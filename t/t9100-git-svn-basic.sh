@@ -170,7 +170,7 @@ then
 	     test -L $SVN_TREE/exec-2.sh"
 
 	name='modify a symlink to become a file'
-	git help > help || true
+	echo git help > help || true
 	rm exec-2.sh
 	cp help exec-2.sh
 	git update-index exec-2.sh
@@ -217,10 +217,10 @@ name='check imported tree checksums expected tree checksums'
 rm -f expected
 if test "$have_utf8" = t
 then
-	echo tree f735671b89a7eb30cab1d8597de35bd4271ab813 > expected
+	echo tree bf522353586b1b883488f2bc73dab0d9f774b9a9 > expected
 fi
 cat >> expected <<\EOF
-tree 4b9af72bb861eaed053854ec502cf7df72618f0f
+tree 83654bb36f019ae4fe77a0171f81075972087624
 tree 031b8d557afc6fea52894eaebb45bec52f1ba6d1
 tree 0b094cbff17168f24c302e297f55bfac65eb8bd3
 tree d667270a1f7b109f5eb3aaea21ede14b56bfdd6e
@@ -231,4 +231,3 @@ EOF
 test_expect_success "$name" "diff -u a expected"
 
 test_done
-

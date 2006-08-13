@@ -2,18 +2,12 @@
 #define BUILTIN_H
 
 #include <stdio.h>
-
-#ifndef PATH_MAX
-# define PATH_MAX 4096
-#endif
+#include <limits.h>
 
 extern const char git_version_string[];
+extern const char git_usage_string[];
 
-void cmd_usage(int show_all, const char *exec_path, const char *fmt, ...)
-#ifdef __GNUC__
-	__attribute__((__format__(__printf__, 3, 4), __noreturn__))
-#endif
-	;
+extern void help_unknown_cmd(const char *cmd);
 
 extern int cmd_help(int argc, const char **argv, const char *prefix);
 extern int cmd_version(int argc, const char **argv, const char *prefix);
@@ -26,6 +20,7 @@ extern int cmd_format_patch(int argc, const char **argv, const char *prefix);
 extern int cmd_count_objects(int argc, const char **argv, const char *prefix);
 
 extern int cmd_prune(int argc, const char **argv, const char *prefix);
+extern int cmd_prune_packed(int argc, const char **argv, const char *prefix);
 
 extern int cmd_push(int argc, const char **argv, const char *prefix);
 extern int cmd_grep(int argc, const char **argv, const char *prefix);
@@ -53,6 +48,7 @@ extern int cmd_update_index(int argc, const char **argv, const char *prefix);
 extern int cmd_update_ref(int argc, const char **argv, const char *prefix);
 extern int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix);
 extern int cmd_mv(int argc, const char **argv, const char *prefix);
+extern int cmd_repo_config(int argc, const char **argv, const char *prefix);
 
 extern int cmd_write_tree(int argc, const char **argv, const char *prefix);
 extern int write_tree(unsigned char *sha1, int missing_ok, const char *prefix);

@@ -1698,6 +1698,12 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 	desc.buffer = buf;
 	if (apply_fragments(&desc, patch) < 0)
 		return -1;
+
+	/* NUL terminate the result */
+	if (desc.alloc <= desc.size)
+		desc.buffer = xrealloc(desc.buffer, desc.size + 1);
+	desc.buffer[desc.size] = 0;
+
 	patch->result = desc.buffer;
 	patch->resultsize = desc.size;
 
@@ -2040,6 +2046,9 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	int fd;
 
 	if (S_ISLNK(mode))
+		/* Although buf:size is counted string, it also is NUL
+		 * terminated.
+		 */
 		return symlink(buf, path);
 	fd = open(path, O_CREAT | O_EXCL | O_WRONLY, (mode & 0100) ? 0777 : 0666);
 	if (fd < 0)
@@ -2225,12 +2234,9 @@ static int apply_patch(int fd, const char *filename,
 		apply = 0;
 
 	write_index = check_index && apply;
-	if (write_index && newfd < 0) {
+	if (write_index && newfd < 0)
 		newfd = hold_lock_file_for_update(&lock_file,
-						  get_index_file());
-		if (newfd < 0)
-			die("unable to create new index file");
-	}
+						  get_index_file(), 1);
 	if (check_index) {
 		if (read_cache() < 0)
 			die("unable to read index file");

@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 
 static const char prune_packed_usage[] =
@@ -54,11 +55,9 @@ static void prune_packed_objects(void)
 	}
 }
 
-int main(int argc, char **argv)
+int cmd_prune_packed(int argc, const char **argv, const char *prefix)
 {
 	int i;
-
-	setup_git_directory();
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];

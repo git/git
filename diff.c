@@ -175,7 +175,7 @@ int git_diff_ui_config(const char *var, const char *value)
 			diff_use_color_default = 1; /* bool */
 		else if (!strcasecmp(value, "auto")) {
 			diff_use_color_default = 0;
-			if (isatty(1) || pager_in_use) {
+			if (isatty(1) || (pager_in_use && pager_use_color)) {
 				char *term = getenv("TERM");
 				if (term && strcmp(term, "dumb"))
 					diff_use_color_default = 1;
@@ -1515,10 +1515,8 @@ void diff_setup(struct diff_options *options)
 
 int diff_setup_done(struct diff_options *options)
 {
-	if ((options->find_copies_harder &&
-	     options->detect_rename != DIFF_DETECT_COPY) ||
-	    (0 <= options->rename_limit && !options->detect_rename))
-		return -1;
+	if (options->find_copies_harder)
+		options->detect_rename = DIFF_DETECT_COPY;
 
 	if (options->output_format & (DIFF_FORMAT_NAME |
 				      DIFF_FORMAT_NAME_STATUS |
@@ -1786,13 +1784,9 @@ struct diff_filepair *diff_queue(struct diff_queue_struct *queue,
 				 struct diff_filespec *one,
 				 struct diff_filespec *two)
 {
-	struct diff_filepair *dp = xmalloc(sizeof(*dp));
+	struct diff_filepair *dp = xcalloc(1, sizeof(*dp));
 	dp->one = one;
 	dp->two = two;
-	dp->score = 0;
-	dp->status = 0;
-	dp->source_stays = 0;
-	dp->broken_pair = 0;
 	if (queue)
 		diff_q(queue, dp);
 	return dp;

@@ -176,7 +176,7 @@ struct lock_file {
 	struct lock_file *next;
 	char filename[PATH_MAX];
 };
-extern int hold_lock_file_for_update(struct lock_file *, const char *path);
+extern int hold_lock_file_for_update(struct lock_file *, const char *path, int);
 extern int commit_lock_file(struct lock_file *);
 extern void rollback_lock_file(struct lock_file *);
 
@@ -387,6 +387,7 @@ extern int receive_keep_pack(int fd[2], const char *me, int quiet, int);
 /* pager.c */
 extern void setup_pager(void);
 extern int pager_in_use;
+extern int pager_use_color;
 
 /* base85 */
 int decode_85(char *dst, char *line, int linelen);

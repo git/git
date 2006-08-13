@@ -132,6 +132,7 @@ int main(int argc, char **argv)
 	prog = getenv("GIT_SSH_PUSH");
 	if (!prog) prog = "git-ssh-upload";
 
+	setup_ident();
 	setup_git_directory();
 	git_config(git_default_config);
 

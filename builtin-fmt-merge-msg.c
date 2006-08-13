@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 #include "commit.h"
 #include "diff.h"
@@ -242,7 +243,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 	free_list(&subjects);
 }
 
-int cmd_fmt_merge_msg(int argc, char **argv, const char *prefix)
+int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 {
 	int limit = 20, i = 0;
 	char line[1024];

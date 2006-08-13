@@ -410,8 +410,10 @@ static int fixmatch(const char *pattern, char *line, regmatch_t *match)
 static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol, char *eol)
 {
 	int hit = 0;
+	int at_true_bol = 1;
 	regmatch_t pmatch[10];
 
+ again:
 	if (!opt->fixed) {
 		regex_t *exp = &p->regexp;
 		hit = !regexec(exp, bol, ARRAY_SIZE(pmatch),
@@ -422,22 +424,35 @@ static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol
 	}
 
 	if (hit && opt->word_regexp) {
-		/* Match beginning must be either
-		 * beginning of the line, or at word
-		 * boundary (i.e. the last char must
-		 * not be alnum or underscore).
-		 */
 		if ((pmatch[0].rm_so < 0) ||
 		    (eol - bol) <= pmatch[0].rm_so ||
 		    (pmatch[0].rm_eo < 0) ||
 		    (eol - bol) < pmatch[0].rm_eo)
 			die("regexp returned nonsense");
-		if (pmatch[0].rm_so != 0 &&
-		    word_char(bol[pmatch[0].rm_so-1]))
+
+		/* Match beginning must be either beginning of the
+		 * line, or at word boundary (i.e. the last char must
+		 * not be a word char).  Similarly, match end must be
+		 * either end of the line, or at word boundary
+		 * (i.e. the next char must not be a word char).
+		 */
+		if ( ((pmatch[0].rm_so == 0 && at_true_bol) ||
+		      !word_char(bol[pmatch[0].rm_so-1])) &&
+		     ((pmatch[0].rm_eo == (eol-bol)) ||
+		      !word_char(bol[pmatch[0].rm_eo])) )
+			;
+		else
 			hit = 0;
-		if (pmatch[0].rm_eo != (eol-bol) &&
-		    word_char(bol[pmatch[0].rm_eo]))
-			hit = 0;
+
+		if (!hit && pmatch[0].rm_so + bol + 1 < eol) {
+			/* There could be more than one match on the
+			 * line, and the first match might not be
+			 * strict word match.  But later ones could be!
+			 */
+			bol = pmatch[0].rm_so + bol + 1;
+			at_true_bol = 0;
+			goto again;
+		}
 	}
 	return hit;
 }

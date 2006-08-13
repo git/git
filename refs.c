@@ -147,7 +147,7 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 			namelen = strlen(de->d_name);
 			if (namelen > 255)
 				continue;
-			if (namelen>5 && !strcmp(de->d_name+namelen-5,".lock"))
+			if (has_extension(de->d_name, ".lock"))
 				continue;
 			memcpy(path + baselen, de->d_name, namelen+1);
 			if (stat(git_path("%s", path), &st) < 0)
@@ -319,13 +319,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *path,
 
 	if (safe_create_leading_directories(lock->ref_file))
 		die("unable to create directory for %s", lock->ref_file);
-	lock->lock_fd = hold_lock_file_for_update(lock->lk, lock->ref_file);
-	if (lock->lock_fd < 0) {
-		error("Couldn't open lock file %s: %s",
-		      lock->lk->filename, strerror(errno));
-		unlock_ref(lock);
-		return NULL;
-	}
+	lock->lock_fd = hold_lock_file_for_update(lock->lk, lock->ref_file, 1);
 
 	return old_sha1 ? verify_lock(lock, old_sha1, mustexist) : lock;
 }

@@ -2,10 +2,11 @@
 #include "tag.h"
 
 /*
- * A signature file has a very simple fixed format: three lines
- * of "object <sha1>" + "type <typename>" + "tag <tagname>",
- * followed by some free-form signature that git itself doesn't
- * care about, but that can be verified with gpg or similar.
+ * A signature file has a very simple fixed format: four lines
+ * of "object <sha1>" + "type <typename>" + "tag <tagname>" +
+ * "tagger <committer>", followed by a blank line, a free-form tag
+ * message and a signature block that git itself doesn't care about,
+ * but that can be verified with gpg or similar.
  *
  * The first three lines are guaranteed to be at least 63 bytes:
  * "object <sha1>\n" is 48 bytes, "type tag\n" at 9 bytes is the
@@ -38,6 +39,12 @@ static int verify_object(unsigned char *sha1, const char *expected_type)
 	return ret;
 }
 
+#ifdef NO_C99_FORMAT
+#define PD_FMT "%d"
+#else
+#define PD_FMT "%td"
+#endif
+
 static int verify_tag(char *buffer, unsigned long size)
 {
 	int typelen;
@@ -46,45 +53,42 @@ static int verify_tag(char *buffer, unsigned long size)
 	const char *object, *type_line, *tag_line, *tagger_line;
 
 	if (size < 64)
-		return error("wanna fool me ? you obviously got the size wrong !\n");
+		return error("wanna fool me ? you obviously got the size wrong !");
 
 	buffer[size] = 0;
 
 	/* Verify object line */
 	object = buffer;
 	if (memcmp(object, "object ", 7))
-		return error("char%d: does not start with \"object \"\n", 0);
+		return error("char%d: does not start with \"object \"", 0);
 
 	if (get_sha1_hex(object + 7, sha1))
-		return error("char%d: could not get SHA1 hash\n", 7);
+		return error("char%d: could not get SHA1 hash", 7);
 
 	/* Verify type line */
 	type_line = object + 48;
 	if (memcmp(type_line - 1, "\ntype ", 6))
-		return error("char%d: could not find \"\\ntype \"\n", 47);
+		return error("char%d: could not find \"\\ntype \"", 47);
 
 	/* Verify tag-line */
 	tag_line = strchr(type_line, '\n');
 	if (!tag_line)
-		return error("char%td: could not find next \"\\n\"\n", type_line - buffer);
+		return error("char" PD_FMT ": could not find next \"\\n\"", type_line - buffer);
 	tag_line++;
 	if (memcmp(tag_line, "tag ", 4) || tag_line[4] == '\n')
-		return error("char%td: no \"tag \" found\n", tag_line - buffer);
+		return error("char" PD_FMT ": no \"tag \" found", tag_line - buffer);
 
 	/* Get the actual type */
 	typelen = tag_line - type_line - strlen("type \n");
 	if (typelen >= sizeof(type))
-		return error("char%td: type too long\n", type_line+5 - buffer);
+		return error("char" PD_FMT ": type too long", type_line+5 - buffer);
 
 	memcpy(type, type_line+5, typelen);
 	type[typelen] = 0;
 
 	/* Verify that the object matches */
-	if (get_sha1_hex(object + 7, sha1))
-		return error("char%d: could not get SHA1 hash but this is really odd since i got it before !\n", 7);
-
 	if (verify_object(sha1, type))
-		return error("char%d: could not verify object %s\n", 7, sha1);
+		return error("char%d: could not verify object %s", 7, sha1_to_hex(sha1));
 
 	/* Verify the tag-name: we don't allow control characters or spaces in it */
 	tag_line += 4;
@@ -94,18 +98,23 @@ static int verify_tag(char *buffer, unsigned long size)
 			break;
 		if (c > ' ')
 			continue;
-		return error("char%td: could not verify tag name\n", tag_line - buffer);
+		return error("char" PD_FMT ": could not verify tag name", tag_line - buffer);
 	}
 
 	/* Verify the tagger line */
 	tagger_line = tag_line;
 
 	if (memcmp(tagger_line, "tagger", 6) || (tagger_line[6] == '\n'))
-		return error("char%td: could not find \"tagger\"\n", tagger_line - buffer);
+		return error("char" PD_FMT ": could not find \"tagger\"", tagger_line - buffer);
+
+	/* TODO: check for committer info + blank line? */
+	/* Also, the minimum length is probably + "tagger .", or 63+8=71 */
 
 	/* The actual stuff afterwards we don't care about.. */
 	return 0;
 }
+
+#undef PD_FMT
 
 int main(int argc, char **argv)
 {
@@ -114,7 +123,7 @@ int main(int argc, char **argv)
 	unsigned char result_sha1[20];
 
 	if (argc != 1)
-		usage("cat <signaturefile> | git-mktag");
+		usage("git-mktag < signaturefile");
 
 	setup_git_directory();
 

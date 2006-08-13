@@ -125,9 +125,7 @@ static int flush_cache(void)
 {
 	/* flush temporary index */
 	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
-	int fd = hold_lock_file_for_update(lock, current_index_file);
-	if (fd < 0)
-		die("could not lock %s", lock->filename);
+	int fd = hold_lock_file_for_update(lock, current_index_file, 1);
 	if (write_cache(fd, active_cache, active_nr) ||
 			close(fd) || commit_lock_file(lock))
 		die ("unable to write %s", current_index_file);

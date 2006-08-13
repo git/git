@@ -52,9 +52,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config);
 
-	newfd = hold_lock_file_for_update(&lock_file, get_index_file());
-	if (newfd < 0)
-		die("unable to create new index file");
+	newfd = hold_lock_file_for_update(&lock_file, get_index_file(), 1);
 
 	if (read_cache() < 0)
 		die("index file corrupt");
@@ -80,7 +78,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 			force = 1;
 			continue;
 		}
-		die(builtin_rm_usage);
+		usage(builtin_rm_usage);
 	}
 	if (argc <= i)
 		usage(builtin_rm_usage);
@@ -115,7 +113,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		printf("rm '%s'\n", path);
 
 		if (remove_file_from_cache(path))
-			die("git rm: unable to remove %s", path);
+			die("git-rm: unable to remove %s", path);
 		cache_tree_invalidate_path(active_cache_tree, path);
 	}
 
@@ -139,7 +137,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!removed)
-				die("git rm: %s: %s", path, strerror(errno));
+				die("git-rm: %s: %s", path, strerror(errno));
 		}
 	}
 

@@ -93,9 +93,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config);
 
-	newfd = hold_lock_file_for_update(&lock_file, get_index_file());
-	if (newfd < 0)
-		die("unable to create new index file");
+	newfd = hold_lock_file_for_update(&lock_file, get_index_file(), 1);
 
 	if (read_cache() < 0)
 		die("index file corrupt");
@@ -117,7 +115,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			verbose = 1;
 			continue;
 		}
-		die(builtin_add_usage);
+		usage(builtin_add_usage);
 	}
 	pathspec = get_pathspec(prefix, argv + i);
 

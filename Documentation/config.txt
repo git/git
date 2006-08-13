@@ -83,9 +83,12 @@ core.repositoryFormatVersion::
 	version.
 
 core.sharedRepository::
-	If true, the repository is made shareable between several users
-	in a group (making sure all the files and objects are group-writable).
-	See gitlink:git-init-db[1]. False by default.
+	When 'group' (or 'true'), the repository is made shareable between
+	several users in a group (making sure all the files and objects are
+	group-writable). When 'all' (or 'world' or 'everybody'), the
+	repository will be readable by all users, additionally to being
+	group-shareable. When 'umask' (or 'false'), git will use permissions
+	reported by umask(2). See gitlink:git-init-db[1]. False by default.
 
 core.warnAmbiguousRefs::
 	If true, git will warn you if the ref name you passed it is ambiguous
@@ -115,6 +118,10 @@ alias.*::
 apply.whitespace::
 	Tells `git-apply` how to handle whitespaces, in the same way
 	as the '--whitespace' option. See gitlink:git-apply[1].
+
+pager.color::
+	A boolean to enable/disable colored output when the pager is in
+	use (default is true).
 
 diff.color::
 	When true (or `always`), always use colors in patch.
@@ -219,14 +226,14 @@ showbranch.default::
 	See gitlink:git-show-branch[1].
 
 tar.umask::
-	By default, git-link:git-tar-tree[1] sets file and directories modes
+	By default, gitlink:git-tar-tree[1] sets file and directories modes
 	to 0666 or 0777. While this is both useful and acceptable for projects
 	such as the Linux Kernel, it might be excessive for other projects.
 	With this variable, it becomes possible to tell
-	git-link:git-tar-tree[1] to apply a specific umask to the modes above.
+	gitlink:git-tar-tree[1] to apply a specific umask to the modes above.
 	The special value "user" indicates that the user's current umask will
 	be used. This should be enough for most projects, as it will lead to
-	the same permissions as git-link:git-checkout[1] would use. The default
+	the same permissions as gitlink:git-checkout[1] would use. The default
 	value remains 0, which means world read-write.
 
 user.email::

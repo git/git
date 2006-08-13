@@ -43,8 +43,8 @@ static int setup_indices(void)
 		return -1;
 	while ((de = readdir(dir)) != NULL) {
 		int namelen = strlen(de->d_name);
-		if (namelen != 50 || 
-		    strcmp(de->d_name + namelen - 5, ".pack"))
+		if (namelen != 50 ||
+		    !has_extension(de->d_name, ".pack"))
 			continue;
 		get_sha1_hex(de->d_name + 5, sha1);
 		setup_index(sha1);
@@ -210,6 +210,7 @@ int main(int argc, const char **argv)
 	char **commit_id;
 	int arg = 1;
 
+	setup_ident();
 	setup_git_directory();
 	git_config(git_default_config);
 

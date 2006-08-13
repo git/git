@@ -91,6 +91,9 @@ static inline void *xmalloc(size_t size)
 		ret = malloc(1);
 	if (!ret)
 		die("Out of memory, malloc failed");
+#ifdef XMALLOC_POISON
+	memset(ret, 0xA5, size);
+#endif
 	return ret;
 }
 
@@ -134,6 +137,13 @@ static inline ssize_t xwrite(int fd, const void *buf, size_t len)
 			continue;
 		return nr;
 	}
+}
+
+static inline int has_extension(const char *filename, const char *ext)
+{
+	size_t len = strlen(filename);
+	size_t extlen = strlen(ext);
+	return len > extlen && !memcmp(filename + len - extlen, ext, extlen);
 }
 
 /* Sane ctype - no locale, and works with signed chars */

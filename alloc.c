@@ -39,8 +39,21 @@ DEFINE_ALLOCATOR(tree)
 DEFINE_ALLOCATOR(commit)
 DEFINE_ALLOCATOR(tag)
 
+#ifdef NO_C99_FORMAT
+#define SZ_FMT "%u"
+#else
+#define SZ_FMT "%zu"
+#endif
+
+static void report(const char* name, unsigned int count, size_t size)
+{
+    fprintf(stderr, "%10s: %8u (" SZ_FMT " kB)\n", name, count, size);
+}
+
+#undef SZ_FMT
+
 #define REPORT(name)	\
-	fprintf(stderr, "%10s: %8u (%zu kB)\n", #name, name##_allocs, name##_allocs*sizeof(struct name) >> 10)
+    report(#name, name##_allocs, name##_allocs*sizeof(struct name) >> 10)
 
 void alloc_report(void)
 {

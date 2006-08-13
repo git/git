@@ -18,7 +18,7 @@ int write_tree(unsigned char *sha1, int missing_ok, const char *prefix)
 	/* We can't free this memory, it becomes part of a linked list parsed atexit() */
 	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
 
-	newfd = hold_lock_file_for_update(lock_file, get_index_file());
+	newfd = hold_lock_file_for_update(lock_file, get_index_file(), 0);
 
 	entries = read_cache();
 	if (entries < 0)
@@ -73,7 +73,7 @@ int cmd_write_tree(int argc, const char **argv, const char *unused_prefix)
 		else if (!strncmp(arg, "--prefix=", 9))
 			prefix = arg + 9;
 		else
-			die(write_tree_usage);
+			usage(write_tree_usage);
 		argc--; argv++;
 	}
 

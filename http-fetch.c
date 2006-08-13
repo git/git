@@ -870,7 +870,7 @@ static void process_ls_pack(struct remote_ls_ctx *ls)
 
 	if (strlen(ls->dentry_name) == 63 &&
 	    !strncmp(ls->dentry_name, "objects/pack/pack-", 18) &&
-	    !strncmp(ls->dentry_name+58, ".pack", 5)) {
+	    has_extension(ls->dentry_name, ".pack")) {
 		get_sha1_hex(ls->dentry_name + 18, sha1);
 		setup_index(ls->repo, sha1);
 	}
@@ -1226,6 +1226,7 @@ int main(int argc, const char **argv)
 	int arg = 1;
 	int rc = 0;
 
+	setup_ident();
 	setup_git_directory();
 	git_config(git_default_config);
 

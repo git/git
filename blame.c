@@ -20,7 +20,7 @@
 
 #define DEBUG 0
 
-static const char blame_usage[] = "[-c] [-l] [-t] [-S <revs-file>] [--] file [commit]\n"
+static const char blame_usage[] = "git-blame [-c] [-l] [-t] [-S <revs-file>] [--] file [commit]\n"
 	"  -c, --compatibility Use the same output mode as git-annotate (Default: off)\n"
 	"  -l, --long          Show long commit SHA1 (Default: off)\n"
 	"  -t, --time          Show raw timestamp (Default: off)\n"

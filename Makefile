@@ -24,6 +24,11 @@ all:
 # Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
 # d_type in struct dirent (latest Cygwin -- will be fixed soonish).
 #
+# Define NO_C99_FORMAT if your formatted IO functions (printf/scanf et.al.)
+# do not support the 'size specifiers' introduced by C99, namely ll, hh,
+# j, z, t. (representing long long int, char, intmax_t, size_t, ptrdiff_t).
+# some c compilers supported these specifiers prior to C99 as an extension.
+#
 # Define NO_STRCASESTR if you don't have strcasestr.
 #
 # Define NO_STRLCPY if you don't have strlcpy.
@@ -173,14 +178,14 @@ PROGRAMS = \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
 	git-merge-base$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-pack-objects$X git-patch-id$X \
-	git-peek-remote$X git-prune-packed$X git-receive-pack$X \
+	git-peek-remote$X git-receive-pack$X \
 	git-send-pack$X git-shell$X \
 	git-show-index$X git-ssh-fetch$X \
 	git-ssh-upload$X git-unpack-file$X \
 	git-unpack-objects$X git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X \
 	git-symbolic-ref$X \
-	git-name-rev$X git-pack-redundant$X git-repo-config$X git-var$X \
+	git-name-rev$X git-pack-redundant$X git-var$X \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X \
 	git-merge-recur$X
 
@@ -193,7 +198,8 @@ BUILT_INS = git-log$X git-whatchanged$X git-show$X git-update-ref$X \
 	git-read-tree$X git-commit-tree$X git-write-tree$X \
 	git-apply$X git-show-branch$X git-diff-files$X git-update-index$X \
 	git-diff-index$X git-diff-stages$X git-diff-tree$X git-cat-file$X \
-	git-fmt-merge-msg$X git-prune$X git-mv$X
+	git-fmt-merge-msg$X git-prune$X git-mv$X git-prune-packed$X \
+	git-repo-config$X
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -250,7 +256,7 @@ BUILTIN_OBJS = \
 	builtin-diff-index.o builtin-diff-stages.o builtin-diff-tree.o \
 	builtin-cat-file.o builtin-mailsplit.o builtin-stripspace.o \
 	builtin-update-ref.o builtin-fmt-merge-msg.o builtin-prune.o \
-	builtin-mv.o
+	builtin-mv.o builtin-prune-packed.o builtin-repo-config.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz
@@ -309,9 +315,9 @@ ifeq ($(uname_O),Cygwin)
 	NO_D_TYPE_IN_DIRENT = YesPlease
 	NO_D_INO_IN_DIRENT = YesPlease
 	NO_STRCASESTR = YesPlease
-	NO_STRLCPY = YesPlease
 	NO_SYMLINK_HEAD = YesPlease
 	NEEDS_LIBICONV = YesPlease
+	NO_C99_FORMAT = YesPlease
 	# There are conflicting reports about this.
 	# On some boxes NO_MMAP is needed, and not so elsewhere.
 	# Try uncommenting this if you see things break -- YMMV.
@@ -432,6 +438,9 @@ ifdef NO_D_TYPE_IN_DIRENT
 endif
 ifdef NO_D_INO_IN_DIRENT
 	ALL_CFLAGS += -DNO_D_INO_IN_DIRENT
+endif
+ifdef NO_C99_FORMAT
+	ALL_CFLAGS += -DNO_C99_FORMAT
 endif
 ifdef NO_SYMLINK_HEAD
 	ALL_CFLAGS += -DNO_SYMLINK_HEAD
@@ -718,7 +727,7 @@ install: all
 	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(gitexecdir_SQ)'
 	$(INSTALL) $(ALL_PROGRAMS) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
 	$(INSTALL) git$X gitk '$(DESTDIR_SQ)$(bindir_SQ)'
-	$(MAKE) -C templates install
+	$(MAKE) -C templates DESTDIR='$(DESTDIR_SQ)' install
 	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
 	$(INSTALL) $(PYMODULES) '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
 	if test 'z$(bindir_SQ)' != 'z$(gitexecdir_SQ)'; \

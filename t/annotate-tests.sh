@@ -4,7 +4,8 @@
 check_count () {
 	head=
 	case "$1" in -h) head="$2"; shift; shift ;; esac
-	$PROG file $head | perl -e '
+	$PROG file $head >.result || return 1
+	cat .result | perl -e '
 		my %expect = (@ARGV);
 		my %count = ();
 		while (<STDIN>) {

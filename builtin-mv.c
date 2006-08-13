@@ -48,7 +48,8 @@ static const char *add_slash(const char *path)
 	if (path[len - 1] != '/') {
 		char *with_slash = xmalloc(len + 2);
 		memcpy(with_slash, path, len);
-		strcat(with_slash + len, "/");
+		with_slash[len++] = '/';
+		with_slash[len] = 0;
 		return with_slash;
 	}
 	return path;
@@ -71,10 +72,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
 	git_config(git_default_config);
 
-	newfd = hold_lock_file_for_update(&lock_file, get_index_file());
-	if (newfd < 0)
-		die("unable to create new index file");
-
+	newfd = hold_lock_file_for_update(&lock_file, get_index_file(), 1);
 	if (read_cache() < 0)
 		die("index file corrupt");
 
@@ -99,7 +97,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			ignore_errors = 1;
 			continue;
 		}
-		die(builtin_mv_usage);
+		usage(builtin_mv_usage);
 	}
 	count = argc - i - 1;
 	if (count < 1)

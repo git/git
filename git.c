@@ -15,6 +15,9 @@
 
 #include "builtin.h"
 
+const char git_usage_string[] =
+	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [--help] COMMAND [ ARGS ]";
+
 static void prepend_to_path(const char *dir, int len)
 {
 	const char *old_path = getenv("PATH");
@@ -78,7 +81,7 @@ static int handle_options(const char*** argv, int* argc)
 			setenv("GIT_DIR", getcwd(git_dir, 1024), 1);
 		} else {
 			fprintf(stderr, "Unknown option: %s\n", cmd);
-			cmd_usage(0, NULL, NULL);
+			usage(git_usage_string);
 		}
 
 		(*argv)++;
@@ -211,6 +214,7 @@ static int handle_alias(int *argcp, const char ***argv)
 const char git_version_string[] = GIT_VERSION;
 
 #define NEEDS_PREFIX 1
+#define USE_PAGER 2
 
 static void handle_internal_command(int argc, const char **argv, char **envp)
 {
@@ -218,14 +222,14 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 	static struct cmd_struct {
 		const char *cmd;
 		int (*fn)(int, const char **, const char *);
-		int prefix;
+		int option;
 	} commands[] = {
 		{ "version", cmd_version },
 		{ "help", cmd_help },
-		{ "log", cmd_log, NEEDS_PREFIX },
-		{ "whatchanged", cmd_whatchanged, NEEDS_PREFIX },
-		{ "show", cmd_show, NEEDS_PREFIX },
-		{ "push", cmd_push },
+		{ "log", cmd_log, NEEDS_PREFIX | USE_PAGER },
+		{ "whatchanged", cmd_whatchanged, NEEDS_PREFIX | USE_PAGER },
+		{ "show", cmd_show, NEEDS_PREFIX | USE_PAGER },
+		{ "push", cmd_push, NEEDS_PREFIX },
 		{ "format-patch", cmd_format_patch, NEEDS_PREFIX },
 		{ "count-objects", cmd_count_objects },
 		{ "diff", cmd_diff, NEEDS_PREFIX },
@@ -259,6 +263,8 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "fmt-merge-msg", cmd_fmt_merge_msg, NEEDS_PREFIX },
 		{ "prune", cmd_prune, NEEDS_PREFIX },
 		{ "mv", cmd_mv, NEEDS_PREFIX },
+		{ "prune-packed", cmd_prune_packed, NEEDS_PREFIX },
+		{ "repo-config", cmd_repo_config },
 	};
 	int i;
 
@@ -275,8 +281,10 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 			continue;
 
 		prefix = NULL;
-		if (p->prefix)
+		if (p->option & NEEDS_PREFIX)
 			prefix = setup_git_directory();
+		if (p->option & USE_PAGER)
+			setup_pager();
 		if (getenv("GIT_TRACE")) {
 			int i;
 			fprintf(stderr, "trace: built-in: git");
@@ -372,7 +380,7 @@ int main(int argc, const char **argv, char **envp)
 	}
 
 	if (errno == ENOENT)
-		cmd_usage(0, exec_path, "'%s' is not a git-command", cmd);
+		help_unknown_cmd(cmd);
 
 	fprintf(stderr, "Failed to run command '%s': %s\n",
 		cmd, strerror(errno));

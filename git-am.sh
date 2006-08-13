@@ -45,6 +45,12 @@ go_next () {
 	this=$next
 }
 
+cannot_fallback () {
+	echo "$1"
+	echo "Cannot fall back to three-way merge."
+	exit 1
+}
+
 fall_back_3way () {
     O_OBJECT=`cd "$GIT_OBJECT_DIRECTORY" && pwd`
 
@@ -52,19 +58,23 @@ fall_back_3way () {
     mkdir "$dotest/patch-merge-tmp-dir"
 
     # First see if the patch records the index info that we can use.
-    if git-apply -z --index-info "$dotest/patch" \
-	>"$dotest/patch-merge-index-info" 2>/dev/null &&
-	GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
-	git-update-index -z --index-info <"$dotest/patch-merge-index-info" &&
-	GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
-	git-write-tree >"$dotest/patch-merge-base+" &&
-	# index has the base tree now.
-	GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
+    git-apply -z --index-info "$dotest/patch" \
+	>"$dotest/patch-merge-index-info" &&
+    GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
+    git-update-index -z --index-info <"$dotest/patch-merge-index-info" &&
+    GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
+    git-write-tree >"$dotest/patch-merge-base+" ||
+    cannot_fallback "Patch does not record usable index information."
+
+    echo Using index info to reconstruct a base tree...
+    if GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
 	git-apply $binary --cached <"$dotest/patch"
     then
-	echo Using index info to reconstruct a base tree...
 	mv "$dotest/patch-merge-base+" "$dotest/patch-merge-base"
 	mv "$dotest/patch-merge-tmp-index" "$dotest/patch-merge-index"
+    else
+        cannot_fallback "Did you hand edit your patch?
+It does not apply to blobs recorded in its index."
     fi
 
     test -f "$dotest/patch-merge-index" &&
