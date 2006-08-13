@@ -19,7 +19,7 @@ static int append_signoff(char *buf, int buf_sz, int at, const char *signoff)
 	char *cp = buf;
 
 	/* Do we have enough space to add it? */
-	if (buf_sz - at <= strlen(signed_off_by) + signoff_len + 2)
+	if (buf_sz - at <= strlen(signed_off_by) + signoff_len + 3)
 		return at;
 
 	/* First see if we already have the sign-off by the signer */
@@ -32,6 +32,48 @@ static int append_signoff(char *buf, int buf_sz, int at, const char *signoff)
 		    !strncmp(cp, signoff, signoff_len) &&
 		    isspace(cp[signoff_len]))
 			return at; /* we already have him */
+	}
+
+	/* Does the last line already end with "^[-A-Za-z]+: [^@]+@"?
+	 * If not, add a blank line to separate the message from
+	 * the run of Signed-off-by: and Acked-by: lines.
+	 */
+	{
+		char ch;
+		int seen_colon, seen_at, seen_name, seen_head, not_signoff;
+		seen_colon = 0;
+		seen_at = 0;
+		seen_name = 0;
+		seen_head = 0;
+		not_signoff = 0;
+		cp = buf + at;
+		while (buf <= --cp && (ch = *cp) == '\n')
+			;
+		while (!not_signoff && buf <= cp && (ch = *cp--) != '\n') {
+			if (!seen_at) {
+				if (ch == '@')
+					seen_at = 1;
+				continue;
+			}
+			if (!seen_colon) {
+				if (ch == '@')
+					not_signoff = 1;
+				else if (ch == ':')
+					seen_colon = 1;
+				else
+					seen_name = 1;
+				continue;
+			}
+			if (('A' <= ch && ch <= 'Z') ||
+			    ('a' <= ch && ch <= 'z') ||
+			    ch == '-') {
+				seen_head = 1;
+				continue;
+			}
+			not_signoff = 1;
+		}
+		if (not_signoff || !seen_head || !seen_name)
+			buf[at++] = '\n';
 	}
 
 	strcpy(buf + at, signed_off_by);
