@@ -11,9 +11,15 @@
 
 static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=nn] <dir>";
 
-#define THEY_HAVE (1U << 0)
-#define OUR_REF (1U << 1)
-#define WANTED (1U << 2)
+/* bits #0..7 in revision.h, #8..10 in commit.c */
+#define THEY_HAVE	(1u << 11)
+#define OUR_REF		(1u << 12)
+#define WANTED		(1u << 13)
+#define COMMON_KNOWN	(1u << 14)
+#define REACHABLE	(1u << 15)
+
+static unsigned long oldest_have = 0;
+
 static int multi_ack = 0, nr_our_refs = 0;
 static int use_thin_pack = 0;
 static struct object_array have_obj;
@@ -323,11 +329,12 @@ static void create_pack_file(void)
 static int got_sha1(char *hex, unsigned char *sha1)
 {
 	struct object *o;
+	int we_knew_they_have = 0;
 
 	if (get_sha1_hex(hex, sha1))
 		die("git-upload-pack: expected SHA1 object, got '%s'", hex);
 	if (!has_sha1_file(sha1))
-		return 0;
+		return -1;
 
 	o = lookup_object(sha1);
 	if (!(o && o->parsed))
@@ -336,22 +343,92 @@ static int got_sha1(char *hex, unsigned char *sha1)
 		die("oops (%s)", sha1_to_hex(sha1));
 	if (o->type == OBJ_COMMIT) {
 		struct commit_list *parents;
+		struct commit *commit = (struct commit *)o;
 		if (o->flags & THEY_HAVE)
-			return 0;
-		o->flags |= THEY_HAVE;
-		for (parents = ((struct commit*)o)->parents;
+			we_knew_they_have = 1;
+		else
+			o->flags |= THEY_HAVE;
+		if (!oldest_have || (commit->date < oldest_have))
+			oldest_have = commit->date;
+		for (parents = commit->parents;
 		     parents;
 		     parents = parents->next)
 			parents->item->object.flags |= THEY_HAVE;
 	}
-	add_object_array(o, NULL, &have_obj);
+	if (!we_knew_they_have) {
+		add_object_array(o, NULL, &have_obj);
+		return 1;
+	}
+	return 0;
+}
+
+static int reachable(struct commit *want)
+{
+	struct commit_list *work = NULL;
+
+	insert_by_date(want, &work);
+	while (work) {
+		struct commit_list *list = work->next;
+		struct commit *commit = work->item;
+		free(work);
+		work = list;
+
+		if (commit->object.flags & THEY_HAVE) {
+			want->object.flags |= COMMON_KNOWN;
+			break;
+		}
+		if (!commit->object.parsed)
+			parse_object(commit->object.sha1);
+		if (commit->object.flags & REACHABLE)
+			continue;
+		commit->object.flags |= REACHABLE;
+		if (commit->date < oldest_have)
+			continue;
+		for (list = commit->parents; list; list = list->next) {
+			struct commit *parent = list->item;
+			if (!(parent->object.flags & REACHABLE))
+				insert_by_date(parent, &work);
+		}
+	}
+	want->object.flags |= REACHABLE;
+	clear_commit_marks(want, REACHABLE);
+	free_commit_list(work);
+	return (want->object.flags & COMMON_KNOWN);
+}
+
+static int ok_to_give_up(void)
+{
+	int i;
+
+	if (!have_obj.nr)
+		return 0;
+
+	for (i = 0; i < want_obj.nr; i++) {
+		struct object *want = want_obj.objects[i].item;
+
+		if (want->flags & COMMON_KNOWN)
+			continue;
+		want = deref_tag(want, "a want line", 0);
+		if (!want || want->type != OBJ_COMMIT) {
+			/* no way to tell if this is reachable by
+			 * looking at the ancestry chain alone, so
+			 * leave a note to ourselves not to worry about
+			 * this object anymore.
+			 */
+			want_obj.objects[i].item->flags |= COMMON_KNOWN;
+			continue;
+		}
+		if (!reachable((struct commit *)want))
+			return 0;
+	}
 	return 1;
 }
 
 static int get_common_commits(void)
 {
 	static char line[1000];
-	unsigned char sha1[20], last_sha1[20];
+	unsigned char sha1[20];
+	char hex[41], last_hex[41];
 	int len;
 
 	track_object_refs = 0;
@@ -368,21 +445,29 @@ static int get_common_commits(void)
 		}
 		len = strip(line, len);
 		if (!strncmp(line, "have ", 5)) {
-			if (got_sha1(line+5, sha1) &&
-			    (multi_ack || have_obj.nr == 1)) {
-				packet_write(1, "ACK %s%s\n",
-					     sha1_to_hex(sha1),
-					     multi_ack ?  " continue" : "");
-				if (multi_ack)
-					memcpy(last_sha1, sha1, 20);
+			switch (got_sha1(line+5, sha1)) {
+			case -1: /* they have what we do not */
+				if (multi_ack && ok_to_give_up())
+					packet_write(1, "ACK %s continue\n",
+						     sha1_to_hex(sha1));
+				break;
+			default:
+				memcpy(hex, sha1_to_hex(sha1), 41);
+				if (multi_ack) {
+					const char *msg = "ACK %s continue\n";
+					packet_write(1, msg, hex);
+					memcpy(last_hex, hex, 41);
+				}
+				else if (have_obj.nr == 1)
+					packet_write(1, "ACK %s\n", hex);
+				break;
 			}
 			continue;
 		}
 		if (!strcmp(line, "done")) {
 			if (have_obj.nr > 0) {
 				if (multi_ack)
-					packet_write(1, "ACK %s\n",
-							sha1_to_hex(last_sha1));
+					packet_write(1, "ACK %s\n", last_hex);
 				return 0;
 			}
 			packet_write(1, "NAK\n");
