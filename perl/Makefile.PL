@@ -22,10 +22,14 @@ if ($@) {
 	$pm{'private-Error.pm'} = '$(INST_LIBDIR)/Error.pm';
 }
 
+my %extra;
+$extra{DESTDIR} = $ENV{DESTDIR} if $ENV{DESTDIR};
+
 WriteMakefile(
 	NAME            => 'Git',
 	VERSION_FROM    => 'Git.pm',
 	PM		=> \%pm,
 	MYEXTLIB        => '../libgit.a',
 	INC             => '-I. -I..',
+	%extra
 );
