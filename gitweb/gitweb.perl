@@ -527,6 +527,37 @@ sub git_get_projects_list {
 	return @list;
 }
 
+sub git_get_project_owner {
+	my $project = shift;
+	my $owner;
+
+	return undef unless $project;
+
+	# read from file (url-encoded):
+	# 'git%2Fgit.git Linus+Torvalds'
+	# 'libs%2Fklibc%2Fklibc.git H.+Peter+Anvin'
+	# 'linux%2Fhotplug%2Fudev.git Greg+Kroah-Hartman'
+	if (-f $projects_list) {
+		open (my $fd , $projects_list);
+		while (my $line = <$fd>) {
+			chomp $line;
+			my ($pr, $ow) = split ' ', $line;
+			$pr = unescape($pr);
+			$ow = unescape($ow);
+			if ($pr eq $project) {
+				$owner = decode("utf8", $ow, Encode::FB_DEFAULT);
+				last;
+			}
+		}
+		close $fd;
+	}
+	if (!defined $owner) {
+		$owner = get_file_owner("$projectroot/$project");
+	}
+
+	return $owner;
+}
+
 sub git_get_references {
 	my $type = shift || "";
 	my %refs;
@@ -1458,24 +1489,7 @@ sub git_summary {
 	my %co = parse_commit($head);
 	my %cd = parse_date($co{'committer_epoch'}, $co{'committer_tz'});
 
-	my $owner;
-	if (-f $projects_list) {
-		open (my $fd , $projects_list);
-		while (my $line = <$fd>) {
-			chomp $line;
-			my ($pr, $ow) = split ' ', $line;
-			$pr = unescape($pr);
-			$ow = unescape($ow);
-			if ($pr eq $project) {
-				$owner = decode("utf8", $ow, Encode::FB_DEFAULT);
-				last;
-			}
-		}
-		close $fd;
-	}
-	if (!defined $owner) {
-		$owner = get_file_owner("$projectroot/$project");
-	}
+	my $owner = git_get_project_owner($project);
 
 	my $refs = git_get_references();
 	git_header_html();
