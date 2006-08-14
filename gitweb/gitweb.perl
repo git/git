@@ -364,9 +364,26 @@ sub format_log_line_html {
 # format marker of refs pointing to given object
 sub format_ref_marker {
 	my ($refs, $id) = @_;
+	my $markers = '';
 
 	if (defined $refs->{$id}) {
-		return ' <span class="tag">' . esc_html($refs->{$id}) . '</span>';
+		foreach my $ref (@{$refs->{$id}}) {
+			my ($type, $name) = qw();
+			# e.g. tags/v2.6.11 or heads/next
+			if ($ref =~ m!^(.*?)s?/(.*)$!) {
+				$type = $1;
+				$name = $2;
+			} else {
+				$type = "ref";
+				$name = $ref;
+			}
+
+			$markers .= " <span class=\"$type\">" . esc_html($name) . "</span>";
+		}
+	}
+
+	if ($markers) {
+		return ' <span class="refs">'. $markers . '</span>';
 	} else {
 		return "";
 	}
@@ -561,18 +578,24 @@ sub git_get_project_owner {
 sub git_get_references {
 	my $type = shift || "";
 	my %refs;
+	my $fd;
 	# 5dc01c595e6c6ec9ccda4f6f69c131c0dd945f8c	refs/tags/v2.6.11
 	# c39ae07f393806ccf406ef966e9a15afc43cc36a	refs/tags/v2.6.11^{}
-	open my $fd, "$projectroot/$project/info/refs" or return;
+	if (-f "$projectroot/$project/info/refs") {
+		open $fd, "$projectroot/$project/info/refs"
+			or return;
+	} else {
+		open $fd, "-|", $GIT, "ls-remote", "."
+			or return;
+	}
+
 	while (my $line = <$fd>) {
 		chomp $line;
-		# attention: for $type == "" it saves only last path part of ref name
-		# e.g. from 'refs/heads/jn/gitweb' it would leave only 'gitweb'
-		if ($line =~ m/^([0-9a-fA-F]{40})\t.*$type\/([^\^]+)/) {
+		if ($line =~ m/^([0-9a-fA-F]{40})\trefs\/($type\/?[^\^]+)/) {
 			if (defined $refs{$1}) {
-				$refs{$1} .= " / $2";
+				push @{$refs{$1}}, $2;
 			} else {
-				$refs{$1} = $2;
+				$refs{$1} = [ $2 ];
 			}
 		}
 	}
