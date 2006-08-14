@@ -32,10 +32,8 @@ static int expand_one_ref(const char *ref, const unsigned char *sha1)
 	/* Ignore the "refs/" at the beginning of the refname */
 	ref += 5;
 
-	if (strncmp(ref, "tags/", 5))
-		return 0;
-
-	add_refspec(strdup(ref));
+	if (!strncmp(ref, "tags/", 5))
+		add_refspec(strdup(ref));
 	return 0;
 }
 
