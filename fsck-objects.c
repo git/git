@@ -366,13 +366,13 @@ static void add_sha1_list(unsigned char *sha1, unsigned long ino)
 	sha1_list.nr = ++nr;
 }
 
-static int fsck_dir(int i, char *path)
+static void fsck_dir(int i, char *path)
 {
 	DIR *dir = opendir(path);
 	struct dirent *de;
 
 	if (!dir)
-		return 0;
+		return;
 
 	while ((de = readdir(dir)) != NULL) {
 		char name[100];
@@ -398,7 +398,6 @@ static int fsck_dir(int i, char *path)
 		fprintf(stderr, "bad sha1 file: %s/%s\n", path, de->d_name);
 	}
 	closedir(dir);
-	return 0;
 }
 
 static int default_refs = 0;
