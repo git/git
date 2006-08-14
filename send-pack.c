@@ -111,7 +111,7 @@ static void rev_list(int fd, struct ref *refs)
 	exec_rev_list(refs);
 }
 
-static int pack_objects(int fd, struct ref *refs)
+static void pack_objects(int fd, struct ref *refs)
 {
 	pid_t rev_list_pid;
 
@@ -126,7 +126,6 @@ static int pack_objects(int fd, struct ref *refs)
 	 * We don't wait for the rev-list pipeline in the parent:
 	 * we end up waiting for the other end instead
 	 */
-	return 0;
 }
 
 static void unmark_and_free(struct commit_list *list, unsigned int mark)
