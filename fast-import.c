@@ -70,6 +70,7 @@ Format of STDIN stream:
 struct object_entry
 {
 	struct object_entry *next;
+	enum object_type type;
 	unsigned long offset;
 	unsigned char sha1[20];
 };
@@ -528,6 +529,7 @@ static int store_object(
 		duplicate_count_by_type[type]++;
 		return 1;
 	}
+	e->type = type;
 	e->offset = pack_offset;
 	object_count++;
 	object_count_by_type[type]++;
@@ -713,7 +715,7 @@ static int tree_content_set(
 			}
 			if (!S_ISDIR(e->mode)) {
 				e->tree = new_tree_content(8);
-				e->mode = 040000;
+				e->mode = S_IFDIR;
 			}
 			if (!e->tree)
 				load_tree(e);
@@ -732,7 +734,7 @@ static int tree_content_set(
 	t->entries[t->entry_count++] = e;
 	if (slash1) {
 		e->tree = new_tree_content(8);
-		e->mode = 040000;
+		e->mode = S_IFDIR;
 		tree_content_set(e, slash1 + 1, sha1, mode);
 	} else {
 		e->tree = NULL;
@@ -948,16 +950,28 @@ static void load_branch(struct branch *b)
 static void file_change_m(struct branch *b)
 {
 	const char *path = read_path();
+	struct object_entry *oe;
 	char hexsha1[41];
 	unsigned char sha1[20];
+	char type[20];
 
 	yread(0, hexsha1, 40);
 	hexsha1[40] = 0;
 
 	if (get_sha1_hex(hexsha1, sha1))
 		die("Invalid sha1 %s for %s", hexsha1, path);
+	oe = find_object(sha1);
+	if (oe) {
+		if (oe->type != OBJ_BLOB)
+			die("%s is a %s not a blob (for %s)", hexsha1, type_names[oe->type], path);
+	} else {
+		if (sha1_object_info(sha1, type, NULL))
+			die("No blob %s for %s", hexsha1, path);
+		if (strcmp(blob_type, type))
+			die("%s is a %s not a blob (for %s)", hexsha1, type, path);
+	}
 
-	tree_content_set(&b->branch_tree, path, sha1, 0100644);
+	tree_content_set(&b->branch_tree, path, sha1, S_IFREG | 0644);
 }
 
 static void file_change_d(struct branch *b)
@@ -985,6 +999,10 @@ static void cmd_new_commit()
 	body = xmalloc(acmsglen + max_hdr_len);
 	c = body + max_hdr_len;
 	yread(0, c, acmsglen);
+
+	/* oddly enough this is all that fsck-objects cares about */
+	if (memcmp(c, "author ", 7))
+		die("Invalid commit format on branch %s", name);
 
 	/* file_change* */
 	for (;;) {
@@ -1104,7 +1122,9 @@ int main(int argc, const char **argv)
 	fprintf(stderr, "      tags   :   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG]);
 	fprintf(stderr, "Total branches:  %10lu\n", branch_count);
 	fprintf(stderr, "Total atoms:     %10u\n", atom_cnt);
-	fprintf(stderr, "Memory pools:    %10lu MiB\n", total_allocd/(1024*1024));
+	fprintf(stderr, "Memory total:    %10lu KiB\n", (total_allocd + alloc_count*sizeof(struct object_entry))/1024);
+	fprintf(stderr, "       pools:    %10lu KiB\n", total_allocd/1024);
+	fprintf(stderr, "     objects:    %10lu KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
 	fprintf(stderr, "---------------------------------------------------\n");
 
 	stat(pack_name, &sb);
