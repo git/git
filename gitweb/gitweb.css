@@ -226,6 +226,10 @@ table.diff_tree span.file_status.mode_chnge {
 	color: #777777;
 }
 
+table.diff_tree span.file_status.copied {
+  color: #70a070;
+}
+
 /* age2: 60*60*24*2 <= age */
 table.project_list td.age2, table.blame td.age2 {
 	font-style: italic;

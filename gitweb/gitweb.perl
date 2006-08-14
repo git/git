@@ -1136,6 +1136,145 @@ sub git_print_page_path {
 ## ......................................................................
 ## functions printing large fragments of HTML
 
+sub git_difftree_body {
+	my ($difftree, $parent) = @_;
+
+	print "<div class=\"list_head\">\n";
+	if ($#{$difftree} > 10) {
+		print(($#{$difftree} + 1) . " files changed:\n");
+	}
+	print "</div>\n";
+
+	print "<table class=\"diff_tree\">\n";
+	my $alternate = 0;
+	foreach my $line (@{$difftree}) {
+		# ':100644 100644 03b218260e99b78c6df0ed378e59ed9205ccc96d 3b93d5e7cc7f7dd4ebed13a5cc1a4ad976fc94d8 M	ls-files.c'
+		# ':100644 100644 7f9281985086971d3877aca27704f2aaf9c448ce bc190ebc71bbd923f2b728e505408f5e54bd073a M	rev-tree.c'
+		if ($line !~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)([0-9]{0,3})\t(.*)$/) {
+			next;
+		}
+		my $from_mode = $1;
+		my $to_mode = $2;
+		my $from_id = $3;
+		my $to_id = $4;
+		my $status = $5;
+		my $similarity = $6; # score
+		my $file = validate_input(unquote($7));
+
+		if ($alternate) {
+			print "<tr class=\"dark\">\n";
+		} else {
+			print "<tr class=\"light\">\n";
+		}
+		$alternate ^= 1;
+
+		if ($status eq "A") { # created
+			my $mode_chng = "";
+			if (S_ISREG(oct $to_mode)) {
+				$mode_chng = sprintf(" with mode: %04o", (oct $to_mode) & 0777);
+			}
+			print "<td>" .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file"),
+			              -class => "list"}, esc_html($file)) .
+			      "</td>\n" .
+			      "<td><span class=\"file_status new\">[new " . file_type($to_mode) . "$mode_chng]</span></td>\n" .
+			      "<td class=\"link\">" .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, "blob") .
+			      "</td>\n";
+
+		} elsif ($status eq "D") { # deleted
+			print "<td>" .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$parent;f=$file"),
+			               -class => "list"}, esc_html($file)) . "</td>\n" .
+			      "<td><span class=\"file_status deleted\">[deleted " . file_type($from_mode). "]</span></td>\n" .
+			      "<td class=\"link\">" .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$parent;f=$file")}, "blob") . " | " .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=history;hb=$parent;f=$file")}, "history") .
+			      "</td>\n"
+
+		} elsif ($status eq "M" || $status eq "T") { # modified, or type changed
+			my $mode_chnge = "";
+			if ($from_mode != $to_mode) {
+				$mode_chnge = " <span class=\"file_status mode_chnge\">[changed";
+				if (((oct $from_mode) & S_IFMT) != ((oct $to_mode) & S_IFMT)) {
+					$mode_chnge .= " from " . file_type($from_mode) . " to " . file_type($to_mode);
+				}
+				if (((oct $from_mode) & 0777) != ((oct $to_mode) & 0777)) {
+					if (S_ISREG($from_mode) && S_ISREG($to_mode)) {
+						$mode_chnge .= sprintf(" mode: %04o->%04o", (oct $from_mode) & 0777, (oct $to_mode) & 0777);
+					} elsif (S_ISREG($to_mode)) {
+						$mode_chnge .= sprintf(" mode: %04o", (oct $to_mode) & 0777);
+					}
+				}
+				$mode_chnge .= "]</span>\n";
+			}
+			print "<td>";
+			if ($to_id ne $from_id) { # modified
+				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$file"),
+				              -class => "list"}, esc_html($file));
+			} else { # mode changed
+				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file"),
+				              -class => "list"}, esc_html($file));
+			}
+			print "</td>\n" .
+			      "<td>$mode_chnge</td>\n" .
+			      "<td class=\"link\">" .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, "blob");
+			if ($to_id ne $from_id) { # modified
+				print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$file")}, "diff");
+			}
+			print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=history;hb=$hash;f=$file")}, "history") . "\n";
+			print "</td>\n";
+
+		} elsif ($status eq "R") { # renamed
+			my ($from_file, $to_file) = split "\t", $file;
+			my $mode_chng = "";
+			if ($from_mode != $to_mode) {
+				$mode_chng = sprintf(", mode: %04o", (oct $to_mode) & 0777);
+			}
+			print "<td>" .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file"),
+			              -class => "list"}, esc_html($to_file)) . "</td>\n" .
+			      "<td><span class=\"file_status moved\">[moved from " .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$parent;f=$from_file"),
+			              -class => "list"}, esc_html($from_file)) .
+			      " with " . (int $similarity) . "% similarity$mode_chng]</span></td>\n" .
+			      "<td class=\"link\">" .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file")}, "blob");
+			if ($to_id ne $from_id) {
+				print " | " .
+				      $cgi->a({-href => "$my_uri?" .
+				              esc_param("p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$to_file;fp=$from_file")}, "diff");
+			}
+			print "</td>\n";
+
+		} elsif ($status eq "C") { # copied
+			my ($from_file, $to_file) = split "\t", $file;
+			my $mode_chng = "";
+			if ($from_mode != $to_mode) {
+				$mode_chng = sprintf(", mode: %04o", (oct $to_mode) & 0777);
+			}
+			print "<td>" .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file"),
+			              -class => "list"}, esc_html($to_file)) . "</td>\n" .
+			      "<td><span class=\"file_status copied\">[copied from " .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$parent;f=$from_file"),
+			              -class => "list"}, esc_html($from_file)) .
+			      " with " . (int $similarity) . "% similarity$mode_chng]</span></td>\n" .
+			      "<td class=\"link\">" .
+			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file")}, "blob");
+			if ($to_id ne $from_id) {
+				print " | " .
+				      $cgi->a({-href => "$my_uri?" .
+				              esc_param("p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$to_file;fp=$from_file")}, "diff");
+			}
+			print "</td>\n";
+		} # we should not encounter Unmerged (U) or Unknown (X) status
+		print "</tr>\n";
+	}
+	print "</table>\n";
+}
+
 sub git_shortlog_body {
 	# uses global variable $project
 	my ($revlist, $from, $to, $refs, $extra) = @_;
@@ -2089,101 +2228,9 @@ sub git_commit {
 		}
 	}
 	print "</div>\n";
-	print "<div class=\"list_head\">\n";
-	if ($#difftree > 10) {
-		print(($#difftree + 1) . " files changed:\n");
-	}
-	print "</div>\n";
-	print "<table class=\"diff_tree\">\n";
-	my $alternate = 0;
-	foreach my $line (@difftree) {
-		# ':100644 100644 03b218260e99b78c6df0ed378e59ed9205ccc96d 3b93d5e7cc7f7dd4ebed13a5cc1a4ad976fc94d8 M      ls-files.c'
-		# ':100644 100644 7f9281985086971d3877aca27704f2aaf9c448ce bc190ebc71bbd923f2b728e505408f5e54bd073a M      rev-tree.c'
-		if ($line !~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)([0-9]{0,3})\t(.*)$/) {
-			next;
-		}
-		my $from_mode = $1;
-		my $to_mode = $2;
-		my $from_id = $3;
-		my $to_id = $4;
-		my $status = $5;
-		my $similarity = $6;
-		my $file = validate_input(unquote($7));
-		if ($alternate) {
-			print "<tr class=\"dark\">\n";
-		} else {
-			print "<tr class=\"light\">\n";
-		}
-		$alternate ^= 1;
-		if ($status eq "A") {
-			my $mode_chng = "";
-			if (S_ISREG(oct $to_mode)) {
-				$mode_chng = sprintf(" with mode: %04o", (oct $to_mode) & 0777);
-			}
-			print "<td>" .
-			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file"), -class => "list"}, esc_html($file)) . "</td>\n" .
-			      "<td><span class=\"file_status new\">[new " . file_type($to_mode) . "$mode_chng]</span></td>\n" .
-			      "<td class=\"link\">" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, "blob") . "</td>\n";
-		} elsif ($status eq "D") {
-			print "<td>" .
-			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$parent;f=$file"), -class => "list"}, esc_html($file)) . "</td>\n" .
-			      "<td><span class=\"file_status deleted\">[deleted " . file_type($from_mode). "]</span></td>\n" .
-			      "<td class=\"link\">" .
-			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$parent;f=$file")}, "blob") .
-			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=history;hb=$parent;f=$file")}, "history") .
-			      "</td>\n"
-		} elsif ($status eq "M" || $status eq "T") {
-			my $mode_chnge = "";
-			if ($from_mode != $to_mode) {
-				$mode_chnge = " <span class=\"file_status mode_chnge\">[changed";
-				if (((oct $from_mode) & S_IFMT) != ((oct $to_mode) & S_IFMT)) {
-					$mode_chnge .= " from " . file_type($from_mode) . " to " . file_type($to_mode);
-				}
-				if (((oct $from_mode) & 0777) != ((oct $to_mode) & 0777)) {
-					if (S_ISREG($from_mode) && S_ISREG($to_mode)) {
-						$mode_chnge .= sprintf(" mode: %04o->%04o", (oct $from_mode) & 0777, (oct $to_mode) & 0777);
-					} elsif (S_ISREG($to_mode)) {
-						$mode_chnge .= sprintf(" mode: %04o", (oct $to_mode) & 0777);
-					}
-				}
-				$mode_chnge .= "]</span>\n";
-			}
-			print "<td>";
-			if ($to_id ne $from_id) {
-				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$file"), -class => "list"}, esc_html($file));
-			} else {
-				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file"), -class => "list"}, esc_html($file));
-			}
-			print "</td>\n" .
-			      "<td>$mode_chnge</td>\n" .
-			      "<td class=\"link\">";
-			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$file")}, "blob");
-			if ($to_id ne $from_id) {
-				print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$file")}, "diff");
-			}
-			print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=history;hb=$hash;f=$file")}, "history") . "\n";
-			print "</td>\n";
-		} elsif ($status eq "R") {
-			my ($from_file, $to_file) = split "\t", $file;
-			my $mode_chng = "";
-			if ($from_mode != $to_mode) {
-				$mode_chng = sprintf(", mode: %04o", (oct $to_mode) & 0777);
-			}
-			print "<td>" .
-			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file"), -class => "list"}, esc_html($to_file)) . "</td>\n" .
-			      "<td><span class=\"file_status moved\">[moved from " .
-			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$from_id;hb=$parent;f=$from_file"), -class => "list"}, esc_html($from_file)) .
-			      " with " . (int $similarity) . "% similarity$mode_chng]</span></td>\n" .
-			      "<td class=\"link\">" .
-			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blob;h=$to_id;hb=$hash;f=$to_file")}, "blob");
-			if ($to_id ne $from_id) {
-				print " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$to_file")}, "diff");
-			}
-			print "</td>\n";
-		}
-		print "</tr>\n";
-	}
-	print "</table>\n";
+
+	git_difftree_body(\@difftree, $parent);
+
 	git_footer_html();
 }
 
