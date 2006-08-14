@@ -858,6 +858,7 @@ sub mimetype_guess_file {
 	my %mimemap;
 	open(MIME, $mimemap) or return undef;
 	while (<MIME>) {
+		next if m/^#/; # skip comments
 		my ($mime, $exts) = split(/\t+/);
 		if (defined $exts) {
 			my @exts = split(/\s+/, $exts);
