@@ -904,9 +904,7 @@ static int mmfile_is_binary(mmfile_t *mf)
 	long sz = mf->size;
 	if (FIRST_FEW_BYTES < sz)
 		sz = FIRST_FEW_BYTES;
-	if (memchr(mf->ptr, 0, sz))
-		return 1;
-	return 0;
+	return !!memchr(mf->ptr, 0, sz);
 }
 
 static void builtin_diff(const char *name_a,
