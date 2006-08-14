@@ -880,10 +880,8 @@ static int write_index_ext_header(SHA_CTX *context, int fd,
 {
 	ext = htonl(ext);
 	sz = htonl(sz);
-	if ((ce_write(context, fd, &ext, 4) < 0) ||
-	    (ce_write(context, fd, &sz, 4) < 0))
-		return -1;
-	return 0;
+	return ((ce_write(context, fd, &ext, 4) < 0) ||
+		(ce_write(context, fd, &sz, 4) < 0)) ? -1 : 0;
 }
 
 static int ce_flush(SHA_CTX *context, int fd)
@@ -905,9 +903,7 @@ static int ce_flush(SHA_CTX *context, int fd)
 	/* Append the SHA1 signature at the end */
 	SHA1_Final(write_buffer + left, context);
 	left += 20;
-	if (write(fd, write_buffer, left) != left)
-		return -1;
-	return 0;
+	return (write(fd, write_buffer, left) != left) ? -1 : 0;
 }
 
 static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
