@@ -122,7 +122,7 @@ static int checkout_file(const char *name, int prefix_length)
 	return -1;
 }
 
-static int checkout_all(const char *prefix, int prefix_length)
+static void checkout_all(const char *prefix, int prefix_length)
 {
 	int i, errs = 0;
 	struct cache_entry* last_ce = NULL;
@@ -153,7 +153,6 @@ static int checkout_all(const char *prefix, int prefix_length)
 		 * exit with the same code as die().
 		 */
 		exit(128);
-	return 0;
 }
 
 static const char checkout_cache_usage[] =
