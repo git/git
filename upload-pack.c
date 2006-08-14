@@ -459,18 +459,17 @@ static int send_ref(const char *refname, const unsigned char *sha1)
 	return 0;
 }
 
-static int upload_pack(void)
+static void upload_pack(void)
 {
 	reset_timeout();
 	head_ref(send_ref);
 	for_each_ref(send_ref);
 	packet_flush(1);
 	receive_needs();
-	if (!want_obj.nr)
-		return 0;
-	get_common_commits();
-	create_pack_file();
-	return 0;
+	if (want_obj.nr) {
+		get_common_commits();
+		create_pack_file();
+	}
 }
 
 int main(int argc, char **argv)
