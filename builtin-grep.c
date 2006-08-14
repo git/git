@@ -390,9 +390,7 @@ static int buffer_is_binary(const char *ptr, unsigned long size)
 {
 	if (FIRST_FEW_BYTES < size)
 		size = FIRST_FEW_BYTES;
-	if (memchr(ptr, 0, size))
-		return 1;
-	return 0;
+	return !!memchr(ptr, 0, size);
 }
 
 static int fixmatch(const char *pattern, char *line, regmatch_t *match)
