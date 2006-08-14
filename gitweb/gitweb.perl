@@ -1117,6 +1117,64 @@ sub git_shortlog_body {
 	print "</table>\n";
 }
 
+sub git_history_body {
+	# Warning: assumes constant type (blob or tree) during history
+	my ($fd, $refs, $hash_base, $ftype, $extra) = @_;
+
+	print "<table class=\"history\" cellspacing=\"0\">\n";
+	my $alternate = 0;
+	while (my $line = <$fd>) {
+		if ($line !~ m/^([0-9a-fA-F]{40})/) {
+			next;
+		}
+
+		my $commit = $1;
+		my %co = parse_commit($commit);
+		if (!%co) {
+			next;
+		}
+
+		my $ref = format_ref_marker($refs, $commit);
+
+		if ($alternate) {
+			print "<tr class=\"dark\">\n";
+		} else {
+			print "<tr class=\"light\">\n";
+		}
+		$alternate ^= 1;
+		print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
+		      # shortlog uses      chop_str($co{'author_name'}, 10)
+		      "<td><i>" . esc_html(chop_str($co{'author_name'}, 15, 3)) . "</i></td>\n" .
+		      "<td>";
+		# originally git_history used chop_str($co{'title'}, 50)
+		print format_subject_html($co{'title'}, $co{'title_short'}, "p=$project;a=commit;h=$commit", $ref);
+		print "</td>\n" .
+		      "<td class=\"link\">" .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit")}, "commit") . " | " .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$commit")}, "commitdiff") . " | " .
+		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$ftype;hb=$commit;f=$file_name")}, $ftype);
+
+		if ($ftype eq 'blob') {
+			my $blob_current = git_get_hash_by_path($hash_base, $file_name);
+			my $blob_parent  = git_get_hash_by_path($commit, $file_name);
+			if (defined $blob_current && defined $blob_parent &&
+					$blob_current ne $blob_parent) {
+				print " | " .
+					$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blobdiff;h=$blob_current;hp=$blob_parent;hb=$commit;f=$file_name")},
+					        "diff to current");
+			}
+		}
+		print "</td>\n" .
+		      "</tr>\n";
+	}
+	if (defined $extra) {
+		print "<tr>\n" .
+		      "<td colspan=\"4\">$extra</td>\n" .
+		      "</tr>\n";
+	}
+	print "</table>\n";
+}
+
 sub git_tags_body {
 	# uses global variable $project
 	my ($taglist, $from, $to, $extra) = @_;
@@ -2297,42 +2355,8 @@ sub git_history {
 
 	open my $fd, "-|",
 		$GIT, "rev-list", "--full-history", $hash_base, "--", $file_name;
-	print "<table cellspacing=\"0\">\n";
-	my $alternate = 0;
-	while (my $line = <$fd>) {
-		if ($line =~ m/^([0-9a-fA-F]{40})/){
-			my $commit = $1;
-			my %co = parse_commit($commit);
-			if (!%co) {
-				next;
-			}
-			my $ref = format_ref_marker($refs, $commit);
-			if ($alternate) {
-				print "<tr class=\"dark\">\n";
-			} else {
-				print "<tr class=\"light\">\n";
-			}
-			$alternate ^= 1;
-			print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
-			      "<td><i>" . esc_html(chop_str($co{'author_name'}, 15, 3)) . "</i></td>\n" .
-			      "<td>" . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit"), -class => "list"}, "<b>" .
-			      esc_html(chop_str($co{'title'}, 50)) . "$ref</b>") . "</td>\n" .
-			      "<td class=\"link\">" .
-			      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit")}, "commit") .
-			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commitdiff;h=$commit")}, "commitdiff") .
-			      " | " . $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=$ftype;hb=$commit;f=$file_name")}, $ftype);
-			my $blob = git_get_hash_by_path($hash_base, $file_name);
-			my $blob_parent = git_get_hash_by_path($commit, $file_name);
-			if (defined $blob && defined $blob_parent && $blob ne $blob_parent) {
-				print " | " .
-				$cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=blobdiff;h=$blob;hp=$blob_parent;hb=$commit;f=$file_name")},
-				"diff to current");
-			}
-			print "</td>\n" .
-			      "</tr>\n";
-		}
-	}
-	print "</table>\n";
+	git_history_body($fd, $refs, $hash_base, $ftype);
+
 	close $fd;
 	git_footer_html();
 }
