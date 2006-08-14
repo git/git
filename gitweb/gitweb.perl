@@ -36,6 +36,9 @@ our $git_temp = "/tmp/gitweb";
 # target of the home link on top of all pages
 our $home_link = $my_uri;
 
+# string of the home link on top of all pages
+our $home_link_str = "++GITWEB_HOME_LINK_STR++";
+
 # name of your site or organization to appear in page titles
 # replace this with something more descriptive for clearer bookmarks
 our $site_name = "++GITWEB_SITENAME++" || $ENV{'SERVER_NAME'} || "Untitled";
@@ -974,7 +977,7 @@ EOF
 	      "<a href=\"http://www.kernel.org/pub/software/scm/git/docs/\" title=\"git documentation\">" .
 	      "<img src=\"$logo\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
 	      "</a>\n";
-	print $cgi->a({-href => esc_param($home_link)}, "projects") . " / ";
+	print $cgi->a({-href => esc_param($home_link)}, $home_link_str) . " / ";
 	if (defined $project) {
 		print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=summary")}, esc_html($project));
 		if (defined $action) {
