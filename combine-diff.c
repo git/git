@@ -609,15 +609,15 @@ static void dump_quoted_path(const char *prefix, const char *path,
 	printf("%s\n", c_reset);
 }
 
-static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
-			   int dense, struct rev_info *rev)
+static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
+			    int dense, struct rev_info *rev)
 {
 	struct diff_options *opt = &rev->diffopt;
 	unsigned long result_size, cnt, lno;
 	char *result, *cp;
 	struct sline *sline; /* survived lines */
 	int mode_differs = 0;
-	int i, show_hunks, shown_header = 0;
+	int i, show_hunks;
 	int working_tree_file = !memcmp(elem->sha1, null_sha1, 20);
 	int abbrev = opt->full_index ? 40 : DEFAULT_ABBREV;
 	mmfile_t result_file;
@@ -769,7 +769,6 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	}
 	free(sline[0].p_lno);
 	free(sline);
-	return shown_header;
 }
 
 #define COLONS "::::::::::::::::::::::::::::::::"
@@ -837,11 +836,10 @@ void show_combined_diff(struct combine_diff_path *p,
 		return;
 	if (opt->output_format & (DIFF_FORMAT_RAW |
 				  DIFF_FORMAT_NAME |
-				  DIFF_FORMAT_NAME_STATUS)) {
+				  DIFF_FORMAT_NAME_STATUS))
 		show_raw_diff(p, num_parent, rev);
-	} else if (opt->output_format & DIFF_FORMAT_PATCH) {
+	else if (opt->output_format & DIFF_FORMAT_PATCH)
 		show_patch_diff(p, num_parent, dense, rev);
-	}
 }
 
 void diff_tree_combined(const unsigned char *sha1,
