@@ -372,6 +372,22 @@ sub format_ref_marker {
 	}
 }
 
+# format, perhaps shortened and with markers, title line
+sub format_subject_html {
+	my ($long, $short, $query, $extra) = @_;
+	$extra = '' unless defined($extra);
+
+	if (length($short) < length($long)) {
+		return $cgi->a({-href => "$my_uri?" . esc_param($query),
+		               -class => "list", -title => $long},
+		       esc_html($short) . $extra);
+	} else {
+		return $cgi->a({-href => "$my_uri?" . esc_param($query),
+		               -class => "list"},
+		       esc_html($long)  . $extra);
+	}
+}
+
 ## ----------------------------------------------------------------------
 ## git utility subroutines, invoking git commands
 
@@ -1085,15 +1101,7 @@ sub git_shortlog_body {
 		print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 		      "<td><i>" . esc_html(chop_str($co{'author_name'}, 10)) . "</i></td>\n" .
 		      "<td>";
-		if (length($co{'title_short'}) < length($co{'title'})) {
-			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit"),
-			               -class => "list", -title => "$co{'title'}"},
-			      "<b>" . esc_html($co{'title_short'}) . "$ref</b>");
-		} else {
-			print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit"),
-			               -class => "list"},
-			      "<b>" . esc_html($co{'title'}) . "$ref</b>");
-		}
+		print format_subject_html($co{'title'}, $co{'title_short'}, "p=$project;a=commit;h=$commit", $ref);
 		print "</td>\n" .
 		      "<td class=\"link\">" .
 		      $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=commit;h=$commit")}, "commit") . " | " .
@@ -1139,13 +1147,7 @@ sub git_tags_body {
 		      "</td>\n" .
 		      "<td>";
 		if (defined $comment) {
-			if (length($comment_short) < length($comment)) {
-				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tag;h=$tag{'id'}"),
-				               -class => "list", -title => $comment}, $comment_short);
-			} else {
-				print $cgi->a({-href => "$my_uri?" . esc_param("p=$project;a=tag;h=$tag{'id'}"),
-				               -class => "list"}, $comment);
-			}
+			print format_subject_html($comment, $comment_short, "p=$project;a=tag;h=$tag{'id'}");
 		}
 		print "</td>\n" .
 		      "<td class=\"selflink\">";

@@ -117,7 +117,12 @@ div.list_head {
 
 a.list {
 	text-decoration: none;
+	font-weight: bold;
 	color: #000000;
+}
+
+table.tags a.list {
+	font-weight: normal;
 }
 
 a.list:hover {
