@@ -4,57 +4,93 @@ Format of STDIN stream:
   stream ::= cmd*;
 
   cmd ::= new_blob
-        | new_commit
         | new_branch
+        | new_commit
         | new_tag
         ;
 
-  new_blob ::= 'blob' blob_data;
+  new_blob ::= 'blob' lf
+	mark?
+    file_content;
+  file_content ::= data;
 
-  new_commit ::= 'comt' ref_name author_committer_msg
+  new_branch ::= 'branch' sp ref_str lf
+    ('from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)?
+    lf;
+
+  new_commit ::= 'commit' sp ref_str lf
+	mark?
+	('author' sp name '<' email '>' ts tz lf)?
+	'committer' sp name '<' email '>' ts tz lf
+	commit_msg
     file_change*
-    '0';
+    lf;
+  commit_msg ::= data;
 
-  new_branch ::= 'brch' dst_ref_name src_ref_name;
-  dst_ref_name ::= ref_name;
-  src_ref_name ::= ref_name | sha1_exp;
-
-  new_tag ::= 'tagg' ref_name tag_name tagger_msg;
-
-  file_change ::= 'M' path_name hexsha1
-                | 'D' path_name
+  file_change ::= 'M' sp mode sp (hexsha1 | idnum) sp path_str lf
+                | 'D' sp path_str lf
                 ;
+  mode ::= '644' | '755';
 
-  author_committer_msg ::= len32
-    'author' sp name '<' email '>' ts tz lf
-    'committer' sp name '<' email '>' ts tz lf
-    lf
-    binary_data;
+  new_tag ::= 'tag' sp tag_str lf
+    'from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf
+	'tagger' sp name '<' email '>' ts tz lf
+    tag_msg;
+  tag_msg ::= data;
 
-  tagger_msg ::= len32
-    'tagger' sp name '<' email '>' ts tz lf
-    lf
-    binary_data;
+     # note: the first idnum in a stream should be 1 and subsequent
+     # idnums should not have gaps between values as this will cause
+     # the stream parser to reserve space for the gapped values.  An
+	 # idnum can be updated in the future to a new object by issuing
+     # a new mark directive with the old idnum.
+	 #
+  mark ::= 'mark' sp idnum lf;
 
-  blob_data ::= len32 binary_data; # max len is 2^32-1
-  path_name ::= len32 path;        # max len is PATH_MAX-1
-  ref_name  ::= len32 ref;         # max len is PATH_MAX-1
-  tag_name  ::= len32 tag;         # max len is PATH_MAX-1
-  sha1_exp  ::= len32 sha1exp;     # max len is PATH_MAX-1
+     # note: declen indicates the length of binary_data in bytes.
+     # declen does not include the lf preceeding or trailing the
+     # binary data.
+     #
+  data ::= 'data' sp declen lf
+    binary_data
+	lf;
 
-  len32 ::= # unsigned 32 bit value, native format;
+     # note: quoted strings are C-style quoting supporting \c for
+     # common escapes of 'c' (e..g \n, \t, \\, \") or \nnn where nnn
+	 # is the signed byte value in octal.  Note that the only
+     # characters which must actually be escaped to protect the
+     # stream formatting is: \, " and LF.  Otherwise these values
+	 # are UTF8.
+     #
+  ref_str     ::= ref     | '"' quoted(ref)     '"' ;
+  sha1exp_str ::= sha1exp | '"' quoted(sha1exp) '"' ;
+  tag_str     ::= tag     | '"' quoted(tag)     '"' ;
+  path_str    ::= path    | '"' quoted(path)    '"' ;
+
+  declen ::= # unsigned 32 bit value, ascii base10 notation;
   binary_data ::= # file content, not interpreted;
+
   sp ::= # ASCII space character;
   lf ::= # ASCII newline (LF) character;
-  path ::= # GIT style file path, e.g. "a/b/c";
-  ref ::= # GIT ref name, e.g. "refs/heads/MOZ_GECKO_EXPERIMENT";
-  tag ::= # GIT tag name, e.g. "FIREFOX_1_5";
+
+     # note: a colon (':') must precede the numerical value assigned to
+	 # an idnum.  This is to distinguish it from a ref or tag name as
+     # GIT does not permit ':' in ref or tag strings.
+	 #
+  idnum   ::= ':' declen;
+  path    ::= # GIT style file path, e.g. "a/b/c";
+  ref     ::= # GIT ref name, e.g. "refs/heads/MOZ_GECKO_EXPERIMENT";
+  tag     ::= # GIT tag name, e.g. "FIREFOX_1_5";
   sha1exp ::= # Any valid GIT SHA1 expression;
   hexsha1 ::= # SHA1 in hexadecimal format;
-  name ::= # valid GIT author/committer name;
+
+     # note: name and email are UTF8 strings, however name must not
+	 # contain '<' or lf and email must not contain any of the
+     # following: '<', '>', lf.
+	 #
+  name  ::= # valid GIT author/committer name;
   email ::= # valid GIT author/committer email;
-  ts ::= # time since the epoch in seconds, ascii decimal;
-  tz ::= # GIT style timezone;
+  ts    ::= # time since the epoch in seconds, ascii base10 notation;
+  tz    ::= # GIT style timezone;
 */
 
 #include "builtin.h"
@@ -66,6 +102,8 @@ Format of STDIN stream:
 #include "pack.h"
 #include "refs.h"
 #include "csum-file.h"
+#include "strbuf.h"
+#include "quote.h"
 
 struct object_entry
 {
@@ -153,7 +191,7 @@ static size_t mem_pool_alloc = 2*1024*1024 - sizeof(struct mem_pool);
 static size_t total_allocd;
 static struct mem_pool *mem_pool;
 
-/* atom management */
+/* Atom management */
 static unsigned int atom_table_sz = 4451;
 static unsigned int atom_cnt;
 static struct atom_str **atom_table;
@@ -183,6 +221,10 @@ static unsigned int cur_active_branches;
 static unsigned int branch_table_sz = 1039;
 static struct branch **branch_table;
 static struct branch *active_branches;
+
+/* Input stream parsing */
+static struct strbuf command_buf;
+static unsigned long command_mark;
 
 
 static void alloc_objects(int cnt)
@@ -330,6 +372,8 @@ static struct branch* new_branch(const char *name)
 
 	if (b)
 		die("Invalid attempt to create duplicate branch: %s", name);
+	if (check_ref_format(name))
+		die("Branch name doesn't conform to GIT standards: %s", name);
 
 	b = pool_calloc(1, sizeof(struct branch));
 	b->name = pool_strdup(name);
@@ -433,22 +477,6 @@ static void yread(int fd, void *buffer, size_t length)
 	}
 }
 
-static int optional_read(int fd, void *buffer, size_t length)
-{
-	ssize_t ret = 0;
-	while (ret < length) {
-		ssize_t size = xread(fd, (char *) buffer + ret, length - ret);
-		if (!size && !ret)
-			return 1;
-		if (!size)
-			die("Read from descriptor %i: end of stream", fd);
-		if (size < 0)
-			die("Read from descriptor %i: %s", fd, strerror(errno));
-		ret += size;
-	}
-	return 0;
-}
-
 static void ywrite(int fd, void *buffer, size_t length)
 {
 	ssize_t ret = 0;
@@ -462,24 +490,9 @@ static void ywrite(int fd, void *buffer, size_t length)
 	}
 }
 
-static const char* read_path()
-{
-	static char sn[PATH_MAX];
-	unsigned long slen;
-
-	yread(0, &slen, 4);
-	if (!slen)
-		die("Expected string command parameter, didn't find one");
-	if (slen > (PATH_MAX - 1))
-		die("Can't handle excessive string length %lu", slen);
-	yread(0, sn, slen);
-	sn[slen] = 0;
-	return sn;
-}
-
-static unsigned long encode_header(
+static size_t encode_header(
 	enum object_type type,
-	unsigned long size,
+	size_t size,
 	unsigned char *hdr)
 {
 	int n = 1;
@@ -503,7 +516,7 @@ static unsigned long encode_header(
 static int store_object(
 	enum object_type type,
 	void *dat,
-	unsigned long datlen,
+	size_t datlen,
 	struct last_object *last,
 	unsigned char *sha1out)
 {
@@ -896,15 +909,57 @@ static void dump_branches()
 	}
 }
 
+static void read_next_command()
+{
+	read_line(&command_buf, stdin, '\n');
+}
+
+static void cmd_mark()
+{
+	if (!strncmp("mark :", command_buf.buf, 6)) {
+		command_mark = strtoul(command_buf.buf + 6, NULL, 10);
+		read_next_command();
+	}
+	else
+		command_mark = 0;
+}
+
+static void* cmd_data (size_t *size)
+{
+	size_t n = 0;
+	void *buffer;
+	size_t length;
+
+	if (strncmp("data ", command_buf.buf, 5))
+		die("Expected 'data n' command, found: %s", command_buf.buf);
+
+	length = strtoul(command_buf.buf + 5, NULL, 10);
+	buffer = xmalloc(length);
+
+	while (n < length) {
+		size_t s = fread((char*)buffer + n, 1, length - n, stdin);
+		if (!s && feof(stdin))
+			die("EOF in data (%lu bytes remaining)", length - n);
+		n += s;
+	}
+
+	if (fgetc(stdin) != '\n')
+		die("An lf did not trail the binary data as expected.");
+
+	*size = length;
+	return buffer;
+}
+
 static void cmd_new_blob()
 {
-	unsigned long datlen;
-	unsigned char sha1[20];
+	size_t datlen;
 	void *dat;
+	unsigned char sha1[20];
 
-	yread(0, &datlen, 4);
-	dat = xmalloc(datlen);
-	yread(0, dat, datlen);
+	read_next_command();
+	cmd_mark();
+	dat = cmd_data(&datlen);
+
 	if (store_object(OBJ_BLOB, dat, datlen, &last_blob, sha1))
 		free(dat);
 }
@@ -949,122 +1004,231 @@ static void load_branch(struct branch *b)
 
 static void file_change_m(struct branch *b)
 {
-	const char *path = read_path();
+	const char *p = command_buf.buf + 2;
+	char *p_uq;
+	const char *endp;
 	struct object_entry *oe;
-	char hexsha1[41];
 	unsigned char sha1[20];
+	unsigned int mode;
 	char type[20];
 
-	yread(0, hexsha1, 40);
-	hexsha1[40] = 0;
+	p = get_mode(p, &mode);
+	if (!p)
+		die("Corrupt mode: %s", command_buf.buf);
+	switch (mode) {
+	case S_IFREG | 0644:
+	case S_IFREG | 0755:
+	case 0644:
+	case 0755:
+		/* ok */
+		break;
+	default:
+		die("Corrupt mode: %s", command_buf.buf);
+	}
 
-	if (get_sha1_hex(hexsha1, sha1))
-		die("Invalid sha1 %s for %s", hexsha1, path);
+	if (get_sha1_hex(p, sha1))
+		die("Invalid SHA1: %s", command_buf.buf);
+	p += 40;
+	if (*p++ != ' ')
+		die("Missing space after SHA1: %s", command_buf.buf);
+
+	p_uq = unquote_c_style(p, &endp);
+	if (p_uq) {
+		if (*endp)
+			die("Garbage after path in: %s", command_buf.buf);
+		p = p_uq;
+	}
+
 	oe = find_object(sha1);
 	if (oe) {
 		if (oe->type != OBJ_BLOB)
-			die("%s is a %s not a blob (for %s)", hexsha1, type_names[oe->type], path);
+			die("Not a blob (actually a %s): %s",
+				command_buf.buf, type_names[oe->type]);
 	} else {
 		if (sha1_object_info(sha1, type, NULL))
-			die("No blob %s for %s", hexsha1, path);
+			die("Blob not found: %s", command_buf.buf);
 		if (strcmp(blob_type, type))
-			die("%s is a %s not a blob (for %s)", hexsha1, type, path);
+			die("Not a blob (actually a %s): %s",
+				command_buf.buf, type);
 	}
 
-	tree_content_set(&b->branch_tree, path, sha1, S_IFREG | 0644);
+	tree_content_set(&b->branch_tree, p, sha1, S_IFREG | mode);
+
+	if (p_uq)
+		free(p_uq);
 }
 
 static void file_change_d(struct branch *b)
 {
-	tree_content_remove(&b->branch_tree, read_path());
+	const char *p = command_buf.buf + 2;
+	char *p_uq;
+	const char *endp;
+
+	p_uq = unquote_c_style(p, &endp);
+	if (p_uq) {
+		if (*endp)
+			die("Garbage after path in: %s", command_buf.buf);
+		p = p_uq;
+	}
+	tree_content_remove(&b->branch_tree, p);
+	if (p_uq)
+		free(p_uq);
 }
 
 static void cmd_new_commit()
 {
-	static const unsigned int max_hdr_len = 94;
-	const char *name = read_path();
-	struct branch *b = lookup_branch(name);
-	unsigned int acmsglen;
-	char *body, *c;
+	struct branch *b;
+	void *msg;
+	size_t msglen;
+	char *str_uq;
+	const char *endp;
+	char *sp;
+	char *author = NULL;
+	char *committer = NULL;
+	char *body;
 
+	/* Obtain the branch name from the rest of our command */
+	sp = strchr(command_buf.buf, ' ') + 1;
+	str_uq = unquote_c_style(sp, &endp);
+	if (str_uq) {
+		if (*endp)
+			die("Garbage after ref in: %s", command_buf.buf);
+		sp = str_uq;
+	}
+	b = lookup_branch(sp);
 	if (!b)
-		die("Branch not declared: %s", name);
+		die("Branch not declared: %s", sp);
+	if (str_uq)
+		free(str_uq);
+
+	read_next_command();
+	cmd_mark();
+	if (!strncmp("author ", command_buf.buf, 7)) {
+		author = strdup(command_buf.buf);
+		read_next_command();
+	}
+	if (!strncmp("committer ", command_buf.buf, 10)) {
+		committer = strdup(command_buf.buf);
+		read_next_command();
+	}
+	if (!committer)
+		die("Expected committer but didn't get one");
+	msg = cmd_data(&msglen);
+
+	/* ensure the branch is active/loaded */
 	if (!b->branch_tree.tree) {
 		unload_one_branch();
 		load_branch(b);
 	}
 
-	/* author_committer_msg */
-	yread(0, &acmsglen, 4);
-	body = xmalloc(acmsglen + max_hdr_len);
-	c = body + max_hdr_len;
-	yread(0, c, acmsglen);
-
-	/* oddly enough this is all that fsck-objects cares about */
-	if (memcmp(c, "author ", 7))
-		die("Invalid commit format on branch %s", name);
-
 	/* file_change* */
 	for (;;) {
-		unsigned char cmd;
-		yread(0, &cmd, 1);
-		if (cmd == '0')
+		read_next_command();
+		if (1 == command_buf.len)
 			break;
-		else if (cmd == 'M')
+		else if (!strncmp("M ", command_buf.buf, 2))
 			file_change_m(b);
-		else if (cmd == 'D')
+		else if (!strncmp("D ", command_buf.buf, 2))
 			file_change_d(b);
 		else
-			die("Unsupported file_change: %c", cmd);
+			die("Unsupported file_change: %s", command_buf.buf);
 	}
 
-	if (memcmp(b->sha1, null_sha1, 20)) {
-		sprintf(c - 48, "parent %s", sha1_to_hex(b->sha1));
-		*(c - 1) = '\n';
-		c -= 48;
-	}
+	/* build the tree and the commit */
 	store_tree(&b->branch_tree);
-	sprintf(c - 46, "tree %s", sha1_to_hex(b->branch_tree.sha1));
-	*(c - 1) = '\n';
-	c -= 46;
+	body = xmalloc(97 + msglen
+		+ (author
+			? strlen(author) + strlen(committer)
+			: 2 * strlen(committer)));
+	sp = body;
+	sp += sprintf(sp, "tree %s\n", sha1_to_hex(b->branch_tree.sha1));
+	if (memcmp(b->sha1, null_sha1, 20))
+		sp += sprintf(sp, "parent %s\n", sha1_to_hex(b->sha1));
+	if (author)
+		sp += sprintf(sp, "%s\n", author);
+	else
+		sp += sprintf(sp, "author %s\n", committer + 10);
+	sp += sprintf(sp, "%s\n\n", committer);
+	memcpy(sp, msg, msglen);
+	sp += msglen;
+	if (author)
+		free(author);
+	free(committer);
+	free(msg);
 
-	store_object(OBJ_COMMIT,
-		c, (body + max_hdr_len + acmsglen) - c,
-		NULL, b->sha1);
+	store_object(OBJ_COMMIT, body, sp - body, NULL, b->sha1);
 	free(body);
 	b->last_commit = object_count_by_type[OBJ_COMMIT];
 }
 
 static void cmd_new_branch()
 {
-	struct branch *b = new_branch(read_path());
-	const char *base = read_path();
-	struct branch *s = lookup_branch(base);
+	struct branch *b;
+	char *str_uq;
+	const char *endp;
+	char *sp;
 
-	if (!strcmp(b->name, base))
-		die("Can't create a branch from itself: %s", base);
-	else if (s) {
-		memcpy(b->sha1, s->sha1, 20);
-		memcpy(b->branch_tree.sha1, s->branch_tree.sha1, 20);
+	/* Obtain the new branch name from the rest of our command */
+	sp = strchr(command_buf.buf, ' ') + 1;
+	str_uq = unquote_c_style(sp, &endp);
+	if (str_uq) {
+		if (*endp)
+			die("Garbage after ref in: %s", command_buf.buf);
+		sp = str_uq;
 	}
-	else if (!get_sha1(base, b->sha1)) {
-		if (!memcmp(b->sha1, null_sha1, 20))
-			memcpy(b->branch_tree.sha1, null_sha1, 20);
-		else {
-			unsigned long size;
-			char *buf;
+	b = new_branch(sp);
+	if (str_uq)
+		free(str_uq);
+	read_next_command();
 
-			buf = read_object_with_reference(b->sha1,
-				type_names[OBJ_COMMIT], &size, b->sha1);
-			if (!buf || size < 46)
-				die("Not a valid commit: %s", base);
-			if (memcmp("tree ", buf, 5)
-				|| get_sha1_hex(buf + 5, b->branch_tree.sha1))
-				die("The commit %s is corrupt", sha1_to_hex(b->sha1));
-			free(buf);
+	/* from ... */
+	if (!strncmp("from ", command_buf.buf, 5)) {
+		const char *from;
+		struct branch *s;
+
+		from = strchr(command_buf.buf, ' ') + 1;
+		str_uq = unquote_c_style(from, &endp);
+		if (str_uq) {
+			if (*endp)
+				die("Garbage after string in: %s", command_buf.buf);
+			from = str_uq;
 		}
-	} else
-		die("Not a SHA1 or branch: %s", base);
+
+		s = lookup_branch(from);
+		if (b == s)
+			die("Can't create a branch from itself: %s", b->name);
+		else if (s) {
+			memcpy(b->sha1, s->sha1, 20);
+			memcpy(b->branch_tree.sha1, s->branch_tree.sha1, 20);
+		} else if (!get_sha1(from, b->sha1)) {
+			if (!memcmp(b->sha1, null_sha1, 20))
+				memcpy(b->branch_tree.sha1, null_sha1, 20);
+			else {
+				unsigned long size;
+				char *buf;
+
+				buf = read_object_with_reference(b->sha1,
+					type_names[OBJ_COMMIT], &size, b->sha1);
+				if (!buf || size < 46)
+					die("Not a valid commit: %s", from);
+				if (memcmp("tree ", buf, 5)
+					|| get_sha1_hex(buf + 5, b->branch_tree.sha1))
+					die("The commit %s is corrupt", sha1_to_hex(b->sha1));
+				free(buf);
+			}
+		} else
+			die("Invalid ref name or SHA1 expression: %s", from);
+
+		if (str_uq)
+			free(str_uq);
+		read_next_command();
+	} else {
+		memcpy(b->sha1, null_sha1, 20);
+		memcpy(b->branch_tree.sha1, null_sha1, 20);
+	}
+
+	if (command_buf.eof || command_buf.len > 1)
+		die("An lf did not terminate the branch command as expected.");
 }
 
 int main(int argc, const char **argv)
@@ -1087,26 +1251,28 @@ int main(int argc, const char **argv)
 	if (pack_fd < 0)
 		die("Can't create %s: %s", pack_name, strerror(errno));
 
+	init_pack_header();
 	alloc_objects(est_obj_cnt);
+	strbuf_init(&command_buf);
 
 	atom_table = xcalloc(atom_table_sz, sizeof(struct atom_str*));
 	branch_table = xcalloc(branch_table_sz, sizeof(struct branch*));
 	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
 
-	init_pack_header();
 	for (;;) {
-		unsigned long cmd;
-		if (optional_read(0, &cmd, 4))
+		read_next_command();
+		if (command_buf.eof)
 			break;
-
-		switch (ntohl(cmd)) {
-		case 'blob': cmd_new_blob();   break;
-		case 'comt': cmd_new_commit(); break;
-		case 'brch': cmd_new_branch(); break;
-		default:
-			die("Invalid command %lu", cmd);
-		}
+		else if (!strcmp("blob", command_buf.buf))
+			cmd_new_blob();
+		else if (!strncmp("branch ", command_buf.buf, 7))
+			cmd_new_branch();
+		else if (!strncmp("commit ", command_buf.buf, 7))
+			cmd_new_commit();
+		else
+			die("Unsupported command: %s", command_buf.buf);
 	}
+
 	fixup_header_footer();
 	close(pack_fd);
 	write_index(idx_name);
