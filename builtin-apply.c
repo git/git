@@ -1684,7 +1684,7 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 	}
 
 	get_sha1_hex(patch->new_sha1_prefix, sha1);
-	if (!memcmp(sha1, null_sha1, 20)) {
+	if (is_null_sha1(sha1)) {
 		free(desc->buffer);
 		desc->alloc = desc->size = 0;
 		desc->buffer = NULL;
@@ -1914,11 +1914,6 @@ static int check_patch_list(struct patch *patch)
 		prev_patch = patch;
 	}
 	return error;
-}
-
-static inline int is_null_sha1(const unsigned char *sha1)
-{
-	return !memcmp(sha1, null_sha1, 20);
 }
 
 static void show_index_list(struct patch *list)

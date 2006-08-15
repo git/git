@@ -1102,7 +1102,7 @@ void fill_filespec(struct diff_filespec *spec, const unsigned char *sha1,
 	if (mode) {
 		spec->mode = canon_mode(mode);
 		memcpy(spec->sha1, sha1, 20);
-		spec->sha1_valid = !!memcmp(sha1, null_sha1, 20);
+		spec->sha1_valid = !is_null_sha1(sha1);
 	}
 }
 

@@ -452,7 +452,7 @@ static int fsck_head_link(void)
 	if (strncmp(git_refs_heads_master + pfxlen, "refs/heads/", 11))
 		return error("HEAD points to something strange (%s)",
 			     git_refs_heads_master + pfxlen);
-	if (!memcmp(null_sha1, sha1, 20))
+	if (is_null_sha1(sha1))
 		return error("HEAD: not a valid git pointer");
 	return 0;
 }
