@@ -10,7 +10,7 @@
 #include "cache.h"
 #include "csum-file.h"
 
-static int sha1flush(struct sha1file *f, unsigned int count)
+static void sha1flush(struct sha1file *f, unsigned int count)
 {
 	void *buf = f->buffer;
 
@@ -21,7 +21,7 @@ static int sha1flush(struct sha1file *f, unsigned int count)
 			count -= ret;
 			if (count)
 				continue;
-			return 0;
+			return;
 		}
 		if (!ret)
 			die("sha1 file '%s' write error. Out of diskspace", f->name);

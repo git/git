@@ -7,13 +7,6 @@
 #include "xdiff-interface.h"
 #include "log-tree.h"
 
-static int uninteresting(struct diff_filepair *p)
-{
-	if (diff_unmodified_pair(p))
-		return 1;
-	return 0;
-}
-
 static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr, int n, int num_parent)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
@@ -25,7 +18,7 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 		for (i = 0; i < q->nr; i++) {
 			int len;
 			const char *path;
-			if (uninteresting(q->queue[i]))
+			if (diff_unmodified_pair(q->queue[i]))
 				continue;
 			path = q->queue[i]->two->path;
 			len = strlen(path);
@@ -57,7 +50,7 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 			const char *path;
 			int len;
 
-			if (uninteresting(q->queue[i]))
+			if (diff_unmodified_pair(q->queue[i]))
 				continue;
 			path = q->queue[i]->two->path;
 			len = strlen(path);

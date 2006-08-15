@@ -2186,10 +2186,7 @@ static int verify_merge_base(unsigned char *head_sha1, unsigned char *branch_sha
 	struct commit *branch = lookup_commit(branch_sha1);
 	struct commit_list *merge_bases = get_merge_bases(head, branch, 1);
 
-	if (merge_bases && !merge_bases->next && merge_bases->item == branch)
-		return 1;
-
-	return 0;
+	return (merge_bases && !merge_bases->next && merge_bases->item == branch);
 }
 
 static int delete_remote_branch(char *pattern, int force)
