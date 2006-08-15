@@ -301,10 +301,12 @@ ifeq ($(uname_S),SunOS)
 		NEEDS_LIBICONV = YesPlease
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
+		NO_C99_FORMAT = YesPlease
 	endif
 	ifeq ($(uname_R),5.9)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
+		NO_C99_FORMAT = YesPlease
 	endif
 	INSTALL = ginstall
 	TAR = gtar
