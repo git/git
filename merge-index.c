@@ -11,7 +11,8 @@ static int err;
 
 static void run_program(void)
 {
-	int pid = fork(), status;
+	pid_t pid = fork();
+	int status;
 
 	if (pid < 0)
 		die("unable to fork");
