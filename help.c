@@ -140,7 +140,7 @@ static void list_commands(const char *exec_path, const char *pattern)
 			continue;
 
 		entlen = strlen(de->d_name);
-		if (4 < entlen && !strcmp(de->d_name + entlen - 4, ".exe"))
+		if (has_extension(de->d_name, ".exe"))
 			entlen -= 4;
 
 		if (longest < entlen)

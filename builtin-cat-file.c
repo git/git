@@ -26,7 +26,7 @@ static void flush_buffer(const char *buf, unsigned long size)
 	}
 }
 
-static int pprint_tag(const unsigned char *sha1, const char *buf, unsigned long size)
+static void pprint_tag(const unsigned char *sha1, const char *buf, unsigned long size)
 {
 	/* the parser in tag.c is useless here. */
 	const char *endp = buf + size;
@@ -91,7 +91,6 @@ static int pprint_tag(const unsigned char *sha1, const char *buf, unsigned long 
 	 */
 	if (cp < endp)
 		flush_buffer(cp, endp - cp);
-	return 0;
 }
 
 int cmd_cat_file(int argc, const char **argv, const char *prefix)
@@ -145,8 +144,10 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		buf = read_sha1_file(sha1, type, &size);
 		if (!buf)
 			die("Cannot read object %s", argv[2]);
-		if (!strcmp(type, tag_type))
-			return pprint_tag(sha1, buf, size);
+		if (!strcmp(type, tag_type)) {
+			pprint_tag(sha1, buf, size);
+			return 0;
+		}
 
 		/* otherwise just spit out the data */
 		break;

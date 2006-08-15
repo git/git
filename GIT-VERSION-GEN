@@ -3,9 +3,17 @@
 GVF=GIT-VERSION-FILE
 DEF_VER=v1.4.2.GIT
 
+LF='
+'
+
 # First try git-describe, then see if there is a version file
 # (included in release tarballs), then default
-if VN=$(git describe --abbrev=4 HEAD 2>/dev/null); then
+if VN=$(git describe --abbrev=4 HEAD 2>/dev/null) &&
+   case "$VN" in
+   *$LF*) (exit 1) ;;
+   v[0-9]*) : happy ;;
+   esac
+then
 	VN=$(echo "$VN" | sed -e 's/-/./g');
 elif test -f version
 then

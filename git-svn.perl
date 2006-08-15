@@ -31,6 +31,7 @@ use File::Basename qw/dirname basename/;
 use File::Path qw/mkpath/;
 use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev pass_through/;
 use File::Spec qw//;
+use File::Copy qw/copy/;
 use POSIX qw/strftime/;
 use IPC::Open3;
 use Memoize;
@@ -76,9 +77,6 @@ my %cmt_opts = ( 'edit|e' => \$_edit,
 		'l=i' => \$_l,
 		'copy-similarity|C=i'=> \$_cp_similarity
 );
-
-# yes, 'native' sets "\n".  Patches to fix this for non-*nix systems welcome:
-my %EOL = ( CR => "\015", LF => "\012", CRLF => "\015\012", native => "\012" );
 
 my %cmd = (
 	fetch => [ \&fetch, "Download new revisions from SVN",
@@ -1160,27 +1158,24 @@ sub repo_path_split {
 		}
 	}
 
-	my ($url, $path) = ($full_url =~ m!^([a-z\+]+://[^/]*)(.*)$!i);
-	$path =~ s#^/+##;
-	my @paths = split(m#/+#, $path);
-
 	if ($_use_lib) {
-		while (1) {
-			$SVN = libsvn_connect($url);
-			last if (defined $SVN &&
-				defined eval { $SVN->get_latest_revnum });
-			my $n = shift @paths || last;
-			$url .= "/$n";
-		}
+		my $tmp = libsvn_connect($full_url);
+		my $url = $tmp->get_repos_root;
+		$full_url =~ s#^\Q$url\E/*##;
+		push @repo_path_split_cache, qr/^(\Q$url\E)/;
+		return ($url, $full_url);
 	} else {
+		my ($url, $path) = ($full_url =~ m!^([a-z\+]+://[^/]*)(.*)$!i);
+		$path =~ s#^/+##;
+		my @paths = split(m#/+#, $path);
 		while (quiet_run(qw/svn ls --non-interactive/, $url)) {
 			my $n = shift @paths || last;
 			$url .= "/$n";
 		}
+		push @repo_path_split_cache, qr/^(\Q$url\E)/;
+		$path = join('/',@paths);
+		return ($url, $path);
 	}
-	push @repo_path_split_cache, qr/^(\Q$url\E)/;
-	$path = join('/',@paths);
-	return ($url, $path);
 }
 
 sub setup_git_svn {
@@ -1760,43 +1755,6 @@ sub svn_info {
 
 sub sys { system(@_) == 0 or croak $? }
 
-sub eol_cp {
-	my ($from, $to) = @_;
-	my $es = svn_propget_base('svn:eol-style', $to);
-	open my $rfd, '<', $from or croak $!;
-	binmode $rfd or croak $!;
-	open my $wfd, '>', $to or croak $!;
-	binmode $wfd or croak $!;
-	eol_cp_fd($rfd, $wfd, $es);
-	close $rfd or croak $!;
-	close $wfd or croak $!;
-}
-
-sub eol_cp_fd {
-	my ($rfd, $wfd, $es) = @_;
-	my $eol = defined $es ? $EOL{$es} : undef;
-	my $buf;
-	use bytes;
-	while (1) {
-		my ($r, $w, $t);
-		defined($r = sysread($rfd, $buf, 4096)) or croak $!;
-		return unless $r;
-		if ($eol) {
-			if ($buf =~ /\015$/) {
-				my $c;
-				defined($r = sysread($rfd,$c,1)) or croak $!;
-				$buf .= $c if $r > 0;
-			}
-			$buf =~ s/(?:\015\012|\015|\012)/$eol/gs;
-			$r = length($buf);
-		}
-		for ($w = 0; $w < $r; $w += $t) {
-			$t = syswrite($wfd, $buf, $r - $w, $w) or croak $!;
-		}
-	}
-	no bytes;
-}
-
 sub do_update_index {
 	my ($z_cmd, $cmd, $no_text_base) = @_;
 
@@ -1824,9 +1782,11 @@ sub do_update_index {
 						'text-base',"$f.svn-base");
 				$tb =~ s#^/##;
 			}
+			my @s = stat($x);
 			unlink $x or croak $!;
-			eol_cp($tb, $x);
+			copy($tb, $x);
 			chmod(($mode &~ umask), $x) or croak $!;
+			utime $s[8], $s[9], $x;
 		}
 		print $ui $x,"\0";
 	}
@@ -2617,7 +2577,9 @@ sub libsvn_connect {
 sub libsvn_get_file {
 	my ($gui, $f, $rev) = @_;
 	my $p = $f;
-	return unless ($p =~ s#^\Q$SVN_PATH\E/##);
+	if (length $SVN_PATH > 0) {
+		return unless ($p =~ s#^\Q$SVN_PATH\E/##);
+	}
 
 	my ($hash, $pid, $in, $out);
 	my $pool = SVN::Pool->new;
@@ -2664,6 +2626,7 @@ sub libsvn_log_entry {
 	if (defined $_authors && ! defined $users{$author}) {
 		die "Author: $author not defined in $_authors file\n";
 	}
+	$msg = '' if ($rev == 0 && !defined $msg);
 	return { revision => $rev, date => "+0000 $Y-$m-$d $H:$M:$S",
 		author => $author, msg => $msg."\n", parents => $parents || [] }
 }

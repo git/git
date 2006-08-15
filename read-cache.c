@@ -5,6 +5,7 @@
  */
 #include "cache.h"
 #include "cache-tree.h"
+#include <time.h>
 
 /* Index extensions.
  *
@@ -840,6 +841,18 @@ unmap:
 static unsigned char write_buffer[WRITE_BUFFER_SIZE];
 static unsigned long write_buffer_len;
 
+static int ce_write_flush(SHA_CTX *context, int fd)
+{
+	unsigned int buffered = write_buffer_len;
+	if (buffered) {
+		SHA1_Update(context, write_buffer, buffered);
+		if (write(fd, write_buffer, buffered) != buffered)
+			return -1;
+		write_buffer_len = 0;
+	}
+	return 0;
+}
+
 static int ce_write(SHA_CTX *context, int fd, void *data, unsigned int len)
 {
 	while (len) {
@@ -850,8 +863,8 @@ static int ce_write(SHA_CTX *context, int fd, void *data, unsigned int len)
 		memcpy(write_buffer + buffered, data, partial);
 		buffered += partial;
 		if (buffered == WRITE_BUFFER_SIZE) {
-			SHA1_Update(context, write_buffer, WRITE_BUFFER_SIZE);
-			if (write(fd, write_buffer, WRITE_BUFFER_SIZE) != WRITE_BUFFER_SIZE)
+			write_buffer_len = buffered;
+			if (ce_write_flush(context, fd))
 				return -1;
 			buffered = 0;
 		}
@@ -867,10 +880,8 @@ static int write_index_ext_header(SHA_CTX *context, int fd,
 {
 	ext = htonl(ext);
 	sz = htonl(sz);
-	if ((ce_write(context, fd, &ext, 4) < 0) ||
-	    (ce_write(context, fd, &sz, 4) < 0))
-		return -1;
-	return 0;
+	return ((ce_write(context, fd, &ext, 4) < 0) ||
+		(ce_write(context, fd, &sz, 4) < 0)) ? -1 : 0;
 }
 
 static int ce_flush(SHA_CTX *context, int fd)
@@ -892,9 +903,7 @@ static int ce_flush(SHA_CTX *context, int fd)
 	/* Append the SHA1 signature at the end */
 	SHA1_Final(write_buffer + left, context);
 	left += 20;
-	if (write(fd, write_buffer, left) != left)
-		return -1;
-	return 0;
+	return (write(fd, write_buffer, left) != left) ? -1 : 0;
 }
 
 static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
@@ -923,7 +932,7 @@ static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
 		 * $ echo filfre >nitfol
 		 * $ git-update-index --add nitfol
 		 *
-		 * but it does not.  Whe the second update-index runs,
+		 * but it does not.  When the second update-index runs,
 		 * it notices that the entry "frotz" has the same timestamp
 		 * as index, and if we were to smudge it by resetting its
 		 * size to zero here, then the object name recorded
@@ -945,7 +954,9 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 {
 	SHA_CTX c;
 	struct cache_header hdr;
-	int i, removed;
+	int i, removed, recent;
+	struct stat st;
+	time_t now;
 
 	for (i = removed = 0; i < entries; i++)
 		if (!cache[i]->ce_mode)
@@ -981,6 +992,58 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 		else {
 			free(data);
 			return -1;
+		}
+	}
+
+	/*
+	 * To prevent later ce_match_stat() from always falling into
+	 * check_fs(), if we have too many entries that can trigger
+	 * racily clean check, we are better off delaying the return.
+	 * We arbitrarily say if more than 20 paths or 25% of total
+	 * paths are very new, we delay the return until the index
+	 * file gets a new timestamp.
+	 *
+	 * NOTE! NOTE! NOTE!
+	 *
+	 * This assumes that nobody is touching the working tree while
+	 * we are updating the index.
+	 */
+
+	/* Make sure that the new index file has st_mtime
+	 * that is current enough -- ce_write() batches the data
+	 * so it might not have written anything yet.
+	 */
+	ce_write_flush(&c, newfd);
+
+	now = fstat(newfd, &st) ? 0 : st.st_mtime;
+	if (now) {
+		recent = 0;
+		for (i = 0; i < entries; i++) {
+			struct cache_entry *ce = cache[i];
+			time_t entry_time = (time_t) ntohl(ce->ce_mtime.sec);
+			if (!ce->ce_mode)
+				continue;
+			if (now && now <= entry_time)
+				recent++;
+		}
+		if (20 < recent && entries <= recent * 4) {
+#if 0
+			fprintf(stderr, "entries    %d\n", entries);
+			fprintf(stderr, "recent     %d\n", recent);
+			fprintf(stderr, "now        %lu\n", now);
+#endif
+			while (!fstat(newfd, &st) && st.st_mtime <= now) {
+				struct timespec rq, rm;
+				off_t where = lseek(newfd, 0, SEEK_CUR);
+				rq.tv_sec = 0;
+				rq.tv_nsec = 250000000;
+				nanosleep(&rq, &rm);
+				if ((where == (off_t) -1) ||
+				    (write(newfd, "", 1) != 1) ||
+				    (lseek(newfd, -1, SEEK_CUR) != where) ||
+				    ftruncate(newfd, where))
+					break;
+			}
 		}
 	}
 	return ce_flush(&c, newfd);

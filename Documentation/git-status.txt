@@ -8,7 +8,7 @@ git-status - Show working tree status
 
 SYNOPSIS
 --------
-'git-status'
+'git-status' <options>...
 
 DESCRIPTION
 -----------
@@ -22,6 +22,10 @@ running 'git commit'.
 If there is no path that is different between the index file and
 the current HEAD commit, the command exits with non-zero
 status.
+
+The command takes the same set of options as `git-commit`; it
+shows what would be committed if the same options are given to
+`git-commit`.
 
 
 OUTPUT

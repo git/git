@@ -22,7 +22,7 @@ static void remove_lock_file_on_signal(int signo)
 	raise(signo);
 }
 
-int hold_lock_file_for_update(struct lock_file *lk, const char *path)
+static int lock_file(struct lock_file *lk, const char *path)
 {
 	int fd;
 	sprintf(lk->filename, "%s.lock", path);
@@ -38,6 +38,14 @@ int hold_lock_file_for_update(struct lock_file *lk, const char *path)
 			return error("cannot fix permission bits on %s",
 				     lk->filename);
 	}
+	return fd;
+}
+
+int hold_lock_file_for_update(struct lock_file *lk, const char *path, int die_on_error)
+{
+	int fd = lock_file(lk, path);
+	if (fd < 0 && die_on_error)
+		die("unable to create '%s': %s", path, strerror(errno));
 	return fd;
 }
 

@@ -608,7 +608,7 @@ static void prepare_packed_git_one(char *objdir, int local)
 		int namelen = strlen(de->d_name);
 		struct packed_git *p;
 
-		if (strcmp(de->d_name + namelen - 4, ".idx"))
+		if (!has_extension(de->d_name, ".idx"))
 			continue;
 
 		/* we have .idx.  Is it a file we can map? */
@@ -664,8 +664,7 @@ int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long siz
 	return memcmp(sha1, real_sha1, 20) ? -1 : 0;
 }
 
-static void *map_sha1_file_internal(const unsigned char *sha1,
-				    unsigned long *size)
+void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 {
 	struct stat st;
 	void *map;
@@ -702,10 +701,26 @@ static void *map_sha1_file_internal(const unsigned char *sha1,
 	return map;
 }
 
+int legacy_loose_object(unsigned char *map)
+{
+	unsigned int word;
+
+	/*
+	 * Is it a zlib-compressed buffer? If so, the first byte
+	 * must be 0x78 (15-bit window size, deflated), and the
+	 * first 16-bit word is evenly divisible by 31
+	 */
+	word = (map[0] << 8) + map[1];
+	if (map[0] == 0x78 && !(word % 31))
+		return 1;
+	else
+		return 0;
+}
+
 static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz)
 {
 	unsigned char c;
-	unsigned int word, bits;
+	unsigned int bits;
 	unsigned long size;
 	static const char *typename[8] = {
 		NULL,	/* OBJ_EXT */
@@ -721,13 +736,7 @@ static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned lon
 	stream->next_out = buffer;
 	stream->avail_out = bufsiz;
 
-	/*
-	 * Is it a zlib-compressed buffer? If so, the first byte
-	 * must be 0x78 (15-bit window size, deflated), and the
-	 * first 16-bit word is evenly divisible by 31
-	 */
-	word = (map[0] << 8) + map[1];
-	if (map[0] == 0x78 && !(word % 31)) {
+	if (legacy_loose_object(map)) {
 		inflateInit(stream);
 		return inflate(stream, 0);
 	}
@@ -1264,7 +1273,7 @@ int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep
 	z_stream stream;
 	char hdr[128];
 
-	map = map_sha1_file_internal(sha1, &mapsize);
+	map = map_sha1_file(sha1, &mapsize);
 	if (!map) {
 		struct pack_entry e;
 
@@ -1309,7 +1318,7 @@ void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size
 
 	if (find_pack_entry(sha1, &e))
 		return read_packed_sha1(sha1, type, size);
-	map = map_sha1_file_internal(sha1, &mapsize);
+	map = map_sha1_file(sha1, &mapsize);
 	if (map) {
 		buf = unpack_sha1_file(map, mapsize, type, size);
 		munmap(map, mapsize);
@@ -1647,7 +1656,7 @@ int write_sha1_to_fd(int fd, const unsigned char *sha1)
 {
 	int retval;
 	unsigned long objsize;
-	void *buf = map_sha1_file_internal(sha1, &objsize);
+	void *buf = map_sha1_file(sha1, &objsize);
 
 	if (buf) {
 		retval = write_buffer(fd, buf, objsize);

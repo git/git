@@ -178,7 +178,7 @@ struct lock_file {
 	struct lock_file *next;
 	char filename[PATH_MAX];
 };
-extern int hold_lock_file_for_update(struct lock_file *, const char *path);
+extern int hold_lock_file_for_update(struct lock_file *, const char *path, int);
 extern int commit_lock_file(struct lock_file *);
 extern void rollback_lock_file(struct lock_file *);
 
@@ -247,6 +247,8 @@ extern int move_temp_to_file(const char *tmpfile, char *filename);
 
 extern int has_sha1_pack(const unsigned char *sha1);
 extern int has_sha1_file(const unsigned char *sha1);
+extern void *map_sha1_file(const unsigned char *sha1, unsigned long *);
+extern int legacy_loose_object(unsigned char *);
 
 extern int has_pack_file(const unsigned char *sha1);
 extern int has_pack_index(const unsigned char *sha1);

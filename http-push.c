@@ -530,7 +530,7 @@ static void start_put(struct transfer_request *request)
 	request->dest = xmalloc(strlen(request->url) + 14);
 	sprintf(request->dest, "Destination: %s", request->url);
 	posn += 38;
-	*(posn++) = '.';
+	*(posn++) = '_';
 	strcpy(posn, request->lock->token);
 
 	slot = get_active_slot();
@@ -2182,49 +2182,11 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 
 static int verify_merge_base(unsigned char *head_sha1, unsigned char *branch_sha1)
 {
-	int pipe_fd[2];
-	pid_t merge_base_pid;
-	char line[PATH_MAX + 20];
-	unsigned char merge_sha1[20];
-	int verified = 0;
+	struct commit *head = lookup_commit(head_sha1);
+	struct commit *branch = lookup_commit(branch_sha1);
+	struct commit_list *merge_bases = get_merge_bases(head, branch, 1);
 
-	if (pipe(pipe_fd) < 0)
-		die("Verify merge base: pipe failed");
-
-	merge_base_pid = fork();
-	if (!merge_base_pid) {
-		static const char *args[] = {
-			"merge-base",
-			"-a",
-			NULL,
-			NULL,
-			NULL
-		};
-		args[2] = strdup(sha1_to_hex(head_sha1));
-		args[3] = sha1_to_hex(branch_sha1);
-
-		dup2(pipe_fd[1], 1);
-		close(pipe_fd[0]);
-		close(pipe_fd[1]);
-		execv_git_cmd(args);
-		die("merge-base setup failed");
-	}
-	if (merge_base_pid < 0)
-		die("merge-base fork failed");
-
-	dup2(pipe_fd[0], 0);
-	close(pipe_fd[0]);
-	close(pipe_fd[1]);
-	while (fgets(line, sizeof(line), stdin) != NULL) {
-		if (get_sha1_hex(line, merge_sha1))
-			die("expected sha1, got garbage:\n %s", line);
-		if (!memcmp(branch_sha1, merge_sha1, 20)) {
-			verified = 1;
-			break;
-		}
-	}
-
-	return verified;
+	return (merge_bases && !merge_bases->next && merge_bases->item == branch);
 }
 
 static int delete_remote_branch(char *pattern, int force)

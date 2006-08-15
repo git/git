@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 
 static const char git_symbolic_ref_usage[] =
@@ -17,9 +18,8 @@ static void check_symref(const char *HEAD)
 		die("No such ref: %s", HEAD);
 }
 
-int main(int argc, const char **argv)
+int cmd_symbolic_ref(int argc, const char **argv, const char *prefix)
 {
-	setup_git_directory();
 	git_config(git_default_config);
 	switch (argc) {
 	case 2:

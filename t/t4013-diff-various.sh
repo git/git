@@ -88,7 +88,7 @@ test_expect_success setup '
 +*+ [initial] Initial
 EOF
 
-V=`git version | sed -e 's/^git version //'`
+V=`git version | sed -e 's/^git version //' -e 's/\./\\./g'`
 while read cmd
 do
 	case "$cmd" in
@@ -103,7 +103,9 @@ do
 	test_expect_success "git $cmd" '
 		{
 			echo "\$ git $cmd"
-			git $cmd | sed -e "s/$V/g-i-t--v-e-r-s-i-o-n/"
+			git $cmd |
+			sed -e "s/^\\(-*\\)$V\\(-*\\)\$/\\1g-i-t--v-e-r-s-i-o-n\2/" \
+			    -e "s/^\\( *boundary=\"-*\\)$V\\(-*\\)\"\$/\\1g-i-t--v-e-r-s-i-o-n\2\"/"
 			echo "\$"
 		} >"$actual" &&
 		if test -f "$expect"

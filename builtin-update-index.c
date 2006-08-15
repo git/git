@@ -491,9 +491,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	/* We can't free this memory, it becomes part of a linked list parsed atexit() */
 	lock_file = xcalloc(1, sizeof(struct lock_file));
 
-	newfd = hold_lock_file_for_update(lock_file, get_index_file());
-	if (newfd < 0)
-		die("unable to create new cachefile");
+	newfd = hold_lock_file_for_update(lock_file, get_index_file(), 1);
 
 	entries = read_cache();
 	if (entries < 0)

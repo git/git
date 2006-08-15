@@ -125,6 +125,7 @@ git-verify-tag
 git-whatchanged
 git-write-tree
 git-core-*/?*
+gitweb/gitweb.cgi
 test-date
 test-delta
 test-dump-cache-tree
@@ -140,7 +141,7 @@ config.mak
 autom4te.cache
 config.log
 config.status
-config.mak.in
 config.mak.autogen
+config.mak.append
 configure
 git-blame

@@ -117,7 +117,12 @@ div.list_head {
 
 a.list {
 	text-decoration: none;
+	font-weight: bold;
 	color: #000000;
+}
+
+table.tags a.list {
+	font-weight: normal;
 }
 
 a.list:hover {
@@ -171,6 +176,10 @@ tr.dark {
 	background-color: #f6f6f0;
 }
 
+tr.dark2 {
+	background-color: #f6f6f0;
+}
+
 tr.dark:hover {
 	background-color: #edece6;
 }
@@ -181,10 +190,14 @@ td {
 	vertical-align: top;
 }
 
-td.link {
+td.link, td.selflink {
 	padding: 2px 5px;
 	font-family: sans-serif;
 	font-size: 10px;
+}
+
+td.selflink {
+	padding-right: 0px;
 }
 
 td.sha1 {
@@ -194,6 +207,10 @@ td.sha1 {
 td.error {
 	color: red;
 	background-color: yellow;
+}
+
+td.current_head {
+	text-decoration: underline;
 }
 
 table.diff_tree span.file_status.new {
@@ -207,6 +224,10 @@ table.diff_tree span.file_status.deleted {
 table.diff_tree span.file_status.moved,
 table.diff_tree span.file_status.mode_chnge {
 	color: #777777;
+}
+
+table.diff_tree span.file_status.copied {
+  color: #70a070;
 }
 
 /* age2: 60*60*24*2 <= age */
@@ -309,13 +330,28 @@ a.rss_logo:hover {
 	background-color: #ee5500;
 }
 
-span.tag {
+span.refs span {
 	padding: 0px 4px;
 	font-size: 10px;
 	font-weight: normal;
-	background-color: #ffffaa;
 	border: 1px solid;
+	background-color: #ffaaff;
+	border-color: #ffccff #ff00ee #ff00ee #ffccff;
+}
+
+span.refs span.ref {
+	background-color: #aaaaff;
+	border-color: #ccccff #0033cc #0033cc #ccccff;
+}
+
+span.refs span.tag {
+	background-color: #ffffaa;
 	border-color: #ffffcc #ffee00 #ffee00 #ffffcc;
+}
+
+span.refs span.head {
+	background-color: #aaffaa;
+	border-color: #ccffcc #00cc33 #00cc33 #ccffcc;
 }
 
 span.atnight {
