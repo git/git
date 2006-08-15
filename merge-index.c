@@ -4,7 +4,7 @@
 
 #include "cache.h"
 
-static const char *pgm = NULL;
+static const char *pgm;
 static const char *arguments[8];
 static int one_shot, quiet;
 static int err;

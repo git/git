@@ -39,9 +39,9 @@ static const char rev_list_usage[] =
 
 static struct rev_info revs;
 
-static int bisect_list = 0;
-static int show_timestamp = 0;
-static int hdr_termination = 0;
+static int bisect_list;
+static int show_timestamp;
+static int hdr_termination;
 static const char *header_prefix;
 
 static void show_commit(struct commit *commit)

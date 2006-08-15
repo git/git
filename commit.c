@@ -727,10 +727,10 @@ struct commit *pop_commit(struct commit_list **stack)
 
 int count_parents(struct commit * commit)
 {
-        int count = 0;
+        int count;
         struct commit_list * parents = commit->parents;
-        for (count=0;parents; parents=parents->next,count++)
-          ;
+        for (count = 0; parents; parents = parents->next,count++)
+		;
         return count;
 }
 

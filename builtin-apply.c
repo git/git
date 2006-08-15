@@ -28,18 +28,18 @@ static int prefix_length = -1;
 static int newfd = -1;
 
 static int p_value = 1;
-static int allow_binary_replacement = 0;
-static int check_index = 0;
-static int write_index = 0;
-static int cached = 0;
-static int diffstat = 0;
-static int numstat = 0;
-static int summary = 0;
-static int check = 0;
+static int allow_binary_replacement;
+static int check_index;
+static int write_index;
+static int cached;
+static int diffstat;
+static int numstat;
+static int summary;
+static int check;
 static int apply = 1;
-static int apply_in_reverse = 0;
-static int no_add = 0;
-static int show_index_info = 0;
+static int apply_in_reverse;
+static int no_add;
+static int show_index_info;
 static int line_termination = '\n';
 static unsigned long p_context = -1;
 static const char apply_usage[] =
@@ -51,10 +51,10 @@ static enum whitespace_eol {
 	error_on_whitespace,
 	strip_whitespace,
 } new_whitespace = warn_on_whitespace;
-static int whitespace_error = 0;
+static int whitespace_error;
 static int squelch_whitespace_errors = 5;
-static int applied_after_stripping = 0;
-static const char *patch_input_file = NULL;
+static int applied_after_stripping;
+static const char *patch_input_file;
 
 static void parse_whitespace_option(const char *option)
 {

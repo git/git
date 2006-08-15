@@ -49,7 +49,6 @@ static void write_tree(unsigned char *sha1)
 	int i;
 
 	qsort(entries, used, sizeof(*entries), ent_compare);
-	size = 100;
 	for (size = i = 0; i < used; i++)
 		size += 32 + entries[i]->len;
 	buffer = xmalloc(size);

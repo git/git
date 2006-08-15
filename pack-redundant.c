@@ -13,7 +13,7 @@
 static const char pack_redundant_usage[] =
 "git-pack-redundant [ --verbose ] [ --alt-odb ] < --all | <.pack filename> ...>";
 
-static int load_all_packs = 0, verbose = 0, alt_odb = 0;
+static int load_all_packs, verbose, alt_odb;
 
 struct llist_item {
 	struct llist_item *next;
@@ -37,7 +37,7 @@ struct pll {
 	struct pack_list *pl;
 };
 
-static struct llist_item *free_nodes = NULL;
+static struct llist_item *free_nodes;
 
 static inline void llist_item_put(struct llist_item *item)
 {

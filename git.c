@@ -92,7 +92,7 @@ static int handle_options(const char*** argv, int* argc)
 }
 
 static const char *alias_command;
-static char *alias_string = NULL;
+static char *alias_string;
 
 static int git_alias_config(const char *var, const char *value)
 {

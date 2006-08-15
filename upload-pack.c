@@ -14,12 +14,12 @@ static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=n
 #define THEY_HAVE (1U << 0)
 #define OUR_REF (1U << 1)
 #define WANTED (1U << 2)
-static int multi_ack = 0, nr_our_refs = 0;
-static int use_thin_pack = 0;
+static int multi_ack, nr_our_refs;
+static int use_thin_pack;
 static struct object_array have_obj;
 static struct object_array want_obj;
-static unsigned int timeout = 0;
-static int use_sideband = 0;
+static unsigned int timeout;
+static int use_sideband;
 
 static void reset_timeout(void)
 {

@@ -22,24 +22,24 @@ static const char daemon_usage[] =
 "           [--reuseaddr] [--detach] [--pid-file=file] [directory...]";
 
 /* List of acceptable pathname prefixes */
-static char **ok_paths = NULL;
-static int strict_paths = 0;
+static char **ok_paths;
+static int strict_paths;
 
 /* If this is set, git-daemon-export-ok is not required */
-static int export_all_trees = 0;
+static int export_all_trees;
 
 /* Take all paths relative to this one if non-NULL */
-static char *base_path = NULL;
+static char *base_path;
 
 /* If defined, ~user notation is allowed and the string is inserted
  * after ~user/.  E.g. a request to git://host/~alice/frotz would
  * go to /home/alice/pub_git/frotz with --user-path=pub_git.
  */
-static const char *user_path = NULL;
+static const char *user_path;
 
 /* Timeout, and initial timeout */
-static unsigned int timeout = 0;
-static unsigned int init_timeout = 0;
+static unsigned int timeout;
+static unsigned int init_timeout;
 
 static void logreport(int priority, const char *err, va_list params)
 {
@@ -333,12 +333,12 @@ static int execute(struct sockaddr *addr)
 static int max_connections = 25;
 
 /* These are updated by the signal handler */
-static volatile unsigned int children_reaped = 0;
+static volatile unsigned int children_reaped;
 static pid_t dead_child[MAX_CHILDREN];
 
 /* These are updated by the main loop */
-static unsigned int children_spawned = 0;
-static unsigned int children_deleted = 0;
+static unsigned int children_spawned;
+static unsigned int children_deleted;
 
 static struct child {
 	pid_t pid;

@@ -24,8 +24,8 @@ static const char *exec = "git-upload-pack";
  */
 #define MAX_IN_VAIN 256
 
-static struct commit_list *rev_list = NULL;
-static int non_common_revs = 0, multi_ack = 0, use_thin_pack = 0, use_sideband;
+static struct commit_list *rev_list;
+static int non_common_revs, multi_ack, use_thin_pack, use_sideband;
 
 static void rev_list_push(struct commit *commit, int mark)
 {
@@ -250,7 +250,7 @@ done:
 	return retval;
 }
 
-static struct commit_list *complete = NULL;
+static struct commit_list *complete;
 
 static int mark_complete(const char *path, const unsigned char *sha1)
 {

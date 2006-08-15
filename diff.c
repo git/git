@@ -13,9 +13,9 @@
 
 static int use_size_cache;
 
-static int diff_detect_rename_default = 0;
+static int diff_detect_rename_default;
 static int diff_rename_limit_default = -1;
-static int diff_use_color_default = 0;
+static int diff_use_color_default;
 
 /* "\033[1;38;5;2xx;48;5;2xxm\0" is 23 bytes */
 static char diff_colors[][24] = {

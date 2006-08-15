@@ -14,12 +14,12 @@
 #define REACHABLE 0x0001
 #define SEEN      0x0002
 
-static int show_root = 0;
-static int show_tags = 0;
-static int show_unreachable = 0;
-static int check_full = 0;
-static int check_strict = 0;
-static int keep_cache_objects = 0;
+static int show_root;
+static int show_tags;
+static int show_unreachable;
+static int check_full;
+static int check_strict;
+static int keep_cache_objects;
 static unsigned char head_sha1[20];
 
 #ifdef NO_D_INO_IN_DIRENT
@@ -400,7 +400,7 @@ static void fsck_dir(int i, char *path)
 	closedir(dir);
 }
 
-static int default_refs = 0;
+static int default_refs;
 
 static int fsck_handle_ref(const char *refname, const unsigned char *sha1)
 {

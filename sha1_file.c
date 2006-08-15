@@ -22,7 +22,7 @@
 #endif
 #endif
 
-const unsigned char null_sha1[20] = { 0, };
+const unsigned char null_sha1[20];
 
 static unsigned int sha1_file_open_flag = O_NOATIME;
 

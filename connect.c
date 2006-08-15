@@ -10,7 +10,7 @@
 #include <netdb.h>
 #include <signal.h>
 
-static char *server_capabilities = NULL;
+static char *server_capabilities;
 
 static int check_ref(const char *name, int len, unsigned int flags)
 {
@@ -493,8 +493,8 @@ static void git_tcp_connect(int fd[2], char *host)
 }
 
 
-static char *git_proxy_command = NULL;
-static const char *rhost_name = NULL;
+static char *git_proxy_command;
+static const char *rhost_name;
 static int rhost_len;
 
 static int git_proxy_command_options(const char *var, const char *value)
