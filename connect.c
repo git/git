@@ -737,14 +737,9 @@ int git_connect(int fd[2], char *url, const char *prog)
 
 int finish_connect(pid_t pid)
 {
-	int ret;
-
-	for (;;) {
-		ret = waitpid(pid, NULL, 0);
-		if (!ret)
-			break;
+	while (waitpid(pid, NULL, 0) < 0) {
 		if (errno != EINTR)
-			break;
+			return -1;
 	}
-	return ret;
+	return 0;
 }
