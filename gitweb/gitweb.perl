@@ -54,6 +54,10 @@ our $logo = "++GITWEB_LOGO++";
 # source of projects list
 our $projects_list = "++GITWEB_LIST++";
 
+# list of git base URLs used for URL to where fetch project from,
+# i.e. full URL is "$git_base_url/$project"
+our @git_base_url_list = ("++GITWEB_BASE_URL++");
+
 # default blob_plain mimetype and default charset for text/plain blob
 our $default_blob_plain_mimetype = 'text/plain';
 our $default_text_plain_charset  = undef;
@@ -1668,8 +1672,14 @@ sub git_summary {
 	print "<table cellspacing=\"0\">\n" .
 	      "<tr><td>description</td><td>" . esc_html($descr) . "</td></tr>\n" .
 	      "<tr><td>owner</td><td>$owner</td></tr>\n" .
-	      "<tr><td>last change</td><td>$cd{'rfc2822'}</td></tr>\n" .
-	      "</table>\n";
+	      "<tr><td>last change</td><td>$cd{'rfc2822'}</td></tr>\n";
+	my $url_tag = "URL";
+	foreach my $git_base_url (@git_base_url_list) {
+		next unless $git_base_url;
+		print "<tr><td>$url_tag</td><td>$git_base_url/$project</td></tr>\n";
+		$url_tag = "";
+	}
+	print "</table>\n";
 
 	open my $fd, "-|", $GIT, "rev-list", "--max-count=17", git_get_head_hash($project)
 		or die_error(undef, "Open git-rev-list failed");
