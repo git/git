@@ -5,7 +5,6 @@
  */
 #include "cache.h"
 #include "cache-tree.h"
-#include <time.h>
 
 /* Index extensions.
  *
@@ -1050,11 +1049,8 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 			fprintf(stderr, "now        %lu\n", now);
 #endif
 			while (!fstat(newfd, &st) && st.st_mtime <= now) {
-				struct timespec rq, rm;
 				off_t where = lseek(newfd, 0, SEEK_CUR);
-				rq.tv_sec = 0;
-				rq.tv_nsec = 250000000;
-				nanosleep(&rq, &rm);
+				sleep(1);
 				if ((where == (off_t) -1) ||
 				    (write(newfd, "", 1) != 1) ||
 				    (lseek(newfd, -1, SEEK_CUR) != where) ||
