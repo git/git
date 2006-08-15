@@ -95,7 +95,14 @@ AC_SUBST(PYTHON_PATH)
 ## Checks for programs.
 AC_MSG_NOTICE([CHECKS for programs])
 #
-AC_PROG_CC
+AC_PROG_CC([cc gcc])
+if test -n "$GCC"; then
+	PIC_FLAG="-fPIC"
+else
+	AC_CHECK_DECL(__SUNPRO_C, [CFLAGS="$CFLAGS -xO3"; PIC_FLAG="-KPIC"])
+fi
+AC_SUBST(PIC_FLAG)
+
 #AC_PROG_INSTALL		# needs install-sh or install.sh in sources
 AC_CHECK_TOOL(AR, ar, :)
 AC_CHECK_PROGS(TAR, [gtar tar])
@@ -154,6 +161,7 @@ AC_CHECK_LIB([c], [socket],
 [NEEDS_SOCKET=],
 [NEEDS_SOCKET=YesPlease])
 AC_SUBST(NEEDS_SOCKET)
+test -n "$NEEDS_SOCKET" && LIBS="$LIBS -lsocket"
 
 
 ## Checks for header files.
@@ -181,8 +189,10 @@ AC_SUBST(NO_D_TYPE_IN_DIRENT)
 # sockaddr_storage.
 AC_CHECK_TYPE(struct sockaddr_storage,
 [NO_SOCKADDR_STORAGE=],
-[NO_SOCKADDR_STORAGE=YesPlease],
-[#include <netinet/in.h>])
+[NO_SOCKADDR_STORAGE=YesPlease],[
+#include <sys/types.h>
+#include <sys/socket.h>
+])
 AC_SUBST(NO_SOCKADDR_STORAGE)
 #
 # Define NO_IPV6 if you lack IPv6 support and getaddrinfo().

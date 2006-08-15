@@ -2,6 +2,8 @@
 # @configure_input@
 
 CC = @CC@
+CFLAGS = @CFLAGS@
+PIC_FLAG = @PIC_FLAG@
 AR = @AR@
 TAR = @TAR@
 #INSTALL = @INSTALL@		# needs install-sh or install.sh in sources

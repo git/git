@@ -112,6 +112,7 @@ uname_P := $(shell sh -c 'uname -p 2>/dev/null || echo not')
 # CFLAGS and LDFLAGS are for the users to override from the command line.
 
 CFLAGS = -g -O2 -Wall
+PIC_FLAG = -fPIC
 LDFLAGS =
 ALL_CFLAGS = $(CFLAGS)
 ALL_LDFLAGS = $(LDFLAGS)
@@ -338,7 +339,6 @@ ifeq ($(uname_S),SunOS)
 	NEEDS_NSL = YesPlease
 	SHELL_PATH = /bin/bash
 	NO_STRCASESTR = YesPlease
-	NO_STRLCPY = YesPlease
 	ifeq ($(uname_R),5.8)
 		NEEDS_LIBICONV = YesPlease
 		NO_UNSETENV = YesPlease
@@ -403,6 +403,9 @@ ifeq ($(uname_S),IRIX64)
 endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
+endif
+ifeq ($(uname_M),sun4u)
+	USE_PIC = YesPlease
 endif
 ifeq ($(uname_M),x86_64)
 	USE_PIC = YesPlease
@@ -546,7 +549,7 @@ endif
 endif
 endif
 ifdef USE_PIC
-	ALL_CFLAGS += -fPIC
+	ALL_CFLAGS += $(PIC_FLAG)
 endif
 ifdef NO_ACCURATE_DIFF
 	BASIC_CFLAGS += -DNO_ACCURATE_DIFF
