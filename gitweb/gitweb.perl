@@ -185,6 +185,33 @@ $actions{$action}->();
 exit;
 
 ## ======================================================================
+## action links
+
+sub href(%) {
+	my %mapping = (
+		action => "a",
+		project => "p",
+		file_name => "f",
+		hash => "h",
+		hash_parent => "hp",
+		hash_base => "hb",
+		page => "pg",
+		searchtext => "s",
+	);
+
+	my %params = @_;
+	$params{"project"} ||= $project;
+
+	my $href = "$my_uri?";
+	$href .= esc_param( join(";",
+		map { "$mapping{$_}=$params{$_}" } keys %params
+	) );
+
+	return $href;
+}
+
+
+## ======================================================================
 ## validation, quoting/unquoting and escaping
 
 sub validate_input {
