@@ -37,6 +37,7 @@ static int numstat = 0;
 static int summary = 0;
 static int check = 0;
 static int apply = 1;
+static int apply_in_reverse = 0;
 static int no_add = 0;
 static int show_index_info = 0;
 static int line_termination = '\n';
@@ -120,7 +121,7 @@ struct fragment {
 struct patch {
 	char *new_name, *old_name, *def_name;
 	unsigned int old_mode, new_mode;
-	int is_rename, is_copy, is_new, is_delete, is_binary, is_reverse;
+	int is_rename, is_copy, is_new, is_delete, is_binary;
 #define BINARY_DELTA_DEFLATED 1
 #define BINARY_LITERAL_DEFLATED 2
 	unsigned long deflate_origlen;
@@ -1143,7 +1144,6 @@ static void reverse_patches(struct patch *p)
 			swap(frag->newpos, frag->oldpos);
 			swap(frag->newlines, frag->oldlines);
 		}
-		p->is_reverse = !p->is_reverse;
 	}
 }
 
@@ -1363,8 +1363,7 @@ static int apply_line(char *output, const char *patch, int plen)
 	return plen;
 }
 
-static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag,
-	int reverse, int inaccurate_eof)
+static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, int inaccurate_eof)
 {
 	int match_beginning, match_end;
 	char *buf = desc->buffer;
@@ -1396,7 +1395,7 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag,
 		if (len < size && patch[len] == '\\')
 			plen--;
 		first = *patch;
-		if (reverse) {
+		if (apply_in_reverse) {
 			if (first == '-')
 				first = '+';
 			else if (first == '+')
@@ -1536,7 +1535,7 @@ static int apply_binary_fragment(struct buffer_desc *desc, struct patch *patch)
 	void *result;
 
 	/* Binary patch is irreversible */
-	if (patch->is_reverse)
+	if (apply_in_reverse)
 		return error("cannot reverse-apply a binary patch to '%s'",
 			     patch->new_name
 			     ? patch->new_name : patch->old_name);
@@ -1657,8 +1656,7 @@ static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 		return apply_binary(desc, patch);
 
 	while (frag) {
-		if (apply_one_fragment(desc, frag, patch->is_reverse,
-					patch->inaccurate_eof) < 0)
+		if (apply_one_fragment(desc, frag, patch->inaccurate_eof) < 0)
 			return error("patch failed: %s:%ld",
 				     name, frag->oldpos);
 		frag = frag->next;
@@ -2194,8 +2192,7 @@ static int use_patch(struct patch *p)
 	return 1;
 }
 
-static int apply_patch(int fd, const char *filename,
-		int reverse, int inaccurate_eof)
+static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 {
 	unsigned long offset, size;
 	char *buffer = read_patch_file(fd, &size);
@@ -2215,7 +2212,7 @@ static int apply_patch(int fd, const char *filename,
 		nr = parse_chunk(buffer + offset, size, patch);
 		if (nr < 0)
 			break;
-		if (reverse)
+		if (apply_in_reverse)
 			reverse_patches(patch);
 		if (use_patch(patch)) {
 			patch_stats(patch);
@@ -2278,7 +2275,6 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	int read_stdin = 1;
-	int reverse = 0;
 	int inaccurate_eof = 0;
 
 	const char *whitespace_option = NULL;
@@ -2289,7 +2285,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 		int fd;
 
 		if (!strcmp(arg, "-")) {
-			apply_patch(0, "<stdin>", reverse, inaccurate_eof);
+			apply_patch(0, "<stdin>", inaccurate_eof);
 			read_stdin = 0;
 			continue;
 		}
@@ -2367,7 +2363,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp(arg, "-R") || !strcmp(arg, "--reverse")) {
-			reverse = 1;
+			apply_in_reverse = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--inaccurate-eof")) {
@@ -2390,12 +2386,12 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			usage(apply_usage);
 		read_stdin = 0;
 		set_default_whitespace_mode(whitespace_option);
-		apply_patch(fd, arg, reverse, inaccurate_eof);
+		apply_patch(fd, arg, inaccurate_eof);
 		close(fd);
 	}
 	set_default_whitespace_mode(whitespace_option);
 	if (read_stdin)
-		apply_patch(0, "<stdin>", reverse, inaccurate_eof);
+		apply_patch(0, "<stdin>", inaccurate_eof);
 	if (whitespace_error) {
 		if (squelch_whitespace_errors &&
 		    squelch_whitespace_errors < whitespace_error) {
