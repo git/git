@@ -34,7 +34,7 @@ our $projectroot = "++GITWEB_PROJECTROOT++";
 our $git_temp = "/tmp/gitweb";
 
 # target of the home link on top of all pages
-our $home_link = $my_uri;
+our $home_link = $my_uri || "/";
 
 # string of the home link on top of all pages
 our $home_link_str = "++GITWEB_HOME_LINK_STR++";
