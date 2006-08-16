@@ -95,8 +95,9 @@ our $project = ($cgi->param('p') || $ENV{'PATH_INFO'});
 if (defined $project) {
 	$project =~ s|^/||;
 	$project =~ s|/$||;
+	$project = undef unless $project;
 }
-if (defined $project && $project) {
+if (defined $project) {
 	if (!validate_input($project)) {
 		die_error(undef, "Invalid project parameter");
 	}
