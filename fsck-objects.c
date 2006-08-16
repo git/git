@@ -14,12 +14,12 @@
 #define REACHABLE 0x0001
 #define SEEN      0x0002
 
-static int show_root = 0;
-static int show_tags = 0;
-static int show_unreachable = 0;
-static int check_full = 0;
-static int check_strict = 0;
-static int keep_cache_objects = 0;
+static int show_root;
+static int show_tags;
+static int show_unreachable;
+static int check_full;
+static int check_strict;
+static int keep_cache_objects;
 static unsigned char head_sha1[20];
 
 #ifdef NO_D_INO_IN_DIRENT
@@ -400,7 +400,7 @@ static void fsck_dir(int i, char *path)
 	closedir(dir);
 }
 
-static int default_refs = 0;
+static int default_refs;
 
 static int fsck_handle_ref(const char *refname, const unsigned char *sha1)
 {
@@ -452,7 +452,7 @@ static int fsck_head_link(void)
 	if (strncmp(git_refs_heads_master + pfxlen, "refs/heads/", 11))
 		return error("HEAD points to something strange (%s)",
 			     git_refs_heads_master + pfxlen);
-	if (!memcmp(null_sha1, sha1, 20))
+	if (is_null_sha1(sha1))
 		return error("HEAD: not a valid git pointer");
 	return 0;
 }

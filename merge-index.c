@@ -4,14 +4,15 @@
 
 #include "cache.h"
 
-static const char *pgm = NULL;
+static const char *pgm;
 static const char *arguments[8];
 static int one_shot, quiet;
 static int err;
 
 static void run_program(void)
 {
-	int pid = fork(), status;
+	pid_t pid = fork();
+	int status;
 
 	if (pid < 0)
 		die("unable to fork");

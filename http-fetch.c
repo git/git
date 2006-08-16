@@ -36,10 +36,10 @@ enum XML_Status {
 #define PREV_BUF_SIZE 4096
 #define RANGE_HEADER_SIZE 30
 
-static int commits_on_stdin = 0;
+static int commits_on_stdin;
 
 static int got_alternates = -1;
-static int corrupt_object_found = 0;
+static int corrupt_object_found;
 
 static struct curl_slist *no_pragma_header;
 
@@ -52,7 +52,7 @@ struct alt_base
 	struct alt_base *next;
 };
 
-static struct alt_base *alt = NULL;
+static struct alt_base *alt;
 
 enum object_request_state {
 	WAITING,
@@ -114,7 +114,7 @@ struct remote_ls_ctx
 };
 #endif
 
-static struct object_request *object_queue_head = NULL;
+static struct object_request *object_queue_head;
 
 static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 			       void *data)

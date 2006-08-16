@@ -53,17 +53,17 @@ struct object_entry {
  */
 
 static unsigned char object_list_sha1[20];
-static int non_empty = 0;
-static int no_reuse_delta = 0;
-static int local = 0;
-static int incremental = 0;
+static int non_empty;
+static int no_reuse_delta;
+static int local;
+static int incremental;
 static struct object_entry **sorted_by_sha, **sorted_by_type;
-static struct object_entry *objects = NULL;
-static int nr_objects = 0, nr_alloc = 0, nr_result = 0;
+static struct object_entry *objects;
+static int nr_objects, nr_alloc, nr_result;
 static const char *base_name;
 static unsigned char pack_file_sha1[20];
 static int progress = 1;
-static volatile sig_atomic_t progress_update = 0;
+static volatile sig_atomic_t progress_update;
 static int window = 10;
 
 /*
@@ -72,8 +72,8 @@ static int window = 10;
  * sorted_by_sha is also possible but this was easier to code and faster.
  * This hashtable is built after all the objects are seen.
  */
-static int *object_ix = NULL;
-static int object_ix_hashsz = 0;
+static int *object_ix;
+static int object_ix_hashsz;
 
 /*
  * Pack index for existing packs give us easy access to the offsets into
@@ -90,15 +90,15 @@ struct pack_revindex {
 	struct packed_git *p;
 	unsigned long *revindex;
 } *pack_revindex = NULL;
-static int pack_revindex_hashsz = 0;
+static int pack_revindex_hashsz;
 
 /*
  * stats
  */
-static int written = 0;
-static int written_delta = 0;
-static int reused = 0;
-static int reused_delta = 0;
+static int written;
+static int written_delta;
+static int reused;
+static int reused_delta;
 
 static int pack_revindex_ix(struct packed_git *p)
 {

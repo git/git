@@ -12,7 +12,7 @@
 #include "unpack-trees.h"
 #include "builtin.h"
 
-static struct object_list *trees = NULL;
+static struct object_list *trees;
 
 static int list_tree(unsigned char *sha1)
 {

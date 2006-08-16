@@ -8,9 +8,9 @@
 static const char show_branch_usage[] =
 "git-show-branch [--sparse] [--current] [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...]";
 
-static int default_num = 0;
-static int default_alloc = 0;
-static const char **default_arg = NULL;
+static int default_num;
+static int default_alloc;
+static const char **default_arg;
 
 #define UNINTERESTING	01
 

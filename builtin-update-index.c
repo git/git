@@ -23,7 +23,7 @@ static int allow_replace;
 static int info_only;
 static int force_remove;
 static int verbose;
-static int mark_valid_only = 0;
+static int mark_valid_only;
 #define MARK_VALID 1
 #define UNMARK_VALID 2
 

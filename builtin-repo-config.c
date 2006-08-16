@@ -5,14 +5,14 @@
 static const char git_config_set_usage[] =
 "git-repo-config [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --unset | --unset-all] name [value [value_regex]] | --list";
 
-static char* key = NULL;
-static regex_t* key_regexp = NULL;
-static regex_t* regexp = NULL;
-static int show_keys = 0;
-static int use_key_regexp = 0;
-static int do_all = 0;
-static int do_not_match = 0;
-static int seen = 0;
+static char *key;
+static regex_t *key_regexp;
+static regex_t *regexp;
+static int show_keys;
+static int use_key_regexp;
+static int do_all;
+static int do_not_match;
+static int seen;
 static enum { T_RAW, T_INT, T_BOOL } type = T_RAW;
 
 static int show_all_config(const char *key_, const char *value_)

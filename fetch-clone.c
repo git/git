@@ -44,9 +44,8 @@ static int finish_pack(const char *pack_tmp_name, const char *me)
 
 	for (;;) {
 		int status, code;
-		int retval = waitpid(pid, &status, 0);
 
-		if (retval < 0) {
+		if (waitpid(pid, &status, 0) < 0) {
 			if (errno == EINTR)
 				continue;
 			error("waitpid failed (%s)", strerror(errno));

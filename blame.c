@@ -56,9 +56,9 @@ struct patch {
 static void get_blob(struct commit *commit);
 
 /* Only used for statistics */
-static int num_get_patch = 0;
-static int num_commits = 0;
-static int patch_time = 0;
+static int num_get_patch;
+static int num_commits;
+static int patch_time;
 
 struct blame_diff_state {
 	struct xdiff_emit_state xm;

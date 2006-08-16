@@ -9,10 +9,10 @@ static const char send_pack_usage[] =
 "git-send-pack [--all] [--exec=git-receive-pack] <remote> [<head>...]\n"
 "  --all and explicit <head> specification are mutually exclusive.";
 static const char *exec = "git-receive-pack";
-static int verbose = 0;
-static int send_all = 0;
-static int force_update = 0;
-static int use_thin_pack = 0;
+static int verbose;
+static int send_all;
+static int force_update;
+static int use_thin_pack;
 
 static int is_zero_sha1(const unsigned char *sha1)
 {

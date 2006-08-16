@@ -68,8 +68,7 @@ static void stuff_change(struct diff_options *opt,
 {
 	struct diff_filespec *one, *two;
 
-	if (memcmp(null_sha1, old_sha1, 20) &&
-	    memcmp(null_sha1, new_sha1, 20) &&
+	if (!is_null_sha1(old_sha1) && !is_null_sha1(new_sha1) &&
 	    !memcmp(old_sha1, new_sha1, 20))
 		return;
 

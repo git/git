@@ -70,18 +70,18 @@ enum XML_Status {
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define MAXDEPTH 5
 
-static int pushing = 0;
-static int aborted = 0;
+static int pushing;
+static int aborted;
 static signed char remote_dir_exists[256];
 
 static struct curl_slist *no_pragma_header;
 static struct curl_slist *default_headers;
 
-static int push_verbosely = 0;
-static int push_all = 0;
-static int force_all = 0;
+static int push_verbosely;
+static int push_all;
+static int force_all;
 
-static struct object_list *objects = NULL;
+static struct object_list *objects;
 
 struct repo
 {
@@ -94,7 +94,7 @@ struct repo
 	struct remote_lock *locks;
 };
 
-static struct repo *remote = NULL;
+static struct repo *remote;
 
 enum transfer_state {
 	NEED_FETCH,
@@ -134,7 +134,7 @@ struct transfer_request
 	struct transfer_request *next;
 };
 
-static struct transfer_request *request_queue_head = NULL;
+static struct transfer_request *request_queue_head;
 
 struct xml_ctx
 {

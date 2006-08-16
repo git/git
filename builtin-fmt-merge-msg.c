@@ -8,7 +8,7 @@
 static const char *fmt_merge_msg_usage =
 	"git-fmt-merge-msg [--summary] [--no-summary] [--file <file>]";
 
-static int merge_summary = 0;
+static int merge_summary;
 
 static int fmt_merge_msg_config(const char *key, const char *value)
 {

@@ -25,15 +25,15 @@ int run_command_v_opt(int argc, const char **argv, int flags)
 	}
 	for (;;) {
 		int status, code;
-		int retval = waitpid(pid, &status, 0);
+		pid_t waiting = waitpid(pid, &status, 0);
 
-		if (retval < 0) {
+		if (waiting < 0) {
 			if (errno == EINTR)
 				continue;
-			error("waitpid failed (%s)", strerror(retval));
+			error("waitpid failed (%s)", strerror(errno));
 			return -ERR_RUN_COMMAND_WAITPID;
 		}
-		if (retval != pid)
+		if (waiting != pid)
 			return -ERR_RUN_COMMAND_WAITPID_WRONG_PID;
 		if (WIFSIGNALED(status))
 			return -ERR_RUN_COMMAND_WAITPID_SIGNAL;

@@ -8,10 +8,10 @@ static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
 static const char *unpacker[] = { "unpack-objects", NULL };
 
-static int report_status = 0;
+static int report_status;
 
 static char capabilities[] = "report-status";
-static int capabilities_sent = 0;
+static int capabilities_sent;
 
 static int show_ref(const char *path, const unsigned char *sha1)
 {
@@ -40,7 +40,7 @@ struct command {
 	char ref_name[FLEX_ARRAY]; /* more */
 };
 
-static struct command *commands = NULL;
+static struct command *commands;
 
 static int is_all_zeroes(const char *hex)
 {

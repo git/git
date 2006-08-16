@@ -14,7 +14,7 @@
 static int term_columns(void)
 {
 	char *col_string = getenv("COLUMNS");
-	int n_cols = 0;
+	int n_cols;
 
 	if (col_string && (n_cols = atoi(col_string)) > 0)
 		return n_cols;

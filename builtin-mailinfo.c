@@ -16,8 +16,8 @@
 
 static FILE *cmitmsg, *patchfile, *fin, *fout;
 
-static int keep_subject = 0;
-static const char *metainfo_charset = NULL;
+static int keep_subject;
+static const char *metainfo_charset;
 static char line[1000];
 static char date[1000];
 static char name[1000];
@@ -31,7 +31,7 @@ static char charset[256];
 
 static char multipart_boundary[1000];
 static int multipart_boundary_len;
-static int patch_lines = 0;
+static int patch_lines;
 
 static char *sanity_check(char *name, char *email)
 {

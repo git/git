@@ -197,7 +197,7 @@ const char *find_unique_abbrev(const unsigned char *sha1, int len)
 	int status, is_null;
 	static char hex[41];
 
-	is_null = !memcmp(sha1, null_sha1, 20);
+	is_null = is_null_sha1(sha1);
 	memcpy(hex, sha1_to_hex(sha1), 40);
 	if (len == 40 || !len)
 		return hex;

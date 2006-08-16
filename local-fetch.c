@@ -5,10 +5,10 @@
 #include "commit.h"
 #include "fetch.h"
 
-static int use_link = 0;
-static int use_symlink = 0;
+static int use_link;
+static int use_symlink;
 static int use_filecopy = 1;
-static int commits_on_stdin = 0;
+static int commits_on_stdin;
 
 static const char *path; /* "Remote" git repository */
 
@@ -16,7 +16,7 @@ void prefetch(unsigned char *sha1)
 {
 }
 
-static struct packed_git *packs = NULL;
+static struct packed_git *packs;
 
 static void setup_index(unsigned char *sha1)
 {

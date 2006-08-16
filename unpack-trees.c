@@ -278,7 +278,7 @@ static void unlink_entry(char *name)
 	}
 }
 
-static volatile int progress_update = 0;
+static volatile sig_atomic_t progress_update;
 
 static void progress_interval(int signum)
 {

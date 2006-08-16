@@ -75,7 +75,7 @@ copy_data:
 	}
 }
 
-static int tags_only = 0;
+static int tags_only;
 
 static int name_ref(const char *path, const unsigned char *sha1)
 {
