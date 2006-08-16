@@ -10,7 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git-apply' [--stat] [--numstat] [--summary] [--check] [--index] [--apply]
-	  [--no-add] [--index-info] [--allow-binary-replacement] [-z] [-pNUM]
+	  [--no-add] [--index-info] [--allow-binary-replacement]
+	  [--reverse] [-z] [-pNUM]
 	  [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>]
 	  [<patch>...]
 
@@ -61,6 +62,9 @@ OPTIONS
 	the patch applies to.  When this flag is given, and if
 	the original version of the blob is available locally,
 	outputs information about them to the standard output.
+
+--reverse::
+	Apply the patch in reverse.
 
 -z::
 	When showing the index information, do not munge paths,
