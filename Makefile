@@ -206,7 +206,11 @@ PROGRAMS = \
 	git-upload-pack$X git-verify-pack$X \
 	git-pack-redundant$X git-var$X \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X \
-	git-merge-recur$X
+	git-merge-recur$X \
+	$(EXTRA_PROGRAMS)
+
+# Empty...
+EXTRA_PROGRAMS =
 
 BUILT_INS = \
 	git-format-patch$X git-show$X git-whatchanged$X \
