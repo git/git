@@ -169,9 +169,11 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 	return changed;
 }
 
-int ce_match_stat(struct cache_entry *ce, struct stat *st, int ignore_valid)
+int ce_match_stat(struct cache_entry *ce, struct stat *st, int options)
 {
 	unsigned int changed;
+	int ignore_valid = options & 01;
+	int assume_racy_is_modified = options & 02;
 
 	/*
 	 * If it's marked as always valid in the index, it's
@@ -200,8 +202,12 @@ int ce_match_stat(struct cache_entry *ce, struct stat *st, int ignore_valid)
 	 */
 	if (!changed &&
 	    index_file_timestamp &&
-	    index_file_timestamp <= ntohl(ce->ce_mtime.sec))
-		changed |= ce_modified_check_fs(ce, st);
+	    index_file_timestamp <= ntohl(ce->ce_mtime.sec)) {
+		if (assume_racy_is_modified)
+			changed |= DATA_CHANGED;
+		else
+			changed |= ce_modified_check_fs(ce, st);
+	}
 
 	return changed;
 }
