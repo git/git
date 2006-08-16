@@ -119,6 +119,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
 	/* Checking */
 	for (i = 0; i < count; i++) {
+		int length;
 		const char *bad = NULL;
 
 		if (show_only)
@@ -204,7 +205,9 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		}
 
 		if (!bad &&
-		    !strncmp(destination[i], source[i], strlen(source[i])))
+		    (length = strlen(source[i])) >= 0 &&
+		    !strncmp(destination[i], source[i], length) &&
+		    (destination[i][length] == 0 || destination[i][length] == '/'))
 			bad = "can not move directory into itself";
 
 		if (!bad && cache_name_pos(source[i], strlen(source[i])) < 0)
