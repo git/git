@@ -800,15 +800,14 @@ del_entry:
 
 static void init_pack_header()
 {
-	const char* magic = "PACK";
-	unsigned long version = 3;
-	unsigned long zero = 0;
+	struct pack_header hdr;
 
-	version = htonl(version);
-	ywrite(pack_fd, (char*)magic, 4);
-	ywrite(pack_fd, &version, 4);
-	ywrite(pack_fd, &zero, 4);
-	pack_offset = 4 * 3;
+	hdr.hdr_signature = htonl(PACK_SIGNATURE);
+	hdr.hdr_version = htonl(2);
+	hdr.hdr_entries = 0;
+
+	ywrite(pack_fd, &hdr, sizeof(hdr));
+	pack_offset = sizeof(hdr);
 }
 
 static void fixup_header_footer()
