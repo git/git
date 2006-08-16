@@ -959,9 +959,7 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 {
 	SHA_CTX c;
 	struct cache_header hdr;
-	int i, removed, recent;
-	struct stat st;
-	time_t now;
+	int i, removed;
 
 	for (i = removed = 0; i < entries; i++)
 		if (!cache[i]->ce_mode)
@@ -997,55 +995,6 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 		else {
 			free(data);
 			return -1;
-		}
-	}
-
-	/*
-	 * To prevent later ce_match_stat() from always falling into
-	 * check_fs(), if we have too many entries that can trigger
-	 * racily clean check, we are better off delaying the return.
-	 * We arbitrarily say if more than 20 paths or 25% of total
-	 * paths are very new, we delay the return until the index
-	 * file gets a new timestamp.
-	 *
-	 * NOTE! NOTE! NOTE!
-	 *
-	 * This assumes that nobody is touching the working tree while
-	 * we are updating the index.
-	 */
-
-	/* Make sure that the new index file has st_mtime
-	 * that is current enough -- ce_write() batches the data
-	 * so it might not have written anything yet.
-	 */
-	ce_write_flush(&c, newfd);
-
-	now = fstat(newfd, &st) ? 0 : st.st_mtime;
-	if (now) {
-		recent = 0;
-		for (i = 0; i < entries; i++) {
-			struct cache_entry *ce = cache[i];
-			time_t entry_time = (time_t) ntohl(ce->ce_mtime.sec);
-			if (!ce->ce_mode)
-				continue;
-			if (now && now <= entry_time)
-				recent++;
-		}
-		if (20 < recent && entries <= recent * 4) {
-#if 0
-			fprintf(stderr, "entries    %d\n", entries);
-			fprintf(stderr, "recent     %d\n", recent);
-			fprintf(stderr, "now        %lu\n", now);
-#endif
-			while (!fstat(newfd, &st) && st.st_mtime <= now) {
-				off_t where = lseek(newfd, 0, SEEK_CUR);
-				sleep(1);
-				if ((where == (off_t) -1) ||
-				    (write(newfd, "", 1) != 1) ||
-				    (lseek(newfd, -1, SEEK_CUR) != where) ||
-				    ftruncate(newfd, where))
-					break;
-			}
 		}
 	}
 	return ce_flush(&c, newfd);
