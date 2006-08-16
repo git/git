@@ -17,12 +17,19 @@ static const char builtin_mv_usage[] =
 static const char **copy_pathspec(const char *prefix, const char **pathspec,
 				  int count, int base_name)
 {
+	int i;
 	const char **result = xmalloc((count + 1) * sizeof(const char *));
 	memcpy(result, pathspec, count * sizeof(const char *));
 	result[count] = NULL;
-	if (base_name) {
-		int i;
-		for (i = 0; i < count; i++) {
+	for (i = 0; i < count; i++) {
+		int length = strlen(result[i]);
+		if (length > 0 && result[i][length - 1] == '/') {
+			char *without_slash = xmalloc(length);
+			memcpy(without_slash, result[i], length - 1);
+			without_slash[length] = '\0';
+			result[i] = without_slash;
+		}
+		if (base_name) {
 			const char *last_slash = strrchr(result[i], '/');
 			if (last_slash)
 				result[i] = last_slash + 1;
@@ -129,6 +136,12 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		if (lstat(source[i], &st) < 0)
 			bad = "bad source";
 
+		if (!bad &&
+		    (length = strlen(source[i])) >= 0 &&
+		    !strncmp(destination[i], source[i], length) &&
+		    (destination[i][length] == 0 || destination[i][length] == '/'))
+			bad = "can not move directory into itself";
+
 		if (S_ISDIR(st.st_mode)) {
 			const char *dir = source[i], *dest_dir = destination[i];
 			int first, last, len = strlen(dir);
@@ -203,12 +216,6 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 					bad = "Cannot overwrite";
 			}
 		}
-
-		if (!bad &&
-		    (length = strlen(source[i])) >= 0 &&
-		    !strncmp(destination[i], source[i], length) &&
-		    (destination[i][length] == 0 || destination[i][length] == '/'))
-			bad = "can not move directory into itself";
 
 		if (!bad && cache_name_pos(source[i], strlen(source[i])) < 0)
 			bad = "not under version control";
