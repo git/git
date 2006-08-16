@@ -17,13 +17,12 @@ proc gitdir {} {
 }
 
 proc start_rev_list {view} {
-    global startmsecs nextupdate ncmupdate
+    global startmsecs nextupdate
     global commfd leftover tclencoding datemode
     global viewargs viewfiles commitidx
 
     set startmsecs [clock clicks -milliseconds]
     set nextupdate [expr {$startmsecs + 100}]
-    set ncmupdate 1
     set commitidx($view) 0
     set args $viewargs($view)
     if {$viewfiles($view) ne {}} {
@@ -79,7 +78,7 @@ proc getcommitlines {fd view}  {
     global parentlist childlist children curview hlview
     global vparentlist vchildlist vdisporder vcmitlisted
 
-    set stuff [read $fd]
+    set stuff [read $fd 500000]
     if {$stuff == {}} {
 	if {![eof $fd]} return
 	global viewname
@@ -185,7 +184,7 @@ proc getcommitlines {fd view}  {
     }
     if {$gotsome} {
 	if {$view == $curview} {
-	    layoutmore
+	    while {[layoutmore $nextupdate]} doupdate
 	} elseif {[info exists hlview] && $view == $hlview} {
 	    vhighlightmore
 	}
@@ -196,20 +195,13 @@ proc getcommitlines {fd view}  {
 }
 
 proc doupdate {} {
-    global commfd nextupdate numcommits ncmupdate
+    global commfd nextupdate numcommits
 
     foreach v [array names commfd] {
 	fileevent $commfd($v) readable {}
     }
     update
     set nextupdate [expr {[clock clicks -milliseconds] + 100}]
-    if {$numcommits < 100} {
-	set ncmupdate [expr {$numcommits + 1}]
-    } elseif {$numcommits < 10000} {
-	set ncmupdate [expr {$numcommits + 10}]
-    } else {
-	set ncmupdate [expr {$numcommits + 100}]
-    }
     foreach v [array names commfd] {
 	set fd $commfd($v)
 	fileevent $fd readable [list getcommitlines $fd $v]
@@ -1697,7 +1689,7 @@ proc showview {n} {
 	    show_status "Reading commits..."
 	}
 	if {[info exists commfd($n)]} {
-	    layoutmore
+	    layoutmore {}
 	} else {
 	    finishcommits
 	}
@@ -2378,20 +2370,38 @@ proc visiblerows {} {
     return [list $r0 $r1]
 }
 
-proc layoutmore {} {
+proc layoutmore {tmax} {
     global rowlaidout rowoptim commitidx numcommits optim_delay
     global uparrowlen curview
 
-    set row $rowlaidout
-    set rowlaidout [layoutrows $row $commitidx($curview) 0]
-    set orow [expr {$rowlaidout - $uparrowlen - 1}]
-    if {$orow > $rowoptim} {
-	optimize_rows $rowoptim 0 $orow
-	set rowoptim $orow
-    }
-    set canshow [expr {$rowoptim - $optim_delay}]
-    if {$canshow > $numcommits} {
-	showstuff $canshow
+    while {1} {
+	if {$rowoptim - $optim_delay > $numcommits} {
+	    showstuff [expr {$rowoptim - $optim_delay}]
+	} elseif {$rowlaidout - $uparrowlen - 1 > $rowoptim} {
+	    set nr [expr {$rowlaidout - $uparrowlen - 1 - $rowoptim}]
+	    if {$nr > 100} {
+		set nr 100
+	    }
+	    optimize_rows $rowoptim 0 [expr {$rowoptim + $nr}]
+	    incr rowoptim $nr
+	} elseif {$commitidx($curview) > $rowlaidout} {
+	    set nr [expr {$commitidx($curview) - $rowlaidout}]
+	    # may need to increase this threshold if uparrowlen or
+	    # mingaplen are increased...
+	    if {$nr > 150} {
+		set nr 150
+	    }
+	    set row $rowlaidout
+	    set rowlaidout [layoutrows $row [expr {$row + $nr}] 0]
+	    if {$rowlaidout == $row} {
+		return 0
+	    }
+	} else {
+	    return 0
+	}
+	if {$tmax ne {} && [clock clicks -milliseconds] >= $tmax} {
+	    return 1
+	}
     }
 }
 
