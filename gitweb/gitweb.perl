@@ -119,6 +119,13 @@ if (defined $file_name) {
 	}
 }
 
+our $file_parent = $cgi->param('fp');
+if (defined $file_parent) {
+	if (!validate_input($file_parent)) {
+		die_error(undef, "Invalid file parent parameter");
+	}
+}
+
 our $hash = $cgi->param('h');
 if (defined $hash) {
 	if (!validate_input($hash)) {
@@ -192,6 +199,7 @@ sub href(%) {
 		action => "a",
 		project => "p",
 		file_name => "f",
+		file_parent => "fp",
 		hash => "h",
 		hash_parent => "hp",
 		hash_base => "hb",
@@ -1287,8 +1295,7 @@ sub git_difftree_body {
 			      $cgi->a({-href => href(action=>"blob", hash=>$to_id, hash_base=>$hash, file_name=>$to_file)}, "blob");
 			if ($to_id ne $from_id) {
 				print " | " .
-				      $cgi->a({-href => "$my_uri?" .
-				              esc_param("p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$to_file;fp=$from_file")}, "diff");
+				      $cgi->a({-href => href(action=>"blobdiff", hash=>$to_id, hash_parent=>$from_id, hash_base=>$hash, file_name=>$to_file, file_parent=>$from_file)}, "diff");
 			}
 			print "</td>\n";
 
@@ -1309,8 +1316,7 @@ sub git_difftree_body {
 			      $cgi->a({-href => href(action=>"blob", hash=>$to_id, hash_base=>$hash, file_name=>$to_file)}, "blob");
 			if ($to_id ne $from_id) {
 				print " | " .
-				      $cgi->a({-href => "$my_uri?" .
-				              esc_param("p=$project;a=blobdiff;h=$to_id;hp=$from_id;hb=$hash;f=$to_file;fp=$from_file")}, "diff");
+				      $cgi->a({-href => href(action=>"blobdiff", hash=>$to_id, hash_parent=>$from_id, hash_base=>$hash, file_name=>$to_file, file_parent=>$from_file)}, "diff");
 			}
 			print "</td>\n";
 		} # we should not encounter Unmerged (U) or Unknown (X) status
@@ -2304,7 +2310,7 @@ sub git_blobdiff {
 	git_print_page_path($file_name, "blob");
 	print "<div class=\"page_body\">\n" .
 	      "<div class=\"diff_info\">blob:" .
-	      $cgi->a({-href => href(action=>"blob", hash=>$hash_parent, hash_base=>$hash_base, file_name=>$file_name)}, $hash_parent) .
+	      $cgi->a({-href => href(action=>"blob", hash=>$hash_parent, hash_base=>$hash_base, file_name=>($file_parent || $file_name))}, $hash_parent) .
 	      " -> blob:" .
 	      $cgi->a({-href => href(action=>"blob", hash=>$hash, hash_base=>$hash_base, file_name=>$file_name)}, $hash) .
 	      "</div>\n";
