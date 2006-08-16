@@ -175,60 +175,11 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	}
 }
 
-#if DEBUG
-static inline void indent(int in)
-{
-	int i;
-	for (i = 0; i < in; i++) putchar(' ');
-}
-
-static void dump_pattern_exp(struct grep_expr *x, int in)
-{
-	switch (x->node) {
-	case GREP_NODE_ATOM:
-		indent(in);
-		puts(x->u.atom->pattern);
-		break;
-	case GREP_NODE_NOT:
-		indent(in);
-		puts("--not");
-		dump_pattern_exp(x->u.unary, in+1);
-		break;
-	case GREP_NODE_AND:
-		dump_pattern_exp(x->u.binary.left, in+1);
-		indent(in);
-		puts("--and");
-		dump_pattern_exp(x->u.binary.right, in+1);
-		break;
-	case GREP_NODE_OR:
-		dump_pattern_exp(x->u.binary.left, in+1);
-		indent(in);
-		puts("--or");
-		dump_pattern_exp(x->u.binary.right, in+1);
-		break;
-	}
-}
-
-static void looking_at(const char *msg, struct grep_pat **list)
-{
-	struct grep_pat *p = *list;
-	fprintf(stderr, "%s: looking at ", msg);
-	if (!p)
-		fprintf(stderr, "empty\n");
-	else
-		fprintf(stderr, "<%s>\n", p->pattern);
-}
-#else
-#define looking_at(a,b) do {} while(0)
-#endif
-
 static struct grep_expr *compile_pattern_expr(struct grep_pat **);
 static struct grep_expr *compile_pattern_atom(struct grep_pat **list)
 {
 	struct grep_pat *p;
 	struct grep_expr *x;
-
-	looking_at("atom", list);
 
 	p = *list;
 	switch (p->token) {
@@ -257,8 +208,6 @@ static struct grep_expr *compile_pattern_not(struct grep_pat **list)
 	struct grep_pat *p;
 	struct grep_expr *x;
 
-	looking_at("not", list);
-
 	p = *list;
 	switch (p->token) {
 	case GREP_NOT:
@@ -280,8 +229,6 @@ static struct grep_expr *compile_pattern_and(struct grep_pat **list)
 {
 	struct grep_pat *p;
 	struct grep_expr *x, *y, *z;
-
-	looking_at("and", list);
 
 	x = compile_pattern_not(list);
 	p = *list;
@@ -306,8 +253,6 @@ static struct grep_expr *compile_pattern_or(struct grep_pat **list)
 	struct grep_pat *p;
 	struct grep_expr *x, *y, *z;
 
-	looking_at("or", list);
-
 	x = compile_pattern_and(list);
 	p = *list;
 	if (x && p && p->token != GREP_CLOSE_PAREN) {
@@ -325,8 +270,6 @@ static struct grep_expr *compile_pattern_or(struct grep_pat **list)
 
 static struct grep_expr *compile_pattern_expr(struct grep_pat **list)
 {
-	looking_at("expr", list);
-
 	return compile_pattern_or(list);
 }
 
