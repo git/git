@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git-apply' [--stat] [--numstat] [--summary] [--check] [--index] [--apply]
 	  [--no-add] [--index-info] [--allow-binary-replacement]
-	  [--reverse] [-z] [-pNUM]
+	  [--reverse] [--reject] [-z] [-pNUM]
 	  [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>]
 	  [<patch>...]
 
@@ -65,6 +65,13 @@ OPTIONS
 
 --reverse::
 	Apply the patch in reverse.
+
+--reject::
+	For atomicity, `git apply` fails the whole patch and
+	does not touch the working tree when some of the hunks
+	do not apply by default.  This option makes it apply
+	parts of the patch that are applicable, and send the
+	rejected hunks to the standard output of the command.
 
 -z::
 	When showing the index information, do not munge paths,

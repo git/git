@@ -38,12 +38,13 @@ static int summary;
 static int check;
 static int apply = 1;
 static int apply_in_reverse;
+static int apply_with_reject;
 static int no_add;
 static int show_index_info;
 static int line_termination = '\n';
 static unsigned long p_context = -1;
 static const char apply_usage[] =
-"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--cached] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [--reverse] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>] <patch>...";
+"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--cached] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [--reverse] [--reject] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>] <patch>...";
 
 static enum whitespace_eol {
 	nowarn_whitespace,
@@ -122,6 +123,7 @@ struct fragment {
 	unsigned long newpos, newlines;
 	const char *patch;
 	int size;
+	int rejected;
 	struct fragment *next;
 };
 
@@ -138,6 +140,7 @@ struct patch {
 	char *new_name, *old_name, *def_name;
 	unsigned int old_mode, new_mode;
 	int is_rename, is_copy, is_new, is_delete, is_binary;
+	int rejected;
 	unsigned long deflate_origlen;
 	int lines_added, lines_deleted;
 	int score;
@@ -1548,7 +1551,8 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 	lines = 0;
 	pos = frag->newpos;
 	for (;;) {
-		offset = find_offset(buf, desc->size, oldlines, oldsize, pos, &lines);
+		offset = find_offset(buf, desc->size,
+				     oldlines, oldsize, pos, &lines);
 		if (match_end && offset + oldsize != desc->size)
 			offset = -1;
 		if (match_beginning && offset)
@@ -1561,8 +1565,10 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 			/* Warn if it was necessary to reduce the number
 			 * of context lines.
 			 */
-			if ((leading != frag->leading) || (trailing != frag->trailing))
-				fprintf(stderr, "Context reduced to (%ld/%ld) to apply fragment at %d\n",
+			if ((leading != frag->leading) ||
+			    (trailing != frag->trailing))
+				fprintf(stderr, "Context reduced to (%ld/%ld)"
+					" to apply fragment at %d\n",
 					leading, trailing, pos + lines);
 
 			if (size > alloc) {
@@ -1572,7 +1578,9 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 				desc->buffer = buf;
 			}
 			desc->size = size;
-			memmove(buf + offset + newsize, buf + offset + oldsize, size - offset - newsize);
+			memmove(buf + offset + newsize,
+				buf + offset + oldsize,
+				size - offset - newsize);
 			memcpy(buf + offset, newlines, newsize);
 			offset = 0;
 
@@ -1736,9 +1744,12 @@ static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 		return apply_binary(desc, patch);
 
 	while (frag) {
-		if (apply_one_fragment(desc, frag, patch->inaccurate_eof) < 0)
-			return error("patch failed: %s:%ld",
-				     name, frag->oldpos);
+		if (apply_one_fragment(desc, frag, patch->inaccurate_eof)) {
+			error("patch failed: %s:%ld", name, frag->oldpos);
+			if (!apply_with_reject)
+				return -1;
+			frag->rejected = 1;
+		}
 		frag = frag->next;
 	}
 	return 0;
@@ -1774,8 +1785,9 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 	desc.size = size;
 	desc.alloc = alloc;
 	desc.buffer = buf;
+
 	if (apply_fragments(&desc, patch) < 0)
-		return -1;
+		return -1; /* note with --reject this succeeds. */
 
 	/* NUL terminate the result */
 	if (desc.alloc <= desc.size)
@@ -1800,6 +1812,7 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 	struct cache_entry *ce = NULL;
 	int ok_if_exists;
 
+	patch->rejected = 1; /* we will drop this after we succeed */
 	if (old_name) {
 		int changed = 0;
 		int stat_ret = 0;
@@ -1905,6 +1918,7 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 
 	if (apply_data(patch, &st, ce) < 0)
 		return error("%s: patch does not apply", name);
+	patch->rejected = 0;
 	return 0;
 }
 
@@ -2223,23 +2237,73 @@ static void write_out_one_result(struct patch *patch, int phase)
 	if (phase == 0)
 		remove_file(patch);
 	if (phase == 1)
-	create_file(patch);
+		create_file(patch);
 }
 
-static void write_out_results(struct patch *list, int skipped_patch)
+static int write_out_one_reject(struct patch *patch)
+{
+	struct fragment *frag;
+	int rejects = 0;
+
+	for (rejects = 0, frag = patch->fragments; frag; frag = frag->next) {
+		if (!frag->rejected)
+			continue;
+		if (rejects == 0) {
+			rejects = 1;
+			printf("** Rejected hunk(s) for ");
+			if (patch->old_name && patch->new_name &&
+			    strcmp(patch->old_name, patch->new_name)) {
+				write_name_quoted(NULL, 0,
+						  patch->old_name, 1, stdout);
+				fputs(" => ", stdout);
+				write_name_quoted(NULL, 0,
+						  patch->new_name, 1, stdout);
+			}
+			else {
+				const char *n = patch->new_name;
+				if (!n)
+					n = patch->old_name;
+				write_name_quoted(NULL, 0, n, 1, stdout);
+			}
+			printf(" **\n");
+		}
+		printf("%.*s", frag->size, frag->patch);
+		if (frag->patch[frag->size-1] != '\n')
+			putchar('\n');
+	}
+	return rejects;
+}
+
+static int write_out_results(struct patch *list, int skipped_patch)
 {
 	int phase;
+	int errs = 0;
+	struct patch *l;
 
 	if (!list && !skipped_patch)
-		die("No changes");
+		return error("No changes");
 
 	for (phase = 0; phase < 2; phase++) {
-		struct patch *l = list;
+		l = list;
 		while (l) {
-			write_out_one_result(l, phase);
+			if (l->rejected)
+				errs = 1;
+			else
+				write_out_one_result(l, phase);
 			l = l->next;
 		}
 	}
+	if (apply_with_reject) {
+		l = list;
+		while (l) {
+			if (!l->rejected) {
+				if (write_out_one_reject(l))
+					errs = 1;
+			}
+			l = l->next;
+		}
+	}
+	return errs;
 }
 
 static struct lock_file lock_file;
@@ -2314,11 +2378,13 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 			die("unable to read index file");
 	}
 
-	if ((check || apply) && check_patch_list(list) < 0)
+	if ((check || apply) &&
+	    check_patch_list(list) < 0 &&
+	    !apply_with_reject)
 		exit(1);
 
-	if (apply)
-		write_out_results(list, skipped_patch);
+	if (apply && write_out_results(list, skipped_patch))
+		exit(1);
 
 	if (show_index_info)
 		show_index_list(list);
@@ -2351,6 +2417,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 	int i;
 	int read_stdin = 1;
 	int inaccurate_eof = 0;
+	int errs = 0;
 
 	const char *whitespace_option = NULL;
 
@@ -2360,7 +2427,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 		int fd;
 
 		if (!strcmp(arg, "-")) {
-			apply_patch(0, "<stdin>", inaccurate_eof);
+			errs |= apply_patch(0, "<stdin>", inaccurate_eof);
 			read_stdin = 0;
 			continue;
 		}
@@ -2441,6 +2508,10 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			apply_in_reverse = 1;
 			continue;
 		}
+		if (!strcmp(arg, "--reject")) {
+			apply = apply_with_reject = 1;
+			continue;
+		}
 		if (!strcmp(arg, "--inaccurate-eof")) {
 			inaccurate_eof = 1;
 			continue;
@@ -2461,18 +2532,19 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			usage(apply_usage);
 		read_stdin = 0;
 		set_default_whitespace_mode(whitespace_option);
-		apply_patch(fd, arg, inaccurate_eof);
+		errs |= apply_patch(fd, arg, inaccurate_eof);
 		close(fd);
 	}
 	set_default_whitespace_mode(whitespace_option);
 	if (read_stdin)
-		apply_patch(0, "<stdin>", inaccurate_eof);
+		errs |= apply_patch(0, "<stdin>", inaccurate_eof);
 	if (whitespace_error) {
 		if (squelch_whitespace_errors &&
 		    squelch_whitespace_errors < whitespace_error) {
 			int squelched =
 				whitespace_error - squelch_whitespace_errors;
-			fprintf(stderr, "warning: squelched %d whitespace error%s\n",
+			fprintf(stderr, "warning: squelched %d "
+				"whitespace error%s\n",
 				squelched,
 				squelched == 1 ? "" : "s");
 		}
@@ -2500,5 +2572,5 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			die("Unable to write new index file");
 	}
 
-	return 0;
+	return !!errs;
 }
