@@ -2441,7 +2441,7 @@ sub git_commitdiff {
 				      $cgi->a({-href => href(action=>"blob", hash=>$from_id, hash_base=>$hash_parent, file_name=>$file)}, $from_id) .
 				      " -> " .
 				      file_type($to_mode) . ":" .
-				      $cgi->a({-href => href(action=>"blob", hash=>$to_id, hash_base=>$hash, file_name=>$file)}, $to_id) .
+				      $cgi->a({-href => href(action=>"blob", hash=>$to_id, hash_base=>$hash, file_name=>$file)}, $to_id);
 				print "</div>\n";
 				git_diff_print($from_id, "a/$file",  $to_id, "b/$file");
 			}
