@@ -7,15 +7,15 @@ int save_commit_buffer = 1;
 struct sort_node
 {
 	/*
-         * the number of children of the associated commit
-         * that also occur in the list being sorted.
-         */
+	 * the number of children of the associated commit
+	 * that also occur in the list being sorted.
+	 */
 	unsigned int indegree;
 
 	/*
-         * reference to original list item that we will re-use
-         * on output.
-         */
+	 * reference to original list item that we will re-use
+	 * on output.
+	 */
 	struct commit_list * list_item;
 
 };
