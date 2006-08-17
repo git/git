@@ -15,6 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Encode;
 use Fcntl ':mode';
 use File::Find qw();
+use File::Basename qw(basename);
 binmode STDOUT, ':utf8';
 
 our $cgi = new CGI;
@@ -183,6 +184,7 @@ my %actions = (
 	"tag" => \&git_tag,
 	"tags" => \&git_tags,
 	"tree" => \&git_tree,
+	"snapshot" => \&git_snapshot,
 );
 
 $action = 'summary' if (!defined($action));
@@ -1389,6 +1391,7 @@ sub git_difftree_body {
 sub git_shortlog_body {
 	# uses global variable $project
 	my ($revlist, $from, $to, $refs, $extra) = @_;
+	my $have_snapshot = git_get_project_config_bool('snapshot');
 	$from = 0 unless defined $from;
 	$to = $#{$revlist} if (!defined $to || $#{$revlist} < $to);
 
@@ -1413,8 +1416,11 @@ sub git_shortlog_body {
 		print "</td>\n" .
 		      "<td class=\"link\">" .
 		      $cgi->a({-href => href(action=>"commit", hash=>$commit)}, "commit") . " | " .
-		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff") .
-		      "</td>\n" .
+		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff");
+		if ($have_snapshot) {
+			print " | " .  $cgi->a({-href => href(action=>"snapshot", hash=>$commit)}, "snapshot");
+		}
+		print "</td>\n" .
 		      "</tr>\n";
 	}
 	if (defined $extra) {
@@ -2181,6 +2187,29 @@ sub git_tree {
 	git_footer_html();
 }
 
+sub git_snapshot {
+
+	if (!defined $hash) {
+		$hash = git_get_head_hash($project);
+	}
+
+	my $filename = basename($project) . "-$hash.tar.gz";
+
+	print $cgi->header(-type => 'application/x-tar',
+			-content-encoding => 'gzip',
+			'-content-disposition' => "inline; filename=\"$filename\"",
+			-status => '200 OK');
+
+	open my $fd, "-|", "$GIT tar-tree $hash \'$project\' | gzip" or
+				die_error(undef, "Execute git-tar-tree failed.");
+	binmode STDOUT, ':raw';
+	print <$fd>;
+	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
+	close $fd;
+
+
+}
+
 sub git_log {
 	my $head = git_get_head_hash($project);
 	if (!defined $hash) {
@@ -2258,6 +2287,7 @@ sub git_commit {
 	}
 	my $refs = git_get_references();
 	my $ref = format_ref_marker($refs, $co{'id'});
+	my $have_snapshot = git_get_project_config_bool('snapshot');
 	my $formats_nav = '';
 	if (defined $file_name && defined $co{'parent'}) {
 		my $parent = $co{'parent'};
@@ -2293,8 +2323,11 @@ sub git_commit {
 	      "<td class=\"sha1\">" .
 	      $cgi->a({-href => href(action=>"tree", hash=>$co{'tree'}, hash_base=>$hash), class => "list"}, $co{'tree'}) .
 	      "</td>" .
-	      "<td class=\"link\">" . $cgi->a({-href => href(action=>"tree", hash=>$co{'tree'}, hash_base=>$hash)}, "tree") .
-	      "</td>" .
+	      "<td class=\"link\">" . $cgi->a({-href => href(action=>"tree", hash=>$co{'tree'}, hash_base=>$hash)}, "tree");
+	if ($have_snapshot) {
+		print " | " .  $cgi->a({-href => href(action=>"snapshot", hash=>$hash)}, "snapshot");
+	}
+	print "</td>" .
 	      "</tr>\n";
 	my $parents = $co{'parents'};
 	foreach my $par (@$parents) {
