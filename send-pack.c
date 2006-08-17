@@ -265,7 +265,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 		char old_hex[60], *new_hex;
 		if (!ref->peer_ref)
 			continue;
-		if (!memcmp(ref->old_sha1, ref->peer_ref->new_sha1, 20)) {
+		if (!hashcmp(ref->old_sha1, ref->peer_ref->new_sha1)) {
 			if (verbose)
 				fprintf(stderr, "'%s': up-to-date\n", ref->name);
 			continue;

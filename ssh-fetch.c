@@ -67,7 +67,7 @@ int fetch(unsigned char *sha1)
 	signed char remote;
 	struct object_list *temp;
 
-	if (memcmp(sha1, in_transit->item->sha1, 20)) {
+	if (hashcmp(sha1, in_transit->item->sha1)) {
 		/* we must have already fetched it to clean the queue */
 		return has_sha1_file(sha1) ? 0 : -1;
 	}

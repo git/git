@@ -301,7 +301,7 @@ static void finish_object_request(struct object_request *obj_req)
 		unlink(obj_req->tmpfile);
 		return;
 	}
-	if (memcmp(obj_req->sha1, obj_req->real_sha1, 20)) {
+	if (hashcmp(obj_req->sha1, obj_req->real_sha1)) {
 		unlink(obj_req->tmpfile);
 		return;
 	}
@@ -1070,7 +1070,7 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 	int ret = 0;
 	struct object_request *obj_req = object_queue_head;
 
-	while (obj_req != NULL && memcmp(obj_req->sha1, sha1, 20))
+	while (obj_req != NULL && hashcmp(obj_req->sha1, sha1))
 		obj_req = obj_req->next;
 	if (obj_req == NULL)
 		return error("Couldn't find request for %s in the queue", hex);
@@ -1109,7 +1109,7 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 	} else if (obj_req->zret != Z_STREAM_END) {
 		corrupt_object_found++;
 		ret = error("File %s (%s) corrupt", hex, obj_req->url);
-	} else if (memcmp(obj_req->sha1, obj_req->real_sha1, 20)) {
+	} else if (hashcmp(obj_req->sha1, obj_req->real_sha1)) {
 		ret = error("File %s has bad hash", hex);
 	} else if (obj_req->rename < 0) {
 		ret = error("unable to write sha1 filename %s",

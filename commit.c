@@ -123,7 +123,7 @@ static int commit_graft_pos(const unsigned char *sha1)
 	while (lo < hi) {
 		int mi = (lo + hi) / 2;
 		struct commit_graft *graft = commit_graft[mi];
-		int cmp = memcmp(sha1, graft->sha1, 20);
+		int cmp = hashcmp(sha1, graft->sha1);
 		if (!cmp)
 			return mi;
 		if (cmp < 0)

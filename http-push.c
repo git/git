@@ -745,7 +745,7 @@ static void finish_request(struct transfer_request *request)
 			SHA1_Final(request->real_sha1, &request->c);
 			if (request->zret != Z_STREAM_END) {
 				unlink(request->tmpfile);
-			} else if (memcmp(request->obj->sha1, request->real_sha1, 20)) {
+			} else if (hashcmp(request->obj->sha1, request->real_sha1)) {
 				unlink(request->tmpfile);
 			} else {
 				request->rename =
@@ -2416,7 +2416,7 @@ int main(int argc, char **argv)
 
 		if (!ref->peer_ref)
 			continue;
-		if (!memcmp(ref->old_sha1, ref->peer_ref->new_sha1, 20)) {
+		if (!hashcmp(ref->old_sha1, ref->peer_ref->new_sha1)) {
 			if (push_verbosely || 1)
 				fprintf(stderr, "'%s': up-to-date\n", ref->name);
 			continue;
