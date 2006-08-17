@@ -1186,6 +1186,66 @@ sub git_print_page_path {
 	}
 }
 
+sub git_print_log {
+	my $log = shift;
+
+	# remove leading empty lines
+	while (defined $log->[0] && $log->[0] eq "") {
+		shift @$log;
+	}
+
+	# print log
+	my $signoff = 0;
+	my $empty = 0;
+	foreach my $line (@$log) {
+		# print only one empty line
+		# do not print empty line after signoff
+		if ($line eq "") {
+			next if ($empty || $signoff);
+			$empty = 1;
+		} else {
+			$empty = 0;
+		}
+		if ($line =~ m/^ *(signed[ \-]off[ \-]by[ :]|acked[ \-]by[ :]|cc[ :])/i) {
+			$signoff = 1;
+			print "<span class=\"signoff\">" . esc_html($line) . "</span><br/>\n";
+		} else {
+			$signoff = 0;
+			print format_log_line_html($line) . "<br/>\n";
+		}
+	}
+}
+
+sub git_print_simplified_log {
+	my $log = shift;
+	my $remove_title = shift;
+
+	shift @$log if $remove_title;
+	# remove leading empty lines
+	while (defined $log->[0] && $log->[0] eq "") {
+		shift @$log;
+	}
+
+	# simplify and print log
+	my $empty = 0;
+	foreach my $line (@$log) {
+		# remove signoff lines
+		if ($line =~ m/^ *(signed[ \-]off[ \-]by[ :]|acked[ \-]by[ :]|cc[ :])/i) {
+			next;
+		}
+		# print only one empty line
+		if ($line eq "") {
+			next if $empty;
+			$empty = 1;
+		} else {
+			$empty = 0;
+		}
+		print format_log_line_html($line) . "<br/>\n";
+	}
+	# end with single empty line
+	print "<br/>\n" unless $empty;
+}
+
 ## ......................................................................
 ## functions printing large fragments of HTML
 
@@ -2165,27 +2225,10 @@ sub git_log {
 		      "<br/>\n" .
 		      "</div>\n" .
 		      "<i>" . esc_html($co{'author_name'}) .  " [$ad{'rfc2822'}]</i><br/>\n" .
-		      "</div>\n" .
-		      "<div class=\"log_body\">\n";
-		my $comment = $co{'comment'};
-		my $empty = 0;
-		foreach my $line (@$comment) {
-			if ($line =~ m/^ *(signed[ \-]off[ \-]by[ :]|acked[ \-]by[ :]|cc[ :])/i) {
-				next;
-			}
-			if ($line eq "") {
-				if ($empty) {
-					next;
-				}
-				$empty = 1;
-			} else {
-				$empty = 0;
-			}
-			print format_log_line_html($line) . "<br/>\n";
-		}
-		if (!$empty) {
-			print "<br/>\n";
-		}
+		      "</div>\n";
+
+		print "<div class=\"log_body\">\n";
+		git_print_simplified_log($co{'comment'});
 		print "</div>\n";
 	}
 	git_footer_html();
@@ -2266,28 +2309,9 @@ sub git_commit {
 	}
 	print "</table>".
 	      "</div>\n";
+
 	print "<div class=\"page_body\">\n";
-	my $comment = $co{'comment'};
-	my $empty = 0;
-	my $signed = 0;
-	foreach my $line (@$comment) {
-		# print only one empty line
-		if ($line eq "") {
-			if ($empty || $signed) {
-				next;
-			}
-			$empty = 1;
-		} else {
-			$empty = 0;
-		}
-		if ($line =~ m/^ *(signed[ \-]off[ \-]by[ :]|acked[ \-]by[ :]|cc[ :])/i) {
-			$signed = 1;
-			print "<span class=\"signoff\">" . esc_html($line) . "</span><br/>\n";
-		} else {
-			$signed = 0;
-			print format_log_line_html($line) . "<br/>\n";
-		}
-	}
+	git_print_log($co{'comment'});
 	print "</div>\n";
 
 	git_difftree_body(\@difftree, $parent);
@@ -2353,29 +2377,7 @@ sub git_commitdiff {
 	git_print_page_nav('commitdiff','', $hash,$co{'tree'},$hash, $formats_nav);
 	git_print_header_div('commit', esc_html($co{'title'}) . $ref, $hash);
 	print "<div class=\"page_body\">\n";
-	my $comment = $co{'comment'};
-	my $empty = 0;
-	my $signed = 0;
-	my @log = @$comment;
-	# remove first and empty lines after that
-	shift @log;
-	while (defined $log[0] && $log[0] eq "") {
-		shift @log;
-	}
-	foreach my $line (@log) {
-		if ($line =~ m/^ *(signed[ \-]off[ \-]by[ :]|acked[ \-]by[ :]|cc[ :])/i) {
-			next;
-		}
-		if ($line eq "") {
-			if ($empty) {
-				next;
-			}
-			$empty = 1;
-		} else {
-			$empty = 0;
-		}
-		print format_log_line_html($line) . "<br/>\n";
-	}
+	git_print_simplified_log($co{'comment'}, 1); # skip title
 	print "<br/>\n";
 	foreach my $line (@difftree) {
 		# ':100644 100644 03b218260e99b78c6df0ed378e59ed9205ccc96d 3b93d5e7cc7f7dd4ebed13a5cc1a4ad976fc94d8 M      ls-files.c'
