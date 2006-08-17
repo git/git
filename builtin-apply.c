@@ -43,7 +43,7 @@ static int show_index_info;
 static int line_termination = '\n';
 static unsigned long p_context = -1;
 static const char apply_usage[] =
-"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--cached] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>] <patch>...";
+"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--cached] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [--reverse] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>] <patch>...";
 
 static enum whitespace_eol {
 	nowarn_whitespace,
@@ -1063,8 +1063,12 @@ static struct fragment *parse_binary_hunk(char **buf_p,
 		llen = linelen(buffer, size);
 		used += llen;
 		linenr++;
-		if (llen == 1)
+		if (llen == 1) {
+			/* consume the blank line */
+			buffer++;
+			size--;
 			break;
+		}
 		/* Minimum line is "A00000\n" which is 7-byte long,
 		 * and the line length must be multiple of 5 plus 2.
 		 */
@@ -1618,7 +1622,7 @@ static int apply_binary_fragment(struct buffer_desc *desc, struct patch *patch)
 				     "without the reverse hunk to '%s'",
 				     patch->new_name
 				     ? patch->new_name : patch->old_name);
-		fragment = fragment;
+		fragment = fragment->next;
 	}
 	data = (void*) fragment->patch;
 	switch (fragment->binary_patch_method) {
@@ -1717,7 +1721,7 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 		write_sha1_file_prepare(desc->buffer, desc->size, blob_type,
 					sha1, hdr, &hdrlen);
 		if (strcmp(sha1_to_hex(sha1), patch->new_sha1_prefix))
-			return error("binary patch to '%s' creates incorrect result", name);
+			return error("binary patch to '%s' creates incorrect result (expecting %s, got %s)", name, patch->new_sha1_prefix, sha1_to_hex(sha1));
 	}
 
 	return 0;
