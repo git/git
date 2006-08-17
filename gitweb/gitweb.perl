@@ -1177,12 +1177,18 @@ sub git_print_header_div {
 sub git_print_page_path {
 	my $name = shift;
 	my $type = shift;
+	my $hb = shift;
 
 	if (!defined $name) {
 		print "<div class=\"page_path\"><b>/</b></div>\n";
 	} elsif (defined $type && $type eq 'blob') {
-		print "<div class=\"page_path\"><b>" .
-			$cgi->a({-href => href(action=>"blob_plain", file_name=>$file_name)}, esc_html($name)) . "</b><br/></div>\n";
+		print "<div class=\"page_path\"><b>";
+		if (defined $hb) {
+			print $cgi->a({-href => href(action=>"blob_plain", hash_base=>$hb, file_name=>$file_name)}, esc_html($name));
+		} else {
+			print $cgi->a({-href => href(action=>"blob_plain", file_name=>$file_name)}, esc_html($name));
+		}
+		print "</b><br/></div>\n";
 	} else {
 		print "<div class=\"page_path\"><b>" . esc_html($name) . "</b><br/></div>\n";
 	}
@@ -1874,7 +1880,7 @@ sub git_blame2 {
 		" | " . $cgi->a({-href => href(action=>"blame", file_name=>$file_name)}, "head");
 	git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
 	git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
-	git_print_page_path($file_name, $ftype);
+	git_print_page_path($file_name, $ftype, $hash_base);
 	my @rev_color = (qw(light2 dark2));
 	my $num_colors = scalar(@rev_color);
 	my $current_color = 0;
@@ -1928,7 +1934,7 @@ sub git_blame {
 		" | " . $cgi->a({-href => href(action=>"blame", file_name=>$file_name)}, "head");
 	git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
 	git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
-	git_print_page_path($file_name, 'blob');
+	git_print_page_path($file_name, 'blob', $hash_base);
 	print "<div class=\"page_body\">\n";
 	print <<HTML;
 <table class="blame">
@@ -2091,7 +2097,7 @@ sub git_blob {
 		      "<br/><br/></div>\n" .
 		      "<div class=\"title\">$hash</div>\n";
 	}
-	git_print_page_path($file_name, "blob");
+	git_print_page_path($file_name, "blob", $hash_base);
 	print "<div class=\"page_body\">\n";
 	my $nr;
 	while (my $line = <$fd>) {
@@ -2141,7 +2147,7 @@ sub git_tree {
 	if (defined $file_name) {
 		$base = esc_html("$file_name/");
 	}
-	git_print_page_path($file_name, 'tree');
+	git_print_page_path($file_name, 'tree', $hash_base);
 	print "<div class=\"page_body\">\n";
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 0;
@@ -2365,7 +2371,7 @@ sub git_blobdiff {
 		      "<br/><br/></div>\n" .
 		      "<div class=\"title\">$hash vs $hash_parent</div>\n";
 	}
-	git_print_page_path($file_name, "blob");
+	git_print_page_path($file_name, "blob", $hash_base);
 	print "<div class=\"page_body\">\n" .
 	      "<div class=\"diff_info\">blob:" .
 	      $cgi->a({-href => href(action=>"blob", hash=>$hash_parent, hash_base=>$hash_base, file_name=>($file_parent || $file_name))}, $hash_parent) .
@@ -2535,7 +2541,7 @@ sub git_history {
 	if (defined $hash) {
 		$ftype = git_get_type($hash);
 	}
-	git_print_page_path($file_name, $ftype);
+	git_print_page_path($file_name, $ftype, $hash_base);
 
 	open my $fd, "-|",
 		$GIT, "rev-list", "--full-history", $hash_base, "--", $file_name;
