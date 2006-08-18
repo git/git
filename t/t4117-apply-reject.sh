@@ -57,6 +57,17 @@ test_expect_success 'apply without --reject should fail' '
 	diff -u file1 saved.file1
 '
 
+test_expect_success 'apply without --reject should fail' '
+
+	if git apply --verbose patch.1
+	then
+		echo "Eh? Why?"
+		exit 1
+	fi
+
+	diff -u file1 saved.file1
+'
+
 test_expect_success 'apply with --reject should fail but update the file' '
 
 	cat saved.file1 >file1 &&
@@ -104,6 +115,43 @@ test_expect_success 'apply with --reject should fail but update the file' '
 		exit 1
 	fi
 
+'
+
+test_expect_success 'the same test with --verbose' '
+
+	cat saved.file1 >file1 &&
+	rm -f file1.rej file2.rej file2 &&
+
+	if git apply --reject --verbose patch.2 >rejects
+	then
+		echo "succeeds with --reject?"
+		exit 1
+	fi
+
+	test -f file1 && {
+		echo "file1 still exists?"
+		exit 1
+	}
+	diff -u file2 expected &&
+
+	cat file2.rej &&
+
+	if test -f file1.rej
+	then
+		echo "file2 should not have been touched"
+		exit 1
+	fi
+
+'
+
+test_expect_success 'apply cleanly with --verbose' '
+
+	git cat-file -p HEAD:file1 >file1 &&
+	rm -f file?.rej file2 &&
+
+	git apply --verbose patch.1 &&
+
+	diff -u file1 clean
 '
 
 test_done
