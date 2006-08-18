@@ -15,6 +15,7 @@ use CGI::Carp qw(fatalsToBrowser);
 use Encode;
 use Fcntl ':mode';
 use File::Find qw();
+use File::Basename qw(basename);
 binmode STDOUT, ':utf8';
 
 our $cgi = new CGI;
@@ -183,6 +184,7 @@ my %actions = (
 	"tag" => \&git_tag,
 	"tags" => \&git_tags,
 	"tree" => \&git_tree,
+	"snapshot" => \&git_snapshot,
 );
 
 $action = 'summary' if (!defined($action));
@@ -1175,12 +1177,18 @@ sub git_print_header_div {
 sub git_print_page_path {
 	my $name = shift;
 	my $type = shift;
+	my $hb = shift;
 
 	if (!defined $name) {
 		print "<div class=\"page_path\"><b>/</b></div>\n";
 	} elsif (defined $type && $type eq 'blob') {
-		print "<div class=\"page_path\"><b>" .
-			$cgi->a({-href => href(action=>"blob_plain", file_name=>$file_name)}, esc_html($name)) . "</b><br/></div>\n";
+		print "<div class=\"page_path\"><b>";
+		if (defined $hb) {
+			print $cgi->a({-href => href(action=>"blob_plain", hash_base=>$hb, file_name=>$file_name)}, esc_html($name));
+		} else {
+			print $cgi->a({-href => href(action=>"blob_plain", file_name=>$file_name)}, esc_html($name));
+		}
+		print "</b><br/></div>\n";
 	} else {
 		print "<div class=\"page_path\"><b>" . esc_html($name) . "</b><br/></div>\n";
 	}
@@ -1389,6 +1397,7 @@ sub git_difftree_body {
 sub git_shortlog_body {
 	# uses global variable $project
 	my ($revlist, $from, $to, $refs, $extra) = @_;
+	my $have_snapshot = git_get_project_config_bool('snapshot');
 	$from = 0 unless defined $from;
 	$to = $#{$revlist} if (!defined $to || $#{$revlist} < $to);
 
@@ -1413,8 +1422,11 @@ sub git_shortlog_body {
 		print "</td>\n" .
 		      "<td class=\"link\">" .
 		      $cgi->a({-href => href(action=>"commit", hash=>$commit)}, "commit") . " | " .
-		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff") .
-		      "</td>\n" .
+		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff");
+		if ($have_snapshot) {
+			print " | " .  $cgi->a({-href => href(action=>"snapshot", hash=>$commit)}, "snapshot");
+		}
+		print "</td>\n" .
 		      "</tr>\n";
 	}
 	if (defined $extra) {
@@ -1868,7 +1880,7 @@ sub git_blame2 {
 		" | " . $cgi->a({-href => href(action=>"blame", file_name=>$file_name)}, "head");
 	git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
 	git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
-	git_print_page_path($file_name, $ftype);
+	git_print_page_path($file_name, $ftype, $hash_base);
 	my @rev_color = (qw(light2 dark2));
 	my $num_colors = scalar(@rev_color);
 	my $current_color = 0;
@@ -1922,7 +1934,7 @@ sub git_blame {
 		" | " . $cgi->a({-href => href(action=>"blame", file_name=>$file_name)}, "head");
 	git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
 	git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
-	git_print_page_path($file_name, 'blob');
+	git_print_page_path($file_name, 'blob', $hash_base);
 	print "<div class=\"page_body\">\n";
 	print <<HTML;
 <table class="blame">
@@ -2085,7 +2097,7 @@ sub git_blob {
 		      "<br/><br/></div>\n" .
 		      "<div class=\"title\">$hash</div>\n";
 	}
-	git_print_page_path($file_name, "blob");
+	git_print_page_path($file_name, "blob", $hash_base);
 	print "<div class=\"page_body\">\n";
 	my $nr;
 	while (my $line = <$fd>) {
@@ -2135,7 +2147,7 @@ sub git_tree {
 	if (defined $file_name) {
 		$base = esc_html("$file_name/");
 	}
-	git_print_page_path($file_name, 'tree');
+	git_print_page_path($file_name, 'tree', $hash_base);
 	print "<div class=\"page_body\">\n";
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 0;
@@ -2179,6 +2191,29 @@ sub git_tree {
 	print "</table>\n" .
 	      "</div>";
 	git_footer_html();
+}
+
+sub git_snapshot {
+
+	if (!defined $hash) {
+		$hash = git_get_head_hash($project);
+	}
+
+	my $filename = basename($project) . "-$hash.tar.gz";
+
+	print $cgi->header(-type => 'application/x-tar',
+			-content-encoding => 'x-gzip',
+			'-content-disposition' => "inline; filename=\"$filename\"",
+			-status => '200 OK');
+
+	open my $fd, "-|", "$GIT tar-tree $hash \'$project\' | gzip" or
+				die_error(undef, "Execute git-tar-tree failed.");
+	binmode STDOUT, ':raw';
+	print <$fd>;
+	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
+	close $fd;
+
+
 }
 
 sub git_log {
@@ -2258,6 +2293,7 @@ sub git_commit {
 	}
 	my $refs = git_get_references();
 	my $ref = format_ref_marker($refs, $co{'id'});
+	my $have_snapshot = git_get_project_config_bool('snapshot');
 	my $formats_nav = '';
 	if (defined $file_name && defined $co{'parent'}) {
 		my $parent = $co{'parent'};
@@ -2293,8 +2329,11 @@ sub git_commit {
 	      "<td class=\"sha1\">" .
 	      $cgi->a({-href => href(action=>"tree", hash=>$co{'tree'}, hash_base=>$hash), class => "list"}, $co{'tree'}) .
 	      "</td>" .
-	      "<td class=\"link\">" . $cgi->a({-href => href(action=>"tree", hash=>$co{'tree'}, hash_base=>$hash)}, "tree") .
-	      "</td>" .
+	      "<td class=\"link\">" . $cgi->a({-href => href(action=>"tree", hash=>$co{'tree'}, hash_base=>$hash)}, "tree");
+	if ($have_snapshot) {
+		print " | " .  $cgi->a({-href => href(action=>"snapshot", hash=>$hash)}, "snapshot");
+	}
+	print "</td>" .
 	      "</tr>\n";
 	my $parents = $co{'parents'};
 	foreach my $par (@$parents) {
@@ -2332,7 +2371,7 @@ sub git_blobdiff {
 		      "<br/><br/></div>\n" .
 		      "<div class=\"title\">$hash vs $hash_parent</div>\n";
 	}
-	git_print_page_path($file_name, "blob");
+	git_print_page_path($file_name, "blob", $hash_base);
 	print "<div class=\"page_body\">\n" .
 	      "<div class=\"diff_info\">blob:" .
 	      $cgi->a({-href => href(action=>"blob", hash=>$hash_parent, hash_base=>$hash_base, file_name=>($file_parent || $file_name))}, $hash_parent) .
@@ -2408,7 +2447,7 @@ sub git_commitdiff {
 				      $cgi->a({-href => href(action=>"blob", hash=>$from_id, hash_base=>$hash_parent, file_name=>$file)}, $from_id) .
 				      " -> " .
 				      file_type($to_mode) . ":" .
-				      $cgi->a({-href => href(action=>"blob", hash=>$to_id, hash_base=>$hash, file_name=>$file)}, $to_id) .
+				      $cgi->a({-href => href(action=>"blob", hash=>$to_id, hash_base=>$hash, file_name=>$file)}, $to_id);
 				print "</div>\n";
 				git_diff_print($from_id, "a/$file",  $to_id, "b/$file");
 			}
@@ -2502,7 +2541,7 @@ sub git_history {
 	if (defined $hash) {
 		$ftype = git_get_type($hash);
 	}
-	git_print_page_path($file_name, $ftype);
+	git_print_page_path($file_name, $ftype, $hash_base);
 
 	open my $fd, "-|",
 		$GIT, "rev-list", "--full-history", $hash_base, "--", $file_name;
