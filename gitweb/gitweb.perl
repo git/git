@@ -2202,7 +2202,7 @@ sub git_snapshot {
 	my $filename = basename($project) . "-$hash.tar.gz";
 
 	print $cgi->header(-type => 'application/x-tar',
-			-content-encoding => 'gzip',
+			-content-encoding => 'x-gzip',
 			'-content-disposition' => "inline; filename=\"$filename\"",
 			-status => '200 OK');
 
