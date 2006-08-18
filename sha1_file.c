@@ -503,10 +503,10 @@ int use_packed_git(struct packed_git *p)
 		/* Check if the pack file matches with the index file.
 		 * this is cheap.
 		 */
-		if (memcmp((char*)(p->index_base) + p->index_size - 40,
-			   (char *) p->pack_base + p->pack_size - 20,
-			   20)) {
-
+		if (hashcmp((unsigned char *)(p->index_base) +
+			    p->index_size - 40,
+			    (unsigned char *)p->pack_base +
+			    p->pack_size - 20)) {
 			die("packfile %s does not match index.", p->pack_name);
 		}
 	}
@@ -661,7 +661,7 @@ int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long siz
 	SHA1_Update(&c, header, 1+sprintf(header, "%s %lu", type, size));
 	SHA1_Update(&c, map, size);
 	SHA1_Final(real_sha1, &c);
-	return memcmp(sha1, real_sha1, 20) ? -1 : 0;
+	return hashcmp(sha1, real_sha1) ? -1 : 0;
 }
 
 void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
@@ -959,7 +959,7 @@ int check_reuse_pack_delta(struct packed_git *p, unsigned long offset,
 	ptr = unpack_object_header(p, ptr, kindp, sizep);
 	if (*kindp != OBJ_DELTA)
 		goto done;
-	memcpy(base, (char *) p->pack_base + ptr, 20);
+	memcpy(base, (unsigned char *) p->pack_base + ptr, 20);
 	status = 0;
  done:
 	unuse_packed_git(p);
@@ -1224,7 +1224,7 @@ int find_pack_entry_one(const unsigned char *sha1,
 
 	do {
 		int mi = (lo + hi) / 2;
-		int cmp = memcmp((char *) index + (24 * mi) + 4, sha1, 20);
+		int cmp = hashcmp((unsigned char *)index + (24 * mi) + 4, sha1);
 		if (!cmp) {
 			e->offset = ntohl(*((unsigned int *) ((char *) index + (24 * mi))));
 			memcpy(e->sha1, sha1, 20);
@@ -1733,7 +1733,7 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 		unlink(tmpfile);
 		return error("File %s corrupted", sha1_to_hex(sha1));
 	}
-	if (memcmp(sha1, real_sha1, 20)) {
+	if (hashcmp(sha1, real_sha1)) {
 		unlink(tmpfile);
 		return error("File %s has bad hash", sha1_to_hex(sha1));
 	}

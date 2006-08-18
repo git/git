@@ -69,7 +69,7 @@ static void stuff_change(struct diff_options *opt,
 	struct diff_filespec *one, *two;
 
 	if (!is_null_sha1(old_sha1) && !is_null_sha1(new_sha1) &&
-	    !memcmp(old_sha1, new_sha1, 20))
+	    !hashcmp(old_sha1, new_sha1))
 		return;
 
 	if (opt->reverse_diff) {

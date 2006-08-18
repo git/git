@@ -136,7 +136,7 @@ static void added_object(unsigned char *sha1, const char *type, void *data, unsi
 	struct delta_info *info;
 
 	while ((info = *p) != NULL) {
-		if (!memcmp(info->base_sha1, sha1, 20)) {
+		if (!hashcmp(info->base_sha1, sha1)) {
 			*p = info->next;
 			p = &delta_list;
 			resolve_delta(type, data, size, info->delta, info->size);
@@ -292,7 +292,7 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 	unpack_all();
 	SHA1_Update(&ctx, buffer, offset);
 	SHA1_Final(sha1, &ctx);
-	if (memcmp(fill(20), sha1, 20))
+	if (hashcmp(fill(20), sha1))
 		die("final sha1 did not match");
 	use(20);
 

@@ -39,7 +39,7 @@ static struct entry *lookup_entry(unsigned char *sha1)
 	while (low < high) {
 		int next = (low + high) / 2;
 		struct entry *n = convert[next];
-		int cmp = memcmp(sha1, n->old_sha1, 20);
+		int cmp = hashcmp(sha1, n->old_sha1);
 		if (!cmp)
 			return n;
 		if (cmp < 0) {

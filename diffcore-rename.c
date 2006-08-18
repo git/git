@@ -101,7 +101,7 @@ static int is_exact_match(struct diff_filespec *src,
 			  int contents_too)
 {
 	if (src->sha1_valid && dst->sha1_valid &&
-	    !memcmp(src->sha1, dst->sha1, 20))
+	    !hashcmp(src->sha1, dst->sha1))
 		return 1;
 	if (!contents_too)
 		return 0;

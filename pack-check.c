@@ -29,10 +29,10 @@ static int verify_packfile(struct packed_git *p)
 	pack_base = p->pack_base;
 	SHA1_Update(&ctx, pack_base, pack_size - 20);
 	SHA1_Final(sha1, &ctx);
-	if (memcmp(sha1, (char *) pack_base + pack_size - 20, 20))
+	if (hashcmp(sha1, (unsigned char *)pack_base + pack_size - 20))
 		return error("Packfile %s SHA1 mismatch with itself",
 			     p->pack_name);
-	if (memcmp(sha1, (char *) index_base + index_size - 40, 20))
+	if (hashcmp(sha1, (unsigned char *)index_base + index_size - 40))
 		return error("Packfile %s SHA1 mismatch with idx",
 			     p->pack_name);
 
@@ -135,7 +135,7 @@ int verify_pack(struct packed_git *p, int verbose)
 	SHA1_Init(&ctx);
 	SHA1_Update(&ctx, index_base, index_size - 20);
 	SHA1_Final(sha1, &ctx);
-	if (memcmp(sha1, (char *) index_base + index_size - 20, 20))
+	if (hashcmp(sha1, (unsigned char *)index_base + index_size - 20))
 		ret = error("Packfile index for %s SHA1 mismatch",
 			    p->pack_name);
 

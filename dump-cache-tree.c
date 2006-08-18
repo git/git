@@ -33,7 +33,7 @@ static int dump_cache_tree(struct cache_tree *it,
 	}
 	else {
 		dump_one(it, pfx, "");
-		if (memcmp(it->sha1, ref->sha1, 20) ||
+		if (hashcmp(it->sha1, ref->sha1) ||
 		    ref->entry_count != it->entry_count ||
 		    ref->subtree_nr != it->subtree_nr) {
 			dump_one(ref, pfx, "#(ref) ");

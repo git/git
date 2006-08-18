@@ -218,6 +218,10 @@ static inline int is_null_sha1(const unsigned char *sha1)
 {
 	return !memcmp(sha1, null_sha1, 20);
 }
+static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
+{
+	return memcmp(sha1, sha2, 20);
+}
 
 int git_mkstemp(char *path, size_t n, const char *template);
 

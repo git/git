@@ -90,7 +90,7 @@ static int find_short_packed_object(int len, const unsigned char *match, unsigne
 			int cmp;
 
 			nth_packed_object_sha1(p, mid, now);
-			cmp = memcmp(match, now, 20);
+			cmp = hashcmp(match, now);
 			if (!cmp) {
 				first = mid;
 				break;
@@ -112,7 +112,7 @@ static int find_short_packed_object(int len, const unsigned char *match, unsigne
 						memcpy(found_sha1, now, 20);
 						found++;
 					}
-					else if (memcmp(found_sha1, now, 20)) {
+					else if (hashcmp(found_sha1, now)) {
 						found = 2;
 						break;
 					}
@@ -150,7 +150,7 @@ static int find_unique_short_object(int len, char *canonical,
 		return 0;
 	}
 	/* Both have unique ones -- do they match? */
-	if (memcmp(packed_sha1, unpacked_sha1, 20))
+	if (hashcmp(packed_sha1, unpacked_sha1))
 		return SHORT_NAME_AMBIGUOUS;
 	memcpy(sha1, packed_sha1, 20);
 	return 0;

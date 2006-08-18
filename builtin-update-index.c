@@ -378,7 +378,7 @@ static int unresolve_one(const char *path)
 		ret = -1;
 		goto free_return;
 	}
-	if (!memcmp(ce_2->sha1, ce_3->sha1, 20) &&
+	if (!hashcmp(ce_2->sha1, ce_3->sha1) &&
 	    ce_2->ce_mode == ce_3->ce_mode) {
 		fprintf(stderr, "%s: identical in both, skipping.\n",
 			path);
@@ -460,7 +460,7 @@ static int do_reupdate(int ac, const char **av,
 			old = read_one_ent(NULL, head_sha1,
 					   ce->name, ce_namelen(ce), 0);
 		if (old && ce->ce_mode == old->ce_mode &&
-		    !memcmp(ce->sha1, old->sha1, 20)) {
+		    !hashcmp(ce->sha1, old->sha1)) {
 			free(old);
 			continue; /* unchanged */
 		}

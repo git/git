@@ -69,7 +69,7 @@ static int new_parent(int idx)
 	int i;
 	unsigned char *sha1 = parent_sha1[idx];
 	for (i = 0; i < idx; i++) {
-		if (!memcmp(parent_sha1[i], sha1, 20)) {
+		if (!hashcmp(parent_sha1[i], sha1)) {
 			error("duplicate parent %s ignored", sha1_to_hex(sha1));
 			return 0;
 		}

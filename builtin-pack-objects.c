@@ -441,7 +441,7 @@ static int locate_object_entry_hash(const unsigned char *sha1)
 	memcpy(&ui, sha1, sizeof(unsigned int));
 	i = ui % object_ix_hashsz;
 	while (0 < object_ix[i]) {
-		if (!memcmp(sha1, objects[object_ix[i]-1].sha1, 20))
+		if (!hashcmp(sha1, objects[object_ix[i] - 1].sha1))
 			return i;
 		if (++i == object_ix_hashsz)
 			i = 0;
@@ -607,7 +607,7 @@ static struct pbase_tree_cache *pbase_tree_get(const unsigned char *sha1)
 	 */
 	for (neigh = 0; neigh < 8; neigh++) {
 		ent = pbase_tree_cache[my_ix];
-		if (ent && !memcmp(ent->sha1, sha1, 20)) {
+		if (ent && !hashcmp(ent->sha1, sha1)) {
 			ent->ref++;
 			return ent;
 		}
@@ -789,7 +789,7 @@ static void add_preferred_base(unsigned char *sha1)
 		return;
 
 	for (it = pbase_tree; it; it = it->next) {
-		if (!memcmp(it->pcache.sha1, tree_sha1, 20)) {
+		if (!hashcmp(it->pcache.sha1, tree_sha1)) {
 			free(data);
 			return;
 		}
@@ -931,7 +931,7 @@ static struct object_entry **create_sorted_list(entry_sort_t sort)
 
 static int sha1_sort(const struct object_entry *a, const struct object_entry *b)
 {
-	return memcmp(a->sha1, b->sha1, 20);
+	return hashcmp(a->sha1, b->sha1);
 }
 
 static struct object_entry **create_final_object_list(void)

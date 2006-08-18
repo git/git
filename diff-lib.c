@@ -215,7 +215,7 @@ static int show_modified(struct rev_info *revs,
 	}
 
 	oldmode = old->ce_mode;
-	if (mode == oldmode && !memcmp(sha1, old->sha1, 20) &&
+	if (mode == oldmode && !hashcmp(sha1, old->sha1) &&
 	    !revs->diffopt.find_copies_harder)
 		return 0;
 

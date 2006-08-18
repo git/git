@@ -417,7 +417,7 @@ static int same(struct cache_entry *a, struct cache_entry *b)
 	if (!a && !b)
 		return 1;
 	return a->ce_mode == b->ce_mode &&
-		!memcmp(a->sha1, b->sha1, 20);
+	       !hashcmp(a->sha1, b->sha1);
 }
 
 

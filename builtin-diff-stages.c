@@ -46,7 +46,7 @@ static void diff_stages(int stage1, int stage2, const char **pathspec)
 		else if (!two)
 			diff_addremove(&diff_options, '-', ntohl(one->ce_mode),
 				       one->sha1, name, NULL);
-		else if (memcmp(one->sha1, two->sha1, 20) ||
+		else if (hashcmp(one->sha1, two->sha1) ||
 			 (one->ce_mode != two->ce_mode) ||
 			 diff_options.find_copies_harder)
 			diff_change(&diff_options,

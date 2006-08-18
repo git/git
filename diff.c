@@ -1146,7 +1146,7 @@ static int work_tree_matches(const char *name, const unsigned char *sha1)
 	if ((lstat(name, &st) < 0) ||
 	    !S_ISREG(st.st_mode) || /* careful! */
 	    ce_match_stat(ce, &st, 0) ||
-	    memcmp(sha1, ce->sha1, 20))
+	    hashcmp(sha1, ce->sha1))
 		return 0;
 	/* we return 1 only when we can stat, it is a regular file,
 	 * stat information matches, and sha1 recorded in the cache
@@ -1174,7 +1174,7 @@ static struct sha1_size_cache *locate_size_cache(unsigned char *sha1,
 	while (last > first) {
 		int cmp, next = (last + first) >> 1;
 		e = sha1_size_cache[next];
-		cmp = memcmp(e->sha1, sha1, 20);
+		cmp = hashcmp(e->sha1, sha1);
 		if (!cmp)
 			return e;
 		if (cmp < 0) {
@@ -1585,7 +1585,7 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 		;
 	}
 
-	if (memcmp(one->sha1, two->sha1, 20)) {
+	if (hashcmp(one->sha1, two->sha1)) {
 		int abbrev = o->full_index ? 40 : DEFAULT_ABBREV;
 
 		len += snprintf(msg + len, sizeof(msg) - len,
@@ -2104,7 +2104,7 @@ int diff_unmodified_pair(struct diff_filepair *p)
 	 * dealing with a change.
 	 */
 	if (one->sha1_valid && two->sha1_valid &&
-	    !memcmp(one->sha1, two->sha1, sizeof(one->sha1)))
+	    !hashcmp(one->sha1, two->sha1))
 		return 1; /* no change */
 	if (!one->sha1_valid && !two->sha1_valid)
 		return 1; /* both look at the same file on the filesystem. */
@@ -2243,7 +2243,7 @@ static void diff_resolve_rename_copy(void)
 			if (!p->status)
 				p->status = DIFF_STATUS_RENAMED;
 		}
-		else if (memcmp(p->one->sha1, p->two->sha1, 20) ||
+		else if (hashcmp(p->one->sha1, p->two->sha1) ||
 			 p->one->mode != p->two->mode)
 			p->status = DIFF_STATUS_MODIFIED;
 		else {
