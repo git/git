@@ -39,12 +39,13 @@ static int check;
 static int apply = 1;
 static int apply_in_reverse;
 static int apply_with_reject;
+static int apply_verbosely;
 static int no_add;
 static int show_index_info;
 static int line_termination = '\n';
 static unsigned long p_context = -1;
 static const char apply_usage[] =
-"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--cached] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [--reverse] [--reject] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>] <patch>...";
+"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--cached] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [--reverse] [--reject] [--verbose] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>] <patch>...";
 
 static enum whitespace_eol {
 	nowarn_whitespace,
@@ -152,6 +153,24 @@ struct patch {
 	char new_sha1_prefix[41];
 	struct patch *next;
 };
+
+static void say_patch_name(FILE *output, const char *pre, struct patch *patch, const char *post)
+{
+	fputs(pre, output);
+	if (patch->old_name && patch->new_name &&
+	    strcmp(patch->old_name, patch->new_name)) {
+		write_name_quoted(NULL, 0, patch->old_name, 1, output);
+		fputs(" => ", output);
+		write_name_quoted(NULL, 0, patch->new_name, 1, output);
+	}
+	else {
+		const char *n = patch->new_name;
+		if (!n)
+			n = patch->old_name;
+		write_name_quoted(NULL, 0, n, 1, output);
+	}
+	fputs(post, output);
+}
 
 #define CHUNKSIZE (8192)
 #define SLOP (16)
@@ -1928,6 +1947,9 @@ static int check_patch_list(struct patch *patch)
 	int error = 0;
 
 	for (prev_patch = NULL; patch ; patch = patch->next) {
+		if (apply_verbosely)
+			say_patch_name(stderr,
+				       "Checking patch ", patch, "...\n");
 		error |= check_patch(patch, prev_patch);
 		prev_patch = patch;
 	}
@@ -2242,36 +2264,69 @@ static void write_out_one_result(struct patch *patch, int phase)
 
 static int write_out_one_reject(struct patch *patch)
 {
+	FILE *rej;
+	char namebuf[PATH_MAX];
 	struct fragment *frag;
-	int rejects = 0;
+	int cnt = 0;
 
-	for (rejects = 0, frag = patch->fragments; frag; frag = frag->next) {
+	for (cnt = 0, frag = patch->fragments; frag; frag = frag->next) {
 		if (!frag->rejected)
 			continue;
-		if (rejects == 0) {
-			rejects = 1;
-			printf("** Rejected hunk(s) for ");
-			if (patch->old_name && patch->new_name &&
-			    strcmp(patch->old_name, patch->new_name)) {
-				write_name_quoted(NULL, 0,
-						  patch->old_name, 1, stdout);
-				fputs(" => ", stdout);
-				write_name_quoted(NULL, 0,
-						  patch->new_name, 1, stdout);
-			}
-			else {
-				const char *n = patch->new_name;
-				if (!n)
-					n = patch->old_name;
-				write_name_quoted(NULL, 0, n, 1, stdout);
-			}
-			printf(" **\n");
-		}
-		printf("%.*s", frag->size, frag->patch);
-		if (frag->patch[frag->size-1] != '\n')
-			putchar('\n');
+		cnt++;
 	}
-	return rejects;
+
+	if (!cnt) {
+		if (apply_verbosely)
+			say_patch_name(stderr,
+				       "Applied patch ", patch, " cleanly.\n");
+		return 0;
+	}
+
+	/* This should not happen, because a removal patch that leaves
+	 * contents are marked "rejected" at the patch level.
+	 */
+	if (!patch->new_name)
+		die("internal error");
+
+	/* Say this even without --verbose */
+	say_patch_name(stderr, "Applying patch ", patch, " with");
+	fprintf(stderr, " %d rejects...\n", cnt);
+
+	cnt = strlen(patch->new_name);
+	if (ARRAY_SIZE(namebuf) <= cnt + 5) {
+		cnt = ARRAY_SIZE(namebuf) - 5;
+		fprintf(stderr,
+			"warning: truncating .rej filename to %.*s.rej",
+			cnt - 1, patch->new_name);
+	}
+	memcpy(namebuf, patch->new_name, cnt);
+	memcpy(namebuf + cnt, ".rej", 5);
+
+	rej = fopen(namebuf, "w");
+	if (!rej)
+		return error("cannot open %s: %s", namebuf, strerror(errno));
+
+	/* Normal git tools never deal with .rej, so do not pretend
+	 * this is a git patch by saying --git nor give extended
+	 * headers.  While at it, maybe please "kompare" that wants
+	 * the trailing TAB and some garbage at the end of line ;-).
+	 */
+	fprintf(rej, "diff a/%s b/%s\t(rejected hunks)\n",
+		patch->new_name, patch->new_name);
+	for (cnt = 0, frag = patch->fragments;
+	     frag;
+	     cnt++, frag = frag->next) {
+		if (!frag->rejected) {
+			fprintf(stderr, "Hunk #%d applied cleanly.\n", cnt);
+			continue;
+		}
+		fprintf(stderr, "Rejected hunk #%d.\n", cnt);
+		fprintf(rej, "%.*s", frag->size, frag->patch);
+		if (frag->patch[frag->size-1] != '\n')
+			fputc('\n', rej);
+	}
+	fclose(rej);
+	return -1;
 }
 
 static int write_out_results(struct patch *list, int skipped_patch)
@@ -2288,16 +2343,9 @@ static int write_out_results(struct patch *list, int skipped_patch)
 		while (l) {
 			if (l->rejected)
 				errs = 1;
-			else
+			else {
 				write_out_one_result(l, phase);
-			l = l->next;
-		}
-	}
-	if (apply_with_reject) {
-		l = list;
-		while (l) {
-			if (!l->rejected) {
-				if (write_out_one_reject(l))
+				if (phase == 1 && write_out_one_reject(l))
 					errs = 1;
 			}
 			l = l->next;
@@ -2510,6 +2558,10 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "--reject")) {
 			apply = apply_with_reject = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--verbose")) {
+			apply_verbosely = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--inaccurate-eof")) {
