@@ -918,6 +918,33 @@ sub parse_ref {
 	return %ref_item;
 }
 
+sub parse_difftree_raw_line {
+	my $line = shift;
+	my %res;
+
+	# ':100644 100644 03b218260e99b78c6df0ed378e59ed9205ccc96d 3b93d5e7cc7f7dd4ebed13a5cc1a4ad976fc94d8 M	ls-files.c'
+	# ':100644 100644 7f9281985086971d3877aca27704f2aaf9c448ce bc190ebc71bbd923f2b728e505408f5e54bd073a M	rev-tree.c'
+	if ($line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)([0-9]{0,3})\t(.*)$/) {
+		$res{'from_mode'} = $1;
+		$res{'to_mode'} = $2;
+		$res{'from_id'} = $3;
+		$res{'to_id'} = $4;
+		$res{'status'} = $5;
+		$res{'similarity'} = $6;
+		if ($res{'status'} eq 'R' || $res{'status'} eq 'C') { # renamed or copied
+			($res{'from_file'}, $res{'to_file'}) = map(unquote, split("\t", $7));
+		} else {
+			$res{'file'} = unquote($7);
+		}
+	}
+	# 'c512b523472485aef4fff9e57b229d9d243c967f'
+	#elsif ($line =~ m/^([0-9a-fA-F]{40})$/) {
+	#	$res{'commit'} = $1;
+	#}
+
+	return wantarray ? %res : \%res;
+}
+
 ## ......................................................................
 ## parse to array of hashes functions
 
