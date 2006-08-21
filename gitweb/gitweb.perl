@@ -67,6 +67,68 @@ our $default_text_plain_charset  = undef;
 # (relative to the current git repository)
 our $mimetypes_file = undef;
 
+# You define site-wide feature defaults here; override them with
+# $GITWEB_CONFIG as necessary.
+our %feature =
+(
+
+# feature  => {'sub' => feature-sub, 'override' => allow-override, 'default' => [ default options...]
+
+'blame'         => {'sub' => \&feature_blame, 'override' => 0, 'default' => [0]},
+'snapshot'      => {'sub' => \&feature_snapshot, 'override' => 0, 'default' => ['x-gzip', 'gz', 'gzip']},
+
+);
+
+sub gitweb_check_feature {
+	my ($name) = @_;
+	return undef unless exists $feature{$name};
+	my ($sub, $override, @defaults) = ($feature{$name}{'sub'},
+						$feature{$name}{'override'},
+						@{$feature{$name}{'default'}});
+	if (!$override) { return @defaults; }
+	return $sub->(@defaults);
+}
+
+# To enable system wide have in $GITWEB_CONFIG
+# $feature{'blame'}{'default'} =  [1];
+# To have project specific config enable override in  $GITWEB_CONFIG
+# $feature{'blame'}{'override'} =  1;
+# and in project config gitweb.blame = 0|1;
+
+sub feature_blame {
+	my ($val) = git_get_project_config('blame', '--bool');
+
+	if ($val eq 'true') {
+		return 1;
+	} elsif ($val eq 'false') {
+		return 0;
+	}
+
+	return $_[0];
+}
+
+# To disable system wide have in $GITWEB_CONFIG
+# $feature{'snapshot'}{'default'} =  [undef];
+# To have project specific config enable override in  $GITWEB_CONFIG
+# $feature{'blame'}{'override'} =  1;
+# and in project config  gitweb.snapshot = none|gzip|bzip2
+
+sub feature_snapshot {
+	my ($ctype, $suffix, $command) = @_;
+
+	my ($val) = git_get_project_config('snapshot');
+
+	if ($val eq 'gzip') {
+		return ('x-gzip', 'gz', 'gzip');
+	} elsif ($val eq 'bzip2') {
+		return ('x-bzip2', 'bz2', 'bzip2');
+	} elsif ($val eq 'none') {
+		return ();
+	}
+
+	return ($ctype, $suffix, $command);
+}
+
 our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "++GITWEB_CONFIG++";
 require $GITWEB_CONFIG if -e $GITWEB_CONFIG;
 
@@ -485,22 +547,19 @@ sub git_get_type {
 }
 
 sub git_get_project_config {
-	my $key = shift;
+	my ($key, $type) = @_;
 
 	return unless ($key);
 	$key =~ s/^gitweb\.//;
 	return if ($key =~ m/\W/);
 
-	my $val = qx($GIT repo-config --get gitweb.$key);
+	my @x = ($GIT, 'repo-config');
+	if (defined $type) { push @x, $type; }
+	push @x, "--get";
+	push @x, "gitweb.$key";
+	my $val = qx(@x);
+	chomp $val;
 	return ($val);
-}
-
-sub git_get_project_config_bool {
-	my $val = git_get_project_config (@_);
-	if ($val and $val =~ m/true|yes|on/) {
-		return (1);
-	}
-	return; # implicit false
 }
 
 # get hash of given path at given ref
@@ -1397,7 +1456,10 @@ sub git_difftree_body {
 sub git_shortlog_body {
 	# uses global variable $project
 	my ($revlist, $from, $to, $refs, $extra) = @_;
-	my $have_snapshot = git_get_project_config_bool('snapshot');
+
+	my ($ctype, $suffix, $command) = gitweb_check_feature('snapshot');
+	my $have_snapshot = (defined $ctype && defined $suffix);
+
 	$from = 0 unless defined $from;
 	$to = $#{$revlist} if (!defined $to || $#{$revlist} < $to);
 
@@ -1858,7 +1920,10 @@ sub git_tag {
 sub git_blame2 {
 	my $fd;
 	my $ftype;
-	die_error(undef, "Permission denied") if (!git_get_project_config_bool ('blame'));
+
+	if (!gitweb_check_feature('blame')) {
+		die_error('403 Permission denied', "Permission denied");
+	}
 	die_error('404 Not Found', "File name not defined") if (!$file_name);
 	$hash_base ||= git_get_head_hash($project);
 	die_error(undef, "Couldn't find base commit") unless ($hash_base);
@@ -1916,7 +1981,10 @@ sub git_blame2 {
 
 sub git_blame {
 	my $fd;
-	die_error('403 Permission denied', "Permission denied") if (!git_get_project_config_bool ('blame'));
+
+	if (!gitweb_check_feature('blame')) {
+		die_error('403 Permission denied', "Permission denied");
+	}
 	die_error('404 Not Found', "File name not defined") if (!$file_name);
 	$hash_base ||= git_get_head_hash($project);
 	die_error(undef, "Couldn't find base commit") unless ($hash_base);
@@ -2069,7 +2137,7 @@ sub git_blob {
 			die_error(undef, "No file name defined");
 		}
 	}
-	my $have_blame = git_get_project_config_bool ('blame');
+	my $have_blame = gitweb_check_feature('blame');
 	open my $fd, "-|", $GIT, "cat-file", "blob", $hash
 		or die_error(undef, "Couldn't cat $file_name, $hash");
 	my $mimetype = blob_mimetype($fd, $file_name);
@@ -2134,7 +2202,7 @@ sub git_tree {
 	git_header_html();
 	my %base_key = ();
 	my $base = "";
-	my $have_blame = git_get_project_config_bool ('blame');
+	my $have_blame = gitweb_check_feature('blame');
 	if (defined $hash_base && (my %co = parse_commit($hash_base))) {
 		$base_key{hash_base} = $hash_base;
 		git_print_page_nav('tree','', $hash_base);
@@ -2195,24 +2263,30 @@ sub git_tree {
 
 sub git_snapshot {
 
+	my ($ctype, $suffix, $command) = gitweb_check_feature('snapshot');
+	my $have_snapshot = (defined $ctype && defined $suffix);
+	if (!$have_snapshot) {
+		die_error('403 Permission denied', "Permission denied");
+	}
+
 	if (!defined $hash) {
 		$hash = git_get_head_hash($project);
 	}
 
-	my $filename = basename($project) . "-$hash.tar.gz";
+	my $filename = basename($project) . "-$hash.tar.$suffix";
 
 	print $cgi->header(-type => 'application/x-tar',
-			-content-encoding => 'x-gzip',
-			'-content-disposition' => "inline; filename=\"$filename\"",
-			-status => '200 OK');
+			   -content-encoding => $ctype,
+			   '-content-disposition' =>
+			   "inline; filename=\"$filename\"",
+			   -status => '200 OK');
 
-	open my $fd, "-|", "$GIT tar-tree $hash \'$project\' | gzip" or
-				die_error(undef, "Execute git-tar-tree failed.");
+	open my $fd, "-|", "$GIT tar-tree $hash \'$project\' | $command" or
+		die_error(undef, "Execute git-tar-tree failed.");
 	binmode STDOUT, ':raw';
 	print <$fd>;
 	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
 	close $fd;
-
 
 }
 
@@ -2293,7 +2367,10 @@ sub git_commit {
 	}
 	my $refs = git_get_references();
 	my $ref = format_ref_marker($refs, $co{'id'});
-	my $have_snapshot = git_get_project_config_bool('snapshot');
+
+	my ($ctype, $suffix, $command) = gitweb_check_feature('snapshot');
+	my $have_snapshot = (defined $ctype && defined $suffix);
+
 	my $formats_nav = '';
 	if (defined $file_name && defined $co{'parent'}) {
 		my $parent = $co{'parent'};
