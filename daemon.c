@@ -324,8 +324,15 @@ static int upload_pack(void)
 	return -1;
 }
 
+static int upload_tar(void)
+{
+	execl_git_cmd("upload-tar", ".", NULL);
+	return -1;
+}
+
 static struct daemon_service daemon_service[] = {
 	{ "upload-pack", "uploadpack", upload_pack, 1, 1 },
+	{ "upload-tar", "uploadtar", upload_tar, 0, 1 },
 };
 
 static void enable_service(const char *name, int ena) {
@@ -896,12 +903,12 @@ int main(int argc, char **argv)
 			enable_service(arg + 10, 0);
 			continue;
 		}
-		if (!strncmp(arg, "--enable-override=", 18)) {
-			make_service_overridable(arg + 18, 1);
+		if (!strncmp(arg, "--allow-override=", 17)) {
+			make_service_overridable(arg + 17, 1);
 			continue;
 		}
-		if (!strncmp(arg, "--disable-override=", 19)) {
-			make_service_overridable(arg + 19, 0);
+		if (!strncmp(arg, "--forbid-override=", 18)) {
+			make_service_overridable(arg + 18, 0);
 			continue;
 		}
 		if (!strcmp(arg, "--")) {
