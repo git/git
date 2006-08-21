@@ -1057,9 +1057,6 @@ static int packed_object_info(struct pack_entry *entry,
 	return 0;
 }
 
-/* forward declaration for a mutually recursive function */
-static void *unpack_entry(struct pack_entry *, char *, unsigned long *);
-
 static void *unpack_delta_entry(unsigned char *base_sha1,
 				unsigned long delta_size,
 				unsigned long left,
