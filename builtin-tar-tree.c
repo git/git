@@ -14,7 +14,7 @@
 #define BLOCKSIZE	(RECORDSIZE * 20)
 
 static const char tar_tree_usage[] =
-"git-tar-tree [--remote=<repo>] <ent> [basedir]";
+"git-tar-tree [--remote=<repo>] <tree-ish> [basedir]";
 
 static char block[BLOCKSIZE];
 static unsigned long offset;
