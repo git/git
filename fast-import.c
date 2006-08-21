@@ -1017,6 +1017,7 @@ static void file_change_m(struct branch *b)
 	switch (mode) {
 	case S_IFREG | 0644:
 	case S_IFREG | 0755:
+	case S_IFLNK:
 	case 0644:
 	case 0755:
 		/* ok */
