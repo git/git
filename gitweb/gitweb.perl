@@ -155,11 +155,6 @@ if (defined $action) {
 	if ($action =~ m/[^0-9a-zA-Z\.\-_]/) {
 		die_error(undef, "Invalid action parameter");
 	}
-	# action which does not check rest of parameters
-	if ($action eq "opml") {
-		git_opml();
-		exit;
-	}
 }
 
 our $project = ($cgi->param('p') || $ENV{'PATH_INFO'});
@@ -179,9 +174,6 @@ if (defined $project) {
 		die_error(undef, "No such project");
 	}
 	$ENV{'GIT_DIR'} = "$projectroot/$project";
-} else {
-	git_project_list();
-	exit;
 }
 
 our $file_name = $cgi->param('f');
@@ -255,9 +247,16 @@ my %actions = (
 	"tags" => \&git_tags,
 	"tree" => \&git_tree,
 	"snapshot" => \&git_snapshot,
+	# those below don't need $project
+	"opml" => \&git_opml,
+	"project_list" => \&git_project_list,
 );
 
-$action = 'summary' if (!defined($action));
+if (defined $project) {
+	$action ||= 'summary';
+} else {
+	$action ||= 'project_list';
+}
 if (!defined($actions{$action})) {
 	die_error(undef, "Unknown action");
 }
