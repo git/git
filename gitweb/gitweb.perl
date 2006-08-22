@@ -267,7 +267,9 @@ exit;
 ## action links
 
 sub href(%) {
-	my %mapping = (
+	my %params = @_;
+
+	my @mapping = (
 		action => "a",
 		project => "p",
 		file_name => "f",
@@ -278,18 +280,18 @@ sub href(%) {
 		page => "pg",
 		searchtext => "s",
 	);
+	my %mapping = @mapping;
 
-	my %params = @_;
 	$params{"project"} ||= $project;
 
-	my $href = "$my_uri?";
-	$href .= esc_param( join(";",
-		map {
-			defined $params{$_} ? "$mapping{$_}=$params{$_}" : ()
-		} keys %params
-	) );
-
-	return $href;
+	my @result = ();
+	for (my $i = 0; $i < @mapping; $i += 2) {
+		my ($name, $symbol) = ($mapping[$i], $mapping[$i+1]);
+		if (defined $params{$name}) {
+			push @result, $symbol . "=" . esc_param($params{$name});
+		}
+	}
+	return "$my_uri?" . join(';', @result);
 }
 
 
