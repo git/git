@@ -1185,11 +1185,13 @@ sub die_error {
 	my $error = shift || "Malformed query, file missing or permission denied";
 
 	git_header_html($status);
-	print "<div class=\"page_body\">\n" .
-	      "<br/><br/>\n" .
-	      "$status - $error\n" .
-	      "<br/>\n" .
-	      "</div>\n";
+	print <<EOF;
+<div class="page_body">
+<br /><br />
+$status - $error
+<br />
+</div>
+EOF
 	git_footer_html();
 	exit;
 }
@@ -2022,9 +2024,11 @@ sub git_blame2 {
 	my $num_colors = scalar(@rev_color);
 	my $current_color = 0;
 	my $last_rev;
-	print "<div class=\"page_body\">\n";
-	print "<table class=\"blame\">\n";
-	print "<tr><th>Commit</th><th>Line</th><th>Data</th></tr>\n";
+	print <<HTML;
+<div class="page_body">
+<table class="blame">
+<tr><th>Commit</th><th>Line</th><th>Data</th></tr>
+HTML
 	while (<$fd>) {
 		/^([0-9a-fA-F]{40}).*?(\d+)\)\s{1}(\s*.*)/;
 		my $full_rev = $1;
@@ -2566,9 +2570,10 @@ sub git_blobdiff {
 		git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
 		git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
 	} else {
-		print "<div class=\"page_nav\">\n" .
-		      "<br/><br/></div>\n" .
-		      "<div class=\"title\">$hash vs $hash_parent</div>\n";
+		print <<HTML;
+<div class="page_nav"><br/><br/></div>
+<div class="title">$hash vs $hash_parent</div>
+HTML
 	}
 	git_print_page_path($file_name, "blob", $hash_base);
 	print "<div class=\"page_body\">\n" .
@@ -2704,9 +2709,11 @@ sub git_commitdiff_plain {
 	                   -content_disposition => "inline; filename=\"git-$hash.patch\"");
 	my %ad = parse_date($co{'author_epoch'}, $co{'author_tz'});
 	my $comment = $co{'comment'};
-	print "From: $co{'author'}\n" .
-	      "Date: $ad{'rfc2822'} ($ad{'tz_local'})\n".
-	      "Subject: $co{'title'}\n";
+	print <<TEXT;
+From: $co{'author'}
+Date: $ad{'rfc2822'} ($ad{'tz_local'})
+Subject: $co{'title'}
+TEXT
 	if (defined $tagname) {
 		print "X-Git-Tag: $tagname\n";
 	}
@@ -2950,13 +2957,15 @@ sub git_rss {
 	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading git-rev-list failed");
 	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
-	print "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".
-	      "<rss version=\"2.0\" xmlns:content=\"http://purl.org/rss/1.0/modules/content/\">\n";
-	print "<channel>\n";
-	print "<title>$project</title>\n".
-	      "<link>" . esc_html("$my_url?p=$project;a=summary") . "</link>\n".
-	      "<description>$project log</description>\n".
-	      "<language>en</language>\n";
+	print <<XML;
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<channel>
+<title>$project $my_uri $my_url</title>
+<link>${\esc_html("$my_url?p=$project;a=summary")}</link>
+<description>$project log</description>
+<language>en</language>
+XML
 
 	for (my $i = 0; $i <= $#revlist; $i++) {
 		my $commit = $revlist[$i];
@@ -3005,13 +3014,15 @@ sub git_opml {
 	my @list = git_get_projects_list();
 
 	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
-	print "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".
-	      "<opml version=\"1.0\">\n".
-	      "<head>".
-	      "  <title>$site_name Git OPML Export</title>\n".
-	      "</head>\n".
-	      "<body>\n".
-	      "<outline text=\"git RSS feeds\">\n";
+	print <<XML;
+<?xml version="1.0" encoding="utf-8"?>
+<opml version="1.0">
+<head>
+  <title>$site_name Git OPML Export</title>
+</head>
+<body>
+<outline text="git RSS feeds">
+XML
 
 	foreach my $pr (@list) {
 		my %proj = %$pr;
@@ -3030,7 +3041,9 @@ sub git_opml {
 		my $html = "$my_url?p=$proj{'path'};a=summary";
 		print "<outline type=\"rss\" text=\"$path\" title=\"$path\" xmlUrl=\"$rss\" htmlUrl=\"$html\"/>\n";
 	}
-	print "</outline>\n".
-	      "</body>\n".
-	      "</opml>\n";
+	print <<XML;
+</outline>
+</body>
+</opml>
+XML
 }
