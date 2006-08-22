@@ -2313,7 +2313,7 @@ static int write_out_one_reject(struct patch *patch)
 	 */
 	fprintf(rej, "diff a/%s b/%s\t(rejected hunks)\n",
 		patch->new_name, patch->new_name);
-	for (cnt = 0, frag = patch->fragments;
+	for (cnt = 1, frag = patch->fragments;
 	     frag;
 	     cnt++, frag = frag->next) {
 		if (!frag->rejected) {
