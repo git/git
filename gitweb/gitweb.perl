@@ -2198,7 +2198,8 @@ sub git_blob_plain {
 		$save_as .= '.txt';
 	}
 
-	print $cgi->header(-type => "$type", '-content-disposition' => "inline; filename=\"$save_as\"");
+	print $cgi->header(-type => "$type",
+	                   -content_disposition => "inline; filename=\"$save_as\"");
 	undef $/;
 	binmode STDOUT, ':raw';
 	print <$fd>;
@@ -2382,8 +2383,8 @@ sub git_snapshot {
 	my $filename = basename($project) . "-$hash.tar.$suffix";
 
 	print $cgi->header(-type => 'application/x-tar',
-	                   -content-encoding => $ctype,
-	                  '-content-disposition' => "inline; filename=\"$filename\"",
+	                   -content_encoding => $ctype,
+	                   -content_disposition => "inline; filename=\"$filename\"",
 	                   -status => '200 OK');
 
 	open my $fd, "-|", "$GIT tar-tree $hash \'$project\' | $command" or
@@ -2701,7 +2702,7 @@ sub git_commitdiff_plain {
 
 	print $cgi->header(-type => "text/plain",
 	                   -charset => 'utf-8',
-	                  '-content-disposition' => "inline; filename=\"git-$hash.patch\"");
+	                   -content_disposition => "inline; filename=\"git-$hash.patch\"");
 	my %ad = parse_date($co{'author_epoch'}, $co{'author_tz'});
 	my $comment = $co{'comment'};
 	print "From: $co{'author'}\n" .
