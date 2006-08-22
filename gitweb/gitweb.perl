@@ -285,7 +285,7 @@ sub href(%) {
 	my $href = "$my_uri?";
 	$href .= esc_param( join(";",
 		map {
-			"$mapping{$_}=$params{$_}" if defined $params{$_}
+			defined $params{$_} ? "$mapping{$_}=$params{$_}" : ()
 		} keys %params
 	) );
 
