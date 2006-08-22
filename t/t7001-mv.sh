@@ -82,4 +82,8 @@ test_expect_failure \
     'do not move directory over existing directory' \
     'mkdir path0 && mkdir path0/path2 && git-mv path2 path0'
 
+test_expect_success \
+    'move into "."' \
+    'git-mv path1/path2/ .'
+
 test_done

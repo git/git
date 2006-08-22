@@ -9,23 +9,6 @@
 #include "tree.h"
 #include "builtin.h"
 
-static void flush_buffer(const char *buf, unsigned long size)
-{
-	while (size > 0) {
-		long ret = xwrite(1, buf, size);
-		if (ret < 0) {
-			/* Ignore epipe */
-			if (errno == EPIPE)
-				break;
-			die("git-cat-file: %s", strerror(errno));
-		} else if (!ret) {
-			die("git-cat-file: disk full?");
-		}
-		size -= ret;
-		buf += ret;
-	}
-}
-
 static void pprint_tag(const unsigned char *sha1, const char *buf, unsigned long size)
 {
 	/* the parser in tag.c is useless here. */
@@ -42,7 +25,7 @@ static void pprint_tag(const unsigned char *sha1, const char *buf, unsigned long
 			/* Found the tagger line.  Copy out the contents
 			 * of the buffer so far.
 			 */
-			flush_buffer(buf, cp - buf);
+			write_or_die(1, buf, cp - buf);
 
 			/*
 			 * Do something intelligent, like pretty-printing
@@ -61,18 +44,18 @@ static void pprint_tag(const unsigned char *sha1, const char *buf, unsigned long
 						sp++;
 					if (sp == cp) {
 						/* give up */
-						flush_buffer(tagger,
+						write_or_die(1, tagger,
 							     cp - tagger);
 						break;
 					}
 					while (sp < cp &&
 					       !('0' <= *sp && *sp <= '9'))
 						sp++;
-					flush_buffer(tagger, sp - tagger);
+					write_or_die(1, tagger, sp - tagger);
 					date = strtoul(sp, &ep, 10);
 					tz = strtol(ep, NULL, 10);
 					sp = show_date(date, tz);
-					flush_buffer(sp, strlen(sp));
+					write_or_die(1, sp, strlen(sp));
 					xwrite(1, "\n", 1);
 					break;
 				}
@@ -90,7 +73,7 @@ static void pprint_tag(const unsigned char *sha1, const char *buf, unsigned long
 	 * remainder as is.
 	 */
 	if (cp < endp)
-		flush_buffer(cp, endp - cp);
+		write_or_die(1, cp, endp - cp);
 }
 
 int cmd_cat_file(int argc, const char **argv, const char *prefix)
@@ -162,6 +145,6 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 	if (!buf)
 		die("git-cat-file %s: bad file", argv[2]);
 
-	flush_buffer(buf, size);
+	write_or_die(1, buf, size);
 	return 0;
 }

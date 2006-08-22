@@ -26,7 +26,7 @@ static const char **copy_pathspec(const char *prefix, const char **pathspec,
 		if (length > 0 && result[i][length - 1] == '/') {
 			char *without_slash = xmalloc(length);
 			memcpy(without_slash, result[i], length - 1);
-			without_slash[length] = '\0';
+			without_slash[length - 1] = '\0';
 			result[i] = without_slash;
 		}
 		if (base_name) {
@@ -114,7 +114,10 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	modes = xcalloc(count, sizeof(enum update_mode));
 	dest_path = copy_pathspec(prefix, argv + argc - 1, 1, 0);
 
-	if (!lstat(dest_path[0], &st) &&
+	if (dest_path[0][0] == '\0')
+		/* special case: "." was normalized to "" */
+		destination = copy_pathspec(dest_path[0], argv + i, count, 1);
+	else if (!lstat(dest_path[0], &st) &&
 			S_ISDIR(st.st_mode)) {
 		dest_path[0] = add_slash(dest_path[0]);
 		destination = copy_pathspec(dest_path[0], argv + i, count, 1);

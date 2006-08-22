@@ -481,6 +481,7 @@ int use_packed_git(struct packed_git *p)
 		int fd;
 		struct stat st;
 		void *map;
+		struct pack_header *hdr;
 
 		pack_mapped += p->pack_size;
 		while (PACK_MAX_SZ < pack_mapped && unuse_one_packed_git())
@@ -499,6 +500,17 @@ int use_packed_git(struct packed_git *p)
 		if (map == MAP_FAILED)
 			die("packfile %s cannot be mapped.", p->pack_name);
 		p->pack_base = map;
+
+		/* Check if we understand this pack file.  If we don't we're
+		 * likely too old to handle it.
+		 */
+		hdr = map;
+		if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
+			die("packfile %s isn't actually a pack.", p->pack_name);
+		if (!pack_version_ok(hdr->hdr_version))
+			die("packfile %s is version %i and not supported"
+				" (try upgrading GIT to a newer version)",
+				p->pack_name, ntohl(hdr->hdr_version));
 
 		/* Check if the pack file matches with the index file.
 		 * this is cheap.
@@ -1062,9 +1074,6 @@ static int packed_object_info(struct pack_entry *entry,
 	unuse_packed_git(p);
 	return 0;
 }
-
-/* forward declaration for a mutually recursive function */
-static void *unpack_entry(struct pack_entry *, char *, unsigned long *);
 
 static void *unpack_delta_entry(unsigned char *base_sha1,
 				unsigned long delta_size,

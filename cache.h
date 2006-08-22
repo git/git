@@ -392,6 +392,7 @@ extern char git_default_name[MAX_GITNAME];
 extern char git_commit_encoding[MAX_ENCODING_LENGTH];
 
 extern int copy_fd(int ifd, int ofd);
+extern void write_or_die(int fd, const void *buf, size_t count);
 
 /* Finish off pack transfer receiving end */
 extern int receive_unpack_pack(int fd[2], const char *me, int quiet, int);
