@@ -1267,17 +1267,17 @@ sub git_print_page_path {
 	my $hb = shift;
 
 	if (!defined $name) {
-		print "<div class=\"page_path\"><b>/</b></div>\n";
+		print "<div class=\"page_path\">/</div>\n";
 	} elsif (defined $type && $type eq 'blob') {
-		print "<div class=\"page_path\"><b>";
+		print "<div class=\"page_path\">";
 		if (defined $hb) {
 			print $cgi->a({-href => href(action=>"blob_plain", hash_base=>$hb, file_name=>$file_name)}, esc_html($name));
 		} else {
 			print $cgi->a({-href => href(action=>"blob_plain", file_name=>$file_name)}, esc_html($name));
 		}
-		print "</b><br/></div>\n";
+		print "<br/></div>\n";
 	} else {
-		print "<div class=\"page_path\"><b>" . esc_html($name) . "</b><br/></div>\n";
+		print "<div class=\"page_path\">" . esc_html($name) . "<br/></div>\n";
 	}
 }
 
@@ -1626,7 +1626,7 @@ sub git_tags_body {
 		print "<td><i>$tag{'age'}</i></td>\n" .
 		      "<td>" .
 		      $cgi->a({-href => href(action=>$tag{'reftype'}, hash=>$tag{'refid'}),
-		               -class => "list"}, "<b>" . esc_html($tag{'name'}) . "</b>") .
+		               -class => "list name"}, esc_html($tag{'name'})) .
 		      "</td>\n" .
 		      "<td>";
 		if (defined $comment) {
@@ -1680,7 +1680,7 @@ sub git_heads_body {
 		print "<td><i>$tag{'age'}</i></td>\n" .
 		      ($tag{'id'} eq $head ? "<td class=\"current_head\">" : "<td>") .
 		      $cgi->a({-href => href(action=>"shortlog", hash=>$tag{'name'}),
-		               -class => "list"}, "<b>" . esc_html($tag{'name'}) . "</b>") .
+		               -class => "list name"},esc_html($tag{'name'})) .
 		      "</td>\n" .
 		      "<td class=\"link\">" .
 		      $cgi->a({-href => href(action=>"shortlog", hash=>$tag{'name'})}, "shortlog") . " | " .
@@ -2729,7 +2729,8 @@ sub git_search {
 			print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 			      "<td><i>" . esc_html(chop_str($co{'author_name'}, 15, 5)) . "</i></td>\n" .
 			      "<td>" .
-			      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'}) -class => "list"}, "<b>" . esc_html(chop_str($co{'title'}, 50)) . "</b><br/>");
+			      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'}), -class => "list subject"},
+			               esc_html(chop_str($co{'title'}, 50)) . "<br/>");
 			my $comment = $co{'comment'};
 			foreach my $line (@$comment) {
 				if ($line =~ m/^(.*)($searchtext)(.*)$/i) {
@@ -2782,8 +2783,8 @@ sub git_search {
 					print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
 					      "<td><i>" . esc_html(chop_str($co{'author_name'}, 15, 5)) . "</i></td>\n" .
 					      "<td>" .
-					      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'}), -class => "list"}, "<b>" .
-					      esc_html(chop_str($co{'title'}, 50)) . "</b><br/>");
+					      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'}), -class => "list subject"},
+					              esc_html(chop_str($co{'title'}, 50)) . "<br/>");
 					while (my $setref = shift @files) {
 						my %set = %$setref;
 						print $cgi->a({-href => href(action=>"blob", hash=>$set{'id'}, hash_base=>$co{'id'}, file_name=>$set{'file'}), class => "list"},
