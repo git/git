@@ -504,11 +504,11 @@ sub format_subject_html {
 	$extra = '' unless defined($extra);
 
 	if (length($short) < length($long)) {
-		return $cgi->a({-href => $href, -class => "list",
+		return $cgi->a({-href => $href, -class => "list subject",
 		                -title => $long},
 		       esc_html($short) . $extra);
 	} else {
-		return $cgi->a({-href => $href, -class => "list"},
+		return $cgi->a({-href => $href, -class => "list subject"},
 		       esc_html($long)  . $extra);
 	}
 }

@@ -117,11 +117,14 @@ div.list_head {
 
 a.list {
 	text-decoration: none;
-	font-weight: bold;
 	color: #000000;
 }
 
-table.tags a.list {
+a.subject {
+	font-weight: bold;
+}
+
+table.tags a.subject {
 	font-weight: normal;
 }
 
