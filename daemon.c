@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <syslog.h>
+#include <pwd.h>
+#include <grp.h>
 #include "pkt-line.h"
 #include "cache.h"
 #include "exec_cmd.h"
@@ -19,7 +21,8 @@ static const char daemon_usage[] =
 "git-daemon [--verbose] [--syslog] [--inetd | --port=n] [--export-all]\n"
 "           [--timeout=n] [--init-timeout=n] [--strict-paths]\n"
 "           [--base-path=path] [--user-path | --user-path=path]\n"
-"           [--reuseaddr] [--detach] [--pid-file=file] [directory...]";
+"           [--reuseaddr] [--detach] [--pid-file=file]\n"
+"           [--user=user [[--group=group]] [directory...]";
 
 /* List of acceptable pathname prefixes */
 static char **ok_paths;
@@ -701,13 +704,18 @@ static void store_pid(const char *path)
 	fclose(f);
 }
 
-static int serve(int port)
+static int serve(int port, struct passwd *pass, gid_t gid)
 {
 	int socknum, *socklist;
 
 	socknum = socksetup(port, &socklist);
 	if (socknum == 0)
 		die("unable to allocate any listen sockets on port %u", port);
+
+	if (pass && gid &&
+	    (initgroups(pass->pw_name, gid) || setgid (gid) ||
+	     setuid(pass->pw_uid)))
+		die("cannot drop privileges");
 
 	return service_loop(socknum, socklist);
 }
@@ -716,8 +724,11 @@ int main(int argc, char **argv)
 {
 	int port = DEFAULT_GIT_PORT;
 	int inetd_mode = 0;
-	const char *pid_file = NULL;
+	const char *pid_file = NULL, *user_name = NULL, *group_name = NULL;
 	int detach = 0;
+	struct passwd *pass = NULL;
+	struct group *group;
+	gid_t gid = 0;
 	int i;
 
 	/* Without this we cannot rely on waitpid() to tell
@@ -791,6 +802,14 @@ int main(int argc, char **argv)
 			log_syslog = 1;
 			continue;
 		}
+		if (!strncmp(arg, "--user=", 7)) {
+			user_name = arg + 7;
+			continue;
+		}
+		if (!strncmp(arg, "--group=", 8)) {
+			group_name = arg + 8;
+			continue;
+		}
 		if (!strcmp(arg, "--")) {
 			ok_paths = &argv[i+1];
 			break;
@@ -800,6 +819,28 @@ int main(int argc, char **argv)
 		}
 
 		usage(daemon_usage);
+	}
+
+	if (inetd_mode && (group_name || user_name))
+		die("--user and --group are incompatible with --inetd");
+
+	if (group_name && !user_name)
+		die("--group supplied without --user");
+
+	if (user_name) {
+		pass = getpwnam(user_name);
+		if (!pass)
+			die("user not found - %s", user_name);
+
+		if (!group_name)
+			gid = pass->pw_gid;
+		else {
+			group = getgrnam(group_name);
+			if (!group)
+				die("group not found - %s", group_name);
+
+			gid = group->gr_gid;
+		}
 	}
 
 	if (log_syslog) {
@@ -831,5 +872,5 @@ int main(int argc, char **argv)
 	if (pid_file)
 		store_pid(pid_file);
 
-	return serve(port);
+	return serve(port, pass, gid);
 }
