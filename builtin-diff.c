@@ -192,7 +192,7 @@ static int builtin_diff_combined(struct rev_info *revs,
 	parent = xmalloc(ents * sizeof(*parent));
 	/* Again, the revs are all reverse */
 	for (i = 0; i < ents; i++)
-		memcpy(parent + i, ent[ents - 1 - i].item->sha1, 20);
+		hashcpy((unsigned char*)parent + i, ent[ents - 1 - i].item->sha1);
 	diff_tree_combined(parent[0], parent + 1, ents - 1,
 			   revs->dense_combined_merges, revs);
 	return 0;
@@ -290,7 +290,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		if (obj->type == OBJ_BLOB) {
 			if (2 <= blobs)
 				die("more than two blobs given: '%s'", name);
-			memcpy(blob[blobs].sha1, obj->sha1, 20);
+			hashcpy(blob[blobs].sha1, obj->sha1);
 			blob[blobs].name = name;
 			blobs++;
 			continue;

@@ -84,7 +84,7 @@ static int process_commit(struct commit *commit)
 	if (commit->object.flags & COMPLETE)
 		return 0;
 
-	memcpy(current_commit_sha1, commit->object.sha1, 20);
+	hashcpy(current_commit_sha1, commit->object.sha1);
 
 	pull_say("walk %s\n", sha1_to_hex(commit->object.sha1));
 

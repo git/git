@@ -176,7 +176,7 @@ static int get_blob_sha1(struct tree *t, const char *pathname,
 	if (i == 20)
 		return -1;
 
-	memcpy(sha1, blob_sha1, 20);
+	hashcpy(sha1, blob_sha1);
 	return 0;
 }
 
@@ -191,7 +191,7 @@ static int get_blob_sha1_internal(const unsigned char *sha1, const char *base,
 	    strcmp(blame_file + baselen, pathname))
 		return -1;
 
-	memcpy(blob_sha1, sha1, 20);
+	hashcpy(blob_sha1, sha1);
 	return -1;
 }
 

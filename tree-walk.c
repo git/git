@@ -179,7 +179,7 @@ static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char 
 		if (cmp < 0)
 			break;
 		if (entrylen == namelen) {
-			memcpy(result, sha1, 20);
+			hashcpy(result, sha1);
 			return 0;
 		}
 		if (name[entrylen] != '/')
@@ -187,7 +187,7 @@ static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char 
 		if (!S_ISDIR(*mode))
 			break;
 		if (++entrylen == namelen) {
-			memcpy(result, sha1, 20);
+			hashcpy(result, sha1);
 			return 0;
 		}
 		return get_tree_entry(sha1, name + entrylen, result, mode);

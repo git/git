@@ -247,8 +247,8 @@ static void read_head_info(void)
 				report_status = 1;
 		}
 		cmd = xmalloc(sizeof(struct command) + len - 80);
-		memcpy(cmd->old_sha1, old_sha1, 20);
-		memcpy(cmd->new_sha1, new_sha1, 20);
+		hashcpy(cmd->old_sha1, old_sha1);
+		hashcpy(cmd->new_sha1, new_sha1);
 		memcpy(cmd->ref_name, line + 82, len - 81);
 		cmd->error_string = "n/a (unpacker error)";
 		cmd->next = NULL;

@@ -50,10 +50,10 @@ int write_tree(unsigned char *sha1, int missing_ok, const char *prefix)
 	if (prefix) {
 		struct cache_tree *subtree =
 			cache_tree_find(active_cache_tree, prefix);
-		memcpy(sha1, subtree->sha1, 20);
+		hashcpy(sha1, subtree->sha1);
 	}
 	else
-		memcpy(sha1, active_cache_tree->sha1, 20);
+		hashcpy(sha1, active_cache_tree->sha1);
 
 	rollback_lock_file(lock_file);
 

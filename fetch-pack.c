@@ -404,7 +404,7 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 			continue;
 		}
 
-		memcpy(ref->new_sha1, local, 20);
+		hashcpy(ref->new_sha1, local);
 		if (!verbose)
 			continue;
 		fprintf(stderr,

@@ -200,7 +200,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 
 			any_files = 1;
 
-			memcpy(ce->sha1, posns[i]->sha1, 20);
+			hashcpy(ce->sha1, posns[i]->sha1);
 			src[i + o->merge] = ce;
 			subposns[i] = df_conflict_list;
 			posns[i] = posns[i]->next;

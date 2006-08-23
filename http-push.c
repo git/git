@@ -1874,7 +1874,7 @@ static int one_local_ref(const char *refname, const unsigned char *sha1)
 	struct ref *ref;
 	int len = strlen(refname) + 1;
 	ref = xcalloc(1, sizeof(*ref) + len);
-	memcpy(ref->new_sha1, sha1, 20);
+	hashcpy(ref->new_sha1, sha1);
 	memcpy(ref->name, refname, len);
 	*local_tail = ref;
 	local_tail = &ref->next;
@@ -1909,7 +1909,7 @@ static void one_remote_ref(char *refname)
 	}
 
 	ref = xcalloc(1, sizeof(*ref) + len);
-	memcpy(ref->old_sha1, remote_sha1, 20);
+	hashcpy(ref->old_sha1, remote_sha1);
 	memcpy(ref->name, refname, len);
 	*remote_tail = ref;
 	remote_tail = &ref->next;
@@ -2445,7 +2445,7 @@ int main(int argc, char **argv)
 				continue;
 			}
 		}
-		memcpy(ref->new_sha1, ref->peer_ref->new_sha1, 20);
+		hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
 		if (is_zero_sha1(ref->new_sha1)) {
 			error("cannot happen anymore");
 			rc = -3;
