@@ -1907,13 +1907,13 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 static int check_patch_list(struct patch *patch)
 {
 	struct patch *prev_patch = NULL;
-	int error = 0;
+	int err = 0;
 
 	for (prev_patch = NULL; patch ; patch = patch->next) {
-		error |= check_patch(patch, prev_patch);
+		err |= check_patch(patch, prev_patch);
 		prev_patch = patch;
 	}
-	return error;
+	return err;
 }
 
 static void show_index_list(struct patch *list)

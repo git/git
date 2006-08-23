@@ -232,7 +232,7 @@ static int do_push(const char *repo)
 	common_argc = argc;
 
 	for (i = 0; i < n; i++) {
-		int error;
+		int err;
 		int dest_argc = common_argc;
 		int dest_refspec_nr = refspec_nr;
 		const char **dest_refspec = refspec;
@@ -248,10 +248,10 @@ static int do_push(const char *repo)
 		while (dest_refspec_nr--)
 			argv[dest_argc++] = *dest_refspec++;
 		argv[dest_argc] = NULL;
-		error = run_command_v(argc, argv);
-		if (!error)
+		err = run_command_v(argc, argv);
+		if (!err)
 			continue;
-		switch (error) {
+		switch (err) {
 		case -ERR_RUN_COMMAND_FORK:
 			die("unable to fork for %s", sender);
 		case -ERR_RUN_COMMAND_EXEC:
@@ -262,7 +262,7 @@ static int do_push(const char *repo)
 		case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
 			die("%s died with strange error", sender);
 		default:
-			return -error;
+			return -err;
 		}
 	}
 	return 0;
