@@ -262,10 +262,10 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	} else {
 		for (i = 0; i < changed.nr; i++) {
 			const char *path = changed.items[i].path;
-			int i = cache_name_pos(path, strlen(path));
-			struct cache_entry *ce = active_cache[i];
+			int j = cache_name_pos(path, strlen(path));
+			struct cache_entry *ce = active_cache[j];
 
-			if (i < 0)
+			if (j < 0)
 				die ("Huh? Cache entry for %s unknown?", path);
 			refresh_cache_entry(ce, 0);
 		}

@@ -292,11 +292,11 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		if (p->option & USE_PAGER)
 			setup_pager();
 		if (getenv("GIT_TRACE")) {
-			int i;
+			int j;
 			fprintf(stderr, "trace: built-in: git");
-			for (i = 0; i < argc; ++i) {
+			for (j = 0; j < argc; ++j) {
 				fputc(' ', stderr);
-				sq_quote_print(stderr, argv[i]);
+				sq_quote_print(stderr, argv[j]);
 			}
 			putc('\n', stderr);
 			fflush(stderr);
