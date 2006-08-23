@@ -8,9 +8,9 @@
 static const char show_branch_usage[] =
 "git-show-branch [--sparse] [--current] [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...]";
 
-static int default_num = 0;
-static int default_alloc = 0;
-static const char **default_arg = NULL;
+static int default_num;
+static int default_alloc;
+static const char **default_arg;
 
 #define UNINTERESTING	01
 
@@ -378,7 +378,7 @@ static int append_head_ref(const char *refname, const unsigned char *sha1)
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
 	 */
-	if (get_sha1(refname + ofs, tmp) || memcmp(tmp, sha1, 20))
+	if (get_sha1(refname + ofs, tmp) || hashcmp(tmp, sha1))
 		ofs = 5;
 	return append_ref(refname + ofs, sha1);
 }
@@ -442,7 +442,7 @@ static int rev_is_head(char *head_path, int headlen, char *name,
 {
 	int namelen;
 	if ((!head_path[0]) ||
-	    (head_sha1 && sha1 && memcmp(head_sha1, sha1, 20)))
+	    (head_sha1 && sha1 && hashcmp(head_sha1, sha1)))
 		return 0;
 	namelen = strlen(name);
 	if ((headlen < namelen) ||

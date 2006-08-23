@@ -27,7 +27,7 @@ all:
 # Define NO_C99_FORMAT if your formatted IO functions (printf/scanf et.al.)
 # do not support the 'size specifiers' introduced by C99, namely ll, hh,
 # j, z, t. (representing long long int, char, intmax_t, size_t, ptrdiff_t).
-# some c compilers supported these specifiers prior to C99 as an extension.
+# some C compilers supported these specifiers prior to C99 as an extension.
 #
 # Define NO_STRCASESTR if you don't have strcasestr.
 #
@@ -121,6 +121,17 @@ template_dir = $(prefix)/share/git-core/templates/
 GIT_PYTHON_DIR = $(prefix)/share/git-core/python
 # DESTDIR=
 
+# default configuration for gitweb
+GITWEB_CONFIG = gitweb_config.perl
+GITWEB_HOME_LINK_STR = projects
+GITWEB_SITENAME =
+GITWEB_PROJECTROOT = /pub/git
+GITWEB_BASE_URL =
+GITWEB_LIST =
+GITWEB_HOMETEXT = indextext.html
+GITWEB_CSS = gitweb.css
+GITWEB_LOGO = git-logo.png
+
 export prefix bindir gitexecdir template_dir GIT_PYTHON_DIR
 
 CC = gcc
@@ -173,33 +184,28 @@ SIMPLE_PROGRAMS = \
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
-	git-checkout-index$X \
 	git-convert-objects$X git-fetch-pack$X git-fsck-objects$X \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
 	git-merge-base$X \
-	git-merge-index$X git-mktag$X git-mktree$X git-pack-objects$X git-patch-id$X \
+	git-merge-index$X git-mktag$X git-mktree$X git-patch-id$X \
 	git-peek-remote$X git-receive-pack$X \
 	git-send-pack$X git-shell$X \
 	git-show-index$X git-ssh-fetch$X \
 	git-ssh-upload$X git-unpack-file$X \
-	git-unpack-objects$X git-update-server-info$X \
+	git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X \
-	git-symbolic-ref$X \
-	git-name-rev$X git-pack-redundant$X git-var$X \
+	git-pack-redundant$X git-var$X \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X \
-	git-merge-recur$X
+	git-merge-recur$X \
+	$(EXTRA_PROGRAMS)
 
-BUILT_INS = git-log$X git-whatchanged$X git-show$X git-update-ref$X \
-	git-count-objects$X git-diff$X git-push$X git-mailsplit$X \
-	git-grep$X git-add$X git-rm$X git-rev-list$X git-stripspace$X \
-	git-check-ref-format$X git-rev-parse$X git-mailinfo$X \
-	git-init-db$X git-tar-tree$X git-upload-tar$X git-format-patch$X \
-	git-ls-files$X git-ls-tree$X git-get-tar-commit-id$X \
-	git-read-tree$X git-commit-tree$X git-write-tree$X \
-	git-apply$X git-show-branch$X git-diff-files$X git-update-index$X \
-	git-diff-index$X git-diff-stages$X git-diff-tree$X git-cat-file$X \
-	git-fmt-merge-msg$X git-prune$X git-mv$X git-prune-packed$X \
-	git-repo-config$X
+# Empty...
+EXTRA_PROGRAMS =
+
+BUILT_INS = \
+	git-format-patch$X git-show$X git-whatchanged$X \
+	git-get-tar-commit-id$X \
+	$(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
@@ -228,7 +234,7 @@ LIB_H = \
 	blob.h cache.h commit.h csum-file.h delta.h \
 	diff.h object.h pack.h pkt-line.h quote.h refs.h \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
-	tree-walk.h log-tree.h dir.h path-list.h unpack-trees.h
+	tree-walk.h log-tree.h dir.h path-list.h unpack-trees.h builtin.h
 
 DIFF_OBJS = \
 	diff.o diff-lib.o diffcore-break.o diffcore-order.o \
@@ -243,20 +249,51 @@ LIB_OBJS = \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
 	fetch-clone.o revision.o pager.o tree-walk.o xdiff-interface.o \
-	alloc.o merge-file.o path-list.o unpack-trees.o $(DIFF_OBJS)
+	write_or_die.o \
+	alloc.o merge-file.o path-list.o help.o unpack-trees.o $(DIFF_OBJS)
 
 BUILTIN_OBJS = \
-	builtin-log.o builtin-help.o builtin-count.o builtin-diff.o builtin-push.o \
-	builtin-grep.o builtin-add.o builtin-rev-list.o builtin-check-ref-format.o \
-	builtin-rm.o builtin-init-db.o builtin-rev-parse.o \
-	builtin-tar-tree.o builtin-upload-tar.o builtin-update-index.o \
-	builtin-ls-files.o builtin-ls-tree.o builtin-write-tree.o \
-	builtin-read-tree.o builtin-commit-tree.o builtin-mailinfo.o \
-	builtin-apply.o builtin-show-branch.o builtin-diff-files.o \
-	builtin-diff-index.o builtin-diff-stages.o builtin-diff-tree.o \
-	builtin-cat-file.o builtin-mailsplit.o builtin-stripspace.o \
-	builtin-update-ref.o builtin-fmt-merge-msg.o builtin-prune.o \
-	builtin-mv.o builtin-prune-packed.o builtin-repo-config.o
+	builtin-add.o \
+	builtin-apply.o \
+	builtin-cat-file.o \
+	builtin-checkout-index.o \
+	builtin-check-ref-format.o \
+	builtin-commit-tree.o \
+	builtin-count-objects.o \
+	builtin-diff.o \
+	builtin-diff-files.o \
+	builtin-diff-index.o \
+	builtin-diff-stages.o \
+	builtin-diff-tree.o \
+	builtin-fmt-merge-msg.o \
+	builtin-grep.o \
+	builtin-init-db.o \
+	builtin-log.o \
+	builtin-ls-files.o \
+	builtin-ls-tree.o \
+	builtin-mailinfo.o \
+	builtin-mailsplit.o \
+	builtin-mv.o \
+	builtin-name-rev.o \
+	builtin-pack-objects.o \
+	builtin-prune.o \
+	builtin-prune-packed.o \
+	builtin-push.o \
+	builtin-read-tree.o \
+	builtin-repo-config.o \
+	builtin-rev-list.o \
+	builtin-rev-parse.o \
+	builtin-rm.o \
+	builtin-show-branch.o \
+	builtin-stripspace.o \
+	builtin-symbolic-ref.o \
+	builtin-tar-tree.o \
+	builtin-unpack-objects.o \
+	builtin-update-index.o \
+	builtin-update-ref.o \
+	builtin-upload-tar.o \
+	builtin-verify-pack.o \
+	builtin-write-tree.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz
@@ -297,15 +334,16 @@ ifeq ($(uname_S),SunOS)
 	NEEDS_NSL = YesPlease
 	SHELL_PATH = /bin/bash
 	NO_STRCASESTR = YesPlease
-	NO_STRLCPY = YesPlease
 	ifeq ($(uname_R),5.8)
 		NEEDS_LIBICONV = YesPlease
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
+		NO_C99_FORMAT = YesPlease
 	endif
 	ifeq ($(uname_R),5.9)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
+		NO_C99_FORMAT = YesPlease
 	endif
 	INSTALL = ginstall
 	TAR = gtar
@@ -524,7 +562,7 @@ LIB_OBJS += $(COMPAT_OBJS)
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
 
-all: $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk
+all: $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk gitweb/gitweb.cgi
 
 all:
 	$(MAKE) -C templates
@@ -537,7 +575,7 @@ git$X: git.c common-cmds.h $(BUILTIN_OBJS) $(GITLIBS) GIT-CFLAGS
 		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) \
 		$(BUILTIN_OBJS) $(ALL_LDFLAGS) $(LIBS)
 
-builtin-help.o: common-cmds.h
+help.o: common-cmds.h
 
 $(BUILT_INS): git$X
 	rm -f $@ && ln git$X $@
@@ -582,6 +620,24 @@ git-status: git-commit
 	cp $< $@+
 	mv $@+ $@
 
+gitweb/gitweb.cgi: gitweb/gitweb.perl
+	rm -f $@ $@+
+	sed -e '1s|#!.*perl|#!$(PERL_PATH_SQ)|' \
+	    -e 's|++GIT_VERSION++|$(GIT_VERSION)|g' \
+	    -e 's|++GIT_BINDIR++|$(bindir)|g' \
+	    -e 's|++GITWEB_CONFIG++|$(GITWEB_CONFIG)|g' \
+	    -e 's|++GITWEB_HOME_LINK_STR++|$(GITWEB_HOME_LINK_STR)|g' \
+	    -e 's|++GITWEB_SITENAME++|$(GITWEB_SITENAME)|g' \
+	    -e 's|++GITWEB_PROJECTROOT++|$(GITWEB_PROJECTROOT)|g' \
+	    -e 's|++GITWEB_BASE_URL++|$(GITWEB_BASE_URL)|g' \
+	    -e 's|++GITWEB_LIST++|$(GITWEB_LIST)|g' \
+	    -e 's|++GITWEB_HOMETEXT++|$(GITWEB_HOMETEXT)|g' \
+	    -e 's|++GITWEB_CSS++|$(GITWEB_CSS)|g' \
+	    -e 's|++GITWEB_LOGO++|$(GITWEB_LOGO)|g' \
+	    $< >$@+
+	chmod +x $@+
+	mv $@+ $@
+
 git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css
 	rm -f $@ $@+
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
@@ -592,9 +648,16 @@ git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css
 	    -e '/@@GITWEB_CGI@@/d' \
 	    -e '/@@GITWEB_CSS@@/r gitweb/gitweb.css' \
 	    -e '/@@GITWEB_CSS@@/d' \
-	    $@.sh | sed "s|/usr/bin/git|$(bindir)/git|" > $@+
+	    $@.sh > $@+
 	chmod +x $@+
 	mv $@+ $@
+
+configure: configure.ac
+	rm -f $@ $<+
+	sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+	    $< > $<+
+	autoconf -o $@ $<+
+	rm -f $<+
 
 # These can record GIT_VERSION
 git$X git.spec \
@@ -792,10 +855,11 @@ clean:
 	rm -f $(ALL_PROGRAMS) $(BUILT_INS) git$X
 	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
 	rm -rf autom4te.cache
-	rm -f config.log config.mak.autogen configure config.status config.cache
+	rm -f configure config.log config.mak.autogen config.mak.append config.status config.cache
 	rm -rf $(GIT_TARNAME) .doc-tmp-dir
 	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
 	rm -f $(htmldocs).tar.gz $(manpages).tar.gz
+	rm -f gitweb/gitweb.cgi
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C templates clean
 	$(MAKE) -C t/ clean

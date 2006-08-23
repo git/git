@@ -92,7 +92,7 @@ static int handle_options(const char*** argv, int* argc)
 }
 
 static const char *alias_command;
-static char *alias_string = NULL;
+static char *alias_string;
 
 static int git_alias_config(const char *var, const char *value)
 {
@@ -213,8 +213,8 @@ static int handle_alias(int *argcp, const char ***argv)
 
 const char git_version_string[] = GIT_VERSION;
 
-#define NEEDS_PREFIX 1
-#define USE_PAGER 2
+#define RUN_SETUP	(1<<0)
+#define USE_PAGER	(1<<1)
 
 static void handle_internal_command(int argc, const char **argv, char **envp)
 {
@@ -224,47 +224,53 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		int (*fn)(int, const char **, const char *);
 		int option;
 	} commands[] = {
-		{ "version", cmd_version },
-		{ "help", cmd_help },
-		{ "log", cmd_log, NEEDS_PREFIX | USE_PAGER },
-		{ "whatchanged", cmd_whatchanged, NEEDS_PREFIX | USE_PAGER },
-		{ "show", cmd_show, NEEDS_PREFIX | USE_PAGER },
-		{ "push", cmd_push, NEEDS_PREFIX },
-		{ "format-patch", cmd_format_patch, NEEDS_PREFIX },
-		{ "count-objects", cmd_count_objects },
-		{ "diff", cmd_diff, NEEDS_PREFIX },
-		{ "grep", cmd_grep, NEEDS_PREFIX },
-		{ "rm", cmd_rm, NEEDS_PREFIX },
-		{ "add", cmd_add, NEEDS_PREFIX },
-		{ "rev-list", cmd_rev_list, NEEDS_PREFIX },
-		{ "init-db", cmd_init_db },
-		{ "get-tar-commit-id", cmd_get_tar_commit_id },
-		{ "upload-tar", cmd_upload_tar },
-		{ "check-ref-format", cmd_check_ref_format },
-		{ "ls-files", cmd_ls_files, NEEDS_PREFIX },
-		{ "ls-tree", cmd_ls_tree, NEEDS_PREFIX },
-		{ "tar-tree", cmd_tar_tree, NEEDS_PREFIX },
-		{ "read-tree", cmd_read_tree, NEEDS_PREFIX },
-		{ "commit-tree", cmd_commit_tree, NEEDS_PREFIX },
+		{ "add", cmd_add, RUN_SETUP },
 		{ "apply", cmd_apply },
-		{ "show-branch", cmd_show_branch, NEEDS_PREFIX },
-		{ "diff-files", cmd_diff_files, NEEDS_PREFIX },
-		{ "diff-index", cmd_diff_index, NEEDS_PREFIX },
-		{ "diff-stages", cmd_diff_stages, NEEDS_PREFIX },
-		{ "diff-tree", cmd_diff_tree, NEEDS_PREFIX },
-		{ "cat-file", cmd_cat_file, NEEDS_PREFIX },
-		{ "rev-parse", cmd_rev_parse, NEEDS_PREFIX },
-		{ "write-tree", cmd_write_tree, NEEDS_PREFIX },
-		{ "mailsplit", cmd_mailsplit },
+		{ "cat-file", cmd_cat_file, RUN_SETUP },
+		{ "checkout-index", cmd_checkout_index, RUN_SETUP },
+		{ "check-ref-format", cmd_check_ref_format },
+		{ "commit-tree", cmd_commit_tree, RUN_SETUP },
+		{ "count-objects", cmd_count_objects },
+		{ "diff", cmd_diff, RUN_SETUP },
+		{ "diff-files", cmd_diff_files, RUN_SETUP },
+		{ "diff-index", cmd_diff_index, RUN_SETUP },
+		{ "diff-stages", cmd_diff_stages, RUN_SETUP },
+		{ "diff-tree", cmd_diff_tree, RUN_SETUP },
+		{ "fmt-merge-msg", cmd_fmt_merge_msg, RUN_SETUP },
+		{ "format-patch", cmd_format_patch, RUN_SETUP },
+		{ "get-tar-commit-id", cmd_get_tar_commit_id },
+		{ "grep", cmd_grep, RUN_SETUP },
+		{ "help", cmd_help },
+		{ "init-db", cmd_init_db },
+		{ "log", cmd_log, RUN_SETUP | USE_PAGER },
+		{ "ls-files", cmd_ls_files, RUN_SETUP },
+		{ "ls-tree", cmd_ls_tree, RUN_SETUP },
 		{ "mailinfo", cmd_mailinfo },
-		{ "stripspace", cmd_stripspace },
-		{ "update-index", cmd_update_index, NEEDS_PREFIX },
-		{ "update-ref", cmd_update_ref, NEEDS_PREFIX },
-		{ "fmt-merge-msg", cmd_fmt_merge_msg, NEEDS_PREFIX },
-		{ "prune", cmd_prune, NEEDS_PREFIX },
-		{ "mv", cmd_mv, NEEDS_PREFIX },
-		{ "prune-packed", cmd_prune_packed, NEEDS_PREFIX },
+		{ "mailsplit", cmd_mailsplit },
+		{ "mv", cmd_mv, RUN_SETUP },
+		{ "name-rev", cmd_name_rev, RUN_SETUP },
+		{ "pack-objects", cmd_pack_objects, RUN_SETUP },
+		{ "prune", cmd_prune, RUN_SETUP },
+		{ "prune-packed", cmd_prune_packed, RUN_SETUP },
+		{ "push", cmd_push, RUN_SETUP },
+		{ "read-tree", cmd_read_tree, RUN_SETUP },
 		{ "repo-config", cmd_repo_config },
+		{ "rev-list", cmd_rev_list, RUN_SETUP },
+		{ "rev-parse", cmd_rev_parse, RUN_SETUP },
+		{ "rm", cmd_rm, RUN_SETUP },
+		{ "show-branch", cmd_show_branch, RUN_SETUP },
+		{ "show", cmd_show, RUN_SETUP | USE_PAGER },
+		{ "stripspace", cmd_stripspace },
+		{ "symbolic-ref", cmd_symbolic_ref, RUN_SETUP },
+		{ "tar-tree", cmd_tar_tree, RUN_SETUP },
+		{ "unpack-objects", cmd_unpack_objects, RUN_SETUP },
+		{ "update-index", cmd_update_index, RUN_SETUP },
+		{ "update-ref", cmd_update_ref, RUN_SETUP },
+		{ "upload-tar", cmd_upload_tar },
+		{ "version", cmd_version },
+		{ "whatchanged", cmd_whatchanged, RUN_SETUP | USE_PAGER },
+		{ "write-tree", cmd_write_tree, RUN_SETUP },
+		{ "verify-pack", cmd_verify_pack },
 	};
 	int i;
 
@@ -281,7 +287,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 			continue;
 
 		prefix = NULL;
-		if (p->option & NEEDS_PREFIX)
+		if (p->option & RUN_SETUP)
 			prefix = setup_git_directory();
 		if (p->option & USE_PAGER)
 			setup_pager();

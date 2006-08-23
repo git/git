@@ -2,7 +2,7 @@
 #include "cache.h"
 #include "commit.h"
 
-static int show_all = 0;
+static int show_all;
 
 static int merge_base(struct commit *rev1, struct commit *rev2)
 {

@@ -56,13 +56,6 @@ static int builtin_diff_files(struct rev_info *revs,
 	if (revs->max_count < 0 &&
 	    (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
 		revs->combine_merges = revs->dense_combined_merges = 1;
-	/*
-	 * Backward compatibility wart - "diff-files -s" used to
-	 * defeat the common diff option "-s" which asked for
-	 * DIFF_FORMAT_NO_OUTPUT.
-	 */
-	if (revs->diffopt.output_format == DIFF_FORMAT_NO_OUTPUT)
-		revs->diffopt.output_format = DIFF_FORMAT_RAW;
 	return run_diff_files(revs, silent);
 }
 
@@ -75,9 +68,8 @@ static void stuff_change(struct diff_options *opt,
 {
 	struct diff_filespec *one, *two;
 
-	if (memcmp(null_sha1, old_sha1, 20) &&
-	    memcmp(null_sha1, new_sha1, 20) &&
-	    !memcmp(old_sha1, new_sha1, 20))
+	if (!is_null_sha1(old_sha1) && !is_null_sha1(new_sha1) &&
+	    !hashcmp(old_sha1, new_sha1))
 		return;
 
 	if (opt->reverse_diff) {
@@ -200,7 +192,7 @@ static int builtin_diff_combined(struct rev_info *revs,
 	parent = xmalloc(ents * sizeof(*parent));
 	/* Again, the revs are all reverse */
 	for (i = 0; i < ents; i++)
-		memcpy(parent + i, ent[ents - 1 - i].item->sha1, 20);
+		hashcpy((unsigned char*)parent + i, ent[ents - 1 - i].item->sha1);
 	diff_tree_combined(parent[0], parent + 1, ents - 1,
 			   revs->dense_combined_merges, revs);
 	return 0;
@@ -298,7 +290,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		if (obj->type == OBJ_BLOB) {
 			if (2 <= blobs)
 				die("more than two blobs given: '%s'", name);
-			memcpy(blob[blobs].sha1, obj->sha1, 20);
+			hashcpy(blob[blobs].sha1, obj->sha1);
 			blob[blobs].name = name;
 			blobs++;
 			continue;

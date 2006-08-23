@@ -82,7 +82,7 @@ static void parse_pack_header(void)
 	SHA1_Init(&ctx);
 	SHA1_Update(&ctx, pack_base, pack_size - 20);
 	SHA1_Final(sha1, &ctx);
-	if (memcmp(sha1, pack_base + pack_size - 20, 20))
+	if (hashcmp(sha1, pack_base + pack_size - 20))
 		die("packfile '%s' SHA1 mismatch", pack_name);
 }
 
@@ -161,7 +161,7 @@ static void *unpack_raw_entry(unsigned long offset,
 	case OBJ_DELTA:
 		if (pos + 20 >= pack_limit)
 			bad_object(offset, "object extends past end of pack");
-		memcpy(delta_base, pack_base + pos, 20);
+		hashcpy(delta_base, pack_base + pos);
 		pos += 20;
 		/* fallthru */
 	case OBJ_COMMIT:
@@ -189,7 +189,7 @@ static int find_delta(const unsigned char *base_sha1)
                 struct delta_entry *delta = &deltas[next];
                 int cmp;
 
-                cmp = memcmp(base_sha1, delta->base_sha1, 20);
+                cmp = hashcmp(base_sha1, delta->base_sha1);
                 if (!cmp)
                         return next;
                 if (cmp < 0) {
@@ -210,9 +210,9 @@ static int find_deltas_based_on_sha1(const unsigned char *base_sha1,
 
 	if (first < 0)
 		return -1;
-	while (first > 0 && !memcmp(deltas[first-1].base_sha1, base_sha1, 20))
+	while (first > 0 && !hashcmp(deltas[first - 1].base_sha1, base_sha1))
 		--first;
-	while (last < end && !memcmp(deltas[last+1].base_sha1, base_sha1, 20))
+	while (last < end && !hashcmp(deltas[last + 1].base_sha1, base_sha1))
 		++last;
 	*first_index = first;
 	*last_index = last;
@@ -278,7 +278,7 @@ static int compare_delta_entry(const void *a, const void *b)
 {
 	const struct delta_entry *delta_a = a;
 	const struct delta_entry *delta_b = b;
-	return memcmp(delta_a->base_sha1, delta_b->base_sha1, 20);
+	return hashcmp(delta_a->base_sha1, delta_b->base_sha1);
 }
 
 static void parse_pack_objects(void)
@@ -304,7 +304,7 @@ static void parse_pack_objects(void)
 		if (obj->type == OBJ_DELTA) {
 			struct delta_entry *delta = &deltas[nr_deltas++];
 			delta->obj = obj;
-			memcpy(delta->base_sha1, base_sha1, 20);
+			hashcpy(delta->base_sha1, base_sha1);
 		} else
 			sha1_object(data, data_size, obj->type, obj->sha1);
 		free(data);
@@ -350,7 +350,7 @@ static int sha1_compare(const void *_a, const void *_b)
 {
 	struct object_entry *a = *(struct object_entry **)_a;
 	struct object_entry *b = *(struct object_entry **)_b;
-	return memcmp(a->sha1, b->sha1, 20);
+	return hashcmp(a->sha1, b->sha1);
 }
 
 static void write_index_file(const char *index_name, unsigned char *sha1)

@@ -11,7 +11,7 @@
 #include "cache-tree.h"
 
 static const char prune_usage[] = "git-prune [-n]";
-static int show_only = 0;
+static int show_only;
 static struct rev_info revs;
 
 static int prune_object(char *path, const char *filename, const unsigned char *sha1)

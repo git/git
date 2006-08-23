@@ -42,8 +42,6 @@
 #include "cache-tree.h"
 
 #define CHECKOUT_ALL 4
-static const char *prefix;
-static int prefix_length;
 static int line_termination = '\n';
 static int checkout_stage; /* default to checkout stage0 */
 static int to_tempfile;
@@ -51,7 +49,7 @@ static char topath[4][MAXPATHLEN+1];
 
 static struct checkout state;
 
-static void write_tempfile_record (const char *name)
+static void write_tempfile_record(const char *name, int prefix_length)
 {
 	int i;
 
@@ -77,7 +75,7 @@ static void write_tempfile_record (const char *name)
 	}
 }
 
-static int checkout_file(const char *name)
+static int checkout_file(const char *name, int prefix_length)
 {
 	int namelen = strlen(name);
 	int pos = cache_name_pos(name, namelen);
@@ -106,7 +104,7 @@ static int checkout_file(const char *name)
 
 	if (did_checkout) {
 		if (to_tempfile)
-			write_tempfile_record(name);
+			write_tempfile_record(name, prefix_length);
 		return errs > 0 ? -1 : 0;
 	}
 
@@ -124,7 +122,7 @@ static int checkout_file(const char *name)
 	return -1;
 }
 
-static int checkout_all(void)
+static void checkout_all(const char *prefix, int prefix_length)
 {
 	int i, errs = 0;
 	struct cache_entry* last_ce = NULL;
@@ -141,7 +139,7 @@ static int checkout_all(void)
 		if (last_ce && to_tempfile) {
 			if (ce_namelen(last_ce) != ce_namelen(ce)
 			    || memcmp(last_ce->name, ce->name, ce_namelen(ce)))
-				write_tempfile_record(last_ce->name);
+				write_tempfile_record(last_ce->name, prefix_length);
 		}
 		if (checkout_entry(ce, &state,
 		    to_tempfile ? topath[ce_stage(ce)] : NULL) < 0)
@@ -149,13 +147,12 @@ static int checkout_all(void)
 		last_ce = ce;
 	}
 	if (last_ce && to_tempfile)
-		write_tempfile_record(last_ce->name);
+		write_tempfile_record(last_ce->name, prefix_length);
 	if (errs)
 		/* we have already done our error reporting.
 		 * exit with the same code as die().
 		 */
 		exit(128);
-	return 0;
 }
 
 static const char checkout_cache_usage[] =
@@ -163,16 +160,16 @@ static const char checkout_cache_usage[] =
 
 static struct lock_file lock_file;
 
-int main(int argc, char **argv)
+int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	int newfd = -1;
 	int all = 0;
 	int read_from_stdin = 0;
+	int prefix_length;
 
-	state.base_dir = "";
-	prefix = setup_git_directory();
 	git_config(git_default_config);
+	state.base_dir = "";
 	prefix_length = prefix ? strlen(prefix) : 0;
 
 	if (read_cache() < 0) {
@@ -270,7 +267,7 @@ int main(int argc, char **argv)
 		if (read_from_stdin)
 			die("git-checkout-index: don't mix '--stdin' and explicit filenames");
 		p = prefix_path(prefix, prefix_length, arg);
-		checkout_file(p);
+		checkout_file(p, prefix_length);
 		if (p < arg || p > arg + strlen(arg))
 			free((char*)p);
 	}
@@ -292,7 +289,7 @@ int main(int argc, char **argv)
 			else
 				path_name = buf.buf;
 			p = prefix_path(prefix, prefix_length, path_name);
-			checkout_file(p);
+			checkout_file(p, prefix_length);
 			if (p < path_name || p > path_name + strlen(path_name))
 				free((char *)p);
 			if (path_name != buf.buf)
@@ -301,7 +298,7 @@ int main(int argc, char **argv)
 	}
 
 	if (all)
-		checkout_all();
+		checkout_all(prefix, prefix_length);
 
 	if (0 <= newfd &&
 	    (write_cache(newfd, active_cache, active_nr) ||

@@ -15,7 +15,8 @@ static char *malloc_base(const char *base, const char *path, int pathlen)
 	return newbase;
 }
 
-static int show_entry(struct diff_options *opt, const char *prefix, struct tree_desc *desc, const char *base);
+static void show_entry(struct diff_options *opt, const char *prefix, struct tree_desc *desc,
+		       const char *base);
 
 static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2, const char *base, struct diff_options *opt)
 {
@@ -38,8 +39,7 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2, const 
 		show_entry(opt, "+", t2, base);
 		return 1;
 	}
-	if (!opt->find_copies_harder &&
-	    !memcmp(sha1, sha2, 20) && mode1 == mode2)
+	if (!opt->find_copies_harder && !hashcmp(sha1, sha2) && mode1 == mode2)
 		return 0;
 
 	/*
@@ -131,7 +131,8 @@ static void show_tree(struct diff_options *opt, const char *prefix, struct tree_
 }
 
 /* A file entry went away or appeared */
-static int show_entry(struct diff_options *opt, const char *prefix, struct tree_desc *desc, const char *base)
+static void show_entry(struct diff_options *opt, const char *prefix, struct tree_desc *desc,
+		       const char *base)
 {
 	unsigned mode;
 	const char *path;
@@ -152,11 +153,9 @@ static int show_entry(struct diff_options *opt, const char *prefix, struct tree_
 
 		free(tree);
 		free(newbase);
-		return 0;
+	} else {
+		opt->add_remove(opt, prefix[0], mode, sha1, base, path);
 	}
-
-	opt->add_remove(opt, prefix[0], mode, sha1, base, path);
-	return 0;
 }
 
 int diff_tree(struct tree_desc *t1, struct tree_desc *t2, const char *base, struct diff_options *opt)

@@ -15,16 +15,16 @@
 #define DO_NONFLAGS	8
 static int filter = ~0;
 
-static const char *def = NULL;
+static const char *def;
 
 #define NORMAL 0
 #define REVERSED 1
 static int show_type = NORMAL;
-static int symbolic = 0;
-static int abbrev = 0;
-static int output_sq = 0;
+static int symbolic;
+static int abbrev;
+static int output_sq;
 
-static int revs_count = 0;
+static int revs_count;
 
 /*
  * Some arguments are relevant "revision" arguments,

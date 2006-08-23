@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 #include "object.h"
 #include "delta.h"
@@ -94,7 +95,7 @@ static void add_delta_to_list(unsigned char *base_sha1, void *delta, unsigned lo
 {
 	struct delta_info *info = xmalloc(sizeof(*info));
 
-	memcpy(info->base_sha1, base_sha1, 20);
+	hashcpy(info->base_sha1, base_sha1);
 	info->size = size;
 	info->delta = delta;
 	info->next = delta_list;
@@ -112,7 +113,7 @@ static void write_object(void *buf, unsigned long size, const char *type)
 }
 
 static int resolve_delta(const char *type,
-	void *base, unsigned long base_size, 
+	void *base, unsigned long base_size,
 	void *delta, unsigned long delta_size)
 {
 	void *result;
@@ -135,7 +136,7 @@ static void added_object(unsigned char *sha1, const char *type, void *data, unsi
 	struct delta_info *info;
 
 	while ((info = *p) != NULL) {
-		if (!memcmp(info->base_sha1, sha1, 20)) {
+		if (!hashcmp(info->base_sha1, sha1)) {
 			*p = info->next;
 			p = &delta_list;
 			resolve_delta(type, data, size, info->delta, info->size);
@@ -172,7 +173,7 @@ static int unpack_delta_entry(unsigned long delta_size)
 	unsigned char base_sha1[20];
 	int result;
 
-	memcpy(base_sha1, fill(20), 20);
+	hashcpy(base_sha1, fill(20));
 	use(20);
 
 	delta_data = get_data(delta_size);
@@ -260,12 +261,12 @@ static void unpack_all(void)
 		die("unresolved deltas left after unpacking");
 }
 
-int main(int argc, char **argv)
+int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	unsigned char sha1[20];
 
-	setup_git_directory();
+	git_config(git_default_config);
 
 	quiet = !isatty(2);
 
@@ -291,7 +292,7 @@ int main(int argc, char **argv)
 	unpack_all();
 	SHA1_Update(&ctx, buffer, offset);
 	SHA1_Final(sha1, &ctx);
-	if (memcmp(fill(20), sha1, 20))
+	if (hashcmp(fill(20), sha1))
 		die("final sha1 did not match");
 	use(20);
 

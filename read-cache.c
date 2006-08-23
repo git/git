@@ -18,16 +18,16 @@
 #define CACHE_EXT(s) ( (s[0]<<24)|(s[1]<<16)|(s[2]<<8)|(s[3]) )
 #define CACHE_EXT_TREE 0x54524545	/* "TREE" */
 
-struct cache_entry **active_cache = NULL;
+struct cache_entry **active_cache;
 static time_t index_file_timestamp;
-unsigned int active_nr = 0, active_alloc = 0, active_cache_changed = 0;
+unsigned int active_nr, active_alloc, active_cache_changed;
 
-struct cache_tree *active_cache_tree = NULL;
+struct cache_tree *active_cache_tree;
 
-int cache_errno = 0;
+int cache_errno;
 
-static void *cache_mmap = NULL;
-static size_t cache_mmap_size = 0;
+static void *cache_mmap;
+static size_t cache_mmap_size;
 
 /*
  * This only updates the "non-critical" parts of the directory
@@ -60,7 +60,7 @@ static int ce_compare_data(struct cache_entry *ce, struct stat *st)
 	if (fd >= 0) {
 		unsigned char sha1[20];
 		if (!index_fd(sha1, fd, st, 0, NULL))
-			match = memcmp(sha1, ce->sha1, 20);
+			match = hashcmp(sha1, ce->sha1);
 		/* index_fd() closed the file descriptor already */
 	}
 	return match;
@@ -169,9 +169,11 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 	return changed;
 }
 
-int ce_match_stat(struct cache_entry *ce, struct stat *st, int ignore_valid)
+int ce_match_stat(struct cache_entry *ce, struct stat *st, int options)
 {
 	unsigned int changed;
+	int ignore_valid = options & 01;
+	int assume_racy_is_modified = options & 02;
 
 	/*
 	 * If it's marked as always valid in the index, it's
@@ -200,8 +202,12 @@ int ce_match_stat(struct cache_entry *ce, struct stat *st, int ignore_valid)
 	 */
 	if (!changed &&
 	    index_file_timestamp &&
-	    index_file_timestamp <= ntohl(ce->ce_mtime.sec))
-		changed |= ce_modified_check_fs(ce, st);
+	    index_file_timestamp <= ntohl(ce->ce_mtime.sec)) {
+		if (assume_racy_is_modified)
+			changed |= DATA_CHANGED;
+		else
+			changed |= ce_modified_check_fs(ce, st);
+	}
 
 	return changed;
 }
@@ -738,7 +744,7 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size)
 	SHA1_Init(&c);
 	SHA1_Update(&c, hdr, size - 20);
 	SHA1_Final(sha1, &c);
-	if (memcmp(sha1, (char *) hdr + size - 20, 20))
+	if (hashcmp(sha1, (unsigned char *)hdr + size - 20))
 		return error("bad index file sha1 signature");
 	return 0;
 }
@@ -857,6 +863,18 @@ int discard_cache()
 static unsigned char write_buffer[WRITE_BUFFER_SIZE];
 static unsigned long write_buffer_len;
 
+static int ce_write_flush(SHA_CTX *context, int fd)
+{
+	unsigned int buffered = write_buffer_len;
+	if (buffered) {
+		SHA1_Update(context, write_buffer, buffered);
+		if (write(fd, write_buffer, buffered) != buffered)
+			return -1;
+		write_buffer_len = 0;
+	}
+	return 0;
+}
+
 static int ce_write(SHA_CTX *context, int fd, void *data, unsigned int len)
 {
 	while (len) {
@@ -867,8 +885,8 @@ static int ce_write(SHA_CTX *context, int fd, void *data, unsigned int len)
 		memcpy(write_buffer + buffered, data, partial);
 		buffered += partial;
 		if (buffered == WRITE_BUFFER_SIZE) {
-			SHA1_Update(context, write_buffer, WRITE_BUFFER_SIZE);
-			if (write(fd, write_buffer, WRITE_BUFFER_SIZE) != WRITE_BUFFER_SIZE)
+			write_buffer_len = buffered;
+			if (ce_write_flush(context, fd))
 				return -1;
 			buffered = 0;
 		}
@@ -884,10 +902,8 @@ static int write_index_ext_header(SHA_CTX *context, int fd,
 {
 	ext = htonl(ext);
 	sz = htonl(sz);
-	if ((ce_write(context, fd, &ext, 4) < 0) ||
-	    (ce_write(context, fd, &sz, 4) < 0))
-		return -1;
-	return 0;
+	return ((ce_write(context, fd, &ext, 4) < 0) ||
+		(ce_write(context, fd, &sz, 4) < 0)) ? -1 : 0;
 }
 
 static int ce_flush(SHA_CTX *context, int fd)
@@ -909,9 +925,7 @@ static int ce_flush(SHA_CTX *context, int fd)
 	/* Append the SHA1 signature at the end */
 	SHA1_Final(write_buffer + left, context);
 	left += 20;
-	if (write(fd, write_buffer, left) != left)
-		return -1;
-	return 0;
+	return (write(fd, write_buffer, left) != left) ? -1 : 0;
 }
 
 static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
@@ -940,7 +954,7 @@ static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
 		 * $ echo filfre >nitfol
 		 * $ git-update-index --add nitfol
 		 *
-		 * but it does not.  Whe the second update-index runs,
+		 * but it does not.  When the second update-index runs,
 		 * it notices that the entry "frotz" has the same timestamp
 		 * as index, and if we were to smudge it by resetting its
 		 * size to zero here, then the object name recorded

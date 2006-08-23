@@ -25,7 +25,7 @@ static int read_one_entry(const unsigned char *sha1, const char *base, int basel
 	ce->ce_flags = create_ce_flags(baselen + len, stage);
 	memcpy(ce->name, base, baselen);
 	memcpy(ce->name + baselen, pathname, len+1);
-	memcpy(ce->sha1, sha1, 20);
+	hashcpy(ce->sha1, sha1);
 	return add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_SKIP_DFCHECK);
 }
 
@@ -144,7 +144,7 @@ struct tree *lookup_tree(const unsigned char *sha1)
 	return (struct tree *) obj;
 }
 
-static int track_tree_refs(struct tree *item)
+static void track_tree_refs(struct tree *item)
 {
 	int n_refs = 0, i;
 	struct object_refs *refs;
@@ -174,7 +174,6 @@ static int track_tree_refs(struct tree *item)
 		refs->ref[i++] = obj;
 	}
 	set_object_refs(&item->object, refs);
-	return 0;
 }
 
 int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)

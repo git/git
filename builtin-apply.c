@@ -28,17 +28,18 @@ static int prefix_length = -1;
 static int newfd = -1;
 
 static int p_value = 1;
-static int allow_binary_replacement = 0;
-static int check_index = 0;
-static int write_index = 0;
-static int cached = 0;
-static int diffstat = 0;
-static int numstat = 0;
-static int summary = 0;
-static int check = 0;
+static int allow_binary_replacement;
+static int check_index;
+static int write_index;
+static int cached;
+static int diffstat;
+static int numstat;
+static int summary;
+static int check;
 static int apply = 1;
-static int no_add = 0;
-static int show_index_info = 0;
+static int apply_in_reverse;
+static int no_add;
+static int show_index_info;
 static int line_termination = '\n';
 static unsigned long p_context = -1;
 static const char apply_usage[] =
@@ -50,10 +51,10 @@ static enum whitespace_eol {
 	error_on_whitespace,
 	strip_whitespace,
 } new_whitespace = warn_on_whitespace;
-static int whitespace_error = 0;
+static int whitespace_error;
 static int squelch_whitespace_errors = 5;
-static int applied_after_stripping = 0;
-static const char *patch_input_file = NULL;
+static int applied_after_stripping;
+static const char *patch_input_file;
 
 static void parse_whitespace_option(const char *option)
 {
@@ -108,6 +109,13 @@ static int max_change, max_len;
  */
 static int linenr = 1;
 
+/*
+ * This represents one "hunk" from a patch, starting with
+ * "@@ -oldpos,oldlines +newpos,newlines @@" marker.  The
+ * patch text is pointed at by patch, and its byte length
+ * is stored in size.  leading and trailing are the number
+ * of context lines.
+ */
 struct fragment {
 	unsigned long leading, trailing;
 	unsigned long oldpos, oldlines;
@@ -117,12 +125,19 @@ struct fragment {
 	struct fragment *next;
 };
 
+/*
+ * When dealing with a binary patch, we reuse "leading" field
+ * to store the type of the binary hunk, either deflated "delta"
+ * or deflated "literal".
+ */
+#define binary_patch_method leading
+#define BINARY_DELTA_DEFLATED	1
+#define BINARY_LITERAL_DEFLATED 2
+
 struct patch {
 	char *new_name, *old_name, *def_name;
 	unsigned int old_mode, new_mode;
-	int is_rename, is_copy, is_new, is_delete, is_binary, is_reverse;
-#define BINARY_DELTA_DEFLATED 1
-#define BINARY_LITERAL_DEFLATED 2
+	int is_rename, is_copy, is_new, is_delete, is_binary;
 	unsigned long deflate_origlen;
 	int lines_added, lines_deleted;
 	int score;
@@ -978,43 +993,70 @@ static inline int metadata_changes(struct patch *patch)
 		 patch->old_mode != patch->new_mode);
 }
 
-static int parse_binary(char *buffer, unsigned long size, struct patch *patch)
+static char *inflate_it(const void *data, unsigned long size,
+			unsigned long inflated_size)
 {
-	/* We have read "GIT binary patch\n"; what follows is a line
-	 * that says the patch method (currently, either "deflated
-	 * literal" or "deflated delta") and the length of data before
-	 * deflating; a sequence of 'length-byte' followed by base-85
-	 * encoded data follows.
+	z_stream stream;
+	void *out;
+	int st;
+
+	memset(&stream, 0, sizeof(stream));
+
+	stream.next_in = (unsigned char *)data;
+	stream.avail_in = size;
+	stream.next_out = out = xmalloc(inflated_size);
+	stream.avail_out = inflated_size;
+	inflateInit(&stream);
+	st = inflate(&stream, Z_FINISH);
+	if ((st != Z_STREAM_END) || stream.total_out != inflated_size) {
+		free(out);
+		return NULL;
+	}
+	return out;
+}
+
+static struct fragment *parse_binary_hunk(char **buf_p,
+					  unsigned long *sz_p,
+					  int *status_p,
+					  int *used_p)
+{
+	/* Expect a line that begins with binary patch method ("literal"
+	 * or "delta"), followed by the length of data before deflating.
+	 * a sequence of 'length-byte' followed by base-85 encoded data
+	 * should follow, terminated by a newline.
 	 *
 	 * Each 5-byte sequence of base-85 encodes up to 4 bytes,
 	 * and we would limit the patch line to 66 characters,
 	 * so one line can fit up to 13 groups that would decode
 	 * to 52 bytes max.  The length byte 'A'-'Z' corresponds
 	 * to 1-26 bytes, and 'a'-'z' corresponds to 27-52 bytes.
-	 * The end of binary is signaled with an empty line.
 	 */
 	int llen, used;
-	struct fragment *fragment;
+	unsigned long size = *sz_p;
+	char *buffer = *buf_p;
+	int patch_method;
+	unsigned long origlen;
 	char *data = NULL;
+	int hunk_size = 0;
+	struct fragment *frag;
 
-	patch->fragments = fragment = xcalloc(1, sizeof(*fragment));
-
-	/* Grab the type of patch */
 	llen = linelen(buffer, size);
 	used = llen;
-	linenr++;
+
+	*status_p = 0;
 
 	if (!strncmp(buffer, "delta ", 6)) {
-		patch->is_binary = BINARY_DELTA_DEFLATED;
-		patch->deflate_origlen = strtoul(buffer + 6, NULL, 10);
+		patch_method = BINARY_DELTA_DEFLATED;
+		origlen = strtoul(buffer + 6, NULL, 10);
 	}
 	else if (!strncmp(buffer, "literal ", 8)) {
-		patch->is_binary = BINARY_LITERAL_DEFLATED;
-		patch->deflate_origlen = strtoul(buffer + 8, NULL, 10);
+		patch_method = BINARY_LITERAL_DEFLATED;
+		origlen = strtoul(buffer + 8, NULL, 10);
 	}
 	else
-		return error("unrecognized binary patch at line %d: %.*s",
-			     linenr-1, llen-1, buffer);
+		return NULL;
+
+	linenr++;
 	buffer += llen;
 	while (1) {
 		int byte_length, max_byte_length, newsize;
@@ -1043,21 +1085,79 @@ static int parse_binary(char *buffer, unsigned long size, struct patch *patch)
 		if (max_byte_length < byte_length ||
 		    byte_length <= max_byte_length - 4)
 			goto corrupt;
-		newsize = fragment->size + byte_length;
+		newsize = hunk_size + byte_length;
 		data = xrealloc(data, newsize);
-		if (decode_85(data + fragment->size,
-			      buffer + 1,
-			      byte_length))
+		if (decode_85(data + hunk_size, buffer + 1, byte_length))
 			goto corrupt;
-		fragment->size = newsize;
+		hunk_size = newsize;
 		buffer += llen;
 		size -= llen;
 	}
-	fragment->patch = data;
-	return used;
+
+	frag = xcalloc(1, sizeof(*frag));
+	frag->patch = inflate_it(data, hunk_size, origlen);
+	if (!frag->patch)
+		goto corrupt;
+	free(data);
+	frag->size = origlen;
+	*buf_p = buffer;
+	*sz_p = size;
+	*used_p = used;
+	frag->binary_patch_method = patch_method;
+	return frag;
+
  corrupt:
-	return error("corrupt binary patch at line %d: %.*s",
-		     linenr-1, llen-1, buffer);
+	if (data)
+		free(data);
+	*status_p = -1;
+	error("corrupt binary patch at line %d: %.*s",
+	      linenr-1, llen-1, buffer);
+	return NULL;
+}
+
+static int parse_binary(char *buffer, unsigned long size, struct patch *patch)
+{
+	/* We have read "GIT binary patch\n"; what follows is a line
+	 * that says the patch method (currently, either "literal" or
+	 * "delta") and the length of data before deflating; a
+	 * sequence of 'length-byte' followed by base-85 encoded data
+	 * follows.
+	 *
+	 * When a binary patch is reversible, there is another binary
+	 * hunk in the same format, starting with patch method (either
+	 * "literal" or "delta") with the length of data, and a sequence
+	 * of length-byte + base-85 encoded data, terminated with another
+	 * empty line.  This data, when applied to the postimage, produces
+	 * the preimage.
+	 */
+	struct fragment *forward;
+	struct fragment *reverse;
+	int status;
+	int used, used_1;
+
+	forward = parse_binary_hunk(&buffer, &size, &status, &used);
+	if (!forward && !status)
+		/* there has to be one hunk (forward hunk) */
+		return error("unrecognized binary patch at line %d", linenr-1);
+	if (status)
+		/* otherwise we already gave an error message */
+		return status;
+
+	reverse = parse_binary_hunk(&buffer, &size, &status, &used_1);
+	if (reverse)
+		used += used_1;
+	else if (status) {
+		/* not having reverse hunk is not an error, but having
+		 * a corrupt reverse hunk is.
+		 */
+		free((void*) forward->patch);
+		free(forward);
+		return status;
+	}
+	forward->next = reverse;
+	patch->fragments = forward;
+	patch->is_binary = 1;
+	return used;
 }
 
 static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
@@ -1143,7 +1243,6 @@ static void reverse_patches(struct patch *p)
 			swap(frag->newpos, frag->oldpos);
 			swap(frag->newlines, frag->oldlines);
 		}
-		p->is_reverse = !p->is_reverse;
 	}
 }
 
@@ -1363,8 +1462,7 @@ static int apply_line(char *output, const char *patch, int plen)
 	return plen;
 }
 
-static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag,
-	int reverse, int inaccurate_eof)
+static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, int inaccurate_eof)
 {
 	int match_beginning, match_end;
 	char *buf = desc->buffer;
@@ -1396,7 +1494,7 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag,
 		if (len < size && patch[len] == '\\')
 			plen--;
 		first = *patch;
-		if (reverse) {
+		if (apply_in_reverse) {
 			if (first == '-')
 				first = '+';
 			else if (first == '+')
@@ -1506,28 +1604,6 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag,
 	return offset;
 }
 
-static char *inflate_it(const void *data, unsigned long size,
-			unsigned long inflated_size)
-{
-	z_stream stream;
-	void *out;
-	int st;
-
-	memset(&stream, 0, sizeof(stream));
-
-	stream.next_in = (unsigned char *)data;
-	stream.avail_in = size;
-	stream.next_out = out = xmalloc(inflated_size);
-	stream.avail_out = inflated_size;
-	inflateInit(&stream);
-	st = inflate(&stream, Z_FINISH);
-	if ((st != Z_STREAM_END) || stream.total_out != inflated_size) {
-		free(out);
-		return NULL;
-	}
-	return out;
-}
-
 static int apply_binary_fragment(struct buffer_desc *desc, struct patch *patch)
 {
 	unsigned long dst_size;
@@ -1535,30 +1611,29 @@ static int apply_binary_fragment(struct buffer_desc *desc, struct patch *patch)
 	void *data;
 	void *result;
 
-	/* Binary patch is irreversible */
-	if (patch->is_reverse)
-		return error("cannot reverse-apply a binary patch to '%s'",
-			     patch->new_name
-			     ? patch->new_name : patch->old_name);
-
-	data = inflate_it(fragment->patch, fragment->size,
-			  patch->deflate_origlen);
-	if (!data)
-		return error("corrupt patch data");
-	switch (patch->is_binary) {
+	/* Binary patch is irreversible without the optional second hunk */
+	if (apply_in_reverse) {
+		if (!fragment->next)
+			return error("cannot reverse-apply a binary patch "
+				     "without the reverse hunk to '%s'",
+				     patch->new_name
+				     ? patch->new_name : patch->old_name);
+		fragment = fragment;
+	}
+	data = (void*) fragment->patch;
+	switch (fragment->binary_patch_method) {
 	case BINARY_DELTA_DEFLATED:
 		result = patch_delta(desc->buffer, desc->size,
 				     data,
-				     patch->deflate_origlen,
+				     fragment->size,
 				     &dst_size);
 		free(desc->buffer);
 		desc->buffer = result;
-		free(data);
 		break;
 	case BINARY_LITERAL_DEFLATED:
 		free(desc->buffer);
 		desc->buffer = data;
-		dst_size = patch->deflate_origlen;
+		dst_size = fragment->size;
 		break;
 	}
 	if (!desc->buffer)
@@ -1609,7 +1684,7 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 	}
 
 	get_sha1_hex(patch->new_sha1_prefix, sha1);
-	if (!memcmp(sha1, null_sha1, 20)) {
+	if (is_null_sha1(sha1)) {
 		free(desc->buffer);
 		desc->alloc = desc->size = 0;
 		desc->buffer = NULL;
@@ -1657,8 +1732,7 @@ static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 		return apply_binary(desc, patch);
 
 	while (frag) {
-		if (apply_one_fragment(desc, frag, patch->is_reverse,
-					patch->inaccurate_eof) < 0)
+		if (apply_one_fragment(desc, frag, patch->inaccurate_eof) < 0)
 			return error("patch failed: %s:%ld",
 				     name, frag->oldpos);
 		frag = frag->next;
@@ -1840,11 +1914,6 @@ static int check_patch_list(struct patch *patch)
 		prev_patch = patch;
 	}
 	return error;
-}
-
-static inline int is_null_sha1(const unsigned char *sha1)
-{
-	return !memcmp(sha1, null_sha1, 20);
 }
 
 static void show_index_list(struct patch *list)
@@ -2194,8 +2263,7 @@ static int use_patch(struct patch *p)
 	return 1;
 }
 
-static int apply_patch(int fd, const char *filename,
-		int reverse, int inaccurate_eof)
+static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 {
 	unsigned long offset, size;
 	char *buffer = read_patch_file(fd, &size);
@@ -2215,7 +2283,7 @@ static int apply_patch(int fd, const char *filename,
 		nr = parse_chunk(buffer + offset, size, patch);
 		if (nr < 0)
 			break;
-		if (reverse)
+		if (apply_in_reverse)
 			reverse_patches(patch);
 		if (use_patch(patch)) {
 			patch_stats(patch);
@@ -2278,7 +2346,6 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	int read_stdin = 1;
-	int reverse = 0;
 	int inaccurate_eof = 0;
 
 	const char *whitespace_option = NULL;
@@ -2289,7 +2356,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 		int fd;
 
 		if (!strcmp(arg, "-")) {
-			apply_patch(0, "<stdin>", reverse, inaccurate_eof);
+			apply_patch(0, "<stdin>", inaccurate_eof);
 			read_stdin = 0;
 			continue;
 		}
@@ -2367,7 +2434,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp(arg, "-R") || !strcmp(arg, "--reverse")) {
-			reverse = 1;
+			apply_in_reverse = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--inaccurate-eof")) {
@@ -2390,12 +2457,12 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			usage(apply_usage);
 		read_stdin = 0;
 		set_default_whitespace_mode(whitespace_option);
-		apply_patch(fd, arg, reverse, inaccurate_eof);
+		apply_patch(fd, arg, inaccurate_eof);
 		close(fd);
 	}
 	set_default_whitespace_mode(whitespace_option);
 	if (read_stdin)
-		apply_patch(0, "<stdin>", reverse, inaccurate_eof);
+		apply_patch(0, "<stdin>", inaccurate_eof);
 	if (whitespace_error) {
 		if (squelch_whitespace_errors &&
 		    squelch_whitespace_errors < whitespace_error) {

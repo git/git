@@ -13,9 +13,9 @@
 
 static int use_size_cache;
 
-static int diff_detect_rename_default = 0;
+static int diff_detect_rename_default;
 static int diff_rename_limit_default = -1;
-static int diff_use_color_default = 0;
+static int diff_use_color_default;
 
 /* "\033[1;38;5;2xx;48;5;2xxm\0" is 23 bytes */
 static char diff_colors[][24] = {
@@ -358,11 +358,151 @@ static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
 	return 0;
 }
 
+struct diff_words_buffer {
+	mmfile_t text;
+	long alloc;
+	long current; /* output pointer */
+	int suppressed_newline;
+};
+
+static void diff_words_append(char *line, unsigned long len,
+		struct diff_words_buffer *buffer)
+{
+	if (buffer->text.size + len > buffer->alloc) {
+		buffer->alloc = (buffer->text.size + len) * 3 / 2;
+		buffer->text.ptr = xrealloc(buffer->text.ptr, buffer->alloc);
+	}
+	line++;
+	len--;
+	memcpy(buffer->text.ptr + buffer->text.size, line, len);
+	buffer->text.size += len;
+}
+
+struct diff_words_data {
+	struct xdiff_emit_state xm;
+	struct diff_words_buffer minus, plus;
+};
+
+static void print_word(struct diff_words_buffer *buffer, int len, int color,
+		int suppress_newline)
+{
+	const char *ptr;
+	int eol = 0;
+
+	if (len == 0)
+		return;
+
+	ptr  = buffer->text.ptr + buffer->current;
+	buffer->current += len;
+
+	if (ptr[len - 1] == '\n') {
+		eol = 1;
+		len--;
+	}
+
+	fputs(diff_get_color(1, color), stdout);
+	fwrite(ptr, len, 1, stdout);
+	fputs(diff_get_color(1, DIFF_RESET), stdout);
+
+	if (eol) {
+		if (suppress_newline)
+			buffer->suppressed_newline = 1;
+		else
+			putchar('\n');
+	}
+}
+
+static void fn_out_diff_words_aux(void *priv, char *line, unsigned long len)
+{
+	struct diff_words_data *diff_words = priv;
+
+	if (diff_words->minus.suppressed_newline) {
+		if (line[0] != '+')
+			putchar('\n');
+		diff_words->minus.suppressed_newline = 0;
+	}
+
+	len--;
+	switch (line[0]) {
+		case '-':
+			print_word(&diff_words->minus, len, DIFF_FILE_OLD, 1);
+			break;
+		case '+':
+			print_word(&diff_words->plus, len, DIFF_FILE_NEW, 0);
+			break;
+		case ' ':
+			print_word(&diff_words->plus, len, DIFF_PLAIN, 0);
+			diff_words->minus.current += len;
+			break;
+	}
+}
+
+/* this executes the word diff on the accumulated buffers */
+static void diff_words_show(struct diff_words_data *diff_words)
+{
+	xpparam_t xpp;
+	xdemitconf_t xecfg;
+	xdemitcb_t ecb;
+	mmfile_t minus, plus;
+	int i;
+
+	minus.size = diff_words->minus.text.size;
+	minus.ptr = xmalloc(minus.size);
+	memcpy(minus.ptr, diff_words->minus.text.ptr, minus.size);
+	for (i = 0; i < minus.size; i++)
+		if (isspace(minus.ptr[i]))
+			minus.ptr[i] = '\n';
+	diff_words->minus.current = 0;
+
+	plus.size = diff_words->plus.text.size;
+	plus.ptr = xmalloc(plus.size);
+	memcpy(plus.ptr, diff_words->plus.text.ptr, plus.size);
+	for (i = 0; i < plus.size; i++)
+		if (isspace(plus.ptr[i]))
+			plus.ptr[i] = '\n';
+	diff_words->plus.current = 0;
+
+	xpp.flags = XDF_NEED_MINIMAL;
+	xecfg.ctxlen = diff_words->minus.alloc + diff_words->plus.alloc;
+	xecfg.flags = 0;
+	ecb.outf = xdiff_outf;
+	ecb.priv = diff_words;
+	diff_words->xm.consume = fn_out_diff_words_aux;
+	xdl_diff(&minus, &plus, &xpp, &xecfg, &ecb);
+
+	free(minus.ptr);
+	free(plus.ptr);
+	diff_words->minus.text.size = diff_words->plus.text.size = 0;
+
+	if (diff_words->minus.suppressed_newline) {
+		putchar('\n');
+		diff_words->minus.suppressed_newline = 0;
+	}
+}
+
 struct emit_callback {
 	struct xdiff_emit_state xm;
 	int nparents, color_diff;
 	const char **label_path;
+	struct diff_words_data *diff_words;
 };
+
+static void free_diff_words_data(struct emit_callback *ecbdata)
+{
+	if (ecbdata->diff_words) {
+		/* flush buffers */
+		if (ecbdata->diff_words->minus.text.size ||
+				ecbdata->diff_words->plus.text.size)
+			diff_words_show(ecbdata->diff_words);
+
+		if (ecbdata->diff_words->minus.text.ptr)
+			free (ecbdata->diff_words->minus.text.ptr);
+		if (ecbdata->diff_words->plus.text.ptr)
+			free (ecbdata->diff_words->plus.text.ptr);
+		free(ecbdata->diff_words);
+		ecbdata->diff_words = NULL;
+	}
+}
 
 const char *diff_get_color(int diff_use_color, enum color_diff ix)
 {
@@ -398,12 +538,31 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 	else {
 		int nparents = ecbdata->nparents;
 		int color = DIFF_PLAIN;
-		for (i = 0; i < nparents && len; i++) {
-			if (line[i] == '-')
-				color = DIFF_FILE_OLD;
-			else if (line[i] == '+')
-				color = DIFF_FILE_NEW;
-		}
+		if (ecbdata->diff_words && nparents != 1)
+			/* fall back to normal diff */
+			free_diff_words_data(ecbdata);
+		if (ecbdata->diff_words) {
+			if (line[0] == '-') {
+				diff_words_append(line, len,
+						&ecbdata->diff_words->minus);
+				return;
+			} else if (line[0] == '+') {
+				diff_words_append(line, len,
+						&ecbdata->diff_words->plus);
+				return;
+			}
+			if (ecbdata->diff_words->minus.text.size ||
+					ecbdata->diff_words->plus.text.size)
+				diff_words_show(ecbdata->diff_words);
+			line++;
+			len--;
+		} else
+			for (i = 0; i < nparents && len; i++) {
+				if (line[i] == '-')
+					color = DIFF_FILE_OLD;
+				else if (line[i] == '+')
+					color = DIFF_FILE_NEW;
+			}
 		set = diff_get_color(ecbdata->color_diff, color);
 	}
 	if (len > 0 && line[len-1] == '\n')
@@ -745,9 +904,7 @@ static int mmfile_is_binary(mmfile_t *mf)
 	long sz = mf->size;
 	if (FIRST_FEW_BYTES < sz)
 		sz = FIRST_FEW_BYTES;
-	if (memchr(mf->ptr, 0, sz))
-		return 1;
-	return 0;
+	return !!memchr(mf->ptr, 0, sz);
 }
 
 static void builtin_diff(const char *name_a,
@@ -836,7 +993,12 @@ static void builtin_diff(const char *name_a,
 		ecb.outf = xdiff_outf;
 		ecb.priv = &ecbdata;
 		ecbdata.xm.consume = fn_out_consume;
+		if (o->color_diff_words)
+			ecbdata.diff_words =
+				xcalloc(1, sizeof(struct diff_words_data));
 		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
+		if (o->color_diff_words)
+			free_diff_words_data(&ecbdata);
 	}
 
  free_ab_and_return:
@@ -939,8 +1101,8 @@ void fill_filespec(struct diff_filespec *spec, const unsigned char *sha1,
 {
 	if (mode) {
 		spec->mode = canon_mode(mode);
-		memcpy(spec->sha1, sha1, 20);
-		spec->sha1_valid = !!memcmp(sha1, null_sha1, 20);
+		hashcpy(spec->sha1, sha1);
+		spec->sha1_valid = !is_null_sha1(sha1);
 	}
 }
 
@@ -978,7 +1140,7 @@ static int work_tree_matches(const char *name, const unsigned char *sha1)
 	if ((lstat(name, &st) < 0) ||
 	    !S_ISREG(st.st_mode) || /* careful! */
 	    ce_match_stat(ce, &st, 0) ||
-	    memcmp(sha1, ce->sha1, 20))
+	    hashcmp(sha1, ce->sha1))
 		return 0;
 	/* we return 1 only when we can stat, it is a regular file,
 	 * stat information matches, and sha1 recorded in the cache
@@ -1006,7 +1168,7 @@ static struct sha1_size_cache *locate_size_cache(unsigned char *sha1,
 	while (last > first) {
 		int cmp, next = (last + first) >> 1;
 		e = sha1_size_cache[next];
-		cmp = memcmp(e->sha1, sha1, 20);
+		cmp = hashcmp(e->sha1, sha1);
 		if (!cmp)
 			return e;
 		if (cmp < 0) {
@@ -1032,7 +1194,7 @@ static struct sha1_size_cache *locate_size_cache(unsigned char *sha1,
 			sizeof(*sha1_size_cache));
 	e = xmalloc(sizeof(struct sha1_size_cache));
 	sha1_size_cache[first] = e;
-	memcpy(e->sha1, sha1, 20);
+	hashcpy(e->sha1, sha1);
 	e->size = size;
 	return e;
 }
@@ -1354,7 +1516,7 @@ static void diff_fill_sha1_info(struct diff_filespec *one)
 		}
 	}
 	else
-		memset(one->sha1, 0, 20);
+		hashclr(one->sha1);
 }
 
 static void run_diff(struct diff_filepair *p, struct diff_options *o)
@@ -1417,7 +1579,7 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 		;
 	}
 
-	if (memcmp(one->sha1, two->sha1, 20)) {
+	if (hashcmp(one->sha1, two->sha1)) {
 		int abbrev = o->full_index ? 40 : DEFAULT_ABBREV;
 
 		len += snprintf(msg + len, sizeof(msg) - len,
@@ -1515,6 +1677,19 @@ void diff_setup(struct diff_options *options)
 
 int diff_setup_done(struct diff_options *options)
 {
+	int count = 0;
+
+	if (options->output_format & DIFF_FORMAT_NAME)
+		count++;
+	if (options->output_format & DIFF_FORMAT_NAME_STATUS)
+		count++;
+	if (options->output_format & DIFF_FORMAT_CHECKDIFF)
+		count++;
+	if (options->output_format & DIFF_FORMAT_NO_OUTPUT)
+		count++;
+	if (count > 1)
+		die("--name-only, --name-status, --check and -s are mutually exclusive");
+
 	if (options->find_copies_harder)
 		options->detect_rename = DIFF_DETECT_COPY;
 
@@ -1697,6 +1872,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->xdl_opts |= XDF_IGNORE_WHITESPACE;
 	else if (!strcmp(arg, "-b") || !strcmp(arg, "--ignore-space-change"))
 		options->xdl_opts |= XDF_IGNORE_WHITESPACE_CHANGE;
+	else if (!strcmp(arg, "--color-words"))
+		options->color_diff = options->color_diff_words = 1;
 	else if (!strcmp(arg, "--no-renames"))
 		options->detect_rename = 0;
 	else
@@ -1921,7 +2098,7 @@ int diff_unmodified_pair(struct diff_filepair *p)
 	 * dealing with a change.
 	 */
 	if (one->sha1_valid && two->sha1_valid &&
-	    !memcmp(one->sha1, two->sha1, sizeof(one->sha1)))
+	    !hashcmp(one->sha1, two->sha1))
 		return 1; /* no change */
 	if (!one->sha1_valid && !two->sha1_valid)
 		return 1; /* both look at the same file on the filesystem. */
@@ -2060,7 +2237,7 @@ static void diff_resolve_rename_copy(void)
 			if (!p->status)
 				p->status = DIFF_STATUS_RENAMED;
 		}
-		else if (memcmp(p->one->sha1, p->two->sha1, 20) ||
+		else if (hashcmp(p->one->sha1, p->two->sha1) ||
 			 p->one->mode != p->two->mode)
 			p->status = DIFF_STATUS_MODIFIED;
 		else {

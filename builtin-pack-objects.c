@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 #include "object.h"
 #include "blob.h"
@@ -52,17 +53,17 @@ struct object_entry {
  */
 
 static unsigned char object_list_sha1[20];
-static int non_empty = 0;
-static int no_reuse_delta = 0;
-static int local = 0;
-static int incremental = 0;
+static int non_empty;
+static int no_reuse_delta;
+static int local;
+static int incremental;
 static struct object_entry **sorted_by_sha, **sorted_by_type;
-static struct object_entry *objects = NULL;
-static int nr_objects = 0, nr_alloc = 0, nr_result = 0;
+static struct object_entry *objects;
+static int nr_objects, nr_alloc, nr_result;
 static const char *base_name;
 static unsigned char pack_file_sha1[20];
 static int progress = 1;
-static volatile sig_atomic_t progress_update = 0;
+static volatile sig_atomic_t progress_update;
 static int window = 10;
 
 /*
@@ -71,8 +72,8 @@ static int window = 10;
  * sorted_by_sha is also possible but this was easier to code and faster.
  * This hashtable is built after all the objects are seen.
  */
-static int *object_ix = NULL;
-static int object_ix_hashsz = 0;
+static int *object_ix;
+static int object_ix_hashsz;
 
 /*
  * Pack index for existing packs give us easy access to the offsets into
@@ -89,15 +90,15 @@ struct pack_revindex {
 	struct packed_git *p;
 	unsigned long *revindex;
 } *pack_revindex = NULL;
-static int pack_revindex_hashsz = 0;
+static int pack_revindex_hashsz;
 
 /*
  * stats
  */
-static int written = 0;
-static int written_delta = 0;
-static int reused = 0;
-static int reused_delta = 0;
+static int written;
+static int written_delta;
+static int reused;
+static int reused_delta;
 
 static int pack_revindex_ix(struct packed_git *p)
 {
@@ -269,6 +270,22 @@ static unsigned long write_object(struct sha1file *f,
 				 * and we do not need to deltify it.
 				 */
 
+	if (!entry->in_pack && !entry->delta) {
+		unsigned char *map;
+		unsigned long mapsize;
+		map = map_sha1_file(entry->sha1, &mapsize);
+		if (map && !legacy_loose_object(map)) {
+			/* We can copy straight into the pack file */
+			sha1write(f, map, mapsize);
+			munmap(map, mapsize);
+			written++;
+			reused++;
+			return mapsize;
+		}
+		if (map)
+			munmap(map, mapsize);
+	}
+
 	if (! to_reuse) {
 		buf = read_sha1_file(entry->sha1, type, &size);
 		if (!buf)
@@ -424,7 +441,7 @@ static int locate_object_entry_hash(const unsigned char *sha1)
 	memcpy(&ui, sha1, sizeof(unsigned int));
 	i = ui % object_ix_hashsz;
 	while (0 < object_ix[i]) {
-		if (!memcmp(sha1, objects[object_ix[i]-1].sha1, 20))
+		if (!hashcmp(sha1, objects[object_ix[i] - 1].sha1))
 			return i;
 		if (++i == object_ix_hashsz)
 			i = 0;
@@ -517,7 +534,7 @@ static int add_object_entry(const unsigned char *sha1, unsigned hash, int exclud
 	entry = objects + idx;
 	nr_objects = idx + 1;
 	memset(entry, 0, sizeof(*entry));
-	memcpy(entry->sha1, sha1, 20);
+	hashcpy(entry->sha1, sha1);
 	entry->hash = hash;
 
 	if (object_ix_hashsz * 3 <= nr_objects * 4)
@@ -590,7 +607,7 @@ static struct pbase_tree_cache *pbase_tree_get(const unsigned char *sha1)
 	 */
 	for (neigh = 0; neigh < 8; neigh++) {
 		ent = pbase_tree_cache[my_ix];
-		if (ent && !memcmp(ent->sha1, sha1, 20)) {
+		if (ent && !hashcmp(ent->sha1, sha1)) {
 			ent->ref++;
 			return ent;
 		}
@@ -632,7 +649,7 @@ static struct pbase_tree_cache *pbase_tree_get(const unsigned char *sha1)
 		free(ent->tree_data);
 		nent = ent;
 	}
-	memcpy(nent->sha1, sha1, 20);
+	hashcpy(nent->sha1, sha1);
 	nent->tree_data = data;
 	nent->tree_size = size;
 	nent->ref = 1;
@@ -772,7 +789,7 @@ static void add_preferred_base(unsigned char *sha1)
 		return;
 
 	for (it = pbase_tree; it; it = it->next) {
-		if (!memcmp(it->pcache.sha1, tree_sha1, 20)) {
+		if (!hashcmp(it->pcache.sha1, tree_sha1)) {
 			free(data);
 			return;
 		}
@@ -782,7 +799,7 @@ static void add_preferred_base(unsigned char *sha1)
 	it->next = pbase_tree;
 	pbase_tree = it;
 
-	memcpy(it->pcache.sha1, tree_sha1, 20);
+	hashcpy(it->pcache.sha1, tree_sha1);
 	it->pcache.tree_data = data;
 	it->pcache.tree_size = size;
 }
@@ -914,7 +931,7 @@ static struct object_entry **create_sorted_list(entry_sort_t sort)
 
 static int sha1_sort(const struct object_entry *a, const struct object_entry *b)
 {
-	return memcmp(a->sha1, b->sha1, 20);
+	return hashcmp(a->sha1, b->sha1);
 }
 
 static struct object_entry **create_final_object_list(void)
@@ -1226,7 +1243,7 @@ static int git_pack_config(const char *k, const char *v)
 	return git_default_config(k, v);
 }
 
-int main(int argc, char **argv)
+int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 {
 	SHA_CTX ctx;
 	char line[40 + 1 + PATH_MAX + 2];
@@ -1235,7 +1252,6 @@ int main(int argc, char **argv)
 	int num_preferred_base = 0;
 	int i;
 
-	setup_git_directory();
 	git_config(git_pack_config);
 
 	progress = isatty(2);

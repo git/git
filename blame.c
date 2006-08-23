@@ -56,9 +56,9 @@ struct patch {
 static void get_blob(struct commit *commit);
 
 /* Only used for statistics */
-static int num_get_patch = 0;
-static int num_commits = 0;
-static int patch_time = 0;
+static int num_get_patch;
+static int num_commits;
+static int patch_time;
 
 struct blame_diff_state {
 	struct xdiff_emit_state xm;
@@ -165,7 +165,7 @@ static int get_blob_sha1(struct tree *t, const char *pathname,
 	blame_file = pathname;
 	pathspec[0] = pathname;
 	pathspec[1] = NULL;
-	memset(blob_sha1, 0, sizeof(blob_sha1));
+	hashclr(blob_sha1);
 	read_tree_recursive(t, "", 0, 0, pathspec, get_blob_sha1_internal);
 
 	for (i = 0; i < 20; i++) {
@@ -176,7 +176,7 @@ static int get_blob_sha1(struct tree *t, const char *pathname,
 	if (i == 20)
 		return -1;
 
-	memcpy(sha1, blob_sha1, 20);
+	hashcpy(sha1, blob_sha1);
 	return 0;
 }
 
@@ -191,7 +191,7 @@ static int get_blob_sha1_internal(const unsigned char *sha1, const char *base,
 	    strcmp(blame_file + baselen, pathname))
 		return -1;
 
-	memcpy(blob_sha1, sha1, 20);
+	hashcpy(blob_sha1, sha1);
 	return -1;
 }
 
@@ -351,10 +351,7 @@ static int fill_util_info(struct commit *commit)
 	assert(util);
 	assert(util->pathname);
 
-	if (get_blob_sha1(commit->tree, util->pathname, util->sha1))
-		return 1;
-	else
-		return 0;
+	return !!get_blob_sha1(commit->tree, util->pathname, util->sha1);
 }
 
 static void alloc_line_map(struct commit *commit)

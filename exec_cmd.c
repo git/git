@@ -5,7 +5,7 @@
 
 extern char **environ;
 static const char *builtin_exec_path = GIT_EXEC_PATH;
-static const char *current_exec_path = NULL;
+static const char *current_exec_path;
 
 void git_set_exec_path(const char *exec_path)
 {

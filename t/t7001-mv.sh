@@ -60,6 +60,10 @@ test_expect_success \
      grep -E "^R100.+path0/README.+path2/README"'
 
 test_expect_success \
+    'succeed when source is a prefix of destination' \
+    'git-mv path2/COPYING path2/COPYING-renamed'
+
+test_expect_success \
     'moving whole subdirectory into subdirectory' \
     'git-mv path2 path1'
 
@@ -77,5 +81,9 @@ test_expect_success \
 test_expect_failure \
     'do not move directory over existing directory' \
     'mkdir path0 && mkdir path0/path2 && git-mv path2 path0'
+
+test_expect_success \
+    'move into "."' \
+    'git-mv path1/path2/ .'
 
 test_done

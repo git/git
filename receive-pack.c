@@ -8,10 +8,10 @@ static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
 static const char *unpacker[] = { "unpack-objects", NULL };
 
-static int report_status = 0;
+static int report_status;
 
 static char capabilities[] = "report-status";
-static int capabilities_sent = 0;
+static int capabilities_sent;
 
 static int show_ref(const char *path, const unsigned char *sha1)
 {
@@ -40,7 +40,7 @@ struct command {
 	char ref_name[FLEX_ARRAY]; /* more */
 };
 
-static struct command *commands = NULL;
+static struct command *commands;
 
 static int is_all_zeroes(const char *hex)
 {
@@ -247,8 +247,8 @@ static void read_head_info(void)
 				report_status = 1;
 		}
 		cmd = xmalloc(sizeof(struct command) + len - 80);
-		memcpy(cmd->old_sha1, old_sha1, 20);
-		memcpy(cmd->new_sha1, new_sha1, 20);
+		hashcpy(cmd->old_sha1, old_sha1);
+		hashcpy(cmd->new_sha1, new_sha1);
 		memcpy(cmd->ref_name, line + 82, len - 81);
 		cmd->error_string = "n/a (unpacker error)";
 		cmd->next = NULL;

@@ -22,7 +22,7 @@
 #endif
 #endif
 
-const unsigned char null_sha1[20] = { 0, };
+const unsigned char null_sha1[20];
 
 static unsigned int sha1_file_open_flag = O_NOATIME;
 
@@ -463,6 +463,7 @@ int use_packed_git(struct packed_git *p)
 		int fd;
 		struct stat st;
 		void *map;
+		struct pack_header *hdr;
 
 		pack_mapped += p->pack_size;
 		while (PACK_MAX_SZ < pack_mapped && unuse_one_packed_git())
@@ -482,13 +483,24 @@ int use_packed_git(struct packed_git *p)
 			die("packfile %s cannot be mapped.", p->pack_name);
 		p->pack_base = map;
 
+		/* Check if we understand this pack file.  If we don't we're
+		 * likely too old to handle it.
+		 */
+		hdr = map;
+		if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
+			die("packfile %s isn't actually a pack.", p->pack_name);
+		if (!pack_version_ok(hdr->hdr_version))
+			die("packfile %s is version %i and not supported"
+				" (try upgrading GIT to a newer version)",
+				p->pack_name, ntohl(hdr->hdr_version));
+
 		/* Check if the pack file matches with the index file.
 		 * this is cheap.
 		 */
-		if (memcmp((char*)(p->index_base) + p->index_size - 40,
-			   (char *) p->pack_base + p->pack_size - 20,
-			   20)) {
-
+		if (hashcmp((unsigned char *)(p->index_base) +
+			    p->index_size - 40,
+			    (unsigned char *)p->pack_base +
+			    p->pack_size - 20)) {
 			die("packfile %s does not match index.", p->pack_name);
 		}
 	}
@@ -528,7 +540,7 @@ struct packed_git *add_packed_git(char *path, int path_len, int local)
 	p->pack_use_cnt = 0;
 	p->pack_local = local;
 	if ((path_len > 44) && !get_sha1_hex(path + path_len - 44, sha1))
-		memcpy(p->sha1, sha1, 20);
+		hashcpy(p->sha1, sha1);
 	return p;
 }
 
@@ -559,7 +571,7 @@ struct packed_git *parse_pack_index_file(const unsigned char *sha1, char *idx_pa
 	p->pack_base = NULL;
 	p->pack_last_used = 0;
 	p->pack_use_cnt = 0;
-	memcpy(p->sha1, sha1, 20);
+	hashcpy(p->sha1, sha1);
 	return p;
 }
 
@@ -643,11 +655,10 @@ int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long siz
 	SHA1_Update(&c, header, 1+sprintf(header, "%s %lu", type, size));
 	SHA1_Update(&c, map, size);
 	SHA1_Final(real_sha1, &c);
-	return memcmp(sha1, real_sha1, 20) ? -1 : 0;
+	return hashcmp(sha1, real_sha1) ? -1 : 0;
 }
 
-static void *map_sha1_file_internal(const unsigned char *sha1,
-				    unsigned long *size)
+void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 {
 	struct stat st;
 	void *map;
@@ -684,10 +695,26 @@ static void *map_sha1_file_internal(const unsigned char *sha1,
 	return map;
 }
 
+int legacy_loose_object(unsigned char *map)
+{
+	unsigned int word;
+
+	/*
+	 * Is it a zlib-compressed buffer? If so, the first byte
+	 * must be 0x78 (15-bit window size, deflated), and the
+	 * first 16-bit word is evenly divisible by 31
+	 */
+	word = (map[0] << 8) + map[1];
+	if (map[0] == 0x78 && !(word % 31))
+		return 1;
+	else
+		return 0;
+}
+
 static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz)
 {
 	unsigned char c;
-	unsigned int word, bits;
+	unsigned int bits;
 	unsigned long size;
 	static const char *typename[8] = {
 		NULL,	/* OBJ_EXT */
@@ -703,13 +730,7 @@ static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned lon
 	stream->next_out = buffer;
 	stream->avail_out = bufsiz;
 
-	/*
-	 * Is it a zlib-compressed buffer? If so, the first byte
-	 * must be 0x78 (15-bit window size, deflated), and the
-	 * first 16-bit word is evenly divisible by 31
-	 */
-	word = (map[0] << 8) + map[1];
-	if (map[0] == 0x78 && !(word % 31)) {
+	if (legacy_loose_object(map)) {
 		inflateInit(stream);
 		return inflate(stream, 0);
 	}
@@ -932,7 +953,7 @@ int check_reuse_pack_delta(struct packed_git *p, unsigned long offset,
 	ptr = unpack_object_header(p, ptr, kindp, sizep);
 	if (*kindp != OBJ_DELTA)
 		goto done;
-	memcpy(base, (char *) p->pack_base + ptr, 20);
+	hashcpy(base, (unsigned char *) p->pack_base + ptr);
 	status = 0;
  done:
 	unuse_packed_git(p);
@@ -960,7 +981,7 @@ void packed_object_info_detail(struct pack_entry *e,
 		if (p->pack_size <= offset + 20)
 			die("pack file %s records an incomplete delta base",
 			    p->pack_name);
-		memcpy(base_sha1, pack, 20);
+		hashcpy(base_sha1, pack);
 		do {
 			struct pack_entry base_ent;
 			unsigned long junk;
@@ -1035,9 +1056,6 @@ static int packed_object_info(struct pack_entry *entry,
 	unuse_packed_git(p);
 	return 0;
 }
-
-/* forward declaration for a mutually recursive function */
-static void *unpack_entry(struct pack_entry *, char *, unsigned long *);
 
 static void *unpack_delta_entry(unsigned char *base_sha1,
 				unsigned long delta_size,
@@ -1183,7 +1201,7 @@ int nth_packed_object_sha1(const struct packed_git *p, int n,
 	void *index = p->index_base + 256;
 	if (n < 0 || num_packed_objects(p) <= n)
 		return -1;
-	memcpy(sha1, (char *) index + (24 * n) + 4, 20);
+	hashcpy(sha1, (unsigned char *) index + (24 * n) + 4);
 	return 0;
 }
 
@@ -1197,10 +1215,10 @@ int find_pack_entry_one(const unsigned char *sha1,
 
 	do {
 		int mi = (lo + hi) / 2;
-		int cmp = memcmp((char *) index + (24 * mi) + 4, sha1, 20);
+		int cmp = hashcmp((unsigned char *)index + (24 * mi) + 4, sha1);
 		if (!cmp) {
 			e->offset = ntohl(*((unsigned int *) ((char *) index + (24 * mi))));
-			memcpy(e->sha1, sha1, 20);
+			hashcpy(e->sha1, sha1);
 			e->p = p;
 			return 1;
 		}
@@ -1246,7 +1264,7 @@ int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep
 	z_stream stream;
 	char hdr[128];
 
-	map = map_sha1_file_internal(sha1, &mapsize);
+	map = map_sha1_file(sha1, &mapsize);
 	if (!map) {
 		struct pack_entry e;
 
@@ -1291,7 +1309,7 @@ void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size
 
 	if (find_pack_entry(sha1, &e))
 		return read_packed_sha1(sha1, type, size);
-	map = map_sha1_file_internal(sha1, &mapsize);
+	map = map_sha1_file(sha1, &mapsize);
 	if (map) {
 		buf = unpack_sha1_file(map, mapsize, type, size);
 		munmap(map, mapsize);
@@ -1313,7 +1331,7 @@ void *read_object_with_reference(const unsigned char *sha1,
 	unsigned long isize;
 	unsigned char actual_sha1[20];
 
-	memcpy(actual_sha1, sha1, 20);
+	hashcpy(actual_sha1, sha1);
 	while (1) {
 		int ref_length = -1;
 		const char *ref_type = NULL;
@@ -1324,7 +1342,7 @@ void *read_object_with_reference(const unsigned char *sha1,
 		if (!strcmp(type, required_type)) {
 			*size = isize;
 			if (actual_sha1_return)
-				memcpy(actual_sha1_return, actual_sha1, 20);
+				hashcpy(actual_sha1_return, actual_sha1);
 			return buffer;
 		}
 		/* Handle references */
@@ -1519,7 +1537,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	 */
 	filename = write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
 	if (returnsha1)
-		memcpy(returnsha1, sha1, 20);
+		hashcpy(returnsha1, sha1);
 	if (has_sha1_file(sha1))
 		return 0;
 	fd = open(filename, O_RDONLY);
@@ -1629,7 +1647,7 @@ int write_sha1_to_fd(int fd, const unsigned char *sha1)
 {
 	int retval;
 	unsigned long objsize;
-	void *buf = map_sha1_file_internal(sha1, &objsize);
+	void *buf = map_sha1_file(sha1, &objsize);
 
 	if (buf) {
 		retval = write_buffer(fd, buf, objsize);
@@ -1706,7 +1724,7 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 		unlink(tmpfile);
 		return error("File %s corrupted", sha1_to_hex(sha1));
 	}
-	if (memcmp(sha1, real_sha1, 20)) {
+	if (hashcmp(sha1, real_sha1)) {
 		unlink(tmpfile);
 		return error("File %s has bad hash", sha1_to_hex(sha1));
 	}

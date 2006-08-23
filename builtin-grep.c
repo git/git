@@ -123,6 +123,7 @@ struct grep_opt {
 	struct grep_pat *pattern_list;
 	struct grep_pat **pattern_tail;
 	struct grep_expr *pattern_expression;
+	int prefix_length;
 	regex_t regexp;
 	unsigned linenum:1;
 	unsigned invert:1;
@@ -136,6 +137,7 @@ struct grep_opt {
 #define GREP_BINARY_TEXT	2
 	unsigned binary:2;
 	unsigned extended:1;
+	unsigned relative:1;
 	int regflags;
 	unsigned pre_context;
 	unsigned post_context;
@@ -173,60 +175,11 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	}
 }
 
-#if DEBUG
-static inline void indent(int in)
-{
-	int i;
-	for (i = 0; i < in; i++) putchar(' ');
-}
-
-static void dump_pattern_exp(struct grep_expr *x, int in)
-{
-	switch (x->node) {
-	case GREP_NODE_ATOM:
-		indent(in);
-		puts(x->u.atom->pattern);
-		break;
-	case GREP_NODE_NOT:
-		indent(in);
-		puts("--not");
-		dump_pattern_exp(x->u.unary, in+1);
-		break;
-	case GREP_NODE_AND:
-		dump_pattern_exp(x->u.binary.left, in+1);
-		indent(in);
-		puts("--and");
-		dump_pattern_exp(x->u.binary.right, in+1);
-		break;
-	case GREP_NODE_OR:
-		dump_pattern_exp(x->u.binary.left, in+1);
-		indent(in);
-		puts("--or");
-		dump_pattern_exp(x->u.binary.right, in+1);
-		break;
-	}
-}
-
-static void looking_at(const char *msg, struct grep_pat **list)
-{
-	struct grep_pat *p = *list;
-	fprintf(stderr, "%s: looking at ", msg);
-	if (!p)
-		fprintf(stderr, "empty\n");
-	else
-		fprintf(stderr, "<%s>\n", p->pattern);
-}
-#else
-#define looking_at(a,b) do {} while(0)
-#endif
-
 static struct grep_expr *compile_pattern_expr(struct grep_pat **);
 static struct grep_expr *compile_pattern_atom(struct grep_pat **list)
 {
 	struct grep_pat *p;
 	struct grep_expr *x;
-
-	looking_at("atom", list);
 
 	p = *list;
 	switch (p->token) {
@@ -255,8 +208,6 @@ static struct grep_expr *compile_pattern_not(struct grep_pat **list)
 	struct grep_pat *p;
 	struct grep_expr *x;
 
-	looking_at("not", list);
-
 	p = *list;
 	switch (p->token) {
 	case GREP_NOT:
@@ -278,8 +229,6 @@ static struct grep_expr *compile_pattern_and(struct grep_pat **list)
 {
 	struct grep_pat *p;
 	struct grep_expr *x, *y, *z;
-
-	looking_at("and", list);
 
 	x = compile_pattern_not(list);
 	p = *list;
@@ -304,8 +253,6 @@ static struct grep_expr *compile_pattern_or(struct grep_pat **list)
 	struct grep_pat *p;
 	struct grep_expr *x, *y, *z;
 
-	looking_at("or", list);
-
 	x = compile_pattern_and(list);
 	p = *list;
 	if (x && p && p->token != GREP_CLOSE_PAREN) {
@@ -323,8 +270,6 @@ static struct grep_expr *compile_pattern_or(struct grep_pat **list)
 
 static struct grep_expr *compile_pattern_expr(struct grep_pat **list)
 {
-	looking_at("expr", list);
-
 	return compile_pattern_or(list);
 }
 
@@ -388,9 +333,7 @@ static int buffer_is_binary(const char *ptr, unsigned long size)
 {
 	if (FIRST_FEW_BYTES < size)
 		size = FIRST_FEW_BYTES;
-	if (memchr(ptr, 0, size))
-		return 1;
-	return 0;
+	return !!memchr(ptr, 0, size);
 }
 
 static int fixmatch(const char *pattern, char *line, regmatch_t *match)
@@ -632,19 +575,40 @@ static int grep_buffer(struct grep_opt *opt, const char *name,
 	return !!last_hit;
 }
 
-static int grep_sha1(struct grep_opt *opt, const unsigned char *sha1, const char *name)
+static int grep_sha1(struct grep_opt *opt, const unsigned char *sha1, const char *name, int tree_name_len)
 {
 	unsigned long size;
 	char *data;
 	char type[20];
+	char *to_free = NULL;
 	int hit;
+
 	data = read_sha1_file(sha1, type, &size);
 	if (!data) {
 		error("'%s': unable to read %s", name, sha1_to_hex(sha1));
 		return 0;
 	}
+	if (opt->relative && opt->prefix_length) {
+		static char name_buf[PATH_MAX];
+		char *cp;
+		int name_len = strlen(name) - opt->prefix_length + 1;
+
+		if (!tree_name_len)
+			name += opt->prefix_length;
+		else {
+			if (ARRAY_SIZE(name_buf) <= name_len)
+				cp = to_free = xmalloc(name_len);
+			else
+				cp = name_buf;
+			memcpy(cp, name, tree_name_len);
+			strcpy(cp + tree_name_len,
+			       name + tree_name_len + opt->prefix_length);
+			name = cp;
+		}
+	}
 	hit = grep_buffer(opt, name, data, size);
 	free(data);
+	free(to_free);
 	return hit;
 }
 
@@ -674,6 +638,8 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 		return 0;
 	}
 	close(i);
+	if (opt->relative && opt->prefix_length)
+		filename += opt->prefix_length;
 	i = grep_buffer(opt, filename, data, st.st_size);
 	free(data);
 	return i;
@@ -720,7 +686,7 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 	char *argptr = randarg;
 	struct grep_pat *p;
 
-	if (opt->extended)
+	if (opt->extended || (opt->relative && opt->prefix_length))
 		return -1;
 	len = nr = 0;
 	push_arg("grep");
@@ -845,7 +811,7 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 		if (!pathspec_matches(paths, ce->name))
 			continue;
 		if (cached)
-			hit |= grep_sha1(opt, ce->sha1, ce->name);
+			hit |= grep_sha1(opt, ce->sha1, ce->name, 0);
 		else
 			hit |= grep_file(opt, ce->name);
 	}
@@ -860,11 +826,12 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 	int hit = 0;
 	struct name_entry entry;
 	char *down;
-	char *path_buf = xmalloc(PATH_MAX + strlen(tree_name) + 100);
+	int tn_len = strlen(tree_name);
+	char *path_buf = xmalloc(PATH_MAX + tn_len + 100);
 
-	if (tree_name[0]) {
-		int offset = sprintf(path_buf, "%s:", tree_name);
-		down = path_buf + offset;
+	if (tn_len) {
+		tn_len = sprintf(path_buf, "%s:", tree_name);
+		down = path_buf + tn_len;
 		strcat(down, base);
 	}
 	else {
@@ -886,7 +853,7 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 		if (!pathspec_matches(paths, down))
 			;
 		else if (S_ISREG(entry.mode))
-			hit |= grep_sha1(opt, entry.sha1, path_buf);
+			hit |= grep_sha1(opt, entry.sha1, path_buf, tn_len);
 		else if (S_ISDIR(entry.mode)) {
 			char type[20];
 			struct tree_desc sub;
@@ -907,7 +874,7 @@ static int grep_object(struct grep_opt *opt, const char **paths,
 		       struct object *obj, const char *name)
 {
 	if (obj->type == OBJ_BLOB)
-		return grep_sha1(opt, obj->sha1, name);
+		return grep_sha1(opt, obj->sha1, name, 0);
 	if (obj->type == OBJ_COMMIT || obj->type == OBJ_TREE) {
 		struct tree_desc tree;
 		void *data;
@@ -945,6 +912,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	int i;
 
 	memset(&opt, 0, sizeof(opt));
+	opt.prefix_length = (prefix && *prefix) ? strlen(prefix) : 0;
+	opt.relative = 1;
 	opt.pattern_tail = &opt.pattern_list;
 	opt.regflags = REG_NEWLINE;
 
@@ -1118,6 +1087,10 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			}
 			die(emsg_missing_argument, arg);
 		}
+		if (!strcmp("--full-name", arg)) {
+			opt.relative = 0;
+			continue;
+		}
 		if (!strcmp("--", arg)) {
 			/* later processing wants to have this at argv[1] */
 			argv--;
@@ -1176,8 +1149,15 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			verify_filename(prefix, argv[j]);
 	}
 
-	if (i < argc)
+	if (i < argc) {
 		paths = get_pathspec(prefix, argv + i);
+		if (opt.prefix_length && opt.relative) {
+			/* Make sure we do not get outside of paths */
+			for (i = 0; paths[i]; i++)
+				if (strncmp(prefix, paths[i], opt.prefix_length))
+					die("git-grep: cannot generate relative filenames containing '..'");
+		}
+	}
 	else if (prefix) {
 		paths = xcalloc(2, sizeof(const char *));
 		paths[0] = prefix;

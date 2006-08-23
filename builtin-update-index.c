@@ -23,7 +23,7 @@ static int allow_replace;
 static int info_only;
 static int force_remove;
 static int verbose;
-static int mark_valid_only = 0;
+static int mark_valid_only;
 #define MARK_VALID 1
 #define UNMARK_VALID 2
 
@@ -142,7 +142,7 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
 	size = cache_entry_size(len);
 	ce = xcalloc(1, size);
 
-	memcpy(ce->sha1, sha1, 20);
+	hashcpy(ce->sha1, sha1);
 	memcpy(ce->name, path, len);
 	ce->ce_flags = create_ce_flags(len, stage);
 	ce->ce_mode = create_ce_mode(mode);
@@ -333,7 +333,7 @@ static struct cache_entry *read_one_ent(const char *which,
 	size = cache_entry_size(namelen);
 	ce = xcalloc(1, size);
 
-	memcpy(ce->sha1, sha1, 20);
+	hashcpy(ce->sha1, sha1);
 	memcpy(ce->name, path, namelen);
 	ce->ce_flags = create_ce_flags(namelen, stage);
 	ce->ce_mode = create_ce_mode(mode);
@@ -378,7 +378,7 @@ static int unresolve_one(const char *path)
 		ret = -1;
 		goto free_return;
 	}
-	if (!memcmp(ce_2->sha1, ce_3->sha1, 20) &&
+	if (!hashcmp(ce_2->sha1, ce_3->sha1) &&
 	    ce_2->ce_mode == ce_3->ce_mode) {
 		fprintf(stderr, "%s: identical in both, skipping.\n",
 			path);
@@ -460,7 +460,7 @@ static int do_reupdate(int ac, const char **av,
 			old = read_one_ent(NULL, head_sha1,
 					   ce->name, ce_namelen(ce), 0);
 		if (old && ce->ce_mode == old->ce_mode &&
-		    !memcmp(ce->sha1, old->sha1, 20)) {
+		    !hashcmp(ce->sha1, old->sha1)) {
 			free(old);
 			continue; /* unchanged */
 		}

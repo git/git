@@ -17,7 +17,7 @@
 static int fd_in;
 static int fd_out;
 
-static unsigned char remote_version = 0;
+static unsigned char remote_version;
 static unsigned char local_version = 1;
 
 static ssize_t force_write(int fd, void *buffer, size_t length)
@@ -36,9 +36,9 @@ static ssize_t force_write(int fd, void *buffer, size_t length)
 	return ret;
 }
 
-static int prefetches = 0;
+static int prefetches;
 
-static struct object_list *in_transit = NULL;
+static struct object_list *in_transit;
 static struct object_list **end_of_transit = &in_transit;
 
 void prefetch(unsigned char *sha1)
@@ -59,7 +59,7 @@ void prefetch(unsigned char *sha1)
 }
 
 static char conn_buf[4096];
-static size_t conn_buf_posn = 0;
+static size_t conn_buf_posn;
 
 int fetch(unsigned char *sha1)
 {
@@ -67,7 +67,7 @@ int fetch(unsigned char *sha1)
 	signed char remote;
 	struct object_list *temp;
 
-	if (memcmp(sha1, in_transit->item->sha1, 20)) {
+	if (hashcmp(sha1, in_transit->item->sha1)) {
 		/* we must have already fetched it to clean the queue */
 		return has_sha1_file(sha1) ? 0 : -1;
 	}

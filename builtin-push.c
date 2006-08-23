@@ -10,14 +10,14 @@
 
 static const char push_usage[] = "git-push [--all] [--tags] [-f | --force] <repository> [<refspec>...]";
 
-static int all = 0, tags = 0, force = 0, thin = 1;
-static const char *execute = NULL;
+static int all, tags, force, thin = 1;
+static const char *execute;
 
 #define BUF_SIZE (2084)
 static char buffer[BUF_SIZE];
 
-static const char **refspec = NULL;
-static int refspec_nr = 0;
+static const char **refspec;
+static int refspec_nr;
 
 static void add_refspec(const char *ref)
 {
@@ -32,10 +32,8 @@ static int expand_one_ref(const char *ref, const unsigned char *sha1)
 	/* Ignore the "refs/" at the beginning of the refname */
 	ref += 5;
 
-	if (strncmp(ref, "tags/", 5))
-		return 0;
-
-	add_refspec(strdup(ref));
+	if (!strncmp(ref, "tags/", 5))
+		add_refspec(strdup(ref));
 	return 0;
 }
 

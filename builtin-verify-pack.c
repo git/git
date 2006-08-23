@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 #include "pack.h"
 
@@ -47,28 +48,28 @@ static int verify_one_pack(const char *path, int verbose)
 
 static const char verify_pack_usage[] = "git-verify-pack [-v] <pack>...";
 
-int main(int ac, char **av)
+int cmd_verify_pack(int argc, const char **argv, const char *prefix)
 {
 	int err = 0;
 	int verbose = 0;
 	int no_more_options = 0;
 	int nothing_done = 1;
 
-	while (1 < ac) {
-		if (!no_more_options && av[1][0] == '-') {
-			if (!strcmp("-v", av[1]))
+	while (1 < argc) {
+		if (!no_more_options && argv[1][0] == '-') {
+			if (!strcmp("-v", argv[1]))
 				verbose = 1;
-			else if (!strcmp("--", av[1]))
+			else if (!strcmp("--", argv[1]))
 				no_more_options = 1;
 			else
 				usage(verify_pack_usage);
 		}
 		else {
-			if (verify_one_pack(av[1], verbose))
+			if (verify_one_pack(argv[1], verbose))
 				err = 1;
 			nothing_done = 0;
 		}
-		ac--; av++;
+		argc--; argv++;
 	}
 
 	if (nothing_done)

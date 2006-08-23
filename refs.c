@@ -29,7 +29,7 @@ const char *resolve_ref(const char *path, unsigned char *sha1, int reading)
 		if (lstat(path, &st) < 0) {
 			if (reading || errno != ENOENT)
 				return NULL;
-			memset(sha1, 0, 20);
+			hashclr(sha1);
 			return path;
 		}
 
@@ -281,7 +281,7 @@ static struct ref_lock *verify_lock(struct ref_lock *lock,
 		unlock_ref(lock);
 		return NULL;
 	}
-	if (memcmp(lock->old_sha1, old_sha1, 20)) {
+	if (hashcmp(lock->old_sha1, old_sha1)) {
 		error("Ref %s is at %s but expected %s", lock->ref_file,
 			sha1_to_hex(lock->old_sha1), sha1_to_hex(old_sha1));
 		unlock_ref(lock);
@@ -411,7 +411,7 @@ int write_ref_sha1(struct ref_lock *lock,
 
 	if (!lock)
 		return -1;
-	if (!lock->force_write && !memcmp(lock->old_sha1, sha1, 20)) {
+	if (!lock->force_write && !hashcmp(lock->old_sha1, sha1)) {
 		unlock_ref(lock);
 		return 0;
 	}
@@ -475,7 +475,7 @@ int read_ref_at(const char *ref, unsigned long at_time, unsigned char *sha1)
 					die("Log %s is corrupt.", logfile);
 				if (get_sha1_hex(rec + 41, sha1))
 					die("Log %s is corrupt.", logfile);
-				if (memcmp(logged_sha1, sha1, 20)) {
+				if (hashcmp(logged_sha1, sha1)) {
 					tz = strtoul(tz_c, NULL, 10);
 					fprintf(stderr,
 						"warning: Log %s has gap after %s.\n",
@@ -489,7 +489,7 @@ int read_ref_at(const char *ref, unsigned long at_time, unsigned char *sha1)
 			else {
 				if (get_sha1_hex(rec + 41, logged_sha1))
 					die("Log %s is corrupt.", logfile);
-				if (memcmp(logged_sha1, sha1, 20)) {
+				if (hashcmp(logged_sha1, sha1)) {
 					tz = strtoul(tz_c, NULL, 10);
 					fprintf(stderr,
 						"warning: Log %s unexpectedly ended on %s.\n",

@@ -12,21 +12,22 @@
 #include "dir.h"
 #include "builtin.h"
 
-static int abbrev = 0;
-static int show_deleted = 0;
-static int show_cached = 0;
-static int show_others = 0;
-static int show_stage = 0;
-static int show_unmerged = 0;
-static int show_modified = 0;
-static int show_killed = 0;
-static int show_valid_bit = 0;
+static int abbrev;
+static int show_deleted;
+static int show_cached;
+static int show_others;
+static int show_stage;
+static int show_unmerged;
+static int show_modified;
+static int show_killed;
+static int show_valid_bit;
 static int line_terminator = '\n';
 
-static int prefix_len = 0, prefix_offset = 0;
-static const char **pathspec = NULL;
-static int error_unmatch = 0;
-static char *ps_matched = NULL;
+static int prefix_len;
+static int prefix_offset;
+static const char **pathspec;
+static int error_unmatch;
+static char *ps_matched;
 
 static const char *tag_cached = "";
 static const char *tag_unmerged = "";

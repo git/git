@@ -15,9 +15,9 @@
 #include <string.h>
 
 static unsigned char local_version = 1;
-static unsigned char remote_version = 0;
+static unsigned char remote_version;
 
-static int verbose = 0;
+static int verbose;
 
 static int serve_object(int fd_in, int fd_out) {
 	ssize_t size;

@@ -8,12 +8,12 @@
 static const char describe_usage[] =
 "git-describe [--all] [--tags] [--abbrev=<n>] <committish>*";
 
-static int all = 0;	/* Default to annotated tags only */
-static int tags = 0;	/* But allow any tags if --tags is specified */
+static int all;	/* Default to annotated tags only */
+static int tags;	/* But allow any tags if --tags is specified */
 
 static int abbrev = DEFAULT_ABBREV;
 
-static int names = 0, allocs = 0;
+static int names, allocs;
 static struct commit_name {
 	const struct commit *commit;
 	int prio; /* annotated tag = 2, tag = 1, head = 0 */

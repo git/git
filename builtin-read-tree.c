@@ -12,7 +12,7 @@
 #include "unpack-trees.h"
 #include "builtin.h"
 
-static struct object_list *trees = NULL;
+static struct object_list *trees;
 
 static int list_tree(unsigned char *sha1)
 {
@@ -53,7 +53,7 @@ static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 	struct name_entry entry;
 	int cnt;
 
-	memcpy(it->sha1, tree->object.sha1, 20);
+	hashcpy(it->sha1, tree->object.sha1);
 	desc.buf = tree->buffer;
 	desc.size = tree->size;
 	cnt = 0;

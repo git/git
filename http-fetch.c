@@ -36,10 +36,10 @@ enum XML_Status {
 #define PREV_BUF_SIZE 4096
 #define RANGE_HEADER_SIZE 30
 
-static int commits_on_stdin = 0;
+static int commits_on_stdin;
 
 static int got_alternates = -1;
-static int corrupt_object_found = 0;
+static int corrupt_object_found;
 
 static struct curl_slist *no_pragma_header;
 
@@ -52,7 +52,7 @@ struct alt_base
 	struct alt_base *next;
 };
 
-static struct alt_base *alt = NULL;
+static struct alt_base *alt;
 
 enum object_request_state {
 	WAITING,
@@ -114,7 +114,7 @@ struct remote_ls_ctx
 };
 #endif
 
-static struct object_request *object_queue_head = NULL;
+static struct object_request *object_queue_head;
 
 static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 			       void *data)
@@ -301,7 +301,7 @@ static void finish_object_request(struct object_request *obj_req)
 		unlink(obj_req->tmpfile);
 		return;
 	}
-	if (memcmp(obj_req->sha1, obj_req->real_sha1, 20)) {
+	if (hashcmp(obj_req->sha1, obj_req->real_sha1)) {
 		unlink(obj_req->tmpfile);
 		return;
 	}
@@ -393,7 +393,7 @@ void prefetch(unsigned char *sha1)
 	char *filename = sha1_file_name(sha1);
 
 	newreq = xmalloc(sizeof(*newreq));
-	memcpy(newreq->sha1, sha1, 20);
+	hashcpy(newreq->sha1, sha1);
 	newreq->repo = alt;
 	newreq->url = NULL;
 	newreq->local = -1;
@@ -1070,7 +1070,7 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 	int ret = 0;
 	struct object_request *obj_req = object_queue_head;
 
-	while (obj_req != NULL && memcmp(obj_req->sha1, sha1, 20))
+	while (obj_req != NULL && hashcmp(obj_req->sha1, sha1))
 		obj_req = obj_req->next;
 	if (obj_req == NULL)
 		return error("Couldn't find request for %s in the queue", hex);
@@ -1109,7 +1109,7 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 	} else if (obj_req->zret != Z_STREAM_END) {
 		corrupt_object_found++;
 		ret = error("File %s (%s) corrupt", hex, obj_req->url);
-	} else if (memcmp(obj_req->sha1, obj_req->real_sha1, 20)) {
+	} else if (hashcmp(obj_req->sha1, obj_req->real_sha1)) {
 		ret = error("File %s has bad hash", hex);
 	} else if (obj_req->rename < 0) {
 		ret = error("unable to write sha1 filename %s",

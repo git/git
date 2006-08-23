@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git-grep' [--cached]
 	   [-a | --text] [-I] [-i | --ignore-case] [-w | --word-regexp]
-	   [-v | --invert-match]
+	   [-v | --invert-match] [--full-name]
 	   [-E | --extended-regexp] [-G | --basic-regexp] [-F | --fixed-strings]
 	   [-n] [-l | --files-with-matches] [-L | --files-without-match]
 	   [-c | --count]
@@ -46,6 +46,12 @@ OPTIONS
 
 -v | --invert-match::
 	Select non-matching lines.
+
+--full-name::
+	When run from a subdirectory, the command usually
+	outputs paths relative to the current directory.  This
+	option forces paths to be output relative to the project
+	top directory.
 
 -E | --extended-regexp | -G | --basic-regexp::
 	Use POSIX extended/basic regexp for patterns.  Default

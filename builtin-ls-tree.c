@@ -14,10 +14,10 @@ static int line_termination = '\n';
 #define LS_TREE_ONLY 2
 #define LS_SHOW_TREES 4
 #define LS_NAME_ONLY 8
-static int abbrev = 0;
-static int ls_options = 0;
+static int abbrev;
+static int ls_options;
 static const char **pathspec;
-static int chomp_prefix = 0;
+static int chomp_prefix;
 static const char *ls_tree_prefix;
 
 static const char ls_tree_usage[] =

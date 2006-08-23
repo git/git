@@ -54,7 +54,7 @@
     (let* ((dir (file-name-directory file))
            (name (file-relative-name file dir)))
       (when dir (cd dir))
-      (and (eq 0 (call-process "git" nil '(t nil) nil "ls-files" "-c" "-z" "--" name))
+      (and (ignore-errors (eq 0 (call-process "git" nil '(t nil) nil "ls-files" "-c" "-z" "--" name)))
            (let ((str (buffer-string)))
              (and (> (length str) (length name))
                   (string= (substring str 0 (1+ (length name))) (concat name "\0"))))))))

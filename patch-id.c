@@ -47,7 +47,7 @@ static void generate_id_list(void)
 
 		if (!get_sha1_hex(p, n)) {
 			flush_current_id(patchlen, sha1, &ctx);
-			memcpy(sha1, n, 20);
+			hashcpy(sha1, n);
 			patchlen = 0;
 			continue;
 		}

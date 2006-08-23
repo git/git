@@ -7,13 +7,6 @@
 #include "xdiff-interface.h"
 #include "log-tree.h"
 
-static int uninteresting(struct diff_filepair *p)
-{
-	if (diff_unmodified_pair(p))
-		return 1;
-	return 0;
-}
-
 static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr, int n, int num_parent)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
@@ -25,7 +18,7 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 		for (i = 0; i < q->nr; i++) {
 			int len;
 			const char *path;
-			if (uninteresting(q->queue[i]))
+			if (diff_unmodified_pair(q->queue[i]))
 				continue;
 			path = q->queue[i]->two->path;
 			len = strlen(path);
@@ -38,9 +31,9 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 			memset(p->parent, 0,
 			       sizeof(p->parent[0]) * num_parent);
 
-			memcpy(p->sha1, q->queue[i]->two->sha1, 20);
+			hashcpy(p->sha1, q->queue[i]->two->sha1);
 			p->mode = q->queue[i]->two->mode;
-			memcpy(p->parent[n].sha1, q->queue[i]->one->sha1, 20);
+			hashcpy(p->parent[n].sha1, q->queue[i]->one->sha1);
 			p->parent[n].mode = q->queue[i]->one->mode;
 			p->parent[n].status = q->queue[i]->status;
 			*tail = p;
@@ -57,14 +50,13 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 			const char *path;
 			int len;
 
-			if (uninteresting(q->queue[i]))
+			if (diff_unmodified_pair(q->queue[i]))
 				continue;
 			path = q->queue[i]->two->path;
 			len = strlen(path);
 			if (len == p->len && !memcmp(path, p->path, len)) {
 				found = 1;
-				memcpy(p->parent[n].sha1,
-				       q->queue[i]->one->sha1, 20);
+				hashcpy(p->parent[n].sha1, q->queue[i]->one->sha1);
 				p->parent[n].mode = q->queue[i]->one->mode;
 				p->parent[n].status = q->queue[i]->status;
 				break;
@@ -101,7 +93,7 @@ static char *grab_blob(const unsigned char *sha1, unsigned long *size)
 {
 	char *blob;
 	char type[20];
-	if (!memcmp(sha1, null_sha1, 20)) {
+	if (is_null_sha1(sha1)) {
 		/* deleted blob */
 		*size = 0;
 		return xcalloc(1, 1);
@@ -609,16 +601,16 @@ static void dump_quoted_path(const char *prefix, const char *path,
 	printf("%s\n", c_reset);
 }
 
-static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
-			   int dense, struct rev_info *rev)
+static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
+			    int dense, struct rev_info *rev)
 {
 	struct diff_options *opt = &rev->diffopt;
 	unsigned long result_size, cnt, lno;
 	char *result, *cp;
 	struct sline *sline; /* survived lines */
 	int mode_differs = 0;
-	int i, show_hunks, shown_header = 0;
-	int working_tree_file = !memcmp(elem->sha1, null_sha1, 20);
+	int i, show_hunks;
+	int working_tree_file = is_null_sha1(elem->sha1);
 	int abbrev = opt->full_index ? 40 : DEFAULT_ABBREV;
 	mmfile_t result_file;
 
@@ -695,8 +687,8 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	for (i = 0; i < num_parent; i++) {
 		int j;
 		for (j = 0; j < i; j++) {
-			if (!memcmp(elem->parent[i].sha1,
-				    elem->parent[j].sha1, 20)) {
+			if (!hashcmp(elem->parent[i].sha1,
+				     elem->parent[j].sha1)) {
 				reuse_combine_diff(sline, cnt, i, j);
 				break;
 			}
@@ -769,7 +761,6 @@ static int show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	}
 	free(sline[0].p_lno);
 	free(sline);
-	return shown_header;
 }
 
 #define COLONS "::::::::::::::::::::::::::::::::"
@@ -837,11 +828,10 @@ void show_combined_diff(struct combine_diff_path *p,
 		return;
 	if (opt->output_format & (DIFF_FORMAT_RAW |
 				  DIFF_FORMAT_NAME |
-				  DIFF_FORMAT_NAME_STATUS)) {
+				  DIFF_FORMAT_NAME_STATUS))
 		show_raw_diff(p, num_parent, rev);
-	} else if (opt->output_format & DIFF_FORMAT_PATCH) {
+	else if (opt->output_format & DIFF_FORMAT_PATCH)
 		show_patch_diff(p, num_parent, dense, rev);
-	}
 }
 
 void diff_tree_combined(const unsigned char *sha1,
@@ -936,6 +926,7 @@ void diff_tree_combined_merge(const unsigned char *sha1,
 	for (parents = commit->parents, num_parent = 0;
 	     parents;
 	     parents = parents->next, num_parent++)
-		memcpy(parent + num_parent, parents->item->object.sha1, 20);
+		hashcpy((unsigned char*)(parent + num_parent),
+			parents->item->object.sha1);
 	diff_tree_combined(sha1, parent, num_parent, dense, rev);
 }

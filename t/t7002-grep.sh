@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Junio C Hamano
 #
 
-test_description='git grep -w
+test_description='git grep various.
 '
 
 . ./test-lib.sh
@@ -19,7 +19,9 @@ test_expect_success setup '
 	echo x x xx x >x &&
 	echo y yy >y &&
 	echo zzz > z &&
-	git add file x y z &&
+	mkdir t &&
+	echo test >t/t &&
+	git add file x y z t/t &&
 	git commit -m initial
 '
 
@@ -80,6 +82,31 @@ do
 			diff expected actual
 		fi
 	'
+
+	test_expect_success "grep $L (t-1)" '
+		echo "${HC}t/t:1:test" >expected &&
+		git grep -n -e test $H >actual &&
+		diff expected actual
+	'
+
+	test_expect_success "grep $L (t-2)" '
+		echo "${HC}t:1:test" >expected &&
+		(
+			cd t &&
+			git grep -n -e test $H
+		) >actual &&
+		diff expected actual
+	'
+
+	test_expect_success "grep $L (t-3)" '
+		echo "${HC}t/t:1:test" >expected &&
+		(
+			cd t &&
+			git grep --full-name -n -e test $H
+		) >actual &&
+		diff expected actual
+	'
+
 done
 
 test_done
