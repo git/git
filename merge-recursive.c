@@ -158,7 +158,7 @@ static struct cache_entry *make_cache_entry(unsigned int mode,
 	size = cache_entry_size(len);
 	ce = xcalloc(1, size);
 
-	memcpy(ce->sha1, sha1, 20);
+	hashcpy(ce->sha1, sha1);
 	memcpy(ce->name, path, len);
 	ce->ce_flags = create_ce_flags(len, stage);
 	ce->ce_mode = create_ce_mode(mode);
@@ -355,7 +355,7 @@ static struct path_list *get_unmerged(void)
 		}
 		e = item->util;
 		e->stages[ce_stage(ce)].mode = ntohl(ce->ce_mode);
-		memcpy(e->stages[ce_stage(ce)].sha, ce->sha1, 20);
+		hashcpy(e->stages[ce_stage(ce)].sha, ce->sha1);
 	}
 
 	return unmerged;
@@ -636,10 +636,10 @@ static struct merge_file_info merge_file(struct diff_filespec *o,
 		result.clean = 0;
 		if (S_ISREG(a->mode)) {
 			result.mode = a->mode;
-			memcpy(result.sha, a->sha1, 20);
+			hashcpy(result.sha, a->sha1);
 		} else {
 			result.mode = b->mode;
-			memcpy(result.sha, b->sha1, 20);
+			hashcpy(result.sha, b->sha1);
 		}
 	} else {
 		if (!sha_eq(a->sha1, o->sha1) && !sha_eq(b->sha1, o->sha1))
@@ -648,9 +648,9 @@ static struct merge_file_info merge_file(struct diff_filespec *o,
 		result.mode = a->mode == o->mode ? b->mode: a->mode;
 
 		if (sha_eq(a->sha1, o->sha1))
-			memcpy(result.sha, b->sha1, 20);
+			hashcpy(result.sha, b->sha1);
 		else if (sha_eq(b->sha1, o->sha1))
-			memcpy(result.sha, a->sha1, 20);
+			hashcpy(result.sha, a->sha1);
 		else if (S_ISREG(a->mode)) {
 			int code = 1, fd;
 			struct stat st;
@@ -699,7 +699,7 @@ static struct merge_file_info merge_file(struct diff_filespec *o,
 			if (!(S_ISLNK(a->mode) || S_ISLNK(b->mode)))
 				die("cannot merge modes?");
 
-			memcpy(result.sha, a->sha1, 20);
+			hashcpy(result.sha, a->sha1);
 
 			if (!sha_eq(a->sha1, b->sha1))
 				result.clean = 0;
@@ -1096,11 +1096,11 @@ static int process_entry(const char *path, struct stage_data *entry,
 
 		output("Auto-merging %s", path);
 		o.path = a.path = b.path = (char *)path;
-		memcpy(o.sha1, o_sha, 20);
+		hashcpy(o.sha1, o_sha);
 		o.mode = o_mode;
-		memcpy(a.sha1, a_sha, 20);
+		hashcpy(a.sha1, a_sha);
 		a.mode = a_mode;
-		memcpy(b.sha1, b_sha, 20);
+		hashcpy(b.sha1, b_sha);
 		b.mode = b_mode;
 
 		mfi = merge_file(&o, &a, &b,
