@@ -606,9 +606,7 @@ static char *git_header_name(char *line, int llen)
 	 * form.
 	 */
 	for (len = 0 ; ; len++) {
-		char c = name[len];
-
-		switch (c) {
+		switch (name[len]) {
 		default:
 			continue;
 		case '\n':
