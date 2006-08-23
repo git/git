@@ -152,7 +152,7 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 	   initialization in create_delta(). */
 	entries = (bufsize - 1)  / RABIN_WINDOW;
 	hsize = entries / 4;
-	for (i = 4; (1 << i) < hsize && i < 31; i++);
+	for (i = 4; (1u << i) < hsize && i < 31; i++);
 	hsize = 1 << i;
 	hmask = hsize - 1;
 

@@ -534,7 +534,7 @@ static int add_object_entry(const unsigned char *sha1, unsigned hash, int exclud
 	entry = objects + idx;
 	nr_objects = idx + 1;
 	memset(entry, 0, sizeof(*entry));
-	memcpy(entry->sha1, sha1, 20);
+	hashcpy(entry->sha1, sha1);
 	entry->hash = hash;
 
 	if (object_ix_hashsz * 3 <= nr_objects * 4)
@@ -649,7 +649,7 @@ static struct pbase_tree_cache *pbase_tree_get(const unsigned char *sha1)
 		free(ent->tree_data);
 		nent = ent;
 	}
-	memcpy(nent->sha1, sha1, 20);
+	hashcpy(nent->sha1, sha1);
 	nent->tree_data = data;
 	nent->tree_size = size;
 	nent->ref = 1;
@@ -799,7 +799,7 @@ static void add_preferred_base(unsigned char *sha1)
 	it->next = pbase_tree;
 	pbase_tree = it;
 
-	memcpy(it->pcache.sha1, tree_sha1, 20);
+	hashcpy(it->pcache.sha1, tree_sha1);
 	it->pcache.tree_data = data;
 	it->pcache.tree_size = size;
 }

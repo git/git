@@ -356,7 +356,7 @@ static void add_sha1_list(unsigned char *sha1, unsigned long ino)
 	int nr;
 
 	entry->ino = ino;
-	memcpy(entry->sha1, sha1, 20);
+	hashcpy(entry->sha1, sha1);
 	nr = sha1_list.nr;
 	if (nr == MAX_SHA1_ENTRIES) {
 		fsck_sha1_list();

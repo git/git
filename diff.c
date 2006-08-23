@@ -1107,7 +1107,7 @@ void fill_filespec(struct diff_filespec *spec, const unsigned char *sha1,
 {
 	if (mode) {
 		spec->mode = canon_mode(mode);
-		memcpy(spec->sha1, sha1, 20);
+		hashcpy(spec->sha1, sha1);
 		spec->sha1_valid = !is_null_sha1(sha1);
 	}
 }
@@ -1200,7 +1200,7 @@ static struct sha1_size_cache *locate_size_cache(unsigned char *sha1,
 			sizeof(*sha1_size_cache));
 	e = xmalloc(sizeof(struct sha1_size_cache));
 	sha1_size_cache[first] = e;
-	memcpy(e->sha1, sha1, 20);
+	hashcpy(e->sha1, sha1);
 	e->size = size;
 	return e;
 }
@@ -1522,7 +1522,7 @@ static void diff_fill_sha1_info(struct diff_filespec *one)
 		}
 	}
 	else
-		memset(one->sha1, 0, 20);
+		hashclr(one->sha1);
 }
 
 static void run_diff(struct diff_filepair *p, struct diff_options *o)

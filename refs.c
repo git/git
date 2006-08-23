@@ -29,7 +29,7 @@ const char *resolve_ref(const char *path, unsigned char *sha1, int reading)
 		if (lstat(path, &st) < 0) {
 			if (reading || errno != ENOENT)
 				return NULL;
-			memset(sha1, 0, 20);
+			hashclr(sha1);
 			return path;
 		}
 
