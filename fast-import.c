@@ -420,11 +420,16 @@ static void release_tree_content(struct tree_content *t)
 {
 	struct avail_tree_content *f = (struct avail_tree_content*)t;
 	unsigned int hc = hc_entries(f->entry_capacity);
+	f->next_avail = avail_tree_table[hc];
+	avail_tree_table[hc] = f;
+}
+
+static void release_tree_content_recursive(struct tree_content *t)
+{
 	unsigned int i;
 	for (i = 0; i < t->entry_count; i++)
 		release_tree_entry(t->entries[i]);
-	f->next_avail = avail_tree_table[hc];
-	avail_tree_table[hc] = f;
+	release_tree_content(t);
 }
 
 static struct tree_content* grow_tree_content(
@@ -459,7 +464,7 @@ static struct tree_entry* new_tree_entry()
 static void release_tree_entry(struct tree_entry *e)
 {
 	if (e->tree)
-		release_tree_content(e->tree);
+		release_tree_content_recursive(e->tree);
 	*((void**)e) = avail_tree_entry;
 	avail_tree_entry = e;
 }
@@ -720,7 +725,7 @@ static int tree_content_set(
 				e->mode = mode;
 				memcpy(e->sha1, sha1, 20);
 				if (e->tree) {
-					release_tree_content(e->tree);
+					release_tree_content_recursive(e->tree);
 					e->tree = NULL;
 				}
 				memcpy(root->sha1, null_sha1, 20);
@@ -986,7 +991,7 @@ static void unload_one_branch()
 		}
 		e->active_next_branch = NULL;
 		if (e->branch_tree.tree) {
-			release_tree_content(e->branch_tree.tree);
+			release_tree_content_recursive(e->branch_tree.tree);
 			e->branch_tree.tree = NULL;
 		}
 		cur_active_branches--;
