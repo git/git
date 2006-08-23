@@ -121,6 +121,15 @@ struct object_entry_pool
 	struct object_entry entries[FLEX_ARRAY]; /* more */
 };
 
+struct mark_set
+{
+	int shift;
+	union {
+		struct object_entry *marked[1024];
+		struct mark_set *sets[1024];
+	} data;
+};
+
 struct last_object
 {
 	void *data;
@@ -183,6 +192,7 @@ static unsigned long alloc_count;
 static unsigned long branch_count;
 static unsigned long object_count;
 static unsigned long duplicate_count;
+static unsigned long marks_set_count;
 static unsigned long object_count_by_type[9];
 static unsigned long duplicate_count_by_type[9];
 
@@ -205,6 +215,7 @@ static unsigned char pack_sha1[20];
 static unsigned int object_entry_alloc = 1000;
 static struct object_entry_pool *blocks;
 static struct object_entry *object_table[1 << 16];
+static struct mark_set *marks;
 
 /* Our last blob */
 static struct last_object last_blob;
@@ -224,7 +235,7 @@ static struct branch *active_branches;
 
 /* Input stream parsing */
 static struct strbuf command_buf;
-static unsigned long command_mark;
+static unsigned long next_mark;
 
 
 static void alloc_objects(int cnt)
@@ -333,6 +344,48 @@ static char* pool_strdup(const char *s)
 	char *r = pool_alloc(strlen(s) + 1);
 	strcpy(r, s);
 	return r;
+}
+
+static void insert_mark(unsigned long idnum, struct object_entry *oe)
+{
+	struct mark_set *s = marks;
+	while ((idnum >> s->shift) >= 1024) {
+		s = pool_calloc(1, sizeof(struct mark_set));
+		s->shift = marks->shift + 10;
+		s->data.sets[0] = marks;
+		marks = s;
+	}
+	while (s->shift) {
+		unsigned long i = idnum >> s->shift;
+		idnum -= i << s->shift;
+		if (!s->data.sets[i]) {
+			s->data.sets[i] = pool_calloc(1, sizeof(struct mark_set));
+			s->data.sets[i]->shift = s->shift - 10;
+		}
+		s = s->data.sets[i];
+	}
+	if (!s->data.marked[idnum])
+		marks_set_count++;
+	s->data.marked[idnum] = oe;
+}
+
+static struct object_entry* find_mark(unsigned long idnum)
+{
+	unsigned long orig_idnum = idnum;
+	struct mark_set *s = marks;
+	struct object_entry *oe = NULL;
+	if ((idnum >> s->shift) < 1024) {
+		while (s && s->shift) {
+			unsigned long i = idnum >> s->shift;
+			idnum -= i << s->shift;
+			s = s->data.sets[i];
+		}
+		if (s)
+			oe = s->data.marked[idnum];
+	}
+	if (!oe)
+		die("mark :%lu not declared", orig_idnum);
+	return oe;
 }
 
 static struct atom_str* to_atom(const char *s, size_t len)
@@ -523,7 +576,8 @@ static int store_object(
 	void *dat,
 	size_t datlen,
 	struct last_object *last,
-	unsigned char *sha1out)
+	unsigned char *sha1out,
+	unsigned long mark)
 {
 	void *out, *delta;
 	struct object_entry *e;
@@ -542,6 +596,8 @@ static int store_object(
 		memcpy(sha1out, sha1, sizeof(sha1));
 
 	e = insert_object(sha1);
+	if (mark)
+		insert_mark(mark, e);
 	if (e->offset) {
 		duplicate_count++;
 		duplicate_count_by_type[type]++;
@@ -695,7 +751,7 @@ static void store_tree(struct tree_entry *root)
 		memcpy(c, e->sha1, 20);
 		c += 20;
 	}
-	store_object(OBJ_TREE, buf, c - buf, NULL, root->sha1);
+	store_object(OBJ_TREE, buf, c - buf, NULL, root->sha1, 0);
 	free(buf);
 }
 
@@ -921,11 +977,11 @@ static void read_next_command()
 static void cmd_mark()
 {
 	if (!strncmp("mark :", command_buf.buf, 6)) {
-		command_mark = strtoul(command_buf.buf + 6, NULL, 10);
+		next_mark = strtoul(command_buf.buf + 6, NULL, 10);
 		read_next_command();
 	}
 	else
-		command_mark = 0;
+		next_mark = 0;
 }
 
 static void* cmd_data (size_t *size)
@@ -956,16 +1012,15 @@ static void* cmd_data (size_t *size)
 
 static void cmd_new_blob()
 {
-	size_t datlen;
-	void *dat;
-	unsigned char sha1[20];
+	size_t l;
+	void *d;
 
 	read_next_command();
 	cmd_mark();
-	dat = cmd_data(&datlen);
+	d = cmd_data(&l);
 
-	if (store_object(OBJ_BLOB, dat, datlen, &last_blob, sha1))
-		free(dat);
+	if (store_object(OBJ_BLOB, d, l, &last_blob, NULL, next_mark))
+		free(d);
 }
 
 static void unload_one_branch()
@@ -1031,9 +1086,16 @@ static void file_change_m(struct branch *b)
 		die("Corrupt mode: %s", command_buf.buf);
 	}
 
-	if (get_sha1_hex(p, sha1))
-		die("Invalid SHA1: %s", command_buf.buf);
-	p += 40;
+	if (*p == ':') {
+		char *x;
+		oe = find_mark(strtoul(p + 1, &x, 10));
+		p = x;
+	} else {
+		if (get_sha1_hex(p, sha1))
+			die("Invalid SHA1: %s", command_buf.buf);
+		oe = find_object(sha1);
+		p += 40;
+	}
 	if (*p++ != ' ')
 		die("Missing space after SHA1: %s", command_buf.buf);
 
@@ -1044,7 +1106,6 @@ static void file_change_m(struct branch *b)
 		p = p_uq;
 	}
 
-	oe = find_object(sha1);
 	if (oe) {
 		if (oe->type != OBJ_BLOB)
 			die("Not a blob (actually a %s): %s",
@@ -1161,7 +1222,7 @@ static void cmd_new_commit()
 	free(committer);
 	free(msg);
 
-	store_object(OBJ_COMMIT, body, sp - body, NULL, b->sha1);
+	store_object(OBJ_COMMIT, body, sp - body, NULL, b->sha1, next_mark);
 	free(body);
 	b->last_commit = object_count_by_type[OBJ_COMMIT];
 }
@@ -1205,6 +1266,13 @@ static void cmd_new_branch()
 		else if (s) {
 			memcpy(b->sha1, s->sha1, 20);
 			memcpy(b->branch_tree.sha1, s->branch_tree.sha1, 20);
+		} else if (*from == ':') {
+			unsigned long idnum = strtoul(from + 1, NULL, 10);
+			struct object_entry *oe = find_mark(idnum);
+			if (oe->type != OBJ_COMMIT)
+				die("Mark :%lu not a commit", idnum);
+			memcpy(b->sha1, oe->sha1, 20);
+			memcpy(b->branch_tree.sha1, null_sha1, 20);
 		} else if (!get_sha1(from, b->sha1)) {
 			if (!memcmp(b->sha1, null_sha1, 20))
 				memcpy(b->branch_tree.sha1, null_sha1, 20);
@@ -1285,6 +1353,7 @@ int main(int argc, const char **argv)
 	atom_table = xcalloc(atom_table_sz, sizeof(struct atom_str*));
 	branch_table = xcalloc(branch_table_sz, sizeof(struct branch*));
 	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
+	marks = pool_calloc(1, sizeof(struct mark_set));
 
 	for (;;) {
 		read_next_command();
@@ -1314,7 +1383,8 @@ int main(int argc, const char **argv)
 	fprintf(stderr, "      commits:   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT]);
 	fprintf(stderr, "      tags   :   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG]);
 	fprintf(stderr, "Total branches:  %10lu\n", branch_count);
-	fprintf(stderr, "Total atoms:     %10u\n", atom_cnt);
+	fprintf(stderr, "      atoms:     %10u\n", atom_cnt);
+	fprintf(stderr, "      marks:     %10u (%10lu unique    )\n", (1 << marks->shift) * 1024, marks_set_count);
 	fprintf(stderr, "Memory total:    %10lu KiB\n", (total_allocd + alloc_count*sizeof(struct object_entry))/1024);
 	fprintf(stderr, "       pools:    %10lu KiB\n", total_allocd/1024);
 	fprintf(stderr, "     objects:    %10lu KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
