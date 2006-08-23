@@ -285,6 +285,10 @@ div.diff.chunk_header {
 	color: #990099;
 }
 
+div.diff.incomplete {
+	color: #cccccc;
+}
+
 div.diff_info {
 	font-family: monospace;
 	color: #000099;

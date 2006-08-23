@@ -539,7 +539,7 @@ sub format_diff_line {
 		$diff_class = " chunk_header";
 	} elsif ($char eq "\\") {
 		# skip errors (incomplete lines)
-		return "";
+		$diff_class = " incomplete";
 	}
 	$line = untabify($line);
 	return "<div class=\"diff$diff_class\">" . esc_html($line) . "</div>\n";
