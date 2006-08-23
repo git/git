@@ -510,7 +510,7 @@ foreach my $t (@files) {
 					if ($2 eq $from) {
 						next if ($suppress_from);
 					}
-					else {
+					elsif ($1 eq 'From') {
 						$author_not_sender = $2;
 					}
 					printf("(mbox) Adding cc: %s from line '%s'\n",
