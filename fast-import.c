@@ -178,7 +178,7 @@ struct branch
 
 
 /* Stats and misc. counters */
-static int max_depth = 10;
+static unsigned long max_depth = 10;
 static unsigned long alloc_count;
 static unsigned long branch_count;
 static unsigned long object_count;
@@ -216,9 +216,9 @@ static unsigned int avail_tree_table_sz = 100;
 static struct avail_tree_content **avail_tree_table;
 
 /* Branch data */
-static unsigned int max_active_branches = 5;
-static unsigned int cur_active_branches;
-static unsigned int branch_table_sz = 1039;
+static unsigned long max_active_branches = 5;
+static unsigned long cur_active_branches;
+static unsigned long branch_table_sz = 1039;
 static struct branch **branch_table;
 static struct branch *active_branches;
 
@@ -1236,16 +1236,38 @@ static void cmd_new_branch()
 		die("An lf did not terminate the branch command as expected.");
 }
 
+static const char fast_import_usage[] =
+"git-fast-import [--objects=n] [--depth=n] [--active-branches=n] temp.pack";
+
 int main(int argc, const char **argv)
 {
-	const char *base_name = argv[1];
-	int est_obj_cnt = atoi(argv[2]);
+	const char *base_name;
+	int i;
+	unsigned long est_obj_cnt = 1000;
 	char *pack_name;
 	char *idx_name;
 	struct stat sb;
 
 	setup_ident();
 	git_config(git_default_config);
+
+	for (i = 1; i < argc; i++) {
+		const char *a = argv[i];
+
+		if (*a != '-' || !strcmp(a, "--"))
+			break;
+		else if (!strncmp(a, "--objects=", 10))
+			est_obj_cnt = strtoul(a + 10, NULL, 0);
+		else if (!strncmp(a, "--depth=", 8))
+			max_depth = strtoul(a + 8, NULL, 0);
+		else if (!strncmp(a, "--active-branches=", 18))
+			max_active_branches = strtoul(a + 18, NULL, 0);
+		else
+			die("unknown option %s", a);
+	}
+	if ((i+1) != argc)
+		usage(fast_import_usage);
+	base_name = argv[i];
 
 	pack_name = xmalloc(strlen(base_name) + 6);
 	sprintf(pack_name, "%s.pack", base_name);
