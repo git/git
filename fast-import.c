@@ -190,6 +190,7 @@ struct branch
 static unsigned long max_depth = 10;
 static unsigned long alloc_count;
 static unsigned long branch_count;
+static unsigned long branch_load_count;
 static unsigned long object_count;
 static unsigned long duplicate_count;
 static unsigned long marks_set_count;
@@ -1059,6 +1060,7 @@ static void load_branch(struct branch *b)
 	b->active_next_branch = active_branches;
 	active_branches = b;
 	cur_active_branches++;
+	branch_load_count++;
 }
 
 static void file_change_m(struct branch *b)
@@ -1382,9 +1384,9 @@ int main(int argc, const char **argv)
 	fprintf(stderr, "      trees  :   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE]);
 	fprintf(stderr, "      commits:   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT]);
 	fprintf(stderr, "      tags   :   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG]);
-	fprintf(stderr, "Total branches:  %10lu\n", branch_count);
-	fprintf(stderr, "      atoms:     %10u\n", atom_cnt);
+	fprintf(stderr, "Total branches:  %10lu (%10lu loads     )\n", branch_count, branch_load_count);
 	fprintf(stderr, "      marks:     %10u (%10lu unique    )\n", (1 << marks->shift) * 1024, marks_set_count);
+	fprintf(stderr, "      atoms:     %10u\n", atom_cnt);
 	fprintf(stderr, "Memory total:    %10lu KiB\n", (total_allocd + alloc_count*sizeof(struct object_entry))/1024);
 	fprintf(stderr, "       pools:    %10lu KiB\n", total_allocd/1024);
 	fprintf(stderr, "     objects:    %10lu KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
