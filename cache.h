@@ -222,6 +222,10 @@ static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src)
 {
 	memcpy(sha_dst, sha_src, 20);
 }
+static inline void hashclr(unsigned char *hash)
+{
+	memset(hash, 0, 20);
+}
 
 int git_mkstemp(char *path, size_t n, const char *template);
 

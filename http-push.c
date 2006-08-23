@@ -2164,7 +2164,7 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 	if (*symref != NULL)
 		free(*symref);
 	*symref = NULL;
-	memset(sha1, 0, 20);
+	hashclr(sha1);
 
 	if (buffer.posn == 0)
 		return;

@@ -159,7 +159,7 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 
 	if (len < MINIMUM_ABBREV)
 		return -1;
-	memset(res, 0, 20);
+	hashclr(res);
 	memset(canonical, 'x', 40);
 	for (i = 0; i < len ;i++) {
 		unsigned char c = name[i];

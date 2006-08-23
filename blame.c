@@ -165,7 +165,7 @@ static int get_blob_sha1(struct tree *t, const char *pathname,
 	blame_file = pathname;
 	pathspec[0] = pathname;
 	pathspec[1] = NULL;
-	memset(blob_sha1, 0, sizeof(blob_sha1));
+	hashclr(blob_sha1);
 	read_tree_recursive(t, "", 0, 0, pathspec, get_blob_sha1_internal);
 
 	for (i = 0; i < 20; i++) {
