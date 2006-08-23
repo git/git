@@ -56,7 +56,7 @@ static int sha_eq(const unsigned char *a, const unsigned char *b)
 {
 	if (!a && !b)
 		return 2;
-	return a && b && memcmp(a, b, 20) == 0;
+	return a && b && hashcmp(a, b) == 0;
 }
 
 /*
@@ -891,11 +891,9 @@ static int process_renames(struct path_list *a_renames,
 
 			remove_file(1, ren1_src);
 
-			memcpy(src_other.sha1,
-					ren1->src_entry->stages[stage].sha, 20);
+			hashcpy(src_other.sha1, ren1->src_entry->stages[stage].sha);
 			src_other.mode = ren1->src_entry->stages[stage].mode;
-			memcpy(dst_other.sha1,
-					ren1->dst_entry->stages[stage].sha, 20);
+			hashcpy(dst_other.sha1, ren1->dst_entry->stages[stage].sha);
 			dst_other.mode = ren1->dst_entry->stages[stage].mode;
 
 			try_merge = 0;
@@ -980,7 +978,7 @@ static int process_renames(struct path_list *a_renames,
 
 static unsigned char *has_sha(const unsigned char *sha)
 {
-	return memcmp(sha, null_sha1, 20) == 0 ? NULL: (unsigned char *)sha;
+	return is_null_sha1(sha) ? NULL: (unsigned char *)sha;
 }
 
 /* Per entry merge function */
