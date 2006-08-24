@@ -26,8 +26,8 @@ int pager_in_use;
 int pager_use_color = 1;
 
 static int dyn_git_object_dir, dyn_git_index_file, dyn_git_graft_file;
-static char *git_dir, *git_object_dir, *git_index_file, *git_refs_dir,
-	*git_graft_file;
+static const char *git_dir;
+static char *git_object_dir, *git_index_file, *git_refs_dir, *git_graft_file;
 
 void setup_git(char *new_git_dir, char *new_git_object_dir,
                char *new_git_index_file, char *new_git_graft_file)
@@ -82,7 +82,7 @@ static void setup_git_env(void)
 	          getenv(GRAFT_ENVIRONMENT));
 }
 
-char *get_git_dir(void)
+const char *get_git_dir(void)
 {
 	if (!git_dir)
 		setup_git_env();

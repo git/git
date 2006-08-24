@@ -306,7 +306,7 @@ static void read_index_info(int line_termination)
 }
 
 static const char update_index_usage[] =
-"git-update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--really-refresh] [--cacheinfo] [--chmod=(+|-)x] [--assume-unchanged] [--info-only] [--force-remove] [--stdin] [--index-info] [--unresolve] [--again] [--ignore-missing] [-z] [--verbose] [--] <file>...";
+"git-update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--really-refresh] [--cacheinfo] [--chmod=(+|-)x] [--assume-unchanged] [--info-only] [--force-remove] [--stdin] [--index-info] [--unresolve] [--again | -g] [--ignore-missing] [-z] [--verbose] [--] <file>...";
 
 static unsigned char head_sha1[20];
 static unsigned char merge_head_sha1[20];
@@ -595,7 +595,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 					active_cache_changed = 0;
 				goto finish;
 			}
-			if (!strcmp(path, "--again")) {
+			if (!strcmp(path, "--again") || !strcmp(path, "-g")) {
 				has_errors = do_reupdate(argc - i, argv + i,
 							 prefix, prefix_length);
 				if (has_errors)

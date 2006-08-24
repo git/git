@@ -275,7 +275,7 @@ static void traverse_tree(struct tree_desc *tree, struct strbuf *path)
 	}
 }
 
-int git_tar_config(const char *var, const char *value)
+static int git_tar_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "tar.umask")) {
 		if (!strcmp(value, "user")) {

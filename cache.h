@@ -126,7 +126,7 @@ extern void setup_git(char *new_git_dir, char *new_git_object_dir,
 #define INDEX_ENVIRONMENT "GIT_INDEX_FILE"
 #define GRAFT_ENVIRONMENT "GIT_GRAFT_FILE"
 
-extern char *get_git_dir(void);
+extern const char *get_git_dir(void);
 extern char *get_object_directory(void);
 extern char *get_refs_directory(void);
 extern char *get_index_file(void);
