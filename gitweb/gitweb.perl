@@ -538,7 +538,6 @@ sub format_diff_line {
 	} elsif ($char eq "@") {
 		$diff_class = " chunk_header";
 	} elsif ($char eq "\\") {
-		# skip errors (incomplete lines)
 		$diff_class = " incomplete";
 	}
 	$line = untabify($line);
