@@ -4,7 +4,6 @@ Format of STDIN stream:
   stream ::= cmd*;
 
   cmd ::= new_blob
-        | new_branch
         | new_commit
         | new_tag
         ;
@@ -14,15 +13,12 @@ Format of STDIN stream:
     file_content;
   file_content ::= data;
 
-  new_branch ::= 'branch' sp ref_str lf
-    ('from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)?
-    lf;
-
   new_commit ::= 'commit' sp ref_str lf
-	mark?
-	('author' sp name '<' email '>' ts tz lf)?
-	'committer' sp name '<' email '>' ts tz lf
-	commit_msg
+    ('from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)?
+    mark?
+    ('author' sp name '<' email '>' ts tz lf)?
+    'committer' sp name '<' email '>' ts tz lf
+    commit_msg
     file_change*
     lf;
   commit_msg ::= data;
@@ -831,7 +827,7 @@ static void load_tree(struct tree_entry *root)
 	} else {
 		char type[20];
 		buf = read_sha1_file(root->sha1, type, &size);
-		if (!buf || !strcmp(type, tree_type))
+		if (!buf || strcmp(type, tree_type))
 			die("Can't load tree %s", sha1_to_hex(root->sha1));
 	}
 
@@ -1299,6 +1295,69 @@ static void file_change_d(struct branch *b)
 		free(p_uq);
 }
 
+static void cmd_from(struct branch *b)
+{
+	const char *from, *endp;
+	char *str_uq;
+	struct branch *s;
+
+	if (strncmp("from ", command_buf.buf, 5))
+		return;
+
+	if (b->last_commit)
+		die("Can't reinitailize branch %s", b->name);
+
+	from = strchr(command_buf.buf, ' ') + 1;
+	str_uq = unquote_c_style(from, &endp);
+	if (str_uq) {
+		if (*endp)
+			die("Garbage after string in: %s", command_buf.buf);
+		from = str_uq;
+	}
+
+	s = lookup_branch(from);
+	if (b == s)
+		die("Can't create a branch from itself: %s", b->name);
+	else if (s) {
+		memcpy(b->sha1, s->sha1, 20);
+		memcpy(b->branch_tree.sha1, s->branch_tree.sha1, 20);
+	} else if (*from == ':') {
+		unsigned long idnum = strtoul(from + 1, NULL, 10);
+		struct object_entry *oe = find_mark(idnum);
+		unsigned long size;
+		char *buf;
+		if (oe->type != OBJ_COMMIT)
+			die("Mark :%lu not a commit", idnum);
+		memcpy(b->sha1, oe->sha1, 20);
+		buf = unpack_entry(oe->offset, &size);
+		if (!buf || size < 46)
+			die("Not a valid commit: %s", from);
+		if (memcmp("tree ", buf, 5)
+			|| get_sha1_hex(buf + 5, b->branch_tree.sha1))
+			die("The commit %s is corrupt", sha1_to_hex(b->sha1));
+		free(buf);
+	} else if (!get_sha1(from, b->sha1)) {
+		if (!memcmp(b->sha1, null_sha1, 20))
+			memcpy(b->branch_tree.sha1, null_sha1, 20);
+		else {
+			unsigned long size;
+			char *buf;
+
+			buf = read_object_with_reference(b->sha1,
+				type_names[OBJ_COMMIT], &size, b->sha1);
+			if (!buf || size < 46)
+				die("Not a valid commit: %s", from);
+			if (memcmp("tree ", buf, 5)
+				|| get_sha1_hex(buf + 5, b->branch_tree.sha1))
+				die("The commit %s is corrupt", sha1_to_hex(b->sha1));
+			free(buf);
+		}
+	} else
+		die("Invalid ref name or SHA1 expression: %s", from);
+
+	read_next_command();
+}
+
 static void cmd_new_commit()
 {
 	struct branch *b;
@@ -1321,11 +1380,12 @@ static void cmd_new_commit()
 	}
 	b = lookup_branch(sp);
 	if (!b)
-		die("Branch not declared: %s", sp);
+		b = new_branch(sp);
 	if (str_uq)
 		free(str_uq);
 
 	read_next_command();
+	cmd_from(b);
 	cmd_mark();
 	if (!strncmp("author ", command_buf.buf, 7)) {
 		author = strdup(command_buf.buf);
@@ -1383,91 +1443,6 @@ static void cmd_new_commit()
 	store_object(OBJ_COMMIT, body, sp - body, NULL, b->sha1, next_mark);
 	free(body);
 	b->last_commit = object_count_by_type[OBJ_COMMIT];
-}
-
-static void cmd_new_branch()
-{
-	struct branch *b;
-	char *str_uq;
-	const char *endp;
-	char *sp;
-
-	/* Obtain the new branch name from the rest of our command */
-	sp = strchr(command_buf.buf, ' ') + 1;
-	str_uq = unquote_c_style(sp, &endp);
-	if (str_uq) {
-		if (*endp)
-			die("Garbage after ref in: %s", command_buf.buf);
-		sp = str_uq;
-	}
-	b = new_branch(sp);
-	if (str_uq)
-		free(str_uq);
-	read_next_command();
-
-	/* from ... */
-	if (!strncmp("from ", command_buf.buf, 5)) {
-		const char *from;
-		struct branch *s;
-
-		from = strchr(command_buf.buf, ' ') + 1;
-		str_uq = unquote_c_style(from, &endp);
-		if (str_uq) {
-			if (*endp)
-				die("Garbage after string in: %s", command_buf.buf);
-			from = str_uq;
-		}
-
-		s = lookup_branch(from);
-		if (b == s)
-			die("Can't create a branch from itself: %s", b->name);
-		else if (s) {
-			memcpy(b->sha1, s->sha1, 20);
-			memcpy(b->branch_tree.sha1, s->branch_tree.sha1, 20);
-		} else if (*from == ':') {
-			unsigned long idnum = strtoul(from + 1, NULL, 10);
-			struct object_entry *oe = find_mark(idnum);
-			unsigned long size;
-			char *buf;
-			if (oe->type != OBJ_COMMIT)
-				die("Mark :%lu not a commit", idnum);
-			memcpy(b->sha1, oe->sha1, 20);
-			buf = unpack_entry(oe->offset, &size);
-			if (!buf || size < 46)
-				die("Not a valid commit: %s", from);
-			if (memcmp("tree ", buf, 5)
-				|| get_sha1_hex(buf + 5, b->branch_tree.sha1))
-				die("The commit %s is corrupt", sha1_to_hex(b->sha1));
-			free(buf);
-		} else if (!get_sha1(from, b->sha1)) {
-			if (!memcmp(b->sha1, null_sha1, 20))
-				memcpy(b->branch_tree.sha1, null_sha1, 20);
-			else {
-				unsigned long size;
-				char *buf;
-
-				buf = read_object_with_reference(b->sha1,
-					type_names[OBJ_COMMIT], &size, b->sha1);
-				if (!buf || size < 46)
-					die("Not a valid commit: %s", from);
-				if (memcmp("tree ", buf, 5)
-					|| get_sha1_hex(buf + 5, b->branch_tree.sha1))
-					die("The commit %s is corrupt", sha1_to_hex(b->sha1));
-				free(buf);
-			}
-		} else
-			die("Invalid ref name or SHA1 expression: %s", from);
-
-		if (str_uq)
-			free(str_uq);
-		read_next_command();
-	} else {
-		memcpy(b->sha1, null_sha1, 20);
-		memcpy(b->branch_tree.sha1, null_sha1, 20);
-	}
-
-	if (command_buf.eof || command_buf.len > 1)
-		die("An lf did not terminate the branch command as expected.");
 }
 
 static void cmd_new_tag()
@@ -1623,8 +1598,6 @@ int main(int argc, const char **argv)
 			break;
 		else if (!strcmp("blob", command_buf.buf))
 			cmd_new_blob();
-		else if (!strncmp("branch ", command_buf.buf, 7))
-			cmd_new_branch();
 		else if (!strncmp("commit ", command_buf.buf, 7))
 			cmd_new_commit();
 		else if (!strncmp("tag ", command_buf.buf, 4))
