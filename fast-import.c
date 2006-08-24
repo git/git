@@ -185,6 +185,13 @@ struct branch
 	unsigned char sha1[20];
 };
 
+struct tag
+{
+	struct tag *next_tag;
+	const char *name;
+	unsigned char sha1[20];
+};
+
 
 /* Stats and misc. counters */
 static unsigned long max_depth = 10;
@@ -233,6 +240,10 @@ static unsigned long cur_active_branches;
 static unsigned long branch_table_sz = 1039;
 static struct branch **branch_table;
 static struct branch *active_branches;
+
+/* Tag data */
+static struct tag *first_tag;
+static struct tag *last_tag;
 
 /* Input stream parsing */
 static struct strbuf command_buf;
@@ -970,6 +981,21 @@ static void dump_branches()
 	}
 }
 
+static void dump_tags()
+{
+	static const char *msg = "fast-import";
+	struct tag *t;
+	struct ref_lock *lock;
+	char path[PATH_MAX];
+
+	for (t = first_tag; t; t = t->next_tag) {
+		sprintf(path, "refs/tags/%s", t->name);
+		lock = lock_any_ref_for_update(path, NULL, 0);
+		if (!lock || write_ref_sha1(lock, t->sha1, msg) < 0)
+			die("Can't write %s", path);
+	}
+}
+
 static void read_next_command()
 {
 	read_line(&command_buf, stdin, '\n');
@@ -1306,6 +1332,102 @@ static void cmd_new_branch()
 		die("An lf did not terminate the branch command as expected.");
 }
 
+static void cmd_new_tag()
+{
+	char *str_uq;
+	const char *endp;
+	char *sp;
+	const char *from;
+	char *tagger;
+	struct branch *s;
+	void *msg;
+	size_t msglen;
+	char *body;
+	struct tag *t;
+	unsigned char sha1[20];
+
+	/* Obtain the new tag name from the rest of our command */
+	sp = strchr(command_buf.buf, ' ') + 1;
+	str_uq = unquote_c_style(sp, &endp);
+	if (str_uq) {
+		if (*endp)
+			die("Garbage after tag name in: %s", command_buf.buf);
+		sp = str_uq;
+	}
+	t = pool_alloc(sizeof(struct tag));
+	t->next_tag = NULL;
+	t->name = pool_strdup(sp);
+	if (last_tag)
+		last_tag->next_tag = t;
+	else
+		first_tag = t;
+	last_tag = t;
+	if (str_uq)
+		free(str_uq);
+	read_next_command();
+
+	/* from ... */
+	if (strncmp("from ", command_buf.buf, 5))
+		die("Expected from command, got %s", command_buf.buf);
+
+	from = strchr(command_buf.buf, ' ') + 1;
+	str_uq = unquote_c_style(from, &endp);
+	if (str_uq) {
+		if (*endp)
+			die("Garbage after string in: %s", command_buf.buf);
+		from = str_uq;
+	}
+
+	s = lookup_branch(from);
+	if (s) {
+		memcpy(sha1, s->sha1, 20);
+	} else if (*from == ':') {
+		unsigned long idnum = strtoul(from + 1, NULL, 10);
+		struct object_entry *oe = find_mark(idnum);
+		if (oe->type != OBJ_COMMIT)
+			die("Mark :%lu not a commit", idnum);
+		memcpy(sha1, oe->sha1, 20);
+	} else if (!get_sha1(from, sha1)) {
+		unsigned long size;
+		char *buf;
+
+		buf = read_object_with_reference(sha1,
+			type_names[OBJ_COMMIT], &size, sha1);
+		if (!buf || size < 46)
+			die("Not a valid commit: %s", from);
+		free(buf);
+	} else
+		die("Invalid ref name or SHA1 expression: %s", from);
+
+	if (str_uq)
+		free(str_uq);
+	read_next_command();
+
+	/* tagger ... */
+	if (strncmp("tagger ", command_buf.buf, 7))
+		die("Expected tagger command, got %s", command_buf.buf);
+	tagger = strdup(command_buf.buf);
+
+	/* tag payload/message */
+	read_next_command();
+	msg = cmd_data(&msglen);
+
+	/* build the tag object */
+	body = xmalloc(67 + strlen(t->name) + strlen(tagger) + msglen);
+	sp = body;
+	sp += sprintf(sp, "object %s\n", sha1_to_hex(sha1));
+	sp += sprintf(sp, "type %s\n", type_names[OBJ_COMMIT]);
+	sp += sprintf(sp, "tag %s\n", t->name);
+	sp += sprintf(sp, "%s\n\n", tagger);
+	memcpy(sp, msg, msglen);
+	sp += msglen;
+	free(tagger);
+	free(msg);
+
+	store_object(OBJ_TAG, body, sp - body, NULL, t->sha1, 0);
+	free(body);
+}
+
 static const char fast_import_usage[] =
 "git-fast-import [--objects=n] [--depth=n] [--active-branches=n] temp.pack";
 
@@ -1367,6 +1489,8 @@ int main(int argc, const char **argv)
 			cmd_new_branch();
 		else if (!strncmp("commit ", command_buf.buf, 7))
 			cmd_new_commit();
+		else if (!strncmp("tag ", command_buf.buf, 4))
+			cmd_new_tag();
 		else
 			die("Unsupported command: %s", command_buf.buf);
 	}
@@ -1375,6 +1499,7 @@ int main(int argc, const char **argv)
 	close(pack_fd);
 	write_index(idx_name);
 	dump_branches();
+	dump_tags();
 
 	fprintf(stderr, "%s statistics:\n", argv[0]);
 	fprintf(stderr, "---------------------------------------------------\n");
