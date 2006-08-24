@@ -789,16 +789,15 @@ sub git_get_preceding_references {
 		or return undef;
 
 	my @reflist;
-	my $firstref;
 
 	foreach my $commit (@commits) {
 		foreach my $ref (@{$refs->{$commit}}) {
-			$firstref = $ref unless $firstref;
+			return $ref unless wantarray;
 			push @reflist, $ref;
 		}
 	}
 
-	return wantarray ? @reflist : $firstref;
+	return @reflist;
 }
 
 ## ----------------------------------------------------------------------
