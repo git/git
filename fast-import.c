@@ -198,6 +198,7 @@ static unsigned long max_depth = 10;
 static unsigned long alloc_count;
 static unsigned long branch_count;
 static unsigned long branch_load_count;
+static unsigned long remap_count;
 static unsigned long object_count;
 static unsigned long duplicate_count;
 static unsigned long marks_set_count;
@@ -216,8 +217,10 @@ static struct atom_str **atom_table;
 
 /* The .pack file being generated */
 static int pack_fd;
-static unsigned long pack_offset;
+static unsigned long pack_size;
 static unsigned char pack_sha1[20];
+static void* pack_base;
+static size_t pack_mlen;
 
 /* Table of objects we've written. */
 static unsigned int object_entry_alloc = 1000;
@@ -616,7 +619,7 @@ static int store_object(
 		return 1;
 	}
 	e->type = type;
-	e->offset = pack_offset;
+	e->offset = pack_size;
 	object_count++;
 	object_count_by_type[type]++;
 
@@ -637,7 +640,7 @@ static int store_object(
 		hdrlen = encode_header(OBJ_DELTA, deltalen, hdr);
 		ywrite(pack_fd, hdr, hdrlen);
 		ywrite(pack_fd, last->sha1, sizeof(sha1));
-		pack_offset += hdrlen + sizeof(sha1);
+		pack_size += hdrlen + sizeof(sha1);
 	} else {
 		if (last)
 			last->depth = 0;
@@ -645,7 +648,7 @@ static int store_object(
 		s.avail_in = datlen;
 		hdrlen = encode_header(type, datlen, hdr);
 		ywrite(pack_fd, hdr, hdrlen);
-		pack_offset += hdrlen;
+		pack_size += hdrlen;
 	}
 
 	s.avail_out = deflateBound(&s, s.avail_in);
@@ -655,7 +658,7 @@ static int store_object(
 	deflateEnd(&s);
 
 	ywrite(pack_fd, out, s.total_out);
-	pack_offset += s.total_out;
+	pack_size += s.total_out;
 
 	free(out);
 	if (delta)
@@ -668,6 +671,127 @@ static int store_object(
 		memcpy(last->sha1, sha1, sizeof(sha1));
 	}
 	return 0;
+}
+
+static void* map_pack(unsigned long offset)
+{
+	if (offset >= pack_size)
+		die("object offset outside of pack file");
+	if (offset >= pack_mlen) {
+		if (pack_base)
+			munmap(pack_base, pack_mlen);
+		/* round out how much we map to 16 MB units */
+		pack_mlen = pack_size;
+		if (pack_mlen & ((1 << 24) - 1))
+			pack_mlen = ((pack_mlen >> 24) + 1) << 24;
+		pack_base = mmap(NULL,pack_mlen,PROT_READ,MAP_SHARED,pack_fd,0);
+		if (pack_base == MAP_FAILED)
+			die("Failed to map generated pack: %s", strerror(errno));
+		remap_count++;
+	}
+	return (char*)pack_base + offset;
+}
+
+static unsigned long unpack_object_header(unsigned long offset,
+	enum object_type *type,
+	unsigned long *sizep)
+{
+	unsigned shift;
+	unsigned char c;
+	unsigned long size;
+
+	c = *(unsigned char*)map_pack(offset++);
+	*type = (c >> 4) & 7;
+	size = c & 15;
+	shift = 4;
+	while (c & 0x80) {
+		c = *(unsigned char*)map_pack(offset++);
+		size += (c & 0x7f) << shift;
+		shift += 7;
+	}
+	*sizep = size;
+	return offset;
+}
+
+static void *unpack_non_delta_entry(unsigned long o, unsigned long sz)
+{
+	z_stream stream;
+	unsigned char *result;
+
+	result = xmalloc(sz + 1);
+	result[sz] = 0;
+
+	memset(&stream, 0, sizeof(stream));
+	stream.next_in = map_pack(o);
+	stream.avail_in = pack_mlen - o;
+	stream.next_out = result;
+	stream.avail_out = sz;
+
+	inflateInit(&stream);
+	for (;;) {
+		int st = inflate(&stream, Z_FINISH);
+		if (st == Z_STREAM_END)
+			break;
+		if (st == Z_OK) {
+			o = stream.next_in - (unsigned char*)pack_base;
+			stream.next_in = map_pack(o);
+			stream.avail_in = pack_mlen - o;
+			continue;
+		}
+		die("Error from zlib during inflate.");
+	}
+	inflateEnd(&stream);
+	if (stream.total_out != sz)
+		die("Error after inflate: sizes mismatch");
+	return result;
+}
+
+static void *unpack_entry(unsigned long offset, unsigned long *sizep);
+
+static void *unpack_delta_entry(unsigned long offset,
+	unsigned long delta_size,
+	unsigned long *sizep)
+{
+	struct object_entry *base_oe;
+	unsigned char *base_sha1;
+	void *delta_data, *base, *result;
+	unsigned long base_size, result_size;
+
+	base_sha1 = (unsigned char*)map_pack(offset + 20) - 20;
+	base_oe = find_object(base_sha1);
+	if (!base_oe)
+		die("I'm broken; I can't find a base I know must be here.");
+	base = unpack_entry(base_oe->offset, &base_size);
+	delta_data = unpack_non_delta_entry(offset + 20, delta_size);
+	result = patch_delta(base, base_size,
+			     delta_data, delta_size,
+			     &result_size);
+	if (!result)
+		die("failed to apply delta");
+	free(delta_data);
+	free(base);
+	*sizep = result_size;
+	return result;
+}
+
+static void *unpack_entry(unsigned long offset, unsigned long *sizep)
+{
+	unsigned long size;
+	enum object_type kind;
+
+	offset = unpack_object_header(offset, &kind, &size);
+	switch (kind) {
+	case OBJ_DELTA:
+		return unpack_delta_entry(offset, size, sizep);
+	case OBJ_COMMIT:
+	case OBJ_TREE:
+	case OBJ_BLOB:
+	case OBJ_TAG:
+		*sizep = size;
+		return unpack_non_delta_entry(offset, size);
+	default:
+		die("I created an object I can't read!");
+	}
 }
 
 static const char *get_mode(const char *str, unsigned int *modep)
@@ -691,7 +815,6 @@ static void load_tree(struct tree_entry *root)
 	unsigned long size;
 	char *buf;
 	const char *c;
-	char type[20];
 
 	root->tree = t = new_tree_content(8);
 	if (!memcmp(root->sha1, null_sha1, 20))
@@ -699,11 +822,14 @@ static void load_tree(struct tree_entry *root)
 
 	myoe = find_object(root->sha1);
 	if (myoe) {
-		die("FIXME");
+		if (myoe->type != OBJ_TREE)
+			die("Not a tree: %s", sha1_to_hex(root->sha1));
+		buf = unpack_entry(myoe->offset, &size);
 	} else {
+		char type[20];
 		buf = read_sha1_file(root->sha1, type, &size);
-		if (!buf || strcmp(type, tree_type))
-			die("Can't load existing tree %s", sha1_to_hex(root->sha1));
+		if (!buf || !strcmp(type, tree_type))
+			die("Can't load tree %s", sha1_to_hex(root->sha1));
 	}
 
 	c = buf;
@@ -880,7 +1006,7 @@ static void init_pack_header()
 	hdr.hdr_entries = 0;
 
 	ywrite(pack_fd, &hdr, sizeof(hdr));
-	pack_offset = sizeof(hdr);
+	pack_size = sizeof(hdr);
 }
 
 static void fixup_header_footer()
@@ -1052,7 +1178,8 @@ static void cmd_new_blob()
 
 static void unload_one_branch()
 {
-	while (cur_active_branches >= max_active_branches) {
+	while (cur_active_branches
+		&& cur_active_branches >= max_active_branches) {
 		unsigned long min_commit = ULONG_MAX;
 		struct branch *e, *l = NULL, *p = NULL;
 
@@ -1210,7 +1337,7 @@ static void cmd_new_commit()
 	msg = cmd_data(&msglen);
 
 	/* ensure the branch is active/loaded */
-	if (!b->branch_tree.tree) {
+	if (!b->branch_tree.tree || !max_active_branches) {
 		unload_one_branch();
 		load_branch(b);
 	}
@@ -1297,10 +1424,18 @@ static void cmd_new_branch()
 		} else if (*from == ':') {
 			unsigned long idnum = strtoul(from + 1, NULL, 10);
 			struct object_entry *oe = find_mark(idnum);
+			unsigned long size;
+			char *buf;
 			if (oe->type != OBJ_COMMIT)
 				die("Mark :%lu not a commit", idnum);
 			memcpy(b->sha1, oe->sha1, 20);
-			memcpy(b->branch_tree.sha1, null_sha1, 20);
+			buf = unpack_entry(oe->offset, &size);
+			if (!buf || size < 46)
+				die("Not a valid commit: %s", from);
+			if (memcmp("tree ", buf, 5)
+				|| get_sha1_hex(buf + 5, b->branch_tree.sha1))
+				die("The commit %s is corrupt", sha1_to_hex(b->sha1));
+			free(buf);
 		} else if (!get_sha1(from, b->sha1)) {
 			if (!memcmp(b->sha1, null_sha1, 20))
 				memcpy(b->branch_tree.sha1, null_sha1, 20);
@@ -1515,6 +1650,7 @@ int main(int argc, const char **argv)
 	fprintf(stderr, "Memory total:    %10lu KiB\n", (total_allocd + alloc_count*sizeof(struct object_entry))/1024);
 	fprintf(stderr, "       pools:    %10lu KiB\n", total_allocd/1024);
 	fprintf(stderr, "     objects:    %10lu KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
+	fprintf(stderr, "Pack remaps:     %10lu\n", remap_count);
 	fprintf(stderr, "---------------------------------------------------\n");
 
 	stat(pack_name, &sb);
