@@ -1539,7 +1539,7 @@ sub git_difftree_body {
 }
 
 sub git_patchset_body {
-	my ($patchset, $difftree, $hash, $hash_parent) = @_;
+	my ($fd, $difftree, $hash, $hash_parent) = @_;
 
 	my $patch_idx = 0;
 	my $in_header = 0;
@@ -1548,7 +1548,9 @@ sub git_patchset_body {
 
 	print "<div class=\"patchset\">\n";
 
-	LINE: foreach my $patch_line (@$patchset) {
+	LINE:
+	while (my $patch_line @$fd>) {
+		chomp $patch_line;
 
 		if ($patch_line =~ m/^diff /) { # "git diff" header
 			# beginning of patch (in patchset)
@@ -2727,7 +2729,6 @@ sub git_commitdiff {
 	# read commitdiff
 	my $fd;
 	my @difftree;
-	my @patchset;
 	if ($format eq 'html') {
 		open $fd, "-|", $GIT, "diff-tree", '-r', '-M', '-C',
 			"--patch-with-raw", "--full-index", $hash_parent, $hash
@@ -2738,13 +2739,11 @@ sub git_commitdiff {
 			last unless $line;
 			push @difftree, $line;
 		}
-		@patchset = map { chomp; $_ } <$fd>;
 
-		close $fd
-			or die_error(undef, "Reading git-diff-tree failed");
 	} elsif ($format eq 'plain') {
 		open $fd, "-|", $GIT, "diff-tree", '-r', '-p', '-B', $hash_parent, $hash
 			or die_error(undef, "Open git-diff-tree failed");
+
 	} else {
 		die_error(undef, "Unknown commitdiff format");
 	}
@@ -2806,8 +2805,8 @@ TEXT
 		#git_difftree_body(\@difftree, $hash, $hash_parent);
 		#print "<br/>\n";
 
-		git_patchset_body(\@patchset, \@difftree, $hash, $hash_parent);
-
+		git_patchset_body($fd, \@difftree, $hash, $hash_parent);
+		close $fd;
 		print "</div>\n"; # class="page_body"
 		git_footer_html();
 
