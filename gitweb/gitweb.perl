@@ -2840,10 +2840,7 @@ sub git_commitdiff {
 
 	} elsif ($format eq 'plain') {
 		my $refs = git_get_references("tags");
-		my @tagnames;
-		if (exists $refs->{$hash}) {
-			@tagnames = map { s|^tags/|| } $refs->{$hash};
-		}
+		my $tagname = git_get_rev_name_tags($hash);
 		my $filename = basename($project) . "-$hash.patch";
 
 		print $cgi->header(
@@ -2857,10 +2854,9 @@ From: $co{'author'}
 Date: $ad{'rfc2822'} ($ad{'tz_local'})
 Subject: $co{'title'}
 TEXT
-		foreach my $tag (@tagnames) {
-			print "X-Git-Tag: $tag\n";
-		}
+		print "X-Git-Tag: $tagname\n" if $tagname;
 		print "X-Git-Url: " . $cgi->self_url() . "\n\n";
+
 		foreach my $line (@{$co{'comment'}}) {
 			print "$line\n";
 		}
