@@ -800,6 +800,22 @@ sub git_get_preceding_references {
 	return @reflist;
 }
 
+sub git_get_rev_name_tags {
+	my $hash = shift || return undef;
+
+	open my $fd, "-|", $GIT, "name-rev", "--tags", $hash
+		or return;
+	my $name_rev = <$fd>;
+	close $fd;
+
+	if ($name_rev =~ m|^$hash tags/(.*)$|) {
+		return $1;
+	} else {
+		# catches also '$hash undefined' output
+		return undef;
+	}
+}
+
 ## ----------------------------------------------------------------------
 ## parse to hash functions
 
