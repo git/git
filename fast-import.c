@@ -342,6 +342,9 @@ static void* pool_alloc(size_t len)
 	}
 
 	r = p->next_free;
+	/* round out to a pointer alignment */
+	if (len & (sizeof(void*) - 1))
+		len += sizeof(void*) - (len & (sizeof(void*) - 1));
 	p->next_free += len;
 	return r;
 }
