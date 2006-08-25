@@ -1706,8 +1706,24 @@ sub git_patchset_body {
 
 
 		if ($in_header && $patch_line =~ m/^---/) {
-			#print "</div>\n"
+			#print "</div>\n"; # class="diff extended_header"
 			$in_header = 0;
+
+			my $file = $diffinfo->{'from_file'};
+			$file  ||= $diffinfo->{'file'};
+			$patch_line =~ s|a/[0-9a-fA-F]{40}|a/$file|g;
+			print "<div class=\"diff from_file\">" . esc_html($patch_line) . "</div>\n";
+
+			$patch_line = <$fd>;
+			chomp $patch_line;
+
+			#$patch_line =~ m/^+++/;
+			$file    = $diffinfo->{'to_file'};
+			$file  ||= $diffinfo->{'file'};
+			$patch_line =~ s|b/[0-9a-fA-F]{40}|b/$file|g;
+			print "<div class=\"diff to_file\">" . esc_html($patch_line) . "</div>\n";
+
+			next LINE;
 		}
 		next LINE if $in_header;
 
