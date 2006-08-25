@@ -2800,10 +2800,8 @@ sub git_blobdiff {
 		git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
 		git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
 	} else {
-		print <<HTML;
-<div class="page_nav"><br/>$formats_nav<br/></div>
-<div class="title">$hash vs $hash_parent</div>
-HTML
+		print "<div class=\"page_nav\"><br/>$formats_nav<br/></div>\n";
+		print "<div class=\"title\">$hash vs $hash_parent</div>\n";
 	}
 	git_print_page_path($file_name, "blob", $hash_base);
 	print "<div class=\"page_body\">\n" .
