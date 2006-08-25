@@ -2815,9 +2815,12 @@ sub git_commit {
 }
 
 sub git_blobdiff {
+	my $format = shift || 'html';
+
 	my $fd;
 	my @difftree;
 	my %diffinfo;
+	my $expires;
 
 	# preparing $fd and %diffinfo for git_patchset_body
 	# new style URI
@@ -2866,6 +2869,12 @@ sub git_blobdiff {
 		$hash_parent ||= $diffinfo{'from_id'};
 		$hash        ||= $diffinfo{'to_id'};
 
+		# non-textual hash id's can be cached
+		if ($hash_base =~ m/^[0-9a-fA-F]{40}$/ &&
+		    $hash_parent_base =~ m/^[0-9a-fA-F]{40}$/) {
+			$expires = '+1d';
+		}
+
 		# open patch output
 		open $fd, "-|", $GIT, "diff-tree", '-r', '-p', '-M', '-C', $hash_parent_base, $hash_base,
 			"--", $file_name
@@ -2895,6 +2904,13 @@ sub git_blobdiff {
 			$diffinfo{'to_file'}   = $hash;
 		}
 
+		# non-textual hash id's can be cached
+		if ($hash =~ m/^[0-9a-fA-F]{40}$/ &&
+		    $hash_parent =~ m/^[0-9a-fA-F]{40}$/) {
+			$expires = '+1d';
+		}
+
+		# open patch output
 		#open $fd, "-|", $GIT, "diff", '-p', $hash_parent, $hash
 		open $fd, "-|", $GIT, "diff", '-p', $hash, $hash_parent
 			or die_error(undef, "Open git-diff failed");
@@ -2904,40 +2920,67 @@ sub git_blobdiff {
 	}
 
 	# header
-	my $formats_nav =
-		$cgi->a({-href => href(action=>"blobdiff_plain",
-		                       hash=>$hash, hash_parent=>$hash_parent,
-		                       hash_base=>$hash_base, hash_parent_base=>$hash_parent_base,
-		                       file_name=>$file_name, file_parent=>$file_parent)},
-		        "plain");
-	git_header_html();
-	if (defined $hash_base && (my %co = parse_commit($hash_base))) {
-		git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
-		git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
+	if ($format eq 'html') {
+		my $formats_nav =
+			$cgi->a({-href => href(action=>"blobdiff_plain",
+			                       hash=>$hash, hash_parent=>$hash_parent,
+			                       hash_base=>$hash_base, hash_parent_base=>$hash_parent_base,
+			                       file_name=>$file_name, file_parent=>$file_parent)},
+			        "plain");
+		git_header_html(undef, $expires);
+		if (defined $hash_base && (my %co = parse_commit($hash_base))) {
+			git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
+			git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
+		} else {
+			print "<div class=\"page_nav\"><br/>$formats_nav<br/></div>\n";
+			print "<div class=\"title\">$hash vs $hash_parent</div>\n";
+		}
+		if (defined $file_name) {
+			git_print_page_path($file_name, "blob", $hash_base);
+		} else {
+			print "<div class=\"page_path\"></div>\n";
+		}
+
+	} elsif ($format eq 'plain') {
+		print $cgi->header(
+			-type => 'text/plain',
+			-charset => 'utf-8',
+			-expires => $expires,
+			-content_disposition => qq(inline; filename="${file_name}.patch"));
+
+		print "X-Git-Url: " . $cgi->self_url() . "\n\n";
+
 	} else {
-		print "<div class=\"page_nav\"><br/>$formats_nav<br/></div>\n";
-		print "<div class=\"title\">$hash vs $hash_parent</div>\n";
-	}
-	if (defined $file_name) {
-		git_print_page_path($file_name, "blob", $hash_base);
-	} else {
-		print "<div class=\"page_path\"></div>\n";
+		die_error(undef, "Unknown blobdiff format");
 	}
 
 	# patch
-	print "<div class=\"page_body\">\n";
+	if ($format eq 'html') {
+		print "<div class=\"page_body\">\n";
 
-	git_patchset_body($fd, [ \%diffinfo ], $hash_base, $hash_parent_base);
-	close $fd;
+		git_patchset_body($fd, [ \%diffinfo ], $hash_base, $hash_parent_base);
+		close $fd;
 
-	print "</div>\n"; # class="page_body"
-	git_footer_html();
+		print "</div>\n"; # class="page_body"
+		git_footer_html();
+
+	} else {
+		while (my $line = <$fd>) {
+			$line =~ s!a/($hash|$hash_parent)!a/$diffinfo{'from_file'}!g;
+			$line =~ s!b/($hash|$hash_parent)!b/$diffinfo{'to_file'}!g;
+
+			print $line;
+
+			last if $line =~ m!^\+\+\+!;
+		}
+		local $/ = undef;
+		print <$fd>;
+		close $fd;
+	}
 }
 
 sub git_blobdiff_plain {
-	mkdir($git_temp, 0700);
-	print $cgi->header(-type => "text/plain", -charset => 'utf-8');
-	git_diff_print($hash_parent, $file_name || $hash_parent, $hash, $file_name || $hash, "plain");
+	git_blobdiff('plain');
 }
 
 sub git_commitdiff {
