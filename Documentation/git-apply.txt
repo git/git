@@ -10,9 +10,10 @@ SYNOPSIS
 --------
 [verse]
 'git-apply' [--stat] [--numstat] [--summary] [--check] [--index] [--apply]
-	  [--no-add] [--index-info] [--allow-binary-replacement] [-z] [-pNUM]
-	  [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>]
-	  [<patch>...]
+	  [--no-add] [--index-info] [--allow-binary-replacement | --binary]
+	  [-R | --reverse] [--reject] [-z] [-pNUM] [-CNUM] [--inaccurate-eof]
+	  [--whitespace=<nowarn|warn|error|error-all|strip>] [--exclude=PATH]
+	  [--cached] [--verbose] [<patch>...]
 
 DESCRIPTION
 -----------
@@ -55,12 +56,27 @@ OPTIONS
 	up-to-date, it is flagged as an error.  This flag also
 	causes the index file to be updated.
 
+--cached::
+	Apply a patch without touching the working tree. Instead, take the
+	cached data, apply the patch, and store the result in the index,
+	without using the working tree. This implies '--index'.
+
 --index-info::
 	Newer git-diff output has embedded 'index information'
 	for each blob to help identify the original version that
 	the patch applies to.  When this flag is given, and if
 	the original version of the blob is available locally,
 	outputs information about them to the standard output.
+
+-R, --reverse::
+	Apply the patch in reverse.
+
+--reject::
+	For atomicity, gitlink:git-apply[1] by default fails the whole patch and
+	does not touch the working tree when some of the hunks
+	do not apply.  This option makes it apply
+	the parts of the patch that are applicable, and send the
+	rejected hunks to the standard output of the command.
 
 -z::
 	When showing the index information, do not munge paths,
@@ -80,8 +96,8 @@ OPTIONS
 	ever ignored.
 
 --apply::
-	If you use any of the options marked ``Turns off
-	"apply"'' above, git-apply reads and outputs the
+	If you use any of the options marked "Turns off
+	'apply'" above, gitlink:git-apply[1] reads and outputs the
 	information you asked without actually applying the
 	patch.  Give this flag after those flags to also apply
 	the patch.
@@ -93,7 +109,7 @@ OPTIONS
 	the result with this option, which would apply the
 	deletion part but not addition part.
 
---allow-binary-replacement::
+--allow-binary-replacement, --binary::
 	When applying a patch, which is a git-enhanced patch
 	that was prepared to record the pre- and post-image object
 	name in full, and the path being patched exactly matches
@@ -104,13 +120,18 @@ OPTIONS
 	result.  This allows binary files to be patched in a
 	very limited way.
 
+--exclude=<path-pattern>::
+	Don't apply changes to files matching the given path pattern. This can
+	be useful when importing patchsets, where you want to exclude certain
+	files or directories.
+
 --whitespace=<option>::
 	When applying a patch, detect a new or modified line
 	that ends with trailing whitespaces (this includes a
 	line that solely consists of whitespaces).  By default,
 	the command outputs warning messages and applies the
 	patch.
-	When `git-apply` is used for statistics and not applying a
+	When gitlink:git-apply[1] is used for statistics and not applying a
 	patch, it defaults to `nowarn`.
 	You can use different `<option>` to control this
 	behavior:
@@ -124,6 +145,17 @@ OPTIONS
 * `strip` outputs warnings for a few such errors, strips out the
   trailing whitespaces and applies the patch.
 
+--inacurate-eof::
+	Under certain circumstances, some versions of diff do not correctly
+	detect a missing new-line at the end of the file. As a result, patches
+	created by such diff programs do not record incomplete lines
+	correctly. This option adds support for applying such patches by
+	working around this bug.
+
+--verbose::
+	Report progress to stderr. By default, only a message about the
+	current patch being applied will be printed. This option will cause
+	additional information to be reported.
 
 Configuration
 -------------
