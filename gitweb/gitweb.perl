@@ -2790,18 +2790,18 @@ sub git_commit {
 sub git_blobdiff {
 	mkdir($git_temp, 0700);
 	git_header_html();
+	my $formats_nav =
+		$cgi->a({-href => href(action=>"blobdiff_plain",
+		                       hash=>$hash, hash_parent=>$hash_parent,
+		                       hash_base=>$hash_base, hash_parent_base=>$hash_parent_base,
+		                       file_name=>$file_name, file_parent=>$file_parent)},
+		        "plain");
 	if (defined $hash_base && (my %co = parse_commit($hash_base))) {
-		my $formats_nav =
-			$cgi->a({-href => href(action=>"blobdiff_plain",
-			                       hash=>$hash, hash_parent=>$hash_parent,
-			                       hash_base=>$hash_base, hash_parent_base=>$hash_parent_base,
-			                       file_name=>$file_name, file_parent=>$file_parent)},
-			        "plain");
 		git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
 		git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
 	} else {
 		print <<HTML;
-<div class="page_nav"><br/><br/></div>
+<div class="page_nav"><br/>$formats_nav<br/></div>
 <div class="title">$hash vs $hash_parent</div>
 HTML
 	}
