@@ -14,11 +14,11 @@ Format of STDIN stream:
   file_content ::= data;
 
   new_commit ::= 'commit' sp ref_str lf
-    ('from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)?
     mark?
     ('author' sp name '<' email '>' ts tz lf)?
     'committer' sp name '<' email '>' ts tz lf
     commit_msg
+    ('from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)?
     file_change*
     lf;
   commit_msg ::= data;
@@ -1385,7 +1385,6 @@ static void cmd_new_commit()
 		free(str_uq);
 
 	read_next_command();
-	cmd_from(b);
 	cmd_mark();
 	if (!strncmp("author ", command_buf.buf, 7)) {
 		author = strdup(command_buf.buf);
@@ -1398,6 +1397,8 @@ static void cmd_new_commit()
 	if (!committer)
 		die("Expected committer but didn't get one");
 	msg = cmd_data(&msglen);
+	read_next_command();
+	cmd_from(b);
 
 	/* ensure the branch is active/loaded */
 	if (!b->branch_tree.tree || !max_active_branches) {
@@ -1407,7 +1408,6 @@ static void cmd_new_commit()
 
 	/* file_change* */
 	for (;;) {
-		read_next_command();
 		if (1 == command_buf.len)
 			break;
 		else if (!strncmp("M ", command_buf.buf, 2))
@@ -1416,6 +1416,7 @@ static void cmd_new_commit()
 			file_change_d(b);
 		else
 			die("Unsupported file_change: %s", command_buf.buf);
+		read_next_command();
 	}
 
 	/* build the tree and the commit */
