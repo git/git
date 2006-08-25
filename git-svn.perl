@@ -500,6 +500,8 @@ sub commit_lib {
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef, 0) : ();
 	my $commit_msg = "$GIT_SVN_DIR/.svn-commit.tmp.$$";
 
+	my $repo;
+	($repo, $SVN_PATH) = repo_path_split($SVN_URL);
 	set_svn_commit_env();
 	foreach my $c (@revs) {
 		my $log_msg = get_commit_message($c, $commit_msg);
@@ -508,6 +510,8 @@ sub commit_lib {
 		# can't track down... (it's probably in the SVN code)
 		defined(my $pid = open my $fh, '-|') or croak $!;
 		if (!$pid) {
+			$SVN_LOG = libsvn_connect($repo);
+			$SVN = libsvn_connect($repo);
 			my $ed = SVN::Git::Editor->new(
 					{	r => $r_last,
 						ra => $SVN,
