@@ -223,6 +223,7 @@ static unsigned int object_entry_alloc = 1000;
 static struct object_entry_pool *blocks;
 static struct object_entry *object_table[1 << 16];
 static struct mark_set *marks;
+static const char* mark_file;
 
 /* Our last blob */
 static struct last_object last_blob;
@@ -1122,6 +1123,36 @@ static void dump_tags()
 	}
 }
 
+static void dump_marks_helper(FILE *f,
+	unsigned long base,
+	struct mark_set *m)
+{
+	int k;
+	if (m->shift) {
+		for (k = 0; k < 1024; k++) {
+			if (m->data.sets[k])
+				dump_marks_helper(f, (base + k) << m->shift,
+					m->data.sets[k]);
+		}
+	} else {
+		for (k = 0; k < 1024; k++) {
+			if (m->data.marked[k])
+				fprintf(f, "%lu,%s\n", base + k,
+					sha1_to_hex(m->data.marked[k]->sha1));
+		}
+	}
+}
+
+static void dump_marks()
+{
+	if (mark_file)
+	{
+		FILE *f = fopen(mark_file, "w");
+		dump_marks_helper(f, 0, marks);
+		fclose(f);
+	}
+}
+
 static void read_next_command()
 {
 	read_line(&command_buf, stdin, '\n');
@@ -1544,7 +1575,7 @@ static void cmd_new_tag()
 }
 
 static const char fast_import_usage[] =
-"git-fast-import [--objects=n] [--depth=n] [--active-branches=n] temp.pack";
+"git-fast-import [--objects=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file] temp.pack";
 
 int main(int argc, const char **argv)
 {
@@ -1569,6 +1600,8 @@ int main(int argc, const char **argv)
 			max_depth = strtoul(a + 8, NULL, 0);
 		else if (!strncmp(a, "--active-branches=", 18))
 			max_active_branches = strtoul(a + 18, NULL, 0);
+		else if (!strncmp(a, "--export-marks=", 15))
+			mark_file = a + 15;
 		else
 			die("unknown option %s", a);
 	}
@@ -1613,6 +1646,7 @@ int main(int argc, const char **argv)
 	write_index(idx_name);
 	dump_branches();
 	dump_tags();
+	dump_marks();
 
 	fprintf(stderr, "%s statistics:\n", argv[0]);
 	fprintf(stderr, "---------------------------------------------------\n");
