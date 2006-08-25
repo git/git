@@ -235,11 +235,25 @@ Tracking and contributing to an Subversion managed-project:
 	git-svn commit <tree-ish> [<tree-ish_2> ...]
 # Commit all the git commits from my-branch that don't exist in SVN:
 	git-svn commit remotes/git-svn..my-branch
-# Something is committed to SVN, pull the latest into your branch:
-	git-svn fetch && git pull . remotes/git-svn
+# Something is committed to SVN, rebase the latest into your branch:
+	git-svn fetch && git rebase remotes/git-svn
 # Append svn:ignore settings to the default git exclude file:
 	git-svn show-ignore >> .git/info/exclude
 ------------------------------------------------------------------------
+
+REBASE VS. PULL
+---------------
+
+Originally, git-svn recommended that the remotes/git-svn branch be
+pulled from.  This is because the author favored 'git-svn commit B'
+to commit a single head rather than the 'git-svn commit A..B' notation
+to commit multiple commits.
+
+If you use 'git-svn commit A..B' to commit several diffs and you do not
+have the latest remotes/git-svn merged into my-branch, you should use
+'git rebase' to update your work branch instead of 'git pull'.  'pull'
+can cause non-linear history to be flattened when committing into SVN,
+which can lead to merge commits reversing previous commits in SVN.
 
 DESIGN PHILOSOPHY
 -----------------
@@ -338,6 +352,10 @@ this as it's quite difficult and time-consuming to get working for all
 the possible corner cases (git doesn't do it, either).  Renamed and
 copied files are fully supported if they're similar enough for git to
 detect them.
+
+SEE ALSO
+--------
+gitlink:git-rebase[1]
 
 Author
 ------
