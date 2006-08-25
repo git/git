@@ -1711,8 +1711,11 @@ sub git_patchset_body {
 
 			my $file = $diffinfo->{'from_file'};
 			$file  ||= $diffinfo->{'file'};
-			$patch_line =~ s|a/[0-9a-fA-F]{40}|a/$file|g;
-			print "<div class=\"diff from_file\">" . esc_html($patch_line) . "</div>\n";
+			$file = $cgi->a({-href => href(action=>"blob", hash_base=>$hash_parent,
+			                               hash=>$diffinfo->{'from_id'}, file_name=>$file),
+			                -class => "list"}, esc_html($file));
+			$patch_line =~ s|a/.*$|a/$file|g;
+			print "<div class=\"diff from_file\">$patch_line</div>\n";
 
 			$patch_line = <$fd>;
 			chomp $patch_line;
@@ -1720,8 +1723,11 @@ sub git_patchset_body {
 			#$patch_line =~ m/^+++/;
 			$file    = $diffinfo->{'to_file'};
 			$file  ||= $diffinfo->{'file'};
-			$patch_line =~ s|b/[0-9a-fA-F]{40}|b/$file|g;
-			print "<div class=\"diff to_file\">" . esc_html($patch_line) . "</div>\n";
+			$file = $cgi->a({-href => href(action=>"blob", hash_base=>$hash,
+			                               hash=>$diffinfo->{'to_id'}, file_name=>$file),
+			                -class => "list"}, esc_html($file));
+			$patch_line =~ s|b/.*|b/$file|g;
+			print "<div class=\"diff to_file\">$patch_line</div>\n";
 
 			next LINE;
 		}
