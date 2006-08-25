@@ -1624,7 +1624,7 @@ sub git_patchset_body {
 	my $patch_idx = 0;
 	my $in_header = 0;
 	my $patch_found = 0;
-	my %diffinfo;
+	my $diffinfo;
 
 	print "<div class=\"patchset\">\n";
 
@@ -1643,54 +1643,59 @@ sub git_patchset_body {
 			}
 			print "<div class=\"patch\">\n";
 
-			%diffinfo = parse_difftree_raw_line($difftree->[$patch_idx++]);
+			if (ref($difftree->[$patch_idx]) eq "HASH") {
+				$diffinfo = $difftree->[$patch_idx];
+			} else {
+				$diffinfo = parse_difftree_raw_line($difftree->[$patch_idx]);
+			}
+			$patch_idx++;
 
 			# for now, no extended header, hence we skip empty patches
 			# companion to	next LINE if $in_header;
-			if ($diffinfo{'from_id'} eq $diffinfo{'to_id'}) { # no change
+			if ($diffinfo->{'from_id'} eq $diffinfo->{'to_id'}) { # no change
 				$in_header = 1;
 				next LINE;
 			}
 
-			if ($diffinfo{'status'} eq "A") { # added
-				print "<div class=\"diff_info\">" . file_type($diffinfo{'to_mode'}) . ":" .
+			if ($diffinfo->{'status'} eq "A") { # added
+				print "<div class=\"diff_info\">" . file_type($diffinfo->{'to_mode'}) . ":" .
 				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash,
-				                             hash=>$diffinfo{'to_id'}, file_name=>$diffinfo{'file'})},
-				              $diffinfo{'to_id'}) . "(new)" .
+				                             hash=>$diffinfo->{'to_id'}, file_name=>$diffinfo->{'file'})},
+				              $diffinfo->{'to_id'}) . "(new)" .
 				      "</div>\n"; # class="diff_info"
 
-			} elsif ($diffinfo{'status'} eq "D") { # deleted
-				print "<div class=\"diff_info\">" . file_type($diffinfo{'from_mode'}) . ":" .
+			} elsif ($diffinfo->{'status'} eq "D") { # deleted
+				print "<div class=\"diff_info\">" . file_type($diffinfo->{'from_mode'}) . ":" .
 				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash_parent,
-				                             hash=>$diffinfo{'from_id'}, file_name=>$diffinfo{'file'})},
-				              $diffinfo{'from_id'}) . "(deleted)" .
+				                             hash=>$diffinfo->{'from_id'}, file_name=>$diffinfo->{'file'})},
+				              $diffinfo->{'from_id'}) . "(deleted)" .
 				      "</div>\n"; # class="diff_info"
 
-			} elsif ($diffinfo{'status'} eq "R" || # renamed
-			         $diffinfo{'status'} eq "C") { # copied
+			} elsif ($diffinfo->{'status'} eq "R" || # renamed
+			         $diffinfo->{'status'} eq "C") { # copied
 				print "<div class=\"diff_info\">" .
-				      file_type($diffinfo{'from_mode'}) . ":" .
+				      file_type($diffinfo->{'from_mode'}) . ":" .
 				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash_parent,
-				                             hash=>$diffinfo{'from_id'}, file_name=>$diffinfo{'from_file'})},
-				              $diffinfo{'from_id'}) .
+				                             hash=>$diffinfo->{'from_id'}, file_name=>$diffinfo->{'from_file'})},
+				              $diffinfo->{'from_id'}) .
 				      " -> " .
-				      file_type($diffinfo{'to_mode'}) . ":" .
+				      file_type($diffinfo->{'to_mode'}) . ":" .
 				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash,
-				                             hash=>$diffinfo{'to_id'}, file_name=>$diffinfo{'to_file'})},
-				              $diffinfo{'to_id'});
+				                             hash=>$diffinfo->{'to_id'}, file_name=>$diffinfo->{'to_file'})},
+				              $diffinfo->{'to_id'});
 				print "</div>\n"; # class="diff_info"
 
 			} else { # modified, mode changed, ...
 				print "<div class=\"diff_info\">" .
-				      file_type($diffinfo{'from_mode'}) . ":" .
+				      file_type($diffinfo->{'from_mode'}) . ":" .
 				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash_parent,
-				                             hash=>$diffinfo{'from_id'}, file_name=>$diffinfo{'file'})},
-				              $diffinfo{'from_id'}) .
+				                             hash=>$diffinfo->{'from_id'}, file_name=>$diffinfo->{'file'})},
+				              $diffinfo->{'from_id'}) .
 				      " -> " .
-				      file_type($diffinfo{'to_mode'}) . ":" .
+				      file_type($diffinfo->{'to_mode'}) . ":" .
 				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash,
-				                             hash=>$diffinfo{'to_id'}, file_name=>$diffinfo{'file'})},
-				              $diffinfo{'to_id'});
+				                             hash=>$diffinfo->{'to_id'}, file_name=>$diffinfo->{'file'})},
+				              $diffinfo->{'to_id'});
 				print "</div>\n"; # class="diff_info"
 			}
 
