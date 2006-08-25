@@ -31,9 +31,6 @@ our $GIT = "++GIT_BINDIR++/git";
 #our $projectroot = "/pub/scm";
 our $projectroot = "++GITWEB_PROJECTROOT++";
 
-# location for temporary files needed for diffs
-our $git_temp = "/tmp/gitweb";
-
 # target of the home link on top of all pages
 our $home_link = $my_uri || "/";
 
@@ -144,9 +141,6 @@ require $GITWEB_CONFIG if -e $GITWEB_CONFIG;
 our $git_version = qx($GIT --version) =~ m/git version (.*)$/ ? $1 : "unknown";
 
 $projects_list ||= $projectroot;
-if (! -d $git_temp) {
-	mkdir($git_temp, 0700) || die_error(undef, "Couldn't mkdir $git_temp");
-}
 
 # ======================================================================
 # input validation and dispatch
