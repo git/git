@@ -3,16 +3,19 @@ git-ls-remote(1)
 
 NAME
 ----
-git-ls-remote - Look at references other repository has
+git-ls-remote - List references in a remote repository
 
 
 SYNOPSIS
 --------
-'git-ls-remote' [--heads] [--tags] <repository> <refs>...
+[verse]
+'git-ls-remote' [--heads] [--tags]  [-u <exec> | --upload-pack <exec>]
+	      <repository> <refs>...
 
 DESCRIPTION
 -----------
-Displays the references other repository has.
+Displays references available in a remote repository along with the associated
+commit IDs.
 
 
 OPTIONS
@@ -23,9 +26,16 @@ OPTIONS
 	both, references stored in refs/heads and refs/tags are
 	displayed.
 
+-u <exec>, --upload-pack=<exec>::
+	Specify the full path of gitlink:git-upload-pack[1] on the remote
+	host. This allows listing references from repositories accessed via
+	SSH and where the SSH deamon does not use the PATH configured by the
+	user. Also see the '--exec' option for gitlink:git-peek-remote[1].
+
 <repository>::
 	Location of the repository.  The shorthand defined in
-	$GIT_DIR/branches/ can be used.
+	$GIT_DIR/branches/ can be used. Use "." (dot) to list references in
+	the local repository.
 
 <refs>...::
 	When unspecified, all references, after filtering done

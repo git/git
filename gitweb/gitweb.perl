@@ -31,9 +31,6 @@ our $GIT = "++GIT_BINDIR++/git";
 #our $projectroot = "/pub/scm";
 our $projectroot = "++GITWEB_PROJECTROOT++";
 
-# location for temporary files needed for diffs
-our $git_temp = "/tmp/gitweb";
-
 # target of the home link on top of all pages
 our $home_link = $my_uri || "/";
 
@@ -144,9 +141,6 @@ require $GITWEB_CONFIG if -e $GITWEB_CONFIG;
 our $git_version = qx($GIT --version) =~ m/git version (.*)$/ ? $1 : "unknown";
 
 $projects_list ||= $projectroot;
-if (! -d $git_temp) {
-	mkdir($git_temp, 0700) || die_error(undef, "Couldn't mkdir $git_temp");
-}
 
 # ======================================================================
 # input validation and dispatch
@@ -211,6 +205,13 @@ if (defined $hash_base) {
 	}
 }
 
+our $hash_parent_base = $cgi->param('hpb');
+if (defined $hash_parent_base) {
+	if (!validate_input($hash_parent_base)) {
+		die_error(undef, "Invalid hash parent base parameter");
+	}
+}
+
 our $page = $cgi->param('pg');
 if (defined $page) {
 	if ($page =~ m/[^0-9]$/) {
@@ -270,13 +271,14 @@ sub href(%) {
 	my %params = @_;
 
 	my @mapping = (
-		action => "a",
 		project => "p",
+		action => "a",
 		file_name => "f",
 		file_parent => "fp",
 		hash => "h",
 		hash_parent => "hp",
 		hash_base => "hb",
+		hash_parent_base => "hpb",
 		page => "pg",
 		searchtext => "s",
 	);
@@ -446,7 +448,13 @@ sub mode_str {
 
 # convert file mode in octal to file type string
 sub file_type {
-	my $mode = oct shift;
+	my $mode = shift;
+
+	if ($mode !~ m/^[0-7]+$/) {
+		return $mode;
+	} else {
+		$mode = oct $mode;
+	}
 
 	if (S_ISDIR($mode & S_IFMT)) {
 		return "directory";
@@ -524,6 +532,26 @@ sub format_subject_html {
 	}
 }
 
+sub format_diff_line {
+	my $line = shift;
+	my $char = substr($line, 0, 1);
+	my $diff_class = "";
+
+	chomp $line;
+
+	if ($char eq '+') {
+		$diff_class = " add";
+	} elsif ($char eq "-") {
+		$diff_class = " rem";
+	} elsif ($char eq "@") {
+		$diff_class = " chunk_header";
+	} elsif ($char eq "\\") {
+		$diff_class = " incomplete";
+	}
+	$line = untabify($line);
+	return "<div class=\"diff$diff_class\">" . esc_html($line) . "</div>\n";
+}
+
 ## ----------------------------------------------------------------------
 ## git utility subroutines, invoking git commands
 
@@ -588,6 +616,26 @@ sub git_get_hash_by_path {
 	#'100644 blob 0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
 	$line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40})\t(.+)$/;
 	return $3;
+}
+
+# converts symbolic name to hash
+sub git_to_hash {
+	my @params = @_;
+	return undef unless @params;
+
+	open my $fd, "-|", $GIT, "rev-parse", @params
+		or return undef;
+	my @hashes = map { chomp; $_ } <$fd>;
+	close $fd;
+
+	if (wantarray) {
+		return @hashes;
+	} elsif (scalar(@hashes) == 1) {
+		# single hash
+		return $hashes[0];
+	} else {
+		return \@hashes;
+	}
 }
 
 ## ......................................................................
@@ -727,6 +775,73 @@ sub git_get_references {
 	}
 	close $fd or return;
 	return \%refs;
+}
+
+sub git_get_following_references {
+	my $hash = shift || return undef;
+	my $type = shift;
+	my $base = shift || $hash_base || "HEAD";
+
+	my $refs = git_get_references($type);
+	open my $fd, "-|", $GIT, "rev-list", $base
+		or return undef;
+	my @commits = map { chomp; $_ } <$fd>;
+	close $fd
+		or return undef;
+
+	my @reflist;
+	my $lastref;
+
+	foreach my $commit (@commits) {
+		foreach my $ref (@{$refs->{$commit}}) {
+			$lastref = $ref;
+			push @reflist, $lastref;
+		}
+		if ($commit eq $hash) {
+			last;
+		}
+	}
+
+	return wantarray ? @reflist : $lastref;
+}
+
+sub git_get_preceding_references {
+	my $hash = shift || return undef;
+	my $type = shift;
+
+	my $refs = git_get_references($type);
+	open my $fd, "-|", $GIT, "rev-list", $hash
+		or return undef;
+	my @commits = map { chomp; $_ } <$fd>;
+	close $fd
+		or return undef;
+
+	my @reflist;
+
+	foreach my $commit (@commits) {
+		foreach my $ref (@{$refs->{$commit}}) {
+			return $ref unless wantarray;
+			push @reflist, $ref;
+		}
+	}
+
+	return @reflist;
+}
+
+sub git_get_rev_name_tags {
+	my $hash = shift || return undef;
+
+	open my $fd, "-|", $GIT, "name-rev", "--tags", $hash
+		or return;
+	my $name_rev = <$fd>;
+	close $fd;
+
+	if ($name_rev =~ m|^$hash tags/(.*)$|) {
+		return $1;
+	} else {
+		# catches also '$hash undefined' output
+		return undef;
+	}
 }
 
 ## ----------------------------------------------------------------------
@@ -1367,7 +1482,7 @@ sub git_print_simplified_log {
 ## functions printing large fragments of HTML
 
 sub git_difftree_body {
-	my ($difftree, $parent) = @_;
+	my ($difftree, $hash, $parent) = @_;
 
 	print "<div class=\"list_head\">\n";
 	if ($#{$difftree} > 10) {
@@ -1456,8 +1571,10 @@ sub git_difftree_body {
 			}
 			print "<td>";
 			if ($diff{'to_id'} ne $diff{'from_id'}) { # modified
-				print $cgi->a({-href => href(action=>"blobdiff", hash=>$diff{'to_id'}, hash_parent=>$diff{'from_id'},
-				                             hash_base=>$hash, file_name=>$diff{'file'}),
+				print $cgi->a({-href => href(action=>"blobdiff",
+				                             hash=>$diff{'to_id'}, hash_parent=>$diff{'from_id'},
+				                             hash_base=>$hash, hash_parent_base=>$parent,
+				                             file_name=>$diff{'file'}),
 				              -class => "list"}, esc_html($diff{'file'}));
 			} else { # only mode changed
 				print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
@@ -1472,8 +1589,10 @@ sub git_difftree_body {
 				        "blob");
 			if ($diff{'to_id'} ne $diff{'from_id'}) { # modified
 				print " | " .
-					$cgi->a({-href => href(action=>"blobdiff", hash=>$diff{'to_id'}, hash_parent=>$diff{'from_id'},
-					                       hash_base=>$hash, file_name=>$diff{'file'})},
+					$cgi->a({-href => href(action=>"blobdiff",
+					                       hash=>$diff{'to_id'}, hash_parent=>$diff{'from_id'},
+					                       hash_base=>$hash, hash_parent_base=>$parent,
+					                       file_name=>$diff{'file'})},
 					        "diff");
 			}
 			print " | " .
@@ -1505,8 +1624,9 @@ sub git_difftree_body {
 			              "blob");
 			if ($diff{'to_id'} ne $diff{'from_id'}) {
 				print " | " .
-					$cgi->a({-href => href(action=>"blobdiff", hash_base=>$hash,
+					$cgi->a({-href => href(action=>"blobdiff",
 					                       hash=>$diff{'to_id'}, hash_parent=>$diff{'from_id'},
+					                       hash_base=>$hash, hash_parent_base=>$parent,
 					                       file_name=>$diff{'to_file'}, file_parent=>$diff{'from_file'})},
 					        "diff");
 			}
@@ -1517,6 +1637,131 @@ sub git_difftree_body {
 	}
 	print "</table>\n";
 }
+
+sub git_patchset_body {
+	my ($fd, $difftree, $hash, $hash_parent) = @_;
+
+	my $patch_idx = 0;
+	my $in_header = 0;
+	my $patch_found = 0;
+	my $diffinfo;
+
+	print "<div class=\"patchset\">\n";
+
+	LINE:
+	while (my $patch_line @$fd>) {
+		chomp $patch_line;
+
+		if ($patch_line =~ m/^diff /) { # "git diff" header
+			# beginning of patch (in patchset)
+			if ($patch_found) {
+				# close previous patch
+				print "</div>\n"; # class="patch"
+			} else {
+				# first patch in patchset
+				$patch_found = 1;
+			}
+			print "<div class=\"patch\">\n";
+
+			if (ref($difftree->[$patch_idx]) eq "HASH") {
+				$diffinfo = $difftree->[$patch_idx];
+			} else {
+				$diffinfo = parse_difftree_raw_line($difftree->[$patch_idx]);
+			}
+			$patch_idx++;
+
+			# for now, no extended header, hence we skip empty patches
+			# companion to	next LINE if $in_header;
+			if ($diffinfo->{'from_id'} eq $diffinfo->{'to_id'}) { # no change
+				$in_header = 1;
+				next LINE;
+			}
+
+			if ($diffinfo->{'status'} eq "A") { # added
+				print "<div class=\"diff_info\">" . file_type($diffinfo->{'to_mode'}) . ":" .
+				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash,
+				                             hash=>$diffinfo->{'to_id'}, file_name=>$diffinfo->{'file'})},
+				              $diffinfo->{'to_id'}) . "(new)" .
+				      "</div>\n"; # class="diff_info"
+
+			} elsif ($diffinfo->{'status'} eq "D") { # deleted
+				print "<div class=\"diff_info\">" . file_type($diffinfo->{'from_mode'}) . ":" .
+				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash_parent,
+				                             hash=>$diffinfo->{'from_id'}, file_name=>$diffinfo->{'file'})},
+				              $diffinfo->{'from_id'}) . "(deleted)" .
+				      "</div>\n"; # class="diff_info"
+
+			} elsif ($diffinfo->{'status'} eq "R" || # renamed
+			         $diffinfo->{'status'} eq "C" || # copied
+			         $diffinfo->{'status'} eq "2") { # with two filenames (from git_blobdiff)
+				print "<div class=\"diff_info\">" .
+				      file_type($diffinfo->{'from_mode'}) . ":" .
+				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash_parent,
+				                             hash=>$diffinfo->{'from_id'}, file_name=>$diffinfo->{'from_file'})},
+				              $diffinfo->{'from_id'}) .
+				      " -> " .
+				      file_type($diffinfo->{'to_mode'}) . ":" .
+				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash,
+				                             hash=>$diffinfo->{'to_id'}, file_name=>$diffinfo->{'to_file'})},
+				              $diffinfo->{'to_id'});
+				print "</div>\n"; # class="diff_info"
+
+			} else { # modified, mode changed, ...
+				print "<div class=\"diff_info\">" .
+				      file_type($diffinfo->{'from_mode'}) . ":" .
+				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash_parent,
+				                             hash=>$diffinfo->{'from_id'}, file_name=>$diffinfo->{'file'})},
+				              $diffinfo->{'from_id'}) .
+				      " -> " .
+				      file_type($diffinfo->{'to_mode'}) . ":" .
+				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash,
+				                             hash=>$diffinfo->{'to_id'}, file_name=>$diffinfo->{'file'})},
+				              $diffinfo->{'to_id'});
+				print "</div>\n"; # class="diff_info"
+			}
+
+			#print "<div class=\"diff extended_header\">\n";
+			$in_header = 1;
+			next LINE;
+		} # start of patch in patchset
+
+
+		if ($in_header && $patch_line =~ m/^---/) {
+			#print "</div>\n"; # class="diff extended_header"
+			$in_header = 0;
+
+			my $file = $diffinfo->{'from_file'};
+			$file  ||= $diffinfo->{'file'};
+			$file = $cgi->a({-href => href(action=>"blob", hash_base=>$hash_parent,
+			                               hash=>$diffinfo->{'from_id'}, file_name=>$file),
+			                -class => "list"}, esc_html($file));
+			$patch_line =~ s|a/.*$|a/$file|g;
+			print "<div class=\"diff from_file\">$patch_line</div>\n";
+
+			$patch_line = <$fd>;
+			chomp $patch_line;
+
+			#$patch_line =~ m/^+++/;
+			$file    = $diffinfo->{'to_file'};
+			$file  ||= $diffinfo->{'file'};
+			$file = $cgi->a({-href => href(action=>"blob", hash_base=>$hash,
+			                               hash=>$diffinfo->{'to_id'}, file_name=>$file),
+			                -class => "list"}, esc_html($file));
+			$patch_line =~ s|b/.*|b/$file|g;
+			print "<div class=\"diff to_file\">$patch_line</div>\n";
+
+			next LINE;
+		}
+		next LINE if $in_header;
+
+		print format_diff_line($patch_line);
+	}
+	print "</div>\n" if $patch_found; # class="patch"
+
+	print "</div>\n"; # class="patchset"
+}
+
+# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 
 sub git_shortlog_body {
 	# uses global variable $project
@@ -1609,8 +1854,10 @@ sub git_history_body {
 			if (defined $blob_current && defined $blob_parent &&
 					$blob_current ne $blob_parent) {
 				print " | " .
-					$cgi->a({-href => href(action=>"blobdiff", hash=>$blob_current, hash_parent=>$blob_parent,
-					                       hash_base=>$commit, file_name=>$file_name)},
+					$cgi->a({-href => href(action=>"blobdiff",
+					                       hash=>$blob_current, hash_parent=>$blob_parent,
+					                       hash_base=>$hash_base, hash_parent_base=>$commit,
+					                       file_name=>$file_name)},
 					        "diff to current");
 			}
 		}
@@ -1721,77 +1968,6 @@ sub git_heads_body {
 	}
 	print "</table>\n";
 }
-
-## ----------------------------------------------------------------------
-## functions printing large fragments, format as one of arguments
-
-sub git_diff_print {
-	my $from = shift;
-	my $from_name = shift;
-	my $to = shift;
-	my $to_name = shift;
-	my $format = shift || "html";
-
-	my $from_tmp = "/dev/null";
-	my $to_tmp = "/dev/null";
-	my $pid = $$;
-
-	# create tmp from-file
-	if (defined $from) {
-		$from_tmp = "$git_temp/gitweb_" . $$ . "_from";
-		open my $fd2, "> $from_tmp";
-		open my $fd, "-|", $GIT, "cat-file", "blob", $from;
-		my @file = <$fd>;
-		print $fd2 @file;
-		close $fd2;
-		close $fd;
-	}
-
-	# create tmp to-file
-	if (defined $to) {
-		$to_tmp = "$git_temp/gitweb_" . $$ . "_to";
-		open my $fd2, "> $to_tmp";
-		open my $fd, "-|", $GIT, "cat-file", "blob", $to;
-		my @file = <$fd>;
-		print $fd2 @file;
-		close $fd2;
-		close $fd;
-	}
-
-	open my $fd, "-|", "/usr/bin/diff -u -p -L \'$from_name\' -L \'$to_name\' $from_tmp $to_tmp";
-	if ($format eq "plain") {
-		undef $/;
-		print <$fd>;
-		$/ = "\n";
-	} else {
-		while (my $line = <$fd>) {
-			chomp $line;
-			my $char = substr($line, 0, 1);
-			my $diff_class = "";
-			if ($char eq '+') {
-				$diff_class = " add";
-			} elsif ($char eq "-") {
-				$diff_class = " rem";
-			} elsif ($char eq "@") {
-				$diff_class = " chunk_header";
-			} elsif ($char eq "\\") {
-				# skip errors
-				next;
-			}
-			$line = untabify($line);
-			print "<div class=\"diff$diff_class\">" . esc_html($line) . "</div>\n";
-		}
-	}
-	close $fd;
-
-	if (defined $from) {
-		unlink($from_tmp);
-	}
-	if (defined $to) {
-		unlink($to_tmp);
-	}
-}
-
 
 ## ======================================================================
 ## ======================================================================
@@ -2115,7 +2291,7 @@ HTML
 		chomp $line;
 		$line_class_num = ($line_class_num + 1) % $line_class_len;
 
-		if ($line =~ m/^([0-9a-fA-F]{40})\t\(\s*([^\t]+)\t(\d+) \+\d\d\d\d\t(\d+)\)(.*)$/) {
+		if ($line =~ m/^([0-9a-fA-F]{40})\t\(\s*([^\t]+)\t(\d+) [+-]\d\d\d\d\t(\d+)\)(.*)$/) {
 			$long_rev = $1;
 			$author   = $2;
 			$time     = $3;
@@ -2556,51 +2732,182 @@ sub git_commit {
 	git_print_log($co{'comment'});
 	print "</div>\n";
 
-	git_difftree_body(\@difftree, $parent);
+	git_difftree_body(\@difftree, $hash, $parent);
 
 	git_footer_html();
 }
 
 sub git_blobdiff {
-	mkdir($git_temp, 0700);
-	git_header_html();
-	if (defined $hash_base && (my %co = parse_commit($hash_base))) {
+	my $format = shift || 'html';
+
+	my $fd;
+	my @difftree;
+	my %diffinfo;
+	my $expires;
+
+	# preparing $fd and %diffinfo for git_patchset_body
+	# new style URI
+	if (defined $hash_base && defined $hash_parent_base) {
+		if (defined $file_name) {
+			# read raw output
+			open $fd, "-|", $GIT, "diff-tree", '-r', '-M', '-C', $hash_parent_base, $hash_base,
+				"--", $file_name
+				or die_error(undef, "Open git-diff-tree failed");
+			@difftree = map { chomp; $_ } <$fd>;
+			close $fd
+				or die_error(undef, "Reading git-diff-tree failed");
+			@difftree
+				or die_error('404 Not Found', "Blob diff not found");
+
+		} elsif (defined $hash) { # try to find filename from $hash
+			if ($hash !~ /[0-9a-fA-F]{40}/) {
+				$hash = git_to_hash($hash);
+			}
+
+			# read filtered raw output
+			open $fd, "-|", $GIT, "diff-tree", '-r', '-M', '-C', $hash_parent_base, $hash_base
+				or die_error(undef, "Open git-diff-tree failed");
+			@difftree =
+				# ':100644 100644 03b21826... 3b93d5e7... M	ls-files.c'
+				# $hash == to_id
+				grep { /^:[0-7]{6} [0-7]{6} [0-9a-fA-F]{40} $hash/ }
+				map { chomp; $_ } <$fd>;
+			close $fd
+				or die_error(undef, "Reading git-diff-tree failed");
+			@difftree
+				or die_error('404 Not Found', "Blob diff not found");
+
+		} else {
+			die_error('404 Not Found', "Missing one of the blob diff parameters");
+		}
+
+		if (@difftree > 1) {
+			die_error('404 Not Found', "Ambiguous blob diff specification");
+		}
+
+		%diffinfo = parse_difftree_raw_line($difftree[0]);
+		$file_parent ||= $diffinfo{'from_file'} || $file_name || $diffinfo{'file'};
+		$file_name   ||= $diffinfo{'to_file'}   || $diffinfo{'file'};
+
+		$hash_parent ||= $diffinfo{'from_id'};
+		$hash        ||= $diffinfo{'to_id'};
+
+		# non-textual hash id's can be cached
+		if ($hash_base =~ m/^[0-9a-fA-F]{40}$/ &&
+		    $hash_parent_base =~ m/^[0-9a-fA-F]{40}$/) {
+			$expires = '+1d';
+		}
+
+		# open patch output
+		open $fd, "-|", $GIT, "diff-tree", '-r', '-p', '-M', '-C', $hash_parent_base, $hash_base,
+			"--", $file_name
+			or die_error(undef, "Open git-diff-tree failed");
+	}
+
+	# old/legacy style URI
+	if (!%diffinfo && # if new style URI failed
+	    defined $hash && defined $hash_parent) {
+		# fake git-diff-tree raw output
+		$diffinfo{'from_mode'} = $diffinfo{'to_mode'} = "blob";
+		$diffinfo{'from_id'} = $hash_parent;
+		$diffinfo{'to_id'}   = $hash;
+		if (defined $file_name) {
+			if (defined $file_parent) {
+				$diffinfo{'status'} = '2';
+				$diffinfo{'from_file'} = $file_parent;
+				$diffinfo{'to_file'}   = $file_name;
+			} else { # assume not renamed
+				$diffinfo{'status'} = '1';
+				$diffinfo{'from_file'} = $file_name;
+				$diffinfo{'to_file'}   = $file_name;
+			}
+		} else { # no filename given
+			$diffinfo{'status'} = '2';
+			$diffinfo{'from_file'} = $hash_parent;
+			$diffinfo{'to_file'}   = $hash;
+		}
+
+		# non-textual hash id's can be cached
+		if ($hash =~ m/^[0-9a-fA-F]{40}$/ &&
+		    $hash_parent =~ m/^[0-9a-fA-F]{40}$/) {
+			$expires = '+1d';
+		}
+
+		# open patch output
+		#open $fd, "-|", $GIT, "diff", '-p', $hash_parent, $hash
+		open $fd, "-|", $GIT, "diff", '-p', $hash, $hash_parent
+			or die_error(undef, "Open git-diff failed");
+	} else  {
+		die_error('404 Not Found', "Missing one of the blob diff parameters")
+			unless %diffinfo;
+	}
+
+	# header
+	if ($format eq 'html') {
 		my $formats_nav =
 			$cgi->a({-href => href(action=>"blobdiff_plain",
-			                       hash=>$hash, hash_parent=>$hash_parent)},
+			                       hash=>$hash, hash_parent=>$hash_parent,
+			                       hash_base=>$hash_base, hash_parent_base=>$hash_parent_base,
+			                       file_name=>$file_name, file_parent=>$file_parent)},
 			        "plain");
-		git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
-		git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
+		git_header_html(undef, $expires);
+		if (defined $hash_base && (my %co = parse_commit($hash_base))) {
+			git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
+			git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
+		} else {
+			print "<div class=\"page_nav\"><br/>$formats_nav<br/></div>\n";
+			print "<div class=\"title\">$hash vs $hash_parent</div>\n";
+		}
+		if (defined $file_name) {
+			git_print_page_path($file_name, "blob", $hash_base);
+		} else {
+			print "<div class=\"page_path\"></div>\n";
+		}
+
+	} elsif ($format eq 'plain') {
+		print $cgi->header(
+			-type => 'text/plain',
+			-charset => 'utf-8',
+			-expires => $expires,
+			-content_disposition => qq(inline; filename="${file_name}.patch"));
+
+		print "X-Git-Url: " . $cgi->self_url() . "\n\n";
+
 	} else {
-		print <<HTML;
-<div class="page_nav"><br/><br/></div>
-<div class="title">$hash vs $hash_parent</div>
-HTML
+		die_error(undef, "Unknown blobdiff format");
 	}
-	git_print_page_path($file_name, "blob", $hash_base);
-	print "<div class=\"page_body\">\n" .
-	      "<div class=\"diff_info\">blob:" .
-	      $cgi->a({-href => href(action=>"blob", hash=>$hash_parent,
-	                             hash_base=>$hash_base, file_name=>($file_parent || $file_name))},
-	              $hash_parent) .
-	      " -> blob:" .
-	      $cgi->a({-href => href(action=>"blob", hash=>$hash,
-	                             hash_base=>$hash_base, file_name=>$file_name)},
-	              $hash) .
-	      "</div>\n";
-	git_diff_print($hash_parent, $file_name || $hash_parent, $hash, $file_name || $hash);
-	print "</div>"; # page_body
-	git_footer_html();
+
+	# patch
+	if ($format eq 'html') {
+		print "<div class=\"page_body\">\n";
+
+		git_patchset_body($fd, [ \%diffinfo ], $hash_base, $hash_parent_base);
+		close $fd;
+
+		print "</div>\n"; # class="page_body"
+		git_footer_html();
+
+	} else {
+		while (my $line = <$fd>) {
+			$line =~ s!a/($hash|$hash_parent)!a/$diffinfo{'from_file'}!g;
+			$line =~ s!b/($hash|$hash_parent)!b/$diffinfo{'to_file'}!g;
+
+			print $line;
+
+			last if $line =~ m!^\+\+\+!;
+		}
+		local $/ = undef;
+		print <$fd>;
+		close $fd;
+	}
 }
 
 sub git_blobdiff_plain {
-	mkdir($git_temp, 0700);
-	print $cgi->header(-type => "text/plain", -charset => 'utf-8');
-	git_diff_print($hash_parent, $file_name || $hash_parent, $hash, $file_name || $hash, "plain");
+	git_blobdiff('plain');
 }
 
 sub git_commitdiff {
-	mkdir($git_temp, 0700);
+	my $format = shift || 'html';
 	my %co = parse_commit($hash);
 	if (!%co) {
 		die_error(undef, "Unknown commit object");
@@ -2608,141 +2915,97 @@ sub git_commitdiff {
 	if (!defined $hash_parent) {
 		$hash_parent = $co{'parent'} || '--root';
 	}
-	open my $fd, "-|", $GIT, "diff-tree", '-r', $hash_parent, $hash
-		or die_error(undef, "Open git-diff-tree failed");
-	my @difftree = map { chomp; $_ } <$fd>;
-	close $fd or die_error(undef, "Reading git-diff-tree failed");
+
+	# read commitdiff
+	my $fd;
+	my @difftree;
+	if ($format eq 'html') {
+		open $fd, "-|", $GIT, "diff-tree", '-r', '-M', '-C',
+			"--patch-with-raw", "--full-index", $hash_parent, $hash
+			or die_error(undef, "Open git-diff-tree failed");
+
+		while (chomp(my $line = <$fd>)) {
+			# empty line ends raw part of diff-tree output
+			last unless $line;
+			push @difftree, $line;
+		}
+
+	} elsif ($format eq 'plain') {
+		open $fd, "-|", $GIT, "diff-tree", '-r', '-p', '-B', $hash_parent, $hash
+			or die_error(undef, "Open git-diff-tree failed");
+
+	} else {
+		die_error(undef, "Unknown commitdiff format");
+	}
 
 	# non-textual hash id's can be cached
 	my $expires;
 	if ($hash =~ m/^[0-9a-fA-F]{40}$/) {
 		$expires = "+1d";
 	}
-	my $refs = git_get_references();
-	my $ref = format_ref_marker($refs, $co{'id'});
-	my $formats_nav =
-		$cgi->a({-href => href(action=>"commitdiff_plain", hash=>$hash, hash_parent=>$hash_parent)},
-		        "plain");
-	git_header_html(undef, $expires);
-	git_print_page_nav('commitdiff','', $hash,$co{'tree'},$hash, $formats_nav);
-	git_print_header_div('commit', esc_html($co{'title'}) . $ref, $hash);
-	print "<div class=\"page_body\">\n";
-	git_print_simplified_log($co{'comment'}, 1); # skip title
-	print "<br/>\n";
-	foreach my $line (@difftree) {
-		# ':100644 100644 03b218260e99b78c6df0ed378e59ed9205ccc96d 3b93d5e7cc7f7dd4ebed13a5cc1a4ad976fc94d8 M      ls-files.c'
-		# ':100644 100644 7f9281985086971d3877aca27704f2aaf9c448ce bc190ebc71bbd923f2b728e505408f5e54bd073a M      rev-tree.c'
-		if ($line !~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)\t(.*)$/) {
-			next;
-		}
-		my $from_mode = $1;
-		my $to_mode = $2;
-		my $from_id = $3;
-		my $to_id = $4;
-		my $status = $5;
-		my $file = validate_input(unquote($6));
-		if ($status eq "A") {
-			print "<div class=\"diff_info\">" . file_type($to_mode) . ":" .
-			      $cgi->a({-href => href(action=>"blob", hash_base=>$hash,
-			                             hash=>$to_id, file_name=>$file)},
-			              $to_id) . "(new)" .
-			      "</div>\n";
-			git_diff_print(undef, "/dev/null", $to_id, "b/$file");
-		} elsif ($status eq "D") {
-			print "<div class=\"diff_info\">" . file_type($from_mode) . ":" .
-			      $cgi->a({-href => href(action=>"blob", hash_base=>$hash_parent,
-			                             hash=>$from_id, file_name=>$file)},
-			              $from_id) . "(deleted)" .
-			      "</div>\n";
-			git_diff_print($from_id, "a/$file", undef, "/dev/null");
-		} elsif ($status eq "M") {
-			if ($from_id ne $to_id) {
-				print "<div class=\"diff_info\">" .
-				      file_type($from_mode) . ":" .
-				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash_parent,
-				                             hash=>$from_id, file_name=>$file)},
-				              $from_id) .
-				      " -> " .
-				      file_type($to_mode) . ":" .
-				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash,
-				                             hash=>$to_id, file_name=>$file)},
-				              $to_id);
-				print "</div>\n";
-				git_diff_print($from_id, "a/$file",  $to_id, "b/$file");
-			}
-		}
-	}
-	print "<br/>\n" .
-	      "</div>";
-	git_footer_html();
-}
 
-sub git_commitdiff_plain {
-	mkdir($git_temp, 0700);
-	my %co = parse_commit($hash);
-	if (!%co) {
-		die_error(undef, "Unknown commit object");
-	}
-	if (!defined $hash_parent) {
-		$hash_parent = $co{'parent'} || '--root';
-	}
-	open my $fd, "-|", $GIT, "diff-tree", '-r', $hash_parent, $hash
-		or die_error(undef, "Open git-diff-tree failed");
-	my @difftree = map { chomp; $_ } <$fd>;
-	close $fd or die_error(undef, "Reading diff-tree failed");
+	# write commit message
+	if ($format eq 'html') {
+		my $refs = git_get_references();
+		my $ref = format_ref_marker($refs, $co{'id'});
+		my $formats_nav =
+			$cgi->a({-href => href(action=>"commitdiff_plain",
+			                       hash=>$hash, hash_parent=>$hash_parent)},
+			        "plain");
 
-	# try to figure out the next tag after this commit
-	my $tagname;
-	my $refs = git_get_references("tags");
-	open $fd, "-|", $GIT, "rev-list", "HEAD";
-	my @commits = map { chomp; $_ } <$fd>;
-	close $fd;
-	foreach my $commit (@commits) {
-		if (defined $refs->{$commit}) {
-			$tagname = $refs->{$commit}
-		}
-		if ($commit eq $hash) {
-			last;
-		}
-	}
+		git_header_html(undef, $expires);
+		git_print_page_nav('commitdiff','', $hash,$co{'tree'},$hash, $formats_nav);
+		git_print_header_div('commit', esc_html($co{'title'}) . $ref, $hash);
+		print "<div class=\"page_body\">\n";
+		print "<div class=\"log\">\n";
+		git_print_simplified_log($co{'comment'}, 1); # skip title
+		print "</div>\n"; # class="log"
 
-	print $cgi->header(-type => "text/plain",
-	                   -charset => 'utf-8',
-	                   -content_disposition => "inline; filename=\"git-$hash.patch\"");
-	my %ad = parse_date($co{'author_epoch'}, $co{'author_tz'});
-	my $comment = $co{'comment'};
-	print <<TEXT;
+	} elsif ($format eq 'plain') {
+		my $refs = git_get_references("tags");
+		my $tagname = git_get_rev_name_tags($hash);
+		my $filename = basename($project) . "-$hash.patch";
+
+		print $cgi->header(
+			-type => 'text/plain',
+			-charset => 'utf-8',
+			-expires => $expires,
+			-content_disposition => qq(inline; filename="$filename"));
+		my %ad = parse_date($co{'author_epoch'}, $co{'author_tz'});
+		print <<TEXT;
 From: $co{'author'}
 Date: $ad{'rfc2822'} ($ad{'tz_local'})
 Subject: $co{'title'}
 TEXT
-	if (defined $tagname) {
-		print "X-Git-Tag: $tagname\n";
-	}
-	print "X-Git-Url: $my_url?p=$project;a=commitdiff;h=$hash\n" .
-	      "\n";
+		print "X-Git-Tag: $tagname\n" if $tagname;
+		print "X-Git-Url: " . $cgi->self_url() . "\n\n";
 
-	foreach my $line (@$comment) {;
-		print "$line\n";
+		foreach my $line (@{$co{'comment'}}) {
+			print "$line\n";
+		}
+		print "---\n\n";
 	}
-	print "---\n\n";
 
-	foreach my $line (@difftree) {
-		if ($line !~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)\t(.*)$/) {
-			next;
-		}
-		my $from_id = $3;
-		my $to_id = $4;
-		my $status = $5;
-		my $file = $6;
-		if ($status eq "A") {
-			git_diff_print(undef, "/dev/null", $to_id, "b/$file", "plain");
-		} elsif ($status eq "D") {
-			git_diff_print($from_id, "a/$file", undef, "/dev/null", "plain");
-		} elsif ($status eq "M") {
-			git_diff_print($from_id, "a/$file",  $to_id, "b/$file", "plain");
-		}
+	# write patch
+	if ($format eq 'html') {
+		#git_difftree_body(\@difftree, $hash, $hash_parent);
+		#print "<br/>\n";
+
+		git_patchset_body($fd, \@difftree, $hash, $hash_parent);
+		close $fd;
+		print "</div>\n"; # class="page_body"
+		git_footer_html();
+
+	} elsif ($format eq 'plain') {
+		local $/ = undef;
+		print <$fd>;
+		close $fd
+			or print "Reading git-diff-tree failed\n";
 	}
+}
+
+sub git_commitdiff_plain {
+	git_commitdiff('plain');
 }
 
 sub git_history {

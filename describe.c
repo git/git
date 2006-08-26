@@ -42,7 +42,7 @@ static void add_to_known_names(const char *path,
 	struct commit_name *name = xmalloc(sizeof(struct commit_name) + len);
 
 	name->commit = commit;
-	name->prio = prio; 
+	name->prio = prio;
 	memcpy(name->path, path, len);
 	idx = names;
 	if (idx >= allocs) {
@@ -154,7 +154,7 @@ int main(int argc, char **argv)
 			tags = 1;
 		else if (!strncmp(arg, "--abbrev=", 9)) {
 			abbrev = strtoul(arg + 9, NULL, 10);
-			if (abbrev < MINIMUM_ABBREV || 40 <= abbrev)
+			if (abbrev < MINIMUM_ABBREV || 40 < abbrev)
 				abbrev = DEFAULT_ABBREV;
 		}
 		else
