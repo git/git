@@ -819,6 +819,7 @@ sub commit_diff {
 	} else {
 		$ed->close_edit;
 	}
+	$_message = $_file = undef;
 }
 
 ########################### utility functions #########################
