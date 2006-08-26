@@ -54,6 +54,15 @@ remotes/git-svn.
 See '<<fetch-args,Additional Fetch Arguments>>' if you are interested in
 manually joining branches on commit.
 
+'dcommit'::
+	Commit all diffs from the current HEAD directly to the SVN
+	repository, and then rebase or reset (depending on whether or
+	not there is a diff between SVN and HEAD).  It is recommended
+	that you run git-svn fetch and rebase (not pull) your commits
+	against the latest changes in the SVN repository.
+	This is advantageous over 'commit' (below) because it produces
+	cleaner, more linear history.
+
 'commit'::
 	Commit specified commit or tree objects to SVN.  This relies on
 	your imported fetch data being up-to-date.  This makes
@@ -156,6 +165,24 @@ appropriate entry.  Re-running the previous git-svn command
 after the authors-file is modified should continue operation.
 
 repo-config key: svn.authors-file
+
+-m::
+--merge::
+-s<strategy>::
+--strategy=<strategy>::
+
+These are only used with the 'dcommit' command.
+
+Passed directly to git-rebase when using 'dcommit' if a
+'git-reset' cannot be used (see dcommit).
+
+-n::
+--dry-run::
+
+This is only used with the 'dcommit' command.
+
+Print out the series of git arguments that would show
+which diffs would be committed to SVN.
 
 --
 

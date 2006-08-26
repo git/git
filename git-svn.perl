@@ -51,7 +51,8 @@ my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_message, $_file, $_follow_parent, $_no_metadata,
 	$_template, $_shared, $_no_default_regex, $_no_graft_copy,
 	$_limit, $_verbose, $_incremental, $_oneline, $_l_fmt, $_show_commit,
-	$_version, $_upgrade, $_authors, $_branch_all_refs, @_opt_m);
+	$_version, $_upgrade, $_authors, $_branch_all_refs, @_opt_m,
+	$_merge, $_strategy, $_dry_run);
 my (@_branch_from, %tree_map, %users, %rusers, %equiv);
 my ($_svn_co_url_revs, $_svn_pg_peg_revs);
 my @repo_path_split_cache;
@@ -117,6 +118,11 @@ my %cmd = (
 	'commit-diff' => [ \&commit_diff, 'Commit a diff between two trees',
 			{ 'message|m=s' => \$_message,
 			  'file|F=s' => \$_file,
+			%cmt_opts } ],
+	dcommit => [ \&dcommit, 'Commit several diffs to merge with upstream',
+			{ 'merge|m|M' => \$_merge,
+			  'strategy|s=s' => \$_strategy,
+			  'dry-run|n' => \$_dry_run,
 			%cmt_opts } ],
 );
 
@@ -559,6 +565,33 @@ sub commit_lib {
 	}
 	$ENV{LC_ALL} = 'C';
 	unlink $commit_msg;
+}
+
+sub dcommit {
+	my $gs = "refs/remotes/$GIT_SVN";
+	chomp(my @refs = safe_qx(qw/git-rev-list --no-merges/, "$gs..HEAD"));
+	foreach my $d (reverse @refs) {
+		if ($_dry_run) {
+			print "diff-tree $d~1 $d\n";
+		} else {
+			commit_diff("$d~1", $d);
+		}
+	}
+	return if $_dry_run;
+	fetch();
+	my @diff = safe_qx(qw/git-diff-tree HEAD/, $gs);
+	my @finish;
+	if (@diff) {
+		@finish = qw/rebase/;
+		push @finish, qw/--merge/ if $_merge;
+		push @finish, "--strategy=$_strategy" if $_strategy;
+		print STDERR "W: HEAD and $gs differ, using @finish:\n", @diff;
+	} else {
+		print "No changes between current HEAD and $gs\n",
+		      "Hard resetting to the latest $gs\n";
+		@finish = qw/reset --hard/;
+	}
+	sys('git', @finish, $gs);
 }
 
 sub show_ignore {
