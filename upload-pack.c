@@ -374,7 +374,7 @@ static int get_common_commits(void)
 					     sha1_to_hex(sha1),
 					     multi_ack ?  " continue" : "");
 				if (multi_ack)
-					memcpy(last_sha1, sha1, 20);
+					hashcpy(last_sha1, sha1);
 			}
 			continue;
 		}

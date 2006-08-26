@@ -540,7 +540,7 @@ struct packed_git *add_packed_git(char *path, int path_len, int local)
 	p->pack_use_cnt = 0;
 	p->pack_local = local;
 	if ((path_len > 44) && !get_sha1_hex(path + path_len - 44, sha1))
-		memcpy(p->sha1, sha1, 20);
+		hashcpy(p->sha1, sha1);
 	return p;
 }
 
@@ -571,7 +571,7 @@ struct packed_git *parse_pack_index_file(const unsigned char *sha1, char *idx_pa
 	p->pack_base = NULL;
 	p->pack_last_used = 0;
 	p->pack_use_cnt = 0;
-	memcpy(p->sha1, sha1, 20);
+	hashcpy(p->sha1, sha1);
 	return p;
 }
 
@@ -953,7 +953,7 @@ int check_reuse_pack_delta(struct packed_git *p, unsigned long offset,
 	ptr = unpack_object_header(p, ptr, kindp, sizep);
 	if (*kindp != OBJ_DELTA)
 		goto done;
-	memcpy(base, (unsigned char *) p->pack_base + ptr, 20);
+	hashcpy(base, (unsigned char *) p->pack_base + ptr);
 	status = 0;
  done:
 	unuse_packed_git(p);
@@ -981,7 +981,7 @@ void packed_object_info_detail(struct pack_entry *e,
 		if (p->pack_size <= offset + 20)
 			die("pack file %s records an incomplete delta base",
 			    p->pack_name);
-		memcpy(base_sha1, pack, 20);
+		hashcpy(base_sha1, pack);
 		do {
 			struct pack_entry base_ent;
 			unsigned long junk;
@@ -1201,7 +1201,7 @@ int nth_packed_object_sha1(const struct packed_git *p, int n,
 	void *index = p->index_base + 256;
 	if (n < 0 || num_packed_objects(p) <= n)
 		return -1;
-	memcpy(sha1, (char *) index + (24 * n) + 4, 20);
+	hashcpy(sha1, (unsigned char *) index + (24 * n) + 4);
 	return 0;
 }
 
@@ -1218,7 +1218,7 @@ int find_pack_entry_one(const unsigned char *sha1,
 		int cmp = hashcmp((unsigned char *)index + (24 * mi) + 4, sha1);
 		if (!cmp) {
 			e->offset = ntohl(*((unsigned int *) ((char *) index + (24 * mi))));
-			memcpy(e->sha1, sha1, 20);
+			hashcpy(e->sha1, sha1);
 			e->p = p;
 			return 1;
 		}
@@ -1331,7 +1331,7 @@ void *read_object_with_reference(const unsigned char *sha1,
 	unsigned long isize;
 	unsigned char actual_sha1[20];
 
-	memcpy(actual_sha1, sha1, 20);
+	hashcpy(actual_sha1, sha1);
 	while (1) {
 		int ref_length = -1;
 		const char *ref_type = NULL;
@@ -1342,7 +1342,7 @@ void *read_object_with_reference(const unsigned char *sha1,
 		if (!strcmp(type, required_type)) {
 			*size = isize;
 			if (actual_sha1_return)
-				memcpy(actual_sha1_return, actual_sha1, 20);
+				hashcpy(actual_sha1_return, actual_sha1);
 			return buffer;
 		}
 		/* Handle references */
@@ -1537,7 +1537,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	 */
 	filename = write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
 	if (returnsha1)
-		memcpy(returnsha1, sha1, 20);
+		hashcpy(returnsha1, sha1);
 	if (has_sha1_file(sha1))
 		return 0;
 	fd = open(filename, O_RDONLY);

@@ -496,7 +496,7 @@ static int add_parents_only(struct rev_info *revs, const char *arg, int flags)
 		it = get_reference(revs, arg, sha1, 0);
 		if (it->type != OBJ_TAG)
 			break;
-		memcpy(sha1, ((struct tag*)it)->tagged->sha1, 20);
+		hashcpy(sha1, ((struct tag*)it)->tagged->sha1);
 	}
 	if (it->type != OBJ_COMMIT)
 		return 0;

@@ -95,7 +95,7 @@ static void add_delta_to_list(unsigned char *base_sha1, void *delta, unsigned lo
 {
 	struct delta_info *info = xmalloc(sizeof(*info));
 
-	memcpy(info->base_sha1, base_sha1, 20);
+	hashcpy(info->base_sha1, base_sha1);
 	info->size = size;
 	info->delta = delta;
 	info->next = delta_list;
@@ -173,7 +173,7 @@ static int unpack_delta_entry(unsigned long delta_size)
 	unsigned char base_sha1[20];
 	int result;
 
-	memcpy(base_sha1, fill(20), 20);
+	hashcpy(base_sha1, fill(20));
 	use(20);
 
 	delta_data = get_data(delta_size);

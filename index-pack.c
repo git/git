@@ -161,7 +161,7 @@ static void *unpack_raw_entry(unsigned long offset,
 	case OBJ_DELTA:
 		if (pos + 20 >= pack_limit)
 			bad_object(offset, "object extends past end of pack");
-		memcpy(delta_base, pack_base + pos, 20);
+		hashcpy(delta_base, pack_base + pos);
 		pos += 20;
 		/* fallthru */
 	case OBJ_COMMIT:
@@ -304,7 +304,7 @@ static void parse_pack_objects(void)
 		if (obj->type == OBJ_DELTA) {
 			struct delta_entry *delta = &deltas[nr_deltas++];
 			delta->obj = obj;
-			memcpy(delta->base_sha1, base_sha1, 20);
+			hashcpy(delta->base_sha1, base_sha1);
 		} else
 			sha1_object(data, data_size, obj->type, obj->sha1);
 		free(data);

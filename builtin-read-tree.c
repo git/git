@@ -53,7 +53,7 @@ static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 	struct name_entry entry;
 	int cnt;
 
-	memcpy(it->sha1, tree->object.sha1, 20);
+	hashcpy(it->sha1, tree->object.sha1);
 	desc.buf = tree->buffer;
 	desc.size = tree->size;
 	cnt = 0;

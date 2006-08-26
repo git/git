@@ -393,7 +393,7 @@ void prefetch(unsigned char *sha1)
 	char *filename = sha1_file_name(sha1);
 
 	newreq = xmalloc(sizeof(*newreq));
-	memcpy(newreq->sha1, sha1, 20);
+	hashcpy(newreq->sha1, sha1);
 	newreq->repo = alt;
 	newreq->url = NULL;
 	newreq->local = -1;

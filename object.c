@@ -91,7 +91,7 @@ void created_object(const unsigned char *sha1, struct object *obj)
 	obj->used = 0;
 	obj->type = OBJ_NONE;
 	obj->flags = 0;
-	memcpy(obj->sha1, sha1, 20);
+	hashcpy(obj->sha1, sha1);
 
 	if (obj_hash_size - 1 <= nr_objs * 2)
 		grow_object_hash();

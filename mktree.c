@@ -30,7 +30,7 @@ static void append_to_tree(unsigned mode, unsigned char *sha1, char *path)
 	ent = entries[used++] = xmalloc(sizeof(**entries) + len + 1);
 	ent->mode = mode;
 	ent->len = len;
-	memcpy(ent->sha1, sha1, 20);
+	hashcpy(ent->sha1, sha1);
 	memcpy(ent->name, path, len+1);
 }
 
@@ -64,7 +64,7 @@ static void write_tree(unsigned char *sha1)
 		offset += sprintf(buffer + offset, "%o ", ent->mode);
 		offset += sprintf(buffer + offset, "%s", ent->name);
 		buffer[offset++] = 0;
-		memcpy(buffer + offset, ent->sha1, 20);
+		hashcpy((unsigned char*)buffer + offset, ent->sha1);
 		offset += 20;
 	}
 	write_sha1_file(buffer, offset, tree_type, sha1);

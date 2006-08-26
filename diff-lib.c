@@ -48,7 +48,7 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 			memcpy(dpath->path, ce->name, path_len);
 			dpath->path[path_len] = '\0';
 			dpath->mode = 0;
-			memset(dpath->sha1, 0, 20);
+			hashclr(dpath->sha1);
 			memset(&(dpath->parent[0]), 0,
 					sizeof(struct combine_diff_parent)*5);
 
@@ -66,8 +66,7 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 				if (2 <= stage) {
 					int mode = ntohl(nce->ce_mode);
 					num_compare_stages++;
-					memcpy(dpath->parent[stage-2].sha1,
-					       nce->sha1, 20);
+					hashcpy(dpath->parent[stage-2].sha1, nce->sha1);
 					dpath->parent[stage-2].mode =
 						canon_mode(mode);
 					dpath->parent[stage-2].status =
