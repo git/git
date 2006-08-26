@@ -293,7 +293,7 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 	if (fdir) {
 		int exclude_stk;
 		struct dirent *de;
-		char fullname[MAXPATHLEN + 1];
+		char fullname[PATH_MAX + 1];
 		memcpy(fullname, base, baselen);
 
 		exclude_stk = push_exclude_per_directory(dir, base, baselen);

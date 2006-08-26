@@ -172,7 +172,4 @@ static inline int sane_case(int x, int high)
 	return x;
 }
 
-#ifndef MAXPATHLEN
-#define MAXPATHLEN 256
-#endif
 #endif
