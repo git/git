@@ -917,23 +917,19 @@ static unsigned long unpack_object_header(struct packed_git *p, unsigned long of
 	enum object_type *type, unsigned long *sizep)
 {
 	unsigned shift;
-	unsigned char *pack, c;
+	unsigned char c;
 	unsigned long size;
 
 	if (offset >= p->pack_size)
 		die("object offset outside of pack file");
-
-	pack =  (unsigned char *) p->pack_base + offset;
-	c = *pack++;
-	offset++;
+	c = *((unsigned char *)p->pack_base + offset++);
 	*type = (c >> 4) & 7;
 	size = c & 15;
 	shift = 4;
 	while (c & 0x80) {
 		if (offset >= p->pack_size)
 			die("object offset outside of pack file");
-		c = *pack++;
-		offset++;
+		c = *((unsigned char *)p->pack_base + offset++);
 		size += (c & 0x7f) << shift;
 		shift += 7;
 	}
