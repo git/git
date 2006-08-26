@@ -67,9 +67,16 @@ our $mimetypes_file = undef;
 # You define site-wide feature defaults here; override them with
 # $GITWEB_CONFIG as necessary.
 our %feature = (
-	# feature => {'sub' => feature-sub, 'override' => allow-override, 'default' => [ default options...]
-	# if feature is overridable, feature-sub will be called with default options;
-	# return value indicates if to enable specified feature
+	# feature => {
+	# 	'sub' => feature-sub (subroutine),
+	# 	'override' => allow-override (boolean),
+	# 	'default' => [ default options...] (array reference)}
+	#
+	# if feature is overridable (it means that allow-override has true value,
+	# then feature-sub will be called with default options as parameters;
+	# return value of feature-sub indicates if to enable specified feature
+	#
+	# use gitweb_check_feature(<feature>) to check if <feature> is enabled
 
 	'blame' => {
 		'sub' => \&feature_blame,
@@ -95,9 +102,9 @@ sub gitweb_check_feature {
 }
 
 # To enable system wide have in $GITWEB_CONFIG
-# $feature{'blame'}{'default'} =  [1];
-# To have project specific config enable override in  $GITWEB_CONFIG
-# $feature{'blame'}{'override'} =  1;
+# $feature{'blame'}{'default'} = [1];
+# To have project specific config enable override in $GITWEB_CONFIG
+# $feature{'blame'}{'override'} = 1;
 # and in project config gitweb.blame = 0|1;
 
 sub feature_blame {
@@ -113,9 +120,9 @@ sub feature_blame {
 }
 
 # To disable system wide have in $GITWEB_CONFIG
-# $feature{'snapshot'}{'default'} =  [undef];
-# To have project specific config enable override in  $GITWEB_CONFIG
-# $feature{'blame'}{'override'} =  1;
+# $feature{'snapshot'}{'default'} = [undef];
+# To have project specific config enable override in $GITWEB_CONFIG
+# $feature{'blame'}{'override'} = 1;
 # and in project config  gitweb.snapshot = none|gzip|bzip2
 
 sub feature_snapshot {
