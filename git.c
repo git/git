@@ -120,7 +120,7 @@ static int split_cmdline(char *cmdline, const char ***argv)
 				; /* skip */
 			if (count >= size) {
 				size += 16;
-				*argv = realloc(*argv, sizeof(char*) * size);
+				*argv = xrealloc(*argv, sizeof(char*) * size);
 			}
 			(*argv)[count++] = cmdline + dst;
 		} else if(!quoted && (c == '\'' || c == '"')) {
@@ -191,8 +191,8 @@ static int handle_alias(int *argcp, const char ***argv)
 			fflush(stderr);
 		}
 
-		new_argv = realloc(new_argv, sizeof(char*) *
-				   (count + *argcp + 1));
+		new_argv = xrealloc(new_argv, sizeof(char*) *
+				    (count + *argcp + 1));
 		/* insert after command name */
 		memcpy(new_argv + count, *argv + 1, sizeof(char*) * *argcp);
 		new_argv[count+*argcp] = NULL;

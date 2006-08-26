@@ -1740,7 +1740,7 @@ int read_pipe(int fd, char** return_buf, unsigned long* return_size)
 			off += iret;
 			if (off == size) {
 				size *= 2;
-				buf = realloc(buf, size);
+				buf = xrealloc(buf, size);
 			}
 		}
 	} while (iret > 0);

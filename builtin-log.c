@@ -101,7 +101,7 @@ static int git_format_config(const char *var, const char *value)
 	if (!strcmp(var, "format.headers")) {
 		int len = strlen(value);
 		extra_headers_size += len + 1;
-		extra_headers = realloc(extra_headers, extra_headers_size);
+		extra_headers = xrealloc(extra_headers, extra_headers_size);
 		extra_headers[extra_headers_size - len - 1] = 0;
 		strcat(extra_headers, value);
 		return 0;
@@ -381,7 +381,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			continue;
 
 		nr++;
-		list = realloc(list, nr * sizeof(list[0]));
+		list = xrealloc(list, nr * sizeof(list[0]));
 		list[nr - 1] = commit;
 	}
 	total = nr;

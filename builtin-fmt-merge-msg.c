@@ -27,8 +27,8 @@ static void append_to_list(struct list *list, char *value, void *payload)
 {
 	if (list->nr == list->alloc) {
 		list->alloc += 32;
-		list->list = realloc(list->list, sizeof(char *) * list->alloc);
-		list->payload = realloc(list->payload,
+		list->list = xrealloc(list->list, sizeof(char *) * list->alloc);
+		list->payload = xrealloc(list->payload,
 				sizeof(char *) * list->alloc);
 	}
 	list->payload[list->nr] = payload;

@@ -101,8 +101,8 @@ void add_exclude(const char *string, const char *base,
 	x->baselen = baselen;
 	if (which->nr == which->alloc) {
 		which->alloc = alloc_nr(which->alloc);
-		which->excludes = realloc(which->excludes,
-					  which->alloc * sizeof(x));
+		which->excludes = xrealloc(which->excludes,
+					   which->alloc * sizeof(x));
 	}
 	which->excludes[which->nr++] = x;
 }
