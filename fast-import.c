@@ -248,6 +248,7 @@ static struct tag *last_tag;
 /* Input stream parsing */
 static struct strbuf command_buf;
 static unsigned long next_mark;
+static FILE* branch_log;
 
 
 static void alloc_objects(int cnt)
@@ -1137,7 +1138,7 @@ static void dump_marks_helper(FILE *f,
 	} else {
 		for (k = 0; k < 1024; k++) {
 			if (m->data.marked[k])
-				fprintf(f, "%lu,%s\n", base + k,
+				fprintf(f, ":%lu %s\n", base + k,
 					sha1_to_hex(m->data.marked[k]->sha1));
 		}
 	}
@@ -1476,6 +1477,18 @@ static void cmd_new_commit()
 	store_object(OBJ_COMMIT, body, sp - body, NULL, b->sha1, next_mark);
 	free(body);
 	b->last_commit = object_count_by_type[OBJ_COMMIT];
+
+	if (branch_log) {
+		int need_dq = quote_c_style(b->name, NULL, NULL, 0);
+		fprintf(branch_log, "commit ");
+		if (need_dq) {
+			fputc('"', branch_log);
+			quote_c_style(b->name, NULL, branch_log, 0);
+			fputc('"', branch_log);
+		} else
+			fprintf(branch_log, "%s", b->name);
+		fprintf(branch_log," :%lu %s\n",next_mark,sha1_to_hex(b->sha1));
+	}
 }
 
 static void cmd_new_tag()
@@ -1490,6 +1503,7 @@ static void cmd_new_tag()
 	size_t msglen;
 	char *body;
 	struct tag *t;
+	unsigned long from_mark = 0;
 	unsigned char sha1[20];
 
 	/* Obtain the new tag name from the rest of our command */
@@ -1528,10 +1542,10 @@ static void cmd_new_tag()
 	if (s) {
 		memcpy(sha1, s->sha1, 20);
 	} else if (*from == ':') {
-		unsigned long idnum = strtoul(from + 1, NULL, 10);
-		struct object_entry *oe = find_mark(idnum);
+		from_mark = strtoul(from + 1, NULL, 10);
+		struct object_entry *oe = find_mark(from_mark);
 		if (oe->type != OBJ_COMMIT)
-			die("Mark :%lu not a commit", idnum);
+			die("Mark :%lu not a commit", from_mark);
 		memcpy(sha1, oe->sha1, 20);
 	} else if (!get_sha1(from, sha1)) {
 		unsigned long size;
@@ -1572,10 +1586,22 @@ static void cmd_new_tag()
 
 	store_object(OBJ_TAG, body, sp - body, NULL, t->sha1, 0);
 	free(body);
+
+	if (branch_log) {
+		int need_dq = quote_c_style(t->name, NULL, NULL, 0);
+		fprintf(branch_log, "tag ");
+		if (need_dq) {
+			fputc('"', branch_log);
+			quote_c_style(t->name, NULL, branch_log, 0);
+			fputc('"', branch_log);
+		} else
+			fprintf(branch_log, "%s", t->name);
+		fprintf(branch_log," :%lu %s\n",from_mark,sha1_to_hex(t->sha1));
+	}
 }
 
 static const char fast_import_usage[] =
-"git-fast-import [--objects=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file] temp.pack";
+"git-fast-import [--objects=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file] [--branch-log=log] temp.pack";
 
 int main(int argc, const char **argv)
 {
@@ -1602,6 +1628,11 @@ int main(int argc, const char **argv)
 			max_active_branches = strtoul(a + 18, NULL, 0);
 		else if (!strncmp(a, "--export-marks=", 15))
 			mark_file = a + 15;
+		else if (!strncmp(a, "--branch-log=", 13)) {
+			branch_log = fopen(a + 13, "w");
+			if (!branch_log)
+				die("Can't create %s: %s", a + 13, strerror(errno));
+		}
 		else
 			die("unknown option %s", a);
 	}
@@ -1647,6 +1678,7 @@ int main(int argc, const char **argv)
 	dump_branches();
 	dump_tags();
 	dump_marks();
+	fclose(branch_log);
 
 	fprintf(stderr, "%s statistics:\n", argv[0]);
 	fprintf(stderr, "---------------------------------------------------\n");
