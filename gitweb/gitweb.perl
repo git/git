@@ -1556,7 +1556,7 @@ sub git_difftree_body {
 			              "blob") .
 			      " | " .
 			      $cgi->a({-href => href(action=>"history", hash_base=>$parent,
-			                             file_name=>$diff{'file'})},\
+			                             file_name=>$diff{'file'})},
 			              "history") .
 			      "</td>\n";
 
