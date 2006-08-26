@@ -1092,10 +1092,8 @@ static void *unpack_delta_entry(unsigned char *base_sha1,
 				struct packed_git *p)
 {
 	struct pack_entry base_ent;
-	void *data, *delta_data, *result, *base;
-	unsigned long data_size, result_size, base_size;
-	z_stream stream;
-	int st;
+	void *delta_data, *result, *base;
+	unsigned long result_size, base_size;
 
 	if (left < 20)
 		die("truncated pack file");
@@ -1109,23 +1107,8 @@ static void *unpack_delta_entry(unsigned char *base_sha1,
 		die("failed to read delta-pack base object %s",
 		    sha1_to_hex(base_sha1));
 
-	data = base_sha1 + 20;
-	data_size = left - 20;
-	delta_data = xmalloc(delta_size);
-
-	memset(&stream, 0, sizeof(stream));
-
-	stream.next_in = data;
-	stream.avail_in = data_size;
-	stream.next_out = delta_data;
-	stream.avail_out = delta_size;
-
-	inflateInit(&stream);
-	st = inflate(&stream, Z_FINISH);
-	inflateEnd(&stream);
-	if ((st != Z_STREAM_END) || stream.total_out != delta_size)
-		die("delta data unpack failed");
-
+	delta_data = unpack_compressed_entry(base_sha1 + 20,
+			     delta_size, left - 20);
 	result = patch_delta(base, base_size,
 			     delta_data, delta_size,
 			     &result_size);
