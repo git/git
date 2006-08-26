@@ -142,7 +142,7 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
 	size = cache_entry_size(len);
 	ce = xcalloc(1, size);
 
-	memcpy(ce->sha1, sha1, 20);
+	hashcpy(ce->sha1, sha1);
 	memcpy(ce->name, path, len);
 	ce->ce_flags = create_ce_flags(len, stage);
 	ce->ce_mode = create_ce_mode(mode);
@@ -306,7 +306,7 @@ static void read_index_info(int line_termination)
 }
 
 static const char update_index_usage[] =
-"git-update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--really-refresh] [--cacheinfo] [--chmod=(+|-)x] [--assume-unchanged] [--info-only] [--force-remove] [--stdin] [--index-info] [--unresolve] [--again] [--ignore-missing] [-z] [--verbose] [--] <file>...";
+"git-update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--really-refresh] [--cacheinfo] [--chmod=(+|-)x] [--assume-unchanged] [--info-only] [--force-remove] [--stdin] [--index-info] [--unresolve] [--again | -g] [--ignore-missing] [-z] [--verbose] [--] <file>...";
 
 static unsigned char head_sha1[20];
 static unsigned char merge_head_sha1[20];
@@ -333,7 +333,7 @@ static struct cache_entry *read_one_ent(const char *which,
 	size = cache_entry_size(namelen);
 	ce = xcalloc(1, size);
 
-	memcpy(ce->sha1, sha1, 20);
+	hashcpy(ce->sha1, sha1);
 	memcpy(ce->name, path, namelen);
 	ce->ce_flags = create_ce_flags(namelen, stage);
 	ce->ce_mode = create_ce_mode(mode);
@@ -378,7 +378,7 @@ static int unresolve_one(const char *path)
 		ret = -1;
 		goto free_return;
 	}
-	if (!memcmp(ce_2->sha1, ce_3->sha1, 20) &&
+	if (!hashcmp(ce_2->sha1, ce_3->sha1) &&
 	    ce_2->ce_mode == ce_3->ce_mode) {
 		fprintf(stderr, "%s: identical in both, skipping.\n",
 			path);
@@ -460,7 +460,7 @@ static int do_reupdate(int ac, const char **av,
 			old = read_one_ent(NULL, head_sha1,
 					   ce->name, ce_namelen(ce), 0);
 		if (old && ce->ce_mode == old->ce_mode &&
-		    !memcmp(ce->sha1, old->sha1, 20)) {
+		    !hashcmp(ce->sha1, old->sha1)) {
 			free(old);
 			continue; /* unchanged */
 		}
@@ -595,7 +595,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 					active_cache_changed = 0;
 				goto finish;
 			}
-			if (!strcmp(path, "--again")) {
+			if (!strcmp(path, "--again") || !strcmp(path, "-g")) {
 				has_errors = do_reupdate(argc - i, argv + i,
 							 prefix, prefix_length);
 				if (has_errors)

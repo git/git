@@ -31,9 +31,9 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 			memset(p->parent, 0,
 			       sizeof(p->parent[0]) * num_parent);
 
-			memcpy(p->sha1, q->queue[i]->two->sha1, 20);
+			hashcpy(p->sha1, q->queue[i]->two->sha1);
 			p->mode = q->queue[i]->two->mode;
-			memcpy(p->parent[n].sha1, q->queue[i]->one->sha1, 20);
+			hashcpy(p->parent[n].sha1, q->queue[i]->one->sha1);
 			p->parent[n].mode = q->queue[i]->one->mode;
 			p->parent[n].status = q->queue[i]->status;
 			*tail = p;
@@ -56,8 +56,7 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 			len = strlen(path);
 			if (len == p->len && !memcmp(path, p->path, len)) {
 				found = 1;
-				memcpy(p->parent[n].sha1,
-				       q->queue[i]->one->sha1, 20);
+				hashcpy(p->parent[n].sha1, q->queue[i]->one->sha1);
 				p->parent[n].mode = q->queue[i]->one->mode;
 				p->parent[n].status = q->queue[i]->status;
 				break;
@@ -688,8 +687,8 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	for (i = 0; i < num_parent; i++) {
 		int j;
 		for (j = 0; j < i; j++) {
-			if (!memcmp(elem->parent[i].sha1,
-				    elem->parent[j].sha1, 20)) {
+			if (!hashcmp(elem->parent[i].sha1,
+				     elem->parent[j].sha1)) {
 				reuse_combine_diff(sline, cnt, i, j);
 				break;
 			}
@@ -927,6 +926,7 @@ void diff_tree_combined_merge(const unsigned char *sha1,
 	for (parents = commit->parents, num_parent = 0;
 	     parents;
 	     parents = parents->next, num_parent++)
-		memcpy(parent + num_parent, parents->item->object.sha1, 20);
+		hashcpy((unsigned char*)(parent + num_parent),
+			parents->item->object.sha1);
 	diff_tree_combined(sha1, parent, num_parent, dense, rev);
 }

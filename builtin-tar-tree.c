@@ -14,7 +14,7 @@
 #define BLOCKSIZE	(RECORDSIZE * 20)
 
 static const char tar_tree_usage[] =
-"git-tar-tree [--remote=<repo>] <ent> [basedir]";
+"git-tar-tree [--remote=<repo>] <tree-ish> [basedir]";
 
 static char block[BLOCKSIZE];
 static unsigned long offset;
@@ -22,30 +22,11 @@ static unsigned long offset;
 static time_t archive_time;
 static int tar_umask;
 
-/* tries hard to write, either succeeds or dies in the attempt */
-static void reliable_write(const void *data, unsigned long size)
-{
-	const char *buf = data;
-
-	while (size > 0) {
-		long ret = xwrite(1, buf, size);
-		if (ret < 0) {
-			if (errno == EPIPE)
-				exit(0);
-			die("git-tar-tree: %s", strerror(errno));
-		} else if (!ret) {
-			die("git-tar-tree: disk full?");
-		}
-		size -= ret;
-		buf += ret;
-	}
-}
-
 /* writes out the whole block, but only if it is full */
 static void write_if_needed(void)
 {
 	if (offset == BLOCKSIZE) {
-		reliable_write(block, BLOCKSIZE);
+		write_or_die(1, block, BLOCKSIZE);
 		offset = 0;
 	}
 }
@@ -70,7 +51,7 @@ static void write_blocked(const void *data, unsigned long size)
 		write_if_needed();
 	}
 	while (size >= BLOCKSIZE) {
-		reliable_write(buf, BLOCKSIZE);
+		write_or_die(1, buf, BLOCKSIZE);
 		size -= BLOCKSIZE;
 		buf += BLOCKSIZE;
 	}
@@ -94,10 +75,10 @@ static void write_trailer(void)
 {
 	int tail = BLOCKSIZE - offset;
 	memset(block + offset, 0, tail);
-	reliable_write(block, BLOCKSIZE);
+	write_or_die(1, block, BLOCKSIZE);
 	if (tail < 2 * RECORDSIZE) {
 		memset(block, 0, offset);
-		reliable_write(block, BLOCKSIZE);
+		write_or_die(1, block, BLOCKSIZE);
 	}
 }
 
@@ -294,7 +275,7 @@ static void traverse_tree(struct tree_desc *tree, struct strbuf *path)
 	}
 }
 
-int git_tar_config(const char *var, const char *value)
+static int git_tar_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "tar.umask")) {
 		if (!strcmp(value, "user")) {

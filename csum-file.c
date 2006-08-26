@@ -38,7 +38,7 @@ int sha1close(struct sha1file *f, unsigned char *result, int update)
 	}
 	SHA1_Final(f->buffer, &f->ctx);
 	if (result)
-		memcpy(result, f->buffer, 20);
+		hashcpy(result, f->buffer);
 	if (update)
 		sha1flush(f, 20);
 	if (close(f->fd))

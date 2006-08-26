@@ -77,7 +77,7 @@ struct ref **get_remote_heads(int in, struct ref **list,
 		if (nr_match && !path_match(name, nr_match, match))
 			continue;
 		ref = xcalloc(1, sizeof(*ref) + len - 40);
-		memcpy(ref->old_sha1, old_sha1, 20);
+		hashcpy(ref->old_sha1, old_sha1);
 		memcpy(ref->name, buffer + 41, len - 40);
 		*list = ref;
 		list = &ref->next;
@@ -208,7 +208,7 @@ static struct ref *try_explicit_object_name(const char *name)
 	len = strlen(name) + 1;
 	ref = xcalloc(1, sizeof(*ref) + len);
 	memcpy(ref->name, name, len);
-	memcpy(ref->new_sha1, sha1, 20);
+	hashcpy(ref->new_sha1, sha1);
 	return ref;
 }
 
@@ -318,7 +318,7 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 			int len = strlen(src->name) + 1;
 			dst_peer = xcalloc(1, sizeof(*dst_peer) + len);
 			memcpy(dst_peer->name, src->name, len);
-			memcpy(dst_peer->new_sha1, src->new_sha1, 20);
+			hashcpy(dst_peer->new_sha1, src->new_sha1);
 			link_dst_tail(dst_peer, dst_tail);
 		}
 		dst_peer->peer_ref = src;

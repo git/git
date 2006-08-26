@@ -25,8 +25,9 @@ int zlib_compression_level = Z_DEFAULT_COMPRESSION;
 int pager_in_use;
 int pager_use_color = 1;
 
-static char *git_dir, *git_object_dir, *git_index_file, *git_refs_dir,
-	*git_graft_file;
+static const char *git_dir;
+static char *git_object_dir, *git_index_file, *git_refs_dir, *git_graft_file;
+
 static void setup_git_env(void)
 {
 	git_dir = getenv(GIT_DIR_ENVIRONMENT);
@@ -49,7 +50,7 @@ static void setup_git_env(void)
 		git_graft_file = strdup(git_path("info/grafts"));
 }
 
-char *get_git_dir(void)
+const char *get_git_dir(void)
 {
 	if (!git_dir)
 		setup_git_env();

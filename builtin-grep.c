@@ -293,9 +293,6 @@ static void compile_patterns(struct grep_opt *opt)
 	 */
 	p = opt->pattern_list;
 	opt->pattern_expression = compile_pattern_expr(&p);
-#if DEBUG
-	dump_pattern_exp(opt->pattern_expression, 0);
-#endif
 	if (p)
 		die("incomplete pattern expression: %s", p->pattern);
 }

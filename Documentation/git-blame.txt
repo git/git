@@ -3,21 +3,38 @@ git-blame(1)
 
 NAME
 ----
-git-blame - Blame file lines on commits
+git-blame - Show what revision and author last modified each line of a file
 
 SYNOPSIS
 --------
-git-blame file [options] file [revision]
+'git-blame' [-c] [-l] [-t] [-S <revs-file>] [--] <file> [<rev>]
 
 DESCRIPTION
 -----------
-Annotates each line in the given file with information from the commit
-which introduced the line. Start annotation from the given revision.
+
+Annotates each line in the given file with information from the revision which
+last modified the line. Optionally, start annotating from the given revision.
+
+This report doesn't tell you anything about lines which have been deleted or
+replaced; you need to use a tool such as gitlink:git-diff[1] or the "pickaxe"
+interface briefly mentioned in the following paragraph.
+
+Apart from supporting file annotation, git also supports searching the
+development history for when a code snippet occured in a change. This makes it
+possible to track when a code snippet was added to a file, moved or copied
+between files, and eventually deleted or replaced. It works by searching for
+a text string in the diff. A small example:
+
+-----------------------------------------------------------------------------
+$ git log --pretty=oneline -S'blame_usage'
+5040f17eba15504bad66b14a645bddd9b015ebb7 blame -S <ancestry-file>
+ea4c7f9bf69e781dd0cd88d2bccb2bf5cc15c9a7 git-blame: Make the output
+-----------------------------------------------------------------------------
 
 OPTIONS
 -------
 -c, --compatibility::
-	Use the same output mode as git-annotate (Default: off).
+	Use the same output mode as gitlink:git-annotate[1] (Default: off).
 
 -l, --long::
 	Show long rev (Default: off).
@@ -26,7 +43,7 @@ OPTIONS
 	Show raw timestamp (Default: off).
 
 -S, --rev-file <revs-file>::
-	Use revs from revs-file instead of calling git-rev-list.
+	Use revs from revs-file instead of calling gitlink:git-rev-list[1].
 
 -h, --help::
 	Show help message.

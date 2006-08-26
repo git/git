@@ -84,7 +84,7 @@ static int find_short_packed_object(int len, const unsigned char *match, unsigne
 			int cmp;
 
 			nth_packed_object_sha1(p, mid, now);
-			cmp = memcmp(match, now, 20);
+			cmp = hashcmp(match, now);
 			if (!cmp) {
 				first = mid;
 				break;
@@ -103,10 +103,10 @@ static int find_short_packed_object(int len, const unsigned char *match, unsigne
 				    !match_sha(len, match, next)) {
 					/* unique within this pack */
 					if (!found) {
-						memcpy(found_sha1, now, 20);
+						hashcpy(found_sha1, now);
 						found++;
 					}
-					else if (memcmp(found_sha1, now, 20)) {
+					else if (hashcmp(found_sha1, now)) {
 						found = 2;
 						break;
 					}
@@ -120,7 +120,7 @@ static int find_short_packed_object(int len, const unsigned char *match, unsigne
 		}
 	}
 	if (found == 1)
-		memcpy(sha1, found_sha1, 20);
+		hashcpy(sha1, found_sha1);
 	return found;
 }
 
@@ -140,13 +140,13 @@ static int find_unique_short_object(int len, char *canonical,
 	if (1 < has_unpacked || 1 < has_packed)
 		return SHORT_NAME_AMBIGUOUS;
 	if (has_unpacked != has_packed) {
-		memcpy(sha1, (has_packed ? packed_sha1 : unpacked_sha1), 20);
+		hashcpy(sha1, (has_packed ? packed_sha1 : unpacked_sha1));
 		return 0;
 	}
 	/* Both have unique ones -- do they match? */
-	if (memcmp(packed_sha1, unpacked_sha1, 20))
+	if (hashcmp(packed_sha1, unpacked_sha1))
 		return SHORT_NAME_AMBIGUOUS;
-	memcpy(sha1, packed_sha1, 20);
+	hashcpy(sha1, packed_sha1);
 	return 0;
 }
 
@@ -159,7 +159,7 @@ static int get_short_sha1(const char *name, int len, unsigned char *sha1,
 
 	if (len < MINIMUM_ABBREV)
 		return -1;
-	memset(res, 0, 20);
+	hashclr(res);
 	memset(canonical, 'x', 40);
 	for (i = 0; i < len ;i++) {
 		unsigned char c = name[i];
@@ -320,13 +320,13 @@ static int get_parent(const char *name, int len,
 	if (parse_commit(commit))
 		return -1;
 	if (!idx) {
-		memcpy(result, commit->object.sha1, 20);
+		hashcpy(result, commit->object.sha1);
 		return 0;
 	}
 	p = commit->parents;
 	while (p) {
 		if (!--idx) {
-			memcpy(result, p->item->object.sha1, 20);
+			hashcpy(result, p->item->object.sha1);
 			return 0;
 		}
 		p = p->next;
@@ -347,9 +347,9 @@ static int get_nth_ancestor(const char *name, int len,
 
 		if (!commit || parse_commit(commit) || !commit->parents)
 			return -1;
-		memcpy(sha1, commit->parents->item->object.sha1, 20);
+		hashcpy(sha1, commit->parents->item->object.sha1);
 	}
-	memcpy(result, sha1, 20);
+	hashcpy(result, sha1);
 	return 0;
 }
 
@@ -401,7 +401,7 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 		o = deref_tag(o, name, sp - name - 2);
 		if (!o || (!o->parsed && !parse_object(o->sha1)))
 			return -1;
-		memcpy(sha1, o->sha1, 20);
+		hashcpy(sha1, o->sha1);
 	}
 	else {
 		/* At this point, the syntax look correct, so
@@ -413,7 +413,7 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 			if (!o || (!o->parsed && !parse_object(o->sha1)))
 				return -1;
 			if (o->type == expected_type) {
-				memcpy(sha1, o->sha1, 20);
+				hashcpy(sha1, o->sha1);
 				return 0;
 			}
 			if (o->type == OBJ_TAG)
@@ -520,7 +520,7 @@ int get_sha1(const char *name, unsigned char *sha1)
 			    memcmp(ce->name, cp, namelen))
 				break;
 			if (ce_stage(ce) == stage) {
-				memcpy(sha1, ce->sha1, 20);
+				hashcpy(sha1, ce->sha1);
 				return 0;
 			}
 			pos++;

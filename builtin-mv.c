@@ -26,7 +26,7 @@ static const char **copy_pathspec(const char *prefix, const char **pathspec,
 		if (length > 0 && result[i][length - 1] == '/') {
 			char *without_slash = xmalloc(length);
 			memcpy(without_slash, result[i], length - 1);
-			without_slash[length] = '\0';
+			without_slash[length - 1] = '\0';
 			result[i] = without_slash;
 		}
 		if (base_name) {
@@ -114,7 +114,10 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	modes = xcalloc(count, sizeof(enum update_mode));
 	dest_path = copy_pathspec(prefix, argv + argc - 1, 1, 0);
 
-	if (!lstat(dest_path[0], &st) &&
+	if (dest_path[0][0] == '\0')
+		/* special case: "." was normalized to "" */
+		destination = copy_pathspec(dest_path[0], argv + i, count, 1);
+	else if (!lstat(dest_path[0], &st) &&
 			S_ISDIR(st.st_mode)) {
 		dest_path[0] = add_slash(dest_path[0]);
 		destination = copy_pathspec(dest_path[0], argv + i, count, 1);
@@ -126,48 +129,43 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
 	/* Checking */
 	for (i = 0; i < count; i++) {
-		int length;
+		const char *src = source[i], *dst = destination[i];
+		int length, src_is_dir;
 		const char *bad = NULL;
 
 		if (show_only)
-			printf("Checking rename of '%s' to '%s'\n",
-				source[i], destination[i]);
+			printf("Checking rename of '%s' to '%s'\n", src, dst);
 
-		if (lstat(source[i], &st) < 0)
+		length = strlen(src);
+		if (lstat(src, &st) < 0)
 			bad = "bad source";
-
-		if (!bad &&
-		    (length = strlen(source[i])) >= 0 &&
-		    !strncmp(destination[i], source[i], length) &&
-		    (destination[i][length] == 0 || destination[i][length] == '/'))
+		else if (!strncmp(src, dst, length) &&
+				(dst[length] == 0 || dst[length] == '/')) {
 			bad = "can not move directory into itself";
-
-		if (S_ISDIR(st.st_mode)) {
-			const char *dir = source[i], *dest_dir = destination[i];
-			int first, last, len = strlen(dir);
-
-			if (lstat(dest_dir, &st) == 0) {
-				bad = "cannot move directory over file";
-				goto next;
-			}
+		} else if ((src_is_dir = S_ISDIR(st.st_mode))
+				&& lstat(dst, &st) == 0)
+			bad = "cannot move directory over file";
+		else if (src_is_dir) {
+			int first, last;
 
 			modes[i] = WORKING_DIRECTORY;
 
-			first = cache_name_pos(source[i], len);
+			first = cache_name_pos(src, length);
 			if (first >= 0)
-				die ("Huh? %s/ is in index?", dir);
+				die ("Huh? %s/ is in index?", src);
 
 			first = -1 - first;
 			for (last = first; last < active_nr; last++) {
 				const char *path = active_cache[last]->name;
-				if (strncmp(path, dir, len) || path[len] != '/')
+				if (strncmp(path, src, length)
+						|| path[length] != '/')
 					break;
 			}
 
 			if (last - first < 1)
 				bad = "source directory is empty";
-			else if (!bad) {
-				int j, dst_len = strlen(dest_dir);
+			else {
+				int j, dst_len;
 
 				if (last - first > 0) {
 					source = realloc(source,
@@ -181,24 +179,21 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 							* sizeof(enum update_mode));
 				}
 
-				dest_dir = add_slash(dest_dir);
+				dst = add_slash(dst);
+				dst_len = strlen(dst) - 1;
 
 				for (j = 0; j < last - first; j++) {
 					const char *path =
 						active_cache[first + j]->name;
 					source[count + j] = path;
 					destination[count + j] =
-						prefix_path(dest_dir, dst_len,
-							path + len);
+						prefix_path(dst, dst_len,
+							path + length);
 					modes[count + j] = INDEX;
 				}
 				count += last - first;
 			}
-
-			goto next;
-		}
-
-		if (!bad && lstat(destination[i], &st) == 0) {
+		} else if (lstat(dst, &st) == 0) {
 			bad = "destination exists";
 			if (force) {
 				/*
@@ -210,24 +205,17 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 							" will overwrite!\n",
 							bad);
 					bad = NULL;
-					path_list_insert(destination[i],
-							&overwritten);
+					path_list_insert(dst, &overwritten);
 				} else
 					bad = "Cannot overwrite";
 			}
-		}
-
-		if (!bad && cache_name_pos(source[i], strlen(source[i])) < 0)
+		} else if (cache_name_pos(src, length) < 0)
 			bad = "not under version control";
+		else if (path_list_has_path(&src_for_dst, dst))
+			bad = "multiple sources for the same target";
+		else
+			path_list_insert(dst, &src_for_dst);
 
-		if (!bad) {
-			if (path_list_has_path(&src_for_dst, destination[i]))
-				bad = "multiple sources for the same target";
-			else
-				path_list_insert(destination[i], &src_for_dst);
-		}
-
-next:
 		if (bad) {
 			if (ignore_errors) {
 				if (--count > 0) {
@@ -239,33 +227,32 @@ next:
 				}
 			} else
 				die ("%s, source=%s, destination=%s",
-				     bad, source[i], destination[i]);
+				     bad, src, dst);
 		}
 	}
 
 	for (i = 0; i < count; i++) {
+		const char *src = source[i], *dst = destination[i];
+		enum update_mode mode = modes[i];
 		if (show_only || verbose)
-			printf("Renaming %s to %s\n",
-			       source[i], destination[i]);
-		if (!show_only && modes[i] != INDEX &&
-		    rename(source[i], destination[i]) < 0 &&
-		    !ignore_errors)
-			die ("renaming %s failed: %s",
-			     source[i], strerror(errno));
+			printf("Renaming %s to %s\n", src, dst);
+		if (!show_only && mode != INDEX &&
+				rename(src, dst) < 0 && !ignore_errors)
+			die ("renaming %s failed: %s", src, strerror(errno));
 
-		if (modes[i] == WORKING_DIRECTORY)
+		if (mode == WORKING_DIRECTORY)
 			continue;
 
-		if (cache_name_pos(source[i], strlen(source[i])) >= 0) {
-			path_list_insert(source[i], &deleted);
+		if (cache_name_pos(src, strlen(src)) >= 0) {
+			path_list_insert(src, &deleted);
 
 			/* destination can be a directory with 1 file inside */
-			if (path_list_has_path(&overwritten, destination[i]))
-				path_list_insert(destination[i], &changed);
+			if (path_list_has_path(&overwritten, dst))
+				path_list_insert(dst, &changed);
 			else
-				path_list_insert(destination[i], &added);
+				path_list_insert(dst, &added);
 		} else
-			path_list_insert(destination[i], &added);
+			path_list_insert(dst, &added);
 	}
 
         if (show_only) {
@@ -275,10 +262,10 @@ next:
 	} else {
 		for (i = 0; i < changed.nr; i++) {
 			const char *path = changed.items[i].path;
-			int i = cache_name_pos(path, strlen(path));
-			struct cache_entry *ce = active_cache[i];
+			int j = cache_name_pos(path, strlen(path));
+			struct cache_entry *ce = active_cache[j];
 
-			if (i < 0)
+			if (j < 0)
 				die ("Huh? Cache entry for %s unknown?", path);
 			refresh_cache_entry(ce, 0);
 		}

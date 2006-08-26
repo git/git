@@ -745,7 +745,7 @@ static void finish_request(struct transfer_request *request)
 			SHA1_Final(request->real_sha1, &request->c);
 			if (request->zret != Z_STREAM_END) {
 				unlink(request->tmpfile);
-			} else if (memcmp(request->obj->sha1, request->real_sha1, 20)) {
+			} else if (hashcmp(request->obj->sha1, request->real_sha1)) {
 				unlink(request->tmpfile);
 			} else {
 				request->rename =
@@ -1700,7 +1700,7 @@ static int locking_available(void)
 	return lock_flags;
 }
 
-struct object_list **add_one_object(struct object *obj, struct object_list **p)
+static struct object_list **add_one_object(struct object *obj, struct object_list **p)
 {
 	struct object_list *entry = xmalloc(sizeof(struct object_list));
 	entry->item = obj;
@@ -1874,7 +1874,7 @@ static int one_local_ref(const char *refname, const unsigned char *sha1)
 	struct ref *ref;
 	int len = strlen(refname) + 1;
 	ref = xcalloc(1, sizeof(*ref) + len);
-	memcpy(ref->new_sha1, sha1, 20);
+	hashcpy(ref->new_sha1, sha1);
 	memcpy(ref->name, refname, len);
 	*local_tail = ref;
 	local_tail = &ref->next;
@@ -1909,7 +1909,7 @@ static void one_remote_ref(char *refname)
 	}
 
 	ref = xcalloc(1, sizeof(*ref) + len);
-	memcpy(ref->old_sha1, remote_sha1, 20);
+	hashcpy(ref->old_sha1, remote_sha1);
 	memcpy(ref->name, refname, len);
 	*remote_tail = ref;
 	remote_tail = &ref->next;
@@ -2164,7 +2164,7 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 	if (*symref != NULL)
 		free(*symref);
 	*symref = NULL;
-	memset(sha1, 0, 20);
+	hashclr(sha1);
 
 	if (buffer.posn == 0)
 		return;
@@ -2416,7 +2416,7 @@ int main(int argc, char **argv)
 
 		if (!ref->peer_ref)
 			continue;
-		if (!memcmp(ref->old_sha1, ref->peer_ref->new_sha1, 20)) {
+		if (!hashcmp(ref->old_sha1, ref->peer_ref->new_sha1)) {
 			if (push_verbosely || 1)
 				fprintf(stderr, "'%s': up-to-date\n", ref->name);
 			continue;
@@ -2445,7 +2445,7 @@ int main(int argc, char **argv)
 				continue;
 			}
 		}
-		memcpy(ref->new_sha1, ref->peer_ref->new_sha1, 20);
+		hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
 		if (is_zero_sha1(ref->new_sha1)) {
 			error("cannot happen anymore");
 			rc = -3;

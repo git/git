@@ -123,7 +123,7 @@ extern int cache_errno;
 #define INDEX_ENVIRONMENT "GIT_INDEX_FILE"
 #define GRAFT_ENVIRONMENT "GIT_GRAFT_FILE"
 
-extern char *get_git_dir(void);
+extern const char *get_git_dir(void);
 extern char *get_object_directory(void);
 extern char *get_refs_directory(void);
 extern char *get_index_file(void);
@@ -213,6 +213,18 @@ extern const unsigned char null_sha1[20];
 static inline int is_null_sha1(const unsigned char *sha1)
 {
 	return !memcmp(sha1, null_sha1, 20);
+}
+static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
+{
+	return memcmp(sha1, sha2, 20);
+}
+static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src)
+{
+	memcpy(sha_dst, sha_src, 20);
+}
+static inline void hashclr(unsigned char *hash)
+{
+	memset(hash, 0, 20);
 }
 
 int git_mkstemp(char *path, size_t n, const char *template);
@@ -384,6 +396,7 @@ extern char git_default_name[MAX_GITNAME];
 extern char git_commit_encoding[MAX_ENCODING_LENGTH];
 
 extern int copy_fd(int ifd, int ofd);
+extern void write_or_die(int fd, const void *buf, size_t count);
 
 /* Finish off pack transfer receiving end */
 extern int receive_unpack_pack(int fd[2], const char *me, int quiet, int);

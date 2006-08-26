@@ -584,10 +584,10 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, int *num)
 	const struct typelen *tl;
 	const struct special *s;
 	const char *end = date;
-	int n = 1, i;
+	int i;
 
-	while (isalpha(*++end))
-		n++;
+	while (isalpha(*++end));
+		;
 
 	for (i = 0; i < 12; i++) {
 		int match = match_string(date, month_names[i]);

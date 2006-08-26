@@ -25,7 +25,7 @@ static int read_one_entry(const unsigned char *sha1, const char *base, int basel
 	ce->ce_flags = create_ce_flags(baselen + len, stage);
 	memcpy(ce->name, base, baselen);
 	memcpy(ce->name + baselen, pathname, len+1);
-	memcpy(ce->sha1, sha1, 20);
+	hashcpy(ce->sha1, sha1);
 	return add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_SKIP_DFCHECK);
 }
 

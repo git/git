@@ -185,7 +185,7 @@ static int one_local_ref(const char *refname, const unsigned char *sha1)
 	struct ref *ref;
 	int len = strlen(refname) + 1;
 	ref = xcalloc(1, sizeof(*ref) + len);
-	memcpy(ref->new_sha1, sha1, 20);
+	hashcpy(ref->new_sha1, sha1);
 	memcpy(ref->name, refname, len);
 	*local_tail = ref;
 	local_tail = &ref->next;
@@ -265,7 +265,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 		char old_hex[60], *new_hex;
 		if (!ref->peer_ref)
 			continue;
-		if (!memcmp(ref->old_sha1, ref->peer_ref->new_sha1, 20)) {
+		if (!hashcmp(ref->old_sha1, ref->peer_ref->new_sha1)) {
 			if (verbose)
 				fprintf(stderr, "'%s': up-to-date\n", ref->name);
 			continue;
@@ -310,7 +310,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 				continue;
 			}
 		}
-		memcpy(ref->new_sha1, ref->peer_ref->new_sha1, 20);
+		hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
 		if (is_zero_sha1(ref->new_sha1)) {
 			error("cannot happen anymore");
 			ret = -3;

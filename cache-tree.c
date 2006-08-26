@@ -335,7 +335,7 @@ static int update_one(struct cache_tree *it,
 		offset += sprintf(buffer + offset,
 				  "%o %.*s", mode, entlen, path + baselen);
 		buffer[offset++] = 0;
-		memcpy(buffer + offset, sha1, 20);
+		hashcpy((unsigned char*)buffer + offset, sha1);
 		offset += 20;
 
 #if DEBUG
@@ -412,7 +412,7 @@ static void *write_one(struct cache_tree *it,
 #endif
 
 	if (0 <= it->entry_count) {
-		memcpy(buffer + *offset, it->sha1, 20);
+		hashcpy((unsigned char*)buffer + *offset, it->sha1);
 		*offset += 20;
 	}
 	for (i = 0; i < it->subtree_nr; i++) {
@@ -478,7 +478,7 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 	if (0 <= it->entry_count) {
 		if (size < 20)
 			goto free_return;
-		memcpy(it->sha1, buf, 20);
+		hashcpy(it->sha1, (unsigned char*)buf);
 		buf += 20;
 		size -= 20;
 	}

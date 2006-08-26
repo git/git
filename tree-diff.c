@@ -39,8 +39,7 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2, const 
 		show_entry(opt, "+", t2, base);
 		return 1;
 	}
-	if (!opt->find_copies_harder &&
-	    !memcmp(sha1, sha2, 20) && mode1 == mode2)
+	if (!opt->find_copies_harder && !hashcmp(sha1, sha2) && mode1 == mode2)
 		return 0;
 
 	/*

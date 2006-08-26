@@ -139,7 +139,7 @@ static inline struct llist_item *llist_insert_sorted_unique(struct llist *list, 
 
 	l = (hint == NULL) ? list->front : hint;
 	while (l) {
-		int cmp = memcmp(l->sha1, sha1, 20);
+		int cmp = hashcmp(l->sha1, sha1);
 		if (cmp > 0) { /* we insert before this entry */
 			return llist_insert(list, prev, sha1);
 		}
@@ -162,7 +162,7 @@ redo_from_start:
 	l = (hint == NULL) ? list->front : hint;
 	prev = NULL;
 	while (l) {
-		int cmp = memcmp(l->sha1, sha1, 20);
+		int cmp = hashcmp(l->sha1, sha1);
 		if (cmp > 0) /* not in list, since sorted */
 			return prev;
 		if(!cmp) { /* found */
@@ -256,7 +256,7 @@ static void cmp_two_packs(struct pack_list *p1, struct pack_list *p2)
 	while (p1_off <= p1->pack->index_size - 3 * 20 &&
 	       p2_off <= p2->pack->index_size - 3 * 20)
 	{
-		int cmp = memcmp(p1_base + p1_off, p2_base + p2_off, 20);
+		int cmp = hashcmp(p1_base + p1_off, p2_base + p2_off);
 		/* cmp ~ p1 - p2 */
 		if (cmp == 0) {
 			p1_hint = llist_sorted_remove(p1->unique_objects,
@@ -351,16 +351,16 @@ static size_t sizeof_union(struct packed_git *p1, struct packed_git *p2)
 {
 	size_t ret = 0;
 	int p1_off, p2_off;
-	char *p1_base, *p2_base;
+	unsigned char *p1_base, *p2_base;
 
 	p1_off = p2_off = 256 * 4 + 4;
-	p1_base = (char *)p1->index_base;
-	p2_base = (char *)p2->index_base;
+	p1_base = (unsigned char *)p1->index_base;
+	p2_base = (unsigned char *)p2->index_base;
 
 	while (p1_off <= p1->index_size - 3 * 20 &&
 	       p2_off <= p2->index_size - 3 * 20)
 	{
-		int cmp = memcmp(p1_base + p1_off, p2_base + p2_off, 20);
+		int cmp = hashcmp(p1_base + p1_off, p2_base + p2_off);
 		/* cmp ~ p1 - p2 */
 		if (cmp == 0) {
 			ret++;

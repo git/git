@@ -60,7 +60,7 @@ static int ce_compare_data(struct cache_entry *ce, struct stat *st)
 	if (fd >= 0) {
 		unsigned char sha1[20];
 		if (!index_fd(sha1, fd, st, 0, NULL))
-			match = memcmp(sha1, ce->sha1, 20);
+			match = hashcmp(sha1, ce->sha1);
 		/* index_fd() closed the file descriptor already */
 	}
 	return match;
@@ -744,7 +744,7 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size)
 	SHA1_Init(&c);
 	SHA1_Update(&c, hdr, size - 20);
 	SHA1_Final(sha1, &c);
-	if (memcmp(sha1, (char *) hdr + size - 20, 20))
+	if (hashcmp(sha1, (unsigned char *)hdr + size - 20))
 		return error("bad index file sha1 signature");
 	return 0;
 }

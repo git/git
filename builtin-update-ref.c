@@ -44,7 +44,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 
 	if (get_sha1(value, sha1))
 		die("%s: not a valid SHA1", value);
-	memset(oldsha1, 0, 20);
+	hashclr(oldsha1);
 	if (oldval && get_sha1(oldval, oldsha1))
 		die("%s: not a valid old SHA1", oldval);
 
