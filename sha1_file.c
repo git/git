@@ -1057,6 +1057,33 @@ static int packed_object_info(struct pack_entry *entry,
 	return 0;
 }
 
+static void *unpack_compressed_entry(unsigned char *data,
+				    unsigned long size,
+				    unsigned long left)
+{
+	int st;
+	z_stream stream;
+	unsigned char *buffer;
+
+	buffer = xmalloc(size + 1);
+	buffer[size] = 0;
+	memset(&stream, 0, sizeof(stream));
+	stream.next_in = data;
+	stream.avail_in = left;
+	stream.next_out = buffer;
+	stream.avail_out = size;
+
+	inflateInit(&stream);
+	st = inflate(&stream, Z_FINISH);
+	inflateEnd(&stream);
+	if ((st != Z_STREAM_END) || stream.total_out != size) {
+		free(buffer);
+		return NULL;
+	}
+
+	return buffer;
+}
+
 static void *unpack_delta_entry(unsigned char *base_sha1,
 				unsigned long delta_size,
 				unsigned long left,
@@ -1110,33 +1137,6 @@ static void *unpack_delta_entry(unsigned char *base_sha1,
 	return result;
 }
 
-static void *unpack_non_delta_entry(unsigned char *data,
-				    unsigned long size,
-				    unsigned long left)
-{
-	int st;
-	z_stream stream;
-	unsigned char *buffer;
-
-	buffer = xmalloc(size + 1);
-	buffer[size] = 0;
-	memset(&stream, 0, sizeof(stream));
-	stream.next_in = data;
-	stream.avail_in = left;
-	stream.next_out = buffer;
-	stream.avail_out = size;
-
-	inflateInit(&stream);
-	st = inflate(&stream, Z_FINISH);
-	inflateEnd(&stream);
-	if ((st != Z_STREAM_END) || stream.total_out != size) {
-		free(buffer);
-		return NULL;
-	}
-
-	return buffer;
-}
-
 static void *unpack_entry(struct pack_entry *entry,
 			  char *type, unsigned long *sizep)
 {
@@ -1185,7 +1185,7 @@ void *unpack_entry_gently(struct pack_entry *entry,
 		return NULL;
 	}
 	*sizep = size;
-	retval = unpack_non_delta_entry(pack, size, left);
+	retval = unpack_compressed_entry(pack, size, left);
 	return retval;
 }
 
