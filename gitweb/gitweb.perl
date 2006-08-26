@@ -2834,8 +2834,7 @@ sub git_blobdiff {
 		}
 
 		# open patch output
-		#open $fd, "-|", $GIT, "diff", '-p', $hash_parent, $hash
-		open $fd, "-|", $GIT, "diff", '-p', $hash, $hash_parent
+		open $fd, "-|", $GIT, "diff", '-p', $hash_parent, $hash
 			or die_error(undef, "Open git-diff failed");
 	} else  {
 		die_error('404 Not Found', "Missing one of the blob diff parameters")
