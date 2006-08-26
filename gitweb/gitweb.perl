@@ -1656,7 +1656,7 @@ sub git_patchset_body {
 	print "<div class=\"patchset\">\n";
 
 	LINE:
-	while (my $patch_line @$fd>) {
+	while (my $patch_line = <$fd>) {
 		chomp $patch_line;
 
 		if ($patch_line =~ m/^diff /) { # "git diff" header
