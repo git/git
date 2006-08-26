@@ -37,6 +37,16 @@ static const char *weekday_names[] = {
 	"Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"
 };
 
+static time_t gm_time_t(unsigned long time, int tz)
+{
+	int minutes;
+
+	minutes = tz < 0 ? -tz : tz;
+	minutes = (minutes / 100)*60 + (minutes % 100);
+	minutes = tz < 0 ? -minutes : minutes;
+	return time + minutes * 60;
+}
+
 /*
  * The "tz" thing is passed in as this strange "decimal parse of tz"
  * thing, which means that tz -0100 is passed in as the integer -100,
@@ -44,20 +54,57 @@ static const char *weekday_names[] = {
  */
 static struct tm *time_to_tm(unsigned long time, int tz)
 {
-	time_t t;
-	int minutes;
-
-	minutes = tz < 0 ? -tz : tz;
-	minutes = (minutes / 100)*60 + (minutes % 100);
-	minutes = tz < 0 ? -minutes : minutes;
-	t = time + minutes * 60;
+	time_t t = gm_time_t(time, tz);
 	return gmtime(&t);
 }
 
-const char *show_date(unsigned long time, int tz)
+const char *show_date(unsigned long time, int tz, int relative)
 {
 	struct tm *tm;
 	static char timebuf[200];
+
+	if (relative) {
+		unsigned long diff;
+		time_t t = gm_time_t(time, tz);
+		struct timeval now;
+		gettimeofday(&now, NULL);
+		if (now.tv_sec < t)
+			return "in the future";
+		diff = now.tv_sec - t;
+		if (diff < 90) {
+			snprintf(timebuf, sizeof(timebuf), "%lu seconds ago", diff);
+			return timebuf;
+		}
+		/* Turn it into minutes */
+		diff = (diff + 30) / 60;
+		if (diff < 90) {
+			snprintf(timebuf, sizeof(timebuf), "%lu minutes ago", diff);
+			return timebuf;
+		}
+		/* Turn it into hours */
+		diff = (diff + 30) / 60;
+		if (diff < 36) {
+			snprintf(timebuf, sizeof(timebuf), "%lu hours ago", diff);
+			return timebuf;
+		}
+		/* We deal with number of days from here on */
+		diff = (diff + 12) / 24;
+		if (diff < 14) {
+			snprintf(timebuf, sizeof(timebuf), "%lu days ago", diff);
+			return timebuf;
+		}
+		/* Say weeks for the past 10 weeks or so */
+		if (diff < 70) {
+			snprintf(timebuf, sizeof(timebuf), "%lu weeks ago", (diff + 3) / 7);
+			return timebuf;
+		}
+		/* Say months for the past 12 months or so */
+		if (diff < 360) {
+			snprintf(timebuf, sizeof(timebuf), "%lu months ago", (diff + 15) / 30);
+			return timebuf;
+		}
+		/* Else fall back on absolute format.. */
+	}
 
 	tm = time_to_tm(time, tz);
 	if (!tm)

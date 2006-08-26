@@ -507,14 +507,14 @@ static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf, const c
 	}
 	switch (fmt) {
 	case CMIT_FMT_MEDIUM:
-		ret += sprintf(buf + ret, "Date:   %s\n", show_date(time, tz));
+		ret += sprintf(buf + ret, "Date:   %s\n", show_date(time, tz, 0));
 		break;
 	case CMIT_FMT_EMAIL:
 		ret += sprintf(buf + ret, "Date: %s\n",
 			       show_rfc2822_date(time, tz));
 		break;
 	case CMIT_FMT_FULLER:
-		ret += sprintf(buf + ret, "%sDate: %s\n", what, show_date(time, tz));
+		ret += sprintf(buf + ret, "%sDate: %s\n", what, show_date(time, tz, 0));
 		break;
 	default:
 		/* notin' */
