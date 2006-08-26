@@ -996,16 +996,10 @@ void packed_object_info_detail(struct pack_entry *e,
 	}
 	switch (kind) {
 	case OBJ_COMMIT:
-		strcpy(type, commit_type);
-		break;
 	case OBJ_TREE:
-		strcpy(type, tree_type);
-		break;
 	case OBJ_BLOB:
-		strcpy(type, blob_type);
-		break;
 	case OBJ_TAG:
-		strcpy(type, tag_type);
+		strcpy(type, type_names[kind]);
 		break;
 	default:
 		die("corrupted pack file %s containing object of kind %d",
@@ -1036,16 +1030,10 @@ static int packed_object_info(struct pack_entry *entry,
 		unuse_packed_git(p);
 		return retval;
 	case OBJ_COMMIT:
-		strcpy(type, commit_type);
-		break;
 	case OBJ_TREE:
-		strcpy(type, tree_type);
-		break;
 	case OBJ_BLOB:
-		strcpy(type, blob_type);
-		break;
 	case OBJ_TAG:
-		strcpy(type, tag_type);
+		strcpy(type, type_names[kind]);
 		break;
 	default:
 		die("corrupted pack file %s containing object of kind %d",
@@ -1143,33 +1131,23 @@ void *unpack_entry_gently(struct pack_entry *entry,
 	unsigned long offset, size, left;
 	unsigned char *pack;
 	enum object_type kind;
-	void *retval;
 
 	offset = unpack_object_header(p, entry->offset, &kind, &size);
 	pack = (unsigned char *) p->pack_base + offset;
 	left = p->pack_size - offset;
 	switch (kind) {
 	case OBJ_DELTA:
-		retval = unpack_delta_entry(pack, size, left, type, sizep, p);
-		return retval;
+		return unpack_delta_entry(pack, size, left, type, sizep, p);
 	case OBJ_COMMIT:
-		strcpy(type, commit_type);
-		break;
 	case OBJ_TREE:
-		strcpy(type, tree_type);
-		break;
 	case OBJ_BLOB:
-		strcpy(type, blob_type);
-		break;
 	case OBJ_TAG:
-		strcpy(type, tag_type);
-		break;
+		strcpy(type, type_names[kind]);
+		*sizep = size;
+		return unpack_compressed_entry(pack, size, left);
 	default:
 		return NULL;
 	}
-	*sizep = size;
-	retval = unpack_compressed_entry(pack, size, left);
-	return retval;
 }
 
 int num_packed_objects(const struct packed_git *p)
