@@ -2363,6 +2363,12 @@ sub git_heads {
 }
 
 sub git_blob_plain {
+	# blobs defined by non-textual hash id's can be cached
+	my $expires;
+	if ($hash =~ m/^[0-9a-fA-F]{40}$/) {
+		$expires = "+1d";
+	}
+
 	if (!defined $hash) {
 		if (defined $file_name) {
 			my $base = $hash_base || git_get_head_hash($project);
@@ -2386,8 +2392,10 @@ sub git_blob_plain {
 		$save_as .= '.txt';
 	}
 
-	print $cgi->header(-type => "$type",
-	                   -content_disposition => "inline; filename=\"$save_as\"");
+	print $cgi->header(
+		-type => "$type",
+		-expires=>$expires,
+		-content_disposition => "inline; filename=\"$save_as\"");
 	undef $/;
 	binmode STDOUT, ':raw';
 	print <$fd>;
@@ -2397,6 +2405,12 @@ sub git_blob_plain {
 }
 
 sub git_blob {
+	# blobs defined by non-textual hash id's can be cached
+	my $expires;
+	if ($hash =~ m/^[0-9a-fA-F]{40}$/) {
+		$expires = "+1d";
+	}
+
 	if (!defined $hash) {
 		if (defined $file_name) {
 			my $base = $hash_base || git_get_head_hash($project);
@@ -2414,7 +2428,7 @@ sub git_blob {
 		close $fd;
 		return git_blob_plain($mimetype);
 	}
-	git_header_html();
+	git_header_html(undef, $expires);
 	my $formats_nav = '';
 	if (defined $hash_base && (my %co = parse_commit($hash_base))) {
 		if (defined $file_name) {
