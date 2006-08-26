@@ -1041,9 +1041,9 @@ static int packed_object_info(struct pack_entry *entry,
 	return 0;
 }
 
-static void *unpack_compressed_entry(unsigned char *data,
-				    unsigned long size,
-				    unsigned long left)
+static void *unpack_compressed_entry(struct packed_git *p,
+				    unsigned long offset,
+				    unsigned long size)
 {
 	int st;
 	z_stream stream;
@@ -1052,8 +1052,8 @@ static void *unpack_compressed_entry(unsigned char *data,
 	buffer = xmalloc(size + 1);
 	buffer[size] = 0;
 	memset(&stream, 0, sizeof(stream));
-	stream.next_in = data;
-	stream.avail_in = left;
+	stream.next_in = (unsigned char*)p->pack_base + offset;
+	stream.avail_in = p->pack_size - offset;
 	stream.next_out = buffer;
 	stream.avail_out = size;
 
@@ -1068,21 +1068,22 @@ static void *unpack_compressed_entry(unsigned char *data,
 	return buffer;
 }
 
-static void *unpack_delta_entry(unsigned char *base_sha1,
+static void *unpack_delta_entry(struct packed_git *p,
+				unsigned long offset,
 				unsigned long delta_size,
-				unsigned long left,
 				char *type,
-				unsigned long *sizep,
-				struct packed_git *p)
+				unsigned long *sizep)
 {
 	struct pack_entry base_ent;
 	void *delta_data, *result, *base;
 	unsigned long result_size, base_size;
+	unsigned char* base_sha1;
 
-	if (left < 20)
+	if ((offset + 20) >= p->pack_size)
 		die("truncated pack file");
 
 	/* The base entry _must_ be in the same pack */
+	base_sha1 = (unsigned char*)p->pack_base + offset;
 	if (!find_pack_entry_one(base_sha1, &base_ent, p))
 		die("failed to find delta-pack base object %s",
 		    sha1_to_hex(base_sha1));
@@ -1091,8 +1092,7 @@ static void *unpack_delta_entry(unsigned char *base_sha1,
 		die("failed to read delta-pack base object %s",
 		    sha1_to_hex(base_sha1));
 
-	delta_data = unpack_compressed_entry(base_sha1 + 20,
-			     delta_size, left - 20);
+	delta_data = unpack_compressed_entry(p, offset + 20, delta_size);
 	result = patch_delta(base, base_size,
 			     delta_data, delta_size,
 			     &result_size);
@@ -1124,23 +1124,20 @@ void *unpack_entry_gently(struct pack_entry *entry,
 			  char *type, unsigned long *sizep)
 {
 	struct packed_git *p = entry->p;
-	unsigned long offset, size, left;
-	unsigned char *pack;
+	unsigned long offset, size;
 	enum object_type kind;
 
 	offset = unpack_object_header(p, entry->offset, &kind, &size);
-	pack = (unsigned char *) p->pack_base + offset;
-	left = p->pack_size - offset;
 	switch (kind) {
 	case OBJ_DELTA:
-		return unpack_delta_entry(pack, size, left, type, sizep, p);
+		return unpack_delta_entry(p, offset, size, type, sizep);
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
 		strcpy(type, type_names[kind]);
 		*sizep = size;
-		return unpack_compressed_entry(pack, size, left);
+		return unpack_compressed_entry(p, offset, size);
 	default:
 		return NULL;
 	}
