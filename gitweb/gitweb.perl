@@ -1882,7 +1882,7 @@ HTML
 		chomp $line;
 		$line_class_num = ($line_class_num + 1) % $line_class_len;
 
-		if ($line =~ m/^([0-9a-fA-F]{40})\t\(\s*([^\t]+)\t(\d+) \+\d\d\d\d\t(\d+)\)(.*)$/) {
+		if ($line =~ m/^([0-9a-fA-F]{40})\t\(\s*([^\t]+)\t(\d+) [+-]\d\d\d\d\t(\d+)\)(.*)$/) {
 			$long_rev = $1;
 			$author   = $2;
 			$time     = $3;
