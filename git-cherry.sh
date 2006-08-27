@@ -51,9 +51,6 @@ patch=$tmp-patch
 mkdir $patch
 trap "rm -rf $tmp-*" 0 1 2 3 15
 
-_x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
-_x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
-
 for c in $inup
 do
 	git-diff-tree -p $c
