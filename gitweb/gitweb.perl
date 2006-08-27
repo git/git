@@ -67,9 +67,16 @@ our $mimetypes_file = undef;
 # You define site-wide feature defaults here; override them with
 # $GITWEB_CONFIG as necessary.
 our %feature = (
-	# feature => {'sub' => feature-sub, 'override' => allow-override, 'default' => [ default options...]
-	# if feature is overridable, feature-sub will be called with default options;
-	# return value indicates if to enable specified feature
+	# feature => {
+	# 	'sub' => feature-sub (subroutine),
+	# 	'override' => allow-override (boolean),
+	# 	'default' => [ default options...] (array reference)}
+	#
+	# if feature is overridable (it means that allow-override has true value,
+	# then feature-sub will be called with default options as parameters;
+	# return value of feature-sub indicates if to enable specified feature
+	#
+	# use gitweb_check_feature(<feature>) to check if <feature> is enabled
 
 	'blame' => {
 		'sub' => \&feature_blame,
@@ -95,9 +102,9 @@ sub gitweb_check_feature {
 }
 
 # To enable system wide have in $GITWEB_CONFIG
-# $feature{'blame'}{'default'} =  [1];
-# To have project specific config enable override in  $GITWEB_CONFIG
-# $feature{'blame'}{'override'} =  1;
+# $feature{'blame'}{'default'} = [1];
+# To have project specific config enable override in $GITWEB_CONFIG
+# $feature{'blame'}{'override'} = 1;
 # and in project config gitweb.blame = 0|1;
 
 sub feature_blame {
@@ -113,9 +120,9 @@ sub feature_blame {
 }
 
 # To disable system wide have in $GITWEB_CONFIG
-# $feature{'snapshot'}{'default'} =  [undef];
-# To have project specific config enable override in  $GITWEB_CONFIG
-# $feature{'blame'}{'override'} =  1;
+# $feature{'snapshot'}{'default'} = [undef];
+# To have project specific config enable override in $GITWEB_CONFIG
+# $feature{'blame'}{'override'} = 1;
 # and in project config  gitweb.snapshot = none|gzip|bzip2
 
 sub feature_snapshot {
@@ -1549,7 +1556,7 @@ sub git_difftree_body {
 			              "blob") .
 			      " | " .
 			      $cgi->a({-href => href(action=>"history", hash_base=>$parent,
-			                             file_name=>$diff{'file'})},\
+			                             file_name=>$diff{'file'})},
 			              "history") .
 			      "</td>\n";
 
@@ -2356,6 +2363,12 @@ sub git_heads {
 }
 
 sub git_blob_plain {
+	# blobs defined by non-textual hash id's can be cached
+	my $expires;
+	if ($hash =~ m/^[0-9a-fA-F]{40}$/) {
+		$expires = "+1d";
+	}
+
 	if (!defined $hash) {
 		if (defined $file_name) {
 			my $base = $hash_base || git_get_head_hash($project);
@@ -2379,8 +2392,10 @@ sub git_blob_plain {
 		$save_as .= '.txt';
 	}
 
-	print $cgi->header(-type => "$type",
-	                   -content_disposition => "inline; filename=\"$save_as\"");
+	print $cgi->header(
+		-type => "$type",
+		-expires=>$expires,
+		-content_disposition => "inline; filename=\"$save_as\"");
 	undef $/;
 	binmode STDOUT, ':raw';
 	print <$fd>;
@@ -2390,6 +2405,12 @@ sub git_blob_plain {
 }
 
 sub git_blob {
+	# blobs defined by non-textual hash id's can be cached
+	my $expires;
+	if ($hash =~ m/^[0-9a-fA-F]{40}$/) {
+		$expires = "+1d";
+	}
+
 	if (!defined $hash) {
 		if (defined $file_name) {
 			my $base = $hash_base || git_get_head_hash($project);
@@ -2407,7 +2428,7 @@ sub git_blob {
 		close $fd;
 		return git_blob_plain($mimetype);
 	}
-	git_header_html();
+	git_header_html(undef, $expires);
 	my $formats_nav = '';
 	if (defined $hash_base && (my %co = parse_commit($hash_base))) {
 		if (defined $file_name) {
@@ -2834,8 +2855,7 @@ sub git_blobdiff {
 		}
 
 		# open patch output
-		#open $fd, "-|", $GIT, "diff", '-p', $hash_parent, $hash
-		open $fd, "-|", $GIT, "diff", '-p', $hash, $hash_parent
+		open $fd, "-|", $GIT, "diff", '-p', $hash_parent, $hash
 			or die_error(undef, "Open git-diff failed");
 	} else  {
 		die_error('404 Not Found', "Missing one of the blob diff parameters")
