@@ -625,26 +625,6 @@ sub git_get_hash_by_path {
 	return $3;
 }
 
-# converts symbolic name to hash
-sub git_to_hash {
-	my @params = @_;
-	return undef unless @params;
-
-	open my $fd, "-|", $GIT, "rev-parse", @params
-		or return undef;
-	my @hashes = map { chomp; $_ } <$fd>;
-	close $fd;
-
-	if (wantarray) {
-		return @hashes;
-	} elsif (scalar(@hashes) == 1) {
-		# single hash
-		return $hashes[0];
-	} else {
-		return \@hashes;
-	}
-}
-
 ## ......................................................................
 ## git utility functions, directly accessing git repository
 
@@ -2733,6 +2713,9 @@ sub git_blobdiff {
 			if ($hash !~ /[0-9a-fA-F]{40}/) {
 				$hash = git_to_hash($hash);
 			}
+		} elsif (defined $hash &&
+		         $hash =~ /[0-9a-fA-F]{40}/) {
+			# try to find filename from $hash
 
 			# read filtered raw output
 			open $fd, "-|", $GIT, "diff-tree", '-r', '-M', '-C', $hash_parent_base, $hash_base
