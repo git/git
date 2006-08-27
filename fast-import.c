@@ -6,6 +6,7 @@ Format of STDIN stream:
   cmd ::= new_blob
         | new_commit
         | new_tag
+        | reset_branch
         ;
 
   new_blob ::= 'blob' lf
@@ -33,6 +34,8 @@ Format of STDIN stream:
 	'tagger' sp name '<' email '>' ts tz lf
     tag_msg;
   tag_msg ::= data;
+
+  reset_branch ::= 'reset' sp ref_str lf;
 
      # note: the first idnum in a stream should be 1 and subsequent
      # idnums should not have gaps between values as this will cause
@@ -1604,6 +1607,33 @@ static void cmd_new_tag()
 	}
 }
 
+static void cmd_reset_branch()
+{
+	struct branch *b;
+	char *str_uq;
+	const char *endp;
+	char *sp;
+
+	/* Obtain the branch name from the rest of our command */
+	sp = strchr(command_buf.buf, ' ') + 1;
+	str_uq = unquote_c_style(sp, &endp);
+	if (str_uq) {
+		if (*endp)
+			die("Garbage after ref in: %s", command_buf.buf);
+		sp = str_uq;
+	}
+	b = lookup_branch(sp);
+	if (b) {
+		b->last_commit = 0;
+		if (b->branch_tree.tree) {
+			release_tree_content_recursive(b->branch_tree.tree);
+			b->branch_tree.tree = NULL;
+		}
+	}
+	if (str_uq)
+		free(str_uq);
+}
+
 static const char fast_import_usage[] =
 "git-fast-import [--objects=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file] [--branch-log=log] temp.pack";
 
@@ -1673,6 +1703,8 @@ int main(int argc, const char **argv)
 			cmd_new_commit();
 		else if (!strncmp("tag ", command_buf.buf, 4))
 			cmd_new_tag();
+		else if (!strncmp("reset ", command_buf.buf, 6))
+			cmd_reset_branch();
 		else
 			die("Unsupported command: %s", command_buf.buf);
 	}
