@@ -141,6 +141,16 @@ sub feature_snapshot {
 	return ($ctype, $suffix, $command);
 }
 
+# rename detection options for git-diff and git-diff-tree
+# - default is '-M', with the cost proportional to
+#   (number of removed files) * (number of new files).
+# - more costly is '-C' (or '-C', '-M'), with the cost proportional to
+#   (number of changed files + number of removed files) * (number of new files)
+# - even more costly is '-C', '--find-copies-harder' with cost
+#   (number of files in the original tree) * (number of new files)
+# - one might want to include '-B' option, e.g. '-B', '-M'
+our @diff_opts = ('-M'); # taken from git_commit
+
 our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "++GITWEB_CONFIG++";
 require $GITWEB_CONFIG if -e $GITWEB_CONFIG;
 
@@ -625,26 +635,6 @@ sub git_get_hash_by_path {
 	return $3;
 }
 
-# converts symbolic name to hash
-sub git_to_hash {
-	my @params = @_;
-	return undef unless @params;
-
-	open my $fd, "-|", $GIT, "rev-parse", @params
-		or return undef;
-	my @hashes = map { chomp; $_ } <$fd>;
-	close $fd;
-
-	if (wantarray) {
-		return @hashes;
-	} elsif (scalar(@hashes) == 1) {
-		# single hash
-		return $hashes[0];
-	} else {
-		return \@hashes;
-	}
-}
-
 ## ......................................................................
 ## git utility functions, directly accessing git repository
 
@@ -782,57 +772,6 @@ sub git_get_references {
 	}
 	close $fd or return;
 	return \%refs;
-}
-
-sub git_get_following_references {
-	my $hash = shift || return undef;
-	my $type = shift;
-	my $base = shift || $hash_base || "HEAD";
-
-	my $refs = git_get_references($type);
-	open my $fd, "-|", $GIT, "rev-list", $base
-		or return undef;
-	my @commits = map { chomp; $_ } <$fd>;
-	close $fd
-		or return undef;
-
-	my @reflist;
-	my $lastref;
-
-	foreach my $commit (@commits) {
-		foreach my $ref (@{$refs->{$commit}}) {
-			$lastref = $ref;
-			push @reflist, $lastref;
-		}
-		if ($commit eq $hash) {
-			last;
-		}
-	}
-
-	return wantarray ? @reflist : $lastref;
-}
-
-sub git_get_preceding_references {
-	my $hash = shift || return undef;
-	my $type = shift;
-
-	my $refs = git_get_references($type);
-	open my $fd, "-|", $GIT, "rev-list", $hash
-		or return undef;
-	my @commits = map { chomp; $_ } <$fd>;
-	close $fd
-		or return undef;
-
-	my @reflist;
-
-	foreach my $commit (@commits) {
-		foreach my $ref (@{$refs->{$commit}}) {
-			return $ref unless wantarray;
-			push @reflist, $ref;
-		}
-	}
-
-	return @reflist;
 }
 
 sub git_get_rev_name_tags {
@@ -1656,7 +1595,7 @@ sub git_patchset_body {
 	print "<div class=\"patchset\">\n";
 
 	LINE:
-	while (my $patch_line @$fd>) {
+	while (my $patch_line = <$fd>) {
 		chomp $patch_line;
 
 		if ($patch_line =~ m/^diff /) { # "git diff" header
@@ -2664,7 +2603,7 @@ sub git_commit {
 	if (!defined $parent) {
 		$parent = "--root";
 	}
-	open my $fd, "-|", $GIT, "diff-tree", '-r', '-M', $parent, $hash
+	open my $fd, "-|", $GIT, "diff-tree", '-r', @diff_opts, $parent, $hash
 		or die_error(undef, "Open git-diff-tree failed");
 	my @difftree = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading git-diff-tree failed");
@@ -2771,7 +2710,7 @@ sub git_blobdiff {
 	if (defined $hash_base && defined $hash_parent_base) {
 		if (defined $file_name) {
 			# read raw output
-			open $fd, "-|", $GIT, "diff-tree", '-r', '-M', '-C', $hash_parent_base, $hash_base,
+			open $fd, "-|", $GIT, "diff-tree", '-r', @diff_opts, $hash_parent_base, $hash_base,
 				"--", $file_name
 				or die_error(undef, "Open git-diff-tree failed");
 			@difftree = map { chomp; $_ } <$fd>;
@@ -2784,9 +2723,12 @@ sub git_blobdiff {
 			if ($hash !~ /[0-9a-fA-F]{40}/) {
 				$hash = git_to_hash($hash);
 			}
+		} elsif (defined $hash &&
+		         $hash =~ /[0-9a-fA-F]{40}/) {
+			# try to find filename from $hash
 
 			# read filtered raw output
-			open $fd, "-|", $GIT, "diff-tree", '-r', '-M', '-C', $hash_parent_base, $hash_base
+			open $fd, "-|", $GIT, "diff-tree", '-r', @diff_opts, $hash_parent_base, $hash_base
 				or die_error(undef, "Open git-diff-tree failed");
 			@difftree =
 				# ':100644 100644 03b21826... 3b93d5e7... M	ls-files.c'
@@ -2820,7 +2762,8 @@ sub git_blobdiff {
 		}
 
 		# open patch output
-		open $fd, "-|", $GIT, "diff-tree", '-r', '-p', '-M', '-C', $hash_parent_base, $hash_base,
+		open $fd, "-|", $GIT, "diff-tree", '-r', @diff_opts,
+			'-p', $hash_parent_base, $hash_base,
 			"--", $file_name
 			or die_error(undef, "Open git-diff-tree failed");
 	}
@@ -2855,7 +2798,7 @@ sub git_blobdiff {
 		}
 
 		# open patch output
-		open $fd, "-|", $GIT, "diff", '-p', $hash_parent, $hash
+		open $fd, "-|", $GIT, "diff", '-p', @diff_opts, $hash_parent, $hash
 			or die_error(undef, "Open git-diff failed");
 	} else  {
 		die_error('404 Not Found', "Missing one of the blob diff parameters")
@@ -2940,7 +2883,7 @@ sub git_commitdiff {
 	my $fd;
 	my @difftree;
 	if ($format eq 'html') {
-		open $fd, "-|", $GIT, "diff-tree", '-r', '-M', '-C',
+		open $fd, "-|", $GIT, "diff-tree", '-r', @diff_opts,
 			"--patch-with-raw", "--full-index", $hash_parent, $hash
 			or die_error(undef, "Open git-diff-tree failed");
 
@@ -2951,7 +2894,8 @@ sub git_commitdiff {
 		}
 
 	} elsif ($format eq 'plain') {
-		open $fd, "-|", $GIT, "diff-tree", '-r', '-p', '-B', $hash_parent, $hash
+		open $fd, "-|", $GIT, "diff-tree", '-r', @diff_opts,
+			'-p', $hash_parent, $hash
 			or die_error(undef, "Open git-diff-tree failed");
 
 	} else {
@@ -3260,9 +3204,12 @@ XML
 			last;
 		}
 		my %cd = parse_date($co{'committer_epoch'});
-		open $fd, "-|", $GIT, "diff-tree", '-r', $co{'parent'}, $co{'id'} or next;
+		open $fd, "-|", $GIT, "diff-tree", '-r', @diff_opts,
+			$co{'parent'}, $co{'id'}
+			or next;
 		my @difftree = map { chomp; $_ } <$fd>;
-		close $fd or next;
+		close $fd
+			or next;
 		print "<item>\n" .
 		      "<title>" .
 		      sprintf("%d %s %02d:%02d", $cd{'mday'}, $cd{'month'}, $cd{'hour'}, $cd{'minute'}) . " - " . esc_html($co{'title'}) .
