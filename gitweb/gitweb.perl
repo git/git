@@ -784,57 +784,6 @@ sub git_get_references {
 	return \%refs;
 }
 
-sub git_get_following_references {
-	my $hash = shift || return undef;
-	my $type = shift;
-	my $base = shift || $hash_base || "HEAD";
-
-	my $refs = git_get_references($type);
-	open my $fd, "-|", $GIT, "rev-list", $base
-		or return undef;
-	my @commits = map { chomp; $_ } <$fd>;
-	close $fd
-		or return undef;
-
-	my @reflist;
-	my $lastref;
-
-	foreach my $commit (@commits) {
-		foreach my $ref (@{$refs->{$commit}}) {
-			$lastref = $ref;
-			push @reflist, $lastref;
-		}
-		if ($commit eq $hash) {
-			last;
-		}
-	}
-
-	return wantarray ? @reflist : $lastref;
-}
-
-sub git_get_preceding_references {
-	my $hash = shift || return undef;
-	my $type = shift;
-
-	my $refs = git_get_references($type);
-	open my $fd, "-|", $GIT, "rev-list", $hash
-		or return undef;
-	my @commits = map { chomp; $_ } <$fd>;
-	close $fd
-		or return undef;
-
-	my @reflist;
-
-	foreach my $commit (@commits) {
-		foreach my $ref (@{$refs->{$commit}}) {
-			return $ref unless wantarray;
-			push @reflist, $ref;
-		}
-	}
-
-	return @reflist;
-}
-
 sub git_get_rev_name_tags {
 	my $hash = shift || return undef;
 
