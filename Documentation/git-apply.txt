@@ -70,8 +70,8 @@ OPTIONS
 	For atomicity, `git apply` fails the whole patch and
 	does not touch the working tree when some of the hunks
 	do not apply by default.  This option makes it apply
-	parts of the patch that are applicable, and send the
-	rejected hunks to the standard output of the command.
+	parts of the patch that are applicable, and leave the
+	rejected hunks in corresponding *.rej files.
 
 -z::
 	When showing the index information, do not munge paths,

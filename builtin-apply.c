@@ -2557,7 +2557,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp(arg, "--reject")) {
-			apply = apply_with_reject = 1;
+			apply = apply_with_reject = apply_verbosely = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--verbose")) {
