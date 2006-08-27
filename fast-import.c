@@ -215,8 +215,10 @@ static struct atom_str **atom_table;
 static int pack_fd;
 static unsigned long pack_size;
 static unsigned char pack_sha1[20];
-static void* pack_base;
-static size_t pack_mlen;
+static unsigned char* pack_base;
+static unsigned long pack_moff;
+static unsigned long pack_mlen = 128*1024*1024;
+static unsigned long page_size;
 
 /* Table of objects we've written. */
 static unsigned int object_entry_alloc = 1000;
@@ -676,23 +678,26 @@ static int store_object(
 	return 0;
 }
 
-static void* map_pack(unsigned long offset)
+static unsigned char* map_pack(unsigned long offset, unsigned int *left)
 {
 	if (offset >= pack_size)
 		die("object offset outside of pack file");
-	if (offset >= pack_mlen) {
+	if (!pack_base
+			|| offset < pack_moff
+			|| (offset + 20) >= (pack_moff + pack_mlen)) {
 		if (pack_base)
 			munmap(pack_base, pack_mlen);
-		/* round out how much we map to 16 MB units */
-		pack_mlen = pack_size;
-		if (pack_mlen & ((1 << 24) - 1))
-			pack_mlen = ((pack_mlen >> 24) + 1) << 24;
-		pack_base = mmap(NULL,pack_mlen,PROT_READ,MAP_SHARED,pack_fd,0);
+		pack_moff = (offset / page_size) * page_size;
+		pack_base = mmap(NULL,pack_mlen,PROT_READ,MAP_SHARED,
+			pack_fd,pack_moff);
 		if (pack_base == MAP_FAILED)
 			die("Failed to map generated pack: %s", strerror(errno));
 		remap_count++;
 	}
-	return (char*)pack_base + offset;
+	offset -= pack_moff;
+	if (left)
+		*left = pack_mlen - offset;
+	return pack_base + offset;
 }
 
 static unsigned long unpack_object_header(unsigned long offset,
@@ -703,12 +708,12 @@ static unsigned long unpack_object_header(unsigned long offset,
 	unsigned char c;
 	unsigned long size;
 
-	c = *(unsigned char*)map_pack(offset++);
+	c = *map_pack(offset++, NULL);
 	*type = (c >> 4) & 7;
 	size = c & 15;
 	shift = 4;
 	while (c & 0x80) {
-		c = *(unsigned char*)map_pack(offset++);
+		c = *map_pack(offset++, NULL);
 		size += (c & 0x7f) << shift;
 		shift += 7;
 	}
@@ -725,8 +730,7 @@ static void *unpack_non_delta_entry(unsigned long o, unsigned long sz)
 	result[sz] = 0;
 
 	memset(&stream, 0, sizeof(stream));
-	stream.next_in = map_pack(o);
-	stream.avail_in = pack_mlen - o;
+	stream.next_in = map_pack(o, &stream.avail_in);
 	stream.next_out = result;
 	stream.avail_out = sz;
 
@@ -735,13 +739,12 @@ static void *unpack_non_delta_entry(unsigned long o, unsigned long sz)
 		int st = inflate(&stream, Z_FINISH);
 		if (st == Z_STREAM_END)
 			break;
-		if (st == Z_OK) {
-			o = stream.next_in - (unsigned char*)pack_base;
-			stream.next_in = map_pack(o);
-			stream.avail_in = pack_mlen - o;
+		if (st == Z_OK || st == Z_BUF_ERROR) {
+			o = stream.next_in - pack_base + pack_moff;
+			stream.next_in = map_pack(o, &stream.avail_in);
 			continue;
 		}
-		die("Error from zlib during inflate.");
+		die("Error %i from zlib during inflate.", st);
 	}
 	inflateEnd(&stream);
 	if (stream.total_out != sz)
@@ -760,7 +763,7 @@ static void *unpack_delta_entry(unsigned long offset,
 	void *delta_data, *base, *result;
 	unsigned long base_size, result_size;
 
-	base_sha1 = (unsigned char*)map_pack(offset + 20) - 20;
+	base_sha1 = map_pack(offset, NULL);
 	base_oe = find_object(base_sha1);
 	if (!base_oe)
 		die("I'm broken; I can't find a base I know must be here.");
@@ -1615,6 +1618,7 @@ int main(int argc, const char **argv)
 
 	setup_ident();
 	git_config(git_default_config);
+	page_size = getpagesize();
 
 	for (i = 1; i < argc; i++) {
 		const char *a = argv[i];
