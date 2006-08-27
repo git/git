@@ -524,7 +524,7 @@ static struct tree_entry* new_tree_entry()
 			*((void**)e) = e + 1;
 			e++;
 		}
-		*((void*)e) = NULL;
+		*((void**)e) = NULL;
 	}
 
 	e = avail_tree_entry;
