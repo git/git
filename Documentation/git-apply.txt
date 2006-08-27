@@ -75,8 +75,8 @@ OPTIONS
 	For atomicity, gitlink:git-apply[1] by default fails the whole patch and
 	does not touch the working tree when some of the hunks
 	do not apply.  This option makes it apply
-	the parts of the patch that are applicable, and send the
-	rejected hunks to the standard output of the command.
+	the parts of the patch that are applicable, and leave the
+	rejected hunks in corresponding *.rej files.
 
 -z::
 	When showing the index information, do not munge paths,
