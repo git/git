@@ -529,7 +529,6 @@ static int socksetup(int port, int **socklist_p)
 
 	for (ai = ai0; ai; ai = ai->ai_next) {
 		int sockfd;
-		int *newlist;
 
 		sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (sockfd < 0)
@@ -563,11 +562,7 @@ static int socksetup(int port, int **socklist_p)
 			continue;	/* not fatal */
 		}
 
-		newlist = realloc(socklist, sizeof(int) * (socknum + 1));
-		if (!newlist)
-			die("memory allocation failed: %s", strerror(errno));
-
-		socklist = newlist;
+		socklist = xrealloc(socklist, sizeof(int) * (socknum + 1));
 		socklist[socknum++] = sockfd;
 
 		if (maxfd < sockfd)

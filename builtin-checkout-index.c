@@ -45,7 +45,7 @@
 static int line_termination = '\n';
 static int checkout_stage; /* default to checkout stage0 */
 static int to_tempfile;
-static char topath[4][MAXPATHLEN+1];
+static char topath[4][PATH_MAX + 1];
 
 static struct checkout state;
 

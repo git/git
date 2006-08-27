@@ -120,7 +120,7 @@ static int split_cmdline(char *cmdline, const char ***argv)
 				; /* skip */
 			if (count >= size) {
 				size += 16;
-				*argv = realloc(*argv, sizeof(char*) * size);
+				*argv = xrealloc(*argv, sizeof(char*) * size);
 			}
 			(*argv)[count++] = cmdline + dst;
 		} else if(!quoted && (c == '\'' || c == '"')) {
@@ -191,8 +191,8 @@ static int handle_alias(int *argcp, const char ***argv)
 			fflush(stderr);
 		}
 
-		new_argv = realloc(new_argv, sizeof(char*) *
-				   (count + *argcp + 1));
+		new_argv = xrealloc(new_argv, sizeof(char*) *
+				    (count + *argcp + 1));
 		/* insert after command name */
 		memcpy(new_argv + count, *argv + 1, sizeof(char*) * *argcp);
 		new_argv[count+*argcp] = NULL;
@@ -263,6 +263,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "stripspace", cmd_stripspace },
 		{ "symbolic-ref", cmd_symbolic_ref, RUN_SETUP },
 		{ "tar-tree", cmd_tar_tree, RUN_SETUP },
+		{ "zip-tree", cmd_zip_tree, RUN_SETUP },
 		{ "unpack-objects", cmd_unpack_objects, RUN_SETUP },
 		{ "update-index", cmd_update_index, RUN_SETUP },
 		{ "update-ref", cmd_update_ref, RUN_SETUP },

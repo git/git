@@ -935,23 +935,19 @@ static unsigned long unpack_object_header(struct packed_git *p, unsigned long of
 	enum object_type *type, unsigned long *sizep)
 {
 	unsigned shift;
-	unsigned char *pack, c;
+	unsigned char c;
 	unsigned long size;
 
 	if (offset >= p->pack_size)
 		die("object offset outside of pack file");
-
-	pack =  (unsigned char *) p->pack_base + offset;
-	c = *pack++;
-	offset++;
+	c = *((unsigned char *)p->pack_base + offset++);
 	*type = (c >> 4) & 7;
 	size = c & 15;
 	shift = 4;
 	while (c & 0x80) {
 		if (offset >= p->pack_size)
 			die("object offset outside of pack file");
-		c = *pack++;
-		offset++;
+		c = *((unsigned char *)p->pack_base + offset++);
 		size += (c & 0x7f) << shift;
 		shift += 7;
 	}
@@ -1014,16 +1010,10 @@ void packed_object_info_detail(struct pack_entry *e,
 	}
 	switch (kind) {
 	case OBJ_COMMIT:
-		strcpy(type, commit_type);
-		break;
 	case OBJ_TREE:
-		strcpy(type, tree_type);
-		break;
 	case OBJ_BLOB:
-		strcpy(type, blob_type);
-		break;
 	case OBJ_TAG:
-		strcpy(type, tag_type);
+		strcpy(type, type_names[kind]);
 		break;
 	default:
 		die("corrupted pack file %s containing object of kind %d",
@@ -1054,16 +1044,10 @@ static int packed_object_info(struct pack_entry *entry,
 		unuse_packed_git(p);
 		return retval;
 	case OBJ_COMMIT:
-		strcpy(type, commit_type);
-		break;
 	case OBJ_TREE:
-		strcpy(type, tree_type);
-		break;
 	case OBJ_BLOB:
-		strcpy(type, blob_type);
-		break;
 	case OBJ_TAG:
-		strcpy(type, tag_type);
+		strcpy(type, type_names[kind]);
 		break;
 	default:
 		die("corrupted pack file %s containing object of kind %d",
@@ -1075,62 +1059,9 @@ static int packed_object_info(struct pack_entry *entry,
 	return 0;
 }
 
-static void *unpack_delta_entry(unsigned char *base_sha1,
-				unsigned long delta_size,
-				unsigned long left,
-				char *type,
-				unsigned long *sizep,
-				struct packed_git *p)
-{
-	struct pack_entry base_ent;
-	void *data, *delta_data, *result, *base;
-	unsigned long data_size, result_size, base_size;
-	z_stream stream;
-	int st;
-
-	if (left < 20)
-		die("truncated pack file");
-
-	/* The base entry _must_ be in the same pack */
-	if (!find_pack_entry_one(base_sha1, &base_ent, p))
-		die("failed to find delta-pack base object %s",
-		    sha1_to_hex(base_sha1));
-	base = unpack_entry_gently(&base_ent, type, &base_size);
-	if (!base)
-		die("failed to read delta-pack base object %s",
-		    sha1_to_hex(base_sha1));
-
-	data = base_sha1 + 20;
-	data_size = left - 20;
-	delta_data = xmalloc(delta_size);
-
-	memset(&stream, 0, sizeof(stream));
-
-	stream.next_in = data;
-	stream.avail_in = data_size;
-	stream.next_out = delta_data;
-	stream.avail_out = delta_size;
-
-	inflateInit(&stream);
-	st = inflate(&stream, Z_FINISH);
-	inflateEnd(&stream);
-	if ((st != Z_STREAM_END) || stream.total_out != delta_size)
-		die("delta data unpack failed");
-
-	result = patch_delta(base, base_size,
-			     delta_data, delta_size,
-			     &result_size);
-	if (!result)
-		die("failed to apply delta");
-	free(delta_data);
-	free(base);
-	*sizep = result_size;
-	return result;
-}
-
-static void *unpack_non_delta_entry(unsigned char *data,
-				    unsigned long size,
-				    unsigned long left)
+static void *unpack_compressed_entry(struct packed_git *p,
+				    unsigned long offset,
+				    unsigned long size)
 {
 	int st;
 	z_stream stream;
@@ -1139,8 +1070,8 @@ static void *unpack_non_delta_entry(unsigned char *data,
 	buffer = xmalloc(size + 1);
 	buffer[size] = 0;
 	memset(&stream, 0, sizeof(stream));
-	stream.next_in = data;
-	stream.avail_in = left;
+	stream.next_in = (unsigned char*)p->pack_base + offset;
+	stream.avail_in = p->pack_size - offset;
 	stream.next_out = buffer;
 	stream.avail_out = size;
 
@@ -1153,6 +1084,42 @@ static void *unpack_non_delta_entry(unsigned char *data,
 	}
 
 	return buffer;
+}
+
+static void *unpack_delta_entry(struct packed_git *p,
+				unsigned long offset,
+				unsigned long delta_size,
+				char *type,
+				unsigned long *sizep)
+{
+	struct pack_entry base_ent;
+	void *delta_data, *result, *base;
+	unsigned long result_size, base_size;
+	unsigned char* base_sha1;
+
+	if ((offset + 20) >= p->pack_size)
+		die("truncated pack file");
+
+	/* The base entry _must_ be in the same pack */
+	base_sha1 = (unsigned char*)p->pack_base + offset;
+	if (!find_pack_entry_one(base_sha1, &base_ent, p))
+		die("failed to find delta-pack base object %s",
+		    sha1_to_hex(base_sha1));
+	base = unpack_entry_gently(&base_ent, type, &base_size);
+	if (!base)
+		die("failed to read delta-pack base object %s",
+		    sha1_to_hex(base_sha1));
+
+	delta_data = unpack_compressed_entry(p, offset + 20, delta_size);
+	result = patch_delta(base, base_size,
+			     delta_data, delta_size,
+			     &result_size);
+	if (!result)
+		die("failed to apply delta");
+	free(delta_data);
+	free(base);
+	*sizep = result_size;
+	return result;
 }
 
 static void *unpack_entry(struct pack_entry *entry,
@@ -1175,36 +1142,23 @@ void *unpack_entry_gently(struct pack_entry *entry,
 			  char *type, unsigned long *sizep)
 {
 	struct packed_git *p = entry->p;
-	unsigned long offset, size, left;
-	unsigned char *pack;
+	unsigned long offset, size;
 	enum object_type kind;
-	void *retval;
 
 	offset = unpack_object_header(p, entry->offset, &kind, &size);
-	pack = (unsigned char *) p->pack_base + offset;
-	left = p->pack_size - offset;
 	switch (kind) {
 	case OBJ_DELTA:
-		retval = unpack_delta_entry(pack, size, left, type, sizep, p);
-		return retval;
+		return unpack_delta_entry(p, offset, size, type, sizep);
 	case OBJ_COMMIT:
-		strcpy(type, commit_type);
-		break;
 	case OBJ_TREE:
-		strcpy(type, tree_type);
-		break;
 	case OBJ_BLOB:
-		strcpy(type, blob_type);
-		break;
 	case OBJ_TAG:
-		strcpy(type, tag_type);
-		break;
+		strcpy(type, type_names[kind]);
+		*sizep = size;
+		return unpack_compressed_entry(p, offset, size);
 	default:
 		return NULL;
 	}
-	*sizep = size;
-	retval = unpack_non_delta_entry(pack, size, left);
-	return retval;
 }
 
 int num_packed_objects(const struct packed_git *p)
@@ -1804,7 +1758,7 @@ int read_pipe(int fd, char** return_buf, unsigned long* return_size)
 			off += iret;
 			if (off == size) {
 				size *= 2;
-				buf = realloc(buf, size);
+				buf = xrealloc(buf, size);
 			}
 		}
 	} while (iret > 0);

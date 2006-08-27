@@ -168,13 +168,13 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				int j, dst_len;
 
 				if (last - first > 0) {
-					source = realloc(source,
+					source = xrealloc(source,
 							(count + last - first)
 							* sizeof(char *));
-					destination = realloc(destination,
+					destination = xrealloc(destination,
 							(count + last - first)
 							* sizeof(char *));
-					modes = realloc(modes,
+					modes = xrealloc(modes,
 							(count + last - first)
 							* sizeof(enum update_mode));
 				}

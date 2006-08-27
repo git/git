@@ -135,7 +135,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct checkout *stat
 
 int checkout_entry(struct cache_entry *ce, struct checkout *state, char *topath)
 {
-	static char path[MAXPATHLEN+1];
+	static char path[PATH_MAX + 1];
 	struct stat st;
 	int len = state->base_dir_len;
 
@@ -172,5 +172,3 @@ int checkout_entry(struct cache_entry *ce, struct checkout *state, char *topath)
 	create_directories(path, state);
 	return write_entry(ce, path, state, 0);
 }
-
-
