@@ -1377,9 +1377,15 @@ sub git_print_page_path {
 	}
 }
 
-sub git_print_log {
+# sub git_print_log (\@;%) {
+sub git_print_log ($;%) {
 	my $log = shift;
+	my %opts = @_;
 
+	if ($opts{'-remove_title'}) {
+		# remove title, i.e. first line of log
+		shift @$log;
+	}
 	# remove leading empty lines
 	while (defined $log->[0] && $log->[0] eq "") {
 		shift @$log;
@@ -1389,6 +1395,19 @@ sub git_print_log {
 	my $signoff = 0;
 	my $empty = 0;
 	foreach my $line (@$log) {
+		if ($line =~ m/^ *(signed[ \-]off[ \-]by[ :]|acked[ \-]by[ :]|cc[ :])/i) {
+			$signoff = 1;
+			if (! $opts{'-remove_signoff'}) {
+				print "<span class=\"signoff\">" . esc_html($line) . "</span><br/>\n";
+				next;
+			} else {
+				# remove signoff lines
+				next;
+			}
+		} else {
+			$signoff = 0;
+		}
+
 		# print only one empty line
 		# do not print empty line after signoff
 		if ($line eq "") {
@@ -1397,13 +1416,13 @@ sub git_print_log {
 		} else {
 			$empty = 0;
 		}
-		if ($line =~ m/^ *(signed[ \-]off[ \-]by[ :]|acked[ \-]by[ :]|cc[ :])/i) {
-			$signoff = 1;
-			print "<span class=\"signoff\">" . esc_html($line) . "</span><br/>\n";
-		} else {
-			$signoff = 0;
-			print format_log_line_html($line) . "<br/>\n";
-		}
+
+		print format_log_line_html($line) . "<br/>\n";
+	}
+
+	if ($opts{'-final_empty_line'}) {
+		# end with single empty line
+		print "<br/>\n" unless $empty;
 	}
 }
 
@@ -1411,30 +1430,10 @@ sub git_print_simplified_log {
 	my $log = shift;
 	my $remove_title = shift;
 
-	shift @$log if $remove_title;
-	# remove leading empty lines
-	while (defined $log->[0] && $log->[0] eq "") {
-		shift @$log;
-	}
-
-	# simplify and print log
-	my $empty = 0;
-	foreach my $line (@$log) {
-		# remove signoff lines
-		if ($line =~ m/^ *(signed[ \-]off[ \-]by[ :]|acked[ \-]by[ :]|cc[ :])/i) {
-			next;
-		}
-		# print only one empty line
-		if ($line eq "") {
-			next if $empty;
-			$empty = 1;
-		} else {
-			$empty = 0;
-		}
-		print format_log_line_html($line) . "<br/>\n";
-	}
-	# end with single empty line
-	print "<br/>\n" unless $empty;
+	git_print_log($log,
+		-final_empty_line=> 1,
+		-remove_signoff => 1,
+		-remove_title => $remove_title);
 }
 
 ## ......................................................................
