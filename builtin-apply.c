@@ -1131,8 +1131,7 @@ static struct fragment *parse_binary_hunk(char **buf_p,
 	return frag;
 
  corrupt:
-	if (data)
-		free(data);
+	free(data);
 	*status_p = -1;
 	error("corrupt binary patch at line %d: %.*s",
 	      linenr-1, llen-1, buffer);
@@ -1329,8 +1328,7 @@ static void show_stats(struct patch *patch)
 		printf(" %s%-*s |%5d %.*s%.*s\n", prefix,
 		       len, name, patch->lines_added + patch->lines_deleted,
 		       add, pluses, del, minuses);
-	if (qname)
-		free(qname);
+	free(qname);
 }
 
 static int read_old_data(struct stat *st, const char *path, void *buf, unsigned long size)

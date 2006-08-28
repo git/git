@@ -93,10 +93,8 @@ static void show_commit(struct commit *commit)
 		free_commit_list(commit->parents);
 		commit->parents = NULL;
 	}
-	if (commit->buffer) {
-		free(commit->buffer);
-		commit->buffer = NULL;
-	}
+	free(commit->buffer);
+	commit->buffer = NULL;
 }
 
 static void process_blob(struct blob *blob,

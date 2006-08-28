@@ -348,10 +348,8 @@ void unlock_ref(struct ref_lock *lock)
 		if (lock->lk)
 			rollback_lock_file(lock->lk);
 	}
-	if (lock->ref_file)
-		free(lock->ref_file);
-	if (lock->log_file)
-		free(lock->log_file);
+	free(lock->ref_file);
+	free(lock->log_file);
 	free(lock);
 }
 

@@ -361,8 +361,7 @@ int git_config(config_fn_t fn)
 	}
 
 	ret += git_config_from_file(fn, filename);
-	if (repo_config)
-		free(repo_config);
+	free(repo_config);
 	return ret;
 }
 
@@ -734,8 +733,7 @@ int git_config_set_multivar(const char* key, const char* value,
 out_free:
 	if (0 <= fd)
 		close(fd);
-	if (config_filename)
-		free(config_filename);
+	free(config_filename);
 	if (lock_file) {
 		unlink(lock_file);
 		free(lock_file);
