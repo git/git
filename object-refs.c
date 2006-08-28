@@ -30,7 +30,7 @@ static void grow_refs_hash(void)
 	int new_hash_size = (refs_hash_size + 1000) * 3 / 2;
 	struct object_refs **new_hash;
 
-	new_hash = calloc(new_hash_size, sizeof(struct object_refs *));
+	new_hash = xcalloc(new_hash_size, sizeof(struct object_refs *));
 	for (i = 0; i < refs_hash_size; i++) {
 		struct object_refs *ref = refs_hash[i];
 		if (!ref)
