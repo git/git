@@ -132,7 +132,7 @@ struct mark_set
 struct last_object
 {
 	void *data;
-	unsigned int len;
+	unsigned long len;
 	unsigned int depth;
 	unsigned char sha1[20];
 };
@@ -157,14 +157,18 @@ struct tree_entry
 {
 	struct tree_content *tree;
 	struct atom_str* name;
-	unsigned int mode;
-	unsigned char sha1[20];
+	struct tree_entry_ms
+	{
+		unsigned int mode;
+		unsigned char sha1[20];
+	} versions[2];
 };
 
 struct tree_content
 {
 	unsigned int entry_capacity; /* must match avail_tree_content */
 	unsigned int entry_count;
+	unsigned int delta_depth;
 	struct tree_entry *entries[FLEX_ARRAY]; /* more */
 };
 
@@ -203,6 +207,7 @@ static unsigned long duplicate_count;
 static unsigned long marks_set_count;
 static unsigned long object_count_by_type[9];
 static unsigned long duplicate_count_by_type[9];
+static unsigned long delta_count_by_type[9];
 
 /* Memory pools */
 static size_t mem_pool_alloc = 2*1024*1024 - sizeof(struct mem_pool);
@@ -224,7 +229,7 @@ static unsigned long pack_mlen = 128*1024*1024;
 static unsigned long page_size;
 
 /* Table of objects we've written. */
-static unsigned int object_entry_alloc = 1000;
+static unsigned int object_entry_alloc = 5000;
 static struct object_entry_pool *blocks;
 static struct object_entry *object_table[1 << 16];
 static struct mark_set *marks;
@@ -486,6 +491,7 @@ static struct tree_content* new_tree_content(unsigned int cnt)
 
 	t = (struct tree_content*)f;
 	t->entry_count = 0;
+	t->delta_depth = 0;
 	return t;
 }
 
@@ -512,6 +518,7 @@ static struct tree_content* grow_tree_content(
 {
 	struct tree_content *r = new_tree_content(t->entry_count + amt);
 	r->entry_count = t->entry_count;
+	r->delta_depth = t->delta_depth;
 	memcpy(r->entries,t->entries,t->entry_count*sizeof(t->entries[0]));
 	release_tree_content(t);
 	return r;
@@ -642,6 +649,7 @@ static int store_object(
 	deflateInit(&s, zlib_compression_level);
 
 	if (delta) {
+		delta_count_by_type[type]++;
 		last->depth++;
 		s.next_in = delta;
 		s.avail_in = deltalen;
@@ -755,11 +763,14 @@ static void *unpack_non_delta_entry(unsigned long o, unsigned long sz)
 	return result;
 }
 
-static void *unpack_entry(unsigned long offset, unsigned long *sizep);
+static void *unpack_entry(unsigned long offset,
+	unsigned long *sizep,
+	unsigned int *delta_depth);
 
 static void *unpack_delta_entry(unsigned long offset,
 	unsigned long delta_size,
-	unsigned long *sizep)
+	unsigned long *sizep,
+	unsigned int *delta_depth)
 {
 	struct object_entry *base_oe;
 	unsigned char *base_sha1;
@@ -770,7 +781,7 @@ static void *unpack_delta_entry(unsigned long offset,
 	base_oe = find_object(base_sha1);
 	if (!base_oe)
 		die("I'm broken; I can't find a base I know must be here.");
-	base = unpack_entry(base_oe->offset, &base_size);
+	base = unpack_entry(base_oe->offset, &base_size, delta_depth);
 	delta_data = unpack_non_delta_entry(offset + 20, delta_size);
 	result = patch_delta(base, base_size,
 			     delta_data, delta_size,
@@ -780,10 +791,13 @@ static void *unpack_delta_entry(unsigned long offset,
 	free(delta_data);
 	free(base);
 	*sizep = result_size;
+	(*delta_depth)++;
 	return result;
 }
 
-static void *unpack_entry(unsigned long offset, unsigned long *sizep)
+static void *unpack_entry(unsigned long offset,
+	unsigned long *sizep,
+	unsigned int *delta_depth)
 {
 	unsigned long size;
 	enum object_type kind;
@@ -791,12 +805,13 @@ static void *unpack_entry(unsigned long offset, unsigned long *sizep)
 	offset = unpack_object_header(offset, &kind, &size);
 	switch (kind) {
 	case OBJ_DELTA:
-		return unpack_delta_entry(offset, size, sizep);
+		return unpack_delta_entry(offset, size, sizep, delta_depth);
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
 		*sizep = size;
+		*delta_depth = 0;
 		return unpack_non_delta_entry(offset, size);
 	default:
 		die("I created an object I can't read!");
@@ -819,6 +834,7 @@ static const char *get_mode(const char *str, unsigned int *modep)
 
 static void load_tree(struct tree_entry *root)
 {
+	unsigned char* sha1 = root->versions[1].sha1;
 	struct object_entry *myoe;
 	struct tree_content *t;
 	unsigned long size;
@@ -826,19 +842,19 @@ static void load_tree(struct tree_entry *root)
 	const char *c;
 
 	root->tree = t = new_tree_content(8);
-	if (is_null_sha1(root->sha1))
+	if (is_null_sha1(sha1))
 		return;
 
-	myoe = find_object(root->sha1);
+	myoe = find_object(sha1);
 	if (myoe) {
 		if (myoe->type != OBJ_TREE)
-			die("Not a tree: %s", sha1_to_hex(root->sha1));
-		buf = unpack_entry(myoe->offset, &size);
+			die("Not a tree: %s", sha1_to_hex(sha1));
+		buf = unpack_entry(myoe->offset, &size, &t->delta_depth);
 	} else {
 		char type[20];
-		buf = read_sha1_file(root->sha1, type, &size);
+		buf = read_sha1_file(sha1, type, &size);
 		if (!buf || strcmp(type, tree_type))
-			die("Can't load tree %s", sha1_to_hex(root->sha1));
+			die("Can't load tree %s", sha1_to_hex(sha1));
 	}
 
 	c = buf;
@@ -850,56 +866,116 @@ static void load_tree(struct tree_entry *root)
 		t->entries[t->entry_count++] = e;
 
 		e->tree = NULL;
-		c = get_mode(c, &e->mode);
+		c = get_mode(c, &e->versions[1].mode);
 		if (!c)
-			die("Corrupt mode in %s", sha1_to_hex(root->sha1));
+			die("Corrupt mode in %s", sha1_to_hex(sha1));
+		e->versions[0].mode = e->versions[1].mode;
 		e->name = to_atom(c, strlen(c));
 		c += e->name->str_len + 1;
-		hashcpy(e->sha1, c);
+		hashcpy(e->versions[0].sha1, (unsigned char*)c);
+		hashcpy(e->versions[1].sha1, (unsigned char*)c);
 		c += 20;
 	}
 	free(buf);
 }
 
-static int tecmp (const void *_a, const void *_b)
+static int tecmp0 (const void *_a, const void *_b)
 {
 	struct tree_entry *a = *((struct tree_entry**)_a);
 	struct tree_entry *b = *((struct tree_entry**)_b);
 	return base_name_compare(
-		a->name->str_dat, a->name->str_len, a->mode,
-		b->name->str_dat, b->name->str_len, b->mode);
+		a->name->str_dat, a->name->str_len, a->versions[0].mode,
+		b->name->str_dat, b->name->str_len, b->versions[0].mode);
+}
+
+static int tecmp1 (const void *_a, const void *_b)
+{
+	struct tree_entry *a = *((struct tree_entry**)_a);
+	struct tree_entry *b = *((struct tree_entry**)_b);
+	return base_name_compare(
+		a->name->str_dat, a->name->str_len, a->versions[1].mode,
+		b->name->str_dat, b->name->str_len, b->versions[1].mode);
+}
+
+static void* mktree(struct tree_content *t, int v, unsigned long *szp)
+{
+	size_t maxlen = 0;
+	unsigned int i;
+	char *buf, *c;
+
+	if (!v)
+		qsort(t->entries,t->entry_count,sizeof(t->entries[0]),tecmp0);
+	else
+		qsort(t->entries,t->entry_count,sizeof(t->entries[0]),tecmp1);
+
+	for (i = 0; i < t->entry_count; i++) {
+		if (t->entries[i]->versions[v].mode)
+			maxlen += t->entries[i]->name->str_len + 34;
+	}
+
+	buf = c = xmalloc(maxlen);
+	for (i = 0; i < t->entry_count; i++) {
+		struct tree_entry *e = t->entries[i];
+		if (!e->versions[v].mode)
+			continue;
+		c += sprintf(c, "%o", e->versions[v].mode);
+		*c++ = ' ';
+		strcpy(c, e->name->str_dat);
+		c += e->name->str_len + 1;
+		hashcpy((unsigned char*)c, e->versions[v].sha1);
+		c += 20;
+	}
+
+	*szp = c - buf;
+	return buf;
 }
 
 static void store_tree(struct tree_entry *root)
 {
 	struct tree_content *t = root->tree;
-	unsigned int i;
-	size_t maxlen;
-	char *buf, *c;
+	unsigned int i, j, del;
+	unsigned long vers1len;
+	void **vers1dat;
+	struct last_object lo;
 
-	if (!is_null_sha1(root->sha1))
+	if (!is_null_sha1(root->versions[1].sha1))
 		return;
 
-	maxlen = 0;
 	for (i = 0; i < t->entry_count; i++) {
-		maxlen += t->entries[i]->name->str_len + 34;
 		if (t->entries[i]->tree)
 			store_tree(t->entries[i]);
 	}
 
-	qsort(t->entries, t->entry_count, sizeof(t->entries[0]), tecmp);
-	buf = c = xmalloc(maxlen);
-	for (i = 0; i < t->entry_count; i++) {
-		struct tree_entry *e = t->entries[i];
-		c += sprintf(c, "%o", e->mode);
-		*c++ = ' ';
-		strcpy(c, e->name->str_dat);
-		c += e->name->str_len + 1;
-		hashcpy(c, e->sha1);
-		c += 20;
+	if (is_null_sha1(root->versions[0].sha1)
+			|| !find_object(root->versions[0].sha1)) {
+		lo.data = NULL;
+		lo.depth = 0;
+	} else {
+		lo.data = mktree(t, 0, &lo.len);
+		lo.depth = t->delta_depth;
+		hashcpy(lo.sha1, root->versions[0].sha1);
 	}
-	store_object(OBJ_TREE, buf, c - buf, NULL, root->sha1, 0);
-	free(buf);
+	vers1dat = mktree(t, 1, &vers1len);
+
+	store_object(OBJ_TREE, vers1dat, vers1len,
+		&lo, root->versions[1].sha1, 0);
+	/* note: lo.dat (if created) was freed by store_object */
+	free(vers1dat);
+
+	t->delta_depth = lo.depth;
+	hashcpy(root->versions[0].sha1, root->versions[1].sha1);
+	for (i = 0, j = 0, del = 0; i < t->entry_count; i++) {
+		struct tree_entry *e = t->entries[i];
+		if (e->versions[1].mode) {
+			e->versions[0].mode = e->versions[1].mode;
+			hashcpy(e->versions[0].sha1, e->versions[1].sha1);
+			t->entries[j++] = e;
+		} else {
+			release_tree_entry(e);
+			del++;
+		}
+	}
+	t->entry_count -= del;
 }
 
 static int tree_content_set(
@@ -923,25 +999,26 @@ static int tree_content_set(
 		e = t->entries[i];
 		if (e->name->str_len == n && !strncmp(p, e->name->str_dat, n)) {
 			if (!slash1) {
-				if (e->mode == mode && !hashcmp(e->sha1, sha1))
+				if (e->versions[1].mode == mode
+						&& !hashcmp(e->versions[1].sha1, sha1))
 					return 0;
-				e->mode = mode;
-				hashcpy(e->sha1, sha1);
+				e->versions[1].mode = mode;
+				hashcpy(e->versions[1].sha1, sha1);
 				if (e->tree) {
 					release_tree_content_recursive(e->tree);
 					e->tree = NULL;
 				}
-				hashclr(root->sha1);
+				hashclr(root->versions[1].sha1);
 				return 1;
 			}
-			if (!S_ISDIR(e->mode)) {
+			if (!S_ISDIR(e->versions[1].mode)) {
 				e->tree = new_tree_content(8);
-				e->mode = S_IFDIR;
+				e->versions[1].mode = S_IFDIR;
 			}
 			if (!e->tree)
 				load_tree(e);
 			if (tree_content_set(e, slash1 + 1, sha1, mode)) {
-				hashclr(root->sha1);
+				hashclr(root->versions[1].sha1);
 				return 1;
 			}
 			return 0;
@@ -952,17 +1029,19 @@ static int tree_content_set(
 		root->tree = t = grow_tree_content(t, 8);
 	e = new_tree_entry();
 	e->name = to_atom(p, n);
+	e->versions[0].mode = 0;
+	hashclr(e->versions[0].sha1);
 	t->entries[t->entry_count++] = e;
 	if (slash1) {
 		e->tree = new_tree_content(8);
-		e->mode = S_IFDIR;
+		e->versions[1].mode = S_IFDIR;
 		tree_content_set(e, slash1 + 1, sha1, mode);
 	} else {
 		e->tree = NULL;
-		e->mode = mode;
-		hashcpy(e->sha1, sha1);
+		e->versions[1].mode = mode;
+		hashcpy(e->versions[1].sha1, sha1);
 	}
-	hashclr(root->sha1);
+	hashclr(root->versions[1].sha1);
 	return 1;
 }
 
@@ -982,14 +1061,14 @@ static int tree_content_remove(struct tree_entry *root, const char *p)
 	for (i = 0; i < t->entry_count; i++) {
 		e = t->entries[i];
 		if (e->name->str_len == n && !strncmp(p, e->name->str_dat, n)) {
-			if (!slash1 || !S_ISDIR(e->mode))
+			if (!slash1 || !S_ISDIR(e->versions[1].mode))
 				goto del_entry;
 			if (!e->tree)
 				load_tree(e);
 			if (tree_content_remove(e, slash1 + 1)) {
 				if (!e->tree->entry_count)
 					goto del_entry;
-				hashclr(root->sha1);
+				hashclr(root->versions[1].sha1);
 				return 1;
 			}
 			return 0;
@@ -998,11 +1077,13 @@ static int tree_content_remove(struct tree_entry *root, const char *p)
 	return 0;
 
 del_entry:
-	for (i++; i < t->entry_count; i++)
-		t->entries[i-1] = t->entries[i];
-	t->entry_count--;
-	release_tree_entry(e);
-	hashclr(root->sha1);
+	if (e->tree) {
+		release_tree_content_recursive(e->tree);
+		e->tree = NULL;
+	}
+	e->versions[1].mode = 0;
+	hashclr(e->versions[1].sha1);
+	hashclr(root->versions[1].sha1);
 	return 1;
 }
 
@@ -1359,27 +1440,33 @@ static void cmd_from(struct branch *b)
 	if (b == s)
 		die("Can't create a branch from itself: %s", b->name);
 	else if (s) {
+		unsigned char *t = s->branch_tree.versions[1].sha1;
 		hashcpy(b->sha1, s->sha1);
-		hashcpy(b->branch_tree.sha1, s->branch_tree.sha1);
+		hashcpy(b->branch_tree.versions[0].sha1, t);
+		hashcpy(b->branch_tree.versions[1].sha1, t);
 	} else if (*from == ':') {
 		unsigned long idnum = strtoul(from + 1, NULL, 10);
 		struct object_entry *oe = find_mark(idnum);
 		unsigned long size;
+		unsigned int depth;
 		char *buf;
 		if (oe->type != OBJ_COMMIT)
 			die("Mark :%lu not a commit", idnum);
 		hashcpy(b->sha1, oe->sha1);
-		buf = unpack_entry(oe->offset, &size);
+		buf = unpack_entry(oe->offset, &size, &depth);
 		if (!buf || size < 46)
 			die("Not a valid commit: %s", from);
 		if (memcmp("tree ", buf, 5)
-			|| get_sha1_hex(buf + 5, b->branch_tree.sha1))
+			|| get_sha1_hex(buf + 5, b->branch_tree.versions[1].sha1))
 			die("The commit %s is corrupt", sha1_to_hex(b->sha1));
 		free(buf);
+		hashcpy(b->branch_tree.versions[0].sha1,
+			b->branch_tree.versions[1].sha1);
 	} else if (!get_sha1(from, b->sha1)) {
-		if (is_null_sha1(b->sha1))
-			hashclr(b->branch_tree.sha1);
-		else {
+		if (is_null_sha1(b->sha1)) {
+			hashclr(b->branch_tree.versions[0].sha1);
+			hashclr(b->branch_tree.versions[1].sha1);
+		} else {
 			unsigned long size;
 			char *buf;
 
@@ -1388,9 +1475,11 @@ static void cmd_from(struct branch *b)
 			if (!buf || size < 46)
 				die("Not a valid commit: %s", from);
 			if (memcmp("tree ", buf, 5)
-				|| get_sha1_hex(buf + 5, b->branch_tree.sha1))
+				|| get_sha1_hex(buf + 5, b->branch_tree.versions[1].sha1))
 				die("The commit %s is corrupt", sha1_to_hex(b->sha1));
 			free(buf);
+			hashcpy(b->branch_tree.versions[0].sha1,
+				b->branch_tree.versions[1].sha1);
 		}
 	} else
 		die("Invalid ref name or SHA1 expression: %s", from);
@@ -1466,7 +1555,8 @@ static void cmd_new_commit()
 			? strlen(author) + strlen(committer)
 			: 2 * strlen(committer)));
 	sp = body;
-	sp += sprintf(sp, "tree %s\n", sha1_to_hex(b->branch_tree.sha1));
+	sp += sprintf(sp, "tree %s\n",
+		sha1_to_hex(b->branch_tree.versions[1].sha1));
 	if (!is_null_sha1(b->sha1))
 		sp += sprintf(sp, "parent %s\n", sha1_to_hex(b->sha1));
 	if (author)
@@ -1722,10 +1812,10 @@ int main(int argc, const char **argv)
 	fprintf(stderr, "---------------------------------------------------\n");
 	fprintf(stderr, "Alloc'd objects: %10lu (%10lu overflow  )\n", alloc_count, alloc_count - est_obj_cnt);
 	fprintf(stderr, "Total objects:   %10lu (%10lu duplicates)\n", object_count, duplicate_count);
-	fprintf(stderr, "      blobs  :   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB]);
-	fprintf(stderr, "      trees  :   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE]);
-	fprintf(stderr, "      commits:   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT]);
-	fprintf(stderr, "      tags   :   %10lu (%10lu duplicates)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG]);
+	fprintf(stderr, "      blobs  :   %10lu (%10lu duplicates %10lu deltas)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB], delta_count_by_type[OBJ_BLOB]);
+	fprintf(stderr, "      trees  :   %10lu (%10lu duplicates %10lu deltas)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE], delta_count_by_type[OBJ_TREE]);
+	fprintf(stderr, "      commits:   %10lu (%10lu duplicates %10lu deltas)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT], delta_count_by_type[OBJ_COMMIT]);
+	fprintf(stderr, "      tags   :   %10lu (%10lu duplicates %10lu deltas)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG], delta_count_by_type[OBJ_TAG]);
 	fprintf(stderr, "Total branches:  %10lu (%10lu loads     )\n", branch_count, branch_load_count);
 	fprintf(stderr, "      marks:     %10u (%10lu unique    )\n", (1 << marks->shift) * 1024, marks_set_count);
 	fprintf(stderr, "      atoms:     %10u\n", atom_cnt);
