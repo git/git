@@ -1715,7 +1715,8 @@ int main(int argc, const char **argv)
 	dump_branches();
 	dump_tags();
 	dump_marks();
-	fclose(branch_log);
+	if (branch_log)
+		fclose(branch_log);
 
 	fprintf(stderr, "%s statistics:\n", argv[0]);
 	fprintf(stderr, "---------------------------------------------------\n");
