@@ -62,6 +62,7 @@ git-merge-tree
 git-merge-octopus
 git-merge-one-file
 git-merge-ours
+git-merge-recur
 git-merge-recursive
 git-merge-resolve
 git-merge-stupid

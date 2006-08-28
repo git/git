@@ -196,6 +196,7 @@ PROGRAMS = \
 	git-upload-pack$X git-verify-pack$X \
 	git-pack-redundant$X git-var$X \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X \
+	git-merge-recur$X \
 	$(EXTRA_PROGRAMS)
 
 # Empty...
@@ -711,6 +712,11 @@ git-http-push$X: revision.o http.o http-push.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
+merge-recursive.o path-list.o: path-list.h
+git-merge-recur$X: merge-recursive.o path-list.o $(GITLIBS)
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
+		$(LIBS)
+
 $(LIB_OBJS) $(BUILTIN_OBJS): $(LIB_H)
 $(patsubst git-%$X,%.o,$(PROGRAMS)): $(LIB_H) $(wildcard */*.h)
 $(DIFF_OBJS): diffcore.h
@@ -870,7 +876,7 @@ check-docs::
 	do \
 		case "$$v" in \
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
-		git-merge-resolve | git-merge-stupid | \
+		git-merge-resolve | git-merge-stupid | git-merge-recur | \
 		git-ssh-pull | git-ssh-push ) continue ;; \
 		esac ; \
 		test -f "Documentation/$$v.txt" || \

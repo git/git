@@ -842,6 +842,23 @@ unmap:
 	die("index file corrupt");
 }
 
+int discard_cache()
+{
+	int ret;
+
+	active_nr = active_cache_changed = 0;
+	index_file_timestamp = 0;
+	cache_tree_free(&active_cache_tree);
+	if (cache_mmap == NULL)
+		return 0;
+	ret = munmap(cache_mmap, cache_mmap_size);
+	cache_mmap = NULL;
+	cache_mmap_size = 0;
+
+	/* no need to throw away allocated active_cache */
+	return ret;
+}
+
 #define WRITE_BUFFER_SIZE 8192
 static unsigned char write_buffer[WRITE_BUFFER_SIZE];
 static unsigned long write_buffer_len;
