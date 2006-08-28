@@ -277,7 +277,7 @@ static struct object_entry* new_object(unsigned char *sha1)
 		alloc_objects(object_entry_alloc);
 
 	e = blocks->next_free++;
-	memcpy(e->sha1, sha1, sizeof(e->sha1));
+	hashcpy(e->sha1, sha1);
 	return e;
 }
 
@@ -286,7 +286,7 @@ static struct object_entry* find_object(unsigned char *sha1)
 	unsigned int h = sha1[0] << 8 | sha1[1];
 	struct object_entry *e;
 	for (e = object_table[h]; e; e = e->next)
-		if (!memcmp(sha1, e->sha1, sizeof(e->sha1)))
+		if (!hashcmp(sha1, e->sha1))
 			return e;
 	return NULL;
 }
@@ -298,7 +298,7 @@ static struct object_entry* insert_object(unsigned char *sha1)
 	struct object_entry *p = NULL;
 
 	while (e) {
-		if (!memcmp(sha1, e->sha1, sizeof(e->sha1)))
+		if (!hashcmp(sha1, e->sha1))
 			return e;
 		p = e;
 		e = e->next;
@@ -616,7 +616,7 @@ static int store_object(
 	SHA1_Update(&c, dat, datlen);
 	SHA1_Final(sha1, &c);
 	if (sha1out)
-		memcpy(sha1out, sha1, sizeof(sha1));
+		hashcpy(sha1out, sha1);
 
 	e = insert_object(sha1);
 	if (mark)
@@ -676,7 +676,7 @@ static int store_object(
 			free(last->data);
 		last->data = dat;
 		last->len = datlen;
-		memcpy(last->sha1, sha1, sizeof(sha1));
+		hashcpy(last->sha1, sha1);
 	}
 	return 0;
 }
@@ -826,7 +826,7 @@ static void load_tree(struct tree_entry *root)
 	const char *c;
 
 	root->tree = t = new_tree_content(8);
-	if (!memcmp(root->sha1, null_sha1, 20))
+	if (is_null_sha1(root->sha1))
 		return;
 
 	myoe = find_object(root->sha1);
@@ -855,7 +855,7 @@ static void load_tree(struct tree_entry *root)
 			die("Corrupt mode in %s", sha1_to_hex(root->sha1));
 		e->name = to_atom(c, strlen(c));
 		c += e->name->str_len + 1;
-		memcpy(e->sha1, c, sizeof(e->sha1));
+		hashcpy(e->sha1, c);
 		c += 20;
 	}
 	free(buf);
@@ -877,7 +877,7 @@ static void store_tree(struct tree_entry *root)
 	size_t maxlen;
 	char *buf, *c;
 
-	if (memcmp(root->sha1, null_sha1, 20))
+	if (!is_null_sha1(root->sha1))
 		return;
 
 	maxlen = 0;
@@ -895,7 +895,7 @@ static void store_tree(struct tree_entry *root)
 		*c++ = ' ';
 		strcpy(c, e->name->str_dat);
 		c += e->name->str_len + 1;
-		memcpy(c, e->sha1, 20);
+		hashcpy(c, e->sha1);
 		c += 20;
 	}
 	store_object(OBJ_TREE, buf, c - buf, NULL, root->sha1, 0);
@@ -923,15 +923,15 @@ static int tree_content_set(
 		e = t->entries[i];
 		if (e->name->str_len == n && !strncmp(p, e->name->str_dat, n)) {
 			if (!slash1) {
-				if (e->mode == mode && !memcmp(e->sha1, sha1, 20))
+				if (e->mode == mode && !hashcmp(e->sha1, sha1))
 					return 0;
 				e->mode = mode;
-				memcpy(e->sha1, sha1, 20);
+				hashcpy(e->sha1, sha1);
 				if (e->tree) {
 					release_tree_content_recursive(e->tree);
 					e->tree = NULL;
 				}
-				memcpy(root->sha1, null_sha1, 20);
+				hashclr(root->sha1);
 				return 1;
 			}
 			if (!S_ISDIR(e->mode)) {
@@ -941,7 +941,7 @@ static int tree_content_set(
 			if (!e->tree)
 				load_tree(e);
 			if (tree_content_set(e, slash1 + 1, sha1, mode)) {
-				memcpy(root->sha1, null_sha1, 20);
+				hashclr(root->sha1);
 				return 1;
 			}
 			return 0;
@@ -960,9 +960,9 @@ static int tree_content_set(
 	} else {
 		e->tree = NULL;
 		e->mode = mode;
-		memcpy(e->sha1, sha1, 20);
+		hashcpy(e->sha1, sha1);
 	}
-	memcpy(root->sha1, null_sha1, 20);
+	hashclr(root->sha1);
 	return 1;
 }
 
@@ -989,7 +989,7 @@ static int tree_content_remove(struct tree_entry *root, const char *p)
 			if (tree_content_remove(e, slash1 + 1)) {
 				if (!e->tree->entry_count)
 					goto del_entry;
-				memcpy(root->sha1, null_sha1, 20);
+				hashclr(root->sha1);
 				return 1;
 			}
 			return 0;
@@ -1002,7 +1002,7 @@ del_entry:
 		t->entries[i-1] = t->entries[i];
 	t->entry_count--;
 	release_tree_entry(e);
-	memcpy(root->sha1, null_sha1, 20);
+	hashclr(root->sha1);
 	return 1;
 }
 
@@ -1054,7 +1054,7 @@ static int oecmp (const void *_a, const void *_b)
 {
 	struct object_entry *a = *((struct object_entry**)_a);
 	struct object_entry *b = *((struct object_entry**)_b);
-	return memcmp(a->sha1, b->sha1, sizeof(a->sha1));
+	return hashcmp(a->sha1, b->sha1);
 }
 
 static void write_index(const char *idx_name)
@@ -1359,8 +1359,8 @@ static void cmd_from(struct branch *b)
 	if (b == s)
 		die("Can't create a branch from itself: %s", b->name);
 	else if (s) {
-		memcpy(b->sha1, s->sha1, 20);
-		memcpy(b->branch_tree.sha1, s->branch_tree.sha1, 20);
+		hashcpy(b->sha1, s->sha1);
+		hashcpy(b->branch_tree.sha1, s->branch_tree.sha1);
 	} else if (*from == ':') {
 		unsigned long idnum = strtoul(from + 1, NULL, 10);
 		struct object_entry *oe = find_mark(idnum);
@@ -1368,7 +1368,7 @@ static void cmd_from(struct branch *b)
 		char *buf;
 		if (oe->type != OBJ_COMMIT)
 			die("Mark :%lu not a commit", idnum);
-		memcpy(b->sha1, oe->sha1, 20);
+		hashcpy(b->sha1, oe->sha1);
 		buf = unpack_entry(oe->offset, &size);
 		if (!buf || size < 46)
 			die("Not a valid commit: %s", from);
@@ -1377,8 +1377,8 @@ static void cmd_from(struct branch *b)
 			die("The commit %s is corrupt", sha1_to_hex(b->sha1));
 		free(buf);
 	} else if (!get_sha1(from, b->sha1)) {
-		if (!memcmp(b->sha1, null_sha1, 20))
-			memcpy(b->branch_tree.sha1, null_sha1, 20);
+		if (is_null_sha1(b->sha1))
+			hashclr(b->branch_tree.sha1);
 		else {
 			unsigned long size;
 			char *buf;
@@ -1467,7 +1467,7 @@ static void cmd_new_commit()
 			: 2 * strlen(committer)));
 	sp = body;
 	sp += sprintf(sp, "tree %s\n", sha1_to_hex(b->branch_tree.sha1));
-	if (memcmp(b->sha1, null_sha1, 20))
+	if (!is_null_sha1(b->sha1))
 		sp += sprintf(sp, "parent %s\n", sha1_to_hex(b->sha1));
 	if (author)
 		sp += sprintf(sp, "%s\n", author);
@@ -1547,13 +1547,13 @@ static void cmd_new_tag()
 
 	s = lookup_branch(from);
 	if (s) {
-		memcpy(sha1, s->sha1, 20);
+		hashcpy(sha1, s->sha1);
 	} else if (*from == ':') {
 		from_mark = strtoul(from + 1, NULL, 10);
 		struct object_entry *oe = find_mark(from_mark);
 		if (oe->type != OBJ_COMMIT)
 			die("Mark :%lu not a commit", from_mark);
-		memcpy(sha1, oe->sha1, 20);
+		hashcpy(sha1, oe->sha1);
 	} else if (!get_sha1(from, sha1)) {
 		unsigned long size;
 		char *buf;
