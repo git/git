@@ -134,6 +134,7 @@ struct last_object
 	void *data;
 	unsigned long len;
 	unsigned int depth;
+	int no_free;
 	unsigned char sha1[20];
 };
 
@@ -195,6 +196,12 @@ struct tag
 	unsigned char sha1[20];
 };
 
+struct dbuf
+{
+	void *buffer;
+	size_t capacity;
+};
+
 
 /* Stats and misc. counters */
 static unsigned long max_depth = 10;
@@ -243,6 +250,8 @@ static unsigned int tree_entry_alloc = 1000;
 static void *avail_tree_entry;
 static unsigned int avail_tree_table_sz = 100;
 static struct avail_tree_content **avail_tree_table;
+static struct dbuf old_tree;
+static struct dbuf new_tree;
 
 /* Branch data */
 static unsigned long max_active_branches = 5;
@@ -680,7 +689,7 @@ static int store_object(
 	if (delta)
 		free(delta);
 	if (last) {
-		if (last->data)
+		if (last->data && !last->no_free)
 			free(last->data);
 		last->data = dat;
 		last->len = datlen;
@@ -897,11 +906,14 @@ static int tecmp1 (const void *_a, const void *_b)
 		b->name->str_dat, b->name->str_len, b->versions[1].mode);
 }
 
-static void* mktree(struct tree_content *t, int v, unsigned long *szp)
+static void mktree(struct tree_content *t,
+	int v,
+	unsigned long *szp,
+	struct dbuf *b)
 {
 	size_t maxlen = 0;
 	unsigned int i;
-	char *buf, *c;
+	char *c;
 
 	if (!v)
 		qsort(t->entries,t->entry_count,sizeof(t->entries[0]),tecmp0);
@@ -913,7 +925,16 @@ static void* mktree(struct tree_content *t, int v, unsigned long *szp)
 			maxlen += t->entries[i]->name->str_len + 34;
 	}
 
-	buf = c = xmalloc(maxlen);
+	if (b->buffer) {
+		if (b->capacity < maxlen)
+			b->capacity = ((maxlen / 1024) + 1) * 1024;
+		b->buffer = xrealloc(b->buffer, b->capacity);
+	} else {
+		b->capacity = ((maxlen / 1024) + 1) * 1024;
+		b->buffer = xmalloc(b->capacity);
+	}
+
+	c = b->buffer;
 	for (i = 0; i < t->entry_count; i++) {
 		struct tree_entry *e = t->entries[i];
 		if (!e->versions[v].mode)
@@ -925,17 +946,14 @@ static void* mktree(struct tree_content *t, int v, unsigned long *szp)
 		hashcpy((unsigned char*)c, e->versions[v].sha1);
 		c += 20;
 	}
-
-	*szp = c - buf;
-	return buf;
+	*szp = c - (char*)b->buffer;
 }
 
 static void store_tree(struct tree_entry *root)
 {
 	struct tree_content *t = root->tree;
 	unsigned int i, j, del;
-	unsigned long vers1len;
-	void **vers1dat;
+	unsigned long new_len;
 	struct last_object lo;
 
 	if (!is_null_sha1(root->versions[1].sha1))
@@ -951,16 +969,16 @@ static void store_tree(struct tree_entry *root)
 		lo.data = NULL;
 		lo.depth = 0;
 	} else {
-		lo.data = mktree(t, 0, &lo.len);
+		mktree(t, 0, &lo.len, &old_tree);
+		lo.data = old_tree.buffer;
 		lo.depth = t->delta_depth;
+		lo.no_free = 1;
 		hashcpy(lo.sha1, root->versions[0].sha1);
 	}
-	vers1dat = mktree(t, 1, &vers1len);
+	mktree(t, 1, &new_len, &new_tree);
 
-	store_object(OBJ_TREE, vers1dat, vers1len,
+	store_object(OBJ_TREE, new_tree.buffer, new_len,
 		&lo, root->versions[1].sha1, 0);
-	/* note: lo.dat (if created) was freed by store_object */
-	free(vers1dat);
 
 	t->delta_depth = lo.depth;
 	hashcpy(root->versions[0].sha1, root->versions[1].sha1);
