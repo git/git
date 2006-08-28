@@ -267,6 +267,7 @@ static struct tag *last_tag;
 /* Input stream parsing */
 static struct strbuf command_buf;
 static unsigned long next_mark;
+static struct dbuf new_data;
 static FILE* branch_log;
 
 
@@ -379,6 +380,17 @@ static char* pool_strdup(const char *s)
 	char *r = pool_alloc(strlen(s) + 1);
 	strcpy(r, s);
 	return r;
+}
+
+static void size_dbuf(struct dbuf *b, size_t maxlen)
+{
+	if (b->buffer) {
+		if (b->capacity >= maxlen)
+			return;
+		free(b->buffer);
+	}
+	b->capacity = ((maxlen / 1024) + 1) * 1024;
+	b->buffer = xmalloc(b->capacity);
 }
 
 static void insert_mark(unsigned long idnum, struct object_entry *oe)
@@ -925,15 +937,7 @@ static void mktree(struct tree_content *t,
 			maxlen += t->entries[i]->name->str_len + 34;
 	}
 
-	if (b->buffer) {
-		if (b->capacity < maxlen)
-			b->capacity = ((maxlen / 1024) + 1) * 1024;
-		b->buffer = xrealloc(b->buffer, b->capacity);
-	} else {
-		b->capacity = ((maxlen / 1024) + 1) * 1024;
-		b->buffer = xmalloc(b->capacity);
-	}
-
+	size_dbuf(b, maxlen);
 	c = b->buffer;
 	for (i = 0; i < t->entry_count; i++) {
 		struct tree_entry *e = t->entries[i];
@@ -1515,7 +1519,6 @@ static void cmd_new_commit()
 	char *sp;
 	char *author = NULL;
 	char *committer = NULL;
-	char *body;
 
 	/* Obtain the branch name from the rest of our command */
 	sp = strchr(command_buf.buf, ' ') + 1;
@@ -1568,11 +1571,11 @@ static void cmd_new_commit()
 
 	/* build the tree and the commit */
 	store_tree(&b->branch_tree);
-	body = xmalloc(97 + msglen
+	size_dbuf(&new_data, 97 + msglen
 		+ (author
 			? strlen(author) + strlen(committer)
 			: 2 * strlen(committer)));
-	sp = body;
+	sp = new_data.buffer;
 	sp += sprintf(sp, "tree %s\n",
 		sha1_to_hex(b->branch_tree.versions[1].sha1));
 	if (!is_null_sha1(b->sha1))
@@ -1589,8 +1592,9 @@ static void cmd_new_commit()
 	free(committer);
 	free(msg);
 
-	store_object(OBJ_COMMIT, body, sp - body, NULL, b->sha1, next_mark);
-	free(body);
+	store_object(OBJ_COMMIT,
+		new_data.buffer, sp - (char*)new_data.buffer,
+		NULL, b->sha1, next_mark);
 	b->last_commit = object_count_by_type[OBJ_COMMIT];
 
 	if (branch_log) {
@@ -1616,7 +1620,6 @@ static void cmd_new_tag()
 	struct branch *s;
 	void *msg;
 	size_t msglen;
-	char *body;
 	struct tag *t;
 	unsigned long from_mark = 0;
 	unsigned char sha1[20];
@@ -1688,8 +1691,8 @@ static void cmd_new_tag()
 	msg = cmd_data(&msglen);
 
 	/* build the tag object */
-	body = xmalloc(67 + strlen(t->name) + strlen(tagger) + msglen);
-	sp = body;
+	size_dbuf(&new_data, 67+strlen(t->name)+strlen(tagger)+msglen);
+	sp = new_data.buffer;
 	sp += sprintf(sp, "object %s\n", sha1_to_hex(sha1));
 	sp += sprintf(sp, "type %s\n", type_names[OBJ_COMMIT]);
 	sp += sprintf(sp, "tag %s\n", t->name);
@@ -1699,8 +1702,8 @@ static void cmd_new_tag()
 	free(tagger);
 	free(msg);
 
-	store_object(OBJ_TAG, body, sp - body, NULL, t->sha1, 0);
-	free(body);
+	store_object(OBJ_TAG, new_data.buffer, sp - (char*)new_data.buffer,
+		NULL, t->sha1, 0);
 
 	if (branch_log) {
 		int need_dq = quote_c_style(t->name, NULL, NULL, 0);
@@ -1749,7 +1752,7 @@ int main(int argc, const char **argv)
 {
 	const char *base_name;
 	int i;
-	unsigned long est_obj_cnt = 1000;
+	unsigned long est_obj_cnt = object_entry_alloc;
 	char *pack_name;
 	char *idx_name;
 	struct stat sb;
