@@ -1432,7 +1432,6 @@ sub git_print_simplified_log {
 
 	git_print_log($log,
 		-final_empty_line=> 1,
-		-remove_signoff => 1,
 		-remove_title => $remove_title);
 }
 
