@@ -838,7 +838,7 @@ static unsigned char *deflate_it(char *data,
 	return deflated;
 }
 
-static void emit_binary_diff(mmfile_t *one, mmfile_t *two)
+static void emit_binary_diff_body(mmfile_t *one, mmfile_t *two)
 {
 	void *cp;
 	void *delta;
@@ -849,7 +849,6 @@ static void emit_binary_diff(mmfile_t *one, mmfile_t *two)
 	unsigned long deflate_size;
 	unsigned long data_size;
 
-	printf("GIT binary patch\n");
 	/* We could do deflated delta, or we could do just deflated two,
 	 * whichever is smaller.
 	 */
@@ -896,6 +895,13 @@ static void emit_binary_diff(mmfile_t *one, mmfile_t *two)
 	}
 	printf("\n");
 	free(data);
+}
+
+static void emit_binary_diff(mmfile_t *one, mmfile_t *two)
+{
+	printf("GIT binary patch\n");
+	emit_binary_diff_body(one, two);
+	emit_binary_diff_body(two, one);
 }
 
 #define FIRST_FEW_BYTES 8000
