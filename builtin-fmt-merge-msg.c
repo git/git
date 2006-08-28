@@ -55,8 +55,7 @@ static void free_list(struct list *list)
 
 	for (i = 0; i < list->nr; i++) {
 		free(list->list[i]);
-		if (list->payload[i])
-			free(list->payload[i]);
+		free(list->payload[i]);
 	}
 	free(list->list);
 	free(list->payload);

@@ -112,17 +112,15 @@ static int add_excludes_from_file_1(const char *fname,
 				    int baselen,
 				    struct exclude_list *which)
 {
+	struct stat st;
 	int fd, i;
 	long size;
 	char *buf, *entry;
 
 	fd = open(fname, O_RDONLY);
-	if (fd < 0)
+	if (fd < 0 || fstat(fd, &st) < 0)
 		goto err;
-	size = lseek(fd, 0, SEEK_END);
-	if (size < 0)
-		goto err;
-	lseek(fd, 0, SEEK_SET);
+	size = st.st_size;
 	if (size == 0) {
 		close(fd);
 		return 0;

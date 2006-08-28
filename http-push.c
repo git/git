@@ -1238,10 +1238,8 @@ xml_start_tag(void *userData, const char *name, const char **atts)
 	strcat(ctx->name, ".");
 	strcat(ctx->name, c);
 
-	if (ctx->cdata) {
-		free(ctx->cdata);
-		ctx->cdata = NULL;
-	}
+	free(ctx->cdata);
+	ctx->cdata = NULL;
 
 	ctx->userFunc(ctx, 0);
 }
@@ -1268,8 +1266,7 @@ static void
 xml_cdata(void *userData, const XML_Char *s, int len)
 {
 	struct xml_ctx *ctx = (struct xml_ctx *)userData;
-	if (ctx->cdata)
-		free(ctx->cdata);
+	free(ctx->cdata);
 	ctx->cdata = xmalloc(len + 1);
 	strlcpy(ctx->cdata, s, len + 1);
 }
@@ -1518,9 +1515,7 @@ static void handle_remote_ls_ctx(struct xml_ctx *ctx, int tag_closed)
 			ls->dentry_flags |= IS_DIR;
 		}
 	} else if (!strcmp(ctx->name, DAV_PROPFIND_RESP)) {
-		if (ls->dentry_name) {
-			free(ls->dentry_name);
-		}
+		free(ls->dentry_name);
 		ls->dentry_name = NULL;
 		ls->dentry_flags = 0;
 	}

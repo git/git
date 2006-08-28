@@ -3,9 +3,6 @@
 USAGE='[--mixed | --soft | --hard]  [<commit-ish>]'
 . git-sh-setup
 
-tmp=${GIT_DIR}/reset.$$
-trap 'rm -f $tmp-*' 0 1 2 3 15
-
 update=
 reset_type=--mixed
 case "$1" in

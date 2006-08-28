@@ -302,8 +302,7 @@ int pull(int targets, char **target, const char **write_ref,
 		if (ret)
 			goto unlock_and_fail;
 	}
-	if (msg)
-		free(msg);
+	free(msg);
 
 	return 0;
 

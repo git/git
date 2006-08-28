@@ -85,8 +85,7 @@ void path_list_clear(struct path_list *list, int free_items)
 			for (i = 0; i < list->nr; i++) {
 				if (list->strdup_paths)
 					free(list->items[i].path);
-				if (list->items[i].util)
-					free(list->items[i].util);
+				free(list->items[i].util);
 			}
 		free(list->items);
 	}

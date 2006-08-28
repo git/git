@@ -232,13 +232,42 @@ static char *path_ok(char *dir)
 	return NULL;		/* Fallthrough. Deny by default */
 }
 
-static int upload(char *dir)
-{
-	/* Timeout as string */
-	char timeout_buf[64];
-	const char *path;
+typedef int (*daemon_service_fn)(void);
+struct daemon_service {
+	const char *name;
+	const char *config_name;
+	daemon_service_fn fn;
+	int enabled;
+	int overridable;
+};
 
-	loginfo("Request for '%s'", dir);
+static struct daemon_service *service_looking_at;
+static int service_enabled;
+
+static int git_daemon_config(const char *var, const char *value)
+{
+	if (!strncmp(var, "daemon.", 7) &&
+	    !strcmp(var + 7, service_looking_at->config_name)) {
+		service_enabled = git_config_bool(var, value);
+		return 0;
+	}
+
+	/* we are not interested in parsing any other configuration here */
+	return 0;
+}
+
+static int run_service(char *dir, struct daemon_service *service)
+{
+	const char *path;
+	int enabled = service->enabled;
+
+	loginfo("Request %s for '%s'", service->name, dir);
+
+	if (!enabled && !service->overridable) {
+		logerror("'%s': service not enabled.", service->name);
+		errno = EACCES;
+		return -1;
+	}
 
 	if (!(path = path_ok(dir)))
 		return -1;
@@ -260,11 +289,33 @@ static int upload(char *dir)
 		return -1;
 	}
 
+	if (service->overridable) {
+		service_looking_at = service;
+		service_enabled = -1;
+		git_config(git_daemon_config);
+		if (0 <= service_enabled)
+			enabled = service_enabled;
+	}
+	if (!enabled) {
+		logerror("'%s': service not enabled for '%s'",
+			 service->name, path);
+		errno = EACCES;
+		return -1;
+	}
+
 	/*
 	 * We'll ignore SIGTERM from now on, we have a
 	 * good client.
 	 */
 	signal(SIGTERM, SIG_IGN);
+
+	return service->fn();
+}
+
+static int upload_pack(void)
+{
+	/* Timeout as string */
+	char timeout_buf[64];
 
 	snprintf(timeout_buf, sizeof timeout_buf, "--timeout=%u", timeout);
 
@@ -273,10 +324,43 @@ static int upload(char *dir)
 	return -1;
 }
 
+static int upload_tar(void)
+{
+	execl_git_cmd("upload-tar", ".", NULL);
+	return -1;
+}
+
+static struct daemon_service daemon_service[] = {
+	{ "upload-pack", "uploadpack", upload_pack, 1, 1 },
+	{ "upload-tar", "uploadtar", upload_tar, 0, 1 },
+};
+
+static void enable_service(const char *name, int ena) {
+	int i;
+	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
+		if (!strcmp(daemon_service[i].name, name)) {
+			daemon_service[i].enabled = ena;
+			return;
+		}
+	}
+	die("No such service %s", name);
+}
+
+static void make_service_overridable(const char *name, int ena) {
+	int i;
+	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
+		if (!strcmp(daemon_service[i].name, name)) {
+			daemon_service[i].overridable = ena;
+			return;
+		}
+	}
+	die("No such service %s", name);
+}
+
 static int execute(struct sockaddr *addr)
 {
 	static char line[1000];
-	int pktlen, len;
+	int pktlen, len, i;
 
 	if (addr) {
 		char addrbuf[256] = "";
@@ -313,8 +397,14 @@ static int execute(struct sockaddr *addr)
 	if (len && line[len-1] == '\n')
 		line[--len] = 0;
 
-	if (!strncmp("git-upload-pack ", line, 16))
-		return upload(line+16);
+	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
+		struct daemon_service *s = &(daemon_service[i]);
+		int namelen = strlen(s->name);
+		if (!strncmp("git-", line, 4) &&
+		    !strncmp(s->name, line + 4, namelen) &&
+		    line[namelen + 4] == ' ')
+			return run_service(line + namelen + 5, s);
+	}
 
 	logerror("Protocol error: '%s'", line);
 	return -1;
@@ -803,6 +893,22 @@ int main(int argc, char **argv)
 		}
 		if (!strncmp(arg, "--group=", 8)) {
 			group_name = arg + 8;
+			continue;
+		}
+		if (!strncmp(arg, "--enable=", 9)) {
+			enable_service(arg + 9, 1);
+			continue;
+		}
+		if (!strncmp(arg, "--disable=", 10)) {
+			enable_service(arg + 10, 0);
+			continue;
+		}
+		if (!strncmp(arg, "--allow-override=", 17)) {
+			make_service_overridable(arg + 17, 1);
+			continue;
+		}
+		if (!strncmp(arg, "--forbid-override=", 18)) {
+			make_service_overridable(arg + 18, 0);
 			continue;
 		}
 		if (!strcmp(arg, "--")) {

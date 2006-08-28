@@ -122,10 +122,8 @@ static int get_value(const char* key_, const char* regex_)
 		ret = (seen == 1) ? 0 : seen > 1 ? 2 : 1;
 
 free_strings:
-	if (repo_config)
-		free(repo_config);
-	if (global)
-		free(global);
+	free(repo_config);
+	free(global);
 	return ret;
 }
 
