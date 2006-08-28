@@ -3314,14 +3314,14 @@ proc finishcommits {} {
     catch {unset pending_select}
 }
 
-# Inserting a new commit as the child of the commit on row $row.
+# Insert a new commit as the child of the commit on row $row.
 # The new commit will be displayed on row $row and the commits
 # on that row and below will move down one row.
 proc insertrow {row newcmit} {
     global displayorder parentlist childlist commitlisted
     global commitrow curview rowidlist rowoffsets numcommits
     global rowrangelist idrowranges rowlaidout rowoptim numcommits
-    global linesegends
+    global linesegends selectedline
 
     if {$row >= $numcommits} {
 	puts "oops, inserting new row $row but only have $numcommits rows"
@@ -3334,6 +3334,7 @@ proc insertrow {row newcmit} {
     lappend kids $newcmit
     lset childlist $row $kids
     set childlist [linsert $childlist $row {}]
+    set commitlisted [linsert $commitlisted $row 1]
     set l [llength $displayorder]
     for {set r $row} {$r < $l} {incr r} {
 	set id [lindex $displayorder $r]
@@ -3409,6 +3410,9 @@ proc insertrow {row newcmit} {
     incr rowoptim
     incr numcommits
 
+    if {[info exists selectedline] && $selectedline >= $row} {
+	incr selectedline
+    }
     redisplay
 }
 
