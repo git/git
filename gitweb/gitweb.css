@@ -42,6 +42,7 @@ div.page_nav a:visited {
 
 div.page_path {
 	padding: 8px;
+	font-weight: bold;
 	border: solid #d9d8d1;
 	border-width: 0px 0px 1px;
 }
@@ -117,11 +118,14 @@ div.list_head {
 
 a.list {
 	text-decoration: none;
-	font-weight: bold;
 	color: #000000;
 }
 
-table.tags a.list {
+a.subject, a.name {
+	font-weight: bold;
+}
+
+table.tags a.subject {
 	font-weight: normal;
 }
 
@@ -269,16 +273,32 @@ td.mode {
 	font-family: monospace;
 }
 
+div.diff a.list {
+	text-decoration: none;
+}
+
+div.diff a.list:hover {
+	text-decoration: underline;
+}
+
+div.diff.to_file a.list,
+div.diff.to_file,
 div.diff.add {
 	color: #008800;
 }
 
+div.diff.from_file a.list,
+div.diff.from_file,
 div.diff.rem {
 	color: #cc0000;
 }
 
 div.diff.chunk_header {
 	color: #990099;
+}
+
+div.diff.incomplete {
+	color: #cccccc;
 }
 
 div.diff_info {
