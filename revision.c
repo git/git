@@ -816,6 +816,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->simplify_history = 0;
 				continue;
 			}
+			if (!strcmp(arg, "--relative-date")) {
+				revs->relative_date = 1;
+				continue;
+			}
 			opts = diff_opt_parse(&revs->diffopt, argv+i, argc-i);
 			if (opts > 0) {
 				revs->diff = 1;

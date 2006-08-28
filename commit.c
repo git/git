@@ -467,7 +467,8 @@ static int add_rfc2047(char *buf, const char *line, int len)
 	return bp - buf;
 }
 
-static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf, const char *line)
+static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf,
+			 const char *line, int relative_date)
 {
 	char *date;
 	int namelen;
@@ -507,14 +508,16 @@ static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf, const c
 	}
 	switch (fmt) {
 	case CMIT_FMT_MEDIUM:
-		ret += sprintf(buf + ret, "Date:   %s\n", show_date(time, tz, 0));
+		ret += sprintf(buf + ret, "Date:   %s\n",
+			       show_date(time, tz, relative_date));
 		break;
 	case CMIT_FMT_EMAIL:
 		ret += sprintf(buf + ret, "Date: %s\n",
 			       show_rfc2822_date(time, tz));
 		break;
 	case CMIT_FMT_FULLER:
-		ret += sprintf(buf + ret, "%sDate: %s\n", what, show_date(time, tz, 0));
+		ret += sprintf(buf + ret, "%sDate: %s\n", what,
+			       show_date(time, tz, relative_date));
 		break;
 	default:
 		/* notin' */
@@ -557,7 +560,10 @@ static int add_merge_info(enum cmit_fmt fmt, char *buf, const struct commit *com
 	return offset;
 }
 
-unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit, unsigned long len, char *buf, unsigned long space, int abbrev, const char *subject, const char *after_subject)
+unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
+				  unsigned long len, char *buf, unsigned long space,
+				  int abbrev, const char *subject,
+				  const char *after_subject, int relative_date)
 {
 	int hdr = 1, body = 0;
 	unsigned long offset = 0;
@@ -646,12 +652,14 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 			if (!memcmp(line, "author ", 7))
 				offset += add_user_info("Author", fmt,
 							buf + offset,
-							line + 7);
+							line + 7,
+							relative_date);
 			if (!memcmp(line, "committer ", 10) &&
 			    (fmt == CMIT_FMT_FULL || fmt == CMIT_FMT_FULLER))
 				offset += add_user_info("Commit", fmt,
 							buf + offset,
-							line + 10);
+							line + 10,
+							relative_date);
 			continue;
 		}
 

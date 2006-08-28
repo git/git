@@ -128,6 +128,11 @@ OPTIONS
 	After a failed merge, show refs that touch files having a
 	conflict and don't exist on all heads to merge.
 
+--relative-date::
+	Show dates relative to the current time, e.g. "2 hours ago".
+	Only takes effect for dates shown in human-readable format,
+	such as when using "--pretty".
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>
