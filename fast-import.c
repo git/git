@@ -586,19 +586,6 @@ static void yread(int fd, void *buffer, size_t length)
 	}
 }
 
-static void ywrite(int fd, void *buffer, size_t length)
-{
-	ssize_t ret = 0;
-	while (ret < length) {
-		ssize_t size = xwrite(fd, (char *) buffer + ret, length - ret);
-		if (!size)
-			die("Write to descriptor %i: end of file", fd);
-		if (size < 0)
-			die("Write to descriptor %i: %s", fd, strerror(errno));
-		ret += size;
-	}
-}
-
 static size_t encode_header(
 	enum object_type type,
 	size_t size,
@@ -675,8 +662,8 @@ static int store_object(
 		s.next_in = delta;
 		s.avail_in = deltalen;
 		hdrlen = encode_header(OBJ_DELTA, deltalen, hdr);
-		ywrite(pack_fd, hdr, hdrlen);
-		ywrite(pack_fd, last->sha1, sizeof(sha1));
+		write_or_die(pack_fd, hdr, hdrlen);
+		write_or_die(pack_fd, last->sha1, sizeof(sha1));
 		pack_size += hdrlen + sizeof(sha1);
 	} else {
 		if (last)
@@ -684,7 +671,7 @@ static int store_object(
 		s.next_in = dat;
 		s.avail_in = datlen;
 		hdrlen = encode_header(type, datlen, hdr);
-		ywrite(pack_fd, hdr, hdrlen);
+		write_or_die(pack_fd, hdr, hdrlen);
 		pack_size += hdrlen;
 	}
 
@@ -694,7 +681,7 @@ static int store_object(
 		/* nothing */;
 	deflateEnd(&s);
 
-	ywrite(pack_fd, out, s.total_out);
+	write_or_die(pack_fd, out, s.total_out);
 	pack_size += s.total_out;
 
 	free(out);
@@ -1117,7 +1104,7 @@ static void init_pack_header()
 	hdr.hdr_version = htonl(2);
 	hdr.hdr_entries = 0;
 
-	ywrite(pack_fd, &hdr, sizeof(hdr));
+	write_or_die(pack_fd, &hdr, sizeof(hdr));
 	pack_size = sizeof(hdr);
 }
 
@@ -1138,7 +1125,7 @@ static void fixup_header_footer()
 
 	cnt = htonl(object_count);
 	SHA1_Update(&c, &cnt, 4);
-	ywrite(pack_fd, &cnt, 4);
+	write_or_die(pack_fd, &cnt, 4);
 
 	buf = xmalloc(128 * 1024);
 	for (;;) {
@@ -1150,7 +1137,7 @@ static void fixup_header_footer()
 	free(buf);
 
 	SHA1_Final(pack_sha1, &c);
-	ywrite(pack_fd, pack_sha1, sizeof(pack_sha1));
+	write_or_die(pack_fd, pack_sha1, sizeof(pack_sha1));
 }
 
 static int oecmp (const void *_a, const void *_b)
