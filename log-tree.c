@@ -194,7 +194,9 @@ void show_log(struct rev_info *opt, const char *sep)
 	/*
 	 * And then the pretty-printed message itself
 	 */
-	len = pretty_print_commit(opt->commit_format, commit, ~0u, this_header, sizeof(this_header), abbrev, subject, extra_headers);
+	len = pretty_print_commit(opt->commit_format, commit, ~0u, this_header,
+				  sizeof(this_header), abbrev, subject,
+				  extra_headers, opt->relative_date);
 
 	if (opt->add_signoff)
 		len = append_signoff(this_header, sizeof(this_header), len,
