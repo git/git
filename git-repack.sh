@@ -38,7 +38,7 @@ case ",$all_into_one," in
 	pack_objects=
 
 	# Redundancy check in all-into-one case is trivial.
-	existing=`cd "$PACKDIR" && \
+	existing=`test -d "$PACKDIR" && cd "$PACKDIR" && \
 	    find . -type f \( -name '*.pack' -o -name '*.idx' \) -print`
 	;;
 esac
