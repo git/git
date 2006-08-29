@@ -1,7 +1,6 @@
 #include "cache.h"
 #include "refs.h"
 #include "pkt-line.h"
-#include <sys/wait.h>
 
 static const char peek_remote_usage[] =
 "git-peek-remote [--exec=upload-pack] [host:]directory";
