@@ -15,7 +15,7 @@ static const char unpack_usage[] = "git-unpack-objects [-n] [-q] < pack-file";
 
 /* We always read in 4kB chunks. */
 static unsigned char buffer[4096];
-static unsigned long offset, len, eof;
+static unsigned long offset, len;
 static SHA_CTX ctx;
 
 /*
@@ -26,8 +26,6 @@ static void * fill(int min)
 {
 	if (min <= len)
 		return buffer + offset;
-	if (eof)
-		die("unable to fill input");
 	if (min > sizeof(buffer))
 		die("cannot fill %d bytes", min);
 	if (offset) {
