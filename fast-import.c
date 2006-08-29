@@ -956,7 +956,8 @@ static void store_tree(struct tree_entry *root)
 	}
 
 	if (is_null_sha1(root->versions[0].sha1)
-			|| !find_object(root->versions[0].sha1)) {
+			|| !find_object(root->versions[0].sha1)
+			|| !S_ISDIR(root->versions[0].mode)) {
 		lo.data = NULL;
 		lo.depth = 0;
 	} else {
@@ -1023,6 +1024,7 @@ static int tree_content_set(
 			if (!S_ISDIR(e->versions[1].mode)) {
 				e->tree = new_tree_content(8);
 				e->versions[1].mode = S_IFDIR;
+				hashclr(e->versions[1].sha1);
 			}
 			if (!e->tree)
 				load_tree(e);
@@ -1044,6 +1046,7 @@ static int tree_content_set(
 	if (slash1) {
 		e->tree = new_tree_content(8);
 		e->versions[1].mode = S_IFDIR;
+		hashclr(e->versions[1].sha1);
 		tree_content_set(e, slash1 + 1, sha1, mode);
 	} else {
 		e->tree = NULL;
@@ -1075,10 +1078,13 @@ static int tree_content_remove(struct tree_entry *root, const char *p)
 			if (!e->tree)
 				load_tree(e);
 			if (tree_content_remove(e, slash1 + 1)) {
-				if (!e->tree->entry_count)
-					goto del_entry;
-				hashclr(root->versions[1].sha1);
-				return 1;
+				for (n = 0; n < e->tree->entry_count; n++) {
+					if (e->tree->entries[n]->versions[1].mode) {
+						hashclr(root->versions[1].sha1);
+						return 1;
+					}
+				}
+				goto del_entry;
 			}
 			return 0;
 		}
