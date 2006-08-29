@@ -425,8 +425,23 @@ static int fsck_handle_ref(const char *refname, const unsigned char *sha1)
 static void get_default_heads(void)
 {
 	for_each_ref(fsck_handle_ref);
-	if (!default_refs)
-		die("No default references");
+
+	/*
+	 * Not having any default heads isn't really fatal, but
+	 * it does mean that "--unreachable" no longer makes any
+	 * sense (since in this case everything will obviously
+	 * be unreachable by definition.
+	 *
+	 * Showing dangling objects is valid, though (as those
+	 * dangling objects are likely lost heads).
+	 *
+	 * So we just print a warning about it, and clear the
+	 * "show_unreachable" flag.
+	 */
+	if (!default_refs) {
+		error("No default references");
+		show_unreachable = 0;
+	}
 }
 
 static void fsck_object_dir(const char *path)
