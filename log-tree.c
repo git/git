@@ -12,10 +12,58 @@ static void show_parents(struct commit *commit, int abbrev)
 	}
 }
 
+/*
+ * Search for "^[-A-Za-z]+: [^@]+@" pattern. It usually matches
+ * Signed-off-by: and Acked-by: lines.
+ */
+static int detect_any_signoff(char *letter, int size)
+{
+	char ch, *cp;
+	int seen_colon = 0;
+	int seen_at = 0;
+	int seen_name = 0;
+	int seen_head = 0;
+
+	cp = letter + size;
+	while (letter <= --cp && (ch = *cp) == '\n')
+		continue;
+
+	while (letter <= cp) {
+		ch = *cp--;
+		if (ch == '\n')
+			break;
+
+		if (!seen_at) {
+			if (ch == '@')
+				seen_at = 1;
+			continue;
+		}
+		if (!seen_colon) {
+			if (ch == '@')
+				return 0;
+			else if (ch == ':')
+				seen_colon = 1;
+			else
+				seen_name = 1;
+			continue;
+		}
+		if (('A' <= ch && ch <= 'Z') ||
+		    ('a' <= ch && ch <= 'z') ||
+		    ch == '-') {
+			seen_head = 1;
+			continue;
+		}
+		/* no empty last line doesn't match */
+		return 0;
+	}
+	return seen_head && seen_name;
+}
+
 static int append_signoff(char *buf, int buf_sz, int at, const char *signoff)
 {
-	int signoff_len = strlen(signoff);
 	static const char signed_off_by[] = "Signed-off-by: ";
+	int signoff_len = strlen(signoff);
+	int has_signoff = 0;
 	char *cp = buf;
 
 	/* Do we have enough space to add it? */
@@ -23,58 +71,26 @@ static int append_signoff(char *buf, int buf_sz, int at, const char *signoff)
 		return at;
 
 	/* First see if we already have the sign-off by the signer */
-	while (1) {
-		cp = strstr(cp, signed_off_by);
-		if (!cp)
-			break;
+	while ((cp = strstr(cp, signed_off_by))) {
+
+		has_signoff = 1;
+
 		cp += strlen(signed_off_by);
-		if ((cp + signoff_len < buf + at) &&
-		    !strncmp(cp, signoff, signoff_len) &&
-		    isspace(cp[signoff_len]))
-			return at; /* we already have him */
+		if (cp + signoff_len >= buf + at)
+			break;
+		if (strncmp(cp, signoff, signoff_len))
+			continue;
+		if (!isspace(cp[signoff_len]))
+			continue;
+		/* we already have him */
+		return at;
 	}
 
-	/* Does the last line already end with "^[-A-Za-z]+: [^@]+@"?
-	 * If not, add a blank line to separate the message from
-	 * the run of Signed-off-by: and Acked-by: lines.
-	 */
-	{
-		char ch;
-		int seen_colon, seen_at, seen_name, seen_head, not_signoff;
-		seen_colon = 0;
-		seen_at = 0;
-		seen_name = 0;
-		seen_head = 0;
-		not_signoff = 0;
-		cp = buf + at;
-		while (buf <= --cp && (ch = *cp) == '\n')
-			;
-		while (!not_signoff && buf <= cp && (ch = *cp--) != '\n') {
-			if (!seen_at) {
-				if (ch == '@')
-					seen_at = 1;
-				continue;
-			}
-			if (!seen_colon) {
-				if (ch == '@')
-					not_signoff = 1;
-				else if (ch == ':')
-					seen_colon = 1;
-				else
-					seen_name = 1;
-				continue;
-			}
-			if (('A' <= ch && ch <= 'Z') ||
-			    ('a' <= ch && ch <= 'z') ||
-			    ch == '-') {
-				seen_head = 1;
-				continue;
-			}
-			not_signoff = 1;
-		}
-		if (not_signoff || !seen_head || !seen_name)
-			buf[at++] = '\n';
-	}
+	if (!has_signoff)
+		has_signoff = detect_any_signoff(buf, at);
+
+	if (!has_signoff)
+		buf[at++] = '\n';
 
 	strcpy(buf + at, signed_off_by);
 	at += strlen(signed_off_by);
