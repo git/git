@@ -478,6 +478,8 @@ static struct branch* new_branch(const char *name)
 	b = pool_calloc(1, sizeof(struct branch));
 	b->name = pool_strdup(name);
 	b->table_next_branch = branch_table[hc];
+	b->branch_tree.versions[0].mode = S_IFDIR;
+	b->branch_tree.versions[1].mode = S_IFDIR;
 	branch_table[hc] = b;
 	branch_count++;
 	return b;
@@ -955,9 +957,9 @@ static void store_tree(struct tree_entry *root)
 			store_tree(t->entries[i]);
 	}
 
-	if (is_null_sha1(root->versions[0].sha1)
-			|| !find_object(root->versions[0].sha1)
-			|| !S_ISDIR(root->versions[0].mode)) {
+	if (!S_ISDIR(root->versions[0].mode)
+			|| is_null_sha1(root->versions[0].sha1)
+			|| !find_object(root->versions[0].sha1)) {
 		lo.data = NULL;
 		lo.depth = 0;
 	} else {
@@ -967,13 +969,12 @@ static void store_tree(struct tree_entry *root)
 		lo.no_free = 1;
 		hashcpy(lo.sha1, root->versions[0].sha1);
 	}
-	mktree(t, 1, &new_len, &new_tree);
 
+	mktree(t, 1, &new_len, &new_tree);
 	store_object(OBJ_TREE, new_tree.buffer, new_len,
 		&lo, root->versions[1].sha1, 0);
 
 	t->delta_depth = lo.depth;
-	hashcpy(root->versions[0].sha1, root->versions[1].sha1);
 	for (i = 0, j = 0, del = 0; i < t->entry_count; i++) {
 		struct tree_entry *e = t->entries[i];
 		if (e->versions[1].mode) {
@@ -1024,7 +1025,6 @@ static int tree_content_set(
 			if (!S_ISDIR(e->versions[1].mode)) {
 				e->tree = new_tree_content(8);
 				e->versions[1].mode = S_IFDIR;
-				hashclr(e->versions[1].sha1);
 			}
 			if (!e->tree)
 				load_tree(e);
@@ -1046,7 +1046,6 @@ static int tree_content_set(
 	if (slash1) {
 		e->tree = new_tree_content(8);
 		e->versions[1].mode = S_IFDIR;
-		hashclr(e->versions[1].sha1);
 		tree_content_set(e, slash1 + 1, sha1, mode);
 	} else {
 		e->tree = NULL;
@@ -1564,6 +1563,8 @@ static void cmd_new_commit()
 
 	/* build the tree and the commit */
 	store_tree(&b->branch_tree);
+	hashcpy(b->branch_tree.versions[0].sha1,
+		b->branch_tree.versions[1].sha1);
 	size_dbuf(&new_data, 97 + msglen
 		+ (author
 			? strlen(author) + strlen(committer)
@@ -1823,9 +1824,9 @@ int main(int argc, const char **argv)
 		fclose(branch_log);
 
 	fprintf(stderr, "%s statistics:\n", argv[0]);
-	fprintf(stderr, "---------------------------------------------------\n");
+	fprintf(stderr, "---------------------------------------------------------------------\n");
 	fprintf(stderr, "Alloc'd objects: %10lu (%10lu overflow  )\n", alloc_count, alloc_count - est_obj_cnt);
-	fprintf(stderr, "Total objects:   %10lu (%10lu duplicates)\n", object_count, duplicate_count);
+	fprintf(stderr, "Total objects:   %10lu (%10lu duplicates                  )\n", object_count, duplicate_count);
 	fprintf(stderr, "      blobs  :   %10lu (%10lu duplicates %10lu deltas)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB], delta_count_by_type[OBJ_BLOB]);
 	fprintf(stderr, "      trees  :   %10lu (%10lu duplicates %10lu deltas)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE], delta_count_by_type[OBJ_TREE]);
 	fprintf(stderr, "      commits:   %10lu (%10lu duplicates %10lu deltas)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT], delta_count_by_type[OBJ_COMMIT]);
@@ -1837,12 +1838,11 @@ int main(int argc, const char **argv)
 	fprintf(stderr, "       pools:    %10lu KiB\n", total_allocd/1024);
 	fprintf(stderr, "     objects:    %10lu KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
 	fprintf(stderr, "Pack remaps:     %10lu\n", remap_count);
-	fprintf(stderr, "---------------------------------------------------\n");
-
 	stat(pack_name, &sb);
 	fprintf(stderr, "Pack size:       %10lu KiB\n", (unsigned long)(sb.st_size/1024));
 	stat(idx_name, &sb);
 	fprintf(stderr, "Index size:      %10lu KiB\n", (unsigned long)(sb.st_size/1024));
+	fprintf(stderr, "---------------------------------------------------------------------\n");
 
 	fprintf(stderr, "\n");
 
