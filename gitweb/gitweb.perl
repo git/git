@@ -152,7 +152,7 @@ sub feature_snapshot {
 our @diff_opts = ('-M'); # taken from git_commit
 
 our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "++GITWEB_CONFIG++";
-require $GITWEB_CONFIG if -e $GITWEB_CONFIG;
+do $GITWEB_CONFIG if -e $GITWEB_CONFIG;
 
 # version of the core git binary
 our $git_version = qx($GIT --version) =~ m/git version (.*)$/ ? $1 : "unknown";
