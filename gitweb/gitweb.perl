@@ -1034,6 +1034,27 @@ sub parse_difftree_raw_line {
 	return wantarray ? %res : \%res;
 }
 
+# parse line of git-ls-tree output
+sub parse_ls_tree_line ($;%) {
+	my $line = shift;
+	my %opts = @_;
+	my %res;
+
+	#'100644 blob 0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
+	$line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40})\t(.+)$/;
+
+	$res{'mode'} = $1;
+	$res{'type'} = $2;
+	$res{'hash'} = $3;
+	if ($opts{'-z'}) {
+		$res{'name'} = $4;
+	} else {
+		$res{'name'} = unquote($4);
+	}
+
+	return wantarray ? %res : \%res;
+}
+
 ## ......................................................................
 ## parse to array of hashes functions
 
@@ -2512,51 +2533,54 @@ sub git_tree {
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 0;
 	foreach my $line (@entries) {
-		#'100644	blob	0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
-		$line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40})\t(.+)$/;
-		my $t_mode = $1;
-		my $t_type = $2;
-		my $t_hash = $3;
-		my $t_name = validate_input($4);
+		my %t = parse_ls_tree_line($line, -z => 1);
+
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
 		} else {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
-		print "<td class=\"mode\">" . mode_str($t_mode) . "</td>\n";
-		if ($t_type eq "blob") {
+
+		print "<td class=\"mode\">" . mode_str($t{'mode'}) . "</td>\n";
+		if ($t{'type'} eq "blob") {
 			print "<td class=\"list\">" .
-			      $cgi->a({-href => href(action=>"blob", hash=>$t_hash, file_name=>"$base$t_name", %base_key),
-			              -class => "list"}, esc_html($t_name)) .
+			      $cgi->a({-href => href(action=>"blob", hash=>$t{'hash'},
+			                             file_name=>"$base$t{'name'}", %base_key),
+			              -class => "list"}, esc_html($t{'name'})) .
 			      "</td>\n" .
 			      "<td class=\"link\">" .
-			      $cgi->a({-href => href(action=>"blob", hash=>$t_hash, file_name=>"$base$t_name", %base_key)},
+			      $cgi->a({-href => href(action=>"blob", hash=>$t{'hash'},
+			                             file_name=>"$base$t{'name'}", %base_key)},
 			              "blob");
 			if ($have_blame) {
 				print " | " .
-					$cgi->a({-href => href(action=>"blame", hash=>$t_hash, file_name=>"$base$t_name", %base_key)},
+					$cgi->a({-href => href(action=>"blame", hash=>$t{'hash'},
+					                       file_name=>"$base$t{'name'}", %base_key)},
 					        "blame");
 			}
 			print " | " .
 			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
-			                             hash=>$t_hash, file_name=>"$base$t_name")},
+			                             hash=>$t{'hash'}, file_name=>"$base$t{'name'}")},
 			              "history") .
 			      " | " .
 			      $cgi->a({-href => href(action=>"blob_plain",
-			                             hash=>$t_hash, file_name=>"$base$t_name")},
+			                             hash=>$t{'hash'}, file_name=>"$base$t{'name'}")},
 			              "raw") .
 			      "</td>\n";
-		} elsif ($t_type eq "tree") {
+		} elsif ($t{'type'} eq "tree") {
 			print "<td class=\"list\">" .
-			      $cgi->a({-href => href(action=>"tree", hash=>$t_hash, file_name=>"$base$t_name", %base_key)},
-			              esc_html($t_name)) .
+			      $cgi->a({-href => href(action=>"tree", hash=>$t{'hash'},
+			                             file_name=>"$base$t{'name'}", %base_key)},
+			              esc_html($t{'name'})) .
 			      "</td>\n" .
 			      "<td class=\"link\">" .
-			      $cgi->a({-href => href(action=>"tree", hash=>$t_hash, file_name=>"$base$t_name", %base_key)},
+			      $cgi->a({-href => href(action=>"tree", hash=>$t{'hash'},
+			                             file_name=>"$base$t{'name'}", %base_key)},
 			              "tree") .
 			      " | " .
-			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base, file_name=>"$base$t_name")},
+			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
+			                             file_name=>"$base$t{'name'}")},
 			              "history") .
 			      "</td>\n";
 		}
