@@ -1027,9 +1027,9 @@ sub parse_difftree_raw_line {
 		}
 	}
 	# 'c512b523472485aef4fff9e57b229d9d243c967f'
-	#elsif ($line =~ m/^([0-9a-fA-F]{40})$/) {
-	#	$res{'commit'} = $1;
-	#}
+	elsif ($line =~ m/^([0-9a-fA-F]{40})$/) {
+		$res{'commit'} = $1;
+	}
 
 	return wantarray ? %res : \%res;
 }
