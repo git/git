@@ -1475,6 +1475,62 @@ sub git_print_simplified_log {
 		-remove_title => $remove_title);
 }
 
+# print tree entry (row of git_tree), but without encompassing <tr> element
+sub git_print_tree_entry {
+	my ($t, $basedir, $hash_base, $have_blame) = @_;
+
+	my %base_key = ();
+	$base_key{hash_base} = $hash_base if defined $hash_base;
+
+	print "<td class=\"mode\">" . mode_str($t->{'mode'}) . "</td>\n";
+	if ($t->{'type'} eq "blob") {
+		print "<td class=\"list\">" .
+		      $cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
+		                             file_name=>"$basedir$t->{'name'}", %base_key),
+		              -class => "list"}, esc_html($t->{'name'})) .
+		      "</td>\n" .
+		      "<td class=\"link\">" .
+		      $cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
+		                             file_name=>"$basedir$t->{'name'}", %base_key)},
+		              "blob");
+		if ($have_blame) {
+			print " | " .
+				$cgi->a({-href => href(action=>"blame", hash=>$t->{'hash'},
+				                       file_name=>"$basedir$t->{'name'}", %base_key)},
+				        "blame");
+		}
+		if (defined $hash_base) {
+			print " | " .
+			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
+			                             hash=>$t->{'hash'}, file_name=>"$basedir$t->{'name'}")},
+			              "history");
+		}
+		print " | " .
+		      $cgi->a({-href => href(action=>"blob_plain",
+		                             hash=>$t->{'hash'}, file_name=>"$basedir$t->{'name'}")},
+		              "raw") .
+		      "</td>\n";
+
+	} elsif ($t->{'type'} eq "tree") {
+		print "<td class=\"list\">" .
+		      $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
+		                             file_name=>"$basedir$t->{'name'}", %base_key)},
+		              esc_html($t->{'name'})) .
+		      "</td>\n" .
+		      "<td class=\"link\">" .
+		      $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
+		                             file_name=>"$basedir$t->{'name'}", %base_key)},
+		              "tree");
+		if (defined $hash_base) {
+			print " | " .
+			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
+			                             file_name=>"$basedir$t->{'name'}")},
+			              "history");
+		}
+		print "</td>\n";
+	}
+}
+
 ## ......................................................................
 ## functions printing large fragments of HTML
 
@@ -2513,14 +2569,13 @@ sub git_tree {
 	my $refs = git_get_references();
 	my $ref = format_ref_marker($refs, $hash_base);
 	git_header_html();
-	my %base_key = ();
 	my $base = "";
 	my $have_blame = gitweb_check_feature('blame');
 	if (defined $hash_base && (my %co = parse_commit($hash_base))) {
-		$base_key{hash_base} = $hash_base;
 		git_print_page_nav('tree','', $hash_base);
 		git_print_header_div('commit', esc_html($co{'title'}) . $ref, $hash_base);
 	} else {
+		undef $hash_base;
 		print "<div class=\"page_nav\">\n";
 		print "<br/><br/></div>\n";
 		print "<div class=\"title\">$hash</div>\n";
@@ -2542,48 +2597,8 @@ sub git_tree {
 		}
 		$alternate ^= 1;
 
-		print "<td class=\"mode\">" . mode_str($t{'mode'}) . "</td>\n";
-		if ($t{'type'} eq "blob") {
-			print "<td class=\"list\">" .
-			      $cgi->a({-href => href(action=>"blob", hash=>$t{'hash'},
-			                             file_name=>"$base$t{'name'}", %base_key),
-			              -class => "list"}, esc_html($t{'name'})) .
-			      "</td>\n" .
-			      "<td class=\"link\">" .
-			      $cgi->a({-href => href(action=>"blob", hash=>$t{'hash'},
-			                             file_name=>"$base$t{'name'}", %base_key)},
-			              "blob");
-			if ($have_blame) {
-				print " | " .
-					$cgi->a({-href => href(action=>"blame", hash=>$t{'hash'},
-					                       file_name=>"$base$t{'name'}", %base_key)},
-					        "blame");
-			}
-			print " | " .
-			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
-			                             hash=>$t{'hash'}, file_name=>"$base$t{'name'}")},
-			              "history") .
-			      " | " .
-			      $cgi->a({-href => href(action=>"blob_plain",
-			                             hash=>$t{'hash'}, file_name=>"$base$t{'name'}")},
-			              "raw") .
-			      "</td>\n";
-		} elsif ($t{'type'} eq "tree") {
-			print "<td class=\"list\">" .
-			      $cgi->a({-href => href(action=>"tree", hash=>$t{'hash'},
-			                             file_name=>"$base$t{'name'}", %base_key)},
-			              esc_html($t{'name'})) .
-			      "</td>\n" .
-			      "<td class=\"link\">" .
-			      $cgi->a({-href => href(action=>"tree", hash=>$t{'hash'},
-			                             file_name=>"$base$t{'name'}", %base_key)},
-			              "tree") .
-			      " | " .
-			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
-			                             file_name=>"$base$t{'name'}")},
-			              "history") .
-			      "</td>\n";
-		}
+		git_print_tree_entry(\%t, $base, $hash_base, $have_blame);
+
 		print "</tr>\n";
 	}
 	print "</table>\n" .
