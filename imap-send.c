@@ -110,7 +110,6 @@ static char *next_arg( char ** );
 
 static void free_generic_messages( message_t * );
 
-static int nfvasprintf( char **str, const char *fmt, va_list va );
 static int nfsnprintf( char *buf, int blen, const char *fmt, ... );
 
 
@@ -372,21 +371,6 @@ free_generic_messages( message_t *msgs )
 }
 
 static int
-git_vasprintf( char **strp, const char *fmt, va_list ap )
-{
-	int len;
-	char tmp[1024];
-
-	if ((len = vsnprintf( tmp, sizeof(tmp), fmt, ap )) < 0 || !(*strp = xmalloc( len + 1 )))
-		return -1;
-	if (len >= (int)sizeof(tmp))
-		vsprintf( *strp, fmt, ap );
-	else
-		memcpy( *strp, tmp, len + 1 );
-	return len;
-}
-
-static int
 nfsnprintf( char *buf, int blen, const char *fmt, ... )
 {
 	int ret;
@@ -396,15 +380,6 @@ nfsnprintf( char *buf, int blen, const char *fmt, ... )
 	if (blen <= 0 || (unsigned)(ret = vsnprintf( buf, blen, fmt, va )) >= (unsigned)blen)
 		die( "Fatal: buffer too small. Please report a bug.\n");
 	va_end( va );
-	return ret;
-}
-
-static int
-nfvasprintf( char **str, const char *fmt, va_list va )
-{
-	int ret = git_vasprintf( str, fmt, va );
-	if (ret < 0)
-		die( "Fatal: Out of memory\n");
 	return ret;
 }
 

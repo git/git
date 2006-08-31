@@ -152,7 +152,7 @@ sub feature_snapshot {
 our @diff_opts = ('-M'); # taken from git_commit
 
 our $GITWEB_CONFIG = $ENV{'GITWEB_CONFIG'} || "++GITWEB_CONFIG++";
-require $GITWEB_CONFIG if -e $GITWEB_CONFIG;
+do $GITWEB_CONFIG if -e $GITWEB_CONFIG;
 
 # version of the core git binary
 our $git_version = qx($GIT --version) =~ m/git version (.*)$/ ? $1 : "unknown";
@@ -1027,9 +1027,30 @@ sub parse_difftree_raw_line {
 		}
 	}
 	# 'c512b523472485aef4fff9e57b229d9d243c967f'
-	#elsif ($line =~ m/^([0-9a-fA-F]{40})$/) {
-	#	$res{'commit'} = $1;
-	#}
+	elsif ($line =~ m/^([0-9a-fA-F]{40})$/) {
+		$res{'commit'} = $1;
+	}
+
+	return wantarray ? %res : \%res;
+}
+
+# parse line of git-ls-tree output
+sub parse_ls_tree_line ($;%) {
+	my $line = shift;
+	my %opts = @_;
+	my %res;
+
+	#'100644 blob 0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
+	$line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40})\t(.+)$/;
+
+	$res{'mode'} = $1;
+	$res{'type'} = $2;
+	$res{'hash'} = $3;
+	if ($opts{'-z'}) {
+		$res{'name'} = $4;
+	} else {
+		$res{'name'} = unquote($4);
+	}
 
 	return wantarray ? %res : \%res;
 }
@@ -1452,6 +1473,62 @@ sub git_print_simplified_log {
 	git_print_log($log,
 		-final_empty_line=> 1,
 		-remove_title => $remove_title);
+}
+
+# print tree entry (row of git_tree), but without encompassing <tr> element
+sub git_print_tree_entry {
+	my ($t, $basedir, $hash_base, $have_blame) = @_;
+
+	my %base_key = ();
+	$base_key{hash_base} = $hash_base if defined $hash_base;
+
+	print "<td class=\"mode\">" . mode_str($t->{'mode'}) . "</td>\n";
+	if ($t->{'type'} eq "blob") {
+		print "<td class=\"list\">" .
+		      $cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
+		                             file_name=>"$basedir$t->{'name'}", %base_key),
+		              -class => "list"}, esc_html($t->{'name'})) .
+		      "</td>\n" .
+		      "<td class=\"link\">" .
+		      $cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
+		                             file_name=>"$basedir$t->{'name'}", %base_key)},
+		              "blob");
+		if ($have_blame) {
+			print " | " .
+				$cgi->a({-href => href(action=>"blame", hash=>$t->{'hash'},
+				                       file_name=>"$basedir$t->{'name'}", %base_key)},
+				        "blame");
+		}
+		if (defined $hash_base) {
+			print " | " .
+			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
+			                             hash=>$t->{'hash'}, file_name=>"$basedir$t->{'name'}")},
+			              "history");
+		}
+		print " | " .
+		      $cgi->a({-href => href(action=>"blob_plain",
+		                             hash=>$t->{'hash'}, file_name=>"$basedir$t->{'name'}")},
+		              "raw") .
+		      "</td>\n";
+
+	} elsif ($t->{'type'} eq "tree") {
+		print "<td class=\"list\">" .
+		      $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
+		                             file_name=>"$basedir$t->{'name'}", %base_key)},
+		              esc_html($t->{'name'})) .
+		      "</td>\n" .
+		      "<td class=\"link\">" .
+		      $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
+		                             file_name=>"$basedir$t->{'name'}", %base_key)},
+		              "tree");
+		if (defined $hash_base) {
+			print " | " .
+			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
+			                             file_name=>"$basedir$t->{'name'}")},
+			              "history");
+		}
+		print "</td>\n";
+	}
 }
 
 ## ......................................................................
@@ -2492,14 +2569,13 @@ sub git_tree {
 	my $refs = git_get_references();
 	my $ref = format_ref_marker($refs, $hash_base);
 	git_header_html();
-	my %base_key = ();
 	my $base = "";
 	my $have_blame = gitweb_check_feature('blame');
 	if (defined $hash_base && (my %co = parse_commit($hash_base))) {
-		$base_key{hash_base} = $hash_base;
 		git_print_page_nav('tree','', $hash_base);
 		git_print_header_div('commit', esc_html($co{'title'}) . $ref, $hash_base);
 	} else {
+		undef $hash_base;
 		print "<div class=\"page_nav\">\n";
 		print "<br/><br/></div>\n";
 		print "<div class=\"title\">$hash</div>\n";
@@ -2512,54 +2588,17 @@ sub git_tree {
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 0;
 	foreach my $line (@entries) {
-		#'100644	blob	0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
-		$line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40})\t(.+)$/;
-		my $t_mode = $1;
-		my $t_type = $2;
-		my $t_hash = $3;
-		my $t_name = validate_input($4);
+		my %t = parse_ls_tree_line($line, -z => 1);
+
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
 		} else {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
-		print "<td class=\"mode\">" . mode_str($t_mode) . "</td>\n";
-		if ($t_type eq "blob") {
-			print "<td class=\"list\">" .
-			      $cgi->a({-href => href(action=>"blob", hash=>$t_hash, file_name=>"$base$t_name", %base_key),
-			              -class => "list"}, esc_html($t_name)) .
-			      "</td>\n" .
-			      "<td class=\"link\">" .
-			      $cgi->a({-href => href(action=>"blob", hash=>$t_hash, file_name=>"$base$t_name", %base_key)},
-			              "blob");
-			if ($have_blame) {
-				print " | " .
-					$cgi->a({-href => href(action=>"blame", hash=>$t_hash, file_name=>"$base$t_name", %base_key)},
-					        "blame");
-			}
-			print " | " .
-			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
-			                             hash=>$t_hash, file_name=>"$base$t_name")},
-			              "history") .
-			      " | " .
-			      $cgi->a({-href => href(action=>"blob_plain",
-			                             hash=>$t_hash, file_name=>"$base$t_name")},
-			              "raw") .
-			      "</td>\n";
-		} elsif ($t_type eq "tree") {
-			print "<td class=\"list\">" .
-			      $cgi->a({-href => href(action=>"tree", hash=>$t_hash, file_name=>"$base$t_name", %base_key)},
-			              esc_html($t_name)) .
-			      "</td>\n" .
-			      "<td class=\"link\">" .
-			      $cgi->a({-href => href(action=>"tree", hash=>$t_hash, file_name=>"$base$t_name", %base_key)},
-			              "tree") .
-			      " | " .
-			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base, file_name=>"$base$t_name")},
-			              "history") .
-			      "</td>\n";
-		}
+
+		git_print_tree_entry(\%t, $base, $hash_base, $have_blame);
+
 		print "</tr>\n";
 	}
 	print "</table>\n" .
@@ -2778,10 +2817,6 @@ sub git_blobdiff {
 			@difftree
 				or die_error('404 Not Found', "Blob diff not found");
 
-		} elsif (defined $hash) { # try to find filename from $hash
-			if ($hash !~ /[0-9a-fA-F]{40}/) {
-				$hash = git_to_hash($hash);
-			}
 		} elsif (defined $hash &&
 		         $hash =~ /[0-9a-fA-F]{40}/) {
 			# try to find filename from $hash

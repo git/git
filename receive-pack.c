@@ -2,7 +2,6 @@
 #include "refs.h"
 #include "pkt-line.h"
 #include "run-command.h"
-#include <sys/wait.h>
 
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 

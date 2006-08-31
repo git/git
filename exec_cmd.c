@@ -97,26 +97,12 @@ int execv_git_cmd(const char **argv)
 		tmp = argv[0];
 		argv[0] = git_command;
 
-		if (getenv("GIT_TRACE")) {
-			const char **p = argv;
-			fputs("trace: exec:", stderr);
-			while (*p) {
-				fputc(' ', stderr);
-				sq_quote_print(stderr, *p);
-				++p;
-			}
-			putc('\n', stderr);
-			fflush(stderr);
-		}
+		trace_argv_printf(argv, -1, "trace: exec:");
 
 		/* execve() can only ever return if it fails */
 		execve(git_command, (char **)argv, environ);
 
-		if (getenv("GIT_TRACE")) {
-			fprintf(stderr, "trace: exec failed: %s\n",
-				strerror(errno));
-			fflush(stderr);
-		}
+		trace_printf("trace: exec failed: %s\n", strerror(errno));
 
 		argv[0] = tmp;
 	}
