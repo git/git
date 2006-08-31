@@ -2778,10 +2778,6 @@ sub git_blobdiff {
 			@difftree
 				or die_error('404 Not Found', "Blob diff not found");
 
-		} elsif (defined $hash) { # try to find filename from $hash
-			if ($hash !~ /[0-9a-fA-F]{40}/) {
-				$hash = git_to_hash($hash);
-			}
 		} elsif (defined $hash &&
 		         $hash =~ /[0-9a-fA-F]{40}/) {
 			# try to find filename from $hash
