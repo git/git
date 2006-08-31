@@ -249,7 +249,7 @@ LIB_OBJS = \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
 	fetch-clone.o revision.o pager.o tree-walk.o xdiff-interface.o \
-	write_or_die.o \
+	write_or_die.o trace.o \
 	alloc.o merge-file.o path-list.o help.o unpack-trees.o $(DIFF_OBJS)
 
 BUILTIN_OBJS = \
