@@ -53,7 +53,7 @@ static void exec_rev_list(struct ref *refs)
 		if (900 < i)
 			die("git-rev-list environment overflow");
 		if (!is_zero_sha1(ref->new_sha1)) {
-			char *buf = malloc(100);
+			char *buf = xmalloc(100);
 			args[i++] = buf;
 			snprintf(buf, 50, "%s", sha1_to_hex(ref->new_sha1));
 			buf += 50;
@@ -75,7 +75,7 @@ static void exec_rev_list(struct ref *refs)
 		if (is_zero_sha1(ref->new_sha1) &&
 		    !is_zero_sha1(ref->old_sha1) &&
 		    has_sha1_file(ref->old_sha1)) {
-			char *buf = malloc(42);
+			char *buf = xmalloc(42);
 			args[i++] = buf;
 			snprintf(buf, 42, "^%s", sha1_to_hex(ref->old_sha1));
 		}

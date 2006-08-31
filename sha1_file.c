@@ -1756,7 +1756,7 @@ int read_pipe(int fd, char** return_buf, unsigned long* return_size)
 int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
 {
 	unsigned long size = 4096;
-	char *buf = malloc(size);
+	char *buf = xmalloc(size);
 	int ret;
 	unsigned char hdr[50];
 	int hdrlen;
