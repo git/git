@@ -142,7 +142,7 @@ static int handle_line(char *line)
 		if (origin[0] == '\'' && origin[len - 1] == '\'') {
 			char *new_origin = xmalloc(len - 1);
 			memcpy(new_origin, origin + 1, len - 2);
-			new_origin[len - 1] = 0;
+			new_origin[len - 2] = 0;
 			origin = new_origin;
 		} else
 			origin = strdup(origin);
