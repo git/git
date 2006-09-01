@@ -283,7 +283,7 @@ static int save_files_dirs(const unsigned char *sha1,
 		unsigned int mode, int stage)
 {
 	int len = strlen(path);
-	char *newpath = malloc(baselen + len + 1);
+	char *newpath = xmalloc(baselen + len + 1);
 	memcpy(newpath, base, baselen);
 	memcpy(newpath + baselen, path, len);
 	newpath[baselen + len] = '\0';
@@ -455,7 +455,7 @@ static int remove_path(const char *name)
 	if (ret)
 		return ret;
 	len = strlen(name);
-	dirs = malloc(len+1);
+	dirs = xmalloc(len+1);
 	memcpy(dirs, name, len);
 	dirs[len] = '\0';
 	while ((slash = strrchr(name, '/'))) {
@@ -572,7 +572,7 @@ void update_file_flags(const unsigned char *sha,
 			flush_buffer(fd, buf, size);
 			close(fd);
 		} else if (S_ISLNK(mode)) {
-			char *lnk = malloc(size + 1);
+			char *lnk = xmalloc(size + 1);
 			memcpy(lnk, buf, size);
 			lnk[size] = '\0';
 			mkdir_p(path, 0777);

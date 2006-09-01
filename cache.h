@@ -260,7 +260,7 @@ extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned l
 extern int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 			      size_t bufsize, size_t *bufposn);
 extern int write_sha1_to_fd(int fd, const unsigned char *sha1);
-extern int move_temp_to_file(const char *tmpfile, char *filename);
+extern int move_temp_to_file(const char *tmpfile, const char *filename);
 
 extern int has_sha1_pack(const unsigned char *sha1);
 extern int has_sha1_file(const unsigned char *sha1);

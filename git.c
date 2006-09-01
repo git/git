@@ -29,7 +29,7 @@ static void prepend_to_path(const char *dir, int len)
 
 	path_len = len + strlen(old_path) + 1;
 
-	path = malloc(path_len + 1);
+	path = xmalloc(path_len + 1);
 
 	memcpy(path, dir, len);
 	path[len] = ':';

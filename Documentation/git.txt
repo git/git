@@ -303,6 +303,9 @@ gitlink:git-format-patch[1]::
 gitlink:git-grep[1]::
 	Print lines matching a pattern.
 
+gitlink:gitk[1]::
+	The git repository browser.
+
 gitlink:git-log[1]::
 	Shows commit logs.
 
@@ -481,13 +484,6 @@ gitlink:git-symbolic-ref[1]::
 
 gitlink:git-stripspace[1]::
 	Filter out empty lines.
-
-
-Commands not yet documented
----------------------------
-
-gitlink:gitk[1]::
-	The gitk repository browser.
 
 
 Configuration Mechanism
