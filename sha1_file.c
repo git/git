@@ -1348,7 +1348,7 @@ char *write_sha1_file_prepare(void *buf,
  *
  * Returns the errno on failure, 0 on success.
  */
-static int link_temp_to_file(const char *tmpfile, char *filename)
+static int link_temp_to_file(const char *tmpfile, const char *filename)
 {
 	int ret;
 	char *dir;
@@ -1381,7 +1381,7 @@ static int link_temp_to_file(const char *tmpfile, char *filename)
 /*
  * Move the just written object into its final resting place
  */
-int move_temp_to_file(const char *tmpfile, char *filename)
+int move_temp_to_file(const char *tmpfile, const char *filename)
 {
 	int ret = link_temp_to_file(tmpfile, filename);
 
