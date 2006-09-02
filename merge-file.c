@@ -21,7 +21,7 @@ static const char *write_temp_file(mmfile_t *f)
 	fd = mkstemp(filename);
 	if (fd < 0)
 		return NULL;
-	filename = strdup(filename);
+	filename = xstrdup(filename);
 	if (f->size != xwrite(fd, f->ptr, f->size)) {
 		rm_temp_file(filename);
 		return NULL;

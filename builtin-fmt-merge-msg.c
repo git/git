@@ -111,29 +111,29 @@ static int handle_line(char *line)
 	i = find_in_list(&srcs, src);
 	if (i < 0) {
 		i = srcs.nr;
-		append_to_list(&srcs, strdup(src),
+		append_to_list(&srcs, xstrdup(src),
 				xcalloc(1, sizeof(struct src_data)));
 	}
 	src_data = srcs.payload[i];
 
 	if (pulling_head) {
-		origin = strdup(src);
+		origin = xstrdup(src);
 		src_data->head_status |= 1;
 	} else if (!strncmp(line, "branch ", 7)) {
-		origin = strdup(line + 7);
+		origin = xstrdup(line + 7);
 		append_to_list(&src_data->branch, origin, NULL);
 		src_data->head_status |= 2;
 	} else if (!strncmp(line, "tag ", 4)) {
 		origin = line;
-		append_to_list(&src_data->tag, strdup(origin + 4), NULL);
+		append_to_list(&src_data->tag, xstrdup(origin + 4), NULL);
 		src_data->head_status |= 2;
 	} else if (!strncmp(line, "remote branch ", 14)) {
-		origin = strdup(line + 14);
+		origin = xstrdup(line + 14);
 		append_to_list(&src_data->r_branch, origin, NULL);
 		src_data->head_status |= 2;
 	} else {
-		origin = strdup(src);
-		append_to_list(&src_data->generic, strdup(line), NULL);
+		origin = xstrdup(src);
+		append_to_list(&src_data->generic, xstrdup(line), NULL);
 		src_data->head_status |= 2;
 	}
 
@@ -145,7 +145,7 @@ static int handle_line(char *line)
 			new_origin[len - 2] = 0;
 			origin = new_origin;
 		} else
-			origin = strdup(origin);
+			origin = xstrdup(origin);
 	} else {
 		char *new_origin = xmalloc(strlen(origin) + strlen(src) + 5);
 		sprintf(new_origin, "%s of %s", origin, src);
@@ -203,7 +203,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 
 		bol = strstr(commit->buffer, "\n\n");
 		if (!bol) {
-			append_to_list(&subjects, strdup(sha1_to_hex(
+			append_to_list(&subjects, xstrdup(sha1_to_hex(
 							commit->object.sha1)),
 					NULL);
 			continue;
@@ -218,7 +218,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 			memcpy(oneline, bol, len);
 			oneline[len] = 0;
 		} else
-			oneline = strdup(bol);
+			oneline = xstrdup(bol);
 		append_to_list(&subjects, oneline, NULL);
 	}
 
@@ -277,7 +277,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 		usage(fmt_merge_msg_usage);
 
 	/* get current branch */
-	head = strdup(git_path("HEAD"));
+	head = xstrdup(git_path("HEAD"));
 	current_branch = resolve_ref(head, head_sha1, 1);
 	current_branch += strlen(head) - 4;
 	free((char *)head);

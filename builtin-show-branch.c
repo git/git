@@ -163,7 +163,7 @@ static void name_commits(struct commit_list *list,
 					en += sprintf(en, "^");
 				else
 					en += sprintf(en, "^%d", nth);
-				name_commit(p, strdup(newname), 0);
+				name_commit(p, xstrdup(newname), 0);
 				i++;
 				name_first_parent_chain(p);
 			}
@@ -364,7 +364,7 @@ static int append_ref(const char *refname, const unsigned char *sha1)
 			refname, MAX_REVS);
 		return 0;
 	}
-	ref_name[ref_name_cnt++] = strdup(refname);
+	ref_name[ref_name_cnt++] = xstrdup(refname);
 	ref_name[ref_name_cnt] = NULL;
 	return 0;
 }
@@ -521,7 +521,7 @@ static int git_show_branch_config(const char *var, const char *value)
 			default_alloc = default_alloc * 3 / 2 + 20;
 			default_arg = xrealloc(default_arg, sizeof *default_arg * default_alloc);
 		}
-		default_arg[default_num++] = strdup(value);
+		default_arg[default_num++] = xstrdup(value);
 		default_arg[default_num] = NULL;
 		return 0;
 	}

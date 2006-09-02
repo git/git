@@ -311,11 +311,11 @@ int cmd_zip_tree(int argc, const char **argv, const char *prefix)
 
 	switch (argc) {
 	case 3:
-		base = strdup(argv[2]);
+		base = xstrdup(argv[2]);
 		baselen = strlen(base);
 		break;
 	case 2:
-		base = strdup("");
+		base = xstrdup("");
 		baselen = 0;
 		break;
 	default:

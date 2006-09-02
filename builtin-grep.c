@@ -1048,7 +1048,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 				/* ignore empty line like grep does */
 				if (!buf[0])
 					continue;
-				add_pattern(&opt, strdup(buf), argv[1], ++lno,
+				add_pattern(&opt, xstrdup(buf), argv[1], ++lno,
 					    GREP_PATTERN);
 			}
 			fclose(patterns);

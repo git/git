@@ -109,7 +109,7 @@ static void process_blob(struct blob *blob,
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return;
 	obj->flags |= SEEN;
-	name = strdup(name);
+	name = xstrdup(name);
 	add_object(obj, p, path, name);
 }
 
@@ -130,7 +130,7 @@ static void process_tree(struct tree *tree,
 	if (parse_tree(tree) < 0)
 		die("bad tree object %s", sha1_to_hex(obj->sha1));
 	obj->flags |= SEEN;
-	name = strdup(name);
+	name = xstrdup(name);
 	add_object(obj, p, path, name);
 	me.up = path;
 	me.elem = name;

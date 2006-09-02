@@ -458,7 +458,7 @@ static void fsck_object_dir(const char *path)
 static int fsck_head_link(void)
 {
 	unsigned char sha1[20];
-	const char *git_HEAD = strdup(git_path("HEAD"));
+	const char *git_HEAD = xstrdup(git_path("HEAD"));
 	const char *git_refs_heads_master = resolve_ref(git_HEAD, sha1, 1);
 	int pfxlen = strlen(git_HEAD) - 4; /* strip .../.git/ part */
 

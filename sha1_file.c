@@ -115,7 +115,7 @@ static void fill_sha1_path(char *pathbuf, const unsigned char *sha1)
 
 /*
  * NOTE! This returns a statically allocated buffer, so you have to be
- * careful about using it. Do a "strdup()" if you need to save the
+ * careful about using it. Do a "xstrdup()" if you need to save the
  * filename.
  *
  * Also note that this returns the location for creating.  Reading
