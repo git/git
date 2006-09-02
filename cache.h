@@ -398,6 +398,7 @@ extern char git_commit_encoding[MAX_ENCODING_LENGTH];
 
 extern int copy_fd(int ifd, int ofd);
 extern void write_or_die(int fd, const void *buf, size_t count);
+extern int write_or_whine(int fd, const void *buf, size_t count, const char *msg);
 
 /* Finish off pack transfer receiving end */
 extern int receive_unpack_pack(int fd[2], const char *me, int quiet, int);
@@ -422,5 +423,10 @@ extern struct tree *alloc_tree_node(void);
 extern struct commit *alloc_commit_node(void);
 extern struct tag *alloc_tag_node(void);
 extern void alloc_report(void);
+
+/* trace.c */
+extern int nfvasprintf(char **str, const char *fmt, va_list va);
+extern void trace_printf(const char *format, ...);
+extern void trace_argv_printf(const char **argv, int count, const char *format, ...);
 
 #endif /* CACHE_H */

@@ -74,6 +74,38 @@ char *sq_quote(const char *src)
 	return buf;
 }
 
+char *sq_quote_argv(const char** argv, int count)
+{
+	char *buf, *to;
+	int i;
+	size_t len = 0;
+
+	/* Count argv if needed. */
+	if (count < 0) {
+		for (count = 0; argv[count]; count++)
+			; /* just counting */
+	}
+
+	/* Special case: no argv. */
+	if (!count)
+		return xcalloc(1,1);
+
+	/* Get destination buffer length. */
+	for (i = 0; i < count; i++)
+		len += sq_quote_buf(NULL, 0, argv[i]) + 1;
+
+	/* Alloc destination buffer. */
+	to = buf = xmalloc(len + 1);
+
+	/* Copy into destination buffer. */
+	for (i = 0; i < count; ++i) {
+		*to++ = ' ';
+		to += sq_quote_buf(to, len, argv[i]);
+	}
+
+	return buf;
+}
+
 char *sq_dequote(char *arg)
 {
 	char *dst = arg;

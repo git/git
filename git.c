@@ -179,17 +179,9 @@ static int handle_alias(int *argcp, const char ***argv)
 		if (!strcmp(alias_command, new_argv[0]))
 			die("recursive alias: %s", alias_command);
 
-		if (getenv("GIT_TRACE")) {
-			int i;
-			fprintf(stderr, "trace: alias expansion: %s =>",
-				alias_command);
-			for (i = 0; i < count; ++i) {
-				fputc(' ', stderr);
-				sq_quote_print(stderr, new_argv[i]);
-			}
-			fputc('\n', stderr);
-			fflush(stderr);
-		}
+		trace_argv_printf(new_argv, count,
+				  "trace: alias expansion: %s =>",
+				  alias_command);
 
 		new_argv = xrealloc(new_argv, sizeof(char*) *
 				    (count + *argcp + 1));
@@ -292,16 +284,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 			prefix = setup_git_directory();
 		if (p->option & USE_PAGER)
 			setup_pager();
-		if (getenv("GIT_TRACE")) {
-			int j;
-			fprintf(stderr, "trace: built-in: git");
-			for (j = 0; j < argc; ++j) {
-				fputc(' ', stderr);
-				sq_quote_print(stderr, argv[j]);
-			}
-			putc('\n', stderr);
-			fflush(stderr);
-		}
+		trace_argv_printf(argv, argc, "trace: built-in: git");
 
 		exit(p->fn(argc, argv, prefix));
 	}
