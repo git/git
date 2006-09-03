@@ -11,7 +11,6 @@ use strict;
 use Getopt::Long;
 use POSIX qw(strftime gmtime);
 use File::Basename qw(basename dirname);
-use Git;
 
 sub usage() {
 	print STDERR "Usage: ${\basename $0} [-s] [-S revs-file] file [ revision ]
@@ -30,7 +29,7 @@ sub usage() {
 	exit(1);
 }
 
-our ($help, $longrev, $rename, $rawtime, $starting_rev, $rev_file, $repo) = (0, 0, 1);
+our ($help, $longrev, $rename, $rawtime, $starting_rev, $rev_file) = (0, 0, 1);
 
 my $rc = GetOptions(	"long|l" => \$longrev,
 			"time|t" => \$rawtime,
@@ -52,8 +51,6 @@ my @stack = (
 		'filename' => $filename,
 	},
 );
-
-$repo = Git->repository();
 
 our @filelines = ();
 
@@ -105,11 +102,15 @@ while (my $bound = pop @stack) {
 push @revqueue, $head;
 init_claim( defined $starting_rev ? $head : 'dirty');
 unless (defined $starting_rev) {
-	my %ident;
-	@ident{'author', 'author_email', 'author_date'} = $repo->ident('author');
-	my $diff = $repo->command_output_pipe('diff', '-R', 'HEAD', '--', $filename);
-	_git_diff_parse($diff, [$head], "dirty", %ident);
-	$repo->command_close_pipe($diff);
+	my $diff = open_pipe("git","diff","HEAD", "--",$filename)
+		or die "Failed to call git diff to check for dirty state: $!";
+
+	_git_diff_parse($diff, [$head], "dirty", (
+				'author' => gitvar_name("GIT_AUTHOR_IDENT"),
+				'author_date' => sprintf("%s +0000",time()),
+				)
+			);
+	close($diff);
 }
 handle_rev();
 
@@ -179,7 +180,8 @@ sub git_rev_list {
 		open($revlist, '<' . $rev_file)
 		    or die "Failed to open $rev_file : $!";
 	} else {
-		$revlist = $repo->command_output_pipe('rev-list', '--parents', '--remove-empty', $rev, '--', $file);
+		$revlist = open_pipe("git-rev-list","--parents","--remove-empty",$rev,"--",$file)
+			or die "Failed to exec git-rev-list: $!";
 	}
 
 	my @revs;
@@ -188,7 +190,7 @@ sub git_rev_list {
 		my ($rev, @parents) = split /\s+/, $line;
 		push @revs, [ $rev, @parents ];
 	}
-	$repo->command_close_pipe($revlist);
+	close($revlist);
 
 	printf("0 revs found for rev %s (%s)\n", $rev, $file) if (@revs == 0);
 	return @revs;
@@ -197,7 +199,8 @@ sub git_rev_list {
 sub find_parent_renames {
 	my ($rev, $file) = @_;
 
-	my $patch = $repo->command_output_pipe('diff-tree', '-M50', '-r', '--name-status', '-z', $rev);
+	my $patch = open_pipe("git-diff-tree", "-M50", "-r","--name-status", "-z","$rev")
+		or die "Failed to exec git-diff: $!";
 
 	local $/ = "\0";
 	my %bound;
@@ -223,7 +226,7 @@ sub find_parent_renames {
 			}
 		}
 	}
-	$repo->command_close_pipe($patch);
+	close($patch);
 
 	return \%bound;
 }
@@ -232,9 +235,14 @@ sub find_parent_renames {
 sub git_find_parent {
 	my ($rev, $filename) = @_;
 
-	my $parentline = $repo->command_oneline('rev-list', '--remove-empty',
-			'--parents', '--max-count=1', $rev, '--', $filename);
-	my ($revfound, $parent) = split m/\s+/, $parentline;
+	my $revparent = open_pipe("git-rev-list","--remove-empty", "--parents","--max-count=1","$rev","--",$filename)
+		or die "Failed to open git-rev-list to find a single parent: $!";
+
+	my $parentline = <$revparent>;
+	chomp $parentline;
+	my ($revfound,$parent) = split m/\s+/, $parentline;
+
+	close($revparent);
 
 	return $parent;
 }
@@ -242,8 +250,14 @@ sub git_find_parent {
 sub git_find_all_parents {
 	my ($rev) = @_;
 
-	my $parentline = $repo->command_oneline("rev-list","--remove-empty", "--parents","--max-count=1","$rev");
+	my $revparent = open_pipe("git-rev-list","--remove-empty", "--parents","--max-count=1","$rev")
+		or die "Failed to open git-rev-list to find a single parent: $!";
+
+	my $parentline = <$revparent>;
+	chomp $parentline;
 	my ($origrev, @parents) = split m/\s+/, $parentline;
+
+	close($revparent);
 
 	return @parents;
 }
@@ -251,7 +265,14 @@ sub git_find_all_parents {
 sub git_merge_base {
 	my ($rev1, $rev2) = @_;
 
-	my $base = $repo->command_oneline("merge-base", $rev1, $rev2);
+	my $mb = open_pipe("git-merge-base", $rev1, $rev2)
+	        or die "Failed to open git-merge-base: $!";
+
+	my $base = <$mb>;
+	chomp $base;
+
+	close($mb);
+
 	return $base;
 }
 
@@ -316,7 +337,7 @@ sub git_diff_parse {
 	my ($parents, $rev, %revinfo) = @_;
 
 	my @pseudo_parents;
-	my @command = ("diff-tree");
+	my @command = ("git-diff-tree");
 	my $revision_spec;
 
 	if (scalar @$parents == 1) {
@@ -345,11 +366,12 @@ sub git_diff_parse {
 	push @command, "-p", "-M", $revision_spec, "--", @filenames;
 
 
-	my $diff = $repo->command_output_pipe(@command);
+	my $diff = open_pipe( @command )
+		or die "Failed to call git-diff for annotation: $!";
 
 	_git_diff_parse($diff, \@pseudo_parents, $rev, %revinfo);
 
-	$repo->command_close_pipe($diff);
+	close($diff);
 }
 
 sub _git_diff_parse {
@@ -525,25 +547,36 @@ sub git_cat_file {
 	my $blob = git_ls_tree($rev, $filename);
 	die "Failed to find a blob for $filename in rev $rev\n" if !defined $blob;
 
-	my @lines = split(/\n/, $repo->get_object('blob', $blob));
-	pop @lines unless $lines[$#lines]; # Trailing newline
+	my $catfile = open_pipe("git","cat-file", "blob", $blob)
+		or die "Failed to git-cat-file blob $blob (rev $rev, file $filename): " . $!;
+
+	my @lines;
+	while(<$catfile>) {
+		chomp;
+		push @lines, $_;
+	}
+	close($catfile);
+
 	return @lines;
 }
 
 sub git_ls_tree {
 	my ($rev, $filename) = @_;
 
-	my $lstree = $repo->command_output_pipe('ls-tree', $rev, $filename);
+	my $lstree = open_pipe("git","ls-tree",$rev,$filename)
+		or die "Failed to call git ls-tree: $!";
+
 	my ($mode, $type, $blob, $tfilename);
 	while(<$lstree>) {
 		chomp;
 		($mode, $type, $blob, $tfilename) = split(/\s+/, $_, 4);
 		last if ($tfilename eq $filename);
 	}
-	$repo->command_close_pipe($lstree);
+	close($lstree);
 
 	return $blob if ($tfilename eq $filename);
 	die "git-ls-tree failed to find blob for $filename";
+
 }
 
 
@@ -559,17 +592,25 @@ sub claim_line {
 
 sub git_commit_info {
 	my ($rev) = @_;
-	my $commit = $repo->get_object('commit', $rev);
+	my $commit = open_pipe("git-cat-file", "commit", $rev)
+		or die "Failed to call git-cat-file: $!";
 
 	my %info;
-	while ($commit =~ /(.*?)\n/g) {
-		my $line = $1;
-		if ($line =~ s/^author //) {
-			@info{'author', 'author_email', 'author_date'} = $repo->ident($line);
-		} elsif ($line =~ s/^committer//) {
-			@info{'committer', 'committer_email', 'committer_date'} = $repo->ident($line);
+	while(<$commit>) {
+		chomp;
+		last if (length $_ == 0);
+
+		if (m/^author (.*) <(.*)> (.*)$/) {
+			$info{'author'} = $1;
+			$info{'author_email'} = $2;
+			$info{'author_date'} = $3;
+		} elsif (m/^committer (.*) <(.*)> (.*)$/) {
+			$info{'committer'} = $1;
+			$info{'committer_email'} = $2;
+			$info{'committer_date'} = $3;
 		}
 	}
+	close($commit);
 
 	return %info;
 }
@@ -586,4 +627,82 @@ sub format_date {
 	}
 	my $t = $timestamp + $minutes * 60;
 	return strftime("%Y-%m-%d %H:%M:%S " . $timezone, gmtime($t));
+}
+
+# Copied from git-send-email.perl - We need a Git.pm module..
+sub gitvar {
+    my ($var) = @_;
+    my $fh;
+    my $pid = open($fh, '-|');
+    die "$!" unless defined $pid;
+    if (!$pid) {
+	exec('git-var', $var) or die "$!";
+    }
+    my ($val) = <$fh>;
+    close $fh or die "$!";
+    chomp($val);
+    return $val;
+}
+
+sub gitvar_name {
+    my ($name) = @_;
+    my $val = gitvar($name);
+    my @field = split(/\s+/, $val);
+    return join(' ', @field[0...(@field-4)]);
+}
+
+sub open_pipe {
+	if ($^O eq '##INSERT_ACTIVESTATE_STRING_HERE##') {
+		return open_pipe_activestate(@_);
+	} else {
+		return open_pipe_normal(@_);
+	}
+}
+
+sub open_pipe_activestate {
+	tie *fh, "Git::ActiveStatePipe", @_;
+	return *fh;
+}
+
+sub open_pipe_normal {
+	my (@execlist) = @_;
+
+	my $pid = open my $kid, "-|";
+	defined $pid or die "Cannot fork: $!";
+
+	unless ($pid) {
+		exec @execlist;
+		die "Cannot exec @execlist: $!";
+	}
+
+	return $kid;
+}
+
+package Git::ActiveStatePipe;
+use strict;
+
+sub TIEHANDLE {
+	my ($class, @params) = @_;
+	my $cmdline = join " ", @params;
+	my  @data = qx{$cmdline};
+	bless { i => 0, data => \@data }, $class;
+}
+
+sub READLINE {
+	my $self = shift;
+	if ($self->{i} >= scalar @{$self->{data}}) {
+		return undef;
+	}
+	return $self->{'data'}->[ $self->{i}++ ];
+}
+
+sub CLOSE {
+	my $self = shift;
+	delete $self->{data};
+	delete $self->{i};
+}
+
+sub EOF {
+	my $self = shift;
+	return ($self->{i} >= scalar @{$self->{data}});
 }
