@@ -65,6 +65,7 @@ static unsigned char pack_file_sha1[20];
 static int progress = 1;
 static volatile sig_atomic_t progress_update;
 static int window = 10;
+static int pack_to_stdout;
 
 /*
  * The object names in objects array are hashed with this hashtable,
@@ -242,6 +243,58 @@ static int encode_header(enum object_type type, unsigned long size, unsigned cha
 	return n;
 }
 
+static int revalidate_one(struct object_entry *entry,
+			  void *data, char *type, unsigned long size)
+{
+	int err;
+	if (!data)
+		return -1;
+	if (size != entry->size)
+		return -1;
+	err = check_sha1_signature(entry->sha1, data, size,
+				   type_names[entry->type]);
+	free(data);
+	return err;
+}
+
+/*
+ * we are going to reuse the existing pack entry data.  make
+ * sure it is not corrupt.
+ */
+static int revalidate_pack_entry(struct object_entry *entry)
+{
+	void *data;
+	char type[20];
+	unsigned long size;
+	struct pack_entry e;
+
+	if (pack_to_stdout)
+		return 0;
+
+	e.p = entry->in_pack;
+	e.offset = entry->in_pack_offset;
+
+	/* the caller has already called use_packed_git() for us */
+	data = unpack_entry_gently(&e, type, &size);
+	return revalidate_one(entry, data, type, size);
+}
+
+static int revalidate_loose_object(struct object_entry *entry,
+				   unsigned char *map,
+				   unsigned long mapsize)
+{
+	/* we already know this is a loose object with new type header. */
+	void *data;
+	char type[20];
+	unsigned long size;
+
+	if (pack_to_stdout)
+		return 0;
+
+	data = unpack_sha1_file(map, mapsize, type, &size);
+	return revalidate_one(entry, data, type, size);
+}
+
 static unsigned long write_object(struct sha1file *f,
 				  struct object_entry *entry)
 {
@@ -276,6 +329,9 @@ static unsigned long write_object(struct sha1file *f,
 		map = map_sha1_file(entry->sha1, &mapsize);
 		if (map && !legacy_loose_object(map)) {
 			/* We can copy straight into the pack file */
+			if (revalidate_loose_object(entry, map, mapsize))
+				die("corrupt loose object %s",
+				    sha1_to_hex(entry->sha1));
 			sha1write(f, map, mapsize);
 			munmap(map, mapsize);
 			written++;
@@ -286,7 +342,7 @@ static unsigned long write_object(struct sha1file *f,
 			munmap(map, mapsize);
 	}
 
-	if (! to_reuse) {
+	if (!to_reuse) {
 		buf = read_sha1_file(entry->sha1, type, &size);
 		if (!buf)
 			die("unable to read %s", sha1_to_hex(entry->sha1));
@@ -319,6 +375,9 @@ static unsigned long write_object(struct sha1file *f,
 
 		datalen = find_packed_object_size(p, entry->in_pack_offset);
 		buf = (char *) p->pack_base + entry->in_pack_offset;
+
+		if (revalidate_pack_entry(entry))
+			die("corrupt delta in pack %s", sha1_to_hex(entry->sha1));
 		sha1write(f, buf, datalen);
 		unuse_packed_git(p);
 		hdrlen = 0; /* not really */
@@ -1163,7 +1222,7 @@ static void prepare_pack(int window, int depth)
 		find_deltas(sorted_by_type, window+1, depth);
 }
 
-static int reuse_cached_pack(unsigned char *sha1, int pack_to_stdout)
+static int reuse_cached_pack(unsigned char *sha1)
 {
 	static const char cache[] = "pack-cache/pack-%s.%s";
 	char *cached_pack, *cached_idx;
@@ -1247,7 +1306,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 {
 	SHA_CTX ctx;
 	char line[40 + 1 + PATH_MAX + 2];
-	int depth = 10, pack_to_stdout = 0;
+	int depth = 10;
 	struct object_entry **list;
 	int num_preferred_base = 0;
 	int i;
@@ -1367,7 +1426,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (progress && (nr_objects != nr_result))
 		fprintf(stderr, "Result has %d objects.\n", nr_result);
 
-	if (reuse_cached_pack(object_list_sha1, pack_to_stdout))
+	if (reuse_cached_pack(object_list_sha1))
 		;
 	else {
 		if (nr_result)
