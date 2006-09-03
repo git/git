@@ -69,7 +69,7 @@ struct ref **get_remote_heads(int in, struct ref **list,
 		if (len != name_len + 41) {
 			if (server_capabilities)
 				free(server_capabilities);
-			server_capabilities = strdup(name + name_len + 1);
+			server_capabilities = xstrdup(name + name_len + 1);
 		}
 
 		if (!check_ref(name, name_len, flags))
@@ -661,7 +661,7 @@ int git_connect(int fd[2], char *url, const char *prog)
 		if (path[1] == '~')
 			path++;
 		else {
-			path = strdup(ptr);
+			path = xstrdup(ptr);
 			free_path = 1;
 		}
 
@@ -672,7 +672,7 @@ int git_connect(int fd[2], char *url, const char *prog)
 		/* These underlying connection commands die() if they
 		 * cannot connect.
 		 */
-		char *target_host = strdup(host);
+		char *target_host = xstrdup(host);
 		if (git_use_proxy(host))
 			git_proxy_connect(fd, host);
 		else

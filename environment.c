@@ -67,7 +67,7 @@ void setup_git(char *new_git_dir, char *new_git_object_dir,
 		free(git_graft_file);
 	git_graft_file = new_git_graft_file;
 	if (!git_graft_file) {
-		git_graft_file = strdup(git_path("info/grafts"));
+		git_graft_file = xstrdup(git_path("info/grafts"));
 		dyn_git_graft_file = 1;
 	} else {
 		dyn_git_graft_file = 0;

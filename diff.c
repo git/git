@@ -216,7 +216,7 @@ static char *quote_one(const char *str)
 		return NULL;
 	needlen = quote_c_style(str, NULL, NULL, 0);
 	if (!needlen)
-		return strdup(str);
+		return xstrdup(str);
 	xp = xmalloc(needlen + 1);
 	quote_c_style(str, xp, NULL, 0);
 	return xp;
@@ -658,7 +658,7 @@ static struct diffstat_file *diffstat_add(struct diffstat_t *diffstat,
 		x->is_renamed = 1;
 	}
 	else
-		x->name = strdup(name_a);
+		x->name = xstrdup(name_a);
 	return x;
 }
 

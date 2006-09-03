@@ -72,12 +72,12 @@ static int get_value(const char* key_, const char* regex_)
 		const char *home = getenv("HOME");
 		local = getenv("GIT_CONFIG_LOCAL");
 		if (!local)
-			local = repo_config = strdup(git_path("config"));
+			local = repo_config = xstrdup(git_path("config"));
 		if (home)
-			global = strdup(mkpath("%s/.gitconfig", home));
+			global = xstrdup(mkpath("%s/.gitconfig", home));
 	}
 
-	key = strdup(key_);
+	key = xstrdup(key_);
 	for (tl=key+strlen(key)-1; tl >= key && *tl != '.'; --tl)
 		*tl = tolower(*tl);
 	for (tl=key; *tl && *tl != '.'; ++tl)

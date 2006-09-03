@@ -617,7 +617,7 @@ static void simplify_commit(struct rev_info *revs, struct commit *commit)
 				if (new_name) {
 					struct util_info* putil = get_util(p);
 					if (!putil->pathname)
-						putil->pathname = strdup(new_name);
+						putil->pathname = xstrdup(new_name);
 				} else {
 					*pp = parent->next;
 					continue;

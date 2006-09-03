@@ -787,7 +787,7 @@ static int remote_ls(struct alt_base *repo, const char *path, int flags,
 
 	ls.flags = flags;
 	ls.repo = repo;
-	ls.path = strdup(path);
+	ls.path = xstrdup(path);
 	ls.dentry_name = NULL;
 	ls.dentry_flags = 0;
 	ls.userData = userData;

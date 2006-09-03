@@ -32,7 +32,7 @@ static int remove_file(const char *name)
 
 	ret = unlink(name);
 	if (!ret && (slash = strrchr(name, '/'))) {
-		char *n = strdup(name);
+		char *n = xstrdup(name);
 		do {
 			n[slash - name] = 0;
 			name = n;

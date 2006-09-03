@@ -2449,7 +2449,7 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 static int git_apply_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "apply.whitespace")) {
-		apply_default_whitespace = strdup(value);
+		apply_default_whitespace = xstrdup(value);
 		return 0;
 	}
 	return git_default_config(var, value);

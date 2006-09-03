@@ -97,7 +97,7 @@ static char *alias_string;
 static int git_alias_config(const char *var, const char *value)
 {
 	if (!strncmp(var, "alias.", 6) && !strcmp(var + 6, alias_command)) {
-		alias_string = strdup(value);
+		alias_string = xstrdup(value);
 	}
 	return 0;
 }

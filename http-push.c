@@ -1539,7 +1539,7 @@ static void remote_ls(const char *path, int flags,
 	struct remote_ls_ctx ls;
 
 	ls.flags = flags;
-	ls.path = strdup(path);
+	ls.path = xstrdup(path);
 	ls.dentry_name = NULL;
 	ls.dentry_flags = 0;
 	ls.userData = userData;
@@ -1738,7 +1738,7 @@ static struct object_list **process_tree(struct tree *tree,
 		die("bad tree object %s", sha1_to_hex(obj->sha1));
 
 	obj->flags |= SEEN;
-	name = strdup(name);
+	name = xstrdup(name);
 	p = add_one_object(obj, p);
 	me.up = path;
 	me.elem = name;
@@ -2467,7 +2467,7 @@ int main(int argc, char **argv)
 
 		/* Set up revision info for this refspec */
 		commit_argc = 3;
-		new_sha1_hex = strdup(sha1_to_hex(ref->new_sha1));
+		new_sha1_hex = xstrdup(sha1_to_hex(ref->new_sha1));
 		old_sha1_hex = NULL;
 		commit_argv[1] = "--objects";
 		commit_argv[2] = new_sha1_hex;

@@ -513,8 +513,8 @@ static char *unique_path(const char *path, const char *branch)
 
 static int mkdir_p(const char *path, unsigned long mode)
 {
-	/* path points to cache entries, so strdup before messing with it */
-	char *buf = strdup(path);
+	/* path points to cache entries, so xstrdup before messing with it */
+	char *buf = xstrdup(path);
 	int result = safe_create_leading_directories(buf);
 	free(buf);
 	return result;
@@ -668,9 +668,9 @@ static struct merge_file_info merge_file(struct diff_filespec *o,
 			git_unpack_file(a->sha1, src1);
 			git_unpack_file(b->sha1, src2);
 
-			argv[2] = la = strdup(mkpath("%s/%s", branch1, a->path));
-			argv[6] = lb = strdup(mkpath("%s/%s", branch2, b->path));
-			argv[4] = lo = strdup(mkpath("orig/%s", o->path));
+			argv[2] = la = xstrdup(mkpath("%s/%s", branch1, a->path));
+			argv[6] = lb = xstrdup(mkpath("%s/%s", branch2, b->path));
+			argv[4] = lo = xstrdup(mkpath("orig/%s", o->path));
 			argv[7] = src1;
 			argv[8] = orig;
 			argv[9] = src2,
@@ -1314,9 +1314,9 @@ int main(int argc, char *argv[])
 	original_index_file = getenv("GIT_INDEX_FILE");
 
 	if (!original_index_file)
-		original_index_file = strdup(git_path("index"));
+		original_index_file = xstrdup(git_path("index"));
 
-	temporary_index_file = strdup(git_path("mrg-rcrsv-tmp-idx"));
+	temporary_index_file = xstrdup(git_path("mrg-rcrsv-tmp-idx"));
 
 	if (argc < 4)
 		die("Usage: %s <base>... -- <head> <remote> ...\n", argv[0]);
