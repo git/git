@@ -72,19 +72,19 @@ static int get_value(const char* key_, const char* regex_)
 		const char *home = getenv("HOME");
 		local = getenv("GIT_CONFIG_LOCAL");
 		if (!local)
-			local = repo_config = strdup(git_path("config"));
+			local = repo_config = xstrdup(git_path("config"));
 		if (home)
-			global = strdup(mkpath("%s/.gitconfig", home));
+			global = xstrdup(mkpath("%s/.gitconfig", home));
 	}
 
-	key = strdup(key_);
+	key = xstrdup(key_);
 	for (tl=key+strlen(key)-1; tl >= key && *tl != '.'; --tl)
 		*tl = tolower(*tl);
 	for (tl=key; *tl && *tl != '.'; ++tl)
 		*tl = tolower(*tl);
 
 	if (use_key_regexp) {
-		key_regexp = (regex_t*)malloc(sizeof(regex_t));
+		key_regexp = (regex_t*)xmalloc(sizeof(regex_t));
 		if (regcomp(key_regexp, key, REG_EXTENDED)) {
 			fprintf(stderr, "Invalid key pattern: %s\n", key_);
 			goto free_strings;
@@ -97,7 +97,7 @@ static int get_value(const char* key_, const char* regex_)
 			regex_++;
 		}
 
-		regexp = (regex_t*)malloc(sizeof(regex_t));
+		regexp = (regex_t*)xmalloc(sizeof(regex_t));
 		if (regcomp(regexp, regex_, REG_EXTENDED)) {
 			fprintf(stderr, "Invalid pattern: %s\n", regex_);
 			goto free_strings;

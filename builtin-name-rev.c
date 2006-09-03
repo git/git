@@ -100,7 +100,7 @@ static int name_ref(const char *path, const unsigned char *sha1)
 		else if (!strncmp(path, "refs/", 5))
 			path = path + 5;
 
-		name_rev(commit, strdup(path), 0, 0, deref);
+		name_rev(commit, xstrdup(path), 0, 0, deref);
 	}
 	return 0;
 }

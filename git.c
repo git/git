@@ -29,7 +29,7 @@ static void prepend_to_path(const char *dir, int len)
 
 	path_len = len + strlen(old_path) + 1;
 
-	path = malloc(path_len + 1);
+	path = xmalloc(path_len + 1);
 
 	memcpy(path, dir, len);
 	path[len] = ':';
@@ -97,7 +97,7 @@ static char *alias_string;
 static int git_alias_config(const char *var, const char *value)
 {
 	if (!strncmp(var, "alias.", 6) && !strcmp(var + 6, alias_command)) {
-		alias_string = strdup(value);
+		alias_string = xstrdup(value);
 	}
 	return 0;
 }

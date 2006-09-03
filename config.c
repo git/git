@@ -350,11 +350,11 @@ int git_config(config_fn_t fn)
 		home = getenv("HOME");
 		filename = getenv("GIT_CONFIG_LOCAL");
 		if (!filename)
-			filename = repo_config = strdup(git_path("config"));
+			filename = repo_config = xstrdup(git_path("config"));
 	}
 
 	if (home) {
-		char *user_config = strdup(mkpath("%s/.gitconfig", home));
+		char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
 		if (!access(user_config, R_OK))
 			ret = git_config_from_file(fn, user_config);
 		free(user_config);
@@ -545,8 +545,8 @@ int git_config_set_multivar(const char* key, const char* value,
 		if (!config_filename)
 			config_filename  = git_path("config");
 	}
-	config_filename = strdup(config_filename);
-	lock_file = strdup(mkpath("%s.lock", config_filename));
+	config_filename = xstrdup(config_filename);
+	lock_file = xstrdup(mkpath("%s.lock", config_filename));
 
 	/*
 	 * Since "key" actually contains the section name and the real
@@ -565,7 +565,7 @@ int git_config_set_multivar(const char* key, const char* value,
 	/*
 	 * Validate the key and while at it, lower case it for matching.
 	 */
-	store.key = (char*)malloc(strlen(key)+1);
+	store.key = xmalloc(strlen(key) + 1);
 	dot = 0;
 	for (i = 0; key[i]; i++) {
 		unsigned char c = key[i];
@@ -633,7 +633,7 @@ int git_config_set_multivar(const char* key, const char* value,
 			} else
 				store.do_not_match = 0;
 
-			store.value_regex = (regex_t*)malloc(sizeof(regex_t));
+			store.value_regex = (regex_t*)xmalloc(sizeof(regex_t));
 			if (regcomp(store.value_regex, value_regex,
 					REG_EXTENDED)) {
 				fprintf(stderr, "Invalid pattern: %s\n",

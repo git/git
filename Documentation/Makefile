@@ -33,6 +33,8 @@ man7dir=$(mandir)/man7
 
 INSTALL?=install
 
+-include ../config.mak.autogen
+
 #
 # Please note that there is a minor bug in asciidoc.
 # The version after 6.0.3 _will_ include the patch found here:
@@ -105,7 +107,7 @@ WEBDOC_DEST = /pub/software/scm/git/docs
 
 $(patsubst %.txt,%.html,$(wildcard howto/*.txt)): %.html : %.txt
 	rm -f $@+ $@
-	sed -e '1,/^$$/d' $? | asciidoc -b xhtml11 - >$@+
+	sed -e '1,/^$$/d' $< | asciidoc -b xhtml11 - >$@+
 	mv $@+ $@
 
 install-webdoc : html

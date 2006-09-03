@@ -53,7 +53,7 @@ int cmd_upload_tar(int argc, const char **argv, const char *prefix)
 			return nak("expected (optional) base");
 		if (buf[len-1] == '\n')
 			buf[--len] = 0;
-		base = strdup(buf + 5);
+		base = xstrdup(buf + 5);
 		len = packet_read_line(0, buf, sizeof(buf));
 	}
 	if (len)

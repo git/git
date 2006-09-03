@@ -313,8 +313,8 @@ static struct ref_lock *lock_ref_sha1_basic(const char *path,
 	}
 	lock->lk = xcalloc(1, sizeof(struct lock_file));
 
-	lock->ref_file = strdup(path);
-	lock->log_file = strdup(git_path("logs/%s", lock->ref_file + plen));
+	lock->ref_file = xstrdup(path);
+	lock->log_file = xstrdup(git_path("logs/%s", lock->ref_file + plen));
 	lock->force_write = lstat(lock->ref_file, &st) && errno == ENOENT;
 
 	if (safe_create_leading_directories(lock->ref_file))

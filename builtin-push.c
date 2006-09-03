@@ -33,7 +33,7 @@ static int expand_one_ref(const char *ref, const unsigned char *sha1)
 	ref += 5;
 
 	if (!strncmp(ref, "tags/", 5))
-		add_refspec(strdup(ref));
+		add_refspec(xstrdup(ref));
 	return 0;
 }
 
@@ -100,12 +100,12 @@ static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 
 		if (!is_refspec) {
 			if (n < MAX_URI)
-				uri[n++] = strdup(s);
+				uri[n++] = xstrdup(s);
 			else
 				error("more than %d URL's specified, ignoring the rest", MAX_URI);
 		}
 		else if (is_refspec && !has_explicit_refspec)
-			add_refspec(strdup(s));
+			add_refspec(xstrdup(s));
 	}
 	fclose(f);
 	if (!n)
@@ -125,13 +125,13 @@ static int get_remote_config(const char* key, const char* value)
 	    !strncmp(key + 7, config_repo, config_repo_len)) {
 		if (!strcmp(key + 7 + config_repo_len, ".url")) {
 			if (config_current_uri < MAX_URI)
-				config_uri[config_current_uri++] = strdup(value);
+				config_uri[config_current_uri++] = xstrdup(value);
 			else
 				error("more than %d URL's specified, ignoring the rest", MAX_URI);
 		}
 		else if (config_get_refspecs &&
 			 !strcmp(key + 7 + config_repo_len, ".push"))
-			add_refspec(strdup(value));
+			add_refspec(xstrdup(value));
 	}
 	return 0;
 }

@@ -34,6 +34,15 @@ export GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME
 export GIT_COMMITTER_EMAIL GIT_COMMITTER_NAME
 export EDITOR VISUAL
 
+case $(echo $GIT_TRACE |tr [A-Z] [a-z]) in
+	1|2|true)
+		echo "* warning: Some tests will not work if GIT_TRACE" \
+			"is set as to trace on STDERR ! *"
+		echo "* warning: Please set GIT_TRACE to something" \
+			"other than 1, 2 or true ! *"
+		;;
+esac
+
 # Each test should start with something like this, after copyright notices:
 #
 # test_description='Description of this test...

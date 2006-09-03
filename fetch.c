@@ -234,8 +234,8 @@ int pull_targets_stdin(char ***target, const char ***write_ref)
 			*target = xrealloc(*target, targets_alloc * sizeof(**target));
 			*write_ref = xrealloc(*write_ref, targets_alloc * sizeof(**write_ref));
 		}
-		(*target)[targets] = strdup(tg_one);
-		(*write_ref)[targets] = rf_one ? strdup(rf_one) : NULL;
+		(*target)[targets] = xstrdup(tg_one);
+		(*write_ref)[targets] = rf_one ? xstrdup(rf_one) : NULL;
 		targets++;
 	}
 	return targets;

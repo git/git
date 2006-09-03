@@ -177,7 +177,7 @@ static void resolve(const char *base, struct name_entry *branch1, struct name_en
 	if (!branch1)
 		return;
 
-	path = strdup(mkpath("%s%s", base, result->path));
+	path = xstrdup(mkpath("%s%s", base, result->path));
 	orig = create_entry(2, branch1->mode, branch1->sha1, path);
 	final = create_entry(0, result->mode, result->sha1, path);
 
@@ -233,7 +233,7 @@ static struct merge_list *link_entry(unsigned stage, const char *base, struct na
 	if (entry)
 		path = entry->path;
 	else
-		path = strdup(mkpath("%s%s", base, n->path));
+		path = xstrdup(mkpath("%s%s", base, n->path));
 	link = create_entry(stage, n->mode, n->sha1, path);
 	link->link = entry;
 	return link;

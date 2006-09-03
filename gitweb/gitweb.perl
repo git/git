@@ -2251,7 +2251,8 @@ sub git_blame2 {
 	my $fd;
 	my $ftype;
 
-	if (!gitweb_check_feature('blame')) {
+	my ($have_blame) = gitweb_check_feature('blame');
+	if (!$have_blame) {
 		die_error('403 Permission denied', "Permission denied");
 	}
 	die_error('404 Not Found', "File name not defined") if (!$file_name);
@@ -2320,7 +2321,8 @@ HTML
 sub git_blame {
 	my $fd;
 
-	if (!gitweb_check_feature('blame')) {
+	my ($have_blame) = gitweb_check_feature('blame');
+	if (!$have_blame) {
 		die_error('403 Permission denied', "Permission denied");
 	}
 	die_error('404 Not Found', "File name not defined") if (!$file_name);
@@ -2494,7 +2496,7 @@ sub git_blob {
 			die_error(undef, "No file name defined");
 		}
 	}
-	my $have_blame = gitweb_check_feature('blame');
+	my ($have_blame) = gitweb_check_feature('blame');
 	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
 		or die_error(undef, "Couldn't cat $file_name, $hash");
 	my $mimetype = blob_mimetype($fd, $file_name);
@@ -2570,7 +2572,7 @@ sub git_tree {
 	my $ref = format_ref_marker($refs, $hash_base);
 	git_header_html();
 	my $base = "";
-	my $have_blame = gitweb_check_feature('blame');
+	my ($have_blame) = gitweb_check_feature('blame');
 	if (defined $hash_base && (my %co = parse_commit($hash_base))) {
 		git_print_page_nav('tree','', $hash_base);
 		git_print_header_div('commit', esc_html($co{'title'}) . $ref, $hash_base);

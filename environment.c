@@ -47,7 +47,7 @@ static void setup_git_env(void)
 	}
 	git_graft_file = getenv(GRAFT_ENVIRONMENT);
 	if (!git_graft_file)
-		git_graft_file = strdup(git_path("info/grafts"));
+		git_graft_file = xstrdup(git_path("info/grafts"));
 }
 
 const char *get_git_dir(void)

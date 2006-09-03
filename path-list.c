@@ -45,7 +45,7 @@ static int add_entry(struct path_list *list, const char *path)
 				(list->nr - index)
 				* sizeof(struct path_list_item));
 	list->items[index].path = list->strdup_paths ?
-		strdup(path) : (char *)path;
+		xstrdup(path) : (char *)path;
 	list->items[index].util = NULL;
 	list->nr++;
 

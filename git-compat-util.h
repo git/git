@@ -84,6 +84,14 @@ extern char *gitstrcasestr(const char *haystack, const char *needle);
 extern size_t gitstrlcpy(char *, const char *, size_t);
 #endif
 
+static inline char* xstrdup(const char *str)
+{
+	char *ret = strdup(str);
+	if (!ret)
+		die("Out of memory, strdup failed");
+	return ret;
+}
+
 static inline void *xmalloc(size_t size)
 {
 	void *ret = malloc(size);

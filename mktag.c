@@ -119,7 +119,7 @@ static int verify_tag(char *buffer, unsigned long size)
 int main(int argc, char **argv)
 {
 	unsigned long size = 4096;
-	char *buffer = malloc(size);
+	char *buffer = xmalloc(size);
 	unsigned char result_sha1[20];
 
 	if (argc != 1)

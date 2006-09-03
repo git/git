@@ -51,7 +51,7 @@ int nfvasprintf(char **str, const char *fmt, va_list va)
 }
 
 /* Get a trace file descriptor from GIT_TRACE env variable. */
-static int get_trace_fd()
+static int get_trace_fd(int *need_close)
 {
 	char *trace = getenv("GIT_TRACE");
 
@@ -61,9 +61,25 @@ static int get_trace_fd()
 		return STDERR_FILENO;
 	if (strlen(trace) == 1 && isdigit(*trace))
 		return atoi(trace);
+	if (*trace == '/') {
+		int fd = open(trace, O_WRONLY | O_APPEND | O_CREAT, 0666);
+		if (fd == -1) {
+			fprintf(stderr,
+				"Could not open '%s' for tracing: %s\n"
+				"Defaulting to tracing on stderr...\n",
+				trace, strerror(errno));
+			return STDERR_FILENO;
+		}
+		*need_close = 1;
+		return fd;
+	}
 
 	fprintf(stderr, "What does '%s' for GIT_TRACE means ?\n", trace);
+	fprintf(stderr, "If you want to trace into a file, "
+		"then please set GIT_TRACE to an absolute pathname "
+		"(starting with /).\n");
 	fprintf(stderr, "Defaulting to tracing on stderr...\n");
+
 	return STDERR_FILENO;
 }
 
@@ -74,7 +90,8 @@ void trace_printf(const char *format, ...)
 {
 	char *trace_str;
 	va_list rest;
-	int fd = get_trace_fd();
+	int need_close = 0;
+	int fd = get_trace_fd(&need_close);
 
 	if (!fd)
 		return;
@@ -86,6 +103,9 @@ void trace_printf(const char *format, ...)
 	write_or_whine(fd, trace_str, strlen(trace_str), err_msg);
 
 	free(trace_str);
+
+	if (need_close)
+		close(fd);
 }
 
 void trace_argv_printf(const char **argv, int count, const char *format, ...)
@@ -93,7 +113,8 @@ void trace_argv_printf(const char **argv, int count, const char *format, ...)
 	char *argv_str, *format_str, *trace_str;
 	size_t argv_len, format_len, trace_len;
 	va_list rest;
-	int fd = get_trace_fd();
+	int need_close = 0;
+	int fd = get_trace_fd(&need_close);
 
 	if (!fd)
 		return;
@@ -122,4 +143,7 @@ void trace_argv_printf(const char **argv, int count, const char *format, ...)
 	free(argv_str);
 	free(format_str);
 	free(trace_str);
+
+	if (need_close)
+		close(fd);
 }

@@ -279,7 +279,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		pathname = resolve_ref(git_path(*p, len, str), this_result, 1);
 		if (pathname) {
 			if (!refs_found++)
-				real_path = strdup(pathname);
+				real_path = xstrdup(pathname);
 			if (!warn_ambiguous_refs)
 				break;
 		}

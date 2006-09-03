@@ -351,7 +351,7 @@ static int remote_tar(int argc, const char **argv)
 		usage(tar_tree_usage);
 
 	/* --remote=<repo> */
-	url = strdup(argv[1]+9);
+	url = xstrdup(argv[1]+9);
 	pid = git_connect(fd, url, exec);
 	if (pid < 0)
 		return 1;

@@ -115,7 +115,7 @@ static void fill_sha1_path(char *pathbuf, const unsigned char *sha1)
 
 /*
  * NOTE! This returns a statically allocated buffer, so you have to be
- * careful about using it. Do a "strdup()" if you need to save the
+ * careful about using it. Do a "xstrdup()" if you need to save the
  * filename.
  *
  * Also note that this returns the location for creating.  Reading
@@ -711,17 +711,39 @@ int legacy_loose_object(unsigned char *map)
 		return 0;
 }
 
+static unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep)
+{
+	unsigned shift;
+	unsigned char c;
+	unsigned long size;
+	unsigned long used = 0;
+
+	c = buf[used++];
+	*type = (c >> 4) & 7;
+	size = c & 15;
+	shift = 4;
+	while (c & 0x80) {
+		if (len <= used)
+			return 0;
+		if (sizeof(long) * 8 <= shift)
+			return 0;
+		c = buf[used++];
+		size += (c & 0x7f) << shift;
+		shift += 7;
+	}
+	*sizep = size;
+	return used;
+}
+
 static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz)
 {
-	unsigned char c;
-	unsigned int bits;
-	unsigned long size;
-	static const char *typename[8] = {
-		NULL,	/* OBJ_EXT */
-		"commit", "tree", "blob", "tag",
-		NULL, NULL, NULL
+	unsigned long size, used;
+	static const char valid_loose_object_type[8] = {
+		0, /* OBJ_EXT */
+		1, 1, 1, 1, /* "commit", "tree", "blob", "tag" */
+		0, /* "delta" and others are invalid in a loose object */
 	};
-	const char *type;
+	enum object_type type;
 
 	/* Get the data stream */
 	memset(stream, 0, sizeof(*stream));
@@ -735,22 +757,11 @@ static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned lon
 		return inflate(stream, 0);
 	}
 
-	c = *map++;
-	mapsize--;
-	type = typename[(c >> 4) & 7];
-	if (!type)
+	used = unpack_object_header_gently(map, mapsize, &type, &size);
+	if (!used || !valid_loose_object_type[type])
 		return -1;
-
-	bits = 4;
-	size = c & 0xf;
-	while ((c & 0x80)) {
-		if (bits >= 8*sizeof(long))
-			return -1;
-		c = *map++;
-		size += (c & 0x7f) << bits;
-		bits += 7;
-		mapsize--;
-	}
+	map += used;
+	mapsize -= used;
 
 	/* Set up the stream for the rest.. */
 	stream->next_in = map;
@@ -758,7 +769,8 @@ static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned lon
 	inflateInit(stream);
 
 	/* And generate the fake traditional header */
-	stream->total_out = 1 + snprintf(buffer, bufsiz, "%s %lu", type, size);
+	stream->total_out = 1 + snprintf(buffer, bufsiz, "%s %lu",
+					 type_names[type], size);
 	return 0;
 }
 
@@ -916,25 +928,18 @@ static int packed_delta_info(unsigned char *base_sha1,
 static unsigned long unpack_object_header(struct packed_git *p, unsigned long offset,
 	enum object_type *type, unsigned long *sizep)
 {
-	unsigned shift;
-	unsigned char c;
-	unsigned long size;
+	unsigned long used;
 
-	if (offset >= p->pack_size)
+	if (p->pack_size <= offset)
 		die("object offset outside of pack file");
-	c = *((unsigned char *)p->pack_base + offset++);
-	*type = (c >> 4) & 7;
-	size = c & 15;
-	shift = 4;
-	while (c & 0x80) {
-		if (offset >= p->pack_size)
-			die("object offset outside of pack file");
-		c = *((unsigned char *)p->pack_base + offset++);
-		size += (c & 0x7f) << shift;
-		shift += 7;
-	}
-	*sizep = size;
-	return offset;
+
+	used = unpack_object_header_gently((unsigned char *)p->pack_base +
+					   offset,
+					   p->pack_size - offset, type, sizep);
+	if (!used)
+		die("object offset outside of pack file");
+
+	return offset + used;
 }
 
 int check_reuse_pack_delta(struct packed_git *p, unsigned long offset,
@@ -1348,7 +1353,7 @@ char *write_sha1_file_prepare(void *buf,
  *
  * Returns the errno on failure, 0 on success.
  */
-static int link_temp_to_file(const char *tmpfile, char *filename)
+static int link_temp_to_file(const char *tmpfile, const char *filename)
 {
 	int ret;
 	char *dir;
@@ -1381,7 +1386,7 @@ static int link_temp_to_file(const char *tmpfile, char *filename)
 /*
  * Move the just written object into its final resting place
  */
-int move_temp_to_file(const char *tmpfile, char *filename)
+int move_temp_to_file(const char *tmpfile, const char *filename)
 {
 	int ret = link_temp_to_file(tmpfile, filename);
 
@@ -1756,7 +1761,7 @@ int read_pipe(int fd, char** return_buf, unsigned long* return_size)
 int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
 {
 	unsigned long size = 4096;
-	char *buf = malloc(size);
+	char *buf = xmalloc(size);
 	int ret;
 	unsigned char hdr[50];
 	int hdrlen;
