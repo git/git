@@ -98,8 +98,6 @@ XSLoader::load('Git', $VERSION);
 
 }
 
-my $instance_id = 0;
-
 
 =head1 CONSTRUCTORS
 
@@ -217,7 +215,7 @@ sub repository {
 		delete $opts{Directory};
 	}
 
-	$self = { opts => \%opts, id => $instance_id++ };
+	$self = { opts => \%opts };
 	bless $self, $class;
 }
 
@@ -572,24 +570,6 @@ sub ident_person {
 }
 
 
-=item get_object ( TYPE, SHA1 )
-
-Return contents of the given object in a scalar string. If the object has
-not been found, undef is returned; however, do not rely on this! Currently,
-if you use multiple repositories at once, get_object() on one repository
-_might_ return the object even though it exists only in another repository.
-(But do not rely on this behaviour either.)
-
-The method must be called on a repository instance.
-
-Implementation of this method is very fast; no external command calls
-are involved. That's why it is broken, too. ;-)
-
-=cut
-
-# Implemented in Git.xs.
-
-
 =item hash_object ( TYPE, FILENAME )
 
 =item hash_object ( TYPE, FILEHANDLE )
@@ -853,10 +833,11 @@ sub _call_gate {
 	if (defined $self) {
 		# XXX: We ignore the WorkingCopy! To properly support
 		# that will require heavy changes in libgit.
-		# For now, when we will need to do it we could temporarily
-		# chdir() there and then chdir() back after the call is done.
 
-		xs__call_gate($self->{id}, $self->repo_path());
+		# XXX: And we ignore everything else as well. libgit
+		# at least needs to be extended to let us specify
+		# the $GIT_DIR instead of looking it up in environment.
+		#xs_call_gate($self->{opts}->{Repository});
 	}
 
 	# Having to call throw from the C code is a sure path to insanity.

@@ -163,14 +163,6 @@ int register_commit_graft(struct commit_graft *graft, int ignore_dups)
 	return 0;
 }
 
-void free_commit_grafts(void)
-{
-	int pos = commit_graft_nr;
-	while (pos >= 0)
-		free(commit_graft[pos--]);
-	commit_graft_nr = 0;
-}
-
 struct commit_graft *read_graft_line(char *buf, int len)
 {
 	/* The format is just "Commit Parent1 Parent2 ...\n" */
@@ -223,18 +215,11 @@ int read_graft_file(const char *graft_file)
 static void prepare_commit_graft(void)
 {
 	static int commit_graft_prepared;
-	static char *last_graft_file;
-	char *graft_file = get_graft_file();
+	char *graft_file;
 
-	if (last_graft_file) {
-		if (!strcmp(graft_file, last_graft_file))
-			return;
-		free_commit_grafts();
-	}
-	if (last_graft_file)
-		free(last_graft_file);
-	last_graft_file = strdup(graft_file);
-
+	if (commit_graft_prepared)
+		return;
+	graft_file = get_graft_file();
 	read_graft_file(graft_file);
 	commit_graft_prepared = 1;
 }

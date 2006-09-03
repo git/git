@@ -25,61 +25,29 @@ int zlib_compression_level = Z_DEFAULT_COMPRESSION;
 int pager_in_use;
 int pager_use_color = 1;
 
-static int dyn_git_object_dir, dyn_git_index_file, dyn_git_graft_file;
 static const char *git_dir;
 static char *git_object_dir, *git_index_file, *git_refs_dir, *git_graft_file;
 
-void setup_git(char *new_git_dir, char *new_git_object_dir,
-               char *new_git_index_file, char *new_git_graft_file)
+static void setup_git_env(void)
 {
-	git_dir = new_git_dir;
+	git_dir = getenv(GIT_DIR_ENVIRONMENT);
 	if (!git_dir)
 		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
-
-	if (dyn_git_object_dir)
-		free(git_object_dir);
-	git_object_dir = new_git_object_dir;
+	git_object_dir = getenv(DB_ENVIRONMENT);
 	if (!git_object_dir) {
 		git_object_dir = xmalloc(strlen(git_dir) + 9);
 		sprintf(git_object_dir, "%s/objects", git_dir);
-		dyn_git_object_dir = 1;
-	} else {
-		dyn_git_object_dir = 0;
 	}
-
-	if (git_refs_dir)
-		free(git_refs_dir);
 	git_refs_dir = xmalloc(strlen(git_dir) + 6);
 	sprintf(git_refs_dir, "%s/refs", git_dir);
-
-	if (dyn_git_index_file)
-		free(git_index_file);
-	git_index_file = new_git_index_file;
+	git_index_file = getenv(INDEX_ENVIRONMENT);
 	if (!git_index_file) {
 		git_index_file = xmalloc(strlen(git_dir) + 7);
 		sprintf(git_index_file, "%s/index", git_dir);
-		dyn_git_index_file = 1;
-	} else {
-		dyn_git_index_file = 0;
 	}
-
-	if (dyn_git_graft_file)
-		free(git_graft_file);
-	git_graft_file = new_git_graft_file;
-	if (!git_graft_file) {
+	git_graft_file = getenv(GRAFT_ENVIRONMENT);
+	if (!git_graft_file)
 		git_graft_file = xstrdup(git_path("info/grafts"));
-		dyn_git_graft_file = 1;
-	} else {
-		dyn_git_graft_file = 0;
-	}
-}
-
-static void setup_git_env(void)
-{
-	setup_git(getenv(GIT_DIR_ENVIRONMENT),
-	          getenv(DB_ENVIRONMENT),
-	          getenv(INDEX_ENVIRONMENT),
-	          getenv(GRAFT_ENVIRONMENT));
 }
 
 const char *get_git_dir(void)

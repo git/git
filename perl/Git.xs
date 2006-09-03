@@ -52,21 +52,7 @@ BOOT:
 }
 
 
-void
-xs__call_gate(repoid, git_dir)
-	long repoid;
-	char *git_dir;
-CODE:
-{
-	static long last_repoid;
-	if (repoid != last_repoid) {
-		setup_git(git_dir,
-		          getenv(DB_ENVIRONMENT),
-		          getenv(INDEX_ENVIRONMENT),
-		          getenv(GRAFT_ENVIRONMENT));
-		last_repoid = repoid;
-	}
-}
+# /* TODO: xs_call_gate(). See Git.pm. */
 
 
 char *
@@ -110,30 +96,6 @@ CODE:
 			free((char *) argv[i]);
 	free((char **) argv);
 }
-
-
-SV *
-xs_get_object(type, id)
-	char *type;
-	char *id;
-CODE:
-{
-	unsigned char sha1[20];
-	unsigned long size;
-	void *buf;
-
-	if (strlen(id) != 40 || get_sha1_hex(id, sha1) < 0)
-		XSRETURN_UNDEF;
-
-	buf = read_sha1_file(sha1, type, &size);
-	if (!buf)
-		XSRETURN_UNDEF;
-	RETVAL = newSVpvn(buf, size);
-	free(buf);
-}
-OUTPUT:
-	RETVAL
-
 
 char *
 xs_hash_object_pipe(type, fd)
