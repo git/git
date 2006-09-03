@@ -98,8 +98,6 @@ XSLoader::load('Git', $VERSION);
 
 }
 
-my $instance_id = 0;
-
 
 =head1 CONSTRUCTORS
 
@@ -217,7 +215,7 @@ sub repository {
 		delete $opts{Directory};
 	}
 
-	$self = { opts => \%opts, id => $instance_id++ };
+	$self = { opts => \%opts };
 	bless $self, $class;
 }
 
@@ -835,10 +833,11 @@ sub _call_gate {
 	if (defined $self) {
 		# XXX: We ignore the WorkingCopy! To properly support
 		# that will require heavy changes in libgit.
-		# For now, when we will need to do it we could temporarily
-		# chdir() there and then chdir() back after the call is done.
 
-		xs__call_gate($self->{id}, $self->repo_path());
+		# XXX: And we ignore everything else as well. libgit
+		# at least needs to be extended to let us specify
+		# the $GIT_DIR instead of looking it up in environment.
+		#xs_call_gate($self->{opts}->{Repository});
 	}
 
 	# Having to call throw from the C code is a sure path to insanity.
