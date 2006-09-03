@@ -247,12 +247,13 @@ static int revalidate_one(struct object_entry *entry,
 			  void *data, char *type, unsigned long size)
 {
 	int err;
-	if (!data)
-		return -1;
-	if (size != entry->size)
-		return -1;
-	err = check_sha1_signature(entry->sha1, data, size,
-				   type_names[entry->type]);
+	if ((!data) ||
+	    ((entry->type != OBJ_DELTA) &&
+	     ( (size != entry->size) ||
+	       strcmp(type_names[entry->type], type))))
+		err = -1;
+	else
+		err = check_sha1_signature(entry->sha1, data, size, type);
 	free(data);
 	return err;
 }
