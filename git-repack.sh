@@ -24,8 +24,10 @@ do
 	shift
 done
 
-rm -f .tmp-pack-*
 PACKDIR="$GIT_OBJECT_DIRECTORY/pack"
+PACKTMP="$GIT_DIR/.tmp-$$-pack"
+rm -f "$PACKTMP"-*
+trap 'rm -f "$PACKTMP"-*' 0 1 2 3 15
 
 # There will be more repacking strategies to come...
 case ",$all_into_one," in
@@ -42,11 +44,12 @@ case ",$all_into_one," in
 	    find . -type f \( -name '*.pack' -o -name '*.idx' \) -print`
 	;;
 esac
+
 pack_objects="$pack_objects $local $quiet $no_reuse_delta$extra"
 name=$( { git-rev-list --objects --all $rev_list ||
 	  echo "git-rev-list died with exit code $?"
 	} |
-	git-pack-objects --non-empty $pack_objects .tmp-pack) ||
+	git-pack-objects --non-empty $pack_objects "$PACKTMP") ||
 	exit 1
 if [ -z "$name" ]; then
 	echo Nothing new to pack.
@@ -64,8 +67,8 @@ else
 				"$PACKDIR/old-pack-$name.$sfx"
 		fi
 	done &&
-	mv -f .tmp-pack-$name.pack "$PACKDIR/pack-$name.pack" &&
-	mv -f .tmp-pack-$name.idx  "$PACKDIR/pack-$name.idx" &&
+	mv -f "$PACKTMP-$name.pack" "$PACKDIR/pack-$name.pack" &&
+	mv -f "$PACKTMP-$name.idx"  "$PACKDIR/pack-$name.idx" &&
 	test -f "$PACKDIR/pack-$name.pack" &&
 	test -f "$PACKDIR/pack-$name.idx" || {
 		echo >&2 "Couldn't replace the existing pack with updated one."
