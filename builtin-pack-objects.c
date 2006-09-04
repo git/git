@@ -243,40 +243,61 @@ static int encode_header(enum object_type type, unsigned long size, unsigned cha
 	return n;
 }
 
-static int revalidate_one(struct object_entry *entry,
-			  void *data, char *type, unsigned long size)
+static int check_inflate(unsigned char *data, unsigned long len, unsigned long expect)
 {
-	int err;
-	if (!data)
-		return -1;
-	if (size != entry->size)
-		return -1;
-	err = check_sha1_signature(entry->sha1, data, size,
-				   type_names[entry->type]);
-	free(data);
-	return err;
+	z_stream stream;
+	unsigned char fakebuf[4096];
+	int st;
+
+	memset(&stream, 0, sizeof(stream));
+	stream.next_in = data;
+	stream.avail_in = len;
+	stream.next_out = fakebuf;
+	stream.avail_out = sizeof(fakebuf);
+	inflateInit(&stream);
+
+	while (1) {
+		st = inflate(&stream, Z_FINISH);
+		if (st == Z_STREAM_END || st == Z_OK) {
+			st = (stream.total_out == expect &&
+			      stream.total_in == len) ? 0 : -1;
+			break;
+		}
+		if (st != Z_BUF_ERROR) {
+			st = -1;
+			break;
+		}
+		stream.next_out = fakebuf;
+		stream.avail_out = sizeof(fakebuf);
+	}
+	inflateEnd(&stream);
+	return st;
 }
 
 /*
  * we are going to reuse the existing pack entry data.  make
  * sure it is not corrupt.
  */
-static int revalidate_pack_entry(struct object_entry *entry)
+static int revalidate_pack_entry(struct object_entry *entry, unsigned char *data, unsigned long len)
 {
-	void *data;
-	char type[20];
-	unsigned long size;
-	struct pack_entry e;
+	enum object_type type;
+	unsigned long size, used;
 
 	if (pack_to_stdout)
 		return 0;
 
-	e.p = entry->in_pack;
-	e.offset = entry->in_pack_offset;
-
-	/* the caller has already called use_packed_git() for us */
-	data = unpack_entry_gently(&e, type, &size);
-	return revalidate_one(entry, data, type, size);
+	/* the caller has already called use_packed_git() for us,
+	 * so it is safe to access the pack data from mmapped location.
+	 * make sure the entry inflates correctly.
+	 */
+	used = unpack_object_header_gently(data, len, &type, &size);
+	if (!used)
+		return -1;
+	if (type == OBJ_DELTA)
+		used += 20; /* skip base object name */
+	data += used;
+	len -= used;
+	return check_inflate(data, len, entry->size);
 }
 
 static int revalidate_loose_object(struct object_entry *entry,
@@ -284,15 +305,18 @@ static int revalidate_loose_object(struct object_entry *entry,
 				   unsigned long mapsize)
 {
 	/* we already know this is a loose object with new type header. */
-	void *data;
-	char type[20];
-	unsigned long size;
+	enum object_type type;
+	unsigned long size, used;
 
 	if (pack_to_stdout)
 		return 0;
 
-	data = unpack_sha1_file(map, mapsize, type, &size);
-	return revalidate_one(entry, data, type, size);
+	used = unpack_object_header_gently(map, mapsize, &type, &size);
+	if (!used)
+		return -1;
+	map += used;
+	mapsize -= used;
+	return check_inflate(map, mapsize, size);
 }
 
 static unsigned long write_object(struct sha1file *f,
@@ -376,7 +400,7 @@ static unsigned long write_object(struct sha1file *f,
 		datalen = find_packed_object_size(p, entry->in_pack_offset);
 		buf = (char *) p->pack_base + entry->in_pack_offset;
 
-		if (revalidate_pack_entry(entry))
+		if (revalidate_pack_entry(entry, buf, datalen))
 			die("corrupt delta in pack %s", sha1_to_hex(entry->sha1));
 		sha1write(f, buf, datalen);
 		unuse_packed_git(p);

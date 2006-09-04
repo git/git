@@ -27,17 +27,6 @@ struct object_array {
 /*
  * The object type is stored in 3 bits.
  */
-enum object_type {
-	OBJ_NONE = 0,
-	OBJ_COMMIT = 1,
-	OBJ_TREE = 2,
-	OBJ_BLOB = 3,
-	OBJ_TAG = 4,
-	/* 5/6 for future expansion */
-	OBJ_DELTA = 7,
-	OBJ_BAD,
-};
-
 struct object {
 	unsigned parsed : 1;
 	unsigned used : 1;
