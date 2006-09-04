@@ -267,6 +267,17 @@ extern int legacy_loose_object(unsigned char *);
 extern int has_pack_file(const unsigned char *sha1);
 extern int has_pack_index(const unsigned char *sha1);
 
+enum object_type {
+	OBJ_NONE = 0,
+	OBJ_COMMIT = 1,
+	OBJ_TREE = 2,
+	OBJ_BLOB = 3,
+	OBJ_TAG = 4,
+	/* 5/6 for future expansion */
+	OBJ_DELTA = 7,
+	OBJ_BAD,
+};
+
 /* Convert to/from hex/sha1 representation */
 #define MINIMUM_ABBREV 4
 #define DEFAULT_ABBREV 7
@@ -374,6 +385,7 @@ extern int num_packed_objects(const struct packed_git *p);
 extern int nth_packed_object_sha1(const struct packed_git *, int, unsigned char*);
 extern int find_pack_entry_one(const unsigned char *, struct pack_entry *, struct packed_git *);
 extern void *unpack_entry_gently(struct pack_entry *, char *, unsigned long *);
+extern unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
 extern void packed_object_info_detail(struct pack_entry *, char *, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
 
 /* Dumb servers support */
