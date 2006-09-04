@@ -1405,19 +1405,32 @@ sub git_print_page_path {
 
 	if (!defined $name) {
 		print "<div class=\"page_path\">/</div>\n";
-	} elsif (defined $type && $type eq 'blob') {
+	} else {
+		my @dirname = split '/', $name;
+		my $basename = pop @dirname;
+		my $fullname = '';
+
 		print "<div class=\"page_path\">";
-		if (defined $hb) {
+		foreach my $dir (@dirname) {
+			$fullname .= $dir . '/';
+			print $cgi->a({-href => href(action=>"tree", file_name=>$fullname,
+			                             hash_base=>$hb),
+			              -title => $fullname}, esc_html($dir));
+			print "/";
+		}
+		if (defined $type && $type eq 'blob') {
 			print $cgi->a({-href => href(action=>"blob_plain", file_name=>$file_name,
-			                             hash_base=>$hb)},
-			              esc_html($name));
+			                             hash_base=>$hb),
+			              -title => $name}, esc_html($basename));
+		} elsif (defined $type && $type eq 'tree') {
+			print $cgi->a({-href => href(action=>"tree", file_name=>$file_name,
+			                             hash_base=>$hb),
+			              -title => $name}, esc_html($basename));
+			print "/";
 		} else {
-			print $cgi->a({-href => href(action=>"blob_plain", file_name=>$file_name)},
-			              esc_html($name));
+			print esc_html($basename);
 		}
 		print "<br/></div>\n";
-	} else {
-		print "<div class=\"page_path\">" . esc_html($name) . "<br/></div>\n";
 	}
 }
 
