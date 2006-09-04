@@ -205,8 +205,8 @@ AC_SUBST(NO_IPV6)
 # do not support the 'size specifiers' introduced by C99, namely ll, hh,
 # j, z, t. (representing long long int, char, intmax_t, size_t, ptrdiff_t).
 # some C compilers supported these specifiers prior to C99 as an extension.
-AC_CACHE_CHECK(whether formatted IO functions support C99 size specifiers,
- ac_cv_c_c99_format,
+AC_CACHE_CHECK([whether formatted IO functions support C99 size specifiers],
+ [ac_cv_c_c99_format],
 [# Actually git uses only %z (%zu) in alloc.c, and %t (%td) in mktag.c
 AC_RUN_IFELSE(
 	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
@@ -261,8 +261,8 @@ AC_SUBST(NO_SETENV)
 # Enable it on Windows.  By default, symrefs are still used.
 #
 # Define WITH_OWN_SUBPROCESS_PY if you want to use with python 2.3.
-AC_CACHE_CHECK(for subprocess.py,
- ac_cv_python_has_subprocess_py,
+AC_CACHE_CHECK([for subprocess.py],
+ [ac_cv_python_has_subprocess_py],
 [if $PYTHON_PATH -c 'import subprocess' 2>/dev/null; then
 	ac_cv_python_has_subprocess_py=yes
 else
