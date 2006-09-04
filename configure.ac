@@ -261,6 +261,16 @@ AC_SUBST(NO_SETENV)
 # Enable it on Windows.  By default, symrefs are still used.
 #
 # Define WITH_OWN_SUBPROCESS_PY if you want to use with python 2.3.
+AC_CACHE_CHECK(for subprocess.py,
+ ac_cv_python_has_subprocess_py,
+[if $PYTHON_PATH -c 'import subprocess' 2>/dev/null; then
+	ac_cv_python_has_subprocess_py=yes
+else
+	ac_cv_python_has_subprocess_py=no
+fi])
+if test $ac_cv_python_has_subprocess_py != yes; then
+	GIT_CONF_APPEND_LINE([WITH_OWN_SUBPROCESS_PY=YesPlease])
+fi
 #
 # Define NO_ACCURATE_DIFF if your diff program at least sometimes misses
 # a missing newline at the end of the file.
