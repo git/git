@@ -634,9 +634,18 @@ other
 	This environment variable overrides `$PAGER`.
 
 'GIT_TRACE'::
-	If this variable is set git will print `trace:` messages on
+	If this variable is set to "1", "2" or "true" (comparison
+	is case insensitive), git will print `trace:` messages on
 	stderr telling about alias expansion, built-in command
 	execution and external command execution.
+	If this variable is set to an integer value greater than 1
+	and lower than 10 (strictly) then git will interpret this
+	value as an open file descriptor and will try to write the
+	trace messages into this file descriptor.
+	Alternatively, if this variable is set to an absolute path
+	(starting with a '/' character), git will interpret this
+	as a file path and will try to write the trace messages
+	into it.
 
 Discussion[[Discussion]]
 ------------------------
