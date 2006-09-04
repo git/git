@@ -48,6 +48,8 @@ our $home_text = "++GITWEB_HOMETEXT++";
 our $stylesheet = "++GITWEB_CSS++";
 # URI of GIT logo
 our $logo = "++GITWEB_LOGO++";
+# URI of GIT favicon, assumed to be image/png type
+our $favicon = "++GITWEB_FAVICON++";
 
 # source of projects list
 our $projects_list = "++GITWEB_LIST++";
@@ -1221,6 +1223,9 @@ EOF
 		printf('<link rel="alternate" title="%s log" '.
 		       'href="%s" type="application/rss+xml"/>'."\n",
 		       esc_param($project), href(action=>"rss"));
+	}
+	if (defined $favicon) {
+		print qq(<link rel="shortcut icon" href="$favicon" type="image/png"/>\n);
 	}
 
 	print "</head>\n" .
