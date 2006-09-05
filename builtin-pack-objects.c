@@ -65,6 +65,7 @@ static unsigned char pack_file_sha1[20];
 static int progress = 1;
 static volatile sig_atomic_t progress_update;
 static int window = 10;
+static int pack_to_stdout;
 
 /*
  * The object names in objects array are hashed with this hashtable,
@@ -242,6 +243,82 @@ static int encode_header(enum object_type type, unsigned long size, unsigned cha
 	return n;
 }
 
+static int check_inflate(unsigned char *data, unsigned long len, unsigned long expect)
+{
+	z_stream stream;
+	unsigned char fakebuf[4096];
+	int st;
+
+	memset(&stream, 0, sizeof(stream));
+	stream.next_in = data;
+	stream.avail_in = len;
+	stream.next_out = fakebuf;
+	stream.avail_out = sizeof(fakebuf);
+	inflateInit(&stream);
+
+	while (1) {
+		st = inflate(&stream, Z_FINISH);
+		if (st == Z_STREAM_END || st == Z_OK) {
+			st = (stream.total_out == expect &&
+			      stream.total_in == len) ? 0 : -1;
+			break;
+		}
+		if (st != Z_BUF_ERROR) {
+			st = -1;
+			break;
+		}
+		stream.next_out = fakebuf;
+		stream.avail_out = sizeof(fakebuf);
+	}
+	inflateEnd(&stream);
+	return st;
+}
+
+/*
+ * we are going to reuse the existing pack entry data.  make
+ * sure it is not corrupt.
+ */
+static int revalidate_pack_entry(struct object_entry *entry, unsigned char *data, unsigned long len)
+{
+	enum object_type type;
+	unsigned long size, used;
+
+	if (pack_to_stdout)
+		return 0;
+
+	/* the caller has already called use_packed_git() for us,
+	 * so it is safe to access the pack data from mmapped location.
+	 * make sure the entry inflates correctly.
+	 */
+	used = unpack_object_header_gently(data, len, &type, &size);
+	if (!used)
+		return -1;
+	if (type == OBJ_DELTA)
+		used += 20; /* skip base object name */
+	data += used;
+	len -= used;
+	return check_inflate(data, len, entry->size);
+}
+
+static int revalidate_loose_object(struct object_entry *entry,
+				   unsigned char *map,
+				   unsigned long mapsize)
+{
+	/* we already know this is a loose object with new type header. */
+	enum object_type type;
+	unsigned long size, used;
+
+	if (pack_to_stdout)
+		return 0;
+
+	used = unpack_object_header_gently(map, mapsize, &type, &size);
+	if (!used)
+		return -1;
+	map += used;
+	mapsize -= used;
+	return check_inflate(map, mapsize, size);
+}
+
 static unsigned long write_object(struct sha1file *f,
 				  struct object_entry *entry)
 {
@@ -276,6 +353,9 @@ static unsigned long write_object(struct sha1file *f,
 		map = map_sha1_file(entry->sha1, &mapsize);
 		if (map && !legacy_loose_object(map)) {
 			/* We can copy straight into the pack file */
+			if (revalidate_loose_object(entry, map, mapsize))
+				die("corrupt loose object %s",
+				    sha1_to_hex(entry->sha1));
 			sha1write(f, map, mapsize);
 			munmap(map, mapsize);
 			written++;
@@ -286,7 +366,7 @@ static unsigned long write_object(struct sha1file *f,
 			munmap(map, mapsize);
 	}
 
-	if (! to_reuse) {
+	if (!to_reuse) {
 		buf = read_sha1_file(entry->sha1, type, &size);
 		if (!buf)
 			die("unable to read %s", sha1_to_hex(entry->sha1));
@@ -319,6 +399,9 @@ static unsigned long write_object(struct sha1file *f,
 
 		datalen = find_packed_object_size(p, entry->in_pack_offset);
 		buf = (char *) p->pack_base + entry->in_pack_offset;
+
+		if (revalidate_pack_entry(entry, buf, datalen))
+			die("corrupt delta in pack %s", sha1_to_hex(entry->sha1));
 		sha1write(f, buf, datalen);
 		unuse_packed_git(p);
 		hdrlen = 0; /* not really */
@@ -1163,7 +1246,7 @@ static void prepare_pack(int window, int depth)
 		find_deltas(sorted_by_type, window+1, depth);
 }
 
-static int reuse_cached_pack(unsigned char *sha1, int pack_to_stdout)
+static int reuse_cached_pack(unsigned char *sha1)
 {
 	static const char cache[] = "pack-cache/pack-%s.%s";
 	char *cached_pack, *cached_idx;
@@ -1247,7 +1330,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 {
 	SHA_CTX ctx;
 	char line[40 + 1 + PATH_MAX + 2];
-	int depth = 10, pack_to_stdout = 0;
+	int depth = 10;
 	struct object_entry **list;
 	int num_preferred_base = 0;
 	int i;
@@ -1367,7 +1450,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (progress && (nr_objects != nr_result))
 		fprintf(stderr, "Result has %d objects.\n", nr_result);
 
-	if (reuse_cached_pack(object_list_sha1, pack_to_stdout))
+	if (reuse_cached_pack(object_list_sha1))
 		;
 	else {
 		if (nr_result)
