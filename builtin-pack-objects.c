@@ -9,10 +9,13 @@
 #include "pack.h"
 #include "csum-file.h"
 #include "tree-walk.h"
+#include "diff.h"
+#include "revision.h"
+#include "list-objects.h"
 #include <sys/time.h>
 #include <signal.h>
 
-static const char pack_usage[] = "git-pack-objects [-q] [--no-reuse-delta] [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list";
+static const char pack_usage[] = "git-pack-objects [-q] [--no-reuse-delta] [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} [--revs [--unpacked | --all]* <ref-list | <object-list]";
 
 struct object_entry {
 	unsigned char sha1[20];
@@ -1326,89 +1329,14 @@ static int git_pack_config(const char *k, const char *v)
 	return git_default_config(k, v);
 }
 
-int cmd_pack_objects(int argc, const char **argv, const char *prefix)
+static void read_object_list_from_stdin(void)
 {
-	SHA_CTX ctx;
-	char line[40 + 1 + PATH_MAX + 2];
-	int depth = 10;
-	struct object_entry **list;
 	int num_preferred_base = 0;
-	int i;
-
-	git_config(git_pack_config);
-
-	progress = isatty(2);
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-
-		if (*arg == '-') {
-			if (!strcmp("--non-empty", arg)) {
-				non_empty = 1;
-				continue;
-			}
-			if (!strcmp("--local", arg)) {
-				local = 1;
-				continue;
-			}
-			if (!strcmp("--progress", arg)) {
-				progress = 1;
-				continue;
-			}
-			if (!strcmp("--incremental", arg)) {
-				incremental = 1;
-				continue;
-			}
-			if (!strncmp("--window=", arg, 9)) {
-				char *end;
-				window = strtoul(arg+9, &end, 0);
-				if (!arg[9] || *end)
-					usage(pack_usage);
-				continue;
-			}
-			if (!strncmp("--depth=", arg, 8)) {
-				char *end;
-				depth = strtoul(arg+8, &end, 0);
-				if (!arg[8] || *end)
-					usage(pack_usage);
-				continue;
-			}
-			if (!strcmp("--progress", arg)) {
-				progress = 1;
-				continue;
-			}
-			if (!strcmp("-q", arg)) {
-				progress = 0;
-				continue;
-			}
-			if (!strcmp("--no-reuse-delta", arg)) {
-				no_reuse_delta = 1;
-				continue;
-			}
-			if (!strcmp("--stdout", arg)) {
-				pack_to_stdout = 1;
-				continue;
-			}
-			usage(pack_usage);
-		}
-		if (base_name)
-			usage(pack_usage);
-		base_name = arg;
-	}
-
-	if (pack_to_stdout != !base_name)
-		usage(pack_usage);
-
-	prepare_packed_git();
-
-	if (progress) {
-		fprintf(stderr, "Generating pack...\n");
-		setup_progress_signal();
-	}
+	char line[40 + 1 + PATH_MAX + 2];
+	unsigned char sha1[20];
+	unsigned hash;
 
 	for (;;) {
-		unsigned char sha1[20];
-		unsigned hash;
-
 		if (!fgets(line, sizeof(line), stdin)) {
 			if (feof(stdin))
 				break;
@@ -1419,21 +1347,226 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			clearerr(stdin);
 			continue;
 		}
-
 		if (line[0] == '-') {
 			if (get_sha1_hex(line+1, sha1))
 				die("expected edge sha1, got garbage:\n %s",
-				    line+1);
+				    line);
 			if (num_preferred_base++ < window)
 				add_preferred_base(sha1);
 			continue;
 		}
 		if (get_sha1_hex(line, sha1))
 			die("expected sha1, got garbage:\n %s", line);
+
 		hash = name_hash(line+41);
 		add_preferred_base_object(line+41, hash);
 		add_object_entry(sha1, hash, 0);
 	}
+}
+
+/* copied from rev-list but needs to do things slightly differently */
+static void mark_edge_parents_uninteresting(struct commit *commit)
+{
+	struct commit_list *parents;
+
+	for (parents = commit->parents; parents; parents = parents->next) {
+		struct commit *parent = parents->item;
+		if (!(parent->object.flags & UNINTERESTING))
+			continue;
+		mark_tree_uninteresting(parent->tree);
+	}
+}
+
+static void mark_edges_uninteresting(struct commit_list *list)
+{
+	for ( ; list; list = list->next) {
+		struct commit *commit = list->item;
+
+		if (commit->object.flags & UNINTERESTING) {
+			mark_tree_uninteresting(commit->tree);
+			continue;
+		}
+		mark_edge_parents_uninteresting(commit);
+	}
+}
+
+static void show_commit(struct commit *commit)
+{
+	unsigned hash = name_hash("");
+	add_object_entry(commit->object.sha1, hash, 0);
+}
+
+static void show_object(struct object_array_entry *p)
+{
+	unsigned hash = name_hash(p->name);
+	add_object_entry(p->item->sha1, hash, 0);
+}
+
+static void get_object_list(int unpacked, int all)
+{
+	struct rev_info revs;
+	char line[1000];
+	const char *av[6];
+	int ac;
+	int flags = 0;
+
+	av[0] = "pack-objects";
+	av[1] = "--objects";
+	ac = 2;
+	if (unpacked)
+		av[ac++] = "--unpacked";
+	if (all)
+		av[ac++] = "--all";
+	av[ac++] = "--stdin";
+	av[ac] = NULL;
+
+	init_revisions(&revs, NULL);
+	save_commit_buffer = 0;
+	track_object_refs = 0;
+	setup_revisions(ac, av, &revs, NULL);
+
+	/* make sure we did not get pathspecs */
+	if (revs.prune_data)
+		die("pathspec given");
+
+	while (fgets(line, sizeof(line), stdin) != NULL) {
+		int len = strlen(line);
+		if (line[len - 1] == '\n')
+			line[--len] = 0;
+		if (!len)
+			break;
+		if (*line == '-') {
+			if (!strcmp(line, "--not")) {
+				flags ^= UNINTERESTING;
+				continue;
+			}
+			die("not a rev '%s'", line);
+		}
+		if (handle_revision_arg(line, &revs, flags, 1))
+			die("bad revision '%s'", line);
+	}
+
+	prepare_revision_walk(&revs);
+	mark_edges_uninteresting(revs.commits);
+
+	traverse_commit_list(&revs, show_commit, show_object);
+}
+
+int cmd_pack_objects(int argc, const char **argv, const char *prefix)
+{
+	SHA_CTX ctx;
+	int depth = 10;
+	struct object_entry **list;
+	int use_internal_rev_list = 0;
+	int unpacked = 0;
+	int all = 0;
+	int i;
+
+	git_config(git_pack_config);
+
+	progress = isatty(2);
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+
+		if (*arg != '-')
+			break;
+
+		if (!strcmp("--non-empty", arg)) {
+			non_empty = 1;
+			continue;
+		}
+		if (!strcmp("--local", arg)) {
+			local = 1;
+			continue;
+		}
+		if (!strcmp("--progress", arg)) {
+			progress = 1;
+			continue;
+		}
+		if (!strcmp("--incremental", arg)) {
+			incremental = 1;
+			continue;
+		}
+		if (!strncmp("--window=", arg, 9)) {
+			char *end;
+			window = strtoul(arg+9, &end, 0);
+			if (!arg[9] || *end)
+				usage(pack_usage);
+			continue;
+		}
+		if (!strncmp("--depth=", arg, 8)) {
+			char *end;
+			depth = strtoul(arg+8, &end, 0);
+			if (!arg[8] || *end)
+				usage(pack_usage);
+			continue;
+		}
+		if (!strcmp("--progress", arg)) {
+			progress = 1;
+			continue;
+		}
+		if (!strcmp("-q", arg)) {
+			progress = 0;
+			continue;
+		}
+		if (!strcmp("--no-reuse-delta", arg)) {
+			no_reuse_delta = 1;
+			continue;
+		}
+		if (!strcmp("--stdout", arg)) {
+			pack_to_stdout = 1;
+			continue;
+		}
+		if (!strcmp("--revs", arg)) {
+			use_internal_rev_list = 1;
+			continue;
+		}
+		if (!strcmp("--unpacked", arg)) {
+			unpacked = 1;
+			continue;
+		}
+		if (!strcmp("--all", arg)) {
+			all = 1;
+			continue;
+		}
+		usage(pack_usage);
+	}
+
+	/* Traditionally "pack-objects [options] base extra" failed;
+	 * we would however want to take refs parameter that would
+	 * have been given to upstream rev-list ourselves, which means
+	 * we somehow want to say what the base name is.  So the
+	 * syntax would be:
+	 *
+	 * pack-objects [options] base <refs...>
+	 *
+	 * in other words, we would treat the first non-option as the
+	 * base_name and send everything else to the internal revision
+	 * walker.
+	 */
+
+	if (!pack_to_stdout)
+		base_name = argv[i++];
+
+	if (pack_to_stdout != !base_name)
+		usage(pack_usage);
+
+	/* --unpacked and --all makes sense only with --revs */
+	if (!use_internal_rev_list && (unpacked || all))
+		usage(pack_usage);
+
+	prepare_packed_git();
+
+	if (progress) {
+		fprintf(stderr, "Generating pack...\n");
+		setup_progress_signal();
+	}
+
+	if (!use_internal_rev_list)
+		read_object_list_from_stdin();
+	else
+		get_object_list(unpacked, all);
+
 	if (progress)
 		fprintf(stderr, "Done counting %d objects.\n", nr_objects);
 	sorted_by_sha = create_final_object_list();
