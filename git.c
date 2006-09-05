@@ -36,6 +36,8 @@ static void prepend_to_path(const char *dir, int len)
 	memcpy(path + len + 1, old_path, path_len - len);
 
 	setenv("PATH", path, 1);
+
+	free(path);
 }
 
 static int handle_options(const char*** argv, int* argc)
