@@ -48,6 +48,8 @@ our $home_text = "++GITWEB_HOMETEXT++";
 our $stylesheet = "++GITWEB_CSS++";
 # URI of GIT logo
 our $logo = "++GITWEB_LOGO++";
+# URI of GIT favicon, assumed to be image/png type
+our $favicon = "++GITWEB_FAVICON++";
 
 # source of projects list
 our $projects_list = "++GITWEB_LIST++";
@@ -1222,6 +1224,9 @@ EOF
 		       'href="%s" type="application/rss+xml"/>'."\n",
 		       esc_param($project), href(action=>"rss"));
 	}
+	if (defined $favicon) {
+		print qq(<link rel="shortcut icon" href="$favicon" type="image/png"/>\n);
+	}
 
 	print "</head>\n" .
 	      "<body>\n" .
@@ -1400,19 +1405,32 @@ sub git_print_page_path {
 
 	if (!defined $name) {
 		print "<div class=\"page_path\">/</div>\n";
-	} elsif (defined $type && $type eq 'blob') {
+	} else {
+		my @dirname = split '/', $name;
+		my $basename = pop @dirname;
+		my $fullname = '';
+
 		print "<div class=\"page_path\">";
-		if (defined $hb) {
+		foreach my $dir (@dirname) {
+			$fullname .= $dir . '/';
+			print $cgi->a({-href => href(action=>"tree", file_name=>$fullname,
+			                             hash_base=>$hb),
+			              -title => $fullname}, esc_html($dir));
+			print "/";
+		}
+		if (defined $type && $type eq 'blob') {
 			print $cgi->a({-href => href(action=>"blob_plain", file_name=>$file_name,
-			                             hash_base=>$hb)},
-			              esc_html($name));
+			                             hash_base=>$hb),
+			              -title => $name}, esc_html($basename));
+		} elsif (defined $type && $type eq 'tree') {
+			print $cgi->a({-href => href(action=>"tree", file_name=>$file_name,
+			                             hash_base=>$hb),
+			              -title => $name}, esc_html($basename));
+			print "/";
 		} else {
-			print $cgi->a({-href => href(action=>"blob_plain", file_name=>$file_name)},
-			              esc_html($name));
+			print esc_html($basename);
 		}
 		print "<br/></div>\n";
-	} else {
-		print "<div class=\"page_path\">" . esc_html($name) . "<br/></div>\n";
 	}
 }
 
@@ -1587,7 +1605,7 @@ sub git_difftree_body {
 			      $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
 			                             hash_base=>$hash, file_name=>$diff{'file'})},
 			              "blob");
-			if ($action == "commitdiff") {
+			if ($action eq 'commitdiff') {
 				# link to patch
 				$patchno++;
 				print " | " .
@@ -1608,7 +1626,7 @@ sub git_difftree_body {
 			                             hash_base=>$parent, file_name=>$diff{'file'})},
 			              "blob") .
 			      " | ";
-			if ($action == "commitdiff") {
+			if ($action eq 'commitdiff') {
 				# link to patch
 				$patchno++;
 				print " | " .
@@ -1654,7 +1672,7 @@ sub git_difftree_body {
 			                             hash_base=>$hash, file_name=>$diff{'file'})},
 			              "blob");
 			if ($diff{'to_id'} ne $diff{'from_id'}) { # modified
-				if ($action == "commitdiff") {
+				if ($action eq 'commitdiff') {
 					# link to patch
 					$patchno++;
 					print " | " .
@@ -1696,7 +1714,7 @@ sub git_difftree_body {
 			                             hash=>$diff{'to_id'}, file_name=>$diff{'to_file'})},
 			              "blob");
 			if ($diff{'to_id'} ne $diff{'from_id'}) {
-				if ($action == "commitdiff") {
+				if ($action eq 'commitdiff') {
 					# link to patch
 					$patchno++;
 					print " | " .

@@ -137,6 +137,7 @@ GITWEB_LIST =
 GITWEB_HOMETEXT = indextext.html
 GITWEB_CSS = gitweb.css
 GITWEB_LOGO = git-logo.png
+GITWEB_FAVICON = git-favicon.png
 
 export prefix bindir gitexecdir template_dir GIT_PYTHON_DIR
 
@@ -674,6 +675,7 @@ gitweb/gitweb.cgi: gitweb/gitweb.perl
 	    -e 's|++GITWEB_HOMETEXT++|$(GITWEB_HOMETEXT)|g' \
 	    -e 's|++GITWEB_CSS++|$(GITWEB_CSS)|g' \
 	    -e 's|++GITWEB_LOGO++|$(GITWEB_LOGO)|g' \
+	    -e 's|++GITWEB_FAVICON++|$(GITWEB_FAVICON)|g' \
 	    $< >$@+
 	chmod +x $@+
 	mv $@+ $@
