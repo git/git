@@ -147,7 +147,7 @@ AC_CHECK_LIB([c], [iconv],
 [NEEDS_LIBICONV=],
 [NEEDS_LIBICONV=YesPlease])
 AC_SUBST(NEEDS_LIBICONV)
-test -n "$NEEDS_SOCKET" && LIBS="$LIBS -liconv"
+test -n "$NEEDS_LIBICONV" && LIBS="$LIBS -liconv"
 #
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
