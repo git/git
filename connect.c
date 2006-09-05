@@ -17,7 +17,7 @@ static int check_ref(const char *name, int len, unsigned int flags)
 	if (!flags)
 		return 1;
 
-	if (len > 45 || memcmp(name, "refs/", 5))
+	if (len < 5 || memcmp(name, "refs/", 5))
 		return 0;
 
 	/* Skip the "refs/" part */
