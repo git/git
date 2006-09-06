@@ -90,6 +90,8 @@ extern int rev_compare_tree(struct rev_info *, struct tree *t1, struct tree *t2)
 
 extern void init_revisions(struct rev_info *revs, const char *prefix);
 extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def);
+extern int handle_revision_arg(const char *arg, struct rev_info *revs,int flags,int cant_be_filename);
+
 extern void prepare_revision_walk(struct rev_info *revs);
 extern struct commit *get_revision(struct rev_info *revs);
 

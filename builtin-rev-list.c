@@ -23,6 +23,7 @@ static const char rev_list_usage[] =
 "    --no-merges\n"
 "    --remove-empty\n"
 "    --all\n"
+"    --stdin\n"
 "  ordering output:\n"
 "    --topo-order\n"
 "    --date-order\n"
@@ -304,10 +305,28 @@ static void mark_edges_uninteresting(struct commit_list *list)
 	}
 }
 
+static void read_revisions_from_stdin(struct rev_info *revs)
+{
+	char line[1000];
+
+	while (fgets(line, sizeof(line), stdin) != NULL) {
+		int len = strlen(line);
+		if (line[len - 1] == '\n')
+			line[--len] = 0;
+		if (!len)
+			break;
+		if (line[0] == '-')
+			die("options not supported in --stdin mode");
+		if (handle_revision_arg(line, revs, 0, 1))
+			die("bad revision '%s'", line);
+	}
+}
+
 int cmd_rev_list(int argc, const char **argv, const char *prefix)
 {
 	struct commit_list *list;
 	int i;
+	int read_from_stdin = 0;
 
 	init_revisions(&revs, prefix);
 	revs.abbrev = 0;
@@ -327,6 +346,12 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "--bisect")) {
 			bisect_list = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--stdin")) {
+			if (read_from_stdin++)
+				die("--stdin given twice?");
+			read_revisions_from_stdin(&revs);
 			continue;
 		}
 		usage(rev_list_usage);
