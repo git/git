@@ -69,6 +69,7 @@ static int progress = 1;
 static volatile sig_atomic_t progress_update;
 static int window = 10;
 static int pack_to_stdout;
+static int num_preferred_base;
 
 /*
  * The object names in objects array are hashed with this hashtable,
@@ -841,7 +842,7 @@ static int check_pbase_path(unsigned hash)
 	return 0;
 }
 
-static void add_preferred_base_object(char *name, unsigned hash)
+static void add_preferred_base_object(const char *name, unsigned hash)
 {
 	struct pbase_tree *it;
 	int cmplen = name_cmp_len(name);
@@ -869,6 +870,9 @@ static void add_preferred_base(unsigned char *sha1)
 	void *data;
 	unsigned long size;
 	unsigned char tree_sha1[20];
+
+	if (window <= num_preferred_base++)
+		return;
 
 	data = read_object_with_reference(sha1, tree_type, &size, tree_sha1);
 	if (!data)
@@ -1331,7 +1335,6 @@ static int git_pack_config(const char *k, const char *v)
 
 static void read_object_list_from_stdin(void)
 {
-	int num_preferred_base = 0;
 	char line[40 + 1 + PATH_MAX + 2];
 	unsigned char sha1[20];
 	unsigned hash;
@@ -1351,8 +1354,7 @@ static void read_object_list_from_stdin(void)
 			if (get_sha1_hex(line+1, sha1))
 				die("expected edge sha1, got garbage:\n %s",
 				    line);
-			if (num_preferred_base++ < window)
-				add_preferred_base(sha1);
+			add_preferred_base(sha1);
 			continue;
 		}
 		if (get_sha1_hex(line, sha1))
@@ -1364,70 +1366,35 @@ static void read_object_list_from_stdin(void)
 	}
 }
 
-/* copied from rev-list but needs to do things slightly differently */
-static void mark_edge_parents_uninteresting(struct commit *commit)
-{
-	struct commit_list *parents;
-
-	for (parents = commit->parents; parents; parents = parents->next) {
-		struct commit *parent = parents->item;
-		if (!(parent->object.flags & UNINTERESTING))
-			continue;
-		mark_tree_uninteresting(parent->tree);
-	}
-}
-
-static void mark_edges_uninteresting(struct commit_list *list)
-{
-	for ( ; list; list = list->next) {
-		struct commit *commit = list->item;
-
-		if (commit->object.flags & UNINTERESTING) {
-			mark_tree_uninteresting(commit->tree);
-			continue;
-		}
-		mark_edge_parents_uninteresting(commit);
-	}
-}
-
 static void show_commit(struct commit *commit)
 {
 	unsigned hash = name_hash("");
+	add_preferred_base_object("", hash);
 	add_object_entry(commit->object.sha1, hash, 0);
 }
 
 static void show_object(struct object_array_entry *p)
 {
 	unsigned hash = name_hash(p->name);
+	add_preferred_base_object(p->name, hash);
 	add_object_entry(p->item->sha1, hash, 0);
 }
 
-static void get_object_list(int unpacked, int all)
+static void show_edge(struct commit *commit)
+{
+	add_preferred_base(commit->object.sha1);
+}
+
+static void get_object_list(int ac, const char **av)
 {
 	struct rev_info revs;
 	char line[1000];
-	const char *av[6];
-	int ac;
 	int flags = 0;
-
-	av[0] = "pack-objects";
-	av[1] = "--objects";
-	ac = 2;
-	if (unpacked)
-		av[ac++] = "--unpacked";
-	if (all)
-		av[ac++] = "--all";
-	av[ac++] = "--stdin";
-	av[ac] = NULL;
 
 	init_revisions(&revs, NULL);
 	save_commit_buffer = 0;
 	track_object_refs = 0;
 	setup_revisions(ac, av, &revs, NULL);
-
-	/* make sure we did not get pathspecs */
-	if (revs.prune_data)
-		die("pathspec given");
 
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		int len = strlen(line);
@@ -1447,8 +1414,7 @@ static void get_object_list(int unpacked, int all)
 	}
 
 	prepare_revision_walk(&revs);
-	mark_edges_uninteresting(revs.commits);
-
+	mark_edges_uninteresting(revs.commits, &revs, show_edge);
 	traverse_commit_list(&revs, show_commit, show_object);
 }
 
@@ -1458,9 +1424,14 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	int depth = 10;
 	struct object_entry **list;
 	int use_internal_rev_list = 0;
-	int unpacked = 0;
-	int all = 0;
+	int thin = 0;
 	int i;
+	const char *rp_av[64];
+	int rp_ac;
+
+	rp_av[0] = "pack-objects";
+	rp_av[1] = "--objects"; /* --thin will make it --objects-edge */
+	rp_ac = 2;
 
 	git_config(git_pack_config);
 
@@ -1521,12 +1492,19 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			use_internal_rev_list = 1;
 			continue;
 		}
-		if (!strcmp("--unpacked", arg)) {
-			unpacked = 1;
+		if (!strcmp("--unpacked", arg) ||
+		    !strncmp("--unpacked=", arg, 11) ||
+		    !strcmp("--all", arg)) {
+			use_internal_rev_list = 1;
+			if (ARRAY_SIZE(rp_av) - 1 <= rp_ac)
+				die("too many internal rev-list options");
+			rp_av[rp_ac++] = arg;
 			continue;
 		}
-		if (!strcmp("--all", arg)) {
-			all = 1;
+		if (!strcmp("--thin", arg)) {
+			use_internal_rev_list = 1;
+			thin = 1;
+			rp_av[1] = "--objects-edge";
 			continue;
 		}
 		usage(pack_usage);
@@ -1551,9 +1529,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (pack_to_stdout != !base_name)
 		usage(pack_usage);
 
-	/* --unpacked and --all makes sense only with --revs */
-	if (!use_internal_rev_list && (unpacked || all))
-		usage(pack_usage);
+	if (!pack_to_stdout && thin)
+		die("--thin cannot be used to build an indexable pack.");
 
 	prepare_packed_git();
 
@@ -1564,8 +1541,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	if (!use_internal_rev_list)
 		read_object_list_from_stdin();
-	else
-		get_object_list(unpacked, all);
+	else {
+		rp_av[rp_ac] = NULL;
+		get_object_list(rp_ac, rp_av);
+	}
 
 	if (progress)
 		fprintf(stderr, "Done counting %d objects.\n", nr_objects);

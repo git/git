@@ -66,6 +66,39 @@ static void process_tree(struct rev_info *revs,
 	tree->buffer = NULL;
 }
 
+static void mark_edge_parents_uninteresting(struct commit *commit,
+					    struct rev_info *revs,
+					    show_edge_fn show_edge)
+{
+	struct commit_list *parents;
+
+	for (parents = commit->parents; parents; parents = parents->next) {
+		struct commit *parent = parents->item;
+		if (!(parent->object.flags & UNINTERESTING))
+			continue;
+		mark_tree_uninteresting(parent->tree);
+		if (revs->edge_hint && !(parent->object.flags & SHOWN)) {
+			parent->object.flags |= SHOWN;
+			show_edge(parent);
+		}
+	}
+}
+
+void mark_edges_uninteresting(struct commit_list *list,
+			      struct rev_info *revs,
+			      show_edge_fn show_edge)
+{
+	for ( ; list; list = list->next) {
+		struct commit *commit = list->item;
+
+		if (commit->object.flags & UNINTERESTING) {
+			mark_tree_uninteresting(commit->tree);
+			continue;
+		}
+		mark_edge_parents_uninteresting(commit, revs, show_edge);
+	}
+}
+
 void traverse_commit_list(struct rev_info *revs,
 			  void (*show_commit)(struct commit *),
 			  void (*show_object)(struct object_array_entry *))

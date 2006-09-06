@@ -114,6 +114,11 @@ static void show_object(struct object_array_entry *p)
 		printf("%s %s\n", sha1_to_hex(p->item->sha1), p->name);
 }
 
+static void show_edge(struct commit *commit)
+{
+	printf("-%s\n", sha1_to_hex(commit->object.sha1));
+}
+
 /*
  * This is a truly stupid algorithm, but it's only
  * used for bisection, and we just don't care enough.
@@ -190,35 +195,6 @@ static struct commit_list *find_bisection(struct commit_list *list)
 	if (best)
 		best->next = NULL;
 	return best;
-}
-
-static void mark_edge_parents_uninteresting(struct commit *commit)
-{
-	struct commit_list *parents;
-
-	for (parents = commit->parents; parents; parents = parents->next) {
-		struct commit *parent = parents->item;
-		if (!(parent->object.flags & UNINTERESTING))
-			continue;
-		mark_tree_uninteresting(parent->tree);
-		if (revs.edge_hint && !(parent->object.flags & SHOWN)) {
-			parent->object.flags |= SHOWN;
-			printf("-%s\n", sha1_to_hex(parent->object.sha1));
-		}
-	}
-}
-
-static void mark_edges_uninteresting(struct commit_list *list)
-{
-	for ( ; list; list = list->next) {
-		struct commit *commit = list->item;
-
-		if (commit->object.flags & UNINTERESTING) {
-			mark_tree_uninteresting(commit->tree);
-			continue;
-		}
-		mark_edge_parents_uninteresting(commit);
-	}
 }
 
 static void read_revisions_from_stdin(struct rev_info *revs)
@@ -300,7 +276,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 
 	prepare_revision_walk(&revs);
 	if (revs.tree_objects)
-		mark_edges_uninteresting(revs.commits);
+		mark_edges_uninteresting(revs.commits, &revs, show_edge);
 
 	if (bisect_list)
 		revs.commits = find_bisection(revs.commits);
