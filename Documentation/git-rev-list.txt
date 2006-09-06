@@ -17,6 +17,7 @@ SYNOPSIS
 	     [ \--remove-empty ]
 	     [ \--not ]
 	     [ \--all ]
+	     [ \--stdin ]
 	     [ \--topo-order ]
 	     [ \--parents ]
 	     [ [\--objects | \--objects-edge] [ \--unpacked ] ]
@@ -170,6 +171,11 @@ limiting may be applied.
 
 	Pretend as if all the refs in `$GIT_DIR/refs/` are listed on the
 	command line as '<commit>'.
+
+--stdin::
+
+	In addition to the '<commit>' listed on the command
+	line, read them from the standard input.
 
 --merge::
 
