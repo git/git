@@ -2587,6 +2587,9 @@ void diff_flush(struct diff_options *options)
 		}
 	}
 
+	if (output_format & DIFF_FORMAT_CALLBACK)
+		options->format_callback(q, options, options->format_callback_data);
+
 	for (i = 0; i < q->nr; i++)
 		diff_free_filepair(q->queue[i]);
 free_queue:
