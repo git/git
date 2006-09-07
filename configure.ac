@@ -143,9 +143,12 @@ AC_CHECK_LIB([expat], [XML_ParserCreate],
 AC_SUBST(NO_EXPAT)
 #
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin).
+# Define NO_ICONV if neither libc nor libiconv support iconv.
 AC_CHECK_LIB([c], [iconv],
-[NEEDS_LIBICONV=],
-[NEEDS_LIBICONV=YesPlease])
+	[NEEDS_LIBICONV=],
+	AC_CHECK_LIB([iconv], [iconv],
+		[NEEDS_LIBICONV=YesPlease],
+		[GIT_CONF_APPEND_LINE([NO_ICONV=YesPlease])]))
 AC_SUBST(NEEDS_LIBICONV)
 test -n "$NEEDS_LIBICONV" && LIBS="$LIBS -liconv"
 #
