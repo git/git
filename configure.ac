@@ -148,8 +148,9 @@ AC_CHECK_LIB([c], [iconv],
 	[NEEDS_LIBICONV=],
 	AC_CHECK_LIB([iconv], [iconv],
 		[NEEDS_LIBICONV=YesPlease],
-		[GIT_CONF_APPEND_LINE([NO_ICONV=YesPlease])]))
+		[NO_ICONV=YesPlease]))
 AC_SUBST(NEEDS_LIBICONV)
+AC_SUBST(NO_ICONV)
 test -n "$NEEDS_LIBICONV" && LIBS="$LIBS -liconv"
 #
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
@@ -343,6 +344,16 @@ GIT_PARSE_WITH(expat))
 # library directories by defining CFLAGS and LDFLAGS appropriately.
 #
 # Define NO_MMAP if you want to avoid mmap.
+#
+# Define NO_ICONV if your libc does not properly support iconv.
+AC_ARG_WITH(iconv,
+AS_HELP_STRING([--without-iconv],
+[if your architecture doesn't properly support iconv])
+AS_HELP_STRING([--with-iconv=PATH],
+[PATH is prefix for libiconv library and headers])
+AS_HELP_STRING([],
+[used only if you need linking with libiconv]),
+GIT_PARSE_WITH(iconv))
 
 ## --enable-FEATURE[=ARG] and --disable-FEATURE
 #
