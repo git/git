@@ -110,15 +110,10 @@ OPTIONS
 	deletion part but not addition part.
 
 --allow-binary-replacement, --binary::
-	When applying a patch, which is a git-enhanced patch
-	that was prepared to record the pre- and post-image object
-	name in full, and the path being patched exactly matches
-	the object the patch applies to (i.e. "index" line's
-	pre-image object name is what is in the working tree),
-	and the post-image object is available in the object
-	database, use the post-image object as the patch
-	result.  This allows binary files to be patched in a
-	very limited way.
+	Historically we did not allow binary patch applied
+	without an explicit permission from the user, and this
+	flag was the way to do so.  Currently we always allow binary
+	patch application, so this is a no-op.
 
 --exclude=<path-pattern>::
 	Don't apply changes to files matching the given path pattern. This can
