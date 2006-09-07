@@ -22,6 +22,7 @@ static const char daemon_usage[] =
 "           [--timeout=n] [--init-timeout=n] [--strict-paths]\n"
 "           [--base-path=path] [--user-path | --user-path=path]\n"
 "           [--reuseaddr] [--detach] [--pid-file=file]\n"
+"           [--[enable|disable|allow-override|forbid-override]=service]\n"
 "           [--user=user [[--group=group]] [directory...]";
 
 /* List of acceptable pathname prefixes */
@@ -324,15 +325,8 @@ static int upload_pack(void)
 	return -1;
 }
 
-static int upload_tar(void)
-{
-	execl_git_cmd("upload-tar", ".", NULL);
-	return -1;
-}
-
 static struct daemon_service daemon_service[] = {
 	{ "upload-pack", "uploadpack", upload_pack, 1, 1 },
-	{ "upload-tar", "uploadtar", upload_tar, 0, 1 },
 };
 
 static void enable_service(const char *name, int ena) {
