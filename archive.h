@@ -37,5 +37,9 @@ extern void parse_treeish_arg(const char **treeish,
 
 extern void parse_pathspec_arg(const char **pathspec,
 			       struct archiver_args *args);
+/*
+ * Archive-format specific backends.
+ */
+extern int write_tar_archive(struct archiver_args *);
 
 #endif	/* ARCHIVE_H */
