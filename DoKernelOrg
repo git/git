@@ -46,13 +46,12 @@ maint | master)
 	hera.kernel.org)
 		narch='x86_64 i386'
 		arch=x86_64 ;;
-	old-hera.kernel.org)
+	demeter.kernel.org|demeter|old-hera.kernel.org)
 		arch=i386 ;;
 	*)	echo >&2 "What are you talking about???"
 		exit 1 ;;
 	esac &&
 	: >./:all.log &&
-	mkdir -p $G/RPMS/$arch $G/RPMS/SRPMS &&
 	echo "* Building $1" &&
 	git checkout "$1" &&
 	make $J git >./:all.log 2>&1 &&
@@ -79,6 +78,7 @@ maint | master)
 		exit $status ;;
 	esac >>./:all.log 2>&1 &&
 	make dist-doc >>./:all.log 2>&1 &&
+	mkdir -p $G/RPMS/$arch $G/RPMS/SRPMS &&
 	ln git-$V.tar.gz git-htmldocs-$V.tar.gz git-manpages-$V.tar.gz $G/. &&
 	for a in $narch
 	do
