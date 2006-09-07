@@ -8,6 +8,7 @@ git-apply
 git-applymbox
 git-applypatch
 git-archimport
+git-archive
 git-bisect
 git-branch
 git-cat-file

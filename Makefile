@@ -232,7 +232,7 @@ LIB_FILE=libgit.a
 XDIFF_LIB=xdiff/lib.a
 
 LIB_H = \
-	blob.h cache.h commit.h csum-file.h delta.h \
+	archive.h blob.h cache.h commit.h csum-file.h delta.h \
 	diff.h object.h pack.h pkt-line.h quote.h refs.h \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
 	tree-walk.h log-tree.h dir.h path-list.h unpack-trees.h builtin.h
@@ -256,6 +256,7 @@ LIB_OBJS = \
 BUILTIN_OBJS = \
 	builtin-add.o \
 	builtin-apply.o \
+	builtin-archive.o \
 	builtin-cat-file.o \
 	builtin-checkout-index.o \
 	builtin-check-ref-format.o \
