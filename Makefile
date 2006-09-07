@@ -293,6 +293,7 @@ BUILTIN_OBJS = \
 	builtin-unpack-objects.o \
 	builtin-update-index.o \
 	builtin-update-ref.o \
+	builtin-upload-archive.o \
 	builtin-upload-tar.o \
 	builtin-verify-pack.o \
 	builtin-write-tree.o \
