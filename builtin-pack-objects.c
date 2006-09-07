@@ -9,10 +9,13 @@
 #include "pack.h"
 #include "csum-file.h"
 #include "tree-walk.h"
+#include "diff.h"
+#include "revision.h"
+#include "list-objects.h"
 #include <sys/time.h>
 #include <signal.h>
 
-static const char pack_usage[] = "git-pack-objects [-q] [--no-reuse-delta] [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} < object-list";
+static const char pack_usage[] = "git-pack-objects [-q] [--no-reuse-delta] [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} [--revs [--unpacked | --all]* <ref-list | <object-list]";
 
 struct object_entry {
 	unsigned char sha1[20];
@@ -66,6 +69,7 @@ static int progress = 1;
 static volatile sig_atomic_t progress_update;
 static int window = 10;
 static int pack_to_stdout;
+static int num_preferred_base;
 
 /*
  * The object names in objects array are hashed with this hashtable,
@@ -838,7 +842,7 @@ static int check_pbase_path(unsigned hash)
 	return 0;
 }
 
-static void add_preferred_base_object(char *name, unsigned hash)
+static void add_preferred_base_object(const char *name, unsigned hash)
 {
 	struct pbase_tree *it;
 	int cmplen = name_cmp_len(name);
@@ -866,6 +870,9 @@ static void add_preferred_base(unsigned char *sha1)
 	void *data;
 	unsigned long size;
 	unsigned char tree_sha1[20];
+
+	if (window <= num_preferred_base++)
+		return;
 
 	data = read_object_with_reference(sha1, tree_type, &size, tree_sha1);
 	if (!data)
@@ -1326,89 +1333,13 @@ static int git_pack_config(const char *k, const char *v)
 	return git_default_config(k, v);
 }
 
-int cmd_pack_objects(int argc, const char **argv, const char *prefix)
+static void read_object_list_from_stdin(void)
 {
-	SHA_CTX ctx;
 	char line[40 + 1 + PATH_MAX + 2];
-	int depth = 10;
-	struct object_entry **list;
-	int num_preferred_base = 0;
-	int i;
-
-	git_config(git_pack_config);
-
-	progress = isatty(2);
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-
-		if (*arg == '-') {
-			if (!strcmp("--non-empty", arg)) {
-				non_empty = 1;
-				continue;
-			}
-			if (!strcmp("--local", arg)) {
-				local = 1;
-				continue;
-			}
-			if (!strcmp("--progress", arg)) {
-				progress = 1;
-				continue;
-			}
-			if (!strcmp("--incremental", arg)) {
-				incremental = 1;
-				continue;
-			}
-			if (!strncmp("--window=", arg, 9)) {
-				char *end;
-				window = strtoul(arg+9, &end, 0);
-				if (!arg[9] || *end)
-					usage(pack_usage);
-				continue;
-			}
-			if (!strncmp("--depth=", arg, 8)) {
-				char *end;
-				depth = strtoul(arg+8, &end, 0);
-				if (!arg[8] || *end)
-					usage(pack_usage);
-				continue;
-			}
-			if (!strcmp("--progress", arg)) {
-				progress = 1;
-				continue;
-			}
-			if (!strcmp("-q", arg)) {
-				progress = 0;
-				continue;
-			}
-			if (!strcmp("--no-reuse-delta", arg)) {
-				no_reuse_delta = 1;
-				continue;
-			}
-			if (!strcmp("--stdout", arg)) {
-				pack_to_stdout = 1;
-				continue;
-			}
-			usage(pack_usage);
-		}
-		if (base_name)
-			usage(pack_usage);
-		base_name = arg;
-	}
-
-	if (pack_to_stdout != !base_name)
-		usage(pack_usage);
-
-	prepare_packed_git();
-
-	if (progress) {
-		fprintf(stderr, "Generating pack...\n");
-		setup_progress_signal();
-	}
+	unsigned char sha1[20];
+	unsigned hash;
 
 	for (;;) {
-		unsigned char sha1[20];
-		unsigned hash;
-
 		if (!fgets(line, sizeof(line), stdin)) {
 			if (feof(stdin))
 				break;
@@ -1419,21 +1350,202 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			clearerr(stdin);
 			continue;
 		}
-
 		if (line[0] == '-') {
 			if (get_sha1_hex(line+1, sha1))
 				die("expected edge sha1, got garbage:\n %s",
-				    line+1);
-			if (num_preferred_base++ < window)
-				add_preferred_base(sha1);
+				    line);
+			add_preferred_base(sha1);
 			continue;
 		}
 		if (get_sha1_hex(line, sha1))
 			die("expected sha1, got garbage:\n %s", line);
+
 		hash = name_hash(line+41);
 		add_preferred_base_object(line+41, hash);
 		add_object_entry(sha1, hash, 0);
 	}
+}
+
+static void show_commit(struct commit *commit)
+{
+	unsigned hash = name_hash("");
+	add_preferred_base_object("", hash);
+	add_object_entry(commit->object.sha1, hash, 0);
+}
+
+static void show_object(struct object_array_entry *p)
+{
+	unsigned hash = name_hash(p->name);
+	add_preferred_base_object(p->name, hash);
+	add_object_entry(p->item->sha1, hash, 0);
+}
+
+static void show_edge(struct commit *commit)
+{
+	add_preferred_base(commit->object.sha1);
+}
+
+static void get_object_list(int ac, const char **av)
+{
+	struct rev_info revs;
+	char line[1000];
+	int flags = 0;
+
+	init_revisions(&revs, NULL);
+	save_commit_buffer = 0;
+	track_object_refs = 0;
+	setup_revisions(ac, av, &revs, NULL);
+
+	while (fgets(line, sizeof(line), stdin) != NULL) {
+		int len = strlen(line);
+		if (line[len - 1] == '\n')
+			line[--len] = 0;
+		if (!len)
+			break;
+		if (*line == '-') {
+			if (!strcmp(line, "--not")) {
+				flags ^= UNINTERESTING;
+				continue;
+			}
+			die("not a rev '%s'", line);
+		}
+		if (handle_revision_arg(line, &revs, flags, 1))
+			die("bad revision '%s'", line);
+	}
+
+	prepare_revision_walk(&revs);
+	mark_edges_uninteresting(revs.commits, &revs, show_edge);
+	traverse_commit_list(&revs, show_commit, show_object);
+}
+
+int cmd_pack_objects(int argc, const char **argv, const char *prefix)
+{
+	SHA_CTX ctx;
+	int depth = 10;
+	struct object_entry **list;
+	int use_internal_rev_list = 0;
+	int thin = 0;
+	int i;
+	const char *rp_av[64];
+	int rp_ac;
+
+	rp_av[0] = "pack-objects";
+	rp_av[1] = "--objects"; /* --thin will make it --objects-edge */
+	rp_ac = 2;
+
+	git_config(git_pack_config);
+
+	progress = isatty(2);
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+
+		if (*arg != '-')
+			break;
+
+		if (!strcmp("--non-empty", arg)) {
+			non_empty = 1;
+			continue;
+		}
+		if (!strcmp("--local", arg)) {
+			local = 1;
+			continue;
+		}
+		if (!strcmp("--progress", arg)) {
+			progress = 1;
+			continue;
+		}
+		if (!strcmp("--incremental", arg)) {
+			incremental = 1;
+			continue;
+		}
+		if (!strncmp("--window=", arg, 9)) {
+			char *end;
+			window = strtoul(arg+9, &end, 0);
+			if (!arg[9] || *end)
+				usage(pack_usage);
+			continue;
+		}
+		if (!strncmp("--depth=", arg, 8)) {
+			char *end;
+			depth = strtoul(arg+8, &end, 0);
+			if (!arg[8] || *end)
+				usage(pack_usage);
+			continue;
+		}
+		if (!strcmp("--progress", arg)) {
+			progress = 1;
+			continue;
+		}
+		if (!strcmp("-q", arg)) {
+			progress = 0;
+			continue;
+		}
+		if (!strcmp("--no-reuse-delta", arg)) {
+			no_reuse_delta = 1;
+			continue;
+		}
+		if (!strcmp("--stdout", arg)) {
+			pack_to_stdout = 1;
+			continue;
+		}
+		if (!strcmp("--revs", arg)) {
+			use_internal_rev_list = 1;
+			continue;
+		}
+		if (!strcmp("--unpacked", arg) ||
+		    !strncmp("--unpacked=", arg, 11) ||
+		    !strcmp("--all", arg)) {
+			use_internal_rev_list = 1;
+			if (ARRAY_SIZE(rp_av) - 1 <= rp_ac)
+				die("too many internal rev-list options");
+			rp_av[rp_ac++] = arg;
+			continue;
+		}
+		if (!strcmp("--thin", arg)) {
+			use_internal_rev_list = 1;
+			thin = 1;
+			rp_av[1] = "--objects-edge";
+			continue;
+		}
+		usage(pack_usage);
+	}
+
+	/* Traditionally "pack-objects [options] base extra" failed;
+	 * we would however want to take refs parameter that would
+	 * have been given to upstream rev-list ourselves, which means
+	 * we somehow want to say what the base name is.  So the
+	 * syntax would be:
+	 *
+	 * pack-objects [options] base <refs...>
+	 *
+	 * in other words, we would treat the first non-option as the
+	 * base_name and send everything else to the internal revision
+	 * walker.
+	 */
+
+	if (!pack_to_stdout)
+		base_name = argv[i++];
+
+	if (pack_to_stdout != !base_name)
+		usage(pack_usage);
+
+	if (!pack_to_stdout && thin)
+		die("--thin cannot be used to build an indexable pack.");
+
+	prepare_packed_git();
+
+	if (progress) {
+		fprintf(stderr, "Generating pack...\n");
+		setup_progress_signal();
+	}
+
+	if (!use_internal_rev_list)
+		read_object_list_from_stdin();
+	else {
+		rp_av[rp_ac] = NULL;
+		get_object_list(rp_ac, rp_av);
+	}
+
 	if (progress)
 		fprintf(stderr, "Done counting %d objects.\n", nr_objects);
 	sorted_by_sha = create_final_object_list();

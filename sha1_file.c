@@ -1189,12 +1189,20 @@ int find_pack_entry_one(const unsigned char *sha1,
 	return 0;
 }
 
-static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
+static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e, const char **ignore_packed)
 {
 	struct packed_git *p;
 	prepare_packed_git();
 
 	for (p = packed_git; p; p = p->next) {
+		if (ignore_packed) {
+			const char **ig;
+			for (ig = ignore_packed; *ig; ig++)
+				if (!strcmp(p->pack_name, *ig))
+					break;
+			if (*ig)
+				continue;
+		}
 		if (find_pack_entry_one(sha1, e, p))
 			return 1;
 	}
@@ -1227,10 +1235,10 @@ int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep
 	if (!map) {
 		struct pack_entry e;
 
-		if (find_pack_entry(sha1, &e))
+		if (find_pack_entry(sha1, &e, NULL))
 			return packed_object_info(&e, type, sizep);
 		reprepare_packed_git();
-		if (find_pack_entry(sha1, &e))
+		if (find_pack_entry(sha1, &e, NULL))
 			return packed_object_info(&e, type, sizep);
 		return error("unable to find %s", sha1_to_hex(sha1));
 	}
@@ -1253,7 +1261,7 @@ static void *read_packed_sha1(const unsigned char *sha1, char *type, unsigned lo
 {
 	struct pack_entry e;
 
-	if (!find_pack_entry(sha1, &e)) {
+	if (!find_pack_entry(sha1, &e, NULL)) {
 		error("cannot read sha1_file for %s", sha1_to_hex(sha1));
 		return NULL;
 	}
@@ -1266,7 +1274,7 @@ void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size
 	void *map, *buf;
 	struct pack_entry e;
 
-	if (find_pack_entry(sha1, &e))
+	if (find_pack_entry(sha1, &e, NULL))
 		return read_packed_sha1(sha1, type, size);
 	map = map_sha1_file(sha1, &mapsize);
 	if (map) {
@@ -1275,7 +1283,7 @@ void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size
 		return buf;
 	}
 	reprepare_packed_git();
-	if (find_pack_entry(sha1, &e))
+	if (find_pack_entry(sha1, &e, NULL))
 		return read_packed_sha1(sha1, type, size);
 	return NULL;
 }
@@ -1707,10 +1715,10 @@ int has_pack_file(const unsigned char *sha1)
 	return 1;
 }
 
-int has_sha1_pack(const unsigned char *sha1)
+int has_sha1_pack(const unsigned char *sha1, const char **ignore_packed)
 {
 	struct pack_entry e;
-	return find_pack_entry(sha1, &e);
+	return find_pack_entry(sha1, &e, ignore_packed);
 }
 
 int has_sha1_file(const unsigned char *sha1)
@@ -1718,7 +1726,7 @@ int has_sha1_file(const unsigned char *sha1)
 	struct stat st;
 	struct pack_entry e;
 
-	if (find_pack_entry(sha1, &e))
+	if (find_pack_entry(sha1, &e, NULL))
 		return 1;
 	return find_sha1_file(sha1, &st) ? 1 : 0;
 }

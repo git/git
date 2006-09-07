@@ -19,7 +19,7 @@ static void prune_dir(int i, DIR *dir, char *pathname, int len)
 		memcpy(hex+2, de->d_name, 38);
 		if (get_sha1_hex(hex, sha1))
 			continue;
-		if (!has_sha1_pack(sha1))
+		if (!has_sha1_pack(sha1, NULL))
 			continue;
 		memcpy(pathname + len, de->d_name, 38);
 		if (dryrun)
