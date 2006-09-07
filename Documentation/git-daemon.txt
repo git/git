@@ -135,12 +135,6 @@ upload-pack::
 	disable it by setting `daemon.uploadpack` configuration
 	item to `false`.
 
-upload-tar::
-	This serves `git-tar-tree --remote=repository` client.
-	It is not enabled by default, but a repository can
-	enable it by setting `daemon.uploadtar` configuration
-	item to `true`.
-
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>, YOSHIFUJI Hideaki
