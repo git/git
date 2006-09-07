@@ -22,6 +22,7 @@ static const char daemon_usage[] =
 "           [--timeout=n] [--init-timeout=n] [--strict-paths]\n"
 "           [--base-path=path] [--user-path | --user-path=path]\n"
 "           [--reuseaddr] [--detach] [--pid-file=file]\n"
+"           [--[enable|disable|allow-override|forbid-override]=service]\n"
 "           [--user=user [[--group=group]] [directory...]";
 
 /* List of acceptable pathname prefixes */
@@ -896,12 +897,12 @@ int main(int argc, char **argv)
 			enable_service(arg + 10, 0);
 			continue;
 		}
-		if (!strncmp(arg, "--enable-override=", 18)) {
-			make_service_overridable(arg + 18, 1);
+		if (!strncmp(arg, "--allow-override=", 17)) {
+			make_service_overridable(arg + 17, 1);
 			continue;
 		}
-		if (!strncmp(arg, "--disable-override=", 19)) {
-			make_service_overridable(arg + 19, 0);
+		if (!strncmp(arg, "--forbid-override=", 18)) {
+			make_service_overridable(arg + 18, 0);
 			continue;
 		}
 		if (!strcmp(arg, "--")) {

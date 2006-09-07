@@ -11,17 +11,16 @@ SYNOPSIS
 'git-daemon' [--verbose] [--syslog] [--inetd | --port=n] [--export-all]
              [--timeout=n] [--init-timeout=n] [--strict-paths]
              [--base-path=path] [--user-path | --user-path=path]
-	     [--reuseaddr] [--detach] [--pid-file=file]
-	     [--user=user [--group=group]] [directory...]
+             [--enable=service] [--disable=service]
+	     [--allow-override=service] [--forbid-override=service]
+             [--reuseaddr] [--detach] [--pid-file=file]
+             [--user=user [--group=group]] [directory...]
 
 DESCRIPTION
 -----------
 A really simple TCP git daemon that normally listens on port "DEFAULT_GIT_PORT"
-aka 9418. It waits for a connection, and will just execute "git-upload-pack"
-when it gets one.
-
-It's careful in that there's a magic request-line that gives the command and
-what directory to upload, and it verifies that the directory is OK.
+aka 9418.  It waits for a connection asking for a service, and will serve
+that service if it is enabled.
 
 It verifies that the directory has the magic file "git-daemon-export-ok", and
 it will refuse to export any git directory that hasn't explicitly been marked
@@ -29,7 +28,12 @@ for export this way (unless the '--export-all' parameter is specified). If you
 pass some directory paths as 'git-daemon' arguments, you can further restrict
 the offers to a whitelist comprising of those.
 
-This is ideally suited for read-only updates, i.e., pulling from git repositories.
+By default, only `upload-pack` service is enabled, which serves
+`git-fetch-pack` and `git-peek-remote` clients that are invoked
+from `git-fetch`, `git-ls-remote`, and `git-clone`.
+
+This is ideally suited for read-only updates, i.e., pulling from
+git repositories.
 
 OPTIONS
 -------
@@ -105,10 +109,31 @@ Giving these options is an error when used with `--inetd`; use
 the facility of inet daemon to achieve the same before spawning
 `git-daemon` if needed.
 
+--enable-service, --disable-service::
+	Enable/disable the service site-wide per default.  Note
+	that a service disabled site-wide can still be enabled
+	per repository if it is marked overridable and the
+	repository enables the service with an configuration
+	item.
+
+--allow-override, --forbid-override::
+	Allow/forbid overriding the site-wide default with per
+	repository configuration.  By default, all the services
+	are overridable.
+
 <directory>::
 	A directory to add to the whitelist of allowed directories. Unless
 	--strict-paths is specified this will also include subdirectories
 	of each named directory.
+
+SERVICES
+--------
+
+upload-pack::
+	This serves `git-fetch-pack` and `git-peek-remote`
+	clients.  It is enabled by default, but a repository can
+	disable it by setting `daemon.uploadpack` configuration
+	item to `false`.
 
 Author
 ------
