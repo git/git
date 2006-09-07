@@ -83,6 +83,9 @@ Technical (milder)
 Technical (trivial)
 -------------------
 
+* log-tree.c: pad sequence numbers with leading 0 if a series is
+  larger than 9, around ll.133?
+
 * git-cherry-pick should check if the original commit message is
   just a single liner, in which case it should add a LF before
   appending "cherry-picked from..." message.
