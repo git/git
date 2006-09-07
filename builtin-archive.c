@@ -16,6 +16,7 @@ static const char archive_usage[] = \
 
 struct archiver archivers[] = {
 	{ .name = "tar", .write_archive = write_tar_archive },
+	{ .name = "zip", .write_archive = write_zip_archive },
 };
 
 static int run_remote_archiver(struct archiver *ar, int argc,
