@@ -9,6 +9,7 @@ sed -e '
 /^our .projectroot = /s|".*"|"/opt/packrat/playpen/public/in-place/git"|
 /^our .stylesheet = /s|".*"|"/gitweb.css"|
 /^our .logo = /s|".*"|"/git-logo.png"|
+/^our .favicon = /s|".*"|"/git-favicon.png"|
 /^our .projects_list = /s|".*"|"/opt/packrat/playpen/public/in-place/git/index/index.aux"|
 ' gitweb.cgi >gitweb.cgi++
 
@@ -26,6 +27,14 @@ then
 	diff -u "$DEST/gitweb.css" gitweb.css || differs="s$differs"
 else
 	differs="s$differs"
+fi
+
+if test -f "$DEST/git-favicon.png"
+then
+	cmp "$DEST/git-favicon.png" git-favicon.png >/dev/null ||
+	differs="i$differs"
+else
+	differs="i$differs"
 fi
 
 case "$differs" in
@@ -62,5 +71,12 @@ case "$differs" in
 *s*)
 	rm -f "$DEST/gitweb.css"
 	cp gitweb.css "$DEST/gitweb.css"
+	;;
+esac
+
+case "$differs" in
+*i*)
+	rm -f "$DEST/git-favicon.png"
+	cp git-favicon.png "$DEST/git-favicon.png"
 	;;
 esac
