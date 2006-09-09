@@ -94,6 +94,7 @@ git-rev-list
 git-rev-parse
 git-revert
 git-rm
+git-runstatus
 git-send-email
 git-send-pack
 git-sh-setup
@@ -141,6 +142,7 @@ git-core.spec
 *.py[co]
 config.mak
 autom4te.cache
+config.cache
 config.log
 config.status
 config.mak.autogen

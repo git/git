@@ -60,26 +60,6 @@ report () {
 }
 
 run_status () {
-    (
-	# We always show status for the whole tree.
-	cd "$TOP"
-
-	IS_INITIAL="$initial_commit"
-	REFERENCE=HEAD
-	case "$amend" in
-	t)
-		# If we are amending the initial commit, there
-		# is no HEAD^1.
-		if git-rev-parse --verify "HEAD^1" >/dev/null 2>&1
-		then
-			REFERENCE="HEAD^1"
-			IS_INITIAL=
-		else
-			IS_INITIAL=t
-		fi
-		;;
-	esac
-
 	# If TMP_INDEX is defined, that means we are doing
 	# "--only" partial commit, and that index file is used
 	# to build the tree for the commit.  Otherwise, if
@@ -96,85 +76,13 @@ run_status () {
 	    export GIT_INDEX_FILE
 	fi
 
-	case "$branch" in
-	refs/heads/master) ;;
-	*)  echo "# On branch $branch" ;;
-	esac
-
-	if test -z "$IS_INITIAL"
-	then
-	    git-diff-index -M --cached --name-status \
-		--diff-filter=MDTCRA $REFERENCE |
-	    sed -e '
-		    s/\\/\\\\/g
-		    s/ /\\ /g
-	    ' |
-	    report "Updated but not checked in" "will commit"
-	    committable="$?"
-	else
-	    echo '#
-# Initial commit
-#'
-	    git-ls-files |
-	    sed -e '
-		    s/\\/\\\\/g
-		    s/ /\\ /g
-		    s/^/A /
-	    ' |
-	    report "Updated but not checked in" "will commit"
-
-	    committable="$?"
-	fi
-
-	git-diff-files  --name-status |
-	sed -e '
-		s/\\/\\\\/g
-		s/ /\\ /g
-	' |
-	report "Changed but not updated" \
-	    "use git-update-index to mark for commit"
-
-        option=""
-        if test -z "$untracked_files"; then
-            option="--directory --no-empty-directory"
-        fi
-	hdr_shown=
-	if test -f "$GIT_DIR/info/exclude"
-	then
-	    git-ls-files --others $option \
-		--exclude-from="$GIT_DIR/info/exclude" \
-		--exclude-per-directory=.gitignore
-	else
-	    git-ls-files --others $option \
-		--exclude-per-directory=.gitignore
-	fi |
-	while read line; do
-	    if [ -z "$hdr_shown" ]; then
-		echo '#'
-		echo '# Untracked files:'
-		echo '#   (use "git add" to add to commit)'
-		echo '#'
-		hdr_shown=1
-	    fi
-	    echo "#	$line"
-	done
-
-	if test -n "$verbose" -a -z "$IS_INITIAL"
-	then
-	    git-diff-index --cached -M -p --diff-filter=MDTCRA $REFERENCE
-	fi
-	case "$committable" in
-	0)
-		case "$amend" in
-		t)
-			echo "# No changes" ;;
-		*)
-			echo "nothing to commit" ;;
-		esac
-		exit 1 ;;
-	esac
-	exit 0
-    )
+  case "$status_only" in
+    t) color= ;;
+    *) color=--nocolor ;;
+  esac
+  git-runstatus ${color} \
+                ${verbose:+--verbose} \
+                ${amend:+--amend}
 }
 
 trap '
