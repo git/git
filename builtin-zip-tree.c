@@ -8,6 +8,7 @@
 #include "tree.h"
 #include "quote.h"
 #include "builtin.h"
+#include "archive.h"
 
 static const char zip_tree_usage[] =
 "git-zip-tree [-0|...|-9] <tree-ish> [ <base> ]";
@@ -350,4 +351,44 @@ int cmd_zip_tree(int argc, const char **argv, const char *prefix)
 	free(base);
 
 	return 0;
+}
+
+int write_zip_archive(struct archiver_args *args)
+{
+	int plen = strlen(args->base);
+
+	dos_time(&args->time, &zip_date, &zip_time);
+
+	zip_dir = xmalloc(ZIP_DIRECTORY_MIN_SIZE);
+	zip_dir_size = ZIP_DIRECTORY_MIN_SIZE;
+
+	if (args->base && plen > 0 && args->base[plen - 1] == '/') {
+		char *base = strdup(args->base);
+		int baselen = strlen(base);
+
+		while (baselen > 0 && base[baselen - 1] == '/')
+			base[--baselen] = '\0';
+		write_zip_entry(args->tree->object.sha1, "", 0, base, 040777, 0);
+		free(base);
+	}
+	read_tree_recursive(args->tree, args->base, plen, 0,
+			    args->pathspec, write_zip_entry);
+	write_zip_trailer(args->commit_sha1);
+
+	free(zip_dir);
+
+	return 0;
+}
+
+void *parse_extra_zip_args(int argc, const char **argv)
+{
+	for (; argc > 0; argc--, argv++) {
+		const char *arg = argv[0];
+
+		if (arg[0] == '-' && isdigit(arg[1]) && arg[2] == '\0')
+			zlib_compression_level = arg[1] - '0';
+		else
+			die("Unknown argument for zip format: %s", arg);
+	}
+	return NULL;
 }

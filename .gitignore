@@ -8,6 +8,7 @@ git-apply
 git-applymbox
 git-applypatch
 git-archimport
+git-archive
 git-bisect
 git-branch
 git-cat-file
@@ -119,6 +120,7 @@ git-unpack-objects
 git-update-index
 git-update-ref
 git-update-server-info
+git-upload-archive
 git-upload-pack
 git-upload-tar
 git-var

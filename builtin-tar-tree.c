@@ -9,6 +9,7 @@
 #include "tar.h"
 #include "builtin.h"
 #include "pkt-line.h"
+#include "archive.h"
 
 #define RECORDSIZE	(512)
 #define BLOCKSIZE	(RECORDSIZE * 20)
@@ -335,6 +336,72 @@ static int generate_tar(int argc, const char **argv, const char *prefix)
 	write_trailer();
 	free(buffer);
 	free(current_path.buf);
+	return 0;
+}
+
+static int write_tar_entry(const unsigned char *sha1,
+                           const char *base, int baselen,
+                           const char *filename, unsigned mode, int stage)
+{
+	static struct strbuf path;
+	int filenamelen = strlen(filename);
+	void *buffer;
+	char type[20];
+	unsigned long size;
+
+	if (!path.alloc) {
+		path.buf = xmalloc(PATH_MAX);
+		path.alloc = PATH_MAX;
+		path.len = path.eof = 0;
+	}
+	if (path.alloc < baselen + filenamelen) {
+		free(path.buf);
+		path.buf = xmalloc(baselen + filenamelen);
+		path.alloc = baselen + filenamelen;
+	}
+	memcpy(path.buf, base, baselen);
+	memcpy(path.buf + baselen, filename, filenamelen);
+	path.len = baselen + filenamelen;
+	if (S_ISDIR(mode)) {
+		strbuf_append_string(&path, "/");
+		buffer = NULL;
+		size = 0;
+	} else {
+		buffer = read_sha1_file(sha1, type, &size);
+		if (!buffer)
+			die("cannot read %s", sha1_to_hex(sha1));
+	}
+
+	write_entry(sha1, &path, mode, buffer, size);
+	free(buffer);
+
+	return READ_TREE_RECURSIVE;
+}
+
+int write_tar_archive(struct archiver_args *args)
+{
+	int plen = strlen(args->base);
+
+	git_config(git_tar_config);
+
+	archive_time = args->time;
+
+	if (args->commit_sha1)
+		write_global_extended_header(args->commit_sha1);
+
+	if (args->base && plen > 0 && args->base[plen - 1] == '/') {
+		char *base = strdup(args->base);
+		int baselen = strlen(base);
+
+		while (baselen > 0 && base[baselen - 1] == '/')
+			base[--baselen] = '\0';
+		write_tar_entry(args->tree->object.sha1, "", 0, base, 040777, 0);
+		free(base);
+	}
+	read_tree_recursive(args->tree, args->base, plen, 0,
+			    args->pathspec, write_tar_entry);
+	write_trailer();
+
 	return 0;
 }
 

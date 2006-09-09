@@ -325,7 +325,14 @@ static int upload_pack(void)
 	return -1;
 }
 
+static int upload_archive(void)
+{
+	execl_git_cmd("upload-archive", ".", NULL);
+	return -1;
+}
+
 static struct daemon_service daemon_service[] = {
+	{ "upload-archive", "uploadarch", upload_archive, 0, 1 },
 	{ "upload-pack", "uploadpack", upload_pack, 1, 1 },
 };
 
