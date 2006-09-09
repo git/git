@@ -42,5 +42,6 @@ extern void parse_pathspec_arg(const char **pathspec,
  */
 extern int write_tar_archive(struct archiver_args *);
 extern int write_zip_archive(struct archiver_args *);
+extern void *parse_extra_zip_args(int argc, const char **argv);
 
 #endif	/* ARCHIVE_H */

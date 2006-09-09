@@ -15,8 +15,15 @@ static const char archive_usage[] = \
 "git-archive --format=<fmt> [--prefix=<prefix>/] [<extra>] <tree-ish> [path...]";
 
 struct archiver archivers[] = {
-	{ .name = "tar", .write_archive = write_tar_archive },
-	{ .name = "zip", .write_archive = write_zip_archive },
+	{
+		.name		= "tar",
+		.write_archive	= write_tar_archive,
+	},
+	{
+		.name		= "zip",
+		.write_archive	= write_zip_archive,
+		.parse_extra	= parse_extra_zip_args,
+	},
 };
 
 static int run_remote_archiver(struct archiver *ar, int argc,
