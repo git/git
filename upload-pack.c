@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "refs.h"
 #include "pkt-line.h"
+#include "sideband.h"
 #include "tag.h"
 #include "object.h"
 #include "commit.h"
@@ -33,45 +34,19 @@ static int strip(char *line, int len)
 	return len;
 }
 
-#define PACKET_MAX 1000
 static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
 {
-	ssize_t ssz;
-	const char *p;
+	if (use_sideband)
+		return send_sideband(1, fd, data, sz, DEFAULT_PACKET_MAX);
 
-	if (!data) {
-		if (!use_sideband)
-			return 0;
-		packet_flush(1);
+	if (fd == 3)
+		/* emergency quit */
+		fd = 2;
+	if (fd == 2) {
+		xwrite(fd, data, sz);
+		return sz;
 	}
-
-	if (!use_sideband) {
-		if (fd == 3)
-			/* emergency quit */
-			fd = 2;
-		if (fd == 2) {
-			xwrite(fd, data, sz);
-			return sz;
-		}
-		return safe_write(fd, data, sz);
-	}
-	p = data;
-	ssz = sz;
-	while (sz) {
-		unsigned n;
-		char hdr[5];
-
-		n = sz;
-		if (PACKET_MAX - 5 < n)
-			n = PACKET_MAX - 5;
-		sprintf(hdr, "%04x", n + 5);
-		hdr[4] = fd;
-		safe_write(1, hdr, 5);
-		safe_write(1, p, n);
-		p += n;
-		sz -= n;
-	}
-	return ssz;
+	return safe_write(fd, data, sz);
 }
 
 static void create_pack_file(void)
@@ -308,7 +283,8 @@ static void create_pack_file(void)
 				goto fail;
 			fprintf(stderr, "flushed.\n");
 		}
-		send_client_data(1, NULL, 0);
+		if (use_sideband)
+			packet_flush(1);
 		return;
 	}
  fail:

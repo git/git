@@ -46,3 +46,29 @@ int recv_sideband(const char *me, int in_stream, int out, int err, char *buf, in
 	}
 	return 0;
 }
+
+/*
+ * fd is connected to the remote side; send the sideband data
+ * over multiplexed packet stream.
+ */
+ssize_t send_sideband(int fd, int band, const char *data, ssize_t sz, int packet_max)
+{
+	ssize_t ssz = sz;
+	const char *p = data;
+
+	while (sz) {
+		unsigned n;
+		char hdr[5];
+
+		n = sz;
+		if (packet_max - 5 < n)
+			n = packet_max - 5;
+		sprintf(hdr, "%04x", n + 5);
+		hdr[4] = band;
+		safe_write(fd, hdr, 5);
+		safe_write(fd, p, n);
+		p += n;
+		sz -= n;
+	}
+	return ssz;
+}
