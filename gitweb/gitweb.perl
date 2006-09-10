@@ -90,6 +90,11 @@ our %feature = (
 		'override' => 0,
 		#         => [content-encoding, suffix, program]
 		'default' => ['x-gzip', 'gz', 'gzip']},
+
+	'pickaxe' => {
+		'sub' => \&feature_pickaxe,
+		'override' => 0,
+		'default' => [1]},
 );
 
 sub gitweb_check_feature {
@@ -141,6 +146,24 @@ sub feature_snapshot {
 	}
 
 	return ($ctype, $suffix, $command);
+}
+
+# To enable system wide have in $GITWEB_CONFIG
+# $feature{'pickaxe'}{'default'} = [1];
+# To have project specific config enable override in $GITWEB_CONFIG
+# $feature{'pickaxe'}{'override'} = 1;
+# and in project config gitweb.pickaxe = 0|1;
+
+sub feature_pickaxe {
+	my ($val) = git_get_project_config('pickaxe', '--bool');
+
+	if ($val eq 'true') {
+		return (1);
+	} elsif ($val eq 'false') {
+		return (0);
+	}
+
+	return ($_[0]);
 }
 
 # rename detection options for git-diff and git-diff-tree
@@ -3128,8 +3151,7 @@ sub git_search {
 	if (!%co) {
 		die_error(undef, "Unknown commit object");
 	}
-	# pickaxe may take all resources of your box and run for several minutes
-	# with every query - so decide by yourself how public you make this feature :)
+
 	my $commit_search = 1;
 	my $author_search = 0;
 	my $committer_search = 0;
@@ -3141,6 +3163,13 @@ sub git_search {
 	} elsif ($searchtext =~ s/^pickaxe\\://i) {
 		$commit_search = 0;
 		$pickaxe_search = 1;
+
+		# pickaxe may take all resources of your box and run for several minutes
+		# with every query - so decide by yourself how public you make this feature
+		my ($have_pickaxe) = gitweb_check_feature('pickaxe');
+		if (!$have_pickaxe) {
+			die_error('403 Permission denied', "Permission denied");
+		}
 	}
 	git_header_html();
 	git_print_page_nav('','', $hash,$co{'tree'},$hash);
