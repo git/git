@@ -32,16 +32,30 @@ static int run_remote_archiver(const char *remote, int argc,
 	char *url, buf[1024];
 	int fd[2], i, len, rv;
 	pid_t pid;
+	const char *exec = "git-upload-archive";
+	int exec_at = 0;
 
-	sprintf(buf, "git-upload-archive");
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+		if (!strncmp("--exec=", arg, 7)) {
+			if (exec_at)
+				die("multiple --exec specified");
+			exec = arg + 7;
+			exec_at = i;
+			break;
+		}
+	}
 
 	url = xstrdup(remote);
-	pid = git_connect(fd, url, buf);
+	pid = git_connect(fd, url, exec);
 	if (pid < 0)
 		return pid;
 
-	for (i = 1; i < argc; i++)
+	for (i = 1; i < argc; i++) {
+		if (i == exec_at)
+			continue;
 		packet_write(fd[1], "argument %s\n", argv[i]);
+	}
 	packet_flush(fd[1]);
 
 	len = packet_read_line(fd[0], buf, sizeof(buf));
