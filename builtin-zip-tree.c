@@ -13,6 +13,7 @@
 static const char zip_tree_usage[] =
 "git-zip-tree [-0|...|-9] <tree-ish> [ <base> ]";
 
+static int verbose;
 static int zip_date;
 static int zip_time;
 
@@ -164,6 +165,8 @@ static int write_zip_entry(const unsigned char *sha1,
 	crc = crc32(0, Z_NULL, 0);
 
 	path = construct_path(base, baselen, filename, S_ISDIR(mode), &pathlen);
+	if (verbose)
+		fprintf(stderr, "%s\n", path);
 	if (pathlen > 0xffff) {
 		error("path too long (%d chars, SHA1: %s): %s", pathlen,
 		      sha1_to_hex(sha1), path);
@@ -361,6 +364,7 @@ int write_zip_archive(struct archiver_args *args)
 
 	zip_dir = xmalloc(ZIP_DIRECTORY_MIN_SIZE);
 	zip_dir_size = ZIP_DIRECTORY_MIN_SIZE;
+	verbose = args->verbose;
 
 	if (args->base && plen > 0 && args->base[plen - 1] == '/') {
 		char *base = xstrdup(args->base);

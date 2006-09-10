@@ -12,7 +12,7 @@
 #include "pkt-line.h"
 
 static const char archive_usage[] = \
-"git-archive --format=<fmt> [--prefix=<prefix>/] [<extra>] <tree-ish> [path...]";
+"git-archive --format=<fmt> [--prefix=<prefix>/] [--verbose] [<extra>] <tree-ish> [path...]";
 
 struct archiver archivers[] = {
 	{
@@ -148,6 +148,7 @@ int parse_archive_args(int argc, const char **argv, struct archiver *ar)
 	int extra_argc = 0;
 	const char *format = NULL; /* might want to default to "tar" */
 	const char *base = "";
+	int verbose = 0;
 	int i;
 
 	for (i = 1; i < argc; i++) {
@@ -157,6 +158,10 @@ int parse_archive_args(int argc, const char **argv, struct archiver *ar)
 			for (i = 0; i < ARRAY_SIZE(archivers); i++)
 				printf("%s\n", archivers[i].name);
 			exit(0);
+		}
+		if (!strcmp(arg, "--verbose") || !strcmp(arg, "-v")) {
+			verbose = 1;
+			continue;
 		}
 		if (!strncmp(arg, "--format=", 9)) {
 			format = arg + 9;
@@ -192,6 +197,7 @@ int parse_archive_args(int argc, const char **argv, struct archiver *ar)
 			die("%s", default_parse_extra(ar, extra_argv));
 		ar->args.extra = ar->parse_extra(extra_argc, extra_argv);
 	}
+	ar->args.verbose = verbose;
 	ar->args.base = base;
 
 	return i;

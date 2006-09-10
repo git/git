@@ -22,6 +22,7 @@ static unsigned long offset;
 
 static time_t archive_time;
 static int tar_umask;
+static int verbose;
 
 /* writes out the whole block, but only if it is full */
 static void write_if_needed(void)
@@ -169,6 +170,8 @@ static void write_entry(const unsigned char *sha1, struct strbuf *path,
 		mode = 0100666;
 		sprintf(header.name, "%s.paxheader", sha1_to_hex(sha1));
 	} else {
+		if (verbose)
+			fprintf(stderr, "%.*s\n", path->len, path->buf);
 		if (S_ISDIR(mode)) {
 			*header.typeflag = TYPEFLAG_DIR;
 			mode = (mode | 0777) & ~tar_umask;
@@ -385,6 +388,7 @@ int write_tar_archive(struct archiver_args *args)
 	git_config(git_tar_config);
 
 	archive_time = args->time;
+	verbose = args->verbose;
 
 	if (args->commit_sha1)
 		write_global_extended_header(args->commit_sha1);

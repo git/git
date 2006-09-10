@@ -10,6 +10,7 @@ struct archiver_args {
 	const unsigned char *commit_sha1;
 	time_t time;
 	const char **pathspec;
+	unsigned int verbose : 1;
 	void *extra;
 };
 
