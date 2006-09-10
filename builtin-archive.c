@@ -238,6 +238,8 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 	if (remote)
 		return run_remote_archiver(remote, argc, argv);
 
+	setlinebuf(stderr);
+
 	memset(&ar, 0, sizeof(ar));
 	tree_idx = parse_archive_args(argc, argv, &ar);
 	if (prefix == NULL)
