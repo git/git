@@ -233,7 +233,7 @@ XDIFF_LIB=xdiff/lib.a
 
 LIB_H = \
 	blob.h cache.h commit.h csum-file.h delta.h \
-	diff.h object.h pack.h pkt-line.h quote.h refs.h \
+	diff.h object.h pack.h pkt-line.h quote.h refs.h sideband.h \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
 	tree-walk.h log-tree.h dir.h path-list.h unpack-trees.h builtin.h
 
@@ -245,7 +245,7 @@ DIFF_OBJS = \
 LIB_OBJS = \
 	blob.o commit.o connect.o csum-file.o cache-tree.o base85.o \
 	date.o diff-delta.o entry.o exec_cmd.o ident.o lockfile.o \
-	object.o pack-check.o patch-delta.o path.o pkt-line.o \
+	object.o pack-check.o patch-delta.o path.o pkt-line.o sideband.o \
 	quote.o read-cache.o refs.o run-command.o dir.o object-refs.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
