@@ -20,6 +20,9 @@ static int use_thin_pack;
 static struct object_array have_obj;
 static struct object_array want_obj;
 static unsigned int timeout;
+/* 0 for no sideband,
+ * otherwise maximum packet size (up to 65520 bytes).
+ */
 static int use_sideband;
 
 static void reset_timeout(void)
@@ -37,8 +40,7 @@ static int strip(char *line, int len)
 static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
 {
 	if (use_sideband)
-		return send_sideband(1, fd, data, sz, DEFAULT_PACKET_MAX);
-
+		return send_sideband(1, fd, data, sz, use_sideband);
 	if (fd == 3)
 		/* emergency quit */
 		fd = 2;
@@ -389,8 +391,10 @@ static void receive_needs(void)
 			multi_ack = 1;
 		if (strstr(line+45, "thin-pack"))
 			use_thin_pack = 1;
-		if (strstr(line+45, "side-band"))
-			use_sideband = 1;
+		if (strstr(line+45, "side-band-64k"))
+			use_sideband = LARGE_PACKET_MAX;
+		else if (strstr(line+45, "side-band"))
+			use_sideband = DEFAULT_PACKET_MAX;
 
 		/* We have sent all our refs already, and the other end
 		 * should have chosen out of them; otherwise they are
@@ -412,7 +416,7 @@ static void receive_needs(void)
 
 static int send_ref(const char *refname, const unsigned char *sha1)
 {
-	static const char *capabilities = "multi_ack thin-pack side-band";
+	static const char *capabilities = "multi_ack thin-pack side-band side-band-64k";
 	struct object *o = parse_object(sha1);
 
 	if (!o)

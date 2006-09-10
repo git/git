@@ -115,7 +115,7 @@ static pid_t setup_sideband(int sideband, const char *me, int fd[2], int xd[2])
 		die("%s: unable to fork off sideband demultiplexer", me);
 	if (!side_pid) {
 		/* subprocess */
-		char buf[DEFAULT_PACKET_MAX];
+		char buf[LARGE_PACKET_MAX];
 
 		close(fd[0]);
 		if (xd[0] != xd[1])
