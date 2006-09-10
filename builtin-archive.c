@@ -10,6 +10,7 @@
 #include "tree-walk.h"
 #include "exec_cmd.h"
 #include "pkt-line.h"
+#include "sideband.h"
 
 static const char archive_usage[] = \
 "git-archive --format=<fmt> [--prefix=<prefix>/] [--verbose] [<extra>] <tree-ish> [path...]";
@@ -29,7 +30,7 @@ struct archiver archivers[] = {
 static int run_remote_archiver(const char *remote, int argc,
 			       const char **argv)
 {
-	char *url, buf[1024];
+	char *url, buf[LARGE_PACKET_MAX];
 	int fd[2], i, len, rv;
 	pid_t pid;
 	const char *exec = "git-upload-archive";
@@ -74,8 +75,7 @@ static int run_remote_archiver(const char *remote, int argc,
 		die("git-archive: expected a flush");
 
 	/* Now, start reading from fd[0] and spit it out to stdout */
-	rv = copy_fd(fd[0], 1);
-
+	rv = recv_sideband("archive", fd[0], 1, 2, buf, sizeof(buf));
 	close(fd[0]);
 	rv |= finish_connect(pid);
 
