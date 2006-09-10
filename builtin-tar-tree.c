@@ -390,7 +390,7 @@ int write_tar_archive(struct archiver_args *args)
 		write_global_extended_header(args->commit_sha1);
 
 	if (args->base && plen > 0 && args->base[plen - 1] == '/') {
-		char *base = strdup(args->base);
+		char *base = xstrdup(args->base);
 		int baselen = strlen(base);
 
 		while (baselen > 0 && base[baselen - 1] == '/')

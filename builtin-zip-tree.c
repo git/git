@@ -363,7 +363,7 @@ int write_zip_archive(struct archiver_args *args)
 	zip_dir_size = ZIP_DIRECTORY_MIN_SIZE;
 
 	if (args->base && plen > 0 && args->base[plen - 1] == '/') {
-		char *base = strdup(args->base);
+		char *base = xstrdup(args->base);
 		int baselen = strlen(base);
 
 		while (baselen > 0 && base[baselen - 1] == '/')
