@@ -387,47 +387,39 @@ proc getcommit {id} {
 }
 
 proc readrefs {} {
-    global tagids idtags headids idheads tagcontents
+    global tagids idtags headids idheads tagobjid
     global otherrefids idotherrefs mainhead mainheadid
 
     foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
 	catch {unset $v}
     }
-    set refd [open [list | git show-ref] r]
-    while {0 <= [set n [gets $refd line]]} {
-	if {![regexp {^([0-9a-f]{40}) refs/([^^]*)$} $line \
-	    match id path]} {
-	    continue
-	}
-	if {[regexp {^remotes/.*/HEAD$} $path match]} {
-	    continue
-	}
-	if {![regexp {^(tags|heads)/(.*)$} $path match type name]} {
-	    set type others
-	    set name $path
-	}
-	if {[regexp {^remotes/} $path match]} {
-	    set type heads
-	}
-	if {$type == "tags"} {
-	    set tagids($name) $id
-	    lappend idtags($id) $name
-	    set obj {}
-	    set type {}
-	    set tag {}
-	    catch {
-		set commit [exec git rev-parse "$id^0"]
-		if {$commit != $id} {
-		    set tagids($name) $commit
-		    lappend idtags($commit) $name
-		}
-	    }		
-	    catch {
-	        set tagcontents($name) [exec git cat-file tag $id]
+    set refd [open [list | git show-ref -d] r]
+    while {[gets $refd line] >= 0} {
+	if {[string index $line 40] ne " "} continue
+	set id [string range $line 0 39]
+	set ref [string range $line 41 end]
+	if {![string match "refs/*" $ref]} continue
+	set name [string range $ref 5 end]
+	if {[string match "remotes/*" $name]} {
+	    if {![string match "*/HEAD" $name]} {
+		set headids($name) $id
+		lappend idheads($id) $name
 	    }
-	} elseif { $type == "heads" } {
+	} elseif {[string match "heads/*" $name]} {
+	    set name [string range $name 6 end]
 	    set headids($name) $id
 	    lappend idheads($id) $name
+	} elseif {[string match "tags/*" $name]} {
+	    # this lets refs/tags/foo^{} overwrite refs/tags/foo,
+	    # which is what we want since the former is the commit ID
+	    set name [string range $name 5 end]
+	    if {[string match "*^{}" $name]} {
+		set name [string range $name 0 end-3]
+	    } else {
+		set tagobjid($name) $id
+	    }
+	    set tagids($name) $id
+	    lappend idtags($id) $name
 	} else {
 	    set otherrefids($name) $id
 	    lappend idotherrefs($id) $name
@@ -6777,7 +6769,7 @@ proc listrefs {id} {
 }
 
 proc showtag {tag isnew} {
-    global ctext tagcontents tagids linknum
+    global ctext tagcontents tagids linknum tagobjid
 
     if {$isnew} {
 	addtohistory [list showtag $tag 0]
@@ -6785,6 +6777,11 @@ proc showtag {tag isnew} {
     $ctext conf -state normal
     clear_ctext
     set linknum 0
+    if {![info exists tagcontents($tag)]} {
+	catch {
+	    set tagcontents($tag) [exec git cat-file tag $tagobjid($tag)]
+	}
+    }
     if {[info exists tagcontents($tag)]} {
 	set text $tagcontents($tag)
     } else {
