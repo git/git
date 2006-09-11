@@ -33,6 +33,12 @@ extern void sq_quote_print(FILE *stream, const char *src);
 extern size_t sq_quote_buf(char *dst, size_t n, const char *src);
 extern char *sq_quote_argv(const char** argv, int count);
 
+/*
+ * Append a string to a string buffer, with or without shell quoting.
+ * Return true if the buffer overflowed.
+ */
+extern int add_to_string(char **ptrp, int *sizep, const char *str, int quote);
+
 /* This unwraps what sq_quote() produces in place, but returns
  * NULL if the input does not look like what sq_quote would have
  * produced.
