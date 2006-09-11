@@ -3,6 +3,145 @@
 
 #include <errno.h>
 
+struct ref_list {
+	struct ref_list *next;
+	unsigned char sha1[20];
+	char name[FLEX_ARRAY];
+};
+
+static const char *parse_ref_line(char *line, unsigned char *sha1)
+{
+	/*
+	 * 42: the answer to everything.
+	 *
+	 * In this case, it happens to be the answer to
+	 *  40 (length of sha1 hex representation)
+	 *  +1 (space in between hex and name)
+	 *  +1 (newline at the end of the line)
+	 */
+	int len = strlen(line) - 42;
+
+	if (len <= 0)
+		return NULL;
+	if (get_sha1_hex(line, sha1) < 0)
+		return NULL;
+	if (!isspace(line[40]))
+		return NULL;
+	line += 41;
+	if (line[len] != '\n')
+		return NULL;
+	line[len] = 0;
+	return line;
+}
+
+static struct ref_list *add_ref(const char *name, const unsigned char *sha1, struct ref_list *list)
+{
+	int len;
+	struct ref_list **p = &list, *entry;
+
+	/* Find the place to insert the ref into.. */
+	while ((entry = *p) != NULL) {
+		int cmp = strcmp(entry->name, name);
+		if (cmp > 0)
+			break;
+
+		/* Same as existing entry? */
+		if (!cmp)
+			return list;
+		p = &entry->next;
+	}
+
+	/* Allocate it and add it in.. */
+	len = strlen(name) + 1;
+	entry = xmalloc(sizeof(struct ref_list) + len);
+	hashcpy(entry->sha1, sha1);
+	memcpy(entry->name, name, len);
+	entry->next = *p;
+	*p = entry;
+	return list;
+}
+
+static struct ref_list *get_packed_refs(void)
+{
+	static int did_refs = 0;
+	static struct ref_list *refs = NULL;
+
+	if (!did_refs) {
+		FILE *f = fopen(git_path("packed-refs"), "r");
+		if (f) {
+			struct ref_list *list = NULL;
+			char refline[PATH_MAX];
+			while (fgets(refline, sizeof(refline), f)) {
+				unsigned char sha1[20];
+				const char *name = parse_ref_line(refline, sha1);
+				if (!name)
+					continue;
+				list = add_ref(name, sha1, list);
+			}
+			fclose(f);
+			refs = list;
+		}
+		did_refs = 1;
+	}
+	return refs;
+}
+
+static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
+{
+	DIR *dir = opendir(git_path("%s", base));
+
+	if (dir) {
+		struct dirent *de;
+		int baselen = strlen(base);
+		char *path = xmalloc(baselen + 257);
+
+		memcpy(path, base, baselen);
+		if (baselen && base[baselen-1] != '/')
+			path[baselen++] = '/';
+
+		while ((de = readdir(dir)) != NULL) {
+			unsigned char sha1[20];
+			struct stat st;
+			int namelen;
+
+			if (de->d_name[0] == '.')
+				continue;
+			namelen = strlen(de->d_name);
+			if (namelen > 255)
+				continue;
+			if (has_extension(de->d_name, ".lock"))
+				continue;
+			memcpy(path + baselen, de->d_name, namelen+1);
+			if (stat(git_path("%s", path), &st) < 0)
+				continue;
+			if (S_ISDIR(st.st_mode)) {
+				list = get_ref_dir(path, list);
+				continue;
+			}
+			if (read_ref(git_path("%s", path), sha1) < 0) {
+				error("%s points nowhere!", path);
+				continue;
+			}
+			list = add_ref(path, sha1, list);
+		}
+		free(path);
+		closedir(dir);
+	}
+	return list;
+}
+
+static struct ref_list *get_loose_refs(void)
+{
+	static int did_refs = 0;
+	static struct ref_list *refs = NULL;
+
+	if (!did_refs) {
+		refs = get_ref_dir("refs", NULL);
+		did_refs = 1;
+	}
+	return refs;
+}
+
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define MAXDEPTH 5
 
@@ -121,60 +260,41 @@ int read_ref(const char *filename, unsigned char *sha1)
 
 static int do_for_each_ref(const char *base, int (*fn)(const char *path, const unsigned char *sha1), int trim)
 {
-	int retval = 0;
-	DIR *dir = opendir(git_path("%s", base));
+	int retval;
+	struct ref_list *packed = get_packed_refs();
+	struct ref_list *loose = get_loose_refs();
 
-	if (dir) {
-		struct dirent *de;
-		int baselen = strlen(base);
-		char *path = xmalloc(baselen + 257);
-
-		if (!strncmp(base, "./", 2)) {
-			base += 2;
-			baselen -= 2;
+	while (packed && loose) {
+		struct ref_list *entry;
+		int cmp = strcmp(packed->name, loose->name);
+		if (!cmp) {
+			packed = packed->next;
+			continue;
 		}
-		memcpy(path, base, baselen);
-		if (baselen && base[baselen-1] != '/')
-			path[baselen++] = '/';
-
-		while ((de = readdir(dir)) != NULL) {
-			unsigned char sha1[20];
-			struct stat st;
-			int namelen;
-
-			if (de->d_name[0] == '.')
-				continue;
-			namelen = strlen(de->d_name);
-			if (namelen > 255)
-				continue;
-			if (has_extension(de->d_name, ".lock"))
-				continue;
-			memcpy(path + baselen, de->d_name, namelen+1);
-			if (stat(git_path("%s", path), &st) < 0)
-				continue;
-			if (S_ISDIR(st.st_mode)) {
-				retval = do_for_each_ref(path, fn, trim);
-				if (retval)
-					break;
-				continue;
-			}
-			if (read_ref(git_path("%s", path), sha1) < 0) {
-				error("%s points nowhere!", path);
-				continue;
-			}
-			if (!has_sha1_file(sha1)) {
-				error("%s does not point to a valid "
-				      "commit object!", path);
-				continue;
-			}
-			retval = fn(path + trim, sha1);
-			if (retval)
-				break;
+		if (cmp > 0) {
+			entry = loose;
+			loose = loose->next;
+		} else {
+			entry = packed;
+			packed = packed->next;
 		}
-		free(path);
-		closedir(dir);
+		if (strncmp(base, entry->name, trim))
+			continue;
+		retval = fn(entry->name + trim, entry->sha1);
+		if (retval)
+			return retval;
 	}
-	return retval;
+
+	packed = packed ? packed : loose;
+	while (packed) {
+		if (!strncmp(base, packed->name, trim)) {
+			retval = fn(packed->name + trim, packed->sha1);
+			if (retval)
+				return retval;
+		}
+		packed = packed->next;
+	}
+	return 0;
 }
 
 int head_ref(int (*fn)(const char *path, const unsigned char *sha1))
@@ -187,22 +307,22 @@ int head_ref(int (*fn)(const char *path, const unsigned char *sha1))
 
 int for_each_ref(int (*fn)(const char *path, const unsigned char *sha1))
 {
-	return do_for_each_ref("refs", fn, 0);
+	return do_for_each_ref("refs/", fn, 0);
 }
 
 int for_each_tag_ref(int (*fn)(const char *path, const unsigned char *sha1))
 {
-	return do_for_each_ref("refs/tags", fn, 10);
+	return do_for_each_ref("refs/tags/", fn, 10);
 }
 
 int for_each_branch_ref(int (*fn)(const char *path, const unsigned char *sha1))
 {
-	return do_for_each_ref("refs/heads", fn, 11);
+	return do_for_each_ref("refs/heads/", fn, 11);
 }
 
 int for_each_remote_ref(int (*fn)(const char *path, const unsigned char *sha1))
 {
-	return do_for_each_ref("refs/remotes", fn, 13);
+	return do_for_each_ref("refs/remotes/", fn, 13);
 }
 
 int get_ref_sha1(const char *ref, unsigned char *sha1)
