@@ -10,6 +10,7 @@ struct archiver_args {
 	const unsigned char *commit_sha1;
 	time_t time;
 	const char **pathspec;
+	unsigned int verbose : 1;
 	void *extra;
 };
 
@@ -19,7 +20,6 @@ typedef void *(*parse_extra_args_fn_t)(int argc, const char **argv);
 
 struct archiver {
 	const char *name;
-	const char *remote;
 	struct archiver_args args;
 	write_archive_fn_t write_archive;
 	parse_extra_args_fn_t parse_extra;

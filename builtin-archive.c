@@ -10,9 +10,10 @@
 #include "tree-walk.h"
 #include "exec_cmd.h"
 #include "pkt-line.h"
+#include "sideband.h"
 
 static const char archive_usage[] = \
-"git-archive --format=<fmt> [--prefix=<prefix>/] [<extra>] <tree-ish> [path...]";
+"git-archive --format=<fmt> [--prefix=<prefix>/] [--verbose] [<extra>] <tree-ish> [path...]";
 
 struct archiver archivers[] = {
 	{
@@ -26,22 +27,33 @@ struct archiver archivers[] = {
 	},
 };
 
-static int run_remote_archiver(struct archiver *ar, int argc,
+static int run_remote_archiver(const char *remote, int argc,
 			       const char **argv)
 {
-	char *url, buf[1024];
+	char *url, buf[LARGE_PACKET_MAX];
 	int fd[2], i, len, rv;
 	pid_t pid;
+	const char *exec = "git-upload-archive";
+	int exec_at = 0;
 
-	sprintf(buf, "git-upload-archive");
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+		if (!strncmp("--exec=", arg, 7)) {
+			if (exec_at)
+				die("multiple --exec specified");
+			exec = arg + 7;
+			exec_at = i;
+			break;
+		}
+	}
 
-	url = xstrdup(ar->remote);
-	pid = git_connect(fd, url, buf);
+	url = xstrdup(remote);
+	pid = git_connect(fd, url, exec);
 	if (pid < 0)
 		return pid;
 
 	for (i = 1; i < argc; i++) {
-		if (!strncmp(argv[i], "--remote=", 9))
+		if (i == exec_at)
 			continue;
 		packet_write(fd[1], "argument %s\n", argv[i]);
 	}
@@ -63,8 +75,7 @@ static int run_remote_archiver(struct archiver *ar, int argc,
 		die("git-archive: expected a flush");
 
 	/* Now, start reading from fd[0] and spit it out to stdout */
-	rv = copy_fd(fd[0], 1);
-
+	rv = recv_sideband("archive", fd[0], 1, 2, buf, sizeof(buf));
 	close(fd[0]);
 	rv |= finish_connect(pid);
 
@@ -150,16 +161,20 @@ int parse_archive_args(int argc, const char **argv, struct archiver *ar)
 	const char *extra_argv[MAX_EXTRA_ARGS];
 	int extra_argc = 0;
 	const char *format = NULL; /* might want to default to "tar" */
-	const char *remote = NULL;
 	const char *base = "";
-	int list = 0;
+	int verbose = 0;
 	int i;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
 		if (!strcmp(arg, "--list") || !strcmp(arg, "-l")) {
-			list = 1;
+			for (i = 0; i < ARRAY_SIZE(archivers); i++)
+				printf("%s\n", archivers[i].name);
+			exit(0);
+		}
+		if (!strcmp(arg, "--verbose") || !strcmp(arg, "-v")) {
+			verbose = 1;
 			continue;
 		}
 		if (!strncmp(arg, "--format=", 9)) {
@@ -168,10 +183,6 @@ int parse_archive_args(int argc, const char **argv, struct archiver *ar)
 		}
 		if (!strncmp(arg, "--prefix=", 9)) {
 			base = arg + 9;
-			continue;
-		}
-		if (!strncmp(arg, "--remote=", 9)) {
-			remote = arg + 9;
 			continue;
 		}
 		if (!strcmp(arg, "--")) {
@@ -187,44 +198,70 @@ int parse_archive_args(int argc, const char **argv, struct archiver *ar)
 		break;
 	}
 
-	if (list) {
-		if (!remote) {
-			for (i = 0; i < ARRAY_SIZE(archivers); i++)
-				printf("%s\n", archivers[i].name);
-			exit(0);
-		}
-		die("--list and --remote are mutually exclusive");
-	}
-
-	if (argc - i < 1)
+	/* We need at least one parameter -- tree-ish */
+	if (argc - 1 < i)
 		usage(archive_usage);
 	if (!format)
 		die("You must specify an archive format");
 	if (init_archiver(format, ar) < 0)
 		die("Unknown archive format '%s'", format);
 
-	if (extra_argc && !remote) {
-		if (!ar->parse_extra) {
+	if (extra_argc) {
+		if (!ar->parse_extra)
 			die("%s", default_parse_extra(ar, extra_argv));
-		}
 		ar->args.extra = ar->parse_extra(extra_argc, extra_argv);
 	}
-	ar->remote = remote;
+	ar->args.verbose = verbose;
 	ar->args.base = base;
 
 	return i;
+}
+
+static const char *remote_request(int *ac, const char **av)
+{
+	int ix, iy, cnt = *ac;
+	int no_more_options = 0;
+	const char *remote = NULL;
+
+	for (ix = iy = 1; ix < cnt; ix++) {
+		const char *arg = av[ix];
+		if (!strcmp(arg, "--"))
+			no_more_options = 1;
+		if (!no_more_options) {
+			if (!strncmp(arg, "--remote=", 9)) {
+				if (remote)
+					die("Multiple --remote specified");
+				remote = arg + 9;
+				continue;
+			}
+			if (arg[0] != '-')
+				no_more_options = 1;
+		}
+		if (ix != iy)
+			av[iy] = arg;
+		iy++;
+	}
+	if (remote) {
+		av[--cnt] = NULL;
+		*ac = cnt;
+	}
+	return remote;
 }
 
 int cmd_archive(int argc, const char **argv, const char *prefix)
 {
 	struct archiver ar;
 	int tree_idx;
+	const char *remote = NULL;
 
+	remote = remote_request(&argc, argv);
+	if (remote)
+		return run_remote_archiver(remote, argc, argv);
+
+	setlinebuf(stderr);
+
+	memset(&ar, 0, sizeof(ar));
 	tree_idx = parse_archive_args(argc, argv, &ar);
-
-	if (ar.remote)
-		return run_remote_archiver(&ar, argc, argv);
-
 	if (prefix == NULL)
 		prefix = setup_git_directory();
 
