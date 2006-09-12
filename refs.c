@@ -280,6 +280,12 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 		}
 		if (strncmp(base, entry->name, trim))
 			continue;
+		if (is_null_sha1(entry->sha1))
+			continue;
+		if (!has_sha1_file(entry->sha1)) {
+			error("%s does not point to a valid object!", entry->name);
+			continue;
+		}
 		retval = fn(entry->name + trim, entry->sha1);
 		if (retval)
 			return retval;
