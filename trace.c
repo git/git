@@ -55,7 +55,7 @@ static int get_trace_fd(int *need_close)
 {
 	char *trace = getenv("GIT_TRACE");
 
-	if (!trace || !strcmp(trace, "0") || !strcasecmp(trace," false"))
+	if (!trace || !strcmp(trace, "0") || !strcasecmp(trace, "false"))
 		return 0;
 	if (!strcmp(trace, "1") || !strcasecmp(trace, "true"))
 		return STDERR_FILENO;
