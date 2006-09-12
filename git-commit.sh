@@ -82,7 +82,8 @@ run_status () {
   esac
   git-runstatus ${color} \
                 ${verbose:+--verbose} \
-                ${amend:+--amend}
+                ${amend:+--amend} \
+		${untracked_files:+--untracked}
 }
 
 trap '

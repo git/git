@@ -15,6 +15,7 @@ struct wt_status {
 	int commitable;
 	int verbose;
 	int amend;
+	int untracked;
 };
 
 int git_status_config(const char *var, const char *value);
