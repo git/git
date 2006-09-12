@@ -249,7 +249,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 	FILE *in = stdin;
 	const char *sep = "";
 	unsigned char head_sha1[20];
-	const char *head, *current_branch;
+	const char *current_branch;
 
 	git_config(fmt_merge_msg_config);
 
@@ -277,10 +277,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 		usage(fmt_merge_msg_usage);
 
 	/* get current branch */
-	head = xstrdup(git_path("HEAD"));
-	current_branch = resolve_ref(head, head_sha1, 1);
-	current_branch += strlen(head) - 4;
-	free((char *)head);
+	current_branch = resolve_ref("HEAD", head_sha1, 1);
 	if (!strncmp(current_branch, "refs/heads/", 11))
 		current_branch += 11;
 

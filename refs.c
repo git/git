@@ -93,11 +93,11 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 	if (dir) {
 		struct dirent *de;
 		int baselen = strlen(base);
-		char *path = xmalloc(baselen + 257);
+		char *ref = xmalloc(baselen + 257);
 
-		memcpy(path, base, baselen);
+		memcpy(ref, base, baselen);
 		if (baselen && base[baselen-1] != '/')
-			path[baselen++] = '/';
+			ref[baselen++] = '/';
 
 		while ((de = readdir(dir)) != NULL) {
 			unsigned char sha1[20];
@@ -111,20 +111,20 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 				continue;
 			if (has_extension(de->d_name, ".lock"))
 				continue;
-			memcpy(path + baselen, de->d_name, namelen+1);
-			if (stat(git_path("%s", path), &st) < 0)
+			memcpy(ref + baselen, de->d_name, namelen+1);
+			if (stat(git_path("%s", ref), &st) < 0)
 				continue;
 			if (S_ISDIR(st.st_mode)) {
-				list = get_ref_dir(path, list);
+				list = get_ref_dir(ref, list);
 				continue;
 			}
-			if (read_ref(git_path("%s", path), sha1) < 0) {
-				error("%s points nowhere!", path);
+			if (read_ref(ref, sha1) < 0) {
+				error("%s points nowhere!", ref);
 				continue;
 			}
-			list = add_ref(path, sha1, list);
+			list = add_ref(ref, sha1, list);
 		}
-		free(path);
+		free(ref);
 		closedir(dir);
 	}
 	return list;
@@ -145,12 +145,14 @@ static struct ref_list *get_loose_refs(void)
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define MAXDEPTH 5
 
-const char *resolve_ref(const char *path, unsigned char *sha1, int reading)
+const char *resolve_ref(const char *ref, unsigned char *sha1, int reading)
 {
 	int depth = MAXDEPTH, len;
 	char buffer[256];
+	static char ref_buffer[256];
 
 	for (;;) {
+		const char *path = git_path("%s", ref);
 		struct stat st;
 		char *buf;
 		int fd;
@@ -169,14 +171,16 @@ const char *resolve_ref(const char *path, unsigned char *sha1, int reading)
 			if (reading || errno != ENOENT)
 				return NULL;
 			hashclr(sha1);
-			return path;
+			return ref;
 		}
 
 		/* Follow "normalized" - ie "refs/.." symlinks by hand */
 		if (S_ISLNK(st.st_mode)) {
 			len = readlink(path, buffer, sizeof(buffer)-1);
 			if (len >= 5 && !memcmp("refs/", buffer, 5)) {
-				path = git_path("%.*s", len, buffer);
+				buffer[len] = 0;
+				strcpy(ref_buffer, buffer);
+				ref = ref_buffer;
 				continue;
 			}
 		}
@@ -201,19 +205,22 @@ const char *resolve_ref(const char *path, unsigned char *sha1, int reading)
 		while (len && isspace(*buf))
 			buf++, len--;
 		while (len && isspace(buf[len-1]))
-			buf[--len] = 0;
-		path = git_path("%.*s", len, buf);
+			len--;
+		buf[len] = 0;
+		memcpy(ref_buffer, buf, len + 1);
+		ref = ref_buffer;
 	}
 	if (len < 40 || get_sha1_hex(buffer, sha1))
 		return NULL;
-	return path;
+	return ref;
 }
 
-int create_symref(const char *git_HEAD, const char *refs_heads_master)
+int create_symref(const char *ref_target, const char *refs_heads_master)
 {
 	const char *lockpath;
 	char ref[1000];
 	int fd, len, written;
+	const char *git_HEAD = git_path("%s", ref_target);
 
 #ifndef NO_SYMLINK_HEAD
 	if (prefer_symlink_refs) {
@@ -251,9 +258,9 @@ int create_symref(const char *git_HEAD, const char *refs_heads_master)
 	return 0;
 }
 
-int read_ref(const char *filename, unsigned char *sha1)
+int read_ref(const char *ref, unsigned char *sha1)
 {
-	if (resolve_ref(filename, sha1, 1))
+	if (resolve_ref(ref, sha1, 1))
 		return 0;
 	return -1;
 }
@@ -306,7 +313,7 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 int head_ref(int (*fn)(const char *path, const unsigned char *sha1))
 {
 	unsigned char sha1[20];
-	if (!read_ref(git_path("HEAD"), sha1))
+	if (!read_ref("HEAD", sha1))
 		return fn("HEAD", sha1);
 	return 0;
 }
@@ -335,7 +342,7 @@ int get_ref_sha1(const char *ref, unsigned char *sha1)
 {
 	if (check_ref_format(ref))
 		return -1;
-	return read_ref(git_path("refs/%s", ref), sha1);
+	return read_ref(mkpath("refs/%s", ref), sha1);
 }
 
 /*
@@ -416,31 +423,30 @@ static struct ref_lock *verify_lock(struct ref_lock *lock,
 	return lock;
 }
 
-static struct ref_lock *lock_ref_sha1_basic(const char *path,
+static struct ref_lock *lock_ref_sha1_basic(const char *ref,
 	int plen,
 	const unsigned char *old_sha1, int mustexist)
 {
-	const char *orig_path = path;
+	const char *orig_ref = ref;
 	struct ref_lock *lock;
 	struct stat st;
 
 	lock = xcalloc(1, sizeof(struct ref_lock));
 	lock->lock_fd = -1;
 
-	plen = strlen(path) - plen;
-	path = resolve_ref(path, lock->old_sha1, mustexist);
-	if (!path) {
+	ref = resolve_ref(ref, lock->old_sha1, mustexist);
+	if (!ref) {
 		int last_errno = errno;
 		error("unable to resolve reference %s: %s",
-			orig_path, strerror(errno));
+			orig_ref, strerror(errno));
 		unlock_ref(lock);
 		errno = last_errno;
 		return NULL;
 	}
 	lock->lk = xcalloc(1, sizeof(struct lock_file));
 
-	lock->ref_file = xstrdup(path);
-	lock->log_file = xstrdup(git_path("logs/%s", lock->ref_file + plen));
+	lock->ref_file = xstrdup(git_path("%s", ref));
+	lock->log_file = xstrdup(git_path("logs/%s", ref));
 	lock->force_write = lstat(lock->ref_file, &st) && errno == ENOENT;
 
 	if (safe_create_leading_directories(lock->ref_file))
@@ -455,15 +461,14 @@ struct ref_lock *lock_ref_sha1(const char *ref,
 {
 	if (check_ref_format(ref))
 		return NULL;
-	return lock_ref_sha1_basic(git_path("refs/%s", ref),
+	return lock_ref_sha1_basic(mkpath("refs/%s", ref),
 		5 + strlen(ref), old_sha1, mustexist);
 }
 
 struct ref_lock *lock_any_ref_for_update(const char *ref,
 	const unsigned char *old_sha1, int mustexist)
 {
-	return lock_ref_sha1_basic(git_path("%s", ref),
-		strlen(ref), old_sha1, mustexist);
+	return lock_ref_sha1_basic(ref, strlen(ref), old_sha1, mustexist);
 }
 
 void unlock_ref(struct ref_lock *lock)
