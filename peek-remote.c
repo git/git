@@ -66,6 +66,6 @@ int main(int argc, char **argv)
 	ret = peek_remote(fd, flags);
 	close(fd[0]);
 	close(fd[1]);
-	finish_connect(pid);
-	return ret;
+	ret |= finish_connect(pid);
+	return !!ret;
 }

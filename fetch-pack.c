@@ -519,7 +519,7 @@ int main(int argc, char **argv)
 	ret = fetch_pack(fd, nr_heads, heads);
 	close(fd[0]);
 	close(fd[1]);
-	finish_connect(pid);
+	ret |= finish_connect(pid);
 
 	if (!ret && nr_heads) {
 		/* If the heads to pull were given, we should have
@@ -534,5 +534,5 @@ int main(int argc, char **argv)
 			}
 	}
 
-	return ret;
+	return !!ret;
 }
