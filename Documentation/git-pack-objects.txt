@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git-pack-objects' [-q] [--no-reuse-delta] [--non-empty]
 	[--local] [--incremental] [--window=N] [--depth=N]
-	{--stdout | base-name} < object-list
+	[--revs [--unpacked | --all]*] [--stdout | base-name] < object-list
 
 
 DESCRIPTION
@@ -55,6 +55,24 @@ base-name::
 --stdout::
 	Write the pack contents (what would have been written to
 	.pack file) out to the standard output.
+
+--revs::
+	Read the revision arguments from the standard input, instead of
+	individual object names.  The revision arguments are processed
+	the same way as gitlink:git-rev-list[1] with `--objects` flag
+	uses its `commit` arguments to build the list of objects it
+	outputs.  The objects on the resulting list are packed.
+
+--unpacked::
+	This implies `--revs`.  When processing the list of
+	revision arguments read from the standard input, limit
+	the objects packed to those that are not already packed.
+
+--all::
+	This implies `--revs`.  In addition to the list of
+	revision arguments read from the standard input, pretend
+	as if all refs under `$GIT_DIR/refs` are specifed to be
+	included.
 
 --window and --depth::
 	These two options affects how the objects contained in
@@ -103,6 +121,7 @@ Documentation by Junio C Hamano
 
 See Also
 --------
+gitlink:git-rev-list[1]
 gitlink:git-repack[1]
 gitlink:git-prune-packed[1]
 

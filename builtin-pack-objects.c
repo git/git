@@ -15,7 +15,7 @@
 #include <sys/time.h>
 #include <signal.h>
 
-static const char pack_usage[] = "git-pack-objects [-q] [--no-reuse-delta] [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] {--stdout | base-name} [--revs [--unpacked | --all]* <ref-list | <object-list]";
+static const char pack_usage[] = "git-pack-objects [-q] [--no-reuse-delta] [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] [--revs [--unpacked | --all]*] [--stdout | base-name] <ref-list | <object-list]";
 
 struct object_entry {
 	unsigned char sha1[20];
