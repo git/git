@@ -16,6 +16,9 @@ static const char upload_archive_usage[] =
 static const char deadchild[] =
 "git-upload-archive: archiver died with error";
 
+static const char lostchild[] =
+"git-upload-archive: archiver process was lost";
+
 
 static int run_upload_archive(int argc, const char **argv, const char *prefix)
 {
@@ -73,6 +76,31 @@ static int run_upload_archive(int argc, const char **argv, const char *prefix)
 	return ar.write_archive(&ar.args);
 }
 
+static void error_clnt(const char *fmt, ...)
+{
+	char buf[1024];
+	va_list params;
+	int len;
+
+	va_start(params, fmt);
+	len = vsprintf(buf, fmt, params);
+	va_end(params);
+	send_sideband(1, 3, buf, len, LARGE_PACKET_MAX);
+	die("sent error to the client: %s", buf);
+}
+
+static void process_input(int child_fd, int band)
+{
+	char buf[16384];
+	ssize_t sz = read(child_fd, buf, sizeof(buf));
+	if (sz < 0) {
+		if (errno != EINTR)
+			error_clnt("read error: %s\n", strerror(errno));
+		return;
+	}
+	send_sideband(1, band, buf, sz, LARGE_PACKET_MAX);
+}
+
 int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 {
 	pid_t writer;
@@ -112,9 +140,6 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 
 	while (1) {
 		struct pollfd pfd[2];
-		char buf[16384];
-		ssize_t sz;
-		pid_t pid;
 		int status;
 
 		pfd[0].fd = fd1[0];
@@ -129,28 +154,19 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 			}
 			continue;
 		}
-		if (pfd[0].revents & (POLLIN|POLLHUP)) {
+		if (pfd[0].revents & POLLIN)
 			/* Data stream ready */
-			sz = read(pfd[0].fd, buf, sizeof(buf));
-			send_sideband(1, 1, buf, sz, LARGE_PACKET_MAX);
-		}
-		if (pfd[1].revents & (POLLIN|POLLHUP)) {
+			process_input(pfd[0].fd, 1);
+		if (pfd[1].revents & POLLIN)
 			/* Status stream ready */
-			sz = read(pfd[1].fd, buf, sizeof(buf));
-			send_sideband(1, 2, buf, sz, LARGE_PACKET_MAX);
-		}
+			process_input(pfd[1].fd, 2);
+		if ((pfd[0].revents | pfd[1].revents) == POLLIN)
+			continue;
 
-		if (((pfd[0].revents | pfd[1].revents) & POLLHUP) == 0)
-			continue;
-		/* did it die? */
-		pid = waitpid(writer, &status, WNOHANG);
-		if (!pid) {
-			fprintf(stderr, "Hmph, HUP?\n");
-			continue;
-		}
-		if (!WIFEXITED(status) || WEXITSTATUS(status) > 0)
-			send_sideband(1, 3, deadchild, strlen(deadchild),
-				      LARGE_PACKET_MAX);
+		if (waitpid(writer, &status, 0) < 0)
+			error_clnt("%s", lostchild);
+		else if (!WIFEXITED(status) || WEXITSTATUS(status) > 0)
+			error_clnt("%s", deadchild);
 		packet_flush(1);
 		break;
 	}

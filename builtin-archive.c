@@ -217,7 +217,7 @@ int parse_archive_args(int argc, const char **argv, struct archiver *ar)
 	return i;
 }
 
-static const char *remote_request(int *ac, const char **av)
+static const char *extract_remote_arg(int *ac, const char **av)
 {
 	int ix, iy, cnt = *ac;
 	int no_more_options = 0;
@@ -254,7 +254,7 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 	int tree_idx;
 	const char *remote = NULL;
 
-	remote = remote_request(&argc, argv);
+	remote = extract_remote_arg(&argc, argv);
 	if (remote)
 		return run_remote_archiver(remote, argc, argv);
 
