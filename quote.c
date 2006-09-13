@@ -106,6 +106,35 @@ char *sq_quote_argv(const char** argv, int count)
 	return buf;
 }
 
+/*
+ * Append a string to a string buffer, with or without shell quoting.
+ * Return true if the buffer overflowed.
+ */
+int add_to_string(char **ptrp, int *sizep, const char *str, int quote)
+{
+	char *p = *ptrp;
+	int size = *sizep;
+	int oc;
+	int err = 0;
+
+	if (quote)
+		oc = sq_quote_buf(p, size, str);
+	else {
+		oc = strlen(str);
+		memcpy(p, str, (size <= oc) ? size - 1 : oc);
+	}
+
+	if (size <= oc) {
+		err = 1;
+		oc = size - 1;
+	}
+
+	*ptrp += oc;
+	**ptrp = '\0';
+	*sizep -= oc;
+	return err;
+}
+
 char *sq_dequote(char *arg)
 {
 	char *dst = arg;

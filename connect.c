@@ -599,12 +599,19 @@ static void git_proxy_connect(int fd[2], char *host)
 	close(pipefd[1][0]);
 }
 
+#define MAX_CMD_LEN 1024
+
 /*
- * Yeah, yeah, fixme. Need to pass in the heads etc.
+ * This returns 0 if the transport protocol does not need fork(2),
+ * or a process id if it does.  Once done, finish the connection
+ * with finish_connect() with the value returned from this function
+ * (it is safe to call finish_connect() with 0 to support the former
+ * case).
+ *
+ * Does not return a negative value on error; it just dies.
  */
-int git_connect(int fd[2], char *url, const char *prog)
+pid_t git_connect(int fd[2], char *url, const char *prog)
 {
-	char command[1024];
 	char *host, *path = url;
 	char *end;
 	int c;
@@ -697,8 +704,18 @@ int git_connect(int fd[2], char *url, const char *prog)
 	if (pid < 0)
 		die("unable to fork");
 	if (!pid) {
-		snprintf(command, sizeof(command), "%s %s", prog,
-			 sq_quote(path));
+		char command[MAX_CMD_LEN];
+		char *posn = command;
+		int size = MAX_CMD_LEN;
+		int of = 0;
+
+		of |= add_to_string(&posn, &size, prog, 0);
+		of |= add_to_string(&posn, &size, " ", 0);
+		of |= add_to_string(&posn, &size, path, 1);
+
+		if (of)
+			die("command line too long");
+
 		dup2(pipefd[1][0], 0);
 		dup2(pipefd[0][1], 1);
 		close(pipefd[0][0]);
@@ -737,6 +754,9 @@ int git_connect(int fd[2], char *url, const char *prog)
 
 int finish_connect(pid_t pid)
 {
+	if (pid == 0)
+		return 0;
+
 	while (waitpid(pid, NULL, 0) < 0) {
 		if (errno != EINTR)
 			return -1;

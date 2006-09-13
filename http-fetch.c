@@ -559,9 +559,36 @@ static void process_alternates_response(void *callback_data)
 			char *target = NULL;
 			char *path;
 			if (data[i] == '/') {
-				serverlen = strchr(base + 8, '/') - base;
-				okay = 1;
+				/* This counts
+				 * http://git.host/pub/scm/linux.git/
+				 * -----------here^
+				 * so memcpy(dst, base, serverlen) will
+				 * copy up to "...git.host".
+				 */
+				const char *colon_ss = strstr(base,"://");
+				if (colon_ss) {
+					serverlen = (strchr(colon_ss + 3, '/')
+						     - base);
+					okay = 1;
+				}
 			} else if (!memcmp(data + i, "../", 3)) {
+				/* Relative URL; chop the corresponding
+				 * number of subpath from base (and ../
+				 * from data), and concatenate the result.
+				 *
+				 * The code first drops ../ from data, and
+				 * then drops one ../ from data and one path
+				 * from base.  IOW, one extra ../ is dropped
+				 * from data than path is dropped from base.
+				 *
+				 * This is not wrong.  The alternate in
+				 *     http://git.host/pub/scm/linux.git/
+				 * to borrow from
+				 *     http://git.host/pub/scm/linus.git/
+				 * is ../../linus.git/objects/.  You need
+				 * two ../../ to borrow from your direct
+				 * neighbour.
+				 */
 				i += 3;
 				serverlen = strlen(base);
 				while (i + 2 < posn &&
@@ -583,11 +610,13 @@ static void process_alternates_response(void *callback_data)
 					okay = 1;
 				}
 			}
-			/* skip 'objects' at end */
+			/* skip "objects\n" at end */
 			if (okay) {
 				target = xmalloc(serverlen + posn - i - 6);
-				strlcpy(target, base, serverlen);
-				strlcpy(target + serverlen, data + i, posn - i - 6);
+				memcpy(target, base, serverlen);
+				memcpy(target + serverlen, data + i,
+				       posn - i - 7);
+				target[serverlen + posn - i - 7] = 0;
 				if (get_verbosely)
 					fprintf(stderr,
 						"Also look at %s\n", target);

@@ -90,6 +90,11 @@ our %feature = (
 		'override' => 0,
 		#         => [content-encoding, suffix, program]
 		'default' => ['x-gzip', 'gz', 'gzip']},
+
+	'pickaxe' => {
+		'sub' => \&feature_pickaxe,
+		'override' => 0,
+		'default' => [1]},
 );
 
 sub gitweb_check_feature {
@@ -141,6 +146,24 @@ sub feature_snapshot {
 	}
 
 	return ($ctype, $suffix, $command);
+}
+
+# To enable system wide have in $GITWEB_CONFIG
+# $feature{'pickaxe'}{'default'} = [1];
+# To have project specific config enable override in $GITWEB_CONFIG
+# $feature{'pickaxe'}{'override'} = 1;
+# and in project config gitweb.pickaxe = 0|1;
+
+sub feature_pickaxe {
+	my ($val) = git_get_project_config('pickaxe', '--bool');
+
+	if ($val eq 'true') {
+		return (1);
+	} elsif ($val eq 'false') {
+		return (0);
+	}
+
+	return ($_[0]);
 }
 
 # rename detection options for git-diff and git-diff-tree
@@ -1910,12 +1933,15 @@ sub git_shortlog_body {
 
 sub git_history_body {
 	# Warning: assumes constant type (blob or tree) during history
-	my ($fd, $refs, $hash_base, $ftype, $extra) = @_;
+	my ($revlist, $from, $to, $refs, $hash_base, $ftype, $extra) = @_;
+
+	$from = 0 unless defined $from;
+	$to = $#{$revlist} unless (defined $to && $to <= $#{$revlist});
 
 	print "<table class=\"history\" cellspacing=\"0\">\n";
 	my $alternate = 0;
-	while (my $line = <$fd>) {
-		if ($line !~ m/^([0-9a-fA-F]{40})/) {
+	for (my $i = $from; $i <= $to; $i++) {
+		if ($revlist->[$i] !~ m/^([0-9a-fA-F]{40})/) {
 			next;
 		}
 
@@ -3091,29 +3117,70 @@ sub git_history {
 	if (!defined $hash_base) {
 		$hash_base = git_get_head_hash($project);
 	}
+	if (!defined $page) {
+		$page = 0;
+	}
 	my $ftype;
 	my %co = parse_commit($hash_base);
 	if (!%co) {
 		die_error(undef, "Unknown commit object");
 	}
+
 	my $refs = git_get_references();
-	git_header_html();
-	git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base);
-	git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
+	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
+
 	if (!defined $hash && defined $file_name) {
 		$hash = git_get_hash_by_path($hash_base, $file_name);
 	}
 	if (defined $hash) {
 		$ftype = git_get_type($hash);
 	}
-	git_print_page_path($file_name, $ftype, $hash_base);
 
 	open my $fd, "-|",
-		git_cmd(), "rev-list", "--full-history", $hash_base, "--", $file_name;
+		git_cmd(), "rev-list", $limit, "--full-history", $hash_base, "--", $file_name
+			or die_error(undef, "Open git-rev-list-failed");
+	my @revlist = map { chomp; $_ } <$fd>;
+	close $fd
+		or die_error(undef, "Reading git-rev-list failed");
 
-	git_history_body($fd, $refs, $hash_base, $ftype);
+	my $paging_nav = '';
+	if ($page > 0) {
+		$paging_nav .=
+			$cgi->a({-href => href(action=>"history", hash=>$hash, hash_base=>$hash_base,
+			                       file_name=>$file_name)},
+			        "first");
+		$paging_nav .= " &sdot; " .
+			$cgi->a({-href => href(action=>"history", hash=>$hash, hash_base=>$hash_base,
+			                       file_name=>$file_name, page=>$page-1),
+			         -accesskey => "p", -title => "Alt-p"}, "prev");
+	} else {
+		$paging_nav .= "first";
+		$paging_nav .= " &sdot; prev";
+	}
+	if ($#revlist >= (100 * ($page+1)-1)) {
+		$paging_nav .= " &sdot; " .
+			$cgi->a({-href => href(action=>"history", hash=>$hash, hash_base=>$hash_base,
+			                       file_name=>$file_name, page=>$page+1),
+			         -accesskey => "n", -title => "Alt-n"}, "next");
+	} else {
+		$paging_nav .= " &sdot; next";
+	}
+	my $next_link = '';
+	if ($#revlist >= (100 * ($page+1)-1)) {
+		$next_link =
+			$cgi->a({-href => href(action=>"history", hash=>$hash, hash_base=>$hash_base,
+			                       file_name=>$file_name, page=>$page+1),
+			         -title => "Alt-n"}, "next");
+	}
 
-	close $fd;
+	git_header_html();
+	git_print_page_nav('history','', $hash_base,$co{'tree'},$hash_base, $paging_nav);
+	git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
+	git_print_page_path($file_name, $ftype, $hash_base);
+
+	git_history_body(\@revlist, ($page * 100), $#revlist,
+	                 $refs, $hash_base, $ftype, $next_link);
+
 	git_footer_html();
 }
 
@@ -3128,8 +3195,7 @@ sub git_search {
 	if (!%co) {
 		die_error(undef, "Unknown commit object");
 	}
-	# pickaxe may take all resources of your box and run for several minutes
-	# with every query - so decide by yourself how public you make this feature :)
+
 	my $commit_search = 1;
 	my $author_search = 0;
 	my $committer_search = 0;
@@ -3141,6 +3207,13 @@ sub git_search {
 	} elsif ($searchtext =~ s/^pickaxe\\://i) {
 		$commit_search = 0;
 		$pickaxe_search = 1;
+
+		# pickaxe may take all resources of your box and run for several minutes
+		# with every query - so decide by yourself how public you make this feature
+		my ($have_pickaxe) = gitweb_check_feature('pickaxe');
+		if (!$have_pickaxe) {
+			die_error('403 Permission denied', "Permission denied");
+		}
 	}
 	git_header_html();
 	git_print_page_nav('','', $hash,$co{'tree'},$hash);
