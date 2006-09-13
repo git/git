@@ -78,7 +78,7 @@ static void wt_status_print_filepair(int t, struct diff_filepair *p)
 				p->one->path, p->two->path);
 		break;
 	case DIFF_STATUS_DELETED:
-		color_printf_ln(c, "deleted: %s", p->one->path); break;
+		color_printf(c, "deleted: %s", p->one->path); break;
 	case DIFF_STATUS_MODIFIED:
 		color_printf(c, "modified: %s", p->one->path); break;
 	case DIFF_STATUS_RENAMED:
