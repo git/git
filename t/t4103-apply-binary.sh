@@ -94,11 +94,11 @@ test_expect_failure 'apply binary diff (copy) -- should fail.' \
 	'do_reset
 	 git-apply --index C.diff'
 
-test_expect_failure 'apply binary diff without replacement -- should fail.' \
+test_expect_success 'apply binary diff without replacement.' \
 	'do_reset
 	 git-apply BF.diff'
 
-test_expect_failure 'apply binary diff without replacement (copy) -- should fail.' \
+test_expect_success 'apply binary diff without replacement (copy).' \
 	'do_reset
 	 git-apply CF.diff'
 

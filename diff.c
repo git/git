@@ -1588,6 +1588,12 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 	if (hashcmp(one->sha1, two->sha1)) {
 		int abbrev = o->full_index ? 40 : DEFAULT_ABBREV;
 
+		if (o->binary) {
+			mmfile_t mf;
+			if ((!fill_mmfile(&mf, one) && mmfile_is_binary(&mf)) ||
+			    (!fill_mmfile(&mf, two) && mmfile_is_binary(&mf)))
+				abbrev = 40;
+		}
 		len += snprintf(msg + len, sizeof(msg) - len,
 				"index %.*s..%.*s",
 				abbrev, sha1_to_hex(one->sha1),
@@ -1818,7 +1824,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->full_index = 1;
 	else if (!strcmp(arg, "--binary")) {
 		options->output_format |= DIFF_FORMAT_PATCH;
-		options->full_index = options->binary = 1;
+		options->binary = 1;
 	}
 	else if (!strcmp(arg, "-a") || !strcmp(arg, "--text")) {
 		options->text = 1;

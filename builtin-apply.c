@@ -28,7 +28,6 @@ static int prefix_length = -1;
 static int newfd = -1;
 
 static int p_value = 1;
-static int allow_binary_replacement;
 static int check_index;
 static int write_index;
 static int cached;
@@ -1228,14 +1227,12 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 			}
 		}
 
-		/* Empty patch cannot be applied if:
-		 * - it is a binary patch and we do not do binary_replace, or
-		 * - text patch without metadata change
+		/* Empty patch cannot be applied if it is a text patch
+		 * without metadata change.  A binary patch appears
+		 * empty to us here.
 		 */
 		if ((apply || check) &&
-		    (patch->is_binary
-		     ? !allow_binary_replacement
-		     : !metadata_changes(patch)))
+		    (!patch->is_binary && !metadata_changes(patch)))
 			die("patch with only garbage at line %d", linenr);
 	}
 
@@ -1675,11 +1672,6 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 	unsigned char sha1[20];
 	unsigned char hdr[50];
 	int hdrlen;
-
-	if (!allow_binary_replacement)
-		return error("cannot apply binary patch to '%s' "
-			     "without --allow-binary-replacement",
-			     name);
 
 	/* For safety, we require patch index line to contain
 	 * full 40-byte textual SHA1 for old and new, at least for now.
@@ -2497,8 +2489,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "--allow-binary-replacement") ||
 		    !strcmp(arg, "--binary")) {
-			allow_binary_replacement = 1;
-			continue;
+			continue; /* now no-op */
 		}
 		if (!strcmp(arg, "--numstat")) {
 			apply = 0;
