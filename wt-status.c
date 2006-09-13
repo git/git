@@ -50,6 +50,7 @@ void wt_status_prepare(struct wt_status *s)
 	s->amend = 0;
 	s->verbose = 0;
 	s->commitable = 0;
+	s->untracked = 0;
 }
 
 static void wt_status_print_header(const char *main, const char *sub)
@@ -188,6 +189,10 @@ static void wt_status_print_untracked(const struct wt_status *s)
 	memset(&dir, 0, sizeof(dir));
 
 	dir.exclude_per_dir = ".gitignore";
+	if (!s->untracked) {
+		dir.show_other_directories = 1;
+		dir.hide_empty_directories = 1;
+	}
 	x = git_path("info/exclude");
 	if (file_exists(x))
 		add_excludes_from_file(&dir, x);

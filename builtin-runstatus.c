@@ -25,6 +25,8 @@ int cmd_runstatus(int argc, const char **argv, const char *prefix)
 		}
 		else if (!strcmp(argv[i], "--verbose"))
 			s.verbose = 1;
+		else if (!strcmp(argv[i], "--untracked"))
+			s.untracked = 1;
 		else
 			usage(runstatus_usage);
 	}
