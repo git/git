@@ -10,8 +10,8 @@
 
 #include <sys/time.h>
 
-static int dry_run, quiet;
-static const char unpack_usage[] = "git-unpack-objects [-n] [-q] < pack-file";
+static int dry_run, quiet, recover, has_errors;
+static const char unpack_usage[] = "git-unpack-objects [-n] [-q] [-r] < pack-file";
 
 /* We always read in 4kB chunks. */
 static unsigned char buffer[4096];
@@ -71,8 +71,15 @@ static void *get_data(unsigned long size)
 		use(len - stream.avail_in);
 		if (stream.total_out == size && ret == Z_STREAM_END)
 			break;
-		if (ret != Z_OK)
-			die("inflate returned %d\n", ret);
+		if (ret != Z_OK) {
+			error("inflate returned %d\n", ret);
+			free(buf);
+			buf = NULL;
+			if (!recover)
+				exit(1);
+			has_errors = 1;
+			break;
+		}
 		stream.next_in = fill(1);
 		stream.avail_in = len;
 	}
@@ -110,9 +117,9 @@ static void write_object(void *buf, unsigned long size, const char *type)
 	added_object(sha1, type, buf, size);
 }
 
-static int resolve_delta(const char *type,
-	void *base, unsigned long base_size,
-	void *delta, unsigned long delta_size)
+static void resolve_delta(const char *type,
+			  void *base, unsigned long base_size,
+			  void *delta, unsigned long delta_size)
 {
 	void *result;
 	unsigned long result_size;
@@ -125,7 +132,6 @@ static int resolve_delta(const char *type,
 	free(delta);
 	write_object(result, result_size, type);
 	free(result);
-	return 0;
 }
 
 static void added_object(unsigned char *sha1, const char *type, void *data, unsigned long size)
@@ -145,7 +151,7 @@ static void added_object(unsigned char *sha1, const char *type, void *data, unsi
 	}
 }
 
-static int unpack_non_delta_entry(enum object_type kind, unsigned long size)
+static void unpack_non_delta_entry(enum object_type kind, unsigned long size)
 {
 	void *buf = get_data(size);
 	const char *type;
@@ -157,39 +163,42 @@ static int unpack_non_delta_entry(enum object_type kind, unsigned long size)
 	case OBJ_TAG:    type = tag_type; break;
 	default: die("bad type %d", kind);
 	}
-	if (!dry_run)
+	if (!dry_run && buf)
 		write_object(buf, size, type);
 	free(buf);
-	return 0;
 }
 
-static int unpack_delta_entry(unsigned long delta_size)
+static void unpack_delta_entry(unsigned long delta_size)
 {
 	void *delta_data, *base;
 	unsigned long base_size;
 	char type[20];
 	unsigned char base_sha1[20];
-	int result;
 
 	hashcpy(base_sha1, fill(20));
 	use(20);
 
 	delta_data = get_data(delta_size);
-	if (dry_run) {
+	if (dry_run || !delta_data) {
 		free(delta_data);
-		return 0;
+		return;
 	}
 
 	if (!has_sha1_file(base_sha1)) {
 		add_delta_to_list(base_sha1, delta_data, delta_size);
-		return 0;
+		return;
 	}
 	base = read_sha1_file(base_sha1, type, &base_size);
-	if (!base)
-		die("failed to read delta-pack base object %s", sha1_to_hex(base_sha1));
-	result = resolve_delta(type, base, base_size, delta_data, delta_size);
+	if (!base) {
+		error("failed to read delta-pack base object %s",
+		      sha1_to_hex(base_sha1));
+		if (!recover)
+			exit(1);
+		has_errors = 1;
+		return;
+	}
+	resolve_delta(type, base, base_size, delta_data, delta_size);
 	free(base);
-	return result;
 }
 
 static void unpack_one(unsigned nr, unsigned total)
@@ -236,7 +245,11 @@ static void unpack_one(unsigned nr, unsigned total)
 		unpack_delta_entry(size);
 		return;
 	default:
-		die("bad object type %d", type);
+		error("bad object type %d", type);
+		has_errors = 1;
+		if (recover)
+			return;
+		exit(1);
 	}
 }
 
@@ -280,6 +293,10 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 				quiet = 1;
 				continue;
 			}
+			if (!strcmp(arg, "-r")) {
+				recover = 1;
+				continue;
+			}
 			usage(unpack_usage);
 		}
 
@@ -306,5 +323,5 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 	/* All done */
 	if (!quiet)
 		fprintf(stderr, "\n");
-	return 0;
+	return has_errors;
 }

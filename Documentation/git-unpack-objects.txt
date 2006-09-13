@@ -8,7 +8,7 @@ git-unpack-objects - Unpack objects from a packed archive
 
 SYNOPSIS
 --------
-'git-unpack-objects' [-n] [-q] <pack-file
+'git-unpack-objects' [-n] [-q] [-r] <pack-file
 
 
 DESCRIPTION
@@ -33,6 +33,12 @@ OPTIONS
 -q::
 	The command usually shows percentage progress.  This
 	flag suppresses it.
+
+-r::
+	When unpacking a corrupt packfile, the command dies at
+	the first corruption.  This flag tells it to keep going
+	and make the best effort to recover as many objects as
+	possible.
 
 
 Author
