@@ -38,9 +38,8 @@ static void exec_pack_objects(void)
 
 static void exec_rev_list(struct ref *refs)
 {
-	struct ref *ref;
-	static const char *args[1000];
-	int i = 0, j;
+	static const char *args[4];
+	int i = 0;
 
 	args[i++] = "rev-list";	/* 0 */
 	if (use_thin_pack)	/* 1 */
@@ -48,43 +47,16 @@ static void exec_rev_list(struct ref *refs)
 	else
 		args[i++] = "--objects";
 
-	/* First send the ones we care about most */
-	for (ref = refs; ref; ref = ref->next) {
-		if (900 < i)
-			die("git-rev-list environment overflow");
-		if (!is_zero_sha1(ref->new_sha1)) {
-			char *buf = xmalloc(100);
-			args[i++] = buf;
-			snprintf(buf, 50, "%s", sha1_to_hex(ref->new_sha1));
-			buf += 50;
-			if (!is_zero_sha1(ref->old_sha1) &&
-			    has_sha1_file(ref->old_sha1)) {
-				args[i++] = buf;
-				snprintf(buf, 50, "^%s",
-					 sha1_to_hex(ref->old_sha1));
-			}
-		}
-	}
+	args[i++] = "--stdin";
 
-	/* Then a handful of the remainder
-	 * NEEDSWORK: we would be better off if used the newer ones first.
-	 */
-	for (ref = refs, j = i + 16;
-	     i < 900 && i < j && ref;
-	     ref = ref->next) {
-		if (is_zero_sha1(ref->new_sha1) &&
-		    !is_zero_sha1(ref->old_sha1) &&
-		    has_sha1_file(ref->old_sha1)) {
-			char *buf = xmalloc(42);
-			args[i++] = buf;
-			snprintf(buf, 42, "^%s", sha1_to_hex(ref->old_sha1));
-		}
-	}
 	args[i] = NULL;
 	execv_git_cmd(args);
 	die("git-rev-list exec failed (%s)", strerror(errno));
 }
 
+/*
+ * Run "rev-list --stdin | pack-objects" pipe.
+ */
 static void rev_list(int fd, struct ref *refs)
 {
 	int pipe_fd[2];
@@ -94,6 +66,9 @@ static void rev_list(int fd, struct ref *refs)
 		die("rev-list setup: pipe failed");
 	pack_objects_pid = fork();
 	if (!pack_objects_pid) {
+		/* The child becomes pack-objects; reads from pipe
+		 * and writes to the original fd
+		 */
 		dup2(pipe_fd[0], 0);
 		dup2(fd, 1);
 		close(pipe_fd[0]);
@@ -104,6 +79,8 @@ static void rev_list(int fd, struct ref *refs)
 	}
 	if (pack_objects_pid < 0)
 		die("pack-objects fork failed");
+
+	/* We become rev-list --stdin; output goes to pipe. */
 	dup2(pipe_fd[1], 1);
 	close(pipe_fd[0]);
 	close(pipe_fd[1]);
@@ -111,13 +88,71 @@ static void rev_list(int fd, struct ref *refs)
 	exec_rev_list(refs);
 }
 
+/*
+ * Create "rev-list --stdin | pack-objects" pipe and feed
+ * the refs into the pipeline.
+ */
+static void rev_list_generate(int fd, struct ref *refs)
+{
+	int pipe_fd[2];
+	pid_t rev_list_generate_pid;
+
+	if (pipe(pipe_fd) < 0)
+		die("rev-list-generate setup: pipe failed");
+	rev_list_generate_pid = fork();
+	if (!rev_list_generate_pid) {
+		/* The child becomes the "rev-list | pack-objects"
+		 * pipeline.  It takes input from us, and its output
+		 * goes to fd.
+		 */
+		dup2(pipe_fd[0], 0);
+		dup2(fd, 1);
+		close(pipe_fd[0]);
+		close(pipe_fd[1]);
+		close(fd);
+		rev_list(fd, refs);
+		die("rev-list setup failed");
+	}
+	if (rev_list_generate_pid < 0)
+		die("rev-list-generate fork failed");
+
+	/* We feed the rev parameters to them.  We do not write into
+	 * fd nor read from the pipe.
+	 */
+	close(pipe_fd[0]);
+	close(fd);
+	while (refs) {
+		char buf[42];
+
+		if (!is_null_sha1(refs->old_sha1) &&
+		    has_sha1_file(refs->old_sha1)) {
+			memcpy(buf + 1, sha1_to_hex(refs->old_sha1), 40);
+			buf[0] = '^';
+			buf[41] = '\n';
+			write(pipe_fd[1], buf, 42);
+		}
+		if (!is_null_sha1(refs->new_sha1)) {
+			memcpy(buf, sha1_to_hex(refs->new_sha1), 40);
+			buf[40] = '\n';
+			write(pipe_fd[1], buf, 41);
+		}
+		refs = refs->next;
+	}
+	close(pipe_fd[1]);
+	// waitpid(rev_list_generate_pid);
+	exit(0);
+}
+
+/*
+ * Make a pack stream and spit it out into file descriptor fd
+ */
 static void pack_objects(int fd, struct ref *refs)
 {
 	pid_t rev_list_pid;
 
 	rev_list_pid = fork();
 	if (!rev_list_pid) {
-		rev_list(fd, refs);
+		rev_list_generate(fd, refs);
 		die("rev-list setup failed");
 	}
 	if (rev_list_pid < 0)
