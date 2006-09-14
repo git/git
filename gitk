@@ -2739,7 +2739,13 @@ proc optimize_rows {row col endrow} {
 		    set isarrow 1
 		}
 	    }
+	    # Looking at lines from this row to the previous row,
+	    # make them go straight up if they end in an arrow on
+	    # the previous row; otherwise make them go straight up
+	    # or at 45 degrees.
 	    if {$z < -1 || ($z < 0 && $isarrow)} {
+		# Line currently goes left too much;
+		# insert pads in the previous row, then optimize it
 		set npad [expr {-1 - $z + $isarrow}]
 		set offs [incrange $offs $col $npad]
 		insert_pad $y0 $x0 $npad
@@ -2750,6 +2756,8 @@ proc optimize_rows {row col endrow} {
 		set x0 [expr {$col + $z}]
 		set z0 [lindex $rowoffsets $y0 $x0]
 	    } elseif {$z > 1 || ($z > 0 && $isarrow)} {
+		# Line currently goes right too much;
+		# insert pads in this line and adjust the next's rowoffsets
 		set npad [expr {$z - 1 + $isarrow}]
 		set y1 [expr {$row + 1}]
 		set offs2 [lindex $rowoffsets $y1]
@@ -2780,6 +2788,7 @@ proc optimize_rows {row col endrow} {
 		    set z0 [expr {$xc - $x0}]
 		}
 	    }
+	    # avoid lines jigging left then immediately right
 	    if {$z0 ne {} && $z < 0 && $z0 > 0} {
 		insert_pad $y0 $x0 1
 		set offs [incrange $offs $col 1]
@@ -2788,6 +2797,7 @@ proc optimize_rows {row col endrow} {
 	}
 	if {!$haspad} {
 	    set o {}
+	    # Find the first column that doesn't have a line going right
 	    for {set col [llength $idlist]} {[incr col -1] >= 0} {} {
 		set o [lindex $offs $col]
 		if {$o eq {}} {
@@ -2806,6 +2816,8 @@ proc optimize_rows {row col endrow} {
 		}
 		if {$o eq {} || $o <= 0} break
 	    }
+	    # Insert a pad at that column as long as it has a line and
+	    # isn't the last column, and adjust the next row' offsets
 	    if {$o ne {} && [incr col] < [llength $idlist]} {
 		set y1 [expr {$row + 1}]
 		set offs2 [lindex $rowoffsets $y1]
