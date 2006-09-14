@@ -138,6 +138,7 @@ struct grep_opt {
 	unsigned binary:2;
 	unsigned extended:1;
 	unsigned relative:1;
+	unsigned pathname:1;
 	int regflags;
 	unsigned pre_context;
 	unsigned post_context;
@@ -316,7 +317,8 @@ static int word_char(char ch)
 static void show_line(struct grep_opt *opt, const char *bol, const char *eol,
 		      const char *name, unsigned lno, char sign)
 {
-	printf("%s%c", name, sign);
+	if (opt->pathname)
+		printf("%s%c", name, sign);
 	if (opt->linenum)
 		printf("%d%c", lno, sign);
 	printf("%.*s\n", (int)(eol-bol), bol);
@@ -691,6 +693,8 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 		push_arg("-F");
 	if (opt->linenum)
 		push_arg("-n");
+	if (!opt->pathname)
+		push_arg("-h");
 	if (opt->regflags & REG_EXTENDED)
 		push_arg("-E");
 	if (opt->regflags & REG_ICASE)
@@ -911,6 +915,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	memset(&opt, 0, sizeof(opt));
 	opt.prefix_length = (prefix && *prefix) ? strlen(prefix) : 0;
 	opt.relative = 1;
+	opt.pathname = 1;
 	opt.pattern_tail = &opt.pattern_list;
 	opt.regflags = REG_NEWLINE;
 
@@ -970,10 +975,12 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			opt.linenum = 1;
 			continue;
 		}
+		if (!strcmp("-h", arg)) {
+			opt.pathname = 0;
+			continue;
+		}
 		if (!strcmp("-H", arg)) {
-			/* We always show the pathname, so this
-			 * is a noop.
-			 */
+			opt.pathname = 1;
 			continue;
 		}
 		if (!strcmp("-l", arg) ||
