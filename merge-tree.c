@@ -337,7 +337,7 @@ int main(int argc, char **argv)
 	struct tree_desc t[3];
 	void *buf1, *buf2, *buf3;
 
-	if (argc < 4)
+	if (argc != 4)
 		usage(merge_tree_usage);
 
 	setup_git_directory();

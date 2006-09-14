@@ -294,7 +294,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 
 int main(int argc, const char **argv, char **envp)
 {
-	const char *cmd = argv[0];
+	const char *cmd = argv[0] ? argv[0] : "git-help";
 	char *slash = strrchr(cmd, '/');
 	const char *exec_path = NULL;
 	int done_alias = 0;
