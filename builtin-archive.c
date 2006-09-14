@@ -145,17 +145,6 @@ void parse_treeish_arg(const char **argv, struct archiver_args *ar_args,
 	ar_args->time = archive_time;
 }
 
-static const char *default_parse_extra(struct archiver *ar,
-				       const char **argv)
-{
-	static char msg[64];
-
-	snprintf(msg, sizeof(msg) - 4, "'%s' format does not handle %s",
-		 ar->name, *argv);
-
-	return strcat(msg, "...");
-}
-
 int parse_archive_args(int argc, const char **argv, struct archiver *ar)
 {
 	const char *extra_argv[MAX_EXTRA_ARGS];
@@ -208,7 +197,8 @@ int parse_archive_args(int argc, const char **argv, struct archiver *ar)
 
 	if (extra_argc) {
 		if (!ar->parse_extra)
-			die("%s", default_parse_extra(ar, extra_argv));
+			die("'%s' format does not handle %s",
+			    ar->name, extra_argv[0]);
 		ar->args.extra = ar->parse_extra(extra_argc, extra_argv);
 	}
 	ar->args.verbose = verbose;
