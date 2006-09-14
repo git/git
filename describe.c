@@ -161,6 +161,8 @@ int main(int argc, char **argv)
 			usage(describe_usage);
 	}
 
+	setup_git_directory();
+
 	if (i == argc)
 		describe("HEAD", 1);
 	else

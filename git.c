@@ -224,7 +224,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "checkout-index", cmd_checkout_index, RUN_SETUP },
 		{ "check-ref-format", cmd_check_ref_format },
 		{ "commit-tree", cmd_commit_tree, RUN_SETUP },
-		{ "count-objects", cmd_count_objects },
+		{ "count-objects", cmd_count_objects, RUN_SETUP },
 		{ "diff", cmd_diff, RUN_SETUP },
 		{ "diff-files", cmd_diff_files, RUN_SETUP },
 		{ "diff-index", cmd_diff_index, RUN_SETUP },
