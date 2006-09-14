@@ -286,7 +286,7 @@ fetch_main () {
 
       # There are transports that can fetch only one head at a time...
       case "$remote" in
-      http://* | https://*)
+      http://* | https://* | ftp://*)
 	  if [ -n "$GIT_SSL_NO_VERIFY" ]; then
 	      curl_extra_args="-k"
 	  fi
@@ -350,7 +350,7 @@ fetch_main () {
   done
 
   case "$remote" in
-  http://* | https://* | rsync://* )
+  http://* | https://* | ftp://* | rsync://* )
       ;; # we are already done.
   *)
     ( : subshell because we muck with IFS
