@@ -49,7 +49,7 @@ trap "rm -fr $tmp-*" 0 1 2 3 15
 tmpdir=$tmp-d
 
 case "$peek_repo" in
-http://* | https://* )
+http://* | https://* | ftp://* )
         if [ -n "$GIT_SSL_NO_VERIFY" ]; then
             curl_extra_args="-k"
         fi

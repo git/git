@@ -10,8 +10,8 @@
 
 #include <sys/time.h>
 
-static int dry_run, quiet, desperate, has_errors;
-static const char unpack_usage[] = "git-unpack-objects [-n] [-q] < pack-file";
+static int dry_run, quiet, recover, has_errors;
+static const char unpack_usage[] = "git-unpack-objects [-n] [-q] [-r] < pack-file";
 
 /* We always read in 4kB chunks. */
 static unsigned char buffer[4096];
@@ -75,7 +75,7 @@ static void *get_data(unsigned long size)
 			error("inflate returned %d\n", ret);
 			free(buf);
 			buf = NULL;
-			if (!desperate)
+			if (!recover)
 				exit(1);
 			has_errors = 1;
 			break;
@@ -192,7 +192,7 @@ static void unpack_delta_entry(unsigned long delta_size)
 	if (!base) {
 		error("failed to read delta-pack base object %s",
 		      sha1_to_hex(base_sha1));
-		if (!desperate)
+		if (!recover)
 			exit(1);
 		has_errors = 1;
 		return;
@@ -247,7 +247,7 @@ static void unpack_one(unsigned nr, unsigned total)
 	default:
 		error("bad object type %d", type);
 		has_errors = 1;
-		if (desperate)
+		if (recover)
 			return;
 		exit(1);
 	}
@@ -294,7 +294,7 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "-r")) {
-				desperate = 1;
+				recover = 1;
 				continue;
 			}
 			usage(unpack_usage);

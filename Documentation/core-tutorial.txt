@@ -1620,7 +1620,7 @@ suggested in the previous section may be new to you. You do not
 have to worry. git supports "shared public repository" style of
 cooperation you are probably more familiar with as well.
 
-See link:cvs-migration.txt[git for CVS users] for the details.
+See link:cvs-migration.html[git for CVS users] for the details.
 
 Bundling your work together
 ---------------------------

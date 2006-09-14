@@ -443,6 +443,6 @@ int main(int argc, char **argv)
 	ret = send_pack(fd[0], fd[1], nr_heads, heads);
 	close(fd[0]);
 	close(fd[1]);
-	finish_connect(pid);
-	return ret;
+	ret |= finish_connect(pid);
+	return !!ret;
 }

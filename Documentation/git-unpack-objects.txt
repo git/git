@@ -37,7 +37,7 @@ OPTIONS
 -r::
 	When unpacking a corrupt packfile, the command dies at
 	the first corruption.  This flag tells it to keep going
-	and make the best effort to salvage as many objects as
+	and make the best effort to recover as many objects as
 	possible.
 
 

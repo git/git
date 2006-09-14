@@ -368,7 +368,7 @@ in the index file is identical to the one in the working directory.
 In addition to being the staging area for new commits, the index file
 is also populated from the object database when checking out a
 branch, and is used to hold the trees involved in a merge operation.
-See the link:core-tutorial.txt[core tutorial] and the relevant man
+See the link:core-tutorial.html[core tutorial] and the relevant man
 pages for details.
 
 What next?

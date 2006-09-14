@@ -340,6 +340,8 @@ int main(int argc, char **argv)
 	if (argc < 4)
 		usage(merge_tree_usage);
 
+	setup_git_directory();
+
 	buf1 = get_tree_descriptor(t+0, argv[1]);
 	buf2 = get_tree_descriptor(t+1, argv[2]);
 	buf3 = get_tree_descriptor(t+2, argv[3]);
