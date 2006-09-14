@@ -715,16 +715,26 @@ sub git_get_projects_list {
 	if (-d $projects_list) {
 		# search in directory
 		my $dir = $projects_list;
-		opendir my ($dh), $dir or return undef;
-		while (my $dir = readdir($dh)) {
-			if (-e "$projectroot/$dir/HEAD") {
-				my $pr = {
-					path => $dir,
-				};
-				push @list, $pr
-			}
-		}
-		closedir($dh);
+		my $pfxlen = length("$dir");
+
+		File::Find::find({
+			follow_fast => 1, # follow symbolic links
+			dangling_symlinks => 0, # ignore dangling symlinks, silently
+			wanted => sub {
+				# skip project-list toplevel, if we get it.
+				return if (m!^[/.]$!);
+				# only directories can be git repositories
+				return unless (-d $_);
+
+				my $subdir = substr($File::Find::name, $pfxlen + 1);
+				# we check related file in $projectroot
+				if (-e "$projectroot/$subdir/HEAD") {
+					push @list, { path => $subdir };
+					$File::Find::prune = 1;
+				}
+			},
+		}, "$dir");
+
 	} elsif (-f $projects_list) {
 		# read from file(url-encoded):
 		# 'git%2Fgit.git Linus+Torvalds'
