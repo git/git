@@ -28,6 +28,8 @@ static const char *parse_ref_line(char *line, unsigned char *sha1)
 	if (!isspace(line[40]))
 		return NULL;
 	line += 41;
+	if (isspace(*line))
+		return NULL;
 	if (line[len] != '\n')
 		return NULL;
 	line[len] = 0;
@@ -168,6 +170,14 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading)
 		 * reading.
 		 */
 		if (lstat(path, &st) < 0) {
+			struct ref_list *list = get_packed_refs();
+			while (list) {
+				if (!strcmp(ref, list->name)) {
+					hashcpy(sha1, list->sha1);
+					return ref;
+				}
+				list = list->next;
+			}
 			if (reading || errno != ENOENT)
 				return NULL;
 			hashclr(sha1);
@@ -400,22 +410,13 @@ int check_ref_format(const char *ref)
 static struct ref_lock *verify_lock(struct ref_lock *lock,
 	const unsigned char *old_sha1, int mustexist)
 {
-	char buf[40];
-	int nr, fd = open(lock->ref_file, O_RDONLY);
-	if (fd < 0 && (mustexist || errno != ENOENT)) {
-		error("Can't verify ref %s", lock->ref_file);
-		unlock_ref(lock);
-		return NULL;
-	}
-	nr = read(fd, buf, 40);
-	close(fd);
-	if (nr != 40 || get_sha1_hex(buf, lock->old_sha1) < 0) {
-		error("Can't verify ref %s", lock->ref_file);
+	if (!resolve_ref(lock->ref_name, lock->old_sha1, mustexist)) {
+		error("Can't verify ref %s", lock->ref_name);
 		unlock_ref(lock);
 		return NULL;
 	}
 	if (hashcmp(lock->old_sha1, old_sha1)) {
-		error("Ref %s is at %s but expected %s", lock->ref_file,
+		error("Ref %s is at %s but expected %s", lock->ref_name,
 			sha1_to_hex(lock->old_sha1), sha1_to_hex(old_sha1));
 		unlock_ref(lock);
 		return NULL;
@@ -427,6 +428,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref,
 	int plen,
 	const unsigned char *old_sha1, int mustexist)
 {
+	char *ref_file;
 	const char *orig_ref = ref;
 	struct ref_lock *lock;
 	struct stat st;
@@ -445,13 +447,14 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref,
 	}
 	lock->lk = xcalloc(1, sizeof(struct lock_file));
 
-	lock->ref_file = xstrdup(git_path("%s", ref));
+	lock->ref_name = xstrdup(ref);
 	lock->log_file = xstrdup(git_path("logs/%s", ref));
-	lock->force_write = lstat(lock->ref_file, &st) && errno == ENOENT;
+	ref_file = git_path(ref);
+	lock->force_write = lstat(ref_file, &st) && errno == ENOENT;
 
-	if (safe_create_leading_directories(lock->ref_file))
-		die("unable to create directory for %s", lock->ref_file);
-	lock->lock_fd = hold_lock_file_for_update(lock->lk, lock->ref_file, 1);
+	if (safe_create_leading_directories(ref_file))
+		die("unable to create directory for %s", ref_file);
+	lock->lock_fd = hold_lock_file_for_update(lock->lk, ref_file, 1);
 
 	return old_sha1 ? verify_lock(lock, old_sha1, mustexist) : lock;
 }
@@ -479,7 +482,7 @@ void unlock_ref(struct ref_lock *lock)
 		if (lock->lk)
 			rollback_lock_file(lock->lk);
 	}
-	free(lock->ref_file);
+	free(lock->ref_name);
 	free(lock->log_file);
 	free(lock);
 }
@@ -556,7 +559,7 @@ int write_ref_sha1(struct ref_lock *lock,
 		return -1;
 	}
 	if (commit_lock_file(lock->lk)) {
-		error("Couldn't set %s", lock->ref_file);
+		error("Couldn't set %s", lock->ref_name);
 		unlock_ref(lock);
 		return -1;
 	}

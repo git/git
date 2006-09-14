@@ -2,7 +2,7 @@
 #define REFS_H
 
 struct ref_lock {
-	char *ref_file;
+	char *ref_name;
 	char *log_file;
 	struct lock_file *lk;
 	unsigned char old_sha1[20];
