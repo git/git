@@ -1255,6 +1255,13 @@ EOF
 		printf('<link rel="alternate" title="%s log" '.
 		       'href="%s" type="application/rss+xml"/>'."\n",
 		       esc_param($project), href(action=>"rss"));
+	} else {
+		printf('<link rel="alternate" title="%s projects list" '.
+		       'href="%s" type="text/plain; charset=utf-8"/>'."\n",
+		       $site_name, href(project=>undef, action=>"project_index"));
+		printf('<link rel="alternate" title="%s projects logs" '.
+		       'href="%s" type="text/x-opml"/>'."\n",
+		       $site_name, href(project=>undef, action=>"opml"));
 	}
 	if (defined $favicon) {
 		print qq(<link rel="shortcut icon" href="$favicon" type="image/png"/>\n);
@@ -1309,7 +1316,9 @@ sub git_footer_html {
 		              -class => "rss_logo"}, "RSS") . "\n";
 	} else {
 		print $cgi->a({-href => href(project=>undef, action=>"opml"),
-		              -class => "rss_logo"}, "OPML") . "\n";
+		              -class => "rss_logo"}, "OPML") . " ";
+		print $cgi->a({-href => href(project=>undef, action=>"project_index"),
+		              -class => "rss_logo"}, "TXT") . "\n";
 	}
 	print "</div>\n" .
 	      "</body>\n" .
