@@ -296,6 +296,7 @@ my %actions = (
 	# those below don't need $project
 	"opml" => \&git_opml,
 	"project_list" => \&git_project_list,
+	"project_index" => \&git_project_index,
 );
 
 if (defined $project) {
@@ -676,19 +677,6 @@ sub git_get_hash_by_path {
 ## ......................................................................
 ## git utility functions, directly accessing git repository
 
-# assumes that PATH is not symref
-sub git_get_hash_by_ref {
-	my $path = shift;
-
-	open my $fd, "$projectroot/$path" or return undef;
-	my $head = <$fd>;
-	close $fd;
-	chomp $head;
-	if ($head =~ m/^[0-9a-fA-F]{40}$/) {
-		return $head;
-	}
-}
-
 sub git_get_project_description {
 	my $path = shift;
 
@@ -715,16 +703,26 @@ sub git_get_projects_list {
 	if (-d $projects_list) {
 		# search in directory
 		my $dir = $projects_list;
-		opendir my ($dh), $dir or return undef;
-		while (my $dir = readdir($dh)) {
-			if (-e "$projectroot/$dir/HEAD") {
-				my $pr = {
-					path => $dir,
-				};
-				push @list, $pr
-			}
-		}
-		closedir($dh);
+		my $pfxlen = length("$dir");
+
+		File::Find::find({
+			follow_fast => 1, # follow symbolic links
+			dangling_symlinks => 0, # ignore dangling symlinks, silently
+			wanted => sub {
+				# skip project-list toplevel, if we get it.
+				return if (m!^[/.]$!);
+				# only directories can be git repositories
+				return unless (-d $_);
+
+				my $subdir = substr($File::Find::name, $pfxlen + 1);
+				# we check related file in $projectroot
+				if (-e "$projectroot/$subdir/HEAD") {
+					push @list, { path => $subdir };
+					$File::Find::prune = 1;
+				}
+			},
+		}, "$dir");
+
 	} elsif (-f $projects_list) {
 		# read from file(url-encoded):
 		# 'git%2Fgit.git Linus+Torvalds'
@@ -1088,17 +1086,27 @@ sub git_get_refs_list {
 	my @reflist;
 
 	my @refs;
-	my $pfxlen = length("$projectroot/$project/$ref_dir");
-	File::Find::find(sub {
-		return if (/^\./);
-		if (-f $_) {
-			push @refs, substr($File::Find::name, $pfxlen + 1);
+	open my $fd, "-|", $GIT, "peek-remote", "$projectroot/$project/"
+		or return;
+	while (my $line = <$fd>) {
+		chomp $line;
+		if ($line =~ m/^([0-9a-fA-F]{40})\t$ref_dir\/?([^\^]+)$/) {
+			push @refs, { hash => $1, name => $2 };
+		} elsif ($line =~ m/^[0-9a-fA-F]{40}\t$ref_dir\/?(.*)\^\{\}$/ &&
+		         $1 eq $refs[-1]{'name'}) {
+			# most likely a tag is followed by its peeled
+			# (deref) one, and when that happens we know the
+			# previous one was of type 'tag'.
+			$refs[-1]{'type'} = "tag";
 		}
-	}, "$projectroot/$project/$ref_dir");
+	}
+	close $fd;
 
-	foreach my $ref_file (@refs) {
-		my $ref_id = git_get_hash_by_ref("$project/$ref_dir/$ref_file");
-		my $type = git_get_type($ref_id) || next;
+	foreach my $ref (@refs) {
+		my $ref_file = $ref->{'name'};
+		my $ref_id   = $ref->{'hash'};
+
+		my $type = $ref->{'type'} || git_get_type($ref_id) || next;
 		my %ref_item = parse_ref($ref_file, $ref_id, $type);
 
 		push @reflist, \%ref_item;
@@ -2201,6 +2209,30 @@ sub git_project_list {
 	}
 	print "</table>\n";
 	git_footer_html();
+}
+
+sub git_project_index {
+	my @projects = git_get_projects_list();
+
+	print $cgi->header(
+		-type => 'text/plain',
+		-charset => 'utf-8',
+		-content_disposition => qq(inline; filename="index.aux"));
+
+	foreach my $pr (@projects) {
+		if (!exists $pr->{'owner'}) {
+			$pr->{'owner'} = get_file_owner("$projectroot/$project");
+		}
+
+		my ($path, $owner) = ($pr->{'path'}, $pr->{'owner'});
+		# quote as in CGI::Util::encode, but keep the slash, and use '+' for ' '
+		$path  =~ s/([^a-zA-Z0-9_.\-\/ ])/sprintf("%%%02X", ord($1))/eg;
+		$owner =~ s/([^a-zA-Z0-9_.\-\/ ])/sprintf("%%%02X", ord($1))/eg;
+		$path  =~ s/ /\+/g;
+		$owner =~ s/ /\+/g;
+
+		print "$path $owner\n";
+	}
 }
 
 sub git_summary {

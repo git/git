@@ -163,7 +163,7 @@ int main(int argc, char **argv)
 
 	setup_git_directory();
 
-	if (i == argc)
+	if (argc <= i)
 		describe("HEAD", 1);
 	else
 		while (i < argc) {
