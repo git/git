@@ -676,19 +676,6 @@ sub git_get_hash_by_path {
 ## ......................................................................
 ## git utility functions, directly accessing git repository
 
-# assumes that PATH is not symref
-sub git_get_hash_by_ref {
-	my $path = shift;
-
-	open my $fd, "$projectroot/$path" or return undef;
-	my $head = <$fd>;
-	close $fd;
-	chomp $head;
-	if ($head =~ m/^[0-9a-fA-F]{40}$/) {
-		return $head;
-	}
-}
-
 sub git_get_project_description {
 	my $path = shift;
 
@@ -1098,17 +1085,27 @@ sub git_get_refs_list {
 	my @reflist;
 
 	my @refs;
-	my $pfxlen = length("$projectroot/$project/$ref_dir");
-	File::Find::find(sub {
-		return if (/^\./);
-		if (-f $_) {
-			push @refs, substr($File::Find::name, $pfxlen + 1);
+	open my $fd, "-|", $GIT, "peek-remote", "$projectroot/$project/"
+		or return;
+	while (my $line = <$fd>) {
+		chomp $line;
+		if ($line =~ m/^([0-9a-fA-F]{40})\t$ref_dir\/?([^\^]+)$/) {
+			push @refs, { hash => $1, name => $2 };
+		} elsif ($line =~ m/^[0-9a-fA-F]{40}\t$ref_dir\/?(.*)\^\{\}$/ &&
+		         $1 eq $refs[-1]{'name'}) {
+			# most likely a tag is followed by its peeled
+			# (deref) one, and when that happens we know the
+			# previous one was of type 'tag'.
+			$refs[-1]{'type'} = "tag";
 		}
-	}, "$projectroot/$project/$ref_dir");
+	}
+	close $fd;
 
-	foreach my $ref_file (@refs) {
-		my $ref_id = git_get_hash_by_ref("$project/$ref_dir/$ref_file");
-		my $type = git_get_type($ref_id) || next;
+	foreach my $ref (@refs) {
+		my $ref_file = $ref->{'name'};
+		my $ref_id   = $ref->{'hash'};
+
+		my $type = $ref->{'type'} || git_get_type($ref_id) || next;
 		my %ref_item = parse_ref($ref_file, $ref_id, $type);
 
 		push @reflist, \%ref_item;
