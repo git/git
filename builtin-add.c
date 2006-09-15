@@ -70,7 +70,6 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec)
 	base = "";
 	if (baselen) {
 		char *common = xmalloc(baselen + 1);
-		common = xmalloc(baselen + 1);
 		memcpy(common, *pathspec, baselen);
 		common[baselen] = 0;
 		path = base = common;
