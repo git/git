@@ -52,4 +52,8 @@ extern char *unquote_c_style(const char *quoted, const char **endp);
 extern void write_name_quoted(const char *prefix, int prefix_len,
 			      const char *name, int quote, FILE *out);
 
+/* quoting as a string literal for other languages */
+extern void perl_quote_print(FILE *stream, const char *src);
+extern void python_quote_print(FILE *stream, const char *src);
+
 #endif
