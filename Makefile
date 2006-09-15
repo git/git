@@ -295,7 +295,8 @@ BUILTIN_OBJS = \
 	builtin-upload-tar.o \
 	builtin-verify-pack.o \
 	builtin-write-tree.o \
-	builtin-zip-tree.o
+	builtin-zip-tree.o \
+	builtin-show-ref.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz
