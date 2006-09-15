@@ -296,6 +296,7 @@ my %actions = (
 	# those below don't need $project
 	"opml" => \&git_opml,
 	"project_list" => \&git_project_list,
+	"project_index" => \&git_project_index,
 );
 
 if (defined $project) {
@@ -2208,6 +2209,30 @@ sub git_project_list {
 	}
 	print "</table>\n";
 	git_footer_html();
+}
+
+sub git_project_index {
+	my @projects = git_get_projects_list();
+
+	print $cgi->header(
+		-type => 'text/plain',
+		-charset => 'utf-8',
+		-content_disposition => qq(inline; filename="index.aux"));
+
+	foreach my $pr (@projects) {
+		if (!exists $pr->{'owner'}) {
+			$pr->{'owner'} = get_file_owner("$projectroot/$project");
+		}
+
+		my ($path, $owner) = ($pr->{'path'}, $pr->{'owner'});
+		# quote as in CGI::Util::encode, but keep the slash, and use '+' for ' '
+		$path  =~ s/([^a-zA-Z0-9_.\-\/ ])/sprintf("%%%02X", ord($1))/eg;
+		$owner =~ s/([^a-zA-Z0-9_.\-\/ ])/sprintf("%%%02X", ord($1))/eg;
+		$path  =~ s/ /\+/g;
+		$owner =~ s/ /\+/g;
+
+		print "$path $owner\n";
+	}
 }
 
 sub git_summary {
