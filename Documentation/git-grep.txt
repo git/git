@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git-grep' [--cached]
 	   [-a | --text] [-I] [-i | --ignore-case] [-w | --word-regexp]
-	   [-v | --invert-match] [--full-name]
+	   [-v | --invert-match] [-h|-H] [--full-name]
 	   [-E | --extended-regexp] [-G | --basic-regexp] [-F | --fixed-strings]
 	   [-n] [-l | --files-with-matches] [-L | --files-without-match]
 	   [-c | --count]
@@ -46,6 +46,13 @@ OPTIONS
 
 -v | --invert-match::
 	Select non-matching lines.
+
+-h | -H::
+	By default, the command shows the filename for each
+	match.  `-h` option is used to suppress this output.
+	`-H` is there for completeness and does not do anything
+	except it overrides `-h` given earlier on the command
+	line.
 
 --full-name::
 	When run from a subdirectory, the command usually
