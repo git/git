@@ -30,11 +30,8 @@ rm -f .git/$m
 test_expect_success \
 	"fail to create $n" \
 	"touch .git/$n_dir
-	 git-update-ref $n $A >out 2>err
-	 test "'$? = 1 &&
-	 test "" = "$(cat out)" &&
-	 grep "error: unable to resolve reference" err &&
-	 grep '"$n err"
+	 git-update-ref $n $A >out 2>err"'
+	 test $? != 0'
 rm -f .git/$n_dir out err
 
 test_expect_success \
