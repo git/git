@@ -54,6 +54,13 @@ our $favicon = "++GITWEB_FAVICON++";
 # source of projects list
 our $projects_list = "++GITWEB_LIST++";
 
+# show repository only if this file exists
+# (only effective if this variable evaluates to true)
+our $export_ok = "++GITWEB_EXPORT_OK++";
+
+# only allow viewing of repositories also shown on the overview page
+our $strict_export = "++GITWEB_STRICT_EXPORT++";
+
 # list of git base URLs used for URL to where fetch project from,
 # i.e. full URL is "$git_base_url/$project"
 our @git_base_url_list = ("++GITWEB_BASE_URL++");
@@ -200,7 +207,9 @@ our $project = $cgi->param('p');
 if (defined $project) {
 	if (!validate_input($project) ||
 	    !(-d "$projectroot/$project") ||
-	    !(-e "$projectroot/$project/HEAD")) {
+	    !(-e "$projectroot/$project/HEAD") ||
+	    ($export_ok && !(-e "$projectroot/$project/$export_ok")) ||
+	    ($strict_export && !project_in_list($project))) {
 		undef $project;
 		die_error(undef, "No such project");
 	}
@@ -420,6 +429,12 @@ sub untabify {
 	}
 
 	return $line;
+}
+
+sub project_in_list {
+	my $project = shift;
+	my @list = git_get_projects_list();
+	return @list && scalar(grep { $_->{'path'} eq $project } @list);
 }
 
 ## ----------------------------------------------------------------------
@@ -734,7 +749,8 @@ sub git_get_projects_list {
 
 				my $subdir = substr($File::Find::name, $pfxlen + 1);
 				# we check related file in $projectroot
-				if (-e "$projectroot/$subdir/HEAD") {
+				if (-e "$projectroot/$subdir/HEAD" && (!$export_ok ||
+				    -e "$projectroot/$subdir/$export_ok")) {
 					push @list, { path => $subdir };
 					$File::Find::prune = 1;
 				}
@@ -755,7 +771,8 @@ sub git_get_projects_list {
 			if (!defined $path) {
 				next;
 			}
-			if (-e "$projectroot/$path/HEAD") {
+			if (-e "$projectroot/$path/HEAD" && (!$export_ok ||
+			    -e "$projectroot/$path/$export_ok")) {
 				my $pr = {
 					path => $path,
 					owner => decode("utf8", $owner, Encode::FB_DEFAULT),
