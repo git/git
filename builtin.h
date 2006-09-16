@@ -1,8 +1,7 @@
 #ifndef BUILTIN_H
 #define BUILTIN_H
 
-#include <stdio.h>
-#include <limits.h>
+#include "git-compat-util.h"
 
 extern const char git_version_string[];
 extern const char git_usage_string[];
