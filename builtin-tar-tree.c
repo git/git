@@ -3,7 +3,6 @@
  */
 #include <time.h>
 #include "cache.h"
-#include "tree-walk.h"
 #include "commit.h"
 #include "strbuf.h"
 #include "tar.h"
@@ -248,37 +247,6 @@ static void write_global_extended_header(const unsigned char *sha1)
 	free(ext_header.buf);
 }
 
-static void traverse_tree(struct tree_desc *tree, struct strbuf *path)
-{
-	int pathlen = path->len;
-	struct name_entry entry;
-
-	while (tree_entry(tree, &entry)) {
-		void *eltbuf;
-		char elttype[20];
-		unsigned long eltsize;
-
-		eltbuf = read_sha1_file(entry.sha1, elttype, &eltsize);
-		if (!eltbuf)
-			die("cannot read %s", sha1_to_hex(entry.sha1));
-
-		path->len = pathlen;
-		strbuf_append_string(path, entry.path);
-		if (S_ISDIR(entry.mode))
-			strbuf_append_string(path, "/");
-
-		write_entry(entry.sha1, path, entry.mode, eltbuf, eltsize);
-
-		if (S_ISDIR(entry.mode)) {
-			struct tree_desc subtree;
-			subtree.buf = eltbuf;
-			subtree.size = eltsize;
-			traverse_tree(&subtree, path);
-		}
-		free(eltbuf);
-	}
-}
-
 static int git_tar_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "tar.umask")) {
@@ -295,51 +263,29 @@ static int git_tar_config(const char *var, const char *value)
 
 static int generate_tar(int argc, const char **argv, const char *prefix)
 {
-	unsigned char sha1[20], tree_sha1[20];
-	struct commit *commit;
-	struct tree_desc tree;
-	struct strbuf current_path;
-	void *buffer;
-
-	current_path.buf = xmalloc(PATH_MAX);
-	current_path.alloc = PATH_MAX;
-	current_path.len = current_path.eof = 0;
+	struct archiver_args args;
+	int result;
+	char *base = NULL;
 
 	git_config(git_tar_config);
 
-	switch (argc) {
-	case 3:
-		strbuf_append_string(&current_path, argv[2]);
-		strbuf_append_string(&current_path, "/");
-		/* FALLTHROUGH */
-	case 2:
-		if (get_sha1(argv[1], sha1))
-			die("Not a valid object name %s", argv[1]);
-		break;
-	default:
+	memset(&args, 0, sizeof(args));
+	if (argc != 2 && argc != 3)
 		usage(tar_tree_usage);
+	if (argc == 3) {
+		int baselen = strlen(argv[2]);
+		base = xmalloc(baselen + 2);
+		memcpy(base, argv[2], baselen);
+		base[baselen] = '/';
+		base[baselen + 1] = '\0';
 	}
+	args.base = base;
+	parse_treeish_arg(argv + 1, &args, NULL);
 
-	commit = lookup_commit_reference_gently(sha1, 1);
-	if (commit) {
-		write_global_extended_header(commit->object.sha1);
-		archive_time = commit->date;
-	} else
-		archive_time = time(NULL);
+	result = write_tar_archive(&args);
+	free(base);
 
-	tree.buf = buffer = read_object_with_reference(sha1, tree_type,
-	                                               &tree.size, tree_sha1);
-	if (!tree.buf)
-		die("not a reference to a tag, commit or tree object: %s",
-		    sha1_to_hex(sha1));
-
-	if (current_path.len > 0)
-		write_entry(tree_sha1, &current_path, 040777, NULL, 0);
-	traverse_tree(&tree, &current_path);
-	write_trailer();
-	free(buffer);
-	free(current_path.buf);
-	return 0;
+	return result;
 }
 
 static int write_tar_entry(const unsigned char *sha1,
@@ -383,7 +329,7 @@ static int write_tar_entry(const unsigned char *sha1,
 
 int write_tar_archive(struct archiver_args *args)
 {
-	int plen = strlen(args->base);
+	int plen = args->base ? strlen(args->base) : 0;
 
 	git_config(git_tar_config);
 
