@@ -37,6 +37,7 @@ git-fetch
 git-fetch-pack
 git-findtags
 git-fmt-merge-msg
+git-for-each-ref
 git-format-patch
 git-fsck-objects
 git-get-tar-commit-id
