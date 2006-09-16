@@ -326,11 +326,12 @@ sub href(%) {
 		hash_base => "hb",
 		hash_parent_base => "hpb",
 		page => "pg",
+		order => "o",
 		searchtext => "s",
 	);
 	my %mapping = @mapping;
 
-	$params{"project"} ||= $project;
+	$params{'project'} = $project unless exists $params{'project'};
 
 	my @result = ();
 	for (my $i = 0; $i < @mapping; $i += 2) {
@@ -1254,6 +1255,13 @@ EOF
 		printf('<link rel="alternate" title="%s log" '.
 		       'href="%s" type="application/rss+xml"/>'."\n",
 		       esc_param($project), href(action=>"rss"));
+	} else {
+		printf('<link rel="alternate" title="%s projects list" '.
+		       'href="%s" type="text/plain; charset=utf-8"/>'."\n",
+		       $site_name, href(project=>undef, action=>"project_index"));
+		printf('<link rel="alternate" title="%s projects logs" '.
+		       'href="%s" type="text/x-opml"/>'."\n",
+		       $site_name, href(project=>undef, action=>"opml"));
 	}
 	if (defined $favicon) {
 		print qq(<link rel="shortcut icon" href="$favicon" type="image/png"/>\n);
@@ -1304,9 +1312,13 @@ sub git_footer_html {
 		if (defined $descr) {
 			print "<div class=\"page_footer_text\">" . esc_html($descr) . "</div>\n";
 		}
-		print $cgi->a({-href => href(action=>"rss"), -class => "rss_logo"}, "RSS") . "\n";
+		print $cgi->a({-href => href(action=>"rss"),
+		              -class => "rss_logo"}, "RSS") . "\n";
 	} else {
-		print $cgi->a({-href => href(action=>"opml"), -class => "rss_logo"}, "OPML") . "\n";
+		print $cgi->a({-href => href(project=>undef, action=>"opml"),
+		              -class => "rss_logo"}, "OPML") . " ";
+		print $cgi->a({-href => href(project=>undef, action=>"project_index"),
+		              -class => "rss_logo"}, "TXT") . "\n";
 	}
 	print "</div>\n" .
 	      "</body>\n" .
@@ -2153,7 +2165,7 @@ sub git_project_list {
 		print "<th>Project</th>\n";
 	} else {
 		print "<th>" .
-		      $cgi->a({-href => "$my_uri?" . esc_param("o=project"),
+		      $cgi->a({-href => href(project=>undef, order=>'project'),
 		               -class => "header"}, "Project") .
 		      "</th>\n";
 	}
@@ -2162,7 +2174,7 @@ sub git_project_list {
 		print "<th>Description</th>\n";
 	} else {
 		print "<th>" .
-		      $cgi->a({-href => "$my_uri?" . esc_param("o=descr"),
+		      $cgi->a({-href => href(project=>undef, order=>'descr'),
 		               -class => "header"}, "Description") .
 		      "</th>\n";
 	}
@@ -2171,7 +2183,7 @@ sub git_project_list {
 		print "<th>Owner</th>\n";
 	} else {
 		print "<th>" .
-		      $cgi->a({-href => "$my_uri?" . esc_param("o=owner"),
+		      $cgi->a({-href => href(project=>undef, order=>'owner'),
 		               -class => "header"}, "Owner") .
 		      "</th>\n";
 	}
@@ -2180,7 +2192,7 @@ sub git_project_list {
 		print "<th>Last Change</th>\n";
 	} else {
 		print "<th>" .
-		      $cgi->a({-href => "$my_uri?" . esc_param("o=age"),
+		      $cgi->a({-href => href(project=>undef, order=>'age'),
 		               -class => "header"}, "Last Change") .
 		      "</th>\n";
 	}

@@ -13,8 +13,14 @@
 #include "cache.h"
 #include <pwd.h>
 
-static char pathname[PATH_MAX];
 static char bad_path[] = "/bad-path/";
+
+static char *get_pathname(void)
+{
+	static char pathname_array[4][PATH_MAX];
+	static int index;
+	return pathname_array[3 & ++index];
+}
 
 static char *cleanup_path(char *path)
 {
@@ -31,6 +37,7 @@ char *mkpath(const char *fmt, ...)
 {
 	va_list args;
 	unsigned len;
+	char *pathname = get_pathname();
 
 	va_start(args, fmt);
 	len = vsnprintf(pathname, PATH_MAX, fmt, args);
@@ -43,6 +50,7 @@ char *mkpath(const char *fmt, ...)
 char *git_path(const char *fmt, ...)
 {
 	const char *git_dir = get_git_dir();
+	char *pathname = get_pathname();
 	va_list args;
 	unsigned len;
 
