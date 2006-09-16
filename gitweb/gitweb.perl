@@ -198,13 +198,10 @@ if (defined $action) {
 
 our $project = $cgi->param('p');
 if (defined $project) {
-	if (!validate_input($project)) {
-		die_error(undef, "Invalid project parameter");
-	}
-	if (!(-d "$projectroot/$project")) {
-		die_error(undef, "No such directory");
-	}
-	if (!(-e "$projectroot/$project/HEAD")) {
+	if (!validate_input($project) ||
+	    !(-d "$projectroot/$project") ||
+	    !(-e "$projectroot/$project/HEAD")) {
+		undef $project;
 		die_error(undef, "No such project");
 	}
 }
