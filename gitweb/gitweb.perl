@@ -2547,11 +2547,7 @@ sub git_heads {
 }
 
 sub git_blob_plain {
-	# blobs defined by non-textual hash id's can be cached
 	my $expires;
-	if ($hash =~ m/^[0-9a-fA-F]{40}$/) {
-		$expires = "+1d";
-	}
 
 	if (!defined $hash) {
 		if (defined $file_name) {
@@ -2561,7 +2557,11 @@ sub git_blob_plain {
 		} else {
 			die_error(undef, "No file name defined");
 		}
+	} elsif ($hash =~ m/^[0-9a-fA-F]{40}$/) {
+		# blobs defined by non-textual hash id's can be cached
+		$expires = "+1d";
 	}
+
 	my $type = shift;
 	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
 		or die_error(undef, "Couldn't cat $file_name, $hash");
@@ -2589,11 +2589,7 @@ sub git_blob_plain {
 }
 
 sub git_blob {
-	# blobs defined by non-textual hash id's can be cached
 	my $expires;
-	if ($hash =~ m/^[0-9a-fA-F]{40}$/) {
-		$expires = "+1d";
-	}
 
 	if (!defined $hash) {
 		if (defined $file_name) {
@@ -2603,7 +2599,11 @@ sub git_blob {
 		} else {
 			die_error(undef, "No file name defined");
 		}
+	} elsif ($hash =~ m/^[0-9a-fA-F]{40}$/) {
+		# blobs defined by non-textual hash id's can be cached
+		$expires = "+1d";
 	}
+
 	my ($have_blame) = gitweb_check_feature('blame');
 	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
 		or die_error(undef, "Couldn't cat $file_name, $hash");
