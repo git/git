@@ -196,12 +196,7 @@ if (defined $action) {
 	}
 }
 
-our $project = ($cgi->param('p') || $ENV{'PATH_INFO'});
-if (defined $project) {
-	$project =~ s|^/||;
-	$project =~ s|/$||;
-	$project = undef unless $project;
-}
+our $project = $cgi->param('p');
 if (defined $project) {
 	if (!validate_input($project)) {
 		die_error(undef, "Invalid project parameter");
@@ -212,7 +207,6 @@ if (defined $project) {
 	if (!(-e "$projectroot/$project/HEAD")) {
 		die_error(undef, "No such project");
 	}
-	$git_dir = "$projectroot/$project";
 }
 
 our $file_name = $cgi->param('f');
@@ -271,6 +265,32 @@ if (defined $searchtext) {
 	}
 	$searchtext = quotemeta $searchtext;
 }
+
+# now read PATH_INFO and use it as alternative to parameters
+our $path_info = $ENV{"PATH_INFO"};
+$path_info =~ s|^/||;
+$path_info =~ s|/$||;
+if (validate_input($path_info) && !defined $project) {
+	$project = $path_info;
+	while ($project && !-e "$projectroot/$project/HEAD") {
+		$project =~ s,/*[^/]*$,,;
+	}
+	if (defined $project) {
+		$project = undef unless $project;
+	}
+	if ($path_info =~ m,^$project/([^/]+)/(.+)$,) {
+		# we got "project.git/branch/filename"
+		$action    ||= "blob_plain";
+		$hash_base ||= $1;
+		$file_name ||= $2;
+	} elsif ($path_info =~ m,^$project/([^/]+)$,) {
+		# we got "project.git/branch"
+		$action ||= "shortlog";
+		$hash   ||= $1;
+	}
+}
+
+$git_dir = "$projectroot/$project";
 
 # dispatch
 my %actions = (
