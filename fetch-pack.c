@@ -166,10 +166,11 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		}
 
 		if (!fetching)
-			packet_write(fd[1], "want %s%s%s%s\n",
+			packet_write(fd[1], "want %s%s%s%s%s\n",
 				     sha1_to_hex(remote),
 				     (multi_ack ? " multi_ack" : ""),
-				     (use_sideband ? " side-band" : ""),
+				     (use_sideband == 2 ? " side-band-64k" : ""),
+				     (use_sideband == 1 ? " side-band" : ""),
 				     (use_thin_pack ? " thin-pack" : ""));
 		else
 			packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
@@ -426,7 +427,12 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 			fprintf(stderr, "Server supports multi_ack\n");
 		multi_ack = 1;
 	}
-	if (server_supports("side-band")) {
+	if (server_supports("side-band-64k")) {
+		if (verbose)
+			fprintf(stderr, "Server supports side-band-64k\n");
+		use_sideband = 2;
+	}
+	else if (server_supports("side-band")) {
 		if (verbose)
 			fprintf(stderr, "Server supports side-band\n");
 		use_sideband = 1;

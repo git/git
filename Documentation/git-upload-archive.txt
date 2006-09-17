@@ -1,0 +1,37 @@
+git-upload-archive(1)
+====================
+
+NAME
+----
+git-upload-archive - Send archive
+
+
+SYNOPSIS
+--------
+'git-upload-archive' <directory>
+
+DESCRIPTION
+-----------
+Invoked by 'git-archive --remote' and sends a generated archive to the
+other end over the git protocol.
+
+This command is usually not invoked directly by the end user.  The UI
+for the protocol is on the 'git-archive' side, and the program pair
+is meant to be used to get an archive from a remote repository.
+
+OPTIONS
+-------
+<directory>::
+	The repository to get a tar archive from.
+
+Author
+------
+Written by Franck Bui-Huu.
+
+Documentation
+--------------
+Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the gitlink:git[7] suite

@@ -12,6 +12,7 @@ struct cmdname_help common_cmds[] = {"
 sort <<\EOF |
 add
 apply
+archive
 bisect
 branch
 checkout
