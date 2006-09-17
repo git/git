@@ -9,7 +9,7 @@ objects into pack files.
 
 SYNOPSIS
 --------
-'git-repack' [-a] [-d] [-f] [-l] [-n] [-q]
+'git-repack' [-a] [-d] [-f] [-l] [-n] [-q] [--window=N] [--depth=N]
 
 DESCRIPTION
 -----------
@@ -55,6 +55,16 @@ OPTIONS
 -n::
         Do not update the server information with
         `git update-server-info`.
+
+--window=[N], --depth=[N]::
+	These two options affects how the objects contained in the pack are
+	stored using delta compression. The objects are first internally
+	sorted by type, size and optionally names and compared against the
+	other objects within `--window` to see if using delta compression saves
+	space. `--depth` limits the maximum delta depth; making it too deep
+	affects the performance on the unpacker side, because delta data needs
+	to be applied that many times to get to the necessary object.
+
 
 Author
 ------
