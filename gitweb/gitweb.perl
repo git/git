@@ -256,7 +256,7 @@ if (defined $hash_parent_base) {
 
 our $page = $cgi->param('pg');
 if (defined $page) {
-	if ($page =~ m/[^0-9]$/) {
+	if ($page =~ m/[^0-9]/) {
 		die_error(undef, "Invalid page parameter");
 	}
 }
