@@ -189,9 +189,6 @@ do $GITWEB_CONFIG if -e $GITWEB_CONFIG;
 # version of the core git binary
 our $git_version = qx($GIT --version) =~ m/git version (.*)$/ ? $1 : "unknown";
 
-# path to the current git repository
-our $git_dir;
-
 $projects_list ||= $projectroot;
 
 # ======================================================================
@@ -273,30 +270,41 @@ if (defined $searchtext) {
 }
 
 # now read PATH_INFO and use it as alternative to parameters
-our $path_info = $ENV{"PATH_INFO"};
-$path_info =~ s|^/||;
-$path_info =~ s|/$||;
-if (validate_input($path_info) && !defined $project) {
+sub evaluate_path_info {
+	return if defined $project;
+	my $path_info = $ENV{"PATH_INFO"};
+	return if !$path_info;
+	$path_info =~ s,(^/|/$),,gs;
+	$path_info = validate_input($path_info);
+	return if !$path_info;
 	$project = $path_info;
 	while ($project && !-e "$projectroot/$project/HEAD") {
 		$project =~ s,/*[^/]*$,,;
 	}
-	if (defined $project) {
-		$project = undef unless $project;
+	if (!$project ||
+	    ($export_ok && !-e "$projectroot/$project/$export_ok") ||
+	    ($strict_export && !project_in_list($project))) {
+		undef $project;
+		return;
 	}
+	# do not change any parameters if an action is given using the query string
+	return if $action;
 	if ($path_info =~ m,^$project/([^/]+)/(.+)$,) {
 		# we got "project.git/branch/filename"
 		$action    ||= "blob_plain";
-		$hash_base ||= $1;
-		$file_name ||= $2;
+		$hash_base ||= validate_input($1);
+		$file_name ||= validate_input($2);
 	} elsif ($path_info =~ m,^$project/([^/]+)$,) {
 		# we got "project.git/branch"
 		$action ||= "shortlog";
-		$hash   ||= $1;
+		$hash   ||= validate_input($1);
 	}
 }
+evaluate_path_info();
 
-$git_dir = "$projectroot/$project";
+# path to the current git repository
+our $git_dir;
+$git_dir = "$projectroot/$project" if $project;
 
 # dispatch
 my %actions = (
