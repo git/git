@@ -160,7 +160,8 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix)
 		if (pfd[1].revents & POLLIN)
 			/* Status stream ready */
 			process_input(pfd[1].fd, 2);
-		if ((pfd[0].revents | pfd[1].revents) == POLLIN)
+		/* Always finish to read data when available */
+		if ((pfd[0].revents | pfd[1].revents) & POLLIN)
 			continue;
 
 		if (waitpid(writer, &status, 0) < 0)
