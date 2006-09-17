@@ -3,9 +3,10 @@
 #include "object.h"
 #include "tag.h"
 
-static const char show_ref_usage[] = "git show-ref [-q|--quiet] [--verify] [-h|--head] [-d|--deref] [--tags] [--heads] [--] [pattern*]";
+static const char show_ref_usage[] = "git show-ref [-q|--quiet] [--verify] [-h|--head] [-d|--deref] [-s|--hash] [--tags] [--heads] [--] [pattern*]";
 
-static int deref_tags = 0, show_head = 0, tags_only = 0, heads_only = 0, found_match = 0, verify = 0, quiet = 0;
+static int deref_tags = 0, show_head = 0, tags_only = 0, heads_only = 0,
+	found_match = 0, verify = 0, quiet = 0, hash_only = 0;
 static const char **pattern;
 
 static int show_ref(const char *refname, const unsigned char *sha1)
@@ -50,7 +51,10 @@ match:
 	}
 	if (quiet)
 		return 0;
-	printf("%s %s\n", sha1_to_hex(sha1), refname);
+	if (hash_only)
+		printf("%s\n", sha1_to_hex(sha1));
+	else
+		printf("%s %s\n", sha1_to_hex(sha1), refname);
 	if (deref_tags && obj->type == OBJ_TAG) {
 		obj = deref_tag(obj, refname, 0);
 		printf("%s %s^{}\n", sha1_to_hex(obj->sha1), refname);
@@ -84,6 +88,10 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "-d") || !strcmp(arg, "--dereference")) {
 			deref_tags = 1;
+			continue;
+		}
+		if (!strcmp(arg, "-s") || !strcmp(arg, "--hash")) {
+			hash_only = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--verify")) {
