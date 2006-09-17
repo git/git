@@ -54,6 +54,13 @@ our $favicon = "++GITWEB_FAVICON++";
 # source of projects list
 our $projects_list = "++GITWEB_LIST++";
 
+# show repository only if this file exists
+# (only effective if this variable evaluates to true)
+our $export_ok = "++GITWEB_EXPORT_OK++";
+
+# only allow viewing of repositories also shown on the overview page
+our $strict_export = "++GITWEB_STRICT_EXPORT++";
+
 # list of git base URLs used for URL to where fetch project from,
 # i.e. full URL is "$git_base_url/$project"
 our @git_base_url_list = ("++GITWEB_BASE_URL++");
@@ -196,23 +203,16 @@ if (defined $action) {
 	}
 }
 
-our $project = ($cgi->param('p') || $ENV{'PATH_INFO'});
+our $project = $cgi->param('p');
 if (defined $project) {
-	$project =~ s|^/||;
-	$project =~ s|/$||;
-	$project = undef unless $project;
-}
-if (defined $project) {
-	if (!validate_input($project)) {
-		die_error(undef, "Invalid project parameter");
-	}
-	if (!(-d "$projectroot/$project")) {
-		die_error(undef, "No such directory");
-	}
-	if (!(-e "$projectroot/$project/HEAD")) {
+	if (!validate_input($project) ||
+	    !(-d "$projectroot/$project") ||
+	    !(-e "$projectroot/$project/HEAD") ||
+	    ($export_ok && !(-e "$projectroot/$project/$export_ok")) ||
+	    ($strict_export && !project_in_list($project))) {
+		undef $project;
 		die_error(undef, "No such project");
 	}
-	$git_dir = "$projectroot/$project";
 }
 
 our $file_name = $cgi->param('f');
@@ -271,6 +271,32 @@ if (defined $searchtext) {
 	}
 	$searchtext = quotemeta $searchtext;
 }
+
+# now read PATH_INFO and use it as alternative to parameters
+our $path_info = $ENV{"PATH_INFO"};
+$path_info =~ s|^/||;
+$path_info =~ s|/$||;
+if (validate_input($path_info) && !defined $project) {
+	$project = $path_info;
+	while ($project && !-e "$projectroot/$project/HEAD") {
+		$project =~ s,/*[^/]*$,,;
+	}
+	if (defined $project) {
+		$project = undef unless $project;
+	}
+	if ($path_info =~ m,^$project/([^/]+)/(.+)$,) {
+		# we got "project.git/branch/filename"
+		$action    ||= "blob_plain";
+		$hash_base ||= $1;
+		$file_name ||= $2;
+	} elsif ($path_info =~ m,^$project/([^/]+)$,) {
+		# we got "project.git/branch"
+		$action ||= "shortlog";
+		$hash   ||= $1;
+	}
+}
+
+$git_dir = "$projectroot/$project";
 
 # dispatch
 my %actions = (
@@ -403,6 +429,12 @@ sub untabify {
 	}
 
 	return $line;
+}
+
+sub project_in_list {
+	my $project = shift;
+	my @list = git_get_projects_list();
+	return @list && scalar(grep { $_->{'path'} eq $project } @list);
 }
 
 ## ----------------------------------------------------------------------
@@ -717,7 +749,8 @@ sub git_get_projects_list {
 
 				my $subdir = substr($File::Find::name, $pfxlen + 1);
 				# we check related file in $projectroot
-				if (-e "$projectroot/$subdir/HEAD") {
+				if (-e "$projectroot/$subdir/HEAD" && (!$export_ok ||
+				    -e "$projectroot/$subdir/$export_ok")) {
 					push @list, { path => $subdir };
 					$File::Find::prune = 1;
 				}
@@ -738,7 +771,8 @@ sub git_get_projects_list {
 			if (!defined $path) {
 				next;
 			}
-			if (-e "$projectroot/$path/HEAD") {
+			if (-e "$projectroot/$path/HEAD" && (!$export_ok ||
+			    -e "$projectroot/$path/$export_ok")) {
 				my $pr = {
 					path => $path,
 					owner => decode("utf8", $owner, Encode::FB_DEFAULT),
@@ -2527,11 +2561,7 @@ sub git_heads {
 }
 
 sub git_blob_plain {
-	# blobs defined by non-textual hash id's can be cached
 	my $expires;
-	if ($hash =~ m/^[0-9a-fA-F]{40}$/) {
-		$expires = "+1d";
-	}
 
 	if (!defined $hash) {
 		if (defined $file_name) {
@@ -2541,7 +2571,11 @@ sub git_blob_plain {
 		} else {
 			die_error(undef, "No file name defined");
 		}
+	} elsif ($hash =~ m/^[0-9a-fA-F]{40}$/) {
+		# blobs defined by non-textual hash id's can be cached
+		$expires = "+1d";
 	}
+
 	my $type = shift;
 	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
 		or die_error(undef, "Couldn't cat $file_name, $hash");
@@ -2569,11 +2603,7 @@ sub git_blob_plain {
 }
 
 sub git_blob {
-	# blobs defined by non-textual hash id's can be cached
 	my $expires;
-	if ($hash =~ m/^[0-9a-fA-F]{40}$/) {
-		$expires = "+1d";
-	}
 
 	if (!defined $hash) {
 		if (defined $file_name) {
@@ -2583,7 +2613,11 @@ sub git_blob {
 		} else {
 			die_error(undef, "No file name defined");
 		}
+	} elsif ($hash =~ m/^[0-9a-fA-F]{40}$/) {
+		# blobs defined by non-textual hash id's can be cached
+		$expires = "+1d";
 	}
+
 	my ($have_blame) = gitweb_check_feature('blame');
 	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
 		or die_error(undef, "Couldn't cat $file_name, $hash");
