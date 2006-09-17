@@ -6,6 +6,8 @@
 #include "diff.h"
 #include "refs.h"
 #include "revision.h"
+#include <regex.h>
+#include "grep.h"
 
 static char *path_name(struct name_path *path, const char *name)
 {
@@ -1045,6 +1047,15 @@ static void mark_boundary_to_show(struct commit *commit)
 	}
 }
 
+static int commit_match(struct commit *commit, struct rev_info *opt)
+{
+	if (!opt->header_filter && !opt->message_filter)
+		return 1;
+
+	/* match it here */
+	return 1;
+}
+
 struct commit *get_revision(struct rev_info *revs)
 {
 	struct commit_list *list = revs->commits;
@@ -1104,6 +1115,8 @@ struct commit *get_revision(struct rev_info *revs)
 			continue;
 		if (revs->no_merges &&
 		    commit->parents && commit->parents->next)
+			continue;
+		if (!commit_match(commit, revs))
 			continue;
 		if (revs->prune_fn && revs->dense) {
 			/* Commit without changes? */
