@@ -259,7 +259,7 @@ extern int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 extern int write_sha1_to_fd(int fd, const unsigned char *sha1);
 extern int move_temp_to_file(const char *tmpfile, const char *filename);
 
-extern int has_sha1_pack(const unsigned char *sha1);
+extern int has_sha1_pack(const unsigned char *sha1, const char **ignore);
 extern int has_sha1_file(const unsigned char *sha1);
 extern void *map_sha1_file(const unsigned char *sha1, unsigned long *);
 extern int legacy_loose_object(unsigned char *);

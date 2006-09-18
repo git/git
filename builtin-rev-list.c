@@ -7,6 +7,7 @@
 #include "tree-walk.h"
 #include "diff.h"
 #include "revision.h"
+#include "list-objects.h"
 #include "builtin.h"
 
 /* bits #0-15 in revision.h */
@@ -98,104 +99,24 @@ static void show_commit(struct commit *commit)
 	commit->buffer = NULL;
 }
 
-static void process_blob(struct blob *blob,
-			 struct object_array *p,
-			 struct name_path *path,
-			 const char *name)
+static void show_object(struct object_array_entry *p)
 {
-	struct object *obj = &blob->object;
-
-	if (!revs.blob_objects)
-		return;
-	if (obj->flags & (UNINTERESTING | SEEN))
-		return;
-	obj->flags |= SEEN;
-	name = xstrdup(name);
-	add_object(obj, p, path, name);
+	/* An object with name "foo\n0000000..." can be used to
+	 * confuse downstream git-pack-objects very badly.
+	 */
+	const char *ep = strchr(p->name, '\n');
+	if (ep) {
+		printf("%s %.*s\n", sha1_to_hex(p->item->sha1),
+		       (int) (ep - p->name),
+		       p->name);
+	}
+	else
+		printf("%s %s\n", sha1_to_hex(p->item->sha1), p->name);
 }
 
-static void process_tree(struct tree *tree,
-			 struct object_array *p,
-			 struct name_path *path,
-			 const char *name)
+static void show_edge(struct commit *commit)
 {
-	struct object *obj = &tree->object;
-	struct tree_desc desc;
-	struct name_entry entry;
-	struct name_path me;
-
-	if (!revs.tree_objects)
-		return;
-	if (obj->flags & (UNINTERESTING | SEEN))
-		return;
-	if (parse_tree(tree) < 0)
-		die("bad tree object %s", sha1_to_hex(obj->sha1));
-	obj->flags |= SEEN;
-	name = xstrdup(name);
-	add_object(obj, p, path, name);
-	me.up = path;
-	me.elem = name;
-	me.elem_len = strlen(name);
-
-	desc.buf = tree->buffer;
-	desc.size = tree->size;
-
-	while (tree_entry(&desc, &entry)) {
-		if (S_ISDIR(entry.mode))
-			process_tree(lookup_tree(entry.sha1), p, &me, entry.path);
-		else
-			process_blob(lookup_blob(entry.sha1), p, &me, entry.path);
-	}
-	free(tree->buffer);
-	tree->buffer = NULL;
-}
-
-static void show_commit_list(struct rev_info *revs)
-{
-	int i;
-	struct commit *commit;
-	struct object_array objects = { 0, 0, NULL };
-
-	while ((commit = get_revision(revs)) != NULL) {
-		process_tree(commit->tree, &objects, NULL, "");
-		show_commit(commit);
-	}
-	for (i = 0; i < revs->pending.nr; i++) {
-		struct object_array_entry *pending = revs->pending.objects + i;
-		struct object *obj = pending->item;
-		const char *name = pending->name;
-		if (obj->flags & (UNINTERESTING | SEEN))
-			continue;
-		if (obj->type == OBJ_TAG) {
-			obj->flags |= SEEN;
-			add_object_array(obj, name, &objects);
-			continue;
-		}
-		if (obj->type == OBJ_TREE) {
-			process_tree((struct tree *)obj, &objects, NULL, name);
-			continue;
-		}
-		if (obj->type == OBJ_BLOB) {
-			process_blob((struct blob *)obj, &objects, NULL, name);
-			continue;
-		}
-		die("unknown pending object %s (%s)", sha1_to_hex(obj->sha1), name);
-	}
-	for (i = 0; i < objects.nr; i++) {
-		struct object_array_entry *p = objects.objects + i;
-
-		/* An object with name "foo\n0000000..." can be used to
-		 * confuse downstream git-pack-objects very badly.
-		 */
-		const char *ep = strchr(p->name, '\n');
-		if (ep) {
-			printf("%s %.*s\n", sha1_to_hex(p->item->sha1),
-			       (int) (ep - p->name),
-			       p->name);
-		}
-		else
-			printf("%s %s\n", sha1_to_hex(p->item->sha1), p->name);
-	}
+	printf("-%s\n", sha1_to_hex(commit->object.sha1));
 }
 
 /*
@@ -274,35 +195,6 @@ static struct commit_list *find_bisection(struct commit_list *list)
 	if (best)
 		best->next = NULL;
 	return best;
-}
-
-static void mark_edge_parents_uninteresting(struct commit *commit)
-{
-	struct commit_list *parents;
-
-	for (parents = commit->parents; parents; parents = parents->next) {
-		struct commit *parent = parents->item;
-		if (!(parent->object.flags & UNINTERESTING))
-			continue;
-		mark_tree_uninteresting(parent->tree);
-		if (revs.edge_hint && !(parent->object.flags & SHOWN)) {
-			parent->object.flags |= SHOWN;
-			printf("-%s\n", sha1_to_hex(parent->object.sha1));
-		}
-	}
-}
-
-static void mark_edges_uninteresting(struct commit_list *list)
-{
-	for ( ; list; list = list->next) {
-		struct commit *commit = list->item;
-
-		if (commit->object.flags & UNINTERESTING) {
-			mark_tree_uninteresting(commit->tree);
-			continue;
-		}
-		mark_edge_parents_uninteresting(commit);
-	}
 }
 
 static void read_revisions_from_stdin(struct rev_info *revs)
@@ -384,12 +276,12 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 
 	prepare_revision_walk(&revs);
 	if (revs.tree_objects)
-		mark_edges_uninteresting(revs.commits);
+		mark_edges_uninteresting(revs.commits, &revs, show_edge);
 
 	if (bisect_list)
 		revs.commits = find_bisection(revs.commits);
 
-	show_commit_list(&revs);
+	traverse_commit_list(&revs, show_commit, show_object);
 
 	return 0;
 }
