@@ -329,7 +329,8 @@ static int got_sha1(char *hex, unsigned char *sha1)
 static int get_common_commits(void)
 {
 	static char line[1000];
-	unsigned char sha1[20], last_sha1[20];
+	unsigned char sha1[20];
+	char hex[41], last_hex[41];
 	int len;
 
 	track_object_refs = 0;
@@ -346,21 +347,22 @@ static int get_common_commits(void)
 		}
 		len = strip(line, len);
 		if (!strncmp(line, "have ", 5)) {
-			if (got_sha1(line+5, sha1) &&
-			    (multi_ack || have_obj.nr == 1)) {
-				packet_write(1, "ACK %s%s\n",
-					     sha1_to_hex(sha1),
-					     multi_ack ?  " continue" : "");
-				if (multi_ack)
-					hashcpy(last_sha1, sha1);
+			if (got_sha1(line+5, sha1)) {
+				memcpy(hex, sha1_to_hex(sha1), 41);
+				if (multi_ack) {
+					const char *msg = "ACK %s continue\n";
+					packet_write(1, msg, hex);
+					memcpy(last_hex, hex, 41);
+				}
+				else if (have_obj.nr == 1)
+					packet_write(1, "ACK %s\n", hex);
 			}
 			continue;
 		}
 		if (!strcmp(line, "done")) {
 			if (have_obj.nr > 0) {
 				if (multi_ack)
-					packet_write(1, "ACK %s\n",
-							sha1_to_hex(last_sha1));
+					packet_write(1, "ACK %s\n", last_hex);
 				return 0;
 			}
 			packet_write(1, "NAK\n");
