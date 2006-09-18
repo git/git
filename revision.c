@@ -677,6 +677,7 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 static void add_header_grep(struct rev_info *revs, const char *field, const char *pattern)
 {
 	char *pat;
+	const char *prefix;
 	int patlen, fldlen;
 
 	if (!revs->header_filter) {
@@ -689,8 +690,13 @@ static void add_header_grep(struct rev_info *revs, const char *field, const char
 
 	fldlen = strlen(field);
 	patlen = strlen(pattern);
-	pat = xmalloc(patlen + fldlen + 3);
-	sprintf(pat, "^%s %s", field, pattern);
+	pat = xmalloc(patlen + fldlen + 10);
+	prefix = ".*";
+	if (*pattern == '^') {
+		prefix = "";
+		pattern++;
+	}
+	sprintf(pat, "^%s %s%s", field, prefix, pattern);
 	append_grep_pattern(revs->header_filter, pat,
 			    "command line", 0, GREP_PATTERN);
 }
