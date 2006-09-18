@@ -73,6 +73,7 @@ git-name-rev
 git-mv
 git-pack-redundant
 git-pack-objects
+git-pack-refs
 git-parse-remote
 git-patch-id
 git-peek-remote
