@@ -397,3 +397,10 @@ int read_directory(struct dir_struct *dir, const char *path, const char *base, i
 	qsort(dir->entries, dir->nr, sizeof(struct dir_entry *), cmp_name);
 	return dir->nr;
 }
+
+int
+file_exists(const char *f)
+{
+  struct stat sb;
+  return stat(f, &sb) == 0;
+}

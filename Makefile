@@ -253,7 +253,8 @@ LIB_OBJS = \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
 	fetch-clone.o revision.o pager.o tree-walk.o xdiff-interface.o \
 	write_or_die.o trace.o \
-	alloc.o merge-file.o path-list.o help.o unpack-trees.o $(DIFF_OBJS)
+	alloc.o merge-file.o path-list.o help.o unpack-trees.o $(DIFF_OBJS) \
+	color.o wt-status.o
 
 BUILTIN_OBJS = \
 	builtin-add.o \
@@ -288,6 +289,7 @@ BUILTIN_OBJS = \
 	builtin-rev-list.o \
 	builtin-rev-parse.o \
 	builtin-rm.o \
+	builtin-runstatus.o \
 	builtin-show-branch.o \
 	builtin-stripspace.o \
 	builtin-symbolic-ref.o \

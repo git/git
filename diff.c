@@ -10,6 +10,7 @@
 #include "diffcore.h"
 #include "delta.h"
 #include "xdiff-interface.h"
+#include "color.h"
 
 static int use_size_cache;
 
@@ -17,8 +18,7 @@ static int diff_detect_rename_default;
 static int diff_rename_limit_default = -1;
 static int diff_use_color_default;
 
-/* "\033[1;38;5;2xx;48;5;2xxm\0" is 23 bytes */
-static char diff_colors[][24] = {
+static char diff_colors[][COLOR_MAXLEN] = {
 	"\033[m",	/* reset */
 	"",		/* normal */
 	"\033[1m",	/* bold */
@@ -45,119 +45,6 @@ static int parse_diff_color_slot(const char *var, int ofs)
 	die("bad config variable '%s'", var);
 }
 
-static int parse_color(const char *name, int len)
-{
-	static const char * const color_names[] = {
-		"normal", "black", "red", "green", "yellow",
-		"blue", "magenta", "cyan", "white"
-	};
-	char *end;
-	int i;
-	for (i = 0; i < ARRAY_SIZE(color_names); i++) {
-		const char *str = color_names[i];
-		if (!strncasecmp(name, str, len) && !str[len])
-			return i - 1;
-	}
-	i = strtol(name, &end, 10);
-	if (*name && !*end && i >= -1 && i <= 255)
-		return i;
-	return -2;
-}
-
-static int parse_attr(const char *name, int len)
-{
-	static const int attr_values[] = { 1, 2, 4, 5, 7 };
-	static const char * const attr_names[] = {
-		"bold", "dim", "ul", "blink", "reverse"
-	};
-	int i;
-	for (i = 0; i < ARRAY_SIZE(attr_names); i++) {
-		const char *str = attr_names[i];
-		if (!strncasecmp(name, str, len) && !str[len])
-			return attr_values[i];
-	}
-	return -1;
-}
-
-static void parse_diff_color_value(const char *value, const char *var, char *dst)
-{
-	const char *ptr = value;
-	int attr = -1;
-	int fg = -2;
-	int bg = -2;
-
-	if (!strcasecmp(value, "reset")) {
-		strcpy(dst, "\033[m");
-		return;
-	}
-
-	/* [fg [bg]] [attr] */
-	while (*ptr) {
-		const char *word = ptr;
-		int val, len = 0;
-
-		while (word[len] && !isspace(word[len]))
-			len++;
-
-		ptr = word + len;
-		while (*ptr && isspace(*ptr))
-			ptr++;
-
-		val = parse_color(word, len);
-		if (val >= -1) {
-			if (fg == -2) {
-				fg = val;
-				continue;
-			}
-			if (bg == -2) {
-				bg = val;
-				continue;
-			}
-			goto bad;
-		}
-		val = parse_attr(word, len);
-		if (val < 0 || attr != -1)
-			goto bad;
-		attr = val;
-	}
-
-	if (attr >= 0 || fg >= 0 || bg >= 0) {
-		int sep = 0;
-
-		*dst++ = '\033';
-		*dst++ = '[';
-		if (attr >= 0) {
-			*dst++ = '0' + attr;
-			sep++;
-		}
-		if (fg >= 0) {
-			if (sep++)
-				*dst++ = ';';
-			if (fg < 8) {
-				*dst++ = '3';
-				*dst++ = '0' + fg;
-			} else {
-				dst += sprintf(dst, "38;5;%d", fg);
-			}
-		}
-		if (bg >= 0) {
-			if (sep++)
-				*dst++ = ';';
-			if (bg < 8) {
-				*dst++ = '4';
-				*dst++ = '0' + bg;
-			} else {
-				dst += sprintf(dst, "48;5;%d", bg);
-			}
-		}
-		*dst++ = 'm';
-	}
-	*dst = 0;
-	return;
-bad:
-	die("bad config value '%s' for variable '%s'", value, var);
-}
-
 /*
  * These are to give UI layer defaults.
  * The core-level commands such as git-diff-files should
@@ -171,22 +58,7 @@ int git_diff_ui_config(const char *var, const char *value)
 		return 0;
 	}
 	if (!strcmp(var, "diff.color")) {
-		if (!value)
-			diff_use_color_default = 1; /* bool */
-		else if (!strcasecmp(value, "auto")) {
-			diff_use_color_default = 0;
-			if (isatty(1) || (pager_in_use && pager_use_color)) {
-				char *term = getenv("TERM");
-				if (term && strcmp(term, "dumb"))
-					diff_use_color_default = 1;
-			}
-		}
-		else if (!strcasecmp(value, "never"))
-			diff_use_color_default = 0;
-		else if (!strcasecmp(value, "always"))
-			diff_use_color_default = 1;
-		else
-			diff_use_color_default = git_config_bool(var, value);
+		diff_use_color_default = git_config_colorbool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.renames")) {
@@ -201,7 +73,7 @@ int git_diff_ui_config(const char *var, const char *value)
 	}
 	if (!strncmp(var, "diff.color.", 11)) {
 		int slot = parse_diff_color_slot(var, 11);
-		parse_diff_color_value(value, var, diff_colors[slot]);
+		color_parse(value, var, diff_colors[slot]);
 		return 0;
 	}
 	return git_default_config(var, value);
@@ -2592,6 +2464,9 @@ void diff_flush(struct diff_options *options)
 				diff_flush_patch(p, options);
 		}
 	}
+
+	if (output_format & DIFF_FORMAT_CALLBACK)
+		options->format_callback(q, options, options->format_callback_data);
 
 	for (i = 0; i < q->nr; i++)
 		diff_free_filepair(q->queue[i]);
