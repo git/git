@@ -458,15 +458,13 @@ static void fsck_object_dir(const char *path)
 static int fsck_head_link(void)
 {
 	unsigned char sha1[20];
-	const char *git_HEAD = xstrdup(git_path("HEAD"));
-	const char *git_refs_heads_master = resolve_ref(git_HEAD, sha1, 1);
-	int pfxlen = strlen(git_HEAD) - 4; /* strip .../.git/ part */
+	const char *head_points_at = resolve_ref("HEAD", sha1, 1);
 
-	if (!git_refs_heads_master)
+	if (!head_points_at)
 		return error("HEAD is not a symbolic ref");
-	if (strncmp(git_refs_heads_master + pfxlen, "refs/heads/", 11))
+	if (strncmp(head_points_at, "refs/heads/", 11))
 		return error("HEAD points to something strange (%s)",
-			     git_refs_heads_master + pfxlen);
+			     head_points_at);
 	if (is_null_sha1(sha1))
 		return error("HEAD: not a valid git pointer");
 	return 0;
