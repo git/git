@@ -269,7 +269,9 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	    revs.diff)
 		usage(rev_list_usage);
 
-	save_commit_buffer = revs.verbose_header;
+	save_commit_buffer = revs.verbose_header ||
+		revs.header_filter ||
+		revs.message_filter;
 	track_object_refs = 0;
 	if (bisect_list)
 		revs.limited = 1;
