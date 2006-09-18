@@ -102,6 +102,7 @@ git-shortlog
 git-show
 git-show-branch
 git-show-index
+git-show-ref
 git-ssh-fetch
 git-ssh-pull
 git-ssh-push
