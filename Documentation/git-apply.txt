@@ -95,6 +95,16 @@ OPTIONS
 	context exist they all must match.  By default no context is
 	ever ignored.
 
+--unidiff-zero::
+	By default, gitlink:git-apply[1] expects that the patch being
+	applied is a unified diff with at least one line of context.
+	This provides good safety measures, but breaks down when
+	applying a diff generated with --unified=0. To bypass these
+	checks use '--unidiff-zero'.
++
+Note, for the reasons stated above usage of context-free patches are
+discouraged.
+
 --apply::
 	If you use any of the options marked "Turns off
 	'apply'" above, gitlink:git-apply[1] reads and outputs the

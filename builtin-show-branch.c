@@ -437,21 +437,13 @@ static void snarf_refs(int head, int tag)
 	}
 }
 
-static int rev_is_head(char *head_path, int headlen, char *name,
+static int rev_is_head(char *head, int headlen, char *name,
 		       unsigned char *head_sha1, unsigned char *sha1)
 {
-	int namelen;
-	if ((!head_path[0]) ||
+	if ((!head[0]) ||
 	    (head_sha1 && sha1 && hashcmp(head_sha1, sha1)))
 		return 0;
-	namelen = strlen(name);
-	if ((headlen < namelen) ||
-	    memcmp(head_path + headlen - namelen, name, namelen))
-		return 0;
-	if (headlen == namelen ||
-	    head_path[headlen - namelen - 1] == '/')
-		return 1;
-	return 0;
+	return !strcmp(head, name);
 }
 
 static int show_merge_base(struct commit_list *seen, int num_rev)
@@ -559,9 +551,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	int all_heads = 0, all_tags = 0;
 	int all_mask, all_revs;
 	int lifo = 1;
-	char head_path[128];
-	const char *head_path_p;
-	int head_path_len;
+	char head[128];
+	const char *head_p;
+	int head_len;
 	unsigned char head_sha1[20];
 	int merge_base = 0;
 	int independent = 0;
@@ -638,31 +630,31 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		ac--; av++;
 	}
 
-	head_path_p = resolve_ref(git_path("HEAD"), head_sha1, 1);
-	if (head_path_p) {
-		head_path_len = strlen(head_path_p);
-		memcpy(head_path, head_path_p, head_path_len + 1);
+	head_p = resolve_ref("HEAD", head_sha1, 1);
+	if (head_p) {
+		head_len = strlen(head_p);
+		memcpy(head, head_p, head_len + 1);
 	}
 	else {
-		head_path_len = 0;
-		head_path[0] = 0;
+		head_len = 0;
+		head[0] = 0;
 	}
 
-	if (with_current_branch && head_path_p) {
+	if (with_current_branch && head_p) {
 		int has_head = 0;
 		for (i = 0; !has_head && i < ref_name_cnt; i++) {
 			/* We are only interested in adding the branch
 			 * HEAD points at.
 			 */
-			if (rev_is_head(head_path,
-					head_path_len,
+			if (rev_is_head(head,
+					head_len,
 					ref_name[i],
 					head_sha1, NULL))
 				has_head++;
 		}
 		if (!has_head) {
-			int pfxlen = strlen(git_path("refs/heads/"));
-			append_one_rev(head_path + pfxlen);
+			int pfxlen = strlen("refs/heads/");
+			append_one_rev(head + pfxlen);
 		}
 	}
 
@@ -713,8 +705,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	if (1 < num_rev || extra < 0) {
 		for (i = 0; i < num_rev; i++) {
 			int j;
-			int is_head = rev_is_head(head_path,
-						  head_path_len,
+			int is_head = rev_is_head(head,
+						  head_len,
 						  ref_name[i],
 						  head_sha1,
 						  rev[i]->object.sha1);

@@ -271,6 +271,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "write-tree", cmd_write_tree, RUN_SETUP },
 		{ "verify-pack", cmd_verify_pack },
 		{ "show-ref", cmd_show_ref, RUN_SETUP },
+		{ "pack-refs", cmd_pack_refs, RUN_SETUP },
 	};
 	int i;
 
