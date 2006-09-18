@@ -280,6 +280,15 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 	};
 	int i;
 
+#ifdef STRIP_EXTENSION
+	i = strlen(argv[0]) - strlen(STRIP_EXTENSION);
+	if (i > 0 && !strcmp(argv[0] + i, STRIP_EXTENSION)) {
+		char *argv0 = strdup(argv[0]);
+		argv[0] = cmd = argv0;
+		argv0[i] = '\0';
+	}
+#endif
+
 	/* Turn "git cmd --help" into "git help cmd" */
 	if (argc > 1 && !strcmp(argv[1], "--help")) {
 		argv[1] = argv[0];
@@ -324,6 +333,16 @@ int main(int argc, const char **argv, char **envp)
 			exec_path = cmd;
 		cmd = slash;
 	}
+
+#ifdef __MINGW32__
+	slash = strrchr(cmd, '\\');
+	if (slash) {
+		*slash++ = 0;
+		if (cmd[1] == ':')
+			exec_path = cmd;
+		cmd = slash;
+	}
+#endif
 
 	/*
 	 * "git-xxxx" is the same as "git xxxx", but we obviously:
