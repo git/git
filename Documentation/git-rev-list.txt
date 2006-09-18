@@ -20,6 +20,7 @@ SYNOPSIS
 	     [ \--stdin ]
 	     [ \--topo-order ]
 	     [ \--parents ]
+	     [ \--(author|committer|grep)=<pattern> ]
 	     [ [\--objects | \--objects-edge] [ \--unpacked ] ]
 	     [ \--pretty | \--header ]
 	     [ \--bisect ]
@@ -153,6 +154,16 @@ limiting may be applied.
 --max-age='timestamp', --min-age='timestamp'::
 
 	Limit the commits output to specified time range.
+
+--author='pattern', --committer='pattern'::
+
+	Limit the commits output to ones with author/committer
+	header lines that match the specified pattern.
+
+--grep='pattern'::
+
+	Limit the commits output to ones with log message that
+	matches the specified pattern.
 
 --remove-empty::
 
