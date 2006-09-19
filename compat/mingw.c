@@ -1,5 +1,9 @@
 #include <stdint.h>
+#include <stdlib.h>
+#include <fcntl.h>
 #include "../git-compat-util.h"
+
+unsigned int _CRT_fmode = _O_BINARY;
 
 int readlink(const char *path, char *buf, size_t bufsiz)
 {
