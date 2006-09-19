@@ -2576,7 +2576,7 @@ sub git_tags {
 	git_print_header_div('summary', $project);
 
 	my ($taglist) = git_get_refs_list("tags");
-	if (defined @$taglist) {
+	if (@$taglist) {
 		git_tags_body($taglist);
 	}
 	git_footer_html();
@@ -2589,7 +2589,7 @@ sub git_heads {
 	git_print_header_div('summary', $project);
 
 	my ($headlist) = git_get_refs_list("heads");
-	if (defined @$headlist) {
+	if (@$headlist) {
 		git_heads_body($headlist, $head);
 	}
 	git_footer_html();
