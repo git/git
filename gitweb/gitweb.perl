@@ -1197,7 +1197,7 @@ sub mimetype_guess_file {
 	}
 	close(MIME);
 
-	$filename =~ /\.(.*?)$/;
+	$filename =~ /\.([^.]*)$/;
 	return $mimemap{$1};
 }
 
