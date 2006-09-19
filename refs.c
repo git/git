@@ -339,6 +339,7 @@ int create_symref(const char *ref_target, const char *refs_heads_master)
 		error("Unable to write to %s", lockpath);
 		return -2;
 	}
+	unlink(git_HEAD);
 	if (rename(lockpath, git_HEAD) < 0) {
 		unlink(lockpath);
 		error("Unable to create %s", git_HEAD);
