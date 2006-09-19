@@ -843,16 +843,10 @@ sub git_get_project_owner {
 sub git_get_references {
 	my $type = shift || "";
 	my %refs;
-	my $fd;
 	# 5dc01c595e6c6ec9ccda4f6f69c131c0dd945f8c	refs/tags/v2.6.11
 	# c39ae07f393806ccf406ef966e9a15afc43cc36a	refs/tags/v2.6.11^{}
-	if (-f "$projectroot/$project/info/refs") {
-		open $fd, "$projectroot/$project/info/refs"
-			or return;
-	} else {
-		open $fd, "-|", git_cmd(), "ls-remote", "."
-			or return;
-	}
+	open my $fd, "-|", $GIT, "peek-remote", "$projectroot/$project/"
+		or return;
 
 	while (my $line = <$fd>) {
 		chomp $line;
