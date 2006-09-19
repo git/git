@@ -462,10 +462,12 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref,
 struct ref_lock *lock_ref_sha1(const char *ref,
 	const unsigned char *old_sha1, int mustexist)
 {
+	char refpath[PATH_MAX];
 	if (check_ref_format(ref))
 		return NULL;
-	return lock_ref_sha1_basic(mkpath("refs/%s", ref),
-		5 + strlen(ref), old_sha1, mustexist);
+	strcpy(refpath, mkpath("refs/%s", ref));
+	return lock_ref_sha1_basic(refpath, strlen(refpath),
+		old_sha1, mustexist);
 }
 
 struct ref_lock *lock_any_ref_for_update(const char *ref,
