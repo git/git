@@ -352,6 +352,10 @@ if (defined $project) {
 if (!defined($actions{$action})) {
 	die_error(undef, "Unknown action");
 }
+if ($action !~ m/^(opml|project_list|project_index)$/ &&
+    !$project) {
+	die_error(undef, "Project needed");
+}
 $actions{$action}->();
 exit;
 
