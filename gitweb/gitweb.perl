@@ -1134,7 +1134,8 @@ sub parse_ls_tree_line ($;%) {
 ## parse to array of hashes functions
 
 sub git_get_refs_list {
-	my $ref_dir = shift;
+	my $type = shift || "";
+	my %refs;
 	my @reflist;
 
 	my @refs;
@@ -1142,14 +1143,21 @@ sub git_get_refs_list {
 		or return;
 	while (my $line = <$fd>) {
 		chomp $line;
-		if ($line =~ m/^([0-9a-fA-F]{40})\t$ref_dir\/?([^\^]+)$/) {
-			push @refs, { hash => $1, name => $2 };
-		} elsif ($line =~ m/^[0-9a-fA-F]{40}\t$ref_dir\/?(.*)\^\{\}$/ &&
-		         $1 eq $refs[-1]{'name'}) {
-			# most likely a tag is followed by its peeled
-			# (deref) one, and when that happens we know the
-			# previous one was of type 'tag'.
-			$refs[-1]{'type'} = "tag";
+		if ($line =~ m/^([0-9a-fA-F]{40})\trefs\/($type\/?([^\^]+))(\^\{\})?$/) {
+			if (defined $refs{$1}) {
+				push @{$refs{$1}}, $2;
+			} else {
+				$refs{$1} = [ $2 ];
+			}
+
+			if (! $4) { # unpeeled, direct reference
+				push @refs, { hash => $1, name => $3 }; # without type
+			} elsif ($3 eq $refs[-1]{'name'}) {
+				# most likely a tag is followed by its peeled
+				# (deref) one, and when that happens we know the
+				# previous one was of type 'tag'.
+				$refs[-1]{'type'} = "tag";
+			}
 		}
 	}
 	close $fd;
@@ -1165,7 +1173,7 @@ sub git_get_refs_list {
 	}
 	# sort refs by age
 	@reflist = sort {$b->{'epoch'} <=> $a->{'epoch'}} @reflist;
-	return \@reflist;
+	return (\@reflist, \%refs);
 }
 
 ## ----------------------------------------------------------------------
@@ -2129,14 +2137,14 @@ sub git_tags_body {
 
 sub git_heads_body {
 	# uses global variable $project
-	my ($taglist, $head, $from, $to, $extra) = @_;
+	my ($headlist, $head, $from, $to, $extra) = @_;
 	$from = 0 unless defined $from;
-	$to = $#{$taglist} if (!defined $to || $#{$taglist} < $to);
+	$to = $#{$headlist} if (!defined $to || $#{$headlist} < $to);
 
 	print "<table class=\"heads\" cellspacing=\"0\">\n";
 	my $alternate = 0;
 	for (my $i = $from; $i <= $to; $i++) {
-		my $entry = $taglist->[$i];
+		my $entry = $headlist->[$i];
 		my %tag = %$entry;
 		my $curr = $tag{'id'} eq $head;
 		if ($alternate) {
@@ -2306,7 +2314,19 @@ sub git_summary {
 
 	my $owner = git_get_project_owner($project);
 
-	my $refs = git_get_references();
+	my ($reflist, $refs) = git_get_refs_list();
+
+	my @taglist;
+	my @headlist;
+	foreach my $ref (@$reflist) {
+		if ($ref->{'name'} =~ s!^heads/!!) {
+			push @headlist, $ref;
+		} else {
+			$ref->{'name'} =~ s!^tags/!!;
+			push @taglist, $ref;
+		}
+	}
+
 	git_header_html();
 	git_print_page_nav('summary','', $head);
 
@@ -2336,17 +2356,15 @@ sub git_summary {
 	git_shortlog_body(\@revlist, 0, 15, $refs,
 	                  $cgi->a({-href => href(action=>"shortlog")}, "..."));
 
-	my $taglist = git_get_refs_list("refs/tags");
-	if (defined @$taglist) {
+	if (@taglist) {
 		git_print_header_div('tags');
-		git_tags_body($taglist, 0, 15,
+		git_tags_body(\@taglist, 0, 15,
 		              $cgi->a({-href => href(action=>"tags")}, "..."));
 	}
 
-	my $headlist = git_get_refs_list("refs/heads");
-	if (defined @$headlist) {
+	if (@headlist) {
 		git_print_header_div('heads');
-		git_heads_body($headlist, $head, 0, 15,
+		git_heads_body(\@headlist, $head, 0, 15,
 		               $cgi->a({-href => href(action=>"heads")}, "..."));
 	}
 
@@ -2557,7 +2575,7 @@ sub git_tags {
 	git_print_page_nav('','', $head,undef,$head);
 	git_print_header_div('summary', $project);
 
-	my $taglist = git_get_refs_list("refs/tags");
+	my ($taglist) = git_get_refs_list("tags");
 	if (defined @$taglist) {
 		git_tags_body($taglist);
 	}
@@ -2570,9 +2588,9 @@ sub git_heads {
 	git_print_page_nav('','', $head,undef,$head);
 	git_print_header_div('summary', $project);
 
-	my $taglist = git_get_refs_list("refs/heads");
-	if (defined @$taglist) {
-		git_heads_body($taglist, $head);
+	my ($headlist) = git_get_refs_list("heads");
+	if (defined @$headlist) {
+		git_heads_body($headlist, $head);
 	}
 	git_footer_html();
 }
