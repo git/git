@@ -30,6 +30,22 @@ fi
 
 . ./test-lib.sh
 
+test "$no_symlinks" && {
+	DIFF=$(which diff)
+
+	function diff () {
+		opt=
+		case "$1" in -*) opt=$1; shift;; esac
+		tr -d "\015" < $1 > $1.doof
+		grep -v "^:\?120000" < $2 | \
+			sed -e s/58a09c23e2ca152193f2786e06986b7b6712bdbe/600f42758e4458c37c2c1f8063378f540b4efad7/ \
+			    -e s/21ae8269cacbe57ae09138dcc3a2887f904d02b3/cfb8591b2f65de8b8cc1020cd7d9e67e7793b325/ \
+			    -e s/3c5e5399f3a333eddecce7a9b9465b63f65f51e2/ce580448f0148b985a513b693fdf7d802cacb44f/ \
+			> $2.doof
+		$DIFF $opt $1.doof $2.doof
+	}
+}
+
 ################################################################
 # git-init has been done in an empty repository.
 # make sure it is empty.
@@ -113,6 +129,7 @@ cat >expected <<\EOF
 100644 00fb5908cb97c2564a9783c0c64087333b3b464f 0	path3/subp3/file3
 120000 6649a1ebe9e9f1c553b66f5a6e74136a07ccc57c 0	path3/subp3/file3sym
 EOF
+
 test_expect_success \
     'validate git-ls-files output for a known tree.' \
     'diff current expected'
@@ -120,9 +137,11 @@ test_expect_success \
 test_expect_success \
     'writing tree out with git-write-tree.' \
     'tree=$(git-write-tree)'
+expected_tree=087704a96baf1c2d1c869a8b084481e121c88b5b
+test "$no_symlinks" && expected_tree=8e18edf7d7edcf4371a3ac6ae5f07c2641db7c46
 test_expect_success \
     'validate object ID for a known tree.' \
-    'test "$tree" = 087704a96baf1c2d1c869a8b084481e121c88b5b'
+    'test "$tree" = "$expected_tree"'
 
 test_expect_success \
     'showing tree with git-ls-tree' \
@@ -180,16 +199,20 @@ test_expect_success \
 test_expect_success \
     'writing partial tree out with git-write-tree --prefix.' \
     'ptree=$(git-write-tree --prefix=path3)'
+expected_tree=21ae8269cacbe57ae09138dcc3a2887f904d02b3
+test "$no_symlinks" && expected_tree=cfb8591b2f65de8b8cc1020cd7d9e67e7793b325
 test_expect_success \
     'validate object ID for a known tree.' \
-    'test "$ptree" = 21ae8269cacbe57ae09138dcc3a2887f904d02b3'
+    'test "$ptree" = "$expected_tree"'
 
 test_expect_success \
     'writing partial tree out with git-write-tree --prefix.' \
     'ptree=$(git-write-tree --prefix=path3/subp3)'
+expect_tree=3c5e5399f3a333eddecce7a9b9465b63f65f51e2
+test "$no_symlinks" && expect_tree=ce580448f0148b985a513b693fdf7d802cacb44f
 test_expect_success \
     'validate object ID for a known tree.' \
-    'test "$ptree" = 3c5e5399f3a333eddecce7a9b9465b63f65f51e2'
+    'test "$ptree" = "$expect_tree"'
 
 cat >badobjects <<EOF
 100644 blob 1000000000000000000000000000000000000000	dir/file1
@@ -234,7 +257,7 @@ cat >expected <<\EOF
 EOF
 test_expect_success \
     'validate git-diff-files output for a know cache/work tree state.' \
-    'git-diff-files >current && diff >/dev/null -b current expected'
+    'git-diff-files >current && diff -b current expected'
 
 test_expect_success \
     'git-update-index --refresh should succeed.' \
@@ -246,6 +269,7 @@ test_expect_success \
 
 ################################################################
 P=087704a96baf1c2d1c869a8b084481e121c88b5b
+test "$no_symlinks" && P=7bb943559a305bdd6bdee2cef6e5df2413c3d30a
 test_expect_success \
     'git-commit-tree records the correct tree in a commit.' \
     'commit0=$(echo NO | git-commit-tree $P) &&

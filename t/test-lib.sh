@@ -78,6 +78,8 @@ do
 	--no-python)
 		# noop now...
 		shift ;;
+	--no-symlinks)
+		no_symlinks=t; shift ;;
 	*)
 		break ;;
 	esac
