@@ -180,6 +180,7 @@ extern int refresh_cache(unsigned int flags);
 
 struct lock_file {
 	struct lock_file *next;
+	int fd;
 	char on_list;
 	char filename[PATH_MAX];
 };
