@@ -351,7 +351,10 @@ struct sigaction {
 
 struct itimerval { struct timeval it_interval, it_value; };
 
-int git_mkdir(const char *path, int mode);
+static inline int git_mkdir(const char *path, int mode)
+{
+	return mkdir(path);
+}
 #define mkdir git_mkdir
 
 #include <time.h>

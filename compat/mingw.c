@@ -115,12 +115,6 @@ int regexec(const regex_t *preg, const char *string, size_t nmatch, regmatch_t p
 	return -1;
 }
 
-#undef mkdir
-int git_mkdir(const char *path, int mode)
-{
-	return mkdir(path);
-}
-
 #include <time.h>
 
 struct tm *gmtime_r(const time_t *timep, struct tm *result)
