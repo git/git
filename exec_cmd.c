@@ -44,9 +44,11 @@ int execv_git_cmd(const char **argv)
 		const char *exec_dir = paths[i];
 		const char *tmp;
 
-		if (!exec_dir || !*exec_dir) continue;
-
+#ifdef __MINGW32__
+		if (*exec_dir != '/' && exec_dir[1] != ':') {
+#else
 		if (*exec_dir != '/') {
+#endif
 			if (!getcwd(git_command, sizeof(git_command))) {
 				fprintf(stderr, "git: cannot determine "
 					"current directory: %s\n",
