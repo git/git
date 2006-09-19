@@ -274,13 +274,16 @@ sub evaluate_path_info {
 	return if defined $project;
 	my $path_info = $ENV{"PATH_INFO"};
 	return if !$path_info;
-	$path_info =~ s,(^/|/$),,gs;
-	$path_info = validate_input($path_info);
+	$path_info =~ s,^/+,,;
 	return if !$path_info;
+	# find which part of PATH_INFO is project
 	$project = $path_info;
+	$project =~ s,/+$,,;
 	while ($project && !-e "$projectroot/$project/HEAD") {
 		$project =~ s,/*[^/]*$,,;
 	}
+	# validate project
+	$project = validate_input($project);
 	if (!$project ||
 	    ($export_ok && !-e "$projectroot/$project/$export_ok") ||
 	    ($strict_export && !project_in_list($project))) {
@@ -289,15 +292,23 @@ sub evaluate_path_info {
 	}
 	# do not change any parameters if an action is given using the query string
 	return if $action;
-	if ($path_info =~ m,^$project/([^/]+)/(.+)$,) {
-		# we got "project.git/branch/filename"
-		$action    ||= "blob_plain";
-		$hash_base ||= validate_input($1);
-		$file_name ||= validate_input($2);
-	} elsif ($path_info =~ m,^$project/([^/]+)$,) {
+	$path_info =~ s,^$project/*,,;
+	my ($refname, $pathname) = split(/:/, $path_info, 2);
+	if (defined $pathname) {
+		# we got "project.git/branch:filename" or "project.git/branch:dir/"
+		# we could use git_get_type(branch:pathname), but it needs $git_dir
+		$pathname =~ s,^/+,,;
+		if (!$pathname || substr($pathname, -1) eq "/") {
+			$action  ||= "tree";
+		} else {
+			$action  ||= "blob_plain";
+		}
+		$hash_base ||= validate_input($refname);
+		$file_name ||= validate_input($pathname);
+	} elsif (defined $refname) {
 		# we got "project.git/branch"
 		$action ||= "shortlog";
-		$hash   ||= validate_input($1);
+		$hash   ||= validate_input($refname);
 	}
 }
 evaluate_path_info();
