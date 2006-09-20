@@ -278,6 +278,12 @@ enum object_type {
 	OBJ_BAD,
 };
 
+extern signed char hexval_table[256];
+static inline unsigned int hexval(unsigned int c)
+{
+	return hexval_table[c];
+}
+
 /* Convert to/from hex/sha1 representation */
 #define MINIMUM_ABBREV 4
 #define DEFAULT_ABBREV 7
