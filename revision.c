@@ -6,6 +6,8 @@
 #include "diff.h"
 #include "refs.h"
 #include "revision.h"
+#include <regex.h>
+#include "grep.h"
 
 static char *path_name(struct name_path *path, const char *name)
 {
@@ -672,6 +674,42 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 	return 0;
 }
 
+static void add_grep(struct rev_info *revs, const char *ptn, enum grep_pat_token what)
+{
+	if (!revs->grep_filter) {
+		struct grep_opt *opt = xcalloc(1, sizeof(*opt));
+		opt->status_only = 1;
+		opt->pattern_tail = &(opt->pattern_list);
+		opt->regflags = REG_NEWLINE;
+		revs->grep_filter = opt;
+	}
+	append_grep_pattern(revs->grep_filter, ptn,
+			    "command line", 0, what);
+}
+
+static void add_header_grep(struct rev_info *revs, const char *field, const char *pattern)
+{
+	char *pat;
+	const char *prefix;
+	int patlen, fldlen;
+
+	fldlen = strlen(field);
+	patlen = strlen(pattern);
+	pat = xmalloc(patlen + fldlen + 10);
+	prefix = ".*";
+	if (*pattern == '^') {
+		prefix = "";
+		pattern++;
+	}
+	sprintf(pat, "^%s %s%s", field, prefix, pattern);
+	add_grep(revs, pat, GREP_PATTERN_HEAD);
+}
+
+static void add_message_grep(struct rev_info *revs, const char *pattern)
+{
+	add_grep(revs, pattern, GREP_PATTERN_BODY);
+}
+
 static void add_ignore_packed(struct rev_info *revs, const char *name)
 {
 	int num = ++revs->num_ignore_packed;
@@ -913,6 +951,23 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->relative_date = 1;
 				continue;
 			}
+
+			/*
+			 * Grepping the commit log
+			 */
+			if (!strncmp(arg, "--author=", 9)) {
+				add_header_grep(revs, "author", arg+9);
+				continue;
+			}
+			if (!strncmp(arg, "--committer=", 12)) {
+				add_header_grep(revs, "committer", arg+12);
+				continue;
+			}
+			if (!strncmp(arg, "--grep=", 7)) {
+				add_message_grep(revs, arg+7);
+				continue;
+			}
+
 			opts = diff_opt_parse(&revs->diffopt, argv+i, argc-i);
 			if (opts > 0) {
 				revs->diff = 1;
@@ -972,6 +1027,9 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	revs->diffopt.abbrev = revs->abbrev;
 	if (diff_setup_done(&revs->diffopt) < 0)
 		die("diff_setup_done failed");
+
+	if (revs->grep_filter)
+		compile_grep_patterns(revs->grep_filter);
 
 	return left;
 }
@@ -1045,6 +1103,15 @@ static void mark_boundary_to_show(struct commit *commit)
 	}
 }
 
+static int commit_match(struct commit *commit, struct rev_info *opt)
+{
+	if (!opt->grep_filter)
+		return 1;
+	return grep_buffer(opt->grep_filter,
+			   NULL, /* we say nothing, not even filename */
+			   commit->buffer, strlen(commit->buffer));
+}
+
 struct commit *get_revision(struct rev_info *revs)
 {
 	struct commit_list *list = revs->commits;
@@ -1104,6 +1171,8 @@ struct commit *get_revision(struct rev_info *revs)
 			continue;
 		if (revs->no_merges &&
 		    commit->parents && commit->parents->next)
+			continue;
+		if (!commit_match(commit, revs))
 			continue;
 		if (revs->prune_fn && revs->dense) {
 			/* Commit without changes? */
