@@ -427,7 +427,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_ICONV=YesPlease
 	COMPAT_CFLAGS += -DNO_ETC_PASSWD -DNO_ST_BLOCKS
 	COMPAT_OBJS += compat/mingw.o
-	EXTLIBS += -lws2_32
+	EXTLIBS += -lws2_32 -lregex
 	X = .exe
 endif
 ifneq (,$(findstring arm,$(uname_M)))
