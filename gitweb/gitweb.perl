@@ -274,13 +274,16 @@ sub evaluate_path_info {
 	return if defined $project;
 	my $path_info = $ENV{"PATH_INFO"};
 	return if !$path_info;
-	$path_info =~ s,(^/|/$),,gs;
-	$path_info = validate_input($path_info);
+	$path_info =~ s,^/+,,;
 	return if !$path_info;
+	# find which part of PATH_INFO is project
 	$project = $path_info;
+	$project =~ s,/+$,,;
 	while ($project && !-e "$projectroot/$project/HEAD") {
 		$project =~ s,/*[^/]*$,,;
 	}
+	# validate project
+	$project = validate_input($project);
 	if (!$project ||
 	    ($export_ok && !-e "$projectroot/$project/$export_ok") ||
 	    ($strict_export && !project_in_list($project))) {
@@ -289,15 +292,23 @@ sub evaluate_path_info {
 	}
 	# do not change any parameters if an action is given using the query string
 	return if $action;
-	if ($path_info =~ m,^$project/([^/]+)/(.+)$,) {
-		# we got "project.git/branch/filename"
-		$action    ||= "blob_plain";
-		$hash_base ||= validate_input($1);
-		$file_name ||= validate_input($2);
-	} elsif ($path_info =~ m,^$project/([^/]+)$,) {
+	$path_info =~ s,^$project/*,,;
+	my ($refname, $pathname) = split(/:/, $path_info, 2);
+	if (defined $pathname) {
+		# we got "project.git/branch:filename" or "project.git/branch:dir/"
+		# we could use git_get_type(branch:pathname), but it needs $git_dir
+		$pathname =~ s,^/+,,;
+		if (!$pathname || substr($pathname, -1) eq "/") {
+			$action  ||= "tree";
+		} else {
+			$action  ||= "blob_plain";
+		}
+		$hash_base ||= validate_input($refname);
+		$file_name ||= validate_input($pathname);
+	} elsif (defined $refname) {
 		# we got "project.git/branch"
 		$action ||= "shortlog";
-		$hash   ||= validate_input($1);
+		$hash   ||= validate_input($refname);
 	}
 }
 evaluate_path_info();
@@ -340,6 +351,10 @@ if (defined $project) {
 }
 if (!defined($actions{$action})) {
 	die_error(undef, "Unknown action");
+}
+if ($action !~ m/^(opml|project_list|project_index)$/ &&
+    !$project) {
+	die_error(undef, "Project needed");
 }
 $actions{$action}->();
 exit;
@@ -828,16 +843,10 @@ sub git_get_project_owner {
 sub git_get_references {
 	my $type = shift || "";
 	my %refs;
-	my $fd;
 	# 5dc01c595e6c6ec9ccda4f6f69c131c0dd945f8c	refs/tags/v2.6.11
 	# c39ae07f393806ccf406ef966e9a15afc43cc36a	refs/tags/v2.6.11^{}
-	if (-f "$projectroot/$project/info/refs") {
-		open $fd, "$projectroot/$project/info/refs"
-			or return;
-	} else {
-		open $fd, "-|", git_cmd(), "ls-remote", "."
-			or return;
-	}
+	open my $fd, "-|", $GIT, "peek-remote", "$projectroot/$project/"
+		or return;
 
 	while (my $line = <$fd>) {
 		chomp $line;
@@ -1125,7 +1134,8 @@ sub parse_ls_tree_line ($;%) {
 ## parse to array of hashes functions
 
 sub git_get_refs_list {
-	my $ref_dir = shift;
+	my $type = shift || "";
+	my %refs;
 	my @reflist;
 
 	my @refs;
@@ -1133,14 +1143,21 @@ sub git_get_refs_list {
 		or return;
 	while (my $line = <$fd>) {
 		chomp $line;
-		if ($line =~ m/^([0-9a-fA-F]{40})\t$ref_dir\/?([^\^]+)$/) {
-			push @refs, { hash => $1, name => $2 };
-		} elsif ($line =~ m/^[0-9a-fA-F]{40}\t$ref_dir\/?(.*)\^\{\}$/ &&
-		         $1 eq $refs[-1]{'name'}) {
-			# most likely a tag is followed by its peeled
-			# (deref) one, and when that happens we know the
-			# previous one was of type 'tag'.
-			$refs[-1]{'type'} = "tag";
+		if ($line =~ m/^([0-9a-fA-F]{40})\trefs\/($type\/?([^\^]+))(\^\{\})?$/) {
+			if (defined $refs{$1}) {
+				push @{$refs{$1}}, $2;
+			} else {
+				$refs{$1} = [ $2 ];
+			}
+
+			if (! $4) { # unpeeled, direct reference
+				push @refs, { hash => $1, name => $3 }; # without type
+			} elsif ($3 eq $refs[-1]{'name'}) {
+				# most likely a tag is followed by its peeled
+				# (deref) one, and when that happens we know the
+				# previous one was of type 'tag'.
+				$refs[-1]{'type'} = "tag";
+			}
 		}
 	}
 	close $fd;
@@ -1156,7 +1173,7 @@ sub git_get_refs_list {
 	}
 	# sort refs by age
 	@reflist = sort {$b->{'epoch'} <=> $a->{'epoch'}} @reflist;
-	return \@reflist;
+	return (\@reflist, \%refs);
 }
 
 ## ----------------------------------------------------------------------
@@ -1197,7 +1214,7 @@ sub mimetype_guess_file {
 	}
 	close(MIME);
 
-	$filename =~ /\.(.*?)$/;
+	$filename =~ /\.([^.]*)$/;
 	return $mimemap{$1};
 }
 
@@ -2120,14 +2137,14 @@ sub git_tags_body {
 
 sub git_heads_body {
 	# uses global variable $project
-	my ($taglist, $head, $from, $to, $extra) = @_;
+	my ($headlist, $head, $from, $to, $extra) = @_;
 	$from = 0 unless defined $from;
-	$to = $#{$taglist} if (!defined $to || $#{$taglist} < $to);
+	$to = $#{$headlist} if (!defined $to || $#{$headlist} < $to);
 
 	print "<table class=\"heads\" cellspacing=\"0\">\n";
 	my $alternate = 0;
 	for (my $i = $from; $i <= $to; $i++) {
-		my $entry = $taglist->[$i];
+		my $entry = $headlist->[$i];
 		my %tag = %$entry;
 		my $curr = $tag{'id'} eq $head;
 		if ($alternate) {
@@ -2297,7 +2314,19 @@ sub git_summary {
 
 	my $owner = git_get_project_owner($project);
 
-	my $refs = git_get_references();
+	my ($reflist, $refs) = git_get_refs_list();
+
+	my @taglist;
+	my @headlist;
+	foreach my $ref (@$reflist) {
+		if ($ref->{'name'} =~ s!^heads/!!) {
+			push @headlist, $ref;
+		} else {
+			$ref->{'name'} =~ s!^tags/!!;
+			push @taglist, $ref;
+		}
+	}
+
 	git_header_html();
 	git_print_page_nav('summary','', $head);
 
@@ -2327,17 +2356,15 @@ sub git_summary {
 	git_shortlog_body(\@revlist, 0, 15, $refs,
 	                  $cgi->a({-href => href(action=>"shortlog")}, "..."));
 
-	my $taglist = git_get_refs_list("refs/tags");
-	if (defined @$taglist) {
+	if (@taglist) {
 		git_print_header_div('tags');
-		git_tags_body($taglist, 0, 15,
+		git_tags_body(\@taglist, 0, 15,
 		              $cgi->a({-href => href(action=>"tags")}, "..."));
 	}
 
-	my $headlist = git_get_refs_list("refs/heads");
-	if (defined @$headlist) {
+	if (@headlist) {
 		git_print_header_div('heads');
-		git_heads_body($headlist, $head, 0, 15,
+		git_heads_body(\@headlist, $head, 0, 15,
 		               $cgi->a({-href => href(action=>"heads")}, "..."));
 	}
 
@@ -2548,8 +2575,8 @@ sub git_tags {
 	git_print_page_nav('','', $head,undef,$head);
 	git_print_header_div('summary', $project);
 
-	my $taglist = git_get_refs_list("refs/tags");
-	if (defined @$taglist) {
+	my ($taglist) = git_get_refs_list("tags");
+	if (@$taglist) {
 		git_tags_body($taglist);
 	}
 	git_footer_html();
@@ -2561,9 +2588,9 @@ sub git_heads {
 	git_print_page_nav('','', $head,undef,$head);
 	git_print_header_div('summary', $project);
 
-	my $taglist = git_get_refs_list("refs/heads");
-	if (defined @$taglist) {
-		git_heads_body($taglist, $head);
+	my ($headlist) = git_get_refs_list("heads");
+	if (@$headlist) {
+		git_heads_body($headlist, $head);
 	}
 	git_footer_html();
 }

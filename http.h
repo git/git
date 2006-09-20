@@ -22,6 +22,10 @@
 #define NO_CURL_EASY_DUPHANDLE
 #endif
 
+#if LIBCURL_VERSION_NUM < 0x070a03
+#define CURLE_HTTP_RETURNED_ERROR CURLE_HTTP_NOT_FOUND
+#endif
+
 struct slot_results
 {
 	CURLcode curl_result;
