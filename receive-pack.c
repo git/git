@@ -2,6 +2,8 @@
 #include "refs.h"
 #include "pkt-line.h"
 #include "run-command.h"
+#include "commit.h"
+#include "object.h"
 
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
@@ -126,6 +128,20 @@ static int update(struct command *cmd)
 		cmd->error_string = "bad pack";
 		return error("unpack should have generated %s, "
 			     "but I can't find it!", new_hex);
+	}
+	if (deny_non_fast_forwards && !is_null_sha1(old_sha1)) {
+		struct commit *old_commit, *new_commit;
+		struct commit_list *bases;
+
+		old_commit = (struct commit *)parse_object(old_sha1);
+		new_commit = (struct commit *)parse_object(new_sha1);
+		for (bases = get_merge_bases(old_commit, new_commit, 1);
+				bases; bases = bases->next)
+			if (!hashcmp(old_sha1, bases->item->object.sha1))
+				break;
+		if (!bases)
+			return error("denying non-fast forward;"
+					" you should pull first");
 	}
 	safe_create_leading_directories(lock_name);
 

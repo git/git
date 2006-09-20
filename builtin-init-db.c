@@ -311,6 +311,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		 */
 		sprintf(buf, "%d", shared_repository);
 		git_config_set("core.sharedrepository", buf);
+		git_config_set("receive.denyNonFastforwards", "true");
 	}
 
 	return 0;
