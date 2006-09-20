@@ -812,6 +812,8 @@ int git_config_set_multivar(const char* key, const char* value,
 		unlink(config_filename);
 	}
 
+	close(fd);
+	fd = -1;
 	if (rename(lock_file, config_filename) < 0) {
 		fprintf(stderr, "Could not rename the lock file?\n");
 		ret = 4;
