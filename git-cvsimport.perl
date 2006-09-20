@@ -495,22 +495,17 @@ unless(-d $git_dir) {
 	$tip_at_start = `git-rev-parse --verify HEAD`;
 
 	# Get the last import timestamps
-	opendir(D,"$git_dir/refs/heads");
-	while(defined(my $head = readdir(D))) {
-		next if $head =~ /^\./;
-		open(F,"$git_dir/refs/heads/$head")
-			or die "Bad head branch: $head: $!\n";
-		chomp(my $ftag = <F>);
-		close(F);
-		open(F,"git-cat-file commit $ftag |");
-		while(<F>) {
-			next unless /^author\s.*\s(\d+)\s[-+]\d{4}$/;
-			$branch_date{$head} = $1;
-			last;
-		}
-		close(F);
+	my $fmt = '($ref, $author) = (%(refname), %(author));';
+	open(H, "git-for-each-ref --perl --format='$fmt' refs/heads |") or
+		die "Cannot run git-for-each-ref: $!\n";
+	while(defined(my $entry = <H>)) {
+		my ($ref, $author);
+		eval($entry) || die "cannot eval refs list: $@";
+		my ($head) = ($ref =~ m|^refs/heads/(.*)|);
+		$author =~ /^.*\s(\d+)\s[-+]\d{4}$/;
+		$branch_date{$head} = $1;
 	}
-	closedir(D);
+	close(H);
 }
 
 -d $git_dir
