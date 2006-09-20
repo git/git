@@ -12,6 +12,7 @@
 #include "pkt-line.h"
 #include "cache.h"
 #include "exec_cmd.h"
+#include "interpolate.h"
 
 static int log_syslog;
 static int verbose;
@@ -21,6 +22,7 @@ static const char daemon_usage[] =
 "git-daemon [--verbose] [--syslog] [--inetd | --port=n] [--export-all]\n"
 "           [--timeout=n] [--init-timeout=n] [--strict-paths]\n"
 "           [--base-path=path] [--user-path | --user-path=path]\n"
+"           [--interpolated-path=path]\n"
 "           [--reuseaddr] [--detach] [--pid-file=file]\n"
 "           [--[enable|disable|allow-override|forbid-override]=service]\n"
 "           [--user=user [[--group=group]] [directory...]";
@@ -34,6 +36,10 @@ static int export_all_trees;
 
 /* Take all paths relative to this one if non-NULL */
 static char *base_path;
+static char *interpolated_path;
+
+/* Flag indicating client sent extra args. */
+static int saw_extended_args;
 
 /* If defined, ~user notation is allowed and the string is inserted
  * after ~user/.  E.g. a request to git://host/~alice/frotz would
@@ -44,6 +50,21 @@ static const char *user_path;
 /* Timeout, and initial timeout */
 static unsigned int timeout;
 static unsigned int init_timeout;
+
+/*
+ * Static table for now.  Ugh.
+ * Feel free to make dynamic as needed.
+ */
+#define INTERP_SLOT_HOST	(0)
+#define INTERP_SLOT_DIR		(1)
+#define INTERP_SLOT_PERCENT	(2)
+
+static struct interp interp_table[] = {
+	{ "%H", 0},
+	{ "%D", 0},
+	{ "%%", "%"},
+};
+
 
 static void logreport(int priority, const char *err, va_list params)
 {
@@ -152,10 +173,14 @@ static int avoid_alias(char *p)
 	}
 }
 
-static char *path_ok(char *dir)
+static char *path_ok(struct interp *itable)
 {
 	static char rpath[PATH_MAX];
+	static char interp_path[PATH_MAX];
 	char *path;
+	char *dir;
+
+	dir = itable[INTERP_SLOT_DIR].value;
 
 	if (avoid_alias(dir)) {
 		logerror("'%s': aliased", dir);
@@ -184,16 +209,27 @@ static char *path_ok(char *dir)
 			dir = rpath;
 		}
 	}
+	else if (interpolated_path && saw_extended_args) {
+		if (*dir != '/') {
+			/* Allow only absolute */
+			logerror("'%s': Non-absolute path denied (interpolated-path active)", dir);
+			return NULL;
+		}
+
+		interpolate(interp_path, PATH_MAX, interpolated_path,
+			    interp_table, ARRAY_SIZE(interp_table));
+		loginfo("Interpolated dir '%s'", interp_path);
+
+		dir = interp_path;
+	}
 	else if (base_path) {
 		if (*dir != '/') {
 			/* Allow only absolute */
 			logerror("'%s': Non-absolute path denied (base-path active)", dir);
 			return NULL;
 		}
-		else {
-			snprintf(rpath, PATH_MAX, "%s%s", base_path, dir);
-			dir = rpath;
-		}
+		snprintf(rpath, PATH_MAX, "%s%s", base_path, dir);
+		dir = rpath;
 	}
 
 	path = enter_repo(dir, strict_paths);
@@ -257,12 +293,14 @@ static int git_daemon_config(const char *var, const char *value)
 	return 0;
 }
 
-static int run_service(char *dir, struct daemon_service *service)
+static int run_service(struct interp *itable, struct daemon_service *service)
 {
 	const char *path;
 	int enabled = service->enabled;
 
-	loginfo("Request %s for '%s'", service->name, dir);
+	loginfo("Request %s for '%s'",
+		service->name,
+		itable[INTERP_SLOT_DIR].value);
 
 	if (!enabled && !service->overridable) {
 		logerror("'%s': service not enabled.", service->name);
@@ -270,7 +308,7 @@ static int run_service(char *dir, struct daemon_service *service)
 		return -1;
 	}
 
-	if (!(path = path_ok(dir)))
+	if (!(path = path_ok(itable)))
 		return -1;
 
 	/*
@@ -358,6 +396,28 @@ static void make_service_overridable(const char *name, int ena) {
 	die("No such service %s", name);
 }
 
+static void parse_extra_args(char *extra_args, int buflen)
+{
+	char *val;
+	int vallen;
+	char *end = extra_args + buflen;
+
+	while (extra_args < end && *extra_args) {
+		saw_extended_args = 1;
+		if (strncasecmp("host=", extra_args, 5) == 0) {
+			val = extra_args + 5;
+			vallen = strlen(val) + 1;
+			if (*val) {
+				char *save = xmalloc(vallen);
+				interp_table[INTERP_SLOT_HOST].value = save;
+				strlcpy(save, val, vallen);
+			}
+			/* On to the next one */
+			extra_args = val + vallen;
+		}
+	}
+}
+
 static int execute(struct sockaddr *addr)
 {
 	static char line[1000];
@@ -398,13 +458,18 @@ static int execute(struct sockaddr *addr)
 	if (len && line[len-1] == '\n')
 		line[--len] = 0;
 
+	if (len != pktlen)
+	    parse_extra_args(line + len + 1, pktlen - len - 1);
+
 	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		struct daemon_service *s = &(daemon_service[i]);
 		int namelen = strlen(s->name);
 		if (!strncmp("git-", line, 4) &&
 		    !strncmp(s->name, line + 4, namelen) &&
-		    line[namelen + 4] == ' ')
-			return run_service(line + namelen + 5, s);
+		    line[namelen + 4] == ' ') {
+			interp_table[INTERP_SLOT_DIR].value = line+namelen+5;
+			return run_service(interp_table, s);
+		}
 	}
 
 	logerror("Protocol error: '%s'", line);
@@ -865,6 +930,10 @@ int main(int argc, char **argv)
 		}
 		if (!strncmp(arg, "--base-path=", 12)) {
 			base_path = arg+12;
+			continue;
+		}
+		if (!strncmp(arg, "--interpolated-path=", 20)) {
+			interpolated_path = arg+20;
 			continue;
 		}
 		if (!strcmp(arg, "--reuseaddr")) {
