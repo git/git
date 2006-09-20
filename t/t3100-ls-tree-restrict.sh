@@ -18,6 +18,24 @@ path2/baz.  Also path0/ should snow nothing.
 '
 . ./test-lib.sh
 
+test "$no_symlinks" && {
+	function ln () {
+		test "$1" = -s && shift
+		date > "$2"
+	}
+	DIFF=$(which diff)
+	function diff () {
+		opt=
+		if test "$1" = -u; then
+			opt="$1"
+			shift
+		fi
+		sed s/^120000/100644/ < "$1" > "$1".doof
+		$DIFF $opt "$1".doof "$2"
+	}
+}
+
+
 test_expect_success \
     'setup' \
     'mkdir path2 path2/baz &&

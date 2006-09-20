@@ -37,6 +37,13 @@ modified without reporting path9 and path10.
 '
 . ./test-lib.sh
 
+test "$no_symlinks" && {
+	function ln () {
+		test "$1" = -s && shift
+		date > "$2"
+	}
+}
+
 date >path0
 ln -s xyzzy path1
 mkdir path2 path3
