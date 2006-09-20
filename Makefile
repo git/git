@@ -425,8 +425,8 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_STRCASESTR=YesPlease
 	NO_STRLCPY=YesPlease
 	NO_ICONV=YesPlease
-	COMPAT_CFLAGS += -DNO_ETC_PASSWD -DNO_ST_BLOCKS
-	COMPAT_OBJS += compat/mingw.o
+	COMPAT_CFLAGS += -DNO_ETC_PASSWD -DNO_ST_BLOCKS -I compat
+	COMPAT_OBJS += compat/mingw.o compat/fnmatch.o
 	EXTLIBS += -lws2_32 -lregex
 	X = .exe
 endif

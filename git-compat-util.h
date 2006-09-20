@@ -36,7 +36,7 @@
 #include <time.h>
 #include <signal.h>
 //#include <sys/wait.h>
-//#include <fnmatch.h>
+#include <fnmatch.h>
 //#include <sys/poll.h>
 //#include <sys/socket.h>
 #include <assert.h>
@@ -335,8 +335,6 @@ struct pollfd {
 int poll(struct pollfd *ufds, unsigned int nfds, int timeout);
 #define POLLIN 1
 #define POLLHUP 2
-int fnmatch(const char *pattern, const char *string, int flags);
-#define FNM_PATHNAME 1
 
 typedef int siginfo_t;
 struct sigaction {

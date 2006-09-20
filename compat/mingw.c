@@ -93,11 +93,6 @@ int poll(struct pollfd *ufds, unsigned int nfds, int timeout)
 	return -1;
 }
 
-int fnmatch(const char *pattern, const char *string, int flags)
-{
-	return -1;
-}
-
 #include <time.h>
 
 struct tm *gmtime_r(const time_t *timep, struct tm *result)
