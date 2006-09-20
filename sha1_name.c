@@ -431,6 +431,26 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 	return 0;
 }
 
+static int get_describe_name(const char *name, int len, unsigned char *sha1)
+{
+	const char *cp;
+
+	for (cp = name + len - 1; name + 2 <= cp; cp--) {
+		char ch = *cp;
+		if (hexval(ch) & ~0377) {
+			/* We must be looking at g in "SOMETHING-g"
+			 * for it to be describe output.
+			 */
+			if (ch == 'g' && cp[-1] == '-') {
+				cp++;
+				len -= cp - name;
+				return get_short_sha1(cp, len, sha1, 1);
+			}
+		}
+	}
+	return -1;
+}
+
 static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 {
 	int ret, has_suffix;
@@ -472,6 +492,12 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 	ret = get_sha1_basic(name, len, sha1);
 	if (!ret)
 		return 0;
+
+	/* It could be describe output that is "SOMETHING-gXXXX" */
+	ret = get_describe_name(name, len, sha1);
+	if (!ret)
+		return 0;
+
 	return get_short_sha1(name, len, sha1, 0);
 }
 
