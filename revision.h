@@ -72,8 +72,7 @@ struct rev_info {
 	const char	*extra_headers;
 
 	/* Filter by commit log message */
-	struct grep_opt	*header_filter;
-	struct grep_opt	*message_filter;
+	struct grep_opt	*grep_filter;
 
 	/* special limits */
 	int max_count;

@@ -674,19 +674,24 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 	return 0;
 }
 
+static void add_grep(struct rev_info *revs, const char *ptn, enum grep_pat_token what)
+{
+	if (!revs->grep_filter) {
+		struct grep_opt *opt = xcalloc(1, sizeof(*opt));
+		opt->status_only = 1;
+		opt->pattern_tail = &(opt->pattern_list);
+		opt->regflags = REG_NEWLINE;
+		revs->grep_filter = opt;
+	}
+	append_grep_pattern(revs->grep_filter, ptn,
+			    "command line", 0, what);
+}
+
 static void add_header_grep(struct rev_info *revs, const char *field, const char *pattern)
 {
 	char *pat;
 	const char *prefix;
 	int patlen, fldlen;
-
-	if (!revs->header_filter) {
-		struct grep_opt *opt = xcalloc(1, sizeof(*opt));
-		opt->status_only = 1;
-		opt->pattern_tail = &(opt->pattern_list);
-		opt->regflags = REG_NEWLINE;
-		revs->header_filter = opt;
-	}
 
 	fldlen = strlen(field);
 	patlen = strlen(pattern);
@@ -697,21 +702,12 @@ static void add_header_grep(struct rev_info *revs, const char *field, const char
 		pattern++;
 	}
 	sprintf(pat, "^%s %s%s", field, prefix, pattern);
-	append_grep_pattern(revs->header_filter, pat,
-			    "command line", 0, GREP_PATTERN);
+	add_grep(revs, pat, GREP_PATTERN_HEAD);
 }
 
 static void add_message_grep(struct rev_info *revs, const char *pattern)
 {
-	if (!revs->message_filter) {
-		struct grep_opt *opt = xcalloc(1, sizeof(*opt));
-		opt->status_only = 1;
-		opt->pattern_tail = &(opt->pattern_list);
-		opt->regflags = REG_NEWLINE;
-		revs->message_filter = opt;
-	}
-	append_grep_pattern(revs->message_filter, pattern,
-			    "command line", 0, GREP_PATTERN);
+	add_grep(revs, pattern, GREP_PATTERN_BODY);
 }
 
 static void add_ignore_packed(struct rev_info *revs, const char *name)
@@ -955,6 +951,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->relative_date = 1;
 				continue;
 			}
+
+			/*
+			 * Grepping the commit log
+			 */
 			if (!strncmp(arg, "--author=", 9)) {
 				add_header_grep(revs, "author", arg+9);
 				continue;
@@ -967,6 +967,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				add_message_grep(revs, arg+7);
 				continue;
 			}
+
 			opts = diff_opt_parse(&revs->diffopt, argv+i, argc-i);
 			if (opts > 0) {
 				revs->diff = 1;
@@ -1027,10 +1028,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	if (diff_setup_done(&revs->diffopt) < 0)
 		die("diff_setup_done failed");
 
-	if (revs->header_filter)
-		compile_grep_patterns(revs->header_filter);
-	if (revs->message_filter)
-		compile_grep_patterns(revs->message_filter);
+	if (revs->grep_filter)
+		compile_grep_patterns(revs->grep_filter);
 
 	return left;
 }
@@ -1106,34 +1105,11 @@ static void mark_boundary_to_show(struct commit *commit)
 
 static int commit_match(struct commit *commit, struct rev_info *opt)
 {
-	char *header, *message;
-	unsigned long header_len, message_len;
-
-	if (!opt->header_filter && !opt->message_filter)
+	if (!opt->grep_filter)
 		return 1;
-
-	header = commit->buffer;
-	message = strstr(header, "\n\n");
-	if (message) {
-		message += 2;
-		header_len = message - header - 1;
-		message_len = strlen(message);
-	}
-	else {
-		header_len = strlen(header);
-		message = header;
-		message_len = 0;
-	}
-
-	if (opt->header_filter &&
-	    !grep_buffer(opt->header_filter, NULL, header, header_len))
-		return 0;
-
-	if (opt->message_filter &&
-	    !grep_buffer(opt->message_filter, NULL, message, message_len))
-		return 0;
-
-	return 1;
+	return grep_buffer(opt->grep_filter,
+			   NULL, /* we say nothing, not even filename */
+			   commit->buffer, strlen(commit->buffer));
 }
 
 struct commit *get_revision(struct rev_info *revs)
