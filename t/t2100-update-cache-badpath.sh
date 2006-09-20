@@ -29,6 +29,7 @@ date >path0
 ln -s xyzzy path1
 date >path2/file2
 date >path3/file3
+test "$no_symlinks" && date > path1
 
 test_expect_success \
     'git-update-index --add to add various paths.' \
@@ -41,6 +42,7 @@ date >path2
 ln -s frotz path3
 date >path0/file0
 date >path1/file1
+test "$no_symlinks" && date > path3
 
 for p in path0/file0 path1/file1 path2 path3
 do

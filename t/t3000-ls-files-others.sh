@@ -18,6 +18,7 @@ filesystem.
 
 date >path0
 ln -s xyzzy path1
+test "$no_symlinks" && date > path1
 mkdir path2 path3
 date >path2/file2
 date >path2-junk

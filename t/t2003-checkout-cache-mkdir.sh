@@ -19,6 +19,7 @@ test_expect_success \
     echo rezrov >path1/file1 &&
     git-update-index --add path0 path1/file1'
 
+test "$no_symlinks" || {
 test_expect_success \
     'have symlink in place where dir is expected.' \
     'rm -fr path0 path1 &&
@@ -27,6 +28,7 @@ test_expect_success \
      git-checkout-index -f -a &&
      test ! -h path1 && test -d path1 &&
      test -f path1/file1 && test ! -f path2/file1'
+}
 
 test_expect_success \
     'use --prefix=path2/' \
@@ -58,6 +60,7 @@ test_expect_success \
      test ! -f path0 &&
      test ! -f path1/file1'
 
+test "$no_symlinks" || {
 # Linus fix #1
 test_expect_success \
     'use --prefix=tmp/orary/ where tmp is a symlink' \
@@ -92,5 +95,6 @@ test_expect_success \
      test ! -h tmp-path1 &&
      test -d tmp-path1 &&
      test -f tmp-path1/file1'
+}
 
 test_done
