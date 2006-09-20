@@ -37,6 +37,10 @@ frequently used options.
 
 	Show commits older than a specific date.
 
+--all::
+
+	Show all branches.
+
 <revs>::
 
 	Limit the revisions to show. This can be either a single revision
@@ -62,6 +66,11 @@ gitk --since="2 weeks ago" \-- gitk::
 	Show the changes during the last two weeks to the file 'gitk'.
 	The "--" is necessary to avoid confusion with the *branch* named
 	'gitk'
+
+gitk --max-count=100 --all -- Makefile::
+
+	Show at most 100 changes made to the file 'Makefile'. Instead of only
+	looking for changes in the current branch look in all branches.
 
 See Also
 --------
