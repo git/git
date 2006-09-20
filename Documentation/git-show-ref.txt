@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git-show-ref' [-q|--quiet] [--verify] [-h|--head] [-d|--dereference]
-	     [--tags] [--heads] [--] <pattern>...
+	     [-s|--hash] [--tags] [--heads] [--] <pattern>...
 
 DESCRIPTION
 -----------
@@ -40,6 +40,12 @@ OPTIONS
 	Dereference tags into object IDs. They will be shown with "^{}"
 	appended.
 
+-s, --hash::
+
+	Only show the SHA1 hash, not the reference name. When also using
+	--dereference the dereferenced tag will still be shown after the SHA1,
+	this maybe a bug.
+
 --verify::
 
 	Enable stricter reference checking by requiring an exact ref path.
@@ -69,6 +75,16 @@ $ git show-ref --head --dereference
 6ddc0964034342519a87fe013781abf31c6db6ad refs/tags/v0.99.9c^{}
 055e4ae3ae6eb344cbabf2a5256a49ea66040131 refs/tags/v1.0rc4
 423325a2d24638ddcc82ce47be5e40be550f4507 refs/tags/v1.0rc4^{}
+...
+-----------------------------------------------------------------------------
+
+When using --hash (and not --dereference) the output format is: '<SHA-1 ID>'
+
+-----------------------------------------------------------------------------
+$ git show-ref --heads --hash
+2e3ba0114a1f52b47df29743d6915d056be13278
+185008ae97960c8d551adcd9e23565194651b5d1
+03adf42c988195b50e1a1935ba5fcbc39b2b029b
 ...
 -----------------------------------------------------------------------------
 
