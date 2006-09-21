@@ -137,7 +137,7 @@ static void show_default(void)
 	}
 }
 
-static int show_reference(const char *refname, const unsigned char *sha1)
+static int show_reference(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	show_rev(NORMAL, sha1, refname);
 	return 0;
@@ -299,19 +299,19 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--all")) {
-				for_each_ref(show_reference);
+				for_each_ref(show_reference, NULL);
 				continue;
 			}
 			if (!strcmp(arg, "--branches")) {
-				for_each_branch_ref(show_reference);
+				for_each_branch_ref(show_reference, NULL);
 				continue;
 			}
 			if (!strcmp(arg, "--tags")) {
-				for_each_tag_ref(show_reference);
+				for_each_tag_ref(show_reference, NULL);
 				continue;
 			}
 			if (!strcmp(arg, "--remotes")) {
-				for_each_remote_ref(show_reference);
+				for_each_remote_ref(show_reference, NULL);
 				continue;
 			}
 			if (!strcmp(arg, "--show-prefix")) {

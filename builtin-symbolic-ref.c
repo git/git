@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "refs.h"
 
 static const char git_symbolic_ref_usage[] =
 "git-symbolic-ref name [ref]";
@@ -7,10 +8,13 @@ static const char git_symbolic_ref_usage[] =
 static void check_symref(const char *HEAD)
 {
 	unsigned char sha1[20];
-	const char *refs_heads_master = resolve_ref("HEAD", sha1, 0);
+	int flag;
+	const char *refs_heads_master = resolve_ref(HEAD, sha1, 0, &flag);
 
 	if (!refs_heads_master)
 		die("No such ref: %s", HEAD);
+	else if (!(flag & REF_ISSYMREF))
+		die("ref %s is not a symbolic ref", HEAD);
 	puts(refs_heads_master);
 }
 

@@ -276,7 +276,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 
 	for (p = fmt; *p; p++) {
 		this_result = refs_found ? sha1_from_ref : sha1;
-		ref = resolve_ref(mkpath(*p, len, str), this_result, 1);
+		ref = resolve_ref(mkpath(*p, len, str), this_result, 1, NULL);
 		if (ref) {
 			if (!refs_found++)
 				real_ref = xstrdup(ref);

@@ -42,7 +42,7 @@ static void rev_list_push(struct commit *commit, int mark)
 	}
 }
 
-static int rev_list_insert_ref(const char *path, const unsigned char *sha1)
+static int rev_list_insert_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *o = deref_tag(parse_object(sha1), path, 0);
 
@@ -143,7 +143,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	unsigned in_vain = 0;
 	int got_continue = 0;
 
-	for_each_ref(rev_list_insert_ref);
+	for_each_ref(rev_list_insert_ref, NULL);
 
 	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
@@ -253,7 +253,7 @@ done:
 
 static struct commit_list *complete;
 
-static int mark_complete(const char *path, const unsigned char *sha1)
+static int mark_complete(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *o = parse_object(sha1);
 
@@ -365,7 +365,7 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 		}
 	}
 
-	for_each_ref(mark_complete);
+	for_each_ref(mark_complete, NULL);
 	if (cutoff)
 		mark_recent_complete_commits(cutoff);
 

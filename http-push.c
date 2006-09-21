@@ -1864,7 +1864,7 @@ static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 static struct ref *local_refs, **local_tail;
 static struct ref *remote_refs, **remote_tail;
 
-static int one_local_ref(const char *refname, const unsigned char *sha1)
+static int one_local_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct ref *ref;
 	int len = strlen(refname) + 1;
@@ -1913,7 +1913,7 @@ static void one_remote_ref(char *refname)
 static void get_local_heads(void)
 {
 	local_tail = &local_refs;
-	for_each_ref(one_local_ref);
+	for_each_ref(one_local_ref, NULL);
 }
 
 static void get_dav_remote_heads(void)

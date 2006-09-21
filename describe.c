@@ -53,7 +53,7 @@ static void add_to_known_names(const char *path,
 	names = ++idx;
 }
 
-static int get_name(const char *path, const unsigned char *sha1)
+static int get_name(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
 	struct object *object;
@@ -113,7 +113,7 @@ static void describe(const char *arg, int last_one)
 
 	if (!initialized) {
 		initialized = 1;
-		for_each_ref(get_name);
+		for_each_ref(get_name, NULL);
 		qsort(name_array, names, sizeof(*name_array), compare_names);
 	}
 
