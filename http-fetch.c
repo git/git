@@ -144,6 +144,19 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	return size;
 }
 
+static int missing__target(int code, int result)
+{
+	return	/* file:// URL -- do we ever use one??? */
+		(result == CURLE_FILE_COULDNT_READ_FILE) ||
+		/* http:// and https:// URL */
+		(code == 404 && result == CURLE_HTTP_RETURNED_ERROR) ||
+		/* ftp:// URL */
+		(code == 550 && result == CURLE_FTP_COULDNT_RETR_FILE)
+		;
+}
+
+#define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
+
 static void fetch_alternates(const char *base);
 
 static void process_object_response(void *callback_data);
@@ -323,8 +336,7 @@ static void process_object_response(void *callback_data)
 	obj_req->state = COMPLETE;
 
 	/* Use alternates if necessary */
-	if (obj_req->http_code == 404 ||
-	    obj_req->curl_result == CURLE_FILE_COULDNT_READ_FILE) {
+	if (missing_target(obj_req)) {
 		fetch_alternates(alt->base);
 		if (obj_req->repo->next != NULL) {
 			obj_req->repo =
@@ -537,8 +549,7 @@ static void process_alternates_response(void *callback_data)
 			return;
 		}
 	} else if (slot->curl_result != CURLE_OK) {
-		if (slot->http_code != 404 &&
-		    slot->curl_result != CURLE_FILE_COULDNT_READ_FILE) {
+		if (!missing_target(slot)) {
 			got_alternates = -1;
 			return;
 		}
@@ -941,8 +952,7 @@ static int fetch_indices(struct alt_base *repo)
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
 		if (results.curl_result != CURLE_OK) {
-			if (results.http_code == 404 ||
-			    results.curl_result == CURLE_FILE_COULDNT_READ_FILE) {
+			if (missing_target(&results)) {
 				repo->got_indices = 1;
 				free(buffer.buffer);
 				return 0;
@@ -1123,8 +1133,7 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 		ret = error("Request for %s aborted", hex);
 	} else if (obj_req->curl_result != CURLE_OK &&
 		   obj_req->http_code != 416) {
-		if (obj_req->http_code == 404 ||
-		    obj_req->curl_result == CURLE_FILE_COULDNT_READ_FILE)
+		if (missing_target(obj_req))
 			ret = -1; /* Be silent, it is probably in a pack. */
 		else
 			ret = error("%s (curl_result = %d, http_code = %ld, sha1 = %s)",

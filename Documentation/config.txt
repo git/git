@@ -225,6 +225,20 @@ showbranch.default::
 	The default set of branches for gitlink:git-show-branch[1].
 	See gitlink:git-show-branch[1].
 
+status.color::
+	A boolean to enable/disable color in the output of
+	gitlink:git-status[1]. May be set to `true` (or `always`),
+	`false` (or `never`) or `auto`, in which case colors are used
+	only when the output is to a terminal. Defaults to false.
+
+status.color.<slot>::
+	Use customized color for status colorization. `<slot>` is
+	one of `header` (the header text of the status message),
+	`updated` (files which are updated but not committed),
+	`changed` (files which are changed but not updated in the index),
+	or `untracked` (files which are not tracked by git). The values of
+	these variables may be specified as in diff.color.<slot>.
+
 tar.umask::
 	By default, gitlink:git-tar-tree[1] sets file and directories modes
 	to 0666 or 0777. While this is both useful and acceptable for projects

@@ -416,7 +416,8 @@ static void limit_list(struct rev_info *revs)
 
 		if (revs->max_age != -1 && (commit->date < revs->max_age))
 			obj->flags |= UNINTERESTING;
-		if (revs->unpacked && has_sha1_pack(obj->sha1))
+		if (revs->unpacked &&
+		    has_sha1_pack(obj->sha1, revs->ignore_packed))
 			obj->flags |= UNINTERESTING;
 		add_parents_to_list(revs, commit, &list);
 		if (obj->flags & UNINTERESTING) {
@@ -465,7 +466,7 @@ static void limit_list(struct rev_info *revs)
 static int all_flags;
 static struct rev_info *all_revs;
 
-static int handle_one_ref(const char *path, const unsigned char *sha1)
+static int handle_one_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *object = get_reference(all_revs, path, sha1, all_flags);
 	add_pending_object(all_revs, object, "");
@@ -476,7 +477,7 @@ static void handle_all(struct rev_info *revs, unsigned flags)
 {
 	all_revs = revs;
 	all_flags = flags;
-	for_each_ref(handle_one_ref);
+	for_each_ref(handle_one_ref, NULL);
 }
 
 static int add_parents_only(struct rev_info *revs, const char *arg, int flags)
@@ -671,6 +672,16 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 	return 0;
 }
 
+static void add_ignore_packed(struct rev_info *revs, const char *name)
+{
+	int num = ++revs->num_ignore_packed;
+
+	revs->ignore_packed = xrealloc(revs->ignore_packed,
+				       sizeof(const char **) * (num + 1));
+	revs->ignore_packed[num-1] = name;
+	revs->ignore_packed[num] = NULL;
+}
+
 /*
  * Parse revision information, filling in the "rev_info" structure,
  * and removing the used arguments from the argument list.
@@ -811,6 +822,14 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "--unpacked")) {
 				revs->unpacked = 1;
+				free(revs->ignore_packed);
+				revs->ignore_packed = NULL;
+				revs->num_ignore_packed = 0;
+				continue;
+			}
+			if (!strncmp(arg, "--unpacked=", 11)) {
+				revs->unpacked = 1;
+				add_ignore_packed(revs, arg+11);
 				continue;
 			}
 			if (!strcmp(arg, "-r")) {
@@ -1057,7 +1076,8 @@ struct commit *get_revision(struct rev_info *revs)
 		 */
 		if (!revs->limited) {
 			if ((revs->unpacked &&
-			     has_sha1_pack(commit->object.sha1)) ||
+			     has_sha1_pack(commit->object.sha1,
+					   revs->ignore_packed)) ||
 			    (revs->max_age != -1 &&
 			     (commit->date < revs->max_age)))
 				continue;

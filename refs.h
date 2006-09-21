@@ -2,7 +2,7 @@
 #define REFS_H
 
 struct ref_lock {
-	char *ref_file;
+	char *ref_name;
 	char *log_file;
 	struct lock_file *lk;
 	unsigned char old_sha1[20];
@@ -14,11 +14,14 @@ struct ref_lock {
  * Calls the specified function for each ref file until it returns nonzero,
  * and returns the value
  */
-extern int head_ref(int (*fn)(const char *path, const unsigned char *sha1));
-extern int for_each_ref(int (*fn)(const char *path, const unsigned char *sha1));
-extern int for_each_tag_ref(int (*fn)(const char *path, const unsigned char *sha1));
-extern int for_each_branch_ref(int (*fn)(const char *path, const unsigned char *sha1));
-extern int for_each_remote_ref(int (*fn)(const char *path, const unsigned char *sha1));
+#define REF_ISSYMREF 01
+#define REF_ISPACKED 02
+typedef int each_ref_fn(const char *refname, const unsigned char *sha1, int flags, void *cb_data);
+extern int head_ref(each_ref_fn, void *);
+extern int for_each_ref(each_ref_fn, void *);
+extern int for_each_tag_ref(each_ref_fn, void *);
+extern int for_each_branch_ref(each_ref_fn, void *);
+extern int for_each_remote_ref(each_ref_fn, void *);
 
 /** Reads the refs file specified into sha1 **/
 extern int get_ref_sha1(const char *ref, unsigned char *sha1);

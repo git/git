@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "refs.h"
 #include "pkt-line.h"
+#include "sideband.h"
 #include "tag.h"
 #include "object.h"
 #include "commit.h"
@@ -19,6 +20,9 @@ static int use_thin_pack;
 static struct object_array have_obj;
 static struct object_array want_obj;
 static unsigned int timeout;
+/* 0 for no sideband,
+ * otherwise maximum packet size (up to 65520 bytes).
+ */
 static int use_sideband;
 
 static void reset_timeout(void)
@@ -33,45 +37,18 @@ static int strip(char *line, int len)
 	return len;
 }
 
-#define PACKET_MAX 1000
 static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
 {
-	ssize_t ssz;
-	const char *p;
-
-	if (!data) {
-		if (!use_sideband)
-			return 0;
-		packet_flush(1);
+	if (use_sideband)
+		return send_sideband(1, fd, data, sz, use_sideband);
+	if (fd == 3)
+		/* emergency quit */
+		fd = 2;
+	if (fd == 2) {
+		xwrite(fd, data, sz);
+		return sz;
 	}
-
-	if (!use_sideband) {
-		if (fd == 3)
-			/* emergency quit */
-			fd = 2;
-		if (fd == 2) {
-			xwrite(fd, data, sz);
-			return sz;
-		}
-		return safe_write(fd, data, sz);
-	}
-	p = data;
-	ssz = sz;
-	while (sz) {
-		unsigned n;
-		char hdr[5];
-
-		n = sz;
-		if (PACKET_MAX - 5 < n)
-			n = PACKET_MAX - 5;
-		sprintf(hdr, "%04x", n + 5);
-		hdr[4] = fd;
-		safe_write(1, hdr, 5);
-		safe_write(1, p, n);
-		p += n;
-		sz -= n;
-	}
-	return ssz;
+	return safe_write(fd, data, sz);
 }
 
 static void create_pack_file(void)
@@ -308,7 +285,8 @@ static void create_pack_file(void)
 				goto fail;
 			fprintf(stderr, "flushed.\n");
 		}
-		send_client_data(1, NULL, 0);
+		if (use_sideband)
+			packet_flush(1);
 		return;
 	}
  fail:
@@ -351,7 +329,8 @@ static int got_sha1(char *hex, unsigned char *sha1)
 static int get_common_commits(void)
 {
 	static char line[1000];
-	unsigned char sha1[20], last_sha1[20];
+	unsigned char sha1[20];
+	char hex[41], last_hex[41];
 	int len;
 
 	track_object_refs = 0;
@@ -368,21 +347,22 @@ static int get_common_commits(void)
 		}
 		len = strip(line, len);
 		if (!strncmp(line, "have ", 5)) {
-			if (got_sha1(line+5, sha1) &&
-			    (multi_ack || have_obj.nr == 1)) {
-				packet_write(1, "ACK %s%s\n",
-					     sha1_to_hex(sha1),
-					     multi_ack ?  " continue" : "");
-				if (multi_ack)
-					hashcpy(last_sha1, sha1);
+			if (got_sha1(line+5, sha1)) {
+				memcpy(hex, sha1_to_hex(sha1), 41);
+				if (multi_ack) {
+					const char *msg = "ACK %s continue\n";
+					packet_write(1, msg, hex);
+					memcpy(last_hex, hex, 41);
+				}
+				else if (have_obj.nr == 1)
+					packet_write(1, "ACK %s\n", hex);
 			}
 			continue;
 		}
 		if (!strcmp(line, "done")) {
 			if (have_obj.nr > 0) {
 				if (multi_ack)
-					packet_write(1, "ACK %s\n",
-							sha1_to_hex(last_sha1));
+					packet_write(1, "ACK %s\n", last_hex);
 				return 0;
 			}
 			packet_write(1, "NAK\n");
@@ -413,8 +393,10 @@ static void receive_needs(void)
 			multi_ack = 1;
 		if (strstr(line+45, "thin-pack"))
 			use_thin_pack = 1;
-		if (strstr(line+45, "side-band"))
-			use_sideband = 1;
+		if (strstr(line+45, "side-band-64k"))
+			use_sideband = LARGE_PACKET_MAX;
+		else if (strstr(line+45, "side-band"))
+			use_sideband = DEFAULT_PACKET_MAX;
 
 		/* We have sent all our refs already, and the other end
 		 * should have chosen out of them; otherwise they are
@@ -434,9 +416,9 @@ static void receive_needs(void)
 	}
 }
 
-static int send_ref(const char *refname, const unsigned char *sha1)
+static int send_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
-	static const char *capabilities = "multi_ack thin-pack side-band";
+	static const char *capabilities = "multi_ack thin-pack side-band side-band-64k";
 	struct object *o = parse_object(sha1);
 
 	if (!o)
@@ -462,8 +444,8 @@ static int send_ref(const char *refname, const unsigned char *sha1)
 static void upload_pack(void)
 {
 	reset_timeout();
-	head_ref(send_ref);
-	for_each_ref(send_ref);
+	head_ref(send_ref, NULL);
+	for_each_ref(send_ref, NULL);
 	packet_flush(1);
 	receive_needs();
 	if (want_obj.nr) {

@@ -8,6 +8,7 @@
 
 struct rev_info;
 struct diff_options;
+struct diff_queue_struct;
 
 typedef void (*change_fn_t)(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
@@ -19,6 +20,9 @@ typedef void (*add_remove_fn_t)(struct diff_options *options,
 		    int addremove, unsigned mode,
 		    const unsigned char *sha1,
 		    const char *base, const char *path);
+
+typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
+		struct diff_options *options, void *data);
 
 #define DIFF_FORMAT_RAW		0x0001
 #define DIFF_FORMAT_DIFFSTAT	0x0002
@@ -34,6 +38,8 @@ typedef void (*add_remove_fn_t)(struct diff_options *options,
  * and we should not give default value to output_format.
  */
 #define DIFF_FORMAT_NO_OUTPUT	0x0080
+
+#define DIFF_FORMAT_CALLBACK	0x0100
 
 struct diff_options {
 	const char *filter;
@@ -68,6 +74,8 @@ struct diff_options {
 	int *pathlens;
 	change_fn_t change;
 	add_remove_fn_t add_remove;
+	diff_format_fn_t format_callback;
+	void *format_callback_data;
 };
 
 enum color_diff {

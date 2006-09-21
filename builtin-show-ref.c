@@ -9,7 +9,7 @@ static int deref_tags = 0, show_head = 0, tags_only = 0, heads_only = 0,
 	found_match = 0, verify = 0, quiet = 0, hash_only = 0;
 static const char **pattern;
 
-static int show_ref(const char *refname, const unsigned char *sha1)
+static int show_ref(const char *refname, const unsigned char *sha1, int flag, void *cbdata)
 {
 	struct object *obj;
 
@@ -109,8 +109,8 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 		usage(show_ref_usage);
 	}
 	if (show_head)
-		head_ref(show_ref);
-	for_each_ref(show_ref);
+		head_ref(show_ref, NULL);
+	for_each_ref(show_ref, NULL);
 	if (!found_match) {
 		if (verify && !quiet)
 			die("No match");

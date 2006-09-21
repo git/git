@@ -8,6 +8,7 @@ git-apply
 git-applymbox
 git-applypatch
 git-archimport
+git-archive
 git-bisect
 git-branch
 git-cat-file
@@ -72,6 +73,7 @@ git-name-rev
 git-mv
 git-pack-redundant
 git-pack-objects
+git-pack-refs
 git-parse-remote
 git-patch-id
 git-peek-remote
@@ -94,6 +96,7 @@ git-rev-list
 git-rev-parse
 git-revert
 git-rm
+git-runstatus
 git-send-email
 git-send-pack
 git-sh-setup
@@ -119,6 +122,7 @@ git-unpack-objects
 git-update-index
 git-update-ref
 git-update-server-info
+git-upload-archive
 git-upload-pack
 git-upload-tar
 git-var

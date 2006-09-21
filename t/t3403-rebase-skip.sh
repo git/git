@@ -37,7 +37,9 @@ test_expect_success setup '
 	git branch skip-merge skip-reference
 	'
 
-test_expect_failure 'rebase with git am -3 (default)' 'git rebase master'
+test_expect_failure 'rebase with git am -3 (default)' '
+	git rebase master
+'
 
 test_expect_success 'rebase --skip with am -3' '
 	git reset --hard HEAD &&
