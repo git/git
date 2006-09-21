@@ -64,4 +64,18 @@ test_expect_success \
 	cmp victim/.git/refs/heads/master .git/refs/heads/master
 '
 
+unset GIT_CONFIG GIT_CONFIG_LOCAL
+HOME=`pwd`/no-such-directory
+export HOME ;# this way we force the victim/.git/config to be used.
+
+test_expect_success \
+        'pushing with --force should be denied with denyNonFastforwards' '
+	cd victim &&
+	git-repo-config receive.denyNonFastforwards true &&
+	cd .. &&
+	git-update-ref refs/heads/master master^ &&
+	git-send-pack --force ./victim/.git/ master &&
+	! diff -u .git/refs/heads/master victim/.git/refs/heads/master
+'
+
 test_done

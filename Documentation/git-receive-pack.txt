@@ -73,6 +73,8 @@ packed and is served via a dumb transport.
 There are other real-world examples of using update and
 post-update hooks found in the Documentation/howto directory.
 
+git-receive-pack honours the receive.denyNonFastforwards flag, which
+tells it if updates to a ref should be denied if they are not fast-forwards.
 
 OPTIONS
 -------
