@@ -232,7 +232,7 @@ static int encode_header(enum object_type type, unsigned long size, unsigned cha
 	int n = 1;
 	unsigned char c;
 
-	if (type < OBJ_COMMIT || type > OBJ_DELTA)
+	if (type < OBJ_COMMIT || type > OBJ_REF_DELTA)
 		die("bad type %d", type);
 
 	c = (type << 4) | (size & 15);
@@ -297,7 +297,7 @@ static int revalidate_pack_entry(struct object_entry *entry, unsigned char *data
 	used = unpack_object_header_gently(data, len, &type, &size);
 	if (!used)
 		return -1;
-	if (type == OBJ_DELTA)
+	if (type == OBJ_REF_DELTA)
 		used += 20; /* skip base object name */
 	data += used;
 	len -= used;
@@ -340,7 +340,7 @@ static unsigned long write_object(struct sha1file *f,
 	obj_type = entry->type;
 	if (! entry->in_pack)
 		to_reuse = 0;	/* can't reuse what we don't have */
-	else if (obj_type == OBJ_DELTA)
+	else if (obj_type == OBJ_REF_DELTA)
 		to_reuse = 1;	/* check_object() decided it for us */
 	else if (obj_type != entry->in_pack_type)
 		to_reuse = 0;	/* pack has delta which is unusable */
@@ -380,7 +380,7 @@ static unsigned long write_object(struct sha1file *f,
 		if (entry->delta) {
 			buf = delta_against(buf, size, entry);
 			size = entry->delta_size;
-			obj_type = OBJ_DELTA;
+			obj_type = OBJ_REF_DELTA;
 		}
 		/*
 		 * The object header is a byte of 'type' followed by zero or
@@ -409,11 +409,11 @@ static unsigned long write_object(struct sha1file *f,
 		sha1write(f, buf, datalen);
 		unuse_packed_git(p);
 		hdrlen = 0; /* not really */
-		if (obj_type == OBJ_DELTA)
+		if (obj_type == OBJ_REF_DELTA)
 			reused_delta++;
 		reused++;
 	}
-	if (obj_type == OBJ_DELTA)
+	if (obj_type == OBJ_REF_DELTA)
 		written_delta++;
 	written++;
 	return hdrlen + datalen;
@@ -916,7 +916,7 @@ static void check_object(struct object_entry *entry)
 		 * delta.
 		 */
 		if (!no_reuse_delta &&
-		    entry->in_pack_type == OBJ_DELTA &&
+		    entry->in_pack_type == OBJ_REF_DELTA &&
 		    (base_entry = locate_object_entry(base)) &&
 		    (!base_entry->preferred_base)) {
 
@@ -929,7 +929,7 @@ static void check_object(struct object_entry *entry)
 			/* uncompressed size of the delta data */
 			entry->size = entry->delta_size = size;
 			entry->delta = base_entry;
-			entry->type = OBJ_DELTA;
+			entry->type = OBJ_REF_DELTA;
 
 			entry->delta_sibling = base_entry->delta_child;
 			base_entry->delta_child = entry;

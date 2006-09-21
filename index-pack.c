@@ -158,7 +158,7 @@ static void *unpack_raw_entry(unsigned long offset,
 	}
 
 	switch (type) {
-	case OBJ_DELTA:
+	case OBJ_REF_DELTA:
 		if (pos + 20 >= pack_limit)
 			bad_object(offset, "object extends past end of pack");
 		hashcpy(delta_base, pack_base + pos);
@@ -301,7 +301,7 @@ static void parse_pack_objects(void)
 		data = unpack_raw_entry(offset, &obj->type, &data_size,
 					base_sha1, &offset);
 		obj->real_type = obj->type;
-		if (obj->type == OBJ_DELTA) {
+		if (obj->type == OBJ_REF_DELTA) {
 			struct delta_entry *delta = &deltas[nr_deltas++];
 			delta->obj = obj;
 			hashcpy(delta->base_sha1, base_sha1);
@@ -328,7 +328,7 @@ static void parse_pack_objects(void)
 		struct object_entry *obj = &objects[i];
 		int j, first, last;
 
-		if (obj->type == OBJ_DELTA)
+		if (obj->type == OBJ_REF_DELTA)
 			continue;
 		if (find_deltas_based_on_sha1(obj->sha1, &first, &last))
 			continue;
@@ -341,7 +341,7 @@ static void parse_pack_objects(void)
 
 	/* Check for unresolved deltas */
 	for (i = 0; i < nr_deltas; i++) {
-		if (deltas[i].obj->real_type == OBJ_DELTA)
+		if (deltas[i].obj->real_type == OBJ_REF_DELTA)
 			die("packfile '%s' has unresolved deltas",  pack_name);
 	}
 }

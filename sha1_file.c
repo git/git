@@ -883,26 +883,61 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 	return unpack_sha1_rest(&stream, hdr, *size);
 }
 
+static unsigned long get_delta_base(struct packed_git *p,
+				    unsigned long offset,
+				    enum object_type kind,
+				    unsigned long delta_obj_offset,
+				    unsigned long *base_obj_offset)
+{
+	unsigned char *base_info = (unsigned char *) p->pack_base + offset;
+	unsigned long base_offset;
+
+	/* there must be at least 20 bytes left regardless of delta type */
+	if (p->pack_size <= offset + 20)
+		die("truncated pack file");
+
+	if (kind == OBJ_OFS_DELTA) {
+		unsigned used = 0;
+		unsigned char c = base_info[used++];
+		base_offset = c & 127;
+		while (c & 128) {
+			base_offset += 1;
+			if (!base_offset || base_offset & ~(~0UL >> 7))
+				die("offset value overflow for delta base object");
+			c = base_info[used++];
+			base_offset = (base_offset << 7) + (c & 127);
+		}
+		base_offset = delta_obj_offset - base_offset;
+		if (base_offset >= delta_obj_offset)
+			die("delta base offset out of bound");
+		offset += used;
+	} else if (kind == OBJ_REF_DELTA) {
+		/* The base entry _must_ be in the same pack */
+		base_offset = find_pack_entry_one(base_info, p);
+		if (!base_offset)
+			die("failed to find delta-pack base object %s",
+				sha1_to_hex(base_info));
+		offset += 20;
+	} else
+		die("I am totally screwed");
+	*base_obj_offset = base_offset;
+	return offset;
+}
+
 /* forward declaration for a mutually recursive function */
 static int packed_object_info(struct packed_git *p, unsigned long offset,
 			      char *type, unsigned long *sizep);
 
 static int packed_delta_info(struct packed_git *p,
 			     unsigned long offset,
+			     enum object_type kind,
+			     unsigned long obj_offset,
 			     char *type,
 			     unsigned long *sizep)
 {
 	unsigned long base_offset;
-	unsigned char *base_sha1 = (unsigned char *) p->pack_base + offset;
 
-	if (p->pack_size < offset + 20)
-		die("truncated pack file");
-	/* The base entry _must_ be in the same pack */
-	base_offset = find_pack_entry_one(base_sha1, p);
-	if (!base_offset)
-		die("failed to find delta-pack base object %s",
-		    sha1_to_hex(base_sha1));
-	offset += 20;
+	offset = get_delta_base(p, offset, kind, obj_offset, &base_offset);
 
 	/* We choose to only get the type of the base object and
 	 * ignore potentially corrupt pack file that expects the delta
@@ -975,7 +1010,7 @@ int check_reuse_pack_delta(struct packed_git *p, unsigned long offset,
 	use_packed_git(p);
 	ptr = offset;
 	ptr = unpack_object_header(p, ptr, kindp, sizep);
-	if (*kindp != OBJ_DELTA)
+	if (*kindp != OBJ_REF_DELTA)
 		goto done;
 	hashcpy(base, (unsigned char *) p->pack_base + ptr);
 	status = 0;
@@ -992,11 +1027,12 @@ void packed_object_info_detail(struct packed_git *p,
 			       unsigned int *delta_chain_length,
 			       unsigned char *base_sha1)
 {
-	unsigned long val;
+	unsigned long obj_offset, val;
 	unsigned char *next_sha1;
 	enum object_type kind;
 
 	*delta_chain_length = 0;
+	obj_offset = offset;
 	offset = unpack_object_header(p, offset, &kind, size);
 
 	for (;;) {
@@ -1011,7 +1047,13 @@ void packed_object_info_detail(struct packed_git *p,
 			strcpy(type, type_names[kind]);
 			*store_size = 0; /* notyet */
 			return;
-		case OBJ_DELTA:
+		case OBJ_OFS_DELTA:
+			get_delta_base(p, offset, kind, obj_offset, &offset);
+			if (*delta_chain_length == 0) {
+				/* TODO: find base_sha1 as pointed by offset */
+			}
+			break;
+		case OBJ_REF_DELTA:
 			if (p->pack_size <= offset + 20)
 				die("pack file %s records an incomplete delta base",
 				    p->pack_name);
@@ -1021,6 +1063,7 @@ void packed_object_info_detail(struct packed_git *p,
 			offset = find_pack_entry_one(next_sha1, p);
 			break;
 		}
+		obj_offset = offset;
 		offset = unpack_object_header(p, offset, &kind, &val);
 		(*delta_chain_length)++;
 	}
@@ -1029,15 +1072,15 @@ void packed_object_info_detail(struct packed_git *p,
 static int packed_object_info(struct packed_git *p, unsigned long offset,
 			      char *type, unsigned long *sizep)
 {
-	unsigned long size;
+	unsigned long size, obj_offset = offset;
 	enum object_type kind;
 
 	offset = unpack_object_header(p, offset, &kind, &size);
 
-	if (kind == OBJ_DELTA)
-		return packed_delta_info(p, offset, type, sizep);
-
 	switch (kind) {
+	case OBJ_OFS_DELTA:
+	case OBJ_REF_DELTA:
+		return packed_delta_info(p, offset, kind, obj_offset, type, sizep);
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
@@ -1083,23 +1126,15 @@ static void *unpack_compressed_entry(struct packed_git *p,
 static void *unpack_delta_entry(struct packed_git *p,
 				unsigned long offset,
 				unsigned long delta_size,
+				enum object_type kind,
+				unsigned long obj_offset,
 				char *type,
 				unsigned long *sizep)
 {
 	void *delta_data, *result, *base;
 	unsigned long result_size, base_size, base_offset;
-	unsigned char *base_sha1;
 
-	if (p->pack_size < offset + 20)
-		die("truncated pack file");
-	/* The base entry _must_ be in the same pack */
-	base_sha1 = (unsigned char*)p->pack_base + offset;
-	base_offset = find_pack_entry_one(base_sha1, p);
-	if (!base_offset)
-		die("failed to find delta-pack base object %s",
-		    sha1_to_hex(base_sha1));
-	offset += 20;
-
+	offset = get_delta_base(p, offset, kind, obj_offset, &base_offset);
 	base = unpack_entry_gently(p, base_offset, type, &base_size);
 	if (!base)
 		die("failed to read delta base object at %lu from %s",
@@ -1136,13 +1171,14 @@ static void *unpack_entry(struct pack_entry *entry,
 void *unpack_entry_gently(struct packed_git *p, unsigned long offset,
 			  char *type, unsigned long *sizep)
 {
-	unsigned long size;
+	unsigned long size, obj_offset = offset;
 	enum object_type kind;
 
 	offset = unpack_object_header(p, offset, &kind, &size);
 	switch (kind) {
-	case OBJ_DELTA:
-		return unpack_delta_entry(p, offset, size, type, sizep);
+	case OBJ_OFS_DELTA:
+	case OBJ_REF_DELTA:
+		return unpack_delta_entry(p, offset, size, kind, obj_offset, type, sizep);
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:

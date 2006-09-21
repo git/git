@@ -241,7 +241,7 @@ static void unpack_one(unsigned nr, unsigned total)
 	case OBJ_TAG:
 		unpack_non_delta_entry(type, size);
 		return;
-	case OBJ_DELTA:
+	case OBJ_REF_DELTA:
 		unpack_delta_entry(size);
 		return;
 	default:
