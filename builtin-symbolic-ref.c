@@ -7,7 +7,7 @@ static const char git_symbolic_ref_usage[] =
 static void check_symref(const char *HEAD)
 {
 	unsigned char sha1[20];
-	const char *refs_heads_master = resolve_ref("HEAD", sha1, 0);
+	const char *refs_heads_master = resolve_ref(HEAD, sha1, 0);
 
 	if (!refs_heads_master)
 		die("No such ref: %s", HEAD);
