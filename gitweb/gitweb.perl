@@ -300,6 +300,7 @@ sub evaluate_path_info {
 		$pathname =~ s,^/+,,;
 		if (!$pathname || substr($pathname, -1) eq "/") {
 			$action  ||= "tree";
+			$pathname =~ s,/$,,;
 		} else {
 			$action  ||= "blob_plain";
 		}
