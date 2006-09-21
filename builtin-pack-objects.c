@@ -60,6 +60,8 @@ static int non_empty;
 static int no_reuse_delta;
 static int local;
 static int incremental;
+static int allow_ofs_delta;
+
 static struct object_entry **sorted_by_sha, **sorted_by_type;
 static struct object_entry *objects;
 static int nr_objects, nr_alloc, nr_result;
@@ -334,9 +336,6 @@ static unsigned long write_object(struct sha1file *f,
 	enum object_type obj_type;
 	int to_reuse = 0;
 
-	if (entry->preferred_base)
-		return 0;
-
 	obj_type = entry->type;
 	if (! entry->in_pack)
 		to_reuse = 0;	/* can't reuse what we don't have */
@@ -380,18 +379,35 @@ static unsigned long write_object(struct sha1file *f,
 		if (entry->delta) {
 			buf = delta_against(buf, size, entry);
 			size = entry->delta_size;
-			obj_type = OBJ_REF_DELTA;
+			obj_type = (allow_ofs_delta && entry->delta->offset) ?
+				OBJ_OFS_DELTA : OBJ_REF_DELTA;
 		}
 		/*
 		 * The object header is a byte of 'type' followed by zero or
-		 * more bytes of length.  For deltas, the 20 bytes of delta
-		 * sha1 follows that.
+		 * more bytes of length.
 		 */
 		hdrlen = encode_header(obj_type, size, header);
 		sha1write(f, header, hdrlen);
 
-		if (entry->delta) {
-			sha1write(f, entry->delta, 20);
+		if (obj_type == OBJ_OFS_DELTA) {
+			/*
+			 * Deltas with relative base contain an additional
+			 * encoding of the relative offset for the delta
+			 * base from this object's position in the pack.
+			 */
+			unsigned long ofs = entry->offset - entry->delta->offset;
+			unsigned pos = sizeof(header) - 1;
+			header[pos] = ofs & 127;
+			while (ofs >>= 7)
+				header[--pos] = 128 | (--ofs & 127);
+			sha1write(f, header + pos, sizeof(header) - pos);
+			hdrlen += sizeof(header) - pos;
+		} else if (obj_type == OBJ_REF_DELTA) {
+			/*
+			 * Deltas with a base reference contain
+			 * an additional 20 bytes for the base sha1.
+			 */
+			sha1write(f, entry->delta->sha1, 20);
 			hdrlen += 20;
 		}
 		datalen = sha1write_compressed(f, buf, size);
@@ -413,7 +429,7 @@ static unsigned long write_object(struct sha1file *f,
 			reused_delta++;
 		reused++;
 	}
-	if (obj_type == OBJ_REF_DELTA)
+	if (entry->delta)
 		written_delta++;
 	written++;
 	return hdrlen + datalen;
@@ -423,17 +439,16 @@ static unsigned long write_one(struct sha1file *f,
 			       struct object_entry *e,
 			       unsigned long offset)
 {
-	if (e->offset)
+	if (e->offset || e->preferred_base)
 		/* offset starts from header size and cannot be zero
 		 * if it is written already.
 		 */
 		return offset;
-	e->offset = offset;
-	offset += write_object(f, e);
-	/* if we are deltified, write out its base object. */
+	/* if we are deltified, write out its base object first. */
 	if (e->delta)
 		offset = write_one(f, e->delta, offset);
-	return offset;
+	e->offset = offset;
+	return offset + write_object(f, e);
 }
 
 static void write_pack_file(void)
@@ -1482,6 +1497,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp("--no-reuse-delta", arg)) {
 			no_reuse_delta = 1;
+			continue;
+		}
+		if (!strcmp("--delta-base-offset", arg)) {
+			allow_ofs_delta = no_reuse_delta = 1;
 			continue;
 		}
 		if (!strcmp("--stdout", arg)) {
