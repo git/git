@@ -215,7 +215,7 @@ static int ref_newer(const unsigned char *new_sha1,
 static struct ref *local_refs, **local_tail;
 static struct ref *remote_refs, **remote_tail;
 
-static int one_local_ref(const char *refname, const unsigned char *sha1, void *cb_data)
+static int one_local_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct ref *ref;
 	int len = strlen(refname) + 1;

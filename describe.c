@@ -53,7 +53,7 @@ static void add_to_known_names(const char *path,
 	names = ++idx;
 }
 
-static int get_name(const char *path, const unsigned char *sha1, void *cb_data)
+static int get_name(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
 	struct object *object;

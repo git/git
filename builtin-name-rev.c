@@ -75,7 +75,7 @@ copy_data:
 	}
 }
 
-static int name_ref(const char *path, const unsigned char *sha1, void *cb_data)
+static int name_ref(const char *path, const unsigned char *sha1, int flags, void *cb_data)
 {
 	struct object *o = parse_object(sha1);
 	int tags_only = *(int*)cb_data;

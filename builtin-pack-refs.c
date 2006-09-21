@@ -9,7 +9,8 @@ static void remove_lock_file(void)
 		unlink(lock_path);
 }
 
-static int handle_one_ref(const char *path, const unsigned char *sha1, void *cb_data)
+static int handle_one_ref(const char *path, const unsigned char *sha1,
+			  int flags, void *cb_data)
 {
 	FILE *refs_file = cb_data;
 

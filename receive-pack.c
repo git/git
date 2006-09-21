@@ -12,7 +12,7 @@ static int report_status;
 static char capabilities[] = "report-status";
 static int capabilities_sent;
 
-static int show_ref(const char *path, const unsigned char *sha1, void *cb_data)
+static int show_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	if (capabilities_sent)
 		packet_write(1, "%s %s\n", sha1_to_hex(sha1), path);
@@ -27,7 +27,7 @@ static void write_head_info(void)
 {
 	for_each_ref(show_ref, NULL);
 	if (!capabilities_sent)
-		show_ref("capabilities^{}", null_sha1, NULL);
+		show_ref("capabilities^{}", null_sha1, 0, NULL);
 
 }
 

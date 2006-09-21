@@ -137,7 +137,7 @@ static void show_default(void)
 	}
 }
 
-static int show_reference(const char *refname, const unsigned char *sha1, void *cb_data)
+static int show_reference(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	show_rev(NORMAL, sha1, refname);
 	return 0;

@@ -7,7 +7,7 @@
 /* refs */
 static FILE *info_ref_fp;
 
-static int add_info_ref(const char *path, const unsigned char *sha1, void *cb_data)
+static int add_info_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *o = parse_object(sha1);
 

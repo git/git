@@ -416,7 +416,7 @@ static void receive_needs(void)
 	}
 }
 
-static int send_ref(const char *refname, const unsigned char *sha1, void *cb_data)
+static int send_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	static const char *capabilities = "multi_ack thin-pack side-band side-band-64k";
 	struct object *o = parse_object(sha1);

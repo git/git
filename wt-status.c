@@ -41,7 +41,7 @@ void wt_status_prepare(struct wt_status *s)
 
 	s->is_initial = get_sha1("HEAD", sha1) ? 1 : 0;
 
-	head = resolve_ref("HEAD", sha1, 0);
+	head = resolve_ref("HEAD", sha1, 0, NULL);
 	s->branch = head ? xstrdup(head) : NULL;
 
 	s->reference = "HEAD";

@@ -201,7 +201,7 @@ static int interpret_target(char *target, unsigned char *sha1)
 	return -1;
 }
 
-static int mark_complete(const char *path, const unsigned char *sha1, void *cb_data)
+static int mark_complete(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
 	if (commit) {

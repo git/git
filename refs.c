@@ -5,6 +5,7 @@
 
 struct ref_list {
 	struct ref_list *next;
+	unsigned char flag; /* ISSYMREF? ISPACKED? */
 	unsigned char sha1[20];
 	char name[FLEX_ARRAY];
 };
@@ -36,7 +37,8 @@ static const char *parse_ref_line(char *line, unsigned char *sha1)
 	return line;
 }
 
-static struct ref_list *add_ref(const char *name, const unsigned char *sha1, struct ref_list *list)
+static struct ref_list *add_ref(const char *name, const unsigned char *sha1,
+				int flag, struct ref_list *list)
 {
 	int len;
 	struct ref_list **p = &list, *entry;
@@ -58,6 +60,7 @@ static struct ref_list *add_ref(const char *name, const unsigned char *sha1, str
 	entry = xmalloc(sizeof(struct ref_list) + len);
 	hashcpy(entry->sha1, sha1);
 	memcpy(entry->name, name, len);
+	entry->flag = flag;
 	entry->next = *p;
 	*p = entry;
 	return list;
@@ -78,7 +81,7 @@ static struct ref_list *get_packed_refs(void)
 				const char *name = parse_ref_line(refline, sha1);
 				if (!name)
 					continue;
-				list = add_ref(name, sha1, list);
+				list = add_ref(name, sha1, REF_ISPACKED, list);
 			}
 			fclose(f);
 			refs = list;
@@ -104,6 +107,7 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 		while ((de = readdir(dir)) != NULL) {
 			unsigned char sha1[20];
 			struct stat st;
+			int flag;
 			int namelen;
 
 			if (de->d_name[0] == '.')
@@ -120,11 +124,11 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 				list = get_ref_dir(ref, list);
 				continue;
 			}
-			if (read_ref(ref, sha1) < 0) {
+			if (!resolve_ref(ref, sha1, 1, &flag)) {
 				error("%s points nowhere!", ref);
 				continue;
 			}
-			list = add_ref(ref, sha1, list);
+			list = add_ref(ref, sha1, flag, list);
 		}
 		free(ref);
 		closedir(dir);
@@ -147,11 +151,14 @@ static struct ref_list *get_loose_refs(void)
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define MAXDEPTH 5
 
-const char *resolve_ref(const char *ref, unsigned char *sha1, int reading)
+const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *flag)
 {
 	int depth = MAXDEPTH, len;
 	char buffer[256];
 	static char ref_buffer[256];
+
+	if (flag)
+		*flag = 0;
 
 	for (;;) {
 		const char *path = git_path("%s", ref);
@@ -174,6 +181,8 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading)
 			while (list) {
 				if (!strcmp(ref, list->name)) {
 					hashcpy(sha1, list->sha1);
+					if (flag)
+						*flag |= REF_ISPACKED;
 					return ref;
 				}
 				list = list->next;
@@ -191,6 +200,8 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading)
 				buffer[len] = 0;
 				strcpy(ref_buffer, buffer);
 				ref = ref_buffer;
+				if (flag)
+					*flag |= REF_ISSYMREF;
 				continue;
 			}
 		}
@@ -219,6 +230,8 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading)
 		buf[len] = 0;
 		memcpy(ref_buffer, buf, len + 1);
 		ref = ref_buffer;
+		if (flag)
+			*flag |= REF_ISSYMREF;
 	}
 	if (len < 40 || get_sha1_hex(buffer, sha1))
 		return NULL;
@@ -270,12 +283,13 @@ int create_symref(const char *ref_target, const char *refs_heads_master)
 
 int read_ref(const char *ref, unsigned char *sha1)
 {
-	if (resolve_ref(ref, sha1, 1))
+	if (resolve_ref(ref, sha1, 1, NULL))
 		return 0;
 	return -1;
 }
 
-static int do_for_each_ref(const char *base, each_ref_fn fn, int trim, void *cb_data)
+static int do_for_each_ref(const char *base, each_ref_fn fn, int trim,
+			   void *cb_data)
 {
 	int retval;
 	struct ref_list *packed = get_packed_refs();
@@ -303,7 +317,8 @@ static int do_for_each_ref(const char *base, each_ref_fn fn, int trim, void *cb_
 			error("%s does not point to a valid object!", entry->name);
 			continue;
 		}
-		retval = fn(entry->name + trim, entry->sha1, cb_data);
+		retval = fn(entry->name + trim, entry->sha1,
+			    entry->flag, cb_data);
 		if (retval)
 			return retval;
 	}
@@ -311,7 +326,8 @@ static int do_for_each_ref(const char *base, each_ref_fn fn, int trim, void *cb_
 	packed = packed ? packed : loose;
 	while (packed) {
 		if (!strncmp(base, packed->name, trim)) {
-			retval = fn(packed->name + trim, packed->sha1, cb_data);
+			retval = fn(packed->name + trim, packed->sha1,
+				    packed->flag, cb_data);
 			if (retval)
 				return retval;
 		}
@@ -323,8 +339,10 @@ static int do_for_each_ref(const char *base, each_ref_fn fn, int trim, void *cb_
 int head_ref(each_ref_fn fn, void *cb_data)
 {
 	unsigned char sha1[20];
-	if (!read_ref("HEAD", sha1))
-		return fn("HEAD", sha1, cb_data);
+	int flag;
+
+	if (resolve_ref("HEAD", sha1, 1, &flag))
+		return fn("HEAD", sha1, flag, cb_data);
 	return 0;
 }
 
@@ -415,7 +433,7 @@ int check_ref_format(const char *ref)
 static struct ref_lock *verify_lock(struct ref_lock *lock,
 	const unsigned char *old_sha1, int mustexist)
 {
-	if (!resolve_ref(lock->ref_name, lock->old_sha1, mustexist)) {
+	if (!resolve_ref(lock->ref_name, lock->old_sha1, mustexist, NULL)) {
 		error("Can't verify ref %s", lock->ref_name);
 		unlock_ref(lock);
 		return NULL;
@@ -441,7 +459,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref,
 	lock = xcalloc(1, sizeof(struct ref_lock));
 	lock->lock_fd = -1;
 
-	ref = resolve_ref(ref, lock->old_sha1, mustexist);
+	ref = resolve_ref(ref, lock->old_sha1, mustexist, NULL);
 	if (!ref) {
 		int last_errno = errno;
 		error("unable to resolve reference %s: %s",

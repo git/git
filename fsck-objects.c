@@ -402,7 +402,7 @@ static void fsck_dir(int i, char *path)
 
 static int default_refs;
 
-static int fsck_handle_ref(const char *refname, const unsigned char *sha1, void *cb_data)
+static int fsck_handle_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *obj;
 
@@ -458,9 +458,10 @@ static void fsck_object_dir(const char *path)
 static int fsck_head_link(void)
 {
 	unsigned char sha1[20];
-	const char *head_points_at = resolve_ref("HEAD", sha1, 1);
+	int flag;
+	const char *head_points_at = resolve_ref("HEAD", sha1, 1, &flag);
 
-	if (!head_points_at)
+	if (!head_points_at || !(flag & REF_ISSYMREF))
 		return error("HEAD is not a symbolic ref");
 	if (strncmp(head_points_at, "refs/heads/", 11))
 		return error("HEAD points to something strange (%s)",
