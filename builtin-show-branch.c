@@ -443,6 +443,12 @@ static int rev_is_head(char *head, int headlen, char *name,
 	if ((!head[0]) ||
 	    (head_sha1 && sha1 && hashcmp(head_sha1, sha1)))
 		return 0;
+	if (!strncmp(head, "refs/heads/", 11))
+		head += 11;
+	if (!strncmp(name, "refs/heads/", 11))
+		name += 11;
+	else if (!strncmp(name, "heads/", 6))
+		name += 6;
 	return !strcmp(head, name);
 }
 
