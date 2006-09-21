@@ -597,15 +597,15 @@ static int add_object_entry(const unsigned char *sha1, unsigned hash, int exclud
 
 	if (!exclude) {
 		for (p = packed_git; p; p = p->next) {
-			struct pack_entry e;
-			if (find_pack_entry_one(sha1, &e, p)) {
+			unsigned long offset = find_pack_entry_one(sha1, p);
+			if (offset) {
 				if (incremental)
 					return 0;
 				if (local && !p->pack_local)
 					return 0;
 				if (!found_pack) {
-					found_offset = e.offset;
-					found_pack = e.p;
+					found_offset = offset;
+					found_pack = p;
 				}
 			}
 		}
