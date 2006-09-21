@@ -1514,12 +1514,15 @@ sub git_print_page_path {
 		my $fullname = '';
 
 		print "<div class=\"page_path\">";
+		print $cgi->a({-href => href(action=>"tree", hash_base=>$hb),
+			      -title => '/'}, '/');
+		print " ";
 		foreach my $dir (@dirname) {
-			$fullname .= $dir . '/';
+			$fullname .= ($fullname ? '/' : '') . $dir;
 			print $cgi->a({-href => href(action=>"tree", file_name=>$fullname,
 			                             hash_base=>$hb),
-			              -title => $fullname}, esc_html($dir));
-			print "/";
+			              -title => $fullname}, esc_html($dir . '/'));
+			print " ";
 		}
 		if (defined $type && $type eq 'blob') {
 			print $cgi->a({-href => href(action=>"blob_plain", file_name=>$file_name,
@@ -1528,8 +1531,7 @@ sub git_print_page_path {
 		} elsif (defined $type && $type eq 'tree') {
 			print $cgi->a({-href => href(action=>"tree", file_name=>$file_name,
 			                             hash_base=>$hb),
-			              -title => $name}, esc_html($basename));
-			print "/";
+			              -title => $name}, esc_html($basename . '/'));
 		} else {
 			print esc_html($basename);
 		}
