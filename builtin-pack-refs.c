@@ -14,7 +14,9 @@ static int handle_one_ref(const char *path, const unsigned char *sha1,
 {
 	FILE *refs_file = cb_data;
 
-	fprintf(refs_file, "%s %s\n", sha1_to_hex(sha1), path);
+	/* Do not pack the symbolic refs */
+	if (!(flags & REF_ISSYMREF))
+		fprintf(refs_file, "%s %s\n", sha1_to_hex(sha1), path);
 	return 0;
 }
 
