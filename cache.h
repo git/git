@@ -188,6 +188,7 @@ extern int prefer_symlink_refs;
 extern int log_all_ref_updates;
 extern int warn_ambiguous_refs;
 extern int shared_repository;
+extern int deny_non_fast_forwards;
 extern const char *apply_default_whitespace;
 extern int zlib_compression_level;
 
@@ -277,6 +278,12 @@ enum object_type {
 	OBJ_DELTA = 7,
 	OBJ_BAD,
 };
+
+extern signed char hexval_table[256];
+static inline unsigned int hexval(unsigned int c)
+{
+	return hexval_table[c];
+}
 
 /* Convert to/from hex/sha1 representation */
 #define MINIMUM_ABBREV 4
