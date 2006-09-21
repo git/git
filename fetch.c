@@ -201,7 +201,7 @@ static int interpret_target(char *target, unsigned char *sha1)
 	return -1;
 }
 
-static int mark_complete(const char *path, const unsigned char *sha1)
+static int mark_complete(const char *path, const unsigned char *sha1, void *cb_data)
 {
 	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
 	if (commit) {
@@ -274,7 +274,7 @@ int pull(int targets, char **target, const char **write_ref,
 	}
 
 	if (!get_recover)
-		for_each_ref(mark_complete);
+		for_each_ref(mark_complete, NULL);
 
 	for (i = 0; i < targets; i++) {
 		if (interpret_target(target[i], &sha1[20 * i])) {

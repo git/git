@@ -215,7 +215,7 @@ static int ref_newer(const unsigned char *new_sha1,
 static struct ref *local_refs, **local_tail;
 static struct ref *remote_refs, **remote_tail;
 
-static int one_local_ref(const char *refname, const unsigned char *sha1)
+static int one_local_ref(const char *refname, const unsigned char *sha1, void *cb_data)
 {
 	struct ref *ref;
 	int len = strlen(refname) + 1;
@@ -230,7 +230,7 @@ static int one_local_ref(const char *refname, const unsigned char *sha1)
 static void get_local_heads(void)
 {
 	local_tail = &local_refs;
-	for_each_ref(one_local_ref);
+	for_each_ref(one_local_ref, NULL);
 }
 
 static int receive_status(int in)

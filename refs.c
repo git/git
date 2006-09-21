@@ -275,7 +275,7 @@ int read_ref(const char *ref, unsigned char *sha1)
 	return -1;
 }
 
-static int do_for_each_ref(const char *base, int (*fn)(const char *path, const unsigned char *sha1), int trim)
+static int do_for_each_ref(const char *base, each_ref_fn fn, int trim, void *cb_data)
 {
 	int retval;
 	struct ref_list *packed = get_packed_refs();
@@ -303,7 +303,7 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 			error("%s does not point to a valid object!", entry->name);
 			continue;
 		}
-		retval = fn(entry->name + trim, entry->sha1);
+		retval = fn(entry->name + trim, entry->sha1, cb_data);
 		if (retval)
 			return retval;
 	}
@@ -311,7 +311,7 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 	packed = packed ? packed : loose;
 	while (packed) {
 		if (!strncmp(base, packed->name, trim)) {
-			retval = fn(packed->name + trim, packed->sha1);
+			retval = fn(packed->name + trim, packed->sha1, cb_data);
 			if (retval)
 				return retval;
 		}
@@ -320,34 +320,39 @@ static int do_for_each_ref(const char *base, int (*fn)(const char *path, const u
 	return 0;
 }
 
-int head_ref(int (*fn)(const char *path, const unsigned char *sha1))
+int head_ref(each_ref_fn fn, void *cb_data)
 {
 	unsigned char sha1[20];
 	if (!read_ref("HEAD", sha1))
-		return fn("HEAD", sha1);
+		return fn("HEAD", sha1, cb_data);
 	return 0;
 }
 
-int for_each_ref(int (*fn)(const char *path, const unsigned char *sha1))
+int for_each_ref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref("refs/", fn, 0);
+	return do_for_each_ref("refs/", fn, 0, cb_data);
 }
 
-int for_each_tag_ref(int (*fn)(const char *path, const unsigned char *sha1))
+int for_each_tag_ref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref("refs/tags/", fn, 10);
+	return do_for_each_ref("refs/tags/", fn, 10, cb_data);
 }
 
-int for_each_branch_ref(int (*fn)(const char *path, const unsigned char *sha1))
+int for_each_branch_ref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref("refs/heads/", fn, 11);
+	return do_for_each_ref("refs/heads/", fn, 11, cb_data);
 }
 
-int for_each_remote_ref(int (*fn)(const char *path, const unsigned char *sha1))
+int for_each_remote_ref(each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref("refs/remotes/", fn, 13);
+	return do_for_each_ref("refs/remotes/", fn, 13, cb_data);
 }
 
+/* NEEDSWORK: This is only used by ssh-upload and it should go; the
+ * caller should do resolve_ref or read_ref like everybody else.  Or
+ * maybe everybody else should use get_ref_sha1() instead of doing
+ * read_ref().
+ */
 int get_ref_sha1(const char *ref, unsigned char *sha1)
 {
 	if (check_ref_format(ref))

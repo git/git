@@ -75,11 +75,10 @@ copy_data:
 	}
 }
 
-static int tags_only;
-
-static int name_ref(const char *path, const unsigned char *sha1)
+static int name_ref(const char *path, const unsigned char *sha1, void *cb_data)
 {
 	struct object *o = parse_object(sha1);
+	int tags_only = *(int*)cb_data;
 	int deref = 0;
 
 	if (tags_only && strncmp(path, "refs/tags/", 10))
@@ -131,6 +130,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 {
 	struct object_array revs = { 0, 0, NULL };
 	int as_is = 0, all = 0, transform_stdin = 0;
+	int tags_only = 0;
 
 	git_config(git_default_config);
 
@@ -186,7 +186,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		add_object_array((struct object *)commit, *argv, &revs);
 	}
 
-	for_each_ref(name_ref);
+	for_each_ref(name_ref, &tags_only);
 
 	if (transform_stdin) {
 		char buffer[2048];

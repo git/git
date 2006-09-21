@@ -402,7 +402,7 @@ static void fsck_dir(int i, char *path)
 
 static int default_refs;
 
-static int fsck_handle_ref(const char *refname, const unsigned char *sha1)
+static int fsck_handle_ref(const char *refname, const unsigned char *sha1, void *cb_data)
 {
 	struct object *obj;
 
@@ -424,7 +424,7 @@ static int fsck_handle_ref(const char *refname, const unsigned char *sha1)
 
 static void get_default_heads(void)
 {
-	for_each_ref(fsck_handle_ref);
+	for_each_ref(fsck_handle_ref, NULL);
 
 	/*
 	 * Not having any default heads isn't really fatal, but

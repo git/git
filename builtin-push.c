@@ -27,7 +27,7 @@ static void add_refspec(const char *ref)
 	refspec_nr = nr;
 }
 
-static int expand_one_ref(const char *ref, const unsigned char *sha1)
+static int expand_one_ref(const char *ref, const unsigned char *sha1, void *cb_data)
 {
 	/* Ignore the "refs/" at the beginning of the refname */
 	ref += 5;
@@ -51,7 +51,7 @@ static void expand_refspecs(void)
 	}
 	if (!tags)
 		return;
-	for_each_ref(expand_one_ref);
+	for_each_ref(expand_one_ref, NULL);
 }
 
 static void set_refspecs(const char **refs, int nr)

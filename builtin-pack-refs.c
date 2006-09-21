@@ -1,7 +1,6 @@
 #include "cache.h"
 #include "refs.h"
 
-static FILE *refs_file;
 static const char *result_path, *lock_path;
 
 static void remove_lock_file(void)
@@ -10,8 +9,10 @@ static void remove_lock_file(void)
 		unlink(lock_path);
 }
 
-static int handle_one_ref(const char *path, const unsigned char *sha1)
+static int handle_one_ref(const char *path, const unsigned char *sha1, void *cb_data)
 {
+	FILE *refs_file = cb_data;
+
 	fprintf(refs_file, "%s %s\n", sha1_to_hex(sha1), path);
 	return 0;
 }
@@ -19,6 +20,7 @@ static int handle_one_ref(const char *path, const unsigned char *sha1)
 int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 {
 	int fd;
+	FILE *refs_file;
 
 	result_path = xstrdup(git_path("packed-refs"));
 	lock_path = xstrdup(mkpath("%s.lock", result_path));
@@ -31,7 +33,7 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 	refs_file = fdopen(fd, "w");
 	if (!refs_file)
 		die("unable to create ref-pack file structure (%s)", strerror(errno));
-	for_each_ref(handle_one_ref);
+	for_each_ref(handle_one_ref, refs_file);
 	fsync(fd);
 	fclose(refs_file);
 	if (rename(lock_path, result_path) < 0)
