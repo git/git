@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "exec_cmd.h"
 #include "pkt-line.h"
+#include "sideband.h"
 #include <sys/wait.h>
 #include <sys/time.h>
 
@@ -114,36 +115,13 @@ static pid_t setup_sideband(int sideband, const char *me, int fd[2], int xd[2])
 		die("%s: unable to fork off sideband demultiplexer", me);
 	if (!side_pid) {
 		/* subprocess */
+		char buf[LARGE_PACKET_MAX];
+
 		close(fd[0]);
 		if (xd[0] != xd[1])
 			close(xd[1]);
-		while (1) {
-			char buf[1024];
-			int len = packet_read_line(xd[0], buf, sizeof(buf));
-			if (len == 0)
-				break;
-			if (len < 1)
-				die("%s: protocol error: no band designator",
-				    me);
-			len--;
-			switch (buf[0] & 0xFF) {
-			case 3:
-				safe_write(2, "remote: ", 8);
-				safe_write(2, buf+1, len);
-				safe_write(2, "\n", 1);
-				exit(1);
-			case 2:
-				safe_write(2, "remote: ", 8);
-				safe_write(2, buf+1, len);
-				continue;
-			case 1:
-				safe_write(fd[1], buf+1, len);
-				continue;
-			default:
-				die("%s: protocol error: bad band #%d",
-				    me, (buf[0] & 0xFF));
-			}
-		}
+		if (recv_sideband(me, xd[0], fd[1], 2, buf, sizeof(buf)))
+			exit(1);
 		exit(0);
 	}
 	close(xd[0]);

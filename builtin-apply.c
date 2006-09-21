@@ -27,6 +27,7 @@ static const char *prefix;
 static int prefix_length = -1;
 static int newfd = -1;
 
+static int unidiff_zero;
 static int p_value = 1;
 static int check_index;
 static int write_index;
@@ -854,11 +855,10 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 }
 
 /*
- * Parse a unified diff. Note that this really needs
- * to parse each fragment separately, since the only
- * way to know the difference between a "---" that is
- * part of a patch, and a "---" that starts the next
- * patch is to look at the line counts..
+ * Parse a unified diff. Note that this really needs to parse each
+ * fragment separately, since the only way to know the difference
+ * between a "---" that is part of a patch, and a "---" that starts
+ * the next patch is to look at the line counts..
  */
 static int parse_fragment(char *line, unsigned long size, struct patch *patch, struct fragment *fragment)
 {
@@ -875,31 +875,14 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 	leading = 0;
 	trailing = 0;
 
-	if (patch->is_new < 0) {
-		patch->is_new =  !oldlines;
-		if (!oldlines)
-			patch->old_name = NULL;
-	}
-	if (patch->is_delete < 0) {
-		patch->is_delete = !newlines;
-		if (!newlines)
-			patch->new_name = NULL;
-	}
-
-	if (patch->is_new && oldlines)
-		return error("new file depends on old contents");
-	if (patch->is_delete != !newlines) {
-		if (newlines)
-			return error("deleted file still has contents");
-		fprintf(stderr, "** warning: file %s becomes empty but is not deleted\n", patch->new_name);
-	}
-
 	/* Parse the thing.. */
 	line += len;
 	size -= len;
 	linenr++;
 	added = deleted = 0;
-	for (offset = len; size > 0; offset += len, size -= len, line += len, linenr++) {
+	for (offset = len;
+	     0 < size;
+	     offset += len, size -= len, line += len, linenr++) {
 		if (!oldlines && !newlines)
 			break;
 		len = linelen(line, size);
@@ -972,12 +955,18 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 
 	patch->lines_added += added;
 	patch->lines_deleted += deleted;
+
+	if (0 < patch->is_new && oldlines)
+		return error("new file depends on old contents");
+	if (0 < patch->is_delete && newlines)
+		return error("deleted file still has contents");
 	return offset;
 }
 
 static int parse_single_patch(char *line, unsigned long size, struct patch *patch)
 {
 	unsigned long offset = 0;
+	unsigned long oldlines = 0, newlines = 0, context = 0;
 	struct fragment **fragp = &patch->fragments;
 
 	while (size > 4 && !memcmp(line, "@@ -", 4)) {
@@ -988,9 +977,11 @@ static int parse_single_patch(char *line, unsigned long size, struct patch *patc
 		len = parse_fragment(line, size, patch, fragment);
 		if (len <= 0)
 			die("corrupt patch at line %d", linenr);
-
 		fragment->patch = line;
 		fragment->size = len;
+		oldlines += fragment->oldlines;
+		newlines += fragment->newlines;
+		context += fragment->leading + fragment->trailing;
 
 		*fragp = fragment;
 		fragp = &fragment->next;
@@ -999,6 +990,46 @@ static int parse_single_patch(char *line, unsigned long size, struct patch *patc
 		line += len;
 		size -= len;
 	}
+
+	/*
+	 * If something was removed (i.e. we have old-lines) it cannot
+	 * be creation, and if something was added it cannot be
+	 * deletion.  However, the reverse is not true; --unified=0
+	 * patches that only add are not necessarily creation even
+	 * though they do not have any old lines, and ones that only
+	 * delete are not necessarily deletion.
+	 *
+	 * Unfortunately, a real creation/deletion patch do _not_ have
+	 * any context line by definition, so we cannot safely tell it
+	 * apart with --unified=0 insanity.  At least if the patch has
+	 * more than one hunk it is not creation or deletion.
+	 */
+	if (patch->is_new < 0 &&
+	    (oldlines || (patch->fragments && patch->fragments->next)))
+		patch->is_new = 0;
+	if (patch->is_delete < 0 &&
+	    (newlines || (patch->fragments && patch->fragments->next)))
+		patch->is_delete = 0;
+	if (!unidiff_zero || context) {
+		/* If the user says the patch is not generated with
+		 * --unified=0, or if we have seen context lines,
+		 * then not having oldlines means the patch is creation,
+		 * and not having newlines means the patch is deletion.
+		 */
+		if (patch->is_new < 0 && !oldlines)
+			patch->is_new = 1;
+		if (patch->is_delete < 0 && !newlines)
+			patch->is_delete = 1;
+	}
+
+	if (0 < patch->is_new && oldlines)
+		die("new file %s depends on old contents", patch->new_name);
+	if (0 < patch->is_delete && newlines)
+		die("deleted file %s still has contents", patch->old_name);
+	if (!patch->is_delete && !newlines && context)
+		fprintf(stderr, "** warning: file %s becomes empty but "
+			"is not deleted\n", patch->new_name);
+
 	return offset;
 }
 
@@ -1556,9 +1587,19 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 	/*
 	 * If we don't have any leading/trailing data in the patch,
 	 * we want it to match at the beginning/end of the file.
+	 *
+	 * But that would break if the patch is generated with
+	 * --unified=0; sane people wouldn't do that to cause us
+	 * trouble, but we try to please not so sane ones as well.
 	 */
-	match_beginning = !leading && (frag->oldpos == 1);
-	match_end = !trailing;
+	if (unidiff_zero) {
+		match_beginning = (!leading && !frag->oldpos);
+		match_end = 0;
+	}
+	else {
+		match_beginning = !leading && (frag->oldpos == 1);
+		match_end = !trailing;
+	}
 
 	lines = 0;
 	pos = frag->newpos;
@@ -1804,7 +1845,7 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 	patch->result = desc.buffer;
 	patch->resultsize = desc.size;
 
-	if (patch->is_delete && patch->resultsize)
+	if (0 < patch->is_delete && patch->resultsize)
 		return error("removal patch leaves file contents");
 
 	return 0;
@@ -1876,7 +1917,7 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 				old_name, st_mode, patch->old_mode);
 	}
 
-	if (new_name && prev_patch && prev_patch->is_delete &&
+	if (new_name && prev_patch && 0 < prev_patch->is_delete &&
 	    !strcmp(prev_patch->old_name, new_name))
 		/* A type-change diff is always split into a patch to
 		 * delete old, immediately followed by a patch to
@@ -1889,7 +1930,8 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 	else
 		ok_if_exists = 0;
 
-	if (new_name && (patch->is_new | patch->is_rename | patch->is_copy)) {
+	if (new_name &&
+	    ((0 < patch->is_new) | (0 < patch->is_rename) | patch->is_copy)) {
 		if (check_index &&
 		    cache_name_pos(new_name, strlen(new_name)) >= 0 &&
 		    !ok_if_exists)
@@ -1906,7 +1948,7 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 				return error("%s: %s", new_name, strerror(errno));
 		}
 		if (!patch->new_mode) {
-			if (patch->is_new)
+			if (0 < patch->is_new)
 				patch->new_mode = S_IFREG | 0644;
 			else
 				patch->new_mode = patch->old_mode;
@@ -1957,7 +1999,7 @@ static void show_index_list(struct patch *list)
 		const char *name;
 
 		name = patch->old_name ? patch->old_name : patch->new_name;
-		if (patch->is_new)
+		if (0 < patch->is_new)
 			sha1_ptr = null_sha1;
 		else if (get_sha1(patch->old_sha1_prefix, sha1))
 			die("sha1 information is lacking or useless (%s).",
@@ -2541,6 +2583,10 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "-R") || !strcmp(arg, "--reverse")) {
 			apply_in_reverse = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--unidiff-zero")) {
+			unidiff_zero = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--reject")) {

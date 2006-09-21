@@ -42,7 +42,7 @@ static void rev_list_push(struct commit *commit, int mark)
 	}
 }
 
-static int rev_list_insert_ref(const char *path, const unsigned char *sha1)
+static int rev_list_insert_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *o = deref_tag(parse_object(sha1), path, 0);
 
@@ -143,7 +143,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	unsigned in_vain = 0;
 	int got_continue = 0;
 
-	for_each_ref(rev_list_insert_ref);
+	for_each_ref(rev_list_insert_ref, NULL);
 
 	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
@@ -166,10 +166,11 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		}
 
 		if (!fetching)
-			packet_write(fd[1], "want %s%s%s%s\n",
+			packet_write(fd[1], "want %s%s%s%s%s\n",
 				     sha1_to_hex(remote),
 				     (multi_ack ? " multi_ack" : ""),
-				     (use_sideband ? " side-band" : ""),
+				     (use_sideband == 2 ? " side-band-64k" : ""),
+				     (use_sideband == 1 ? " side-band" : ""),
 				     (use_thin_pack ? " thin-pack" : ""));
 		else
 			packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
@@ -252,7 +253,7 @@ done:
 
 static struct commit_list *complete;
 
-static int mark_complete(const char *path, const unsigned char *sha1)
+static int mark_complete(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *o = parse_object(sha1);
 
@@ -364,7 +365,7 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 		}
 	}
 
-	for_each_ref(mark_complete);
+	for_each_ref(mark_complete, NULL);
 	if (cutoff)
 		mark_recent_complete_commits(cutoff);
 
@@ -426,7 +427,12 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 			fprintf(stderr, "Server supports multi_ack\n");
 		multi_ack = 1;
 	}
-	if (server_supports("side-band")) {
+	if (server_supports("side-band-64k")) {
+		if (verbose)
+			fprintf(stderr, "Server supports side-band-64k\n");
+		use_sideband = 2;
+	}
+	else if (server_supports("side-band")) {
 		if (verbose)
 			fprintf(stderr, "Server supports side-band\n");
 		use_sideband = 1;

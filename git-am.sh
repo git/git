@@ -166,10 +166,25 @@ fi
 
 if test -d "$dotest"
 then
-	if test ",$#," != ",0," || ! tty -s
-	then
-		die "previous dotest directory $dotest still exists but mbox given."
-	fi
+	case "$#,$skip$resolved" in
+	0,*t*)
+		# Explicit resume command and we do not have file, so
+		# we are happy.
+		: ;;
+	0,)
+		# No file input but without resume parameters; catch
+		# user error to feed us a patch from standard input
+		# when there is already .dotest.  This is somewhat
+		# unreliable -- stdin could be /dev/null for example
+		# and the caller did not intend to feed us a patch but
+		# wanted to continue unattended.
+		tty -s
+		;;
+	*)
+		false
+		;;
+	esac ||
+	die "previous dotest directory $dotest still exists but mbox given."
 	resume=yes
 else
 	# Make sure we are not given --skip nor --resolved

@@ -218,8 +218,8 @@ static void create_default_files(const char *git_dir, const char *template_path)
 	 * branch, if it does not exist yet.
 	 */
 	strcpy(path + len, "HEAD");
-	if (read_ref(path, sha1) < 0) {
-		if (create_symref(path, "refs/heads/master") < 0)
+	if (read_ref("HEAD", sha1) < 0) {
+		if (create_symref("HEAD", "refs/heads/master") < 0)
 			exit(1);
 	}
 

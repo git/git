@@ -247,8 +247,8 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		NULL
 	};
 	static const char *warning = "warning: refname '%.*s' is ambiguous.\n";
-	const char **p, *pathname;
-	char *real_path = NULL;
+	const char **p, *ref;
+	char *real_ref = NULL;
 	int refs_found = 0, am;
 	unsigned long at_time = (unsigned long)-1;
 	unsigned char *this_result;
@@ -276,10 +276,10 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 
 	for (p = fmt; *p; p++) {
 		this_result = refs_found ? sha1_from_ref : sha1;
-		pathname = resolve_ref(git_path(*p, len, str), this_result, 1);
-		if (pathname) {
+		ref = resolve_ref(mkpath(*p, len, str), this_result, 1, NULL);
+		if (ref) {
 			if (!refs_found++)
-				real_path = xstrdup(pathname);
+				real_ref = xstrdup(ref);
 			if (!warn_ambiguous_refs)
 				break;
 		}
@@ -293,12 +293,12 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 
 	if (at_time != (unsigned long)-1) {
 		read_ref_at(
-			real_path + strlen(git_path(".")) - 1,
+			real_ref,
 			at_time,
 			sha1);
 	}
 
-	free(real_path);
+	free(real_ref);
 	return 0;
 }
 

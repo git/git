@@ -585,24 +585,27 @@ static void get_value(struct refinfo *ref, int atom, struct atom_value **v)
 	*v = &ref->value[atom];
 }
 
-static struct refinfo **grab_array;
-static const char **grab_pattern;
-static int *grab_cnt;
+struct grab_ref_cbdata {
+	struct refinfo **grab_array;
+	const char **grab_pattern;
+	int grab_cnt;
+};
 
 /*
  * A call-back given to for_each_ref().  It is unfortunate that we
  * need to use global variables to pass extra information to this
  * function.
  */
-static int grab_single_ref(const char *refname, const unsigned char *sha1)
+static int grab_single_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
+	struct grab_ref_cbdata *cb = cb_data;
 	struct refinfo *ref;
 	int cnt;
 
-	if (*grab_pattern) {
+	if (*cb->grab_pattern) {
 		const char **pattern;
 		int namelen = strlen(refname);
-		for (pattern = grab_pattern; *pattern; pattern++) {
+		for (pattern = cb->grab_pattern; *pattern; pattern++) {
 			const char *p = *pattern;
 			int plen = strlen(p);
 
@@ -626,23 +629,12 @@ static int grab_single_ref(const char *refname, const unsigned char *sha1)
 	ref->refname = xstrdup(refname);
 	hashcpy(ref->objectname, sha1);
 
-	cnt = *grab_cnt;
-	grab_array = xrealloc(grab_array, sizeof(*grab_array) * (cnt + 1));
-	grab_array[cnt++] = ref;
-	*grab_cnt = cnt;
+	cnt = cb->grab_cnt;
+	cb->grab_array = xrealloc(cb->grab_array,
+				  sizeof(*cb->grab_array) * (cnt + 1));
+	cb->grab_array[cnt++] = ref;
+	cb->grab_cnt = cnt;
 	return 0;
-}
-
-static struct refinfo **grab_refs(const char **pattern, int *cnt)
-{
-	/* Sheesh, we really should make for-each-ref to take
-	 * callback data.
-	 */
-	*cnt = 0;
-	grab_pattern = pattern;
-	grab_cnt = cnt;
-	for_each_ref(grab_single_ref);
-	return grab_array;
 }
 
 static int cmp_ref_sort(struct ref_sort *s, struct refinfo *a, struct refinfo *b)
@@ -784,6 +776,7 @@ int cmd_for_each_ref(int ac, const char **av, char *prefix)
 	int maxcount = 0;
 	int quote_style = -1; /* unspecified yet */
 	struct refinfo **refs;
+	struct grab_ref_cbdata cbdata;
 
 	for (i = 1; i < ac; i++) {
 		const char *arg = av[i];
@@ -855,7 +848,11 @@ int cmd_for_each_ref(int ac, const char **av, char *prefix)
 
 	verify_format(format);
 
-	refs = grab_refs(av + i, &num_refs);
+	memset(&cbdata, 0, sizeof(cbdata));
+	cbdata.grab_pattern = av + i;
+	for_each_ref(grab_single_ref, &cbdata);
+	refs = cbdata.grab_array;
+	num_refs = cbdata.grab_cnt;
 
 	for (i = 0; i < used_atom_cnt; i++) {
 		if (used_atom[i][0] == '*') {
