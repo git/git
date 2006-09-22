@@ -472,7 +472,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref,
 
 	lock->ref_name = xstrdup(ref);
 	lock->log_file = xstrdup(git_path("logs/%s", ref));
-	ref_file = git_path(ref);
+	ref_file = git_path("%s", ref);
 	lock->force_write = lstat(ref_file, &st) && errno == ENOENT;
 
 	if (safe_create_leading_directories(ref_file))
