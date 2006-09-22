@@ -2690,14 +2690,14 @@ sub git_blob {
 				" | " .
 				$cgi->a({-href => href(action=>"blob_plain",
 				                       hash=>$hash, file_name=>$file_name)},
-				        "plain") .
+				        "raw") .
 				" | " .
 				$cgi->a({-href => href(action=>"blob",
 				                       hash_base=>"HEAD", file_name=>$file_name)},
 				        "head");
 		} else {
 			$formats_nav .=
-				$cgi->a({-href => href(action=>"blob_plain", hash=>$hash)}, "plain");
+				$cgi->a({-href => href(action=>"blob_plain", hash=>$hash)}, "raw");
 		}
 		git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
 		git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
@@ -3106,7 +3106,7 @@ sub git_blobdiff {
 			                       hash=>$hash, hash_parent=>$hash_parent,
 			                       hash_base=>$hash_base, hash_parent_base=>$hash_parent_base,
 			                       file_name=>$file_name, file_parent=>$file_parent)},
-			        "plain");
+			        "raw");
 		git_header_html(undef, $expires);
 		if (defined $hash_base && (my %co = parse_commit($hash_base))) {
 			git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
@@ -3209,7 +3209,7 @@ sub git_commitdiff {
 		my $formats_nav =
 			$cgi->a({-href => href(action=>"commitdiff_plain",
 			                       hash=>$hash, hash_parent=>$hash_parent)},
-			        "plain");
+			        "raw");
 
 		git_header_html(undef, $expires);
 		git_print_page_nav('commitdiff','', $hash,$co{'tree'},$hash, $formats_nav);
