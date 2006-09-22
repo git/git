@@ -2441,6 +2441,9 @@ sub git_blame2 {
 		$cgi->a({-href => href(action=>"blob", hash=>$hash, hash_base=>$hash_base, file_name=>$file_name)},
 		        "blob") .
 		" | " .
+		$cgi->a({-href => href(action=>"history", hash=>$hash, hash_base=>$hash_base, file_name=>$file_name)},
+			"history") .
+		" | " .
 		$cgi->a({-href => href(action=>"blame", file_name=>$file_name)},
 		        "head");
 	git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
@@ -2506,6 +2509,9 @@ sub git_blame {
 	my $formats_nav =
 		$cgi->a({-href => href(action=>"blob", hash=>$hash, hash_base=>$hash_base, file_name=>$file_name)},
 		        "blob") .
+		" | " .
+		$cgi->a({-href => href(action=>"history", hash=>$hash, hash_base=>$hash_base, file_name=>$file_name)},
+			"history") .
 		" | " .
 		$cgi->a({-href => href(action=>"blame", file_name=>$file_name)},
 		        "head");
@@ -2682,6 +2688,10 @@ sub git_blob {
 					" | ";
 			}
 			$formats_nav .=
+				$cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
+				                       hash=>$hash, file_name=>$file_name)},
+				        "history") .
+				" | " .
 				$cgi->a({-href => href(action=>"blob_plain",
 				                       hash=>$hash, file_name=>$file_name)},
 				        "plain") .
@@ -2717,6 +2727,9 @@ sub git_blob {
 }
 
 sub git_tree {
+	my ($ctype, $suffix, $command) = gitweb_check_feature('snapshot');
+	my $have_snapshot = (defined $ctype && defined $suffix);
+
 	if (!defined $hash) {
 		$hash = git_get_head_hash($project);
 		if (defined $file_name) {
@@ -2740,7 +2753,23 @@ sub git_tree {
 	my $base = "";
 	my ($have_blame) = gitweb_check_feature('blame');
 	if (defined $hash_base && (my %co = parse_commit($hash_base))) {
-		git_print_page_nav('tree','', $hash_base);
+		my @views_nav = ();
+		if (defined $file_name) {
+			push @views_nav,
+				$cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
+				                       hash=>$hash, file_name=>$file_name)},
+				        "history"),
+				$cgi->a({-href => href(action=>"tree",
+				                       hash_base=>"HEAD", file_name=>$file_name)},
+				        "head");
+		}
+		if ($have_snapshot) {
+			# FIXME: Should be available when we have no hash base as well.
+			push @views_nav,
+				$cgi->a({-href => href(action=>"snapshot")},
+					"snapshot");
+		}
+		git_print_page_nav('tree','', $hash_base, undef, undef, join(' | ', @views_nav));
 		git_print_header_div('commit', esc_html($co{'title'}) . $ref, $hash_base);
 	} else {
 		undef $hash_base;
@@ -2885,17 +2914,22 @@ sub git_commit {
 	my ($ctype, $suffix, $command) = gitweb_check_feature('snapshot');
 	my $have_snapshot = (defined $ctype && defined $suffix);
 
-	my $formats_nav = '';
+	my @views_nav = ();
 	if (defined $file_name && defined $co{'parent'}) {
 		my $parent = $co{'parent'};
-		$formats_nav .=
+		push @views_nav,
 			$cgi->a({-href => href(action=>"blame", hash_parent=>$parent, file_name=>$file_name)},
 			        "blame");
+	}
+	if (defined $co{'parent'}) {
+		push @views_nav,
+			$cgi->a({-href => href(action=>"shortlog", hash=>$hash)}, "shortlog"),
+			$cgi->a({-href => href(action=>"log", hash=>$hash)}, "log");
 	}
 	git_header_html(undef, $expires);
 	git_print_page_nav('commit', defined $co{'parent'} ? '' : 'commitdiff',
 	                   $hash, $co{'tree'}, $hash,
-	                   $formats_nav);
+	                   join (' | ', @views_nav));
 
 	if (defined $co{'parent'}) {
 		git_print_header_div('commitdiff', esc_html($co{'title'}) . $ref, $hash);
