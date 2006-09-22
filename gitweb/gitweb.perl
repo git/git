@@ -2163,7 +2163,8 @@ sub git_heads_body {
 		      "</td>\n" .
 		      "<td class=\"link\">" .
 		      $cgi->a({-href => href(action=>"shortlog", hash=>$tag{'name'})}, "shortlog") . " | " .
-		      $cgi->a({-href => href(action=>"log", hash=>$tag{'name'})}, "log") .
+		      $cgi->a({-href => href(action=>"log", hash=>$tag{'name'})}, "log") . " | " .
+		      $cgi->a({-href => href(action=>"tree", hash=>$tag{'name'}, hash_base=>$tag{'name'})}, "tree") .
 		      "</td>\n" .
 		      "</tr>";
 	}
