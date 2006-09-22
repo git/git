@@ -752,7 +752,7 @@ sub git_get_project_description {
 sub git_get_project_url_list {
 	my $path = shift;
 
-	open my $fd, "$projectroot/$path/cloneurl" or return undef;
+	open my $fd, "$projectroot/$path/cloneurl" or return;
 	my @git_project_url_list = map { chomp; $_ } <$fd>;
 	close $fd;
 
