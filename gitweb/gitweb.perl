@@ -2441,7 +2441,7 @@ sub git_blame2 {
 			"history") .
 		" | " .
 		$cgi->a({-href => href(action=>"blame", file_name=>$file_name)},
-		        "head");
+		        "HEAD");
 	git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
 	git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
 	git_print_page_path($file_name, $ftype, $hash_base);
@@ -2510,7 +2510,7 @@ sub git_blame {
 			"history") .
 		" | " .
 		$cgi->a({-href => href(action=>"blame", file_name=>$file_name)},
-		        "head");
+		        "HEAD");
 	git_print_page_nav('','', $hash_base,$co{'tree'},$hash_base, $formats_nav);
 	git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
 	git_print_page_path($file_name, 'blob', $hash_base);
@@ -2694,7 +2694,7 @@ sub git_blob {
 				" | " .
 				$cgi->a({-href => href(action=>"blob",
 				                       hash_base=>"HEAD", file_name=>$file_name)},
-				        "head");
+				        "HEAD");
 		} else {
 			$formats_nav .=
 				$cgi->a({-href => href(action=>"blob_plain", hash=>$hash)}, "raw");
@@ -2757,7 +2757,7 @@ sub git_tree {
 				        "history"),
 				$cgi->a({-href => href(action=>"tree",
 				                       hash_base=>"HEAD", file_name=>$file_name)},
-				        "head");
+				        "HEAD"),
 		}
 		if ($have_snapshot) {
 			# FIXME: Should be available when we have no hash base as well.
