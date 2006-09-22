@@ -2870,6 +2870,8 @@ sub git_log {
 		      $cgi->a({-href => href(action=>"commit", hash=>$commit)}, "commit") .
 		      " | " .
 		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff") .
+		      " | " .
+		      $cgi->a({-href => href(action=>"tree", hash=>$commit), hash_base=>$commit}, "tree") .
 		      "<br/>\n" .
 		      "</div>\n" .
 		      "<i>" . esc_html($co{'author_name'}) .  " [$ad{'rfc2822'}]</i><br/>\n" .
