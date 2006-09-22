@@ -270,6 +270,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	rev.extra_headers = extra_headers;
 
+	output_directory = prefix;
+
 	/*
 	 * Parse the arguments before setup_revisions(), or something
 	 * like "git fmt-patch -o a123 HEAD^.." may fail; a123 is
