@@ -2762,7 +2762,7 @@ sub git_tree {
 		if ($have_snapshot) {
 			# FIXME: Should be available when we have no hash base as well.
 			push @views_nav,
-				$cgi->a({-href => href(action=>"snapshot")},
+				$cgi->a({-href => href(action=>"snapshot", hash=>$hash)},
 					"snapshot");
 		}
 		git_print_page_nav('tree','', $hash_base, undef, undef, join(' | ', @views_nav));
