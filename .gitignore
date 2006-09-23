@@ -128,7 +128,6 @@ git-verify-pack
 git-verify-tag
 git-whatchanged
 git-write-tree
-git-zip-tree
 git-core-*/?*
 gitweb/gitweb.cgi
 test-date
