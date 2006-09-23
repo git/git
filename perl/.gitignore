@@ -1,7 +1,4 @@
-Git.bs
-Git.c
 Makefile
 blib
 blibdirs
 pm_to_blib
-ppport.h
