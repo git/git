@@ -16,7 +16,4 @@ struct pack_header {
 };
 
 extern int verify_pack(struct packed_git *, int);
-extern int check_reuse_pack_delta(struct packed_git *, unsigned long,
-				  unsigned char *, unsigned long *,
-				  enum object_type *);
 #endif
