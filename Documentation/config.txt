@@ -122,6 +122,10 @@ apply.whitespace::
 branch.<name>.remote::
 	When in branch <name>, it tells `git fetch` which remote to fetch.
 
+branch.<name>.merge::
+	When in branch <name>, it tells `git fetch` the default remote branch
+	to be merged.
+
 pager.color::
 	A boolean to enable/disable colored output when the pager is in
 	use (default is true).
