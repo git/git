@@ -68,6 +68,12 @@ get_remote_url () {
 	esac
 }
 
+get_default_remote () {
+	curr_branch=$(git-symbolic-ref HEAD | sed -e 's|^refs/heads/||')
+	origin=$(git-repo-config --get "branch.$curr_branch.remote")
+	echo ${origin:-origin}
+}
+
 get_remote_default_refs_for_push () {
 	data_source=$(get_data_source "$1")
 	case "$data_source" in
