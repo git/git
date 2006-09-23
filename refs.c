@@ -447,9 +447,7 @@ static struct ref_lock *verify_lock(struct ref_lock *lock,
 	return lock;
 }
 
-static struct ref_lock *lock_ref_sha1_basic(const char *ref,
-	int plen,
-	const unsigned char *old_sha1, int mustexist)
+static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char *old_sha1, int mustexist)
 {
 	char *ref_file;
 	const char *orig_ref = ref;
@@ -489,14 +487,13 @@ struct ref_lock *lock_ref_sha1(const char *ref,
 	if (check_ref_format(ref))
 		return NULL;
 	strcpy(refpath, mkpath("refs/%s", ref));
-	return lock_ref_sha1_basic(refpath, strlen(refpath),
-		old_sha1, mustexist);
+	return lock_ref_sha1_basic(refpath, old_sha1, mustexist);
 }
 
 struct ref_lock *lock_any_ref_for_update(const char *ref,
 	const unsigned char *old_sha1, int mustexist)
 {
-	return lock_ref_sha1_basic(ref, strlen(ref), old_sha1, mustexist);
+	return lock_ref_sha1_basic(ref, old_sha1, mustexist);
 }
 
 void unlock_ref(struct ref_lock *lock)
