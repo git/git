@@ -51,6 +51,9 @@ our $logo = "++GITWEB_LOGO++";
 # URI of GIT favicon, assumed to be image/png type
 our $favicon = "++GITWEB_FAVICON++";
 
+our $githelp_url = "http://git.or.cz/";
+our $githelp_label = "git homepage";
+
 # source of projects list
 our $projects_list = "++GITWEB_LIST++";
 
@@ -1373,7 +1376,9 @@ EOF
 	print "</head>\n" .
 	      "<body>\n" .
 	      "<div class=\"page_header\">\n" .
-	      "<a href=\"http://www.kernel.org/pub/software/scm/git/docs/\" title=\"git documentation\">" .
+	      "<a href=\"" . esc_html($githelp_url) .
+	      "\" title=\"" . esc_html($githelp_label) .
+	      "\">" .
 	      "<img src=\"$logo\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
 	      "</a>\n";
 	print $cgi->a({-href => esc_url($home_link)}, $home_link_str) . " / ";
