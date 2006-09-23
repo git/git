@@ -254,7 +254,7 @@ LIB_OBJS = \
 	fetch-clone.o revision.o pager.o tree-walk.o xdiff-interface.o \
 	write_or_die.o trace.o list-objects.o \
 	alloc.o merge-file.o path-list.o help.o unpack-trees.o $(DIFF_OBJS) \
-	color.o wt-status.o
+	color.o wt-status.o archive-zip.o
 
 BUILTIN_OBJS = \
 	builtin-add.o \
@@ -300,8 +300,7 @@ BUILTIN_OBJS = \
 	builtin-upload-archive.o \
 	builtin-upload-tar.o \
 	builtin-verify-pack.o \
-	builtin-write-tree.o \
-	builtin-zip-tree.o
+	builtin-write-tree.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 LIBS = $(GITLIBS) -lz
