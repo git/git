@@ -752,7 +752,7 @@ sub git_get_project_description {
 sub git_get_project_url_list {
 	my $path = shift;
 
-	open my $fd, "$projectroot/$path/cloneurl" or return undef;
+	open my $fd, "$projectroot/$path/cloneurl" or return;
 	my @git_project_url_list = map { chomp; $_ } <$fd>;
 	close $fd;
 
@@ -1520,14 +1520,14 @@ sub git_print_page_path {
 
 		print "<div class=\"page_path\">";
 		print $cgi->a({-href => href(action=>"tree", hash_base=>$hb),
-			      -title => '/'}, '/');
-		print " ";
+			      -title => 'tree root'}, "[$project]");
+		print " / ";
 		foreach my $dir (@dirname) {
 			$fullname .= ($fullname ? '/' : '') . $dir;
 			print $cgi->a({-href => href(action=>"tree", file_name=>$fullname,
 			                             hash_base=>$hb),
-			              -title => $fullname}, esc_html($dir . '/'));
-			print " ";
+			              -title => $fullname}, esc_html($dir));
+			print " / ";
 		}
 		if (defined $type && $type eq 'blob') {
 			print $cgi->a({-href => href(action=>"blob_plain", file_name=>$file_name,
@@ -1536,7 +1536,7 @@ sub git_print_page_path {
 		} elsif (defined $type && $type eq 'tree') {
 			print $cgi->a({-href => href(action=>"tree", file_name=>$file_name,
 			                             hash_base=>$hb),
-			              -title => $name}, esc_html($basename . '/'));
+			              -title => $name}, esc_html($basename));
 		} else {
 			print esc_html($basename);
 		}
@@ -2762,7 +2762,7 @@ sub git_tree {
 		if ($have_snapshot) {
 			# FIXME: Should be available when we have no hash base as well.
 			push @views_nav,
-				$cgi->a({-href => href(action=>"snapshot")},
+				$cgi->a({-href => href(action=>"snapshot", hash=>$hash)},
 					"snapshot");
 		}
 		git_print_page_nav('tree','', $hash_base, undef, undef, join(' | ', @views_nav));
@@ -2871,7 +2871,7 @@ sub git_log {
 		      " | " .
 		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff") .
 		      " | " .
-		      $cgi->a({-href => href(action=>"tree", hash=>$commit), hash_base=>$commit}, "tree") .
+		      $cgi->a({-href => href(action=>"tree", hash=>$commit, hash_base=>$commit)}, "tree") .
 		      "<br/>\n" .
 		      "</div>\n" .
 		      "<i>" . esc_html($co{'author_name'}) .  " [$ad{'rfc2822'}]</i><br/>\n" .
