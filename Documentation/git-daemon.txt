@@ -11,6 +11,7 @@ SYNOPSIS
 'git-daemon' [--verbose] [--syslog] [--inetd | --port=n] [--export-all]
              [--timeout=n] [--init-timeout=n] [--strict-paths]
              [--base-path=path] [--user-path | --user-path=path]
+             [--interpolated-path=pathtemplate]
              [--enable=service] [--disable=service]
 	     [--allow-override=service] [--forbid-override=service]
              [--reuseaddr] [--detach] [--pid-file=file]
@@ -49,6 +50,12 @@ OPTIONS
 	'--base-path=/srv/git' on example.com, then if you later try to pull
 	'git://example.com/hello.git', `git-daemon` will interpret the path
 	as '/srv/git/hello.git'.
+
+--interpolated-path=pathtemplate::
+	To support virtual hosting, an interpolated path template can be
+	used to dynamically construct alternate paths.  The template
+	supports %H for the target hostname as supplied by the client,
+	and %D for the absolute path of the named repository.
 
 --export-all::
 	Allow pulling from all directories that look like GIT repositories
@@ -134,6 +141,46 @@ upload-pack::
 	clients.  It is enabled by default, but a repository can
 	disable it by setting `daemon.uploadpack` configuration
 	item to `false`.
+
+EXAMPLES
+--------
+git-daemon as inetd server::
+	To set up `git-daemon` as an inetd service that handles any
+	repository under the whitelisted set of directories, /pub/foo
+	and /pub/bar, place an entry like the following into
+	/etc/inetd all on one line:
++
+------------------------------------------------
+	git stream tcp nowait nobody  /usr/bin/git-daemon
+		git-daemon --inetd --verbose
+		--syslog --export-all
+		/pub/foo /pub/bar
+------------------------------------------------
+
+
+git-daemon as inetd server for virtual hosts::
+	To set up `git-daemon` as an inetd service that handles
+	repositories for different virtual hosts, `www.example.com`
+	and `www.example.org`, place an entry like the following into
+	`/etc/inetd` all on one line:
++
+------------------------------------------------
+	git stream tcp nowait nobody /usr/bin/git-daemon
+		git-daemon --inetd --verbose
+		--syslog --export-all
+		--interpolated-path=/pub/%H%D
+		/pub/www.example.org/software
+		/pub/www.example.com/software
+		/software
+------------------------------------------------
++
+In this example, the root-level directory `/pub` will contain
+a subdirectory for each virtual host name supported.
+Further, both hosts advertise repositories simply as
+`git://www.example.com/software/repo.git`.  For pre-1.4.0
+clients, a symlink from `/software` into the appropriate
+default repository could be made as well.
+
 
 Author
 ------

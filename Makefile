@@ -246,7 +246,9 @@ DIFF_OBJS = \
 
 LIB_OBJS = \
 	blob.o commit.o connect.o csum-file.o cache-tree.o base85.o \
-	date.o diff-delta.o entry.o exec_cmd.o ident.o lockfile.o \
+	date.o diff-delta.o entry.o exec_cmd.o ident.o \
+	interpolate.o \
+	lockfile.o \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o sideband.o \
 	quote.o read-cache.o refs.o run-command.o dir.o object-refs.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
