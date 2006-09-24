@@ -68,11 +68,10 @@ done
 
 case "$#" in
 0)
-	test -f "$GIT_DIR/branches/origin" ||
-		test -f "$GIT_DIR/remotes/origin" ||
-			git-repo-config --get remote.origin.url >/dev/null ||
-				die "Where do you want to fetch from today?"
-	set origin ;;
+	origin=$(get_default_remote)
+	test -n "$(get_remote_url ${origin})" ||
+		die "Where do you want to fetch from today?"
+	set x $origin ; shift ;;
 esac
 
 remote_nick="$1"
