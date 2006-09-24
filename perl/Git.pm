@@ -93,9 +93,6 @@ use Carp qw(carp croak); # but croak is bad - throw instead
 use Error qw(:try);
 use Cwd qw(abs_path);
 
-require XSLoader;
-XSLoader::load('Git', $VERSION);
-
 }
 
 
@@ -413,12 +410,13 @@ sub command_noisy {
 
 Return the Git version in use.
 
-Implementation of this function is very fast; no external command calls
-are involved.
-
 =cut
 
-# Implemented in Git.xs.
+sub version {
+	my $verstr = command_oneline('--version');
+	$verstr =~ s/^git version //;
+	$verstr;
+}
 
 
 =item exec_path ()
@@ -426,12 +424,9 @@ are involved.
 Return path to the Git sub-command executables (the same as
 C<git --exec-path>). Useful mostly only internally.
 
-Implementation of this function is very fast; no external command calls
-are involved.
-
 =cut
 
-# Implemented in Git.xs.
+sub exec_path { command_oneline('--exec-path') }
 
 
 =item repo_path ()
@@ -572,41 +567,21 @@ sub ident_person {
 
 =item hash_object ( TYPE, FILENAME )
 
-=item hash_object ( TYPE, FILEHANDLE )
-
 Compute the SHA1 object id of the given C<FILENAME> (or data waiting in
 C<FILEHANDLE>) considering it is of the C<TYPE> object type (C<blob>,
 C<commit>, C<tree>).
-
-In case of C<FILEHANDLE> passed instead of file name, all the data
-available are read and hashed, and the filehandle is automatically
-closed. The file handle should be freshly opened - if you have already
-read anything from the file handle, the results are undefined (since
-this function works directly with the file descriptor and internal
-PerlIO buffering might have messed things up).
 
 The method can be called without any instance or on a specified Git repository,
 it makes zero difference.
 
 The function returns the SHA1 hash.
 
-Implementation of this function is very fast; no external command calls
-are involved.
-
 =cut
 
+# TODO: Support for passing FILEHANDLE instead of FILENAME
 sub hash_object {
 	my ($self, $type, $file) = _maybe_self(@_);
-
-	# hash_object_* implemented in Git.xs.
-
-	if (ref($file) eq 'GLOB') {
-		my $hash = hash_object_pipe($type, fileno($file));
-		close $file;
-		return $hash;
-	} else {
-		hash_object_file($type, $file);
-	}
+	command_oneline('hash-object', '-t', $type, $file);
 }
 
 
@@ -802,7 +777,7 @@ sub _cmd_exec {
 
 # Execute the given Git command ($_[0]) with arguments ($_[1..])
 # by searching for it at proper places.
-# _execv_git_cmd(), implemented in Git.xs.
+sub _execv_git_cmd { exec('git', @_); }
 
 # Close pipe to a subprocess.
 sub _cmd_close {
@@ -820,39 +795,6 @@ sub _cmd_close {
 	}
 }
 
-
-# Trickery for .xs routines: In order to avoid having some horrid
-# C code trying to do stuff with undefs and hashes, we gate all
-# xs calls through the following and in case we are being ran upon
-# an instance call a C part of the gate which will set up the
-# environment properly.
-sub _call_gate {
-	my $xsfunc = shift;
-	my ($self, @args) = _maybe_self(@_);
-
-	if (defined $self) {
-		# XXX: We ignore the WorkingCopy! To properly support
-		# that will require heavy changes in libgit.
-
-		# XXX: And we ignore everything else as well. libgit
-		# at least needs to be extended to let us specify
-		# the $GIT_DIR instead of looking it up in environment.
-		#xs_call_gate($self->{opts}->{Repository});
-	}
-
-	# Having to call throw from the C code is a sure path to insanity.
-	local $SIG{__DIE__} = sub { throw Error::Simple("@_"); };
-	&$xsfunc(@args);
-}
-
-sub AUTOLOAD {
-	my $xsname;
-	our $AUTOLOAD;
-	($xsname = $AUTOLOAD) =~ s/.*:://;
-	throw Error::Simple("&Git::$xsname not defined") if $xsname =~ /^xs_/;
-	$xsname = 'xs_'.$xsname;
-	_call_gate(\&$xsname, @_);
-}
 
 sub DESTROY { }
 

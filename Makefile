@@ -116,8 +116,6 @@ PIC_FLAG = -fPIC
 LDFLAGS =
 ALL_CFLAGS = $(CFLAGS)
 ALL_LDFLAGS = $(LDFLAGS)
-PERL_CFLAGS =
-PERL_LDFLAGS =
 STRIP ?= strip
 
 prefix = $(HOME)
@@ -158,9 +156,10 @@ SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 ### --- END CONFIGURATION SECTION ---
 
 # Those must not be GNU-specific; they are shared with perl/ which may
-# be built by a different compiler.
-BASIC_CFLAGS = $(PERL_CFLAGS)
-BASIC_LDFLAGS = $(PERL_LDFLAGS)
+# be built by a different compiler. (Note that this is an artifact now
+# but it still might be nice to keep that distinction.)
+BASIC_CFLAGS =
+BASIC_LDFLAGS =
 
 SCRIPT_SH = \
 	git-bisect.sh git-branch.sh git-checkout.sh \
@@ -784,15 +783,9 @@ $(XDIFF_LIB): $(XDIFF_OBJS)
 	rm -f $@ && $(AR) rcs $@ $(XDIFF_OBJS)
 
 
-PERL_DEFINE = $(BASIC_CFLAGS) -DGIT_VERSION='"$(GIT_VERSION)"'
-PERL_DEFINE_SQ = $(subst ','\'',$(PERL_DEFINE))
-PERL_LIBS = $(BASIC_LDFLAGS) $(EXTLIBS)
-PERL_LIBS_SQ = $(subst ','\'',$(PERL_LIBS))
 perl/Makefile: perl/Git.pm perl/Makefile.PL GIT-CFLAGS
 	(cd perl && $(PERL_PATH) Makefile.PL \
-		PREFIX='$(prefix_SQ)' \
-		DEFINE='$(PERL_DEFINE_SQ)' \
-		LIBS='$(PERL_LIBS_SQ)')
+		PREFIX='$(prefix_SQ)')
 
 doc:
 	$(MAKE) -C Documentation all
