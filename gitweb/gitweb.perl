@@ -3062,12 +3062,12 @@ sub git_blobdiff {
 		if (defined $file_name) {
 			if (defined $file_parent) {
 				$diffinfo{'status'} = '2';
-				$diffinfo{'from_file'} = esc_html($file_parent);
-				$diffinfo{'to_file'}   = esc_html($file_name);
+				$diffinfo{'from_file'} = $file_parent;
+				$diffinfo{'to_file'}   = $file_name;
 			} else { # assume not renamed
 				$diffinfo{'status'} = '1';
-				$diffinfo{'from_file'} = esc_html($file_name);
-				$diffinfo{'to_file'}   = esc_html($file_name);
+				$diffinfo{'from_file'} = $file_name;
+				$diffinfo{'to_file'}   = $file_name;
 			}
 		} else { # no filename given
 			$diffinfo{'status'} = '2';
@@ -3136,8 +3136,8 @@ sub git_blobdiff {
 
 	} else {
 		while (my $line = <$fd>) {
-			$line =~ s!a/($hash|$hash_parent)!a/$diffinfo{'from_file'}!g;
-			$line =~ s!b/($hash|$hash_parent)!b/$diffinfo{'to_file'}!g;
+			$line =~ s!a/($hash|$hash_parent)!'a/'.esc_html($diffinfo{'from_file'})!eg;
+			$line =~ s!b/($hash|$hash_parent)!'b/'.esc_html($diffinfo{'to_file'})!eg;
 
 			print $line;
 
