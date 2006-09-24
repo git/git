@@ -267,8 +267,6 @@ static int generate_tar(int argc, const char **argv, const char *prefix)
 	int result;
 	char *base = NULL;
 
-	git_config(git_tar_config);
-
 	memset(&args, 0, sizeof(args));
 	if (argc != 2 && argc != 3)
 		usage(tar_tree_usage);
