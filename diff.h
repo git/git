@@ -86,6 +86,7 @@ enum color_diff {
 	DIFF_FILE_OLD = 4,
 	DIFF_FILE_NEW = 5,
 	DIFF_COMMIT = 6,
+	DIFF_WHITESPACE = 7,
 };
 const char *diff_get_color(int diff_use_color, enum color_diff ix);
 
