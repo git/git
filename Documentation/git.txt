@@ -247,10 +247,6 @@ gitlink:git-upload-pack[1]::
 	Invoked by 'git-fetch-pack' to push
 	what are asked for.
 
-gitlink:git-upload-tar[1]::
-	Invoked by 'git-tar-tree --remote' to return the tar
-	archive the other end asked for.
-
 
 High-level commands (porcelain)
 -------------------------------

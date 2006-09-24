@@ -12,6 +12,9 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
+THIS COMMAND IS DEPRECATED.  Use `git-archive` with `--format=tar`
+option instead.
+
 Creates a tar archive containing the tree structure for the named tree.
 When <base> is specified it is added as a leading path to the files in the
 generated tar archive.
