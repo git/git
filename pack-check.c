@@ -42,16 +42,16 @@ static int verify_packfile(struct packed_git *p)
 	 */
 	for (i = err = 0; i < nr_objects; i++) {
 		unsigned char sha1[20];
-		struct pack_entry e;
 		void *data;
 		char type[20];
-		unsigned long size;
+		unsigned long size, offset;
 
 		if (nth_packed_object_sha1(p, i, sha1))
 			die("internal error pack-check nth-packed-object");
-		if (!find_pack_entry_one(sha1, &e, p))
+		offset = find_pack_entry_one(sha1, p);
+		if (!offset)
 			die("internal error pack-check find-pack-entry-one");
-		data = unpack_entry_gently(&e, type, &size);
+		data = unpack_entry_gently(p, offset, type, &size);
 		if (!data) {
 			err = error("cannot unpack %s from %s",
 				    sha1_to_hex(sha1), p->pack_name);
@@ -84,25 +84,26 @@ static void show_pack_info(struct packed_git *p)
 
 	for (i = 0; i < nr_objects; i++) {
 		unsigned char sha1[20], base_sha1[20];
-		struct pack_entry e;
 		char type[20];
 		unsigned long size;
 		unsigned long store_size;
+		unsigned long offset;
 		unsigned int delta_chain_length;
 
 		if (nth_packed_object_sha1(p, i, sha1))
 			die("internal error pack-check nth-packed-object");
-		if (!find_pack_entry_one(sha1, &e, p))
+		offset = find_pack_entry_one(sha1, p);
+		if (!offset)
 			die("internal error pack-check find-pack-entry-one");
 
-		packed_object_info_detail(&e, type, &size, &store_size,
+		packed_object_info_detail(p, offset, type, &size, &store_size,
 					  &delta_chain_length,
 					  base_sha1);
 		printf("%s ", sha1_to_hex(sha1));
 		if (!delta_chain_length)
-			printf("%-6s %lu %u\n", type, size, e.offset);
+			printf("%-6s %lu %lu\n", type, size, offset);
 		else {
-			printf("%-6s %lu %u %u %s\n", type, size, e.offset,
+			printf("%-6s %lu %lu %u %s\n", type, size, offset,
 			       delta_chain_length, sha1_to_hex(base_sha1));
 			if (delta_chain_length < MAX_CHAIN)
 				chain_histogram[delta_chain_length]++;
