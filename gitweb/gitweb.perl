@@ -106,7 +106,7 @@ our %feature = (
 
 sub gitweb_check_feature {
 	my ($name) = @_;
-	return undef unless exists $feature{$name};
+	return unless exists $feature{$name};
 	my ($sub, $override, @defaults) = (
 		$feature{$name}{'sub'},
 		$feature{$name}{'override'},
@@ -781,7 +781,7 @@ sub git_get_projects_list {
 		# 'git%2Fgit.git Linus+Torvalds'
 		# 'libs%2Fklibc%2Fklibc.git H.+Peter+Anvin'
 		# 'linux%2Fhotplug%2Fudev.git Greg+Kroah-Hartman'
-		open my ($fd), $projects_list or return undef;
+		open my ($fd), $projects_list or return;
 		while (my $line = <$fd>) {
 			chomp $line;
 			my ($path, $owner) = split ' ', $line;
