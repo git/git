@@ -31,7 +31,7 @@ $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
 our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,
-    $opt_b,$opt_r,$opt_I,$opt_A,$opt_s,$opt_l,$opt_d,$opt_D);
+    $opt_b,$opt_r,$opt_I,$opt_A,$opt_s,$opt_l,$opt_d,$opt_D,$opt_S);
 
 sub usage() {
 	print STDERR <<END;
@@ -39,12 +39,12 @@ Usage: ${\basename $0}     # fetch/update GIT from SVN
        [-o branch-for-HEAD] [-h] [-v] [-l max_rev]
        [-C GIT_repository] [-t tagname] [-T trunkname] [-b branchname]
        [-d|-D] [-i] [-u] [-r] [-I ignorefilename] [-s start_chg]
-       [-m] [-M regex] [-A author_file] [SVN_URL]
+       [-m] [-M regex] [-A author_file] [-S] [SVN_URL]
 END
 	exit(1);
 }
 
-getopts("A:b:C:dDhiI:l:mM:o:rs:t:T:uv") or usage();
+getopts("A:b:C:dDhiI:l:mM:o:rs:t:T:Suv") or usage();
 usage if $opt_h;
 
 my $tag_name = $opt_t || "tags";
@@ -531,21 +531,30 @@ sub copy_path($$$$$$$$) {
 
 sub commit {
 	my($branch, $changed_paths, $revision, $author, $date, $message) = @_;
-	my($author_name,$author_email,$dest);
+	my($committer_name,$committer_email,$dest);
+	my($author_name,$author_email);
 	my(@old,@new,@parents);
 
 	if (not defined $author or $author eq "") {
-		$author_name = $author_email = "unknown";
+		$committer_name = $committer_email = "unknown";
 	} elsif (defined $users_file) {
 		die "User $author is not listed in $users_file\n"
 		    unless exists $users{$author};
-		($author_name,$author_email) = @{$users{$author}};
+		($committer_name,$committer_email) = @{$users{$author}};
 	} elsif ($author =~ /^(.*?)\s+<(.*)>$/) {
-		($author_name, $author_email) = ($1, $2);
+		($committer_name, $committer_email) = ($1, $2);
 	} else {
 		$author =~ s/^<(.*)>$/$1/;
-		$author_name = $author_email = $author;
+		$committer_name = $committer_email = $author;
 	}
+
+	if ($opt_S && $message =~ /Signed-off-by:\s+(.*?)\s+<(.*)>\s*\n/) {
+		($author_name, $author_email) = ($1, $2);
+	} else {
+		$author_name = $committer_name;
+		$author_email = $committer_email;
+	}
+
 	$date = pdate($date);
 
 	my $tag;
@@ -772,8 +781,8 @@ sub commit {
 				"GIT_AUTHOR_NAME=$author_name",
 				"GIT_AUTHOR_EMAIL=$author_email",
 				"GIT_AUTHOR_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
-				"GIT_COMMITTER_NAME=$author_name",
-				"GIT_COMMITTER_EMAIL=$author_email",
+				"GIT_COMMITTER_NAME=$committer_name",
+				"GIT_COMMITTER_EMAIL=$committer_email",
 				"GIT_COMMITTER_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
 				"git-commit-tree", $tree,@par);
 			die "Cannot exec git-commit-tree: $!\n";
@@ -825,7 +834,7 @@ sub commit {
 		print $out ("object $cid\n".
 		    "type commit\n".
 		    "tag $dest\n".
-		    "tagger $author_name <$author_email>\n") and
+		    "tagger $committer_name <$committer_email>\n") and
 		close($out)
 		    or die "Cannot create tag object $dest: $!\n";
 
