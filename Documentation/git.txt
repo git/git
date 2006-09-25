@@ -266,6 +266,9 @@ gitlink:git-am[1]::
 gitlink:git-applymbox[1]::
 	Apply patches from a mailbox, original version by Linus.
 
+gitlink:git-archive[1]::
+	Creates an archive of files from a named tree.
+
 gitlink:git-bisect[1]::
 	Find the change that introduced a bug by binary search.
 

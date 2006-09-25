@@ -40,6 +40,7 @@ OPTIONS
 
 <extra>::
 	This can be any options that the archiver backend understand.
+	See next section.
 
 --remote=<repo>::
 	Instead of making a tar archive from local repository,
@@ -51,6 +52,18 @@ OPTIONS
 path::
 	If one or more paths are specified, include only these in the
 	archive, otherwise include all files and subdirectories.
+
+BACKEND EXTRA OPTIONS
+---------------------
+
+zip
+~~~
+-0::
+	Store the files instead of deflating them.
+-9::
+	Highest and slowest compression level.  You can specify any
+	number from 1 to 9 to adjust compression speed and ratio.
+
 
 CONFIGURATION
 -------------
