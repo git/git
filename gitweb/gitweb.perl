@@ -2320,7 +2320,7 @@ sub git_project_index {
 	print $cgi->header(
 		-type => 'text/plain',
 		-charset => 'utf-8',
-		-content_disposition => qq(inline; filename="index.aux"));
+		-content_disposition => 'inline; filename="index.aux"');
 
 	foreach my $pr (@projects) {
 		if (!exists $pr->{'owner'}) {
@@ -2682,7 +2682,7 @@ sub git_blob_plain {
 	print $cgi->header(
 		-type => "$type",
 		-expires=>$expires,
-		-content_disposition => "inline; filename=\"$save_as\"");
+		-content_disposition => 'inline; filename="' . quotemeta($save_as) . '"');
 	undef $/;
 	binmode STDOUT, ':raw';
 	print <$fd>;
@@ -2856,10 +2856,11 @@ sub git_snapshot {
 
 	my $filename = basename($project) . "-$hash.tar.$suffix";
 
-	print $cgi->header(-type => 'application/x-tar',
-	                   -content_encoding => $ctype,
-	                   -content_disposition => "inline; filename=\"$filename\"",
-	                   -status => '200 OK');
+	print $cgi->header(
+		-type => 'application/x-tar',
+		-content_encoding => $ctype,
+		-content_disposition => 'inline; filename="' . quotemeta($filename) . '"',
+		-status => '200 OK');
 
 	my $git_command = git_cmd_str();
 	open my $fd, "-|", "$git_command tar-tree $hash \'$project\' | $command" or
@@ -3169,7 +3170,7 @@ sub git_blobdiff {
 			-type => 'text/plain',
 			-charset => 'utf-8',
 			-expires => $expires,
-			-content_disposition => qq(inline; filename=") . quotemeta($file_name) . qq(.patch"));
+			-content_disposition => 'inline; filename="' . quotemeta($file_name) . '.patch"');
 
 		print "X-Git-Url: " . $cgi->self_url() . "\n\n";
 
@@ -3272,7 +3273,7 @@ sub git_commitdiff {
 			-type => 'text/plain',
 			-charset => 'utf-8',
 			-expires => $expires,
-			-content_disposition => qq(inline; filename="$filename"));
+			-content_disposition => 'inline; filename="' . quotemeta($filename) . '"');
 		my %ad = parse_date($co{'author_epoch'}, $co{'author_tz'});
 		print <<TEXT;
 From: $co{'author'}
