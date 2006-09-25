@@ -2171,7 +2171,7 @@ sub load_authors {
 	open my $authors, '<', $_authors or die "Can't open $_authors $!\n";
 	while (<$authors>) {
 		chomp;
-		next unless /^(\S+?)\s*=\s*(.+?)\s*<(.+)>\s*$/;
+		next unless /^(\S+?|\(no author\))\s*=\s*(.+?)\s*<(.+)>\s*$/;
 		my ($user, $name, $email) = ($1, $2, $3);
 		$users{$user} = [$name, $email];
 	}
