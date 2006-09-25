@@ -4,6 +4,7 @@
 #
 
 USAGE='[-a] [-d] [-f] [-l] [-n] [-q]'
+SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
 no_update_info= all_into_one= remove_redundant=
