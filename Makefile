@@ -81,8 +81,6 @@ all:
 # Define NO_ACCURATE_DIFF if your diff program at least sometimes misses
 # a missing newline at the end of the file.
 #
-# Define NO_PYTHON if you want to lose all benefits of the recursive merge.
-#
 # Define COLLISION_CHECK below if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
 # sufficient guarantee that no collisions between objects will ever happen.
@@ -174,7 +172,7 @@ SCRIPT_PERL = \
 	git-send-email.perl git-svn.perl
 
 SCRIPT_PYTHON = \
-	git-merge-recursive.py
+	git-merge-recursive-old.py
 
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
@@ -199,7 +197,7 @@ PROGRAMS = \
 	git-upload-pack$X git-verify-pack$X \
 	git-pack-redundant$X git-var$X \
 	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X \
-	git-merge-recur$X \
+	git-merge-recursive$X \
 	$(EXTRA_PROGRAMS)
 
 # Empty...
@@ -570,7 +568,8 @@ LIB_OBJS += $(COMPAT_OBJS)
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 ### Build rules
 
-all: $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk gitweb/gitweb.cgi
+all: $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk gitweb/gitweb.cgi \
+	git-merge-recur$X
 
 all:
 	$(MAKE) -C templates
@@ -584,6 +583,9 @@ git$X: git.c common-cmds.h $(BUILTIN_OBJS) $(GITLIBS) GIT-CFLAGS
 		$(BUILTIN_OBJS) $(ALL_LDFLAGS) $(LIBS)
 
 help.o: common-cmds.h
+
+git-merge-recur$X: git-merge-recursive$X
+	rm -f $@ && ln git-merge-recursive$X $@
 
 $(BUILT_INS): git$X
 	rm -f $@ && ln git$X $@
@@ -721,11 +723,6 @@ git-http-fetch$X: fetch.o http.o http-fetch.o $(GITLIBS)
 git-http-push$X: revision.o http.o http-push.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
-
-merge-recursive.o path-list.o: path-list.h
-git-merge-recur$X: merge-recursive.o path-list.o $(GITLIBS)
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
-		$(LIBS)
 
 $(LIB_OBJS) $(BUILTIN_OBJS): $(LIB_H)
 $(patsubst git-%$X,%.o,$(PROGRAMS)): $(LIB_H) $(wildcard */*.h)
@@ -887,6 +884,7 @@ check-docs::
 		case "$$v" in \
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
 		git-merge-resolve | git-merge-stupid | git-merge-recur | \
+		git-merge-recursive-old | \
 		git-ssh-pull | git-ssh-push ) continue ;; \
 		esac ; \
 		test -f "Documentation/$$v.txt" || \

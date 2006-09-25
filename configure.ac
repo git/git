@@ -75,7 +75,6 @@ GIT_ARG_SET_PATH(shell)
 # Define PERL_PATH to provide path to Perl.
 GIT_ARG_SET_PATH(perl)
 #
-# Define NO_PYTHON if you want to lose all benefits of the recursive merge.
 # Define PYTHON_PATH to provide path to Python.
 AC_ARG_WITH(python,[AS_HELP_STRING([--with-python=PATH], [provide PATH to python])
 AS_HELP_STRING([--without-python], [don't use python scripts])],
@@ -100,7 +99,6 @@ AC_PROG_CC
 AC_CHECK_TOOL(AR, ar, :)
 AC_CHECK_PROGS(TAR, [gtar tar])
 #
-# Define NO_PYTHON if you want to lose all benefits of the recursive merge.
 # Define PYTHON_PATH to provide path to Python.
 if test -z "$NO_PYTHON"; then
 	if test -z "$PYTHON_PATH"; then
