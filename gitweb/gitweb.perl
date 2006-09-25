@@ -200,9 +200,10 @@ if (defined $action) {
 	}
 }
 
+# parameters which are pathnames
 our $project = $cgi->param('p');
 if (defined $project) {
-	if (!validate_input($project) ||
+	if (!validate_pathname($project) ||
 	    !(-d "$projectroot/$project") ||
 	    !(-e "$projectroot/$project/HEAD") ||
 	    ($export_ok && !(-e "$projectroot/$project/$export_ok")) ||
@@ -212,38 +213,50 @@ if (defined $project) {
 	}
 }
 
-# We have to handle those containing any characters:
 our $file_name = $cgi->param('f');
-our $file_parent = $cgi->param('fp');
+if (defined $file_name) {
+	if (!validate_pathname($file_name)) {
+		die_error(undef, "Invalid file parameter");
+	}
+}
 
+our $file_parent = $cgi->param('fp');
+if (defined $file_parent) {
+	if (!validate_pathname($file_parent)) {
+		die_error(undef, "Invalid file parent parameter");
+	}
+}
+
+# parameters which are refnames
 our $hash = $cgi->param('h');
 if (defined $hash) {
-	if (!validate_input($hash)) {
+	if (!validate_refname($hash)) {
 		die_error(undef, "Invalid hash parameter");
 	}
 }
 
 our $hash_parent = $cgi->param('hp');
 if (defined $hash_parent) {
-	if (!validate_input($hash_parent)) {
+	if (!validate_refname($hash_parent)) {
 		die_error(undef, "Invalid hash parent parameter");
 	}
 }
 
 our $hash_base = $cgi->param('hb');
 if (defined $hash_base) {
-	if (!validate_input($hash_base)) {
+	if (!validate_refname($hash_base)) {
 		die_error(undef, "Invalid hash base parameter");
 	}
 }
 
 our $hash_parent_base = $cgi->param('hpb');
 if (defined $hash_parent_base) {
-	if (!validate_input($hash_parent_base)) {
+	if (!validate_refname($hash_parent_base)) {
 		die_error(undef, "Invalid hash parent base parameter");
 	}
 }
 
+# other parameters
 our $page = $cgi->param('pg');
 if (defined $page) {
 	if ($page =~ m/[^0-9]/) {
@@ -273,7 +286,7 @@ sub evaluate_path_info {
 		$project =~ s,/*[^/]*$,,;
 	}
 	# validate project
-	$project = validate_input($project);
+	$project = validate_pathname($project);
 	if (!$project ||
 	    ($export_ok && !-e "$projectroot/$project/$export_ok") ||
 	    ($strict_export && !project_in_list($project))) {
@@ -294,12 +307,12 @@ sub evaluate_path_info {
 		} else {
 			$action  ||= "blob_plain";
 		}
-		$hash_base ||= validate_input($refname);
-		$file_name ||= $pathname;
+		$hash_base ||= validate_refname($refname);
+		$file_name ||= validate_pathname($pathname);
 	} elsif (defined $refname) {
 		# we got "project.git/branch"
 		$action ||= "shortlog";
-		$hash   ||= validate_input($refname);
+		$hash   ||= validate_refname($refname);
 	}
 }
 evaluate_path_info();
@@ -387,16 +400,34 @@ sub href(%) {
 ## ======================================================================
 ## validation, quoting/unquoting and escaping
 
-sub validate_input {
-	my $input = shift;
+sub validate_pathname {
+	my $input = shift || return undef;
 
+	# no '.' or '..' as elements of path, i.e. no '.' nor '..'
+	# at the beginning, at the end, and between slashes.
+	# also this catches doubled slashes
+	if ($input =~ m!(^|/)(|\.|\.\.)(/|$)!) {
+		return undef;
+	}
+	# no null characters
+	if ($input =~ m!\0!) {
+		return undef;
+	}
+	return $input;
+}
+
+sub validate_refname {
+	my $input = shift || return undef;
+
+	# textual hashes are O.K.
 	if ($input =~ m/^[0-9a-fA-F]{40}$/) {
 		return $input;
 	}
-	if ($input =~ m/(^|\/)(|\.|\.\.)($|\/)/) {
-		return undef;
-	}
-	if ($input =~ m/[^a-zA-Z0-9_\x80-\xff\ \t\.\/\-\+\#\~\%]/) {
+	# it must be correct pathname
+	$input = validate_pathname($input)
+		or return undef;
+	# restrictions on ref name according to git-check-ref-format
+	if ($input =~ m!(/\.|\.\.|[\000-\040\177 ~^:?*\[]|/$)!) {
 		return undef;
 	}
 	return $input;
