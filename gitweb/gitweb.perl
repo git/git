@@ -443,6 +443,15 @@ sub esc_param {
 	return $str;
 }
 
+# quote unsafe chars in whole URL, so some charactrs cannot be quoted
+sub esc_url {
+	my $str = shift;
+	$str =~ s/([^A-Za-z0-9\-_.~();\/;?:@&=])/sprintf("%%%02X", ord($1))/eg;
+	$str =~ s/\+/%2B/g;
+	$str =~ s/ /\+/g;
+	return $str;
+}
+
 # replace invalid utf8 character with SUBSTITUTION sequence
 sub esc_html {
 	my $str = shift;
@@ -1359,7 +1368,7 @@ EOF
 	      "<a href=\"http://www.kernel.org/pub/software/scm/git/docs/\" title=\"git documentation\">" .
 	      "<img src=\"$logo\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
 	      "</a>\n";
-	print $cgi->a({-href => esc_param($home_link)}, $home_link_str) . " / ";
+	print $cgi->a({-href => esc_url($home_link)}, $home_link_str) . " / ";
 	if (defined $project) {
 		print $cgi->a({-href => href(action=>"summary")}, esc_html($project));
 		if (defined $action) {
