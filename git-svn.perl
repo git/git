@@ -52,7 +52,7 @@ my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_template, $_shared, $_no_default_regex, $_no_graft_copy,
 	$_limit, $_verbose, $_incremental, $_oneline, $_l_fmt, $_show_commit,
 	$_version, $_upgrade, $_authors, $_branch_all_refs, @_opt_m,
-	$_merge, $_strategy, $_dry_run);
+	$_merge, $_strategy, $_dry_run, $_ignore_nodate);
 my (@_branch_from, %tree_map, %users, %rusers, %equiv);
 my ($_svn_co_url_revs, $_svn_pg_peg_revs);
 my @repo_path_split_cache;
@@ -65,6 +65,7 @@ my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
 		'repack:i' => \$_repack,
 		'no-metadata' => \$_no_metadata,
 		'quiet|q' => \$_q,
+		'ignore-nodate' => \$_ignore_nodate,
 		'repack-flags|repack-args|repack-opts=s' => \$_repack_flags);
 
 my ($_trunk, $_tags, $_branches);
@@ -1734,6 +1735,8 @@ sub next_log_entry {
 			my $rev = $1;
 			my ($author, $date, $lines) = split(/\s*\|\s*/, $_, 3);
 			($lines) = ($lines =~ /(\d+)/);
+			$date = '1970-01-01 00:00:00 +0000'
+				if ($_ignore_nodate && $date eq '(no date)');
 			my ($Y,$m,$d,$H,$M,$S,$tz) = ($date =~
 					/(\d{4})\-(\d\d)\-(\d\d)\s
 					 (\d\d)\:(\d\d)\:(\d\d)\s([\-\+]\d+)/x)
@@ -2168,7 +2171,7 @@ sub load_authors {
 	open my $authors, '<', $_authors or die "Can't open $_authors $!\n";
 	while (<$authors>) {
 		chomp;
-		next unless /^(\S+?)\s*=\s*(.+?)\s*<(.+)>\s*$/;
+		next unless /^(\S+?|\(no author\))\s*=\s*(.+?)\s*<(.+)>\s*$/;
 		my ($user, $name, $email) = ($1, $2, $3);
 		$users{$user} = [$name, $email];
 	}

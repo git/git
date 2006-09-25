@@ -211,7 +211,7 @@ export PATH GIT_EXEC_PATH
 PYTHON=`sed -e '1{
 	s/^#!//
 	q
-}' ../git-merge-recursive` || {
+}' ../git-merge-recursive-old` || {
 	error "You haven't built things yet, have you?"
 }
 "$PYTHON" -c 'import subprocess' 2>/dev/null || {

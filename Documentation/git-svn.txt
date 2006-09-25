@@ -244,6 +244,18 @@ doing.
 
 repo-config key: svn.noignoreexternals
 
+--ignore-nodate::
+Only used with the 'fetch' command.
+
+By default git-svn will crash if it tries to import a revision
+from SVN which has '(no date)' listed as the date of the revision.
+This is repository corruption on SVN's part, plain and simple.
+But sometimes you really need those revisions anyway.
+
+If supplied git-svn will convert '(no date)' entries to the UNIX
+epoch (midnight on Jan. 1, 1970).  Yes, that's probably very wrong.
+SVN was very wrong.
+
 --
 
 Basic Examples
