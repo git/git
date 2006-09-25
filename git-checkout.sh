@@ -4,8 +4,8 @@ USAGE='[-f] [-b <new_branch>] [-m] [<branch>] [<paths>...]'
 SUBDIRECTORY_OK=Sometimes
 . git-sh-setup
 
-old=$(git-rev-parse HEAD)
 old_name=HEAD
+old=$(git-rev-parse --verify $old_name 2>/dev/null)
 new=
 new_name=
 force=
@@ -138,6 +138,13 @@ fi
 	[ "$new" != "$old" ] &&
 	die "git checkout: to checkout the requested commit you need to specify 
               a name for a new branch which is created and switched to"
+
+if [ "X$old" = X ]
+then
+	echo "warning: You do not appear to currently be on a branch." >&2
+	echo "warning: Forcing checkout of $new_name." >&2
+	force=1
+fi
 
 if [ "$force" ]
 then
