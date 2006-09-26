@@ -1631,18 +1631,14 @@ sub git_print_tree_entry {
 		print "</td>\n";
 
 	} elsif ($t->{'type'} eq "tree") {
-		print "<td class=\"list\">" .
-		      $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
+		print "<td class=\"list\">";
+		print $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
 		                             file_name=>"$basedir$t->{'name'}", %base_key)},
-		              esc_html($t->{'name'})) .
-		      "</td>\n" .
-		      "<td class=\"link\">" .
-		      $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
-		                             file_name=>"$basedir$t->{'name'}", %base_key)},
-		              "tree");
+		              esc_html($t->{'name'}));
+		print "</td>\n";
+		print "<td class=\"link\">";
 		if (defined $hash_base) {
-			print " | " .
-			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
+			print $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
 			                             file_name=>"$basedir$t->{'name'}")},
 			              "history");
 		}
