@@ -2439,7 +2439,7 @@ sub git_blame2 {
 	print <<HTML;
 <div class="page_body">
 <table class="blame">
-<tr><th>Commit</th><th>Line</th><th>Data</th></tr>
+<tr><th>Prev</th><th>Diff</th><th>Commit</th><th>Line</th><th>Data</th></tr>
 HTML
 	while (<$fd>) {
 		/^([0-9a-fA-F]{40}).*?(\d+)\)\s{1}(\s*.*)/;
@@ -2447,6 +2447,8 @@ HTML
 		my $rev = substr($full_rev, 0, 8);
 		my $lineno = $2;
 		my $data = $3;
+		my %pco = parse_commit($full_rev);
+		my $parent = $pco{'parent'};
 
 		if (!defined $last_rev) {
 			$last_rev = $full_rev;
@@ -2455,11 +2457,25 @@ HTML
 			$current_color = ++$current_color % $num_colors;
 		}
 		print "<tr class=\"$rev_color[$current_color]\">\n";
+		# Print the Prev link
+		print "<td class=\"sha1\">";
+		print $cgi->a({-href => href(action=>"blame", hash_base=>$parent, file_name=>$file_name)},
+			      esc_html(substr($parent, 0, 8)));
+		print "</td>\n";
+		# Print the Diff (blobdiff) link
+		print "<td>";
+		print $cgi->a({-href => href(action=>"blobdiff", file_name=>$file_name, hash_parent_base=>$parent,
+					     hash_base=>$full_rev)},
+			      esc_html("Diff"));
+		print "</td>\n";
+		# Print the Commit link
 		print "<td class=\"sha1\">" .
 			$cgi->a({-href => href(action=>"commit", hash=>$full_rev, file_name=>$file_name)},
 			        esc_html($rev)) . "</td>\n";
+		# Print the Line number
 		print "<td class=\"linenr\"><a id=\"l$lineno\" href=\"#l$lineno\" class=\"linenr\">" .
 		      esc_html($lineno) . "</a></td>\n";
+		# Print the Data
 		print "<td class=\"pre\">" . esc_html($data) . "</td>\n";
 		print "</tr>\n";
 	}
