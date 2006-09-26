@@ -1600,34 +1600,35 @@ sub git_print_tree_entry {
 	my %base_key = ();
 	$base_key{hash_base} = $hash_base if defined $hash_base;
 
+	# The format of a table row is: mode list link.  Where mode is
+	# the mode of the entry, list is the name of the entry, an href,
+	# and link is the action links of the entry.
+
 	print "<td class=\"mode\">" . mode_str($t->{'mode'}) . "</td>\n";
 	if ($t->{'type'} eq "blob") {
 		print "<td class=\"list\">" .
-		      $cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
-		                             file_name=>"$basedir$t->{'name'}", %base_key),
-		              -class => "list"}, esc_html($t->{'name'})) .
-		      "</td>\n" .
-		      "<td class=\"link\">" .
-		      $cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
-		                             file_name=>"$basedir$t->{'name'}", %base_key)},
-		              "blob");
+			$cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
+					       file_name=>"$basedir$t->{'name'}", %base_key),
+				 -class => "list"}, esc_html($t->{'name'})) . "</td>\n";
+		print "<td class=\"link\">";
 		if ($have_blame) {
-			print " | " .
-				$cgi->a({-href => href(action=>"blame", hash=>$t->{'hash'},
-				                       file_name=>"$basedir$t->{'name'}", %base_key)},
-				        "blame");
+			print $cgi->a({-href => href(action=>"blame", hash=>$t->{'hash'},
+						     file_name=>"$basedir$t->{'name'}", %base_key)},
+				      "blame");
 		}
 		if (defined $hash_base) {
-			print " | " .
-			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
+			if ($have_blame) {
+				print " | ";
+			}
+			print $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
 			                             hash=>$t->{'hash'}, file_name=>"$basedir$t->{'name'}")},
 			              "history");
 		}
 		print " | " .
 		      $cgi->a({-href => href(action=>"blob_plain",
 		                             hash=>$t->{'hash'}, file_name=>"$basedir$t->{'name'}")},
-		              "raw") .
-		      "</td>\n";
+		              "raw");
+		print "</td>\n";
 
 	} elsif ($t->{'type'} eq "tree") {
 		print "<td class=\"list\">" .
