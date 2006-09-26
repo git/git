@@ -9,6 +9,7 @@
 #include <syslog.h>
 #include <pwd.h>
 #include <grp.h>
+#include <limits.h>
 #include "pkt-line.h"
 #include "cache.h"
 #include "exec_cmd.h"
@@ -19,13 +20,15 @@ static int verbose;
 static int reuseaddr;
 
 static const char daemon_usage[] =
-"git-daemon [--verbose] [--syslog] [--inetd | --port=n] [--export-all]\n"
+"git-daemon [--verbose] [--syslog] [--export-all]\n"
 "           [--timeout=n] [--init-timeout=n] [--strict-paths]\n"
 "           [--base-path=path] [--user-path | --user-path=path]\n"
 "           [--interpolated-path=path]\n"
 "           [--reuseaddr] [--detach] [--pid-file=file]\n"
 "           [--[enable|disable|allow-override|forbid-override]=service]\n"
-"           [--user=user [[--group=group]] [directory...]";
+"           [--inetd | [--listen=host_or_ipaddr] [--port=n]\n"
+"                      [--user=user [--group=group]]\n"
+"           [directory...]";
 
 /* List of acceptable pathname prefixes */
 static char **ok_paths;
@@ -56,11 +59,17 @@ static unsigned int init_timeout;
  * Feel free to make dynamic as needed.
  */
 #define INTERP_SLOT_HOST	(0)
-#define INTERP_SLOT_DIR		(1)
-#define INTERP_SLOT_PERCENT	(2)
+#define INTERP_SLOT_CANON_HOST	(1)
+#define INTERP_SLOT_IP		(2)
+#define INTERP_SLOT_PORT	(3)
+#define INTERP_SLOT_DIR		(4)
+#define INTERP_SLOT_PERCENT	(5)
 
 static struct interp interp_table[] = {
 	{ "%H", 0},
+	{ "%CH", 0},
+	{ "%IP", 0},
+	{ "%P", 0},
 	{ "%D", 0},
 	{ "%%", "%"},
 };
@@ -408,15 +417,90 @@ static void parse_extra_args(char *extra_args, int buflen)
 			val = extra_args + 5;
 			vallen = strlen(val) + 1;
 			if (*val) {
-				char *save = xmalloc(vallen);
+				char *port;
+				char *save = xmalloc(vallen);	/* FIXME: Leak */
+
 				interp_table[INTERP_SLOT_HOST].value = save;
 				strlcpy(save, val, vallen);
+				port = strrchr(save, ':');
+				if (port) {
+					*port = 0;
+					port++;
+					interp_table[INTERP_SLOT_PORT].value = port;
+				}
 			}
 			/* On to the next one */
 			extra_args = val + vallen;
 		}
 	}
 }
+
+void fill_in_extra_table_entries(struct interp *itable)
+{
+	char *hp;
+	char *canon_host = NULL;
+	char *ipaddr = NULL;
+
+	/*
+	 * Replace literal host with lowercase-ized hostname.
+	 */
+	hp = interp_table[INTERP_SLOT_HOST].value;
+	for ( ; *hp; hp++)
+		*hp = tolower(*hp);
+
+	/*
+	 * Locate canonical hostname and its IP address.
+	 */
+#ifndef NO_IPV6
+	{
+		struct addrinfo hints;
+		struct addrinfo *ai, *ai0;
+		int gai;
+		static char addrbuf[HOST_NAME_MAX + 1];
+
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_flags = AI_CANONNAME;
+
+		gai = getaddrinfo(interp_table[INTERP_SLOT_HOST].value, 0, &hints, &ai0);
+		if (!gai) {
+			for (ai = ai0; ai; ai = ai->ai_next) {
+				struct sockaddr_in *sin_addr = (void *)ai->ai_addr;
+
+				canon_host = xstrdup(ai->ai_canonname);
+				inet_ntop(AF_INET, &sin_addr->sin_addr,
+					  addrbuf, sizeof(addrbuf));
+				ipaddr = addrbuf;
+				break;
+			}
+			freeaddrinfo(ai0);
+		}
+	}
+#else
+	{
+		struct hostent *hent;
+		struct sockaddr_in sa;
+		char **ap;
+		static char addrbuf[HOST_NAME_MAX + 1];
+
+		hent = gethostbyname(interp_table[INTERP_SLOT_HOST].value);
+		canon_host = xstrdup(hent->h_name);
+
+		ap = hent->h_addr_list;
+		memset(&sa, 0, sizeof sa);
+		sa.sin_family = hent->h_addrtype;
+		sa.sin_port = htons(0);
+		memcpy(&sa.sin_addr, *ap, hent->h_length);
+
+		inet_ntop(hent->h_addrtype, &sa.sin_addr,
+			  addrbuf, sizeof(addrbuf));
+		ipaddr = addrbuf;
+	}
+#endif
+
+	interp_table[INTERP_SLOT_CANON_HOST].value = canon_host;	/* FIXME: Leak */
+	interp_table[INTERP_SLOT_IP].value = xstrdup(ipaddr);		/* FIXME: Leak */
+}
+
 
 static int execute(struct sockaddr *addr)
 {
@@ -458,8 +542,10 @@ static int execute(struct sockaddr *addr)
 	if (len && line[len-1] == '\n')
 		line[--len] = 0;
 
-	if (len != pktlen)
+	if (len != pktlen) {
 	    parse_extra_args(line + len + 1, pktlen - len - 1);
+	    fill_in_extra_table_entries(interp_table);
+	}
 
 	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		struct daemon_service *s = &(daemon_service[i]);
@@ -663,23 +749,22 @@ static int set_reuse_addr(int sockfd)
 
 #ifndef NO_IPV6
 
-static int socksetup(int port, int **socklist_p)
+static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 {
 	int socknum = 0, *socklist = NULL;
 	int maxfd = -1;
 	char pbuf[NI_MAXSERV];
-
 	struct addrinfo hints, *ai0, *ai;
 	int gai;
 
-	sprintf(pbuf, "%d", port);
+	sprintf(pbuf, "%d", listen_port);
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 	hints.ai_flags = AI_PASSIVE;
 
-	gai = getaddrinfo(NULL, pbuf, &hints, &ai0);
+	gai = getaddrinfo(listen_addr, pbuf, &hints, &ai0);
 	if (gai)
 		die("getaddrinfo() failed: %s\n", gai_strerror(gai));
 
@@ -733,19 +818,26 @@ static int socksetup(int port, int **socklist_p)
 
 #else /* NO_IPV6 */
 
-static int socksetup(int port, int **socklist_p)
+static int socksetup(char *lisen_addr, int listen_port, int **socklist_p)
 {
 	struct sockaddr_in sin;
 	int sockfd;
 
+	memset(&sin, 0, sizeof sin);
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(listen_port);
+
+	if (listen_addr) {
+		/* Well, host better be an IP address here. */
+		if (inet_pton(AF_INET, listen_addr, &sin.sin_addr.s_addr) <= 0)
+			return 0;
+	} else {
+		sin.sin_addr.s_addr = htonl(INADDR_ANY);
+	}
+
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0)
 		return 0;
-
-	memset(&sin, 0, sizeof sin);
-	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = htonl(INADDR_ANY);
-	sin.sin_port = htons(port);
 
 	if (set_reuse_addr(sockfd)) {
 		close(sockfd);
@@ -855,13 +947,14 @@ static void store_pid(const char *path)
 	fclose(f);
 }
 
-static int serve(int port, struct passwd *pass, gid_t gid)
+static int serve(char *listen_addr, int listen_port, struct passwd *pass, gid_t gid)
 {
 	int socknum, *socklist;
 
-	socknum = socksetup(port, &socklist);
+	socknum = socksetup(listen_addr, listen_port, &socklist);
 	if (socknum == 0)
-		die("unable to allocate any listen sockets on port %u", port);
+		die("unable to allocate any listen sockets on host %s port %u",
+		    listen_addr, listen_port);
 
 	if (pass && gid &&
 	    (initgroups(pass->pw_name, gid) || setgid (gid) ||
@@ -873,7 +966,8 @@ static int serve(int port, struct passwd *pass, gid_t gid)
 
 int main(int argc, char **argv)
 {
-	int port = DEFAULT_GIT_PORT;
+	int listen_port = 0;
+	char *listen_addr = NULL;
 	int inetd_mode = 0;
 	const char *pid_file = NULL, *user_name = NULL, *group_name = NULL;
 	int detach = 0;
@@ -890,12 +984,20 @@ int main(int argc, char **argv)
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
 
+		if (!strncmp(arg, "--listen=", 9)) {
+		    char *p = arg + 9;
+		    char *ph = listen_addr = xmalloc(strlen(arg + 9) + 1);
+		    while (*p)
+			*ph++ = tolower(*p++);
+		    *ph = 0;
+		    continue;
+		}
 		if (!strncmp(arg, "--port=", 7)) {
 			char *end;
 			unsigned long n;
 			n = strtoul(arg+7, &end, 0);
 			if (arg[7] && !*end) {
-				port = n;
+				listen_port = n;
 				continue;
 			}
 		}
@@ -995,6 +1097,11 @@ int main(int argc, char **argv)
 	if (inetd_mode && (group_name || user_name))
 		die("--user and --group are incompatible with --inetd");
 
+	if (inetd_mode && (listen_port || listen_addr))
+		die("--listen= and --port= are incompatible with --inetd");
+	else if (listen_port == 0)
+		listen_port = DEFAULT_GIT_PORT;
+
 	if (group_name && !user_name)
 		die("--group supplied without --user");
 
@@ -1043,5 +1150,5 @@ int main(int argc, char **argv)
 	if (pid_file)
 		store_pid(pid_file);
 
-	return serve(port, pass, gid);
+	return serve(listen_addr, listen_port, pass, gid);
 }
