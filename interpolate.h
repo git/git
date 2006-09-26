@@ -5,6 +5,11 @@
 #ifndef INTERPOLATE_H
 #define INTERPOLATE_H
 
+/*
+ * Convert a NUL-terminated string in buffer orig,
+ * performing substitutions on %-named sub-strings from
+ * the interpretation table.
+ */
 
 struct interp {
 	char *name;
@@ -12,7 +17,7 @@ struct interp {
 };
 
 extern int interpolate(char *result, int reslen,
-		       char *orig,
-		       struct interp *interps, int ninterps);
+		       const char *orig,
+		       const struct interp *interps, int ninterps);
 
 #endif /* INTERPOLATE_H */

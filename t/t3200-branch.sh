@@ -61,4 +61,16 @@ test_expect_success \
 	 test -f .git/logs/refs/heads/g/h/i &&
 	 diff expect .git/logs/refs/heads/g/h/i'
 
+test_expect_success \
+    'git branch j/k should work after branch j has been deleted' \
+       'git-branch j &&
+        git-branch -d j &&
+        git-branch j/k'
+
+test_expect_success \
+    'git branch l should work after branch l/m has been deleted' \
+       'git-branch l/m &&
+        git-branch -d l/m &&
+        git-branch l'
+
 test_done

@@ -25,10 +25,10 @@
  */
 
 int interpolate(char *result, int reslen,
-		char *orig,
-		struct interp *interps, int ninterps)
+		const char *orig,
+		const struct interp *interps, int ninterps)
 {
-	char *src = orig;
+	const char *src = orig;
 	char *dest = result;
 	int newlen = 0;
 	char *name, *value;

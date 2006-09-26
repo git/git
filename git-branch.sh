@@ -112,6 +112,16 @@ rev=$(git-rev-parse --verify "$head") || exit
 git-check-ref-format "heads/$branchname" ||
 	die "we do not like '$branchname' as a branch name."
 
+if [ -d "$GIT_DIR/refs/heads/$branchname" ]
+then
+	for refdir in `cd "$GIT_DIR" && \
+		find "refs/heads/$branchname" -type d | sort -r`
+	do
+		rmdir "$GIT_DIR/$refdir" || \
+		    die "Could not delete '$refdir', there may still be a ref there."
+	done
+fi
+
 if git-show-ref --verify --quiet -- "refs/heads/$branchname"
 then
 	if test '' = "$force"
