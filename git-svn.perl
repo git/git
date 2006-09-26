@@ -1247,6 +1247,7 @@ sub assert_svn_wc_clean {
 	}
 	my @status = grep(!/^Performing status on external/,(`svn status`));
 	@status = grep(!/^\s*$/,@status);
+	@status = grep(!/^X/,@status) if $_no_ignore_ext;
 	if (scalar @status) {
 		print STDERR "Tree ($SVN_WC) is not clean:\n";
 		print STDERR $_ foreach @status;
