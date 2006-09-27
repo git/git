@@ -27,10 +27,10 @@ extern int for_each_remote_ref(each_ref_fn, void *);
 extern int get_ref_sha1(const char *ref, unsigned char *sha1);
 
 /** Locks a "refs/" ref returning the lock on success and NULL on failure. **/
-extern struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1, int mustexist);
+extern struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1);
 
 /** Locks any ref (for 'HEAD' type refs). */
-extern struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1, int mustexist);
+extern struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1);
 
 /** Release any lock taken but not written. **/
 extern void unlock_ref(struct ref_lock *lock);
