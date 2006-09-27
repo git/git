@@ -21,7 +21,7 @@ delete_branch () {
 	,,)
 	    die "What branch are you on anyway?" ;;
 	esac
-	branch=$(cat "$GIT_DIR/refs/heads/$branch_name") &&
+	branch=$(git-show-ref --verify --hash -- "refs/heads/$branch_name") &&
 	    branch=$(git-rev-parse --verify "$branch^0") ||
 		die "Seriously, what branch are you talking about?"
 	case "$option" in
@@ -112,7 +112,7 @@ rev=$(git-rev-parse --verify "$head") || exit
 git-check-ref-format "heads/$branchname" ||
 	die "we do not like '$branchname' as a branch name."
 
-if [ -e "$GIT_DIR/refs/heads/$branchname" ]
+if git-show-ref --verify --quiet -- "refs/heads/$branchname"
 then
 	if test '' = "$force"
 	then

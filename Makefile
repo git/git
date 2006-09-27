@@ -303,6 +303,7 @@ BUILTIN_OBJS = \
 	builtin-verify-pack.o \
 	builtin-write-tree.o \
 	builtin-zip-tree.o \
+	builtin-show-ref.o \
 	builtin-pack-refs.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)

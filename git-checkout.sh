@@ -22,7 +22,7 @@ while [ "$#" != "0" ]; do
 		shift
 		[ -z "$newbranch" ] &&
 			die "git checkout: -b needs a branch name"
-		git-rev-parse --symbolic "heads/$newbranch" >&/dev/null &&
+		git-show-ref --verify --quiet -- "refs/heads/$newbranch" &&
 			die "git checkout: branch $newbranch already exists"
 		git-check-ref-format "heads/$newbranch" ||
 			die "git checkout: we do not like '$newbranch' as a branch name."
@@ -51,7 +51,8 @@ while [ "$#" != "0" ]; do
 			fi
 			new="$rev"
 			new_name="$arg^0"
-			if git-rev-parse "heads/$arg^0" >&/dev/null; then
+			if git-show-ref --verify --quiet -- "refs/heads/$arg"
+			then
 				branch="$arg"
 			fi
 		elif rev=$(git-rev-parse --verify "$arg^{tree}" 2>/dev/null)
