@@ -341,12 +341,16 @@ proc parsecommit {id contents listed} {
 	}
     }
     set headline {}
-    # take the first line of the comment as the headline
-    set i [string first "\n" $comment]
+    # take the first non-blank line of the comment as the headline
+    set headline [string trimleft $comment]
+    set i [string first "\n" $headline]
     if {$i >= 0} {
-	set headline [string trim [string range $comment 0 $i]]
-    } else {
-	set headline $comment
+	set headline [string range $headline 0 $i]
+    }
+    set headline [string trimright $headline]
+    set i [string first "\r" $headline]
+    if {$i >= 0} {
+	set headline [string trimright [string range $headline 0 $i]]
     }
     if {!$listed} {
 	# git rev-list indents the comment by 4 spaces;
@@ -4157,7 +4161,11 @@ proc selectline {l isnew} {
 	dispneartags 1
     }
     $ctext insert end "\n"
-    appendwithlinks [lindex $info 5] {comment}
+    set comment [lindex $info 5]
+    if {[string first "\r" $comment] >= 0} {
+	set comment [string map {"\r" "\n    "} $comment]
+    }
+    appendwithlinks $comment {comment}
 
     $ctext tag delete Comments
     $ctext tag remove found 1.0 end
