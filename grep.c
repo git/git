@@ -138,16 +138,13 @@ void compile_grep_patterns(struct grep_opt *opt)
 {
 	struct grep_pat *p;
 
-	if (opt->fixed)
-		return;
-
-	/* First compile regexps */
 	for (p = opt->pattern_list; p; p = p->next) {
 		switch (p->token) {
 		case GREP_PATTERN: /* atom */
 		case GREP_PATTERN_HEAD:
 		case GREP_PATTERN_BODY:
-			compile_regexp(p, opt);
+			if (!opt->fixed)
+				compile_regexp(p, opt);
 			break;
 		default:
 			opt->extended = 1;
