@@ -41,34 +41,6 @@ struct command {
 
 static struct command *commands;
 
-static int is_all_zeroes(const char *hex)
-{
-	int i;
-	for (i = 0; i < 40; i++)
-		if (*hex++ != '0')
-			return 0;
-	return 1;
-}
-
-static int verify_old_ref(const char *name, char *hex_contents)
-{
-	int fd, ret;
-	char buffer[60];
-
-	if (is_all_zeroes(hex_contents))
-		return 0;
-	fd = open(name, O_RDONLY);
-	if (fd < 0)
-		return -1;
-	ret = read(fd, buffer, 40);
-	close(fd);
-	if (ret != 40)
-		return -1;
-	if (memcmp(buffer, hex_contents, 40))
-		return -1;
-	return 0;
-}
-
 static char update_hook[] = "hooks/update";
 
 static int run_update_hook(const char *refname,
@@ -105,8 +77,8 @@ static int update(struct command *cmd)
 	const char *name = cmd->ref_name;
 	unsigned char *old_sha1 = cmd->old_sha1;
 	unsigned char *new_sha1 = cmd->new_sha1;
-	char new_hex[60], *old_hex, *lock_name;
-	int newfd, namelen, written;
+	char new_hex[41], old_hex[41];
+	struct ref_lock *lock;
 
 	cmd->error_string = NULL;
 	if (!strncmp(name, "refs/", 5) && check_ref_format(name + 5)) {
@@ -115,59 +87,27 @@ static int update(struct command *cmd)
 			     name);
 	}
 
-	namelen = strlen(name);
-	lock_name = xmalloc(namelen + 10);
-	memcpy(lock_name, name, namelen);
-	memcpy(lock_name + namelen, ".lock", 6);
-
 	strcpy(new_hex, sha1_to_hex(new_sha1));
-	old_hex = sha1_to_hex(old_sha1);
+	strcpy(old_hex, sha1_to_hex(old_sha1));
 	if (!has_sha1_file(new_sha1)) {
 		cmd->error_string = "bad pack";
 		return error("unpack should have generated %s, "
 			     "but I can't find it!", new_hex);
 	}
-	safe_create_leading_directories(lock_name);
-
-	newfd = open(lock_name, O_CREAT | O_EXCL | O_WRONLY, 0666);
-	if (newfd < 0) {
-		cmd->error_string = "can't lock";
-		return error("unable to create %s (%s)",
-			     lock_name, strerror(errno));
-	}
-
-	/* Write the ref with an ending '\n' */
-	new_hex[40] = '\n';
-	new_hex[41] = 0;
-	written = write(newfd, new_hex, 41);
-	/* Remove the '\n' again */
-	new_hex[40] = 0;
-
-	close(newfd);
-	if (written != 41) {
-		unlink(lock_name);
-		cmd->error_string = "can't write";
-		return error("unable to write %s", lock_name);
-	}
-	if (verify_old_ref(name, old_hex) < 0) {
-		unlink(lock_name);
-		cmd->error_string = "raced";
-		return error("%s changed during push", name);
-	}
 	if (run_update_hook(name, old_hex, new_hex)) {
-		unlink(lock_name);
 		cmd->error_string = "hook declined";
 		return error("hook declined to update %s", name);
 	}
-	else if (rename(lock_name, name) < 0) {
-		unlink(lock_name);
-		cmd->error_string = "can't rename";
-		return error("unable to replace %s", name);
+
+	lock = lock_any_ref_for_update(name, old_sha1);
+	if (!lock) {
+		cmd->error_string = "failed to lock";
+		return error("failed to lock %s", name);
 	}
-	else {
-		fprintf(stderr, "%s: %s -> %s\n", name, old_hex, new_hex);
-		return 0;
-	}
+	write_ref_sha1(lock, new_sha1, "push");
+
+	fprintf(stderr, "%s: %s -> %s\n", name, old_hex, new_hex);
+	return 0;
 }
 
 static char update_post_hook[] = "hooks/post-update";
@@ -318,8 +258,10 @@ int main(int argc, char **argv)
 	if (!dir)
 		usage(receive_pack_usage);
 
-	if(!enter_repo(dir, 0))
+	if (!enter_repo(dir, 0))
 		die("'%s': unable to chdir or not a git archive", dir);
+
+	git_config(git_default_config);
 
 	write_head_info();
 
