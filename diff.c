@@ -545,21 +545,64 @@ static void diffstat_consume(void *priv, char *line, unsigned long len)
 		x->deleted++;
 }
 
-static const char pluses[] = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-static const char minuses[]= "----------------------------------------------------------------------";
 const char mime_boundary_leader[] = "------------";
 
-static void show_stats(struct diffstat_t* data)
+static int scale_linear(int it, int width, int max_change)
+{
+	/*
+	 * round(width * it / max_change);
+	 */
+	return (it * width * 2 + max_change) / (max_change * 2);
+}
+
+static void show_name(const char *prefix, const char *name, int len)
+{
+	printf(" %s%-*s |", prefix, len, name);
+}
+
+static void show_graph(char ch, int cnt)
+{
+	if (cnt <= 0)
+		return;
+	while (cnt--)
+		putchar(ch);
+}
+
+static void show_stats(struct diffstat_t* data, struct diff_options *options)
 {
 	int i, len, add, del, total, adds = 0, dels = 0;
-	int max, max_change = 0, max_len = 0;
+	int max_change = 0, max_len = 0;
 	int total_files = data->nr;
+	int width, name_width;
 
 	if (data->nr == 0)
 		return;
 
+	width = options->stat_width ? options->stat_width : 80;
+	name_width = options->stat_name_width ? options->stat_name_width : 50;
+
+	/* Sanity: give at least 5 columns to the graph,
+	 * but leave at least 10 columns for the name.
+	 */
+	if (width < name_width + 15) {
+		if (name_width <= 25)
+			width = name_width + 15;
+		else
+			name_width = width - 15;
+	}
+
+	/* Find the longest filename and max number of changes */
 	for (i = 0; i < data->nr; i++) {
 		struct diffstat_file *file = data->files[i];
+		int change = file->added + file->deleted;
+
+		len = quote_c_style(file->name, NULL, NULL, 0);
+		if (len) {
+			char *qname = xmalloc(len + 1);
+			quote_c_style(file->name, qname, NULL, 0);
+			free(file->name);
+			file->name = qname;
+		}
 
 		len = strlen(file->name);
 		if (max_len < len)
@@ -567,54 +610,53 @@ static void show_stats(struct diffstat_t* data)
 
 		if (file->is_binary || file->is_unmerged)
 			continue;
-		if (max_change < file->added + file->deleted)
-			max_change = file->added + file->deleted;
+		if (max_change < change)
+			max_change = change;
 	}
+
+	/* Compute the width of the graph part;
+	 * 10 is for one blank at the beginning of the line plus
+	 * " | count " between the name and the graph.
+	 *
+	 * From here on, name_width is the width of the name area,
+	 * and width is the width of the graph area.
+	 */
+	name_width = (name_width < max_len) ? name_width : max_len;
+	if (width < (name_width + 10) + max_change)
+		width = width - (name_width + 10);
+	else
+		width = max_change;
 
 	for (i = 0; i < data->nr; i++) {
 		const char *prefix = "";
 		char *name = data->files[i]->name;
 		int added = data->files[i]->added;
 		int deleted = data->files[i]->deleted;
-
-		if (0 < (len = quote_c_style(name, NULL, NULL, 0))) {
-			char *qname = xmalloc(len + 1);
-			quote_c_style(name, qname, NULL, 0);
-			free(name);
-			data->files[i]->name = name = qname;
-		}
+		int name_len;
 
 		/*
 		 * "scale" the filename
 		 */
-		len = strlen(name);
-		max = max_len;
-		if (max > 50)
-			max = 50;
-		if (len > max) {
+		len = name_width;
+		name_len = strlen(name);
+		if (name_width < name_len) {
 			char *slash;
 			prefix = "...";
-			max -= 3;
-			name += len - max;
+			len -= 3;
+			name += name_len - len;
 			slash = strchr(name, '/');
 			if (slash)
 				name = slash;
 		}
-		len = max;
-
-		/*
-		 * scale the add/delete
-		 */
-		max = max_change;
-		if (max + len > 70)
-			max = 70 - len;
 
 		if (data->files[i]->is_binary) {
-			printf(" %s%-*s |  Bin\n", prefix, len, name);
+			show_name(prefix, name, len);
+			printf("  Bin\n");
 			goto free_diffstat_file;
 		}
 		else if (data->files[i]->is_unmerged) {
-			printf(" %s%-*s |  Unmerged\n", prefix, len, name);
+			show_name(prefix, name, len);
+			printf("  Unmerged\n");
 			goto free_diffstat_file;
 		}
 		else if (!data->files[i]->is_renamed &&
@@ -623,27 +665,32 @@ static void show_stats(struct diffstat_t* data)
 			goto free_diffstat_file;
 		}
 
+		/*
+		 * scale the add/delete
+		 */
 		add = added;
 		del = deleted;
 		total = add + del;
 		adds += add;
 		dels += del;
 
-		if (max_change > 0) {
-			total = (total * max + max_change / 2) / max_change;
-			add = (add * max + max_change / 2) / max_change;
+		if (width <= max_change) {
+			total = scale_linear(total, width, max_change);
+			add = scale_linear(add, width, max_change);
 			del = total - add;
 		}
-		printf(" %s%-*s |%5d %.*s%.*s\n", prefix,
-				len, name, added + deleted,
-				add, pluses, del, minuses);
+		show_name(prefix, name, len);
+		printf("%5d ", added + deleted);
+		show_graph('+', add);
+		show_graph('-', del);
+		putchar('\n');
 	free_diffstat_file:
 		free(data->files[i]->name);
 		free(data->files[i]);
 	}
 	free(data->files);
 	printf(" %d files changed, %d insertions(+), %d deletions(-)\n",
-			total_files, adds, dels);
+	       total_files, adds, dels);
 }
 
 struct checkdiff_t {
@@ -1681,6 +1728,14 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "--stat"))
 		options->output_format |= DIFF_FORMAT_DIFFSTAT;
+	else if (!strncmp(arg, "--stat-width=", 13)) {
+		options->stat_width = strtoul(arg + 13, NULL, 10);
+		options->output_format |= DIFF_FORMAT_DIFFSTAT;
+	}
+	else if (!strncmp(arg, "--stat-name-width=", 18)) {
+		options->stat_name_width = strtoul(arg + 18, NULL, 10);
+		options->output_format |= DIFF_FORMAT_DIFFSTAT;
+	}
 	else if (!strcmp(arg, "--check"))
 		options->output_format |= DIFF_FORMAT_CHECKDIFF;
 	else if (!strcmp(arg, "--summary"))
@@ -2438,7 +2493,7 @@ void diff_flush(struct diff_options *options)
 			if (check_pair_status(p))
 				diff_flush_stat(p, options, &diffstat);
 		}
-		show_stats(&diffstat);
+		show_stats(&diffstat, options);
 		separator++;
 	}
 

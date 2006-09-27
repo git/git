@@ -69,6 +69,9 @@ struct diff_options {
 	const char *stat_sep;
 	long xdl_opts;
 
+	int stat_width;
+	int stat_name_width;
+
 	int nr_paths;
 	const char **paths;
 	int *pathlens;
