@@ -42,8 +42,7 @@ If you are sure you want to delete it, run 'git branch -D $branch_name'."
 	    esac
 	    ;;
 	esac
-	rm -f "$GIT_DIR/logs/refs/heads/$branch_name"
-	rm -f "$GIT_DIR/refs/heads/$branch_name"
+	git update-ref -d "refs/heads/$branch_name" "$branch"
 	echo "Deleted branch $branch_name."
     done
     exit 0
@@ -112,6 +111,7 @@ rev=$(git-rev-parse --verify "$head") || exit
 git-check-ref-format "heads/$branchname" ||
 	die "we do not like '$branchname' as a branch name."
 
+prev=''
 if git-show-ref --verify --quiet -- "refs/heads/$branchname"
 then
 	if test '' = "$force"
@@ -121,10 +121,11 @@ then
 	then
 		die "cannot force-update the current branch."
 	fi
+	prev=`git rev-parse --verify "refs/heads/$branchname"`
 fi
 if test "$create_log" = 'yes'
 then
 	mkdir -p $(dirname "$GIT_DIR/logs/refs/heads/$branchname")
 	touch "$GIT_DIR/logs/refs/heads/$branchname"
 fi
-git update-ref -m "branch: Created from $head" "refs/heads/$branchname" $rev
+git update-ref -m "branch: Created from $head" "refs/heads/$branchname" "$rev" "$prev"
