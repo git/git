@@ -988,7 +988,7 @@ static void check_object(struct object_entry *entry)
 		unuse_packed_git(p);
 		entry->in_pack_header_size = used;
 
-		if (base_entry && !base_entry->preferred_base) {
+		if (base_entry) {
 
 			/* Depth value does not matter - find_deltas()
 			 * will never consider reused delta as the
