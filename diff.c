@@ -555,17 +555,20 @@ static int scale_linear(int it, int width, int max_change)
 	return (it * width * 2 + max_change) / (max_change * 2);
 }
 
-static void show_name(const char *prefix, const char *name, int len)
+static void show_name(const char *prefix, const char *name, int len,
+		      const char *reset, const char *set)
 {
-	printf(" %s%-*s |", prefix, len, name);
+	printf(" %s%s%-*s%s |", set, prefix, len, name, reset);
 }
 
-static void show_graph(char ch, int cnt)
+static void show_graph(char ch, int cnt, const char *set, const char *reset)
 {
 	if (cnt <= 0)
 		return;
+	printf("%s", set);
 	while (cnt--)
 		putchar(ch);
+	printf("%s", reset);
 }
 
 static void show_stats(struct diffstat_t* data, struct diff_options *options)
@@ -574,6 +577,7 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 	int max_change = 0, max_len = 0;
 	int total_files = data->nr;
 	int width, name_width;
+	const char *reset, *set, *add_c, *del_c;
 
 	if (data->nr == 0)
 		return;
@@ -592,6 +596,11 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 	}
 
 	/* Find the longest filename and max number of changes */
+	reset = diff_get_color(options->color_diff, DIFF_RESET);
+	set = diff_get_color(options->color_diff, DIFF_PLAIN);
+	add_c = diff_get_color(options->color_diff, DIFF_FILE_NEW);
+	del_c = diff_get_color(options->color_diff, DIFF_FILE_OLD);
+
 	for (i = 0; i < data->nr; i++) {
 		struct diffstat_file *file = data->files[i];
 		int change = file->added + file->deleted;
@@ -650,12 +659,12 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 		}
 
 		if (data->files[i]->is_binary) {
-			show_name(prefix, name, len);
+			show_name(prefix, name, len, reset, set);
 			printf("  Bin\n");
 			goto free_diffstat_file;
 		}
 		else if (data->files[i]->is_unmerged) {
-			show_name(prefix, name, len);
+			show_name(prefix, name, len, reset, set);
 			printf("  Unmerged\n");
 			goto free_diffstat_file;
 		}
@@ -679,18 +688,18 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 			add = scale_linear(add, width, max_change);
 			del = total - add;
 		}
-		show_name(prefix, name, len);
+		show_name(prefix, name, len, reset, set);
 		printf("%5d ", added + deleted);
-		show_graph('+', add);
-		show_graph('-', del);
+		show_graph('+', add, add_c, reset);
+		show_graph('-', del, del_c, reset);
 		putchar('\n');
 	free_diffstat_file:
 		free(data->files[i]->name);
 		free(data->files[i]);
 	}
 	free(data->files);
-	printf(" %d files changed, %d insertions(+), %d deletions(-)\n",
-	       total_files, adds, dels);
+	printf("%s %d files changed, %d insertions(+), %d deletions(-)%s\n",
+	       set, total_files, adds, dels, reset);
 }
 
 struct checkdiff_t {
