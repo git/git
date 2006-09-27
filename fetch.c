@@ -266,7 +266,7 @@ int pull(int targets, char **target, const char **write_ref,
 		if (!write_ref || !write_ref[i])
 			continue;
 
-		lock[i] = lock_ref_sha1(write_ref[i], NULL, 0);
+		lock[i] = lock_ref_sha1(write_ref[i], NULL);
 		if (!lock[i]) {
 			error("Can't lock ref %s", write_ref[i]);
 			goto unlock_and_fail;

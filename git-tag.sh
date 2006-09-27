@@ -63,8 +63,11 @@ done
 
 name="$1"
 [ "$name" ] || usage
-if [ -e "$GIT_DIR/refs/tags/$name" -a -z "$force" ]; then
-    die "tag '$name' already exists"
+prev=0000000000000000000000000000000000000000
+if test -e "$GIT_DIR/refs/tags/$name"
+then
+    test -n "$force" || die "tag '$name' already exists"
+    prev=`git rev-parse "refs/tags/$name"`
 fi
 shift
 git-check-ref-format "tags/$name" ||
@@ -109,4 +112,4 @@ fi
 
 leading=`expr "refs/tags/$name" : '\(.*\)/'` &&
 mkdir -p "$GIT_DIR/$leading" &&
-echo $object > "$GIT_DIR/refs/tags/$name"
+GIT_DIR="$GIT_DIR" git update-ref "refs/tags/$name" "$object" "$prev"

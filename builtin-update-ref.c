@@ -3,15 +3,16 @@
 #include "builtin.h"
 
 static const char git_update_ref_usage[] =
-"git-update-ref <refname> <value> [<oldval>] [-m <reason>]";
+"git-update-ref [-m <reason>] (-d <refname> <value> | <refname> <value> [<oldval>])";
 
 int cmd_update_ref(int argc, const char **argv, const char *prefix)
 {
 	const char *refname=NULL, *value=NULL, *oldval=NULL, *msg=NULL;
 	struct ref_lock *lock;
 	unsigned char sha1[20], oldsha1[20];
-	int i;
+	int i, delete;
 
+	delete = 0;
 	setup_ident();
 	git_config(git_default_config);
 
@@ -24,6 +25,10 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 				die("Refusing to perform update with empty message.");
 			if (strchr(msg, '\n'))
 				die("Refusing to perform update with \\n in message.");
+			continue;
+		}
+		if (!strcmp("-d", argv[i])) {
+			delete = 1;
 			continue;
 		}
 		if (!refname) {
@@ -44,11 +49,18 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 
 	if (get_sha1(value, sha1))
 		die("%s: not a valid SHA1", value);
+
+	if (delete) {
+		if (oldval)
+			usage(git_update_ref_usage);
+		return delete_ref(refname, sha1);
+	}
+
 	hashclr(oldsha1);
-	if (oldval && get_sha1(oldval, oldsha1))
+	if (oldval && *oldval && get_sha1(oldval, oldsha1))
 		die("%s: not a valid old SHA1", oldval);
 
-	lock = lock_any_ref_for_update(refname, oldval ? oldsha1 : NULL, 0);
+	lock = lock_any_ref_for_update(refname, oldval ? oldsha1 : NULL);
 	if (!lock)
 		return 1;
 	if (write_ref_sha1(lock, sha1, msg) < 0)

@@ -53,7 +53,7 @@ static int handle_one_ref(const char *path, const unsigned char *sha1,
 /* make sure nobody touched the ref, and unlink */
 static void prune_ref(struct ref_to_prune *r)
 {
-	struct ref_lock *lock = lock_ref_sha1(r->name + 5, r->sha1, 1);
+	struct ref_lock *lock = lock_ref_sha1(r->name + 5, r->sha1);
 
 	if (lock) {
 		unlink(git_path("%s", r->name));

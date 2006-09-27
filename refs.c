@@ -378,6 +378,32 @@ int get_ref_sha1(const char *ref, unsigned char *sha1)
 	return read_ref(mkpath("refs/%s", ref), sha1);
 }
 
+int delete_ref(const char *refname, unsigned char *sha1)
+{
+	struct ref_lock *lock;
+	int err, i, ret = 0;
+
+	lock = lock_any_ref_for_update(refname, sha1);
+	if (!lock)
+		return 1;
+	i = strlen(lock->lk->filename) - 5; /* .lock */
+	lock->lk->filename[i] = 0;
+	err = unlink(lock->lk->filename);
+	if (err) {
+		ret = 1;
+		error("unlink(%s) failed: %s",
+		      lock->lk->filename, strerror(errno));
+	}
+	lock->lk->filename[i] = '.';
+
+	err = unlink(lock->log_file);
+	if (err && errno != ENOENT)
+		fprintf(stderr, "warning: unlink(%s) failed: %s",
+			lock->log_file, strerror(errno));
+
+	return ret;
+}
+
 /*
  * Make sure "ref" is something reasonable to have under ".git/refs/";
  * We do not like it if:
@@ -447,12 +473,13 @@ static struct ref_lock *verify_lock(struct ref_lock *lock,
 	return lock;
 }
 
-static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char *old_sha1, int mustexist)
+static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char *old_sha1)
 {
 	char *ref_file;
 	const char *orig_ref = ref;
 	struct ref_lock *lock;
 	struct stat st;
+	int mustexist = (old_sha1 && !is_null_sha1(old_sha1));
 
 	lock = xcalloc(1, sizeof(struct ref_lock));
 	lock->lock_fd = -1;
@@ -480,20 +507,18 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 	return old_sha1 ? verify_lock(lock, old_sha1, mustexist) : lock;
 }
 
-struct ref_lock *lock_ref_sha1(const char *ref,
-	const unsigned char *old_sha1, int mustexist)
+struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1)
 {
 	char refpath[PATH_MAX];
 	if (check_ref_format(ref))
 		return NULL;
 	strcpy(refpath, mkpath("refs/%s", ref));
-	return lock_ref_sha1_basic(refpath, old_sha1, mustexist);
+	return lock_ref_sha1_basic(refpath, old_sha1);
 }
 
-struct ref_lock *lock_any_ref_for_update(const char *ref,
-	const unsigned char *old_sha1, int mustexist)
+struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1)
 {
-	return lock_ref_sha1_basic(ref, old_sha1, mustexist);
+	return lock_ref_sha1_basic(ref, old_sha1);
 }
 
 void unlock_ref(struct ref_lock *lock)
