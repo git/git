@@ -167,6 +167,46 @@ void compile_grep_patterns(struct grep_opt *opt)
 		die("incomplete pattern expression: %s", p->pattern);
 }
 
+static void free_pattern_expr(struct grep_expr *x)
+{
+	switch (x->node) {
+	case GREP_NODE_ATOM:
+		break;
+	case GREP_NODE_NOT:
+		free_pattern_expr(x->u.unary);
+		break;
+	case GREP_NODE_AND:
+	case GREP_NODE_OR:
+		free_pattern_expr(x->u.binary.left);
+		free_pattern_expr(x->u.binary.right);
+		break;
+	}
+	free(x);
+}
+
+void free_grep_patterns(struct grep_opt *opt)
+{
+	struct grep_pat *p, *n;
+
+	for (p = opt->pattern_list; p; p = n) {
+		n = p->next;
+		switch (p->token) {
+		case GREP_PATTERN: /* atom */
+		case GREP_PATTERN_HEAD:
+		case GREP_PATTERN_BODY:
+			regfree(&p->regexp);
+			break;
+		default:
+			break;
+		}
+		free(p);
+	}
+
+	if (!opt->extended)
+		return;
+	free_pattern_expr(opt->pattern_expression);
+}
+
 static char *end_of_line(char *cp, unsigned long *left)
 {
 	unsigned long l = *left;
@@ -438,6 +478,8 @@ int grep_buffer(struct grep_opt *opt, const char *name, char *buf, unsigned long
 		left--;
 		lno++;
 	}
+
+	free(prev);
 
 	if (opt->status_only)
 		return 0;
