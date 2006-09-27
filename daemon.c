@@ -71,7 +71,7 @@ static struct interp interp_table[] = {
 	{ "%IP", 0},
 	{ "%P", 0},
 	{ "%D", 0},
-	{ "%%", "%"},
+	{ "%%", 0},
 };
 
 
@@ -405,7 +405,11 @@ static void make_service_overridable(const char *name, int ena) {
 	die("No such service %s", name);
 }
 
-static void parse_extra_args(char *extra_args, int buflen)
+/*
+ * Separate the "extra args" information as supplied by the client connection.
+ * Any resulting data is squirrelled away in the given interpolation table.
+ */
+static void parse_extra_args(struct interp *table, char *extra_args, int buflen)
 {
 	char *val;
 	int vallen;
@@ -417,18 +421,17 @@ static void parse_extra_args(char *extra_args, int buflen)
 			val = extra_args + 5;
 			vallen = strlen(val) + 1;
 			if (*val) {
-				char *port;
-				char *save = xmalloc(vallen);	/* FIXME: Leak */
-
-				interp_table[INTERP_SLOT_HOST].value = save;
-				strlcpy(save, val, vallen);
-				port = strrchr(save, ':');
+				/* Split <host>:<port> at colon. */
+				char *host = val;
+				char *port = strrchr(host, ':');
 				if (port) {
 					*port = 0;
 					port++;
-					interp_table[INTERP_SLOT_PORT].value = port;
+					interp_set_entry(table, INTERP_SLOT_PORT, port);
 				}
+				interp_set_entry(table, INTERP_SLOT_HOST, host);
 			}
+
 			/* On to the next one */
 			extra_args = val + vallen;
 		}
@@ -438,8 +441,6 @@ static void parse_extra_args(char *extra_args, int buflen)
 void fill_in_extra_table_entries(struct interp *itable)
 {
 	char *hp;
-	char *canon_host = NULL;
-	char *ipaddr = NULL;
 
 	/*
 	 * Replace literal host with lowercase-ized hostname.
@@ -466,10 +467,12 @@ void fill_in_extra_table_entries(struct interp *itable)
 			for (ai = ai0; ai; ai = ai->ai_next) {
 				struct sockaddr_in *sin_addr = (void *)ai->ai_addr;
 
-				canon_host = xstrdup(ai->ai_canonname);
 				inet_ntop(AF_INET, &sin_addr->sin_addr,
 					  addrbuf, sizeof(addrbuf));
-				ipaddr = addrbuf;
+				interp_set_entry(interp_table,
+						 INTERP_SLOT_CANON_HOST, ai->ai_canonname);
+				interp_set_entry(interp_table,
+						 INTERP_SLOT_IP, addrbuf);
 				break;
 			}
 			freeaddrinfo(ai0);
@@ -483,7 +486,6 @@ void fill_in_extra_table_entries(struct interp *itable)
 		static char addrbuf[HOST_NAME_MAX + 1];
 
 		hent = gethostbyname(interp_table[INTERP_SLOT_HOST].value);
-		canon_host = xstrdup(hent->h_name);
 
 		ap = hent->h_addr_list;
 		memset(&sa, 0, sizeof sa);
@@ -493,12 +495,11 @@ void fill_in_extra_table_entries(struct interp *itable)
 
 		inet_ntop(hent->h_addrtype, &sa.sin_addr,
 			  addrbuf, sizeof(addrbuf));
-		ipaddr = addrbuf;
+
+		interp_set_entry(interp_table, INTERP_SLOT_CANON_HOST, hent->h_name);
+		interp_set_entry(interp_table, INTERP_SLOT_IP, addrbuf);
 	}
 #endif
-
-	interp_table[INTERP_SLOT_CANON_HOST].value = canon_host;	/* FIXME: Leak */
-	interp_table[INTERP_SLOT_IP].value = xstrdup(ipaddr);		/* FIXME: Leak */
 }
 
 
@@ -542,8 +543,14 @@ static int execute(struct sockaddr *addr)
 	if (len && line[len-1] == '\n')
 		line[--len] = 0;
 
+	/*
+	 * Initialize the path interpolation table for this connection.
+	 */
+	interp_clear_table(interp_table, ARRAY_SIZE(interp_table));
+	interp_set_entry(interp_table, INTERP_SLOT_PERCENT, "%");
+
 	if (len != pktlen) {
-	    parse_extra_args(line + len + 1, pktlen - len - 1);
+	    parse_extra_args(interp_table, line + len + 1, pktlen - len - 1);
 	    fill_in_extra_table_entries(interp_table);
 	}
 
@@ -553,7 +560,12 @@ static int execute(struct sockaddr *addr)
 		if (!strncmp("git-", line, 4) &&
 		    !strncmp(s->name, line + 4, namelen) &&
 		    line[namelen + 4] == ' ') {
-			interp_table[INTERP_SLOT_DIR].value = line+namelen+5;
+			/*
+			 * Note: The directory here is probably context sensitive,
+			 * and might depend on the actual service being performed.
+			 */
+			interp_set_entry(interp_table,
+					 INTERP_SLOT_DIR, line + namelen + 5);
 			return run_service(interp_table, s);
 		}
 	}
