@@ -378,6 +378,32 @@ int get_ref_sha1(const char *ref, unsigned char *sha1)
 	return read_ref(mkpath("refs/%s", ref), sha1);
 }
 
+int delete_ref(const char *refname, unsigned char *sha1)
+{
+	struct ref_lock *lock;
+	int err, i, ret = 0;
+
+	lock = lock_any_ref_for_update(refname, sha1);
+	if (!lock)
+		return 1;
+	i = strlen(lock->lk->filename) - 5; /* .lock */
+	lock->lk->filename[i] = 0;
+	err = unlink(lock->lk->filename);
+	if (err) {
+		ret = 1;
+		error("unlink(%s) failed: %s",
+		      lock->lk->filename, strerror(errno));
+	}
+	lock->lk->filename[i] = '.';
+
+	err = unlink(lock->log_file);
+	if (err && errno != ENOENT)
+		fprintf(stderr, "warning: unlink(%s) failed: %s",
+			lock->log_file, strerror(errno));
+
+	return ret;
+}
+
 /*
  * Make sure "ref" is something reasonable to have under ".git/refs/";
  * We do not like it if:
