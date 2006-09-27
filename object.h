@@ -59,6 +59,12 @@ void created_object(const unsigned char *sha1, struct object *obj);
 /** Returns the object, having parsed it to find out what it is. **/
 struct object *parse_object(const unsigned char *sha1);
 
+/* Given the result of read_sha1_file(), returns the object after
+ * parsing it.  eaten_p indicates if the object has a borrowed copy
+ * of buffer and the caller should not free() it.
+ */
+struct object *parse_object_buffer(const unsigned char *sha1, const char *type, unsigned long size, void *buffer, int *eaten_p);
+
 /** Returns the object, with potentially excess memory allocated. **/
 struct object *lookup_unknown_object(const unsigned  char *sha1);
 
