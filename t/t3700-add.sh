@@ -35,7 +35,7 @@ test_expect_success \
 	'git repo-config core.filemode 0 &&
 	 echo foo >xfoo2 &&
 	 chmod 755 xfoo2 &&
-	 git-add xfoo2 &&
+	 git-update-index --add xfoo2 &&
 	 case "`git-ls-files --stage xfoo2`" in
 	 100644" "*xfoo2) echo ok;;
 	 *) echo fail; git-ls-files --stage xfoo2; exit 1;;
