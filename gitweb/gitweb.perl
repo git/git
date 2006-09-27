@@ -106,7 +106,7 @@ our %feature = (
 
 sub gitweb_check_feature {
 	my ($name) = @_;
-	return undef unless exists $feature{$name};
+	return unless exists $feature{$name};
 	my ($sub, $override, @defaults) = (
 		$feature{$name}{'sub'},
 		$feature{$name}{'override'},
@@ -200,9 +200,10 @@ if (defined $action) {
 	}
 }
 
+# parameters which are pathnames
 our $project = $cgi->param('p');
 if (defined $project) {
-	if (!validate_input($project) ||
+	if (!validate_pathname($project) ||
 	    !(-d "$projectroot/$project") ||
 	    !(-e "$projectroot/$project/HEAD") ||
 	    ($export_ok && !(-e "$projectroot/$project/$export_ok")) ||
@@ -212,38 +213,50 @@ if (defined $project) {
 	}
 }
 
-# We have to handle those containing any characters:
 our $file_name = $cgi->param('f');
-our $file_parent = $cgi->param('fp');
+if (defined $file_name) {
+	if (!validate_pathname($file_name)) {
+		die_error(undef, "Invalid file parameter");
+	}
+}
 
+our $file_parent = $cgi->param('fp');
+if (defined $file_parent) {
+	if (!validate_pathname($file_parent)) {
+		die_error(undef, "Invalid file parent parameter");
+	}
+}
+
+# parameters which are refnames
 our $hash = $cgi->param('h');
 if (defined $hash) {
-	if (!validate_input($hash)) {
+	if (!validate_refname($hash)) {
 		die_error(undef, "Invalid hash parameter");
 	}
 }
 
 our $hash_parent = $cgi->param('hp');
 if (defined $hash_parent) {
-	if (!validate_input($hash_parent)) {
+	if (!validate_refname($hash_parent)) {
 		die_error(undef, "Invalid hash parent parameter");
 	}
 }
 
 our $hash_base = $cgi->param('hb');
 if (defined $hash_base) {
-	if (!validate_input($hash_base)) {
+	if (!validate_refname($hash_base)) {
 		die_error(undef, "Invalid hash base parameter");
 	}
 }
 
 our $hash_parent_base = $cgi->param('hpb');
 if (defined $hash_parent_base) {
-	if (!validate_input($hash_parent_base)) {
+	if (!validate_refname($hash_parent_base)) {
 		die_error(undef, "Invalid hash parent base parameter");
 	}
 }
 
+# other parameters
 our $page = $cgi->param('pg');
 if (defined $page) {
 	if ($page =~ m/[^0-9]/) {
@@ -273,7 +286,7 @@ sub evaluate_path_info {
 		$project =~ s,/*[^/]*$,,;
 	}
 	# validate project
-	$project = validate_input($project);
+	$project = validate_pathname($project);
 	if (!$project ||
 	    ($export_ok && !-e "$projectroot/$project/$export_ok") ||
 	    ($strict_export && !project_in_list($project))) {
@@ -294,12 +307,12 @@ sub evaluate_path_info {
 		} else {
 			$action  ||= "blob_plain";
 		}
-		$hash_base ||= validate_input($refname);
-		$file_name ||= $pathname;
+		$hash_base ||= validate_refname($refname);
+		$file_name ||= validate_pathname($pathname);
 	} elsif (defined $refname) {
 		# we got "project.git/branch"
 		$action ||= "shortlog";
-		$hash   ||= validate_input($refname);
+		$hash   ||= validate_refname($refname);
 	}
 }
 evaluate_path_info();
@@ -387,16 +400,34 @@ sub href(%) {
 ## ======================================================================
 ## validation, quoting/unquoting and escaping
 
-sub validate_input {
-	my $input = shift;
+sub validate_pathname {
+	my $input = shift || return undef;
 
+	# no '.' or '..' as elements of path, i.e. no '.' nor '..'
+	# at the beginning, at the end, and between slashes.
+	# also this catches doubled slashes
+	if ($input =~ m!(^|/)(|\.|\.\.)(/|$)!) {
+		return undef;
+	}
+	# no null characters
+	if ($input =~ m!\0!) {
+		return undef;
+	}
+	return $input;
+}
+
+sub validate_refname {
+	my $input = shift || return undef;
+
+	# textual hashes are O.K.
 	if ($input =~ m/^[0-9a-fA-F]{40}$/) {
 		return $input;
 	}
-	if ($input =~ m/(^|\/)(|\.|\.\.)($|\/)/) {
-		return undef;
-	}
-	if ($input =~ m/[^a-zA-Z0-9_\x80-\xff\ \t\.\/\-\+\#\~\%]/) {
+	# it must be correct pathname
+	$input = validate_pathname($input)
+		or return undef;
+	# restrictions on ref name according to git-check-ref-format
+	if ($input =~ m!(/\.|\.\.|[\000-\040\177 ~^:?*\[]|/$)!) {
 		return undef;
 	}
 	return $input;
@@ -407,6 +438,15 @@ sub validate_input {
 sub esc_param {
 	my $str = shift;
 	$str =~ s/([^A-Za-z0-9\-_.~()\/:@])/sprintf("%%%02X", ord($1))/eg;
+	$str =~ s/\+/%2B/g;
+	$str =~ s/ /\+/g;
+	return $str;
+}
+
+# quote unsafe chars in whole URL, so some charactrs cannot be quoted
+sub esc_url {
+	my $str = shift;
+	$str =~ s/([^A-Za-z0-9\-_.~();\/;?:@&=])/sprintf("%%%02X", ord($1))/eg;
 	$str =~ s/\+/%2B/g;
 	$str =~ s/ /\+/g;
 	return $str;
@@ -710,7 +750,7 @@ sub git_get_hash_by_path {
 	my $path = shift || return undef;
 	my $type = shift;
 
-	my $tree = $base;
+	$path =~ s,/+$,,;
 
 	open my $fd, "-|", git_cmd(), "ls-tree", $base, "--", $path
 		or die_error(undef, "Open git-ls-tree failed");
@@ -781,7 +821,7 @@ sub git_get_projects_list {
 		# 'git%2Fgit.git Linus+Torvalds'
 		# 'libs%2Fklibc%2Fklibc.git H.+Peter+Anvin'
 		# 'linux%2Fhotplug%2Fudev.git Greg+Kroah-Hartman'
-		open my ($fd), $projects_list or return undef;
+		open my ($fd), $projects_list or return;
 		while (my $line = <$fd>) {
 			chomp $line;
 			my ($path, $owner) = split ' ', $line;
@@ -1328,7 +1368,7 @@ EOF
 	      "<a href=\"http://www.kernel.org/pub/software/scm/git/docs/\" title=\"git documentation\">" .
 	      "<img src=\"$logo\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
 	      "</a>\n";
-	print $cgi->a({-href => esc_param($home_link)}, $home_link_str) . " / ";
+	print $cgi->a({-href => esc_url($home_link)}, $home_link_str) . " / ";
 	if (defined $project) {
 		print $cgi->a({-href => href(action=>"summary")}, esc_html($project));
 		if (defined $action) {
@@ -1631,18 +1671,14 @@ sub git_print_tree_entry {
 		print "</td>\n";
 
 	} elsif ($t->{'type'} eq "tree") {
-		print "<td class=\"list\">" .
-		      $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
+		print "<td class=\"list\">";
+		print $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
 		                             file_name=>"$basedir$t->{'name'}", %base_key)},
-		              esc_html($t->{'name'})) .
-		      "</td>\n" .
-		      "<td class=\"link\">" .
-		      $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
-		                             file_name=>"$basedir$t->{'name'}", %base_key)},
-		              "tree");
+		              esc_html($t->{'name'}));
+		print "</td>\n";
+		print "<td class=\"link\">";
 		if (defined $hash_base) {
-			print " | " .
-			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
+			print $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
 			                             file_name=>"$basedir$t->{'name'}")},
 			              "history");
 		}
@@ -2284,7 +2320,7 @@ sub git_project_index {
 	print $cgi->header(
 		-type => 'text/plain',
 		-charset => 'utf-8',
-		-content_disposition => qq(inline; filename="index.aux"));
+		-content_disposition => 'inline; filename="index.aux"');
 
 	foreach my $pr (@projects) {
 		if (!exists $pr->{'owner'}) {
@@ -2443,7 +2479,7 @@ sub git_blame2 {
 	print <<HTML;
 <div class="page_body">
 <table class="blame">
-<tr><th>Commit</th><th>Line</th><th>Data</th></tr>
+<tr><th>Prev</th><th>Diff</th><th>Commit</th><th>Line</th><th>Data</th></tr>
 HTML
 	while (<$fd>) {
 		/^([0-9a-fA-F]{40}).*?(\d+)\)\s{1}(\s*.*)/;
@@ -2451,6 +2487,8 @@ HTML
 		my $rev = substr($full_rev, 0, 8);
 		my $lineno = $2;
 		my $data = $3;
+		my %pco = parse_commit($full_rev);
+		my $parent = $pco{'parent'};
 
 		if (!defined $last_rev) {
 			$last_rev = $full_rev;
@@ -2459,11 +2497,25 @@ HTML
 			$current_color = ++$current_color % $num_colors;
 		}
 		print "<tr class=\"$rev_color[$current_color]\">\n";
+		# Print the Prev link
+		print "<td class=\"sha1\">";
+		print $cgi->a({-href => href(action=>"blame", hash_base=>$parent, file_name=>$file_name)},
+			      esc_html(substr($parent, 0, 8)));
+		print "</td>\n";
+		# Print the Diff (blobdiff) link
+		print "<td>";
+		print $cgi->a({-href => href(action=>"blobdiff", file_name=>$file_name, hash_parent_base=>$parent,
+					     hash_base=>$full_rev)},
+			      esc_html("Diff"));
+		print "</td>\n";
+		# Print the Commit link
 		print "<td class=\"sha1\">" .
 			$cgi->a({-href => href(action=>"commit", hash=>$full_rev, file_name=>$file_name)},
 			        esc_html($rev)) . "</td>\n";
+		# Print the Line number
 		print "<td class=\"linenr\"><a id=\"l$lineno\" href=\"#l$lineno\" class=\"linenr\">" .
 		      esc_html($lineno) . "</a></td>\n";
+		# Print the Data
 		print "<td class=\"pre\">" . esc_html($data) . "</td>\n";
 		print "</tr>\n";
 	}
@@ -2630,7 +2682,7 @@ sub git_blob_plain {
 	print $cgi->header(
 		-type => "$type",
 		-expires=>$expires,
-		-content_disposition => "inline; filename=\"$save_as\"");
+		-content_disposition => 'inline; filename="' . quotemeta($save_as) . '"');
 	undef $/;
 	binmode STDOUT, ':raw';
 	print <$fd>;
@@ -2804,10 +2856,11 @@ sub git_snapshot {
 
 	my $filename = basename($project) . "-$hash.tar.$suffix";
 
-	print $cgi->header(-type => 'application/x-tar',
-	                   -content_encoding => $ctype,
-	                   -content_disposition => "inline; filename=\"$filename\"",
-	                   -status => '200 OK');
+	print $cgi->header(
+		-type => 'application/x-tar',
+		-content_encoding => $ctype,
+		-content_disposition => 'inline; filename="' . quotemeta($filename) . '"',
+		-status => '200 OK');
 
 	my $git_command = git_cmd_str();
 	open my $fd, "-|", "$git_command tar-tree $hash \'$project\' | $command" or
@@ -3117,7 +3170,7 @@ sub git_blobdiff {
 			-type => 'text/plain',
 			-charset => 'utf-8',
 			-expires => $expires,
-			-content_disposition => qq(inline; filename=") . quotemeta($file_name) . qq(.patch"));
+			-content_disposition => 'inline; filename="' . quotemeta($file_name) . '.patch"');
 
 		print "X-Git-Url: " . $cgi->self_url() . "\n\n";
 
@@ -3220,7 +3273,7 @@ sub git_commitdiff {
 			-type => 'text/plain',
 			-charset => 'utf-8',
 			-expires => $expires,
-			-content_disposition => qq(inline; filename="$filename"));
+			-content_disposition => 'inline; filename="' . quotemeta($filename) . '"');
 		my %ad = parse_date($co{'author_epoch'}, $co{'author_tz'});
 		print <<TEXT;
 From: $co{'author'}
