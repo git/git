@@ -596,6 +596,10 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 					    GREP_CLOSE_PAREN);
 			continue;
 		}
+		if (!strcmp("--all-match", arg)) {
+			opt.all_match = 1;
+			continue;
+		}
 		if (!strcmp("-e", arg)) {
 			if (1 < argc) {
 				append_grep_pattern(&opt, argv[1],
