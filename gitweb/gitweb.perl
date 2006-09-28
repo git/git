@@ -1699,7 +1699,7 @@ sub git_difftree_body {
 	print "</div>\n";
 
 	print "<table class=\"diff_tree\">\n";
-	my $alternate = 0;
+	my $alternate = 1;
 	my $patchno = 0;
 	foreach my $line (@{$difftree}) {
 		my %diff = parse_difftree_raw_line($line);
@@ -1993,7 +1993,7 @@ sub git_shortlog_body {
 	$to = $#{$revlist} if (!defined $to || $#{$revlist} < $to);
 
 	print "<table class=\"shortlog\" cellspacing=\"0\">\n";
-	my $alternate = 0;
+	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
 		my $commit = $revlist->[$i];
 		#my $ref = defined $refs ? format_ref_marker($refs, $commit) : '';
@@ -2035,7 +2035,7 @@ sub git_history_body {
 	$to = $#{$revlist} unless (defined $to && $to <= $#{$revlist});
 
 	print "<table class=\"history\" cellspacing=\"0\">\n";
-	my $alternate = 0;
+	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
 		if ($revlist->[$i] !~ m/^([0-9a-fA-F]{40})/) {
 			next;
@@ -2099,7 +2099,7 @@ sub git_tags_body {
 	$to = $#{$taglist} if (!defined $to || $#{$taglist} < $to);
 
 	print "<table class=\"tags\" cellspacing=\"0\">\n";
-	my $alternate = 0;
+	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
 		my $entry = $taglist->[$i];
 		my %tag = %$entry;
@@ -2159,7 +2159,7 @@ sub git_heads_body {
 	$to = $#{$headlist} if (!defined $to || $#{$headlist} < $to);
 
 	print "<table class=\"heads\" cellspacing=\"0\">\n";
-	my $alternate = 0;
+	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
 		my $entry = $headlist->[$i];
 		my %tag = %$entry;
@@ -2275,7 +2275,7 @@ sub git_project_list {
 	}
 	print "<th></th>\n" .
 	      "</tr>\n";
-	my $alternate = 0;
+	my $alternate = 1;
 	foreach my $pr (@projects) {
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
@@ -2793,7 +2793,7 @@ sub git_tree {
 	git_print_page_path($file_name, 'tree', $hash_base);
 	print "<div class=\"page_body\">\n";
 	print "<table cellspacing=\"0\">\n";
-	my $alternate = 0;
+	my $alternate = 1;
 	foreach my $line (@entries) {
 		my %t = parse_ls_tree_line($line, -z => 1);
 
@@ -3389,7 +3389,7 @@ sub git_search {
 	git_print_header_div('commit', esc_html($co{'title'}), $hash);
 
 	print "<table cellspacing=\"0\">\n";
-	my $alternate = 0;
+	my $alternate = 1;
 	if ($commit_search) {
 		$/ = "\0";
 		open my $fd, "-|", git_cmd(), "rev-list", "--header", "--parents", $hash or next;
