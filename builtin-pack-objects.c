@@ -440,7 +440,6 @@ static unsigned long write_object(struct sha1file *f,
 			+ entry->in_pack_header_size;
 		datalen = find_packed_object_size(p, entry->in_pack_offset)
 				- entry->in_pack_header_size;
-//fprintf(stderr, "reusing %d at %d header %d size %d\n", obj_type, entry->in_pack_offset, entry->in_pack_header_size, datalen);
 		if (!pack_to_stdout && check_inflate(buf, datalen, entry->size))
 			die("corrupt delta in pack %s", sha1_to_hex(entry->sha1));
 		sha1write(f, buf, datalen);
@@ -989,7 +988,7 @@ static void check_object(struct object_entry *entry)
 		unuse_packed_git(p);
 		entry->in_pack_header_size = used;
 
-		if (base_entry && !base_entry->preferred_base) {
+		if (base_entry) {
 
 			/* Depth value does not matter - find_deltas()
 			 * will never consider reused delta as the
