@@ -37,12 +37,12 @@ test_expect_success \
      git-show-ref b >result &&
      diff expect result'
 
-# test_expect_failure \
-#     'git branch c/d should barf if branch c exists' \
-#     'git-branch c &&
-#      git-pack-refs &&
-#      rm .git/refs/heads/c &&
-#      git-branch c/d'
+test_expect_failure \
+    'git branch c/d should barf if branch c exists' \
+    'git-branch c &&
+     git-pack-refs &&
+     rm .git/refs/heads/c &&
+     git-branch c/d'
 
 test_expect_success \
     'see if a branch still exists after git pack-refs --prune' \
