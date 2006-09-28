@@ -550,9 +550,12 @@ const char mime_boundary_leader[] = "------------";
 static int scale_linear(int it, int width, int max_change)
 {
 	/*
-	 * round(width * it / max_change);
+	 * make sure that at least one '-' is printed if there were deletions,
+	 * and likewise for '+'.
 	 */
-	return (it * width * 2 + max_change) / (max_change * 2);
+	if (max_change < 2)
+		return it;
+	return ((it - 1) * (width - 1) + max_change - 1) / (max_change - 1);
 }
 
 static void show_name(const char *prefix, const char *name, int len,
@@ -684,9 +687,9 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 		dels += del;
 
 		if (width <= max_change) {
-			total = scale_linear(total, width, max_change);
 			add = scale_linear(add, width, max_change);
-			del = total - add;
+			del = scale_linear(del, width, max_change);
+			total = add + del;
 		}
 		show_name(prefix, name, len, reset, set);
 		printf("%5d ", added + deleted);
