@@ -712,6 +712,15 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, int *num)
 	return end;
 }
 
+static const char *approxidate_digit(const char *date, struct tm *tm, int *num)
+{
+	char *end;
+	unsigned long number = strtoul(date, &end, 10);
+
+	*num = number;
+	return end;
+}
+
 unsigned long approxidate(const char *date)
 {
 	int number = 0;
@@ -731,9 +740,7 @@ unsigned long approxidate(const char *date)
 			break;
 		date++;
 		if (isdigit(c)) {
-			char *end;
-			number = strtoul(date-1, &end, 10);
-			date = end;
+			date = approxidate_digit(date-1, &tm, &number);
 			continue;
 		}
 		if (isalpha(c))
