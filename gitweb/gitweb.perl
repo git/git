@@ -2660,7 +2660,7 @@ sub git_blob_plain {
 	print $cgi->header(
 		-type => "$type",
 		-expires=>$expires,
-		-content_disposition => 'inline; filename="' . quotemeta($save_as) . '"');
+		-content_disposition => 'inline; filename="' . "$save_as" . '"');
 	undef $/;
 	binmode STDOUT, ':raw';
 	print <$fd>;
@@ -2835,7 +2835,7 @@ sub git_snapshot {
 	print $cgi->header(
 		-type => 'application/x-tar',
 		-content_encoding => $ctype,
-		-content_disposition => 'inline; filename="' . quotemeta($filename) . '"',
+		-content_disposition => 'inline; filename="' . "$filename" . '"',
 		-status => '200 OK');
 
 	my $git_command = git_cmd_str();
@@ -2933,7 +2933,6 @@ sub git_commit {
 
 	my @views_nav = ();
 	if (defined $file_name && defined $co{'parent'}) {
-		my $parent = $co{'parent'};
 		push @views_nav,
 			$cgi->a({-href => href(action=>"blame", hash_parent=>$parent, file_name=>$file_name)},
 			        "blame");
@@ -3145,7 +3144,7 @@ sub git_blobdiff {
 			-type => 'text/plain',
 			-charset => 'utf-8',
 			-expires => $expires,
-			-content_disposition => 'inline; filename="' . quotemeta($file_name) . '.patch"');
+			-content_disposition => 'inline; filename="' . "$file_name" . '.patch"');
 
 		print "X-Git-Url: " . $cgi->self_url() . "\n\n";
 
@@ -3248,7 +3247,7 @@ sub git_commitdiff {
 			-type => 'text/plain',
 			-charset => 'utf-8',
 			-expires => $expires,
-			-content_disposition => 'inline; filename="' . quotemeta($filename) . '"');
+			-content_disposition => 'inline; filename="' . "$filename" . '"');
 		my %ad = parse_date($co{'author_epoch'}, $co{'author_tz'});
 		print <<TEXT;
 From: $co{'author'}
