@@ -121,6 +121,16 @@ then
 	done
 fi
 
+branchdir=$(dirname $branchname)
+while test "$branchdir" != "."
+do
+	if git-show-ref --verify --quiet -- "refs/heads/$branchdir"
+	then
+		die "$branchdir already exists."
+	fi
+	branchdir=$(dirname $branchdir)
+done
+
 prev=''
 if git-show-ref --verify --quiet -- "refs/heads/$branchname"
 then

@@ -283,7 +283,7 @@ static int dir_exists(const char *dirname, int len)
  * Also, we ignore the name ".git" (even if it is not a directory).
  * That likely will not change.
  */
-static int read_directory_recursive(struct dir_struct *dir, const char *path, const char *base, int baselen)
+static int read_directory_recursive(struct dir_struct *dir, const char *path, const char *base, int baselen, int check_only)
 {
 	DIR *fdir = opendir(path);
 	int contents = 0;
@@ -314,7 +314,6 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 
 			switch (DTYPE(de)) {
 			struct stat st;
-			int subdir, rewind_base;
 			default:
 				continue;
 			case DT_UNKNOWN:
@@ -328,26 +327,30 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 			case DT_DIR:
 				memcpy(fullname + baselen + len, "/", 2);
 				len++;
-				rewind_base = dir->nr;
-				subdir = read_directory_recursive(dir, fullname, fullname,
-				                        baselen + len);
 				if (dir->show_other_directories &&
-				    (subdir || !dir->hide_empty_directories) &&
 				    !dir_exists(fullname, baselen + len)) {
-					/* Rewind the read subdirectory */
-					while (dir->nr > rewind_base)
-						free(dir->entries[--dir->nr]);
+					if (dir->hide_empty_directories &&
+					    !read_directory_recursive(dir,
+						    fullname, fullname,
+						    baselen + len, 1))
+						continue;
 					break;
 				}
-				contents += subdir;
+
+				contents += read_directory_recursive(dir,
+					fullname, fullname, baselen + len, 0);
 				continue;
 			case DT_REG:
 			case DT_LNK:
 				break;
 			}
-			add_name(dir, fullname, baselen + len);
 			contents++;
+			if (check_only)
+				goto exit_early;
+			else
+				add_name(dir, fullname, baselen + len);
 		}
+exit_early:
 		closedir(fdir);
 
 		pop_exclude_per_directory(dir, exclude_stk);
@@ -393,7 +396,7 @@ int read_directory(struct dir_struct *dir, const char *path, const char *base, i
 		}
 	}
 
-	read_directory_recursive(dir, path, base, baselen);
+	read_directory_recursive(dir, path, base, baselen, 0);
 	qsort(dir->entries, dir->nr, sizeof(struct dir_entry *), cmp_name);
 	return dir->nr;
 }
