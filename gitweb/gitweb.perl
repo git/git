@@ -1732,47 +1732,42 @@ sub git_difftree_body {
 			my $mode_chng = "<span class=\"file_status new\">[new $to_file_type";
 			$mode_chng   .= " with mode: $to_mode_str" if $to_mode_str;
 			$mode_chng   .= "]</span>";
-			print "<td>" .
-			      $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
+			print "<td>";
+			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
 			                             hash_base=>$hash, file_name=>$diff{'file'}),
-			              -class => "list"}, esc_html($diff{'file'})) .
-			      "</td>\n" .
-			      "<td>$mode_chng</td>\n" .
-			      "<td class=\"link\">" .
-			      $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
-			                             hash_base=>$hash, file_name=>$diff{'file'})},
-			              "blob");
+				       -class => "list"}, esc_html($diff{'file'}));
+			print "</td>\n";
+			print "<td>$mode_chng</td>\n";
+			print "<td class=\"link\">";
 			if ($action eq 'commitdiff') {
 				# link to patch
 				$patchno++;
-				print " | " .
-				      $cgi->a({-href => "#patch$patchno"}, "patch");
+				print $cgi->a({-href => "#patch$patchno"}, "patch");
 			}
 			print "</td>\n";
 
 		} elsif ($diff{'status'} eq "D") { # deleted
 			my $mode_chng = "<span class=\"file_status deleted\">[deleted $from_file_type]</span>";
-			print "<td>" .
-			      $cgi->a({-href => href(action=>"blob", hash=>$diff{'from_id'},
+			print "<td>";
+			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'from_id'},
 			                             hash_base=>$parent, file_name=>$diff{'file'}),
-			               -class => "list"}, esc_html($diff{'file'})) .
-			      "</td>\n" .
-			      "<td>$mode_chng</td>\n" .
-			      "<td class=\"link\">" .
-			      $cgi->a({-href => href(action=>"blob", hash=>$diff{'from_id'},
-			                             hash_base=>$parent, file_name=>$diff{'file'})},
-			              "blob") .
-			      " | ";
+			               -class => "list"}, esc_html($diff{'file'}));
+			print "</td>\n";
+			print "<td>$mode_chng</td>\n";
+			print "<td class=\"link\">";
 			if ($action eq 'commitdiff') {
 				# link to patch
 				$patchno++;
-				print " | " .
-				      $cgi->a({-href => "#patch$patchno"}, "patch");
+				print $cgi->a({-href => "#patch$patchno"}, "patch");
+				print " | ";
 			}
+			print $cgi->a({-href => href(action=>"blame", hash_base=>$parent,
+						     file_name=>$diff{'file'})},
+				      "blame") . " | ";
 			print $cgi->a({-href => href(action=>"history", hash_base=>$parent,
-			                             file_name=>$diff{'file'})},
-			              "history") .
-			      "</td>\n";
+						     file_name=>$diff{'file'})},
+				      "history");
+			print "</td>\n";
 
 		} elsif ($diff{'status'} eq "M" || $diff{'status'} eq "T") { # modified, or type changed
 			my $mode_chnge = "";
@@ -1791,42 +1786,32 @@ sub git_difftree_body {
 				$mode_chnge .= "]</span>\n";
 			}
 			print "<td>";
-			if ($diff{'to_id'} ne $diff{'from_id'}) { # modified
-				print $cgi->a({-href => href(action=>"blobdiff",
-				                             hash=>$diff{'to_id'}, hash_parent=>$diff{'from_id'},
-				                             hash_base=>$hash, hash_parent_base=>$parent,
-				                             file_name=>$diff{'file'}),
-				              -class => "list"}, esc_html($diff{'file'}));
-			} else { # only mode changed
-				print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
-				                             hash_base=>$hash, file_name=>$diff{'file'}),
-				              -class => "list"}, esc_html($diff{'file'}));
-			}
-			print "</td>\n" .
-			      "<td>$mode_chnge</td>\n" .
-			      "<td class=\"link\">" .
-			      $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
-			                             hash_base=>$hash, file_name=>$diff{'file'})},
-			              "blob");
+			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
+						     hash_base=>$hash, file_name=>$diff{'file'}),
+				       -class => "list"}, esc_html($diff{'file'}));
+			print "</td>\n";
+			print "<td>$mode_chnge</td>\n";
+			print "<td class=\"link\">";
 			if ($diff{'to_id'} ne $diff{'from_id'}) { # modified
 				if ($action eq 'commitdiff') {
 					# link to patch
 					$patchno++;
-					print " | " .
-						$cgi->a({-href => "#patch$patchno"}, "patch");
+					print $cgi->a({-href => "#patch$patchno"}, "patch");
 				} else {
-					print " | " .
-						$cgi->a({-href => href(action=>"blobdiff",
-						                       hash=>$diff{'to_id'}, hash_parent=>$diff{'from_id'},
-						                       hash_base=>$hash, hash_parent_base=>$parent,
-						                       file_name=>$diff{'file'})},
-						        "diff");
+					print $cgi->a({-href => href(action=>"blobdiff",
+								     hash=>$diff{'to_id'}, hash_parent=>$diff{'from_id'},
+								     hash_base=>$hash, hash_parent_base=>$parent,
+								     file_name=>$diff{'file'})},
+						      "diff");
 				}
+				print " | ";
 			}
-			print " | " .
-				$cgi->a({-href => href(action=>"history",
-				                       hash_base=>$hash, file_name=>$diff{'file'})},
-				        "history");
+			print $cgi->a({-href => href(action=>"blame", hash_base=>$hash,
+						     file_name=>$diff{'file'})},
+				      "blame") . " | ";
+			print $cgi->a({-href => href(action=>"history", hash_base=>$hash,
+						     file_name=>$diff{'file'})},
+				      "history");
 			print "</td>\n";
 
 		} elsif ($diff{'status'} eq "R" || $diff{'status'} eq "C") { # renamed or copied
@@ -1846,25 +1831,27 @@ sub git_difftree_body {
 			                             hash=>$diff{'from_id'}, file_name=>$diff{'from_file'}),
 			              -class => "list"}, esc_html($diff{'from_file'})) .
 			      " with " . (int $diff{'similarity'}) . "% similarity$mode_chng]</span></td>\n" .
-			      "<td class=\"link\">" .
-			      $cgi->a({-href => href(action=>"blob", hash_base=>$hash,
-			                             hash=>$diff{'to_id'}, file_name=>$diff{'to_file'})},
-			              "blob");
+			      "<td class=\"link\">";
 			if ($diff{'to_id'} ne $diff{'from_id'}) {
 				if ($action eq 'commitdiff') {
 					# link to patch
 					$patchno++;
-					print " | " .
-						$cgi->a({-href => "#patch$patchno"}, "patch");
+					print $cgi->a({-href => "#patch$patchno"}, "patch");
 				} else {
-					print " | " .
-						$cgi->a({-href => href(action=>"blobdiff",
-						                       hash=>$diff{'to_id'}, hash_parent=>$diff{'from_id'},
-						                       hash_base=>$hash, hash_parent_base=>$parent,
-						                       file_name=>$diff{'to_file'}, file_parent=>$diff{'from_file'})},
-						        "diff");
+					print $cgi->a({-href => href(action=>"blobdiff",
+								     hash=>$diff{'to_id'}, hash_parent=>$diff{'from_id'},
+								     hash_base=>$hash, hash_parent_base=>$parent,
+								     file_name=>$diff{'to_file'}, file_parent=>$diff{'from_file'})},
+						      "diff");
 				}
+				print " | ";
 			}
+			print $cgi->a({-href => href(action=>"blame", hash_base=>$parent,
+						     file_name=>$diff{'from_file'})},
+				      "blame") . " | ";
+			print $cgi->a({-href => href(action=>"history", hash_base=>$parent,
+						     file_name=>$diff{'from_file'})},
+				      "history");
 			print "</td>\n";
 
 		} # we should not encounter Unmerged (U) or Unknown (X) status
@@ -2479,7 +2466,7 @@ sub git_blame2 {
 	print <<HTML;
 <div class="page_body">
 <table class="blame">
-<tr><th>Prev</th><th>Diff</th><th>Commit</th><th>Line</th><th>Data</th></tr>
+<tr><th>Commit</th><th>Line</th><th>Data</th></tr>
 HTML
 	while (<$fd>) {
 		/^([0-9a-fA-F]{40}).*?(\d+)\)\s{1}(\s*.*)/;
@@ -2487,8 +2474,6 @@ HTML
 		my $rev = substr($full_rev, 0, 8);
 		my $lineno = $2;
 		my $data = $3;
-		my %pco = parse_commit($full_rev);
-		my $parent = $pco{'parent'};
 
 		if (!defined $last_rev) {
 			$last_rev = $full_rev;
@@ -2497,25 +2482,11 @@ HTML
 			$current_color = ++$current_color % $num_colors;
 		}
 		print "<tr class=\"$rev_color[$current_color]\">\n";
-		# Print the Prev link
-		print "<td class=\"sha1\">";
-		print $cgi->a({-href => href(action=>"blame", hash_base=>$parent, file_name=>$file_name)},
-			      esc_html(substr($parent, 0, 8)));
-		print "</td>\n";
-		# Print the Diff (blobdiff) link
-		print "<td>";
-		print $cgi->a({-href => href(action=>"blobdiff", file_name=>$file_name, hash_parent_base=>$parent,
-					     hash_base=>$full_rev)},
-			      esc_html("Diff"));
-		print "</td>\n";
-		# Print the Commit link
 		print "<td class=\"sha1\">" .
 			$cgi->a({-href => href(action=>"commit", hash=>$full_rev, file_name=>$file_name)},
 			        esc_html($rev)) . "</td>\n";
-		# Print the Line number
 		print "<td class=\"linenr\"><a id=\"l$lineno\" href=\"#l$lineno\" class=\"linenr\">" .
 		      esc_html($lineno) . "</a></td>\n";
-		# Print the Data
 		print "<td class=\"pre\">" . esc_html($data) . "</td>\n";
 		print "</tr>\n";
 	}
