@@ -71,6 +71,9 @@ struct rev_info {
 	const char	*add_signoff;
 	const char	*extra_headers;
 
+	/* Filter by commit log message */
+	struct grep_opt	*grep_filter;
+
 	/* special limits */
 	int max_count;
 	unsigned long max_age;

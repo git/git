@@ -189,6 +189,7 @@ extern int prefer_symlink_refs;
 extern int log_all_ref_updates;
 extern int warn_ambiguous_refs;
 extern int shared_repository;
+extern int deny_non_fast_forwards;
 extern const char *apply_default_whitespace;
 extern int zlib_compression_level;
 
@@ -278,6 +279,12 @@ enum object_type {
 	OBJ_DELTA = 7,
 	OBJ_BAD,
 };
+
+extern signed char hexval_table[256];
+static inline unsigned int hexval(unsigned int c)
+{
+	return hexval_table[c];
+}
 
 /* Convert to/from hex/sha1 representation */
 #define MINIMUM_ABBREV 4
@@ -384,10 +391,10 @@ extern void unuse_packed_git(struct packed_git *);
 extern struct packed_git *add_packed_git(char *, int, int);
 extern int num_packed_objects(const struct packed_git *p);
 extern int nth_packed_object_sha1(const struct packed_git *, int, unsigned char*);
-extern int find_pack_entry_one(const unsigned char *, struct pack_entry *, struct packed_git *);
-extern void *unpack_entry_gently(struct pack_entry *, char *, unsigned long *);
+extern unsigned long find_pack_entry_one(const unsigned char *, struct packed_git *);
+extern void *unpack_entry_gently(struct packed_git *, unsigned long, char *, unsigned long *);
 extern unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
-extern void packed_object_info_detail(struct pack_entry *, char *, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
+extern void packed_object_info_detail(struct packed_git *, unsigned long, char *, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
 
 /* Dumb servers support */
 extern int update_server_info(int);

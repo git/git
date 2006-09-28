@@ -4,6 +4,7 @@
 #
 
 USAGE='[-a] [-d] [-f] [-l] [-n] [-q]'
+SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
 no_update_info= all_into_one= remove_redundant=
@@ -32,12 +33,10 @@ trap 'rm -f "$PACKTMP"-*' 0 1 2 3 15
 # There will be more repacking strategies to come...
 case ",$all_into_one," in
 ,,)
-	rev_list='--unpacked'
-	pack_objects='--incremental'
+	args='--unpacked --incremental'
 	;;
 ,t,)
-	rev_list=
-	pack_objects=
+	args=
 
 	# Redundancy check in all-into-one case is trivial.
 	existing=`test -d "$PACKDIR" && cd "$PACKDIR" && \
@@ -45,11 +44,8 @@ case ",$all_into_one," in
 	;;
 esac
 
-pack_objects="$pack_objects $local $quiet $no_reuse_delta$extra"
-name=$( { git-rev-list --objects --all $rev_list ||
-	  echo "git-rev-list died with exit code $?"
-	} |
-	git-pack-objects --non-empty $pack_objects "$PACKTMP") ||
+args="$args $local $quiet $no_reuse_delta$extra"
+name=$(git-pack-objects --non-empty --all $args </dev/null "$PACKTMP") ||
 	exit 1
 if [ -z "$name" ]; then
 	echo Nothing new to pack.

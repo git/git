@@ -10,9 +10,6 @@
 #include "builtin.h"
 #include "archive.h"
 
-static const char zip_tree_usage[] =
-"git-zip-tree [-0|...|-9] <tree-ish> [ <base> ]";
-
 static int verbose;
 static int zip_date;
 static int zip_time;
@@ -292,68 +289,6 @@ static void dos_time(time_t *time, int *dos_date, int *dos_time)
 	*dos_date = t->tm_mday + (t->tm_mon + 1) * 32 +
 	            (t->tm_year + 1900 - 1980) * 512;
 	*dos_time = t->tm_sec / 2 + t->tm_min * 32 + t->tm_hour * 2048;
-}
-
-int cmd_zip_tree(int argc, const char **argv, const char *prefix)
-{
-	unsigned char sha1[20];
-	struct tree *tree;
-	struct commit *commit;
-	time_t archive_time;
-	char *base;
-	int baselen;
-
-	git_config(git_default_config);
-
-	if (argc > 1 && argv[1][0] == '-') {
-		if (isdigit(argv[1][1]) && argv[1][2] == '\0') {
-			zlib_compression_level = argv[1][1] - '0';
-			argc--;
-			argv++;
-		}
-	}
-
-	switch (argc) {
-	case 3:
-		base = xstrdup(argv[2]);
-		baselen = strlen(base);
-		break;
-	case 2:
-		base = xstrdup("");
-		baselen = 0;
-		break;
-	default:
-		usage(zip_tree_usage);
-	}
-
-	if (get_sha1(argv[1], sha1))
-		die("Not a valid object name %s", argv[1]);
-
-	commit = lookup_commit_reference_gently(sha1, 1);
-	archive_time = commit ? commit->date : time(NULL);
-	dos_time(&archive_time, &zip_date, &zip_time);
-
-	zip_dir = xmalloc(ZIP_DIRECTORY_MIN_SIZE);
-	zip_dir_size = ZIP_DIRECTORY_MIN_SIZE;
-
-	tree = parse_tree_indirect(sha1);
-	if (!tree)
-		die("not a tree object");
-
-	if (baselen > 0) {
-		write_zip_entry(tree->object.sha1, "", 0, base, 040777, 0);
-		base = xrealloc(base, baselen + 1);
-		base[baselen] = '/';
-		baselen++;
-		base[baselen] = '\0';
-	}
-	read_tree_recursive(tree, base, baselen, 0, NULL, write_zip_entry);
-	write_zip_trailer(commit ? commit->object.sha1 : NULL);
-
-	free(zip_dir);
-	free(base);
-
-	return 0;
 }
 
 int write_zip_archive(struct archiver_args *args)

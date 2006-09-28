@@ -112,11 +112,13 @@ static int add_file_to_cache(const char *path)
 	ce->ce_mode = create_ce_mode(st.st_mode);
 	if (!trust_executable_bit) {
 		/* If there is an existing entry, pick the mode bits
-		 * from it.
+		 * from it, otherwise force to 644.
 		 */
 		int pos = cache_name_pos(path, namelen);
 		if (0 <= pos)
 			ce->ce_mode = active_cache[pos]->ce_mode;
+		else
+			ce->ce_mode = create_ce_mode(S_IFREG | 0644);
 	}
 
 	if (index_path(ce->sha1, path, &st, !info_only))

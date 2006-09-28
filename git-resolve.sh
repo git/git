@@ -5,6 +5,10 @@
 # Resolve two trees.
 #
 
+echo 'WARNING: This command is DEPRECATED and will be removed very soon.' >&2
+echo 'WARNING: Please use git-merge or git-pull instead.' >&2
+sleep 2
+
 USAGE='<head> <remote> <merge-message>'
 . git-sh-setup
 

@@ -66,6 +66,7 @@ git-merge-one-file
 git-merge-ours
 git-merge-recur
 git-merge-recursive
+git-merge-recursive-old
 git-merge-resolve
 git-merge-stupid
 git-mktag
@@ -125,13 +126,11 @@ git-update-ref
 git-update-server-info
 git-upload-archive
 git-upload-pack
-git-upload-tar
 git-var
 git-verify-pack
 git-verify-tag
 git-whatchanged
 git-write-tree
-git-zip-tree
 git-core-*/?*
 gitweb/gitweb.cgi
 test-date

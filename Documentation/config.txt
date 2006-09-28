@@ -119,6 +119,13 @@ apply.whitespace::
 	Tells `git-apply` how to handle whitespaces, in the same way
 	as the '--whitespace' option. See gitlink:git-apply[1].
 
+branch.<name>.remote::
+	When in branch <name>, it tells `git fetch` which remote to fetch.
+
+branch.<name>.merge::
+	When in branch <name>, it tells `git fetch` the default remote branch
+	to be merged.
+
 pager.color::
 	A boolean to enable/disable colored output when the pager is in
 	use (default is true).
@@ -267,3 +274,10 @@ whatchanged.difftree::
 imap::
 	The configuration variables in the 'imap' section are described
 	in gitlink:git-imap-send[1].
+
+receive.denyNonFastforwads::
+	If set to true, git-receive-pack will deny a ref update which is
+	not a fast forward. Use this to prevent such an update via a push,
+	even if that push is forced. This configuration variable is
+	set when initializing a shared repository.
+

@@ -451,17 +451,6 @@ static int read_one_header_line(char *line, int sz, FILE *in)
 	return ofs;
 }
 
-static unsigned hexval(int c)
-{
-	if (c >= '0' && c <= '9')
-		return c - '0';
-	if (c >= 'a' && c <= 'f')
-		return c - 'a' + 10;
-	if (c >= 'A' && c <= 'F')
-		return c - 'A' + 10;
-	return ~0;
-}
-
 static int decode_q_segment(char *in, char *ot, char *ep, int rfc2047)
 {
 	int c;

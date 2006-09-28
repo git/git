@@ -244,6 +244,8 @@ int check_repository_format_version(const char *var, const char *value)
                repository_format_version = git_config_int(var, value);
 	else if (strcmp(var, "core.sharedrepository") == 0)
 		shared_repository = git_config_perm(var, value);
+	else if (strcmp(var, "receive.denynonfastforwards") == 0)
+		deny_non_fast_forwards = git_config_bool(var, value);
        return 0;
 }
 
