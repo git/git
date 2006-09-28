@@ -1761,9 +1761,12 @@ sub git_difftree_body {
 				print $cgi->a({-href => "#patch$patchno"}, "patch");
 				print " | ";
 			}
+			print $cgi->a({-href => href(action=>"blame", hash_base=>$parent,
+						     file_name=>$diff{'file'})},
+				      "blame") . " | ";
 			print $cgi->a({-href => href(action=>"history", hash_base=>$parent,
-			                             file_name=>$diff{'file'})},
-			              "history");
+						     file_name=>$diff{'file'})},
+				      "history");
 			print "</td>\n";
 
 		} elsif ($diff{'status'} eq "M" || $diff{'status'} eq "T") { # modified, or type changed
@@ -1803,8 +1806,11 @@ sub git_difftree_body {
 				}
 				print " | ";
 			}
-			print $cgi->a({-href => href(action=>"history",
-						     hash_base=>$hash, file_name=>$diff{'file'})},
+			print $cgi->a({-href => href(action=>"blame", hash_base=>$hash,
+						     file_name=>$diff{'file'})},
+				      "blame") . " | ";
+			print $cgi->a({-href => href(action=>"history", hash_base=>$hash,
+						     file_name=>$diff{'file'})},
 				      "history");
 			print "</td>\n";
 
@@ -1830,17 +1836,22 @@ sub git_difftree_body {
 				if ($action eq 'commitdiff') {
 					# link to patch
 					$patchno++;
-					print " | " .
-						$cgi->a({-href => "#patch$patchno"}, "patch");
+					print $cgi->a({-href => "#patch$patchno"}, "patch");
 				} else {
-					print " | " .
-						$cgi->a({-href => href(action=>"blobdiff",
-						                       hash=>$diff{'to_id'}, hash_parent=>$diff{'from_id'},
-						                       hash_base=>$hash, hash_parent_base=>$parent,
-						                       file_name=>$diff{'to_file'}, file_parent=>$diff{'from_file'})},
-						        "diff");
+					print $cgi->a({-href => href(action=>"blobdiff",
+								     hash=>$diff{'to_id'}, hash_parent=>$diff{'from_id'},
+								     hash_base=>$hash, hash_parent_base=>$parent,
+								     file_name=>$diff{'to_file'}, file_parent=>$diff{'from_file'})},
+						      "diff");
 				}
+				print " | ";
 			}
+			print $cgi->a({-href => href(action=>"blame", hash_base=>$parent,
+						     file_name=>$diff{'from_file'})},
+				      "blame") . " | ";
+			print $cgi->a({-href => href(action=>"history", hash_base=>$parent,
+						     file_name=>$diff{'from_file'})},
+				      "history");
 			print "</td>\n";
 
 		} # we should not encounter Unmerged (U) or Unknown (X) status
