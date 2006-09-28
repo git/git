@@ -732,6 +732,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	int i, flags, seen_dashdash, show_merge;
 	const char **unrecognized = argv + 1;
 	int left = 1;
+	int all_match = 0;
 
 	/* First, search for "--" */
 	seen_dashdash = 0;
@@ -967,6 +968,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				add_message_grep(revs, arg+7);
 				continue;
 			}
+			if (!strcmp(arg, "--all-match")) {
+				all_match = 1;
+				continue;
+			}
 
 			opts = diff_opt_parse(&revs->diffopt, argv+i, argc-i);
 			if (opts > 0) {
@@ -1028,8 +1033,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	if (diff_setup_done(&revs->diffopt) < 0)
 		die("diff_setup_done failed");
 
-	if (revs->grep_filter)
+	if (revs->grep_filter) {
+		revs->grep_filter->all_match = all_match;
 		compile_grep_patterns(revs->grep_filter);
+	}
 
 	return left;
 }
