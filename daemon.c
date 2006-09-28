@@ -15,6 +15,10 @@
 #include "exec_cmd.h"
 #include "interpolate.h"
 
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 256
+#endif
+
 static int log_syslog;
 static int verbose;
 static int reuseaddr;
