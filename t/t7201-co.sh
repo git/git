@@ -31,6 +31,15 @@ test_expect_success setup '
 	git checkout master
 '
 
+test_expect_success "checkout from non-existing branch" '
+
+	git checkout -b delete-me master &&
+	rm .git/refs/heads/delete-me &&
+	test refs/heads/delete-me = "$(git symbolic-ref HEAD)" &&
+	git checkout master &&
+	test refs/heads/master = "$(git symbolic-ref HEAD)"
+'
+
 test_expect_success "checkout with dirty tree without -m" '
 
 	fill 0 1 2 3 4 5 >one &&
