@@ -278,6 +278,7 @@ int main(int argc, char **argv)
 	if (!enter_repo(dir, 0))
 		die("'%s': unable to chdir or not a git archive", dir);
 
+	setup_ident();
 	git_config(git_default_config);
 
 	write_head_info();
