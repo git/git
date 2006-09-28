@@ -854,6 +854,49 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 	return -1;
 }
 
+static void check_whitespace(const char *line, int len)
+{
+	const char *err = "Adds trailing whitespace";
+	int seen_space = 0;
+	int i;
+
+	/*
+	 * We know len is at least two, since we have a '+' and we
+	 * checked that the last character was a '\n' before calling
+	 * this function.  That is, an addition of an empty line would
+	 * check the '+' here.  Sneaky...
+	 */
+	if (isspace(line[len-2]))
+		goto error;
+
+	/*
+	 * Make sure that there is no space followed by a tab in
+	 * indentation.
+	 */
+	err = "Space in indent is followed by a tab";
+	for (i = 1; i < len; i++) {
+		if (line[i] == '\t') {
+			if (seen_space)
+				goto error;
+		}
+		else if (line[i] == ' ')
+			seen_space = 1;
+		else
+			break;
+	}
+	return;
+
+ error:
+	whitespace_error++;
+	if (squelch_whitespace_errors &&
+	    squelch_whitespace_errors < whitespace_error)
+		;
+	else
+		fprintf(stderr, "%s.\n%s:%d:%.*s\n",
+			err, patch_input_file, linenr, len-2, line+1);
+}
+
+
 /*
  * Parse a unified diff. Note that this really needs to parse each
  * fragment separately, since the only way to know the difference
@@ -904,25 +947,8 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 			trailing = 0;
 			break;
 		case '+':
-			/*
-			 * We know len is at least two, since we have a '+' and
-			 * we checked that the last character was a '\n' above.
-			 * That is, an addition of an empty line would check
-			 * the '+' here.  Sneaky...
-			 */
-			if ((new_whitespace != nowarn_whitespace) &&
-			    isspace(line[len-2])) {
-				whitespace_error++;
-				if (squelch_whitespace_errors &&
-				    squelch_whitespace_errors <
-				    whitespace_error)
-					;
-				else {
-					fprintf(stderr, "Adds trailing whitespace.\n%s:%d:%.*s\n",
-						patch_input_file,
-						linenr, len-2, line+1);
-				}
-			}
+			if (new_whitespace != nowarn_whitespace)
+				check_whitespace(line, len);
 			added++;
 			newlines--;
 			trailing = 0;
@@ -1494,22 +1520,68 @@ static int apply_line(char *output, const char *patch, int plen)
 {
 	/* plen is number of bytes to be copied from patch,
 	 * starting at patch+1 (patch[0] is '+').  Typically
-	 * patch[plen] is '\n'.
+	 * patch[plen] is '\n', unless this is the incomplete
+	 * last line.
 	 */
+	int i;
 	int add_nl_to_tail = 0;
-	if ((new_whitespace == strip_whitespace) &&
-	    1 < plen && isspace(patch[plen-1])) {
+	int fixed = 0;
+	int last_tab_in_indent = -1;
+	int last_space_in_indent = -1;
+	int need_fix_leading_space = 0;
+	char *buf;
+
+	if ((new_whitespace != strip_whitespace) || !whitespace_error) {
+		memcpy(output, patch + 1, plen);
+		return plen;
+	}
+
+	if (1 < plen && isspace(patch[plen-1])) {
 		if (patch[plen] == '\n')
 			add_nl_to_tail = 1;
 		plen--;
 		while (0 < plen && isspace(patch[plen]))
 			plen--;
-		applied_after_stripping++;
+		fixed = 1;
 	}
-	memcpy(output, patch + 1, plen);
+
+	for (i = 1; i < plen; i++) {
+		char ch = patch[i];
+		if (ch == '\t') {
+			last_tab_in_indent = i;
+			if (0 <= last_space_in_indent)
+				need_fix_leading_space = 1;
+		}
+		else if (ch == ' ')
+			last_space_in_indent = i;
+		else
+			break;
+	}
+
+	buf = output;
+	if (need_fix_leading_space) {
+		/* between patch[1..last_tab_in_indent] strip the
+		 * funny spaces, updating them to tab as needed.
+		 */
+		for (i = 1; i < last_tab_in_indent; i++, plen--) {
+			char ch = patch[i];
+			if (ch != ' ')
+				*output++ = ch;
+			else if ((i % 8) == 0)
+				*output++ = '\t';
+		}
+		fixed = 1;
+		i = last_tab_in_indent;
+	}
+	else
+		i = 1;
+
+	memcpy(output, patch + i, plen);
 	if (add_nl_to_tail)
 		output[plen++] = '\n';
-	return plen;
+	if (fixed)
+		applied_after_stripping++;
+	return output + plen - buf;
 }
 
 static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, int inaccurate_eof)
