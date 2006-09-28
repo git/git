@@ -1735,15 +1735,32 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "--patch-with-raw")) {
 		options->output_format |= DIFF_FORMAT_PATCH | DIFF_FORMAT_RAW;
 	}
-	else if (!strcmp(arg, "--stat"))
+	else if (!strncmp(arg, "--stat", 6)) {
+		char *end;
+		int width = options->stat_width;
+		int name_width = options->stat_name_width;
+		arg += 6;
+		end = (char *)arg;
+
+		switch (*arg) {
+		case '-':
+			if (!strncmp(arg, "-width=", 7))
+				width = strtoul(arg + 7, &end, 10);
+			else if (!strncmp(arg, "-name-width=", 12))
+				name_width = strtoul(arg + 12, &end, 10);
+			break;
+		case '=':
+			width = strtoul(arg+1, &end, 10);
+			if (*end == ',')
+				name_width = strtoul(end+1, &end, 10);
+		}
+
+		/* Important! This checks all the error cases! */
+		if (*end)
+			return 0;
 		options->output_format |= DIFF_FORMAT_DIFFSTAT;
-	else if (!strncmp(arg, "--stat-width=", 13)) {
-		options->stat_width = strtoul(arg + 13, NULL, 10);
-		options->output_format |= DIFF_FORMAT_DIFFSTAT;
-	}
-	else if (!strncmp(arg, "--stat-name-width=", 18)) {
-		options->stat_name_width = strtoul(arg + 18, NULL, 10);
-		options->output_format |= DIFF_FORMAT_DIFFSTAT;
+		options->stat_name_width = name_width;
+		options->stat_width = width;
 	}
 	else if (!strcmp(arg, "--check"))
 		options->output_format |= DIFF_FORMAT_CHECKDIFF;
