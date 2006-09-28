@@ -8,10 +8,10 @@
 #include "interpolate.h"
 
 
-void interp_set_entry(struct interp *table, int slot, char *value)
+void interp_set_entry(struct interp *table, int slot, const char *value)
 {
 	char *oldval = table[slot].value;
-	char *newval = value;
+	char *newval = NULL;
 
 	if (oldval)
 		free(oldval);
