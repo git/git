@@ -834,7 +834,7 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 
 #else /* NO_IPV6 */
 
-static int socksetup(char *lisen_addr, int listen_port, int **socklist_p)
+static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 {
 	struct sockaddr_in sin;
 	int sockfd;
