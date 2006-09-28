@@ -155,6 +155,13 @@ sub feature_snapshot {
 	return ($ctype, $suffix, $command);
 }
 
+sub gitweb_have_snapshot {
+	my ($ctype, $suffix, $command) = gitweb_check_feature('snapshot');
+	my $have_snapshot = (defined $ctype && defined $suffix);
+
+	return $have_snapshot;
+}
+
 # To enable system wide have in $GITWEB_CONFIG
 # $feature{'pickaxe'}{'default'} = [1];
 # To have project specific config enable override in $GITWEB_CONFIG
@@ -2736,8 +2743,7 @@ sub git_blob {
 }
 
 sub git_tree {
-	my ($ctype, $suffix, $command) = gitweb_check_feature('snapshot');
-	my $have_snapshot = (defined $ctype && defined $suffix);
+	my $have_snapshot = gitweb_have_snapshot();
 
 	if (!defined $hash) {
 		$hash = git_get_head_hash($project);
@@ -2813,7 +2819,6 @@ sub git_tree {
 }
 
 sub git_snapshot {
-
 	my ($ctype, $suffix, $command) = gitweb_check_feature('snapshot');
 	my $have_snapshot = (defined $ctype && defined $suffix);
 	if (!$have_snapshot) {
@@ -2923,8 +2928,7 @@ sub git_commit {
 	my $refs = git_get_references();
 	my $ref = format_ref_marker($refs, $co{'id'});
 
-	my ($ctype, $suffix, $command) = gitweb_check_feature('snapshot');
-	my $have_snapshot = (defined $ctype && defined $suffix);
+	my $have_snapshot = gitweb_have_snapshot();
 
 	my @views_nav = ();
 	if (defined $file_name && defined $co{'parent'}) {
