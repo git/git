@@ -8,14 +8,15 @@ git-daemon - A really simple server for git repositories
 SYNOPSIS
 --------
 [verse]
-'git-daemon' [--verbose] [--syslog] [--inetd | --port=n] [--export-all]
+'git-daemon' [--verbose] [--syslog] [--export-all]
              [--timeout=n] [--init-timeout=n] [--strict-paths]
              [--base-path=path] [--user-path | --user-path=path]
              [--interpolated-path=pathtemplate]
+             [--reuseaddr] [--detach] [--pid-file=file]
              [--enable=service] [--disable=service]
 	     [--allow-override=service] [--forbid-override=service]
-             [--reuseaddr] [--detach] [--pid-file=file]
-             [--user=user [--group=group]] [directory...]
+	     [--inetd | [--listen=host_or_ipaddr] [--port=n] [--user=user [--group=group]]
+	     [directory...]
 
 DESCRIPTION
 -----------
@@ -54,8 +55,12 @@ OPTIONS
 --interpolated-path=pathtemplate::
 	To support virtual hosting, an interpolated path template can be
 	used to dynamically construct alternate paths.  The template
-	supports %H for the target hostname as supplied by the client,
+	supports %H for the target hostname as supplied by the client but
+	converted to all lowercase, %CH for the canonical hostname,
+	%IP for the server's IP address, %P for the port number,
 	and %D for the absolute path of the named repository.
+	After interpolation, the path is validated against the directory
+	whitelist.
 
 --export-all::
 	Allow pulling from all directories that look like GIT repositories
@@ -64,9 +69,17 @@ OPTIONS
 
 --inetd::
 	Have the server run as an inetd service. Implies --syslog.
+	Incompatible with --port, --listen, --user and --group options.
 
---port::
-	Listen on an alternative port.
+--listen=host_or_ipaddr::
+	Listen on an a specific IP address or hostname.  IP addresses can
+	be either an IPv4 address or an IPV6 address if supported.  If IPv6
+	is not supported, then --listen=hostname is also not supported and
+	--listen must be given an IPv4 address.
+	Incompatible with '--inetd' option.
+
+--port=n::
+	Listen on an alternative port.  Incompatible with '--inetd' option.
 
 --init-timeout::
 	Timeout between the moment the connection is established and the
@@ -180,6 +193,24 @@ Further, both hosts advertise repositories simply as
 `git://www.example.com/software/repo.git`.  For pre-1.4.0
 clients, a symlink from `/software` into the appropriate
 default repository could be made as well.
+
+
+git-daemon as regular daemon for virtual hosts::
+	To set up `git-daemon` as a regular, non-inetd service that
+	handles repositories for multiple virtual hosts based on
+	their IP addresses, start the daemon like this:
++
+------------------------------------------------
+	git-daemon --verbose --export-all
+		--interpolated-path=/pub/%IP/%D
+		/pub/192.168.1.200/software
+		/pub/10.10.220.23/software
+------------------------------------------------
++
+In this example, the root-level directory `/pub` will contain
+a subdirectory for each virtual host IP address supported.
+Repositories can still be accessed by hostname though, assuming
+they correspond to these IP addresses.
 
 
 Author

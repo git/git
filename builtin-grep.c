@@ -325,6 +325,7 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 		else
 			hit |= grep_file(opt, ce->name);
 	}
+	free_grep_patterns(opt);
 	return hit;
 }
 
@@ -694,5 +695,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		if (grep_object(&opt, paths, real_obj, list.objects[i].name))
 			hit = 1;
 	}
+	free_grep_patterns(&opt);
 	return !hit;
 }

@@ -73,6 +73,7 @@ struct grep_opt {
 
 extern void append_grep_pattern(struct grep_opt *opt, const char *pat, const char *origin, int no, enum grep_pat_token t);
 extern void compile_grep_patterns(struct grep_opt *opt);
+extern void free_grep_patterns(struct grep_opt *opt);
 extern int grep_buffer(struct grep_opt *opt, const char *name, char *buf, unsigned long size);
 
 #endif
