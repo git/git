@@ -270,8 +270,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	rev.extra_headers = extra_headers;
 
-	output_directory = prefix;
-
 	/*
 	 * Parse the arguments before setup_revisions(), or something
 	 * like "git fmt-patch -o a123 HEAD^.." may fail; a123 is
@@ -349,6 +347,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_PATCH;
+
+	if (!output_directory)
+		output_directory = prefix;
 
 	if (output_directory) {
 		if (use_stdout)
