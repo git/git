@@ -155,6 +155,13 @@ sub feature_snapshot {
 	return ($ctype, $suffix, $command);
 }
 
+sub gitweb_have_snapshot {
+	my ($ctype, $suffix, $command) = gitweb_check_feature('snapshot');
+	my $have_snapshot = (defined $ctype && defined $suffix);
+
+	return $have_snapshot;
+}
+
 # To enable system wide have in $GITWEB_CONFIG
 # $feature{'pickaxe'}{'default'} = [1];
 # To have project specific config enable override in $GITWEB_CONFIG
@@ -1699,7 +1706,7 @@ sub git_difftree_body {
 	print "</div>\n";
 
 	print "<table class=\"diff_tree\">\n";
-	my $alternate = 0;
+	my $alternate = 1;
 	my $patchno = 0;
 	foreach my $line (@{$difftree}) {
 		my %diff = parse_difftree_raw_line($line);
@@ -1993,7 +2000,7 @@ sub git_shortlog_body {
 	$to = $#{$revlist} if (!defined $to || $#{$revlist} < $to);
 
 	print "<table class=\"shortlog\" cellspacing=\"0\">\n";
-	my $alternate = 0;
+	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
 		my $commit = $revlist->[$i];
 		#my $ref = defined $refs ? format_ref_marker($refs, $commit) : '';
@@ -2013,9 +2020,9 @@ sub git_shortlog_body {
 		                          href(action=>"commit", hash=>$commit), $ref);
 		print "</td>\n" .
 		      "<td class=\"link\">" .
-		      $cgi->a({-href => href(action=>"commit", hash=>$commit)}, "commit") . " | " .
 		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff") . " | " .
-		      $cgi->a({-href => href(action=>"tree", hash=>$commit, hash_base=>$commit)}, "tree");
+		      $cgi->a({-href => href(action=>"tree", hash=>$commit, hash_base=>$commit)}, "tree") . " | " .
+		      $cgi->a({-href => href(action=>"snapshot", hash=>$commit)}, "snapshot");
 		print "</td>\n" .
 		      "</tr>\n";
 	}
@@ -2035,7 +2042,7 @@ sub git_history_body {
 	$to = $#{$revlist} unless (defined $to && $to <= $#{$revlist});
 
 	print "<table class=\"history\" cellspacing=\"0\">\n";
-	my $alternate = 0;
+	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
 		if ($revlist->[$i] !~ m/^([0-9a-fA-F]{40})/) {
 			next;
@@ -2064,9 +2071,8 @@ sub git_history_body {
 		                          href(action=>"commit", hash=>$commit), $ref);
 		print "</td>\n" .
 		      "<td class=\"link\">" .
-		      $cgi->a({-href => href(action=>"commit", hash=>$commit)}, "commit") . " | " .
-		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff") . " | " .
-		      $cgi->a({-href => href(action=>$ftype, hash_base=>$commit, file_name=>$file_name)}, $ftype);
+		      $cgi->a({-href => href(action=>$ftype, hash_base=>$commit, file_name=>$file_name)}, $ftype) . " | " .
+		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff");
 
 		if ($ftype eq 'blob') {
 			my $blob_current = git_get_hash_by_path($hash_base, $file_name);
@@ -2099,7 +2105,7 @@ sub git_tags_body {
 	$to = $#{$taglist} if (!defined $to || $#{$taglist} < $to);
 
 	print "<table class=\"tags\" cellspacing=\"0\">\n";
-	my $alternate = 0;
+	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
 		my $entry = $taglist->[$i];
 		my %tag = %$entry;
@@ -2159,7 +2165,7 @@ sub git_heads_body {
 	$to = $#{$headlist} if (!defined $to || $#{$headlist} < $to);
 
 	print "<table class=\"heads\" cellspacing=\"0\">\n";
-	my $alternate = 0;
+	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
 		my $entry = $headlist->[$i];
 		my %tag = %$entry;
@@ -2275,7 +2281,7 @@ sub git_project_list {
 	}
 	print "<th></th>\n" .
 	      "</tr>\n";
-	my $alternate = 0;
+	my $alternate = 1;
 	foreach my $pr (@projects) {
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
@@ -2653,7 +2659,7 @@ sub git_blob_plain {
 	print $cgi->header(
 		-type => "$type",
 		-expires=>$expires,
-		-content_disposition => 'inline; filename="' . quotemeta($save_as) . '"');
+		-content_disposition => 'inline; filename="' . "$save_as" . '"');
 	undef $/;
 	binmode STDOUT, ':raw';
 	print <$fd>;
@@ -2737,8 +2743,7 @@ sub git_blob {
 }
 
 sub git_tree {
-	my ($ctype, $suffix, $command) = gitweb_check_feature('snapshot');
-	my $have_snapshot = (defined $ctype && defined $suffix);
+	my $have_snapshot = gitweb_have_snapshot();
 
 	if (!defined $hash) {
 		$hash = git_get_head_hash($project);
@@ -2793,7 +2798,7 @@ sub git_tree {
 	git_print_page_path($file_name, 'tree', $hash_base);
 	print "<div class=\"page_body\">\n";
 	print "<table cellspacing=\"0\">\n";
-	my $alternate = 0;
+	my $alternate = 1;
 	foreach my $line (@entries) {
 		my %t = parse_ls_tree_line($line, -z => 1);
 
@@ -2814,7 +2819,6 @@ sub git_tree {
 }
 
 sub git_snapshot {
-
 	my ($ctype, $suffix, $command) = gitweb_check_feature('snapshot');
 	my $have_snapshot = (defined $ctype && defined $suffix);
 	if (!$have_snapshot) {
@@ -2830,7 +2834,7 @@ sub git_snapshot {
 	print $cgi->header(
 		-type => 'application/x-tar',
 		-content_encoding => $ctype,
-		-content_disposition => 'inline; filename="' . quotemeta($filename) . '"',
+		-content_disposition => 'inline; filename="' . "$filename" . '"',
 		-status => '200 OK');
 
 	my $git_command = git_cmd_str();
@@ -2924,12 +2928,10 @@ sub git_commit {
 	my $refs = git_get_references();
 	my $ref = format_ref_marker($refs, $co{'id'});
 
-	my ($ctype, $suffix, $command) = gitweb_check_feature('snapshot');
-	my $have_snapshot = (defined $ctype && defined $suffix);
+	my $have_snapshot = gitweb_have_snapshot();
 
 	my @views_nav = ();
 	if (defined $file_name && defined $co{'parent'}) {
-		my $parent = $co{'parent'};
 		push @views_nav,
 			$cgi->a({-href => href(action=>"blame", hash_parent=>$parent, file_name=>$file_name)},
 			        "blame");
@@ -3141,7 +3143,7 @@ sub git_blobdiff {
 			-type => 'text/plain',
 			-charset => 'utf-8',
 			-expires => $expires,
-			-content_disposition => 'inline; filename="' . quotemeta($file_name) . '.patch"');
+			-content_disposition => 'inline; filename="' . "$file_name" . '.patch"');
 
 		print "X-Git-Url: " . $cgi->self_url() . "\n\n";
 
@@ -3244,7 +3246,7 @@ sub git_commitdiff {
 			-type => 'text/plain',
 			-charset => 'utf-8',
 			-expires => $expires,
-			-content_disposition => 'inline; filename="' . quotemeta($filename) . '"');
+			-content_disposition => 'inline; filename="' . "$filename" . '"');
 		my %ad = parse_date($co{'author_epoch'}, $co{'author_tz'});
 		print <<TEXT;
 From: $co{'author'}
@@ -3389,7 +3391,7 @@ sub git_search {
 	git_print_header_div('commit', esc_html($co{'title'}), $hash);
 
 	print "<table cellspacing=\"0\">\n";
-	my $alternate = 0;
+	my $alternate = 1;
 	if ($commit_search) {
 		$/ = "\0";
 		open my $fd, "-|", git_cmd(), "rev-list", "--header", "--parents", $hash or next;
