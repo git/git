@@ -96,13 +96,6 @@ AC_SUBST(PYTHON_PATH)
 AC_MSG_NOTICE([CHECKS for programs])
 #
 AC_PROG_CC([cc gcc])
-if test -n "$GCC"; then
-	PIC_FLAG="-fPIC"
-else
-	AC_CHECK_DECL(__SUNPRO_C, [CFLAGS="$CFLAGS -xO3"; PIC_FLAG="-KPIC"])
-fi
-AC_SUBST(PIC_FLAG)
-
 #AC_PROG_INSTALL		# needs install-sh or install.sh in sources
 AC_CHECK_TOOL(AR, ar, :)
 AC_CHECK_PROGS(TAR, [gtar tar])
