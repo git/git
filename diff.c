@@ -333,7 +333,7 @@ static void emit_rewrite_diff(const char *name_a,
 	diff_populate_filespec(two, 0);
 	lc_a = count_lines(one->data, one->size);
 	lc_b = count_lines(two->data, two->size);
-	printf("--- %s\n+++ %s\n@@ -", name_a, name_b);
+	printf("--- a/%s\n+++ b/%s\n@@ -", name_a, name_b);
 	print_line_count(lc_a);
 	printf(" +");
 	print_line_count(lc_b);
