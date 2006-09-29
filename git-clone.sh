@@ -31,6 +31,10 @@ clone_dumb_http () {
 	cd "$2" &&
 	clone_tmp="$GIT_DIR/clone-tmp" &&
 	mkdir -p "$clone_tmp" || exit 1
+	if [ -n "$GIT_CURL_FTP_NO_EPSV" -o \
+		"`git-repo-config --bool http.noEPSV`" = true ]; then
+		curl_extra_args="${curl_extra_args} --disable-epsv"
+	fi
 	http_fetch "$1/info/refs" "$clone_tmp/refs" || {
 		echo >&2 "Cannot get remote repository information.
 Perhaps git-update-server-info needs to be run there?"

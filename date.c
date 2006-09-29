@@ -598,6 +598,32 @@ static void date_tea(struct tm *tm, int *num)
 	date_time(tm, 17);
 }
 
+static void date_pm(struct tm *tm, int *num)
+{
+	int hour = *num;
+	*num = 0;
+
+	if (hour > 0 && hour < 12) {
+		tm->tm_hour = hour;
+		tm->tm_min = 0;
+		tm->tm_sec = 0;
+	}
+	if (tm->tm_hour > 0 && tm->tm_hour < 12)
+		tm->tm_hour += 12;
+}
+
+static void date_am(struct tm *tm, int *num)
+{
+	int hour = *num;
+	*num = 0;
+
+	if (hour > 0 && hour < 12) {
+		tm->tm_hour = hour;
+		tm->tm_min = 0;
+		tm->tm_sec = 0;
+	}
+}
+
 static const struct special {
 	const char *name;
 	void (*fn)(struct tm *, int *);
@@ -606,6 +632,8 @@ static const struct special {
 	{ "noon", date_noon },
 	{ "midnight", date_midnight },
 	{ "tea", date_tea },
+	{ "PM", date_pm },
+	{ "AM", date_am },
 	{ NULL }
 };
 
@@ -712,6 +740,27 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, int *num)
 	return end;
 }
 
+static const char *approxidate_digit(const char *date, struct tm *tm, int *num)
+{
+	char *end;
+	unsigned long number = strtoul(date, &end, 10);
+
+	switch (*end) {
+	case ':':
+	case '.':
+	case '/':
+	case '-':
+		if (isdigit(end[1])) {
+			int match = match_multi_number(number, *end, date, end, tm);
+			if (match)
+				return date + match;
+		}
+	}
+
+	*num = number;
+	return end;
+}
+
 unsigned long approxidate(const char *date)
 {
 	int number = 0;
@@ -731,9 +780,7 @@ unsigned long approxidate(const char *date)
 			break;
 		date++;
 		if (isdigit(c)) {
-			char *end;
-			number = strtoul(date-1, &end, 10);
-			date = end;
+			date = approxidate_digit(date-1, &tm, &number);
 			continue;
 		}
 		if (isalpha(c))

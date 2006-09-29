@@ -15,6 +15,10 @@
 #include "exec_cmd.h"
 #include "interpolate.h"
 
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 256
+#endif
+
 static int log_syslog;
 static int verbose;
 static int reuseaddr;
@@ -830,7 +834,7 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 
 #else /* NO_IPV6 */
 
-static int socksetup(char *lisen_addr, int listen_port, int **socklist_p)
+static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 {
 	struct sockaddr_in sin;
 	int sockfd;

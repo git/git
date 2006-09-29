@@ -16,7 +16,7 @@ struct interp {
 	char *value;
 };
 
-extern void interp_set_entry(struct interp *table, int slot, char *value);
+extern void interp_set_entry(struct interp *table, int slot, const char *value);
 extern void interp_clear_table(struct interp *table, int ninterps);
 
 extern int interpolate(char *result, int reslen,

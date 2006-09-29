@@ -289,6 +289,10 @@ fetch_main () {
 	  if [ -n "$GIT_SSL_NO_VERIFY" ]; then
 	      curl_extra_args="-k"
 	  fi
+	  if [ -n "$GIT_CURL_FTP_NO_EPSV" -o \
+		"`git-repo-config --bool http.noEPSV`" = true ]; then
+	      noepsv_opt="--disable-epsv"
+	  fi
 	  max_depth=5
 	  depth=0
 	  head="ref: $remote_name"
@@ -300,7 +304,7 @@ fetch_main () {
 	      $u =~ s{([^-a-zA-Z0-9/.])}{sprintf"%%%02x",ord($1)}eg;
 	      print "$u";
 	  ' "$head")
-	    head=$(curl -nsfL $curl_extra_args "$remote/$remote_name_quoted")
+	    head=$(curl -nsfL $curl_extra_args $noepsv_opt "$remote/$remote_name_quoted")
 	    depth=$( expr \( $depth + 1 \) )
 	  done
 	  expr "z$head" : "z$_x40\$" >/dev/null ||
