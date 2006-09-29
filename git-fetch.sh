@@ -257,6 +257,7 @@ fi
 fetch_main () {
   reflist="$1"
   refs=
+  rref=
 
   for ref in $reflist
   do
