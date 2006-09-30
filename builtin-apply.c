@@ -360,7 +360,7 @@ static int gitdiff_hdrend(const char *line, struct patch *patch)
 static char *gitdiff_verify_name(const char *line, int isnull, char *orig_name, const char *oldnew)
 {
 	if (!orig_name && !isnull)
-		return find_name(line, NULL, 1, 0);
+		return find_name(line, NULL, 1, TERM_TAB);
 
 	if (orig_name) {
 		int len;
@@ -370,7 +370,7 @@ static char *gitdiff_verify_name(const char *line, int isnull, char *orig_name, 
 		len = strlen(name);
 		if (isnull)
 			die("git-apply: bad git-diff - expected /dev/null, got %s on line %d", name, linenr);
-		another = find_name(line, NULL, 1, 0);
+		another = find_name(line, NULL, 1, TERM_TAB);
 		if (!another || memcmp(another, name, len))
 			die("git-apply: bad git-diff - inconsistent %s filename on line %d", oldnew, linenr);
 		free(another);

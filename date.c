@@ -256,8 +256,12 @@ static int match_alpha(const char *date, struct tm *tm, int *offset)
 	}
 
 	if (match_string(date, "PM") == 2) {
-		if (tm->tm_hour > 0 && tm->tm_hour < 12)
-			tm->tm_hour += 12;
+		tm->tm_hour = (tm->tm_hour % 12) + 12;
+		return 2;
+	}
+
+	if (match_string(date, "AM") == 2) {
+		tm->tm_hour = (tm->tm_hour % 12) + 0;
 		return 2;
 	}
 
@@ -600,28 +604,30 @@ static void date_tea(struct tm *tm, int *num)
 
 static void date_pm(struct tm *tm, int *num)
 {
-	int hour = *num;
+	int hour, n = *num;
 	*num = 0;
 
-	if (hour > 0 && hour < 12) {
-		tm->tm_hour = hour;
+	hour = tm->tm_hour;
+	if (n) {
+		hour = n;
 		tm->tm_min = 0;
 		tm->tm_sec = 0;
 	}
-	if (tm->tm_hour > 0 && tm->tm_hour < 12)
-		tm->tm_hour += 12;
+	tm->tm_hour = (hour % 12) + 12;
 }
 
 static void date_am(struct tm *tm, int *num)
 {
-	int hour = *num;
+	int hour, n = *num;
 	*num = 0;
 
-	if (hour > 0 && hour < 12) {
-		tm->tm_hour = hour;
+	hour = tm->tm_hour;
+	if (n) {
+		hour = n;
 		tm->tm_min = 0;
 		tm->tm_sec = 0;
 	}
+	tm->tm_hour = (hour % 12);
 }
 
 static const struct special {
