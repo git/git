@@ -66,12 +66,42 @@ static struct ref_list *add_ref(const char *name, const unsigned char *sha1,
 	return list;
 }
 
+/*
+ * Future: need to be in "struct repository"
+ * when doing a full libification.
+ */
+struct cached_refs {
+	char did_loose;
+	char did_packed;
+	struct ref_list *loose;
+	struct ref_list *packed;
+} cached_refs;
+
+static void free_ref_list(struct ref_list *list)
+{
+	struct ref_list *next;
+	for ( ; list; list = next) {
+		next = list->next;
+		free(list);
+	}
+}
+
+static void invalidate_cached_refs(void)
+{
+	struct cached_refs *ca = &cached_refs;
+
+	if (ca->did_loose && ca->loose)
+		free_ref_list(ca->loose);
+	if (ca->did_packed && ca->packed)
+		free_ref_list(ca->packed);
+	ca->loose = ca->packed = NULL;
+	ca->did_loose = ca->did_packed = 0;
+}
+
 static struct ref_list *get_packed_refs(void)
 {
-	static int did_refs = 0;
-	static struct ref_list *refs = NULL;
-
-	if (!did_refs) {
+	if (!cached_refs.did_packed) {
+		struct ref_list *refs = NULL;
 		FILE *f = fopen(git_path("packed-refs"), "r");
 		if (f) {
 			struct ref_list *list = NULL;
@@ -86,9 +116,10 @@ static struct ref_list *get_packed_refs(void)
 			fclose(f);
 			refs = list;
 		}
-		did_refs = 1;
+		cached_refs.packed = refs;
+		cached_refs.did_packed = 1;
 	}
-	return refs;
+	return cached_refs.packed;
 }
 
 static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
@@ -138,14 +169,11 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 
 static struct ref_list *get_loose_refs(void)
 {
-	static int did_refs = 0;
-	static struct ref_list *refs = NULL;
-
-	if (!did_refs) {
-		refs = get_ref_dir("refs", NULL);
-		did_refs = 1;
+	if (!cached_refs.did_loose) {
+		cached_refs.loose = get_ref_dir("refs", NULL);
+		cached_refs.did_loose = 1;
 	}
-	return refs;
+	return cached_refs.loose;
 }
 
 /* We allow "recursive" symbolic refs. Only within reason, though */
@@ -401,6 +429,7 @@ int delete_ref(const char *refname, unsigned char *sha1)
 		fprintf(stderr, "warning: unlink(%s) failed: %s",
 			lock->log_file, strerror(errno));
 
+	invalidate_cached_refs();
 	return ret;
 }
 
@@ -665,6 +694,7 @@ int write_ref_sha1(struct ref_lock *lock,
 		unlock_ref(lock);
 		return -1;
 	}
+	invalidate_cached_refs();
 	if (log_ref_write(lock, sha1, logmsg) < 0) {
 		unlock_ref(lock);
 		return -1;
