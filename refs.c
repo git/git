@@ -406,33 +406,6 @@ int get_ref_sha1(const char *ref, unsigned char *sha1)
 	return read_ref(mkpath("refs/%s", ref), sha1);
 }
 
-int delete_ref(const char *refname, unsigned char *sha1)
-{
-	struct ref_lock *lock;
-	int err, i, ret = 0;
-
-	lock = lock_any_ref_for_update(refname, sha1);
-	if (!lock)
-		return 1;
-	i = strlen(lock->lk->filename) - 5; /* .lock */
-	lock->lk->filename[i] = 0;
-	err = unlink(lock->lk->filename);
-	if (err) {
-		ret = 1;
-		error("unlink(%s) failed: %s",
-		      lock->lk->filename, strerror(errno));
-	}
-	lock->lk->filename[i] = '.';
-
-	err = unlink(lock->log_file);
-	if (err && errno != ENOENT)
-		fprintf(stderr, "warning: unlink(%s) failed: %s",
-			lock->log_file, strerror(errno));
-
-	invalidate_cached_refs();
-	return ret;
-}
-
 /*
  * Make sure "ref" is something reasonable to have under ".git/refs/";
  * We do not like it if:
@@ -555,7 +528,7 @@ static int remove_empty_directories(char *file)
 	return remove_empty_dir_recursive(path, len);
 }
 
-static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char *old_sha1)
+static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char *old_sha1, int *flag)
 {
 	char *ref_file;
 	const char *orig_ref = ref;
@@ -567,7 +540,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 	lock = xcalloc(1, sizeof(struct ref_lock));
 	lock->lock_fd = -1;
 
-	ref = resolve_ref(ref, lock->old_sha1, mustexist, NULL);
+	ref = resolve_ref(ref, lock->old_sha1, mustexist, flag);
 	if (!ref && errno == EISDIR) {
 		/* we are trying to lock foo but we used to
 		 * have foo/bar which now does not exist;
@@ -580,7 +553,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 			error("there are still refs under '%s'", orig_ref);
 			goto error_return;
 		}
-		ref = resolve_ref(orig_ref, lock->old_sha1, mustexist, NULL);
+		ref = resolve_ref(orig_ref, lock->old_sha1, mustexist, flag);
 	}
 	if (!ref) {
 		last_errno = errno;
@@ -640,12 +613,84 @@ struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1)
 	if (check_ref_format(ref))
 		return NULL;
 	strcpy(refpath, mkpath("refs/%s", ref));
-	return lock_ref_sha1_basic(refpath, old_sha1);
+	return lock_ref_sha1_basic(refpath, old_sha1, NULL);
 }
 
 struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1)
 {
-	return lock_ref_sha1_basic(ref, old_sha1);
+	return lock_ref_sha1_basic(ref, old_sha1, NULL);
+}
+
+static int repack_without_ref(const char *refname)
+{
+	struct ref_list *list, *packed_ref_list;
+	int fd;
+	int found = 0;
+	struct lock_file packlock;
+
+	packed_ref_list = get_packed_refs();
+	for (list = packed_ref_list; list; list = list->next) {
+		if (!strcmp(refname, list->name)) {
+			found = 1;
+			break;
+		}
+	}
+	if (!found)
+		return 0;
+	memset(&packlock, 0, sizeof(packlock));
+	fd = hold_lock_file_for_update(&packlock, git_path("packed-refs"), 0);
+	if (fd < 0)
+		return error("cannot delete '%s' from packed refs", refname);
+
+	for (list = packed_ref_list; list; list = list->next) {
+		char line[PATH_MAX + 100];
+		int len;
+
+		if (!strcmp(refname, list->name))
+			continue;
+		len = snprintf(line, sizeof(line), "%s %s\n",
+			       sha1_to_hex(list->sha1), list->name);
+		/* this should not happen but just being defensive */
+		if (len > sizeof(line))
+			die("too long a refname '%s'", list->name);
+		write_or_die(fd, line, len);
+	}
+	return commit_lock_file(&packlock);
+}
+
+int delete_ref(const char *refname, unsigned char *sha1)
+{
+	struct ref_lock *lock;
+	int err, i, ret = 0, flag = 0;
+
+	lock = lock_ref_sha1_basic(refname, sha1, &flag);
+	if (!lock)
+		return 1;
+	if (!(flag & REF_ISPACKED)) {
+		/* loose */
+		i = strlen(lock->lk->filename) - 5; /* .lock */
+		lock->lk->filename[i] = 0;
+		err = unlink(lock->lk->filename);
+		if (err) {
+			ret = 1;
+			error("unlink(%s) failed: %s",
+			      lock->lk->filename, strerror(errno));
+		}
+		lock->lk->filename[i] = '.';
+	}
+	/* removing the loose one could have resurrected an earlier
+	 * packed one.  Also, if it was not loose we need to repack
+	 * without it.
+	 */
+	ret |= repack_without_ref(refname);
+
+	err = unlink(lock->log_file);
+	if (err && errno != ENOENT)
+		fprintf(stderr, "warning: unlink(%s) failed: %s",
+			lock->log_file, strerror(errno));
+	invalidate_cached_refs();
+	unlock_ref(lock);
+	return ret;
 }
 
 void unlock_ref(struct ref_lock *lock)
