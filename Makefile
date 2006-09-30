@@ -60,9 +60,6 @@ all:
 # on non-x86 architectures (e.g. PowerPC), while the OpenSSL version (default
 # choice) has very fast version optimized for i586.
 #
-# Define USE_PIC if you need the main git objects to be built with -fPIC
-# in order to build and link perl/Git.so.  x86-64 seems to need this.
-#
 # Define NEEDS_SSL_WITH_CRYPTO if you need -lcrypto with -lssl (Darwin).
 #
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin).
@@ -110,7 +107,6 @@ uname_P := $(shell sh -c 'uname -p 2>/dev/null || echo not')
 # CFLAGS and LDFLAGS are for the users to override from the command line.
 
 CFLAGS = -g -O2 -Wall
-PIC_FLAG = -fPIC
 LDFLAGS =
 ALL_CFLAGS = $(CFLAGS)
 ALL_LDFLAGS = $(LDFLAGS)
@@ -420,12 +416,6 @@ endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
 endif
-ifeq ($(uname_M),sun4u)
-	USE_PIC = YesPlease
-endif
-ifeq ($(uname_M),x86_64)
-	USE_PIC = YesPlease
-endif
 
 -include config.mak.autogen
 -include config.mak
@@ -566,9 +556,6 @@ else
 	EXTLIBS += $(LIB_4_CRYPTO)
 endif
 endif
-endif
-ifdef USE_PIC
-	ALL_CFLAGS += $(PIC_FLAG)
 endif
 ifdef NO_ACCURATE_DIFF
 	BASIC_CFLAGS += -DNO_ACCURATE_DIFF
