@@ -561,6 +561,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 	const char *orig_ref = ref;
 	struct ref_lock *lock;
 	struct stat st;
+	int last_errno = 0;
 	int mustexist = (old_sha1 && !is_null_sha1(old_sha1));
 
 	lock = xcalloc(1, sizeof(struct ref_lock));
@@ -574,17 +575,18 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 		 * to remain.
 		 */
 		ref_file = git_path("%s", orig_ref);
-		if (remove_empty_directories(ref_file))
-			die("there are still refs under '%s'", orig_ref);
+		if (remove_empty_directories(ref_file)) {
+			last_errno = errno;
+			error("there are still refs under '%s'", orig_ref);
+			goto error_return;
+		}
 		ref = resolve_ref(orig_ref, lock->old_sha1, mustexist, NULL);
 	}
 	if (!ref) {
-		int last_errno = errno;
+		last_errno = errno;
 		error("unable to resolve reference %s: %s",
 			orig_ref, strerror(errno));
-		unlock_ref(lock);
-		errno = last_errno;
-		return NULL;
+		goto error_return;
 	}
 	lock->lk = xcalloc(1, sizeof(struct lock_file));
 
@@ -593,11 +595,19 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 	ref_file = git_path("%s", ref);
 	lock->force_write = lstat(ref_file, &st) && errno == ENOENT;
 
-	if (safe_create_leading_directories(ref_file))
-		die("unable to create directory for %s", ref_file);
+	if (safe_create_leading_directories(ref_file)) {
+		last_errno = errno;
+		error("unable to create directory for %s", ref_file);
+		goto error_return;
+	}
 	lock->lock_fd = hold_lock_file_for_update(lock->lk, ref_file, 1);
 
 	return old_sha1 ? verify_lock(lock, old_sha1, mustexist) : lock;
+
+ error_return:
+	unlock_ref(lock);
+	errno = last_errno;
+	return NULL;
 }
 
 struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1)
