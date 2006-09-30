@@ -588,6 +588,30 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 			orig_ref, strerror(errno));
 		goto error_return;
 	}
+	if (is_null_sha1(lock->old_sha1)) {
+		/* The ref did not exist and we are creating it.
+		 * Make sure there is no existing ref that is packed
+		 * whose name begins with our refname, nor a ref whose
+		 * name is a proper prefix of our refname.
+		 */
+		int namlen = strlen(ref); /* e.g. 'foo/bar' */
+		struct ref_list *list = get_packed_refs();
+		while (list) {
+			/* list->name could be 'foo' or 'foo/bar/baz' */
+			int len = strlen(list->name);
+			int cmplen = (namlen < len) ? namlen : len;
+			const char *lead = (namlen < len) ? list->name : ref;
+
+			if (!strncmp(ref, list->name, cmplen) &&
+			    lead[cmplen] == '/') {
+				error("'%s' exists; cannot create '%s'",
+				      list->name, ref);
+				goto error_return;
+			}
+			list = list->next;
+		}
+	}
+
 	lock->lk = xcalloc(1, sizeof(struct lock_file));
 
 	lock->ref_name = xstrdup(ref);
