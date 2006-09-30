@@ -1672,9 +1672,9 @@ sub git_print_tree_entry {
 			              "history");
 		}
 		print " | " .
-		      $cgi->a({-href => href(action=>"blob_plain",
-		                             hash=>$t->{'hash'}, file_name=>"$basedir$t->{'name'}")},
-		              "raw");
+			$cgi->a({-href => href(action=>"blob_plain", hash_base=>$hash_base,
+					       file_name=>"$basedir$t->{'name'}")},
+				"raw");
 		print "</td>\n";
 
 	} elsif ($t->{'type'} eq "tree") {
@@ -2745,14 +2745,14 @@ sub git_blob {
 sub git_tree {
 	my $have_snapshot = gitweb_have_snapshot();
 
+	if (!defined $hash_base) {
+		$hash_base = "HEAD";
+	}
 	if (!defined $hash) {
-		$hash = git_get_head_hash($project);
 		if (defined $file_name) {
-			my $base = $hash_base || $hash;
-			$hash = git_get_hash_by_path($base, $file_name, "tree");
-		}
-		if (!defined $hash_base) {
-			$hash_base = $hash;
+			$hash = git_get_hash_by_path($hash_base, $file_name, "tree");
+		} else {
+			$hash = $hash_base;
 		}
 	}
 	$/ = "\0";
