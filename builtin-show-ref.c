@@ -6,12 +6,13 @@
 static const char show_ref_usage[] = "git show-ref [-q|--quiet] [--verify] [-h|--head] [-d|--dereference] [-s|--hash] [--tags] [--heads] [--] [pattern*]";
 
 static int deref_tags = 0, show_head = 0, tags_only = 0, heads_only = 0,
-	found_match = 0, verify = 0, quiet = 0, hash_only = 0;
+	found_match = 0, verify = 0, quiet = 0, hash_only = 0, abbrev = 0;
 static const char **pattern;
 
 static int show_ref(const char *refname, const unsigned char *sha1, int flag, void *cbdata)
 {
 	struct object *obj;
+	const char *hex;
 
 	if (tags_only || heads_only) {
 		int match;
@@ -51,13 +52,16 @@ match:
 	}
 	if (quiet)
 		return 0;
+
+	hex = find_unique_abbrev(sha1, abbrev);
 	if (hash_only)
-		printf("%s\n", sha1_to_hex(sha1));
+		printf("%s\n", hex);
 	else
-		printf("%s %s\n", sha1_to_hex(sha1), refname);
+		printf("%s %s\n", hex, refname);
 	if (deref_tags && obj->type == OBJ_TAG) {
 		obj = deref_tag(obj, refname, 0);
-		printf("%s %s^{}\n", sha1_to_hex(obj->sha1), refname);
+		hex = find_unique_abbrev(obj->sha1, abbrev);
+		printf("%s %s^{}\n", hex, refname);
 	}
 	return 0;
 }
@@ -92,6 +96,29 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "-s") || !strcmp(arg, "--hash")) {
 			hash_only = 1;
+			continue;
+		}
+		if (!strncmp(arg, "--hash=", 7) ||
+		    (!strncmp(arg, "--abbrev", 8) &&
+		     (arg[8] == '=' || arg[8] == '\0'))) {
+			if (arg[3] != 'h' && !arg[8])
+				/* --abbrev only */
+				abbrev = DEFAULT_ABBREV;
+			else {
+				/* --hash= or --abbrev= */
+				char *end;
+				if (arg[3] == 'h') {
+					hash_only = 1;
+					arg += 7;
+				}
+				else
+					arg += 9;
+				abbrev = strtoul(arg, &end, 10);
+				if (*end || abbrev > 40)
+					usage(show_ref_usage);
+				if (abbrev < MINIMUM_ABBREV)
+					abbrev = MINIMUM_ABBREV;
+			}
 			continue;
 		}
 		if (!strcmp(arg, "--verify")) {
