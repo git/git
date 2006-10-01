@@ -635,21 +635,76 @@ static void diffstat_consume(void *priv, char *line, unsigned long len)
 		x->deleted++;
 }
 
-static const char pluses[] = "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-static const char minuses[]= "----------------------------------------------------------------------";
 const char mime_boundary_leader[] = "------------";
 
-static void show_stats(struct diffstat_t* data)
+static int scale_linear(int it, int width, int max_change)
+{
+	/*
+	 * make sure that at least one '-' is printed if there were deletions,
+	 * and likewise for '+'.
+	 */
+	if (max_change < 2)
+		return it;
+	return ((it - 1) * (width - 1) + max_change - 1) / (max_change - 1);
+}
+
+static void show_name(const char *prefix, const char *name, int len,
+		      const char *reset, const char *set)
+{
+	printf(" %s%s%-*s%s |", set, prefix, len, name, reset);
+}
+
+static void show_graph(char ch, int cnt, const char *set, const char *reset)
+{
+	if (cnt <= 0)
+		return;
+	printf("%s", set);
+	while (cnt--)
+		putchar(ch);
+	printf("%s", reset);
+}
+
+static void show_stats(struct diffstat_t* data, struct diff_options *options)
 {
 	int i, len, add, del, total, adds = 0, dels = 0;
-	int max, max_change = 0, max_len = 0;
+	int max_change = 0, max_len = 0;
 	int total_files = data->nr;
+	int width, name_width;
+	const char *reset, *set, *add_c, *del_c;
 
 	if (data->nr == 0)
 		return;
 
+	width = options->stat_width ? options->stat_width : 80;
+	name_width = options->stat_name_width ? options->stat_name_width : 50;
+
+	/* Sanity: give at least 5 columns to the graph,
+	 * but leave at least 10 columns for the name.
+	 */
+	if (width < name_width + 15) {
+		if (name_width <= 25)
+			width = name_width + 15;
+		else
+			name_width = width - 15;
+	}
+
+	/* Find the longest filename and max number of changes */
+	reset = diff_get_color(options->color_diff, DIFF_RESET);
+	set = diff_get_color(options->color_diff, DIFF_PLAIN);
+	add_c = diff_get_color(options->color_diff, DIFF_FILE_NEW);
+	del_c = diff_get_color(options->color_diff, DIFF_FILE_OLD);
+
 	for (i = 0; i < data->nr; i++) {
 		struct diffstat_file *file = data->files[i];
+		int change = file->added + file->deleted;
+
+		len = quote_c_style(file->name, NULL, NULL, 0);
+		if (len) {
+			char *qname = xmalloc(len + 1);
+			quote_c_style(file->name, qname, NULL, 0);
+			free(file->name);
+			file->name = qname;
+		}
 
 		len = strlen(file->name);
 		if (max_len < len)
@@ -657,54 +712,53 @@ static void show_stats(struct diffstat_t* data)
 
 		if (file->is_binary || file->is_unmerged)
 			continue;
-		if (max_change < file->added + file->deleted)
-			max_change = file->added + file->deleted;
+		if (max_change < change)
+			max_change = change;
 	}
+
+	/* Compute the width of the graph part;
+	 * 10 is for one blank at the beginning of the line plus
+	 * " | count " between the name and the graph.
+	 *
+	 * From here on, name_width is the width of the name area,
+	 * and width is the width of the graph area.
+	 */
+	name_width = (name_width < max_len) ? name_width : max_len;
+	if (width < (name_width + 10) + max_change)
+		width = width - (name_width + 10);
+	else
+		width = max_change;
 
 	for (i = 0; i < data->nr; i++) {
 		const char *prefix = "";
 		char *name = data->files[i]->name;
 		int added = data->files[i]->added;
 		int deleted = data->files[i]->deleted;
-
-		if (0 < (len = quote_c_style(name, NULL, NULL, 0))) {
-			char *qname = xmalloc(len + 1);
-			quote_c_style(name, qname, NULL, 0);
-			free(name);
-			data->files[i]->name = name = qname;
-		}
+		int name_len;
 
 		/*
 		 * "scale" the filename
 		 */
-		len = strlen(name);
-		max = max_len;
-		if (max > 50)
-			max = 50;
-		if (len > max) {
+		len = name_width;
+		name_len = strlen(name);
+		if (name_width < name_len) {
 			char *slash;
 			prefix = "...";
-			max -= 3;
-			name += len - max;
+			len -= 3;
+			name += name_len - len;
 			slash = strchr(name, '/');
 			if (slash)
 				name = slash;
 		}
-		len = max;
-
-		/*
-		 * scale the add/delete
-		 */
-		max = max_change;
-		if (max + len > 70)
-			max = 70 - len;
 
 		if (data->files[i]->is_binary) {
-			printf(" %s%-*s |  Bin\n", prefix, len, name);
+			show_name(prefix, name, len, reset, set);
+			printf("  Bin\n");
 			goto free_diffstat_file;
 		}
 		else if (data->files[i]->is_unmerged) {
-			printf(" %s%-*s |  Unmerged\n", prefix, len, name);
+			show_name(prefix, name, len, reset, set);
+			printf("  Unmerged\n");
 			goto free_diffstat_file;
 		}
 		else if (!data->files[i]->is_renamed &&
@@ -713,27 +767,32 @@ static void show_stats(struct diffstat_t* data)
 			goto free_diffstat_file;
 		}
 
+		/*
+		 * scale the add/delete
+		 */
 		add = added;
 		del = deleted;
 		total = add + del;
 		adds += add;
 		dels += del;
 
-		if (max_change > 0) {
-			total = (total * max + max_change / 2) / max_change;
-			add = (add * max + max_change / 2) / max_change;
-			del = total - add;
+		if (width <= max_change) {
+			add = scale_linear(add, width, max_change);
+			del = scale_linear(del, width, max_change);
+			total = add + del;
 		}
-		printf(" %s%-*s |%5d %.*s%.*s\n", prefix,
-				len, name, added + deleted,
-				add, pluses, del, minuses);
+		show_name(prefix, name, len, reset, set);
+		printf("%5d ", added + deleted);
+		show_graph('+', add, add_c, reset);
+		show_graph('-', del, del_c, reset);
+		putchar('\n');
 	free_diffstat_file:
 		free(data->files[i]->name);
 		free(data->files[i]);
 	}
 	free(data->files);
-	printf(" %d files changed, %d insertions(+), %d deletions(-)\n",
-			total_files, adds, dels);
+	printf("%s %d files changed, %d insertions(+), %d deletions(-)%s\n",
+	       set, total_files, adds, dels, reset);
 }
 
 struct checkdiff_t {
@@ -1769,8 +1828,33 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "--patch-with-raw")) {
 		options->output_format |= DIFF_FORMAT_PATCH | DIFF_FORMAT_RAW;
 	}
-	else if (!strcmp(arg, "--stat"))
+	else if (!strncmp(arg, "--stat", 6)) {
+		char *end;
+		int width = options->stat_width;
+		int name_width = options->stat_name_width;
+		arg += 6;
+		end = (char *)arg;
+
+		switch (*arg) {
+		case '-':
+			if (!strncmp(arg, "-width=", 7))
+				width = strtoul(arg + 7, &end, 10);
+			else if (!strncmp(arg, "-name-width=", 12))
+				name_width = strtoul(arg + 12, &end, 10);
+			break;
+		case '=':
+			width = strtoul(arg+1, &end, 10);
+			if (*end == ',')
+				name_width = strtoul(end+1, &end, 10);
+		}
+
+		/* Important! This checks all the error cases! */
+		if (*end)
+			return 0;
 		options->output_format |= DIFF_FORMAT_DIFFSTAT;
+		options->stat_name_width = name_width;
+		options->stat_width = width;
+	}
 	else if (!strcmp(arg, "--check"))
 		options->output_format |= DIFF_FORMAT_CHECKDIFF;
 	else if (!strcmp(arg, "--summary"))
@@ -2528,7 +2612,7 @@ void diff_flush(struct diff_options *options)
 			if (check_pair_status(p))
 				diff_flush_stat(p, options, &diffstat);
 		}
-		show_stats(&diffstat);
+		show_stats(&diffstat, options);
 		separator++;
 	}
 
