@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git-show-ref' [-q|--quiet] [--verify] [-h|--head] [-d|--dereference]
-	     [-s|--hash] [--tags] [--heads] [--] <pattern>...
+	     [-s|--hash] [--abbrev] [--tags] [--heads] [--] <pattern>...
 
 DESCRIPTION
 -----------
@@ -37,20 +37,24 @@ OPTIONS
 
 -d, --dereference::
 
-	Dereference tags into object IDs. They will be shown with "^{}"
+	Dereference tags into object IDs as well. They will be shown with "^{}"
 	appended.
 
 -s, --hash::
 
 	Only show the SHA1 hash, not the reference name. When also using
-	--dereference the dereferenced tag will still be shown after the SHA1,
-	this maybe a bug.
+	--dereference the dereferenced tag will still be shown after the SHA1.
 
 --verify::
 
 	Enable stricter reference checking by requiring an exact ref path.
 	Aside from returning an error code of 1, it will also print an error
 	message if '--quiet' was not specified.
+
+--abbrev, --abbrev=len::
+
+	Abbreviate the object name.  When using `--hash`, you do
+	not have to say `--hash --abbrev`; `--hash=len` would do.
 
 -q, --quiet::
 
