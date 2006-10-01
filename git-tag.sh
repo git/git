@@ -66,7 +66,7 @@ done
 name="$1"
 [ "$name" ] || usage
 prev=0000000000000000000000000000000000000000
-if test -e "$GIT_DIR/refs/tags/$name"
+if git-show-ref --verify --quiet -- "refs/tags/$name"
 then
     test -n "$force" || die "tag '$name' already exists"
     prev=`git rev-parse "refs/tags/$name"`
