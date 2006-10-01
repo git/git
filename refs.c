@@ -498,7 +498,7 @@ static int remove_empty_dir_recursive(char *path, int len)
 		    strcpy(path + len, e->d_name) &&
 		    !lstat(path, &st) &&
 		    S_ISDIR(st.st_mode) &&
-		    remove_empty_dir_recursive(path, len + namlen))
+		    !remove_empty_dir_recursive(path, len + namlen))
 			continue; /* happy */
 
 		/* path too long, stat fails, or non-directory still exists */
