@@ -67,4 +67,31 @@ test_expect_success \
      git-pack-refs &&
      git-branch -d g'
 
+test_expect_failure \
+    'git branch i/j/k should barf if branch i exists' \
+    'git-branch i &&
+     git-pack-refs --prune &&
+     git-branch i/j/k'
+
+test_expect_success \
+    'test git branch k after branch k/l/m and k/lm have been deleted' \
+    'git-branch k/l &&
+     git-branch k/lm &&
+     git-branch -d k/l &&
+     git-branch k/l/m &&
+     git-branch -d k/l/m &&
+     git-branch -d k/lm &&
+     git-branch k'
+
+test_expect_success \
+    'test git branch n after some branch deletion and pruning' \
+    'git-branch n/o &&
+     git-branch n/op &&
+     git-branch -d n/o &&
+     git-branch n/o/p &&
+     git-branch -d n/op &&
+     git-pack-refs --prune &&
+     git-branch -d n/o/p &&
+     git-branch n'
+
 test_done
