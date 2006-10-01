@@ -443,6 +443,12 @@ sub validate_refname {
 	return $input;
 }
 
+# very thin wrapper for decode("utf8", $str, Encode::FB_DEFAULT);
+sub to_utf8 {
+	my $str = shift;
+	return decode("utf8", $str, Encode::FB_DEFAULT);
+}
+
 # quote unsafe chars, but keep the slash, even when it's not
 # correct, but quoted slashes look too horrible in bookmarks
 sub esc_param {
@@ -465,7 +471,7 @@ sub esc_url {
 # replace invalid utf8 character with SUBSTITUTION sequence
 sub esc_html {
 	my $str = shift;
-	$str = decode("utf8", $str, Encode::FB_DEFAULT);
+	$str = to_utf8($str);
 	$str = escapeHTML($str);
 	$str =~ s/\014/^L/g; # escape FORM FEED (FF) character (e.g. in COPYING file)
 	$str =~ s/\033/^[/g; # "escape" ESCAPE (\e) character (e.g. commit 20a3847d8a5032ce41f90dcc68abfb36e6fee9b1)
@@ -668,7 +674,7 @@ sub format_subject_html {
 
 	if (length($short) < length($long)) {
 		return $cgi->a({-href => $href, -class => "list subject",
-		                -title => decode("utf8", $long, Encode::FB_DEFAULT)},
+		                -title => to_utf8($long)},
 		       esc_html($short) . $extra);
 	} else {
 		return $cgi->a({-href => $href, -class => "list subject"},
@@ -845,7 +851,7 @@ sub git_get_projects_list {
 			    -e "$projectroot/$path/$export_ok")) {
 				my $pr = {
 					path => $path,
-					owner => decode("utf8", $owner, Encode::FB_DEFAULT),
+					owner => to_utf8($owner),
 				};
 				push @list, $pr
 			}
@@ -874,7 +880,7 @@ sub git_get_project_owner {
 			$pr = unescape($pr);
 			$ow = unescape($ow);
 			if ($pr eq $project) {
-				$owner = decode("utf8", $ow, Encode::FB_DEFAULT);
+				$owner = to_utf8($ow);
 				last;
 			}
 		}
@@ -1236,7 +1242,7 @@ sub get_file_owner {
 	}
 	my $owner = $gcos;
 	$owner =~ s/[,;].*$//;
-	return decode("utf8", $owner, Encode::FB_DEFAULT);
+	return to_utf8($owner);
 }
 
 ## ......................................................................
@@ -3589,7 +3595,7 @@ XML
 		      "<![CDATA[\n";
 		my $comment = $co{'comment'};
 		foreach my $line (@$comment) {
-			$line = decode("utf8", $line, Encode::FB_DEFAULT);
+			$line = to_utf8($line);
 			print "$line<br/>\n";
 		}
 		print "<br/>\n";
@@ -3598,7 +3604,7 @@ XML
 				next;
 			}
 			my $file = esc_html(unquote($7));
-			$file = decode("utf8", $file, Encode::FB_DEFAULT);
+			$file = to_utf8($file);
 			print "$file<br/>\n";
 		}
 		print "]]>\n" .
