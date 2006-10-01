@@ -4,7 +4,33 @@
 
 #include <string.h>
 
+#include "git-compat-util.h"
 #include "interpolate.h"
+
+
+void interp_set_entry(struct interp *table, int slot, const char *value)
+{
+	char *oldval = table[slot].value;
+	char *newval = NULL;
+
+	if (oldval)
+		free(oldval);
+
+	if (value)
+		newval = xstrdup(value);
+
+	table[slot].value = newval;
+}
+
+
+void interp_clear_table(struct interp *table, int ninterps)
+{
+	int i;
+
+	for (i = 0; i < ninterps; i++) {
+		interp_set_entry(table, i, NULL);
+	}
+}
 
 
 /*

@@ -129,22 +129,25 @@ append_fetch_head () {
     then
 	headc_=$(git-rev-parse --verify "$head_^0") || exit
 	echo "$headc_	$not_for_merge_	$note_" >>"$GIT_DIR/FETCH_HEAD"
-	[ "$verbose" ] && echo >&2 "* committish: $head_"
-	[ "$verbose" ] && echo >&2 "  $note_"
     else
 	echo "$head_	not-for-merge	$note_" >>"$GIT_DIR/FETCH_HEAD"
-	[ "$verbose" ] && echo >&2 "* non-commit: $head_"
-	[ "$verbose" ] && echo >&2 "  $note_"
     fi
-    if test "$local_name_" != ""
-    then
-	# We are storing the head locally.  Make sure that it is
-	# a fast forward (aka "reverse push").
-	fast_forward_local "$local_name_" "$head_" "$note_"
-    fi
+
+    update_local_ref "$local_name_" "$head_" "$note_"
 }
 
-fast_forward_local () {
+update_local_ref () {
+    # If we are storing the head locally make sure that it is
+    # a fast forward (aka "reverse push").
+
+    label_=$(git-cat-file -t $2)
+    newshort_=$(git-rev-parse --short $2)
+    if test -z "$1" ; then
+	[ "$verbose" ] && echo >&2 "* fetched $3"
+	[ "$verbose" ] && echo >&2 "  $label_: $newshort_"
+	return 0
+    fi
+    oldshort_=$(git-rev-parse --short "$1" 2>/dev/null)
     mkdir -p "$(dirname "$GIT_DIR/$1")"
     case "$1" in
     refs/tags/*)
@@ -154,13 +157,16 @@ fast_forward_local () {
 	then
 		if now_=$(cat "$GIT_DIR/$1") && test "$now_" = "$2"
 		then
-			[ "$verbose" ] && echo >&2 "* $1: same as $3" ||:
+			[ "$verbose" ] && echo >&2 "* $1: same as $3"
+			[ "$verbose" ] && echo >&2 "  $label_: $newshort_" ||:
 		else
 			echo >&2 "* $1: updating with $3"
+			echo >&2 "  $label_: $newshort_"
 			git-update-ref -m "$rloga: updating tag" "$1" "$2"
 		fi
 	else
 		echo >&2 "* $1: storing $3"
+		echo >&2 "  $label_: $newshort_"
 		git-update-ref -m "$rloga: storing tag" "$1" "$2"
 	fi
 	;;
@@ -178,31 +184,34 @@ fast_forward_local () {
 	        if test -n "$verbose"
 		then
 			echo >&2 "* $1: same as $3"
+			echo >&2 "  $label_: $newshort_"
 		fi
 		;;
 	    *,$local)
 		echo >&2 "* $1: fast forward to $3"
-		echo >&2 "  from $local to $2"
+		echo >&2 "  old..new: $oldshort_..$newshort_"
 		git-update-ref -m "$rloga: fast-forward" "$1" "$2" "$local"
 		;;
 	    *)
 		false
 		;;
 	    esac || {
-		echo >&2 "* $1: does not fast forward to $3;"
 		case ",$force,$single_force," in
 		*,t,*)
-			echo >&2 "  forcing update."
+			echo >&2 "* $1: forcing update to non-fast forward $3"
+			echo >&2 "  old...new: $oldshort_...$newshort_"
 			git-update-ref -m "$rloga: forced-update" "$1" "$2" "$local"
 			;;
 		*)
-			echo >&2 "  not updating."
+			echo >&2 "* $1: not updating to non-fast forward $3"
+			echo >&2 "  old...new: $oldshort_...$newshort_"
 			exit 1
 			;;
 		esac
 	    }
 	else
 	    echo >&2 "* $1: storing $3"
+	    echo >&2 "  $label_: $newshort_"
 	    git-update-ref -m "$rloga: storing head" "$1" "$2"
 	fi
 	;;
@@ -257,6 +266,7 @@ fi
 fetch_main () {
   reflist="$1"
   refs=
+  rref=
 
   for ref in $reflist
   do
@@ -289,6 +299,10 @@ fetch_main () {
 	  if [ -n "$GIT_SSL_NO_VERIFY" ]; then
 	      curl_extra_args="-k"
 	  fi
+	  if [ -n "$GIT_CURL_FTP_NO_EPSV" -o \
+		"`git-repo-config --bool http.noEPSV`" = true ]; then
+	      noepsv_opt="--disable-epsv"
+	  fi
 	  max_depth=5
 	  depth=0
 	  head="ref: $remote_name"
@@ -300,7 +314,7 @@ fetch_main () {
 	      $u =~ s{([^-a-zA-Z0-9/.])}{sprintf"%%%02x",ord($1)}eg;
 	      print "$u";
 	  ' "$head")
-	    head=$(curl -nsfL $curl_extra_args "$remote/$remote_name_quoted")
+	    head=$(curl -nsfL $curl_extra_args $noepsv_opt "$remote/$remote_name_quoted")
 	    depth=$( expr \( $depth + 1 \) )
 	  done
 	  expr "z$head" : "z$_x40\$" >/dev/null ||

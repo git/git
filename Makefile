@@ -525,6 +525,9 @@ endif
 ifdef NO_INET_NTOP
 	LIB_OBJS += compat/inet_ntop.o
 endif
+ifdef NO_INET_PTON
+	LIB_OBJS += compat/inet_pton.o
+endif
 
 ifdef NO_ICONV
 	ALL_CFLAGS += -DNO_ICONV

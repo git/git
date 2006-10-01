@@ -202,6 +202,12 @@ http.lowSpeedLimit, http.lowSpeedTime::
 	Can be overridden by the 'GIT_HTTP_LOW_SPEED_LIMIT' and
 	'GIT_HTTP_LOW_SPEED_TIME' environment variables.
 
+http.noEPSV::
+	A boolean which disables using of EPSV ftp command by curl.
+	This can helpful with some "poor" ftp servers which doesn't
+	support EPSV mode. Can be overridden by the 'GIT_CURL_FTP_NO_EPSV'
+	environment variable. Default is false (curl will use EPSV).
+
 i18n.commitEncoding::
 	Character encoding the commit messages are stored in; git itself
 	does not care per se, but this information is necessary e.g. when
