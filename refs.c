@@ -42,6 +42,12 @@ const char *resolve_ref(const char *path, unsigned char *sha1, int reading)
 			}
 		}
 
+		/* Is it a directory? */
+		if (S_ISDIR(st.st_mode)) {
+			errno = EISDIR;
+			return NULL;
+		}
+
 		/*
 		 * Anything else, just open it and try to use it as
 		 * a ref
