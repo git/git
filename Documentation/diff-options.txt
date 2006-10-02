@@ -10,8 +10,11 @@
 --patch-with-raw::
 	Synonym for "-p --raw".
 
---stat::
-	Generate a diffstat.
+--stat[=width[,name-width]]::
+	Generate a diffstat.  You can override the default
+	output width for 80-column terminal by "--stat=width".
+	The width of the filename part can be controlled by
+	giving another width to it separated by a comma.
 
 --summary::
 	Output a condensed summary of extended header information

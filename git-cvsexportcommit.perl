@@ -135,7 +135,7 @@ foreach my $f (@files) {
     if ($fields[4] eq 'M') {
 	push @mfiles, $fields[5];
     }
-    if ($fields[4] eq 'R') {
+    if ($fields[4] eq 'D') {
 	push @dfiles, $fields[5];
     }
 }

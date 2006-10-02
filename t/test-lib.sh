@@ -218,6 +218,8 @@ PYTHON=`sed -e '1{
 	PYTHONPATH=$(pwd)/../compat
 	export PYTHONPATH
 }
+GITPERLLIB=$(pwd)/../perl/blib/lib:$(pwd)/../perl/blib/arch/auto/Git
+export GITPERLLIB
 test -d ../templates/blt || {
 	error "You haven't built things yet, have you?"
 }

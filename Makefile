@@ -1,11 +1,6 @@
 # The default target of this Makefile is...
 all:
 
-# Define MOZILLA_SHA1 environment variable when running make to make use of
-# a bundled SHA1 routine coming from Mozilla. It is GPL'd and should be fast
-# on non-x86 architectures (e.g. PowerPC), while the OpenSSL version (default
-# choice) has very fast version optimized for i586.
-#
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
 # This also implies MOZILLA_SHA1.
 #
@@ -60,6 +55,11 @@ all:
 # Define ARM_SHA1 environment variable when running make to make use of
 # a bundled SHA1 routine optimized for ARM.
 #
+# Define MOZILLA_SHA1 environment variable when running make to make use of
+# a bundled SHA1 routine coming from Mozilla. It is GPL'd and should be fast
+# on non-x86 architectures (e.g. PowerPC), while the OpenSSL version (default
+# choice) has very fast version optimized for i586.
+#
 # Define NEEDS_SSL_WITH_CRYPTO if you need -lcrypto with -lssl (Darwin).
 #
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin).
@@ -84,13 +84,13 @@ all:
 # Define COLLISION_CHECK below if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
 # sufficient guarantee that no collisions between objects will ever happen.
-
+#
 # Define USE_NSEC below if you want git to care about sub-second file mtimes
 # and ctimes. Note that you need recent glibc (at least 2.2.4) for this, and
 # it will BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely
 # randomly break unless your underlying filesystem supports those sub-second
 # times (my ext3 doesn't).
-
+#
 # Define USE_STDEV below if you want git to care about the underlying device
 # change being considered an inode change from the update-cache perspective.
 
@@ -148,6 +148,12 @@ SPARSE_FLAGS = -D__BIG_ENDIAN__ -D__powerpc__
 
 
 ### --- END CONFIGURATION SECTION ---
+
+# Those must not be GNU-specific; they are shared with perl/ which may
+# be built by a different compiler. (Note that this is an artifact now
+# but it still might be nice to keep that distinction.)
+BASIC_CFLAGS =
+BASIC_LDFLAGS =
 
 SCRIPT_SH = \
 	git-bisect.sh git-branch.sh git-checkout.sh \
@@ -209,7 +215,8 @@ BUILT_INS = \
 	$(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
 
 # what 'all' will build and 'install' will install, in gitexecdir
-ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS)
+ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS) \
+	git-merge-recur$X
 
 # Backward compatibility -- to be removed after 1.0
 PROGRAMS += git-ssh-pull$X git-ssh-push$X
@@ -305,7 +312,7 @@ BUILTIN_OBJS = \
 	builtin-pack-refs.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
-LIBS = $(GITLIBS) -lz
+EXTLIBS = -lz
 
 #
 # Platform specific tweaks
@@ -327,14 +334,14 @@ ifeq ($(uname_S),Darwin)
 	NO_STRLCPY = YesPlease
 	ifndef NO_FINK
 		ifeq ($(shell test -d /sw/lib && echo y),y)
-			ALL_CFLAGS += -I/sw/include
-			ALL_LDFLAGS += -L/sw/lib
+			BASIC_CFLAGS += -I/sw/include
+			BASIC_LDFLAGS += -L/sw/lib
 		endif
 	endif
 	ifndef NO_DARWIN_PORTS
 		ifeq ($(shell test -d /opt/local/lib && echo y),y)
-			ALL_CFLAGS += -I/opt/local/include
-			ALL_LDFLAGS += -L/opt/local/lib
+			BASIC_CFLAGS += -I/opt/local/include
+			BASIC_LDFLAGS += -L/opt/local/lib
 		endif
 	endif
 endif
@@ -356,7 +363,7 @@ ifeq ($(uname_S),SunOS)
 	endif
 	INSTALL = ginstall
 	TAR = gtar
-	ALL_CFLAGS += -D__EXTENSIONS__
+	BASIC_CFLAGS += -D__EXTENSIONS__
 endif
 ifeq ($(uname_O),Cygwin)
 	NO_D_TYPE_IN_DIRENT = YesPlease
@@ -374,21 +381,22 @@ ifeq ($(uname_O),Cygwin)
 endif
 ifeq ($(uname_S),FreeBSD)
 	NEEDS_LIBICONV = YesPlease
-	ALL_CFLAGS += -I/usr/local/include
-	ALL_LDFLAGS += -L/usr/local/lib
+	BASIC_CFLAGS += -I/usr/local/include
+	BASIC_LDFLAGS += -L/usr/local/lib
 endif
 ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
 	NEEDS_LIBICONV = YesPlease
-	ALL_CFLAGS += -I/usr/local/include
-	ALL_LDFLAGS += -L/usr/local/lib
+	BASIC_CFLAGS += -I/usr/local/include
+	BASIC_LDFLAGS += -L/usr/local/lib
 endif
 ifeq ($(uname_S),NetBSD)
 	ifeq ($(shell expr "$(uname_R)" : '[01]\.'),2)
 		NEEDS_LIBICONV = YesPlease
 	endif
-	ALL_CFLAGS += -I/usr/pkg/include
-	ALL_LDFLAGS += -L/usr/pkg/lib -Wl,-rpath,/usr/pkg/lib
+	BASIC_CFLAGS += -I/usr/pkg/include
+	BASIC_LDFLAGS += -L/usr/pkg/lib
+	ALL_LDFLAGS += -Wl,-rpath,/usr/pkg/lib
 endif
 ifeq ($(uname_S),AIX)
 	NO_STRCASESTR=YesPlease
@@ -402,9 +410,9 @@ ifeq ($(uname_S),IRIX64)
 	NO_STRLCPY = YesPlease
 	NO_SOCKADDR_STORAGE=YesPlease
 	SHELL_PATH=/usr/gnu/bin/bash
-	ALL_CFLAGS += -DPATH_MAX=1024
+	BASIC_CFLAGS += -DPATH_MAX=1024
 	# for now, build 32-bit version
-	ALL_LDFLAGS += -L/usr/lib32
+	BASIC_LDFLAGS += -L/usr/lib32
 endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
@@ -426,7 +434,7 @@ endif
 ifndef NO_CURL
 	ifdef CURLDIR
 		# This is still problematic -- gcc does not always want -R.
-		ALL_CFLAGS += -I$(CURLDIR)/include
+		BASIC_CFLAGS += -I$(CURLDIR)/include
 		CURL_LIBCURL = -L$(CURLDIR)/lib -R$(CURLDIR)/lib -lcurl
 	else
 		CURL_LIBCURL = -lcurl
@@ -447,13 +455,13 @@ ifndef NO_OPENSSL
 	OPENSSL_LIBSSL = -lssl
 	ifdef OPENSSLDIR
 		# Again this may be problematic -- gcc does not always want -R.
-		ALL_CFLAGS += -I$(OPENSSLDIR)/include
+		BASIC_CFLAGS += -I$(OPENSSLDIR)/include
 		OPENSSL_LINK = -L$(OPENSSLDIR)/lib -R$(OPENSSLDIR)/lib
 	else
 		OPENSSL_LINK =
 	endif
 else
-	ALL_CFLAGS += -DNO_OPENSSL
+	BASIC_CFLAGS += -DNO_OPENSSL
 	MOZILLA_SHA1 = 1
 	OPENSSL_LIBSSL =
 endif
@@ -465,32 +473,32 @@ endif
 ifdef NEEDS_LIBICONV
 	ifdef ICONVDIR
 		# Again this may be problematic -- gcc does not always want -R.
-		ALL_CFLAGS += -I$(ICONVDIR)/include
+		BASIC_CFLAGS += -I$(ICONVDIR)/include
 		ICONV_LINK = -L$(ICONVDIR)/lib -R$(ICONVDIR)/lib
 	else
 		ICONV_LINK =
 	endif
-	LIBS += $(ICONV_LINK) -liconv
+	EXTLIBS += $(ICONV_LINK) -liconv
 endif
 ifdef NEEDS_SOCKET
-	LIBS += -lsocket
+	EXTLIBS += -lsocket
 	SIMPLE_LIB += -lsocket
 endif
 ifdef NEEDS_NSL
-	LIBS += -lnsl
+	EXTLIBS += -lnsl
 	SIMPLE_LIB += -lnsl
 endif
 ifdef NO_D_TYPE_IN_DIRENT
-	ALL_CFLAGS += -DNO_D_TYPE_IN_DIRENT
+	BASIC_CFLAGS += -DNO_D_TYPE_IN_DIRENT
 endif
 ifdef NO_D_INO_IN_DIRENT
-	ALL_CFLAGS += -DNO_D_INO_IN_DIRENT
+	BASIC_CFLAGS += -DNO_D_INO_IN_DIRENT
 endif
 ifdef NO_C99_FORMAT
 	ALL_CFLAGS += -DNO_C99_FORMAT
 endif
 ifdef NO_SYMLINK_HEAD
-	ALL_CFLAGS += -DNO_SYMLINK_HEAD
+	BASIC_CFLAGS += -DNO_SYMLINK_HEAD
 endif
 ifdef NO_STRCASESTR
 	COMPAT_CFLAGS += -DNO_STRCASESTR
@@ -513,21 +521,24 @@ ifdef NO_MMAP
 	COMPAT_OBJS += compat/mmap.o
 endif
 ifdef NO_IPV6
-	ALL_CFLAGS += -DNO_IPV6
+	BASIC_CFLAGS += -DNO_IPV6
 endif
 ifdef NO_SOCKADDR_STORAGE
 ifdef NO_IPV6
-	ALL_CFLAGS += -Dsockaddr_storage=sockaddr_in
+	BASIC_CFLAGS += -Dsockaddr_storage=sockaddr_in
 else
-	ALL_CFLAGS += -Dsockaddr_storage=sockaddr_in6
+	BASIC_CFLAGS += -Dsockaddr_storage=sockaddr_in6
 endif
 endif
 ifdef NO_INET_NTOP
 	LIB_OBJS += compat/inet_ntop.o
 endif
+ifdef NO_INET_PTON
+	LIB_OBJS += compat/inet_pton.o
+endif
 
 ifdef NO_ICONV
-	ALL_CFLAGS += -DNO_ICONV
+	BASIC_CFLAGS += -DNO_ICONV
 endif
 
 ifdef PPC_SHA1
@@ -543,12 +554,12 @@ ifdef MOZILLA_SHA1
 	LIB_OBJS += mozilla-sha1/sha1.o
 else
 	SHA1_HEADER = <openssl/sha.h>
-	LIBS += $(LIB_4_CRYPTO)
+	EXTLIBS += $(LIB_4_CRYPTO)
 endif
 endif
 endif
 ifdef NO_ACCURATE_DIFF
-	ALL_CFLAGS += -DNO_ACCURATE_DIFF
+	BASIC_CFLAGS += -DNO_ACCURATE_DIFF
 endif
 
 # Shell quote (do not use $(call) to accommodate ancient setups);
@@ -566,15 +577,23 @@ PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
 PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
 GIT_PYTHON_DIR_SQ = $(subst ','\'',$(GIT_PYTHON_DIR))
 
-ALL_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' $(COMPAT_CFLAGS)
+LIBS = $(GITLIBS) $(EXTLIBS)
+
+BASIC_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' $(COMPAT_CFLAGS)
 LIB_OBJS += $(COMPAT_OBJS)
+
+ALL_CFLAGS += $(BASIC_CFLAGS)
+ALL_LDFLAGS += $(BASIC_LDFLAGS)
+
 export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
+
+
 ### Build rules
 
-all: $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk gitweb/gitweb.cgi \
-	git-merge-recur$X
+all: $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk gitweb/gitweb.cgi
 
-all:
+all: perl/Makefile
+	$(MAKE) -C perl
 	$(MAKE) -C templates
 
 strip: $(PROGRAMS) git$X
@@ -608,9 +627,18 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	chmod +x $@+
 	mv $@+ $@
 
-$(patsubst %.perl,%,$(SCRIPT_PERL)) : % : %.perl
+$(patsubst %.perl,%,$(SCRIPT_PERL)): perl/Makefile
+$(patsubst %.perl,%,$(SCRIPT_PERL)): % : %.perl
 	rm -f $@ $@+
-	sed -e '1s|#!.*perl|#!$(PERL_PATH_SQ)|' \
+	INSTLIBDIR=`$(MAKE) -C perl -s --no-print-directory instlibdir` && \
+	sed -e '1{' \
+	    -e '	s|#!.*perl|#!$(PERL_PATH_SQ)|' \
+	    -e '	h' \
+	    -e '	s=.*=use lib (split(/:/, $$ENV{GITPERLLIB} || "@@INSTLIBDIR@@"));=' \
+	    -e '	H' \
+	    -e '	x' \
+	    -e '}' \
+	    -e 's|@@INSTLIBDIR@@|'"$$INSTLIBDIR"'|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    $@.perl >$@+
 	chmod +x $@+
@@ -740,6 +768,10 @@ $(XDIFF_LIB): $(XDIFF_OBJS)
 	rm -f $@ && $(AR) rcs $@ $(XDIFF_OBJS)
 
 
+perl/Makefile: perl/Git.pm perl/Makefile.PL GIT-CFLAGS
+	(cd perl && $(PERL_PATH) Makefile.PL \
+		PREFIX='$(prefix_SQ)')
+
 doc:
 	$(MAKE) -C Documentation all
 
@@ -802,6 +834,7 @@ install: all
 	$(INSTALL) $(ALL_PROGRAMS) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
 	$(INSTALL) git$X gitk '$(DESTDIR_SQ)$(bindir_SQ)'
 	$(MAKE) -C templates DESTDIR='$(DESTDIR_SQ)' install
+	$(MAKE) -C perl install
 	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
 	$(INSTALL) $(PYMODULES) '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
 	if test 'z$(bindir_SQ)' != 'z$(gitexecdir_SQ)'; \
@@ -872,7 +905,9 @@ clean:
 	rm -f $(htmldocs).tar.gz $(manpages).tar.gz
 	rm -f gitweb/gitweb.cgi
 	$(MAKE) -C Documentation/ clean
-	$(MAKE) -C templates clean
+	[ ! -f perl/Makefile ] || $(MAKE) -C perl/ clean || $(MAKE) -C perl/ clean
+	rm -f perl/ppport.h perl/Makefile.old
+	$(MAKE) -C templates/ clean
 	$(MAKE) -C t/ clean
 	rm -f GIT-VERSION-FILE GIT-CFLAGS
 

@@ -31,7 +31,7 @@ $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
 our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,
-    $opt_b,$opt_r,$opt_I,$opt_A,$opt_s,$opt_l,$opt_d,$opt_D,$opt_S);
+    $opt_b,$opt_r,$opt_I,$opt_A,$opt_s,$opt_l,$opt_d,$opt_D,$opt_S,$opt_F);
 
 sub usage() {
 	print STDERR <<END;
@@ -39,12 +39,12 @@ Usage: ${\basename $0}     # fetch/update GIT from SVN
        [-o branch-for-HEAD] [-h] [-v] [-l max_rev]
        [-C GIT_repository] [-t tagname] [-T trunkname] [-b branchname]
        [-d|-D] [-i] [-u] [-r] [-I ignorefilename] [-s start_chg]
-       [-m] [-M regex] [-A author_file] [-S] [SVN_URL]
+       [-m] [-M regex] [-A author_file] [-S] [-F] [SVN_URL]
 END
 	exit(1);
 }
 
-getopts("A:b:C:dDhiI:l:mM:o:rs:t:T:Suv") or usage();
+getopts("A:b:C:dDFhiI:l:mM:o:rs:t:T:Suv") or usage();
 usage if $opt_h;
 
 my $tag_name = $opt_t || "tags";
@@ -548,8 +548,12 @@ sub commit {
 		$committer_name = $committer_email = $author;
 	}
 
-	if ($opt_S && $message =~ /Signed-off-by:\s+(.*?)\s+<(.*)>\s*\n/) {
+	if ($opt_F && $message =~ /From:\s+(.*?)\s+<(.*)>\s*\n/) {
 		($author_name, $author_email) = ($1, $2);
+		print "Author from From: $1 <$2>\n" if ($opt_v);;
+	} elsif ($opt_S && $message =~ /Signed-off-by:\s+(.*?)\s+<(.*)>\s*\n/) {
+		($author_name, $author_email) = ($1, $2);
+		print "Author from Signed-off-by: $1 <$2>\n" if ($opt_v);;
 	} else {
 		$author_name = $committer_name;
 		$author_email = $committer_email;

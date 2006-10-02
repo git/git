@@ -54,7 +54,8 @@ OPTIONS
 
 --get::
 	Get the value for a given key (optionally filtered by a regex
-	matching the value).
+	matching the value). Returns error code 1 if the key was not
+	found and error code 2 if multiple key values were found.
 
 --get-all::
 	Like get, but does not fail if the number of values for the key

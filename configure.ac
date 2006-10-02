@@ -94,7 +94,7 @@ AC_SUBST(PYTHON_PATH)
 ## Checks for programs.
 AC_MSG_NOTICE([CHECKS for programs])
 #
-AC_PROG_CC
+AC_PROG_CC([cc gcc])
 #AC_PROG_INSTALL		# needs install-sh or install.sh in sources
 AC_CHECK_TOOL(AR, ar, :)
 AC_CHECK_PROGS(TAR, [gtar tar])
