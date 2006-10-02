@@ -112,6 +112,5 @@ if [ "$annotate" ]; then
     object=$(git-mktag < "$GIT_DIR"/TAG_TMP)
 fi
 
-leading=`expr "refs/tags/$name" : '\(.*\)/'` &&
-mkdir -p "$GIT_DIR/$leading" &&
-GIT_DIR="$GIT_DIR" git update-ref "refs/tags/$name" "$object" "$prev"
+git update-ref "refs/tags/$name" "$object" "$prev"
+
