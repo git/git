@@ -278,6 +278,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		for (i = 0; i < deleted.nr; i++) {
 			const char *path = deleted.items[i].path;
 			remove_file_from_cache(path);
+			cache_tree_invalidate_path(active_cache_tree, path);
 		}
 
 		if (active_cache_changed) {
