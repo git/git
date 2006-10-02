@@ -80,12 +80,12 @@ static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 		int is_refspec;
 		char *s, *p;
 
-		if (!strncmp("URL: ", buffer, 5)) {
+		if (!strncmp("URL:", buffer, 4)) {
 			is_refspec = 0;
-			s = buffer + 5;
-		} else if (!strncmp("Push: ", buffer, 6)) {
+			s = buffer + 4;
+		} else if (!strncmp("Push:", buffer, 5)) {
 			is_refspec = 1;
-			s = buffer + 6;
+			s = buffer + 5;
 		} else
 			continue;
 
