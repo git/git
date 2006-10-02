@@ -102,6 +102,10 @@ our %feature = (
 		'sub' => \&feature_pickaxe,
 		'override' => 0,
 		'default' => [1]},
+
+	'pathinfo' => {
+		'override' => 0,
+		'default' => [0]},
 );
 
 sub gitweb_check_feature {
@@ -375,6 +379,7 @@ exit;
 
 sub href(%) {
 	my %params = @_;
+	my $href = $my_uri;
 
 	my @mapping = (
 		project => "p",
@@ -393,6 +398,19 @@ sub href(%) {
 
 	$params{'project'} = $project unless exists $params{'project'};
 
+	my ($use_pathinfo) = gitweb_check_feature('pathinfo');
+	if ($use_pathinfo) {
+		# use PATH_INFO for project name
+		$href .= "/$params{'project'}" if defined $params{'project'};
+		delete $params{'project'};
+
+		# Summary just uses the project path URL
+		if (defined $params{'action'} && $params{'action'} eq 'summary') {
+			delete $params{'action'};
+		}
+	}
+
+	# now encode the parameters explicitly
 	my @result = ();
 	for (my $i = 0; $i < @mapping; $i += 2) {
 		my ($name, $symbol) = ($mapping[$i], $mapping[$i+1]);
@@ -400,7 +418,9 @@ sub href(%) {
 			push @result, $symbol . "=" . esc_param($params{$name});
 		}
 	}
-	return "$my_uri?" . join(';', @result);
+	$href .= "?" . join(';', @result) if scalar @result;
+
+	return $href;
 }
 
 
