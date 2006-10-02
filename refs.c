@@ -621,12 +621,13 @@ struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *o
 	return lock_ref_sha1_basic(ref, old_sha1, NULL);
 }
 
+static struct lock_file packlock;
+
 static int repack_without_ref(const char *refname)
 {
 	struct ref_list *list, *packed_ref_list;
 	int fd;
 	int found = 0;
-	struct lock_file packlock;
 
 	packed_ref_list = get_packed_refs();
 	for (list = packed_ref_list; list; list = list->next) {
