@@ -41,11 +41,19 @@ our $home_link_str = "++GITWEB_HOME_LINK_STR++";
 # replace this with something more descriptive for clearer bookmarks
 our $site_name = "++GITWEB_SITENAME++" || $ENV{'SERVER_NAME'} || "Untitled";
 
+# filename of html text to include at top of each page
+our $site_header = "++GITWEB_SITE_HEADER++";
 # html text to include at home page
 our $home_text = "++GITWEB_HOMETEXT++";
+# filename of html text to include at bottom of each page
+our $site_footer = "++GITWEB_SITE_FOOTER++";
 
-# URI of default stylesheet
-our $stylesheet = "++GITWEB_CSS++";
+# URI of stylesheets
+our @stylesheets = ("++GITWEB_CSS++");
+our $stylesheet;
+# default is not to define style sheet, but it can be overwritten later
+undef $stylesheet;
+
 # URI of GIT logo
 our $logo = "++GITWEB_LOGO++";
 # URI of GIT favicon, assumed to be image/png type
@@ -1366,8 +1374,17 @@ sub git_header_html {
 <meta name="generator" content="gitweb/$version git/$git_version"/>
 <meta name="robots" content="index, nofollow"/>
 <title>$title</title>
-<link rel="stylesheet" type="text/css" href="$stylesheet"/>
 EOF
+# print out each stylesheet that exist
+	if (defined $stylesheet) {
+#provides backwards capability for those people who define style sheet in a config file
+		print '<link rel="stylesheet" type="text/css" href="'.$stylesheet.'"/>'."\n";
+	} else {
+		foreach my $stylesheet (@stylesheets) {
+			next unless $stylesheet;
+			print '<link rel="stylesheet" type="text/css" href="'.$stylesheet.'"/>'."\n";
+		}
+	}
 	if (defined $project) {
 		printf('<link rel="alternate" title="%s log" '.
 		       'href="%s" type="application/rss+xml"/>'."\n",
@@ -1385,8 +1402,15 @@ EOF
 	}
 
 	print "</head>\n" .
-	      "<body>\n" .
-	      "<div class=\"page_header\">\n" .
+	      "<body>\n";
+
+	if (-f $site_header) {
+		open (my $fd, $site_header);
+		print <$fd>;
+		close $fd;
+	}
+
+	print "<div class=\"page_header\">\n" .
 	      "<a href=\"http://www.kernel.org/pub/software/scm/git/docs/\" title=\"git documentation\">" .
 	      "<img src=\"$logo\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
 	      "</a>\n";
@@ -1437,8 +1461,15 @@ sub git_footer_html {
 		print $cgi->a({-href => href(project=>undef, action=>"project_index"),
 		              -class => "rss_logo"}, "TXT") . "\n";
 	}
-	print "</div>\n" .
-	      "</body>\n" .
+	print "</div>\n" ;
+
+	if (-f $site_footer) {
+		open (my $fd, $site_footer);
+		print <$fd>;
+		close $fd;
+	}
+
+	print "</body>\n" .
 	      "</html>";
 }
 
