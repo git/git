@@ -1,4 +1,5 @@
 GIT web Interface
+=================
 
 The one working on:
   http://www.kernel.org/git/
@@ -6,7 +7,8 @@ The one working on:
 From the git version 1.4.0 gitweb is bundled with git.
 
 
-How to configure gitweb for your local system:
+How to configure gitweb for your local system
+---------------------------------------------
 
 You can specify the following configuration variables when building GIT:
  * GITWEB_SITENAME
@@ -28,6 +30,28 @@ You can specify the following configuration variables when building GIT:
    $GITWEB_CONFIG is set when gitweb.cgi is executed the file in the
    environment variable will be loaded instead of the file
    specified when gitweb.cgi was created.
+
+
+Webserver configuration
+-----------------------
+
+If you want to have one URL for both gitweb and your http://
+repositories, you can configure apache like this:
+
+<VirtualHost www:80>
+    ServerName git.domain.org
+    DocumentRoot /pub/git
+    RewriteEngine on
+    RewriteRule ^/(.*\.git/(?!/?(info|objects|refs)).*)?$ /cgi-bin/gitweb.cgi%{REQUEST_URI}  [L,PT]
+</VirtualHost>
+
+The above configuration expects your public repositories to live under
+/pub/git and will serve them as http://git.domain.org/dir-under-pub-git,
+both as cloneable GIT URL and as browseable gitweb interface.
+If you then start your git-daemon with --base-path=/pub/git --export-all
+then you can even use the git:// URL with exactly the same path.
+
+
 
 Originally written by:
   Kay Sievers <kay.sievers@vrfy.org>
