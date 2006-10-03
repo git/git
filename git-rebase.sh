@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano.
 #
 
-USAGE='[--onto <newbase>] <upstream> [<branch>]'
+USAGE='[-v] [--onto <newbase>] <upstream> [<branch>]'
 LONG_USAGE='git-rebase replaces <branch> with a new branch of the
 same name.  When the --onto option is provided the new branch starts
 out with a HEAD equal to <newbase>, otherwise it is equal to <upstream>
@@ -39,6 +39,7 @@ strategy=recursive
 do_merge=
 dotest=$GIT_DIR/.dotest-merge
 prec=4
+verbose=
 
 continue_merge () {
 	test -n "$prev_head" || die "prev_head must be defined"
@@ -190,6 +191,9 @@ do
 		esac
 		do_merge=t
 		;;
+	-v|--verbose)
+		verbose=t
+		;;
 	-*)
 		usage
 		;;
@@ -271,6 +275,12 @@ if test "$upstream" = "$onto" && test "$mb" = "$onto"
 then
 	echo >&2 "Current branch $branch_name is up to date."
 	exit 0
+fi
+
+if test -n "$verbose"
+then
+	echo "Changes from $mb to $onto:"
+	git-diff-tree --stat --summary "$mb" "$onto"
 fi
 
 # Rewind the head to "$onto"; this saves our current head in ORIG_HEAD.
