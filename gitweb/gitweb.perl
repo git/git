@@ -485,6 +485,7 @@ sub esc_html {
 	$str = decode("utf8", $str, Encode::FB_DEFAULT);
 	$str = escapeHTML($str);
 	$str =~ s/\014/^L/g; # escape FORM FEED (FF) character (e.g. in COPYING file)
+	$str =~ s/\033/^[/g; # "escape" ESCAPE (\e) character (e.g. commit 20a3847d8a5032ce41f90dcc68abfb36e6fee9b1)
 	return $str;
 }
 
@@ -2449,9 +2450,64 @@ sub git_tag {
 	git_footer_html();
 }
 
+sub git_blame_flush_chunk {
+	my ($name, $revdata, $color, $rev, @line) = @_;
+	my $label = substr($rev, 0, 8);
+	my $line = scalar(@line);
+	my $cnt = 0;
+	my $pop = '';
+
+	if ($revdata->{$rev} ne '') {
+		$pop = ' title="' . esc_html($revdata->{$rev}) . '"';
+	}
+
+	for (@line) {
+		my ($lineno, $data) = @$_;
+		$cnt++;
+		print "<tr class=\"$color\">\n";
+		if ($cnt == 1) {
+			print "<td class=\"sha1\"$pop";
+			if ($line > 1) {
+				print " rowspan=\"$line\"";
+			}
+			print ">";
+			print $cgi->a({-href => href(action=>"commit",
+						     hash=>$rev,
+						     file_name=>$name)},
+				      $label);
+			print "</td>\n";
+		}
+		print "<td class=\"linenr\">".
+		    "<a id=\"l$lineno\" href=\"#l$lineno\" class=\"linenr\">" .
+		    esc_html($lineno) . "</a></td>\n";
+		print "<td class=\"pre\">" . esc_html($data) . "</td>\n";
+		print "</tr>\n";
+	}
+}
+
+# We can have up to N*2 lines.  If it is more than N lines, split it
+# into two to avoid orphans.
+sub git_blame_flush_chunk_1 {
+	my ($chunk_cap, $name, $revdata, $color, $rev, @chunk) = @_;
+	if ($chunk_cap < @chunk) {
+		my @first = splice(@chunk, 0, @chunk/2);
+		git_blame_flush_chunk($name,
+				      $revdata,
+				      $color,
+				      $rev,
+				      @first);
+	}
+	git_blame_flush_chunk($name,
+			      $revdata,
+			      $color,
+			      $rev,
+			      @chunk);
+}
+
 sub git_blame2 {
 	my $fd;
 	my $ftype;
+	my $chunk_cap = 20;
 
 	my ($have_blame) = gitweb_check_feature('blame');
 	if (!$have_blame) {
@@ -2494,27 +2550,45 @@ sub git_blame2 {
 <table class="blame">
 <tr><th>Commit</th><th>Line</th><th>Data</th></tr>
 HTML
+	my @chunk = ();
+	my %revdata = ();
 	while (<$fd>) {
 		/^([0-9a-fA-F]{40}).*?(\d+)\)\s{1}(\s*.*)/;
-		my $full_rev = $1;
-		my $rev = substr($full_rev, 0, 8);
-		my $lineno = $2;
-		my $data = $3;
-
+		my ($full_rev, $author, $date, $lineno, $data) =
+		    /^([0-9a-f]{40}).*?\s\((.*?)\s+([-\d]+ [:\d]+ [-+\d]+)\s+(\d+)\)\s(.*)/;
+		if (!exists $revdata{$full_rev}) {
+			$revdata{$full_rev} = "$author, $date";
+		}
 		if (!defined $last_rev) {
 			$last_rev = $full_rev;
 		} elsif ($last_rev ne $full_rev) {
+			git_blame_flush_chunk_1($chunk_cap,
+						$file_name,
+						\%revdata,
+						$rev_color[$current_color],
+						$last_rev, @chunk);
+			@chunk = ();
 			$last_rev = $full_rev;
 			$current_color = ++$current_color % $num_colors;
 		}
-		print "<tr class=\"$rev_color[$current_color]\">\n";
-		print "<td class=\"sha1\">" .
-			$cgi->a({-href => href(action=>"commit", hash=>$full_rev, file_name=>$file_name)},
-			        esc_html($rev)) . "</td>\n";
-		print "<td class=\"linenr\"><a id=\"l$lineno\" href=\"#l$lineno\" class=\"linenr\">" .
-		      esc_html($lineno) . "</a></td>\n";
-		print "<td class=\"pre\">" . esc_html($data) . "</td>\n";
-		print "</tr>\n";
+		elsif ($chunk_cap * 2 < @chunk) {
+			# We have more than N*2 lines from the same
+			# revision.  Flush N lines and leave N lines
+			# in @chunk to avoid orphaned lines.
+			my @first = splice(@chunk, 0, $chunk_cap);
+			git_blame_flush_chunk($file_name,
+					      \%revdata,
+					      $rev_color[$current_color],
+					      $last_rev, @first);
+		}
+		push @chunk, [$lineno, $data];
+	}
+	if (@chunk) {
+		git_blame_flush_chunk_1($chunk_cap,
+					$file_name,
+					\%revdata,
+					$rev_color[$current_color],
+					$last_rev, @chunk);
 	}
 	print "</table>\n";
 	print "</div>";

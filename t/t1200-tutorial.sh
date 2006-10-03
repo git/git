@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Johannes Schindelin
 #
 
-test_description='Test git-rev-parse with different parent options'
+test_description='A simple turial in the form of a test case'
 
 . ./test-lib.sh
 
