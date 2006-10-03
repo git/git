@@ -138,7 +138,7 @@ syntax.
   'rev{caret}0' means the commit itself and is used when 'rev' is the
   object name of a tag object that refers to a commit object.
 
-* A suffix '~<n>' to a revision parameter means the commit
+* A suffix '{tilde}<n>' to a revision parameter means the commit
   object that is the <n>th generation grand-parent of the named
   commit object, following only the first parent.  I.e. rev~3 is
   equivalent to rev{caret}{caret}{caret} which is equivalent to\
