@@ -426,7 +426,7 @@ case "$no_tags$tags" in
 		sed -ne 's|^\([0-9a-f]*\)[ 	]\(refs/tags/.*\)^{}$|\1 \2|p' |
 		while read sha1 name
 		do
-			test -f "$GIT_DIR/$name" && continue
+			git-show-ref --verify --quiet -- $name && continue
 			git-check-ref-format "$name" || {
 				echo >&2 "warning: tag ${name} ignored"
 				continue

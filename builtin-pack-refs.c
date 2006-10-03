@@ -1,7 +1,6 @@
 #include "cache.h"
 #include "refs.h"
 
-static const char *result_path, *lock_path;
 static const char builtin_pack_refs_usage[] =
 "git-pack-refs [--prune]";
 
@@ -16,12 +15,6 @@ struct pack_refs_cb_data {
 	struct ref_to_prune *ref_to_prune;
 	FILE *refs_file;
 };
-
-static void remove_lock_file(void)
-{
-	if (lock_path)
-		unlink(lock_path);
-}
 
 static int do_not_prune(int flags)
 {
@@ -69,6 +62,8 @@ static void prune_refs(struct ref_to_prune *r)
 	}
 }
 
+static struct lock_file packed;
+
 int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 {
 	int fd, i;
@@ -88,14 +83,7 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 	if (i != argc)
 		usage(builtin_pack_refs_usage);
 
-	result_path = xstrdup(git_path("packed-refs"));
-	lock_path = xstrdup(mkpath("%s.lock", result_path));
-
-	fd = open(lock_path, O_CREAT | O_EXCL | O_WRONLY, 0666);
-	if (fd < 0)
-		die("unable to create new ref-pack file (%s)", strerror(errno));
-	atexit(remove_lock_file);
-
+	fd = hold_lock_file_for_update(&packed, git_path("packed-refs"), 1);
 	cbdata.refs_file = fdopen(fd, "w");
 	if (!cbdata.refs_file)
 		die("unable to create ref-pack file structure (%s)",
@@ -103,9 +91,8 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 	for_each_ref(handle_one_ref, &cbdata);
 	fsync(fd);
 	fclose(cbdata.refs_file);
-	if (rename(lock_path, result_path) < 0)
+	if (commit_lock_file(&packed) < 0)
 		die("unable to overwrite old ref-pack file (%s)", strerror(errno));
-	lock_path = NULL;
 	if (cbdata.prune)
 		prune_refs(cbdata.ref_to_prune);
 	return 0;
