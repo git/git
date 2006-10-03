@@ -180,6 +180,22 @@ sub feature_pickaxe {
 	return ($_[0]);
 }
 
+# checking HEAD file with -e is fragile if the repository was
+# initialized long time ago (i.e. symlink HEAD) and was pack-ref'ed
+# and then pruned.
+sub check_head_link {
+	my ($dir) = @_;
+	my $headfile = "$dir/HEAD";
+	return ((-e $headfile) ||
+		(-l $headfile && readlink($headfile) =~ /^refs\/heads\//));
+}
+
+sub check_export_ok {
+	my ($dir) = @_;
+	return (check_head_link($dir) &&
+		(!$export_ok || -e "$dir/$export_ok"));
+}
+
 # rename detection options for git-diff and git-diff-tree
 # - default is '-M', with the cost proportional to
 #   (number of removed files) * (number of new files).
@@ -212,7 +228,7 @@ our $project = $cgi->param('p');
 if (defined $project) {
 	if (!validate_pathname($project) ||
 	    !(-d "$projectroot/$project") ||
-	    !(-e "$projectroot/$project/HEAD") ||
+	    !check_head_link("$projectroot/$project") ||
 	    ($export_ok && !(-e "$projectroot/$project/$export_ok")) ||
 	    ($strict_export && !project_in_list($project))) {
 		undef $project;
@@ -289,7 +305,7 @@ sub evaluate_path_info {
 	# find which part of PATH_INFO is project
 	$project = $path_info;
 	$project =~ s,/+$,,;
-	while ($project && !-e "$projectroot/$project/HEAD") {
+	while ($project && !check_head_link("$projectroot/$project")) {
 		$project =~ s,/*[^/]*$,,;
 	}
 	# validate project
@@ -816,8 +832,7 @@ sub git_get_projects_list {
 
 				my $subdir = substr($File::Find::name, $pfxlen + 1);
 				# we check related file in $projectroot
-				if (-e "$projectroot/$subdir/HEAD" && (!$export_ok ||
-				    -e "$projectroot/$subdir/$export_ok")) {
+				if (check_export_ok("$projectroot/$subdir")) {
 					push @list, { path => $subdir };
 					$File::Find::prune = 1;
 				}
@@ -838,8 +853,7 @@ sub git_get_projects_list {
 			if (!defined $path) {
 				next;
 			}
-			if (-e "$projectroot/$path/HEAD" && (!$export_ok ||
-			    -e "$projectroot/$path/$export_ok")) {
+			if (check_export_ok("$projectroot/$path")) {
 				my $pr = {
 					path => $path,
 					owner => decode("utf8", $owner, Encode::FB_DEFAULT),
