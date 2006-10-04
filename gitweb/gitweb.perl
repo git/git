@@ -41,11 +41,19 @@ our $home_link_str = "++GITWEB_HOME_LINK_STR++";
 # replace this with something more descriptive for clearer bookmarks
 our $site_name = "++GITWEB_SITENAME++" || $ENV{'SERVER_NAME'} || "Untitled";
 
+# filename of html text to include at top of each page
+our $site_header = "++GITWEB_SITE_HEADER++";
 # html text to include at home page
 our $home_text = "++GITWEB_HOMETEXT++";
+# filename of html text to include at bottom of each page
+our $site_footer = "++GITWEB_SITE_FOOTER++";
 
-# URI of default stylesheet
-our $stylesheet = "++GITWEB_CSS++";
+# URI of stylesheets
+our @stylesheets = ("++GITWEB_CSS++");
+our $stylesheet;
+# default is not to define style sheet, but it can be overwritten later
+undef $stylesheet;
+
 # URI of GIT logo
 our $logo = "++GITWEB_LOGO++";
 # URI of GIT favicon, assumed to be image/png type
@@ -184,6 +192,22 @@ sub feature_pickaxe {
 	return ($_[0]);
 }
 
+# checking HEAD file with -e is fragile if the repository was
+# initialized long time ago (i.e. symlink HEAD) and was pack-ref'ed
+# and then pruned.
+sub check_head_link {
+	my ($dir) = @_;
+	my $headfile = "$dir/HEAD";
+	return ((-e $headfile) ||
+		(-l $headfile && readlink($headfile) =~ /^refs\/heads\//));
+}
+
+sub check_export_ok {
+	my ($dir) = @_;
+	return (check_head_link($dir) &&
+		(!$export_ok || -e "$dir/$export_ok"));
+}
+
 # rename detection options for git-diff and git-diff-tree
 # - default is '-M', with the cost proportional to
 #   (number of removed files) * (number of new files).
@@ -216,7 +240,7 @@ our $project = $cgi->param('p');
 if (defined $project) {
 	if (!validate_pathname($project) ||
 	    !(-d "$projectroot/$project") ||
-	    !(-e "$projectroot/$project/HEAD") ||
+	    !check_head_link("$projectroot/$project") ||
 	    ($export_ok && !(-e "$projectroot/$project/$export_ok")) ||
 	    ($strict_export && !project_in_list($project))) {
 		undef $project;
@@ -293,7 +317,7 @@ sub evaluate_path_info {
 	# find which part of PATH_INFO is project
 	$project = $path_info;
 	$project =~ s,/+$,,;
-	while ($project && !-e "$projectroot/$project/HEAD") {
+	while ($project && !check_head_link("$projectroot/$project")) {
 		$project =~ s,/*[^/]*$,,;
 	}
 	# validate project
@@ -836,8 +860,7 @@ sub git_get_projects_list {
 
 				my $subdir = substr($File::Find::name, $pfxlen + 1);
 				# we check related file in $projectroot
-				if (-e "$projectroot/$subdir/HEAD" && (!$export_ok ||
-				    -e "$projectroot/$subdir/$export_ok")) {
+				if (check_export_ok("$projectroot/$subdir")) {
 					push @list, { path => $subdir };
 					$File::Find::prune = 1;
 				}
@@ -858,8 +881,7 @@ sub git_get_projects_list {
 			if (!defined $path) {
 				next;
 			}
-			if (-e "$projectroot/$path/HEAD" && (!$export_ok ||
-			    -e "$projectroot/$path/$export_ok")) {
+			if (check_export_ok("$projectroot/$path")) {
 				my $pr = {
 					path => $path,
 					owner => decode("utf8", $owner, Encode::FB_DEFAULT),
@@ -1372,8 +1394,17 @@ sub git_header_html {
 <meta name="generator" content="gitweb/$version git/$git_version"/>
 <meta name="robots" content="index, nofollow"/>
 <title>$title</title>
-<link rel="stylesheet" type="text/css" href="$stylesheet"/>
 EOF
+# print out each stylesheet that exist
+	if (defined $stylesheet) {
+#provides backwards capability for those people who define style sheet in a config file
+		print '<link rel="stylesheet" type="text/css" href="'.$stylesheet.'"/>'."\n";
+	} else {
+		foreach my $stylesheet (@stylesheets) {
+			next unless $stylesheet;
+			print '<link rel="stylesheet" type="text/css" href="'.$stylesheet.'"/>'."\n";
+		}
+	}
 	if (defined $project) {
 		printf('<link rel="alternate" title="%s log" '.
 		       'href="%s" type="application/rss+xml"/>'."\n",
@@ -1391,8 +1422,15 @@ EOF
 	}
 
 	print "</head>\n" .
-	      "<body>\n" .
-	      "<div class=\"page_header\">\n" .
+	      "<body>\n";
+
+	if (-f $site_header) {
+		open (my $fd, $site_header);
+		print <$fd>;
+		close $fd;
+	}
+
+	print "<div class=\"page_header\">\n" .
 	      "<a href=\"http://www.kernel.org/pub/software/scm/git/docs/\" title=\"git documentation\">" .
 	      "<img src=\"$logo\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
 	      "</a>\n";
@@ -1443,8 +1481,15 @@ sub git_footer_html {
 		print $cgi->a({-href => href(project=>undef, action=>"project_index"),
 		              -class => "rss_logo"}, "TXT") . "\n";
 	}
-	print "</div>\n" .
-	      "</body>\n" .
+	print "</div>\n" ;
+
+	if (-f $site_footer) {
+		open (my $fd, $site_footer);
+		print <$fd>;
+		close $fd;
+	}
+
+	print "</body>\n" .
 	      "</html>";
 }
 
@@ -2450,64 +2495,9 @@ sub git_tag {
 	git_footer_html();
 }
 
-sub git_blame_flush_chunk {
-	my ($name, $revdata, $color, $rev, @line) = @_;
-	my $label = substr($rev, 0, 8);
-	my $line = scalar(@line);
-	my $cnt = 0;
-	my $pop = '';
-
-	if ($revdata->{$rev} ne '') {
-		$pop = ' title="' . esc_html($revdata->{$rev}) . '"';
-	}
-
-	for (@line) {
-		my ($lineno, $data) = @$_;
-		$cnt++;
-		print "<tr class=\"$color\">\n";
-		if ($cnt == 1) {
-			print "<td class=\"sha1\"$pop";
-			if ($line > 1) {
-				print " rowspan=\"$line\"";
-			}
-			print ">";
-			print $cgi->a({-href => href(action=>"commit",
-						     hash=>$rev,
-						     file_name=>$name)},
-				      $label);
-			print "</td>\n";
-		}
-		print "<td class=\"linenr\">".
-		    "<a id=\"l$lineno\" href=\"#l$lineno\" class=\"linenr\">" .
-		    esc_html($lineno) . "</a></td>\n";
-		print "<td class=\"pre\">" . esc_html($data) . "</td>\n";
-		print "</tr>\n";
-	}
-}
-
-# We can have up to N*2 lines.  If it is more than N lines, split it
-# into two to avoid orphans.
-sub git_blame_flush_chunk_1 {
-	my ($chunk_cap, $name, $revdata, $color, $rev, @chunk) = @_;
-	if ($chunk_cap < @chunk) {
-		my @first = splice(@chunk, 0, @chunk/2);
-		git_blame_flush_chunk($name,
-				      $revdata,
-				      $color,
-				      $rev,
-				      @first);
-	}
-	git_blame_flush_chunk($name,
-			      $revdata,
-			      $color,
-			      $rev,
-			      @chunk);
-}
-
 sub git_blame2 {
 	my $fd;
 	my $ftype;
-	my $chunk_cap = 20;
 
 	my ($have_blame) = gitweb_check_feature('blame');
 	if (!$have_blame) {
@@ -2550,45 +2540,35 @@ sub git_blame2 {
 <table class="blame">
 <tr><th>Commit</th><th>Line</th><th>Data</th></tr>
 HTML
-	my @chunk = ();
-	my %revdata = ();
 	while (<$fd>) {
-		/^([0-9a-fA-F]{40}).*?(\d+)\)\s{1}(\s*.*)/;
 		my ($full_rev, $author, $date, $lineno, $data) =
-		    /^([0-9a-f]{40}).*?\s\((.*?)\s+([-\d]+ [:\d]+ [-+\d]+)\s+(\d+)\)\s(.*)/;
-		if (!exists $revdata{$full_rev}) {
-			$revdata{$full_rev} = "$author, $date";
-		}
+			/^([0-9a-f]{40}).*?\s\((.*?)\s+([-\d]+ [:\d]+ [-+\d]+)\s+(\d+)\)\s(.*)/;
+		my $rev = substr($full_rev, 0, 8);
+		my $print_c8 = 0;
+
 		if (!defined $last_rev) {
 			$last_rev = $full_rev;
+			$print_c8 = 1;
 		} elsif ($last_rev ne $full_rev) {
-			git_blame_flush_chunk_1($chunk_cap,
-						$file_name,
-						\%revdata,
-						$rev_color[$current_color],
-						$last_rev, @chunk);
-			@chunk = ();
 			$last_rev = $full_rev;
 			$current_color = ++$current_color % $num_colors;
+			$print_c8 = 1;
 		}
-		elsif ($chunk_cap * 2 < @chunk) {
-			# We have more than N*2 lines from the same
-			# revision.  Flush N lines and leave N lines
-			# in @chunk to avoid orphaned lines.
-			my @first = splice(@chunk, 0, $chunk_cap);
-			git_blame_flush_chunk($file_name,
-					      \%revdata,
-					      $rev_color[$current_color],
-					      $last_rev, @first);
+		print "<tr class=\"$rev_color[$current_color]\">\n";
+		print "<td class=\"sha1\"";
+		if ($print_c8 == 1) {
+			print " title=\"$author, $date\"";
 		}
-		push @chunk, [$lineno, $data];
-	}
-	if (@chunk) {
-		git_blame_flush_chunk_1($chunk_cap,
-					$file_name,
-					\%revdata,
-					$rev_color[$current_color],
-					$last_rev, @chunk);
+		print ">";
+		if ($print_c8 == 1) {
+			print $cgi->a({-href => href(action=>"commit", hash=>$full_rev, file_name=>$file_name)},
+				      esc_html($rev));
+		}
+		print "</td>\n";
+		print "<td class=\"linenr\"><a id=\"l$lineno\" href=\"#l$lineno\" class=\"linenr\">" .
+		      esc_html($lineno) . "</a></td>\n";
+		print "<td class=\"pre\">" . esc_html($data) . "</td>\n";
+		print "</tr>\n";
 	}
 	print "</table>\n";
 	print "</div>";
