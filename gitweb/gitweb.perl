@@ -2495,17 +2495,23 @@ HTML
 		my $rev = substr($full_rev, 0, 8);
 		my $lineno = $2;
 		my $data = $3;
+		my $print_c8 = 0;
 
 		if (!defined $last_rev) {
 			$last_rev = $full_rev;
+			$print_c8 = 1;
 		} elsif ($last_rev ne $full_rev) {
 			$last_rev = $full_rev;
 			$current_color = ++$current_color % $num_colors;
+			$print_c8 = 1;
 		}
 		print "<tr class=\"$rev_color[$current_color]\">\n";
-		print "<td class=\"sha1\">" .
-			$cgi->a({-href => href(action=>"commit", hash=>$full_rev, file_name=>$file_name)},
-			        esc_html($rev)) . "</td>\n";
+		print "<td class=\"sha1\">";
+		if ($print_c8 == 1) {
+			print $cgi->a({-href => href(action=>"commit", hash=>$full_rev, file_name=>$file_name)},
+				      esc_html($rev));
+		}
+		print "</td>\n";
 		print "<td class=\"linenr\"><a id=\"l$lineno\" href=\"#l$lineno\" class=\"linenr\">" .
 		      esc_html($lineno) . "</a></td>\n";
 		print "<td class=\"pre\">" . esc_html($data) . "</td>\n";
