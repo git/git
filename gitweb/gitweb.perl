@@ -2490,11 +2490,9 @@ sub git_blame2 {
 <tr><th>Commit</th><th>Line</th><th>Data</th></tr>
 HTML
 	while (<$fd>) {
-		/^([0-9a-fA-F]{40}).*?(\d+)\)\s{1}(\s*.*)/;
-		my $full_rev = $1;
+		my ($full_rev, $author, $date, $lineno, $data) =
+			/^([0-9a-f]{40}).*?\s\((.*?)\s+([-\d]+ [:\d]+ [-+\d]+)\s+(\d+)\)\s(.*)/;
 		my $rev = substr($full_rev, 0, 8);
-		my $lineno = $2;
-		my $data = $3;
 		my $print_c8 = 0;
 
 		if (!defined $last_rev) {
@@ -2506,7 +2504,11 @@ HTML
 			$print_c8 = 1;
 		}
 		print "<tr class=\"$rev_color[$current_color]\">\n";
-		print "<td class=\"sha1\">";
+		print "<td class=\"sha1\"";
+		if ($print_c8 == 1) {
+			print " title=\"$author, $date\"";
+		}
+		print ">";
 		if ($print_c8 == 1) {
 			print $cgi->a({-href => href(action=>"commit", hash=>$full_rev, file_name=>$file_name)},
 				      esc_html($rev));
