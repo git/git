@@ -750,6 +750,42 @@ static int find_orig_linenum(struct util_info *u, int lineno)
 	return 0;
 }
 
+static void emit_meta(struct commit *c, int lno,
+		      int sha1_len, int compatibility,
+		      int show_name, int show_number, int show_raw_time,
+		      int longest_file, int longest_author,
+		      int max_digits, int max_orig_digits)
+{
+	struct util_info *u;
+	int lineno;
+	struct commit_info ci;
+
+	u = c->util;
+	lineno = find_orig_linenum(u, lno);
+
+	get_commit_info(c, &ci);
+	fwrite(sha1_to_hex(c->object.sha1), sha1_len, 1, stdout);
+	if (compatibility) {
+		printf("\t(%10s\t%10s\t%d)", ci.author,
+		       format_time(ci.author_time, ci.author_tz,
+				   show_raw_time),
+		       lno + 1);
+	}
+	else {
+		if (show_name)
+			printf(" %-*.*s", longest_file, longest_file,
+			       u->pathname);
+		if (show_number)
+			printf(" %*d", max_orig_digits,
+			       lineno);
+		printf(" (%-*.*s %10s %*d) ",
+		       longest_author, longest_author, ci.author,
+		       format_time(ci.author_time, ci.author_tz,
+				   show_raw_time),
+		       max_digits, lno + 1);
+	}
+}
+
 int main(int argc, const char **argv)
 {
 	int i;
@@ -877,6 +913,10 @@ int main(int argc, const char **argv)
 	prepare_revision_walk(&rev);
 	process_commits(&rev, filename, &initial);
 
+	for (i = 0; i < num_blame_lines; i++)
+		if (!blame_lines[i])
+			blame_lines[i] = initial;
+
 	buf = blame_contents;
 	max_digits = lineno_width(num_blame_lines);
 
@@ -886,8 +926,6 @@ int main(int argc, const char **argv)
 	for (i = 0; i < num_blame_lines; i++) {
 		struct commit *c = blame_lines[i];
 		struct util_info *u;
-		if (!c)
-			c = initial;
 		u = c->util;
 
 		if (!show_name && strcmp(filename, u->pathname))
@@ -904,35 +942,11 @@ int main(int argc, const char **argv)
 	max_orig_digits = lineno_width(longest_file_lines);
 
 	for (i = 0; i < num_blame_lines; i++) {
-		struct commit *c = blame_lines[i];
-		struct util_info *u;
-		int lineno;
-		if (!c)
-			c = initial;
-		u = c->util;
-		lineno = find_orig_linenum(u, i);
-
-		get_commit_info(c, &ci);
-		fwrite(sha1_to_hex(c->object.sha1), sha1_len, 1, stdout);
-		if (compatibility) {
-			printf("\t(%10s\t%10s\t%d)", ci.author,
-			       format_time(ci.author_time, ci.author_tz,
-					   show_raw_time),
-			       i+1);
-		}
-		else {
-			if (show_name)
-				printf(" %-*.*s", longest_file, longest_file,
-				       u->pathname);
-			if (show_number)
-				printf(" %*d", max_orig_digits,
-				       lineno);
-			printf(" (%-*.*s %10s %*d) ",
-			       longest_author, longest_author, ci.author,
-			       format_time(ci.author_time, ci.author_tz,
-					   show_raw_time),
-			       max_digits, i+1);
-		}
+		emit_meta(blame_lines[i], i,
+			  sha1_len, compatibility,
+			  show_name, show_number, show_raw_time,
+			  longest_file, longest_author,
+			  max_digits, max_orig_digits);
 
 		if (i == num_blame_lines - 1) {
 			fwrite(buf, blame_len - (buf - blame_contents),
