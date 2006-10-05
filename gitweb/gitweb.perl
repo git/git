@@ -2940,11 +2940,6 @@ sub git_commit {
 			$cgi->a({-href => href(action=>"blame", hash_parent=>$parent, file_name=>$file_name)},
 			        "blame");
 	}
-	if (defined $co{'parent'}) {
-		push @views_nav,
-			$cgi->a({-href => href(action=>"shortlog", hash=>$hash)}, "shortlog"),
-			$cgi->a({-href => href(action=>"log", hash=>$hash)}, "log");
-	}
 	git_header_html(undef, $expires);
 	git_print_page_nav('commit', defined $co{'parent'} ? '' : 'commitdiff',
 	                   $hash, $co{'tree'}, $hash,
