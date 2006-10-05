@@ -89,6 +89,7 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 		die("unable to create ref-pack file structure (%s)",
 		    strerror(errno));
 	for_each_ref(handle_one_ref, &cbdata);
+	fflush(cbdata.refs_file);
 	fsync(fd);
 	fclose(cbdata.refs_file);
 	if (commit_lock_file(&packed) < 0)

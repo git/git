@@ -124,6 +124,10 @@ sub gitweb_check_feature {
 		$feature{$name}{'override'},
 		@{$feature{$name}{'default'}});
 	if (!$override) { return @defaults; }
+	if (!defined $sub) {
+		warn "feature $name is not overrideable";
+		return @defaults;
+	}
 	return $sub->(@defaults);
 }
 
