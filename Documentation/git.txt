@@ -243,6 +243,9 @@ gitlink:git-update-server-info[1]::
 	Updates auxiliary information on a dumb server to help
 	clients discover references and packs on it.
 
+gitlink:git-upload-archive[1]::
+	Invoked by 'git-archive' to send a generated archive.
+
 gitlink:git-upload-pack[1]::
 	Invoked by 'git-fetch-pack' to push
 	what are asked for.
