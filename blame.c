@@ -752,7 +752,7 @@ int main(int argc, const char **argv)
 	const char *buf;
 	int max_digits;
 	int longest_file, longest_author;
-	int found_rename;
+	int show_name = 0;
 
 	const char *prefix = setup_git_directory();
 	git_config(git_default_config);
@@ -785,6 +785,11 @@ int main(int argc, const char **argv)
 					continue;
 				}
 				usage(blame_usage);
+			}
+			if (!strcmp(argv[i], "-f") ||
+			    !strcmp(argv[i], "--show-name")) {
+				show_name = 1;
+				continue;
 			}
 			if (!strcmp(argv[i], "--")) {
 				options = 0;
@@ -853,7 +858,6 @@ int main(int argc, const char **argv)
 
 	longest_file = 0;
 	longest_author = 0;
-	found_rename = 0;
 	for (i = 0; i < num_blame_lines; i++) {
 		struct commit *c = blame_lines[i];
 		struct util_info *u;
@@ -861,8 +865,8 @@ int main(int argc, const char **argv)
 			c = initial;
 		u = c->util;
 
-		if (!found_rename && strcmp(filename, u->pathname))
-			found_rename = 1;
+		if (!show_name && strcmp(filename, u->pathname))
+			show_name = 1;
 		if (longest_file < strlen(u->pathname))
 			longest_file = strlen(u->pathname);
 		get_commit_info(c, &ci);
@@ -886,7 +890,7 @@ int main(int argc, const char **argv)
 			       i+1);
 		}
 		else {
-			if (found_rename)
+			if (show_name)
 				printf(" %-*.*s", longest_file, longest_file,
 				       u->pathname);
 			printf(" (%-*.*s %10s %*d) ",
