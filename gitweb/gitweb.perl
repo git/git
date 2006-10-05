@@ -2838,9 +2838,12 @@ sub git_snapshot {
 		-content_disposition => 'inline; filename="' . "$filename" . '"',
 		-status => '200 OK');
 
-	my $git_command = git_cmd_str();
-	open my $fd, "-|", "$git_command tar-tree $hash \'$project\' | $command" or
-		die_error(undef, "Execute git-tar-tree failed.");
+	my $git = git_cmd_str();
+	my $name = $project;
+	$name =~ s/\047/\047\\\047\047/g;
+	open my $fd, "-|",
+	"$git archive --format=tar --prefix=\'$name\'/ $hash | $command"
+		or die_error(undef, "Execute git-tar-tree failed.");
 	binmode STDOUT, ':raw';
 	print <$fd>;
 	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
