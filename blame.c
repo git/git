@@ -731,6 +731,25 @@ static int read_ancestry(const char *graft_file,
 	return 0;
 }
 
+static int lineno_width(int lines)
+{
+	int i, width;
+
+	for (width = 1, i = 10; i <= lines + 1; width++)
+		i *= 10;
+	return width;
+}
+
+static int find_orig_linenum(struct util_info *u, int lineno)
+{
+	int i;
+
+	for (i = 0; i < u->num_lines; i++)
+		if (lineno == u->line_map[i])
+			return i + 1;
+	return 0;
+}
+
 int main(int argc, const char **argv)
 {
 	int i;
@@ -750,9 +769,10 @@ int main(int argc, const char **argv)
 
 	struct commit_info ci;
 	const char *buf;
-	int max_digits;
-	int longest_file, longest_author;
+	int max_digits, max_orig_digits;
+	int longest_file, longest_author, longest_file_lines;
 	int show_name = 0;
+	int show_number = 0;
 
 	const char *prefix = setup_git_directory();
 	git_config(git_default_config);
@@ -789,6 +809,11 @@ int main(int argc, const char **argv)
 			if (!strcmp(argv[i], "-f") ||
 			    !strcmp(argv[i], "--show-name")) {
 				show_name = 1;
+				continue;
+			}
+			if (!strcmp(argv[i], "-n") ||
+			    !strcmp(argv[i], "--show-number")) {
+				show_number = 1;
 				continue;
 			}
 			if (!strcmp(argv[i], "--")) {
@@ -853,11 +878,11 @@ int main(int argc, const char **argv)
 	process_commits(&rev, filename, &initial);
 
 	buf = blame_contents;
-	for (max_digits = 1, i = 10; i <= num_blame_lines + 1; max_digits++)
-		i *= 10;
+	max_digits = lineno_width(num_blame_lines);
 
 	longest_file = 0;
 	longest_author = 0;
+	longest_file_lines = 0;
 	for (i = 0; i < num_blame_lines; i++) {
 		struct commit *c = blame_lines[i];
 		struct util_info *u;
@@ -869,17 +894,23 @@ int main(int argc, const char **argv)
 			show_name = 1;
 		if (longest_file < strlen(u->pathname))
 			longest_file = strlen(u->pathname);
+		if (longest_file_lines < u->num_lines)
+			longest_file_lines = u->num_lines;
 		get_commit_info(c, &ci);
 		if (longest_author < strlen(ci.author))
 			longest_author = strlen(ci.author);
 	}
 
+	max_orig_digits = lineno_width(longest_file_lines);
+
 	for (i = 0; i < num_blame_lines; i++) {
 		struct commit *c = blame_lines[i];
 		struct util_info *u;
+		int lineno;
 		if (!c)
 			c = initial;
 		u = c->util;
+		lineno = find_orig_linenum(u, i);
 
 		get_commit_info(c, &ci);
 		fwrite(sha1_to_hex(c->object.sha1), sha1_len, 1, stdout);
@@ -893,6 +924,9 @@ int main(int argc, const char **argv)
 			if (show_name)
 				printf(" %-*.*s", longest_file, longest_file,
 				       u->pathname);
+			if (show_number)
+				printf(" %*d", max_orig_digits,
+				       lineno);
 			printf(" (%-*.*s %10s %*d) ",
 			       longest_author, longest_author, ci.author,
 			       format_time(ci.author_time, ci.author_tz,
