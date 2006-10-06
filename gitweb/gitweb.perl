@@ -1922,14 +1922,14 @@ sub git_patchset_body {
 				print "<div class=\"diff_info\">" . file_type($diffinfo->{'to_mode'}) . ":" .
 				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash,
 				                             hash=>$diffinfo->{'to_id'}, file_name=>$diffinfo->{'file'})},
-				              $diffinfo->{'to_id'}) . "(new)" .
+				              $diffinfo->{'to_id'}) . " (new)" .
 				      "</div>\n"; # class="diff_info"
 
 			} elsif ($diffinfo->{'status'} eq "D") { # deleted
 				print "<div class=\"diff_info\">" . file_type($diffinfo->{'from_mode'}) . ":" .
 				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash_parent,
 				                             hash=>$diffinfo->{'from_id'}, file_name=>$diffinfo->{'file'})},
-				              $diffinfo->{'from_id'}) . "(deleted)" .
+				              $diffinfo->{'from_id'}) . " (deleted)" .
 				      "</div>\n"; # class="diff_info"
 
 			} elsif ($diffinfo->{'status'} eq "R" || # renamed
