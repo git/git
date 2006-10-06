@@ -12,13 +12,13 @@ case "$0" in
 *-cherry-pick* )
 	edit=
 	me=cherry-pick
-	USAGE='[--edit] [-n] [-r] <commit-ish>'  ;;
+	USAGE='[--edit] [-n] [-r] [-x] <commit-ish>'  ;;
 * )
 	die "What are you talking about?" ;;
 esac
 . git-sh-setup
 
-no_commit= replay=
+no_commit= replay=t
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -32,8 +32,10 @@ do
 	--n|--no|--no-|--no-e|--no-ed|--no-edi|--no-edit)
 		edit=
 		;;
-	-r|--r|--re|--rep|--repl|--repla|--replay)
-		replay=t
+	-r)
+		: no-op ;;
+	-x|--i-really-want-to-expose-my-private-commit-object-name)
+		replay=
 		;;
 	-*)
 		usage
@@ -121,7 +123,7 @@ cherry-pick)
 	git-cat-file commit $commit | sed -e '1,/^$/d'
 	case "$replay" in
 	'')
-		echo "(cherry picked from $commit commit)"
+		echo "(cherry picked from commit $commit)"
 		test "$rev" = "$commit" ||
 		echo "(original 'git cherry-pick' arguments: $@)"
 		;;
