@@ -9,7 +9,14 @@ The GIT To-Do File
 Recent issues
 -------------
 
-Franck Bui-Huu <vagabon.xyz@gmail.com>
+From: A Large Angry SCM <gitzilla@gmail.com>
+Subject: Notes on Using Git with Subprojects
+Message-ID: <45196628.9010107@gmail.com>
+
+[jc: a very nice write-up of a subprojects workflow. I do not
+ remember if it produced any actionable items, though]
+
+From: Franck Bui-Huu <vagabon.xyz@gmail.com>
 Message-ID: <450EABD0.1040102@innova-card.com>
 
 Repeated requests against git-daemon makes it stuck
@@ -30,7 +37,6 @@ Deal with rfc2822-invalid author mail address in send-email.
 
 [jc: forgot to apply?]
 
-
 From: Nicolas Pitre <nico@cam.org>
 Subject: [PATCH 8/6] let the GIT native protocol use offsets to delta base when
 
@@ -41,7 +47,7 @@ Message-ID: <20060930045037.GB18479@spearce.org>
 
 "git ref-log" command to interact with ref-log?
 
-[jc: not much interest?]
+[jc: not much interest from users?]
 
 From: Stefan Richter <stefanr@s5r6.in-berlin.de>
 Message-ID: <4523EC14.6070806@s5r6.in-berlin.de>
