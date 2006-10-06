@@ -2957,7 +2957,7 @@ sub git_commit {
 			        "blame");
 	}
 	git_header_html(undef, $expires);
-	git_print_page_nav('commit', defined $co{'parent'} ? '' : 'commitdiff',
+	git_print_page_nav('commit', '',
 	                   $hash, $co{'tree'}, $hash,
 	                   join (' | ', @views_nav));
 
