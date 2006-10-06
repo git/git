@@ -39,7 +39,7 @@ extern void unlock_ref(struct ref_lock *lock);
 extern int write_ref_sha1(struct ref_lock *lock, const unsigned char *sha1, const char *msg);
 
 /** Reads log for the value of ref during at_time. **/
-extern int read_ref_at(const char *ref, unsigned long at_time, unsigned char *sha1);
+extern int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *sha1);
 
 /** Returns 0 if target has the right format for a ref. **/
 extern int check_ref_format(const char *target);
