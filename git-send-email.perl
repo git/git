@@ -409,6 +409,11 @@ sub send_message
 	    $gitversion = Git::version();
 	}
 
+	my ($author_name) = ($from =~ /^(.*?)\s+</);
+	if ($author_name =~ /\./ && $author_name !~ /^".*"$/) {
+		my ($name, $addr) = ($from =~ /^(.*?)(\s+<.*)/);
+		$from = "\"$name\"$addr";
+	}
 	my $header = "From: $from
 To: $to
 Cc: $cc
