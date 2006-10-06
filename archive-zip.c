@@ -145,6 +145,7 @@ static int write_zip_entry(const unsigned char *sha1,
 {
 	struct zip_local_header header;
 	struct zip_dir_header dirent;
+	unsigned long attr2;
 	unsigned long compressed_size;
 	unsigned long uncompressed_size;
 	unsigned long crc;
@@ -172,12 +173,16 @@ static int write_zip_entry(const unsigned char *sha1,
 
 	if (S_ISDIR(mode)) {
 		method = 0;
+		attr2 = 16;
 		result = READ_TREE_RECURSIVE;
 		out = NULL;
 		uncompressed_size = 0;
 		compressed_size = 0;
-	} else if (S_ISREG(mode)) {
-		method = zlib_compression_level == 0 ? 0 : 8;
+	} else if (S_ISREG(mode) || S_ISLNK(mode)) {
+		method = 0;
+		attr2 = S_ISLNK(mode) ? ((mode | 0777) << 16) : 0;
+		if (S_ISREG(mode) && zlib_compression_level != 0)
+			method = 8;
 		result = 0;
 		buffer = read_sha1_file(sha1, type, &size);
 		if (!buffer)
@@ -213,7 +218,7 @@ static int write_zip_entry(const unsigned char *sha1,
 	}
 
 	copy_le32(dirent.magic, 0x02014b50);
-	copy_le16(dirent.creator_version, 0);
+	copy_le16(dirent.creator_version, S_ISLNK(mode) ? 0x0317 : 0);
 	copy_le16(dirent.version, 10);
 	copy_le16(dirent.flags, 0);
 	copy_le16(dirent.compression_method, method);
@@ -227,7 +232,7 @@ static int write_zip_entry(const unsigned char *sha1,
 	copy_le16(dirent.comment_length, 0);
 	copy_le16(dirent.disk, 0);
 	copy_le16(dirent.attr1, 0);
-	copy_le32(dirent.attr2, 0);
+	copy_le32(dirent.attr2, attr2);
 	copy_le32(dirent.offset, zip_offset);
 	memcpy(zip_dir + zip_dir_offset, &dirent, sizeof(struct zip_dir_header));
 	zip_dir_offset += sizeof(struct zip_dir_header);
