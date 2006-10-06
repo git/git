@@ -57,13 +57,14 @@ OPTIONS
         `git update-server-info`.
 
 --window=[N], --depth=[N]::
-	These two options affects how the objects contained in the pack are
+	These two options affect how the objects contained in the pack are
 	stored using delta compression. The objects are first internally
 	sorted by type, size and optionally names and compared against the
 	other objects within `--window` to see if using delta compression saves
 	space. `--depth` limits the maximum delta depth; making it too deep
 	affects the performance on the unpacker side, because delta data needs
 	to be applied that many times to get to the necessary object.
+	The default value for both --window and --depth is 10.
 
 
 Author
