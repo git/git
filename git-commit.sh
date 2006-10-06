@@ -32,33 +32,6 @@ save_index () {
 	cp -p "$THIS_INDEX" "$NEXT_INDEX"
 }
 
-report () {
-  header="#
-# $1:
-#   ($2)
-#
-"
-  trailer=""
-  while read status name newname
-  do
-    printf '%s' "$header"
-    header=""
-    trailer="#
-"
-    case "$status" in
-    M ) echo "#	modified: $name";;
-    D*) echo "#	deleted:  $name";;
-    T ) echo "#	typechange: $name";;
-    C*) echo "#	copied: $name -> $newname";;
-    R*) echo "#	renamed: $name -> $newname";;
-    A*) echo "#	new file: $name";;
-    U ) echo "#	unmerged: $name";;
-    esac
-  done
-  printf '%s' "$trailer"
-  [ "$header" ]
-}
-
 run_status () {
 	# If TMP_INDEX is defined, that means we are doing
 	# "--only" partial commit, and that index file is used

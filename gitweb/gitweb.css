@@ -173,6 +173,12 @@ table.blame {
 	border-collapse: collapse;
 }
 
+table.blame td {
+	padding: 0px 5px;
+	font-size: 12px;
+	vertical-align: top;
+}
+
 th {
 	padding: 2px 5px;
 	font-size: 12px;

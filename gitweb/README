@@ -43,6 +43,7 @@ repositories, you can configure apache like this:
     DocumentRoot /pub/git
     RewriteEngine on
     RewriteRule ^/(.*\.git/(?!/?(info|objects|refs)).*)?$ /cgi-bin/gitweb.cgi%{REQUEST_URI}  [L,PT]
+    SetEnv	GITWEB_CONFIG	/etc/gitweb.conf
 </VirtualHost>
 
 The above configuration expects your public repositories to live under
@@ -51,6 +52,12 @@ both as cloneable GIT URL and as browseable gitweb interface.
 If you then start your git-daemon with --base-path=/pub/git --export-all
 then you can even use the git:// URL with exactly the same path.
 
+Setting the environment variable GITWEB_CONFIG will tell gitweb to use
+the named file (i.e. in this example /etc/gitweb.conf) as a
+configuration for gitweb.  Perl variables defined in here will
+override the defaults given at the head of the gitweb.perl (or
+gitweb.cgi).  Look at the comments in that file for information on
+which variables and what they mean.
 
 
 Originally written by:

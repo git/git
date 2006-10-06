@@ -59,6 +59,9 @@ our $logo = "++GITWEB_LOGO++";
 # URI of GIT favicon, assumed to be image/png type
 our $favicon = "++GITWEB_FAVICON++";
 
+our $githelp_url = "http://git.or.cz/";
+our $githelp_label = "git homepage";
+
 # source of projects list
 our $projects_list = "++GITWEB_LIST++";
 
@@ -1411,7 +1414,9 @@ EOF
 	}
 
 	print "<div class=\"page_header\">\n" .
-	      "<a href=\"http://www.kernel.org/pub/software/scm/git/docs/\" title=\"git documentation\">" .
+	      "<a href=\"" . esc_html($githelp_url) .
+	      "\" title=\"" . esc_html($githelp_label) .
+	      "\">" .
 	      "<img src=\"$logo\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
 	      "</a>\n";
 	print $cgi->a({-href => esc_url($home_link)}, $home_link_str) . " / ";
@@ -2891,9 +2896,12 @@ sub git_snapshot {
 		-content_disposition => 'inline; filename="' . "$filename" . '"',
 		-status => '200 OK');
 
-	my $git_command = git_cmd_str();
-	open my $fd, "-|", "$git_command tar-tree $hash \'$project\' | $command" or
-		die_error(undef, "Execute git-tar-tree failed.");
+	my $git = git_cmd_str();
+	my $name = $project;
+	$name =~ s/\047/\047\\\047\047/g;
+	open my $fd, "-|",
+	"$git archive --format=tar --prefix=\'$name\'/ $hash | $command"
+		or die_error(undef, "Execute git-tar-tree failed.");
 	binmode STDOUT, ':raw';
 	print <$fd>;
 	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
@@ -2989,11 +2997,6 @@ sub git_commit {
 		push @views_nav,
 			$cgi->a({-href => href(action=>"blame", hash_parent=>$parent, file_name=>$file_name)},
 			        "blame");
-	}
-	if (defined $co{'parent'}) {
-		push @views_nav,
-			$cgi->a({-href => href(action=>"shortlog", hash=>$hash)}, "shortlog"),
-			$cgi->a({-href => href(action=>"log", hash=>$hash)}, "log");
 	}
 	git_header_html(undef, $expires);
 	git_print_page_nav('commit', defined $co{'parent'} ? '' : 'commitdiff',
