@@ -1,23 +1,16 @@
 #!/bin/sh
 
+G=/opt/packrat/playpen/public/in-place/git
+Meta/Make GITWEB_CONFIG=$G/index/gitweb_config.perl gitweb/gitweb.cgi
+
 cd gitweb &&
 DEST=`cd ../../index && /bin/pwd` || exit
-
-sed -e '
-/^our .gitbin = /s|"/usr/bin"|"/home/junio/bin/Linux"|
-/^our .GIT = /s|"/usr/bin/|"/home/junio/bin/Linux/|
-/^our .projectroot = /s|".*"|"/opt/packrat/playpen/public/in-place/git"|
-/^our .stylesheet = /s|".*"|"/gitweb.css"|
-/^our .logo = /s|".*"|"/git-logo.png"|
-/^our .favicon = /s|".*"|"/git-favicon.png"|
-/^our .projects_list = /s|".*"|"/opt/packrat/playpen/public/in-place/git/index/index.aux"|
-' gitweb.cgi >gitweb.cgi++
 
 differs=
 
 if test -f "$DEST/gitweb.cgi"
 then
-	diff -u "$DEST/gitweb.cgi" gitweb.cgi++ || differs="g$differs"
+	diff -u "$DEST/gitweb.cgi" gitweb.cgi || differs="g$differs"
 else
 	differs="g$differs"
 fi
@@ -62,7 +55,7 @@ esac
 case "$differs" in
 *g*)
 	rm -f "$DEST/gitweb.cgi"
-	cp gitweb.cgi++ "$DEST/gitweb.cgi"
+	cp gitweb.cgi "$DEST/gitweb.cgi"
 	chmod +x "$DEST/gitweb.cgi"
 	;;
 esac
