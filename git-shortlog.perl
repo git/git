@@ -1,6 +1,18 @@
 #!/usr/bin/perl -w
 
 use strict;
+use Getopt::Std;
+use File::Basename qw(basename dirname);
+
+our ($opt_h, $opt_n, $opt_s);
+getopts('hns');
+
+$opt_h && usage();
+
+sub usage {
+	print STDERR "Usage: ${\basename $0} [-h] [-n] [-s] < <log_data>\n";
+        exit(1);
+}
 
 my (%mailmap);
 my (%email);
@@ -38,16 +50,38 @@ sub by_name($$) {
 
 	uc($a) cmp uc($b);
 }
+sub by_nbentries($$) {
+	my ($a, $b) = @_;
+	my $a_entries = $map{$a};
+	my $b_entries = $map{$b};
+
+	@$b_entries - @$a_entries || by_name $a, $b;
+}
+
+my $sort_method = $opt_n ? \&by_nbentries : \&by_name;
+
+sub summary_output {
+	my ($obj, $num, $key);
+
+	foreach $key (sort $sort_method keys %map) {
+		$obj = $map{$key};
+		$num = @$obj;
+		printf "%s: %u\n", $key, $num;
+		$n_output += $num;
+	}
+}
 
 sub shortlog_output {
-	my ($obj, $key, $desc);
+	my ($obj, $num, $key, $desc);
 
-	foreach $key (sort by_name keys %map) {
+	foreach $key (sort $sort_method keys %map) {
+		$obj = $map{$key};
+		$num = @$obj;
+
 		# output author
-		printf "%s:\n", $key;
+		printf "%s (%u):\n", $key, $num;
 
 		# output author's 1-line summaries
-		$obj = $map{$key};
 		foreach $desc (reverse @$obj) {
 			print "  $desc\n";
 			$n_output++;
@@ -152,7 +186,7 @@ sub finalize {
 
 &setup_mailmap;
 &changelog_input;
-&shortlog_output;
+$opt_s ? &summary_output : &shortlog_output;
 &finalize;
 exit(0);
 
