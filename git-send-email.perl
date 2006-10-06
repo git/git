@@ -83,7 +83,7 @@ sub cleanup_compose_files();
 my $compose_filename = ".msg.$$";
 
 # Variables we fill in automatically, or via prompting:
-my (@to,@cc,@initial_cc,@bcclist,
+my (@to,@cc,@initial_cc,@bcclist,@xh,
 	$initial_reply_to,$initial_subject,@files,$from,$compose,$time);
 
 # Behavior modification variables
@@ -422,6 +422,9 @@ X-Mailer: git-send-email $gitversion
 		$header .= "In-Reply-To: $reply_to\n";
 		$header .= "References: $references\n";
 	}
+	if (@xh) {
+		$header .= join("\n", @xh) . "\n";
+	}
 
 	if ($smtp_server =~ m#^/#) {
 		my $pid = open my $sm, '|-';
@@ -472,6 +475,7 @@ foreach my $t (@files) {
 
 	my $author_not_sender = undef;
 	@cc = @initial_cc;
+	@xh = ();
 	my $found_mbox = 0;
 	my $header_done = 0;
 	$message = "";
@@ -494,6 +498,9 @@ foreach my $t (@files) {
 					printf("(mbox) Adding cc: %s from line '%s'\n",
 						$2, $_) unless $quiet;
 					push @cc, $2;
+				}
+				elsif (/^[-A-Za-z]+:\s+\S/) {
+					push @xh, $_;
 				}
 
 			} else {
@@ -538,7 +545,7 @@ foreach my $t (@files) {
 	send_message();
 
 	# set up for the next message
-	if ($chain_reply_to || length($reply_to) == 0) {
+	if ($chain_reply_to || !defined $reply_to || length($reply_to) == 0) {
 		$reply_to = $message_id;
 		if (length $references > 0) {
 			$references .= " $message_id";
