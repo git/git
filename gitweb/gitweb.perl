@@ -1071,6 +1071,9 @@ sub parse_commit {
 			last;
 		}
 	}
+	if ($co{'title'} eq "") {
+		$co{'title'} = $co{'title_short'} = '(no commit message)';
+	}
 	# remove added spaces
 	foreach my $line (@commit_lines) {
 		$line =~ s/^    //;
