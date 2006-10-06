@@ -16,6 +16,11 @@ a:hover, a:visited, a:active {
 	color: #880000;
 }
 
+img.logo {
+	float: right;
+	border-width: 0px;
+}
+
 div.page_header {
 	height: 25px;
 	padding: 8px;
