@@ -6,44 +6,57 @@ The GIT To-Do File
     http://kernel.org/git/?p=git/git.git;a=blob;hb=todo;f=TODO
 
 
-What to expect from now on
-==========================
-
-This is written in a form of to-do list for me, so if I say
-"accept patch", it means I do not currently plan to do that
-myself.  People interested in seeing it materialize please take
-a hint.  Also whatever I marked "Perhaps" do not have to happen
-if ever -- only if somebody cares enough and submits a clean
-patch, perhaps ;-).
-
-
-Design issues
+Recent issues
 -------------
 
-* tree entries in index?  -- sorry, stalled
+Franck Bui-Huu <vagabon.xyz@gmail.com>
+Message-ID: <450EABD0.1040102@innova-card.com>
 
-* "intent to add" index entries?  -- together with the above
-  needs rethinking.
+Repeated requests against git-daemon makes it stuck
 
-* Plug-in file-level merges.  On the other hand, we may not even
-  need this; just tell people to run "xxdiff -U" on the working
-  tree files (or kompare).
+[jc: does not reproduce easily for me; has anybody seen it?]
+
+From: Shawn Pearce <spearce@spearce.org>
+Message-ID: <20060926215745.GC8177@spearce.org>
+
+git-mirror (reverse of git-push --all).
+
+[jc: any progress?]
+
+From: Junio C Hamano <junkio@cox.net>
+Message-ID: <7v7izrzpk2.fsf@assigned-by-dhcp.cox.net>
+
+Deal with rfc2822-invalid author mail address in send-email.
+
+[jc: forgot to apply?]
 
 
-Technical (heavier)
--------------------
+From: Nicolas Pitre <nico@cam.org>
+Subject: [PATCH 8/6] let the GIT native protocol use offsets to delta base when
 
-* Libification.  There are many places "run once" mentality is
-  ingrained in the management of basic data structures, which
-  need to be fixed.  [Matthias Urlichs was already working on
-  this: <pan.2005.10.03.20.48.52.132570@smurf.noris.de>, but I
-  do not know what happened to his efforts]
+[jc: applied all but I suspect git-push side hasn't been converted?]
 
-* Lazy clones that can be controlled by the user, ranging from
-  totally on-demand a la CVS/SVN to "cache down to this old
-  commit so that I can make full use of git on at least recent
-  history".  This need a lot of work in making tools to exit
-  gracefully when they hit unavailable objects while offline.
+From: Shawn Pearce <spearce@spearce.org>
+Message-ID: <20060930045037.GB18479@spearce.org>
+
+"git ref-log" command to interact with ref-log?
+
+[jc: not much interest?]
+
+From: Stefan Richter <stefanr@s5r6.in-berlin.de>
+Message-ID: <4523EC14.6070806@s5r6.in-berlin.de>
+
+AsciiDoc 8 does not grok documents written for AsciiDoc 7 out of
+the box.
+
+[jc: status?]
+
+From:	Josh Triplett <josh@freedesktop.org>
+Message-ID: <451A30E4.50801@freedesktop.org>
+
+git-split
+
+[jc: no response to the initial review comments]
 
 
 Technical (milder)
@@ -63,32 +76,17 @@ Technical (milder)
   the history, not just published refs. (Erik W. Biederman
   <m164jc9ekx.fsf@ebiederm.dsl.xmission.com>)
 
-* git-daemon side support for virtual hosting.  Client side
-  is ready in 1.4.0 (Jon Loeliger <1149610100.23938.75.camel@cashmere.sps.mot.com>).
-
-* Subprojects.  Try "gitlink" -- sorry, stalled.
-
 * daemon --strict-symlink.
 
-* daemon --base-path does not apply automatically to whitelist
-  somehow feels wrong.  If somebody cares enough, accept
-  patches.
-
-* Perhaps detect cloning request in upload-pack and cache the
-  result for next cloning request until any of our refs change.
-
 * Maybe grok PGP signed text/plain in applymbox as well.
-
 
 Technical (trivial)
 -------------------
 
+* Mbx (not mbox) support for git-mailsplit.
+
 * log-tree.c: pad sequence numbers with leading 0 if a series is
   larger than 9, around ll.133?
-
-* git-cherry-pick should check if the original commit message is
-  just a single liner, in which case it should add a LF before
-  appending "cherry-picked from..." message.
 
 * git-clone fail .git/refs/foo (Yann Dirson <ydirson@altern.org>)
   <20060610225040.GA7766@nowhere.earth>
@@ -99,10 +97,6 @@ Technical (trivial)
   pkt-line, and redirects the request to its real destination.
 
 * test scripts for the relative directory path stuff.
-
-* In a freshly created empty repository, `git fetch foo:bar`
-  works OK, but `git checkout bar` afterwards does not (missing
-  `.git/HEAD`).
 
 
 Local Variables:
