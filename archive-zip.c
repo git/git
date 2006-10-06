@@ -214,7 +214,7 @@ static int write_zip_entry(const unsigned char *sha1,
 
 	copy_le32(dirent.magic, 0x02014b50);
 	copy_le16(dirent.creator_version, 0);
-	copy_le16(dirent.version, 20);
+	copy_le16(dirent.version, 10);
 	copy_le16(dirent.flags, 0);
 	copy_le16(dirent.compression_method, method);
 	copy_le16(dirent.mtime, zip_time);
@@ -236,7 +236,7 @@ static int write_zip_entry(const unsigned char *sha1,
 	zip_dir_entries++;
 
 	copy_le32(header.magic, 0x04034b50);
-	copy_le16(header.version, 20);
+	copy_le16(header.version, 10);
 	copy_le16(header.flags, 0);
 	copy_le16(header.compression_method, method);
 	copy_le16(header.mtime, zip_time);
