@@ -135,6 +135,7 @@ test_expect_failure () {
 	else
 		test_failure_ "$@"
 	fi
+	echo >&3 ""
 }
 
 test_expect_success () {
@@ -148,6 +149,7 @@ test_expect_success () {
 	else
 		test_failure_ "$@"
 	fi
+	echo >&3 ""
 }
 
 test_expect_code () {
@@ -161,6 +163,7 @@ test_expect_code () {
 	else
 		test_failure_ "$@"
 	fi
+	echo >&3 ""
 }
 
 # Most tests can use the created repository, but some amy need to create more.
