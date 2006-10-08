@@ -795,7 +795,7 @@ int write_ref_sha1(struct ref_lock *lock,
 	return 0;
 }
 
-int read_ref_at(const char *ref, unsigned long at_time, unsigned char *sha1)
+int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *sha1)
 {
 	const char *logfile, *logdata, *logend, *rec, *lastgt, *lastrec;
 	char *tz_c;
@@ -828,7 +828,7 @@ int read_ref_at(const char *ref, unsigned long at_time, unsigned char *sha1)
 		if (!lastgt)
 			die("Log %s is corrupt.", logfile);
 		date = strtoul(lastgt + 1, &tz_c, 10);
-		if (date <= at_time) {
+		if (date <= at_time || cnt == 0) {
 			if (lastrec) {
 				if (get_sha1_hex(lastrec, logged_sha1))
 					die("Log %s is corrupt.", logfile);
@@ -859,6 +859,8 @@ int read_ref_at(const char *ref, unsigned long at_time, unsigned char *sha1)
 			return 0;
 		}
 		lastrec = rec;
+		if (cnt > 0)
+			cnt--;
 	}
 
 	rec = logdata;
