@@ -31,7 +31,7 @@ test_expect_success \
 test_expect_success \
     'see if a branch still exists when packed' \
     'git-branch b &&
-     git-pack-refs &&
+     git-pack-refs --all &&
      rm .git/refs/heads/b &&
      echo "$SHA1 refs/heads/b" >expect &&
      git-show-ref b >result &&
@@ -40,14 +40,14 @@ test_expect_success \
 test_expect_failure \
     'git branch c/d should barf if branch c exists' \
     'git-branch c &&
-     git-pack-refs &&
+     git-pack-refs --all &&
      rm .git/refs/heads/c &&
      git-branch c/d'
 
 test_expect_success \
     'see if a branch still exists after git pack-refs --prune' \
     'git-branch e &&
-     git-pack-refs --prune &&
+     git-pack-refs --all --prune &&
      echo "$SHA1 refs/heads/e" >expect &&
      git-show-ref e >result &&
      diff expect result'
@@ -55,22 +55,22 @@ test_expect_success \
 test_expect_failure \
     'see if git pack-refs --prune remove ref files' \
     'git-branch f &&
-     git-pack-refs --prune &&
+     git-pack-refs --all --prune &&
      ls .git/refs/heads/f'
 
 test_expect_success \
     'git branch g should work when git branch g/h has been deleted' \
     'git-branch g/h &&
-     git-pack-refs --prune &&
+     git-pack-refs --all --prune &&
      git-branch -d g/h &&
      git-branch g &&
-     git-pack-refs &&
+     git-pack-refs --all &&
      git-branch -d g'
 
 test_expect_failure \
     'git branch i/j/k should barf if branch i exists' \
     'git-branch i &&
-     git-pack-refs --prune &&
+     git-pack-refs --all --prune &&
      git-branch i/j/k'
 
 test_expect_success \
@@ -90,7 +90,7 @@ test_expect_success \
      git-branch -d n/o &&
      git-branch n/o/p &&
      git-branch -d n/op &&
-     git-pack-refs --prune &&
+     git-pack-refs --all --prune &&
      git-branch -d n/o/p &&
      git-branch n'
 
