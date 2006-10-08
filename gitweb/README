@@ -26,10 +26,24 @@ You can specify the following configuration variables when building GIT:
  * GITWEB_LOGO
    Points to the location where you put git-logo.png on your web server.
  * GITWEB_CONFIG
-   This file will be loaded using 'require'.  If the environment
+   This file will be loaded using 'require' and can be used to override any
+   of the options above as well as some other options - see the top of
+   'gitweb.cgi' for their full list and description.  If the environment
    $GITWEB_CONFIG is set when gitweb.cgi is executed the file in the
    environment variable will be loaded instead of the file
    specified when gitweb.cgi was created.
+
+
+Runtime gitweb configuration
+----------------------------
+
+You can adjust gitweb behaviour using the file specified in `GITWEB_CONFIG`
+(defaults to 'gitweb_config.perl' in the same directory as the CGI).
+See the top of 'gitweb.cgi' for the list of variables and some description.
+The most notable thing that is not configurable at compile time are the
+optional features, stored in the '%features' variable. You can find further
+description on how to reconfigure the default features setting in your
+`GITWEB_CONFIG` or per-project in `project.git/config` inside 'gitweb.cgi'.
 
 
 Webserver configuration
