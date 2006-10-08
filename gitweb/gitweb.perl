@@ -1140,6 +1140,9 @@ sub parse_commit {
 			last;
 		}
 	}
+	if ($co{'title'} eq "") {
+		$co{'title'} = $co{'title_short'} = '(no commit message)';
+	}
 	# remove added spaces
 	foreach my $line (@commit_lines) {
 		$line =~ s/^    //;
@@ -2014,14 +2017,14 @@ sub git_patchset_body {
 				print "<div class=\"diff_info\">" . file_type($diffinfo->{'to_mode'}) . ":" .
 				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash,
 				                             hash=>$diffinfo->{'to_id'}, file_name=>$diffinfo->{'file'})},
-				              $diffinfo->{'to_id'}) . "(new)" .
+				              $diffinfo->{'to_id'}) . " (new)" .
 				      "</div>\n"; # class="diff_info"
 
 			} elsif ($diffinfo->{'status'} eq "D") { # deleted
 				print "<div class=\"diff_info\">" . file_type($diffinfo->{'from_mode'}) . ":" .
 				      $cgi->a({-href => href(action=>"blob", hash_base=>$hash_parent,
 				                             hash=>$diffinfo->{'from_id'}, file_name=>$diffinfo->{'file'})},
-				              $diffinfo->{'from_id'}) . "(deleted)" .
+				              $diffinfo->{'from_id'}) . " (deleted)" .
 				      "</div>\n"; # class="diff_info"
 
 			} elsif ($diffinfo->{'status'} eq "R" || # renamed
@@ -2125,8 +2128,10 @@ sub git_shortlog_body {
 		print "</td>\n" .
 		      "<td class=\"link\">" .
 		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff") . " | " .
-		      $cgi->a({-href => href(action=>"tree", hash=>$commit, hash_base=>$commit)}, "tree") . " | " .
-		      $cgi->a({-href => href(action=>"snapshot", hash=>$commit)}, "snapshot");
+		      $cgi->a({-href => href(action=>"tree", hash=>$commit, hash_base=>$commit)}, "tree");
+		if (gitweb_have_snapshot()) {
+			print " | " . $cgi->a({-href => href(action=>"snapshot", hash=>$commit)}, "snapshot");
+		}
 		print "</td>\n" .
 		      "</tr>\n";
 	}
@@ -3052,7 +3057,7 @@ sub git_commit {
 			        "blame");
 	}
 	git_header_html(undef, $expires);
-	git_print_page_nav('commit', defined $co{'parent'} ? '' : 'commitdiff',
+	git_print_page_nav('commit', '',
 	                   $hash, $co{'tree'}, $hash,
 	                   join (' | ', @views_nav));
 
