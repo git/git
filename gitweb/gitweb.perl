@@ -54,13 +54,18 @@ our $stylesheet;
 # default is not to define style sheet, but it can be overwritten later
 undef $stylesheet;
 
-# URI of GIT logo
+# URI of default stylesheet
+our $stylesheet = "++GITWEB_CSS++";
+# URI of GIT logo (72x27 size)
 our $logo = "++GITWEB_LOGO++";
 # URI of GIT favicon, assumed to be image/png type
 our $favicon = "++GITWEB_FAVICON++";
 
-our $githelp_url = "http://git.or.cz/";
-our $githelp_label = "git homepage";
+# URI and label (title) of GIT logo link
+#our $logo_url = "http://www.kernel.org/pub/software/scm/git/docs/";
+#our $logo_label = "git documentation";
+our $logo_url = "http://git.or.cz/";
+our $logo_label = "git homepage";
 
 # source of projects list
 our $projects_list = "++GITWEB_LIST++";
@@ -1470,11 +1475,9 @@ EOF
 	}
 
 	print "<div class=\"page_header\">\n" .
-	      "<a href=\"" . esc_html($githelp_url) .
-	      "\" title=\"" . esc_html($githelp_label) .
-	      "\">" .
-	      "<img src=\"$logo\" width=\"72\" height=\"27\" alt=\"git\" style=\"float:right; border-width:0px;\"/>" .
-	      "</a>\n";
+	      $cgi->a({-href => esc_url($logo_url),
+	               -title => $logo_label},
+	              qq(<img src="$logo" width="72" height="27" alt="git" class="logo"/>));
 	print $cgi->a({-href => esc_url($home_link)}, $home_link_str) . " / ";
 	if (defined $project) {
 		print $cgi->a({-href => href(action=>"summary")}, esc_html($project));
