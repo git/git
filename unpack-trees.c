@@ -642,7 +642,7 @@ int threeway_merge(struct cache_entry **stages,
 		    (remote_deleted && head && head_match)) {
 			if (index)
 				return deleted_entry(index, index, o);
-			else if (path)
+			else if (path && !head_deleted)
 				verify_absent(path, "removed", o);
 			return 0;
 		}
@@ -661,8 +661,6 @@ int threeway_merge(struct cache_entry **stages,
 	if (index) {
 		verify_uptodate(index, o);
 	}
-	else if (path)
-		verify_absent(path, "overwritten", o);
 
 	o->nontrivial_merge = 1;
 
