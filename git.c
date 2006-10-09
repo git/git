@@ -219,6 +219,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		int option;
 	} commands[] = {
 		{ "add", cmd_add, RUN_SETUP },
+		{ "annotate", cmd_annotate, },
 		{ "apply", cmd_apply },
 		{ "archive", cmd_archive },
 		{ "cat-file", cmd_cat_file, RUN_SETUP },
