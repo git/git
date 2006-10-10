@@ -7,9 +7,11 @@
 case "$0" in
 *-revert* )
 	test -t 0 && edit=-e
+	replay=
 	me=revert
 	USAGE='[--edit | --no-edit] [-n] <commit-ish>' ;;
 *-cherry-pick* )
+	replay=t
 	edit=
 	me=cherry-pick
 	USAGE='[--edit] [-n] [-r] [-x] <commit-ish>'  ;;
@@ -18,7 +20,7 @@ case "$0" in
 esac
 . git-sh-setup
 
-no_commit= replay=t
+no_commit=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
