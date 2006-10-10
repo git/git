@@ -275,7 +275,7 @@ sub req_Directory
     $state->{directory} = "" if ( $state->{directory} eq "." );
     $state->{directory} .= "/" if ( $state->{directory} =~ /\S/ );
 
-    if ( not defined($state->{prependdir}) and $state->{localdir} eq "." and $state->{path} =~ /\S/ )
+    if ( (not defined($state->{prependdir}) or $state->{prependdir} eq '') and $state->{localdir} eq "." and $state->{path} =~ /\S/ )
     {
         $log->info("Setting prepend to '$state->{path}'");
         $state->{prependdir} = $state->{path};
