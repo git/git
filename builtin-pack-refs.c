@@ -2,7 +2,7 @@
 #include "refs.h"
 
 static const char builtin_pack_refs_usage[] =
-"git-pack-refs [--prune]";
+"git-pack-refs [--all] [--prune]";
 
 struct ref_to_prune {
 	struct ref_to_prune *next;
@@ -68,6 +68,7 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 {
 	int fd, i;
 	struct pack_refs_cb_data cbdata;
+	int (*iterate_ref)(each_ref_fn, void *) = for_each_tag_ref;
 
 	memset(&cbdata, 0, sizeof(cbdata));
 
@@ -75,6 +76,10 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--prune")) {
 			cbdata.prune = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--all")) {
+			iterate_ref = for_each_ref;
 			continue;
 		}
 		/* perhaps other parameters later... */
@@ -88,7 +93,7 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 	if (!cbdata.refs_file)
 		die("unable to create ref-pack file structure (%s)",
 		    strerror(errno));
-	for_each_ref(handle_one_ref, &cbdata);
+	iterate_ref(handle_one_ref, &cbdata);
 	fflush(cbdata.refs_file);
 	fsync(fd);
 	fclose(cbdata.refs_file);

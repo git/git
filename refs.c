@@ -721,7 +721,8 @@ static int log_ref_write(struct ref_lock *lock,
 	char *logrec;
 	const char *committer;
 
-	if (log_all_ref_updates) {
+	if (log_all_ref_updates &&
+	    !strncmp(lock->ref_name, "refs/heads/", 11)) {
 		if (safe_create_leading_directories(lock->log_file) < 0)
 			return error("unable to create directory for %s",
 				lock->log_file);
