@@ -1032,6 +1032,9 @@ sub parse_date {
 	$date{'hour_local'} = $hour;
 	$date{'minute_local'} = $min;
 	$date{'tz_local'} = $tz;
+	$date{'iso-tz'} = sprintf ("%04d-%02d-%02d %02d:%02d:%02d %s",
+				   1900+$year, $mon+1, $mday,
+				   $hour, $min, $sec, $tz);
 	return %date;
 }
 
@@ -2562,7 +2565,8 @@ sub git_blame2 {
 	if ($ftype !~ "blob") {
 		die_error("400 Bad Request", "Object is not a blob");
 	}
-	open ($fd, "-|", git_cmd(), "blame", '-l', '--', $file_name, $hash_base)
+	open ($fd, "-|", git_cmd(), "blame", '--porcelain', '--',
+	      $file_name, $hash_base)
 		or die_error(undef, "Open git-blame failed");
 	git_header_html();
 	my $formats_nav =
@@ -2586,33 +2590,52 @@ sub git_blame2 {
 <table class="blame">
 <tr><th>Commit</th><th>Line</th><th>Data</th></tr>
 HTML
-	while (<$fd>) {
-		my ($full_rev, $author, $date, $lineno, $data) =
-			/^([0-9a-f]{40}).*?\s\((.*?)\s+([-\d]+ [:\d]+ [-+\d]+)\s+(\d+)\)\s(.*)/;
+	my %metainfo = ();
+	while (1) {
+		$_ = <$fd>;
+		last unless defined $_;
+		my ($full_rev, $lineno, $orig_lineno, $group_size) =
+		    /^([0-9a-f]{40}) (\d+) (\d+)(?: (\d+))?$/;
+		if (!exists $metainfo{$full_rev}) {
+			$metainfo{$full_rev} = {};
+		}
+		my $meta = $metainfo{$full_rev};
+		while (<$fd>) {
+			last if (s/^\t//);
+			if (/^(\S+) (.*)$/) {
+				$meta->{$1} = $2;
+			}
+		}
+		my $data = $_;
 		my $rev = substr($full_rev, 0, 8);
-		my $print_c8 = 0;
-
-		if (!defined $last_rev) {
-			$last_rev = $full_rev;
-			$print_c8 = 1;
-		} elsif ($last_rev ne $full_rev) {
-			$last_rev = $full_rev;
+		my $author = $meta->{'author'};
+		my %date = parse_date($meta->{'author-time'},
+				      $meta->{'author-tz'});
+		my $date = $date{'iso-tz'};
+		if ($group_size) {
 			$current_color = ++$current_color % $num_colors;
-			$print_c8 = 1;
 		}
 		print "<tr class=\"$rev_color[$current_color]\">\n";
-		print "<td class=\"sha1\"";
-		if ($print_c8 == 1) {
+		if ($group_size) {
+			print "<td class=\"sha1\"";
 			print " title=\"$author, $date\"";
-		}
-		print ">";
-		if ($print_c8 == 1) {
-			print $cgi->a({-href => href(action=>"commit", hash=>$full_rev, file_name=>$file_name)},
+			print " rowspan=\"$group_size\"" if ($group_size > 1);
+			print ">";
+			print $cgi->a({-href => href(action=>"commit",
+						     hash=>$full_rev,
+						     file_name=>$file_name)},
 				      esc_html($rev));
+			print "</td>\n";
 		}
-		print "</td>\n";
-		print "<td class=\"linenr\"><a id=\"l$lineno\" href=\"#l$lineno\" class=\"linenr\">" .
-		      esc_html($lineno) . "</a></td>\n";
+		my $blamed = href(action => 'blame',
+				  file_name => $meta->{'filename'},
+				  hash_base => $full_rev);
+		print "<td class=\"linenr\">";
+		print $cgi->a({ -href => "$blamed#l$orig_lineno",
+				-id => "l$lineno",
+				-class => "linenr" },
+			      esc_html($lineno));
+		print "</td>";
 		print "<td class=\"pre\">" . esc_html($data) . "</td>\n";
 		print "</tr>\n";
 	}
