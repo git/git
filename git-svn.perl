@@ -52,7 +52,7 @@ my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_template, $_shared, $_no_default_regex, $_no_graft_copy,
 	$_limit, $_verbose, $_incremental, $_oneline, $_l_fmt, $_show_commit,
 	$_version, $_upgrade, $_authors, $_branch_all_refs, @_opt_m,
-	$_merge, $_strategy, $_dry_run, $_ignore_nodate);
+	$_merge, $_strategy, $_dry_run, $_ignore_nodate, $_non_recursive);
 my (@_branch_from, %tree_map, %users, %rusers, %equiv);
 my ($_svn_co_url_revs, $_svn_pg_peg_revs);
 my @repo_path_split_cache;
@@ -114,6 +114,7 @@ my %cmd = (
 			  'incremental' => \$_incremental,
 			  'oneline' => \$_oneline,
 			  'show-commit' => \$_show_commit,
+			  'non-recursive' => \$_non_recursive,
 			  'authors-file|A=s' => \$_authors,
 			} ],
 	'commit-diff' => [ \&commit_diff, 'Commit a diff between two trees',
@@ -752,13 +753,18 @@ sub show_log {
 			# ignore
 		} elsif (/^:\d{6} \d{6} $sha1_short/o) {
 			push @{$c->{raw}}, $_;
+		} elsif (/^[ACRMDT]\t/) {
+			# we could add $SVN_PATH here, but that requires
+			# remote access at the moment (repo_path_split)...
+			s#^([ACRMDT])\t#   $1 #;
+			push @{$c->{changed}}, $_;
 		} elsif (/^diff /) {
 			$d = 1;
 			push @{$c->{diff}}, $_;
 		} elsif ($d) {
 			push @{$c->{diff}}, $_;
 		} elsif (/^    (git-svn-id:.+)$/) {
-			(undef, $c->{r}, undef) = extract_metadata($1);
+			($c->{url}, $c->{r}, undef) = extract_metadata($1);
 		} elsif (s/^    //) {
 			push @{$c->{l}}, $_;
 		}
@@ -850,7 +856,8 @@ sub git_svn_log_cmd {
 	my ($r_min, $r_max) = @_;
 	my @cmd = (qw/git-log --abbrev-commit --pretty=raw
 			--default/, "refs/remotes/$GIT_SVN");
-	push @cmd, '--summary' if $_verbose;
+	push @cmd, '-r' unless $_non_recursive;
+	push @cmd, qw/--raw --name-status/ if $_verbose;
 	return @cmd unless defined $r_max;
 	if ($r_max == $r_min) {
 		push @cmd, '--max-count=1';
@@ -861,7 +868,7 @@ sub git_svn_log_cmd {
 		my ($c_min, $c_max);
 		$c_max = revdb_get($REVDB, $r_max);
 		$c_min = revdb_get($REVDB, $r_min);
-		if ($c_min && $c_max) {
+		if (defined $c_min && defined $c_max) {
 			if ($r_max > $r_max) {
 				push @cmd, "$c_min..$c_max";
 			} else {
@@ -2561,6 +2568,12 @@ sub show_commit {
 	}
 }
 
+sub show_commit_changed_paths {
+	my ($c) = @_;
+	return unless $c->{changed};
+	print "Changed paths:\n", @{$c->{changed}};
+}
+
 sub show_commit_normal {
 	my ($c) = @_;
 	print '-' x72, "\nr$c->{r} | ";
@@ -2570,7 +2583,8 @@ sub show_commit_normal {
 	my $nr_line = 0;
 
 	if (my $l = $c->{l}) {
-		while ($l->[$#$l] eq "\n" && $l->[($#$l - 1)] eq "\n") {
+		while ($l->[$#$l] eq "\n" && $#$l > 0
+		                          && $l->[($#$l - 1)] eq "\n") {
 			pop @$l;
 		}
 		$nr_line = scalar @$l;
@@ -2582,11 +2596,15 @@ sub show_commit_normal {
 			} else {
 				$nr_line .= ' lines';
 			}
-			print $nr_line, "\n\n";
+			print $nr_line, "\n";
+			show_commit_changed_paths($c);
+			print "\n";
 			print $_ foreach @$l;
 		}
 	} else {
-		print "1 line\n\n";
+		print "1 line\n";
+		show_commit_changed_paths($c);
+		print "\n";
 
 	}
 	foreach my $x (qw/raw diff/) {
