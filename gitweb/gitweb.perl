@@ -408,6 +408,9 @@ sub href(%) {
 	my %params = @_;
 	my $href = $my_uri;
 
+	# XXX: Warning: If you touch this, check the search form for updating,
+	# too.
+
 	my @mapping = (
 		project => "p",
 		action => "a",
@@ -1442,6 +1445,7 @@ EOF
 		}
 		$cgi->param("a", "search");
 		$cgi->param("h", $search_hash);
+		$cgi->param("p", $project);
 		print $cgi->startform(-method => "get", -action => $my_uri) .
 		      "<div class=\"search\">\n" .
 		      $cgi->hidden(-name => "p") . "\n" .
