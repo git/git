@@ -11,10 +11,13 @@
  * stream, aka "verbose").  A message over band #3 is a signal that
  * the remote died unexpectedly.  A flush() concludes the stream.
  */
-int recv_sideband(const char *me, int in_stream, int out, int err, char *buf, int bufsz)
+int recv_sideband(const char *me, int in_stream, int out, int err)
 {
+	char buf[7 + LARGE_PACKET_MAX + 1];
+	strcpy(buf, "remote:");
 	while (1) {
-		int len = packet_read_line(in_stream, buf, bufsz);
+		int band, len;
+		len	= packet_read_line(in_stream, buf+7, LARGE_PACKET_MAX);
 		if (len == 0)
 			break;
 		if (len < 1) {
@@ -22,25 +25,26 @@ int recv_sideband(const char *me, int in_stream, int out, int err, char *buf, in
 			safe_write(err, buf, len);
 			return SIDEBAND_PROTOCOL_ERROR;
 		}
+		band = buf[7] & 0xff;
 		len--;
-		switch (buf[0] & 0xFF) {
+		switch (band) {
 		case 3:
-			safe_write(err, "remote: ", 8);
-			safe_write(err, buf+1, len);
-			safe_write(err, "\n", 1);
+			buf[7] = ' ';
+			buf[8+len] = '\n';
+			safe_write(err, buf, 8+len+1);
 			return SIDEBAND_REMOTE_ERROR;
 		case 2:
-			safe_write(err, "remote: ", 8);
-			safe_write(err, buf+1, len);
+			buf[7] = ' ';
+			safe_write(err, buf, 8+len);
 			continue;
 		case 1:
-			safe_write(out, buf+1, len);
+			safe_write(out, buf+8, len);
 			continue;
 		default:
-			len = sprintf(buf + 1,
+			len = sprintf(buf,
 				      "%s: protocol error: bad band #%d\n",
-				      me, buf[0] & 0xFF);
-			safe_write(err, buf+1, len);
+				      me, band);
+			safe_write(err, buf, len);
 			return SIDEBAND_PROTOCOL_ERROR;
 		}
 	}
