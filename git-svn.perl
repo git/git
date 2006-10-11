@@ -169,11 +169,11 @@ Usage: $0 <command> [options] [arguments]\n
 
 	foreach (sort keys %cmd) {
 		next if $cmd && $cmd ne $_;
-		print $fd '  ',pack('A13',$_),$cmd{$_}->[1],"\n";
+		print $fd '  ',pack('A17',$_),$cmd{$_}->[1],"\n";
 		foreach (keys %{$cmd{$_}->[2]}) {
 			# prints out arguments as they should be passed:
 			my $x = s#[:=]s$## ? '<arg>' : s#[:=]i$## ? '<num>' : '';
-			print $fd ' ' x 17, join(', ', map { length $_ > 1 ?
+			print $fd ' ' x 21, join(', ', map { length $_ > 1 ?
 							"--$_" : "-$_" }
 						split /\|/,$_)," $x\n";
 		}
