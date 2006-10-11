@@ -548,10 +548,13 @@ static int add_merge_info(enum cmit_fmt fmt, char *buf, const struct commit *com
 
 	while (parent) {
 		struct commit *p = parent->item;
-		const char *hex = abbrev
-			? find_unique_abbrev(p->object.sha1, abbrev)
-			: sha1_to_hex(p->object.sha1);
-		const char *dots = (abbrev && strlen(hex) != 40) ? "..." : "";
+		const char *hex = NULL;
+		const char *dots;
+		if (abbrev)
+			hex = find_unique_abbrev(p->object.sha1, abbrev);
+		if (!hex)
+			hex = sha1_to_hex(p->object.sha1);
+		dots = (abbrev && strlen(hex) != 40) ?  "..." : "";
 		parent = parent->next;
 
 		offset += sprintf(buf + offset, " %s%s", hex, dots);
