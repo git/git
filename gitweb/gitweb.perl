@@ -2533,7 +2533,7 @@ HTML
 	while (1) {
 		$_ = <$fd>;
 		last unless defined $_;
-		my ($full_rev, $lineno, $orig_lineno, $group_size) =
+		my ($full_rev, $orig_lineno, $lineno, $group_size) =
 		    /^([0-9a-f]{40}) (\d+) (\d+)(?: (\d+))?$/;
 		if (!exists $metainfo{$full_rev}) {
 			$metainfo{$full_rev} = {};
