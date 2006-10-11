@@ -436,10 +436,10 @@ esac
 
 # If the original head was empty (i.e. no "master" yet), or
 # if we were told not to worry, we do not have to check.
-case ",$update_head_ok,$orig_head," in
-*,, | t,* )
+case "$orig_head" in
+'')
 	;;
-*)
+?*)
 	curr_head=$(git-rev-parse --verify HEAD 2>/dev/null)
 	if test "$curr_head" != "$orig_head"
 	then
