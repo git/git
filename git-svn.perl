@@ -682,12 +682,17 @@ sub multi_init {
 		}
 		$_trunk = $url . $_trunk;
 	}
+	my $ch_id;
 	if ($GIT_SVN eq 'git-svn') {
-		print "GIT_SVN_ID set to 'trunk' for $_trunk\n";
+		$ch_id = 1;
 		$GIT_SVN = $ENV{GIT_SVN_ID} = 'trunk';
 	}
 	init_vars();
-	init($_trunk);
+	unless (-d $GIT_SVN_DIR) {
+		print "GIT_SVN_ID set to 'trunk' for $_trunk\n" if $ch_id;
+		init($_trunk);
+		sys('git-repo-config', 'svn.trunk', $_trunk);
+	}
 	complete_url_ls_init($url, $_branches, '--branches/-b', '');
 	complete_url_ls_init($url, $_tags, '--tags/-t', 'tags/');
 }
@@ -937,16 +942,21 @@ sub complete_url_ls_init {
 				print STDERR "W: Unrecognized URL: $u\n";
 				die "This should never happen\n";
 			}
+			# don't try to init already existing refs
 			my $id = $pfx.$1;
-			print "init $u => $id\n";
 			$GIT_SVN = $ENV{GIT_SVN_ID} = $id;
 			init_vars();
-			init($u);
+			unless (-d $GIT_SVN_DIR) {
+				print "init $u => $id\n";
+				init($u);
+			}
 		}
 		exit 0;
 	}
 	waitpid $pid, 0;
 	croak $? if $?;
+	my ($n) = ($switch =~ /^--(\w+)/);
+	sys('git-repo-config', "svn.$n", $var);
 }
 
 sub common_prefix {
