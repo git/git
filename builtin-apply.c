@@ -2112,7 +2112,7 @@ static void numstat_patch_list(struct patch *patch)
 			quote_c_style(name, NULL, stdout, 0);
 		else
 			fputs(name, stdout);
-		putchar('\n');
+		putchar(line_termination);
 	}
 }
 

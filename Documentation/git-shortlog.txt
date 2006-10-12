@@ -27,8 +27,8 @@ OPTIONS
 	Sort output according to the number of commits per author instead
 	of author alphabetic order.
 
--s:
-	Supress commit description and Provide a commit count summary only.
+-s::
+	Supress commit description and provide a commit count summary only.
 
 FILES
 -----

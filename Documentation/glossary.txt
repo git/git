@@ -179,7 +179,7 @@ object name::
 	character hexadecimal encoding of the hash of the object (possibly
 	followed by a white space).
 
-object type:
+object type::
 	One of the identifiers "commit","tree","tag" and "blob" describing
 	the type of an object.
 
@@ -324,7 +324,7 @@ tag::
 	A tag is most typically used to mark a particular point in the
 	commit ancestry chain.
 
-unmerged index:
+unmerged index::
 	An index which contains unmerged index entries.
 
 working tree::
