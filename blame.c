@@ -22,11 +22,14 @@
 #define DEBUG 0
 
 static const char blame_usage[] =
-"git-blame [-c] [-l] [-t] [-S <revs-file>] [--] file [commit]\n"
+"git-blame [-c] [-l] [-t] [-f] [-n] [-p] [-S <revs-file>] [--] file [commit]\n"
 "  -c, --compatibility Use the same output mode as git-annotate (Default: off)\n"
 "  -l, --long          Show long commit SHA1 (Default: off)\n"
 "  -t, --time          Show raw timestamp (Default: off)\n"
-"  -S, --revs-file     Use revisions from revs-file instead of calling git-rev-list\n"
+"  -f, --show-name     Show original filename (Default: auto)\n"
+"  -n, --show-number   Show original linenumber (Default: off)\n"
+"  -p, --porcelain     Show in a format designed for machine consumption\n"
+"  -S revs-file        Use revisions from revs-file instead of calling git-rev-list\n"
 "  -h, --help          This message";
 
 static struct commit **blame_lines;
@@ -951,7 +954,8 @@ int main(int argc, const char **argv)
 				show_number = 1;
 				continue;
 			}
-			if (!strcmp(argv[i], "--porcelain")) {
+			if (!strcmp(argv[i], "-p") ||
+			    !strcmp(argv[i], "--porcelain")) {
 				porcelain = 1;
 				sha1_len = 40;
 				show_raw_time = 1;
