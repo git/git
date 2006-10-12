@@ -40,8 +40,22 @@ memoize('cmt_metadata');
 memoize('get_commit_time');
 
 my ($SVN_PATH, $SVN, $SVN_LOG, $_use_lib);
+
+sub nag_lib {
+	print STDERR <<EOF;
+! Please consider installing the SVN Perl libraries (version 1.1.0 or
+! newer).  You will generally get better performance and fewer bugs,
+! especially if you:
+! 1) have a case-insensitive filesystem
+! 2) replace symlinks with files (and vice-versa) in commits
+
+EOF
+}
+
 $_use_lib = 1 unless $ENV{GIT_SVN_NO_LIB};
 libsvn_load();
+nag_lib() unless $_use_lib;
+
 my $_optimize_commits = 1 unless $ENV{GIT_SVN_NO_OPTIMIZE_COMMITS};
 my $sha1 = qr/[a-f\d]{40}/;
 my $sha1_short = qr/[a-f\d]{4,40}/;
