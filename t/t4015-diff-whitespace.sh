@@ -51,13 +51,13 @@ test_expect_success "Ray's example with -w" 'diff -u expect out'
 git-diff -b > out
 test_expect_success "Ray's example with -b" 'diff -u expect out'
 
-cat << EOF > x
+tr 'Q' '\015' << EOF > x
 whitespace at beginning
 whitespace change
 whitespace in the middle
 whitespace at end
 unchanged line
-CR at end
+CR at endQ
 EOF
 
 git-update-index x
@@ -71,7 +71,7 @@ unchanged line
 CR at end
 EOF
 
-cat << EOF > expect
+tr 'Q' '\015' << EOF > expect
 diff --git a/x b/x
 index d99af23..8b32fb5 100644
 --- a/x
@@ -86,7 +86,7 @@ index d99af23..8b32fb5 100644
 +white space in the middle
 +whitespace at end  
  unchanged line
--CR at end
+-CR at endQ
 +CR at end
 EOF
 git-diff > out
@@ -99,7 +99,7 @@ EOF
 git-diff -w > out
 test_expect_success 'another test, with -w' 'diff -u expect out'
 
-cat << EOF > expect
+tr 'Q' '\015' << EOF > expect
 diff --git a/x b/x
 index d99af23..8b32fb5 100644
 --- a/x
@@ -113,7 +113,7 @@ index d99af23..8b32fb5 100644
 +white space in the middle
 +whitespace at end  
  unchanged line
--CR at end
+-CR at endQ
 +CR at end
 EOF
 git-diff -b > out
