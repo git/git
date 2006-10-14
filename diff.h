@@ -26,20 +26,21 @@ typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 
 #define DIFF_FORMAT_RAW		0x0001
 #define DIFF_FORMAT_DIFFSTAT	0x0002
-#define DIFF_FORMAT_SUMMARY	0x0004
-#define DIFF_FORMAT_PATCH	0x0008
+#define DIFF_FORMAT_NUMSTAT	0x0004
+#define DIFF_FORMAT_SUMMARY	0x0008
+#define DIFF_FORMAT_PATCH	0x0010
 
 /* These override all above */
-#define DIFF_FORMAT_NAME	0x0010
-#define DIFF_FORMAT_NAME_STATUS	0x0020
-#define DIFF_FORMAT_CHECKDIFF	0x0040
+#define DIFF_FORMAT_NAME	0x0100
+#define DIFF_FORMAT_NAME_STATUS	0x0200
+#define DIFF_FORMAT_CHECKDIFF	0x0400
 
 /* Same as output_format = 0 but we know that -s flag was given
  * and we should not give default value to output_format.
  */
-#define DIFF_FORMAT_NO_OUTPUT	0x0080
+#define DIFF_FORMAT_NO_OUTPUT	0x0800
 
-#define DIFF_FORMAT_CALLBACK	0x0100
+#define DIFF_FORMAT_CALLBACK	0x1000
 
 struct diff_options {
 	const char *filter;
@@ -170,6 +171,7 @@ extern void diffcore_std_no_resolve(struct diff_options *);
 "  --patch-with-raw\n" \
 "                output both a patch and the diff-raw format.\n" \
 "  --stat        show diffstat instead of patch.\n" \
+"  --numstat     show numeric diffstat instead of patch.\n" \
 "  --patch-with-stat\n" \
 "                output a patch and prepend its diffstat.\n" \
 "  --name-only   show only names of changed files.\n" \

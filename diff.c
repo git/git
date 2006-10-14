@@ -795,6 +795,23 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 	       set, total_files, adds, dels, reset);
 }
 
+static void show_numstat(struct diffstat_t* data, struct diff_options *options)
+{
+	int i;
+
+	for (i = 0; i < data->nr; i++) {
+		struct diffstat_file *file = data->files[i];
+
+		printf("%d\t%d\t", file->added, file->deleted);
+		if (options->line_termination &&
+		    quote_c_style(file->name, NULL, NULL, 0))
+			quote_c_style(file->name, NULL, stdout, 0);
+		else
+			fputs(file->name, stdout);
+		putchar(options->line_termination);
+	}
+}
+
 struct checkdiff_t {
 	struct xdiff_emit_state xm;
 	const char *filename;
@@ -1731,6 +1748,7 @@ int diff_setup_done(struct diff_options *options)
 				      DIFF_FORMAT_CHECKDIFF |
 				      DIFF_FORMAT_NO_OUTPUT))
 		options->output_format &= ~(DIFF_FORMAT_RAW |
+					    DIFF_FORMAT_NUMSTAT |
 					    DIFF_FORMAT_DIFFSTAT |
 					    DIFF_FORMAT_SUMMARY |
 					    DIFF_FORMAT_PATCH);
@@ -1740,6 +1758,7 @@ int diff_setup_done(struct diff_options *options)
 	 * recursive bits for other formats here.
 	 */
 	if (options->output_format & (DIFF_FORMAT_PATCH |
+				      DIFF_FORMAT_NUMSTAT |
 				      DIFF_FORMAT_DIFFSTAT |
 				      DIFF_FORMAT_SUMMARY |
 				      DIFF_FORMAT_CHECKDIFF))
@@ -1828,6 +1847,9 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->output_format |= DIFF_FORMAT_RAW;
 	else if (!strcmp(arg, "--patch-with-raw")) {
 		options->output_format |= DIFF_FORMAT_PATCH | DIFF_FORMAT_RAW;
+	}
+	else if (!strcmp(arg, "--numstat")) {
+		options->output_format |= DIFF_FORMAT_NUMSTAT;
 	}
 	else if (!strncmp(arg, "--stat", 6)) {
 		char *end;
@@ -2603,7 +2625,7 @@ void diff_flush(struct diff_options *options)
 		separator++;
 	}
 
-	if (output_format & DIFF_FORMAT_DIFFSTAT) {
+	if (output_format & (DIFF_FORMAT_DIFFSTAT|DIFF_FORMAT_NUMSTAT)) {
 		struct diffstat_t diffstat;
 
 		memset(&diffstat, 0, sizeof(struct diffstat_t));
@@ -2613,7 +2635,10 @@ void diff_flush(struct diff_options *options)
 			if (check_pair_status(p))
 				diff_flush_stat(p, options, &diffstat);
 		}
-		show_stats(&diffstat, options);
+		if (output_format & DIFF_FORMAT_NUMSTAT)
+			show_numstat(&diffstat, options);
+		if (output_format & DIFF_FORMAT_DIFFSTAT)
+			show_stats(&diffstat, options);
 		separator++;
 	}
 

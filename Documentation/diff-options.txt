@@ -16,6 +16,11 @@
 	The width of the filename part can be controlled by
 	giving another width to it separated by a comma.
 
+--numstat::
+	Similar to \--stat, but shows number of added and
+	deleted lines in decimal notation and pathname without
+	abbreviation, to make it more machine friendly.
+
 --summary::
 	Output a condensed summary of extended header information
 	such as creations, renames and mode changes.
