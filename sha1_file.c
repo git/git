@@ -1347,12 +1347,9 @@ void *read_object_with_reference(const unsigned char *sha1,
 	}
 }
 
-char *write_sha1_file_prepare(void *buf,
-			      unsigned long len,
-			      const char *type,
-			      unsigned char *sha1,
-			      unsigned char *hdr,
-			      int *hdrlen)
+static char *write_sha1_file_prepare(void *buf, unsigned long len,
+                                     const char *type, unsigned char *sha1,
+                                     unsigned char *hdr, int *hdrlen)
 {
 	SHA_CTX c;
 
