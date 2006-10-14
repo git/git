@@ -536,7 +536,7 @@ sub commit_lib {
 			$SVN = libsvn_connect($repo);
 			my $ed = SVN::Git::Editor->new(
 					{	r => $r_last,
-						ra => $SVN,
+						ra => $SVN_LOG,
 						c => $c,
 						svn_path => $SVN_PATH
 					},
@@ -832,7 +832,7 @@ sub commit_diff {
 	$SVN ||= libsvn_connect($repo);
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef, 0) : ();
 	my $ed = SVN::Git::Editor->new({	r => $SVN->get_latest_revnum,
-						ra => $SVN, c => $tb,
+						ra => $SVN_LOG, c => $tb,
 						svn_path => $SVN_PATH
 					},
 				$SVN->get_commit_editor($_message,
