@@ -2472,7 +2472,7 @@ proc sanity {row {full 0}} {
 }
 
 proc makeuparrow {oid x y z} {
-    global rowidlist rowoffsets uparrowlen idrowranges
+    global rowidlist rowoffsets uparrowlen idrowranges displayorder
 
     for {set i 1} {$i < $uparrowlen && $y > 1} {incr i} {
 	incr y -1
@@ -2495,7 +2495,7 @@ proc makeuparrow {oid x y z} {
     }
     set tmp [lreplace [lindex $rowoffsets $y] $x $x {}]
     lset rowoffsets $y [incrange $tmp [expr {$x+1}] -1]
-    lappend idrowranges($oid) $y
+    lappend idrowranges($oid) [lindex $displayorder $y]
 }
 
 proc initlayout {} {
@@ -2609,7 +2609,7 @@ proc layoutmore {tmax allread} {
 
 proc showstuff {canshow} {
     global numcommits commitrow pending_select selectedline
-    global linesegends idrowranges idrangedrawn curview
+    global linesegends idrangedrawn curview
     global displayorder selectfirst
 
     if {$numcommits == 0} {
@@ -2627,11 +2627,12 @@ proc showstuff {canshow} {
     for {set r $row} {$r < $canshow} {incr r} {
 	foreach id [lindex $linesegends [expr {$r+1}]] {
 	    set i -1
-	    foreach {s e} [rowranges $id] {
+	    set ranges [rowranges $id]
+	    foreach {s e} $ranges {
 		incr i
 		if {$e ne {} && $e < $numcommits && $s <= $r1 && $e >= $r0
 		    && ![info exists idrangedrawn($id,$i)]} {
-		    drawlineseg $id $i
+		    drawlineseg $id $i $ranges
 		    set idrangedrawn($id,$i) 1
 		}
 	    }
@@ -2698,7 +2699,7 @@ proc layoutrows {row endrow last} {
 			set idinlist($i) 0
 			set rm1 [expr {$row - 1}]
 			lappend lse $i
-			lappend idrowranges($i) $rm1
+			lappend idrowranges($i) [lindex $displayorder $rm1]
 			if {[incr nev -1] <= 0} break
 			continue
 		    }
@@ -2730,7 +2731,7 @@ proc layoutrows {row endrow last} {
 	set ranges {}
 	if {[info exists idrowranges($id)]} {
 	    set ranges $idrowranges($id)
-	    lappend ranges $row
+	    lappend ranges $id
 	    unset idrowranges($id)
 	}
 	lappend rowrangelist $ranges
@@ -2755,7 +2756,7 @@ proc layoutrows {row endrow last} {
 	}
 	foreach i $newolds {
 	    set idinlist($i) 1
-	    set idrowranges($i) $row
+	    set idrowranges($i) $id
 	}
 	incr col $l
 	foreach oid $oldolds {
@@ -2993,16 +2994,22 @@ proc rowranges {id} {
     } elseif {[info exists idrowranges($id)]} {
 	set ranges $idrowranges($id)
     }
-    return $ranges
+    set linenos {}
+    foreach rid $ranges {
+	lappend linenos $commitrow($curview,$rid)
+    }
+    if {$linenos ne {}} {
+	lset linenos 0 [expr {[lindex $linenos 0] + 1}]
+    }
+    return $linenos
 }
 
-proc drawlineseg {id i} {
+proc drawlineseg {id i ranges} {
     global rowoffsets rowidlist
     global displayorder
     global canv colormap linespc
     global numcommits commitrow curview
 
-    set ranges [rowranges $id]
     set downarrow 1
     if {[info exists commitrow($curview,$id)]
 	&& $commitrow($curview,$id) < $numcommits} {
@@ -3132,10 +3139,11 @@ proc drawlines {id} {
     global children iddrawn commitrow rowidlist curview
 
     $canv delete lines.$id
-    set nr [expr {[llength [rowranges $id]] / 2}]
+    set ranges [rowranges $id]
+    set nr [expr {[llength $ranges] / 2}]
     for {set i 0} {$i < $nr} {incr i} {
 	if {[info exists idrangedrawn($id,$i)]} {
-	    drawlineseg $id $i
+	    drawlineseg $id $i $ranges
 	}
     }
     foreach child $children($curview,$id) {
@@ -3216,13 +3224,14 @@ proc drawcmitrow {row} {
     foreach id [lindex $rowidlist $row] {
 	if {$id eq {}} continue
 	set i -1
-	foreach {s e} [rowranges $id] {
+	set ranges [rowranges $id]
+	foreach {s e} $ranges {
 	    incr i
 	    if {$row < $s} continue
 	    if {$e eq {}} break
 	    if {$row <= $e} {
 		if {$e < $numcommits && ![info exists idrangedrawn($id,$i)]} {
-		    drawlineseg $id $i
+		    drawlineseg $id $i $ranges
 		    set idrangedrawn($id,$i) 1
 		}
 		break
@@ -3528,7 +3537,7 @@ proc show_status {msg} {
 proc insertrow {row newcmit} {
     global displayorder parentlist childlist commitlisted
     global commitrow curview rowidlist rowoffsets numcommits
-    global rowrangelist idrowranges rowlaidout rowoptim numcommits
+    global rowrangelist rowlaidout rowoptim numcommits
     global linesegends selectedline
 
     if {$row >= $numcommits} {
@@ -3572,44 +3581,15 @@ proc insertrow {row newcmit} {
     set rowoffsets [linsert $rowoffsets [expr {$row+1}] $newoffs]
 
     set rowrangelist [linsert $rowrangelist $row {}]
-    set l [llength $rowrangelist]
-    for {set r 0} {$r < $l} {incr r} {
-	set ranges [lindex $rowrangelist $r]
-	if {$ranges ne {} && [lindex $ranges end] >= $row} {
-	    set newranges {}
-	    foreach x $ranges {
-		if {$x >= $row} {
-		    lappend newranges [expr {$x + 1}]
-		} else {
-		    lappend newranges $x
-		}
-	    }
-	    lset rowrangelist $r $newranges
-	}
-    }
     if {[llength $kids] > 1} {
 	set rp1 [expr {$row + 1}]
 	set ranges [lindex $rowrangelist $rp1]
 	if {$ranges eq {}} {
-	    set ranges [list $row $rp1]
-	} elseif {[lindex $ranges end-1] == $rp1} {
-	    lset ranges end-1 $row
+	    set ranges [list $newcmit $p]
+	} elseif {[lindex $ranges end-1] eq $p} {
+	    lset ranges end-1 $newcmit
 	}
 	lset rowrangelist $rp1 $ranges
-    }
-    foreach id [array names idrowranges] {
-	set ranges $idrowranges($id)
-	if {$ranges ne {} && [lindex $ranges end] >= $row} {
-	    set newranges {}
-	    foreach x $ranges {
-		if {$x >= $row} {
-		    lappend newranges [expr {$x + 1}]
-		} else {
-		    lappend newranges $x
-		}
-	    }
-	    set idrowranges($id) $newranges
-	}
     }
 
     set linesegends [linsert $linesegends $row {}]
