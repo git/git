@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 #
 
-USAGE='[-a] [-d] [-f] [-l] [-n] [-q]'
+USAGE='[-a] [-d] [-f] [-l] [-n] [-q] [--window=N] [--depth=N]'
 . git-sh-setup
 
 no_update_info= all_into_one= remove_redundant=
@@ -23,6 +23,15 @@ do
 	esac
 	shift
 done
+
+# Later we will default repack.UseDeltaBaseOffset to true
+default_dbo=false
+
+case "`git repo-config --bool repack.usedeltabaseoffset ||
+       echo $default_dbo`" in
+true)
+	extra="$extra --delta-base-offset" ;;
+esac
 
 PACKDIR="$GIT_OBJECT_DIRECTORY/pack"
 PACKTMP="$GIT_DIR/.tmp-$$-pack"
