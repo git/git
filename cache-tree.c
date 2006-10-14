@@ -344,12 +344,8 @@ static int update_one(struct cache_tree *it,
 #endif
 	}
 
-	if (dryrun) {
-		unsigned char hdr[200];
-		int hdrlen;
-		write_sha1_file_prepare(buffer, offset, tree_type, it->sha1,
-					hdr, &hdrlen);
-	}
+	if (dryrun)
+		hash_sha1_file(buffer, offset, tree_type, it->sha1);
 	else
 		write_sha1_file(buffer, offset, tree_type, it->sha1);
 	free(buffer);

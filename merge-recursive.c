@@ -1235,13 +1235,10 @@ int merge(struct commit *h1,
 	if (merged_common_ancestors == NULL) {
 		/* if there is no common ancestor, make an empty tree */
 		struct tree *tree = xcalloc(1, sizeof(struct tree));
-		unsigned char hdr[40];
-		int hdrlen;
 
 		tree->object.parsed = 1;
 		tree->object.type = OBJ_TREE;
-		write_sha1_file_prepare(NULL, 0, tree_type, tree->object.sha1,
-					hdr, &hdrlen);
+		hash_sha1_file(NULL, 0, tree_type, tree->object.sha1);
 		merged_common_ancestors = make_virtual_commit(tree, "ancestor");
 	}
 

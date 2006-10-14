@@ -245,6 +245,7 @@ char *enter_repo(char *path, int strict);
 extern int sha1_object_info(const unsigned char *, char *, unsigned long *);
 extern void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned long *size);
 extern void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size);
+extern int hash_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *sha1);
 extern int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *return_sha1);
 extern char *write_sha1_file_prepare(void *buf,
 				     unsigned long len,

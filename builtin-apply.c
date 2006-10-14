@@ -1783,8 +1783,6 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 {
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
 	unsigned char sha1[20];
-	unsigned char hdr[50];
-	int hdrlen;
 
 	/* For safety, we require patch index line to contain
 	 * full 40-byte textual SHA1 for old and new, at least for now.
@@ -1800,8 +1798,7 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 		/* See if the old one matches what the patch
 		 * applies to.
 		 */
-		write_sha1_file_prepare(desc->buffer, desc->size,
-					blob_type, sha1, hdr, &hdrlen);
+		hash_sha1_file(desc->buffer, desc->size, blob_type, sha1);
 		if (strcmp(sha1_to_hex(sha1), patch->old_sha1_prefix))
 			return error("the patch applies to '%s' (%s), "
 				     "which does not match the "
@@ -1846,8 +1843,7 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 				     name);
 
 		/* verify that the result matches */
-		write_sha1_file_prepare(desc->buffer, desc->size, blob_type,
-					sha1, hdr, &hdrlen);
+		hash_sha1_file(desc->buffer, desc->size, blob_type, sha1);
 		if (strcmp(sha1_to_hex(sha1), patch->new_sha1_prefix))
 			return error("binary patch to '%s' creates incorrect result (expecting %s, got %s)", name, patch->new_sha1_prefix, sha1_to_hex(sha1));
 	}
