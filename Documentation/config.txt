@@ -234,6 +234,10 @@ pull.octopus::
 pull.twohead::
 	The default merge strategy to use when pulling a single branch.
 
+repack.usedeltabaseoffset::
+	Allow gitlink:git-repack[1] to create packs that uses
+	delta-base offset.  Defaults to false.
+
 show.difftree::
 	The default gitlink:git-diff-tree[1] arguments to be used
 	for gitlink:git-show[1].
