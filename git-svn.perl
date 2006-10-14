@@ -3354,9 +3354,11 @@ sub chg_file {
 	seek $fh, 0, 0 or croak $!;
 
 	my $exp = $md5->hexdigest;
-	my $atd = $self->apply_textdelta($fbat, undef, $self->{pool});
-	my $got = SVN::TxDelta::send_stream($fh, @$atd, $self->{pool});
+	my $pool = SVN::Pool->new;
+	my $atd = $self->apply_textdelta($fbat, undef, $pool);
+	my $got = SVN::TxDelta::send_stream($fh, @$atd, $pool);
 	die "Checksum mismatch\nexpected: $exp\ngot: $got\n" if ($got ne $exp);
+	$pool->clear;
 
 	close $fh or croak $!;
 }
