@@ -1750,7 +1750,7 @@ proc showview {n} {
     global selectedline currentid canv canvy0
     global matchinglines treediffs
     global pending_select phase
-    global commitidx rowlaidout rowoptim linesegends
+    global commitidx rowlaidout rowoptim
     global commfd
     global selectedview selectfirst
     global vparentlist vchildlist vdisporder vcmitlisted
@@ -1786,7 +1786,7 @@ proc showview {n} {
 	    set viewdata($curview) \
 		[list $phase $rowidlist $rowoffsets $rowrangelist \
 		     [flatten idrowranges] [flatten idinlist] \
-		     $rowlaidout $rowoptim $numcommits $linesegends]
+		     $rowlaidout $rowoptim $numcommits]
 	} elseif {![info exists viewdata($curview)]
 		  || [lindex $viewdata($curview) 0] ne {}} {
 	    set viewdata($curview) \
@@ -1832,7 +1832,6 @@ proc showview {n} {
 	set rowlaidout [lindex $v 6]
 	set rowoptim [lindex $v 7]
 	set numcommits [lindex $v 8]
-	set linesegends [lindex $v 9]
     }
 
     catch {unset colormap}
@@ -2506,7 +2505,7 @@ proc initlayout {} {
     global nextcolor
     global parentlist childlist children
     global colormap rowtextx
-    global linesegends selectfirst
+    global selectfirst
 
     set numcommits 0
     set displayorder {}
@@ -2525,7 +2524,6 @@ proc initlayout {} {
     catch {unset colormap}
     catch {unset rowtextx}
     catch {unset idrowranges}
-    set linesegends {}
     set selectfirst 1
 }
 
@@ -2608,8 +2606,7 @@ proc layoutmore {tmax allread} {
 }
 
 proc showstuff {canshow} {
-    global numcommits commitrow pending_select selectedline
-    global linesegends idrangedrawn curview
+    global numcommits commitrow pending_select selectedline curview
     global displayorder selectfirst
 
     if {$numcommits == 0} {
@@ -2617,33 +2614,16 @@ proc showstuff {canshow} {
 	set phase "incrdraw"
 	allcanvs delete all
     }
-    set row $numcommits
+    set r0 $numcommits
     set numcommits $canshow
     setcanvscroll
     set rows [visiblerows]
-    set r0 [lindex $rows 0]
     set r1 [lindex $rows 1]
-    set selrow -1
-    for {set r $row} {$r < $canshow} {incr r} {
-	foreach id [lindex $linesegends [expr {$r+1}]] {
-	    set i -1
-	    set ranges [rowranges $id]
-	    foreach {s e} $ranges {
-		incr i
-		if {$e ne {} && $e < $numcommits && $s <= $r1 && $e >= $r0
-		    && ![info exists idrangedrawn($id,$i)]} {
-		    drawlineseg $id $i $ranges
-		    set idrangedrawn($id,$i) 1
-		}
-	    }
-	}
+    if {$r1 >= $canshow} {
+	set r1 [expr {$canshow - 1}]
     }
-    if {$canshow > $r1} {
-	set canshow $r1
-    }
-    while {$row < $canshow} {
-	drawcmitrow $row
-	incr row
+    if {$r0 <= $r1} {
+	drawcommits $r0 $r1
     }
     if {[info exists pending_select] &&
 	[info exists commitrow($curview,$pending_select)] &&
@@ -2664,7 +2644,7 @@ proc layoutrows {row endrow last} {
     global rowidlist rowoffsets displayorder
     global uparrowlen downarrowlen maxwidth mingaplen
     global childlist parentlist
-    global idrowranges linesegends
+    global idrowranges
     global commitidx curview
     global idinlist rowchk rowrangelist
 
@@ -2681,7 +2661,6 @@ proc layoutrows {row endrow last} {
 		lappend oldolds $p
 	    }
 	}
-	set lse {}
 	set nev [expr {[llength $idlist] + [llength $newolds]
 		       + [llength $oldolds] - $maxwidth + 1}]
 	if {$nev > 0} {
@@ -2698,7 +2677,6 @@ proc layoutrows {row endrow last} {
 			set offs [incrange $offs $x 1]
 			set idinlist($i) 0
 			set rm1 [expr {$row - 1}]
-			lappend lse $i
 			lappend idrowranges($i) [lindex $displayorder $rm1]
 			if {[incr nev -1] <= 0} break
 			continue
@@ -2709,7 +2687,6 @@ proc layoutrows {row endrow last} {
 	    lset rowidlist $row $idlist
 	    lset rowoffsets $row $offs
 	}
-	lappend linesegends $lse
 	set col [lsearch -exact $idlist $id]
 	if {$col < 0} {
 	    set col [llength $idlist]
@@ -3004,95 +2981,206 @@ proc rowranges {id} {
     return $linenos
 }
 
-proc drawlineseg {id i ranges} {
-    global rowoffsets rowidlist
-    global displayorder
-    global canv colormap linespc
-    global numcommits commitrow curview
+# work around tk8.4 refusal to draw arrows on diagonal segments
+proc adjarrowhigh {coords} {
+    global linespc
 
-    set downarrow 1
-    if {[info exists commitrow($curview,$id)]
-	&& $commitrow($curview,$id) < $numcommits} {
-	set downarrow [expr {$i < [llength $ranges] / 2 - 1}]
-    } else {
-	set downarrow 1
-    }
-    set startrow [lindex $ranges [expr {2 * $i}]]
-    set row [lindex $ranges [expr {2 * $i + 1}]]
-    if {$startrow == $row} return
-    assigncolor $id
-    set coords {}
-    set col [lsearch -exact [lindex $rowidlist $row] $id]
-    if {$col < 0} {
-	puts "oops: drawline: id $id not on row $row"
-	return
-    }
-    set lasto {}
-    set ns 0
-    while {1} {
-	set o [lindex $rowoffsets $row $col]
-	if {$o eq {}} break
-	if {$o ne $lasto} {
-	    # changing direction
-	    set x [xc $row $col]
-	    set y [yc $row]
-	    lappend coords $x $y
-	    set lasto $o
-	}
-	incr col $o
-	incr row -1
-    }
-    set x [xc $row $col]
-    set y [yc $row]
-    lappend coords $x $y
-    if {$i == 0} {
-	# draw the link to the first child as part of this line
-	incr row -1
-	set child [lindex $displayorder $row]
-	set ccol [lsearch -exact [lindex $rowidlist $row] $child]
-	if {$ccol >= 0} {
-	    set x [xc $row $ccol]
-	    set y [yc $row]
-	    if {$ccol < $col - 1} {
-		lappend coords [xc $row [expr {$col - 1}]] [yc $row]
-	    } elseif {$ccol > $col + 1} {
-		lappend coords [xc $row [expr {$col + 1}]] [yc $row]
-	    }
-	    lappend coords $x $y
+    set x0 [lindex $coords 0]
+    set x1 [lindex $coords 2]
+    if {$x0 != $x1} {
+	set y0 [lindex $coords 1]
+	set y1 [lindex $coords 3]
+	if {$y0 - $y1 <= 2 * $linespc && $x1 == [lindex $coords 4]} {
+	    # we have a nearby vertical segment, just trim off the diag bit
+	    set coords [lrange $coords 2 end]
+	} else {
+	    set slope [expr {($x0 - $x1) / ($y0 - $y1)}]
+	    set xi [expr {$x0 - $slope * $linespc / 2}]
+	    set yi [expr {$y0 - $linespc / 2}]
+	    set coords [lreplace $coords 0 1 $xi $y0 $xi $yi]
 	}
     }
-    if {[llength $coords] < 4} return
-    if {$downarrow} {
-	# This line has an arrow at the lower end: check if the arrow is
-	# on a diagonal segment, and if so, work around the Tk 8.4
-	# refusal to draw arrows on diagonal lines.
-	set x0 [lindex $coords 0]
-	set x1 [lindex $coords 2]
-	if {$x0 != $x1} {
-	    set y0 [lindex $coords 1]
-	    set y1 [lindex $coords 3]
-	    if {$y0 - $y1 <= 2 * $linespc && $x1 == [lindex $coords 4]} {
-		# we have a nearby vertical segment, just trim off the diag bit
-		set coords [lrange $coords 2 end]
-	    } else {
-		set slope [expr {($x0 - $x1) / ($y0 - $y1)}]
-		set xi [expr {$x0 - $slope * $linespc / 2}]
-		set yi [expr {$y0 - $linespc / 2}]
-		set coords [lreplace $coords 0 1 $xi $y0 $xi $yi]
-	    }
-	}
-    }
-    set arrow [expr {2 * ($i > 0) + $downarrow}]
-    set arrow [lindex {none first last both} $arrow]
-    set t [$canv create line $coords -width [linewidth $id] \
-	       -fill $colormap($id) -tags lines.$id -arrow $arrow]
-    $canv lower $t
-    bindline $t $id
+    return $coords
 }
 
-proc drawparentlinks {id row col olds} {
-    global rowidlist canv colormap
+proc drawlineseg {id row endrow arrowlow} {
+    global rowidlist displayorder iddrawn linesegs
+    global canv colormap linespc curview maxlinelen
 
+    set cols [list [lsearch -exact [lindex $rowidlist $row] $id]]
+    set le [expr {$row + 1}]
+    set arrowhigh 1
+    while {1} {
+	set c [lsearch -exact [lindex $rowidlist $le] $id]
+	if {$c < 0} {
+	    incr le -1
+	    break
+	}
+	lappend cols $c
+	set x [lindex $displayorder $le]
+	if {$x eq $id} {
+	    set arrowhigh 0
+	    break
+	}
+	if {[info exists iddrawn($x)] || $le == $endrow} {
+	    set c [lsearch -exact [lindex $rowidlist [expr {$le+1}]] $id]
+	    if {$c >= 0} {
+		lappend cols $c
+		set arrowhigh 0
+	    }
+	    break
+	}
+	incr le
+    }
+    if {$le <= $row} {
+	return $row
+    }
+
+    set lines {}
+    set i 0
+    set joinhigh 0
+    if {[info exists linesegs($id)]} {
+	set lines $linesegs($id)
+	foreach li $lines {
+	    set r0 [lindex $li 0]
+	    if {$r0 > $row} {
+		if {$r0 == $le && [lindex $li 1] - $row <= $maxlinelen} {
+		    set joinhigh 1
+		}
+		break
+	    }
+	    incr i
+	}
+    }
+    set joinlow 0
+    if {$i > 0} {
+	set li [lindex $lines [expr {$i-1}]]
+	set r1 [lindex $li 1]
+	if {$r1 == $row && $le - [lindex $li 0] <= $maxlinelen} {
+	    set joinlow 1
+	}
+    }
+
+    set x [lindex $cols [expr {$le - $row}]]
+    set xp [lindex $cols [expr {$le - 1 - $row}]]
+    set dir [expr {$xp - $x}]
+    if {$joinhigh} {
+	set ith [lindex $lines $i 2]
+	set coords [$canv coords $ith]
+	set ah [$canv itemcget $ith -arrow]
+	set arrowhigh [expr {$ah eq "first" || $ah eq "both"}]
+	set x2 [lindex $cols [expr {$le + 1 - $row}]]
+	if {$x2 ne {} && $x - $x2 == $dir} {
+	    set coords [lrange $coords 0 end-2]
+	}
+    } else {
+	set coords [list [xc $le $x] [yc $le]]
+    }
+    if {$joinlow} {
+	set itl [lindex $lines [expr {$i-1}] 2]
+	set al [$canv itemcget $itl -arrow]
+	set arrowlow [expr {$al eq "last" || $al eq "both"}]
+    } elseif {$arrowlow &&
+	      [lsearch -exact [lindex $rowidlist [expr {$row-1}]] $id] >= 0} {
+	set arrowlow 0
+    }
+    set arrow [lindex {none first last both} [expr {$arrowhigh + 2*$arrowlow}]]
+    for {set y $le} {[incr y -1] > $row} {} {
+	set x $xp
+	set xp [lindex $cols [expr {$y - 1 - $row}]]
+	set ndir [expr {$xp - $x}]
+	if {$dir != $ndir || $xp < 0} {
+	    lappend coords [xc $y $x] [yc $y]
+	}
+	set dir $ndir
+    }
+    if {!$joinlow} {
+	if {$xp < 0} {
+	    # join parent line to first child
+	    set ch [lindex $displayorder $row]
+	    set xc [lsearch -exact [lindex $rowidlist $row] $ch]
+	    if {$xc < 0} {
+		puts "oops: drawlineseg: child $ch not on row $row"
+	    } else {
+		if {$xc < $x - 1} {
+		    lappend coords [xc $row [expr {$x-1}]] [yc $row]
+		} elseif {$xc > $x + 1} {
+		    lappend coords [xc $row [expr {$x+1}]] [yc $row]
+		}
+		set x $xc
+	    }
+	    lappend coords [xc $row $x] [yc $row]
+	} else {
+	    set xn [xc $row $xp]
+	    set yn [yc $row]
+	    # work around tk8.4 refusal to draw arrows on diagonal segments
+	    if {$arrowlow && $xn != [lindex $coords end-1]} {
+		if {[llength $coords] < 4 ||
+		    [lindex $coords end-3] != [lindex $coords end-1] ||
+		    [lindex $coords end] - $yn > 2 * $linespc} {
+		    set xn [xc $row [expr {$xp - 0.5 * $dir}]]
+		    set yo [yc [expr {$row + 0.5}]]
+		    lappend coords $xn $yo $xn $yn
+		}
+	    } else {
+		lappend coords $xn $yn
+	    }
+	}
+	if {!$joinhigh} {
+	    if {$arrowhigh} {
+		set coords [adjarrowhigh $coords]
+	    }
+	    assigncolor $id
+	    set t [$canv create line $coords -width [linewidth $id] \
+		       -fill $colormap($id) -tags lines.$id -arrow $arrow]
+	    $canv lower $t
+	    bindline $t $id
+	    set lines [linsert $lines $i [list $row $le $t]]
+	} else {
+	    $canv coords $ith $coords
+	    if {$arrow ne $ah} {
+		$canv itemconf $ith -arrow $arrow
+	    }
+	    lset lines $i 0 $row
+	}
+    } else {
+	set xo [lsearch -exact [lindex $rowidlist [expr {$row - 1}]] $id]
+	set ndir [expr {$xo - $xp}]
+	set clow [$canv coords $itl]
+	if {$dir == $ndir} {
+	    set clow [lrange $clow 2 end]
+	}
+	set coords [concat $coords $clow]
+	if {!$joinhigh} {
+	    lset lines [expr {$i-1}] 1 $le
+	    if {$arrowhigh} {
+		set coords [adjarrowhigh $coords]
+	    }
+	} else {
+	    # coalesce two pieces
+	    $canv delete $ith
+	    set b [lindex $lines [expr {$i-1}] 0]
+	    set e [lindex $lines $i 1]
+	    set lines [lreplace $lines [expr {$i-1}] $i [list $b $e $itl]]
+	}
+	$canv coords $itl $coords
+	if {$arrow ne $al} {
+	    $canv itemconf $itl -arrow $arrow
+	}
+    }
+
+    set linesegs($id) $lines
+    return $le
+}
+
+proc drawparentlinks {id row} {
+    global rowidlist canv colormap curview parentlist
+    global idpos
+
+    set rowids [lindex $rowidlist $row]
+    set col [lsearch -exact $rowids $id]
+    if {$col < 0} return
+    set olds [lindex $parentlist $row]
     set row2 [expr {$row + 1}]
     set x [xc $row $col]
     set y [yc $row]
@@ -3110,9 +3198,7 @@ proc drawparentlinks {id row col olds} {
 	if {$x2 > $rmx} {
 	    set rmx $x2
 	}
-	set ranges [rowranges $p]
-	if {$ranges ne {} && $row2 == [lindex $ranges 0]
-	    && $row2 < [lindex $ranges 1]} {
+	if {[lsearch -exact $rowids $p] < 0} {
 	    # drawlineseg will do this one for us
 	    continue
 	}
@@ -3130,36 +3216,21 @@ proc drawparentlinks {id row col olds} {
 	$canv lower $t
 	bindline $t $p
     }
-    return $rmx
+    if {$rmx > [lindex $idpos($id) 1]} {
+	lset idpos($id) 1 $rmx
+	redrawtags $id
+    }
 }
 
 proc drawlines {id} {
-    global colormap canv
-    global idrangedrawn
-    global children iddrawn commitrow rowidlist curview
+    global canv
 
-    $canv delete lines.$id
-    set ranges [rowranges $id]
-    set nr [expr {[llength $ranges] / 2}]
-    for {set i 0} {$i < $nr} {incr i} {
-	if {[info exists idrangedrawn($id,$i)]} {
-	    drawlineseg $id $i $ranges
-	}
-    }
-    foreach child $children($curview,$id) {
-	if {[info exists iddrawn($child)]} {
-	    set row $commitrow($curview,$child)
-	    set col [lsearch -exact [lindex $rowidlist $row] $child]
-	    if {$col >= 0} {
-		drawparentlinks $child $row $col [list $id]
-	    }
-	}
-    }
+    $canv itemconf lines.$id -width [linewidth $id]
 }
 
-proc drawcmittext {id row col rmx} {
+proc drawcmittext {id row col} {
     global linespc canv canv2 canv3 canvy0 fgcolor
-    global commitlisted commitinfo rowidlist
+    global commitlisted commitinfo rowidlist parentlist
     global rowtextx idpos idtags idheads idotherrefs
     global linehtag linentag linedtag
     global mainfont canvxmax boldrows boldnamerows fgcolor
@@ -3173,10 +3244,18 @@ proc drawcmittext {id row col rmx} {
 	       -fill $ofill -outline $fgcolor -width 1 -tags circle]
     $canv raise $t
     $canv bind $t <1> {selcanvline {} %x %y}
-    set xt [xc $row [llength [lindex $rowidlist $row]]]
-    if {$xt < $rmx} {
-	set xt $rmx
+    set rmx [llength [lindex $rowidlist $row]]
+    set olds [lindex $parentlist $row]
+    if {$olds ne {}} {
+	set nextids [lindex $rowidlist [expr {$row + 1}]]
+	foreach p $olds {
+	    set i [lsearch -exact $nextids $p]
+	    if {$i > $rmx} {
+		set rmx $i
+	    }
+	}
     }
+    set xt [xc $row $rmx]
     set rowtextx($row) $xt
     set idpos($id) [list $x $xt $y]
     if {[info exists idtags($id)] || [info exists idheads($id)]
@@ -3214,30 +3293,13 @@ proc drawcmittext {id row col rmx} {
 
 proc drawcmitrow {row} {
     global displayorder rowidlist
-    global idrangedrawn iddrawn
+    global iddrawn
     global commitinfo parentlist numcommits
     global filehighlight fhighlights findstring nhighlights
     global hlview vhighlights
     global highlight_related rhighlights
 
     if {$row >= $numcommits} return
-    foreach id [lindex $rowidlist $row] {
-	if {$id eq {}} continue
-	set i -1
-	set ranges [rowranges $id]
-	foreach {s e} $ranges {
-	    incr i
-	    if {$row < $s} continue
-	    if {$e eq {}} break
-	    if {$row <= $e} {
-		if {$e < $numcommits && ![info exists idrangedrawn($id,$i)]} {
-		    drawlineseg $id $i $ranges
-		    set idrangedrawn($id,$i) 1
-		}
-		break
-	    }
-	}
-    }
 
     set id [lindex $displayorder $row]
     if {[info exists hlview] && ![info exists vhighlights($row)]} {
@@ -3262,35 +3324,85 @@ proc drawcmitrow {row} {
 	getcommit $id
     }
     assigncolor $id
-    set olds [lindex $parentlist $row]
-    if {$olds ne {}} {
-	set rmx [drawparentlinks $id $row $col $olds]
-    } else {
-	set rmx 0
-    }
-    drawcmittext $id $row $col $rmx
+    drawcmittext $id $row $col
     set iddrawn($id) 1
 }
 
+proc drawcommits {row {endrow {}}} {
+    global numcommits iddrawn displayorder curview
+    global parentlist rowidlist
+
+    if {$row < 0} {
+	set row 0
+    }
+    if {$endrow eq {}} {
+	set endrow $row
+    }
+    if {$endrow >= $numcommits} {
+	set endrow [expr {$numcommits - 1}]
+    }
+
+    # make the lines join to already-drawn rows either side
+    set r [expr {$row - 1}]
+    if {$r < 0 || ![info exists iddrawn([lindex $displayorder $r])]} {
+	set r $row
+    }
+    set er [expr {$endrow + 1}]
+    if {$er >= $numcommits ||
+	![info exists iddrawn([lindex $displayorder $er])]} {
+	set er $endrow
+    }
+    for {} {$r <= $er} {incr r} {
+	set id [lindex $displayorder $r]
+	set wasdrawn [info exists iddrawn($id)]
+	if {!$wasdrawn} {
+	    drawcmitrow $r
+	}
+	if {$r == $er} break
+	set nextid [lindex $displayorder [expr {$r + 1}]]
+	if {$wasdrawn && [info exists iddrawn($nextid)]} {
+	    catch {unset prevlines}
+	    continue
+	}
+	drawparentlinks $id $r
+
+	if {[info exists lineends($r)]} {
+	    foreach lid $lineends($r) {
+		unset prevlines($lid)
+	    }
+	}
+	set rowids [lindex $rowidlist $r]
+	foreach lid $rowids {
+	    if {$lid eq {}} continue
+	    if {$lid eq $id} {
+		# see if this is the first child of any of its parents
+		foreach p [lindex $parentlist $r] {
+		    if {[lsearch -exact $rowids $p] < 0} {
+			# make this line extend up to the child
+			set le [drawlineseg $p $r $er 0]
+			lappend lineends($le) $p
+			set prevlines($p) 1
+		    }
+		}
+	    } elseif {![info exists prevlines($lid)]} {
+		set le [drawlineseg $lid $r $er 1]
+		lappend lineends($le) $lid
+		set prevlines($lid) 1
+	    }
+	}
+    }
+}
+
 proc drawfrac {f0 f1} {
-    global numcommits canv
-    global linespc
+    global canv linespc
 
     set ymax [lindex [$canv cget -scrollregion] 3]
     if {$ymax eq {} || $ymax == 0} return
     set y0 [expr {int($f0 * $ymax)}]
     set row [expr {int(($y0 - 3) / $linespc) - 1}]
-    if {$row < 0} {
-	set row 0
-    }
     set y1 [expr {int($f1 * $ymax)}]
     set endrow [expr {int(($y1 - 3) / $linespc) + 1}]
-    if {$endrow >= $numcommits} {
-	set endrow [expr {$numcommits - 1}]
-    }
-    for {} {$row <= $endrow} {incr row} {
-	drawcmitrow $row
-    }
+    drawcommits $row $endrow
 }
 
 proc drawvisible {} {
@@ -3299,12 +3411,12 @@ proc drawvisible {} {
 }
 
 proc clear_display {} {
-    global iddrawn idrangedrawn
+    global iddrawn linesegs
     global vhighlights fhighlights nhighlights rhighlights
 
     allcanvs delete all
     catch {unset iddrawn}
-    catch {unset idrangedrawn}
+    catch {unset linesegs}
     catch {unset vhighlights}
     catch {unset fhighlights}
     catch {unset nhighlights}
@@ -3538,7 +3650,7 @@ proc insertrow {row newcmit} {
     global displayorder parentlist childlist commitlisted
     global commitrow curview rowidlist rowoffsets numcommits
     global rowrangelist rowlaidout rowoptim numcommits
-    global linesegends selectedline
+    global selectedline
 
     if {$row >= $numcommits} {
 	puts "oops, inserting new row $row but only have $numcommits rows"
@@ -3591,8 +3703,6 @@ proc insertrow {row newcmit} {
 	}
 	lset rowrangelist $rp1 $ranges
     }
-
-    set linesegends [linsert $linesegends $row {}]
 
     incr rowlaidout
     incr rowoptim
@@ -3708,13 +3818,13 @@ proc dofind {} {
 	    if {$matches == {}} continue
 	    set doesmatch 1
 	    if {$ty == "Headline"} {
-		drawcmitrow $l
+		drawcommits $l
 		markmatches $canv $l $f $linehtag($l) $matches $mainfont
 	    } elseif {$ty == "Author"} {
-		drawcmitrow $l
+		drawcommits $l
 		markmatches $canv2 $l $f $linentag($l) $matches $mainfont
 	    } elseif {$ty == "Date"} {
-		drawcmitrow $l
+		drawcommits $l
 		markmatches $canv3 $l $f $linedtag($l) $matches $mainfont
 	    }
 	}
@@ -3807,7 +3917,7 @@ proc stopfindproc {{done 0}} {
 proc markheadline {l id} {
     global canv mainfont linehtag
 
-    drawcmitrow $l
+    drawcommits $l
     set bbox [$canv bbox $linehtag($l)]
     set t [$canv create rect $bbox -outline {} -tags matches -fill yellow]
     $canv lower $t
@@ -5302,10 +5412,11 @@ proc domktag {} {
 
 proc redrawtags {id} {
     global canv linehtag commitrow idpos selectedline curview
-    global mainfont canvxmax
+    global mainfont canvxmax iddrawn
 
     if {![info exists commitrow($curview,$id)]} return
-    drawcmitrow $commitrow($curview,$id)
+    if {![info exists iddrawn($id)]} return
+    drawcommits $commitrow($curview,$id)
     $canv delete tag.$id
     set xt [eval drawtags $id $idpos($id)]
     $canv coords $linehtag($commitrow($curview,$id)) $xt [lindex $idpos($id) 2]
@@ -6947,6 +7058,7 @@ set cmitmode "patch"
 set wrapcomment "none"
 set showneartags 1
 set maxrefs 20
+set maxlinelen 200
 
 set colors {green red blue magenta darkgrey brown orange}
 set bgcolor white
