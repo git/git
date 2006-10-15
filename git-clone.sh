@@ -312,7 +312,7 @@ yes,yes)
 		fi
 		;;
 	*)
-		cd "$D" && case "$upload_pack" in
+		case "$upload_pack" in
 		'') git-fetch-pack --all -k $quiet "$repo" ;;
 		*) git-fetch-pack --all -k $quiet "$upload_pack" "$repo" ;;
 		esac >"$GIT_DIR/CLONE_HEAD" || {

@@ -1364,12 +1364,9 @@ void *read_object_with_reference(const unsigned char *sha1,
 	}
 }
 
-char *write_sha1_file_prepare(void *buf,
-			      unsigned long len,
-			      const char *type,
-			      unsigned char *sha1,
-			      unsigned char *hdr,
-			      int *hdrlen)
+static char *write_sha1_file_prepare(void *buf, unsigned long len,
+                                     const char *type, unsigned char *sha1,
+                                     unsigned char *hdr, int *hdrlen)
 {
 	SHA_CTX c;
 
@@ -1516,6 +1513,15 @@ static void setup_object_header(z_stream *stream, const char *type, unsigned lon
 	stream->total_out = hdr;
 	stream->next_out += hdr;
 	stream->avail_out -= hdr;
+}
+
+int hash_sha1_file(void *buf, unsigned long len, const char *type,
+                   unsigned char *sha1)
+{
+	unsigned char hdr[50];
+	int hdrlen;
+	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
+	return 0;
 }
 
 int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
@@ -1801,8 +1807,6 @@ int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
 	unsigned long size = 4096;
 	char *buf = xmalloc(size);
 	int ret;
-	unsigned char hdr[50];
-	int hdrlen;
 
 	if (read_pipe(fd, &buf, &size)) {
 		free(buf);
@@ -1813,10 +1817,8 @@ int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
 		type = blob_type;
 	if (write_object)
 		ret = write_sha1_file(buf, size, type, sha1);
-	else {
-		write_sha1_file_prepare(buf, size, type, sha1, hdr, &hdrlen);
-		ret = 0;
-	}
+	else
+		ret = hash_sha1_file(buf, size, type, sha1);
 	free(buf);
 	return ret;
 }
@@ -1826,8 +1828,6 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 	unsigned long size = st->st_size;
 	void *buf;
 	int ret;
-	unsigned char hdr[50];
-	int hdrlen;
 
 	buf = "";
 	if (size)
@@ -1840,10 +1840,8 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 		type = blob_type;
 	if (write_object)
 		ret = write_sha1_file(buf, size, type, sha1);
-	else {
-		write_sha1_file_prepare(buf, size, type, sha1, hdr, &hdrlen);
-		ret = 0;
-	}
+	else
+		ret = hash_sha1_file(buf, size, type, sha1);
 	if (size)
 		munmap(buf, size);
 	return ret;
@@ -1872,12 +1870,9 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, int write
 			return error("readlink(\"%s\"): %s", path,
 			             errstr);
 		}
-		if (!write_object) {
-			unsigned char hdr[50];
-			int hdrlen;
-			write_sha1_file_prepare(target, st->st_size, blob_type,
-						sha1, hdr, &hdrlen);
-		} else if (write_sha1_file(target, st->st_size, blob_type, sha1))
+		if (!write_object)
+			hash_sha1_file(target, st->st_size, blob_type, sha1);
+		else if (write_sha1_file(target, st->st_size, blob_type, sha1))
 			return error("%s: failed to insert into database",
 				     path);
 		free(target);
