@@ -1009,6 +1009,24 @@ sub parse_tag {
 	return %tag
 }
 
+sub git_get_last_activity {
+	my ($path) = @_;
+	my $fd;
+
+	$git_dir = "$projectroot/$path";
+	open($fd, "-|", git_cmd(), 'for-each-ref',
+	     '--format=%(refname) %(committer)',
+	     '--sort=-committerdate',
+	     'refs/heads') or return;
+	my $most_recent = <$fd>;
+	close $fd or return;
+	if ($most_recent =~ / (\d+) [-+][01]\d\d\d$/) {
+		my $timestamp = $1;
+		my $age = time - $timestamp;
+		return ($age, age_string($age));
+	}
+}
+
 sub parse_commit {
 	my $commit_id = shift;
 	my $commit_text = shift;
@@ -2258,16 +2276,11 @@ sub git_project_list {
 		die_error(undef, "No projects found");
 	}
 	foreach my $pr (@list) {
-		my $head = git_get_head_hash($pr->{'path'});
-		if (!defined $head) {
+		my (@aa) = git_get_last_activity($pr->{'path'});
+		unless (@aa) {
 			next;
 		}
-		$git_dir = "$projectroot/$pr->{'path'}";
-		my %co = parse_commit($head);
-		if (!%co) {
-			next;
-		}
-		$pr->{'commit'} = \%co;
+		($pr->{'age'}, $pr->{'age_string'}) = @aa;
 		if (!defined $pr->{'descr'}) {
 			my $descr = git_get_project_description($pr->{'path'}) || "";
 			$pr->{'descr'} = chop_str($descr, 25, 5);
@@ -2317,7 +2330,7 @@ sub git_project_list {
 		      "</th>\n";
 	}
 	if ($order eq "age") {
-		@projects = sort {$a->{'commit'}{'age'} <=> $b->{'commit'}{'age'}} @projects;
+		@projects = sort {$a->{'age'} <=> $b->{'age'}} @projects;
 		print "<th>Last Change</th>\n";
 	} else {
 		print "<th>" .
@@ -2339,8 +2352,8 @@ sub git_project_list {
 		                        -class => "list"}, esc_html($pr->{'path'})) . "</td>\n" .
 		      "<td>" . esc_html($pr->{'descr'}) . "</td>\n" .
 		      "<td><i>" . chop_str($pr->{'owner'}, 15) . "</i></td>\n";
-		print "<td class=\"". age_class($pr->{'commit'}{'age'}) . "\">" .
-		      $pr->{'commit'}{'age_string'} . "</td>\n" .
+		print "<td class=\"". age_class($pr->{'age'}) . "\">" .
+		      $pr->{'age_string'} . "</td>\n" .
 		      "<td class=\"link\">" .
 		      $cgi->a({-href => href(project=>$pr->{'path'}, action=>"summary")}, "summary")   . " | " .
 		      $cgi->a({-href => href(project=>$pr->{'path'}, action=>"shortlog")}, "shortlog") . " | " .
