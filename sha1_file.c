@@ -527,6 +527,7 @@ int use_packed_git(struct packed_git *p)
 			    p->pack_size - 20)) {
 			die("packfile %s does not match index.", p->pack_name);
 		}
+		p->pack_version = ntohl(hdr->hdr_version);
 	}
 	p->pack_last_used = pack_used_ctr++;
 	p->pack_use_cnt++;

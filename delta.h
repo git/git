@@ -1,6 +1,8 @@
 #ifndef DELTA_H
 #define DELTA_H
 
+extern int delta_version;
+
 /* opaque object for delta index */
 struct delta_index;
 

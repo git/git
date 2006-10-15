@@ -253,9 +253,12 @@ create_delta(const struct delta_index *index,
 	int inscnt;
 	const unsigned char *ref_data, *ref_top, *data, *top;
 	unsigned char *out;
+	unsigned int ref_size_limit;
 
 	if (!trg_buf || !trg_size)
 		return NULL;
+
+	ref_size_limit = (delta_version > 2) ? 0xffffff : 0x10000;
 
 	outpos = 0;
 	outsize = 8192;
@@ -308,8 +311,8 @@ create_delta(const struct delta_index *index,
 				continue;
 			if (ref_size > top - src)
 				ref_size = top - src;
-			if (ref_size > 0x10000)
-				ref_size = 0x10000;
+			if (ref_size > ref_size_limit)
+				ref_size = ref_size_limit;
 			if (ref_size <= msize)
 				break;
 			while (ref_size-- && *src++ == *ref)
@@ -318,6 +321,8 @@ create_delta(const struct delta_index *index,
 				/* this is our best match so far */
 				msize = ref - entry->ptr;
 				moff = entry->ptr - ref_data;
+				if (delta_version > 2 && msize >= 0x10000)
+					break; /* this is good enough */
 			}
 		}
 
@@ -381,6 +386,12 @@ create_delta(const struct delta_index *index,
 			if (msize & 0xff) { out[outpos++] = msize; i |= 0x10; }
 			msize >>= 8;
 			if (msize & 0xff) { out[outpos++] = msize; i |= 0x20; }
+			if (delta_version > 2) {
+				msize >>= 8;
+				if (msize & 0xff) {
+					out[outpos++] = msize; i |= 0x40;
+				}
+			}
 
 			*op = i;
 		}
