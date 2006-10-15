@@ -8,7 +8,6 @@
  * are.
  */
 #include "cache.h"
-#include "pack.h"
 
 char git_default_email[MAX_GITNAME];
 char git_default_name[MAX_GITNAME];
@@ -26,8 +25,6 @@ const char *apply_default_whitespace;
 int zlib_compression_level = Z_DEFAULT_COMPRESSION;
 int pager_in_use;
 int pager_use_color = 1;
-/* by default we allow 2 but up to PACK_VERSION is allowed */
-int delta_version = 2;
 
 static const char *git_dir;
 static char *git_object_dir, *git_index_file, *git_refs_dir, *git_graft_file;

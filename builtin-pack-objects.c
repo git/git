@@ -488,7 +488,7 @@ static void write_pack_file(void)
 		fprintf(stderr, "Writing %d objects.\n", nr_result);
 
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
-	hdr.hdr_version = htonl(delta_version);
+	hdr.hdr_version = htonl(PACK_VERSION);
 	hdr.hdr_entries = htonl(nr_result);
 	sha1write(f, &hdr, sizeof(hdr));
 	offset = sizeof(hdr);
@@ -952,12 +952,8 @@ static void check_object(struct object_entry *entry)
 		/* Check if it is delta, and the base is also an object
 		 * we are going to pack.  If so we will reuse the existing
 		 * delta.
-		 *
-		 * Also make sure that we do not reuse delta from an existing
-		 * pack that uses higher delta version than allowed.
 		 */
-		if (!no_reuse_delta &&
-		    entry->in_pack->pack_version <= delta_version) {
+		if (!no_reuse_delta) {
 			unsigned char c, *base_name;
 			unsigned long ofs;
 			/* there is at least 20 bytes left in the pack */
@@ -1175,7 +1171,6 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	 * on an earlier try, but only when reusing delta data.
 	 */
 	if (!no_reuse_delta && trg_entry->in_pack &&
-	    trg_entry->in_pack->pack_version <= delta_version &&
 	    trg_entry->in_pack == src_entry->in_pack)
 		return 0;
 
@@ -1401,14 +1396,9 @@ static void setup_progress_signal(void)
 
 static int git_pack_config(const char *k, const char *v)
 {
-	if (!strcmp(k, "pack.window")) {
+	if(!strcmp(k, "pack.window")) {
 		window = git_config_int(k, v);
 		return 0;
-	}
-	if (!strcmp(k, "pack.deltaversion")) {
-		delta_version = git_config_int(k, v);
-		if (!pack_version_ok(htonl(delta_version)))
-			die("value %s for '%s' not allowed", v, k);
 	}
 	return git_default_config(k, v);
 }
