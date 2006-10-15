@@ -671,14 +671,8 @@ static void reprepare_packed_git(void)
 
 int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long size, const char *type)
 {
-	char header[100];
 	unsigned char real_sha1[20];
-	SHA_CTX c;
-
-	SHA1_Init(&c);
-	SHA1_Update(&c, header, 1+sprintf(header, "%s %lu", type, size));
-	SHA1_Update(&c, map, size);
-	SHA1_Final(real_sha1, &c);
+	hash_sha1_file(map, size, type, real_sha1);
 	return hashcmp(sha1, real_sha1) ? -1 : 0;
 }
 
