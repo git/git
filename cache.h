@@ -339,6 +339,7 @@ extern struct packed_git {
 	unsigned int pack_last_used;
 	unsigned int pack_use_cnt;
 	int pack_local;
+	int pack_version;
 	unsigned char sha1[20];
 	/* something like ".git/objects/pack/xxxxx.pack" */
 	char pack_name[FLEX_ARRAY]; /* more */
