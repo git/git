@@ -1347,9 +1347,9 @@ void *read_object_with_reference(const unsigned char *sha1,
 	}
 }
 
-static char *write_sha1_file_prepare(void *buf, unsigned long len,
-                                     const char *type, unsigned char *sha1,
-                                     unsigned char *hdr, int *hdrlen)
+static void write_sha1_file_prepare(void *buf, unsigned long len,
+                                    const char *type, unsigned char *sha1,
+                                    unsigned char *hdr, int *hdrlen)
 {
 	SHA_CTX c;
 
@@ -1361,8 +1361,6 @@ static char *write_sha1_file_prepare(void *buf, unsigned long len,
 	SHA1_Update(&c, hdr, *hdrlen);
 	SHA1_Update(&c, buf, len);
 	SHA1_Final(sha1, &c);
-
-	return sha1_file_name(sha1);
 }
 
 /*
@@ -1521,7 +1519,8 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	/* Normally if we have it in the pack then we do not bother writing
 	 * it out into .git/objects/??/?{38} file.
 	 */
-	filename = write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
+	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
+	filename = sha1_file_name(sha1);
 	if (returnsha1)
 		hashcpy(returnsha1, sha1);
 	if (has_sha1_file(sha1))
