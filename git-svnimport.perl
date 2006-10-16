@@ -838,7 +838,7 @@ sub commit {
 		print $out ("object $cid\n".
 		    "type commit\n".
 		    "tag $dest\n".
-		    "tagger $committer_name <$committer_email>\n") and
+		    "tagger $committer_name <$committer_email> 0 +0000\n") and
 		close($out)
 		    or die "Cannot create tag object $dest: $!\n";
 
