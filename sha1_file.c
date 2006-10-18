@@ -908,7 +908,7 @@ static int packed_delta_info(struct packed_git *p,
 
 	if (sizep) {
 		const unsigned char *data;
-		unsigned char delta_head[64];
+		unsigned char delta_head[20];
 		unsigned long result_size;
 		z_stream stream;
 		int st;
