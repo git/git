@@ -2,7 +2,9 @@
 
 # DDD=' -DUSE_SYMLINK_HEAD=0'
 # PATH=/usr/bin:/bin
-PATH=$HOME/bin/Linux:/usr/bin:/bin
+
+G=/opt/packrat/playpen/public/in-place/git/index/gitweb_config.perl
+PATH=$HOME/git-master/bin:/usr/bin:/bin
 LANG=C
 LC_CTYPE=C
 export PATH LANG LC_CTYPE
@@ -11,15 +13,19 @@ export PATH LANG LC_CTYPE
 #GIT_SVN_NO_LIB=1
 #export GIT_SVN_NO_LIB
 
-case "`git symbolic-ref HEAD`" in
-refs/heads/next)
-	d="bindir=$HOME/bin/Linux gitexecdir=$HOME/bin/Linux" ;;
-refs/heads/maint)
-	d="prefix=$HOME/git-maint" ;;
-refs/heads/master)
-	d="prefix=$HOME/git-master" ;;
-refs/heads/pu)
-	d="prefix=$HOME/git-pu" ;;
+head=`git symbolic-ref HEAD` &&
+branch=`expr "$head" : 'refs/heads/\(.*\)'` &&
+case "$branch" in
+next | maint | master | pu)
+	d="prefix=$HOME/git-$branch" ;;
+snap)
+	v=`git describe HEAD`
+	expr "$v" : '.*-g[0-9a-f]*$' >/dev/null && {
+	    echo >&2 "You are on 'snap' but $v is not an official version."
+	    exit 1
+	}
+	d="prefix=$HOME/git-snap-$v"
+	;;
 *)
 	d="prefix=$HOME/git-test" ;;
 esac
@@ -47,6 +53,7 @@ done
 
 : ${O=-O2}
 make $d \
+     GITWEB_CONFIG=$G \
      PYTHON_PATH=/usr/bin/python2.4 \
      CFLAGS="$O -Wall -Wdeclaration-after-statement -g" \
      WITH_SEND_EMAIL=YesPlease \
