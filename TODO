@@ -64,9 +64,45 @@ git-split
 
 [jc: no response to the initial review comments]
 
+From: Sean <seanlkml@sympatico.ca>
+Subject: [RFC PATCH] Add WEBDAV timeout to http-fetch.
+Message-ID: <BAYC1-PASMTP11CF83A008B0B3BA5F6B15AE100@CEZ.ICE>
+
+Use CURLOPT_TIMEOUT to recover from stuck read() early.
+
+[jc: the trouble that triggered this patch was WEBDAV on the
+ server side not responding and the proposed commit log says so,
+ but it seems that the patch is applicable and useful for other
+ requests.  I suspect ls_remote() call should be removed from
+ fetch_indices(). ] 
+
+From: Luben Tuikov <ltuikov@yahoo.com>
+Subject: [PATCH] gitweb: Convert Content-Disposition filenames into qtext
+Message-ID: <20061006191801.68649.qmail@web31815.mail.mud.yahoo.com>
+
+Use qtext quoting for Content-Disposition.
+
+[jc: the purpose of the patch was murky -- we wanted to avoid
+ breaking the parsing of filename="value" by underquoting, but
+ I think it is also prudent not to throw locally unsafe characters
+ in the suggested filename to be used, so replacement regexp
+ would need to be updated from the one proposed in the original
+ patch.]
+
+
+From: Linus Torvalds <torvalds@osdl.org>
+Subject: Re: git show and gitweb gives different result for kernel
+Message-ID: <Pine.LNX.4.64.0610061202060.3952@g5.osdl.org>
+
+Maybe allow gitweb to show diff with any parent and diff --cc,
+not just diff with the first parent for a merge.
 
 Technical (milder)
 ------------------
+
+* pack-refs --all and make it not pack active branches.
+
+* redo git-annotate as synonym to "git-blame -c".
 
 * duplicated refspec given to "fetch-pack a a a" makes it emit
   strange error message because it triggers the "match only
