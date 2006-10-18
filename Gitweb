@@ -1,7 +1,6 @@
 #!/bin/sh
 
-G=/opt/packrat/playpen/public/in-place/git
-Meta/Make GITWEB_CONFIG=$G/index/gitweb_config.perl gitweb/gitweb.cgi
+Meta/Make gitweb/gitweb.cgi
 
 cd gitweb &&
 DEST=`cd ../../index && /bin/pwd` || exit
