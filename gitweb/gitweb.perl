@@ -93,21 +93,66 @@ our %feature = (
 	#
 	# use gitweb_check_feature(<feature>) to check if <feature> is enabled
 
+	# Enable the 'blame' blob view, showing the last commit that modified
+	# each line in the file. This can be very CPU-intensive.
+
+	# To enable system wide have in $GITWEB_CONFIG
+	# $feature{'blame'}{'default'} = [1];
+	# To have project specific config enable override in $GITWEB_CONFIG
+	# $feature{'blame'}{'override'} = 1;
+	# and in project config gitweb.blame = 0|1;
 	'blame' => {
 		'sub' => \&feature_blame,
 		'override' => 0,
 		'default' => [0]},
 
+	# Enable the 'snapshot' link, providing a compressed tarball of any
+	# tree. This can potentially generate high traffic if you have large
+	# project.
+
+	# To disable system wide have in $GITWEB_CONFIG
+	# $feature{'snapshot'}{'default'} = [undef];
+	# To have project specific config enable override in $GITWEB_CONFIG
+	# $feature{'blame'}{'override'} = 1;
+	# and in project config gitweb.snapshot = none|gzip|bzip2;
 	'snapshot' => {
 		'sub' => \&feature_snapshot,
 		'override' => 0,
 		#         => [content-encoding, suffix, program]
 		'default' => ['x-gzip', 'gz', 'gzip']},
 
+	# Enable the pickaxe search, which will list the commits that modified
+	# a given string in a file. This can be practical and quite faster
+	# alternative to 'blame', but still potentially CPU-intensive.
+
+	# To enable system wide have in $GITWEB_CONFIG
+	# $feature{'pickaxe'}{'default'} = [1];
+	# To have project specific config enable override in $GITWEB_CONFIG
+	# $feature{'pickaxe'}{'override'} = 1;
+	# and in project config gitweb.pickaxe = 0|1;
 	'pickaxe' => {
 		'sub' => \&feature_pickaxe,
 		'override' => 0,
 		'default' => [1]},
+
+	# Make gitweb use an alternative format of the URLs which can be
+	# more readable and natural-looking: project name is embedded
+	# directly in the path and the query string contains other
+	# auxiliary information. All gitweb installations recognize
+	# URL in either format; this configures in which formats gitweb
+	# generates links.
+
+	# To enable system wide have in $GITWEB_CONFIG
+	# $feature{'pathinfo'}{'default'} = [1];
+	# Project specific override is not supported.
+
+	# Note that you will need to change the default location of CSS,
+	# favicon, logo and possibly other files to an absolute URL. Also,
+	# if gitweb.cgi serves as your indexfile, you will need to force
+	# $my_uri to contain the script name in your $GITWEB_CONFIG.
+	'pathinfo' => {
+		'override' => 0,
+		'default' => [0]},
 );
 
 sub gitweb_check_feature {
@@ -118,14 +163,12 @@ sub gitweb_check_feature {
 		$feature{$name}{'override'},
 		@{$feature{$name}{'default'}});
 	if (!$override) { return @defaults; }
+	if (!defined $sub) {
+		warn "feature $name is not overrideable";
+		return @defaults;
+	}
 	return $sub->(@defaults);
 }
-
-# To enable system wide have in $GITWEB_CONFIG
-# $feature{'blame'}{'default'} = [1];
-# To have project specific config enable override in $GITWEB_CONFIG
-# $feature{'blame'}{'override'} = 1;
-# and in project config gitweb.blame = 0|1;
 
 sub feature_blame {
 	my ($val) = git_get_project_config('blame', '--bool');
@@ -138,12 +181,6 @@ sub feature_blame {
 
 	return $_[0];
 }
-
-# To disable system wide have in $GITWEB_CONFIG
-# $feature{'snapshot'}{'default'} = [undef];
-# To have project specific config enable override in $GITWEB_CONFIG
-# $feature{'blame'}{'override'} = 1;
-# and in project config  gitweb.snapshot = none|gzip|bzip2
 
 sub feature_snapshot {
 	my ($ctype, $suffix, $command) = @_;
@@ -167,12 +204,6 @@ sub gitweb_have_snapshot {
 
 	return $have_snapshot;
 }
-
-# To enable system wide have in $GITWEB_CONFIG
-# $feature{'pickaxe'}{'default'} = [1];
-# To have project specific config enable override in $GITWEB_CONFIG
-# $feature{'pickaxe'}{'override'} = 1;
-# and in project config gitweb.pickaxe = 0|1;
 
 sub feature_pickaxe {
 	my ($val) = git_get_project_config('pickaxe', '--bool');
@@ -381,6 +412,10 @@ exit;
 
 sub href(%) {
 	my %params = @_;
+	my $href = $my_uri;
+
+	# XXX: Warning: If you touch this, check the search form for updating,
+	# too.
 
 	my @mapping = (
 		project => "p",
@@ -399,6 +434,19 @@ sub href(%) {
 
 	$params{'project'} = $project unless exists $params{'project'};
 
+	my ($use_pathinfo) = gitweb_check_feature('pathinfo');
+	if ($use_pathinfo) {
+		# use PATH_INFO for project name
+		$href .= "/$params{'project'}" if defined $params{'project'};
+		delete $params{'project'};
+
+		# Summary just uses the project path URL
+		if (defined $params{'action'} && $params{'action'} eq 'summary') {
+			delete $params{'action'};
+		}
+	}
+
+	# now encode the parameters explicitly
 	my @result = ();
 	for (my $i = 0; $i < @mapping; $i += 2) {
 		my ($name, $symbol) = ($mapping[$i], $mapping[$i+1]);
@@ -406,7 +454,9 @@ sub href(%) {
 			push @result, $symbol . "=" . esc_param($params{$name});
 		}
 	}
-	return "$my_uri?" . join(';', @result);
+	$href .= "?" . join(';', @result) if scalar @result;
+
+	return $href;
 }
 
 
@@ -1411,6 +1461,7 @@ EOF
 		}
 		$cgi->param("a", "search");
 		$cgi->param("h", $search_hash);
+		$cgi->param("p", $project);
 		print $cgi->startform(-method => "get", -action => $my_uri) .
 		      "<div class=\"search\">\n" .
 		      $cgi->hidden(-name => "p") . "\n" .
