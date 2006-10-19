@@ -5,7 +5,7 @@ Date:   Mon Jun 26 00:00:00 2006 +0000
 
     Initial
 
- create mode 040000 dir
+ create mode 100644 dir/sub
  create mode 100644 file0
  create mode 100644 file2
 $

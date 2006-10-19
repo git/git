@@ -1760,6 +1760,7 @@ int diff_setup_done(struct diff_options *options)
 	if (options->output_format & (DIFF_FORMAT_PATCH |
 				      DIFF_FORMAT_NUMSTAT |
 				      DIFF_FORMAT_DIFFSTAT |
+				      DIFF_FORMAT_SUMMARY |
 				      DIFF_FORMAT_CHECKDIFF))
 		options->recursive = 1;
 	/*
