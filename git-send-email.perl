@@ -412,7 +412,7 @@ sub send_message
 	}
 
 	my ($author_name) = ($from =~ /^(.*?)\s+</);
-	if ($author_name =~ /\./ && $author_name !~ /^".*"$/) {
+	if ($author_name && $author_name =~ /\./ && $author_name !~ /^".*"$/) {
 		my ($name, $addr) = ($from =~ /^(.*?)(\s+<.*)/);
 		$from = "\"$name\"$addr";
 	}
