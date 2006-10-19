@@ -1226,6 +1226,14 @@ split_msg( msg_data_t *all_msgs, msg_data_t *msg, int *ofs )
 	if (msg->len < 5 || strncmp( data, "From ", 5 ))
 		return 0;
 
+	p = strchr( data, '\n' );
+	if (p) {
+		p = &p[1];
+		msg->len -= p-data;
+		*ofs += p-data;
+		data = p;
+	}
+
 	p = strstr( data, "\nFrom " );
 	if (p)
 		msg->len = &p[1] - data;
