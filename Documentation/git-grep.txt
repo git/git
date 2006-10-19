@@ -14,7 +14,7 @@ SYNOPSIS
 	   [-v | --invert-match] [-h|-H] [--full-name]
 	   [-E | --extended-regexp] [-G | --basic-regexp] [-F | --fixed-strings]
 	   [-n] [-l | --files-with-matches] [-L | --files-without-match]
-	   [-c | --count]
+	   [-c | --count] [--all-match]
 	   [-A <post-context>] [-B <pre-context>] [-C <context>]
 	   [-f <file>] [-e] <pattern> [--and|--or|--not|(|)|-e <pattern>...]
 	   [<tree>...]
@@ -96,6 +96,11 @@ OPTIONS
 	higher precedence than `--or`.  `-e` has to be used for all
 	patterns.
 
+--all-match::
+	When giving multiple pattern expressions combined with `--or`,
+	this flag is specified to limit the match to files that
+	have lines to match all of them.
+
 `<tree>...`::
 	Search blobs in the trees for specified patterns.
 
@@ -110,6 +115,10 @@ Example
 git grep -e \'#define\' --and \( -e MAX_PATH -e PATH_MAX \)::
 	Looks for a line that has `#define` and either `MAX_PATH` or
 	`PATH_MAX`.
+
+git grep --all-match -e NODE -e Unexpected::
+	Looks for a line that has `NODE` or `Unexpected` in
+	files that have lines that match both.
 
 Author
 ------
