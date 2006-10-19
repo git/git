@@ -83,7 +83,7 @@ sub cleanup_compose_files();
 my $compose_filename = ".msg.$$";
 
 # Variables we fill in automatically, or via prompting:
-my (@to,@cc,@initial_cc,@bcclist,
+my (@to,@cc,@initial_cc,@bcclist,@xh,
 	$initial_reply_to,$initial_subject,@files,$from,$compose,$time);
 
 # Behavior modification variables
@@ -411,6 +411,11 @@ sub send_message
 	    $gitversion = Git::version();
 	}
 
+	my ($author_name) = ($from =~ /^(.*?)\s+</);
+	if ($author_name =~ /\./ && $author_name !~ /^".*"$/) {
+		my ($name, $addr) = ($from =~ /^(.*?)(\s+<.*)/);
+		$from = "\"$name\"$addr";
+	}
 	my $header = "From: $from
 To: $to
 Cc: $cc
@@ -423,6 +428,9 @@ X-Mailer: git-send-email $gitversion
 
 		$header .= "In-Reply-To: $reply_to\n";
 		$header .= "References: $references\n";
+	}
+	if (@xh) {
+		$header .= join("\n", @xh) . "\n";
 	}
 
 	if ($dry_run) {
@@ -476,15 +484,22 @@ foreach my $t (@files) {
 
 	my $author_not_sender = undef;
 	@cc = @initial_cc;
-	my $found_mbox = 0;
+	@xh = ();
+	my $input_format = undef;
 	my $header_done = 0;
 	$message = "";
 	while(<F>) {
 		if (!$header_done) {
-			$found_mbox = 1, next if (/^From /);
+			if (/^From /) {
+				$input_format = 'mbox';
+				next;
+			}
 			chomp;
+			if (!defined $input_format && /^[-A-Za-z]+:\s/) {
+				$input_format = 'mbox';
+			}
 
-			if ($found_mbox) {
+			if (defined $input_format && $input_format eq 'mbox') {
 				if (/^Subject:\s+(.*)$/) {
 					$subject = $1;
 
@@ -499,6 +514,9 @@ foreach my $t (@files) {
 						$2, $_) unless $quiet;
 					push @cc, $2;
 				}
+				elsif (/^[-A-Za-z]+:\s+\S/) {
+					push @xh, $_;
+				}
 
 			} else {
 				# In the traditional
@@ -506,6 +524,7 @@ foreach my $t (@files) {
 				# line 1 = cc
 				# line 2 = subject
 				# So let's support that, too.
+				$input_format = 'lots';
 				if (@cc == 0) {
 					printf("(non-mbox) Adding cc: %s from line '%s'\n",
 						$_, $_) unless $quiet;
