@@ -288,6 +288,7 @@ BUILTIN_OBJS = \
 	builtin-mv.o \
 	builtin-name-rev.o \
 	builtin-pack-objects.o \
+	builtin-pickaxe.o \
 	builtin-prune.o \
 	builtin-prune-packed.o \
 	builtin-push.o \
