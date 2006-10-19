@@ -733,8 +733,18 @@ static int log_ref_write(struct ref_lock *lock,
 	if (logfd < 0) {
 		if (!(oflags & O_CREAT) && errno == ENOENT)
 			return 0;
-		return error("Unable to append to %s: %s",
-			lock->log_file, strerror(errno));
+
+		if ((oflags & O_CREAT) && errno == EISDIR) {
+			if (remove_empty_directories(lock->log_file)) {
+				return error("There are still logs under '%s'",
+					     lock->log_file);
+			}
+			logfd = open(lock->log_file, oflags, 0666);
+		}
+
+		if (logfd < 0)
+			return error("Unable to append to %s: %s",
+				     lock->log_file, strerror(errno));
 	}
 
 	committer = git_committer_info(1);

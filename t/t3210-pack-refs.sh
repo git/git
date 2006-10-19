@@ -11,6 +11,8 @@ semantic is still the same.
 '
 . ./test-lib.sh
 
+echo '[core] logallrefupdates = true' >>.git/config
+
 test_expect_success \
     'prepare a trivial repository' \
     'echo Hello > A &&
