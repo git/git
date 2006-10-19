@@ -873,6 +873,8 @@ proc makewindow {} {
     $rowctxmenu add command -label "Create new branch" -command mkbranch
     $rowctxmenu add command -label "Cherry-pick this commit" \
 	-command cherrypick
+    $rowctxmenu add command -label "Reset HEAD branch to here" \
+	-command resethead
 
     set fakerowmenu .fakerowmenu
     menu $fakerowmenu -tearoff 0
@@ -5377,8 +5379,8 @@ proc mstime {} {
 }
 
 proc rowmenu {x y id} {
-    global rowctxmenu commitrow selectedline rowmenuid curview nullid
-    global fakerowmenu
+    global rowctxmenu commitrow selectedline rowmenuid curview
+    global nullid fakerowmenu mainhead
 
     set rowmenuid $id
     if {![info exists selectedline]
@@ -5389,6 +5391,7 @@ proc rowmenu {x y id} {
     }
     if {$id ne $nullid} {
 	set menu $rowctxmenu
+	$menu entryconfigure 7 -label "Reset $mainhead branch to here"
     } else {
 	set menu $fakerowmenu
     }
@@ -5775,6 +5778,55 @@ proc cherrypick {} {
     notbusy cherrypick
 }
 
+proc resethead {} {
+    global mainheadid mainhead rowmenuid confirm_ok resettype
+    global showlocalchanges
+
+    set confirm_ok 0
+    set w ".confirmreset"
+    toplevel $w
+    wm transient $w .
+    wm title $w "Confirm reset"
+    message $w.m -text \
+	"Reset branch $mainhead to [string range $rowmenuid 0 7]?" \
+	-justify center -aspect 1000
+    pack $w.m -side top -fill x -padx 20 -pady 20
+    frame $w.f -relief sunken -border 2
+    message $w.f.rt -text "Reset type:" -aspect 1000
+    grid $w.f.rt -sticky w
+    set resettype mixed
+    radiobutton $w.f.soft -value soft -variable resettype -justify left \
+	-text "Soft: Leave working tree and index untouched"
+    grid $w.f.soft -sticky w
+    radiobutton $w.f.mixed -value mixed -variable resettype -justify left \
+	-text "Mixed: Leave working tree untouched, reset index"
+    grid $w.f.mixed -sticky w
+    radiobutton $w.f.hard -value hard -variable resettype -justify left \
+	-text "Hard: Reset working tree and index\n(discard ALL local changes)"
+    grid $w.f.hard -sticky w
+    pack $w.f -side top -fill x
+    button $w.ok -text OK -command "set confirm_ok 1; destroy $w"
+    pack $w.ok -side left -fill x -padx 20 -pady 20
+    button $w.cancel -text Cancel -command "destroy $w"
+    pack $w.cancel -side right -fill x -padx 20 -pady 20
+    bind $w <Visibility> "grab $w; focus $w"
+    tkwait window $w
+    if {!$confirm_ok} return
+    dohidelocalchanges
+    if {[catch {exec git reset --$resettype $rowmenuid} err]} {
+	error_popup $err
+    } else {
+	set oldhead $mainheadid
+	movedhead $rowmenuid $mainhead
+	set mainheadid $rowmenuid
+	redrawtags $oldhead
+	redrawtags $rowmenuid
+    }
+    if {$showlocalchanges} {
+	doshowlocalchanges
+    }
+}
+
 # context menu for a head
 proc headmenu {x y id head} {
     global headmenuid headmenuhead headctxmenu mainhead
@@ -5812,9 +5864,9 @@ proc cobranch {} {
 	    redrawtags $headids($oldmainhead)
 	}
 	redrawtags $headmenuid
-	if {$showlocalchanges} {
-	    dodiffindex
-	}
+    }
+    if {$showlocalchanges} {
+	dodiffindex
     }
 }
 
