@@ -23,6 +23,12 @@ union delta_base {
 	unsigned long offset;
 };
 
+/*
+ * Even if sizeof(union delta_base) == 24 on 64-bit archs, we really want
+ * to memcmp() only the first 20 bytes.
+ */
+#define UNION_BASE_SZ	20
+
 struct delta_entry
 {
 	struct object_entry *obj;
@@ -211,7 +217,7 @@ static int find_delta(const union delta_base *base)
                 struct delta_entry *delta = &deltas[next];
                 int cmp;
 
-                cmp = memcmp(base, &delta->base, sizeof(*base));
+                cmp = memcmp(base, &delta->base, UNION_BASE_SZ);
                 if (!cmp)
                         return next;
                 if (cmp < 0) {
@@ -232,9 +238,9 @@ static int find_delta_childs(const union delta_base *base,
 
 	if (first < 0)
 		return -1;
-	while (first > 0 && !memcmp(&deltas[first - 1].base, base, sizeof(*base)))
+	while (first > 0 && !memcmp(&deltas[first - 1].base, base, UNION_BASE_SZ))
 		--first;
-	while (last < end && !memcmp(&deltas[last + 1].base, base, sizeof(*base)))
+	while (last < end && !memcmp(&deltas[last + 1].base, base, UNION_BASE_SZ))
 		++last;
 	*first_index = first;
 	*last_index = last;
@@ -312,7 +318,7 @@ static int compare_delta_entry(const void *a, const void *b)
 {
 	const struct delta_entry *delta_a = a;
 	const struct delta_entry *delta_b = b;
-	return memcmp(&delta_a->base, &delta_b->base, sizeof(union delta_base));
+	return memcmp(&delta_a->base, &delta_b->base, UNION_BASE_SZ);
 }
 
 static void parse_pack_objects(void)
