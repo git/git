@@ -87,7 +87,8 @@ my (@to,@cc,@initial_cc,@bcclist,
 	$initial_reply_to,$initial_subject,@files,$from,$compose,$time);
 
 # Behavior modification variables
-my ($chain_reply_to, $quiet, $suppress_from, $no_signed_off_cc) = (1, 0, 0, 0);
+my ($chain_reply_to, $quiet, $suppress_from, $no_signed_off_cc,
+	$dry_run) = (1, 0, 0, 0, 0);
 my $smtp_server;
 
 # Example reply to:
@@ -116,6 +117,7 @@ my $rc = GetOptions("from=s" => \$from,
 		    "quiet" => \$quiet,
 		    "suppress-from" => \$suppress_from,
 		    "no-signed-off-cc|no-signed-off-by-cc" => \$no_signed_off_cc,
+		    "dry-run" => \$dry_run,
 	 );
 
 # Verify the user input
@@ -423,7 +425,9 @@ X-Mailer: git-send-email $gitversion
 		$header .= "References: $references\n";
 	}
 
-	if ($smtp_server =~ m#^/#) {
+	if ($dry_run) {
+		# We don't want to send the email.
+	} elsif ($smtp_server =~ m#^/#) {
 		my $pid = open my $sm, '|-';
 		defined $pid or die $!;
 		if (!$pid) {
