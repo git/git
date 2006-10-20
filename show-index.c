@@ -8,7 +8,7 @@ int main(int argc, char **argv)
 	static unsigned int top_index[256];
 
 	if (fread(top_index, sizeof(top_index), 1, stdin) != 1)
-		die("unable to read idex");
+		die("unable to read index");
 	nr = 0;
 	for (i = 0; i < 256; i++) {
 		unsigned n = ntohl(top_index[i]);
