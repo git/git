@@ -19,7 +19,7 @@
 #include <sys/time.h>
 
 static char pickaxe_usage[] =
-"git-pickaxe [-c] [-l] [-t] [-f] [-n] [-p] [-L n,m] [-S <revs-file>] [commit] [--] file\n"
+"git-pickaxe [-c] [-l] [-t] [-f] [-n] [-p] [-L n,m] [-S <revs-file>] [-M] [commit] [--] file\n"
 "  -c, --compatibility Use the same output mode as git-annotate (Default: off)\n"
 "  -l, --long          Show long commit SHA1 (Default: off)\n"
 "  -t, --time          Show raw timestamp (Default: off)\n"
@@ -27,6 +27,7 @@ static char pickaxe_usage[] =
 "  -n, --show-number   Show original linenumber (Default: off)\n"
 "  -p, --porcelain     Show in a format designed for machine consumption\n"
 "  -L n,m              Process only line range n,m, counting from 1\n"
+"  -M                  Find line movements within the file\n"
 "  -S revs-file        Use revisions from revs-file instead of calling git-rev-list\n";
 
 static int longest_file;
@@ -35,6 +36,8 @@ static int max_orig_digits;
 static int max_digits;
 
 #define DEBUG 0
+
+#define PICKAXE_BLAME_MOVE		01
 
 /* bits #0..7 in revision.h, #8..11 used for merge_bases() in commit.c */
 #define METAINFO_SHOWN		(1u<<12)
@@ -542,9 +545,99 @@ static int pass_blame_to_parent(struct scoreboard *sb,
 	return 0;
 }
 
+static void copy_split_if_better(struct blame_entry best_so_far[3],
+				 struct blame_entry this[3])
+{
+	if (!this[1].suspect)
+		return;
+	if (best_so_far[1].suspect &&
+	    (this[1].num_lines < best_so_far[1].num_lines))
+		return;
+	memcpy(best_so_far, this, sizeof(struct blame_entry [3]));
+}
+
+static void find_copy_in_blob(struct scoreboard *sb,
+			      struct blame_entry *ent,
+			      struct origin *parent,
+			      struct blame_entry split[3],
+			      mmfile_t *file_p)
+{
+	const char *cp;
+	int cnt;
+	mmfile_t file_o;
+	struct patch *patch;
+	int i, plno, tlno;
+
+	cp = nth_line(sb, ent->lno);
+	file_o.ptr = (char*) cp;
+	cnt = ent->num_lines;
+
+	while (cnt && cp < sb->final_buf + sb->final_buf_size) {
+		if (*cp++ == '\n')
+			cnt--;
+	}
+	file_o.size = cp - file_o.ptr;
+
+	patch = compare_buffer(file_p, &file_o, 1);
+
+	memset(split, 0, sizeof(struct blame_entry [3]));
+	plno = tlno = 0;
+	for (i = 0; i < patch->num; i++) {
+		struct chunk *chunk = &patch->chunks[i];
+
+		/* tlno to chunk->same are the same as ent */
+		if (ent->num_lines <= tlno)
+			break;
+		if (tlno < chunk->same) {
+			struct blame_entry this[3];
+			split_overlap(this, ent,
+				      tlno + ent->s_lno, plno,
+				      chunk->same + ent->s_lno,
+				      parent);
+			copy_split_if_better(split, this);
+		}
+		plno = chunk->p_next;
+		tlno = chunk->t_next;
+	}
+	free_patch(patch);
+}
+
+static int find_move_in_parent(struct scoreboard *sb,
+			       struct origin *target,
+			       struct origin *parent)
+{
+	int last_in_target;
+	struct blame_entry *ent, split[3];
+	mmfile_t file_p;
+	char type[10];
+	char *blob_p;
+
+	last_in_target = find_last_in_target(sb, target);
+	if (last_in_target < 0)
+		return 1; /* nothing remains for this target */
+
+	blob_p = read_sha1_file(parent->blob_sha1, type,
+				(unsigned long *) &file_p.size);
+	file_p.ptr = blob_p;
+	if (!file_p.ptr) {
+		free(blob_p);
+		return 0;
+	}
+
+	for (ent = sb->ent; ent; ent = ent->next) {
+		if (ent->suspect != target || ent->guilty)
+			continue;
+		find_copy_in_blob(sb, ent, parent, split, &file_p);
+		if (split[1].suspect)
+			split_blame(sb, split, ent);
+	}
+	free(blob_p);
+	return 0;
+}
+
 #define MAXPARENT 16
 
-static void pass_blame(struct scoreboard *sb, struct origin *origin)
+static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 {
 	int i;
 	struct commit *commit = origin->commit;
@@ -589,9 +682,24 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin)
 		if (pass_blame_to_parent(sb, origin, porigin))
 			return;
 	}
+
+	/*
+	 * Optionally run "miff" to find moves in parents' files here.
+	 */
+	if (opt & PICKAXE_BLAME_MOVE)
+		for (i = 0, parent = commit->parents;
+		     i < MAXPARENT && parent;
+		     parent = parent->next, i++) {
+			struct origin *porigin = parent_origin[i];
+			if (!porigin)
+				continue;
+			if (find_move_in_parent(sb, origin, porigin))
+				return;
+		}
+
 }
 
-static void assign_blame(struct scoreboard *sb, struct rev_info *revs)
+static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
 {
 	while (1) {
 		struct blame_entry *ent;
@@ -609,7 +717,7 @@ static void assign_blame(struct scoreboard *sb, struct rev_info *revs)
 		parse_commit(commit);
 		if (!(commit->object.flags & UNINTERESTING) &&
 		    !(revs->max_age != -1 && commit->date  < revs->max_age))
-			pass_blame(sb, suspect);
+			pass_blame(sb, suspect, opt);
 
 		/* Take responsibility for the remaining entries */
 		for (ent = sb->ent; ent; ent = ent->next)
@@ -967,13 +1075,14 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 	struct scoreboard sb;
 	struct origin *o;
 	struct blame_entry *ent;
-	int i, seen_dashdash, unk;
+	int i, seen_dashdash, unk, opt;
 	long bottom, top, lno;
 	int output_option = 0;
 	const char *revs_file = NULL;
 	const char *final_commit_name = NULL;
 	char type[10];
 
+	opt = 0;
 	bottom = top = 0;
 	seen_dashdash = 0;
 	for (unk = i = 1; i < argc; i++) {
@@ -988,6 +1097,8 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 			output_option |= OUTPUT_LONG_OBJECT_NAME;
 		else if (!strcmp("-S", arg) && ++i < argc)
 			revs_file = argv[i];
+		else if (!strcmp("-M", arg))
+			opt |= PICKAXE_BLAME_MOVE;
 		else if (!strcmp("-L", arg) && ++i < argc) {
 			char *term;
 			arg = argv[i];
@@ -1176,7 +1287,7 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 		die("reading graft file %s failed: %s",
 		    revs_file, strerror(errno));
 
-	assign_blame(&sb, &revs);
+	assign_blame(&sb, &revs, opt);
 
 	coalesce(&sb);
 
