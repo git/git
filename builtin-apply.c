@@ -934,6 +934,7 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 		switch (*line) {
 		default:
 			return -1;
+		case '\n': /* newer GNU diff, an empty context line */
 		case ' ':
 			oldlines--;
 			newlines--;
@@ -1623,6 +1624,14 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 				first = '-';
 		}
 		switch (first) {
+		case '\n':
+			/* Newer GNU diff, empty context line */
+			if (plen < 0)
+				/* ... followed by '\No newline'; nothing */
+				break;
+			old[oldsize++] = '\n';
+			new[newsize++] = '\n';
+			break;
 		case ' ':
 		case '-':
 			memcpy(old + oldsize, patch + 1, plen);
