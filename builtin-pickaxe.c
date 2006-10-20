@@ -40,6 +40,15 @@ static int max_score_digits;
 #define PICKAXE_BLAME_COPY		02
 #define PICKAXE_BLAME_COPY_HARDER	04
 
+/*
+ * blame for a blame_entry with score lower than these thresholds
+ * is not passed to the parent using move/copy logic.
+ */
+static unsigned blame_move_score;
+static unsigned blame_copy_score;
+#define BLAME_DEFAULT_MOVE_SCORE	20
+#define BLAME_DEFAULT_COPY_SCORE	40
+
 /* bits #0..7 in revision.h, #8..11 used for merge_bases() in commit.c */
 #define METAINFO_SHOWN		(1u<<12)
 #define MORE_THAN_ONE_PATH	(1u<<13)
@@ -645,7 +654,8 @@ static int find_move_in_parent(struct scoreboard *sb,
 		if (ent->suspect != target || ent->guilty)
 			continue;
 		find_copy_in_blob(sb, ent, parent, split, &file_p);
-		if (split[1].suspect)
+		if (split[1].suspect &&
+		    blame_move_score < ent_score(sb, &split[1]))
 			split_blame(sb, split, ent);
 	}
 	free(blob_p);
@@ -716,7 +726,8 @@ static int find_copy_in_parent(struct scoreboard *sb,
 			find_copy_in_blob(sb, ent, norigin, this, &file_p);
 			copy_split_if_better(sb, split, this);
 		}
-		if (split[1].suspect)
+		if (split[1].suspect &&
+		    blame_copy_score < ent_score(sb, &split[1]))
 			split_blame(sb, split, ent);
 	}
 	diff_flush(&diff_opts);
@@ -1180,6 +1191,15 @@ static int has_path_in_work_tree(const char *path)
 	return !lstat(path, &st);
 }
 
+static unsigned parse_score(const char *arg)
+{
+	char *end;
+	unsigned long score = strtoul(arg, &end, 10);
+	if (*end)
+		return 0;
+	return score;
+}
+
 int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
@@ -1209,12 +1229,15 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 			output_option |= OUTPUT_LONG_OBJECT_NAME;
 		else if (!strcmp("-S", arg) && ++i < argc)
 			revs_file = argv[i];
-		else if (!strcmp("-M", arg))
+		else if (!strncmp("-M", arg, 2)) {
 			opt |= PICKAXE_BLAME_MOVE;
-		else if (!strcmp("-C", arg)) {
+			blame_move_score = parse_score(arg+2);
+		}
+		else if (!strncmp("-C", arg, 2)) {
 			if (opt & PICKAXE_BLAME_COPY)
 				opt |= PICKAXE_BLAME_COPY_HARDER;
 			opt |= PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE;
+			blame_copy_score = parse_score(arg+2);
 		}
 		else if (!strcmp("-L", arg) && ++i < argc) {
 			char *term;
@@ -1251,6 +1274,11 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 		else
 			argv[unk++] = arg;
 	}
+
+	if (!blame_move_score)
+		blame_move_score = BLAME_DEFAULT_MOVE_SCORE;
+	if (!blame_copy_score)
+		blame_copy_score = BLAME_DEFAULT_COPY_SCORE;
 
 	/* We have collected options unknown to us in argv[1..unk]
 	 * which are to be passed to revision machinery if we are
