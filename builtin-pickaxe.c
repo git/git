@@ -19,7 +19,7 @@
 #include <sys/time.h>
 
 static char pickaxe_usage[] =
-"git-pickaxe [-c] [-l] [-t] [-f] [-n] [-p] [-L n,m] [-S <revs-file>] [-M] [commit] [--] file\n"
+"git-pickaxe [-c] [-l] [-t] [-f] [-n] [-p] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [commit] [--] file\n"
 "  -c, --compatibility Use the same output mode as git-annotate (Default: off)\n"
 "  -l, --long          Show long commit SHA1 (Default: off)\n"
 "  -t, --time          Show raw timestamp (Default: off)\n"
@@ -27,7 +27,7 @@ static char pickaxe_usage[] =
 "  -n, --show-number   Show original linenumber (Default: off)\n"
 "  -p, --porcelain     Show in a format designed for machine consumption\n"
 "  -L n,m              Process only line range n,m, counting from 1\n"
-"  -M                  Find line movements within the file\n"
+"  -M, -C              Find line movements within and across files\n"
 "  -S revs-file        Use revisions from revs-file instead of calling git-rev-list\n";
 
 static int longest_file;
@@ -38,6 +38,8 @@ static int max_digits;
 #define DEBUG 0
 
 #define PICKAXE_BLAME_MOVE		01
+#define PICKAXE_BLAME_COPY		02
+#define PICKAXE_BLAME_COPY_HARDER	04
 
 /* bits #0..7 in revision.h, #8..11 used for merge_bases() in commit.c */
 #define METAINFO_SHOWN		(1u<<12)
@@ -635,6 +637,78 @@ static int find_move_in_parent(struct scoreboard *sb,
 	return 0;
 }
 
+static int find_copy_in_parent(struct scoreboard *sb,
+			       struct origin *target,
+			       struct commit *parent,
+			       struct origin *porigin,
+			       int opt)
+{
+	struct diff_options diff_opts;
+	const char *paths[1];
+	struct blame_entry *ent;
+	int i;
+
+	if (find_last_in_target(sb, target) < 0)
+		return 1; /* nothing remains for this target */
+
+	diff_setup(&diff_opts);
+	diff_opts.recursive = 1;
+	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
+
+	/* Try "find copies harder" on new path */
+	if ((opt & PICKAXE_BLAME_COPY_HARDER) &&
+	    (!porigin || strcmp(target->path, porigin->path))) {
+		diff_opts.detect_rename = DIFF_DETECT_COPY;
+		diff_opts.find_copies_harder = 1;
+	}
+	paths[0] = NULL;
+	diff_tree_setup_paths(paths, &diff_opts);
+	if (diff_setup_done(&diff_opts) < 0)
+		die("diff-setup");
+	diff_tree_sha1(parent->tree->object.sha1,
+		       target->commit->tree->object.sha1,
+		       "", &diff_opts);
+	diffcore_std(&diff_opts);
+
+	for (ent = sb->ent; ent; ent = ent->next) {
+		struct blame_entry split[3];
+		if (ent->suspect != target || ent->guilty)
+			continue;
+
+		memset(split, 0, sizeof(split));
+		for (i = 0; i < diff_queued_diff.nr; i++) {
+			struct diff_filepair *p = diff_queued_diff.queue[i];
+			struct origin *norigin;
+			mmfile_t file_p;
+			char type[10];
+			char *blob;
+			struct blame_entry this[3];
+
+			if (!DIFF_FILE_VALID(p->one))
+				continue; /* does not exist in parent */
+			if (porigin && !strcmp(p->one->path, porigin->path))
+				/* find_move already dealt with this path */
+				continue;
+			norigin = find_origin(sb, parent, p->one->path);
+
+			blob = read_sha1_file(norigin->blob_sha1, type,
+					      (unsigned long *) &file_p.size);
+			file_p.ptr = blob;
+			if (!file_p.ptr) {
+				free(blob);
+				continue;
+			}
+			find_copy_in_blob(sb, ent, norigin, this, &file_p);
+			copy_split_if_better(split, this);
+		}
+		if (split[1].suspect)
+			split_blame(sb, split, ent);
+	}
+	diff_flush(&diff_opts);
+
+	return 0;
+}
+
 #define MAXPARENT 16
 
 static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
@@ -697,6 +771,18 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 				return;
 		}
 
+	/*
+	 * Optionally run "ciff" to find copies from parents' files here.
+	 */
+	if (opt & PICKAXE_BLAME_COPY)
+		for (i = 0, parent = commit->parents;
+		     i < MAXPARENT && parent;
+		     parent = parent->next, i++) {
+			struct origin *porigin = parent_origin[i];
+			if (find_copy_in_parent(sb, origin, parent->item,
+						porigin, opt))
+				return;
+		}
 }
 
 static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
@@ -1099,6 +1185,11 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 			revs_file = argv[i];
 		else if (!strcmp("-M", arg))
 			opt |= PICKAXE_BLAME_MOVE;
+		else if (!strcmp("-C", arg)) {
+			if (opt & PICKAXE_BLAME_COPY)
+				opt |= PICKAXE_BLAME_COPY_HARDER;
+			opt |= PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE;
+		}
 		else if (!strcmp("-L", arg) && ++i < argc) {
 			char *term;
 			arg = argv[i];
