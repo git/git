@@ -2871,6 +2871,30 @@ sub git_tree {
 	print "<div class=\"page_body\">\n";
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 1;
+	# '..' (top directory) link if possible
+	if (defined $hash_base &&
+	    defined $file_name && $file_name =~ m![^/]+$!) {
+		if ($alternate) {
+			print "<tr class=\"dark\">\n";
+		} else {
+			print "<tr class=\"light\">\n";
+		}
+		$alternate ^= 1;
+
+		my $up = $file_name;
+		$up =~ s!/?[^/]+$!!;
+		undef $up unless $up;
+		# based on git_print_tree_entry
+		print '<td class="mode">' . mode_str('040000') . "</td>\n";
+		print '<td class="list">';
+		print $cgi->a({-href => href(action=>"tree", hash_base=>$hash_base,
+		                             file_name=>$up)},
+		              "..");
+		print "</td>\n";
+		print "<td class=\"link\"></td>\n";
+
+		print "</tr>\n";
+	}
 	foreach my $line (@entries) {
 		my %t = parse_ls_tree_line($line, -z => 1);
 
