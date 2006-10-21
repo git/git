@@ -737,10 +737,26 @@ static int find_copy_in_parent(struct scoreboard *sb,
 	struct diff_options diff_opts;
 	const char *paths[1];
 	struct blame_entry *e;
-	int i;
+	int i, j;
+	struct blame_list {
+		struct blame_entry *ent;
+		struct blame_entry split[3];
+	} *blame_list;
+	int num_ents;
 
-	if (find_last_in_target(sb, target) < 0)
+	/* Count the number of entries the target is suspected for,
+	 * and prepare a list of entry and the best split.
+	 */
+	for (e = sb->ent, num_ents = 0; e; e = e->next)
+		if (!e->guilty && !cmp_suspect(e->suspect, target))
+			num_ents++;
+	if (!num_ents)
 		return 1; /* nothing remains for this target */
+
+	blame_list = xcalloc(num_ents, sizeof(struct blame_list));
+	for (e = sb->ent, i = 0; e; e = e->next)
+		if (!e->guilty && !cmp_suspect(e->suspect, target))
+			blame_list[i++].ent = e;
 
 	diff_setup(&diff_opts);
 	diff_opts.recursive = 1;
@@ -761,52 +777,45 @@ static int find_copy_in_parent(struct scoreboard *sb,
 		       "", &diff_opts);
 	diffcore_std(&diff_opts);
 
+	for (i = 0; i < diff_queued_diff.nr; i++) {
+		struct diff_filepair *p = diff_queued_diff.queue[i];
+		struct origin *norigin;
+		mmfile_t file_p;
+		char type[10];
+		char *blob;
+		struct blame_entry this[3];
 
-	/*
-	 * NEEDSWORK: This loop is wasteful in that it opens the same
-	 * blob in the parent number of times.  We should swap the
-	 * loop inside out, which would require keeping track of
-	 * "best blame so far" for blame entries that the current
-	 * "target" is being suspected.
-	 */
-
-	for (e = sb->ent; e; e = e->next) {
-		struct blame_entry split[3];
-		if (e->guilty || cmp_suspect(e->suspect, target))
+		if (!DIFF_FILE_VALID(p->one))
+			continue; /* does not exist in parent */
+		if (porigin && !strcmp(p->one->path, porigin->path))
+			/* find_move already dealt with this path */
 			continue;
 
-		memset(split, 0, sizeof(split));
-		for (i = 0; i < diff_queued_diff.nr; i++) {
-			struct diff_filepair *p = diff_queued_diff.queue[i];
-			struct origin *norigin;
-			mmfile_t file_p;
-			char type[10];
-			char *blob;
-			struct blame_entry this[3];
+		norigin = get_origin(sb, parent, p->one->path);
+		hashcpy(norigin->blob_sha1, p->one->sha1);
+		blob = read_sha1_file(norigin->blob_sha1, type,
+				      (unsigned long *) &file_p.size);
+		file_p.ptr = blob;
+		if (!file_p.ptr)
+			continue;
 
-			if (!DIFF_FILE_VALID(p->one))
-				continue; /* does not exist in parent */
-			if (porigin && !strcmp(p->one->path, porigin->path))
-				/* find_move already dealt with this path */
-				continue;
-			norigin = get_origin(sb, parent, p->one->path);
-			hashcpy(norigin->blob_sha1, p->one->sha1);
-			blob = read_sha1_file(norigin->blob_sha1, type,
-					      (unsigned long *) &file_p.size);
-			file_p.ptr = blob;
-			if (!file_p.ptr) {
-				free(blob);
-				continue;
-			}
-			find_copy_in_blob(sb, e, norigin, this, &file_p);
-			copy_split_if_better(sb, split, this);
-			free(blob);
+		for (j = 0; j < num_ents; j++) {
+			find_copy_in_blob(sb, blame_list[j].ent, norigin,
+					  this, &file_p);
+			copy_split_if_better(sb, blame_list[j].split,
+					     this);
 		}
-		if (split[1].suspect &&
-		    blame_copy_score < ent_score(sb, &split[1]))
-			split_blame(sb, split, e);
+		free(blob);
 	}
 	diff_flush(&diff_opts);
+
+	for (j = 0; j < num_ents; j++) {
+		struct blame_entry *split = blame_list[j].split;
+		if (split[1].suspect &&
+		    blame_copy_score < ent_score(sb, &split[1]))
+			split_blame(sb, split, blame_list[j].ent);
+	}
+	free(blame_list);
 
 	return 0;
 }
