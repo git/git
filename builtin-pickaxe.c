@@ -108,6 +108,7 @@ struct scoreboard {
 	/* linked list of blames */
 	struct blame_entry *ent;
 
+	/* look-up a line in the final buffer */
 	int num_lines;
 	int *lineno;
 };
@@ -188,7 +189,8 @@ static struct origin *find_rename(struct scoreboard *sb,
 
 	for (i = 0; i < diff_queued_diff.nr; i++) {
 		struct diff_filepair *p = diff_queued_diff.queue[i];
-		if (p->status == 'R' && !strcmp(p->one->path, origin->path)) {
+		if ((p->status == 'R' || p->status == 'C') &&
+		    !strcmp(p->one->path, origin->path)) {
 			porigin = find_origin(sb, parent, p->two->path);
 			break;
 		}
@@ -457,7 +459,7 @@ static void split_blame(struct scoreboard *sb,
 
 	if (1) { /* sanity */
 		struct blame_entry *ent;
-		int lno = 0, corrupt = 0;
+		int lno = sb->ent->lno, corrupt = 0;
 
 		for (ent = sb->ent; ent; ent = ent->next) {
 			if (lno != ent->lno)
@@ -467,7 +469,7 @@ static void split_blame(struct scoreboard *sb,
 			lno += ent->num_lines;
 		}
 		if (corrupt) {
-			lno = 0;
+			lno = sb->ent->lno;
 			for (ent = sb->ent; ent; ent = ent->next) {
 				printf("L %8d l %8d n %8d\n",
 				       lno, ent->lno, ent->num_lines);
@@ -508,10 +510,9 @@ static void blame_chunk(struct scoreboard *sb,
 			int tlno, int plno, int same,
 			struct origin *target, struct origin *parent)
 {
-	struct blame_entry *e, *n;
+	struct blame_entry *e;
 
-	for (e = sb->ent; e; e = n) {
-		n = e->next;
+	for (e = sb->ent; e; e = e->next) {
 		if (e->guilty || e->suspect != target)
 			continue;
 		if (same <= e->s_lno)
@@ -556,7 +557,7 @@ static unsigned ent_score(struct scoreboard *sb, struct blame_entry *e)
 	if (e->score)
 		return e->score;
 
-	score = 0;
+	score = 1;
 	cp = nth_line(sb, e->lno);
 	ep = nth_line(sb, e->lno + e->num_lines);
 	while (cp < ep) {
@@ -933,6 +934,15 @@ static void get_commit_info(struct commit *commit,
 	static char committer_buf[1024];
 	static char summary_buf[1024];
 
+	/* We've operated without save_commit_buffer, so
+	 * we now need to populate them for output.
+	 */
+	if (!commit->buffer) {
+		char type[20];
+		unsigned long size;
+		commit->buffer =
+			read_sha1_file(commit->object.sha1, type, &size);
+	}
 	ret->author = author_buf;
 	get_ac_line(commit->buffer, "\nauthor ",
 		    sizeof(author_buf), author_buf, &ret->author_mail,
@@ -1213,6 +1223,8 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 	const char *revs_file = NULL;
 	const char *final_commit_name = NULL;
 	char type[10];
+
+	save_commit_buffer = 0;
 
 	opt = 0;
 	bottom = top = 0;
