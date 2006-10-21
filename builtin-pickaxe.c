@@ -1085,6 +1085,9 @@ static int prepare_lines(struct scoreboard *sb)
 			bol = 1;
 		}
 	}
+	sb->lineno = xrealloc(sb->lineno,
+			      sizeof(int* ) * (num + incomplete + 1));
+	sb->lineno[num + incomplete] = buf - sb->final_buf;
 	sb->num_lines = num + incomplete;
 	return sb->num_lines;
 }
