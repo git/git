@@ -245,7 +245,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "mv", cmd_mv, RUN_SETUP },
 		{ "name-rev", cmd_name_rev, RUN_SETUP },
 		{ "pack-objects", cmd_pack_objects, RUN_SETUP },
-		{ "pickaxe", cmd_pickaxe, RUN_SETUP },
+		{ "pickaxe", cmd_pickaxe, RUN_SETUP | USE_PAGER },
 		{ "prune", cmd_prune, RUN_SETUP },
 		{ "prune-packed", cmd_prune_packed, RUN_SETUP },
 		{ "push", cmd_push, RUN_SETUP },
