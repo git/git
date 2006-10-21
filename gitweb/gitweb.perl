@@ -2783,7 +2783,7 @@ sub git_tree {
 	my $refs = git_get_references();
 	my $ref = format_ref_marker($refs, $hash_base);
 	git_header_html();
-	my $base = "";
+	my $basedir = '';
 	my ($have_blame) = gitweb_check_feature('blame');
 	if (defined $hash_base && (my %co = parse_commit($hash_base))) {
 		my @views_nav = ();
@@ -2811,7 +2811,10 @@ sub git_tree {
 		print "<div class=\"title\">$hash</div>\n";
 	}
 	if (defined $file_name) {
-		$base = esc_html("$file_name/");
+		$basedir = $file_name;
+		if ($basedir ne '' && substr($basedir, -1) ne '/') {
+			$basedir .= '/';
+		}
 	}
 	git_print_page_path($file_name, 'tree', $hash_base);
 	print "<div class=\"page_body\">\n";
@@ -2827,7 +2830,7 @@ sub git_tree {
 		}
 		$alternate ^= 1;
 
-		git_print_tree_entry(\%t, $base, $hash_base, $have_blame);
+		git_print_tree_entry(\%t, $basedir, $hash_base, $have_blame);
 
 		print "</tr>\n";
 	}
