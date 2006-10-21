@@ -113,12 +113,20 @@ struct scoreboard {
 	int *lineno;
 };
 
+static int cmp_suspect(struct origin *a, struct origin *b)
+{
+	int cmp = hashcmp(a->commit->object.sha1, b->commit->object.sha1);
+	if (cmp)
+		return cmp;
+	return strcmp(a->path, b->path);
+}
+
 static void coalesce(struct scoreboard *sb)
 {
 	struct blame_entry *ent, *next;
 
 	for (ent = sb->ent; ent && (next = ent->next); ent = next) {
-		if (ent->suspect == next->suspect &&
+		if (!cmp_suspect(ent->suspect, next->suspect) &&
 		    ent->guilty == next->guilty &&
 		    ent->s_lno + ent->num_lines == next->s_lno) {
 			ent->num_lines += next->num_lines;
@@ -126,6 +134,7 @@ static void coalesce(struct scoreboard *sb)
 			if (ent->next)
 				ent->next->prev = ent;
 			free(next);
+			ent->score = 0;
 			next = ent; /* again */
 		}
 	}
@@ -498,7 +507,7 @@ static int find_last_in_target(struct scoreboard *sb, struct origin *target)
 	int last_in_target = -1;
 
 	for (e = sb->ent; e; e = e->next) {
-		if (e->guilty || e->suspect != target)
+		if (e->guilty || cmp_suspect(e->suspect, target))
 			continue;
 		if (last_in_target < e->s_lno + e->num_lines)
 			last_in_target = e->s_lno + e->num_lines;
@@ -513,7 +522,7 @@ static void blame_chunk(struct scoreboard *sb,
 	struct blame_entry *e;
 
 	for (e = sb->ent; e; e = e->next) {
-		if (e->guilty || e->suspect != target)
+		if (e->guilty || cmp_suspect(e->suspect, target))
 			continue;
 		if (same <= e->s_lno)
 			continue;
@@ -634,7 +643,7 @@ static int find_move_in_parent(struct scoreboard *sb,
 			       struct origin *parent)
 {
 	int last_in_target;
-	struct blame_entry *ent, split[3];
+	struct blame_entry *e, split[3];
 	mmfile_t file_p;
 	char type[10];
 	char *blob_p;
@@ -651,13 +660,13 @@ static int find_move_in_parent(struct scoreboard *sb,
 		return 0;
 	}
 
-	for (ent = sb->ent; ent; ent = ent->next) {
-		if (ent->suspect != target || ent->guilty)
+	for (e = sb->ent; e; e = e->next) {
+		if (e->guilty || cmp_suspect(e->suspect, target))
 			continue;
-		find_copy_in_blob(sb, ent, parent, split, &file_p);
+		find_copy_in_blob(sb, e, parent, split, &file_p);
 		if (split[1].suspect &&
 		    blame_move_score < ent_score(sb, &split[1]))
-			split_blame(sb, split, ent);
+			split_blame(sb, split, e);
 	}
 	free(blob_p);
 	return 0;
@@ -671,7 +680,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 {
 	struct diff_options diff_opts;
 	const char *paths[1];
-	struct blame_entry *ent;
+	struct blame_entry *e;
 	int i;
 
 	if (find_last_in_target(sb, target) < 0)
@@ -696,9 +705,9 @@ static int find_copy_in_parent(struct scoreboard *sb,
 		       "", &diff_opts);
 	diffcore_std(&diff_opts);
 
-	for (ent = sb->ent; ent; ent = ent->next) {
+	for (e = sb->ent; e; e = e->next) {
 		struct blame_entry split[3];
-		if (ent->suspect != target || ent->guilty)
+		if (e->guilty || cmp_suspect(e->suspect, target))
 			continue;
 
 		memset(split, 0, sizeof(split));
@@ -724,12 +733,12 @@ static int find_copy_in_parent(struct scoreboard *sb,
 				free(blob);
 				continue;
 			}
-			find_copy_in_blob(sb, ent, norigin, this, &file_p);
+			find_copy_in_blob(sb, e, norigin, this, &file_p);
 			copy_split_if_better(sb, split, this);
 		}
 		if (split[1].suspect &&
 		    blame_copy_score < ent_score(sb, &split[1]))
-			split_blame(sb, split, ent);
+			split_blame(sb, split, e);
 	}
 	diff_flush(&diff_opts);
 
@@ -763,12 +772,6 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 			for (e = sb->ent; e; e = e->next)
 				if (e->suspect == origin)
 					e->suspect = porigin;
-			/* now everything blamed for origin is blamed for
-			 * porigin, we do not need to keep it anymore.
-			 * Do not free porigin (or the ones we got from
-			 * earlier round); they may still be used elsewhere.
-			 */
-			free_origin(origin);
 			return;
 		}
 		parent_origin[i] = porigin;
@@ -834,8 +837,10 @@ static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
 
 		/* Take responsibility for the remaining entries */
 		for (ent = sb->ent; ent; ent = ent->next)
-			if (ent->suspect == suspect)
+			if (!cmp_suspect(ent->suspect, suspect))
 				ent->guilty = 1;
+
+		coalesce(sb);
 	}
 }
 
