@@ -1615,17 +1615,16 @@ sub git_print_page_path {
 	my $type = shift;
 	my $hb = shift;
 
-	if (!defined $name) {
-		print "<div class=\"page_path\">/</div>\n";
-	} else {
+
+	print "<div class=\"page_path\">";
+	print $cgi->a({-href => href(action=>"tree", hash_base=>$hb),
+	              -title => 'tree root'}, "[$project]");
+	print " / ";
+	if (defined $name) {
 		my @dirname = split '/', $name;
 		my $basename = pop @dirname;
 		my $fullname = '';
 
-		print "<div class=\"page_path\">";
-		print $cgi->a({-href => href(action=>"tree", hash_base=>$hb),
-			      -title => 'tree root'}, "[$project]");
-		print " / ";
 		foreach my $dir (@dirname) {
 			$fullname .= ($fullname ? '/' : '') . $dir;
 			print $cgi->a({-href => href(action=>"tree", file_name=>$fullname,
@@ -1641,11 +1640,12 @@ sub git_print_page_path {
 			print $cgi->a({-href => href(action=>"tree", file_name=>$file_name,
 			                             hash_base=>$hb),
 			              -title => $name}, esc_html($basename));
+			print " / ";
 		} else {
 			print esc_html($basename);
 		}
-		print "<br/></div>\n";
 	}
+	print "<br/></div>\n";
 }
 
 # sub git_print_log (\@;%) {
