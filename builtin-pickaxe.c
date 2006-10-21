@@ -140,48 +140,103 @@ static void coalesce(struct scoreboard *sb)
 	}
 }
 
-static void free_origin(struct origin *o)
+static struct origin *get_origin(struct scoreboard *sb,
+				 struct commit *commit,
+				 const char *path)
 {
-	free(o);
-}
-
-static struct origin *find_origin(struct scoreboard *sb,
-				  struct commit *commit,
-				  const char *path)
-{
-	struct blame_entry *ent;
+	struct blame_entry *e;
 	struct origin *o;
-	unsigned mode;
-	char type[10];
 
-	for (ent = sb->ent; ent; ent = ent->next) {
-		if (ent->suspect->commit == commit &&
-		    !strcmp(ent->suspect->path, path))
-			return ent->suspect;
+	for (e = sb->ent; e; e = e->next) {
+		if (e->suspect->commit == commit &&
+		    !strcmp(e->suspect->path, path))
+			return e->suspect;
 	}
-
 	o = xcalloc(1, sizeof(*o) + strlen(path) + 1);
 	o->commit = commit;
 	strcpy(o->path, path);
-	if (get_tree_entry(commit->object.sha1, path, o->blob_sha1, &mode))
-		goto err_out;
-	if (sha1_object_info(o->blob_sha1, type, NULL) ||
-	    strcmp(type, blob_type))
-		goto err_out;
 	return o;
- err_out:
-	free_origin(o);
-	return NULL;
 }
 
-static struct origin *find_rename(struct scoreboard *sb,
+static int fill_blob_sha1(struct origin *origin)
+{
+	unsigned mode;
+	char type[10];
+
+	if (!is_null_sha1(origin->blob_sha1))
+		return 0;
+	if (get_tree_entry(origin->commit->object.sha1,
+			   origin->path,
+			   origin->blob_sha1, &mode))
+		goto error_out;
+	if (sha1_object_info(origin->blob_sha1, type, NULL) ||
+	    strcmp(type, blob_type))
+		goto error_out;
+	return 0;
+ error_out:
+	hashclr(origin->blob_sha1);
+	return -1;
+}
+
+static struct origin *find_origin(struct scoreboard *sb,
 				  struct commit *parent,
 				  struct origin *origin)
 {
 	struct origin *porigin = NULL;
 	struct diff_options diff_opts;
 	int i;
-	const char *paths[1];
+	const char *paths[2];
+
+	/* See if the origin->path is different between parent
+	 * and origin first.  Most of the time they are the
+	 * same and diff-tree is fairly efficient about this.
+	 */
+	diff_setup(&diff_opts);
+	diff_opts.recursive = 1;
+	diff_opts.detect_rename = 0;
+	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
+	paths[0] = origin->path;
+	paths[1] = NULL;
+
+	diff_tree_setup_paths(paths, &diff_opts);
+	if (diff_setup_done(&diff_opts) < 0)
+		die("diff-setup");
+	diff_tree_sha1(parent->tree->object.sha1,
+		       origin->commit->tree->object.sha1,
+		       "", &diff_opts);
+	diffcore_std(&diff_opts);
+
+	/* It is either one entry that says "modified", or "created",
+	 * or nothing.
+	 */
+	if (!diff_queued_diff.nr) {
+		/* The path is the same as parent */
+		porigin = get_origin(sb, parent, origin->path);
+		hashcpy(porigin->blob_sha1, origin->blob_sha1);
+	}
+	else if (diff_queued_diff.nr != 1)
+		die("internal error in pickaxe::find_origin");
+	else {
+		struct diff_filepair *p = diff_queued_diff.queue[0];
+		switch (p->status) {
+		default:
+			die("internal error in pickaxe::find_origin (%c)",
+			    p->status);
+		case 'M':
+			porigin = get_origin(sb, parent, origin->path);
+			hashcpy(porigin->blob_sha1, p->one->sha1);
+			break;
+		case 'A':
+		case 'T':
+			/* Did not exist in parent, or type changed */
+			break;
+		}
+	}
+	diff_flush(&diff_opts);
+	if (porigin)
+		return porigin;
+
+	/* Otherwise we would look for a rename */
 
 	diff_setup(&diff_opts);
 	diff_opts.recursive = 1;
@@ -191,16 +246,17 @@ static struct origin *find_rename(struct scoreboard *sb,
 	diff_tree_setup_paths(paths, &diff_opts);
 	if (diff_setup_done(&diff_opts) < 0)
 		die("diff-setup");
-	diff_tree_sha1(origin->commit->tree->object.sha1,
-		       parent->tree->object.sha1,
+	diff_tree_sha1(parent->tree->object.sha1,
+		       origin->commit->tree->object.sha1,
 		       "", &diff_opts);
 	diffcore_std(&diff_opts);
 
 	for (i = 0; i < diff_queued_diff.nr; i++) {
 		struct diff_filepair *p = diff_queued_diff.queue[i];
 		if ((p->status == 'R' || p->status == 'C') &&
-		    !strcmp(p->one->path, origin->path)) {
-			porigin = find_origin(sb, parent, p->two->path);
+		    !strcmp(p->two->path, origin->path)) {
+			porigin = get_origin(sb, parent, p->one->path);
+			hashcpy(porigin->blob_sha1, p->one->sha1);
 			break;
 		}
 	}
@@ -705,6 +761,15 @@ static int find_copy_in_parent(struct scoreboard *sb,
 		       "", &diff_opts);
 	diffcore_std(&diff_opts);
 
+
+	/*
+	 * NEEDSWORK: This loop is wasteful in that it opens the same
+	 * blob in the parent number of times.  We should swap the
+	 * loop inside out, which would require keeping track of
+	 * "best blame so far" for blame entries that the current
+	 * "target" is being suspected.
+	 */
+
 	for (e = sb->ent; e; e = e->next) {
 		struct blame_entry split[3];
 		if (e->guilty || cmp_suspect(e->suspect, target))
@@ -724,8 +789,8 @@ static int find_copy_in_parent(struct scoreboard *sb,
 			if (porigin && !strcmp(p->one->path, porigin->path))
 				/* find_move already dealt with this path */
 				continue;
-			norigin = find_origin(sb, parent, p->one->path);
-
+			norigin = get_origin(sb, parent, p->one->path);
+			hashcpy(norigin->blob_sha1, p->one->sha1);
 			blob = read_sha1_file(norigin->blob_sha1, type,
 					      (unsigned long *) &file_p.size);
 			file_p.ptr = blob;
@@ -735,6 +800,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 			}
 			find_copy_in_blob(sb, e, norigin, this, &file_p);
 			copy_split_if_better(sb, split, this);
+			free(blob);
 		}
 		if (split[1].suspect &&
 		    blame_copy_score < ent_score(sb, &split[1]))
@@ -762,9 +828,7 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 
 		if (parse_commit(p))
 			continue;
-		porigin = find_origin(sb, parent->item, origin->path);
-		if (!porigin)
-			porigin = find_rename(sb, parent->item, origin);
+		porigin = find_origin(sb, parent->item, origin);
 		if (!porigin)
 			continue;
 		if (!hashcmp(porigin->blob_sha1, origin->blob_sha1)) {
@@ -1423,8 +1487,8 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 	 */
 	prepare_revision_walk(&revs);
 
-	o = find_origin(&sb, sb.final, path);
-	if (!o)
+	o = get_origin(&sb, sb.final, path);
+	if (fill_blob_sha1(o))
 		die("no such path %s in %s", path, final_commit_name);
 
 	sb.final_buf = read_sha1_file(o->blob_sha1, type, &sb.final_buf_size);
