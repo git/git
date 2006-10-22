@@ -3396,6 +3396,51 @@ sub git_commitdiff {
 	if (!%co) {
 		die_error(undef, "Unknown commit object");
 	}
+
+	# we need to prepare $formats_nav before any parameter munging
+	my $formats_nav;
+	if ($format eq 'html') {
+		$formats_nav =
+			$cgi->a({-href => href(action=>"commitdiff_plain",
+			                       hash=>$hash, hash_parent=>$hash_parent)},
+			        "raw");
+
+		if (defined $hash_parent) {
+			# commitdiff with two commits given
+			my $hash_parent_short = $hash_parent;
+			if ($hash_parent =~ m/^[0-9a-fA-F]{40}$/) {
+				$hash_parent_short = substr($hash_parent, 0, 7);
+			}
+			$formats_nav .=
+				' (from: ' .
+				$cgi->a({-href => href(action=>"commitdiff",
+				                       hash=>$hash_parent)},
+				        esc_html($hash_parent_short)) .
+				')';
+		} elsif (!$co{'parent'}) {
+			# --root commitdiff
+			$formats_nav .= ' (initial)';
+		} elsif (scalar @{$co{'parents'}} == 1) {
+			# single parent commit
+			$formats_nav .=
+				' (parent: ' .
+				$cgi->a({-href => href(action=>"commitdiff",
+				                       hash=>$co{'parent'})},
+				        esc_html(substr($co{'parent'}, 0, 7))) .
+				')';
+		} else {
+			# merge commit
+			$formats_nav .=
+				' (merge: ' .
+				join(' ', map {
+					$cgi->a({-href => href(action=>"commitdiff",
+					                       hash=>$_)},
+					        esc_html(substr($_, 0, 7)));
+				} @{$co{'parents'}} ) .
+				')';
+		}
+	}
+
 	if (!defined $hash_parent) {
 		$hash_parent = $co{'parent'} || '--root';
 	}
@@ -3434,10 +3479,6 @@ sub git_commitdiff {
 	if ($format eq 'html') {
 		my $refs = git_get_references();
 		my $ref = format_ref_marker($refs, $co{'id'});
-		my $formats_nav =
-			$cgi->a({-href => href(action=>"commitdiff_plain",
-			                       hash=>$hash, hash_parent=>$hash_parent)},
-			        "raw");
 
 		git_header_html(undef, $expires);
 		git_print_page_nav('commitdiff','', $hash,$co{'tree'},$hash, $formats_nav);
