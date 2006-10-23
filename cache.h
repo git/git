@@ -269,8 +269,9 @@ enum object_type {
 	OBJ_TREE = 2,
 	OBJ_BLOB = 3,
 	OBJ_TAG = 4,
-	/* 5/6 for future expansion */
-	OBJ_DELTA = 7,
+	/* 5 for future expansion */
+	OBJ_OFS_DELTA = 6,
+	OBJ_REF_DELTA = 7,
 	OBJ_BAD,
 };
 

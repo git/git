@@ -9,7 +9,7 @@ git-pack-objects - Create a packed archive of objects
 SYNOPSIS
 --------
 [verse]
-'git-pack-objects' [-q] [--no-reuse-delta] [--non-empty]
+'git-pack-objects' [-q] [--no-reuse-delta] [--delta-base-offset] [--non-empty]
 	[--local] [--incremental] [--window=N] [--depth=N]
 	[--revs [--unpacked | --all]*] [--stdout | base-name] < object-list
 
@@ -110,6 +110,17 @@ base-name::
 	This sometimes results in a slightly suboptimal pack.
 	This flag tells the command not to reuse existing deltas
 	but compute them from scratch.
+
+--delta-base-offset::
+	A packed archive can express base object of a delta as
+	either 20-byte object name or as an offset in the
+	stream, but older version of git does not understand the
+	latter.  By default, git-pack-objects only uses the
+	former format for better compatibility.  This option
+	allows the command to use the latter format for
+	compactness.  Depending on the average delta chain
+	length, this option typically shrinks the resulting
+	packfile by 3-5 per-cent.
 
 
 Author
