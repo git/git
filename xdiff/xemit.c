@@ -90,7 +90,7 @@ static void xdl_find_func(xdfile_t *xf, long i, char *buf, long sz, long *ll) {
 		     *rec == '#')) {	/* #define? */
 			if (len > sz)
 				len = sz;
-			if (len && rec[len - 1] == '\n')
+			while (0 < len && isspace((unsigned char)rec[len - 1]))
 				len--;
 			memcpy(buf, rec, len);
 			*ll = len;
