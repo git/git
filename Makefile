@@ -156,7 +156,7 @@ BASIC_CFLAGS =
 BASIC_LDFLAGS =
 
 SCRIPT_SH = \
-	git-bisect.sh git-branch.sh git-checkout.sh \
+	git-bisect.sh git-checkout.sh \
 	git-cherry.sh git-clean.sh git-clone.sh git-commit.sh \
 	git-fetch.sh \
 	git-ls-remote.sh \
@@ -267,6 +267,7 @@ BUILTIN_OBJS = \
 	builtin-add.o \
 	builtin-apply.o \
 	builtin-archive.o \
+	builtin-branch.o \
 	builtin-cat-file.o \
 	builtin-checkout-index.o \
 	builtin-check-ref-format.o \
