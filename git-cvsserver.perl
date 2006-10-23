@@ -2118,9 +2118,17 @@ sub new
                 mode       TEXT NOT NULL
             )
         ");
+        $self->{dbh}->do("
+            CREATE INDEX revision_ix1
+            ON revision (name,revision)
+        ");
+        $self->{dbh}->do("
+            CREATE INDEX revision_ix2
+            ON revision (name,commithash)
+        ");
     }
 
-    # Construct the revision table if required
+    # Construct the head table if required
     unless ( $self->{tables}{head} )
     {
         $self->{dbh}->do("
@@ -2133,6 +2141,10 @@ sub new
                 modified   TEXT NOT NULL,
                 mode       TEXT NOT NULL
             )
+        ");
+        $self->{dbh}->do("
+            CREATE INDEX head_ix1
+            ON head (name)
         ");
     }
 
