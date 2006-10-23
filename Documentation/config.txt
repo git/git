@@ -230,6 +230,18 @@ pull.octopus::
 pull.twohead::
 	The default merge strategy to use when pulling a single branch.
 
+remote.<name>.url::
+	The URL of a remote repository.  See gitlink:git-fetch[1] or
+	gitlink:git-push[1].
+
+remote.<name>.fetch::
+	The default set of "refspec" for gitlink:git-fetch[1]. See
+	gitlink:git-fetch[1].
+
+remote.<name>.push::
+	The default set of "refspec" for gitlink:git-push[1]. See
+	gitlink:git-push[1].
+
 show.difftree::
 	The default gitlink:git-diff-tree[1] arguments to be used
 	for gitlink:git-show[1].
