@@ -98,7 +98,7 @@ static void output_commit_title(struct commit *commit)
 	if (commit->util)
 		printf("virtual %s\n", (char *)commit->util);
 	else {
-		printf("%s ", sha1_to_hex(commit->object.sha1));
+		printf("%s ", find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV));
 		if (parse_commit(commit) != 0)
 			printf("(bad commit)\n");
 		else {
