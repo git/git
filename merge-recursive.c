@@ -427,8 +427,9 @@ static struct path_list *get_renames(struct tree *tree,
 	return renames;
 }
 
-int update_stages(const char *path, struct diff_filespec *o,
-		struct diff_filespec *a, struct diff_filespec *b, int clear)
+static int update_stages(const char *path, struct diff_filespec *o,
+			 struct diff_filespec *a, struct diff_filespec *b,
+			 int clear)
 {
 	int options = ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE;
 	if (clear)
@@ -468,7 +469,7 @@ static int remove_path(const char *name)
 	return ret;
 }
 
-int remove_file(int clean, const char *path)
+static int remove_file(int clean, const char *path)
 {
 	int update_cache = index_only || clean;
 	int update_working_directory = !index_only;
@@ -537,11 +538,11 @@ static void flush_buffer(int fd, const char *buf, unsigned long size)
 	}
 }
 
-void update_file_flags(const unsigned char *sha,
-		       unsigned mode,
-		       const char *path,
-		       int update_cache,
-		       int update_wd)
+static void update_file_flags(const unsigned char *sha,
+			      unsigned mode,
+			      const char *path,
+			      int update_cache,
+			      int update_wd)
 {
 	if (index_only)
 		update_wd = 0;
@@ -586,10 +587,10 @@ void update_file_flags(const unsigned char *sha,
 		add_cacheinfo(mode, sha, path, 0, update_wd, ADD_CACHE_OK_TO_ADD);
 }
 
-void update_file(int clean,
-		const unsigned char *sha,
-		unsigned mode,
-		const char *path)
+static void update_file(int clean,
+			const unsigned char *sha,
+			unsigned mode,
+			const char *path)
 {
 	update_file_flags(sha, mode, path, index_only || clean, !index_only);
 }
