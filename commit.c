@@ -868,11 +868,11 @@ void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
 
 /* merge-rebase stuff */
 
-/* bits #0..7 in revision.h */
-#define PARENT1		(1u<< 8)
-#define PARENT2		(1u<< 9)
-#define STALE		(1u<<10)
-#define RESULT		(1u<<11)
+/* bits #0..15 in revision.h */
+#define PARENT1		(1u<<16)
+#define PARENT2		(1u<<17)
+#define STALE		(1u<<18)
+#define RESULT		(1u<<19)
 
 static struct commit *interesting(struct commit_list *list)
 {

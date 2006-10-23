@@ -45,6 +45,7 @@ static int bisect_list;
 static int show_timestamp;
 static int hdr_termination;
 static const char *header_prefix;
+static int show_left_right;
 
 static void show_commit(struct commit *commit)
 {
@@ -54,6 +55,12 @@ static void show_commit(struct commit *commit)
 		fputs(header_prefix, stdout);
 	if (commit->object.flags & BOUNDARY)
 		putchar('-');
+	else if (show_left_right) {
+		if (commit->object.flags & SYMMETRIC_LEFT)
+			putchar('<');
+		else
+			putchar('>');
+	}
 	if (revs.abbrev_commit && revs.abbrev)
 		fputs(find_unique_abbrev(commit->object.sha1, revs.abbrev),
 		      stdout);
@@ -238,6 +245,10 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "--bisect")) {
 			bisect_list = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--left-right")) {
+			show_left_right = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--stdin")) {
