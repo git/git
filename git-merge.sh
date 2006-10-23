@@ -93,6 +93,8 @@ finish () {
 	esac
 }
 
+case "$#" in 0) usage ;; esac
+
 rloga=
 while case "$#" in 0) break ;; esac
 do

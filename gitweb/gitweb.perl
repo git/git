@@ -1722,13 +1722,13 @@ sub git_print_tree_entry {
 	if ($t->{'type'} eq "blob") {
 		print "<td class=\"list\">" .
 			$cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
-					       file_name=>"$basedir$t->{'name'}", %base_key),
-				 -class => "list"}, esc_html($t->{'name'})) . "</td>\n";
+			                       file_name=>"$basedir$t->{'name'}", %base_key),
+			        -class => "list"}, esc_html($t->{'name'})) . "</td>\n";
 		print "<td class=\"link\">";
 		if ($have_blame) {
 			print $cgi->a({-href => href(action=>"blame", hash=>$t->{'hash'},
-						     file_name=>"$basedir$t->{'name'}", %base_key)},
-				      "blame");
+				                           file_name=>"$basedir$t->{'name'}", %base_key)},
+				            "blame");
 		}
 		if (defined $hash_base) {
 			if ($have_blame) {
@@ -1740,8 +1740,8 @@ sub git_print_tree_entry {
 		}
 		print " | " .
 			$cgi->a({-href => href(action=>"blob_plain", hash_base=>$hash_base,
-					       file_name=>"$basedir$t->{'name'}")},
-				"raw");
+			                       file_name=>"$basedir$t->{'name'}")},
+			        "raw");
 		print "</td>\n";
 
 	} elsif ($t->{'type'} eq "tree") {
@@ -1809,7 +1809,7 @@ sub git_difftree_body {
 			print "<td>";
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
 			                             hash_base=>$hash, file_name=>$diff{'file'}),
-				       -class => "list"}, esc_html($diff{'file'}));
+			              -class => "list"}, esc_html($diff{'file'}));
 			print "</td>\n";
 			print "<td>$mode_chng</td>\n";
 			print "<td class=\"link\">";
@@ -1836,11 +1836,11 @@ sub git_difftree_body {
 				print " | ";
 			}
 			print $cgi->a({-href => href(action=>"blame", hash_base=>$parent,
-						     file_name=>$diff{'file'})},
-				      "blame") . " | ";
+			                             file_name=>$diff{'file'})},
+			              "blame") . " | ";
 			print $cgi->a({-href => href(action=>"history", hash_base=>$parent,
-						     file_name=>$diff{'file'})},
-				      "history");
+			                             file_name=>$diff{'file'})},
+			              "history");
 			print "</td>\n";
 
 		} elsif ($diff{'status'} eq "M" || $diff{'status'} eq "T") { # modified, or type changed
@@ -1861,8 +1861,8 @@ sub git_difftree_body {
 			}
 			print "<td>";
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
-						     hash_base=>$hash, file_name=>$diff{'file'}),
-				       -class => "list"}, esc_html($diff{'file'}));
+			                             hash_base=>$hash, file_name=>$diff{'file'}),
+			              -class => "list"}, esc_html($diff{'file'}));
 			print "</td>\n";
 			print "<td>$mode_chnge</td>\n";
 			print "<td class=\"link\">";
@@ -1873,19 +1873,19 @@ sub git_difftree_body {
 					print $cgi->a({-href => "#patch$patchno"}, "patch");
 				} else {
 					print $cgi->a({-href => href(action=>"blobdiff",
-								     hash=>$diff{'to_id'}, hash_parent=>$diff{'from_id'},
-								     hash_base=>$hash, hash_parent_base=>$parent,
-								     file_name=>$diff{'file'})},
-						      "diff");
+					                             hash=>$diff{'to_id'}, hash_parent=>$diff{'from_id'},
+					                             hash_base=>$hash, hash_parent_base=>$parent,
+					                             file_name=>$diff{'file'})},
+					              "diff");
 				}
 				print " | ";
 			}
 			print $cgi->a({-href => href(action=>"blame", hash_base=>$hash,
-						     file_name=>$diff{'file'})},
-				      "blame") . " | ";
+			                             file_name=>$diff{'file'})},
+			              "blame") . " | ";
 			print $cgi->a({-href => href(action=>"history", hash_base=>$hash,
-						     file_name=>$diff{'file'})},
-				      "history");
+			                             file_name=>$diff{'file'})},
+			              "history");
 			print "</td>\n";
 
 		} elsif ($diff{'status'} eq "R" || $diff{'status'} eq "C") { # renamed or copied
@@ -1913,19 +1913,19 @@ sub git_difftree_body {
 					print $cgi->a({-href => "#patch$patchno"}, "patch");
 				} else {
 					print $cgi->a({-href => href(action=>"blobdiff",
-								     hash=>$diff{'to_id'}, hash_parent=>$diff{'from_id'},
-								     hash_base=>$hash, hash_parent_base=>$parent,
-								     file_name=>$diff{'to_file'}, file_parent=>$diff{'from_file'})},
-						      "diff");
+					                             hash=>$diff{'to_id'}, hash_parent=>$diff{'from_id'},
+					                             hash_base=>$hash, hash_parent_base=>$parent,
+					                             file_name=>$diff{'to_file'}, file_parent=>$diff{'from_file'})},
+					              "diff");
 				}
 				print " | ";
 			}
 			print $cgi->a({-href => href(action=>"blame", hash_base=>$parent,
-						     file_name=>$diff{'from_file'})},
-				      "blame") . " | ";
+			                             file_name=>$diff{'from_file'})},
+			              "blame") . " | ";
 			print $cgi->a({-href => href(action=>"history", hash_base=>$parent,
-						     file_name=>$diff{'from_file'})},
-				      "history");
+			                            file_name=>$diff{'from_file'})},
+			              "history");
 			print "</td>\n";
 
 		} # we should not encounter Unmerged (U) or Unknown (X) status
@@ -2834,7 +2834,7 @@ sub git_tree {
 	my $refs = git_get_references();
 	my $ref = format_ref_marker($refs, $hash_base);
 	git_header_html();
-	my $base = "";
+	my $basedir = '';
 	my ($have_blame) = gitweb_check_feature('blame');
 	if (defined $hash_base && (my %co = parse_commit($hash_base))) {
 		my @views_nav = ();
@@ -2851,7 +2851,7 @@ sub git_tree {
 			# FIXME: Should be available when we have no hash base as well.
 			push @views_nav,
 				$cgi->a({-href => href(action=>"snapshot", hash=>$hash)},
-					"snapshot");
+				        "snapshot");
 		}
 		git_print_page_nav('tree','', $hash_base, undef, undef, join(' | ', @views_nav));
 		git_print_header_div('commit', esc_html($co{'title'}) . $ref, $hash_base);
@@ -2862,7 +2862,10 @@ sub git_tree {
 		print "<div class=\"title\">$hash</div>\n";
 	}
 	if (defined $file_name) {
-		$base = esc_html("$file_name/");
+		$basedir = $file_name;
+		if ($basedir ne '' && substr($basedir, -1) ne '/') {
+			$basedir .= '/';
+		}
 	}
 	git_print_page_path($file_name, 'tree', $hash_base);
 	print "<div class=\"page_body\">\n";
@@ -2878,7 +2881,7 @@ sub git_tree {
 		}
 		$alternate ^= 1;
 
-		git_print_tree_entry(\%t, $base, $hash_base, $have_blame);
+		git_print_tree_entry(\%t, $basedir, $hash_base, $have_blame);
 
 		print "</tr>\n";
 	}

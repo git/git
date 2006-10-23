@@ -23,7 +23,10 @@
 ;; system.
 ;;
 ;; To install: put this file on the load-path and add GIT to the list
-;; of supported backends in `vc-handled-backends'.
+;; of supported backends in `vc-handled-backends'; the following line,
+;; placed in your ~/.emacs, will accomplish this:
+;;
+;;     (add-to-list 'vc-handled-backends 'GIT)
 ;;
 ;; TODO
 ;;  - changelog generation

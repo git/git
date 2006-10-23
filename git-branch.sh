@@ -1,6 +1,6 @@
 #!/bin/sh
 
-USAGE='[-l] [(-d | -D) <branchname>] | [[-f] <branchname> [<start-point>]] | -r'
+USAGE='[-l] [-f] <branchname> [<start-point>] | (-d | -D) <branchname> | [-r]'
 LONG_USAGE='If no arguments, show available branches and mark current branch with a star.
 If one argument, create a new branch <branchname> based off of current HEAD.
 If two arguments, create a new branch <branchname> based off of <start-point>.'
