@@ -414,7 +414,8 @@ Pull: refs/heads/$head_points_at:$origin_track" &&
 
 	case "$no_checkout" in
 	'')
-		git-read-tree -m -u -v HEAD HEAD
+		test "z$quiet" = z && v=-v || v=
+		git-read-tree -m -u $v HEAD HEAD
 	esac
 fi
 rm -f "$GIT_DIR/CLONE_HEAD" "$GIT_DIR/REMOTE_HEAD"
