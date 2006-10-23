@@ -8,7 +8,7 @@
 #include "tree.h"
 
 static const char index_pack_usage[] =
-"git-index-pack [-o index-file] pack-file";
+"git-index-pack [-o <index-file>] { <pack-file> | --stdin [<pack-file>] }";
 
 struct object_entry
 {
@@ -37,17 +37,18 @@ struct delta_entry
 	union delta_base base;
 };
 
-static const char *pack_name;
 static struct object_entry *objects;
 static struct delta_entry *deltas;
 static int nr_objects;
 static int nr_deltas;
 
+static int from_stdin;
+
 /* We always read in 4kB chunks. */
 static unsigned char input_buffer[4096];
 static unsigned long input_offset, input_len, consumed_bytes;
 static SHA_CTX input_ctx;
-static int input_fd;
+static int input_fd, output_fd, mmap_fd;
 
 /*
  * Make sure at least "min" bytes are available in the buffer, and
@@ -60,6 +61,8 @@ static void * fill(int min)
 	if (min > sizeof(input_buffer))
 		die("cannot fill %d bytes", min);
 	if (input_offset) {
+		if (output_fd >= 0)
+			write_or_die(output_fd, input_buffer, input_offset);
 		SHA1_Update(&input_ctx, input_buffer, input_offset);
 		memcpy(input_buffer, input_buffer + input_offset, input_len);
 		input_offset = 0;
@@ -86,13 +89,31 @@ static void use(int bytes)
 	consumed_bytes += bytes;
 }
 
-static void open_pack_file(void)
+static const char * open_pack_file(const char *pack_name)
 {
-	input_fd = open(pack_name, O_RDONLY);
-	if (input_fd < 0)
-		die("cannot open packfile '%s': %s", pack_name,
-		    strerror(errno));
+	if (from_stdin) {
+		input_fd = 0;
+		if (!pack_name) {
+			static char tmpfile[PATH_MAX];
+			snprintf(tmpfile, sizeof(tmpfile),
+				 "%s/pack_XXXXXX", get_object_directory());
+			output_fd = mkstemp(tmpfile);
+			pack_name = xstrdup(tmpfile);
+		} else
+			output_fd = open(pack_name, O_CREAT|O_EXCL|O_RDWR, 0600);
+		if (output_fd < 0)
+			die("unable to create %s: %s\n", pack_name, strerror(errno));
+		mmap_fd = output_fd;
+	} else {
+		input_fd = open(pack_name, O_RDONLY);
+		if (input_fd < 0)
+			die("cannot open packfile '%s': %s",
+			    pack_name, strerror(errno));
+		output_fd = -1;
+		mmap_fd = input_fd;
+	}
 	SHA1_Init(&input_ctx);
+	return pack_name;
 }
 
 static void parse_pack_header(void)
@@ -101,10 +122,9 @@ static void parse_pack_header(void)
 
 	/* Header consistency check */
 	if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
-		die("packfile '%s' signature mismatch", pack_name);
+		die("pack signature mismatch");
 	if (!pack_version_ok(hdr->hdr_version))
-		die("packfile '%s' version %d unsupported",
-		    pack_name, ntohl(hdr->hdr_version));
+		die("pack version %d unsupported", ntohl(hdr->hdr_version));
 
 	nr_objects = ntohl(hdr->hdr_entries);
 	use(sizeof(struct pack_header));
@@ -122,8 +142,7 @@ static void bad_object(unsigned long offset, const char *format, ...)
 	va_start(params, format);
 	vsnprintf(buf, sizeof(buf), format, params);
 	va_end(params);
-	die("packfile '%s': bad object at offset %lu: %s",
-	    pack_name, offset, buf);
+	die("pack has bad object at offset %lu: %s", offset, buf);
 }
 
 static void *unpack_entry_data(unsigned long offset, unsigned long size)
@@ -222,9 +241,9 @@ static void * get_data_from_pack(struct object_entry *obj)
 	int st;
 
 	map = mmap(NULL, len + pg_offset, PROT_READ, MAP_PRIVATE,
-		   input_fd, from - pg_offset);
+		   mmap_fd, from - pg_offset);
 	if (map == MAP_FAILED)
-		die("cannot mmap packfile '%s': %s", pack_name, strerror(errno));
+		die("cannot mmap pack file: %s", strerror(errno));
 	data = xmalloc(obj->size);
 	memset(&stream, 0, sizeof(stream));
 	stream.next_out = data;
@@ -382,14 +401,16 @@ static void parse_pack_objects(unsigned char *sha1)
 	SHA1_Update(&input_ctx, input_buffer, input_offset);
 	SHA1_Final(sha1, &input_ctx);
 	if (hashcmp(fill(20), sha1))
-		die("packfile '%s' SHA1 mismatch", pack_name);
+		die("pack is corrupted (SHA1 mismatch)");
 	use(20);
+	if (output_fd >= 0)
+		write_or_die(output_fd, input_buffer, input_offset);
 
 	/* If input_fd is a file, we should have reached its end now. */
 	if (fstat(input_fd, &st))
-		die("cannot fstat packfile '%s': %s", pack_name, strerror(errno));
+		die("cannot fstat packfile: %s", strerror(errno));
 	if (S_ISREG(st.st_mode) && st.st_size != consumed_bytes)
-		die("packfile '%s' has junk at the end", pack_name);
+		die("pack has junk at the end");
 
 	/* Sort deltas by base SHA1/offset for fast searching */
 	qsort(deltas, nr_deltas, sizeof(struct delta_entry),
@@ -435,7 +456,7 @@ static void parse_pack_objects(unsigned char *sha1)
 	for (i = 0; i < nr_deltas; i++) {
 		if (deltas[i].obj->real_type == OBJ_REF_DELTA ||
 		    deltas[i].obj->real_type == OBJ_OFS_DELTA)
-			die("packfile '%s' has unresolved deltas",  pack_name);
+			die("pack has unresolved deltas");
 	}
 }
 
@@ -450,12 +471,12 @@ static int sha1_compare(const void *_a, const void *_b)
  * On entry *sha1 contains the pack content SHA1 hash, on exit it is
  * the SHA1 hash of sorted object names.
  */
-static void write_index_file(const char *index_name, unsigned char *sha1)
+static const char * write_index_file(const char *index_name, unsigned char *sha1)
 {
 	struct sha1file *f;
 	struct object_entry **sorted_by_sha, **list, **last;
 	unsigned int array[256];
-	int i;
+	int i, fd;
 	SHA_CTX ctx;
 
 	if (nr_objects) {
@@ -472,8 +493,19 @@ static void write_index_file(const char *index_name, unsigned char *sha1)
 	else
 		sorted_by_sha = list = last = NULL;
 
-	unlink(index_name);
-	f = sha1create("%s", index_name);
+	if (!index_name) {
+		static char tmpfile[PATH_MAX];
+		snprintf(tmpfile, sizeof(tmpfile),
+			 "%s/index_XXXXXX", get_object_directory());
+		fd = mkstemp(tmpfile);
+		index_name = xstrdup(tmpfile);
+	} else {
+		unlink(index_name);
+		fd = open(index_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
+	}
+	if (fd < 0)
+		die("unable to create %s: %s", index_name, strerror(errno));
+	f = sha1fd(fd, index_name);
 
 	/*
 	 * Write the first-level table (the list is sorted,
@@ -513,12 +545,52 @@ static void write_index_file(const char *index_name, unsigned char *sha1)
 	sha1close(f, NULL, 1);
 	free(sorted_by_sha);
 	SHA1_Final(sha1, &ctx);
+	return index_name;
+}
+
+static void final(const char *final_pack_name, const char *curr_pack_name,
+		  const char *final_index_name, const char *curr_index_name,
+		  unsigned char *sha1)
+{
+	char name[PATH_MAX];
+	int err;
+
+	if (!from_stdin) {
+		close(input_fd);
+	} else {
+		err = close(output_fd);
+		if (err)
+			die("error while closing pack file: %s", strerror(errno));
+		chmod(curr_pack_name, 0444);
+	}
+
+	if (final_pack_name != curr_pack_name) {
+		if (!final_pack_name) {
+			snprintf(name, sizeof(name), "%s/pack/pack-%s.pack",
+				 get_object_directory(), sha1_to_hex(sha1));
+			final_pack_name = name;
+		}
+		if (move_temp_to_file(curr_pack_name, final_pack_name))
+			die("cannot store pack file");
+	}
+
+	chmod(curr_index_name, 0444);
+	if (final_index_name != curr_index_name) {
+		if (!final_index_name) {
+			snprintf(name, sizeof(name), "%s/pack/pack-%s.idx",
+				 get_object_directory(), sha1_to_hex(sha1));
+			final_index_name = name;
+		}
+		if (move_temp_to_file(curr_index_name, final_index_name))
+			die("cannot store index file");
+	}
 }
 
 int main(int argc, char **argv)
 {
 	int i;
-	char *index_name = NULL;
+	const char *curr_pack, *pack_name = NULL;
+	const char *curr_index, *index_name = NULL;
 	char *index_name_buf = NULL;
 	unsigned char sha1[20];
 
@@ -526,7 +598,9 @@ int main(int argc, char **argv)
 		const char *arg = argv[i];
 
 		if (*arg == '-') {
-			if (!strcmp(arg, "-o")) {
+			if (!strcmp(arg, "--stdin")) {
+				from_stdin = 1;
+			} else if (!strcmp(arg, "-o")) {
 				if (index_name || (i+1) >= argc)
 					usage(index_pack_usage);
 				index_name = argv[++i];
@@ -540,9 +614,9 @@ int main(int argc, char **argv)
 		pack_name = arg;
 	}
 
-	if (!pack_name)
+	if (!pack_name && !from_stdin)
 		usage(index_pack_usage);
-	if (!index_name) {
+	if (!index_name && pack_name) {
 		int len = strlen(pack_name);
 		if (!has_extension(pack_name, ".pack"))
 			die("packfile name '%s' does not end with '.pack'",
@@ -553,13 +627,14 @@ int main(int argc, char **argv)
 		index_name = index_name_buf;
 	}
 
-	open_pack_file();
+	curr_pack = open_pack_file(pack_name);
 	parse_pack_header();
 	objects = xcalloc(nr_objects + 1, sizeof(struct object_entry));
 	deltas = xcalloc(nr_objects, sizeof(struct delta_entry));
 	parse_pack_objects(sha1);
 	free(deltas);
-	write_index_file(index_name, sha1);
+	curr_index = write_index_file(index_name, sha1);
+	final(pack_name, curr_pack, index_name, curr_index, sha1);
 	free(objects);
 	free(index_name_buf);
 
