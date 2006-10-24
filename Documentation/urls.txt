@@ -51,6 +51,14 @@ lines are used for `git-push` and `git-fetch`/`git-pull`,
 respectively.  Multiple `Push:` and `Pull:` lines may
 be specified for additional branch mappings.
 
+Or, equivalently, in the `$GIT_DIR/config` (note the use
+of `fetch` instead of `Pull:`):
+
+[remote "<remote>"]
+	url = <url>
+	push = <refspec>
+	fetch = <refspec>
+
 The name of a file in `$GIT_DIR/branches` directory can be
 specified as an older notation short-hand; the named
 file should contain a single line, a URL in one of the

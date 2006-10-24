@@ -159,7 +159,7 @@ BASIC_LDFLAGS =
 
 SCRIPT_SH = \
 	git-bisect.sh git-branch.sh git-checkout.sh \
-	git-cherry.sh git-clean.sh git-clone.sh git-commit.sh \
+	git-clean.sh git-clone.sh git-commit.sh \
 	git-fetch.sh \
 	git-ls-remote.sh \
 	git-merge-one-file.sh git-parse-remote.sh \
@@ -212,7 +212,7 @@ PROGRAMS = \
 EXTRA_PROGRAMS =
 
 BUILT_INS = \
-	git-format-patch$X git-show$X git-whatchanged$X \
+	git-format-patch$X git-show$X git-whatchanged$X git-cherry$X \
 	git-get-tar-commit-id$X \
 	$(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
 

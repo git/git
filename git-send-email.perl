@@ -514,7 +514,7 @@ foreach my $t (@files) {
 						$2, $_) unless $quiet;
 					push @cc, $2;
 				}
-				elsif (/^[-A-Za-z]+:\s+\S/) {
+				elsif (!/^Date:\s/ && /^[-A-Za-z]+:\s+\S/) {
 					push @xh, $_;
 				}
 

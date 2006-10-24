@@ -33,6 +33,8 @@
 ;;  - working with revisions other than HEAD
 ;;
 
+(eval-when-compile (require 'cl))
+
 (defvar git-commits-coding-system 'utf-8
   "Default coding system for git commits.")
 
