@@ -1009,12 +1009,11 @@ sub parse_commit {
 	if (defined $commit_text) {
 		@commit_lines = @$commit_text;
 	} else {
-		$/ = "\0";
+		local $/ = "\0";
 		open my $fd, "-|", git_cmd(), "rev-list", "--header", "--parents", "--max-count=1", $commit_id
 			or return;
 		@commit_lines = split '\n', <$fd>;
 		close $fd or return;
-		$/ = "\n";
 		pop @commit_lines;
 	}
 	my $header = shift @commit_lines;
