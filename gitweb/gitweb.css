@@ -333,6 +333,8 @@ div.index_include {
 }
 
 div.search {
+	font-size: 12px;
+	font-weight: normal;
 	margin: 4px 8px;
 	position: absolute;
 	top: 56px;
