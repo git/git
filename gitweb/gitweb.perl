@@ -39,7 +39,8 @@ our $home_link_str = "++GITWEB_HOME_LINK_STR++";
 
 # name of your site or organization to appear in page titles
 # replace this with something more descriptive for clearer bookmarks
-our $site_name = "++GITWEB_SITENAME++" || $ENV{'SERVER_NAME'} || "Untitled";
+our $site_name = "++GITWEB_SITENAME++"
+                 || ($ENV{'SERVER_NAME'} || "Untitled") . " Git";
 
 # filename of html text to include at top of each page
 our $site_header = "++GITWEB_SITE_HEADER++";
@@ -1429,7 +1430,7 @@ sub git_header_html {
 	my $status = shift || "200 OK";
 	my $expires = shift;
 
-	my $title = "$site_name git";
+	my $title = "$site_name";
 	if (defined $project) {
 		$title .= " - $project";
 		if (defined $action) {
@@ -3818,7 +3819,7 @@ sub git_opml {
 <?xml version="1.0" encoding="utf-8"?>
 <opml version="1.0">
 <head>
-  <title>$site_name Git OPML Export</title>
+  <title>$site_name OPML Export</title>
 </head>
 <body>
 <outline text="git RSS feeds">
