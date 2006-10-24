@@ -179,11 +179,12 @@ bisect_reset() {
         *)
 	    usage ;;
 	esac
-	git checkout "$branch" &&
-	rm -fr "$GIT_DIR/refs/bisect"
-	rm -f "$GIT_DIR/refs/heads/bisect" "$GIT_DIR/head-name"
-	rm -f "$GIT_DIR/BISECT_LOG"
-	rm -f "$GIT_DIR/BISECT_NAMES"
+	if git checkout "$branch"; then
+		rm -fr "$GIT_DIR/refs/bisect"
+		rm -f "$GIT_DIR/refs/heads/bisect" "$GIT_DIR/head-name"
+		rm -f "$GIT_DIR/BISECT_LOG"
+		rm -f "$GIT_DIR/BISECT_NAMES"
+	fi
 }
 
 bisect_replay () {

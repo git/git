@@ -671,14 +671,8 @@ static void reprepare_packed_git(void)
 
 int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long size, const char *type)
 {
-	char header[100];
 	unsigned char real_sha1[20];
-	SHA_CTX c;
-
-	SHA1_Init(&c);
-	SHA1_Update(&c, header, 1+sprintf(header, "%s %lu", type, size));
-	SHA1_Update(&c, map, size);
-	SHA1_Final(real_sha1, &c);
+	hash_sha1_file(map, size, type, real_sha1);
 	return hashcmp(sha1, real_sha1) ? -1 : 0;
 }
 
@@ -883,26 +877,61 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 	return unpack_sha1_rest(&stream, hdr, *size);
 }
 
+static unsigned long get_delta_base(struct packed_git *p,
+				    unsigned long offset,
+				    enum object_type kind,
+				    unsigned long delta_obj_offset,
+				    unsigned long *base_obj_offset)
+{
+	unsigned char *base_info = (unsigned char *) p->pack_base + offset;
+	unsigned long base_offset;
+
+	/* there must be at least 20 bytes left regardless of delta type */
+	if (p->pack_size <= offset + 20)
+		die("truncated pack file");
+
+	if (kind == OBJ_OFS_DELTA) {
+		unsigned used = 0;
+		unsigned char c = base_info[used++];
+		base_offset = c & 127;
+		while (c & 128) {
+			base_offset += 1;
+			if (!base_offset || base_offset & ~(~0UL >> 7))
+				die("offset value overflow for delta base object");
+			c = base_info[used++];
+			base_offset = (base_offset << 7) + (c & 127);
+		}
+		base_offset = delta_obj_offset - base_offset;
+		if (base_offset >= delta_obj_offset)
+			die("delta base offset out of bound");
+		offset += used;
+	} else if (kind == OBJ_REF_DELTA) {
+		/* The base entry _must_ be in the same pack */
+		base_offset = find_pack_entry_one(base_info, p);
+		if (!base_offset)
+			die("failed to find delta-pack base object %s",
+				sha1_to_hex(base_info));
+		offset += 20;
+	} else
+		die("I am totally screwed");
+	*base_obj_offset = base_offset;
+	return offset;
+}
+
 /* forward declaration for a mutually recursive function */
 static int packed_object_info(struct packed_git *p, unsigned long offset,
 			      char *type, unsigned long *sizep);
 
 static int packed_delta_info(struct packed_git *p,
 			     unsigned long offset,
+			     enum object_type kind,
+			     unsigned long obj_offset,
 			     char *type,
 			     unsigned long *sizep)
 {
 	unsigned long base_offset;
-	unsigned char *base_sha1 = (unsigned char *) p->pack_base + offset;
 
-	if (p->pack_size < offset + 20)
-		die("truncated pack file");
-	/* The base entry _must_ be in the same pack */
-	base_offset = find_pack_entry_one(base_sha1, p);
-	if (!base_offset)
-		die("failed to find delta-pack base object %s",
-		    sha1_to_hex(base_sha1));
-	offset += 20;
+	offset = get_delta_base(p, offset, kind, obj_offset, &base_offset);
 
 	/* We choose to only get the type of the base object and
 	 * ignore potentially corrupt pack file that expects the delta
@@ -914,7 +943,7 @@ static int packed_delta_info(struct packed_git *p,
 
 	if (sizep) {
 		const unsigned char *data;
-		unsigned char delta_head[64];
+		unsigned char delta_head[20];
 		unsigned long result_size;
 		z_stream stream;
 		int st;
@@ -965,25 +994,6 @@ static unsigned long unpack_object_header(struct packed_git *p, unsigned long of
 	return offset + used;
 }
 
-int check_reuse_pack_delta(struct packed_git *p, unsigned long offset,
-			   unsigned char *base, unsigned long *sizep,
-			   enum object_type *kindp)
-{
-	unsigned long ptr;
-	int status = -1;
-
-	use_packed_git(p);
-	ptr = offset;
-	ptr = unpack_object_header(p, ptr, kindp, sizep);
-	if (*kindp != OBJ_DELTA)
-		goto done;
-	hashcpy(base, (unsigned char *) p->pack_base + ptr);
-	status = 0;
- done:
-	unuse_packed_git(p);
-	return status;
-}
-
 void packed_object_info_detail(struct packed_git *p,
 			       unsigned long offset,
 			       char *type,
@@ -992,11 +1002,12 @@ void packed_object_info_detail(struct packed_git *p,
 			       unsigned int *delta_chain_length,
 			       unsigned char *base_sha1)
 {
-	unsigned long val;
+	unsigned long obj_offset, val;
 	unsigned char *next_sha1;
 	enum object_type kind;
 
 	*delta_chain_length = 0;
+	obj_offset = offset;
 	offset = unpack_object_header(p, offset, &kind, size);
 
 	for (;;) {
@@ -1011,7 +1022,13 @@ void packed_object_info_detail(struct packed_git *p,
 			strcpy(type, type_names[kind]);
 			*store_size = 0; /* notyet */
 			return;
-		case OBJ_DELTA:
+		case OBJ_OFS_DELTA:
+			get_delta_base(p, offset, kind, obj_offset, &offset);
+			if (*delta_chain_length == 0) {
+				/* TODO: find base_sha1 as pointed by offset */
+			}
+			break;
+		case OBJ_REF_DELTA:
 			if (p->pack_size <= offset + 20)
 				die("pack file %s records an incomplete delta base",
 				    p->pack_name);
@@ -1021,6 +1038,7 @@ void packed_object_info_detail(struct packed_git *p,
 			offset = find_pack_entry_one(next_sha1, p);
 			break;
 		}
+		obj_offset = offset;
 		offset = unpack_object_header(p, offset, &kind, &val);
 		(*delta_chain_length)++;
 	}
@@ -1029,15 +1047,15 @@ void packed_object_info_detail(struct packed_git *p,
 static int packed_object_info(struct packed_git *p, unsigned long offset,
 			      char *type, unsigned long *sizep)
 {
-	unsigned long size;
+	unsigned long size, obj_offset = offset;
 	enum object_type kind;
 
 	offset = unpack_object_header(p, offset, &kind, &size);
 
-	if (kind == OBJ_DELTA)
-		return packed_delta_info(p, offset, type, sizep);
-
 	switch (kind) {
+	case OBJ_OFS_DELTA:
+	case OBJ_REF_DELTA:
+		return packed_delta_info(p, offset, kind, obj_offset, type, sizep);
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
@@ -1083,23 +1101,15 @@ static void *unpack_compressed_entry(struct packed_git *p,
 static void *unpack_delta_entry(struct packed_git *p,
 				unsigned long offset,
 				unsigned long delta_size,
+				enum object_type kind,
+				unsigned long obj_offset,
 				char *type,
 				unsigned long *sizep)
 {
 	void *delta_data, *result, *base;
 	unsigned long result_size, base_size, base_offset;
-	unsigned char *base_sha1;
 
-	if (p->pack_size < offset + 20)
-		die("truncated pack file");
-	/* The base entry _must_ be in the same pack */
-	base_sha1 = (unsigned char*)p->pack_base + offset;
-	base_offset = find_pack_entry_one(base_sha1, p);
-	if (!base_offset)
-		die("failed to find delta-pack base object %s",
-		    sha1_to_hex(base_sha1));
-	offset += 20;
-
+	offset = get_delta_base(p, offset, kind, obj_offset, &base_offset);
 	base = unpack_entry_gently(p, base_offset, type, &base_size);
 	if (!base)
 		die("failed to read delta base object at %lu from %s",
@@ -1136,13 +1146,14 @@ static void *unpack_entry(struct pack_entry *entry,
 void *unpack_entry_gently(struct packed_git *p, unsigned long offset,
 			  char *type, unsigned long *sizep)
 {
-	unsigned long size;
+	unsigned long size, obj_offset = offset;
 	enum object_type kind;
 
 	offset = unpack_object_header(p, offset, &kind, &size);
 	switch (kind) {
-	case OBJ_DELTA:
-		return unpack_delta_entry(p, offset, size, type, sizep);
+	case OBJ_OFS_DELTA:
+	case OBJ_REF_DELTA:
+		return unpack_delta_entry(p, offset, size, kind, obj_offset, type, sizep);
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
@@ -1347,12 +1358,9 @@ void *read_object_with_reference(const unsigned char *sha1,
 	}
 }
 
-char *write_sha1_file_prepare(void *buf,
-			      unsigned long len,
-			      const char *type,
-			      unsigned char *sha1,
-			      unsigned char *hdr,
-			      int *hdrlen)
+static void write_sha1_file_prepare(void *buf, unsigned long len,
+                                    const char *type, unsigned char *sha1,
+                                    unsigned char *hdr, int *hdrlen)
 {
 	SHA_CTX c;
 
@@ -1364,8 +1372,6 @@ char *write_sha1_file_prepare(void *buf,
 	SHA1_Update(&c, hdr, *hdrlen);
 	SHA1_Update(&c, buf, len);
 	SHA1_Final(sha1, &c);
-
-	return sha1_file_name(sha1);
 }
 
 /*
@@ -1501,6 +1507,15 @@ static void setup_object_header(z_stream *stream, const char *type, unsigned lon
 	stream->avail_out -= hdr;
 }
 
+int hash_sha1_file(void *buf, unsigned long len, const char *type,
+                   unsigned char *sha1)
+{
+	unsigned char hdr[50];
+	int hdrlen;
+	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
+	return 0;
+}
+
 int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
 {
 	int size;
@@ -1515,7 +1530,8 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	/* Normally if we have it in the pack then we do not bother writing
 	 * it out into .git/objects/??/?{38} file.
 	 */
-	filename = write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
+	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
+	filename = sha1_file_name(sha1);
 	if (returnsha1)
 		hashcpy(returnsha1, sha1);
 	if (has_sha1_file(sha1))
@@ -1784,8 +1800,6 @@ int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
 	unsigned long size = 4096;
 	char *buf = xmalloc(size);
 	int ret;
-	unsigned char hdr[50];
-	int hdrlen;
 
 	if (read_pipe(fd, &buf, &size)) {
 		free(buf);
@@ -1796,10 +1810,8 @@ int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
 		type = blob_type;
 	if (write_object)
 		ret = write_sha1_file(buf, size, type, sha1);
-	else {
-		write_sha1_file_prepare(buf, size, type, sha1, hdr, &hdrlen);
-		ret = 0;
-	}
+	else
+		ret = hash_sha1_file(buf, size, type, sha1);
 	free(buf);
 	return ret;
 }
@@ -1809,8 +1821,6 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 	unsigned long size = st->st_size;
 	void *buf;
 	int ret;
-	unsigned char hdr[50];
-	int hdrlen;
 
 	buf = "";
 	if (size)
@@ -1823,10 +1833,8 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 		type = blob_type;
 	if (write_object)
 		ret = write_sha1_file(buf, size, type, sha1);
-	else {
-		write_sha1_file_prepare(buf, size, type, sha1, hdr, &hdrlen);
-		ret = 0;
-	}
+	else
+		ret = hash_sha1_file(buf, size, type, sha1);
 	if (size)
 		munmap(buf, size);
 	return ret;
@@ -1855,12 +1863,9 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, int write
 			return error("readlink(\"%s\"): %s", path,
 			             errstr);
 		}
-		if (!write_object) {
-			unsigned char hdr[50];
-			int hdrlen;
-			write_sha1_file_prepare(target, st->st_size, blob_type,
-						sha1, hdr, &hdrlen);
-		} else if (write_sha1_file(target, st->st_size, blob_type, sha1))
+		if (!write_object)
+			hash_sha1_file(target, st->st_size, blob_type, sha1);
+		else if (write_sha1_file(target, st->st_size, blob_type, sha1))
 			return error("%s: failed to insert into database",
 				     path);
 		free(target);

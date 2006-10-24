@@ -7,7 +7,7 @@
  * Packed object header
  */
 #define PACK_SIGNATURE 0x5041434b	/* "PACK" */
-#define PACK_VERSION 3
+#define PACK_VERSION 2
 #define pack_version_ok(v) ((v) == htonl(2) || (v) == htonl(3))
 struct pack_header {
 	unsigned int hdr_signature;
@@ -16,7 +16,4 @@ struct pack_header {
 };
 
 extern int verify_pack(struct packed_git *, int);
-extern int check_reuse_pack_delta(struct packed_git *, unsigned long,
-				  unsigned char *, unsigned long *,
-				  enum object_type *);
 #endif

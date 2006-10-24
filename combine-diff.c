@@ -856,8 +856,10 @@ void diff_tree_combined(const unsigned char *sha1,
 		/* show stat against the first parent even
 		 * when doing combined diff.
 		 */
-		if (i == 0 && opt->output_format & DIFF_FORMAT_DIFFSTAT)
-			diffopts.output_format = DIFF_FORMAT_DIFFSTAT;
+		int stat_opt = (opt->output_format &
+				(DIFF_FORMAT_NUMSTAT|DIFF_FORMAT_DIFFSTAT));
+		if (i == 0 && stat_opt)
+			diffopts.output_format = stat_opt;
 		else
 			diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
 		diff_tree_sha1(parent[i], sha1, "", &diffopts);
@@ -887,7 +889,8 @@ void diff_tree_combined(const unsigned char *sha1,
 			}
 			needsep = 1;
 		}
-		else if (opt->output_format & DIFF_FORMAT_DIFFSTAT)
+		else if (opt->output_format &
+			 (DIFF_FORMAT_NUMSTAT|DIFF_FORMAT_DIFFSTAT))
 			needsep = 1;
 		if (opt->output_format & DIFF_FORMAT_PATCH) {
 			if (needsep)

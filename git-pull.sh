@@ -58,7 +58,7 @@ then
 
 	echo >&2 "Warning: fetch updated the current branch head."
 	echo >&2 "Warning: fast forwarding your working tree from"
-	echo >&2 "Warning: $orig_head commit."
+	echo >&2 "Warning: commit $orig_head."
 	git-update-index --refresh 2>/dev/null
 	git-read-tree -u -m "$orig_head" "$curr_head" ||
 		die 'Cannot fast-forward your working tree.

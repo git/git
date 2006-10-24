@@ -23,12 +23,17 @@
 ;; system.
 ;;
 ;; To install: put this file on the load-path and add GIT to the list
-;; of supported backends in `vc-handled-backends'.
+;; of supported backends in `vc-handled-backends'; the following line,
+;; placed in your ~/.emacs, will accomplish this:
+;;
+;;     (add-to-list 'vc-handled-backends 'GIT)
 ;;
 ;; TODO
 ;;  - changelog generation
 ;;  - working with revisions other than HEAD
 ;;
+
+(eval-when-compile (require 'cl))
 
 (defvar git-commits-coding-system 'utf-8
   "Default coding system for git commits.")
@@ -119,10 +124,10 @@
 (defun vc-git-annotate-command (file buf &optional rev)
   ; FIXME: rev is ignored
   (let ((name (file-relative-name file)))
-    (call-process "git" nil buf nil "annotate" name)))
+    (call-process "git" nil buf nil "blame" name)))
 
 (defun vc-git-annotate-time ()
-  (and (re-search-forward "[0-9a-f]+\t(.*\t\\([0-9]+\\)-\\([0-9]+\\)-\\([0-9]+\\) \\([0-9]+\\):\\([0-9]+\\):\\([0-9]+\\) \\([-+0-9]+\\)\t[0-9]+)" nil t)
+  (and (re-search-forward "[0-9a-f]+ (.* \\([0-9]+\\)-\\([0-9]+\\)-\\([0-9]+\\) \\([0-9]+\\):\\([0-9]+\\):\\([0-9]+\\) \\([-+0-9]+\\) +[0-9]+)" nil t)
        (vc-annotate-convert-time
         (apply #'encode-time (mapcar (lambda (match) (string-to-number (match-string match))) '(6 5 4 3 2 1 7))))))
 

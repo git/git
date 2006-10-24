@@ -360,7 +360,7 @@ static int gitdiff_hdrend(const char *line, struct patch *patch)
 static char *gitdiff_verify_name(const char *line, int isnull, char *orig_name, const char *oldnew)
 {
 	if (!orig_name && !isnull)
-		return find_name(line, NULL, 1, 0);
+		return find_name(line, NULL, 1, TERM_TAB);
 
 	if (orig_name) {
 		int len;
@@ -370,7 +370,7 @@ static char *gitdiff_verify_name(const char *line, int isnull, char *orig_name, 
 		len = strlen(name);
 		if (isnull)
 			die("git-apply: bad git-diff - expected /dev/null, got %s on line %d", name, linenr);
-		another = find_name(line, NULL, 1, 0);
+		another = find_name(line, NULL, 1, TERM_TAB);
 		if (!another || memcmp(another, name, len))
 			die("git-apply: bad git-diff - inconsistent %s filename on line %d", oldnew, linenr);
 		free(another);
@@ -934,6 +934,7 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 		switch (*line) {
 		default:
 			return -1;
+		case '\n': /* newer GNU diff, an empty context line */
 		case ' ':
 			oldlines--;
 			newlines--;
@@ -1623,6 +1624,14 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 				first = '-';
 		}
 		switch (first) {
+		case '\n':
+			/* Newer GNU diff, empty context line */
+			if (plen < 0)
+				/* ... followed by '\No newline'; nothing */
+				break;
+			old[oldsize++] = '\n';
+			new[newsize++] = '\n';
+			break;
 		case ' ':
 		case '-':
 			memcpy(old + oldsize, patch + 1, plen);
@@ -1783,8 +1792,6 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 {
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
 	unsigned char sha1[20];
-	unsigned char hdr[50];
-	int hdrlen;
 
 	/* For safety, we require patch index line to contain
 	 * full 40-byte textual SHA1 for old and new, at least for now.
@@ -1800,8 +1807,7 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 		/* See if the old one matches what the patch
 		 * applies to.
 		 */
-		write_sha1_file_prepare(desc->buffer, desc->size,
-					blob_type, sha1, hdr, &hdrlen);
+		hash_sha1_file(desc->buffer, desc->size, blob_type, sha1);
 		if (strcmp(sha1_to_hex(sha1), patch->old_sha1_prefix))
 			return error("the patch applies to '%s' (%s), "
 				     "which does not match the "
@@ -1846,8 +1852,7 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 				     name);
 
 		/* verify that the result matches */
-		write_sha1_file_prepare(desc->buffer, desc->size, blob_type,
-					sha1, hdr, &hdrlen);
+		hash_sha1_file(desc->buffer, desc->size, blob_type, sha1);
 		if (strcmp(sha1_to_hex(sha1), patch->new_sha1_prefix))
 			return error("binary patch to '%s' creates incorrect result (expecting %s, got %s)", name, patch->new_sha1_prefix, sha1_to_hex(sha1));
 	}
@@ -2112,7 +2117,7 @@ static void numstat_patch_list(struct patch *patch)
 			quote_c_style(name, NULL, stdout, 0);
 		else
 			fputs(name, stdout);
-		putchar('\n');
+		putchar(line_termination);
 	}
 }
 

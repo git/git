@@ -422,8 +422,8 @@ and returns the process output as a string."
         (propertize
          (concat "   ("
                  (if (eq state 'copy) "copied from "
-                   (if (eq (git-fileinfo->state info) 'added) "renamed to "
-                     "renamed from "))
+                   (if (eq (git-fileinfo->state info) 'added) "renamed from "
+                     "renamed to "))
                  (git-escape-file-name (git-fileinfo->orig-name info))
                  ")") 'face 'git-status-face)
       "")))

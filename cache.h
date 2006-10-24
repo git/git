@@ -245,13 +245,8 @@ char *enter_repo(char *path, int strict);
 extern int sha1_object_info(const unsigned char *, char *, unsigned long *);
 extern void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned long *size);
 extern void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size);
+extern int hash_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *sha1);
 extern int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *return_sha1);
-extern char *write_sha1_file_prepare(void *buf,
-				     unsigned long len,
-				     const char *type,
-				     unsigned char *sha1,
-				     unsigned char *hdr,
-				     int *hdrlen);
 
 extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
 
@@ -274,8 +269,9 @@ enum object_type {
 	OBJ_TREE = 2,
 	OBJ_BLOB = 3,
 	OBJ_TAG = 4,
-	/* 5/6 for future expansion */
-	OBJ_DELTA = 7,
+	/* 5 for future expansion */
+	OBJ_OFS_DELTA = 6,
+	OBJ_REF_DELTA = 7,
 	OBJ_BAD,
 };
 

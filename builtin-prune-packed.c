@@ -4,9 +4,7 @@
 static const char prune_packed_usage[] =
 "git-prune-packed [-n]";
 
-static int dryrun;
-
-static void prune_dir(int i, DIR *dir, char *pathname, int len)
+static void prune_dir(int i, DIR *dir, char *pathname, int len, int dryrun)
 {
 	struct dirent *de;
 	char hex[40];
@@ -31,7 +29,7 @@ static void prune_dir(int i, DIR *dir, char *pathname, int len)
 	rmdir(pathname);
 }
 
-static void prune_packed_objects(void)
+void prune_packed_objects(int dryrun)
 {
 	int i;
 	static char pathname[PATH_MAX];
@@ -50,7 +48,7 @@ static void prune_packed_objects(void)
 		d = opendir(pathname);
 		if (!d)
 			continue;
-		prune_dir(i, d, pathname, len + 3);
+		prune_dir(i, d, pathname, len + 3, dryrun);
 		closedir(d);
 	}
 }
@@ -58,6 +56,7 @@ static void prune_packed_objects(void)
 int cmd_prune_packed(int argc, const char **argv, const char *prefix)
 {
 	int i;
+	int dryrun = 0;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -73,6 +72,6 @@ int cmd_prune_packed(int argc, const char **argv, const char *prefix)
 		usage(prune_packed_usage);
 	}
 	sync();
-	prune_packed_objects();
+	prune_packed_objects(dryrun);
 	return 0;
 }

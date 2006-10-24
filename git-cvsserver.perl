@@ -275,7 +275,7 @@ sub req_Directory
     $state->{directory} = "" if ( $state->{directory} eq "." );
     $state->{directory} .= "/" if ( $state->{directory} =~ /\S/ );
 
-    if ( not defined($state->{prependdir}) and $state->{localdir} eq "." and $state->{path} =~ /\S/ )
+    if ( (not defined($state->{prependdir}) or $state->{prependdir} eq '') and $state->{localdir} eq "." and $state->{path} =~ /\S/ )
     {
         $log->info("Setting prepend to '$state->{path}'");
         $state->{prependdir} = $state->{path};
@@ -805,7 +805,14 @@ sub req_update
             $meta = $updater->getmeta($filename);
         }
 
-        next unless ( $meta->{revision} );
+	if ( ! defined $meta )
+	{
+	    $meta = {
+	        name => $filename,
+	        revision => 0,
+	        filehash => 'added'
+	    };
+	}
 
         my $oldmeta = $meta;
 
@@ -835,7 +842,7 @@ sub req_update
              and not exists ( $state->{opt}{C} ) )
         {
             $log->info("Tell the client the file is modified");
-            print "MT text U\n";
+            print "MT text M \n";
             print "MT fname $filename\n";
             print "MT newline\n";
             next;
@@ -855,15 +862,36 @@ sub req_update
 	    }
         }
         elsif ( not defined ( $state->{entries}{$filename}{modified_hash} )
-		or $state->{entries}{$filename}{modified_hash} eq $oldmeta->{filehash} )
+		or $state->{entries}{$filename}{modified_hash} eq $oldmeta->{filehash}
+		or $meta->{filehash} eq 'added' )
         {
-            $log->info("Updating '$filename'");
-            # normal update, just send the new revision (either U=Update, or A=Add, or R=Remove)
-            print "MT +updated\n";
-            print "MT text U\n";
-            print "MT fname $filename\n";
-            print "MT newline\n";
-            print "MT -updated\n";
+            # normal update, just send the new revision (either U=Update,
+            # or A=Add, or R=Remove)
+	    if ( defined($wrev) && $wrev < 0 )
+	    {
+	        $log->info("Tell the client the file is scheduled for removal");
+		print "MT text R \n";
+                print "MT fname $filename\n";
+                print "MT newline\n";
+		next;
+	    }
+	    elsif ( !defined($wrev) || $wrev == 0 )
+	    {
+	        $log->info("Tell the client the file will be added");
+		print "MT text A \n";
+                print "MT fname $filename\n";
+                print "MT newline\n";
+		next;
+
+	    }
+	    else {
+                $log->info("Updating '$filename' $wrev");
+                print "MT +updated\n";
+                print "MT text U \n";
+                print "MT fname $filename\n";
+                print "MT newline\n";
+		print "MT -updated\n";
+	    }
 
             my ( $filepart, $dirpart ) = filenamesplit($filename,1);
 
@@ -1709,6 +1737,17 @@ sub argsfromdir
 
     return if ( scalar ( @{$state->{args}} ) > 1 );
 
+    my @gethead = @{$updater->gethead};
+
+    # push added files
+    foreach my $file (keys %{$state->{entries}}) {
+	if ( exists $state->{entries}{$file}{revision} &&
+		$state->{entries}{$file}{revision} == 0 )
+	{
+	    push @gethead, { name => $file, filehash => 'added' };
+	}
+    }
+
     if ( scalar(@{$state->{args}}) == 1 )
     {
         my $arg = $state->{args}[0];
@@ -1716,7 +1755,7 @@ sub argsfromdir
 
         $log->info("Only one arg specified, checking for directory expansion on '$arg'");
 
-        foreach my $file ( @{$updater->gethead} )
+        foreach my $file ( @gethead )
         {
             next if ( $file->{filehash} eq "deleted" and not defined ( $state->{entries}{$file->{name}} ) );
             next unless ( $file->{name} =~ /^$arg\// or $file->{name} eq $arg  );
@@ -1729,7 +1768,7 @@ sub argsfromdir
 
         $state->{args} = [];
 
-        foreach my $file ( @{$updater->gethead} )
+        foreach my $file ( @gethead )
         {
             next if ( $file->{filehash} eq "deleted" and not defined ( $state->{entries}{$file->{name}} ) );
             next unless ( $file->{name} =~ s/^$state->{prependdir}// );
@@ -2079,9 +2118,17 @@ sub new
                 mode       TEXT NOT NULL
             )
         ");
+        $self->{dbh}->do("
+            CREATE INDEX revision_ix1
+            ON revision (name,revision)
+        ");
+        $self->{dbh}->do("
+            CREATE INDEX revision_ix2
+            ON revision (name,commithash)
+        ");
     }
 
-    # Construct the revision table if required
+    # Construct the head table if required
     unless ( $self->{tables}{head} )
     {
         $self->{dbh}->do("
@@ -2094,6 +2141,10 @@ sub new
                 modified   TEXT NOT NULL,
                 mode       TEXT NOT NULL
             )
+        ");
+        $self->{dbh}->do("
+            CREATE INDEX head_ix1
+            ON head (name)
         ");
     }
 

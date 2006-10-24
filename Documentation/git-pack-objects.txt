@@ -9,7 +9,7 @@ git-pack-objects - Create a packed archive of objects
 SYNOPSIS
 --------
 [verse]
-'git-pack-objects' [-q] [--no-reuse-delta] [--non-empty]
+'git-pack-objects' [-q] [--no-reuse-delta] [--delta-base-offset] [--non-empty]
 	[--local] [--incremental] [--window=N] [--depth=N]
 	[--revs [--unpacked | --all]*] [--stdout | base-name] < object-list
 
@@ -71,11 +71,11 @@ base-name::
 --all::
 	This implies `--revs`.  In addition to the list of
 	revision arguments read from the standard input, pretend
-	as if all refs under `$GIT_DIR/refs` are specifed to be
+	as if all refs under `$GIT_DIR/refs` are specified to be
 	included.
 
---window and --depth::
-	These two options affects how the objects contained in
+--window=[N], --depth=[N]::
+	These two options affect how the objects contained in
 	the pack are stored using delta compression.  The
 	objects are first internally sorted by type, size and
 	optionally names and compared against the other objects
@@ -84,6 +84,7 @@ base-name::
 	it too deep affects the performance on the unpacker
 	side, because delta data needs to be applied that many
 	times to get to the necessary object.
+	The default value for both --window and --depth is 10.
 
 --incremental::
 	This flag causes an object already in a pack ignored
@@ -109,6 +110,17 @@ base-name::
 	This sometimes results in a slightly suboptimal pack.
 	This flag tells the command not to reuse existing deltas
 	but compute them from scratch.
+
+--delta-base-offset::
+	A packed archive can express base object of a delta as
+	either 20-byte object name or as an offset in the
+	stream, but older version of git does not understand the
+	latter.  By default, git-pack-objects only uses the
+	former format for better compatibility.  This option
+	allows the command to use the latter format for
+	compactness.  Depending on the average delta chain
+	length, this option typically shrinks the resulting
+	packfile by 3-5 per-cent.
 
 
 Author

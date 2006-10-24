@@ -16,7 +16,7 @@ static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=n
 #define OUR_REF (1U << 1)
 #define WANTED (1U << 2)
 static int multi_ack, nr_our_refs;
-static int use_thin_pack;
+static int use_thin_pack, use_ofs_delta;
 static struct object_array have_obj;
 static struct object_array want_obj;
 static unsigned int timeout;
@@ -137,7 +137,9 @@ static void create_pack_file(void)
 		close(pu_pipe[1]);
 		close(pe_pipe[0]);
 		close(pe_pipe[1]);
-		execl_git_cmd("pack-objects", "--stdout", "--progress", NULL);
+		execl_git_cmd("pack-objects", "--stdout", "--progress",
+			      use_ofs_delta ? "--delta-base-offset" : NULL,
+			      NULL);
 		kill(pid_rev_list, SIGKILL);
 		die("git-upload-pack: unable to exec git-pack-objects");
 	}
@@ -393,6 +395,8 @@ static void receive_needs(void)
 			multi_ack = 1;
 		if (strstr(line+45, "thin-pack"))
 			use_thin_pack = 1;
+		if (strstr(line+45, "ofs-delta"))
+			use_ofs_delta = 1;
 		if (strstr(line+45, "side-band-64k"))
 			use_sideband = LARGE_PACKET_MAX;
 		else if (strstr(line+45, "side-band"))
@@ -418,7 +422,7 @@ static void receive_needs(void)
 
 static int send_ref(const char *refname, const unsigned char *sha1)
 {
-	static const char *capabilities = "multi_ack thin-pack side-band side-band-64k";
+	static const char *capabilities = "multi_ack thin-pack side-band side-band-64k ofs-delta";
 	struct object *o = parse_object(sha1);
 
 	if (!o)

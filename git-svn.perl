@@ -40,8 +40,22 @@ memoize('cmt_metadata');
 memoize('get_commit_time');
 
 my ($SVN_PATH, $SVN, $SVN_LOG, $_use_lib);
+
+sub nag_lib {
+	print STDERR <<EOF;
+! Please consider installing the SVN Perl libraries (version 1.1.0 or
+! newer).  You will generally get better performance and fewer bugs,
+! especially if you:
+! 1) have a case-insensitive filesystem
+! 2) replace symlinks with files (and vice-versa) in commits
+
+EOF
+}
+
 $_use_lib = 1 unless $ENV{GIT_SVN_NO_LIB};
 libsvn_load();
+nag_lib() unless $_use_lib;
+
 my $_optimize_commits = 1 unless $ENV{GIT_SVN_NO_OPTIMIZE_COMMITS};
 my $sha1 = qr/[a-f\d]{40}/;
 my $sha1_short = qr/[a-f\d]{4,40}/;
@@ -52,7 +66,7 @@ my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_template, $_shared, $_no_default_regex, $_no_graft_copy,
 	$_limit, $_verbose, $_incremental, $_oneline, $_l_fmt, $_show_commit,
 	$_version, $_upgrade, $_authors, $_branch_all_refs, @_opt_m,
-	$_merge, $_strategy, $_dry_run, $_ignore_nodate);
+	$_merge, $_strategy, $_dry_run, $_ignore_nodate, $_non_recursive);
 my (@_branch_from, %tree_map, %users, %rusers, %equiv);
 my ($_svn_co_url_revs, $_svn_pg_peg_revs);
 my @repo_path_split_cache;
@@ -114,6 +128,7 @@ my %cmd = (
 			  'incremental' => \$_incremental,
 			  'oneline' => \$_oneline,
 			  'show-commit' => \$_show_commit,
+			  'non-recursive' => \$_non_recursive,
 			  'authors-file|A=s' => \$_authors,
 			} ],
 	'commit-diff' => [ \&commit_diff, 'Commit a diff between two trees',
@@ -168,11 +183,11 @@ Usage: $0 <command> [options] [arguments]\n
 
 	foreach (sort keys %cmd) {
 		next if $cmd && $cmd ne $_;
-		print $fd '  ',pack('A13',$_),$cmd{$_}->[1],"\n";
+		print $fd '  ',pack('A17',$_),$cmd{$_}->[1],"\n";
 		foreach (keys %{$cmd{$_}->[2]}) {
 			# prints out arguments as they should be passed:
 			my $x = s#[:=]s$## ? '<arg>' : s#[:=]i$## ? '<num>' : '';
-			print $fd ' ' x 17, join(', ', map { length $_ > 1 ?
+			print $fd ' ' x 21, join(', ', map { length $_ > 1 ?
 							"--$_" : "-$_" }
 						split /\|/,$_)," $x\n";
 		}
@@ -521,7 +536,7 @@ sub commit_lib {
 			$SVN = libsvn_connect($repo);
 			my $ed = SVN::Git::Editor->new(
 					{	r => $r_last,
-						ra => $SVN,
+						ra => $SVN_LOG,
 						c => $c,
 						svn_path => $SVN_PATH
 					},
@@ -682,12 +697,17 @@ sub multi_init {
 		}
 		$_trunk = $url . $_trunk;
 	}
+	my $ch_id;
 	if ($GIT_SVN eq 'git-svn') {
-		print "GIT_SVN_ID set to 'trunk' for $_trunk\n";
+		$ch_id = 1;
 		$GIT_SVN = $ENV{GIT_SVN_ID} = 'trunk';
 	}
 	init_vars();
-	init($_trunk);
+	unless (-d $GIT_SVN_DIR) {
+		print "GIT_SVN_ID set to 'trunk' for $_trunk\n" if $ch_id;
+		init($_trunk);
+		sys('git-repo-config', 'svn.trunk', $_trunk);
+	}
 	complete_url_ls_init($url, $_branches, '--branches/-b', '');
 	complete_url_ls_init($url, $_tags, '--tags/-t', 'tags/');
 }
@@ -747,13 +767,18 @@ sub show_log {
 			# ignore
 		} elsif (/^:\d{6} \d{6} $sha1_short/o) {
 			push @{$c->{raw}}, $_;
+		} elsif (/^[ACRMDT]\t/) {
+			# we could add $SVN_PATH here, but that requires
+			# remote access at the moment (repo_path_split)...
+			s#^([ACRMDT])\t#   $1 #;
+			push @{$c->{changed}}, $_;
 		} elsif (/^diff /) {
 			$d = 1;
 			push @{$c->{diff}}, $_;
 		} elsif ($d) {
 			push @{$c->{diff}}, $_;
 		} elsif (/^    (git-svn-id:.+)$/) {
-			(undef, $c->{r}, undef) = extract_metadata($1);
+			($c->{url}, $c->{r}, undef) = extract_metadata($1);
 		} elsif (s/^    //) {
 			push @{$c->{l}}, $_;
 		}
@@ -807,7 +832,7 @@ sub commit_diff {
 	$SVN ||= libsvn_connect($repo);
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef, 0) : ();
 	my $ed = SVN::Git::Editor->new({	r => $SVN->get_latest_revnum,
-						ra => $SVN, c => $tb,
+						ra => $SVN_LOG, c => $tb,
 						svn_path => $SVN_PATH
 					},
 				$SVN->get_commit_editor($_message,
@@ -845,7 +870,8 @@ sub git_svn_log_cmd {
 	my ($r_min, $r_max) = @_;
 	my @cmd = (qw/git-log --abbrev-commit --pretty=raw
 			--default/, "refs/remotes/$GIT_SVN");
-	push @cmd, '--summary' if $_verbose;
+	push @cmd, '-r' unless $_non_recursive;
+	push @cmd, qw/--raw --name-status/ if $_verbose;
 	return @cmd unless defined $r_max;
 	if ($r_max == $r_min) {
 		push @cmd, '--max-count=1';
@@ -856,7 +882,7 @@ sub git_svn_log_cmd {
 		my ($c_min, $c_max);
 		$c_max = revdb_get($REVDB, $r_max);
 		$c_min = revdb_get($REVDB, $r_min);
-		if ($c_min && $c_max) {
+		if (defined $c_min && defined $c_max) {
 			if ($r_max > $r_max) {
 				push @cmd, "$c_min..$c_max";
 			} else {
@@ -937,16 +963,21 @@ sub complete_url_ls_init {
 				print STDERR "W: Unrecognized URL: $u\n";
 				die "This should never happen\n";
 			}
+			# don't try to init already existing refs
 			my $id = $pfx.$1;
-			print "init $u => $id\n";
 			$GIT_SVN = $ENV{GIT_SVN_ID} = $id;
 			init_vars();
-			init($u);
+			unless (-d $GIT_SVN_DIR) {
+				print "init $u => $id\n";
+				init($u);
+			}
 		}
 		exit 0;
 	}
 	waitpid $pid, 0;
 	croak $? if $?;
+	my ($n) = ($switch =~ /^--(\w+)/);
+	sys('git-repo-config', "svn.$n", $var);
 }
 
 sub common_prefix {
@@ -2551,6 +2582,12 @@ sub show_commit {
 	}
 }
 
+sub show_commit_changed_paths {
+	my ($c) = @_;
+	return unless $c->{changed};
+	print "Changed paths:\n", @{$c->{changed}};
+}
+
 sub show_commit_normal {
 	my ($c) = @_;
 	print '-' x72, "\nr$c->{r} | ";
@@ -2560,7 +2597,8 @@ sub show_commit_normal {
 	my $nr_line = 0;
 
 	if (my $l = $c->{l}) {
-		while ($l->[$#$l] eq "\n" && $l->[($#$l - 1)] eq "\n") {
+		while ($l->[$#$l] eq "\n" && $#$l > 0
+		                          && $l->[($#$l - 1)] eq "\n") {
 			pop @$l;
 		}
 		$nr_line = scalar @$l;
@@ -2572,11 +2610,15 @@ sub show_commit_normal {
 			} else {
 				$nr_line .= ' lines';
 			}
-			print $nr_line, "\n\n";
+			print $nr_line, "\n";
+			show_commit_changed_paths($c);
+			print "\n";
 			print $_ foreach @$l;
 		}
 	} else {
-		print "1 line\n\n";
+		print "1 line\n";
+		show_commit_changed_paths($c);
+		print "\n";
 
 	}
 	foreach my $x (qw/raw diff/) {
@@ -3312,9 +3354,11 @@ sub chg_file {
 	seek $fh, 0, 0 or croak $!;
 
 	my $exp = $md5->hexdigest;
-	my $atd = $self->apply_textdelta($fbat, undef, $self->{pool});
-	my $got = SVN::TxDelta::send_stream($fh, @$atd, $self->{pool});
+	my $pool = SVN::Pool->new;
+	my $atd = $self->apply_textdelta($fbat, undef, $pool);
+	my $got = SVN::TxDelta::send_stream($fh, @$atd, $pool);
 	die "Checksum mismatch\nexpected: $exp\ngot: $got\n" if ($got ne $exp);
+	$pool->clear;
 
 	close $fh or croak $!;
 }

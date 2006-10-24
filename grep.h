@@ -35,6 +35,7 @@ enum grep_expr_node {
 
 struct grep_expr {
 	enum grep_expr_node node;
+	unsigned hit;
 	union {
 		struct grep_pat *atom;
 		struct grep_expr *unary;
@@ -59,6 +60,7 @@ struct grep_opt {
 	unsigned count:1;
 	unsigned word_regexp:1;
 	unsigned fixed:1;
+	unsigned all_match:1;
 #define GREP_BINARY_DEFAULT	0
 #define GREP_BINARY_NOMATCH	1
 #define GREP_BINARY_TEXT	2
