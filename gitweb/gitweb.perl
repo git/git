@@ -2530,6 +2530,14 @@ sub git_summary {
 	}
 	print "</table>\n";
 
+	if (-s "$projectroot/$project/README.html") {
+		if (open my $fd, "$projectroot/$project/README.html") {
+			print "<div class=\"title\">readme</div>\n";
+			print $_ while (<$fd>);
+			close $fd;
+		}
+	}
+
 	open my $fd, "-|", git_cmd(), "rev-list", "--max-count=17",
 		git_get_head_hash($project)
 		or die_error(undef, "Open git-rev-list failed");
