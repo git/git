@@ -1789,16 +1789,18 @@ sub git_print_tree_entry {
 			                       file_name=>"$basedir$t->{'name'}", %base_key),
 			        -class => "list"}, esc_html($t->{'name'})) . "</td>\n";
 		print "<td class=\"link\">";
+		print $cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
+					     file_name=>"$basedir$t->{'name'}", %base_key)},
+			      "blob");
 		if ($have_blame) {
-			print $cgi->a({-href => href(action=>"blame", hash=>$t->{'hash'},
+			print " | " .
+			      $cgi->a({-href => href(action=>"blame", hash=>$t->{'hash'},
 				                           file_name=>"$basedir$t->{'name'}", %base_key)},
 				            "blame");
 		}
 		if (defined $hash_base) {
-			if ($have_blame) {
-				print " | ";
-			}
-			print $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
+			print " | " .
+			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
 			                             hash=>$t->{'hash'}, file_name=>"$basedir$t->{'name'}")},
 			              "history");
 		}
@@ -1815,8 +1817,12 @@ sub git_print_tree_entry {
 		              esc_html($t->{'name'}));
 		print "</td>\n";
 		print "<td class=\"link\">";
+		print $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
+					     file_name=>"$basedir$t->{'name'}", %base_key)},
+			      "tree");
 		if (defined $hash_base) {
-			print $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
+			print " | " .
+			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
 			                             file_name=>"$basedir$t->{'name'}")},
 			              "history");
 		}
@@ -1899,6 +1905,9 @@ sub git_difftree_body {
 				print $cgi->a({-href => "#patch$patchno"}, "patch");
 				print " | ";
 			}
+			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'from_id'},
+			                             hash_base=>$parent, file_name=>$diff{'file'})},
+				      "blob") . " | ";
 			print $cgi->a({-href => href(action=>"blame", hash_base=>$parent,
 			                             file_name=>$diff{'file'})},
 			              "blame") . " | ";
@@ -1944,6 +1953,9 @@ sub git_difftree_body {
 				}
 				print " | ";
 			}
+			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
+						     hash_base=>$hash, file_name=>$diff{'file'})},
+				      "blob") . " | ";
 			print $cgi->a({-href => href(action=>"blame", hash_base=>$hash,
 			                             file_name=>$diff{'file'})},
 			              "blame") . " | ";
@@ -1984,6 +1996,9 @@ sub git_difftree_body {
 				}
 				print " | ";
 			}
+			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'from_id'},
+						     hash_base=>$parent, file_name=>$diff{'from_file'})},
+				      "blob") . " | ";
 			print $cgi->a({-href => href(action=>"blame", hash_base=>$parent,
 			                             file_name=>$diff{'from_file'})},
 			              "blame") . " | ";
@@ -2151,6 +2166,7 @@ sub git_shortlog_body {
 		                          href(action=>"commit", hash=>$commit), $ref);
 		print "</td>\n" .
 		      "<td class=\"link\">" .
+		      $cgi->a({-href => href(action=>"commit", hash=>$commit)}, "commit") . " | " .
 		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff") . " | " .
 		      $cgi->a({-href => href(action=>"tree", hash=>$commit, hash_base=>$commit)}, "tree");
 		if (gitweb_have_snapshot()) {
