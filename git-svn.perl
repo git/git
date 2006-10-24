@@ -1501,10 +1501,13 @@ sub svn_checkout_tree {
 			apply_mod_line_blob($m);
 			svn_check_prop_executable($m);
 		} elsif ($m->{chg} eq 'T') {
-			sys(qw(svn rm --force),$m->{file_b});
-			apply_mod_line_blob($m);
-			sys(qw(svn add), $m->{file_b});
 			svn_check_prop_executable($m);
+			apply_mod_line_blob($m);
+			if ($m->{mode_a} =~ /^120/ && $m->{mode_b} !~ /^120/) {
+				sys(qw(svn propdel svn:special), $m->{file_b});
+			} else {
+				sys(qw(svn propset svn:special *),$m->{file_b});
+			}
 		} elsif ($m->{chg} eq 'A') {
 			svn_ensure_parent_path( $m->{file_b} );
 			apply_mod_line_blob($m);
