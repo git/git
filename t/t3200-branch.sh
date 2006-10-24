@@ -17,13 +17,10 @@ test_expect_success \
      git-commit -m "Initial commit." &&
      HEAD=$(git-rev-parse --verify HEAD)'
 
-test_expect_success \
-    'git branch --help should return success now.' \
-    'git-branch --help'
-
 test_expect_failure \
     'git branch --help should not have created a bogus branch' \
-    'test -f .git/refs/heads/--help'
+    'git-branch --help </dev/null >/dev/null 2>/dev/null || :
+     test -f .git/refs/heads/--help'
 
 test_expect_success \
     'git branch abc should create a branch' \
@@ -34,7 +31,7 @@ test_expect_success \
     'git-branch a/b/c && test -f .git/refs/heads/a/b/c'
 
 cat >expect <<EOF
-0000000000000000000000000000000000000000 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from HEAD
+0000000000000000000000000000000000000000 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
 EOF
 test_expect_success \
     'git branch -l d/e/f should create a branch and a log' \
