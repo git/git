@@ -3428,9 +3428,11 @@ sub git_commitdiff {
 		git_print_header_div('commit', esc_html($co{'title'}) . $ref, $hash);
 		git_print_authorship(\%co);
 		print "<div class=\"page_body\">\n";
-		print "<div class=\"log\">\n";
-		git_print_log($co{'comment'}, -final_empty_line=> 1, -remove_title => 1);
-		print "</div>\n"; # class="log"
+		if (@{$co{'comment'}} > 1) {
+			print "<div class=\"log\">\n";
+			git_print_log($co{'comment'}, -final_empty_line=> 1, -remove_title => 1);
+			print "</div>\n"; # class="log"
+		}
 
 	} elsif ($format eq 'plain') {
 		my $refs = git_get_references("tags");
