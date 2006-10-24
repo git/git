@@ -450,6 +450,8 @@ void fill_in_extra_table_entries(struct interp *itable)
 	 * Replace literal host with lowercase-ized hostname.
 	 */
 	hp = interp_table[INTERP_SLOT_HOST].value;
+	if (!hp)
+		return;
 	for ( ; *hp; hp++)
 		*hp = tolower(*hp);
 
@@ -544,8 +546,10 @@ static int execute(struct sockaddr *addr)
 		loginfo("Extended attributes (%d bytes) exist <%.*s>",
 			(int) pktlen - len,
 			(int) pktlen - len, line + len + 1);
-	if (len && line[len-1] == '\n')
+	if (len && line[len-1] == '\n') {
 		line[--len] = 0;
+		pktlen--;
+	}
 
 	/*
 	 * Initialize the path interpolation table for this connection.

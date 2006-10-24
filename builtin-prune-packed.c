@@ -56,7 +56,7 @@ void prune_packed_objects(int dryrun)
 int cmd_prune_packed(int argc, const char **argv, const char *prefix)
 {
 	int i;
-	int dryrun;
+	int dryrun = 0;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
