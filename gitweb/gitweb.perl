@@ -3115,6 +3115,9 @@ sub git_commit {
 	my @difftree = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading git-diff-tree failed");
 
+	# filter out commit ID output
+	@difftree = grep(!/^[0-9a-fA-F]{40}$/, @difftree);
+
 	# non-textual hash id's can be cached
 	my $expires;
 	if ($hash =~ m/^[0-9a-fA-F]{40}$/) {
@@ -3391,7 +3394,9 @@ sub git_commitdiff {
 		while (chomp(my $line = <$fd>)) {
 			# empty line ends raw part of diff-tree output
 			last unless $line;
-			push @difftree, $line;
+			# filter out commit ID output
+			push @difftree, $line
+				unless $line =~ m/^[0-9a-fA-F]{40}$/;
 		}
 
 	} elsif ($format eq 'plain') {
