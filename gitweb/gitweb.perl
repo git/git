@@ -1776,15 +1776,6 @@ sub git_print_log ($;%) {
 	}
 }
 
-sub git_print_simplified_log {
-	my $log = shift;
-	my $remove_title = shift;
-
-	git_print_log($log,
-		-final_empty_line=> 1,
-		-remove_title => $remove_title);
-}
-
 # print tree entry (row of git_tree), but without encompassing <tr> element
 sub git_print_tree_entry {
 	my ($t, $basedir, $hash_base, $have_blame) = @_;
@@ -3101,7 +3092,7 @@ sub git_log {
 		      "</div>\n";
 
 		print "<div class=\"log_body\">\n";
-		git_print_simplified_log($co{'comment'});
+		git_print_log($co{'comment'}, -final_empty_line=> 1);
 		print "</div>\n";
 	}
 	git_footer_html();
@@ -3433,7 +3424,7 @@ sub git_commitdiff {
 		git_print_authorship(\%co);
 		print "<div class=\"page_body\">\n";
 		print "<div class=\"log\">\n";
-		git_print_simplified_log($co{'comment'}, 1); # skip title
+		git_print_log($co{'comment'}, -final_empty_line=> 1, -remove_title => 1);
 		print "</div>\n"; # class="log"
 
 	} elsif ($format eq 'plain') {
