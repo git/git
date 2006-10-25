@@ -349,3 +349,41 @@ void write_name_quoted(const char *prefix, int prefix_len,
 	else
 		goto no_quote;
 }
+
+/* quoting as a string literal for other languages */
+
+void perl_quote_print(FILE *stream, const char *src)
+{
+	const char sq = '\'';
+	const char bq = '\\';
+	char c;
+
+	fputc(sq, stream);
+	while ((c = *src++)) {
+		if (c == sq || c == bq)
+			fputc(bq, stream);
+		fputc(c, stream);
+	}
+	fputc(sq, stream);
+}
+
+void python_quote_print(FILE *stream, const char *src)
+{
+	const char sq = '\'';
+	const char bq = '\\';
+	const char nl = '\n';
+	char c;
+
+	fputc(sq, stream);
+	while ((c = *src++)) {
+		if (c == nl) {
+			fputc(bq, stream);
+			fputc('n', stream);
+			continue;
+		}
+		if (c == sq || c == bq)
+			fputc(bq, stream);
+		fputc(c, stream);
+	}
+	fputc(sq, stream);
+}
