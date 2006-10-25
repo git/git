@@ -287,6 +287,7 @@ fetch_main () {
       # There are transports that can fetch only one head at a time...
       case "$remote" in
       http://* | https://* | ftp://*)
+	  proto=`expr "$remote" : '\([^:]*\):'`
 	  if [ -n "$GIT_SSL_NO_VERIFY" ]; then
 	      curl_extra_args="-k"
 	  fi
@@ -310,7 +311,7 @@ fetch_main () {
 	  done
 	  expr "z$head" : "z$_x40\$" >/dev/null ||
 	      die "Failed to fetch $remote_name from $remote"
-	  echo >&2 Fetching "$remote_name from $remote" using http
+	  echo >&2 "Fetching $remote_name from $remote using $proto"
 	  git-http-fetch -v -a "$head" "$remote/" || exit
 	  ;;
       rsync://*)
