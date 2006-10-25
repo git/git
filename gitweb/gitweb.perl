@@ -1779,15 +1779,6 @@ sub git_print_log ($;%) {
 	}
 }
 
-sub git_print_simplified_log {
-	my $log = shift;
-	my $remove_title = shift;
-
-	git_print_log($log,
-		-final_empty_line=> 1,
-		-remove_title => $remove_title);
-}
-
 # print tree entry (row of git_tree), but without encompassing <tr> element
 sub git_print_tree_entry {
 	my ($t, $basedir, $hash_base, $have_blame) = @_;
@@ -3124,7 +3115,7 @@ sub git_log {
 		      "</div>\n";
 
 		print "<div class=\"log_body\">\n";
-		git_print_simplified_log($co{'comment'});
+		git_print_log($co{'comment'}, -final_empty_line=> 1);
 		print "</div>\n";
 	}
 	git_footer_html();
@@ -3146,6 +3137,9 @@ sub git_commit {
 		or die_error(undef, "Open git-diff-tree failed");
 	my @difftree = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading git-diff-tree failed");
+
+	# filter out commit ID output
+	@difftree = grep(!/^[0-9a-fA-F]{40}$/, @difftree);
 
 	# non-textual hash id's can be cached
 	my $expires;
@@ -3423,7 +3417,9 @@ sub git_commitdiff {
 		while (chomp(my $line = <$fd>)) {
 			# empty line ends raw part of diff-tree output
 			last unless $line;
-			push @difftree, $line;
+			# filter out commit ID output
+			push @difftree, $line
+				unless $line =~ m/^[0-9a-fA-F]{40}$/;
 		}
 
 	} elsif ($format eq 'plain') {
@@ -3455,9 +3451,11 @@ sub git_commitdiff {
 		git_print_header_div('commit', esc_html($co{'title'}) . $ref, $hash);
 		git_print_authorship(\%co);
 		print "<div class=\"page_body\">\n";
-		print "<div class=\"log\">\n";
-		git_print_simplified_log($co{'comment'}, 1); # skip title
-		print "</div>\n"; # class="log"
+		if (@{$co{'comment'}} > 1) {
+			print "<div class=\"log\">\n";
+			git_print_log($co{'comment'}, -final_empty_line=> 1, -remove_title => 1);
+			print "</div>\n"; # class="log"
+		}
 
 	} elsif ($format eq 'plain') {
 		my $refs = git_get_references("tags");
