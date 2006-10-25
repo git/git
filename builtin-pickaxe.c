@@ -108,16 +108,25 @@ struct scoreboard {
 	/* linked list of blames */
 	struct blame_entry *ent;
 
+	/* look-up a line in the final buffer */
 	int num_lines;
 	int *lineno;
 };
+
+static int cmp_suspect(struct origin *a, struct origin *b)
+{
+	int cmp = hashcmp(a->commit->object.sha1, b->commit->object.sha1);
+	if (cmp)
+		return cmp;
+	return strcmp(a->path, b->path);
+}
 
 static void coalesce(struct scoreboard *sb)
 {
 	struct blame_entry *ent, *next;
 
 	for (ent = sb->ent; ent && (next = ent->next); ent = next) {
-		if (ent->suspect == next->suspect &&
+		if (!cmp_suspect(ent->suspect, next->suspect) &&
 		    ent->guilty == next->guilty &&
 		    ent->s_lno + ent->num_lines == next->s_lno) {
 			ent->num_lines += next->num_lines;
@@ -125,53 +134,109 @@ static void coalesce(struct scoreboard *sb)
 			if (ent->next)
 				ent->next->prev = ent;
 			free(next);
+			ent->score = 0;
 			next = ent; /* again */
 		}
 	}
 }
 
-static void free_origin(struct origin *o)
+static struct origin *get_origin(struct scoreboard *sb,
+				 struct commit *commit,
+				 const char *path)
 {
-	free(o);
-}
-
-static struct origin *find_origin(struct scoreboard *sb,
-				  struct commit *commit,
-				  const char *path)
-{
-	struct blame_entry *ent;
+	struct blame_entry *e;
 	struct origin *o;
-	unsigned mode;
-	char type[10];
 
-	for (ent = sb->ent; ent; ent = ent->next) {
-		if (ent->suspect->commit == commit &&
-		    !strcmp(ent->suspect->path, path))
-			return ent->suspect;
+	for (e = sb->ent; e; e = e->next) {
+		if (e->suspect->commit == commit &&
+		    !strcmp(e->suspect->path, path))
+			return e->suspect;
 	}
-
 	o = xcalloc(1, sizeof(*o) + strlen(path) + 1);
 	o->commit = commit;
 	strcpy(o->path, path);
-	if (get_tree_entry(commit->object.sha1, path, o->blob_sha1, &mode))
-		goto err_out;
-	if (sha1_object_info(o->blob_sha1, type, NULL) ||
-	    strcmp(type, blob_type))
-		goto err_out;
 	return o;
- err_out:
-	free_origin(o);
-	return NULL;
 }
 
-static struct origin *find_rename(struct scoreboard *sb,
+static int fill_blob_sha1(struct origin *origin)
+{
+	unsigned mode;
+	char type[10];
+
+	if (!is_null_sha1(origin->blob_sha1))
+		return 0;
+	if (get_tree_entry(origin->commit->object.sha1,
+			   origin->path,
+			   origin->blob_sha1, &mode))
+		goto error_out;
+	if (sha1_object_info(origin->blob_sha1, type, NULL) ||
+	    strcmp(type, blob_type))
+		goto error_out;
+	return 0;
+ error_out:
+	hashclr(origin->blob_sha1);
+	return -1;
+}
+
+static struct origin *find_origin(struct scoreboard *sb,
 				  struct commit *parent,
 				  struct origin *origin)
 {
 	struct origin *porigin = NULL;
 	struct diff_options diff_opts;
 	int i;
-	const char *paths[1];
+	const char *paths[2];
+
+	/* See if the origin->path is different between parent
+	 * and origin first.  Most of the time they are the
+	 * same and diff-tree is fairly efficient about this.
+	 */
+	diff_setup(&diff_opts);
+	diff_opts.recursive = 1;
+	diff_opts.detect_rename = 0;
+	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
+	paths[0] = origin->path;
+	paths[1] = NULL;
+
+	diff_tree_setup_paths(paths, &diff_opts);
+	if (diff_setup_done(&diff_opts) < 0)
+		die("diff-setup");
+	diff_tree_sha1(parent->tree->object.sha1,
+		       origin->commit->tree->object.sha1,
+		       "", &diff_opts);
+	diffcore_std(&diff_opts);
+
+	/* It is either one entry that says "modified", or "created",
+	 * or nothing.
+	 */
+	if (!diff_queued_diff.nr) {
+		/* The path is the same as parent */
+		porigin = get_origin(sb, parent, origin->path);
+		hashcpy(porigin->blob_sha1, origin->blob_sha1);
+	}
+	else if (diff_queued_diff.nr != 1)
+		die("internal error in pickaxe::find_origin");
+	else {
+		struct diff_filepair *p = diff_queued_diff.queue[0];
+		switch (p->status) {
+		default:
+			die("internal error in pickaxe::find_origin (%c)",
+			    p->status);
+		case 'M':
+			porigin = get_origin(sb, parent, origin->path);
+			hashcpy(porigin->blob_sha1, p->one->sha1);
+			break;
+		case 'A':
+		case 'T':
+			/* Did not exist in parent, or type changed */
+			break;
+		}
+	}
+	diff_flush(&diff_opts);
+	if (porigin)
+		return porigin;
+
+	/* Otherwise we would look for a rename */
 
 	diff_setup(&diff_opts);
 	diff_opts.recursive = 1;
@@ -181,15 +246,17 @@ static struct origin *find_rename(struct scoreboard *sb,
 	diff_tree_setup_paths(paths, &diff_opts);
 	if (diff_setup_done(&diff_opts) < 0)
 		die("diff-setup");
-	diff_tree_sha1(origin->commit->tree->object.sha1,
-		       parent->tree->object.sha1,
+	diff_tree_sha1(parent->tree->object.sha1,
+		       origin->commit->tree->object.sha1,
 		       "", &diff_opts);
 	diffcore_std(&diff_opts);
 
 	for (i = 0; i < diff_queued_diff.nr; i++) {
 		struct diff_filepair *p = diff_queued_diff.queue[i];
-		if (p->status == 'R' && !strcmp(p->one->path, origin->path)) {
-			porigin = find_origin(sb, parent, p->two->path);
+		if ((p->status == 'R' || p->status == 'C') &&
+		    !strcmp(p->two->path, origin->path)) {
+			porigin = get_origin(sb, parent, p->one->path);
+			hashcpy(porigin->blob_sha1, p->one->sha1);
 			break;
 		}
 	}
@@ -457,7 +524,7 @@ static void split_blame(struct scoreboard *sb,
 
 	if (1) { /* sanity */
 		struct blame_entry *ent;
-		int lno = 0, corrupt = 0;
+		int lno = sb->ent->lno, corrupt = 0;
 
 		for (ent = sb->ent; ent; ent = ent->next) {
 			if (lno != ent->lno)
@@ -467,7 +534,7 @@ static void split_blame(struct scoreboard *sb,
 			lno += ent->num_lines;
 		}
 		if (corrupt) {
-			lno = 0;
+			lno = sb->ent->lno;
 			for (ent = sb->ent; ent; ent = ent->next) {
 				printf("L %8d l %8d n %8d\n",
 				       lno, ent->lno, ent->num_lines);
@@ -496,7 +563,7 @@ static int find_last_in_target(struct scoreboard *sb, struct origin *target)
 	int last_in_target = -1;
 
 	for (e = sb->ent; e; e = e->next) {
-		if (e->guilty || e->suspect != target)
+		if (e->guilty || cmp_suspect(e->suspect, target))
 			continue;
 		if (last_in_target < e->s_lno + e->num_lines)
 			last_in_target = e->s_lno + e->num_lines;
@@ -508,11 +575,10 @@ static void blame_chunk(struct scoreboard *sb,
 			int tlno, int plno, int same,
 			struct origin *target, struct origin *parent)
 {
-	struct blame_entry *e, *n;
+	struct blame_entry *e;
 
-	for (e = sb->ent; e; e = n) {
-		n = e->next;
-		if (e->guilty || e->suspect != target)
+	for (e = sb->ent; e; e = e->next) {
+		if (e->guilty || cmp_suspect(e->suspect, target))
 			continue;
 		if (same <= e->s_lno)
 			continue;
@@ -556,7 +622,7 @@ static unsigned ent_score(struct scoreboard *sb, struct blame_entry *e)
 	if (e->score)
 		return e->score;
 
-	score = 0;
+	score = 1;
 	cp = nth_line(sb, e->lno);
 	ep = nth_line(sb, e->lno + e->num_lines);
 	while (cp < ep) {
@@ -633,7 +699,7 @@ static int find_move_in_parent(struct scoreboard *sb,
 			       struct origin *parent)
 {
 	int last_in_target;
-	struct blame_entry *ent, split[3];
+	struct blame_entry *e, split[3];
 	mmfile_t file_p;
 	char type[10];
 	char *blob_p;
@@ -650,13 +716,13 @@ static int find_move_in_parent(struct scoreboard *sb,
 		return 0;
 	}
 
-	for (ent = sb->ent; ent; ent = ent->next) {
-		if (ent->suspect != target || ent->guilty)
+	for (e = sb->ent; e; e = e->next) {
+		if (e->guilty || cmp_suspect(e->suspect, target))
 			continue;
-		find_copy_in_blob(sb, ent, parent, split, &file_p);
+		find_copy_in_blob(sb, e, parent, split, &file_p);
 		if (split[1].suspect &&
 		    blame_move_score < ent_score(sb, &split[1]))
-			split_blame(sb, split, ent);
+			split_blame(sb, split, e);
 	}
 	free(blob_p);
 	return 0;
@@ -670,11 +736,27 @@ static int find_copy_in_parent(struct scoreboard *sb,
 {
 	struct diff_options diff_opts;
 	const char *paths[1];
-	struct blame_entry *ent;
-	int i;
+	struct blame_entry *e;
+	int i, j;
+	struct blame_list {
+		struct blame_entry *ent;
+		struct blame_entry split[3];
+	} *blame_list;
+	int num_ents;
 
-	if (find_last_in_target(sb, target) < 0)
+	/* Count the number of entries the target is suspected for,
+	 * and prepare a list of entry and the best split.
+	 */
+	for (e = sb->ent, num_ents = 0; e; e = e->next)
+		if (!e->guilty && !cmp_suspect(e->suspect, target))
+			num_ents++;
+	if (!num_ents)
 		return 1; /* nothing remains for this target */
+
+	blame_list = xcalloc(num_ents, sizeof(struct blame_list));
+	for (e = sb->ent, i = 0; e; e = e->next)
+		if (!e->guilty && !cmp_suspect(e->suspect, target))
+			blame_list[i++].ent = e;
 
 	diff_setup(&diff_opts);
 	diff_opts.recursive = 1;
@@ -695,42 +777,45 @@ static int find_copy_in_parent(struct scoreboard *sb,
 		       "", &diff_opts);
 	diffcore_std(&diff_opts);
 
-	for (ent = sb->ent; ent; ent = ent->next) {
-		struct blame_entry split[3];
-		if (ent->suspect != target || ent->guilty)
+	for (i = 0; i < diff_queued_diff.nr; i++) {
+		struct diff_filepair *p = diff_queued_diff.queue[i];
+		struct origin *norigin;
+		mmfile_t file_p;
+		char type[10];
+		char *blob;
+		struct blame_entry this[3];
+
+		if (!DIFF_FILE_VALID(p->one))
+			continue; /* does not exist in parent */
+		if (porigin && !strcmp(p->one->path, porigin->path))
+			/* find_move already dealt with this path */
 			continue;
 
-		memset(split, 0, sizeof(split));
-		for (i = 0; i < diff_queued_diff.nr; i++) {
-			struct diff_filepair *p = diff_queued_diff.queue[i];
-			struct origin *norigin;
-			mmfile_t file_p;
-			char type[10];
-			char *blob;
-			struct blame_entry this[3];
+		norigin = get_origin(sb, parent, p->one->path);
+		hashcpy(norigin->blob_sha1, p->one->sha1);
+		blob = read_sha1_file(norigin->blob_sha1, type,
+				      (unsigned long *) &file_p.size);
+		file_p.ptr = blob;
+		if (!file_p.ptr)
+			continue;
 
-			if (!DIFF_FILE_VALID(p->one))
-				continue; /* does not exist in parent */
-			if (porigin && !strcmp(p->one->path, porigin->path))
-				/* find_move already dealt with this path */
-				continue;
-			norigin = find_origin(sb, parent, p->one->path);
-
-			blob = read_sha1_file(norigin->blob_sha1, type,
-					      (unsigned long *) &file_p.size);
-			file_p.ptr = blob;
-			if (!file_p.ptr) {
-				free(blob);
-				continue;
-			}
-			find_copy_in_blob(sb, ent, norigin, this, &file_p);
-			copy_split_if_better(sb, split, this);
+		for (j = 0; j < num_ents; j++) {
+			find_copy_in_blob(sb, blame_list[j].ent, norigin,
+					  this, &file_p);
+			copy_split_if_better(sb, blame_list[j].split,
+					     this);
 		}
-		if (split[1].suspect &&
-		    blame_copy_score < ent_score(sb, &split[1]))
-			split_blame(sb, split, ent);
+		free(blob);
 	}
 	diff_flush(&diff_opts);
+
+	for (j = 0; j < num_ents; j++) {
+		struct blame_entry *split = blame_list[j].split;
+		if (split[1].suspect &&
+		    blame_copy_score < ent_score(sb, &split[1]))
+			split_blame(sb, split, blame_list[j].ent);
+	}
+	free(blame_list);
 
 	return 0;
 }
@@ -752,9 +837,7 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 
 		if (parse_commit(p))
 			continue;
-		porigin = find_origin(sb, parent->item, origin->path);
-		if (!porigin)
-			porigin = find_rename(sb, parent->item, origin);
+		porigin = find_origin(sb, parent->item, origin);
 		if (!porigin)
 			continue;
 		if (!hashcmp(porigin->blob_sha1, origin->blob_sha1)) {
@@ -762,12 +845,6 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 			for (e = sb->ent; e; e = e->next)
 				if (e->suspect == origin)
 					e->suspect = porigin;
-			/* now everything blamed for origin is blamed for
-			 * porigin, we do not need to keep it anymore.
-			 * Do not free porigin (or the ones we got from
-			 * earlier round); they may still be used elsewhere.
-			 */
-			free_origin(origin);
 			return;
 		}
 		parent_origin[i] = porigin;
@@ -833,8 +910,10 @@ static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
 
 		/* Take responsibility for the remaining entries */
 		for (ent = sb->ent; ent; ent = ent->next)
-			if (ent->suspect == suspect)
+			if (!cmp_suspect(ent->suspect, suspect))
 				ent->guilty = 1;
+
+		coalesce(sb);
 	}
 }
 
@@ -933,6 +1012,15 @@ static void get_commit_info(struct commit *commit,
 	static char committer_buf[1024];
 	static char summary_buf[1024];
 
+	/* We've operated without save_commit_buffer, so
+	 * we now need to populate them for output.
+	 */
+	if (!commit->buffer) {
+		char type[20];
+		unsigned long size;
+		commit->buffer =
+			read_sha1_file(commit->object.sha1, type, &size);
+	}
 	ret->author = author_buf;
 	get_ac_line(commit->buffer, "\nauthor ",
 		    sizeof(author_buf), author_buf, &ret->author_mail,
@@ -1214,6 +1302,8 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 	const char *final_commit_name = NULL;
 	char type[10];
 
+	save_commit_buffer = 0;
+
 	opt = 0;
 	bottom = top = 0;
 	seen_dashdash = 0;
@@ -1406,8 +1496,8 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 	 */
 	prepare_revision_walk(&revs);
 
-	o = find_origin(&sb, sb.final, path);
-	if (!o)
+	o = get_origin(&sb, sb.final, path);
+	if (fill_blob_sha1(o))
 		die("no such path %s in %s", path, final_commit_name);
 
 	sb.final_buf = read_sha1_file(o->blob_sha1, type, &sb.final_buf_size);
