@@ -107,7 +107,7 @@ enhancements to them, do not forget to "cc: " the person who primarily
 worked on that hierarchy in contrib/.
 
 
-(6) Sign your work
+(4) Sign your work
 
 To improve tracking of who did what, we've borrowed the
 "sign-off" procedure from the Linux kernel project on patches
