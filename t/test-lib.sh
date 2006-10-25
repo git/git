@@ -207,7 +207,8 @@ test_done () {
 # t/ subdirectory and are run in trash subdirectory.
 PATH=$(pwd)/..:$PATH
 GIT_EXEC_PATH=$(pwd)/..
-export PATH GIT_EXEC_PATH
+HOME=$(pwd)/trash
+export PATH GIT_EXEC_PATH HOME
 
 # Similarly use ../compat/subprocess.py if our python does not
 # have subprocess.py on its own.
