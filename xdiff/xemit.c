@@ -86,8 +86,7 @@ static void xdl_find_func(xdfile_t *xf, long i, char *buf, long sz, long *ll) {
 		if (len > 0 &&
 		    (isalpha((unsigned char)*rec) || /* identifier? */
 		     *rec == '_' ||	/* also identifier? */
-		     *rec == '(' ||	/* lisp defun? */
-		     *rec == '#')) {	/* #define? */
+		     *rec == '$')) {	/* mysterious GNU diff's invention */
 			if (len > sz)
 				len = sz;
 			while (0 < len && isspace((unsigned char)rec[len - 1]))
