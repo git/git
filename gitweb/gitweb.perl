@@ -41,8 +41,18 @@ our $home_link_str = "++GITWEB_HOME_LINK_STR++";
 # replace this with something more descriptive for clearer bookmarks
 our $site_name = "++GITWEB_SITENAME++" || $ENV{'SERVER_NAME'} || "Untitled";
 
+# filename of html text to include at top of each page
+our $site_header = "++GITWEB_SITE_HEADER++";
 # html text to include at home page
 our $home_text = "++GITWEB_HOMETEXT++";
+# filename of html text to include at bottom of each page
+our $site_footer = "++GITWEB_SITE_FOOTER++";
+
+# URI of stylesheets
+our @stylesheets = ("++GITWEB_CSS++");
+our $stylesheet;
+# default is not to define style sheet, but it can be overwritten later
+undef $stylesheet;
 
 # URI of default stylesheet
 our $stylesheet = "++GITWEB_CSS++";
@@ -217,6 +227,22 @@ sub feature_pickaxe {
 	return ($_[0]);
 }
 
+# checking HEAD file with -e is fragile if the repository was
+# initialized long time ago (i.e. symlink HEAD) and was pack-ref'ed
+# and then pruned.
+sub check_head_link {
+	my ($dir) = @_;
+	my $headfile = "$dir/HEAD";
+	return ((-e $headfile) ||
+		(-l $headfile && readlink($headfile) =~ /^refs\/heads\//));
+}
+
+sub check_export_ok {
+	my ($dir) = @_;
+	return (check_head_link($dir) &&
+		(!$export_ok || -e "$dir/$export_ok"));
+}
+
 # rename detection options for git-diff and git-diff-tree
 # - default is '-M', with the cost proportional to
 #   (number of removed files) * (number of new files).
@@ -249,7 +275,7 @@ our $project = $cgi->param('p');
 if (defined $project) {
 	if (!validate_pathname($project) ||
 	    !(-d "$projectroot/$project") ||
-	    !(-e "$projectroot/$project/HEAD") ||
+	    !check_head_link("$projectroot/$project") ||
 	    ($export_ok && !(-e "$projectroot/$project/$export_ok")) ||
 	    ($strict_export && !project_in_list($project))) {
 		undef $project;
@@ -326,7 +352,7 @@ sub evaluate_path_info {
 	# find which part of PATH_INFO is project
 	$project = $path_info;
 	$project =~ s,/+$,,;
-	while ($project && !-e "$projectroot/$project/HEAD") {
+	while ($project && !check_head_link("$projectroot/$project")) {
 		$project =~ s,/*[^/]*$,,;
 	}
 	# validate project
@@ -878,8 +904,7 @@ sub git_get_projects_list {
 
 				my $subdir = substr($File::Find::name, $pfxlen + 1);
 				# we check related file in $projectroot
-				if (-e "$projectroot/$subdir/HEAD" && (!$export_ok ||
-				    -e "$projectroot/$subdir/$export_ok")) {
+				if (check_export_ok("$projectroot/$subdir")) {
 					push @list, { path => $subdir };
 					$File::Find::prune = 1;
 				}
@@ -900,8 +925,7 @@ sub git_get_projects_list {
 			if (!defined $path) {
 				next;
 			}
-			if (-e "$projectroot/$path/HEAD" && (!$export_ok ||
-			    -e "$projectroot/$path/$export_ok")) {
+			if (check_export_ok("$projectroot/$path")) {
 				my $pr = {
 					path => $path,
 					owner => to_utf8($owner),
@@ -1011,6 +1035,9 @@ sub parse_date {
 	$date{'hour_local'} = $hour;
 	$date{'minute_local'} = $min;
 	$date{'tz_local'} = $tz;
+	$date{'iso-tz'} = sprintf ("%04d-%02d-%02d %02d:%02d:%02d %s",
+				   1900+$year, $mon+1, $mday,
+				   $hour, $min, $sec, $tz);
 	return %date;
 }
 
@@ -1416,8 +1443,17 @@ sub git_header_html {
 <meta name="generator" content="gitweb/$version git/$git_version"/>
 <meta name="robots" content="index, nofollow"/>
 <title>$title</title>
-<link rel="stylesheet" type="text/css" href="$stylesheet"/>
 EOF
+# print out each stylesheet that exist
+	if (defined $stylesheet) {
+#provides backwards capability for those people who define style sheet in a config file
+		print '<link rel="stylesheet" type="text/css" href="'.$stylesheet.'"/>'."\n";
+	} else {
+		foreach my $stylesheet (@stylesheets) {
+			next unless $stylesheet;
+			print '<link rel="stylesheet" type="text/css" href="'.$stylesheet.'"/>'."\n";
+		}
+	}
 	if (defined $project) {
 		printf('<link rel="alternate" title="%s log" '.
 		       'href="%s" type="application/rss+xml"/>'."\n",
@@ -1435,8 +1471,15 @@ EOF
 	}
 
 	print "</head>\n" .
-	      "<body>\n" .
-	      "<div class=\"page_header\">\n" .
+	      "<body>\n";
+
+	if (-f $site_header) {
+		open (my $fd, $site_header);
+		print <$fd>;
+		close $fd;
+	}
+
+	print "<div class=\"page_header\">\n" .
 	      $cgi->a({-href => esc_url($logo_url),
 	               -title => $logo_label},
 	              qq(<img src="$logo" width="72" height="27" alt="git" class="logo"/>));
@@ -1488,8 +1531,15 @@ sub git_footer_html {
 		print $cgi->a({-href => href(project=>undef, action=>"project_index"),
 		              -class => "rss_logo"}, "TXT") . "\n";
 	}
-	print "</div>\n" .
-	      "</body>\n" .
+	print "</div>\n" ;
+
+	if (-f $site_footer) {
+		open (my $fd, $site_footer);
+		print <$fd>;
+		close $fd;
+	}
+
+	print "</body>\n" .
 	      "</html>";
 }
 
@@ -2518,7 +2568,8 @@ sub git_blame2 {
 	if ($ftype !~ "blob") {
 		die_error("400 Bad Request", "Object is not a blob");
 	}
-	open ($fd, "-|", git_cmd(), "blame", '-l', '--', $file_name, $hash_base)
+	open ($fd, "-|", git_cmd(), "blame", '-p', '--',
+	      $file_name, $hash_base)
 		or die_error(undef, "Open git-blame failed");
 	git_header_html();
 	my $formats_nav =
@@ -2542,25 +2593,52 @@ sub git_blame2 {
 <table class="blame">
 <tr><th>Commit</th><th>Line</th><th>Data</th></tr>
 HTML
-	while (<$fd>) {
-		/^([0-9a-fA-F]{40}).*?(\d+)\)\s{1}(\s*.*)/;
-		my $full_rev = $1;
+	my %metainfo = ();
+	while (1) {
+		$_ = <$fd>;
+		last unless defined $_;
+		my ($full_rev, $orig_lineno, $lineno, $group_size) =
+		    /^([0-9a-f]{40}) (\d+) (\d+)(?: (\d+))?$/;
+		if (!exists $metainfo{$full_rev}) {
+			$metainfo{$full_rev} = {};
+		}
+		my $meta = $metainfo{$full_rev};
+		while (<$fd>) {
+			last if (s/^\t//);
+			if (/^(\S+) (.*)$/) {
+				$meta->{$1} = $2;
+			}
+		}
+		my $data = $_;
 		my $rev = substr($full_rev, 0, 8);
-		my $lineno = $2;
-		my $data = $3;
-
-		if (!defined $last_rev) {
-			$last_rev = $full_rev;
-		} elsif ($last_rev ne $full_rev) {
-			$last_rev = $full_rev;
+		my $author = $meta->{'author'};
+		my %date = parse_date($meta->{'author-time'},
+				      $meta->{'author-tz'});
+		my $date = $date{'iso-tz'};
+		if ($group_size) {
 			$current_color = ++$current_color % $num_colors;
 		}
 		print "<tr class=\"$rev_color[$current_color]\">\n";
-		print "<td class=\"sha1\">" .
-			$cgi->a({-href => href(action=>"commit", hash=>$full_rev, file_name=>$file_name)},
-			        esc_html($rev)) . "</td>\n";
-		print "<td class=\"linenr\"><a id=\"l$lineno\" href=\"#l$lineno\" class=\"linenr\">" .
-		      esc_html($lineno) . "</a></td>\n";
+		if ($group_size) {
+			print "<td class=\"sha1\"";
+			print " title=\"$author, $date\"";
+			print " rowspan=\"$group_size\"" if ($group_size > 1);
+			print ">";
+			print $cgi->a({-href => href(action=>"commit",
+						     hash=>$full_rev,
+						     file_name=>$file_name)},
+				      esc_html($rev));
+			print "</td>\n";
+		}
+		my $blamed = href(action => 'blame',
+				  file_name => $meta->{'filename'},
+				  hash_base => $full_rev);
+		print "<td class=\"linenr\">";
+		print $cgi->a({ -href => "$blamed#l$orig_lineno",
+				-id => "l$lineno",
+				-class => "linenr" },
+			      esc_html($lineno));
+		print "</td>";
 		print "<td class=\"pre\">" . esc_html($data) . "</td>\n";
 		print "</tr>\n";
 	}

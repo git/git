@@ -7,7 +7,7 @@ git-blame - Show what revision and author last modified each line of a file
 
 SYNOPSIS
 --------
-'git-blame' [-c] [-l] [-t] [-S <revs-file>] [--] <file> [<rev>]
+'git-blame' [-c] [-l] [-t] [-f] [-n] [-p] [-S <revs-file>] [--] <file> [<rev>]
 
 DESCRIPTION
 -----------
@@ -45,9 +45,46 @@ OPTIONS
 -S, --rev-file <revs-file>::
 	Use revs from revs-file instead of calling gitlink:git-rev-list[1].
 
+-f, --show-name::
+	Show filename in the original commit.  By default
+	filename is shown if there is any line that came from a
+	file with different name, due to rename detection.
+
+-n, --show-number::
+	Show line number in the original commit (Default: off).
+
+-p, --porcelain::
+	Show in a format designed for machine consumption.
+
 -h, --help::
 	Show help message.
 
+
+THE PORCELAIN FORMAT
+--------------------
+
+In this format, each line is output after a header; the
+header at the minumum has the first line which has:
+
+- 40-byte SHA-1 of the commit the line is attributed to;
+- the line number of the line in the original file;
+- the line number of the line in the final file;
+- on a line that starts a group of line from a different
+  commit than the previous one, the number of lines in this
+  group.  On subsequent lines this field is absent.
+
+This header line is followed by the following information
+at least once for each commit:
+
+- author name ("author"), email ("author-mail"), time
+  ("author-time"), and timezone ("author-tz"); similarly
+  for committer.
+- filename in the commit the line is attributed to.
+- the first line of the commit log message ("summary").
+
+The contents of the actual line is output after the above
+header, prefixed by a TAB. This is to allow adding more
+header elements later.
 
 SEE ALSO
 --------
