@@ -39,7 +39,8 @@ our $home_link_str = "++GITWEB_HOME_LINK_STR++";
 
 # name of your site or organization to appear in page titles
 # replace this with something more descriptive for clearer bookmarks
-our $site_name = "++GITWEB_SITENAME++" || $ENV{'SERVER_NAME'} || "Untitled";
+our $site_name = "++GITWEB_SITENAME++"
+                 || ($ENV{'SERVER_NAME'} || "Untitled") . " Git";
 
 # filename of html text to include at top of each page
 our $site_header = "++GITWEB_SITE_HEADER++";
@@ -342,6 +343,13 @@ if (defined $searchtext) {
 	$searchtext = quotemeta $searchtext;
 }
 
+our $searchtype = $cgi->param('st');
+if (defined $searchtype) {
+	if ($searchtype =~ m/[^a-z]/) {
+		die_error(undef, "Invalid searchtype parameter");
+	}
+}
+
 # now read PATH_INFO and use it as alternative to parameters
 sub evaluate_path_info {
 	return if defined $project;
@@ -406,6 +414,7 @@ my %actions = (
 	"log" => \&git_log,
 	"rss" => \&git_rss,
 	"search" => \&git_search,
+	"search_help" => \&git_search_help,
 	"shortlog" => \&git_shortlog,
 	"summary" => \&git_summary,
 	"tag" => \&git_tag,
@@ -455,6 +464,7 @@ sub href(%) {
 		page => "pg",
 		order => "o",
 		searchtext => "s",
+		searchtype => "st",
 	);
 	my %mapping = @mapping;
 
@@ -1076,6 +1086,24 @@ sub parse_tag {
 	return %tag
 }
 
+sub git_get_last_activity {
+	my ($path) = @_;
+	my $fd;
+
+	$git_dir = "$projectroot/$path";
+	open($fd, "-|", git_cmd(), 'for-each-ref',
+	     '--format=%(refname) %(committer)',
+	     '--sort=-committerdate',
+	     'refs/heads') or return;
+	my $most_recent = <$fd>;
+	close $fd or return;
+	if ($most_recent =~ / (\d+) [-+][01]\d\d\d$/) {
+		my $timestamp = $1;
+		my $age = time - $timestamp;
+		return ($age, age_string($age));
+	}
+}
+
 sub parse_commit {
 	my $commit_id = shift;
 	my $commit_text = shift;
@@ -1405,7 +1433,7 @@ sub git_header_html {
 	my $status = shift || "200 OK";
 	my $expires = shift;
 
-	my $title = "$site_name git";
+	my $title = "$site_name";
 	if (defined $project) {
 		$title .= " - $project";
 		if (defined $action) {
@@ -1509,6 +1537,10 @@ EOF
 		      $cgi->hidden(-name => "p") . "\n" .
 		      $cgi->hidden(-name => "a") . "\n" .
 		      $cgi->hidden(-name => "h") . "\n" .
+		      $cgi->popup_menu(-name => 'st', -default => 'commit',
+				       -values => ['commit', 'author', 'committer', 'pickaxe']) .
+		      $cgi->sup($cgi->a({-href => href(action=>"search_help")}, "?")) .
+		      " search:\n",
 		      $cgi->textfield(-name => "s", -value => $searchtext) . "\n" .
 		      "</div>" .
 		      $cgi->end_form() . "\n";
@@ -1747,15 +1779,6 @@ sub git_print_log ($;%) {
 	}
 }
 
-sub git_print_simplified_log {
-	my $log = shift;
-	my $remove_title = shift;
-
-	git_print_log($log,
-		-final_empty_line=> 1,
-		-remove_title => $remove_title);
-}
-
 # print tree entry (row of git_tree), but without encompassing <tr> element
 sub git_print_tree_entry {
 	my ($t, $basedir, $hash_base, $have_blame) = @_;
@@ -1774,16 +1797,18 @@ sub git_print_tree_entry {
 			                       file_name=>"$basedir$t->{'name'}", %base_key),
 			        -class => "list"}, esc_html($t->{'name'})) . "</td>\n";
 		print "<td class=\"link\">";
+		print $cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
+					     file_name=>"$basedir$t->{'name'}", %base_key)},
+			      "blob");
 		if ($have_blame) {
-			print $cgi->a({-href => href(action=>"blame", hash=>$t->{'hash'},
+			print " | " .
+			      $cgi->a({-href => href(action=>"blame", hash=>$t->{'hash'},
 				                           file_name=>"$basedir$t->{'name'}", %base_key)},
 				            "blame");
 		}
 		if (defined $hash_base) {
-			if ($have_blame) {
-				print " | ";
-			}
-			print $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
+			print " | " .
+			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
 			                             hash=>$t->{'hash'}, file_name=>"$basedir$t->{'name'}")},
 			              "history");
 		}
@@ -1800,8 +1825,12 @@ sub git_print_tree_entry {
 		              esc_html($t->{'name'}));
 		print "</td>\n";
 		print "<td class=\"link\">";
+		print $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
+					     file_name=>"$basedir$t->{'name'}", %base_key)},
+			      "tree");
 		if (defined $hash_base) {
-			print $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
+			print " | " .
+			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
 			                             file_name=>"$basedir$t->{'name'}")},
 			              "history");
 		}
@@ -1884,6 +1913,9 @@ sub git_difftree_body {
 				print $cgi->a({-href => "#patch$patchno"}, "patch");
 				print " | ";
 			}
+			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'from_id'},
+			                             hash_base=>$parent, file_name=>$diff{'file'})},
+				      "blob") . " | ";
 			print $cgi->a({-href => href(action=>"blame", hash_base=>$parent,
 			                             file_name=>$diff{'file'})},
 			              "blame") . " | ";
@@ -1929,6 +1961,9 @@ sub git_difftree_body {
 				}
 				print " | ";
 			}
+			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
+						     hash_base=>$hash, file_name=>$diff{'file'})},
+				      "blob") . " | ";
 			print $cgi->a({-href => href(action=>"blame", hash_base=>$hash,
 			                             file_name=>$diff{'file'})},
 			              "blame") . " | ";
@@ -1969,6 +2004,9 @@ sub git_difftree_body {
 				}
 				print " | ";
 			}
+			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'from_id'},
+						     hash_base=>$parent, file_name=>$diff{'from_file'})},
+				      "blob") . " | ";
 			print $cgi->a({-href => href(action=>"blame", hash_base=>$parent,
 			                             file_name=>$diff{'from_file'})},
 			              "blame") . " | ";
@@ -2136,6 +2174,7 @@ sub git_shortlog_body {
 		                          href(action=>"commit", hash=>$commit), $ref);
 		print "</td>\n" .
 		      "<td class=\"link\">" .
+		      $cgi->a({-href => href(action=>"commit", hash=>$commit)}, "commit") . " | " .
 		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff") . " | " .
 		      $cgi->a({-href => href(action=>"tree", hash=>$commit, hash_base=>$commit)}, "tree");
 		if (gitweb_have_snapshot()) {
@@ -2330,16 +2369,11 @@ sub git_project_list {
 		die_error(undef, "No projects found");
 	}
 	foreach my $pr (@list) {
-		my $head = git_get_head_hash($pr->{'path'});
-		if (!defined $head) {
+		my (@aa) = git_get_last_activity($pr->{'path'});
+		unless (@aa) {
 			next;
 		}
-		$git_dir = "$projectroot/$pr->{'path'}";
-		my %co = parse_commit($head);
-		if (!%co) {
-			next;
-		}
-		$pr->{'commit'} = \%co;
+		($pr->{'age'}, $pr->{'age_string'}) = @aa;
 		if (!defined $pr->{'descr'}) {
 			my $descr = git_get_project_description($pr->{'path'}) || "";
 			$pr->{'descr'} = chop_str($descr, 25, 5);
@@ -2389,7 +2423,7 @@ sub git_project_list {
 		      "</th>\n";
 	}
 	if ($order eq "age") {
-		@projects = sort {$a->{'commit'}{'age'} <=> $b->{'commit'}{'age'}} @projects;
+		@projects = sort {$a->{'age'} <=> $b->{'age'}} @projects;
 		print "<th>Last Change</th>\n";
 	} else {
 		print "<th>" .
@@ -2411,8 +2445,8 @@ sub git_project_list {
 		                        -class => "list"}, esc_html($pr->{'path'})) . "</td>\n" .
 		      "<td>" . esc_html($pr->{'descr'}) . "</td>\n" .
 		      "<td><i>" . chop_str($pr->{'owner'}, 15) . "</i></td>\n";
-		print "<td class=\"". age_class($pr->{'commit'}{'age'}) . "\">" .
-		      $pr->{'commit'}{'age_string'} . "</td>\n" .
+		print "<td class=\"". age_class($pr->{'age'}) . "\">" .
+		      $pr->{'age_string'} . "</td>\n" .
 		      "<td class=\"link\">" .
 		      $cgi->a({-href => href(project=>$pr->{'path'}, action=>"summary")}, "summary")   . " | " .
 		      $cgi->a({-href => href(project=>$pr->{'path'}, action=>"shortlog")}, "shortlog") . " | " .
@@ -2489,6 +2523,14 @@ sub git_summary {
 		$url_tag = "";
 	}
 	print "</table>\n";
+
+	if (-s "$projectroot/$project/README.html") {
+		if (open my $fd, "$projectroot/$project/README.html") {
+			print "<div class=\"title\">readme</div>\n";
+			print $_ while (<$fd>);
+			close $fd;
+		}
+	}
 
 	open my $fd, "-|", git_cmd(), "rev-list", "--max-count=17",
 		git_get_head_hash($project)
@@ -3073,7 +3115,7 @@ sub git_log {
 		      "</div>\n";
 
 		print "<div class=\"log_body\">\n";
-		git_print_simplified_log($co{'comment'});
+		git_print_log($co{'comment'}, -final_empty_line=> 1);
 		print "</div>\n";
 	}
 	git_footer_html();
@@ -3095,6 +3137,9 @@ sub git_commit {
 		or die_error(undef, "Open git-diff-tree failed");
 	my @difftree = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading git-diff-tree failed");
+
+	# filter out commit ID output
+	@difftree = grep(!/^[0-9a-fA-F]{40}$/, @difftree);
 
 	# non-textual hash id's can be cached
 	my $expires;
@@ -3372,7 +3417,9 @@ sub git_commitdiff {
 		while (chomp(my $line = <$fd>)) {
 			# empty line ends raw part of diff-tree output
 			last unless $line;
-			push @difftree, $line;
+			# filter out commit ID output
+			push @difftree, $line
+				unless $line =~ m/^[0-9a-fA-F]{40}$/;
 		}
 
 	} elsif ($format eq 'plain') {
@@ -3404,9 +3451,11 @@ sub git_commitdiff {
 		git_print_header_div('commit', esc_html($co{'title'}) . $ref, $hash);
 		git_print_authorship(\%co);
 		print "<div class=\"page_body\">\n";
-		print "<div class=\"log\">\n";
-		git_print_simplified_log($co{'comment'}, 1); # skip title
-		print "</div>\n"; # class="log"
+		if (@{$co{'comment'}} > 1) {
+			print "<div class=\"log\">\n";
+			git_print_log($co{'comment'}, -final_empty_line=> 1, -remove_title => 1);
+			print "</div>\n"; # class="log"
+		}
 
 	} elsif ($format eq 'plain') {
 		my $refs = git_get_references("tags");
@@ -3538,18 +3587,8 @@ sub git_search {
 		die_error(undef, "Unknown commit object");
 	}
 
-	my $commit_search = 1;
-	my $author_search = 0;
-	my $committer_search = 0;
-	my $pickaxe_search = 0;
-	if ($searchtext =~ s/^author\\://i) {
-		$author_search = 1;
-	} elsif ($searchtext =~ s/^committer\\://i) {
-		$committer_search = 1;
-	} elsif ($searchtext =~ s/^pickaxe\\://i) {
-		$commit_search = 0;
-		$pickaxe_search = 1;
-
+	$searchtype ||= 'commit';
+	if ($searchtype eq 'pickaxe') {
 		# pickaxe may take all resources of your box and run for several minutes
 		# with every query - so decide by yourself how public you make this feature
 		my ($have_pickaxe) = gitweb_check_feature('pickaxe');
@@ -3557,23 +3596,24 @@ sub git_search {
 			die_error('403 Permission denied', "Permission denied");
 		}
 	}
+
 	git_header_html();
 	git_print_page_nav('','', $hash,$co{'tree'},$hash);
 	git_print_header_div('commit', esc_html($co{'title'}), $hash);
 
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 1;
-	if ($commit_search) {
+	if ($searchtype eq 'commit' or $searchtype eq 'author' or $searchtype eq 'committer') {
 		$/ = "\0";
 		open my $fd, "-|", git_cmd(), "rev-list", "--header", "--parents", $hash or next;
 		while (my $commit_text = <$fd>) {
 			if (!grep m/$searchtext/i, $commit_text) {
 				next;
 			}
-			if ($author_search && !grep m/\nauthor .*$searchtext/i, $commit_text) {
+			if ($searchtype eq 'author' && !grep m/\nauthor .*$searchtext/i, $commit_text) {
 				next;
 			}
-			if ($committer_search && !grep m/\ncommitter .*$searchtext/i, $commit_text) {
+			if ($searchtype eq 'committer' && !grep m/\ncommitter .*$searchtext/i, $commit_text) {
 				next;
 			}
 			my @commit_lines = split "\n", $commit_text;
@@ -3615,7 +3655,7 @@ sub git_search {
 		close $fd;
 	}
 
-	if ($pickaxe_search) {
+	if ($searchtype eq 'pickaxe') {
 		$/ = "\n";
 		my $git_command = git_cmd_str();
 		open my $fd, "-|", "$git_command rev-list $hash | " .
@@ -3672,6 +3712,31 @@ sub git_search {
 		close $fd;
 	}
 	print "</table>\n";
+	git_footer_html();
+}
+
+sub git_search_help {
+	git_header_html();
+	git_print_page_nav('','', $hash,$hash,$hash);
+	print <<EOT;
+<dl>
+<dt><b>commit</b></dt>
+<dd>The commit messages and authorship information will be scanned for the given string.</dd>
+<dt><b>author</b></dt>
+<dd>Name and e-mail of the change author and date of birth of the patch will be scanned for the given string.</dd>
+<dt><b>committer</b></dt>
+<dd>Name and e-mail of the committer and date of commit will be scanned for the given string.</dd>
+EOT
+	my ($have_pickaxe) = gitweb_check_feature('pickaxe');
+	if ($have_pickaxe) {
+		print <<EOT;
+<dt><b>pickaxe</b></dt>
+<dd>All commits that caused the string to appear or disappear from any file (changes that
+added, removed or "modified" the string) will be listed. This search can take a while and
+takes a lot of strain on the server, so please use it wisely.</dd>
+EOT
+	}
+	print "</dl>\n";
 	git_footer_html();
 }
 
@@ -3783,7 +3848,7 @@ sub git_opml {
 <?xml version="1.0" encoding="utf-8"?>
 <opml version="1.0">
 <head>
-  <title>$site_name Git OPML Export</title>
+  <title>$site_name OPML Export</title>
 </head>
 <body>
 <outline text="git RSS feeds">
