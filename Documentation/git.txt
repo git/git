@@ -562,6 +562,9 @@ HEAD::
 	a valid head 'name'
 	(i.e. the contents of `$GIT_DIR/refs/heads/<head>`).
 
+For a more complete list of ways to spell object names, see
+"SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
+
 
 File/Directory Structure
 ------------------------
