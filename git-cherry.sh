@@ -12,8 +12,8 @@ LONG_USAGE='             __*__*__*__*__> <upstream>
 Each commit between the fork-point (or <limit> if given) and <head> is
 examined, and compared against the change each commit between the
 fork-point and <upstream> introduces.  If the change seems to be in
-the upstream, it is shown on the standard output with prefix "+".
-Otherwise it is shown with prefix "-".'
+the upstream, it is shown on the standard output with prefix "-".
+Otherwise it is shown with prefix "+".'
 . git-sh-setup
 
 case "$1" in -v) verbose=t; shift ;; esac 
