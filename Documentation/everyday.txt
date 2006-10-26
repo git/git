@@ -358,7 +358,7 @@ Run git-daemon to serve /pub/scm from inetd.::
 ------------
 $ grep git /etc/inetd.conf
 git	stream	tcp	nowait	nobody \
-  /usr/bin/git-daemon git-daemon --inetd --syslog --export-all /pub/scm
+  /usr/bin/git-daemon git-daemon --inetd --export-all /pub/scm
 ------------
 +
 The actual configuration line should be on one line.
@@ -378,7 +378,7 @@ service git
         wait            = no
         user            = nobody
         server          = /usr/bin/git-daemon
-        server_args     = --inetd --syslog --export-all --base-path=/pub/scm
+        server_args     = --inetd --export-all --base-path=/pub/scm
         log_on_failure  += USERID
 }
 ------------

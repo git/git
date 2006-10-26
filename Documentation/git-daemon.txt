@@ -165,8 +165,7 @@ git-daemon as inetd server::
 +
 ------------------------------------------------
 	git stream tcp nowait nobody  /usr/bin/git-daemon
-		git-daemon --inetd --verbose
-		--syslog --export-all
+		git-daemon --inetd --verbose --export-all
 		/pub/foo /pub/bar
 ------------------------------------------------
 
@@ -179,8 +178,7 @@ git-daemon as inetd server for virtual hosts::
 +
 ------------------------------------------------
 	git stream tcp nowait nobody /usr/bin/git-daemon
-		git-daemon --inetd --verbose
-		--syslog --export-all
+		git-daemon --inetd --verbose --export-all
 		--interpolated-path=/pub/%H%D
 		/pub/www.example.org/software
 		/pub/www.example.com/software
