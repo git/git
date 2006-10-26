@@ -491,7 +491,11 @@ static void show_parent_lno(struct sline *sline, unsigned long l0, unsigned long
 
 static int hunk_comment_line(const char *bol)
 {
-	int ch = *bol & 0xff;
+	int ch;
+
+	if (!bol)
+		return 0;
+	ch = *bol & 0xff;
 	return (isalpha(ch) || ch == '_' || ch == '$');
 }
 
