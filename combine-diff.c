@@ -489,6 +489,12 @@ static void show_parent_lno(struct sline *sline, unsigned long l0, unsigned long
 	printf(" -%lu,%lu", l0, l1-l0);
 }
 
+static int hunk_comment_line(const char *bol)
+{
+	int ch = *bol & 0xff;
+	return (isalpha(ch) || ch == '_' || ch == '$');
+}
+
 static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 		       int use_color)
 {
@@ -508,8 +514,13 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 		struct sline *sl = &sline[lno];
 		unsigned long hunk_end;
 		unsigned long rlines;
-		while (lno <= cnt && !(sline[lno].flag & mark))
+		const char *hunk_comment = NULL;
+
+		while (lno <= cnt && !(sline[lno].flag & mark)) {
+			if (hunk_comment_line(sline[lno].bol))
+				hunk_comment = sline[lno].bol;
 			lno++;
+		}
 		if (cnt < lno)
 			break;
 		else {
@@ -526,6 +537,22 @@ static void dump_sline(struct sline *sline, unsigned long cnt, int num_parent,
 			show_parent_lno(sline, lno, hunk_end, i);
 		printf(" +%lu,%lu ", lno+1, rlines);
 		for (i = 0; i <= num_parent; i++) putchar(combine_marker);
+
+		if (hunk_comment) {
+			int comment_end = 0;
+			for (i = 0; i < 40; i++) {
+				int ch = hunk_comment[i] & 0xff;
+				if (!ch || ch == '\n')
+					break;
+				if (!isspace(ch))
+				    comment_end = i;
+			}
+			if (comment_end)
+				putchar(' ');
+			for (i = 0; i < comment_end; i++)
+				putchar(hunk_comment[i]);
+		}
+
 		printf("%s\n", c_reset);
 		while (lno < hunk_end) {
 			struct lline *ll;
@@ -707,6 +734,8 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		int use_color = opt->color_diff;
 		const char *c_meta = diff_get_color(use_color, DIFF_METAINFO);
 		const char *c_reset = diff_get_color(use_color, DIFF_RESET);
+		int added = 0;
+		int deleted = 0;
 
 		if (rev->loginfo)
 			show_log(rev, opt->msg_sep);
@@ -722,7 +751,10 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		printf("..%s%s\n", abb, c_reset);
 
 		if (mode_differs) {
-			int added = !!elem->mode;
+			deleted = !elem->mode;
+
+			/* We say it was added if nobody had it */
+			added = !deleted;
 			for (i = 0; added && i < num_parent; i++)
 				if (elem->parent[i].status !=
 				    DIFF_STATUS_ADDED)
@@ -731,7 +763,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 				printf("%snew file mode %06o",
 				       c_meta, elem->mode);
 			else {
-				if (!elem->mode)
+				if (deleted)
 					printf("%sdeleted file ", c_meta);
 				printf("mode ");
 				for (i = 0; i < num_parent; i++) {
@@ -743,8 +775,14 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			}
 			printf("%s\n", c_reset);
 		}
-		dump_quoted_path("--- a/", elem->path, c_meta, c_reset);
-		dump_quoted_path("+++ b/", elem->path, c_meta, c_reset);
+		if (added)
+			dump_quoted_path("--- /dev/", "null", c_meta, c_reset);
+		else
+			dump_quoted_path("--- a/", elem->path, c_meta, c_reset);
+		if (deleted)
+			dump_quoted_path("+++ /dev/", "null", c_meta, c_reset);
+		else
+			dump_quoted_path("+++ b/", elem->path, c_meta, c_reset);
 		dump_sline(sline, cnt, num_parent, opt->color_diff);
 	}
 	free(result);

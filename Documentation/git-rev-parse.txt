@@ -122,14 +122,30 @@ blobs contained in a commit.
   your repository whose object name starts with dae86e.
 
 * An output from `git-describe`; i.e. a closest tag, followed by a
-  dash, a 'g', and an abbreviated object name.
+  dash, a `g`, and an abbreviated object name.
 
 * A symbolic ref name.  E.g. 'master' typically means the commit
   object referenced by $GIT_DIR/refs/heads/master.  If you
   happen to have both heads/master and tags/master, you can
   explicitly say 'heads/master' to tell git which one you mean.
+  When ambiguous, a `<name>` is disambiguated by taking the
+  first match in the following rules:
 
-* A suffix '@' followed by a date specification enclosed in a brace
+  . if `$GIT_DIR/<name>` exists, that is what you mean (this is usually
+    useful only for `HEAD`, `FETCH_HEAD` and `MERGE_HEAD`);
+
+  . otherwise, `$GIT_DIR/refs/<name>` if exists;
+
+  . otherwise, `$GIT_DIR/refs/tags/<name>` if exists;
+
+  . otherwise, `$GIT_DIR/refs/heads/<name>` if exists;
+
+  . otherwise, `$GIT_DIR/refs/remotes/<name>` if exists;
+
+  . otherwise, `$GIT_DIR/refs/remotes/<name>/HEAD` if exists.
+
+* A ref followed by the suffix '@' with a date specification
+  enclosed in a brace
   pair (e.g. '\{yesterday\}', '\{1 month 2 weeks 3 days 1 hour 1
   second ago\}' or '\{1979-02-26 18:30:00\}') to specify the value
   of the ref at a prior point in time.  This suffix may only be
@@ -146,8 +162,9 @@ blobs contained in a commit.
 * A suffix '{tilde}<n>' to a revision parameter means the commit
   object that is the <n>th generation grand-parent of the named
   commit object, following only the first parent.  I.e. rev~3 is
-  equivalent to rev{caret}{caret}{caret} which is equivalent to\
-  rev{caret}1{caret}1{caret}1.
+  equivalent to rev{caret}{caret}{caret} which is equivalent to
+  rev{caret}1{caret}1{caret}1.  See below for a illustration of
+  the usage of this form.
 
 * A suffix '{caret}' followed by an object type name enclosed in
   brace pair (e.g. `v0.99.8{caret}\{commit\}`) means the object
