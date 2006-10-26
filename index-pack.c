@@ -456,11 +456,12 @@ static void parse_pack_objects(unsigned char *sha1)
 	SHA1_Final(sha1, &input_ctx);
 	if (hashcmp(fill(20), sha1))
 		die("pack is corrupted (SHA1 mismatch)");
+	use(20);
 
 	/* If input_fd is a file, we should have reached its end now. */
 	if (fstat(input_fd, &st))
 		die("cannot fstat packfile: %s", strerror(errno));
-	if (S_ISREG(st.st_mode) && st.st_size != consumed_bytes + 20)
+	if (S_ISREG(st.st_mode) && st.st_size != consumed_bytes)
 		die("pack has junk at the end");
 
 	if (!nr_deltas)
@@ -765,6 +766,18 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		if (err)
 			die("error while closing pack file: %s", strerror(errno));
 		chmod(curr_pack_name, 0444);
+
+		/*
+		 * Let's just mimic git-unpack-objects here and write
+		 * the last part of the buffer to stdout.
+		 */
+		while (input_len) {
+			err = xwrite(1, input_buffer + input_offset, input_len);
+			if (err <= 0)
+				break;
+			input_len -= err;
+			input_offset += err;
+		}
 	}
 
 	if (final_pack_name != curr_pack_name) {
@@ -863,7 +876,6 @@ int main(int argc, char **argv)
 			    nr_deltas - nr_resolved_deltas);
 	} else {
 		/* Flush remaining pack final 20-byte SHA1. */
-		use(20);
 		flush();
 	}
 	free(deltas);
@@ -872,7 +884,8 @@ int main(int argc, char **argv)
 	free(objects);
 	free(index_name_buf);
 
-	printf("%s\n", sha1_to_hex(sha1));
+	if (!from_stdin)
+		printf("%s\n", sha1_to_hex(sha1));
 
 	return 0;
 }
