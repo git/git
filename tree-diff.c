@@ -215,6 +215,24 @@ int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const cha
 	return retval;
 }
 
+int diff_root_tree_sha1(const unsigned char *new, const char *base, struct diff_options *opt)
+{
+	int retval;
+	void *tree;
+	struct tree_desc empty, real;
+
+	tree = read_object_with_reference(new, tree_type, &real.size, NULL);
+	if (!tree)
+		die("unable to read root tree (%s)", sha1_to_hex(new));
+	real.buf = tree;
+
+	empty.size = 0;
+	empty.buf = "";
+	retval = diff_tree(&empty, &real, base, opt);
+	free(tree);
+	return retval;
+}
+
 static int count_paths(const char **paths)
 {
 	int i = 0;
