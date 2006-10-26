@@ -212,9 +212,9 @@ copying detection) are designed to work with diff of two
        --- a/file
        +++ b/file
 +
-Contrary to two-line header for traditional 'unified' diff
-format, and similar to filenames in ordinary "diff header",
-/dev/null is not used for creation or deletion.
+Similar to two-line header for traditional 'unified' diff
+format, `/dev/null` is used to signal created or deleted
+files.
 
 4.   Chunk header format is modified to prevent people from
      accidentally feeding it to `patch -p1`. Combined diff format
