@@ -491,7 +491,11 @@ static void show_parent_lno(struct sline *sline, unsigned long l0, unsigned long
 
 static int hunk_comment_line(const char *bol)
 {
-	int ch = *bol & 0xff;
+	int ch;
+
+	if (!bol)
+		return 0;
+	ch = *bol & 0xff;
 	return (isalpha(ch) || ch == '_' || ch == '$');
 }
 
@@ -737,7 +741,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		int added = 0;
 		int deleted = 0;
 
-		if (rev->loginfo)
+		if (rev->loginfo && !rev->no_commit_id)
 			show_log(rev, opt->msg_sep);
 		dump_quoted_path(dense ? "diff --cc " : "diff --combined ",
 				 elem->path, c_meta, c_reset);
@@ -815,7 +819,7 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, struct re
 	if (!line_termination)
 		inter_name_termination = 0;
 
-	if (rev->loginfo)
+	if (rev->loginfo && !rev->no_commit_id)
 		show_log(rev, opt->msg_sep);
 
 	if (opt->output_format & DIFF_FORMAT_RAW) {
@@ -887,7 +891,7 @@ void diff_tree_combined(const unsigned char *sha1,
 	diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diffopts.recursive = 1;
 
-	show_log_first = !!rev->loginfo;
+	show_log_first = !!rev->loginfo && !rev->no_commit_id;
 	needsep = 0;
 	/* find set of paths that everybody touches */
 	for (i = 0; i < num_parent; i++) {
