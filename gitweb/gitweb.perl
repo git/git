@@ -3133,13 +3133,11 @@ sub git_commit {
 	if (!defined $parent) {
 		$parent = "--root";
 	}
-	open my $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts, $parent, $hash
+	open my $fd, "-|", git_cmd(), "diff-tree", '-r', "--no-commit-id",
+		@diff_opts, $parent, $hash
 		or die_error(undef, "Open git-diff-tree failed");
 	my @difftree = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading git-diff-tree failed");
-
-	# filter out commit ID output
-	@difftree = grep(!/^[0-9a-fA-F]{40}$/, @difftree);
 
 	# non-textual hash id's can be cached
 	my $expires;
@@ -3411,15 +3409,14 @@ sub git_commitdiff {
 	my @difftree;
 	if ($format eq 'html') {
 		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
+			"--no-commit-id",
 			"--patch-with-raw", "--full-index", $hash_parent, $hash
 			or die_error(undef, "Open git-diff-tree failed");
 
 		while (chomp(my $line = <$fd>)) {
 			# empty line ends raw part of diff-tree output
 			last unless $line;
-			# filter out commit ID output
-			push @difftree, $line
-				unless $line =~ m/^[0-9a-fA-F]{40}$/;
+			push @difftree, $line;
 		}
 
 	} elsif ($format eq 'plain') {
