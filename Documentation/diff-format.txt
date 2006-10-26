@@ -144,8 +144,10 @@ the file that rename/copy produces, respectively.
        dissimilarity index <number>
        index <hash>..<hash> <mode>
 
-3.  TAB, LF, and backslash characters in pathnames are
-    represented as `\t`, `\n`, and `\\`, respectively.
+3.  TAB, LF, double quote and backslash characters in pathnames
+    are represented as `\t`, `\n`, `\"` and `\\`, respectively.
+    If there is need for such substitution then the whole
+    pathname is put in double quotes.
 
 
 combined diff format
