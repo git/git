@@ -80,7 +80,7 @@ our $strict_export = "++GITWEB_STRICT_EXPORT++";
 
 # list of git base URLs used for URL to where fetch project from,
 # i.e. full URL is "$git_base_url/$project"
-our @git_base_url_list = ("++GITWEB_BASE_URL++");
+our @git_base_url_list = grep { $_ ne '' } ("++GITWEB_BASE_URL++");
 
 # default blob_plain mimetype and default charset for text/plain blob
 our $default_blob_plain_mimetype = 'text/plain';
