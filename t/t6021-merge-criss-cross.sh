@@ -10,12 +10,6 @@
 test_description='Test criss-cross merge'
 . ./test-lib.sh
 
-if test "$no_python"; then
-	echo "Skipping: no python => no recursive merge"
-	test_done
-	exit 0
-fi
-
 test_expect_success 'prepare repository' \
 'echo "1
 2
