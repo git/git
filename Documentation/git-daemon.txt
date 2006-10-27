@@ -37,6 +37,8 @@ from `git-fetch`, `git-ls-remote`, and `git-clone`.
 This is ideally suited for read-only updates, i.e., pulling from
 git repositories.
 
+An `upload-archive` also exists to serve `git-archive`.
+
 OPTIONS
 -------
 --strict-paths::
@@ -154,6 +156,9 @@ upload-pack::
 	clients.  It is enabled by default, but a repository can
 	disable it by setting `daemon.uploadpack` configuration
 	item to `false`.
+
+upload-archive::
+	This serves `git-archive --remote`.
 
 EXAMPLES
 --------
