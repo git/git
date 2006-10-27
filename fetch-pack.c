@@ -518,8 +518,6 @@ int main(int argc, char **argv)
 	}
 	if (!dest)
 		usage(fetch_pack_usage);
-	if (keep_pack)
-		use_thin_pack = 0;
 	pid = git_connect(fd, dest, exec);
 	if (pid < 0)
 		return 1;
