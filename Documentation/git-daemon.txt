@@ -162,6 +162,13 @@ upload-archive::
 
 EXAMPLES
 --------
+We assume the following in /etc/services::
++
+------------
+$ grep 9418 /etc/services
+git		9418/tcp		# Git Version Control System
+------------
+
 git-daemon as inetd server::
 	To set up `git-daemon` as an inetd service that handles any
 	repository under the whitelisted set of directories, /pub/foo
