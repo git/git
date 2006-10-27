@@ -105,7 +105,7 @@ static void flush()
  * Make sure at least "min" bytes are available in the buffer, and
  * return the pointer to the buffer.
  */
-static void * fill(int min)
+static void *fill(int min)
 {
 	if (min <= input_len)
 		return input_buffer + input_offset;
@@ -134,7 +134,7 @@ static void use(int bytes)
 	consumed_bytes += bytes;
 }
 
-static const char * open_pack_file(const char *pack_name)
+static const char *open_pack_file(const char *pack_name)
 {
 	if (from_stdin) {
 		input_fd = 0;
@@ -275,7 +275,7 @@ static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_
 	return unpack_entry_data(obj->offset, obj->size);
 }
 
-static void * get_data_from_pack(struct object_entry *obj)
+static void *get_data_from_pack(struct object_entry *obj)
 {
 	unsigned long from = obj[0].offset + obj[0].hdr_size;
 	unsigned long len = obj[1].offset - from;
@@ -324,8 +324,8 @@ static int find_delta(const union delta_base *base)
         return -first-1;
 }
 
-static int find_delta_childs(const union delta_base *base,
-			     int *first_index, int *last_index)
+static int find_delta_children(const union delta_base *base,
+			       int *first_index, int *last_index)
 {
 	int first = find_delta(base);
 	int last = first;
@@ -389,7 +389,7 @@ static void resolve_delta(struct object_entry *delta_obj, void *base_data,
 	nr_resolved_deltas++;
 
 	hashcpy(delta_base.sha1, delta_obj->sha1);
-	if (!find_delta_childs(&delta_base, &first, &last)) {
+	if (!find_delta_children(&delta_base, &first, &last)) {
 		for (j = first; j <= last; j++) {
 			struct object_entry *child = objects + deltas[j].obj_no;
 			if (child->real_type == OBJ_REF_DELTA)
@@ -399,7 +399,7 @@ static void resolve_delta(struct object_entry *delta_obj, void *base_data,
 
 	memset(&delta_base, 0, sizeof(delta_base));
 	delta_base.offset = delta_obj->offset;
-	if (!find_delta_childs(&delta_base, &first, &last)) {
+	if (!find_delta_children(&delta_base, &first, &last)) {
 		for (j = first; j <= last; j++) {
 			struct object_entry *child = objects + deltas[j].obj_no;
 			if (child->real_type == OBJ_OFS_DELTA)
@@ -429,7 +429,7 @@ static void parse_pack_objects(unsigned char *sha1)
 	 * First pass:
 	 * - find locations of all objects;
 	 * - calculate SHA1 of all non-delta objects;
-	 * - remember base SHA1 for all deltas.
+	 * - remember base (SHA1 or offset) for all deltas.
 	 */
 	if (verbose)
 		fprintf(stderr, "Indexing %d objects.\n", nr_objects);
@@ -489,10 +489,10 @@ static void parse_pack_objects(unsigned char *sha1)
 		if (obj->type == OBJ_REF_DELTA || obj->type == OBJ_OFS_DELTA)
 			continue;
 		hashcpy(base.sha1, obj->sha1);
-		ref = !find_delta_childs(&base, &ref_first, &ref_last);
+		ref = !find_delta_children(&base, &ref_first, &ref_last);
 		memset(&base, 0, sizeof(base));
 		base.offset = obj->offset;
-		ofs = !find_delta_childs(&base, &ofs_first, &ofs_last);
+		ofs = !find_delta_children(&base, &ofs_first, &ofs_last);
 		if (!ref && !ofs)
 			continue;
 		data = get_data_from_pack(obj);
@@ -615,7 +615,7 @@ static void fix_unresolved_deltas(int nr_unresolved)
 		else die("base object %s is of type '%s'",
 			 sha1_to_hex(d->base.sha1), type);
 
-		find_delta_childs(&d->base, &first, &last);
+		find_delta_children(&d->base, &first, &last);
 		for (j = first; j <= last; j++) {
 			struct object_entry *child = objects + deltas[j].obj_no;
 			if (child->real_type == OBJ_REF_DELTA)
@@ -675,7 +675,7 @@ static int sha1_compare(const void *_a, const void *_b)
  * On entry *sha1 contains the pack content SHA1 hash, on exit it is
  * the SHA1 hash of sorted object names.
  */
-static const char * write_index_file(const char *index_name, unsigned char *sha1)
+static const char *write_index_file(const char *index_name, unsigned char *sha1)
 {
 	struct sha1file *f;
 	struct object_entry **sorted_by_sha, **list, **last;
