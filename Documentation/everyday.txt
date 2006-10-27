@@ -353,6 +353,13 @@ example of managing a shared central repository.
 
 Examples
 ~~~~~~~~
+We assume the following in /etc/services::
++
+------------
+$ grep 9418 /etc/services
+git		9418/tcp		# Git Version Control System
+------------
+
 Run git-daemon to serve /pub/scm from inetd.::
 +
 ------------

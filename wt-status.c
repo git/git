@@ -70,25 +70,25 @@ static void wt_status_print_filepair(int t, struct diff_filepair *p)
 	color_printf(color(WT_STATUS_HEADER), "#\t");
 	switch (p->status) {
 	case DIFF_STATUS_ADDED:
-		color_printf(c, "new file: %s", p->one->path); break;
+		color_printf(c, "new file:   %s", p->one->path); break;
 	case DIFF_STATUS_COPIED:
-		color_printf(c, "copied: %s -> %s",
+		color_printf(c, "copied:     %s -> %s",
 				p->one->path, p->two->path);
 		break;
 	case DIFF_STATUS_DELETED:
-		color_printf(c, "deleted: %s", p->one->path); break;
+		color_printf(c, "deleted:    %s", p->one->path); break;
 	case DIFF_STATUS_MODIFIED:
-		color_printf(c, "modified: %s", p->one->path); break;
+		color_printf(c, "modified:   %s", p->one->path); break;
 	case DIFF_STATUS_RENAMED:
-		color_printf(c, "renamed: %s -> %s",
+		color_printf(c, "renamed:    %s -> %s",
 				p->one->path, p->two->path);
 		break;
 	case DIFF_STATUS_TYPE_CHANGED:
 		color_printf(c, "typechange: %s", p->one->path); break;
 	case DIFF_STATUS_UNKNOWN:
-		color_printf(c, "unknown: %s", p->one->path); break;
+		color_printf(c, "unknown:    %s", p->one->path); break;
 	case DIFF_STATUS_UNMERGED:
-		color_printf(c, "unmerged: %s", p->one->path); break;
+		color_printf(c, "unmerged:   %s", p->one->path); break;
 	default:
 		die("bug: unhandled diff status %c", p->status);
 	}
