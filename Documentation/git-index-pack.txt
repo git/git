@@ -8,7 +8,8 @@ git-index-pack - Build pack index file for an existing packed archive
 
 SYNOPSIS
 --------
-'git-index-pack' [-o <index-file>] { <pack-file> | --stdin [<pack-file>] }
+'git-index-pack' [-v] [-o <index-file>] <pack-file>
+'git-index-pack' --stdin [--fix-thin] [-v] [-o <index-file>] [<pack-file>]
 
 
 DESCRIPTION
@@ -21,6 +22,9 @@ objects/pack/ directory of a git repository.
 
 OPTIONS
 -------
+-v::
+	Be verbose about what is going on, including progress status.
+
 -o <index-file>::
 	Write the generated pack index into the specified
 	file.  Without this option the name of pack index
@@ -35,6 +39,17 @@ OPTIONS
 	<pack-file> is not specified, the pack is written to
 	objects/pack/ directory of the current git repository with
 	a default name determined from the pack content.
+
+--fix-thin::
+	It is possible for gitlink:git-pack-objects[1] to build
+	"thin" pack, which records objects in deltified form based on
+	objects not included in the pack to reduce network traffic.
+	Those objects are expected to be present on the receiving end
+	and they must be included in the pack for that pack to be self
+	contained and indexable. Without this option any attempt to
+	index a thin pack will fail. This option only makes sense in
+	conjonction with --stdin.
+
 
 Author
 ------
