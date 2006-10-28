@@ -101,6 +101,23 @@ __git_complete_file ()
 	esac
 }
 
+__git_aliases ()
+{
+	git repo-config --list | grep '^alias\.' \
+		| sed -e 's/^alias\.//' -e 's/=.*$//'
+}
+
+__git_aliased_command ()
+{
+	local cmdline=$(git repo-config alias.$1)
+	for word in $cmdline; do
+		if [ "${word##-*}" ]; then
+			echo $word
+			return
+		fi
+	done
+}
+
 _git_branch ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -264,10 +281,18 @@ _git ()
 {
 	if [ $COMP_CWORD = 1 ]; then
 		COMPREPLY=($(compgen \
-			-W "--version $(git help -a|egrep '^ ')" \
+			-W "--version $(git help -a|egrep '^ ') \
+			    $(__git_aliases)" \
 			-- "${COMP_WORDS[COMP_CWORD]}"))
 	else
-		case "${COMP_WORDS[1]}" in
+		local command="${COMP_WORDS[1]}"
+		local expansion=$(__git_aliased_command "$command")
+
+		if [ "$expansion" ]; then
+			command="$expansion"
+		fi
+
+		case "$command" in
 		branch)      _git_branch ;;
 		cat-file)    _git_cat_file ;;
 		checkout)    _git_checkout ;;
