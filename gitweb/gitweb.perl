@@ -51,12 +51,8 @@ our $site_footer = "++GITWEB_SITE_FOOTER++";
 
 # URI of stylesheets
 our @stylesheets = ("++GITWEB_CSS++");
-our $stylesheet;
-# default is not to define style sheet, but it can be overwritten later
-undef $stylesheet;
-
-# URI of default stylesheet
-our $stylesheet = "++GITWEB_CSS++";
+# URI of a single stylesheet, which can be overridden in GITWEB_CONFIG.
+our $stylesheet = undef;
 # URI of GIT logo (72x27 size)
 our $logo = "++GITWEB_LOGO++";
 # URI of GIT favicon, assumed to be image/png type
