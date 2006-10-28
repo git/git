@@ -59,6 +59,8 @@ static struct {
 	{ "taggername" },
 	{ "taggeremail" },
 	{ "taggerdate", FIELD_TIME },
+	{ "creator" },
+	{ "creatordate", FIELD_TIME },
 	{ "subject" },
 	{ "body" },
 	{ "contents" },
@@ -400,6 +402,29 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 			v->s = copy_email(wholine);
 		else if (!strcmp(name + wholen, "date"))
 			grab_date(wholine, v);
+	}
+
+	/* For a tag or a commit object, if "creator" or "creatordate" is
+	 * requested, do something special.
+	 */
+	if (strcmp(who, "tagger") && strcmp(who, "committer"))
+		return; /* "author" for commit object is not wanted */
+	if (!wholine)
+		wholine = find_wholine(who, wholen, buf, sz);
+	if (!wholine)
+		return;
+	for (i = 0; i < used_atom_cnt; i++) {
+		const char *name = used_atom[i];
+		struct atom_value *v = &val[i];
+		if (!!deref != (*name == '*'))
+			continue;
+		if (deref)
+			name++;
+
+		if (!strcmp(name, "creatordate"))
+			grab_date(wholine, v);
+		else if (!strcmp(name, "creator"))
+			v->s = copy_line(wholine);
 	}
 }
 
