@@ -160,6 +160,9 @@ gitlink:git-diff-stages[1]::
 gitlink:git-diff-tree[1]::
 	Compares the content and mode of blobs found via two tree objects.
 
+gitlink:git-for-each-ref[1]::
+	Output information on each ref.
+
 gitlink:git-fsck-objects[1]::
 	Verifies the connectivity and validity of the objects in the database.
 
