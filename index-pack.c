@@ -10,7 +10,7 @@
 #include <signal.h>
 
 static const char index_pack_usage[] =
-"git-index-pack [-v] [-o <index-file>] { <pack-file> | --stdin [--fix-thin] [<pack-file>] }";
+"git-index-pack [-v] [-o <index-file>] [{ ---keep | --keep=<msg> }] { <pack-file> | --stdin [--fix-thin] [<pack-file>] }";
 
 struct object_entry
 {
@@ -754,6 +754,7 @@ static const char *write_index_file(const char *index_name, unsigned char *sha1)
 
 static void final(const char *final_pack_name, const char *curr_pack_name,
 		  const char *final_index_name, const char *curr_index_name,
+		  const char *keep_name, const char *keep_msg,
 		  unsigned char *sha1)
 {
 	char name[PATH_MAX];
@@ -778,6 +779,23 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 			input_len -= err;
 			input_offset += err;
 		}
+	}
+
+	if (keep_msg) {
+		int keep_fd, keep_msg_len = strlen(keep_msg);
+		if (!keep_name) {
+			snprintf(name, sizeof(name), "%s/pack/pack-%s.keep",
+				 get_object_directory(), sha1_to_hex(sha1));
+			keep_name = name;
+		}
+		keep_fd = open(keep_name, O_RDWR | O_CREAT, 0600);
+		if (keep_fd < 0)
+			die("cannot write keep file");
+		if (keep_msg_len > 0) {
+			write_or_die(keep_fd, keep_msg, keep_msg_len);
+			write_or_die(keep_fd, "\n", 1);
+		}
+		close(keep_fd);
 	}
 
 	if (final_pack_name != curr_pack_name) {
@@ -807,7 +825,8 @@ int main(int argc, char **argv)
 	int i, fix_thin_pack = 0;
 	const char *curr_pack, *pack_name = NULL;
 	const char *curr_index, *index_name = NULL;
-	char *index_name_buf = NULL;
+	const char *keep_name = NULL, *keep_msg = NULL;
+	char *index_name_buf = NULL, *keep_name_buf = NULL;
 	unsigned char sha1[20];
 
 	for (i = 1; i < argc; i++) {
@@ -818,6 +837,10 @@ int main(int argc, char **argv)
 				from_stdin = 1;
 			} else if (!strcmp(arg, "--fix-thin")) {
 				fix_thin_pack = 1;
+			} else if (!strcmp(arg, "--keep")) {
+				keep_msg = "";
+			} else if (!strncmp(arg, "--keep=", 7)) {
+				keep_msg = arg + 7;
 			} else if (!strcmp(arg, "-v")) {
 				verbose = 1;
 			} else if (!strcmp(arg, "-o")) {
@@ -847,6 +870,16 @@ int main(int argc, char **argv)
 		memcpy(index_name_buf, pack_name, len - 5);
 		strcpy(index_name_buf + len - 5, ".idx");
 		index_name = index_name_buf;
+	}
+	if (keep_msg && !keep_name && pack_name) {
+		int len = strlen(pack_name);
+		if (!has_extension(pack_name, ".pack"))
+			die("packfile name '%s' does not end with '.pack'",
+			    pack_name);
+		keep_name_buf = xmalloc(len);
+		memcpy(keep_name_buf, pack_name, len - 5);
+		strcpy(keep_name_buf + len - 5, ".keep");
+		keep_name = keep_name_buf;
 	}
 
 	curr_pack = open_pack_file(pack_name);
@@ -880,9 +913,13 @@ int main(int argc, char **argv)
 	}
 	free(deltas);
 	curr_index = write_index_file(index_name, sha1);
-	final(pack_name, curr_pack, index_name, curr_index, sha1);
+	final(pack_name, curr_pack,
+		index_name, curr_index,
+		keep_name, keep_msg,
+		sha1);
 	free(objects);
 	free(index_name_buf);
+	free(keep_name_buf);
 
 	if (!from_stdin)
 		printf("%s\n", sha1_to_hex(sha1));

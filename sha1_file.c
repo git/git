@@ -1310,7 +1310,7 @@ static void *read_packed_sha1(const unsigned char *sha1, char *type, unsigned lo
 	return unpack_entry(&e, type, size);
 }
 
-void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
+void *read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
 {
 	unsigned long mapsize;
 	void *map, *buf;
@@ -1775,7 +1775,10 @@ int has_sha1_file(const unsigned char *sha1)
 
 	if (find_pack_entry(sha1, &e, NULL))
 		return 1;
-	return find_sha1_file(sha1, &st) ? 1 : 0;
+	if (find_sha1_file(sha1, &st))
+		return 1;
+	reprepare_packed_git();
+	return find_pack_entry(sha1, &e, NULL);
 }
 
 /*

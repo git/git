@@ -6,13 +6,14 @@
 #include "exec_cmd.h"
 
 static const char send_pack_usage[] =
-"git-send-pack [--all] [--exec=git-receive-pack] <remote> [<head>...]\n"
+"git-send-pack [--all] [--keep] [--exec=git-receive-pack] <remote> [<head>...]\n"
 "  --all and explicit <head> specification are mutually exclusive.";
 static const char *exec = "git-receive-pack";
 static int verbose;
 static int send_all;
 static int force_update;
 static int use_thin_pack;
+static int keep_pack;
 
 static int is_zero_sha1(const unsigned char *sha1)
 {
@@ -270,6 +271,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	int new_refs;
 	int ret = 0;
 	int ask_for_status_report = 0;
+	int ask_to_keep_pack = 0;
 	int expect_status_report = 0;
 
 	/* No funny business with the matcher */
@@ -279,6 +281,8 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	/* Does the other end support the reporting? */
 	if (server_supports("report-status"))
 		ask_for_status_report = 1;
+	if (server_supports("keep-pack") && keep_pack)
+		ask_to_keep_pack = 1;
 
 	/* match them up */
 	if (!remote_tail)
@@ -355,12 +359,17 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 		strcpy(old_hex, sha1_to_hex(ref->old_sha1));
 		new_hex = sha1_to_hex(ref->new_sha1);
 
-		if (ask_for_status_report) {
-			packet_write(out, "%s %s %s%c%s",
+		if (ask_for_status_report || ask_to_keep_pack) {
+			packet_write(out, "%s %s %s%c%s%s",
 				     old_hex, new_hex, ref->name, 0,
-				     "report-status");
+				     ask_for_status_report
+				     ? " report-status" : "",
+				     ask_to_keep_pack
+				     ? " keep-pack" : "");
+			if (ask_for_status_report)
+				expect_status_report = 1;
 			ask_for_status_report = 0;
-			expect_status_report = 1;
+			ask_to_keep_pack = 0;
 		}
 		else
 			packet_write(out, "%s %s %s",
@@ -417,6 +426,10 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp(arg, "--verbose")) {
 				verbose = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--keep")) {
+				keep_pack = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--thin")) {

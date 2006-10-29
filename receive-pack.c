@@ -8,10 +8,14 @@
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
 static const char *unpacker[] = { "unpack-objects", NULL };
+static const char *keep_packer[] = {
+	"index-pack", "--stdin", "--fix-thin", NULL
+};
 
 static int report_status;
+static int keep_pack;
 
-static char capabilities[] = "report-status";
+static char capabilities[] = "report-status keep-pack";
 static int capabilities_sent;
 
 static int show_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
@@ -201,6 +205,8 @@ static void read_head_info(void)
 		if (reflen + 82 < len) {
 			if (strstr(refname + reflen + 1, "report-status"))
 				report_status = 1;
+			if (strstr(refname + reflen + 1, "keep-pack"))
+				keep_pack = 1;
 		}
 		cmd = xmalloc(sizeof(struct command) + len - 80);
 		hashcpy(cmd->old_sha1, old_sha1);
@@ -215,7 +221,14 @@ static void read_head_info(void)
 
 static const char *unpack(int *error_code)
 {
-	int code = run_command_v_opt(1, unpacker, RUN_GIT_CMD);
+	int code;
+
+	if (keep_pack)
+		code = run_command_v_opt(ARRAY_SIZE(keep_packer) - 1,
+					 keep_packer, RUN_GIT_CMD);
+	else
+		code = run_command_v_opt(ARRAY_SIZE(unpacker) - 1,
+					 unpacker, RUN_GIT_CMD);
 
 	*error_code = 0;
 	switch (code) {
