@@ -3,7 +3,7 @@ git-pull(1)
 
 NAME
 ----
-git-pull - Pull and merge from another repository
+git-pull - Pull and merge from another repository or a local branch
 
 
 SYNOPSIS

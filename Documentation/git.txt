@@ -72,6 +72,246 @@ GIT COMMANDS
 We divide git into high level ("porcelain") commands and low level
 ("plumbing") commands.
 
+High-level commands (porcelain)
+-------------------------------
+
+We separate the porcelain commands into the main commands and some
+ancillary user utilities.
+
+Main porcelain commands
+~~~~~~~~~~~~~~~~~~~~~~~
+
+gitlink:git-add[1]::
+	Add paths to the index.
+
+gitlink:git-am[1]::
+	Apply patches from a mailbox, but cooler.
+
+gitlink:git-applymbox[1]::
+	Apply patches from a mailbox, original version by Linus.
+
+gitlink:git-archive[1]::
+	Creates an archive of files from a named tree.
+
+gitlink:git-bisect[1]::
+	Find the change that introduced a bug by binary search.
+
+gitlink:git-branch[1]::
+	Create and Show branches.
+
+gitlink:git-checkout[1]::
+	Checkout and switch to a branch.
+
+gitlink:git-cherry-pick[1]::
+	Cherry-pick the effect of an existing commit.
+
+gitlink:git-clean[1]::
+	Remove untracked files from the working tree.
+
+gitlink:git-clone[1]::
+	Clones a repository into a new directory.
+
+gitlink:git-commit[1]::
+	Record changes to the repository.
+
+gitlink:git-diff[1]::
+	Show changes between commits, commit and working tree, etc.
+
+gitlink:git-fetch[1]::
+	Download from a remote repository via various protocols.
+
+gitlink:git-format-patch[1]::
+	Prepare patches for e-mail submission.
+
+gitlink:git-grep[1]::
+	Print lines matching a pattern.
+
+gitlink:gitk[1]::
+	The git repository browser.
+
+gitlink:git-log[1]::
+	Shows commit logs.
+
+gitlink:git-ls-remote[1]::
+	Shows references in a remote or local repository.
+
+gitlink:git-merge[1]::
+	Grand unified merge driver.
+
+gitlink:git-mv[1]::
+	Move or rename a file, a directory, or a symlink.
+
+gitlink:git-pull[1]::
+	Fetch from and merge with a remote repository or a local branch.
+
+gitlink:git-push[1]::
+	Update remote refs along with associated objects.
+
+gitlink:git-rebase[1]::
+	Rebase local commits to the updated upstream head.
+
+gitlink:git-repack[1]::
+	Pack unpacked objects in a repository.
+
+gitlink:git-rerere[1]::
+	Reuse recorded resolution of conflicted merges.
+
+gitlink:git-reset[1]::
+	Reset current HEAD to the specified state.
+
+gitlink:git-resolve[1]::
+	Merge two commits.
+
+gitlink:git-revert[1]::
+	Revert an existing commit.
+
+gitlink:git-rm[1]::
+	Remove files from the working tree and from the index.
+
+gitlink:git-shortlog[1]::
+	Summarizes 'git log' output.
+
+gitlink:git-show[1]::
+	Show one commit log and its diff.
+
+gitlink:git-show-branch[1]::
+	Show branches and their commits.
+
+gitlink:git-status[1]::
+	Shows the working tree status.
+
+gitlink:git-verify-tag[1]::
+	Check the GPG signature of tag.
+
+gitlink:git-whatchanged[1]::
+	Shows commit logs and differences they introduce.
+
+
+Ancillary Commands
+~~~~~~~~~~~~~~~~~~
+Manipulators:
+
+gitlink:git-applypatch[1]::
+	Apply one patch extracted from an e-mail.
+
+gitlink:git-archimport[1]::
+	Import an arch repository into git.
+
+gitlink:git-convert-objects[1]::
+	Converts old-style git repository.
+
+gitlink:git-cvsimport[1]::
+	Salvage your data out of another SCM people love to hate.
+
+gitlink:git-cvsexportcommit[1]::
+	Export a single commit to a CVS checkout.
+
+gitlink:git-cvsserver[1]::
+	A CVS server emulator for git.
+
+gitlink:git-lost-found[1]::
+	Recover lost refs that luckily have not yet been pruned.
+
+gitlink:git-merge-one-file[1]::
+	The standard helper program to use with `git-merge-index`.
+
+gitlink:git-prune[1]::
+	Prunes all unreachable objects from the object database.
+
+gitlink:git-quiltimport[1]::
+	Applies a quilt patchset onto the current branch.
+
+gitlink:git-relink[1]::
+	Hardlink common objects in local repositories.
+
+gitlink:git-svn[1]::
+	Bidirectional operation between a single Subversion branch and git.
+
+gitlink:git-svnimport[1]::
+	Import a SVN repository into git.
+
+gitlink:git-sh-setup[1]::
+	Common git shell script setup code.
+
+gitlink:git-symbolic-ref[1]::
+	Read and modify symbolic refs.
+
+gitlink:git-tag[1]::
+	An example script to create a tag object signed with GPG.
+
+gitlink:git-update-ref[1]::
+	Update the object name stored in a ref safely.
+
+
+Interrogators:
+
+gitlink:git-annotate[1]::
+	Annotate file lines with commit info.
+
+gitlink:git-blame[1]::
+	Blame file lines on commits.
+
+gitlink:git-pickaxe[1]::
+	Find out where each line in a file came from.
+
+gitlink:git-check-ref-format[1]::
+	Make sure ref name is well formed.
+
+gitlink:git-cherry[1]::
+	Find commits not merged upstream.
+
+gitlink:git-count-objects[1]::
+	Count unpacked number of objects and their disk consumption.
+
+gitlink:git-daemon[1]::
+	A really simple server for git repositories.
+
+gitlink:git-fmt-merge-msg[1]::
+	Produce a merge commit message.
+
+gitlink:git-get-tar-commit-id[1]::
+	Extract commit ID from an archive created using git-tar-tree.
+
+gitlink:git-imap-send[1]::
+	Dump a mailbox from stdin into an imap folder.
+
+gitlink:git-instaweb[1]::
+	Instantly browse your working repository in gitweb.
+
+gitlink:git-mailinfo[1]::
+	Extracts patch and authorship information from a single
+	e-mail message, optionally transliterating the commit
+	message into utf-8.
+
+gitlink:git-mailsplit[1]::
+	A stupid program to split UNIX mbox format mailbox into
+	individual pieces of e-mail.
+
+gitlink:git-merge-tree[1]::
+	Show three-way merge without touching index.
+
+gitlink:git-patch-id[1]::
+	Compute unique ID for a patch.
+
+gitlink:git-parse-remote[1]::
+	Routines to help parsing `$GIT_DIR/remotes/` files.
+
+gitlink:git-request-pull[1]::
+	git-request-pull.
+
+gitlink:git-rev-parse[1]::
+	Pick out and massage parameters.
+
+gitlink:git-send-email[1]::
+	Send patch e-mails out of "format-patch --mbox" output.
+
+gitlink:git-symbolic-ref[1]::
+	Read and modify symbolic refs.
+
+gitlink:git-stripspace[1]::
+	Filter out empty lines.
+
+
 Low-level commands (plumbing)
 -----------------------------
 
@@ -252,246 +492,6 @@ gitlink:git-upload-archive[1]::
 gitlink:git-upload-pack[1]::
 	Invoked by 'git-fetch-pack' to push
 	what are asked for.
-
-
-High-level commands (porcelain)
--------------------------------
-
-We separate the porcelain commands into the main commands and some
-ancillary user utilities.
-
-Main porcelain commands
-~~~~~~~~~~~~~~~~~~~~~~~
-
-gitlink:git-add[1]::
-	Add paths to the index.
-
-gitlink:git-am[1]::
-	Apply patches from a mailbox, but cooler.
-
-gitlink:git-applymbox[1]::
-	Apply patches from a mailbox, original version by Linus.
-
-gitlink:git-archive[1]::
-	Creates an archive of files from a named tree.
-
-gitlink:git-bisect[1]::
-	Find the change that introduced a bug by binary search.
-
-gitlink:git-branch[1]::
-	Create and Show branches.
-
-gitlink:git-checkout[1]::
-	Checkout and switch to a branch.
-
-gitlink:git-cherry-pick[1]::
-	Cherry-pick the effect of an existing commit.
-
-gitlink:git-clean[1]::
-	Remove untracked files from the working tree.
-
-gitlink:git-clone[1]::
-	Clones a repository into a new directory.
-
-gitlink:git-commit[1]::
-	Record changes to the repository.
-
-gitlink:git-diff[1]::
-	Show changes between commits, commit and working tree, etc.
-
-gitlink:git-fetch[1]::
-	Download from a remote repository via various protocols.
-
-gitlink:git-format-patch[1]::
-	Prepare patches for e-mail submission.
-
-gitlink:git-grep[1]::
-	Print lines matching a pattern.
-
-gitlink:gitk[1]::
-	The git repository browser.
-
-gitlink:git-log[1]::
-	Shows commit logs.
-
-gitlink:git-ls-remote[1]::
-	Shows references in a remote or local repository.
-
-gitlink:git-merge[1]::
-	Grand unified merge driver.
-
-gitlink:git-mv[1]::
-	Move or rename a file, a directory, or a symlink.
-
-gitlink:git-pull[1]::
-	Fetch from and merge with a remote repository.
-
-gitlink:git-push[1]::
-	Update remote refs along with associated objects.
-
-gitlink:git-rebase[1]::
-	Rebase local commits to the updated upstream head.
-
-gitlink:git-repack[1]::
-	Pack unpacked objects in a repository.
-
-gitlink:git-rerere[1]::
-	Reuse recorded resolution of conflicted merges.
-
-gitlink:git-reset[1]::
-	Reset current HEAD to the specified state.
-
-gitlink:git-resolve[1]::
-	Merge two commits.
-
-gitlink:git-revert[1]::
-	Revert an existing commit.
-
-gitlink:git-rm[1]::
-	Remove files from the working tree and from the index.
-
-gitlink:git-shortlog[1]::
-	Summarizes 'git log' output.
-
-gitlink:git-show[1]::
-	Show one commit log and its diff.
-
-gitlink:git-show-branch[1]::
-	Show branches and their commits.
-
-gitlink:git-status[1]::
-	Shows the working tree status.
-
-gitlink:git-verify-tag[1]::
-	Check the GPG signature of tag.
-
-gitlink:git-whatchanged[1]::
-	Shows commit logs and differences they introduce.
-
-
-Ancillary Commands
-~~~~~~~~~~~~~~~~~~
-Manipulators:
-
-gitlink:git-applypatch[1]::
-	Apply one patch extracted from an e-mail.
-
-gitlink:git-archimport[1]::
-	Import an arch repository into git.
-
-gitlink:git-convert-objects[1]::
-	Converts old-style git repository.
-
-gitlink:git-cvsimport[1]::
-	Salvage your data out of another SCM people love to hate.
-
-gitlink:git-cvsexportcommit[1]::
-	Export a single commit to a CVS checkout.
-
-gitlink:git-cvsserver[1]::
-	A CVS server emulator for git.
-
-gitlink:git-lost-found[1]::
-	Recover lost refs that luckily have not yet been pruned.
-
-gitlink:git-merge-one-file[1]::
-	The standard helper program to use with `git-merge-index`.
-
-gitlink:git-prune[1]::
-	Prunes all unreachable objects from the object database.
-
-gitlink:git-quiltimport[1]::
-	Applies a quilt patchset onto the current branch.
-
-gitlink:git-relink[1]::
-	Hardlink common objects in local repositories.
-
-gitlink:git-svn[1]::
-	Bidirectional operation between a single Subversion branch and git.
-
-gitlink:git-svnimport[1]::
-	Import a SVN repository into git.
-
-gitlink:git-sh-setup[1]::
-	Common git shell script setup code.
-
-gitlink:git-symbolic-ref[1]::
-	Read and modify symbolic refs.
-
-gitlink:git-tag[1]::
-	An example script to create a tag object signed with GPG.
-
-gitlink:git-update-ref[1]::
-	Update the object name stored in a ref safely.
-
-
-Interrogators:
-
-gitlink:git-annotate[1]::
-	Annotate file lines with commit info.
-
-gitlink:git-blame[1]::
-	Blame file lines on commits.
-
-gitlink:git-pickaxe[1]::
-	Find out where each line in a file came from.
-
-gitlink:git-check-ref-format[1]::
-	Make sure ref name is well formed.
-
-gitlink:git-cherry[1]::
-	Find commits not merged upstream.
-
-gitlink:git-count-objects[1]::
-	Count unpacked number of objects and their disk consumption.
-
-gitlink:git-daemon[1]::
-	A really simple server for git repositories.
-
-gitlink:git-fmt-merge-msg[1]::
-	Produce a merge commit message.
-
-gitlink:git-get-tar-commit-id[1]::
-	Extract commit ID from an archive created using git-tar-tree.
-
-gitlink:git-imap-send[1]::
-	Dump a mailbox from stdin into an imap folder.
-
-gitlink:git-instaweb[1]::
-	Instantly browse your working repository in gitweb.
-
-gitlink:git-mailinfo[1]::
-	Extracts patch and authorship information from a single
-	e-mail message, optionally transliterating the commit
-	message into utf-8.
-
-gitlink:git-mailsplit[1]::
-	A stupid program to split UNIX mbox format mailbox into
-	individual pieces of e-mail.
-
-gitlink:git-merge-tree[1]::
-	Show three-way merge without touching index.
-
-gitlink:git-patch-id[1]::
-	Compute unique ID for a patch.
-
-gitlink:git-parse-remote[1]::
-	Routines to help parsing `$GIT_DIR/remotes/` files.
-
-gitlink:git-request-pull[1]::
-	git-request-pull.
-
-gitlink:git-rev-parse[1]::
-	Pick out and massage parameters.
-
-gitlink:git-send-email[1]::
-	Send patch e-mails out of "format-patch --mbox" output.
-
-gitlink:git-symbolic-ref[1]::
-	Read and modify symbolic refs.
-
-gitlink:git-stripspace[1]::
-	Filter out empty lines.
 
 
 Configuration Mechanism
