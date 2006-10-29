@@ -45,11 +45,19 @@ case ",$all_into_one," in
 	args='--unpacked --incremental'
 	;;
 ,t,)
-	args=
-
-	# Redundancy check in all-into-one case is trivial.
-	existing=`test -d "$PACKDIR" && cd "$PACKDIR" && \
-	    find . -type f \( -name '*.pack' -o -name '*.idx' \) -print`
+	if [ -d "$PACKDIR" ]; then
+		for e in `cd "$PACKDIR" && find . -type f -name '*.pack' \
+			| sed -e 's/^\.\///' -e 's/\.pack$//'`
+		do
+			if [ -e "$PACKDIR/$e.keep" ]; then
+				: keep
+			else
+				args="$args --unpacked=$e.pack"
+				existing="$existing $e"
+			fi
+		done
+	fi
+	[ -z "$args" ] && args='--unpacked --incremental'
 	;;
 esac
 
@@ -86,17 +94,16 @@ fi
 
 if test "$remove_redundant" = t
 then
-	# We know $existing are all redundant only when
-	# all-into-one is used.
-	if test "$all_into_one" != '' && test "$existing" != ''
+	# We know $existing are all redundant.
+	if [ -n "$existing" ]
 	then
 		sync
 		( cd "$PACKDIR" &&
 		  for e in $existing
 		  do
 			case "$e" in
-			./pack-$name.pack | ./pack-$name.idx) ;;
-			*)	rm -f $e ;;
+			pack-$name) ;;
+			*)	rm -f "$e.pack" "$e.idx" "$e.keep" ;;
 			esac
 		  done
 		)
