@@ -9,17 +9,46 @@ The GIT To-Do File
 Recent issues
 -------------
 
-From: A Large Angry SCM <gitzilla@gmail.com>
-Subject: Notes on Using Git with Subprojects
-Message-ID: <45196628.9010107@gmail.com>
+From: Karl Hasselström <kha@treskal.com>
+Message-ID: <20061026172603.GA21256@diana.vm.bytemark.co.uk>
 
-[jc: a very nice write-up of a subprojects workflow. I do not
- remember if it produced any actionable items, though]
+It might make sense to make --use-separate-remote the default.
+
+[jc: The only downside that I can think of is that it affects me
+or anybody who works on more than one machine on multiple
+branches slightly negatively.
+
+But that is just a minor inconvenience to a minority.  Most of
+the world follow others' repositories, and defaulting to use
+separate-remotes would help them a lot.]
+
+From: Junio C Hamano <junkio@cox.net>
+
+commit walkers still have issues with packed and then pruned
+refs.
+
+From: Junio C Hamano <junkio@cox.net>
+Message-ID: <7vk62npipb.fsf@assigned-by-dhcp.cox.net>
+
+merge-recursive needs to be adjusted for loosening of "working
+file will be clobbered by merge" check in unpack-trees.
+
+[jc: I've fixed up what I could find but this needs to be
+handled a bit carefully. ]
+
+From: Nicolas Pitre <nico@cam.org>
+Message-ID: <Pine.LNX.4.64.0610271022240.11384@xanadu.home>
+
+Race between 'repack -a -d' and 'index-pack --stdin' (or
+'fetch-pack --keep').
+
+[jc: Shawn's .keep to mark packs that wouldn't be repacked would
+work rather nicely when completed.]
 
 From: Franck Bui-Huu <vagabon.xyz@gmail.com>
 Message-ID: <450EABD0.1040102@innova-card.com>
 
-Repeated requests against git-daemon makes it stuck
+Repeated requests against git-daemon makes it stuck under --syslog
 
 [jc: does not reproduce easily for me; has anybody seen it?]
 
@@ -28,14 +57,7 @@ Message-ID: <20060926215745.GC8177@spearce.org>
 
 git-mirror (reverse of git-push --all).
 
-[jc: any progress?]
-
-From: Junio C Hamano <junkio@cox.net>
-Message-ID: <7v7izrzpk2.fsf@assigned-by-dhcp.cox.net>
-
-Deal with rfc2822-invalid author mail address in send-email.
-
-[jc: forgot to apply?]
+[jc: may want the finished version for inclusion]
 
 From: Nicolas Pitre <nico@cam.org>
 Subject: [PATCH 8/6] let the GIT native protocol use offsets to delta base when
@@ -55,40 +77,7 @@ Message-ID: <4523EC14.6070806@s5r6.in-berlin.de>
 AsciiDoc 8 does not grok documents written for AsciiDoc 7 out of
 the box.
 
-[jc: status?]
-
-From:	Josh Triplett <josh@freedesktop.org>
-Message-ID: <451A30E4.50801@freedesktop.org>
-
-git-split
-
-[jc: no response to the initial review comments]
-
-From: Sean <seanlkml@sympatico.ca>
-Subject: [RFC PATCH] Add WEBDAV timeout to http-fetch.
-Message-ID: <BAYC1-PASMTP11CF83A008B0B3BA5F6B15AE100@CEZ.ICE>
-
-Use CURLOPT_TIMEOUT to recover from stuck read() early.
-
-[jc: the trouble that triggered this patch was WEBDAV on the
- server side not responding and the proposed commit log says so,
- but it seems that the patch is applicable and useful for other
- requests.  I suspect ls_remote() call should be removed from
- fetch_indices(). ] 
-
-From: Luben Tuikov <ltuikov@yahoo.com>
-Subject: [PATCH] gitweb: Convert Content-Disposition filenames into qtext
-Message-ID: <20061006191801.68649.qmail@web31815.mail.mud.yahoo.com>
-
-Use qtext quoting for Content-Disposition.
-
-[jc: the purpose of the patch was murky -- we wanted to avoid
- breaking the parsing of filename="value" by underquoting, but
- I think it is also prudent not to throw locally unsafe characters
- in the suggested filename to be used, so replacement regexp
- would need to be updated from the one proposed in the original
- patch.]
-
+[jc: limbo?]
 
 From: Linus Torvalds <torvalds@osdl.org>
 Subject: Re: git show and gitweb gives different result for kernel
@@ -97,12 +86,12 @@ Message-ID: <Pine.LNX.4.64.0610061202060.3952@g5.osdl.org>
 Maybe allow gitweb to show diff with any parent and diff --cc,
 not just diff with the first parent for a merge.
 
+[jc: Jakub is interested in it]
+
 Technical (milder)
 ------------------
 
-* pack-refs --all and make it not pack active branches.
-
-* redo git-annotate as synonym to "git-blame -c".
+* pickaxe perhaps needs to refcount the origin structure.
 
 * duplicated refspec given to "fetch-pack a a a" makes it emit
   strange error message because it triggers the "match only

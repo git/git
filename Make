@@ -30,6 +30,8 @@ snap)
 	d="prefix=$HOME/git-test" ;;
 esac
 
+: ${O=-O2}
+
 while case $# in 0) break ;; esac
 do 
 	case "$1" in
@@ -51,7 +53,6 @@ do
 	shift
 done
 
-: ${O=-O2}
 make $d \
      GITWEB_CONFIG=$G \
      PYTHON_PATH=/usr/bin/python2.4 \

@@ -42,5 +42,5 @@ Changes since $previous are as follows:
 EOF
 
 git log --no-merges "$previous".."$branch" |
-git shortlog |
-tcs -t latin1
+git shortlog
+
