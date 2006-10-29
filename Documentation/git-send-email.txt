@@ -68,9 +68,11 @@ The options available are:
 --smtp-server::
 	If set, specifies the outgoing SMTP server to use.  A full
 	pathname of a sendmail-like program can be specified instead;
-	the program must support the `-i` option.  Defaults to
-	`/usr/sbin/sendmail` or `/usr/lib/sendmail` if such program is
-	available, or to `localhost` otherwise.
+	the program must support the `-i` option.  Default value can
+	be specified by the 'sendemail.smtpserver' configuration
+	option; the built-in default is `/usr/sbin/sendmail` or
+	`/usr/lib/sendmail` if such program is available, or
+	`localhost` otherwise.
 
 --subject::
    	Specify the initial subject of the email thread.
