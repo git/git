@@ -36,6 +36,10 @@ static int max_orig_digits;
 static int max_digits;
 static int max_score_digits;
 
+#ifndef DEBUG
+#define DEBUG 0
+#endif
+
 #define PICKAXE_BLAME_MOVE		01
 #define PICKAXE_BLAME_COPY		02
 #define PICKAXE_BLAME_COPY_HARDER	04
@@ -54,13 +58,29 @@ static unsigned blame_copy_score;
 #define MORE_THAN_ONE_PATH	(1u<<13)
 
 /*
- * One blob in a commit
+ * One blob in a commit that is being suspected
  */
 struct origin {
+	int refcnt;
 	struct commit *commit;
 	unsigned char blob_sha1[20];
 	char path[FLEX_ARRAY];
 };
+
+static inline struct origin *origin_incref(struct origin *o)
+{
+	if (o)
+		o->refcnt++;
+	return o;
+}
+
+static void origin_decref(struct origin *o)
+{
+	if (o && --o->refcnt <= 0) {
+		memset(o, 0, sizeof(*o));
+		free(o);
+	}
+}
 
 struct blame_entry {
 	struct blame_entry *prev;
@@ -121,6 +141,8 @@ static int cmp_suspect(struct origin *a, struct origin *b)
 	return strcmp(a->path, b->path);
 }
 
+static void sanity_check_refcnt(struct scoreboard *);
+
 static void coalesce(struct scoreboard *sb)
 {
 	struct blame_entry *ent, *next;
@@ -133,11 +155,15 @@ static void coalesce(struct scoreboard *sb)
 			ent->next = next->next;
 			if (ent->next)
 				ent->next->prev = ent;
+			origin_decref(next->suspect);
 			free(next);
 			ent->score = 0;
 			next = ent; /* again */
 		}
 	}
+
+	if (DEBUG) /* sanity */
+		sanity_check_refcnt(sb);
 }
 
 static struct origin *get_origin(struct scoreboard *sb,
@@ -150,10 +176,11 @@ static struct origin *get_origin(struct scoreboard *sb,
 	for (e = sb->ent; e; e = e->next) {
 		if (e->suspect->commit == commit &&
 		    !strcmp(e->suspect->path, path))
-			return e->suspect;
+			return origin_incref(e->suspect);
 	}
 	o = xcalloc(1, sizeof(*o) + strlen(path) + 1);
 	o->commit = commit;
+	o->refcnt = 1;
 	strcpy(o->path, path);
 	return o;
 }
@@ -400,6 +427,8 @@ static void add_blame_entry(struct scoreboard *sb, struct blame_entry *e)
 {
 	struct blame_entry *ent, *prev = NULL;
 
+	origin_incref(e->suspect);
+
 	for (ent = sb->ent; ent && ent->lno < e->lno; ent = ent->next)
 		prev = ent;
 
@@ -420,8 +449,11 @@ static void add_blame_entry(struct scoreboard *sb, struct blame_entry *e)
 static void dup_entry(struct blame_entry *dst, struct blame_entry *src)
 {
 	struct blame_entry *p, *n;
+
 	p = dst->prev;
 	n = dst->next;
+	origin_incref(src->suspect);
+	origin_decref(dst->suspect);
 	memcpy(dst, src, sizeof(*src));
 	dst->prev = p;
 	dst->next = n;
@@ -433,7 +465,7 @@ static const char *nth_line(struct scoreboard *sb, int lno)
 	return sb->final_buf + sb->lineno[lno];
 }
 
-static void split_overlap(struct blame_entry split[3],
+static void split_overlap(struct blame_entry *split,
 			  struct blame_entry *e,
 			  int tlno, int plno, int same,
 			  struct origin *parent)
@@ -457,7 +489,7 @@ static void split_overlap(struct blame_entry split[3],
 
 	if (e->s_lno < tlno) {
 		/* there is a pre-chunk part not blamed on parent */
-		split[0].suspect = e->suspect;
+		split[0].suspect = origin_incref(e->suspect);
 		split[0].lno = e->lno;
 		split[0].s_lno = e->s_lno;
 		split[0].num_lines = tlno - e->s_lno;
@@ -471,7 +503,7 @@ static void split_overlap(struct blame_entry split[3],
 
 	if (same < e->s_lno + e->num_lines) {
 		/* there is a post-chunk part not blamed on parent */
-		split[2].suspect = e->suspect;
+		split[2].suspect = origin_incref(e->suspect);
 		split[2].lno = e->lno + (same - e->s_lno);
 		split[2].s_lno = e->s_lno + (same - e->s_lno);
 		split[2].num_lines = e->s_lno + e->num_lines - same;
@@ -483,11 +515,11 @@ static void split_overlap(struct blame_entry split[3],
 
 	if (split[1].num_lines < 1)
 		return;
-	split[1].suspect = parent;
+	split[1].suspect = origin_incref(parent);
 }
 
 static void split_blame(struct scoreboard *sb,
-			struct blame_entry split[3],
+			struct blame_entry *split,
 			struct blame_entry *e)
 {
 	struct blame_entry *new_entry;
@@ -522,7 +554,7 @@ static void split_blame(struct scoreboard *sb,
 		add_blame_entry(sb, new_entry);
 	}
 
-	if (1) { /* sanity */
+	if (DEBUG) { /* sanity */
 		struct blame_entry *ent;
 		int lno = sb->ent->lno, corrupt = 0;
 
@@ -545,6 +577,14 @@ static void split_blame(struct scoreboard *sb,
 	}
 }
 
+static void decref_split(struct blame_entry *split)
+{
+	int i;
+
+	for (i = 0; i < 3; i++)
+		origin_decref(split[i].suspect);
+}
+
 static void blame_overlap(struct scoreboard *sb, struct blame_entry *e,
 			  int tlno, int plno, int same,
 			  struct origin *parent)
@@ -552,9 +592,9 @@ static void blame_overlap(struct scoreboard *sb, struct blame_entry *e,
 	struct blame_entry split[3];
 
 	split_overlap(split, e, tlno, plno, same, parent);
-	if (!split[1].suspect)
-		return;
-	split_blame(sb, split, e);
+	if (split[1].suspect)
+		split_blame(sb, split, e);
+	decref_split(split);
 }
 
 static int find_last_in_target(struct scoreboard *sb, struct origin *target)
@@ -636,22 +676,28 @@ static unsigned ent_score(struct scoreboard *sb, struct blame_entry *e)
 }
 
 static void copy_split_if_better(struct scoreboard *sb,
-				 struct blame_entry best_so_far[3],
-				 struct blame_entry this[3])
+				 struct blame_entry *best_so_far,
+				 struct blame_entry *this)
 {
+	int i;
+
 	if (!this[1].suspect)
 		return;
 	if (best_so_far[1].suspect) {
 		if (ent_score(sb, &this[1]) < ent_score(sb, &best_so_far[1]))
 			return;
 	}
+
+	for (i = 0; i < 3; i++)
+		origin_incref(this[i].suspect);
+	decref_split(best_so_far);
 	memcpy(best_so_far, this, sizeof(struct blame_entry [3]));
 }
 
 static void find_copy_in_blob(struct scoreboard *sb,
 			      struct blame_entry *ent,
 			      struct origin *parent,
-			      struct blame_entry split[3],
+			      struct blame_entry *split,
 			      mmfile_t *file_p)
 {
 	const char *cp;
@@ -687,6 +733,7 @@ static void find_copy_in_blob(struct scoreboard *sb,
 				      chunk->same + ent->s_lno,
 				      parent);
 			copy_split_if_better(sb, split, this);
+			decref_split(this);
 		}
 		plno = chunk->p_next;
 		tlno = chunk->t_next;
@@ -723,6 +770,7 @@ static int find_move_in_parent(struct scoreboard *sb,
 		if (split[1].suspect &&
 		    blame_move_score < ent_score(sb, &split[1]))
 			split_blame(sb, split, e);
+		decref_split(split);
 	}
 	free(blob_p);
 	return 0;
@@ -806,6 +854,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 					     this);
 		}
 		free(blob);
+		origin_decref(norigin);
 	}
 	diff_flush(&diff_opts);
 
@@ -814,6 +863,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 		if (split[1].suspect &&
 		    blame_copy_score < ent_score(sb, &split[1]))
 			split_blame(sb, split, blame_list[j].ent);
+		decref_split(split);
 	}
 	free(blame_list);
 
@@ -843,9 +893,13 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 		if (!hashcmp(porigin->blob_sha1, origin->blob_sha1)) {
 			struct blame_entry *e;
 			for (e = sb->ent; e; e = e->next)
-				if (e->suspect == origin)
+				if (e->suspect == origin) {
+					origin_incref(porigin);
+					origin_decref(e->suspect);
 					e->suspect = porigin;
-			return;
+				}
+			origin_decref(porigin);
+			goto finish;
 		}
 		parent_origin[i] = porigin;
 	}
@@ -857,7 +911,7 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 		if (!porigin)
 			continue;
 		if (pass_blame_to_parent(sb, origin, porigin))
-			return;
+			goto finish;
 	}
 
 	/*
@@ -871,7 +925,7 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 			if (!porigin)
 				continue;
 			if (find_move_in_parent(sb, origin, porigin))
-				return;
+				goto finish;
 		}
 
 	/*
@@ -884,8 +938,12 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 			struct origin *porigin = parent_origin[i];
 			if (find_copy_in_parent(sb, origin, parent->item,
 						porigin, opt))
-				return;
+				goto finish;
 		}
+
+ finish:
+	for (i = 0; i < MAXPARENT; i++)
+		origin_decref(parent_origin[i]);
 }
 
 static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
@@ -902,6 +960,7 @@ static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
 		if (!suspect)
 			return; /* all done */
 
+		origin_incref(suspect);
 		commit = suspect->commit;
 		parse_commit(commit);
 		if (!(commit->object.flags & UNINTERESTING) &&
@@ -912,7 +971,7 @@ static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
 		for (ent = sb->ent; ent; ent = ent->next)
 			if (!cmp_suspect(ent->suspect, suspect))
 				ent->guilty = 1;
-
+		origin_decref(suspect);
 		coalesce(sb);
 	}
 }
@@ -1132,7 +1191,9 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 			       ent->lno + 1 + cnt);
 		else {
 			if (opt & OUTPUT_SHOW_SCORE)
-				printf(" %*d", max_score_digits, ent->score);
+				printf(" %*d %02d",
+				       max_score_digits, ent->score,
+				       ent->suspect->refcnt);
 			if (opt & OUTPUT_SHOW_NAME)
 				printf(" %-*.*s", longest_file, longest_file,
 				       suspect->path);
@@ -1271,6 +1332,45 @@ static void find_alignment(struct scoreboard *sb, int *option)
 	max_orig_digits = lineno_width(longest_src_lines);
 	max_digits = lineno_width(longest_dst_lines);
 	max_score_digits = lineno_width(largest_score);
+}
+
+static void sanity_check_refcnt(struct scoreboard *sb)
+{
+	int baa = 0;
+	struct blame_entry *ent;
+
+	for (ent = sb->ent; ent; ent = ent->next) {
+		/* first mark the ones that haven't been checked */
+		if (0 < ent->suspect->refcnt)
+			ent->suspect->refcnt = -ent->suspect->refcnt;
+		else if (!ent->suspect->refcnt)
+			baa = 1;
+	}
+	for (ent = sb->ent; ent; ent = ent->next) {
+		/* then pick each and see if they have the the
+		 * correct refcnt
+		 */
+		int found;
+		struct blame_entry *e;
+		struct origin *suspect = ent->suspect;
+
+		if (0 < suspect->refcnt)
+			continue;
+		suspect->refcnt = -suspect->refcnt;
+		for (found = 0, e = sb->ent; e; e = e->next) {
+			if (e->suspect != suspect)
+				continue;
+			found++;
+		}
+		if (suspect->refcnt != found)
+			baa = 1;
+	}
+	if (baa) {
+		int opt = 0160;
+		find_alignment(sb, &opt);
+		output(sb, opt);
+		die("Baa!");
+	}
 }
 
 static int has_path_in_work_tree(const char *path)
