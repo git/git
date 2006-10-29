@@ -324,7 +324,7 @@ gitlink:git-mv[1]::
 	Move or rename a file, a directory, or a symlink.
 
 gitlink:git-pull[1]::
-	Fetch from and merge with a remote repository.
+	Fetch from and merge with a remote repository or a local branch.
 
 gitlink:git-push[1]::
 	Update remote refs along with associated objects.
