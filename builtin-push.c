@@ -10,7 +10,7 @@
 
 static const char push_usage[] = "git-push [--all] [--tags] [-f | --force] <repository> [<refspec>...]";
 
-static int all, tags, force, thin = 1;
+static int all, tags, force, thin = 1, verbose;
 static const char *execute;
 
 #define BUF_SIZE (2084)
@@ -248,6 +248,8 @@ static int do_push(const char *repo)
 		while (dest_refspec_nr--)
 			argv[dest_argc++] = *dest_refspec++;
 		argv[dest_argc] = NULL;
+		if (verbose)
+			fprintf(stderr, "Pushing to %s\n", dest);
 		err = run_command_v(argc, argv);
 		if (!err)
 			continue;
@@ -280,6 +282,14 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 			repo = arg;
 			i++;
 			break;
+		}
+		if (!strcmp(arg, "-v")) {
+			verbose=1;
+			continue;
+		}
+		if (!strncmp(arg, "--repo=", 7)) {
+			repo = arg+7;
+			continue;
 		}
 		if (!strcmp(arg, "--all")) {
 			all = 1;
