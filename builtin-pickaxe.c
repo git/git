@@ -852,6 +852,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 					  this, &file_p);
 			copy_split_if_better(sb, blame_list[j].split,
 					     this);
+			decref_split(this);
 		}
 		free(blob);
 		origin_decref(norigin);
@@ -1429,9 +1430,15 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 			opt |= PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE;
 			blame_copy_score = parse_score(arg+2);
 		}
-		else if (!strcmp("-L", arg) && ++i < argc) {
+		else if (!strncmp("-L", arg, 2)) {
 			char *term;
-			arg = argv[i];
+			if (!arg[2]) {
+				if (++i >= argc)
+					usage(pickaxe_usage);
+				arg = argv[i];
+			}
+			else
+				arg += 2;
 			if (bottom || top)
 				die("More than one '-L n,m' option given");
 			bottom = strtol(arg, &term, 10);
