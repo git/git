@@ -973,7 +973,9 @@ static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
 			if (!cmp_suspect(ent->suspect, suspect))
 				ent->guilty = 1;
 		origin_decref(suspect);
-		coalesce(sb);
+
+		if (DEBUG) /* sanity */
+			sanity_check_refcnt(sb);
 	}
 }
 
@@ -1341,11 +1343,14 @@ static void sanity_check_refcnt(struct scoreboard *sb)
 	struct blame_entry *ent;
 
 	for (ent = sb->ent; ent; ent = ent->next) {
-		/* first mark the ones that haven't been checked */
+		/* Nobody should have zero or negative refcnt */
+		if (ent->suspect->refcnt <= 0)
+			baa = 1;
+	}
+	for (ent = sb->ent; ent; ent = ent->next) {
+		/* Mark the ones that haven't been checked */
 		if (0 < ent->suspect->refcnt)
 			ent->suspect->refcnt = -ent->suspect->refcnt;
-		else if (!ent->suspect->refcnt)
-			baa = 1;
 	}
 	for (ent = sb->ent; ent; ent = ent->next) {
 		/* then pick each and see if they have the the
@@ -1357,7 +1362,7 @@ static void sanity_check_refcnt(struct scoreboard *sb)
 
 		if (0 < suspect->refcnt)
 			continue;
-		suspect->refcnt = -suspect->refcnt;
+		suspect->refcnt = -suspect->refcnt; /* Unmark */
 		for (found = 0, e = sb->ent; e; e = e->next) {
 			if (e->suspect != suspect)
 				continue;
