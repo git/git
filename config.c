@@ -103,6 +103,11 @@ static char *parse_value(void)
 	}
 }
 
+static inline int iskeychar(int c)
+{
+	return isalnum(c) || c == '-';
+}
+
 static int get_value(config_fn_t fn, char *name, unsigned int len)
 {
 	int c;
@@ -113,7 +118,7 @@ static int get_value(config_fn_t fn, char *name, unsigned int len)
 		c = get_next_char();
 		if (c == EOF)
 			break;
-		if (!isalnum(c))
+		if (!iskeychar(c))
 			break;
 		name[len++] = tolower(c);
 		if (len >= MAXNAME)
@@ -181,7 +186,7 @@ static int get_base_var(char *name)
 			return baselen;
 		if (isspace(c))
 			return get_extended_base_var(name, baselen, c);
-		if (!isalnum(c) && c != '.')
+		if (!iskeychar(c) && c != '.')
 			return -1;
 		if (baselen > MAXNAME / 2)
 			return -1;
@@ -573,7 +578,7 @@ int git_config_set_multivar(const char* key, const char* value,
 			dot = 1;
 		/* Leave the extended basename untouched.. */
 		if (!dot || i > store.baselen) {
-			if (!isalnum(c) || (i == store.baselen+1 && !isalpha(c))) {
+			if (!iskeychar(c) || (i == store.baselen+1 && !isalpha(c))) {
 				fprintf(stderr, "invalid key: %s\n", key);
 				free(store.key);
 				ret = 1;
