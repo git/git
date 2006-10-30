@@ -1429,9 +1429,15 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 			opt |= PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE;
 			blame_copy_score = parse_score(arg+2);
 		}
-		else if (!strcmp("-L", arg) && ++i < argc) {
+		else if (!strncmp("-L", arg, 2)) {
 			char *term;
-			arg = argv[i];
+			if (!arg[2]) {
+				if (++i >= argc)
+					usage(pickaxe_usage);
+				arg = argv[i];
+			}
+			else
+				arg += 2;
 			if (bottom || top)
 				die("More than one '-L n,m' option given");
 			bottom = strtol(arg, &term, 10);
