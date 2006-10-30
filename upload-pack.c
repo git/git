@@ -486,6 +486,7 @@ static int get_common_commits(void)
 
 static void receive_needs(void)
 {
+	struct object_array shallows = {0, 0, NULL};
 	static char line[1000];
 	int len;
 
@@ -495,8 +496,19 @@ static void receive_needs(void)
 		len = packet_read_line(0, line, sizeof(line));
 		reset_timeout();
 		if (!len)
-			return;
+			break;
 
+		if (!strncmp("shallow ", line, 8)) {
+			unsigned char sha1[20];
+			struct object *object;
+			if (get_sha1(line + 8, sha1))
+				die("invalid shallow line: %s", line);
+			object = parse_object(sha1);
+			if (!object)
+				die("did not find object for %s", line);
+			add_object_array(object, NULL, &shallows);
+			continue;
+		}
 		if (strncmp("want ", line, 5) ||
 		    get_sha1_hex(line+5, sha1_buf))
 			die("git-upload-pack: protocol error, "
@@ -528,11 +540,17 @@ static void receive_needs(void)
 			add_object_array(o, NULL, &want_obj);
 		}
 	}
+	if (shallows.nr > 0) {
+		int i;
+		for (i = 0; i < shallows.nr; i++)
+			register_shallow(shallows.objects[i].item->sha1);
+	}
 }
 
 static int send_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
-	static const char *capabilities = "multi_ack thin-pack side-band side-band-64k ofs-delta";
+	static const char *capabilities = "multi_ack thin-pack side-band"
+		" side-band-64k ofs-delta shallow";
 	struct object *o = parse_object(sha1);
 
 	if (!o)

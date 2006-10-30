@@ -180,6 +180,8 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 			packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
 		fetching++;
 	}
+	if (is_repository_shallow())
+		write_shallow_commits(fd[1], 1);
 	packet_flush(fd[1]);
 	if (!fetching)
 		return 1;
@@ -523,6 +525,8 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 	int status;
 
 	get_remote_heads(fd[0], &ref, 0, NULL, 0);
+	if (is_repository_shallow() && !server_supports("shallow"))
+		die("Server does not support shallow clients");
 	if (server_supports("multi_ack")) {
 		if (verbose)
 			fprintf(stderr, "Server supports multi_ack\n");

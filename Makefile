@@ -260,7 +260,7 @@ LIB_OBJS = \
 	revision.o pager.o tree-walk.o xdiff-interface.o \
 	write_or_die.o trace.o list-objects.o grep.o \
 	alloc.o merge-file.o path-list.o help.o unpack-trees.o $(DIFF_OBJS) \
-	color.o wt-status.o archive-zip.o archive-tar.o
+	color.o wt-status.o archive-zip.o archive-tar.o shallow.o
 
 BUILTIN_OBJS = \
 	builtin-add.o \
