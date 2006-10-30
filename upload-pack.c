@@ -9,6 +9,9 @@
 #include "object.h"
 #include "commit.h"
 #include "exec_cmd.h"
+#include "diff.h"
+#include "revision.h"
+#include "list-objects.h"
 
 static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=nn] <dir>";
 
@@ -57,6 +60,40 @@ static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
 	return safe_write(fd, data, sz);
 }
 
+FILE *pack_pipe = NULL;
+static void show_commit(struct commit *commit)
+{
+	if (commit->object.flags & BOUNDARY)
+		fputc('-', pack_pipe);
+	if (fputs(sha1_to_hex(commit->object.sha1), pack_pipe) < 0)
+		die("broken output pipe");
+	fputc('\n', pack_pipe);
+	fflush(pack_pipe);
+	free(commit->buffer);
+	commit->buffer = NULL;
+}
+
+static void show_object(struct object_array_entry *p)
+{
+	/* An object with name "foo\n0000000..." can be used to
+	 * confuse downstream git-pack-objects very badly.
+	 */
+	const char *ep = strchr(p->name, '\n');
+	if (ep) {
+		fprintf(pack_pipe, "%s %.*s\n", sha1_to_hex(p->item->sha1),
+		       (int) (ep - p->name),
+		       p->name);
+	}
+	else
+		fprintf(pack_pipe, "%s %s\n",
+				sha1_to_hex(p->item->sha1), p->name);
+}
+
+static void show_edge(struct commit *commit)
+{
+	fprintf(pack_pipe, "-%s\n", sha1_to_hex(commit->object.sha1));
+}
+
 static void create_pack_file(void)
 {
 	/* Pipes between rev-list to pack-objects, pack-objects to us
@@ -78,48 +115,38 @@ static void create_pack_file(void)
 
 	if (!pid_rev_list) {
 		int i;
-		int args;
-		const char **argv;
-		const char **p;
-		char *buf;
+		struct rev_info revs;
+
+		pack_pipe = fdopen(lp_pipe[1], "w");
+
+		if (create_full_pack)
+			use_thin_pack = 0; /* no point doing it */
+		init_revisions(&revs, NULL);
+		revs.tag_objects = 1;
+		revs.tree_objects = 1;
+		revs.blob_objects = 1;
+		if (use_thin_pack)
+			revs.edge_hint = 1;
 
 		if (create_full_pack) {
-			args = 10;
-			use_thin_pack = 0; /* no point doing it */
-		}
-		else
-			args = have_obj.nr + want_obj.nr + 5;
-		p = xmalloc(args * sizeof(char *));
-		argv = (const char **) p;
-		buf = xmalloc(args * 45);
-
-		dup2(lp_pipe[1], 1);
-		close(0);
-		close(lp_pipe[0]);
-		close(lp_pipe[1]);
-		*p++ = "rev-list";
-		*p++ = use_thin_pack ? "--objects-edge" : "--objects";
-		if (create_full_pack)
-			*p++ = "--all";
-		else {
+			const char *args[] = {"rev-list", "--all", NULL};
+			setup_revisions(2, args, &revs, NULL);
+		} else {
 			for (i = 0; i < want_obj.nr; i++) {
 				struct object *o = want_obj.objects[i].item;
-				*p++ = buf;
-				memcpy(buf, sha1_to_hex(o->sha1), 41);
-				buf += 41;
+				add_pending_object(&revs, o, NULL);
 			}
-		}
-		if (!create_full_pack)
 			for (i = 0; i < have_obj.nr; i++) {
 				struct object *o = have_obj.objects[i].item;
-				*p++ = buf;
-				*buf++ = '^';
-				memcpy(buf, sha1_to_hex(o->sha1), 41);
-				buf += 41;
+				o->flags |= UNINTERESTING;
+				add_pending_object(&revs, o, NULL);
 			}
-		*p++ = NULL;
-		execv_git_cmd(argv);
-		die("git-upload-pack: unable to exec git-rev-list");
+			setup_revisions(0, NULL, &revs, NULL);
+		}
+		prepare_revision_walk(&revs);
+		mark_edges_uninteresting(revs.commits, &revs, show_edge);
+		traverse_commit_list(&revs, show_commit, show_object);
+		exit(0);
 	}
 
 	if (pipe(pu_pipe) < 0)
