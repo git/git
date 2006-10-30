@@ -1111,7 +1111,9 @@ sub parse_commit {
 		@commit_lines = @$commit_text;
 	} else {
 		local $/ = "\0";
-		open my $fd, "-|", git_cmd(), "rev-list", "--header", "--parents", "--max-count=1", $commit_id
+		open my $fd, "-|", git_cmd(), "rev-list",
+			"--header", "--parents", "--max-count=1",
+			$commit_id, "--"
 			or return;
 		@commit_lines = split '\n', <$fd>;
 		close $fd or return;
@@ -2529,7 +2531,7 @@ sub git_summary {
 	}
 
 	open my $fd, "-|", git_cmd(), "rev-list", "--max-count=17",
-		git_get_head_hash($project)
+		git_get_head_hash($project), "--"
 		or die_error(undef, "Open git-rev-list failed");
 	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd;
@@ -3072,7 +3074,7 @@ sub git_log {
 	my $refs = git_get_references();
 
 	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
-	open my $fd, "-|", git_cmd(), "rev-list", $limit, $hash
+	open my $fd, "-|", git_cmd(), "rev-list", $limit, $hash, "--"
 		or die_error(undef, "Open git-rev-list failed");
 	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd;
@@ -3130,7 +3132,7 @@ sub git_commit {
 		$parent = "--root";
 	}
 	open my $fd, "-|", git_cmd(), "diff-tree", '-r', "--no-commit-id",
-		@diff_opts, $parent, $hash
+		@diff_opts, $parent, $hash, "--"
 		or die_error(undef, "Open git-diff-tree failed");
 	my @difftree = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading git-diff-tree failed");
@@ -3235,7 +3237,8 @@ sub git_blobdiff {
 	if (defined $hash_base && defined $hash_parent_base) {
 		if (defined $file_name) {
 			# read raw output
-			open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts, $hash_parent_base, $hash_base,
+			open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
+				$hash_parent_base, $hash_base,
 				"--", $file_name
 				or die_error(undef, "Open git-diff-tree failed");
 			@difftree = map { chomp; $_ } <$fd>;
@@ -3249,7 +3252,8 @@ sub git_blobdiff {
 			# try to find filename from $hash
 
 			# read filtered raw output
-			open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts, $hash_parent_base, $hash_base
+			open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
+				$hash_parent_base, $hash_base, "--"
 				or die_error(undef, "Open git-diff-tree failed");
 			@difftree =
 				# ':100644 100644 03b21826... 3b93d5e7... M	ls-files.c'
@@ -3319,7 +3323,8 @@ sub git_blobdiff {
 		}
 
 		# open patch output
-		open $fd, "-|", git_cmd(), "diff", '-p', @diff_opts, $hash_parent, $hash
+		open $fd, "-|", git_cmd(), "diff", '-p', @diff_opts,
+			$hash_parent, $hash, "--"
 			or die_error(undef, "Open git-diff failed");
 	} else  {
 		die_error('404 Not Found', "Missing one of the blob diff parameters")
@@ -3450,8 +3455,8 @@ sub git_commitdiff {
 	my @difftree;
 	if ($format eq 'html') {
 		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
-			"--no-commit-id",
-			"--patch-with-raw", "--full-index", $hash_parent, $hash
+			"--no-commit-id", "--patch-with-raw", "--full-index",
+			$hash_parent, $hash, "--"
 			or die_error(undef, "Open git-diff-tree failed");
 
 		while (chomp(my $line = <$fd>)) {
@@ -3462,7 +3467,7 @@ sub git_commitdiff {
 
 	} elsif ($format eq 'plain') {
 		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
-			'-p', $hash_parent, $hash
+			'-p', $hash_parent, $hash, "--"
 			or die_error(undef, "Open git-diff-tree failed");
 
 	} else {
@@ -3639,7 +3644,9 @@ sub git_search {
 	my $alternate = 1;
 	if ($searchtype eq 'commit' or $searchtype eq 'author' or $searchtype eq 'committer') {
 		$/ = "\0";
-		open my $fd, "-|", git_cmd(), "rev-list", "--header", "--parents", $hash or next;
+		open my $fd, "-|", git_cmd(), "rev-list",
+			"--header", "--parents", $hash, "--"
+			or next;
 		while (my $commit_text = <$fd>) {
 			if (!grep m/$searchtext/i, $commit_text) {
 				next;
@@ -3785,7 +3792,7 @@ sub git_shortlog {
 	my $refs = git_get_references();
 
 	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
-	open my $fd, "-|", git_cmd(), "rev-list", $limit, $hash
+	open my $fd, "-|", git_cmd(), "rev-list", $limit, $hash, "--"
 		or die_error(undef, "Open git-rev-list failed");
 	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd;
@@ -3813,7 +3820,8 @@ sub git_shortlog {
 
 sub git_rss {
 	# http://www.notestips.com/80256B3A007F2692/1/NAMO5P9UPQ
-	open my $fd, "-|", git_cmd(), "rev-list", "--max-count=150", git_get_head_hash($project)
+	open my $fd, "-|", git_cmd(), "rev-list", "--max-count=150",
+		git_get_head_hash($project), "--"
 		or die_error(undef, "Open git-rev-list failed");
 	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading git-rev-list failed");
@@ -3837,7 +3845,7 @@ XML
 		}
 		my %cd = parse_date($co{'committer_epoch'});
 		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
-			$co{'parent'}, $co{'id'}
+			$co{'parent'}, $co{'id'}, "--"
 			or next;
 		my @difftree = map { chomp; $_ } <$fd>;
 		close $fd
