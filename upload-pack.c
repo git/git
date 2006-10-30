@@ -488,7 +488,7 @@ static void receive_needs(void)
 {
 	struct object_array shallows = {0, 0, NULL};
 	static char line[1000];
-	int len;
+	int len, depth = 0;
 
 	for (;;) {
 		struct object *o;
@@ -507,6 +507,13 @@ static void receive_needs(void)
 			if (!object)
 				die("did not find object for %s", line);
 			add_object_array(object, NULL, &shallows);
+			continue;
+		}
+		if (!strncmp("deepen ", line, 7)) {
+			char *end;
+			depth = strtol(line + 7, &end, 0);
+			if (end == line + 7 || depth <= 0)
+				die("Invalid deepen: %s", line);
 			continue;
 		}
 		if (strncmp("want ", line, 5) ||
@@ -539,6 +546,18 @@ static void receive_needs(void)
 			o->flags |= WANTED;
 			add_object_array(o, NULL, &want_obj);
 		}
+	}
+	if (depth > 0) {
+		struct commit_list *result, *backup;
+		if (shallows.nr > 0)
+			die("Deepening a shallow repository not yet supported");
+		backup = result = get_shallow_commits(&want_obj, depth);
+		while (result) {
+			packet_write(1, "shallow %s",
+					sha1_to_hex(result->item->object.sha1));
+			result = result->next;
+		}
+		free_commit_list(backup);
 	}
 	if (shallows.nr > 0) {
 		int i;
