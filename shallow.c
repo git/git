@@ -41,7 +41,8 @@ int is_repository_shallow()
 	return is_shallow;
 }
 
-struct commit_list *get_shallow_commits(struct object_array *heads, int depth)
+struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
+		int shallow_flag, int not_shallow_flag)
 {
 	int i = 0, cur_depth = 0;
 	struct commit_list *result = NULL;
@@ -67,6 +68,7 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth)
 			}
 		}
 		parse_commit(commit);
+		commit->object.flags |= not_shallow_flag;
 		cur_depth++;
 		for (p = commit->parents, commit = NULL; p; p = p->next) {
 			if (!p->item->util) {
@@ -87,8 +89,10 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth)
 					commit = p->item;
 					cur_depth = *(int *)commit->util;
 				}
-			} else
+			} else {
 				commit_list_insert(p->item, &result);
+				p->item->object.flags |= shallow_flag;
+			}
 		}
 	}
 

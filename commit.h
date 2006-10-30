@@ -108,9 +108,10 @@ int read_graft_file(const char *graft_file);
 extern struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2, int cleanup);
 
 extern int register_shallow(const unsigned char *sha1);
+extern int unregister_shallow(const unsigned char *sha1);
 extern int write_shallow_commits(int fd, int use_pack_protocol);
 extern int is_repository_shallow();
 extern struct commit_list *get_shallow_commits(struct object_array *heads,
-		int depth);
+		int depth, int shallow_flag, int not_shallow_flag);
 
 #endif /* COMMIT_H */

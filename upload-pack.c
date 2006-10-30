@@ -22,6 +22,10 @@ static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=n
 #define COMMON_KNOWN	(1u << 14)
 #define REACHABLE	(1u << 15)
 
+#define SHALLOW		(1u << 16)
+#define NOT_SHALLOW	(1u << 17)
+#define CLIENT_SHALLOW	(1u << 18)
+
 static unsigned long oldest_have;
 
 static int multi_ack, nr_our_refs;
@@ -134,6 +138,7 @@ static void create_pack_file(void)
 		} else {
 			for (i = 0; i < want_obj.nr; i++) {
 				struct object *o = want_obj.objects[i].item;
+				o->flags &= ~UNINTERESTING;
 				add_pending_object(&revs, o, NULL);
 			}
 			for (i = 0; i < have_obj.nr; i++) {
@@ -501,16 +506,19 @@ static void receive_needs(void)
 		if (!strncmp("shallow ", line, 8)) {
 			unsigned char sha1[20];
 			struct object *object;
+			use_thin_pack = 0;
 			if (get_sha1(line + 8, sha1))
 				die("invalid shallow line: %s", line);
 			object = parse_object(sha1);
 			if (!object)
 				die("did not find object for %s", line);
+			object->flags |= CLIENT_SHALLOW;
 			add_object_array(object, NULL, &shallows);
 			continue;
 		}
 		if (!strncmp("deepen ", line, 7)) {
 			char *end;
+			use_thin_pack = 0;
 			depth = strtol(line + 7, &end, 0);
 			if (end == line + 7 || depth <= 0)
 				die("Invalid deepen: %s", line);
@@ -547,23 +555,51 @@ static void receive_needs(void)
 			add_object_array(o, NULL, &want_obj);
 		}
 	}
+	if (depth == 0 && shallows.nr == 0)
+		return;
 	if (depth > 0) {
 		struct commit_list *result, *backup;
-		if (shallows.nr > 0)
-			die("Deepening a shallow repository not yet supported");
-		backup = result = get_shallow_commits(&want_obj, depth);
+		int i;
+		backup = result = get_shallow_commits(&want_obj, depth,
+			SHALLOW, NOT_SHALLOW);
 		while (result) {
-			packet_write(1, "shallow %s",
-					sha1_to_hex(result->item->object.sha1));
+			struct object *object = &result->item->object;
+			if (!(object->flags & CLIENT_SHALLOW)) {
+				packet_write(1, "shallow %s",
+						sha1_to_hex(object->sha1));
+				register_shallow(object->sha1);
+			}
 			result = result->next;
 		}
 		free_commit_list(backup);
-	}
-	if (shallows.nr > 0) {
-		int i;
-		for (i = 0; i < shallows.nr; i++)
-			register_shallow(shallows.objects[i].item->sha1);
-	}
+		for (i = 0; i < shallows.nr; i++) {
+			struct object *object = shallows.objects[i].item;
+			if (object->flags & NOT_SHALLOW) {
+				struct commit_list *parents;
+				packet_write(1, "unshallow %s",
+					sha1_to_hex(object->sha1));
+				object->flags &= ~CLIENT_SHALLOW;
+				/* make sure the real parents are parsed */
+				unregister_shallow(object->sha1);
+				parse_commit((struct commit *)object);
+				parents = ((struct commit *)object)->parents;
+				while (parents) {
+					add_object_array(&parents->item->object,
+							NULL, &want_obj);
+					parents = parents->next;
+				}
+			}
+			/* make sure commit traversal conforms to client */
+			register_shallow(object->sha1);
+		}
+		packet_flush(1);
+	} else
+		if (shallows.nr > 0) {
+			int i;
+			for (i = 0; i < shallows.nr; i++)
+				register_shallow(shallows.objects[i].item->sha1);
+		}
+	free(shallows.objects);
 }
 
 static int send_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)

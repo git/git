@@ -202,7 +202,17 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 				if (lookup_object(sha1))
 					continue;
 				register_shallow(sha1);
-			}
+			}  else if (!strncmp("unshallow ", line, 10)) {
+				if (get_sha1_hex(line + 10, sha1))
+					die("invalid unshallow line: %s", line);
+				if (!lookup_object(sha1))
+					die("object not found: %s", line);
+				/* make sure that it is parsed as shallow */
+				parse_object(sha1);
+				if (unregister_shallow(sha1))
+					die("no shallow found: %s", line);
+			} else
+				die("expected shallow/unshallow, got %s", line);
 		}
 	}
 
@@ -391,9 +401,11 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 		}
 	}
 
-	for_each_ref(mark_complete, NULL);
-	if (cutoff)
-		mark_recent_complete_commits(cutoff);
+	if (!depth) {
+		for_each_ref(mark_complete, NULL);
+		if (cutoff)
+			mark_recent_complete_commits(cutoff);
+	}
 
 	/*
 	 * Mark all complete remote refs as common refs.
@@ -646,8 +658,6 @@ int main(int argc, char **argv)
 	}
 	if (!dest)
 		usage(fetch_pack_usage);
-	if (is_repository_shallow() && depth > 0)
-		die("Deepening of a shallow repository not yet supported!");
 	pid = git_connect(fd, dest, exec);
 	if (pid < 0)
 		return 1;
