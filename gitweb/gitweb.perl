@@ -2659,7 +2659,7 @@ HTML
 		print "<tr class=\"$rev_color[$current_color]\">\n";
 		if ($group_size) {
 			print "<td class=\"sha1\"";
-			print " title=\"$author, $date\"";
+			print " title=\"". esc_html($author) . ", $date\"";
 			print " rowspan=\"$group_size\"" if ($group_size > 1);
 			print ">";
 			print $cgi->a({-href => href(action=>"commit",
