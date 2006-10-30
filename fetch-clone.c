@@ -46,7 +46,7 @@ static int get_pack(int xd[2], const char *me, int sideband, const char **argv)
 	side_pid = setup_sideband(sideband, me, fd, xd);
 	pid = fork();
 	if (pid < 0)
-		die("%s: unable to fork off git-unpack-objects", me);
+		die("%s: unable to fork off %s", me, argv[0]);
 	if (!pid) {
 		dup2(fd[0], 0);
 		close(fd[0]);
