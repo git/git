@@ -860,7 +860,7 @@ sub git_get_hash_by_path {
 	close $fd or return undef;
 
 	#'100644 blob 0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
-	$line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40})\t(.+)$/;
+	$line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40})\t/;
 	if (defined $type && $type ne $2) {
 		# type doesn't match
 		return undef;
@@ -1277,7 +1277,7 @@ sub parse_ls_tree_line ($;%) {
 	my %res;
 
 	#'100644 blob 0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
-	$line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40})\t(.+)$/;
+	$line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40})\t(.+)$/s;
 
 	$res{'mode'} = $1;
 	$res{'type'} = $2;
