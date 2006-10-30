@@ -852,6 +852,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 					  this, &file_p);
 			copy_split_if_better(sb, blame_list[j].split,
 					     this);
+			decref_split(this);
 		}
 		free(blob);
 		origin_decref(norigin);
