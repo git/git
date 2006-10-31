@@ -53,7 +53,7 @@ static int input_fd;
  * Make sure at least "min" bytes are available in the buffer, and
  * return the pointer to the buffer.
  */
-static void * fill(int min)
+static void *fill(int min)
 {
 	if (min <= input_len)
 		return input_buffer + input_offset;
@@ -61,7 +61,7 @@ static void * fill(int min)
 		die("cannot fill %d bytes", min);
 	if (input_offset) {
 		SHA1_Update(&input_ctx, input_buffer, input_offset);
-		memcpy(input_buffer, input_buffer + input_offset, input_len);
+		memmove(input_buffer, input_buffer + input_offset, input_len);
 		input_offset = 0;
 	}
 	do {

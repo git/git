@@ -22,7 +22,7 @@ static SHA_CTX ctx;
  * Make sure at least "min" bytes are available in the buffer, and
  * return the pointer to the buffer.
  */
-static void * fill(int min)
+static void *fill(int min)
 {
 	if (min <= len)
 		return buffer + offset;
@@ -30,7 +30,7 @@ static void * fill(int min)
 		die("cannot fill %d bytes", min);
 	if (offset) {
 		SHA1_Update(&ctx, buffer, offset);
-		memcpy(buffer, buffer + offset, len);
+		memmove(buffer, buffer + offset, len);
 		offset = 0;
 	}
 	do {
