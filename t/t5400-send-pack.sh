@@ -78,13 +78,4 @@ test_expect_success \
 	! diff -u .git/refs/heads/master victim/.git/refs/heads/master
 '
 
-test_expect_success 'push with --keep' '
-	t=`cd victim && git-rev-parse --verify refs/heads/master` &&
-	git-update-ref refs/heads/master $t &&
-	: > foo &&
-	git add foo &&
-	git commit -m "one more" &&
-	git-send-pack --keep ./victim/.git/ master
-'
-
 test_done
