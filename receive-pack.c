@@ -227,11 +227,10 @@ static void read_head_info(void)
 	}
 }
 
-static const char *unpack(int *error_code)
+static const char *unpack(void)
 {
 	int code = run_command_v_opt(1, unpacker, RUN_GIT_CMD);
 
-	*error_code = 0;
 	switch (code) {
 	case 0:
 		return NULL;
@@ -248,7 +247,6 @@ static const char *unpack(int *error_code)
 	case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
 		return "unpacker died strangely";
 	default:
-		*error_code = -code;
 		return "unpacker exited with error code";
 	}
 }
@@ -302,8 +300,7 @@ int main(int argc, char **argv)
 
 	read_head_info();
 	if (commands) {
-		int code;
-		const char *unpack_status = unpack(&code);
+		const char *unpack_status = unpack();
 		if (!unpack_status)
 			execute_commands();
 		if (report_status)
