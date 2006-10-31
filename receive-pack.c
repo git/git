@@ -12,11 +12,25 @@ static const char *keep_packer[] = {
 	"index-pack", "--stdin", "--fix-thin", NULL
 };
 
+static int deny_non_fast_forwards = 0;
 static int report_status;
 static int keep_pack;
 
 static char capabilities[] = "report-status keep-pack";
 static int capabilities_sent;
+
+static int receive_pack_config(const char *var, const char *value)
+{
+	git_default_config(var, value);
+
+	if (strcmp(var, "receive.denynonfastforwards") == 0)
+	{
+		deny_non_fast_forwards = git_config_bool(var, value);
+		return 0;
+	}
+
+	return 0;
+}
 
 static int show_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
@@ -292,7 +306,7 @@ int main(int argc, char **argv)
 		die("'%s': unable to chdir or not a git archive", dir);
 
 	setup_ident();
-	git_config(git_default_config);
+	git_config(receive_pack_config);
 
 	write_head_info();
 

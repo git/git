@@ -2,7 +2,9 @@
 #include "tree.h"
 #include "cache-tree.h"
 
+#ifndef DEBUG
 #define DEBUG 0
+#endif
 
 struct cache_tree *cache_tree(void)
 {

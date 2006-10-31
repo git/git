@@ -189,7 +189,6 @@ extern int prefer_symlink_refs;
 extern int log_all_ref_updates;
 extern int warn_ambiguous_refs;
 extern int shared_repository;
-extern int deny_non_fast_forwards;
 extern const char *apply_default_whitespace;
 extern int zlib_compression_level;
 
