@@ -418,9 +418,6 @@ static void limit_list(struct rev_info *revs)
 
 		if (revs->max_age != -1 && (commit->date < revs->max_age))
 			obj->flags |= UNINTERESTING;
-		if (revs->unpacked &&
-		    has_sha1_pack(obj->sha1, revs->ignore_packed))
-			obj->flags |= UNINTERESTING;
 		add_parents_to_list(revs, commit, &list);
 		if (obj->flags & UNINTERESTING) {
 			mark_parents_uninteresting(commit);
@@ -1142,16 +1139,17 @@ struct commit *get_revision(struct rev_info *revs)
 		 * that we'd otherwise have done in limit_list().
 		 */
 		if (!revs->limited) {
-			if ((revs->unpacked &&
-			     has_sha1_pack(commit->object.sha1,
-					   revs->ignore_packed)) ||
-			    (revs->max_age != -1 &&
-			     (commit->date < revs->max_age)))
+			if (revs->max_age != -1 &&
+			    (commit->date < revs->max_age))
 				continue;
 			add_parents_to_list(revs, commit, &revs->commits);
 		}
 		if (commit->object.flags & SHOWN)
 			continue;
+
+		if (revs->unpacked && has_sha1_pack(commit->object.sha1,
+						    revs->ignore_packed))
+		    continue;
 
 		/* We want to show boundary commits only when their
 		 * children are shown.  When path-limiter is in effect,
