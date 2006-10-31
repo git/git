@@ -211,7 +211,6 @@ static struct origin *find_origin(struct scoreboard *sb,
 {
 	struct origin *porigin = NULL;
 	struct diff_options diff_opts;
-	int i;
 	const char *paths[2];
 
 	/* See if the origin->path is different between parent
@@ -260,10 +259,17 @@ static struct origin *find_origin(struct scoreboard *sb,
 		}
 	}
 	diff_flush(&diff_opts);
-	if (porigin)
-		return porigin;
+	return porigin;
+}
 
-	/* Otherwise we would look for a rename */
+static struct origin *find_rename(struct scoreboard *sb,
+				  struct commit *parent,
+				  struct origin *origin)
+{
+	struct origin *porigin = NULL;
+	struct diff_options diff_opts;
+	int i;
+	const char *paths[2];
 
 	diff_setup(&diff_opts);
 	diff_opts.recursive = 1;
@@ -875,34 +881,46 @@ static int find_copy_in_parent(struct scoreboard *sb,
 
 static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 {
-	int i;
+	int i, pass;
 	struct commit *commit = origin->commit;
 	struct commit_list *parent;
 	struct origin *parent_origin[MAXPARENT], *porigin;
 
 	memset(parent_origin, 0, sizeof(parent_origin));
-	for (i = 0, parent = commit->parents;
-	     i < MAXPARENT && parent;
-	     parent = parent->next, i++) {
-		struct commit *p = parent->item;
 
-		if (parse_commit(p))
-			continue;
-		porigin = find_origin(sb, parent->item, origin);
-		if (!porigin)
-			continue;
-		if (!hashcmp(porigin->blob_sha1, origin->blob_sha1)) {
-			struct blame_entry *e;
-			for (e = sb->ent; e; e = e->next)
-				if (e->suspect == origin) {
-					origin_incref(porigin);
-					origin_decref(e->suspect);
-					e->suspect = porigin;
-				}
-			origin_decref(porigin);
-			goto finish;
+	/* The first pass looks for unrenamed path to optimize for
+	 * common cases, then we look for renames in the second pass.
+	 */
+	for (pass = 0; pass < 2; pass++) {
+		struct origin *(*find)(struct scoreboard *,
+				       struct commit *, struct origin *);
+		find = pass ? find_rename : find_origin;
+
+		for (i = 0, parent = commit->parents;
+		     i < MAXPARENT && parent;
+		     parent = parent->next, i++) {
+			struct commit *p = parent->item;
+
+			if (parent_origin[i])
+				continue;
+			if (parse_commit(p))
+				continue;
+			porigin = find(sb, parent->item, origin);
+			if (!porigin)
+				continue;
+			if (!hashcmp(porigin->blob_sha1, origin->blob_sha1)) {
+				struct blame_entry *e;
+				for (e = sb->ent; e; e = e->next)
+					if (e->suspect == origin) {
+						origin_incref(porigin);
+						origin_decref(e->suspect);
+						e->suspect = porigin;
+					}
+				origin_decref(porigin);
+				goto finish;
+			}
+			parent_origin[i] = porigin;
 		}
-		parent_origin[i] = porigin;
 	}
 
 	for (i = 0, parent = commit->parents;
@@ -973,7 +991,9 @@ static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
 			if (!cmp_suspect(ent->suspect, suspect))
 				ent->guilty = 1;
 		origin_decref(suspect);
-		coalesce(sb);
+
+		if (DEBUG) /* sanity */
+			sanity_check_refcnt(sb);
 	}
 }
 
@@ -1341,11 +1361,14 @@ static void sanity_check_refcnt(struct scoreboard *sb)
 	struct blame_entry *ent;
 
 	for (ent = sb->ent; ent; ent = ent->next) {
-		/* first mark the ones that haven't been checked */
+		/* Nobody should have zero or negative refcnt */
+		if (ent->suspect->refcnt <= 0)
+			baa = 1;
+	}
+	for (ent = sb->ent; ent; ent = ent->next) {
+		/* Mark the ones that haven't been checked */
 		if (0 < ent->suspect->refcnt)
 			ent->suspect->refcnt = -ent->suspect->refcnt;
-		else if (!ent->suspect->refcnt)
-			baa = 1;
 	}
 	for (ent = sb->ent; ent; ent = ent->next) {
 		/* then pick each and see if they have the the
@@ -1357,7 +1380,7 @@ static void sanity_check_refcnt(struct scoreboard *sb)
 
 		if (0 < suspect->refcnt)
 			continue;
-		suspect->refcnt = -suspect->refcnt;
+		suspect->refcnt = -suspect->refcnt; /* Unmark */
 		for (found = 0, e = sb->ent; e; e = e->next) {
 			if (e->suspect != suspect)
 				continue;
