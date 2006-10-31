@@ -2616,6 +2616,7 @@ proc layoutmore {tmax allread} {
 proc showstuff {canshow last} {
     global numcommits commitrow pending_select selectedline curview
     global lookingforhead mainheadid displayorder nullid selectfirst
+    global lastscrollset
 
     if {$numcommits == 0} {
 	global phase
@@ -2623,8 +2624,13 @@ proc showstuff {canshow last} {
 	allcanvs delete all
     }
     set r0 $numcommits
+    set prev $numcommits
     set numcommits $canshow
-    setcanvscroll
+    set t [clock clicks -milliseconds]
+    if {$prev < 100 || $last || $t - $lastscrollset > 500} {
+	set lastscrollset $t
+	setcanvscroll
+    }
     set rows [visiblerows]
     set r1 [lindex $rows 1]
     if {$r1 >= $canshow} {
