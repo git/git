@@ -141,6 +141,8 @@ static int cmp_suspect(struct origin *a, struct origin *b)
 	return strcmp(a->path, b->path);
 }
 
+#define cmp_suspect(a, b) ( ((a)==(b)) ? 0 : cmp_suspect(a,b) )
+
 static void sanity_check_refcnt(struct scoreboard *);
 
 static void coalesce(struct scoreboard *sb)
@@ -213,6 +215,12 @@ static struct origin *find_origin(struct scoreboard *sb,
 	struct diff_options diff_opts;
 	const char *paths[2];
 
+	if (parent->util) {
+		struct origin *cached = parent->util;
+		if (!strcmp(cached->path, origin->path))
+			return origin_incref(cached);
+	}
+
 	/* See if the origin->path is different between parent
 	 * and origin first.  Most of the time they are the
 	 * same and diff-tree is fairly efficient about this.
@@ -259,6 +267,12 @@ static struct origin *find_origin(struct scoreboard *sb,
 		}
 	}
 	diff_flush(&diff_opts);
+	if (porigin) {
+		origin_incref(porigin);
+		if (parent->util)
+			origin_decref(parent->util);
+		parent->util = porigin;
+	}
 	return porigin;
 }
 
@@ -905,7 +919,7 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 				continue;
 			if (parse_commit(p))
 				continue;
-			porigin = find(sb, parent->item, origin);
+			porigin = find(sb, p, origin);
 			if (!porigin)
 				continue;
 			if (!hashcmp(porigin->blob_sha1, origin->blob_sha1)) {
@@ -1371,8 +1385,10 @@ static void sanity_check_refcnt(struct scoreboard *sb)
 			ent->suspect->refcnt = -ent->suspect->refcnt;
 	}
 	for (ent = sb->ent; ent; ent = ent->next) {
-		/* then pick each and see if they have the the
-		 * correct refcnt
+		/* then pick each and see if they have the the correct
+		 * refcnt; note that ->util caching means origin's refcnt
+		 * may well be greater than the number of blame entries
+		 * that use it.
 		 */
 		int found;
 		struct blame_entry *e;
@@ -1386,7 +1402,7 @@ static void sanity_check_refcnt(struct scoreboard *sb)
 				continue;
 			found++;
 		}
-		if (suspect->refcnt != found)
+		if (suspect->refcnt < found)
 			baa = 1;
 	}
 	if (baa) {
