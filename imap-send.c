@@ -272,7 +272,7 @@ buffer_gets( buffer_t * b, char **s )
 				n = b->bytes - start;
 
 				if (n)
-					memcpy( b->buf, b->buf + start, n );
+					memmove(b->buf, b->buf + start, n);
 				b->offset -= start;
 				b->bytes = n;
 				start = 0;
