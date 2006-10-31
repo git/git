@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git-pack-objects' [-q] [--no-reuse-delta] [--delta-base-offset] [--non-empty]
-	[--local] [--incremental] [--window=N] [--depth=N]
+	[--local] [--incremental] [--window=N] [--depth=N] [--all-progress]
 	[--revs [--unpacked | --all]*] [--stdout | base-name] < object-list
 
 
