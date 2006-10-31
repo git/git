@@ -1007,7 +1007,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		add_pending_object(revs, object, def);
 	}
 
-	if (revs->topo_order || revs->unpacked)
+	if (revs->topo_order)
 		revs->limited = 1;
 
 	if (revs->prune_data) {
