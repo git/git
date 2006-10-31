@@ -19,7 +19,9 @@
 #include "xdiff-interface.h"
 #include "quote.h"
 
+#ifndef DEBUG
 #define DEBUG 0
+#endif
 
 static const char blame_usage[] =
 "git-blame [-c] [-l] [-t] [-f] [-n] [-p] [-S <revs-file>] [--] file [commit]\n"
@@ -231,6 +233,9 @@ static void print_map(struct commit *cmit, struct commit *other)
 	    util->num_lines >
 	    util2->num_lines ? util->num_lines : util2->num_lines;
 	int num;
+
+	if (print_map == NULL)
+		; /* to avoid "unused function" warning */
 
 	for (i = 0; i < max; i++) {
 		printf("i: %d ", i);
