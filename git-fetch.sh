@@ -147,15 +147,15 @@ update_local_ref () {
 	[ "$verbose" ] && echo >&2 "  $label_: $newshort_"
 	return 0
     fi
-    oldshort_=$(git-rev-parse --short "$1" 2>/dev/null)
-    mkdir -p "$(dirname "$GIT_DIR/$1")"
+    oldshort_=$(git show-ref --hash --abbrev "$1" 2>/dev/null)
+
     case "$1" in
     refs/tags/*)
 	# Tags need not be pointing at commits so there
 	# is no way to guarantee "fast-forward" anyway.
-	if test -f "$GIT_DIR/$1"
+	if test -n "$oldshort_"
 	then
-		if now_=$(cat "$GIT_DIR/$1") && test "$now_" = "$2"
+		if now_=$(git show-ref --hash "$1") && test "$now_" = "$2"
 		then
 			[ "$verbose" ] && echo >&2 "* $1: same as $3"
 			[ "$verbose" ] && echo >&2 "  $label_: $newshort_" ||:
