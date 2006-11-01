@@ -416,10 +416,6 @@ extern int copy_fd(int ifd, int ofd);
 extern void write_or_die(int fd, const void *buf, size_t count);
 extern int write_or_whine(int fd, const void *buf, size_t count, const char *msg);
 
-/* Finish off pack transfer receiving end */
-extern int receive_unpack_pack(int fd[2], const char *me, int quiet, int);
-extern int receive_keep_pack(int fd[2], const char *me, int quiet, int);
-
 /* pager.c */
 extern void setup_pager(void);
 extern int pager_in_use;

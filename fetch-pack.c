@@ -3,6 +3,9 @@
 #include "pkt-line.h"
 #include "commit.h"
 #include "tag.h"
+#include "exec_cmd.h"
+#include "sideband.h"
+#include <sys/wait.h>
 
 static int keep_pack;
 static int quiet;
@@ -416,6 +419,103 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 	return retval;
 }
 
+static pid_t setup_sideband(int fd[2], int xd[2])
+{
+	pid_t side_pid;
+
+	if (!use_sideband) {
+		fd[0] = xd[0];
+		fd[1] = xd[1];
+		return 0;
+	}
+	/* xd[] is talking with upload-pack; subprocess reads from
+	 * xd[0], spits out band#2 to stderr, and feeds us band#1
+	 * through our fd[0].
+	 */
+	if (pipe(fd) < 0)
+		die("fetch-pack: unable to set up pipe");
+	side_pid = fork();
+	if (side_pid < 0)
+		die("fetch-pack: unable to fork off sideband demultiplexer");
+	if (!side_pid) {
+		/* subprocess */
+		close(fd[0]);
+		if (xd[0] != xd[1])
+			close(xd[1]);
+		if (recv_sideband("fetch-pack", xd[0], fd[1], 2))
+			exit(1);
+		exit(0);
+	}
+	close(xd[0]);
+	close(fd[1]);
+	fd[1] = xd[1];
+	return side_pid;
+}
+
+static int get_pack(int xd[2], const char **argv)
+{
+	int status;
+	pid_t pid, side_pid;
+	int fd[2];
+
+	side_pid = setup_sideband(fd, xd);
+	pid = fork();
+	if (pid < 0)
+		die("fetch-pack: unable to fork off %s", argv[0]);
+	if (!pid) {
+		dup2(fd[0], 0);
+		close(fd[0]);
+		close(fd[1]);
+		execv_git_cmd(argv);
+		die("%s exec failed", argv[0]);
+	}
+	close(fd[0]);
+	close(fd[1]);
+	while (waitpid(pid, &status, 0) < 0) {
+		if (errno != EINTR)
+			die("waiting for %s: %s", argv[0], strerror(errno));
+	}
+	if (WIFEXITED(status)) {
+		int code = WEXITSTATUS(status);
+		if (code)
+			die("%s died with error code %d", argv[0], code);
+		return 0;
+	}
+	if (WIFSIGNALED(status)) {
+		int sig = WTERMSIG(status);
+		die("%s died of signal %d", argv[0], sig);
+	}
+	die("%s died of unnatural causes %d", argv[0], status);
+}
+
+static int explode_rx_pack(int xd[2])
+{
+	const char *argv[3] = { "unpack-objects", quiet ? "-q" : NULL, NULL };
+	return get_pack(xd, argv);
+}
+
+static int keep_rx_pack(int xd[2])
+{
+	const char *argv[6];
+	char keep_arg[256];
+	int n = 0;
+
+	argv[n++] = "index-pack";
+	argv[n++] = "--stdin";
+	if (!quiet)
+		argv[n++] = "-v";
+	if (use_thin_pack)
+		argv[n++] = "--fix-thin";
+	if (keep_pack > 1) {
+		int s = sprintf(keep_arg, "--keep=fetch-pack %i on ", getpid());
+		if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
+			strcpy(keep_arg + s, "localhost");
+		argv[n++] = keep_arg;
+	}
+	argv[n] = NULL;
+	return get_pack(xd, argv);
+}
+
 static int fetch_pack(int fd[2], int nr_match, char **match)
 {
 	struct ref *ref;
@@ -447,17 +547,13 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 		goto all_done;
 	}
 	if (find_common(fd, sha1, ref) < 0)
-		if (!keep_pack)
+		if (keep_pack != 1)
 			/* When cloning, it is not unusual to have
 			 * no common commit.
 			 */
 			fprintf(stderr, "warning: no common commits\n");
 
-	if (keep_pack)
-		status = receive_keep_pack(fd, "git-fetch-pack", quiet, use_sideband);
-	else
-		status = receive_unpack_pack(fd, "git-fetch-pack", quiet, use_sideband);
-
+	status = (keep_pack) ? keep_rx_pack(fd) : explode_rx_pack(fd);
 	if (status)
 		die("git-fetch-pack: fetch failed.");
 
@@ -494,7 +590,7 @@ int main(int argc, char **argv)
 				continue;
 			}
 			if (!strcmp("--keep", arg) || !strcmp("-k", arg)) {
-				keep_pack = 1;
+				keep_pack++;
 				continue;
 			}
 			if (!strcmp("--thin", arg)) {
