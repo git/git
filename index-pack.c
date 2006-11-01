@@ -841,6 +841,19 @@ int main(int argc, char **argv)
 				keep_msg = "";
 			} else if (!strncmp(arg, "--keep=", 7)) {
 				keep_msg = arg + 7;
+			} else if (!strncmp(arg, "--pack_header=", 14)) {
+				struct pack_header *hdr;
+				char *c;
+
+				hdr = (struct pack_header *)input_buffer;
+				hdr->hdr_signature = htonl(PACK_SIGNATURE);
+				hdr->hdr_version = htonl(strtoul(arg + 14, &c, 10));
+				if (*c != ',')
+					die("bad %s", arg);
+				hdr->hdr_entries = htonl(strtoul(c + 1, &c, 10));
+				if (*c)
+					die("bad %s", arg);
+				input_len = sizeof(*hdr);
 			} else if (!strcmp(arg, "-v")) {
 				verbose = 1;
 			} else if (!strcmp(arg, "-o")) {

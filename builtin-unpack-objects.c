@@ -371,6 +371,21 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 				recover = 1;
 				continue;
 			}
+			if (!strncmp(arg, "--pack_header=", 14)) {
+				struct pack_header *hdr;
+				char *c;
+
+				hdr = (struct pack_header *)buffer;
+				hdr->hdr_signature = htonl(PACK_SIGNATURE);
+				hdr->hdr_version = htonl(strtoul(arg + 14, &c, 10));
+				if (*c != ',')
+					die("bad %s", arg);
+				hdr->hdr_entries = htonl(strtoul(c + 1, &c, 10));
+				if (*c)
+					die("bad %s", arg);
+				len = sizeof(*hdr);
+				continue;
+			}
 			usage(unpack_usage);
 		}
 
