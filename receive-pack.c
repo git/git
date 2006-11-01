@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "pack.h"
 #include "refs.h"
 #include "pkt-line.h"
 #include "run-command.h"
@@ -7,9 +8,8 @@
 
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
-static const char *unpacker[] = { "unpack-objects", NULL };
-
 static int deny_non_fast_forwards = 0;
+static int unpack_limit = 5000;
 static int report_status;
 
 static char capabilities[] = "report-status";
@@ -22,6 +22,12 @@ static int receive_pack_config(const char *var, const char *value)
 	if (strcmp(var, "receive.denynonfastforwards") == 0)
 	{
 		deny_non_fast_forwards = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (strcmp(var, "receive.unpacklimit") == 0)
+	{
+		unpack_limit = git_config_int(var, value);
 		return 0;
 	}
 
@@ -227,27 +233,81 @@ static void read_head_info(void)
 	}
 }
 
+static const char *parse_pack_header(struct pack_header *hdr)
+{
+	char *c = (char*)hdr;
+	ssize_t remaining = sizeof(struct pack_header);
+	do {
+		ssize_t r = xread(0, c, remaining);
+		if (r <= 0)
+			return "eof before pack header was fully read";
+		remaining -= r;
+		c += r;
+	} while (remaining > 0);
+	if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
+		return "protocol error (pack signature mismatch detected)";
+	if (!pack_version_ok(hdr->hdr_version))
+		return "protocol error (pack version unsupported)";
+	return NULL;
+}
+
 static const char *unpack(void)
 {
-	int code = run_command_v_opt(1, unpacker, RUN_GIT_CMD);
+	struct pack_header hdr;
+	const char *hdr_err;
+	char hdr_arg[38];
+	int code;
+
+	hdr_err = parse_pack_header(&hdr);
+	if (hdr_err)
+		return hdr_err;
+	snprintf(hdr_arg, sizeof(hdr_arg), "--pack_header=%u,%u",
+			ntohl(hdr.hdr_version), ntohl(hdr.hdr_entries));
+
+	if (ntohl(hdr.hdr_entries) < unpack_limit) {
+		const char *unpacker[3];
+		unpacker[0] = "unpack-objects";
+		unpacker[1] = hdr_arg;
+		unpacker[2] = NULL;
+		code = run_command_v_opt(1, unpacker, RUN_GIT_CMD);
+	} else {
+		const char *keeper[6];
+		char my_host[255], keep_arg[128 + 255];
+
+		if (gethostname(my_host, sizeof(my_host)))
+			strcpy(my_host, "localhost");
+		snprintf(keep_arg, sizeof(keep_arg),
+				"--keep=receive-pack %i on %s",
+				getpid(), my_host);
+
+		keeper[0] = "index-pack";
+		keeper[1] = "--stdin";
+		keeper[2] = "--fix-thin";
+		keeper[3] = hdr_arg;
+		keeper[4] = keep_arg;
+		keeper[5] = NULL;
+		code = run_command_v_opt(1, keeper, RUN_GIT_CMD);
+		if (!code)
+			reprepare_packed_git();
+	}
 
 	switch (code) {
-	case 0:
-		return NULL;
-	case -ERR_RUN_COMMAND_FORK:
-		return "unpack fork failed";
-	case -ERR_RUN_COMMAND_EXEC:
-		return "unpack execute failed";
-	case -ERR_RUN_COMMAND_WAITPID:
-		return "waitpid failed";
-	case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
-		return "waitpid is confused";
-	case -ERR_RUN_COMMAND_WAITPID_SIGNAL:
-		return "unpacker died of signal";
-	case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
-		return "unpacker died strangely";
-	default:
-		return "unpacker exited with error code";
+		case 0:
+			return NULL;
+		case -ERR_RUN_COMMAND_FORK:
+			return "unpack fork failed";
+		case -ERR_RUN_COMMAND_EXEC:
+			return "unpack execute failed";
+		case -ERR_RUN_COMMAND_WAITPID:
+			return "waitpid failed";
+		case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
+			return "waitpid is confused";
+		case -ERR_RUN_COMMAND_WAITPID_SIGNAL:
+			return "unpacker died of signal";
+		case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
+			return "unpacker died strangely";
+		default:
+			return "unpacker exited with error code";
 	}
 }
 
