@@ -3,8 +3,10 @@
 #include "refs.h"
 #include "pkt-line.h"
 #include "run-command.h"
+#include "exec_cmd.h"
 #include "commit.h"
 #include "object.h"
+#include <sys/wait.h>
 
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
@@ -251,12 +253,13 @@ static const char *parse_pack_header(struct pack_header *hdr)
 	return NULL;
 }
 
+static const char *pack_lockfile;
+
 static const char *unpack(void)
 {
 	struct pack_header hdr;
 	const char *hdr_err;
 	char hdr_arg[38];
-	int code;
 
 	hdr_err = parse_pack_header(&hdr);
 	if (hdr_err)
@@ -265,33 +268,13 @@ static const char *unpack(void)
 			ntohl(hdr.hdr_version), ntohl(hdr.hdr_entries));
 
 	if (ntohl(hdr.hdr_entries) < unpack_limit) {
+		int code;
 		const char *unpacker[3];
 		unpacker[0] = "unpack-objects";
 		unpacker[1] = hdr_arg;
 		unpacker[2] = NULL;
 		code = run_command_v_opt(1, unpacker, RUN_GIT_CMD);
-	} else {
-		const char *keeper[6];
-		char my_host[255], keep_arg[128 + 255];
-
-		if (gethostname(my_host, sizeof(my_host)))
-			strcpy(my_host, "localhost");
-		snprintf(keep_arg, sizeof(keep_arg),
-				"--keep=receive-pack %i on %s",
-				getpid(), my_host);
-
-		keeper[0] = "index-pack";
-		keeper[1] = "--stdin";
-		keeper[2] = "--fix-thin";
-		keeper[3] = hdr_arg;
-		keeper[4] = keep_arg;
-		keeper[5] = NULL;
-		code = run_command_v_opt(1, keeper, RUN_GIT_CMD);
-		if (!code)
-			reprepare_packed_git();
-	}
-
-	switch (code) {
+		switch (code) {
 		case 0:
 			return NULL;
 		case -ERR_RUN_COMMAND_FORK:
@@ -308,6 +291,71 @@ static const char *unpack(void)
 			return "unpacker died strangely";
 		default:
 			return "unpacker exited with error code";
+		}
+	} else {
+		const char *keeper[6];
+		int fd[2], s, len, status;
+		pid_t pid;
+		char keep_arg[256];
+		char packname[46];
+
+		s = sprintf(keep_arg, "--keep=receive-pack %i on ", getpid());
+		if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
+			strcpy(keep_arg + s, "localhost");
+
+		keeper[0] = "index-pack";
+		keeper[1] = "--stdin";
+		keeper[2] = "--fix-thin";
+		keeper[3] = hdr_arg;
+		keeper[4] = keep_arg;
+		keeper[5] = NULL;
+
+		if (pipe(fd) < 0)
+			return "index-pack pipe failed";
+		pid = fork();
+		if (pid < 0)
+			return "index-pack fork failed";
+		if (!pid) {
+			dup2(fd[1], 1);
+			close(fd[1]);
+			close(fd[0]);
+			execv_git_cmd(keeper);
+			die("execv of index-pack failed");
+		}
+		close(fd[1]);
+
+		/*
+		 * The first thing we expects from index-pack's output
+		 * is "pack\t%40s\n" or "keep\t%40s\n" (46 bytes) where
+		 * %40s is the newly created pack SHA1 name.  In the "keep"
+		 * case, we need it to remove the corresponding .keep file
+		 * later on.  If we don't get that then tough luck with it.
+		 */
+		for (len = 0;
+		     len < 46 && (s = xread(fd[0], packname+len, 46-len)) > 0;
+		     len += s);
+		close(fd[0]);
+		if (len == 46 && packname[45] == '\n' &&
+		    memcmp(packname, "keep\t", 5) == 0) {
+			char path[PATH_MAX];
+			packname[45] = 0;
+			snprintf(path, sizeof(path), "%s/pack/pack-%s.keep",
+				 get_object_directory(), packname + 5);
+			pack_lockfile = xstrdup(path);
+		}
+
+		/* Then wrap our index-pack process. */
+		while (waitpid(pid, &status, 0) < 0)
+			if (errno != EINTR)
+				return "waitpid failed";
+		if (WIFEXITED(status)) {
+			int code = WEXITSTATUS(status);
+			if (code)
+				return "index-pack exited with error code";
+			reprepare_packed_git();
+			return NULL;
+		}
+		return "index-pack abnormal exit";
 	}
 }
 
@@ -363,6 +411,8 @@ int main(int argc, char **argv)
 		const char *unpack_status = unpack();
 		if (!unpack_status)
 			execute_commands();
+		if (pack_lockfile)
+			unlink(pack_lockfile);
 		if (report_status)
 			report(unpack_status);
 	}
