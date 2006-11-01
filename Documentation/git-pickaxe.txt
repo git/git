@@ -111,6 +111,44 @@ The contents of the actual line is output after the above
 header, prefixed by a TAB. This is to allow adding more
 header elements later.
 
+
+SPECIFIYING RANGES
+------------------
+
+Unlike `git-blame` and `git-annotate` in older git, the extent
+of annotation can be limited to both line ranges and revision
+ranges.  When you are interested in finding the origin for
+ll. 40-60 for file `foo`, you can use `-L` option like this:
+
+	git pickaxe -L 40,60 foo
+
+When you are not interested in changes older than the version
+v2.6.18, or changes older than 3 weeks, you can use revision
+range specifiers  similar to `git-rev-list`:
+
+	git pickaxe v2.6.18.. -- foo
+	git pickaxe --since=3.weeks -- foo
+
+When revision range specifiers are used to limit the annotation,
+lines that have not changed since the range boundary (either the
+commit v2.6.18 or the most recent commit that is more than 3
+weeks old in the above example) are blamed for that range
+boundary commit.
+
+A particularly useful way is to see if an added file have lines
+created by copy-and-paste from existing files.  Sometimes this
+indicates that the developer was being sloppy and did not
+refactor the code properly.  You can first find the commit that
+introduced the file with:
+
+	git log --diff-filter=A --pretty=short -- foo
+
+and then annotate the change between the commit and its
+parents, using `commit{caret}!` notation:
+
+	git pickaxe -C -C -f $commit^! -- foo
+
+
 SEE ALSO
 --------
 gitlink:git-blame[1]

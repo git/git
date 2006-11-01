@@ -239,14 +239,21 @@ of `r1` and `r2` and is defined as
 It it the set of commits that are reachable from either one of
 `r1` or `r2` but not from both.
 
-Here are a few examples:
+Two other shorthands for naming a set that is formed by a commit
+and its parent commits exists.  `r1{caret}@` notation means all
+parents of `r1`.  `r1{caret}!` includes commit `r1` but excludes
+its all parents.
+
+Here are a handful examples:
 
    D                A B D
    D F              A B C D F
-   ^A G		    B D
+   ^A G             B D
    ^A F             B C F
    G...I            C D F G I
-   ^B G I	    C D F G I
+   ^B G I           C D F G I
+   F^@              A B C
+   F^! H            D F H
 
 Author
 ------

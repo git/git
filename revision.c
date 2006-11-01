@@ -657,6 +657,13 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 			return 0;
 		*dotdot = '^';
 	}
+	dotdot = strstr(arg, "^!");
+	if (dotdot && !dotdot[2]) {
+		*dotdot = 0;
+		if (!add_parents_only(revs, arg, flags ^ UNINTERESTING))
+			*dotdot = '^';
+	}
+
 	local_flags = 0;
 	if (*arg == '^') {
 		local_flags = UNINTERESTING;
