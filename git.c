@@ -222,6 +222,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "annotate", cmd_annotate, },
 		{ "apply", cmd_apply },
 		{ "archive", cmd_archive },
+		{ "branch", cmd_branch },
 		{ "cat-file", cmd_cat_file, RUN_SETUP },
 		{ "checkout-index", cmd_checkout_index, RUN_SETUP },
 		{ "check-ref-format", cmd_check_ref_format },
@@ -269,6 +270,8 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "whatchanged", cmd_whatchanged, RUN_SETUP | USE_PAGER },
 		{ "write-tree", cmd_write_tree, RUN_SETUP },
 		{ "verify-pack", cmd_verify_pack },
+		{ "show-ref", cmd_show_ref, RUN_SETUP },
+		{ "pack-refs", cmd_pack_refs, RUN_SETUP },
 	};
 	int i;
 

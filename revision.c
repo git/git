@@ -465,7 +465,7 @@ static void limit_list(struct rev_info *revs)
 static int all_flags;
 static struct rev_info *all_revs;
 
-static int handle_one_ref(const char *path, const unsigned char *sha1)
+static int handle_one_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *object = get_reference(all_revs, path, sha1, all_flags);
 	add_pending_object(all_revs, object, "");
@@ -476,7 +476,7 @@ static void handle_all(struct rev_info *revs, unsigned flags)
 {
 	all_revs = revs;
 	all_flags = flags;
-	for_each_ref(handle_one_ref);
+	for_each_ref(handle_one_ref, NULL);
 }
 
 static int add_parents_only(struct rev_info *revs, const char *arg, int flags)

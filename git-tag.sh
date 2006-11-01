@@ -47,8 +47,10 @@ do
     -d)
     	shift
 	tag_name="$1"
-	rm "$GIT_DIR/refs/tags/$tag_name" && \
-	        echo "Deleted tag $tag_name."
+	tag=$(git-show-ref --verify --hash -- "refs/tags/$tag_name") ||
+		die "Seriously, what tag are you talking about?"
+	git-update-ref -m 'tag: delete' -d "refs/tags/$tag_name" "$tag" &&
+		echo "Deleted tag $tag_name."
 	exit $?
 	;;
     -*)
@@ -63,8 +65,11 @@ done
 
 name="$1"
 [ "$name" ] || usage
-if [ -e "$GIT_DIR/refs/tags/$name" -a -z "$force" ]; then
-    die "tag '$name' already exists"
+prev=0000000000000000000000000000000000000000
+if git-show-ref --verify --quiet -- "refs/tags/$name"
+then
+    test -n "$force" || die "tag '$name' already exists"
+    prev=`git rev-parse "refs/tags/$name"`
 fi
 shift
 git-check-ref-format "tags/$name" ||
@@ -107,6 +112,5 @@ if [ "$annotate" ]; then
     object=$(git-mktag < "$GIT_DIR"/TAG_TMP)
 fi
 
-leading=`expr "refs/tags/$name" : '\(.*\)/'` &&
-mkdir -p "$GIT_DIR/$leading" &&
-echo $object > "$GIT_DIR/refs/tags/$name"
+git update-ref "refs/tags/$name" "$object" "$prev"
+

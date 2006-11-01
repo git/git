@@ -174,7 +174,7 @@ static void walk_commit_list(struct rev_info *revs)
 	}
 }
 
-static int add_one_ref(const char *path, const unsigned char *sha1)
+static int add_one_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *object = parse_object(sha1);
 	if (!object)
@@ -240,7 +240,7 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	revs.tree_objects = 1;
 
 	/* Add all external refs */
-	for_each_ref(add_one_ref);
+	for_each_ref(add_one_ref, NULL);
 
 	/* Add all refs from the index file */
 	add_cache_refs();

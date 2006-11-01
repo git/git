@@ -406,9 +406,9 @@ static int unresolve_one(const char *path)
 
 static void read_head_pointers(void)
 {
-	if (read_ref(git_path("HEAD"), head_sha1))
+	if (read_ref("HEAD", head_sha1))
 		die("No HEAD -- no initial commit yet?\n");
-	if (read_ref(git_path("MERGE_HEAD"), merge_head_sha1)) {
+	if (read_ref("MERGE_HEAD", merge_head_sha1)) {
 		fprintf(stderr, "Not in the middle of a merge.\n");
 		exit(0);
 	}
@@ -445,7 +445,7 @@ static int do_reupdate(int ac, const char **av,
 	int has_head = 1;
 	const char **pathspec = get_pathspec(prefix, av + 1);
 
-	if (read_ref(git_path("HEAD"), head_sha1))
+	if (read_ref("HEAD", head_sha1))
 		/* If there is no HEAD, that means it is an initial
 		 * commit.  Update everything in the index.
 		 */

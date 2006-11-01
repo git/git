@@ -441,7 +441,7 @@ then
 elif test "$use_commit" != ""
 then
 	git-cat-file commit "$use_commit" | sed -e '1,/^$/d'
-elif test -f "$GIT_DIR/MERGE_HEAD" && test -f "$GIT_DIR/MERGE_MSG"
+elif test -f "$GIT_DIR/MERGE_MSG"
 then
 	cat "$GIT_DIR/MERGE_MSG"
 elif test -f "$GIT_DIR/SQUASH_MSG"
@@ -522,15 +522,15 @@ then
 		PARENTS=$(git-cat-file commit HEAD |
 			sed -n -e '/^$/q' -e 's/^parent /-p /p')
 	fi
-	current=$(git-rev-parse --verify HEAD)
+	current="$(git-rev-parse --verify HEAD)"
 else
 	if [ -z "$(git-ls-files)" ]; then
 		echo >&2 Nothing to commit
 		exit 1
 	fi
 	PARENTS=""
-	current=
 	rloga='commit (initial)'
+	current=''
 fi
 
 if test -z "$no_edit"
@@ -606,8 +606,8 @@ then
 	fi &&
 	commit=$(cat "$GIT_DIR"/COMMIT_MSG | git-commit-tree $tree $PARENTS) &&
 	rlogm=$(sed -e 1q "$GIT_DIR"/COMMIT_MSG) &&
-	git-update-ref -m "$rloga: $rlogm" HEAD $commit $current &&
-	rm -f -- "$GIT_DIR/MERGE_HEAD" &&
+	git-update-ref -m "$rloga: $rlogm" HEAD $commit "$current" &&
+	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" &&
 	if test -f "$NEXT_INDEX"
 	then
 		mv "$NEXT_INDEX" "$THIS_INDEX"

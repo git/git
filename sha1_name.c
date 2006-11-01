@@ -247,26 +247,25 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		NULL
 	};
 	static const char *warning = "warning: refname '%.*s' is ambiguous.\n";
-	const char **p, *pathname;
-	char *real_path = NULL;
-	int refs_found = 0, am;
-	unsigned long at_time = (unsigned long)-1;
+	const char **p, *ref;
+	char *real_ref = NULL;
+	int refs_found = 0;
+	int at, reflog_len;
 	unsigned char *this_result;
 	unsigned char sha1_from_ref[20];
 
 	if (len == 40 && !get_sha1_hex(str, sha1))
 		return 0;
 
-	/* At a given period of time? "@{2 hours ago}" */
-	for (am = 1; am < len - 1; am++) {
-		if (str[am] == '@' && str[am+1] == '{' && str[len-1] == '}') {
-			int date_len = len - am - 3;
-			char *date_spec = xmalloc(date_len + 1);
-			strlcpy(date_spec, str + am + 2, date_len + 1);
-			at_time = approxidate(date_spec);
-			free(date_spec);
-			len = am;
-			break;
+	/* basic@{time or number} format to query ref-log */
+	reflog_len = at = 0;
+	if (str[len-1] == '}') {
+		for (at = 1; at < len - 1; at++) {
+			if (str[at] == '@' && str[at+1] == '{') {
+				reflog_len = (len-1) - (at+2);
+				len = at;
+				break;
+			}
 		}
 	}
 
@@ -276,10 +275,10 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 
 	for (p = fmt; *p; p++) {
 		this_result = refs_found ? sha1_from_ref : sha1;
-		pathname = resolve_ref(git_path(*p, len, str), this_result, 1);
-		if (pathname) {
+		ref = resolve_ref(mkpath(*p, len, str), this_result, 1, NULL);
+		if (ref) {
 			if (!refs_found++)
-				real_path = xstrdup(pathname);
+				real_ref = xstrdup(ref);
 			if (!warn_ambiguous_refs)
 				break;
 		}
@@ -291,14 +290,25 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	if (warn_ambiguous_refs && refs_found > 1)
 		fprintf(stderr, warning, len, str);
 
-	if (at_time != (unsigned long)-1) {
-		read_ref_at(
-			real_path + strlen(git_path(".")) - 1,
-			at_time,
-			sha1);
+	if (reflog_len) {
+		/* Is it asking for N-th entry, or approxidate? */
+		int nth, i;
+		unsigned long at_time;
+		for (i = nth = 0; 0 <= nth && i < reflog_len; i++) {
+			char ch = str[at+2+i];
+			if ('0' <= ch && ch <= '9')
+				nth = nth * 10 + ch - '0';
+			else
+				nth = -1;
+		}
+		if (0 <= nth)
+			at_time = 0;
+		else
+			at_time = approxidate(str + at + 2);
+		read_ref_at(real_ref, at_time, nth, sha1);
 	}
 
-	free(real_path);
+	free(real_ref);
 	return 0;
 }
 

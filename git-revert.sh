@@ -145,9 +145,18 @@ git-read-tree -m -u --aggressive $base $head $next &&
 result=$(git-write-tree 2>/dev/null) || {
     echo >&2 "Simple $me fails; trying Automatic $me."
     git-merge-index -o git-merge-one-file -a || {
+	    mv -f .msg "$GIT_DIR/MERGE_MSG"
+	    {
+		echo '
+Conflicts:
+'
+		git ls-files --unmerged |
+		sed -e 's/^[^	]*	/	/' |
+		uniq
+	    } >>"$GIT_DIR/MERGE_MSG"
 	    echo >&2 "Automatic $me failed.  After resolving the conflicts,"
 	    echo >&2 "mark the corrected paths with 'git-update-index <paths>'"
-	    echo >&2 "and commit with 'git commit -F .msg'"
+	    echo >&2 "and commit the result."
 	    case "$me" in
 	    cherry-pick)
 		echo >&2 "You may choose to use the following when making"

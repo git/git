@@ -71,12 +71,16 @@ core.preferSymlinkRefs::
 	expect HEAD to be a symbolic link.
 
 core.logAllRefUpdates::
-	If true, `git-update-ref` will append a line to
-	"$GIT_DIR/logs/<ref>" listing the new SHA1 and the date/time
-	of the update.	If the file does not exist it will be
-	created automatically.	This information can be used to
-	determine what commit was the tip of a branch "2 days ago".
-	This value is false by default (no logging).
+	Updates to a ref <ref> is logged to the file
+	"$GIT_DIR/logs/<ref>", by appending the new and old
+	SHA1, the date/time and the reason of the update, but
+	only when the file exists.  If this configuration
+	variable is set to true, missing "$GIT_DIR/logs/<ref>"
+	file is automatically created for branch heads.
+
+	This information can be used to determine what commit
+	was the tip of a branch "2 days ago".  This value is
+	false by default (no automated creation of log files).
 
 core.repositoryFormatVersion::
 	Internal variable identifying the repository format and layout

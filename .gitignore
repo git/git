@@ -75,6 +75,7 @@ git-name-rev
 git-mv
 git-pack-redundant
 git-pack-objects
+git-pack-refs
 git-parse-remote
 git-patch-id
 git-peek-remote
@@ -106,6 +107,7 @@ git-shortlog
 git-show
 git-show-branch
 git-show-index
+git-show-ref
 git-ssh-fetch
 git-ssh-pull
 git-ssh-push
