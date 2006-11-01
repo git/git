@@ -554,12 +554,17 @@ sub esc_url {
 }
 
 # replace invalid utf8 character with SUBSTITUTION sequence
-sub esc_html {
+sub esc_html ($;%) {
 	my $str = shift;
+	my %opts = @_;
+
 	$str = to_utf8($str);
 	$str = escapeHTML($str);
 	$str =~ s/\014/^L/g; # escape FORM FEED (FF) character (e.g. in COPYING file)
 	$str =~ s/\033/^[/g; # "escape" ESCAPE (\e) character (e.g. commit 20a3847d8a5032ce41f90dcc68abfb36e6fee9b1)
+	if ($opts{'-nbsp'}) {
+		$str =~ s/ /&nbsp;/g;
+	}
 	return $str;
 }
 
@@ -784,7 +789,7 @@ sub format_diff_line {
 		$diff_class = " incomplete";
 	}
 	$line = untabify($line);
-	return "<div class=\"diff$diff_class\">" . esc_html($line) . "</div>\n";
+	return "<div class=\"diff$diff_class\">" . esc_html($line, -nbsp=>1) . "</div>\n";
 }
 
 ## ----------------------------------------------------------------------
@@ -2944,7 +2949,7 @@ sub git_blob {
 		$nr++;
 		$line = untabify($line);
 		printf "<div class=\"pre\"><a id=\"l%i\" href=\"#l%i\" class=\"linenr\">%4i</a> %s</div>\n",
-		       $nr, $nr, $nr, esc_html($line);
+		       $nr, $nr, $nr, esc_html($line, -nbsp=>1);
 	}
 	close $fd
 		or print "Reading blob failed.\n";
