@@ -171,8 +171,11 @@ static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 static int get_patch_id(struct commit *commit, struct diff_options *options,
 		unsigned char *sha1)
 {
-	diff_tree_sha1(commit->parents->item->object.sha1, commit->object.sha1,
-			"", options);
+	if (commit->parents)
+		diff_tree_sha1(commit->parents->item->object.sha1,
+		               commit->object.sha1, "", options);
+	else
+		diff_root_tree_sha1(commit->object.sha1, "", options);
 	diffcore_std(options);
 	return diff_flush_patch_id(options, sha1);
 }
@@ -437,3 +440,109 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+static int add_pending_commit(const char *arg, struct rev_info *revs, int flags)
+{
+	unsigned char sha1[20];
+	if (get_sha1(arg, sha1) == 0) {
+		struct commit *commit = lookup_commit_reference(sha1);
+		if (commit) {
+			commit->object.flags |= flags;
+			add_pending_object(revs, &commit->object, arg);
+			return 0;
+		}
+	}
+	return -1;
+}
+
+static const char cherry_usage[] =
+"git-cherry [-v] <upstream> [<head>] [<limit>]";
+int cmd_cherry(int argc, const char **argv, const char *prefix)
+{
+	struct rev_info revs;
+	struct diff_options patch_id_opts;
+	struct commit *commit;
+	struct commit_list *list = NULL;
+	const char *upstream;
+	const char *head = "HEAD";
+	const char *limit = NULL;
+	int verbose = 0;
+
+	if (argc > 1 && !strcmp(argv[1], "-v")) {
+		verbose = 1;
+		argc--;
+		argv++;
+	}
+
+	switch (argc) {
+	case 4:
+		limit = argv[3];
+		/* FALLTHROUGH */
+	case 3:
+		head = argv[2];
+		/* FALLTHROUGH */
+	case 2:
+		upstream = argv[1];
+		break;
+	default:
+		usage(cherry_usage);
+	}
+
+	init_revisions(&revs, prefix);
+	revs.diff = 1;
+	revs.combine_merges = 0;
+	revs.ignore_merges = 1;
+	revs.diffopt.recursive = 1;
+
+	if (add_pending_commit(head, &revs, 0))
+		die("Unknown commit %s", head);
+	if (add_pending_commit(upstream, &revs, UNINTERESTING))
+		die("Unknown commit %s", upstream);
+
+	/* Don't say anything if head and upstream are the same. */
+	if (revs.pending.nr == 2) {
+		struct object_array_entry *o = revs.pending.objects;
+		if (hashcmp(o[0].item->sha1, o[1].item->sha1) == 0)
+			return 0;
+	}
+
+	get_patch_ids(&revs, &patch_id_opts, prefix);
+
+	if (limit && add_pending_commit(limit, &revs, UNINTERESTING))
+		die("Unknown commit %s", limit);
+
+	/* reverse the list of commits */
+	prepare_revision_walk(&revs);
+	while ((commit = get_revision(&revs)) != NULL) {
+		/* ignore merges */
+		if (commit->parents && commit->parents->next)
+			continue;
+
+		commit_list_insert(commit, &list);
+	}
+
+	while (list) {
+		unsigned char sha1[20];
+		char sign = '+';
+
+		commit = list->item;
+		if (!get_patch_id(commit, &patch_id_opts, sha1) &&
+		    lookup_object(sha1))
+			sign = '-';
+
+		if (verbose) {
+			static char buf[16384];
+			pretty_print_commit(CMIT_FMT_ONELINE, commit, ~0,
+			                    buf, sizeof(buf), 0, NULL, NULL, 0);
+			printf("%c %s %s\n", sign,
+			       sha1_to_hex(commit->object.sha1), buf);
+		}
+		else {
+			printf("%c %s\n", sign,
+			       sha1_to_hex(commit->object.sha1));
+		}
+
+		list = list->next;
+	}
+
+	return 0;
+}

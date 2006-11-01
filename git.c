@@ -226,6 +226,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "cat-file", cmd_cat_file, RUN_SETUP },
 		{ "checkout-index", cmd_checkout_index, RUN_SETUP },
 		{ "check-ref-format", cmd_check_ref_format },
+		{ "cherry", cmd_cherry, RUN_SETUP },
 		{ "commit-tree", cmd_commit_tree, RUN_SETUP },
 		{ "count-objects", cmd_count_objects, RUN_SETUP },
 		{ "diff", cmd_diff, RUN_SETUP | USE_PAGER },
