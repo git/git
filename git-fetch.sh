@@ -20,7 +20,7 @@ verbose=
 update_head_ok=
 exec=
 upload_pack=
-keep=--thin
+keep=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -370,7 +370,7 @@ fetch_main () {
     ( : subshell because we muck with IFS
       IFS=" 	$LF"
       (
-	  git-fetch-pack $exec $keep "$remote" $rref || echo failed "$remote"
+	  git-fetch-pack --thin $exec $keep "$remote" $rref || echo failed "$remote"
       ) |
       while read sha1 remote_name
       do
