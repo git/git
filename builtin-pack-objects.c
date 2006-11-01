@@ -15,7 +15,7 @@
 #include <sys/time.h>
 #include <signal.h>
 
-static const char pack_usage[] = "git-pack-objects [-q] [--no-reuse-delta] [--delta-base-offset] [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] [--revs [--unpacked | --all]*] [--stdout | base-name] <ref-list | <object-list]";
+static const char pack_usage[] = "git-pack-objects [-q] [--no-reuse-delta] [--delta-base-offset] [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] [--all-progress] [--revs [--unpacked | --all]*] [--stdout | base-name] <ref-list | <object-list]";
 
 struct object_entry {
 	unsigned char sha1[20];
@@ -475,15 +475,15 @@ static void write_pack_file(void)
 	unsigned long offset;
 	struct pack_header hdr;
 	unsigned last_percent = 999;
-	int do_progress = 0;
+	int do_progress = progress;
 
-	if (!base_name)
+	if (!base_name) {
 		f = sha1fd(1, "<stdout>");
-	else {
+		do_progress >>= 1;
+	}
+	else
 		f = sha1create("%s-%s.%s", base_name,
 			       sha1_to_hex(object_list_sha1), "pack");
-		do_progress = progress;
-	}
 	if (do_progress)
 		fprintf(stderr, "Writing %d objects.\n", nr_result);
 
@@ -1524,6 +1524,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			progress = 1;
 			continue;
 		}
+		if (!strcmp("--all-progress", arg)) {
+			progress = 2;
+			continue;
+		}
 		if (!strcmp("--incremental", arg)) {
 			incremental = 1;
 			continue;
@@ -1641,7 +1645,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	else {
 		if (nr_result)
 			prepare_pack(window, depth);
-		if (progress && pack_to_stdout) {
+		if (progress == 1 && pack_to_stdout) {
 			/* the other end usually displays progress itself */
 			struct itimerval v = {{0,},};
 			setitimer(ITIMER_REAL, &v, NULL);

@@ -31,7 +31,7 @@ $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
 our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,
-    $opt_b,$opt_r,$opt_I,$opt_A,$opt_s,$opt_l,$opt_d,$opt_D,$opt_S,$opt_F);
+    $opt_b,$opt_r,$opt_I,$opt_A,$opt_s,$opt_l,$opt_d,$opt_D,$opt_S,$opt_F,$opt_P);
 
 sub usage() {
 	print STDERR <<END;
@@ -39,17 +39,19 @@ Usage: ${\basename $0}     # fetch/update GIT from SVN
        [-o branch-for-HEAD] [-h] [-v] [-l max_rev]
        [-C GIT_repository] [-t tagname] [-T trunkname] [-b branchname]
        [-d|-D] [-i] [-u] [-r] [-I ignorefilename] [-s start_chg]
-       [-m] [-M regex] [-A author_file] [-S] [-F] [SVN_URL]
+       [-m] [-M regex] [-A author_file] [-S] [-F] [-P project_name] [SVN_URL]
 END
 	exit(1);
 }
 
-getopts("A:b:C:dDFhiI:l:mM:o:rs:t:T:Suv") or usage();
+getopts("A:b:C:dDFhiI:l:mM:o:rs:t:T:SP:uv") or usage();
 usage if $opt_h;
 
 my $tag_name = $opt_t || "tags";
 my $trunk_name = $opt_T || "trunk";
 my $branch_name = $opt_b || "branches";
+my $project_name = $opt_P || "";
+$project_name = "/" . $project_name if ($project_name);
 
 @ARGV == 1 or @ARGV == 2 or usage();
 
@@ -427,6 +429,20 @@ sub get_ignore($$$$$) {
 	}
 }
 
+sub project_path($$)
+{
+	my ($path, $project) = @_;
+
+	$path = "/".$path unless ($path =~ m#^\/#) ;
+	return $1 if ($path =~ m#^$project\/(.*)$#);
+
+	$path =~ s#\.#\\\.#g;
+	$path =~ s#\+#\\\+#g;
+	return "/" if ($project =~ m#^$path.*$#);
+
+	return undef;
+}
+
 sub split_path($$) {
 	my($rev,$path) = @_;
 	my $branch;
@@ -446,7 +462,11 @@ sub split_path($$) {
 		print STDERR "$rev: Unrecognized path: $path\n" unless (defined $no_error{$path});
 		return ()
 	}
-	$path = "/" if $path eq "";
+	if ($path eq "") {
+		$path = "/";
+	} elsif ($project_name) {
+		$path = project_path($path, $project_name);
+	}
 	return ($branch,$path);
 }
 
@@ -898,6 +918,7 @@ sub commit_all {
 	while(my($path,$action) = each %$changed_paths) {
 		($branch,$path) = split_path($revision,$path);
 		next if not defined $branch;
+		next if not defined $path;
 		$done{$branch}{$path} = $action;
 	}
 	while(($branch,$changed_paths) = each %done) {

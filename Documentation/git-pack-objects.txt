@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git-pack-objects' [-q] [--no-reuse-delta] [--delta-base-offset] [--non-empty]
-	[--local] [--incremental] [--window=N] [--depth=N]
+	[--local] [--incremental] [--window=N] [--depth=N] [--all-progress]
 	[--revs [--unpacked | --all]*] [--stdout | base-name] < object-list
 
 
@@ -47,9 +47,8 @@ base-name::
 	<base-name> to determine the name of the created file.
 	When this option is used, the two files are written in
 	<base-name>-<SHA1>.{pack,idx} files.  <SHA1> is a hash
-	of object names (currently in random order so it does
-	not have any useful meaning) to make the resulting
-	filename reasonably unique, and written to the standard
+	of the sorted object names to make the resulting filename
+	based on the pack content, and written to the standard
 	output of the command.
 
 --stdout::

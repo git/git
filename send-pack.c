@@ -29,6 +29,7 @@ static void exec_pack_objects(void)
 {
 	static const char *args[] = {
 		"pack-objects",
+		"--all-progress",
 		"--stdout",
 		NULL
 	};
