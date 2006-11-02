@@ -103,6 +103,7 @@ static int ref_cmp(const void *r1, const void *r2)
 static void print_ref_list(int remote_only)
 {
 	int i;
+	char c;
 
 	if (remote_only)
 		for_each_remote_ref(append_ref, NULL);
@@ -112,10 +113,11 @@ static void print_ref_list(int remote_only)
 	qsort(ref_list, ref_index, sizeof(char *), ref_cmp);
 
 	for (i = 0; i < ref_index; i++) {
+		c = ' ';
 		if (!strcmp(ref_list[i], head))
-			printf("* %s\n", ref_list[i]);
-		else
-			printf("  %s\n", ref_list[i]);
+			c = '*';
+
+		printf("%c %s\n", c, ref_list[i]);
 	}
 }
 
