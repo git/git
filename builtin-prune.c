@@ -16,8 +16,14 @@ static struct rev_info revs;
 
 static int prune_object(char *path, const char *filename, const unsigned char *sha1)
 {
+	char buf[20];
+	const char *type;
+
 	if (show_only) {
-		printf("would prune %s/%s\n", path, filename);
+		type = buf;
+		if (sha1_object_info(sha1, type, NULL))
+			type = "unknown";
+		printf("%s %s\n", sha1_to_hex(sha1), type );
 		return 0;
 	}
 	unlink(mkpath("%s/%s", path, filename));
