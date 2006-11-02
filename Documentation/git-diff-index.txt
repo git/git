@@ -54,7 +54,7 @@ If '--cached' is specified, it allows you to ask:
 
 For example, let's say that you have worked on your working directory, updated
 some files in the index and are ready to commit. You want to see exactly
-*what* you are going to commit is without having to write a new tree
+*what* you are going to commit, without having to write a new tree
 object and compare it that way, and to do that, you just do
 
 	git-diff-index --cached HEAD
@@ -68,7 +68,7 @@ matches my working directory. But doing a "git-diff-index" does:
   -100644 blob    4161aecc6700a2eb579e842af0b7f22b98443f74        commit.c
   +100644 blob    4161aecc6700a2eb579e842af0b7f22b98443f74        git-commit.c
 
-You can trivially see that the above is a rename.
+You can see easily that the above is a rename.
 
 In fact, "git-diff-index --cached" *should* always be entirely equivalent to
 actually doing a "git-write-tree" and comparing that. Except this one is much
