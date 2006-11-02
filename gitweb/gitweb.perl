@@ -1294,47 +1294,88 @@ sub parse_ls_tree_line ($;%) {
 ## ......................................................................
 ## parse to array of hashes functions
 
-sub git_get_refs_list {
-	my $type = shift || "";
-	my %refs;
-	my @reflist;
+sub git_get_heads_list {
+	my $limit = shift;
+	my @headslist;
 
-	my @refs;
-	open my $fd, "-|", $GIT, "peek-remote", "$projectroot/$project/"
+	open my $fd, '-|', git_cmd(), 'for-each-ref',
+		($limit ? '--count='.($limit+1) : ()), '--sort=-committerdate',
+		'--format=%(objectname) %(refname) %(subject)%00%(committer)',
+		'refs/heads'
 		or return;
 	while (my $line = <$fd>) {
-		chomp $line;
-		if ($line =~ m/^([0-9a-fA-F]{40})\trefs\/($type\/?([^\^]+))(\^\{\})?$/) {
-			if (defined $refs{$1}) {
-				push @{$refs{$1}}, $2;
-			} else {
-				$refs{$1} = [ $2 ];
-			}
+		my %ref_item;
 
-			if (! $4) { # unpeeled, direct reference
-				push @refs, { hash => $1, name => $3 }; # without type
-			} elsif ($3 eq $refs[-1]{'name'}) {
-				# most likely a tag is followed by its peeled
-				# (deref) one, and when that happens we know the
-				# previous one was of type 'tag'.
-				$refs[-1]{'type'} = "tag";
-			}
+		chomp $line;
+		my ($refinfo, $committerinfo) = split(/\0/, $line);
+		my ($hash, $name, $title) = split(' ', $refinfo, 3);
+		my ($committer, $epoch, $tz) =
+			($committerinfo =~ /^(.*) ([0-9]+) (.*)$/);
+		$name =~ s!^refs/heads/!!;
+
+		$ref_item{'name'}  = $name;
+		$ref_item{'id'}    = $hash;
+		$ref_item{'title'} = $title || '(no commit message)';
+		$ref_item{'epoch'} = $epoch;
+		if ($epoch) {
+			$ref_item{'age'} = age_string(time - $ref_item{'epoch'});
+		} else {
+			$ref_item{'age'} = "unknown";
 		}
+
+		push @headslist, \%ref_item;
 	}
 	close $fd;
 
-	foreach my $ref (@refs) {
-		my $ref_file = $ref->{'name'};
-		my $ref_id   = $ref->{'hash'};
+	return wantarray ? @headslist : \@headslist;
+}
 
-		my $type = $ref->{'type'} || git_get_type($ref_id) || next;
-		my %ref_item = parse_ref($ref_file, $ref_id, $type);
+sub git_get_tags_list {
+	my $limit = shift;
+	my @tagslist;
 
-		push @reflist, \%ref_item;
+	open my $fd, '-|', git_cmd(), 'for-each-ref',
+		($limit ? '--count='.($limit+1) : ()), '--sort=-creatordate',
+		'--format=%(objectname) %(objecttype) %(refname) '.
+		'%(*objectname) %(*objecttype) %(subject)%00%(creator)',
+		'refs/tags'
+		or return;
+	while (my $line = <$fd>) {
+		my %ref_item;
+
+		chomp $line;
+		my ($refinfo, $creatorinfo) = split(/\0/, $line);
+		my ($id, $type, $name, $refid, $reftype, $title) = split(' ', $refinfo, 6);
+		my ($creator, $epoch, $tz) =
+			($creatorinfo =~ /^(.*) ([0-9]+) (.*)$/);
+		$name =~ s!^refs/tags/!!;
+
+		$ref_item{'type'} = $type;
+		$ref_item{'id'} = $id;
+		$ref_item{'name'} = $name;
+		if ($type eq "tag") {
+			$ref_item{'subject'} = $title;
+			$ref_item{'reftype'} = $reftype;
+			$ref_item{'refid'}   = $refid;
+		} else {
+			$ref_item{'reftype'} = $type;
+			$ref_item{'refid'}   = $id;
+		}
+
+		if ($type eq "tag" || $type eq "commit") {
+			$ref_item{'epoch'} = $epoch;
+			if ($epoch) {
+				$ref_item{'age'} = age_string(time - $ref_item{'epoch'});
+			} else {
+				$ref_item{'age'} = "unknown";
+			}
+		}
+
+		push @tagslist, \%ref_item;
 	}
-	# sort refs by age
-	@reflist = sort {$b->{'epoch'} <=> $a->{'epoch'}} @reflist;
-	return (\@reflist, \%refs);
+	close $fd;
+
+	return wantarray ? @tagslist : \@tagslist;
 }
 
 ## ----------------------------------------------------------------------
@@ -2264,8 +2305,7 @@ sub git_tags_body {
 	for (my $i = $from; $i <= $to; $i++) {
 		my $entry = $taglist->[$i];
 		my %tag = %$entry;
-		my $comment_lines = $tag{'comment'};
-		my $comment = shift @$comment_lines;
+		my $comment = $tag{'subject'};
 		my $comment_short;
 		if (defined $comment) {
 			$comment_short = chop_str($comment, 30, 5);
@@ -2298,7 +2338,7 @@ sub git_tags_body {
 		      $cgi->a({-href => href(action=>$tag{'reftype'}, hash=>$tag{'refid'})}, $tag{'reftype'});
 		if ($tag{'reftype'} eq "commit") {
 			print " | " . $cgi->a({-href => href(action=>"shortlog", hash=>$tag{'name'})}, "shortlog") .
-			      " | " . $cgi->a({-href => href(action=>"log", hash=>$tag{'refid'})}, "log");
+			      " | " . $cgi->a({-href => href(action=>"log", hash=>$tag{'name'})}, "log");
 		} elsif ($tag{'reftype'} eq "blob") {
 			print " | " . $cgi->a({-href => href(action=>"blob_plain", hash=>$tag{'refid'})}, "raw");
 		}
@@ -2323,23 +2363,23 @@ sub git_heads_body {
 	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
 		my $entry = $headlist->[$i];
-		my %tag = %$entry;
-		my $curr = $tag{'id'} eq $head;
+		my %ref = %$entry;
+		my $curr = $ref{'id'} eq $head;
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
 		} else {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
-		print "<td><i>$tag{'age'}</i></td>\n" .
-		      ($tag{'id'} eq $head ? "<td class=\"current_head\">" : "<td>") .
-		      $cgi->a({-href => href(action=>"shortlog", hash=>$tag{'name'}),
-		               -class => "list name"},esc_html($tag{'name'})) .
+		print "<td><i>$ref{'age'}</i></td>\n" .
+		      ($curr ? "<td class=\"current_head\">" : "<td>") .
+		      $cgi->a({-href => href(action=>"shortlog", hash=>$ref{'name'}),
+		               -class => "list name"},esc_html($ref{'name'})) .
 		      "</td>\n" .
 		      "<td class=\"link\">" .
-		      $cgi->a({-href => href(action=>"shortlog", hash=>$tag{'name'})}, "shortlog") . " | " .
-		      $cgi->a({-href => href(action=>"log", hash=>$tag{'name'})}, "log") . " | " .
-		      $cgi->a({-href => href(action=>"tree", hash=>$tag{'name'}, hash_base=>$tag{'name'})}, "tree") .
+		      $cgi->a({-href => href(action=>"shortlog", hash=>$ref{'name'})}, "shortlog") . " | " .
+		      $cgi->a({-href => href(action=>"log", hash=>$ref{'name'})}, "log") . " | " .
+		      $cgi->a({-href => href(action=>"tree", hash=>$ref{'name'}, hash_base=>$ref{'name'})}, "tree") .
 		      "</td>\n" .
 		      "</tr>";
 	}
@@ -2489,18 +2529,9 @@ sub git_summary {
 
 	my $owner = git_get_project_owner($project);
 
-	my ($reflist, $refs) = git_get_refs_list();
-
-	my @taglist;
-	my @headlist;
-	foreach my $ref (@$reflist) {
-		if ($ref->{'name'} =~ s!^heads/!!) {
-			push @headlist, $ref;
-		} else {
-			$ref->{'name'} =~ s!^tags/!!;
-			push @taglist, $ref;
-		}
-	}
+	my $refs = git_get_references();
+	my @taglist  = git_get_tags_list(15);
+	my @headlist = git_get_heads_list(15);
 
 	git_header_html();
 	git_print_page_nav('summary','', $head);
@@ -2792,9 +2823,9 @@ sub git_tags {
 	git_print_page_nav('','', $head,undef,$head);
 	git_print_header_div('summary', $project);
 
-	my ($taglist) = git_get_refs_list("tags");
-	if (@$taglist) {
-		git_tags_body($taglist);
+	my @tagslist = git_get_tags_list();
+	if (@tagslist) {
+		git_tags_body(\@tagslist);
 	}
 	git_footer_html();
 }
@@ -2805,9 +2836,9 @@ sub git_heads {
 	git_print_page_nav('','', $head,undef,$head);
 	git_print_header_div('summary', $project);
 
-	my ($headlist) = git_get_refs_list("heads");
-	if (@$headlist) {
-		git_heads_body($headlist, $head);
+	my @headslist = git_get_heads_list();
+	if (@headslist) {
+		git_heads_body(\@headslist, $head);
 	}
 	git_footer_html();
 }
