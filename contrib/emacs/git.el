@@ -589,6 +589,7 @@ and returns the process output as a string."
                           (let ((commit (git-commit-tree buffer tree head)))
                             (git-update-ref "HEAD" commit head)
                             (condition-case nil (delete-file ".git/MERGE_HEAD") (error nil))
+                            (condition-case nil (delete-file ".git/MERGE_MSG") (error nil))
                             (with-current-buffer buffer (erase-buffer))
                             (git-set-files-state files 'uptodate)
                             (when (file-directory-p ".git/rr-cache")
@@ -888,7 +889,7 @@ and returns the process output as a string."
           'face 'git-header-face)
          (propertize git-log-msg-separator 'face 'git-separator-face)
          "\n")
-        (cond ((and merge-heads (file-readable-p ".git/MERGE_MSG"))
+        (cond ((file-readable-p ".git/MERGE_MSG")
                (insert-file-contents ".git/MERGE_MSG"))
               (sign-off
                (insert (format "\n\nSigned-off-by: %s <%s>\n"
