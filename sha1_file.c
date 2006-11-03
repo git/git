@@ -1382,8 +1382,7 @@ static int link_temp_to_file(const char *tmpfile, const char *filename)
 	dir = strrchr(filename, '/');
 	if (dir) {
 		*dir = 0;
-		mkdir(filename, 0777);
-		if (adjust_shared_perm(filename)) {
+		if (!mkdir(filename, 0777) && adjust_shared_perm(filename)) {
 			*dir = '/';
 			return -2;
 		}
