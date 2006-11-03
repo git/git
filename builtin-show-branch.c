@@ -346,7 +346,7 @@ static void sort_ref_range(int bottom, int top)
 	      compare_ref_name);
 }
 
-static int append_ref(const char *refname, const unsigned char *sha1)
+static int append_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
 	int i;
@@ -369,7 +369,7 @@ static int append_ref(const char *refname, const unsigned char *sha1)
 	return 0;
 }
 
-static int append_head_ref(const char *refname, const unsigned char *sha1)
+static int append_head_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	unsigned char tmp[20];
 	int ofs = 11;
@@ -380,14 +380,14 @@ static int append_head_ref(const char *refname, const unsigned char *sha1)
 	 */
 	if (get_sha1(refname + ofs, tmp) || hashcmp(tmp, sha1))
 		ofs = 5;
-	return append_ref(refname + ofs, sha1);
+	return append_ref(refname + ofs, sha1, flag, cb_data);
 }
 
-static int append_tag_ref(const char *refname, const unsigned char *sha1)
+static int append_tag_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	if (strncmp(refname, "refs/tags/", 10))
 		return 0;
-	return append_ref(refname + 5, sha1);
+	return append_ref(refname + 5, sha1, flag, cb_data);
 }
 
 static const char *match_ref_pattern = NULL;
@@ -401,7 +401,7 @@ static int count_slash(const char *s)
 	return cnt;
 }
 
-static int append_matching_ref(const char *refname, const unsigned char *sha1)
+static int append_matching_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	/* we want to allow pattern hold/<asterisk> to show all
 	 * branches under refs/heads/hold/, and v0.99.9? to show
@@ -417,41 +417,39 @@ static int append_matching_ref(const char *refname, const unsigned char *sha1)
 	if (fnmatch(match_ref_pattern, tail, 0))
 		return 0;
 	if (!strncmp("refs/heads/", refname, 11))
-		return append_head_ref(refname, sha1);
+		return append_head_ref(refname, sha1, flag, cb_data);
 	if (!strncmp("refs/tags/", refname, 10))
-		return append_tag_ref(refname, sha1);
-	return append_ref(refname, sha1);
+		return append_tag_ref(refname, sha1, flag, cb_data);
+	return append_ref(refname, sha1, flag, cb_data);
 }
 
 static void snarf_refs(int head, int tag)
 {
 	if (head) {
 		int orig_cnt = ref_name_cnt;
-		for_each_ref(append_head_ref);
+		for_each_ref(append_head_ref, NULL);
 		sort_ref_range(orig_cnt, ref_name_cnt);
 	}
 	if (tag) {
 		int orig_cnt = ref_name_cnt;
-		for_each_ref(append_tag_ref);
+		for_each_ref(append_tag_ref, NULL);
 		sort_ref_range(orig_cnt, ref_name_cnt);
 	}
 }
 
-static int rev_is_head(char *head_path, int headlen, char *name,
+static int rev_is_head(char *head, int headlen, char *name,
 		       unsigned char *head_sha1, unsigned char *sha1)
 {
-	int namelen;
-	if ((!head_path[0]) ||
+	if ((!head[0]) ||
 	    (head_sha1 && sha1 && hashcmp(head_sha1, sha1)))
 		return 0;
-	namelen = strlen(name);
-	if ((headlen < namelen) ||
-	    memcmp(head_path + headlen - namelen, name, namelen))
-		return 0;
-	if (headlen == namelen ||
-	    head_path[headlen - namelen - 1] == '/')
-		return 1;
-	return 0;
+	if (!strncmp(head, "refs/heads/", 11))
+		head += 11;
+	if (!strncmp(name, "refs/heads/", 11))
+		name += 11;
+	else if (!strncmp(name, "heads/", 6))
+		name += 6;
+	return !strcmp(head, name);
 }
 
 static int show_merge_base(struct commit_list *seen, int num_rev)
@@ -495,7 +493,7 @@ static void append_one_rev(const char *av)
 {
 	unsigned char revkey[20];
 	if (!get_sha1(av, revkey)) {
-		append_ref(av, revkey);
+		append_ref(av, revkey, 0, NULL);
 		return;
 	}
 	if (strchr(av, '*') || strchr(av, '?') || strchr(av, '[')) {
@@ -503,7 +501,7 @@ static void append_one_rev(const char *av)
 		int saved_matches = ref_name_cnt;
 		match_ref_pattern = av;
 		match_ref_slash = count_slash(av);
-		for_each_ref(append_matching_ref);
+		for_each_ref(append_matching_ref, NULL);
 		if (saved_matches == ref_name_cnt &&
 		    ref_name_cnt < MAX_REVS)
 			error("no matching refs with %s", av);
@@ -559,9 +557,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	int all_heads = 0, all_tags = 0;
 	int all_mask, all_revs;
 	int lifo = 1;
-	char head_path[128];
-	const char *head_path_p;
-	int head_path_len;
+	char head[128];
+	const char *head_p;
+	int head_len;
 	unsigned char head_sha1[20];
 	int merge_base = 0;
 	int independent = 0;
@@ -638,31 +636,31 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		ac--; av++;
 	}
 
-	head_path_p = resolve_ref(git_path("HEAD"), head_sha1, 1);
-	if (head_path_p) {
-		head_path_len = strlen(head_path_p);
-		memcpy(head_path, head_path_p, head_path_len + 1);
+	head_p = resolve_ref("HEAD", head_sha1, 1, NULL);
+	if (head_p) {
+		head_len = strlen(head_p);
+		memcpy(head, head_p, head_len + 1);
 	}
 	else {
-		head_path_len = 0;
-		head_path[0] = 0;
+		head_len = 0;
+		head[0] = 0;
 	}
 
-	if (with_current_branch && head_path_p) {
+	if (with_current_branch && head_p) {
 		int has_head = 0;
 		for (i = 0; !has_head && i < ref_name_cnt; i++) {
 			/* We are only interested in adding the branch
 			 * HEAD points at.
 			 */
-			if (rev_is_head(head_path,
-					head_path_len,
+			if (rev_is_head(head,
+					head_len,
 					ref_name[i],
 					head_sha1, NULL))
 				has_head++;
 		}
 		if (!has_head) {
-			int pfxlen = strlen(git_path("refs/heads/"));
-			append_one_rev(head_path + pfxlen);
+			int pfxlen = strlen("refs/heads/");
+			append_one_rev(head + pfxlen);
 		}
 	}
 
@@ -713,8 +711,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	if (1 < num_rev || extra < 0) {
 		for (i = 0; i < num_rev; i++) {
 			int j;
-			int is_head = rev_is_head(head_path,
-						  head_path_len,
+			int is_head = rev_is_head(head,
+						  head_len,
 						  ref_name[i],
 						  head_sha1,
 						  rev[i]->object.sha1);

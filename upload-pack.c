@@ -420,7 +420,7 @@ static void receive_needs(void)
 	}
 }
 
-static int send_ref(const char *refname, const unsigned char *sha1)
+static int send_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	static const char *capabilities = "multi_ack thin-pack side-band side-band-64k ofs-delta";
 	struct object *o = parse_object(sha1);
@@ -448,8 +448,8 @@ static int send_ref(const char *refname, const unsigned char *sha1)
 static void upload_pack(void)
 {
 	reset_timeout();
-	head_ref(send_ref);
-	for_each_ref(send_ref);
+	head_ref(send_ref, NULL);
+	for_each_ref(send_ref, NULL);
 	packet_flush(1);
 	receive_needs();
 	if (want_obj.nr) {

@@ -252,26 +252,6 @@ int log_tree_diff_flush(struct rev_info *opt)
 	return 1;
 }
 
-static int diff_root_tree(struct rev_info *opt,
-			  const unsigned char *new, const char *base)
-{
-	int retval;
-	void *tree;
-	struct tree_desc empty, real;
-
-	tree = read_object_with_reference(new, tree_type, &real.size, NULL);
-	if (!tree)
-		die("unable to read root tree (%s)", sha1_to_hex(new));
-	real.buf = tree;
-
-	empty.buf = "";
-	empty.size = 0;
-	retval = diff_tree(&empty, &real, base, &opt->diffopt);
-	free(tree);
-	log_tree_diff_flush(opt);
-	return retval;
-}
-
 static int do_diff_combined(struct rev_info *opt, struct commit *commit)
 {
 	unsigned const char *sha1 = commit->object.sha1;
@@ -297,8 +277,10 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	/* Root commit? */
 	parents = commit->parents;
 	if (!parents) {
-		if (opt->show_root_diff)
-			diff_root_tree(opt, sha1, "");
+		if (opt->show_root_diff) {
+			diff_root_tree_sha1(sha1, "", &opt->diffopt);
+			log_tree_diff_flush(opt);
+		}
 		return !opt->loginfo;
 	}
 

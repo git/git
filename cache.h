@@ -179,6 +179,7 @@ struct lock_file {
 extern int hold_lock_file_for_update(struct lock_file *, const char *path, int);
 extern int commit_lock_file(struct lock_file *);
 extern void rollback_lock_file(struct lock_file *);
+extern int delete_ref(const char *, unsigned char *sha1);
 
 /* Environment bits from configuration mechanism */
 extern int use_legacy_headers;
@@ -188,7 +189,6 @@ extern int prefer_symlink_refs;
 extern int log_all_ref_updates;
 extern int warn_ambiguous_refs;
 extern int shared_repository;
-extern int deny_non_fast_forwards;
 extern const char *apply_default_whitespace;
 extern int zlib_compression_level;
 
@@ -289,9 +289,9 @@ extern int get_sha1(const char *str, unsigned char *sha1);
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 extern int read_ref(const char *filename, unsigned char *sha1);
-extern const char *resolve_ref(const char *path, unsigned char *sha1, int);
-extern int create_symref(const char *git_HEAD, const char *refs_heads_master);
-extern int validate_symref(const char *git_HEAD);
+extern const char *resolve_ref(const char *path, unsigned char *sha1, int, int *);
+extern int create_symref(const char *ref, const char *refs_heads_master);
+extern int validate_symref(const char *ref);
 
 extern int base_name_compare(const char *name1, int len1, int mode1, const char *name2, int len2, int mode2);
 extern int cache_name_compare(const char *name1, int len1, const char *name2, int len2);

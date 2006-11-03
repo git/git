@@ -158,8 +158,8 @@ BASIC_CFLAGS =
 BASIC_LDFLAGS =
 
 SCRIPT_SH = \
-	git-bisect.sh git-branch.sh git-checkout.sh \
-	git-cherry.sh git-clean.sh git-clone.sh git-commit.sh \
+	git-bisect.sh git-checkout.sh \
+	git-clean.sh git-clone.sh git-commit.sh \
 	git-fetch.sh \
 	git-ls-remote.sh \
 	git-merge-one-file.sh git-parse-remote.sh \
@@ -212,7 +212,7 @@ PROGRAMS = \
 EXTRA_PROGRAMS =
 
 BUILT_INS = \
-	git-format-patch$X git-show$X git-whatchanged$X \
+	git-format-patch$X git-show$X git-whatchanged$X git-cherry$X \
 	git-get-tar-commit-id$X \
 	$(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
 
@@ -270,6 +270,7 @@ BUILTIN_OBJS = \
 	builtin-annotate.o \
 	builtin-apply.o \
 	builtin-archive.o \
+	builtin-branch.o \
 	builtin-cat-file.o \
 	builtin-checkout-index.o \
 	builtin-check-ref-format.o \
@@ -310,7 +311,9 @@ BUILTIN_OBJS = \
 	builtin-update-ref.o \
 	builtin-upload-archive.o \
 	builtin-verify-pack.o \
-	builtin-write-tree.o
+	builtin-write-tree.o \
+	builtin-show-ref.o \
+	builtin-pack-refs.o
 
 GITLIBS = $(LIB_FILE) $(XDIFF_LIB)
 EXTLIBS = -lz

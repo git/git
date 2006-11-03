@@ -7,7 +7,7 @@ git-update-ref - update the object name stored in a ref safely
 
 SYNOPSIS
 --------
-'git-update-ref' [-m <reason>] <ref> <newvalue> [<oldvalue>]
+'git-update-ref' [-m <reason>] (-d <ref> <oldvalue> | <ref> <newvalue> [<oldvalue>])
 
 DESCRIPTION
 -----------
@@ -20,7 +20,9 @@ possibly dereferencing the symbolic refs, after verifying that
 the current value of the <ref> matches <oldvalue>.
 E.g. `git-update-ref refs/heads/master <newvalue> <oldvalue>`
 updates the master branch head to <newvalue> only if its current
-value is <oldvalue>.
+value is <oldvalue>.  You can specify 40 "0" or an empty string
+as <oldvalue> to make sure that the ref you are creating does
+not exist.
 
 It also allows a "ref" file to be a symbolic pointer to another
 ref file by starting with the four-byte header sequence of
@@ -48,6 +50,10 @@ that point to "outside" the tree are safe: they'll be followed
 for reading but not for writing (so we'll never write through a
 ref symlink to some other tree, if you have copied a whole
 archive by creating a symlink tree).
+
+With `-d` flag, it deletes the named <ref> after verifying it
+still contains <oldvalue>.
+
 
 Logging Updates
 ---------------

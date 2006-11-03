@@ -418,9 +418,6 @@ static void limit_list(struct rev_info *revs)
 
 		if (revs->max_age != -1 && (commit->date < revs->max_age))
 			obj->flags |= UNINTERESTING;
-		if (revs->unpacked &&
-		    has_sha1_pack(obj->sha1, revs->ignore_packed))
-			obj->flags |= UNINTERESTING;
 		add_parents_to_list(revs, commit, &list);
 		if (obj->flags & UNINTERESTING) {
 			mark_parents_uninteresting(commit);
@@ -468,7 +465,7 @@ static void limit_list(struct rev_info *revs)
 static int all_flags;
 static struct rev_info *all_revs;
 
-static int handle_one_ref(const char *path, const unsigned char *sha1)
+static int handle_one_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *object = get_reference(all_revs, path, sha1, all_flags);
 	add_pending_object(all_revs, object, "");
@@ -479,7 +476,7 @@ static void handle_all(struct rev_info *revs, unsigned flags)
 {
 	all_revs = revs;
 	all_flags = flags;
-	for_each_ref(handle_one_ref);
+	for_each_ref(handle_one_ref, NULL);
 }
 
 static int add_parents_only(struct rev_info *revs, const char *arg, int flags)
@@ -1015,7 +1012,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		add_pending_object(revs, object, def);
 	}
 
-	if (revs->topo_order || revs->unpacked)
+	if (revs->topo_order)
 		revs->limited = 1;
 
 	if (revs->prune_data) {
@@ -1149,16 +1146,17 @@ struct commit *get_revision(struct rev_info *revs)
 		 * that we'd otherwise have done in limit_list().
 		 */
 		if (!revs->limited) {
-			if ((revs->unpacked &&
-			     has_sha1_pack(commit->object.sha1,
-					   revs->ignore_packed)) ||
-			    (revs->max_age != -1 &&
-			     (commit->date < revs->max_age)))
+			if (revs->max_age != -1 &&
+			    (commit->date < revs->max_age))
 				continue;
 			add_parents_to_list(revs, commit, &revs->commits);
 		}
 		if (commit->object.flags & SHOWN)
 			continue;
+
+		if (revs->unpacked && has_sha1_pack(commit->object.sha1,
+						    revs->ignore_packed))
+		    continue;
 
 		/* We want to show boundary commits only when their
 		 * children are shown.  When path-limiter is in effect,

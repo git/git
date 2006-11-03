@@ -41,10 +41,8 @@ void wt_status_prepare(struct wt_status *s)
 
 	s->is_initial = get_sha1("HEAD", sha1) ? 1 : 0;
 
-	head = resolve_ref(git_path("HEAD"), sha1, 0);
-	s->branch = head ?
-		    strdup(head + strlen(get_git_dir()) + 1) :
-		    NULL;
+	head = resolve_ref("HEAD", sha1, 0, NULL);
+	s->branch = head ? xstrdup(head) : NULL;
 
 	s->reference = "HEAD";
 	s->amend = 0;
