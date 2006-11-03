@@ -7,12 +7,6 @@ test_description='git rebase --merge test'
 
 . ./test-lib.sh
 
-if test "$no_python"; then
-	echo "Skipping: no python => no recursive merge"
-	test_done
-	exit 0
-fi
-
 T="A quick brown fox
 jumps over the lazy dog."
 for i in 1 2 3 4 5 6 7 8 9 10

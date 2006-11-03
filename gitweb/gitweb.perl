@@ -51,12 +51,8 @@ our $site_footer = "++GITWEB_SITE_FOOTER++";
 
 # URI of stylesheets
 our @stylesheets = ("++GITWEB_CSS++");
-our $stylesheet;
-# default is not to define style sheet, but it can be overwritten later
-undef $stylesheet;
-
-# URI of default stylesheet
-our $stylesheet = "++GITWEB_CSS++";
+# URI of a single stylesheet, which can be overridden in GITWEB_CONFIG.
+our $stylesheet = undef;
 # URI of GIT logo (72x27 size)
 our $logo = "++GITWEB_LOGO++";
 # URI of GIT favicon, assumed to be image/png type
@@ -80,7 +76,7 @@ our $strict_export = "++GITWEB_STRICT_EXPORT++";
 
 # list of git base URLs used for URL to where fetch project from,
 # i.e. full URL is "$git_base_url/$project"
-our @git_base_url_list = ("++GITWEB_BASE_URL++");
+our @git_base_url_list = grep { $_ ne '' } ("++GITWEB_BASE_URL++");
 
 # default blob_plain mimetype and default charset for text/plain blob
 our $default_blob_plain_mimetype = 'text/plain';
@@ -980,6 +976,24 @@ sub git_get_project_owner {
 	return $owner;
 }
 
+sub git_get_last_activity {
+	my ($path) = @_;
+	my $fd;
+
+	$git_dir = "$projectroot/$path";
+	open($fd, "-|", git_cmd(), 'for-each-ref',
+	     '--format=%(refname) %(committer)',
+	     '--sort=-committerdate',
+	     'refs/heads') or return;
+	my $most_recent = <$fd>;
+	close $fd or return;
+	if ($most_recent =~ / (\d+) [-+][01]\d\d\d$/) {
+		my $timestamp = $1;
+		my $age = time - $timestamp;
+		return ($age, age_string($age));
+	}
+}
+
 sub git_get_references {
 	my $type = shift || "";
 	my %refs;
@@ -1084,24 +1098,6 @@ sub parse_tag {
 		return
 	};
 	return %tag
-}
-
-sub git_get_last_activity {
-	my ($path) = @_;
-	my $fd;
-
-	$git_dir = "$projectroot/$path";
-	open($fd, "-|", git_cmd(), 'for-each-ref',
-	     '--format=%(refname) %(committer)',
-	     '--sort=-committerdate',
-	     'refs/heads') or return;
-	my $most_recent = <$fd>;
-	close $fd or return;
-	if ($most_recent =~ / (\d+) [-+][01]\d\d\d$/) {
-		my $timestamp = $1;
-		my $age = time - $timestamp;
-		return ($age, age_string($age));
-	}
 }
 
 sub parse_commit {
@@ -3133,13 +3129,11 @@ sub git_commit {
 	if (!defined $parent) {
 		$parent = "--root";
 	}
-	open my $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts, $parent, $hash
+	open my $fd, "-|", git_cmd(), "diff-tree", '-r', "--no-commit-id",
+		@diff_opts, $parent, $hash
 		or die_error(undef, "Open git-diff-tree failed");
 	my @difftree = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading git-diff-tree failed");
-
-	# filter out commit ID output
-	@difftree = grep(!/^[0-9a-fA-F]{40}$/, @difftree);
 
 	# non-textual hash id's can be cached
 	my $expires;
@@ -3402,6 +3396,51 @@ sub git_commitdiff {
 	if (!%co) {
 		die_error(undef, "Unknown commit object");
 	}
+
+	# we need to prepare $formats_nav before any parameter munging
+	my $formats_nav;
+	if ($format eq 'html') {
+		$formats_nav =
+			$cgi->a({-href => href(action=>"commitdiff_plain",
+			                       hash=>$hash, hash_parent=>$hash_parent)},
+			        "raw");
+
+		if (defined $hash_parent) {
+			# commitdiff with two commits given
+			my $hash_parent_short = $hash_parent;
+			if ($hash_parent =~ m/^[0-9a-fA-F]{40}$/) {
+				$hash_parent_short = substr($hash_parent, 0, 7);
+			}
+			$formats_nav .=
+				' (from: ' .
+				$cgi->a({-href => href(action=>"commitdiff",
+				                       hash=>$hash_parent)},
+				        esc_html($hash_parent_short)) .
+				')';
+		} elsif (!$co{'parent'}) {
+			# --root commitdiff
+			$formats_nav .= ' (initial)';
+		} elsif (scalar @{$co{'parents'}} == 1) {
+			# single parent commit
+			$formats_nav .=
+				' (parent: ' .
+				$cgi->a({-href => href(action=>"commitdiff",
+				                       hash=>$co{'parent'})},
+				        esc_html(substr($co{'parent'}, 0, 7))) .
+				')';
+		} else {
+			# merge commit
+			$formats_nav .=
+				' (merge: ' .
+				join(' ', map {
+					$cgi->a({-href => href(action=>"commitdiff",
+					                       hash=>$_)},
+					        esc_html(substr($_, 0, 7)));
+				} @{$co{'parents'}} ) .
+				')';
+		}
+	}
+
 	if (!defined $hash_parent) {
 		$hash_parent = $co{'parent'} || '--root';
 	}
@@ -3411,15 +3450,14 @@ sub git_commitdiff {
 	my @difftree;
 	if ($format eq 'html') {
 		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
+			"--no-commit-id",
 			"--patch-with-raw", "--full-index", $hash_parent, $hash
 			or die_error(undef, "Open git-diff-tree failed");
 
 		while (chomp(my $line = <$fd>)) {
 			# empty line ends raw part of diff-tree output
 			last unless $line;
-			# filter out commit ID output
-			push @difftree, $line
-				unless $line =~ m/^[0-9a-fA-F]{40}$/;
+			push @difftree, $line;
 		}
 
 	} elsif ($format eq 'plain') {
@@ -3441,10 +3479,6 @@ sub git_commitdiff {
 	if ($format eq 'html') {
 		my $refs = git_get_references();
 		my $ref = format_ref_marker($refs, $co{'id'});
-		my $formats_nav =
-			$cgi->a({-href => href(action=>"commitdiff_plain",
-			                       hash=>$hash, hash_parent=>$hash_parent)},
-			        "raw");
 
 		git_header_html(undef, $expires);
 		git_print_page_nav('commitdiff','', $hash,$co{'tree'},$hash, $formats_nav);

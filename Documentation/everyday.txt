@@ -1,22 +1,7 @@
 Everyday GIT With 20 Commands Or So
 ===================================
 
-GIT suite has over 100 commands, and the manual page for each of
-them discusses what the command does and how it is used in
-detail, but until you know what command should be used in order
-to achieve what you want to do, you cannot tell which manual
-page to look at, and if you know that already you do not need
-the manual.
-
-Does that mean you need to know all of them before you can use
-git?  Not at all.  Depending on the role you play, the set of
-commands you need to know is slightly different, but in any case
-what you need to learn is far smaller than the full set of
-commands to carry out your day-to-day work.  This document is to
-serve as a cheat-sheet and a set of pointers for people playing
-various roles.
-
-<<Basic Repository>> commands are needed by people who has a
+<<Basic Repository>> commands are needed by people who have a
 repository --- that is everybody, because every working tree of
 git is a repository.
 
@@ -25,28 +10,27 @@ essential for anybody who makes a commit, even for somebody who
 works alone.
 
 If you work with other people, you will need commands listed in
-<<Individual Developer (Participant)>> section as well.
+the <<Individual Developer (Participant)>> section as well.
 
-People who play <<Integrator>> role need to learn some more
+People who play the <<Integrator>> role need to learn some more
 commands in addition to the above.
 
 <<Repository Administration>> commands are for system
-administrators who are responsible to care and feed git
-repositories to support developers.
+administrators who are responsible for the care and feeding
+of git repositories.
 
 
 Basic Repository[[Basic Repository]]
 ------------------------------------
 
-Everybody uses these commands to feed and care git repositories.
+Everybody uses these commands to maintain git repositories.
 
   * gitlink:git-init-db[1] or gitlink:git-clone[1] to create a
     new repository.
 
-  * gitlink:git-fsck-objects[1] to validate the repository.
+  * gitlink:git-fsck-objects[1] to check the repository for errors.
 
-  * gitlink:git-prune[1] to garbage collect cruft in the
-    repository.
+  * gitlink:git-prune[1] to remove unused objects in the repository.
 
   * gitlink:git-repack[1] to pack loose objects for efficiency.
 
@@ -78,8 +62,8 @@ $ git repack -a -d <1>
 $ git prune
 ------------
 +
-<1> pack all the objects reachable from the refs into one pack
-and remove unneeded other packs
+<1> pack all the objects reachable from the refs into one pack,
+then remove the other packs.
 
 
 Individual Developer (Standalone)[[Individual Developer (Standalone)]]
@@ -92,9 +76,6 @@ following commands.
   * gitlink:git-show-branch[1] to see where you are.
 
   * gitlink:git-log[1] to see what happened.
-
-  * gitlink:git-whatchanged[1] to find out where things have
-    come from.
 
   * gitlink:git-checkout[1] and gitlink:git-branch[1] to switch
     branches.
@@ -120,7 +101,7 @@ following commands.
 Examples
 ~~~~~~~~
 
-Extract a tarball and create a working tree and a new repository to keep track of it.::
+Use a tarball as a starting point for a new repository:
 +
 ------------
 $ tar zxf frotz.tar.gz
@@ -203,7 +184,7 @@ $ cd my2.6
 $ edit/compile/test; git commit -a -s <1>
 $ git format-patch origin <2>
 $ git pull <3>
-$ git whatchanged -p ORIG_HEAD.. arch/i386 include/asm-i386 <4>
+$ git log -p ORIG_HEAD.. arch/i386 include/asm-i386 <4>
 $ git pull git://git.kernel.org/pub/.../jgarzik/libata-dev.git ALL <5>
 $ git reset --hard ORIG_HEAD <6>
 $ git prune <7>
@@ -372,12 +353,19 @@ example of managing a shared central repository.
 
 Examples
 ~~~~~~~~
+We assume the following in /etc/services::
++
+------------
+$ grep 9418 /etc/services
+git		9418/tcp		# Git Version Control System
+------------
+
 Run git-daemon to serve /pub/scm from inetd.::
 +
 ------------
 $ grep git /etc/inetd.conf
 git	stream	tcp	nowait	nobody \
-  /usr/bin/git-daemon git-daemon --inetd --syslog --export-all /pub/scm
+  /usr/bin/git-daemon git-daemon --inetd --export-all /pub/scm
 ------------
 +
 The actual configuration line should be on one line.
@@ -397,7 +385,7 @@ service git
         wait            = no
         user            = nobody
         server          = /usr/bin/git-daemon
-        server_args     = --inetd --syslog --export-all --base-path=/pub/scm
+        server_args     = --inetd --export-all --base-path=/pub/scm
         log_on_failure  += USERID
 }
 ------------

@@ -37,6 +37,8 @@ from `git-fetch`, `git-ls-remote`, and `git-clone`.
 This is ideally suited for read-only updates, i.e., pulling from
 git repositories.
 
+An `upload-archive` also exists to serve `git-archive`.
+
 OPTIONS
 -------
 --strict-paths::
@@ -155,8 +157,18 @@ upload-pack::
 	disable it by setting `daemon.uploadpack` configuration
 	item to `false`.
 
+upload-archive::
+	This serves `git-archive --remote`.
+
 EXAMPLES
 --------
+We assume the following in /etc/services::
++
+------------
+$ grep 9418 /etc/services
+git		9418/tcp		# Git Version Control System
+------------
+
 git-daemon as inetd server::
 	To set up `git-daemon` as an inetd service that handles any
 	repository under the whitelisted set of directories, /pub/foo
@@ -165,8 +177,7 @@ git-daemon as inetd server::
 +
 ------------------------------------------------
 	git stream tcp nowait nobody  /usr/bin/git-daemon
-		git-daemon --inetd --verbose
-		--syslog --export-all
+		git-daemon --inetd --verbose --export-all
 		/pub/foo /pub/bar
 ------------------------------------------------
 
@@ -179,8 +190,7 @@ git-daemon as inetd server for virtual hosts::
 +
 ------------------------------------------------
 	git stream tcp nowait nobody /usr/bin/git-daemon
-		git-daemon --inetd --verbose
-		--syslog --export-all
+		git-daemon --inetd --verbose --export-all
 		--interpolated-path=/pub/%H%D
 		/pub/www.example.org/software
 		/pub/www.example.com/software

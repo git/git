@@ -231,6 +231,9 @@ if (!defined $initial_reply_to && $prompting) {
 }
 
 if (!$smtp_server) {
+	$smtp_server = $repo->config('sendemail.smtpserver');
+}
+if (!$smtp_server) {
 	foreach (qw( /usr/sbin/sendmail /usr/lib/sendmail )) {
 		if (-x $_) {
 			$smtp_server = $_;

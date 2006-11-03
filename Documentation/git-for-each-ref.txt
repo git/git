@@ -7,14 +7,14 @@ git-for-each-ref - Output information on each ref
 
 SYNOPSIS
 --------
-'git-for-each-ref' [--count=<count>]* [--shell|--perl|--python] [--sort=<key>]* [--format=<format>] [<pattern>]
+'git-for-each-ref' [--count=<count>]\* [--shell|--perl|--python] [--sort=<key>]\* [--format=<format>] [<pattern>]
 
 DESCRIPTION
 -----------
 
 Iterate over all refs that match `<pattern>` and show them
 according to the given `<format>`, after sorting them according
-to the given set of `<key>`s.  If `<max>` is given, stop after
+to the given set of `<key>`.  If `<max>` is given, stop after
 showing that many refs.  The interporated values in `<format>`
 can optionally be quoted as string literals in the specified
 host language allowing their direct evaluation in that language.
@@ -38,7 +38,11 @@ OPTIONS
 	is prefixed with an asterisk (`*`) and the ref points
 	at a tag object, the value for the field in the object
 	tag refers is used.  When unspecified, defaults to
-	`%(refname)`.
+	`%(objectname) SPC %(objecttype) TAB %(refname)`.
+	It also interpolates `%%` to `%`, and `%xx` where `xx`
+	are hex digits interpolates to character with hex code
+	`xx`; for example `%00` interpolates to `\0` (NUL),
+	`%09` to `\t` (TAB) and `%0a` to `\n` (LF).
 
 <pattern>::
 	If given, the name of the ref is matched against this
