@@ -670,6 +670,32 @@ and returns the process output as a string."
   (unless git-status (error "Not in git-status buffer."))
   (ewoc-goto-prev git-status n))
 
+(defun git-next-unmerged-file (&optional n)
+  "Move the selection down N unmerged files."
+  (interactive "p")
+  (unless git-status (error "Not in git-status buffer."))
+  (let* ((last (ewoc-locate git-status))
+         (node (ewoc-next git-status last)))
+    (while (and node (> n 0))
+      (when (eq 'unmerged (git-fileinfo->state (ewoc-data node)))
+        (setq n (1- n))
+        (setq last node))
+      (setq node (ewoc-next git-status node)))
+    (ewoc-goto-node git-status last)))
+
+(defun git-prev-unmerged-file (&optional n)
+  "Move the selection up N unmerged files."
+  (interactive "p")
+  (unless git-status (error "Not in git-status buffer."))
+  (let* ((last (ewoc-locate git-status))
+         (node (ewoc-prev git-status last)))
+    (while (and node (> n 0))
+      (when (eq 'unmerged (git-fileinfo->state (ewoc-data node)))
+        (setq n (1- n))
+        (setq last node))
+      (setq node (ewoc-prev git-status node)))
+    (ewoc-goto-node git-status last)))
+
 (defun git-add-file ()
   "Add marked file(s) to the index cache."
   (interactive)
@@ -967,7 +993,9 @@ and returns the process output as a string."
     (define-key map "m"   'git-mark-file)
     (define-key map "M"   'git-mark-all)
     (define-key map "n"   'git-next-file)
+    (define-key map "N"   'git-next-unmerged-file)
     (define-key map "p"   'git-prev-file)
+    (define-key map "P"   'git-prev-unmerged-file)
     (define-key map "q"   'git-status-quit)
     (define-key map "r"   'git-remove-file)
     (define-key map "R"   'git-resolve-file)
