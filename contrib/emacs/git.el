@@ -899,7 +899,8 @@ and returns the process output as a string."
               (2 font-lock-function-name-face))
              (,(concat "^\\(" (regexp-quote git-log-msg-separator) "\\)$")
               (1 font-lock-comment-face)))))
-      (log-edit #'git-do-commit nil #'git-log-edit-files buffer))))
+      (log-edit #'git-do-commit nil #'git-log-edit-files buffer)
+      (re-search-forward (regexp-quote (concat git-log-msg-separator "\n")) nil t))))
 
 (defun git-find-file ()
   "Visit the current file in its own buffer."
