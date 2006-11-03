@@ -3,19 +3,19 @@ git-repo-config(1)
 
 NAME
 ----
-git-repo-config - Get and set options in .git/config
+git-repo-config - Get and set repository or global options.
 
 
 SYNOPSIS
 --------
 [verse]
-'git-repo-config' [type] name [value [value_regex]]
-'git-repo-config' [type] --replace-all name [value [value_regex]]
-'git-repo-config' [type] --get name [value_regex]
-'git-repo-config' [type] --get-all name [value_regex]
-'git-repo-config' [type] --unset name [value_regex]
-'git-repo-config' [type] --unset-all name [value_regex]
-'git-repo-config' -l | --list
+'git-repo-config' [--global] [type] name [value [value_regex]]
+'git-repo-config' [--global] [type] --replace-all name [value [value_regex]]
+'git-repo-config' [--global] [type] --get name [value_regex]
+'git-repo-config' [--global] [type] --get-all name [value_regex]
+'git-repo-config' [--global] [type] --unset name [value_regex]
+'git-repo-config' [--global] [type] --unset-all name [value_regex]
+'git-repo-config' [--global] -l | --list
 
 DESCRIPTION
 -----------
@@ -41,8 +41,9 @@ This command will fail if:
 . Can not write to .git/config,
 . no section was provided,
 . the section or key is invalid,
-. you try to unset an option which does not exist, or
-. you try to unset/set an option for which multiple lines match.
+. you try to unset an option which does not exist,
+. you try to unset/set an option for which multiple lines match, or
+. you use --global option without $HOME being properly set.
 
 
 OPTIONS
@@ -64,14 +65,17 @@ OPTIONS
 --get-regexp::
 	Like --get-all, but interprets the name as a regular expression.
 
+--global::
+	Use global ~/.gitconfig file rather than the repository .git/config.
+
 --unset::
-	Remove the line matching the key from .git/config.
+	Remove the line matching the key from config file.
 
 --unset-all::
-	Remove all matching lines from .git/config.
+	Remove all matching lines from config file.
 
 -l, --list::
-	List all variables set in .git/config.
+	List all variables set in config file.
 
 
 ENVIRONMENT
@@ -79,6 +83,7 @@ ENVIRONMENT
 
 GIT_CONFIG::
 	Take the configuration from the given file instead of .git/config.
+	Using the "--global" option forces this to ~/.gitconfig.
 
 GIT_CONFIG_LOCAL::
 	Currently the same as $GIT_CONFIG; when Git will support global

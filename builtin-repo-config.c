@@ -3,7 +3,7 @@
 #include <regex.h>
 
 static const char git_config_set_usage[] =
-"git-repo-config [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --unset | --unset-all] name [value [value_regex]] | --list";
+"git-repo-config [ --global ] [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --unset | --unset-all] name [value [value_regex]] | --list";
 
 static char *key;
 static regex_t *key_regexp;
@@ -139,7 +139,16 @@ int cmd_repo_config(int argc, const char **argv, const char *prefix)
 			type = T_BOOL;
 		else if (!strcmp(argv[1], "--list") || !strcmp(argv[1], "-l"))
 			return git_config(show_all_config);
-		else
+		else if (!strcmp(argv[1], "--global")) {
+			char *home = getenv("HOME");
+			if (home) {
+				char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
+				setenv("GIT_CONFIG", user_config, 1);
+				free(user_config);
+			} else {
+				die("$HOME not set");
+			}
+		} else
 			break;
 		argc--;
 		argv++;

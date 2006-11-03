@@ -20,7 +20,7 @@ verbose=
 update_head_ok=
 exec=
 upload_pack=
-keep=--thin
+keep=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -51,7 +51,7 @@ do
 		verbose=Yes
 		;;
 	-k|--k|--ke|--kee|--keep)
-		keep=--keep
+		keep='-k -k'
 		;;
 	--reflog-action=*)
 		rloga=`expr "z$1" : 'z-[^=]*=\(.*\)'`
@@ -368,9 +368,10 @@ fetch_main () {
       ;; # we are already done.
   *)
     ( : subshell because we muck with IFS
+      pack_lockfile=
       IFS=" 	$LF"
       (
-	  git-fetch-pack $exec $keep "$remote" $rref || echo failed "$remote"
+	  git-fetch-pack --thin $exec $keep "$remote" $rref || echo failed "$remote"
       ) |
       while read sha1 remote_name
       do
@@ -378,6 +379,12 @@ fetch_main () {
 	  failed)
 		  echo >&2 "Fetch failure: $remote"
 		  exit 1 ;;
+	  # special line coming from index-pack with the pack name
+	  pack)
+		  continue ;;
+	  keep)
+		  pack_lockfile="$GIT_OBJECT_DIRECTORY/pack/pack-$remote_name.keep"
+		  continue ;;
 	  esac
 	  found=
 	  single_force=
@@ -408,6 +415,7 @@ fetch_main () {
 	  append_fetch_head "$sha1" "$remote" \
 		  "$remote_name" "$remote_nick" "$local_name" "$not_for_merge"
       done
+      if [ "$pack_lockfile" ]; then rm -f "$pack_lockfile"; fi
     ) || exit ;;
   esac
 

@@ -757,6 +757,7 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		  const char *keep_name, const char *keep_msg,
 		  unsigned char *sha1)
 {
+	char *report = "pack";
 	char name[PATH_MAX];
 	int err;
 
@@ -767,18 +768,6 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		if (err)
 			die("error while closing pack file: %s", strerror(errno));
 		chmod(curr_pack_name, 0444);
-
-		/*
-		 * Let's just mimic git-unpack-objects here and write
-		 * the last part of the buffer to stdout.
-		 */
-		while (input_len) {
-			err = xwrite(1, input_buffer + input_offset, input_len);
-			if (err <= 0)
-				break;
-			input_len -= err;
-			input_offset += err;
-		}
 	}
 
 	if (keep_msg) {
@@ -788,14 +777,18 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 				 get_object_directory(), sha1_to_hex(sha1));
 			keep_name = name;
 		}
-		keep_fd = open(keep_name, O_RDWR | O_CREAT, 0600);
-		if (keep_fd < 0)
-			die("cannot write keep file");
-		if (keep_msg_len > 0) {
-			write_or_die(keep_fd, keep_msg, keep_msg_len);
-			write_or_die(keep_fd, "\n", 1);
+		keep_fd = open(keep_name, O_RDWR|O_CREAT|O_EXCL, 0600);
+		if (keep_fd < 0) {
+			if (errno != EEXIST)
+				die("cannot write keep file");
+		} else {
+			if (keep_msg_len > 0) {
+				write_or_die(keep_fd, keep_msg, keep_msg_len);
+				write_or_die(keep_fd, "\n", 1);
+			}
+			close(keep_fd);
+			report = "keep";
 		}
-		close(keep_fd);
 	}
 
 	if (final_pack_name != curr_pack_name) {
@@ -817,6 +810,27 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		}
 		if (move_temp_to_file(curr_index_name, final_index_name))
 			die("cannot store index file");
+	}
+
+	if (!from_stdin) {
+		printf("%s\n", sha1_to_hex(sha1));
+	} else {
+		char buf[48];
+		int len = snprintf(buf, sizeof(buf), "%s\t%s\n",
+				   report, sha1_to_hex(sha1));
+		xwrite(1, buf, len);
+
+		/*
+		 * Let's just mimic git-unpack-objects here and write
+		 * the last part of the input buffer to stdout.
+		 */
+		while (input_len) {
+			err = xwrite(1, input_buffer + input_offset, input_len);
+			if (err <= 0)
+				break;
+			input_len -= err;
+			input_offset += err;
+		}
 	}
 }
 
@@ -841,6 +855,19 @@ int main(int argc, char **argv)
 				keep_msg = "";
 			} else if (!strncmp(arg, "--keep=", 7)) {
 				keep_msg = arg + 7;
+			} else if (!strncmp(arg, "--pack_header=", 14)) {
+				struct pack_header *hdr;
+				char *c;
+
+				hdr = (struct pack_header *)input_buffer;
+				hdr->hdr_signature = htonl(PACK_SIGNATURE);
+				hdr->hdr_version = htonl(strtoul(arg + 14, &c, 10));
+				if (*c != ',')
+					die("bad %s", arg);
+				hdr->hdr_entries = htonl(strtoul(c + 1, &c, 10));
+				if (*c)
+					die("bad %s", arg);
+				input_len = sizeof(*hdr);
 			} else if (!strcmp(arg, "-v")) {
 				verbose = 1;
 			} else if (!strcmp(arg, "-o")) {
@@ -920,9 +947,6 @@ int main(int argc, char **argv)
 	free(objects);
 	free(index_name_buf);
 	free(keep_name_buf);
-
-	if (!from_stdin)
-		printf("%s\n", sha1_to_hex(sha1));
 
 	return 0;
 }

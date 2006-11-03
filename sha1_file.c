@@ -663,7 +663,7 @@ void prepare_packed_git(void)
 	prepare_packed_git_run_once = 1;
 }
 
-static void reprepare_packed_git(void)
+void reprepare_packed_git(void)
 {
 	prepare_packed_git_run_once = 0;
 	prepare_packed_git();
@@ -1417,8 +1417,7 @@ static int link_temp_to_file(const char *tmpfile, const char *filename)
 	dir = strrchr(filename, '/');
 	if (dir) {
 		*dir = 0;
-		mkdir(filename, 0777);
-		if (adjust_shared_perm(filename)) {
+		if (!mkdir(filename, 0777) && adjust_shared_perm(filename)) {
 			*dir = '/';
 			return -2;
 		}

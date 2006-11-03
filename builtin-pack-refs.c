@@ -12,6 +12,7 @@ struct ref_to_prune {
 
 struct pack_refs_cb_data {
 	int prune;
+	int all;
 	struct ref_to_prune *ref_to_prune;
 	FILE *refs_file;
 };
@@ -29,6 +30,8 @@ static int handle_one_ref(const char *path, const unsigned char *sha1,
 {
 	struct pack_refs_cb_data *cb = cb_data;
 
+	if (!cb->all && strncmp(path, "refs/tags/", 10))
+		return 0;
 	/* Do not pack the symbolic refs */
 	if (!(flags & REF_ISSYMREF))
 		fprintf(cb->refs_file, "%s %s\n", sha1_to_hex(sha1), path);
@@ -68,7 +71,6 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 {
 	int fd, i;
 	struct pack_refs_cb_data cbdata;
-	int (*iterate_ref)(each_ref_fn, void *) = for_each_tag_ref;
 
 	memset(&cbdata, 0, sizeof(cbdata));
 
@@ -79,7 +81,7 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp(arg, "--all")) {
-			iterate_ref = for_each_ref;
+			cbdata.all = 1;
 			continue;
 		}
 		/* perhaps other parameters later... */
@@ -93,7 +95,7 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 	if (!cbdata.refs_file)
 		die("unable to create ref-pack file structure (%s)",
 		    strerror(errno));
-	iterate_ref(handle_one_ref, &cbdata);
+	for_each_ref(handle_one_ref, &cbdata);
 	fflush(cbdata.refs_file);
 	fsync(fd);
 	fclose(cbdata.refs_file);

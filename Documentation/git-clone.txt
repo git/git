@@ -75,6 +75,7 @@ OPTIONS
 	this option is used, neither the `origin` branch nor the
 	default `remotes/origin` file is created.
 
+--origin <name>::
 -o <name>::
 	Instead of using the branch name 'origin' to keep track
 	of the upstream repository, use <name> instead.  Note
