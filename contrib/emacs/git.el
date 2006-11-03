@@ -910,6 +910,15 @@ and returns the process output as a string."
     (when (eq 'unmerged (git-fileinfo->state info))
       (smerge-mode))))
 
+(defun git-find-file-other-window ()
+  "Visit the current file in its own buffer in another window."
+  (interactive)
+  (unless git-status (error "Not in git-status buffer."))
+  (let ((info (ewoc-data (ewoc-locate git-status))))
+    (find-file-other-window (git-fileinfo->name info))
+    (when (eq 'unmerged (git-fileinfo->state info))
+      (smerge-mode))))
+
 (defun git-find-file-imerge ()
   "Visit the current file in interactive merge mode."
   (interactive)
@@ -994,6 +1003,7 @@ and returns the process output as a string."
     (define-key map "M"   'git-mark-all)
     (define-key map "n"   'git-next-file)
     (define-key map "N"   'git-next-unmerged-file)
+    (define-key map "o"   'git-find-file-other-window)
     (define-key map "p"   'git-prev-file)
     (define-key map "P"   'git-prev-unmerged-file)
     (define-key map "q"   'git-status-quit)
