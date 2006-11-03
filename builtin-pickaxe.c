@@ -1428,6 +1428,13 @@ static unsigned parse_score(const char *arg)
 	return score;
 }
 
+static const char *add_prefix(const char *prefix, const char *path)
+{
+	if (!prefix || !prefix[0])
+		return path;
+	return prefix_path(prefix, strlen(prefix), path);
+}
+
 int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
@@ -1548,7 +1555,7 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 		/* (1) */
 		if (argc <= i)
 			usage(pickaxe_usage);
-		path = argv[i];
+		path = add_prefix(prefix, argv[i]);
 		if (i + 1 == argc - 1) {
 			if (unk != 1)
 				usage(pickaxe_usage);
@@ -1566,13 +1573,13 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 		if (seen_dashdash) {
 			if (seen_dashdash + 1 != argc - 1)
 				usage(pickaxe_usage);
-			path = argv[seen_dashdash + 1];
+			path = add_prefix(prefix, argv[seen_dashdash + 1]);
 			for (j = i; j < seen_dashdash; j++)
 				argv[unk++] = argv[j];
 		}
 		else {
 			/* (3) */
-			path = argv[i];
+			path = add_prefix(prefix, argv[i]);
 			if (i + 1 == argc - 1) {
 				final_commit_name = argv[i + 1];
 
@@ -1580,7 +1587,7 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 				 * old-style
 				 */
 				if (unk == 1 && !has_path_in_work_tree(path)) {
-					path = argv[i + 1];
+					path = add_prefix(prefix, argv[i + 1]);
 					final_commit_name = argv[i];
 				}
 			}
