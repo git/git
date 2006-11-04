@@ -271,6 +271,13 @@ _git_push ()
 	esac
 }
 
+_git_reset ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local opt="--mixed --hard --soft"
+	COMPREPLY=($(compgen -W "$opt $(__git_refs .)" -- "$cur"))
+}
+
 _git_show ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -304,6 +311,7 @@ _git ()
 		ls-tree)     _git_ls_tree ;;
 		pull)        _git_pull ;;
 		push)        _git_push ;;
+		reset)       _git_reset ;;
 		show)        _git_show ;;
 		show-branch) _git_log ;;
 		whatchanged) _git_log ;;
@@ -332,6 +340,7 @@ complete -o default -o nospace -F _git_ls_tree git-ls-tree
 complete -o default            -F _git_merge_base git-merge-base
 complete -o default -o nospace -F _git_pull git-pull
 complete -o default -o nospace -F _git_push git-push
+complete -o default            -F _git_reset git-reset
 complete -o default            -F _git_show git-show
 complete -o default -o nospace -F _git_log git-whatchanged
 
