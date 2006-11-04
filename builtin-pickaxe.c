@@ -915,6 +915,7 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 		     i < MAXPARENT && parent;
 		     parent = parent->next, i++) {
 			struct commit *p = parent->item;
+			int j, same;
 
 			if (parent_origin[i])
 				continue;
@@ -934,7 +935,16 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 				origin_decref(porigin);
 				goto finish;
 			}
-			parent_origin[i] = porigin;
+			for (j = same = 0; j < i; j++)
+				if (!hashcmp(parent_origin[j]->blob_sha1,
+					     porigin->blob_sha1)) {
+					same = 1;
+					break;
+				}
+			if (!same)
+				parent_origin[i] = porigin;
+			else
+				origin_decref(porigin);
 		}
 	}
 
