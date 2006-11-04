@@ -922,6 +922,8 @@ sub git_get_projects_list {
 	if (-d $projects_list) {
 		# search in directory
 		my $dir = $projects_list . ($filter ? "/$filter" : '');
+		# remove the trailing "/"
+		$dir =~ s!/+$!!;
 		my $pfxlen = length("$dir");
 
 		my $check_forks = gitweb_check_feature('forks');
