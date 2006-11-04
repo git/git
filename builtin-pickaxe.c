@@ -766,7 +766,7 @@ static int find_move_in_parent(struct scoreboard *sb,
 			       struct origin *target,
 			       struct origin *parent)
 {
-	int last_in_target;
+	int last_in_target, made_progress;
 	struct blame_entry *e, split[3];
 	mmfile_t file_p;
 	char type[10];
@@ -784,14 +784,20 @@ static int find_move_in_parent(struct scoreboard *sb,
 		return 0;
 	}
 
-	for (e = sb->ent; e; e = e->next) {
-		if (e->guilty || cmp_suspect(e->suspect, target))
-			continue;
-		find_copy_in_blob(sb, e, parent, split, &file_p);
-		if (split[1].suspect &&
-		    blame_move_score < ent_score(sb, &split[1]))
-			split_blame(sb, split, e);
-		decref_split(split);
+	made_progress = 1;
+	while (made_progress) {
+		made_progress = 0;
+		for (e = sb->ent; e; e = e->next) {
+			if (e->guilty || cmp_suspect(e->suspect, target))
+				continue;
+			find_copy_in_blob(sb, e, parent, split, &file_p);
+			if (split[1].suspect &&
+			    blame_move_score < ent_score(sb, &split[1])) {
+				split_blame(sb, split, e);
+				made_progress = 1;
+			}
+			decref_split(split);
+		}
 	}
 	free(blob_p);
 	return 0;
