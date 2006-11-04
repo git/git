@@ -339,6 +339,7 @@ complete -o default -o nospace -F _git_log git-whatchanged
 # when the user has tab-completed the executable name and consequently
 # included the '.exe' suffix.
 #
+complete -o default            -F _git_branch git-branch.exe
 complete -o default -o nospace -F _git_cat_file git-cat-file.exe
 complete -o default -o nospace -F _git_diff git-diff.exe
 complete -o default -o nospace -F _git_diff_tree git-diff-tree.exe
