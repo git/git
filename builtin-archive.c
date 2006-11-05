@@ -15,16 +15,14 @@
 static const char archive_usage[] = \
 "git-archive --format=<fmt> [--prefix=<prefix>/] [--verbose] [<extra>] <tree-ish> [path...]";
 
-struct archiver archivers[] = {
-	{
-		.name		= "tar",
-		.write_archive	= write_tar_archive,
-	},
-	{
-		.name		= "zip",
-		.write_archive	= write_zip_archive,
-		.parse_extra	= parse_extra_zip_args,
-	},
+static struct archiver_desc
+{
+	const char *name;
+	write_archive_fn_t write_archive;
+	parse_extra_args_fn_t parse_extra;
+} archivers[] = {
+	{ "tar", write_tar_archive, NULL },
+	{ "zip", write_zip_archive, parse_extra_zip_args },
 };
 
 static int run_remote_archiver(const char *remote, int argc,
@@ -88,7 +86,10 @@ static int init_archiver(const char *name, struct archiver *ar)
 
 	for (i = 0; i < ARRAY_SIZE(archivers); i++) {
 		if (!strcmp(name, archivers[i].name)) {
-			memcpy(ar, &archivers[i], sizeof(struct archiver));
+			memset(ar, 0, sizeof(*ar));
+			ar->name = archivers[i].name;
+			ar->write_archive = archivers[i].write_archive;
+			ar->parse_extra = archivers[i].parse_extra;
 			rv = 0;
 			break;
 		}
