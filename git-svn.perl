@@ -2662,11 +2662,12 @@ sub libsvn_connect {
 }
 
 sub libsvn_get_file {
-	my ($gui, $f, $rev) = @_;
+	my ($gui, $f, $rev, $chg) = @_;
 	my $p = $f;
 	if (length $SVN_PATH > 0) {
 		return unless ($p =~ s#^\Q$SVN_PATH\E/##);
 	}
+	print "\t$chg\t$f\n" unless $_q;
 
 	my ($hash, $pid, $in, $out);
 	my $pool = SVN::Pool->new;
@@ -2769,8 +2770,7 @@ sub libsvn_fetch {
 		$pool->clear;
 	}
 	foreach (@amr) {
-		print "\t$_->[0]\t$_->[1]\n" unless $_q;
-		libsvn_get_file($gui, $_->[1], $rev)
+		libsvn_get_file($gui, $_->[1], $rev, $_->[0]);
 	}
 	close $gui or croak $?;
 	return libsvn_log_entry($rev, $author, $date, $msg, [$last_commit]);
@@ -2848,8 +2848,7 @@ sub libsvn_traverse {
 			if (defined $files) {
 				push @$files, $file;
 			} else {
-				print "\tA\t$file\n" unless $_q;
-				libsvn_get_file($gui, $file, $rev);
+				libsvn_get_file($gui, $file, $rev, 'A');
 			}
 		}
 	}
