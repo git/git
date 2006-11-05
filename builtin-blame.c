@@ -2065,6 +2065,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	int i, seen_dashdash, unk, opt;
 	long bottom, top, lno;
 	int output_option = 0;
+	int show_stats = 0;
 	const char *revs_file = NULL;
 	const char *final_commit_name = NULL;
 	char type[10];
@@ -2086,6 +2087,8 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			blank_boundary = 1;
 		else if (!strcmp("--root", arg))
 			show_root = 1;
+		else if (!strcmp(arg, "--show-stats"))
+			show_stats = 1;
 		else if (!strcmp("-c", arg))
 			output_option |= OUTPUT_ANNOTATE_COMPAT;
 		else if (!strcmp("-t", arg))
@@ -2348,7 +2351,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		ent = e;
 	}
 
-	if (DEBUG) {
+	if (show_stats) {
 		printf("num read blob: %d\n", num_read_blob);
 		printf("num get patch: %d\n", num_get_patch);
 		printf("num commits: %d\n", num_commits);
