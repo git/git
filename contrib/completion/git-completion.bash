@@ -59,12 +59,21 @@ __git_refs2 ()
 
 __git_remotes ()
 {
-	local i REVERTGLOB=$(shopt -p nullglob)
+	local i ngoff IFS=$'\n'
+	shopt -q nullglob || ngoff=1
 	shopt -s nullglob
 	for i in .git/remotes/*; do
 		echo ${i#.git/remotes/}
 	done
-	$REVERTGLOB
+	[ "$ngoff" ] && shopt -u nullglob
+	for i in $(git repo-config --list); do
+		case "$i" in
+		remote.*.url=*)
+			i="${i#remote.}"
+			echo "${i/.url=*/}"
+			;;
+		esac
+	done
 }
 
 __git_complete_file ()
@@ -103,13 +112,20 @@ __git_complete_file ()
 
 __git_aliases ()
 {
-	git repo-config --list | grep '^alias\.' \
-		| sed -e 's/^alias\.//' -e 's/=.*$//'
+	local i IFS=$'\n'
+	for i in $(git repo-config --list); do
+		case "$i" in
+		alias.*)
+			i="${i#alias.}"
+			echo "${i/=*/}"
+			;;
+		esac
+	done
 }
 
 __git_aliased_command ()
 {
-	local cmdline=$(git repo-config alias.$1)
+	local word cmdline=$(git repo-config --get "alias.$1")
 	for word in $cmdline; do
 		if [ "${word##-*}" ]; then
 			echo $word
