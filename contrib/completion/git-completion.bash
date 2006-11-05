@@ -350,6 +350,7 @@ complete -o default -o nospace -F _git_log git-whatchanged
 # when the user has tab-completed the executable name and consequently
 # included the '.exe' suffix.
 #
+if [ Cygwin = "$(uname -o 2>/dev/null)" ]; then
 complete -o default -o nospace -F _git git.exe
 complete -o default            -F _git_branch git-branch.exe
 complete -o default -o nospace -F _git_cat_file git-cat-file.exe
@@ -361,3 +362,4 @@ complete -o default            -F _git_merge_base git-merge-base.exe
 complete -o default -o nospace -F _git_push git-push.exe
 complete -o default -o nospace -F _git_log git-show-branch.exe
 complete -o default -o nospace -F _git_log git-whatchanged.exe
+fi
