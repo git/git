@@ -222,11 +222,16 @@ _git_ls_tree ()
 
 _git_log ()
 {
-	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local pfx cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
+	*...*)
+		pfx="${cur%...*}..."
+		cur="${cur#*...}"
+		COMPREPLY=($(compgen -P "$pfx" -W "$(__git_refs)" -- "$cur"))
+		;;
 	*..*)
-		local pfx=$(echo "$cur" | sed 's/\.\..*$/../')
-		cur=$(echo "$cur" | sed 's/^.*\.\.//')
+		pfx="${cur%..*}.."
+		cur="${cur#*..}"
 		COMPREPLY=($(compgen -P "$pfx" -W "$(__git_refs)" -- "$cur"))
 		;;
 	*)
