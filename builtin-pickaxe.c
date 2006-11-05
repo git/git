@@ -40,6 +40,11 @@ static int max_score_digits;
 #define DEBUG 0
 #endif
 
+/* stats */
+static int num_read_blob;
+static int num_get_patch;
+static int num_commits;
+
 #define PICKAXE_BLAME_MOVE		01
 #define PICKAXE_BLAME_COPY		02
 #define PICKAXE_BLAME_COPY_HARDER	04
@@ -63,9 +68,24 @@ static unsigned blame_copy_score;
 struct origin {
 	int refcnt;
 	struct commit *commit;
+	mmfile_t file;
 	unsigned char blob_sha1[20];
 	char path[FLEX_ARRAY];
 };
+
+static char *fill_origin_blob(struct origin *o, mmfile_t *file)
+{
+	if (!o->file.ptr) {
+		char type[10];
+		num_read_blob++;
+		file->ptr = read_sha1_file(o->blob_sha1, type,
+					   (unsigned long *)(&(file->size)));
+		o->file = *file;
+	}
+	else
+		*file = o->file;
+	return file->ptr;
+}
 
 static inline struct origin *origin_incref(struct origin *o)
 {
@@ -77,6 +97,8 @@ static inline struct origin *origin_incref(struct origin *o)
 static void origin_decref(struct origin *o)
 {
 	if (o && --o->refcnt <= 0) {
+		if (o->file.ptr)
+			free(o->file.ptr);
 		memset(o, 0, sizeof(*o));
 		free(o);
 	}
@@ -431,25 +453,14 @@ static struct patch *compare_buffer(mmfile_t *file_p, mmfile_t *file_o,
 static struct patch *get_patch(struct origin *parent, struct origin *origin)
 {
 	mmfile_t file_p, file_o;
-	char type[10];
-	char *blob_p, *blob_o;
 	struct patch *patch;
 
-	blob_p = read_sha1_file(parent->blob_sha1, type,
-				(unsigned long *) &file_p.size);
-	blob_o = read_sha1_file(origin->blob_sha1, type,
-				(unsigned long *) &file_o.size);
-	file_p.ptr = blob_p;
-	file_o.ptr = blob_o;
-	if (!file_p.ptr || !file_o.ptr) {
-		free(blob_p);
-		free(blob_o);
+	fill_origin_blob(parent, &file_p);
+	fill_origin_blob(origin, &file_o);
+	if (!file_p.ptr || !file_o.ptr)
 		return NULL;
-	}
-
 	patch = compare_buffer(&file_p, &file_o, 0);
-	free(blob_p);
-	free(blob_o);
+	num_get_patch++;
 	return patch;
 }
 
@@ -784,20 +795,14 @@ static int find_move_in_parent(struct scoreboard *sb,
 	int last_in_target, made_progress;
 	struct blame_entry *e, split[3];
 	mmfile_t file_p;
-	char type[10];
-	char *blob_p;
 
 	last_in_target = find_last_in_target(sb, target);
 	if (last_in_target < 0)
 		return 1; /* nothing remains for this target */
 
-	blob_p = read_sha1_file(parent->blob_sha1, type,
-				(unsigned long *) &file_p.size);
-	file_p.ptr = blob_p;
-	if (!file_p.ptr) {
-		free(blob_p);
+	fill_origin_blob(parent, &file_p);
+	if (!file_p.ptr)
 		return 0;
-	}
 
 	made_progress = 1;
 	while (made_progress) {
@@ -814,7 +819,6 @@ static int find_move_in_parent(struct scoreboard *sb,
 			decref_split(split);
 		}
 	}
-	free(blob_p);
 	return 0;
 }
 
@@ -900,8 +904,6 @@ static int find_copy_in_parent(struct scoreboard *sb,
 			struct diff_filepair *p = diff_queued_diff.queue[i];
 			struct origin *norigin;
 			mmfile_t file_p;
-			char type[10];
-			char *blob;
 			struct blame_entry this[3];
 
 			if (!DIFF_FILE_VALID(p->one))
@@ -912,9 +914,7 @@ static int find_copy_in_parent(struct scoreboard *sb,
 
 			norigin = get_origin(sb, parent, p->one->path);
 			hashcpy(norigin->blob_sha1, p->one->sha1);
-			blob = read_sha1_file(norigin->blob_sha1, type,
-					      (unsigned long *) &file_p.size);
-			file_p.ptr = blob;
+			fill_origin_blob(norigin, &file_p);
 			if (!file_p.ptr)
 				continue;
 
@@ -925,7 +925,6 @@ static int find_copy_in_parent(struct scoreboard *sb,
 						     this);
 				decref_split(this);
 			}
-			free(blob);
 			origin_decref(norigin);
 		}
 
@@ -951,6 +950,28 @@ static int find_copy_in_parent(struct scoreboard *sb,
 	diff_flush(&diff_opts);
 
 	return retval;
+}
+
+/* The blobs of origin and porigin exactly match, so everything
+ * origin is suspected for can be blamed on the parent.
+ */
+static void pass_whole_blame(struct scoreboard *sb,
+			     struct origin *origin, struct origin *porigin)
+{
+	struct blame_entry *e;
+
+	if (!porigin->file.ptr && origin->file.ptr) {
+		/* Steal its file */
+		porigin->file = origin->file;
+		origin->file.ptr = NULL;
+	}
+	for (e = sb->ent; e; e = e->next) {
+		if (cmp_suspect(e->suspect, origin))
+			continue;
+		origin_incref(porigin);
+		origin_decref(e->suspect);
+		e->suspect = porigin;
+	}
 }
 
 #define MAXPARENT 16
@@ -986,13 +1007,7 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 			if (!porigin)
 				continue;
 			if (!hashcmp(porigin->blob_sha1, origin->blob_sha1)) {
-				struct blame_entry *e;
-				for (e = sb->ent; e; e = e->next)
-					if (e->suspect == origin) {
-						origin_incref(porigin);
-						origin_decref(e->suspect);
-						e->suspect = porigin;
-					}
+				pass_whole_blame(sb, origin, porigin);
 				origin_decref(porigin);
 				goto finish;
 			}
@@ -1010,6 +1025,7 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 		}
 	}
 
+	num_commits++;
 	for (i = 0, parent = commit->parents;
 	     i < MAXPARENT && parent;
 	     parent = parent->next, i++) {
@@ -1068,7 +1084,8 @@ static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
 
 		origin_incref(suspect);
 		commit = suspect->commit;
-		parse_commit(commit);
+		if (!commit->object.parsed)
+			parse_commit(commit);
 		if (!(commit->object.flags & UNINTERESTING) &&
 		    !(revs->max_age != -1 && commit->date  < revs->max_age))
 			pass_blame(sb, suspect, opt);
@@ -1735,6 +1752,7 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 		die("no such path %s in %s", path, final_commit_name);
 
 	sb.final_buf = read_sha1_file(o->blob_sha1, type, &sb.final_buf_size);
+	num_read_blob++;
 	lno = prepare_lines(&sb);
 
 	if (bottom < 1)
@@ -1771,6 +1789,12 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 		struct blame_entry *e = ent->next;
 		free(ent);
 		ent = e;
+	}
+
+	if (DEBUG) {
+		printf("num read blob: %d\n", num_read_blob);
+		printf("num get patch: %d\n", num_get_patch);
+		printf("num commits: %d\n", num_commits);
 	}
 	return 0;
 }
