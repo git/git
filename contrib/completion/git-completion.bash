@@ -19,15 +19,20 @@
 #        source ~/.git-completion.sh
 #
 
+__gitdir ()
+{
+	echo "${__git_dir:-$(git rev-parse --git-dir 2>/dev/null)}"
+}
+
 __git_refs ()
 {
-	local cmd i is_hash=y
-	if [ -d "$1" ]; then
+	local cmd i is_hash=y dir="${1:-$(__gitdir)}"
+	if [ -d "$dir" ]; then
 		cmd=git-peek-remote
 	else
 		cmd=git-ls-remote
 	fi
-	for i in $($cmd "$1" 2>/dev/null); do
+	for i in $($cmd "$dir" 2>/dev/null); do
 		case "$is_hash,$i" in
 		y,*) is_hash=n ;;
 		n,*^{}) is_hash=y ;;
@@ -40,13 +45,13 @@ __git_refs ()
 
 __git_refs2 ()
 {
-	local cmd i is_hash=y
-	if [ -d "$1" ]; then
+	local cmd i is_hash=y dir="${1:-$(__gitdir)}"
+	if [ -d "$dir" ]; then
 		cmd=git-peek-remote
 	else
 		cmd=git-ls-remote
 	fi
-	for i in $($cmd "$1" 2>/dev/null); do
+	for i in $($cmd "$dir" 2>/dev/null); do
 		case "$is_hash,$i" in
 		y,*) is_hash=n ;;
 		n,*^{}) is_hash=y ;;
@@ -59,25 +64,34 @@ __git_refs2 ()
 
 __git_remotes ()
 {
-	local i REVERTGLOB=$(shopt -p nullglob)
+	local i ngoff IFS=$'\n' d="$(__gitdir)"
+	shopt -q nullglob || ngoff=1
 	shopt -s nullglob
-	for i in .git/remotes/*; do
-		echo ${i#.git/remotes/}
+	for i in "$d/remotes"/*; do
+		echo ${i#$d/remotes/}
 	done
-	$REVERTGLOB
+	[ "$ngoff" ] && shopt -u nullglob
+	for i in $(git --git-dir="$d" repo-config --list); do
+		case "$i" in
+		remote.*.url=*)
+			i="${i#remote.}"
+			echo "${i/.url=*/}"
+			;;
+		esac
+	done
 }
 
 __git_complete_file ()
 {
-	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local pfx ls ref cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	?*:*)
-		local pfx ls ref="$(echo "$cur" | sed 's,:.*$,,')"
-		cur="$(echo "$cur" | sed 's,^.*:,,')"
+		ref="${cur%%:*}"
+		cur="${cur#*:}"
 		case "$cur" in
 		?*/*)
-			pfx="$(echo "$cur" | sed 's,/[^/]*$,,')"
-			cur="$(echo "$cur" | sed 's,^.*/,,')"
+			pfx="${cur%/*}"
+			cur="${cur##*/}"
 			ls="$ref:$pfx"
 			pfx="$pfx/"
 			;;
@@ -86,7 +100,7 @@ __git_complete_file ()
 			;;
 	    esac
 		COMPREPLY=($(compgen -P "$pfx" \
-			-W "$(git-ls-tree "$ls" \
+			-W "$(git --git-dir="$(__gitdir)" ls-tree "$ls" \
 				| sed '/^100... blob /s,^.*	,,
 				       /^040000 tree /{
 				           s,^.*	,,
@@ -96,20 +110,28 @@ __git_complete_file ()
 			-- "$cur"))
 		;;
 	*)
-		COMPREPLY=($(compgen -W "$(__git_refs .)" -- "$cur"))
+		COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
 		;;
 	esac
 }
 
 __git_aliases ()
 {
-	git repo-config --list | grep '^alias\.' \
-		| sed -e 's/^alias\.//' -e 's/=.*$//'
+	local i IFS=$'\n'
+	for i in $(git --git-dir="$(__gitdir)" repo-config --list); do
+		case "$i" in
+		alias.*)
+			i="${i#alias.}"
+			echo "${i/=*/}"
+			;;
+		esac
+	done
 }
 
 __git_aliased_command ()
 {
-	local cmdline=$(git repo-config alias.$1)
+	local word cmdline=$(git --git-dir="$(__gitdir)" \
+		repo-config --get "alias.$1")
 	for word in $cmdline; do
 		if [ "${word##-*}" ]; then
 			echo $word
@@ -121,7 +143,7 @@ __git_aliased_command ()
 _git_branch ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	COMPREPLY=($(compgen -W "-l -f -d -D $(__git_refs .)" -- "$cur"))
+	COMPREPLY=($(compgen -W "-l -f -d -D $(__git_refs)" -- "$cur"))
 }
 
 _git_cat_file ()
@@ -143,7 +165,7 @@ _git_cat_file ()
 _git_checkout ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	COMPREPLY=($(compgen -W "-l -b $(__git_refs .)" -- "$cur"))
+	COMPREPLY=($(compgen -W "-l -b $(__git_refs)" -- "$cur"))
 }
 
 _git_diff ()
@@ -154,7 +176,7 @@ _git_diff ()
 _git_diff_tree ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	COMPREPLY=($(compgen -W "-r -p -M $(__git_refs .)" -- "$cur"))
+	COMPREPLY=($(compgen -W "-r -p -M $(__git_refs)" -- "$cur"))
 }
 
 _git_fetch ()
@@ -171,8 +193,8 @@ _git_fetch ()
 	*)
 		case "$cur" in
 		*:*)
-	        cur=$(echo "$cur" | sed 's/^.*://')
-			COMPREPLY=($(compgen -W "$(__git_refs .)" -- "$cur"))
+			cur="${cur#*:}"
+			COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
 			;;
 		*)
 			local remote
@@ -200,15 +222,20 @@ _git_ls_tree ()
 
 _git_log ()
 {
-	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local pfx cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
+	*...*)
+		pfx="${cur%...*}..."
+		cur="${cur#*...}"
+		COMPREPLY=($(compgen -P "$pfx" -W "$(__git_refs)" -- "$cur"))
+		;;
 	*..*)
-		local pfx=$(echo "$cur" | sed 's/\.\..*$/../')
-		cur=$(echo "$cur" | sed 's/^.*\.\.//')
-		COMPREPLY=($(compgen -P "$pfx" -W "$(__git_refs .)" -- "$cur"))
+		pfx="${cur%..*}.."
+		cur="${cur#*..}"
+		COMPREPLY=($(compgen -P "$pfx" -W "$(__git_refs)" -- "$cur"))
 		;;
 	*)
-		COMPREPLY=($(compgen -W "$(__git_refs .)" -- "$cur"))
+		COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
 		;;
 	esac
 }
@@ -216,7 +243,7 @@ _git_log ()
 _git_merge_base ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	COMPREPLY=($(compgen -W "$(__git_refs .)" -- "$cur"))
+	COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
 }
 
 _git_pull ()
@@ -260,11 +287,11 @@ _git_push ()
 			git-push)  remote="${COMP_WORDS[1]}" ;;
 			git)       remote="${COMP_WORDS[2]}" ;;
 			esac
-	        cur=$(echo "$cur" | sed 's/^.*://')
+			cur="${cur#*:}"
 			COMPREPLY=($(compgen -W "$(__git_refs "$remote")" -- "$cur"))
 			;;
 		*)
-			COMPREPLY=($(compgen -W "$(__git_refs2 .)" -- "$cur"))
+			COMPREPLY=($(compgen -W "$(__git_refs2)" -- "$cur"))
 			;;
 		esac
 		;;
@@ -275,55 +302,67 @@ _git_reset ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local opt="--mixed --hard --soft"
-	COMPREPLY=($(compgen -W "$opt $(__git_refs .)" -- "$cur"))
+	COMPREPLY=($(compgen -W "$opt $(__git_refs)" -- "$cur"))
 }
 
 _git_show ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	COMPREPLY=($(compgen -W "$(__git_refs .)" -- "$cur"))
+	COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
 }
 
 _git ()
 {
-	if [ $COMP_CWORD = 1 ]; then
+	local i c=1 command __git_dir
+
+	while [ $c -lt $COMP_CWORD ]; do
+		i="${COMP_WORDS[c]}"
+		case "$i" in
+		--git-dir=*) __git_dir="${i#--git-dir=}" ;;
+		--bare)      __git_dir="." ;;
+		--version|--help|-p|--paginate) ;;
+		*) command="$i"; break ;;
+		esac
+		c=$((++c))
+	done
+
+	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
 		COMPREPLY=($(compgen \
-			-W "--version $(git help -a|egrep '^ ') \
+			-W "--git-dir= --version \
+				$(git help -a|egrep '^ ') \
 			    $(__git_aliases)" \
 			-- "${COMP_WORDS[COMP_CWORD]}"))
-	else
-		local command="${COMP_WORDS[1]}"
-		local expansion=$(__git_aliased_command "$command")
-
-		if [ "$expansion" ]; then
-			command="$expansion"
-		fi
-
-		case "$command" in
-		branch)      _git_branch ;;
-		cat-file)    _git_cat_file ;;
-		checkout)    _git_checkout ;;
-		diff)        _git_diff ;;
-		diff-tree)   _git_diff_tree ;;
-		fetch)       _git_fetch ;;
-		log)         _git_log ;;
-		ls-remote)   _git_ls_remote ;;
-		ls-tree)     _git_ls_tree ;;
-		pull)        _git_pull ;;
-		push)        _git_push ;;
-		reset)       _git_reset ;;
-		show)        _git_show ;;
-		show-branch) _git_log ;;
-		whatchanged) _git_log ;;
-		*)           COMPREPLY=() ;;
-		esac
+		return;
 	fi
+
+	local expansion=$(__git_aliased_command "$command")
+	[ "$expansion" ] && command="$expansion"
+
+	case "$command" in
+	branch)      _git_branch ;;
+	cat-file)    _git_cat_file ;;
+	checkout)    _git_checkout ;;
+	diff)        _git_diff ;;
+	diff-tree)   _git_diff_tree ;;
+	fetch)       _git_fetch ;;
+	log)         _git_log ;;
+	ls-remote)   _git_ls_remote ;;
+	ls-tree)     _git_ls_tree ;;
+	merge-base)  _git_merge_base ;;
+	pull)        _git_pull ;;
+	push)        _git_push ;;
+	reset)       _git_reset ;;
+	show)        _git_show ;;
+	show-branch) _git_log ;;
+	whatchanged) _git_log ;;
+	*)           COMPREPLY=() ;;
+	esac
 }
 
 _gitk ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	COMPREPLY=($(compgen -W "--all $(__git_refs .)" -- "$cur"))
+	COMPREPLY=($(compgen -W "--all $(__git_refs)" -- "$cur"))
 }
 
 complete -o default -o nospace -F _git git
@@ -342,12 +381,15 @@ complete -o default -o nospace -F _git_pull git-pull
 complete -o default -o nospace -F _git_push git-push
 complete -o default            -F _git_reset git-reset
 complete -o default            -F _git_show git-show
+complete -o default -o nospace -F _git_log git-show-branch
 complete -o default -o nospace -F _git_log git-whatchanged
 
 # The following are necessary only for Cygwin, and only are needed
 # when the user has tab-completed the executable name and consequently
 # included the '.exe' suffix.
 #
+if [ Cygwin = "$(uname -o 2>/dev/null)" ]; then
+complete -o default -o nospace -F _git git.exe
 complete -o default            -F _git_branch git-branch.exe
 complete -o default -o nospace -F _git_cat_file git-cat-file.exe
 complete -o default -o nospace -F _git_diff git-diff.exe
@@ -356,4 +398,6 @@ complete -o default -o nospace -F _git_log git-log.exe
 complete -o default -o nospace -F _git_ls_tree git-ls-tree.exe
 complete -o default            -F _git_merge_base git-merge-base.exe
 complete -o default -o nospace -F _git_push git-push.exe
+complete -o default -o nospace -F _git_log git-show-branch.exe
 complete -o default -o nospace -F _git_log git-whatchanged.exe
+fi

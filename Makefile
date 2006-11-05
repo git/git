@@ -933,3 +933,8 @@ check-docs::
 		*) echo "no link: $$v";; \
 		esac ; \
 	done | sort
+
+### Make sure built-ins do not have dups and listed in git.c
+#
+check-builtins::
+	./check-builtins.sh
