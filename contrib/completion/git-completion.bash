@@ -309,6 +309,7 @@ _git ()
 		log)         _git_log ;;
 		ls-remote)   _git_ls_remote ;;
 		ls-tree)     _git_ls_tree ;;
+		merge-base)  _git_merge_base ;;
 		pull)        _git_pull ;;
 		push)        _git_push ;;
 		reset)       _git_reset ;;
@@ -342,12 +343,14 @@ complete -o default -o nospace -F _git_pull git-pull
 complete -o default -o nospace -F _git_push git-push
 complete -o default            -F _git_reset git-reset
 complete -o default            -F _git_show git-show
+complete -o default -o nospace -F _git_log git-show-branch
 complete -o default -o nospace -F _git_log git-whatchanged
 
 # The following are necessary only for Cygwin, and only are needed
 # when the user has tab-completed the executable name and consequently
 # included the '.exe' suffix.
 #
+complete -o default -o nospace -F _git git.exe
 complete -o default            -F _git_branch git-branch.exe
 complete -o default -o nospace -F _git_cat_file git-cat-file.exe
 complete -o default -o nospace -F _git_diff git-diff.exe
@@ -356,4 +359,5 @@ complete -o default -o nospace -F _git_log git-log.exe
 complete -o default -o nospace -F _git_ls_tree git-ls-tree.exe
 complete -o default            -F _git_merge_base git-merge-base.exe
 complete -o default -o nospace -F _git_push git-push.exe
+complete -o default -o nospace -F _git_log git-show-branch.exe
 complete -o default -o nospace -F _git_log git-whatchanged.exe
