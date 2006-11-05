@@ -83,15 +83,15 @@ __git_remotes ()
 
 __git_complete_file ()
 {
-	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local pfx ls ref cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	?*:*)
-		local pfx ls ref="$(echo "$cur" | sed 's,:.*$,,')"
-		cur="$(echo "$cur" | sed 's,^.*:,,')"
+		ref="${cur%%:*}"
+		cur="${cur#*:}"
 		case "$cur" in
 		?*/*)
-			pfx="$(echo "$cur" | sed 's,/[^/]*$,,')"
-			cur="$(echo "$cur" | sed 's,^.*/,,')"
+			pfx="${cur%/*}"
+			cur="${cur##*/}"
 			ls="$ref:$pfx"
 			pfx="$pfx/"
 			;;
@@ -193,7 +193,7 @@ _git_fetch ()
 	*)
 		case "$cur" in
 		*:*)
-	        cur=$(echo "$cur" | sed 's/^.*://')
+			cur="${cur#*:}"
 			COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
 			;;
 		*)
@@ -287,7 +287,7 @@ _git_push ()
 			git-push)  remote="${COMP_WORDS[1]}" ;;
 			git)       remote="${COMP_WORDS[2]}" ;;
 			esac
-	        cur=$(echo "$cur" | sed 's/^.*://')
+			cur="${cur#*:}"
 			COMPREPLY=($(compgen -W "$(__git_refs "$remote")" -- "$cur"))
 			;;
 		*)
