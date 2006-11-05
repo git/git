@@ -43,7 +43,7 @@ static int apply_verbosely;
 static int no_add;
 static int show_index_info;
 static int line_termination = '\n';
-static unsigned long p_context = -1;
+static unsigned long p_context = ULONG_MAX;
 static const char apply_usage[] =
 "git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--cached] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [--reverse] [--reject] [--verbose] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>] <patch>...";
 

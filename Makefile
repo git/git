@@ -187,15 +187,12 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
 	  git-cherry-pick git-status git-instaweb
 
-# The ones that do not have to link with lcrypto, lz nor xdiff.
-SIMPLE_PROGRAMS = \
-	git-daemon$X
-
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
 	git-convert-objects$X git-fetch-pack$X git-fsck-objects$X \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
 	git-merge-base$X \
+	git-daemon$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-patch-id$X \
 	git-peek-remote$X git-receive-pack$X \
 	git-send-pack$X git-shell$X \
@@ -217,7 +214,7 @@ BUILT_INS = \
 	$(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
 
 # what 'all' will build and 'install' will install, in gitexecdir
-ALL_PROGRAMS = $(PROGRAMS) $(SIMPLE_PROGRAMS) $(SCRIPTS) \
+ALL_PROGRAMS = $(PROGRAMS) $(SCRIPTS) \
 	git-merge-recur$X
 
 # Backward compatibility -- to be removed after 1.0
@@ -487,11 +484,9 @@ ifdef NEEDS_LIBICONV
 endif
 ifdef NEEDS_SOCKET
 	EXTLIBS += -lsocket
-	SIMPLE_LIB += -lsocket
 endif
 ifdef NEEDS_NSL
 	EXTLIBS += -lnsl
-	SIMPLE_LIB += -lnsl
 endif
 ifdef NO_D_TYPE_IN_DIRENT
 	BASIC_CFLAGS += -DNO_D_TYPE_IN_DIRENT
@@ -737,11 +732,6 @@ endif
 
 git-%$X: %.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
-
-$(SIMPLE_PROGRAMS) : $(LIB_FILE)
-$(SIMPLE_PROGRAMS) : git-%$X : %.o
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
-		$(LIB_FILE) $(SIMPLE_LIB)
 
 ssh-pull.o: ssh-fetch.c
 ssh-push.o: ssh-upload.c
