@@ -168,23 +168,28 @@ static void coalesce(struct scoreboard *sb)
 		sanity_check_refcnt(sb);
 }
 
+static struct origin *make_origin(struct commit *commit, const char *path)
+{
+	struct origin *o;
+	o = xcalloc(1, sizeof(*o) + strlen(path) + 1);
+	o->commit = commit;
+	o->refcnt = 1;
+	strcpy(o->path, path);
+	return o;
+}
+
 static struct origin *get_origin(struct scoreboard *sb,
 				 struct commit *commit,
 				 const char *path)
 {
 	struct blame_entry *e;
-	struct origin *o;
 
 	for (e = sb->ent; e; e = e->next) {
 		if (e->suspect->commit == commit &&
 		    !strcmp(e->suspect->path, path))
 			return origin_incref(e->suspect);
 	}
-	o = xcalloc(1, sizeof(*o) + strlen(path) + 1);
-	o->commit = commit;
-	o->refcnt = 1;
-	strcpy(o->path, path);
-	return o;
+	return make_origin(commit, path);
 }
 
 static int fill_blob_sha1(struct origin *origin)
@@ -216,9 +221,19 @@ static struct origin *find_origin(struct scoreboard *sb,
 	const char *paths[2];
 
 	if (parent->util) {
+		/* This is a freestanding copy of origin and not
+		 * refcounted.
+		 */
 		struct origin *cached = parent->util;
-		if (!strcmp(cached->path, origin->path))
-			return origin_incref(cached);
+		if (!strcmp(cached->path, origin->path)) {
+			porigin = get_origin(sb, parent, cached->path);
+			if (porigin->refcnt == 1)
+				hashcpy(porigin->blob_sha1, cached->blob_sha1);
+			return porigin;
+		}
+		/* otherwise it was not very useful; free it */
+		free(parent->util);
+		parent->util = NULL;
 	}
 
 	/* See if the origin->path is different between parent
@@ -268,10 +283,10 @@ static struct origin *find_origin(struct scoreboard *sb,
 	}
 	diff_flush(&diff_opts);
 	if (porigin) {
-		origin_incref(porigin);
-		if (parent->util)
-			origin_decref(parent->util);
-		parent->util = porigin;
+		struct origin *cached;
+		cached = make_origin(porigin->commit, porigin->path);
+		hashcpy(cached->blob_sha1, porigin->blob_sha1);
+		parent->util = cached;
 	}
 	return porigin;
 }
@@ -1434,8 +1449,13 @@ static void sanity_check_refcnt(struct scoreboard *sb)
 
 	for (ent = sb->ent; ent; ent = ent->next) {
 		/* Nobody should have zero or negative refcnt */
-		if (ent->suspect->refcnt <= 0)
+		if (ent->suspect->refcnt <= 0) {
+			fprintf(stderr, "%s in %s has negative refcnt %d\n",
+				ent->suspect->path,
+				sha1_to_hex(ent->suspect->commit->object.sha1),
+				ent->suspect->refcnt);
 			baa = 1;
+		}
 	}
 	for (ent = sb->ent; ent; ent = ent->next) {
 		/* Mark the ones that haven't been checked */
@@ -1444,9 +1464,7 @@ static void sanity_check_refcnt(struct scoreboard *sb)
 	}
 	for (ent = sb->ent; ent; ent = ent->next) {
 		/* then pick each and see if they have the the correct
-		 * refcnt; note that ->util caching means origin's refcnt
-		 * may well be greater than the number of blame entries
-		 * that use it.
+		 * refcnt.
 		 */
 		int found;
 		struct blame_entry *e;
@@ -1460,14 +1478,19 @@ static void sanity_check_refcnt(struct scoreboard *sb)
 				continue;
 			found++;
 		}
-		if (suspect->refcnt < found)
-			baa = 1;
+		if (suspect->refcnt != found) {
+			fprintf(stderr, "%s in %s has refcnt %d, not %d\n",
+				ent->suspect->path,
+				sha1_to_hex(ent->suspect->commit->object.sha1),
+				ent->suspect->refcnt, found);
+			baa = 2;
+		}
 	}
 	if (baa) {
 		int opt = 0160;
 		find_alignment(sb, &opt);
 		output(sb, opt);
-		die("Baa!");
+		die("Baa %d!", baa);
 	}
 }
 
