@@ -803,6 +803,36 @@ static int find_move_in_parent(struct scoreboard *sb,
 	return 0;
 }
 
+
+struct blame_list {
+	struct blame_entry *ent;
+	struct blame_entry split[3];
+};
+
+static struct blame_list *setup_blame_list(struct scoreboard *sb,
+					   struct origin *target,
+					   int *num_ents_p)
+{
+	struct blame_entry *e;
+	int num_ents, i;
+	struct blame_list *blame_list = NULL;
+
+	/* Count the number of entries the target is suspected for,
+	 * and prepare a list of entry and the best split.
+	 */
+	for (e = sb->ent, num_ents = 0; e; e = e->next)
+		if (!e->guilty && !cmp_suspect(e->suspect, target))
+			num_ents++;
+	if (num_ents) {
+		blame_list = xcalloc(num_ents, sizeof(struct blame_list));
+		for (e = sb->ent, i = 0; e; e = e->next)
+			if (!e->guilty && !cmp_suspect(e->suspect, target))
+				blame_list[i++].ent = e;
+	}
+	*num_ents_p = num_ents;
+	return blame_list;
+}
+
 static int find_copy_in_parent(struct scoreboard *sb,
 			       struct origin *target,
 			       struct commit *parent,
@@ -811,91 +841,101 @@ static int find_copy_in_parent(struct scoreboard *sb,
 {
 	struct diff_options diff_opts;
 	const char *paths[1];
-	struct blame_entry *e;
 	int i, j;
-	struct blame_list {
-		struct blame_entry *ent;
-		struct blame_entry split[3];
-	} *blame_list;
+	int retval;
+	struct blame_list *blame_list;
 	int num_ents;
 
-	/* Count the number of entries the target is suspected for,
-	 * and prepare a list of entry and the best split.
-	 */
-	for (e = sb->ent, num_ents = 0; e; e = e->next)
-		if (!e->guilty && !cmp_suspect(e->suspect, target))
-			num_ents++;
-	if (!num_ents)
+	blame_list = setup_blame_list(sb, target, &num_ents);
+	if (!blame_list)
 		return 1; /* nothing remains for this target */
-
-	blame_list = xcalloc(num_ents, sizeof(struct blame_list));
-	for (e = sb->ent, i = 0; e; e = e->next)
-		if (!e->guilty && !cmp_suspect(e->suspect, target))
-			blame_list[i++].ent = e;
 
 	diff_setup(&diff_opts);
 	diff_opts.recursive = 1;
 	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 
-	/* Try "find copies harder" on new path */
-	if ((opt & PICKAXE_BLAME_COPY_HARDER) &&
-	    (!porigin || strcmp(target->path, porigin->path))) {
-		diff_opts.detect_rename = DIFF_DETECT_COPY;
-		diff_opts.find_copies_harder = 1;
-	}
 	paths[0] = NULL;
 	diff_tree_setup_paths(paths, &diff_opts);
 	if (diff_setup_done(&diff_opts) < 0)
 		die("diff-setup");
+
+	/* Try "find copies harder" on new path if requested;
+	 * we do not want to use diffcore_rename() actually to
+	 * match things up; find_copies_harder is set only to
+	 * force diff_tree_sha1() to feed all filepairs to diff_queue,
+	 * and this code needs to be after diff_setup_done(), which
+	 * usually makes find-copies-harder imply copy detection.
+	 */
+	if ((opt & PICKAXE_BLAME_COPY_HARDER) &&
+	    (!porigin || strcmp(target->path, porigin->path)))
+		diff_opts.find_copies_harder = 1;
+
 	diff_tree_sha1(parent->tree->object.sha1,
 		       target->commit->tree->object.sha1,
 		       "", &diff_opts);
-	diffcore_std(&diff_opts);
 
-	for (i = 0; i < diff_queued_diff.nr; i++) {
-		struct diff_filepair *p = diff_queued_diff.queue[i];
-		struct origin *norigin;
-		mmfile_t file_p;
-		char type[10];
-		char *blob;
-		struct blame_entry this[3];
+	if (!diff_opts.find_copies_harder)
+		diffcore_std(&diff_opts);
 
-		if (!DIFF_FILE_VALID(p->one))
-			continue; /* does not exist in parent */
-		if (porigin && !strcmp(p->one->path, porigin->path))
-			/* find_move already dealt with this path */
-			continue;
+	retval = 0;
+	while (1) {
+		int made_progress = 0;
 
-		norigin = get_origin(sb, parent, p->one->path);
-		hashcpy(norigin->blob_sha1, p->one->sha1);
-		blob = read_sha1_file(norigin->blob_sha1, type,
-				      (unsigned long *) &file_p.size);
-		file_p.ptr = blob;
-		if (!file_p.ptr)
-			continue;
+		for (i = 0; i < diff_queued_diff.nr; i++) {
+			struct diff_filepair *p = diff_queued_diff.queue[i];
+			struct origin *norigin;
+			mmfile_t file_p;
+			char type[10];
+			char *blob;
+			struct blame_entry this[3];
+
+			if (!DIFF_FILE_VALID(p->one))
+				continue; /* does not exist in parent */
+			if (porigin && !strcmp(p->one->path, porigin->path))
+				/* find_move already dealt with this path */
+				continue;
+
+			norigin = get_origin(sb, parent, p->one->path);
+			hashcpy(norigin->blob_sha1, p->one->sha1);
+			blob = read_sha1_file(norigin->blob_sha1, type,
+					      (unsigned long *) &file_p.size);
+			file_p.ptr = blob;
+			if (!file_p.ptr)
+				continue;
+
+			for (j = 0; j < num_ents; j++) {
+				find_copy_in_blob(sb, blame_list[j].ent,
+						  norigin, this, &file_p);
+				copy_split_if_better(sb, blame_list[j].split,
+						     this);
+				decref_split(this);
+			}
+			free(blob);
+			origin_decref(norigin);
+		}
 
 		for (j = 0; j < num_ents; j++) {
-			find_copy_in_blob(sb, blame_list[j].ent, norigin,
-					  this, &file_p);
-			copy_split_if_better(sb, blame_list[j].split,
-					     this);
-			decref_split(this);
+			struct blame_entry *split = blame_list[j].split;
+			if (split[1].suspect &&
+			    blame_copy_score < ent_score(sb, &split[1])) {
+				split_blame(sb, split, blame_list[j].ent);
+				made_progress = 1;
+			}
+			decref_split(split);
 		}
-		free(blob);
-		origin_decref(norigin);
+		free(blame_list);
+
+		if (!made_progress)
+			break;
+		blame_list = setup_blame_list(sb, target, &num_ents);
+		if (!blame_list) {
+			retval = 1;
+			break;
+		}
 	}
 	diff_flush(&diff_opts);
 
-	for (j = 0; j < num_ents; j++) {
-		struct blame_entry *split = blame_list[j].split;
-		if (split[1].suspect &&
-		    blame_copy_score < ent_score(sb, &split[1]))
-			split_blame(sb, split, blame_list[j].ent);
-		decref_split(split);
-	}
-	free(blame_list);
-
-	return 0;
+	return retval;
 }
 
 #define MAXPARENT 16
@@ -942,7 +982,8 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 				goto finish;
 			}
 			for (j = same = 0; j < i; j++)
-				if (!hashcmp(parent_origin[j]->blob_sha1,
+				if (parent_origin[j] &&
+				    !hashcmp(parent_origin[j]->blob_sha1,
 					     porigin->blob_sha1)) {
 					same = 1;
 					break;
