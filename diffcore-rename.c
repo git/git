@@ -256,11 +256,15 @@ void diffcore_rename(struct diff_options *options)
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
-		if (!DIFF_FILE_VALID(p->one))
+		if (!DIFF_FILE_VALID(p->one)) {
 			if (!DIFF_FILE_VALID(p->two))
 				continue; /* unmerged */
+			else if (options->single_follow &&
+				 strcmp(options->single_follow, p->two->path))
+				continue; /* not interested */
 			else
 				locate_rename_dst(p->two, 1);
+		}
 		else if (!DIFF_FILE_VALID(p->two)) {
 			/* If the source is a broken "delete", and
 			 * they did not really want to get broken,
