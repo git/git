@@ -25,8 +25,6 @@ struct archiver {
 	parse_extra_args_fn_t parse_extra;
 };
 
-extern struct archiver archivers[];
-
 extern int parse_archive_args(int argc,
 			      const char **argv,
 			      struct archiver *ar);
