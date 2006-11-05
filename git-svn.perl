@@ -3139,7 +3139,7 @@ sub copy_remote_ref {
 	my $ref = "refs/remotes/$GIT_SVN";
 	if (safe_qx('git-ls-remote', $origin, $ref)) {
 		sys(qw/git fetch/, $origin, "$ref:$ref");
-	} else {
+	} elsif ($_cp_remote && !$_upgrade) {
 		die "Unable to find remote reference: ",
 				"refs/remotes/$GIT_SVN on $origin\n";
 	}
