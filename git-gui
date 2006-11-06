@@ -1,0 +1,764 @@
+#!/bin/sh
+# Tcl ignores the next line -*- tcl -*- \
+exec wish "$0" -- "$@"
+
+# Copyright (C) 2006 Shawn Pearce, Paul Mackerras.  All rights reserved.
+# This program is free software; it may be used, copied, modified
+# and distributed under the terms of the GNU General Public Licence,
+# either version 2, or (at your option) any later version.
+
+
+######################################################################
+##
+## status
+
+set status_active 0
+
+proc update_status {} {
+	global gitdir HEAD commit_type
+	global ui_index ui_other ui_status_value
+	global status_active file_states
+
+	if {$status_active > 0} return
+
+	array unset file_states
+	set ui_status_value {Refreshing file status...}
+	foreach w [list $ui_index $ui_other] {
+		$w conf -state normal
+		$w delete 0.0 end
+		$w conf -state disabled
+	}
+
+	if {[catch {set HEAD [exec git rev-parse --verify HEAD]}]} {
+		set commit_type initial
+	} else {
+		set commit_type normal
+	}
+
+	set ls_others [list | git ls-files --others -z \
+		--exclude-per-directory=.gitignore]
+	set info_exclude [file join $gitdir info exclude]
+	if {[file readable $info_exclude]} {
+		lappend ls_others "--exclude-from=$info_exclude"
+	}
+
+	set fd_di [open "| git diff-index --cached -z $HEAD" r]
+	set fd_df [open "| git diff-files -z" r]
+	set fd_lo [open $ls_others r]
+	set status_active 3
+
+	fconfigure $fd_di -blocking 0 -translation binary
+	fconfigure $fd_df -blocking 0 -translation binary
+	fconfigure $fd_lo -blocking 0 -translation binary
+	fileevent $fd_di readable [list read_diff_index $fd_di]
+	fileevent $fd_df readable [list read_diff_files $fd_df]
+	fileevent $fd_lo readable [list read_ls_others $fd_lo]
+}
+
+proc read_diff_index {fd} {
+	global buf_rdi
+
+	append buf_rdi [read $fd]
+	set pck [split $buf_rdi "\0"]
+	set buf_rdi [lindex $pck end]
+	foreach {m p} [lrange $pck 0 end-1] {
+		if {$m != {} && $p != {}} {
+			display_file $p [string index $m end]_
+		}
+	}
+	status_eof $fd buf_rdi
+}
+
+proc read_diff_files {fd} {
+	global buf_rdf
+
+	append buf_rdf [read $fd]
+	set pck [split $buf_rdf "\0"]
+	set buf_rdf [lindex $pck end]
+	foreach {m p} [lrange $pck 0 end-1] {
+		if {$m != {} && $p != {}} {
+			display_file $p _[string index $m end]
+		}
+	}
+	status_eof $fd buf_rdf
+}
+
+proc read_ls_others {fd} {
+	global buf_rlo
+
+	append buf_rlo [read $fd]
+	set pck [split $buf_rlo "\0"]
+	set buf_rlo [lindex $pck end]
+	foreach p [lrange $pck 0 end-1] {
+		display_file $p _O
+	}
+	status_eof $fd buf_rlo
+}
+
+proc status_eof {fd buf} {
+	global status_active $buf
+	global ui_fname_value ui_status_value
+
+	if {[eof $fd]} {
+		set $buf {}
+		close $fd
+		if {[incr status_active -1] == 0} {
+			set ui_status_value {Ready.}
+			if {$ui_fname_value != {}} {
+				show_diff $ui_fname_value
+			}
+		}
+	}
+}
+
+######################################################################
+##
+## diff
+
+set diff_active 0
+
+proc clear_diff {} {
+	global ui_diff ui_fname_value ui_fstatus_value
+
+	$ui_diff conf -state normal
+	$ui_diff delete 0.0 end
+	$ui_diff conf -state disabled
+	set ui_fname_value {}
+	set ui_fstatus_value {}
+}
+
+proc show_diff {path} {
+	global file_states HEAD status_active diff_3way diff_active
+	global ui_diff ui_fname_value ui_fstatus_value ui_status_value
+
+	if {$status_active > 0} return
+	if {$diff_active} return
+
+	clear_diff
+	set s $file_states($path)
+	set m [lindex $s 0]
+	set diff_3way 0
+	set diff_active 1
+	set ui_fname_value $path
+	set ui_fstatus_value [mapdesc $m $path]
+	set ui_status_value "Loading diff of $path..."
+
+	set cmd [list | git diff-index -p $HEAD -- $path]
+	switch $m {
+	AM {
+	}
+	MM {
+		set cmd [list | git diff-index -p -c $HEAD $path]
+	}
+	_O {
+		if {[catch {
+				set fd [open $path r]
+				set content [read $fd]
+				close $fd
+			} err ]} {
+			set ui_status_value "Unable to display $path"
+			error_popup "Error loading file:\n$err"
+			return
+		}
+		$ui_diff conf -state normal
+		$ui_diff insert end $content
+		$ui_diff conf -state disabled
+		return
+	}
+	}
+
+	if {[catch {set fd [open $cmd r]} err]} {
+		set ui_status_value "Unable to display $path"
+		error_popup "Error loading diff:\n$err"
+		return
+	}
+
+	fconfigure $fd -blocking 0
+	fileevent $fd readable [list read_diff $fd]
+}
+
+proc read_diff {fd} {
+	global ui_diff ui_status_value diff_3way diff_active
+
+	while {[gets $fd line] >= 0} {
+		if {[string match index* $line]} {
+			if {[string first , $line] >= 0} {
+				set diff_3way 1
+			}
+		}
+
+		$ui_diff conf -state normal
+		if {!$diff_3way} {
+			set x [string index $line 0]
+			switch -- $x {
+			"@" {set tags da}
+			"+" {set tags dp}
+			"-" {set tags dm}
+			default {set tags {}}
+			}
+		} else {
+			set x [string range $line 0 1]
+			switch -- $x {
+			default {set tags {}}
+			"@@" {set tags da}
+			"++" {set tags dp; set x " +"}
+			" +" {set tags {di bold}; set x "++"}
+			"+ " {set tags dni; set x "-+"}
+			"--" {set tags dm; set x " -"}
+			" -" {set tags {dm bold}; set x "--"}
+			"- " {set tags di; set x "+-"}
+			default {set tags {}}
+			}
+			set line [string replace $line 0 1 $x]
+		}
+		$ui_diff insert end $line $tags
+		$ui_diff insert end "\n"
+		$ui_diff conf -state disabled
+	}
+
+	if {[eof $fd]} {
+		close $fd
+		set diff_active 0
+		set ui_status_value {Ready.}
+	}
+}
+
+######################################################################
+##
+## ui helpers
+
+proc mapcol {state path} {
+	global all_cols
+
+	if {[catch {set r $all_cols($state)}]} {
+		puts "error: no column for state={$state} $path"
+		return o
+	}
+	return $r
+}
+
+proc mapicon {state path} {
+	global all_icons
+
+	if {[catch {set r $all_icons($state)}]} {
+		puts "error: no icon for state={$state} $path"
+		return file_plain
+	}
+	return $r
+}
+
+proc mapdesc {state path} {
+	global all_descs
+
+	if {[catch {set r $all_descs($state)}]} {
+		puts "error: no desc for state={$state} $path"
+		return $state
+	}
+	return $r
+}
+
+proc bsearch {w path} {
+	set hi [expr [lindex [split [$w index end] .] 0] - 2]
+	if {$hi == 0} {
+		return -1
+	}
+	set lo 0
+	while {$lo < $hi} {
+		set mi [expr [expr $lo + $hi] / 2]
+		set ti [expr $mi + 1]
+		set cmp [string compare [$w get $ti.1 $ti.end] $path]
+		if {$cmp < 0} {
+			set lo $ti
+		} elseif {$cmp == 0} {
+			return $mi
+		} else {
+			set hi $mi
+		}
+	}
+	return -[expr $lo + 1]
+}
+
+proc merge_state {path state} {
+	global file_states
+
+	if {[array names file_states -exact $path] == {}}  {
+		set o __
+		set s [list $o none none]
+	} else {
+		set s $file_states($path)
+		set o [lindex $s 0]
+	}
+
+	set m [lindex $s 0]
+	if {[string index $state 0] == "_"} {
+		set state [string index $m 0][string index $state 1]
+	} elseif {[string index $state 0] == "*"} {
+		set state _[string index $state 1]
+	}
+
+	if {[string index $state 1] == "_"} {
+		set state [string index $state 0][string index $m 1]
+	} elseif {[string index $state 1] == "*"} {
+		set state [string index $state 0]_
+	}
+
+	set file_states($path) [lreplace $s 0 0 $state]
+	return $o
+}
+
+proc display_file {path state} {
+	global ui_index ui_other file_states
+
+	set old_m [merge_state $path $state]
+	set s $file_states($path)
+	set m [lindex $s 0]
+
+	if {[mapcol $m $path] == "o"} {
+		set ii 1
+		set ai 2
+		set iw $ui_index
+		set aw $ui_other
+	} else {
+		set ii 2
+		set ai 1
+		set iw $ui_other
+		set aw $ui_index
+	}
+
+	set d [lindex $s $ii]
+	if {$d != "none"} {
+		set lno [bsearch $iw $path]
+		if {$lno >= 0} {
+			incr lno
+			$iw conf -state normal
+			$iw delete $lno.0 [expr $lno + 1].0
+			$iw conf -state disabled
+			set s [lreplace $s $ii $ii none]
+		}
+	}
+
+	set d [lindex $s $ai]
+	if {$d == "none"} {
+		set lno [expr abs([bsearch $aw $path] + 1) + 1]
+		$aw conf -state normal
+		set ico [$aw image create $lno.0 \
+			-align center -padx 5 -pady 1 \
+			-image [mapicon $m $path]]
+		$aw insert $lno.1 "$path\n"
+		$aw conf -state disabled
+		set file_states($path) [lreplace $s $ai $ai [list $ico]]
+	} elseif {[mapicon $m $path] != [mapicon $old_m $path]} {
+		set ico [lindex $d 0]
+		$aw image conf $ico -image [mapicon $m $path]
+	}
+}
+
+proc toggle_mode {path} {
+	global file_states
+
+	set s $file_states($path)
+	set m [lindex $s 0]
+
+	switch -- $m {
+	AM -
+	_O {
+		set new A*
+		set cmd [list exec git update-index --add $path]
+	}
+	MM {
+		set new M*
+		set cmd [list exec git update-index $path]
+	}
+	_D {
+		set new D*
+		set cmd [list exec git update-index --remove $path]
+	}
+	default {
+		return
+	}
+	}
+
+	if {[catch {eval $cmd} err]} {
+		error_popup "Error processing file:\n$err"
+		return
+	}
+	display_file $path $new
+}
+
+######################################################################
+##
+## icons
+
+set filemask {
+#define mask_width 14
+#define mask_height 15
+static unsigned char mask_bits[] = {
+   0xfe, 0x1f, 0xfe, 0x1f, 0xfe, 0x1f, 0xfe, 0x1f, 0xfe, 0x1f, 0xfe, 0x1f,
+   0xfe, 0x1f, 0xfe, 0x1f, 0xfe, 0x1f, 0xfe, 0x1f, 0xfe, 0x1f, 0xfe, 0x1f,
+   0xfe, 0x1f, 0xfe, 0x1f, 0xfe, 0x1f};
+}
+
+image create bitmap file_plain -background white -foreground black -data {
+#define plain_width 14
+#define plain_height 15
+static unsigned char plain_bits[] = {
+   0xfe, 0x01, 0x02, 0x03, 0x02, 0x05, 0x02, 0x09, 0x02, 0x1f, 0x02, 0x10,
+   0x02, 0x10, 0x02, 0x10, 0x02, 0x10, 0x02, 0x10, 0x02, 0x10, 0x02, 0x10,
+   0x02, 0x10, 0x02, 0x10, 0xfe, 0x1f};
+} -maskdata $filemask
+
+image create bitmap file_mod -background white -foreground blue -data {
+#define mod_width 14
+#define mod_height 15
+static unsigned char mod_bits[] = {
+   0xfe, 0x01, 0x02, 0x03, 0x7a, 0x05, 0x02, 0x09, 0x7a, 0x1f, 0x02, 0x10,
+   0xfa, 0x17, 0x02, 0x10, 0xfa, 0x17, 0x02, 0x10, 0xfa, 0x17, 0x02, 0x10,
+   0xfa, 0x17, 0x02, 0x10, 0xfe, 0x1f};
+} -maskdata $filemask
+
+image create bitmap file_tick -background white -foreground "#007000" -data {
+#define file_tick_width 14
+#define file_tick_height 15
+static unsigned char file_tick_bits[] = {
+   0xfe, 0x01, 0x02, 0x1a, 0x02, 0x0c, 0x02, 0x0c, 0x02, 0x16, 0x02, 0x16,
+   0x02, 0x13, 0x00, 0x13, 0x86, 0x11, 0x8c, 0x11, 0xd8, 0x10, 0xf2, 0x10,
+   0x62, 0x10, 0x02, 0x10, 0xfe, 0x1f};
+} -maskdata $filemask
+
+image create bitmap file_parttick -background white -foreground "#005050" -data {
+#define parttick_width 14
+#define parttick_height 15
+static unsigned char parttick_bits[] = {
+   0xfe, 0x01, 0x02, 0x03, 0x7a, 0x05, 0x02, 0x09, 0x7a, 0x1f, 0x02, 0x10,
+   0x7a, 0x14, 0x02, 0x16, 0x02, 0x13, 0x8a, 0x11, 0xda, 0x10, 0x72, 0x10,
+   0x22, 0x10, 0x02, 0x10, 0xfe, 0x1f};
+} -maskdata $filemask
+
+image create bitmap file_question -background white -foreground black -data {
+#define file_question_width 14
+#define file_question_height 15
+static unsigned char file_question_bits[] = {
+   0xfe, 0x01, 0x02, 0x02, 0xe2, 0x04, 0xf2, 0x09, 0x1a, 0x1b, 0x0a, 0x13,
+   0x82, 0x11, 0xc2, 0x10, 0x62, 0x10, 0x62, 0x10, 0x02, 0x10, 0x62, 0x10,
+   0x62, 0x10, 0x02, 0x10, 0xfe, 0x1f};
+} -maskdata $filemask
+
+image create bitmap file_removed -background white -foreground red -data {
+#define file_removed_width 14
+#define file_removed_height 15
+static unsigned char file_removed_bits[] = {
+   0xfe, 0x01, 0x02, 0x03, 0x02, 0x05, 0x02, 0x09, 0x02, 0x1f, 0x02, 0x10,
+   0x1a, 0x16, 0x32, 0x13, 0xe2, 0x11, 0xc2, 0x10, 0xe2, 0x11, 0x32, 0x13,
+   0x1a, 0x16, 0x02, 0x10, 0xfe, 0x1f};
+} -maskdata $filemask
+
+image create bitmap file_merge -background white -foreground blue -data {
+#define file_merge_width 14
+#define file_merge_height 15
+static unsigned char file_merge_bits[] = {
+   0xfe, 0x01, 0x02, 0x03, 0x62, 0x05, 0x62, 0x09, 0x62, 0x1f, 0x62, 0x10,
+   0xfa, 0x11, 0xf2, 0x10, 0x62, 0x10, 0x02, 0x10, 0xfa, 0x17, 0x02, 0x10,
+   0xfa, 0x17, 0x02, 0x10, 0xfe, 0x1f};
+} -maskdata $filemask
+
+foreach i {
+		{__ i "Unmodified"           plain}
+		{_M i "Modified"             mod}
+		{M_ i "Checked in"           tick}
+		{MM i "Partially checked in" parttick}
+
+		{_O o "Untracked"            plain}
+		{A_ o "Added"                tick}
+		{AM o "Partially added"      parttick}
+
+		{_D i "Missing"              question}
+		{D_ i "Removed"              removed}
+		{DD i "Removed"              removed}
+		{DO i "Partially removed"    removed}
+
+		{UM i "Merge conflicts"      merge}
+		{U_ i "Merge conflicts"      merge}
+	} {
+	set all_cols([lindex $i 0]) [lindex $i 1]
+	set all_descs([lindex $i 0]) [lindex $i 2]
+	set all_icons([lindex $i 0]) file_[lindex $i 3]
+}
+unset filemask i
+
+######################################################################
+##
+## util
+
+proc error_popup {msg} {
+	set w .error
+	toplevel $w
+	wm transient $w .
+	show_msg $w $w $msg
+}
+
+proc show_msg {w top msg} {
+	message $w.m -text $msg -justify center -aspect 400
+	pack $w.m -side top -fill x -padx 20 -pady 20
+	button $w.ok -text OK -command "destroy $top"
+	pack $w.ok -side bottom -fill x
+	bind $top <Visibility> "grab $top; focus $top"
+	bind $top <Key-Return> "destroy $top"
+	tkwait window $top
+}
+
+######################################################################
+##
+## ui commands
+
+proc do_gitk {} {
+	global tcl_platform
+
+    if {$tcl_platform(platform) == "windows"} {
+		exec sh -c gitk &
+	} else {
+		exec gitk &
+	}
+}
+
+proc do_quit {} {
+	destroy .
+}
+
+proc do_rescan {} {
+	update_status
+}
+
+# shift == 1: left click
+#          3: right click  
+proc click {w x y shift wx wy} {
+	set pos [split [$w index @$x,$y] .]
+	set lno [lindex $pos 0]
+	set col [lindex $pos 1]
+	set path [$w get $lno.1 $lno.end]
+	if {$path == {}} return
+
+	if {$col > 0 && $shift == 1} {
+		show_diff $path
+	}
+}
+
+proc unclick {w x y} {
+	set pos [split [$w index @$x,$y] .]
+	set lno [lindex $pos 0]
+	set col [lindex $pos 1]
+	set path [$w get $lno.1 $lno.end]
+	if {$path == {}} return
+
+	if {$col == 0} {
+		toggle_mode $path
+	}
+}
+
+######################################################################
+##
+## ui init
+
+set mainfont {Helvetica 10}
+set difffont {Courier 10}
+set maincursor [. cget -cursor]
+
+# -- Menu Bar
+menu .mbar -tearoff 0
+.mbar add cascade -label Project -menu .mbar.project
+.mbar add cascade -label Commit -menu .mbar.commit
+.mbar add cascade -label Fetch -menu .mbar.fetch
+.mbar add cascade -label Pull -menu .mbar.pull
+. configure -menu .mbar
+
+# -- Project Menu
+menu .mbar.project
+.mbar.project add command -label Visulize \
+	-command do_gitk \
+	-font $mainfont
+.mbar.project add command -label Quit \
+	-command do_quit \
+	-font $mainfont
+
+# -- Commit Menu
+menu .mbar.commit
+.mbar.commit add command -label Rescan \
+	-command do_rescan \
+	-font $mainfont
+
+# -- Fetch Menu
+menu .mbar.fetch
+
+# -- Pull Menu
+menu .mbar.pull
+
+# -- Main Window Layout
+panedwindow .vpane -orient vertical
+panedwindow .vpane.files -orient horizontal
+.vpane add .vpane.files -sticky nsew
+pack .vpane -anchor n -side top -fill both -expand 1
+
+# -- Index File List
+set ui_index .vpane.files.index.list
+frame .vpane.files.index -height 100 -width 400
+label .vpane.files.index.title -text {Modified Files} \
+	-background green \
+	-font $mainfont
+text $ui_index -background white -borderwidth 0 \
+	-width 40 -height 10 \
+	-font $mainfont \
+	-yscrollcommand {.vpane.files.index.sb set} \
+	-cursor $maincursor \
+	-state disabled
+scrollbar .vpane.files.index.sb -command [list $ui_index yview]
+pack .vpane.files.index.title -side top -fill x
+pack .vpane.files.index.sb -side right -fill y
+pack $ui_index -side left -fill both -expand 1
+.vpane.files add .vpane.files.index -sticky nsew
+
+# -- Other (Add) File List
+set ui_other .vpane.files.other.list
+frame .vpane.files.other -height 100 -width 100
+label .vpane.files.other.title -text {Untracked Files} \
+	-background red \
+	-font $mainfont
+text $ui_other -background white -borderwidth 0 \
+	-width 40 -height 10 \
+	-font $mainfont \
+	-yscrollcommand {.vpane.files.other.sb set} \
+	-cursor $maincursor \
+	-state disabled
+scrollbar .vpane.files.other.sb -command [list $ui_other yview]
+pack .vpane.files.other.title -side top -fill x
+pack .vpane.files.other.sb -side right -fill y
+pack $ui_other -side left -fill both -expand 1
+.vpane.files add .vpane.files.other -sticky nsew
+
+# -- Diff Header
+set ui_fname_value {}
+set ui_fstatus_value {}
+frame .vpane.diff -height 100 -width 100
+frame .vpane.diff.header
+label .vpane.diff.header.l1 -text {File:} -font $mainfont
+label .vpane.diff.header.l2 -textvariable ui_fname_value \
+	-anchor w \
+	-justify left \
+	-font $mainfont
+label .vpane.diff.header.l3 -text {Status:} -font $mainfont
+label .vpane.diff.header.l4 -textvariable ui_fstatus_value \
+	-width 20 \
+	-anchor w \
+	-justify left \
+	-font $mainfont
+pack .vpane.diff.header.l1 -side left
+pack .vpane.diff.header.l2 -side left -fill x
+pack .vpane.diff.header.l4 -side right
+pack .vpane.diff.header.l3 -side right
+
+# -- Diff Body
+frame .vpane.diff.body
+set ui_diff .vpane.diff.body.t
+text $ui_diff -background white -borderwidth 0 \
+	-width 40 -height 20 \
+	-font $difffont \
+	-xscrollcommand {.vpane.diff.body.sbx set} \
+	-yscrollcommand {.vpane.diff.body.sby set} \
+	-cursor $maincursor \
+	-state disabled
+scrollbar .vpane.diff.body.sbx -orient horizontal \
+	-command [list $ui_diff xview]
+scrollbar .vpane.diff.body.sby -orient vertical \
+	-command [list $ui_diff yview]
+pack .vpane.diff.body.sbx -side bottom -fill x
+pack .vpane.diff.body.sby -side right -fill y
+pack $ui_diff -side left -fill both -expand 1
+pack .vpane.diff.header -side top -fill x
+pack .vpane.diff.body -side bottom -fill both -expand 1
+.vpane add .vpane.diff -stick nsew
+
+$ui_diff tag conf dm -foreground red
+$ui_diff tag conf dp -foreground blue
+$ui_diff tag conf da -font [concat $difffont bold]
+$ui_diff tag conf di -foreground "#00a000"
+$ui_diff tag conf dni -foreground "#a000a0"
+$ui_diff tag conf bold -font [concat $difffont bold]
+
+# -- Commit Area
+frame .vpane.commarea -height 50
+.vpane add .vpane.commarea -stick nsew
+
+# -- Commit Area Buttons
+frame .vpane.commarea.buttons
+label .vpane.commarea.buttons.l -text {} \
+	-anchor w \
+	-justify left \
+	-font $mainfont
+pack .vpane.commarea.buttons.l -side top -fill x
+button .vpane.commarea.buttons.rescan -text {Rescan} \
+	-command do_rescan \
+	-font $mainfont
+pack .vpane.commarea.buttons.rescan -side top -fill x
+button .vpane.commarea.buttons.ciall -text {Check-in All} \
+	-command do_checkin_all \
+	-font $mainfont
+pack .vpane.commarea.buttons.ciall -side top -fill x
+button .vpane.commarea.buttons.commit -text {Commit} \
+	-command do_commit \
+	-font $mainfont
+pack .vpane.commarea.buttons.commit -side top -fill x
+pack .vpane.commarea.buttons -side left -fill y
+
+# -- Commit Message Buffer
+frame .vpane.commarea.buffer
+set ui_comm .vpane.commarea.buffer.t
+label .vpane.commarea.buffer.l -text {Commit Message:} \
+	-anchor w \
+	-justify left \
+	-font $mainfont
+text $ui_comm -background white -borderwidth 1 \
+	-relief sunken \
+	-width 75 -height 10 -wrap none \
+	-font $difffont \
+	-yscrollcommand {.vpane.commarea.buffer.sby set} \
+	-cursor $maincursor
+scrollbar .vpane.commarea.buffer.sby -command [list $ui_comm yview]
+pack .vpane.commarea.buffer.l -side top -fill x
+pack .vpane.commarea.buffer.sby -side right -fill y
+pack $ui_comm -side left -fill y
+pack .vpane.commarea.buffer -side left -fill y
+
+# -- Status Bar
+set ui_status_value {Initializing...}
+label .status -textvariable ui_status_value \
+	-anchor w \
+	-justify left \
+	-borderwidth 1 \
+	-relief sunken \
+	-font $mainfont
+pack .status -anchor w -side bottom -fill x
+
+# -- Key Bindings
+bind . <Destroy> do_quit
+bind . <Key-F5> do_rescan
+bind . <M1-Key-r> do_rescan
+bind . <M1-Key-R> do_rescan
+bind . <M1-Key-q> do_quit
+bind . <M1-Key-Q> do_quit
+foreach i [list $ui_index $ui_other] {
+	bind $i <Button-1> {click %W %x %y 1 %X %Y; break}
+	bind $i <Button-3> {click %W %x %y 3 %X %Y; break}
+	bind $i <ButtonRelease-1> {unclick %W %x %y; break}
+}
+unset i
+
+######################################################################
+##
+## main
+
+if {[catch {set gitdir [exec git rev-parse --git-dir]} err]} {
+	show_msg {} . "Cannot find the git directory: $err"
+	exit 1
+}
+
+wm title . "git-ui ([file normalize [file dirname $gitdir]])"
+focus -force $ui_comm
+update_status
