@@ -229,7 +229,7 @@ proc show_diff {path} {
 		return
 	}
 
-	fconfigure $fd -blocking 0 -translation binary
+	fconfigure $fd -blocking 0 -translation auto
 	fileevent $fd readable [list read_diff $fd]
 }
 
@@ -237,6 +237,10 @@ proc read_diff {fd} {
 	global ui_diff ui_status_value diff_3way diff_active
 
 	while {[gets $fd line] >= 0} {
+		if {[string match {diff --git *} $line]} continue
+		if {[string match {diff --combined *} $line]} continue
+		if {[string match {--- *} $line]} continue
+		if {[string match {+++ *} $line]} continue
 		if {[string match index* $line]} {
 			if {[string first , $line] >= 0} {
 				set diff_3way 1
@@ -584,8 +588,9 @@ proc show_msg {w top msg} {
 ## ui commands
 
 proc do_gitk {} {
-	global tcl_platform
+	global tcl_platform ui_status_value
 
+	set ui_status_value "Please wait... Starting gitk..."
     if {$tcl_platform(platform) == "windows"} {
 		exec sh -c gitk &
 	} else {
@@ -705,7 +710,7 @@ menu .mbar -tearoff 0
 
 # -- Project Menu
 menu .mbar.project
-.mbar.project add command -label Visulize \
+.mbar.project add command -label Visualize \
 	-command do_gitk \
 	-font $mainfont
 .mbar.project add command -label Quit \
@@ -736,7 +741,7 @@ menu .mbar.pull
 # -- Main Window Layout
 panedwindow .vpane -orient vertical
 panedwindow .vpane.files -orient horizontal
-.vpane add .vpane.files -sticky nsew
+.vpane add .vpane.files -sticky nsew -height 100 -width 400
 pack .vpane -anchor n -side top -fill both -expand 1
 
 # -- Index File List
@@ -781,7 +786,7 @@ $ui_other tag conf in_diff -font [concat $mainfont bold]
 # -- Diff Header
 set ui_fname_value {}
 set ui_fstatus_value {}
-frame .vpane.diff -height 50 -width 400
+frame .vpane.diff -height 200 -width 400
 frame .vpane.diff.header
 label .vpane.diff.header.l1 -text {File:} -font $mainfont
 label .vpane.diff.header.l2 -textvariable ui_fname_value \
@@ -803,7 +808,7 @@ pack .vpane.diff.header.l3 -side right
 frame .vpane.diff.body
 set ui_diff .vpane.diff.body.t
 text $ui_diff -background white -borderwidth 0 \
-	-width 80 -height 15 \
+	-width 80 -height 15 -wrap none \
 	-font $difffont \
 	-xscrollcommand {.vpane.diff.body.sbx set} \
 	-yscrollcommand {.vpane.diff.body.sby set} \
@@ -828,7 +833,7 @@ $ui_diff tag conf dni -foreground "#a000a0"
 $ui_diff tag conf bold -font [concat $difffont bold]
 
 # -- Commit Area
-frame .vpane.commarea -height 50
+frame .vpane.commarea -height 150
 .vpane add .vpane.commarea -stick nsew
 
 # -- Commit Area Buttons
