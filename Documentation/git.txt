@@ -141,6 +141,9 @@ gitlink:git-merge[1]::
 gitlink:git-mv[1]::
 	Move or rename a file, a directory, or a symlink.
 
+gitlink:git-pack-refs[1]::
+	Pack heads and tags for efficient repository access.
+
 gitlink:git-pull[1]::
 	Fetch from and merge with a remote repository or a local branch.
 
@@ -423,6 +426,9 @@ gitlink:git-rev-list[1]::
 
 gitlink:git-show-index[1]::
 	Displays contents of a pack idx file.
+
+gitlink:git-show-ref[1]::
+	List references in a local repository.
 
 gitlink:git-tar-tree[1]::
 	Creates a tar archive of the files in the named tree object.
