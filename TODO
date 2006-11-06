@@ -27,24 +27,6 @@ From: Junio C Hamano <junkio@cox.net>
 commit walkers still have issues with packed and then pruned
 refs.
 
-From: Junio C Hamano <junkio@cox.net>
-Message-ID: <7vk62npipb.fsf@assigned-by-dhcp.cox.net>
-
-merge-recursive needs to be adjusted for loosening of "working
-file will be clobbered by merge" check in unpack-trees.
-
-[jc: I've fixed up what I could find but this needs to be
-handled a bit carefully. ]
-
-From: Nicolas Pitre <nico@cam.org>
-Message-ID: <Pine.LNX.4.64.0610271022240.11384@xanadu.home>
-
-Race between 'repack -a -d' and 'index-pack --stdin' (or
-'fetch-pack --keep').
-
-[jc: Shawn's .keep to mark packs that wouldn't be repacked would
-work rather nicely when completed.]
-
 From: Franck Bui-Huu <vagabon.xyz@gmail.com>
 Message-ID: <450EABD0.1040102@innova-card.com>
 
@@ -58,11 +40,6 @@ Message-ID: <20060926215745.GC8177@spearce.org>
 git-mirror (reverse of git-push --all).
 
 [jc: may want the finished version for inclusion]
-
-From: Nicolas Pitre <nico@cam.org>
-Subject: [PATCH 8/6] let the GIT native protocol use offsets to delta base when
-
-[jc: applied all but I suspect git-push side hasn't been converted?]
 
 From: Shawn Pearce <spearce@spearce.org>
 Message-ID: <20060930045037.GB18479@spearce.org>
@@ -91,8 +68,6 @@ not just diff with the first parent for a merge.
 Technical (milder)
 ------------------
 
-* pickaxe perhaps needs to refcount the origin structure.
-
 * duplicated refspec given to "fetch-pack a a a" makes it emit
   strange error message because it triggers the "match only
   once" logic.  Maybe strip the dups on the input side
@@ -102,6 +77,8 @@ Technical (milder)
 * map only parts of huge packfiles and LRU fragments of them.
   People are starting to try git on projects with deep history
   and/or many objects, e.g. Mozilla.
+
+  [jc: ping Shawn or give up and do this myself.]
 
 * upload-pack support for start fetching from any valid point on
   the history, not just published refs. (Erik W. Biederman
