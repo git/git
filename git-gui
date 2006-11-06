@@ -13,16 +13,30 @@ exec wish "$0" -- "$@"
 ## status
 
 set status_active 0
+set diff_active 0
+set checkin_active 0
+set update_index_fd {}
+
+proc is_busy {} {
+	global status_active diff_active checkin_active update_index_fd
+
+	if {$status_active > 0
+		|| $diff_active
+		|| $checkin_active
+		|| $update_index_fd != {}} {
+		return 1
+	}
+	return 0
+}
 
 proc update_status {} {
 	global gitdir HEAD commit_type
-	global ui_index ui_other ui_status_value
+	global ui_index ui_other ui_status_value ui_comm
 	global status_active file_states
 
-	if {$status_active > 0} return
+	if {[is_busy]} return
 
 	array unset file_states
-	set ui_status_value {Refreshing file status...}
 	foreach w [list $ui_index $ui_other] {
 		$w conf -state normal
 		$w delete 0.0 end
@@ -35,6 +49,31 @@ proc update_status {} {
 		set commit_type normal
 	}
 
+	if {![$ui_comm edit modified]
+	    || [string trim [$ui_comm get 0.0 end]] == {}} {
+		if {[load_message GITGUI_MSG]} {
+		} elseif {[load_message MERGE_MSG]} {
+		} elseif {[load_message SQUASH_MSG]} {
+		}
+		$ui_comm edit modified false
+	}
+
+	set status_active 1
+	set ui_status_value {Refreshing file status...}
+	set fd_rf [open "| git update-index -q --unmerged --refresh" r]
+	fconfigure $fd_rf -blocking 0 -translation binary
+	fileevent $fd_rf readable [list read_refresh $fd_rf]
+}
+
+proc read_refresh {fd} {
+	global gitdir HEAD commit_type
+	global ui_index ui_other ui_status_value ui_comm
+	global status_active file_states
+
+	read $fd
+	if {![eof $fd]} return
+	close $fd
+
 	set ls_others [list | git ls-files --others -z \
 		--exclude-per-directory=.gitignore]
 	set info_exclude [file join $gitdir info exclude]
@@ -42,10 +81,11 @@ proc update_status {} {
 		lappend ls_others "--exclude-from=$info_exclude"
 	}
 
+	set status_active 3
+	set ui_status_value {Scanning for modified files ...}
 	set fd_di [open "| git diff-index --cached -z $HEAD" r]
 	set fd_df [open "| git diff-files -z" r]
 	set fd_lo [open $ls_others r]
-	set status_active 3
 
 	fconfigure $fd_di -blocking 0 -translation binary
 	fconfigure $fd_df -blocking 0 -translation binary
@@ -53,6 +93,23 @@ proc update_status {} {
 	fileevent $fd_di readable [list read_diff_index $fd_di]
 	fileevent $fd_df readable [list read_diff_files $fd_df]
 	fileevent $fd_lo readable [list read_ls_others $fd_lo]
+}
+
+proc load_message {file} {
+	global gitdir ui_comm
+
+	set f [file join $gitdir $file]
+	if {[file exists $f]} {
+		if {[catch {set fd [open $f r]}]} {
+			return 0
+		}
+		set content [read $fd]
+		close $fd
+		$ui_comm delete 0.0 end
+		$ui_comm insert end $content
+		return 1
+	}
+	return 0
 }
 
 proc read_diff_index {fd} {
@@ -115,8 +172,6 @@ proc status_eof {fd buf} {
 ##
 ## diff
 
-set diff_active 0
-
 proc clear_diff {} {
 	global ui_diff ui_fname_value ui_fstatus_value
 
@@ -128,11 +183,10 @@ proc clear_diff {} {
 }
 
 proc show_diff {path} {
-	global file_states HEAD status_active diff_3way diff_active
+	global file_states HEAD diff_3way diff_active
 	global ui_diff ui_fname_value ui_fstatus_value ui_status_value
 
-	if {$status_active > 0} return
-	if {$diff_active} return
+	if {[is_busy]} return
 
 	clear_diff
 	set s $file_states($path)
@@ -156,6 +210,7 @@ proc show_diff {path} {
 				set content [read $fd]
 				close $fd
 			} err ]} {
+			set diff_active 0
 			set ui_status_value "Unable to display $path"
 			error_popup "Error loading file:\n$err"
 			return
@@ -168,12 +223,13 @@ proc show_diff {path} {
 	}
 
 	if {[catch {set fd [open $cmd r]} err]} {
+		set diff_active 0
 		set ui_status_value "Unable to display $path"
 		error_popup "Error loading diff:\n$err"
 		return
 	}
 
-	fconfigure $fd -blocking 0
+	fconfigure $fd -blocking 0 -translation binary
 	fileevent $fd readable [list read_diff $fd]
 }
 
@@ -353,6 +409,32 @@ proc display_file {path state} {
 	}
 }
 
+proc with_update_index {body} {
+	global update_index_fd
+
+	if {$update_index_fd == {}} {
+		set update_index_fd [open \
+			"| git update-index --add --remove -z --stdin" \
+			w]
+		fconfigure $update_index_fd -translation binary
+		uplevel 1 $body
+		close $update_index_fd
+		set update_index_fd {}
+	} else {
+		uplevel 1 $body
+	}
+}
+
+proc update_index {path} {
+	global update_index_fd
+
+	if {$update_index_fd == {}} {
+		error {not in with_update_index}
+	} else {
+		puts -nonewline $update_index_fd "$path\0"
+	}
+}
+
 proc toggle_mode {path} {
 	global file_states
 
@@ -361,27 +443,14 @@ proc toggle_mode {path} {
 
 	switch -- $m {
 	AM -
-	_O {
-		set new A*
-		set cmd [list exec git update-index --add $path]
-	}
-	MM {
-		set new M*
-		set cmd [list exec git update-index $path]
-	}
-	_D {
-		set new D*
-		set cmd [list exec git update-index --remove $path]
-	}
-	default {
-		return
-	}
+	_O {set new A*}
+	_M -
+	MM {set new M*}
+	_D {set new D*}
+	default {return}
 	}
 
-	if {[catch {eval $cmd} err]} {
-		error_popup "Error processing file:\n$err"
-		return
-	}
+	with_update_index {update_index $path}
 	display_file $path $new
 }
 
@@ -416,10 +485,10 @@ static unsigned char mod_bits[] = {
    0xfa, 0x17, 0x02, 0x10, 0xfe, 0x1f};
 } -maskdata $filemask
 
-image create bitmap file_tick -background white -foreground "#007000" -data {
-#define file_tick_width 14
-#define file_tick_height 15
-static unsigned char file_tick_bits[] = {
+image create bitmap file_fulltick -background white -foreground "#007000" -data {
+#define file_fulltick_width 14
+#define file_fulltick_height 15
+static unsigned char file_fulltick_bits[] = {
    0xfe, 0x01, 0x02, 0x1a, 0x02, 0x0c, 0x02, 0x0c, 0x02, 0x16, 0x02, 0x16,
    0x02, 0x13, 0x00, 0x13, 0x86, 0x11, 0x8c, 0x11, 0xd8, 0x10, 0xf2, 0x10,
    0x62, 0x10, 0x02, 0x10, 0xfe, 0x1f};
@@ -461,27 +530,31 @@ static unsigned char file_merge_bits[] = {
    0xfa, 0x17, 0x02, 0x10, 0xfe, 0x1f};
 } -maskdata $filemask
 
+set max_status_desc 0
 foreach i {
-		{__ i "Unmodified"           plain}
-		{_M i "Modified"             mod}
-		{M_ i "Checked in"           tick}
-		{MM i "Partially checked in" parttick}
+		{__ i plain    "Unmodified"}
+		{_M i mod      "Modified"}
+		{M_ i fulltick "Checked in"}
+		{MM i parttick "Partially checked in"}
 
-		{_O o "Untracked"            plain}
-		{A_ o "Added"                tick}
-		{AM o "Partially added"      parttick}
+		{_O o plain    "Untracked"}
+		{A_ o fulltick "Added"}
+		{AM o parttick "Partially added"}
 
-		{_D i "Missing"              question}
-		{D_ i "Removed"              removed}
-		{DD i "Removed"              removed}
-		{DO i "Partially removed"    removed}
+		{_D i question "Missing"}
+		{D_ i removed  "Removed"}
+		{DD i removed  "Removed"}
+		{DO i removed  "Removed (still exists)"}
 
-		{UM i "Merge conflicts"      merge}
-		{U_ i "Merge conflicts"      merge}
+		{UM i merge    "Merge conflicts"}
+		{U_ i merge    "Merge conflicts"}
 	} {
+	if {$max_status_desc < [string length [lindex $i 3]]} {
+		set max_status_desc [string length [lindex $i 3]]
+	}
 	set all_cols([lindex $i 0]) [lindex $i 1]
-	set all_descs([lindex $i 0]) [lindex $i 2]
-	set all_icons([lindex $i 0]) file_[lindex $i 3]
+	set all_icons([lindex $i 0]) file_[lindex $i 2]
+	set all_descs([lindex $i 0]) [lindex $i 3]
 }
 unset filemask i
 
@@ -521,6 +594,20 @@ proc do_gitk {} {
 }
 
 proc do_quit {} {
+	global gitdir ui_comm
+
+	set save [file join $gitdir GITGUI_MSG]
+	if {[$ui_comm edit modified]
+	    && [string trim [$ui_comm get 0.0 end]] != {}} {
+		catch {
+			set fd [open $save w]
+			puts $fd [string trim [$ui_comm get 0.0 end]]
+			close $fd
+		}
+	} elseif {[file exists $save]} {
+		file delete $save
+	}
+
 	destroy .
 }
 
@@ -528,9 +615,52 @@ proc do_rescan {} {
 	update_status
 }
 
+proc do_checkin_all {} {
+	global checkin_active ui_status_value
+
+	if {[is_busy]} return
+
+	set checkin_active 1
+	set ui_status_value {Checking in all files...}
+	after 1 {
+		with_update_index {
+			foreach path [array names file_states] {
+				set s $file_states($path)
+				set m [lindex $s 0]
+				switch -- $m {
+				AM -
+				MM -
+				_M -
+				_D {toggle_mode $path}
+				}
+			}
+		}
+		set checkin_active 0
+		set ui_status_value {Ready.}
+	}
+}
+
+proc do_signoff {} {
+	global ui_comm
+
+	catch {
+		set me [exec git var GIT_COMMITTER_IDENT]
+		if {[regexp {(.*) [0-9]+ [-+0-9]+$} $me me name]} {
+			set str "Signed-off-by: $name"
+			if {[$ui_comm get {end -1c linestart} {end -1c}] != $str} {
+				$ui_comm insert end "\n"
+				$ui_comm insert end $str
+				$ui_comm see end
+			}
+		}
+	}
+}
+
 # shift == 1: left click
 #          3: right click  
 proc click {w x y shift wx wy} {
+	global ui_index ui_other
+
 	set pos [split [$w index @$x,$y] .]
 	set lno [lindex $pos 0]
 	set col [lindex $pos 1]
@@ -538,6 +668,9 @@ proc click {w x y shift wx wy} {
 	if {$path == {}} return
 
 	if {$col > 0 && $shift == 1} {
+		$ui_index tag remove in_diff 0.0 end
+		$ui_other tag remove in_diff 0.0 end
+		$w tag add in_diff $lno.0 [expr $lno + 1].0
 		show_diff $path
 	}
 }
@@ -549,7 +682,7 @@ proc unclick {w x y} {
 	set path [$w get $lno.1 $lno.end]
 	if {$path == {}} return
 
-	if {$col == 0} {
+	if {$col == 0 && ![is_busy]} {
 		toggle_mode $path
 	}
 }
@@ -583,6 +716,15 @@ menu .mbar.project
 menu .mbar.commit
 .mbar.commit add command -label Rescan \
 	-command do_rescan \
+	-font $mainfont
+.mbar.commit add command -label {Check-in All Files} \
+	-command do_checkin_all \
+	-font $mainfont
+.mbar.commit add command -label {Sign Off} \
+	-command do_signoff \
+	-font $mainfont
+.mbar.commit add command -label Commit \
+	-command do_commit \
 	-font $mainfont
 
 # -- Fetch Menu
@@ -633,10 +775,13 @@ pack .vpane.files.other.sb -side right -fill y
 pack $ui_other -side left -fill both -expand 1
 .vpane.files add .vpane.files.other -sticky nsew
 
+$ui_index tag conf in_diff -font [concat $mainfont bold]
+$ui_other tag conf in_diff -font [concat $mainfont bold]
+
 # -- Diff Header
 set ui_fname_value {}
 set ui_fstatus_value {}
-frame .vpane.diff -height 100 -width 100
+frame .vpane.diff -height 50 -width 400
 frame .vpane.diff.header
 label .vpane.diff.header.l1 -text {File:} -font $mainfont
 label .vpane.diff.header.l2 -textvariable ui_fname_value \
@@ -645,7 +790,7 @@ label .vpane.diff.header.l2 -textvariable ui_fname_value \
 	-font $mainfont
 label .vpane.diff.header.l3 -text {Status:} -font $mainfont
 label .vpane.diff.header.l4 -textvariable ui_fstatus_value \
-	-width 20 \
+	-width $max_status_desc \
 	-anchor w \
 	-justify left \
 	-font $mainfont
@@ -658,7 +803,7 @@ pack .vpane.diff.header.l3 -side right
 frame .vpane.diff.body
 set ui_diff .vpane.diff.body.t
 text $ui_diff -background white -borderwidth 0 \
-	-width 40 -height 20 \
+	-width 80 -height 15 \
 	-font $difffont \
 	-xscrollcommand {.vpane.diff.body.sbx set} \
 	-yscrollcommand {.vpane.diff.body.sby set} \
@@ -693,19 +838,27 @@ label .vpane.commarea.buttons.l -text {} \
 	-justify left \
 	-font $mainfont
 pack .vpane.commarea.buttons.l -side top -fill x
+pack .vpane.commarea.buttons -side left -fill y
+
 button .vpane.commarea.buttons.rescan -text {Rescan} \
 	-command do_rescan \
 	-font $mainfont
 pack .vpane.commarea.buttons.rescan -side top -fill x
+
 button .vpane.commarea.buttons.ciall -text {Check-in All} \
 	-command do_checkin_all \
 	-font $mainfont
 pack .vpane.commarea.buttons.ciall -side top -fill x
+
+button .vpane.commarea.buttons.signoff -text {Sign Off} \
+	-command do_signoff \
+	-font $mainfont
+pack .vpane.commarea.buttons.signoff -side top -fill x
+
 button .vpane.commarea.buttons.commit -text {Commit} \
 	-command do_commit \
 	-font $mainfont
 pack .vpane.commarea.buttons.commit -side top -fill x
-pack .vpane.commarea.buttons -side left -fill y
 
 # -- Commit Message Buffer
 frame .vpane.commarea.buffer
@@ -741,6 +894,11 @@ bind . <Destroy> do_quit
 bind . <Key-F5> do_rescan
 bind . <M1-Key-r> do_rescan
 bind . <M1-Key-R> do_rescan
+bind . <M1-Key-s> do_signoff
+bind . <M1-Key-S> do_signoff
+bind . <M1-Key-u> do_checkin_all
+bind . <M1-Key-U> do_checkin_all
+bind . <M1-Key-Return> do_commit
 bind . <M1-Key-q> do_quit
 bind . <M1-Key-Q> do_quit
 foreach i [list $ui_index $ui_other] {
