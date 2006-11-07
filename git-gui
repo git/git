@@ -592,16 +592,31 @@ proc fetch_from {remote} {
 	set w [new_console "fetch $remote" \
 		"Fetching new changes from $remote"]
 	set cmd [list git fetch]
-	lappend cmd -v
 	lappend cmd $remote
 	console_exec $w $cmd
+}
+
+proc pull_remote {remote branch} {
+	set w [new_console "pull $remote $branch" \
+		"Pulling new changes from branch $branch in $remote"]
+	set cmd [list git pull]
+	lappend cmd $remote
+	lappend cmd $branch
+	console_exec $w $cmd [list post_pull_remote $remote $branch]
+}
+
+proc post_pull_remote {remote branch success} {
+	if {$success} {
+		update_status "Successfully pulled $branch from $remote."
+	} else {
+		update_status "Conflicts detected while pulling $branch from $remote."
+	}
 }
 
 proc push_to {remote} {
 	set w [new_console "push $remote" \
 		"Pushing changes to $remote"]
 	set cmd [list git push]
-	lappend -v
 	lappend cmd $remote
 	console_exec $w $cmd
 }
@@ -829,12 +844,46 @@ proc load_all_remotes {} {
 }
 
 proc populate_remote_menu {m pfx op} {
-	global gitdir all_remotes mainfont
+	global all_remotes mainfont
 
 	foreach remote $all_remotes {
 		$m add command -label "$pfx $remote..." \
 			-command [list $op $remote] \
 			-font $mainfont
+	}
+}
+
+proc populate_pull_menu {m} {
+	global gitdir repo_config all_remotes mainfont
+
+	foreach remote $all_remotes {
+		set rb {}
+		if {[array get repo_config remote.$remote.url] != {}} {
+			if {[array get repo_config remote.$remote.fetch] != {}} {
+				regexp {^([^:]+):} \
+					[lindex $repo_config(remote.$remote.fetch) 0] \
+					line rb
+			}
+		} else {
+			catch {
+				set fd [open [file join $gitdir remotes $remote] r]
+				while {[gets $fd line] >= 0} {
+					if {[regexp {^Pull:[ \t]*([^:]+):} $line line rb]} {
+						break
+					}
+				}
+				close $fd
+			}
+		}
+
+		set rb_short $rb
+		regsub ^refs/heads/ $rb {} rb_short
+		if {$rb_short != {}} {
+			$m add command \
+				-label "Branch $rb_short from $remote..." \
+				-command [list pull_remote $remote $rb] \
+				-font $mainfont
+		}
 	}
 }
 
@@ -966,7 +1015,9 @@ proc show_msg {w top msg} {
 	pack $w.ok -side bottom
 	bind $top <Visibility> "grab $top; focus $top"
 	bind $top <Key-Return> "destroy $top"
-	wm title $top "error: $appname ([file normalize [file dirname $gitdir]])"
+	wm title $w "$appname ([lindex [file split \
+		[file normalize [file dirname $gitdir]]] \
+		end]): error"
 	tkwait window $top
 }
 
@@ -1011,7 +1062,9 @@ proc hook_failed_popup {hook msg} {
 
 	bind $w <Visibility> "grab $w; focus $w"
 	bind $w <Key-Return> "destroy $w"
-	wm title $w "error: $appname ([file normalize [file dirname $gitdir]])"
+	wm title $w "$appname ([lindex [file split \
+		[file normalize [file dirname $gitdir]]] \
+		end]): error"
 	tkwait window $w
 }
 
@@ -1060,11 +1113,13 @@ proc console_init {w} {
 	pack $w.ok -side bottom
 
 	bind $w <Visibility> "focus $w"
-	wm title $w "$appname ([file dirname [file normalize [file dirname $gitdir]]]): [lindex $console_data($w) 0]"
+	wm title $w "$appname ([lindex [file split \
+		[file normalize [file dirname $gitdir]]] \
+		end]): [lindex $console_data($w) 0]"
 	return $w
 }
 
-proc console_exec {w cmd} {
+proc console_exec {w cmd {after {}}} {
 	global tcl_platform
 
 	# -- Windows tosses the enviroment when we exec our child.
@@ -1081,10 +1136,10 @@ proc console_exec {w cmd} {
 
 	set fd_f [open $cmd r]
 	fconfigure $fd_f -blocking 0 -translation binary
-	fileevent $fd_f readable [list console_read $w $fd_f]
+	fileevent $fd_f readable [list console_read $w $fd_f $after]
 }
 
-proc console_read {w fd} {
+proc console_read {w fd after} {
 	global console_cr console_data
 
 	set buf [read $fd]
@@ -1123,13 +1178,18 @@ proc console_read {w fd} {
 			$w.m.s conf -background red -text {Error: Command Failed}
 			$w.ok conf -text Close
 			$w.ok conf -state normal
+			set ok 0
 		} elseif {[winfo exists $w]} {
 			$w.m.s conf -background green -text {Success}
 			$w.ok conf -text Close
 			$w.ok conf -state normal
+			set ok 1
 		}
 		array unset console_cr $w
 		array unset console_data $w
+		if {$after != {}} {
+			uplevel #0 $after $ok
+		}
 		return
 	}
 	fconfigure $fd -blocking 0
@@ -1558,4 +1618,5 @@ load_repo_config
 load_all_remotes
 populate_remote_menu .mbar.fetch From fetch_from
 populate_remote_menu .mbar.push To push_to
+populate_pull_menu .mbar.pull
 update_status
