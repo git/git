@@ -301,7 +301,16 @@ imap::
 	The configuration variables in the 'imap' section are described
 	in gitlink:git-imap-send[1].
 
-receive.denyNonFastforwads::
+receive.unpackLimit::
+	If the number of objects received in a push is below this
+	limit then the objects will be unpacked into loose object
+	files. However if the number of received objects equals or
+	exceeds this limit then the received pack will be stored as
+	a pack, after adding any missing delta bases.  Storing the
+	pack from a push can make the push operation complete faster,
+	especially on slow filesystems.
+
+receive.denyNonFastForwards::
 	If set to true, git-receive-pack will deny a ref update which is
 	not a fast forward. Use this to prevent such an update via a push,
 	even if that push is forced. This configuration variable is

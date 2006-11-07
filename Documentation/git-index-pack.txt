@@ -8,7 +8,8 @@ git-index-pack - Build pack index file for an existing packed archive
 
 SYNOPSIS
 --------
-'git-index-pack' [-o <index-file>] <pack-file>
+'git-index-pack' [-v] [-o <index-file>] <pack-file>
+'git-index-pack' --stdin [--fix-thin] [--keep] [-v] [-o <index-file>] [<pack-file>]
 
 
 DESCRIPTION
@@ -21,6 +22,9 @@ objects/pack/ directory of a git repository.
 
 OPTIONS
 -------
+-v::
+	Be verbose about what is going on, including progress status.
+
 -o <index-file>::
 	Write the generated pack index into the specified
 	file.  Without this option the name of pack index
@@ -28,6 +32,52 @@ OPTIONS
 	file by replacing .pack with .idx (and the program
 	fails if the name of packed archive does not end
 	with .pack).
+
+--stdin::
+	When this flag is provided, the pack is read from stdin
+	instead and a copy is then written to <pack-file>. If
+	<pack-file> is not specified, the pack is written to
+	objects/pack/ directory of the current git repository with
+	a default name determined from the pack content.  If
+	<pack-file> is not specified consider using --keep to
+	prevent a race condition between this process and
+	gitlink::git-repack[1] .
+
+--fix-thin::
+	It is possible for gitlink:git-pack-objects[1] to build
+	"thin" pack, which records objects in deltified form based on
+	objects not included in the pack to reduce network traffic.
+	Those objects are expected to be present on the receiving end
+	and they must be included in the pack for that pack to be self
+	contained and indexable. Without this option any attempt to
+	index a thin pack will fail. This option only makes sense in
+	conjunction with --stdin.
+
+--keep::
+	Before moving the index into its final destination
+	create an empty .keep file for the associated pack file.
+	This option is usually necessary with --stdin to prevent a
+	simultaneous gitlink:git-repack[1] process from deleting
+	the newly constructed pack and index before refs can be
+	updated to use objects contained in the pack.
+
+--keep='why'::
+	Like --keep create a .keep file before moving the index into
+	its final destination, but rather than creating an empty file
+	place 'why' followed by an LF into the .keep file.  The 'why'
+	message can later be searched for within all .keep files to
+	locate any which have outlived their usefulness.
+
+
+Note
+----
+
+Once the index has been created, the list of object names is sorted
+and the SHA1 hash of that list is printed to stdout. If --stdin was
+also used then this is prefixed by either "pack\t", or "keep\t" if a
+new .keep file was successfully created. This is useful to remove a
+.keep file used as a lock to prevent the race with gitlink:git-repack[1]
+mentioned above.
 
 
 Author

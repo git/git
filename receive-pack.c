@@ -1,15 +1,17 @@
 #include "cache.h"
+#include "pack.h"
 #include "refs.h"
 #include "pkt-line.h"
 #include "run-command.h"
+#include "exec_cmd.h"
 #include "commit.h"
 #include "object.h"
+#include <sys/wait.h>
 
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
-static const char *unpacker[] = { "unpack-objects", NULL };
-
 static int deny_non_fast_forwards = 0;
+static int unpack_limit = 5000;
 static int report_status;
 
 static char capabilities[] = "report-status";
@@ -22,6 +24,12 @@ static int receive_pack_config(const char *var, const char *value)
 	if (strcmp(var, "receive.denynonfastforwards") == 0)
 	{
 		deny_non_fast_forwards = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (strcmp(var, "receive.unpacklimit") == 0)
+	{
+		unpack_limit = git_config_int(var, value);
 		return 0;
 	}
 
@@ -227,29 +235,127 @@ static void read_head_info(void)
 	}
 }
 
-static const char *unpack(int *error_code)
+static const char *parse_pack_header(struct pack_header *hdr)
 {
-	int code = run_command_v_opt(1, unpacker, RUN_GIT_CMD);
+	char *c = (char*)hdr;
+	ssize_t remaining = sizeof(struct pack_header);
+	do {
+		ssize_t r = xread(0, c, remaining);
+		if (r <= 0)
+			return "eof before pack header was fully read";
+		remaining -= r;
+		c += r;
+	} while (remaining > 0);
+	if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
+		return "protocol error (pack signature mismatch detected)";
+	if (!pack_version_ok(hdr->hdr_version))
+		return "protocol error (pack version unsupported)";
+	return NULL;
+}
 
-	*error_code = 0;
-	switch (code) {
-	case 0:
-		return NULL;
-	case -ERR_RUN_COMMAND_FORK:
-		return "unpack fork failed";
-	case -ERR_RUN_COMMAND_EXEC:
-		return "unpack execute failed";
-	case -ERR_RUN_COMMAND_WAITPID:
-		return "waitpid failed";
-	case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
-		return "waitpid is confused";
-	case -ERR_RUN_COMMAND_WAITPID_SIGNAL:
-		return "unpacker died of signal";
-	case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
-		return "unpacker died strangely";
-	default:
-		*error_code = -code;
-		return "unpacker exited with error code";
+static const char *pack_lockfile;
+
+static const char *unpack(void)
+{
+	struct pack_header hdr;
+	const char *hdr_err;
+	char hdr_arg[38];
+
+	hdr_err = parse_pack_header(&hdr);
+	if (hdr_err)
+		return hdr_err;
+	snprintf(hdr_arg, sizeof(hdr_arg), "--pack_header=%u,%u",
+			ntohl(hdr.hdr_version), ntohl(hdr.hdr_entries));
+
+	if (ntohl(hdr.hdr_entries) < unpack_limit) {
+		int code;
+		const char *unpacker[3];
+		unpacker[0] = "unpack-objects";
+		unpacker[1] = hdr_arg;
+		unpacker[2] = NULL;
+		code = run_command_v_opt(1, unpacker, RUN_GIT_CMD);
+		switch (code) {
+		case 0:
+			return NULL;
+		case -ERR_RUN_COMMAND_FORK:
+			return "unpack fork failed";
+		case -ERR_RUN_COMMAND_EXEC:
+			return "unpack execute failed";
+		case -ERR_RUN_COMMAND_WAITPID:
+			return "waitpid failed";
+		case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
+			return "waitpid is confused";
+		case -ERR_RUN_COMMAND_WAITPID_SIGNAL:
+			return "unpacker died of signal";
+		case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
+			return "unpacker died strangely";
+		default:
+			return "unpacker exited with error code";
+		}
+	} else {
+		const char *keeper[6];
+		int fd[2], s, len, status;
+		pid_t pid;
+		char keep_arg[256];
+		char packname[46];
+
+		s = sprintf(keep_arg, "--keep=receive-pack %i on ", getpid());
+		if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
+			strcpy(keep_arg + s, "localhost");
+
+		keeper[0] = "index-pack";
+		keeper[1] = "--stdin";
+		keeper[2] = "--fix-thin";
+		keeper[3] = hdr_arg;
+		keeper[4] = keep_arg;
+		keeper[5] = NULL;
+
+		if (pipe(fd) < 0)
+			return "index-pack pipe failed";
+		pid = fork();
+		if (pid < 0)
+			return "index-pack fork failed";
+		if (!pid) {
+			dup2(fd[1], 1);
+			close(fd[1]);
+			close(fd[0]);
+			execv_git_cmd(keeper);
+			die("execv of index-pack failed");
+		}
+		close(fd[1]);
+
+		/*
+		 * The first thing we expects from index-pack's output
+		 * is "pack\t%40s\n" or "keep\t%40s\n" (46 bytes) where
+		 * %40s is the newly created pack SHA1 name.  In the "keep"
+		 * case, we need it to remove the corresponding .keep file
+		 * later on.  If we don't get that then tough luck with it.
+		 */
+		for (len = 0;
+		     len < 46 && (s = xread(fd[0], packname+len, 46-len)) > 0;
+		     len += s);
+		close(fd[0]);
+		if (len == 46 && packname[45] == '\n' &&
+		    memcmp(packname, "keep\t", 5) == 0) {
+			char path[PATH_MAX];
+			packname[45] = 0;
+			snprintf(path, sizeof(path), "%s/pack/pack-%s.keep",
+				 get_object_directory(), packname + 5);
+			pack_lockfile = xstrdup(path);
+		}
+
+		/* Then wrap our index-pack process. */
+		while (waitpid(pid, &status, 0) < 0)
+			if (errno != EINTR)
+				return "waitpid failed";
+		if (WIFEXITED(status)) {
+			int code = WEXITSTATUS(status);
+			if (code)
+				return "index-pack exited with error code";
+			reprepare_packed_git();
+			return NULL;
+		}
+		return "index-pack abnormal exit";
 	}
 }
 
@@ -302,10 +408,11 @@ int main(int argc, char **argv)
 
 	read_head_info();
 	if (commands) {
-		int code;
-		const char *unpack_status = unpack(&code);
+		const char *unpack_status = unpack();
 		if (!unpack_status)
 			execute_commands();
+		if (pack_lockfile)
+			unlink(pack_lockfile);
 		if (report_status)
 			report(unpack_status);
 	}

@@ -32,7 +32,8 @@ OPTIONS
 -k::
 	Do not invoke 'git-unpack-objects' on received data, but
 	create a single packfile out of it instead, and store it
-	in the object database.
+	in the object database. If provided twice then the pack is
+	locked against repacking.
 
 --exec=<git-upload-pack>::
 	Use this to specify the path to 'git-upload-pack' on the

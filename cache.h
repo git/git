@@ -376,6 +376,7 @@ extern struct packed_git *parse_pack_index_file(const unsigned char *sha1,
 						char *idx_path);
 
 extern void prepare_packed_git(void);
+extern void reprepare_packed_git(void);
 extern void install_packed_git(struct packed_git *pack);
 
 extern struct packed_git *find_sha1_pack(const unsigned char *sha1, 
@@ -414,10 +415,6 @@ extern char git_commit_encoding[MAX_ENCODING_LENGTH];
 extern int copy_fd(int ifd, int ofd);
 extern void write_or_die(int fd, const void *buf, size_t count);
 extern int write_or_whine(int fd, const void *buf, size_t count, const char *msg);
-
-/* Finish off pack transfer receiving end */
-extern int receive_unpack_pack(int fd[2], const char *me, int quiet, int);
-extern int receive_keep_pack(int fd[2], const char *me, int quiet, int);
 
 /* pager.c */
 extern void setup_pager(void);
