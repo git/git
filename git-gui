@@ -586,6 +586,34 @@ proc commit_stage2 {fd_wt curHEAD msg} {
 
 ######################################################################
 ##
+## fetch pull push
+
+proc fetch_from {remote} {
+	set w [new_console "fetch $remote" \
+		"Fetching new changes from $remote"]
+	set cmd [list | git fetch]
+	lappend -v
+	lappend cmd $remote
+	lappend cmd |& cat
+	set fd_f [open $cmd r]
+	fconfigure $fd_f -blocking 0 -translation auto
+	fileevent $fd_f readable [list console_read $w $fd_f]
+}
+
+proc push_to {remote} {
+	set w [new_console "push $remote" \
+		"Pushing changes to $remote"]
+	set cmd [list | git push]
+	lappend -v
+	lappend cmd $remote
+	lappend cmd |& cat
+	set fd_f [open $cmd r]
+	fconfigure $fd_f -blocking 0 -translation auto
+	fileevent $fd_f readable [list console_read $w $fd_f]
+}
+
+######################################################################
+##
 ## ui helpers
 
 proc mapcol {state path} {
@@ -767,6 +795,41 @@ proc toggle_mode {path} {
 
 ######################################################################
 ##
+## config (fetch push pull)
+
+proc load_all_remotes {} {
+	global gitdir all_remotes
+
+	set all_remotes [list]
+	set rm_dir [file join $gitdir remotes]
+	if {[file isdirectory $rm_dir]} {
+		set all_remotes [concat $all_remotes \
+			[glob -types f -tails -directory $rm_dir * *]]
+	}
+
+	set fd_rc [open "| git repo-config --list" r]
+	while {[gets $fd_rc line] >= 0} {
+		if {[regexp ^remote\.(.*)\.url= $line line name]} {
+			lappend all_remotes $name
+		}
+	}
+	close $fd_rc
+
+	set all_remotes [lsort -unique $all_remotes]
+}
+
+proc populate_remote_menu {m pfx op} {
+	global gitdir all_remotes mainfont
+
+	foreach remote $all_remotes {
+		$m add command -label "$pfx $remote..." \
+			-command [list $op $remote] \
+			-font $mainfont
+	}
+}
+
+######################################################################
+##
 ## icons
 
 set filemask {
@@ -888,6 +951,7 @@ proc show_msg {w top msg} {
 	pack $w.m -side top -fill x -padx 5 -pady 10
 	button $w.ok -text OK \
 		-width 15 \
+		-font $mainfont \
 		-command "destroy $top"
 	pack $w.ok -side bottom
 	bind $top <Visibility> "grab $top; focus $top"
@@ -931,6 +995,7 @@ proc hook_failed_popup {hook msg} {
 
 	button $w.ok -text OK \
 		-width 15 \
+		-font $mainfont \
 		-command "destroy $w"
 	pack $w.ok -side bottom
 
@@ -938,6 +1003,58 @@ proc hook_failed_popup {hook msg} {
 	bind $w <Key-Return> "destroy $w"
 	wm title $w "error: $appname ([file normalize [file dirname $gitdir]])"
 	tkwait window $w
+}
+
+set next_console_id 0
+
+proc new_console {short_title long_title} {
+	global next_console_id gitdir appname mainfont difffont
+
+	set w .console[incr next_console_id]
+	toplevel $w
+	frame $w.m
+	label $w.m.l1 -text "$long_title:" \
+		-anchor w \
+		-justify left \
+		-font [concat $mainfont bold]
+	text $w.m.t \
+		-background white -borderwidth 1 \
+		-relief sunken \
+		-width 80 -height 10 \
+		-font $difffont \
+		-state disabled \
+		-yscrollcommand [list $w.m.sby set]
+	scrollbar $w.m.sby -command [list $w.m.t yview]
+	pack $w.m.l1 -side top -fill x
+	pack $w.m.sby -side right -fill y
+	pack $w.m.t -side left -fill both -expand 1
+	pack $w.m -side top -fill both -expand 1 -padx 5 -pady 10
+
+	button $w.ok -text {OK} \
+		-width 15 \
+		-font $mainfont \
+		-state disabled \
+		-command "destroy $w"
+	pack $w.ok -side bottom
+
+	bind $w <Visibility> "focus $w"
+	bind $w <Destroy> break
+	wm title $w "$appname ([file dirname [file normalize [file dirname $gitdir]]]): $short_title"
+	return $w
+}
+
+proc console_read {w fd} {
+	$w.m.t conf -state normal
+	while {[gets $fd line] >= 0} {
+		$w.m.t insert end $line
+		$w.m.t insert end "\n"
+	}
+	$w.m.t conf -state disabled
+
+	if {[eof $fd]} {
+		close $fd
+		$w.ok conf -state normal
+	}
 }
 
 ######################################################################
@@ -1083,6 +1200,7 @@ menu .mbar -tearoff 0
 .mbar add cascade -label Commit -menu .mbar.commit
 .mbar add cascade -label Fetch -menu .mbar.fetch
 .mbar add cascade -label Pull -menu .mbar.pull
+.mbar add cascade -label Push -menu .mbar.push
 . configure -menu .mbar
 
 # -- Project Menu
@@ -1130,6 +1248,9 @@ menu .mbar.fetch
 
 # -- Pull Menu
 menu .mbar.pull
+
+# -- Push Menu
+menu .mbar.push
 
 # -- Main Window Layout
 panedwindow .vpane -orient vertical
@@ -1345,4 +1466,7 @@ if {$appname == {git-citool}} {
 
 wm title . "$appname ([file normalize [file dirname $gitdir]])"
 focus -force $ui_comm
+load_all_remotes
+populate_remote_menu .mbar.fetch From fetch_from
+populate_remote_menu .mbar.push To push_to
 update_status
