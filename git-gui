@@ -266,6 +266,9 @@ proc show_diff {path} {
 		$ui_diff conf -state normal
 		$ui_diff insert end $content
 		$ui_diff conf -state disabled
+		set diff_active 0
+		unlock_index
+		set ui_status_value {Ready.}
 		return
 	}
 	}
@@ -482,8 +485,7 @@ A good commit message has the following format:
 	set ui_status_value {Committing changes...}
 
 	set fd_wt [open "| git write-tree" r]
-	fileevent $fd_wt readable \
-		[list commit_stage2 $fd_wt $curHEAD $msg]
+	fileevent $fd_wt readable [list commit_stage2 $fd_wt $curHEAD $msg]
 }
 
 proc commit_stage2 {fd_wt curHEAD msg} {
@@ -510,8 +512,8 @@ proc commit_stage2 {fd_wt curHEAD msg} {
 	if {$commit_type == {merge}} {
 		if {[catch {
 				set fd_mh [open [file join $gitdir MERGE_HEAD] r]
-				while {[gets $fd_mh merge_head] > 0} {
-					lappend -p $merge_head
+				while {[gets $fd_mh merge_head] >= 0} {
+					lappend cmd -p $merge_head
 				}
 				close $fd_mh
 			} err]} {
@@ -576,6 +578,8 @@ proc commit_stage2 {fd_wt curHEAD msg} {
 
 	set commit_type {}
 	set commit_active 0
+	set HEAD $cmt_id
+	set PARENT $cmt_id
 	unlock_index
 	update_status "Changes committed as $cmt_id."
 }
@@ -739,7 +743,7 @@ proc update_index {path} {
 }
 
 proc toggle_mode {path} {
-	global file_states
+	global file_states ui_fname_value
 
 	set s $file_states($path)
 	set m [lindex $s 0]
@@ -749,12 +753,16 @@ proc toggle_mode {path} {
 	_O {set new A*}
 	_M -
 	MM {set new M*}
+	AD -
 	_D {set new D*}
 	default {return}
 	}
 
 	with_update_index {update_index $path}
 	display_file $path $new
+	if {$ui_fname_value == $path} {
+		show_diff $path
+	}
 }
 
 ######################################################################
@@ -843,6 +851,7 @@ foreach i {
 		{_O o plain    "Untracked"}
 		{A_ o fulltick "Added"}
 		{AM o parttick "Partially added"}
+		{AD o question  "Added (but now gone)"}
 
 		{_D i question "Missing"}
 		{D_ i removed  "Removed"}
@@ -1261,10 +1270,18 @@ lappend disable_on_lock {.vpane.commarea.buttons.commit conf -state}
 # -- Commit Message Buffer
 frame .vpane.commarea.buffer
 set ui_comm .vpane.commarea.buffer.t
-label .vpane.commarea.buffer.l -text {Commit Message:} \
+set ui_coml .vpane.commarea.buffer.l
+label $ui_coml -text {Commit Message:} \
 	-anchor w \
 	-justify left \
 	-font $mainfont
+trace add variable commit_type write {uplevel #0 {
+	switch -glob $commit_type \
+	initial {$ui_coml conf -text {Initial Commit Message:}} \
+	amend   {$ui_coml conf -text {Amended Commit Message:}} \
+	merge   {$ui_coml conf -text {Merge Commit Message:}} \
+	*       {$ui_coml conf -text {Commit Message:}}
+}}
 text $ui_comm -background white -borderwidth 1 \
 	-relief sunken \
 	-width 75 -height 10 -wrap none \
@@ -1272,7 +1289,7 @@ text $ui_comm -background white -borderwidth 1 \
 	-yscrollcommand {.vpane.commarea.buffer.sby set} \
 	-cursor $maincursor
 scrollbar .vpane.commarea.buffer.sby -command [list $ui_comm yview]
-pack .vpane.commarea.buffer.l -side top -fill x
+pack $ui_coml -side top -fill x
 pack .vpane.commarea.buffer.sby -side right -fill y
 pack $ui_comm -side left -fill y
 pack .vpane.commarea.buffer -side left -fill y
@@ -1315,6 +1332,11 @@ if {[catch {set gitdir [exec git rev-parse --git-dir]} err]} {
 	show_msg {} . "Cannot find the git directory: $err"
 	exit 1
 }
+set cdup [exec git rev-parse --show-cdup]
+if {$cdup != ""} {
+	cd $cdup
+}
+unset cdup
 
 set appname [lindex [file split $argv0] end]
 if {$appname == {git-citool}} {
