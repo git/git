@@ -1,0 +1,32 @@
+Items outstanding:
+
+ * Checkout $PARENT version to working directory, overwriting current
+   version.  ($PARENT is HEAD, except when amending).
+
+ * Update index with $PARENT version but leave working directory
+   alone.
+
+ * Populate the pull menu with local branches.
+
+ * Populate the pull menu with default merge branch from each remote.
+
+ * Make use of the new default merge data stored in repo-config.
+
+ * Indicate what the current branch is.
+
+ * Checkout or create a different local branch.
+
+ * Delete a local branch.
+
+ * Store user preferences (like font, window layout) in global
+   repo-config.
+
+ * Better organize fetch/push/pull console windows.
+
+ * Clone UI (to download a new repository).
+
+ * Remotes editor (for .git/config format only).
+
+ * Show a shortlog of the last couple of commits in the main window,
+   to give the user warm fuzzy feelings that we have their data
+   saved.
