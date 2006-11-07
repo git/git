@@ -21,6 +21,10 @@ set update_index_fd {}
 set disable_on_lock [list]
 set index_lock_type none
 
+set HEAD {}
+set PARENT {}
+set commit_type {}
+
 proc lock_index {type} {
 	global index_lock_type disable_on_lock
 
@@ -63,14 +67,23 @@ proc repository_state {hdvar ctvar} {
 	}
 }
 
-proc update_status {} {
-	global HEAD commit_type
+proc update_status {{final Ready.}} {
+	global HEAD PARENT commit_type
 	global ui_index ui_other ui_status_value ui_comm
 	global status_active file_states
 
 	if {$status_active || ![lock_index read]} return
 
-	repository_state HEAD commit_type
+	repository_state new_HEAD new_type
+	if {$commit_type == {amend} 
+		&& $new_type == {normal}
+		&& $new_HEAD == $HEAD} {
+	} else {
+		set HEAD $new_HEAD
+		set PARENT $new_HEAD
+		set commit_type $new_type
+	}
+
 	array unset file_states
 	foreach w [list $ui_index $ui_other] {
 		$w conf -state normal
@@ -91,11 +104,11 @@ proc update_status {} {
 	set ui_status_value {Refreshing file status...}
 	set fd_rf [open "| git update-index -q --unmerged --refresh" r]
 	fconfigure $fd_rf -blocking 0 -translation binary
-	fileevent $fd_rf readable [list read_refresh $fd_rf]
+	fileevent $fd_rf readable [list read_refresh $fd_rf $final]
 }
 
-proc read_refresh {fd} {
-	global gitdir HEAD commit_type
+proc read_refresh {fd final} {
+	global gitdir PARENT commit_type
 	global ui_index ui_other ui_status_value ui_comm
 	global status_active file_states
 
@@ -112,27 +125,27 @@ proc read_refresh {fd} {
 
 	set status_active 3
 	set ui_status_value {Scanning for modified files ...}
-	set fd_di [open "| git diff-index --cached -z $HEAD" r]
+	set fd_di [open "| git diff-index --cached -z $PARENT" r]
 	set fd_df [open "| git diff-files -z" r]
 	set fd_lo [open $ls_others r]
 
 	fconfigure $fd_di -blocking 0 -translation binary
 	fconfigure $fd_df -blocking 0 -translation binary
 	fconfigure $fd_lo -blocking 0 -translation binary
-	fileevent $fd_di readable [list read_diff_index $fd_di]
-	fileevent $fd_df readable [list read_diff_files $fd_df]
-	fileevent $fd_lo readable [list read_ls_others $fd_lo]
+	fileevent $fd_di readable [list read_diff_index $fd_di $final]
+	fileevent $fd_df readable [list read_diff_files $fd_df $final]
+	fileevent $fd_lo readable [list read_ls_others $fd_lo $final]
 }
 
 proc load_message {file} {
 	global gitdir ui_comm
 
 	set f [file join $gitdir $file]
-	if {[file exists $f]} {
+	if {[file isfile $f]} {
 		if {[catch {set fd [open $f r]}]} {
 			return 0
 		}
-		set content [read $fd]
+		set content [string trim [read $fd]]
 		close $fd
 		$ui_comm delete 0.0 end
 		$ui_comm insert end $content
@@ -141,7 +154,7 @@ proc load_message {file} {
 	return 0
 }
 
-proc read_diff_index {fd} {
+proc read_diff_index {fd final} {
 	global buf_rdi
 
 	append buf_rdi [read $fd]
@@ -152,10 +165,10 @@ proc read_diff_index {fd} {
 			display_file $p [string index $m end]_
 		}
 	}
-	status_eof $fd buf_rdi
+	status_eof $fd buf_rdi $final
 }
 
-proc read_diff_files {fd} {
+proc read_diff_files {fd final} {
 	global buf_rdf
 
 	append buf_rdf [read $fd]
@@ -166,10 +179,10 @@ proc read_diff_files {fd} {
 			display_file $p _[string index $m end]
 		}
 	}
-	status_eof $fd buf_rdf
+	status_eof $fd buf_rdf $final
 }
 
-proc read_ls_others {fd} {
+proc read_ls_others {fd final} {
 	global buf_rlo
 
 	append buf_rlo [read $fd]
@@ -178,21 +191,25 @@ proc read_ls_others {fd} {
 	foreach p [lrange $pck 0 end-1] {
 		display_file $p _O
 	}
-	status_eof $fd buf_rlo
+	status_eof $fd buf_rlo $final
 }
 
-proc status_eof {fd buf} {
+proc status_eof {fd buf final} {
 	global status_active $buf
-	global ui_fname_value ui_status_value
+	global ui_fname_value ui_status_value file_states
 
 	if {[eof $fd]} {
 		set $buf {}
 		close $fd
 		if {[incr status_active -1] == 0} {
 			unlock_index
-			set ui_status_value {Ready.}
-			if {$ui_fname_value != {}} {
+
+			set ui_status_value $final
+			if {$ui_fname_value != {} && [array names file_states \
+				-exact $ui_fname_value] != {}}  {
 				show_diff $ui_fname_value
+			} else {
+				clear_diff
 			}
 		}
 	}
@@ -213,7 +230,7 @@ proc clear_diff {} {
 }
 
 proc show_diff {path} {
-	global file_states HEAD diff_3way diff_active
+	global file_states PARENT diff_3way diff_active
 	global ui_diff ui_fname_value ui_fstatus_value ui_status_value
 
 	if {$diff_active || ![lock_index read]} return
@@ -227,12 +244,12 @@ proc show_diff {path} {
 	set ui_fstatus_value [mapdesc $m $path]
 	set ui_status_value "Loading diff of $path..."
 
-	set cmd [list | git diff-index -p $HEAD -- $path]
+	set cmd [list | git diff-index -p $PARENT -- $path]
 	switch $m {
 	AM {
 	}
 	MM {
-		set cmd [list | git diff-index -p -c $HEAD $path]
+		set cmd [list | git diff-index -p -c $PARENT $path]
 	}
 	_O {
 		if {[catch {
@@ -320,6 +337,51 @@ proc read_diff {fd} {
 ##
 ## commit
 
+proc load_last_commit {} {
+	global HEAD PARENT commit_type ui_comm
+
+	if {$commit_type == {amend}} return
+	if {$commit_type != {normal}} {
+		error_popup "Can't amend a $commit_type commit."
+		return
+	}
+
+	set msg {}
+	set parent {}
+	set parent_count 0
+	if {[catch {
+			set fd [open "| git cat-file commit $HEAD" r]
+			while {[gets $fd line] > 0} {
+				if {[string match {parent *} $line]} {
+					set parent [string range $line 7 end]
+					incr parent_count
+				}
+			}
+			set msg [string trim [read $fd]]
+			close $fd
+		} err]} {
+		error_popup "Error loading commit data for amend:\n$err"
+		return
+	}
+
+	if {$parent_count == 0} {
+		set commit_type amend
+		set HEAD {}
+		set PARENT {}
+		update_status
+	} elseif {$parent_count == 1} {
+		set commit_type amend
+		set PARENT $parent
+		$ui_comm delete 0.0 end
+		$ui_comm insert end $msg
+		$ui_comm edit modified false
+		update_status
+	} else {
+		error_popup {You can't amend a merge commit.}
+		return
+	}
+}
+
 proc commit_tree {} {
 	global tcl_platform HEAD gitdir commit_type file_states
 	global commit_active ui_status_value
@@ -330,7 +392,10 @@ proc commit_tree {} {
 	# -- Our in memory state should match the repository.
 	#
 	repository_state curHEAD cur_type
-	if {$commit_type != $cur_type || $HEAD != $curHEAD} {
+	if {$commit_type == {amend} 
+		&& $cur_type == {normal}
+		&& $curHEAD == $HEAD} {
+	} elseif {$commit_type != $cur_type || $HEAD != $curHEAD} {
 		error_popup {Last scanned state does not match repository state.
 
 Its highly likely that another Git program modified the
@@ -397,7 +462,7 @@ A good commit message has the following format:
 	# -- Ask the pre-commit hook for the go-ahead.
 	#
 	set pchook [file join $gitdir hooks pre-commit]
-	if {$tcl_platform(platform) == {windows} && [file exists $pchook]} {
+	if {$tcl_platform(platform) == {windows} && [file isfile $pchook]} {
 		set pchook [list sh -c \
 			"if test -x \"$pchook\"; then exec \"$pchook\"; fi"]
 	} elseif {[file executable $pchook]} {
@@ -422,8 +487,8 @@ A good commit message has the following format:
 }
 
 proc commit_stage2 {fd_wt curHEAD msg} {
-	global single_commit gitdir HEAD commit_type
-	global commit_active ui_status_value comm_ui
+	global single_commit gitdir PARENT commit_type
+	global commit_active ui_status_value ui_comm
 
 	gets $fd_wt tree_id
 	close $fd_wt
@@ -439,8 +504,8 @@ proc commit_stage2 {fd_wt curHEAD msg} {
 	# -- Create the commit.
 	#
 	set cmd [list git commit-tree $tree_id]
-	if {$commit_type != {initial}} {
-		lappend cmd -p $HEAD
+	if {$PARENT != {}} {
+		lappend cmd -p $PARENT
 	}
 	if {$commit_type == {merge}} {
 		if {[catch {
@@ -457,7 +522,7 @@ proc commit_stage2 {fd_wt curHEAD msg} {
 			return
 		}
 	}
-	if {$commit_type == {initial}} {
+	if {$PARENT == {}} {
 		# git commit-tree writes to stderr during initial commit.
 		lappend cmd 2>/dev/null
 	}
@@ -482,9 +547,7 @@ proc commit_stage2 {fd_wt curHEAD msg} {
 	} else {
 		append reflogm {: } $msg
 	}
-	set cmd [list git update-ref \
-		-m $reflogm \
-		HEAD $cmt_id $curHEAD]
+	set cmd [list git update-ref -m $reflogm HEAD $cmt_id $curHEAD]
 	if {[catch {eval exec $cmd} err]} {
 		error_popup "update-ref failed:\n$err"
 		set commit_active 0
@@ -506,15 +569,15 @@ proc commit_stage2 {fd_wt curHEAD msg} {
 		catch {exec git rerere}
 	}
 
-	$comm_ui delete 0.0 end
-	$comm_ui edit modified false
+	$ui_comm delete 0.0 end
+	$ui_comm edit modified false
 
 	if {$single_commit} do_quit
 
+	set commit_type {}
 	set commit_active 0
-	set ui_status_value "Changes committed as $cmt_id."
 	unlock_index
-	update_status
+	update_status "Changes committed as $cmt_id."
 }
 
 ######################################################################
@@ -877,7 +940,7 @@ proc do_gitk {} {
 	global tcl_platform ui_status_value starting_gitk_msg
 
 	set ui_status_value $starting_gitk_msg
-	after 5000 {
+	after 10000 {
 		if {$ui_status_value == $starting_gitk_msg} {
 			set ui_status_value {Ready.}
 		}
@@ -953,6 +1016,10 @@ proc do_signoff {} {
 	}
 }
 
+proc do_amend_last {} {
+	load_last_commit
+}
+
 proc do_commit {} {
 	commit_tree
 }
@@ -1024,6 +1091,11 @@ menu .mbar.commit
 .mbar.commit add command -label Rescan \
 	-command do_rescan \
 	-accelerator F5 \
+	-font $mainfont
+lappend disable_on_lock \
+	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+.mbar.commit add command -label {Amend Last Commit} \
+	-command do_amend_last \
 	-font $mainfont
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
@@ -1145,7 +1217,7 @@ $ui_diff tag conf dni -foreground "#a000a0"
 $ui_diff tag conf bold -font [concat $difffont bold]
 
 # -- Commit Area
-frame .vpane.commarea -height 150
+frame .vpane.commarea -height 170
 .vpane add .vpane.commarea -stick nsew
 
 # -- Commit Area Buttons
@@ -1162,6 +1234,12 @@ button .vpane.commarea.buttons.rescan -text {Rescan} \
 	-font $mainfont
 pack .vpane.commarea.buttons.rescan -side top -fill x
 lappend disable_on_lock {.vpane.commarea.buttons.rescan conf -state}
+
+button .vpane.commarea.buttons.amend -text {Amend Last} \
+	-command do_amend_last \
+	-font $mainfont
+pack .vpane.commarea.buttons.amend -side top -fill x
+lappend disable_on_lock {.vpane.commarea.buttons.amend conf -state}
 
 button .vpane.commarea.buttons.ciall -text {Check-in All} \
 	-command do_checkin_all \
