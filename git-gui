@@ -92,7 +92,7 @@ proc update_status {{final Ready.}} {
 	}
 
 	if {![$ui_comm edit modified]
-	    || [string trim [$ui_comm get 0.0 end]] == {}} {
+		|| [string trim [$ui_comm get 0.0 end]] == {}} {
 		if {[load_message GITGUI_MSG]} {
 		} elseif {[load_message MERGE_MSG]} {
 		} elseif {[load_message SQUASH_MSG]} {
@@ -591,25 +591,19 @@ proc commit_stage2 {fd_wt curHEAD msg} {
 proc fetch_from {remote} {
 	set w [new_console "fetch $remote" \
 		"Fetching new changes from $remote"]
-	set cmd [list | git fetch]
-	lappend -v
+	set cmd [list git fetch]
+	lappend cmd -v
 	lappend cmd $remote
-	lappend cmd |& cat
-	set fd_f [open $cmd r]
-	fconfigure $fd_f -blocking 0 -translation auto
-	fileevent $fd_f readable [list console_read $w $fd_f]
+	console_exec $w $cmd
 }
 
 proc push_to {remote} {
 	set w [new_console "push $remote" \
 		"Pushing changes to $remote"]
-	set cmd [list | git push]
+	set cmd [list git push]
 	lappend -v
 	lappend cmd $remote
-	lappend cmd |& cat
-	set fd_f [open $cmd r]
-	fconfigure $fd_f -blocking 0 -translation auto
-	fileevent $fd_f readable [list console_read $w $fd_f]
+	console_exec $w $cmd
 }
 
 ######################################################################
@@ -1043,6 +1037,26 @@ proc new_console {short_title long_title} {
 	return $w
 }
 
+proc console_exec {w cmd} {
+	global tcl_platform
+
+	# -- Windows tosses the enviroment when we exec our child.
+	#    But most users need that so we have to relogin. :-(
+	#
+	if {$tcl_platform(platform) == {windows}} {
+		set cmd [list sh --login -c "cd \"[pwd]\" && [join $cmd { }]"]
+	}
+
+	# -- Tcl won't let us redirect both stdout and stderr to
+	#    the same pipe.  So pass it through cat...
+	#
+	set cmd [concat | $cmd |& cat]
+
+	set fd_f [open $cmd r]
+	fconfigure $fd_f -blocking 0 -translation auto
+	fileevent $fd_f readable [list console_read $w $fd_f]
+}
+
 proc console_read {w fd} {
 	$w.m.t conf -state normal
 	while {[gets $fd line] >= 0} {
@@ -1050,6 +1064,7 @@ proc console_read {w fd} {
 		$w.m.t insert end "\n"
 	}
 	$w.m.t conf -state disabled
+	$w.m.t see end
 
 	if {[eof $fd]} {
 		close $fd
@@ -1062,6 +1077,7 @@ proc console_read {w fd} {
 ## ui commands
 
 set starting_gitk_msg {Please wait... Starting gitk...}
+
 proc do_gitk {} {
 	global tcl_platform ui_status_value starting_gitk_msg
 
@@ -1072,7 +1088,7 @@ proc do_gitk {} {
 		}
 	}
 
-    if {$tcl_platform(platform) == "windows"} {
+	if {$tcl_platform(platform) == {windows}} {
 		exec sh -c gitk &
 	} else {
 		exec gitk &
