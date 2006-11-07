@@ -797,8 +797,11 @@ proc load_all_remotes {} {
 	set all_remotes [list]
 	set rm_dir [file join $gitdir remotes]
 	if {[file isdirectory $rm_dir]} {
-		set all_remotes [concat $all_remotes \
-			[glob -types f -tails -directory $rm_dir * *]]
+		set all_remotes [concat $all_remotes [glob \
+			-types f \
+			-tails \
+			-nocomplain \
+			-directory $rm_dir *]]
 	}
 
 	set fd_rc [open "| git repo-config --list" r]
