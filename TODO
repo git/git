@@ -21,6 +21,12 @@ Items outstanding:
  * Store user preferences (like font, window layout) in global
    repo-config.
 
+ * Allow user to define keyboard shortcuts for frequently used fetch
+   or merge operations.  Or maybe just define a keyboard shortcut
+   for default fetch/default merge of current branch is enough;
+   but I do know a few users who merge a couple of common branches
+   also into the same branch so one default isn't quite enough.
+
  * Better organize fetch/push/pull console windows.
 
  * Clone UI (to download a new repository).
