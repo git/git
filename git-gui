@@ -1005,14 +1005,20 @@ proc hook_failed_popup {hook msg} {
 set next_console_id 0
 
 proc new_console {short_title long_title} {
-	global next_console_id console_cr
+	global next_console_id console_data
+	set w .console[incr next_console_id]
+	set console_data($w) [list $short_title $long_title]
+	return [console_init $w]
+}
+
+proc console_init {w} {
+	global console_cr console_data
 	global gitdir appname mainfont difffont
 
-	set w .console[incr next_console_id]
 	set console_cr($w) 1.0
 	toplevel $w
 	frame $w.m
-	label $w.m.l1 -text "$long_title:" \
+	label $w.m.l1 -text "[lindex $console_data($w) 1]:" \
 		-anchor w \
 		-justify left \
 		-font [concat $mainfont bold]
@@ -1041,8 +1047,7 @@ proc new_console {short_title long_title} {
 	pack $w.ok -side bottom
 
 	bind $w <Visibility> "focus $w"
-	bind $w <Destroy> break
-	wm title $w "$appname ([file dirname [file normalize [file dirname $gitdir]]]): $short_title"
+	wm title $w "$appname ([file dirname [file normalize [file dirname $gitdir]]]): [lindex $console_data($w) 0]"
 	return $w
 }
 
@@ -1067,44 +1072,51 @@ proc console_exec {w cmd} {
 }
 
 proc console_read {w fd} {
-	global console_cr
+	global console_cr console_data
 
-	$w.m.t conf -state normal
 	set buf [read $fd]
-	set c 0
-	set n [string length $buf]
-	while {$c < $n} {
-		set cr [string first "\r" $buf $c]
-		set lf [string first "\n" $buf $c]
-		if {$cr < 0} {set cr [expr $n + 1]}
-		if {$lf < 0} {set lf [expr $n + 1]}
+	if {$buf != {}} {
+		if {![winfo exists $w]} {console_init $w}
+		$w.m.t conf -state normal
+		set c 0
+		set n [string length $buf]
+		while {$c < $n} {
+			set cr [string first "\r" $buf $c]
+			set lf [string first "\n" $buf $c]
+			if {$cr < 0} {set cr [expr $n + 1]}
+			if {$lf < 0} {set lf [expr $n + 1]}
 
-		if {$lf < $cr} {
-			$w.m.t insert end [string range $buf $c $lf]
-			set console_cr($w) [$w.m.t index {end -1c}]
-			set c $lf
-			incr c
-		} else {
-			$w.m.t delete $console_cr($w) end
-			$w.m.t insert end "\n"
-			$w.m.t insert end [string range $buf $c $cr]
-			set c $cr
-			incr c
+			if {$lf < $cr} {
+				$w.m.t insert end [string range $buf $c $lf]
+				set console_cr($w) [$w.m.t index {end -1c}]
+				set c $lf
+				incr c
+			} else {
+				$w.m.t delete $console_cr($w) end
+				$w.m.t insert end "\n"
+				$w.m.t insert end [string range $buf $c $cr]
+				set c $cr
+				incr c
+			}
 		}
+		$w.m.t conf -state disabled
+		$w.m.t see end
 	}
-	$w.m.t conf -state disabled
-	$w.m.t see end
 
 	fconfigure $fd -blocking 1
 	if {[eof $fd]} {
 		if {[catch {close $fd}]} {
+			if {![winfo exists $w]} {console_init $w}
 			$w.m.s conf -background red -text {Error: Command Failed}
-		} else {
+			$w.ok conf -text Close
+			$w.ok conf -state normal
+		} elseif {[winfo exists $w]} {
 			$w.m.s conf -background green -text {Success}
+			$w.ok conf -text Close
+			$w.ok conf -state normal
 		}
-		$w.ok conf -text Close
-		$w.ok conf -state normal
 		array unset console_cr $w
+		array unset console_data $w
 		return
 	}
 	fconfigure $fd -blocking 0
