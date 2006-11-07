@@ -599,13 +599,60 @@ proc error_popup {msg} {
 }
 
 proc show_msg {w top msg} {
-	message $w.m -text $msg -justify center -aspect 400
+	global gitdir
+
+	message $w.m -text $msg -justify left -aspect 400
 	pack $w.m -side top -fill x -padx 20 -pady 20
 	button $w.ok -text OK -command "destroy $top"
-	pack $w.ok -side bottom -fill x
+	pack $w.ok -side bottom
 	bind $top <Visibility> "grab $top; focus $top"
 	bind $top <Key-Return> "destroy $top"
+	wm title $top "error: git-ui ([file normalize [file dirname $gitdir]])"
 	tkwait window $top
+}
+
+proc hook_failed_popup {hook msg} {
+	global gitdir mainfont difffont
+
+	set w .hookfail
+	toplevel $w
+	wm transient $w .
+
+	frame $w.m
+	label $w.m.l1 -text "$hook hook failed:" \
+		-anchor w \
+		-justify left \
+		-font [concat $mainfont bold]
+	text $w.m.t \
+		-background white -borderwidth 1 \
+		-relief sunken \
+		-width 80 -height 10 \
+		-font $difffont \
+		-yscrollcommand [list $w.m.sby set]
+	label $w.m.l2 \
+		-text {You must correct the above errors before committing.} \
+		-anchor w \
+		-justify left \
+		-font [concat $mainfont bold]
+	scrollbar $w.m.sby -command [list $w.m.t yview]
+	pack $w.m.l1 -side top -fill x
+	pack $w.m.l2 -side bottom -fill x
+	pack $w.m.sby -side right -fill y
+	pack $w.m.t -side left -fill both -expand 1
+	pack $w.m -side top -fill both -expand 1 -padx 5 -pady 10
+
+	$w.m.t insert 1.0 $msg
+	$w.m.t conf -state disabled
+
+	button $w.ok -text OK \
+		-width 15 \
+		-command "destroy $w"
+	pack $w.ok -side bottom
+
+	bind $w <Visibility> "grab $w; focus $w"
+	bind $w <Key-Return> "destroy $w"
+	wm title $w "error: git-ui ([file normalize [file dirname $gitdir]])"
+	tkwait window $w
 }
 
 ######################################################################
@@ -690,6 +737,94 @@ proc do_signoff {} {
 				$ui_comm see end
 			}
 		}
+	}
+}
+
+proc do_commit {} {
+	global tcl_platform HEAD gitdir commit_type file_states
+	global ui_comm
+
+	# -- Our in memory state should match the repository.
+	#
+	if {[catch {set curHEAD [exec git rev-parse --verify HEAD]}]} {
+		set cur_type initial
+	} else {
+		set cur_type normal
+	}
+	if {$commit_type != $commit_type || $HEAD != $curHEAD} {
+		error_popup {Last scanned state does not match repository state.
+
+Its highly likely that another Git program modified the
+repository since our last scan.  A rescan is required
+before committing.
+}
+		update_status
+		return
+	}
+
+	# -- At least one file should differ in the index.
+	#
+	set files_ready 0
+	foreach path [array names file_states] {
+		set s $file_states($path)
+		switch -glob -- [lindex $s 0] {
+		_* {continue}
+		A* -
+		D* -
+		M* {set files_ready 1; break}
+		U* {
+			error_popup "Unmerged files cannot be committed.
+
+File $path has merge conflicts.
+You must resolve them and check the file in before committing.
+"
+			return
+		}
+		default {
+			error_popup "Unknown file state [lindex $s 0] detected.
+
+File $path cannot be committed by this program.
+"
+		}
+		}
+	}
+	if {!$files_ready} {
+		error_popup {No checked-in files to commit.
+
+You must check-in at least 1 file before you can commit.
+}
+		return
+	}
+
+	# -- A message is required.
+	#
+	set msg [string trim [$ui_comm get 1.0 end]]
+	if {$msg == {}} {
+		error_popup {Please supply a commit message.
+
+A good commit message has the following format:
+
+- First line: Describe in one sentance what you did.
+- Second line: Blank
+- Remaining lines: Describe why this change is good.
+}
+		return
+	}
+
+	# -- Ask the pre-commit hook for the go-ahead.
+	#
+	set pchook [file join $gitdir hooks pre-commit]
+	if {$tcl_platform(platform) == {windows} && [file exists $pchook]} {
+		set pchook [list sh -c \
+			"if test -x \"$pchook\"; then exec \"$pchook\"; fi"]
+	} elseif {[file executable $pchook]} {
+		set pchook [list $pchook]
+	} else {
+		set pchook {}
+	}
+	if {$pchook != {} && [catch {eval exec $pchook} err]} {
+		hook_failed_popup pre-commit $err
+		return
 	}
 }
 
