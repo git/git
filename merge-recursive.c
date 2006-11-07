@@ -98,7 +98,7 @@ static void output_commit_title(struct commit *commit)
 	if (commit->util)
 		printf("virtual %s\n", (char *)commit->util);
 	else {
-		printf("%s ", sha1_to_hex(commit->object.sha1));
+		printf("%s ", find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV));
 		if (parse_commit(commit) != 0)
 			printf("(bad commit)\n");
 		else {
@@ -427,8 +427,9 @@ static struct path_list *get_renames(struct tree *tree,
 	return renames;
 }
 
-int update_stages(const char *path, struct diff_filespec *o,
-		struct diff_filespec *a, struct diff_filespec *b, int clear)
+static int update_stages(const char *path, struct diff_filespec *o,
+			 struct diff_filespec *a, struct diff_filespec *b,
+			 int clear)
 {
 	int options = ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE;
 	if (clear)
@@ -468,10 +469,10 @@ static int remove_path(const char *name)
 	return ret;
 }
 
-int remove_file(int clean, const char *path)
+static int remove_file(int clean, const char *path, int no_wd)
 {
 	int update_cache = index_only || clean;
-	int update_working_directory = !index_only;
+	int update_working_directory = !index_only && !no_wd;
 
 	if (update_cache) {
 		if (!cache_dirty)
@@ -480,8 +481,7 @@ int remove_file(int clean, const char *path)
 		if (remove_file_from_cache(path))
 			return -1;
 	}
-	if (update_working_directory)
-	{
+	if (update_working_directory) {
 		unlink(path);
 		if (errno != ENOENT || errno != EISDIR)
 			return -1;
@@ -537,11 +537,11 @@ static void flush_buffer(int fd, const char *buf, unsigned long size)
 	}
 }
 
-void update_file_flags(const unsigned char *sha,
-		       unsigned mode,
-		       const char *path,
-		       int update_cache,
-		       int update_wd)
+static void update_file_flags(const unsigned char *sha,
+			      unsigned mode,
+			      const char *path,
+			      int update_cache,
+			      int update_wd)
 {
 	if (index_only)
 		update_wd = 0;
@@ -586,10 +586,10 @@ void update_file_flags(const unsigned char *sha,
 		add_cacheinfo(mode, sha, path, 0, update_wd, ADD_CACHE_OK_TO_ADD);
 }
 
-void update_file(int clean,
-		const unsigned char *sha,
-		unsigned mode,
-		const char *path)
+static void update_file(int clean,
+			const unsigned char *sha,
+			unsigned mode,
+			const char *path)
 {
 	update_file_flags(sha, mode, path, index_only || clean, !index_only);
 }
@@ -724,13 +724,13 @@ static void conflict_rename_rename(struct rename *ren1,
 		dst_name1 = del[delp++] = unique_path(ren1_dst, branch1);
 		output("%s is a directory in %s adding as %s instead",
 		       ren1_dst, branch2, dst_name1);
-		remove_file(0, ren1_dst);
+		remove_file(0, ren1_dst, 0);
 	}
 	if (path_list_has_path(&current_directory_set, ren2_dst)) {
 		dst_name2 = del[delp++] = unique_path(ren2_dst, branch2);
 		output("%s is a directory in %s adding as %s instead",
 		       ren2_dst, branch1, dst_name2);
-		remove_file(0, ren2_dst);
+		remove_file(0, ren2_dst, 0);
 	}
 	update_stages(dst_name1, NULL, ren1->pair->two, NULL, 1);
 	update_stages(dst_name2, NULL, NULL, ren2->pair->two, 1);
@@ -743,7 +743,7 @@ static void conflict_rename_dir(struct rename *ren1,
 {
 	char *new_path = unique_path(ren1->pair->two->path, branch1);
 	output("Renaming %s to %s instead", ren1->pair->one->path, new_path);
-	remove_file(0, ren1->pair->two->path);
+	remove_file(0, ren1->pair->two->path, 0);
 	update_file(0, ren1->pair->two->sha1, ren1->pair->two->mode, new_path);
 	free(new_path);
 }
@@ -758,7 +758,7 @@ static void conflict_rename_rename_2(struct rename *ren1,
 	output("Renaming %s to %s and %s to %s instead",
 	       ren1->pair->one->path, new_path1,
 	       ren2->pair->one->path, new_path2);
-	remove_file(0, ren1->pair->two->path);
+	remove_file(0, ren1->pair->two->path, 0);
 	update_file(0, ren1->pair->two->sha1, ren1->pair->two->mode, new_path1);
 	update_file(0, ren2->pair->two->sha1, ren2->pair->two->mode, new_path2);
 	free(new_path2);
@@ -856,7 +856,7 @@ static int process_renames(struct path_list *a_renames,
 				conflict_rename_rename(ren1, branch1, ren2, branch2);
 			} else {
 				struct merge_file_info mfi;
-				remove_file(1, ren1_src);
+				remove_file(1, ren1_src, 1);
 				mfi = merge_file(ren1->pair->one,
 						 ren1->pair->two,
 						 ren2->pair->two,
@@ -889,7 +889,7 @@ static int process_renames(struct path_list *a_renames,
 			struct diff_filespec src_other, dst_other;
 			int try_merge, stage = a_renames == renames1 ? 3: 2;
 
-			remove_file(1, ren1_src);
+			remove_file(1, ren1_src, 1);
 
 			hashcpy(src_other.sha1, ren1->src_entry->stages[stage].sha);
 			src_other.mode = ren1->src_entry->stages[stage].mode;
@@ -1007,7 +1007,8 @@ static int process_entry(const char *path, struct stage_data *entry,
 			 * unchanged in the other */
 			if (a_sha)
 				output("Removing %s", path);
-			remove_file(1, path);
+			/* do not touch working file if it did not exist */
+			remove_file(1, path, !a_sha);
 		} else {
 			/* Deleted in one and changed in the other */
 			clean_merge = 0;
@@ -1054,7 +1055,7 @@ static int process_entry(const char *path, struct stage_data *entry,
 			output("CONFLICT (%s): There is a directory with name %s in %s. "
 			       "Adding %s as %s",
 			       conf, path, other_branch, path, new_path);
-			remove_file(0, path);
+			remove_file(0, path, 0);
 			update_file(0, sha, mode, new_path);
 		} else {
 			output("Adding %s", path);
@@ -1082,7 +1083,7 @@ static int process_entry(const char *path, struct stage_data *entry,
 			output("CONFLICT (add/add): File %s added non-identically "
 			       "in both branches. Adding as %s and %s instead.",
 			       path, new_path1, new_path2);
-			remove_file(0, path);
+			remove_file(0, path, 0);
 			update_file(0, a_sha, a_mode, new_path1);
 			update_file(0, b_sha, b_mode, new_path2);
 		}
@@ -1204,14 +1205,13 @@ static struct commit_list *reverse_commit_list(struct commit_list *list)
  * Merge the commits h1 and h2, return the resulting virtual
  * commit object and a flag indicating the cleaness of the merge.
  */
-static
-int merge(struct commit *h1,
-			  struct commit *h2,
-			  const char *branch1,
-			  const char *branch2,
-			  int call_depth /* =0 */,
-			  struct commit *ancestor /* =None */,
-			  struct commit **result)
+static int merge(struct commit *h1,
+		 struct commit *h2,
+		 const char *branch1,
+		 const char *branch2,
+		 int call_depth /* =0 */,
+		 struct commit *ancestor /* =None */,
+		 struct commit **result)
 {
 	struct commit_list *ca = NULL, *iter;
 	struct commit *merged_common_ancestors;
