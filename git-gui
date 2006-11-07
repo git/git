@@ -791,8 +791,23 @@ proc toggle_mode {path} {
 ##
 ## config (fetch push pull)
 
+proc load_repo_config {} {
+	global repo_config
+
+	array unset repo_config
+	catch {
+		set fd_rc [open "| git repo-config --list" r]
+		while {[gets $fd_rc line] >= 0} {
+			if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
+				lappend repo_config($name) $value
+			}
+		}
+		close $fd_rc
+	}
+}
+
 proc load_all_remotes {} {
-	global gitdir all_remotes
+	global gitdir all_remotes repo_config
 
 	set all_remotes [list]
 	set rm_dir [file join $gitdir remotes]
@@ -804,13 +819,11 @@ proc load_all_remotes {} {
 			-directory $rm_dir *]]
 	}
 
-	set fd_rc [open "| git repo-config --list" r]
-	while {[gets $fd_rc line] >= 0} {
-		if {[regexp ^remote\.(.*)\.url= $line line name]} {
+	foreach line [array names repo_config remote.*.url] {
+		if {[regexp ^remote\.(.*)\.url\$ $line line name]} {
 			lappend all_remotes $name
 		}
 	}
-	close $fd_rc
 
 	set all_remotes [lsort -unique $all_remotes]
 }
@@ -1541,6 +1554,7 @@ if {$appname == {git-citool}} {
 
 wm title . "$appname ([file normalize [file dirname $gitdir]])"
 focus -force $ui_comm
+load_repo_config
 load_all_remotes
 populate_remote_menu .mbar.fetch From fetch_from
 populate_remote_menu .mbar.push To push_to
