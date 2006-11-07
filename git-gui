@@ -7,34 +7,53 @@ exec wish "$0" -- "$@"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-
 ######################################################################
 ##
-## status
+## task management
 
 set status_active 0
 set diff_active 0
 set checkin_active 0
 set update_index_fd {}
 
-proc is_busy {} {
-	global status_active diff_active checkin_active update_index_fd
+set disable_on_lock [list]
+set index_lock_type none
 
-	if {$status_active > 0
-		|| $diff_active
-		|| $checkin_active
-		|| $update_index_fd != {}} {
+proc lock_index {type} {
+	global index_lock_type disable_on_lock
+
+	if {$index_lock_type == {none}} {
+		set index_lock_type $type
+		foreach w $disable_on_lock {
+			uplevel #0 $w disabled
+		}
+		return 1
+	} elseif {$index_lock_type == {begin-update} && $type == {update}} {
+		set index_lock_type $type
 		return 1
 	}
 	return 0
 }
+
+proc unlock_index {} {
+	global index_lock_type disable_on_lock
+
+	set index_lock_type none
+	foreach w $disable_on_lock {
+		uplevel #0 $w normal
+	}
+}
+
+######################################################################
+##
+## status
 
 proc update_status {} {
 	global gitdir HEAD commit_type
 	global ui_index ui_other ui_status_value ui_comm
 	global status_active file_states
 
-	if {[is_busy]} return
+	if {$status_active || ![lock_index read]} return
 
 	array unset file_states
 	foreach w [list $ui_index $ui_other] {
@@ -160,6 +179,7 @@ proc status_eof {fd buf} {
 		set $buf {}
 		close $fd
 		if {[incr status_active -1] == 0} {
+			unlock_index
 			set ui_status_value {Ready.}
 			if {$ui_fname_value != {}} {
 				show_diff $ui_fname_value
@@ -186,7 +206,7 @@ proc show_diff {path} {
 	global file_states HEAD diff_3way diff_active
 	global ui_diff ui_fname_value ui_fstatus_value ui_status_value
 
-	if {[is_busy]} return
+	if {$diff_active || ![lock_index read]} return
 
 	clear_diff
 	set s $file_states($path)
@@ -211,6 +231,7 @@ proc show_diff {path} {
 				close $fd
 			} err ]} {
 			set diff_active 0
+			unlock_index
 			set ui_status_value "Unable to display $path"
 			error_popup "Error loading file:\n$err"
 			return
@@ -224,6 +245,7 @@ proc show_diff {path} {
 
 	if {[catch {set fd [open $cmd r]} err]} {
 		set diff_active 0
+		unlock_index
 		set ui_status_value "Unable to display $path"
 		error_popup "Error loading diff:\n$err"
 		return
@@ -279,6 +301,7 @@ proc read_diff {fd} {
 	if {[eof $fd]} {
 		close $fd
 		set diff_active 0
+		unlock_index
 		set ui_status_value {Ready.}
 	}
 }
@@ -417,6 +440,7 @@ proc with_update_index {body} {
 	global update_index_fd
 
 	if {$update_index_fd == {}} {
+		if {![lock_index update]} return
 		set update_index_fd [open \
 			"| git update-index --add --remove -z --stdin" \
 			w]
@@ -424,6 +448,7 @@ proc with_update_index {body} {
 		uplevel 1 $body
 		close $update_index_fd
 		set update_index_fd {}
+		unlock_index
 	} else {
 		uplevel 1 $body
 	}
@@ -587,10 +612,17 @@ proc show_msg {w top msg} {
 ##
 ## ui commands
 
+set starting_gitk_msg {Please wait... Starting gitk...}
 proc do_gitk {} {
-	global tcl_platform ui_status_value
+	global tcl_platform ui_status_value starting_gitk_msg
 
-	set ui_status_value "Please wait... Starting gitk..."
+	set ui_status_value $starting_gitk_msg
+	after 5000 {
+		if {$ui_status_value == $starting_gitk_msg} {
+			set ui_status_value {Ready.}
+		}
+	}
+
     if {$tcl_platform(platform) == "windows"} {
 		exec sh -c gitk &
 	} else {
@@ -623,7 +655,7 @@ proc do_rescan {} {
 proc do_checkin_all {} {
 	global checkin_active ui_status_value
 
-	if {[is_busy]} return
+	if {$checkin_active || ![lock_index begin-update]} return
 
 	set checkin_active 1
 	set ui_status_value {Checking in all files...}
@@ -687,7 +719,7 @@ proc unclick {w x y} {
 	set path [$w get $lno.1 $lno.end]
 	if {$path == {}} return
 
-	if {$col == 0 && ![is_busy]} {
+	if {$col == 0} {
 		toggle_mode $path
 	}
 }
@@ -699,6 +731,11 @@ proc unclick {w x y} {
 set mainfont {Helvetica 10}
 set difffont {Courier 10}
 set maincursor [. cget -cursor]
+
+switch -- $tcl_platform(platform) {
+windows {set M1B Control; set M1T Ctrl}
+default {set M1B M1; set M1T M1}
+}
 
 # -- Menu Bar
 menu .mbar -tearoff 0
@@ -715,22 +752,33 @@ menu .mbar.project
 	-font $mainfont
 .mbar.project add command -label Quit \
 	-command do_quit \
+	-accelerator $M1T-Q \
 	-font $mainfont
 
 # -- Commit Menu
 menu .mbar.commit
 .mbar.commit add command -label Rescan \
 	-command do_rescan \
+	-accelerator F5 \
 	-font $mainfont
+lappend disable_on_lock \
+	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 .mbar.commit add command -label {Check-in All Files} \
 	-command do_checkin_all \
+	-accelerator $M1T-U \
 	-font $mainfont
+lappend disable_on_lock \
+	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 .mbar.commit add command -label {Sign Off} \
 	-command do_signoff \
+	-accelerator $M1T-S \
 	-font $mainfont
 .mbar.commit add command -label Commit \
 	-command do_commit \
+	-accelerator $M1T-Return \
 	-font $mainfont
+lappend disable_on_lock \
+	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
 # -- Fetch Menu
 menu .mbar.fetch
@@ -849,11 +897,13 @@ button .vpane.commarea.buttons.rescan -text {Rescan} \
 	-command do_rescan \
 	-font $mainfont
 pack .vpane.commarea.buttons.rescan -side top -fill x
+lappend disable_on_lock {.vpane.commarea.buttons.rescan conf -state}
 
 button .vpane.commarea.buttons.ciall -text {Check-in All} \
 	-command do_checkin_all \
 	-font $mainfont
 pack .vpane.commarea.buttons.ciall -side top -fill x
+lappend disable_on_lock {.vpane.commarea.buttons.ciall conf -state}
 
 button .vpane.commarea.buttons.signoff -text {Sign Off} \
 	-command do_signoff \
@@ -864,6 +914,7 @@ button .vpane.commarea.buttons.commit -text {Commit} \
 	-command do_commit \
 	-font $mainfont
 pack .vpane.commarea.buttons.commit -side top -fill x
+lappend disable_on_lock {.vpane.commarea.buttons.commit conf -state}
 
 # -- Commit Message Buffer
 frame .vpane.commarea.buffer
@@ -897,21 +948,21 @@ pack .status -anchor w -side bottom -fill x
 # -- Key Bindings
 bind . <Destroy> do_quit
 bind . <Key-F5> do_rescan
-bind . <M1-Key-r> do_rescan
-bind . <M1-Key-R> do_rescan
-bind . <M1-Key-s> do_signoff
-bind . <M1-Key-S> do_signoff
-bind . <M1-Key-u> do_checkin_all
-bind . <M1-Key-U> do_checkin_all
-bind . <M1-Key-Return> do_commit
-bind . <M1-Key-q> do_quit
-bind . <M1-Key-Q> do_quit
+bind . <$M1B-Key-r> do_rescan
+bind . <$M1B-Key-R> do_rescan
+bind . <$M1B-Key-s> do_signoff
+bind . <$M1B-Key-S> do_signoff
+bind . <$M1B-Key-u> do_checkin_all
+bind . <$M1B-Key-U> do_checkin_all
+bind . <$M1B-Key-Return> do_commit
+bind . <$M1B-Key-q> do_quit
+bind . <$M1B-Key-Q> do_quit
 foreach i [list $ui_index $ui_other] {
 	bind $i <Button-1> {click %W %x %y 1 %X %Y; break}
 	bind $i <Button-3> {click %W %x %y 3 %X %Y; break}
 	bind $i <ButtonRelease-1> {unclick %W %x %y; break}
 }
-unset i
+unset i M1B M1T
 
 ######################################################################
 ##
