@@ -17,6 +17,7 @@
 
 #include <time.h>
 #include <sys/time.h>
+#include <regex.h>
 
 static char pickaxe_usage[] =
 "git-pickaxe [-c] [-l] [-t] [-f] [-n] [-p] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [commit] [--] file\n"
@@ -1533,6 +1534,78 @@ static const char *add_prefix(const char *prefix, const char *path)
 	return prefix_path(prefix, strlen(prefix), path);
 }
 
+static const char *parse_loc(const char *spec,
+			     struct scoreboard *sb, long lno,
+			     long begin, long *ret)
+{
+	char *term;
+	const char *line;
+	long num;
+	int reg_error;
+	regex_t regexp;
+	regmatch_t match[1];
+
+	num = strtol(spec, &term, 10);
+	if (term != spec) {
+		*ret = num;
+		return term;
+	}
+	if (spec[0] != '/')
+		return spec;
+
+	/* it could be a regexp of form /.../ */
+	for (term = (char*) spec + 1; *term && *term != '/'; term++) {
+		if (*term == '\\')
+			term++;
+	}
+	if (*term != '/')
+		return spec;
+
+	/* try [spec+1 .. term-1] as regexp */
+	*term = 0;
+	begin--; /* input is in human terms */
+	line = nth_line(sb, begin);
+
+	if (!(reg_error = regcomp(&regexp, spec + 1, REG_NEWLINE)) &&
+	    !(reg_error = regexec(&regexp, line, 1, match, 0))) {
+		const char *cp = line + match[0].rm_so;
+		const char *nline;
+
+		while (begin++ < lno) {
+			nline = nth_line(sb, begin);
+			if (line <= cp && cp < nline)
+				break;
+			line = nline;
+		}
+		*ret = begin;
+		regfree(&regexp);
+		*term++ = '/';
+		return term;
+	}
+	else {
+		char errbuf[1024];
+		regerror(reg_error, &regexp, errbuf, 1024);
+		die("-L parameter '%s': %s", spec + 1, errbuf);
+	}
+}
+
+static void prepare_blame_range(struct scoreboard *sb,
+				const char *bottomtop,
+				long lno,
+				long *bottom, long *top)
+{
+	const char *term;
+
+	term = parse_loc(bottomtop, sb, lno, 1, bottom);
+	if (*term == ',') {
+		term = parse_loc(term + 1, sb, lno, *bottom + 1, top);
+		if (*term)
+			usage(pickaxe_usage);
+	}
+	if (*term)
+		usage(pickaxe_usage);
+}
+
 int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
@@ -1546,11 +1619,11 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 	const char *revs_file = NULL;
 	const char *final_commit_name = NULL;
 	char type[10];
+	const char *bottomtop = NULL;
 
 	save_commit_buffer = 0;
 
 	opt = 0;
-	bottom = top = 0;
 	seen_dashdash = 0;
 	for (unk = i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -1575,7 +1648,6 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 			blame_copy_score = parse_score(arg+2);
 		}
 		else if (!strncmp("-L", arg, 2)) {
-			char *term;
 			if (!arg[2]) {
 				if (++i >= argc)
 					usage(pickaxe_usage);
@@ -1583,18 +1655,9 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 			}
 			else
 				arg += 2;
-			if (bottom || top)
+			if (bottomtop)
 				die("More than one '-L n,m' option given");
-			bottom = strtol(arg, &term, 10);
-			if (*term == ',') {
-				top = strtol(term + 1, &term, 10);
-				if (*term)
-					usage(pickaxe_usage);
-			}
-			if (bottom && top && top < bottom) {
-				unsigned long tmp;
-				tmp = top; top = bottom; bottom = tmp;
-			}
+			bottomtop = arg;
 		}
 		else if (!strcmp("--score-debug", arg))
 			output_option |= OUTPUT_SHOW_SCORE;
@@ -1755,6 +1818,13 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 	num_read_blob++;
 	lno = prepare_lines(&sb);
 
+	bottom = top = 0;
+	if (bottomtop)
+		prepare_blame_range(&sb, bottomtop, lno, &bottom, &top);
+	if (bottom && top && top < bottom) {
+		long tmp;
+		tmp = top; top = bottom; bottom = tmp;
+	}
 	if (bottom < 1)
 		bottom = 1;
 	if (top < 1)
