@@ -111,6 +111,7 @@ proc read_refresh {fd final} {
 	global gitdir PARENT commit_type
 	global ui_index ui_other ui_status_value ui_comm
 	global status_active file_states
+	global buf_rdi buf_rdf buf_rlo
 
 	read $fd
 	if {![eof $fd]} return
@@ -122,6 +123,10 @@ proc read_refresh {fd final} {
 	if {[file readable $info_exclude]} {
 		lappend ls_others "--exclude-from=$info_exclude"
 	}
+
+	set buf_rdi {}
+	set buf_rdf {}
+	set buf_rlo {}
 
 	set status_active 3
 	set ui_status_value {Scanning for modified files ...}
@@ -158,13 +163,28 @@ proc read_diff_index {fd final} {
 	global buf_rdi
 
 	append buf_rdi [read $fd]
-	set pck [split $buf_rdi "\0"]
-	set buf_rdi [lindex $pck end]
-	foreach {m p} [lrange $pck 0 end-1] {
-		if {$m != {} && $p != {}} {
-			display_file $p [string index $m end]_
-		}
+	set c 0
+	set n [string length $buf_rdi]
+	while {$c < $n} {
+		set z1 [string first "\0" $buf_rdi $c]
+		if {$z1 == -1} break
+		incr z1
+		set z2 [string first "\0" $buf_rdi $z1]
+		if {$z2 == -1} break
+
+		set c $z2
+		incr z2 -1
+		display_file \
+			[string range $buf_rdi $z1 $z2] \
+			[string index $buf_rdi [expr $z1 - 2]]_
+		incr c
 	}
+	if {$c < $n} {
+		set buf_rdi [string range $buf_rdi $c end]
+	} else {
+		set buf_rdi {}
+	}
+
 	status_eof $fd buf_rdi $final
 }
 
@@ -172,13 +192,28 @@ proc read_diff_files {fd final} {
 	global buf_rdf
 
 	append buf_rdf [read $fd]
-	set pck [split $buf_rdf "\0"]
-	set buf_rdf [lindex $pck end]
-	foreach {m p} [lrange $pck 0 end-1] {
-		if {$m != {} && $p != {}} {
-			display_file $p _[string index $m end]
-		}
+	set c 0
+	set n [string length $buf_rdf]
+	while {$c < $n} {
+		set z1 [string first "\0" $buf_rdf $c]
+		if {$z1 == -1} break
+		incr z1
+		set z2 [string first "\0" $buf_rdf $z1]
+		if {$z2 == -1} break
+
+		set c $z2
+		incr z2 -1
+		display_file \
+			[string range $buf_rdf $z1 $z2] \
+			_[string index $buf_rdf [expr $z1 - 2]]
+		incr c
 	}
+	if {$c < $n} {
+		set buf_rdf [string range $buf_rdf $c end]
+	} else {
+		set buf_rdf {}
+	}
+
 	status_eof $fd buf_rdf $final
 }
 
