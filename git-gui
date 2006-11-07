@@ -11,9 +11,11 @@ exec wish "$0" -- "$@"
 ##
 ## task management
 
+set single_commit 0
 set status_active 0
 set diff_active 0
 set checkin_active 0
+set commit_active 0
 set update_index_fd {}
 
 set disable_on_lock [list]
@@ -48,24 +50,32 @@ proc unlock_index {} {
 ##
 ## status
 
+proc repository_state {hdvar ctvar} {
+	global gitdir
+	upvar $hdvar hd $ctvar ct
+
+	if {[catch {set hd [exec git rev-parse --verify HEAD]}]} {
+		set ct initial
+	} elseif {[file exists [file join $gitdir MERGE_HEAD]]} {
+		set ct merge
+	} else {
+		set ct normal
+	}
+}
+
 proc update_status {} {
-	global gitdir HEAD commit_type
+	global HEAD commit_type
 	global ui_index ui_other ui_status_value ui_comm
 	global status_active file_states
 
 	if {$status_active || ![lock_index read]} return
 
+	repository_state HEAD commit_type
 	array unset file_states
 	foreach w [list $ui_index $ui_other] {
 		$w conf -state normal
 		$w delete 0.0 end
 		$w conf -state disabled
-	}
-
-	if {[catch {set HEAD [exec git rev-parse --verify HEAD]}]} {
-		set commit_type initial
-	} else {
-		set commit_type normal
 	}
 
 	if {![$ui_comm edit modified]
@@ -304,6 +314,207 @@ proc read_diff {fd} {
 		unlock_index
 		set ui_status_value {Ready.}
 	}
+}
+
+######################################################################
+##
+## commit
+
+proc commit_tree {} {
+	global tcl_platform HEAD gitdir commit_type file_states
+	global commit_active ui_status_value
+	global ui_comm
+
+	if {$commit_active || ![lock_index update]} return
+
+	# -- Our in memory state should match the repository.
+	#
+	repository_state curHEAD cur_type
+	if {$commit_type != $cur_type || $HEAD != $curHEAD} {
+		error_popup {Last scanned state does not match repository state.
+
+Its highly likely that another Git program modified the
+repository since our last scan.  A rescan is required
+before committing.
+}
+		unlock_index
+		update_status
+		return
+	}
+
+	# -- At least one file should differ in the index.
+	#
+	set files_ready 0
+	foreach path [array names file_states] {
+		set s $file_states($path)
+		switch -glob -- [lindex $s 0] {
+		_* {continue}
+		A* -
+		D* -
+		M* {set files_ready 1; break}
+		U* {
+			error_popup "Unmerged files cannot be committed.
+
+File $path has merge conflicts.
+You must resolve them and check the file in before committing.
+"
+			unlock_index
+			return
+		}
+		default {
+			error_popup "Unknown file state [lindex $s 0] detected.
+
+File $path cannot be committed by this program.
+"
+		}
+		}
+	}
+	if {!$files_ready} {
+		error_popup {No checked-in files to commit.
+
+You must check-in at least 1 file before you can commit.
+}
+		unlock_index
+		return
+	}
+
+	# -- A message is required.
+	#
+	set msg [string trim [$ui_comm get 1.0 end]]
+	if {$msg == {}} {
+		error_popup {Please supply a commit message.
+
+A good commit message has the following format:
+
+- First line: Describe in one sentance what you did.
+- Second line: Blank
+- Remaining lines: Describe why this change is good.
+}
+		unlock_index
+		return
+	}
+
+	# -- Ask the pre-commit hook for the go-ahead.
+	#
+	set pchook [file join $gitdir hooks pre-commit]
+	if {$tcl_platform(platform) == {windows} && [file exists $pchook]} {
+		set pchook [list sh -c \
+			"if test -x \"$pchook\"; then exec \"$pchook\"; fi"]
+	} elseif {[file executable $pchook]} {
+		set pchook [list $pchook]
+	} else {
+		set pchook {}
+	}
+	if {$pchook != {} && [catch {eval exec $pchook} err]} {
+		hook_failed_popup pre-commit $err
+		unlock_index
+		return
+	}
+
+	# -- Write the tree in the background.
+	#
+	set commit_active 1
+	set ui_status_value {Committing changes...}
+
+	set fd_wt [open "| git write-tree" r]
+	fileevent $fd_wt readable \
+		[list commit_stage2 $fd_wt $curHEAD $msg]
+}
+
+proc commit_stage2 {fd_wt curHEAD msg} {
+	global single_commit gitdir HEAD commit_type
+	global commit_active ui_status_value comm_ui
+
+	gets $fd_wt tree_id
+	close $fd_wt
+
+	if {$tree_id == {}} {
+		error_popup "write-tree failed"
+		set commit_active 0
+		set ui_status_value {Commit failed.}
+		unlock_index
+		return
+	}
+
+	# -- Create the commit.
+	#
+	set cmd [list git commit-tree $tree_id]
+	if {$commit_type != {initial}} {
+		lappend cmd -p $HEAD
+	}
+	if {$commit_type == {merge}} {
+		if {[catch {
+				set fd_mh [open [file join $gitdir MERGE_HEAD] r]
+				while {[gets $fd_mh merge_head] > 0} {
+					lappend -p $merge_head
+				}
+				close $fd_mh
+			} err]} {
+			error_popup "Loading MERGE_HEADs failed:\n$err"
+			set commit_active 0
+			set ui_status_value {Commit failed.}
+			unlock_index
+			return
+		}
+	}
+	if {$commit_type == {initial}} {
+		# git commit-tree writes to stderr during initial commit.
+		lappend cmd 2>/dev/null
+	}
+	lappend cmd << $msg
+	if {[catch {set cmt_id [eval exec $cmd]} err]} {
+		error_popup "commit-tree failed:\n$err"
+		set commit_active 0
+		set ui_status_value {Commit failed.}
+		unlock_index
+		return
+	}
+
+	# -- Update the HEAD ref.
+	#
+	set reflogm commit
+	if {$commit_type != {normal}} {
+		append reflogm " ($commit_type)"
+	}
+	set i [string first "\n" $msg]
+	if {$i >= 0} {
+		append reflogm {: } [string range $msg 0 [expr $i - 1]]
+	} else {
+		append reflogm {: } $msg
+	}
+	set cmd [list git update-ref \
+		-m $reflogm \
+		HEAD $cmt_id $curHEAD]
+	if {[catch {eval exec $cmd} err]} {
+		error_popup "update-ref failed:\n$err"
+		set commit_active 0
+		set ui_status_value {Commit failed.}
+		unlock_index
+		return
+	}
+
+	# -- Cleanup after ourselves.
+	#
+	catch {file delete [file join $gitdir MERGE_HEAD]}
+	catch {file delete [file join $gitdir MERGE_MSG]}
+	catch {file delete [file join $gitdir SQUASH_MSG]}
+	catch {file delete [file join $gitdir GITGUI_MSG]}
+
+	# -- Let rerere do its thing.
+	#
+	if {[file isdirectory [file join $gitdir rr-cache]]} {
+		catch {exec git rerere}
+	}
+
+	$comm_ui delete 0.0 end
+	$comm_ui edit modified false
+
+	if {$single_commit} do_quit
+
+	set commit_active 0
+	set ui_status_value "Changes committed as $cmt_id."
+	unlock_index
+	update_status
 }
 
 ######################################################################
@@ -599,20 +810,22 @@ proc error_popup {msg} {
 }
 
 proc show_msg {w top msg} {
-	global gitdir
+	global gitdir appname
 
 	message $w.m -text $msg -justify left -aspect 400
-	pack $w.m -side top -fill x -padx 20 -pady 20
-	button $w.ok -text OK -command "destroy $top"
+	pack $w.m -side top -fill x -padx 5 -pady 10
+	button $w.ok -text OK \
+		-width 15 \
+		-command "destroy $top"
 	pack $w.ok -side bottom
 	bind $top <Visibility> "grab $top; focus $top"
 	bind $top <Key-Return> "destroy $top"
-	wm title $top "error: git-ui ([file normalize [file dirname $gitdir]])"
+	wm title $top "error: $appname ([file normalize [file dirname $gitdir]])"
 	tkwait window $top
 }
 
 proc hook_failed_popup {hook msg} {
-	global gitdir mainfont difffont
+	global gitdir mainfont difffont appname
 
 	set w .hookfail
 	toplevel $w
@@ -651,7 +864,7 @@ proc hook_failed_popup {hook msg} {
 
 	bind $w <Visibility> "grab $w; focus $w"
 	bind $w <Key-Return> "destroy $w"
-	wm title $w "error: git-ui ([file normalize [file dirname $gitdir]])"
+	wm title $w "error: $appname ([file normalize [file dirname $gitdir]])"
 	tkwait window $w
 }
 
@@ -681,14 +894,14 @@ proc do_quit {} {
 	global gitdir ui_comm
 
 	set save [file join $gitdir GITGUI_MSG]
-	if {[$ui_comm edit modified]
-	    && [string trim [$ui_comm get 0.0 end]] != {}} {
+	set msg [string trim [$ui_comm get 0.0 end]]
+	if {[$ui_comm edit modified] && $msg != {}} {
 		catch {
 			set fd [open $save w]
 			puts $fd [string trim [$ui_comm get 0.0 end]]
 			close $fd
 		}
-	} elseif {[file exists $save]} {
+	} elseif {$msg == {} && [file exists $save]} {
 		file delete $save
 	}
 
@@ -741,91 +954,7 @@ proc do_signoff {} {
 }
 
 proc do_commit {} {
-	global tcl_platform HEAD gitdir commit_type file_states
-	global ui_comm
-
-	# -- Our in memory state should match the repository.
-	#
-	if {[catch {set curHEAD [exec git rev-parse --verify HEAD]}]} {
-		set cur_type initial
-	} else {
-		set cur_type normal
-	}
-	if {$commit_type != $commit_type || $HEAD != $curHEAD} {
-		error_popup {Last scanned state does not match repository state.
-
-Its highly likely that another Git program modified the
-repository since our last scan.  A rescan is required
-before committing.
-}
-		update_status
-		return
-	}
-
-	# -- At least one file should differ in the index.
-	#
-	set files_ready 0
-	foreach path [array names file_states] {
-		set s $file_states($path)
-		switch -glob -- [lindex $s 0] {
-		_* {continue}
-		A* -
-		D* -
-		M* {set files_ready 1; break}
-		U* {
-			error_popup "Unmerged files cannot be committed.
-
-File $path has merge conflicts.
-You must resolve them and check the file in before committing.
-"
-			return
-		}
-		default {
-			error_popup "Unknown file state [lindex $s 0] detected.
-
-File $path cannot be committed by this program.
-"
-		}
-		}
-	}
-	if {!$files_ready} {
-		error_popup {No checked-in files to commit.
-
-You must check-in at least 1 file before you can commit.
-}
-		return
-	}
-
-	# -- A message is required.
-	#
-	set msg [string trim [$ui_comm get 1.0 end]]
-	if {$msg == {}} {
-		error_popup {Please supply a commit message.
-
-A good commit message has the following format:
-
-- First line: Describe in one sentance what you did.
-- Second line: Blank
-- Remaining lines: Describe why this change is good.
-}
-		return
-	}
-
-	# -- Ask the pre-commit hook for the go-ahead.
-	#
-	set pchook [file join $gitdir hooks pre-commit]
-	if {$tcl_platform(platform) == {windows} && [file exists $pchook]} {
-		set pchook [list sh -c \
-			"if test -x \"$pchook\"; then exec \"$pchook\"; fi"]
-	} elseif {[file executable $pchook]} {
-		set pchook [list $pchook]
-	} else {
-		set pchook {}
-	}
-	if {$pchook != {} && [catch {eval exec $pchook} err]} {
-		hook_failed_popup pre-commit $err
-		return
-	}
+	commit_tree
 }
 
 # shift == 1: left click
@@ -1081,6 +1210,7 @@ label .status -textvariable ui_status_value \
 pack .status -anchor w -side bottom -fill x
 
 # -- Key Bindings
+bind $ui_comm <$M1B-Key-Return> {do_commit;break}
 bind . <Destroy> do_quit
 bind . <Key-F5> do_rescan
 bind . <$M1B-Key-r> do_rescan
@@ -1108,6 +1238,11 @@ if {[catch {set gitdir [exec git rev-parse --git-dir]} err]} {
 	exit 1
 }
 
-wm title . "git-ui ([file normalize [file dirname $gitdir]])"
+set appname [lindex [file split $argv0] end]
+if {$appname == {git-citool}} {
+	set single_commit 1
+}
+
+wm title . "$appname ([file normalize [file dirname $gitdir]])"
 focus -force $ui_comm
 update_status
