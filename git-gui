@@ -1002,9 +1002,11 @@ proc hook_failed_popup {hook msg} {
 set next_console_id 0
 
 proc new_console {short_title long_title} {
-	global next_console_id gitdir appname mainfont difffont
+	global next_console_id console_cr
+	global gitdir appname mainfont difffont
 
 	set w .console[incr next_console_id]
+	set console_cr($w) 1.0
 	toplevel $w
 	frame $w.m
 	label $w.m.l1 -text "$long_title:" \
@@ -1024,7 +1026,7 @@ proc new_console {short_title long_title} {
 	pack $w.m.t -side left -fill both -expand 1
 	pack $w.m -side top -fill both -expand 1 -padx 5 -pady 10
 
-	button $w.ok -text {OK} \
+	button $w.ok -text {Running...} \
 		-width 15 \
 		-font $mainfont \
 		-state disabled \
@@ -1053,22 +1055,44 @@ proc console_exec {w cmd} {
 	set cmd [concat | $cmd |& cat]
 
 	set fd_f [open $cmd r]
-	fconfigure $fd_f -blocking 0 -translation auto
+	fconfigure $fd_f -blocking 0 -translation binary
 	fileevent $fd_f readable [list console_read $w $fd_f]
 }
 
 proc console_read {w fd} {
+	global console_cr
+
 	$w.m.t conf -state normal
-	while {[gets $fd line] >= 0} {
-		$w.m.t insert end $line
-		$w.m.t insert end "\n"
+	set buf [read $fd]
+	set c 0
+	set n [string length $buf]
+	while {$c < $n} {
+		set cr [string first "\r" $buf $c]
+		set lf [string first "\n" $buf $c]
+		if {$cr < 0} {set cr [expr $n + 1]}
+		if {$lf < 0} {set lf [expr $n + 1]}
+
+		if {$lf < $cr} {
+			$w.m.t insert end [string range $buf $c $lf]
+			set console_cr($w) [$w.m.t index {end -1c}]
+			set c $lf
+			incr c
+		} else {
+			$w.m.t delete $console_cr($w) end
+			$w.m.t insert end "\n"
+			$w.m.t insert end [string range $buf $c $cr]
+			set c $cr
+			incr c
+		}
 	}
 	$w.m.t conf -state disabled
 	$w.m.t see end
 
 	if {[eof $fd]} {
 		close $fd
+		$w.ok conf -text Close
 		$w.ok conf -state normal
+		array unset console_cr $w
 	}
 }
 
