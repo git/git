@@ -6,9 +6,11 @@ Items outstanding:
  * Update index with $PARENT version but leave working directory
    alone.
 
- * Populate the pull menu with local branches.
+ * Add all new files in one shot (e.g. "git add .").
 
- * Populate the pull menu with default merge branch from each remote.
+ * Add file to .gitignore or info/excludes.
+
+ * Populate the pull menu with local branches.
 
  * Make use of the new default merge data stored in repo-config.
 
