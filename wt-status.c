@@ -154,10 +154,8 @@ void wt_status_print_initial(struct wt_status *s)
 static void wt_status_print_updated(struct wt_status *s)
 {
 	struct rev_info rev;
-	const char *argv[] = { NULL, NULL, NULL };
-	argv[1] = s->reference;
 	init_revisions(&rev, NULL);
-	setup_revisions(2, argv, &rev, NULL);
+	setup_revisions(0, NULL, &rev, s->reference);
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = wt_status_print_updated_cb;
 	rev.diffopt.format_callback_data = s;
@@ -168,9 +166,8 @@ static void wt_status_print_updated(struct wt_status *s)
 static void wt_status_print_changed(struct wt_status *s)
 {
 	struct rev_info rev;
-	const char *argv[] = { NULL, NULL };
 	init_revisions(&rev, "");
-	setup_revisions(1, argv, &rev, NULL);
+	setup_revisions(0, NULL, &rev, NULL);
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = wt_status_print_changed_cb;
 	rev.diffopt.format_callback_data = s;
@@ -225,10 +222,8 @@ static void wt_status_print_untracked(const struct wt_status *s)
 static void wt_status_print_verbose(struct wt_status *s)
 {
 	struct rev_info rev;
-	const char *argv[] = { NULL, NULL, NULL };
-	argv[1] = s->reference;
 	init_revisions(&rev, NULL);
-	setup_revisions(2, argv, &rev, NULL);
+	setup_revisions(0, NULL, &rev, s->reference);
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
 	rev.diffopt.detect_rename = 1;
 	run_diff_index(&rev, 1);

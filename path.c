@@ -279,7 +279,7 @@ int adjust_shared_perm(const char *path)
 			    : 0));
 	if (S_ISDIR(mode))
 		mode |= S_ISGID;
-	if (chmod(path, mode) < 0)
+	if ((mode & st.st_mode) != mode && chmod(path, mode) < 0)
 		return -2;
 	return 0;
 }

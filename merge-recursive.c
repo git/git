@@ -1308,6 +1308,7 @@ int main(int argc, char *argv[])
 	const char *branch1, *branch2;
 	struct commit *result, *h1, *h2;
 
+	git_config(git_default_config); /* core.filemode */
 	original_index_file = getenv("GIT_INDEX_FILE");
 
 	if (!original_index_file)

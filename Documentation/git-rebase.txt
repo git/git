@@ -51,19 +51,68 @@ would be:
     D---E---F---G master
 ------------
 
-While, starting from the same point, the result of either of the following
-commands:
+The latter form is just a short-hand of `git checkout topic`
+followed by `git rebase master`.
 
-    git-rebase --onto master~1 master
-    git-rebase --onto master~1 master topic
+Here is how you would transplant a topic branch based on one
+branch to another, to pretend that you forked the topic branch
+from the latter branch, using `rebase --onto`.
 
-would be:
+First let's assume your 'topic' is based on branch 'next'.
+For example feature developed in 'topic' depends on some
+functionality which is found in 'next'.
 
 ------------
-              A'--B'--C' topic
-             /
-    D---E---F---G master
+    o---o---o---o---o  master
+         \
+          o---o---o---o---o  next
+                           \
+                            o---o---o  topic
 ------------
+
+We would want to make 'topic' forked from branch 'master',
+for example because the functionality 'topic' branch depend on
+got merged into more stable 'master' branch, like this:
+
+------------
+    o---o---o---o---o  master
+        |            \
+        |             o'--o'--o'  topic
+         \
+          o---o---o---o---o  next
+------------
+
+We can get this using the following command:
+
+    git-rebase --onto master next topic
+
+
+Another example of --onto option is to rebase part of a
+branch.  If we have the following situation:
+
+------------
+                            H---I---J topicB
+                           /
+                  E---F---G  topicA
+                 /
+    A---B---C---D  master
+------------
+
+then the command
+
+    git-rebase --onto master topicA topicB
+
+would result in:
+
+------------
+                 H'--I'--J'  topicB
+                /
+                | E---F---G  topicA
+                |/
+    A---B---C---D  master
+------------
+
+This is useful when topicB does not depend on topicA.
 
 In case of conflict, git-rebase will stop at the first problematic commit
 and leave conflict markers in the tree.  You can use git diff to locate
