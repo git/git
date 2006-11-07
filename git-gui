@@ -1205,9 +1205,10 @@ set mainfont {Helvetica 10}
 set difffont {Courier 10}
 set maincursor [. cget -cursor]
 
-switch -- $tcl_platform(platform) {
-windows {set M1B Control; set M1T Ctrl}
-default {set M1B M1; set M1T M1}
+switch -glob -- "$tcl_platform(platform),$tcl_platform(os)" {
+windows,*   {set M1B Control; set M1T Ctrl}
+unix,Darwin {set M1B M1; set M1T Cmd}
+default     {set M1B M1; set M1T M1}
 }
 
 # -- Menu Bar
