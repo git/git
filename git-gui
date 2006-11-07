@@ -939,7 +939,7 @@ proc error_popup {msg} {
 }
 
 proc show_msg {w top msg} {
-	global gitdir appname
+	global gitdir appname mainfont
 
 	message $w.m -text $msg -justify left -aspect 400
 	pack $w.m -side top -fill x -padx 5 -pady 10
@@ -1465,17 +1465,23 @@ unset i M1B M1T
 ##
 ## main
 
-if {[catch {set gitdir [exec git rev-parse --git-dir]} err]} {
+set appname [lindex [file split $argv0] end]
+set gitdir {}
+
+if {[catch {set cdup [exec git rev-parse --show-cdup]} err]} {
 	show_msg {} . "Cannot find the git directory: $err"
 	exit 1
 }
-set cdup [exec git rev-parse --show-cdup]
 if {$cdup != ""} {
 	cd $cdup
 }
 unset cdup
 
-set appname [lindex [file split $argv0] end]
+if {[catch {set gitdir [exec git rev-parse --git-dir]} err]} {
+	show_msg {} . "Cannot find the git directory: $err"
+	exit 1
+}
+
 if {$appname == {git-citool}} {
 	set single_commit 1
 }
