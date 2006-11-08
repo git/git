@@ -1276,6 +1276,14 @@ proc do_gitk {} {
 	}
 }
 
+proc do_repack {} {
+	set w [new_console "repack" "Repacking the object database"]
+	set cmd [list git repack]
+	lappend cmd -a
+	lappend cmd -d
+	console_exec $w $cmd
+}
+
 proc do_quit {} {
 	global gitdir ui_comm
 
@@ -1405,6 +1413,9 @@ menu .mbar -tearoff 0
 menu .mbar.project
 .mbar.project add command -label Visualize \
 	-command do_gitk \
+	-font $mainfont
+.mbar.project add command -label {Repack Database} \
+	-command do_repack \
 	-font $mainfont
 .mbar.project add command -label Quit \
 	-command do_quit \
