@@ -4440,12 +4440,27 @@ proc getblobdiffline {bdf ids} {
     }
 }
 
+proc prevfile {} {
+    global difffilestart ctext
+    set prev [lindex $difffilestart 0]
+    set here [$ctext index @0,0]
+    foreach loc $difffilestart {
+	if {[$ctext compare $loc >= $here]} {
+	    $ctext yview $prev
+	    return
+	}
+	set prev $loc
+    }
+    $ctext yview $prev
+}
+
 proc nextfile {} {
     global difffilestart ctext
     set here [$ctext index @0,0]
     foreach loc $difffilestart {
 	if {[$ctext compare $loc > $here]} {
 	    $ctext yview $loc
+	    return
 	}
     }
 }
