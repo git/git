@@ -67,6 +67,7 @@ static void get_blob(struct commit *commit);
 static int num_get_patch;
 static int num_commits;
 static int patch_time;
+static int num_read_blob;
 
 struct blame_diff_state {
 	struct xdiff_emit_state xm;
@@ -206,6 +207,7 @@ static void get_blob(struct commit *commit)
 		return;
 
 	info->buf = read_sha1_file(info->sha1, type, &info->size);
+	num_read_blob++;
 
 	assert(!strcmp(type, blob_type));
 }
@@ -1076,6 +1078,7 @@ int main(int argc, const char **argv)
 	}
 
 	if (DEBUG) {
+		printf("num read blob: %d\n", num_read_blob);
 		printf("num get patch: %d\n", num_get_patch);
 		printf("num commits: %d\n", num_commits);
 		printf("patch time: %f\n", patch_time / 1000000.0);

@@ -254,6 +254,9 @@ gitlink:git-annotate[1]::
 gitlink:git-blame[1]::
 	Blame file lines on commits.
 
+gitlink:git-pickaxe[1]::
+	Find out where each line in a file came from.
+
 gitlink:git-check-ref-format[1]::
 	Make sure ref name is well formed.
 
