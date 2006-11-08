@@ -16,6 +16,13 @@ a:hover, a:visited, a:active {
 	color: #880000;
 }
 
+span.cntrl {
+	border: dashed #aaaaaa;
+	border-width: 1px;
+	padding: 0px 2px 0px 2px;
+	margin:  0px 2px 0px 2px;
+}
+
 img.logo {
 	float: right;
 	border-width: 0px;

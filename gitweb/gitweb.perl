@@ -584,12 +584,46 @@ sub esc_html ($;%) {
 	return $str;
 }
 
+# quote control characters and escape filename to HTML
+sub esc_path {
+	my $str = shift;
+	$str = esc_html($str);
+	$str =~ s|([[:cntrl:]])|<span class="cntrl">?</span>|g;
+	return $str;
+}
+
 # git may return quoted and escaped filenames
 sub unquote {
 	my $str = shift;
+
+	sub unq {
+		my $seq = shift;
+		my %es = ( # character escape codes, aka escape sequences
+			't' => "\t",   # tab            (HT, TAB)
+			'n' => "\n",   # newline        (NL)
+			'r' => "\r",   # return         (CR)
+			'f' => "\f",   # form feed      (FF)
+			'b' => "\b",   # backspace      (BS)
+			'a' => "\a",   # alarm (bell)   (BEL)
+			'e' => "\e",   # escape         (ESC)
+			'v' => "\013", # vertical tab   (VT)
+		);
+
+		if ($seq =~ m/^[0-7]{1,3}$/) {
+			# octal char sequence
+			return chr(oct($seq));
+		} elsif (exists $es{$seq}) {
+			# C escape sequence, aka character escape code
+			return $es{$seq}
+		}
+		# quoted ordinary character
+		return $seq;
+	}
+
 	if ($str =~ m/^"(.*)"$/) {
+		# needs unquoting
 		$str = $1;
-		$str =~ s/\\([0-7]{1,3})/chr(oct($1))/eg;
+		$str =~ s/\\([^0-7]|[0-7]{1,3})/unq($1)/eg;
 	}
 	return $str;
 }
@@ -1520,7 +1554,7 @@ sub git_header_html {
 		if (defined $action) {
 			$title .= "/$action";
 			if (defined $file_name) {
-				$title .= " - " . esc_html($file_name);
+				$title .= " - " . esc_path($file_name);
 				if ($action eq "tree" && $file_name !~ m|/$|) {
 					$title .= "/";
 				}
@@ -1791,20 +1825,20 @@ sub git_print_page_path {
 			$fullname .= ($fullname ? '/' : '') . $dir;
 			print $cgi->a({-href => href(action=>"tree", file_name=>$fullname,
 			                             hash_base=>$hb),
-			              -title => $fullname}, esc_html($dir));
+			              -title => $fullname}, esc_path($dir));
 			print " / ";
 		}
 		if (defined $type && $type eq 'blob') {
 			print $cgi->a({-href => href(action=>"blob_plain", file_name=>$file_name,
 			                             hash_base=>$hb),
-			              -title => $name}, esc_html($basename));
+			              -title => $name}, esc_path($basename));
 		} elsif (defined $type && $type eq 'tree') {
 			print $cgi->a({-href => href(action=>"tree", file_name=>$file_name,
 			                             hash_base=>$hb),
-			              -title => $name}, esc_html($basename));
+			              -title => $name}, esc_path($basename));
 			print " / ";
 		} else {
-			print esc_html($basename);
+			print esc_path($basename);
 		}
 	}
 	print "<br/></div>\n";
@@ -1876,7 +1910,7 @@ sub git_print_tree_entry {
 		print "<td class=\"list\">" .
 			$cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
 			                       file_name=>"$basedir$t->{'name'}", %base_key),
-			        -class => "list"}, esc_html($t->{'name'})) . "</td>\n";
+			        -class => "list"}, esc_path($t->{'name'})) . "</td>\n";
 		print "<td class=\"link\">";
 		print $cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
 					     file_name=>"$basedir$t->{'name'}", %base_key)},
@@ -1903,7 +1937,7 @@ sub git_print_tree_entry {
 		print "<td class=\"list\">";
 		print $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
 		                             file_name=>"$basedir$t->{'name'}", %base_key)},
-		              esc_html($t->{'name'}));
+		              esc_path($t->{'name'}));
 		print "</td>\n";
 		print "<td class=\"link\">";
 		print $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
@@ -1968,7 +2002,7 @@ sub git_difftree_body {
 			print "<td>";
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
 			                             hash_base=>$hash, file_name=>$diff{'file'}),
-			              -class => "list"}, esc_html($diff{'file'}));
+			              -class => "list"}, esc_path($diff{'file'}));
 			print "</td>\n";
 			print "<td>$mode_chng</td>\n";
 			print "<td class=\"link\">";
@@ -1984,7 +2018,7 @@ sub git_difftree_body {
 			print "<td>";
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'from_id'},
 			                             hash_base=>$parent, file_name=>$diff{'file'}),
-			               -class => "list"}, esc_html($diff{'file'}));
+			               -class => "list"}, esc_path($diff{'file'}));
 			print "</td>\n";
 			print "<td>$mode_chng</td>\n";
 			print "<td class=\"link\">";
@@ -2024,7 +2058,7 @@ sub git_difftree_body {
 			print "<td>";
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
 			                             hash_base=>$hash, file_name=>$diff{'file'}),
-			              -class => "list"}, esc_html($diff{'file'}));
+			              -class => "list"}, esc_path($diff{'file'}));
 			print "</td>\n";
 			print "<td>$mode_chnge</td>\n";
 			print "<td class=\"link\">";
@@ -2064,11 +2098,11 @@ sub git_difftree_body {
 			print "<td>" .
 			      $cgi->a({-href => href(action=>"blob", hash_base=>$hash,
 			                             hash=>$diff{'to_id'}, file_name=>$diff{'to_file'}),
-			              -class => "list"}, esc_html($diff{'to_file'})) . "</td>\n" .
+			              -class => "list"}, esc_path($diff{'to_file'})) . "</td>\n" .
 			      "<td><span class=\"file_status $nstatus\">[$nstatus from " .
 			      $cgi->a({-href => href(action=>"blob", hash_base=>$parent,
 			                             hash=>$diff{'from_id'}, file_name=>$diff{'from_file'}),
-			              -class => "list"}, esc_html($diff{'from_file'})) .
+			              -class => "list"}, esc_path($diff{'from_file'})) .
 			      " with " . (int $diff{'similarity'}) . "% similarity$mode_chng]</span></td>\n" .
 			      "<td class=\"link\">";
 			if ($action eq 'commitdiff') {
@@ -2191,7 +2225,7 @@ sub git_patchset_body {
 			$file  ||= $diffinfo->{'file'};
 			$file = $cgi->a({-href => href(action=>"blob", hash_base=>$hash_parent,
 			                               hash=>$diffinfo->{'from_id'}, file_name=>$file),
-			                -class => "list"}, esc_html($file));
+			                -class => "list"}, esc_path($file));
 			$patch_line =~ s|a/.*$|a/$file|g;
 			print "<div class=\"diff from_file\">$patch_line</div>\n";
 
@@ -2203,7 +2237,7 @@ sub git_patchset_body {
 			$file  ||= $diffinfo->{'file'};
 			$file = $cgi->a({-href => href(action=>"blob", hash_base=>$hash,
 			                               hash=>$diffinfo->{'to_id'}, file_name=>$file),
-			                -class => "list"}, esc_html($file));
+			                -class => "list"}, esc_path($file));
 			$patch_line =~ s|b/.*|b/$file|g;
 			print "<div class=\"diff to_file\">$patch_line</div>\n";
 
@@ -3521,8 +3555,8 @@ sub git_blobdiff {
 
 	} else {
 		while (my $line = <$fd>) {
-			$line =~ s!a/($hash|$hash_parent)!'a/'.esc_html($diffinfo{'from_file'})!eg;
-			$line =~ s!b/($hash|$hash_parent)!'b/'.esc_html($diffinfo{'to_file'})!eg;
+			$line =~ s!a/($hash|$hash_parent)!'a/'.esc_path($diffinfo{'from_file'})!eg;
+			$line =~ s!b/($hash|$hash_parent)!'b/'.esc_path($diffinfo{'to_file'})!eg;
 
 			print $line;
 
@@ -3879,7 +3913,7 @@ sub git_search {
 						print $cgi->a({-href => href(action=>"blob", hash_base=>$co{'id'},
 						                             hash=>$set{'id'}, file_name=>$set{'file'}),
 						              -class => "list"},
-						              "<span class=\"match\">" . esc_html($set{'file'}) . "</span>") .
+						              "<span class=\"match\">" . esc_path($set{'file'}) . "</span>") .
 						      "<br/>\n";
 					}
 					print "</td>\n" .
@@ -4014,7 +4048,7 @@ XML
 			if (!($line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)([0-9]{0,3})\t(.*)$/)) {
 				next;
 			}
-			my $file = esc_html(unquote($7));
+			my $file = esc_path(unquote($7));
 			$file = to_utf8($file);
 			print "$file<br/>\n";
 		}
