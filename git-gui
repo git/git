@@ -70,7 +70,7 @@ proc repository_state {hdvar ctvar} {
 proc update_status {{final Ready.}} {
 	global HEAD PARENT commit_type
 	global ui_index ui_other ui_status_value ui_comm
-	global status_active file_states status_start
+	global status_active file_states
 
 	if {$status_active || ![lock_index read]} return
 
@@ -84,7 +84,6 @@ proc update_status {{final Ready.}} {
 		set commit_type $new_type
 	}
 
-	set status_start [clock seconds]
 	array unset file_states
 	foreach w [list $ui_index $ui_other] {
 		$w conf -state normal
@@ -231,7 +230,7 @@ proc read_ls_others {fd final} {
 }
 
 proc status_eof {fd buf final} {
-	global status_active status_start $buf
+	global status_active $buf
 	global ui_fname_value ui_status_value file_states
 
 	if {[eof $fd]} {
@@ -241,11 +240,7 @@ proc status_eof {fd buf final} {
 		if {[incr status_active -1] == 0} {
 			unlock_index
 
-			set e1 [clock seconds]
 			display_all_files
-			set e2 [clock seconds]
-puts "TIME [expr $e1 - $status_start] + [expr $e2 - $e1] = [expr $e2 - $status_start]"
-
 			set ui_status_value $final
 
 			if {$ui_fname_value != {} && [array names file_states \
@@ -758,10 +753,10 @@ proc display_file {path state} {
 	if {$status_active} return
 
 	set s $file_states($path)
-	set old_w [mapcol $old_m $path]
-	set new_w [mapcol $new_m $path]
 	set new_m [lindex $s 0]
-	set new_ico [mapicon $new_m $path]
+	set new_w [mapcol $new_m $path] 
+	set old_w [mapcol $old_m $path]
+	set new_icon [mapicon $new_m $path]
 
 	if {$new_w != $old_w} {
 		set lno [bsearch $old_w $path]
@@ -1498,101 +1493,56 @@ pack $ui_other -side left -fill both -expand 1
 $ui_index tag conf in_diff -font [concat $mainfont bold]
 $ui_other tag conf in_diff -font [concat $mainfont bold]
 
-# -- Diff Header
-set ui_fname_value {}
-set ui_fstatus_value {}
-frame .vpane.diff -height 200 -width 400
-frame .vpane.diff.header
-label .vpane.diff.header.l1 -text {File:} -font $mainfont
-label .vpane.diff.header.l2 -textvariable ui_fname_value \
-	-anchor w \
-	-justify left \
-	-font $mainfont
-label .vpane.diff.header.l3 -text {Status:} -font $mainfont
-label .vpane.diff.header.l4 -textvariable ui_fstatus_value \
-	-width $max_status_desc \
-	-anchor w \
-	-justify left \
-	-font $mainfont
-pack .vpane.diff.header.l1 -side left
-pack .vpane.diff.header.l2 -side left -fill x
-pack .vpane.diff.header.l4 -side right
-pack .vpane.diff.header.l3 -side right
-
-# -- Diff Body
-frame .vpane.diff.body
-set ui_diff .vpane.diff.body.t
-text $ui_diff -background white -borderwidth 0 \
-	-width 80 -height 15 -wrap none \
-	-font $difffont \
-	-xscrollcommand {.vpane.diff.body.sbx set} \
-	-yscrollcommand {.vpane.diff.body.sby set} \
-	-cursor $maincursor \
-	-state disabled
-scrollbar .vpane.diff.body.sbx -orient horizontal \
-	-command [list $ui_diff xview]
-scrollbar .vpane.diff.body.sby -orient vertical \
-	-command [list $ui_diff yview]
-pack .vpane.diff.body.sbx -side bottom -fill x
-pack .vpane.diff.body.sby -side right -fill y
-pack $ui_diff -side left -fill both -expand 1
-pack .vpane.diff.header -side top -fill x
-pack .vpane.diff.body -side bottom -fill both -expand 1
-.vpane add .vpane.diff -stick nsew
-
-$ui_diff tag conf dm -foreground red
-$ui_diff tag conf dp -foreground blue
-$ui_diff tag conf da -font [concat $difffont bold]
-$ui_diff tag conf di -foreground "#00a000"
-$ui_diff tag conf dni -foreground "#a000a0"
-$ui_diff tag conf bold -font [concat $difffont bold]
-
-# -- Commit Area
-frame .vpane.commarea -height 170
-.vpane add .vpane.commarea -stick nsew
+# -- Diff and Commit Area
+frame .vpane.lower -height 400 -width 400
+frame .vpane.lower.commarea
+frame .vpane.lower.diff -relief sunken -borderwidth 1
+pack .vpane.lower.commarea -side top -fill x
+pack .vpane.lower.diff -side bottom -fill both -expand 1
+.vpane add .vpane.lower -stick nsew
 
 # -- Commit Area Buttons
-frame .vpane.commarea.buttons
-label .vpane.commarea.buttons.l -text {} \
+frame .vpane.lower.commarea.buttons
+label .vpane.lower.commarea.buttons.l -text {} \
 	-anchor w \
 	-justify left \
 	-font $mainfont
-pack .vpane.commarea.buttons.l -side top -fill x
-pack .vpane.commarea.buttons -side left -fill y
+pack .vpane.lower.commarea.buttons.l -side top -fill x
+pack .vpane.lower.commarea.buttons -side left -fill y
 
-button .vpane.commarea.buttons.rescan -text {Rescan} \
+button .vpane.lower.commarea.buttons.rescan -text {Rescan} \
 	-command do_rescan \
 	-font $mainfont
-pack .vpane.commarea.buttons.rescan -side top -fill x
-lappend disable_on_lock {.vpane.commarea.buttons.rescan conf -state}
+pack .vpane.lower.commarea.buttons.rescan -side top -fill x
+lappend disable_on_lock {.vpane.lower.commarea.buttons.rescan conf -state}
 
-button .vpane.commarea.buttons.amend -text {Amend Last} \
+button .vpane.lower.commarea.buttons.amend -text {Amend Last} \
 	-command do_amend_last \
 	-font $mainfont
-pack .vpane.commarea.buttons.amend -side top -fill x
-lappend disable_on_lock {.vpane.commarea.buttons.amend conf -state}
+pack .vpane.lower.commarea.buttons.amend -side top -fill x
+lappend disable_on_lock {.vpane.lower.commarea.buttons.amend conf -state}
 
-button .vpane.commarea.buttons.ciall -text {Check-in All} \
+button .vpane.lower.commarea.buttons.ciall -text {Check-in All} \
 	-command do_checkin_all \
 	-font $mainfont
-pack .vpane.commarea.buttons.ciall -side top -fill x
-lappend disable_on_lock {.vpane.commarea.buttons.ciall conf -state}
+pack .vpane.lower.commarea.buttons.ciall -side top -fill x
+lappend disable_on_lock {.vpane.lower.commarea.buttons.ciall conf -state}
 
-button .vpane.commarea.buttons.signoff -text {Sign Off} \
+button .vpane.lower.commarea.buttons.signoff -text {Sign Off} \
 	-command do_signoff \
 	-font $mainfont
-pack .vpane.commarea.buttons.signoff -side top -fill x
+pack .vpane.lower.commarea.buttons.signoff -side top -fill x
 
-button .vpane.commarea.buttons.commit -text {Commit} \
+button .vpane.lower.commarea.buttons.commit -text {Commit} \
 	-command do_commit \
 	-font $mainfont
-pack .vpane.commarea.buttons.commit -side top -fill x
-lappend disable_on_lock {.vpane.commarea.buttons.commit conf -state}
+pack .vpane.lower.commarea.buttons.commit -side top -fill x
+lappend disable_on_lock {.vpane.lower.commarea.buttons.commit conf -state}
 
 # -- Commit Message Buffer
-frame .vpane.commarea.buffer
-set ui_comm .vpane.commarea.buffer.t
-set ui_coml .vpane.commarea.buffer.l
+frame .vpane.lower.commarea.buffer
+set ui_comm .vpane.lower.commarea.buffer.t
+set ui_coml .vpane.lower.commarea.buffer.l
 label $ui_coml -text {Commit Message:} \
 	-anchor w \
 	-justify left \
@@ -1606,15 +1556,68 @@ trace add variable commit_type write {uplevel #0 {
 }}
 text $ui_comm -background white -borderwidth 1 \
 	-relief sunken \
-	-width 75 -height 10 -wrap none \
+	-width 75 -height 9 -wrap none \
 	-font $difffont \
-	-yscrollcommand {.vpane.commarea.buffer.sby set} \
+	-yscrollcommand {.vpane.lower.commarea.buffer.sby set} \
 	-cursor $maincursor
-scrollbar .vpane.commarea.buffer.sby -command [list $ui_comm yview]
+scrollbar .vpane.lower.commarea.buffer.sby -command [list $ui_comm yview]
 pack $ui_coml -side top -fill x
-pack .vpane.commarea.buffer.sby -side right -fill y
+pack .vpane.lower.commarea.buffer.sby -side right -fill y
 pack $ui_comm -side left -fill y
-pack .vpane.commarea.buffer -side left -fill y
+pack .vpane.lower.commarea.buffer -side left -fill y
+
+# -- Diff Header
+set ui_fname_value {}
+set ui_fstatus_value {}
+frame .vpane.lower.diff.header -background orange
+label .vpane.lower.diff.header.l1 -text {File:} \
+	-background orange \
+	-font $mainfont
+label .vpane.lower.diff.header.l2 -textvariable ui_fname_value \
+	-background orange \
+	-anchor w \
+	-justify left \
+	-font $mainfont
+label .vpane.lower.diff.header.l3 -text {Status:} \
+	-background orange \
+	-font $mainfont
+label .vpane.lower.diff.header.l4 -textvariable ui_fstatus_value \
+	-background orange \
+	-width $max_status_desc \
+	-anchor w \
+	-justify left \
+	-font $mainfont
+pack .vpane.lower.diff.header.l1 -side left
+pack .vpane.lower.diff.header.l2 -side left -fill x
+pack .vpane.lower.diff.header.l4 -side right
+pack .vpane.lower.diff.header.l3 -side right
+
+# -- Diff Body
+frame .vpane.lower.diff.body
+set ui_diff .vpane.lower.diff.body.t
+text $ui_diff -background white -borderwidth 0 \
+	-width 80 -height 15 -wrap none \
+	-font $difffont \
+	-xscrollcommand {.vpane.lower.diff.body.sbx set} \
+	-yscrollcommand {.vpane.lower.diff.body.sby set} \
+	-cursor $maincursor \
+	-state disabled
+scrollbar .vpane.lower.diff.body.sbx -orient horizontal \
+	-command [list $ui_diff xview]
+scrollbar .vpane.lower.diff.body.sby -orient vertical \
+	-command [list $ui_diff yview]
+pack .vpane.lower.diff.body.sbx -side bottom -fill x
+pack .vpane.lower.diff.body.sby -side right -fill y
+pack $ui_diff -side left -fill both -expand 1
+pack .vpane.lower.diff.header -side top -fill x
+pack .vpane.lower.diff.body -side bottom -fill both -expand 1
+
+$ui_diff tag conf dm -foreground red
+$ui_diff tag conf dp -foreground blue
+$ui_diff tag conf da -font [concat $difffont bold]
+$ui_diff tag conf di -foreground "#00a000"
+$ui_diff tag conf dni -foreground "#a000a0"
+$ui_diff tag conf bold -font [concat $difffont bold]
 
 # -- Status Bar
 set ui_status_value {Initializing...}
