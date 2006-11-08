@@ -1491,7 +1491,7 @@ menu .mbar.push
 
 # -- Options Menu
 menu .mbar.options
-.mbar.options add checkbutton -label {Trust File Modification Timestamp} \
+.mbar.options add checkbutton -label {Trust File Modification Timestamps} \
 	-offvalue false \
 	-onvalue true \
 	-variable cfg_trust_mtime
