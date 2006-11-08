@@ -2012,7 +2012,7 @@ sub git_print_tree_entry {
 
 sub git_difftree_body {
 	my ($difftree, $hash, $parent) = @_;
-
+	my ($have_blame) = gitweb_check_feature('blame');
 	print "<div class=\"list_head\">\n";
 	if ($#{$difftree} > 10) {
 		print(($#{$difftree} + 1) . " files changed:\n");
@@ -2085,9 +2085,13 @@ sub git_difftree_body {
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'from_id'},
 			                             hash_base=>$parent, file_name=>$diff{'file'})},
 				      "blob") . " | ";
-			print $cgi->a({-href => href(action=>"blame", hash_base=>$parent,
-			                             file_name=>$diff{'file'})},
-			              "blame") . " | ";
+			if ($have_blame) {
+				print $cgi->a({-href =>
+						   href(action=>"blame",
+							hash_base=>$parent,
+							file_name=>$diff{'file'})},
+					      "blame") . " | ";
+			}
 			print $cgi->a({-href => href(action=>"history", hash_base=>$parent,
 			                             file_name=>$diff{'file'})},
 			              "history");
@@ -2133,9 +2137,12 @@ sub git_difftree_body {
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
 						     hash_base=>$hash, file_name=>$diff{'file'})},
 				      "blob") . " | ";
-			print $cgi->a({-href => href(action=>"blame", hash_base=>$hash,
-			                             file_name=>$diff{'file'})},
-			              "blame") . " | ";
+			if ($have_blame) {
+				print $cgi->a({-href => href(action=>"blame",
+							     hash_base=>$hash,
+							     file_name=>$diff{'file'})},
+					      "blame") . " | ";
+			}
 			print $cgi->a({-href => href(action=>"history", hash_base=>$hash,
 			                             file_name=>$diff{'file'})},
 			              "history");
@@ -2176,9 +2183,12 @@ sub git_difftree_body {
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'from_id'},
 						     hash_base=>$parent, file_name=>$diff{'from_file'})},
 				      "blob") . " | ";
-			print $cgi->a({-href => href(action=>"blame", hash_base=>$parent,
-			                             file_name=>$diff{'from_file'})},
-			              "blame") . " | ";
+			if ($have_blame) {
+				print $cgi->a({-href => href(action=>"blame",
+							     hash_base=>$hash,
+							     file_name=>$diff{'to_file'})},
+					      "blame") . " | ";
+			}
 			print $cgi->a({-href => href(action=>"history", hash_base=>$parent,
 			                            file_name=>$diff{'from_file'})},
 			              "history");
