@@ -70,7 +70,7 @@ proc repository_state {hdvar ctvar} {
 proc update_status {{final Ready.}} {
 	global HEAD PARENT commit_type
 	global ui_index ui_other ui_status_value ui_comm
-	global status_active file_states
+	global status_active file_states status_start
 
 	if {$status_active || ![lock_index read]} return
 
@@ -84,6 +84,7 @@ proc update_status {{final Ready.}} {
 		set commit_type $new_type
 	}
 
+	set status_start [clock seconds]
 	array unset file_states
 	foreach w [list $ui_index $ui_other] {
 		$w conf -state normal
@@ -230,7 +231,7 @@ proc read_ls_others {fd final} {
 }
 
 proc status_eof {fd buf final} {
-	global status_active $buf
+	global status_active status_start $buf
 	global ui_fname_value ui_status_value file_states
 
 	if {[eof $fd]} {
@@ -240,8 +241,12 @@ proc status_eof {fd buf final} {
 		if {[incr status_active -1] == 0} {
 			unlock_index
 
-			set ui_status_value $final
+			set e1 [clock seconds]
 			display_all_files
+			set e2 [clock seconds]
+puts "TIME [expr $e1 - $status_start] + [expr $e2 - $e1] = [expr $e2 - $status_start]"
+
+			set ui_status_value $final
 
 			if {$ui_fname_value != {} && [array names file_states \
 				-exact $ui_fname_value] != {}}  {
@@ -664,11 +669,11 @@ proc push_to {remote} {
 ## ui helpers
 
 proc mapcol {state path} {
-	global all_cols
+	global all_cols ui_other
 
 	if {[catch {set r $all_cols($state)}]} {
 		puts "error: no column for state={$state} $path"
-		return o
+		return $ui_other
 	}
 	return $r
 }
@@ -716,31 +721,34 @@ proc bsearch {w path} {
 
 set next_icon_id 0
 
-proc merge_state {path state} {
+proc merge_state {path new_state} {
 	global file_states next_icon_id
 
-	if {[array names file_states -exact $path] == {}}  {
-		set m __
-		set s [list $m icon[incr next_icon_id]]
+	set s0 [string index $new_state 0]
+	set s1 [string index $new_state 1]
+
+	if {[catch {set info $file_states($path)}]} {
+		set state __
+		set icon n[incr next_icon_id]
 	} else {
-		set s $file_states($path)
-		set m [lindex $s 0]
+		set state [lindex $info 0]
+		set icon [lindex $info 1]
 	}
 
-	if {[string index $state 0] == {_}} {
-		set state [string index $m 0][string index $state 1]
-	} elseif {[string index $state 0] == {*}} {
-		set state _[string index $state 1]
+	if {$s0 == {_}} {
+		set s0 [string index $state 0]
+	} elseif {$s0 == {*}} {
+		set s0 _
 	}
 
-	if {[string index $state 1] == {_}} {
-		set state [string index $state 0][string index $m 1]
-	} elseif {[string index $state 1] == {*}} {
-		set state [string index $state 0]_
+	if {$s1 == {_}} {
+		set s1 [string index $state 1]
+	} elseif {$s1 == {*}} {
+		set s1 _
 	}
 
-	set file_states($path) [lreplace $s 0 0 $state]
-	return $m
+	set file_states($path) [list $s0$s1 $icon]
+	return $state
 }
 
 proc display_file {path state} {
@@ -750,19 +758,12 @@ proc display_file {path state} {
 	if {$status_active} return
 
 	set s $file_states($path)
+	set old_w [mapcol $old_m $path]
+	set new_w [mapcol $new_m $path]
 	set new_m [lindex $s 0]
-	set new_col [mapcol $new_m $path]
 	set new_ico [mapicon $new_m $path]
 
-	if {$new_col == {o}} {
-		set old_w $ui_index
-		set new_w $ui_other
-	} else {
-		set old_w $ui_other
-		set new_w $ui_index
-	}
-
-	if {$new_col != [mapcol $old_m $path]} {
+	if {$new_w != $old_w} {
 		set lno [bsearch $old_w $path]
 		if {$lno >= 0} {
 			incr lno
@@ -795,18 +796,12 @@ proc display_all_files {} {
 	foreach path [lsort [array names file_states]] {
 		set s $file_states($path)
 		set m [lindex $s 0]
-
-		if {[mapcol $m $path] == {o}} {
-			set aw $ui_other
-		} else {
-			set aw $ui_index
-		}
-
-		$aw image create end \
+		set w [mapcol $m $path]
+		$w image create end \
 			-align center -padx 5 -pady 1 \
 			-name [lindex $s 1] \
 			-image [mapicon $m $path]
-		$aw insert end "$path\n"
+		$w insert end "$path\n"
 	}
 
 	$ui_index conf -state disabled
@@ -1025,6 +1020,8 @@ static unsigned char file_merge_bits[] = {
    0xfa, 0x17, 0x02, 0x10, 0xfe, 0x1f};
 } -maskdata $filemask
 
+set ui_index .vpane.files.index.list
+set ui_other .vpane.files.other.list
 set max_status_desc 0
 foreach i {
 		{__ i plain    "Unmodified"}
@@ -1035,7 +1032,7 @@ foreach i {
 		{_O o plain    "Untracked"}
 		{A_ o fulltick "Added"}
 		{AM o parttick "Partially added"}
-		{AD o question  "Added (but now gone)"}
+		{AD o question "Added (but now gone)"}
 
 		{_D i question "Missing"}
 		{D_ i removed  "Removed"}
@@ -1048,7 +1045,11 @@ foreach i {
 	if {$max_status_desc < [string length [lindex $i 3]]} {
 		set max_status_desc [string length [lindex $i 3]]
 	}
-	set all_cols([lindex $i 0]) [lindex $i 1]
+	if {[lindex $i 1] == {i}} {
+		set all_cols([lindex $i 0]) $ui_index
+	} else {
+		set all_cols([lindex $i 0]) $ui_other
+	}
 	set all_icons([lindex $i 0]) file_[lindex $i 2]
 	set all_descs([lindex $i 0]) [lindex $i 3]
 }
@@ -1461,7 +1462,6 @@ panedwindow .vpane.files -orient horizontal
 pack .vpane -anchor n -side top -fill both -expand 1
 
 # -- Index File List
-set ui_index .vpane.files.index.list
 frame .vpane.files.index -height 100 -width 400
 label .vpane.files.index.title -text {Modified Files} \
 	-background green \
@@ -1479,7 +1479,6 @@ pack $ui_index -side left -fill both -expand 1
 .vpane.files add .vpane.files.index -sticky nsew
 
 # -- Other (Add) File List
-set ui_other .vpane.files.other.list
 frame .vpane.files.other -height 100 -width 100
 label .vpane.files.other.title -text {Untracked Files} \
 	-background red \
