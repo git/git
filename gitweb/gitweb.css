@@ -298,40 +298,82 @@ td.mode {
 	font-family: monospace;
 }
 
-div.diff a.list {
-	text-decoration: none;
+/* styling of diffs (patchsets): commitdiff and blobdiff views */
+div.diff.header,
+div.diff.extended_header {
+	white-space: normal;
 }
 
-div.diff a.list:hover {
+div.diff.header {
+	font-weight: bold;
+
+	background-color: #edece6;
+
+	margin-top: 4px;
+	padding: 4px 0px 2px 0px;
+	border: solid #d9d8d1;
+	border-width: 1px 0px 1px 0px;
+}
+
+div.diff.header a.path {
 	text-decoration: underline;
 }
 
-div.diff.to_file a.list,
-div.diff.to_file,
+div.diff.extended_header,
+div.diff.extended_header a.path,
+div.diff.extended_header a.hash {
+	color: #777777;
+}
+
+div.diff.extended_header .info {
+	color: #b0b0b0;
+}
+
+div.diff.extended_header {
+	background-color: #f6f5ee;
+	padding: 2px 0px 2px 0px;
+}
+
+div.diff a.path,
+div.diff a.hash {
+	text-decoration: none;
+}
+
+div.diff a.path:hover,
+div.diff a.hash:hover {
+	text-decoration: underline;
+}
+
+div.diff.to_file a.path,
+div.diff.to_file {
+	color: #007000;
+}
+
 div.diff.add {
 	color: #008800;
 }
 
-div.diff.from_file a.list,
-div.diff.from_file,
+div.diff.from_file a.path,
+div.diff.from_file {
+	color: #aa0000;
+}
+
 div.diff.rem {
 	color: #cc0000;
 }
 
 div.diff.chunk_header {
 	color: #990099;
+
+	border: dotted #ffe0ff;
+	border-width: 1px 0px 0px 0px;
+	margin-top: 2px;
 }
 
 div.diff.incomplete {
 	color: #cccccc;
 }
 
-div.diff_info {
-	font-family: monospace;
-	color: #000099;
-	background-color: #edece6;
-	font-style: italic;
-}
 
 div.index_include {
 	border: solid #d9d8d1;
