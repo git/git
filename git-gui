@@ -642,7 +642,40 @@ proc fetch_from {remote} {
 }
 
 proc pull_remote {remote branch} {
+	global HEAD commit_type
+	global file_states
+
 	if {![lock_index update]} return
+
+	# -- Our in memory state should match the repository.
+	#
+	repository_state curHEAD cur_type
+	if {$commit_type != $cur_type || $HEAD != $curHEAD} {
+		error_popup {Last scanned state does not match repository state.
+
+Its highly likely that another Git program modified the
+repository since our last scan.  A rescan is required
+before a pull can be started.
+}
+		unlock_index
+		update_status
+		return
+	}
+
+	# -- No differences should exist before a pull.
+	#
+	if {[array size file_states] != 0} {
+		error_popup {Uncommitted but modified files are present.
+
+You should not perform a pull with unmodified files in your working
+directory as Git would be unable to recover from an incorrect merge.
+
+Commit or throw away all changes before starting a pull operation.
+}
+		unlock_index
+		return
+	}
+
 	set w [new_console "pull $remote $branch" \
 		"Pulling new changes from branch $branch in $remote"]
 	set cmd [list git pull]
@@ -652,9 +685,14 @@ proc pull_remote {remote branch} {
 }
 
 proc post_pull_remote {remote branch success} {
+	global HEAD PARENT commit_type
+	global ui_status_value
+
 	unlock_index
 	if {$success} {
-		update_status "Successfully pulled $branch from $remote."
+		repository_state HEAD commit_type
+		set PARENT $HEAD
+		set $ui_status_value {Ready.}
 	} else {
 		update_status "Conflicts detected while pulling $branch from $remote."
 	}
