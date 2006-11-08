@@ -236,10 +236,13 @@ proc status_eof {fd buf final} {
 	if {[eof $fd]} {
 		set $buf {}
 		close $fd
+
 		if {[incr status_active -1] == 0} {
 			unlock_index
 
 			set ui_status_value $final
+			display_all_files
+
 			if {$ui_fname_value != {} && [array names file_states \
 				-exact $ui_fname_value] != {}}  {
 				show_diff $ui_fname_value
@@ -711,79 +714,103 @@ proc bsearch {w path} {
 	return -[expr $lo + 1]
 }
 
+set next_icon_id 0
+
 proc merge_state {path state} {
-	global file_states
+	global file_states next_icon_id
 
 	if {[array names file_states -exact $path] == {}}  {
-		set o __
-		set s [list $o none none]
+		set m __
+		set s [list $m icon[incr next_icon_id]]
 	} else {
 		set s $file_states($path)
-		set o [lindex $s 0]
+		set m [lindex $s 0]
 	}
 
-	set m [lindex $s 0]
-	if {[string index $state 0] == "_"} {
+	if {[string index $state 0] == {_}} {
 		set state [string index $m 0][string index $state 1]
-	} elseif {[string index $state 0] == "*"} {
+	} elseif {[string index $state 0] == {*}} {
 		set state _[string index $state 1]
 	}
 
-	if {[string index $state 1] == "_"} {
+	if {[string index $state 1] == {_}} {
 		set state [string index $state 0][string index $m 1]
-	} elseif {[string index $state 1] == "*"} {
+	} elseif {[string index $state 1] == {*}} {
 		set state [string index $state 0]_
 	}
 
 	set file_states($path) [lreplace $s 0 0 $state]
-	return $o
+	return $m
 }
 
 proc display_file {path state} {
-	global ui_index ui_other file_states
+	global ui_index ui_other file_states status_active
 
 	set old_m [merge_state $path $state]
-	set s $file_states($path)
-	set m [lindex $s 0]
+	if {$status_active} return
 
-	if {[mapcol $m $path] == "o"} {
-		set ii 1
-		set ai 2
-		set iw $ui_index
-		set aw $ui_other
+	set s $file_states($path)
+	set new_m [lindex $s 0]
+	set new_col [mapcol $new_m $path]
+	set new_ico [mapicon $new_m $path]
+
+	if {$new_col == {o}} {
+		set old_w $ui_index
+		set new_w $ui_other
 	} else {
-		set ii 2
-		set ai 1
-		set iw $ui_other
-		set aw $ui_index
+		set old_w $ui_other
+		set new_w $ui_index
 	}
 
-	set d [lindex $s $ii]
-	if {$d != "none"} {
-		set lno [bsearch $iw $path]
+	if {$new_col != [mapcol $old_m $path]} {
+		set lno [bsearch $old_w $path]
 		if {$lno >= 0} {
 			incr lno
-			$iw conf -state normal
-			$iw delete $lno.0 [expr $lno + 1].0
-			$iw conf -state disabled
-			set s [lreplace $s $ii $ii none]
+			$old_w conf -state normal
+			$old_w delete $lno.0 [expr $lno + 1].0
+			$old_w conf -state disabled
 		}
+
+		set lno [expr abs([bsearch $new_w $path] + 1) + 1]
+		$new_w conf -state normal
+		$new_w image create $lno.0 \
+			-align center -padx 5 -pady 1 \
+			-name [lindex $s 1] \
+			-image [mapicon $m $path]
+		$new_w insert $lno.1 "$path\n"
+		$new_w conf -state disabled
+	} elseif {$new_icon != [mapicon $old_m $path]} {
+		$new_w conf -state normal
+		$new_w image conf [lindex $s 1] -image $new_icon
+		$new_w conf -state disabled
+	}
+}
+
+proc display_all_files {} {
+	global ui_index ui_other file_states
+
+	$ui_index conf -state normal
+	$ui_other conf -state normal
+
+	foreach path [lsort [array names file_states]] {
+		set s $file_states($path)
+		set m [lindex $s 0]
+
+		if {[mapcol $m $path] == {o}} {
+			set aw $ui_other
+		} else {
+			set aw $ui_index
+		}
+
+		$aw image create end \
+			-align center -padx 5 -pady 1 \
+			-name [lindex $s 1] \
+			-image [mapicon $m $path]
+		$aw insert end "$path\n"
 	}
 
-	set d [lindex $s $ai]
-	if {$d == "none"} {
-		set lno [expr abs([bsearch $aw $path] + 1) + 1]
-		$aw conf -state normal
-		set ico [$aw image create $lno.0 \
-			-align center -padx 5 -pady 1 \
-			-image [mapicon $m $path]]
-		$aw insert $lno.1 "$path\n"
-		$aw conf -state disabled
-		set file_states($path) [lreplace $s $ai $ai [list $ico]]
-	} elseif {[mapicon $m $path] != [mapicon $old_m $path]} {
-		set ico [lindex $d 0]
-		$aw image conf $ico -image [mapicon $m $path]
-	}
+	$ui_index conf -state disabled
+	$ui_other conf -state disabled
 }
 
 proc with_update_index {body} {
