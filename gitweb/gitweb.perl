@@ -962,6 +962,17 @@ sub git_get_projects_list {
 			if (!defined $path) {
 				next;
 			}
+			if ($filter ne '') {
+				# looking for forks;
+				my $pfx = substr($path, 0, length($filter));
+				if ($pfx ne $filter) {
+					next;
+				}
+				my $sfx = substr($path, length($filter));
+				if ($sfx !~ /^\/.*\.git$/) {
+					next;
+				}
+			}
 			if (check_export_ok("$projectroot/$path")) {
 				my $pr = {
 					path => $path,
@@ -2230,8 +2241,14 @@ sub git_project_list_body {
 		}
 		if ($check_forks) {
 			my $pname = $pr->{'path'};
-			$pname =~ s/\.git$//;
-			$pr->{'forks'} = -d "$projectroot/$pname";
+			if (($pname =~ s/\.git$//) &&
+			    ($pname !~ /\/$/) &&
+			    (-d "$projectroot/$pname")) {
+				$pr->{'forks'} = "-d $projectroot/$pname";
+			}
+			else {
+				$pr->{'forks'} = 0;
+			}
 		}
 		push @projects, $pr;
 	}
@@ -2297,6 +2314,7 @@ sub git_project_list_body {
 		if ($check_forks) {
 			print "<td>";
 			if ($pr->{'forks'}) {
+				print "<!-- $pr->{'forks'} -->\n";
 				print $cgi->a({-href => href(project=>$pr->{'path'}, action=>"forks")}, "+");
 			}
 			print "</td>\n";
