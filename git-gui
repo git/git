@@ -71,6 +71,7 @@ proc update_status {{final Ready.}} {
 	global HEAD PARENT commit_type
 	global ui_index ui_other ui_status_value ui_comm
 	global status_active file_states
+	global cfg_trust_mtime
 
 	if {$status_active || ![lock_index read]} return
 
@@ -100,22 +101,28 @@ proc update_status {{final Ready.}} {
 		$ui_comm edit modified false
 	}
 
-	set status_active 1
-	set ui_status_value {Refreshing file status...}
-	set fd_rf [open "| git update-index -q --unmerged --refresh" r]
-	fconfigure $fd_rf -blocking 0 -translation binary
-	fileevent $fd_rf readable [list read_refresh $fd_rf $final]
+	if {$cfg_trust_mtime == {true}} {
+		update_status_stage2 {} $final
+	} else {
+		set status_active 1
+		set ui_status_value {Refreshing file status...}
+		set fd_rf [open "| git update-index -q --unmerged --refresh" r]
+		fconfigure $fd_rf -blocking 0 -translation binary
+		fileevent $fd_rf readable [list update_status_stage2 $fd_rf $final]
+	}
 }
 
-proc read_refresh {fd final} {
+proc update_status_stage2 {fd final} {
 	global gitdir PARENT commit_type
 	global ui_index ui_other ui_status_value ui_comm
 	global status_active file_states
 	global buf_rdi buf_rdf buf_rlo
 
-	read $fd
-	if {![eof $fd]} return
-	close $fd
+	if {$fd != {}} {
+		read $fd
+		if {![eof $fd]} return
+		close $fd
+	}
 
 	set ls_others [list | git ls-files --others -z \
 		--exclude-per-directory=.gitignore]
@@ -860,6 +867,7 @@ proc toggle_mode {path} {
 
 proc load_repo_config {} {
 	global repo_config
+	global cfg_trust_mtime
 
 	array unset repo_config
 	catch {
@@ -870,6 +878,22 @@ proc load_repo_config {} {
 			}
 		}
 		close $fd_rc
+	}
+
+	if {[catch {set cfg_trust_mtime $repo_config(gui.trustmtime)}]} {
+		set cfg_trust_mtime false
+	}
+}
+
+proc save_my_config {} {
+	global repo_config
+	global cfg_trust_mtime
+
+	if {[catch {set rc_trustMTime $repo_config(gui.trustmtime)}]} {
+		set rc_trustMTime false
+	}
+	if {$cfg_trust_mtime != $rc_trustMTime} {
+		exec git repo-config gui.trustMTime $cfg_trust_mtime
 	}
 }
 
@@ -1299,6 +1323,7 @@ proc do_quit {} {
 		file delete $save
 	}
 
+	save_my_config
 	destroy .
 }
 
@@ -1407,6 +1432,7 @@ menu .mbar -tearoff 0
 .mbar add cascade -label Fetch -menu .mbar.fetch
 .mbar add cascade -label Pull -menu .mbar.pull
 .mbar add cascade -label Push -menu .mbar.push
+.mbar add cascade -label Options -menu .mbar.options
 . configure -menu .mbar
 
 # -- Project Menu
@@ -1460,6 +1486,13 @@ menu .mbar.pull
 
 # -- Push Menu
 menu .mbar.push
+
+# -- Options Menu
+menu .mbar.options
+.mbar.options add checkbutton -label {Trust File Modification Timestamp} \
+	-offvalue false \
+	-onvalue true \
+	-variable cfg_trust_mtime
 
 # -- Main Window Layout
 panedwindow .vpane -orient vertical
