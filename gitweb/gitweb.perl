@@ -584,11 +584,39 @@ sub esc_html ($;%) {
 	return $str;
 }
 
+# Make control characterss "printable".
+sub quot_cec {
+	my $cntrl = shift;
+	my %es = ( # character escape codes, aka escape sequences
+		   "\t" => '\t',   # tab            (HT)
+		   "\n" => '\n',   # line feed      (LF)
+		   "\r" => '\r',   # carrige return (CR)
+		   "\f" => '\f',   # form feed      (FF)
+		   "\b" => '\b',   # backspace      (BS)
+		   "\a" => '\a',   # alarm (bell)   (BEL)
+		   "\e" => '\e',   # escape         (ESC)
+		   "\013" => '\v', # vertical tab   (VT)
+		   "\000" => '\0', # nul character  (NUL)
+		   );
+	my $chr = ( (exists $es{$cntrl})
+		    ? $es{$cntrl}
+		    : sprintf('\%03o', ord($cntrl)) );
+	return "<span class=\"cntrl\">$chr</span>";
+}
+
+# Alternatively use unicode control pictures codepoints.
+sub quot_upr {
+	my $cntrl = shift;
+	my $chr = sprintf('&#%04d;', 0x2400+ord($cntrl));
+	return "<span class=\"cntrl\">$chr</span>";
+}
+
 # quote control characters and escape filename to HTML
 sub esc_path {
 	my $str = shift;
+
 	$str = esc_html($str);
-	$str =~ s|([[:cntrl:]])|<span class="cntrl">?</span>|g;
+	$str =~ s|([[:cntrl:]])|quot_cec($1)|eg;
 	return $str;
 }
 
