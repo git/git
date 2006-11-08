@@ -926,7 +926,7 @@ sub git_get_projects_list {
 		$dir =~ s!/+$!!;
 		my $pfxlen = length("$dir");
 
-		my $check_forks = gitweb_check_feature('forks');
+		my ($check_forks) = gitweb_check_feature('forks');
 
 		File::Find::find({
 			follow_fast => 1, # follow symbolic links
@@ -2212,7 +2212,7 @@ sub git_patchset_body {
 sub git_project_list_body {
 	my ($projlist, $order, $from, $to, $extra, $no_header) = @_;
 
-	my $check_forks = gitweb_check_feature('forks');
+	my ($check_forks) = gitweb_check_feature('forks');
 
 	my @projects;
 	foreach my $pr (@$projlist) {
@@ -2614,7 +2614,9 @@ sub git_summary {
 	my @taglist  = git_get_tags_list(15);
 	my @headlist = git_get_heads_list(15);
 	my @forklist;
-	if (gitweb_check_feature('forks')) {
+	my ($check_forks) = gitweb_check_feature('forks');
+
+	if ($check_forks) {
 		@forklist = git_get_projects_list($project);
 	}
 
