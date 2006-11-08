@@ -642,6 +642,7 @@ proc fetch_from {remote} {
 }
 
 proc pull_remote {remote branch} {
+	if {![lock_index update]} return
 	set w [new_console "pull $remote $branch" \
 		"Pulling new changes from branch $branch in $remote"]
 	set cmd [list git pull]
@@ -651,6 +652,7 @@ proc pull_remote {remote branch} {
 }
 
 proc post_pull_remote {remote branch success} {
+	unlock_index
 	if {$success} {
 		update_status "Successfully pulled $branch from $remote."
 	} else {
