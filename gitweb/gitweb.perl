@@ -576,11 +576,10 @@ sub esc_html ($;%) {
 
 	$str = to_utf8($str);
 	$str = escapeHTML($str);
-	$str =~ s/\014/^L/g; # escape FORM FEED (FF) character (e.g. in COPYING file)
-	$str =~ s/\033/^[/g; # "escape" ESCAPE (\e) character (e.g. commit 20a3847d8a5032ce41f90dcc68abfb36e6fee9b1)
 	if ($opts{'-nbsp'}) {
 		$str =~ s/ /&nbsp;/g;
 	}
+	$str =~ s|([[:cntrl:]])|(($1 ne "\t") ? quot_cec($1) : $1)|eg;
 	return $str;
 }
 
@@ -1879,17 +1878,17 @@ sub git_print_page_path {
 			$fullname .= ($fullname ? '/' : '') . $dir;
 			print $cgi->a({-href => href(action=>"tree", file_name=>$fullname,
 			                             hash_base=>$hb),
-			              -title => $fullname}, esc_path($dir));
+			              -title => esc_html($fullname)}, esc_path($dir));
 			print " / ";
 		}
 		if (defined $type && $type eq 'blob') {
 			print $cgi->a({-href => href(action=>"blob_plain", file_name=>$file_name,
 			                             hash_base=>$hb),
-			              -title => $name}, esc_path($basename));
+			              -title => esc_html($name)}, esc_path($basename));
 		} elsif (defined $type && $type eq 'tree') {
 			print $cgi->a({-href => href(action=>"tree", file_name=>$file_name,
 			                             hash_base=>$hb),
-			              -title => $name}, esc_path($basename));
+			              -title => esc_html($name)}, esc_path($basename));
 			print " / ";
 		} else {
 			print esc_path($basename);
@@ -2851,6 +2850,7 @@ sub git_tag {
 	print "<div class=\"page_body\">";
 	my $comment = $tag{'comment'};
 	foreach my $line (@$comment) {
+		chomp($line);
 		print esc_html($line) . "<br/>\n";
 	}
 	print "</div>\n";
@@ -2920,6 +2920,7 @@ HTML
 			}
 		}
 		my $data = $_;
+		chomp($data);
 		my $rev = substr($full_rev, 0, 8);
 		my $author = $meta->{'author'};
 		my %date = parse_date($meta->{'author-time'},
