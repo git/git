@@ -932,7 +932,7 @@ proc populate_remote_menu {m pfx op} {
 }
 
 proc populate_pull_menu {m} {
-	global gitdir repo_config all_remotes mainfont
+	global gitdir repo_config all_remotes mainfont disable_on_lock
 
 	foreach remote $all_remotes {
 		set rb {}
@@ -961,6 +961,8 @@ proc populate_pull_menu {m} {
 				-label "Branch $rb_short from $remote..." \
 				-command [list pull_remote $remote $rb] \
 				-font $mainfont
+			lappend disable_on_lock \
+				[list $m entryconf [$m index last] -state]
 		}
 	}
 }
