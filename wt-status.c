@@ -102,8 +102,6 @@ static void wt_status_print_updated_cb(struct diff_queue_struct *q,
 	struct wt_status *s = data;
 	int shown_header = 0;
 	int i;
-	if (q->nr) {
-	}
 	for (i = 0; i < q->nr; i++) {
 		if (q->queue[i]->status == 'U')
 			continue;

@@ -15,7 +15,12 @@
 #include <sys/time.h>
 #include <signal.h>
 
-static const char pack_usage[] = "git-pack-objects [-q] [--no-reuse-delta] [--delta-base-offset] [--non-empty] [--local] [--incremental] [--window=N] [--depth=N] [--all-progress] [--revs [--unpacked | --all]*] [--stdout | base-name] <ref-list | <object-list]";
+static const char pack_usage[] = "\
+git-pack-objects [{ -q | --progress | --all-progress }] \n\
+	[--local] [--incremental] [--window=N] [--depth=N] \n\
+	[--no-reuse-delta] [--delta-base-offset] [--non-empty] \n\
+	[--revs [--unpacked | --all]*] [--stdout | base-name] \n\
+	[<ref-list | <object-list]";
 
 struct object_entry {
 	unsigned char sha1[20];
@@ -1520,14 +1525,6 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			local = 1;
 			continue;
 		}
-		if (!strcmp("--progress", arg)) {
-			progress = 1;
-			continue;
-		}
-		if (!strcmp("--all-progress", arg)) {
-			progress = 2;
-			continue;
-		}
 		if (!strcmp("--incremental", arg)) {
 			incremental = 1;
 			continue;
@@ -1548,6 +1545,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp("--progress", arg)) {
 			progress = 1;
+			continue;
+		}
+		if (!strcmp("--all-progress", arg)) {
+			progress = 2;
 			continue;
 		}
 		if (!strcmp("-q", arg)) {
