@@ -64,31 +64,70 @@ static void wt_status_print_trailer(void)
 	color_printf_ln(color(WT_STATUS_HEADER), "#");
 }
 
+static const char *quote_crlf(const char *in, char *buf, size_t sz)
+{
+	const char *scan;
+	char *out;
+	const char *ret = in;
+
+	for (scan = in, out = buf; *scan; scan++) {
+		int ch = *scan;
+		int quoted;
+
+		switch (ch) {
+		case '\n':
+			quoted = 'n';
+			break;
+		case '\r':
+			quoted = 'r';
+			break;
+		default:
+			*out++ = ch;
+			continue;
+		}
+		*out++ = '\\';
+		*out++ = quoted;
+		ret = buf;
+	}
+	*out = '\0';
+	return ret;
+}
+
 static void wt_status_print_filepair(int t, struct diff_filepair *p)
 {
 	const char *c = color(t);
+	const char *one, *two;
+	char onebuf[PATH_MAX], twobuf[PATH_MAX];
+
+	one = quote_crlf(p->one->path, onebuf, sizeof(onebuf));
+	two = quote_crlf(p->two->path, twobuf, sizeof(twobuf));
+
 	color_printf(color(WT_STATUS_HEADER), "#\t");
 	switch (p->status) {
 	case DIFF_STATUS_ADDED:
-		color_printf(c, "new file:   %s", p->one->path); break;
+		color_printf(c, "new file:   %s", one);
+		break;
 	case DIFF_STATUS_COPIED:
-		color_printf(c, "copied:     %s -> %s",
-				p->one->path, p->two->path);
+		color_printf(c, "copied:     %s -> %s", one, two);
 		break;
 	case DIFF_STATUS_DELETED:
-		color_printf(c, "deleted:    %s", p->one->path); break;
+		color_printf(c, "deleted:    %s", one);
+		break;
 	case DIFF_STATUS_MODIFIED:
-		color_printf(c, "modified:   %s", p->one->path); break;
+		color_printf(c, "modified:   %s", one);
+		break;
 	case DIFF_STATUS_RENAMED:
-		color_printf(c, "renamed:    %s -> %s",
-				p->one->path, p->two->path);
+		color_printf(c, "renamed:    %s -> %s", one, two);
 		break;
 	case DIFF_STATUS_TYPE_CHANGED:
-		color_printf(c, "typechange: %s", p->one->path); break;
+		color_printf(c, "typechange: %s", one);
+		break;
 	case DIFF_STATUS_UNKNOWN:
-		color_printf(c, "unknown:    %s", p->one->path); break;
+		color_printf(c, "unknown:    %s", one);
+		break;
 	case DIFF_STATUS_UNMERGED:
-		color_printf(c, "unmerged:   %s", p->one->path); break;
+		color_printf(c, "unmerged:   %s", one);
+		break;
 	default:
 		die("bug: unhandled diff status %c", p->status);
 	}
@@ -134,6 +173,8 @@ static void wt_status_print_changed_cb(struct diff_queue_struct *q,
 void wt_status_print_initial(struct wt_status *s)
 {
 	int i;
+	char buf[PATH_MAX];
+
 	read_cache();
 	if (active_nr) {
 		s->commitable = 1;
@@ -143,7 +184,8 @@ void wt_status_print_initial(struct wt_status *s)
 	for (i = 0; i < active_nr; i++) {
 		color_printf(color(WT_STATUS_HEADER), "#\t");
 		color_printf_ln(color(WT_STATUS_UPDATED), "new file: %s",
-				active_cache[i]->name);
+				quote_crlf(active_cache[i]->name,
+					   buf, sizeof(buf)));
 	}
 	if (active_nr)
 		wt_status_print_trailer();
