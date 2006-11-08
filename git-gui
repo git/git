@@ -819,7 +819,7 @@ proc display_file {path state} {
 		$new_w image create $lno.0 \
 			-align center -padx 5 -pady 1 \
 			-name [lindex $s 1] \
-			-image [mapicon $m $path]
+			-image $new_icon
 		$new_w insert $lno.1 "$path\n"
 		$new_w conf -state disabled
 	} elseif {$new_icon != [mapicon $old_m $path]} {
