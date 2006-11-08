@@ -10,6 +10,8 @@ Items outstanding:
 
  * Add file to .gitignore or info/excludes.
 
+ * Make initial commits work (currently it crashes the UI).
+
  * Populate the pull menu with local branches.
 
  * Make use of the new default merge data stored in repo-config.
