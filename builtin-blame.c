@@ -19,8 +19,8 @@
 #include <sys/time.h>
 #include <regex.h>
 
-static char pickaxe_usage[] =
-"git-pickaxe [-c] [-l] [-t] [-f] [-n] [-p] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [commit] [--] file\n"
+static char blame_usage[] =
+"git-blame [-c] [-l] [-t] [-f] [-n] [-p] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [commit] [--] file\n"
 "  -c, --compatibility Use the same output mode as git-annotate (Default: off)\n"
 "  -l, --long          Show long commit SHA1 (Default: off)\n"
 "  -t, --time          Show raw timestamp (Default: off)\n"
@@ -287,12 +287,12 @@ static struct origin *find_origin(struct scoreboard *sb,
 		hashcpy(porigin->blob_sha1, origin->blob_sha1);
 	}
 	else if (diff_queued_diff.nr != 1)
-		die("internal error in pickaxe::find_origin");
+		die("internal error in blame::find_origin");
 	else {
 		struct diff_filepair *p = diff_queued_diff.queue[0];
 		switch (p->status) {
 		default:
-			die("internal error in pickaxe::find_origin (%c)",
+			die("internal error in blame::find_origin (%c)",
 			    p->status);
 		case 'M':
 			porigin = get_origin(sb, parent, origin->path);
@@ -1619,13 +1619,13 @@ static void prepare_blame_range(struct scoreboard *sb,
 	if (*term == ',') {
 		term = parse_loc(term + 1, sb, lno, *bottom + 1, top);
 		if (*term)
-			usage(pickaxe_usage);
+			usage(blame_usage);
 	}
 	if (*term)
-		usage(pickaxe_usage);
+		usage(blame_usage);
 }
 
-int cmd_pickaxe(int argc, const char **argv, const char *prefix)
+int cmd_blame(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
 	const char *path;
@@ -1669,7 +1669,7 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 		else if (!strncmp("-L", arg, 2)) {
 			if (!arg[2]) {
 				if (++i >= argc)
-					usage(pickaxe_usage);
+					usage(blame_usage);
 				arg = argv[i];
 			}
 			else
@@ -1734,16 +1734,16 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 	if (seen_dashdash) {
 		/* (1) */
 		if (argc <= i)
-			usage(pickaxe_usage);
+			usage(blame_usage);
 		path = add_prefix(prefix, argv[i]);
 		if (i + 1 == argc - 1) {
 			if (unk != 1)
-				usage(pickaxe_usage);
+				usage(blame_usage);
 			argv[unk++] = argv[i + 1];
 		}
 		else if (i + 1 != argc)
 			/* garbage at end */
-			usage(pickaxe_usage);
+			usage(blame_usage);
 	}
 	else {
 		int j;
@@ -1752,7 +1752,7 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 				seen_dashdash = j;
 		if (seen_dashdash) {
 			if (seen_dashdash + 1 != argc - 1)
-				usage(pickaxe_usage);
+				usage(blame_usage);
 			path = add_prefix(prefix, argv[seen_dashdash + 1]);
 			for (j = i; j < seen_dashdash; j++)
 				argv[unk++] = argv[j];
@@ -1772,7 +1772,7 @@ int cmd_pickaxe(int argc, const char **argv, const char *prefix)
 				}
 			}
 			else if (i != argc - 1)
-				usage(pickaxe_usage); /* garbage at end */
+				usage(blame_usage); /* garbage at end */
 
 			if (!has_path_in_work_tree(path))
 				die("cannot stat path %s: %s",

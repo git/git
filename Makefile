@@ -201,7 +201,7 @@ PROGRAMS = \
 	git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X \
 	git-pack-redundant$X git-var$X \
-	git-describe$X git-merge-tree$X git-blame$X git-imap-send$X \
+	git-describe$X git-merge-tree$X git-imap-send$X \
 	git-merge-recursive$X \
 	$(EXTRA_PROGRAMS)
 
@@ -267,6 +267,7 @@ BUILTIN_OBJS = \
 	builtin-annotate.o \
 	builtin-apply.o \
 	builtin-archive.o \
+	builtin-blame.o \
 	builtin-branch.o \
 	builtin-cat-file.o \
 	builtin-checkout-index.o \
@@ -290,7 +291,6 @@ BUILTIN_OBJS = \
 	builtin-mv.o \
 	builtin-name-rev.o \
 	builtin-pack-objects.o \
-	builtin-pickaxe.o \
 	builtin-prune.o \
 	builtin-prune-packed.o \
 	builtin-push.o \
