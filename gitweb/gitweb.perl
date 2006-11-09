@@ -814,12 +814,11 @@ sub file_type_long {
 ## functions returning short HTML fragments, or transforming HTML fragments
 ## which don't beling to other sections
 
-# format line of commit message or tag comment
+# format line of commit message.
 sub format_log_line_html {
 	my $line = shift;
 
-	$line = esc_html($line);
-	$line =~ s/ /&nbsp;/g;
+	$line = esc_html($line, -nbsp=>1);
 	if ($line =~ m/([0-9a-fA-F]{40})/) {
 		my $hash_text = $1;
 		if (git_get_type($hash_text) eq "commit") {
