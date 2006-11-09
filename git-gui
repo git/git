@@ -1398,19 +1398,28 @@ proc do_include_all {} {
 	}
 }
 
-proc do_signoff {} {
-	global ui_comm
+set GIT_COMMITTER_IDENT {}
 
-	catch {
-		set me [exec git var GIT_COMMITTER_IDENT]
-		if {[regexp {(.*) [0-9]+ [-+0-9]+$} $me me name]} {
-			set str "Signed-off-by: $name"
-			if {[$ui_comm get {end -1c linestart} {end -1c}] != $str} {
-				$ui_comm insert end "\n"
-				$ui_comm insert end $str
-				$ui_comm see end
-			}
+proc do_signoff {} {
+	global ui_comm GIT_COMMITTER_IDENT
+
+	if {$GIT_COMMITTER_IDENT == {}} {
+		if {[catch {set me [exec git var GIT_COMMITTER_IDENT]} err]} {
+			error_popup "Unable to obtain your identity:\n$err"
+			return
 		}
+		if {![regexp {^(.*) [0-9]+ [-+0-9]+$} \
+			$me me GIT_COMMITTER_IDENT]} {
+			error_popup "Invalid GIT_COMMITTER_IDENT:\n$me"
+			return
+		}
+	}
+
+	set str "Signed-off-by: $GIT_COMMITTER_IDENT"
+	if {[$ui_comm get {end -1c linestart} {end -1c}] != $str} {
+		$ui_comm insert end "\n"
+		$ui_comm insert end $str
+		$ui_comm see end
 	}
 }
 
