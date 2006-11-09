@@ -134,6 +134,7 @@ my %cmd = (
 	'commit-diff' => [ \&commit_diff, 'Commit a diff between two trees',
 			{ 'message|m=s' => \$_message,
 			  'file|F=s' => \$_file,
+			  'revision|r=s' => \$_revision,
 			%cmt_opts } ],
 	dcommit => [ \&dcommit, 'Commit several diffs to merge with upstream',
 			{ 'merge|m|M' => \$_merge,
@@ -586,11 +587,21 @@ sub commit_lib {
 sub dcommit {
 	my $gs = "refs/remotes/$GIT_SVN";
 	chomp(my @refs = safe_qx(qw/git-rev-list --no-merges/, "$gs..HEAD"));
+	my $last_rev;
 	foreach my $d (reverse @refs) {
+		unless (defined $last_rev) {
+			(undef, $last_rev, undef) = cmt_metadata("$d~1");
+			unless (defined $last_rev) {
+				die "Unable to extract revision information ",
+				    "from commit $d~1\n";
+			}
+		}
 		if ($_dry_run) {
 			print "diff-tree $d~1 $d\n";
 		} else {
-			commit_diff("$d~1", $d);
+			if (my $r = commit_diff("$d~1", $d, undef, $last_rev)) {
+				$last_rev = $r;
+			} # else: no changes, same $last_rev
 		}
 	}
 	return if $_dry_run;
@@ -814,6 +825,8 @@ sub commit_diff {
 		print STDERR "Needed URL or usable git-svn id command-line\n";
 		commit_diff_usage();
 	}
+	my $r = shift || $_revision;
+	die "-r|--revision is a required argument\n" unless (defined $r);
 	if (defined $_message && defined $_file) {
 		print STDERR "Both --message/-m and --file/-F specified ",
 				"for the commit message.\n",
@@ -830,13 +843,22 @@ sub commit_diff {
 	($repo, $SVN_PATH) = repo_path_split($SVN_URL);
 	$SVN_LOG ||= libsvn_connect($repo);
 	$SVN ||= libsvn_connect($repo);
+	if ($r eq 'HEAD') {
+		$r = $SVN->get_latest_revnum;
+	} elsif ($r !~ /^\d+$/) {
+		die "revision argument: $r not understood by git-svn\n";
+	}
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef, 0) : ();
-	my $ed = SVN::Git::Editor->new({	r => $SVN->get_latest_revnum,
+	my $rev_committed;
+	my $ed = SVN::Git::Editor->new({	r => $r,
 						ra => $SVN_LOG, c => $tb,
 						svn_path => $SVN_PATH
 					},
 				$SVN->get_commit_editor($_message,
-					sub {print "Committed $_[0]\n"},@lock)
+					sub {
+						$rev_committed = $_[0];
+						print "Committed $_[0]\n";
+					}, @lock)
 				);
 	my $mods = libsvn_checkout_tree($ta, $tb, $ed);
 	if (@$mods == 0) {
@@ -846,6 +868,7 @@ sub commit_diff {
 		$ed->close_edit;
 	}
 	$_message = $_file = undef;
+	return $rev_committed;
 }
 
 ########################### utility functions #########################
