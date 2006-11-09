@@ -41,10 +41,7 @@ OPTIONS
 	Use the same output mode as gitlink:git-annotate[1] (Default: off).
 
 -L n,m::
-	Annotate only the specified line range (lines count from
-	1).  The range can be specified with a regexp.  For
-	example, `-L '/^sub esc_html /,/^}$/'` limits the
-	annotation only to the body of `esc_html` subroutine.
+	Annotate only the specified line range (lines count from 1).
 
 -l, --long::
 	Show long rev (Default: off).
@@ -124,6 +121,12 @@ ranges.  When you are interested in finding the origin for
 ll. 40-60 for file `foo`, you can use `-L` option like this:
 
 	git blame -L 40,60 foo
+
+Also you can use regular expression to specify the line range.
+
+	git blame -L '/^sub hello {/,/^}$/' foo
+
+would limit the annotation to the body of `hello` subroutine.
 
 When you are not interested in changes older than the version
 v2.6.18, or changes older than 3 weeks, you can use revision
