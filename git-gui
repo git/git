@@ -9,6 +9,86 @@ exec wish "$0" -- "$@"
 
 ######################################################################
 ##
+## config
+
+proc load_repo_config {} {
+	global repo_config
+	global cfg_trust_mtime
+
+	array unset repo_config
+	catch {
+		set fd_rc [open "| git repo-config --list" r]
+		while {[gets $fd_rc line] >= 0} {
+			if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
+				lappend repo_config($name) $value
+			}
+		}
+		close $fd_rc
+	}
+
+	if {[catch {set cfg_trust_mtime \
+			[lindex $repo_config(gui.trustmtime) 0]
+		}]} {
+		set cfg_trust_mtime false
+	}
+}
+
+proc save_my_config {} {
+	global repo_config
+	global cfg_trust_mtime
+
+	if {[catch {set rc_trustMTime $repo_config(gui.trustmtime)}]} {
+		set rc_trustMTime [list false]
+	}
+	if {$cfg_trust_mtime != [lindex $rc_trustMTime 0]} {
+		exec git repo-config gui.trustMTime $cfg_trust_mtime
+		set repo_config(gui.trustmtime) [list $cfg_trust_mtime]
+	}
+
+	set cfg_geometry [list \
+		[wm geometry .] \
+		[.vpane sash coord 0] \
+		[.vpane.files sash coord 0] \
+		]
+	if {[catch {set rc_geometry $repo_config(gui.geometry)}]} {
+		set rc_geometry [list [list]]
+	}
+	if {$cfg_geometry != [lindex $rc_geometry 0]} {
+		exec git repo-config gui.geometry $cfg_geometry
+		set repo_config(gui.geometry) [list $cfg_geometry]
+	}
+}
+
+######################################################################
+##
+## repository setup
+
+set appname [lindex [file split $argv0] end]
+set gitdir {}
+set GIT_COMMITTER_IDENT {}
+
+if {[catch {set cdup [exec git rev-parse --show-cdup]} err]} {
+	show_msg {} . "Cannot find the git directory: $err"
+	exit 1
+}
+if {$cdup != ""} {
+	cd $cdup
+}
+unset cdup
+
+if {[catch {set gitdir [exec git rev-parse --git-dir]} err]} {
+	show_msg {} . "Cannot find the git directory: $err"
+	exit 1
+}
+
+if {$appname == {git-citool}} {
+	set single_commit 1
+}
+
+load_repo_config
+
+######################################################################
+##
 ## task management
 
 set single_commit 0
@@ -903,39 +983,7 @@ proc toggle_mode {path} {
 
 ######################################################################
 ##
-## config (fetch push pull)
-
-proc load_repo_config {} {
-	global repo_config
-	global cfg_trust_mtime
-
-	array unset repo_config
-	catch {
-		set fd_rc [open "| git repo-config --list" r]
-		while {[gets $fd_rc line] >= 0} {
-			if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
-				lappend repo_config($name) $value
-			}
-		}
-		close $fd_rc
-	}
-
-	if {[catch {set cfg_trust_mtime $repo_config(gui.trustmtime)}]} {
-		set cfg_trust_mtime false
-	}
-}
-
-proc save_my_config {} {
-	global repo_config
-	global cfg_trust_mtime
-
-	if {[catch {set rc_trustMTime $repo_config(gui.trustmtime)}]} {
-		set rc_trustMTime false
-	}
-	if {$cfg_trust_mtime != $rc_trustMTime} {
-		exec git repo-config gui.trustMTime $cfg_trust_mtime
-	}
-}
+## remote management
 
 proc load_all_remotes {} {
 	global gitdir all_remotes repo_config
@@ -1398,8 +1446,6 @@ proc do_include_all {} {
 	}
 }
 
-set GIT_COMMITTER_IDENT {}
-
 proc do_signoff {} {
 	global ui_comm GIT_COMMITTER_IDENT
 
@@ -1724,6 +1770,13 @@ label .status -textvariable ui_status_value \
 	-font $mainfont
 pack .status -anchor w -side bottom -fill x
 
+# -- Load geometry
+catch {
+wm geometry . [lindex $repo_config(gui.geometry) 0 0]
+eval .vpane sash place 0 [lindex $repo_config(gui.geometry) 0 1]
+eval .vpane.files sash place 0 [lindex $repo_config(gui.geometry) 0 2]
+}
+
 # -- Key Bindings
 bind $ui_comm <$M1B-Key-Return> {do_commit;break}
 bind .   <Destroy> do_quit
@@ -1746,34 +1799,8 @@ foreach i [list $ui_index $ui_other] {
 }
 unset i M1B M1T
 
-######################################################################
-##
-## main
-
-set appname [lindex [file split $argv0] end]
-set gitdir {}
-
-if {[catch {set cdup [exec git rev-parse --show-cdup]} err]} {
-	show_msg {} . "Cannot find the git directory: $err"
-	exit 1
-}
-if {$cdup != ""} {
-	cd $cdup
-}
-unset cdup
-
-if {[catch {set gitdir [exec git rev-parse --git-dir]} err]} {
-	show_msg {} . "Cannot find the git directory: $err"
-	exit 1
-}
-
-if {$appname == {git-citool}} {
-	set single_commit 1
-}
-
 wm title . "$appname ([file normalize [file dirname $gitdir]])"
 focus -force $ui_comm
-load_repo_config
 load_all_remotes
 populate_remote_menu .mbar.fetch From fetch_from
 populate_remote_menu .mbar.push To push_to
