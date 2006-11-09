@@ -14,7 +14,7 @@ exec wish "$0" -- "$@"
 set single_commit 0
 set status_active 0
 set diff_active 0
-set checkin_active 0
+set update_active 0
 set commit_active 0
 set update_index_fd {}
 
@@ -469,7 +469,7 @@ before committing.
 			error_popup "Unmerged files cannot be committed.
 
 File $path has merge conflicts.
-You must resolve them and check the file in before committing.
+You must resolve them and include the file before committing.
 "
 			unlock_index
 			return
@@ -483,9 +483,9 @@ File $path cannot be committed by this program.
 		}
 	}
 	if {!$files_ready} {
-		error_popup {No checked-in files to commit.
+		error_popup {No included files to commit.
 
-You must check-in at least 1 file before you can commit.
+You must include at least 1 file before you can commit.
 }
 		unlock_index
 		return
@@ -1088,7 +1088,7 @@ foreach i {
 		{__ i plain    "Unmodified"}
 		{_M i mod      "Modified"}
 		{M_ i fulltick "Checked in"}
-		{MM i parttick "Partially checked in"}
+		{MM i parttick "Partially included"}
 
 		{_O o plain    "Untracked"}
 		{A_ o fulltick "Added"}
@@ -1373,13 +1373,13 @@ proc do_rescan {} {
 	update_status
 }
 
-proc do_checkin_all {} {
-	global checkin_active ui_status_value
+proc do_include_all {} {
+	global update_active ui_status_value
 
-	if {$checkin_active || ![lock_index begin-update]} return
+	if {$update_active || ![lock_index begin-update]} return
 
-	set checkin_active 1
-	set ui_status_value {Checking in all files...}
+	set update_active 1
+	set ui_status_value {Including all modified files...}
 	after 1 {
 		with_update_index {
 			foreach path [array names file_states] {
@@ -1393,7 +1393,7 @@ proc do_checkin_all {} {
 				}
 			}
 		}
-		set checkin_active 0
+		set update_active 0
 		set ui_status_value {Ready.}
 	}
 }
@@ -1503,8 +1503,8 @@ lappend disable_on_lock \
 	-font $mainfont
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
-.mbar.commit add command -label {Check-in All Files} \
-	-command do_checkin_all \
+.mbar.commit add command -label {Include All Files} \
+	-command do_include_all \
 	-accelerator $M1T-U \
 	-font $mainfont
 lappend disable_on_lock \
@@ -1608,11 +1608,11 @@ button .vpane.lower.commarea.buttons.amend -text {Amend Last} \
 pack .vpane.lower.commarea.buttons.amend -side top -fill x
 lappend disable_on_lock {.vpane.lower.commarea.buttons.amend conf -state}
 
-button .vpane.lower.commarea.buttons.ciall -text {Check-in All} \
-	-command do_checkin_all \
+button .vpane.lower.commarea.buttons.incall -text {Include All} \
+	-command do_include_all \
 	-font $mainfont
-pack .vpane.lower.commarea.buttons.ciall -side top -fill x
-lappend disable_on_lock {.vpane.lower.commarea.buttons.ciall conf -state}
+pack .vpane.lower.commarea.buttons.incall -side top -fill x
+lappend disable_on_lock {.vpane.lower.commarea.buttons.incall conf -state}
 
 button .vpane.lower.commarea.buttons.signoff -text {Sign Off} \
 	-command do_signoff \
@@ -1723,8 +1723,8 @@ bind all <$M1B-Key-r> do_rescan
 bind all <$M1B-Key-R> do_rescan
 bind .   <$M1B-Key-s> do_signoff
 bind .   <$M1B-Key-S> do_signoff
-bind .   <$M1B-Key-u> do_checkin_all
-bind .   <$M1B-Key-U> do_checkin_all
+bind .   <$M1B-Key-u> do_include_all
+bind .   <$M1B-Key-U> do_include_all
 bind .   <$M1B-Key-Return> do_commit
 bind all <$M1B-Key-q> do_quit
 bind all <$M1B-Key-Q> do_quit
