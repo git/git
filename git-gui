@@ -626,7 +626,7 @@ proc commit_stage2 {fd_wt curHEAD msg} {
 	set HEAD $cmt_id
 	set PARENT $cmt_id
 	unlock_index
-	update_status "Changes committed as $cmt_id."
+	update_status "Changes committed as [string range $cmt_id 0 7]."
 }
 
 ######################################################################
