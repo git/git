@@ -2338,6 +2338,8 @@ sub git_patchset_body {
 
 		print format_diff_line($patch_line);
 	}
+	print "</div>\n" if $in_header; # extended header
+
 	print "</div>\n" if $patch_found; # class="patch"
 
 	print "</div>\n"; # class="patchset"
