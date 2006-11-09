@@ -33,7 +33,7 @@ prev=`git rev-parse --verify HEAD^1`
 
 test_expect_success 'test the commit-diff command' "
 	test -n '$prev' && test -n '$head' &&
-	git-svn commit-diff '$prev' '$head' '$svnrepo' &&
+	git-svn commit-diff -r1 '$prev' '$head' '$svnrepo' &&
 	svn co $svnrepo wc &&
 	cmp readme wc/readme
 	"

@@ -120,6 +120,7 @@ manually joining branches on commit.
 	URL of the target Subversion repository.  The final argument
 	(URL) may be omitted if you are working from a git-svn-aware
 	repository (that has been init-ed with git-svn).
+	The -r<revision> option is required for this.
 
 'graft-branches'::
 	This command attempts to detect merges/branches from already
