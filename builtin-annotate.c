@@ -4,7 +4,7 @@
  * Copyright (C) 2006 Ryan Anderson
  */
 #include "git-compat-util.h"
-#include "exec_cmd.h"
+#include "builtin.h"
 
 int cmd_annotate(int argc, const char **argv, const char *prefix)
 {
@@ -20,6 +20,6 @@ int cmd_annotate(int argc, const char **argv, const char *prefix)
 	}
 	nargv[argc + 1] = NULL;
 
-	return execv_git_cmd(nargv);
+	return cmd_blame(argc + 1, nargv, prefix);
 }
 
