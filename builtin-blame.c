@@ -1407,7 +1407,8 @@ static int read_ancestry(const char *graft_file)
 		/* The format is just "Commit Parent1 Parent2 ...\n" */
 		int len = strlen(buf);
 		struct commit_graft *graft = read_graft_line(buf, len);
-		register_commit_graft(graft, 0);
+		if (graft)
+			register_commit_graft(graft, 0);
 	}
 	fclose(fp);
 	return 0;
