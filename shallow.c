@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "commit.h"
+#include "tag.h"
 
 static int is_shallow = -1;
 
@@ -54,7 +55,7 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 		if (!commit) {
 			if (i < heads->nr) {
 				commit = (struct commit *)
-					heads->objects[i++].item;
+					deref_tag(heads->objects[i++].item, NULL, 0);
 				if (commit->object.type != OBJ_COMMIT) {
 					commit = NULL;
 					continue;
