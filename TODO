@@ -22,9 +22,6 @@ Items outstanding:
 
  * Delete a local branch.
 
- * Store user preferences (like font, window layout) in global
-   repo-config.
-
  * Allow user to define keyboard shortcuts for frequently used fetch
    or merge operations.  Or maybe just define a keyboard shortcut
    for default fetch/default merge of current branch is enough;
