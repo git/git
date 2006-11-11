@@ -179,6 +179,7 @@ proc update_status {{final Ready.}} {
 		} elseif {[load_message SQUASH_MSG]} {
 		}
 		$ui_comm edit modified false
+		$ui_comm edit reset
 	}
 
 	if {$cfg_trust_mtime == {true}} {
@@ -503,6 +504,7 @@ proc load_last_commit {} {
 		$ui_comm delete 0.0 end
 		$ui_comm insert end $msg
 		$ui_comm edit modified false
+		$ui_comm edit reset
 		update_status
 	} else {
 		error_popup {You can't amend a merge commit.}
@@ -698,6 +700,7 @@ proc commit_stage2 {fd_wt curHEAD msg} {
 
 	$ui_comm delete 0.0 end
 	$ui_comm edit modified false
+	$ui_comm edit reset
 
 	if {$single_commit} do_quit
 
@@ -1463,8 +1466,9 @@ proc do_signoff {} {
 
 	set str "Signed-off-by: $GIT_COMMITTER_IDENT"
 	if {[$ui_comm get {end -1c linestart} {end -1c}] != $str} {
-		$ui_comm insert end "\n"
-		$ui_comm insert end $str
+		$ui_comm edit separator
+		$ui_comm insert end "\n$str"
+		$ui_comm edit separator
 		$ui_comm see end
 	}
 }
@@ -1733,6 +1737,7 @@ trace add variable commit_type write {uplevel #0 {
 }}
 text $ui_comm -background white -borderwidth 1 \
 	-undo true \
+	-maxundo 20 \
 	-autoseparators true \
 	-relief sunken \
 	-width 75 -height 9 -wrap none \
@@ -1836,10 +1841,10 @@ bind $ui_diff <$M1B-Key-v> {break}
 bind $ui_diff <$M1B-Key-V> {break}
 bind $ui_diff <$M1B-Key-a> {%W tag add sel 0.0 end;break}
 bind $ui_diff <$M1B-Key-A> {%W tag add sel 0.0 end;break}
-bind $ui_diff <Key-Up>     {%W yview scroll -1 units}
-bind $ui_diff <Key-Down>   {%W yview scroll 1 units}
-bind $ui_diff <Key-Left>   {%W xview scroll -1 units}
-bind $ui_diff <Key-Right>  {%W xview scroll 1 units}
+bind $ui_diff <Key-Up>     {catch {%W yview scroll -1 units};break}
+bind $ui_diff <Key-Down>   {catch {%W yview scroll  1 units};break}
+bind $ui_diff <Key-Left>   {catch {%W xview scroll -1 units};break}
+bind $ui_diff <Key-Right>  {catch {%W xview scroll  1 units};break}
 
 bind .   <Destroy> do_quit
 bind all <Key-F5> do_rescan
