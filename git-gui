@@ -1525,6 +1525,7 @@ default     {set M1B M1; set M1T M1}
 # -- Menu Bar
 menu .mbar -tearoff 0
 .mbar add cascade -label Project -menu .mbar.project
+.mbar add cascade -label Edit -menu .mbar.edit
 .mbar add cascade -label Commit -menu .mbar.commit
 .mbar add cascade -label Fetch -menu .mbar.fetch
 .mbar add cascade -label Pull -menu .mbar.pull
@@ -1543,6 +1544,40 @@ menu .mbar.project
 .mbar.project add command -label Quit \
 	-command do_quit \
 	-accelerator $M1T-Q \
+	-font $mainfont
+
+# -- Edit Menu
+#
+menu .mbar.edit
+.mbar.edit add command -label Undo \
+	-command {catch {[focus] edit undo}} \
+	-accelerator $M1T-Z \
+	-font $mainfont
+.mbar.edit add command -label Redo \
+	-command {catch {[focus] edit redo}} \
+	-accelerator $M1T-Y \
+	-font $mainfont
+.mbar.edit add separator
+.mbar.edit add command -label Cut \
+	-command {catch {tk_textCut [focus]}} \
+	-accelerator $M1T-X \
+	-font $mainfont
+.mbar.edit add command -label Copy \
+	-command {catch {tk_textCopy [focus]}} \
+	-accelerator $M1T-C \
+	-font $mainfont
+.mbar.edit add command -label Paste \
+	-command {catch {tk_textPaste [focus]; [focus] see insert}} \
+	-accelerator $M1T-V \
+	-font $mainfont
+.mbar.edit add command -label Delete \
+	-command {catch {[focus] delete sel.first sel.last}} \
+	-accelerator Del \
+	-font $mainfont
+.mbar.edit add separator
+.mbar.edit add command -label {Select All} \
+	-command {catch {[focus] tag add sel 0.0 end}} \
+	-accelerator $M1T-A \
 	-font $mainfont
 
 # -- Commit Menu
@@ -1586,7 +1621,8 @@ menu .mbar.push
 
 # -- Options Menu
 menu .mbar.options
-.mbar.options add checkbutton -label {Trust File Modification Timestamps} \
+.mbar.options add checkbutton \
+	-label {Trust File Modification Timestamps} \
 	-offvalue false \
 	-onvalue true \
 	-variable cfg_trust_mtime
@@ -1696,6 +1732,8 @@ trace add variable commit_type write {uplevel #0 {
 	*       {$ui_coml conf -text {Commit Message:}}
 }}
 text $ui_comm -background white -borderwidth 1 \
+	-undo true \
+	-autoseparators true \
 	-relief sunken \
 	-width 75 -height 9 -wrap none \
 	-font $difffont \
@@ -1781,6 +1819,27 @@ eval .vpane.files sash place 0 [lindex $repo_config(gui.geometry) 0 2]
 bind $ui_comm <$M1B-Key-Return> {do_commit;break}
 bind $ui_comm <$M1B-Key-i> {do_include_all;break}
 bind $ui_comm <$M1B-Key-I> {do_include_all;break}
+bind $ui_comm <$M1B-Key-x> {tk_textCut %W;break}
+bind $ui_comm <$M1B-Key-X> {tk_textCut %W;break}
+bind $ui_comm <$M1B-Key-c> {tk_textCopy %W;break}
+bind $ui_comm <$M1B-Key-C> {tk_textCopy %W;break}
+bind $ui_comm <$M1B-Key-v> {tk_textPaste %W; %W see insert; break}
+bind $ui_comm <$M1B-Key-V> {tk_textPaste %W; %W see insert; break}
+bind $ui_comm <$M1B-Key-a> {%W tag add sel 0.0 end;break}
+bind $ui_comm <$M1B-Key-A> {%W tag add sel 0.0 end;break}
+
+bind $ui_diff <$M1B-Key-x> {tk_textCopy %W;break}
+bind $ui_diff <$M1B-Key-X> {tk_textCopy %W;break}
+bind $ui_diff <$M1B-Key-c> {tk_textCopy %W;break}
+bind $ui_diff <$M1B-Key-C> {tk_textCopy %W;break}
+bind $ui_diff <$M1B-Key-v> {break}
+bind $ui_diff <$M1B-Key-V> {break}
+bind $ui_diff <$M1B-Key-a> {%W tag add sel 0.0 end;break}
+bind $ui_diff <$M1B-Key-A> {%W tag add sel 0.0 end;break}
+bind $ui_diff <Key-Up>     {%W yview scroll -1 units}
+bind $ui_diff <Key-Down>   {%W yview scroll 1 units}
+bind $ui_diff <Key-Left>   {%W xview scroll -1 units}
+bind $ui_diff <Key-Right>  {%W xview scroll 1 units}
 
 bind .   <Destroy> do_quit
 bind all <Key-F5> do_rescan
