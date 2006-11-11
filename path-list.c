@@ -57,7 +57,7 @@ struct path_list_item *path_list_insert(const char *path, struct path_list *list
 	int index = add_entry(list, path);
 
 	if (index < 0)
-		index = 1 - index;
+		index = -1 - index;
 
 	return list->items + index;
 }
