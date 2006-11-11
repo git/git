@@ -1044,17 +1044,17 @@ proc load_all_remotes {} {
 }
 
 proc populate_remote_menu {m pfx op} {
-	global all_remotes mainfont
+	global all_remotes font_ui
 
 	foreach remote $all_remotes {
 		$m add command -label "$pfx $remote..." \
 			-command [list $op $remote] \
-			-font $mainfont
+			-font $font_ui
 	}
 }
 
 proc populate_pull_menu {m} {
-	global gitdir repo_config all_remotes mainfont disable_on_lock
+	global gitdir repo_config all_remotes font_ui disable_on_lock
 
 	foreach remote $all_remotes {
 		set rb {}
@@ -1082,7 +1082,7 @@ proc populate_pull_menu {m} {
 			$m add command \
 				-label "Branch $rb_short from $remote..." \
 				-command [list pull_remote $remote $rb] \
-				-font $mainfont
+				-font $font_ui
 			lappend disable_on_lock \
 				[list $m entryconf [$m index last] -state]
 		}
@@ -1212,13 +1212,13 @@ proc error_popup {msg} {
 }
 
 proc show_msg {w top msg} {
-	global gitdir appname mainfont
+	global gitdir appname font_ui
 
 	message $w.m -text $msg -justify left -aspect 400
 	pack $w.m -side top -fill x -padx 5 -pady 10
 	button $w.ok -text OK \
 		-width 15 \
-		-font $mainfont \
+		-font $font_ui \
 		-command "destroy $top"
 	pack $w.ok -side bottom
 	bind $top <Visibility> "grab $top; focus $top"
@@ -1230,7 +1230,7 @@ proc show_msg {w top msg} {
 }
 
 proc hook_failed_popup {hook msg} {
-	global gitdir mainfont difffont appname
+	global gitdir font_ui font_diff appname
 
 	set w .hookfail
 	toplevel $w
@@ -1240,18 +1240,18 @@ proc hook_failed_popup {hook msg} {
 	label $w.m.l1 -text "$hook hook failed:" \
 		-anchor w \
 		-justify left \
-		-font [concat $mainfont bold]
+		-font [concat $font_ui bold]
 	text $w.m.t \
 		-background white -borderwidth 1 \
 		-relief sunken \
 		-width 80 -height 10 \
-		-font $difffont \
+		-font $font_diff \
 		-yscrollcommand [list $w.m.sby set]
 	label $w.m.l2 \
 		-text {You must correct the above errors before committing.} \
 		-anchor w \
 		-justify left \
-		-font [concat $mainfont bold]
+		-font [concat $font_ui bold]
 	scrollbar $w.m.sby -command [list $w.m.t yview]
 	pack $w.m.l1 -side top -fill x
 	pack $w.m.l2 -side bottom -fill x
@@ -1264,7 +1264,7 @@ proc hook_failed_popup {hook msg} {
 
 	button $w.ok -text OK \
 		-width 15 \
-		-font $mainfont \
+		-font $font_ui \
 		-command "destroy $w"
 	pack $w.ok -side bottom
 
@@ -1287,7 +1287,7 @@ proc new_console {short_title long_title} {
 
 proc console_init {w} {
 	global console_cr console_data
-	global gitdir appname mainfont difffont
+	global gitdir appname font_ui font_diff
 
 	set console_cr($w) 1.0
 	toplevel $w
@@ -1295,17 +1295,17 @@ proc console_init {w} {
 	label $w.m.l1 -text "[lindex $console_data($w) 1]:" \
 		-anchor w \
 		-justify left \
-		-font [concat $mainfont bold]
+		-font [concat $font_ui bold]
 	text $w.m.t \
 		-background white -borderwidth 1 \
 		-relief sunken \
 		-width 80 -height 10 \
-		-font $difffont \
+		-font $font_diff \
 		-state disabled \
 		-yscrollcommand [list $w.m.sby set]
 	label $w.m.s -anchor w \
 		-justify left \
-		-font [concat $mainfont bold]
+		-font [concat $font_ui bold]
 	scrollbar $w.m.sby -command [list $w.m.t yview]
 	pack $w.m.l1 -side top -fill x
 	pack $w.m.s -side bottom -fill x
@@ -1315,7 +1315,7 @@ proc console_init {w} {
 
 	button $w.ok -text {Running...} \
 		-width 15 \
-		-font $mainfont \
+		-font $font_ui \
 		-state disabled \
 		-command "destroy $w"
 	pack $w.ok -side bottom
@@ -1548,8 +1548,8 @@ proc unclick {w x y} {
 ##
 ## ui init
 
-set mainfont {Helvetica 10}
-set difffont {Courier 10}
+set font_ui {Helvetica 10}
+set font_diff {Courier 10}
 set maincursor [. cget -cursor]
 
 switch -glob -- "$tcl_platform(platform),$tcl_platform(os)" {
@@ -1573,14 +1573,14 @@ menu .mbar -tearoff 0
 menu .mbar.project
 .mbar.project add command -label Visualize \
 	-command do_gitk \
-	-font $mainfont
+	-font $font_ui
 .mbar.project add command -label {Repack Database} \
 	-command do_repack \
-	-font $mainfont
+	-font $font_ui
 .mbar.project add command -label Quit \
 	-command do_quit \
 	-accelerator $M1T-Q \
-	-font $mainfont
+	-font $font_ui
 
 # -- Edit Menu
 #
@@ -1588,61 +1588,61 @@ menu .mbar.edit
 .mbar.edit add command -label Undo \
 	-command {catch {[focus] edit undo}} \
 	-accelerator $M1T-Z \
-	-font $mainfont
+	-font $font_ui
 .mbar.edit add command -label Redo \
 	-command {catch {[focus] edit redo}} \
 	-accelerator $M1T-Y \
-	-font $mainfont
+	-font $font_ui
 .mbar.edit add separator
 .mbar.edit add command -label Cut \
 	-command {catch {tk_textCut [focus]}} \
 	-accelerator $M1T-X \
-	-font $mainfont
+	-font $font_ui
 .mbar.edit add command -label Copy \
 	-command {catch {tk_textCopy [focus]}} \
 	-accelerator $M1T-C \
-	-font $mainfont
+	-font $font_ui
 .mbar.edit add command -label Paste \
 	-command {catch {tk_textPaste [focus]; [focus] see insert}} \
 	-accelerator $M1T-V \
-	-font $mainfont
+	-font $font_ui
 .mbar.edit add command -label Delete \
 	-command {catch {[focus] delete sel.first sel.last}} \
 	-accelerator Del \
-	-font $mainfont
+	-font $font_ui
 .mbar.edit add separator
 .mbar.edit add command -label {Select All} \
 	-command {catch {[focus] tag add sel 0.0 end}} \
 	-accelerator $M1T-A \
-	-font $mainfont
+	-font $font_ui
 
 # -- Commit Menu
 menu .mbar.commit
 .mbar.commit add command -label Rescan \
 	-command do_rescan \
 	-accelerator F5 \
-	-font $mainfont
+	-font $font_ui
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 .mbar.commit add command -label {Amend Last Commit} \
 	-command do_amend_last \
-	-font $mainfont
+	-font $font_ui
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 .mbar.commit add command -label {Include All Files} \
 	-command do_include_all \
 	-accelerator $M1T-I \
-	-font $mainfont
+	-font $font_ui
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 .mbar.commit add command -label {Sign Off} \
 	-command do_signoff \
 	-accelerator $M1T-S \
-	-font $mainfont
+	-font $font_ui
 .mbar.commit add command -label Commit \
 	-command do_commit \
 	-accelerator $M1T-Return \
-	-font $mainfont
+	-font $font_ui
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
@@ -1673,10 +1673,10 @@ pack .vpane -anchor n -side top -fill both -expand 1
 frame .vpane.files.index -height 100 -width 400
 label .vpane.files.index.title -text {Modified Files} \
 	-background green \
-	-font $mainfont
+	-font $font_ui
 text $ui_index -background white -borderwidth 0 \
 	-width 40 -height 10 \
-	-font $mainfont \
+	-font $font_ui \
 	-yscrollcommand {.vpane.files.index.sb set} \
 	-cursor $maincursor \
 	-state disabled
@@ -1690,10 +1690,10 @@ pack $ui_index -side left -fill both -expand 1
 frame .vpane.files.other -height 100 -width 100
 label .vpane.files.other.title -text {Untracked Files} \
 	-background red \
-	-font $mainfont
+	-font $font_ui
 text $ui_other -background white -borderwidth 0 \
 	-width 40 -height 10 \
-	-font $mainfont \
+	-font $font_ui \
 	-yscrollcommand {.vpane.files.other.sb set} \
 	-cursor $maincursor \
 	-state disabled
@@ -1703,8 +1703,8 @@ pack .vpane.files.other.sb -side right -fill y
 pack $ui_other -side left -fill both -expand 1
 .vpane.files add .vpane.files.other -sticky nsew
 
-$ui_index tag conf in_diff -font [concat $mainfont bold]
-$ui_other tag conf in_diff -font [concat $mainfont bold]
+$ui_index tag conf in_diff -font [concat $font_ui bold]
+$ui_other tag conf in_diff -font [concat $font_ui bold]
 
 # -- Diff and Commit Area
 frame .vpane.lower -height 400 -width 400
@@ -1719,36 +1719,36 @@ frame .vpane.lower.commarea.buttons
 label .vpane.lower.commarea.buttons.l -text {} \
 	-anchor w \
 	-justify left \
-	-font $mainfont
+	-font $font_ui
 pack .vpane.lower.commarea.buttons.l -side top -fill x
 pack .vpane.lower.commarea.buttons -side left -fill y
 
 button .vpane.lower.commarea.buttons.rescan -text {Rescan} \
 	-command do_rescan \
-	-font $mainfont
+	-font $font_ui
 pack .vpane.lower.commarea.buttons.rescan -side top -fill x
 lappend disable_on_lock {.vpane.lower.commarea.buttons.rescan conf -state}
 
 button .vpane.lower.commarea.buttons.amend -text {Amend Last} \
 	-command do_amend_last \
-	-font $mainfont
+	-font $font_ui
 pack .vpane.lower.commarea.buttons.amend -side top -fill x
 lappend disable_on_lock {.vpane.lower.commarea.buttons.amend conf -state}
 
 button .vpane.lower.commarea.buttons.incall -text {Include All} \
 	-command do_include_all \
-	-font $mainfont
+	-font $font_ui
 pack .vpane.lower.commarea.buttons.incall -side top -fill x
 lappend disable_on_lock {.vpane.lower.commarea.buttons.incall conf -state}
 
 button .vpane.lower.commarea.buttons.signoff -text {Sign Off} \
 	-command do_signoff \
-	-font $mainfont
+	-font $font_ui
 pack .vpane.lower.commarea.buttons.signoff -side top -fill x
 
 button .vpane.lower.commarea.buttons.commit -text {Commit} \
 	-command do_commit \
-	-font $mainfont
+	-font $font_ui
 pack .vpane.lower.commarea.buttons.commit -side top -fill x
 lappend disable_on_lock {.vpane.lower.commarea.buttons.commit conf -state}
 
@@ -1759,7 +1759,7 @@ set ui_coml .vpane.lower.commarea.buffer.l
 label $ui_coml -text {Commit Message:} \
 	-anchor w \
 	-justify left \
-	-font $mainfont
+	-font $font_ui
 trace add variable commit_type write {uplevel #0 {
 	switch -glob $commit_type \
 	initial {$ui_coml conf -text {Initial Commit Message:}} \
@@ -1773,7 +1773,7 @@ text $ui_comm -background white -borderwidth 1 \
 	-autoseparators true \
 	-relief sunken \
 	-width 75 -height 9 -wrap none \
-	-font $difffont \
+	-font $font_diff \
 	-yscrollcommand {.vpane.lower.commarea.buffer.sby set} \
 	-cursor $maincursor
 scrollbar .vpane.lower.commarea.buffer.sby -command [list $ui_comm yview]
@@ -1788,21 +1788,21 @@ set ui_fstatus_value {}
 frame .vpane.lower.diff.header -background orange
 label .vpane.lower.diff.header.l1 -text {File:} \
 	-background orange \
-	-font $mainfont
+	-font $font_ui
 label .vpane.lower.diff.header.l2 -textvariable ui_fname_value \
 	-background orange \
 	-anchor w \
 	-justify left \
-	-font $mainfont
+	-font $font_ui
 label .vpane.lower.diff.header.l3 -text {Status:} \
 	-background orange \
-	-font $mainfont
+	-font $font_ui
 label .vpane.lower.diff.header.l4 -textvariable ui_fstatus_value \
 	-background orange \
 	-width $max_status_desc \
 	-anchor w \
 	-justify left \
-	-font $mainfont
+	-font $font_ui
 pack .vpane.lower.diff.header.l1 -side left
 pack .vpane.lower.diff.header.l2 -side left -fill x
 pack .vpane.lower.diff.header.l4 -side right
@@ -1813,7 +1813,7 @@ frame .vpane.lower.diff.body
 set ui_diff .vpane.lower.diff.body.t
 text $ui_diff -background white -borderwidth 0 \
 	-width 80 -height 15 -wrap none \
-	-font $difffont \
+	-font $font_diff \
 	-xscrollcommand {.vpane.lower.diff.body.sbx set} \
 	-yscrollcommand {.vpane.lower.diff.body.sby set} \
 	-cursor $maincursor \
@@ -1830,10 +1830,10 @@ pack .vpane.lower.diff.body -side bottom -fill both -expand 1
 
 $ui_diff tag conf dm -foreground red
 $ui_diff tag conf dp -foreground blue
-$ui_diff tag conf da -font [concat $difffont bold]
+$ui_diff tag conf da -font [concat $font_diff bold]
 $ui_diff tag conf di -foreground "#00a000"
 $ui_diff tag conf dni -foreground "#a000a0"
-$ui_diff tag conf bold -font [concat $difffont bold]
+$ui_diff tag conf bold -font [concat $font_diff bold]
 
 # -- Status Bar
 set ui_status_value {Initializing...}
@@ -1842,7 +1842,7 @@ label .status -textvariable ui_status_value \
 	-justify left \
 	-borderwidth 1 \
 	-relief sunken \
-	-font $mainfont
+	-font $font_ui
 pack .status -anchor w -side bottom -fill x
 
 # -- Load geometry
