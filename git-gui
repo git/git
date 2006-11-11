@@ -350,11 +350,11 @@ proc clear_diff {} {
 proc reshow_diff {} {
 	global ui_fname_value ui_status_value file_states
 
-	if {$ui_fname_value != {} && [array names file_states \
-		-exact $ui_fname_value] != {}}  {
-		show_diff $ui_fname_value
-	} else {
+	if {$ui_fname_value == {}
+		|| [catch {set s $file_states($ui_fname_value)}]} {
 		clear_diff
+	} else {
+		show_diff $ui_fname_value
 	}
 }
 
