@@ -1560,7 +1560,7 @@ lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 .mbar.commit add command -label {Include All Files} \
 	-command do_include_all \
-	-accelerator $M1T-U \
+	-accelerator $M1T-I \
 	-font $mainfont
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
@@ -1779,14 +1779,17 @@ eval .vpane.files sash place 0 [lindex $repo_config(gui.geometry) 0 2]
 
 # -- Key Bindings
 bind $ui_comm <$M1B-Key-Return> {do_commit;break}
+bind $ui_comm <$M1B-Key-i> {do_include_all;break}
+bind $ui_comm <$M1B-Key-I> {do_include_all;break}
+
 bind .   <Destroy> do_quit
 bind all <Key-F5> do_rescan
 bind all <$M1B-Key-r> do_rescan
 bind all <$M1B-Key-R> do_rescan
 bind .   <$M1B-Key-s> do_signoff
 bind .   <$M1B-Key-S> do_signoff
-bind .   <$M1B-Key-u> do_include_all
-bind .   <$M1B-Key-U> do_include_all
+bind .   <$M1B-Key-i> do_include_all
+bind .   <$M1B-Key-I> do_include_all
 bind .   <$M1B-Key-Return> do_commit
 bind all <$M1B-Key-q> do_quit
 bind all <$M1B-Key-Q> do_quit
