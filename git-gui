@@ -150,7 +150,7 @@ proc repository_state {hdvar ctvar} {
 proc update_status {{final Ready.}} {
 	global HEAD PARENT commit_type
 	global ui_index ui_other ui_status_value ui_comm
-	global status_active file_states file_lists
+	global status_active file_states
 	global cfg_trust_mtime
 
 	if {$status_active || ![lock_index read]} return
@@ -166,12 +166,6 @@ proc update_status {{final Ready.}} {
 	}
 
 	array unset file_states
-	array unset file_lists
-	foreach w [list $ui_index $ui_other] {
-		$w conf -state normal
-		$w delete 0.0 end
-		$w conf -state disabled
-	}
 
 	if {![$ui_comm edit modified]
 		|| [string trim [$ui_comm get 0.0 end]] == {}} {
@@ -319,25 +313,18 @@ proc read_ls_others {fd final} {
 }
 
 proc status_eof {fd buf final} {
-	global status_active $buf
-	global ui_fname_value ui_status_value file_states
+	global status_active ui_status_value
+	upvar $buf to_clear
 
 	if {[eof $fd]} {
-		set $buf {}
+		set to_clear {}
 		close $fd
 
 		if {[incr status_active -1] == 0} {
-			unlock_index
-
 			display_all_files
+			unlock_index
+			reshow_diff
 			set ui_status_value $final
-
-			if {$ui_fname_value != {} && [array names file_states \
-				-exact $ui_fname_value] != {}}  {
-				show_diff $ui_fname_value
-			} else {
-				clear_diff
-			}
 		}
 	}
 }
@@ -358,6 +345,17 @@ proc clear_diff {} {
 
 	$ui_index tag remove in_diff 0.0 end
 	$ui_other tag remove in_diff 0.0 end
+}
+
+proc reshow_diff {} {
+	global ui_fname_value ui_status_value file_states
+
+	if {$ui_fname_value != {} && [array names file_states \
+		-exact $ui_fname_value] != {}}  {
+		show_diff $ui_fname_value
+	} else {
+		clear_diff
+	}
 }
 
 proc show_diff {path {w {}} {lno {}}} {
@@ -562,11 +560,11 @@ before committing.
 	foreach path [array names file_states] {
 		set s $file_states($path)
 		switch -glob -- [lindex $s 0] {
-		_* {continue}
-		A* -
-		D* -
-		M* {set files_ready 1; break}
-		U* {
+		_? {continue}
+		A? -
+		D? -
+		M? {set files_ready 1; break}
+		U? {
 			error_popup "Unmerged files cannot be committed.
 
 File [escape_path $path] has merge conflicts.
@@ -635,8 +633,9 @@ A good commit message has the following format:
 }
 
 proc commit_stage2 {fd_wt curHEAD msg} {
-	global single_commit gitdir PARENT commit_type
+	global single_commit gitdir HEAD PARENT commit_type
 	global commit_active ui_status_value ui_comm
+	global file_states
 
 	gets $fd_wt tree_id
 	close $fd_wt
@@ -663,7 +662,7 @@ proc commit_stage2 {fd_wt curHEAD msg} {
 				}
 				close $fd_mh
 			} err]} {
-			error_popup "Loading MERGE_HEADs failed:\n$err"
+			error_popup "Loading MERGE_HEAD failed:\n$err"
 			set commit_active 0
 			set ui_status_value {Commit failed.}
 			unlock_index
@@ -723,12 +722,34 @@ proc commit_stage2 {fd_wt curHEAD msg} {
 
 	if {$single_commit} do_quit
 
-	set commit_type {}
+	# -- Update status without invoking any git commands.
+	#
 	set commit_active 0
+	set commit_type normal
 	set HEAD $cmt_id
 	set PARENT $cmt_id
+
+	foreach path [array names file_states] {
+		set s $file_states($path)
+		set m [lindex $s 0]
+		switch -glob -- $m {
+		A? -
+		M? -
+		D? {set m _[string index $m 1]}
+		}
+
+		if {$m == {__}} {
+			unset file_states($path)
+		} else {
+			lset file_states($path) 0 $m
+		}
+	}
+
+	display_all_files
 	unlock_index
-	update_status "Changes committed as [string range $cmt_id 0 7]."
+	reshow_diff
+	set ui_status_value \
+		"Changes committed as [string range $cmt_id 0 7]."
 }
 
 ######################################################################
@@ -925,6 +946,10 @@ proc display_all_files {} {
 	$ui_index conf -state normal
 	$ui_other conf -state normal
 
+	$ui_index delete 0.0 end
+	$ui_other delete 0.0 end
+
+	array unset file_lists
 	foreach path [lsort [array names file_states]] {
 		set s $file_states($path)
 		set m [lindex $s 0]
@@ -1506,10 +1531,12 @@ proc click {w x y shift wx wy} {
 }
 
 proc unclick {w x y} {
+	global file_lists
+
 	set pos [split [$w index @$x,$y] .]
 	set lno [lindex $pos 0]
 	set col [lindex $pos 1]
-	set path [$w get $lno.1 $lno.end]
+	set path [lindex $file_lists($w) [expr $lno - 1]]
 	if {$path == {}} return
 
 	if {$col == 0} {
