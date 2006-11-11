@@ -150,7 +150,7 @@ proc repository_state {hdvar ctvar} {
 proc update_status {{final Ready.}} {
 	global HEAD PARENT commit_type
 	global ui_index ui_other ui_status_value ui_comm
-	global status_active file_states
+	global status_active file_states file_lists
 	global cfg_trust_mtime
 
 	if {$status_active || ![lock_index read]} return
@@ -166,6 +166,7 @@ proc update_status {{final Ready.}} {
 	}
 
 	array unset file_states
+	array unset file_lists
 	foreach w [list $ui_index $ui_other] {
 		$w conf -state normal
 		$w delete 0.0 end
@@ -196,7 +197,7 @@ proc update_status {{final Ready.}} {
 proc update_status_stage2 {fd final} {
 	global gitdir PARENT commit_type
 	global ui_index ui_other ui_status_value ui_comm
-	global status_active file_states
+	global status_active
 	global buf_rdi buf_rdf buf_rlo
 
 	if {$fd != {}} {
@@ -346,22 +347,40 @@ proc status_eof {fd buf final} {
 ## diff
 
 proc clear_diff {} {
-	global ui_diff ui_fname_value ui_fstatus_value
+	global ui_diff ui_fname_value ui_fstatus_value ui_index ui_other
 
 	$ui_diff conf -state normal
 	$ui_diff delete 0.0 end
 	$ui_diff conf -state disabled
+
 	set ui_fname_value {}
 	set ui_fstatus_value {}
+
+	$ui_index tag remove in_diff 0.0 end
+	$ui_other tag remove in_diff 0.0 end
 }
 
-proc show_diff {path} {
-	global file_states PARENT diff_3way diff_active
+proc show_diff {path {w {}} {lno {}}} {
+	global file_states file_lists
+	global PARENT diff_3way diff_active
 	global ui_diff ui_fname_value ui_fstatus_value ui_status_value
 
 	if {$diff_active || ![lock_index read]} return
 
 	clear_diff
+	if {$w == {} || $lno == {}} {
+		foreach w [array names file_lists] {
+			set lno [lsearch -sorted $file_lists($w) $path]
+			if {$lno >= 0} {
+				incr lno
+				break
+			}
+		}
+	}
+	if {$w != {} && $lno >= 1} {
+		$w tag add in_diff $lno.0 [expr $lno + 1].0
+	}
+
 	set s $file_states($path)
 	set m [lindex $s 0]
 	set diff_3way 0
@@ -823,27 +842,6 @@ proc mapdesc {state path} {
 	return $r
 }
 
-proc bsearch {w path} {
-	set hi [expr [lindex [split [$w index end] .] 0] - 2]
-	if {$hi == 0} {
-		return -1
-	}
-	set lo 0
-	while {$lo < $hi} {
-		set mi [expr [expr $lo + $hi] / 2]
-		set ti [expr $mi + 1]
-		set cmp [string compare [$w get $ti.1 $ti.end] $path]
-		if {$cmp < 0} {
-			set lo $ti
-		} elseif {$cmp == 0} {
-			return $mi
-		} else {
-			set hi $mi
-		}
-	}
-	return -[expr $lo + 1]
-}
-
 set next_icon_id 0
 
 proc merge_state {path new_state} {
@@ -877,7 +875,8 @@ proc merge_state {path new_state} {
 }
 
 proc display_file {path state} {
-	global ui_index ui_other file_states status_active
+	global ui_index ui_other
+	global file_states file_lists status_active
 
 	set old_m [merge_state $path $state]
 	if {$status_active} return
@@ -889,7 +888,7 @@ proc display_file {path state} {
 	set new_icon [mapicon $new_m $path]
 
 	if {$new_w != $old_w} {
-		set lno [bsearch $old_w $path]
+		set lno [lsearch -sorted $file_lists($old_w) $path]
 		if {$lno >= 0} {
 			incr lno
 			$old_w conf -state normal
@@ -897,7 +896,10 @@ proc display_file {path state} {
 			$old_w conf -state disabled
 		}
 
-		set lno [expr abs([bsearch $new_w $path] + 1) + 1]
+		lappend file_lists($new_w) $path
+		set file_lists($new_w) [lsort $file_lists($new_w)]
+		set lno [lsearch -sorted $file_lists($new_w) $path]
+		incr lno
 		$new_w conf -state normal
 		$new_w image create $lno.0 \
 			-align center -padx 5 -pady 1 \
@@ -913,7 +915,7 @@ proc display_file {path state} {
 }
 
 proc display_all_files {} {
-	global ui_index ui_other file_states
+	global ui_index ui_other file_states file_lists
 
 	$ui_index conf -state normal
 	$ui_other conf -state normal
@@ -922,6 +924,7 @@ proc display_all_files {} {
 		set s $file_states($path)
 		set m [lindex $s 0]
 		set w [mapcol $m $path]
+		lappend file_lists($w) $path
 		$w image create end \
 			-align center -padx 5 -pady 1 \
 			-name [lindex $s 1] \
@@ -1484,19 +1487,16 @@ proc do_commit {} {
 # shift == 1: left click
 #          3: right click  
 proc click {w x y shift wx wy} {
-	global ui_index ui_other
+	global ui_index ui_other file_lists
 
 	set pos [split [$w index @$x,$y] .]
 	set lno [lindex $pos 0]
 	set col [lindex $pos 1]
-	set path [$w get $lno.1 $lno.end]
+	set path [lindex $file_lists($w) [expr $lno - 1]]
 	if {$path == {}} return
 
 	if {$col > 0 && $shift == 1} {
-		$ui_index tag remove in_diff 0.0 end
-		$ui_other tag remove in_diff 0.0 end
-		$w tag add in_diff $lno.0 [expr $lno + 1].0
-		show_diff $path
+		show_diff $path $w $lno
 	}
 }
 
