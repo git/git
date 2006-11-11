@@ -385,9 +385,9 @@ proc show_diff {path {w {}} {lno {}}} {
 	set m [lindex $s 0]
 	set diff_3way 0
 	set diff_active 1
-	set ui_fname_value $path
+	set ui_fname_value [escape_path $path]
 	set ui_fstatus_value [mapdesc $m $path]
-	set ui_status_value "Loading diff of $path..."
+	set ui_status_value "Loading diff of [escape_path $path]..."
 
 	set cmd [list | git diff-index -p $PARENT -- $path]
 	switch $m {
@@ -404,7 +404,7 @@ proc show_diff {path {w {}} {lno {}}} {
 			} err ]} {
 			set diff_active 0
 			unlock_index
-			set ui_status_value "Unable to display $path"
+			set ui_status_value "Unable to display [escape_path $path]"
 			error_popup "Error loading file:\n$err"
 			return
 		}
@@ -421,7 +421,7 @@ proc show_diff {path {w {}} {lno {}}} {
 	if {[catch {set fd [open $cmd r]} err]} {
 		set diff_active 0
 		unlock_index
-		set ui_status_value "Unable to display $path"
+		set ui_status_value "Unable to display [escape_path $path]"
 		error_popup "Error loading diff:\n$err"
 		return
 	}
@@ -569,7 +569,7 @@ before committing.
 		U* {
 			error_popup "Unmerged files cannot be committed.
 
-File $path has merge conflicts.
+File [escape_path $path] has merge conflicts.
 You must resolve them and include the file before committing.
 "
 			unlock_index
@@ -578,7 +578,7 @@ You must resolve them and include the file before committing.
 		default {
 			error_popup "Unknown file state [lindex $s 0] detected.
 
-File $path cannot be committed by this program.
+File [escape_path $path] cannot be committed by this program.
 "
 		}
 		}
@@ -842,6 +842,11 @@ proc mapdesc {state path} {
 	return $r
 }
 
+proc escape_path {path} {
+	regsub -all "\n" $path "\\n" path
+	return $path
+}
+
 set next_icon_id 0
 
 proc merge_state {path new_state} {
@@ -905,7 +910,7 @@ proc display_file {path state} {
 			-align center -padx 5 -pady 1 \
 			-name [lindex $s 1] \
 			-image $new_icon
-		$new_w insert $lno.1 "$path\n"
+		$new_w insert $lno.1 "[escape_path $path]\n"
 		$new_w conf -state disabled
 	} elseif {$new_icon != [mapicon $old_m $path]} {
 		$new_w conf -state normal
@@ -929,7 +934,7 @@ proc display_all_files {} {
 			-align center -padx 5 -pady 1 \
 			-name [lindex $s 1] \
 			-image [mapicon $m $path]
-		$w insert end "$path\n"
+		$w insert end "[escape_path $path]\n"
 	}
 
 	$ui_index conf -state disabled
