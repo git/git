@@ -24,24 +24,27 @@ proc is_many_config {name} {
 	}
 }
 
-proc load_config {} {
+proc load_config {include_global} {
 	global repo_config global_config default_config
 
 	array unset global_config
-	array unset repo_config
-	catch {
-		set fd_rc [open "| git repo-config --global --list" r]
-		while {[gets $fd_rc line] >= 0} {
-			if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
-				if {[is_many_config $name]} {
-					lappend global_config($name) $value
-				} else {
-					set global_config($name) $value
+	if {$include_global} {
+		catch {
+			set fd_rc [open "| git repo-config --global --list" r]
+			while {[gets $fd_rc line] >= 0} {
+				if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
+					if {[is_many_config $name]} {
+						lappend global_config($name) $value
+					} else {
+						set global_config($name) $value
+					}
 				}
 			}
+			close $fd_rc
 		}
-		close $fd_rc
 	}
+
+	array unset repo_config
 	catch {
 		set fd_rc [open "| git repo-config --list" r]
 		while {[gets $fd_rc line] >= 0} {
@@ -1711,7 +1714,7 @@ proc do_options {} {
 	global repo_config global_config
 	global repo_config_new global_config_new
 
-	load_config
+	load_config 1
 	array unset repo_config_new
 	array unset global_config_new
 	foreach name [array names repo_config] {
@@ -1919,7 +1922,7 @@ set font_descs {
 	{fontui   font_ui   {Main Font}}
 	{fontdiff font_diff {Diff/Console Font}}
 }
-load_config
+load_config 0
 apply_config
 
 ######################################################################
