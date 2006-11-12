@@ -90,15 +90,15 @@ proc save_config {} {
 
 	foreach name [array names default_config] {
 		set value $global_config_new($name)
-		if {$value != $global_config($name)} {
-			if {$value == $default_config($name)} {
+		if {$value ne $global_config($name)} {
+			if {$value eq $default_config($name)} {
 				catch {exec git repo-config --global --unset $name}
 			} else {
 				regsub -all "\[{}\]" $value {"} value
 				exec git repo-config --global $name $value
 			}
 			set global_config($name) $value
-			if {$value == $repo_config($name)} {
+			if {$value eq $repo_config($name)} {
 				catch {exec git repo-config --unset $name}
 				set repo_config($name) $value
 			}
@@ -107,8 +107,8 @@ proc save_config {} {
 
 	foreach name [array names default_config] {
 		set value $repo_config_new($name)
-		if {$value != $repo_config($name)} {
-			if {$value == $global_config($name)} {
+		if {$value ne $repo_config($name)} {
+			if {$value eq $global_config($name)} {
 				catch {exec git repo-config --unset $name}
 			} else {
 				regsub -all "\[{}\]" $value {"} value
@@ -123,7 +123,7 @@ proc error_popup {msg} {
 	global gitdir appname
 
 	set title $appname
-	if {$gitdir != {}} {
+	if {$gitdir ne {}} {
 		append title { (}
 		append title [lindex \
 			[file split [file normalize [file dirname $gitdir]]] \
@@ -142,7 +142,7 @@ proc info_popup {msg} {
 	global gitdir appname
 
 	set title $appname
-	if {$gitdir != {}} {
+	if {$gitdir ne {}} {
 		append title { (}
 		append title [lindex \
 			[file split [file normalize [file dirname $gitdir]]] \
@@ -167,13 +167,13 @@ if {   [catch {set cdup [exec git rev-parse --show-cdup]} err]
 	error_popup "Cannot find the git directory:\n\n$err"
 	exit 1
 }
-if {$cdup != ""} {
+if {$cdup ne ""} {
 	cd $cdup
 }
 unset cdup
 
 set single_commit 0
-if {$appname == {git-citool}} {
+if {$appname eq {git-citool}} {
 	set single_commit 1
 }
 
@@ -194,13 +194,13 @@ set commit_type {}
 proc lock_index {type} {
 	global index_lock_type disable_on_lock
 
-	if {$index_lock_type == {none}} {
+	if {$index_lock_type eq {none}} {
 		set index_lock_type $type
 		foreach w $disable_on_lock {
 			uplevel #0 $w disabled
 		}
 		return 1
-	} elseif {$index_lock_type == {begin-update} && $type == {update}} {
+	} elseif {$index_lock_type eq {begin-update} && $type eq {update}} {
 		set index_lock_type $type
 		return 1
 	}
@@ -242,9 +242,9 @@ proc update_status {{final Ready.}} {
 	if {$status_active || ![lock_index read]} return
 
 	repository_state new_HEAD new_type
-	if {$commit_type == {amend} 
-		&& $new_type == {normal}
-		&& $new_HEAD == $HEAD} {
+	if {$commit_type eq {amend}
+		&& $new_type eq {normal}
+		&& $new_HEAD eq $HEAD} {
 	} else {
 		set HEAD $new_HEAD
 		set PARENT $new_HEAD
@@ -254,7 +254,7 @@ proc update_status {{final Ready.}} {
 	array unset file_states
 
 	if {![$ui_comm edit modified]
-		|| [string trim [$ui_comm get 0.0 end]] == {}} {
+		|| [string trim [$ui_comm get 0.0 end]] eq {}} {
 		if {[load_message GITGUI_MSG]} {
 		} elseif {[load_message MERGE_MSG]} {
 		} elseif {[load_message SQUASH_MSG]} {
@@ -263,7 +263,7 @@ proc update_status {{final Ready.}} {
 		$ui_comm edit reset
 	}
 
-	if {$repo_config(gui.trustmtime) == {true}} {
+	if {$repo_config(gui.trustmtime) eq {true}} {
 		update_status_stage2 {} $final
 	} else {
 		set status_active 1
@@ -286,7 +286,7 @@ proc update_status_stage2 {fd final} {
 	global status_active
 	global buf_rdi buf_rdf buf_rlo
 
-	if {$fd != {}} {
+	if {$fd ne {}} {
 		read $fd
 		if {![eof $fd]} return
 		close $fd
@@ -442,7 +442,7 @@ proc clear_diff {} {
 proc reshow_diff {} {
 	global ui_fname_value ui_status_value file_states
 
-	if {$ui_fname_value == {}
+	if {$ui_fname_value eq {}
 		|| [catch {set s $file_states($ui_fname_value)}]} {
 		clear_diff
 	} else {
@@ -455,7 +455,7 @@ proc handle_empty_diff {} {
 
 	set path $ui_fname_value
 	set s $file_states($path)
-	if {[lindex $s 0] != {_M}} return
+	if {[lindex $s 0] ne {_M}} return
 
 	info_popup "No differences detected.
 
@@ -494,7 +494,7 @@ proc show_diff {path {w {}} {lno {}}} {
 	if {$diff_active || ![lock_index read]} return
 
 	clear_diff
-	if {$w == {} || $lno == {}} {
+	if {$w eq {} || $lno == {}} {
 		foreach w [array names file_lists] {
 			set lno [lsearch -sorted $file_lists($w) $path]
 			if {$lno >= 0} {
@@ -503,7 +503,7 @@ proc show_diff {path {w {}} {lno {}}} {
 			}
 		}
 	}
-	if {$w != {} && $lno >= 1} {
+	if {$w ne {} && $lno >= 1} {
 		$w tag add in_diff $lno.0 [expr $lno + 1].0
 	}
 
@@ -604,8 +604,8 @@ proc read_diff {fd} {
 		unlock_index
 		set ui_status_value {Ready.}
 
-		if {$repo_config(gui.trustmtime) == {true}
-			&& [$ui_diff index end] == {2.0}} {
+		if {$repo_config(gui.trustmtime) eq {true}
+			&& [$ui_diff index end] eq {2.0}} {
 			handle_empty_diff
 		}
 	}
@@ -618,8 +618,8 @@ proc read_diff {fd} {
 proc load_last_commit {} {
 	global HEAD PARENT commit_type ui_comm
 
-	if {$commit_type == {amend}} return
-	if {$commit_type != {normal}} {
+	if {$commit_type eq {amend}} return
+	if {$commit_type ne {normal}} {
 		error_popup "Can't amend a $commit_type commit."
 		return
 	}
@@ -671,10 +671,10 @@ proc commit_tree {} {
 	# -- Our in memory state should match the repository.
 	#
 	repository_state curHEAD cur_type
-	if {$commit_type == {amend} 
-		&& $cur_type == {normal}
-		&& $curHEAD == $HEAD} {
-	} elseif {$commit_type != $cur_type || $HEAD != $curHEAD} {
+	if {$commit_type eq {amend}
+		&& $cur_type eq {normal}
+		&& $curHEAD eq $HEAD} {
+	} elseif {$commit_type ne $cur_type || $HEAD ne $curHEAD} {
 		error_popup {Last scanned state does not match repository state.
 
 Its highly likely that another Git program modified the
@@ -725,7 +725,7 @@ You must include at least 1 file before you can commit.
 	# -- A message is required.
 	#
 	set msg [string trim [$ui_comm get 1.0 end]]
-	if {$msg == {}} {
+	if {$msg eq {}} {
 		error_popup {Please supply a commit message.
 
 A good commit message has the following format:
@@ -741,7 +741,7 @@ A good commit message has the following format:
 	# -- Ask the pre-commit hook for the go-ahead.
 	#
 	set pchook [file join $gitdir hooks pre-commit]
-	if {$tcl_platform(platform) == {windows} && [file isfile $pchook]} {
+	if {$tcl_platform(platform) eq {windows} && [file isfile $pchook]} {
 		set pchook [list sh -c [concat \
 			"if test -x \"$pchook\";" \
 			"then exec \"$pchook\" 2>&1;" \
@@ -751,7 +751,7 @@ A good commit message has the following format:
 	} else {
 		set pchook {}
 	}
-	if {$pchook != {}} {
+	if {$pchook ne {}} {
 		set ui_status_value {Calling pre-commit hook...}
 		set pch_error {}
 		set fd_ph [open "| $pchook" r]
@@ -798,7 +798,7 @@ proc commit_stage3 {fd_wt curHEAD msg} {
 	global file_states
 
 	gets $fd_wt tree_id
-	if {$tree_id == {} || [catch {close $fd_wt} err]} {
+	if {$tree_id eq {} || [catch {close $fd_wt} err]} {
 		error_popup "write-tree failed:\n\n$err"
 		set ui_status_value {Commit failed.}
 		unlock_index
@@ -808,10 +808,10 @@ proc commit_stage3 {fd_wt curHEAD msg} {
 	# -- Create the commit.
 	#
 	set cmd [list git commit-tree $tree_id]
-	if {$PARENT != {}} {
+	if {$PARENT ne {}} {
 		lappend cmd -p $PARENT
 	}
-	if {$commit_type == {merge}} {
+	if {$commit_type eq {merge}} {
 		if {[catch {
 				set fd_mh [open [file join $gitdir MERGE_HEAD] r]
 				while {[gets $fd_mh merge_head] >= 0} {
@@ -825,7 +825,7 @@ proc commit_stage3 {fd_wt curHEAD msg} {
 			return
 		}
 	}
-	if {$PARENT == {}} {
+	if {$PARENT eq {}} {
 		# git commit-tree writes to stderr during initial commit.
 		lappend cmd 2>/dev/null
 	}
@@ -840,7 +840,7 @@ proc commit_stage3 {fd_wt curHEAD msg} {
 	# -- Update the HEAD ref.
 	#
 	set reflogm commit
-	if {$commit_type != {normal}} {
+	if {$commit_type ne {normal}} {
 		append reflogm " ($commit_type)"
 	}
 	set i [string first "\n" $msg]
@@ -873,7 +873,7 @@ proc commit_stage3 {fd_wt curHEAD msg} {
 	# -- Run the post-commit hook.
 	#
 	set pchook [file join $gitdir hooks post-commit]
-	if {$tcl_platform(platform) == {windows} && [file isfile $pchook]} {
+	if {$tcl_platform(platform) eq {windows} && [file isfile $pchook]} {
 		set pchook [list sh -c [concat \
 			"if test -x \"$pchook\";" \
 			"then exec \"$pchook\";" \
@@ -881,7 +881,7 @@ proc commit_stage3 {fd_wt curHEAD msg} {
 	} elseif {![file executable $pchook]} {
 		set pchook {}
 	}
-	if {$pchook != {}} {
+	if {$pchook ne {}} {
 		catch {exec $pchook &}
 	}
 
@@ -906,7 +906,7 @@ proc commit_stage3 {fd_wt curHEAD msg} {
 		D? {set m _[string index $m 1]}
 		}
 
-		if {$m == {__}} {
+		if {$m eq {__}} {
 			unset file_states($path)
 		} else {
 			lset file_states($path) 0 $m
@@ -940,7 +940,7 @@ proc pull_remote {remote branch} {
 	# -- Our in memory state should match the repository.
 	#
 	repository_state curHEAD cur_type
-	if {$commit_type != $cur_type || $HEAD != $curHEAD} {
+	if {$commit_type ne $cur_type || $HEAD ne $curHEAD} {
 		error_popup {Last scanned state does not match repository state.
 
 Its highly likely that another Git program modified the
@@ -969,7 +969,7 @@ Commit or throw away all changes before starting a pull operation.
 	set w [new_console "pull $remote $branch" \
 		"Pulling new changes from branch $branch in $remote"]
 	set cmd [list git pull]
-	if {$repo_config(gui.pullsummary) == {false}} {
+	if {$repo_config(gui.pullsummary) eq {false}} {
 		lappend cmd --no-summary
 	}
 	lappend cmd $remote
@@ -1059,15 +1059,15 @@ proc merge_state {path new_state} {
 		set icon [lindex $info 1]
 	}
 
-	if {$s0 == {_}} {
+	if {$s0 eq {_}} {
 		set s0 [string index $state 0]
-	} elseif {$s0 == {*}} {
+	} elseif {$s0 eq {*}} {
 		set s0 _
 	}
 
-	if {$s1 == {_}} {
+	if {$s1 eq {_}} {
 		set s1 [string index $state 1]
-	} elseif {$s1 == {*}} {
+	} elseif {$s1 eq {*}} {
 		set s1 _
 	}
 
@@ -1087,7 +1087,7 @@ proc display_file {path state} {
 	set old_w [mapcol $old_m $path]
 	set new_icon [mapicon $new_m $path]
 
-	if {$new_w != $old_w} {
+	if {$new_w ne $old_w} {
 		set lno [lsearch -sorted $file_lists($old_w) $path]
 		if {$lno >= 0} {
 			incr lno
@@ -1107,7 +1107,7 @@ proc display_file {path state} {
 			-image $new_icon
 		$new_w insert $lno.1 "[escape_path $path]\n"
 		$new_w conf -state disabled
-	} elseif {$new_icon != [mapicon $old_m $path]} {
+	} elseif {$new_icon ne [mapicon $old_m $path]} {
 		$new_w conf -state normal
 		$new_w image conf [lindex $s 1] -image $new_icon
 		$new_w conf -state disabled
@@ -1199,7 +1199,7 @@ proc write_update_index {fd pathList totalCnt batch} {
 		puts -nonewline $fd $path
 		puts -nonewline $fd "\0"
 		display_file $path $new
-		if {$ui_fname_value == $path} {
+		if {$ui_fname_value eq $path} {
 			show_diff $path
 		}
 	}
@@ -1252,8 +1252,8 @@ proc populate_pull_menu {m} {
 
 	foreach remote $all_remotes {
 		set rb {}
-		if {[array get repo_config remote.$remote.url] != {}} {
-			if {[array get repo_config remote.$remote.fetch] != {}} {
+		if {[array get repo_config remote.$remote.url] ne {}} {
+			if {[array get repo_config remote.$remote.fetch] ne {}} {
 				regexp {^([^:]+):} \
 					[lindex $repo_config(remote.$remote.fetch) 0] \
 					line rb
@@ -1272,7 +1272,7 @@ proc populate_pull_menu {m} {
 
 		set rb_short $rb
 		regsub ^refs/heads/ $rb {} rb_short
-		if {$rb_short != {}} {
+		if {$rb_short ne {}} {
 			$m add command \
 				-label "Branch $rb_short from $remote..." \
 				-command [list pull_remote $remote $rb] \
@@ -1384,7 +1384,7 @@ foreach i {
 	if {$max_status_desc < [string length [lindex $i 3]]} {
 		set max_status_desc [string length [lindex $i 3]]
 	}
-	if {[lindex $i 1] == {i}} {
+	if {[lindex $i 1] eq {i}} {
 		set all_cols([lindex $i 0]) $ui_index
 	} else {
 		set all_cols([lindex $i 0]) $ui_other
@@ -1400,8 +1400,8 @@ unset filemask i
 
 proc is_MacOSX {} {
 	global tcl_platform tk_library
-	if {$tcl_platform(platform) == {unix}
-		&& $tcl_platform(os) == {Darwin}
+	if {$tcl_platform(platform) eq {unix}
+		&& $tcl_platform(os) eq {Darwin}
 		&& [string match /Library/Frameworks/* $tk_library]} {
 		return 1
 	}
@@ -1543,7 +1543,7 @@ proc console_exec {w cmd {after {}}} {
 	# -- Windows tosses the enviroment when we exec our child.
 	#    But most users need that so we have to relogin. :-(
 	#
-	if {$tcl_platform(platform) == {windows}} {
+	if {$tcl_platform(platform) eq {windows}} {
 		set cmd [list sh --login -c "cd \"[pwd]\" && [join $cmd { }]"]
 	}
 
@@ -1561,7 +1561,7 @@ proc console_read {w fd after} {
 	global console_cr console_data
 
 	set buf [read $fd]
-	if {$buf != {}} {
+	if {$buf ne {}} {
 		if {![winfo exists $w]} {console_init $w}
 		$w.m.t conf -state normal
 		set c 0
@@ -1605,7 +1605,7 @@ proc console_read {w fd after} {
 		}
 		array unset console_cr $w
 		array unset console_data $w
-		if {$after != {}} {
+		if {$after ne {}} {
 			uplevel #0 $after $ok
 		}
 		return
@@ -1624,12 +1624,12 @@ proc do_gitk {} {
 
 	set ui_status_value $starting_gitk_msg
 	after 10000 {
-		if {$ui_status_value == $starting_gitk_msg} {
+		if {$ui_status_value eq $starting_gitk_msg} {
 			set ui_status_value {Ready.}
 		}
 	}
 
-	if {$tcl_platform(platform) == {windows}} {
+	if {$tcl_platform(platform) eq {windows}} {
 		exec sh -c gitk &
 	} else {
 		exec gitk &
@@ -1656,13 +1656,13 @@ proc do_quit {} {
 	#
 	set save [file join $gitdir GITGUI_MSG]
 	set msg [string trim [$ui_comm get 0.0 end]]
-	if {[$ui_comm edit modified] && $msg != {}} {
+	if {[$ui_comm edit modified] && $msg ne {}} {
 		catch {
 			set fd [open $save w]
 			puts $fd [string trim [$ui_comm get 0.0 end]]
 			close $fd
 		}
-	} elseif {$msg == {} && [file exists $save]} {
+	} elseif {$msg eq {} && [file exists $save]} {
 		file delete $save
 	}
 
@@ -1675,7 +1675,7 @@ proc do_quit {} {
 	if {[catch {set rc_geometry $repo_config(gui.geometry)}]} {
 		set rc_geometry {}
 	}
-	if {$cfg_geometry != $rc_geometry} {
+	if {$cfg_geometry ne $rc_geometry} {
 		catch {exec git repo-config gui.geometry $cfg_geometry}
 	}
 
@@ -1702,7 +1702,7 @@ proc do_include_all {} {
 		_D {lappend pathList $path}
 		}
 	}
-	if {$pathList == {}} {
+	if {$pathList eq {}} {
 		unlock_index
 	} else {
 		update_index $pathList
@@ -1714,7 +1714,7 @@ set GIT_COMMITTER_IDENT {}
 proc do_signoff {} {
 	global ui_comm GIT_COMMITTER_IDENT
 
-	if {$GIT_COMMITTER_IDENT == {}} {
+	if {$GIT_COMMITTER_IDENT eq {}} {
 		if {[catch {set me [exec git var GIT_COMMITTER_IDENT]} err]} {
 			error_popup "Unable to obtain your identity:\n\n$err"
 			return
@@ -1728,9 +1728,9 @@ proc do_signoff {} {
 
 	set sob "Signed-off-by: $GIT_COMMITTER_IDENT"
 	set last [$ui_comm get {end -1c linestart} {end -1c}]
-	if {$last != $sob} {
+	if {$last ne $sob} {
 		$ui_comm edit separator
-		if {$last != {}
+		if {$last ne {}
 			&& ![regexp {^[A-Z][A-Za-z]*-[A-Za-z-]+: *} $last]} {
 			$ui_comm insert end "\n"
 		}
@@ -1888,7 +1888,7 @@ proc click {w x y shift wx wy} {
 	set lno [lindex $pos 0]
 	set col [lindex $pos 1]
 	set path [lindex $file_lists($w) [expr $lno - 1]]
-	if {$path == {}} return
+	if {$path eq {}} return
 
 	if {$col > 0 && $shift == 1} {
 		show_diff $path $w $lno
@@ -1902,7 +1902,7 @@ proc unclick {w x y} {
 	set lno [lindex $pos 0]
 	set col [lindex $pos 1]
 	set path [lindex $file_lists($w) [expr $lno - 1]]
-	if {$path == {}} return
+	if {$path eq {}} return
 
 	if {$col == 0} {
 		update_index [list $path]
@@ -1927,7 +1927,7 @@ font create font_diffbold
 
 set M1B M1
 set M1T M1
-if {$tcl_platform(platform) == {windows}} {
+if {$tcl_platform(platform) eq {windows}} {
 	set M1B Control
 	set M1T Ctrl
 } elseif {[is_MacOSX]} {
