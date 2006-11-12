@@ -793,7 +793,7 @@ proc commit_stage2 {curHEAD msg} {
 }
 
 proc commit_stage3 {fd_wt curHEAD msg} {
-	global single_commit gitdir HEAD PARENT commit_type
+	global single_commit gitdir HEAD PARENT commit_type tcl_platform
 	global ui_status_value ui_comm
 	global file_states
 
@@ -868,6 +868,21 @@ proc commit_stage3 {fd_wt curHEAD msg} {
 	#
 	if {[file isdirectory [file join $gitdir rr-cache]]} {
 		catch {exec git rerere}
+	}
+
+	# -- Run the post-commit hook.
+	#
+	set pchook [file join $gitdir hooks post-commit]
+	if {$tcl_platform(platform) == {windows} && [file isfile $pchook]} {
+		set pchook [list sh -c [concat \
+			"if test -x \"$pchook\";" \
+			"then exec \"$pchook\";" \
+			"fi"]]
+	} elseif {![file executable $pchook]} {
+		set pchook {}
+	}
+	if {$pchook != {}} {
+		catch {exec $pchook &}
 	}
 
 	$ui_comm delete 0.0 end
