@@ -73,7 +73,8 @@ proc error_popup {msg} {
 			end]
 		append title {)}
 	}
-	tk_messageBox -parent . \
+	tk_messageBox \
+		-parent . \
 		-icon error \
 		-type ok \
 		-title "$title: error" \
@@ -84,19 +85,16 @@ proc error_popup {msg} {
 ##
 ## repository setup
 
-if {[catch {set cdup [exec git rev-parse --show-cdup]} err]} {
-	error_popup "Cannot find the git directory:\n$err"
+if {   [catch {set cdup [exec git rev-parse --show-cdup]} err]
+	|| [catch {set gitdir [exec git rev-parse --git-dir]} err]} {
+	catch {wm withdraw .}
+	error_popup "Cannot find the git directory:\n\n$err"
 	exit 1
 }
 if {$cdup != ""} {
 	cd $cdup
 }
 unset cdup
-
-if {[catch {set gitdir [exec git rev-parse --git-dir]} err]} {
-	error_popup "Cannot find the git directory:\n$err"
-	exit 1
-}
 
 if {$appname == {git-citool}} {
 	set single_commit 1
@@ -420,7 +418,7 @@ proc show_diff {path {w {}} {lno {}}} {
 			set diff_active 0
 			unlock_index
 			set ui_status_value "Unable to display [escape_path $path]"
-			error_popup "Error loading file:\n$err"
+			error_popup "Error loading file:\n\n$err"
 			return
 		}
 		$ui_diff conf -state normal
@@ -437,7 +435,7 @@ proc show_diff {path {w {}} {lno {}}} {
 		set diff_active 0
 		unlock_index
 		set ui_status_value "Unable to display [escape_path $path]"
-		error_popup "Error loading diff:\n$err"
+		error_popup "Error loading diff:\n\n$err"
 		return
 	}
 
@@ -523,7 +521,7 @@ proc load_last_commit {} {
 			set msg [string trim [read $fd]]
 			close $fd
 		} err]} {
-		error_popup "Error loading commit data for amend:\n$err"
+		error_popup "Error loading commit data for amend:\n\n$err"
 		return
 	}
 
@@ -655,10 +653,8 @@ proc commit_stage2 {fd_wt curHEAD msg} {
 	global file_states
 
 	gets $fd_wt tree_id
-	close $fd_wt
-
-	if {$tree_id == {}} {
-		error_popup "write-tree failed"
+	if {$tree_id == {} || [catch {close $fd_wt} err]} {
+		error_popup "write-tree failed:\n\n$err"
 		set commit_active 0
 		set ui_status_value {Commit failed.}
 		unlock_index
@@ -679,7 +675,7 @@ proc commit_stage2 {fd_wt curHEAD msg} {
 				}
 				close $fd_mh
 			} err]} {
-			error_popup "Loading MERGE_HEAD failed:\n$err"
+			error_popup "Loading MERGE_HEAD failed:\n\n$err"
 			set commit_active 0
 			set ui_status_value {Commit failed.}
 			unlock_index
@@ -692,7 +688,7 @@ proc commit_stage2 {fd_wt curHEAD msg} {
 	}
 	lappend cmd << $msg
 	if {[catch {set cmt_id [eval exec $cmd]} err]} {
-		error_popup "commit-tree failed:\n$err"
+		error_popup "commit-tree failed:\n\n$err"
 		set commit_active 0
 		set ui_status_value {Commit failed.}
 		unlock_index
@@ -713,7 +709,7 @@ proc commit_stage2 {fd_wt curHEAD msg} {
 	}
 	set cmd [list git update-ref -m $reflogm HEAD $cmt_id $curHEAD]
 	if {[catch {eval exec $cmd} err]} {
-		error_popup "update-ref failed:\n$err"
+		error_popup "update-ref failed:\n\n$err"
 		set commit_active 0
 		set ui_status_value {Commit failed.}
 		unlock_index
@@ -1481,12 +1477,12 @@ proc do_signoff {} {
 
 	if {$GIT_COMMITTER_IDENT == {}} {
 		if {[catch {set me [exec git var GIT_COMMITTER_IDENT]} err]} {
-			error_popup "Unable to obtain your identity:\n$err"
+			error_popup "Unable to obtain your identity:\n\n$err"
 			return
 		}
 		if {![regexp {^(.*) [0-9]+ [-+0-9]+$} \
 			$me me GIT_COMMITTER_IDENT]} {
-			error_popup "Invalid GIT_COMMITTER_IDENT:\n$me"
+			error_popup "Invalid GIT_COMMITTER_IDENT:\n\n$me"
 			return
 		}
 	}
