@@ -169,6 +169,7 @@ if {$cdup != ""} {
 }
 unset cdup
 
+set single_commit 0
 if {$appname == {git-citool}} {
 	set single_commit 1
 }
@@ -177,7 +178,6 @@ if {$appname == {git-citool}} {
 ##
 ## task management
 
-set single_commit 0
 set status_active 0
 set diff_active 0
 set commit_active 0
@@ -1931,9 +1931,11 @@ menu .mbar -tearoff 0
 .mbar add cascade -label Project -menu .mbar.project
 .mbar add cascade -label Edit -menu .mbar.edit
 .mbar add cascade -label Commit -menu .mbar.commit
-.mbar add cascade -label Fetch -menu .mbar.fetch
-.mbar add cascade -label Pull -menu .mbar.pull
-.mbar add cascade -label Push -menu .mbar.push
+if {!$single_commit} {
+	.mbar add cascade -label Fetch -menu .mbar.fetch
+	.mbar add cascade -label Pull -menu .mbar.pull
+	.mbar add cascade -label Push -menu .mbar.push
+}
 . configure -menu .mbar
 
 # -- Project Menu
@@ -1941,9 +1943,11 @@ menu .mbar.project
 .mbar.project add command -label Visualize \
 	-command do_gitk \
 	-font font_ui
-.mbar.project add command -label {Repack Database} \
-	-command do_repack \
-	-font font_ui
+if {!$single_commit} {
+	.mbar.project add command -label {Repack Database} \
+		-command do_repack \
+		-font font_ui
+}
 .mbar.project add command -label Quit \
 	-command do_quit \
 	-accelerator $M1T-Q \
@@ -2017,14 +2021,16 @@ lappend disable_on_lock \
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-# -- Fetch Menu
-menu .mbar.fetch
+if {!$single_commit} {
+	# -- Fetch Menu
+	menu .mbar.fetch
 
-# -- Pull Menu
-menu .mbar.pull
+	# -- Pull Menu
+	menu .mbar.pull
 
-# -- Push Menu
-menu .mbar.push
+	# -- Push Menu
+	menu .mbar.push
+}
 
 # -- Main Window Layout
 panedwindow .vpane -orient vertical
@@ -2335,8 +2341,10 @@ set file_lists($ui_other) [list]
 
 wm title . "$appname ([file normalize [file dirname $gitdir]])"
 focus -force $ui_comm
-load_all_remotes
-populate_remote_menu .mbar.fetch From fetch_from
-populate_remote_menu .mbar.push To push_to
-populate_pull_menu .mbar.pull
+if {!$single_commit} {
+	load_all_remotes
+	populate_remote_menu .mbar.fetch From fetch_from
+	populate_remote_menu .mbar.push To push_to
+	populate_pull_menu .mbar.pull
+}
 after 1 update_status
