@@ -39,6 +39,7 @@ proc load_repo_config {} {
 proc save_my_config {} {
 	global repo_config
 	global cfg_trust_mtime
+	global font_diff
 
 	if {[catch {set rc_trustMTime $repo_config(gui.trustmtime)}]} {
 		set rc_trustMTime [list false]
@@ -46,6 +47,14 @@ proc save_my_config {} {
 	if {$cfg_trust_mtime != [lindex $rc_trustMTime 0]} {
 		exec git repo-config gui.trustMTime $cfg_trust_mtime
 		set repo_config(gui.trustmtime) [list $cfg_trust_mtime]
+	}
+
+	if {[catch {set rc_fontdiff $repo_config(gui.fontdiff)}]} {
+		set rc_fontdiff [list {Courier 10}]
+	}
+	if {$font_diff != [lindex $rc_fontdiff 0]} {
+		exec git repo-config --global gui.fontDiff $font_diff
+		set repo_config(gui.fontdiff) [list $font_diff]
 	}
 
 	set cfg_geometry [wm geometry .]
@@ -1890,9 +1899,9 @@ pack .vpane.lower.diff.body -side bottom -fill both -expand 1
 
 $ui_diff tag conf dm -foreground red
 $ui_diff tag conf dp -foreground blue
-$ui_diff tag conf da -font [concat $font_diff bold]
 $ui_diff tag conf di -foreground "#00a000"
 $ui_diff tag conf dni -foreground "#a000a0"
+$ui_diff tag conf da -font [concat $font_diff bold]
 $ui_diff tag conf bold -font [concat $font_diff bold]
 
 # -- Diff Body Context Menu
@@ -1911,6 +1920,23 @@ $ui_diff.ctxm add command -label "Copy All" \
 		tk_textCopy $ui_diff
 		$ui_diff tag remove sel 0.0 end
 	"
+$ui_diff.ctxm add separator
+$ui_diff.ctxm add command -label "Decrease Font Size" \
+	-font $font_ui \
+	-command {
+		lset font_diff 1 [expr [lindex $font_diff 1] - 1]
+		$ui_diff configure -font $font_diff
+		$ui_diff tag conf da -font [concat $font_diff bold]
+		$ui_diff tag conf bold -font [concat $font_diff bold]
+	}
+$ui_diff.ctxm add command -label "Increase Font Size" \
+	-font $font_ui \
+	-command {
+		lset font_diff 1 [expr [lindex $font_diff 1] + 1]
+		$ui_diff configure -font $font_diff
+		$ui_diff tag conf da -font [concat $font_diff bold]
+		$ui_diff tag conf bold -font [concat $font_diff bold]
+	}
 bind $ui_diff <Any-Button-3> "tk_popup $ui_diff.ctxm %X %Y"
 
 # -- Status Bar
