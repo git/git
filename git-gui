@@ -2337,5 +2337,4 @@ load_all_remotes
 populate_remote_menu .mbar.fetch From fetch_from
 populate_remote_menu .mbar.push To push_to
 populate_pull_menu .mbar.pull
-tkwait visibility .
-update_status
+after 1 update_status
