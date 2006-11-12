@@ -88,6 +88,25 @@ proc error_popup {msg} {
 		-message $msg
 }
 
+proc info_popup {msg} {
+	global gitdir appname
+
+	set title $appname
+	if {$gitdir != {}} {
+		append title { (}
+		append title [lindex \
+			[file split [file normalize [file dirname $gitdir]]] \
+			end]
+		append title {)}
+	}
+	tk_messageBox \
+		-parent . \
+		-icon error \
+		-type ok \
+		-title $title \
+		-message $msg
+}
+
 ######################################################################
 ##
 ## repository setup
@@ -204,7 +223,12 @@ proc update_status {{final Ready.}} {
 	} else {
 		set status_active 1
 		set ui_status_value {Refreshing file status...}
-		set fd_rf [open "| git update-index -q --unmerged --refresh" r]
+		set cmd [list git update-index]
+		lappend cmd -q
+		lappend cmd --unmerged
+		lappend cmd --ignore-missing
+		lappend cmd --refresh
+		set fd_rf [open "| $cmd" r]
 		fconfigure $fd_rf -blocking 0 -translation binary
 		fileevent $fd_rf readable \
 			[list update_status_stage2 $fd_rf $final]
@@ -381,6 +405,42 @@ proc reshow_diff {} {
 	}
 }
 
+proc handle_empty_diff {} {
+	global ui_fname_value file_states file_lists
+
+	set path $ui_fname_value
+	set s $file_states($path)
+	if {[lindex $s 0] != {_M}} return
+
+	info_popup "No differences detected.
+
+[short_path $path] has no changes.
+
+The modification date of this file was updated by another
+application and you currently have the Trust File Modification
+Timestamps feature enabled, so Git did not automatically detect
+that there are no content differences in this file.
+
+This file will now be removed from the modified files list, to
+prevent possible confusion.
+"
+	if {[catch {exec git update-index -- $path} err]} {
+		error_popup "Failed to refresh index:\n\n$err"
+	}
+
+	clear_diff
+	set old_w [mapcol [lindex $file_states($path) 0] $path]
+	set lno [lsearch -sorted $file_lists($old_w) $path]
+	if {$lno >= 0} {
+		set file_lists($old_w) \
+			[lreplace $file_lists($old_w) $lno $lno]
+		incr lno
+		$old_w conf -state normal
+		$old_w delete $lno.0 [expr $lno + 1].0
+		$old_w conf -state disabled
+	}
+}
+
 proc show_diff {path {w {}} {lno {}}} {
 	global file_states file_lists
 	global PARENT diff_3way diff_active
@@ -451,6 +511,7 @@ proc show_diff {path {w {}} {lno {}}} {
 
 proc read_diff {fd} {
 	global ui_diff ui_status_value diff_3way diff_active
+	global cfg_trust_mtime
 
 	while {[gets $fd line] >= 0} {
 		if {[string match {diff --git *} $line]} continue
@@ -497,6 +558,10 @@ proc read_diff {fd} {
 		set diff_active 0
 		unlock_index
 		set ui_status_value {Ready.}
+
+		if {$cfg_trust_mtime && [$ui_diff index end] == {2.0}} {
+			handle_empty_diff
+		}
 	}
 }
 
@@ -588,7 +653,7 @@ before committing.
 		U? {
 			error_popup "Unmerged files cannot be committed.
 
-File [escape_path $path] has merge conflicts.
+File [short_path $path] has merge conflicts.
 You must resolve them and include the file before committing.
 "
 			unlock_index
@@ -597,7 +662,7 @@ You must resolve them and include the file before committing.
 		default {
 			error_popup "Unknown file state [lindex $s 0] detected.
 
-File [escape_path $path] cannot be committed by this program.
+File [short_path $path] cannot be committed by this program.
 "
 		}
 		}
@@ -888,6 +953,10 @@ proc escape_path {path} {
 	return $path
 }
 
+proc short_path {path} {
+	return [escape_path [lindex [file split $path] end]]
+}
+
 set next_icon_id 0
 
 proc merge_state {path new_state} {
@@ -921,7 +990,6 @@ proc merge_state {path new_state} {
 }
 
 proc display_file {path state} {
-	global ui_index ui_other
 	global file_states file_lists status_active
 
 	set old_m [merge_state $path $state]
