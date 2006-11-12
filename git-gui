@@ -1510,10 +1510,15 @@ proc do_signoff {} {
 		}
 	}
 
-	set str "Signed-off-by: $GIT_COMMITTER_IDENT"
-	if {[$ui_comm get {end -1c linestart} {end -1c}] != $str} {
+	set sob "Signed-off-by: $GIT_COMMITTER_IDENT"
+	set last [$ui_comm get {end -1c linestart} {end -1c}]
+	if {$last != $sob} {
 		$ui_comm edit separator
-		$ui_comm insert end "\n$str"
+		if {$last != {}
+			&& ![regexp {^[A-Z][A-Za-z]*-[A-Za-z-]+: *} $last]} {
+			$ui_comm insert end "\n"
+		}
+		$ui_comm insert end "\n$sob"
 		$ui_comm edit separator
 		$ui_comm see end
 	}
