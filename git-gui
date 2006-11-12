@@ -2068,7 +2068,7 @@ $ui_index tag conf in_diff -font font_uibold
 $ui_other tag conf in_diff -font font_uibold
 
 # -- Diff and Commit Area
-frame .vpane.lower -height 400 -width 400
+frame .vpane.lower -height 300 -width 400
 frame .vpane.lower.commarea
 frame .vpane.lower.diff -relief sunken -borderwidth 1
 pack .vpane.lower.commarea -side top -fill x
@@ -2254,6 +2254,9 @@ $ui_diff.ctxm add command -label "Decrease Font Size" \
 $ui_diff.ctxm add command -label "Increase Font Size" \
 	-font font_ui \
 	-command {incr_font_size font_diff 1}
+$ui_diff.ctxm add command -label {Options...} \
+	-font font_ui \
+	-command do_options
 bind_button3 $ui_diff "tk_popup $ui_diff.ctxm %X %Y"
 
 # -- Status Bar
