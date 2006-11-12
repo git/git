@@ -1718,9 +1718,13 @@ proc do_options {} {
 	foreach name [array names global_config] {
 		set global_config_new($name) $global_config($name)
 	}
+	set reponame [lindex [file split \
+		[file normalize [file dirname $gitdir]]] \
+		end]
 
 	set w .options_editor
 	toplevel $w
+	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
 	label $w.header -text "$appname Options" \
 		-font font_uibold
@@ -1741,7 +1745,7 @@ proc do_options {} {
 	pack $w.buttons.cancel -side right
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.repo -text {This Repository} \
+	labelframe $w.repo -text "$reponame Repository" \
 		-font font_ui \
 		-relief raised -borderwidth 2
 	labelframe $w.global -text {Global (All Repositories)} \
@@ -1794,9 +1798,7 @@ proc do_options {} {
 
 	bind $w <Visibility> "grab $w; focus $w"
 	bind $w <Key-Escape> "destroy $w"
-	wm title $w "$appname ([lindex [file split \
-		[file normalize [file dirname $gitdir]]] \
-		end]): Options"
+	wm title $w "$appname ($reponame): Options"
 	tkwait window $w
 }
 
