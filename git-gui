@@ -1566,9 +1566,16 @@ proc unclick {w x y} {
 ##
 ## ui init
 
-set font_ui {Helvetica 10}
-set font_diff {Courier 10}
-set cursor_ptr left_ptr
+set font_ui {}
+set font_diff {}
+set cursor_ptr {}
+menu .mbar -tearoff 0
+catch {set font_ui   [lindex $repo_config(gui.fontui) 0]}
+catch {set font_diff [lindex $repo_config(gui.fontdiff) 0]}
+if {$font_ui == {}}    {catch {set font_ui [.mbar cget -font]}}
+if {$font_ui == {}}    {set font_ui {Helvetica 10}}
+if {$font_diff == {}}  {set font_diff {Courier 10}}
+if {$cursor_ptr == {}} {set cursor_ptr left_ptr}
 
 switch -glob -- "$tcl_platform(platform),$tcl_platform(os)" {
 windows,*   {set M1B Control; set M1T Ctrl}
@@ -1577,7 +1584,6 @@ unix,Darwin {set M1B M1; set M1T Cmd}
 }
 
 # -- Menu Bar
-menu .mbar -tearoff 0
 .mbar add cascade -label Project -menu .mbar.project
 .mbar add cascade -label Edit -menu .mbar.edit
 .mbar add cascade -label Commit -menu .mbar.commit
