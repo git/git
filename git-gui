@@ -1658,7 +1658,7 @@ proc unclick {w x y} {
 ##
 ## ui init
 
-set cursor_ptr left_ptr
+set cursor_ptr arrow
 font create font_diff -family Courier -size 10
 font create font_ui
 catch {
