@@ -896,8 +896,7 @@ proc fetch_from {remote} {
 }
 
 proc pull_remote {remote branch} {
-	global HEAD commit_type
-	global file_states
+	global HEAD commit_type file_states repo_config
 
 	if {![lock_index update]} return
 
@@ -933,6 +932,9 @@ Commit or throw away all changes before starting a pull operation.
 	set w [new_console "pull $remote $branch" \
 		"Pulling new changes from branch $branch in $remote"]
 	set cmd [list git pull]
+	if {$repo_config(gui.pullsummary) == {false}} {
+		lappend cmd --no-summary
+	}
 	lappend cmd $remote
 	lappend cmd $branch
 	console_exec $w $cmd [list post_pull_remote $remote $branch]
@@ -1760,6 +1762,7 @@ proc do_options {} {
 	pack $w.global -side right -fill both -expand 1 -pady 5 -padx 5
 
 	foreach option {
+		{pullsummary {Show Pull Summary}}
 		{trustmtime {Trust File Modification Timestamps}}
 		} {
 		set name [lindex $option 0]
@@ -1916,6 +1919,7 @@ proc apply_config {} {
 }
 
 set default_config(gui.trustmtime) false
+set default_config(gui.pullsummary) true
 set default_config(gui.fontui) [font configure font_ui]
 set default_config(gui.fontdiff) [font configure font_diff]
 set font_descs {
