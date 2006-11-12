@@ -2343,67 +2343,72 @@ sub update
 
         if ( defined ( $lastpicked ) )
         {
-            my $filepipe = open(FILELIST, '-|', 'git-diff-tree', '-r', $lastpicked, $commit->{hash}) or die("Cannot call git-diff-tree : $!");
+            my $filepipe = open(FILELIST, '-|', 'git-diff-tree', '-z', '-r', $lastpicked, $commit->{hash}) or die("Cannot call git-diff-tree : $!");
+	    local ($/) = "\0";
             while ( <FILELIST> )
             {
-                unless ( /^:\d{6}\s+\d{3}(\d)\d{2}\s+[a-zA-Z0-9]{40}\s+([a-zA-Z0-9]{40})\s+(\w)\s+(.*)$/o )
+		chomp;
+                unless ( /^:\d{6}\s+\d{3}(\d)\d{2}\s+[a-zA-Z0-9]{40}\s+([a-zA-Z0-9]{40})\s+(\w)$/o )
                 {
                     die("Couldn't process git-diff-tree line : $_");
                 }
+		my ($mode, $hash, $change) = ($1, $2, $3);
+		my $name = <FILELIST>;
+		chomp($name);
 
-                # $log->debug("File mode=$1, hash=$2, change=$3, name=$4");
+                # $log->debug("File mode=$mode, hash=$hash, change=$change, name=$name");
 
                 my $git_perms = "";
-                $git_perms .= "r" if ( $1 & 4 );
-                $git_perms .= "w" if ( $1 & 2 );
-                $git_perms .= "x" if ( $1 & 1 );
+                $git_perms .= "r" if ( $mode & 4 );
+                $git_perms .= "w" if ( $mode & 2 );
+                $git_perms .= "x" if ( $mode & 1 );
                 $git_perms = "rw" if ( $git_perms eq "" );
 
-                if ( $3 eq "D" )
+                if ( $change eq "D" )
                 {
-                    #$log->debug("DELETE   $4");
-                    $head->{$4} = {
-                        name => $4,
-                        revision => $head->{$4}{revision} + 1,
+                    #$log->debug("DELETE   $name");
+                    $head->{$name} = {
+                        name => $name,
+                        revision => $head->{$name}{revision} + 1,
                         filehash => "deleted",
                         commithash => $commit->{hash},
                         modified => $commit->{date},
                         author => $commit->{author},
                         mode => $git_perms,
                     };
-                    $self->insert_rev($4, $head->{$4}{revision}, $2, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
                 }
-                elsif ( $3 eq "M" )
+                elsif ( $change eq "M" )
                 {
-                    #$log->debug("MODIFIED $4");
-                    $head->{$4} = {
-                        name => $4,
-                        revision => $head->{$4}{revision} + 1,
-                        filehash => $2,
+                    #$log->debug("MODIFIED $name");
+                    $head->{$name} = {
+                        name => $name,
+                        revision => $head->{$name}{revision} + 1,
+                        filehash => $hash,
                         commithash => $commit->{hash},
                         modified => $commit->{date},
                         author => $commit->{author},
                         mode => $git_perms,
                     };
-                    $self->insert_rev($4, $head->{$4}{revision}, $2, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
                 }
-                elsif ( $3 eq "A" )
+                elsif ( $change eq "A" )
                 {
-                    #$log->debug("ADDED    $4");
-                    $head->{$4} = {
-                        name => $4,
+                    #$log->debug("ADDED    $name");
+                    $head->{$name} = {
+                        name => $name,
                         revision => 1,
-                        filehash => $2,
+                        filehash => $hash,
                         commithash => $commit->{hash},
                         modified => $commit->{date},
                         author => $commit->{author},
                         mode => $git_perms,
                     };
-                    $self->insert_rev($4, $head->{$4}{revision}, $2, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
                 }
                 else
                 {
-                    $log->warn("UNKNOWN FILE CHANGE mode=$1, hash=$2, change=$3, name=$4");
+                    $log->warn("UNKNOWN FILE CHANGE mode=$mode, hash=$hash, change=$change, name=$name");
                     die;
                 }
             }
@@ -2412,10 +2417,12 @@ sub update
             # this is used to detect files removed from the repo
             my $seen_files = {};
 
-            my $filepipe = open(FILELIST, '-|', 'git-ls-tree', '-r', $commit->{hash}) or die("Cannot call git-ls-tree : $!");
+            my $filepipe = open(FILELIST, '-|', 'git-ls-tree', '-z', '-r', $commit->{hash}) or die("Cannot call git-ls-tree : $!");
+	    local $/ = "\0";
             while ( <FILELIST> )
             {
-                unless ( /^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\s+(.*)$/o )
+		chomp;
+                unless ( /^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
                 {
                     die("Couldn't process git-ls-tree line : $_");
                 }
