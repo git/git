@@ -1563,7 +1563,7 @@ proc unclick {w x y} {
 
 set font_ui {Helvetica 10}
 set font_diff {Courier 10}
-set maincursor [. cget -cursor]
+set cursor_ptr left_ptr
 
 switch -glob -- "$tcl_platform(platform),$tcl_platform(os)" {
 windows,*   {set M1B Control; set M1T Ctrl}
@@ -1690,8 +1690,8 @@ label .vpane.files.index.title -text {Modified Files} \
 text $ui_index -background white -borderwidth 0 \
 	-width 40 -height 10 \
 	-font $font_ui \
+	-cursor $cursor_ptr \
 	-yscrollcommand {.vpane.files.index.sb set} \
-	-cursor $maincursor \
 	-state disabled
 scrollbar .vpane.files.index.sb -command [list $ui_index yview]
 pack .vpane.files.index.title -side top -fill x
@@ -1707,8 +1707,8 @@ label .vpane.files.other.title -text {Untracked Files} \
 text $ui_other -background white -borderwidth 0 \
 	-width 40 -height 10 \
 	-font $font_ui \
+	-cursor $cursor_ptr \
 	-yscrollcommand {.vpane.files.other.sb set} \
-	-cursor $maincursor \
 	-state disabled
 scrollbar .vpane.files.other.sb -command [list $ui_other yview]
 pack .vpane.files.other.title -side top -fill x
@@ -1791,8 +1791,7 @@ text $ui_comm -background white -borderwidth 1 \
 	-relief sunken \
 	-width 75 -height 9 -wrap none \
 	-font $font_diff \
-	-yscrollcommand {.vpane.lower.commarea.buffer.sby set} \
-	-cursor $maincursor
+	-yscrollcommand {.vpane.lower.commarea.buffer.sby set}
 scrollbar .vpane.lower.commarea.buffer.sby \
 	-command [list $ui_comm yview]
 pack $ui_coml -side top -fill x
@@ -1866,7 +1865,6 @@ text $ui_diff -background white -borderwidth 0 \
 	-font $font_diff \
 	-xscrollcommand {.vpane.lower.diff.body.sbx set} \
 	-yscrollcommand {.vpane.lower.diff.body.sby set} \
-	-cursor $maincursor \
 	-state disabled
 scrollbar .vpane.lower.diff.body.sbx -orient horizontal \
 	-command [list $ui_diff xview]
