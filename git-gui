@@ -664,8 +664,8 @@ proc load_last_commit {} {
 
 proc commit_tree {} {
 	global tcl_platform HEAD gitdir commit_type file_states
-	global commit_active ui_status_value
-	global ui_comm
+	global commit_active pch_error
+	global ui_status_value ui_comm
 
 	if {$commit_active || ![lock_index update]} return
 
@@ -739,33 +739,64 @@ A good commit message has the following format:
 		return
 	}
 
+	set commit_active 1
+
 	# -- Ask the pre-commit hook for the go-ahead.
 	#
 	set pchook [file join $gitdir hooks pre-commit]
 	if {$tcl_platform(platform) == {windows} && [file isfile $pchook]} {
-		set pchook [list sh -c \
-			"if test -x \"$pchook\"; then exec \"$pchook\"; fi"]
+		set pchook [list sh -c [concat \
+			"if test -x \"$pchook\";" \
+			"then exec \"$pchook\" 2>&1;" \
+			"fi"]]
 	} elseif {[file executable $pchook]} {
-		set pchook [list $pchook]
+		set pchook [list $pchook |& cat]
 	} else {
 		set pchook {}
 	}
-	if {$pchook != {} && [catch {eval exec $pchook} err]} {
-		hook_failed_popup pre-commit $err
-		unlock_index
+	if {$pchook != {}} {
+		set ui_status_value {Calling pre-commit hook...}
+		set pch_error {}
+		set fd_ph [open "| $pchook" r]
+		fconfigure $fd_ph -blocking 0 -translation binary
+		fileevent $fd_ph readable \
+			[list commit_stage1 $fd_ph $curHEAD $msg]
+	} else {
+		commit_stage2 $curHEAD $msg
+	}
+}
+
+proc commit_stage1 {fd_ph curHEAD msg} {
+	global commit_active pch_error ui_status_value
+
+	append pch_error [read $fd_ph]
+	fconfigure $fd_ph -blocking 1
+	if {[eof $fd_ph]} {
+		if {[catch {close $fd_ph}]} {
+			set ui_status_value {Commit declined by pre-commit hook.}
+			hook_failed_popup pre-commit $pch_error
+			unlock_index
+			set commit_active 0
+			set pch_error {}
+			return
+		}
+		commit_stage2 $curHEAD $msg
 		return
 	}
+	fconfigure $fd_ph -blocking 0
+}
+
+proc commit_stage2 {curHEAD msg} {
+	global ui_status_value
 
 	# -- Write the tree in the background.
 	#
-	set commit_active 1
 	set ui_status_value {Committing changes...}
-
 	set fd_wt [open "| git write-tree" r]
-	fileevent $fd_wt readable [list commit_stage2 $fd_wt $curHEAD $msg]
+	fileevent $fd_wt readable [list commit_stage3 $fd_wt $curHEAD $msg]
 }
 
-proc commit_stage2 {fd_wt curHEAD msg} {
+proc commit_stage3 {fd_wt curHEAD msg} {
 	global single_commit gitdir HEAD PARENT commit_type
 	global commit_active ui_status_value ui_comm
 	global file_states
