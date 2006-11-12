@@ -183,7 +183,6 @@ if {$appname == {git-citool}} {
 
 set status_active 0
 set diff_active 0
-set commit_active 0
 
 set disable_on_lock [list]
 set index_lock_type none
@@ -664,10 +663,10 @@ proc load_last_commit {} {
 
 proc commit_tree {} {
 	global tcl_platform HEAD gitdir commit_type file_states
-	global commit_active pch_error
+	global pch_error
 	global ui_status_value ui_comm
 
-	if {$commit_active || ![lock_index update]} return
+	if {![lock_index update]} return
 
 	# -- Our in memory state should match the repository.
 	#
@@ -739,8 +738,6 @@ A good commit message has the following format:
 		return
 	}
 
-	set commit_active 1
-
 	# -- Ask the pre-commit hook for the go-ahead.
 	#
 	set pchook [file join $gitdir hooks pre-commit]
@@ -767,7 +764,7 @@ A good commit message has the following format:
 }
 
 proc commit_stage1 {fd_ph curHEAD msg} {
-	global commit_active pch_error ui_status_value
+	global pch_error ui_status_value
 
 	append pch_error [read $fd_ph]
 	fconfigure $fd_ph -blocking 1
@@ -776,14 +773,13 @@ proc commit_stage1 {fd_ph curHEAD msg} {
 			set ui_status_value {Commit declined by pre-commit hook.}
 			hook_failed_popup pre-commit $pch_error
 			unlock_index
-			set commit_active 0
-			set pch_error {}
-			return
+		} else {
+			commit_stage2 $curHEAD $msg
 		}
-		commit_stage2 $curHEAD $msg
-		return
+		set pch_error {}
+	} else {
+		fconfigure $fd_ph -blocking 0
 	}
-	fconfigure $fd_ph -blocking 0
 }
 
 proc commit_stage2 {curHEAD msg} {
@@ -798,13 +794,12 @@ proc commit_stage2 {curHEAD msg} {
 
 proc commit_stage3 {fd_wt curHEAD msg} {
 	global single_commit gitdir HEAD PARENT commit_type
-	global commit_active ui_status_value ui_comm
+	global ui_status_value ui_comm
 	global file_states
 
 	gets $fd_wt tree_id
 	if {$tree_id == {} || [catch {close $fd_wt} err]} {
 		error_popup "write-tree failed:\n\n$err"
-		set commit_active 0
 		set ui_status_value {Commit failed.}
 		unlock_index
 		return
@@ -825,7 +820,6 @@ proc commit_stage3 {fd_wt curHEAD msg} {
 				close $fd_mh
 			} err]} {
 			error_popup "Loading MERGE_HEAD failed:\n\n$err"
-			set commit_active 0
 			set ui_status_value {Commit failed.}
 			unlock_index
 			return
@@ -838,7 +832,6 @@ proc commit_stage3 {fd_wt curHEAD msg} {
 	lappend cmd << $msg
 	if {[catch {set cmt_id [eval exec $cmd]} err]} {
 		error_popup "commit-tree failed:\n\n$err"
-		set commit_active 0
 		set ui_status_value {Commit failed.}
 		unlock_index
 		return
@@ -859,7 +852,6 @@ proc commit_stage3 {fd_wt curHEAD msg} {
 	set cmd [list git update-ref -m $reflogm HEAD $cmt_id $curHEAD]
 	if {[catch {eval exec $cmd} err]} {
 		error_popup "update-ref failed:\n\n$err"
-		set commit_active 0
 		set ui_status_value {Commit failed.}
 		unlock_index
 		return
@@ -886,7 +878,6 @@ proc commit_stage3 {fd_wt curHEAD msg} {
 
 	# -- Update status without invoking any git commands.
 	#
-	set commit_active 0
 	set commit_type normal
 	set HEAD $cmt_id
 	set PARENT $cmt_id
