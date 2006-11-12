@@ -1285,6 +1285,23 @@ unset filemask i
 ##
 ## util
 
+proc is_MacOSX {} {
+	global tcl_platform tk_library
+	if {$tcl_platform(platform) == {unix}
+		&& $tcl_platform(os) == {Darwin}
+		&& [string match /Library/Frameworks/* $tk_library]} {
+		return 1
+	}
+	return 0
+}
+
+proc bind_button3 {w cmd} {
+	bind $w <Any-Button-3> $cmd
+	if {[is_MacOSX]} {
+		bind $w <Control-Button-1> $cmd
+	}
+}
+
 proc incr_font_size {font {amt 1}} {
 	set sz [font configure $font -size]
 	incr sz $amt
@@ -1398,7 +1415,7 @@ proc console_init {w} {
 		-command "destroy $w"
 	pack $w.ok -side bottom
 
-	bind $w.m.t <Any-Button-3> "tk_popup $w.ctxm %X %Y"
+	bind_button3 $w.m.t "tk_popup $w.ctxm %X %Y"
 	bind $w.m.t <$M1B-Key-a> "$w.m.t tag add sel 0.0 end;break"
 	bind $w.m.t <$M1B-Key-A> "$w.m.t tag add sel 0.0 end;break"
 	bind $w <Visibility> "focus $w"
@@ -1655,10 +1672,14 @@ font configure font_uibold -weight bold
 eval font create font_diffbold [font configure font_diff]
 font configure font_diffbold -weight bold
 
-switch -glob -- "$tcl_platform(platform),$tcl_platform(os)" {
-windows,*   {set M1B Control; set M1T Ctrl}
-unix,Darwin {set M1B M1; set M1T Cmd}
-*           {set M1B M1; set M1T M1}
+set M1B M1
+set M1T M1
+if {$tcl_platform(platform) == {windows}} {
+	set M1B Control
+	set M1T Ctrl
+} elseif {[is_MacOSX]} {
+	set M1B M1
+	set M1T Cmd
 }
 
 # -- Menu Bar
@@ -1920,7 +1941,7 @@ $ui_comm.ctxm add separator
 $ui_comm.ctxm add command -label "Sign Off" \
 	-font font_ui \
 	-command do_signoff
-bind $ui_comm <Any-Button-3> "tk_popup $ui_comm.ctxm %X %Y"
+bind_button3 $ui_comm "tk_popup $ui_comm.ctxm %X %Y"
 
 # -- Diff Header
 set ui_fname_value {}
@@ -1997,7 +2018,7 @@ $ui_diff.ctxm add command -label "Decrease Font Size" \
 $ui_diff.ctxm add command -label "Increase Font Size" \
 	-font font_ui \
 	-command {incr_font_size font_diff 1}
-bind $ui_diff <Any-Button-3> "tk_popup $ui_diff.ctxm %X %Y"
+bind_button3 $ui_diff "tk_popup $ui_diff.ctxm %X %Y"
 
 # -- Status Bar
 set ui_status_value {Initializing...}
@@ -2063,8 +2084,8 @@ bind all <$M1B-Key-w> {destroy [winfo toplevel %W]}
 bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
 foreach i [list $ui_index $ui_other] {
 	bind $i <Button-1> {click %W %x %y 1 %X %Y; break}
-	bind $i <Button-3> {click %W %x %y 3 %X %Y; break}
 	bind $i <ButtonRelease-1> {unclick %W %x %y; break}
+	bind_button3 $i {click %W %x %y 3 %X %Y; break}
 }
 unset i
 
