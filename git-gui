@@ -178,9 +178,7 @@ if {$appname == {git-citool}} {
 set single_commit 0
 set status_active 0
 set diff_active 0
-set update_active 0
 set commit_active 0
-set update_index_fd {}
 
 set disable_on_lock [list]
 set index_lock_type none
@@ -1100,55 +1098,73 @@ proc display_all_files {} {
 	$ui_other conf -state disabled
 }
 
-proc with_update_index {body} {
-	global update_index_fd
+proc update_index {pathList} {
+	global update_index_cp ui_status_value
 
-	if {$update_index_fd == {}} {
-		if {![lock_index update]} return
-		set update_index_fd [open \
-			"| git update-index --add --remove -z --stdin" \
-			w]
-		fconfigure $update_index_fd -translation binary
-		uplevel 1 $body
-		close $update_index_fd
-		set update_index_fd {}
-		unlock_index
-	} else {
-		uplevel 1 $body
-	}
+	if {![lock_index update]} return
+
+	set update_index_cp 0
+	set totalCnt [llength $pathList]
+	set batch [expr {int($totalCnt * .01) + 1}]
+	if {$batch > 25} {set batch 25}
+
+	set ui_status_value "Including files ... 0/$totalCnt 0%"
+	set ui_status_value [format \
+		"Including files ... %i/%i files (%.2f%%)" \
+		$update_index_cp \
+		$totalCnt \
+		0.0]
+	set fd [open "| git update-index --add --remove -z --stdin" w]
+	fconfigure $fd -blocking 0 -translation binary
+	fileevent $fd writable [list \
+		write_update_index \
+		$fd \
+		$pathList \
+		$totalCnt \
+		$batch \
+		]
 }
 
-proc update_index {path} {
-	global update_index_fd
-
-	if {$update_index_fd == {}} {
-		error {not in with_update_index}
-	} else {
-		puts -nonewline $update_index_fd "$path\0"
-	}
-}
-
-proc toggle_mode {path} {
+proc write_update_index {fd pathList totalCnt batch} {
+	global update_index_cp ui_status_value
 	global file_states ui_fname_value
 
-	set s $file_states($path)
-	set m [lindex $s 0]
-
-	switch -- $m {
-	AM -
-	_O {set new A*}
-	_M -
-	MM {set new M*}
-	AD -
-	_D {set new D*}
-	default {return}
+	if {$update_index_cp >= $totalCnt} {
+		close $fd
+		unlock_index
+		set ui_status_value {Ready.}
+		return
 	}
 
-	with_update_index {update_index $path}
-	display_file $path $new
-	if {$ui_fname_value == $path} {
-		show_diff $path
+	for {set i $batch} \
+		{$update_index_cp < $totalCnt && $i > 0} \
+		{incr i -1} {
+		set path [lindex $pathList $update_index_cp]
+		incr update_index_cp
+
+		switch -- [lindex $file_states($path) 0] {
+		AM -
+		_O {set new A*}
+		_M -
+		MM {set new M*}
+		AD -
+		_D {set new D*}
+		default {continue}
+		}
+
+		puts -nonewline $fd $path
+		puts -nonewline $fd "\0"
+		display_file $path $new
+		if {$ui_fname_value == $path} {
+			show_diff $path
+		}
 	}
+
+	set ui_status_value [format \
+		"Including files ... %i/%i files (%.2f%%)" \
+		$update_index_cp \
+		$totalCnt \
+		[expr {100.0 * $update_index_cp / $totalCnt}]]
 }
 
 ######################################################################
@@ -1627,27 +1643,25 @@ proc do_rescan {} {
 }
 
 proc do_include_all {} {
-	global update_active ui_status_value
+	global file_states
 
-	if {$update_active || ![lock_index begin-update]} return
+	if {![lock_index begin-update]} return
 
-	set update_active 1
-	set ui_status_value {Including all modified files...}
-	after 1 {
-		with_update_index {
-			foreach path [array names file_states] {
-				set s $file_states($path)
-				set m [lindex $s 0]
-				switch -- $m {
-				AM -
-				MM -
-				_M -
-				_D {toggle_mode $path}
-				}
-			}
+	set pathList [list]
+	foreach path [array names file_states] {
+		set s $file_states($path)
+		set m [lindex $s 0]
+		switch -- $m {
+		AM -
+		MM -
+		_M -
+		_D {lappend pathList $path}
 		}
-		set update_active 0
-		set ui_status_value {Ready.}
+	}
+	if {$pathList == {}} {
+		unlock_index
+	} else {
+		update_index $pathList
 	}
 }
 
@@ -1844,7 +1858,7 @@ proc unclick {w x y} {
 	if {$path == {}} return
 
 	if {$col == 0} {
-		toggle_mode $path
+		update_index [list $path]
 	}
 }
 
@@ -2318,4 +2332,5 @@ load_all_remotes
 populate_remote_menu .mbar.fetch From fetch_from
 populate_remote_menu .mbar.push To push_to
 populate_pull_menu .mbar.pull
+tkwait visibility .
 update_status
