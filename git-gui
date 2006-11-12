@@ -1532,13 +1532,13 @@ proc do_repack {} {
 	console_exec $w $cmd
 }
 
-set quitting 0
+set is_quitting 0
 
 proc do_quit {} {
-	global gitdir ui_comm quitting
+	global gitdir ui_comm is_quitting
 
-	if {$quitting} return
-	set quitting 1
+	if {$is_quitting} return
+	set is_quitting 1
 
 	set save [file join $gitdir GITGUI_MSG]
 	set msg [string trim [$ui_comm get 0.0 end]]
