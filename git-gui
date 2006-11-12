@@ -7,6 +7,9 @@ exec wish "$0" -- "$@"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
+set appname [lindex [file split $argv0] end]
+set gitdir {}
+
 ######################################################################
 ##
 ## config
@@ -59,16 +62,30 @@ proc save_my_config {} {
 	}
 }
 
+proc error_popup {msg} {
+	global gitdir appname
+
+	set title $appname
+	if {$gitdir != {}} {
+		append title { (}
+		append title [lindex \
+			[file split [file normalize [file dirname $gitdir]]] \
+			end]
+		append title {)}
+	}
+	tk_messageBox -parent . \
+		-icon error \
+		-type ok \
+		-title "$title: error" \
+		-message $msg
+}
+
 ######################################################################
 ##
 ## repository setup
 
-set appname [lindex [file split $argv0] end]
-set gitdir {}
-set GIT_COMMITTER_IDENT {}
-
 if {[catch {set cdup [exec git rev-parse --show-cdup]} err]} {
-	show_msg {} . "Cannot find the git directory: $err"
+	error_popup "Cannot find the git directory:\n$err"
 	exit 1
 }
 if {$cdup != ""} {
@@ -77,7 +94,7 @@ if {$cdup != ""} {
 unset cdup
 
 if {[catch {set gitdir [exec git rev-parse --git-dir]} err]} {
-	show_msg {} . "Cannot find the git directory: $err"
+	error_popup "Cannot find the git directory:\n$err"
 	exit 1
 }
 
@@ -1204,31 +1221,6 @@ unset filemask i
 ##
 ## util
 
-proc error_popup {msg} {
-	set w .error
-	toplevel $w
-	wm transient $w .
-	show_msg $w $w $msg
-}
-
-proc show_msg {w top msg} {
-	global gitdir appname font_ui
-
-	message $w.m -text $msg -justify left -aspect 400
-	pack $w.m -side top -fill x -padx 5 -pady 10
-	button $w.ok -text OK \
-		-width 15 \
-		-font $font_ui \
-		-command "destroy $top"
-	pack $w.ok -side bottom
-	bind $top <Visibility> "grab $top; focus $top"
-	bind $top <Key-Return> "destroy $top"
-	wm title $w "$appname ([lindex [file split \
-		[file normalize [file dirname $gitdir]]] \
-		end]): error"
-	tkwait window $top
-}
-
 proc hook_failed_popup {hook msg} {
 	global gitdir font_ui font_diff appname
 
@@ -1481,6 +1473,8 @@ proc do_include_all {} {
 		set ui_status_value {Ready.}
 	}
 }
+
+set GIT_COMMITTER_IDENT {}
 
 proc do_signoff {} {
 	global ui_comm GIT_COMMITTER_IDENT
