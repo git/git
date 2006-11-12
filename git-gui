@@ -14,49 +14,90 @@ set gitdir {}
 ##
 ## config
 
-proc load_repo_config {} {
-	global repo_config
-	global cfg_trust_mtime
+set default_config(gui.trustmtime) false
 
+proc is_many_config {name} {
+	switch -glob -- $name {
+	remote.*.fetch -
+	remote.*.push
+		{return 1}
+	*
+		{return 0}
+	}
+}
+
+proc load_config {} {
+	global repo_config global_config default_config
+
+	array unset global_config
 	array unset repo_config
+	catch {
+		set fd_rc [open "| git repo-config --global --list" r]
+		while {[gets $fd_rc line] >= 0} {
+			if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
+				if {[is_many_config $name]} {
+					lappend global_config($name) $value
+				} else {
+					set global_config($name) $value
+				}
+			}
+		}
+		close $fd_rc
+	}
 	catch {
 		set fd_rc [open "| git repo-config --list" r]
 		while {[gets $fd_rc line] >= 0} {
 			if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
-				lappend repo_config($name) $value
+				if {[is_many_config $name]} {
+					lappend repo_config($name) $value
+				} else {
+					set repo_config($name) $value
+				}
 			}
 		}
 		close $fd_rc
 	}
 
-	if {[catch {set cfg_trust_mtime \
-			[lindex $repo_config(gui.trustmtime) 0]
-		}]} {
-		set cfg_trust_mtime false
+	foreach name [array names default_config] {
+		if {[catch {set v $global_config($name)}]} {
+			set global_config($name) $default_config($name)
+		}
+		if {[catch {set v $repo_config($name)}]} {
+			set repo_config($name) $default_config($name)
+		}
 	}
 }
 
-proc save_my_config {} {
-	global repo_config
-	global cfg_trust_mtime
+proc save_config {} {
+	global repo_config global_config default_config
+	global repo_config_new global_config_new
 
-	if {[catch {set rc_trustMTime $repo_config(gui.trustmtime)}]} {
-		set rc_trustMTime [list false]
-	}
-	if {$cfg_trust_mtime != [lindex $rc_trustMTime 0]} {
-		exec git repo-config gui.trustMTime $cfg_trust_mtime
-		set repo_config(gui.trustmtime) [list $cfg_trust_mtime]
+	foreach name [array names global_config_new] {
+		set value $global_config_new($name)
+		if {$value != $global_config($name)} {
+			if {$value == $default_config($name)} {
+				catch {exec git repo-config --global --unset $name}
+			} else {
+				catch {exec git repo-config --global $name $value}
+			}
+			set global_config($name) $value
+			if {$value == $repo_config($name)} {
+				catch {exec git repo-config --unset $name}
+				set repo_config($name) $value
+			}
+		}
 	}
 
-	set cfg_geometry [wm geometry .]
-	append cfg_geometry " [lindex [.vpane sash coord 0] 1]"
-	append cfg_geometry " [lindex [.vpane.files sash coord 0] 0]"
-	if {[catch {set rc_geometry $repo_config(gui.geometry)}]} {
-		set rc_geometry [list [list]]
-	}
-	if {$cfg_geometry != [lindex $rc_geometry 0]} {
-		exec git repo-config gui.geometry $cfg_geometry
-		set repo_config(gui.geometry) [list $cfg_geometry]
+	foreach name [array names repo_config_new] {
+		set value $repo_config_new($name)
+		if {$value != $repo_config($name)} {
+			if {$value == $global_config($name)} {
+				catch {exec git repo-config --unset $name}
+			} else {
+				catch {exec git repo-config $name $value}
+			}
+			set repo_config($name) $value
+		}
 	}
 }
 
@@ -117,7 +158,7 @@ if {$appname == {git-citool}} {
 	set single_commit 1
 }
 
-load_repo_config
+load_config
 
 ######################################################################
 ##
@@ -183,7 +224,7 @@ proc update_status {{final Ready.}} {
 	global HEAD PARENT commit_type
 	global ui_index ui_other ui_status_value ui_comm
 	global status_active file_states
-	global cfg_trust_mtime
+	global repo_config
 
 	if {$status_active || ![lock_index read]} return
 
@@ -209,7 +250,7 @@ proc update_status {{final Ready.}} {
 		$ui_comm edit reset
 	}
 
-	if {$cfg_trust_mtime == {true}} {
+	if {$repo_config(gui.trustmtime) == {true}} {
 		update_status_stage2 {} $final
 	} else {
 		set status_active 1
@@ -409,7 +450,7 @@ proc handle_empty_diff {} {
 
 The modification date of this file was updated by another
 application and you currently have the Trust File Modification
-Timestamps feature enabled, so Git did not automatically detect
+Timestamps option enabled, so Git did not automatically detect
 that there are no content differences in this file.
 
 This file will now be removed from the modified files list, to
@@ -502,7 +543,7 @@ proc show_diff {path {w {}} {lno {}}} {
 
 proc read_diff {fd} {
 	global ui_diff ui_status_value diff_3way diff_active
-	global cfg_trust_mtime
+	global repo_config
 
 	while {[gets $fd line] >= 0} {
 		if {[string match {diff --git *} $line]} continue
@@ -550,7 +591,8 @@ proc read_diff {fd} {
 		unlock_index
 		set ui_status_value {Ready.}
 
-		if {$cfg_trust_mtime && [$ui_diff index end] == {2.0}} {
+		if {$repo_config(gui.trustmtime) == {true}
+			&& [$ui_diff index end] == {2.0}} {
 			handle_empty_diff
 		}
 	}
@@ -1314,7 +1356,6 @@ proc hook_failed_popup {hook msg} {
 
 	set w .hookfail
 	toplevel $w
-	wm transient $w .
 
 	frame $w.m
 	label $w.m.l1 -text "$hook hook failed:" \
@@ -1535,11 +1576,13 @@ proc do_repack {} {
 set is_quitting 0
 
 proc do_quit {} {
-	global gitdir ui_comm is_quitting
+	global gitdir ui_comm is_quitting repo_config
 
 	if {$is_quitting} return
 	set is_quitting 1
 
+	# -- Stash our current commit buffer.
+	#
 	set save [file join $gitdir GITGUI_MSG]
 	set msg [string trim [$ui_comm get 0.0 end]]
 	if {[$ui_comm edit modified] && $msg != {}} {
@@ -1552,7 +1595,19 @@ proc do_quit {} {
 		file delete $save
 	}
 
-	save_my_config
+	# -- Stash our current window geometry into this repository.
+	#
+	set cfg_geometry [list]
+	lappend cfg_geometry [wm geometry .]
+	lappend cfg_geometry [lindex [.vpane sash coord 0] 1]
+	lappend cfg_geometry [lindex [.vpane.files sash coord 0] 0]
+	if {[catch {set rc_geometry $repo_config(gui.geometry)}]} {
+		set rc_geometry {}
+	}
+	if {$cfg_geometry != $rc_geometry} {
+		catch {exec git repo-config gui.geometry $cfg_geometry}
+	}
+
 	destroy .
 }
 
@@ -1624,6 +1679,69 @@ proc do_commit {} {
 	commit_tree
 }
 
+proc do_options {} {
+	global appname gitdir
+	global repo_config global_config
+	global repo_config_new global_config_new
+
+	load_config
+	array unset repo_config_new
+	array unset global_config_new
+	foreach name [array names repo_config] {
+		set repo_config_new($name) $repo_config($name)
+	}
+	foreach name [array names global_config] {
+		set global_config_new($name) $global_config($name)
+	}
+
+	set w .options_editor
+	toplevel $w
+
+	label $w.header -text "$appname Options" \
+		-font font_uibold
+	pack $w.header -side top -fill x
+
+	frame $w.buttons
+	button $w.buttons.save -text Save \
+		-font font_ui \
+		-command "save_config; destroy $w"
+	pack $w.buttons.save -side right
+	button $w.buttons.cancel -text {Cancel} \
+		-font font_ui \
+		-command "destroy $w"
+	pack $w.buttons.cancel -side right
+	pack $w.buttons -side bottom -anchor e -pady 10 -padx 10
+
+	labelframe $w.repo -text {This Repository} \
+		-relief raised -borderwidth 2
+	labelframe $w.global -text {Global (All Repositories)} \
+		-relief raised -borderwidth 2
+	pack $w.repo -side left -fill both -expand 1 -pady 5 -padx 5
+	pack $w.global -side right -fill both -expand 1 -pady 5 -padx 5
+
+	foreach option {
+		{trustmtime {Trust File Modification Timestamps}}
+		} {
+		set name [lindex $option 0]
+		set text [lindex $option 1]
+		foreach f {repo global} {
+			checkbutton $w.$f.$name -text $text \
+				-variable ${f}_config_new(gui.$name) \
+				-onvalue true \
+				-offvalue false \
+				-font font_ui
+			pack $w.$f.$name -side top -anchor w
+		}
+	}
+
+	bind $w <Visibility> "grab $w; focus $w"
+	bind $w <Key-Escape> "destroy $w"
+	wm title $w "$appname ([lindex [file split \
+		[file normalize [file dirname $gitdir]]] \
+		end]): Options"
+	tkwait window $w
+}
+
 # shift == 1: left click
 #          3: right click  
 proc click {w x y shift wx wy} {
@@ -1690,7 +1808,6 @@ menu .mbar -tearoff 0
 .mbar add cascade -label Fetch -menu .mbar.fetch
 .mbar add cascade -label Pull -menu .mbar.pull
 .mbar add cascade -label Push -menu .mbar.push
-.mbar add cascade -label Options -menu .mbar.options
 . configure -menu .mbar
 
 # -- Project Menu
@@ -1739,6 +1856,10 @@ menu .mbar.edit
 	-command {catch {[focus] tag add sel 0.0 end}} \
 	-accelerator $M1T-A \
 	-font font_ui
+.mbar.edit add separator
+.mbar.edit add command -label {Options...} \
+	-command do_options \
+	-font font_ui
 
 # -- Commit Menu
 menu .mbar.commit
@@ -1778,15 +1899,6 @@ menu .mbar.pull
 
 # -- Push Menu
 menu .mbar.push
-
-# -- Options Menu
-menu .mbar.options
-.mbar.options add checkbutton \
-	-label {Trust File Modification Timestamps} \
-	-font font_ui \
-	-offvalue false \
-	-onvalue true \
-	-variable cfg_trust_mtime
 
 # -- Main Window Layout
 panedwindow .vpane -orient vertical
@@ -2032,7 +2144,7 @@ pack .status -anchor w -side bottom -fill x
 
 # -- Load geometry
 catch {
-set gm [lindex $repo_config(gui.geometry) 0]
+set gm $repo_config(gui.geometry)
 wm geometry . [lindex $gm 0]
 .vpane sash place 0 \
 	[lindex [.vpane sash coord 0] 0] \
