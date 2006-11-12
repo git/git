@@ -197,7 +197,8 @@ proc update_status {{final Ready.}} {
 		set ui_status_value {Refreshing file status...}
 		set fd_rf [open "| git update-index -q --unmerged --refresh" r]
 		fconfigure $fd_rf -blocking 0 -translation binary
-		fileevent $fd_rf readable [list update_status_stage2 $fd_rf $final]
+		fileevent $fd_rf readable \
+			[list update_status_stage2 $fd_rf $final]
 	}
 }
 
@@ -402,8 +403,6 @@ proc show_diff {path {w {}} {lno {}}} {
 
 	set cmd [list | git diff-index -p $PARENT -- $path]
 	switch $m {
-	AM {
-	}
 	MM {
 		set cmd [list | git diff-index -p -c $PARENT $path]
 	}
@@ -828,7 +827,8 @@ proc post_pull_remote {remote branch success} {
 		set PARENT $HEAD
 		set $ui_status_value {Ready.}
 	} else {
-		update_status "Conflicts detected while pulling $branch from $remote."
+		update_status \
+			"Conflicts detected while pulling $branch from $remote."
 	}
 }
 
@@ -1548,7 +1548,7 @@ set maincursor [. cget -cursor]
 switch -glob -- "$tcl_platform(platform),$tcl_platform(os)" {
 windows,*   {set M1B Control; set M1T Ctrl}
 unix,Darwin {set M1B M1; set M1T Cmd}
-default     {set M1B M1; set M1T M1}
+*           {set M1B M1; set M1T M1}
 }
 
 # -- Menu Bar
@@ -1720,19 +1720,22 @@ button .vpane.lower.commarea.buttons.rescan -text {Rescan} \
 	-command do_rescan \
 	-font $font_ui
 pack .vpane.lower.commarea.buttons.rescan -side top -fill x
-lappend disable_on_lock {.vpane.lower.commarea.buttons.rescan conf -state}
+lappend disable_on_lock \
+	{.vpane.lower.commarea.buttons.rescan conf -state}
 
 button .vpane.lower.commarea.buttons.amend -text {Amend Last} \
 	-command do_amend_last \
 	-font $font_ui
 pack .vpane.lower.commarea.buttons.amend -side top -fill x
-lappend disable_on_lock {.vpane.lower.commarea.buttons.amend conf -state}
+lappend disable_on_lock \
+	{.vpane.lower.commarea.buttons.amend conf -state}
 
 button .vpane.lower.commarea.buttons.incall -text {Include All} \
 	-command do_include_all \
 	-font $font_ui
 pack .vpane.lower.commarea.buttons.incall -side top -fill x
-lappend disable_on_lock {.vpane.lower.commarea.buttons.incall conf -state}
+lappend disable_on_lock \
+	{.vpane.lower.commarea.buttons.incall conf -state}
 
 button .vpane.lower.commarea.buttons.signoff -text {Sign Off} \
 	-command do_signoff \
@@ -1743,7 +1746,8 @@ button .vpane.lower.commarea.buttons.commit -text {Commit} \
 	-command do_commit \
 	-font $font_ui
 pack .vpane.lower.commarea.buttons.commit -side top -fill x
-lappend disable_on_lock {.vpane.lower.commarea.buttons.commit conf -state}
+lappend disable_on_lock \
+	{.vpane.lower.commarea.buttons.commit conf -state}
 
 # -- Commit Message Buffer
 frame .vpane.lower.commarea.buffer
@@ -1769,7 +1773,8 @@ text $ui_comm -background white -borderwidth 1 \
 	-font $font_diff \
 	-yscrollcommand {.vpane.lower.commarea.buffer.sby set} \
 	-cursor $maincursor
-scrollbar .vpane.lower.commarea.buffer.sby -command [list $ui_comm yview]
+scrollbar .vpane.lower.commarea.buffer.sby \
+	-command [list $ui_comm yview]
 pack $ui_coml -side top -fill x
 pack .vpane.lower.commarea.buffer.sby -side right -fill y
 pack $ui_comm -side left -fill y
@@ -1848,8 +1853,8 @@ wm geometry . [lindex $gm 0]
 .vpane.files sash place 0 \
 	[lindex $gm 2] \
 	[lindex [.vpane.files sash coord 0] 1]
-}
 unset gm
+}
 
 # -- Key Bindings
 bind $ui_comm <$M1B-Key-Return> {do_commit;break}
