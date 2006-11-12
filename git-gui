@@ -960,7 +960,9 @@ proc display_all_files {} {
 	$ui_index delete 0.0 end
 	$ui_other delete 0.0 end
 
-	array unset file_lists
+	set file_lists($ui_index) [list]
+	set file_lists($ui_other) [list]
+
 	foreach path [lsort [array names file_states]] {
 		set s $file_states($path)
 		set m [lindex $s 0]
@@ -1273,7 +1275,7 @@ proc new_console {short_title long_title} {
 
 proc console_init {w} {
 	global console_cr console_data
-	global gitdir appname font_ui font_diff
+	global gitdir appname font_ui font_diff M1B
 
 	set console_cr($w) 1.0
 	toplevel $w
@@ -1306,6 +1308,8 @@ proc console_init {w} {
 		-command "destroy $w"
 	pack $w.ok -side bottom
 
+	bind $w.m.t <$M1B-Key-a> "$w.m.t tag add sel 0.0 end;break"
+	bind $w.m.t <$M1B-Key-A> "$w.m.t tag add sel 0.0 end;break"
 	bind $w <Visibility> "focus $w"
 	wm title $w "$appname ([lindex [file split \
 		[file normalize [file dirname $gitdir]]] \
@@ -1900,7 +1904,10 @@ foreach i [list $ui_index $ui_other] {
 	bind $i <Button-3> {click %W %x %y 3 %X %Y; break}
 	bind $i <ButtonRelease-1> {unclick %W %x %y; break}
 }
-unset i M1B M1T
+unset i
+
+set file_lists($ui_index) [list]
+set file_lists($ui_other) [list]
 
 wm title . "$appname ([file normalize [file dirname $gitdir]])"
 focus -force $ui_comm
