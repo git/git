@@ -1143,11 +1143,12 @@ proc display_all_files {} {
 }
 
 proc update_index {pathList} {
-	global update_index_cp ui_status_value
+	global update_index_cp update_index_rsd ui_status_value
 
 	if {![lock_index update]} return
 
 	set update_index_cp 0
+	set update_index_rsd 0
 	set totalCnt [llength $pathList]
 	set batch [expr {int($totalCnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
@@ -1170,13 +1171,17 @@ proc update_index {pathList} {
 }
 
 proc write_update_index {fd pathList totalCnt batch} {
-	global update_index_cp ui_status_value
+	global update_index_cp update_index_rsd ui_status_value
 	global file_states ui_fname_value
 
 	if {$update_index_cp >= $totalCnt} {
 		close $fd
 		unlock_index
-		set ui_status_value {Ready.}
+		if {$update_index_rsd} {
+			show_diff $ui_fname_value
+		} else {
+			set ui_status_value {Ready.}
+		}
 		return
 	}
 
@@ -1200,7 +1205,7 @@ proc write_update_index {fd pathList totalCnt batch} {
 		puts -nonewline $fd "\0"
 		display_file $path $new
 		if {$ui_fname_value eq $path} {
-			show_diff $path
+			set update_index_rsd 1
 		}
 	}
 
