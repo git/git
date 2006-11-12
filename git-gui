@@ -91,7 +91,8 @@ proc save_config {} {
 			if {$value == $default_config($name)} {
 				catch {exec git repo-config --global --unset $name}
 			} else {
-				catch {exec git repo-config --global $name $value}
+				regsub -all "\[{}\]" $value {"} value
+				exec git repo-config --global $name $value
 			}
 			set global_config($name) $value
 			if {$value == $repo_config($name)} {
@@ -107,7 +108,8 @@ proc save_config {} {
 			if {$value == $global_config($name)} {
 				catch {exec git repo-config --unset $name}
 			} else {
-				catch {exec git repo-config $name $value}
+				regsub -all "\[{}\]" $value {"} value
+				exec git repo-config $name $value
 			}
 			set repo_config($name) $value
 		}
@@ -1803,7 +1805,7 @@ proc do_options {} {
 }
 
 proc do_restore_defaults {} {
-	global font_descs default_config
+	global font_descs default_config repo_config
 	global repo_config_new global_config_new
 
 	foreach name [array names default_config] {
@@ -1813,7 +1815,7 @@ proc do_restore_defaults {} {
 
 	foreach option $font_descs {
 		set name [lindex $option 0]
-		set repo_config($name) $default_config(gui.$name)
+		set repo_config(gui.$name) $default_config(gui.$name)
 	}
 	apply_config
 
