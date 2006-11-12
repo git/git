@@ -48,11 +48,9 @@ proc save_my_config {} {
 		set repo_config(gui.trustmtime) [list $cfg_trust_mtime]
 	}
 
-	set cfg_geometry [list \
-		[wm geometry .] \
-		[.vpane sash coord 0] \
-		[.vpane.files sash coord 0] \
-		]
+	set cfg_geometry [wm geometry .]
+	append cfg_geometry " [lindex [.vpane sash coord 0] 1]"
+	append cfg_geometry " [lindex [.vpane.files sash coord 0] 0]"
 	if {[catch {set rc_geometry $repo_config(gui.geometry)}]} {
 		set rc_geometry [list [list]]
 	}
@@ -1422,8 +1420,13 @@ proc do_repack {} {
 	console_exec $w $cmd
 }
 
+set quitting 0
+
 proc do_quit {} {
-	global gitdir ui_comm
+	global gitdir ui_comm quitting
+
+	if {$quitting} return
+	set quitting 1
 
 	set save [file join $gitdir GITGUI_MSG]
 	set msg [string trim [$ui_comm get 0.0 end]]
@@ -1837,10 +1840,16 @@ pack .status -anchor w -side bottom -fill x
 
 # -- Load geometry
 catch {
-wm geometry . [lindex $repo_config(gui.geometry) 0 0]
-eval .vpane sash place 0 [lindex $repo_config(gui.geometry) 0 1]
-eval .vpane.files sash place 0 [lindex $repo_config(gui.geometry) 0 2]
+set gm [lindex $repo_config(gui.geometry) 0]
+wm geometry . [lindex $gm 0]
+.vpane sash place 0 \
+	[lindex [.vpane sash coord 0] 0] \
+	[lindex $gm 1]
+.vpane.files sash place 0 \
+	[lindex $gm 2] \
+	[lindex [.vpane.files sash coord 0] 1]
 }
+unset gm
 
 # -- Key Bindings
 bind $ui_comm <$M1B-Key-Return> {do_commit;break}
