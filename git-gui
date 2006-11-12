@@ -488,7 +488,7 @@ prevent possible confusion.
 
 proc show_diff {path {w {}} {lno {}}} {
 	global file_states file_lists
-	global PARENT diff_3way diff_active
+	global PARENT diff_3way diff_active repo_config
 	global ui_diff ui_fname_value ui_fstatus_value ui_status_value
 
 	if {$diff_active || ![lock_index read]} return
@@ -515,10 +515,13 @@ proc show_diff {path {w {}} {lno {}}} {
 	set ui_fstatus_value [mapdesc $m $path]
 	set ui_status_value "Loading diff of [escape_path $path]..."
 
-	set cmd [list | git diff-index -p $PARENT -- $path]
+	set cmd [list | git diff-index]
+	lappend cmd --no-color
+	lappend cmd -p
+
 	switch $m {
 	MM {
-		set cmd [list | git diff-index -p -c $PARENT $path]
+		lappend cmd -c
 	}
 	_O {
 		if {[catch {
@@ -541,6 +544,10 @@ proc show_diff {path {w {}} {lno {}}} {
 		return
 	}
 	}
+
+	lappend cmd $PARENT
+	lappend cmd --
+	lappend cmd $path
 
 	if {[catch {set fd [open $cmd r]} err]} {
 		set diff_active 0
@@ -1178,7 +1185,7 @@ proc write_update_index {fd pathList totalCnt batch} {
 		close $fd
 		unlock_index
 		if {$update_index_rsd} {
-			show_diff $ui_fname_value
+			reshow_diff
 		} else {
 			set ui_status_value {Ready.}
 		}
