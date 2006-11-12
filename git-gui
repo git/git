@@ -14,8 +14,6 @@ set gitdir {}
 ##
 ## config
 
-set default_config(gui.trustmtime) false
-
 proc is_many_config {name} {
 	switch -glob -- $name {
 	remote.*.fetch -
@@ -69,10 +67,25 @@ proc load_config {} {
 }
 
 proc save_config {} {
-	global repo_config global_config default_config
+	global default_config font_descs
+	global repo_config global_config
 	global repo_config_new global_config_new
 
-	foreach name [array names global_config_new] {
+	foreach option $font_descs {
+		set name [lindex $option 0]
+		set font [lindex $option 1]
+		font configure $font \
+			-family $global_config_new(gui.$font^^family) \
+			-size $global_config_new(gui.$font^^size)
+		font configure ${font}bold \
+			-family $global_config_new(gui.$font^^family) \
+			-size $global_config_new(gui.$font^^size)
+		set global_config_new(gui.$name) [font configure $font]
+		unset global_config_new(gui.$font^^family)
+		unset global_config_new(gui.$font^^size)
+	}
+
+	foreach name [array names default_config] {
 		set value $global_config_new($name)
 		if {$value != $global_config($name)} {
 			if {$value == $default_config($name)} {
@@ -88,7 +101,7 @@ proc save_config {} {
 		}
 	}
 
-	foreach name [array names repo_config_new] {
+	foreach name [array names default_config] {
 		set value $repo_config_new($name)
 		if {$value != $repo_config($name)} {
 			if {$value == $global_config($name)} {
@@ -157,8 +170,6 @@ unset cdup
 if {$appname == {git-citool}} {
 	set single_commit 1
 }
-
-load_config
 
 ######################################################################
 ##
@@ -1680,7 +1691,7 @@ proc do_commit {} {
 }
 
 proc do_options {} {
-	global appname gitdir
+	global appname gitdir font_descs
 	global repo_config global_config
 	global repo_config_new global_config_new
 
@@ -1702,19 +1713,25 @@ proc do_options {} {
 	pack $w.header -side top -fill x
 
 	frame $w.buttons
+	button $w.buttons.restore -text {Restore Defaults} \
+		-font font_ui \
+		-command do_restore_defaults
+	pack $w.buttons.restore -side left
 	button $w.buttons.save -text Save \
 		-font font_ui \
-		-command "save_config; destroy $w"
+		-command [list do_save_config $w]
 	pack $w.buttons.save -side right
 	button $w.buttons.cancel -text {Cancel} \
 		-font font_ui \
-		-command "destroy $w"
+		-command [list destroy $w]
 	pack $w.buttons.cancel -side right
-	pack $w.buttons -side bottom -anchor e -pady 10 -padx 10
+	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
 	labelframe $w.repo -text {This Repository} \
+		-font font_ui \
 		-relief raised -borderwidth 2
 	labelframe $w.global -text {Global (All Repositories)} \
+		-font font_ui \
 		-relief raised -borderwidth 2
 	pack $w.repo -side left -fill both -expand 1 -pady 5 -padx 5
 	pack $w.global -side right -fill both -expand 1 -pady 5 -padx 5
@@ -1734,12 +1751,71 @@ proc do_options {} {
 		}
 	}
 
+	set all_fonts [lsort [font families]]
+	foreach option $font_descs {
+		set name [lindex $option 0]
+		set font [lindex $option 1]
+		set text [lindex $option 2]
+
+		set global_config_new(gui.$font^^family) \
+			[font configure $font -family]
+		set global_config_new(gui.$font^^size) \
+			[font configure $font -size]
+
+		frame $w.global.$name
+		label $w.global.$name.l -text "$text:" -font font_ui
+		pack $w.global.$name.l -side left -anchor w -fill x
+		eval tk_optionMenu $w.global.$name.family \
+			global_config_new(gui.$font^^family) \
+			$all_fonts
+		spinbox $w.global.$name.size \
+			-textvariable global_config_new(gui.$font^^size) \
+			-from 2 -to 80 -increment 1 \
+			-width 3 \
+			-font font_ui
+		pack $w.global.$name.size -side right -anchor e
+		pack $w.global.$name.family -side right -anchor e
+		pack $w.global.$name -side top -anchor w -fill x
+	}
+
 	bind $w <Visibility> "grab $w; focus $w"
 	bind $w <Key-Escape> "destroy $w"
 	wm title $w "$appname ([lindex [file split \
 		[file normalize [file dirname $gitdir]]] \
 		end]): Options"
 	tkwait window $w
+}
+
+proc do_restore_defaults {} {
+	global font_descs default_config
+	global repo_config_new global_config_new
+
+	foreach name [array names default_config] {
+		set repo_config_new($name) $default_config($name)
+		set global_config_new($name) $default_config($name)
+	}
+
+	foreach option $font_descs {
+		set name [lindex $option 0]
+		set repo_config($name) $default_config(gui.$name)
+	}
+	apply_config
+
+	foreach option $font_descs {
+		set name [lindex $option 0]
+		set font [lindex $option 1]
+		set global_config_new(gui.$font^^family) \
+			[font configure $font -family]
+		set global_config_new(gui.$font^^size) \
+			[font configure $font -size]
+	}
+}
+
+proc do_save_config {w} {
+	if {[catch {save_config} err]} {
+		error_popup "Failed to completely save options:\n\n$err"
+	}
+	destroy $w
 }
 
 # shift == 1: left click
@@ -1774,7 +1850,7 @@ proc unclick {w x y} {
 
 ######################################################################
 ##
-## ui init
+## config defaults
 
 set cursor_ptr arrow
 font create font_diff -family Courier -size 10
@@ -1785,10 +1861,8 @@ catch {
 	destroy .dummy
 }
 
-eval font create font_uibold [font configure font_ui]
-font configure font_uibold -weight bold
-eval font create font_diffbold [font configure font_diff]
-font configure font_diffbold -weight bold
+font create font_uibold
+font create font_diffbold
 
 set M1B M1
 set M1T M1
@@ -1799,6 +1873,40 @@ if {$tcl_platform(platform) == {windows}} {
 	set M1B M1
 	set M1T Cmd
 }
+
+proc apply_config {} {
+	global repo_config font_descs
+
+	foreach option $font_descs {
+		set name [lindex $option 0]
+		set font [lindex $option 1]
+		if {[catch {
+			foreach {cn cv} $repo_config(gui.$name) {
+				font configure $font $cn $cv
+			}
+			} err]} {
+			error_popup "Invalid font specified in gui.$name:\n\n$err"
+		}
+		foreach {cn cv} [font configure $font] {
+			font configure ${font}bold $cn $cv
+		}
+		font configure ${font}bold -weight bold
+	}
+}
+
+set default_config(gui.trustmtime) false
+set default_config(gui.fontui) [font configure font_ui]
+set default_config(gui.fontdiff) [font configure font_diff]
+set font_descs {
+	{fontui   font_ui   {Main Font}}
+	{fontdiff font_diff {Diff/Console Font}}
+}
+load_config
+apply_config
+
+######################################################################
+##
+## ui construction
 
 # -- Menu Bar
 menu .mbar -tearoff 0
