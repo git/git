@@ -1301,6 +1301,21 @@ proc console_init {w} {
 	pack $w.m.t -side left -fill both -expand 1
 	pack $w.m -side top -fill both -expand 1 -padx 5 -pady 10
 
+	menu $w.ctxm -tearoff 0
+	$w.ctxm add command -label "Copy" \
+		-font $font_ui \
+		-command "tk_textCopy $w.m.t"
+	$w.ctxm add command -label "Select All" \
+		-font $font_ui \
+		-command "$w.m.t tag add sel 0.0 end"
+	$w.ctxm add command -label "Copy All" \
+		-font $font_ui \
+		-command "
+			$w.m.t tag add sel 0.0 end
+			tk_textCopy $w.m.t
+			$w.m.t tag remove sel 0.0 end
+		"
+
 	button $w.ok -text {Running...} \
 		-width 15 \
 		-font $font_ui \
@@ -1308,6 +1323,7 @@ proc console_init {w} {
 		-command "destroy $w"
 	pack $w.ok -side bottom
 
+	bind $w.m.t <Any-Button-3> "tk_popup $w.ctxm %X %Y"
 	bind $w.m.t <$M1B-Key-a> "$w.m.t tag add sel 0.0 end;break"
 	bind $w.m.t <$M1B-Key-A> "$w.m.t tag add sel 0.0 end;break"
 	bind $w <Visibility> "focus $w"
@@ -1784,6 +1800,38 @@ pack .vpane.lower.commarea.buffer.sby -side right -fill y
 pack $ui_comm -side left -fill y
 pack .vpane.lower.commarea.buffer -side left -fill y
 
+# -- Commit Message Buffer Context Menu
+#
+menu $ui_comm.ctxm -tearoff 0
+$ui_comm.ctxm add command -label "Cut" \
+	-font $font_ui \
+	-command "tk_textCut $ui_comm"
+$ui_comm.ctxm add command -label "Copy" \
+	-font $font_ui \
+	-command "tk_textCopy $ui_comm"
+$ui_comm.ctxm add command -label "Paste" \
+	-font $font_ui \
+	-command "tk_textPaste $ui_comm"
+$ui_comm.ctxm add command -label "Delete" \
+	-font $font_ui \
+	-command "$ui_comm delete sel.first sel.last"
+$ui_comm.ctxm add separator
+$ui_comm.ctxm add command -label "Select All" \
+	-font $font_ui \
+	-command "$ui_comm tag add sel 0.0 end"
+$ui_comm.ctxm add command -label "Copy All" \
+	-font $font_ui \
+	-command "
+		$ui_comm tag add sel 0.0 end
+		tk_textCopy $ui_comm
+		$ui_comm tag remove sel 0.0 end
+	"
+$ui_comm.ctxm add separator
+$ui_comm.ctxm add command -label "Sign Off" \
+	-font $font_ui \
+	-command do_signoff
+bind $ui_comm <Any-Button-3> "tk_popup $ui_comm.ctxm %X %Y"
+
 # -- Diff Header
 set ui_fname_value {}
 set ui_fstatus_value {}
@@ -1836,6 +1884,24 @@ $ui_diff tag conf da -font [concat $font_diff bold]
 $ui_diff tag conf di -foreground "#00a000"
 $ui_diff tag conf dni -foreground "#a000a0"
 $ui_diff tag conf bold -font [concat $font_diff bold]
+
+# -- Diff Body Context Menu
+#
+menu $ui_diff.ctxm -tearoff 0
+$ui_diff.ctxm add command -label "Copy" \
+	-font $font_ui \
+	-command "tk_textCopy $ui_diff"
+$ui_diff.ctxm add command -label "Select All" \
+	-font $font_ui \
+	-command "$ui_diff tag add sel 0.0 end"
+$ui_diff.ctxm add command -label "Copy All" \
+	-font $font_ui \
+	-command "
+		$ui_diff tag add sel 0.0 end
+		tk_textCopy $ui_diff
+		$ui_diff tag remove sel 0.0 end
+	"
+bind $ui_diff <Any-Button-3> "tk_popup $ui_diff.ctxm %X %Y"
 
 # -- Status Bar
 set ui_status_value {Initializing...}
