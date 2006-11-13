@@ -1,10 +1,10 @@
 #!/usr/bin/perl -w
 
 # Known limitations:
-# - cannot add or remove binary files
 # - does not propagate permissions
 # - tells "ready for commit" even when things could not be completed
-#   (eg addition of a binary file)
+#   (not sure this is true anymore, more testing is needed)
+# - does not handle whitespace in pathnames at all.
 
 use strict;
 use Getopt::Std;
@@ -68,9 +68,9 @@ foreach my $line (@commit) {
     if ($stage eq 'headers') {
 	if ($line =~ m/^parent (\w{40})$/) { # found a parent
 	    push @parents, $1;
-	} elsif ($line =~ m/^author (.+) \d+ \+\d+$/) {
+	} elsif ($line =~ m/^author (.+) \d+ [-+]\d+$/) {
 	    $author = $1;
-	} elsif ($line =~ m/^committer (.+) \d+ \+\d+$/) {
+	} elsif ($line =~ m/^committer (.+) \d+ [-+]\d+$/) {
 	    $committer = $1;
 	}
     } else {
@@ -139,6 +139,17 @@ foreach my $f (@files) {
 	push @dfiles, $fields[5];
     }
 }
+my (@binfiles, @abfiles, @dbfiles, @bfiles, @mbfiles);
+@binfiles = grep m/^Binary files/, safe_pipe_capture('git-diff-tree', '-p', $parent, $commit);
+map { chomp } @binfiles;
+@abfiles = grep s/^Binary files \/dev\/null and b\/(.*) differ$/$1/, @binfiles;
+@dbfiles = grep s/^Binary files a\/(.*) and \/dev\/null differ$/$1/, @binfiles;
+@mbfiles = grep s/^Binary files a\/(.*) and b\/(.*) differ$/$1/, @binfiles;
+push @bfiles, @abfiles;
+push @bfiles, @dbfiles;
+push @bfiles, @mbfiles;
+push @mfiles, @mbfiles;
+
 $opt_v && print "The commit affects:\n ";
 $opt_v && print join ("\n ", @afiles,@mfiles,@dfiles) . "\n\n";
 undef @files; # don't need it anymore
@@ -153,6 +164,10 @@ foreach my $d (@dirs) {
 }
 foreach my $f (@afiles) {
     # This should return only one value
+    if ($f =~ m,(.*)/[^/]*$,) {
+	my $p = $1;
+	next if (grep { $_ eq $p } @dirs);
+    }
     my @status = grep(m/^File/,  safe_pipe_capture('cvs', '-q', 'status' ,$f));
     if (@status > 1) { warn 'Strange! cvs status returned more than one line?'};
     if (-d dirname $f and $status[0] !~ m/Status: Unknown$/
@@ -162,6 +177,7 @@ foreach my $f (@afiles) {
 	warn "Status was: $status[0]\n";
     }
 }
+
 foreach my $f (@mfiles, @dfiles) {
     # TODO:we need to handle removed in cvs
     my @status = grep(m/^File/,  safe_pipe_capture('cvs', '-q', 'status' ,$f));
@@ -200,24 +216,31 @@ foreach my $d (@dirs) {
 
 print "'Patching' binary files\n";
 
-my @bfiles = grep(m/^Binary/, safe_pipe_capture('git-diff-tree', '-p', $parent, $commit));
-@bfiles = map { chomp } @bfiles;
 foreach my $f (@bfiles) {
     # check that the file in cvs matches the "old" file
     # extract the file to $tmpdir and compare with cmp
-    my $tree = safe_pipe_capture('git-rev-parse', "$parent^{tree}");
-    chomp $tree;
-    my $blob = `git-ls-tree $tree "$f" | cut -f 1 | cut -d ' ' -f 3`;
-    chomp $blob;
-    `git-cat-file blob $blob > $tmpdir/blob`;
-    if (system('cmp', '-s', $f, "$tmpdir/blob")) {
-	warn "Binary file $f in CVS does not match parent.\n";
-	$dirty = 1;
-	next;
+    if (not(grep { $_ eq $f } @afiles)) {
+        my $tree = safe_pipe_capture('git-rev-parse', "$parent^{tree}");
+	chomp $tree;
+	my $blob = `git-ls-tree $tree "$f" | cut -f 1 | cut -d ' ' -f 3`;
+	chomp $blob;
+        `git-cat-file blob $blob > $tmpdir/blob`;
+        if (system('cmp', '-s', $f, "$tmpdir/blob")) {
+	    warn "Binary file $f in CVS does not match parent.\n";
+	    if (not $opt_f) {
+	        $dirty = 1;
+		next;
+	    }
+        }
     }
-
-    # replace with the new file
-     `git-cat-file blob $blob > $f`;
+    if (not(grep { $_ eq $f } @dfiles)) {
+	my $tree = safe_pipe_capture('git-rev-parse', "$commit^{tree}");
+	chomp $tree;
+	my $blob = `git-ls-tree $tree "$f" | cut -f 1 | cut -d ' ' -f 3`;
+	chomp $blob;
+	# replace with the new file
+	`git-cat-file blob $blob > $f`;
+    }
 
     # TODO: something smart with file modes
 
@@ -231,7 +254,10 @@ if ($dirty) {
 my $fuzz = $opt_p ? 0 : 2;
 
 print "Patching non-binary files\n";
-print `(git-diff-tree -p $parent -p $commit | patch -p1 -F $fuzz ) 2>&1`;
+
+if (scalar(@afiles)+scalar(@dfiles)+scalar(@mfiles) != scalar(@bfiles)) {
+    print `(git-diff-tree -p $parent -p $commit | patch -p1 -F $fuzz ) 2>&1`;
+}
 
 my $dirtypatch = 0;
 if (($? >> 8) == 2) {
@@ -242,7 +268,11 @@ if (($? >> 8) == 2) {
 }
 
 foreach my $f (@afiles) {
-    system('cvs', 'add', $f);
+    if (grep { $_ eq $f } @bfiles) {
+      system('cvs', 'add','-kb',$f);
+    } else {
+      system('cvs', 'add', $f);
+    }
     if ($?) {
 	$dirty = 1;
 	warn "Failed to cvs add $f -- you may need to do it manually";

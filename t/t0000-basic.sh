@@ -209,6 +209,28 @@ test_expect_success \
     'validate object ID for a known tree.' \
     'test "$ptree" = 3c5e5399f3a333eddecce7a9b9465b63f65f51e2'
 
+cat >badobjects <<EOF
+100644 blob 1000000000000000000000000000000000000000	dir/file1
+100644 blob 2000000000000000000000000000000000000000	dir/file2
+100644 blob 3000000000000000000000000000000000000000	dir/file3
+100644 blob 4000000000000000000000000000000000000000	dir/file4
+100644 blob 5000000000000000000000000000000000000000	dir/file5
+EOF
+
+rm .git/index
+test_expect_success \
+    'put invalid objects into the index.' \
+    'git-update-index --index-info < badobjects'
+
+test_expect_failure \
+    'writing this tree without --missing-ok.' \
+    'git-write-tree'
+
+test_expect_success \
+    'writing this tree with --missing-ok.' \
+    'git-write-tree --missing-ok'
+
+
 ################################################################
 rm .git/index
 test_expect_success \

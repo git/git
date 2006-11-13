@@ -216,8 +216,8 @@ $ git ls-files -s
 ------------
 
 
-Using "assume unchanged" bit
-----------------------------
+Using ``assume unchanged'' bit
+------------------------------
 
 Many operations in git depend on your filesystem to have an
 efficient `lstat(2)` implementation, so that `st_mtime`
