@@ -406,19 +406,33 @@ proc read_ls_others {fd final} {
 
 proc status_eof {fd buf final} {
 	global status_active ui_status_value
+	global file_states repo_config
 	upvar $buf to_clear
 
-	if {[eof $fd]} {
-		set to_clear {}
-		close $fd
+	if {![eof $fd]} return
+	set to_clear {}
+	close $fd
+	if {[incr status_active -1] > 0} return
 
-		if {[incr status_active -1] == 0} {
-			display_all_files
-			unlock_index
-			reshow_diff
-			set ui_status_value $final
+	unlock_index
+	display_all_files
+
+	if {$repo_config(gui.partialinclude) ne {true}} {
+		set pathList  [list]
+		foreach path [array names file_states] {
+			switch -- [lindex $file_states($path) 0] {
+			AM -
+			MM {lappend pathList $path}
+			}
+		}
+		if {$pathList ne {}} {
+			update_index $pathList
+			return
 		}
 	}
+
+	reshow_diff
+	set ui_status_value $final
 }
 
 ######################################################################
@@ -1164,7 +1178,6 @@ proc update_index {pathList} {
 	set batch [expr {int($totalCnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
 
-	set ui_status_value "Including files ... 0/$totalCnt 0%"
 	set ui_status_value [format \
 		"Including files ... %i/%i files (%.2f%%)" \
 		$update_index_cp \
@@ -1192,10 +1205,9 @@ proc write_update_index {fd pathList totalCnt batch} {
 	if {$update_index_cp >= $totalCnt} {
 		close $fd
 		unlock_index
+		set ui_status_value {Ready.}
 		if {$update_index_rsd} {
 			reshow_diff
-		} else {
-			set ui_status_value {Ready.}
 		}
 		return
 	}
@@ -1823,6 +1835,7 @@ proc do_options {} {
 	pack $w.global -side right -fill both -expand 1 -pady 5 -padx 5
 
 	foreach option {
+		{b partialinclude {Allow Partially Included Files}}
 		{b pullsummary {Show Pull Summary}}
 		{b trustmtime  {Trust File Modification Timestamps}}
 		{i diffcontext {Number of Diff Context Lines}}
@@ -2000,6 +2013,7 @@ proc apply_config {} {
 
 set default_config(gui.trustmtime) false
 set default_config(gui.pullsummary) true
+set default_config(gui.partialinclude) false
 set default_config(gui.diffcontext) 5
 set default_config(gui.fontui) [font configure font_ui]
 set default_config(gui.fontdiff) [font configure font_diff]
