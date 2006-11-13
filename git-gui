@@ -511,7 +511,7 @@ proc show_diff {path {w {}} {lno {}}} {
 	set m [lindex $s 0]
 	set diff_3way 0
 	set diff_active 1
-	set ui_fname_value [escape_path $path]
+	set ui_fname_value $path
 	set ui_fstatus_value [mapdesc $m $path]
 	set ui_status_value "Loading diff of [escape_path $path]..."
 
@@ -2284,11 +2284,33 @@ frame .vpane.lower.diff.header -background orange
 label .vpane.lower.diff.header.l1 -text {File:} \
 	-background orange \
 	-font font_ui
-label .vpane.lower.diff.header.l2 -textvariable ui_fname_value \
+set ui_fname .vpane.lower.diff.header.l2
+text $ui_fname \
 	-background orange \
-	-anchor w \
-	-justify left \
+	-height 1 \
+	-relief flat \
+	-state disabled \
 	-font font_ui
+menu $ui_fname.ctxm -tearoff 0
+$ui_fname.ctxm add command -label "Copy Only Selection" \
+	-font font_ui \
+	-command "tk_textCopy $ui_fname"
+$ui_fname.ctxm add command -label "Copy Complete Name" \
+	-font font_ui \
+	-command "
+		$ui_fname tag add sel 0.0 {end -1c}
+		tk_textCopy $ui_fname
+		$ui_fname tag remove sel 0.0 end
+	"
+bind_button3 $ui_fname "tk_popup $ui_fname.ctxm %X %Y"
+trace add variable ui_fname_value write $ui_fname.update
+proc $ui_fname.update {varname args} {
+	global ui_fname ui_fname_value
+	$ui_fname configure -state normal
+	$ui_fname delete 0.0 end
+	$ui_fname insert end [escape_path $ui_fname_value]
+	$ui_fname configure -state disabled
+}
 label .vpane.lower.diff.header.l3 -text {Status:} \
 	-background orange \
 	-font font_ui
