@@ -183,6 +183,7 @@ if {$appname eq {git-citool}} {
 
 set status_active 0
 set diff_active 0
+set last_clicked {}
 
 set disable_on_lock [list]
 set index_lock_type none
@@ -351,7 +352,7 @@ proc read_diff_index {fd final} {
 		incr z2 -1
 		display_file \
 			[string range $buf_rdi $z1 $z2] \
-			[string index $buf_rdi [expr $z1 - 2]]_
+			[string index $buf_rdi [expr {$z1 - 2}]]_
 		incr c
 	}
 	if {$c < $n} {
@@ -380,7 +381,7 @@ proc read_diff_files {fd final} {
 		incr z2 -1
 		display_file \
 			[string range $buf_rdf $z1 $z2] \
-			_[string index $buf_rdf [expr $z1 - 2]]
+			_[string index $buf_rdf [expr {$z1 - 2}]]
 		incr c
 	}
 	if {$c < $n} {
@@ -414,6 +415,7 @@ proc status_eof {fd buf final} {
 	close $fd
 	if {[incr status_active -1] > 0} return
 
+	prune_selection
 	unlock_index
 	display_all_files
 
@@ -433,6 +435,16 @@ proc status_eof {fd buf final} {
 
 	reshow_diff
 	set ui_status_value $final
+}
+
+proc prune_selection {} {
+	global file_states selected_paths
+
+	foreach path [array names selected_paths] {
+		if {[catch {set still_here $file_states($path)}]} {
+			unset selected_paths($path)
+		}
+	}
 }
 
 ######################################################################
@@ -497,7 +509,7 @@ files list, to prevent possible confusion.
 			[lreplace $file_lists($old_w) $lno $lno]
 		incr lno
 		$old_w conf -state normal
-		$old_w delete $lno.0 [expr $lno + 1].0
+		$old_w delete $lno.0 [expr {$lno + 1}].0
 		$old_w conf -state disabled
 	}
 }
@@ -520,7 +532,7 @@ proc show_diff {path {w {}} {lno {}}} {
 		}
 	}
 	if {$w ne {} && $lno >= 1} {
-		$w tag add in_diff $lno.0 [expr $lno + 1].0
+		$w tag add in_diff $lno.0 [expr {$lno + 1}].0
 	}
 
 	set s $file_states($path)
@@ -821,7 +833,7 @@ proc commit_stage2 {curHEAD msg} {
 proc commit_stage3 {fd_wt curHEAD msg} {
 	global single_commit gitdir HEAD PARENT commit_type tcl_platform
 	global ui_status_value ui_comm
-	global file_states
+	global file_states selected_paths
 
 	gets $fd_wt tree_id
 	if {$tree_id eq {} || [catch {close $fd_wt} err]} {
@@ -871,7 +883,7 @@ proc commit_stage3 {fd_wt curHEAD msg} {
 	}
 	set i [string first "\n" $msg]
 	if {$i >= 0} {
-		append reflogm {: } [string range $msg 0 [expr $i - 1]]
+		append reflogm {: } [string range $msg 0 [expr {$i - 1}]]
 	} else {
 		append reflogm {: } $msg
 	}
@@ -934,6 +946,7 @@ proc commit_stage3 {fd_wt curHEAD msg} {
 
 		if {$m eq {__}} {
 			unset file_states($path)
+			catch {unset selected_paths($path)}
 		} else {
 			lset file_states($path) 0 $m
 		}
@@ -1102,7 +1115,7 @@ proc merge_state {path new_state} {
 }
 
 proc display_file {path state} {
-	global file_states file_lists status_active
+	global file_states file_lists selected_paths status_active
 
 	set old_m [merge_state $path $state]
 	if {$status_active} return
@@ -1118,7 +1131,7 @@ proc display_file {path state} {
 		if {$lno >= 0} {
 			incr lno
 			$old_w conf -state normal
-			$old_w delete $lno.0 [expr $lno + 1].0
+			$old_w delete $lno.0 [expr {$lno + 1}].0
 			$old_w conf -state disabled
 		}
 
@@ -1132,6 +1145,12 @@ proc display_file {path state} {
 			-name [lindex $s 1] \
 			-image $new_icon
 		$new_w insert $lno.1 "[escape_path $path]\n"
+		if {[catch {set in_sel $selected_paths($path)}]} {
+			set in_sel 0
+		}
+		if {$in_sel} {
+			$new_w tag add in_sel $lno.0 [expr {$lno + 1}].0
+		}
 		$new_w conf -state disabled
 	} elseif {$new_icon ne [mapicon $old_m $path]} {
 		$new_w conf -state normal
@@ -1141,13 +1160,16 @@ proc display_file {path state} {
 }
 
 proc display_all_files {} {
-	global ui_index ui_other file_states file_lists
+	global ui_index ui_other
+	global file_states file_lists
+	global last_clicked selected_paths
 
 	$ui_index conf -state normal
 	$ui_other conf -state normal
 
 	$ui_index delete 0.0 end
 	$ui_other delete 0.0 end
+	set last_clicked {}
 
 	set file_lists($ui_index) [list]
 	set file_lists($ui_other) [list]
@@ -1157,11 +1179,18 @@ proc display_all_files {} {
 		set m [lindex $s 0]
 		set w [mapcol $m $path]
 		lappend file_lists($w) $path
+		set lno [expr {[lindex [split [$w index end] .] 0] - 1}]
 		$w image create end \
 			-align center -padx 5 -pady 1 \
 			-name [lindex $s 1] \
 			-image [mapicon $m $path]
 		$w insert end "[escape_path $path]\n"
+		if {[catch {set in_sel $selected_paths($path)}]} {
+			set in_sel 0
+		}
+		if {$in_sel} {
+			$w tag add in_sel $lno.0 [expr {$lno + 1}].0
+		}
 	}
 
 	$ui_index conf -state disabled
@@ -1603,8 +1632,8 @@ proc console_read {w fd after} {
 		while {$c < $n} {
 			set cr [string first "\r" $buf $c]
 			set lf [string first "\n" $buf $c]
-			if {$cr < 0} {set cr [expr $n + 1]}
-			if {$lf < 0} {set lf [expr $n + 1]}
+			if {$cr < 0} {set cr [expr {$n + 1}]}
+			if {$lf < 0} {set lf [expr {$n + 1}]}
 
 			if {$lf < $cr} {
 				$w.m.t insert end [string range $buf $c $lf]
@@ -1937,32 +1966,83 @@ proc do_save_config {w} {
 	destroy $w
 }
 
-proc file_left_click {w x y} {
-	global file_lists
+proc toggle_or_diff {w x y} {
+	global file_lists ui_index ui_other
+	global last_clicked selected_paths
 
 	set pos [split [$w index @$x,$y] .]
 	set lno [lindex $pos 0]
 	set col [lindex $pos 1]
-	set path [lindex $file_lists($w) [expr $lno - 1]]
-	if {$path eq {}} return
+	set path [lindex $file_lists($w) [expr {$lno - 1}]]
+	if {$path eq {}} {
+		set last_clicked {}
+		return
+	}
 
-	if {$col > 0} {
+	set last_clicked [list $w $lno]
+	array unset selected_paths
+	$ui_index tag remove in_sel 0.0 end
+	$ui_other tag remove in_sel 0.0 end
+
+	if {$col == 0} {
+		update_index [list $path]
+	} else {
 		show_diff $path $w $lno
 	}
 }
 
-proc file_left_unclick {w x y} {
+proc add_one_to_selection {w x y} {
 	global file_lists
+	global last_clicked selected_paths
 
 	set pos [split [$w index @$x,$y] .]
 	set lno [lindex $pos 0]
 	set col [lindex $pos 1]
-	set path [lindex $file_lists($w) [expr $lno - 1]]
-	if {$path eq {}} return
-
-	if {$col == 0} {
-		update_index [list $path]
+	set path [lindex $file_lists($w) [expr {$lno - 1}]]
+	if {$path eq {}} {
+		set last_clicked {}
+		return
 	}
+
+	set last_clicked [list $w $lno]
+	if {[catch {set in_sel $selected_paths($path)}]} {
+		set in_sel 0
+	}
+	if {$in_sel} {
+		unset selected_paths($path)
+		$w tag remove in_sel $lno.0 [expr {$lno + 1}].0
+	} else {
+		set selected_paths($path) 1
+		$w tag add in_sel $lno.0 [expr {$lno + 1}].0
+	}
+}
+
+proc add_range_to_selection {w x y} {
+	global file_lists
+	global last_clicked selected_paths
+
+	if {[lindex $last_clicked 0] ne $w} {
+		toggle_or_diff $w $x $y
+		return
+	}
+
+	set pos [split [$w index @$x,$y] .]
+	set lno [lindex $pos 0]
+	set lc [lindex $last_clicked 1]
+	if {$lc < $lno} {
+		set begin $lc
+		set end $lno
+	} else {
+		set begin $lno
+		set end $lc
+	}
+
+	foreach path [lrange $file_lists($w) \
+		[expr {$begin - 1}] \
+		[expr {$end - 1}]] {
+		set selected_paths($path) 1
+	}
+	$w tag add in_sel $begin.0 [expr {$end + 1}].0
 }
 
 ######################################################################
@@ -2174,8 +2254,13 @@ pack .vpane.files.other.sb -side right -fill y
 pack $ui_other -side left -fill both -expand 1
 .vpane.files add .vpane.files.other -sticky nsew
 
-$ui_index tag conf in_diff -font font_uibold
-$ui_other tag conf in_diff -font font_uibold
+foreach i [list $ui_index $ui_other] {
+	$i tag conf in_diff -font font_uibold
+	$i tag conf in_sel \
+		-background [$i cget -foreground] \
+		-foreground [$i cget -background]
+}
+unset i
 
 # -- Diff and Commit Area
 frame .vpane.lower -height 300 -width 400
@@ -2457,8 +2542,9 @@ bind all <$M1B-Key-Q> do_quit
 bind all <$M1B-Key-w> {destroy [winfo toplevel %W]}
 bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
 foreach i [list $ui_index $ui_other] {
-	bind $i <Button-1>        {file_left_click %W %x %y; break}
-	bind $i <ButtonRelease-1> {file_left_unclick %W %x %y; break}
+	bind $i <Button-1>       "toggle_or_diff         $i %x %y; break"
+	bind $i <$M1B-Button-1>  "add_one_to_selection   $i %x %y; break"
+	bind $i <Shift-Button-1> "add_range_to_selection $i %x %y; break"
 }
 unset i
 
