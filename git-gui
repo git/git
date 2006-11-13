@@ -517,6 +517,9 @@ proc show_diff {path {w {}} {lno {}}} {
 
 	set cmd [list | git diff-index]
 	lappend cmd --no-color
+	if {$repo_config(gui.diffcontext) > 0} {
+		lappend cmd "-U$repo_config(gui.diffcontext)"
+	}
 	lappend cmd -p
 
 	switch $m {
@@ -1765,10 +1768,16 @@ proc do_options {} {
 	global repo_config global_config
 	global repo_config_new global_config_new
 
-	load_config 1
 	array unset repo_config_new
 	array unset global_config_new
 	foreach name [array names repo_config] {
+		set repo_config_new($name) $repo_config($name)
+	}
+	load_config 1
+	foreach name [array names repo_config] {
+		switch -- $name {
+		gui.diffcontext {continue}
+		}
 		set repo_config_new($name) $repo_config($name)
 	}
 	foreach name [array names global_config] {
@@ -1811,18 +1820,36 @@ proc do_options {} {
 	pack $w.global -side right -fill both -expand 1 -pady 5 -padx 5
 
 	foreach option {
-		{pullsummary {Show Pull Summary}}
-		{trustmtime {Trust File Modification Timestamps}}
+		{b pullsummary {Show Pull Summary}}
+		{b trustmtime  {Trust File Modification Timestamps}}
+		{i diffcontext {Number of Diff Context Lines}}
 		} {
-		set name [lindex $option 0]
-		set text [lindex $option 1]
+		set type [lindex $option 0]
+		set name [lindex $option 1]
+		set text [lindex $option 2]
 		foreach f {repo global} {
-			checkbutton $w.$f.$name -text $text \
-				-variable ${f}_config_new(gui.$name) \
-				-onvalue true \
-				-offvalue false \
-				-font font_ui
-			pack $w.$f.$name -side top -anchor w
+			switch $type {
+			b {
+				checkbutton $w.$f.$name -text $text \
+					-variable ${f}_config_new(gui.$name) \
+					-onvalue true \
+					-offvalue false \
+					-font font_ui
+				pack $w.$f.$name -side top -anchor w
+			}
+			i {
+				frame $w.$f.$name
+				label $w.$f.$name.l -text "$text:" -font font_ui
+				pack $w.$f.$name.l -side left -anchor w -fill x
+				spinbox $w.$f.$name.v \
+					-textvariable ${f}_config_new(gui.$name) \
+					-from 1 -to 99 -increment 1 \
+					-width 3 \
+					-font font_ui
+				pack $w.$f.$name.v -side right -anchor e
+				pack $w.$f.$name -side top -anchor w -fill x
+			}
+			}
 		}
 	}
 
@@ -1888,6 +1915,7 @@ proc do_save_config {w} {
 	if {[catch {save_config} err]} {
 		error_popup "Failed to completely save options:\n\n$err"
 	}
+	reshow_diff
 	destroy $w
 }
 
@@ -1969,6 +1997,7 @@ proc apply_config {} {
 
 set default_config(gui.trustmtime) false
 set default_config(gui.pullsummary) true
+set default_config(gui.diffcontext) 5
 set default_config(gui.fontui) [font configure font_ui]
 set default_config(gui.fontdiff) [font configure font_diff]
 set font_descs {
@@ -2318,6 +2347,21 @@ $ui_diff.ctxm add command -label "Decrease Font Size" \
 $ui_diff.ctxm add command -label "Increase Font Size" \
 	-font font_ui \
 	-command {incr_font_size font_diff 1}
+$ui_diff.ctxm add separator
+$ui_diff.ctxm add command -label "Show Less Context" \
+	-font font_ui \
+	-command {if {$ui_fname_value ne {}
+		&& $repo_config(gui.diffcontext) >= 2} {
+		incr repo_config(gui.diffcontext) -1
+		reshow_diff
+	}}
+$ui_diff.ctxm add command -label "Show More Context" \
+	-font font_ui \
+	-command {if {$ui_fname_value ne {}} {
+		incr repo_config(gui.diffcontext)
+		reshow_diff
+	}}
+$ui_diff.ctxm add separator
 $ui_diff.ctxm add command -label {Options...} \
 	-font font_ui \
 	-command do_options
