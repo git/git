@@ -1478,7 +1478,7 @@ proc hook_failed_popup {hook msg} {
 		-width 15 \
 		-font font_ui \
 		-command "destroy $w"
-	pack $w.ok -side bottom
+	pack $w.ok -side bottom -anchor e -pady 10 -padx 10
 
 	bind $w <Visibility> "grab $w; focus $w"
 	bind $w <Key-Return> "destroy $w"
@@ -1515,7 +1515,8 @@ proc console_init {w} {
 		-font font_diff \
 		-state disabled \
 		-yscrollcommand [list $w.m.sby set]
-	label $w.m.s -anchor w \
+	label $w.m.s -text {Working... please wait...} \
+		-anchor w \
 		-justify left \
 		-font font_uibold
 	scrollbar $w.m.sby -command [list $w.m.t yview]
@@ -1540,12 +1541,11 @@ proc console_init {w} {
 			$w.m.t tag remove sel 0.0 end
 		"
 
-	button $w.ok -text {Running...} \
-		-width 15 \
+	button $w.ok -text {Close} \
 		-font font_ui \
 		-state disabled \
 		-command "destroy $w"
-	pack $w.ok -side bottom
+	pack $w.ok -side bottom -anchor e -pady 10 -padx 10
 
 	bind_button3 $w.m.t "tk_popup $w.ctxm %X %Y"
 	bind $w.m.t <$M1B-Key-a> "$w.m.t tag add sel 0.0 end;break"
@@ -1614,12 +1614,10 @@ proc console_read {w fd after} {
 		if {[catch {close $fd}]} {
 			if {![winfo exists $w]} {console_init $w}
 			$w.m.s conf -background red -text {Error: Command Failed}
-			$w.ok conf -text Close
 			$w.ok conf -state normal
 			set ok 0
 		} elseif {[winfo exists $w]} {
 			$w.m.s conf -background green -text {Success}
-			$w.ok conf -text Close
 			$w.ok conf -state normal
 			set ok 1
 		}
