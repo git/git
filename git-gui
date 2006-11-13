@@ -1935,10 +1935,8 @@ proc do_save_config {w} {
 	destroy $w
 }
 
-# shift == 1: left click
-#          3: right click  
-proc click {w x y shift wx wy} {
-	global ui_index ui_other file_lists
+proc file_left_click {w x y} {
+	global file_lists
 
 	set pos [split [$w index @$x,$y] .]
 	set lno [lindex $pos 0]
@@ -1946,12 +1944,12 @@ proc click {w x y shift wx wy} {
 	set path [lindex $file_lists($w) [expr $lno - 1]]
 	if {$path eq {}} return
 
-	if {$col > 0 && $shift == 1} {
+	if {$col > 0} {
 		show_diff $path $w $lno
 	}
 }
 
-proc unclick {w x y} {
+proc file_left_unclick {w x y} {
 	global file_lists
 
 	set pos [split [$w index @$x,$y] .]
@@ -2457,9 +2455,8 @@ bind all <$M1B-Key-Q> do_quit
 bind all <$M1B-Key-w> {destroy [winfo toplevel %W]}
 bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
 foreach i [list $ui_index $ui_other] {
-	bind $i <Button-1> {click %W %x %y 1 %X %Y; break}
-	bind $i <ButtonRelease-1> {unclick %W %x %y; break}
-	bind_button3 $i {click %W %x %y 3 %X %Y; break}
+	bind $i <Button-1>        {file_left_click %W %x %y; break}
+	bind $i <ButtonRelease-1> {file_left_unclick %W %x %y; break}
 }
 unset i
 
