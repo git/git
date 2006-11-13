@@ -2281,6 +2281,13 @@ bind_button3 $ui_comm "tk_popup $ui_comm.ctxm %X %Y"
 set ui_fname_value {}
 set ui_fstatus_value {}
 frame .vpane.lower.diff.header -background orange
+label .vpane.lower.diff.header.l4 \
+	-textvariable ui_fstatus_value \
+	-background orange \
+	-width $max_status_desc \
+	-anchor w \
+	-justify left \
+	-font font_ui
 label .vpane.lower.diff.header.l1 -text {File:} \
 	-background orange \
 	-font font_ui
@@ -2288,6 +2295,7 @@ set ui_fname .vpane.lower.diff.header.l2
 text $ui_fname \
 	-background orange \
 	-height 1 \
+	-wrap none \
 	-relief flat \
 	-state disabled \
 	-font font_ui
@@ -2311,19 +2319,9 @@ proc $ui_fname.update {varname args} {
 	$ui_fname insert end [escape_path $ui_fname_value]
 	$ui_fname configure -state disabled
 }
-label .vpane.lower.diff.header.l3 -text {Status:} \
-	-background orange \
-	-font font_ui
-label .vpane.lower.diff.header.l4 -textvariable ui_fstatus_value \
-	-background orange \
-	-width $max_status_desc \
-	-anchor w \
-	-justify left \
-	-font font_ui
+pack .vpane.lower.diff.header.l4 -side left
 pack .vpane.lower.diff.header.l1 -side left
-pack .vpane.lower.diff.header.l2 -side left -fill x
-pack .vpane.lower.diff.header.l4 -side right
-pack .vpane.lower.diff.header.l3 -side right
+pack $ui_fname -fill x
 
 # -- Diff Body
 frame .vpane.lower.diff.body
