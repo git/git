@@ -1385,17 +1385,17 @@ set max_status_desc 0
 foreach i {
 		{__ i plain    "Unmodified"}
 		{_M i mod      "Modified"}
-		{M_ i fulltick "Checked in"}
+		{M_ i fulltick "Included in commit"}
 		{MM i parttick "Partially included"}
 
 		{_O o plain    "Untracked"}
-		{A_ o fulltick "Added"}
+		{A_ o fulltick "Added by commit"}
 		{AM o parttick "Partially added"}
 		{AD o question "Added (but now gone)"}
 
 		{_D i question "Missing"}
-		{D_ i removed  "Removed"}
-		{DD i removed  "Removed"}
+		{D_ i removed  "Removed by commit"}
+		{DD i removed  "Removed by commit"}
 		{DO i removed  "Removed (still exists)"}
 
 		{UM i merge    "Merge conflicts"}
