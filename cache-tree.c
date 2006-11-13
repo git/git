@@ -282,6 +282,8 @@ static int update_one(struct cache_tree *it,
 				    baselen + sublen + 1,
 				    missing_ok,
 				    dryrun);
+		if (subcnt < 0)
+			return subcnt;
 		i += subcnt - 1;
 		sub->used = 1;
 	}
