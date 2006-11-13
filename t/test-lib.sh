@@ -129,7 +129,7 @@ test_expect_failure () {
 	error "bug in the test script: not 2 parameters to test-expect-failure"
 	say >&3 "expecting failure: $2"
 	test_run_ "$2"
-	if [ "$?" = 0 -a "$eval_ret" != 0 ]
+	if [ "$?" = 0 -a "$eval_ret" != 0 -a "$eval_ret" -lt 129 ]
 	then
 		test_ok_ "$1"
 	else
