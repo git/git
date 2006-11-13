@@ -1159,6 +1159,7 @@ proc update_index {pathList} {
 
 	set update_index_cp 0
 	set update_index_rsd 0
+	set pathList [lsort $pathList]
 	set totalCnt [llength $pathList]
 	set batch [expr {int($totalCnt * .01) + 1}]
 	if {$batch > 25} {set batch 25}
