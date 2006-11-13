@@ -475,13 +475,15 @@ proc handle_empty_diff {} {
 
 [short_path $path] has no changes.
 
-The modification date of this file was updated by another
-application and you currently have the Trust File Modification
-Timestamps option enabled, so Git did not automatically detect
-that there are no content differences in this file.
+The modification date of this file was updated
+by another application and you currently have
+the Trust File Modification Timestamps option
+enabled, so Git did not automatically detect
+that there are no content differences in this
+file.
 
-This file will now be removed from the modified files list, to
-prevent possible confusion.
+This file will now be removed from the modified
+files list, to prevent possible confusion.
 "
 	if {[catch {exec git update-index -- $path} err]} {
 		error_popup "Failed to refresh index:\n\n$err"
