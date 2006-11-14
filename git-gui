@@ -428,7 +428,10 @@ proc rescan_done {fd buf after} {
 			}
 		}
 		if {$pathList ne {}} {
-			update_index $pathList
+			update_index \
+				"Updating included files" \
+				$pathList \
+				[concat {reshow_diff;} $after]
 			return
 		}
 	}
@@ -1197,7 +1200,7 @@ proc display_all_files {} {
 	$ui_other conf -state disabled
 }
 
-proc update_index {pathList} {
+proc update_index {msg pathList after} {
 	global update_index_cp update_index_rsd ui_status_value
 
 	if {![lock_index update]} return
@@ -1210,7 +1213,7 @@ proc update_index {pathList} {
 	if {$batch > 25} {set batch 25}
 
 	set ui_status_value [format \
-		"Including files ... %i/%i files (%.2f%%)" \
+		"$msg... %i/%i files (%.2f%%)" \
 		$update_index_cp \
 		$totalCnt \
 		0.0]
@@ -1226,20 +1229,20 @@ proc update_index {pathList} {
 		$pathList \
 		$totalCnt \
 		$batch \
+		$msg \
+		$after \
 		]
 }
 
-proc write_update_index {fd pathList totalCnt batch} {
+proc write_update_index {fd pathList totalCnt batch msg after} {
 	global update_index_cp update_index_rsd ui_status_value
 	global file_states ui_fname_value
 
 	if {$update_index_cp >= $totalCnt} {
 		close $fd
 		unlock_index
-		set ui_status_value {Ready.}
-		if {$update_index_rsd} {
-			reshow_diff
-		}
+		if {$update_index_rsd} reshow_diff
+		uplevel #0 $after
 		return
 	}
 
@@ -1268,7 +1271,7 @@ proc write_update_index {fd pathList totalCnt batch} {
 	}
 
 	set ui_status_value [format \
-		"Including files ... %i/%i files (%.2f%%)" \
+		"$msg... %i/%i files (%.2f%%)" \
 		$update_index_cp \
 		$totalCnt \
 		[expr {100.0 * $update_index_cp / $totalCnt}]]
@@ -1766,7 +1769,10 @@ proc do_include_all {} {
 	if {$pathList eq {}} {
 		unlock_index
 	} else {
-		update_index $pathList
+		update_index \
+			"Including all modified files" \
+			$pathList \
+			{set ui_status_value {Ready to commit.}}
 	}
 }
 
@@ -1985,7 +1991,10 @@ proc toggle_or_diff {w x y} {
 	$ui_other tag remove in_sel 0.0 end
 
 	if {$col == 0} {
-		update_index [list $path]
+		update_index \
+			"Including [short_path $path]" \
+			[list $path] \
+			{set ui_status_value {Ready.}}
 	} else {
 		show_diff $path $w $lno
 	}
