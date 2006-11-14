@@ -198,9 +198,6 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 			if (!strncmp("shallow ", line, 8)) {
 				if (get_sha1_hex(line + 8, sha1))
 					die("invalid shallow line: %s", line);
-				/* no need making it shallow if we have it already */
-				if (lookup_object(sha1))
-					continue;
 				register_shallow(sha1);
 				continue;
 			}
