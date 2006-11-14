@@ -234,7 +234,7 @@ proc repository_state {hdvar ctvar} {
 	}
 }
 
-proc update_status {{final Ready.}} {
+proc rescan {{final Ready.}} {
 	global HEAD PARENT commit_type
 	global ui_index ui_other ui_status_value ui_comm
 	global status_active file_states
@@ -265,7 +265,7 @@ proc update_status {{final Ready.}} {
 	}
 
 	if {$repo_config(gui.trustmtime) eq {true}} {
-		update_status_stage2 {} $final
+		rescan_stage2 {} $final
 	} else {
 		set status_active 1
 		set ui_status_value {Refreshing file status...}
@@ -277,11 +277,11 @@ proc update_status {{final Ready.}} {
 		set fd_rf [open "| $cmd" r]
 		fconfigure $fd_rf -blocking 0 -translation binary
 		fileevent $fd_rf readable \
-			[list update_status_stage2 $fd_rf $final]
+			[list rescan_stage2 $fd_rf $final]
 	}
 }
 
-proc update_status_stage2 {fd final} {
+proc rescan_stage2 {fd final} {
 	global gitdir PARENT commit_type
 	global ui_index ui_other ui_status_value ui_comm
 	global status_active
@@ -684,7 +684,7 @@ proc load_last_commit {} {
 		set commit_type amend
 		set HEAD {}
 		set PARENT {}
-		update_status
+		rescan
 	} elseif {$parent_count == 1} {
 		set commit_type amend
 		set PARENT $parent
@@ -692,7 +692,7 @@ proc load_last_commit {} {
 		$ui_comm insert end $msg
 		$ui_comm edit modified false
 		$ui_comm edit reset
-		update_status
+		rescan
 	} else {
 		error_popup {You can't amend a merge commit.}
 		return
@@ -720,7 +720,7 @@ repository since our last scan.  A rescan is required
 before committing.
 }
 		unlock_index
-		update_status
+		rescan
 		return
 	}
 
@@ -987,7 +987,7 @@ repository since our last scan.  A rescan is required
 before a pull can be started.
 }
 		unlock_index
-		update_status
+		rescan
 		return
 	}
 
@@ -1026,7 +1026,7 @@ proc post_pull_remote {remote branch success} {
 		set PARENT $HEAD
 		set $ui_status_value {Ready.}
 	} else {
-		update_status \
+		rescan \
 			"Conflicts detected while pulling $branch from $remote."
 	}
 }
@@ -1744,7 +1744,7 @@ proc do_quit {} {
 }
 
 proc do_rescan {} {
-	update_status
+	rescan
 }
 
 proc do_include_all {} {
@@ -2559,4 +2559,4 @@ if {!$single_commit} {
 	populate_remote_menu .mbar.push To push_to
 	populate_pull_menu .mbar.pull
 }
-after 1 update_status
+after 1 rescan
