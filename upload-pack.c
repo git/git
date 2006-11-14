@@ -138,6 +138,7 @@ static void create_pack_file(void)
 		} else {
 			for (i = 0; i < want_obj.nr; i++) {
 				struct object *o = want_obj.objects[i].item;
+				/* why??? */
 				o->flags &= ~UNINTERESTING;
 				add_pending_object(&revs, o, NULL);
 			}
