@@ -189,7 +189,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	if (!fetching)
 		return 1;
 
-	if (depth >  0) {
+	if (depth > 0) {
 		char line[1024];
 		unsigned char sha1[20];
 		int len;
@@ -202,7 +202,9 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 				if (lookup_object(sha1))
 					continue;
 				register_shallow(sha1);
-			}  else if (!strncmp("unshallow ", line, 10)) {
+				continue;
+			}
+			if (!strncmp("unshallow ", line, 10)) {
 				if (get_sha1_hex(line + 10, sha1))
 					die("invalid unshallow line: %s", line);
 				if (!lookup_object(sha1))
@@ -211,8 +213,9 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 				parse_object(sha1);
 				if (unregister_shallow(sha1))
 					die("no shallow found: %s", line);
-			} else
-				die("expected shallow/unshallow, got %s", line);
+				continue;
+			}
+			die("expected shallow/unshallow, got %s", line);
 		}
 	}
 
