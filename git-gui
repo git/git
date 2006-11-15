@@ -420,7 +420,7 @@ proc rescan_done {fd buf after} {
 	display_all_files
 
 	if {$repo_config(gui.partialinclude) ne {true}} {
-		set pathList  [list]
+		set pathList [list]
 		foreach path [array names file_states] {
 			switch -- [lindex $file_states($path) 0] {
 			AM -
@@ -703,9 +703,7 @@ proc load_last_commit {} {
 }
 
 proc commit_tree {} {
-	global tcl_platform HEAD gitdir commit_type file_states
-	global pch_error
-	global ui_status_value ui_comm
+	global HEAD commit_type file_states ui_comm repo_config
 
 	if {![lock_index update]} return
 
@@ -719,8 +717,10 @@ proc commit_tree {} {
 		error_popup {Last scanned state does not match repository state.
 
 Its highly likely that another Git program modified the
-repository since our last scan.  A rescan is required
+repository since the last scan.  A rescan is required
 before committing.
+
+A rescan will be automatically started now.
 }
 		unlock_index
 		rescan {set ui_status_value {Ready.}}
@@ -731,8 +731,7 @@ before committing.
 	#
 	set files_ready 0
 	foreach path [array names file_states] {
-		set s $file_states($path)
-		switch -glob -- [lindex $s 0] {
+		switch -glob -- [lindex $file_states($path) 0] {
 		_? {continue}
 		A? -
 		D? -
@@ -779,10 +778,39 @@ A good commit message has the following format:
 		return
 	}
 
-	# -- Ask the pre-commit hook for the go-ahead.
+	# -- Update included files if partialincludes are off.
 	#
+	if {$repo_config(gui.partialinclude) ne {true}} {
+		set pathList [list]
+		foreach path [array names file_states] {
+			switch -glob -- [lindex $file_states($path) 0] {
+			A? -
+			M? {lappend pathList $path}
+			}
+		}
+		if {$pathList ne {}} {
+			unlock_index
+			update_index \
+				"Updating included files" \
+				$pathList \
+				[concat {lock_index update;} \
+					[list commit_prehook $curHEAD $msg]]
+			return
+		}
+	}
+
+	commit_prehook $curHEAD $msg
+}
+
+proc commit_prehook {curHEAD msg} {
+	global tcl_platform gitdir ui_status_value pch_error
+
+	# On Cygwin [file executable] might lie so we need to ask
+	# the shell if the hook is executable.  Yes that's annoying.
+
 	set pchook [file join $gitdir hooks pre-commit]
-	if {$tcl_platform(platform) eq {windows} && [file isfile $pchook]} {
+	if {$tcl_platform(platform) eq {windows}
+		&& [file isfile $pchook]} {
 		set pchook [list sh -c [concat \
 			"if test -x \"$pchook\";" \
 			"then exec \"$pchook\" 2>&1;" \
@@ -790,21 +818,19 @@ A good commit message has the following format:
 	} elseif {[file executable $pchook]} {
 		set pchook [list $pchook |& cat]
 	} else {
-		set pchook {}
+		commit_writetree $curHEAD $msg
+		return
 	}
-	if {$pchook ne {}} {
-		set ui_status_value {Calling pre-commit hook...}
-		set pch_error {}
-		set fd_ph [open "| $pchook" r]
-		fconfigure $fd_ph -blocking 0 -translation binary
-		fileevent $fd_ph readable \
-			[list commit_stage1 $fd_ph $curHEAD $msg]
-	} else {
-		commit_stage2 $curHEAD $msg
-	}
+
+	set ui_status_value {Calling pre-commit hook...}
+	set pch_error {}
+	set fd_ph [open "| $pchook" r]
+	fconfigure $fd_ph -blocking 0 -translation binary
+	fileevent $fd_ph readable \
+		[list commit_prehook_wait $fd_ph $curHEAD $msg]
 }
 
-proc commit_stage1 {fd_ph curHEAD msg} {
+proc commit_prehook_wait {fd_ph curHEAD msg} {
 	global pch_error ui_status_value
 
 	append pch_error [read $fd_ph]
@@ -815,25 +841,24 @@ proc commit_stage1 {fd_ph curHEAD msg} {
 			hook_failed_popup pre-commit $pch_error
 			unlock_index
 		} else {
-			commit_stage2 $curHEAD $msg
+			commit_writetree $curHEAD $msg
 		}
 		set pch_error {}
-	} else {
-		fconfigure $fd_ph -blocking 0
+		return
 	}
+	fconfigure $fd_ph -blocking 0
 }
 
-proc commit_stage2 {curHEAD msg} {
+proc commit_writetree {curHEAD msg} {
 	global ui_status_value
 
-	# -- Write the tree in the background.
-	#
 	set ui_status_value {Committing changes...}
 	set fd_wt [open "| git write-tree" r]
-	fileevent $fd_wt readable [list commit_stage3 $fd_wt $curHEAD $msg]
+	fileevent $fd_wt readable \
+		[list commit_committree $fd_wt $curHEAD $msg]
 }
 
-proc commit_stage3 {fd_wt curHEAD msg} {
+proc commit_committree {fd_wt curHEAD msg} {
 	global single_commit gitdir HEAD PARENT commit_type tcl_platform
 	global ui_status_value ui_comm
 	global file_states selected_paths
@@ -1252,14 +1277,20 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 		set path [lindex $pathList $update_index_cp]
 		incr update_index_cp
 
-		switch -- [lindex $file_states($path) 0] {
-		AM -
-		_O {set new A*}
-		_M -
-		MM {set new M*}
+		switch -glob -- [lindex $file_states($path) 0] {
 		AD -
+		MD -
 		_D {set new D*}
-		default {continue}
+
+		_M -
+		MM -
+		M_ {set new M*}
+
+		_O -
+		AM -
+		A_ {set new A*}
+
+		?? {continue}
 		}
 
 		puts -nonewline $fd $path
