@@ -77,6 +77,11 @@ while [ "$#" != "0" ]; do
     esac
 done
 
+case "$force$merge" in
+11)
+	die "git checkout: -f and -m are incompatible"
+esac
+
 # The behaviour of the command with and without explicit path
 # parameters is quite different.
 #
