@@ -1,4 +1,4 @@
-#define _XOPEN_SOURCE 500 /* glibc2 and AIX 5.3L need this */
+#define _XOPEN_SOURCE 600 /* glibc2 and AIX 5.3L need 500, OpenBSD needs 600 for S_ISLNK() */
 #define _XOPEN_SOURCE_EXTENDED 1 /* AIX 5.3L needs this */
 #define _GNU_SOURCE
 #include <time.h>
