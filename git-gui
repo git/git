@@ -455,34 +455,33 @@ proc prune_selection {} {
 ## diff
 
 proc clear_diff {} {
-	global ui_diff ui_fname_value ui_fstatus_value ui_index ui_other
+	global ui_diff current_diff ui_index ui_other
 
 	$ui_diff conf -state normal
 	$ui_diff delete 0.0 end
 	$ui_diff conf -state disabled
 
-	set ui_fname_value {}
-	set ui_fstatus_value {}
+	set current_diff {}
 
 	$ui_index tag remove in_diff 0.0 end
 	$ui_other tag remove in_diff 0.0 end
 }
 
 proc reshow_diff {} {
-	global ui_fname_value ui_status_value file_states
+	global current_diff ui_status_value file_states
 
-	if {$ui_fname_value eq {}
-		|| [catch {set s $file_states($ui_fname_value)}]} {
+	if {$current_diff eq {}
+		|| [catch {set s $file_states($current_diff)}]} {
 		clear_diff
 	} else {
-		show_diff $ui_fname_value
+		show_diff $current_diff
 	}
 }
 
 proc handle_empty_diff {} {
-	global ui_fname_value file_states file_lists
+	global current_diff file_states file_lists
 
-	set path $ui_fname_value
+	set path $current_diff
 	set s $file_states($path)
 	if {[lindex $s 0] ne {_M}} return
 
@@ -520,7 +519,7 @@ files list, to prevent possible confusion.
 proc show_diff {path {w {}} {lno {}}} {
 	global file_states file_lists
 	global PARENT diff_3way diff_active repo_config
-	global ui_diff ui_fname_value ui_fstatus_value ui_status_value
+	global ui_diff current_diff ui_status_value
 
 	if {$diff_active || ![lock_index read]} return
 
@@ -542,8 +541,7 @@ proc show_diff {path {w {}} {lno {}}} {
 	set m [lindex $s 0]
 	set diff_3way 0
 	set diff_active 1
-	set ui_fname_value $path
-	set ui_fstatus_value [mapdesc $m $path]
+	set current_diff $path
 	set ui_status_value "Loading diff of [escape_path $path]..."
 
 	set cmd [list | git diff-index]
@@ -1261,7 +1259,7 @@ proc update_index {msg pathList after} {
 
 proc write_update_index {fd pathList totalCnt batch msg after} {
 	global update_index_cp update_index_rsd ui_status_value
-	global file_states ui_fname_value
+	global file_states current_diff
 
 	if {$update_index_cp >= $totalCnt} {
 		close $fd
@@ -1296,7 +1294,7 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 		puts -nonewline $fd $path
 		puts -nonewline $fd "\0"
 		display_file $path $new
-		if {$ui_fname_value eq $path} {
+		if {$current_diff eq $path} {
 			set update_index_rsd 1
 		}
 	}
@@ -2384,71 +2382,105 @@ pack .vpane.lower.commarea.buffer -side left -fill y
 
 # -- Commit Message Buffer Context Menu
 #
-menu $ui_comm.ctxm -tearoff 0
-$ui_comm.ctxm add command -label "Cut" \
+set ctxm .vpane.lower.commarea.buffer.ctxm
+menu $ctxm -tearoff 0
+$ctxm add command \
+	-label {Cut} \
 	-font font_ui \
-	-command "tk_textCut $ui_comm"
-$ui_comm.ctxm add command -label "Copy" \
+	-command {tk_textCut $ui_comm}
+$ctxm add command \
+	-label {Copy} \
 	-font font_ui \
-	-command "tk_textCopy $ui_comm"
-$ui_comm.ctxm add command -label "Paste" \
+	-command {tk_textCopy $ui_comm}
+$ctxm add command \
+	-label {Paste} \
 	-font font_ui \
-	-command "tk_textPaste $ui_comm"
-$ui_comm.ctxm add command -label "Delete" \
+	-command {tk_textPaste $ui_comm}
+$ctxm add command \
+	-label {Delete} \
 	-font font_ui \
-	-command "$ui_comm delete sel.first sel.last"
-$ui_comm.ctxm add separator
-$ui_comm.ctxm add command -label "Select All" \
+	-command {$ui_comm delete sel.first sel.last}
+$ctxm add separator
+$ctxm add command \
+	-label {Select All} \
 	-font font_ui \
-	-command "$ui_comm tag add sel 0.0 end"
-$ui_comm.ctxm add command -label "Copy All" \
+	-command {$ui_comm tag add sel 0.0 end}
+$ctxm add command \
+	-label {Copy All} \
 	-font font_ui \
-	-command "
+	-command {
 		$ui_comm tag add sel 0.0 end
 		tk_textCopy $ui_comm
 		$ui_comm tag remove sel 0.0 end
-	"
-$ui_comm.ctxm add separator
-$ui_comm.ctxm add command -label "Sign Off" \
+	}
+$ctxm add separator
+$ctxm add command \
+	-label {Sign Off} \
 	-font font_ui \
 	-command do_signoff
-bind_button3 $ui_comm "tk_popup $ui_comm.ctxm %X %Y"
+bind_button3 $ui_comm "tk_popup $ctxm %X %Y"
 
 # -- Diff Header
-set ui_fname_value {}
-set ui_fstatus_value {}
+set current_diff {}
+set diff_actions [list]
+proc current_diff_trace {varname args} {
+	global current_diff diff_actions file_states
+	if {$current_diff eq {}} {
+		set s {}
+		set f {}
+		set p {}
+		set o disabled
+	} else {
+		set p $current_diff
+		set s [mapdesc [lindex $file_states($p) 0] $p]
+		set f {File:}
+		set p [escape_path $p]
+		set o normal
+	}
+
+	.vpane.lower.diff.header.status configure -text $s
+	.vpane.lower.diff.header.file configure -text $f
+	.vpane.lower.diff.header.path configure -text $p
+	foreach w $diff_actions {
+		uplevel #0 $w $o
+	}
+}
+trace add variable current_diff write current_diff_trace
+
 frame .vpane.lower.diff.header -background orange
-label .vpane.lower.diff.header.l4 \
-	-textvariable ui_fstatus_value \
+label .vpane.lower.diff.header.status \
 	-background orange \
 	-width $max_status_desc \
 	-anchor w \
 	-justify left \
 	-font font_ui
-label .vpane.lower.diff.header.l1 -text {File:} \
-	-background orange \
-	-font font_ui
-set ui_fname .vpane.lower.diff.header.l2
-label $ui_fname \
-	-textvariable ui_fname_value \
+label .vpane.lower.diff.header.file \
 	-background orange \
 	-anchor w \
 	-justify left \
 	-font font_ui
-menu $ui_fname.ctxm -tearoff 0
-$ui_fname.ctxm add command -label "Copy" \
+label .vpane.lower.diff.header.path \
+	-background orange \
+	-anchor w \
+	-justify left \
+	-font font_ui
+pack .vpane.lower.diff.header.status -side left
+pack .vpane.lower.diff.header.file -side left
+pack .vpane.lower.diff.header.path -fill x
+set ctxm .vpane.lower.diff.header.ctxm
+menu $ctxm -tearoff 0
+$ctxm add command \
+	-label {Copy} \
 	-font font_ui \
 	-command {
 		clipboard clear
 		clipboard append \
 			-format STRING \
 			-type STRING \
-			-- $ui_fname_value
+			-- $current_diff
 	}
-bind_button3 $ui_fname "tk_popup $ui_fname.ctxm %X %Y"
-pack .vpane.lower.diff.header.l4 -side left
-pack .vpane.lower.diff.header.l1 -side left
-pack $ui_fname -fill x
+lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+bind_button3 .vpane.lower.diff.header.path "tk_popup $ctxm %X %Y"
 
 # -- Diff Body
 frame .vpane.lower.diff.body
@@ -2478,48 +2510,63 @@ $ui_diff tag conf bold -font font_diffbold
 
 # -- Diff Body Context Menu
 #
-menu $ui_diff.ctxm -tearoff 0
-$ui_diff.ctxm add command -label "Copy" \
+set ctxm .vpane.lower.diff.body.ctxm
+menu $ctxm -tearoff 0
+$ctxm add command \
+	-label {Copy} \
 	-font font_ui \
-	-command "tk_textCopy $ui_diff"
-$ui_diff.ctxm add command -label "Select All" \
+	-command {tk_textCopy $ui_diff}
+lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+$ctxm add command \
+	-label {Select All} \
 	-font font_ui \
-	-command "$ui_diff tag add sel 0.0 end"
-$ui_diff.ctxm add command -label "Copy All" \
+	-command {$ui_diff tag add sel 0.0 end}
+lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+$ctxm add command \
+	-label {Copy All} \
 	-font font_ui \
-	-command "
+	-command {
 		$ui_diff tag add sel 0.0 end
 		tk_textCopy $ui_diff
 		$ui_diff tag remove sel 0.0 end
-	"
-$ui_diff.ctxm add separator
-$ui_diff.ctxm add command -label "Decrease Font Size" \
+	}
+lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+$ctxm add separator
+$ctxm add command \
+	-label {Decrease Font Size} \
 	-font font_ui \
 	-command {incr_font_size font_diff -1}
-$ui_diff.ctxm add command -label "Increase Font Size" \
+lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+$ctxm add command \
+	-label {Increase Font Size} \
 	-font font_ui \
 	-command {incr_font_size font_diff 1}
-$ui_diff.ctxm add separator
-$ui_diff.ctxm add command -label "Show Less Context" \
+lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+$ctxm add separator
+$ctxm add command \
+	-label {Show Less Context} \
 	-font font_ui \
-	-command {if {$ui_fname_value ne {}
-		&& $repo_config(gui.diffcontext) >= 2} {
+	-command {if {$repo_config(gui.diffcontext) >= 2} {
 		incr repo_config(gui.diffcontext) -1
 		reshow_diff
 	}}
-$ui_diff.ctxm add command -label "Show More Context" \
+lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+$ctxm add command \
+	-label {Show More Context} \
 	-font font_ui \
-	-command {if {$ui_fname_value ne {}} {
+	-command {
 		incr repo_config(gui.diffcontext)
 		reshow_diff
-	}}
-$ui_diff.ctxm add separator
-$ui_diff.ctxm add command -label {Options...} \
+	}
+lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
+$ctxm add separator
+$ctxm add command -label {Options...} \
 	-font font_ui \
 	-command do_options
-bind_button3 $ui_diff "tk_popup $ui_diff.ctxm %X %Y"
+bind_button3 $ui_diff "tk_popup $ctxm %X %Y"
 
 # -- Status Bar
+#
 set ui_status_value {Initializing...}
 label .status -textvariable ui_status_value \
 	-anchor w \
@@ -2530,6 +2577,7 @@ label .status -textvariable ui_status_value \
 pack .status -anchor w -side bottom -fill x
 
 # -- Load geometry
+#
 catch {
 set gm $repo_config(gui.geometry)
 wm geometry . [lindex $gm 0]
@@ -2543,6 +2591,7 @@ unset gm
 }
 
 # -- Key Bindings
+#
 bind $ui_comm <$M1B-Key-Return> {do_commit;break}
 bind $ui_comm <$M1B-Key-i> {do_include_all;break}
 bind $ui_comm <$M1B-Key-I> {do_include_all;break}
@@ -2590,6 +2639,7 @@ unset i
 
 set file_lists($ui_index) [list]
 set file_lists($ui_other) [list]
+set current_diff {}
 
 wm title . "$appname ([file normalize [file dirname $gitdir]])"
 focus -force $ui_comm
