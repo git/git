@@ -876,6 +876,16 @@ while(<CVS>) {
 }
 commit() if $branch and $state != 11;
 
+# The heuristic of repacking every 1024 commits can leave a
+# lot of unpacked data.  If there is more than 1MB worth of
+# not-packed objects, repack once more.
+my $line = `git-count-objects`;
+if ($line =~ /^(\d+) objects, (\d+) kilobytes$/) {
+  my ($n_objects, $kb) = ($1, $2);
+  1024 < $kb
+    and system("git repack -a -d");
+}
+
 foreach my $git_index (values %index) {
     if ($git_index ne '.git/index') {
 	unlink($git_index);
