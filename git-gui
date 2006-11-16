@@ -161,16 +161,17 @@ proc info_popup {msg} {
 ##
 ## repository setup
 
-if {   [catch {set cdup [exec git rev-parse --show-cdup]} err]
-	|| [catch {set gitdir [exec git rev-parse --git-dir]} err]} {
+if {   [catch {set gitdir $env(GIT_DIR)}]
+	&& [catch {set gitdir [exec git rev-parse --git-dir]} err]} {
 	catch {wm withdraw .}
 	error_popup "Cannot find the git directory:\n\n$err"
 	exit 1
 }
-if {$cdup ne ""} {
-	cd $cdup
+if {[catch {cd [file dirname $gitdir]} err]} {
+	catch {wm withdraw .}
+	error_popup "No working directory [file dirname $gitdir]:\n\n$err"
+	exit 1
 }
-unset cdup
 
 set single_commit 0
 if {$appname eq {git-citool}} {
