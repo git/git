@@ -167,6 +167,16 @@ if {   [catch {set gitdir $env(GIT_DIR)}]
 	error_popup "Cannot find the git directory:\n\n$err"
 	exit 1
 }
+if {![file isdirectory $gitdir]} {
+	catch {wm withdraw .}
+	error_popup "Git directory not found:\n\n$gitdir"
+	exit 1
+}
+if {[lindex [file split $gitdir] end] ne {.git}} {
+	catch {wm withdraw .}
+	error_popup "Cannot use funny .git directory:\n\n$gitdir"
+	exit 1
+}
 if {[catch {cd [file dirname $gitdir]} err]} {
 	catch {wm withdraw .}
 	error_popup "No working directory [file dirname $gitdir]:\n\n$err"
@@ -2040,8 +2050,8 @@ proc do_windows_shortcut {} {
 					--absolute \
 					$gitdir]
 				puts -nonewline $fd "\"$sh\" --login -c \""
-				puts -nonewline $fd "GIT_DIR=\\\"$gd\\\""
-				puts -nonewline $fd " \\\"$me\\\""
+				puts -nonewline $fd "GIT_DIR='$gd'"
+				puts -nonewline $fd " '$me'"
 				puts $fd "&\""
 				close $fd
 			} err]} {
