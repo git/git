@@ -1343,13 +1343,65 @@ proc load_all_remotes {} {
 	set all_remotes [lsort -unique $all_remotes]
 }
 
-proc populate_remote_menu {m pfx op} {
-	global all_remotes
+proc populate_fetch_menu {m} {
+	global gitdir all_remotes repo_config
 
-	foreach remote $all_remotes {
-		$m add command -label "$pfx $remote..." \
-			-command [list $op $remote] \
-			-font font_ui
+	foreach r $all_remotes {
+		set enable 0
+		if {![catch {set a $repo_config(remote.$r.url)}]} {
+			if {![catch {set a $repo_config(remote.$r.fetch)}]} {
+				set enable 1
+			}
+		} else {
+			catch {
+				set fd [open [file join $gitdir remotes $r] r]
+				while {[gets $fd n] >= 0} {
+					if {[regexp {^Pull:[ \t]*([^:]+):} $n]} {
+						set enable 1
+						break
+					}
+				}
+				close $fd
+			}
+		}
+
+		if {$enable} {
+			$m add command \
+				-label "Fetch from $r..." \
+				-command [list fetch_from $r] \
+				-font font_ui
+		}
+	}
+}
+
+proc populate_push_menu {m} {
+	global gitdir all_remotes repo_config
+
+	foreach r $all_remotes {
+		set enable 0
+		if {![catch {set a $repo_config(remote.$r.url)}]} {
+			if {![catch {set a $repo_config(remote.$r.push)}]} {
+				set enable 1
+			}
+		} else {
+			catch {
+				set fd [open [file join $gitdir remotes $r] r]
+				while {[gets $fd n] >= 0} {
+					if {[regexp {^Push:[ \t]*([^:]+):} $n]} {
+						set enable 1
+						break
+					}
+				}
+				close $fd
+			}
+		}
+
+		if {$enable} {
+			$m add command \
+				-label "Push to $r..." \
+				-command [list push_to $r] \
+				-font font_ui
+		}
 	}
 }
 
@@ -2713,8 +2765,8 @@ wm title . "$appname ([file normalize [file dirname $gitdir]])"
 focus -force $ui_comm
 if {!$single_commit} {
 	load_all_remotes
-	populate_remote_menu .mbar.fetch From fetch_from
-	populate_remote_menu .mbar.push To push_to
+	populate_fetch_menu .mbar.fetch
 	populate_pull_menu .mbar.pull
+	populate_push_menu .mbar.push
 }
 after 1 do_rescan
