@@ -2049,6 +2049,8 @@ proc do_windows_shortcut {} {
 					--unix \
 					--absolute \
 					$gitdir]
+				regsub -all ' $me "'\\''" me
+				regsub -all ' $gd "'\\''" gd
 				puts -nonewline $fd "\"$sh\" --login -c \""
 				puts -nonewline $fd "GIT_DIR='$gd'"
 				puts -nonewline $fd " '$me'"
