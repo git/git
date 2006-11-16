@@ -2002,6 +2002,54 @@ proc do_save_config {w} {
 	destroy $w
 }
 
+proc do_windows_shortcut {} {
+	global gitdir appname argv0
+
+	set reponame [lindex [file split \
+		[file normalize [file dirname $gitdir]]] \
+		end]
+
+	if {[catch {
+		set desktop [exec cygpath \
+			--windows \
+			--absolute \
+			--long-name \
+			--desktop]
+		}]} {
+			set desktop .
+	}
+	set fn [tk_getSaveFile \
+		-parent . \
+		-title "$appname ($reponame): Create Desktop Icon" \
+		-initialdir $desktop \
+		-initialfile "Git $reponame.bat"]
+	if {$fn != {}} {
+		if {[catch {
+				set fd [open $fn w]
+				set sh [exec cygpath \
+					--windows \
+					--absolute \
+					--long-name \
+					/bin/sh]
+				set me [exec cygpath \
+					--unix \
+					--absolute \
+					$argv0]
+				set gd [exec cygpath \
+					--unix \
+					--absolute \
+					$gitdir]
+				puts -nonewline $fd "\"$sh\" --login -c \""
+				puts -nonewline $fd "GIT_DIR=\\\"$gd\\\""
+				puts -nonewline $fd " \\\"$me\\\""
+				puts $fd "&\""
+				close $fd
+			} err]} {
+			error_popup "Cannot write script:\n\n$err"
+		}
+	}
+}
+
 proc toggle_or_diff {w x y} {
 	global file_lists ui_index ui_other
 	global last_clicked selected_paths
@@ -2168,6 +2216,13 @@ if {!$single_commit} {
 	.mbar.project add command -label {Repack Database} \
 		-command do_repack \
 		-font font_ui
+
+	if {$tcl_platform(platform) eq {windows}} {
+		.mbar.project add command \
+			-label {Create Desktop Icon} \
+			-command do_windows_shortcut \
+			-font font_ui
+	}
 }
 .mbar.project add command -label Quit \
 	-command do_quit \
