@@ -7,6 +7,7 @@
 void *gitfakemmap(void *start, size_t length, int prot , int flags, int fd, off_t offset)
 {
 	int n = 0;
+	off_t current_offset = lseek(fd, 0, SEEK_CUR);
 
 	if (start != NULL || !(flags & MAP_PRIVATE))
 		die("Invalid usage of gitfakemmap.");
@@ -37,6 +38,11 @@ void *gitfakemmap(void *start, size_t length, int prot , int flags, int fd, off_
 		}
 
 		n += count;
+	}
+
+	if (current_offset != lseek(fd, current_offset, SEEK_SET)) {
+		errno = EINVAL;
+		return MAP_FAILED;
 	}
 
 	return start;

@@ -77,6 +77,11 @@ while [ "$#" != "0" ]; do
     esac
 done
 
+case "$force$merge" in
+11)
+	die "git checkout: -f and -m are incompatible"
+esac
+
 # The behaviour of the command with and without explicit path
 # parameters is quite different.
 #
@@ -107,7 +112,11 @@ Did you intend to checkout '$@' which can not be resolved as commit?"
 		git-ls-tree --full-name -r "$new" "$@" |
 		git-update-index --index-info || exit $?
 	fi
-	git-checkout-index -f -u -- "$@"
+
+	# Make sure the request is about existing paths.
+	git-ls-files --error-unmatch -- "$@" >/dev/null || exit
+	git-ls-files -- "$@" |
+	git-checkout-index -f -u --stdin
 	exit $?
 else
 	# Make sure we did not fall back on $arg^{tree} codepath
