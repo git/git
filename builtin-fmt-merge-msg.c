@@ -278,6 +278,8 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 
 	/* get current branch */
 	current_branch = resolve_ref("HEAD", head_sha1, 1, NULL);
+	if (!current_branch)
+		die("No current branch");
 	if (!strncmp(current_branch, "refs/heads/", 11))
 		current_branch += 11;
 
