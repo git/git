@@ -478,9 +478,9 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, struct obj
 		if (!strcmp(name, "subject"))
 			v->s = copy_line(subpos);
 		else if (!strcmp(name, "body"))
-			v->s = bodypos;
+			v->s = xstrdup(bodypos);
 		else if (!strcmp(name, "contents"))
-			v->s = subpos;
+			v->s = xstrdup(subpos);
 	}
 }
 
