@@ -282,6 +282,13 @@ SCM::
 SHA1::
 	Synonym for object name.
 
+symref::
+	Symbolic reference: instead of containing the SHA1 id itself, it
+	is of the format 'ref: refs/some/thing' and when referenced, it
+	recursively dereferences to this reference. 'HEAD' is a prime
+	example of a symref. Symbolic references are manipulated with
+	the gitlink:git-symbolic-ref[1] command.
+
 topic branch::
 	A regular git branch that is used by a developer to
 	identify a conceptual line of development.  Since branches
