@@ -1853,14 +1853,14 @@ proc do_rescan {} {
 	rescan {set ui_status_value {Ready.}}
 }
 
-proc do_include_all {} {
+proc include_helper {txt paths} {
 	global file_states current_diff
 
 	if {![lock_index begin-update]} return
 
 	set pathList [list]
 	set after {}
-	foreach path [array names file_states] {
+	foreach path $paths {
 		switch -- [lindex $file_states($path) 0] {
 		AM -
 		MM -
@@ -1877,10 +1877,31 @@ proc do_include_all {} {
 		unlock_index
 	} else {
 		update_index \
-			"Including all modified files" \
+			$txt \
 			$pathList \
 			[concat $after {set ui_status_value {Ready to commit.}}]
 	}
+}
+
+proc do_include_selection {} {
+	global current_diff selected_paths
+
+	if {[array size selected_paths] > 0} {
+		include_helper \
+			{Including selected files} \
+			[array names selected_paths]
+	} elseif {$current_diff ne {}} {
+		include_helper \
+			"Including [short_path $current_diff]" \
+			[list $current_diff]
+	}
+}
+
+proc do_include_all {} {
+	global file_states
+	include_helper \
+		{Including all modified files} \
+		[array names file_states]
 }
 
 set GIT_COMMITTER_IDENT {}
@@ -2439,6 +2460,11 @@ lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 .mbar.commit add command -label {Amend Last Commit} \
 	-command do_amend_last \
+	-font font_ui
+lappend disable_on_lock \
+	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+.mbar.commit add command -label {Include Selected Files} \
+	-command do_include_selection \
 	-font font_ui
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
