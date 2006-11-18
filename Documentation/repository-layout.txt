@@ -52,9 +52,20 @@ objects/info/packs::
 	by default.
 
 objects/info/alternates::
-	This file records absolute filesystem paths of alternate
-	object stores that this object store borrows objects
-	from, one pathname per line.
+	This file records paths to alternate object stores that
+	this object store borrows objects from, one pathname per
+	line. Note that not only native Git tools use it locally,
+	but the HTTP fetcher also tries to use it remotely; this
+	will usually work if you have relative paths (relative
+	to the object database, not to the repository!) in your
+	alternates file, but it will not work if you use absolute
+	paths unless the absolute path in filesystem and web URL
+	is the same. See also 'objects/info/http-alternates'.
+
+objects/info/http-alternates::
+	This file records URLs to alternate object stores that
+	this object store borrows objects from, to be used when
+	the repository is fetched over HTTP.
 
 refs::
 	References are stored in subdirectories of this
