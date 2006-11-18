@@ -2202,31 +2202,56 @@ sub git_patchset_body {
 	my ($fd, $difftree, $hash, $hash_parent) = @_;
 
 	my $patch_idx = 0;
-	my $in_header = 0;
-	my $patch_found = 0;
+	my $patch_line;
 	my $diffinfo;
 	my (%from, %to);
+	my ($from_id, $to_id);
 
 	print "<div class=\"patchset\">\n";
 
-	LINE:
-	while (my $patch_line = <$fd>) {
+	# skip to first patch
+	while ($patch_line = <$fd>) {
 		chomp $patch_line;
 
-		if ($patch_line =~ m/^diff /) { # "git diff" header
-			# beginning of patch (in patchset)
-			if ($patch_found) {
-				# close extended header for previous empty patch
-				if ($in_header) {
-					print "</div>\n" # class="diff extended_header"
-				}
-				# close previous patch
-				print "</div>\n"; # class="patch"
-			} else {
-				# first patch in patchset
-				$patch_found = 1;
+		last if ($patch_line =~ m/^diff /);
+	}
+
+ PATCH:
+	while ($patch_line) {
+		my @diff_header;
+
+		# git diff header
+		#assert($patch_line =~ m/^diff /) if DEBUG;
+		#assert($patch_line !~ m!$/$!) if DEBUG; # is chomp-ed
+		push @diff_header, $patch_line;
+
+		# extended diff header
+	EXTENDED_HEADER:
+		while ($patch_line = <$fd>) {
+			chomp $patch_line;
+
+			last EXTENDED_HEADER if ($patch_line =~ m/^--- /);
+
+			if ($patch_line =~ m/^index ([0-9a-fA-F]{40})..([0-9a-fA-F]{40})/) {
+				$from_id = $1;
+				$to_id   = $2;
 			}
-			print "<div class=\"patch\" id=\"patch". ($patch_idx+1) ."\">\n";
+
+			push @diff_header, $patch_line;
+		}
+		#last PATCH unless $patch_line;
+		my $last_patch_line = $patch_line;
+
+		# check if current patch belong to current raw line
+		# and parse raw git-diff line if needed
+		if (defined $diffinfo &&
+		    $diffinfo->{'from_id'} eq $from_id &&
+		    $diffinfo->{'to_id'}   eq $to_id) {
+			# this is split patch
+			print "<div class=\"patch cont\">\n";
+		} else {
+			# advance raw git-diff output if needed
+			$patch_idx++ if defined $diffinfo;
 
 			# read and prepare patch information
 			if (ref($difftree->[$patch_idx]) eq "HASH") {
@@ -2247,100 +2272,112 @@ sub git_patchset_body {
 				                   hash=>$diffinfo->{'to_id'},
 				                   file_name=>$to{'file'});
 			}
-			$patch_idx++;
-
-			# print "git diff" header
-			$patch_line =~ s!^(diff (.*?) )"?a/.*$!$1!;
-			if ($from{'href'}) {
-				$patch_line .= $cgi->a({-href => $from{'href'}, -class => "path"},
-				                       'a/' . esc_path($from{'file'}));
-			} else { # file was added
-				$patch_line .= 'a/' . esc_path($from{'file'});
-			}
-			$patch_line .= ' ';
-			if ($to{'href'}) {
-				$patch_line .= $cgi->a({-href => $to{'href'}, -class => "path"},
-				                       'b/' . esc_path($to{'file'}));
-			} else { # file was deleted
-				$patch_line .= 'b/' . esc_path($to{'file'});
-			}
-
-			print "<div class=\"diff header\">$patch_line</div>\n";
-			print "<div class=\"diff extended_header\">\n";
-			$in_header = 1;
-			next LINE;
+			# this is first patch for raw difftree line with $patch_idx index
+			# we index @$difftree array from 0, but number patches from 1
+			print "<div class=\"patch\" id=\"patch". ($patch_idx+1) ."\">\n";
 		}
 
-		if ($in_header) {
-			if ($patch_line !~ m/^---/) {
-				# match <path>
-				if ($patch_line =~ s!^((copy|rename) from ).*$!$1! && $from{'href'}) {
-					$patch_line .= $cgi->a({-href=>$from{'href'}, -class=>"path"},
-					                        esc_path($from{'file'}));
-				}
-				if ($patch_line =~ s!^((copy|rename) to ).*$!$1! && $to{'href'}) {
-					$patch_line = $cgi->a({-href=>$to{'href'}, -class=>"path"},
-					                      esc_path($to{'file'}));
-				}
-				# match <mode>
-				if ($patch_line =~ m/\s(\d{6})$/) {
-					$patch_line .= '<span class="info"> (' .
-					               file_type_long($1) .
-					               ')</span>';
-				}
-				# match <hash>
-				if ($patch_line =~ m/^index/) {
-					my ($from_link, $to_link);
-					if ($from{'href'}) {
-						$from_link = $cgi->a({-href=>$from{'href'}, -class=>"hash"},
-						                     substr($diffinfo->{'from_id'},0,7));
-					} else {
-						$from_link = '0' x 7;
-					}
-					if ($to{'href'}) {
-						$to_link = $cgi->a({-href=>$to{'href'}, -class=>"hash"},
-						                   substr($diffinfo->{'to_id'},0,7));
-					} else {
-						$to_link = '0' x 7;
-					}
-					my ($from_id, $to_id) = ($diffinfo->{'from_id'}, $diffinfo->{'to_id'});
-					$patch_line =~ s!$from_id\.\.$to_id!$from_link..$to_link!;
-				}
-				print $patch_line . "<br/>\n";
+		# print "git diff" header
+		$patch_line = shift @diff_header;
+		$patch_line =~ s!^(diff (.*?) )"?a/.*$!$1!;
+		if ($from{'href'}) {
+			$patch_line .= $cgi->a({-href => $from{'href'}, -class => "path"},
+			                       'a/' . esc_path($from{'file'}));
+		} else { # file was added
+			$patch_line .= 'a/' . esc_path($from{'file'});
+		}
+		$patch_line .= ' ';
+		if ($to{'href'}) {
+			$patch_line .= $cgi->a({-href => $to{'href'}, -class => "path"},
+			                       'b/' . esc_path($to{'file'}));
+		} else { # file was deleted
+			$patch_line .= 'b/' . esc_path($to{'file'});
+		}
+		print "<div class=\"diff header\">$patch_line</div>\n";
 
-			} else {
-				#$in_header && $patch_line =~ m/^---/;
-				print "</div>\n"; # class="diff extended_header"
-				$in_header = 0;
-
+		# print extended diff header
+		print "<div class=\"diff extended_header\">\n" if (@diff_header > 0);
+	EXTENDED_HEADER:
+		foreach $patch_line (@diff_header) {
+			# match <path>
+			if ($patch_line =~ s!^((copy|rename) from ).*$!$1! && $from{'href'}) {
+				$patch_line .= $cgi->a({-href=>$from{'href'}, -class=>"path"},
+				                        esc_path($from{'file'}));
+			}
+			if ($patch_line =~ s!^((copy|rename) to ).*$!$1! && $to{'href'}) {
+				$patch_line = $cgi->a({-href=>$to{'href'}, -class=>"path"},
+				                      esc_path($to{'file'}));
+			}
+			# match <mode>
+			if ($patch_line =~ m/\s(\d{6})$/) {
+				$patch_line .= '<span class="info"> (' .
+				               file_type_long($1) .
+				               ')</span>';
+			}
+			# match <hash>
+			if ($patch_line =~ m/^index/) {
+				my ($from_link, $to_link);
 				if ($from{'href'}) {
-					$patch_line = '--- a/' .
-					              $cgi->a({-href=>$from{'href'}, -class=>"path"},
-					                      esc_path($from{'file'}));
+					$from_link = $cgi->a({-href=>$from{'href'}, -class=>"hash"},
+					                     substr($diffinfo->{'from_id'},0,7));
+				} else {
+					$from_link = '0' x 7;
 				}
-				print "<div class=\"diff from_file\">$patch_line</div>\n";
-
-				$patch_line = <$fd>;
-				chomp $patch_line;
-
-				#$patch_line =~ m/^+++/;
 				if ($to{'href'}) {
-					$patch_line = '+++ b/' .
-					              $cgi->a({-href=>$to{'href'}, -class=>"path"},
-					                      esc_path($to{'file'}));
+					$to_link = $cgi->a({-href=>$to{'href'}, -class=>"hash"},
+					                   substr($diffinfo->{'to_id'},0,7));
+				} else {
+					$to_link = '0' x 7;
 				}
-				print "<div class=\"diff to_file\">$patch_line</div>\n";
-
+				#affirm {
+				#	my ($from_hash, $to_hash) =
+				#		($patch_line =~ m/^index ([0-9a-fA-F]{40})..([0-9a-fA-F]{40})/);
+				#	my ($from_id, $to_id) =
+				#		($diffinfo->{'from_id'}, $diffinfo->{'to_id'});
+				#	($from_hash eq $from_id) && ($to_hash eq $to_id);
+				#} if DEBUG;
+				my ($from_id, $to_id) = ($diffinfo->{'from_id'}, $diffinfo->{'to_id'});
+				$patch_line =~ s!$from_id\.\.$to_id!$from_link..$to_link!;
 			}
+			print $patch_line . "<br/>\n";
+		}
+		print "</div>\n"  if (@diff_header > 0); # class="diff extended_header"
 
-			next LINE;
+		# from-file/to-file diff header
+		$patch_line = $last_patch_line;
+		#assert($patch_line =~ m/^---/) if DEBUG;
+		if ($from{'href'}) {
+			$patch_line = '--- a/' .
+			              $cgi->a({-href=>$from{'href'}, -class=>"path"},
+			                      esc_path($from{'file'}));
+		}
+		print "<div class=\"diff from_file\">$patch_line</div>\n";
+
+		$patch_line = <$fd>;
+		#last PATCH unless $patch_line;
+		chomp $patch_line;
+
+		#assert($patch_line =~ m/^+++/) if DEBUG;
+		if ($to{'href'}) {
+			$patch_line = '+++ b/' .
+			              $cgi->a({-href=>$to{'href'}, -class=>"path"},
+			                      esc_path($to{'file'}));
+		}
+		print "<div class=\"diff to_file\">$patch_line</div>\n";
+
+		# the patch itself
+	LINE:
+		while ($patch_line = <$fd>) {
+			chomp $patch_line;
+
+			next PATCH if ($patch_line =~ m/^diff /);
+
+			print format_diff_line($patch_line);
 		}
 
-		print format_diff_line($patch_line);
+	} continue {
+		print "</div>\n"; # class="patch"
 	}
-	print "</div>\n" if $in_header; # extended header
-
-	print "</div>\n" if $patch_found; # class="patch"
 
 	print "</div>\n"; # class="patchset"
 }
