@@ -205,6 +205,7 @@ set index_lock_type none
 set HEAD {}
 set PARENT {}
 set commit_type {}
+set empty_tree {}
 
 proc lock_index {type} {
 	global index_lock_type disable_on_lock
@@ -240,12 +241,25 @@ proc repository_state {hdvar ctvar} {
 	upvar $hdvar hd $ctvar ct
 
 	if {[catch {set hd [exec git rev-parse --verify HEAD]}]} {
+		set hd {}
 		set ct initial
 	} elseif {[file exists [file join $gitdir MERGE_HEAD]]} {
 		set ct merge
 	} else {
 		set ct normal
 	}
+}
+
+proc PARENT {} {
+	global PARENT empty_tree
+
+	if {$PARENT ne {}} {
+		return $PARENT
+	}
+	if {$empty_tree eq {}} {
+		set empty_tree [exec git mktree << {}]
+	}
+	return $empty_tree
 }
 
 proc rescan {after} {
@@ -257,7 +271,7 @@ proc rescan {after} {
 	if {$rescan_active > 0 || ![lock_index read]} return
 
 	repository_state new_HEAD new_type
-	if {$commit_type eq {amend}
+	if {[string match amend* $commit_type]
 		&& $new_type eq {normal}
 		&& $new_HEAD eq $HEAD} {
 	} else {
@@ -296,10 +310,8 @@ proc rescan {after} {
 }
 
 proc rescan_stage2 {fd after} {
-	global gitdir PARENT commit_type
-	global ui_index ui_other ui_status_value ui_comm
-	global rescan_active
-	global buf_rdi buf_rdf buf_rlo
+	global gitdir ui_status_value
+	global rescan_active buf_rdi buf_rdf buf_rlo
 
 	if {$fd ne {}} {
 		read $fd
@@ -320,7 +332,7 @@ proc rescan_stage2 {fd after} {
 
 	set rescan_active 3
 	set ui_status_value {Scanning for modified files ...}
-	set fd_di [open "| git diff-index --cached -z $PARENT" r]
+	set fd_di [open "| git diff-index --cached -z [PARENT]" r]
 	set fd_df [open "| git diff-files -z" r]
 	set fd_lo [open $ls_others r]
 
@@ -532,7 +544,7 @@ files list, to prevent possible confusion.
 
 proc show_diff {path {w {}} {lno {}}} {
 	global file_states file_lists
-	global PARENT diff_3way diff_active repo_config
+	global diff_3way diff_active repo_config
 	global ui_diff current_diff ui_status_value
 
 	if {$diff_active || ![lock_index read]} return
@@ -591,7 +603,7 @@ proc show_diff {path {w {}} {lno {}}} {
 	}
 	}
 
-	lappend cmd $PARENT
+	lappend cmd [PARENT]
 	lappend cmd --
 	lappend cmd $path
 
@@ -671,7 +683,7 @@ proc read_diff {fd} {
 proc load_last_commit {} {
 	global HEAD PARENT commit_type ui_comm
 
-	if {$commit_type eq {amend}} return
+	if {[string match amend* $commit_type]} return
 	if {$commit_type ne {normal}} {
 		error_popup "Can't amend a $commit_type commit."
 		return
@@ -695,23 +707,24 @@ proc load_last_commit {} {
 		return
 	}
 
+	if {$parent_count > 1} {
+		error_popup {Can't amend a merge commit.}
+		return
+	}
+
 	if {$parent_count == 0} {
-		set commit_type amend
-		set HEAD {}
+		set commit_type amend-initial
 		set PARENT {}
-		rescan {set ui_status_value {Ready.}}
 	} elseif {$parent_count == 1} {
 		set commit_type amend
 		set PARENT $parent
-		$ui_comm delete 0.0 end
-		$ui_comm insert end $msg
-		$ui_comm edit modified false
-		$ui_comm edit reset
-		rescan {set ui_status_value {Ready.}}
-	} else {
-		error_popup {You can't amend a merge commit.}
-		return
 	}
+
+	$ui_comm delete 0.0 end
+	$ui_comm insert end $msg
+	$ui_comm edit modified false
+	$ui_comm edit reset
+	rescan {set ui_status_value {Ready.}}
 }
 
 proc commit_tree {} {
@@ -722,7 +735,7 @@ proc commit_tree {} {
 	# -- Our in memory state should match the repository.
 	#
 	repository_state curHEAD cur_type
-	if {$commit_type eq {amend}
+	if {[string match amend* $commit_type]
 		&& $cur_type eq {normal}
 		&& $curHEAD eq $HEAD} {
 	} elseif {$commit_type ne $cur_type || $HEAD ne $curHEAD} {
@@ -2559,13 +2572,18 @@ label $ui_coml -text {Commit Message:} \
 	-anchor w \
 	-justify left \
 	-font font_ui
-trace add variable commit_type write {uplevel #0 {
-	switch -glob $commit_type \
-	initial {$ui_coml conf -text {Initial Commit Message:}} \
-	amend   {$ui_coml conf -text {Amended Commit Message:}} \
-	merge   {$ui_coml conf -text {Merge Commit Message:}} \
-	*       {$ui_coml conf -text {Commit Message:}}
-}}
+proc trace_commit_type {varname args} {
+	global ui_coml commit_type
+	switch -glob -- $commit_type {
+	initial       {set txt {Initial Commit Message:}}
+	amend         {set txt {Amended Commit Message:}}
+	amend-initial {set txt {Amended Initial Commit Message:}}
+	merge         {set txt {Merge Commit Message:}}
+	*             {set txt {Commit Message:}}
+	}
+	$ui_coml conf -text $txt
+}
+trace add variable commit_type write trace_commit_type
 text $ui_comm -background white -borderwidth 1 \
 	-undo true \
 	-maxundo 20 \
