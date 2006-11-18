@@ -378,7 +378,7 @@ proc read_diff_index {fd after} {
 		incr z2 -1
 		display_file \
 			[string range $buf_rdi $z1 $z2] \
-			[string index $buf_rdi [expr {$z1 - 2}]]_
+			[string index $buf_rdi [expr {$z1 - 2}]]?
 		incr c
 	}
 	if {$c < $n} {
@@ -407,7 +407,7 @@ proc read_diff_files {fd after} {
 		incr z2 -1
 		display_file \
 			[string range $buf_rdf $z1 $z2] \
-			_[string index $buf_rdf [expr {$z1 - 2}]]
+			?[string index $buf_rdf [expr {$z1 - 2}]]
 		incr c
 	}
 	if {$c < $n} {
@@ -426,7 +426,7 @@ proc read_ls_others {fd after} {
 	set pck [split $buf_rlo "\0"]
 	set buf_rlo [lindex $pck end]
 	foreach p [lrange $pck 0 end-1] {
-		display_file $p _O
+		display_file $p ?O
 	}
 	rescan_done $fd buf_rlo $after
 }
@@ -1151,15 +1151,15 @@ proc merge_state {path new_state} {
 		set icon [lindex $info 1]
 	}
 
-	if {$s0 eq {_}} {
+	if {$s0 eq {?}} {
 		set s0 [string index $state 0]
-	} elseif {$s0 eq {*}} {
+	} elseif {$s0 eq {_}} {
 		set s0 _
 	}
 
-	if {$s1 eq {_}} {
+	if {$s1 eq {?}} {
 		set s1 [string index $state 1]
-	} elseif {$s1 eq {*}} {
+	} elseif {$s1 eq {_}} {
 		set s1 _
 	}
 
@@ -1303,15 +1303,15 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 		switch -glob -- [lindex $file_states($path) 0] {
 		AD -
 		MD -
-		_D {set new D*}
+		_D {set new D_}
 
 		_M -
 		MM -
-		M_ {set new M*}
+		M_ {set new M_}
 
 		_O -
 		AM -
-		A_ {set new A*}
+		A_ {set new A_}
 
 		?? {continue}
 		}
