@@ -202,11 +202,6 @@ set last_clicked {}
 set disable_on_lock [list]
 set index_lock_type none
 
-set HEAD {}
-set PARENT {}
-set commit_type {}
-set empty_tree {}
-
 proc lock_index {type} {
 	global index_lock_type disable_on_lock
 
@@ -2374,6 +2369,7 @@ apply_config
 ## ui construction
 
 # -- Menu Bar
+#
 menu .mbar -tearoff 0
 .mbar add cascade -label Project -menu .mbar.project
 .mbar add cascade -label Edit -menu .mbar.edit
@@ -2386,6 +2382,7 @@ if {!$single_commit} {
 . configure -menu .mbar
 
 # -- Project Menu
+#
 menu .mbar.project
 .mbar.project add command -label Visualize \
 	-command do_gitk \
@@ -2451,6 +2448,7 @@ menu .mbar.edit
 	-font font_ui
 
 # -- Commit Menu
+#
 menu .mbar.commit
 .mbar.commit add command -label Rescan \
 	-command do_rescan \
@@ -2485,24 +2483,23 @@ lappend disable_on_lock \
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
+# -- Transport menus
+#
 if {!$single_commit} {
-	# -- Fetch Menu
 	menu .mbar.fetch
-
-	# -- Pull Menu
 	menu .mbar.pull
-
-	# -- Push Menu
 	menu .mbar.push
 }
 
 # -- Main Window Layout
+#
 panedwindow .vpane -orient vertical
 panedwindow .vpane.files -orient horizontal
 .vpane add .vpane.files -sticky nsew -height 100 -width 400
 pack .vpane -anchor n -side top -fill both -expand 1
 
 # -- Index File List
+#
 frame .vpane.files.index -height 100 -width 400
 label .vpane.files.index.title -text {Modified Files} \
 	-background green \
@@ -2520,6 +2517,7 @@ pack $ui_index -side left -fill both -expand 1
 .vpane.files add .vpane.files.index -sticky nsew
 
 # -- Other (Add) File List
+#
 frame .vpane.files.other -height 100 -width 100
 label .vpane.files.other.title -text {Untracked Files} \
 	-background red \
@@ -2545,6 +2543,7 @@ foreach i [list $ui_index $ui_other] {
 unset i
 
 # -- Diff and Commit Area
+#
 frame .vpane.lower -height 300 -width 400
 frame .vpane.lower.commarea
 frame .vpane.lower.diff -relief sunken -borderwidth 1
@@ -2553,6 +2552,7 @@ pack .vpane.lower.diff -side bottom -fill both -expand 1
 .vpane add .vpane.lower -stick nsew
 
 # -- Commit Area Buttons
+#
 frame .vpane.lower.commarea.buttons
 label .vpane.lower.commarea.buttons.l -text {} \
 	-anchor w \
@@ -2595,10 +2595,11 @@ lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.commit conf -state}
 
 # -- Commit Message Buffer
+#
 frame .vpane.lower.commarea.buffer
 set ui_comm .vpane.lower.commarea.buffer.t
 set ui_coml .vpane.lower.commarea.buffer.l
-label $ui_coml -text {Commit Message:} \
+label $ui_coml \
 	-anchor w \
 	-justify left \
 	-font font_ui
@@ -2670,6 +2671,7 @@ $ctxm add command \
 bind_button3 $ui_comm "tk_popup $ctxm %X %Y"
 
 # -- Diff Header
+#
 set current_diff {}
 set diff_actions [list]
 proc trace_current_diff {varname args} {
@@ -2732,6 +2734,7 @@ lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 bind_button3 .vpane.lower.diff.header.path "tk_popup $ctxm %X %Y"
 
 # -- Diff Body
+#
 frame .vpane.lower.diff.body
 set ui_diff .vpane.lower.diff.body.t
 text $ui_diff -background white -borderwidth 0 \
@@ -2888,6 +2891,11 @@ unset i
 
 set file_lists($ui_index) [list]
 set file_lists($ui_other) [list]
+
+set HEAD {}
+set PARENT {}
+set commit_type {}
+set empty_tree {}
 set current_diff {}
 
 wm title . "$appname ([file normalize [file dirname $gitdir]])"
