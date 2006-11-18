@@ -211,7 +211,7 @@ proc lock_index {type} {
 			uplevel #0 $w disabled
 		}
 		return 1
-	} elseif {$index_lock_type eq {begin-update} && $type eq {update}} {
+	} elseif {$index_lock_type eq "begin-$type"} {
 		set index_lock_type $type
 		return 1
 	}
@@ -2906,4 +2906,5 @@ if {!$single_commit} {
 	populate_pull_menu .mbar.pull
 	populate_push_menu .mbar.push
 }
+lock_index begin-read
 after 1 do_rescan
