@@ -70,12 +70,16 @@ refs/tags/`name`::
 	object, or a tag object that points at a commit object).
 
 HEAD::
-	A symlink of the form `refs/heads/'name'` to point at
-	the current branch, if exists.  It does not mean much if
-	the repository is not associated with any working tree
+	A symref (see glossary) to the `refs/heads/` namespace
+	describing the currently active branch.  It does not mean
+	much if the repository is not associated with any working tree
 	(i.e. a 'bare' repository), but a valid git repository
-	*must* have such a symlink here.  It is legal if the
-	named branch 'name' does not (yet) exist.
+	*must* have the HEAD file; some porcelains may use it to
+	guess the designated "default" branch of the repository
+	(usually 'master').  It is legal if the named branch
+	'name' does not (yet) exist.  In some legacy setups, it is
+	a symbolic link instead of a symref that points at the current
+	branch.
 
 branches::
 	A slightly deprecated way to store shorthands to be used

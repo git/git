@@ -140,12 +140,15 @@ struct fragment {
 struct patch {
 	char *new_name, *old_name, *def_name;
 	unsigned int old_mode, new_mode;
-	int is_rename, is_copy, is_new, is_delete, is_binary;
+	int is_new, is_delete;	/* -1 = unknown, 0 = false, 1 = true */
 	int rejected;
 	unsigned long deflate_origlen;
 	int lines_added, lines_deleted;
 	int score;
-	int inaccurate_eof:1;
+	unsigned int inaccurate_eof:1;
+	unsigned int is_binary:1;
+	unsigned int is_copy:1;
+	unsigned int is_rename:1;
 	struct fragment *fragments;
 	char *result;
 	unsigned long resultsize;

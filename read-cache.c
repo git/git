@@ -844,7 +844,7 @@ unmap:
 	die("index file corrupt");
 }
 
-int discard_cache()
+int discard_cache(void)
 {
 	int ret;
 

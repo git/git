@@ -150,7 +150,7 @@ discouraged.
 * `strip` outputs warnings for a few such errors, strips out the
   trailing whitespaces and applies the patch.
 
---inacurate-eof::
+--inaccurate-eof::
 	Under certain circumstances, some versions of diff do not correctly
 	detect a missing new-line at the end of the file. As a result, patches
 	created by such diff programs do not record incomplete lines

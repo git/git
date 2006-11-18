@@ -90,7 +90,7 @@ static SHA_CTX input_ctx;
 static int input_fd, output_fd, mmap_fd;
 
 /* Discard current buffer used content. */
-static void flush()
+static void flush(void)
 {
 	if (input_offset) {
 		if (output_fd >= 0)

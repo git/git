@@ -4,7 +4,7 @@
 extern int wt_status_use_color;
 
 static const char runstatus_usage[] =
-"git-runstatus [--color|--nocolor] [--amend] [--verbose]";
+"git-runstatus [--color|--nocolor] [--amend] [--verbose] [--untracked]";
 
 int cmd_runstatus(int argc, const char **argv, const char *prefix)
 {
