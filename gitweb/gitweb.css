@@ -334,11 +334,13 @@ div.diff.extended_header {
 	padding: 2px 0px 2px 0px;
 }
 
+div.diff a.list,
 div.diff a.path,
 div.diff a.hash {
 	text-decoration: none;
 }
 
+div.diff a.list:hover,
 div.diff a.path:hover,
 div.diff a.hash:hover {
 	text-decoration: underline;
@@ -362,12 +364,23 @@ div.diff.rem {
 	color: #cc0000;
 }
 
+div.diff.chunk_header a,
 div.diff.chunk_header {
 	color: #990099;
+}
 
+div.diff.chunk_header {
 	border: dotted #ffe0ff;
 	border-width: 1px 0px 0px 0px;
 	margin-top: 2px;
+}
+
+div.diff.chunk_header span.chunk_info {
+	background-color: #ffeeff;
+}
+
+div.diff.chunk_header span.section {
+	color: #aa22aa;
 }
 
 div.diff.incomplete {
