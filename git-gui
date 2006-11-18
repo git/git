@@ -130,12 +130,15 @@ proc error_popup {msg} {
 			end]
 		append title {)}
 	}
-	tk_messageBox \
-		-parent . \
+	set cmd [list tk_messageBox \
 		-icon error \
 		-type ok \
 		-title "$title: error" \
-		-message $msg
+		-message $msg]
+	if {[winfo ismapped .]} {
+		lappend cmd -parent .
+	}
+	eval $cmd
 }
 
 proc info_popup {msg} {
