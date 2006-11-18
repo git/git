@@ -3429,6 +3429,7 @@ sub git_log {
 }
 
 sub git_commit {
+	$hash ||= $hash_base || "HEAD";
 	my %co = parse_commit($hash);
 	if (!%co) {
 		die_error(undef, "Unknown commit object");
@@ -3706,6 +3707,7 @@ sub git_blobdiff_plain {
 
 sub git_commitdiff {
 	my $format = shift || 'html';
+	$hash ||= $hash_base || "HEAD";
 	my %co = parse_commit($hash);
 	if (!%co) {
 		die_error(undef, "Unknown commit object");
