@@ -1251,12 +1251,11 @@ proc display_all_files {} {
 }
 
 proc update_index {msg pathList after} {
-	global update_index_cp update_index_rsd ui_status_value
+	global update_index_cp ui_status_value
 
 	if {![lock_index update]} return
 
 	set update_index_cp 0
-	set update_index_rsd 0
 	set pathList [lsort $pathList]
 	set totalCnt [llength $pathList]
 	set batch [expr {int($totalCnt * .01) + 1}]
@@ -1285,13 +1284,12 @@ proc update_index {msg pathList after} {
 }
 
 proc write_update_index {fd pathList totalCnt batch msg after} {
-	global update_index_cp update_index_rsd ui_status_value
+	global update_index_cp ui_status_value
 	global file_states current_diff
 
 	if {$update_index_cp >= $totalCnt} {
 		close $fd
 		unlock_index
-		if {$update_index_rsd} reshow_diff
 		uplevel #0 $after
 		return
 	}
@@ -1321,9 +1319,6 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 		puts -nonewline $fd $path
 		puts -nonewline $fd "\0"
 		display_file $path $new
-		if {$current_diff eq $path} {
-			set update_index_rsd 1
-		}
 	}
 
 	set ui_status_value [format \
@@ -1859,19 +1854,23 @@ proc do_rescan {} {
 }
 
 proc do_include_all {} {
-	global file_states
+	global file_states current_diff
 
 	if {![lock_index begin-update]} return
 
 	set pathList [list]
+	set after {}
 	foreach path [array names file_states] {
-		set s $file_states($path)
-		set m [lindex $s 0]
-		switch -- $m {
+		switch -- [lindex $file_states($path) 0] {
 		AM -
 		MM -
 		_M -
-		_D {lappend pathList $path}
+		_D {
+			lappend pathList $path
+			if {$path eq $current_diff} {
+				set after {reshow_diff;}
+			}
+		}
 		}
 	}
 	if {$pathList eq {}} {
@@ -1880,7 +1879,7 @@ proc do_include_all {} {
 		update_index \
 			"Including all modified files" \
 			$pathList \
-			{set ui_status_value {Ready to commit.}}
+			[concat $after {set ui_status_value {Ready to commit.}}]
 	}
 }
 
@@ -2204,7 +2203,7 @@ proc do_macosx_app {} {
 }
 
 proc toggle_or_diff {w x y} {
-	global file_lists ui_index ui_other
+	global file_lists current_diff ui_index ui_other
 	global last_clicked selected_paths
 
 	set pos [split [$w index @$x,$y] .]
@@ -2222,10 +2221,15 @@ proc toggle_or_diff {w x y} {
 	$ui_other tag remove in_sel 0.0 end
 
 	if {$col == 0} {
+		if {$current_diff eq $path} {
+			set after {reshow_diff;}
+		} else {
+			set after {}
+		}
 		update_index \
 			"Including [short_path $path]" \
 			[list $path] \
-			{set ui_status_value {Ready.}}
+			[concat $after {set ui_status_value {Ready.}}]
 	} else {
 		show_diff $path $w $lno
 	}
@@ -2642,7 +2646,7 @@ bind_button3 $ui_comm "tk_popup $ctxm %X %Y"
 # -- Diff Header
 set current_diff {}
 set diff_actions [list]
-proc current_diff_trace {varname args} {
+proc trace_current_diff {varname args} {
 	global current_diff diff_actions file_states
 	if {$current_diff eq {}} {
 		set s {}
@@ -2664,7 +2668,7 @@ proc current_diff_trace {varname args} {
 		uplevel #0 $w $o
 	}
 }
-trace add variable current_diff write current_diff_trace
+trace add variable current_diff write trace_current_diff
 
 frame .vpane.lower.diff.header -background orange
 label .vpane.lower.diff.header.status \
