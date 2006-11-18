@@ -6,11 +6,7 @@ Items outstanding:
  * Update index with $PARENT version but leave working directory
    alone.
 
- * Add all new files in one shot (e.g. "git add .").
-
  * Add file to .gitignore or info/excludes.
-
- * Make initial commits work (currently it crashes the UI).
 
  * Populate the pull menu with local branches.
 
