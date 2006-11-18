@@ -3731,7 +3731,8 @@ sub git_commitdiff {
 			$hash_parent, $hash, "--"
 			or die_error(undef, "Open git-diff-tree failed");
 
-		while (chomp(my $line = <$fd>)) {
+		while (my $line = <$fd>) {
+			chomp $line;
 			# empty line ends raw part of diff-tree output
 			last unless $line;
 			push @difftree, $line;
