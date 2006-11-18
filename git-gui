@@ -2114,6 +2114,79 @@ proc do_windows_shortcut {} {
 	}
 }
 
+proc do_macosx_app {} {
+	global gitdir appname argv0 env
+
+	set reponame [lindex [file split \
+		[file normalize [file dirname $gitdir]]] \
+		end]
+
+	set fn [tk_getSaveFile \
+		-parent . \
+		-title "$appname ($reponame): Create Desktop Icon" \
+		-initialdir [file join $env(HOME) Desktop] \
+		-initialfile "Git $reponame.app"]
+	if {$fn != {}} {
+		if {[catch {
+				set Contents [file join $fn Contents]
+				set MacOS [file join $Contents MacOS]
+				set exe [file join $MacOS git-gui]
+
+				file mkdir $MacOS
+
+				set fd [open [file join $Contents PkgInfo] w]
+				puts -nonewline $fd {APPL????}
+				close $fd
+
+				set fd [open [file join $Contents Info.plist] w]
+				puts $fd {<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>git-gui</string>
+	<key>CFBundleIdentifier</key>
+	<string>org.spearce.git-gui</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>1.0</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+</dict>
+</plist>}
+				close $fd
+
+				set fd [open $exe w]
+				set gd [file normalize $gitdir]
+				set ep [file normalize [exec git --exec-path]]
+				regsub -all ' $gd "'\\''" gd
+				regsub -all ' $ep "'\\''" ep
+				puts $fd "#!/bin/sh"
+				foreach name [array names env] {
+					if {[string match GIT_* $name]} {
+						regsub -all ' $env($name) "'\\''" v
+						puts $fd "export $name='$v'"
+					}
+				}
+				puts $fd "export PATH='$ep':\$PATH"
+				puts $fd "export GIT_DIR='$gd'"
+				puts $fd "exec [file normalize $argv0]"
+				close $fd
+
+				file attributes $exe -permissions u+x,g+x,o+x
+			} err]} {
+			error_popup "Cannot write icon:\n\n$err"
+		}
+	}
+}
+
 proc toggle_or_diff {w x y} {
 	global file_lists ui_index ui_other
 	global last_clicked selected_paths
@@ -2285,6 +2358,11 @@ if {!$single_commit} {
 		.mbar.project add command \
 			-label {Create Desktop Icon} \
 			-command do_windows_shortcut \
+			-font font_ui
+	} elseif {[is_MacOSX]} {
+		.mbar.project add command \
+			-label {Create Desktop Icon} \
+			-command do_macosx_app \
 			-font font_ui
 	}
 }
