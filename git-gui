@@ -1891,9 +1891,13 @@ proc include_helper {txt paths} {
 	foreach path $paths {
 		switch -- [lindex $file_states($path) 0] {
 		AM -
+		AD -
 		MM -
+		UM -
+		U_ -
 		_M -
-		_D {
+		_D -
+		_O {
 			lappend pathList $path
 			if {$path eq $current_diff} {
 				set after {reshow_diff;}
@@ -1927,9 +1931,20 @@ proc do_include_selection {} {
 
 proc do_include_all {} {
 	global file_states
+
+	set paths [list]
+	foreach path [array names file_states] {
+		switch -- [lindex $file_states($path) 0] {
+		AM -
+		AD -
+		MM -
+		_M -
+		_D {lappend paths $path}
+		}
+	}
 	include_helper \
 		{Including all modified files} \
-		[array names file_states]
+		$paths
 }
 
 proc do_signoff {} {
@@ -1965,7 +1980,7 @@ proc do_select_commit_type {} {
 		# The amend request was rejected...
 		#
 		if {![string match amend* $commit_type]} {
-			set commit_type new
+			set selected_commit_type new
 		}
 	}
 }
