@@ -369,13 +369,14 @@ proc read_diff_index {fd after} {
 		if {$z2 == -1} break
 
 		incr c
-		set n [split [string range $buf_rdi $c [expr {$z1 - 2}]] { }]
+		set i [split [string range $buf_rdi $c [expr {$z1 - 2}]] { }]
 		merge_state \
 			[string range $buf_rdi $z1 [expr {$z2 - 1}]] \
-			[lindex $n 4]? \
-			[list [lindex $n 0] [lindex $n 2]] \
+			[lindex $i 4]? \
+			[list [lindex $i 0] [lindex $i 2]] \
 			[list]
 		set c $z2
+		incr c
 	}
 	if {$c < $n} {
 		set buf_rdi [string range $buf_rdi $c end]
@@ -400,13 +401,14 @@ proc read_diff_files {fd after} {
 		if {$z2 == -1} break
 
 		incr c
-		set n [split [string range $buf_rdf $c [expr {$z1 - 2}]] { }]
+		set i [split [string range $buf_rdf $c [expr {$z1 - 2}]] { }]
 		merge_state \
 			[string range $buf_rdf $z1 [expr {$z2 - 1}]] \
-			?[lindex $n 4] \
+			?[lindex $i 4] \
 			[list] \
-			[list [lindex $n 0] [lindex $n 2]]
+			[list [lindex $i 0] [lindex $i 2]]
 		set c $z2
+		incr c
 	}
 	if {$c < $n} {
 		set buf_rdf [string range $buf_rdf $c end]
