@@ -459,7 +459,8 @@ exit;
 
 sub href(%) {
 	my %params = @_;
-	my $href = $my_uri;
+	# default is to use -absolute url() i.e. $my_uri
+	my $href = $params{-full} ? $my_url : $my_uri;
 
 	# XXX: Warning: If you touch this, check the search form for updating,
 	# too.
