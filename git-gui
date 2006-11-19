@@ -732,10 +732,31 @@ proc create_new_commit {} {
 	rescan {set ui_status_value {Ready.}}
 }
 
+set GIT_COMMITTER_IDENT {}
+
+proc committer_ident {} {
+	global GIT_COMMITTER_IDENT
+
+	if {$GIT_COMMITTER_IDENT eq {}} {
+		if {[catch {set me [exec git var GIT_COMMITTER_IDENT]} err]} {
+			error_popup "Unable to obtain your identity:\n\n$err"
+			return {}
+		}
+		if {![regexp {^(.*) [0-9]+ [-+0-9]+$} \
+			$me me GIT_COMMITTER_IDENT]} {
+			error_popup "Invalid GIT_COMMITTER_IDENT:\n\n$me"
+			return {}
+		}
+	}
+
+	return $GIT_COMMITTER_IDENT
+}
+
 proc commit_tree {} {
 	global HEAD commit_type file_states ui_comm repo_config
 
 	if {![lock_index update]} return
+	if {[committer_ident] eq {}} return
 
 	# -- Our in memory state should match the repository.
 	#
@@ -1911,24 +1932,13 @@ proc do_include_all {} {
 		[array names file_states]
 }
 
-set GIT_COMMITTER_IDENT {}
-
 proc do_signoff {} {
-	global ui_comm GIT_COMMITTER_IDENT
+	global ui_comm
 
-	if {$GIT_COMMITTER_IDENT eq {}} {
-		if {[catch {set me [exec git var GIT_COMMITTER_IDENT]} err]} {
-			error_popup "Unable to obtain your identity:\n\n$err"
-			return
-		}
-		if {![regexp {^(.*) [0-9]+ [-+0-9]+$} \
-			$me me GIT_COMMITTER_IDENT]} {
-			error_popup "Invalid GIT_COMMITTER_IDENT:\n\n$me"
-			return
-		}
-	}
+	set me [committer_ident]
+	if {$me eq {}} return
 
-	set sob "Signed-off-by: $GIT_COMMITTER_IDENT"
+	set sob "Signed-off-by: $me"
 	set last [$ui_comm get {end -1c linestart} {end -1c}]
 	if {$last ne $sob} {
 		$ui_comm edit separator
