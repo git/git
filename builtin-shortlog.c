@@ -22,48 +22,40 @@ static int compare_by_number(const void *a1, const void *a2)
 		return +1;
 }
 
-static struct path_list_item mailmap_list[] = {
-	{ "R.Marek@sh.cvut.cz", (void*)"Rudolf Marek" },
-	{ "Ralf.Wildenhues@gmx.de", (void*)"Ralf Wildenhues" },
-	{ "aherrman@de.ibm.com", (void*)"Andreas Herrmann" },
-	{ "akpm@osdl.org", (void*)"Andrew Morton" },
-	{ "andrew.vasquez@qlogic.com", (void*)"Andrew Vasquez" },
-	{ "aquynh@gmail.com", (void*)"Nguyen Anh Quynh" },
-	{ "axboe@suse.de", (void*)"Jens Axboe" },
-	{ "blaisorblade@yahoo.it", (void*)"Paolo 'Blaisorblade' Giarrusso" },
-	{ "bunk@stusta.de", (void*)"Adrian Bunk" },
-	{ "domen@coderock.org", (void*)"Domen Puncer" },
-	{ "dougg@torque.net", (void*)"Douglas Gilbert" },
-	{ "dwmw2@shinybook.infradead.org", (void*)"David Woodhouse" },
-	{ "ecashin@coraid.com", (void*)"Ed L Cashin" },
-	{ "felix@derklecks.de", (void*)"Felix Moeller" },
-	{ "fzago@systemfabricworks.com", (void*)"Frank Zago" },
-	{ "gregkh@suse.de", (void*)"Greg Kroah-Hartman" },
-	{ "hch@lst.de", (void*)"Christoph Hellwig" },
-	{ "htejun@gmail.com", (void*)"Tejun Heo" },
-	{ "jejb@mulgrave.(none)", (void*)"James Bottomley" },
-	{ "jejb@titanic.il.steeleye.com", (void*)"James Bottomley" },
-	{ "jgarzik@pretzel.yyz.us", (void*)"Jeff Garzik" },
-	{ "johnpol@2ka.mipt.ru", (void*)"Evgeniy Polyakov" },
-	{ "kay.sievers@vrfy.org", (void*)"Kay Sievers" },
-	{ "minyard@acm.org", (void*)"Corey Minyard" },
-	{ "mshah@teja.com", (void*)"Mitesh shah" },
-	{ "pj@ludd.ltu.se", (void*)"Peter A Jonsson" },
-	{ "rmps@joel.ist.utl.pt", (void*)"Rui Saraiva" },
-	{ "santtu.hyrkko@gmail.com", (void*)"Santtu Hyrkk,Av(B" },
-	{ "simon@thekelleys.org.uk", (void*)"Simon Kelley" },
-	{ "ssant@in.ibm.com", (void*)"Sachin P Sant" },
-	{ "terra@gnome.org", (void*)"Morten Welinder" },
-	{ "tony.luck@intel.com", (void*)"Tony Luck" },
-	{ "welinder@anemone.rentec.com", (void*)"Morten Welinder" },
-	{ "welinder@darter.rentec.com", (void*)"Morten Welinder" },
-	{ "welinder@troll.com", (void*)"Morten Welinder" }
-};
+static struct path_list mailmap = {NULL, 0, 0, 0};
 
-static struct path_list mailmap = {
-	mailmap_list,
-	sizeof(mailmap_list) / sizeof(struct path_list_item), 0, 0
-};
+static int read_mailmap(const char *filename)
+{
+	char buffer[1024];
+	FILE *f = fopen(filename, "r");
+
+	if (f == NULL)
+		return 1;
+	while (fgets(buffer, sizeof(buffer), f) != NULL) {
+		char *end_of_name, *left_bracket, *right_bracket;
+		char *name, *email;
+		if (buffer[0] == '#')
+			continue;
+		if ((left_bracket = strchr(buffer, '<')) == NULL)
+			continue;
+		if ((right_bracket = strchr(left_bracket + 1, '>')) == NULL)
+			continue;
+		if (right_bracket == left_bracket + 1)
+			continue;
+		for (end_of_name = left_bracket; end_of_name != buffer
+				&& isspace(end_of_name[-1]); end_of_name--)
+			/* keep on looking */
+		if (end_of_name == buffer)
+			continue;
+		name = xmalloc(end_of_name - buffer + 1);
+		strlcpy(name, buffer, end_of_name - buffer + 1);
+		email = xmalloc(right_bracket - left_bracket);
+		strlcpy(email, left_bracket + 1, right_bracket - left_bracket);
+		path_list_insert(email, &mailmap)->util = name;
+	}
+	fclose(f);
+	return 0;
+}
 
 static int map_email(char *email, char *name, int maxlen)
 {
@@ -269,6 +261,9 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 		argc--;
 	}
 
+	if (!access(".mailmap", R_OK))
+		read_mailmap(".mailmap");
+
 	if (rev.pending.nr == 1)
 		die ("Need a range!");
 	else if (rev.pending.nr == 0)
@@ -298,6 +293,8 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 
 	list.strdup_paths = 1;
 	path_list_clear(&list, 1);
+	mailmap.strdup_paths = 1;
+	path_list_clear(&mailmap, 1);
 
 	return 0;
 }
