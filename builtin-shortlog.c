@@ -34,6 +34,7 @@ static int read_mailmap(const char *filename)
 	while (fgets(buffer, sizeof(buffer), f) != NULL) {
 		char *end_of_name, *left_bracket, *right_bracket;
 		char *name, *email;
+		int i;
 		if (buffer[0] == '#')
 			continue;
 		if ((left_bracket = strchr(buffer, '<')) == NULL)
@@ -50,7 +51,9 @@ static int read_mailmap(const char *filename)
 		name = xmalloc(end_of_name - buffer + 1);
 		strlcpy(name, buffer, end_of_name - buffer + 1);
 		email = xmalloc(right_bracket - left_bracket);
-		strlcpy(email, left_bracket + 1, right_bracket - left_bracket);
+		for (i = 0; i < right_bracket - left_bracket - 1; i++)
+			email[i] = tolower(left_bracket[i + 1]);
+		email[right_bracket - left_bracket - 1] = '\0';
 		path_list_insert(email, &mailmap)->util = name;
 	}
 	fclose(f);
@@ -68,6 +71,9 @@ static int map_email(char *email, char *name, int maxlen)
 		return 0;
 
 	*p = '\0';
+	/* downcase the email address */
+	for (p = email; *p; p++)
+		*p = tolower(*p);
 	item = path_list_lookup(email, &mailmap);
 	if (item != NULL) {
 		const char *realname = (const char *)item->util;
