@@ -922,7 +922,7 @@ proc commit_writetree {curHEAD msg} {
 proc commit_committree {fd_wt curHEAD msg} {
 	global single_commit gitdir HEAD PARENT commit_type tcl_platform
 	global ui_status_value ui_comm selected_commit_type
-	global file_states selected_paths
+	global file_states selected_paths rescan_active
 
 	gets $fd_wt tree_id
 	if {$tree_id eq {} || [catch {close $fd_wt} err]} {
@@ -1018,7 +1018,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 
 	if {$single_commit} do_quit
 
-	# -- Update status without invoking any git commands.
+	# -- Update in memory status
 	#
 	set commit_type normal
 	set selected_commit_type new
@@ -1029,18 +1029,29 @@ proc commit_committree {fd_wt curHEAD msg} {
 		set s $file_states($path)
 		set m [lindex $s 0]
 		switch -glob -- $m {
-		DD -
-		AO {set m __}
-		A? -
-		M? -
-		D? {set m _[string index $m 1]}
-		}
-
-		if {$m eq {__}} {
+		_O -
+		_M -
+		_D {continue}
+		__ -
+		A_ -
+		M_ -
+		DD {
 			unset file_states($path)
 			catch {unset selected_paths($path)}
-		} else {
-			lset file_states($path) 0 $m
+		}
+		DO {
+			set file_states($path) [list _O [lindex $s 1] {} {}]
+		}
+		AM -
+		AD -
+		MM -
+		DM {
+			set file_states($path) [list \
+				_[string index $m 1] \
+				[lindex $s 1] \
+				[lindex $s 3] \
+				{}]
+		}
 		}
 	}
 
@@ -1661,9 +1672,9 @@ foreach i {
 		{AD o question "Added (but now gone)"}
 
 		{_D i question "Missing"}
-		{D_ i removed  "Removed by commit"}
 		{DD i removed  "Removed by commit"}
 		{DO i removed  "Removed (still exists)"}
+		{DM i removed  "Removed (but modified)"}
 
 		{UM i merge    "Merge conflicts"}
 		{U_ i merge    "Merge conflicts"}
@@ -2424,7 +2435,6 @@ proc toggle_or_diff {w x y} {
 		}
 		switch -glob -- [lindex $file_states($path) 0] {
 		A_ -
-		AO -
 		M_ -
 		DD -
 		D_ {
