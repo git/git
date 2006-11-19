@@ -3,9 +3,6 @@ Items outstanding:
  * Checkout $PARENT version to working directory, overwriting current
    version.  ($PARENT is HEAD, except when amending).
 
- * Update index with $PARENT version but leave working directory
-   alone.
-
  * Add file to .gitignore or info/excludes.
 
  * Populate the pull menu with local branches.
