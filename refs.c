@@ -1,16 +1,18 @@
 #include "refs.h"
 #include "cache.h"
+#include "object.h"
+#include "tag.h"
 
 #include <errno.h>
 
 struct ref_list {
 	struct ref_list *next;
-	unsigned char flag; /* ISSYMREF? ISPACKED? */
+	unsigned char flag; /* ISSYMREF? ISPACKED? ISPEELED? */
 	unsigned char sha1[20];
 	char name[FLEX_ARRAY];
 };
 
-static const char *parse_ref_line(char *line, unsigned char *sha1)
+static const char *parse_ref_line(char *line, unsigned char *sha1, int *flag)
 {
 	/*
 	 * 42: the answer to everything.
@@ -21,6 +23,7 @@ static const char *parse_ref_line(char *line, unsigned char *sha1)
 	 *  +1 (newline at the end of the line)
 	 */
 	int len = strlen(line) - 42;
+	int peeled = 0;
 
 	if (len <= 0)
 		return NULL;
@@ -29,11 +32,24 @@ static const char *parse_ref_line(char *line, unsigned char *sha1)
 	if (!isspace(line[40]))
 		return NULL;
 	line += 41;
-	if (isspace(*line))
-		return NULL;
+
+	if (isspace(*line)) {
+		/* "SHA-1 SP SP refs/tags/tagname^{} LF"? */
+		line++;
+		len--;
+		peeled = 1;
+	}
 	if (line[len] != '\n')
 		return NULL;
 	line[len] = 0;
+
+	if (peeled && (len < 3 || strcmp(line + len - 3, "^{}")))
+		return NULL;
+
+	if (!peeled)
+		*flag &= ~REF_ISPEELED;
+	else
+		*flag |= REF_ISPEELED;
 	return line;
 }
 
@@ -108,10 +124,12 @@ static struct ref_list *get_packed_refs(void)
 			char refline[PATH_MAX];
 			while (fgets(refline, sizeof(refline), f)) {
 				unsigned char sha1[20];
-				const char *name = parse_ref_line(refline, sha1);
+				int flag = REF_ISPACKED;
+				const char *name =
+					parse_ref_line(refline, sha1, &flag);
 				if (!name)
 					continue;
-				list = add_ref(name, sha1, REF_ISPACKED, list);
+				list = add_ref(name, sha1, flag, list);
 			}
 			fclose(f);
 			refs = list;
@@ -207,7 +225,8 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 		if (lstat(path, &st) < 0) {
 			struct ref_list *list = get_packed_refs();
 			while (list) {
-				if (!strcmp(ref, list->name)) {
+				if (!(list->flag & REF_ISPEELED) &&
+				    !strcmp(ref, list->name)) {
 					hashcpy(sha1, list->sha1);
 					if (flag)
 						*flag |= REF_ISPACKED;
@@ -329,11 +348,51 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 		return 0;
 	if (is_null_sha1(entry->sha1))
 		return 0;
+	if (entry->flag & REF_ISPEELED)
+		return 0;
 	if (!has_sha1_file(entry->sha1)) {
 		error("%s does not point to a valid object!", entry->name);
 		return 0;
 	}
 	return fn(entry->name + trim, entry->sha1, entry->flag, cb_data);
+}
+
+int peel_ref(const char *ref, unsigned char *sha1)
+{
+	int flag;
+	unsigned char base[20];
+	struct object *o;
+
+	if (!resolve_ref(ref, base, 1, &flag))
+		return -1;
+
+	if ((flag & REF_ISPACKED)) {
+		struct ref_list *list = get_packed_refs();
+		int len = strlen(ref);
+
+		while (list) {
+			if ((list->flag & REF_ISPEELED) &&
+			    !strncmp(list->name, ref, len) &&
+			    strlen(list->name) == len + 3 &&
+			    !strcmp(list->name + len, "^{}")) {
+				hashcpy(sha1, list->sha1);
+				return 0;
+			}
+			list = list->next;
+		}
+		/* older pack-refs did not leave peeled ones in */
+	}
+
+	/* otherwise ... */
+	o = parse_object(base);
+	if (o->type == OBJ_TAG) {
+		o = deref_tag(o, ref, 0);
+		if (o) {
+			hashcpy(sha1, o->sha1);
+			return 0;
+		}
+	}
+	return -1;
 }
 
 static int do_for_each_ref(const char *base, each_ref_fn fn, int trim,
