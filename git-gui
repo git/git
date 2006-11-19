@@ -2387,7 +2387,7 @@ proc do_macosx_app {} {
 }
 
 proc toggle_or_diff {w x y} {
-	global file_lists current_diff ui_index ui_other
+	global file_states file_lists current_diff ui_index ui_other
 	global last_clicked selected_paths
 
 	set pos [split [$w index @$x,$y] .]
@@ -2410,10 +2410,23 @@ proc toggle_or_diff {w x y} {
 		} else {
 			set after {}
 		}
-		update_index \
-			"Including [short_path $path]" \
-			[list $path] \
-			[concat $after {set ui_status_value {Ready.}}]
+		switch -glob -- [lindex $file_states($path) 0] {
+		A_ -
+		AO -
+		M_ -
+		D_ {
+			update_indexinfo \
+				"Removing [short_path $path] from commit" \
+				[list $path] \
+				[concat $after {set ui_status_value {Ready.}}]
+		}
+		?? {
+			update_index \
+				"Including [short_path $path]" \
+				[list $path] \
+				[concat $after {set ui_status_value {Ready.}}]
+		}
+		}
 	} else {
 		show_diff $path $w $lno
 	}
