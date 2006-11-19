@@ -1676,6 +1676,7 @@ foreach i {
 		{DO i removed  "Removed (still exists)"}
 		{DM i removed  "Removed (but modified)"}
 
+		{UD i merge    "Merge conflicts"}
 		{UM i merge    "Merge conflicts"}
 		{U_ i merge    "Merge conflicts"}
 	} {
@@ -2033,12 +2034,11 @@ proc include_helper {txt paths} {
 	set pathList [list]
 	set after {}
 	foreach path $paths {
-		switch -- [lindex $file_states($path) 0] {
+		switch -glob -- [lindex $file_states($path) 0] {
 		AM -
 		AD -
 		MM -
-		UM -
-		U_ -
+		U? -
 		_M -
 		_D -
 		_O {
@@ -2437,7 +2437,8 @@ proc toggle_or_diff {w x y} {
 		A_ -
 		M_ -
 		DD -
-		D_ {
+		DO -
+		DM {
 			update_indexinfo \
 				"Removing [short_path $path] from commit" \
 				[list $path] \
