@@ -432,10 +432,11 @@ case "$no_tags$tags" in
 		# using local tracking branch.
 		taglist=$(IFS=" " &&
 		git-ls-remote $upload_pack --tags "$remote" |
-		sed -ne 's|^\([0-9a-f]*\)[ 	]\(refs/tags/.*\)^{}$|\1 \2|p' |
+		sed -n	-e 's|^\('"$_x40"'\)	\(refs/tags/.*\)^{}$|\1 \2|p' \
+			-e 's|^\('"$_x40"'\)	\(refs/tags/.*\)$|\1 \2|p' |
 		while read sha1 name
 		do
-			git-show-ref --verify --quiet -- $name && continue
+			git-show-ref --verify --quiet -- "$name" && continue
 			git-check-ref-format "$name" || {
 				echo >&2 "warning: tag ${name} ignored"
 				continue

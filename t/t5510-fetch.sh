@@ -66,4 +66,20 @@ test_expect_success "fetch test for-merge" '
 	cut -f -2 .git/FETCH_HEAD >actual &&
 	diff expected actual'
 
+test_expect_success 'fetch following tags' '
+
+	cd "$D" &&
+	git tag -a -m 'annotated' anno HEAD &&
+	git tag light HEAD &&
+
+	mkdir four &&
+	cd four &&
+	git init-db &&
+
+	git fetch .. :track &&
+	git show-ref --verify refs/tags/anno &&
+	git show-ref --verify refs/tags/light
+
+'
+
 test_done
