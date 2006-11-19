@@ -108,13 +108,15 @@ static void insert_author_oneline(struct path_list *list,
 		free(buffer);
 
 	if (!strncmp(oneline, "[PATCH", 6)) {
-		char *eob = strchr(buffer, ']');
+		char *eob = strchr(oneline, ']');
 
-		while (isspace(eob[1]) && eob[1] != '\n')
-			eob++;
-		if (eob - oneline < onelinelen) {
-			onelinelen -= eob - oneline;
-			oneline = eob;
+		if (eob) {
+			while (isspace(eob[1]) && eob[1] != '\n')
+				eob++;
+			if (eob - oneline < onelinelen) {
+				onelinelen -= eob - oneline;
+				oneline = eob;
+			}
 		}
 	}
 
