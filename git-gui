@@ -722,6 +722,16 @@ proc load_last_commit {} {
 	rescan {set ui_status_value {Ready.}}
 }
 
+proc create_new_commit {} {
+	global commit_type ui_comm
+
+	set commit_type normal
+	$ui_comm delete 0.0 end
+	$ui_comm edit modified false
+	$ui_comm edit reset
+	rescan {set ui_status_value {Ready.}}
+}
+
 proc commit_tree {} {
 	global HEAD commit_type file_states ui_comm repo_config
 
@@ -880,7 +890,7 @@ proc commit_writetree {curHEAD msg} {
 
 proc commit_committree {fd_wt curHEAD msg} {
 	global single_commit gitdir HEAD PARENT commit_type tcl_platform
-	global ui_status_value ui_comm
+	global ui_status_value ui_comm selected_commit_type
 	global file_states selected_paths
 
 	gets $fd_wt tree_id
@@ -980,6 +990,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 	# -- Update status without invoking any git commands.
 	#
 	set commit_type normal
+	set selected_commit_type new
 	set HEAD $cmt_id
 	set PARENT $cmt_id
 
@@ -1065,13 +1076,14 @@ Commit or throw away all changes before starting a pull operation.
 }
 
 proc post_pull_remote {remote branch success} {
-	global HEAD PARENT commit_type
+	global HEAD PARENT commit_type selected_commit_type
 	global ui_status_value
 
 	unlock_index
 	if {$success} {
 		repository_state HEAD commit_type
 		set PARENT $HEAD
+		set selected_commit_type new
 		set $ui_status_value "Pulling $branch from $remote complete."
 	} else {
 		set m "Conflicts detected while pulling $branch from $remote."
@@ -1930,8 +1942,22 @@ proc do_signoff {} {
 	}
 }
 
-proc do_amend_last {} {
-	load_last_commit
+proc do_select_commit_type {} {
+	global commit_type selected_commit_type
+
+	if {$selected_commit_type eq {new}
+		&& [string match amend* $commit_type]} {
+		create_new_commit
+	} elseif {$selected_commit_type eq {amend}
+		&& ![string match amend* $commit_type]} {
+		load_last_commit
+
+		# The amend request was rejected...
+		#
+		if {![string match amend* $commit_type]} {
+			set commit_type new
+		}
+	}
 }
 
 proc do_commit {} {
@@ -2450,32 +2476,52 @@ menu .mbar.edit
 # -- Commit Menu
 #
 menu .mbar.commit
+
+.mbar.commit add radiobutton \
+	-label {New Commit} \
+	-command do_select_commit_type \
+	-variable selected_commit_type \
+	-value new \
+	-font font_ui
+lappend disable_on_lock \
+	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+
+.mbar.commit add radiobutton \
+	-label {Amend Last Commit} \
+	-command do_select_commit_type \
+	-variable selected_commit_type \
+	-value amend \
+	-font font_ui
+lappend disable_on_lock \
+	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+
+.mbar.commit add separator
+
 .mbar.commit add command -label Rescan \
 	-command do_rescan \
 	-accelerator F5 \
 	-font font_ui
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
-.mbar.commit add command -label {Amend Last Commit} \
-	-command do_amend_last \
-	-font font_ui
-lappend disable_on_lock \
-	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+
 .mbar.commit add command -label {Include Selected Files} \
 	-command do_include_selection \
 	-font font_ui
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+
 .mbar.commit add command -label {Include All Files} \
 	-command do_include_all \
 	-accelerator $M1T-I \
 	-font font_ui
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+
 .mbar.commit add command -label {Sign Off} \
 	-command do_signoff \
 	-accelerator $M1T-S \
 	-font font_ui
+
 .mbar.commit add command -label Commit \
 	-command do_commit \
 	-accelerator $M1T-Return \
@@ -2568,13 +2614,6 @@ pack .vpane.lower.commarea.buttons.rescan -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.rescan conf -state}
 
-button .vpane.lower.commarea.buttons.amend -text {Amend Last} \
-	-command do_amend_last \
-	-font font_ui
-pack .vpane.lower.commarea.buttons.amend -side top -fill x
-lappend disable_on_lock \
-	{.vpane.lower.commarea.buttons.amend conf -state}
-
 button .vpane.lower.commarea.buttons.incall -text {Include All} \
 	-command do_include_all \
 	-font font_ui
@@ -2597,8 +2636,25 @@ lappend disable_on_lock \
 # -- Commit Message Buffer
 #
 frame .vpane.lower.commarea.buffer
+frame .vpane.lower.commarea.buffer.header
 set ui_comm .vpane.lower.commarea.buffer.t
-set ui_coml .vpane.lower.commarea.buffer.l
+set ui_coml .vpane.lower.commarea.buffer.header.l
+radiobutton .vpane.lower.commarea.buffer.header.new \
+	-text {New Commit} \
+	-command do_select_commit_type \
+	-variable selected_commit_type \
+	-value new \
+	-font font_ui
+lappend disable_on_lock \
+	[list .vpane.lower.commarea.buffer.header.new conf -state]
+radiobutton .vpane.lower.commarea.buffer.header.amend \
+	-text {Amend Last Commit} \
+	-command do_select_commit_type \
+	-variable selected_commit_type \
+	-value amend \
+	-font font_ui
+lappend disable_on_lock \
+	[list .vpane.lower.commarea.buffer.header.amend conf -state]
 label $ui_coml \
 	-anchor w \
 	-justify left \
@@ -2615,6 +2671,10 @@ proc trace_commit_type {varname args} {
 	$ui_coml conf -text $txt
 }
 trace add variable commit_type write trace_commit_type
+pack $ui_coml -side left -fill x
+pack .vpane.lower.commarea.buffer.header.amend -side right
+pack .vpane.lower.commarea.buffer.header.new -side right
+
 text $ui_comm -background white -borderwidth 1 \
 	-undo true \
 	-maxundo 20 \
@@ -2625,7 +2685,7 @@ text $ui_comm -background white -borderwidth 1 \
 	-yscrollcommand {.vpane.lower.commarea.buffer.sby set}
 scrollbar .vpane.lower.commarea.buffer.sby \
 	-command [list $ui_comm yview]
-pack $ui_coml -side top -fill x
+pack .vpane.lower.commarea.buffer.header -side top -fill x
 pack .vpane.lower.commarea.buffer.sby -side right -fill y
 pack $ui_comm -side left -fill y
 pack .vpane.lower.commarea.buffer -side left -fill y
@@ -2897,6 +2957,7 @@ set PARENT {}
 set commit_type {}
 set empty_tree {}
 set current_diff {}
+set selected_commit_type new
 
 wm title . "$appname ([file normalize [file dirname $gitdir]])"
 focus -force $ui_comm
