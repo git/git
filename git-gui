@@ -1174,9 +1174,10 @@ proc short_path {path} {
 }
 
 set next_icon_id 0
+set null_sha1 [string repeat 0 40]
 
 proc merge_state {path new_state {head_info {}} {index_info {}}} {
-	global file_states next_icon_id
+	global file_states next_icon_id null_sha1
 
 	set s0 [string index $new_state 0]
 	set s1 [string index $new_state 1]
@@ -1197,7 +1198,9 @@ proc merge_state {path new_state {head_info {}} {index_info {}}} {
 	if     {$s1 eq {?}} {set s1 [string index $state 1]} \
 	elseif {$s1 eq {_}} {set s1 _}
 
-	if {$s0 ne {_} && [string index $state 0] eq {_}
+	if {$s0 eq {A} && $s1 eq {_} && $head_info eq {}} {
+		set head_info [list 0 $null_sha1]
+	} elseif {$s0 ne {_} && [string index $state 0] eq {_}
 		&& $head_info eq {}} {
 		set head_info $index_info
 	}
