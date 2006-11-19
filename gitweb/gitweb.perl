@@ -2092,7 +2092,11 @@ sub git_difftree_body {
 				# link to patch
 				$patchno++;
 				print $cgi->a({-href => "#patch$patchno"}, "patch");
+				print " | ";
 			}
+			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
+			                             hash_base=>$hash, file_name=>$diff{'file'})},
+			              "blob") . " | ";
 			print "</td>\n";
 
 		} elsif ($diff{'status'} eq "D") { # deleted
@@ -2112,13 +2116,11 @@ sub git_difftree_body {
 			}
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'from_id'},
 			                             hash_base=>$parent, file_name=>$diff{'file'})},
-				      "blob") . " | ";
+			              "blob") . " | ";
 			if ($have_blame) {
-				print $cgi->a({-href =>
-						   href(action=>"blame",
-							hash_base=>$parent,
-							file_name=>$diff{'file'})},
-					      "blame") . " | ";
+				print $cgi->a({-href => href(action=>"blame", hash_base=>$parent,
+				                             file_name=>$diff{'file'})},
+				              "blame") . " | ";
 			}
 			print $cgi->a({-href => href(action=>"history", hash_base=>$parent,
 			                             file_name=>$diff{'file'})},
@@ -2163,13 +2165,12 @@ sub git_difftree_body {
 				      " | ";
 			}
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
-						     hash_base=>$hash, file_name=>$diff{'file'})},
-				      "blob") . " | ";
+			                             hash_base=>$hash, file_name=>$diff{'file'})},
+			               "blob") . " | ";
 			if ($have_blame) {
-				print $cgi->a({-href => href(action=>"blame",
-							     hash_base=>$hash,
-							     file_name=>$diff{'file'})},
-					      "blame") . " | ";
+				print $cgi->a({-href => href(action=>"blame", hash_base=>$hash,
+				                             file_name=>$diff{'file'})},
+				              "blame") . " | ";
 			}
 			print $cgi->a({-href => href(action=>"history", hash_base=>$hash,
 			                             file_name=>$diff{'file'})},
@@ -2208,17 +2209,16 @@ sub git_difftree_body {
 				              "diff") .
 				      " | ";
 			}
-			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'from_id'},
-						     hash_base=>$parent, file_name=>$diff{'from_file'})},
-				      "blob") . " | ";
+			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
+			                             hash_base=>$parent, file_name=>$diff{'to_file'})},
+			              "blob") . " | ";
 			if ($have_blame) {
-				print $cgi->a({-href => href(action=>"blame",
-							     hash_base=>$hash,
-							     file_name=>$diff{'to_file'})},
-					      "blame") . " | ";
+				print $cgi->a({-href => href(action=>"blame", hash_base=>$hash,
+				                             file_name=>$diff{'to_file'})},
+				              "blame") . " | ";
 			}
-			print $cgi->a({-href => href(action=>"history", hash_base=>$parent,
-			                            file_name=>$diff{'from_file'})},
+			print $cgi->a({-href => href(action=>"history", hash_base=>$hash,
+			                            file_name=>$diff{'to_file'})},
 			              "history");
 			print "</td>\n";
 
