@@ -628,6 +628,9 @@ proc read_diff {fd} {
 		if {[string match {diff --combined *} $line]} continue
 		if {[string match {--- *} $line]} continue
 		if {[string match {+++ *} $line]} continue
+		if {$line eq {deleted file mode 120000}} {
+			set line "deleted symlink"
+		}
 		if {[string match index* $line]} {
 			if {[string first , $line] >= 0} {
 				set diff_3way 1
