@@ -322,6 +322,20 @@ int read_ref(const char *ref, unsigned char *sha1)
 	return -1;
 }
 
+static int do_one_ref(const char *base, each_ref_fn fn, int trim,
+		      void *cb_data, struct ref_list *entry)
+{
+	if (strncmp(base, entry->name, trim))
+		return 0;
+	if (is_null_sha1(entry->sha1))
+		return 0;
+	if (!has_sha1_file(entry->sha1)) {
+		error("%s does not point to a valid object!", entry->name);
+		return 0;
+	}
+	return fn(entry->name + trim, entry->sha1, entry->flag, cb_data);
+}
+
 static int do_for_each_ref(const char *base, each_ref_fn fn, int trim,
 			   void *cb_data)
 {
@@ -343,29 +357,15 @@ static int do_for_each_ref(const char *base, each_ref_fn fn, int trim,
 			entry = packed;
 			packed = packed->next;
 		}
-		if (strncmp(base, entry->name, trim))
-			continue;
-		if (is_null_sha1(entry->sha1))
-			continue;
-		if (!has_sha1_file(entry->sha1)) {
-			error("%s does not point to a valid object!", entry->name);
-			continue;
-		}
-		retval = fn(entry->name + trim, entry->sha1,
-			    entry->flag, cb_data);
+		retval = do_one_ref(base, fn, trim, cb_data, entry);
 		if (retval)
 			return retval;
 	}
 
-	packed = packed ? packed : loose;
-	while (packed) {
-		if (!strncmp(base, packed->name, trim)) {
-			retval = fn(packed->name + trim, packed->sha1,
-				    packed->flag, cb_data);
-			if (retval)
-				return retval;
-		}
-		packed = packed->next;
+	for (packed = packed ? packed : loose; packed; packed = packed->next) {
+		retval = do_one_ref(base, fn, trim, cb_data, packed);
+		if (retval)
+			return retval;
 	}
 	return 0;
 }
