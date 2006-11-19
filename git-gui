@@ -1,4 +1,3 @@
-#!/bin/sh
 # Tcl ignores the next line -*- tcl -*- \
 exec wish "$0" -- "$@"
 
@@ -369,12 +368,14 @@ proc read_diff_index {fd after} {
 		set z2 [string first "\0" $buf_rdi $z1]
 		if {$z2 == -1} break
 
-		set c $z2
-		incr z2 -1
-		display_file \
-			[string range $buf_rdi $z1 $z2] \
-			[string index $buf_rdi [expr {$z1 - 2}]]?
 		incr c
+		set n [split [string range $buf_rdi $c [expr {$z1 - 2}]] { }]
+		merge_state \
+			[string range $buf_rdi $z1 [expr {$z2 - 1}]] \
+			[lindex $n 4]? \
+			[list [lindex $n 0] [lindex $n 2]] \
+			[list]
+		set c $z2
 	}
 	if {$c < $n} {
 		set buf_rdi [string range $buf_rdi $c end]
@@ -398,12 +399,14 @@ proc read_diff_files {fd after} {
 		set z2 [string first "\0" $buf_rdf $z1]
 		if {$z2 == -1} break
 
-		set c $z2
-		incr z2 -1
-		display_file \
-			[string range $buf_rdf $z1 $z2] \
-			?[string index $buf_rdf [expr {$z1 - 2}]]
 		incr c
+		set n [split [string range $buf_rdf $c [expr {$z1 - 2}]] { }]
+		merge_state \
+			[string range $buf_rdf $z1 [expr {$z2 - 1}]] \
+			?[lindex $n 4] \
+			[list] \
+			[list [lindex $n 0] [lindex $n 2]]
+		set c $z2
 	}
 	if {$c < $n} {
 		set buf_rdf [string range $buf_rdf $c end]
@@ -421,7 +424,7 @@ proc read_ls_others {fd after} {
 	set pck [split $buf_rlo "\0"]
 	set buf_rlo [lindex $pck end]
 	foreach p [lrange $pck 0 end-1] {
-		display_file $p ?O
+		merge_state $p ?O
 	}
 	rescan_done $fd buf_rlo $after
 }
@@ -1165,7 +1168,7 @@ proc short_path {path} {
 
 set next_icon_id 0
 
-proc merge_state {path new_state} {
+proc merge_state {path new_state {head_info {}} {index_info {}}} {
 	global file_states next_icon_id
 
 	set s0 [string index $new_state 0]
@@ -1177,30 +1180,31 @@ proc merge_state {path new_state} {
 	} else {
 		set state [lindex $info 0]
 		set icon [lindex $info 1]
+		if {$head_info eq {}}  {set head_info  [lindex $info 2]}
+		if {$index_info eq {}} {set index_info [lindex $info 3]}
 	}
 
-	if {$s0 eq {?}} {
-		set s0 [string index $state 0]
-	} elseif {$s0 eq {_}} {
-		set s0 _
+	if     {$s0 eq {?}} {set s0 [string index $state 0]} \
+	elseif {$s0 eq {_}} {set s0 _}
+
+	if     {$s1 eq {?}} {set s1 [string index $state 1]} \
+	elseif {$s1 eq {_}} {set s1 _}
+
+	if {$s0 ne {_} && [string index $state 0] eq {_}
+		&& $head_info eq {}} {
+		set head_info $index_info
 	}
 
-	if {$s1 eq {?}} {
-		set s1 [string index $state 1]
-	} elseif {$s1 eq {_}} {
-		set s1 _
-	}
-
-	set file_states($path) [list $s0$s1 $icon]
+	set file_states($path) [list $s0$s1 $icon \
+		$head_info $index_info \
+		]
 	return $state
 }
 
 proc display_file {path state} {
-	global file_states file_lists selected_paths rescan_active
+	global file_states file_lists selected_paths
 
 	set old_m [merge_state $path $state]
-	if {$rescan_active > 0} return
-
 	set s $file_states($path)
 	set new_m [lindex $s 0]
 	set new_w [mapcol $new_m $path] 
@@ -1276,6 +1280,80 @@ proc display_all_files {} {
 
 	$ui_index conf -state disabled
 	$ui_other conf -state disabled
+}
+
+proc update_indexinfo {msg pathList after} {
+	global update_index_cp ui_status_value
+
+	if {![lock_index update]} return
+
+	set update_index_cp 0
+	set pathList [lsort $pathList]
+	set totalCnt [llength $pathList]
+	set batch [expr {int($totalCnt * .01) + 1}]
+	if {$batch > 25} {set batch 25}
+
+	set ui_status_value [format \
+		"$msg... %i/%i files (%.2f%%)" \
+		$update_index_cp \
+		$totalCnt \
+		0.0]
+	set fd [open "| git update-index -z --index-info" w]
+	fconfigure $fd \
+		-blocking 0 \
+		-buffering full \
+		-buffersize 512 \
+		-translation binary
+	fileevent $fd writable [list \
+		write_update_indexinfo \
+		$fd \
+		$pathList \
+		$totalCnt \
+		$batch \
+		$msg \
+		$after \
+		]
+}
+
+proc write_update_indexinfo {fd pathList totalCnt batch msg after} {
+	global update_index_cp ui_status_value
+	global file_states current_diff
+
+	if {$update_index_cp >= $totalCnt} {
+		close $fd
+		unlock_index
+		uplevel #0 $after
+		return
+	}
+
+	for {set i $batch} \
+		{$update_index_cp < $totalCnt && $i > 0} \
+		{incr i -1} {
+		set path [lindex $pathList $update_index_cp]
+		incr update_index_cp
+
+		set s $file_states($path)
+		switch -glob -- [lindex $s 0] {
+		A? {set new _O}
+		M? {set new _M}
+		D? {set new _?}
+		?? {continue}
+		}
+		set info [lindex $s 2]
+		if {$info eq {}} continue
+
+		puts -nonewline $fd $info
+		puts -nonewline $fd "\t"
+		puts -nonewline $fd $path
+		puts -nonewline $fd "\0"
+		display_file $path $new
+	}
+
+	set ui_status_value [format \
+		"$msg... %i/%i files (%.2f%%)" \
+		$update_index_cp \
+		$totalCnt \
+		[expr {100.0 * $update_index_cp / $totalCnt}]]
 }
 
 proc update_index {msg pathList after} {
@@ -1879,6 +1957,49 @@ proc do_quit {} {
 
 proc do_rescan {} {
 	rescan {set ui_status_value {Ready.}}
+}
+
+proc remove_helper {txt paths} {
+	global file_states current_diff
+
+	if {![lock_index begin-update]} return
+
+	set pathList [list]
+	set after {}
+	foreach path $paths {
+		switch -glob -- [lindex $file_states($path) 0] {
+		A? -
+		M? -
+		D? {
+			lappend pathList $path
+			if {$path eq $current_diff} {
+				set after {reshow_diff;}
+			}
+		}
+		}
+	}
+	if {$pathList eq {}} {
+		unlock_index
+	} else {
+		update_indexinfo \
+			$txt \
+			$pathList \
+			[concat $after {set ui_status_value {Ready.}}]
+	}
+}
+
+proc do_remove_selection {} {
+	global current_diff selected_paths
+
+	if {[array size selected_paths] > 0} {
+		remove_helper \
+			{Removing selected files from commit} \
+			[array names selected_paths]
+	} elseif {$current_diff ne {}} {
+		remove_helper \
+			"Removing [short_path $current_diff] from commit" \
+			[list $current_diff]
+	}
 }
 
 proc include_helper {txt paths} {
@@ -2525,18 +2646,26 @@ lappend disable_on_lock \
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-.mbar.commit add command -label {Include Selected Files} \
+.mbar.commit add command -label {Remove From Commit} \
+	-command do_remove_selection \
+	-font font_ui
+lappend disable_on_lock \
+	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+
+.mbar.commit add command -label {Include In Commit} \
 	-command do_include_selection \
 	-font font_ui
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-.mbar.commit add command -label {Include All Files} \
+.mbar.commit add command -label {Include All} \
 	-command do_include_all \
 	-accelerator $M1T-I \
 	-font font_ui
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+
+.mbar.commit add separator
 
 .mbar.commit add command -label {Sign Off} \
 	-command do_signoff \
