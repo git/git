@@ -1022,6 +1022,8 @@ proc commit_committree {fd_wt curHEAD msg} {
 		set s $file_states($path)
 		set m [lindex $s 0]
 		switch -glob -- $m {
+		DD -
+		AO {set m __}
 		A? -
 		M? -
 		D? {set m _[string index $m 1]}
@@ -1409,7 +1411,7 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 		switch -glob -- [lindex $file_states($path) 0] {
 		AD -
 		MD -
-		_D {set new D_}
+		_D {set new DD}
 
 		_M -
 		MM -
@@ -2414,6 +2416,7 @@ proc toggle_or_diff {w x y} {
 		A_ -
 		AO -
 		M_ -
+		DD -
 		D_ {
 			update_indexinfo \
 				"Removing [short_path $path] from commit" \
