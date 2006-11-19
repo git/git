@@ -765,13 +765,13 @@ proc commit_tree {} {
 		&& $cur_type eq {normal}
 		&& $curHEAD eq $HEAD} {
 	} elseif {$commit_type ne $cur_type || $HEAD ne $curHEAD} {
-		error_popup {Last scanned state does not match repository state.
+		info_popup {Last scanned state does not match repository state.
 
-Its highly likely that another Git program modified the
-repository since the last scan.  A rescan is required
-before committing.
+Another Git program has modified this repository
+since the last scan.  A rescan must be performed
+before another commit can be created.
 
-A rescan will be automatically started now.
+The rescan will be automatically started now.
 }
 		unlock_index
 		rescan {set ui_status_value {Ready.}}
