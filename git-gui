@@ -544,7 +544,7 @@ files list, to prevent possible confusion.
 
 proc show_diff {path {w {}} {lno {}}} {
 	global file_states file_lists
-	global diff_3way diff_active repo_config
+	global is_3way_diff diff_active repo_config
 	global ui_diff current_diff ui_status_value
 
 	if {$diff_active || ![lock_index read]} return
@@ -565,7 +565,7 @@ proc show_diff {path {w {}} {lno {}}} {
 
 	set s $file_states($path)
 	set m [lindex $s 0]
-	set diff_3way 0
+	set is_3way_diff 0
 	set diff_active 1
 	set current_diff $path
 	set ui_status_value "Loading diff of [escape_path $path]..."
@@ -620,51 +620,52 @@ proc show_diff {path {w {}} {lno {}}} {
 }
 
 proc read_diff {fd} {
-	global ui_diff ui_status_value diff_3way diff_active
+	global ui_diff ui_status_value is_3way_diff diff_active
 	global repo_config
 
+	$ui_diff conf -state normal
 	while {[gets $fd line] >= 0} {
-		if {[string match {diff --git *} $line]} continue
+		# -- Cleanup uninteresting diff header lines.
+		#
+		if {[string match {diff --git *}      $line]} continue
 		if {[string match {diff --combined *} $line]} continue
-		if {[string match {--- *} $line]} continue
-		if {[string match {+++ *} $line]} continue
+		if {[string match {--- *}             $line]} continue
+		if {[string match {+++ *}             $line]} continue
 		if {$line eq {deleted file mode 120000}} {
 			set line "deleted symlink"
 		}
-		if {[string match index* $line]} {
-			if {[string first , $line] >= 0} {
-				set diff_3way 1
-			}
-		}
 
-		$ui_diff conf -state normal
-		if {!$diff_3way} {
-			set x [string index $line 0]
-			switch -- $x {
-			"@" {set tags da}
-			"+" {set tags dp}
-			"-" {set tags dm}
+		# -- Automatically detect if this is a 3 way diff.
+		#
+		if {[string match {@@@ *} $line]} {set is_3way_diff 1}
+
+		# -- Reformat a 3 way diff, 'cause its too weird.
+		#
+		if {$is_3way_diff} {
+			set op [string range $line 0 1]
+			switch -- $op {
+			{@@} {set tags d_@}
+			{++} {set tags d_+ ; set op { +}}
+			{--} {set tags d_- ; set op { -}}
+			{ +} {set tags d_++; set op {++}}
+			{ -} {set tags d_--; set op {--}}
+			{+ } {set tags d_-+; set op {-+}}
+			{- } {set tags d_+-; set op {+-}}
 			default {set tags {}}
 			}
+			set line [string replace $line 0 1 $op]
 		} else {
-			set x [string range $line 0 1]
-			switch -- $x {
-			default {set tags {}}
-			"@@" {set tags da}
-			"++" {set tags dp; set x " +"}
-			" +" {set tags {di bold}; set x "++"}
-			"+ " {set tags dni; set x "-+"}
-			"--" {set tags dm; set x " -"}
-			" -" {set tags {dm bold}; set x "--"}
-			"- " {set tags di; set x "+-"}
+			switch -- [string index $line 0] {
+			@ {set tags d_@}
+			+ {set tags d_+}
+			- {set tags d_-}
 			default {set tags {}}
 			}
-			set line [string replace $line 0 1 $x]
 		}
 		$ui_diff insert end $line $tags
-		$ui_diff insert end "\n"
-		$ui_diff conf -state disabled
+		$ui_diff insert end "\n" $tags
 	}
+	$ui_diff conf -state disabled
 
 	if {[eof $fd]} {
 		close $fd
@@ -2987,12 +2988,17 @@ pack $ui_diff -side left -fill both -expand 1
 pack .vpane.lower.diff.header -side top -fill x
 pack .vpane.lower.diff.body -side bottom -fill both -expand 1
 
-$ui_diff tag conf dm -foreground red
-$ui_diff tag conf dp -foreground blue
-$ui_diff tag conf di -foreground {#00a000}
-$ui_diff tag conf dni -foreground {#a000a0}
-$ui_diff tag conf da -font font_diffbold
-$ui_diff tag conf bold -font font_diffbold
+$ui_diff tag conf d_@ -font font_diffbold
+$ui_diff tag conf d_+  -foreground blue
+$ui_diff tag conf d_-  -foreground red
+$ui_diff tag conf d_++ -foreground {#00a000}
+$ui_diff tag conf d_-- -foreground {#a000a0}
+$ui_diff tag conf d_+- \
+	-foreground red \
+	-background {light goldenrod yellow}
+$ui_diff tag conf d_-+ \
+	-foreground blue \
+	-background azure2
 
 # -- Diff Body Context Menu
 #
