@@ -13,6 +13,7 @@ static int show_ref(const char *refname, const unsigned char *sha1, int flag, vo
 {
 	struct object *obj;
 	const char *hex;
+	unsigned char peeled[20];
 
 	if (tags_only || heads_only) {
 		int match;
@@ -44,12 +45,15 @@ static int show_ref(const char *refname, const unsigned char *sha1, int flag, vo
 
 match:
 	found_match++;
-	obj = parse_object(sha1);
-	if (!obj) {
-		if (quiet)
-			return 0;
-		die("git-show-ref: bad ref %s (%s)", refname, sha1_to_hex(sha1));
-	}
+
+	/* This changes the semantics slightly that even under quiet we
+	 * detect and return error if the repository is corrupt and
+	 * ref points at a nonexistent object.
+	 */
+	if (!has_sha1_file(sha1))
+		die("git-show-ref: bad ref %s (%s)", refname,
+		    sha1_to_hex(sha1));
+
 	if (quiet)
 		return 0;
 
@@ -58,10 +62,24 @@ match:
 		printf("%s\n", hex);
 	else
 		printf("%s %s\n", hex, refname);
-	if (deref_tags && obj->type == OBJ_TAG) {
-		obj = deref_tag(obj, refname, 0);
-		hex = find_unique_abbrev(obj->sha1, abbrev);
+
+	if (!deref_tags)
+		return 0;
+
+	if ((flag & REF_ISPACKED) && !peel_ref(refname, peeled)) {
+		hex = find_unique_abbrev(peeled, abbrev);
 		printf("%s %s^{}\n", hex, refname);
+	}
+	else {
+		obj = parse_object(sha1);
+		if (!obj)
+			die("git-show-ref: bad ref %s (%s)", refname,
+			    sha1_to_hex(sha1));
+		if (obj->type == OBJ_TAG) {
+			obj = deref_tag(obj, refname, 0);
+			hex = find_unique_abbrev(obj->sha1, abbrev);
+			printf("%s %s^{}\n", hex, refname);
+		}
 	}
 	return 0;
 }
