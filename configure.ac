@@ -75,20 +75,6 @@ GIT_ARG_SET_PATH(shell)
 # Define PERL_PATH to provide path to Perl.
 GIT_ARG_SET_PATH(perl)
 #
-# Define PYTHON_PATH to provide path to Python.
-AC_ARG_WITH(python,[AS_HELP_STRING([--with-python=PATH], [provide PATH to python])
-AS_HELP_STRING([--without-python], [don't use python scripts])],
- [if test "$withval" = "no"; then \
-    NO_PYTHON=YesPlease; \
-  elif test "$withval" = "yes"; then \
-    NO_PYTHON=; \
-  else \
-    NO_PYTHON=; \
-    PYTHON_PATH=$withval; \
-  fi; \
- ])
-AC_SUBST(NO_PYTHON)
-AC_SUBST(PYTHON_PATH)
 
 
 ## Checks for programs.
@@ -98,18 +84,6 @@ AC_PROG_CC([cc gcc])
 #AC_PROG_INSTALL		# needs install-sh or install.sh in sources
 AC_CHECK_TOOL(AR, ar, :)
 AC_CHECK_PROGS(TAR, [gtar tar])
-#
-# Define PYTHON_PATH to provide path to Python.
-if test -z "$NO_PYTHON"; then
-	if test -z "$PYTHON_PATH"; then
-		AC_PATH_PROGS(PYTHON_PATH, [python python2.4 python2.3 python2])
-	fi
-	if test -n "$PYTHON_PATH"; then
-		GIT_CONF_APPEND_LINE([PYTHON_PATH=@PYTHON_PATH@])
-		NO_PYTHON=""
-	fi
-fi
-
 
 ## Checks for libraries.
 AC_MSG_NOTICE([CHECKS for libraries])
@@ -262,21 +236,8 @@ AC_SUBST(NO_SETENV)
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
 # Enable it on Windows.  By default, symrefs are still used.
 #
-# Define WITH_OWN_SUBPROCESS_PY if you want to use with python 2.3.
-AC_CACHE_CHECK([for subprocess.py],
- [ac_cv_python_has_subprocess_py],
-[if $PYTHON_PATH -c 'import subprocess' 2>/dev/null; then
-	ac_cv_python_has_subprocess_py=yes
-else
-	ac_cv_python_has_subprocess_py=no
-fi])
-if test $ac_cv_python_has_subprocess_py != yes; then
-	GIT_CONF_APPEND_LINE([WITH_OWN_SUBPROCESS_PY=YesPlease])
-fi
-#
 # Define NO_ACCURATE_DIFF if your diff program at least sometimes misses
 # a missing newline at the end of the file.
-
 
 ## Site configuration (override autodetection)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE

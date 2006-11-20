@@ -99,9 +99,6 @@ Issues of note:
 	- "perl" and POSIX-compliant shells are needed to use most of
 	  the barebone Porcelainish scripts.
 
-	- "python" 2.3 or more recent; if you have 2.3, you may need
-          to build with "make WITH_OWN_SUBPROCESS_PY=YesPlease".
-
  - Some platform specific issues are dealt with Makefile rules,
    but depending on your specific installation, you may not
    have all the libraries/tools needed, or you may have

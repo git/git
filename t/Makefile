@@ -13,10 +13,6 @@ SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 T = $(wildcard t[0-9][0-9][0-9][0-9]-*.sh)
 TSVN = $(wildcard t91[0-9][0-9]-*.sh)
 
-ifdef NO_PYTHON
-	GIT_TEST_OPTS += --no-python
-endif
-
 all: $(T) clean
 
 $(T):

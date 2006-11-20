@@ -9,16 +9,13 @@ USAGE='[-n] [--no-commit] [--squash] [-s <strategy>]... <merge-message> <head> <
 LF='
 '
 
-all_strategies='recur recursive recursive-old octopus resolve stupid ours'
+all_strategies='recur recursive octopus resolve stupid ours'
 default_twohead_strategies='recursive'
 default_octopus_strategies='octopus'
 no_trivial_merge_strategies='ours'
 use_strategies=
 
 index_merge=t
-if test "@@NO_PYTHON@@"; then
-	all_strategies='recur recursive resolve octopus stupid ours'
-fi
 
 dropsave() {
 	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" \
