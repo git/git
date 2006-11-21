@@ -297,8 +297,8 @@ proc rescan {after} {
 		} elseif {[load_message MERGE_MSG]} {
 		} elseif {[load_message SQUASH_MSG]} {
 		}
-		$ui_comm edit modified false
 		$ui_comm edit reset
+		$ui_comm edit modified false
 	}
 
 	if {$repo_config(gui.trustmtime) eq {true}} {
@@ -750,8 +750,8 @@ current merge activity.
 
 	$ui_comm delete 0.0 end
 	$ui_comm insert end $msg
-	$ui_comm edit modified false
 	$ui_comm edit reset
+	$ui_comm edit modified false
 	rescan {set ui_status_value {Ready.}}
 }
 
@@ -760,8 +760,8 @@ proc create_new_commit {} {
 
 	set commit_type normal
 	$ui_comm delete 0.0 end
-	$ui_comm edit modified false
 	$ui_comm edit reset
+	$ui_comm edit modified false
 	rescan {set ui_status_value {Ready.}}
 }
 
@@ -1025,8 +1025,8 @@ proc commit_committree {fd_wt curHEAD msg} {
 	}
 
 	$ui_comm delete 0.0 end
-	$ui_comm edit modified false
 	$ui_comm edit reset
+	$ui_comm edit modified false
 
 	if {$single_commit} do_quit
 
@@ -1966,7 +1966,7 @@ proc do_fsck_objects {} {
 set is_quitting 0
 
 proc do_quit {} {
-	global gitdir ui_comm is_quitting repo_config
+	global gitdir ui_comm is_quitting repo_config commit_type
 
 	if {$is_quitting} return
 	set is_quitting 1
@@ -1975,14 +1975,16 @@ proc do_quit {} {
 	#
 	set save [file join $gitdir GITGUI_MSG]
 	set msg [string trim [$ui_comm get 0.0 end]]
-	if {[$ui_comm edit modified] && $msg ne {}} {
+	if {![string match amend* $commit_type]
+		&& [$ui_comm edit modified]
+		&& $msg ne {}} {
 		catch {
 			set fd [open $save w]
 			puts $fd [string trim [$ui_comm get 0.0 end]]
 			close $fd
 		}
-	} elseif {$msg eq {} && [file exists $save]} {
-		file delete $save
+	} else {
+		catch {file delete $save}
 	}
 
 	# -- Stash our current window geometry into this repository.
