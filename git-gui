@@ -9,8 +9,7 @@ All rights reserved.
 
 This program is free software; it may be used, copied, modified
 and distributed under the terms of the GNU General Public Licence,
-either version 2, or (at your option) any later version.
-}
+either version 2, or (at your option) any later version.}
 
 set appname [lindex [file split $argv0] end]
 set gitdir {}
@@ -2166,6 +2165,7 @@ proc do_commit {} {
 
 proc do_about {} {
 	global appname copyright
+	global tcl_patchLevel tk_patchLevel
 
 	set w .about_dialog
 	toplevel $w
@@ -2193,8 +2193,17 @@ $copyright" \
 		-font font_ui
 	pack $w.desc -side top -fill x -padx 5 -pady 5
 
+	set v [exec git --version]
+	append v "\n\n"
+	if {$tcl_patchLevel eq $tk_patchLevel} {
+		append v "Tcl/Tk version $tcl_patchLevel"
+	} else {
+		append v "Tcl version $tcl_patchLevel"
+		append v ", Tk version $tk_patchLevel"
+	}
+
 	label $w.vers \
-		-text [exec git --version] \
+		-text $v \
 		-padx 5 -pady 5 \
 		-justify left \
 		-anchor w \
