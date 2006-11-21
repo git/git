@@ -2602,7 +2602,7 @@ apply_config
 # -- Menu Bar
 #
 menu .mbar -tearoff 0
-.mbar add cascade -label Project -menu .mbar.project
+.mbar add cascade -label Repository -menu .mbar.repository
 .mbar add cascade -label Edit -menu .mbar.edit
 .mbar add cascade -label Commit -menu .mbar.commit
 if {!$single_commit} {
@@ -2612,38 +2612,38 @@ if {!$single_commit} {
 }
 . configure -menu .mbar
 
-# -- Project Menu
+# -- Repository Menu
 #
-menu .mbar.project
-.mbar.project add command -label Visualize \
+menu .mbar.repository
+.mbar.repository add command -label Visualize \
 	-command do_gitk \
 	-font font_ui
 if {!$single_commit} {
-	.mbar.project add separator
+	.mbar.repository add separator
 
-	.mbar.project add command -label {Repack Database} \
+	.mbar.repository add command -label {Repack Database} \
 		-command do_repack \
 		-font font_ui
 
-	.mbar.project add command -label {Verify Database} \
+	.mbar.repository add command -label {Verify Database} \
 		-command do_fsck_objects \
 		-font font_ui
 
-	.mbar.project add separator
+	.mbar.repository add separator
 
 	if {$tcl_platform(platform) eq {windows}} {
-		.mbar.project add command \
+		.mbar.repository add command \
 			-label {Create Desktop Icon} \
 			-command do_windows_shortcut \
 			-font font_ui
 	} elseif {[is_MacOSX]} {
-		.mbar.project add command \
+		.mbar.repository add command \
 			-label {Create Desktop Icon} \
 			-command do_macosx_app \
 			-font font_ui
 	}
 }
-.mbar.project add command -label Quit \
+.mbar.repository add command -label Quit \
 	-command do_quit \
 	-accelerator $M1T-Q \
 	-font font_ui
@@ -2729,7 +2729,7 @@ lappend disable_on_lock \
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-.mbar.commit add command -label {Include All} \
+.mbar.commit add command -label {Include All In Commit} \
 	-command do_include_all \
 	-accelerator $M1T-I \
 	-font font_ui
