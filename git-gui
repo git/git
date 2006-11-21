@@ -2159,6 +2159,55 @@ proc do_commit {} {
 	commit_tree
 }
 
+proc do_about {} {
+	global appname
+
+	set w .about_dialog
+	toplevel $w
+	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
+
+	label $w.header -text "About $appname" \
+		-font font_uibold
+	pack $w.header -side top -fill x
+
+	frame $w.buttons
+	button $w.buttons.close -text {Close} \
+		-font font_ui \
+		-command [list destroy $w]
+	pack $w.buttons.close -side right
+	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
+
+	label $w.desc \
+		-text "$appname - a commit creation tool for Git.
+
+Copyright © 2006 Shawn Pearce, Paul Mackerras
+
+Use and redistribute under the terms of the
+GNU General Public License, v. 2.0 or later." \
+		-padx 5 -pady 5 \
+		-justify left \
+		-anchor w \
+		-borderwidth 1 \
+		-relief solid \
+		-font font_ui
+	pack $w.desc -side top -fill x -padx 5 -pady 5
+
+	label $w.vers \
+		-text [exec git --version] \
+		-padx 5 -pady 5 \
+		-justify left \
+		-anchor w \
+		-borderwidth 1 \
+		-relief solid \
+		-font font_ui
+	pack $w.vers -side top -fill x -padx 5 -pady 5
+
+	bind $w <Visibility> "grab $w; focus $w"
+	bind $w <Key-Escape> "destroy $w"
+	wm title $w "About $appname"
+	tkwait window $w
+}
+
 proc do_options {} {
 	global appname gitdir font_descs
 	global repo_config global_config
@@ -2610,6 +2659,7 @@ if {!$single_commit} {
 	.mbar add cascade -label Pull -menu .mbar.pull
 	.mbar add cascade -label Push -menu .mbar.push
 }
+.mbar add cascade -label Help -menu .mbar.help
 . configure -menu .mbar
 
 # -- Repository Menu
@@ -2757,6 +2807,14 @@ if {!$single_commit} {
 	menu .mbar.pull
 	menu .mbar.push
 }
+
+# -- Help Menm
+#
+menu .mbar.help
+
+.mbar.help add command -label "About $appname" \
+	-command do_about \
+	-font font_ui
 
 # -- Main Window Layout
 #
