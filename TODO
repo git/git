@@ -29,4 +29,11 @@ Items outstanding:
 
  * Show a shortlog of the last couple of commits in the main window,
    to give the user warm fuzzy feelings that we have their data
-   saved.
+   saved.  Actually this may be the set of commits not yet in
+   the upstream (aka default merge branch remote repository).
+
+ * GUI configuration editor for options listed in
+   git.git/Documentation/config.txt.  Ideally this would
+   parse that file and generate the options dialog from
+   the documentation itself, and include the help text
+   from the documentation as part of the UI somehow.
