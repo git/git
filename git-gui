@@ -1947,7 +1947,8 @@ proc do_gitk {} {
 }
 
 proc do_repack {} {
-	set w [new_console "repack" "Repacking the object database"]
+	set w [new_console {repack} \
+		{Repacking the object database}]
 	set cmd [list git repack]
 	lappend cmd -a
 	lappend cmd -d
@@ -1955,7 +1956,8 @@ proc do_repack {} {
 }
 
 proc do_fsck_objects {} {
-	set w [new_console "verify" "Verifying the object database"]
+	set w [new_console {fsck-objects} \
+		{Verifying the object database with fsck-objects}]
 	set cmd [list git fsck-objects]
 	lappend cmd --full
 	lappend cmd --cache
