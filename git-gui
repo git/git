@@ -2619,6 +2619,8 @@ menu .mbar.project
 	-command do_gitk \
 	-font font_ui
 if {!$single_commit} {
+	.mbar.project add separator
+
 	.mbar.project add command -label {Repack Database} \
 		-command do_repack \
 		-font font_ui
@@ -2626,6 +2628,8 @@ if {!$single_commit} {
 	.mbar.project add command -label {Verify Database} \
 		-command do_fsck_objects \
 		-font font_ui
+
+	.mbar.project add separator
 
 	if {$tcl_platform(platform) eq {windows}} {
 		.mbar.project add command \
