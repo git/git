@@ -79,11 +79,7 @@ Using these options, gitlink:git-rev-list[1] will act similar to the
 more specialized family of commit log tools: gitlink:git-log[1],
 gitlink:git-show[1], and gitlink:git-whatchanged[1]
 
---pretty[='<format>']::
-
-	Pretty print the contents of the commit logs in a given format,
-	where '<format>' can be one of 'raw', 'medium', 'short', 'full',
-	and 'oneline'. When left out the format default to 'medium'.
+include::pretty-formats.txt[]
 
 --relative-date::
 

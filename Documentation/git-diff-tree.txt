@@ -73,10 +73,7 @@ separated with a single space are given.
 	This flag causes "git-diff-tree --stdin" to also show
 	the commit message before the differences.
 
---pretty[=(raw|medium|short)]::
-	This is used to control "pretty printing" format of the
-	commit message.  Without "=<style>", it defaults to
-	medium.
+include::pretty-formats.txt[]
 
 --no-commit-id::
 	git-diff-tree outputs a line with the commit ID when
