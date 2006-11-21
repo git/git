@@ -7,7 +7,7 @@
 #include <string.h>
 
 static const char shortlog_usage[] =
-"git-shortlog [-n] [-s] [<commit-id>... ]\n";
+"git-shortlog [-n] [-s] [<commit-id>... ]";
 
 static int compare_by_number(const void *a1, const void *a2)
 {
@@ -15,11 +15,11 @@ static int compare_by_number(const void *a1, const void *a2)
 	const struct path_list *l1 = i1->util, *l2 = i2->util;
 
 	if (l1->nr < l2->nr)
-		return -1;
+		return 1;
 	else if (l1->nr == l2->nr)
 		return 0;
 	else
-		return +1;
+		return -1;
 }
 
 static struct path_list mailmap = {NULL, 0, 0, 0};
@@ -251,8 +251,7 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 	struct path_list list = { NULL, 0, 0, 1 };
 	int i, j, sort_by_number = 0, summary = 0;
 
-	init_revisions(&rev, prefix);
-	argc = setup_revisions(argc, argv, &rev, NULL);
+	/* since -n is a shadowed rev argument, parse our args first */
 	while (argc > 1) {
 		if (!strcmp(argv[1], "-n") || !strcmp(argv[1], "--numbered"))
 			sort_by_number = 1;
@@ -262,10 +261,14 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 		else if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help"))
 			usage(shortlog_usage);
 		else
-			die ("unrecognized argument: %s", argv[1]);
+			break;
 		argv++;
 		argc--;
 	}
+	init_revisions(&rev, prefix);
+	argc = setup_revisions(argc, argv, &rev, NULL);
+	if (argc > 1)
+		die ("unrecognized argument: %s", argv[1]);
 
 	if (!access(".mailmap", R_OK))
 		read_mailmap(".mailmap");
@@ -278,14 +281,16 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 		get_from_rev(&rev, &list);
 
 	if (sort_by_number)
-		qsort(list.items, sizeof(struct path_list_item), list.nr,
+		qsort(list.items, list.nr, sizeof(struct path_list_item),
 			compare_by_number);
 
 	for (i = 0; i < list.nr; i++) {
 		struct path_list *onelines = list.items[i].util;
 
-		printf("%s (%d):\n", list.items[i].path, onelines->nr);
-		if (!summary) {
+		if (summary) {
+			printf("%s: %d\n", list.items[i].path, onelines->nr);
+		} else {
+			printf("%s (%d):\n", list.items[i].path, onelines->nr);
 			for (j = onelines->nr - 1; j >= 0; j--)
 				printf("      %s\n", onelines->items[j].path);
 			printf("\n");
