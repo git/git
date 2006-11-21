@@ -145,6 +145,28 @@ proc error_popup {msg} {
 	eval $cmd
 }
 
+proc warn_popup {msg} {
+	global gitdir appname
+
+	set title $appname
+	if {$gitdir ne {}} {
+		append title { (}
+		append title [lindex \
+			[file split [file normalize [file dirname $gitdir]]] \
+			end]
+		append title {)}
+	}
+	set cmd [list tk_messageBox \
+		-icon warning \
+		-type ok \
+		-title "$title: warning" \
+		-message $msg]
+	if {[winfo ismapped .]} {
+		lappend cmd -parent .
+	}
+	eval $cmd
+}
+
 proc info_popup {msg} {
 	global gitdir appname
 
@@ -158,7 +180,7 @@ proc info_popup {msg} {
 	}
 	tk_messageBox \
 		-parent . \
-		-icon error \
+		-icon info \
 		-type ok \
 		-title $title \
 		-message $msg
@@ -3279,6 +3301,64 @@ set selected_commit_type new
 
 wm title . "$appname ([file normalize [file dirname $gitdir]])"
 focus -force $ui_comm
+
+# -- Warn the user about environmental problems.
+#    Cygwin's Tcl does *not* pass its env array
+#    onto any processes it spawns.  This means
+#    that the git processes get none of our
+#    environment.  That may not work...
+#
+if {[is_Windows]} {
+	set ignored_env 0
+	set suggest_user {}
+	set msg "Possible environment issues exist.
+
+The following environment variables are probably
+going to be ignored by any Git subprocess run
+by $appname:
+
+"
+	foreach name [array names env] {
+		switch -regexp -- $name {
+		{^GIT_INDEX_FILE$} -
+		{^GIT_OBJECT_DIRECTORY$} -
+		{^GIT_ALTERNATE_OBJECT_DIRECTORIES$} -
+		{^GIT_DIFF_OPTS$} -
+		{^GIT_EXTERNAL_DIFF$} -
+		{^GIT_PAGER$} -
+		{^GIT_TRACE$} -
+		{^GIT_CONFIG$} -
+		{^GIT_CONFIG_LOCAL$} -
+		{^GIT_(AUTHOR|COMMITTER)_DATE$} {
+			append msg " - $name\n"
+			incr ignored_env
+		}
+		{^GIT_(AUTHOR|COMMITTER)_(NAME|EMAIL)$} {
+			append msg " - $name\n"
+			incr ignored_env
+			set suggest_user $name
+		}
+		}
+	}
+	if {$ignored_env > 0} {
+		append msg "
+This is due to a known issue with the
+Tcl binary distributed by Cygwin."
+
+		if {$suggest_user ne {}} {
+			append msg "
+
+A good replacement for $suggest_user
+is placing values for the user.name and
+user.email settings into your personal
+~/.gitconfig file.
+"
+		}
+		warn_popup $msg
+	}
+	unset ignored_env msg suggest_user name
+}
+
 if {!$single_commit} {
 	load_all_remotes
 	populate_fetch_menu .mbar.fetch
