@@ -891,14 +891,14 @@ A good commit message has the following format:
 }
 
 proc commit_prehook {curHEAD msg} {
-	global tcl_platform gitdir ui_status_value pch_error
+	global gitdir ui_status_value pch_error
+
+	set pchook [file join $gitdir hooks pre-commit]
 
 	# On Cygwin [file executable] might lie so we need to ask
 	# the shell if the hook is executable.  Yes that's annoying.
-
-	set pchook [file join $gitdir hooks pre-commit]
-	if {$tcl_platform(platform) eq {windows}
-		&& [file isfile $pchook]} {
+	#
+	if {[is_Windows] && [file isfile $pchook]} {
 		set pchook [list sh -c [concat \
 			"if test -x \"$pchook\";" \
 			"then exec \"$pchook\" 2>&1;" \
@@ -948,7 +948,7 @@ proc commit_writetree {curHEAD msg} {
 
 proc commit_committree {fd_wt curHEAD msg} {
 	global HEAD PARENT MERGE_HEAD commit_type
-	global single_commit gitdir tcl_platform
+	global single_commit gitdir
 	global ui_status_value ui_comm selected_commit_type
 	global file_states selected_paths rescan_active
 
@@ -1016,7 +1016,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 	# -- Run the post-commit hook.
 	#
 	set pchook [file join $gitdir hooks post-commit]
-	if {$tcl_platform(platform) eq {windows} && [file isfile $pchook]} {
+	if {[is_Windows] && [file isfile $pchook]} {
 		set pchook [list sh -c [concat \
 			"if test -x \"$pchook\";" \
 			"then exec \"$pchook\";" \
@@ -1724,6 +1724,14 @@ proc is_MacOSX {} {
 	return 0
 }
 
+proc is_Windows {} {
+	global tcl_platform
+	if {$tcl_platform(platform) eq {windows}} {
+		return 1
+	}
+	return 0
+}
+
 proc bind_button3 {w cmd} {
 	bind $w <Any-Button-3> $cmd
 	if {[is_MacOSX]} {
@@ -1854,12 +1862,10 @@ proc console_init {w} {
 }
 
 proc console_exec {w cmd {after {}}} {
-	global tcl_platform
-
 	# -- Windows tosses the enviroment when we exec our child.
 	#    But most users need that so we have to relogin. :-(
 	#
-	if {$tcl_platform(platform) eq {windows}} {
+	if {[is_Windows]} {
 		set cmd [list sh --login -c "cd \"[pwd]\" && [join $cmd { }]"]
 	}
 
@@ -1934,7 +1940,7 @@ proc console_read {w fd after} {
 set starting_gitk_msg {Please wait... Starting gitk...}
 
 proc do_gitk {} {
-	global tcl_platform ui_status_value starting_gitk_msg
+	global ui_status_value starting_gitk_msg
 
 	set ui_status_value $starting_gitk_msg
 	after 10000 {
@@ -1943,7 +1949,7 @@ proc do_gitk {} {
 		}
 	}
 
-	if {$tcl_platform(platform) eq {windows}} {
+	if {[is_Windows]} {
 		exec sh -c gitk &
 	} else {
 		exec gitk &
@@ -2613,7 +2619,7 @@ font create font_diffbold
 
 set M1B M1
 set M1T M1
-if {$tcl_platform(platform) eq {windows}} {
+if {[is_Windows]} {
 	set M1B Control
 	set M1T Ctrl
 } elseif {[is_MacOSX]} {
@@ -2690,7 +2696,7 @@ if {!$single_commit} {
 
 	.mbar.repository add separator
 
-	if {$tcl_platform(platform) eq {windows}} {
+	if {[is_Windows]} {
 		.mbar.repository add command \
 			-label {Create Desktop Icon} \
 			-command do_windows_shortcut \
