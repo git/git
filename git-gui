@@ -2,10 +2,15 @@
 # Tcl ignores the next line -*- tcl -*- \
 exec wish "$0" -- "$@"
 
-# Copyright (C) 2006 Shawn Pearce, Paul Mackerras.  All rights reserved.
-# This program is free software; it may be used, copied, modified
-# and distributed under the terms of the GNU General Public Licence,
-# either version 2, or (at your option) any later version.
+set copyright {
+Copyright © 2006 Shawn Pearce, Paul Mackerras.
+
+All rights reserved.
+
+This program is free software; it may be used, copied, modified
+and distributed under the terms of the GNU General Public Licence,
+either version 2, or (at your option) any later version.
+}
 
 set appname [lindex [file split $argv0] end]
 set gitdir {}
@@ -2160,7 +2165,7 @@ proc do_commit {} {
 }
 
 proc do_about {} {
-	global appname
+	global appname copyright
 
 	set w .about_dialog
 	toplevel $w
@@ -2179,11 +2184,7 @@ proc do_about {} {
 
 	label $w.desc \
 		-text "$appname - a commit creation tool for Git.
-
-Copyright © 2006 Shawn Pearce, Paul Mackerras
-
-Use and redistribute under the terms of the
-GNU General Public License, v. 2.0 or later." \
+$copyright" \
 		-padx 5 -pady 5 \
 		-justify left \
 		-anchor w \
