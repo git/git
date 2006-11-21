@@ -7,7 +7,7 @@
 #include <string.h>
 
 static const char shortlog_usage[] =
-"git-shortlog [-n] [-s] [<commit-id>... ]\n";
+"git-shortlog [-n] [-s] [<commit-id>... ]";
 
 static int compare_by_number(const void *a1, const void *a2)
 {
@@ -287,8 +287,10 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 	for (i = 0; i < list.nr; i++) {
 		struct path_list *onelines = list.items[i].util;
 
-		printf("%s (%d):\n", list.items[i].path, onelines->nr);
-		if (!summary) {
+		if (summary) {
+			printf("%s: %d\n", list.items[i].path, onelines->nr);
+		} else {
+			printf("%s (%d):\n", list.items[i].path, onelines->nr);
 			for (j = onelines->nr - 1; j >= 0; j--)
 				printf("      %s\n", onelines->items[j].path);
 			printf("\n");
