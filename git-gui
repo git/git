@@ -1954,6 +1954,15 @@ proc do_repack {} {
 	console_exec $w $cmd
 }
 
+proc do_fsck_objects {} {
+	set w [new_console "verify" "Verifying the object database"]
+	set cmd [list git fsck-objects]
+	lappend cmd --full
+	lappend cmd --cache
+	lappend cmd --strict
+	console_exec $w $cmd
+}
+
 set is_quitting 0
 
 proc do_quit {} {
@@ -2608,6 +2617,10 @@ menu .mbar.project
 if {!$single_commit} {
 	.mbar.project add command -label {Repack Database} \
 		-command do_repack \
+		-font font_ui
+
+	.mbar.project add command -label {Verify Database} \
+		-command do_fsck_objects \
 		-font font_ui
 
 	if {$tcl_platform(platform) eq {windows}} {
