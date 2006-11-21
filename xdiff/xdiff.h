@@ -49,6 +49,9 @@ extern "C" {
 #define XDL_BDOP_CPY 2
 #define XDL_BDOP_INSB 3
 
+#define XDL_MERGE_MINIMAL 0
+#define XDL_MERGE_EAGER 1
+#define XDL_MERGE_ZEALOUS 2
 
 typedef struct s_mmfile {
 	char *ptr;
@@ -89,6 +92,10 @@ long xdl_mmfile_size(mmfile_t *mmf);
 
 int xdl_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	     xdemitconf_t const *xecfg, xdemitcb_t *ecb);
+
+int xdl_merge(mmfile_t *orig, mmfile_t *mf1, const char *name1,
+		mmfile_t *mf2, const char *name2,
+		xpparam_t const *xpp, int level, mmbuffer_t *result);
 
 #ifdef __cplusplus
 }
