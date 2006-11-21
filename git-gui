@@ -2659,7 +2659,6 @@ if {!$single_commit} {
 	.mbar add cascade -label Pull -menu .mbar.pull
 	.mbar add cascade -label Push -menu .mbar.push
 }
-.mbar add cascade -label Help -menu .mbar.help
 . configure -menu .mbar
 
 # -- Repository Menu
@@ -2730,10 +2729,6 @@ menu .mbar.edit
 .mbar.edit add command -label {Select All} \
 	-command {catch {[focus] tag add sel 0.0 end}} \
 	-accelerator $M1T-A \
-	-font font_ui
-.mbar.edit add separator
-.mbar.edit add command -label {Options...} \
-	-command do_options \
 	-font font_ui
 
 # -- Commit Menu
@@ -2808,13 +2803,36 @@ if {!$single_commit} {
 	menu .mbar.push
 }
 
-# -- Help Menm
-#
-menu .mbar.help
+if {[is_MacOSX]} {
+	# -- Apple Menu (Mac OS X only)
+	#
+	.mbar add cascade -label Apple -menu .mbar.apple
+	menu .mbar.apple
 
-.mbar.help add command -label "About $appname" \
-	-command do_about \
-	-font font_ui
+	.mbar.apple add command -label "About $appname" \
+		-command do_about \
+		-font font_ui
+	.mbar.apple add command -label "$appname Options..." \
+		-command do_options \
+		-font font_ui
+} else {
+	# -- Edit Menu
+	#
+	.mbar.edit add separator
+	.mbar.edit add command -label {Options...} \
+		-command do_options \
+		-font font_ui
+
+	# -- Help Menu
+	#
+	.mbar add cascade -label Help -menu .mbar.help
+	menu .mbar.help
+
+	.mbar.help add command -label "About $appname" \
+		-command do_about \
+		-font font_ui
+}
+
 
 # -- Main Window Layout
 #
