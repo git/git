@@ -159,6 +159,24 @@ then
 	shift
 	head_arg="$1"
 	shift
+elif ! git-rev-parse --verify HEAD 2>/dev/null
+then
+	# If the merged head is a valid one there is no reason to
+	# forbid "git merge" into a branch yet to be born.  We do
+	# the same for "git pull".
+	if test 1 -ne $#
+	then
+		echo >&2 "Can merge only exactly one commit into empty head"
+		exit 1
+	fi
+
+	rh=$(git rev-parse --verify "$1^0") ||
+		die "$1 - not something we can merge"
+
+	git-update-ref -m "initial pull" HEAD "$rh" "" &&
+	git-read-tree --reset -u HEAD
+	exit
+
 else
 	# We are invoked directly as the first-class UI.
 	head_arg=HEAD
