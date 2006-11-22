@@ -161,8 +161,22 @@ sub new {
 sub conn {
 	my $self = shift;
 	my $repo = $self->{'fullrep'};
-	if($repo =~ s/^:pserver:(?:(.*?)(?::(.*?))?@)?([^:\/]*)(?::(\d*))?//) {
-		my($user,$pass,$serv,$port) = ($1,$2,$3,$4);
+	if($repo =~ s/^:pserver(?:([^:]*)):(?:(.*?)(?::(.*?))?@)?([^:\/]*)(?::(\d*))?//) {
+		my($param,$user,$pass,$serv,$port) = ($1,$2,$3,$4,$5);
+
+		my($proxyhost,$proxyport);
+		if($param && ($param =~ m/proxy=([^;]+)/)) {
+			$proxyhost = $1;
+			# Default proxyport, if not specified, is 8080.
+			$proxyport = 8080;
+			if($ENV{"CVS_PROXY_PORT"}) {
+				$proxyport = $ENV{"CVS_PROXY_PORT"};
+			}
+			if($param =~ m/proxyport=([^;]+)/){
+				$proxyport = $1;
+			}
+		}
+
 		$user="anonymous" unless defined $user;
 		my $rr2 = "-";
 		unless($port) {
@@ -187,13 +201,43 @@ sub conn {
 		}
 		$pass="A" unless $pass;
 
-		my $s = IO::Socket::INET->new(PeerHost => $serv, PeerPort => $port);
-		die "Socket to $serv: $!\n" unless defined $s;
+		my ($s, $rep);
+		if($proxyhost) {
+
+			# Use a HTTP Proxy. Only works for HTTP proxies that
+			# don't require user authentication
+			#
+			# See: http://www.ietf.org/rfc/rfc2817.txt
+
+			$s = IO::Socket::INET->new(PeerHost => $proxyhost, PeerPort => $proxyport);
+			die "Socket to $proxyhost: $!\n" unless defined $s;
+			$s->write("CONNECT $serv:$port HTTP/1.1\r\nHost: $serv:$port\r\n\r\n")
+	                        or die "Write to $proxyhost: $!\n";
+	                $s->flush();
+
+			$rep = <$s>;
+
+			# The answer should look like 'HTTP/1.x 2yy ....'
+			if(!($rep =~ m#^HTTP/1\.. 2[0-9][0-9]#)) {
+				die "Proxy connect: $rep\n";
+			}
+			# Skip up to the empty line of the proxy server output
+			# including the response headers.
+			while ($rep = <$s>) {
+				last if (!defined $rep ||
+					 $rep eq "\n" ||
+					 $rep eq "\r\n");
+			}
+		} else {
+			$s = IO::Socket::INET->new(PeerHost => $serv, PeerPort => $port);
+			die "Socket to $serv: $!\n" unless defined $s;
+		}
+
 		$s->write("BEGIN AUTH REQUEST\n$repo\n$user\n$pass\nEND AUTH REQUEST\n")
 			or die "Write to $serv: $!\n";
 		$s->flush();
 
-		my $rep = <$s>;
+		$rep = <$s>;
 
 		if($rep ne "I LOVE YOU\n") {
 			$rep="<unknown>" unless $rep;
