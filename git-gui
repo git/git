@@ -2637,14 +2637,15 @@ catch {
 font create font_uibold
 font create font_diffbold
 
-set M1B M1
-set M1T M1
 if {[is_Windows]} {
 	set M1B Control
 	set M1T Ctrl
 } elseif {[is_MacOSX]} {
 	set M1B M1
 	set M1T Cmd
+} else {
+	set M1B M1
+	set M1T M1
 }
 
 proc apply_config {} {
