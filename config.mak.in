@@ -13,7 +13,6 @@ bindir = @bindir@
 #gitexecdir = @libexecdir@/git-core/
 datarootdir = @datarootdir@
 template_dir = @datadir@/git-core/templates/
-GIT_PYTHON_DIR = @datadir@/git-core/python
 
 mandir=@mandir@
 
@@ -23,7 +22,6 @@ VPATH = @srcdir@
 export exec_prefix mandir
 export srcdir VPATH
 
-NO_PYTHON=@NO_PYTHON@
 NEEDS_SSL_WITH_CRYPTO=@NEEDS_SSL_WITH_CRYPTO@
 NO_OPENSSL=@NO_OPENSSL@
 NO_CURL=@NO_CURL@

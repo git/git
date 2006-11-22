@@ -141,7 +141,7 @@ $ git commit -a
 ------------------------------------------------
 
 at this point the two branches have diverged, with different changes
-made in each.  To merge the changes made in the two branches, run
+made in each.  To merge the changes made in experimental into master, run
 
 ------------------------------------------------
 $ git pull . experimental

@@ -69,8 +69,6 @@ all:
 #
 # Define NO_MMAP if you want to avoid mmap.
 #
-# Define WITH_OWN_SUBPROCESS_PY if you want to use with python 2.3.
-#
 # Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
 #
 # Define NO_SOCKADDR_STORAGE if your platform does not have struct
@@ -116,7 +114,6 @@ prefix = $(HOME)
 bindir = $(prefix)/bin
 gitexecdir = $(bindir)
 template_dir = $(prefix)/share/git-core/templates/
-GIT_PYTHON_DIR = $(prefix)/share/git-core/python
 # DESTDIR=
 
 # default configuration for gitweb
@@ -135,7 +132,7 @@ GITWEB_FAVICON = git-favicon.png
 GITWEB_SITE_HEADER =
 GITWEB_SITE_FOOTER =
 
-export prefix bindir gitexecdir template_dir GIT_PYTHON_DIR
+export prefix bindir gitexecdir template_dir
 
 CC = gcc
 AR = ar
@@ -179,12 +176,8 @@ SCRIPT_PERL = \
 	git-svnimport.perl git-cvsexportcommit.perl \
 	git-send-email.perl git-svn.perl
 
-SCRIPT_PYTHON = \
-	git-merge-recursive-old.py
-
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
-	  $(patsubst %.py,%,$(SCRIPT_PYTHON)) \
 	  git-cherry-pick git-status git-instaweb
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
@@ -227,12 +220,6 @@ endif
 ifndef PERL_PATH
 	PERL_PATH = /usr/bin/perl
 endif
-ifndef PYTHON_PATH
-	PYTHON_PATH = /usr/bin/python
-endif
-
-PYMODULES = \
-	gitMergeCommon.py
 
 LIB_FILE=libgit.a
 XDIFF_LIB=xdiff/lib.a
@@ -424,16 +411,6 @@ endif
 -include config.mak.autogen
 -include config.mak
 
-ifdef WITH_OWN_SUBPROCESS_PY
-	PYMODULES += compat/subprocess.py
-else
-	ifeq ($(NO_PYTHON),)
-		ifneq ($(shell $(PYTHON_PATH) -c 'import subprocess;print"OK"' 2>/dev/null),OK)
-			PYMODULES += compat/subprocess.py
-		endif
-	endif
-endif
-
 ifndef NO_CURL
 	ifdef CURLDIR
 		# This is still problematic -- gcc does not always want -R.
@@ -575,8 +552,6 @@ prefix_SQ = $(subst ','\'',$(prefix))
 
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
-PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
-GIT_PYTHON_DIR_SQ = $(subst ','\'',$(GIT_PYTHON_DIR))
 
 LIBS = $(GITLIBS) $(EXTLIBS)
 
@@ -623,7 +598,6 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	    -e 's|@@PERL@@|$(PERL_PATH_SQ)|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
-	    -e 's/@@NO_PYTHON@@/$(NO_PYTHON)/g' \
 	    $@.sh >$@+
 	chmod +x $@+
 	mv $@+ $@
@@ -642,15 +616,6 @@ $(patsubst %.perl,%,$(SCRIPT_PERL)): % : %.perl
 	    -e 's|@@INSTLIBDIR@@|'"$$INSTLIBDIR"'|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    $@.perl >$@+
-	chmod +x $@+
-	mv $@+ $@
-
-$(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py GIT-CFLAGS
-	rm -f $@ $@+
-	sed -e '1s|#!.*python|#!$(PYTHON_PATH_SQ)|' \
-	    -e 's|@@GIT_PYTHON_PATH@@|$(GIT_PYTHON_DIR_SQ)|g' \
-	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
-	    $@.py >$@+
 	chmod +x $@+
 	mv $@+ $@
 
@@ -690,7 +655,6 @@ git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
-	    -e 's/@@NO_PYTHON@@/$(NO_PYTHON)/g' \
 	    -e '/@@GITWEB_CGI@@/r gitweb/gitweb.cgi' \
 	    -e '/@@GITWEB_CGI@@/d' \
 	    -e '/@@GITWEB_CSS@@/r gitweb/gitweb.css' \
@@ -710,7 +674,6 @@ configure: configure.ac
 git$X git.spec \
 	$(patsubst %.sh,%,$(SCRIPT_SH)) \
 	$(patsubst %.perl,%,$(SCRIPT_PERL)) \
-	$(patsubst %.py,%,$(SCRIPT_PYTHON)) \
 	: GIT-VERSION-FILE
 
 %.o: %.c GIT-CFLAGS
@@ -784,7 +747,7 @@ tags:
 	find . -name '*.[hcS]' -print | xargs ctags -a
 
 ### Detect prefix changes
-TRACK_CFLAGS = $(subst ','\'',$(ALL_CFLAGS)):$(GIT_PYTHON_DIR_SQ):\
+TRACK_CFLAGS = $(subst ','\'',$(ALL_CFLAGS)):\
              $(bindir_SQ):$(gitexecdir_SQ):$(template_dir_SQ):$(prefix_SQ)
 
 GIT-CFLAGS: .FORCE-GIT-CFLAGS
@@ -800,7 +763,6 @@ GIT-CFLAGS: .FORCE-GIT-CFLAGS
 # However, the environment gets quite big, and some programs have problems
 # with that.
 
-export NO_PYTHON
 export NO_SVN_TESTS
 
 test: all
@@ -835,8 +797,6 @@ install: all
 	$(INSTALL) git$X gitk '$(DESTDIR_SQ)$(bindir_SQ)'
 	$(MAKE) -C templates DESTDIR='$(DESTDIR_SQ)' install
 	$(MAKE) -C perl install
-	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
-	$(INSTALL) $(PYMODULES) '$(DESTDIR_SQ)$(GIT_PYTHON_DIR_SQ)'
 	if test 'z$(bindir_SQ)' != 'z$(gitexecdir_SQ)'; \
 	then \
 		ln -f '$(DESTDIR_SQ)$(bindir_SQ)/git$X' \
@@ -923,7 +883,6 @@ check-docs::
 		case "$$v" in \
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
 		git-merge-resolve | git-merge-stupid | git-merge-recur | \
-		git-merge-recursive-old | \
 		git-ssh-pull | git-ssh-push ) continue ;; \
 		esac ; \
 		test -f "Documentation/$$v.txt" || \

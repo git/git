@@ -20,10 +20,10 @@ modification *should* take notice and update the test vectors here.
 
 ################################################################
 # It appears that people are getting bitten by not installing
-# 'merge' (usually part of RCS package in binary distributions)
-# or have too old python without subprocess.  Check them and error
-# out before running any tests.  Also catch the bogosity of trying
-# to run tests without building while we are at it.
+# 'merge' (usually part of RCS package in binary distributions).
+# Check this and error out before running any tests.  Also catch
+# the bogosity of trying to run tests without building while we
+# are at it.
 
 ../git >/dev/null
 if test $? != 1
@@ -41,12 +41,6 @@ Please check INSTALL document.'
 fi
 
 . ./test-lib.sh
-
-test "$no_python" || "$PYTHON" -c 'import subprocess' || {
-	echo >&2 'Your python seem to lack "subprocess" module.
-Please check INSTALL document.'
-	exit 1
-}
 
 ################################################################
 # init-db has been done in an empty repository.
