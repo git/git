@@ -67,8 +67,10 @@ match:
 		return 0;
 
 	if ((flag & REF_ISPACKED) && !peel_ref(refname, peeled)) {
-		hex = find_unique_abbrev(peeled, abbrev);
-		printf("%s %s^{}\n", hex, refname);
+		if (!is_null_sha1(peeled)) {
+			hex = find_unique_abbrev(peeled, abbrev);
+			printf("%s %s^{}\n", hex, refname);
+		}
 	}
 	else {
 		obj = parse_object(sha1);

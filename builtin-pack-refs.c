@@ -46,8 +46,8 @@ static int handle_one_ref(const char *path, const unsigned char *sha1,
 		if (o->type == OBJ_TAG) {
 			o = deref_tag(o, path, 0);
 			if (o)
-				fprintf(cb->refs_file, "%s  %s^{}\n",
-					sha1_to_hex(o->sha1), path);
+				fprintf(cb->refs_file, "^%s\n",
+					sha1_to_hex(o->sha1));
 		}
 	}
 
@@ -111,6 +111,10 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 	if (!cbdata.refs_file)
 		die("unable to create ref-pack file structure (%s)",
 		    strerror(errno));
+
+	/* perhaps other traits later as well */
+	fprintf(cbdata.refs_file, "# pack-refs with: peeled \n");
+
 	for_each_ref(handle_one_ref, &cbdata);
 	fflush(cbdata.refs_file);
 	fsync(fd);

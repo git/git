@@ -10,14 +10,13 @@ struct ref_lock {
 	int force_write;
 };
 
+#define REF_ISSYMREF 01
+#define REF_ISPACKED 02
+
 /*
  * Calls the specified function for each ref file until it returns nonzero,
  * and returns the value
  */
-#define REF_ISSYMREF 01
-#define REF_ISPACKED 02
-#define REF_ISPEELED 04 /* internal use */
-
 typedef int each_ref_fn(const char *refname, const unsigned char *sha1, int flags, void *cb_data);
 extern int head_ref(each_ref_fn, void *);
 extern int for_each_ref(each_ref_fn, void *);
