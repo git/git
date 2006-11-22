@@ -1959,20 +1959,28 @@ proc console_read {w fd after} {
 
 set starting_gitk_msg {Please wait... Starting gitk...}
 
-proc do_gitk {} {
+proc do_gitk {revs} {
 	global ui_status_value starting_gitk_msg
 
-	set ui_status_value $starting_gitk_msg
-	after 10000 {
-		if {$ui_status_value eq $starting_gitk_msg} {
-			set ui_status_value {Ready.}
-		}
+	set cmd gitk
+	if {$revs ne {}} {
+		append cmd { }
+		append cmd $revs
 	}
-
 	if {[is_Windows]} {
-		exec sh -c gitk &
+		set cmd "sh -c \"exec $cmd\""
+	}
+	append cmd { &}
+
+	if {[catch {eval exec $cmd} err]} {
+		error_popup "Failed to start gitk:\n\n$err"
 	} else {
-		exec gitk &
+		set ui_status_value $starting_gitk_msg
+		after 10000 {
+			if {$ui_status_value eq $starting_gitk_msg} {
+				set ui_status_value {Ready.}
+			}
+		}
 	}
 }
 
@@ -2701,12 +2709,17 @@ if {!$single_commit} {
 # -- Repository Menu
 #
 menu .mbar.repository
-.mbar.repository add command -label Visualize \
-	-command do_gitk \
+.mbar.repository add command \
+	-label {Visualize Current Branch} \
+	-command {do_gitk {}} \
 	-font font_ui
-if {!$single_commit} {
-	.mbar.repository add separator
+.mbar.repository add command \
+	-label {Visualize All Branches} \
+	-command {do_gitk {--all}} \
+	-font font_ui
+.mbar.repository add separator
 
+if {!$single_commit} {
 	.mbar.repository add command -label {Repack Database} \
 		-command do_repack \
 		-font font_ui
