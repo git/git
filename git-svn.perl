@@ -589,6 +589,13 @@ sub dcommit {
 	chomp(my @refs = safe_qx(qw/git-rev-list --no-merges/, "$gs..HEAD"));
 	my $last_rev;
 	foreach my $d (reverse @refs) {
+		if (quiet_run('git-rev-parse','--verify',"$d~1") != 0) {
+			die "Commit $d\n",
+			    "has no parent commit, and therefore ",
+			    "nothing to diff against.\n",
+			    "You should be working from a repository ",
+			    "originally created by git-svn\n";
+		}
 		unless (defined $last_rev) {
 			(undef, $last_rev, undef) = cmt_metadata("$d~1");
 			unless (defined $last_rev) {
