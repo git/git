@@ -26,10 +26,7 @@ OPTIONS
 <commitid>::
 	ID of the commit to show.
 
---pretty=<format>::
-	Controls the output format for the commit logs.
-	<format> can be one of 'raw', 'medium', 'short', 'full',
-	and 'oneline'.
+include::pretty-formats.txt[]
 
 Author
 ------

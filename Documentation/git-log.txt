@@ -24,8 +24,8 @@ This manual page describes only the most frequently used options.
 
 OPTIONS
 -------
---pretty=<format>::
-	Controls the way the commit log is formatted.
+
+include::pretty-formats.txt[]
 
 --max-count=<n>::
 	Limits the number of commits to show.
