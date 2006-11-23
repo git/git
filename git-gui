@@ -1122,11 +1122,13 @@ proc pull_remote {remote branch} {
 	#
 	repository_state curType curHEAD curMERGE_HEAD
 	if {$commit_type ne $curType || $HEAD ne $curHEAD} {
-		error_popup {Last scanned state does not match repository state.
+		info_popup {Last scanned state does not match repository state.
 
-Its highly likely that another Git program modified the
-repository since our last scan.  A rescan is required
-before a pull can be started.
+Another Git program has modified this repository
+since the last scan.  A rescan must be performed
+before a pull operation can be started.
+
+The rescan will be automatically started now.
 }
 		unlock_index
 		rescan {set ui_status_value {Ready.}}
@@ -1138,10 +1140,12 @@ before a pull can be started.
 	if {[array size file_states] != 0} {
 		error_popup {Uncommitted but modified files are present.
 
-You should not perform a pull with unmodified files in your working
-directory as Git would be unable to recover from an incorrect merge.
+You should not perform a pull with unmodified
+files in your working directory as Git will be
+unable to recover from an incorrect merge.
 
-Commit or throw away all changes before starting a pull operation.
+You should commit or revert all changes before
+starting a pull operation.
 }
 		unlock_index
 		return
