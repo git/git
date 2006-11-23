@@ -88,6 +88,10 @@ then
 	: >"$GIT_DIR/FETCH_HEAD"
 fi
 
+# Global that is reused later
+ls_remote_result=$(git ls-remote $upload_pack "$remote") ||
+	die "Cannot find the reflist at $remote"
+
 append_fetch_head () {
     head_="$1"
     remote_="$2"
@@ -233,10 +237,7 @@ reflist=$(get_remote_refs_for_fetch "$@")
 if test "$tags"
 then
 	taglist=`IFS="	" &&
-		  (
-			git-ls-remote $upload_pack --tags "$remote" ||
-			echo fail ouch
-		  ) |
+		  echo "$ls_remote_result" |
 	          while read sha1 name
 		  do
 			case "$sha1" in
@@ -245,6 +246,8 @@ then
 			esac
 			case "$name" in
 			*^*) continue ;;
+			refs/tags/*) ;;
+			*) continue ;;
 			esac
 		  	if git-check-ref-format "$name"
 			then
@@ -431,7 +434,7 @@ case "$no_tags$tags" in
 		# effective only when we are following remote branch
 		# using local tracking branch.
 		taglist=$(IFS=" " &&
-		git-ls-remote $upload_pack --tags "$remote" |
+		echo "$ls_remote_result" |
 		sed -n	-e 's|^\('"$_x40"'\)	\(refs/tags/.*\)^{}$|\1 \2|p' \
 			-e 's|^\('"$_x40"'\)	\(refs/tags/.*\)$|\1 \2|p' |
 		while read sha1 name
