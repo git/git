@@ -307,22 +307,20 @@ fetch_main () {
 		"`git-repo-config --bool http.noEPSV`" = true ]; then
 	      noepsv_opt="--disable-epsv"
 	  fi
-	  max_depth=5
-	  depth=0
-	  head="ref: $remote_name"
-	  while (expr "z$head" : "zref:" && expr $depth \< $max_depth) >/dev/null
-	  do
-	    remote_name_quoted=$(@@PERL@@ -e '
-	      my $u = $ARGV[0];
-              $u =~ s/^ref:\s*//;
-	      $u =~ s{([^-a-zA-Z0-9/.])}{sprintf"%%%02x",ord($1)}eg;
-	      print "$u";
-	  ' "$head")
-	    head=$(curl -nsfL $curl_extra_args $noepsv_opt "$remote/$remote_name_quoted")
-	    depth=$( expr \( $depth + 1 \) )
-	  done
+
+	  # Find $remote_name from ls-remote output.
+	  head=$(
+		IFS='	'
+		echo "$ls_remote_result" |
+		while read sha1 name
+		do
+			test "z$name" = "z$remote_name" || continue
+			echo "$sha1"
+			break
+		done
+	  )
 	  expr "z$head" : "z$_x40\$" >/dev/null ||
-	      die "Failed to fetch $remote_name from $remote"
+		die "No such ref $remote_name at $remote"
 	  echo >&2 "Fetching $remote_name from $remote using $proto"
 	  git-http-fetch -v -a "$head" "$remote/" || exit
 	  ;;
