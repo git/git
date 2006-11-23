@@ -232,7 +232,7 @@ sub rebuild {
 		my @commit = grep(/^git-svn-id: /,`git-cat-file commit $c`);
 		next if (!@commit); # skip merges
 		my ($url, $rev, $uuid) = extract_metadata($commit[$#commit]);
-		if (!$rev || !$uuid) {
+		if (!defined $rev || !$uuid) {
 			croak "Unable to extract revision or UUID from ",
 				"$c, $commit[$#commit]\n";
 		}
@@ -832,8 +832,14 @@ sub commit_diff {
 		print STDERR "Needed URL or usable git-svn id command-line\n";
 		commit_diff_usage();
 	}
-	my $r = shift || $_revision;
-	die "-r|--revision is a required argument\n" unless (defined $r);
+	my $r = shift;
+	unless (defined $r) {
+		if (defined $_revision) {
+			$r = $_revision
+		} else {
+			die "-r|--revision is a required argument\n";
+		}
+	}
 	if (defined $_message && defined $_file) {
 		print STDERR "Both --message/-m and --file/-F specified ",
 				"for the commit message.\n",
@@ -2493,7 +2499,7 @@ sub extract_metadata {
 	my $id = shift or return (undef, undef, undef);
 	my ($url, $rev, $uuid) = ($id =~ /^git-svn-id:\s(\S+?)\@(\d+)
 							\s([a-f\d\-]+)$/x);
-	if (!$rev || !$uuid || !$url) {
+	if (!defined $rev || !$uuid || !$url) {
 		# some of the original repositories I made had
 		# identifiers like this:
 		($rev, $uuid) = ($id =~/^git-svn-id:\s(\d+)\@([a-f\d\-]+)/);
