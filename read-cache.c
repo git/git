@@ -347,13 +347,13 @@ int add_file_to_index(const char *path, int verbose)
 	ce->ce_mode = create_ce_mode(st.st_mode);
 	if (!trust_executable_bit) {
 		/* If there is an existing entry, pick the mode bits
-		 * from it, otherwise force to 644.
+		 * from it, otherwise assume unexecutable.
 		 */
 		int pos = cache_name_pos(path, namelen);
 		if (pos >= 0)
 			ce->ce_mode = active_cache[pos]->ce_mode;
-		else
-			ce->ce_mode = create_ce_mode(S_IFREG | 0644);
+		else if (S_ISREG(st.st_mode))
+			ce->ce_mode = create_ce_mode(S_IFREG | 0666);
 	}
 
 	if (index_path(ce->sha1, path, &st, 1))

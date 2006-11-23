@@ -27,7 +27,7 @@ test_expect_success \
 	 git-add xfoo1 &&
 	 case "`git-ls-files --stage xfoo1`" in
 	 100644" "*xfoo1) echo ok;;
-	 *) echo fail; git-ls-files --stage xfoo1; exit 1;;
+	 *) echo fail; git-ls-files --stage xfoo1; (exit 1);;
 	 esac'
 
 test_expect_success \
@@ -38,7 +38,17 @@ test_expect_success \
 	 git-update-index --add xfoo2 &&
 	 case "`git-ls-files --stage xfoo2`" in
 	 100644" "*xfoo2) echo ok;;
-	 *) echo fail; git-ls-files --stage xfoo2; exit 1;;
+	 *) echo fail; git-ls-files --stage xfoo2; (exit 1);;
+	 esac'
+
+test_expect_success \
+	'git-update-index --add: Test that executable bit is not used...' \
+	'git repo-config core.filemode 0 &&
+	 ln -s xfoo2 xfoo3 &&
+	 git-update-index --add xfoo3 &&
+	 case "`git-ls-files --stage xfoo3`" in
+	 120000" "*xfoo3) echo ok;;
+	 *) echo fail; git-ls-files --stage xfoo3; (exit 1);;
 	 esac'
 
 test_done
