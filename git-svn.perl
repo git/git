@@ -623,7 +623,7 @@ sub dcommit {
 	} else {
 		print "No changes between current HEAD and $gs\n",
 		      "Hard resetting to the latest $gs\n";
-		@finish = qw/reset --hard/;
+		@finish = qw/reset --mixed/;
 	}
 	sys('git', @finish, $gs);
 }
