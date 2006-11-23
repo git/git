@@ -219,6 +219,12 @@ i18n.commitEncoding::
 	browser (and possibly at other places in the future or in other
 	porcelains). See e.g. gitlink:git-mailinfo[1]. Defaults to 'utf-8'.
 
+log.showroot::
+	If true, the initial commit will be shown as a big creation event.
+	This is equivalent to a diff against an empty tree.
+	Tools like gitlink:git-log[1] or gitlink:git-whatchanged[1], which
+	normally hide the root commit will now show it. True by default.
+
 merge.summary::
 	Whether to include summaries of merged commits in newly created
 	merge commit messages. False by default.

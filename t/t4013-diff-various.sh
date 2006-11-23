@@ -73,6 +73,7 @@ test_expect_success setup '
 	for i in 1 2; do echo $i; done >>dir/sub &&
 	git update-index file0 dir/sub &&
 
+	git repo-config log.showroot false &&
 	git commit --amend &&
 	git show-branch
 '
