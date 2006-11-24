@@ -565,7 +565,7 @@ static void receive_needs(void)
 			SHALLOW, NOT_SHALLOW);
 		while (result) {
 			struct object *object = &result->item->object;
-			if (!(object->flags & CLIENT_SHALLOW)) {
+			if (!(object->flags & (CLIENT_SHALLOW|NOT_SHALLOW))) {
 				packet_write(1, "shallow %s",
 						sha1_to_hex(object->sha1));
 				register_shallow(object->sha1);
