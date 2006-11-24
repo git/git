@@ -11,7 +11,7 @@
 #include "builtin.h"
 
 static const char builtin_branch_usage[] =
-"git-branch (-d | -D) <branchname> | [-l] [-f] <branchname> [<start-point>] | [-r] | [-a]";
+"git-branch (-d | -D) <branchname> | [-l] [-f] <branchname> [<start-point>] | [-r | -a] [-v] [--abbrev=<length>] ";
 
 
 static const char *head;
@@ -87,10 +87,11 @@ static void delete_branches(int argc, const char **argv, int force)
 struct ref_item {
 	char *name;
 	unsigned int kind;
+	unsigned char sha1[20];
 };
 
 struct ref_list {
-	int index, alloc;
+	int index, alloc, maxwidth;
 	struct ref_item *list;
 	int kinds;
 };
@@ -100,6 +101,7 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	struct ref_list *ref_list = (struct ref_list*)(cb_data);
 	struct ref_item *newitem;
 	int kind = REF_UNKNOWN_TYPE;
+	int len;
 
 	/* Detect kind */
 	if (!strncmp(refname, "refs/heads/", 11)) {
@@ -128,6 +130,10 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	newitem = &(ref_list->list[ref_list->index++]);
 	newitem->name = xstrdup(refname);
 	newitem->kind = kind;
+	hashcpy(newitem->sha1, sha1);
+	len = strlen(newitem->name);
+	if (len > ref_list->maxwidth)
+		ref_list->maxwidth = len;
 
 	return 0;
 }
@@ -151,7 +157,24 @@ static int ref_cmp(const void *r1, const void *r2)
 	return strcmp(c1->name, c2->name);
 }
 
-static void print_ref_list(int kinds)
+static void print_ref_info(const unsigned char *sha1, int abbrev)
+{
+	struct commit *commit;
+	char subject[256];
+
+
+	commit = lookup_commit(sha1);
+	if (commit && !parse_commit(commit))
+		pretty_print_commit(CMIT_FMT_ONELINE, commit, ~0,
+				    subject, sizeof(subject), 0,
+				    NULL, NULL, 0);
+	else
+		strcpy(subject, " **** invalid ref ****");
+
+	printf(" %s %s\n", find_unique_abbrev(sha1, abbrev), subject);
+}
+
+static void print_ref_list(int kinds, int verbose, int abbrev)
 {
 	int i;
 	char c;
@@ -169,7 +192,13 @@ static void print_ref_list(int kinds)
 				!strcmp(ref_list.list[i].name, head))
 			c = '*';
 
-		printf("%c %s\n", c, ref_list.list[i].name);
+		if (verbose) {
+			printf("%c %-*s", c, ref_list.maxwidth,
+			       ref_list.list[i].name);
+			print_ref_info(ref_list.list[i].sha1, abbrev);
+		}
+		else
+			printf("%c %s\n", c, ref_list.list[i].name);
 	}
 
 	free_ref_list(&ref_list);
@@ -215,6 +244,7 @@ static void create_branch(const char *name, const char *start,
 int cmd_branch(int argc, const char **argv, const char *prefix)
 {
 	int delete = 0, force_delete = 0, force_create = 0;
+	int verbose = 0, abbrev = DEFAULT_ABBREV;
 	int reflog = 0;
 	int kinds = REF_LOCAL_BRANCH;
 	int i;
@@ -255,6 +285,14 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			reflog = 1;
 			continue;
 		}
+		if (!strncmp(arg, "--abbrev=", 9)) {
+			abbrev = atoi(arg+9);
+			continue;
+		}
+		if (!strcmp(arg, "-v")) {
+			verbose = 1;
+			continue;
+		}
 		usage(builtin_branch_usage);
 	}
 
@@ -268,7 +306,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	if (delete)
 		delete_branches(argc - i, argv + i, force_delete);
 	else if (i == argc)
-		print_ref_list(kinds);
+		print_ref_list(kinds, verbose, abbrev);
 	else if (i == argc - 1)
 		create_branch(argv[i], head, force_create, reflog);
 	else if (i == argc - 2)
