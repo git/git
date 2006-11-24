@@ -2918,7 +2918,7 @@ sub git_tag {
 	print "<div class=\"page_body\">";
 	my $comment = $tag{'comment'};
 	foreach my $line (@$comment) {
-		chomp($line);
+		chomp $line;
 		print esc_html($line, -nbsp=>1) . "<br/>\n";
 	}
 	print "</div>\n";
@@ -2988,7 +2988,7 @@ HTML
 			}
 		}
 		my $data = $_;
-		chomp($data);
+		chomp $data;
 		my $rev = substr($full_rev, 0, 8);
 		my $author = $meta->{'author'};
 		my %date = parse_date($meta->{'author-time'},
