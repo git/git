@@ -2119,7 +2119,11 @@ static void numstat_patch_list(struct patch *patch)
 	for ( ; patch; patch = patch->next) {
 		const char *name;
 		name = patch->new_name ? patch->new_name : patch->old_name;
-		printf("%d\t%d\t", patch->lines_added, patch->lines_deleted);
+		if (patch->is_binary)
+			printf("-\t-\t");
+		else
+			printf("%d\t%d\t",
+			       patch->lines_added, patch->lines_deleted);
 		if (line_termination && quote_c_style(name, NULL, NULL, 0))
 			quote_c_style(name, NULL, stdout, 0);
 		else
