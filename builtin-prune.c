@@ -20,10 +20,11 @@ static int prune_object(char *path, const char *filename, const unsigned char *s
 	const char *type;
 
 	if (show_only) {
-		type = buf;
-		if (sha1_object_info(sha1, type, NULL))
+		if (sha1_object_info(sha1, buf, NULL))
 			type = "unknown";
-		printf("%s %s\n", sha1_to_hex(sha1), type );
+		else
+			type = buf;
+		printf("%s %s\n", sha1_to_hex(sha1), type);
 		return 0;
 	}
 	unlink(mkpath("%s/%s", path, filename));
