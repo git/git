@@ -9,6 +9,9 @@
 #include "object.h"
 #include "commit.h"
 #include "exec_cmd.h"
+#include "diff.h"
+#include "revision.h"
+#include "list-objects.h"
 
 static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=nn] <dir>";
 
@@ -18,6 +21,10 @@ static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=n
 #define WANTED		(1u << 13)
 #define COMMON_KNOWN	(1u << 14)
 #define REACHABLE	(1u << 15)
+
+#define SHALLOW		(1u << 16)
+#define NOT_SHALLOW	(1u << 17)
+#define CLIENT_SHALLOW	(1u << 18)
 
 static unsigned long oldest_have;
 
@@ -57,6 +64,40 @@ static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
 	return safe_write(fd, data, sz);
 }
 
+FILE *pack_pipe = NULL;
+static void show_commit(struct commit *commit)
+{
+	if (commit->object.flags & BOUNDARY)
+		fputc('-', pack_pipe);
+	if (fputs(sha1_to_hex(commit->object.sha1), pack_pipe) < 0)
+		die("broken output pipe");
+	fputc('\n', pack_pipe);
+	fflush(pack_pipe);
+	free(commit->buffer);
+	commit->buffer = NULL;
+}
+
+static void show_object(struct object_array_entry *p)
+{
+	/* An object with name "foo\n0000000..." can be used to
+	 * confuse downstream git-pack-objects very badly.
+	 */
+	const char *ep = strchr(p->name, '\n');
+	if (ep) {
+		fprintf(pack_pipe, "%s %.*s\n", sha1_to_hex(p->item->sha1),
+		       (int) (ep - p->name),
+		       p->name);
+	}
+	else
+		fprintf(pack_pipe, "%s %s\n",
+				sha1_to_hex(p->item->sha1), p->name);
+}
+
+static void show_edge(struct commit *commit)
+{
+	fprintf(pack_pipe, "-%s\n", sha1_to_hex(commit->object.sha1));
+}
+
 static void create_pack_file(void)
 {
 	/* Pipes between rev-list to pack-objects, pack-objects to us
@@ -78,48 +119,40 @@ static void create_pack_file(void)
 
 	if (!pid_rev_list) {
 		int i;
-		int args;
-		const char **argv;
-		const char **p;
-		char *buf;
+		struct rev_info revs;
+
+		pack_pipe = fdopen(lp_pipe[1], "w");
+
+		if (create_full_pack)
+			use_thin_pack = 0; /* no point doing it */
+		init_revisions(&revs, NULL);
+		revs.tag_objects = 1;
+		revs.tree_objects = 1;
+		revs.blob_objects = 1;
+		if (use_thin_pack)
+			revs.edge_hint = 1;
 
 		if (create_full_pack) {
-			args = 10;
-			use_thin_pack = 0; /* no point doing it */
-		}
-		else
-			args = have_obj.nr + want_obj.nr + 5;
-		p = xmalloc(args * sizeof(char *));
-		argv = (const char **) p;
-		buf = xmalloc(args * 45);
-
-		dup2(lp_pipe[1], 1);
-		close(0);
-		close(lp_pipe[0]);
-		close(lp_pipe[1]);
-		*p++ = "rev-list";
-		*p++ = use_thin_pack ? "--objects-edge" : "--objects";
-		if (create_full_pack)
-			*p++ = "--all";
-		else {
+			const char *args[] = {"rev-list", "--all", NULL};
+			setup_revisions(2, args, &revs, NULL);
+		} else {
 			for (i = 0; i < want_obj.nr; i++) {
 				struct object *o = want_obj.objects[i].item;
-				*p++ = buf;
-				memcpy(buf, sha1_to_hex(o->sha1), 41);
-				buf += 41;
+				/* why??? */
+				o->flags &= ~UNINTERESTING;
+				add_pending_object(&revs, o, NULL);
 			}
-		}
-		if (!create_full_pack)
 			for (i = 0; i < have_obj.nr; i++) {
 				struct object *o = have_obj.objects[i].item;
-				*p++ = buf;
-				*buf++ = '^';
-				memcpy(buf, sha1_to_hex(o->sha1), 41);
-				buf += 41;
+				o->flags |= UNINTERESTING;
+				add_pending_object(&revs, o, NULL);
 			}
-		*p++ = NULL;
-		execv_git_cmd(argv);
-		die("git-upload-pack: unable to exec git-rev-list");
+			setup_revisions(0, NULL, &revs, NULL);
+		}
+		prepare_revision_walk(&revs);
+		mark_edges_uninteresting(revs.commits, &revs, show_edge);
+		traverse_commit_list(&revs, show_commit, show_object);
+		exit(0);
 	}
 
 	if (pipe(pu_pipe) < 0)
@@ -459,8 +492,9 @@ static int get_common_commits(void)
 
 static void receive_needs(void)
 {
+	struct object_array shallows = {0, 0, NULL};
 	static char line[1000];
-	int len;
+	int len, depth = 0;
 
 	for (;;) {
 		struct object *o;
@@ -468,8 +502,29 @@ static void receive_needs(void)
 		len = packet_read_line(0, line, sizeof(line));
 		reset_timeout();
 		if (!len)
-			return;
+			break;
 
+		if (!strncmp("shallow ", line, 8)) {
+			unsigned char sha1[20];
+			struct object *object;
+			use_thin_pack = 0;
+			if (get_sha1(line + 8, sha1))
+				die("invalid shallow line: %s", line);
+			object = parse_object(sha1);
+			if (!object)
+				die("did not find object for %s", line);
+			object->flags |= CLIENT_SHALLOW;
+			add_object_array(object, NULL, &shallows);
+			continue;
+		}
+		if (!strncmp("deepen ", line, 7)) {
+			char *end;
+			use_thin_pack = 0;
+			depth = strtol(line + 7, &end, 0);
+			if (end == line + 7 || depth <= 0)
+				die("Invalid deepen: %s", line);
+			continue;
+		}
 		if (strncmp("want ", line, 5) ||
 		    get_sha1_hex(line+5, sha1_buf))
 			die("git-upload-pack: protocol error, "
@@ -501,11 +556,58 @@ static void receive_needs(void)
 			add_object_array(o, NULL, &want_obj);
 		}
 	}
+	if (depth == 0 && shallows.nr == 0)
+		return;
+	if (depth > 0) {
+		struct commit_list *result, *backup;
+		int i;
+		backup = result = get_shallow_commits(&want_obj, depth,
+			SHALLOW, NOT_SHALLOW);
+		while (result) {
+			struct object *object = &result->item->object;
+			if (!(object->flags & (CLIENT_SHALLOW|NOT_SHALLOW))) {
+				packet_write(1, "shallow %s",
+						sha1_to_hex(object->sha1));
+				register_shallow(object->sha1);
+			}
+			result = result->next;
+		}
+		free_commit_list(backup);
+		for (i = 0; i < shallows.nr; i++) {
+			struct object *object = shallows.objects[i].item;
+			if (object->flags & NOT_SHALLOW) {
+				struct commit_list *parents;
+				packet_write(1, "unshallow %s",
+					sha1_to_hex(object->sha1));
+				object->flags &= ~CLIENT_SHALLOW;
+				/* make sure the real parents are parsed */
+				unregister_shallow(object->sha1);
+				object->parsed = 0;
+				parse_commit((struct commit *)object);
+				parents = ((struct commit *)object)->parents;
+				while (parents) {
+					add_object_array(&parents->item->object,
+							NULL, &want_obj);
+					parents = parents->next;
+				}
+			}
+			/* make sure commit traversal conforms to client */
+			register_shallow(object->sha1);
+		}
+		packet_flush(1);
+	} else
+		if (shallows.nr > 0) {
+			int i;
+			for (i = 0; i < shallows.nr; i++)
+				register_shallow(shallows.objects[i].item->sha1);
+		}
+	free(shallows.objects);
 }
 
 static int send_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
-	static const char *capabilities = "multi_ack thin-pack side-band side-band-64k ofs-delta";
+	static const char *capabilities = "multi_ack thin-pack side-band"
+		" side-band-64k ofs-delta shallow";
 	struct object *o = parse_object(sha1);
 
 	if (!o)

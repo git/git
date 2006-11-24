@@ -21,6 +21,7 @@ update_head_ok=
 exec=
 upload_pack=
 keep=
+shallow_depth=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -55,6 +56,13 @@ do
 		;;
 	--reflog-action=*)
 		rloga=`expr "z$1" : 'z-[^=]*=\(.*\)'`
+		;;
+	--depth=*)
+		shallow_depth="--depth=`expr "z$1" : 'z-[^=]*=\(.*\)'`"
+		;;
+	--depth)
+		shift
+		shallow_depth="--depth=$1"
 		;;
 	-*)
 		usage
@@ -299,6 +307,8 @@ fetch_main () {
       # There are transports that can fetch only one head at a time...
       case "$remote" in
       http://* | https://* | ftp://*)
+	  test -n "$shallow_depth" &&
+		die "shallow clone with http not supported"
 	  proto=`expr "$remote" : '\([^:]*\):'`
 	  if [ -n "$GIT_SSL_NO_VERIFY" ]; then
 	      curl_extra_args="-k"
@@ -325,6 +335,8 @@ fetch_main () {
 	  git-http-fetch -v -a "$head" "$remote/" || exit
 	  ;;
       rsync://*)
+	  test -n "$shallow_depth" &&
+		die "shallow clone with rsync not supported"
 	  TMP_HEAD="$GIT_DIR/TMP_HEAD"
 	  rsync -L -q "$remote/$remote_name" "$TMP_HEAD" || exit 1
 	  head=$(git-rev-parse --verify TMP_HEAD)
@@ -372,7 +384,7 @@ fetch_main () {
       pack_lockfile=
       IFS=" 	$LF"
       (
-	  git-fetch-pack --thin $exec $keep "$remote" $rref || echo failed "$remote"
+	  git-fetch-pack --thin $exec $keep $shallow_depth "$remote" $rref || echo failed "$remote"
       ) |
       while read sha1 remote_name
       do
@@ -450,6 +462,8 @@ case "$no_tags$tags" in
 	case "$taglist" in
 	'') ;;
 	?*)
+		# do not deepen a shallow tree when following tags
+		shallow_depth=
 		fetch_main "$taglist" ;;
 	esac
 esac
