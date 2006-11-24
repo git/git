@@ -144,6 +144,7 @@ struct refspec {
  * +A:B means overwrite remote B with local A.
  * +A is a shorthand for +A:A.
  * A is a shorthand for A:A.
+ * :B means delete remote B.
  */
 static struct refspec *parse_ref_spec(int nr_refspec, char **refspec)
 {
@@ -240,6 +241,13 @@ static struct ref *try_explicit_object_name(const char *name)
 	unsigned char sha1[20];
 	struct ref *ref;
 	int len;
+
+	if (!*name) {
+		ref = xcalloc(1, sizeof(*ref) + 20);
+		strcpy(ref->name, "(delete)");
+		hashclr(ref->new_sha1);
+		return ref;
+	}
 	if (get_sha1(name, sha1))
 		return NULL;
 	len = strlen(name) + 1;
@@ -262,7 +270,8 @@ static int match_explicit_refs(struct ref *src, struct ref *dst,
 			break;
 		case 0:
 			/* The source could be in the get_sha1() format
-			 * not a reference name.
+			 * not a reference name.  :refs/other is a
+			 * way to delete 'other' ref at the remote end.
 			 */
 			matched_src = try_explicit_object_name(rs[i].src);
 			if (matched_src)
