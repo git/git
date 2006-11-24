@@ -258,10 +258,19 @@ proc unlock_index {} {
 ## status
 
 proc repository_state {ctvar hdvar mhvar} {
-	global gitdir
+	global gitdir current_branch
 	upvar $ctvar ct $hdvar hd $mhvar mh
 
 	set mh [list]
+
+	if {[catch {set current_branch [exec git symbolic-ref HEAD]}]} {
+		set current_branch {}
+	} else {
+		regsub ^refs/(heads|tags)/ \
+			$current_branch \
+			{} \
+			current_branch
+	}
 
 	if {[catch {set hd [exec git rev-parse --verify HEAD]}]} {
 		set hd {}
@@ -3060,6 +3069,25 @@ if {[is_MacOSX]} {
 }
 
 
+# -- Branch Control
+#
+frame .branch \
+	-borderwidth 1 \
+	-relief sunken
+label .branch.l1 \
+	-text {Current Branch:} \
+	-anchor w \
+	-justify left \
+	-font font_ui
+label .branch.cb \
+	-textvariable current_branch \
+	-anchor w \
+	-justify left \
+	-font font_ui
+pack .branch.l1 -side left
+pack .branch.cb -side left -fill x
+pack .branch -side top -fill x
+
 # -- Main Window Layout
 #
 panedwindow .vpane -orient vertical
@@ -3486,6 +3514,7 @@ set PARENT {}
 set MERGE_HEAD [list]
 set commit_type {}
 set empty_tree {}
+set current_branch {}
 set current_diff {}
 set selected_commit_type new
 
