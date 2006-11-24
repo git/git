@@ -60,7 +60,9 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 					commit = NULL;
 					continue;
 				}
-				commit->util = xcalloc(1, sizeof(int));
+				if (!commit->util)
+					commit->util = xmalloc(sizeof(int));
+				*(int *)commit->util = 0;
 				cur_depth = 0;
 			} else {
 				commit = (struct commit *)
