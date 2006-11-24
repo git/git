@@ -461,6 +461,8 @@ case "$no_tags$tags" in
 	case "$taglist" in
 	'') ;;
 	?*)
+		# do not deepen a shallow tree when following tags
+		shallow_depth=
 		fetch_main "$taglist" ;;
 	esac
 esac
