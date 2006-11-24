@@ -14,7 +14,7 @@ static int deny_non_fast_forwards = 0;
 static int unpack_limit = 5000;
 static int report_status;
 
-static char capabilities[] = "report-status";
+static char capabilities[] = " report-status delete-refs ";
 static int capabilities_sent;
 
 static int receive_pack_config(const char *var, const char *value)
@@ -113,12 +113,14 @@ static int update(struct command *cmd)
 
 	strcpy(new_hex, sha1_to_hex(new_sha1));
 	strcpy(old_hex, sha1_to_hex(old_sha1));
-	if (!has_sha1_file(new_sha1)) {
+
+	if (!is_null_sha1(new_sha1) && !has_sha1_file(new_sha1)) {
 		cmd->error_string = "bad pack";
 		return error("unpack should have generated %s, "
 			     "but I can't find it!", new_hex);
 	}
-	if (deny_non_fast_forwards && !is_null_sha1(old_sha1)) {
+	if (deny_non_fast_forwards && !is_null_sha1(new_sha1) &&
+	    !is_null_sha1(old_sha1)) {
 		struct commit *old_commit, *new_commit;
 		struct commit_list *bases, *ent;
 
@@ -138,14 +140,22 @@ static int update(struct command *cmd)
 		return error("hook declined to update %s", name);
 	}
 
-	lock = lock_any_ref_for_update(name, old_sha1);
-	if (!lock) {
-		cmd->error_string = "failed to lock";
-		return error("failed to lock %s", name);
+	if (is_null_sha1(new_sha1)) {
+		if (delete_ref(name, old_sha1)) {
+			cmd->error_string = "failed to delete";
+			return error("failed to delete %s", name);
+		}
+		fprintf(stderr, "%s: %s -> deleted\n", name, old_hex);
 	}
-	write_ref_sha1(lock, new_sha1, "push");
-
-	fprintf(stderr, "%s: %s -> %s\n", name, old_hex, new_hex);
+	else {
+		lock = lock_any_ref_for_update(name, old_sha1);
+		if (!lock) {
+			cmd->error_string = "failed to lock";
+			return error("failed to lock %s", name);
+		}
+		write_ref_sha1(lock, new_sha1, "push");
+		fprintf(stderr, "%s: %s -> %s\n", name, old_hex, new_hex);
+	}
 	return 0;
 }
 
@@ -375,6 +385,16 @@ static void report(const char *unpack_status)
 	packet_flush(1);
 }
 
+static int delete_only(struct command *cmd)
+{
+	while (cmd) {
+		if (!is_null_sha1(cmd->new_sha1))
+			return 0;
+		cmd = cmd->next;
+	}
+	return 1;
+}
+
 int main(int argc, char **argv)
 {
 	int i;
@@ -408,7 +428,10 @@ int main(int argc, char **argv)
 
 	read_head_info();
 	if (commands) {
-		const char *unpack_status = unpack();
+		const char *unpack_status = NULL;
+
+		if (!delete_only(commands))
+			unpack_status = unpack();
 		if (!unpack_status)
 			execute_commands();
 		if (pack_lockfile)

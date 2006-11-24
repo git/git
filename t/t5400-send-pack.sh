@@ -64,6 +64,16 @@ test_expect_success \
 	cmp victim/.git/refs/heads/master .git/refs/heads/master
 '
 
+test_expect_success \
+        'push can be used to delete a ref' '
+	cd victim &&
+	git branch extra master &&
+	cd .. &&
+	test -f victim/.git/refs/heads/extra &&
+	git-send-pack ./victim/.git/ :extra master &&
+	! test -f victim/.git/refs/heads/extra
+'
+
 unset GIT_CONFIG GIT_CONFIG_LOCAL
 HOME=`pwd`/no-such-directory
 export HOME ;# this way we force the victim/.git/config to be used.
