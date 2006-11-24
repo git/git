@@ -700,7 +700,7 @@ int main(int argc, char **argv)
 
 		fd = hold_lock_file_for_update(&lock, shallow, 1);
 		if (!write_shallow_commits(fd, 0)) {
-			unlink(lock.filename);
+			unlink(shallow);
 			rollback_lock_file(&lock);
 		} else {
 			close(fd);
