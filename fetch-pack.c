@@ -342,7 +342,8 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 		if (!memcmp(ref->name, "refs/", 5) &&
 		    check_ref_format(ref->name + 5))
 			; /* trash */
-		else if (fetch_all) {
+		else if (fetch_all &&
+			 (!depth || strncmp(ref->name, "refs/tags/", 10) )) {
 			*newtail = ref;
 			ref->next = NULL;
 			newtail = &ref->next;
