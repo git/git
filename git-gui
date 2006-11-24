@@ -1093,6 +1093,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 		AM -
 		AD -
 		MM -
+		MD -
 		DM {
 			set file_states($path) [list \
 				_[string index $m 1] \
@@ -2211,6 +2212,7 @@ proc include_helper {txt paths} {
 		AM -
 		AD -
 		MM -
+		MD -
 		U? -
 		_M -
 		_D -
@@ -2255,6 +2257,7 @@ proc do_include_all {} {
 		AM -
 		AD -
 		MM -
+		MD -
 		_M -
 		_D {lappend paths $path}
 		}
