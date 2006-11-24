@@ -2919,7 +2919,7 @@ sub git_tag {
 	my $comment = $tag{'comment'};
 	foreach my $line (@$comment) {
 		chomp($line);
-		print esc_html($line) . "<br/>\n";
+		print esc_html($line, -nbsp=>1) . "<br/>\n";
 	}
 	print "</div>\n";
 	git_footer_html();
