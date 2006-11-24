@@ -425,6 +425,7 @@ my %actions = (
 	"history" => \&git_history,
 	"log" => \&git_log,
 	"rss" => \&git_rss,
+	"atom" => \&git_atom,
 	"search" => \&git_search,
 	"search_help" => \&git_search_help,
 	"shortlog" => \&git_shortlog,
@@ -459,7 +460,8 @@ exit;
 
 sub href(%) {
 	my %params = @_;
-	my $href = $my_uri;
+	# default is to use -absolute url() i.e. $my_uri
+	my $href = $params{-full} ? $my_url : $my_uri;
 
 	# XXX: Warning: If you touch this, check the search form for updating,
 	# too.
@@ -874,8 +876,10 @@ sub format_subject_html {
 	}
 }
 
+# format patch (diff) line (rather not to be used for diff headers)
 sub format_diff_line {
 	my $line = shift;
+	my ($from, $to) = @_;
 	my $char = substr($line, 0, 1);
 	my $diff_class = "";
 
@@ -891,6 +895,25 @@ sub format_diff_line {
 		$diff_class = " incomplete";
 	}
 	$line = untabify($line);
+	if ($from && $to && $line =~ m/^\@{2} /) {
+		my ($from_text, $from_start, $from_lines, $to_text, $to_start, $to_lines, $section) =
+			$line =~ m/^\@{2} (-(\d+)(?:,(\d+))?) (\+(\d+)(?:,(\d+))?) \@{2}(.*)$/;
+
+		$from_lines = 0 unless defined $from_lines;
+		$to_lines   = 0 unless defined $to_lines;
+
+		if ($from->{'href'}) {
+			$from_text = $cgi->a({-href=>"$from->{'href'}#l$from_start",
+			                     -class=>"list"}, $from_text);
+		}
+		if ($to->{'href'}) {
+			$to_text   = $cgi->a({-href=>"$to->{'href'}#l$to_start",
+			                     -class=>"list"}, $to_text);
+		}
+		$line = "<span class=\"chunk_info\">@@ $from_text $to_text @@</span>" .
+		        "<span class=\"section\">" . esc_html($section, -nbsp=>1) . "</span>";
+		return "<div class=\"diff$diff_class\">$line</div>\n";
+	}
 	return "<div class=\"diff$diff_class\">" . esc_html($line, -nbsp=>1) . "</div>\n";
 }
 
@@ -1176,10 +1199,12 @@ sub parse_date {
 	$date{'mday'} = $mday;
 	$date{'day'} = $days[$wday];
 	$date{'month'} = $months[$mon];
-	$date{'rfc2822'} = sprintf "%s, %d %s %4d %02d:%02d:%02d +0000",
-	                   $days[$wday], $mday, $months[$mon], 1900+$year, $hour ,$min, $sec;
+	$date{'rfc2822'}   = sprintf "%s, %d %s %4d %02d:%02d:%02d +0000",
+	                     $days[$wday], $mday, $months[$mon], 1900+$year, $hour ,$min, $sec;
 	$date{'mday-time'} = sprintf "%d %s %02d:%02d",
 	                     $mday, $months[$mon], $hour ,$min;
+	$date{'iso-8601'}  = sprintf "%04d-%02d-%02dT%02d:%02d:%02dZ",
+	                     1900+$year, $mon, $mday, $hour ,$min, $sec;
 
 	$tz =~ m/^([+\-][0-9][0-9])([0-9][0-9])$/;
 	my $local = $epoch + ((int $1 + ($2/60)) * 3600);
@@ -1187,9 +1212,9 @@ sub parse_date {
 	$date{'hour_local'} = $hour;
 	$date{'minute_local'} = $min;
 	$date{'tz_local'} = $tz;
-	$date{'iso-tz'} = sprintf ("%04d-%02d-%02d %02d:%02d:%02d %s",
-				   1900+$year, $mon+1, $mday,
-				   $hour, $min, $sec, $tz);
+	$date{'iso-tz'} = sprintf("%04d-%02d-%02d %02d:%02d:%02d %s",
+	                          1900+$year, $mon+1, $mday,
+	                          $hour, $min, $sec, $tz);
 	return %date;
 }
 
@@ -1650,14 +1675,17 @@ EOF
 		}
 	}
 	if (defined $project) {
-		printf('<link rel="alternate" title="%s log" '.
-		       'href="%s" type="application/rss+xml"/>'."\n",
+		printf('<link rel="alternate" title="%s log RSS feed" '.
+		       'href="%s" type="application/rss+xml" />'."\n",
 		       esc_param($project), href(action=>"rss"));
+		printf('<link rel="alternate" title="%s log Atom feed" '.
+		       'href="%s" type="application/atom+xml" />'."\n",
+		       esc_param($project), href(action=>"atom"));
 	} else {
 		printf('<link rel="alternate" title="%s projects list" '.
 		       'href="%s" type="text/plain; charset=utf-8"/>'."\n",
 		       $site_name, href(project=>undef, action=>"project_index"));
-		printf('<link rel="alternate" title="%s projects logs" '.
+		printf('<link rel="alternate" title="%s projects feeds" '.
 		       'href="%s" type="text/x-opml"/>'."\n",
 		       $site_name, href(project=>undef, action=>"opml"));
 	}
@@ -1723,7 +1751,9 @@ sub git_footer_html {
 			print "<div class=\"page_footer_text\">" . esc_html($descr) . "</div>\n";
 		}
 		print $cgi->a({-href => href(action=>"rss"),
-		              -class => "rss_logo"}, "RSS") . "\n";
+		              -class => "rss_logo"}, "RSS") . " ";
+		print $cgi->a({-href => href(action=>"atom"),
+		              -class => "rss_logo"}, "Atom") . "\n";
 	} else {
 		print $cgi->a({-href => href(project=>undef, action=>"opml"),
 		              -class => "rss_logo"}, "OPML") . " ";
@@ -2062,7 +2092,11 @@ sub git_difftree_body {
 				# link to patch
 				$patchno++;
 				print $cgi->a({-href => "#patch$patchno"}, "patch");
+				print " | ";
 			}
+			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
+			                             hash_base=>$hash, file_name=>$diff{'file'})},
+			              "blob") . " | ";
 			print "</td>\n";
 
 		} elsif ($diff{'status'} eq "D") { # deleted
@@ -2082,13 +2116,11 @@ sub git_difftree_body {
 			}
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'from_id'},
 			                             hash_base=>$parent, file_name=>$diff{'file'})},
-				      "blob") . " | ";
+			              "blob") . " | ";
 			if ($have_blame) {
-				print $cgi->a({-href =>
-						   href(action=>"blame",
-							hash_base=>$parent,
-							file_name=>$diff{'file'})},
-					      "blame") . " | ";
+				print $cgi->a({-href => href(action=>"blame", hash_base=>$parent,
+				                             file_name=>$diff{'file'})},
+				              "blame") . " | ";
 			}
 			print $cgi->a({-href => href(action=>"history", hash_base=>$parent,
 			                             file_name=>$diff{'file'})},
@@ -2133,13 +2165,12 @@ sub git_difftree_body {
 				      " | ";
 			}
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
-						     hash_base=>$hash, file_name=>$diff{'file'})},
-				      "blob") . " | ";
+			                             hash_base=>$hash, file_name=>$diff{'file'})},
+			               "blob") . " | ";
 			if ($have_blame) {
-				print $cgi->a({-href => href(action=>"blame",
-							     hash_base=>$hash,
-							     file_name=>$diff{'file'})},
-					      "blame") . " | ";
+				print $cgi->a({-href => href(action=>"blame", hash_base=>$hash,
+				                             file_name=>$diff{'file'})},
+				              "blame") . " | ";
 			}
 			print $cgi->a({-href => href(action=>"history", hash_base=>$hash,
 			                             file_name=>$diff{'file'})},
@@ -2178,17 +2209,16 @@ sub git_difftree_body {
 				              "diff") .
 				      " | ";
 			}
-			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'from_id'},
-						     hash_base=>$parent, file_name=>$diff{'from_file'})},
-				      "blob") . " | ";
+			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
+			                             hash_base=>$parent, file_name=>$diff{'to_file'})},
+			              "blob") . " | ";
 			if ($have_blame) {
-				print $cgi->a({-href => href(action=>"blame",
-							     hash_base=>$hash,
-							     file_name=>$diff{'to_file'})},
-					      "blame") . " | ";
+				print $cgi->a({-href => href(action=>"blame", hash_base=>$hash,
+				                             file_name=>$diff{'to_file'})},
+				              "blame") . " | ";
 			}
-			print $cgi->a({-href => href(action=>"history", hash_base=>$parent,
-			                            file_name=>$diff{'from_file'})},
+			print $cgi->a({-href => href(action=>"history", hash_base=>$hash,
+			                            file_name=>$diff{'to_file'})},
 			              "history");
 			print "</td>\n";
 
@@ -2202,31 +2232,56 @@ sub git_patchset_body {
 	my ($fd, $difftree, $hash, $hash_parent) = @_;
 
 	my $patch_idx = 0;
-	my $in_header = 0;
-	my $patch_found = 0;
+	my $patch_line;
 	my $diffinfo;
 	my (%from, %to);
+	my ($from_id, $to_id);
 
 	print "<div class=\"patchset\">\n";
 
-	LINE:
-	while (my $patch_line = <$fd>) {
+	# skip to first patch
+	while ($patch_line = <$fd>) {
 		chomp $patch_line;
 
-		if ($patch_line =~ m/^diff /) { # "git diff" header
-			# beginning of patch (in patchset)
-			if ($patch_found) {
-				# close extended header for previous empty patch
-				if ($in_header) {
-					print "</div>\n" # class="diff extended_header"
-				}
-				# close previous patch
-				print "</div>\n"; # class="patch"
-			} else {
-				# first patch in patchset
-				$patch_found = 1;
+		last if ($patch_line =~ m/^diff /);
+	}
+
+ PATCH:
+	while ($patch_line) {
+		my @diff_header;
+
+		# git diff header
+		#assert($patch_line =~ m/^diff /) if DEBUG;
+		#assert($patch_line !~ m!$/$!) if DEBUG; # is chomp-ed
+		push @diff_header, $patch_line;
+
+		# extended diff header
+	EXTENDED_HEADER:
+		while ($patch_line = <$fd>) {
+			chomp $patch_line;
+
+			last EXTENDED_HEADER if ($patch_line =~ m/^--- /);
+
+			if ($patch_line =~ m/^index ([0-9a-fA-F]{40})..([0-9a-fA-F]{40})/) {
+				$from_id = $1;
+				$to_id   = $2;
 			}
-			print "<div class=\"patch\" id=\"patch". ($patch_idx+1) ."\">\n";
+
+			push @diff_header, $patch_line;
+		}
+		#last PATCH unless $patch_line;
+		my $last_patch_line = $patch_line;
+
+		# check if current patch belong to current raw line
+		# and parse raw git-diff line if needed
+		if (defined $diffinfo &&
+		    $diffinfo->{'from_id'} eq $from_id &&
+		    $diffinfo->{'to_id'}   eq $to_id) {
+			# this is split patch
+			print "<div class=\"patch cont\">\n";
+		} else {
+			# advance raw git-diff output if needed
+			$patch_idx++ if defined $diffinfo;
 
 			# read and prepare patch information
 			if (ref($difftree->[$patch_idx]) eq "HASH") {
@@ -2247,100 +2302,112 @@ sub git_patchset_body {
 				                   hash=>$diffinfo->{'to_id'},
 				                   file_name=>$to{'file'});
 			}
-			$patch_idx++;
-
-			# print "git diff" header
-			$patch_line =~ s!^(diff (.*?) )"?a/.*$!$1!;
-			if ($from{'href'}) {
-				$patch_line .= $cgi->a({-href => $from{'href'}, -class => "path"},
-				                       'a/' . esc_path($from{'file'}));
-			} else { # file was added
-				$patch_line .= 'a/' . esc_path($from{'file'});
-			}
-			$patch_line .= ' ';
-			if ($to{'href'}) {
-				$patch_line .= $cgi->a({-href => $to{'href'}, -class => "path"},
-				                       'b/' . esc_path($to{'file'}));
-			} else { # file was deleted
-				$patch_line .= 'b/' . esc_path($to{'file'});
-			}
-
-			print "<div class=\"diff header\">$patch_line</div>\n";
-			print "<div class=\"diff extended_header\">\n";
-			$in_header = 1;
-			next LINE;
+			# this is first patch for raw difftree line with $patch_idx index
+			# we index @$difftree array from 0, but number patches from 1
+			print "<div class=\"patch\" id=\"patch". ($patch_idx+1) ."\">\n";
 		}
 
-		if ($in_header) {
-			if ($patch_line !~ m/^---/) {
-				# match <path>
-				if ($patch_line =~ s!^((copy|rename) from ).*$!$1! && $from{'href'}) {
-					$patch_line .= $cgi->a({-href=>$from{'href'}, -class=>"path"},
-					                        esc_path($from{'file'}));
-				}
-				if ($patch_line =~ s!^((copy|rename) to ).*$!$1! && $to{'href'}) {
-					$patch_line = $cgi->a({-href=>$to{'href'}, -class=>"path"},
-					                      esc_path($to{'file'}));
-				}
-				# match <mode>
-				if ($patch_line =~ m/\s(\d{6})$/) {
-					$patch_line .= '<span class="info"> (' .
-					               file_type_long($1) .
-					               ')</span>';
-				}
-				# match <hash>
-				if ($patch_line =~ m/^index/) {
-					my ($from_link, $to_link);
-					if ($from{'href'}) {
-						$from_link = $cgi->a({-href=>$from{'href'}, -class=>"hash"},
-						                     substr($diffinfo->{'from_id'},0,7));
-					} else {
-						$from_link = '0' x 7;
-					}
-					if ($to{'href'}) {
-						$to_link = $cgi->a({-href=>$to{'href'}, -class=>"hash"},
-						                   substr($diffinfo->{'to_id'},0,7));
-					} else {
-						$to_link = '0' x 7;
-					}
-					my ($from_id, $to_id) = ($diffinfo->{'from_id'}, $diffinfo->{'to_id'});
-					$patch_line =~ s!$from_id\.\.$to_id!$from_link..$to_link!;
-				}
-				print $patch_line . "<br/>\n";
+		# print "git diff" header
+		$patch_line = shift @diff_header;
+		$patch_line =~ s!^(diff (.*?) )"?a/.*$!$1!;
+		if ($from{'href'}) {
+			$patch_line .= $cgi->a({-href => $from{'href'}, -class => "path"},
+			                       'a/' . esc_path($from{'file'}));
+		} else { # file was added
+			$patch_line .= 'a/' . esc_path($from{'file'});
+		}
+		$patch_line .= ' ';
+		if ($to{'href'}) {
+			$patch_line .= $cgi->a({-href => $to{'href'}, -class => "path"},
+			                       'b/' . esc_path($to{'file'}));
+		} else { # file was deleted
+			$patch_line .= 'b/' . esc_path($to{'file'});
+		}
+		print "<div class=\"diff header\">$patch_line</div>\n";
 
-			} else {
-				#$in_header && $patch_line =~ m/^---/;
-				print "</div>\n"; # class="diff extended_header"
-				$in_header = 0;
-
+		# print extended diff header
+		print "<div class=\"diff extended_header\">\n" if (@diff_header > 0);
+	EXTENDED_HEADER:
+		foreach $patch_line (@diff_header) {
+			# match <path>
+			if ($patch_line =~ s!^((copy|rename) from ).*$!$1! && $from{'href'}) {
+				$patch_line .= $cgi->a({-href=>$from{'href'}, -class=>"path"},
+				                        esc_path($from{'file'}));
+			}
+			if ($patch_line =~ s!^((copy|rename) to ).*$!$1! && $to{'href'}) {
+				$patch_line = $cgi->a({-href=>$to{'href'}, -class=>"path"},
+				                      esc_path($to{'file'}));
+			}
+			# match <mode>
+			if ($patch_line =~ m/\s(\d{6})$/) {
+				$patch_line .= '<span class="info"> (' .
+				               file_type_long($1) .
+				               ')</span>';
+			}
+			# match <hash>
+			if ($patch_line =~ m/^index/) {
+				my ($from_link, $to_link);
 				if ($from{'href'}) {
-					$patch_line = '--- a/' .
-					              $cgi->a({-href=>$from{'href'}, -class=>"path"},
-					                      esc_path($from{'file'}));
+					$from_link = $cgi->a({-href=>$from{'href'}, -class=>"hash"},
+					                     substr($diffinfo->{'from_id'},0,7));
+				} else {
+					$from_link = '0' x 7;
 				}
-				print "<div class=\"diff from_file\">$patch_line</div>\n";
-
-				$patch_line = <$fd>;
-				chomp $patch_line;
-
-				#$patch_line =~ m/^+++/;
 				if ($to{'href'}) {
-					$patch_line = '+++ b/' .
-					              $cgi->a({-href=>$to{'href'}, -class=>"path"},
-					                      esc_path($to{'file'}));
+					$to_link = $cgi->a({-href=>$to{'href'}, -class=>"hash"},
+					                   substr($diffinfo->{'to_id'},0,7));
+				} else {
+					$to_link = '0' x 7;
 				}
-				print "<div class=\"diff to_file\">$patch_line</div>\n";
-
+				#affirm {
+				#	my ($from_hash, $to_hash) =
+				#		($patch_line =~ m/^index ([0-9a-fA-F]{40})..([0-9a-fA-F]{40})/);
+				#	my ($from_id, $to_id) =
+				#		($diffinfo->{'from_id'}, $diffinfo->{'to_id'});
+				#	($from_hash eq $from_id) && ($to_hash eq $to_id);
+				#} if DEBUG;
+				my ($from_id, $to_id) = ($diffinfo->{'from_id'}, $diffinfo->{'to_id'});
+				$patch_line =~ s!$from_id\.\.$to_id!$from_link..$to_link!;
 			}
+			print $patch_line . "<br/>\n";
+		}
+		print "</div>\n"  if (@diff_header > 0); # class="diff extended_header"
 
-			next LINE;
+		# from-file/to-file diff header
+		$patch_line = $last_patch_line;
+		#assert($patch_line =~ m/^---/) if DEBUG;
+		if ($from{'href'}) {
+			$patch_line = '--- a/' .
+			              $cgi->a({-href=>$from{'href'}, -class=>"path"},
+			                      esc_path($from{'file'}));
+		}
+		print "<div class=\"diff from_file\">$patch_line</div>\n";
+
+		$patch_line = <$fd>;
+		#last PATCH unless $patch_line;
+		chomp $patch_line;
+
+		#assert($patch_line =~ m/^+++/) if DEBUG;
+		if ($to{'href'}) {
+			$patch_line = '+++ b/' .
+			              $cgi->a({-href=>$to{'href'}, -class=>"path"},
+			                      esc_path($to{'file'}));
+		}
+		print "<div class=\"diff to_file\">$patch_line</div>\n";
+
+		# the patch itself
+	LINE:
+		while ($patch_line = <$fd>) {
+			chomp $patch_line;
+
+			next PATCH if ($patch_line =~ m/^diff /);
+
+			print format_diff_line($patch_line, \%from, \%to);
 		}
 
-		print format_diff_line($patch_line);
+	} continue {
+		print "</div>\n"; # class="patch"
 	}
-	print "</div>\n" if $in_header; # extended header
-
-	print "</div>\n" if $patch_found; # class="patch"
 
 	print "</div>\n"; # class="patchset"
 }
@@ -3392,6 +3459,7 @@ sub git_log {
 }
 
 sub git_commit {
+	$hash ||= $hash_base || "HEAD";
 	my %co = parse_commit($hash);
 	if (!%co) {
 		die_error(undef, "Unknown commit object");
@@ -3669,6 +3737,7 @@ sub git_blobdiff_plain {
 
 sub git_commitdiff {
 	my $format = shift || 'html';
+	$hash ||= $hash_base || "HEAD";
 	my %co = parse_commit($hash);
 	if (!%co) {
 		die_error(undef, "Unknown commit object");
@@ -3731,7 +3800,8 @@ sub git_commitdiff {
 			$hash_parent, $hash, "--"
 			or die_error(undef, "Open git-diff-tree failed");
 
-		while (chomp(my $line = <$fd>)) {
+		while (my $line = <$fd>) {
+			chomp $line;
 			# empty line ends raw part of diff-tree output
 			last unless $line;
 			push @difftree, $line;
@@ -4088,26 +4158,125 @@ sub git_shortlog {
 }
 
 ## ......................................................................
-## feeds (RSS, OPML)
+## feeds (RSS, Atom; OPML)
 
-sub git_rss {
-	# http://www.notestips.com/80256B3A007F2692/1/NAMO5P9UPQ
+sub git_feed {
+	my $format = shift || 'atom';
+	my ($have_blame) = gitweb_check_feature('blame');
+
+	# Atom: http://www.atomenabled.org/developers/syndication/
+	# RSS:  http://www.notestips.com/80256B3A007F2692/1/NAMO5P9UPQ
+	if ($format ne 'rss' && $format ne 'atom') {
+		die_error(undef, "Unknown web feed format");
+	}
+
+	# log/feed of current (HEAD) branch, log of given branch, history of file/directory
+	my $head = $hash || 'HEAD';
 	open my $fd, "-|", git_cmd(), "rev-list", "--max-count=150",
-		git_get_head_hash($project), "--"
+		$head, "--", (defined $file_name ? $file_name : ())
 		or die_error(undef, "Open git-rev-list failed");
 	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd or die_error(undef, "Reading git-rev-list failed");
-	print $cgi->header(-type => 'text/xml', -charset => 'utf-8');
-	print <<XML;
-<?xml version="1.0" encoding="utf-8"?>
+
+	my %latest_commit;
+	my %latest_date;
+	my $content_type = "application/$format+xml";
+	if (defined $cgi->http('HTTP_ACCEPT') &&
+		 $cgi->Accept('text/xml') > $cgi->Accept($content_type)) {
+		# browser (feed reader) prefers text/xml
+		$content_type = 'text/xml';
+	}
+	if (defined($revlist[0])) {
+		%latest_commit = parse_commit($revlist[0]);
+		%latest_date   = parse_date($latest_commit{'committer_epoch'});
+		print $cgi->header(
+			-type => $content_type,
+			-charset => 'utf-8',
+			-last_modified => $latest_date{'rfc2822'});
+	} else {
+		print $cgi->header(
+			-type => $content_type,
+			-charset => 'utf-8');
+	}
+
+	# Optimization: skip generating the body if client asks only
+	# for Last-Modified date.
+	return if ($cgi->request_method() eq 'HEAD');
+
+	# header variables
+	my $title = "$site_name - $project/$action";
+	my $feed_type = 'log';
+	if (defined $hash) {
+		$title .= " - '$hash'";
+		$feed_type = 'branch log';
+		if (defined $file_name) {
+			$title .= " :: $file_name";
+			$feed_type = 'history';
+		}
+	} elsif (defined $file_name) {
+		$title .= " - $file_name";
+		$feed_type = 'history';
+	}
+	$title .= " $feed_type";
+	my $descr = git_get_project_description($project);
+	if (defined $descr) {
+		$descr = esc_html($descr);
+	} else {
+		$descr = "$project " .
+		         ($format eq 'rss' ? 'RSS' : 'Atom') .
+		         " feed";
+	}
+	my $owner = git_get_project_owner($project);
+	$owner = esc_html($owner);
+
+	#header
+	my $alt_url;
+	if (defined $file_name) {
+		$alt_url = href(-full=>1, action=>"history", hash=>$hash, file_name=>$file_name);
+	} elsif (defined $hash) {
+		$alt_url = href(-full=>1, action=>"log", hash=>$hash);
+	} else {
+		$alt_url = href(-full=>1, action=>"summary");
+	}
+	print qq!<?xml version="1.0" encoding="utf-8"?>\n!;
+	if ($format eq 'rss') {
+		print <<XML;
 <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
 <channel>
-<title>$project $my_uri $my_url</title>
-<link>${\esc_html("$my_url?p=$project;a=summary")}</link>
-<description>$project log</description>
-<language>en</language>
 XML
+		print "<title>$title</title>\n" .
+		      "<link>$alt_url</link>\n" .
+		      "<description>$descr</description>\n" .
+		      "<language>en</language>\n";
+	} elsif ($format eq 'atom') {
+		print <<XML;
+<feed xmlns="http://www.w3.org/2005/Atom">
+XML
+		print "<title>$title</title>\n" .
+		      "<subtitle>$descr</subtitle>\n" .
+		      '<link rel="alternate" type="text/html" href="' .
+		      $alt_url . '" />' . "\n" .
+		      '<link rel="self" type="' . $content_type . '" href="' .
+		      $cgi->self_url() . '" />' . "\n" .
+		      "<id>" . href(-full=>1) . "</id>\n" .
+		      # use project owner for feed author
+		      "<author><name>$owner</name></author>\n";
+		if (defined $favicon) {
+			print "<icon>" . esc_url($favicon) . "</icon>\n";
+		}
+		if (defined $logo_url) {
+			# not twice as wide as tall: 72 x 27 pixels
+			print "<logo>" . esc_url($logo_url) . "</logo>\n";
+		}
+		if (! %latest_date) {
+			# dummy date to keep the feed valid until commits trickle in:
+			print "<updated>1970-01-01T00:00:00Z</updated>\n";
+		} else {
+			print "<updated>$latest_date{'iso-8601'}</updated>\n";
+		}
+	}
 
+	# contents
 	for (my $i = 0; $i <= $#revlist; $i++) {
 		my $commit = $revlist[$i];
 		my %co = parse_commit($commit);
@@ -4116,42 +4285,100 @@ XML
 			last;
 		}
 		my %cd = parse_date($co{'committer_epoch'});
+
+		# get list of changed files
 		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
-			$co{'parent'}, $co{'id'}, "--"
+			$co{'parent'}, $co{'id'}, "--", (defined $file_name ? $file_name : ())
 			or next;
 		my @difftree = map { chomp; $_ } <$fd>;
 		close $fd
 			or next;
-		print "<item>\n" .
-		      "<title>" .
-		      sprintf("%d %s %02d:%02d", $cd{'mday'}, $cd{'month'}, $cd{'hour'}, $cd{'minute'}) . " - " . esc_html($co{'title'}) .
-		      "</title>\n" .
-		      "<author>" . esc_html($co{'author'}) . "</author>\n" .
-		      "<pubDate>$cd{'rfc2822'}</pubDate>\n" .
-		      "<guid isPermaLink=\"true\">" . esc_html("$my_url?p=$project;a=commit;h=$commit") . "</guid>\n" .
-		      "<link>" . esc_html("$my_url?p=$project;a=commit;h=$commit") . "</link>\n" .
-		      "<description>" . esc_html($co{'title'}) . "</description>\n" .
-		      "<content:encoded>" .
-		      "<![CDATA[\n";
+
+		# print element (entry, item)
+		my $co_url = href(-full=>1, action=>"commit", hash=>$commit);
+		if ($format eq 'rss') {
+			print "<item>\n" .
+			      "<title>" . esc_html($co{'title'}) . "</title>\n" .
+			      "<author>" . esc_html($co{'author'}) . "</author>\n" .
+			      "<pubDate>$cd{'rfc2822'}</pubDate>\n" .
+			      "<guid isPermaLink=\"true\">$co_url</guid>\n" .
+			      "<link>$co_url</link>\n" .
+			      "<description>" . esc_html($co{'title'}) . "</description>\n" .
+			      "<content:encoded>" .
+			      "<![CDATA[\n";
+		} elsif ($format eq 'atom') {
+			print "<entry>\n" .
+			      "<title type=\"html\">" . esc_html($co{'title'}) . "</title>\n" .
+			      "<updated>$cd{'iso-8601'}</updated>\n" .
+			      "<author><name>" . esc_html($co{'author_name'}) . "</name></author>\n" .
+			      # use committer for contributor
+			      "<contributor><name>" . esc_html($co{'committer_name'}) . "</name></contributor>\n" .
+			      "<published>$cd{'iso-8601'}</published>\n" .
+			      "<link rel=\"alternate\" type=\"text/html\" href=\"$co_url\" />\n" .
+			      "<id>$co_url</id>\n" .
+			      "<content type=\"xhtml\" xml:base=\"" . esc_url($my_url) . "\">\n" .
+			      "<div xmlns=\"http://www.w3.org/1999/xhtml\">\n";
+		}
 		my $comment = $co{'comment'};
+		print "<pre>\n";
 		foreach my $line (@$comment) {
-			$line = to_utf8($line);
-			print "$line<br/>\n";
+			$line = esc_html($line);
+			print "$line\n";
 		}
-		print "<br/>\n";
-		foreach my $line (@difftree) {
-			if (!($line =~ m/^:([0-7]{6}) ([0-7]{6}) ([0-9a-fA-F]{40}) ([0-9a-fA-F]{40}) (.)([0-9]{0,3})\t(.*)$/)) {
-				next;
+		print "</pre><ul>\n";
+		foreach my $difftree_line (@difftree) {
+			my %difftree = parse_difftree_raw_line($difftree_line);
+			next if !$difftree{'from_id'};
+
+			my $file = $difftree{'file'} || $difftree{'to_file'};
+
+			print "<li>" .
+			      "[" .
+			      $cgi->a({-href => href(-full=>1, action=>"blobdiff",
+			                             hash=>$difftree{'to_id'}, hash_parent=>$difftree{'from_id'},
+			                             hash_base=>$co{'id'}, hash_parent_base=>$co{'parent'},
+			                             file_name=>$file, file_parent=>$difftree{'from_file'}),
+			              -title => "diff"}, 'D');
+			if ($have_blame) {
+				print $cgi->a({-href => href(-full=>1, action=>"blame",
+				                             file_name=>$file, hash_base=>$commit),
+				              -title => "blame"}, 'B');
 			}
-			my $file = esc_path(unquote($7));
-			$file = to_utf8($file);
-			print "$file<br/>\n";
+			# if this is not a feed of a file history
+			if (!defined $file_name || $file_name ne $file) {
+				print $cgi->a({-href => href(-full=>1, action=>"history",
+				                             file_name=>$file, hash=>$commit),
+				              -title => "history"}, 'H');
+			}
+			$file = esc_path($file);
+			print "] ".
+			      "$file</li>\n";
 		}
-		print "]]>\n" .
-		      "</content:encoded>\n" .
-		      "</item>\n";
+		if ($format eq 'rss') {
+			print "</ul>]]>\n" .
+			      "</content:encoded>\n" .
+			      "</item>\n";
+		} elsif ($format eq 'atom') {
+			print "</ul>\n</div>\n" .
+			      "</content>\n" .
+			      "</entry>\n";
+		}
 	}
-	print "</channel></rss>";
+
+	# end of feed
+	if ($format eq 'rss') {
+		print "</channel>\n</rss>\n";
+	}	elsif ($format eq 'atom') {
+		print "</feed>\n";
+	}
+}
+
+sub git_rss {
+	git_feed('rss');
+}
+
+sub git_atom {
+	git_feed('atom');
 }
 
 sub git_opml {
