@@ -1277,9 +1277,26 @@ proc display_file {path state} {
 	set old_w [mapcol $old_m $path]
 	set new_icon [mapicon $new_m $path]
 
+	if {$new_m eq {__}} {
+		set lno [lsearch -sorted $file_lists($old_w) $path]
+		if {$lno >= 0} {
+			set file_lists($old_w) \
+				[lreplace $file_lists($old_w) $lno $lno]
+			incr lno
+			$old_w conf -state normal
+			$old_w delete $lno.0 [expr {$lno + 1}].0
+			$old_w conf -state disabled
+		}
+		unset file_states($path)
+		catch {unset selected_paths($path)}
+		return
+	}
+
 	if {$new_w ne $old_w} {
 		set lno [lsearch -sorted $file_lists($old_w) $path]
 		if {$lno >= 0} {
+			set file_lists($old_w) \
+				[lreplace $file_lists($old_w) $lno $lno]
 			incr lno
 			$old_w conf -state normal
 			$old_w delete $lno.0 [expr {$lno + 1}].0
@@ -1485,6 +1502,84 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 		AM -
 		A_ {set new A_}
 
+		?? {continue}
+		}
+
+		puts -nonewline $fd $path
+		puts -nonewline $fd "\0"
+		display_file $path $new
+	}
+
+	set ui_status_value [format \
+		"$msg... %i/%i files (%.2f%%)" \
+		$update_index_cp \
+		$totalCnt \
+		[expr {100.0 * $update_index_cp / $totalCnt}]]
+}
+
+proc checkout_index {msg pathList after} {
+	global update_index_cp ui_status_value
+
+	if {![lock_index update]} return
+
+	set update_index_cp 0
+	set pathList [lsort $pathList]
+	set totalCnt [llength $pathList]
+	set batch [expr {int($totalCnt * .01) + 1}]
+	if {$batch > 25} {set batch 25}
+
+	set ui_status_value [format \
+		"$msg... %i/%i files (%.2f%%)" \
+		$update_index_cp \
+		$totalCnt \
+		0.0]
+	set cmd [list git checkout-index]
+	lappend cmd --index
+	lappend cmd --quiet
+	lappend cmd --force
+	lappend cmd -z
+	lappend cmd --stdin
+	set fd [open "| $cmd " w]
+	fconfigure $fd \
+		-blocking 0 \
+		-buffering full \
+		-buffersize 512 \
+		-translation binary
+	fileevent $fd writable [list \
+		write_checkout_index \
+		$fd \
+		$pathList \
+		$totalCnt \
+		$batch \
+		$msg \
+		$after \
+		]
+}
+
+proc write_checkout_index {fd pathList totalCnt batch msg after} {
+	global update_index_cp ui_status_value
+	global file_states current_diff
+
+	if {$update_index_cp >= $totalCnt} {
+		close $fd
+		unlock_index
+		uplevel #0 $after
+		return
+	}
+
+	for {set i $batch} \
+		{$update_index_cp < $totalCnt && $i > 0} \
+		{incr i -1} {
+		set path [lindex $pathList $update_index_cp]
+		incr update_index_cp
+
+		switch -glob -- [lindex $file_states($path) 0] {
+		AM -
+		AD {set new A_}
+		MM -
+		MD {set new M_}
+		_M -
+		_D {set new __}
 		?? {continue}
 		}
 
@@ -1708,11 +1803,12 @@ foreach i {
 		{_M i mod      "Modified"}
 		{M_ i fulltick "Included in commit"}
 		{MM i parttick "Partially included"}
+		{MD i question "Included (but gone)"}
 
 		{_O o plain    "Untracked"}
 		{A_ o fulltick "Added by commit"}
 		{AM o parttick "Partially added"}
-		{AD o question "Added (but now gone)"}
+		{AD o question "Added (but gone)"}
 
 		{_D i question "Missing"}
 		{DD i removed  "Removed by commit"}
@@ -2157,6 +2253,74 @@ proc do_include_all {} {
 	include_helper \
 		{Including all modified files} \
 		$paths
+}
+
+proc revert_helper {txt paths} {
+	global file_states current_diff
+
+	if {![lock_index begin-update]} return
+
+	set pathList [list]
+	set after {}
+	foreach path $paths {
+		switch -glob -- [lindex $file_states($path) 0] {
+		AM -
+		AD -
+		MM -
+		MD -
+		_M -
+		_D {
+			lappend pathList $path
+			if {$path eq $current_diff} {
+				set after {reshow_diff;}
+			}
+		}
+		}
+	}
+
+	set n [llength $pathList]
+	if {$n == 0} {
+		unlock_index
+		return
+	} elseif {$n == 1} {
+		set s "[short_path [lindex $pathList]]"
+	} else {
+		set s "these $n files"
+	}
+
+	set reply [tk_dialog \
+		.confirm_revert \
+		"title" \
+		"Revert unincluded changes in $s?
+
+Any unincluded changes will be permanently lost by the revert." \
+		questhead \
+		1 \
+		{Do Nothing} \
+		{Revert Changes} \
+		]
+	if {$reply == 1} {
+		checkout_index \
+			$txt \
+			$pathList \
+			[concat $after {set ui_status_value {Ready.}}]
+	} else {
+		unlock_index
+	}
+}
+
+proc do_revert_selection {} {
+	global current_diff selected_paths
+
+	if {[array size selected_paths] > 0} {
+		revert_helper \
+			{Reverting selected files} \
+			[array names selected_paths]
+	} elseif {$current_diff ne {}} {
+		revert_helper \
+			"Reverting [short_path $current_diff]" \
+			[list $current_diff]
+	}
 }
 
 proc do_signoff {} {
@@ -2818,12 +2982,6 @@ lappend disable_on_lock \
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-.mbar.commit add command -label {Remove From Commit} \
-	-command do_remove_selection \
-	-font font_ui
-lappend disable_on_lock \
-	[list .mbar.commit entryconf [.mbar.commit index last] -state]
-
 .mbar.commit add command -label {Include In Commit} \
 	-command do_include_selection \
 	-font font_ui
@@ -2833,6 +2991,18 @@ lappend disable_on_lock \
 .mbar.commit add command -label {Include All In Commit} \
 	-command do_include_all \
 	-accelerator $M1T-I \
+	-font font_ui
+lappend disable_on_lock \
+	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+
+.mbar.commit add command -label {Remove From Commit} \
+	-command do_remove_selection \
+	-font font_ui
+lappend disable_on_lock \
+	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+
+.mbar.commit add command -label {Revert Changes} \
+	-command do_revert_selection \
 	-font font_ui
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
