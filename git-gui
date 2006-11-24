@@ -1607,6 +1607,44 @@ proc write_checkout_index {fd pathList totalCnt batch msg after} {
 
 ######################################################################
 ##
+## branch management
+
+proc load_all_branches {} {
+	global all_branches
+
+	set all_branches [list]
+	set cmd [list git for-each-ref]
+	lappend cmd --format=%(refname)
+	lappend cmd refs/heads
+	set fd [open "| $cmd" r]
+	while {[gets $fd line] > 0} {
+		if {[regsub ^refs/heads/ $line {} line]} {
+			lappend all_branches $line
+		}
+	}
+	close $fd
+
+	set all_branches [lsort $all_branches]
+}
+
+proc populate_branch_menu {m} {
+	global all_branches disable_on_lock
+
+	$m add separator
+	foreach b $all_branches {
+		$m add radiobutton \
+			-label $b \
+			-command [list do_switch_branch $b] \
+			-variable current_branch \
+			-value $b \
+			-font font_ui
+		lappend disable_on_lock \
+			[list $m entryconf [$m index last] -state]
+	}
+}
+
+######################################################################
+##
 ## remote management
 
 proc load_all_remotes {} {
@@ -2878,6 +2916,9 @@ apply_config
 menu .mbar -tearoff 0
 .mbar add cascade -label Repository -menu .mbar.repository
 .mbar add cascade -label Edit -menu .mbar.edit
+if {!$single_commit} {
+	.mbar add cascade -label Branch -menu .mbar.branch
+}
 .mbar add cascade -label Commit -menu .mbar.commit
 if {!$single_commit} {
 	.mbar add cascade -label Fetch -menu .mbar.fetch
@@ -2962,6 +3003,24 @@ menu .mbar.edit
 	-command {catch {[focus] tag add sel 0.0 end}} \
 	-accelerator $M1T-A \
 	-font font_ui
+
+if {!$single_commit} {
+	# -- Branch Menu
+	#
+	menu .mbar.branch
+
+	.mbar.branch add command -label {Create...} \
+		-command do_create_branch \
+		-font font_ui
+	lappend disable_on_lock [list .mbar.branch entryconf \
+		[.mbar.branch index last] -state]
+
+	.mbar.branch add command -label {Delete...} \
+		-command do_delete_branch \
+		-font font_ui
+	lappend disable_on_lock [list .mbar.branch entryconf \
+		[.mbar.branch index last] -state]
+}
 
 # -- Commit Menu
 #
@@ -3583,6 +3642,8 @@ user.email settings into your personal
 
 if {!$single_commit} {
 	load_all_remotes
+	load_all_branches
+	populate_branch_menu .mbar.branch
 	populate_fetch_menu .mbar.fetch
 	populate_pull_menu .mbar.pull
 	populate_push_menu .mbar.push
