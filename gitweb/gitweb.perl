@@ -4323,9 +4323,19 @@ XML
 			print "<entry>\n" .
 			      "<title type=\"html\">" . esc_html($co{'title'}) . "</title>\n" .
 			      "<updated>$cd{'iso-8601'}</updated>\n" .
-			      "<author><name>" . esc_html($co{'author_name'}) . "</name></author>\n" .
+			      "<author>\n" .
+			      "  <name>" . esc_html($co{'author_name'}) . "</name>\n";
+			if ($co{'author_email'}) {
+				print "  <email>" . esc_html($co{'author_email'}) . "</email>\n";
+			}
+			print "</author>\n" .
 			      # use committer for contributor
-			      "<contributor><name>" . esc_html($co{'committer_name'}) . "</name></contributor>\n" .
+			      "<contributor>\n" .
+			      "  <name>" . esc_html($co{'committer_name'}) . "</name>\n";
+			if ($co{'committer_email'}) {
+				print "  <email>" . esc_html($co{'committer_email'}) . "</email>\n";
+			}
+			print "</contributor>\n" .
 			      "<published>$cd{'iso-8601'}</published>\n" .
 			      "<link rel=\"alternate\" type=\"text/html\" href=\"$co_url\" />\n" .
 			      "<id>$co_url</id>\n" .
