@@ -1634,13 +1634,17 @@ proc populate_branch_menu {m} {
 	foreach b $all_branches {
 		$m add radiobutton \
 			-label $b \
-			-command [list do_switch_branch $b] \
+			-command [list switch_branch $b] \
 			-variable current_branch \
 			-value $b \
 			-font font_ui
 		lappend disable_on_lock \
 			[list $m entryconf [$m index last] -state]
 	}
+}
+
+proc switch_branch {b} {
+	error "NOT IMPLEMENTED"
 }
 
 ######################################################################
