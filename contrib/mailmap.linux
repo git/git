@@ -3,6 +3,8 @@
 # So have an email->real name table to translate the
 # (hopefully few) missing names
 #
+# repo-abbrev: /pub/scm/linux/kernel/git/
+#
 Adrian Bunk <bunk@stusta.de>
 Andreas Herrmann <aherrman@de.ibm.com>
 Andrew Morton <akpm@osdl.org>
