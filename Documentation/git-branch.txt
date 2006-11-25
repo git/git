@@ -8,14 +8,16 @@ git-branch - List, create, or delete branches.
 SYNOPSIS
 --------
 [verse]
-'git-branch' [-r]
+'git-branch' [-r] [-a] [-v] [--abbrev=<length>]
 'git-branch' [-l] [-f] <branchname> [<start-point>]
 'git-branch' (-d | -D) <branchname>...
 
 DESCRIPTION
 -----------
-With no arguments given (or just `-r`) a list of available branches
+With no arguments given a list of existing branches
 will be shown, the current branch will be highlighted with an asterisk.
+Option `-r` causes the remote-tracking branches to be listed,
+and option `-a` shows both.
 
 In its second form, a new branch named <branchname> will be created.
 It will start out with a head equal to the one given as <start-point>.
@@ -45,7 +47,17 @@ OPTIONS
 	a branch that already exists with the same name.
 
 -r::
-	List only the "remote" branches.
+	List the remote-tracking branches.
+
+-a::
+	List both remote-tracking branches and local branches.
+
+-v::
+	Show sha1 and subject message for each head.
+
+--abbrev=<length>::
+	Alter minimum display length for sha1 in output listing,
+	default value is 7.
 
 <branchname>::
 	The name of the branch to create or delete.

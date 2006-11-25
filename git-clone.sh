@@ -14,7 +14,7 @@ die() {
 }
 
 usage() {
-	die "Usage: $0 [--template=<template_directory>] [--use-separate-remote] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [-n] <repo> [<dir>]"
+	die "Usage: $0 [--template=<template_directory>] [--use-immingled-remote] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [-n] <repo> [<dir>]"
 }
 
 get_repo_base() {
@@ -47,6 +47,10 @@ Perhaps git-update-server-info needs to be run there?"
 		name=`expr "z$refname" : 'zrefs/\(.*\)'` &&
 		case "$name" in
 		*^*)	continue;;
+		esac
+		case "$bare,$name" in
+		yes,* | ,heads/* | ,tags/*) ;;
+		*)	continue ;;
 		esac
 		if test -n "$use_separate_remote" &&
 		   branch_name=`expr "z$name" : 'zheads/\(.*\)'`
@@ -115,7 +119,7 @@ bare=
 reference=
 origin=
 origin_override=
-use_separate_remote=
+use_separate_remote=t
 while
 	case "$#,$1" in
 	0,*) break ;;
@@ -134,7 +138,10 @@ while
 	  template="$1" ;;
 	*,-q|*,--quiet) quiet=-q ;;
 	*,--use-separate-remote)
+		# default
 		use_separate_remote=t ;;
+	*,--use-immingled-remote)
+		use_separate_remote= ;;
 	1,--reference) usage ;;
 	*,--reference)
 		shift; reference="$1" ;;
@@ -169,18 +176,15 @@ repo="$1"
 test -n "$repo" ||
     die 'you must specify a repository to clone.'
 
-# --bare implies --no-checkout
+# --bare implies --no-checkout and --use-immingled-remote
 if test yes = "$bare"
 then
 	if test yes = "$origin_override"
 	then
 		die '--bare and --origin $origin options are incompatible.'
 	fi
-	if test t = "$use_separate_remote"
-	then
-		die '--bare and --use-separate-remote options are incompatible.'
-	fi
 	no_checkout=yes
+	use_separate_remote=
 fi
 
 if test -z "$origin"

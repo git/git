@@ -174,21 +174,58 @@ static int count_refspec_match(const char *pattern,
 			       struct ref *refs,
 			       struct ref **matched_ref)
 {
-	int match;
 	int patlen = strlen(pattern);
+	struct ref *matched_weak = NULL;
+	struct ref *matched = NULL;
+	int weak_match = 0;
+	int match = 0;
 
-	for (match = 0; refs; refs = refs->next) {
+	for (weak_match = match = 0; refs; refs = refs->next) {
 		char *name = refs->name;
 		int namelen = strlen(name);
+		int weak_match;
+
 		if (namelen < patlen ||
 		    memcmp(name + namelen - patlen, pattern, patlen))
 			continue;
 		if (namelen != patlen && name[namelen - patlen - 1] != '/')
 			continue;
-		match++;
-		*matched_ref = refs;
+
+		/* A match is "weak" if it is with refs outside
+		 * heads or tags, and did not specify the pattern
+		 * in full (e.g. "refs/remotes/origin/master") or at
+		 * least from the toplevel (e.g. "remotes/origin/master");
+		 * otherwise "git push $URL master" would result in
+		 * ambiguity between remotes/origin/master and heads/master
+		 * at the remote site.
+		 */
+		if (namelen != patlen &&
+		    patlen != namelen - 5 &&
+		    strncmp(name, "refs/heads/", 11) &&
+		    strncmp(name, "refs/tags/", 10)) {
+			/* We want to catch the case where only weak
+			 * matches are found and there are multiple
+			 * matches, and where more than one strong
+			 * matches are found, as ambiguous.  One
+			 * strong match with zero or more weak matches
+			 * are acceptable as a unique match.
+			 */
+			matched_weak = refs;
+			weak_match++;
+		}
+		else {
+			matched = refs;
+			match++;
+		}
 	}
-	return match;
+	if (!matched) {
+		*matched_ref = matched_weak;
+		return weak_match;
+	}
+	else {
+		*matched_ref = matched;
+		return match;
+	}
 }
 
 static void link_dst_tail(struct ref *ref, struct ref ***tail)

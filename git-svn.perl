@@ -21,6 +21,7 @@ $ENV{TZ} = 'UTC';
 $ENV{LC_ALL} = 'C';
 $| = 1; # unbuffer STDOUT
 
+sub fatal (@) { print STDERR $@; exit 1 }
 # If SVN:: library support is added, please make the dependencies
 # optional and preserve the capability to use the command-line client.
 # use eval { require SVN::... } to make it lazy load
@@ -39,7 +40,7 @@ memoize('revisions_eq');
 memoize('cmt_metadata');
 memoize('get_commit_time');
 
-my ($SVN_PATH, $SVN, $SVN_LOG, $_use_lib);
+my ($SVN, $_use_lib);
 
 sub nag_lib {
 	print STDERR <<EOF;
@@ -66,7 +67,8 @@ my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_template, $_shared, $_no_default_regex, $_no_graft_copy,
 	$_limit, $_verbose, $_incremental, $_oneline, $_l_fmt, $_show_commit,
 	$_version, $_upgrade, $_authors, $_branch_all_refs, @_opt_m,
-	$_merge, $_strategy, $_dry_run, $_ignore_nodate, $_non_recursive);
+	$_merge, $_strategy, $_dry_run, $_ignore_nodate, $_non_recursive,
+	$_username, $_config_dir, $_no_auth_cache);
 my (@_branch_from, %tree_map, %users, %rusers, %equiv);
 my ($_svn_co_url_revs, $_svn_pg_peg_revs);
 my @repo_path_split_cache;
@@ -79,6 +81,9 @@ my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
 		'repack:i' => \$_repack,
 		'no-metadata' => \$_no_metadata,
 		'quiet|q' => \$_q,
+		'username=s' => \$_username,
+		'config-dir=s' => \$_config_dir,
+		'no-auth-cache' => \$_no_auth_cache,
 		'ignore-nodate' => \$_ignore_nodate,
 		'repack-flags|repack-args|repack-opts=s' => \$_repack_flags);
 
@@ -377,10 +382,7 @@ sub fetch_cmd {
 sub fetch_lib {
 	my (@parents) = @_;
 	$SVN_URL ||= file_to_s("$GIT_SVN_DIR/info/url");
-	my $repo;
-	($repo, $SVN_PATH) = repo_path_split($SVN_URL);
-	$SVN_LOG ||= libsvn_connect($repo);
-	$SVN ||= libsvn_connect($repo);
+	$SVN ||= libsvn_connect($SVN_URL);
 	my ($last_rev, $last_commit) = svn_grab_base_rev();
 	my ($base, $head) = libsvn_parse_revision($last_rev);
 	if ($base > $head) {
@@ -422,7 +424,7 @@ sub fetch_lib {
 			# performance sucks with it enabled, so it's much
 			# faster to fetch revision ranges instead of relying
 			# on the limiter.
-			libsvn_get_log($SVN_LOG, '/'.$SVN_PATH,
+			libsvn_get_log(libsvn_dup_ra($SVN), [''],
 					$min, $max, 0, 1, 1,
 				sub {
 					my $log_msg;
@@ -524,7 +526,6 @@ sub commit_lib {
 	my $commit_msg = "$GIT_SVN_DIR/.svn-commit.tmp.$$";
 
 	my $repo;
-	($repo, $SVN_PATH) = repo_path_split($SVN_URL);
 	set_svn_commit_env();
 	foreach my $c (@revs) {
 		my $log_msg = get_commit_message($c, $commit_msg);
@@ -533,13 +534,11 @@ sub commit_lib {
 		# can't track down... (it's probably in the SVN code)
 		defined(my $pid = open my $fh, '-|') or croak $!;
 		if (!$pid) {
-			$SVN_LOG = libsvn_connect($repo);
-			$SVN = libsvn_connect($repo);
 			my $ed = SVN::Git::Editor->new(
 					{	r => $r_last,
-						ra => $SVN_LOG,
+						ra => libsvn_dup_ra($SVN),
 						c => $c,
-						svn_path => $SVN_PATH
+						svn_path => $SVN->{svn_path},
 					},
 					$SVN->get_commit_editor(
 						$log_msg->{msg},
@@ -571,7 +570,7 @@ sub commit_lib {
 				$no = 1;
 			}
 		}
-		close $fh or croak $?;
+		close $fh or exit 1;
 		if (! defined $r_new && ! defined $cmt_new) {
 			unless ($no) {
 				die "Failed to parse revision information\n";
@@ -657,10 +656,9 @@ sub show_ignore_cmd {
 
 sub show_ignore_lib {
 	my $repo;
-	($repo, $SVN_PATH) = repo_path_split($SVN_URL);
-	$SVN ||= libsvn_connect($repo);
+	$SVN ||= libsvn_connect($SVN_URL);
 	my $r = defined $_revision ? $_revision : $SVN->get_latest_revnum;
-	libsvn_traverse_ignore(\*STDOUT, $SVN_PATH, $r);
+	libsvn_traverse_ignore(\*STDOUT, $SVN->{svn_path}, $r);
 }
 
 sub graft_branches {
@@ -786,7 +784,7 @@ sub show_log {
 		} elsif (/^:\d{6} \d{6} $sha1_short/o) {
 			push @{$c->{raw}}, $_;
 		} elsif (/^[ACRMDT]\t/) {
-			# we could add $SVN_PATH here, but that requires
+			# we could add $SVN->{svn_path} here, but that requires
 			# remote access at the moment (repo_path_split)...
 			s#^([ACRMDT])\t#   $1 #;
 			push @{$c->{changed}}, $_;
@@ -852,10 +850,7 @@ sub commit_diff {
 		$_message ||= get_commit_message($tb,
 					"$GIT_DIR/.svn-commit.tmp.$$")->{msg};
 	}
-	my $repo;
-	($repo, $SVN_PATH) = repo_path_split($SVN_URL);
-	$SVN_LOG ||= libsvn_connect($repo);
-	$SVN ||= libsvn_connect($repo);
+	$SVN ||= libsvn_connect($SVN_URL);
 	if ($r eq 'HEAD') {
 		$r = $SVN->get_latest_revnum;
 	} elsif ($r !~ /^\d+$/) {
@@ -864,8 +859,9 @@ sub commit_diff {
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef, 0) : ();
 	my $rev_committed;
 	my $ed = SVN::Git::Editor->new({	r => $r,
-						ra => $SVN_LOG, c => $tb,
-						svn_path => $SVN_PATH
+						ra => libsvn_dup_ra($SVN),
+						c => $tb,
+						svn_path => $SVN->{svn_path}
 					},
 				$SVN->get_commit_editor($_message,
 					sub {
@@ -873,13 +869,16 @@ sub commit_diff {
 						print "Committed $_[0]\n";
 					}, @lock)
 				);
-	my $mods = libsvn_checkout_tree($ta, $tb, $ed);
-	if (@$mods == 0) {
-		print "No changes\n$ta == $tb\n";
-		$ed->abort_edit;
-	} else {
-		$ed->close_edit;
-	}
+	eval {
+		my $mods = libsvn_checkout_tree($ta, $tb, $ed);
+		if (@$mods == 0) {
+			print "No changes\n$ta == $tb\n";
+			$ed->abort_edit;
+		} else {
+			$ed->close_edit;
+		}
+	};
+	fatal "$@\n" if $@;
 	$_message = $_file = undef;
 	return $rev_committed;
 }
@@ -1143,8 +1142,7 @@ sub graft_file_copy_lib {
 	my $tree_paths = $l_map->{$u};
 	my $pfx = common_prefix([keys %$tree_paths]);
 	my ($repo, $path) = repo_path_split($u.$pfx);
-	$SVN_LOG ||= libsvn_connect($repo);
-	$SVN ||= libsvn_connect($repo);
+	$SVN = libsvn_connect($repo);
 
 	my ($base, $head) = libsvn_parse_revision();
 	my $inc = 1000;
@@ -1153,7 +1151,8 @@ sub graft_file_copy_lib {
 	$SVN::Error::handler = \&libsvn_skip_unknown_revs;
 	while (1) {
 		my $pool = SVN::Pool->new;
-		libsvn_get_log($SVN_LOG, "/$path", $min, $max, 0, 1, 1,
+		libsvn_get_log(libsvn_dup_ra($SVN), [$path],
+		               $min, $max, 0, 1, 1,
 			sub {
 				libsvn_graft_file_copies($grafts, $tree_paths,
 							$path, @_);
@@ -1263,13 +1262,9 @@ sub repo_path_split {
 			return ($u, $full_url);
 		}
 	}
-
 	if ($_use_lib) {
 		my $tmp = libsvn_connect($full_url);
-		my $url = $tmp->get_repos_root;
-		$full_url =~ s#^\Q$url\E/*##;
-		push @repo_path_split_cache, qr/^(\Q$url\E)/;
-		return ($url, $full_url);
+		return ($tmp->{repos_root}, $tmp->{svn_path});
 	} else {
 		my ($url, $path) = ($full_url =~ m!^([a-z\+]+://[^/]*)(.*)$!i);
 		$path =~ s#^/+##;
@@ -2683,26 +2678,169 @@ sub libsvn_load {
 		my $kill_stupid_warnings = $SVN::Node::none.$SVN::Node::file.
 					$SVN::Node::dir.$SVN::Node::unknown.
 					$SVN::Node::none.$SVN::Node::file.
-					$SVN::Node::dir.$SVN::Node::unknown;
+					$SVN::Node::dir.$SVN::Node::unknown.
+					$SVN::Auth::SSL::CNMISMATCH.
+					$SVN::Auth::SSL::NOTYETVALID.
+					$SVN::Auth::SSL::EXPIRED.
+					$SVN::Auth::SSL::UNKNOWNCA.
+					$SVN::Auth::SSL::OTHER;
 		1;
 	};
 }
 
+sub _simple_prompt {
+	my ($cred, $realm, $default_username, $may_save, $pool) = @_;
+	$may_save = undef if $_no_auth_cache;
+	$default_username = $_username if defined $_username;
+	if (defined $default_username && length $default_username) {
+		if (defined $realm && length $realm) {
+			print "Authentication realm: $realm\n";
+		}
+		$cred->username($default_username);
+	} else {
+		_username_prompt($cred, $realm, $may_save, $pool);
+	}
+	$cred->password(_read_password("Password for '" .
+	                               $cred->username . "': ", $realm));
+	$cred->may_save($may_save);
+	$SVN::_Core::SVN_NO_ERROR;
+}
+
+sub _ssl_server_trust_prompt {
+	my ($cred, $realm, $failures, $cert_info, $may_save, $pool) = @_;
+	$may_save = undef if $_no_auth_cache;
+	print "Error validating server certificate for '$realm':\n";
+	if ($failures & $SVN::Auth::SSL::UNKNOWNCA) {
+		print " - The certificate is not issued by a trusted ",
+		      "authority. Use the\n",
+	              "   fingerprint to validate the certificate manually!\n";
+	}
+	if ($failures & $SVN::Auth::SSL::CNMISMATCH) {
+		print " - The certificate hostname does not match.\n";
+	}
+	if ($failures & $SVN::Auth::SSL::NOTYETVALID) {
+		print " - The certificate is not yet valid.\n";
+	}
+	if ($failures & $SVN::Auth::SSL::EXPIRED) {
+		print " - The certificate has expired.\n";
+	}
+	if ($failures & $SVN::Auth::SSL::OTHER) {
+		print " - The certificate has an unknown error.\n";
+	}
+	printf( "Certificate information:\n".
+	        " - Hostname: %s\n".
+	        " - Valid: from %s until %s\n".
+	        " - Issuer: %s\n".
+	        " - Fingerprint: %s\n",
+	        map $cert_info->$_, qw(hostname valid_from valid_until
+	                               issuer_dname fingerprint) );
+	my $choice;
+prompt:
+	print $may_save ?
+	      "(R)eject, accept (t)emporarily or accept (p)ermanently? " :
+	      "(R)eject or accept (t)emporarily? ";
+	$choice = lc(substr(<STDIN> || 'R', 0, 1));
+	if ($choice =~ /^t$/i) {
+		$cred->may_save(undef);
+	} elsif ($choice =~ /^r$/i) {
+		return -1;
+	} elsif ($may_save && $choice =~ /^p$/i) {
+		$cred->may_save($may_save);
+	} else {
+		goto prompt;
+	}
+	$cred->accepted_failures($failures);
+	$SVN::_Core::SVN_NO_ERROR;
+}
+
+sub _ssl_client_cert_prompt {
+	my ($cred, $realm, $may_save, $pool) = @_;
+	$may_save = undef if $_no_auth_cache;
+	print "Client certificate filename: ";
+	chomp(my $filename = <STDIN>);
+	$cred->cert_file($filename);
+	$cred->may_save($may_save);
+	$SVN::_Core::SVN_NO_ERROR;
+}
+
+sub _ssl_client_cert_pw_prompt {
+	my ($cred, $realm, $may_save, $pool) = @_;
+	$may_save = undef if $_no_auth_cache;
+	$cred->password(_read_password("Password: ", $realm));
+	$cred->may_save($may_save);
+	$SVN::_Core::SVN_NO_ERROR;
+}
+
+sub _username_prompt {
+	my ($cred, $realm, $may_save, $pool) = @_;
+	$may_save = undef if $_no_auth_cache;
+	if (defined $realm && length $realm) {
+		print "Authentication realm: $realm\n";
+	}
+	my $username;
+	if (defined $_username) {
+		$username = $_username;
+	} else {
+		print "Username: ";
+		chomp($username = <STDIN>);
+	}
+	$cred->username($username);
+	$cred->may_save($may_save);
+	$SVN::_Core::SVN_NO_ERROR;
+}
+
+sub _read_password {
+	my ($prompt, $realm) = @_;
+	print $prompt;
+	require Term::ReadKey;
+	Term::ReadKey::ReadMode('noecho');
+	my $password = '';
+	while (defined(my $key = Term::ReadKey::ReadKey(0))) {
+		last if $key =~ /[\012\015]/; # \n\r
+		$password .= $key;
+	}
+	Term::ReadKey::ReadMode('restore');
+	print "\n";
+	$password;
+}
+
 sub libsvn_connect {
 	my ($url) = @_;
-	my $auth = SVN::Core::auth_open([SVN::Client::get_simple_provider(),
-			  SVN::Client::get_ssl_server_trust_file_provider(),
-			  SVN::Client::get_username_provider()]);
-	my $s = eval { SVN::Ra->new(url => $url, auth => $auth) };
-	return $s;
+	SVN::_Core::svn_config_ensure($_config_dir, undef);
+	my ($baton, $callbacks) = SVN::Core::auth_open_helper([
+	    SVN::Client::get_simple_provider(),
+	    SVN::Client::get_ssl_server_trust_file_provider(),
+	    SVN::Client::get_simple_prompt_provider(
+	      \&_simple_prompt, 2),
+	    SVN::Client::get_ssl_client_cert_prompt_provider(
+	      \&_ssl_client_cert_prompt, 2),
+	    SVN::Client::get_ssl_client_cert_pw_prompt_provider(
+	      \&_ssl_client_cert_pw_prompt, 2),
+	    SVN::Client::get_username_provider(),
+	    SVN::Client::get_ssl_server_trust_prompt_provider(
+	      \&_ssl_server_trust_prompt),
+	    SVN::Client::get_username_prompt_provider(
+	      \&_username_prompt, 2),
+	  ]);
+	my $ra = SVN::Ra->new(url => $url, auth => $baton,
+	                      pool => SVN::Pool->new,
+	                      auth_provider_callbacks => $callbacks);
+	$ra->{svn_path} = $url;
+	$ra->{repos_root} = $ra->get_repos_root;
+	$ra->{svn_path} =~ s#^\Q$ra->{repos_root}\E/*##;
+	push @repo_path_split_cache, qr/^(\Q$ra->{repos_root}\E)/;
+	return $ra;
+}
+
+sub libsvn_dup_ra {
+	my ($ra) = @_;
+	SVN::Ra->new(map { $_ => $ra->{$_} }
+	             qw/url auth auth_provider_callbacks repos_root svn_path/);
 }
 
 sub libsvn_get_file {
 	my ($gui, $f, $rev, $chg) = @_;
-	my $p = $f;
-	if (length $SVN_PATH > 0) {
-		return unless ($p =~ s#^\Q$SVN_PATH\E/##);
-	}
+	$f =~ s#^/##;
 	print "\t$chg\t$f\n" unless $_q;
 
 	my ($hash, $pid, $in, $out);
@@ -2739,7 +2877,7 @@ sub libsvn_get_file {
 		waitpid $pid, 0;
 		$hash =~ /^$sha1$/o or die "not a sha1: $hash\n";
 	}
-	print $gui $mode,' ',$hash,"\t",$p,"\0" or croak $!;
+	print $gui $mode,' ',$hash,"\t",$f,"\0" or croak $!;
 }
 
 sub libsvn_log_entry {
@@ -2757,7 +2895,6 @@ sub libsvn_log_entry {
 
 sub process_rm {
 	my ($gui, $last_commit, $f) = @_;
-	$f =~ s#^\Q$SVN_PATH\E/?## or return;
 	# remove entire directories.
 	if (safe_qx('git-ls-tree',$last_commit,'--',$f) =~ /^040000 tree/) {
 		defined(my $pid = open my $ls, '-|') or croak $!;
@@ -2779,9 +2916,11 @@ sub libsvn_fetch {
 	my ($last_commit, $paths, $rev, $author, $date, $msg) = @_;
 	open my $gui, '| git-update-index -z --index-info' or croak $!;
 	my @amr;
+	my $p = $SVN->{svn_path};
 	foreach my $f (keys %$paths) {
 		my $m = $paths->{$f}->action();
-		$f =~ s#^/+##;
+		$f =~ s#^/\Q$p\E/##;
+		next if $f =~ m#^/#;
 		if ($m =~ /^[DR]$/) {
 			print "\t$m\t$f\n" unless $_q;
 			process_rm($gui, $last_commit, $f);
@@ -2871,9 +3010,9 @@ sub libsvn_parse_revision {
 
 sub libsvn_traverse {
 	my ($gui, $pfx, $path, $rev, $files) = @_;
-	my $cwd = "$pfx/$path";
+	my $cwd = length $pfx ? "$pfx/$path" : $path;
 	my $pool = SVN::Pool->new;
-	$cwd =~ s#^/+##g;
+	$cwd =~ s#^\Q$SVN->{svn_path}\E##;
 	my ($dirent, $r, $props) = $SVN->get_dir($cwd, $rev, $pool);
 	foreach my $d (keys %$dirent) {
 		my $t = $dirent->{$d}->kind;
@@ -2897,7 +3036,7 @@ sub libsvn_traverse_ignore {
 	my $pool = SVN::Pool->new;
 	my ($dirent, undef, $props) = $SVN->get_dir($path, $r, $pool);
 	my $p = $path;
-	$p =~ s#^\Q$SVN_PATH\E/?##;
+	$p =~ s#^\Q$SVN->{svn_path}\E/##;
 	print $fh length $p ? "\n# $p\n" : "\n# /\n";
 	if (my $s = $props->{'svn:ignore'}) {
 		$s =~ s/[\r\n]+/\n/g;
@@ -2924,7 +3063,7 @@ sub revisions_eq {
 	if ($_use_lib) {
 		# should be OK to use Pool here (r1 - r0) should be small
 		my $pool = SVN::Pool->new;
-		libsvn_get_log($SVN, "/$path", $r0, $r1,
+		libsvn_get_log($SVN, [$path], $r0, $r1,
 				0, 1, 1, sub {$nr++}, $pool);
 		$pool->clear;
 	} else {
@@ -2939,7 +3078,7 @@ sub revisions_eq {
 
 sub libsvn_find_parent_branch {
 	my ($paths, $rev, $author, $date, $msg) = @_;
-	my $svn_path = '/'.$SVN_PATH;
+	my $svn_path = '/'.$SVN->{svn_path};
 
 	# look for a parent from another branch:
 	my $i = $paths->{$svn_path} or return;
@@ -2950,7 +3089,7 @@ sub libsvn_find_parent_branch {
 	$branch_from =~ s#^/##;
 	my $l_map = {};
 	read_url_paths_all($l_map, '', "$GIT_DIR/svn");
-	my $url = $SVN->{url};
+	my $url = $SVN->{repos_root};
 	defined $l_map->{$url} or return;
 	my $id = $l_map->{$url}->{$branch_from};
 	if (!defined $id && $_follow_parent) {
@@ -2972,7 +3111,7 @@ sub libsvn_find_parent_branch {
 			$GIT_SVN = $ENV{GIT_SVN_ID} = $id;
 			init_vars();
 			$SVN_URL = "$url/$branch_from";
-			$SVN_LOG = $SVN = undef;
+			$SVN = undef;
 			setup_git_svn();
 			# we can't assume SVN_URL exists at r+1:
 			$_revision = "0:$r";
@@ -3009,7 +3148,7 @@ sub libsvn_new_tree {
 	}
 	my ($paths, $rev, $author, $date, $msg) = @_;
 	open my $gui, '| git-update-index -z --index-info' or croak $!;
-	libsvn_traverse($gui, '', $SVN_PATH, $rev);
+	libsvn_traverse($gui, '', $SVN->{svn_path}, $rev);
 	close $gui or croak $?;
 	return libsvn_log_entry($rev, $author, $date, $msg);
 }
@@ -3094,11 +3233,10 @@ sub libsvn_commit_cb {
 
 sub libsvn_ls_fullurl {
 	my $fullurl = shift;
-	my ($repo, $path) = repo_path_split($fullurl);
-	$SVN ||= libsvn_connect($repo);
+	$SVN ||= libsvn_connect($fullurl);
 	my @ret;
 	my $pool = SVN::Pool->new;
-	my ($dirent, undef, undef) = $SVN->get_dir($path,
+	my ($dirent, undef, undef) = $SVN->get_dir($SVN->{svn_path},
 						$SVN->get_latest_revnum, $pool);
 	foreach my $d (keys %$dirent) {
 		if ($dirent->{$d}->kind == $SVN::Node::dir) {
@@ -3120,8 +3258,9 @@ sub libsvn_skip_unknown_revs {
 	# Wonderfully consistent library, eh?
 	# 160013 - svn:// and file://
 	# 175002 - http(s)://
+	# 175007 - http(s):// (this repo required authorization, too...)
 	#   More codes may be discovered later...
-	if ($errno == 175002 || $errno == 160013) {
+	if ($errno == 175007 || $errno == 175002 || $errno == 160013) {
 		return;
 	}
 	croak "Error from SVN, ($errno): ", $err->expanded_message,"\n";
@@ -3209,8 +3348,7 @@ sub split_path {
 }
 
 sub repo_path {
-	(defined $_[1] && length $_[1]) ? "$_[0]->{svn_path}/$_[1]"
-					: $_[0]->{svn_path}
+	(defined $_[1] && length $_[1]) ? $_[1] : ''
 }
 
 sub url_path {
@@ -3242,10 +3380,9 @@ sub rmdirs {
 		exec qw/git-ls-tree --name-only -r -z/, $self->{c} or croak $!;
 	}
 	local $/ = "\0";
-	my @svn_path = split m#/#, $self->{svn_path};
 	while (<$fh>) {
 		chomp;
-		my @dn = (@svn_path, (split m#/#, $_));
+		my @dn = split m#/#, $_;
 		while (pop @dn) {
 			delete $rm->{join '/', @dn};
 		}

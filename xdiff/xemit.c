@@ -118,7 +118,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		  xdemitconf_t const *xecfg) {
 	long s1, s2, e1, e2, lctx;
 	xdchange_t *xch, *xche;
-	char funcbuf[40];
+	char funcbuf[80];
 	long funclen = 0;
 
 	if (xecfg->flags & XDL_EMIT_COMMON)

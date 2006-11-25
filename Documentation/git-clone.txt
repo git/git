@@ -11,7 +11,8 @@ SYNOPSIS
 [verse]
 'git-clone' [--template=<template_directory>] [-l [-s]] [-q] [-n] [--bare]
 	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
-	  [--use-separate-remote] <repository> [<directory>]
+	  [--use-separate-remote | --use-immingled-remote] <repository>
+	  [<directory>]
 
 DESCRIPTION
 -----------
@@ -71,9 +72,13 @@ OPTIONS
 	Make a 'bare' GIT repository.  That is, instead of
 	creating `<directory>` and placing the administrative
 	files in `<directory>/.git`, make the `<directory>`
-	itself the `$GIT_DIR`. This implies `-n` option.  When
-	this option is used, neither the `origin` branch nor the
-	default `remotes/origin` file is created.
+	itself the `$GIT_DIR`. This obviously implies the `-n`
+	because there is nowhere to check out the working tree.
+	Also the branch heads at the remote are copied directly
+	to corresponding local branch heads, without mapping
+	them to `refs/remotes/origin/`.  When this option is
+	used, neither the `origin` branch nor the default
+	`remotes/origin` file is created.
 
 --origin <name>::
 -o <name>::
@@ -97,8 +102,15 @@ OPTIONS
 
 --use-separate-remote::
 	Save remotes heads under `$GIT_DIR/remotes/origin/` instead
-	of `$GIT_DIR/refs/heads/`.  Only the master branch is saved
-	in the latter.
+	of `$GIT_DIR/refs/heads/`.  Only the local master branch is
+	saved in the latter. This is the default.
+
+--use-immingled-remote::
+	Save remotes heads in the same namespace as the local
+	heads, `$GIT_DIR/refs/heads/'.  In regular repositories,
+	this is a legacy setup git-clone created by default in
+	older Git versions, and will be removed before the next
+	major release.
 
 <repository>::
 	The (possibly remote) repository to clone from.  It can
