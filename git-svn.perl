@@ -21,6 +21,7 @@ $ENV{TZ} = 'UTC';
 $ENV{LC_ALL} = 'C';
 $| = 1; # unbuffer STDOUT
 
+sub fatal (@) { print STDERR $@; exit 1 }
 # If SVN:: library support is added, please make the dependencies
 # optional and preserve the capability to use the command-line client.
 # use eval { require SVN::... } to make it lazy load
@@ -569,7 +570,7 @@ sub commit_lib {
 				$no = 1;
 			}
 		}
-		close $fh or croak $?;
+		close $fh or exit 1;
 		if (! defined $r_new && ! defined $cmt_new) {
 			unless ($no) {
 				die "Failed to parse revision information\n";
@@ -868,13 +869,16 @@ sub commit_diff {
 						print "Committed $_[0]\n";
 					}, @lock)
 				);
-	my $mods = libsvn_checkout_tree($ta, $tb, $ed);
-	if (@$mods == 0) {
-		print "No changes\n$ta == $tb\n";
-		$ed->abort_edit;
-	} else {
-		$ed->close_edit;
-	}
+	eval {
+		my $mods = libsvn_checkout_tree($ta, $tb, $ed);
+		if (@$mods == 0) {
+			print "No changes\n$ta == $tb\n";
+			$ed->abort_edit;
+		} else {
+			$ed->close_edit;
+		}
+	};
+	fatal "$@\n" if $@;
 	$_message = $_file = undef;
 	return $rev_committed;
 }
