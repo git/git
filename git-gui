@@ -266,7 +266,7 @@ proc repository_state {ctvar hdvar mhvar} {
 	if {[catch {set current_branch [exec git symbolic-ref HEAD]}]} {
 		set current_branch {}
 	} else {
-		regsub ^refs/(heads|tags)/ \
+		regsub ^refs/((heads|tags|remotes)/)? \
 			$current_branch \
 			{} \
 			current_branch
