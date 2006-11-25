@@ -48,6 +48,10 @@ Perhaps git-update-server-info needs to be run there?"
 		case "$name" in
 		*^*)	continue;;
 		esac
+		case "$bare,$name" in
+		yes,* | ,heads/* | ,tags/*) ;;
+		*)	continue ;;
+		esac
 		if test -n "$use_separate_remote" &&
 		   branch_name=`expr "z$name" : 'zheads/\(.*\)'`
 		then
