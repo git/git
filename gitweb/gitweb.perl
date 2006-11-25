@@ -1154,14 +1154,15 @@ sub git_get_last_activity {
 sub git_get_references {
 	my $type = shift || "";
 	my %refs;
-	# 5dc01c595e6c6ec9ccda4f6f69c131c0dd945f8c	refs/tags/v2.6.11
-	# c39ae07f393806ccf406ef966e9a15afc43cc36a	refs/tags/v2.6.11^{}
-	open my $fd, "-|", $GIT, "peek-remote", "$projectroot/$project/"
+	# 5dc01c595e6c6ec9ccda4f6f69c131c0dd945f8c refs/tags/v2.6.11
+	# c39ae07f393806ccf406ef966e9a15afc43cc36a refs/tags/v2.6.11^{}
+	open my $fd, "-|", git_cmd(), "show-ref", "--dereference",
+		($type ? ("--", "refs/$type") : ()) # use -- <pattern> if $type
 		or return;
 
 	while (my $line = <$fd>) {
 		chomp $line;
-		if ($line =~ m/^([0-9a-fA-F]{40})\trefs\/($type\/?[^\^]+)/) {
+		if ($line =~ m!^([0-9a-fA-F]{40})\srefs/($type/?[^^]+)!) {
 			if (defined $refs{$1}) {
 				push @{$refs{$1}}, $2;
 			} else {
@@ -1293,8 +1294,9 @@ sub parse_commit {
 			$co{'author'} = $1;
 			$co{'author_epoch'} = $2;
 			$co{'author_tz'} = $3;
-			if ($co{'author'} =~ m/^([^<]+) </) {
-				$co{'author_name'} = $1;
+			if ($co{'author'} =~ m/^([^<]+) <([^>]*)>/) {
+				$co{'author_name'}  = $1;
+				$co{'author_email'} = $2;
 			} else {
 				$co{'author_name'} = $co{'author'};
 			}
@@ -1303,7 +1305,12 @@ sub parse_commit {
 			$co{'committer_epoch'} = $2;
 			$co{'committer_tz'} = $3;
 			$co{'committer_name'} = $co{'committer'};
-			$co{'committer_name'} =~ s/ <.*//;
+			if ($co{'committer'} =~ m/^([^<]+) <([^>]*)>/) {
+				$co{'committer_name'}  = $1;
+				$co{'committer_email'} = $2;
+			} else {
+				$co{'committer_name'} = $co{'committer'};
+			}
 		}
 	}
 	if (!defined $co{'tree'}) {
@@ -4194,7 +4201,7 @@ sub git_feed {
 	}
 	if (defined($revlist[0])) {
 		%latest_commit = parse_commit($revlist[0]);
-		%latest_date   = parse_date($latest_commit{'committer_epoch'});
+		%latest_date   = parse_date($latest_commit{'author_epoch'});
 		print $cgi->header(
 			-type => $content_type,
 			-charset => 'utf-8',
@@ -4287,10 +4294,10 @@ XML
 		my $commit = $revlist[$i];
 		my %co = parse_commit($commit);
 		# we read 150, we always show 30 and the ones more recent than 48 hours
-		if (($i >= 20) && ((time - $co{'committer_epoch'}) > 48*60*60)) {
+		if (($i >= 20) && ((time - $co{'author_epoch'}) > 48*60*60)) {
 			last;
 		}
-		my %cd = parse_date($co{'committer_epoch'});
+		my %cd = parse_date($co{'author_epoch'});
 
 		# get list of changed files
 		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
@@ -4316,9 +4323,19 @@ XML
 			print "<entry>\n" .
 			      "<title type=\"html\">" . esc_html($co{'title'}) . "</title>\n" .
 			      "<updated>$cd{'iso-8601'}</updated>\n" .
-			      "<author><name>" . esc_html($co{'author_name'}) . "</name></author>\n" .
+			      "<author>\n" .
+			      "  <name>" . esc_html($co{'author_name'}) . "</name>\n";
+			if ($co{'author_email'}) {
+				print "  <email>" . esc_html($co{'author_email'}) . "</email>\n";
+			}
+			print "</author>\n" .
 			      # use committer for contributor
-			      "<contributor><name>" . esc_html($co{'committer_name'}) . "</name></contributor>\n" .
+			      "<contributor>\n" .
+			      "  <name>" . esc_html($co{'committer_name'}) . "</name>\n";
+			if ($co{'committer_email'}) {
+				print "  <email>" . esc_html($co{'committer_email'}) . "</email>\n";
+			}
+			print "</contributor>\n" .
 			      "<published>$cd{'iso-8601'}</published>\n" .
 			      "<link rel=\"alternate\" type=\"text/html\" href=\"$co_url\" />\n" .
 			      "<id>$co_url</id>\n" .
