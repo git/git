@@ -9,6 +9,8 @@
 static const char shortlog_usage[] =
 "git-shortlog [-n] [-s] [<commit-id>... ]";
 
+static char *common_repo_prefix;
+
 static int compare_by_number(const void *a1, const void *a2)
 {
 	const struct path_list_item *i1 = a1, *i2 = a2;
@@ -35,8 +37,26 @@ static int read_mailmap(const char *filename)
 		char *end_of_name, *left_bracket, *right_bracket;
 		char *name, *email;
 		int i;
-		if (buffer[0] == '#')
+		if (buffer[0] == '#') {
+			static const char abbrev[] = "# repo-abbrev:";
+			int abblen = sizeof(abbrev) - 1;
+			int len = strlen(buffer);
+
+			if (len && buffer[len - 1] == '\n')
+				buffer[--len] = 0;
+			if (!strncmp(buffer, abbrev, abblen)) {
+				char *cp;
+
+				if (common_repo_prefix)
+					free(common_repo_prefix);
+				common_repo_prefix = xmalloc(len);
+
+				for (cp = buffer + abblen; isspace(*cp); cp++)
+					; /* nothing */
+				strcpy(common_repo_prefix, cp);
+			}
 			continue;
+		}
 		if ((left_bracket = strchr(buffer, '<')) == NULL)
 			continue;
 		if ((right_bracket = strchr(left_bracket + 1, '>')) == NULL)
@@ -87,7 +107,7 @@ static void insert_author_oneline(struct path_list *list,
 		const char *author, int authorlen,
 		const char *oneline, int onelinelen)
 {
-	const char *dot3 = "/pub/scm/linux/kernel/git/";
+	const char *dot3 = common_repo_prefix;
 	char *buffer, *p;
 	struct path_list_item *item;
 	struct path_list *onelines;
@@ -130,11 +150,16 @@ static void insert_author_oneline(struct path_list *list,
 	memcpy(buffer, oneline, onelinelen);
 	buffer[onelinelen] = '\0';
 
-	while ((p = strstr(buffer, dot3)) != NULL) {
-		memcpy(p, "...", 3);
-		strcpy(p + 2, p + sizeof(dot3) - 1);
+	if (dot3) {
+		int dot3len = strlen(dot3);
+		if (dot3len > 5) {
+			while ((p = strstr(buffer, dot3)) != NULL) {
+				int taillen = strlen(p) - dot3len;
+				memcpy(p, "/.../", 5);
+				memmove(p + 5, p + dot3len, taillen + 1);
+			}
+		}
 	}
-
 
 	onelines = item->util;
 	if (onelines->nr >= onelines->alloc) {
