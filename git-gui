@@ -2387,6 +2387,7 @@ proc do_include_all {} {
 }
 
 proc revert_helper {txt paths} {
+	global gitdir appname
 	global file_states current_diff
 
 	if {![lock_index begin-update]} return
@@ -2419,13 +2420,17 @@ proc revert_helper {txt paths} {
 		set s "these $n files"
 	}
 
+	set reponame [lindex [file split \
+		[file normalize [file dirname $gitdir]]] \
+		end]
+
 	set reply [tk_dialog \
 		.confirm_revert \
-		"title" \
+		"$appname ($reponame)" \
 		"Revert unincluded changes in $s?
 
 Any unincluded changes will be permanently lost by the revert." \
-		questhead \
+		question \
 		1 \
 		{Do Nothing} \
 		{Revert Changes} \
