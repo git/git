@@ -130,11 +130,16 @@ static void insert_author_oneline(struct path_list *list,
 	memcpy(buffer, oneline, onelinelen);
 	buffer[onelinelen] = '\0';
 
-	while ((p = strstr(buffer, dot3)) != NULL) {
-		memcpy(p, "...", 3);
-		strcpy(p + 2, p + sizeof(dot3) - 1);
+	if (dot3) {
+		int dot3len = strlen(dot3);
+		if (dot3len > 5) {
+			while ((p = strstr(buffer, dot3)) != NULL) {
+				int taillen = strlen(p) - dot3len;
+				memcpy(p, "/.../", 5);
+				memmove(p + 5, p + dot3len, taillen + 1);
+			}
+		}
 	}
-
 
 	onelines = item->util;
 	if (onelines->nr >= onelines->alloc) {
