@@ -1294,8 +1294,9 @@ sub parse_commit {
 			$co{'author'} = $1;
 			$co{'author_epoch'} = $2;
 			$co{'author_tz'} = $3;
-			if ($co{'author'} =~ m/^([^<]+) </) {
-				$co{'author_name'} = $1;
+			if ($co{'author'} =~ m/^([^<]+) <([^>]*)>/) {
+				$co{'author_name'}  = $1;
+				$co{'author_email'} = $2;
 			} else {
 				$co{'author_name'} = $co{'author'};
 			}
@@ -1304,7 +1305,12 @@ sub parse_commit {
 			$co{'committer_epoch'} = $2;
 			$co{'committer_tz'} = $3;
 			$co{'committer_name'} = $co{'committer'};
-			$co{'committer_name'} =~ s/ <.*//;
+			if ($co{'committer'} =~ m/^([^<]+) <([^>]*)>/) {
+				$co{'committer_name'}  = $1;
+				$co{'committer_email'} = $2;
+			} else {
+				$co{'committer_name'} = $co{'committer'};
+			}
 		}
 	}
 	if (!defined $co{'tree'}) {
