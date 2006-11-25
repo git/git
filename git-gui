@@ -2997,6 +2997,7 @@ if {!$single_commit} {
 			-font font_ui
 	}
 }
+
 .mbar.repository add command -label Quit \
 	-command do_quit \
 	-accelerator $M1T-Q \
@@ -3036,9 +3037,9 @@ menu .mbar.edit
 	-accelerator $M1T-A \
 	-font font_ui
 
+# -- Branch Menu
+#
 if {!$single_commit} {
-	# -- Branch Menu
-	#
 	menu .mbar.branch
 
 	.mbar.branch add command -label {Create...} \
@@ -3615,11 +3616,9 @@ set selected_commit_type new
 wm title . "$appname ([file normalize [file dirname $gitdir]])"
 focus -force $ui_comm
 
-# -- Warn the user about environmental problems.
-#    Cygwin's Tcl does *not* pass its env array
-#    onto any processes it spawns.  This means
-#    that the git processes get none of our
-#    environment.  That may not work...
+# -- Warn the user about environmental problems.  Cygwin's Tcl
+#    does *not* pass its env array onto any processes it spawns.
+#    This means that git processes get none of our environment.
 #
 if {[is_Windows]} {
 	set ignored_env 0
@@ -3672,13 +3671,17 @@ user.email settings into your personal
 	unset ignored_env msg suggest_user name
 }
 
+# -- Only initialize complex UI if we are going to stay running.
+#
 if {!$single_commit} {
 	load_all_remotes
 	load_all_heads
+
 	populate_branch_menu .mbar.branch
 	populate_fetch_menu .mbar.fetch
 	populate_pull_menu .mbar.pull
 	populate_push_menu .mbar.push
 }
+
 lock_index begin-read
 after 1 do_rescan
