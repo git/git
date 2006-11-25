@@ -359,7 +359,7 @@ fetch_main () {
       esac
 
       append_fetch_head "$head" "$remote" \
-	  "$remote_name" "$remote_nick" "$local_name" "$not_for_merge"
+	  "$remote_name" "$remote_nick" "$local_name" "$not_for_merge" || exit
 
   done
 
@@ -413,15 +413,16 @@ fetch_main () {
 	  done
 	  local_name=$(expr "z$found" : 'z[^:]*:\(.*\)')
 	  append_fetch_head "$sha1" "$remote" \
-		  "$remote_name" "$remote_nick" "$local_name" "$not_for_merge"
-      done
+		  "$remote_name" "$remote_nick" "$local_name" \
+		  "$not_for_merge" || exit
+      done &&
       if [ "$pack_lockfile" ]; then rm -f "$pack_lockfile"; fi
     ) || exit ;;
   esac
 
 }
 
-fetch_main "$reflist"
+fetch_main "$reflist" || exit
 
 # automated tag following
 case "$no_tags$tags" in
@@ -449,7 +450,7 @@ case "$no_tags$tags" in
 	case "$taglist" in
 	'') ;;
 	?*)
-		fetch_main "$taglist" ;;
+		fetch_main "$taglist" || exit ;;
 	esac
 esac
 
