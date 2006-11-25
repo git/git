@@ -1610,7 +1610,7 @@ proc write_checkout_index {fd pathList totalCnt batch msg after} {
 ## branch management
 
 proc load_all_branches {} {
-	global all_branches
+	global all_branches tracking_branches
 
 	set all_branches [list]
 	set cmd [list git for-each-ref]
@@ -1618,9 +1618,9 @@ proc load_all_branches {} {
 	lappend cmd refs/heads
 	set fd [open "| $cmd" r]
 	while {[gets $fd line] > 0} {
-		if {[regsub ^refs/heads/ $line {} line]} {
-			lappend all_branches $line
-		}
+		if {![catch {set info $tracking_branches($line)}]} continue
+		if {![regsub ^refs/heads/ $line {} name]} continue
+		lappend all_branches $name
 	}
 	close $fd
 
@@ -1652,21 +1652,49 @@ proc switch_branch {b} {
 ## remote management
 
 proc load_all_remotes {} {
-	global gitdir all_remotes repo_config
+	global gitdir repo_config
+	global all_remotes tracking_branches
 
 	set all_remotes [list]
+	array unset tracking_branches
+
 	set rm_dir [file join $gitdir remotes]
 	if {[file isdirectory $rm_dir]} {
-		set all_remotes [concat $all_remotes [glob \
+		set all_remotes [glob \
 			-types f \
 			-tails \
 			-nocomplain \
-			-directory $rm_dir *]]
+			-directory $rm_dir *]
+
+		foreach name $all_remotes {
+			catch {
+				set fd [open [file join $rm_dir $name] r]
+				while {[gets $fd line] >= 0} {
+					if {![regexp {^Pull:[ 	]*([^:]+):(.+)$} \
+						$line line src dst]} continue
+					if {![regexp ^refs/ $dst]} {
+						set dst "refs/heads/$dst"
+					}
+					set tracking_branches($dst) [list $name $src]
+				}
+				close $fd
+			}
+		}
 	}
 
 	foreach line [array names repo_config remote.*.url] {
-		if {[regexp ^remote\.(.*)\.url\$ $line line name]} {
-			lappend all_remotes $name
+		if {![regexp ^remote\.(.*)\.url\$ $line line name]} continue
+		lappend all_remotes $name
+
+		if {[catch {set fl $repo_config(remote.$name.fetch)}]} {
+			set fl {}
+		}
+		foreach line $fl {
+			if {![regexp {^([^:]+):(.+)$} $line line src dst]} continue
+			if {![regexp ^refs/ $dst]} {
+				set dst "refs/heads/$dst"
+			}
+			set tracking_branches($dst) [list $name $src]
 		}
 	}
 
