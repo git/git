@@ -99,13 +99,17 @@ get_remote_default_refs_for_push () {
 expand_refs_wildcard () {
 	for ref
 	do
+		lref=${ref#'+'}
 		# a non glob pattern is given back as-is.
-		expr "z$ref" : 'zrefs/.*/\*:refs/.*/\*$' >/dev/null || {
+		expr "z$lref" : 'zrefs/.*/\*:refs/.*/\*$' >/dev/null || {
 			echo "$ref"
 			continue
 		}
-		from=`expr "z$ref" : 'z\(refs/.*/\)\*:refs/.*/\*$'`
-		to=`expr "z$ref" : 'zrefs/.*/\*:\(refs/.*/\)\*$'`
+
+		from=`expr "z$lref" : 'z\(refs/.*/\)\*:refs/.*/\*$'`
+		to=`expr "z$lref" : 'zrefs/.*/\*:\(refs/.*/\)\*$'`
+		local_force=
+		test "z$lref" = "z$ref" || local_force='+'
 		echo "$ls_remote_result" |
 		(
 			IFS='	'
@@ -117,7 +121,7 @@ expand_refs_wildcard () {
 				then
 					continue
 				fi
-				echo "${name}:${to}${mapped}"
+				echo "${local_force}${name}:${to}${mapped}"
 			done
 		)
 	done
