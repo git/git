@@ -1609,10 +1609,10 @@ proc write_checkout_index {fd pathList totalCnt batch msg after} {
 ##
 ## branch management
 
-proc load_all_branches {} {
-	global all_branches tracking_branches
+proc load_all_heads {} {
+	global all_heads tracking_branches
 
-	set all_branches [list]
+	set all_heads [list]
 	set cmd [list git for-each-ref]
 	lappend cmd --format=%(refname)
 	lappend cmd refs/heads
@@ -1620,18 +1620,18 @@ proc load_all_branches {} {
 	while {[gets $fd line] > 0} {
 		if {![catch {set info $tracking_branches($line)}]} continue
 		if {![regsub ^refs/heads/ $line {} name]} continue
-		lappend all_branches $name
+		lappend all_heads $name
 	}
 	close $fd
 
-	set all_branches [lsort $all_branches]
+	set all_heads [lsort $all_heads]
 }
 
 proc populate_branch_menu {m} {
-	global all_branches disable_on_lock
+	global all_heads disable_on_lock
 
 	$m add separator
-	foreach b $all_branches {
+	foreach b $all_heads {
 		$m add radiobutton \
 			-label $b \
 			-command [list switch_branch $b] \
@@ -3674,7 +3674,7 @@ user.email settings into your personal
 
 if {!$single_commit} {
 	load_all_remotes
-	load_all_branches
+	load_all_heads
 	populate_branch_menu .mbar.branch
 	populate_fetch_menu .mbar.fetch
 	populate_pull_menu .mbar.pull
