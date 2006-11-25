@@ -4201,7 +4201,7 @@ sub git_feed {
 	}
 	if (defined($revlist[0])) {
 		%latest_commit = parse_commit($revlist[0]);
-		%latest_date   = parse_date($latest_commit{'committer_epoch'});
+		%latest_date   = parse_date($latest_commit{'author_epoch'});
 		print $cgi->header(
 			-type => $content_type,
 			-charset => 'utf-8',
@@ -4294,10 +4294,10 @@ XML
 		my $commit = $revlist[$i];
 		my %co = parse_commit($commit);
 		# we read 150, we always show 30 and the ones more recent than 48 hours
-		if (($i >= 20) && ((time - $co{'committer_epoch'}) > 48*60*60)) {
+		if (($i >= 20) && ((time - $co{'author_epoch'}) > 48*60*60)) {
 			last;
 		}
-		my %cd = parse_date($co{'committer_epoch'});
+		my %cd = parse_date($co{'author_epoch'});
 
 		# get list of changed files
 		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
