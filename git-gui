@@ -1643,8 +1643,57 @@ proc populate_branch_menu {m} {
 	}
 }
 
-proc switch_branch {b} {
+proc do_create_branch {} {
 	error "NOT IMPLEMENTED"
+}
+
+proc do_delete_branch {} {
+	error "NOT IMPLEMENTED"
+}
+
+proc switch_branch {b} {
+	global HEAD commit_type file_states current_branch
+	global selected_commit_type ui_comm
+
+	if {![lock_index switch]} return
+
+	# -- Backup the selected branch (repository_state resets it)
+	#
+	set new_branch $current_branch
+
+	# -- Our in memory state should match the repository.
+	#
+	repository_state curType curHEAD curMERGE_HEAD
+	if {[string match amend* $commit_type]
+		&& $curType eq {normal}
+		&& $curHEAD eq $HEAD} {
+	} elseif {$commit_type ne $curType || $HEAD ne $curHEAD} {
+		info_popup {Last scanned state does not match repository state.
+
+Another Git program has modified this repository
+since the last scan.  A rescan must be performed
+before the current branch can be changed.
+
+The rescan will be automatically started now.
+}
+		unlock_index
+		rescan {set ui_status_value {Ready.}}
+		return
+	}
+
+	# -- Toss the message buffer if we are in amend mode.
+	#
+	if {[string match amend* $curType]} {
+		$ui_comm delete 0.0 end
+		$ui_comm edit reset
+		$ui_comm edit modified false
+	}
+
+	set selected_commit_type new
+	set current_branch $new_branch
+
+	unlock_index
+	error "NOT FINISHED"
 }
 
 ######################################################################
