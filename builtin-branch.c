@@ -38,12 +38,16 @@ static int in_merge_bases(const unsigned char *sha1,
 
 static void delete_branches(int argc, const char **argv, int force)
 {
-	struct commit *rev, *head_rev;
+	struct commit *rev, *head_rev = head_rev;
 	unsigned char sha1[20];
 	char *name;
 	int i;
 
-	head_rev = lookup_commit_reference(head_sha1);
+	if (!force) {
+		head_rev = lookup_commit_reference(head_sha1);
+		if (!head_rev)
+			die("Couldn't look up commit object for HEAD");
+	}
 	for (i = 0; i < argc; i++) {
 		if (!strcmp(head, argv[i]))
 			die("Cannot delete the branch you are currently on.");
@@ -53,8 +57,8 @@ static void delete_branches(int argc, const char **argv, int force)
 			die("Branch '%s' not found.", argv[i]);
 
 		rev = lookup_commit_reference(sha1);
-		if (!rev || !head_rev)
-			die("Couldn't look up commit objects.");
+		if (!rev)
+			die("Couldn't look up commit object for '%s'", name);
 
 		/* This checks whether the merge bases of branch and
 		 * HEAD contains branch -- which means that the HEAD
