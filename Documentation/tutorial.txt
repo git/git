@@ -209,29 +209,28 @@ at /home/bob/myrepo.  She does this with:
 
 ------------------------------------------------
 $ cd /home/alice/project
-$ git pull /home/bob/myrepo
+$ git pull /home/bob/myrepo master
 ------------------------------------------------
 
-This actually pulls changes from the branch in Bob's repository named
-"master".  Alice could request a different branch by adding the name
-of the branch to the end of the git pull command line.
+This merges the changes from Bob's "master" branch into Alice's
+current branch.  If Alice has made her own changes in the meantime,
+then she may need to manually fix any conflicts.  (Note that the
+"master" argument in the above command is actually unnecessary, as it
+is the default.)
 
-This merges Bob's changes into her repository; "git log" will
-now show the new commits.  If Alice has made her own changes in the
-meantime, then Bob's changes will be merged in, and she will need to
-manually fix any conflicts.
+The "pull" command thus performs two operations: it fetches changes
+from a remote branch, then merges them into the current branch.
 
-A more cautious Alice might wish to examine Bob's changes before
-pulling them.  She can do this by creating a temporary branch just
-for the purpose of studying Bob's changes:
+You can perform the first operation alone using the "git fetch"
+command.  For example, Alice could create a temporary branch just to
+track Bob's changes, without merging them with her own, using:
 
 -------------------------------------
 $ git fetch /home/bob/myrepo master:bob-incoming
 -------------------------------------
 
 which fetches the changes from Bob's master branch into a new branch
-named bob-incoming.  (Unlike git pull, git fetch just fetches a copy
-of Bob's line of development without doing any merging).  Then
+named bob-incoming.  Then
 
 -------------------------------------
 $ git log -p master..bob-incoming
@@ -240,8 +239,8 @@ $ git log -p master..bob-incoming
 shows a list of all the changes that Bob made since he branched from
 Alice's master branch.
 
-After examining those changes, and possibly fixing things, Alice can
-pull the changes into her master branch:
+After examining those changes, and possibly fixing things, Alice
+could pull the changes into her master branch:
 
 -------------------------------------
 $ git checkout master
@@ -250,6 +249,18 @@ $ git pull . bob-incoming
 
 The last command is a pull from the "bob-incoming" branch in Alice's
 own repository.
+
+Alice could also perform both steps at once with:
+
+-------------------------------------
+$ git pull /home/bob/myrepo master:bob-incoming
+-------------------------------------
+
+This is just like the "git pull /home/bob/myrepo master" that we saw
+before, except that it also stores the unmerged changes from bob's
+master branch in bob-incoming before merging them into Alice's
+current branch.  Note that git pull always merges into the current
+branch, regardless of what else is given on the commandline.
 
 Later, Bob can update his repo with Alice's latest changes using
 
