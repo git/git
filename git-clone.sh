@@ -377,9 +377,9 @@ then
 		*)	origin_track="$remote_top/$origin"
 			git-update-ref "refs/heads/$origin" "$head_sha1" ;;
 		esac &&
-		echo >"$GIT_DIR/remotes/$origin" \
-		"URL: $repo
-Pull: refs/heads/$head_points_at:$origin_track" &&
+		git-repo-config remote."$origin".url "$repo" &&
+		git-repo-config remote."$origin".fetch \
+			"refs/heads/$head_points_at:$origin_track" &&
 		(cd "$GIT_DIR/$remote_top" && find . -type f -print) |
 		while read dotslref
 		do
@@ -393,8 +393,8 @@ Pull: refs/heads/$head_points_at:$origin_track" &&
 			then
 				continue
 			fi
-			echo "Pull: refs/heads/${name}:$remote_top/${name}"
-		done >>"$GIT_DIR/remotes/$origin" &&
+			git-repo-config remote."$origin".fetch "refs/heads/${name}:$remote_top/${name}" '^$'
+		done &&
 		case "$use_separate_remote" in
 		t)
 			rm -f "refs/remotes/$origin/HEAD"
