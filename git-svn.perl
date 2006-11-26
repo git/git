@@ -2919,8 +2919,12 @@ sub libsvn_fetch {
 	my $p = $SVN->{svn_path};
 	foreach my $f (keys %$paths) {
 		my $m = $paths->{$f}->action();
-		$f =~ s#^/\Q$p\E/##;
-		next if $f =~ m#^/#;
+		if (length $p) {
+			$f =~ s#^/\Q$p\E/##;
+			next if $f =~ m#^/#;
+		} else {
+			$f =~ s#^/##;
+		}
 		if ($m =~ /^[DR]$/) {
 			print "\t$m\t$f\n" unless $_q;
 			process_rm($gui, $last_commit, $f);
