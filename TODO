@@ -1,15 +1,10 @@
 Items outstanding:
 
- * Checkout $PARENT version to working directory, overwriting current
-   version.  ($PARENT is HEAD, except when amending).
-
  * Add file to .gitignore or info/excludes.
 
  * Populate the pull menu with local branches.
 
  * Make use of the new default merge data stored in repo-config.
-
- * Indicate what the current branch is.
 
  * Checkout or create a different local branch.
 
@@ -37,3 +32,18 @@ Items outstanding:
    parse that file and generate the options dialog from
    the documentation itself, and include the help text
    from the documentation as part of the UI somehow.
+
+Known bugs:
+
+ * git-gui sometimes just closes on Windows with no error message.
+   I'm not sure what the problem is here.  I suspect the wish
+   process is just terminating due to a segfault or something,
+   as the do_quit proc in git-gui doesn't run.  It often seems to
+   occur while writing a commit message in the buffer.  Odd.
+
+ * At one point after using git-gui for a while to make many commits
+   to a repository I reverted one file through git-gui and another
+   manually in my editor; during commit git-gui crashed with an
+   error about the icon name it was trying to update no longer
+   existed in the widget.  I suspect something didn't update right
+   in file_states...
