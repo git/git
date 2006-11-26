@@ -2441,6 +2441,7 @@ sub git_project_list_body {
 		($pr->{'age'}, $pr->{'age_string'}) = @aa;
 		if (!defined $pr->{'descr'}) {
 			my $descr = git_get_project_description($pr->{'path'}) || "";
+			$pr->{'descr_long'} = to_utf8($descr);
 			$pr->{'descr'} = chop_str($descr, 25, 5);
 		}
 		if (!defined $pr->{'owner'}) {
@@ -2476,7 +2477,7 @@ sub git_project_list_body {
 		} else {
 			print "<th>" .
 			      $cgi->a({-href => href(project=>undef, order=>'project'),
-				       -class => "header"}, "Project") .
+			               -class => "header"}, "Project") .
 			      "</th>\n";
 		}
 		if ($order eq "descr") {
@@ -2485,7 +2486,7 @@ sub git_project_list_body {
 		} else {
 			print "<th>" .
 			      $cgi->a({-href => href(project=>undef, order=>'descr'),
-				       -class => "header"}, "Description") .
+			               -class => "header"}, "Description") .
 			      "</th>\n";
 		}
 		if ($order eq "owner") {
@@ -2494,7 +2495,7 @@ sub git_project_list_body {
 		} else {
 			print "<th>" .
 			      $cgi->a({-href => href(project=>undef, order=>'owner'),
-				       -class => "header"}, "Owner") .
+			               -class => "header"}, "Owner") .
 			      "</th>\n";
 		}
 		if ($order eq "age") {
@@ -2503,7 +2504,7 @@ sub git_project_list_body {
 		} else {
 			print "<th>" .
 			      $cgi->a({-href => href(project=>undef, order=>'age'),
-				       -class => "header"}, "Last Change") .
+			               -class => "header"}, "Last Change") .
 			      "</th>\n";
 		}
 		print "<th></th>\n" .
@@ -2528,7 +2529,9 @@ sub git_project_list_body {
 		}
 		print "<td>" . $cgi->a({-href => href(project=>$pr->{'path'}, action=>"summary"),
 		                        -class => "list"}, esc_html($pr->{'path'})) . "</td>\n" .
-		      "<td>" . esc_html($pr->{'descr'}) . "</td>\n" .
+		      "<td>" . $cgi->a({-href => href(project=>$pr->{'path'}, action=>"summary"),
+		                        -class => "list", -title => $pr->{'descr_long'}},
+		                        esc_html($pr->{'descr'})) . "</td>\n" .
 		      "<td><i>" . chop_str($pr->{'owner'}, 15) . "</i></td>\n";
 		print "<td class=\"". age_class($pr->{'age'}) . "\">" .
 		      $pr->{'age_string'} . "</td>\n" .
