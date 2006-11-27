@@ -1,12 +1,18 @@
 #include "refs.h"
 #include "cache.h"
+#include "object.h"
+#include "tag.h"
 
 #include <errno.h>
+
+/* ISSYMREF=01 and ISPACKED=02 are public interfaces */
+#define REF_KNOWS_PEELED 04
 
 struct ref_list {
 	struct ref_list *next;
 	unsigned char flag; /* ISSYMREF? ISPACKED? */
 	unsigned char sha1[20];
+	unsigned char peeled[20];
 	char name[FLEX_ARRAY];
 };
 
@@ -34,11 +40,13 @@ static const char *parse_ref_line(char *line, unsigned char *sha1)
 	if (line[len] != '\n')
 		return NULL;
 	line[len] = 0;
+
 	return line;
 }
 
 static struct ref_list *add_ref(const char *name, const unsigned char *sha1,
-				int flag, struct ref_list *list)
+				int flag, struct ref_list *list,
+				struct ref_list **new_entry)
 {
 	int len;
 	struct ref_list **p = &list, *entry;
@@ -50,8 +58,11 @@ static struct ref_list *add_ref(const char *name, const unsigned char *sha1,
 			break;
 
 		/* Same as existing entry? */
-		if (!cmp)
+		if (!cmp) {
+			if (new_entry)
+				*new_entry = entry;
 			return list;
+		}
 		p = &entry->next;
 	}
 
@@ -59,10 +70,13 @@ static struct ref_list *add_ref(const char *name, const unsigned char *sha1,
 	len = strlen(name) + 1;
 	entry = xmalloc(sizeof(struct ref_list) + len);
 	hashcpy(entry->sha1, sha1);
+	hashclr(entry->peeled);
 	memcpy(entry->name, name, len);
 	entry->flag = flag;
 	entry->next = *p;
 	*p = entry;
+	if (new_entry)
+		*new_entry = entry;
 	return list;
 }
 
@@ -98,25 +112,50 @@ static void invalidate_cached_refs(void)
 	ca->did_loose = ca->did_packed = 0;
 }
 
+static void read_packed_refs(FILE *f, struct cached_refs *cached_refs)
+{
+	struct ref_list *list = NULL;
+	struct ref_list *last = NULL;
+	char refline[PATH_MAX];
+	int flag = REF_ISPACKED;
+
+	while (fgets(refline, sizeof(refline), f)) {
+		unsigned char sha1[20];
+		const char *name;
+		static const char header[] = "# pack-refs with:";
+
+		if (!strncmp(refline, header, sizeof(header)-1)) {
+			const char *traits = refline + sizeof(header) - 1;
+			if (strstr(traits, " peeled "))
+				flag |= REF_KNOWS_PEELED;
+			/* perhaps other traits later as well */
+			continue;
+		}
+
+		name = parse_ref_line(refline, sha1);
+		if (name) {
+			list = add_ref(name, sha1, flag, list, &last);
+			continue;
+		}
+		if (last &&
+		    refline[0] == '^' &&
+		    strlen(refline) == 42 &&
+		    refline[41] == '\n' &&
+		    !get_sha1_hex(refline + 1, sha1))
+			hashcpy(last->peeled, sha1);
+	}
+	cached_refs->packed = list;
+}
+
 static struct ref_list *get_packed_refs(void)
 {
 	if (!cached_refs.did_packed) {
-		struct ref_list *refs = NULL;
 		FILE *f = fopen(git_path("packed-refs"), "r");
+		cached_refs.packed = NULL;
 		if (f) {
-			struct ref_list *list = NULL;
-			char refline[PATH_MAX];
-			while (fgets(refline, sizeof(refline), f)) {
-				unsigned char sha1[20];
-				const char *name = parse_ref_line(refline, sha1);
-				if (!name)
-					continue;
-				list = add_ref(name, sha1, REF_ISPACKED, list);
-			}
+			read_packed_refs(f, &cached_refs);
 			fclose(f);
-			refs = list;
 		}
-		cached_refs.packed = refs;
 		cached_refs.did_packed = 1;
 	}
 	return cached_refs.packed;
@@ -159,7 +198,7 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 				error("%s points nowhere!", ref);
 				continue;
 			}
-			list = add_ref(ref, sha1, flag, list);
+			list = add_ref(ref, sha1, flag, list, NULL);
 		}
 		free(ref);
 		closedir(dir);
@@ -334,6 +373,43 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 		return 0;
 	}
 	return fn(entry->name + trim, entry->sha1, entry->flag, cb_data);
+}
+
+int peel_ref(const char *ref, unsigned char *sha1)
+{
+	int flag;
+	unsigned char base[20];
+	struct object *o;
+
+	if (!resolve_ref(ref, base, 1, &flag))
+		return -1;
+
+	if ((flag & REF_ISPACKED)) {
+		struct ref_list *list = get_packed_refs();
+
+		while (list) {
+			if (!strcmp(list->name, ref)) {
+				if (list->flag & REF_KNOWS_PEELED) {
+					hashcpy(sha1, list->peeled);
+					return 0;
+				}
+				/* older pack-refs did not leave peeled ones */
+				break;
+			}
+			list = list->next;
+		}
+	}
+
+	/* fallback - callers should not call this for unpacked refs */
+	o = parse_object(base);
+	if (o->type == OBJ_TAG) {
+		o = deref_tag(o, ref, 0);
+		if (o) {
+			hashcpy(sha1, o->sha1);
+			return 0;
+		}
+	}
+	return -1;
 }
 
 static int do_for_each_ref(const char *base, each_ref_fn fn, int trim,
