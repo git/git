@@ -18,7 +18,13 @@
 #    2) Added the following line to your .bashrc:
 #        source ~/.git-completion.sh
 #
-#    3) Consider changing your PS1 to also show the current branch:
+#    3) You may want to make sure the git executable is available
+#       in your PATH before this script is sourced, as some caching
+#       is performed while the script loads.  If git isn't found
+#       at source time then all lookups will be done on demand,
+#       which may be slightly slower.
+#
+#    4) Consider changing your PS1 to also show the current branch:
 #        PS1='[\u@\h \W$(__git_ps1 " (%s)")]\$ '
 #
 #       The argument to __git_ps1 will be displayed only if you
@@ -150,6 +156,10 @@ __git_remotes ()
 
 __git_merge_strategies ()
 {
+	if [ -n "$__git_merge_strategylist" ]; then
+		echo "$__git_merge_strategylist"
+		return
+	fi
 	sed -n "/^all_strategies='/{
 		s/^all_strategies='//
 		s/'//
@@ -157,6 +167,8 @@ __git_merge_strategies ()
 		q
 		}" "$(git --exec-path)/git-merge"
 }
+__git_merge_strategylist=
+__git_merge_strategylist="$(__git_merge_strategies 2>/dev/null)"
 
 __git_complete_file ()
 {
@@ -214,6 +226,10 @@ __git_complete_revlist ()
 
 __git_commands ()
 {
+	if [ -n "$__git_commandlist" ]; then
+		echo "$__git_commandlist"
+		return
+	fi
 	local i IFS=" "$'\n'
 	for i in $(git help -a|egrep '^ ')
 	do
@@ -263,6 +279,8 @@ __git_commands ()
 		esac
 	done
 }
+__git_commandlist=
+__git_commandlist="$(__git_commands 2>/dev/null)"
 
 __git_aliases ()
 {
