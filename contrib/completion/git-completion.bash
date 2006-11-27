@@ -125,6 +125,58 @@ __git_complete_file ()
 	esac
 }
 
+__git_commands ()
+{
+	local i IFS=" "$'\n'
+	for i in $(git help -a|egrep '^ ')
+	do
+		case $i in
+		check-ref-format) : plumbing;;
+		commit-tree)      : plumbing;;
+		convert-objects)  : plumbing;;
+		cvsserver)        : daemon;;
+		daemon)           : daemon;;
+		fetch-pack)       : plumbing;;
+		hash-object)      : plumbing;;
+		http-*)           : transport;;
+		index-pack)       : plumbing;;
+		local-fetch)      : plumbing;;
+		mailinfo)         : plumbing;;
+		mailsplit)        : plumbing;;
+		merge-*)          : plumbing;;
+		mktree)           : plumbing;;
+		mktag)            : plumbing;;
+		pack-objects)     : plumbing;;
+		pack-redundant)   : plumbing;;
+		pack-refs)        : plumbing;;
+		parse-remote)     : plumbing;;
+		patch-id)         : plumbing;;
+		peek-remote)      : plumbing;;
+		read-tree)        : plumbing;;
+		receive-pack)     : plumbing;;
+		rerere)           : plumbing;;
+		rev-list)         : plumbing;;
+		rev-parse)        : plumbing;;
+		runstatus)        : plumbing;;
+		sh-setup)         : internal;;
+		shell)            : daemon;;
+		send-pack)        : plumbing;;
+		show-index)       : plumbing;;
+		ssh-*)            : transport;;
+		stripspace)       : plumbing;;
+		symbolic-ref)     : plumbing;;
+		unpack-file)      : plumbing;;
+		unpack-objects)   : plumbing;;
+		update-ref)       : plumbing;;
+		update-server-info) : daemon;;
+		upload-archive)   : plumbing;;
+		upload-pack)      : plumbing;;
+		write-tree)       : plumbing;;
+		*) echo $i;;
+		esac
+	done
+}
+
 __git_aliases ()
 {
 	local i IFS=$'\n'
@@ -355,11 +407,11 @@ _git ()
 	done
 
 	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
-		COMPREPLY=($(compgen \
-			-W "--git-dir= --version \
-				$(git help -a|egrep '^ ') \
-			    $(__git_aliases)" \
-			-- "${COMP_WORDS[COMP_CWORD]}"))
+		COMPREPLY=($(compgen -W "
+			--git-dir= --version --exec-path
+			$(__git_commands)
+			$(__git_aliases)
+			" -- "${COMP_WORDS[COMP_CWORD]}"))
 		return;
 	fi
 
