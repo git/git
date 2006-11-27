@@ -65,62 +65,17 @@ Generating patches with -p
 
 When "git-diff-index", "git-diff-tree", or "git-diff-files" are run
 with a '-p' option, they do not produce the output described above;
-instead they produce a patch file.
+instead they produce a patch file.  You can customize the creation
+of such patches via the GIT_EXTERNAL_DIFF and the GIT_DIFF_OPTS
+environment variables.
 
-The patch generation can be customized at two levels.
-
-1. When the environment variable 'GIT_EXTERNAL_DIFF' is not set,
-   these commands internally invoke "diff" like this:
-
-      diff -L a/<path> -L b/<path> -pu <old> <new>
-+
-For added files, `/dev/null` is used for <old>.  For removed
-files, `/dev/null` is used for <new>
-+
-The "diff" formatting options can be customized via the
-environment variable 'GIT_DIFF_OPTS'.  For example, if you
-prefer context diff:
-
-      GIT_DIFF_OPTS=-c git-diff-index -p HEAD
-
-
-2. When the environment variable 'GIT_EXTERNAL_DIFF' is set, the
-   program named by it is called, instead of the diff invocation
-   described above.
-+
-For a path that is added, removed, or modified,
-'GIT_EXTERNAL_DIFF' is called with 7 parameters:
-
-     path old-file old-hex old-mode new-file new-hex new-mode
-+
-where:
-
-     <old|new>-file:: are files GIT_EXTERNAL_DIFF can use to read the
-		      contents of <old|new>,
-     <old|new>-hex:: are the 40-hexdigit SHA1 hashes,
-     <old|new>-mode:: are the octal representation of the file modes.
-
-+ 
-The file parameters can point at the user's working file
-(e.g. `new-file` in "git-diff-files"), `/dev/null` (e.g. `old-file`
-when a new file is added), or a temporary file (e.g. `old-file` in the
-index).  'GIT_EXTERNAL_DIFF' should not worry about unlinking the
-temporary file --- it is removed when 'GIT_EXTERNAL_DIFF' exits.
-
-For a path that is unmerged, 'GIT_EXTERNAL_DIFF' is called with 1
-parameter, <path>.
-
-
-git specific extension to diff format
--------------------------------------
-
-What -p option produces is slightly different from the
-traditional diff format.
+What the -p option produces is slightly different from the traditional
+diff format.
 
 1.   It is preceded with a "git diff" header, that looks like
      this:
 
-     diff --git a/file1 b/file2
+       diff --git a/file1 b/file2
 +
 The `a/` and `b/` filenames are the same unless rename/copy is
 involved.  Especially, even for a creation or a deletion,
