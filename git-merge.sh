@@ -159,7 +159,7 @@ then
 	shift
 	head_arg="$1"
 	shift
-elif ! git-rev-parse --verify HEAD 2>/dev/null
+elif ! git-rev-parse --verify HEAD >/dev/null 2>&1
 then
 	# If the merged head is a valid one there is no reason to
 	# forbid "git merge" into a branch yet to be born.  We do
