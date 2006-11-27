@@ -499,8 +499,8 @@ proc rescan_done {fd buf after} {
 		set pathList [list]
 		foreach path [array names file_states] {
 			switch -- [lindex $file_states($path) 0] {
-			AM -
-			MM {lappend pathList $path}
+			A? -
+			M? {lappend pathList $path}
 			}
 		}
 		if {$pathList ne {}} {
