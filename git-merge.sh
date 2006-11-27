@@ -3,22 +3,20 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-USAGE='[-n] [--no-commit] [--squash] [-s <strategy>]... <merge-message> <head> <remote>+'
+USAGE='[-n] [--no-commit] [--squash] [-s <strategy>] [--reflog-action=<action>] [-m=<merge-message>] <commit>+'
+
 . git-sh-setup
 
 LF='
 '
 
-all_strategies='recur recursive recursive-old octopus resolve stupid ours'
+all_strategies='recur recursive octopus resolve stupid ours'
 default_twohead_strategies='recursive'
 default_octopus_strategies='octopus'
 no_trivial_merge_strategies='ours'
 use_strategies=
 
 index_merge=t
-if test "@@NO_PYTHON@@"; then
-	all_strategies='recur recursive resolve octopus stupid ours'
-fi
 
 dropsave() {
 	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" \
@@ -95,7 +93,7 @@ finish () {
 
 case "$#" in 0) usage ;; esac
 
-rloga=
+rloga= have_message=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -128,17 +126,81 @@ do
 	--reflog-action=*)
 		rloga=`expr "z$1" : 'z-[^=]*=\(.*\)'`
 		;;
+	-m=*|--m=*|--me=*|--mes=*|--mess=*|--messa=*|--messag=*|--message=*)
+		merge_msg=`expr "z$1" : 'z-[^=]*=\(.*\)'`
+		have_message=t
+		;;
+	-m|--m|--me|--mes|--mess|--messa|--messag|--message)
+		shift
+		case "$#" in
+		1)	usage ;;
+		esac
+		merge_msg="$1"
+		have_message=t
+		;;
 	-*)	usage ;;
 	*)	break ;;
 	esac
 	shift
 done
 
-merge_msg="$1"
-shift
-head_arg="$1"
-head=$(git-rev-parse --verify "$1"^0) || usage
-shift
+# This could be traditional "merge <msg> HEAD <commit>..."  and the
+# way we can tell it is to see if the second token is HEAD, but some
+# people might have misused the interface and used a committish that
+# is the same as HEAD there instead.  Traditional format never would
+# have "-m" so it is an additional safety measure to check for it.
+
+if test -z "$have_message" &&
+	second_token=$(git-rev-parse --verify "$2^0" 2>/dev/null) &&
+	head_commit=$(git-rev-parse --verify "HEAD" 2>/dev/null) &&
+	test "$second_token" = "$head_commit"
+then
+	merge_msg="$1"
+	shift
+	head_arg="$1"
+	shift
+elif ! git-rev-parse --verify HEAD >/dev/null 2>&1
+then
+	# If the merged head is a valid one there is no reason to
+	# forbid "git merge" into a branch yet to be born.  We do
+	# the same for "git pull".
+	if test 1 -ne $#
+	then
+		echo >&2 "Can merge only exactly one commit into empty head"
+		exit 1
+	fi
+
+	rh=$(git rev-parse --verify "$1^0") ||
+		die "$1 - not something we can merge"
+
+	git-update-ref -m "initial pull" HEAD "$rh" "" &&
+	git-read-tree --reset -u HEAD
+	exit
+
+else
+	# We are invoked directly as the first-class UI.
+	head_arg=HEAD
+
+	# All the rest are the commits being merged; prepare
+	# the standard merge summary message to be appended to
+	# the given message.  If remote is invalid we will die
+	# later in the common codepath so we discard the error
+	# in this loop.
+	merge_name=$(for remote
+		do
+			rh=$(git-rev-parse --verify "$remote"^0 2>/dev/null) &&
+			if git show-ref -q --verify "refs/heads/$remote"
+			then
+				what=branch
+			else
+				what=commit
+			fi &&
+			echo "$rh		$what '$remote'"
+		done | git-fmt-merge-msg
+	)
+	merge_msg="${merge_msg:+$merge_msg$LF$LF}$merge_name"
+fi
+head=$(git-rev-parse --verify "$head_arg"^0) || usage
 
 # All the rest are remote heads
 test "$#" = 0 && usage ;# we need at least one remote head.
@@ -147,7 +209,7 @@ test "$rloga" = '' && rloga="merge: $@"
 remoteheads=
 for remote
 do
-	remotehead=$(git-rev-parse --verify "$remote"^0) ||
+	remotehead=$(git-rev-parse --verify "$remote"^0 2>/dev/null) ||
 	    die "$remote - not something we can merge"
 	remoteheads="${remoteheads}$remotehead "
 done

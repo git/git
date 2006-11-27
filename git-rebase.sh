@@ -302,15 +302,6 @@ then
 	exit $?
 fi
 
-if test "@@NO_PYTHON@@" && test "$strategy" = "recursive-old"
-then
-	die 'The recursive-old merge strategy is written in Python,
-which this installation of git was not configured with.  Please consider
-a different merge strategy (e.g. recursive, resolve, or stupid)
-or install Python and git with Python support.'
-
-fi
-
 # start doing a rebase with git-merge
 # this is rename-aware if the recursive (default) strategy is used
 
