@@ -144,6 +144,26 @@ __git_complete_file ()
 	esac
 }
 
+__git_complete_revlist ()
+{
+	local pfx cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	*...*)
+		pfx="${cur%...*}..."
+		cur="${cur#*...}"
+		COMPREPLY=($(compgen -P "$pfx" -W "$(__git_refs)" -- "$cur"))
+		;;
+	*..*)
+		pfx="${cur%..*}.."
+		cur="${cur#*..}"
+		COMPREPLY=($(compgen -P "$pfx" -W "$(__git_refs)" -- "$cur"))
+		;;
+	*)
+		COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
+		;;
+	esac
+}
+
 __git_commands ()
 {
 	local i IFS=" "$'\n'
@@ -290,6 +310,26 @@ _git_fetch ()
 	esac
 }
 
+_git_format_patch ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		COMPREPLY=($(compgen -W "
+			--stdout --attach --thread
+			--output-directory
+			--numbered --start-number
+			--keep-subject
+			--signoff
+			--in-reply-to=
+			--full-index --binary
+			" -- "$cur"))
+		return
+		;;
+	esac
+	__git_complete_revlist
+}
+
 _git_ls_remote ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -303,22 +343,7 @@ _git_ls_tree ()
 
 _git_log ()
 {
-	local pfx cur="${COMP_WORDS[COMP_CWORD]}"
-	case "$cur" in
-	*...*)
-		pfx="${cur%...*}..."
-		cur="${cur#*...}"
-		COMPREPLY=($(compgen -P "$pfx" -W "$(__git_refs)" -- "$cur"))
-		;;
-	*..*)
-		pfx="${cur%..*}.."
-		cur="${cur#*..}"
-		COMPREPLY=($(compgen -P "$pfx" -W "$(__git_refs)" -- "$cur"))
-		;;
-	*)
-		COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
-		;;
-	esac
+	__git_complete_revlist
 }
 
 _git_merge ()
@@ -450,6 +475,7 @@ _git ()
 	diff)        _git_diff ;;
 	diff-tree)   _git_diff_tree ;;
 	fetch)       _git_fetch ;;
+	format-patch) _git_format_patch ;;
 	log)         _git_log ;;
 	ls-remote)   _git_ls_remote ;;
 	ls-tree)     _git_ls_tree ;;
@@ -480,6 +506,7 @@ complete -o default            -F _git_checkout git-checkout
 complete -o default -o nospace -F _git_diff git-diff
 complete -o default            -F _git_diff_tree git-diff-tree
 complete -o default -o nospace -F _git_fetch git-fetch
+complete -o default -o nospace -F _git_format_patch git-format-patch
 complete -o default -o nospace -F _git_log git-log
 complete -o default            -F _git_ls_remote git-ls-remote
 complete -o default -o nospace -F _git_ls_tree git-ls-tree
@@ -503,6 +530,7 @@ complete -o default            -F _git_branch git-branch.exe
 complete -o default -o nospace -F _git_cat_file git-cat-file.exe
 complete -o default -o nospace -F _git_diff git-diff.exe
 complete -o default -o nospace -F _git_diff_tree git-diff-tree.exe
+complete -o default -o nospace -F _git_format_patch git-format-patch.exe
 complete -o default -o nospace -F _git_log git-log.exe
 complete -o default -o nospace -F _git_ls_tree git-ls-tree.exe
 complete -o default            -F _git_merge_base git-merge-base.exe
