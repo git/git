@@ -81,6 +81,16 @@ __git_remotes ()
 	done
 }
 
+__git_merge_strategies ()
+{
+	sed -n "/^all_strategies='/{
+		s/^all_strategies='//
+		s/'//
+		p
+		q
+		}" "$(git --exec-path)/git-merge"
+}
+
 __git_complete_file ()
 {
 	local pfx ls ref cur="${COMP_WORDS[COMP_CWORD]}"
@@ -240,6 +250,24 @@ _git_log ()
 	esac
 }
 
+_git_merge ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		COMPREPLY=($(compgen -W "
+			--no-commit --no-summary --squash
+			" -- "$cur"))
+		return
+	esac
+	if [ $COMP_CWORD -gt 1 -a X-s = "X${COMP_WORDS[COMP_CWORD-1]}" ]
+	then
+		COMPREPLY=($(compgen -W "$(__git_merge_strategies)" -- "$cur"))
+	else
+		COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
+	fi
+}
+
 _git_merge_base ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -348,6 +376,7 @@ _git ()
 	log)         _git_log ;;
 	ls-remote)   _git_ls_remote ;;
 	ls-tree)     _git_ls_tree ;;
+	merge)       _git_merge;;
 	merge-base)  _git_merge_base ;;
 	pull)        _git_pull ;;
 	push)        _git_push ;;
@@ -376,6 +405,7 @@ complete -o default -o nospace -F _git_fetch git-fetch
 complete -o default -o nospace -F _git_log git-log
 complete -o default            -F _git_ls_remote git-ls-remote
 complete -o default -o nospace -F _git_ls_tree git-ls-tree
+complete -o default            -F _git_merge git-merge
 complete -o default            -F _git_merge_base git-merge-base
 complete -o default -o nospace -F _git_pull git-pull
 complete -o default -o nospace -F _git_push git-push
