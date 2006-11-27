@@ -435,16 +435,21 @@ _git_log ()
 _git_merge ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "${COMP_WORDS[COMP_CWORD-1]}" in
+	-s|--strategy)
+		COMPREPLY=($(compgen -W "$(__git_merge_strategies)" -- "$cur"))
+		return
+	esac
 	case "$cur" in
+	--strategy=*)
+		COMPREPLY=($(compgen -W "$(__git_merge_strategies)" \
+			-- "${cur##--strategy=}"))
+		return
+		;;
 	--*)
 		COMPREPLY=($(compgen -W "
 			--no-commit --no-summary --squash --strategy
 			" -- "$cur"))
-		return
-	esac
-	case "${COMP_WORDS[COMP_CWORD-1]}" in
-	-s|--strategy)
-		COMPREPLY=($(compgen -W "$(__git_merge_strategies)" -- "$cur"))
 		return
 	esac
 	COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
@@ -523,16 +528,21 @@ _git_rebase ()
 			" -- "$cur"))
 		return
 	fi
+	case "${COMP_WORDS[COMP_CWORD-1]}" in
+	-s|--strategy)
+		COMPREPLY=($(compgen -W "$(__git_merge_strategies)" -- "$cur"))
+		return
+	esac
 	case "$cur" in
+	--strategy=*)
+		COMPREPLY=($(compgen -W "$(__git_merge_strategies)" \
+			-- "${cur##--strategy=}"))
+		return
+		;;
 	--*)
 		COMPREPLY=($(compgen -W "
 			--onto --merge --strategy
 			" -- "$cur"))
-		return
-	esac
-	case "${COMP_WORDS[COMP_CWORD-1]}" in
-	-s|--strategy)
-		COMPREPLY=($(compgen -W "$(__git_merge_strategies)" -- "$cur"))
 		return
 	esac
 	COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
