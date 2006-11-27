@@ -326,6 +326,12 @@ _git_merge_base ()
 	COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
 }
 
+_git_name_rev ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	COMPREPLY=($(compgen -W "--tags --all --stdin" -- "$cur"))
+}
+
 _git_pull ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -430,6 +436,7 @@ _git ()
 	ls-tree)     _git_ls_tree ;;
 	merge)       _git_merge;;
 	merge-base)  _git_merge_base ;;
+	name-rev)    _git_name_rev ;;
 	pull)        _git_pull ;;
 	push)        _git_push ;;
 	reset)       _git_reset ;;
@@ -459,6 +466,7 @@ complete -o default            -F _git_ls_remote git-ls-remote
 complete -o default -o nospace -F _git_ls_tree git-ls-tree
 complete -o default            -F _git_merge git-merge
 complete -o default            -F _git_merge_base git-merge-base
+complete -o default            -F _git_name_rev git-name-rev
 complete -o default -o nospace -F _git_pull git-pull
 complete -o default -o nospace -F _git_push git-push
 complete -o default            -F _git_reset git-reset
@@ -479,6 +487,7 @@ complete -o default -o nospace -F _git_diff_tree git-diff-tree.exe
 complete -o default -o nospace -F _git_log git-log.exe
 complete -o default -o nospace -F _git_ls_tree git-ls-tree.exe
 complete -o default            -F _git_merge_base git-merge-base.exe
+complete -o default            -F _git_name_rev git-name-rev.exe
 complete -o default -o nospace -F _git_push git-push.exe
 complete -o default -o nospace -F _git_log git-show-branch.exe
 complete -o default -o nospace -F _git_log git-whatchanged.exe
