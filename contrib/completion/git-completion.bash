@@ -18,10 +18,29 @@
 #    2) Added the following line to your .bashrc:
 #        source ~/.git-completion.sh
 #
+#    3) Consider changing your PS1 to also show the current branch:
+#        PS1='[\u@\h \W$(__git_ps1 " (%s)")]\$ '
+#
+#       The argument to __git_ps1 will be displayed only if you
+#       are currently in a git repository.  The %s token will be
+#       the name of the current branch.
+#
 
 __gitdir ()
 {
 	echo "${__git_dir:-$(git rev-parse --git-dir 2>/dev/null)}"
+}
+
+__git_ps1 ()
+{
+	local b="$(git symbolic-ref HEAD 2>/dev/null)"
+	if [ -n "$b" ]; then
+		if [ -n "$1" ]; then
+			printf "$1" "${b##refs/heads/}"
+		else
+			printf " (%s)" "${b##refs/heads/}"
+		fi
+	fi
 }
 
 __git_refs ()
