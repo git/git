@@ -159,7 +159,7 @@ then
 	shift
 	head_arg="$1"
 	shift
-elif ! git-rev-parse --verify HEAD 2>/dev/null
+elif ! git-rev-parse --verify HEAD >/dev/null 2>&1
 then
 	# If the merged head is a valid one there is no reason to
 	# forbid "git merge" into a branch yet to be born.  We do
@@ -188,13 +188,13 @@ else
 	# in this loop.
 	merge_name=$(for remote
 		do
-			rh=$(git-rev-parse --verify "$remote"^0 2>/dev/null)
+			rh=$(git-rev-parse --verify "$remote"^0 2>/dev/null) &&
 			if git show-ref -q --verify "refs/heads/$remote"
 			then
 				what=branch
 			else
 				what=commit
-			fi
+			fi &&
 			echo "$rh		$what '$remote'"
 		done | git-fmt-merge-msg
 	)
@@ -209,7 +209,7 @@ test "$rloga" = '' && rloga="merge: $@"
 remoteheads=
 for remote
 do
-	remotehead=$(git-rev-parse --verify "$remote"^0) ||
+	remotehead=$(git-rev-parse --verify "$remote"^0 2>/dev/null) ||
 	    die "$remote - not something we can merge"
 	remoteheads="${remoteheads}$remotehead "
 done
