@@ -307,6 +307,54 @@ __git_aliased_command ()
 	done
 }
 
+__git_whitespacelist="nowarn warn error error-all strip"
+
+_git_am ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	if [ -d .dotest ]; then
+		COMPREPLY=($(compgen -W "
+			--skip --resolved
+			" -- "$cur"))
+		return
+	fi
+	case "$cur" in
+	--whitespace=*)
+		COMPREPLY=($(compgen -W "$__git_whitespacelist" \
+			-- "${cur##--whitespace=}"))
+		return
+		;;
+	--*)
+		COMPREPLY=($(compgen -W "
+			--signoff --utf8 --binary --3way --interactive
+			--whitespace=
+			" -- "$cur"))
+		return
+	esac
+	COMPREPLY=()
+}
+
+_git_apply ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--whitespace=*)
+		COMPREPLY=($(compgen -W "$__git_whitespacelist" \
+			-- "${cur##--whitespace=}"))
+		return
+		;;
+	--*)
+		COMPREPLY=($(compgen -W "
+			--stat --numstat --summary --check --index
+			--cached --index-info --reverse --reject --unidiff-zero
+			--apply --no-add --exclude=
+			--whitespace= --inaccurate-eof --verbose
+			" -- "$cur"))
+		return
+	esac
+	COMPREPLY=()
+}
+
 _git_branch ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -714,6 +762,8 @@ _git ()
 	[ "$expansion" ] && command="$expansion"
 
 	case "$command" in
+	am)          _git_am ;;
+	apply)       _git_apply ;;
 	branch)      _git_branch ;;
 	cat-file)    _git_cat_file ;;
 	checkout)    _git_checkout ;;
@@ -748,6 +798,8 @@ _gitk ()
 
 complete -o default -o nospace -F _git git
 complete -o default            -F _gitk gitk
+complete -o default            -F _git_am git-am
+complete -o default            -F _git_apply git-apply
 complete -o default            -F _git_branch git-branch
 complete -o default -o nospace -F _git_cat_file git-cat-file
 complete -o default            -F _git_checkout git-checkout
@@ -776,6 +828,7 @@ complete -o default -o nospace -F _git_log git-whatchanged
 # included the '.exe' suffix.
 #
 if [ Cygwin = "$(uname -o 2>/dev/null)" ]; then
+complete -o default            -F _git_apply git-apply.exe
 complete -o default -o nospace -F _git git.exe
 complete -o default            -F _git_branch git-branch.exe
 complete -o default -o nospace -F _git_cat_file git-cat-file.exe
