@@ -47,16 +47,26 @@ __git_refs ()
 {
 	local cmd i is_hash=y dir="${1:-$(__gitdir)}"
 	if [ -d "$dir" ]; then
-		cmd=git-peek-remote
-	else
-		cmd=git-ls-remote
+		if [ -e "$dir/HEAD" ]; then echo HEAD; fi
+		for i in $(git --git-dir="$dir" \
+			for-each-ref --format='%(refname)' \
+			refs/tags refs/heads refs/remotes); do
+			case "$i" in
+				refs/tags/*)    echo "${i#refs/tags/}" ;;
+				refs/heads/*)   echo "${i#refs/heads/}" ;;
+				refs/remotes/*) echo "${i#refs/remotes/}" ;;
+				*)              echo "$i" ;;
+			esac
+		done
+		return
 	fi
-	for i in $($cmd "$dir" 2>/dev/null); do
+	for i in $(git-ls-remote "$dir" 2>/dev/null); do
 		case "$is_hash,$i" in
 		y,*) is_hash=n ;;
 		n,*^{}) is_hash=y ;;
 		n,refs/tags/*) is_hash=y; echo "${i#refs/tags/}" ;;
 		n,refs/heads/*) is_hash=y; echo "${i#refs/heads/}" ;;
+		n,refs/remotes/*) is_hash=y; echo "${i#refs/remotes/}" ;;
 		n,*) is_hash=y; echo "$i" ;;
 		esac
 	done
