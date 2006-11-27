@@ -43,6 +43,27 @@ __git_ps1 ()
 	fi
 }
 
+__git_heads ()
+{
+	local cmd i is_hash=y dir="${1:-$(__gitdir)}"
+	if [ -d "$dir" ]; then
+		for i in $(git --git-dir="$dir" \
+			for-each-ref --format='%(refname)' \
+			refs/heads ); do
+			echo "${i#refs/heads/}"
+		done
+		return
+	fi
+	for i in $(git-ls-remote "$dir" 2>/dev/null); do
+		case "$is_hash,$i" in
+		y,*) is_hash=n ;;
+		n,*^{}) is_hash=y ;;
+		n,refs/heads/*) is_hash=y; echo "${i#refs/heads/}" ;;
+		n,*) is_hash=y; echo "$i" ;;
+		esac
+	done
+}
+
 __git_refs ()
 {
 	local cmd i is_hash=y dir="${1:-$(__gitdir)}"
@@ -87,6 +108,23 @@ __git_refs2 ()
 		n,refs/tags/*) is_hash=y; echo "${i#refs/tags/}:${i#refs/tags/}" ;;
 		n,refs/heads/*) is_hash=y; echo "${i#refs/heads/}:${i#refs/heads/}" ;;
 		n,*) is_hash=y; echo "$i:$i" ;;
+		esac
+	done
+}
+
+__git_refs_remotes ()
+{
+	local cmd i is_hash=y
+	for i in $(git-ls-remote "$1" 2>/dev/null); do
+		case "$is_hash,$i" in
+		n,refs/heads/*)
+			is_hash=y
+			echo "$i:refs/remotes/$1/${i#refs/heads/}"
+			;;
+		y,*) is_hash=n ;;
+		n,*^{}) is_hash=y ;;
+		n,refs/tags/*) is_hash=y;;
+		n,*) is_hash=y; ;;
 		esac
 	done
 }
@@ -500,6 +538,119 @@ _git_rebase ()
 	COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
 }
 
+_git_repo_config ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	local prv="${COMP_WORDS[COMP_CWORD-1]}"
+	case "$prv" in
+	branch.*.remote)
+		COMPREPLY=($(compgen -W "$(__git_remotes)" -- "$cur"))
+		return
+		;;
+	branch.*.merge)
+		COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
+		return
+		;;
+	remote.*.fetch)
+		local remote="${prv#remote.}"
+		remote="${remote%.fetch}"
+		COMPREPLY=($(compgen -W "$(__git_refs_remotes "$remote")" \
+			-- "$cur"))
+		return
+		;;
+	remote.*.push)
+		local remote="${prv#remote.}"
+		remote="${remote%.push}"
+		COMPREPLY=($(compgen -W "$(git --git-dir="$(__gitdir)" \
+			for-each-ref --format='%(refname):%(refname)' \
+			refs/heads)" -- "$cur"))
+		return
+		;;
+	*.*)
+		COMPREPLY=()
+		return
+		;;
+	esac
+	case "$cur" in
+	--*)
+		COMPREPLY=($(compgen -W "
+			--global --list --replace-all
+			--get --get-all --get-regexp
+			--unset --unset-all
+			" -- "$cur"))
+		return
+		;;
+	branch.*.*)
+		local pfx="${cur%.*}."
+		cur="${cur##*.}"
+		COMPREPLY=($(compgen -P "$pfx" -W "remote merge" -- "$cur"))
+		return
+		;;
+	branch.*)
+		local pfx="${cur%.*}."
+		cur="${cur#*.}"
+		COMPREPLY=($(compgen -P "$pfx" -S . \
+			-W "$(__git_heads)" -- "$cur"))
+		return
+		;;
+	remote.*.*)
+		local pfx="${cur%.*}."
+		cur="${cur##*.}"
+		COMPREPLY=($(compgen -P "$pfx" -W "url fetch push" -- "$cur"))
+		return
+		;;
+	remote.*)
+		local pfx="${cur%.*}."
+		cur="${cur#*.}"
+		COMPREPLY=($(compgen -P "$pfx" -S . \
+			-W "$(__git_remotes)" -- "$cur"))
+		return
+		;;
+	esac
+	COMPREPLY=($(compgen -W "
+		apply.whitespace
+		core.fileMode
+		core.gitProxy
+		core.ignoreStat
+		core.preferSymlinkRefs
+		core.logAllRefUpdates
+		core.repositoryFormatVersion
+		core.sharedRepository
+		core.warnAmbiguousRefs
+		core.compression
+		core.legacyHeaders
+		i18n.commitEncoding
+		diff.color
+		diff.renameLimit
+		diff.renames
+		pager.color
+		status.color
+		log.showroot
+		show.difftree
+		showbranch.default
+		whatchanged.difftree
+		http.sslVerify
+		http.sslCert
+		http.sslKey
+		http.sslCAInfo
+		http.sslCAPath
+		http.maxRequests
+		http.lowSpeedLimit http.lowSpeedTime
+		http.noEPSV
+		pack.window
+		repack.useDeltaBaseOffset
+		pull.octopus pull.twohead
+		merge.summary
+		receive.unpackLimit
+		receive.denyNonFastForwards
+		user.name user.email
+		tar.umask
+		gitcvs.enabled
+		gitcvs.logfile
+		branch. remote.
+	" -- "$cur"))
+}
+
 _git_reset ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -552,6 +703,7 @@ _git ()
 	pull)        _git_pull ;;
 	push)        _git_push ;;
 	rebase)      _git_rebase ;;
+	repo-config) _git_repo_config ;;
 	reset)       _git_reset ;;
 	show)        _git_log ;;
 	show-branch) _git_log ;;
@@ -585,6 +737,7 @@ complete -o default            -F _git_name_rev git-name-rev
 complete -o default -o nospace -F _git_pull git-pull
 complete -o default -o nospace -F _git_push git-push
 complete -o default            -F _git_rebase git-rebase
+complete -o default            -F _git_repo_config git-repo-config
 complete -o default            -F _git_reset git-reset
 complete -o default            -F _git_log git-show
 complete -o default -o nospace -F _git_log git-show-branch
@@ -606,6 +759,7 @@ complete -o default -o nospace -F _git_ls_tree git-ls-tree.exe
 complete -o default            -F _git_merge_base git-merge-base.exe
 complete -o default            -F _git_name_rev git-name-rev.exe
 complete -o default -o nospace -F _git_push git-push.exe
+complete -o default            -F _git_repo_config git-repo-config
 complete -o default -o nospace -F _git_log git-show.exe
 complete -o default -o nospace -F _git_log git-show-branch.exe
 complete -o default -o nospace -F _git_log git-whatchanged.exe
