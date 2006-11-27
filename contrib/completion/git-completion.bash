@@ -367,16 +367,16 @@ _git_merge ()
 	case "$cur" in
 	--*)
 		COMPREPLY=($(compgen -W "
-			--no-commit --no-summary --squash
+			--no-commit --no-summary --squash --strategy
 			" -- "$cur"))
 		return
 	esac
-	if [ $COMP_CWORD -gt 1 -a X-s = "X${COMP_WORDS[COMP_CWORD-1]}" ]
-	then
+	case "${COMP_WORDS[COMP_CWORD-1]}" in
+	-s|--strategy)
 		COMPREPLY=($(compgen -W "$(__git_merge_strategies)" -- "$cur"))
-	else
-		COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
-	fi
+		return
+	esac
+	COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
 }
 
 _git_merge_base ()
@@ -443,6 +443,30 @@ _git_push ()
 	esac
 }
 
+_git_rebase ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	if [ -d .dotest ]; then
+		COMPREPLY=($(compgen -W "
+			--continue --skip --abort
+			" -- "$cur"))
+		return
+	fi
+	case "$cur" in
+	--*)
+		COMPREPLY=($(compgen -W "
+			--onto --merge --strategy
+			" -- "$cur"))
+		return
+	esac
+	case "${COMP_WORDS[COMP_CWORD-1]}" in
+	-s|--strategy)
+		COMPREPLY=($(compgen -W "$(__git_merge_strategies)" -- "$cur"))
+		return
+	esac
+	COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
+}
+
 _git_reset ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -500,6 +524,7 @@ _git ()
 	name-rev)    _git_name_rev ;;
 	pull)        _git_pull ;;
 	push)        _git_push ;;
+	rebase)      _git_rebase ;;
 	reset)       _git_reset ;;
 	show)        _git_show ;;
 	show-branch) _git_log ;;
@@ -532,6 +557,7 @@ complete -o default            -F _git_merge_base git-merge-base
 complete -o default            -F _git_name_rev git-name-rev
 complete -o default -o nospace -F _git_pull git-pull
 complete -o default -o nospace -F _git_push git-push
+complete -o default            -F _git_rebase git-rebase
 complete -o default            -F _git_reset git-reset
 complete -o default            -F _git_show git-show
 complete -o default -o nospace -F _git_log git-show-branch
