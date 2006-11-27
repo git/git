@@ -1502,10 +1502,13 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 		switch -glob -- [lindex $file_states($path) 0] {
 		AD -
 		MD -
+		UD -
 		_D {set new DD}
 
 		_M -
 		MM -
+		UM -
+		U_ -
 		M_ {set new M_}
 
 		_O -
