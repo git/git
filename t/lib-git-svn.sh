@@ -45,6 +45,6 @@ else
 	svnadmin create "$svnrepo"
 fi
 
-svnrepo="file://$svnrepo/test-git-svn"
+svnrepo="file://$svnrepo"
 
 
