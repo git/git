@@ -1152,7 +1152,7 @@ sub graft_file_copy_lib {
 	while (1) {
 		my $pool = SVN::Pool->new;
 		libsvn_get_log(libsvn_dup_ra($SVN), [$path],
-		               $min, $max, 0, 1, 1,
+		               $min, $max, 0, 2, 1,
 			sub {
 				libsvn_graft_file_copies($grafts, $tree_paths,
 							$path, @_);
@@ -2906,7 +2906,7 @@ sub libsvn_log_entry {
 }
 
 sub process_rm {
-	my ($gui, $last_commit, $f) = @_;
+	my ($gui, $last_commit, $f, $q) = @_;
 	# remove entire directories.
 	if (safe_qx('git-ls-tree',$last_commit,'--',$f) =~ /^040000 tree/) {
 		defined(my $pid = open my $ls, '-|') or croak $!;
@@ -2917,10 +2917,13 @@ sub process_rm {
 		local $/ = "\0";
 		while (<$ls>) {
 			print $gui '0 ',0 x 40,"\t",$_ or croak $!;
+			print "\tD\t$_\n" unless $q;
 		}
+		print "\tD\t$f/\n" unless $q;
 		close $ls or croak $?;
 	} else {
 		print $gui '0 ',0 x 40,"\t",$f,"\0" or croak $!;
+		print "\tD\t$f\n" unless $q;
 	}
 }
 
@@ -2931,8 +2934,7 @@ sub libsvn_fetch {
 sub libsvn_fetch_delta {
 	my ($last_commit, $paths, $rev, $author, $date, $msg) = @_;
 	my $pool = SVN::Pool->new;
-	my $ed = SVN::Git::Fetcher->new({ c => $last_commit, ra => $SVN,
-	                                  paths => $paths });
+	my $ed = SVN::Git::Fetcher->new({ c => $last_commit, q => $_q });
 	my $reporter = $SVN->do_update($rev, '', 1, $ed, $pool);
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
 	my (undef, $last_rev, undef) = cmt_metadata($last_commit);
@@ -2959,8 +2961,7 @@ sub libsvn_fetch_full {
 			$f =~ s#^/##;
 		}
 		if ($m =~ /^[DR]$/) {
-			print "\t$m\t$f\n" unless $_q;
-			process_rm($gui, $last_commit, $f);
+			process_rm($gui, $last_commit, $f, $_q);
 			next if $m eq 'D';
 			# 'R' can be file replacements, too, right?
 		}
@@ -3101,7 +3102,7 @@ sub revisions_eq {
 		# should be OK to use Pool here (r1 - r0) should be small
 		my $pool = SVN::Pool->new;
 		libsvn_get_log($SVN, [$path], $r0, $r1,
-				0, 1, 1, sub {$nr++}, $pool);
+				0, 0, 1, sub {$nr++}, $pool);
 		$pool->clear;
 	} else {
 		my ($url, undef) = repo_path_split($SVN_URL);
@@ -3177,6 +3178,7 @@ sub libsvn_find_parent_branch {
 
 sub libsvn_get_log {
 	my ($ra, @args) = @_;
+	$args[4]-- if $args[4] && $_xfer_delta && ! $_follow_parent;
 	if ($SVN::Core::VERSION le '1.2.0') {
 		splice(@args, 3, 1);
 	}
@@ -3190,7 +3192,7 @@ sub libsvn_new_tree {
 	my ($paths, $rev, $author, $date, $msg) = @_;
 	if ($_xfer_delta) {
 		my $pool = SVN::Pool->new;
-		my $ed = SVN::Git::Fetcher->new({paths => $paths, ra => $SVN});
+		my $ed = SVN::Git::Fetcher->new({q => $_q});
 		my $reporter = $SVN->do_update($rev, '', 1, $ed, $pool);
 		my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
 		$reporter->set_path('', $rev, 1, @lock, $pool);
@@ -3388,20 +3390,14 @@ sub new {
 	open my $gui, '| git-update-index -z --index-info' or croak $!;
 	$self->{gui} = $gui;
 	$self->{c} = $git_svn->{c} if exists $git_svn->{c};
-	if (my $p = $git_svn->{paths} && $git_svn->{ra}) {
-		my $s = $git_svn->{ra}->{svn_path};
-		$s = length $s ? qr#^/\Q$s\E/# : qr#^/#;
-		$self->{paths} = { map { my $x = $_;
-		                         $x =~ s/$s//;
-		                         $x => $p->{$_} } keys %$p };
-	}
+	$self->{q} = $git_svn->{q};
 	require Digest::MD5;
 	$self;
 }
 
 sub delete_entry {
 	my ($self, $path, $rev, $pb) = @_;
-	process_rm($self->{gui}, $self->{c}, $path);
+	process_rm($self->{gui}, $self->{c}, $path, $self->{q});
 	undef;
 }
 
@@ -3410,13 +3406,13 @@ sub open_file {
 	my ($mode, $blob) = (safe_qx('git-ls-tree',$self->{c},'--',$path)
 	                     =~ /^(\d{6}) blob ([a-f\d]{40})\t/);
 	{ path => $path, mode_a => $mode, mode_b => $mode, blob => $blob,
-	  pool => SVN::Pool->new };
+	  pool => SVN::Pool->new, action => 'M' };
 }
 
 sub add_file {
 	my ($self, $path, $pb, $cp_path, $cp_rev) = @_;
 	{ path => $path, mode_a => 100644, mode_b => 100644,
-	  pool => SVN::Pool->new };
+	  pool => SVN::Pool->new, action => 'A' };
 }
 
 sub change_file_prop {
@@ -3499,8 +3495,7 @@ sub close_file {
 	$fb->{pool}->clear;
 	my $gui = $self->{gui};
 	print $gui "$fb->{mode_b} $hash\t$path\0" or croak $!;
-	print "\t", $self->{paths}->{$path}->action,
-	      "\t$path\n" if defined $self->{paths}->{$path};
+	print "\t$fb->{action}\t$path\n" if $fb->{action} && ! $self->{q};
 	undef;
 }
 
