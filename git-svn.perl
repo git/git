@@ -2939,6 +2939,9 @@ sub libsvn_fetch_delta {
 	$reporter->set_path('', $last_rev, 0, @lock, $pool);
 	$reporter->finish_report($pool);
 	$pool->clear;
+	unless ($ed->{git_commit_ok}) {
+		die "SVN connection failed somewhere...\n";
+	}
 	libsvn_log_entry($rev, $author, $date, $msg, [$last_commit]);
 }
 
@@ -3193,6 +3196,9 @@ sub libsvn_new_tree {
 		$reporter->set_path('', $rev, 1, @lock, $pool);
 		$reporter->finish_report($pool);
 		$pool->clear;
+		unless ($ed->{git_commit_ok}) {
+			die "SVN connection failed somewhere...\n";
+		}
 	} else {
 		open my $gui, '| git-update-index -z --index-info' or croak $!;
 		libsvn_traverse($gui, '', $SVN->{svn_path}, $rev);
@@ -3506,7 +3512,8 @@ sub abort_edit {
 
 sub close_edit {
 	my $self = shift;
-	close $self->{gui} or croak;
+	close $self->{gui} or croak $!;
+	$self->{git_commit_ok} = 1;
 	$self->SUPER::close_edit(@_);
 }
 
