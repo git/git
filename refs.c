@@ -610,6 +610,29 @@ static int remove_empty_directories(char *file)
 	return remove_empty_dir_recursive(path, len);
 }
 
+static int is_refname_available(const char *ref, const char *oldref,
+				struct ref_list *list, int quiet)
+{
+	int namlen = strlen(ref); /* e.g. 'foo/bar' */
+	while (list) {
+		/* list->name could be 'foo' or 'foo/bar/baz' */
+		if (!oldref || strcmp(oldref, list->name)) {
+			int len = strlen(list->name);
+			int cmplen = (namlen < len) ? namlen : len;
+			const char *lead = (namlen < len) ? list->name : ref;
+			if (!strncmp(ref, list->name, cmplen) &&
+			    lead[cmplen] == '/') {
+				if (!quiet)
+					error("'%s' exists; cannot create '%s'",
+					      list->name, ref);
+				return 0;
+			}
+		}
+		list = list->next;
+	}
+	return 1;
+}
+
 static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char *old_sha1, int *flag)
 {
 	char *ref_file;
@@ -643,29 +666,14 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 			orig_ref, strerror(errno));
 		goto error_return;
 	}
-	if (is_null_sha1(lock->old_sha1)) {
-		/* The ref did not exist and we are creating it.
-		 * Make sure there is no existing ref that is packed
-		 * whose name begins with our refname, nor a ref whose
-		 * name is a proper prefix of our refname.
-		 */
-		int namlen = strlen(ref); /* e.g. 'foo/bar' */
-		struct ref_list *list = get_packed_refs();
-		while (list) {
-			/* list->name could be 'foo' or 'foo/bar/baz' */
-			int len = strlen(list->name);
-			int cmplen = (namlen < len) ? namlen : len;
-			const char *lead = (namlen < len) ? list->name : ref;
-
-			if (!strncmp(ref, list->name, cmplen) &&
-			    lead[cmplen] == '/') {
-				error("'%s' exists; cannot create '%s'",
-				      list->name, ref);
-				goto error_return;
-			}
-			list = list->next;
-		}
-	}
+	/* When the ref did not exist and we are creating it,
+	 * make sure there is no existing ref that is packed
+	 * whose name begins with our refname, nor a ref whose
+	 * name is a proper prefix of our refname.
+	 */
+	if (is_null_sha1(lock->old_sha1) &&
+            !is_refname_available(ref, NULL, get_packed_refs(), 0))
+		goto error_return;
 
 	lock->lk = xcalloc(1, sizeof(struct lock_file));
 
@@ -774,6 +782,121 @@ int delete_ref(const char *refname, unsigned char *sha1)
 	invalidate_cached_refs();
 	unlock_ref(lock);
 	return ret;
+}
+
+int rename_ref(const char *oldref, const char *newref)
+{
+	static const char renamed_ref[] = "RENAMED-REF";
+	unsigned char sha1[20], orig_sha1[20];
+	int flag = 0, logmoved = 0;
+	struct ref_lock *lock;
+	char msg[PATH_MAX*2 + 100];
+	struct stat loginfo;
+	int log = !stat(git_path("logs/%s", oldref), &loginfo);
+
+	if (S_ISLNK(loginfo.st_mode))
+		return error("reflog for %s is a symlink", oldref);
+
+	if (!resolve_ref(oldref, orig_sha1, 1, &flag))
+		return error("refname %s not found", oldref);
+
+	if (!is_refname_available(newref, oldref, get_packed_refs(), 0))
+		return 1;
+
+	if (!is_refname_available(newref, oldref, get_loose_refs(), 0))
+		return 1;
+
+	if (snprintf(msg, sizeof(msg), "renamed %s to %s", oldref, newref) > sizeof(msg))
+		return error("Refnames to long");
+
+	lock = lock_ref_sha1_basic(renamed_ref, NULL, NULL);
+	if (!lock)
+		return error("unable to lock %s", renamed_ref);
+	lock->force_write = 1;
+	if (write_ref_sha1(lock, orig_sha1, msg))
+		return error("unable to save current sha1 in %s", renamed_ref);
+
+	if (log && rename(git_path("logs/%s", oldref), git_path("tmp-renamed-log")))
+		return error("unable to move logfile logs/%s to tmp-renamed-log: %s",
+			oldref, strerror(errno));
+
+	if (delete_ref(oldref, orig_sha1)) {
+		error("unable to delete old %s", oldref);
+		goto rollback;
+	}
+
+	if (resolve_ref(newref, sha1, 1, &flag) && delete_ref(newref, sha1)) {
+		if (errno==EISDIR) {
+			if (remove_empty_directories(git_path("%s", newref))) {
+				error("Directory not empty: %s", newref);
+				goto rollback;
+			}
+		} else {
+			error("unable to delete existing %s", newref);
+			goto rollback;
+		}
+	}
+
+	if (log && safe_create_leading_directories(git_path("logs/%s", newref))) {
+		error("unable to create directory for %s", newref);
+		goto rollback;
+	}
+
+ retry:
+	if (log && rename(git_path("tmp-renamed-log"), git_path("logs/%s", newref))) {
+		if (errno==EISDIR) {
+			if (remove_empty_directories(git_path("logs/%s", newref))) {
+				error("Directory not empty: logs/%s", newref);
+				goto rollback;
+			}
+			goto retry;
+		} else {
+			error("unable to move logfile tmp-renamed-log to logs/%s: %s",
+				newref, strerror(errno));
+			goto rollback;
+		}
+	}
+	logmoved = log;
+
+	lock = lock_ref_sha1_basic(newref, NULL, NULL);
+	if (!lock) {
+		error("unable to lock %s for update", newref);
+		goto rollback;
+	}
+
+	lock->force_write = 1;
+	hashcpy(lock->old_sha1, orig_sha1);
+	if (write_ref_sha1(lock, orig_sha1, msg)) {
+		error("unable to write current sha1 into %s", newref);
+		goto rollback;
+	}
+
+	return 0;
+
+ rollback:
+	lock = lock_ref_sha1_basic(oldref, NULL, NULL);
+	if (!lock) {
+		error("unable to lock %s for rollback", oldref);
+		goto rollbacklog;
+	}
+
+	lock->force_write = 1;
+	flag = log_all_ref_updates;
+	log_all_ref_updates = 0;
+	if (write_ref_sha1(lock, orig_sha1, NULL))
+		error("unable to write current sha1 into %s", oldref);
+	log_all_ref_updates = flag;
+
+ rollbacklog:
+	if (logmoved && rename(git_path("logs/%s", newref), git_path("logs/%s", oldref)))
+		error("unable to restore logfile %s from %s: %s",
+			oldref, newref, strerror(errno));
+	if (!logmoved && log &&
+	    rename(git_path("tmp-renamed-log"), git_path("logs/%s", oldref)))
+		error("unable to restore logfile %s from tmp-renamed-log: %s",
+			oldref, strerror(errno));
+
+	return 1;
 }
 
 void unlock_ref(struct ref_lock *lock)

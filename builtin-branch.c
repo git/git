@@ -11,7 +11,7 @@
 #include "builtin.h"
 
 static const char builtin_branch_usage[] =
-"git-branch (-d | -D) <branchname> | [-l] [-f] <branchname> [<start-point>] | [-r | -a] [-v] [--abbrev=<length>] ";
+  "git-branch (-d | -D) <branchname> | [-l] [-f] <branchname> [<start-point>] | (-m | -M) [<oldbranch>] <newbranch> | [-r | -a] [-v [--abbrev=<length>]]";
 
 
 static const char *head;
@@ -245,9 +245,37 @@ static void create_branch(const char *name, const char *start,
 		die("Failed to write ref: %s.", strerror(errno));
 }
 
+static void rename_branch(const char *oldname, const char *newname, int force)
+{
+	char oldref[PATH_MAX], newref[PATH_MAX];
+	unsigned char sha1[20];
+
+	if (snprintf(oldref, sizeof(oldref), "refs/heads/%s", oldname) > sizeof(oldref))
+		die("Old branchname too long");
+
+	if (check_ref_format(oldref))
+		die("Invalid branch name: %s", oldref);
+
+	if (snprintf(newref, sizeof(newref), "refs/heads/%s", newname) > sizeof(newref))
+		die("New branchname too long");
+
+	if (check_ref_format(newref))
+		die("Invalid branch name: %s", newref);
+
+	if (resolve_ref(newref, sha1, 1, NULL) && !force)
+		die("A branch named '%s' already exists.", newname);
+
+	if (rename_ref(oldref, newref))
+		die("Branch rename failed");
+
+	if (!strcmp(oldname, head) && create_symref("HEAD", newref))
+		die("Branch renamed to %s, but HEAD is not updated!", newname);
+}
+
 int cmd_branch(int argc, const char **argv, const char *prefix)
 {
 	int delete = 0, force_delete = 0, force_create = 0;
+	int rename = 0, force_rename = 0;
 	int verbose = 0, abbrev = DEFAULT_ABBREV;
 	int reflog = 0;
 	int kinds = REF_LOCAL_BRANCH;
@@ -277,6 +305,15 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			force_create = 1;
 			continue;
 		}
+		if (!strcmp(arg, "-m")) {
+			rename = 1;
+			continue;
+		}
+		if (!strcmp(arg, "-M")) {
+			rename = 1;
+			force_rename = 1;
+			continue;
+		}
 		if (!strcmp(arg, "-r")) {
 			kinds = REF_REMOTE_BRANCH;
 			continue;
@@ -300,6 +337,10 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		usage(builtin_branch_usage);
 	}
 
+	if ((delete && rename) || (delete && force_create) ||
+	    (rename && force_create))
+		usage(builtin_branch_usage);
+
 	head = xstrdup(resolve_ref("HEAD", head_sha1, 0, NULL));
 	if (!head)
 		die("Failed to resolve HEAD as a valid ref.");
@@ -311,6 +352,10 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		delete_branches(argc - i, argv + i, force_delete);
 	else if (i == argc)
 		print_ref_list(kinds, verbose, abbrev);
+	else if (rename && (i == argc - 1))
+		rename_branch(head, argv[i], force_rename);
+	else if (rename && (i == argc - 2))
+		rename_branch(argv[i], argv[i + 1], force_rename);
 	else if (i == argc - 1)
 		create_branch(argv[i], head, force_create, reflog);
 	else if (i == argc - 2)
