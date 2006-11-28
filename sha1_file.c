@@ -1261,7 +1261,7 @@ struct packed_git *find_sha1_pack(const unsigned char *sha1,
 	
 }
 
-int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep)
+static int sha1_loose_object_info(const unsigned char *sha1, char *type, unsigned long *sizep)
 {
 	int status;
 	unsigned long mapsize, size;
@@ -1270,20 +1270,8 @@ int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep
 	char hdr[128];
 
 	map = map_sha1_file(sha1, &mapsize);
-	if (!map) {
-		struct pack_entry e;
-
-		if (!find_pack_entry(sha1, &e, NULL)) {
-			reprepare_packed_git();
-			if (!find_pack_entry(sha1, &e, NULL))
-				return error("unable to find %s", sha1_to_hex(sha1));
-		}
-		if (use_packed_git(e.p))
-			die("cannot map packed file");
-		status = packed_object_info(e.p, e.offset, type, sizep);
-		unuse_packed_git(e.p);
-		return status;
-	}
+	if (!map)
+		return error("unable to find %s", sha1_to_hex(sha1));
 	if (unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr)) < 0)
 		status = error("unable to unpack %s header",
 			       sha1_to_hex(sha1));
@@ -1296,6 +1284,23 @@ int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep
 	}
 	inflateEnd(&stream);
 	munmap(map, mapsize);
+	return status;
+}
+
+int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep)
+{
+	int status;
+	struct pack_entry e;
+
+	if (!find_pack_entry(sha1, &e, NULL)) {
+		reprepare_packed_git();
+		if (!find_pack_entry(sha1, &e, NULL))
+			return sha1_loose_object_info(sha1, type, sizep);
+	}
+	if (use_packed_git(e.p))
+		die("cannot map packed file");
+	status = packed_object_info(e.p, e.offset, type, sizep);
+	unuse_packed_git(e.p);
 	return status;
 }
 

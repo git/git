@@ -2822,7 +2822,9 @@ sub libsvn_connect {
 	    SVN::Client::get_username_prompt_provider(
 	      \&_username_prompt, 2),
 	  ]);
+	my $config = SVN::Core::config_get_config($_config_dir);
 	my $ra = SVN::Ra->new(url => $url, auth => $baton,
+	                      config => $config,
 	                      pool => SVN::Pool->new,
 	                      auth_provider_callbacks => $callbacks);
 	$ra->{svn_path} = $url;
@@ -2834,8 +2836,8 @@ sub libsvn_connect {
 
 sub libsvn_dup_ra {
 	my ($ra) = @_;
-	SVN::Ra->new(map { $_ => $ra->{$_} }
-	             qw/url auth auth_provider_callbacks repos_root svn_path/);
+	SVN::Ra->new(map { $_ => $ra->{$_} } qw/config url
+	             auth auth_provider_callbacks repos_root svn_path/);
 }
 
 sub libsvn_get_file {
