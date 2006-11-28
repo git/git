@@ -398,6 +398,20 @@ _git_cherry_pick ()
 	esac
 }
 
+_git_commit ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		COMPREPLY=($(compgen -W "
+			--all --author= --signoff --verify --no-verify
+			--edit --amend --include --only
+			" -- "$cur"))
+		return
+	esac
+	COMPREPLY=()
+}
+
 _git_diff ()
 {
 	__git_complete_file
@@ -768,6 +782,7 @@ _git ()
 	cat-file)    _git_cat_file ;;
 	checkout)    _git_checkout ;;
 	cherry-pick) _git_cherry_pick ;;
+	commit)      _git_commit ;;
 	diff)        _git_diff ;;
 	diff-tree)   _git_diff_tree ;;
 	fetch)       _git_fetch ;;
@@ -804,6 +819,7 @@ complete -o default            -F _git_branch git-branch
 complete -o default -o nospace -F _git_cat_file git-cat-file
 complete -o default            -F _git_checkout git-checkout
 complete -o default            -F _git_cherry_pick git-cherry-pick
+complete -o default            -F _git_commit git-commit
 complete -o default -o nospace -F _git_diff git-diff
 complete -o default            -F _git_diff_tree git-diff-tree
 complete -o default -o nospace -F _git_fetch git-fetch
