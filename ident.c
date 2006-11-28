@@ -158,12 +158,17 @@ static int copy(char *buf, int size, int offset, const char *src)
 static const char au_env[] = "GIT_AUTHOR_NAME";
 static const char co_env[] = "GIT_COMMITTER_NAME";
 static const char *env_hint =
-"\n*** Environment problem:\n"
+"\n"
 "*** Your name cannot be determined from your system services (gecos).\n"
-"*** You would need to set %s and %s\n"
-"*** environment variables; otherwise you won't be able to perform\n"
-"*** certain operations because of \"empty ident\" errors.\n"
-"*** Alternatively, you can use user.name configuration variable.\n\n";
+"\n"
+"Run\n"
+"\n"
+"  git repo-config user.email \"you@email.com\"\n"
+"  git repo-config user.name \"Your Name\"\n"
+"\n"
+"To set the identity in this repository.\n"
+"Add --global to set your account\'s default\n"
+"\n";
 
 static const char *get_ident(const char *name, const char *email,
 			     const char *date_str, int error_on_no_name)
