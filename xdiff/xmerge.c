@@ -384,6 +384,7 @@ int xdl_merge(mmfile_t *orig, mmfile_t *mf1, const char *name1,
 		xpparam_t const *xpp, int level, mmbuffer_t *result) {
 	xdchange_t *xscr1, *xscr2;
 	xdfenv_t xe1, xe2;
+	int status;
 
 	result->ptr = NULL;
 	result->size = 0;
@@ -404,6 +405,7 @@ int xdl_merge(mmfile_t *orig, mmfile_t *mf1, const char *name1,
 		xdl_free_env(&xe2);
 		return -1;
 	}
+	status = 0;
 	if (xscr1 || xscr2) {
 		if (!xscr1) {
 			result->ptr = xdl_malloc(mf2->size);
@@ -413,14 +415,10 @@ int xdl_merge(mmfile_t *orig, mmfile_t *mf1, const char *name1,
 			result->ptr = xdl_malloc(mf1->size);
 			memcpy(result->ptr, mf1->ptr, mf1->size);
 			result->size = mf1->size;
-		} else if (xdl_do_merge(&xe1, xscr1, name1,
-					&xe2, xscr2, name2,
-					level, xpp, result) < 0) {
-			xdl_free_script(xscr1);
-			xdl_free_script(xscr2);
-			xdl_free_env(&xe1);
-			xdl_free_env(&xe2);
-			return -1;
+		} else {
+			status = xdl_do_merge(&xe1, xscr1, name1,
+					      &xe2, xscr2, name2,
+					      level, xpp, result);
 		}
 		xdl_free_script(xscr1);
 		xdl_free_script(xscr2);
@@ -428,6 +426,5 @@ int xdl_merge(mmfile_t *orig, mmfile_t *mf1, const char *name1,
 	xdl_free_env(&xe1);
 	xdl_free_env(&xe2);
 
-	return 0;
+	return status;
 }
-
