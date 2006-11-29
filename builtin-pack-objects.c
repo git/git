@@ -514,6 +514,8 @@ static void write_pack_file(void)
 	if (do_progress)
 		fputc('\n', stderr);
  done:
+	if (written != nr_result)
+		die("wrote %d objects while expecting %d", written, nr_result);
 	sha1close(f, pack_file_sha1, 1);
 }
 
@@ -1662,7 +1664,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		}
 	}
 	if (progress)
-		fprintf(stderr, "Total %d, written %d (delta %d), reused %d (delta %d)\n",
-			nr_result, written, written_delta, reused, reused_delta);
+		fprintf(stderr, "Total %d (delta %d), reused %d (delta %d)\n",
+			written, written_delta, reused, reused_delta);
 	return 0;
 }
