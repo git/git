@@ -21,6 +21,7 @@
 #include "tag.h"
 #include "unpack-trees.h"
 #include "path-list.h"
+#include "xdiff-interface.h"
 
 /*
  * A virtual commit has
@@ -604,24 +605,15 @@ struct merge_file_info
 		 merge:1;
 };
 
-static char *git_unpack_file(const unsigned char *sha1, char *path)
+static void fill_mm(const unsigned char *sha1, mmfile_t *mm)
 {
-	void *buf;
-	char type[20];
 	unsigned long size;
-	int fd;
+	char type[20];
 
-	buf = read_sha1_file(sha1, type, &size);
-	if (!buf || strcmp(type, blob_type))
+	mm->ptr = read_sha1_file(sha1, type, &size);
+	if (!mm->ptr || strcmp(type, blob_type))
 		die("unable to read blob object %s", sha1_to_hex(sha1));
-
-	strcpy(path, ".merge_file_XXXXXX");
-	fd = mkstemp(path);
-	if (fd < 0)
-		die("unable to create temp-file");
-	flush_buffer(fd, buf, size);
-	close(fd);
-	return path;
+	mm->size = size;
 }
 
 static struct merge_file_info merge_file(struct diff_filespec *o,
@@ -652,49 +644,41 @@ static struct merge_file_info merge_file(struct diff_filespec *o,
 		else if (sha_eq(b->sha1, o->sha1))
 			hashcpy(result.sha, a->sha1);
 		else if (S_ISREG(a->mode)) {
-			int code = 1, fd;
-			struct stat st;
-			char orig[PATH_MAX];
-			char src1[PATH_MAX];
-			char src2[PATH_MAX];
-			const char *argv[] = {
-				"merge", "-L", NULL, "-L", NULL, "-L", NULL,
-				NULL, NULL, NULL,
-				NULL
-			};
-			char *la, *lb, *lo;
+			mmfile_t orig, src1, src2;
+			mmbuffer_t result_buf;
+			xpparam_t xpp;
+			char *name1, *name2;
+			int merge_status;
 
-			git_unpack_file(o->sha1, orig);
-			git_unpack_file(a->sha1, src1);
-			git_unpack_file(b->sha1, src2);
+			name1 = xstrdup(mkpath("%s/%s", branch1, a->path));
+			name2 = xstrdup(mkpath("%s/%s", branch2, b->path));
 
-			argv[2] = la = xstrdup(mkpath("%s/%s", branch1, a->path));
-			argv[6] = lb = xstrdup(mkpath("%s/%s", branch2, b->path));
-			argv[4] = lo = xstrdup(mkpath("orig/%s", o->path));
-			argv[7] = src1;
-			argv[8] = orig;
-			argv[9] = src2,
+			fill_mm(o->sha1, &orig);
+			fill_mm(a->sha1, &src1);
+			fill_mm(b->sha1, &src2);
 
-			code = run_command_v(10, argv);
+			memset(&xpp, 0, sizeof(xpp));
+			merge_status = xdl_merge(&orig,
+						 &src1, name1,
+						 &src2, name2,
+						 &xpp, XDL_MERGE_ZEALOUS,
+						 &result_buf);
+			free(name1);
+			free(name2);
+			free(orig.ptr);
+			free(src1.ptr);
+			free(src2.ptr);
 
-			free(la);
-			free(lb);
-			free(lo);
-			if (code && code < -256) {
-				die("Failed to execute 'merge'. merge(1) is used as the "
-				    "file-level merge tool. Is 'merge' in your path?");
-			}
-			fd = open(src1, O_RDONLY);
-			if (fd < 0 || fstat(fd, &st) < 0 ||
-					index_fd(result.sha, fd, &st, 1,
-						"blob"))
-				die("Unable to add %s to database", src1);
+			if ((merge_status < 0) || !result_buf.ptr)
+				die("Failed to execute internal merge");
 
-			unlink(orig);
-			unlink(src1);
-			unlink(src2);
+			if (write_sha1_file(result_buf.ptr, result_buf.size,
+					    blob_type, result.sha))
+				die("Unable to add %s to database",
+				    a->path);
 
-			result.clean = WEXITSTATUS(code) == 0;
+			free(result_buf.ptr);
+			result.clean = (merge_status == 0);
 		} else {
 			if (!(S_ISLNK(a->mode) || S_ISLNK(b->mode)))
 				die("cannot merge modes?");
