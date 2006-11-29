@@ -318,13 +318,13 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 			xscr1->i1 = i2;
 			xscr1->i2 += xscr1->chg2;
 			xscr1->chg2 = 0;
-			xscr1 = xscr1->next;
+			xscr2 = xscr2->next;
 		} else if (i2 > i1) {
 			xscr2->chg1 -= i2 - i1;
 			xscr2->i1 = i1;
 			xscr2->i2 += xscr2->chg2;
 			xscr2->chg2 = 0;
-			xscr2 = xscr2->next;
+			xscr1 = xscr1->next;
 		} else {
 			xscr1 = xscr1->next;
 			xscr2 = xscr2->next;
