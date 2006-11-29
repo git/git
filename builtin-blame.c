@@ -1435,14 +1435,14 @@ static void find_alignment(struct scoreboard *sb, int *option)
 		struct commit_info ci;
 		int num;
 
+		if (strcmp(suspect->path, sb->path))
+			*option |= OUTPUT_SHOW_NAME;
+		num = strlen(suspect->path);
+		if (longest_file < num)
+			longest_file = num;
 		if (!(suspect->commit->object.flags & METAINFO_SHOWN)) {
 			suspect->commit->object.flags |= METAINFO_SHOWN;
 			get_commit_info(suspect->commit, &ci, 1);
-			if (strcmp(suspect->path, sb->path))
-				*option |= OUTPUT_SHOW_NAME;
-			num = strlen(suspect->path);
-			if (longest_file < num)
-				longest_file = num;
 			num = strlen(ci.author);
 			if (longest_author < num)
 				longest_author = num;
