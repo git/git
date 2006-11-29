@@ -77,6 +77,12 @@ OPTIONS
 -l, --list::
 	List all variables set in config file.
 
+--bool::
+	git-repo-config will ensure that the output is "true" or "false"
+
+--int::
+	git-repo-config will ensure that the output is a simple decimal number
+
 
 ENVIRONMENT
 -----------
