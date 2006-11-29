@@ -90,6 +90,43 @@ get_remote_default_refs_for_push () {
 	esac
 }
 
+# Called from canon_refs_list_for_fetch -d "$remote", which
+# is called from get_remote_default_refs_for_fetch to grok
+# refspecs that are retrieved from the configuration, but not
+# from get_remote_refs_for_fetch when it deals with refspecs
+# supplied on the command line.  $ls_remote_result has the list
+# of refs available at remote.
+expand_refs_wildcard () {
+	for ref
+	do
+		lref=${ref#'+'}
+		# a non glob pattern is given back as-is.
+		expr "z$lref" : 'zrefs/.*/\*:refs/.*/\*$' >/dev/null || {
+			echo "$ref"
+			continue
+		}
+
+		from=`expr "z$lref" : 'z\(refs/.*/\)\*:refs/.*/\*$'`
+		to=`expr "z$lref" : 'zrefs/.*/\*:\(refs/.*/\)\*$'`
+		local_force=
+		test "z$lref" = "z$ref" || local_force='+'
+		echo "$ls_remote_result" |
+		(
+			IFS='	'
+			while read sha1 name
+			do
+				mapped=${name#"$from"}
+				if test "z$name" != "z${name#'^{}'}" ||
+					test "z$name" = "z$mapped"
+				then
+					continue
+				fi
+				echo "${local_force}${name}:${to}${mapped}"
+			done
+		)
+	done
+}
+
 # Subroutine to canonicalize remote:local notation.
 canon_refs_list_for_fetch () {
 	# If called from get_remote_default_refs_for_fetch
@@ -107,6 +144,8 @@ canon_refs_list_for_fetch () {
 			merge_branches=$(git-repo-config \
 			    --get-all "branch.${curr_branch}.merge")
 		fi
+		set x $(expand_refs_wildcard "$@")
+		shift
 	fi
 	for ref
 	do

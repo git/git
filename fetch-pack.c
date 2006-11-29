@@ -566,6 +566,29 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 	return 0;
 }
 
+static int remove_duplicates(int nr_heads, char **heads)
+{
+	int src, dst;
+
+	for (src = dst = 0; src < nr_heads; src++) {
+		/* If heads[src] is different from any of
+		 * heads[0..dst], push it in.
+		 */
+		int i;
+		for (i = 0; i < dst; i++) {
+			if (!strcmp(heads[i], heads[src]))
+				break;
+		}
+		if (i < dst)
+			continue;
+		if (src != dst)
+			heads[dst] = heads[src];
+		dst++;
+	}
+	heads[dst] = 0;
+	return dst;
+}
+
 int main(int argc, char **argv)
 {
 	int i, ret, nr_heads;
@@ -617,6 +640,8 @@ int main(int argc, char **argv)
 	pid = git_connect(fd, dest, exec);
 	if (pid < 0)
 		return 1;
+	if (heads && nr_heads)
+		nr_heads = remove_duplicates(nr_heads, heads);
 	ret = fetch_pack(fd, nr_heads, heads);
 	close(fd[0]);
 	close(fd[1]);
