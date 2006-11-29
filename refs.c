@@ -792,7 +792,7 @@ int rename_ref(const char *oldref, const char *newref)
 	struct ref_lock *lock;
 	char msg[PATH_MAX*2 + 100];
 	struct stat loginfo;
-	int log = !stat(git_path("logs/%s", oldref), &loginfo);
+	int log = !lstat(git_path("logs/%s", oldref), &loginfo);
 
 	if (S_ISLNK(loginfo.st_mode))
 		return error("reflog for %s is a symlink", oldref);

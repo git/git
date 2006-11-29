@@ -104,4 +104,11 @@ test_expect_success \
         git-branch -m s/s s &&
         test -f .git/logs/refs/heads/s'
 
+test_expect_failure \
+    'git-branch -m u v should fail when the reflog for u is a symlink' \
+    'git-branch -l u &&
+     mv .git/logs/refs/heads/u real-u &&
+     ln -s real-u .git/logs/refs/heads/u &&
+     git-branch -m u v'
+
 test_done
