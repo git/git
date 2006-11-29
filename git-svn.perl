@@ -124,7 +124,12 @@ my %cmd = (
 			  'no-graft-copy' => \$_no_graft_copy } ],
 	'multi-init' => [ \&multi_init,
 			'Initialize multiple trees (like git-svnimport)',
-			{ %multi_opts, %fc_opts } ],
+			{ %multi_opts, %init_opts,
+			 'revision|r=i' => \$_revision,
+			 'username=s' => \$_username,
+			 'config-dir=s' => \$_config_dir,
+			 'no-auth-cache' => \$_no_auth_cache,
+			} ],
 	'multi-fetch' => [ \&multi_fetch,
 			'Fetch multiple trees (like git-svnimport)',
 			\%fc_opts ],
@@ -3316,11 +3321,11 @@ sub libsvn_commit_cb {
 
 sub libsvn_ls_fullurl {
 	my $fullurl = shift;
-	$SVN ||= libsvn_connect($fullurl);
+	my $ra = libsvn_connect($fullurl);
 	my @ret;
 	my $pool = SVN::Pool->new;
-	my ($dirent, undef, undef) = $SVN->get_dir($SVN->{svn_path},
-						$SVN->get_latest_revnum, $pool);
+	my $r = defined $_revision ? $_revision : $ra->get_latest_revnum;
+	my ($dirent, undef, undef) = $ra->get_dir('', $r, $pool);
 	foreach my $d (keys %$dirent) {
 		if ($dirent->{$d}->kind == $SVN::Node::dir) {
 			push @ret, "$d/"; # add '/' for compat with cli svn
