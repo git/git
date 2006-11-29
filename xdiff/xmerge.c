@@ -194,11 +194,11 @@ static int xdl_refine_conflicts(xdfenv_t *xe1, xdfenv_t *xe2, xdmerge_t *m,
 		 * we have a very simple mmfile structure.
 		 */
 		t1.ptr = (char *)xe1->xdf2.recs[m->i1]->ptr;
-		t1.size = xe1->xdf2.recs[m->i1 + m->chg1]->ptr
-			+ xe1->xdf2.recs[m->i1 + m->chg1]->size - t1.ptr;
-		t2.ptr = (char *)xe2->xdf2.recs[m->i1]->ptr;
-		t2.size = xe2->xdf2.recs[m->i1 + m->chg1]->ptr
-			+ xe2->xdf2.recs[m->i1 + m->chg1]->size - t2.ptr;
+		t1.size = xe1->xdf2.recs[m->i1 + m->chg1 - 1]->ptr
+			+ xe1->xdf2.recs[m->i1 + m->chg1 - 1]->size - t1.ptr;
+		t2.ptr = (char *)xe2->xdf2.recs[m->i2]->ptr;
+		t2.size = xe2->xdf2.recs[m->i2 + m->chg2 - 1]->ptr
+			+ xe2->xdf2.recs[m->i2 + m->chg2 - 1]->size - t2.ptr;
 		if (xdl_do_diff(&t1, &t2, xpp, &xe) < 0)
 			return -1;
 		if (xdl_change_compact(&xe.xdf1, &xe.xdf2, xpp->flags) < 0 ||
