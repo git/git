@@ -11,6 +11,18 @@ diff" with:
 $ man git-diff
 ------------------------------------------------
 
+It is a good idea to introduce yourself to git before doing any
+operation.  The easiest way to do so is:
+
+------------------------------------------------
+$ cat >~/.gitconfig <<\EOF
+[user]
+	name = Your Name Comes Here
+	email = you@yourdomain.example.com
+EOF
+------------------------------------------------
+
+
 Importing a new project
 -----------------------
 
@@ -31,7 +43,8 @@ defaulting to local storage area
 
 You've now initialized the working directory--you may notice a new
 directory created, named ".git".  Tell git that you want it to track
-every file under the current directory with
+every file under the current directory with (notice the dot '.'
+that means the current directory):
 
 ------------------------------------------------
 $ git add .
@@ -40,7 +53,7 @@ $ git add .
 Finally,
 
 ------------------------------------------------
-$ git commit -a
+$ git commit
 ------------------------------------------------
 
 will prompt you for a commit message, then record the current state
@@ -55,11 +68,17 @@ $ git diff
 to review your changes.  When you're done,
 
 ------------------------------------------------
-$ git commit -a
+$ git commit file1 file2...
 ------------------------------------------------
 
 will again prompt your for a message describing the change, and then
-record the new versions of the modified files.
+record the new versions of the files you listed.  It is cumbersome
+to list all files and you can say `-a` (which stands for 'all')
+instead.
+
+------------------------------------------------
+$ git commit -a
+------------------------------------------------
 
 A note on commit messages: Though not required, it's a good idea to
 begin the commit message with a single short (less than 50 character)
@@ -75,7 +94,7 @@ $ git add path/to/new/file
 ------------------------------------------------
 
 then commit as usual.  No special command is required when removing a
-file; just remove it, then commit.
+file; just remove it, then tell `commit` about the file as usual.
 
 At any point you can view the history of your changes using
 

@@ -1787,6 +1787,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	/* Now we got rev and path.  We do not want the path pruning
 	 * but we may want "bottom" processing.
 	 */
+	argv[unk++] = "--"; /* terminate the rev name */
 	argv[unk] = NULL;
 
 	init_revisions(&revs, NULL);
