@@ -34,7 +34,19 @@
 
 __gitdir ()
 {
-	echo "${__git_dir:-$(git rev-parse --git-dir 2>/dev/null)}"
+	if [ -z "$1" ]; then
+		if [ -n "$__git_dir" ]; then
+			echo "$__git_dir"
+		elif [ -d .git ]; then
+			echo .git
+		else
+			git rev-parse --git-dir 2>/dev/null
+		fi
+	elif [ -d "$1/.git" ]; then
+		echo "$1/.git"
+	else
+		echo "$1"
+	fi
 }
 
 __git_ps1 ()
@@ -51,7 +63,7 @@ __git_ps1 ()
 
 __git_heads ()
 {
-	local cmd i is_hash=y dir="${1:-$(__gitdir)}"
+	local cmd i is_hash=y dir="$(__gitdir "$1")"
 	if [ -d "$dir" ]; then
 		for i in $(git --git-dir="$dir" \
 			for-each-ref --format='%(refname)' \
@@ -60,7 +72,7 @@ __git_heads ()
 		done
 		return
 	fi
-	for i in $(git-ls-remote "$dir" 2>/dev/null); do
+	for i in $(git-ls-remote "$1" 2>/dev/null); do
 		case "$is_hash,$i" in
 		y,*) is_hash=n ;;
 		n,*^{}) is_hash=y ;;
@@ -72,7 +84,7 @@ __git_heads ()
 
 __git_refs ()
 {
-	local cmd i is_hash=y dir="${1:-$(__gitdir)}"
+	local cmd i is_hash=y dir="$(__gitdir "$1")"
 	if [ -d "$dir" ]; then
 		if [ -e "$dir/HEAD" ]; then echo HEAD; fi
 		for i in $(git --git-dir="$dir" \
@@ -101,20 +113,9 @@ __git_refs ()
 
 __git_refs2 ()
 {
-	local cmd i is_hash=y dir="${1:-$(__gitdir)}"
-	if [ -d "$dir" ]; then
-		cmd=git-peek-remote
-	else
-		cmd=git-ls-remote
-	fi
-	for i in $($cmd "$dir" 2>/dev/null); do
-		case "$is_hash,$i" in
-		y,*) is_hash=n ;;
-		n,*^{}) is_hash=y ;;
-		n,refs/tags/*) is_hash=y; echo "${i#refs/tags/}:${i#refs/tags/}" ;;
-		n,refs/heads/*) is_hash=y; echo "${i#refs/heads/}:${i#refs/heads/}" ;;
-		n,*) is_hash=y; echo "$i:$i" ;;
-		esac
+	local i
+	for i in $(__git_refs "$1"); do
+		echo "$i:$i"
 	done
 }
 
@@ -396,6 +397,20 @@ _git_cherry_pick ()
 		COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
 		;;
 	esac
+}
+
+_git_commit ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		COMPREPLY=($(compgen -W "
+			--all --author= --signoff --verify --no-verify
+			--edit --amend --include --only
+			" -- "$cur"))
+		return
+	esac
+	COMPREPLY=()
 }
 
 _git_diff ()
@@ -768,6 +783,7 @@ _git ()
 	cat-file)    _git_cat_file ;;
 	checkout)    _git_checkout ;;
 	cherry-pick) _git_cherry_pick ;;
+	commit)      _git_commit ;;
 	diff)        _git_diff ;;
 	diff-tree)   _git_diff_tree ;;
 	fetch)       _git_fetch ;;
@@ -804,6 +820,7 @@ complete -o default            -F _git_branch git-branch
 complete -o default -o nospace -F _git_cat_file git-cat-file
 complete -o default            -F _git_checkout git-checkout
 complete -o default            -F _git_cherry_pick git-cherry-pick
+complete -o default            -F _git_commit git-commit
 complete -o default -o nospace -F _git_diff git-diff
 complete -o default            -F _git_diff_tree git-diff-tree
 complete -o default -o nospace -F _git_fetch git-fetch

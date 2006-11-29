@@ -298,9 +298,7 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 	if (!access(".mailmap", R_OK))
 		read_mailmap(".mailmap");
 
-	if (rev.pending.nr == 1)
-		die ("Need a range!");
-	else if (rev.pending.nr == 0)
+	if (rev.pending.nr == 0)
 		read_from_stdin(&list);
 	else
 		get_from_rev(&rev, &list);
