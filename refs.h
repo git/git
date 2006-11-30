@@ -48,6 +48,6 @@ extern int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned
 extern int check_ref_format(const char *target);
 
 /** rename ref, return 0 on success **/
-extern int rename_ref(const char *oldref, const char *newref);
+extern int rename_ref(const char *oldref, const char *newref, const char *logmsg);
 
 #endif /* REFS_H */

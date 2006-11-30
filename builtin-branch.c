@@ -247,7 +247,7 @@ static void create_branch(const char *name, const char *start,
 
 static void rename_branch(const char *oldname, const char *newname, int force)
 {
-	char oldref[PATH_MAX], newref[PATH_MAX];
+	char oldref[PATH_MAX], newref[PATH_MAX], logmsg[PATH_MAX*2 + 100];
 	unsigned char sha1[20];
 
 	if (snprintf(oldref, sizeof(oldref), "refs/heads/%s", oldname) > sizeof(oldref))
@@ -265,7 +265,10 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	if (resolve_ref(newref, sha1, 1, NULL) && !force)
 		die("A branch named '%s' already exists.", newname);
 
-	if (rename_ref(oldref, newref))
+	snprintf(logmsg, sizeof(logmsg), "Branch: renamed %s to %s",
+		 oldref, newref);
+
+	if (rename_ref(oldref, newref, logmsg))
 		die("Branch rename failed");
 
 	if (!strcmp(oldname, head) && create_symref("HEAD", newref))
@@ -281,6 +284,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	int kinds = REF_LOCAL_BRANCH;
 	int i;
 
+	setup_ident();
 	git_config(git_default_config);
 
 	for (i = 1; i < argc; i++) {
