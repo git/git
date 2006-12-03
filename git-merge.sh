@@ -189,13 +189,13 @@ else
 	merge_name=$(for remote
 		do
 			rh=$(git-rev-parse --verify "$remote"^0 2>/dev/null) &&
-			if git show-ref -q --verify "refs/heads/$remote"
+			bh=$(git show-ref -s --verify "refs/heads/$remote") &&
+			if test "$rh" = "$bh"
 			then
-				what=branch
+				echo "$rh		branch '$remote' of ."
 			else
-				what=commit
-			fi &&
-			echo "$rh		$what '$remote'"
+				echo "$rh		commit '$remote'"
+			fi
 		done | git-fmt-merge-msg
 	)
 	merge_msg="${merge_msg:+$merge_msg$LF$LF}$merge_name"
