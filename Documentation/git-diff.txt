@@ -22,8 +22,10 @@ the number of trees given to the command.
 
 * When one <tree-ish> is given, the working tree and the named
   tree are compared, using `git-diff-index`.  The option
-  `--cached` can be given to compare the index file and
+  `--index` can be given to compare the index file and
   the named tree.
+  `--cached` is a deprecated alias for `--index`. It's use is
+  discouraged.
 
 * When two <tree-ish>s are given, these two trees are compared
   using `git-diff-tree`.
@@ -47,7 +49,7 @@ Various ways to check your working tree::
 +
 ------------
 $ git diff            <1>
-$ git diff --cached   <2>
+$ git diff --index    <2>
 $ git diff HEAD       <3>
 ------------
 +

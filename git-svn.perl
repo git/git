@@ -2982,7 +2982,7 @@ sub libsvn_fetch_delta {
 sub libsvn_fetch_full {
 	my ($last_commit, $paths, $rev, $author, $date, $msg) = @_;
 	open my $gui, '| git-update-index -z --index-info' or croak $!;
-	my @amr;
+	my %amr;
 	my $p = $SVN->{svn_path};
 	foreach my $f (keys %$paths) {
 		my $m = $paths->{$f}->action();
@@ -3001,7 +3001,7 @@ sub libsvn_fetch_full {
 		my $t = $SVN->check_path($f, $rev, $pool);
 		if ($t == $SVN::Node::file) {
 			if ($m =~ /^[AMR]$/) {
-				push @amr, [ $m, $f ];
+				$amr{$f} = $m;
 			} else {
 				die "Unrecognized action: $m, ($f r$rev)\n";
 			}
@@ -3009,13 +3009,13 @@ sub libsvn_fetch_full {
 			my @traversed = ();
 			libsvn_traverse($gui, '', $f, $rev, \@traversed);
 			foreach (@traversed) {
-				push @amr, [ $m, $_ ]
+				$amr{$_} = $m;
 			}
 		}
 		$pool->clear;
 	}
-	foreach (@amr) {
-		libsvn_get_file($gui, $_->[1], $rev, $_->[0]);
+	foreach (keys %amr) {
+		libsvn_get_file($gui, $_, $rev, $amr{$_});
 	}
 	close $gui or croak $?;
 	return libsvn_log_entry($rev, $author, $date, $msg, [$last_commit]);

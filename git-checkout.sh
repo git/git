@@ -168,6 +168,9 @@ else
 		exit 1 ;;
 	esac
 
+	# First stash away the local changes
+	git diff-index --binary -p HEAD >"$GIT_DIR"/LOCAL_DIFF
+
 	# Match the index to the working tree, and do a three-way.
     	git diff-files --name-only | git update-index --remove --stdin &&
 	work=`git write-tree` &&
@@ -195,6 +198,10 @@ else
 			sed -e 's/^[0-7]* [0-9a-f]* /'"0 $z40 /"
 			echo "$unmerged"
 		) | git update-index --index-info
+
+		echo >&2 "Conflicts in locally modified files:"
+		git diff --name-only --diff-filter=U >&2
+		echo >&2 "Your local changes are found in $GIT_DIR/LOCAL_DIFF"
 		;;
 	esac
 	exit 0

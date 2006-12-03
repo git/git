@@ -91,6 +91,51 @@ finish () {
 	esac
 }
 
+merge_local_changes () {
+	merge_error=$(git-read-tree -m -u $1 $2 2>&1) || (
+
+		# First stash away the local changes
+		git diff-index --binary -p HEAD >"$GIT_DIR"/LOCAL_DIFF
+
+		# Match the index to the working tree, and do a three-way.
+		git diff-files --name-only |
+		git update-index --remove --stdin &&
+		work=`git write-tree` &&
+		git read-tree --reset -u $2 &&
+		git read-tree -m -u --aggressive $1 $2 $work || exit
+
+		echo >&2 "Carrying local changes forward."
+		if result=`git write-tree 2>/dev/null`
+		then
+			echo >&2 "Trivially automerged."
+		else
+			git merge-index -o git-merge-one-file -a
+		fi
+
+		# Do not register the cleanly merged paths in the index
+		# yet; this is not a real merge before committing, but
+		# just carrying the working tree changes along.
+		unmerged=`git ls-files -u`
+		git read-tree --reset $2
+		case "$unmerged" in
+		'')	;;
+		*)
+			(
+				z40=0000000000000000000000000000000000000000
+				echo "$unmerged" |
+				sed -e 's/^[0-7]* [0-9a-f]* /'"0 $z40 /"
+				echo "$unmerged"
+			) | git update-index --index-info
+
+			echo >&2 "Conflicts in locally modified files:"
+			git diff --name-only --diff-filter=U >&2
+			echo >&2 "Your local changes are found in $GIT_DIR/LOCAL_DIFF"
+			;;
+		esac
+		exit 0
+	)
+}
+
 case "$#" in 0) usage ;; esac
 
 rloga= have_message=
@@ -189,13 +234,13 @@ else
 	merge_name=$(for remote
 		do
 			rh=$(git-rev-parse --verify "$remote"^0 2>/dev/null) &&
-			if git show-ref -q --verify "refs/heads/$remote"
+			bh=$(git show-ref -s --verify "refs/heads/$remote") &&
+			if test "$rh" = "$bh"
 			then
-				what=branch
+				echo "$rh		branch '$remote' of ."
 			else
-				what=commit
-			fi &&
-			echo "$rh		$what '$remote'"
+				echo "$rh		commit '$remote'"
+			fi
 		done | git-fmt-merge-msg
 	)
 	merge_msg="${merge_msg:+$merge_msg$LF$LF}$merge_name"
@@ -264,7 +309,7 @@ f,*)
 	echo "Updating $(git-rev-parse --short $head)..$(git-rev-parse --short $1)"
 	git-update-index --refresh 2>/dev/null
 	new_head=$(git-rev-parse --verify "$1^0") &&
-	git-read-tree -u -v -m $head "$new_head" &&
+	merge_local_changes $head $new_head &&
 	finish "$new_head" "Fast forward"
 	dropsave
 	exit 0
