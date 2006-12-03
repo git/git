@@ -45,7 +45,6 @@ static long xdl_split(unsigned long const *ha1, long off1, long lim1,
 		      long *kvdf, long *kvdb, int need_min, xdpsplit_t *spl,
 		      xdalgoenv_t *xenv);
 static xdchange_t *xdl_add_change(xdchange_t *xscr, long i1, long i2, long chg1, long chg2);
-static int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags);
 
 
 
@@ -397,7 +396,7 @@ static xdchange_t *xdl_add_change(xdchange_t *xscr, long i1, long i2, long chg1,
 }
 
 
-static int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
+int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 	long ix, ixo, ixs, ixref, grpsiz, nrec = xdf->nrec;
 	char *rchg = xdf->rchg, *rchgo = xdfo->rchg;
 	xrecord_t **recs = xdf->recs;
