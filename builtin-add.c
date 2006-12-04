@@ -94,9 +94,6 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	newfd = hold_lock_file_for_update(&lock_file, get_index_file(), 1);
 
-	if (read_cache() < 0)
-		die("index file corrupt");
-
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
@@ -130,6 +127,9 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		fputs(eof, stdout);
 		return 0;
 	}
+
+	if (read_cache() < 0)
+		die("index file corrupt");
 
 	for (i = 0; i < dir.nr; i++)
 		add_file_to_index(dir.entries[i]->name, verbose);
