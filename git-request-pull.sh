@@ -30,4 +30,4 @@ echo "  $url"
 echo
 
 git log  $baserev..$headrev | git-shortlog ;
-git diff --stat --summary $baserev..$headrev
+git diff -M --stat --summary $baserev..$headrev
