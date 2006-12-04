@@ -116,7 +116,7 @@ expand_refs_wildcard () {
 			while read sha1 name
 			do
 				mapped=${name#"$from"}
-				if test "z$name" != "z${name#'^{}'}" ||
+				if test "z$name" != "z${name%'^{}'}" ||
 					test "z$name" = "z$mapped"
 				then
 					continue
