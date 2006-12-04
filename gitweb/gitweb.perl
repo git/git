@@ -4282,7 +4282,7 @@ XML
 		}
 		if (defined $logo_url) {
 			# not twice as wide as tall: 72 x 27 pixels
-			print "<logo>" . esc_url($logo_url) . "</logo>\n";
+			print "<logo>" . esc_url($logo) . "</logo>\n";
 		}
 		if (! %latest_date) {
 			# dummy date to keep the feed valid until commits trickle in:
