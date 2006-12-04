@@ -459,6 +459,7 @@ sub fetch_lib {
 		$min = $max + 1;
 		$max += $inc;
 		$max = $head if ($max > $head);
+		$SVN = libsvn_connect($SVN_URL);
 	}
 	restore_index($index);
 	return { revision => $last_rev, commit => $last_commit };
