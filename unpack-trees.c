@@ -370,7 +370,7 @@ int unpack_trees(struct object_list *trees, struct unpack_trees_options *o)
 	int i;
 	struct object_list *posn = trees;
 	struct tree_entry_list df_conflict_list;
-	struct cache_entry df_conflict_entry;
+	static struct cache_entry *dfc;
 
 	memset(&df_conflict_list, 0, sizeof(df_conflict_list));
 	df_conflict_list.next = &df_conflict_list;
@@ -381,8 +381,10 @@ int unpack_trees(struct object_list *trees, struct unpack_trees_options *o)
 	state.refresh_cache = 1;
 
 	o->merge_size = len;
-	memset(&df_conflict_entry, 0, sizeof(df_conflict_entry));
-	o->df_conflict_entry = &df_conflict_entry;
+
+	if (!dfc)
+		dfc = xcalloc(1, sizeof(struct cache_entry) + 1);
+	o->df_conflict_entry = dfc;
 
 	if (len) {
 		posns = xmalloc(len * sizeof(struct tree_entry_list *));
