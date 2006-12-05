@@ -14,7 +14,7 @@ die() {
 }
 
 usage() {
-	die "Usage: $0 [--template=<template_directory>] [--use-immingled-remote] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [--depth <n>] [-n] <repo> [<dir>]"
+	die "Usage: $0 [--template=<template_directory>] [--no-separate-remote] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [--depth <n>] [-n] <repo> [<dir>]"
 }
 
 get_repo_base() {
@@ -141,7 +141,7 @@ while
 	*,--use-separate-remote)
 		# default
 		use_separate_remote=t ;;
-	*,--use-immingled-remote)
+	*,--no-separate-remote)
 		use_separate_remote= ;;
 	1,--reference) usage ;;
 	*,--reference)
@@ -181,7 +181,7 @@ repo="$1"
 test -n "$repo" ||
     die 'you must specify a repository to clone.'
 
-# --bare implies --no-checkout and --use-immingled-remote
+# --bare implies --no-checkout and --no-separate-remote
 if test yes = "$bare"
 then
 	if test yes = "$origin_override"

@@ -142,4 +142,20 @@ test_expect_success \
      diff F/newfile6.png ../F/newfile6.png
      )'
 
+test_expect_success 'Retain execute bit' '
+	mkdir G &&
+	echo executeon >G/on &&
+	chmod +x G/on &&
+	echo executeoff >G/off &&
+	git add G/on &&
+	git add G/off &&
+	git commit -a -m "Execute test" &&
+	(
+		cd "$CVSWORK" &&
+		git-cvsexportcommit -c HEAD
+		test -x G/on &&
+		! test -x G/off
+	)
+'
+
 test_done

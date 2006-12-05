@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git-clone' [--template=<template_directory>] [-l [-s]] [-q] [-n] [--bare]
 	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
-	  [--use-separate-remote | --use-immingled-remote] <repository>
+	  [--use-separate-remote | --no-separate-remote] <repository>
 	  [<directory>]
 
 DESCRIPTION
@@ -105,7 +105,7 @@ OPTIONS
 	of `$GIT_DIR/refs/heads/`.  Only the local master branch is
 	saved in the latter. This is the default.
 
---use-immingled-remote::
+--no-separate-remote::
 	Save remotes heads in the same namespace as the local
 	heads, `$GIT_DIR/refs/heads/'.  In regular repositories,
 	this is a legacy setup git-clone created by default in

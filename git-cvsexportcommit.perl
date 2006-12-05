@@ -116,6 +116,7 @@ if ($opt_a) {
 close MSG;
 
 my (@afiles, @dfiles, @mfiles, @dirs);
+my %amodes;
 my @files = safe_pipe_capture('git-diff-tree', '-r', $parent, $commit);
 #print @files;
 $? && die "Error in git-diff-tree";
@@ -124,6 +125,7 @@ foreach my $f (@files) {
     my @fields = split(m!\s+!, $f);
     if ($fields[4] eq 'A') {
         my $path = $fields[5];
+	$amodes{$path} = $fields[1];
 	push @afiles, $path;
         # add any needed parent directories
 	$path = dirname $path;
@@ -268,6 +270,7 @@ if (($? >> 8) == 2) {
 }
 
 foreach my $f (@afiles) {
+    set_new_file_permissions($f, $amodes{$f});
     if (grep { $_ eq $f } @bfiles) {
       system('cvs', 'add','-kb',$f);
     } else {
@@ -341,4 +344,14 @@ sub safe_pipe_capture {
 	exec(@_) or die "$! $?"; # exec() can fail the executable can't be found
     }
     return wantarray ? @output : join('',@output);
+}
+
+# For any file we want to add to cvs, we must first set its permissions
+# properly, *before* the "cvs add ..." command.  Otherwise, it is impossible
+# to change the permission of the file in the CVS repository using only cvs
+# commands.  This should be fixed in cvs-1.12.14.
+sub set_new_file_permissions {
+    my ($file, $perm) = @_;
+    chmod oct($perm), $file
+      or die "failed to set permissions of \"$file\": $!\n";
 }
