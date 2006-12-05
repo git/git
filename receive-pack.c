@@ -120,7 +120,8 @@ static int update(struct command *cmd)
 			     "but I can't find it!", new_hex);
 	}
 	if (deny_non_fast_forwards && !is_null_sha1(new_sha1) &&
-	    !is_null_sha1(old_sha1)) {
+	    !is_null_sha1(old_sha1) &&
+	    !strncmp(name, "refs/heads/", 11)) {
 		struct commit *old_commit, *new_commit;
 		struct commit_list *bases, *ent;
 
