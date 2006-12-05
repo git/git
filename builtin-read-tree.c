@@ -10,6 +10,7 @@
 #include "tree-walk.h"
 #include "cache-tree.h"
 #include "unpack-trees.h"
+#include "dir.h"
 #include "builtin.h"
 
 static struct object_list *trees;
@@ -178,6 +179,23 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 			continue;
 		}
 
+		if (!strncmp(arg, "--exclude-per-directory=", 24)) {
+			struct dir_struct *dir;
+
+			if (opts.dir)
+				die("more than one --exclude-per-directory are given.");
+
+			dir = calloc(1, sizeof(*opts.dir));
+			dir->show_ignored = 1;
+			dir->exclude_per_dir = arg + 24;
+			opts.dir = dir;
+			/* We do not need to nor want to do read-directory
+			 * here; we are merely interested in reusing the
+			 * per directory ignore stack mechanism.
+			 */
+			continue;
+		}
+
 		/* using -u and -i at the same time makes no sense */
 		if (1 < opts.index_only + opts.update)
 			usage(read_tree_usage);
@@ -190,6 +208,8 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	}
 	if ((opts.update||opts.index_only) && !opts.merge)
 		usage(read_tree_usage);
+	if ((opts.dir && !opts.update))
+		die("--exclude-per-directory is meaningless unless -u");
 
 	if (opts.prefix) {
 		int pfxlen = strlen(opts.prefix);

@@ -156,7 +156,7 @@ void add_excludes_from_file(struct dir_struct *dir, const char *fname)
 		die("cannot use %s as an exclude file", fname);
 }
 
-static int push_exclude_per_directory(struct dir_struct *dir, const char *base, int baselen)
+int push_exclude_per_directory(struct dir_struct *dir, const char *base, int baselen)
 {
 	char exclude_file[PATH_MAX];
 	struct exclude_list *el = &dir->exclude_list[EXC_DIRS];
@@ -170,7 +170,7 @@ static int push_exclude_per_directory(struct dir_struct *dir, const char *base, 
 	return current_nr;
 }
 
-static void pop_exclude_per_directory(struct dir_struct *dir, int stk)
+void pop_exclude_per_directory(struct dir_struct *dir, int stk)
 {
 	struct exclude_list *el = &dir->exclude_list[EXC_DIRS];
 
