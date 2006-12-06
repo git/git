@@ -188,8 +188,9 @@ else
 	# in this loop.
 	merge_name=$(for remote
 		do
-			rh=$(git-rev-parse --verify "$remote"^0 2>/dev/null) &&
-			bh=$(git show-ref -s --verify "refs/heads/$remote" 2>/dev/null) &&
+			rh=$(git-rev-parse --verify "$remote"^0 2>/dev/null) ||
+			continue ;# not something we can merge
+			bh=$(git show-ref -s --verify "refs/heads/$remote" 2>/dev/null)
 			if test "$rh" = "$bh"
 			then
 				echo "$rh		branch '$remote' of ."
