@@ -81,8 +81,8 @@ variants of this model.
 With a small group, developers may just pull changes from each other's
 repositories without the need for a central maintainer.
 
-Emulating the CVS Development Model
------------------------------------
+Creating a Shared Repository
+----------------------------
 
 Start with an ordinary git working directory containing the project, and
 remove the checked-out files, keeping just the bare .git directory:
@@ -110,7 +110,10 @@ $ GIT_DIR=repo.git git repo-config core.sharedrepository true
 Make sure committers have a umask of at most 027, so that the directories
 they create are writable and searchable by other group members.
 
-Suppose this repository is now set up in /pub/repo.git on the host
+Performing Development on a Shared Repository
+---------------------------------------------
+
+Suppose a repository is now set up in /pub/repo.git on the host
 foo.com.  Then as an individual committer you can clone the shared
 repository:
 
@@ -139,15 +142,17 @@ Pull: master:origin
 ------------
 ================================
 
-You can update the shared repository with your changes using:
+You can update the shared repository with your changes by first commiting
+your changes, and then using:
 
 ------------------------------------------------
 $ git push origin master
 ------------------------------------------------
 
-If someone else has updated the repository more recently, `git push`, like
-`cvs commit`, will complain, in which case you must pull any changes
-before attempting the push again.
+to "push" those commits to the shared repository.  If someone else has
+updated the repository more recently, `git push`, like `cvs commit`, will
+complain, in which case you must pull any changes before attempting the
+push again.
 
 In the `git push` command above we specify the name of the remote branch
 to update (`master`).  If we leave that out, `git push` tries to update
