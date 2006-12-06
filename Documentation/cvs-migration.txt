@@ -24,6 +24,11 @@ First, note some ways that git differs from CVS:
     single shared repository which people can synchronize with; see below
     for details.
 
+  * Since every working tree contains a repository, a commit in your
+    private repository will not publish your changes; it will only create
+    a revision. You have to "push" your changes to a public repository to
+    make them visible to others.
+
 Importing a CVS archive
 -----------------------
 
