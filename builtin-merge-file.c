@@ -2,7 +2,7 @@
 #include "xdiff/xdiff.h"
 
 static const char merge_file_usage[] =
-"git merge-file [-L name1 [-L orig [-L name2]]] file1 orig_file file2";
+"git merge-file [-p | --stdout] [-q | --quiet] [-L name1 [-L orig [-L name2]]] file1 orig_file file2";
 
 static int read_file(mmfile_t *ptr, const char *filename)
 {
@@ -27,16 +27,23 @@ int cmd_merge_file(int argc, char **argv, char **envp)
 	mmfile_t mmfs[3];
 	mmbuffer_t result = {NULL, 0};
 	xpparam_t xpp = {XDF_NEED_MINIMAL};
-	int ret = 0, i = 0;
+	int ret = 0, i = 0, to_stdout = 0;
 
 	while (argc > 4) {
-		if (!strcmp(argv[1], "-L")) {
+		if (!strcmp(argv[1], "-L") && i < 3) {
 			names[i++] = argv[2];
-			argc -= 2;
-			argv += 2;
-			continue;
-		}
-		usage(merge_file_usage);
+			argc--;
+			argv++;
+		} else if (!strcmp(argv[1], "-p") ||
+				!strcmp(argv[1], "--stdout"))
+			to_stdout = 1;
+		else if (!strcmp(argv[1], "-q") ||
+				!strcmp(argv[1], "--quiet"))
+			freopen("/dev/null", "w", stderr);
+		else
+			usage(merge_file_usage);
+		argc--;
+		argv++;
 	}
 
 	if (argc != 4)
@@ -57,7 +64,7 @@ int cmd_merge_file(int argc, char **argv, char **envp)
 
 	if (ret >= 0) {
 		char *filename = argv[1];
-		FILE *f = fopen(filename, "wb");
+		FILE *f = to_stdout ? stdout : fopen(filename, "wb");
 
 		if (!f)
 			ret = error("Could not open %s for writing", filename);
