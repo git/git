@@ -38,8 +38,9 @@ static int xdl_append_merge(xdmerge_t **merge, int mode,
 		long i1, long chg1, long i2, long chg2)
 {
 	xdmerge_t *m = *merge;
-	if (m && mode == m->mode &&
-			(i1 == m->i1 + m->chg1 || i2 == m->i2 + m->chg2)) {
+	if (m && (i1 <= m->i1 + m->chg1 || i2 <= m->i2 + m->chg2)) {
+		if (mode != m->mode)
+			m->mode = 0;
 		m->chg1 = i1 + chg1 - m->i1;
 		m->chg2 = i2 + chg2 - m->i2;
 	} else {
@@ -313,22 +314,10 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1, const char *name1,
 		i1 = xscr1->i1 + xscr1->chg1;
 		i2 = xscr2->i1 + xscr2->chg1;
 
-		if (i1 > i2) {
-			xscr1->chg1 -= i1 - i2;
-			xscr1->i1 = i2;
-			xscr1->i2 += xscr1->chg2;
-			xscr1->chg2 = 0;
+		if (i1 >= i2)
 			xscr2 = xscr2->next;
-		} else if (i2 > i1) {
-			xscr2->chg1 -= i2 - i1;
-			xscr2->i1 = i1;
-			xscr2->i2 += xscr2->chg2;
-			xscr2->chg2 = 0;
+		if (i2 >= i1)
 			xscr1 = xscr1->next;
-		} else {
-			xscr1 = xscr1->next;
-			xscr2 = xscr2->next;
-		}
 	}
 	while (xscr1) {
 		if (!changes)
