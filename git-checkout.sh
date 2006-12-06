@@ -161,7 +161,7 @@ then
     git-read-tree --reset -u $new
 else
     git-update-index --refresh >/dev/null
-    merge_error=$(git-read-tree -m -u $old $new 2>&1) || (
+    merge_error=$(git-read-tree -m -u --exclude-per-directory=.gitignore $old $new 2>&1) || (
 	case "$merge" in
 	'')
 		echo >&2 "$merge_error"
@@ -175,7 +175,8 @@ else
     	git diff-files --name-only | git update-index --remove --stdin &&
 	work=`git write-tree` &&
 	git read-tree --reset -u $new &&
-	git read-tree -m -u --aggressive $old $new $work || exit
+	git read-tree -m -u --aggressive --exclude-per-directory=.gitignore $old $new $work ||
+	exit
 
 	if result=`git write-tree 2>/dev/null`
 	then

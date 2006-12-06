@@ -92,7 +92,7 @@ finish () {
 }
 
 merge_local_changes () {
-	merge_error=$(git-read-tree -m -u $1 $2 2>&1) || (
+	merge_error=$(git-read-tree -m -u --exclude-per-directory=.gitignore $1 $2 2>&1) || (
 
 		# First stash away the local changes
 		git diff-index --binary -p HEAD >"$GIT_DIR"/LOCAL_DIFF
@@ -102,7 +102,7 @@ merge_local_changes () {
 		git update-index --remove --stdin &&
 		work=`git write-tree` &&
 		git read-tree --reset -u $2 &&
-		git read-tree -m -u --aggressive $1 $2 $work || exit
+		git read-tree -m -u --aggressive --exclude-per-directory=.gitignore $1 $2 $work || exit
 
 		echo >&2 "Carrying local changes forward."
 		if result=`git write-tree 2>/dev/null`
