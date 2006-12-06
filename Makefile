@@ -275,6 +275,7 @@ BUILTIN_OBJS = \
 	builtin-ls-tree.o \
 	builtin-mailinfo.o \
 	builtin-mailsplit.o \
+	builtin-merge-file.o \
 	builtin-mv.o \
 	builtin-name-rev.o \
 	builtin-pack-objects.o \
