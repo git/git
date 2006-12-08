@@ -120,7 +120,7 @@ our %feature = (
 	# To disable system wide have in $GITWEB_CONFIG
 	# $feature{'snapshot'}{'default'} = [undef];
 	# To have project specific config enable override in $GITWEB_CONFIG
-	# $feature{'blame'}{'override'} = 1;
+	# $feature{'snapshot'}{'override'} = 1;
 	# and in project config gitweb.snapshot = none|gzip|bzip2;
 	'snapshot' => {
 		'sub' => \&feature_snapshot,
