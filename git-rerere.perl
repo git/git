@@ -172,6 +172,38 @@ sub merge {
 -d "$rr_dir" || exit(0);
 
 read_rr();
+
+if (@ARGV) {
+	my $arg = shift @ARGV;
+	if ($arg eq 'clear') {
+		for my $path (keys %merge_rr) {
+			my $name = $merge_rr{$path};
+			if (-d "$rr_dir/$name" &&
+			    ! -f "$rr_dir/$name/postimage") {
+				rmtree(["$rr_dir/$name"]);
+			}
+		}
+		unlink $merge_rr;
+	}
+	elsif ($arg eq 'status') {
+		for my $path (keys %merge_rr) {
+			print $path, "\n";
+		}
+	}
+	elsif ($arg eq 'diff') {
+		for my $path (keys %merge_rr) {
+			my $name = $merge_rr{$path};
+			system('diff', ((@ARGV == 0) ? ('-u') : @ARGV),
+				'-L', "a/$path", '-L', "b/$path",
+				"$rr_dir/$name/preimage", $path);
+		}
+	}
+	else {
+		die "$0 unknown command: $arg\n";
+	}
+	exit 0;
+}
+
 my %conflict = map { $_ => 1 } find_conflict();
 
 # MERGE_RR records paths with conflicts immediately after merge
