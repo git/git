@@ -169,6 +169,28 @@ sub merge {
 	return 0;
 }
 
+sub garbage_collect_rerere {
+	# We should allow specifying these from the command line and
+	# that is why the caller gives @ARGV to us, but I am lazy.
+
+	my $cutoff_noresolve = 15; # two weeks
+	my $cutoff_resolve = 60; # two months
+	my @to_remove;
+	while (<$rr_dir/*/preimage>) {
+		my ($dir) = /^(.*)\/preimage$/;
+		my $cutoff = ((-f "$dir/postimage")
+			      ? $cutoff_resolve
+			      : $cutoff_noresolve);
+		my $age = -M "$_";
+		if ($cutoff <= $age) {
+			push @to_remove, $dir;
+		}
+	}
+	if (@to_remove) {
+		rmtree(\@to_remove);
+	}
+}
+
 -d "$rr_dir" || exit(0);
 
 read_rr();
@@ -197,6 +219,9 @@ if (@ARGV) {
 				'-L', "a/$path", '-L', "b/$path",
 				"$rr_dir/$name/preimage", $path);
 		}
+	}
+	elsif ($arg eq 'gc') {
+		garbage_collect_rerere(@ARGV);
 	}
 	else {
 		die "$0 unknown command: $arg\n";
