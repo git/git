@@ -3438,6 +3438,9 @@ sub open_file {
 	my ($self, $path, $pb, $rev) = @_;
 	my ($mode, $blob) = (safe_qx('git-ls-tree',$self->{c},'--',$path)
 	                     =~ /^(\d{6}) blob ([a-f\d]{40})\t/);
+	unless (defined $mode && defined $blob) {
+		die "$path was not found in commit $self->{c} (r$rev)\n";
+	}
 	{ path => $path, mode_a => $mode, mode_b => $mode, blob => $blob,
 	  pool => SVN::Pool->new, action => 'M' };
 }
