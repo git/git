@@ -3210,6 +3210,35 @@ if {[is_MacOSX]} {
 		-command do_options \
 		-font font_ui
 
+	# -- Tools Menu
+	#
+	if {[file exists /usr/local/miga/lib/gui-miga]} {
+	proc do_miga {} {
+		global gitdir ui_status_value
+		if {![lock_index update]} return
+		set cmd [list sh --login -c "/usr/local/miga/lib/gui-miga \"[pwd]\""]
+		set miga_fd [open "|$cmd" r]
+		fconfigure $miga_fd -blocking 0
+		fileevent $miga_fd readable [list miga_done $miga_fd]
+		set ui_status_value {Running miga...}
+	}
+	proc miga_done {fd} {
+		read $fd 512
+		if {[eof $fd]} {
+			close $fd
+			unlock_index
+			rescan [list set ui_status_value {Ready.}]
+		}
+	}
+	.mbar add cascade -label Tools -menu .mbar.tools
+	menu .mbar.tools
+	.mbar.tools add command -label "Migrate" \
+		-command do_miga \
+		-font font_ui
+	lappend disable_on_lock \
+		[list .mbar.tools entryconf [.mbar.tools index last] -state]
+	}
+
 	# -- Help Menu
 	#
 	.mbar add cascade -label Help -menu .mbar.help
