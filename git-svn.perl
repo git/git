@@ -72,7 +72,7 @@ my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_username, $_config_dir, $_no_auth_cache, $_xfer_delta,
 	$_pager, $_color);
 my (@_branch_from, %tree_map, %users, %rusers, %equiv);
-my ($_svn_co_url_revs, $_svn_pg_peg_revs);
+my ($_svn_co_url_revs, $_svn_pg_peg_revs, $_svn_can_do_switch);
 my @repo_path_split_cache;
 
 my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
@@ -2877,6 +2877,24 @@ sub libsvn_connect {
 	return $ra;
 }
 
+sub libsvn_can_do_switch {
+	unless (defined $_svn_can_do_switch) {
+		my $pool = SVN::Pool->new;
+		my $rep = eval {
+			$SVN->do_switch(1, '', 0, $SVN->{url},
+			                SVN::Delta::Editor->new, $pool);
+		};
+		if ($@) {
+			$_svn_can_do_switch = 0;
+		} else {
+			$rep->abort_report($pool);
+			$_svn_can_do_switch = 1;
+		}
+		$pool->clear;
+	}
+	$_svn_can_do_switch;
+}
+
 sub libsvn_dup_ra {
 	my ($ra) = @_;
 	SVN::Ra->new(map { $_ => $ra->{$_} } qw/config url
@@ -3198,12 +3216,26 @@ sub libsvn_find_parent_branch {
 		unlink $GIT_SVN_INDEX;
 		print STDERR "Found branch parent: ($GIT_SVN) $parent\n";
 		sys(qw/git-read-tree/, $parent);
-		# I can't seem to get do_switch() to work correctly with
-		# the SWIG interface (TypeError when passing switch_url...),
-		# so we'll unconditionally bypass the delta interface here
-		# for now
-		return libsvn_fetch_full($parent, $paths, $rev,
-					$author, $date, $msg);
+		unless (libsvn_can_do_switch()) {
+			return libsvn_fetch_full($parent, $paths, $rev,
+						$author, $date, $msg);
+		}
+		# do_switch works with svn/trunk >= r22312, but that is not
+		# included with SVN 1.4.2 (the latest version at the moment),
+		# so we can't rely on it.
+		my $ra = libsvn_connect("$url/$branch_from");
+		my $ed = SVN::Git::Fetcher->new({c => $parent, q => $_q});
+		my $pool = SVN::Pool->new;
+		my $reporter = $ra->do_switch($rev, '', 1, $SVN->{url},
+		                              $ed, $pool);
+		my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
+		$reporter->set_path('', $r0, 0, @lock, $pool);
+		$reporter->finish_report($pool);
+		$pool->clear;
+		unless ($ed->{git_commit_ok}) {
+			die "SVN connection failed somewhere...\n";
+		}
+		return libsvn_log_entry($rev, $author, $date, $msg, [$parent]);
 	}
 	print STDERR "Nope, branch point not imported or unknown\n";
 	return undef;
