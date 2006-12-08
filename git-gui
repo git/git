@@ -3143,13 +3143,13 @@ lappend disable_on_lock \
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-.mbar.commit add command -label {Include In Commit} \
+.mbar.commit add command -label {Add To Commit} \
 	-command do_include_selection \
 	-font font_ui
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-.mbar.commit add command -label {Include All In Commit} \
+.mbar.commit add command -label {Add All To Commit} \
 	-command do_include_all \
 	-accelerator $M1T-I \
 	-font font_ui
@@ -3317,7 +3317,7 @@ pack .vpane.lower.commarea.buttons.rescan -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.rescan conf -state}
 
-button .vpane.lower.commarea.buttons.incall -text {Include All} \
+button .vpane.lower.commarea.buttons.incall -text {Add All} \
 	-command do_include_all \
 	-font font_ui
 pack .vpane.lower.commarea.buttons.incall -side top -fill x
