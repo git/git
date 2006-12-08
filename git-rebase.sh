@@ -139,6 +139,10 @@ do
 	--skip)
 		if test -d "$dotest"
 		then
+			if test -d "$GIT_DIR/rr-cache"
+			then
+				git-rerere clear
+			fi
 			prev_head="`cat $dotest/prev_head`"
 			end="`cat $dotest/end`"
 			msgnum="`cat $dotest/msgnum`"
@@ -157,6 +161,10 @@ do
 		exit
 		;;
 	--abort)
+		if test -d "$GIT_DIR/rr-cache"
+		then
+			git-rerere clear
+		fi
 		if test -d "$dotest"
 		then
 			rm -r "$dotest"
