@@ -111,8 +111,9 @@ Using Topic Branches
 
 Some important disciplines first.
 
- * Once a topic branch forks from "master", never merge "master"
-   updates into the topic branch.
+ * Once a topic branch forks from "master", avoid merging "master"
+   updates into the topic branch unless necessary to resolve conflicts
+   early.
 
  * Once a topic branch is fully cooked and merged into "master",
    delete it.  If you need to build on top of it to correct
