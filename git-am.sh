@@ -246,6 +246,10 @@ last=`cat "$dotest/last"`
 this=`cat "$dotest/next"`
 if test "$skip" = t
 then
+	if test -d "$GIT_DIR/rr-cache"
+	then
+		git-rerere clear
+	fi
 	this=`expr "$this" + 1`
 	resume=
 fi
@@ -408,6 +412,10 @@ do
 			stop_here_user_resolve $this
 		fi
 		apply_status=0
+		if test -d "$GIT_DIR/rr-cache"
+		then
+			git rerere
+		fi
 		;;
 	esac
 

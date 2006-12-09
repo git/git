@@ -188,7 +188,7 @@ static void read_from_stdin(struct path_list *list)
 				bob = buffer + strlen(buffer);
 			else {
 				offset = 8;
-				while (isspace(bob[-1]))
+				if (isspace(bob[-1]))
 					bob--;
 			}
 
@@ -236,7 +236,7 @@ static void get_from_rev(struct rev_info *rev, struct path_list *list)
 					author = scratch;
 					authorlen = strlen(scratch);
 				} else {
-					while (bracket[-1] == ' ')
+					if (bracket[-1] == ' ')
 						bracket--;
 
 					author = buffer + 7;
