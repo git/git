@@ -43,8 +43,8 @@ Pull: refs/heads/master:refs/remotes/origin/master
 ------------
 ================================
 
-You can update the shared repository with your changes by first commiting
-your changes, and then using:
+You can update the shared repository with your changes by first committing
+your changes, and then using the gitlink:git-push[1] command:
 
 ------------------------------------------------
 $ git push origin master
@@ -76,11 +76,15 @@ possibly created from scratch or from a tarball (see the
 link:tutorial.html[tutorial]), or imported from an already existing CVS
 repository (see the next section).
 
-If your project's working directory is /home/alice/myproject, you can
-create a shared repository at /pub/repo.git with:
+Assume your existing repo is at /home/alice/myproject.  Create a new "bare"
+repository (a repository without a working tree) and fetch your project into
+it:
 
 ------------------------------------------------
-$ git clone -bare /home/alice/myproject /pub/repo.git
+$ mkdir /pub/my-repo.git
+$ cd /pub/my-repo.git
+$ git --bare init-db --shared
+$ git --bare fetch /home/alice/myproject master:master
 ------------------------------------------------
 
 Next, give every team member read/write access to this repository.  One
@@ -93,10 +97,7 @@ Put all the committers in the same group, and make the repository
 writable by that group:
 
 ------------------------------------------------
-$ cd /pub
-$ chgrp -R $group repo.git
-$ find repo.git -mindepth 1 -type d |xargs chmod ug+rwx,g+s
-$ GIT_DIR=repo.git git repo-config core.sharedrepository true
+$ chgrp -R $group /pub/my-repo.git
 ------------------------------------------------
 
 Make sure committers have a umask of at most 027, so that the directories
@@ -107,15 +108,15 @@ Importing a CVS archive
 
 First, install version 2.1 or higher of cvsps from
 link:http://www.cobite.com/cvsps/[http://www.cobite.com/cvsps/] and make
-sure it is in your path.  The magic command line is then
+sure it is in your path.  Then cd to a checked out CVS working directory
+of the project you are interested in and run gitlink:git-cvsimport[1]:
 
 -------------------------------------------
-$ git cvsimport -v -d <cvsroot> -C <destination> <module>
+$ git cvsimport -C <destination>
 -------------------------------------------
 
 This puts a git archive of the named CVS module in the directory
-<destination>, which will be created if necessary.  The -v option makes
-the conversion script very chatty.
+<destination>, which will be created if necessary.
 
 The import checks out from CVS every revision of every file.  Reportedly
 cvsimport can average some twenty revisions per second, so for a
