@@ -434,6 +434,7 @@ my %actions = (
 	"tags" => \&git_tags,
 	"tree" => \&git_tree,
 	"snapshot" => \&git_snapshot,
+	"object" => \&git_object,
 	# those below don't need $project
 	"opml" => \&git_opml,
 	"project_list" => \&git_project_list,
@@ -3617,6 +3618,53 @@ sub git_commit {
 	git_difftree_body(\@difftree, $hash, $parent);
 
 	git_footer_html();
+}
+
+sub git_object {
+	# object is defined by:
+	# - hash or hash_base alone
+	# - hash_base and file_name
+	my $type;
+
+	# - hash or hash_base alone
+	if ($hash || ($hash_base && !defined $file_name)) {
+		my $object_id = $hash || $hash_base;
+
+		my $git_command = git_cmd_str();
+		open my $fd, "-|", "$git_command cat-file -t $object_id 2>/dev/null"
+			or die_error('404 Not Found', "Object does not exist");
+		$type = <$fd>;
+		chomp $type;
+		close $fd
+			or die_error('404 Not Found', "Object does not exist");
+
+	# - hash_base and file_name
+	} elsif ($hash_base && defined $file_name) {
+		$file_name =~ s,/+$,,;
+
+		system(git_cmd(), "cat-file", '-e', $hash_base) == 0
+			or die_error('404 Not Found', "Base object does not exist");
+
+		# here errors should not hapen
+		open my $fd, "-|", git_cmd(), "ls-tree", $hash_base, "--", $file_name
+			or die_error(undef, "Open git-ls-tree failed");
+		my $line = <$fd>;
+		close $fd;
+
+		#'100644 blob 0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
+		unless ($line && $line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40})\t/) {
+			die_error('404 Not Found', "File or directory for given base does not exist");
+		}
+		$type = $2;
+		$hash = $3;
+	} else {
+		die_error('404 Not Found', "Not enough information to find object");
+	}
+
+	print $cgi->redirect(-uri => href(action=>$type, -full=>1,
+	                                  hash=>$hash, hash_base=>$hash_base,
+	                                  file_name=>$file_name),
+	                     -status => '302 Found');
 }
 
 sub git_blobdiff {
