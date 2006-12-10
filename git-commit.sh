@@ -350,19 +350,9 @@ t,)
 			refuse_partial "Cannot do a partial commit during a merge."
 		fi
 		TMP_INDEX="$GIT_DIR/tmp-index$$"
-		if test -z "$initial_commit"
-		then
-			# make sure index is clean at the specified paths, or
-			# they are additions.
-			dirty_in_index=`git-diff-index --cached --name-status \
-				--diff-filter=DMTU HEAD -- "$@"`
-			test -z "$dirty_in_index" ||
-			refuse_partial "Different in index and the last commit:
-$dirty_in_index"
-		fi
 		commit_only=`git-ls-files --error-unmatch -- "$@"` || exit
 
-		# Build the temporary index and update the real index
+		# Build a temporary index and update the real index
 		# the same way.
 		if test -z "$initial_commit"
 		then
