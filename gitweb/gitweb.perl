@@ -1989,12 +1989,31 @@ sub git_print_log ($;%) {
 	}
 }
 
+# return link target (what link points to)
+sub git_get_link_target {
+	my $hash = shift;
+	my $link_target;
+
+	# read link
+	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
+		or return;
+	{
+		local $/;
+		$link_target = <$fd>;
+	}
+	close $fd
+		or return;
+
+	return $link_target;
+}
+
+
 # print tree entry (row of git_tree), but without encompassing <tr> element
 sub git_print_tree_entry {
 	my ($t, $basedir, $hash_base, $have_blame) = @_;
 
 	my %base_key = ();
-	$base_key{hash_base} = $hash_base if defined $hash_base;
+	$base_key{'hash_base'} = $hash_base if defined $hash_base;
 
 	# The format of a table row is: mode list link.  Where mode is
 	# the mode of the entry, list is the name of the entry, an href,
@@ -2005,16 +2024,23 @@ sub git_print_tree_entry {
 		print "<td class=\"list\">" .
 			$cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
 			                       file_name=>"$basedir$t->{'name'}", %base_key),
-			        -class => "list"}, esc_path($t->{'name'})) . "</td>\n";
+			        -class => "list"}, esc_path($t->{'name'}));
+		if (S_ISLNK(oct $t->{'mode'})) {
+			my $link_target = git_get_link_target($t->{'hash'});
+			if ($link_target) {
+				print " -> " . esc_path($link_target);
+			}
+		}
+		print "</td>\n";
 		print "<td class=\"link\">";
 		print $cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
-					     file_name=>"$basedir$t->{'name'}", %base_key)},
-			      "blob");
+		                             file_name=>"$basedir$t->{'name'}", %base_key)},
+		              "blob");
 		if ($have_blame) {
 			print " | " .
 			      $cgi->a({-href => href(action=>"blame", hash=>$t->{'hash'},
-				                           file_name=>"$basedir$t->{'name'}", %base_key)},
-				            "blame");
+			                             file_name=>"$basedir$t->{'name'}", %base_key)},
+			              "blame");
 		}
 		if (defined $hash_base) {
 			print " | " .
@@ -2036,8 +2062,8 @@ sub git_print_tree_entry {
 		print "</td>\n";
 		print "<td class=\"link\">";
 		print $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
-					     file_name=>"$basedir$t->{'name'}", %base_key)},
-			      "tree");
+		                             file_name=>"$basedir$t->{'name'}", %base_key)},
+		              "tree");
 		if (defined $hash_base) {
 			print " | " .
 			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
