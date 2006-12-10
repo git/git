@@ -6293,6 +6293,7 @@ set stuffsaved 0
 set patchnum 0
 setcoords
 makewindow
+wm title . "[file tail $argv0]: [file tail [pwd]]"
 readrefs
 
 if {$cmdline_files ne {} || $revtreeargs ne {}} {
