@@ -188,7 +188,8 @@ static void read_from_stdin(struct path_list *list)
 				bob = buffer + strlen(buffer);
 			else {
 				offset = 8;
-				if (isspace(bob[-1]))
+				while (buffer + offset < bob &&
+				       isspace(bob[-1]))
 					bob--;
 			}
 
