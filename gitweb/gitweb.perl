@@ -828,14 +828,12 @@ sub format_log_line_html {
 	my $line = shift;
 
 	$line = esc_html($line, -nbsp=>1);
-	if ($line =~ m/([0-9a-fA-F]{40})/) {
+	if ($line =~ m/([0-9a-fA-F]{8,40})/) {
 		my $hash_text = $1;
-		if (git_get_type($hash_text) eq "commit") {
-			my $link =
-				$cgi->a({-href => href(action=>"commit", hash=>$hash_text),
-				        -class => "text"}, $hash_text);
-			$line =~ s/$hash_text/$link/;
-		}
+		my $link =
+			$cgi->a({-href => href(action=>"object", hash=>$hash_text),
+			        -class => "text"}, $hash_text);
+		$line =~ s/$hash_text/$link/;
 	}
 	return $line;
 }
