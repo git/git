@@ -3414,8 +3414,7 @@ sub git_snapshot {
 	my $filename = basename($project) . "-$hash.tar.$suffix";
 
 	print $cgi->header(
-		-type => 'application/x-tar',
-		-content_encoding => $ctype,
+		-type => "application/$ctype",
 		-content_disposition => 'inline; filename="' . "$filename" . '"',
 		-status => '200 OK');
 
