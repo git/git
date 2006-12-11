@@ -816,7 +816,10 @@ static void show_numstat(struct diffstat_t* data, struct diff_options *options)
 	for (i = 0; i < data->nr; i++) {
 		struct diffstat_file *file = data->files[i];
 
-		printf("%d\t%d\t", file->added, file->deleted);
+		if (file->is_binary)
+			printf("-\t-\t");
+		else
+			printf("%d\t%d\t", file->added, file->deleted);
 		if (options->line_termination &&
 		    quote_c_style(file->name, NULL, NULL, 0))
 			quote_c_style(file->name, NULL, stdout, 0);

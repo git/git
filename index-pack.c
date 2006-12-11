@@ -96,7 +96,7 @@ static void flush(void)
 		if (output_fd >= 0)
 			write_or_die(output_fd, input_buffer, input_offset);
 		SHA1_Update(&input_ctx, input_buffer, input_offset);
-		memcpy(input_buffer, input_buffer + input_offset, input_len);
+		memmove(input_buffer, input_buffer + input_offset, input_len);
 		input_offset = 0;
 	}
 }
