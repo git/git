@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
 
+
 use strict;
 
 sub run_cmd_pipe {
@@ -340,6 +341,199 @@ sub parse_diff {
 	return @hunk;
 }
 
+sub hunk_splittable {
+	my ($text) = @_;
+
+	my @s = split_hunk($text);
+	return (1 < @s);
+}
+
+sub parse_hunk_header {
+	my ($line) = @_;
+	my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) =
+	    $line =~ /^@@ -(\d+)(?:,(\d+)) \+(\d+)(?:,(\d+)) @@/;
+	return ($o_ofs, $o_cnt, $n_ofs, $n_cnt);
+}
+
+sub split_hunk {
+	my ($text) = @_;
+	my @split = ();
+
+	# If there are context lines in the middle of a hunk,
+	# it can be split, but we would need to take care of
+	# overlaps later.
+
+	my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) = parse_hunk_header($text->[0]);
+	my $hunk_start = 1;
+	my $next_hunk_start;
+
+      OUTER:
+	while (1) {
+		my $next_hunk_start = undef;
+		my $i = $hunk_start - 1;
+		my $this = +{
+			TEXT => [],
+			OLD => $o_ofs,
+			NEW => $n_ofs,
+			OCNT => 0,
+			NCNT => 0,
+			ADDDEL => 0,
+			POSTCTX => 0,
+		};
+
+		while (++$i < @$text) {
+			my $line = $text->[$i];
+			if ($line =~ /^ /) {
+				if ($this->{ADDDEL} &&
+				    !defined $next_hunk_start) {
+					# We have seen leading context and
+					# adds/dels and then here is another
+					# context, which is trailing for this
+					# split hunk and leading for the next
+					# one.
+					$next_hunk_start = $i;
+				}
+				push @{$this->{TEXT}}, $line;
+				$this->{OCNT}++;
+				$this->{NCNT}++;
+				if (defined $next_hunk_start) {
+					$this->{POSTCTX}++;
+				}
+				next;
+			}
+
+			# add/del
+			if (defined $next_hunk_start) {
+				# We are done with the current hunk and
+				# this is the first real change for the
+				# next split one.
+				$hunk_start = $next_hunk_start;
+				$o_ofs = $this->{OLD} + $this->{OCNT};
+				$n_ofs = $this->{NEW} + $this->{NCNT};
+				$o_ofs -= $this->{POSTCTX};
+				$n_ofs -= $this->{POSTCTX};
+				push @split, $this;
+				redo OUTER;
+			}
+			push @{$this->{TEXT}}, $line;
+			$this->{ADDDEL}++;
+			if ($line =~ /^-/) {
+				$this->{OCNT}++;
+			}
+			else {
+				$this->{NCNT}++;
+			}
+		}
+
+		push @split, $this;
+		last;
+	}
+
+	for my $hunk (@split) {
+		$o_ofs = $hunk->{OLD};
+		$n_ofs = $hunk->{NEW};
+		$o_cnt = $hunk->{OCNT};
+		$n_cnt = $hunk->{NCNT};
+
+		my $head = ("@@ -$o_ofs" .
+			    (($o_cnt != 1) ? ",$o_cnt" : '') .
+			    " +$n_ofs" .
+			    (($n_cnt != 1) ? ",$n_cnt" : '') .
+			    " @@\n");
+		unshift @{$hunk->{TEXT}}, $head;
+	}
+	return map { $_->{TEXT} } @split;
+}
+
+sub find_last_o_ctx {
+	my ($it) = @_;
+	my $text = $it->{TEXT};
+	my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) = parse_hunk_header($text->[0]);
+	my $i = @{$text};
+	my $last_o_ctx = $o_ofs + $o_cnt;
+	while (0 < --$i) {
+		my $line = $text->[$i];
+		if ($line =~ /^ /) {
+			$last_o_ctx--;
+			next;
+		}
+		last;
+	}
+	return $last_o_ctx;
+}
+
+sub merge_hunk {
+	my ($prev, $this) = @_;
+	my ($o0_ofs, $o0_cnt, $n0_ofs, $n0_cnt) =
+	    parse_hunk_header($prev->{TEXT}[0]);
+	my ($o1_ofs, $o1_cnt, $n1_ofs, $n1_cnt) =
+	    parse_hunk_header($this->{TEXT}[0]);
+
+	my (@line, $i, $ofs, $o_cnt, $n_cnt);
+	$ofs = $o0_ofs;
+	$o_cnt = $n_cnt = 0;
+	for ($i = 1; $i < @{$prev->{TEXT}}; $i++) {
+		my $line = $prev->{TEXT}[$i];
+		if ($line =~ /^\+/) {
+			$n_cnt++;
+			push @line, $line;
+			next;
+		}
+
+		last if ($o1_ofs <= $ofs);
+
+		$o_cnt++;
+		$ofs++;
+		if ($line =~ /^ /) {
+			$n_cnt++;
+		}
+		push @line, $line;
+	}
+
+	for ($i = 1; $i < @{$this->{TEXT}}; $i++) {
+		my $line = $this->{TEXT}[$i];
+		if ($line =~ /^\+/) {
+			$n_cnt++;
+			push @line, $line;
+			next;
+		}
+		$ofs++;
+		$o_cnt++;
+		if ($line =~ /^ /) {
+			$n_cnt++;
+		}
+		push @line, $line;
+	}
+	my $head = ("@@ -$o0_ofs" .
+		    (($o_cnt != 1) ? ",$o_cnt" : '') .
+		    " +$n0_ofs" .
+		    (($n_cnt != 1) ? ",$n_cnt" : '') .
+		    " @@\n");
+	@{$prev->{TEXT}} = ($head, @line);
+}
+
+sub coalesce_overlapping_hunks {
+	my (@in) = @_;
+	my @out = ();
+
+	my ($last_o_ctx);
+
+	for (grep { $_->{USE} } @in) {
+		my $text = $_->{TEXT};
+		my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) =
+		    parse_hunk_header($text->[0]);
+		if (defined $last_o_ctx &&
+		    $o_ofs <= $last_o_ctx) {
+			merge_hunk($out[-1], $_);
+		}
+		else {
+			push @out, $_;
+		}
+		$last_o_ctx = find_last_o_ctx($out[-1]);
+	}
+	return @out;
+}
+
 sub help_patch_cmd {
 	print <<\EOF ;
 y - stage this hunk
@@ -350,6 +544,7 @@ j - leave this hunk undecided, see next undecided hunk
 J - leave this hunk undecided, see next hunk
 k - leave this hunk undecided, see previous undecided hunk
 K - leave this hunk undecided, see previous hunk
+s - split the current hunk into smaller hunks
 EOF
 }
 
@@ -375,13 +570,13 @@ sub patch_update_cmd {
 	$ix = 0;
 
 	while (1) {
-		my ($prev, $next, $other, $undecided);
+		my ($prev, $next, $other, $undecided, $i);
 		$other = '';
 
 		if ($num <= $ix) {
 			$ix = 0;
 		}
-		for (my $i = 0; $i < $ix; $i++) {
+		for ($i = 0; $i < $ix; $i++) {
 			if (!defined $hunk[$i]{USE}) {
 				$prev = 1;
 				$other .= '/k';
@@ -391,7 +586,7 @@ sub patch_update_cmd {
 		if ($ix) {
 			$other .= '/K';
 		}
-		for (my $i = $ix + 1; $i < $num; $i++) {
+		for ($i = $ix + 1; $i < $num; $i++) {
 			if (!defined $hunk[$i]{USE}) {
 				$next = 1;
 				$other .= '/j';
@@ -401,7 +596,7 @@ sub patch_update_cmd {
 		if ($ix < $num - 1) {
 			$other .= '/J';
 		}
-		for (my $i = 0; $i < $num; $i++) {
+		for ($i = 0; $i < $num; $i++) {
 			if (!defined $hunk[$i]{USE}) {
 				$undecided = 1;
 				last;
@@ -409,6 +604,9 @@ sub patch_update_cmd {
 		}
 		last if (!$undecided);
 
+		if (hunk_splittable($hunk[$ix]{TEXT})) {
+			$other .= '/s';
+		}
 		for (@{$hunk[$ix]{TEXT}}) {
 			print;
 		}
@@ -463,6 +661,18 @@ sub patch_update_cmd {
 				}
 				next;
 			}
+			elsif ($other =~ /s/ && $line =~ /^s/) {
+				my @split = split_hunk($hunk[$ix]{TEXT});
+				if (1 < @split) {
+					print "Split into ",
+					scalar(@split), " hunks.\n";
+				}
+				splice(@hunk, $ix, 1,
+				       map { +{ TEXT => $_, USE => undef } }
+				       @split);
+				$num = scalar @hunk;
+				next;
+			}
 			else {
 				help_patch_cmd($other);
 				next;
@@ -476,17 +686,37 @@ sub patch_update_cmd {
 		}
 	}
 
-	my ($o_lno, $n_lno);
+	@hunk = coalesce_overlapping_hunks(@hunk);
+
+	my ($o_lofs, $n_lofs) = (0, 0);
 	my @result = ();
 	for (@hunk) {
 		my $text = $_->{TEXT};
 		my ($o_ofs, $o_cnt, $n_ofs, $n_cnt) =
-		    $text->[0] =~ /^@@ -(\d+)(?:,(\d+)) \+(\d+)(?:,(\d+)) @@/;
+		    parse_hunk_header($text->[0]);
+
 		if (!$_->{USE}) {
-			# Adjust offset here.
+			if (!defined $o_cnt) { $o_cnt = 1; }
+			if (!defined $n_cnt) { $n_cnt = 1; }
+
+			# We would have added ($n_cnt - $o_cnt) lines
+			# to the postimage if we were to use this hunk,
+			# but we didn't.  So the line number that the next
+			# hunk starts at would be shifted by that much.
+			$n_lofs -= ($n_cnt - $o_cnt);
 			next;
 		}
 		else {
+			if ($n_lofs) {
+				$n_ofs += $n_lofs;
+				$text->[0] = ("@@ -$o_ofs" .
+					      ((defined $o_cnt)
+					       ? ",$o_cnt" : '') .
+					      " +$n_ofs" .
+					      ((defined $n_cnt)
+					       ? ",$n_cnt" : '') .
+					      " @@\n");
+			}
 			for (@$text) {
 				push @result, $_;
 			}
@@ -500,7 +730,11 @@ sub patch_update_cmd {
 		for (@{$head->{TEXT}}, @result) {
 			print $fh $_;
 		}
-		close $fh;
+		if (!close $fh) {
+			for (@{$head->{TEXT}}, @result) {
+				print STDERR $_;
+			}
+		}
 		refresh();
 	}
 
