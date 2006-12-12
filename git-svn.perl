@@ -31,7 +31,7 @@ my %SKIP = ( 'svn:wc:ra_dav:version-url' => 1,
              'svn:entry:committed-date' => 1,
 );
 
-sub fatal (@) { print STDERR $@; exit 1 }
+sub fatal (@) { print STDERR @_; exit 1 }
 # If SVN:: library support is added, please make the dependencies
 # optional and preserve the capability to use the command-line client.
 # use eval { require SVN::... } to make it lazy load
