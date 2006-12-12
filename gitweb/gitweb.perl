@@ -434,6 +434,7 @@ my %actions = (
 	"tags" => \&git_tags,
 	"tree" => \&git_tree,
 	"snapshot" => \&git_snapshot,
+	"object" => \&git_object,
 	# those below don't need $project
 	"opml" => \&git_opml,
 	"project_list" => \&git_project_list,
@@ -827,14 +828,12 @@ sub format_log_line_html {
 	my $line = shift;
 
 	$line = esc_html($line, -nbsp=>1);
-	if ($line =~ m/([0-9a-fA-F]{40})/) {
+	if ($line =~ m/([0-9a-fA-F]{8,40})/) {
 		my $hash_text = $1;
-		if (git_get_type($hash_text) eq "commit") {
-			my $link =
-				$cgi->a({-href => href(action=>"commit", hash=>$hash_text),
-				        -class => "text"}, $hash_text);
-			$line =~ s/$hash_text/$link/;
-		}
+		my $link =
+			$cgi->a({-href => href(action=>"object", hash=>$hash_text),
+			        -class => "text"}, $hash_text);
+		$line =~ s/$hash_text/$link/;
 	}
 	return $line;
 }
@@ -1989,12 +1988,73 @@ sub git_print_log ($;%) {
 	}
 }
 
+# return link target (what link points to)
+sub git_get_link_target {
+	my $hash = shift;
+	my $link_target;
+
+	# read link
+	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
+		or return;
+	{
+		local $/;
+		$link_target = <$fd>;
+	}
+	close $fd
+		or return;
+
+	return $link_target;
+}
+
+# given link target, and the directory (basedir) the link is in,
+# return target of link relative to top directory (top tree);
+# return undef if it is not possible (including absolute links).
+sub normalize_link_target {
+	my ($link_target, $basedir, $hash_base) = @_;
+
+	# we can normalize symlink target only if $hash_base is provided
+	return unless $hash_base;
+
+	# absolute symlinks (beginning with '/') cannot be normalized
+	return if (substr($link_target, 0, 1) eq '/');
+
+	# normalize link target to path from top (root) tree (dir)
+	my $path;
+	if ($basedir) {
+		$path = $basedir . '/' . $link_target;
+	} else {
+		# we are in top (root) tree (dir)
+		$path = $link_target;
+	}
+
+	# remove //, /./, and /../
+	my @path_parts;
+	foreach my $part (split('/', $path)) {
+		# discard '.' and ''
+		next if (!$part || $part eq '.');
+		# handle '..'
+		if ($part eq '..') {
+			if (@path_parts) {
+				pop @path_parts;
+			} else {
+				# link leads outside repository (outside top dir)
+				return;
+			}
+		} else {
+			push @path_parts, $part;
+		}
+	}
+	$path = join('/', @path_parts);
+
+	return $path;
+}
+
 # print tree entry (row of git_tree), but without encompassing <tr> element
 sub git_print_tree_entry {
 	my ($t, $basedir, $hash_base, $have_blame) = @_;
 
 	my %base_key = ();
-	$base_key{hash_base} = $hash_base if defined $hash_base;
+	$base_key{'hash_base'} = $hash_base if defined $hash_base;
 
 	# The format of a table row is: mode list link.  Where mode is
 	# the mode of the entry, list is the name of the entry, an href,
@@ -2005,16 +2065,31 @@ sub git_print_tree_entry {
 		print "<td class=\"list\">" .
 			$cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
 			                       file_name=>"$basedir$t->{'name'}", %base_key),
-			        -class => "list"}, esc_path($t->{'name'})) . "</td>\n";
+			        -class => "list"}, esc_path($t->{'name'}));
+		if (S_ISLNK(oct $t->{'mode'})) {
+			my $link_target = git_get_link_target($t->{'hash'});
+			if ($link_target) {
+				my $norm_target = normalize_link_target($link_target, $basedir, $hash_base);
+				if (defined $norm_target) {
+					print " -> " .
+					      $cgi->a({-href => href(action=>"object", hash_base=>$hash_base,
+					                             file_name=>$norm_target),
+					               -title => $norm_target}, esc_path($link_target));
+				} else {
+					print " -> " . esc_path($link_target);
+				}
+			}
+		}
+		print "</td>\n";
 		print "<td class=\"link\">";
 		print $cgi->a({-href => href(action=>"blob", hash=>$t->{'hash'},
-					     file_name=>"$basedir$t->{'name'}", %base_key)},
-			      "blob");
+		                             file_name=>"$basedir$t->{'name'}", %base_key)},
+		              "blob");
 		if ($have_blame) {
 			print " | " .
 			      $cgi->a({-href => href(action=>"blame", hash=>$t->{'hash'},
-				                           file_name=>"$basedir$t->{'name'}", %base_key)},
-				            "blame");
+			                             file_name=>"$basedir$t->{'name'}", %base_key)},
+			              "blame");
 		}
 		if (defined $hash_base) {
 			print " | " .
@@ -2036,8 +2111,8 @@ sub git_print_tree_entry {
 		print "</td>\n";
 		print "<td class=\"link\">";
 		print $cgi->a({-href => href(action=>"tree", hash=>$t->{'hash'},
-					     file_name=>"$basedir$t->{'name'}", %base_key)},
-			      "tree");
+		                             file_name=>"$basedir$t->{'name'}", %base_key)},
+		              "tree");
 		if (defined $hash_base) {
 			print " | " .
 			      $cgi->a({-href => href(action=>"history", hash_base=>$hash_base,
@@ -3414,8 +3489,7 @@ sub git_snapshot {
 	my $filename = basename($project) . "-$hash.tar.$suffix";
 
 	print $cgi->header(
-		-type => 'application/x-tar',
-		-content_encoding => $ctype,
+		-type => "application/$ctype",
 		-content_disposition => 'inline; filename="' . "$filename" . '"',
 		-status => '200 OK');
 
@@ -3592,6 +3666,53 @@ sub git_commit {
 	git_difftree_body(\@difftree, $hash, $parent);
 
 	git_footer_html();
+}
+
+sub git_object {
+	# object is defined by:
+	# - hash or hash_base alone
+	# - hash_base and file_name
+	my $type;
+
+	# - hash or hash_base alone
+	if ($hash || ($hash_base && !defined $file_name)) {
+		my $object_id = $hash || $hash_base;
+
+		my $git_command = git_cmd_str();
+		open my $fd, "-|", "$git_command cat-file -t $object_id 2>/dev/null"
+			or die_error('404 Not Found', "Object does not exist");
+		$type = <$fd>;
+		chomp $type;
+		close $fd
+			or die_error('404 Not Found', "Object does not exist");
+
+	# - hash_base and file_name
+	} elsif ($hash_base && defined $file_name) {
+		$file_name =~ s,/+$,,;
+
+		system(git_cmd(), "cat-file", '-e', $hash_base) == 0
+			or die_error('404 Not Found', "Base object does not exist");
+
+		# here errors should not hapen
+		open my $fd, "-|", git_cmd(), "ls-tree", $hash_base, "--", $file_name
+			or die_error(undef, "Open git-ls-tree failed");
+		my $line = <$fd>;
+		close $fd;
+
+		#'100644 blob 0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
+		unless ($line && $line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40})\t/) {
+			die_error('404 Not Found', "File or directory for given base does not exist");
+		}
+		$type = $2;
+		$hash = $3;
+	} else {
+		die_error('404 Not Found', "Not enough information to find object");
+	}
+
+	print $cgi->redirect(-uri => href(action=>$type, -full=>1,
+	                                  hash=>$hash, hash_base=>$hash_base,
+	                                  file_name=>$file_name),
+	                     -status => '302 Found');
 }
 
 sub git_blobdiff {
