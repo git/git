@@ -604,8 +604,9 @@ sub commit_lib {
 }
 
 sub dcommit {
+	my $head = shift || 'HEAD';
 	my $gs = "refs/remotes/$GIT_SVN";
-	chomp(my @refs = safe_qx(qw/git-rev-list --no-merges/, "$gs..HEAD"));
+	chomp(my @refs = safe_qx(qw/git-rev-list --no-merges/, "$gs..$head"));
 	my $last_rev;
 	foreach my $d (reverse @refs) {
 		if (quiet_run('git-rev-parse','--verify',"$d~1") != 0) {
@@ -632,16 +633,16 @@ sub dcommit {
 	}
 	return if $_dry_run;
 	fetch();
-	my @diff = safe_qx(qw/git-diff-tree HEAD/, $gs);
+	my @diff = safe_qx('git-diff-tree', $head, $gs);
 	my @finish;
 	if (@diff) {
 		@finish = qw/rebase/;
 		push @finish, qw/--merge/ if $_merge;
 		push @finish, "--strategy=$_strategy" if $_strategy;
-		print STDERR "W: HEAD and $gs differ, using @finish:\n", @diff;
+		print STDERR "W: $head and $gs differ, using @finish:\n", @diff;
 	} else {
-		print "No changes between current HEAD and $gs\n",
-		      "Hard resetting to the latest $gs\n";
+		print "No changes between current $head and $gs\n",
+		      "Resetting to the latest $gs\n";
 		@finish = qw/reset --mixed/;
 	}
 	sys('git', @finish, $gs);
