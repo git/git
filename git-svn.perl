@@ -2981,7 +2981,8 @@ sub libsvn_log_entry {
 	my ($Y,$m,$d,$H,$M,$S) = ($date =~ /^(\d{4})\-(\d\d)\-(\d\d)T
 					 (\d\d)\:(\d\d)\:(\d\d).\d+Z$/x)
 				or die "Unable to parse date: $date\n";
-	if (defined $_authors && ! defined $users{$author}) {
+	if (defined $author && length $author > 0 &&
+	    defined $_authors && ! defined $users{$author}) {
 		die "Author: $author not defined in $_authors file\n";
 	}
 	$msg = '' if ($rev == 0 && !defined $msg);
