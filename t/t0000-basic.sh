@@ -19,24 +19,12 @@ modification *should* take notice and update the test vectors here.
 '
 
 ################################################################
-# It appears that people are getting bitten by not installing
-# 'merge' (usually part of RCS package in binary distributions).
-# Check this and error out before running any tests.  Also catch
-# the bogosity of trying to run tests without building while we
-# are at it.
+# It appears that people try to run tests without building...
 
 ../git >/dev/null
 if test $? != 1
 then
 	echo >&2 'You do not seem to have built git yet.'
-	exit 1
-fi
-
-merge >/dev/null 2>/dev/null
-if test $? = 127
-then
-	echo >&2 'You do not seem to have "merge" installed.
-Please check INSTALL document.'
 	exit 1
 fi
 

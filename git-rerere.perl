@@ -154,7 +154,7 @@ sub find_conflict {
 sub merge {
 	my ($name, $path) = @_;
 	record_preimage($path, "$rr_dir/$name/thisimage");
-	unless (system('merge', map { "$rr_dir/$name/${_}image" }
+	unless (system('git merge-file', map { "$rr_dir/$name/${_}image" }
 		       qw(this pre post))) {
 		my $in;
 		open $in, "<$rr_dir/$name/thisimage" or
