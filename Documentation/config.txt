@@ -137,10 +137,6 @@ branch.<name>.merge::
 	this option, `git pull` defaults to merge the first refspec fetched.
 	Specify multiple values to get an octopus merge.
 
-color.pager::
-	A boolean to enable/disable colored output when the pager is in
-	use (default is true).
-
 color.diff::
 	When true (or `always`), always use colors in patch.
 	When false (or `never`), never.  When set to `auto`, use
@@ -156,6 +152,24 @@ color.diff.<slot>::
 	`dim`, `ul`, `blink`, `reverse`, `reset`, `black`,
 	`red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, or
 	`white`.
+
+color.pager::
+	A boolean to enable/disable colored output when the pager is in
+	use (default is true).
+
+color.status::
+	A boolean to enable/disable color in the output of
+	gitlink:git-status[1]. May be set to `true` (or `always`),
+	`false` (or `never`) or `auto`, in which case colors are used
+	only when the output is to a terminal. Defaults to false.
+
+color.status.<slot>::
+	Use customized color for status colorization. `<slot>` is
+	one of `header` (the header text of the status message),
+	`updated` (files which are updated but not committed),
+	`changed` (files which are changed but not updated in the index),
+	or `untracked` (files which are not tracked by git). The values of
+	these variables may be specified as in color.diff.<slot>.
 
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename
@@ -270,20 +284,6 @@ show.difftree::
 showbranch.default::
 	The default set of branches for gitlink:git-show-branch[1].
 	See gitlink:git-show-branch[1].
-
-color.status::
-	A boolean to enable/disable color in the output of
-	gitlink:git-status[1]. May be set to `true` (or `always`),
-	`false` (or `never`) or `auto`, in which case colors are used
-	only when the output is to a terminal. Defaults to false.
-
-color.status.<slot>::
-	Use customized color for status colorization. `<slot>` is
-	one of `header` (the header text of the status message),
-	`updated` (files which are updated but not committed),
-	`changed` (files which are changed but not updated in the index),
-	or `untracked` (files which are not tracked by git). The values of
-	these variables may be specified as in color.diff.<slot>.
 
 tar.umask::
 	By default, gitlink:git-tar-tree[1] sets file and directories modes
