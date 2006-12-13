@@ -400,7 +400,14 @@ fi
 case "$best_strategy" in
 '')
 	restorestate
-	echo >&2 "No merge strategy handled the merge."
+	case "$use_strategies" in
+	?*' '?*)
+		echo >&2 "No merge strategy handled the merge."
+		;;
+	*)
+		echo >&2 "Merge with strategy $use_strategies failed."
+		;;
+	esac
 	exit 2
 	;;
 "$wt_strategy")
