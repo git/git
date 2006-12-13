@@ -21,6 +21,7 @@
 #include "tag.h"
 #include "unpack-trees.h"
 #include "path-list.h"
+#include "xdiff-interface.h"
 
 /*
  * A virtual commit has
@@ -604,24 +605,21 @@ struct merge_file_info
 		 merge:1;
 };
 
-static char *git_unpack_file(const unsigned char *sha1, char *path)
+static void fill_mm(const unsigned char *sha1, mmfile_t *mm)
 {
-	void *buf;
-	char type[20];
 	unsigned long size;
-	int fd;
+	char type[20];
 
-	buf = read_sha1_file(sha1, type, &size);
-	if (!buf || strcmp(type, blob_type))
+	if (!hashcmp(sha1, null_sha1)) {
+		mm->ptr = xstrdup("");
+		mm->size = 0;
+		return;
+	}
+
+	mm->ptr = read_sha1_file(sha1, type, &size);
+	if (!mm->ptr || strcmp(type, blob_type))
 		die("unable to read blob object %s", sha1_to_hex(sha1));
-
-	strcpy(path, ".merge_file_XXXXXX");
-	fd = mkstemp(path);
-	if (fd < 0)
-		die("unable to create temp-file");
-	flush_buffer(fd, buf, size);
-	close(fd);
-	return path;
+	mm->size = size;
 }
 
 static struct merge_file_info merge_file(struct diff_filespec *o,
@@ -652,49 +650,41 @@ static struct merge_file_info merge_file(struct diff_filespec *o,
 		else if (sha_eq(b->sha1, o->sha1))
 			hashcpy(result.sha, a->sha1);
 		else if (S_ISREG(a->mode)) {
-			int code = 1, fd;
-			struct stat st;
-			char orig[PATH_MAX];
-			char src1[PATH_MAX];
-			char src2[PATH_MAX];
-			const char *argv[] = {
-				"merge", "-L", NULL, "-L", NULL, "-L", NULL,
-				NULL, NULL, NULL,
-				NULL
-			};
-			char *la, *lb, *lo;
+			mmfile_t orig, src1, src2;
+			mmbuffer_t result_buf;
+			xpparam_t xpp;
+			char *name1, *name2;
+			int merge_status;
 
-			git_unpack_file(o->sha1, orig);
-			git_unpack_file(a->sha1, src1);
-			git_unpack_file(b->sha1, src2);
+			name1 = xstrdup(mkpath("%s/%s", branch1, a->path));
+			name2 = xstrdup(mkpath("%s/%s", branch2, b->path));
 
-			argv[2] = la = xstrdup(mkpath("%s/%s", branch1, a->path));
-			argv[6] = lb = xstrdup(mkpath("%s/%s", branch2, b->path));
-			argv[4] = lo = xstrdup(mkpath("orig/%s", o->path));
-			argv[7] = src1;
-			argv[8] = orig;
-			argv[9] = src2,
+			fill_mm(o->sha1, &orig);
+			fill_mm(a->sha1, &src1);
+			fill_mm(b->sha1, &src2);
 
-			code = run_command_v(10, argv);
+			memset(&xpp, 0, sizeof(xpp));
+			merge_status = xdl_merge(&orig,
+						 &src1, name1,
+						 &src2, name2,
+						 &xpp, XDL_MERGE_ZEALOUS,
+						 &result_buf);
+			free(name1);
+			free(name2);
+			free(orig.ptr);
+			free(src1.ptr);
+			free(src2.ptr);
 
-			free(la);
-			free(lb);
-			free(lo);
-			if (code && code < -256) {
-				die("Failed to execute 'merge'. merge(1) is used as the "
-				    "file-level merge tool. Is 'merge' in your path?");
-			}
-			fd = open(src1, O_RDONLY);
-			if (fd < 0 || fstat(fd, &st) < 0 ||
-					index_fd(result.sha, fd, &st, 1,
-						"blob"))
-				die("Unable to add %s to database", src1);
+			if ((merge_status < 0) || !result_buf.ptr)
+				die("Failed to execute internal merge");
 
-			unlink(orig);
-			unlink(src1);
-			unlink(src2);
+			if (write_sha1_file(result_buf.ptr, result_buf.size,
+					    blob_type, result.sha))
+				die("Unable to add %s to database",
+				    a->path);
 
-			result.clean = WEXITSTATUS(code) == 0;
+			free(result_buf.ptr);
+			result.clean = (merge_status == 0);
 		} else {
 			if (!(S_ISLNK(a->mode) || S_ISLNK(b->mode)))
 				die("cannot merge modes?");
@@ -1061,38 +1051,17 @@ static int process_entry(const char *path, struct stage_data *entry,
 			output("Adding %s", path);
 			update_file(1, sha, mode, path);
 		}
-	} else if (!o_sha && a_sha && b_sha) {
-		/* Case C: Added in both (check for same permissions). */
-		if (sha_eq(a_sha, b_sha)) {
-			if (a_mode != b_mode) {
-				clean_merge = 0;
-				output("CONFLICT: File %s added identically in both branches, "
-				       "but permissions conflict %06o->%06o",
-				       path, a_mode, b_mode);
-				output("CONFLICT: adding with permission: %06o", a_mode);
-				update_file(0, a_sha, a_mode, path);
-			} else {
-				/* This case is handled by git-read-tree */
-				assert(0 && "This case must be handled by git-read-tree");
-			}
-		} else {
-			const char *new_path1, *new_path2;
-			clean_merge = 0;
-			new_path1 = unique_path(path, branch1);
-			new_path2 = unique_path(path, branch2);
-			output("CONFLICT (add/add): File %s added non-identically "
-			       "in both branches. Adding as %s and %s instead.",
-			       path, new_path1, new_path2);
-			remove_file(0, path, 0);
-			update_file(0, a_sha, a_mode, new_path1);
-			update_file(0, b_sha, b_mode, new_path2);
-		}
-
-	} else if (o_sha && a_sha && b_sha) {
+	} else if (a_sha && b_sha) {
+		/* Case C: Added in both (check for same permissions) and */
 		/* case D: Modified in both, but differently. */
+		const char *reason = "content";
 		struct merge_file_info mfi;
 		struct diff_filespec o, a, b;
 
+		if (!o_sha) {
+			reason = "add/add";
+			o_sha = (unsigned char *)null_sha1;
+		}
 		output("Auto-merging %s", path);
 		o.path = a.path = b.path = (char *)path;
 		hashcpy(o.sha1, o_sha);
@@ -1109,7 +1078,8 @@ static int process_entry(const char *path, struct stage_data *entry,
 			update_file(1, mfi.sha, mfi.mode, path);
 		else {
 			clean_merge = 0;
-			output("CONFLICT (content): Merge conflict in %s", path);
+			output("CONFLICT (%s): Merge conflict in %s",
+					reason, path);
 
 			if (index_only)
 				update_file(0, mfi.sha, mfi.mode, path);
