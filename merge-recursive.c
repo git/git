@@ -610,6 +610,12 @@ static void fill_mm(const unsigned char *sha1, mmfile_t *mm)
 	unsigned long size;
 	char type[20];
 
+	if (!hashcmp(sha1, null_sha1)) {
+		mm->ptr = xstrdup("");
+		mm->size = 0;
+		return;
+	}
+
 	mm->ptr = read_sha1_file(sha1, type, &size);
 	if (!mm->ptr || strcmp(type, blob_type))
 		die("unable to read blob object %s", sha1_to_hex(sha1));
@@ -1045,38 +1051,17 @@ static int process_entry(const char *path, struct stage_data *entry,
 			output("Adding %s", path);
 			update_file(1, sha, mode, path);
 		}
-	} else if (!o_sha && a_sha && b_sha) {
-		/* Case C: Added in both (check for same permissions). */
-		if (sha_eq(a_sha, b_sha)) {
-			if (a_mode != b_mode) {
-				clean_merge = 0;
-				output("CONFLICT: File %s added identically in both branches, "
-				       "but permissions conflict %06o->%06o",
-				       path, a_mode, b_mode);
-				output("CONFLICT: adding with permission: %06o", a_mode);
-				update_file(0, a_sha, a_mode, path);
-			} else {
-				/* This case is handled by git-read-tree */
-				assert(0 && "This case must be handled by git-read-tree");
-			}
-		} else {
-			const char *new_path1, *new_path2;
-			clean_merge = 0;
-			new_path1 = unique_path(path, branch1);
-			new_path2 = unique_path(path, branch2);
-			output("CONFLICT (add/add): File %s added non-identically "
-			       "in both branches. Adding as %s and %s instead.",
-			       path, new_path1, new_path2);
-			remove_file(0, path, 0);
-			update_file(0, a_sha, a_mode, new_path1);
-			update_file(0, b_sha, b_mode, new_path2);
-		}
-
-	} else if (o_sha && a_sha && b_sha) {
+	} else if (a_sha && b_sha) {
+		/* Case C: Added in both (check for same permissions) and */
 		/* case D: Modified in both, but differently. */
+		const char *reason = "content";
 		struct merge_file_info mfi;
 		struct diff_filespec o, a, b;
 
+		if (!o_sha) {
+			reason = "add/add";
+			o_sha = (unsigned char *)null_sha1;
+		}
 		output("Auto-merging %s", path);
 		o.path = a.path = b.path = (char *)path;
 		hashcpy(o.sha1, o_sha);
@@ -1093,7 +1078,8 @@ static int process_entry(const char *path, struct stage_data *entry,
 			update_file(1, mfi.sha, mfi.mode, path);
 		else {
 			clean_merge = 0;
-			output("CONFLICT (content): Merge conflict in %s", path);
+			output("CONFLICT (%s): Merge conflict in %s",
+					reason, path);
 
 			if (index_only)
 				update_file(0, mfi.sha, mfi.mode, path);
