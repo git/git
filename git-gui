@@ -1819,28 +1819,29 @@ proc populate_pull_menu {m} {
 	global gitdir repo_config all_remotes disable_on_lock
 
 	foreach remote $all_remotes {
-		set rb {}
+		set rb_list [list]
 		if {[array get repo_config remote.$remote.url] ne {}} {
 			if {[array get repo_config remote.$remote.fetch] ne {}} {
-				regexp {^([^:]+):} \
-					[lindex $repo_config(remote.$remote.fetch) 0] \
-					line rb
+				foreach line $repo_config(remote.$remote.fetch) {
+					if {[regexp {^([^:]+):} $line line rb]} {
+						lappend rb_list $rb
+					}
+				}
 			}
 		} else {
 			catch {
 				set fd [open [file join $gitdir remotes $remote] r]
 				while {[gets $fd line] >= 0} {
 					if {[regexp {^Pull:[ \t]*([^:]+):} $line line rb]} {
-						break
+						lappend rb_list $rb
 					}
 				}
 				close $fd
 			}
 		}
 
-		set rb_short $rb
-		regsub ^refs/heads/ $rb {} rb_short
-		if {$rb_short ne {}} {
+		foreach rb $rb_list {
+			regsub ^refs/heads/ $rb {} rb_short
 			$m add command \
 				-label "Branch $rb_short from $remote..." \
 				-command [list pull_remote $remote $rb] \
