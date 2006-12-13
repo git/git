@@ -8,7 +8,7 @@ git-read-tree - Reads tree information into the index
 
 SYNOPSIS
 --------
-'git-read-tree' (<tree-ish> | [[-m [--aggressive] | --reset | --prefix=<prefix>] [-u | -i]] <tree-ish1> [<tree-ish2> [<tree-ish3>]])
+'git-read-tree' (<tree-ish> | [[-m [--aggressive] | --reset | --prefix=<prefix>] [-u | -i]] [--exclude-per-directory=<gitignore>] <tree-ish1> [<tree-ish2> [<tree-ish3>]])
 
 
 DESCRIPTION
@@ -71,6 +71,20 @@ OPTIONS
 	directory.  Note that the `<prefix>/` value must end
 	with a slash.
 
+--exclude-per-directory=<gitignore>::
+	When running the command with `-u` and `-m` options, the
+	merge result may need to overwrite paths that are not
+	tracked in the current branch.  The command usually
+	refuses to proceed with the merge to avoid losing such a
+	path.  However this safety valve sometimes gets in the
+	way.  For example, it often happens that the other
+	branch added a file that used to be a generated file in
+	your branch, and the safety valve triggers when you try
+	to switch to that branch after you ran `make` but before
+	running `make clean` to remove the generated file.  This
+	option tells the command to read per-directory exclude
+	file (usually '.gitignore') and allows such an untracked
+	but explicitly ignored file to be overwritten.
 
 <tree-ish#>::
 	The id of the tree object(s) to be read/merged.
