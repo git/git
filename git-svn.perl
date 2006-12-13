@@ -925,19 +925,38 @@ sub cmt_showable {
 
 sub log_use_color {
 	return 1 if $_color;
-	my $dc;
-	chomp($dc = `git-repo-config --get diff.color`);
+	my ($dc, $dcvar);
+	$dcvar = 'color.diff';
+	$dc = `git-repo-config --get $dcvar`;
+	if ($dc eq '') {
+		# nothing at all; fallback to "diff.color"
+		$dcvar = 'diff.color';
+		$dc = `git-repo-config --get $dcvar`;
+	}
+	chomp($dc);
 	if ($dc eq 'auto') {
-		if (-t *STDOUT || (defined $_pager &&
-		    `git-repo-config --bool --get pager.color` !~ /^false/)) {
+		my $pc;
+		$pc = `git-repo-config --get color.pager`;
+		if ($pc eq '') {
+			# does not have it -- fallback to pager.color
+			$pc = `git-repo-config --bool --get pager.color`;
+		}
+		else {
+			$pc = `git-repo-config --bool --get color.pager`;
+			if ($?) {
+				$pc = 'false';
+			}
+		}
+		chomp($pc);
+		if (-t *STDOUT || (defined $_pager && $pc eq 'true')) {
 			return ($ENV{TERM} && $ENV{TERM} ne 'dumb');
 		}
 		return 0;
 	}
 	return 0 if $dc eq 'never';
 	return 1 if $dc eq 'always';
-	chomp($dc = `git-repo-config --bool --get diff.color`);
-	$dc eq 'true';
+	chomp($dc = `git-repo-config --bool --get $dcvar`);
+	return ($dc eq 'true');
 }
 
 sub git_svn_log_cmd {
