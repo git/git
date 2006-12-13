@@ -2027,9 +2027,17 @@ sub git_commit {
 
 	# just in case we clobber the existing ref, we still want that ref
 	# as our parent:
-	if (my $cur = eval { file_to_s("$GIT_DIR/refs/remotes/$GIT_SVN") }) {
+	open my $null, '>', '/dev/null' or croak $!;
+	open my $stderr, '>&', \*STDERR or croak $!;
+	open STDERR, '>&', $null or croak $!;
+	if (my $cur = eval { safe_qx('git-rev-parse',
+	                             "refs/remotes/$GIT_SVN^0") }) {
+		chomp $cur;
 		push @tmp_parents, $cur;
 	}
+	open STDERR, '>&', $stderr or croak $!;
+	close $stderr or croak $!;
+	close $null or croak $!;
 
 	if (exists $tree_map{$tree}) {
 		foreach my $p (@{$tree_map{$tree}}) {
