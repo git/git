@@ -17,6 +17,7 @@
 
 use strict;
 use warnings;
+use bytes;
 
 use Fcntl;
 use File::Temp qw/tempdir tempfile/;

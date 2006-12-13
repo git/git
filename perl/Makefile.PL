@@ -24,5 +24,6 @@ WriteMakefile(
 	NAME            => 'Git',
 	VERSION_FROM    => 'Git.pm',
 	PM		=> \%pm,
+	MAKEFILE	=> 'perl.mak',
 	%extra
 );

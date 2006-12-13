@@ -230,7 +230,8 @@ unsigned long xdl_hash_record(char const **data, char const *top, long flags) {
 			while (ptr + 1 < top && isspace(ptr[1])
 					&& ptr[1] != '\n')
 				ptr++;
-			if (flags & XDF_IGNORE_WHITESPACE_CHANGE) {
+			if (flags & XDF_IGNORE_WHITESPACE_CHANGE
+					&& ptr[1] != '\n') {
 				ha += (ha << 5);
 				ha ^= (unsigned long) ' ';
 			}

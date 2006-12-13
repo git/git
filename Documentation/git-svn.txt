@@ -57,11 +57,13 @@ See '<<fetch-args,Additional Fetch Arguments>>' if you are interested in
 manually joining branches on commit.
 
 'dcommit'::
-	Commit all diffs from the current HEAD directly to the SVN
+	Commit all diffs from a specified head directly to the SVN
 	repository, and then rebase or reset (depending on whether or
-	not there is a diff between SVN and HEAD).  It is recommended
+	not there is a diff between SVN and head).  It is recommended
 	that you run git-svn fetch and rebase (not pull) your commits
 	against the latest changes in the SVN repository.
+	An optional command-line argument may be specified as an
+	alternative to HEAD.
 	This is advantageous over 'commit' (below) because it produces
 	cleaner, more linear history.
 

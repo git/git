@@ -188,18 +188,25 @@ static void read_from_stdin(struct path_list *list)
 				bob = buffer + strlen(buffer);
 			else {
 				offset = 8;
-				while (isspace(bob[-1]))
+				while (buffer + offset < bob &&
+				       isspace(bob[-1]))
 					bob--;
 			}
 
 			while (fgets(buffer2, sizeof(buffer2), stdin) &&
 					buffer2[0] != '\n')
 				; /* chomp input */
-			if (fgets(buffer2, sizeof(buffer2), stdin))
+			if (fgets(buffer2, sizeof(buffer2), stdin)) {
+				int l2 = strlen(buffer2);
+				int i;
+				for (i = 0; i < l2; i++)
+					if (!isspace(buffer2[i]))
+						break;
 				insert_author_oneline(list,
 						buffer + offset,
 						bob - buffer - offset,
-						buffer2, strlen(buffer2));
+						buffer2 + i, l2 - i);
+			}
 		}
 	}
 }
@@ -236,7 +243,7 @@ static void get_from_rev(struct rev_info *rev, struct path_list *list)
 					author = scratch;
 					authorlen = strlen(scratch);
 				} else {
-					while (bracket[-1] == ' ')
+					if (bracket[-1] == ' ')
 						bracket--;
 
 					author = buffer + 7;

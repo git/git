@@ -120,7 +120,7 @@ our %feature = (
 	# To disable system wide have in $GITWEB_CONFIG
 	# $feature{'snapshot'}{'default'} = [undef];
 	# To have project specific config enable override in $GITWEB_CONFIG
-	# $feature{'blame'}{'override'} = 1;
+	# $feature{'snapshot'}{'override'} = 1;
 	# and in project config gitweb.snapshot = none|gzip|bzip2;
 	'snapshot' => {
 		'sub' => \&feature_snapshot,
@@ -3229,10 +3229,13 @@ sub git_blob {
 	open my $fd, "-|", git_cmd(), "cat-file", "blob", $hash
 		or die_error(undef, "Couldn't cat $file_name, $hash");
 	my $mimetype = blob_mimetype($fd, $file_name);
-	if ($mimetype !~ m/^text\//) {
+	if ($mimetype !~ m!^(?:text/|image/(?:gif|png|jpeg)$)!) {
 		close $fd;
 		return git_blob_plain($mimetype);
 	}
+	# we can have blame only for text/* mimetype
+	$have_blame &&= ($mimetype =~ m!^text/!);
+
 	git_header_html(undef, $expires);
 	my $formats_nav = '';
 	if (defined $hash_base && (my %co = parse_commit($hash_base))) {
@@ -3269,13 +3272,24 @@ sub git_blob {
 	}
 	git_print_page_path($file_name, "blob", $hash_base);
 	print "<div class=\"page_body\">\n";
-	my $nr;
-	while (my $line = <$fd>) {
-		chomp $line;
-		$nr++;
-		$line = untabify($line);
-		printf "<div class=\"pre\"><a id=\"l%i\" href=\"#l%i\" class=\"linenr\">%4i</a> %s</div>\n",
-		       $nr, $nr, $nr, esc_html($line, -nbsp=>1);
+	if ($mimetype =~ m!^text/!) {
+		my $nr;
+		while (my $line = <$fd>) {
+			chomp $line;
+			$nr++;
+			$line = untabify($line);
+			printf "<div class=\"pre\"><a id=\"l%i\" href=\"#l%i\" class=\"linenr\">%4i</a> %s</div>\n",
+			       $nr, $nr, $nr, esc_html($line, -nbsp=>1);
+		}
+	} elsif ($mimetype =~ m!^image/!) {
+		print qq!<img type="$mimetype"!;
+		if ($file_name) {
+			print qq! alt="$file_name" title="$file_name"!;
+		}
+		print qq! src="! .
+		      href(action=>"blob_plain", hash=>$hash,
+		           hash_base=>$hash_base, file_name=>$file_name) .
+		      qq!" />\n!;
 	}
 	close $fd
 		or print "Reading blob failed.\n";
@@ -4282,7 +4296,7 @@ XML
 		}
 		if (defined $logo_url) {
 			# not twice as wide as tall: 72 x 27 pixels
-			print "<logo>" . esc_url($logo_url) . "</logo>\n";
+			print "<logo>" . esc_url($logo) . "</logo>\n";
 		}
 		if (! %latest_date) {
 			# dummy date to keep the feed valid until commits trickle in:

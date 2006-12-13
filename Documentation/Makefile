@@ -56,8 +56,8 @@ man7: $(DOC_MAN7)
 
 install: man
 	$(INSTALL) -d -m755 $(DESTDIR)$(man1dir) $(DESTDIR)$(man7dir)
-	$(INSTALL) $(DOC_MAN1) $(DESTDIR)$(man1dir)
-	$(INSTALL) $(DOC_MAN7) $(DESTDIR)$(man7dir)
+	$(INSTALL) -m644 $(DOC_MAN1) $(DESTDIR)$(man1dir)
+	$(INSTALL) -m644 $(DOC_MAN7) $(DESTDIR)$(man7dir)
 
 
 #

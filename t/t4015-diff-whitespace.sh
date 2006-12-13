@@ -109,12 +109,10 @@ index d99af23..8b32fb5 100644
 +	whitespace at beginning
  whitespace change
 -whitespace in the middle
--whitespace at end
 +white space in the middle
-+whitespace at end  
+ whitespace at end
  unchanged line
--CR at endQ
-+CR at end
+ CR at endQ
 EOF
 git-diff -b > out
 test_expect_success 'another test, with -b' 'diff -u expect out'

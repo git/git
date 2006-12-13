@@ -14,7 +14,7 @@ die() {
 }
 
 usage() {
-	die "Usage: $0 [--template=<template_directory>] [--use-immingled-remote] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [-n] <repo> [<dir>]"
+	die "Usage: $0 [--template=<template_directory>] [--no-separate-remote] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [-n] <repo> [<dir>]"
 }
 
 get_repo_base() {
@@ -140,7 +140,7 @@ while
 	*,--use-separate-remote)
 		# default
 		use_separate_remote=t ;;
-	*,--use-immingled-remote)
+	*,--no-separate-remote)
 		use_separate_remote= ;;
 	1,--reference) usage ;;
 	*,--reference)
@@ -176,7 +176,7 @@ repo="$1"
 test -n "$repo" ||
     die 'you must specify a repository to clone.'
 
-# --bare implies --no-checkout and --use-immingled-remote
+# --bare implies --no-checkout and --no-separate-remote
 if test yes = "$bare"
 then
 	if test yes = "$origin_override"
@@ -377,9 +377,9 @@ then
 		*)	origin_track="$remote_top/$origin"
 			git-update-ref "refs/heads/$origin" "$head_sha1" ;;
 		esac &&
-		echo >"$GIT_DIR/remotes/$origin" \
-		"URL: $repo
-Pull: refs/heads/$head_points_at:$origin_track" &&
+		git-repo-config remote."$origin".url "$repo" &&
+		git-repo-config remote."$origin".fetch \
+			"refs/heads/$head_points_at:$origin_track" &&
 		(cd "$GIT_DIR/$remote_top" && find . -type f -print) |
 		while read dotslref
 		do
@@ -393,8 +393,8 @@ Pull: refs/heads/$head_points_at:$origin_track" &&
 			then
 				continue
 			fi
-			echo "Pull: refs/heads/${name}:$remote_top/${name}"
-		done >>"$GIT_DIR/remotes/$origin" &&
+			git-repo-config remote."$origin".fetch "refs/heads/${name}:$remote_top/${name}" '^$'
+		done &&
 		case "$use_separate_remote" in
 		t)
 			rm -f "refs/remotes/$origin/HEAD"

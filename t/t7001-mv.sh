@@ -105,4 +105,17 @@ test_expect_success "Michael Cassar's test case" '
 	}
 '
 
+rm -fr papers partA path?
+
+test_expect_success "Sergey Vlasov's test case" '
+	rm -fr .git &&
+	git init-db &&
+	mkdir ab &&
+	date >ab.c &&
+	date >ab/d &&
+	git add ab.c ab &&
+	git commit -m 'initial' &&
+	git mv ab a
+'
+
 test_done

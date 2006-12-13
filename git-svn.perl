@@ -21,7 +21,17 @@ $ENV{TZ} = 'UTC';
 $ENV{LC_ALL} = 'C';
 $| = 1; # unbuffer STDOUT
 
-sub fatal (@) { print STDERR $@; exit 1 }
+# properties that we do not log:
+my %SKIP = ( 'svn:wc:ra_dav:version-url' => 1,
+             'svn:special' => 1,
+             'svn:executable' => 1,
+             'svn:entry:committed-rev' => 1,
+             'svn:entry:last-author' => 1,
+             'svn:entry:uuid' => 1,
+             'svn:entry:committed-date' => 1,
+);
+
+sub fatal (@) { print STDERR @_; exit 1 }
 # If SVN:: library support is added, please make the dependencies
 # optional and preserve the capability to use the command-line client.
 # use eval { require SVN::... } to make it lazy load
@@ -72,7 +82,7 @@ my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_username, $_config_dir, $_no_auth_cache, $_xfer_delta,
 	$_pager, $_color);
 my (@_branch_from, %tree_map, %users, %rusers, %equiv);
-my ($_svn_co_url_revs, $_svn_pg_peg_revs);
+my ($_svn_co_url_revs, $_svn_pg_peg_revs, $_svn_can_do_switch);
 my @repo_path_split_cache;
 
 my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
@@ -459,6 +469,7 @@ sub fetch_lib {
 		$min = $max + 1;
 		$max += $inc;
 		$max = $head if ($max > $head);
+		$SVN = libsvn_connect($SVN_URL);
 	}
 	restore_index($index);
 	return { revision => $last_rev, commit => $last_commit };
@@ -593,8 +604,9 @@ sub commit_lib {
 }
 
 sub dcommit {
+	my $head = shift || 'HEAD';
 	my $gs = "refs/remotes/$GIT_SVN";
-	chomp(my @refs = safe_qx(qw/git-rev-list --no-merges/, "$gs..HEAD"));
+	chomp(my @refs = safe_qx(qw/git-rev-list --no-merges/, "$gs..$head"));
 	my $last_rev;
 	foreach my $d (reverse @refs) {
 		if (quiet_run('git-rev-parse','--verify',"$d~1") != 0) {
@@ -621,16 +633,16 @@ sub dcommit {
 	}
 	return if $_dry_run;
 	fetch();
-	my @diff = safe_qx(qw/git-diff-tree HEAD/, $gs);
+	my @diff = safe_qx('git-diff-tree', $head, $gs);
 	my @finish;
 	if (@diff) {
 		@finish = qw/rebase/;
 		push @finish, qw/--merge/ if $_merge;
 		push @finish, "--strategy=$_strategy" if $_strategy;
-		print STDERR "W: HEAD and $gs differ, using @finish:\n", @diff;
+		print STDERR "W: $head and $gs differ, using @finish:\n", @diff;
 	} else {
-		print "No changes between current HEAD and $gs\n",
-		      "Hard resetting to the latest $gs\n";
+		print "No changes between current $head and $gs\n",
+		      "Resetting to the latest $gs\n";
 		@finish = qw/reset --mixed/;
 	}
 	sys('git', @finish, $gs);
@@ -2015,9 +2027,17 @@ sub git_commit {
 
 	# just in case we clobber the existing ref, we still want that ref
 	# as our parent:
-	if (my $cur = eval { file_to_s("$GIT_DIR/refs/remotes/$GIT_SVN") }) {
+	open my $null, '>', '/dev/null' or croak $!;
+	open my $stderr, '>&', \*STDERR or croak $!;
+	open STDERR, '>&', $null or croak $!;
+	if (my $cur = eval { safe_qx('git-rev-parse',
+	                             "refs/remotes/$GIT_SVN^0") }) {
+		chomp $cur;
 		push @tmp_parents, $cur;
 	}
+	open STDERR, '>&', $stderr or croak $!;
+	close $stderr or croak $!;
+	close $null or croak $!;
 
 	if (exists $tree_map{$tree}) {
 		foreach my $p (@{$tree_map{$tree}}) {
@@ -2876,6 +2896,24 @@ sub libsvn_connect {
 	return $ra;
 }
 
+sub libsvn_can_do_switch {
+	unless (defined $_svn_can_do_switch) {
+		my $pool = SVN::Pool->new;
+		my $rep = eval {
+			$SVN->do_switch(1, '', 0, $SVN->{url},
+			                SVN::Delta::Editor->new, $pool);
+		};
+		if ($@) {
+			$_svn_can_do_switch = 0;
+		} else {
+			$rep->abort_report($pool);
+			$_svn_can_do_switch = 1;
+		}
+		$pool->clear;
+	}
+	$_svn_can_do_switch;
+}
+
 sub libsvn_dup_ra {
 	my ($ra) = @_;
 	SVN::Ra->new(map { $_ => $ra->{$_} } qw/config url
@@ -2883,7 +2921,7 @@ sub libsvn_dup_ra {
 }
 
 sub libsvn_get_file {
-	my ($gui, $f, $rev, $chg) = @_;
+	my ($gui, $f, $rev, $chg, $untracked) = @_;
 	$f =~ s#^/##;
 	print "\t$chg\t$f\n" unless $_q;
 
@@ -2921,11 +2959,25 @@ sub libsvn_get_file {
 		waitpid $pid, 0;
 		$hash =~ /^$sha1$/o or die "not a sha1: $hash\n";
 	}
+	%{$untracked->{file_prop}->{$f}} = %$props;
 	print $gui $mode,' ',$hash,"\t",$f,"\0" or croak $!;
 }
 
+sub uri_encode {
+	my ($f) = @_;
+	$f =~ s#([^a-zA-Z0-9\*!\:_\./\-])#uc sprintf("%%%02x",ord($1))#eg;
+	$f
+}
+
+sub uri_decode {
+	my ($f) = @_;
+	$f =~ tr/+/ /;
+	$f =~ s/%([A-F0-9]{2})/chr hex($1)/ge;
+	$f
+}
+
 sub libsvn_log_entry {
-	my ($rev, $author, $date, $msg, $parents) = @_;
+	my ($rev, $author, $date, $msg, $parents, $untracked) = @_;
 	my ($Y,$m,$d,$H,$M,$S) = ($date =~ /^(\d{4})\-(\d\d)\-(\d\d)T
 					 (\d\d)\:(\d\d)\:(\d\d).\d+Z$/x)
 				or die "Unable to parse date: $date\n";
@@ -2933,8 +2985,65 @@ sub libsvn_log_entry {
 		die "Author: $author not defined in $_authors file\n";
 	}
 	$msg = '' if ($rev == 0 && !defined $msg);
-	return { revision => $rev, date => "+0000 $Y-$m-$d $H:$M:$S",
-		author => $author, msg => $msg."\n", parents => $parents || [] }
+
+	open my $un, '>>', "$GIT_SVN_DIR/unhandled.log" or croak $!;
+	my $h;
+	print $un "r$rev\n" or croak $!;
+	$h = $untracked->{empty};
+	foreach (sort keys %$h) {
+		my $act = $h->{$_} ? '+empty_dir' : '-empty_dir';
+		print $un "  $act: ", uri_encode($_), "\n" or croak $!;
+		warn "W: $act: $_\n";
+	}
+	foreach my $t (qw/dir_prop file_prop/) {
+		$h = $untracked->{$t} or next;
+		foreach my $path (sort keys %$h) {
+			my $ppath = $path eq '' ? '.' : $path;
+			foreach my $prop (sort keys %{$h->{$path}}) {
+				next if $SKIP{$prop};
+				my $v = $h->{$path}->{$prop};
+				if (defined $v) {
+					print $un "  +$t: ",
+						  uri_encode($ppath), ' ',
+						  uri_encode($prop), ' ',
+						  uri_encode($v), "\n"
+						  or croak $!;
+				} else {
+					print $un "  -$t: ",
+						  uri_encode($ppath), ' ',
+						  uri_encode($prop), "\n"
+						  or croak $!;
+				}
+			}
+		}
+	}
+	foreach my $t (qw/absent_file absent_directory/) {
+		$h = $untracked->{$t} or next;
+		foreach my $parent (sort keys %$h) {
+			foreach my $path (sort @{$h->{$parent}}) {
+				print $un "  $t: ",
+				      uri_encode("$parent/$path"), "\n"
+				      or croak $!;
+				warn "W: $t: $parent/$path ",
+				     "Insufficient permissions?\n";
+			}
+		}
+	}
+
+	# revprops (make this optional? it's an extra network trip...)
+	my $pool = SVN::Pool->new;
+	my $rp = $SVN->rev_proplist($rev, $pool);
+	foreach (sort keys %$rp) {
+		next if /^svn:(?:author|date|log)$/;
+		print $un "  rev_prop: ", uri_encode($_), ' ',
+		          uri_encode($rp->{$_}), "\n";
+	}
+	$pool->clear;
+	close $un or croak $!;
+
+	{ revision => $rev, date => "+0000 $Y-$m-$d $H:$M:$S",
+	  author => $author, msg => $msg."\n", parents => $parents || [],
+	  revprops => $rp }
 }
 
 sub process_rm {
@@ -2953,9 +3062,11 @@ sub process_rm {
 		}
 		print "\tD\t$f/\n" unless $q;
 		close $ls or croak $?;
+		return $SVN::Node::dir;
 	} else {
 		print $gui '0 ',0 x 40,"\t",$f,"\0" or croak $!;
 		print "\tD\t$f\n" unless $q;
+		return $SVN::Node::file;
 	}
 }
 
@@ -2976,13 +3087,14 @@ sub libsvn_fetch_delta {
 	unless ($ed->{git_commit_ok}) {
 		die "SVN connection failed somewhere...\n";
 	}
-	libsvn_log_entry($rev, $author, $date, $msg, [$last_commit]);
+	libsvn_log_entry($rev, $author, $date, $msg, [$last_commit], $ed);
 }
 
 sub libsvn_fetch_full {
 	my ($last_commit, $paths, $rev, $author, $date, $msg) = @_;
 	open my $gui, '| git-update-index -z --index-info' or croak $!;
 	my %amr;
+	my $ut = { empty => {}, dir_prop => {}, file_prop => {} };
 	my $p = $SVN->{svn_path};
 	foreach my $f (keys %$paths) {
 		my $m = $paths->{$f}->action();
@@ -2993,8 +3105,11 @@ sub libsvn_fetch_full {
 			$f =~ s#^/##;
 		}
 		if ($m =~ /^[DR]$/) {
-			process_rm($gui, $last_commit, $f, $_q);
-			next if $m eq 'D';
+			my $t = process_rm($gui, $last_commit, $f, $_q);
+			if ($m eq 'D') {
+				$ut->{empty}->{$f} = 0 if $t == $SVN::Node::dir;
+				next;
+			}
 			# 'R' can be file replacements, too, right?
 		}
 		my $pool = SVN::Pool->new;
@@ -3007,18 +3122,32 @@ sub libsvn_fetch_full {
 			}
 		} elsif ($t == $SVN::Node::dir && $m =~ /^[AR]$/) {
 			my @traversed = ();
-			libsvn_traverse($gui, '', $f, $rev, \@traversed);
-			foreach (@traversed) {
-				$amr{$_} = $m;
+			libsvn_traverse($gui, '', $f, $rev, \@traversed, $ut);
+			if (@traversed) {
+				foreach (@traversed) {
+					$amr{$_} = $m;
+				}
+			} else {
+				my ($dir, $file) = ($f =~ m#^(.*?)/?([^/]+)$#);
+				delete $ut->{empty}->{$dir};
+				$ut->{empty}->{$f} = 1;
 			}
 		}
 		$pool->clear;
 	}
 	foreach (keys %amr) {
-		libsvn_get_file($gui, $_, $rev, $amr{$_});
+		libsvn_get_file($gui, $_, $rev, $amr{$_}, $ut);
+		my ($d) = ($_ =~ m#^(.*?)/?(?:[^/]+)$#);
+		delete $ut->{empty}->{$d};
+	}
+	unless (exists $ut->{dir_prop}->{''}) {
+		my $pool = SVN::Pool->new;
+		my (undef, undef, $props) = $SVN->get_dir('', $rev, $pool);
+		%{$ut->{dir_prop}->{''}} = %$props;
+		$pool->clear;
 	}
 	close $gui or croak $?;
-	return libsvn_log_entry($rev, $author, $date, $msg, [$last_commit]);
+	libsvn_log_entry($rev, $author, $date, $msg, [$last_commit], $ut);
 }
 
 sub svn_grab_base_rev {
@@ -3079,25 +3208,38 @@ sub libsvn_parse_revision {
 }
 
 sub libsvn_traverse {
-	my ($gui, $pfx, $path, $rev, $files) = @_;
+	my ($gui, $pfx, $path, $rev, $files, $untracked) = @_;
 	my $cwd = length $pfx ? "$pfx/$path" : $path;
 	my $pool = SVN::Pool->new;
 	$cwd =~ s#^\Q$SVN->{svn_path}\E##;
+	my $nr = 0;
 	my ($dirent, $r, $props) = $SVN->get_dir($cwd, $rev, $pool);
+	%{$untracked->{dir_prop}->{$cwd}} = %$props;
 	foreach my $d (keys %$dirent) {
 		my $t = $dirent->{$d}->kind;
 		if ($t == $SVN::Node::dir) {
-			libsvn_traverse($gui, $cwd, $d, $rev, $files);
+			my $i = libsvn_traverse($gui, $cwd, $d, $rev,
+			                        $files, $untracked);
+			if ($i) {
+				$nr += $i;
+			} else {
+				$untracked->{empty}->{"$cwd/$d"} = 1;
+			}
 		} elsif ($t == $SVN::Node::file) {
+			$nr++;
 			my $file = "$cwd/$d";
 			if (defined $files) {
 				push @$files, $file;
 			} else {
-				libsvn_get_file($gui, $file, $rev, 'A');
+				libsvn_get_file($gui, $file, $rev, 'A',
+				                $untracked);
+				my ($dir) = ($file =~ m#^(.*?)/?(?:[^/]+)$#);
+				delete $untracked->{empty}->{$dir};
 			}
 		}
 	}
 	$pool->clear;
+	$nr;
 }
 
 sub libsvn_traverse_ignore {
@@ -3197,12 +3339,26 @@ sub libsvn_find_parent_branch {
 		unlink $GIT_SVN_INDEX;
 		print STDERR "Found branch parent: ($GIT_SVN) $parent\n";
 		sys(qw/git-read-tree/, $parent);
-		# I can't seem to get do_switch() to work correctly with
-		# the SWIG interface (TypeError when passing switch_url...),
-		# so we'll unconditionally bypass the delta interface here
-		# for now
-		return libsvn_fetch_full($parent, $paths, $rev,
-					$author, $date, $msg);
+		unless (libsvn_can_do_switch()) {
+			return libsvn_fetch_full($parent, $paths, $rev,
+						$author, $date, $msg);
+		}
+		# do_switch works with svn/trunk >= r22312, but that is not
+		# included with SVN 1.4.2 (the latest version at the moment),
+		# so we can't rely on it.
+		my $ra = libsvn_connect("$url/$branch_from");
+		my $ed = SVN::Git::Fetcher->new({c => $parent, q => $_q});
+		my $pool = SVN::Pool->new;
+		my $reporter = $ra->do_switch($rev, '', 1, $SVN->{url},
+		                              $ed, $pool);
+		my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
+		$reporter->set_path('', $r0, 0, @lock, $pool);
+		$reporter->finish_report($pool);
+		$pool->clear;
+		unless ($ed->{git_commit_ok}) {
+			die "SVN connection failed somewhere...\n";
+		}
+		return libsvn_log_entry($rev, $author, $date, $msg, [$parent]);
 	}
 	print STDERR "Nope, branch point not imported or unknown\n";
 	return undef;
@@ -3222,6 +3378,7 @@ sub libsvn_new_tree {
 		return $log_entry;
 	}
 	my ($paths, $rev, $author, $date, $msg) = @_;
+	my $ut;
 	if ($_xfer_delta) {
 		my $pool = SVN::Pool->new;
 		my $ed = SVN::Git::Fetcher->new({q => $_q});
@@ -3233,12 +3390,14 @@ sub libsvn_new_tree {
 		unless ($ed->{git_commit_ok}) {
 			die "SVN connection failed somewhere...\n";
 		}
+		$ut = $ed;
 	} else {
+		$ut = { empty => {}, dir_prop => {}, file_prop => {} };
 		open my $gui, '| git-update-index -z --index-info' or croak $!;
-		libsvn_traverse($gui, '', $SVN->{svn_path}, $rev);
+		libsvn_traverse($gui, '', $SVN->{svn_path}, $rev, undef, $ut);
 		close $gui or croak $?;
 	}
-	return libsvn_log_entry($rev, $author, $date, $msg);
+	libsvn_log_entry($rev, $author, $date, $msg, [], $ut);
 }
 
 sub find_graft_path_commit {
@@ -3423,13 +3582,28 @@ sub new {
 	$self->{gui} = $gui;
 	$self->{c} = $git_svn->{c} if exists $git_svn->{c};
 	$self->{q} = $git_svn->{q};
+	$self->{empty} = {};
+	$self->{dir_prop} = {};
+	$self->{file_prop} = {};
+	$self->{absent_dir} = {};
+	$self->{absent_file} = {};
 	require Digest::MD5;
 	$self;
 }
 
+sub open_root {
+	{ path => '' };
+}
+
+sub open_directory {
+	my ($self, $path, $pb, $rev) = @_;
+	{ path => $path };
+}
+
 sub delete_entry {
 	my ($self, $path, $rev, $pb) = @_;
-	process_rm($self->{gui}, $self->{c}, $path, $self->{q});
+	my $t = process_rm($self->{gui}, $self->{c}, $path, $self->{q});
+	$self->{empty}->{$path} = 0 if $t == $SVN::Node::dir;
 	undef;
 }
 
@@ -3437,14 +3611,48 @@ sub open_file {
 	my ($self, $path, $pb, $rev) = @_;
 	my ($mode, $blob) = (safe_qx('git-ls-tree',$self->{c},'--',$path)
 	                     =~ /^(\d{6}) blob ([a-f\d]{40})\t/);
+	unless (defined $mode && defined $blob) {
+		die "$path was not found in commit $self->{c} (r$rev)\n";
+	}
 	{ path => $path, mode_a => $mode, mode_b => $mode, blob => $blob,
 	  pool => SVN::Pool->new, action => 'M' };
 }
 
 sub add_file {
 	my ($self, $path, $pb, $cp_path, $cp_rev) = @_;
+	my ($dir, $file) = ($path =~ m#^(.*?)/?([^/]+)$#);
+	delete $self->{empty}->{$dir};
 	{ path => $path, mode_a => 100644, mode_b => 100644,
 	  pool => SVN::Pool->new, action => 'A' };
+}
+
+sub add_directory {
+	my ($self, $path, $cp_path, $cp_rev) = @_;
+	my ($dir, $file) = ($path =~ m#^(.*?)/?([^/]+)$#);
+	delete $self->{empty}->{$dir};
+	$self->{empty}->{$path} = 1;
+	{ path => $path };
+}
+
+sub change_dir_prop {
+	my ($self, $db, $prop, $value) = @_;
+	$self->{dir_prop}->{$db->{path}} ||= {};
+	$self->{dir_prop}->{$db->{path}}->{$prop} = $value;
+	undef;
+}
+
+sub absent_directory {
+	my ($self, $path, $pb) = @_;
+	$self->{absent_dir}->{$pb->{path}} ||= [];
+	push @{$self->{absent_dir}->{$pb->{path}}}, $path;
+	undef;
+}
+
+sub absent_file {
+	my ($self, $path, $pb) = @_;
+	$self->{absent_file}->{$pb->{path}} ||= [];
+	push @{$self->{absent_file}->{$pb->{path}}}, $path;
+	undef;
 }
 
 sub change_file_prop {
@@ -3455,6 +3663,9 @@ sub change_file_prop {
 		}
 	} elsif ($prop eq 'svn:special') {
 		$fb->{mode_b} = defined $value ? 120000 : 100644;
+	} else {
+		$self->{file_prop}->{$fb->{path}} ||= {};
+		$self->{file_prop}->{$fb->{path}}->{$prop} = $value;
 	}
 	undef;
 }
