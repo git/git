@@ -13,4 +13,18 @@
 	<xsl:apply-templates/>
 	<xsl:text>.br&#10;</xsl:text>
 </xsl:template>
+
+<!-- sorry, this is not about callouts, but attempts to work around
+ spurious .sp at the tail of the line docbook stylesheets seem to add -->
+<xsl:template match="simpara">
+  <xsl:variable name="content">
+    <xsl:apply-templates/>
+  </xsl:variable>
+  <xsl:value-of select="normalize-space($content)"/>
+  <xsl:if test="not(ancestor::authorblurb) and
+                not(ancestor::personblurb)">
+    <xsl:text>&#10;&#10;</xsl:text>
+  </xsl:if>
+</xsl:template>
+
 </xsl:stylesheet>
