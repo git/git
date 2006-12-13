@@ -23,6 +23,7 @@ $ echo 'hello world' > file.txt
 $ git add .
 $ git commit -a -m "initial commit"
 Committing initial tree 92b8b694ffb1675e5975148e1121810081dbdffe
+ create mode 100644 file.txt
 $ echo 'hello world!' >file.txt
 $ git commit -a -m "add emphasis"
 ------------------------------------------------

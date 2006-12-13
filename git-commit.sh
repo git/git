@@ -629,4 +629,7 @@ if test -x "$GIT_DIR"/hooks/post-commit && test "$ret" = 0
 then
 	"$GIT_DIR"/hooks/post-commit
 fi
+
+test "$ret" = 0 && git-diff-tree --summary --root --no-commit-id HEAD
+
 exit "$ret"
