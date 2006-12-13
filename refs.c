@@ -534,7 +534,7 @@ int check_ref_format(const char *ref)
 		level++;
 		if (!ch) {
 			if (level < 2)
-				return -1; /* at least of form "heads/blah" */
+				return -2; /* at least of form "heads/blah" */
 			return 0;
 		}
 	}
