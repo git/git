@@ -406,6 +406,25 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	return ret;
 }
 
+static void verify_remote_names(int nr_heads, char **heads)
+{
+	int i;
+
+	for (i = 0; i < nr_heads; i++) {
+		const char *remote = strchr(heads[i], ':');
+
+		remote = remote ? (remote + 1) : heads[i];
+		switch (check_ref_format(remote)) {
+		case 0: /* ok */
+		case -2: /* ok but a single level -- that is fine for
+			  * a match pattern.
+			  */
+			continue;
+		}
+		die("remote part of refspec is not a valid name in %s",
+		    heads[i]);
+	}
+}
 
 int main(int argc, char **argv)
 {
@@ -457,6 +476,8 @@ int main(int argc, char **argv)
 		usage(send_pack_usage);
 	if (heads && send_all)
 		usage(send_pack_usage);
+	verify_remote_names(nr_heads, heads);
+
 	pid = git_connect(fd, dest, exec);
 	if (pid < 0)
 		return 1;

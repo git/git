@@ -1090,6 +1090,11 @@ static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
 		if (!(commit->object.flags & UNINTERESTING) &&
 		    !(revs->max_age != -1 && commit->date  < revs->max_age))
 			pass_blame(sb, suspect, opt);
+		else {
+			commit->object.flags |= UNINTERESTING;
+			if (commit->object.parsed)
+				mark_parents_uninteresting(commit);
+		}
 
 		/* Take responsibility for the remaining entries */
 		for (ent = sb->ent; ent; ent = ent->next)
@@ -1273,6 +1278,8 @@ static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent)
 		printf("committer-tz %s\n", ci.committer_tz);
 		printf("filename %s\n", suspect->path);
 		printf("summary %s\n", ci.summary);
+		if (suspect->commit->object.flags & UNINTERESTING)
+			printf("boundary\n");
 	}
 	else if (suspect->commit->object.flags & MORE_THAN_ONE_PATH)
 		printf("filename %s\n", suspect->path);
@@ -1308,8 +1315,14 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 	cp = nth_line(sb, ent->lno);
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {
 		char ch;
+		int length = (opt & OUTPUT_LONG_OBJECT_NAME) ? 40 : 8;
 
-		printf("%.*s", (opt & OUTPUT_LONG_OBJECT_NAME) ? 40 : 8, hex);
+		if (suspect->commit->object.flags & UNINTERESTING) {
+			length--;
+			putchar('^');
+		}
+
+		printf("%.*s", length, hex);
 		if (opt & OUTPUT_ANNOTATE_COMPAT)
 			printf("\t(%10s\t%10s\t%d)", ci.author,
 			       format_time(ci.author_time, ci.author_tz,
