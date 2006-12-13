@@ -89,18 +89,17 @@ test_expect_success \
      ! git cvsexportcommit -c $id
      )'
 
-# Should fail, but only on the git-cvsexportcommit stage
-test_expect_success \
-    'Fail to remove binary file more than one generation old' \
-    'git reset --hard HEAD^ &&
-     cat F/newfile6.png >>D/newfile4.png &&
-     git commit -a -m "generation 2 (again)" &&
-     rm -f D/newfile4.png &&
-     git commit -a -m "generation 3" &&
-     id=$(git rev-list --max-count=1 HEAD) &&
-     (cd "$CVSWORK" &&
-     ! git cvsexportcommit -c $id
-     )'
+#test_expect_success \
+#    'Fail to remove binary file more than one generation old' \
+#    'git reset --hard HEAD^ &&
+#     cat F/newfile6.png >>D/newfile4.png &&
+#     git commit -a -m "generation 2 (again)" &&
+#     rm -f D/newfile4.png &&
+#     git commit -a -m "generation 3" &&
+#     id=$(git rev-list --max-count=1 HEAD) &&
+#     (cd "$CVSWORK" &&
+#     ! git cvsexportcommit -c $id
+#     )'
 
 # We reuse the state from two tests back here
 
@@ -108,7 +107,7 @@ test_expect_success \
 # fail with gnu patch, so cvsexportcommit must handle that.
 test_expect_success \
     'Remove only binary files' \
-    'git reset --hard HEAD^^^ &&
+    'git reset --hard HEAD^^ &&
      rm -f D/newfile4.png &&
      git commit -a -m "test: remove only a binary file" &&
      id=$(git rev-list --max-count=1 HEAD) &&
@@ -142,20 +141,73 @@ test_expect_success \
      diff F/newfile6.png ../F/newfile6.png
      )'
 
-test_expect_success 'Retain execute bit' '
-	mkdir G &&
-	echo executeon >G/on &&
-	chmod +x G/on &&
-	echo executeoff >G/off &&
-	git add G/on &&
-	git add G/off &&
-	git commit -a -m "Execute test" &&
-	(
-		cd "$CVSWORK" &&
-		git-cvsexportcommit -c HEAD
-		test -x G/on &&
-		! test -x G/off
-	)
-'
+test_expect_success \
+     'New file with spaces in file name' \
+     'mkdir "G g" &&
+      echo ok then >"G g/with spaces.txt" &&
+      git add "G g/with spaces.txt" && \
+      cp ../test9200a.png "G g/with spaces.png" && \
+      git add "G g/with spaces.png" &&
+      git commit -a -m "With spaces" &&
+      id=$(git rev-list --max-count=1 HEAD) &&
+      (cd "$CVSWORK" &&
+      git-cvsexportcommit -c $id &&
+      test "$(echo $(sort "G g/CVS/Entries"|cut -d/ -f2,3,5))" = "with spaces.png/1.1/-kb with spaces.txt/1.1/"
+      )'
+
+test_expect_success \
+     'Update file with spaces in file name' \
+     'echo Ok then >>"G g/with spaces.txt" &&
+      cat ../test9200a.png >>"G g/with spaces.png" && \
+      git add "G g/with spaces.png" &&
+      git commit -a -m "Update with spaces" &&
+      id=$(git rev-list --max-count=1 HEAD) &&
+      (cd "$CVSWORK" &&
+      git-cvsexportcommit -c $id
+      test "$(echo $(sort "G g/CVS/Entries"|cut -d/ -f2,3,5))" = "with spaces.png/1.2/-kb with spaces.txt/1.2/"
+      )'
+
+# This test contains ISO-8859-1 characters
+test_expect_success \
+     'File with non-ascii file name' \
+     'mkdir -p Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö &&
+      echo Foo >Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö/gårdetsågårdet.txt &&
+      git add Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö/gårdetsågårdet.txt &&
+      cp ../test9200a.png Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö/gårdetsågårdet.png &&
+      git add Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö/gårdetsågårdet.png &&
+      git commit -a -m "Går det så går det" && \
+      id=$(git rev-list --max-count=1 HEAD) &&
+      (cd "$CVSWORK" &&
+      git-cvsexportcommit -v -c $id &&
+      test "$(echo $(sort Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö/CVS/Entries|cut -d/ -f2,3,5))" = "gårdetsågårdet.png/1.1/-kb gårdetsågårdet.txt/1.1/"
+      )'
+
+test_expect_success \
+     'Mismatching patch should fail' \
+     'date >>"E/newfile5.txt" &&
+      git add "E/newfile5.txt" &&
+      git commit -a -m "Update one" &&
+      date >>"E/newfile5.txt" &&
+      git add "E/newfile5.txt" &&
+      git commit -a -m "Update two" &&
+      id=$(git rev-list --max-count=1 HEAD) &&
+      (cd "$CVSWORK" &&
+      ! git-cvsexportcommit -c $id
+      )'
+
+test_expect_success \
+     'Retain execute bit' \
+     'mkdir G &&
+      echo executeon >G/on &&
+      chmod +x G/on &&
+      echo executeoff >G/off &&
+      git add G/on &&
+      git add G/off &&
+      git commit -a -m "Execute test" &&
+      (cd "$CVSWORK" &&
+      git-cvsexportcommit -c HEAD
+      test -x G/on &&
+      ! test -x G/off
+      )'
 
 test_done
