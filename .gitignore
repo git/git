@@ -60,6 +60,7 @@ git-mailsplit
 git-merge
 git-merge-base
 git-merge-index
+git-merge-file
 git-merge-tree
 git-merge-octopus
 git-merge-one-file

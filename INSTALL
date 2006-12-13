@@ -82,15 +82,6 @@ Issues of note:
 	  do that even if it wasn't for git.  There's no point in living
 	  in the dark ages any more. 
 
-	- "merge", the standard UNIX three-way merge program.  It usually
-	  comes with the "rcs" package on most Linux distributions, so if
-	  you have a developer install you probably have it already, but a
-	  "graphical user desktop" install might have left it out.
-
-	  You'll only need the merge program if you do development using
-	  git, and if you only use git to track other peoples work you'll
-	  never notice the lack of it. 
-
         - "wish", the Tcl/Tk windowing shell is used in gitk to show the
           history graphically
 
