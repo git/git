@@ -400,7 +400,9 @@ then
 			rm -f "refs/remotes/$origin/HEAD"
 			git-symbolic-ref "refs/remotes/$origin/HEAD" \
 				"refs/remotes/$origin/$head_points_at"
-		esac
+		esac &&
+		git-repo-config branch."$head_points_at".remote "$origin" &&
+		git-repo-config branch."$head_points_at".merge "refs/heads/$head_points_at"
 	esac
 
 	case "$no_checkout" in
