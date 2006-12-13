@@ -712,10 +712,13 @@ _git_repo_config ()
 		core.legacyHeaders
 		i18n.commitEncoding
 		diff.color
+		color.diff
 		diff.renameLimit
 		diff.renames
 		pager.color
+		color.pager
 		status.color
+		color.status
 		log.showroot
 		show.difftree
 		showbranch.default
