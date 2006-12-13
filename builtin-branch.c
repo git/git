@@ -23,8 +23,8 @@ static char branch_colors[][COLOR_MAXLEN] = {
 	"\033[m",	/* reset */
 	"",		/* PLAIN (normal) */
 	"\033[31m",	/* REMOTE (red) */
-	"\033[32m",	/* LOCAL (green) */
-	"\033[1;32m",	/* CURRENT (boldgreen) */
+	"",		/* LOCAL (normal) */
+	"\033[32m",	/* CURRENT (green) */
 };
 enum color_branch {
 	COLOR_BRANCH_RESET = 0,
