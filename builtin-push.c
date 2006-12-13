@@ -57,11 +57,36 @@ static void expand_refspecs(void)
 static void set_refspecs(const char **refs, int nr)
 {
 	if (nr) {
-		size_t bytes = nr * sizeof(char *);
-
-		refspec = xrealloc(refspec, bytes);
-		memcpy(refspec, refs, bytes);
-		refspec_nr = nr;
+		int pass;
+		for (pass = 0; pass < 2; pass++) {
+			/* pass 0 counts and allocates, pass 1 fills */
+			int i, cnt;
+			for (i = cnt = 0; i < nr; i++) {
+				if (!strcmp("tag", refs[i])) {
+					int len;
+					char *tag;
+					if (nr <= ++i)
+						die("tag <tag> shorthand without <tag>");
+					if (pass) {
+						len = strlen(refs[i]) + 11;
+						tag = xmalloc(len);
+						strcpy(tag, "refs/tags/");
+						strcat(tag, refs[i]);
+						refspec[cnt] = tag;
+					}
+					cnt++;
+					continue;
+				}
+				if (pass)
+					refspec[cnt] = refs[i];
+				cnt++;
+			}
+			if (!pass) {
+				size_t bytes = cnt * sizeof(char *);
+				refspec_nr = cnt;
+				refspec = xrealloc(refspec, bytes);
+			}
+		}
 	}
 	expand_refspecs();
 }
