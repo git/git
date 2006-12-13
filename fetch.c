@@ -22,14 +22,15 @@ void pull_say(const char *fmt, const char *hex)
 		fprintf(stderr, fmt, hex);
 }
 
-static void report_missing(const char *what, const unsigned char *missing)
+static void report_missing(const struct object *obj)
 {
 	char missing_hex[41];
-
-	strcpy(missing_hex, sha1_to_hex(missing));;
-	fprintf(stderr,
-		"Cannot obtain needed %s %s\nwhile processing commit %s.\n",
-		what, missing_hex, sha1_to_hex(current_commit_sha1));
+	strcpy(missing_hex, sha1_to_hex(obj->sha1));;
+	fprintf(stderr, "Cannot obtain needed %s %s\n",
+		obj->type ? typename(obj->type): "object", missing_hex);
+	if (!is_null_sha1(current_commit_sha1))
+		fprintf(stderr, "while processing commit %s.\n",
+			sha1_to_hex(current_commit_sha1));
 }
 
 static int process(struct object *obj);
@@ -177,7 +178,7 @@ static int loop(void)
 		 */
 		if (! (obj->flags & TO_SCAN)) {
 			if (fetch(obj->sha1)) {
-				report_missing(typename(obj->type), obj->sha1);
+				report_missing(obj);
 				return -1;
 			}
 		}
