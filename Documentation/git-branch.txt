@@ -8,8 +8,9 @@ git-branch - List, create, or delete branches.
 SYNOPSIS
 --------
 [verse]
-'git-branch' [-r] [-a] [-v] [--abbrev=<length>]
+'git-branch' [-r | -a] [-v [--abbrev=<length>]]
 'git-branch' [-l] [-f] <branchname> [<start-point>]
+'git-branch' (-m | -M) [<oldbranch>] <newbranch>
 'git-branch' (-d | -D) <branchname>...
 
 DESCRIPTION
@@ -23,6 +24,12 @@ In its second form, a new branch named <branchname> will be created.
 It will start out with a head equal to the one given as <start-point>.
 If no <start-point> is given, the branch will be created with a head
 equal to that of the currently checked out branch.
+
+With a '-m' or '-M' option, <oldbranch> will be renamed to <newbranch>.
+If <oldbranch> had a corresponding reflog, it is renamed to match
+<newbranch>, and a reflog entry is created to remember the branch
+renaming. If <newbranch> exists, -M must be used to force the rename
+to happen.
 
 With a `-d` or `-D` option, `<branchname>` will be deleted.  You may
 specify more than one branch for deletion.  If the branch currently
@@ -46,6 +53,12 @@ OPTIONS
 	Force the creation of a new branch even if it means deleting
 	a branch that already exists with the same name.
 
+-m::
+	Move/rename a branch and the corresponding reflog.
+
+-M::
+	Move/rename a branch even if the new branchname already exists.
+
 -r::
 	List the remote-tracking branches.
 
@@ -53,7 +66,7 @@ OPTIONS
 	List both remote-tracking branches and local branches.
 
 -v::
-	Show sha1 and subject message for each head.
+	Show sha1 and commit subjectline for each head.
 
 --abbrev=<length>::
 	Alter minimum display length for sha1 in output listing,
@@ -70,6 +83,12 @@ OPTIONS
 	be given as a branch name, a commit-id, or a tag.  If this option
 	is omitted, the current branch is assumed.
 
+<oldbranch>::
+	The name of an existing branch to rename.
+
+<newbranch>::
+	The new name for an existing branch. The same restrictions as for
+	<branchname> applies.
 
 
 Examples
