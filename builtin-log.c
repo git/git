@@ -118,7 +118,7 @@ static int git_format_config(const char *var, const char *value)
 		strcat(extra_headers, value);
 		return 0;
 	}
-	if (!strcmp(var, "diff.color")) {
+	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
 		return 0;
 	}
 	return git_log_config(var, value);
