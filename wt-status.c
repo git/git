@@ -163,7 +163,7 @@ static void wt_status_print_changed_cb(struct diff_queue_struct *q,
 	int i;
 	if (q->nr)
 		wt_status_print_header("Changed but not updated",
-				"use git-update-index to mark for commit");
+				"use git-add on files to include for commit");
 	for (i = 0; i < q->nr; i++)
 		wt_status_print_filepair(WT_STATUS_CHANGED, q->queue[i]);
 	if (q->nr)

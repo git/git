@@ -3,7 +3,7 @@ git-add(1)
 
 NAME
 ----
-git-add - Add files to the index file
+git-add - Add file contents to the changeset to be committed next
 
 SYNOPSIS
 --------
@@ -11,16 +11,31 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-A simple wrapper for git-update-index to add files to the index,
-for people used to do "cvs add".
+All the changed file contents to be committed together in a single set
+of changes must be "added" with the 'add' command before using the
+'commit' command.  This is not only for adding new files.  Even modified
+files must be added to the set of changes about to be committed.
 
-It only adds non-ignored files, to add ignored files use
+This command can be performed multiple times before a commit. The added
+content corresponds to the state of specified file(s) at the time the
+'add' command is used. This means the 'commit' command will not consider
+subsequent changes to already added content if it is not added again before
+the commit.
+
+The 'git status' command can be used to obtain a summary of what is included
+for the next commit.
+
+This command only adds non-ignored files, to add ignored files use
 "git update-index --add".
+
+Please see gitlink:git-commit[1] for alternative ways to add content to a
+commit.
+
 
 OPTIONS
 -------
 <file>...::
-	Files to add to the index (see gitlink:git-ls-files[1]).
+	Files to add content from.
 
 -n::
         Don't actually add the file(s), just show if they exist.
@@ -34,27 +49,12 @@ OPTIONS
 	for command-line options).
 
 
-DISCUSSION
-----------
-
-The list of <file> given to the command is fed to `git-ls-files`
-command to list files that are not registered in the index and
-are not ignored/excluded by `$GIT_DIR/info/exclude` file or
-`.gitignore` file in each directory.  This means two things:
-
-. You can put the name of a directory on the command line, and
-  the command will add all files in it and its subdirectories;
-
-. Giving the name of a file that is already in index does not
-  run `git-update-index` on that path.
-
-
 EXAMPLES
 --------
 git-add Documentation/\\*.txt::
 
-	Adds all `\*.txt` files that are not in the index under
-	`Documentation` directory and its subdirectories.
+	Adds content from all `\*.txt` files under `Documentation`
+	directory and its subdirectories.
 +
 Note that the asterisk `\*` is quoted from the shell in this
 example; this lets the command to include the files from
@@ -62,15 +62,18 @@ subdirectories of `Documentation/` directory.
 
 git-add git-*.sh::
 
-	Adds all git-*.sh scripts that are not in the index.
+	Considers adding content from all git-*.sh scripts.
 	Because this example lets shell expand the asterisk
 	(i.e. you are listing the files explicitly), it does not
-	add `subdir/git-foo.sh` to the index.
+	consider `subdir/git-foo.sh`.
 
 See Also
 --------
+gitlink:git-status[1]
 gitlink:git-rm[1]
-gitlink:git-ls-files[1]
+gitlink:git-mv[1]
+gitlink:git-commit[1]
+gitlink:git-update-index[1]
 
 Author
 ------
