@@ -1,7 +1,14 @@
 #!/bin/sh
 
 USAGE='[--mixed | --soft | --hard]  [<commit-ish>]'
+SUBDIRECTORY_OK=Yes
 . git-sh-setup
+
+TOP=$(git-rev-parse --show-cdup)
+if test ! -z "$TOP"
+then
+	cd "$TOP"
+fi
 
 update=
 reset_type=--mixed
