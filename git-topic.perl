@@ -121,7 +121,14 @@ while (<TOPIC>) {
 	}
 
 	print '*' . rebase_marker($sha1, $stage[0], \@in_next);
-	print " $topic ($date)\n";
+	my $count = "";
+	if (1 < @revs) {
+		$count = " " . (scalar @revs) . " commits";
+	}
+	elsif (@revs) {
+		$count = " 1 commit";
+	}
+	print " $topic ($date)$count\n";
 	describe_topic($topic);
 	for my $item (@revs) {
 		my $mark = $item->[2];
