@@ -12,6 +12,12 @@
 #include "xdiff-interface.h"
 #include "color.h"
 
+#ifdef NO_FAST_WORKING_DIRECTORY
+#define FAST_WORKING_DIRECTORY 0
+#else
+#define FAST_WORKING_DIRECTORY 1
+#endif
+
 static int use_size_cache;
 
 static int diff_detect_rename_default;
@@ -1158,7 +1164,7 @@ void fill_filespec(struct diff_filespec *spec, const unsigned char *sha1,
  * the work tree has that object contents, return true, so that
  * prepare_temp_file() does not have to inflate and extract.
  */
-static int work_tree_matches(const char *name, const unsigned char *sha1)
+static int reuse_worktree_file(const char *name, const unsigned char *sha1, int want_file)
 {
 	struct cache_entry *ce;
 	struct stat st;
@@ -1177,6 +1183,18 @@ static int work_tree_matches(const char *name, const unsigned char *sha1)
 	 * calling us.
 	 */
 	if (!active_cache)
+		return 0;
+
+	/* We want to avoid the working directory if our caller
+	 * doesn't need the data in a normal file, this system
+	 * is rather slow with its stat/open/mmap/close syscalls,
+	 * and the object is contained in a pack file.  The pack
+	 * is probably already open and will be faster to obtain
+	 * the data through than the working directory.  Loose
+	 * objects however would tend to be slower as they need
+	 * to be individually opened and inflated.
+	 */
+	if (FAST_WORKING_DIRECTORY && !want_file && has_sha1_pack(sha1, NULL))
 		return 0;
 
 	len = strlen(name);
@@ -1265,7 +1283,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 	if (s->data)
 		return err;
 	if (!s->sha1_valid ||
-	    work_tree_matches(s->path, s->sha1)) {
+	    reuse_worktree_file(s->path, s->sha1, 0)) {
 		struct stat st;
 		int fd;
 		if (lstat(s->path, &st) < 0) {
@@ -1372,7 +1390,7 @@ static void prepare_temp_file(const char *name,
 	}
 
 	if (!one->sha1_valid ||
-	    work_tree_matches(name, one->sha1)) {
+	    reuse_worktree_file(name, one->sha1, 1)) {
 		struct stat st;
 		if (lstat(name, &st) < 0) {
 			if (errno == ENOENT)

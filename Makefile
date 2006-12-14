@@ -69,6 +69,9 @@ all:
 #
 # Define NO_MMAP if you want to avoid mmap.
 #
+# Define NO_FAST_WORKING_DIRECTORY if accessing objects in pack files is
+# generally faster on your platform than accessing the working directory.
+#
 # Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
 #
 # Define NO_SOCKADDR_STORAGE if your platform does not have struct
@@ -355,6 +358,7 @@ ifeq ($(uname_O),Cygwin)
 	NO_SYMLINK_HEAD = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	NO_C99_FORMAT = YesPlease
+	NO_FAST_WORKING_DIRECTORY = UnfortunatelyYes
 	# There are conflicting reports about this.
 	# On some boxes NO_MMAP is needed, and not so elsewhere.
 	# Try uncommenting this if you see things break -- YMMV.
@@ -505,6 +509,9 @@ endif
 ifdef NO_MMAP
 	COMPAT_CFLAGS += -DNO_MMAP
 	COMPAT_OBJS += compat/mmap.o
+endif
+ifdef NO_FAST_WORKING_DIRECTORY
+	BASIC_CFLAGS += -DNO_FAST_WORKING_DIRECTORY
 endif
 ifdef NO_IPV6
 	BASIC_CFLAGS += -DNO_IPV6
