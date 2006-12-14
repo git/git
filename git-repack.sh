@@ -67,6 +67,8 @@ name=$(git-pack-objects --non-empty --all $args </dev/null "$PACKTMP") ||
 if [ -z "$name" ]; then
 	echo Nothing new to pack.
 else
+	chmod a-w "$PACKTMP-$name.pack"
+	chmod a-w "$PACKTMP-$name.idx"
 	if test "$quiet" != '-q'; then
 	    echo "Pack pack-$name created."
 	fi
