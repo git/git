@@ -63,8 +63,8 @@ test_expect_failure \
 	"test $B"' = $(cat .git/'"$m"')'
 rm -f .git/$m
 
-mkdir -p .git/logs/refs/heads
-touch .git/logs/refs/heads/master
+: a repository with working tree always has reflog these days...
+: >.git/logs/refs/heads/master
 test_expect_success \
 	"create $m (logged by touch)" \
 	'GIT_COMMITTER_DATE="2005-05-26 23:30" \

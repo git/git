@@ -242,6 +242,9 @@ static int create_default_files(const char *git_dir, const char *template_path)
 			       filemode ? "true" : "false");
 	}
 
+	/* Enable logAllRefUpdates if a working tree is attached */
+	if (!is_bare_git_dir(git_dir))
+		git_config_set("core.logallrefupdates", "true");
 	return reinit;
 }
 
