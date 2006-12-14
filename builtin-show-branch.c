@@ -6,7 +6,7 @@
 #include "builtin.h"
 
 static const char show_branch_usage[] =
-"git-show-branch [--sparse] [--current] [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...]";
+"git-show-branch [--sparse] [--current] [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...] | --reflog[=n] <branch>";
 
 static int default_num;
 static int default_alloc;
@@ -16,6 +16,8 @@ static const char **default_arg;
 
 #define REV_SHIFT	 2
 #define MAX_REVS	(FLAG_BITS - REV_SHIFT) /* should not exceed bits_per_int - REV_SHIFT */
+
+#define DEFAULT_REFLOG	4
 
 static struct commit *interesting(struct commit_list *list)
 {
@@ -570,6 +572,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	int head_at = -1;
 	int topics = 0;
 	int dense = 1;
+	int reflog = 0;
 
 	git_config(git_show_branch_config);
 
@@ -615,6 +618,15 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			dense = 0;
 		else if (!strcmp(arg, "--date-order"))
 			lifo = 0;
+		else if (!strcmp(arg, "--reflog")) {
+			reflog = DEFAULT_REFLOG;
+		}
+		else if (!strncmp(arg, "--reflog=", 9)) {
+			char *end;
+			reflog = strtoul(arg + 9, &end, 10);
+			if (*end != '\0')
+				die("unrecognized reflog count '%s'", arg + 9);
+		}
 		else
 			usage(show_branch_usage);
 		ac--; av++;
@@ -622,7 +634,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	ac--; av++;
 
 	/* Only one of these is allowed */
-	if (1 < independent + merge_base + (extra != 0))
+	if (1 < independent + merge_base + (extra != 0) + (!!reflog))
 		usage(show_branch_usage);
 
 	/* If nothing is specified, show all branches by default */
@@ -631,9 +643,22 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 
 	if (all_heads + all_tags)
 		snarf_refs(all_heads, all_tags);
-	while (0 < ac) {
-		append_one_rev(*av);
-		ac--; av++;
+	if (reflog) {
+		int reflen;
+		if (!ac)
+			die("--reflog option needs one branch name");
+		reflen = strlen(*av);
+		for (i = 0; i < reflog; i++) {
+			char *name = xmalloc(reflen + 20);
+			sprintf(name, "%s@{%d}", *av, i);
+			append_one_rev(name);
+		}
+	}
+	else {
+		while (0 < ac) {
+			append_one_rev(*av);
+			ac--; av++;
+		}
 	}
 
 	head_p = resolve_ref("HEAD", head_sha1, 1, NULL);
