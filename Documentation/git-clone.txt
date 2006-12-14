@@ -100,7 +100,7 @@ OPTIONS
 	defined default, typically `/usr/share/git-core/templates`.
 
 --use-separate-remote::
-	Save remotes heads under `$GIT_DIR/remotes/origin/` instead
+	Save remotes heads under `$GIT_DIR/refs/remotes/origin/` instead
 	of `$GIT_DIR/refs/heads/`.  Only the local master branch is
 	saved in the latter. This is the default.
 
