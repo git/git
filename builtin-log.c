@@ -10,6 +10,7 @@
 #include "revision.h"
 #include "log-tree.h"
 #include "builtin.h"
+#include "tag.h"
 #include <time.h>
 #include <sys/time.h>
 
@@ -71,9 +72,43 @@ int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 	return cmd_log_walk(&rev);
 }
 
+static int show_object(const unsigned char *sha1, int suppress_header)
+{
+	unsigned long size;
+	char type[20];
+	char *buf = read_sha1_file(sha1, type, &size);
+	int offset = 0;
+
+	if (!buf)
+		return error("Could not read object %s", sha1_to_hex(sha1));
+
+	if (suppress_header)
+		while (offset < size && buf[offset++] != '\n') {
+			int new_offset = offset;
+			while (new_offset < size && buf[new_offset++] != '\n')
+				; /* do nothing */
+			offset = new_offset;
+		}
+
+	if (offset < size)
+		fwrite(buf + offset, size - offset, 1, stdout);
+	free(buf);
+	return 0;
+}
+
+static int show_tree_object(const unsigned char *sha1,
+		const char *base, int baselen,
+		const char *pathname, unsigned mode, int stage)
+{
+	printf("%s%s\n", pathname, S_ISDIR(mode) ? "/" : "");
+	return 0;
+}
+
 int cmd_show(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
+	struct object_array_entry *objects;
+	int i, count, ret = 0;
 
 	git_config(git_log_config);
 	init_revisions(&rev, prefix);
@@ -85,7 +120,52 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	rev.ignore_merges = 0;
 	rev.no_walk = 1;
 	cmd_log_init(argc, argv, prefix, &rev);
-	return cmd_log_walk(&rev);
+
+	count = rev.pending.nr;
+	objects = rev.pending.objects;
+	for (i = 0; i < count && !ret; i++) {
+		struct object *o = objects[i].item;
+		const char *name = objects[i].name;
+		switch (o->type) {
+		case OBJ_BLOB:
+			ret = show_object(o->sha1, 0);
+			break;
+		case OBJ_TAG: {
+			struct tag *t = (struct tag *)o;
+
+			printf("%stag %s%s\n\n",
+					diff_get_color(rev.diffopt.color_diff,
+						DIFF_COMMIT),
+					t->tag,
+					diff_get_color(rev.diffopt.color_diff,
+						DIFF_RESET));
+			ret = show_object(o->sha1, 1);
+			objects[i].item = (struct object *)t->tagged;
+			i--;
+			break;
+		}
+		case OBJ_TREE:
+			printf("%stree %s%s\n\n",
+					diff_get_color(rev.diffopt.color_diff,
+						DIFF_COMMIT),
+					name,
+					diff_get_color(rev.diffopt.color_diff,
+						DIFF_RESET));
+			read_tree_recursive((struct tree *)o, "", 0, 0, NULL,
+					show_tree_object);
+			break;
+		case OBJ_COMMIT:
+			rev.pending.nr = rev.pending.alloc = 0;
+			rev.pending.objects = NULL;
+			add_object_array(o, name, &rev.pending);
+			ret = cmd_log_walk(&rev);
+			break;
+		default:
+			ret = error("Unknown type: %d", o->type);
+		}
+	}
+	free(objects);
+	return ret;
 }
 
 int cmd_log(int argc, const char **argv, const char *prefix)
