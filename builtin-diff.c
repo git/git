@@ -137,7 +137,7 @@ static int builtin_diff_index(struct rev_info *revs,
 	int cached = 0;
 	while (1 < argc) {
 		const char *arg = argv[1];
-		if (!strcmp(arg, "--index") || !strcmp(arg, "--cached"))
+		if (!strcmp(arg, "--cached"))
 			cached = 1;
 		else
 			usage(builtin_diff_usage);
