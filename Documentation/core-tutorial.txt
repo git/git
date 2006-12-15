@@ -57,7 +57,7 @@ $ git-init-db
 to which git will reply
 
 ----------------
-defaulting to local storage area
+Initialized empty Git repository in .git/
 ----------------
 
 which is just git's way of saying that you haven't been doing anything

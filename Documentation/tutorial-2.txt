@@ -18,7 +18,7 @@ Let's start a new project and create a small amount of history:
 $ mkdir test-project
 $ cd test-project
 $ git init-db
-defaulting to local storage area
+Initialized empty Git repository in .git/
 $ echo 'hello world' > file.txt
 $ git add .
 $ git commit -a -m "initial commit"
