@@ -10,6 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git-repo-config' [--global] [type] name [value [value_regex]]
+'git-repo-config' [--global] [type] --add name value
 'git-repo-config' [--global] [type] --replace-all name [value [value_regex]]
 'git-repo-config' [--global] [type] --get name [value_regex]
 'git-repo-config' [--global] [type] --get-all name [value_regex]
@@ -23,7 +24,8 @@ You can query/set/replace/unset options with this command. The name is
 actually the section and the key separated by a dot, and the value will be
 escaped.
 
-If you want to set/unset an option which can occur on multiple
+Multiple lines can be added to an option by using the '--add' option.
+If you want to update or unset an option which can occur on multiple
 lines, a POSIX regexp `value_regex` needs to be given.  Only the
 existing values that match the regexp are updated or unset.  If
 you want to handle the lines that do *not* match the regex, just
@@ -52,6 +54,10 @@ OPTIONS
 --replace-all::
 	Default behavior is to replace at most one line. This replaces
 	all lines matching the key (and optionally the value_regex).
+
+--add::
+	Adds a new line to the option without altering any existing
+	values.  This is the same as providing '^$' as the value_regex.
 
 --get::
 	Get the value for a given key (optionally filtered by a regex
@@ -192,6 +198,12 @@ To actually match only values with an exclamation mark, you have to
 
 ------------
 % git repo-config section.key value '[!]'
+------------
+
+To add a new proxy, without altering any of the existing ones, use
+
+------------
+% git repo-config core.gitproxy '"proxy" for example.com'
 ------------
 
 

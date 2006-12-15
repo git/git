@@ -265,6 +265,16 @@ EOF
 test_expect_success '--get-regexp' \
 	'git-repo-config --get-regexp in > output && cmp output expect'
 
+git-repo-config --add nextsection.nonewline "wow4 for you"
+
+cat > expect << EOF
+wow2 for me
+wow4 for you
+EOF
+
+test_expect_success '--add' \
+	'git-repo-config --get-all nextsection.nonewline > output && cmp output expect'
+
 cat > .git/config << EOF
 [novalue]
 	variable
