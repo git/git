@@ -3572,8 +3572,34 @@ sub git_commit {
 	my %ad = parse_date($co{'author_epoch'}, $co{'author_tz'});
 	my %cd = parse_date($co{'committer_epoch'}, $co{'committer_tz'});
 
-	my $parent = $co{'parent'};
-	my $parents = $co{'parents'};
+	my $parent  = $co{'parent'};
+	my $parents = $co{'parents'}; # listref
+
+	# we need to prepare $formats_nav before any parameter munging
+	my $formats_nav;
+	if (!defined $parent) {
+		# --root commitdiff
+		$formats_nav .= '(initial)';
+	} elsif (@$parents == 1) {
+		# single parent commit
+		$formats_nav .=
+			'(parent: ' .
+			$cgi->a({-href => href(action=>"commit",
+			                       hash=>$parent)},
+			        esc_html(substr($parent, 0, 7))) .
+			')';
+	} else {
+		# merge commit
+		$formats_nav .=
+			'(merge: ' .
+			join(' ', map {
+				$cgi->a({-href => href(action=>"commitdiff",
+				                       hash=>$_)},
+				        esc_html(substr($_, 0, 7)));
+			} @$parents ) .
+			')';
+	}
+
 	if (!defined $parent) {
 		$parent = "--root";
 	}
@@ -3597,16 +3623,10 @@ sub git_commit {
 
 	my $have_snapshot = gitweb_have_snapshot();
 
-	my @views_nav = ();
-	if (defined $file_name && defined $co{'parent'}) {
-		push @views_nav,
-			$cgi->a({-href => href(action=>"blame", hash_parent=>$parent, file_name=>$file_name)},
-			        "blame");
-	}
 	git_header_html(undef, $expires);
 	git_print_page_nav('commit', '',
 	                   $hash, $co{'tree'}, $hash,
-	                   join (' | ', @views_nav));
+	                   $formats_nav);
 
 	if (defined $co{'parent'}) {
 		git_print_header_div('commitdiff', esc_html($co{'title'}) . $ref, $hash);
