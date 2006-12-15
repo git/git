@@ -228,6 +228,8 @@ ifndef PERL_PATH
 	PERL_PATH = /usr/bin/perl
 endif
 
+export PERL_PATH
+
 LIB_FILE=libgit.a
 XDIFF_LIB=xdiff/lib.a
 
