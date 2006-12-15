@@ -855,7 +855,8 @@ sub format_ref_marker {
 				$name = $ref;
 			}
 
-			$markers .= " <span class=\"$type\">" . esc_html($name) . "</span>";
+			$markers .= " <span class=\"$type\" title=\"$ref\">" .
+			            esc_html($name) . "</span>";
 		}
 	}
 
