@@ -22,14 +22,14 @@ defaulting to local storage area
 $ echo 'hello world' > file.txt
 $ git add .
 $ git commit -a -m "initial commit"
-Committing initial tree 92b8b694ffb1675e5975148e1121810081dbdffe
+Created initial commit 54196cc2703dc165cbd373a65a4dcf22d50ae7f7
  create mode 100644 file.txt
 $ echo 'hello world!' >file.txt
 $ git commit -a -m "add emphasis"
+Created commit c4d59f390b9cfd4318117afde11d601c1085f241
 ------------------------------------------------
 
-What are the 40 digits of hex that git responded to the first commit
-with?
+What are the 40 digits of hex that git responded to the commit with?
 
 We saw in part one of the tutorial that commits have names like this.
 It turns out that every object in the git history is stored under
@@ -39,13 +39,25 @@ the same data twice (since identical data is given an identical SHA1
 name), and that the contents of a git object will never change (since
 that would change the object's name as well).
 
+It is expected that the content of the commit object you created while
+following the example above generates a different SHA1 hash than
+the one shown above because the commit object records the time when
+it was created and the name of the person performing the commit.
+
 We can ask git about this particular object with the cat-file
-command--just cut-and-paste from the reply to the initial commit, to
-save yourself typing all 40 hex digits:
+command. Don't copy the 40 hex digits from this example but use those
+from your own version. Note that you can shorten it to only a few
+characters to save yourself typing all 40 hex digits:
 
 ------------------------------------------------
-$ git cat-file -t 92b8b694ffb1675e5975148e1121810081dbdffe
-tree
+$ git-cat-file -t 54196cc2
+commit
+$ git-cat-file commit 54196cc2
+tree 92b8b694ffb1675e5975148e1121810081dbdffe
+author J. Bruce Fields <bfields@puzzle.fieldses.org> 1143414668 -0500
+committer J. Bruce Fields <bfields@puzzle.fieldses.org> 1143414668 -0500
+
+initial commit
 ------------------------------------------------
 
 A tree can refer to one or more "blob" objects, each corresponding to
@@ -102,8 +114,7 @@ $ find .git/objects/
 
 and the contents of these files is just the compressed data plus a
 header identifying their length and their type.  The type is either a
-blob, a tree, a commit, or a tag.  We've seen a blob and a tree now,
-so next we should look at a commit.
+blob, a tree, a commit, or a tag.
 
 The simplest commit to find is the HEAD commit, which we can find
 from .git/HEAD:

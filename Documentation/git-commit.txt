@@ -113,6 +113,9 @@ but can be used to amend a merge commit.
 	as well.  This is usually not what you want unless you
 	are concluding a conflicted merge.
 
+-q|--quiet::
+	Supress commit summary message.
+
 \--::
 	Do not interpret any more arguments as options.
 

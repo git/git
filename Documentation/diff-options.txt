@@ -21,6 +21,11 @@
 	deleted lines in decimal notation and pathname without
 	abbreviation, to make it more machine friendly.
 
+--shortstat::
+	Output only the last line of the --stat format containing total
+	number of modified files, as well as number of added and deleted
+	lines.
+
 --summary::
 	Output a condensed summary of extended header information
 	such as creations, renames and mode changes.

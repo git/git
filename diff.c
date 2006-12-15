@@ -801,6 +801,35 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 	       set, total_files, adds, dels, reset);
 }
 
+static void show_shortstats(struct diffstat_t* data)
+{
+	int i, adds = 0, dels = 0, total_files = data->nr;
+
+	if (data->nr == 0)
+		return;
+
+	for (i = 0; i < data->nr; i++) {
+		if (!data->files[i]->is_binary &&
+		    !data->files[i]->is_unmerged) {
+			int added = data->files[i]->added;
+			int deleted= data->files[i]->deleted;
+			if (!data->files[i]->is_renamed &&
+			    (added + deleted == 0)) {
+				total_files--;
+			} else {
+				adds += added;
+				dels += deleted;
+			}
+		}
+		free(data->files[i]->name);
+		free(data->files[i]);
+	}
+	free(data->files);
+
+	printf(" %d files changed, %d insertions(+), %d deletions(-)\n",
+	       total_files, adds, dels);
+}
+
 static void show_numstat(struct diffstat_t* data, struct diff_options *options)
 {
 	int i;
@@ -1771,6 +1800,7 @@ int diff_setup_done(struct diff_options *options)
 		options->output_format &= ~(DIFF_FORMAT_RAW |
 					    DIFF_FORMAT_NUMSTAT |
 					    DIFF_FORMAT_DIFFSTAT |
+					    DIFF_FORMAT_SHORTSTAT |
 					    DIFF_FORMAT_SUMMARY |
 					    DIFF_FORMAT_PATCH);
 
@@ -1781,6 +1811,7 @@ int diff_setup_done(struct diff_options *options)
 	if (options->output_format & (DIFF_FORMAT_PATCH |
 				      DIFF_FORMAT_NUMSTAT |
 				      DIFF_FORMAT_DIFFSTAT |
+				      DIFF_FORMAT_SHORTSTAT |
 				      DIFF_FORMAT_SUMMARY |
 				      DIFF_FORMAT_CHECKDIFF))
 		options->recursive = 1;
@@ -1871,6 +1902,9 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "--numstat")) {
 		options->output_format |= DIFF_FORMAT_NUMSTAT;
+	}
+	else if (!strcmp(arg, "--shortstat")) {
+		options->output_format |= DIFF_FORMAT_SHORTSTAT;
 	}
 	else if (!strncmp(arg, "--stat", 6)) {
 		char *end;
@@ -2646,7 +2680,7 @@ void diff_flush(struct diff_options *options)
 		separator++;
 	}
 
-	if (output_format & (DIFF_FORMAT_DIFFSTAT|DIFF_FORMAT_NUMSTAT)) {
+	if (output_format & (DIFF_FORMAT_DIFFSTAT|DIFF_FORMAT_SHORTSTAT|DIFF_FORMAT_NUMSTAT)) {
 		struct diffstat_t diffstat;
 
 		memset(&diffstat, 0, sizeof(struct diffstat_t));
@@ -2660,6 +2694,8 @@ void diff_flush(struct diff_options *options)
 			show_numstat(&diffstat, options);
 		if (output_format & DIFF_FORMAT_DIFFSTAT)
 			show_stats(&diffstat, options);
+		else if (output_format & DIFF_FORMAT_SHORTSTAT)
+			show_shortstats(&diffstat);
 		separator++;
 	}
 
