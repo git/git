@@ -752,6 +752,24 @@ _git_reset ()
 	COMPREPLY=($(compgen -W "$opt $(__git_refs)" -- "$cur"))
 }
 
+_git_show ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--pretty=*)
+		COMPREPLY=($(compgen -W "
+			oneline short medium full fuller email raw
+			" -- "${cur##--pretty=}"))
+		return
+		;;
+	--*)
+		COMPREPLY=($(compgen -W "--pretty=" -- "$cur"))
+		return
+		;;
+	esac
+	__git_complete_file
+}
+
 _git ()
 {
 	local i c=1 command __git_dir
@@ -802,7 +820,7 @@ _git ()
 	rebase)      _git_rebase ;;
 	repo-config) _git_repo_config ;;
 	reset)       _git_reset ;;
-	show)        _git_log ;;
+	show)        _git_show ;;
 	show-branch) _git_log ;;
 	whatchanged) _git_log ;;
 	*)           COMPREPLY=() ;;
@@ -839,7 +857,7 @@ complete -o default -o nospace -F _git_push git-push
 complete -o default            -F _git_rebase git-rebase
 complete -o default            -F _git_repo_config git-repo-config
 complete -o default            -F _git_reset git-reset
-complete -o default            -F _git_log git-show
+complete -o default -o nospace -F _git_show git-show
 complete -o default -o nospace -F _git_log git-show-branch
 complete -o default -o nospace -F _git_log git-whatchanged
 
@@ -861,7 +879,7 @@ complete -o default            -F _git_merge_base git-merge-base.exe
 complete -o default            -F _git_name_rev git-name-rev.exe
 complete -o default -o nospace -F _git_push git-push.exe
 complete -o default            -F _git_repo_config git-repo-config
-complete -o default -o nospace -F _git_log git-show.exe
+complete -o default -o nospace -F _git_show git-show.exe
 complete -o default -o nospace -F _git_log git-show-branch.exe
 complete -o default -o nospace -F _git_log git-whatchanged.exe
 fi
