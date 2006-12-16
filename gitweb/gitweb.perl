@@ -855,7 +855,8 @@ sub format_ref_marker {
 				$name = $ref;
 			}
 
-			$markers .= " <span class=\"$type\">" . esc_html($name) . "</span>";
+			$markers .= " <span class=\"$type\" title=\"$ref\">" .
+			            esc_html($name) . "</span>";
 		}
 	}
 
@@ -3571,15 +3572,46 @@ sub git_commit {
 	my %ad = parse_date($co{'author_epoch'}, $co{'author_tz'});
 	my %cd = parse_date($co{'committer_epoch'}, $co{'committer_tz'});
 
-	my $parent = $co{'parent'};
+	my $parent  = $co{'parent'};
+	my $parents = $co{'parents'}; # listref
+
+	# we need to prepare $formats_nav before any parameter munging
+	my $formats_nav;
+	if (!defined $parent) {
+		# --root commitdiff
+		$formats_nav .= '(initial)';
+	} elsif (@$parents == 1) {
+		# single parent commit
+		$formats_nav .=
+			'(parent: ' .
+			$cgi->a({-href => href(action=>"commit",
+			                       hash=>$parent)},
+			        esc_html(substr($parent, 0, 7))) .
+			')';
+	} else {
+		# merge commit
+		$formats_nav .=
+			'(merge: ' .
+			join(' ', map {
+				$cgi->a({-href => href(action=>"commitdiff",
+				                       hash=>$_)},
+				        esc_html(substr($_, 0, 7)));
+			} @$parents ) .
+			')';
+	}
+
 	if (!defined $parent) {
 		$parent = "--root";
 	}
-	open my $fd, "-|", git_cmd(), "diff-tree", '-r', "--no-commit-id",
-		@diff_opts, $parent, $hash, "--"
-		or die_error(undef, "Open git-diff-tree failed");
-	my @difftree = map { chomp; $_ } <$fd>;
-	close $fd or die_error(undef, "Reading git-diff-tree failed");
+	my @difftree;
+	if (@$parents <= 1) {
+		# difftree output is not printed for merges
+		open my $fd, "-|", git_cmd(), "diff-tree", '-r', "--no-commit-id",
+			@diff_opts, $parent, $hash, "--"
+				or die_error(undef, "Open git-diff-tree failed");
+		@difftree = map { chomp; $_ } <$fd>;
+		close $fd or die_error(undef, "Reading git-diff-tree failed");
+	}
 
 	# non-textual hash id's can be cached
 	my $expires;
@@ -3591,16 +3623,10 @@ sub git_commit {
 
 	my $have_snapshot = gitweb_have_snapshot();
 
-	my @views_nav = ();
-	if (defined $file_name && defined $co{'parent'}) {
-		push @views_nav,
-			$cgi->a({-href => href(action=>"blame", hash_parent=>$parent, file_name=>$file_name)},
-			        "blame");
-	}
 	git_header_html(undef, $expires);
 	git_print_page_nav('commit', '',
 	                   $hash, $co{'tree'}, $hash,
-	                   join (' | ', @views_nav));
+	                   $formats_nav);
 
 	if (defined $co{'parent'}) {
 		git_print_header_div('commitdiff', esc_html($co{'title'}) . $ref, $hash);
@@ -3641,7 +3667,7 @@ sub git_commit {
 	}
 	print "</td>" .
 	      "</tr>\n";
-	my $parents = $co{'parents'};
+
 	foreach my $par (@$parents) {
 		print "<tr>" .
 		      "<td>parent</td>" .
@@ -3663,7 +3689,10 @@ sub git_commit {
 	git_print_log($co{'comment'});
 	print "</div>\n";
 
-	git_difftree_body(\@difftree, $hash, $parent);
+	if (@$parents <= 1) {
+		# do not output difftree/whatchanged for merges
+		git_difftree_body(\@difftree, $hash, $parent);
+	}
 
 	git_footer_html();
 }
