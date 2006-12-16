@@ -351,6 +351,9 @@ gitlink:git-init-db[1]::
 	Creates an empty git object database, or reinitialize an
 	existing one.
 
+gitlink:git-merge-file[1]::
+	Runs a threeway merge.
+
 gitlink:git-merge-index[1]::
 	Runs a merge for files needing merging.
 
