@@ -366,41 +366,54 @@ then
 		)
 	)
 
-	# Write out remotes/$origin file, and update our "$head_points_at".
+	# Write out remote.$origin config, and update our "$head_points_at".
 	case "$head_points_at" in
 	?*)
-		mkdir -p "$GIT_DIR/remotes" &&
+		# Local default branch
 		git-symbolic-ref HEAD "refs/heads/$head_points_at" &&
+
+		# Tracking branch for the primary branch at the remote.
 		case "$use_separate_remote" in
 		t)	origin_track="$remote_top/$head_points_at"
 			git-update-ref HEAD "$head_sha1" ;;
 		*)	origin_track="$remote_top/$origin"
 			git-update-ref "refs/heads/$origin" "$head_sha1" ;;
 		esac &&
+
+		# Upstream URL and the primary branch tracking
 		git-repo-config remote."$origin".url "$repo" &&
 		git-repo-config remote."$origin".fetch \
 			"refs/heads/$head_points_at:$origin_track" &&
-		(cd "$GIT_DIR/$remote_top" && find . -type f -print) |
-		while read dotslref
-		do
-			name=`expr "$dotslref" : './\(.*\)'`
-			if test "z$head_points_at" = "z$name"
-			then
-				continue
-			fi
-			if test "$use_separate_remote" = '' &&
-			   test "z$origin" = "z$name"
-			then
-				continue
-			fi
-			git-repo-config remote."$origin".fetch "refs/heads/${name}:$remote_top/${name}" '^$'
-		done &&
+
+		# Set up the mappings to track the remaining branches.
+		case "$use_separate_remote" in
+		t)
+			git-repo-config remote."$origin".fetch \
+				"refs/heads/*:$remote_top/*" '^$'
+			;;
+		*)
+			(cd "$GIT_DIR/$remote_top" && find . -type f -print) |
+			while read dotslref
+			do
+				name=`expr "$dotslref" : './\(.*\)'`
+				if test "z$head_points_at" = "z$name" ||
+					test "z$origin" = "z$name"
+				then
+					continue
+				fi
+				git-repo-config remote."$origin".fetch \
+				"refs/heads/${name}:$remote_top/${name}" '^$'
+			done
+			;;
+		esac &&
+
 		case "$use_separate_remote" in
 		t)
 			rm -f "refs/remotes/$origin/HEAD"
 			git-symbolic-ref "refs/remotes/$origin/HEAD" \
 				"refs/remotes/$origin/$head_points_at"
 		esac &&
+
 		git-repo-config branch."$head_points_at".remote "$origin" &&
 		git-repo-config branch."$head_points_at".merge "refs/heads/$head_points_at"
 	esac
