@@ -114,6 +114,14 @@ void show_log(struct rev_info *opt, const char *sep)
 
 	opt->loginfo = NULL;
 	if (!opt->verbose_header) {
+		if (opt->left_right) {
+			if (commit->object.flags & BOUNDARY)
+				putchar('-');
+			else if (commit->object.flags & SYMMETRIC_LEFT)
+				putchar('<');
+			else
+				putchar('>');
+		}
 		fputs(diff_unique_abbrev(commit->object.sha1, abbrev_commit), stdout);
 		if (opt->parents)
 			show_parents(commit, abbrev_commit);
@@ -192,10 +200,20 @@ void show_log(struct rev_info *opt, const char *sep)
 			opt->diffopt.stat_sep = buffer;
 		}
 	} else {
-		printf("%s%s%s",
-		       diff_get_color(opt->diffopt.color_diff, DIFF_COMMIT),
-		       opt->commit_format == CMIT_FMT_ONELINE ? "" : "commit ",
-		       diff_unique_abbrev(commit->object.sha1, abbrev_commit));
+		fputs(diff_get_color(opt->diffopt.color_diff, DIFF_COMMIT),
+		      stdout);
+		if (opt->commit_format != CMIT_FMT_ONELINE)
+			fputs("commit ", stdout);
+		if (opt->left_right) {
+			if (commit->object.flags & BOUNDARY)
+				putchar('-');
+			else if (commit->object.flags & SYMMETRIC_LEFT)
+				putchar('<');
+			else
+				putchar('>');
+		}
+		fputs(diff_unique_abbrev(commit->object.sha1, abbrev_commit),
+		      stdout);
 		if (opt->parents)
 			show_parents(commit, abbrev_commit);
 		if (parent)

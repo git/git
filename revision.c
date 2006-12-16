@@ -853,6 +853,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->boundary = 1;
 				continue;
 			}
+			if (!strcmp(arg, "--left-right")) {
+				revs->left_right = 1;
+				continue;
+			}
 			if (!strcmp(arg, "--objects")) {
 				revs->tag_objects = 1;
 				revs->tree_objects = 1;
