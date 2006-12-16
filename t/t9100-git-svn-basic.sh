@@ -56,7 +56,7 @@ git update-index --add --remove dir/a/b/c/d/e/file dir/file file
 git commit -m "$name"
 
 test_expect_success "$name" \
-    "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch &&
+    "git-svn set-tree --find-copies-harder --rmdir remotes/git-svn..mybranch &&
      svn up $SVN_TREE &&
      test -d $SVN_TREE/dir && test ! -d $SVN_TREE/dir/a"
 
@@ -70,7 +70,7 @@ git update-index --add dir/file/file
 git commit -m "$name"
 
 test_expect_failure "$name" \
-    'git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch' \
+    'git-svn set-tree --find-copies-harder --rmdir remotes/git-svn..mybranch' \
     || true
 
 
@@ -85,7 +85,7 @@ git update-index --add -- bar
 git commit -m "$name"
 
 test_expect_failure "$name" \
-    'git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch2' \
+    'git-svn set-tree --find-copies-harder --rmdir remotes/git-svn..mybranch2' \
     || true
 
 
@@ -100,7 +100,7 @@ git-update-index --add bar/zzz/yyy
 git commit -m "$name"
 
 test_expect_failure "$name" \
-    'git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch3' \
+    'git-svn set-tree --find-copies-harder --rmdir remotes/git-svn..mybranch3' \
     || true
 
 
@@ -115,7 +115,7 @@ git update-index --add -- dir
 git commit -m "$name"
 
 test_expect_failure "$name" \
-    'git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch4' \
+    'git-svn set-tree --find-copies-harder --rmdir remotes/git-svn..mybranch4' \
     || true
 
 
@@ -127,7 +127,7 @@ git update-index exec.sh
 git commit -m "$name"
 
 test_expect_success "$name" \
-    "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
+    "git-svn set-tree --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
      svn up $SVN_TREE &&
      test ! -x $SVN_TREE/exec.sh"
 
@@ -138,7 +138,7 @@ git update-index exec.sh
 git commit -m "$name"
 
 test_expect_success "$name" \
-    "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
+    "git-svn set-tree --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
      svn up $SVN_TREE &&
      test -x $SVN_TREE/exec.sh"
 
@@ -153,7 +153,7 @@ then
 	git commit -m "$name"
 
 	test_expect_success "$name" \
-	    "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
+	    "git-svn set-tree --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
 	     svn up $SVN_TREE &&
 	     test -L $SVN_TREE/exec.sh"
 
@@ -164,7 +164,7 @@ then
 	git commit -m "$name"
 
 	test_expect_success "$name" \
-	    "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
+	    "git-svn set-tree --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
 	     svn up $SVN_TREE &&
 	     test -x $SVN_TREE/bar/zzz &&
 	     test -L $SVN_TREE/exec-2.sh"
@@ -177,7 +177,7 @@ then
 	git commit -m "$name"
 
 	test_expect_success "$name" \
-	    "git-svn commit --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
+	    "git-svn set-tree --find-copies-harder --rmdir remotes/git-svn..mybranch5 &&
 	     svn up $SVN_TREE &&
 	     test -f $SVN_TREE/exec-2.sh &&
 	     test ! -L $SVN_TREE/exec-2.sh &&
@@ -192,7 +192,7 @@ then
 	git update-index exec-2.sh
 	git commit -m 'éï∏'
 	export LC_ALL="$GIT_SVN_LC_ALL"
-	test_expect_success "$name" "git-svn commit HEAD"
+	test_expect_success "$name" "git-svn set-tree HEAD"
 	unset LC_ALL
 else
 	echo "UTF-8 locale not set, test skipped ($GIT_SVN_LC_ALL)"
@@ -229,9 +229,7 @@ tree d667270a1f7b109f5eb3aaea21ede14b56bfdd6e
 tree 8f51f74cf0163afc9ad68a4b1537288c4558b5a4
 EOF
 
-if test -z "$GIT_SVN_NO_LIB" || test "$GIT_SVN_NO_LIB" -eq 0; then
-	echo tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904 >> expected
-fi
+echo tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904 >> expected
 
 test_expect_success "$name" "diff -u a expected"
 
