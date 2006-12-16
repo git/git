@@ -3,7 +3,7 @@
 #include <regex.h>
 
 static const char git_config_set_usage[] =
-"git-repo-config [ --global ] [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --unset | --unset-all] name [value [value_regex]] | --list";
+"git-repo-config [ --global ] [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --list";
 
 static char *key;
 static regex_t *key_regexp;
@@ -190,7 +190,9 @@ int cmd_repo_config(int argc, const char **argv, const char *prefix)
 			use_key_regexp = 1;
 			do_all = 1;
 			return get_value(argv[2], argv[3]);
-		} else if (!strcmp(argv[1], "--replace-all"))
+		} else if (!strcmp(argv[1], "--add"))
+			return git_config_set_multivar(argv[2], argv[3], "^$", 0);
+		else if (!strcmp(argv[1], "--replace-all"))
 
 			return git_config_set_multivar(argv[2], argv[3], NULL, 1);
 		else

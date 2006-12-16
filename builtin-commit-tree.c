@@ -107,8 +107,6 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 		if (new_parent(parents))
 			parents++;
 	}
-	if (!parents)
-		fprintf(stderr, "Committing initial tree %s\n", argv[1]);
 
 	init_buffer(&buffer, &size);
 	add_buffer(&buffer, &size, "tree %s\n", sha1_to_hex(tree_sha1));

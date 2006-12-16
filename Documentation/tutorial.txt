@@ -38,7 +38,7 @@ $ git init-db
 Git will reply
 
 ------------------------------------------------
-defaulting to local storage area
+Initialized empty Git repository in .git/
 ------------------------------------------------
 
 You've now initialized the working directory--you may notice a new

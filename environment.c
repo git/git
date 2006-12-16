@@ -48,6 +48,16 @@ static void setup_git_env(void)
 	git_graft_file = getenv(GRAFT_ENVIRONMENT);
 	if (!git_graft_file)
 		git_graft_file = xstrdup(git_path("info/grafts"));
+	log_all_ref_updates = !is_bare_git_dir(git_dir);
+}
+
+int is_bare_git_dir (const char *dir)
+{
+	const char *s;
+	if (!strcmp(dir, DEFAULT_GIT_DIR_ENVIRONMENT))
+		return 0;
+	s = strrchr(dir, '/');
+	return !s || strcmp(s + 1, DEFAULT_GIT_DIR_ENVIRONMENT);
 }
 
 const char *get_git_dir(void)

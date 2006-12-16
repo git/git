@@ -80,6 +80,7 @@ no_edit=
 log_given=
 log_message=
 verify=t
+quiet=
 verbose=
 signoff=
 force_author=
@@ -239,6 +240,10 @@ $1"
 		;;
 	-s|--s|--si|--sig|--sign|--signo|--signof|--signoff)
 		signoff=t
+		shift
+		;;
+	-q|--q|--qu|--qui|--quie|--quiet)
+		quiet=t
 		shift
 		;;
 	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
@@ -515,7 +520,7 @@ then
 	current="$(git-rev-parse --verify HEAD)"
 else
 	if [ -z "$(git-ls-files)" ]; then
-		echo >&2 Nothing to commit
+		echo >&2 'nothing to commit (use "git add file1 file2" to include for commit)'
 		exit 1
 	fi
 	PARENTS=""
@@ -615,11 +620,17 @@ then
 	git-rerere
 fi
 
-if test -x "$GIT_DIR"/hooks/post-commit && test "$ret" = 0
+if test "$ret" = 0
 then
-	"$GIT_DIR"/hooks/post-commit
+	if test -x "$GIT_DIR"/hooks/post-commit
+	then
+		"$GIT_DIR"/hooks/post-commit
+	fi
+	if test -z "$quiet"
+	then
+		echo "Created${initial_commit:+ initial} commit $commit"
+		git-diff-tree --shortstat --summary --root --no-commit-id HEAD
+	fi
 fi
-
-test "$ret" = 0 && git-diff-tree --summary --root --no-commit-id HEAD
 
 exit "$ret"
