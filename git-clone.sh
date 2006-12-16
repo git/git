@@ -380,18 +380,18 @@ then
 			git-update-ref "refs/heads/$origin" "$head_sha1" ;;
 		esac &&
 
-		# Upstream URL and the primary branch tracking
+		# Upstream URL
 		git-repo-config remote."$origin".url "$repo" &&
-		git-repo-config remote."$origin".fetch \
-			"refs/heads/$head_points_at:$origin_track" &&
 
-		# Set up the mappings to track the remaining branches.
+		# Set up the mappings to track the remote branches.
 		case "$use_separate_remote" in
 		t)
 			git-repo-config remote."$origin".fetch \
 				"refs/heads/*:$remote_top/*" '^$'
 			;;
 		*)
+			git-repo-config remote."$origin".fetch \
+				"refs/heads/$head_points_at:$origin_track" &&
 			(cd "$GIT_DIR/$remote_top" && find . -type f -print) |
 			while read dotslref
 			do
