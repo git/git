@@ -94,6 +94,8 @@ test_expect_failure \
          git-branch r &&
          git-branch -m q r/q'
 
+git-repo-config branch.s/s.dummy Hello
+
 test_expect_success \
     'git branch -m s/s s should work when s/t is deleted' \
        'git-branch -l s/s &&
@@ -103,6 +105,10 @@ test_expect_success \
         git-branch -d s/t &&
         git-branch -m s/s s &&
         test -f .git/logs/refs/heads/s'
+
+test_expect_success 'config information was renamed, too' \
+	"test $(git-repo-config branch.s.dummy) = Hello &&
+	 ! git-repo-config branch.s/s/dummy"
 
 test_expect_failure \
     'git-branch -m u v should fail when the reflog for u is a symlink' \

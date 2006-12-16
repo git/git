@@ -343,5 +343,53 @@ EOF
 
 test_expect_success '--set in alternative GIT_CONFIG' 'cmp other-config expect'
 
+cat > .git/config << EOF
+# Hallo
+	#Bello
+[branch "eins"]
+	x = 1
+[branch.eins]
+	y = 1
+	[branch "1 234 blabl/a"]
+weird
+EOF
+
+test_expect_success "rename section" \
+	"git-repo-config --rename-section branch.eins branch.zwei"
+
+cat > expect << EOF
+# Hallo
+	#Bello
+[branch "zwei"]
+	x = 1
+[branch "zwei"]
+	y = 1
+	[branch "1 234 blabl/a"]
+weird
+EOF
+
+test_expect_success "rename succeeded" "diff -u expect .git/config"
+
+test_expect_failure "rename non-existing section" \
+	'git-repo-config --rename-section branch."world domination" branch.drei'
+
+test_expect_success "rename succeeded" "diff -u expect .git/config"
+
+test_expect_success "rename another section" \
+	'git-repo-config --rename-section branch."1 234 blabl/a" branch.drei'
+
+cat > expect << EOF
+# Hallo
+	#Bello
+[branch "zwei"]
+	x = 1
+[branch "zwei"]
+	y = 1
+[branch "drei"]
+weird
+EOF
+
+test_expect_success "rename succeeded" "diff -u expect .git/config"
+
 test_done
 
