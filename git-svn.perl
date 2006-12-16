@@ -107,7 +107,12 @@ my %cmd = (
 	init => [ \&init, "Initialize a repo for tracking" .
 			  " (requires URL argument)",
 			  \%init_opts ],
-	commit => [ \&commit, "Commit git revisions to SVN",
+	dcommit => [ \&dcommit, 'Commit several diffs to merge with upstream',
+			{ 'merge|m|M' => \$_merge,
+			  'strategy|s=s' => \$_strategy,
+			  'dry-run|n' => \$_dry_run,
+			%cmt_opts } ],
+	'set-tree' => [ \&commit, "Set an SVN repository to a git tree-ish",
 			{	'stdin|' => \$_stdin, %cmt_opts, %fc_opts, } ],
 	'show-ignore' => [ \&show_ignore, "Show svn:ignore listings",
 			{ 'revision|r=i' => \$_revision } ],
@@ -149,11 +154,6 @@ my %cmd = (
 			{ 'message|m=s' => \$_message,
 			  'file|F=s' => \$_file,
 			  'revision|r=s' => \$_revision,
-			%cmt_opts } ],
-	dcommit => [ \&dcommit, 'Commit several diffs to merge with upstream',
-			{ 'merge|m|M' => \$_merge,
-			  'strategy|s=s' => \$_strategy,
-			  'dry-run|n' => \$_dry_run,
 			%cmt_opts } ],
 );
 

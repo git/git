@@ -64,7 +64,7 @@ manually joining branches on commit.
 	against the latest changes in the SVN repository.
 	An optional command-line argument may be specified as an
 	alternative to HEAD.
-	This is advantageous over 'commit' (below) because it produces
+	This is advantageous over 'set-tree' (below) because it produces
 	cleaner, more linear history.
 
 'log'::
@@ -89,7 +89,7 @@ manually joining branches on commit.
 
 	Any other arguments are passed directly to `git log'
 
-'commit'::
+'set-tree'::
 	You should consider using 'dcommit' instead of this command.
 	Commit specified commit or tree objects to SVN.  This relies on
 	your imported fetch data being up-to-date.  This makes
@@ -172,7 +172,7 @@ This can allow you to make partial mirrors when running fetch.
 -::
 --stdin::
 
-Only used with the 'commit' command.
+Only used with the 'set-tree' command.
 
 Read a list of commits from stdin and commit them in reverse
 order.  Only the leading sha1 is read from each line, so
@@ -180,7 +180,7 @@ git-rev-list --pretty=oneline output can be used.
 
 --rmdir::
 
-Only used with the 'dcommit', 'commit' and 'commit-diff' commands.
+Only used with the 'dcommit', 'set-tree' and 'commit-diff' commands.
 
 Remove directories from the SVN tree if there are no files left
 behind.  SVN can version empty directories, and they are not
@@ -193,7 +193,7 @@ repo-config key: svn.rmdir
 -e::
 --edit::
 
-Only used with the 'dcommit', 'commit' and 'commit-diff' commands.
+Only used with the 'dcommit', 'set-tree' and 'commit-diff' commands.
 
 Edit the commit message before committing to SVN.  This is off by
 default for objects that are commits, and forced on when committing
@@ -204,7 +204,7 @@ repo-config key: svn.edit
 -l<num>::
 --find-copies-harder::
 
-Only used with the 'dcommit', 'commit' and 'commit-diff' commands.
+Only used with the 'dcommit', 'set-tree' and 'commit-diff' commands.
 
 They are both passed directly to git-diff-tree see
 gitlink:git-diff-tree[1] for more information.
@@ -276,7 +276,7 @@ ADVANCED OPTIONS
 
 -b<refname>::
 --branch <refname>::
-Used with 'fetch', 'dcommit' or 'commit'.
+Used with 'fetch', 'dcommit' or 'set-tree'.
 
 This can be used to join arbitrary git branches to remotes/git-svn
 on new commits where the tree object is equivalent.
@@ -392,11 +392,11 @@ REBASE VS. PULL
 ---------------
 
 Originally, git-svn recommended that the remotes/git-svn branch be
-pulled from.  This is because the author favored 'git-svn commit B'
-to commit a single head rather than the 'git-svn commit A..B' notation
+pulled from.  This is because the author favored 'git-svn set-tree B'
+to commit a single head rather than the 'git-svn set-tree A..B' notation
 to commit multiple commits.
 
-If you use 'git-svn commit A..B' to commit several diffs and you do not
+If you use 'git-svn set-tree A..B' to commit several diffs and you do not
 have the latest remotes/git-svn merged into my-branch, you should use
 'git rebase' to update your work branch instead of 'git pull'.  'pull'
 can cause non-linear history to be flattened when committing into SVN,
