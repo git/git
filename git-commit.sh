@@ -520,7 +520,7 @@ then
 	current="$(git-rev-parse --verify HEAD)"
 else
 	if [ -z "$(git-ls-files)" ]; then
-		echo >&2 Nothing to commit
+		echo >&2 'nothing to commit (use "git add file1 file2" to include for commit)'
 		exit 1
 	fi
 	PARENTS=""
