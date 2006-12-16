@@ -14,7 +14,7 @@ die() {
 }
 
 usage() {
-	die "Usage: $0 [--template=<template_directory>] [--no-separate-remote] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [--depth <n>] [-n] <repo> [<dir>]"
+	die "Usage: $0 [--template=<template_directory>] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [--depth <n>] [-n] <repo> [<dir>]"
 }
 
 get_repo_base() {
@@ -138,11 +138,9 @@ while
 	*,--template=*)
 	  template="$1" ;;
 	*,-q|*,--quiet) quiet=-q ;;
-	*,--use-separate-remote)
-		# default
-		use_separate_remote=t ;;
+	*,--use-separate-remote) ;;
 	*,--no-separate-remote)
-		use_separate_remote= ;;
+		die "clones are always made with separate-remote layout" ;;
 	1,--reference) usage ;;
 	*,--reference)
 		shift; reference="$1" ;;
@@ -340,12 +338,8 @@ cd "$D" || exit
 
 if test -z "$bare" && test -f "$GIT_DIR/REMOTE_HEAD"
 then
-	# Figure out which remote branch HEAD points at.
-	case "$use_separate_remote" in
-	'')	remote_top=refs/heads ;;
-	*)	remote_top="refs/remotes/$origin" ;;
-	esac
-
+	# a non-bare repository is always in separate-remote layout
+	remote_top="refs/remotes/$origin"
 	head_sha1=`cat "$GIT_DIR/REMOTE_HEAD"`
 	case "$head_sha1" in
 	'ref: refs/'*)
@@ -379,41 +373,26 @@ then
 		)
 	)
 
-	# Write out remotes/$origin file, and update our "$head_points_at".
+	# Write out remote.$origin config, and update our "$head_points_at".
 	case "$head_points_at" in
 	?*)
-		mkdir -p "$GIT_DIR/remotes" &&
+		# Local default branch
 		git-symbolic-ref HEAD "refs/heads/$head_points_at" &&
-		case "$use_separate_remote" in
-		t)	origin_track="$remote_top/$head_points_at"
-			git-update-ref HEAD "$head_sha1" ;;
-		*)	origin_track="$remote_top/$origin"
-			git-update-ref "refs/heads/$origin" "$head_sha1" ;;
-		esac &&
+
+		# Tracking branch for the primary branch at the remote.
+		origin_track="$remote_top/$head_points_at" &&
+		git-update-ref HEAD "$head_sha1" &&
+
+		# Upstream URL
 		git-repo-config remote."$origin".url "$repo" &&
+
+		# Set up the mappings to track the remote branches.
 		git-repo-config remote."$origin".fetch \
-			"refs/heads/$head_points_at:$origin_track" &&
-		(cd "$GIT_DIR/$remote_top" && find . -type f -print) |
-		while read dotslref
-		do
-			name=`expr "$dotslref" : './\(.*\)'`
-			if test "z$head_points_at" = "z$name"
-			then
-				continue
-			fi
-			if test "$use_separate_remote" = '' &&
-			   test "z$origin" = "z$name"
-			then
-				continue
-			fi
-			git-repo-config remote."$origin".fetch "refs/heads/${name}:$remote_top/${name}" '^$'
-		done &&
-		case "$use_separate_remote" in
-		t)
-			rm -f "refs/remotes/$origin/HEAD"
-			git-symbolic-ref "refs/remotes/$origin/HEAD" \
-				"refs/remotes/$origin/$head_points_at"
-		esac &&
+			"refs/heads/*:$remote_top/*" '^$' &&
+		rm -f "refs/remotes/$origin/HEAD"
+		git-symbolic-ref "refs/remotes/$origin/HEAD" \
+			"refs/remotes/$origin/$head_points_at" &&
+
 		git-repo-config branch."$head_points_at".remote "$origin" &&
 		git-repo-config branch."$head_points_at".merge "refs/heads/$head_points_at"
 	esac

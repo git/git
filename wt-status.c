@@ -271,7 +271,7 @@ static void wt_status_print_verbose(struct wt_status *s)
 
 void wt_status_print(struct wt_status *s)
 {
-	if (s->branch && strcmp(s->branch, "refs/heads/master"))
+	if (s->branch)
 		color_printf_ln(color(WT_STATUS_HEADER),
 			"# On branch %s", s->branch);
 
