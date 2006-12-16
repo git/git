@@ -91,6 +91,22 @@ finish () {
 	esac
 }
 
+merge_name () {
+	remote="$1"
+	rh=$(git-rev-parse --verify "$remote^0" 2>/dev/null) || return
+	bh=$(git-show-ref -s --verify "refs/heads/$remote" 2>/dev/null)
+	if test "$rh" = "$bh"
+	then
+		echo "$rh		branch '$remote' of ."
+	elif truname=$(expr "$remote" : '\(.*\)~[1-9][0-9]*$') &&
+		git-show-ref -q --verify "refs/heads/$truname" 2>/dev/null
+	then
+		echo "$rh		branch '$truname' (early part) of ."
+	else
+		echo "$rh		commit '$remote'"
+	fi
+}
+
 case "$#" in 0) usage ;; esac
 
 rloga= have_message=
@@ -188,15 +204,7 @@ else
 	# in this loop.
 	merge_name=$(for remote
 		do
-			rh=$(git-rev-parse --verify "$remote"^0 2>/dev/null) ||
-			continue ;# not something we can merge
-			bh=$(git show-ref -s --verify "refs/heads/$remote" 2>/dev/null)
-			if test "$rh" = "$bh"
-			then
-				echo "$rh		branch '$remote' of ."
-			else
-				echo "$rh		commit '$remote'"
-			fi
+			merge_name "$remote"
 		done | git-fmt-merge-msg
 	)
 	merge_msg="${merge_msg:+$merge_msg$LF$LF}$merge_name"
