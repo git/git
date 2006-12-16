@@ -21,7 +21,8 @@ static int parse_status_slot(const char *var, int offset)
 {
 	if (!strcasecmp(var+offset, "header"))
 		return WT_STATUS_HEADER;
-	if (!strcasecmp(var+offset, "updated"))
+	if (!strcasecmp(var+offset, "updated")
+		|| !strcasecmp(var+offset, "added"))
 		return WT_STATUS_UPDATED;
 	if (!strcasecmp(var+offset, "changed"))
 		return WT_STATUS_CHANGED;
@@ -146,7 +147,7 @@ static void wt_status_print_updated_cb(struct diff_queue_struct *q,
 		if (q->queue[i]->status == 'U')
 			continue;
 		if (!shown_header) {
-			wt_status_print_header("Updated but not checked in",
+			wt_status_print_header("Added but not yet committed",
 					"will commit");
 			s->commitable = 1;
 			shown_header = 1;
@@ -163,7 +164,7 @@ static void wt_status_print_changed_cb(struct diff_queue_struct *q,
 {
 	int i;
 	if (q->nr)
-		wt_status_print_header("Changed but not updated", use_add_msg);
+		wt_status_print_header("Changed but not added", use_add_msg);
 	for (i = 0; i < q->nr; i++)
 		wt_status_print_filepair(WT_STATUS_CHANGED, q->queue[i]);
 	if (q->nr)
@@ -178,7 +179,7 @@ void wt_status_print_initial(struct wt_status *s)
 	read_cache();
 	if (active_nr) {
 		s->commitable = 1;
-		wt_status_print_header("Updated but not checked in",
+		wt_status_print_header("Added but not yet committed",
 				"will commit");
 	}
 	for (i = 0; i < active_nr; i++) {

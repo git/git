@@ -169,8 +169,8 @@ color.status::
 color.status.<slot>::
 	Use customized color for status colorization. `<slot>` is
 	one of `header` (the header text of the status message),
-	`updated` (files which are updated but not committed),
-	`changed` (files which are changed but not updated in the index),
+	`added` or `updated` (files which are added but not committed),
+	`changed` (files which are changed but not added in the index),
 	or `untracked` (files which are not tracked by git). The values of
 	these variables may be specified as in color.diff.<slot>.
 

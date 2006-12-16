@@ -353,23 +353,23 @@ situation:
 ------------------------------------------------
 $ git status
 #
-# Updated but not checked in:
+# Added but not yet committed:
 #   (will commit)
 #
 #       new file: closing.txt
 #
 #
-# Changed but not updated:
-#   (use git-update-index to mark for commit)
+# Changed but not added:
+#   (use "git add file1 file2" to include for commit)
 #
 #       modified: file.txt
 #
 ------------------------------------------------
 
 Since the current state of closing.txt is cached in the index file,
-it is listed as "updated but not checked in".  Since file.txt has
+it is listed as "added but not yet committed".  Since file.txt has
 changes in the working directory that aren't reflected in the index,
-it is marked "changed but not updated".  At this point, running "git
+it is marked "changed but not added".  At this point, running "git
 commit" would create a commit that added closing.txt (with its new
 contents), but that didn't modify file.txt.
 
