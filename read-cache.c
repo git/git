@@ -609,7 +609,7 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	if (!skip_df_check &&
 	    check_file_directory_conflict(ce, pos, ok_to_replace)) {
 		if (!ok_to_replace)
-			return -1;
+			return error("'%s' appears as both a file and as a directory", ce->name);
 		pos = cache_name_pos(ce->name, ntohs(ce->ce_flags));
 		pos = -pos-1;
 	}
