@@ -358,7 +358,7 @@ int add_file_to_index(const char *path, int verbose)
 
 	if (index_path(ce->sha1, path, &st, 1))
 		die("unable to index file %s", path);
-	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD))
+	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE))
 		die("unable to add %s to index",path);
 	if (verbose)
 		printf("add '%s'\n", path);
