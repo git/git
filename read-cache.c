@@ -517,7 +517,7 @@ static int has_dir_name(const struct cache_entry *ce, int pos, int ok_to_replace
 		pos = cache_name_pos(name, ntohs(create_ce_flags(len, stage)));
 		if (pos >= 0) {
 			retval = -1;
-			if (ok_to_replace)
+			if (!ok_to_replace)
 				break;
 			remove_cache_entry_at(pos);
 			continue;
