@@ -272,4 +272,13 @@ test_expect_success \
 	 wc -l) &&
      test $numparent = 1'
 
+test_expect_success 'update-index D/F conflict' '
+	mv path0 tmp &&
+	mv path2 path0 &&
+	mv tmp path2 &&
+	git update-index --add --replace path2 path0/file2 &&
+	numpath0=$(git ls-files path0 | wc -l) &&
+	test $numpath0 = 1
+'
+
 test_done

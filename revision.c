@@ -344,6 +344,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 static void add_parents_to_list(struct rev_info *revs, struct commit *commit, struct commit_list **list)
 {
 	struct commit_list *parent = commit->parents;
+	unsigned left_flag;
 
 	if (commit->object.flags & ADDED)
 		return;
@@ -388,6 +389,7 @@ static void add_parents_to_list(struct rev_info *revs, struct commit *commit, st
 	if (revs->no_walk)
 		return;
 
+	left_flag = (commit->object.flags & SYMMETRIC_LEFT);
 	parent = commit->parents;
 	while (parent) {
 		struct commit *p = parent->item;
@@ -395,6 +397,7 @@ static void add_parents_to_list(struct rev_info *revs, struct commit *commit, st
 		parent = parent->next;
 
 		parse_commit(p);
+		p->object.flags |= left_flag;
 		if (p->object.flags & SEEN)
 			continue;
 		p->object.flags |= SEEN;
@@ -640,7 +643,7 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 				add_pending_commit_list(revs, exclude,
 							flags_exclude);
 				free_commit_list(exclude);
-				a->object.flags |= flags;
+				a->object.flags |= flags | SYMMETRIC_LEFT;
 			} else
 				a->object.flags |= flags_exclude;
 			b->object.flags |= flags;
@@ -850,6 +853,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->boundary = 1;
 				continue;
 			}
+			if (!strcmp(arg, "--no-left-right")) {
+				revs->no_left_right = 1;
+				continue;
+			}
 			if (!strcmp(arg, "--objects")) {
 				revs->tag_objects = 1;
 				revs->tree_objects = 1;
@@ -1048,13 +1055,18 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 void prepare_revision_walk(struct rev_info *revs)
 {
 	int nr = revs->pending.nr;
+	int has_symmetric = 0;
 	struct object_array_entry *list = revs->pending.objects;
 
 	revs->pending.nr = 0;
 	revs->pending.alloc = 0;
 	revs->pending.objects = NULL;
 	while (--nr >= 0) {
-		struct commit *commit = handle_commit(revs, list->item, list->name);
+		struct commit *commit;
+
+		if (list->item->flags & SYMMETRIC_LEFT)
+			has_symmetric = 1;
+		commit = handle_commit(revs, list->item, list->name);
 		if (commit) {
 			if (!(commit->object.flags & SEEN)) {
 				commit->object.flags |= SEEN;
@@ -1066,6 +1078,8 @@ void prepare_revision_walk(struct rev_info *revs)
 
 	if (revs->no_walk)
 		return;
+	if (!revs->no_left_right && has_symmetric)
+		revs->left_right = 1;
 	if (revs->limited)
 		limit_list(revs);
 	if (revs->topo_order)

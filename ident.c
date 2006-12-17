@@ -221,3 +221,18 @@ const char *git_committer_info(int error_on_no_name)
 			 getenv("GIT_COMMITTER_DATE"),
 			 error_on_no_name);
 }
+
+void ignore_missing_committer_name()
+{
+	/* If we did not get a name from the user's gecos entry then
+	 * git_default_name is empty; so instead load the username
+	 * into it as a 'good enough for now' approximation of who
+	 * this user is.
+	 */
+	if (!*git_default_name) {
+		struct passwd *pw = getpwuid(getuid());
+		if (!pw)
+			die("You don't exist. Go away!");
+		strlcpy(git_default_name, pw->pw_name, sizeof(git_default_name));
+	}
+}

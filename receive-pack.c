@@ -420,6 +420,8 @@ int main(int argc, char **argv)
 		die("'%s': unable to chdir or not a git archive", dir);
 
 	setup_ident();
+	/* don't die if gecos is empty */
+	ignore_missing_committer_name();
 	git_config(receive_pack_config);
 
 	write_head_info();
