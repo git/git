@@ -104,17 +104,17 @@ repository without -A.
 
 -l <max_rev>::
 	Specify a maximum revision number to pull.
-
-	Formerly, this option controlled how many revisions to pull,
-	due to SVN memory leaks. (These have been worked around.)
++
+Formerly, this option controlled how many revisions to pull,
+due to SVN memory leaks. (These have been worked around.)
 
 -P <path_from_trunk>::
 	Partial import of the SVN tree.
-
-	By default, the whole tree on the SVN trunk (/trunk) is imported.
-	'-P my/proj' will import starting only from '/trunk/my/proj'.
-	This option is useful when you want to import one project from a
-	svn repo which hosts multiple projects under the same trunk.
++
+By default, the whole tree on the SVN trunk (/trunk) is imported.
+'-P my/proj' will import starting only from '/trunk/my/proj'.
+This option is useful when you want to import one project from a
+svn repo which hosts multiple projects under the same trunk.
 
 -v::
 	Verbosity: let 'svnimport' report what it is doing.
