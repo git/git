@@ -41,6 +41,7 @@ struct rev_info {
 			limited:1,
 			unpacked:1, /* see also ignore_packed below */
 			boundary:1,
+			no_left_right:1,
 			left_right:1,
 			parents:1;
 
