@@ -218,9 +218,11 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 		unsigned char sha1[20];
 
 		while (*pattern) {
-			if (resolve_ref(*pattern, sha1, 1, NULL))
-				printf("%s %s\n", sha1_to_hex(sha1),
-				       *pattern);
+			if (resolve_ref(*pattern, sha1, 1, NULL)) {
+				if (!quiet)
+					printf("%s %s\n",
+					       sha1_to_hex(sha1), *pattern);
+			}
 			else if (!quiet)
 				die("'%s' - not a valid ref", *pattern);
 			else
