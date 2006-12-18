@@ -93,13 +93,14 @@ static int in_merge_bases(const unsigned char *sha1,
 	return ret;
 }
 
-static void delete_branches(int argc, const char **argv, int force, int kinds)
+static int delete_branches(int argc, const char **argv, int force, int kinds)
 {
 	struct commit *rev, *head_rev = head_rev;
 	unsigned char sha1[20];
-	char *name;
+	char *name = NULL;
 	const char *fmt, *remote;
 	int i;
+	int ret = 0;
 
 	switch (kinds) {
 	case REF_REMOTE_BRANCH:
@@ -121,16 +122,30 @@ static void delete_branches(int argc, const char **argv, int force, int kinds)
 			die("Couldn't look up commit object for HEAD");
 	}
 	for (i = 0; i < argc; i++) {
-		if (kinds == REF_LOCAL_BRANCH && !strcmp(head, argv[i]))
-			die("Cannot delete the branch you are currently on.");
+		if (kinds == REF_LOCAL_BRANCH && !strcmp(head, argv[i])) {
+			error("Cannot delete the branch '%s' "
+				"which you are currently on.", argv[i]);
+			ret = 1;
+			continue;
+		}
+
+		if (name)
+			free(name);
 
 		name = xstrdup(mkpath(fmt, argv[i]));
-		if (!resolve_ref(name, sha1, 1, NULL))
-			die("%sbranch '%s' not found.", remote, argv[i]);
+		if (!resolve_ref(name, sha1, 1, NULL)) {
+			error("%sbranch '%s' not found.",
+					remote, argv[i]);
+			ret = 1;
+			continue;
+		}
 
 		rev = lookup_commit_reference(sha1);
-		if (!rev)
-			die("Couldn't look up commit object for '%s'", name);
+		if (!rev) {
+			error("Couldn't look up commit object for '%s'", name);
+			ret = 1;
+			continue;
+		}
 
 		/* This checks whether the merge bases of branch and
 		 * HEAD contains branch -- which means that the HEAD
@@ -139,21 +154,27 @@ static void delete_branches(int argc, const char **argv, int force, int kinds)
 
 		if (!force &&
 		    !in_merge_bases(sha1, rev, head_rev)) {
-			fprintf(stderr,
-				"The branch '%s' is not a strict subset of your current HEAD.\n"
-				"If you are sure you want to delete it, run 'git branch -D %s'.\n",
-				argv[i], argv[i]);
-			exit(1);
+			error("The branch '%s' is not a strict subset of "
+				"your current HEAD.\n"
+				"If you are sure you want to delete it, "
+				"run 'git branch -D %s'.", argv[i], argv[i]);
+			ret = 1;
+			continue;
 		}
 
-		if (delete_ref(name, sha1))
-			printf("Error deleting %sbranch '%s'\n", remote,
+		if (delete_ref(name, sha1)) {
+			error("Error deleting %sbranch '%s'", remote,
 			       argv[i]);
-		else
+			ret = 1;
+		} else
 			printf("Deleted %sbranch %s.\n", remote, argv[i]);
 
-		free(name);
 	}
+
+	if (name)
+		free(name);
+
+	return(ret);
 }
 
 struct ref_item {
@@ -450,7 +471,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	head += 11;
 
 	if (delete)
-		delete_branches(argc - i, argv + i, force_delete, kinds);
+		return delete_branches(argc - i, argv + i, force_delete, kinds);
 	else if (i == argc)
 		print_ref_list(kinds, verbose, abbrev);
 	else if (rename && (i == argc - 1))
