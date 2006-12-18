@@ -50,12 +50,12 @@ test_expect_success 'setup separate repository lacking postimage' '
 
 	git tar-tree initial initial | tar xf - &&
 	(
-		cd initial && git init-db && git add .
+		cd initial && git_init_db && git add .
 	) &&
 
 	git tar-tree second second | tar xf - &&
 	(
-		cd second && git init-db && git add .
+		cd second && git_init_db && git add .
 	)
 
 '
