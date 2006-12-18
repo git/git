@@ -96,7 +96,7 @@ fi
 
 # Global that is reused later
 ls_remote_result=$(git ls-remote $upload_pack "$remote") ||
-	die "Cannot find the reflist at $remote"
+	die "Cannot get the repository state from $remote"
 
 append_fetch_head () {
     head_="$1"

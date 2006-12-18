@@ -72,7 +72,7 @@ static void safe_read(int fd, void *buffer, unsigned size)
 		if (ret < 0)
 			die("read error (%s)", strerror(errno));
 		if (!ret)
-			die("unexpected EOF");
+			die("The remote end hung up unexpectedly");
 		n += ret;
 	}
 }
