@@ -12,8 +12,12 @@
 #include "builtin.h"
 
 static const char builtin_branch_usage[] =
-  "git-branch (-d | -D) <branchname> | [-l] [-f] <branchname> [<start-point>] | (-m | -M) [<oldbranch>] <newbranch> | [-r | -a] [-v [--abbrev=<length>]]";
+  "git-branch [-r] (-d | -D) <branchname> | [-l] [-f] <branchname> [<start-point>] | (-m | -M) [<oldbranch>] <newbranch> | [-r | -a] [-v [--abbrev=<length>]]";
 
+#define REF_UNKNOWN_TYPE    0x00
+#define REF_LOCAL_BRANCH    0x01
+#define REF_REMOTE_BRANCH   0x02
+#define REF_TAG             0x04
 
 static const char *head;
 static unsigned char head_sha1[20];
@@ -89,12 +93,27 @@ static int in_merge_bases(const unsigned char *sha1,
 	return ret;
 }
 
-static void delete_branches(int argc, const char **argv, int force)
+static void delete_branches(int argc, const char **argv, int force, int kinds)
 {
 	struct commit *rev, *head_rev = head_rev;
 	unsigned char sha1[20];
 	char *name;
+	const char *fmt, *remote;
 	int i;
+
+	switch (kinds) {
+	case REF_REMOTE_BRANCH:
+		fmt = "refs/remotes/%s";
+		remote = "remote ";
+		force = 1;
+		break;
+	case REF_LOCAL_BRANCH:
+		fmt = "refs/heads/%s";
+		remote = "";
+		break;
+	default:
+		die("cannot use -a with -d");
+	}
 
 	if (!force) {
 		head_rev = lookup_commit_reference(head_sha1);
@@ -102,12 +121,12 @@ static void delete_branches(int argc, const char **argv, int force)
 			die("Couldn't look up commit object for HEAD");
 	}
 	for (i = 0; i < argc; i++) {
-		if (!strcmp(head, argv[i]))
+		if (kinds == REF_LOCAL_BRANCH && !strcmp(head, argv[i]))
 			die("Cannot delete the branch you are currently on.");
 
-		name = xstrdup(mkpath("refs/heads/%s", argv[i]));
+		name = xstrdup(mkpath(fmt, argv[i]));
 		if (!resolve_ref(name, sha1, 1, NULL))
-			die("Branch '%s' not found.", argv[i]);
+			die("%sbranch '%s' not found.", remote, argv[i]);
 
 		rev = lookup_commit_reference(sha1);
 		if (!rev)
@@ -128,18 +147,14 @@ static void delete_branches(int argc, const char **argv, int force)
 		}
 
 		if (delete_ref(name, sha1))
-			printf("Error deleting branch '%s'\n", argv[i]);
+			printf("Error deleting %sbranch '%s'\n", remote,
+			       argv[i]);
 		else
-			printf("Deleted branch %s.\n", argv[i]);
+			printf("Deleted %sbranch %s.\n", remote, argv[i]);
 
 		free(name);
 	}
 }
-
-#define REF_UNKNOWN_TYPE    0x00
-#define REF_LOCAL_BRANCH    0x01
-#define REF_REMOTE_BRANCH   0x02
-#define REF_TAG             0x04
 
 struct ref_item {
 	char *name;
@@ -435,7 +450,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	head += 11;
 
 	if (delete)
-		delete_branches(argc - i, argv + i, force_delete);
+		delete_branches(argc - i, argv + i, force_delete, kinds);
 	else if (i == argc)
 		print_ref_list(kinds, verbose, abbrev);
 	else if (rename && (i == argc - 1))
