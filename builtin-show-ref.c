@@ -213,6 +213,23 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 			return exclude_existing(arg + 19);
 		usage(show_ref_usage);
 	}
+
+	if (verify) {
+		unsigned char sha1[20];
+
+		while (*pattern) {
+			if (resolve_ref(*pattern, sha1, 1, NULL))
+				printf("%s %s\n", sha1_to_hex(sha1),
+				       *pattern);
+			else if (!quiet)
+				die("'%s' - not a valid ref", *pattern);
+			else
+				return 1;
+			pattern++;
+		}
+		return 0;
+	}
+
 	if (show_head)
 		head_ref(show_ref, NULL);
 	for_each_ref(show_ref, NULL);
