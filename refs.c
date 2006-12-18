@@ -1091,3 +1091,28 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 		logfile, show_rfc2822_date(date, tz));
 	return 0;
 }
+
+void for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
+{
+	const char *logfile;
+	FILE *logfp;
+	char buf[1024];
+
+	logfile = git_path("logs/%s", ref);
+	logfp = fopen(logfile, "r");
+	if (!logfp)
+		return;
+	while (fgets(buf, sizeof(buf), logfp)) {
+		unsigned char osha1[20], nsha1[20];
+		int len;
+
+		/* old SP new SP name <email> SP time TAB msg LF */
+		len = strlen(buf);
+		if (len < 83 || buf[len-1] != '\n' ||
+		    get_sha1_hex(buf, osha1) || buf[40] != ' ' ||
+		    get_sha1_hex(buf + 41, nsha1) || buf[81] != ' ')
+			continue; /* corrupt? */
+		fn(osha1, nsha1, buf+82, cb_data);
+	}
+	fclose(logfp);
+}
