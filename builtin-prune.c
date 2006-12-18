@@ -181,12 +181,28 @@ static void walk_commit_list(struct rev_info *revs)
 	}
 }
 
+static int add_one_reflog_ent(unsigned char *osha1, unsigned char *nsha1, char *datail, void *cb_data)
+{
+	struct object *object;
+
+	object = parse_object(osha1);
+	if (object)
+		add_pending_object(&revs, object, "");
+	object = parse_object(nsha1);
+	if (object)
+		add_pending_object(&revs, object, "");
+	return 0;
+}
+
 static int add_one_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *object = parse_object(sha1);
 	if (!object)
 		die("bad object ref: %s:%s", path, sha1_to_hex(sha1));
 	add_pending_object(&revs, object, "");
+
+	for_each_reflog_ent(path, add_one_reflog_ent, NULL);
+
 	return 0;
 }
 
