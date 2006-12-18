@@ -2,8 +2,9 @@
 #include "refs.h"
 #include "object.h"
 #include "tag.h"
+#include "path-list.h"
 
-static const char show_ref_usage[] = "git show-ref [-q|--quiet] [--verify] [-h|--head] [-d|--dereference] [-s|--hash[=<length>]] [--abbrev[=<length>]] [--tags] [--heads] [--] [pattern*]";
+static const char show_ref_usage[] = "git show-ref [-q|--quiet] [--verify] [-h|--head] [-d|--dereference] [-s|--hash[=<length>]] [--abbrev[=<length>]] [--tags] [--heads] [--] [pattern*] | --filter-invalid < ref-list";
 
 static int deref_tags = 0, show_head = 0, tags_only = 0, heads_only = 0,
 	found_match = 0, verify = 0, quiet = 0, hash_only = 0, abbrev = 0;
@@ -86,6 +87,59 @@ match:
 	return 0;
 }
 
+static int add_existing(const char *refname, const unsigned char *sha1, int flag, void *cbdata)
+{
+	struct path_list *list = (struct path_list *)cbdata;
+	path_list_insert(refname, list);
+	return 0;
+}
+
+/*
+ * read "^(?:<anything>\s)?<refname>(?:\^\{\})?$" from the standard input,
+ * and
+ * (1) strip "^{}" at the end of line if any;
+ * (2) ignore if match is provided and does not head-match refname;
+ * (3) warn if refname is not a well-formed refname and skip;
+ * (4) ignore if refname is a ref that exists in the local repository;
+ * (5) otherwise output the line.
+ */
+static int exclude_existing(const char *match)
+{
+	static struct path_list existing_refs = { NULL, 0, 0, 0 };
+	char buf[1024];
+	int matchlen = match ? strlen(match) : 0;
+
+	for_each_ref(add_existing, &existing_refs);
+	while (fgets(buf, sizeof(buf), stdin)) {
+		int len = strlen(buf);
+		char *ref;
+		if (len > 0 && buf[len - 1] == '\n')
+			buf[--len] = '\0';
+		if (!strcmp(buf + len - 3, "^{}")) {
+			len -= 3;
+			buf[len] = '\0';
+		}
+		for (ref = buf + len; buf < ref; ref--)
+			if (isspace(ref[-1]))
+				break;
+		if (match) {
+			int reflen = buf + len - ref;
+			if (reflen < matchlen)
+				continue;
+			if (strncmp(ref, match, matchlen))
+				continue;
+		}
+		if (check_ref_format(ref)) {
+			fprintf(stderr, "warning: ref '%s' ignored\n", ref);
+			continue;
+		}
+		if (!path_list_has_path(&existing_refs, ref)) {
+			printf("%s\n", buf);
+		}
+	}
+	return 0;
+}
+
 int cmd_show_ref(int argc, const char **argv, const char *prefix)
 {
 	int i;
@@ -153,6 +207,10 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 			heads_only = 1;
 			continue;
 		}
+		if (!strcmp(arg, "--exclude-existing"))
+			return exclude_existing(NULL);
+		if (!strncmp(arg, "--exclude-existing=", 19))
+			return exclude_existing(arg + 19);
 		usage(show_ref_usage);
 	}
 	if (show_head)
