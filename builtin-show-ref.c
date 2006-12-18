@@ -10,6 +10,15 @@ static int deref_tags = 0, show_head = 0, tags_only = 0, heads_only = 0,
 	found_match = 0, verify = 0, quiet = 0, hash_only = 0, abbrev = 0;
 static const char **pattern;
 
+static void show_one(const char *refname, const unsigned char *sha1)
+{
+	const char *hex = find_unique_abbrev(sha1, abbrev);
+	if (hash_only)
+		printf("%s\n", hex);
+	else
+		printf("%s %s\n", hex, refname);
+}
+
 static int show_ref(const char *refname, const unsigned char *sha1, int flag, void *cbdata)
 {
 	struct object *obj;
@@ -58,11 +67,7 @@ match:
 	if (quiet)
 		return 0;
 
-	hex = find_unique_abbrev(sha1, abbrev);
-	if (hash_only)
-		printf("%s\n", hex);
-	else
-		printf("%s %s\n", hex, refname);
+	show_one(refname, sha1);
 
 	if (!deref_tags)
 		return 0;
@@ -175,13 +180,13 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 		if (!strncmp(arg, "--hash=", 7) ||
 		    (!strncmp(arg, "--abbrev", 8) &&
 		     (arg[8] == '=' || arg[8] == '\0'))) {
-			if (arg[3] != 'h' && !arg[8])
+			if (arg[2] != 'h' && !arg[8])
 				/* --abbrev only */
 				abbrev = DEFAULT_ABBREV;
 			else {
 				/* --hash= or --abbrev= */
 				char *end;
-				if (arg[3] == 'h') {
+				if (arg[2] == 'h') {
 					hash_only = 1;
 					arg += 7;
 				}
@@ -218,10 +223,10 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 		unsigned char sha1[20];
 
 		while (*pattern) {
-			if (resolve_ref(*pattern, sha1, 1, NULL)) {
+			if (!strncmp(*pattern, "refs/", 5) &&
+			    resolve_ref(*pattern, sha1, 1, NULL)) {
 				if (!quiet)
-					printf("%s %s\n",
-					       sha1_to_hex(sha1), *pattern);
+					show_one(*pattern, sha1);
 			}
 			else if (!quiet)
 				die("'%s' - not a valid ref", *pattern);
