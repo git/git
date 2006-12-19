@@ -2915,8 +2915,10 @@ sub git_summary {
 	my $owner = git_get_project_owner($project);
 
 	my $refs = git_get_references();
-	my @taglist  = git_get_tags_list(15);
-	my @headlist = git_get_heads_list(15);
+	# These get_*_list functions return one more to allow us to see if
+	# there are more ...
+	my @taglist  = git_get_tags_list(16);
+	my @headlist = git_get_heads_list(16);
 	my @forklist;
 	my ($check_forks) = gitweb_check_feature('forks');
 
@@ -2952,6 +2954,8 @@ sub git_summary {
 		}
 	}
 
+	# we need to request one more than 16 (0..15) to check if
+	# those 16 are all
 	open my $fd, "-|", git_cmd(), "rev-list", "--max-count=17",
 		git_get_head_hash($project), "--"
 		or die_error(undef, "Open git-rev-list failed");
@@ -2959,17 +2963,20 @@ sub git_summary {
 	close $fd;
 	git_print_header_div('shortlog');
 	git_shortlog_body(\@revlist, 0, 15, $refs,
+	                  $#revlist <=  15 ? undef :
 	                  $cgi->a({-href => href(action=>"shortlog")}, "..."));
 
 	if (@taglist) {
 		git_print_header_div('tags');
 		git_tags_body(\@taglist, 0, 15,
+		              $#taglist <=  15 ? undef :
 		              $cgi->a({-href => href(action=>"tags")}, "..."));
 	}
 
 	if (@headlist) {
 		git_print_header_div('heads');
 		git_heads_body(\@headlist, $head, 0, 15,
+		               $#headlist <= 15 ? undef :
 		               $cgi->a({-href => href(action=>"heads")}, "..."));
 	}
 
