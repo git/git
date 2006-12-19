@@ -1013,7 +1013,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 {
 	const char *logfile, *logdata, *logend, *rec, *lastgt, *lastrec;
 	char *tz_c;
-	int logfd, tz;
+	int logfd, tz, reccnt = 0;
 	struct stat st;
 	unsigned long date;
 	unsigned char logged_sha1[20];
@@ -1031,6 +1031,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	lastrec = NULL;
 	rec = logend = logdata + st.st_size;
 	while (logdata < rec) {
+		reccnt++;
 		if (logdata < rec && *(rec-1) == '\n')
 			rec--;
 		lastgt = NULL;
@@ -1087,8 +1088,12 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	if (get_sha1_hex(logdata, sha1))
 		die("Log %s is corrupt.", logfile);
 	munmap((void*)logdata, st.st_size);
-	fprintf(stderr, "warning: Log %s only goes back to %s.\n",
-		logfile, show_rfc2822_date(date, tz));
+	if (at_time)
+		fprintf(stderr, "warning: Log %s only goes back to %s.\n",
+			logfile, show_rfc2822_date(date, tz));
+	else
+		fprintf(stderr, "warning: Log %s only has %d entries.\n",
+			logfile, reccnt);
 	return 0;
 }
 
@@ -1116,3 +1121,4 @@ void for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 	}
 	fclose(logfp);
 }
+
