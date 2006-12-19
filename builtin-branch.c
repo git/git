@@ -12,8 +12,12 @@
 #include "builtin.h"
 
 static const char builtin_branch_usage[] =
-  "git-branch (-d | -D) <branchname> | [-l] [-f] <branchname> [<start-point>] | (-m | -M) [<oldbranch>] <newbranch> | [-r | -a] [-v [--abbrev=<length>]]";
+  "git-branch [-r] (-d | -D) <branchname> | [-l] [-f] <branchname> [<start-point>] | (-m | -M) [<oldbranch>] <newbranch> | [-r | -a] [-v [--abbrev=<length>]]";
 
+#define REF_UNKNOWN_TYPE    0x00
+#define REF_LOCAL_BRANCH    0x01
+#define REF_REMOTE_BRANCH   0x02
+#define REF_TAG             0x04
 
 static const char *head;
 static unsigned char head_sha1[20];
@@ -89,12 +93,28 @@ static int in_merge_bases(const unsigned char *sha1,
 	return ret;
 }
 
-static void delete_branches(int argc, const char **argv, int force)
+static int delete_branches(int argc, const char **argv, int force, int kinds)
 {
 	struct commit *rev, *head_rev = head_rev;
 	unsigned char sha1[20];
-	char *name;
+	char *name = NULL;
+	const char *fmt, *remote;
 	int i;
+	int ret = 0;
+
+	switch (kinds) {
+	case REF_REMOTE_BRANCH:
+		fmt = "refs/remotes/%s";
+		remote = "remote ";
+		force = 1;
+		break;
+	case REF_LOCAL_BRANCH:
+		fmt = "refs/heads/%s";
+		remote = "";
+		break;
+	default:
+		die("cannot use -a with -d");
+	}
 
 	if (!force) {
 		head_rev = lookup_commit_reference(head_sha1);
@@ -102,16 +122,30 @@ static void delete_branches(int argc, const char **argv, int force)
 			die("Couldn't look up commit object for HEAD");
 	}
 	for (i = 0; i < argc; i++) {
-		if (!strcmp(head, argv[i]))
-			die("Cannot delete the branch you are currently on.");
+		if (kinds == REF_LOCAL_BRANCH && !strcmp(head, argv[i])) {
+			error("Cannot delete the branch '%s' "
+				"which you are currently on.", argv[i]);
+			ret = 1;
+			continue;
+		}
 
-		name = xstrdup(mkpath("refs/heads/%s", argv[i]));
-		if (!resolve_ref(name, sha1, 1, NULL))
-			die("Branch '%s' not found.", argv[i]);
+		if (name)
+			free(name);
+
+		name = xstrdup(mkpath(fmt, argv[i]));
+		if (!resolve_ref(name, sha1, 1, NULL)) {
+			error("%sbranch '%s' not found.",
+					remote, argv[i]);
+			ret = 1;
+			continue;
+		}
 
 		rev = lookup_commit_reference(sha1);
-		if (!rev)
-			die("Couldn't look up commit object for '%s'", name);
+		if (!rev) {
+			error("Couldn't look up commit object for '%s'", name);
+			ret = 1;
+			continue;
+		}
 
 		/* This checks whether the merge bases of branch and
 		 * HEAD contains branch -- which means that the HEAD
@@ -120,26 +154,28 @@ static void delete_branches(int argc, const char **argv, int force)
 
 		if (!force &&
 		    !in_merge_bases(sha1, rev, head_rev)) {
-			fprintf(stderr,
-				"The branch '%s' is not a strict subset of your current HEAD.\n"
-				"If you are sure you want to delete it, run 'git branch -D %s'.\n",
-				argv[i], argv[i]);
-			exit(1);
+			error("The branch '%s' is not a strict subset of "
+				"your current HEAD.\n"
+				"If you are sure you want to delete it, "
+				"run 'git branch -D %s'.", argv[i], argv[i]);
+			ret = 1;
+			continue;
 		}
 
-		if (delete_ref(name, sha1))
-			printf("Error deleting branch '%s'\n", argv[i]);
-		else
-			printf("Deleted branch %s.\n", argv[i]);
+		if (delete_ref(name, sha1)) {
+			error("Error deleting %sbranch '%s'", remote,
+			       argv[i]);
+			ret = 1;
+		} else
+			printf("Deleted %sbranch %s.\n", remote, argv[i]);
 
-		free(name);
 	}
-}
 
-#define REF_UNKNOWN_TYPE    0x00
-#define REF_LOCAL_BRANCH    0x01
-#define REF_REMOTE_BRANCH   0x02
-#define REF_TAG             0x04
+	if (name)
+		free(name);
+
+	return(ret);
+}
 
 struct ref_item {
 	char *name;
@@ -435,7 +471,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	head += 11;
 
 	if (delete)
-		delete_branches(argc - i, argv + i, force_delete);
+		return delete_branches(argc - i, argv + i, force_delete, kinds);
 	else if (i == argc)
 		print_ref_list(kinds, verbose, abbrev);
 	else if (rename && (i == argc - 1))
