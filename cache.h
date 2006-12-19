@@ -122,6 +122,10 @@ extern int cache_errno;
 #define DB_ENVIRONMENT "GIT_OBJECT_DIRECTORY"
 #define INDEX_ENVIRONMENT "GIT_INDEX_FILE"
 #define GRAFT_ENVIRONMENT "GIT_GRAFT_FILE"
+#define TEMPLATE_DIR_ENVIRONMENT "GIT_TEMPLATE_DIR"
+#define CONFIG_ENVIRONMENT "GIT_CONFIG"
+#define CONFIG_LOCAL_ENVIRONMENT "GIT_CONFIG_LOCAL"
+#define EXEC_PATH_ENVIRONMENT "GIT_EXEC_PATH"
 
 extern int is_bare_git_dir(const char *dir);
 extern const char *get_git_dir(void);

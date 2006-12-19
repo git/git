@@ -21,7 +21,7 @@ const char *git_exec_path(void)
 	if (current_exec_path)
 		return current_exec_path;
 
-	env = getenv("GIT_EXEC_PATH");
+	env = getenv(EXEC_PATH_ENVIRONMENT);
 	if (env && *env) {
 		return env;
 	}
@@ -35,7 +35,7 @@ int execv_git_cmd(const char **argv)
 	char git_command[PATH_MAX + 1];
 	int i;
 	const char *paths[] = { current_exec_path,
-				getenv("GIT_EXEC_PATH"),
+				getenv(EXEC_PATH_ENVIRONMENT),
 				builtin_exec_path };
 
 	for (i = 0; i < ARRAY_SIZE(paths); ++i) {
