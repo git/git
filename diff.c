@@ -1,9 +1,6 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <signal.h>
 #include "cache.h"
 #include "quote.h"
 #include "diff.h"

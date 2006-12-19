@@ -1,6 +1,3 @@
-#include <signal.h>
-#include <sys/wait.h>
-#include <sys/poll.h>
 #include "cache.h"
 #include "refs.h"
 #include "pkt-line.h"

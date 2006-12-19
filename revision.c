@@ -6,7 +6,6 @@
 #include "diff.h"
 #include "refs.h"
 #include "revision.h"
-#include <regex.h>
 #include "grep.h"
 
 static char *path_name(struct name_path *path, const char *name)

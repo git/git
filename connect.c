@@ -3,12 +3,6 @@
 #include "pkt-line.h"
 #include "quote.h"
 #include "refs.h"
-#include <sys/wait.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <signal.h>
 
 static char *server_capabilities;
 

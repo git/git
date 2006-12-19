@@ -1,9 +1,6 @@
 /*
  * Copyright (c) 2006 Franck Bui-Huu
  */
-#include <time.h>
-#include <sys/wait.h>
-#include <sys/poll.h>
 #include "cache.h"
 #include "builtin.h"
 #include "archive.h"

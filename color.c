@@ -1,8 +1,5 @@
-#include "color.h"
 #include "cache.h"
-#include "git-compat-util.h"
-
-#include <stdarg.h>
+#include "color.h"
 
 #define COLOR_RESET "\033[m"
 

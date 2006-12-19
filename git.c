@@ -1,19 +1,7 @@
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdarg.h>
-#include "git-compat-util.h"
+#include "builtin.h"
 #include "exec_cmd.h"
 #include "cache.h"
 #include "quote.h"
-
-#include "builtin.h"
 
 const char git_usage_string[] =
 	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate] [--bare] [--git-dir=GIT_DIR] [--help] COMMAND [ARGS]";

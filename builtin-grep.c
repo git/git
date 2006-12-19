@@ -10,10 +10,7 @@
 #include "tag.h"
 #include "tree-walk.h"
 #include "builtin.h"
-#include <regex.h>
 #include "grep.h"
-#include <fnmatch.h>
-#include <sys/wait.h>
 
 /*
  * git grep pathspecs are somewhat different from diff-tree pathspecs;

@@ -3,12 +3,11 @@
  *
  * Builtin help-related commands (help, usage, version)
  */
-#include <sys/ioctl.h>
 #include "cache.h"
 #include "builtin.h"
 #include "exec_cmd.h"
 #include "common-cmds.h"
-
+#include <sys/ioctl.h>
 
 /* most GUI terminals set COLUMNS (although some don't export it) */
 static int term_columns(void)

@@ -2,15 +2,6 @@
  * Another stupid program, this one parsing the headers of an
  * email to figure out authorship and subject
  */
-#define _GNU_SOURCE
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#ifndef NO_ICONV
-#include <iconv.h>
-#endif
-#include "git-compat-util.h"
 #include "cache.h"
 #include "builtin.h"
 

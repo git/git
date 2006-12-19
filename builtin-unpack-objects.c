@@ -8,8 +8,6 @@
 #include "tag.h"
 #include "tree.h"
 
-#include <sys/time.h>
-
 static int dry_run, quiet, recover, has_errors;
 static const char unpack_usage[] = "git-unpack-objects [-n] [-q] [-r] < pack-file";
 

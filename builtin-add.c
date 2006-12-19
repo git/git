@@ -3,8 +3,6 @@
  *
  * Copyright (C) 2006 Linus Torvalds
  */
-#include <fnmatch.h>
-
 #include "cache.h"
 #include "builtin.h"
 #include "dir.h"

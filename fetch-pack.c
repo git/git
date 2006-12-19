@@ -5,7 +5,6 @@
 #include "tag.h"
 #include "exec_cmd.h"
 #include "sideband.h"
-#include <sys/wait.h>
 
 static int keep_pack;
 static int quiet;

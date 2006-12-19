@@ -1,6 +1,5 @@
 #include "builtin.h"
 #include "cache.h"
-#include <regex.h>
 
 static const char git_config_set_usage[] =
 "git-repo-config [ --global ] [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --list";

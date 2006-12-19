@@ -12,8 +12,6 @@
 #include "diff.h"
 #include "revision.h"
 #include "list-objects.h"
-#include <sys/time.h>
-#include <signal.h>
 
 static const char pack_usage[] = "\
 git-pack-objects [{ -q | --progress | --all-progress }] \n\

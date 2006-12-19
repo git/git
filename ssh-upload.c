@@ -12,8 +12,6 @@
 #include "rsh.h"
 #include "refs.h"
 
-#include <string.h>
-
 static unsigned char local_version = 1;
 static unsigned char remote_version;
 

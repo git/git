@@ -6,7 +6,6 @@
  *
  */
 #include "cache.h"
-#include <regex.h>
 
 #define MAXNAME (256)
 

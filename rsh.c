@@ -1,10 +1,6 @@
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-
+#include "cache.h"
 #include "rsh.h"
 #include "quote.h"
-#include "cache.h"
 
 #define COMMAND_SIZE 4096
 

@@ -1,8 +1,3 @@
-#define _XOPEN_SOURCE 600
-#include <unistd.h>
-#include <sys/time.h>
-#include <signal.h>
-
 #include "cache.h"
 #include "delta.h"
 #include "pack.h"

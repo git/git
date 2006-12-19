@@ -2,8 +2,6 @@
  * Copyright 2006 Jon Loeliger
  */
 
-#include <string.h>
-
 #include "git-compat-util.h"
 #include "interpolate.h"
 

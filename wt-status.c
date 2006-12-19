@@ -1,6 +1,6 @@
+#include "cache.h"
 #include "wt-status.h"
 #include "color.h"
-#include "cache.h"
 #include "object.h"
 #include "dir.h"
 #include "commit.h"
