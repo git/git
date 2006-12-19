@@ -17,7 +17,7 @@ git commit -m initial'
 cd "$base_dir"
 
 test_expect_success 'preparing second repository' \
-'git clone A B && cd B &&
+'git_clone A B && cd B &&
 echo second > file2 &&
 git add file2 &&
 git commit -m addition &&
@@ -27,7 +27,7 @@ git prune'
 cd "$base_dir"
 
 test_expect_success 'cloning with reference' \
-'git clone -l -s --reference B A C'
+'git_clone -l -s --reference B A C'
 
 cd "$base_dir"
 

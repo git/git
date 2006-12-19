@@ -4,7 +4,7 @@
 #include "tag.h"
 #include "path-list.h"
 
-static const char show_ref_usage[] = "git show-ref [-q|--quiet] [--verify] [-h|--head] [-d|--dereference] [-s|--hash[=<length>]] [--abbrev[=<length>]] [--tags] [--heads] [--] [pattern*] | --filter-invalid < ref-list";
+static const char show_ref_usage[] = "git show-ref [-q|--quiet] [--verify] [-h|--head] [-d|--dereference] [-s|--hash[=<length>]] [--abbrev[=<length>]] [--tags] [--heads] [--] [pattern*] < ref-list";
 
 static int deref_tags = 0, show_head = 0, tags_only = 0, heads_only = 0,
 	found_match = 0, verify = 0, quiet = 0, hash_only = 0, abbrev = 0;
@@ -116,11 +116,12 @@ static int exclude_existing(const char *match)
 
 	for_each_ref(add_existing, &existing_refs);
 	while (fgets(buf, sizeof(buf), stdin)) {
-		int len = strlen(buf);
 		char *ref;
+		int len = strlen(buf);
+
 		if (len > 0 && buf[len - 1] == '\n')
 			buf[--len] = '\0';
-		if (!strcmp(buf + len - 3, "^{}")) {
+		if (3 <= len && !strcmp(buf + len - 3, "^{}")) {
 			len -= 3;
 			buf[len] = '\0';
 		}

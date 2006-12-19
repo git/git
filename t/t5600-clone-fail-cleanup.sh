@@ -13,7 +13,7 @@ remove the directory before attempting a clone again.'
 
 test_expect_failure \
     'clone of non-existent source should fail' \
-    'git-clone foo bar'
+    'git_clone foo bar'
 
 test_expect_failure \
     'failed clone should not leave a directory' \
@@ -29,11 +29,11 @@ test_create_repo foo
 # current path not to the target dir
 test_expect_failure \
     'clone of non-existent (relative to $PWD) source should fail' \
-    'git-clone ../foo baz'
+    'git_clone ../foo baz'
 
 test_expect_success \
     'clone should work now that source exists' \
-    'git-clone foo bar'
+    'git_clone foo bar'
 
 test_expect_success \
     'successfull clone must leave the directory' \

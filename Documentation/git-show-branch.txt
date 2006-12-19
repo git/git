@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git-show-branch' [--all] [--heads] [--tags] [--topo-order] [--current]
 		[--more=<n> | --list | --independent | --merge-base]
-		[--no-name | --sha1-name] [<rev> | <glob>]...
+		[--no-name | --sha1-name] [--topics] [<rev> | <glob>]...
 
 DESCRIPTION
 -----------
@@ -85,6 +85,14 @@ OPTIONS
 	them from heads (e.g. "master~2" to mean the grandparent
 	of "master"), name them with the unique prefix of their
 	object names.
+
+--topics::
+	Shows only commits that are NOT on the first branch given.
+	This helps track topic branches by hiding any commit that
+	is already in the main line of development.  When given
+	"git show-branch --topics master topic1 topic2", this
+	will show the revisions given by "git rev-list {caret}master
+	topic1 topic2"
 
 Note that --more, --list, --independent and --merge-base options
 are mutually exclusive.

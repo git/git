@@ -24,7 +24,7 @@ test_expect_success setup '
 	    parent=$commit || return 1
 	done &&
 	git-update-ref HEAD "$commit" &&
-	git-clone -l ./. victim &&
+	git_clone -l ./. victim &&
 	cd victim &&
 	git-log &&
 	cd .. &&
