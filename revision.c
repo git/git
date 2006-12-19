@@ -853,8 +853,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->boundary = 1;
 				continue;
 			}
-			if (!strcmp(arg, "--no-left-right")) {
-				revs->no_left_right = 1;
+			if (!strcmp(arg, "--left-right")) {
+				revs->left_right = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--objects")) {
@@ -1055,18 +1055,13 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 void prepare_revision_walk(struct rev_info *revs)
 {
 	int nr = revs->pending.nr;
-	int has_symmetric = 0;
 	struct object_array_entry *list = revs->pending.objects;
 
 	revs->pending.nr = 0;
 	revs->pending.alloc = 0;
 	revs->pending.objects = NULL;
 	while (--nr >= 0) {
-		struct commit *commit;
-
-		if (list->item->flags & SYMMETRIC_LEFT)
-			has_symmetric = 1;
-		commit = handle_commit(revs, list->item, list->name);
+		struct commit *commit = handle_commit(revs, list->item, list->name);
 		if (commit) {
 			if (!(commit->object.flags & SEEN)) {
 				commit->object.flags |= SEEN;
@@ -1078,8 +1073,6 @@ void prepare_revision_walk(struct rev_info *revs)
 
 	if (revs->no_walk)
 		return;
-	if (!revs->no_left_right && has_symmetric)
-		revs->left_right = 1;
 	if (revs->limited)
 		limit_list(revs);
 	if (revs->topo_order)
