@@ -74,25 +74,6 @@ const char *branch_get_color(enum color_branch ix)
 	return "";
 }
 
-static int in_merge_bases(const unsigned char *sha1,
-			  struct commit *rev1,
-			  struct commit *rev2)
-{
-	struct commit_list *bases, *b;
-	int ret = 0;
-
-	bases = get_merge_bases(rev1, rev2, 1);
-	for (b = bases; b; b = b->next) {
-		if (!hashcmp(sha1, b->item->object.sha1)) {
-			ret = 1;
-			break;
-		}
-	}
-
-	free_commit_list(bases);
-	return ret;
-}
-
 static int delete_branches(int argc, const char **argv, int force, int kinds)
 {
 	struct commit *rev, *head_rev = head_rev;
@@ -153,7 +134,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds)
 		 */
 
 		if (!force &&
-		    !in_merge_bases(sha1, rev, head_rev)) {
+		    !in_merge_bases(rev, head_rev)) {
 			error("The branch '%s' is not a strict subset of "
 				"your current HEAD.\n"
 				"If you are sure you want to delete it, "
