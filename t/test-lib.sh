@@ -182,16 +182,6 @@ test_create_repo () {
 	cd "$owd"
 }
 	
-# Many tests do init-db and clone but they must be told about the freshly
-# built templates.
-git_init_db () {
-	git init-db --template="$GIT_EXEC_PATH/templates/blt/" "$@"
-}
-
-git_clone () {
-	git clone --template="$GIT_EXEC_PATH/templates/blt/" "$@"
-}
-
 test_done () {
 	trap - exit
 	case "$test_failure" in
@@ -218,8 +208,9 @@ test_done () {
 # t/ subdirectory and are run in trash subdirectory.
 PATH=$(pwd)/..:$PATH
 GIT_EXEC_PATH=$(pwd)/..
+GIT_TEMPLATE_DIR=$(pwd)/../templates/blt
 HOME=$(pwd)/trash
-export PATH GIT_EXEC_PATH HOME
+export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR HOME
 
 GITPERLLIB=$(pwd)/../perl/blib/lib:$(pwd)/../perl/blib/arch/auto/Git
 export GITPERLLIB

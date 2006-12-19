@@ -67,10 +67,10 @@ static int get_value(const char* key_, const char* regex_)
 	char *global = NULL, *repo_config = NULL;
 	const char *local;
 
-	local = getenv("GIT_CONFIG");
+	local = getenv(CONFIG_ENVIRONMENT);
 	if (!local) {
 		const char *home = getenv("HOME");
-		local = getenv("GIT_CONFIG_LOCAL");
+		local = getenv(CONFIG_LOCAL_ENVIRONMENT);
 		if (!local)
 			local = repo_config = xstrdup(git_path("config"));
 		if (home)

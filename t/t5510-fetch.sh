@@ -15,23 +15,22 @@ test_expect_success setup '
 	git commit -a -m original'
 
 test_expect_success "clone and setup child repos" '
-	git_clone . one &&
+	git clone . one &&
 	cd one &&
 	echo >file updated by one &&
 	git commit -a -m "updated by one" &&
 	cd .. &&
-	git_clone . two &&
+	git clone . two &&
 	cd two &&
 	git repo-config branch.master.remote one &&
-	{
-		echo "URL: ../one/.git/"
-		echo "Pull: refs/heads/master:refs/heads/one"
-	} >.git/remotes/one
+	git repo-config remote.one.url ../one/.git/ &&
+	git repo-config remote.one.fetch refs/heads/master:refs/heads/one &&
 	cd .. &&
-	git_clone . three &&
+	git clone . three &&
 	cd three &&
 	git repo-config branch.master.remote two &&
 	git repo-config branch.master.merge refs/heads/one &&
+	mkdir -p .git/remotes &&
 	{
 		echo "URL: ../two/.git/"
 		echo "Pull: refs/heads/master:refs/heads/two"
@@ -74,7 +73,7 @@ test_expect_success 'fetch following tags' '
 
 	mkdir four &&
 	cd four &&
-	git_init_db &&
+	git init-db &&
 
 	git fetch .. :track &&
 	git show-ref --verify refs/tags/anno &&
