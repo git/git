@@ -8,6 +8,7 @@
 #include "cache.h"
 #include "builtin.h"
 #include "dir.h"
+#include "exec_cmd.h"
 #include "cache-tree.h"
 
 static const char builtin_add_usage[] =
@@ -89,6 +90,20 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	int verbose = 0, show_only = 0;
 	const char **pathspec;
 	struct dir_struct dir;
+	int add_interactive = 0;
+
+	for (i = 1; i < argc; i++) {
+		if (!strcmp("--interactive", argv[i]))
+			add_interactive++;
+	}
+	if (add_interactive) {
+		const char *args[] = { "add--interactive", NULL };
+
+		if (add_interactive != 1 || argc != 2)
+			die("add --interactive does not take any parameters");
+		execv_git_cmd(args);
+		exit(1);
+	}
 
 	git_config(git_default_config);
 
