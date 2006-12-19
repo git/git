@@ -244,6 +244,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "prune-packed", cmd_prune_packed, RUN_SETUP },
 		{ "push", cmd_push, RUN_SETUP },
 		{ "read-tree", cmd_read_tree, RUN_SETUP },
+		{ "reflog", cmd_reflog, RUN_SETUP },
 		{ "repo-config", cmd_repo_config },
 		{ "rev-list", cmd_rev_list, RUN_SETUP },
 		{ "rev-parse", cmd_rev_parse, RUN_SETUP },
