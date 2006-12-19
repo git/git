@@ -464,21 +464,59 @@ static void limit_list(struct rev_info *revs)
 	revs->commits = newlist;
 }
 
-static int all_flags;
-static struct rev_info *all_revs;
+struct all_refs_cb {
+	int all_flags;
+	struct rev_info *all_revs;
+	const char *name_for_errormsg;
+};
 
 static int handle_one_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
-	struct object *object = get_reference(all_revs, path, sha1, all_flags);
-	add_pending_object(all_revs, object, "");
+	struct all_refs_cb *cb = cb_data;
+	struct object *object = get_reference(cb->all_revs, path, sha1,
+					      cb->all_flags);
+	add_pending_object(cb->all_revs, object, "");
 	return 0;
 }
 
 static void handle_all(struct rev_info *revs, unsigned flags)
 {
-	all_revs = revs;
-	all_flags = flags;
-	for_each_ref(handle_one_ref, NULL);
+	struct all_refs_cb cb;
+	cb.all_revs = revs;
+	cb.all_flags = flags;
+	for_each_ref(handle_one_ref, &cb);
+}
+
+static int handle_one_reflog_ent(unsigned char *osha1, unsigned char *nsha1, char *detail, void *cb_data)
+{
+	struct all_refs_cb *cb = cb_data;
+	struct object *object;
+
+	if (!is_null_sha1(osha1)) {
+		object = get_reference(cb->all_revs, cb->name_for_errormsg,
+				       osha1, cb->all_flags);
+		add_pending_object(cb->all_revs, object, "");
+	}
+	object = get_reference(cb->all_revs, cb->name_for_errormsg,
+			       nsha1, cb->all_flags);
+	add_pending_object(cb->all_revs, object, "");
+	return 0;
+}
+
+static int handle_one_reflog(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+{
+	struct all_refs_cb *cb = cb_data;
+	cb->name_for_errormsg = path;
+	for_each_reflog_ent(path, handle_one_reflog_ent, cb_data);
+	return 0;
+}
+
+static void handle_reflog(struct rev_info *revs, unsigned flags)
+{
+	struct all_refs_cb cb;
+	cb.all_revs = revs;
+	cb.all_flags = flags;
+	for_each_ref(handle_one_reflog, &cb);
 }
 
 static int add_parents_only(struct rev_info *revs, const char *arg, int flags)
@@ -803,6 +841,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "--all")) {
 				handle_all(revs, flags);
+				continue;
+			}
+			if (!strcmp(arg, "--reflog")) {
+				handle_reflog(revs, flags);
 				continue;
 			}
 			if (!strcmp(arg, "--not")) {
