@@ -182,16 +182,6 @@ test_create_repo () {
 	cd "$owd"
 }
 	
-# Many tests do init-db and clone but they must be told about the freshly
-# built templates.
-git_init_db () {
-	git init-db --template="$GIT_EXEC_PATH/templates/blt/" "$@"
-}
-
-git_clone () {
-	git clone --template="$GIT_EXEC_PATH/templates/blt/" "$@"
-}
-
 test_done () {
 	trap - exit
 	case "$test_failure" in

@@ -34,7 +34,7 @@ git prune'
 cd "$base_dir"
 
 test_expect_success 'preparing second repository' \
-'git_clone -l -s A B && cd B &&
+'git clone -l -s A B && cd B &&
 echo "foo bar" > file2 &&
 git add file2 &&
 git commit -m "next commit" file2 &&
@@ -44,7 +44,7 @@ git prune'
 cd "$base_dir"
 
 test_expect_success 'preparing third repository' \
-'git_clone -l -s B C && cd C &&
+'git clone -l -s B C && cd C &&
 echo "Goodbye, cruel world" > file3 &&
 git add file3 &&
 git commit -m "one more" file3 &&
@@ -54,11 +54,11 @@ git prune'
 cd "$base_dir"
 
 test_expect_failure 'creating too deep nesting' \
-'git_clone -l -s C D &&
-git_clone -l -s D E &&
-git_clone -l -s E F &&
-git_clone -l -s F G &&
-git_clone -l -s G H &&
+'git clone -l -s C D &&
+git clone -l -s D E &&
+git clone -l -s E F &&
+git clone -l -s F G &&
+git clone -l -s G H &&
 cd H &&
 test_valid_repo'
 

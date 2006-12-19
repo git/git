@@ -97,7 +97,7 @@ pull_to_client () {
 (
 	mkdir client &&
 	cd client &&
-	git_init_db 2>> log2.txt
+	git-init-db 2>> log2.txt
 )
 
 add A1
