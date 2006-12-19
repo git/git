@@ -132,7 +132,6 @@ canon_refs_list_for_fetch () {
 	# or the first one otherwise; add prefix . to the rest
 	# to prevent the secondary branches to be merged by default.
 	merge_branches=
-	found_mergeref=
 	curr_branch=
 	if test "$1" = "-d"
 	then
@@ -172,10 +171,6 @@ canon_refs_list_for_fetch () {
 			    dot_prefix= && break
 			done
 		fi
-		if test -z $dot_prefix
-		then
-			found_mergeref=true
-		fi
 		case "$remote" in
 		'') remote=HEAD ;;
 		refs/heads/* | refs/tags/* | refs/remotes/*) ;;
@@ -196,11 +191,6 @@ canon_refs_list_for_fetch () {
 		fi
 		echo "${dot_prefix}${force}${remote}:${local}"
 	done
-	if test -z "$found_mergeref" -a "$curr_branch"
-	then
-		echo >&2 "Warning: No merge candidate found because value of config option
-         \"branch.${curr_branch}.merge\" does not match any remote branch fetched."
-	fi
 }
 
 # Returns list of src: (no store), or src:dst (store)

@@ -76,6 +76,10 @@ merge_head=$(sed -e '/	not-for-merge	/d' \
 
 case "$merge_head" in
 '')
+	curr_branch=$(git-symbolic-ref HEAD | \
+		sed -e 's|^refs/heads/||')
+	echo >&2 "Warning: No merge candidate found because value of config option
+         \"branch.${curr_branch}.merge\" does not match any remote branch fetched."
 	echo >&2 "No changes."
 	exit 0
 	;;
