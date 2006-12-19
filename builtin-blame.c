@@ -22,7 +22,9 @@
 static char blame_usage[] =
 "git-blame [-c] [-l] [-t] [-f] [-n] [-p] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [commit] [--] file\n"
 "  -c, --compatibility Use the same output mode as git-annotate (Default: off)\n"
+"  -b                  Show blank SHA-1 for boundary commits (Default: off)\n"
 "  -l, --long          Show long commit SHA1 (Default: off)\n"
+"  --root              Do not treat root commits as boundaries (Default: off)\n"
 "  -t, --time          Show raw timestamp (Default: off)\n"
 "  -f, --show-name     Show original filename (Default: auto)\n"
 "  -n, --show-number   Show original linenumber (Default: off)\n"
@@ -36,6 +38,8 @@ static int longest_author;
 static int max_orig_digits;
 static int max_digits;
 static int max_score_digits;
+static int show_root;
+static int blank_boundary;
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -1095,6 +1099,9 @@ static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
 			if (commit->object.parsed)
 				mark_parents_uninteresting(commit);
 		}
+		/* treat root commit as boundary */
+		if (!commit->parents && !show_root)
+			commit->object.flags |= UNINTERESTING;
 
 		/* Take responsibility for the remaining entries */
 		for (ent = sb->ent; ent; ent = ent->next)
@@ -1318,8 +1325,12 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 		int length = (opt & OUTPUT_LONG_OBJECT_NAME) ? 40 : 8;
 
 		if (suspect->commit->object.flags & UNINTERESTING) {
-			length--;
-			putchar('^');
+			if (!blank_boundary) {
+				length--;
+				putchar('^');
+			}
+			else
+				memset(hex, ' ', length);
 		}
 
 		printf("%.*s", length, hex);
@@ -1639,6 +1650,19 @@ static void prepare_blame_range(struct scoreboard *sb,
 		usage(blame_usage);
 }
 
+static int git_blame_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "blame.showroot")) {
+		show_root = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "blame.blankboundary")) {
+		blank_boundary = git_config_bool(var, value);
+		return 0;
+	}
+	return git_default_config(var, value);
+}
+
 int cmd_blame(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
@@ -1654,6 +1678,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	char type[10];
 	const char *bottomtop = NULL;
 
+	git_config(git_blame_config);
 	save_commit_buffer = 0;
 
 	opt = 0;
@@ -1662,6 +1687,10 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		const char *arg = argv[i];
 		if (*arg != '-')
 			break;
+		else if (!strcmp("-b", arg))
+			blank_boundary = 1;
+		else if (!strcmp("--root", arg))
+			show_root = 1;
 		else if (!strcmp("-c", arg))
 			output_option |= OUTPUT_ANNOTATE_COMPAT;
 		else if (!strcmp("-t", arg))
