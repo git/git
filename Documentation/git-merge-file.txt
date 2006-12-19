@@ -1,9 +1,9 @@
 git-merge-file(1)
-============
+=================
 
 NAME
 ----
-git-merge-file - threeway file merge
+git-merge-file - three-way file merge
 
 
 SYNOPSIS

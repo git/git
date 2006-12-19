@@ -4,7 +4,7 @@ Use of index and Racy git problem
 Background
 ----------
 
-The index is one of the most important data structure in git.
+The index is one of the most important data structures in git.
 It represents a virtual working tree state by recording list of
 paths and their object names and serves as a staging area to
 write out the next tree object to be committed.  The state is
@@ -16,7 +16,7 @@ virtual working tree state in the index and the files in the
 working tree.  The most obvious case is when the user asks `git
 diff` (or its low level implementation, `git diff-files`) or
 `git-ls-files --modified`.  In addition, git internally checks
-if the files in the working tree is different from what are
+if the files in the working tree are different from what are
 recorded in the index to avoid stomping on local changes in them
 during patch application, switching branches, and merging.
 
@@ -24,9 +24,9 @@ In order to speed up this comparison between the files in the
 working tree and the index entries, the index entries record the
 information obtained from the filesystem via `lstat(2)` system
 call when they were last updated.  When checking if they differ,
-git first runs `lstat(2)` on the files and compare the result
+git first runs `lstat(2)` on the files and compares the result
 with this information (this is what was originally done by the
-`ce_match_stat()` function, which the current code does in
+`ce_match_stat()` function, but the current code does it in
 `ce_match_stat_basic()` function).  If some of these "cached
 stat information" fields do not match, git can tell that the
 files are modified without even looking at their contents.
@@ -53,8 +53,9 @@ Racy git
 There is one slight problem with the optimization based on the
 cached stat information.  Consider this sequence:
 
+  : modify 'foo'
   $ git update-index 'foo'
-  : modify 'foo' in-place without changing its size
+  : modify 'foo' again, in-place, without changing its size
 
 The first `update-index` computes the object name of the
 contents of file `foo` and updates the index entry for `foo`
@@ -62,7 +63,8 @@ along with the `struct stat` information.  If the modification
 that follows it happens very fast so that the file's `st_mtime`
 timestamp does not change, after this sequence, the cached stat
 information the index entry records still exactly match what you
-can obtain from the filesystem, but the file `foo` is modified.
+would see in the filesystem, even though the file `foo` is now
+different.
 This way, git can incorrectly think files in the working tree
 are unmodified even though they actually are.  This is called
 the "racy git" problem (discovered by Pasky), and the entries
@@ -87,7 +89,7 @@ the stat information from updated paths, `st_mtime` timestamp of
 it is usually the same as or newer than any of the paths the
 index contains.  And no matter how quick the modification that
 follows `git update-index foo` finishes, the resulting
-`st_mtime` timestamp on `foo` cannot get the timestamp earlier
+`st_mtime` timestamp on `foo` cannot get a value earlier
 than the index file.  Therefore, index entries that can be
 racily clean are limited to the ones that have the same
 timestamp as the index file itself.
@@ -111,7 +113,7 @@ value, and falsely clean entry `foo` would not be caught by the
 timestamp comparison check done with the former logic anymore.
 The latter makes sure that the cached stat information for `foo`
 would never match with the file in the working tree, so later
-checks by `ce_match_stat_basic()` would report the index entry
+checks by `ce_match_stat_basic()` would report that the index entry
 does not match the file and git does not have to fall back on more
 expensive `ce_modified_check_fs()`.
 
@@ -155,17 +157,16 @@ of the cached stat information.
 Avoiding runtime penalty
 ------------------------
 
-In order to avoid the above runtime penalty, the recent "master"
-branch (post 1.4.2) has a code that makes sure the index file
-gets timestamp newer than the youngest files in the index when
+In order to avoid the above runtime penalty, post 1.4.2 git used
+to have a code that made sure the index file
+got timestamp newer than the youngest files in the index when
 there are many young files with the same timestamp as the
 resulting index file would otherwise would have by waiting
 before finishing writing the index file out.
 
-I suspect that in practice the situation where many paths in the
-index are all racily clean is quite rare.  The only code paths
-that can record recent timestamp for large number of paths I
-know of are:
+I suspected that in practice the situation where many paths in the
+index are all racily clean was quite rare.  The only code paths
+that can record recent timestamp for large number of paths are:
 
 . Initial `git add .` of a large project.
 
@@ -188,6 +189,7 @@ youngest file in the working tree.  This means that in these
 cases there actually will not be any racily clean entry in
 the resulting index.
 
-So in summary I think we should not worry about avoiding the
-runtime penalty and get rid of the "wait before finishing
-writing" code out.
+Based on this discussion, the current code does not use the
+"workaround" to avoid the runtime penalty that does not exist in
+practice anymore.  This was done with commit 0fc82cff on Aug 15,
+2006.

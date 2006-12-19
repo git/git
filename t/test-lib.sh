@@ -208,8 +208,9 @@ test_done () {
 # t/ subdirectory and are run in trash subdirectory.
 PATH=$(pwd)/..:$PATH
 GIT_EXEC_PATH=$(pwd)/..
+GIT_TEMPLATE_DIR=$(pwd)/../templates/blt
 HOME=$(pwd)/trash
-export PATH GIT_EXEC_PATH HOME
+export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR HOME
 
 GITPERLLIB=$(pwd)/../perl/blib/lib:$(pwd)/../perl/blib/arch/auto/Git
 export GITPERLLIB

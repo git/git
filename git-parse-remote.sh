@@ -111,16 +111,14 @@ expand_refs_wildcard () {
 		local_force=
 		test "z$lref" = "z$ref" || local_force='+'
 		echo "$ls_remote_result" |
+		sed -e '/\^{}$/d' |
 		(
 			IFS='	'
 			while read sha1 name
 			do
+				# ignore the ones that do not start with $from
 				mapped=${name#"$from"}
-				if test "z$name" != "z${name%'^{}'}" ||
-					test "z$name" = "z$mapped"
-				then
-					continue
-				fi
+				test "z$name" = "z$mapped" && continue
 				echo "${local_force}${name}:${to}${mapped}"
 			done
 		)

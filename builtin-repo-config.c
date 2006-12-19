@@ -3,7 +3,7 @@
 #include <regex.h>
 
 static const char git_config_set_usage[] =
-"git-repo-config [ --global ] [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --list";
+"git-repo-config [ --global ] [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --list";
 
 static char *key;
 static regex_t *key_regexp;
@@ -148,6 +148,18 @@ int cmd_repo_config(int argc, const char **argv, const char *prefix)
 			} else {
 				die("$HOME not set");
 			}
+		} else if (!strcmp(argv[1], "--rename-section")) {
+			int ret;
+			if (argc != 4)
+				usage(git_config_set_usage);
+			ret = git_config_rename_section(argv[2], argv[3]);
+			if (ret < 0)
+				return ret;
+			if (ret == 0) {
+				fprintf(stderr, "No such section!\n");
+				return 1;
+			}
+			return 0;
 		} else
 			break;
 		argc--;

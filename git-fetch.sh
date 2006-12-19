@@ -96,7 +96,7 @@ fi
 
 # Global that is reused later
 ls_remote_result=$(git ls-remote $upload_pack "$remote") ||
-	die "Cannot find the reflist at $remote"
+	die "Cannot get the repository state from $remote"
 
 append_fetch_head () {
     head_="$1"
@@ -242,7 +242,7 @@ esac
 reflist=$(get_remote_refs_for_fetch "$@")
 if test "$tags"
 then
-	taglist=`IFS="	" &&
+	taglist=`IFS='	' &&
 		  echo "$ls_remote_result" |
 	          while read sha1 name
 		  do
@@ -438,17 +438,11 @@ case "$no_tags$tags" in
 	*:refs/*)
 		# effective only when we are following remote branch
 		# using local tracking branch.
-		taglist=$(IFS=" " &&
+		taglist=$(IFS='	' &&
 		echo "$ls_remote_result" |
-		sed -n	-e 's|^\('"$_x40"'\)	\(refs/tags/.*\)^{}$|\1 \2|p' \
-			-e 's|^\('"$_x40"'\)	\(refs/tags/.*\)$|\1 \2|p' |
+		git-show-ref --exclude-existing=refs/tags/ |
 		while read sha1 name
 		do
-			git-show-ref --verify --quiet -- "$name" && continue
-			git-check-ref-format "$name" || {
-				echo >&2 "warning: tag ${name} ignored"
-				continue
-			}
 			git-cat-file -t "$sha1" >/dev/null 2>&1 || continue
 			echo >&2 "Auto-following $name"
 			echo ".${name}:${name}"
