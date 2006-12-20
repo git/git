@@ -749,7 +749,7 @@ out_free:
 int git_config_rename_section(const char *old_name, const char *new_name)
 {
 	int ret = 0;
-	const char *config_filename;
+	char *config_filename;
 	struct lock_file *lock = xcalloc(sizeof(struct lock_file), 1);
 	int out_fd;
 	char buf[1024];
@@ -762,11 +762,15 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 	}
 	config_filename = xstrdup(config_filename);
 	out_fd = hold_lock_file_for_update(lock, config_filename, 0);
-	if (out_fd < 0)
-		return error("Could not lock config file!");
+	if (out_fd < 0) {
+		ret = error("Could not lock config file!");
+		goto out;
+	}
 
-	if (!(config_file = fopen(config_filename, "rb")))
-		return error("Could not open config file!");
+	if (!(config_file = fopen(config_filename, "rb"))) {
+		ret = error("Could not open config file!");
+		goto out;
+	}
 
 	while (fgets(buf, sizeof(buf), config_file)) {
 		int i;
@@ -806,8 +810,11 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 		}
 		write(out_fd, buf, strlen(buf));
 	}
+	fclose(config_file);
 	if (close(out_fd) || commit_lock_file(lock) < 0)
-		return error("Cannot commit config file!");
+		ret = error("Cannot commit config file!");
+ out:
+	free(config_filename);
 	return ret;
 }
 
