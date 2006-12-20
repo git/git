@@ -1,0 +1,14 @@
+#!/bin/sh
+# Prepare "What's cooking in git.git"
+
+master_at=$(git rev-parse --verify refs/heads/master)
+next_at=$(git rev-parse --verify refs/heads/next)
+
+echo "To: git@vger.kernel.org"
+echo "Subject: What's cooking in git.git (topics)"
+echo "X-master-at: $master_at"
+echo "X-next-at: $next_at"
+
+Meta/git-topic.perl --base=master | sed -e 's/^\*./*/'
+
+
