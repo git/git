@@ -349,10 +349,10 @@ int git_config(config_fn_t fn)
 	 * $GIT_CONFIG_LOCAL will make it process it in addition to the
 	 * global config file, the same way it would the per-repository
 	 * config file otherwise. */
-	filename = getenv("GIT_CONFIG");
+	filename = getenv(CONFIG_ENVIRONMENT);
 	if (!filename) {
 		home = getenv("HOME");
-		filename = getenv("GIT_CONFIG_LOCAL");
+		filename = getenv(CONFIG_LOCAL_ENVIRONMENT);
 		if (!filename)
 			filename = repo_config = xstrdup(git_path("config"));
 	}
@@ -543,9 +543,9 @@ int git_config_set_multivar(const char* key, const char* value,
 	char* lock_file;
 	const char* last_dot = strrchr(key, '.');
 
-	config_filename = getenv("GIT_CONFIG");
+	config_filename = getenv(CONFIG_ENVIRONMENT);
 	if (!config_filename) {
-		config_filename = getenv("GIT_CONFIG_LOCAL");
+		config_filename = getenv(CONFIG_LOCAL_ENVIRONMENT);
 		if (!config_filename)
 			config_filename  = git_path("config");
 	}
@@ -753,9 +753,9 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 	int out_fd;
 	char buf[1024];
 
-	config_filename = getenv("GIT_CONFIG");
+	config_filename = getenv(CONFIG_ENVIRONMENT);
 	if (!config_filename) {
-		config_filename = getenv("GIT_CONFIG_LOCAL");
+		config_filename = getenv(CONFIG_LOCAL_ENVIRONMENT);
 		if (!config_filename)
 			config_filename  = git_path("config");
 	}

@@ -1272,7 +1272,7 @@ int main(int argc, char *argv[])
 	struct commit *result, *h1, *h2;
 
 	git_config(git_default_config); /* core.filemode */
-	original_index_file = getenv("GIT_INDEX_FILE");
+	original_index_file = getenv(INDEX_ENVIRONMENT);
 
 	if (!original_index_file)
 		original_index_file = xstrdup(git_path("index"));

@@ -11,8 +11,7 @@ SYNOPSIS
 [verse]
 'git-clone' [--template=<template_directory>] [-l [-s]] [-q] [-n] [--bare]
 	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
-	  [--use-separate-remote | --no-separate-remote] <repository>
-	  [<directory>]
+	  <repository> [<directory>]
 
 DESCRIPTION
 -----------
@@ -98,18 +97,6 @@ OPTIONS
 	Specify the directory from which templates will be used;
 	if unset the templates are taken from the installation
 	defined default, typically `/usr/share/git-core/templates`.
-
---use-separate-remote::
-	Save remotes heads under `$GIT_DIR/refs/remotes/origin/` instead
-	of `$GIT_DIR/refs/heads/`.  Only the local master branch is
-	saved in the latter. This is the default.
-
---no-separate-remote::
-	Save remotes heads in the same namespace as the local
-	heads, `$GIT_DIR/refs/heads/'.  In regular repositories,
-	this is a legacy setup git-clone created by default in
-	older Git versions, and will be removed before the next
-	major release.
 
 <repository>::
 	The (possibly remote) repository to clone from.  It can

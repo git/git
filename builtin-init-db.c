@@ -124,8 +124,11 @@ static void copy_templates(const char *git_dir, int len, const char *template_di
 	int template_len;
 	DIR *dir;
 
-	if (!template_dir)
-		template_dir = DEFAULT_GIT_TEMPLATE_DIR;
+	if (!template_dir) {
+		template_dir = getenv(TEMPLATE_DIR_ENVIRONMENT);
+		if (!template_dir)
+			template_dir = DEFAULT_GIT_TEMPLATE_DIR;
+	}
 	strcpy(template_path, template_dir);
 	template_len = strlen(template_path);
 	if (template_path[template_len-1] != '/') {
