@@ -343,6 +343,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 static void add_parents_to_list(struct rev_info *revs, struct commit *commit, struct commit_list **list)
 {
 	struct commit_list *parent = commit->parents;
+	unsigned left_flag;
 
 	if (commit->object.flags & ADDED)
 		return;
@@ -387,6 +388,7 @@ static void add_parents_to_list(struct rev_info *revs, struct commit *commit, st
 	if (revs->no_walk)
 		return;
 
+	left_flag = (commit->object.flags & SYMMETRIC_LEFT);
 	parent = commit->parents;
 	while (parent) {
 		struct commit *p = parent->item;
@@ -394,6 +396,7 @@ static void add_parents_to_list(struct rev_info *revs, struct commit *commit, st
 		parent = parent->next;
 
 		parse_commit(p);
+		p->object.flags |= left_flag;
 		if (p->object.flags & SEEN)
 			continue;
 		p->object.flags |= SEEN;
@@ -639,7 +642,7 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 				add_pending_commit_list(revs, exclude,
 							flags_exclude);
 				free_commit_list(exclude);
-				a->object.flags |= flags;
+				a->object.flags |= flags | SYMMETRIC_LEFT;
 			} else
 				a->object.flags |= flags_exclude;
 			b->object.flags |= flags;
@@ -847,6 +850,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "--boundary")) {
 				revs->boundary = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--left-right")) {
+				revs->left_right = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--objects")) {
