@@ -5,8 +5,8 @@
  * Based on git-branch.sh by Junio C Hamano.
  */
 
-#include "color.h"
 #include "cache.h"
+#include "color.h"
 #include "refs.h"
 #include "commit.h"
 #include "builtin.h"

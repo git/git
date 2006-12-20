@@ -5,8 +5,6 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#include <fnmatch.h>
-
 #include "cache.h"
 #include "quote.h"
 #include "dir.h"

@@ -15,10 +15,6 @@
 #include "revision.h"
 #include "xdiff-interface.h"
 
-#include <time.h>
-#include <sys/time.h>
-#include <regex.h>
-
 static char blame_usage[] =
 "git-blame [-c] [-l] [-t] [-f] [-n] [-p] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [commit] [--] file\n"
 "  -c, --compatibility Use the same output mode as git-annotate (Default: off)\n"

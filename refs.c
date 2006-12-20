@@ -1,9 +1,7 @@
-#include "refs.h"
 #include "cache.h"
+#include "refs.h"
 #include "object.h"
 #include "tag.h"
-
-#include <errno.h>
 
 /* ISSYMREF=01 and ISPACKED=02 are public interfaces */
 #define REF_KNOWS_PEELED 04

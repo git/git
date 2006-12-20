@@ -4,7 +4,6 @@
 #include "diff.h"
 #include "path-list.h"
 #include "revision.h"
-#include <string.h>
 
 static const char shortlog_usage[] =
 "git-shortlog [-n] [-s] [<commit-id>... ]";

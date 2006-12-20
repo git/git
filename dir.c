@@ -5,9 +5,6 @@
  * Copyright (C) Linus Torvalds, 2005-2006
  *		 Junio Hamano, 2005-2006
  */
-#include <dirent.h>
-#include <fnmatch.h>
-
 #include "cache.h"
 #include "dir.h"
 

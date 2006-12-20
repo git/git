@@ -10,6 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git-rev-list' [ \--max-count=number ]
+	     [ \--skip=number ]
 	     [ \--max-age=timestamp ]
 	     [ \--min-age=timestamp ]
 	     [ \--sparse ]
@@ -138,6 +139,10 @@ limiting may be applied.
 -n 'number', --max-count='number'::
 
 	Limit the number of commits output.
+
+--skip='number'::
+
+	Skip 'number' commits before starting to show the commit output.
 
 --since='date', --after='date'::
 

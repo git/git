@@ -2,7 +2,6 @@
  * Copyright (c) 2006 Franck Bui-Huu
  * Copyright (c) 2006 Rene Scharfe
  */
-#include <time.h>
 #include "cache.h"
 #include "builtin.h"
 #include "archive.h"

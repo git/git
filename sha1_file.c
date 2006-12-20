@@ -1013,7 +1013,7 @@ void packed_object_info_detail(struct packed_git *p,
 	for (;;) {
 		switch (kind) {
 		default:
-			die("corrupted pack file %s containing object of kind %d",
+			die("pack %s contains unknown object type %d",
 			    p->pack_name, kind);
 		case OBJ_COMMIT:
 		case OBJ_TREE:
@@ -1063,7 +1063,7 @@ static int packed_object_info(struct packed_git *p, unsigned long offset,
 		strcpy(type, type_names[kind]);
 		break;
 	default:
-		die("corrupted pack file %s containing object of kind %d",
+		die("pack %s contains unknown object type %d",
 		    p->pack_name, kind);
 	}
 	if (sizep)

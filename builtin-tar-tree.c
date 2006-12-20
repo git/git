@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2005, 2006 Rene Scharfe
  */
-#include <time.h>
 #include "cache.h"
 #include "commit.h"
 #include "tar.h"

@@ -6,8 +6,6 @@
 #include "commit.h"
 #include "tag.h"
 #include "tree.h"
-#include <sys/time.h>
-#include <signal.h>
 
 static const char index_pack_usage[] =
 "git-index-pack [-v] [-o <index-file>] [{ ---keep | --keep=<msg> }] { <pack-file> | --stdin [--fix-thin] [<pack-file>] }";
@@ -87,7 +85,7 @@ static unsigned display_progress(unsigned n, unsigned total, unsigned last_pc)
 static unsigned char input_buffer[4096];
 static unsigned long input_offset, input_len, consumed_bytes;
 static SHA_CTX input_ctx;
-static int input_fd, output_fd, mmap_fd;
+static int input_fd, output_fd, pack_fd;
 
 /* Discard current buffer used content. */
 static void flush(void)
@@ -148,14 +146,14 @@ static const char *open_pack_file(const char *pack_name)
 			output_fd = open(pack_name, O_CREAT|O_EXCL|O_RDWR, 0600);
 		if (output_fd < 0)
 			die("unable to create %s: %s\n", pack_name, strerror(errno));
-		mmap_fd = output_fd;
+		pack_fd = output_fd;
 	} else {
 		input_fd = open(pack_name, O_RDONLY);
 		if (input_fd < 0)
 			die("cannot open packfile '%s': %s",
 			    pack_name, strerror(errno));
 		output_fd = -1;
-		mmap_fd = input_fd;
+		pack_fd = input_fd;
 	}
 	SHA1_Init(&input_ctx);
 	return pack_name;
@@ -268,7 +266,7 @@ static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_
 	case OBJ_TAG:
 		break;
 	default:
-		bad_object(obj->offset, "bad object type %d", obj->type);
+		bad_object(obj->offset, "unknown object type %d", obj->type);
 	}
 	obj->hdr_size = consumed_bytes - obj->offset;
 
@@ -279,27 +277,25 @@ static void *get_data_from_pack(struct object_entry *obj)
 {
 	unsigned long from = obj[0].offset + obj[0].hdr_size;
 	unsigned long len = obj[1].offset - from;
-	unsigned pg_offset = from % getpagesize();
-	unsigned char *map, *data;
+	unsigned char *src, *data;
 	z_stream stream;
 	int st;
 
-	map = mmap(NULL, len + pg_offset, PROT_READ, MAP_PRIVATE,
-		   mmap_fd, from - pg_offset);
-	if (map == MAP_FAILED)
-		die("cannot mmap pack file: %s", strerror(errno));
+	src = xmalloc(len);
+	if (pread(pack_fd, src, len, from) != len)
+		die("cannot pread pack file: %s", strerror(errno));
 	data = xmalloc(obj->size);
 	memset(&stream, 0, sizeof(stream));
 	stream.next_out = data;
 	stream.avail_out = obj->size;
-	stream.next_in = map + pg_offset;
+	stream.next_in = src;
 	stream.avail_in = len;
 	inflateInit(&stream);
 	while ((st = inflate(&stream, Z_FINISH)) == Z_OK);
 	inflateEnd(&stream);
 	if (st != Z_STREAM_END || stream.total_out != obj->size)
 		die("serious inflate inconsistency");
-	munmap(map, len + pg_offset);
+	free(src);
 	return data;
 }
 

@@ -6,7 +6,6 @@
 #include "exec_cmd.h"
 #include "commit.h"
 #include "object.h"
-#include <sys/wait.h>
 
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 

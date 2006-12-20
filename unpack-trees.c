@@ -1,5 +1,3 @@
-#include <signal.h>
-#include <sys/time.h>
 #include "cache.h"
 #include "dir.h"
 #include "tree.h"

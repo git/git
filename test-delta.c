@@ -8,13 +8,7 @@
  * published by the Free Software Foundation.
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
+#include "git-compat-util.h"
 #include "delta.h"
 
 static const char usage[] =

@@ -7,9 +7,6 @@
  */
 #include "cache.h"
 
-#include <pwd.h>
-#include <netdb.h>
-
 static char git_default_date[50];
 
 static void copy_gecos(struct passwd *w, char *name, int sz)

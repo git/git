@@ -6,7 +6,6 @@
  * This applies patches on top of some (arbitrary) version of the SCM.
  *
  */
-#include <fnmatch.h>
 #include "cache.h"
 #include "cache-tree.h"
 #include "quote.h"

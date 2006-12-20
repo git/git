@@ -1,9 +1,6 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <signal.h>
 #include "cache.h"
 #include "quote.h"
 #include "diff.h"
@@ -1237,7 +1234,7 @@ static int reuse_worktree_file(const char *name, const unsigned char *sha1, int 
 	 * objects however would tend to be slower as they need
 	 * to be individually opened and inflated.
 	 */
-	if (FAST_WORKING_DIRECTORY && !want_file && has_sha1_pack(sha1, NULL))
+	if (!FAST_WORKING_DIRECTORY && !want_file && has_sha1_pack(sha1, NULL))
 		return 0;
 
 	len = strlen(name);

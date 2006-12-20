@@ -1,6 +1,5 @@
 #include "cache.h"
 #include "run-command.h"
-#include <sys/wait.h>
 #include "exec_cmd.h"
 
 int run_command_v_opt(int argc, const char **argv, int flags)

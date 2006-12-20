@@ -4,7 +4,6 @@
 #include "commit.h"
 #include "tag.h"
 #include "tree-walk.h"
-#include <stdlib.h>
 
 const char *tree_type = "tree";
 

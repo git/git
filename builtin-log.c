@@ -11,8 +11,6 @@
 #include "log-tree.h"
 #include "builtin.h"
 #include "tag.h"
-#include <time.h>
-#include <sys/time.h>
 
 static int default_show_root = 1;
 

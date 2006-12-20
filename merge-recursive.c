@@ -3,13 +3,6 @@
  * Fredrik Kuivinen.
  * The thieves were Alex Riesen and Johannes Schindelin, in June/July 2006
  */
-#include <stdarg.h>
-#include <string.h>
-#include <assert.h>
-#include <sys/wait.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <time.h>
 #include "cache.h"
 #include "cache-tree.h"
 #include "commit.h"

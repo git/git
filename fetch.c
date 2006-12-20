@@ -1,6 +1,5 @@
-#include "fetch.h"
-
 #include "cache.h"
+#include "fetch.h"
 #include "commit.h"
 #include "tree.h"
 #include "tree-walk.h"

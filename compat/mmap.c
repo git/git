@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
 #include "../git-compat-util.h"
 
 void *gitfakemmap(void *start, size_t length, int prot , int flags, int fd, off_t offset)

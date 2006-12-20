@@ -77,6 +77,7 @@ struct rev_info {
 	struct grep_opt	*grep_filter;
 
 	/* special limits */
+	int skip_count;
 	int max_count;
 	unsigned long max_age;
 	unsigned long min_age;

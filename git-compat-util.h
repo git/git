@@ -11,6 +11,11 @@
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
+#define _XOPEN_SOURCE 600 /* glibc2 and AIX 5.3L need 500, OpenBSD needs 600 for S_ISLNK() */
+#define _XOPEN_SOURCE_EXTENDED 1 /* AIX 5.3L needs this */
+#define _GNU_SOURCE
+#define _BSD_SOURCE
+
 #include <unistd.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -22,9 +27,27 @@
 #include <errno.h>
 #include <limits.h>
 #include <sys/param.h>
-#include <netinet/in.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include <sys/time.h>
+#include <time.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <fnmatch.h>
+#include <sys/poll.h>
+#include <sys/socket.h>
+#include <assert.h>
+#include <regex.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <pwd.h>
+#include <grp.h>
+
+#ifndef NO_ICONV
+#include <iconv.h>
+#endif
 
 /* On most systems <limits.h> would have given us this, but
  * not on some systems (e.g. GNU/Hurd).
