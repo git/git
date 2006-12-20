@@ -17,5 +17,6 @@ int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf);
 int parse_hunk_header(char *line, int len,
 		      int *ob, int *on,
 		      int *nb, int *nn);
+int read_mmfile(mmfile_t *ptr, const char *filename);
 
 #endif

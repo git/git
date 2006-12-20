@@ -102,3 +102,22 @@ int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
 	}
 	return 0;
 }
+
+int read_mmfile(mmfile_t *ptr, const char *filename)
+{
+	struct stat st;
+	FILE *f;
+
+	if (stat(filename, &st))
+		return error("Could not stat %s", filename);
+	if ((f = fopen(filename, "rb")) == NULL)
+		return error("Could not open %s", filename);
+	ptr->ptr = xmalloc(st.st_size);
+	if (fread(ptr->ptr, st.st_size, 1, f) != 1)
+		return error("Could not read %s", filename);
+	fclose(f);
+	ptr->size = st.st_size;
+	return 0;
+}
+
+
