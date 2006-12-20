@@ -266,7 +266,7 @@ static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_
 	case OBJ_TAG:
 		break;
 	default:
-		bad_object(obj->offset, "bad object type %d", obj->type);
+		bad_object(obj->offset, "unknown object type %d", obj->type);
 	}
 	obj->hdr_size = consumed_bytes - obj->offset;
 
