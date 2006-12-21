@@ -7,16 +7,17 @@ then
 	exit
 fi
 
+perl -e 'use SVN::Core; $SVN::Core::VERSION gt "1.1.0" or die' >/dev/null 2>&1
+if test $? -ne 0
+then
+	test_expect_success 'Perl SVN libraries not found, skipping test' :
+	test_done
+	exit
+fi
+
 GIT_DIR=$PWD/.git
 GIT_SVN_DIR=$GIT_DIR/svn/git-svn
 SVN_TREE=$GIT_SVN_DIR/svn-tree
-
-perl -e 'use SVN::Core' >/dev/null 2>&1
-if test $? -ne 0
-then
-   echo 'Perl SVN libraries not found, tests requiring those will be skipped'
-   GIT_SVN_NO_LIB=1
-fi
 
 svnadmin >/dev/null 2>&1
 if test $? -ne 1

@@ -74,7 +74,7 @@ test_expect_success "$name" \
 	'git checkout -b mybranch remotes/git-svn &&
 	echo Hi again >> kw.c &&
 	git commit -a -m "test keywoards ignoring" &&
-	git-svn commit remotes/git-svn..mybranch &&
+	git-svn set-tree remotes/git-svn..mybranch &&
 	git pull . remotes/git-svn'
 
 expect='/* $Id$ */'

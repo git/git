@@ -6,13 +6,6 @@
 test_description='git-svn --follow-parent fetching'
 . ./lib-git-svn.sh
 
-if test -n "$GIT_SVN_NO_LIB" && test "$GIT_SVN_NO_LIB" -ne 0
-then
-	echo 'Skipping: --follow-parent needs SVN libraries'
-	test_done
-	exit 0
-fi
-
 test_expect_success 'initialize repo' "
 	mkdir import &&
 	cd import &&
