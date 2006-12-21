@@ -8,7 +8,7 @@ git-diff - Show changes between commits, commit and working tree, etc
 
 SYNOPSIS
 --------
-'git-diff' [ --diff-options ] <tree-ish>{0,2} [--] [<path>...]
+'git-diff' [ --diff-options ] <commit>{0,2} [--] [<path>...]
 
 DESCRIPTION
 -----------
@@ -26,7 +26,7 @@ tree and the index file, or the index file and the working tree.
 'git-diff' [--options] --cached [<commit>] [--] [<path>...]::
 
 	This form is to view the changes you staged for the next
-	commit relative to the named <tree-ish>.  Typically you
+	commit relative to the named <commit>.  Typically you
 	would want comparison with the latest commit, so if you
 	do not give <commit>, it defaults to HEAD.
 

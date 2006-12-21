@@ -44,6 +44,10 @@ extern int write_ref_sha1(struct ref_lock *lock, const unsigned char *sha1, cons
 /** Reads log for the value of ref during at_time. **/
 extern int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *sha1);
 
+/* iterate over reflog entries */
+typedef int each_reflog_ent_fn(unsigned char *osha1, unsigned char *nsha1, char *, void *);
+void for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data);
+
 /** Returns 0 if target has the right format for a ref. **/
 extern int check_ref_format(const char *target);
 

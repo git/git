@@ -1043,3 +1043,20 @@ struct commit_list *get_merge_bases(struct commit *one,
 	free(rslt);
 	return result;
 }
+
+int in_merge_bases(struct commit *rev1, struct commit *rev2)
+{
+	struct commit_list *bases, *b;
+	int ret = 0;
+
+	bases = get_merge_bases(rev1, rev2, 1);
+	for (b = bases; b; b = b->next) {
+		if (!hashcmp(rev1->object.sha1, b->item->object.sha1)) {
+			ret = 1;
+			break;
+		}
+	}
+
+	free_commit_list(bases);
+	return ret;
+}

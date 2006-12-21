@@ -126,6 +126,11 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		}
 		usage(builtin_add_usage);
 	}
+	if (argc <= i) {
+		fprintf(stderr, "Nothing specified, nothing added.\n");
+		fprintf(stderr, "Maybe you wanted to say 'git add .'?\n");
+		return 0;
+	}
 	pathspec = get_pathspec(prefix, argv + i);
 
 	fill_directory(&dir, pathspec);

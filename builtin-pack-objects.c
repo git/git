@@ -17,7 +17,7 @@ static const char pack_usage[] = "\
 git-pack-objects [{ -q | --progress | --all-progress }] \n\
 	[--local] [--incremental] [--window=N] [--depth=N] \n\
 	[--no-reuse-delta] [--delta-base-offset] [--non-empty] \n\
-	[--revs [--unpacked | --all]*] [--stdout | base-name] \n\
+	[--revs [--unpacked | --all]*] [--reflog] [--stdout | base-name] \n\
 	[<ref-list | <object-list]";
 
 struct object_entry {
@@ -1575,6 +1575,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp("--unpacked", arg) ||
 		    !strncmp("--unpacked=", arg, 11) ||
+		    !strcmp("--reflog", arg) ||
 		    !strcmp("--all", arg)) {
 			use_internal_rev_list = 1;
 			if (ARRAY_SIZE(rp_av) - 1 <= rp_ac)
