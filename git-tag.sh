@@ -45,6 +45,17 @@ do
 	    message_given=1
 	fi
 	;;
+    -F)
+	annotate=1
+	shift
+	if test "$#" = "0"; then
+	    die "error: option -F needs an argument"
+	    exit 2
+	else
+	    message="$(cat "$1")"
+	    message_given=1
+	fi
+	;;
     -u)
 	annotate=1
 	signed=1

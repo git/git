@@ -9,7 +9,8 @@ git-tag - Create a tag object signed with GPG
 SYNOPSIS
 --------
 [verse]
-'git-tag' [-a | -s | -u <key-id>] [-f | -d] [-m <msg>] <name> [<head>]
+'git-tag' [-a | -s | -u <key-id>] [-f | -d] [-m <msg> | -F <file>]
+	 <name> [<head>]
 'git-tag' -l [<pattern>]
 
 DESCRIPTION
@@ -60,6 +61,9 @@ OPTIONS
 -m <msg>::
 	Use the given tag message (instead of prompting)
 
+-F <file>::
+	Take the tag message from the given file.  Use '-' to
+	read the message from the standard input.
 
 Author
 ------
