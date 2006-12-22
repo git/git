@@ -104,7 +104,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 	# Be careful for funny filename such as "-L" in "$4", which
 	# would confuse "merge" greatly.
 	src1=`git-unpack-file $2`
-	merge "$src1" "$orig" "$src2"
+	git-merge-file "$src1" "$orig" "$src2"
 	ret=$?
 
 	# Create the working tree file, using "our tree" version from the

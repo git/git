@@ -155,7 +155,7 @@ Conflicts:
 		uniq
 	    } >>"$GIT_DIR/MERGE_MSG"
 	    echo >&2 "Automatic $me failed.  After resolving the conflicts,"
-	    echo >&2 "mark the corrected paths with 'git-update-index <paths>'"
+	    echo >&2 "mark the corrected paths with 'git-add <paths>'"
 	    echo >&2 "and commit the result."
 	    case "$me" in
 	    cherry-pick)
