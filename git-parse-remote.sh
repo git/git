@@ -141,8 +141,7 @@ canon_refs_list_for_fetch () {
 			curr_branch=$(git-symbolic-ref HEAD | \
 			    sed -e 's|^refs/heads/||')
 			merge_branches=$(git-repo-config \
-			    --get-all "branch.${curr_branch}.merge") ||
-			merge_branches=.this.would.never.match.any.ref.
+			    --get-all "branch.${curr_branch}.merge")
 		fi
 		set x $(expand_refs_wildcard "$@")
 		shift
