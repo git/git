@@ -466,6 +466,7 @@ static void limit_list(struct rev_info *revs)
 
 struct all_refs_cb {
 	int all_flags;
+	int warned_bad_reflog;
 	struct rev_info *all_revs;
 	const char *name_for_errormsg;
 };
@@ -487,25 +488,34 @@ static void handle_all(struct rev_info *revs, unsigned flags)
 	for_each_ref(handle_one_ref, &cb);
 }
 
-static int handle_one_reflog_ent(unsigned char *osha1, unsigned char *nsha1, char *detail, void *cb_data)
+static void handle_one_reflog_commit(unsigned char *sha1, void *cb_data)
 {
 	struct all_refs_cb *cb = cb_data;
-	struct object *object;
-
-	if (!is_null_sha1(osha1)) {
-		object = get_reference(cb->all_revs, cb->name_for_errormsg,
-				       osha1, cb->all_flags);
-		add_pending_object(cb->all_revs, object, "");
+	if (!is_null_sha1(sha1)) {
+		struct object *o = parse_object(sha1);
+		if (o) {
+			o->flags |= cb->all_flags;
+			add_pending_object(cb->all_revs, o, "");
+		}
+		else if (!cb->warned_bad_reflog) {
+			warn("reflog of '%s' references pruned commits",
+				cb->name_for_errormsg);
+			cb->warned_bad_reflog = 1;
+		}
 	}
-	object = get_reference(cb->all_revs, cb->name_for_errormsg,
-			       nsha1, cb->all_flags);
-	add_pending_object(cb->all_revs, object, "");
+}
+
+static int handle_one_reflog_ent(unsigned char *osha1, unsigned char *nsha1, char *detail, void *cb_data)
+{
+	handle_one_reflog_commit(osha1, cb_data);
+	handle_one_reflog_commit(nsha1, cb_data);
 	return 0;
 }
 
 static int handle_one_reflog(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct all_refs_cb *cb = cb_data;
+	cb->warned_bad_reflog = 0;
 	cb->name_for_errormsg = path;
 	for_each_reflog_ent(path, handle_one_reflog_ent, cb_data);
 	return 0;
