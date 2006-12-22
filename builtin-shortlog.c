@@ -4,6 +4,7 @@
 #include "diff.h"
 #include "path-list.h"
 #include "revision.h"
+#include "utf8.h"
 
 static const char shortlog_usage[] =
 "git-shortlog [-n] [-s] [<commit-id>... ]";
@@ -323,9 +324,13 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 			printf("%s: %d\n", list.items[i].path, onelines->nr);
 		} else {
 			printf("%s (%d):\n", list.items[i].path, onelines->nr);
-			for (j = onelines->nr - 1; j >= 0; j--)
-				printf("      %s\n", onelines->items[j].path);
-			printf("\n");
+			for (j = onelines->nr - 1; j >= 0; j--) {
+				int col = print_wrapped_text(onelines->items[j].path,
+							     6, 9, 76);
+				if (col != 76)
+					putchar('\n');
+			}
+			putchar('\n');
 		}
 
 		onelines->strdup_paths = 1;
