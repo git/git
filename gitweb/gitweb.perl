@@ -2911,9 +2911,9 @@ sub git_project_index {
 
 sub git_summary {
 	my $descr = git_get_project_description($project) || "none";
-	my $head = git_get_head_hash($project);
-	my %co = parse_commit($head);
+	my %co = parse_commit("HEAD");
 	my %cd = parse_date($co{'committer_epoch'}, $co{'committer_tz'});
+	my $head = $co{'id'};
 
 	my $owner = git_get_project_owner($project);
 
@@ -2960,7 +2960,7 @@ sub git_summary {
 	# we need to request one more than 16 (0..15) to check if
 	# those 16 are all
 	open my $fd, "-|", git_cmd(), "rev-list", "--max-count=17",
-		git_get_head_hash($project), "--"
+		$head, "--"
 		or die_error(undef, "Open git-rev-list failed");
 	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd;
