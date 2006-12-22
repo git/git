@@ -401,14 +401,14 @@ do
 		changed="$(git-diff-index --cached --name-only HEAD)"
 		if test '' = "$changed"
 		then
-			echo "No changes - did you forget update-index?"
+			echo "No changes - did you forget to use 'git add'?"
 			stop_here_user_resolve $this
 		fi
 		unmerged=$(git-ls-files -u)
 		if test -n "$unmerged"
 		then
 			echo "You still have unmerged paths in your index"
-			echo "did you forget update-index?"
+			echo "did you forget to use 'git add'?"
 			stop_here_user_resolve $this
 		fi
 		apply_status=0
