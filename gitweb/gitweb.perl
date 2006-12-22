@@ -2636,6 +2636,8 @@ sub git_shortlog_body {
 	# uses global variable $project
 	my ($revlist, $from, $to, $refs, $extra) = @_;
 
+	my $have_snapshot = gitweb_have_snapshot();
+
 	$from = 0 unless defined $from;
 	$to = $#{$revlist} if (!defined $to || $#{$revlist} < $to);
 
@@ -2663,7 +2665,7 @@ sub git_shortlog_body {
 		      $cgi->a({-href => href(action=>"commit", hash=>$commit)}, "commit") . " | " .
 		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff") . " | " .
 		      $cgi->a({-href => href(action=>"tree", hash=>$commit, hash_base=>$commit)}, "tree");
-		if (gitweb_have_snapshot()) {
+		if ($have_snapshot) {
 			print " | " . $cgi->a({-href => href(action=>"snapshot", hash=>$commit)}, "snapshot");
 		}
 		print "</td>\n" .
