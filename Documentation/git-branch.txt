@@ -11,7 +11,7 @@ SYNOPSIS
 'git-branch' [-r | -a] [-v [--abbrev=<length>]]
 'git-branch' [-l] [-f] <branchname> [<start-point>]
 'git-branch' (-m | -M) [<oldbranch>] <newbranch>
-'git-branch' (-d | -D) <branchname>...
+'git-branch' (-d | -D) [-r] <branchname>...
 
 DESCRIPTION
 -----------
@@ -33,7 +33,8 @@ to happen.
 
 With a `-d` or `-D` option, `<branchname>` will be deleted.  You may
 specify more than one branch for deletion.  If the branch currently
-has a ref log then the ref log will also be deleted.
+has a ref log then the ref log will also be deleted. Use -r together with -d
+to delete remote-tracking branches.
 
 
 OPTIONS
@@ -60,7 +61,7 @@ OPTIONS
 	Move/rename a branch even if the new branchname already exists.
 
 -r::
-	List the remote-tracking branches.
+	List or delete (if used with -d) the remote-tracking branches.
 
 -a::
 	List both remote-tracking branches and local branches.
@@ -111,10 +112,12 @@ Delete unneeded branch::
 ------------
 $ git clone git://git.kernel.org/.../git.git my.git
 $ cd my.git
-$ git branch -D todo    <1>
+$ git branch -d -r todo html man   <1>
+$ git branch -D test               <2>
 ------------
 +
-<1> delete todo branch even if the "master" branch does not have all
+<1> delete remote-tracking branches "todo", "html", "man"
+<2> delete "test" branch even if the "master" branch does not have all
 commits from todo branch.
 
 

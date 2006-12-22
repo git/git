@@ -874,8 +874,6 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 	if (line[0] == '+') {
 		int i, spaces = 0;
 
-		data->lineno++;
-
 		/* check space before tab */
 		for (i = 1; i < len && (line[i] == ' ' || line[i] == '\t'); i++)
 			if (line[i] == ' ')
@@ -890,6 +888,8 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 		if (isspace(line[len - 1]))
 			printf("%s:%d: white space at end: %.*s\n",
 				data->filename, data->lineno, (int)len, line);
+
+		data->lineno++;
 	} else if (line[0] == ' ')
 		data->lineno++;
 	else if (line[0] == '@') {
