@@ -8,7 +8,7 @@ git-show-branch - Show branches and their commits
 SYNOPSIS
 --------
 [verse]
-'git-show-branch' [--all] [--heads] [--tags] [--topo-order] [--current]
+'git-show-branch' [--all] [--remotes] [--topo-order] [--current]
 		[--more=<n> | --list | --independent | --merge-base]
 		[--no-name | --sha1-name] [--topics] [<rev> | <glob>]...
 
@@ -37,9 +37,11 @@ OPTIONS
 	branches under $GIT_DIR/refs/heads/topic, giving
 	`topic/*` would show all of them.
 
---all --heads --tags::
-	Show all refs under $GIT_DIR/refs, $GIT_DIR/refs/heads,
-	and $GIT_DIR/refs/tags, respectively.
+-r|--remotes::
+	Show the remote-tracking branches.
+
+-a|--all::
+	Show both remote-tracking branches and local branches.
 
 --current::
 	With this option, the command includes the current
