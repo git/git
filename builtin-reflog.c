@@ -3,7 +3,7 @@
 #include "commit.h"
 #include "refs.h"
 #include "dir.h"
-#include <time.h>
+#include "tree-walk.h"
 
 struct expire_reflog_cb {
 	FILE *newlog;
@@ -13,13 +13,50 @@ struct expire_reflog_cb {
 	unsigned long expire_unreachable;
 };
 
+static int tree_is_complete(const unsigned char *sha1)
+{
+	struct tree_desc desc;
+	void *buf;
+	char type[20];
+
+	buf = read_sha1_file(sha1, type, &desc.size);
+	if (!buf)
+		return 0;
+	desc.buf = buf;
+	while (desc.size) {
+		const unsigned char *elem;
+		const char *name;
+		unsigned mode;
+
+		elem = tree_entry_extract(&desc, &name, &mode);
+		if (!has_sha1_file(elem) ||
+		    (S_ISDIR(mode) && !tree_is_complete(elem))) {
+			free(buf);
+			return 0;
+		}
+		update_tree_entry(&desc);
+	}
+	free(buf);
+	return 1;
+}
+
 static int keep_entry(struct commit **it, unsigned char *sha1)
 {
+	struct commit *commit;
+
 	*it = NULL;
 	if (is_null_sha1(sha1))
 		return 1;
-	*it = lookup_commit_reference_gently(sha1, 1);
-	return (*it != NULL);
+	commit = lookup_commit_reference_gently(sha1, 1);
+	if (!commit)
+		return 0;
+
+	/* Make sure everything in this commit exists. */
+	parse_object(commit->object.sha1);
+	if (!tree_is_complete(commit->tree->object.sha1))
+		return 0;
+	*it = commit;
+	return 1;
 }
 
 static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
