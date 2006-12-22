@@ -32,7 +32,7 @@ savestate() {
 restorestate() {
         if test -f "$GIT_DIR/MERGE_SAVE"
 	then
-		git reset --hard $head
+		git reset --hard $head >/dev/null
 		cpio -iuv <"$GIT_DIR/MERGE_SAVE"
 		git-update-index --refresh >/dev/null
 	fi
