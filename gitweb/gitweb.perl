@@ -1139,8 +1139,9 @@ sub git_get_last_activity {
 
 	$git_dir = "$projectroot/$path";
 	open($fd, "-|", git_cmd(), 'for-each-ref',
-	     '--format=%(refname) %(committer)',
+	     '--format=%(committer)',
 	     '--sort=-committerdate',
+	     '--count=1',
 	     'refs/heads') or return;
 	my $most_recent = <$fd>;
 	close $fd or return;
