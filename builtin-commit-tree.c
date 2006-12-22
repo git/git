@@ -101,6 +101,9 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 		a = argv[i]; b = argv[i+1];
 		if (!b || strcmp(a, "-p"))
 			usage(commit_tree_usage);
+
+		if (parents >= MAXPARENT)
+			die("Too many parents (%d max)", MAXPARENT);
 		if (get_sha1(b, parent_sha1[parents]))
 			die("Not a valid object name %s", b);
 		check_valid(parent_sha1[parents], commit_type);
