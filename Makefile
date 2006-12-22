@@ -192,9 +192,8 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
-	git-convert-objects$X git-fetch-pack$X git-fsck-objects$X \
+	git-fetch-pack$X git-fsck-objects$X \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
-	git-daemon$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-patch-id$X \
 	git-peek-remote$X git-receive-pack$X \
 	git-send-pack$X git-shell$X \
@@ -203,7 +202,7 @@ PROGRAMS = \
 	git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X \
 	git-pack-redundant$X git-var$X \
-	git-merge-tree$X git-imap-send$X \
+	git-merge-tree$X \
 	git-merge-recursive$X \
 	$(EXTRA_PROGRAMS)
 
@@ -411,6 +410,25 @@ ifeq ($(uname_S),IRIX64)
 	BASIC_CFLAGS += -DPATH_MAX=1024
 	# for now, build 32-bit version
 	BASIC_LDFLAGS += -L/usr/lib32
+endif
+ifneq (,$(findstring MINGW,$(uname_S)))
+	SHELL_PATH = $(shell cd /bin && pwd -W)/sh
+	NO_MMAP=YesPlease
+	NO_PREAD=YesPlease
+	NO_OPENSSL=YesPlease
+	NO_CURL=YesPlease
+	NO_SYMLINK_HEAD=YesPlease
+	NO_IPV6=YesPlease
+	NO_ETC_PASSWD=YesPlease
+	NO_SETENV=YesPlease
+	NO_UNSETENV=YesPlease
+	NO_STRCASESTR=YesPlease
+	NO_STRLCPY=YesPlease
+	NO_ICONV=YesPlease
+	COMPAT_CFLAGS += -DNO_ETC_PASSWD -DNO_ST_BLOCKS
+	COMPAT_OBJS += compat/mingw.o
+	EXTLIBS += -lws2_32
+	X = .exe
 endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease

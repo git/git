@@ -35,21 +35,23 @@
 #include <sys/time.h>
 #include <time.h>
 #include <signal.h>
-#include <sys/wait.h>
-#include <fnmatch.h>
-#include <sys/poll.h>
-#include <sys/socket.h>
+//#include <sys/wait.h>
+//#include <fnmatch.h>
+//#include <sys/poll.h>
+//#include <sys/socket.h>
 #include <assert.h>
 #include <regex.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
+//#include <netinet/in.h>
+//#include <netinet/tcp.h>
+//#include <arpa/inet.h>
+#ifndef NO_ETC_PASSWD
 #include <netdb.h>
 #include <pwd.h>
 #include <stdint.h>
 #undef _ALL_SOURCE /* AIX 5.3L defines a struct list with _ALL_SOURCE. */
 #include <grp.h>
 #define _ALL_SOURCE 1
+#endif
 
 #ifndef NO_ICONV
 #include <iconv.h>
@@ -270,5 +272,97 @@ static inline int sane_case(int x, int high)
 		x = (x & ~0x20) | high;
 	return x;
 }
+
+// MinGW
+
+#ifndef S_ISLNK
+#define S_ISLNK(x) 0
+#define S_IFLNK 0
+#endif
+
+#ifndef S_ISGRP
+#define S_ISGRP(x) 0
+#define S_IRGRP 0
+#define S_IWGRP 0
+#define S_IXGRP 0
+#define S_ISGID 0
+#define S_IROTH 0
+#define S_IXOTH 0
+#endif
+
+int readlink(const char *path, char *buf, size_t bufsiz);
+int symlink(const char *oldpath, const char *newpath);
+#define link symlink
+int fchmod(int fildes, mode_t mode);
+int lstat(const char *file_name, struct stat *buf);
+
+/* missing: link, mkstemp, fchmod, getuid (?), gettimeofday */
+int socketpair(int d, int type, int protocol, int sv[2]);
+#define AF_UNIX 0
+#define SOCK_STREAM 0
+int syslog(int type, char *bufp, ...);
+#define LOG_ERR 1
+#define LOG_INFO 2
+#define LOG_DAEMON 4
+unsigned int alarm(unsigned int seconds);
+#include <winsock2.h>
+int fork();
+typedef int pid_t;
+pid_t waitpid(pid_t pid, int *status, int options);
+#define WIFEXITED(x) 0
+#define WEXITSTATUS(x) 1
+#define WIFSIGNALED(x) -1
+#define WTERMSIG(x) 0
+#define WNOHANG 0
+#define SIGKILL 0
+#define SIGCHLD 0
+#define SIGALRM 0
+#define ECONNABORTED 0
+
+int kill(pid_t pid, int sig);
+unsigned int sleep (unsigned int __seconds);
+const char *inet_ntop(int af, const void *src,
+                             char *dst, size_t cnt);
+int mkstemp (char *__template);
+int gettimeofday(struct timeval *tv, void *tz);
+int pipe(int filedes[2]);
+
+struct pollfd {
+	int fd;           /* file descriptor */
+	short events;     /* requested events */
+	short revents;    /* returned events */
+};
+int poll(struct pollfd *ufds, unsigned int nfds, int timeout);
+#define POLLIN 1
+#define POLLHUP 2
+int fnmatch(const char *pattern, const char *string, int flags);
+#define FNM_PATHNAME 1
+
+typedef int siginfo_t;
+struct sigaction {
+	void (*sa_handler)(int);
+	void (*sa_sigaction)(int, siginfo_t *, void *);
+	sigset_t sa_mask;
+	int sa_flags;
+	void (*sa_restorer)(void);
+};
+#define SA_RESTART 0
+#define ITIMER_REAL 0
+
+struct itimerval { struct timeval it_interval, it_value; };
+
+int git_mkdir(const char *path, int mode);
+#define mkdir git_mkdir
+
+#include <time.h>
+struct tm *gmtime_r(const time_t *timep, struct tm *result);
+struct tm *localtime_r(const time_t *timep, struct tm *result);
+#define hstrerror strerror
+
+char *mingw_getcwd(char *pointer, int len);
+#define getcwd mingw_getcwd
+
+#define setlinebuf(x)
+#define fsync(x)
 
 #endif

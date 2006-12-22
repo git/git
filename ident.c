@@ -9,6 +9,8 @@
 
 static char git_default_date[50];
 
+#ifndef NO_ETC_PASSWD
+
 static void copy_gecos(struct passwd *w, char *name, int sz)
 {
 	char *src, *dst;
@@ -76,6 +78,8 @@ int setup_ident(void)
 	datestamp(git_default_date, sizeof(git_default_date));
 	return 0;
 }
+
+#else /* NO_ETC_PASSWD */
 
 static int add_raw(char *buf, int size, int offset, const char *str)
 {
@@ -152,6 +156,13 @@ static int copy(char *buf, int size, int offset, const char *src)
 	return offset;
 }
 
+int setup_ident(void)
+{
+	return 0;
+}
+
+#endif
+
 static const char au_env[] = "GIT_AUTHOR_NAME";
 static const char co_env[] = "GIT_COMMITTER_NAME";
 static const char *env_hint =
@@ -219,6 +230,8 @@ const char *git_committer_info(int error_on_no_name)
 			 error_on_no_name);
 }
 
+#ifndef NO_ETC_PASSWD
+
 void ignore_missing_committer_name()
 {
 	/* If we did not get a name from the user's gecos entry then
@@ -233,3 +246,12 @@ void ignore_missing_committer_name()
 		strlcpy(git_default_name, pw->pw_name, sizeof(git_default_name));
 	}
 }
+
+#else
+
+void ignore_missing_committer_name()
+{
+	strcpy(git_default_name, "unknown");
+}
+
+#endif
