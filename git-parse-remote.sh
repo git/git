@@ -145,13 +145,6 @@ canon_refs_list_for_fetch () {
 			merge_branches=$(git-repo-config \
 			    --get-all "branch.${curr_branch}.merge")
 		fi
-		# If we are fetching only one branch, then first branch
-		# is the only thing that makes sense to merge anyway,
-		# so there is no point refusing that traditional rule.
-		if test $# != 1 && test "z$merge_branches" = z
-		then
-			merge_branches=..this..would..never..match..
-		fi
 	fi
 	for ref
 	do
