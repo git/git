@@ -4176,20 +4176,20 @@ sub git_search {
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 1;
 	if ($searchtype eq 'commit' or $searchtype eq 'author' or $searchtype eq 'committer') {
+		my $greptype;
+		if ($searchtype eq 'commit') {
+			$greptype = "--grep=";
+		} elsif ($searchtype eq 'author') {
+			$greptype = "--author=";
+		} elsif ($searchtype eq 'committer') {
+			$greptype = "--committer=";
+		}
 		$/ = "\0";
 		open my $fd, "-|", git_cmd(), "rev-list",
-			"--header", "--parents", $hash, "--"
+			"--header", "--parents", ($greptype . $searchtext),
+			 $hash, "--"
 			or next;
 		while (my $commit_text = <$fd>) {
-			if (!grep m/$searchtext/i, $commit_text) {
-				next;
-			}
-			if ($searchtype eq 'author' && !grep m/\nauthor .*$searchtext/i, $commit_text) {
-				next;
-			}
-			if ($searchtype eq 'committer' && !grep m/\ncommitter .*$searchtext/i, $commit_text) {
-				next;
-			}
 			my @commit_lines = split "\n", $commit_text;
 			my %co = parse_commit(undef, \@commit_lines);
 			if (!%co) {
