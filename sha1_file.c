@@ -465,6 +465,8 @@ static int unuse_one_packed_git(void)
 	munmap(lru->windows->base, lru->windows->len);
 	free(lru->windows);
 	lru->windows = NULL;
+	close(p->pack_fd);
+	p->pack_fd = -1;
 	return 1;
 }
 
@@ -474,62 +476,64 @@ void unuse_packed_git(struct packed_git *p)
 		p->windows->inuse_cnt--;
 }
 
-int use_packed_git(struct packed_git *p)
+static void open_packed_git(struct packed_git *p)
 {
+	struct stat st;
+	struct pack_header hdr;
+	unsigned char sha1[20];
+	unsigned char *idx_sha1;
+
+	p->pack_fd = open(p->pack_name, O_RDONLY);
+	if (p->pack_fd < 0 || fstat(p->pack_fd, &st))
+		die("packfile %s cannot be opened", p->pack_name);
+
+	/* If we created the struct before we had the pack we lack size. */
 	if (!p->pack_size) {
-		struct stat st;
-		/* We created the struct before we had the pack */
-		stat(p->pack_name, &st);
 		if (!S_ISREG(st.st_mode))
 			die("packfile %s not a regular file", p->pack_name);
 		p->pack_size = st.st_size;
-	}
+	} else if (p->pack_size != st.st_size)
+		die("packfile %s size changed", p->pack_name);
+
+	/* Verify we recognize this pack file format. */
+	read_or_die(p->pack_fd, &hdr, sizeof(hdr));
+	if (hdr.hdr_signature != htonl(PACK_SIGNATURE))
+		die("file %s is not a GIT packfile", p->pack_name);
+	if (!pack_version_ok(hdr.hdr_version))
+		die("packfile %s is version %u and not supported"
+			" (try upgrading GIT to a newer version)",
+			p->pack_name, ntohl(hdr.hdr_version));
+
+	/* Verify the pack matches its index. */
+	if (num_packed_objects(p) != ntohl(hdr.hdr_entries))
+		die("packfile %s claims to have %u objects"
+			" while index size indicates %u objects",
+			p->pack_name, ntohl(hdr.hdr_entries),
+			num_packed_objects(p));
+	if (lseek(p->pack_fd, p->pack_size - sizeof(sha1), SEEK_SET) == -1)
+		die("end of packfile %s is unavailable", p->pack_name);
+	read_or_die(p->pack_fd, sha1, sizeof(sha1));
+	idx_sha1 = ((unsigned char *)p->index_base) + p->index_size - 40;
+	if (hashcmp(sha1, idx_sha1))
+		die("packfile %s does not match index", p->pack_name);
+}
+
+int use_packed_git(struct packed_git *p)
+{
+	if (p->pack_fd == -1)
+		open_packed_git(p);
 	if (!p->windows) {
-		int fd;
-		struct stat st;
 		struct pack_window *win;
-		struct pack_header *hdr;
 
 		pack_mapped += p->pack_size;
 		while (packed_git_limit < pack_mapped && unuse_one_packed_git())
 			; /* nothing */
-		fd = open(p->pack_name, O_RDONLY);
-		if (fd < 0)
-			die("packfile %s cannot be opened", p->pack_name);
-		if (fstat(fd, &st)) {
-			close(fd);
-			die("packfile %s cannot be opened", p->pack_name);
-		}
-		if (st.st_size != p->pack_size)
-			die("packfile %s size mismatch.", p->pack_name);
 		win = xcalloc(1, sizeof(*win));
 		win->len = p->pack_size;
-		win->base = mmap(NULL, p->pack_size, PROT_READ, MAP_PRIVATE, fd, 0);
-		close(fd);
+		win->base = mmap(NULL, p->pack_size, PROT_READ, MAP_PRIVATE, p->pack_fd, 0);
 		if (win->base == MAP_FAILED)
 			die("packfile %s cannot be mapped.", p->pack_name);
 		p->windows = win;
-
-		/* Check if we understand this pack file.  If we don't we're
-		 * likely too old to handle it.
-		 */
-		hdr = (struct pack_header*)win->base;
-		if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
-			die("packfile %s isn't actually a pack.", p->pack_name);
-		if (!pack_version_ok(hdr->hdr_version))
-			die("packfile %s is version %i and not supported"
-				" (try upgrading GIT to a newer version)",
-				p->pack_name, ntohl(hdr->hdr_version));
-
-		/* Check if the pack file matches with the index file.
-		 * this is cheap.
-		 */
-		if (hashcmp((unsigned char *)(p->index_base) +
-			    p->index_size - 40,
-			    p->windows->base +
-			    p->pack_size - 20)) {
-			die("packfile %s does not match index.", p->pack_name);
-		}
 	}
 	p->windows->last_used = pack_used_ctr++;
 	p->windows->inuse_cnt++;
@@ -563,6 +567,7 @@ struct packed_git *add_packed_git(char *path, int path_len, int local)
 	p->index_base = idx_map;
 	p->next = NULL;
 	p->windows = NULL;
+	p->pack_fd = -1;
 	p->pack_local = local;
 	if ((path_len > 44) && !get_sha1_hex(path + path_len - 44, sha1))
 		hashcpy(p->sha1, sha1);
@@ -594,6 +599,7 @@ struct packed_git *parse_pack_index_file(const unsigned char *sha1, char *idx_pa
 	p->index_base = idx_map;
 	p->next = NULL;
 	p->windows = NULL;
+	p->pack_fd = -1;
 	hashcpy(p->sha1, sha1);
 	return p;
 }

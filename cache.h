@@ -351,6 +351,7 @@ extern struct packed_git {
 	unsigned int *index_base;
 	off_t index_size;
 	off_t pack_size;
+	int pack_fd;
 	int pack_local;
 	unsigned char sha1[20];
 	/* something like ".git/objects/pack/xxxxx.pack" */
