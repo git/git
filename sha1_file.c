@@ -398,9 +398,33 @@ static char *find_sha1_file(const unsigned char *sha1, struct stat *st)
 }
 
 static unsigned int pack_used_ctr;
+static unsigned int pack_mmap_calls;
+static unsigned int peak_pack_open_windows;
+static unsigned int pack_open_windows;
+static size_t peak_pack_mapped;
 static size_t pack_mapped;
 static size_t page_size;
 struct packed_git *packed_git;
+
+void pack_report()
+{
+	fprintf(stderr,
+		"pack_report: getpagesize()            = %10lu\n"
+		"pack_report: core.packedGitWindowSize = %10lu\n"
+		"pack_report: core.packedGitLimit      = %10lu\n",
+		page_size,
+		packed_git_window_size,
+		packed_git_limit);
+	fprintf(stderr,
+		"pack_report: pack_used_ctr            = %10u\n"
+		"pack_report: pack_mmap_calls          = %10u\n"
+		"pack_report: pack_open_windows        = %10u / %10u\n"
+		"pack_report: pack_mapped              = %10lu / %10lu\n",
+		pack_used_ctr,
+		pack_mmap_calls,
+		pack_open_windows, peak_pack_open_windows,
+		pack_mapped, peak_pack_mapped);
+}
 
 static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 				void **idx_map_)
@@ -492,6 +516,7 @@ static int unuse_one_window(struct packed_git *current)
 			}
 		}
 		free(lru_w);
+		pack_open_windows--;
 		return 1;
 	}
 	return 0;
@@ -605,6 +630,12 @@ unsigned char* use_pack(struct packed_git *p,
 				die("packfile %s cannot be mapped: %s",
 					p->pack_name,
 					strerror(errno));
+			pack_mmap_calls++;
+			pack_open_windows++;
+			if (pack_mapped > peak_pack_mapped)
+				peak_pack_mapped = pack_mapped;
+			if (pack_open_windows > peak_pack_open_windows)
+				peak_pack_open_windows = pack_open_windows;
 			win->next = p->windows;
 			p->windows = win;
 		}
