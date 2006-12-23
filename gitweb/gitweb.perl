@@ -2852,6 +2852,58 @@ sub git_heads_body {
 	print "</table>\n";
 }
 
+sub git_search_grep_body {
+	my ($greplist, $from, $to, $extra) = @_;
+	$from = 0 unless defined $from;
+	$to = $#{$greplist} if (!defined $to || $#{$greplist} < $to);
+
+	print "<table class=\"grep\" cellspacing=\"0\">\n";
+	my $alternate = 1;
+	for (my $i = $from; $i <= $to; $i++) {
+		my $commit = $greplist->[$i];
+		my %co = parse_commit($commit);
+		if (!%co) {
+			next;
+		}
+		if ($alternate) {
+			print "<tr class=\"dark\">\n";
+		} else {
+			print "<tr class=\"light\">\n";
+		}
+		$alternate ^= 1;
+		print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
+		      "<td><i>" . esc_html(chop_str($co{'author_name'}, 15, 5)) . "</i></td>\n" .
+		      "<td>" .
+		      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'}), -class => "list subject"},
+			       esc_html(chop_str($co{'title'}, 50)) . "<br/>");
+		my $comment = $co{'comment'};
+		foreach my $line (@$comment) {
+			if ($line =~ m/^(.*)($searchtext)(.*)$/i) {
+				my $lead = esc_html($1) || "";
+				$lead = chop_str($lead, 30, 10);
+				my $match = esc_html($2) || "";
+				my $trail = esc_html($3) || "";
+				$trail = chop_str($trail, 30, 10);
+				my $text = "$lead<span class=\"match\">$match</span>$trail";
+				print chop_str($text, 80, 5) . "<br/>\n";
+			}
+		}
+		print "</td>\n" .
+		      "<td class=\"link\">" .
+		      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'})}, "commit") .
+		      " | " .
+		      $cgi->a({-href => href(action=>"tree", hash=>$co{'tree'}, hash_base=>$co{'id'})}, "tree");
+		print "</td>\n" .
+		      "</tr>\n";
+	}
+	if (defined $extra) {
+		print "<tr>\n" .
+		      "<td colspan=\"3\">$extra</td>\n" .
+		      "</tr>\n";
+	}
+	print "</table>\n";
+}
+
 ## ======================================================================
 ## ======================================================================
 ## actions
@@ -4174,6 +4226,9 @@ sub git_search {
 	if (!%co) {
 		die_error(undef, "Unknown commit object");
 	}
+	if (!defined $page) {
+		$page = 0;
+	}
 
 	$searchtype ||= 'commit';
 	if ($searchtype eq 'pickaxe') {
@@ -4186,11 +4241,7 @@ sub git_search {
 	}
 
 	git_header_html();
-	git_print_page_nav('','', $hash,$co{'tree'},$hash);
-	git_print_header_div('commit', esc_html($co{'title'}), $hash);
 
-	print "<table cellspacing=\"0\">\n";
-	my $alternate = 1;
 	if ($searchtype eq 'commit' or $searchtype eq 'author' or $searchtype eq 'committer') {
 		my $greptype;
 		if ($searchtype eq 'commit') {
@@ -4200,52 +4251,58 @@ sub git_search {
 		} elsif ($searchtype eq 'committer') {
 			$greptype = "--committer=";
 		}
-		$/ = "\0";
 		open my $fd, "-|", git_cmd(), "rev-list",
-			"--header", "--parents", ($greptype . $searchtext),
-			 $hash, "--"
+			("--max-count=" . (100 * ($page+1))),
+			($greptype . $searchtext),
+			$hash, "--"
 			or next;
-		while (my $commit_text = <$fd>) {
-			my @commit_lines = split "\n", $commit_text;
-			my %co = parse_commit(undef, \@commit_lines);
-			if (!%co) {
-				next;
-			}
-			if ($alternate) {
-				print "<tr class=\"dark\">\n";
-			} else {
-				print "<tr class=\"light\">\n";
-			}
-			$alternate ^= 1;
-			print "<td title=\"$co{'age_string_age'}\"><i>$co{'age_string_date'}</i></td>\n" .
-			      "<td><i>" . esc_html(chop_str($co{'author_name'}, 15, 5)) . "</i></td>\n" .
-			      "<td>" .
-			      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'}), -class => "list subject"},
-			               esc_html(chop_str($co{'title'}, 50)) . "<br/>");
-			my $comment = $co{'comment'};
-			foreach my $line (@$comment) {
-				if ($line =~ m/^(.*)($searchtext)(.*)$/i) {
-					my $lead = esc_html($1) || "";
-					$lead = chop_str($lead, 30, 10);
-					my $match = esc_html($2) || "";
-					my $trail = esc_html($3) || "";
-					$trail = chop_str($trail, 30, 10);
-					my $text = "$lead<span class=\"match\">$match</span>$trail";
-					print chop_str($text, 80, 5) . "<br/>\n";
-				}
-			}
-			print "</td>\n" .
-			      "<td class=\"link\">" .
-			      $cgi->a({-href => href(action=>"commit", hash=>$co{'id'})}, "commit") .
-			      " | " .
-			      $cgi->a({-href => href(action=>"tree", hash=>$co{'tree'}, hash_base=>$co{'id'})}, "tree");
-			print "</td>\n" .
-			      "</tr>\n";
-		}
+		my @revlist = map { chomp; $_ } <$fd>;
 		close $fd;
+
+		my $paging_nav = '';
+		if ($page > 0) {
+			$paging_nav .=
+				$cgi->a({-href => href(action=>"search", hash=>$hash,
+						       searchtext=>$searchtext, searchtype=>$searchtype)},
+					"first");
+			$paging_nav .= " &sdot; " .
+				$cgi->a({-href => href(action=>"search", hash=>$hash,
+						       searchtext=>$searchtext, searchtype=>$searchtype,
+						       page=>$page-1),
+					 -accesskey => "p", -title => "Alt-p"}, "prev");
+		} else {
+			$paging_nav .= "first";
+			$paging_nav .= " &sdot; prev";
+		}
+		if ($#revlist >= (100 * ($page+1)-1)) {
+			$paging_nav .= " &sdot; " .
+				$cgi->a({-href => href(action=>"search", hash=>$hash,
+						       searchtext=>$searchtext, searchtype=>$searchtype,
+						       page=>$page+1),
+					 -accesskey => "n", -title => "Alt-n"}, "next");
+		} else {
+			$paging_nav .= " &sdot; next";
+		}
+		my $next_link = '';
+		if ($#revlist >= (100 * ($page+1)-1)) {
+			$next_link =
+				$cgi->a({-href => href(action=>"search", hash=>$hash,
+						       searchtext=>$searchtext, searchtype=>$searchtype,
+						       page=>$page+1),
+					 -accesskey => "n", -title => "Alt-n"}, "next");
+		}
+
+		git_print_page_nav('','', $hash,$co{'tree'},$hash, $paging_nav);
+		git_print_header_div('commit', esc_html($co{'title'}), $hash);
+		git_search_grep_body(\@revlist, ($page * 100), $#revlist, $next_link);
 	}
 
 	if ($searchtype eq 'pickaxe') {
+		git_print_page_nav('','', $hash,$co{'tree'},$hash);
+		git_print_header_div('commit', esc_html($co{'title'}), $hash);
+
+		print "<table cellspacing=\"0\">\n";
+		my $alternate = 1;
 		$/ = "\n";
 		my $git_command = git_cmd_str();
 		open my $fd, "-|", "$git_command rev-list $hash | " .
@@ -4300,8 +4357,9 @@ sub git_search {
 			}
 		}
 		close $fd;
+
+		print "</table>\n";
 	}
-	print "</table>\n";
 	git_footer_html();
 }
 
