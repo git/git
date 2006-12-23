@@ -276,7 +276,52 @@ static int encode_header(enum object_type type, unsigned long size, unsigned cha
  * we are going to reuse the existing object data as is.  make
  * sure it is not corrupt.
  */
-static int check_inflate(unsigned char *data, unsigned long len, unsigned long expect)
+static int check_pack_inflate(struct packed_git *p,
+		struct pack_window **w_curs,
+		unsigned long offset,
+		unsigned long len,
+		unsigned long expect)
+{
+	z_stream stream;
+	unsigned char fakebuf[4096], *in;
+	int st;
+
+	memset(&stream, 0, sizeof(stream));
+	inflateInit(&stream);
+	do {
+		in = use_pack(p, w_curs, offset, &stream.avail_in);
+		stream.next_in = in;
+		stream.next_out = fakebuf;
+		stream.avail_out = sizeof(fakebuf);
+		st = inflate(&stream, Z_FINISH);
+		offset += stream.next_in - in;
+	} while (st == Z_OK || st == Z_BUF_ERROR);
+	inflateEnd(&stream);
+	return (st == Z_STREAM_END &&
+		stream.total_out == expect &&
+		stream.total_in == len) ? 0 : -1;
+}
+
+static void copy_pack_data(struct sha1file *f,
+		struct packed_git *p,
+		struct pack_window **w_curs,
+		unsigned long offset,
+		unsigned long len)
+{
+	unsigned char *in;
+	unsigned int avail;
+
+	while (len) {
+		in = use_pack(p, w_curs, offset, &avail);
+		if (avail > len)
+			avail = len;
+		sha1write(f, in, avail);
+		offset += avail;
+		len -= avail;
+	}
+}
+
+static int check_loose_inflate(unsigned char *data, unsigned long len, unsigned long expect)
 {
 	z_stream stream;
 	unsigned char fakebuf[4096];
@@ -323,7 +368,7 @@ static int revalidate_loose_object(struct object_entry *entry,
 		return -1;
 	map += used;
 	mapsize -= used;
-	return check_inflate(map, mapsize, size);
+	return check_loose_inflate(map, mapsize, size);
 }
 
 static unsigned long write_object(struct sha1file *f,
@@ -417,6 +462,7 @@ static unsigned long write_object(struct sha1file *f,
 	else {
 		struct packed_git *p = entry->in_pack;
 		struct pack_window *w_curs = NULL;
+		unsigned long offset;
 
 		if (entry->delta) {
 			obj_type = (allow_ofs_delta && entry->delta->offset) ?
@@ -438,13 +484,13 @@ static unsigned long write_object(struct sha1file *f,
 			hdrlen += 20;
 		}
 
-		buf = use_pack(p, &w_curs, entry->in_pack_offset
-			+ entry->in_pack_header_size, NULL);
+		offset = entry->in_pack_offset + entry->in_pack_header_size;
 		datalen = find_packed_object_size(p, entry->in_pack_offset)
 				- entry->in_pack_header_size;
-		if (!pack_to_stdout && check_inflate(buf, datalen, entry->size))
+		if (!pack_to_stdout && check_pack_inflate(p, &w_curs,
+				offset, datalen, entry->size))
 			die("corrupt delta in pack %s", sha1_to_hex(entry->sha1));
-		sha1write(f, buf, datalen);
+		copy_pack_data(f, p, &w_curs, offset, datalen);
 		unuse_pack(&w_curs);
 		reused++;
 	}

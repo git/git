@@ -962,19 +962,23 @@ static int packed_delta_info(struct packed_git *p,
 
 	if (sizep) {
 		const unsigned char *data;
-		unsigned char delta_head[20];
+		unsigned char delta_head[20], *in;
 		unsigned long result_size;
 		z_stream stream;
 		int st;
 
 		memset(&stream, 0, sizeof(stream));
-
-		stream.next_in = use_pack(p, w_curs, offset, &stream.avail_in);
 		stream.next_out = delta_head;
 		stream.avail_out = sizeof(delta_head);
 
 		inflateInit(&stream);
-		st = inflate(&stream, Z_FINISH);
+		do {
+			in = use_pack(p, w_curs, offset, &stream.avail_in);
+			stream.next_in = in;
+			st = inflate(&stream, Z_FINISH);
+			offset += stream.next_in - in;
+		} while ((st == Z_OK || st == Z_BUF_ERROR)
+			&& stream.total_out < sizeof(delta_head));
 		inflateEnd(&stream);
 		if ((st != Z_STREAM_END) &&
 		    stream.total_out != sizeof(delta_head))
@@ -1103,17 +1107,21 @@ static void *unpack_compressed_entry(struct packed_git *p,
 {
 	int st;
 	z_stream stream;
-	unsigned char *buffer;
+	unsigned char *buffer, *in;
 
 	buffer = xmalloc(size + 1);
 	buffer[size] = 0;
 	memset(&stream, 0, sizeof(stream));
-	stream.next_in = use_pack(p, w_curs, offset, &stream.avail_in);
 	stream.next_out = buffer;
 	stream.avail_out = size;
 
 	inflateInit(&stream);
-	st = inflate(&stream, Z_FINISH);
+	do {
+		in = use_pack(p, w_curs, offset, &stream.avail_in);
+		stream.next_in = in;
+		st = inflate(&stream, Z_FINISH);
+		offset += stream.next_in - in;
+	} while (st == Z_OK || st == Z_BUF_ERROR);
 	inflateEnd(&stream);
 	if ((st != Z_STREAM_END) || stream.total_out != size) {
 		free(buffer);
