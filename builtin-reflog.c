@@ -80,7 +80,8 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 		goto prune;
 
 	if ((timestamp < cb->expire_unreachable) &&
-	    ((old && !in_merge_bases(old, cb->ref_commit)) ||
+	    (!cb->ref_commit ||
+	     (old && !in_merge_bases(old, cb->ref_commit)) ||
 	     (new && !in_merge_bases(new, cb->ref_commit))))
 		goto prune;
 
@@ -126,10 +127,9 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 	}
 
 	cb.ref_commit = lookup_commit_reference_gently(sha1, 1);
-	if (!cb.ref_commit) {
-		status = error("ref '%s' does not point at a commit", ref);
-		goto finish;
-	}
+	if (!cb.ref_commit)
+		fprintf(stderr,
+			"warning: ref '%s' does not point at a commit\n", ref);
 	cb.ref = ref;
 	cb.expire_total = cmd->expire_total;
 	cb.expire_unreachable = cmd->expire_unreachable;
