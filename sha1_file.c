@@ -397,7 +397,6 @@ static char *find_sha1_file(const unsigned char *sha1, struct stat *st)
 	return NULL;
 }
 
-#define PACK_MAX_SZ (1<<26)
 static int pack_used_ctr;
 static unsigned long pack_mapped;
 struct packed_git *packed_git;
@@ -490,7 +489,7 @@ int use_packed_git(struct packed_git *p)
 		struct pack_header *hdr;
 
 		pack_mapped += p->pack_size;
-		while (PACK_MAX_SZ < pack_mapped && unuse_one_packed_git())
+		while (packed_git_limit < pack_mapped && unuse_one_packed_git())
 			; /* nothing */
 		fd = open(p->pack_name, O_RDONLY);
 		if (fd < 0)
