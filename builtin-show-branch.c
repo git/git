@@ -4,7 +4,7 @@
 #include "builtin.h"
 
 static const char show_branch_usage[] =
-"git-show-branch [--sparse] [--current] [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...] | --reflog[=n] <branch>";
+"git-show-branch [--sparse] [--current] [--all] [--remotes] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...] | --reflog[=n] <branch>";
 
 static int default_num;
 static int default_alloc;
@@ -383,6 +383,20 @@ static int append_head_ref(const char *refname, const unsigned char *sha1, int f
 	return append_ref(refname + ofs, sha1, flag, cb_data);
 }
 
+static int append_remote_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+{
+	unsigned char tmp[20];
+	int ofs = 13;
+	if (strncmp(refname, "refs/remotes/", ofs))
+		return 0;
+	/* If both heads/foo and tags/foo exists, get_sha1 would
+	 * get confused.
+	 */
+	if (get_sha1(refname + ofs, tmp) || hashcmp(tmp, sha1))
+		ofs = 5;
+	return append_ref(refname + ofs, sha1, flag, cb_data);
+}
+
 static int append_tag_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	if (strncmp(refname, "refs/tags/", 10))
@@ -423,16 +437,16 @@ static int append_matching_ref(const char *refname, const unsigned char *sha1, i
 	return append_ref(refname, sha1, flag, cb_data);
 }
 
-static void snarf_refs(int head, int tag)
+static void snarf_refs(int head, int remotes)
 {
 	if (head) {
 		int orig_cnt = ref_name_cnt;
 		for_each_ref(append_head_ref, NULL);
 		sort_ref_range(orig_cnt, ref_name_cnt);
 	}
-	if (tag) {
+	if (remotes) {
 		int orig_cnt = ref_name_cnt;
-		for_each_ref(append_tag_ref, NULL);
+		for_each_ref(append_remote_ref, NULL);
 		sort_ref_range(orig_cnt, ref_name_cnt);
 	}
 }
@@ -554,7 +568,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	struct commit_list *list = NULL, *seen = NULL;
 	unsigned int rev_mask[MAX_REVS];
 	int num_rev, i, extra = 0;
-	int all_heads = 0, all_tags = 0;
+	int all_heads = 0, all_remotes = 0;
 	int all_mask, all_revs;
 	int lifo = 1;
 	char head[128];
@@ -586,12 +600,10 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			ac--; av++;
 			break;
 		}
-		else if (!strcmp(arg, "--all"))
-			all_heads = all_tags = 1;
-		else if (!strcmp(arg, "--heads"))
-			all_heads = 1;
-		else if (!strcmp(arg, "--tags"))
-			all_tags = 1;
+		else if (!strcmp(arg, "--all") || !strcmp(arg, "-a"))
+			all_heads = all_remotes = 1;
+		else if (!strcmp(arg, "--remotes") || !strcmp(arg, "-r"))
+			all_remotes = 1;
 		else if (!strcmp(arg, "--more"))
 			extra = 1;
 		else if (!strcmp(arg, "--list"))
@@ -636,11 +648,11 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		usage(show_branch_usage);
 
 	/* If nothing is specified, show all branches by default */
-	if (ac + all_heads + all_tags == 0)
+	if (ac + all_heads + all_remotes == 0)
 		all_heads = 1;
 
-	if (all_heads + all_tags)
-		snarf_refs(all_heads, all_tags);
+	if (all_heads + all_remotes)
+		snarf_refs(all_heads, all_remotes);
 	if (reflog) {
 		int reflen;
 		if (!ac)

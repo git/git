@@ -292,6 +292,7 @@ then
 fi
 
 # Rewind the head to "$onto"; this saves our current head in ORIG_HEAD.
+echo "First, rewinding head to replay your work on top of it..."
 git-reset --hard "$onto"
 
 # If the $onto is a proper descendant of the tip of the branch, then

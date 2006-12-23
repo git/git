@@ -32,7 +32,7 @@ savestate() {
 restorestate() {
         if test -f "$GIT_DIR/MERGE_SAVE"
 	then
-		git reset --hard $head
+		git reset --hard $head >/dev/null
 		cpio -iuv <"$GIT_DIR/MERGE_SAVE"
 		git-update-index --refresh >/dev/null
 	fi
@@ -266,6 +266,8 @@ do
 	remotehead=$(git-rev-parse --verify "$remote"^0 2>/dev/null) ||
 	    die "$remote - not something we can merge"
 	remoteheads="${remoteheads}$remotehead "
+	eval GITHEAD_$remotehead='"$remote"'
+	export GITHEAD_$remotehead
 done
 set x $remoteheads ; shift
 

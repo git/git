@@ -128,6 +128,12 @@ our %feature = (
 		#         => [content-encoding, suffix, program]
 		'default' => ['x-gzip', 'gz', 'gzip']},
 
+	# Enable text search, which will list the commits which match author,
+	# committer or commit text to a given string.  Enabled by default.
+	'search' => {
+		'override' => 0,
+		'default' => [1]},
+
 	# Enable the pickaxe search, which will list the commits that modified
 	# a given string in a file. This can be practical and quite faster
 	# alternative to 'blame', but still potentially CPU-intensive.
@@ -350,6 +356,9 @@ our $searchtext = $cgi->param('s');
 if (defined $searchtext) {
 	if ($searchtext =~ m/[^a-zA-Z0-9_\.\/\-\+\:\@ ]/) {
 		die_error(undef, "Invalid search parameter");
+	}
+	if (length($searchtext) < 2) {
+		die_error(undef, "At least two characters are required for search parameter");
 	}
 	$searchtext = quotemeta $searchtext;
 }
@@ -1139,8 +1148,9 @@ sub git_get_last_activity {
 
 	$git_dir = "$projectroot/$path";
 	open($fd, "-|", git_cmd(), 'for-each-ref',
-	     '--format=%(refname) %(committer)',
+	     '--format=%(committer)',
 	     '--sort=-committerdate',
+	     '--count=1',
 	     'refs/heads') or return;
 	my $most_recent = <$fd>;
 	close $fd or return;
@@ -1726,6 +1736,9 @@ EOF
 			print " / $action";
 		}
 		print "\n";
+	}
+	my ($have_search) = gitweb_check_feature('search');
+	if ((defined $project) && ($have_search)) {
 		if (!defined $searchtext) {
 			$searchtext = "";
 		}
@@ -2635,6 +2648,8 @@ sub git_shortlog_body {
 	# uses global variable $project
 	my ($revlist, $from, $to, $refs, $extra) = @_;
 
+	my $have_snapshot = gitweb_have_snapshot();
+
 	$from = 0 unless defined $from;
 	$to = $#{$revlist} if (!defined $to || $#{$revlist} < $to);
 
@@ -2662,7 +2677,7 @@ sub git_shortlog_body {
 		      $cgi->a({-href => href(action=>"commit", hash=>$commit)}, "commit") . " | " .
 		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff") . " | " .
 		      $cgi->a({-href => href(action=>"tree", hash=>$commit, hash_base=>$commit)}, "tree");
-		if (gitweb_have_snapshot()) {
+		if ($have_snapshot) {
 			print " | " . $cgi->a({-href => href(action=>"snapshot", hash=>$commit)}, "snapshot");
 		}
 		print "</td>\n" .
@@ -2908,9 +2923,9 @@ sub git_project_index {
 
 sub git_summary {
 	my $descr = git_get_project_description($project) || "none";
-	my $head = git_get_head_hash($project);
-	my %co = parse_commit($head);
+	my %co = parse_commit("HEAD");
 	my %cd = parse_date($co{'committer_epoch'}, $co{'committer_tz'});
+	my $head = $co{'id'};
 
 	my $owner = git_get_project_owner($project);
 
@@ -2957,7 +2972,7 @@ sub git_summary {
 	# we need to request one more than 16 (0..15) to check if
 	# those 16 are all
 	open my $fd, "-|", git_cmd(), "rev-list", "--max-count=17",
-		git_get_head_hash($project), "--"
+		$head, "--"
 		or die_error(undef, "Open git-rev-list failed");
 	my @revlist = map { chomp; $_ } <$fd>;
 	close $fd;
@@ -2983,6 +2998,7 @@ sub git_summary {
 	if (@forklist) {
 		git_print_header_div('forks');
 		git_project_list_body(\@forklist, undef, 0, 15,
+		                      $#forklist <= 15 ? undef :
 		                      $cgi->a({-href => href(action=>"forks")}, "..."),
 				      'noheader');
 	}
@@ -4144,6 +4160,10 @@ sub git_history {
 }
 
 sub git_search {
+	my ($have_search) = gitweb_check_feature('search');
+	if (!$have_search) {
+		die_error('403 Permission denied', "Permission denied");
+	}
 	if (!defined $searchtext) {
 		die_error(undef, "Text field empty");
 	}
@@ -4172,20 +4192,20 @@ sub git_search {
 	print "<table cellspacing=\"0\">\n";
 	my $alternate = 1;
 	if ($searchtype eq 'commit' or $searchtype eq 'author' or $searchtype eq 'committer') {
+		my $greptype;
+		if ($searchtype eq 'commit') {
+			$greptype = "--grep=";
+		} elsif ($searchtype eq 'author') {
+			$greptype = "--author=";
+		} elsif ($searchtype eq 'committer') {
+			$greptype = "--committer=";
+		}
 		$/ = "\0";
 		open my $fd, "-|", git_cmd(), "rev-list",
-			"--header", "--parents", $hash, "--"
+			"--header", "--parents", ($greptype . $searchtext),
+			 $hash, "--"
 			or next;
 		while (my $commit_text = <$fd>) {
-			if (!grep m/$searchtext/i, $commit_text) {
-				next;
-			}
-			if ($searchtype eq 'author' && !grep m/\nauthor .*$searchtext/i, $commit_text) {
-				next;
-			}
-			if ($searchtype eq 'committer' && !grep m/\ncommitter .*$searchtext/i, $commit_text) {
-				next;
-			}
 			my @commit_lines = split "\n", $commit_text;
 			my %co = parse_commit(undef, \@commit_lines);
 			if (!%co) {

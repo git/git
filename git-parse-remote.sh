@@ -7,18 +7,7 @@ GIT_DIR=$(git-rev-parse --git-dir 2>/dev/null) || :;
 get_data_source () {
 	case "$1" in
 	*/*)
-		# Not so fast.	This could be the partial URL shorthand...
-		token=$(expr "z$1" : 'z\([^/]*\)/')
-		remainder=$(expr "z$1" : 'z[^/]*/\(.*\)')
-		if test "$(git-repo-config --get "remote.$token.url")"
-		then
-			echo config-partial
-		elif test -f "$GIT_DIR/branches/$token"
-		then
-			echo branches-partial
-		else
-			echo ''
-		fi
+		echo ''
 		;;
 	*)
 		if test "$(git-repo-config --get "remote.$1.url")"
@@ -40,12 +29,7 @@ get_remote_url () {
 	data_source=$(get_data_source "$1")
 	case "$data_source" in
 	'')
-		echo "$1" ;;
-	config-partial)
-		token=$(expr "z$1" : 'z\([^/]*\)/')
-		remainder=$(expr "z$1" : 'z[^/]*/\(.*\)')
-		url=$(git-repo-config --get "remote.$token.url")
-		echo "$url/$remainder"
+		echo "$1"
 		;;
 	config)
 		git-repo-config --get "remote.$1.url"
@@ -54,14 +38,10 @@ get_remote_url () {
 		sed -ne '/^URL: */{
 			s///p
 			q
-		}' "$GIT_DIR/remotes/$1" ;;
+		}' "$GIT_DIR/remotes/$1"
+		;;
 	branches)
-		sed -e 's/#.*//' "$GIT_DIR/branches/$1" ;;
-	branches-partial)
-		token=$(expr "z$1" : 'z\([^/]*\)/')
-		remainder=$(expr "z$1" : 'z[^/]*/\(.*\)')
-		url=$(sed -e 's/#.*//' "$GIT_DIR/branches/$token")
-		echo "$url/$remainder"
+		sed -e 's/#.*//' "$GIT_DIR/branches/$1"
 		;;
 	*)
 		die "internal error: get-remote-url $1" ;;
@@ -77,7 +57,7 @@ get_default_remote () {
 get_remote_default_refs_for_push () {
 	data_source=$(get_data_source "$1")
 	case "$data_source" in
-	'' | config-partial | branches | branches-partial)
+	'' | branches)
 		;; # no default push mapping, just send matching refs.
 	config)
 		git-repo-config --get-all "remote.$1.push" ;;
@@ -145,13 +125,6 @@ canon_refs_list_for_fetch () {
 			merge_branches=$(git-repo-config \
 			    --get-all "branch.${curr_branch}.merge")
 		fi
-		# If we are fetching only one branch, then first branch
-		# is the only thing that makes sense to merge anyway,
-		# so there is no point refusing that traditional rule.
-		if test $# != 1 && test "z$merge_branches" = z
-		then
-			merge_branches=..this..would..never..match..
-		fi
 	fi
 	for ref
 	do
@@ -203,7 +176,7 @@ canon_refs_list_for_fetch () {
 get_remote_default_refs_for_fetch () {
 	data_source=$(get_data_source "$1")
 	case "$data_source" in
-	'' | config-partial | branches-partial)
+	'')
 		echo "HEAD:" ;;
 	config)
 		canon_refs_list_for_fetch -d "$1" \

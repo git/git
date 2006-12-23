@@ -111,7 +111,7 @@ my %cmd = (
 			{ 'merge|m|M' => \$_merge,
 			  'strategy|s=s' => \$_strategy,
 			  'dry-run|n' => \$_dry_run,
-			%cmt_opts } ],
+			%cmt_opts, %fc_opts } ],
 	'set-tree' => [ \&commit, "Set an SVN repository to a git tree-ish",
 			{	'stdin|' => \$_stdin, %cmt_opts, %fc_opts, } ],
 	'show-ignore' => [ \&show_ignore, "Show svn:ignore listings",

@@ -146,8 +146,11 @@ fi
 
 [ -z "$branch$newbranch" ] &&
 	[ "$new" != "$old" ] &&
-	die "git checkout: to checkout the requested commit you need to specify 
-              a name for a new branch which is created and switched to"
+	die "git checkout: provided reference cannot be checked out directly
+
+  You need -b to associate a new branch with the wanted checkout. Example:
+  git checkout -b <new_branch_name> $arg
+"
 
 if [ "X$old" = X ]
 then

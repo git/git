@@ -59,8 +59,10 @@ static int handle_options(const char*** argv, int* argc)
 		} else if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
 			setup_pager();
 		} else if (!strcmp(cmd, "--git-dir")) {
-			if (*argc < 1)
-				return -1;
+			if (*argc < 2) {
+				fprintf(stderr, "No directory given for --git-dir.\n" );
+				usage(git_usage_string);
+			}
 			setenv("GIT_DIR", (*argv)[1], 1);
 			(*argv)++;
 			(*argc)--;

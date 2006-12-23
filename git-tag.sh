@@ -40,7 +40,6 @@ do
 	message="$1"
 	if test "$#" = "0"; then
 	    die "error: option -m needs an argument"
-	    exit 2
 	else
 	    message_given=1
 	fi
@@ -50,7 +49,6 @@ do
 	shift
 	if test "$#" = "0"; then
 	    die "error: option -F needs an argument"
-	    exit 2
 	else
 	    message="$(cat "$1")"
 	    message_given=1
