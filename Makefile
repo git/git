@@ -79,9 +79,6 @@ all:
 #
 # Define NO_ICONV if your libc does not properly support iconv.
 #
-# Define NO_ACCURATE_DIFF if your diff program at least sometimes misses
-# a missing newline at the end of the file.
-#
 # Define USE_NSEC below if you want git to care about sub-second file mtimes
 # and ctimes. Note that you need recent glibc (at least 2.2.4) for this, and
 # it will BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely
@@ -548,9 +545,6 @@ else
 	EXTLIBS += $(LIB_4_CRYPTO)
 endif
 endif
-endif
-ifdef NO_ACCURATE_DIFF
-	BASIC_CFLAGS += -DNO_ACCURATE_DIFF
 endif
 ifdef NO_PERL_MAKEMAKER
 	export NO_PERL_MAKEMAKER

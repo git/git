@@ -235,9 +235,6 @@ AC_SUBST(NO_SETENV)
 #
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
 # Enable it on Windows.  By default, symrefs are still used.
-#
-# Define NO_ACCURATE_DIFF if your diff program at least sometimes misses
-# a missing newline at the end of the file.
 
 ## Site configuration (override autodetection)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE
