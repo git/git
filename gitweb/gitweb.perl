@@ -351,6 +351,9 @@ if (defined $searchtext) {
 	if ($searchtext =~ m/[^a-zA-Z0-9_\.\/\-\+\:\@ ]/) {
 		die_error(undef, "Invalid search parameter");
 	}
+	if (length($searchtext) < 2) {
+		die_error(undef, "At least two characters are required for search parameter");
+	}
 	$searchtext = quotemeta $searchtext;
 }
 
