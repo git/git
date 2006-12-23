@@ -394,7 +394,7 @@ extern struct packed_git *add_packed_git(char *, int, int);
 extern int num_packed_objects(const struct packed_git *p);
 extern int nth_packed_object_sha1(const struct packed_git *, int, unsigned char*);
 extern unsigned long find_pack_entry_one(const unsigned char *, struct packed_git *);
-extern void *unpack_entry_gently(struct packed_git *, unsigned long, char *, unsigned long *);
+extern void *unpack_entry(struct packed_git *, unsigned long, char *, unsigned long *);
 extern unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
 extern void packed_object_info_detail(struct packed_git *, unsigned long, char *, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
 

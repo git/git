@@ -1110,7 +1110,7 @@ static void *unpack_delta_entry(struct packed_git *p,
 	unsigned long result_size, base_size, base_offset;
 
 	offset = get_delta_base(p, offset, kind, obj_offset, &base_offset);
-	base = unpack_entry_gently(p, base_offset, type, &base_size);
+	base = unpack_entry(p, base_offset, type, &base_size);
 	if (!base)
 		die("failed to read delta base object at %lu from %s",
 		    base_offset, p->pack_name);
@@ -1127,43 +1127,34 @@ static void *unpack_delta_entry(struct packed_git *p,
 	return result;
 }
 
-static void *unpack_entry(struct pack_entry *entry,
-			  char *type, unsigned long *sizep)
-{
-	struct packed_git *p = entry->p;
-	void *retval;
-
-	if (use_packed_git(p))
-		die("cannot map packed file");
-	retval = unpack_entry_gently(p, entry->offset, type, sizep);
-	unuse_packed_git(p);
-	if (!retval)
-		die("corrupted pack file %s", p->pack_name);
-	return retval;
-}
-
-/* The caller is responsible for use_packed_git()/unuse_packed_git() pair */
-void *unpack_entry_gently(struct packed_git *p, unsigned long offset,
+void *unpack_entry(struct packed_git *p, unsigned long offset,
 			  char *type, unsigned long *sizep)
 {
 	unsigned long size, obj_offset = offset;
 	enum object_type kind;
+	void *retval;
 
+	if (use_packed_git(p))
+		die("cannot map packed file");
 	offset = unpack_object_header(p, offset, &kind, &size);
 	switch (kind) {
 	case OBJ_OFS_DELTA:
 	case OBJ_REF_DELTA:
-		return unpack_delta_entry(p, offset, size, kind, obj_offset, type, sizep);
+		retval = unpack_delta_entry(p, offset, size, kind, obj_offset, type, sizep);
+		break;
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
 		strcpy(type, type_names[kind]);
 		*sizep = size;
-		return unpack_compressed_entry(p, offset, size);
+		retval = unpack_compressed_entry(p, offset, size);
+		break;
 	default:
-		return NULL;
+		die("unknown object type %i in %s", kind, p->pack_name);
 	}
+	unuse_packed_git(p);
+	return retval;
 }
 
 int num_packed_objects(const struct packed_git *p)
@@ -1312,7 +1303,7 @@ static void *read_packed_sha1(const unsigned char *sha1, char *type, unsigned lo
 		error("cannot read sha1_file for %s", sha1_to_hex(sha1));
 		return NULL;
 	}
-	return unpack_entry(&e, type, size);
+	return unpack_entry(e.p, e.offset, type, size);
 }
 
 void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)

@@ -51,7 +51,7 @@ static int verify_packfile(struct packed_git *p)
 		offset = find_pack_entry_one(sha1, p);
 		if (!offset)
 			die("internal error pack-check find-pack-entry-one");
-		data = unpack_entry_gently(p, offset, type, &size);
+		data = unpack_entry(p, offset, type, &size);
 		if (!data) {
 			err = error("cannot unpack %s from %s",
 				    sha1_to_hex(sha1), p->pack_name);
