@@ -302,8 +302,8 @@ int git_default_config(const char *var, const char *value)
 		int pgsz = getpagesize();
 		packed_git_window_size = git_config_int(var, value);
 		packed_git_window_size /= pgsz;
-		if (!packed_git_window_size)
-			packed_git_window_size = 1;
+		if (packed_git_window_size < 2)
+			packed_git_window_size = 2;
 		packed_git_window_size *= pgsz;
 		return 0;
 	}
