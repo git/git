@@ -128,6 +128,12 @@ our %feature = (
 		#         => [content-encoding, suffix, program]
 		'default' => ['x-gzip', 'gz', 'gzip']},
 
+	# Enable text search, which will list the commits which match author,
+	# committer or commit text to a given string.  Enabled by default.
+	'search' => {
+		'override' => 0,
+		'default' => [1]},
+
 	# Enable the pickaxe search, which will list the commits that modified
 	# a given string in a file. This can be practical and quite faster
 	# alternative to 'blame', but still potentially CPU-intensive.
@@ -1730,6 +1736,9 @@ EOF
 			print " / $action";
 		}
 		print "\n";
+	}
+	my ($have_search) = gitweb_check_feature('search');
+	if ((defined $project) && ($have_search)) {
 		if (!defined $searchtext) {
 			$searchtext = "";
 		}
@@ -4151,6 +4160,10 @@ sub git_history {
 }
 
 sub git_search {
+	my ($have_search) = gitweb_check_feature('search');
+	if (!$have_search) {
+		die_error('403 Permission denied', "Permission denied");
+	}
 	if (!defined $searchtext) {
 		die_error(undef, "Text field empty");
 	}
