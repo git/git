@@ -23,6 +23,7 @@ char *git_log_output_encoding;
 int shared_repository = PERM_UMASK;
 const char *apply_default_whitespace;
 int zlib_compression_level = Z_DEFAULT_COMPRESSION;
+size_t packed_git_window_size = 32 * 1024 * 1024;
 size_t packed_git_limit = 256 * 1024 * 1024;
 int pager_in_use;
 int pager_use_color = 1;

@@ -118,6 +118,17 @@ core.legacyheaders::
 	database directly (where the "http://" and "rsync://" protocols
 	count as direct access).
 
+core.packedGitWindowSize::
+	Number of bytes of a pack file to map into memory in a
+	single mapping operation.  Larger window sizes may allow
+	your system to process a smaller number of large pack files
+	more quickly.  Smaller window sizes will negatively affect
+	performance due to increased calls to the opreating system's
+	memory manager, but may improve performance when accessing
+	a large number of large pack files.  Default is 32 MiB,
+	which should be reasonable for all users/operating systems.
+	You probably do not need to adjust this value.
+
 core.packedGitLimit::
 	Maximum number of bytes to map simultaneously into memory
 	from pack files.  If Git needs to access more than this many

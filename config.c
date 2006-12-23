@@ -298,6 +298,16 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.packedgitwindowsize")) {
+		int pgsz = getpagesize();
+		packed_git_window_size = git_config_int(var, value);
+		packed_git_window_size /= pgsz;
+		if (!packed_git_window_size)
+			packed_git_window_size = 1;
+		packed_git_window_size *= pgsz;
+		return 0;
+	}
+
 	if (!strcmp(var, "core.packedgitlimit")) {
 		packed_git_limit = git_config_int(var, value);
 		return 0;

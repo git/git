@@ -397,8 +397,9 @@ static char *find_sha1_file(const unsigned char *sha1, struct stat *st)
 	return NULL;
 }
 
-static int pack_used_ctr;
-static unsigned long pack_mapped;
+static unsigned int pack_used_ctr;
+static size_t pack_mapped;
+static size_t page_size;
 struct packed_git *packed_git;
 
 static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
@@ -536,31 +537,70 @@ static void open_packed_git(struct packed_git *p)
 		die("packfile %s does not match index", p->pack_name);
 }
 
+static int in_window(struct pack_window *win, unsigned long offset)
+{
+	/* We must promise at least 20 bytes (one hash) after the
+	 * offset is available from this window, otherwise the offset
+	 * is not actually in this window and a different window (which
+	 * has that one hash excess) must be used.  This is to support
+	 * the object header and delta base parsing routines below.
+	 */
+	off_t win_off = win->offset;
+	return win_off <= offset
+		&& (offset + 20) <= (win_off + win->len);
+}
+
 unsigned char* use_pack(struct packed_git *p,
 		struct pack_window **w_cursor,
 		unsigned long offset,
 		unsigned int *left)
 {
-	struct pack_window *win = p->windows;
+	struct pack_window *win = *w_cursor;
 
 	if (p->pack_fd == -1)
 		open_packed_git(p);
-	if (!win) {
-		pack_mapped += p->pack_size;
-		while (packed_git_limit < pack_mapped && unuse_one_window())
-			; /* nothing */
-		win = xcalloc(1, sizeof(*win));
-		win->len = p->pack_size;
-		win->base = mmap(NULL, p->pack_size, PROT_READ, MAP_PRIVATE, p->pack_fd, 0);
-		if (win->base == MAP_FAILED)
-			die("packfile %s cannot be mapped.", p->pack_name);
-		p->windows = win;
+
+	/* Since packfiles end in a hash of their content and its
+	 * pointless to ask for an offset into the middle of that
+	 * hash, and the in_window function above wouldn't match
+	 * don't allow an offset too close to the end of the file.
+	 */
+	if (offset > (p->pack_size - 20))
+		die("offset beyond end of packfile (truncated pack?)");
+
+	if (!win || !in_window(win, offset)) {
+		if (win)
+			win->inuse_cnt--;
+		for (win = p->windows; win; win = win->next) {
+			if (in_window(win, offset))
+				break;
+		}
+		if (!win) {
+			if (!page_size)
+				page_size = getpagesize();
+			win = xcalloc(1, sizeof(*win));
+			win->offset = (offset / page_size) * page_size;
+			win->len = p->pack_size - win->offset;
+			if (win->len > packed_git_window_size)
+				win->len = packed_git_window_size;
+			pack_mapped += win->len;
+			while (packed_git_limit < pack_mapped && unuse_one_window())
+				; /* nothing */
+			win->base = mmap(NULL, win->len,
+				PROT_READ, MAP_PRIVATE,
+				p->pack_fd, win->offset);
+			if (win->base == MAP_FAILED)
+				die("packfile %s cannot be mapped.", p->pack_name);
+			win->next = p->windows;
+			p->windows = win;
+		}
 	}
 	if (win != *w_cursor) {
 		win->last_used = pack_used_ctr++;
 		win->inuse_cnt++;
 		*w_cursor = win;
 	}
+	offset -= win->offset;
 	if (left)
 		*left = win->len - offset;
 	return win->base + offset;
