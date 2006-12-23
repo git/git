@@ -649,8 +649,8 @@ static struct merge_file_info merge_file(struct diff_filespec *o,
 			char *name1, *name2;
 			int merge_status;
 
-			name1 = xstrdup(mkpath("%s/%s", branch1, a->path));
-			name2 = xstrdup(mkpath("%s/%s", branch2, b->path));
+			name1 = xstrdup(mkpath("%s:%s", branch1, a->path));
+			name2 = xstrdup(mkpath("%s:%s", branch2, b->path));
 
 			fill_mm(o->sha1, &orig);
 			fill_mm(a->sha1, &src1);
