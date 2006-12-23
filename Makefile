@@ -824,6 +824,8 @@ install: all
 install-doc:
 	$(MAKE) -C Documentation install
 
+quick-install-doc:
+	$(MAKE) -C Documentation quick-install
 
 
 
