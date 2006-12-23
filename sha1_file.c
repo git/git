@@ -590,7 +590,9 @@ unsigned char* use_pack(struct packed_git *p,
 				PROT_READ, MAP_PRIVATE,
 				p->pack_fd, win->offset);
 			if (win->base == MAP_FAILED)
-				die("packfile %s cannot be mapped.", p->pack_name);
+				die("packfile %s cannot be mapped: %s",
+					p->pack_name,
+					strerror(errno));
 			win->next = p->windows;
 			p->windows = win;
 		}
