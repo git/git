@@ -221,6 +221,8 @@ do
 	remotehead=$(git-rev-parse --verify "$remote"^0 2>/dev/null) ||
 	    die "$remote - not something we can merge"
 	remoteheads="${remoteheads}$remotehead "
+	eval GITHEAD_$remotehead='"$remote"'
+	export GITHEAD_$remotehead
 done
 set x $remoteheads ; shift
 
