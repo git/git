@@ -347,10 +347,10 @@ struct pack_window {
 
 extern struct packed_git {
 	struct packed_git *next;
-	unsigned long index_size;
-	unsigned long pack_size;
 	struct pack_window *windows;
 	unsigned int *index_base;
+	off_t index_size;
+	off_t pack_size;
 	int pack_local;
 	unsigned char sha1[20];
 	/* something like ".git/objects/pack/xxxxx.pack" */
