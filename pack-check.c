@@ -1,7 +1,8 @@
 #include "cache.h"
 #include "pack.h"
 
-static int verify_packfile(struct packed_git *p)
+static int verify_packfile(struct packed_git *p,
+		struct pack_window **w_curs)
 {
 	unsigned long index_size = p->index_size;
 	void *index_base = p->index_base;
@@ -13,7 +14,7 @@ static int verify_packfile(struct packed_git *p)
 	int nr_objects, err, i;
 
 	/* Header consistency check */
-	pack_base = p->windows->base;
+	pack_base = use_pack(p, w_curs, 0, NULL);
 	hdr = (struct pack_header*)pack_base;
 	if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
 		return error("Packfile %s signature mismatch", p->pack_name);
@@ -72,13 +73,14 @@ static int verify_packfile(struct packed_git *p)
 
 #define MAX_CHAIN 40
 
-static void show_pack_info(struct packed_git *p)
+static void show_pack_info(struct packed_git *p,
+		struct pack_window **w_curs)
 {
 	struct pack_header *hdr;
 	int nr_objects, i;
 	unsigned int chain_histogram[MAX_CHAIN];
 
-	hdr = (struct pack_header*)p->windows->base;
+	hdr = (struct pack_header*)use_pack(p, w_curs, 0, NULL);
 	nr_objects = ntohl(hdr->hdr_entries);
 	memset(chain_histogram, 0, sizeof(chain_histogram));
 
@@ -142,18 +144,18 @@ int verify_pack(struct packed_git *p, int verbose)
 
 	if (!ret) {
 		/* Verify pack file */
-		use_packed_git(p);
-		ret = verify_packfile(p);
-		unuse_packed_git(p);
+		struct pack_window *w_curs = NULL;
+		ret = verify_packfile(p, &w_curs);
+		unuse_pack(&w_curs);
 	}
 
 	if (verbose) {
 		if (ret)
 			printf("%s: bad\n", p->pack_name);
 		else {
-			use_packed_git(p);
-			show_pack_info(p);
-			unuse_packed_git(p);
+			struct pack_window *w_curs = NULL;
+			show_pack_info(p, &w_curs);
+			unuse_pack(&w_curs);
 			printf("%s: ok\n", p->pack_name);
 		}
 	}

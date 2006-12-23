@@ -470,10 +470,13 @@ static int unuse_one_packed_git(void)
 	return 1;
 }
 
-void unuse_packed_git(struct packed_git *p)
+void unuse_pack(struct pack_window **w_cursor)
 {
-	if (p->windows)
-		p->windows->inuse_cnt--;
+	struct pack_window *w = *w_cursor;
+	if (w) {
+		w->inuse_cnt--;
+		*w_cursor = NULL;
+	}
 }
 
 static void open_packed_git(struct packed_git *p)
@@ -518,13 +521,16 @@ static void open_packed_git(struct packed_git *p)
 		die("packfile %s does not match index", p->pack_name);
 }
 
-int use_packed_git(struct packed_git *p)
+unsigned char* use_pack(struct packed_git *p,
+		struct pack_window **w_cursor,
+		unsigned long offset,
+		unsigned int *left)
 {
+	struct pack_window *win = p->windows;
+
 	if (p->pack_fd == -1)
 		open_packed_git(p);
-	if (!p->windows) {
-		struct pack_window *win;
-
+	if (!win) {
 		pack_mapped += p->pack_size;
 		while (packed_git_limit < pack_mapped && unuse_one_packed_git())
 			; /* nothing */
@@ -535,9 +541,14 @@ int use_packed_git(struct packed_git *p)
 			die("packfile %s cannot be mapped.", p->pack_name);
 		p->windows = win;
 	}
-	p->windows->last_used = pack_used_ctr++;
-	p->windows->inuse_cnt++;
-	return 0;
+	if (win != *w_cursor) {
+		win->last_used = pack_used_ctr++;
+		win->inuse_cnt++;
+		*w_cursor = win;
+	}
+	if (left)
+		*left = win->len - offset;
+	return win->base + offset;
 }
 
 struct packed_git *add_packed_git(char *path, int path_len, int local)
@@ -883,12 +894,13 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 }
 
 static unsigned long get_delta_base(struct packed_git *p,
+				    struct pack_window **w_curs,
 				    unsigned long offset,
 				    enum object_type kind,
 				    unsigned long delta_obj_offset,
 				    unsigned long *base_obj_offset)
 {
-	unsigned char *base_info = p->windows->base + offset;
+	unsigned char *base_info = use_pack(p, w_curs, offset, NULL);
 	unsigned long base_offset;
 
 	/* there must be at least 20 bytes left regardless of delta type */
@@ -928,6 +940,7 @@ static int packed_object_info(struct packed_git *p, unsigned long offset,
 			      char *type, unsigned long *sizep);
 
 static int packed_delta_info(struct packed_git *p,
+			     struct pack_window **w_curs,
 			     unsigned long offset,
 			     enum object_type kind,
 			     unsigned long obj_offset,
@@ -936,7 +949,8 @@ static int packed_delta_info(struct packed_git *p,
 {
 	unsigned long base_offset;
 
-	offset = get_delta_base(p, offset, kind, obj_offset, &base_offset);
+	offset = get_delta_base(p, w_curs, offset, kind,
+		obj_offset, &base_offset);
 
 	/* We choose to only get the type of the base object and
 	 * ignore potentially corrupt pack file that expects the delta
@@ -955,8 +969,7 @@ static int packed_delta_info(struct packed_git *p,
 
 		memset(&stream, 0, sizeof(stream));
 
-		stream.next_in = p->windows->base + offset;
-		stream.avail_in = p->pack_size - offset;
+		stream.next_in = use_pack(p, w_curs, offset, &stream.avail_in);
 		stream.next_out = delta_head;
 		stream.avail_out = sizeof(delta_head);
 
@@ -982,16 +995,18 @@ static int packed_delta_info(struct packed_git *p,
 	return 0;
 }
 
-static unsigned long unpack_object_header(struct packed_git *p, unsigned long offset,
-	enum object_type *type, unsigned long *sizep)
+static unsigned long unpack_object_header(struct packed_git *p,
+		struct pack_window **w_curs,
+		unsigned long offset,
+		enum object_type *type,
+		unsigned long *sizep)
 {
+	unsigned char *base;
+	unsigned int left;
 	unsigned long used;
 
-	if (p->pack_size <= offset)
-		die("object offset outside of pack file");
-
-	used = unpack_object_header_gently(p->windows->base + offset,
-					   p->pack_size - offset, type, sizep);
+	base = use_pack(p, w_curs, offset, &left);
+	used = unpack_object_header_gently(base, left, type, sizep);
 	if (!used)
 		die("object offset outside of pack file");
 
@@ -1006,13 +1021,14 @@ void packed_object_info_detail(struct packed_git *p,
 			       unsigned int *delta_chain_length,
 			       unsigned char *base_sha1)
 {
+	struct pack_window *w_curs = NULL;
 	unsigned long obj_offset, val;
 	unsigned char *next_sha1;
 	enum object_type kind;
 
 	*delta_chain_length = 0;
 	obj_offset = offset;
-	offset = unpack_object_header(p, offset, &kind, size);
+	offset = unpack_object_header(p, &w_curs, offset, &kind, size);
 
 	for (;;) {
 		switch (kind) {
@@ -1025,25 +1041,24 @@ void packed_object_info_detail(struct packed_git *p,
 		case OBJ_TAG:
 			strcpy(type, type_names[kind]);
 			*store_size = 0; /* notyet */
+			unuse_pack(&w_curs);
 			return;
 		case OBJ_OFS_DELTA:
-			get_delta_base(p, offset, kind, obj_offset, &offset);
+			get_delta_base(p, &w_curs, offset, kind,
+				obj_offset, &offset);
 			if (*delta_chain_length == 0) {
 				/* TODO: find base_sha1 as pointed by offset */
 			}
 			break;
 		case OBJ_REF_DELTA:
-			if (p->pack_size <= offset + 20)
-				die("pack file %s records an incomplete delta base",
-				    p->pack_name);
-			next_sha1 = p->windows->base + offset;
+			next_sha1 = use_pack(p, &w_curs, offset, NULL);
 			if (*delta_chain_length == 0)
 				hashcpy(base_sha1, next_sha1);
 			offset = find_pack_entry_one(next_sha1, p);
 			break;
 		}
 		obj_offset = offset;
-		offset = unpack_object_header(p, offset, &kind, &val);
+		offset = unpack_object_header(p, &w_curs, offset, &kind, &val);
 		(*delta_chain_length)++;
 	}
 }
@@ -1051,20 +1066,26 @@ void packed_object_info_detail(struct packed_git *p,
 static int packed_object_info(struct packed_git *p, unsigned long offset,
 			      char *type, unsigned long *sizep)
 {
+	struct pack_window *w_curs = NULL;
 	unsigned long size, obj_offset = offset;
 	enum object_type kind;
+	int r;
 
-	offset = unpack_object_header(p, offset, &kind, &size);
+	offset = unpack_object_header(p, &w_curs, offset, &kind, &size);
 
 	switch (kind) {
 	case OBJ_OFS_DELTA:
 	case OBJ_REF_DELTA:
-		return packed_delta_info(p, offset, kind, obj_offset, type, sizep);
+		r = packed_delta_info(p, &w_curs, offset, kind,
+			obj_offset, type, sizep);
+		unuse_pack(&w_curs);
+		return r;
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
 		strcpy(type, type_names[kind]);
+		unuse_pack(&w_curs);
 		break;
 	default:
 		die("pack %s contains unknown object type %d",
@@ -1076,6 +1097,7 @@ static int packed_object_info(struct packed_git *p, unsigned long offset,
 }
 
 static void *unpack_compressed_entry(struct packed_git *p,
+				    struct pack_window **w_curs,
 				    unsigned long offset,
 				    unsigned long size)
 {
@@ -1086,8 +1108,7 @@ static void *unpack_compressed_entry(struct packed_git *p,
 	buffer = xmalloc(size + 1);
 	buffer[size] = 0;
 	memset(&stream, 0, sizeof(stream));
-	stream.next_in = p->windows->base + offset;
-	stream.avail_in = p->pack_size - offset;
+	stream.next_in = use_pack(p, w_curs, offset, &stream.avail_in);
 	stream.next_out = buffer;
 	stream.avail_out = size;
 
@@ -1103,6 +1124,7 @@ static void *unpack_compressed_entry(struct packed_git *p,
 }
 
 static void *unpack_delta_entry(struct packed_git *p,
+				struct pack_window **w_curs,
 				unsigned long offset,
 				unsigned long delta_size,
 				enum object_type kind,
@@ -1113,13 +1135,14 @@ static void *unpack_delta_entry(struct packed_git *p,
 	void *delta_data, *result, *base;
 	unsigned long result_size, base_size, base_offset;
 
-	offset = get_delta_base(p, offset, kind, obj_offset, &base_offset);
+	offset = get_delta_base(p, w_curs, offset, kind,
+		obj_offset, &base_offset);
 	base = unpack_entry(p, base_offset, type, &base_size);
 	if (!base)
 		die("failed to read delta base object at %lu from %s",
 		    base_offset, p->pack_name);
 
-	delta_data = unpack_compressed_entry(p, offset, delta_size);
+	delta_data = unpack_compressed_entry(p, w_curs, offset, delta_size);
 	result = patch_delta(base, base_size,
 			     delta_data, delta_size,
 			     &result_size);
@@ -1134,17 +1157,17 @@ static void *unpack_delta_entry(struct packed_git *p,
 void *unpack_entry(struct packed_git *p, unsigned long offset,
 			  char *type, unsigned long *sizep)
 {
+	struct pack_window *w_curs = NULL;
 	unsigned long size, obj_offset = offset;
 	enum object_type kind;
 	void *retval;
 
-	if (use_packed_git(p))
-		die("cannot map packed file");
-	offset = unpack_object_header(p, offset, &kind, &size);
+	offset = unpack_object_header(p, &w_curs, offset, &kind, &size);
 	switch (kind) {
 	case OBJ_OFS_DELTA:
 	case OBJ_REF_DELTA:
-		retval = unpack_delta_entry(p, offset, size, kind, obj_offset, type, sizep);
+		retval = unpack_delta_entry(p, &w_curs, offset, size,
+			kind, obj_offset, type, sizep);
 		break;
 	case OBJ_COMMIT:
 	case OBJ_TREE:
@@ -1152,12 +1175,12 @@ void *unpack_entry(struct packed_git *p, unsigned long offset,
 	case OBJ_TAG:
 		strcpy(type, type_names[kind]);
 		*sizep = size;
-		retval = unpack_compressed_entry(p, offset, size);
+		retval = unpack_compressed_entry(p, &w_curs, offset, size);
 		break;
 	default:
 		die("unknown object type %i in %s", kind, p->pack_name);
 	}
-	unuse_packed_git(p);
+	unuse_pack(&w_curs);
 	return retval;
 }
 
@@ -1284,7 +1307,6 @@ static int sha1_loose_object_info(const unsigned char *sha1, char *type, unsigne
 
 int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep)
 {
-	int status;
 	struct pack_entry e;
 
 	if (!find_pack_entry(sha1, &e, NULL)) {
@@ -1292,11 +1314,7 @@ int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep
 		if (!find_pack_entry(sha1, &e, NULL))
 			return sha1_loose_object_info(sha1, type, sizep);
 	}
-	if (use_packed_git(e.p))
-		die("cannot map packed file");
-	status = packed_object_info(e.p, e.offset, type, sizep);
-	unuse_packed_git(e.p);
-	return status;
+	return packed_object_info(e.p, e.offset, type, sizep);
 }
 
 static void *read_packed_sha1(const unsigned char *sha1, char *type, unsigned long *size)

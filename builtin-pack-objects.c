@@ -416,6 +416,7 @@ static unsigned long write_object(struct sha1file *f,
 	}
 	else {
 		struct packed_git *p = entry->in_pack;
+		struct pack_window *w_curs = NULL;
 
 		if (entry->delta) {
 			obj_type = (allow_ofs_delta && entry->delta->offset) ?
@@ -437,16 +438,14 @@ static unsigned long write_object(struct sha1file *f,
 			hdrlen += 20;
 		}
 
-		use_packed_git(p);
-		buf = p->windows->base
-			+ entry->in_pack_offset
-			+ entry->in_pack_header_size;
+		buf = use_pack(p, &w_curs, entry->in_pack_offset
+			+ entry->in_pack_header_size, NULL);
 		datalen = find_packed_object_size(p, entry->in_pack_offset)
 				- entry->in_pack_header_size;
 		if (!pack_to_stdout && check_inflate(buf, datalen, entry->size))
 			die("corrupt delta in pack %s", sha1_to_hex(entry->sha1));
 		sha1write(f, buf, datalen);
-		unuse_packed_git(p);
+		unuse_pack(&w_curs);
 		reused++;
 	}
 	if (entry->delta)
@@ -937,14 +936,13 @@ static void check_object(struct object_entry *entry)
 
 	if (entry->in_pack && !entry->preferred_base) {
 		struct packed_git *p = entry->in_pack;
+		struct pack_window *w_curs = NULL;
 		unsigned long left = p->pack_size - entry->in_pack_offset;
 		unsigned long size, used;
 		unsigned char *buf;
 		struct object_entry *base_entry = NULL;
 
-		use_packed_git(p);
-		buf = p->windows->base;
-		buf += entry->in_pack_offset;
+		buf = use_pack(p, &w_curs, entry->in_pack_offset, NULL);
 
 		/* We want in_pack_type even if we do not reuse delta.
 		 * There is no point not reusing non-delta representations.
@@ -990,7 +988,7 @@ static void check_object(struct object_entry *entry)
 			if (base_name)
 				base_entry = locate_object_entry(base_name);
 		}
-		unuse_packed_git(p);
+		unuse_pack(&w_curs);
 		entry->in_pack_header_size = used;
 
 		if (base_entry) {
