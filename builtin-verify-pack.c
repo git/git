@@ -55,6 +55,7 @@ int cmd_verify_pack(int argc, const char **argv, const char *prefix)
 	int no_more_options = 0;
 	int nothing_done = 1;
 
+	git_config(git_default_config);
 	while (1 < argc) {
 		if (!no_more_options && argv[1][0] == '-') {
 			if (!strcmp("-v", argv[1]))
