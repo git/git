@@ -455,21 +455,23 @@ static int unuse_one_packed_git(void)
 	struct packed_git *p, *lru = NULL;
 
 	for (p = packed_git; p; p = p->next) {
-		if (p->pack_use_cnt || !p->pack_base)
+		if (!p->windows || p->windows->inuse_cnt)
 			continue;
-		if (!lru || p->pack_last_used < lru->pack_last_used)
+		if (!lru || p->windows->last_used < lru->windows->last_used)
 			lru = p;
 	}
 	if (!lru)
 		return 0;
-	munmap(lru->pack_base, lru->pack_size);
-	lru->pack_base = NULL;
+	munmap(lru->windows->base, lru->windows->len);
+	free(lru->windows);
+	lru->windows = NULL;
 	return 1;
 }
 
 void unuse_packed_git(struct packed_git *p)
 {
-	p->pack_use_cnt--;
+	if (p->windows)
+		p->windows->inuse_cnt--;
 }
 
 int use_packed_git(struct packed_git *p)
@@ -482,10 +484,10 @@ int use_packed_git(struct packed_git *p)
 			die("packfile %s not a regular file", p->pack_name);
 		p->pack_size = st.st_size;
 	}
-	if (!p->pack_base) {
+	if (!p->windows) {
 		int fd;
 		struct stat st;
-		void *map;
+		struct pack_window *win;
 		struct pack_header *hdr;
 
 		pack_mapped += p->pack_size;
@@ -500,16 +502,18 @@ int use_packed_git(struct packed_git *p)
 		}
 		if (st.st_size != p->pack_size)
 			die("packfile %s size mismatch.", p->pack_name);
-		map = mmap(NULL, p->pack_size, PROT_READ, MAP_PRIVATE, fd, 0);
+		win = xcalloc(1, sizeof(*win));
+		win->len = p->pack_size;
+		win->base = mmap(NULL, p->pack_size, PROT_READ, MAP_PRIVATE, fd, 0);
 		close(fd);
-		if (map == MAP_FAILED)
+		if (win->base == MAP_FAILED)
 			die("packfile %s cannot be mapped.", p->pack_name);
-		p->pack_base = map;
+		p->windows = win;
 
 		/* Check if we understand this pack file.  If we don't we're
 		 * likely too old to handle it.
 		 */
-		hdr = map;
+		hdr = (struct pack_header*)win->base;
 		if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
 			die("packfile %s isn't actually a pack.", p->pack_name);
 		if (!pack_version_ok(hdr->hdr_version))
@@ -522,13 +526,13 @@ int use_packed_git(struct packed_git *p)
 		 */
 		if (hashcmp((unsigned char *)(p->index_base) +
 			    p->index_size - 40,
-			    (unsigned char *)p->pack_base +
+			    p->windows->base +
 			    p->pack_size - 20)) {
 			die("packfile %s does not match index.", p->pack_name);
 		}
 	}
-	p->pack_last_used = pack_used_ctr++;
-	p->pack_use_cnt++;
+	p->windows->last_used = pack_used_ctr++;
+	p->windows->inuse_cnt++;
 	return 0;
 }
 
@@ -558,9 +562,7 @@ struct packed_git *add_packed_git(char *path, int path_len, int local)
 	p->pack_size = st.st_size;
 	p->index_base = idx_map;
 	p->next = NULL;
-	p->pack_base = NULL;
-	p->pack_last_used = 0;
-	p->pack_use_cnt = 0;
+	p->windows = NULL;
 	p->pack_local = local;
 	if ((path_len > 44) && !get_sha1_hex(path + path_len - 44, sha1))
 		hashcpy(p->sha1, sha1);
@@ -591,9 +593,7 @@ struct packed_git *parse_pack_index_file(const unsigned char *sha1, char *idx_pa
 	p->pack_size = 0;
 	p->index_base = idx_map;
 	p->next = NULL;
-	p->pack_base = NULL;
-	p->pack_last_used = 0;
-	p->pack_use_cnt = 0;
+	p->windows = NULL;
 	hashcpy(p->sha1, sha1);
 	return p;
 }
@@ -882,7 +882,7 @@ static unsigned long get_delta_base(struct packed_git *p,
 				    unsigned long delta_obj_offset,
 				    unsigned long *base_obj_offset)
 {
-	unsigned char *base_info = (unsigned char *) p->pack_base + offset;
+	unsigned char *base_info = p->windows->base + offset;
 	unsigned long base_offset;
 
 	/* there must be at least 20 bytes left regardless of delta type */
@@ -949,7 +949,7 @@ static int packed_delta_info(struct packed_git *p,
 
 		memset(&stream, 0, sizeof(stream));
 
-		stream.next_in = (unsigned char *) p->pack_base + offset;
+		stream.next_in = p->windows->base + offset;
 		stream.avail_in = p->pack_size - offset;
 		stream.next_out = delta_head;
 		stream.avail_out = sizeof(delta_head);
@@ -984,8 +984,7 @@ static unsigned long unpack_object_header(struct packed_git *p, unsigned long of
 	if (p->pack_size <= offset)
 		die("object offset outside of pack file");
 
-	used = unpack_object_header_gently((unsigned char *)p->pack_base +
-					   offset,
+	used = unpack_object_header_gently(p->windows->base + offset,
 					   p->pack_size - offset, type, sizep);
 	if (!used)
 		die("object offset outside of pack file");
@@ -1031,7 +1030,7 @@ void packed_object_info_detail(struct packed_git *p,
 			if (p->pack_size <= offset + 20)
 				die("pack file %s records an incomplete delta base",
 				    p->pack_name);
-			next_sha1 = (unsigned char *) p->pack_base + offset;
+			next_sha1 = p->windows->base + offset;
 			if (*delta_chain_length == 0)
 				hashcpy(base_sha1, next_sha1);
 			offset = find_pack_entry_one(next_sha1, p);
@@ -1081,7 +1080,7 @@ static void *unpack_compressed_entry(struct packed_git *p,
 	buffer = xmalloc(size + 1);
 	buffer[size] = 0;
 	memset(&stream, 0, sizeof(stream));
-	stream.next_in = (unsigned char*)p->pack_base + offset;
+	stream.next_in = p->windows->base + offset;
 	stream.avail_in = p->pack_size - offset;
 	stream.next_out = buffer;
 	stream.avail_out = size;

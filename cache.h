@@ -336,14 +336,21 @@ extern struct alternate_object_database {
 } *alt_odb_list;
 extern void prepare_alt_odb(void);
 
+struct pack_window {
+	struct pack_window *next;
+	unsigned char *base;
+	off_t offset;
+	size_t len;
+	unsigned int last_used;
+	unsigned int inuse_cnt;
+};
+
 extern struct packed_git {
 	struct packed_git *next;
 	unsigned long index_size;
 	unsigned long pack_size;
+	struct pack_window *windows;
 	unsigned int *index_base;
-	void *pack_base;
-	unsigned int pack_last_used;
-	unsigned int pack_use_cnt;
 	int pack_local;
 	unsigned char sha1[20];
 	/* something like ".git/objects/pack/xxxxx.pack" */

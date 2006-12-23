@@ -438,7 +438,7 @@ static unsigned long write_object(struct sha1file *f,
 		}
 
 		use_packed_git(p);
-		buf = (char *) p->pack_base
+		buf = p->windows->base
 			+ entry->in_pack_offset
 			+ entry->in_pack_header_size;
 		datalen = find_packed_object_size(p, entry->in_pack_offset)
@@ -943,7 +943,7 @@ static void check_object(struct object_entry *entry)
 		struct object_entry *base_entry = NULL;
 
 		use_packed_git(p);
-		buf = p->pack_base;
+		buf = p->windows->base;
 		buf += entry->in_pack_offset;
 
 		/* We want in_pack_type even if we do not reuse delta.

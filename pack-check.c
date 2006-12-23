@@ -13,7 +13,8 @@ static int verify_packfile(struct packed_git *p)
 	int nr_objects, err, i;
 
 	/* Header consistency check */
-	hdr = p->pack_base;
+	pack_base = p->windows->base;
+	hdr = (struct pack_header*)pack_base;
 	if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
 		return error("Packfile %s signature mismatch", p->pack_name);
 	if (!pack_version_ok(hdr->hdr_version))
@@ -26,7 +27,6 @@ static int verify_packfile(struct packed_git *p)
 			     num_packed_objects(p));
 
 	SHA1_Init(&ctx);
-	pack_base = p->pack_base;
 	SHA1_Update(&ctx, pack_base, pack_size - 20);
 	SHA1_Final(sha1, &ctx);
 	if (hashcmp(sha1, (unsigned char *)pack_base + pack_size - 20))
@@ -78,7 +78,7 @@ static void show_pack_info(struct packed_git *p)
 	int nr_objects, i;
 	unsigned int chain_histogram[MAX_CHAIN];
 
-	hdr = p->pack_base;
+	hdr = (struct pack_header*)p->windows->base;
 	nr_objects = ntohl(hdr->hdr_entries);
 	memset(chain_histogram, 0, sizeof(chain_histogram));
 
