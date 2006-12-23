@@ -450,24 +450,39 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 	return 0;
 }
 
-static int unuse_one_packed_git(void)
+static int unuse_one_window(void)
 {
-	struct packed_git *p, *lru = NULL;
+	struct packed_git *p, *lru_p = NULL;
+	struct pack_window *w, *w_l, *lru_w = NULL, *lru_l = NULL;
 
 	for (p = packed_git; p; p = p->next) {
-		if (!p->windows || p->windows->inuse_cnt)
-			continue;
-		if (!lru || p->windows->last_used < lru->windows->last_used)
-			lru = p;
+		for (w_l = NULL, w = p->windows; w; w = w->next) {
+			if (!w->inuse_cnt) {
+				if (!lru_w || w->last_used < lru_w->last_used) {
+					lru_p = p;
+					lru_w = w;
+					lru_l = w_l;
+				}
+			}
+			w_l = w;
+		}
 	}
-	if (!lru)
-		return 0;
-	munmap(lru->windows->base, lru->windows->len);
-	free(lru->windows);
-	lru->windows = NULL;
-	close(p->pack_fd);
-	p->pack_fd = -1;
-	return 1;
+	if (lru_p) {
+		munmap(lru_w->base, lru_w->len);
+		pack_mapped -= lru_w->len;
+		if (lru_l)
+			lru_l->next = lru_w->next;
+		else {
+			lru_p->windows = lru_w->next;
+			if (!lru_p->windows) {
+				close(lru_p->pack_fd);
+				lru_p->pack_fd = -1;
+			}
+		}
+		free(lru_w);
+		return 1;
+	}
+	return 0;
 }
 
 void unuse_pack(struct pack_window **w_cursor)
@@ -532,7 +547,7 @@ unsigned char* use_pack(struct packed_git *p,
 		open_packed_git(p);
 	if (!win) {
 		pack_mapped += p->pack_size;
-		while (packed_git_limit < pack_mapped && unuse_one_packed_git())
+		while (packed_git_limit < pack_mapped && unuse_one_window())
 			; /* nothing */
 		win = xcalloc(1, sizeof(*win));
 		win->len = p->pack_size;
