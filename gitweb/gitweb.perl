@@ -2910,18 +2910,18 @@ sub git_heads_body {
 }
 
 sub git_search_grep_body {
-	my ($greplist, $from, $to, $extra) = @_;
+	my ($commitlist, $from, $to, $extra) = @_;
 	$from = 0 unless defined $from;
-	$to = $#{$greplist} if (!defined $to || $#{$greplist} < $to);
+	$to = $#{$commitlist} if (!defined $to || $#{$commitlist} < $to);
 
 	print "<table class=\"grep\" cellspacing=\"0\">\n";
 	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
-		my $commit = $greplist->[$i];
-		my %co = parse_commit($commit);
+		my %co = %{$commitlist->[$i]};
 		if (!%co) {
 			next;
 		}
+		my $commit = $co{'id'};
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
 		} else {
@@ -4307,13 +4307,8 @@ sub git_search {
 		} elsif ($searchtype eq 'committer') {
 			$greptype = "--committer=";
 		}
-		open my $fd, "-|", git_cmd(), "rev-list",
-			("--max-count=" . (100 * ($page+1))),
-			($greptype . $searchtext),
-			$hash, "--"
-			or next;
-		my @revlist = map { chomp; $_ } <$fd>;
-		close $fd;
+		$greptype .= $searchtext;
+		my @commitlist = parse_commits($hash, 101, (100 * $page), $greptype);
 
 		my $paging_nav = '';
 		if ($page > 0) {
@@ -4330,7 +4325,7 @@ sub git_search {
 			$paging_nav .= "first";
 			$paging_nav .= " &sdot; prev";
 		}
-		if ($#revlist >= (100 * ($page+1)-1)) {
+		if ($#commitlist >= 100) {
 			$paging_nav .= " &sdot; " .
 				$cgi->a({-href => href(action=>"search", hash=>$hash,
 						       searchtext=>$searchtext, searchtype=>$searchtype,
@@ -4340,7 +4335,7 @@ sub git_search {
 			$paging_nav .= " &sdot; next";
 		}
 		my $next_link = '';
-		if ($#revlist >= (100 * ($page+1)-1)) {
+		if ($#commitlist >= 100) {
 			$next_link =
 				$cgi->a({-href => href(action=>"search", hash=>$hash,
 						       searchtext=>$searchtext, searchtype=>$searchtype,
@@ -4350,7 +4345,7 @@ sub git_search {
 
 		git_print_page_nav('','', $hash,$co{'tree'},$hash, $paging_nav);
 		git_print_header_div('commit', esc_html($co{'title'}), $hash);
-		git_search_grep_body(\@revlist, ($page * 100), $#revlist, $next_link);
+		git_search_grep_body(\@commitlist, 0, 99, $next_link);
 	}
 
 	if ($searchtype eq 'pickaxe') {
