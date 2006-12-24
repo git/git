@@ -3645,28 +3645,25 @@ sub git_log {
 	}
 	my $refs = git_get_references();
 
-	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
-	open my $fd, "-|", git_cmd(), "rev-list", $limit, $hash, "--"
-		or die_error(undef, "Open git-rev-list failed");
-	my @revlist = map { chomp; $_ } <$fd>;
-	close $fd;
+	my @commitlist = parse_commits($hash, 101, (100 * $page));
 
-	my $paging_nav = format_paging_nav('log', $hash, $head, $page, $#revlist);
+	my $paging_nav = format_paging_nav('log', $hash, $head, $page, (100 * ($page+1)));
 
 	git_header_html();
 	git_print_page_nav('log','', $hash,undef,undef, $paging_nav);
 
-	if (!@revlist) {
+	if (!@commitlist) {
 		my %co = parse_commit($hash);
 
 		git_print_header_div('summary', $project);
 		print "<div class=\"page_body\"> Last change $co{'age_string'}.<br/><br/></div>\n";
 	}
-	for (my $i = ($page * 100); $i <= $#revlist; $i++) {
-		my $commit = $revlist[$i];
-		my $ref = format_ref_marker($refs, $commit);
-		my %co = parse_commit($commit);
+	my $to = ($#commitlist >= 99) ? (99) : ($#commitlist);
+	for (my $i = 0; $i <= $to; $i++) {
+		my %co = %{$commitlist[$i]};
 		next if !%co;
+		my $commit = $co{'id'};
+		my $ref = format_ref_marker($refs, $commit);
 		my %ad = parse_date($co{'author_epoch'});
 		git_print_header_div('commit',
 		               "<span class=\"age\">$co{'age_string'}</span>" .
@@ -3686,6 +3683,12 @@ sub git_log {
 
 		print "<div class=\"log_body\">\n";
 		git_print_log($co{'comment'}, -final_empty_line=> 1);
+		print "</div>\n";
+	}
+	if ($#commitlist >= 100) {
+		print "<div class=\"page_nav\">\n";
+		print $cgi->a({-href => href(action=>"log", hash=>$hash, page=>$page+1),
+			       -accesskey => "n", -title => "Alt-n"}, "next");
 		print "</div>\n";
 	}
 	git_footer_html();
