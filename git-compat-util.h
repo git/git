@@ -92,11 +92,16 @@ extern void set_warn_routine(void (*routine)(const char *warn, va_list params));
 extern void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
 extern int git_munmap(void *start, size_t length);
 
+#define DEFAULT_PACKED_GIT_WINDOW_SIZE (1 * 1024 * 1024)
+
 #else /* NO_MMAP */
 
 #include <sys/mman.h>
+#define DEFAULT_PACKED_GIT_WINDOW_SIZE (32 * 1024 * 1024)
 
 #endif /* NO_MMAP */
+
+#define DEFAULT_PACKED_GIT_LIMIT (256 * 1024 * 1024)
 
 #ifdef NO_SETENV
 #define setenv gitsetenv
