@@ -1281,13 +1281,14 @@ sub parse_commit_text {
 	if (!($header =~ m/^[0-9a-fA-F]{40}/)) {
 		return;
 	}
-	($co{'id'}, my @parents) = split ' ', $header;
-	$co{'parents'} = \@parents;
-	$co{'parent'} = $parents[0];
+	$co{'id'} = $header;
+	my @parents;
 	while (my $line = shift @commit_lines) {
 		last if $line eq "\n";
 		if ($line =~ m/^tree ([0-9a-fA-F]{40})$/) {
 			$co{'tree'} = $1;
+		} elsif ($line =~ m/^parent ([0-9a-fA-F]{40})$/) {
+			push @parents, $1;
 		} elsif ($line =~ m/^author (.*) ([0-9]+) (.*)$/) {
 			$co{'author'} = $1;
 			$co{'author_epoch'} = $2;
@@ -1314,6 +1315,8 @@ sub parse_commit_text {
 	if (!defined $co{'tree'}) {
 		return;
 	};
+	$co{'parents'} = \@parents;
+	$co{'parent'} = $parents[0];
 
 	foreach my $title (@commit_lines) {
 		$title =~ s/^    //;
@@ -1371,7 +1374,6 @@ sub parse_commit {
 
 	open my $fd, "-|", git_cmd(), "rev-list",
 		"--header",
-		"--parents",
 		"--max-count=1",
 		$commit_id,
 		"--",
@@ -1414,7 +1416,6 @@ sub parse_commits {
 
 	open my $fd, "-|", git_cmd(), "rev-list",
 		"--header",
-		"--parents",
 		($arg ? ($arg) : ()),
 		("--max-count=" . $maxcount),
 		# Add once rev-list supports the --skip option
