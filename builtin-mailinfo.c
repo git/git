@@ -4,6 +4,7 @@
  */
 #include "cache.h"
 #include "builtin.h"
+#include "utf8.h"
 
 static FILE *cmitmsg, *patchfile, *fin, *fout;
 
@@ -510,40 +511,18 @@ static int decode_b_segment(char *in, char *ot, char *ep)
 
 static void convert_to_utf8(char *line, char *charset)
 {
-#ifndef NO_ICONV
-	char *in, *out;
-	size_t insize, outsize, nrc;
-	char outbuf[4096]; /* cheat */
 	static char latin_one[] = "latin1";
 	char *input_charset = *charset ? charset : latin_one;
-	iconv_t conv = iconv_open(metainfo_charset, input_charset);
+	char *out = reencode_string(line, metainfo_charset, input_charset);
 
-	if (conv == (iconv_t) -1) {
-		static int warned_latin1_once = 0;
-		if (input_charset != latin_one) {
-			fprintf(stderr, "cannot convert from %s to %s\n",
-				input_charset, metainfo_charset);
-			*charset = 0;
-		}
-		else if (!warned_latin1_once) {
-			warned_latin1_once = 1;
-			fprintf(stderr, "tried to convert from %s to %s, "
-				"but your iconv does not work with it.\n",
-				input_charset, metainfo_charset);
-		}
+	if (!out) {
+		fprintf(stderr, "cannot convert from %s to %s\n",
+			input_charset, metainfo_charset);
+		*charset = 0;
 		return;
 	}
-	in = line;
-	insize = strlen(in);
-	out = outbuf;
-	outsize = sizeof(outbuf);
-	nrc = iconv(conv, &in, &insize, &out, &outsize);
-	iconv_close(conv);
-	if (nrc == (size_t) -1)
-		return;
-	*out = 0;
-	strcpy(line, outbuf);
-#endif
+	strcpy(line, out);
+	free(out);
 }
 
 static int decode_header_bq(char *it)
