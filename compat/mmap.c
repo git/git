@@ -1,12 +1,12 @@
 #include "../git-compat-util.h"
 
-void *gitfakemmap(void *start, size_t length, int prot , int flags, int fd, off_t offset)
+void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
 {
 	int n = 0;
 	off_t current_offset = lseek(fd, 0, SEEK_CUR);
 
 	if (start != NULL || !(flags & MAP_PRIVATE))
-		die("Invalid usage of gitfakemmap.");
+		die("Invalid usage of mmap when built with NO_MMAP");
 
 	if (lseek(fd, offset, SEEK_SET) < 0) {
 		errno = EINVAL;
@@ -44,7 +44,7 @@ void *gitfakemmap(void *start, size_t length, int prot , int flags, int fd, off_
 	return start;
 }
 
-int gitfakemunmap(void *start, size_t length)
+int git_munmap(void *start, size_t length)
 {
 	free(start);
 	return 0;
