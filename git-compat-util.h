@@ -123,11 +123,17 @@ extern char *gitstrcasestr(const char *haystack, const char *needle);
 extern size_t gitstrlcpy(char *, const char *, size_t);
 #endif
 
+extern void release_pack_memory(size_t);
+
 static inline char* xstrdup(const char *str)
 {
 	char *ret = strdup(str);
-	if (!ret)
-		die("Out of memory, strdup failed");
+	if (!ret) {
+		release_pack_memory(strlen(str) + 1);
+		ret = strdup(str);
+		if (!ret)
+			die("Out of memory, strdup failed");
+	}
 	return ret;
 }
 
@@ -136,8 +142,14 @@ static inline void *xmalloc(size_t size)
 	void *ret = malloc(size);
 	if (!ret && !size)
 		ret = malloc(1);
-	if (!ret)
-		die("Out of memory, malloc failed");
+	if (!ret) {
+		release_pack_memory(size);
+		ret = malloc(size);
+		if (!ret && !size)
+			ret = malloc(1);
+		if (!ret)
+			die("Out of memory, malloc failed");
+	}
 #ifdef XMALLOC_POISON
 	memset(ret, 0xA5, size);
 #endif
@@ -149,8 +161,14 @@ static inline void *xrealloc(void *ptr, size_t size)
 	void *ret = realloc(ptr, size);
 	if (!ret && !size)
 		ret = realloc(ptr, 1);
-	if (!ret)
-		die("Out of memory, realloc failed");
+	if (!ret) {
+		release_pack_memory(size);
+		ret = realloc(ptr, size);
+		if (!ret && !size)
+			ret = realloc(ptr, 1);
+		if (!ret)
+			die("Out of memory, realloc failed");
+	}
 	return ret;
 }
 
@@ -159,8 +177,14 @@ static inline void *xcalloc(size_t nmemb, size_t size)
 	void *ret = calloc(nmemb, size);
 	if (!ret && (!nmemb || !size))
 		ret = calloc(1, 1);
-	if (!ret)
-		die("Out of memory, calloc failed");
+	if (!ret) {
+		release_pack_memory(nmemb * size);
+		ret = calloc(nmemb, size);
+		if (!ret && (!nmemb || !size))
+			ret = calloc(1, 1);
+		if (!ret)
+			die("Out of memory, calloc failed");
+	}
 	return ret;
 }
 
