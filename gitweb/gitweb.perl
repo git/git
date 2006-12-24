@@ -1391,35 +1391,13 @@ sub parse_commits {
 	$maxcount ||= 1;
 	$skip ||= 0;
 
-	# Delete once rev-list supports the --skip option
-	if ($skip > 0) {
-		open my $fd, "-|", git_cmd(), "rev-list",
-			($arg ? ($arg) : ()),
-			("--max-count=" . ($maxcount + $skip)),
-			$commit_id,
-			"--",
-			($filename ? ($filename) : ())
-			or die_error(undef, "Open git-rev-list failed");
-		while (my $line = <$fd>) {
-			if ($skip-- <= 0) {
-				chomp $line;
-				my %co = parse_commit($line);
-				push @cos, \%co;
-			}
-		}
-		close $fd;
-
-		return wantarray ? @cos : \@cos;
-	}
-
 	local $/ = "\0";
 
 	open my $fd, "-|", git_cmd(), "rev-list",
 		"--header",
 		($arg ? ($arg) : ()),
 		("--max-count=" . $maxcount),
-		# Add once rev-list supports the --skip option
-		# ("--skip=" . $skip),
+		("--skip=" . $skip),
 		$commit_id,
 		"--",
 		($filename ? ($filename) : ())
