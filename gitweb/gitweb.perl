@@ -2704,20 +2704,19 @@ sub git_project_list_body {
 
 sub git_shortlog_body {
 	# uses global variable $project
-	my ($revlist, $from, $to, $refs, $extra) = @_;
+	my ($commitlist, $from, $to, $refs, $extra) = @_;
 
 	my $have_snapshot = gitweb_have_snapshot();
 
 	$from = 0 unless defined $from;
-	$to = $#{$revlist} if (!defined $to || $#{$revlist} < $to);
+	$to = $#{$commitlist} if (!defined $to || $#{$commitlist} < $to);
 
 	print "<table class=\"shortlog\" cellspacing=\"0\">\n";
 	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
-		my $commit = $revlist->[$i];
-		#my $ref = defined $refs ? format_ref_marker($refs, $commit) : '';
+		my %co = %{$commitlist->[$i]};
+		my $commit = $co{'id'};
 		my $ref = format_ref_marker($refs, $commit);
-		my %co = parse_commit($commit);
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
 		} else {
@@ -3081,14 +3080,10 @@ sub git_summary {
 
 	# we need to request one more than 16 (0..15) to check if
 	# those 16 are all
-	open my $fd, "-|", git_cmd(), "rev-list", "--max-count=17",
-		$head, "--"
-		or die_error(undef, "Open git-rev-list failed");
-	my @revlist = map { chomp; $_ } <$fd>;
-	close $fd;
+	my @commitlist = parse_commits($head, 17);
 	git_print_header_div('shortlog');
-	git_shortlog_body(\@revlist, 0, 15, $refs,
-	                  $#revlist <=  15 ? undef :
+	git_shortlog_body(\@commitlist, 0, 15, $refs,
+	                  $#commitlist <=  15 ? undef :
 	                  $cgi->a({-href => href(action=>"shortlog")}, "..."));
 
 	if (@taglist) {
@@ -4456,26 +4451,21 @@ sub git_shortlog {
 	}
 	my $refs = git_get_references();
 
-	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
-	open my $fd, "-|", git_cmd(), "rev-list", $limit, $hash, "--"
-		or die_error(undef, "Open git-rev-list failed");
-	my @revlist = map { chomp; $_ } <$fd>;
-	close $fd;
+	my @commitlist = parse_commits($head, 101, (100 * $page));
 
-	my $paging_nav = format_paging_nav('shortlog', $hash, $head, $page, $#revlist);
+	my $paging_nav = format_paging_nav('shortlog', $hash, $head, $page, (100 * ($page+1)));
 	my $next_link = '';
-	if ($#revlist >= (100 * ($page+1)-1)) {
+	if ($#commitlist >= 100) {
 		$next_link =
 			$cgi->a({-href => href(action=>"shortlog", hash=>$hash, page=>$page+1),
-			         -title => "Alt-n"}, "next");
+			         -accesskey => "n", -title => "Alt-n"}, "next");
 	}
-
 
 	git_header_html();
 	git_print_page_nav('shortlog','', $hash,$hash,$hash, $paging_nav);
 	git_print_header_div('summary', $project);
 
-	git_shortlog_body(\@revlist, ($page * 100), $#revlist, $refs, $next_link);
+	git_shortlog_body(\@commitlist, 0, 99, $refs, $next_link);
 
 	git_footer_html();
 }
