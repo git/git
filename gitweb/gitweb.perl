@@ -1270,25 +1270,13 @@ sub parse_tag {
 	return %tag
 }
 
-sub parse_commit {
-	my $commit_id = shift;
-	my $commit_text = shift;
-
-	my @commit_lines;
+sub parse_commit_text {
+	my ($commit_text) = @_;
+	my @commit_lines = split '\n', $commit_text;
 	my %co;
 
-	if (defined $commit_text) {
-		@commit_lines = @$commit_text;
-	} else {
-		local $/ = "\0";
-		open my $fd, "-|", git_cmd(), "rev-list",
-			"--header", "--parents", "--max-count=1",
-			$commit_id, "--"
-			or return;
-		@commit_lines = split '\n', <$fd>;
-		close $fd or return;
-		pop @commit_lines;
-	}
+	pop @commit_lines; # Remove '\0'
+
 	my $header = shift @commit_lines;
 	if (!($header =~ m/^[0-9a-fA-F]{40}/)) {
 		return;
@@ -1373,6 +1361,75 @@ sub parse_commit {
 		$co{'age_string_age'} = sprintf "%4i-%02u-%02i", 1900 + $year, $mon+1, $mday;
 	}
 	return %co;
+}
+
+sub parse_commit {
+	my ($commit_id) = @_;
+	my %co;
+
+	local $/ = "\0";
+
+	open my $fd, "-|", git_cmd(), "rev-list",
+		"--header",
+		"--parents",
+		"--max-count=1",
+		$commit_id,
+		"--",
+		or die_error(undef, "Open git-rev-list failed");
+	%co = parse_commit_text(<$fd>);
+	close $fd;
+
+	return %co;
+}
+
+sub parse_commits {
+	my ($commit_id, $maxcount, $skip, $arg, $filename) = @_;
+	my @cos;
+
+	$maxcount ||= 1;
+	$skip ||= 0;
+
+	# Delete once rev-list supports the --skip option
+	if ($skip > 0) {
+		open my $fd, "-|", git_cmd(), "rev-list",
+			($arg ? ($arg) : ()),
+			("--max-count=" . ($maxcount + $skip)),
+			$commit_id,
+			"--",
+			($filename ? ($filename) : ())
+			or die_error(undef, "Open git-rev-list failed");
+		while (my $line = <$fd>) {
+			if ($skip-- <= 0) {
+				chomp $line;
+				my %co = parse_commit($line);
+				push @cos, \%co;
+			}
+		}
+		close $fd;
+
+		return wantarray ? @cos : \@cos;
+	}
+
+	local $/ = "\0";
+
+	open my $fd, "-|", git_cmd(), "rev-list",
+		"--header",
+		"--parents",
+		($arg ? ($arg) : ()),
+		("--max-count=" . $maxcount),
+		# Add once rev-list supports the --skip option
+		# ("--skip=" . $skip),
+		$commit_id,
+		"--",
+		($filename ? ($filename) : ())
+		or die_error(undef, "Open git-rev-list failed");
+	while (my $line = <$fd>) {
+		my %co = parse_commit_text($line);
+		push @cos, \%co;
+	}
+	close $fd;
+
+	return wantarray ? @cos : \@cos;
 }
 
 # parse ref from ref_file, given by ref_id, with given type
