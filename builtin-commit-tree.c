@@ -7,6 +7,7 @@
 #include "commit.h"
 #include "tree.h"
 #include "builtin.h"
+#include "utf8.h"
 
 #define BLOCKING (1ul << 14)
 
@@ -32,7 +33,7 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
 	len = vsnprintf(one_line, sizeof(one_line), fmt, args);
 	va_end(args);
 	size = *sizep;
-	newsize = size + len;
+	newsize = size + len + 1;
 	alloc = (size + 32767) & ~32767;
 	buf = *bufp;
 	if (newsize > alloc) {
@@ -40,7 +41,7 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
 		buf = xrealloc(buf, alloc);
 		*bufp = buf;
 	}
-	*sizep = newsize;
+	*sizep = newsize - 1;
 	memcpy(buf + size, one_line, len);
 }
 
@@ -76,6 +77,11 @@ static int new_parent(int idx)
 	}
 	return 1;
 }
+
+static const char commit_utf8_warn[] =
+"Warning: commit message does not conform to UTF-8.\n"
+"You may want to amend it after fixing the message, or set the config\n"
+"variable i18n.commitencoding to the encoding your project uses.\n";
 
 int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 {
@@ -129,6 +135,11 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	/* And add the comment */
 	while (fgets(comment, sizeof(comment), stdin) != NULL)
 		add_buffer(&buffer, &size, "%s", comment);
+
+	/* And check the encoding */
+	buffer[size] = '\0';
+	if (!strcmp(git_commit_encoding, "utf-8") && !is_utf8(buffer))
+		fprintf(stderr, commit_utf8_warn);
 
 	if (!write_sha1_file(buffer, size, commit_type, commit_sha1)) {
 		printf("%s\n", sha1_to_hex(commit_sha1));

@@ -32,6 +32,7 @@ man7dir=$(mandir)/man7
 # DESTDIR=
 
 INSTALL?=install
+DOC_REF = origin/man
 
 -include ../config.mak.autogen
 
@@ -112,3 +113,6 @@ $(patsubst %.txt,%.html,$(wildcard howto/*.txt)): %.html : %.txt
 
 install-webdoc : html
 	sh ./install-webdoc.sh $(WEBDOC_DEST)
+
+quick-install:
+	sh ./install-doc-quick.sh $(DOC_REF) $(mandir)

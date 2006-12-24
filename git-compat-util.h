@@ -87,10 +87,10 @@ extern void set_warn_routine(void (*routine)(const char *warn, va_list params));
 #define MAP_FAILED ((void*)-1)
 #endif
 
-#define mmap gitfakemmap
-#define munmap gitfakemunmap
-extern void *gitfakemmap(void *start, size_t length, int prot , int flags, int fd, off_t offset);
-extern int gitfakemunmap(void *start, size_t length);
+#define mmap git_mmap
+#define munmap git_munmap
+extern void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
+extern int git_munmap(void *start, size_t length);
 
 #else /* NO_MMAP */
 
