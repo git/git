@@ -59,18 +59,18 @@ GIT_AUTHOR_DATE="2006-12-12 23:00:08" git commit -m F
 test_expect_failure "combined merge conflicts" "git merge -m final G"
 
 cat > expect << EOF
-<<<<<<< HEAD/a1
+<<<<<<< HEAD:a1
 F
 =======
 G
->>>>>>> 26f86b677eb03d4d956dbe108b29cb77061c1e73/a1
+>>>>>>> G:a1
 EOF
 
 test_expect_success "result contains a conflict" "diff -u expect a1"
 
 git ls-files --stage > out
 cat > expect << EOF
-100644 f16f906ab60483c100d1241dfc39868de9ec9fcb 1	a1
+100644 da056ce14a2241509897fa68bb2b3b6e6194ef9e 1	a1
 100644 cf84443e49e1b366fac938711ddf4be2d4d1d9e9 2	a1
 100644 fd7923529855d0b274795ae3349c5e0438333979 3	a1
 EOF

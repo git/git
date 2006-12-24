@@ -649,8 +649,8 @@ static struct merge_file_info merge_file(struct diff_filespec *o,
 			char *name1, *name2;
 			int merge_status;
 
-			name1 = xstrdup(mkpath("%s/%s", branch1, a->path));
-			name2 = xstrdup(mkpath("%s/%s", branch2, b->path));
+			name1 = xstrdup(mkpath("%s:%s", branch1, a->path));
+			name2 = xstrdup(mkpath("%s:%s", branch2, b->path));
 
 			fill_mm(o->sha1, &orig);
 			fill_mm(a->sha1, &src1);
@@ -1263,6 +1263,18 @@ static struct commit *get_ref(const char *ref)
 	return (struct commit *)object;
 }
 
+static const char *better_branch_name(const char *branch)
+{
+	static char githead_env[8 + 40 + 1];
+	char *name;
+
+	if (strlen(branch) != 40)
+		return branch;
+	sprintf(githead_env, "GITHEAD_%s", branch);
+	name = getenv(githead_env);
+	return name ? name : branch;
+}
+
 int main(int argc, char *argv[])
 {
 	static const char *bases[2];
@@ -1293,10 +1305,13 @@ int main(int argc, char *argv[])
 
 	branch1 = argv[++i];
 	branch2 = argv[++i];
-	printf("Merging %s with %s\n", branch1, branch2);
 
 	h1 = get_ref(branch1);
 	h2 = get_ref(branch2);
+
+	branch1 = better_branch_name(branch1);
+	branch2 = better_branch_name(branch2);
+	printf("Merging %s with %s\n", branch1, branch2);
 
 	if (bases_count == 1) {
 		struct commit *ancestor = get_ref(bases[0]);
