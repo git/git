@@ -171,7 +171,6 @@ SCRIPT_SH = \
 
 SCRIPT_PERL = \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
-	git-rerere.perl \
 	git-cvsserver.perl \
 	git-svnimport.perl git-cvsexportcommit.perl \
 	git-send-email.perl git-svn.perl
@@ -288,6 +287,7 @@ BUILTIN_OBJS = \
 	builtin-push.o \
 	builtin-read-tree.o \
 	builtin-repo-config.o \
+	builtin-rerere.o \
 	builtin-rev-list.o \
 	builtin-rev-parse.o \
 	builtin-rm.o \
