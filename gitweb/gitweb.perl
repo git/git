@@ -4483,11 +4483,7 @@ sub git_feed {
 
 	# log/feed of current (HEAD) branch, log of given branch, history of file/directory
 	my $head = $hash || 'HEAD';
-	open my $fd, "-|", git_cmd(), "rev-list", "--max-count=150",
-		$head, "--", (defined $file_name ? $file_name : ())
-		or die_error(undef, "Open git-rev-list failed");
-	my @revlist = map { chomp; $_ } <$fd>;
-	close $fd or die_error(undef, "Reading git-rev-list failed");
+	my @commitlist = parse_commits($head, 150);
 
 	my %latest_commit;
 	my %latest_date;
@@ -4497,8 +4493,8 @@ sub git_feed {
 		# browser (feed reader) prefers text/xml
 		$content_type = 'text/xml';
 	}
-	if (defined($revlist[0])) {
-		%latest_commit = parse_commit($revlist[0]);
+	if (defined($commitlist[0])) {
+		%latest_commit = %{$commitlist[0]};
 		%latest_date   = parse_date($latest_commit{'author_epoch'});
 		print $cgi->header(
 			-type => $content_type,
@@ -4588,9 +4584,9 @@ XML
 	}
 
 	# contents
-	for (my $i = 0; $i <= $#revlist; $i++) {
-		my $commit = $revlist[$i];
-		my %co = parse_commit($commit);
+	for (my $i = 0; $i <= $#commitlist; $i++) {
+		my %co = %{$commitlist[$i]};
+		my $commit = $co{'id'};
 		# we read 150, we always show 30 and the ones more recent than 48 hours
 		if (($i >= 20) && ((time - $co{'author_epoch'}) > 48*60*60)) {
 			last;
@@ -4598,7 +4594,7 @@ XML
 		my %cd = parse_date($co{'author_epoch'});
 
 		# get list of changed files
-		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
+		open my $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
 			$co{'parent'}, $co{'id'}, "--", (defined $file_name ? $file_name : ())
 			or next;
 		my @difftree = map { chomp; $_ } <$fd>;
