@@ -2750,23 +2750,19 @@ sub git_shortlog_body {
 
 sub git_history_body {
 	# Warning: assumes constant type (blob or tree) during history
-	my ($revlist, $from, $to, $refs, $hash_base, $ftype, $extra) = @_;
+	my ($commitlist, $from, $to, $refs, $hash_base, $ftype, $extra) = @_;
 
 	$from = 0 unless defined $from;
-	$to = $#{$revlist} unless (defined $to && $to <= $#{$revlist});
+	$to = $#{$commitlist} unless (defined $to && $to <= $#{$commitlist});
 
 	print "<table class=\"history\" cellspacing=\"0\">\n";
 	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
-		if ($revlist->[$i] !~ m/^([0-9a-fA-F]{40})/) {
-			next;
-		}
-
-		my $commit = $1;
-		my %co = parse_commit($commit);
+		my %co = %{$commitlist->[$i]};
 		if (!%co) {
 			next;
 		}
+		my $commit = $co{'id'};
 
 		my $ref = format_ref_marker($refs, $commit);
 
@@ -4219,12 +4215,7 @@ sub git_history {
 		$ftype = git_get_type($hash);
 	}
 
-	open my $fd, "-|",
-		git_cmd(), "rev-list", $limit, "--full-history", $hash_base, "--", $file_name
-			or die_error(undef, "Open git-rev-list-failed");
-	my @revlist = map { chomp; $_ } <$fd>;
-	close $fd
-		or die_error(undef, "Reading git-rev-list failed");
+	my @commitlist = parse_commits($hash_base, 101, (100 * $page), "--full-history", $file_name);
 
 	my $paging_nav = '';
 	if ($page > 0) {
@@ -4240,7 +4231,7 @@ sub git_history {
 		$paging_nav .= "first";
 		$paging_nav .= " &sdot; prev";
 	}
-	if ($#revlist >= (100 * ($page+1)-1)) {
+	if ($#commitlist >= 100) {
 		$paging_nav .= " &sdot; " .
 			$cgi->a({-href => href(action=>"history", hash=>$hash, hash_base=>$hash_base,
 			                       file_name=>$file_name, page=>$page+1),
@@ -4249,11 +4240,11 @@ sub git_history {
 		$paging_nav .= " &sdot; next";
 	}
 	my $next_link = '';
-	if ($#revlist >= (100 * ($page+1)-1)) {
+	if ($#commitlist >= 100) {
 		$next_link =
 			$cgi->a({-href => href(action=>"history", hash=>$hash, hash_base=>$hash_base,
 			                       file_name=>$file_name, page=>$page+1),
-			         -title => "Alt-n"}, "next");
+			         -accesskey => "n", -title => "Alt-n"}, "next");
 	}
 
 	git_header_html();
@@ -4261,7 +4252,7 @@ sub git_history {
 	git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
 	git_print_page_path($file_name, $ftype, $hash_base);
 
-	git_history_body(\@revlist, ($page * 100), $#revlist,
+	git_history_body(\@commitlist, 0, 99,
 	                 $refs, $hash_base, $ftype, $next_link);
 
 	git_footer_html();
