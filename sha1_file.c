@@ -355,10 +355,8 @@ static void read_info_alternates(const char * relative_base, int depth)
 		close(fd);
 		return;
 	}
-	map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	map = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
-	if (map == MAP_FAILED)
-		return;
 
 	link_alt_odb_entries(map, map + st.st_size, '\n', relative_base, depth);
 
@@ -442,10 +440,8 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 		return -1;
 	}
 	idx_size = st.st_size;
-	idx_map = mmap(NULL, idx_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	idx_map = xmmap(NULL, idx_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
-	if (idx_map == MAP_FAILED)
-		return -1;
 
 	index = idx_map;
 	*idx_map_ = idx_map;
@@ -630,7 +626,7 @@ unsigned char* use_pack(struct packed_git *p,
 			while (packed_git_limit < pack_mapped
 				&& unuse_one_window(p))
 				; /* nothing */
-			win->base = mmap(NULL, win->len,
+			win->base = xmmap(NULL, win->len,
 				PROT_READ, MAP_PRIVATE,
 				p->pack_fd, win->offset);
 			if (win->base == MAP_FAILED)
@@ -828,10 +824,8 @@ void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 		 */
 		sha1_file_open_flag = 0;
 	}
-	map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	map = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
-	if (map == MAP_FAILED)
-		return NULL;
 	*size = st.st_size;
 	return map;
 }
@@ -1987,10 +1981,8 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 
 	buf = "";
 	if (size)
-		buf = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+		buf = xmmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
-	if (buf == MAP_FAILED)
-		return -1;
 
 	if (!type)
 		type = blob_type;

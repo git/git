@@ -188,6 +188,19 @@ static inline void *xcalloc(size_t nmemb, size_t size)
 	return ret;
 }
 
+static inline void *xmmap(void *start, size_t length,
+	int prot, int flags, int fd, off_t offset)
+{
+	void *ret = mmap(start, length, prot, flags, fd, offset);
+	if (ret == MAP_FAILED) {
+		release_pack_memory(length);
+		ret = mmap(start, length, prot, flags, fd, offset);
+		if (ret == MAP_FAILED)
+			die("Out of memory? mmap failed: %s", strerror(errno));
+	}
+	return ret;
+}
+
 static inline ssize_t xread(int fd, void *buf, size_t len)
 {
 	ssize_t nr;
