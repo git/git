@@ -1270,36 +1270,25 @@ sub parse_tag {
 	return %tag
 }
 
-sub parse_commit {
-	my $commit_id = shift;
-	my $commit_text = shift;
-
-	my @commit_lines;
+sub parse_commit_text {
+	my ($commit_text) = @_;
+	my @commit_lines = split '\n', $commit_text;
 	my %co;
 
-	if (defined $commit_text) {
-		@commit_lines = @$commit_text;
-	} else {
-		local $/ = "\0";
-		open my $fd, "-|", git_cmd(), "rev-list",
-			"--header", "--parents", "--max-count=1",
-			$commit_id, "--"
-			or return;
-		@commit_lines = split '\n', <$fd>;
-		close $fd or return;
-		pop @commit_lines;
-	}
+	pop @commit_lines; # Remove '\0'
+
 	my $header = shift @commit_lines;
 	if (!($header =~ m/^[0-9a-fA-F]{40}/)) {
 		return;
 	}
-	($co{'id'}, my @parents) = split ' ', $header;
-	$co{'parents'} = \@parents;
-	$co{'parent'} = $parents[0];
+	$co{'id'} = $header;
+	my @parents;
 	while (my $line = shift @commit_lines) {
 		last if $line eq "\n";
 		if ($line =~ m/^tree ([0-9a-fA-F]{40})$/) {
 			$co{'tree'} = $1;
+		} elsif ($line =~ m/^parent ([0-9a-fA-F]{40})$/) {
+			push @parents, $1;
 		} elsif ($line =~ m/^author (.*) ([0-9]+) (.*)$/) {
 			$co{'author'} = $1;
 			$co{'author_epoch'} = $2;
@@ -1326,6 +1315,8 @@ sub parse_commit {
 	if (!defined $co{'tree'}) {
 		return;
 	};
+	$co{'parents'} = \@parents;
+	$co{'parent'} = $parents[0];
 
 	foreach my $title (@commit_lines) {
 		$title =~ s/^    //;
@@ -1373,6 +1364,51 @@ sub parse_commit {
 		$co{'age_string_age'} = sprintf "%4i-%02u-%02i", 1900 + $year, $mon+1, $mday;
 	}
 	return %co;
+}
+
+sub parse_commit {
+	my ($commit_id) = @_;
+	my %co;
+
+	local $/ = "\0";
+
+	open my $fd, "-|", git_cmd(), "rev-list",
+		"--header",
+		"--max-count=1",
+		$commit_id,
+		"--",
+		or die_error(undef, "Open git-rev-list failed");
+	%co = parse_commit_text(<$fd>);
+	close $fd;
+
+	return %co;
+}
+
+sub parse_commits {
+	my ($commit_id, $maxcount, $skip, $arg, $filename) = @_;
+	my @cos;
+
+	$maxcount ||= 1;
+	$skip ||= 0;
+
+	local $/ = "\0";
+
+	open my $fd, "-|", git_cmd(), "rev-list",
+		"--header",
+		($arg ? ($arg) : ()),
+		("--max-count=" . $maxcount),
+		("--skip=" . $skip),
+		$commit_id,
+		"--",
+		($filename ? ($filename) : ())
+		or die_error(undef, "Open git-rev-list failed");
+	while (my $line = <$fd>) {
+		my %co = parse_commit_text($line);
+		push @cos, \%co;
+	}
+	close $fd;
+
+	return wantarray ? @cos : \@cos;
 }
 
 # parse ref from ref_file, given by ref_id, with given type
@@ -2646,20 +2682,19 @@ sub git_project_list_body {
 
 sub git_shortlog_body {
 	# uses global variable $project
-	my ($revlist, $from, $to, $refs, $extra) = @_;
+	my ($commitlist, $from, $to, $refs, $extra) = @_;
 
 	my $have_snapshot = gitweb_have_snapshot();
 
 	$from = 0 unless defined $from;
-	$to = $#{$revlist} if (!defined $to || $#{$revlist} < $to);
+	$to = $#{$commitlist} if (!defined $to || $#{$commitlist} < $to);
 
 	print "<table class=\"shortlog\" cellspacing=\"0\">\n";
 	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
-		my $commit = $revlist->[$i];
-		#my $ref = defined $refs ? format_ref_marker($refs, $commit) : '';
+		my %co = %{$commitlist->[$i]};
+		my $commit = $co{'id'};
 		my $ref = format_ref_marker($refs, $commit);
-		my %co = parse_commit($commit);
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
 		} else {
@@ -2693,23 +2728,19 @@ sub git_shortlog_body {
 
 sub git_history_body {
 	# Warning: assumes constant type (blob or tree) during history
-	my ($revlist, $from, $to, $refs, $hash_base, $ftype, $extra) = @_;
+	my ($commitlist, $from, $to, $refs, $hash_base, $ftype, $extra) = @_;
 
 	$from = 0 unless defined $from;
-	$to = $#{$revlist} unless (defined $to && $to <= $#{$revlist});
+	$to = $#{$commitlist} unless (defined $to && $to <= $#{$commitlist});
 
 	print "<table class=\"history\" cellspacing=\"0\">\n";
 	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
-		if ($revlist->[$i] !~ m/^([0-9a-fA-F]{40})/) {
-			next;
-		}
-
-		my $commit = $1;
-		my %co = parse_commit($commit);
+		my %co = %{$commitlist->[$i]};
 		if (!%co) {
 			next;
 		}
+		my $commit = $co{'id'};
 
 		my $ref = format_ref_marker($refs, $commit);
 
@@ -2853,18 +2884,18 @@ sub git_heads_body {
 }
 
 sub git_search_grep_body {
-	my ($greplist, $from, $to, $extra) = @_;
+	my ($commitlist, $from, $to, $extra) = @_;
 	$from = 0 unless defined $from;
-	$to = $#{$greplist} if (!defined $to || $#{$greplist} < $to);
+	$to = $#{$commitlist} if (!defined $to || $#{$commitlist} < $to);
 
 	print "<table class=\"grep\" cellspacing=\"0\">\n";
 	my $alternate = 1;
 	for (my $i = $from; $i <= $to; $i++) {
-		my $commit = $greplist->[$i];
-		my %co = parse_commit($commit);
+		my %co = %{$commitlist->[$i]};
 		if (!%co) {
 			next;
 		}
+		my $commit = $co{'id'};
 		if ($alternate) {
 			print "<tr class=\"dark\">\n";
 		} else {
@@ -3023,14 +3054,10 @@ sub git_summary {
 
 	# we need to request one more than 16 (0..15) to check if
 	# those 16 are all
-	open my $fd, "-|", git_cmd(), "rev-list", "--max-count=17",
-		$head, "--"
-		or die_error(undef, "Open git-rev-list failed");
-	my @revlist = map { chomp; $_ } <$fd>;
-	close $fd;
+	my @commitlist = parse_commits($head, 17);
 	git_print_header_div('shortlog');
-	git_shortlog_body(\@revlist, 0, 15, $refs,
-	                  $#revlist <=  15 ? undef :
+	git_shortlog_body(\@commitlist, 0, 15, $refs,
+	                  $#commitlist <=  15 ? undef :
 	                  $cgi->a({-href => href(action=>"shortlog")}, "..."));
 
 	if (@taglist) {
@@ -3592,28 +3619,25 @@ sub git_log {
 	}
 	my $refs = git_get_references();
 
-	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
-	open my $fd, "-|", git_cmd(), "rev-list", $limit, $hash, "--"
-		or die_error(undef, "Open git-rev-list failed");
-	my @revlist = map { chomp; $_ } <$fd>;
-	close $fd;
+	my @commitlist = parse_commits($hash, 101, (100 * $page));
 
-	my $paging_nav = format_paging_nav('log', $hash, $head, $page, $#revlist);
+	my $paging_nav = format_paging_nav('log', $hash, $head, $page, (100 * ($page+1)));
 
 	git_header_html();
 	git_print_page_nav('log','', $hash,undef,undef, $paging_nav);
 
-	if (!@revlist) {
+	if (!@commitlist) {
 		my %co = parse_commit($hash);
 
 		git_print_header_div('summary', $project);
 		print "<div class=\"page_body\"> Last change $co{'age_string'}.<br/><br/></div>\n";
 	}
-	for (my $i = ($page * 100); $i <= $#revlist; $i++) {
-		my $commit = $revlist[$i];
-		my $ref = format_ref_marker($refs, $commit);
-		my %co = parse_commit($commit);
+	my $to = ($#commitlist >= 99) ? (99) : ($#commitlist);
+	for (my $i = 0; $i <= $to; $i++) {
+		my %co = %{$commitlist[$i]};
 		next if !%co;
+		my $commit = $co{'id'};
+		my $ref = format_ref_marker($refs, $commit);
 		my %ad = parse_date($co{'author_epoch'});
 		git_print_header_div('commit',
 		               "<span class=\"age\">$co{'age_string'}</span>" .
@@ -3633,6 +3657,12 @@ sub git_log {
 
 		print "<div class=\"log_body\">\n";
 		git_print_log($co{'comment'}, -final_empty_line=> 1);
+		print "</div>\n";
+	}
+	if ($#commitlist >= 100) {
+		print "<div class=\"page_nav\">\n";
+		print $cgi->a({-href => href(action=>"log", hash=>$hash, page=>$page+1),
+			       -accesskey => "n", -title => "Alt-n"}, "next");
 		print "</div>\n";
 	}
 	git_footer_html();
@@ -4163,12 +4193,7 @@ sub git_history {
 		$ftype = git_get_type($hash);
 	}
 
-	open my $fd, "-|",
-		git_cmd(), "rev-list", $limit, "--full-history", $hash_base, "--", $file_name
-			or die_error(undef, "Open git-rev-list-failed");
-	my @revlist = map { chomp; $_ } <$fd>;
-	close $fd
-		or die_error(undef, "Reading git-rev-list failed");
+	my @commitlist = parse_commits($hash_base, 101, (100 * $page), "--full-history", $file_name);
 
 	my $paging_nav = '';
 	if ($page > 0) {
@@ -4184,7 +4209,7 @@ sub git_history {
 		$paging_nav .= "first";
 		$paging_nav .= " &sdot; prev";
 	}
-	if ($#revlist >= (100 * ($page+1)-1)) {
+	if ($#commitlist >= 100) {
 		$paging_nav .= " &sdot; " .
 			$cgi->a({-href => href(action=>"history", hash=>$hash, hash_base=>$hash_base,
 			                       file_name=>$file_name, page=>$page+1),
@@ -4193,11 +4218,11 @@ sub git_history {
 		$paging_nav .= " &sdot; next";
 	}
 	my $next_link = '';
-	if ($#revlist >= (100 * ($page+1)-1)) {
+	if ($#commitlist >= 100) {
 		$next_link =
 			$cgi->a({-href => href(action=>"history", hash=>$hash, hash_base=>$hash_base,
 			                       file_name=>$file_name, page=>$page+1),
-			         -title => "Alt-n"}, "next");
+			         -accesskey => "n", -title => "Alt-n"}, "next");
 	}
 
 	git_header_html();
@@ -4205,7 +4230,7 @@ sub git_history {
 	git_print_header_div('commit', esc_html($co{'title'}), $hash_base);
 	git_print_page_path($file_name, $ftype, $hash_base);
 
-	git_history_body(\@revlist, ($page * 100), $#revlist,
+	git_history_body(\@commitlist, 0, 99,
 	                 $refs, $hash_base, $ftype, $next_link);
 
 	git_footer_html();
@@ -4251,13 +4276,8 @@ sub git_search {
 		} elsif ($searchtype eq 'committer') {
 			$greptype = "--committer=";
 		}
-		open my $fd, "-|", git_cmd(), "rev-list",
-			("--max-count=" . (100 * ($page+1))),
-			($greptype . $searchtext),
-			$hash, "--"
-			or next;
-		my @revlist = map { chomp; $_ } <$fd>;
-		close $fd;
+		$greptype .= $searchtext;
+		my @commitlist = parse_commits($hash, 101, (100 * $page), $greptype);
 
 		my $paging_nav = '';
 		if ($page > 0) {
@@ -4274,7 +4294,7 @@ sub git_search {
 			$paging_nav .= "first";
 			$paging_nav .= " &sdot; prev";
 		}
-		if ($#revlist >= (100 * ($page+1)-1)) {
+		if ($#commitlist >= 100) {
 			$paging_nav .= " &sdot; " .
 				$cgi->a({-href => href(action=>"search", hash=>$hash,
 						       searchtext=>$searchtext, searchtype=>$searchtype,
@@ -4284,7 +4304,7 @@ sub git_search {
 			$paging_nav .= " &sdot; next";
 		}
 		my $next_link = '';
-		if ($#revlist >= (100 * ($page+1)-1)) {
+		if ($#commitlist >= 100) {
 			$next_link =
 				$cgi->a({-href => href(action=>"search", hash=>$hash,
 						       searchtext=>$searchtext, searchtype=>$searchtype,
@@ -4294,7 +4314,7 @@ sub git_search {
 
 		git_print_page_nav('','', $hash,$co{'tree'},$hash, $paging_nav);
 		git_print_header_div('commit', esc_html($co{'title'}), $hash);
-		git_search_grep_body(\@revlist, ($page * 100), $#revlist, $next_link);
+		git_search_grep_body(\@commitlist, 0, 99, $next_link);
 	}
 
 	if ($searchtype eq 'pickaxe') {
@@ -4398,26 +4418,21 @@ sub git_shortlog {
 	}
 	my $refs = git_get_references();
 
-	my $limit = sprintf("--max-count=%i", (100 * ($page+1)));
-	open my $fd, "-|", git_cmd(), "rev-list", $limit, $hash, "--"
-		or die_error(undef, "Open git-rev-list failed");
-	my @revlist = map { chomp; $_ } <$fd>;
-	close $fd;
+	my @commitlist = parse_commits($head, 101, (100 * $page));
 
-	my $paging_nav = format_paging_nav('shortlog', $hash, $head, $page, $#revlist);
+	my $paging_nav = format_paging_nav('shortlog', $hash, $head, $page, (100 * ($page+1)));
 	my $next_link = '';
-	if ($#revlist >= (100 * ($page+1)-1)) {
+	if ($#commitlist >= 100) {
 		$next_link =
 			$cgi->a({-href => href(action=>"shortlog", hash=>$hash, page=>$page+1),
-			         -title => "Alt-n"}, "next");
+			         -accesskey => "n", -title => "Alt-n"}, "next");
 	}
-
 
 	git_header_html();
 	git_print_page_nav('shortlog','', $hash,$hash,$hash, $paging_nav);
 	git_print_header_div('summary', $project);
 
-	git_shortlog_body(\@revlist, ($page * 100), $#revlist, $refs, $next_link);
+	git_shortlog_body(\@commitlist, 0, 99, $refs, $next_link);
 
 	git_footer_html();
 }
@@ -4437,11 +4452,7 @@ sub git_feed {
 
 	# log/feed of current (HEAD) branch, log of given branch, history of file/directory
 	my $head = $hash || 'HEAD';
-	open my $fd, "-|", git_cmd(), "rev-list", "--max-count=150",
-		$head, "--", (defined $file_name ? $file_name : ())
-		or die_error(undef, "Open git-rev-list failed");
-	my @revlist = map { chomp; $_ } <$fd>;
-	close $fd or die_error(undef, "Reading git-rev-list failed");
+	my @commitlist = parse_commits($head, 150);
 
 	my %latest_commit;
 	my %latest_date;
@@ -4451,8 +4462,8 @@ sub git_feed {
 		# browser (feed reader) prefers text/xml
 		$content_type = 'text/xml';
 	}
-	if (defined($revlist[0])) {
-		%latest_commit = parse_commit($revlist[0]);
+	if (defined($commitlist[0])) {
+		%latest_commit = %{$commitlist[0]};
 		%latest_date   = parse_date($latest_commit{'author_epoch'});
 		print $cgi->header(
 			-type => $content_type,
@@ -4542,9 +4553,9 @@ XML
 	}
 
 	# contents
-	for (my $i = 0; $i <= $#revlist; $i++) {
-		my $commit = $revlist[$i];
-		my %co = parse_commit($commit);
+	for (my $i = 0; $i <= $#commitlist; $i++) {
+		my %co = %{$commitlist[$i]};
+		my $commit = $co{'id'};
 		# we read 150, we always show 30 and the ones more recent than 48 hours
 		if (($i >= 20) && ((time - $co{'author_epoch'}) > 48*60*60)) {
 			last;
@@ -4552,7 +4563,7 @@ XML
 		my %cd = parse_date($co{'author_epoch'});
 
 		# get list of changed files
-		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
+		open my $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
 			$co{'parent'}, $co{'id'}, "--", (defined $file_name ? $file_name : ())
 			or next;
 		my @difftree = map { chomp; $_ } <$fd>;
