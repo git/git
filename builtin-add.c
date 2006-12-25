@@ -26,7 +26,14 @@ static void prune_directory(struct dir_struct *dir, const char **pathspec, int p
 	i = dir->nr;
 	while (--i >= 0) {
 		struct dir_entry *entry = *src++;
-		if (!match_pathspec(pathspec, entry->name, entry->len, prefix, seen)) {
+		int how = match_pathspec(pathspec, entry->name, entry->len,
+					 prefix, seen);
+		/*
+		 * ignored entries can be added with exact match,
+		 * but not with glob nor recursive.
+		 */
+		if (!how ||
+		    (entry->ignored_entry && how != MATCHED_EXACTLY)) {
 			free(entry);
 			continue;
 		}
@@ -55,6 +62,8 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec)
 
 	/* Set up the default git porcelain excludes */
 	memset(dir, 0, sizeof(*dir));
+	if (pathspec)
+		dir->show_both = 1;
 	dir->exclude_per_dir = ".gitignore";
 	path = git_path("info/exclude");
 	if (!access(path, R_OK))
