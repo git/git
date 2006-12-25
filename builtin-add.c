@@ -37,6 +37,9 @@ static void prune_directory(struct dir_struct *dir, const char **pathspec, int p
 			free(entry);
 			continue;
 		}
+		if (entry->ignored_entry)
+			fprintf(stderr, "warning: '%s' is an ignored path.\n",
+				entry->name);
 		*dst++ = entry;
 	}
 	dir->nr = dst - dir->entries;
