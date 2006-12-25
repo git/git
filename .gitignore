@@ -2,6 +2,7 @@ GIT-CFLAGS
 GIT-VERSION-FILE
 git
 git-add
+git-add--interactive
 git-am
 git-annotate
 git-apply

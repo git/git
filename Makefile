@@ -170,6 +170,7 @@ SCRIPT_SH = \
 	git-lost-found.sh git-quiltimport.sh
 
 SCRIPT_PERL = \
+	git-add--interactive.perl \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
 	git-cvsserver.perl \
 	git-svnimport.perl git-cvsexportcommit.perl \
