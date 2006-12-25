@@ -12,7 +12,7 @@
 #include "cache-tree.h"
 
 static const char builtin_add_usage[] =
-"git-add [-n] [-v] <filepattern>...";
+"git-add [-n] [-v] [--interactive] [--] <filepattern>...";
 
 static void prune_directory(struct dir_struct *dir, const char **pathspec, int prefix)
 {
