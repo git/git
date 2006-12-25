@@ -40,6 +40,10 @@ struct dir_struct {
 };
 
 extern int common_prefix(const char **pathspec);
+
+#define MATCHED_RECURSIVELY 1
+#define MATCHED_FNMATCH 2
+#define MATCHED_EXACTLY 3
 extern int match_pathspec(const char **pathspec, const char *name, int namelen, int prefix, char *seen);
 
 extern int read_directory(struct dir_struct *, const char *path, const char *base, int baselen);
