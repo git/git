@@ -40,6 +40,18 @@ int common_prefix(const char **pathspec)
 	return prefix;
 }
 
+/*
+ * Does 'match' matches the given name?
+ * A match is found if
+ *
+ * (1) the 'match' string is leading directory of 'name', or
+ * (2) the 'match' string is a wildcard and matches 'name', or
+ * (3) the 'match' string is exactly the same as 'name'.
+ *
+ * and the return value tells which case it was.
+ *
+ * It returns 0 when there is no match.
+ */
 static int match_one(const char *match, const char *name, int namelen)
 {
 	int matchlen;
@@ -47,27 +59,30 @@ static int match_one(const char *match, const char *name, int namelen)
 	/* If the match was just the prefix, we matched */
 	matchlen = strlen(match);
 	if (!matchlen)
-		return 1;
+		return MATCHED_RECURSIVELY;
 
 	/*
 	 * If we don't match the matchstring exactly,
 	 * we need to match by fnmatch
 	 */
 	if (strncmp(match, name, matchlen))
-		return !fnmatch(match, name, 0);
+		return !fnmatch(match, name, 0) ? MATCHED_FNMATCH : 0;
 
-	/*
-	 * If we did match the string exactly, we still
-	 * need to make sure that it happened on a path
-	 * component boundary (ie either the last character
-	 * of the match was '/', or the next character of
-	 * the name was '/' or the terminating NUL.
-	 */
-	return	match[matchlen-1] == '/' ||
-		name[matchlen] == '/' ||
-		!name[matchlen];
+	if (!name[matchlen])
+		return MATCHED_EXACTLY;
+	if (match[matchlen-1] == '/' || name[matchlen] == '/')
+		return MATCHED_RECURSIVELY;
+	return 0;
 }
 
+/*
+ * Given a name and a list of pathspecs, see if the name matches
+ * any of the pathspecs.  The caller is also interested in seeing
+ * all pathspec matches some names it calls this function with
+ * (otherwise the user could have mistyped the unmatched pathspec),
+ * and a mark is left in seen[] array for pathspec element that
+ * actually matched anything.
+ */
 int match_pathspec(const char **pathspec, const char *name, int namelen, int prefix, char *seen)
 {
 	int retval;
@@ -77,12 +92,16 @@ int match_pathspec(const char **pathspec, const char *name, int namelen, int pre
 	namelen -= prefix;
 
 	for (retval = 0; (match = *pathspec++) != NULL; seen++) {
-		if (retval & *seen)
+		int how;
+		if (retval && *seen == MATCHED_EXACTLY)
 			continue;
 		match += prefix;
-		if (match_one(match, name, namelen)) {
-			retval = 1;
-			*seen = 1;
+		how = match_one(match, name, namelen);
+		if (how) {
+			if (retval < how)
+				retval = how;
+			if (*seen < how)
+				*seen = how;
 		}
 	}
 	return retval;
@@ -241,7 +260,8 @@ int excluded(struct dir_struct *dir, const char *pathname)
 	return 0;
 }
 
-static void add_name(struct dir_struct *dir, const char *pathname, int len)
+static void add_name(struct dir_struct *dir, const char *pathname, int len,
+		     int ignored_entry)
 {
 	struct dir_entry *ent;
 
@@ -254,6 +274,7 @@ static void add_name(struct dir_struct *dir, const char *pathname, int len)
 		dir->entries = xrealloc(dir->entries, alloc*sizeof(ent));
 	}
 	ent = xmalloc(sizeof(*ent) + len + 1);
+	ent->ignored_entry = ignored_entry;
 	ent->len = len;
 	memcpy(ent->name, pathname, len);
 	ent->name[len] = 0;
@@ -295,6 +316,7 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 
 		while ((de = readdir(fdir)) != NULL) {
 			int len;
+			int ignored_entry;
 
 			if ((de->d_name[0] == '.') &&
 			    (de->d_name[1] == 0 ||
@@ -303,11 +325,12 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 				continue;
 			len = strlen(de->d_name);
 			memcpy(fullname + baselen, de->d_name, len+1);
-			if (excluded(dir, fullname) != dir->show_ignored) {
-				if (!dir->show_ignored || DTYPE(de) != DT_DIR) {
-					continue;
-				}
-			}
+			ignored_entry = excluded(dir, fullname);
+
+			if (!dir->show_both &&
+			    (ignored_entry != dir->show_ignored) &&
+			    (!dir->show_ignored || DTYPE(de) != DT_DIR))
+				continue;
 
 			switch (DTYPE(de)) {
 			struct stat st;
@@ -345,7 +368,8 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 			if (check_only)
 				goto exit_early;
 			else
-				add_name(dir, fullname, baselen + len);
+				add_name(dir, fullname, baselen + len,
+					 ignored_entry);
 		}
 exit_early:
 		closedir(fdir);
