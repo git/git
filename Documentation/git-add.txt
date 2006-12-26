@@ -7,7 +7,7 @@ git-add - Add file contents to the changeset to be committed next
 
 SYNOPSIS
 --------
-'git-add' [-n] [-v] [--interactive] [--] <file>...
+'git-add' [-n] [-v] [-f] [--interactive] [--] <file>...
 
 DESCRIPTION
 -----------
@@ -25,7 +25,8 @@ the commit.
 The 'git status' command can be used to obtain a summary of what is included
 for the next commit.
 
-This command can be used to add ignored files, but they have to be
+This command can be used to add ignored files with `-f` (force)
+option, but they have to be
 explicitly and exactly specified from the command line.  File globbing
 and recursive behaviour do not add ignored files.
 
@@ -47,6 +48,9 @@ OPTIONS
 
 -v::
         Be verbose.
+
+-f::
+	Allow adding otherwise ignored files.
 
 \--interactive::
 	Add modified contents in the working tree interactively to
