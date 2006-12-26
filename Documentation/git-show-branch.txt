@@ -11,6 +11,7 @@ SYNOPSIS
 'git-show-branch' [--all] [--remotes] [--topo-order] [--current]
 		[--more=<n> | --list | --independent | --merge-base]
 		[--no-name | --sha1-name] [--topics] [<rev> | <glob>]...
+'git-show-branch' --reflog[=<n>] <ref>
 
 DESCRIPTION
 -----------
@@ -95,6 +96,10 @@ OPTIONS
 	"git show-branch --topics master topic1 topic2", this
 	will show the revisions given by "git rev-list {caret}master
 	topic1 topic2"
+
+--reflog[=<n>] <ref>::
+	Shows <n> most recent ref-log entries for the given ref.
+
 
 Note that --more, --list, --independent and --merge-base options
 are mutually exclusive.
