@@ -11,6 +11,7 @@ git-applypatch
 git-archimport
 git-archive
 git-bisect
+git-blame
 git-branch
 git-cat-file
 git-check-ref-format
@@ -153,4 +154,3 @@ config.status
 config.mak.autogen
 config.mak.append
 configure
-git-blame
