@@ -3,7 +3,8 @@
 # Not for general consumption; a script I used to make sure
 # I do not accidentally push a rewound master to public.
 
-git fetch ko
+case "$1" in --no-fetch) shift ;; *) git fetch ko ;; esac
+
 mb=$(git merge-base ko-master master)
 h=$(git rev-parse $mb ko-master | sort -u | wc -l)
 if test "$h" != 1
