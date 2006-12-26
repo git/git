@@ -10,7 +10,7 @@
 #include "cache-tree.h"
 
 static const char builtin_add_usage[] =
-"git-add [-n] [-v] [--interactive] [--] <filepattern>...";
+"git-add [-n] [-v] [-f] [--interactive] [--] <filepattern>...";
 
 static void prune_directory(struct dir_struct *dir, const char **pathspec, int prefix)
 {
@@ -37,9 +37,6 @@ static void prune_directory(struct dir_struct *dir, const char **pathspec, int p
 			free(entry);
 			continue;
 		}
-		if (entry->ignored_entry)
-			fprintf(stderr, "warning: '%s' is an ignored path.\n",
-				entry->name);
 		*dst++ = entry;
 	}
 	dir->nr = dst - dir->entries;
@@ -94,10 +91,13 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec)
 
 static struct lock_file lock_file;
 
+static const char ignore_warning[] =
+"The following paths are ignored by one of your .gitignore files:\n";
+
 int cmd_add(int argc, const char **argv, const char *prefix)
 {
 	int i, newfd;
-	int verbose = 0, show_only = 0;
+	int verbose = 0, show_only = 0, ignored_too = 0;
 	const char **pathspec;
 	struct dir_struct dir;
 	int add_interactive = 0;
@@ -132,6 +132,10 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			show_only = 1;
 			continue;
 		}
+		if (!strcmp(arg, "-f")) {
+			ignored_too = 1;
+			continue;
+		}
 		if (!strcmp(arg, "-v")) {
 			verbose = 1;
 			continue;
@@ -150,6 +154,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (show_only) {
 		const char *sep = "", *eof = "";
 		for (i = 0; i < dir.nr; i++) {
+			if (!ignored_too && dir.entries[i]->ignored_entry)
+				continue;
 			printf("%s%s", sep, dir.entries[i]->name);
 			sep = " ";
 			eof = "\n";
@@ -160,6 +166,24 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	if (read_cache() < 0)
 		die("index file corrupt");
+
+	if (!ignored_too) {
+		int has_ignored = -1;
+		for (i = 0; has_ignored < 0 && i < dir.nr; i++)
+			if (dir.entries[i]->ignored_entry)
+				has_ignored = i;
+		if (0 <= has_ignored) {
+			fprintf(stderr, ignore_warning);
+			for (i = has_ignored; i < dir.nr; i++) {
+				if (!dir.entries[i]->ignored_entry)
+					continue;
+				fprintf(stderr, "%s\n", dir.entries[i]->name);
+			}
+			fprintf(stderr,
+				"Use -f if you really want to add them.\n");
+			exit(1);
+		}
+	}
 
 	for (i = 0; i < dir.nr; i++)
 		add_file_to_index(dir.entries[i]->name, verbose);
