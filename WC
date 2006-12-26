@@ -4,10 +4,19 @@
 master_at=$(git rev-parse --verify refs/heads/master)
 next_at=$(git rev-parse --verify refs/heads/next)
 
-echo "To: git@vger.kernel.org"
-echo "Subject: What's cooking in git.git (topics)"
-echo "X-master-at: $master_at"
-echo "X-next-at: $next_at"
+
+cat <<EOF
+To: git@vger.kernel.org
+Subject: What's cooking in git.git (topics)
+X-master-at: $master_at
+X-next-at: $next_at
+
+Here are the topics that have been cooking.  Commits prefixed
+with '-' are only in 'pu' while commits prefixed with '+' are
+in 'next'.  The topics list the commits in reverse chronological
+order.
+
+EOF
 
 Meta/git-topic.perl --base=master | sed -e 's/^\*./*/'
 
