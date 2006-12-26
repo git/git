@@ -7,7 +7,9 @@ git-reset - Reset current HEAD to the specified state
 
 SYNOPSIS
 --------
-'git-reset' [--mixed | --soft | --hard] [<commit-ish>]
+[verse]
+'git-reset' [--mixed | --soft | --hard] [<commit>]
+'git-reset' [--mixed] <commit> [--] <paths>...
 
 DESCRIPTION
 -----------
@@ -20,6 +22,10 @@ the undo in the history.
 
 If you want to undo a commit other than the latest on a branch,
 gitlink:git-revert[1] is your friend.
+
+The second form with 'paths' is used to revert selected paths in
+the index from a given commit, without moving HEAD.
+
 
 OPTIONS
 -------
@@ -37,9 +43,9 @@ OPTIONS
 --hard::
 	Matches the working tree and index to that of the tree being
 	switched to. Any changes to tracked files in the working tree
-	since <commit-ish> are lost.
+	since <commit> are lost.
 
-<commit-ish>::
+<commit>::
 	Commit to make the current HEAD.
 
 Examples
