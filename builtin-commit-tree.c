@@ -92,6 +92,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	char comment[1000];
 	char *buffer;
 	unsigned int size;
+	int encoding_is_utf8;
 
 	setup_ident();
 	git_config(git_default_config);
@@ -117,6 +118,8 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 			parents++;
 	}
 
+	encoding_is_utf8 = !strcmp(git_commit_encoding, "utf-8");
+
 	init_buffer(&buffer, &size);
 	add_buffer(&buffer, &size, "tree %s\n", sha1_to_hex(tree_sha1));
 
@@ -130,7 +133,11 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 
 	/* Person/date information */
 	add_buffer(&buffer, &size, "author %s\n", git_author_info(1));
-	add_buffer(&buffer, &size, "committer %s\n\n", git_committer_info(1));
+	add_buffer(&buffer, &size, "committer %s\n", git_committer_info(1));
+	if (!encoding_is_utf8)
+		add_buffer(&buffer, &size,
+				"encoding %s\n", git_commit_encoding);
+	add_buffer(&buffer, &size, "\n");
 
 	/* And add the comment */
 	while (fgets(comment, sizeof(comment), stdin) != NULL)
@@ -138,7 +145,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 
 	/* And check the encoding */
 	buffer[size] = '\0';
-	if (!strcmp(git_commit_encoding, "utf-8") && !is_utf8(buffer))
+	if (encoding_is_utf8 && !is_utf8(buffer))
 		fprintf(stderr, commit_utf8_warn);
 
 	if (!write_sha1_file(buffer, size, commit_type, commit_sha1)) {
