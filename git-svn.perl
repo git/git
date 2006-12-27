@@ -512,15 +512,15 @@ sub dcommit {
 	}
 	return if $_dry_run;
 	fetch();
-	my @diff = command('diff-tree', $head, $gs, '--');
+	my @diff = command('diff-tree', 'HEAD', $gs, '--');
 	my @finish;
 	if (@diff) {
 		@finish = qw/rebase/;
 		push @finish, qw/--merge/ if $_merge;
 		push @finish, "--strategy=$_strategy" if $_strategy;
-		print STDERR "W: $head and $gs differ, using @finish:\n", @diff;
+		print STDERR "W: HEAD and $gs differ, using @finish:\n", @diff;
 	} else {
-		print "No changes between current $head and $gs\n",
+		print "No changes between current HEAD and $gs\n",
 		      "Resetting to the latest $gs\n";
 		@finish = qw/reset --mixed/;
 	}
