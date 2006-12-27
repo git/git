@@ -18,6 +18,10 @@ use File::Find qw();
 use File::Basename qw(basename);
 binmode STDOUT, ':utf8';
 
+BEGIN {
+	CGI->compile() if $ENV{MOD_PERL};
+}
+
 our $cgi = new CGI;
 our $version = "++GIT_VERSION++";
 our $my_url = $cgi->url();
