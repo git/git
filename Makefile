@@ -360,8 +360,8 @@ ifeq ($(uname_O),Cygwin)
 	NO_FAST_WORKING_DIRECTORY = UnfortunatelyYes
 	# There are conflicting reports about this.
 	# On some boxes NO_MMAP is needed, and not so elsewhere.
-	# Try uncommenting this if you see things break -- YMMV.
-	# NO_MMAP = YesPlease
+	# Try commenting this out if you suspect MMAP is more efficient
+	NO_MMAP = YesPlease
 	NO_IPV6 = YesPlease
 	X = .exe
 endif
