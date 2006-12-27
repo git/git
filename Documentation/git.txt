@@ -212,6 +212,9 @@ gitlink:git-cvsexportcommit[1]::
 gitlink:git-cvsserver[1]::
 	A CVS server emulator for git.
 
+gitlink:git-gc[1]::
+	Cleanup unnecessary files and optimize the local repository.
+
 gitlink:git-lost-found[1]::
 	Recover lost refs that luckily have not yet been pruned.
 
