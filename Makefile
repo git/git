@@ -79,6 +79,10 @@ all:
 #
 # Define NO_ICONV if your libc does not properly support iconv.
 #
+# Define NO_R_TO_GCC if your gcc does not like "-R/path/lib" that
+# tells runtime paths to dynamic libraries; "-Wl,-rpath=/path/lib"
+# is used instead.
+#
 # Define USE_NSEC below if you want git to care about sub-second file mtimes
 # and ctimes. Note that you need recent glibc (at least 2.2.4) for this, and
 # it will BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely
@@ -422,11 +426,19 @@ ifeq ($(uname_S),Darwin)
 	endif
 endif
 
+ifdef NO_R_TO_GCC_LINKER
+	# Some gcc does not accept and pass -R to the linker to specify
+	# the runtime dynamic library path.
+	CC_LD_DYNPATH = -Wl,-rpath=
+else
+	CC_LD_DYNPATH = -R
+endif
+
 ifndef NO_CURL
 	ifdef CURLDIR
-		# This is still problematic -- gcc does not always want -R.
+		# Try "-Wl,-rpath=$(CURLDIR)/lib" in such a case.
 		BASIC_CFLAGS += -I$(CURLDIR)/include
-		CURL_LIBCURL = -L$(CURLDIR)/lib -R$(CURLDIR)/lib -lcurl
+		CURL_LIBCURL = -L$(CURLDIR)/lib $(CC_LD_DYNPATH)$(CURLDIR)/lib -lcurl
 	else
 		CURL_LIBCURL = -lcurl
 	endif
@@ -445,9 +457,8 @@ endif
 ifndef NO_OPENSSL
 	OPENSSL_LIBSSL = -lssl
 	ifdef OPENSSLDIR
-		# Again this may be problematic -- gcc does not always want -R.
 		BASIC_CFLAGS += -I$(OPENSSLDIR)/include
-		OPENSSL_LINK = -L$(OPENSSLDIR)/lib -R$(OPENSSLDIR)/lib
+		OPENSSL_LINK = -L$(OPENSSLDIR)/lib $(CC_LD_DYNPATH)$(OPENSSLDIR)/lib
 	else
 		OPENSSL_LINK =
 	endif
@@ -463,9 +474,8 @@ else
 endif
 ifdef NEEDS_LIBICONV
 	ifdef ICONVDIR
-		# Again this may be problematic -- gcc does not always want -R.
 		BASIC_CFLAGS += -I$(ICONVDIR)/include
-		ICONV_LINK = -L$(ICONVDIR)/lib -R$(ICONVDIR)/lib
+		ICONV_LINK = -L$(ICONVDIR)/lib $(CC_LD_DYNPATH)$(ICONVDIR)/lib
 	else
 		ICONV_LINK =
 	endif
