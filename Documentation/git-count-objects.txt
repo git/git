@@ -20,8 +20,8 @@ OPTIONS
 -v::
 	In addition to the number of loose objects and disk
 	space consumed, it reports the number of in-pack
-	objects, and number of objects that can be removed by
-	running `git-prune-packed`.
+	objects, number of packs, and number of objects that can be
+	removed by running `git-prune-packed`.
 
 
 Author

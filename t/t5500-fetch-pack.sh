@@ -135,8 +135,13 @@ test_expect_success "clone shallow" "git-clone --depth 2 . shallow"
 test_expect_success "clone shallow object count" \
 	"test \"in-pack: 18\" = \"$(grep in-pack count.shallow)\""
 
-test_expect_success "clone shallow object count (part 2)" \
-	"test -z \"$(grep -v in-pack count.shallow | sed "s/^.*: 0//")\""
+count_output () {
+	sed -e '/^in-pack:/d' -e '/^packs:/d' -e '/: 0$/d' "$1"
+}
+
+test_expect_success "clone shallow object count (part 2)" '
+	test -z "$(count_output count.shallow)"
+'
 
 test_expect_success "fsck in shallow repo" \
 	"(cd shallow; git-fsck-objects --full)"
