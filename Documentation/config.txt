@@ -192,6 +192,15 @@ format.headers::
 	Additional email headers to include in a patch to be submitted
 	by mail.  See gitlink:git-format-patch[1].
 
+gc.reflogexpire::
+	`git reflog expire` removes reflog entries older than
+	this time; defaults to 90 days.
+
+gc.reflogexpireunreachable::
+	`git reflog expire` removes reflog entries older than
+	this time and are not reachable from the current tip;
+	defaults to 30 days.
+
 gc.rerereresolved::
 	Records of conflicted merge you resolved earlier are
 	kept for this many days when `git rerere gc` is run.

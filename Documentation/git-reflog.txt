@@ -1,0 +1,59 @@
+git-reflog(1)
+=============
+
+NAME
+----
+git-reflog - Manage reflog information
+
+
+SYNOPSIS
+--------
+[verse]
+'git-reflog' expire [--dry-run]
+	[--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...
+
+
+DESCRIPTION
+-----------
+
+Reflog is a mechanism to record when the tip of branches are
+updated.  This command is to manage the information recorded in it.
+
+The subcommand "expire" is used to prune older reflog entries.
+Entries older than `expire` time, or entries older than
+`expire-unreachable` time and are not reachable from the current
+tip, are removed from the reflog.  This is typically not used
+directly by the end users -- instead, see gitlink:git-gc[1].
+
+
+
+OPTIONS
+-------
+
+--expire=<time>::
+	Entries older than this time are pruned.  Without the
+	option it is taken from configuration `gc.reflogExpire`,
+	which in turn defaults to 90 days.
+
+--expire-unreachable=<time>::
+	Entries older than this time and are not reachable from
+	the current tip of the branch are pruned.  Without the
+	option it is taken from configuration
+	`gc.reflogExpireUnreachable`, which in turn defaults to
+	30 days.
+
+--all::
+	Instead of listing <refs> explicitly, prune all refs.
+
+Author
+------
+Written by Junio C Hamano <junkio@cox.net>
+
+Documentation
+--------------
+Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the gitlink:git[7] suite
+
