@@ -287,6 +287,7 @@ BUILTIN_OBJS = \
 	builtin-prune-packed.o \
 	builtin-push.o \
 	builtin-read-tree.o \
+	builtin-reflog.o \
 	builtin-repo-config.o \
 	builtin-rerere.o \
 	builtin-rev-list.o \

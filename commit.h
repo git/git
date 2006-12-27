@@ -107,4 +107,5 @@ int read_graft_file(const char *graft_file);
 
 extern struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2, int cleanup);
 
+int in_merge_bases(struct commit *rev1, struct commit *rev2);
 #endif /* COMMIT_H */

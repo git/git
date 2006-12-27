@@ -89,6 +89,7 @@ git-quiltimport
 git-read-tree
 git-rebase
 git-receive-pack
+git-reflog
 git-relink
 git-repack
 git-repo-config

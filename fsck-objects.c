@@ -399,6 +399,25 @@ static void fsck_dir(int i, char *path)
 
 static int default_refs;
 
+static int fsck_handle_reflog_ent(unsigned char *osha1, unsigned char *nsha1, char *datail, void *cb_data)
+{
+	struct object *obj;
+
+	if (!is_null_sha1(osha1)) {
+		obj = lookup_object(osha1);
+		if (obj) {
+			obj->used = 1;
+			mark_reachable(obj, REACHABLE);
+		}
+	}
+	obj = lookup_object(nsha1);
+	if (obj) {
+		obj->used = 1;
+		mark_reachable(obj, REACHABLE);
+	}
+	return 0;
+}
+
 static int fsck_handle_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *obj;
@@ -416,6 +435,9 @@ static int fsck_handle_ref(const char *refname, const unsigned char *sha1, int f
 	default_refs++;
 	obj->used = 1;
 	mark_reachable(obj, REACHABLE);
+
+	for_each_reflog_ent(refname, fsck_handle_reflog_ent, NULL);
+
 	return 0;
 }
 
