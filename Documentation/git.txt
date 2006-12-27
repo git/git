@@ -212,6 +212,9 @@ gitlink:git-cvsexportcommit[1]::
 gitlink:git-cvsserver[1]::
 	A CVS server emulator for git.
 
+gitlink:git-gc[1]::
+	Cleanup unnecessary files and optimize the local repository.
+
 gitlink:git-lost-found[1]::
 	Recover lost refs that luckily have not yet been pruned.
 
@@ -223,6 +226,9 @@ gitlink:git-prune[1]::
 
 gitlink:git-quiltimport[1]::
 	Applies a quilt patchset onto the current branch.
+
+gitlink:git-reflog[1]::
+	Manage reflog information.
 
 gitlink:git-relink[1]::
 	Hardlink common objects in local repositories.

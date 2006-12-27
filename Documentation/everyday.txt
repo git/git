@@ -34,6 +34,9 @@ Everybody uses these commands to maintain git repositories.
 
   * gitlink:git-repack[1] to pack loose objects for efficiency.
 
+  * gitlink:git-gc[1] to do common housekeeping tasks such as
+    repack and prune.
+
 Examples
 ~~~~~~~~
 
@@ -41,10 +44,9 @@ Check health and remove cruft.::
 +
 ------------
 $ git fsck-objects <1>
-$ git prune
 $ git count-objects <2>
 $ git repack <3>
-$ git prune <4>
+$ git gc <4>
 ------------
 +
 <1> running without `\--full` is usually cheap and assures the
@@ -53,7 +55,8 @@ repository health reasonably well.
 disk space is wasted by not repacking.
 <3> without `-a` repacks incrementally.  repacking every 4-5MB
 of loose objects accumulation may be a good rule of thumb.
-<4> after repack, prune removes the duplicate loose objects.
+<4> it is easier to use `git gc` than individual housekeeping commands
+such as `prune` and `repack`.  This runs `repack -a -d`.
 
 Repack a small project into single pack.::
 +

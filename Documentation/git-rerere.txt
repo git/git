@@ -7,7 +7,7 @@ git-rerere - Reuse recorded resolve
 
 SYNOPSIS
 --------
-'git-rerere' [clear|diff|status]
+'git-rerere' [clear|diff|status|gc]
 
 DESCRIPTION
 -----------
@@ -55,7 +55,11 @@ for resolutions.
 'gc'::
 
 This command is used to prune records of conflicted merge that
-occurred long time ago.
+occurred long time ago.  By default, conflicts older than 15
+days that you have not recorded their resolution, and conflicts
+older than 60 days, are pruned.  These are controlled with
+`gc.rerereunresolved` and `gc.rerereresolved` configuration
+variables.
 
 
 DISCUSSION

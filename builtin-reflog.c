@@ -5,6 +5,9 @@
 #include "dir.h"
 #include "tree-walk.h"
 
+static unsigned long default_reflog_expire;
+static unsigned long default_reflog_expire_unreachable;
+
 struct expire_reflog_cb {
 	FILE *newlog;
 	const char *ref;
@@ -150,6 +153,17 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 	return status;
 }
 
+static int reflog_expire_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "gc.reflogexpire"))
+		default_reflog_expire = approxidate(value);
+	else if (!strcmp(var, "gc.reflogexpireunreachable"))
+		default_reflog_expire_unreachable = approxidate(value);
+	else
+		return git_default_config(var, value);
+	return 0;
+}
+
 static const char reflog_expire_usage[] =
 "git-reflog expire [--dry-run] [--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...";
 
@@ -159,11 +173,18 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	unsigned long now = time(NULL);
 	int i, status, do_all;
 
+	git_config(reflog_expire_config);
+
 	save_commit_buffer = 0;
 	do_all = status = 0;
 	memset(&cb, 0, sizeof(cb));
-	cb.expire_total = now - 90 * 24 * 3600;
-	cb.expire_unreachable = now - 30 * 24 * 3600;
+
+	if (!default_reflog_expire_unreachable)
+		default_reflog_expire_unreachable = now - 30 * 24 * 3600;
+	if (!default_reflog_expire)
+		default_reflog_expire = now - 90 * 24 * 3600;
+	cb.expire_total = default_reflog_expire;
+	cb.expire_unreachable = default_reflog_expire_unreachable;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
