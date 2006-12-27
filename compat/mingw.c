@@ -81,15 +81,10 @@ const char *inet_ntop(int af, const void *src,
 }
 int mkstemp (char *__template)
 {
-	char *temp = xstrdup(__template);
 	char *filename = mktemp(__template);
-	int fd;
-
 	if (filename == NULL)
 		return -1;
-	fd = open(filename, O_RDWR | O_CREAT);
-	free(filename);
-	return fd;
+	return open(filename, O_RDWR | O_CREAT);
 }
 int gettimeofday(struct timeval *tv, void *tz)
 {
