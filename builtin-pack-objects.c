@@ -995,8 +995,6 @@ static void check_object(struct object_entry *entry)
 		 */
 		used = unpack_object_header_gently(buf, left,
 						   &entry->in_pack_type, &size);
-		if (!used || left - used <= 20)
-			die("corrupt pack for %s", sha1_to_hex(entry->sha1));
 
 		/* Check if it is delta, and the base is also an object
 		 * we are going to pack.  If so we will reuse the existing
@@ -1008,10 +1006,13 @@ static void check_object(struct object_entry *entry)
 			/* there is at least 20 bytes left in the pack */
 			switch (entry->in_pack_type) {
 			case OBJ_REF_DELTA:
-				base_name = buf + used;
+				base_name = use_pack(p, &w_curs,
+					entry->in_pack_offset + used, NULL);
 				used += 20;
 				break;
 			case OBJ_OFS_DELTA:
+				buf = use_pack(p, &w_curs,
+					entry->in_pack_offset + used, NULL);
 				c = buf[used++];
 				ofs = c & 127;
 				while (c & 128) {
