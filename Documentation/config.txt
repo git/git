@@ -192,6 +192,16 @@ format.headers::
 	Additional email headers to include in a patch to be submitted
 	by mail.  See gitlink:git-format-patch[1].
 
+gc.rerereresolved::
+	Records of conflicted merge you resolved earlier are
+	kept for this many days when `git rerere gc` is run.
+	The default is 60 days.  See gitlink:git-rerere[1].
+
+gc.rerereunresolved::
+	Records of conflicted merge you have not resolved are
+	kept for this many days when `git rerere gc` is run.
+	The default is 15 days.  See gitlink:git-rerere[1].
+
 gitcvs.enabled::
 	Whether the cvs pserver interface is enabled for this repository.
 	See gitlink:git-cvsserver[1].
