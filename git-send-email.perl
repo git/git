@@ -178,11 +178,10 @@ my $prompting = 0;
 if (!defined $from) {
 	$from = $author || $committer;
 	do {
-		$_ = $term->readline("Who should the emails appear to be from? ",
-			$from);
+		$_ = $term->readline("Who should the emails appear to be from? [$from] ");
 	} while (!defined $_);
 
-	$from = $_;
+	$from = $_ if ($_);
 	print "Emails will be sent from: ", $from, "\n";
 	$prompting++;
 }
