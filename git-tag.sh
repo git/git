@@ -5,6 +5,7 @@ USAGE='-l [<pattern>] | [-a | -s | -u <key-id>] [-f | -d] [-m <msg>] <tagname> [
 SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
+message_given=
 annotate=
 signed=
 force=
@@ -37,6 +38,21 @@ do
     	annotate=1
 	shift
 	message="$1"
+	if test "$#" = "0"; then
+	    die "error: option -m needs an argument"
+	else
+	    message_given=1
+	fi
+	;;
+    -F)
+	annotate=1
+	shift
+	if test "$#" = "0"; then
+	    die "error: option -F needs an argument"
+	else
+	    message="$(cat "$1")"
+	    message_given=1
+	fi
 	;;
     -u)
 	annotate=1
@@ -83,7 +99,7 @@ tagger=$(git-var GIT_COMMITTER_IDENT) || exit 1
 trap 'rm -f "$GIT_DIR"/TAG_TMP* "$GIT_DIR"/TAG_FINALMSG "$GIT_DIR"/TAG_EDITMSG' 0
 
 if [ "$annotate" ]; then
-    if [ -z "$message" ]; then
+    if [ -z "$message_given" ]; then
         ( echo "#"
           echo "# Write a tag message"
           echo "#" ) > "$GIT_DIR"/TAG_EDITMSG
@@ -95,7 +111,7 @@ if [ "$annotate" ]; then
     grep -v '^#' <"$GIT_DIR"/TAG_EDITMSG |
     git-stripspace >"$GIT_DIR"/TAG_FINALMSG
 
-    [ -s "$GIT_DIR"/TAG_FINALMSG ] || {
+    [ -s "$GIT_DIR"/TAG_FINALMSG -o -n "$message_given" ] || {
 	echo >&2 "No tag message?"
 	exit 1
     }

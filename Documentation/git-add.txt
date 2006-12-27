@@ -3,24 +3,45 @@ git-add(1)
 
 NAME
 ----
-git-add - Add files to the index file
+git-add - Add file contents to the changeset to be committed next
 
 SYNOPSIS
 --------
-'git-add' [-n] [-v] [--] <file>...
+'git-add' [-n] [-v] [-f] [--interactive] [--] <file>...
 
 DESCRIPTION
 -----------
-A simple wrapper for git-update-index to add files to the index,
-for people used to do "cvs add".
+All the changed file contents to be committed together in a single set
+of changes must be "added" with the 'add' command before using the
+'commit' command.  This is not only for adding new files.  Even modified
+files must be added to the set of changes about to be committed.
 
-It only adds non-ignored files, to add ignored files use
-"git update-index --add".
+This command can be performed multiple times before a commit. The added
+content corresponds to the state of specified file(s) at the time the
+'add' command is used. This means the 'commit' command will not consider
+subsequent changes to already added content if it is not added again before
+the commit.
+
+The 'git status' command can be used to obtain a summary of what is included
+for the next commit.
+
+This command can be used to add ignored files with `-f` (force)
+option, but they have to be
+explicitly and exactly specified from the command line.  File globbing
+and recursive behaviour do not add ignored files.
+
+Please see gitlink:git-commit[1] for alternative ways to add content to a
+commit.
+
 
 OPTIONS
 -------
 <file>...::
-	Files to add to the index (see gitlink:git-ls-files[1]).
+	Files to add content from.  Fileglobs (e.g. `*.c`) can
+	be given to add all matching files.  Also a
+	leading directory name (e.g. `dir` to add `dir/file1`
+	and `dir/file2`) can be given to add all files in the
+	directory, recursively.
 
 -n::
         Don't actually add the file(s), just show if they exist.
@@ -28,33 +49,25 @@ OPTIONS
 -v::
         Be verbose.
 
+-f::
+	Allow adding otherwise ignored files.
+
+\--interactive::
+	Add modified contents in the working tree interactively to
+	the index.
+
 \--::
 	This option can be used to separate command-line options from
 	the list of files, (useful when filenames might be mistaken
 	for command-line options).
 
 
-DISCUSSION
-----------
-
-The list of <file> given to the command is fed to `git-ls-files`
-command to list files that are not registered in the index and
-are not ignored/excluded by `$GIT_DIR/info/exclude` file or
-`.gitignore` file in each directory.  This means two things:
-
-. You can put the name of a directory on the command line, and
-  the command will add all files in it and its subdirectories;
-
-. Giving the name of a file that is already in index does not
-  run `git-update-index` on that path.
-
-
 EXAMPLES
 --------
 git-add Documentation/\\*.txt::
 
-	Adds all `\*.txt` files that are not in the index under
-	`Documentation` directory and its subdirectories.
+	Adds content from all `\*.txt` files under `Documentation`
+	directory and its subdirectories.
 +
 Note that the asterisk `\*` is quoted from the shell in this
 example; this lets the command to include the files from
@@ -62,15 +75,131 @@ subdirectories of `Documentation/` directory.
 
 git-add git-*.sh::
 
-	Adds all git-*.sh scripts that are not in the index.
+	Considers adding content from all git-*.sh scripts.
 	Because this example lets shell expand the asterisk
 	(i.e. you are listing the files explicitly), it does not
-	add `subdir/git-foo.sh` to the index.
+	consider `subdir/git-foo.sh`.
+
+Interactive mode
+----------------
+When the command enters the interactive mode, it shows the
+output of the 'status' subcommand, and then goes into ints
+interactive command loop.
+
+The command loop shows the list of subcommands available, and
+gives a prompt "What now> ".  In general, when the prompt ends
+with a single '>', you can pick only one of the choices given
+and type return, like this:
+
+------------
+    *** Commands ***
+      1: status       2: update       3: revert       4: add untracked
+      5: patch        6: diff         7: quit         8: help
+    What now> 1
+------------
+
+You also could say "s" or "sta" or "status" above as long as the
+choice is unique.
+
+The main command loop has 6 subcommands (plus help and quit).
+
+status::
+
+   This shows the change between HEAD and index (i.e. what will be
+   committed if you say "git commit"), and between index and
+   working tree files (i.e. what you could stage further before
+   "git commit" using "git-add") for each path.  A sample output
+   looks like this:
++
+------------
+              staged     unstaged path
+     1:       binary      nothing foo.png
+     2:     +403/-35        +1/-1 git-add--interactive.perl
+------------
++
+It shows that foo.png has differences from HEAD (but that is
+binary so line count cannot be shown) and there is no
+difference between indexed copy and the working tree
+version (if the working tree version were also different,
+'binary' would have been shown in place of 'nothing').  The
+other file, git-add--interactive.perl, has 403 lines added
+and 35 lines deleted if you commit what is in the index, but
+working tree file has further modifications (one addition and
+one deletion).
+
+update::
+
+   This shows the status information and gives prompt
+   "Update>>".  When the prompt ends with double '>>', you can
+   make more than one selection, concatenated with whitespace or
+   comma.  Also you can say ranges.  E.g. "2-5 7,9" to choose
+   2,3,4,5,7,9 from the list.  You can say '*' to choose
+   everything.
++
+What you chose are then highlighted with '*',
+like this:
++
+------------
+           staged     unstaged path
+  1:       binary      nothing foo.png
+* 2:     +403/-35        +1/-1 git-add--interactive.perl
+------------
++
+To remove selection, prefix the input with `-`
+like this:
++
+------------
+Update>> -2
+------------
++
+After making the selection, answer with an empty line to stage the
+contents of working tree files for selected paths in the index.
+
+revert::
+
+  This has a very similar UI to 'update', and the staged
+  information for selected paths are reverted to that of the
+  HEAD version.  Reverting new paths makes them untracked.
+
+add untracked::
+
+  This has a very similar UI to 'update' and
+  'revert', and lets you add untracked paths to the index.
+
+patch::
+
+  This lets you choose one path out of 'status' like selection.
+  After choosing the path, it presents diff between the index
+  and the working tree file and asks you if you want to stage
+  the change of each hunk.  You can say:
+
+       y - add the change from that hunk to index
+       n - do not add the change from that hunk to index
+       a - add the change from that hunk and all the rest to index
+       d - do not the change from that hunk nor any of the rest to index
+       j - do not decide on this hunk now, and view the next
+           undecided hunk
+       J - do not decide on this hunk now, and view the next hunk
+       k - do not decide on this hunk now, and view the previous
+           undecided hunk
+       K - do not decide on this hunk now, and view the previous hunk
++
+After deciding the fate for all hunks, if there is any hunk
+that was chosen, the index is updated with the selected hunks.
+
+diff::
+
+  This lets you review what will be committed (i.e. between
+  HEAD and index).
+
 
 See Also
 --------
+gitlink:git-status[1]
 gitlink:git-rm[1]
-gitlink:git-ls-files[1]
+gitlink:git-mv[1]
+gitlink:git-commit[1]
+gitlink:git-update-index[1]
 
 Author
 ------

@@ -10,18 +10,21 @@ struct ref_lock {
 	int force_write;
 };
 
+#define REF_ISSYMREF 01
+#define REF_ISPACKED 02
+
 /*
  * Calls the specified function for each ref file until it returns nonzero,
  * and returns the value
  */
-#define REF_ISSYMREF 01
-#define REF_ISPACKED 02
 typedef int each_ref_fn(const char *refname, const unsigned char *sha1, int flags, void *cb_data);
 extern int head_ref(each_ref_fn, void *);
 extern int for_each_ref(each_ref_fn, void *);
 extern int for_each_tag_ref(each_ref_fn, void *);
 extern int for_each_branch_ref(each_ref_fn, void *);
 extern int for_each_remote_ref(each_ref_fn, void *);
+
+extern int peel_ref(const char *, unsigned char *);
 
 /** Reads the refs file specified into sha1 **/
 extern int get_ref_sha1(const char *ref, unsigned char *sha1);
@@ -41,7 +44,14 @@ extern int write_ref_sha1(struct ref_lock *lock, const unsigned char *sha1, cons
 /** Reads log for the value of ref during at_time. **/
 extern int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *sha1);
 
+/* iterate over reflog entries */
+typedef int each_reflog_ent_fn(unsigned char *osha1, unsigned char *nsha1, char *, void *);
+void for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data);
+
 /** Returns 0 if target has the right format for a ref. **/
 extern int check_ref_format(const char *target);
+
+/** rename ref, return 0 on success **/
+extern int rename_ref(const char *oldref, const char *newref, const char *logmsg);
 
 #endif /* REFS_H */

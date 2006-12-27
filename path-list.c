@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "cache.h"
 #include "path-list.h"
 

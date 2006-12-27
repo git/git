@@ -1,5 +1,7 @@
 #include "cache.h"
 #include "refs.h"
+#include "object.h"
+#include "tag.h"
 
 static const char builtin_pack_refs_usage[] =
 "git-pack-refs [--all] [--prune]";
@@ -29,12 +31,26 @@ static int handle_one_ref(const char *path, const unsigned char *sha1,
 			  int flags, void *cb_data)
 {
 	struct pack_refs_cb_data *cb = cb_data;
+	int is_tag_ref;
 
-	if (!cb->all && strncmp(path, "refs/tags/", 10))
-		return 0;
 	/* Do not pack the symbolic refs */
-	if (!(flags & REF_ISSYMREF))
-		fprintf(cb->refs_file, "%s %s\n", sha1_to_hex(sha1), path);
+	if ((flags & REF_ISSYMREF))
+		return 0;
+	is_tag_ref = !strncmp(path, "refs/tags/", 10);
+	if (!cb->all && !is_tag_ref)
+		return 0;
+
+	fprintf(cb->refs_file, "%s %s\n", sha1_to_hex(sha1), path);
+	if (is_tag_ref) {
+		struct object *o = parse_object(sha1);
+		if (o->type == OBJ_TAG) {
+			o = deref_tag(o, path, 0);
+			if (o)
+				fprintf(cb->refs_file, "^%s\n",
+					sha1_to_hex(o->sha1));
+		}
+	}
+
 	if (cb->prune && !do_not_prune(flags)) {
 		int namelen = strlen(path) + 1;
 		struct ref_to_prune *n = xcalloc(1, sizeof(*n) + namelen);
@@ -95,6 +111,10 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 	if (!cbdata.refs_file)
 		die("unable to create ref-pack file structure (%s)",
 		    strerror(errno));
+
+	/* perhaps other traits later as well */
+	fprintf(cbdata.refs_file, "# pack-refs with: peeled \n");
+
 	for_each_ref(handle_one_ref, &cbdata);
 	fflush(cbdata.refs_file);
 	fsync(fd);

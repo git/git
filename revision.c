@@ -6,7 +6,6 @@
 #include "diff.h"
 #include "refs.h"
 #include "revision.h"
-#include <regex.h>
 #include "grep.h"
 
 static char *path_name(struct name_path *path, const char *name)
@@ -344,6 +343,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 static void add_parents_to_list(struct rev_info *revs, struct commit *commit, struct commit_list **list)
 {
 	struct commit_list *parent = commit->parents;
+	unsigned left_flag;
 
 	if (commit->object.flags & ADDED)
 		return;
@@ -388,6 +388,7 @@ static void add_parents_to_list(struct rev_info *revs, struct commit *commit, st
 	if (revs->no_walk)
 		return;
 
+	left_flag = (commit->object.flags & SYMMETRIC_LEFT);
 	parent = commit->parents;
 	while (parent) {
 		struct commit *p = parent->item;
@@ -395,6 +396,7 @@ static void add_parents_to_list(struct rev_info *revs, struct commit *commit, st
 		parent = parent->next;
 
 		parse_commit(p);
+		p->object.flags |= left_flag;
 		if (p->object.flags & SEEN)
 			continue;
 		p->object.flags |= SEEN;
@@ -462,21 +464,69 @@ static void limit_list(struct rev_info *revs)
 	revs->commits = newlist;
 }
 
-static int all_flags;
-static struct rev_info *all_revs;
+struct all_refs_cb {
+	int all_flags;
+	int warned_bad_reflog;
+	struct rev_info *all_revs;
+	const char *name_for_errormsg;
+};
 
 static int handle_one_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
-	struct object *object = get_reference(all_revs, path, sha1, all_flags);
-	add_pending_object(all_revs, object, "");
+	struct all_refs_cb *cb = cb_data;
+	struct object *object = get_reference(cb->all_revs, path, sha1,
+					      cb->all_flags);
+	add_pending_object(cb->all_revs, object, "");
 	return 0;
 }
 
 static void handle_all(struct rev_info *revs, unsigned flags)
 {
-	all_revs = revs;
-	all_flags = flags;
-	for_each_ref(handle_one_ref, NULL);
+	struct all_refs_cb cb;
+	cb.all_revs = revs;
+	cb.all_flags = flags;
+	for_each_ref(handle_one_ref, &cb);
+}
+
+static void handle_one_reflog_commit(unsigned char *sha1, void *cb_data)
+{
+	struct all_refs_cb *cb = cb_data;
+	if (!is_null_sha1(sha1)) {
+		struct object *o = parse_object(sha1);
+		if (o) {
+			o->flags |= cb->all_flags;
+			add_pending_object(cb->all_revs, o, "");
+		}
+		else if (!cb->warned_bad_reflog) {
+			warn("reflog of '%s' references pruned commits",
+				cb->name_for_errormsg);
+			cb->warned_bad_reflog = 1;
+		}
+	}
+}
+
+static int handle_one_reflog_ent(unsigned char *osha1, unsigned char *nsha1, char *detail, void *cb_data)
+{
+	handle_one_reflog_commit(osha1, cb_data);
+	handle_one_reflog_commit(nsha1, cb_data);
+	return 0;
+}
+
+static int handle_one_reflog(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+{
+	struct all_refs_cb *cb = cb_data;
+	cb->warned_bad_reflog = 0;
+	cb->name_for_errormsg = path;
+	for_each_reflog_ent(path, handle_one_reflog_ent, cb_data);
+	return 0;
+}
+
+static void handle_reflog(struct rev_info *revs, unsigned flags)
+{
+	struct all_refs_cb cb;
+	cb.all_revs = revs;
+	cb.all_flags = flags;
+	for_each_ref(handle_one_reflog, &cb);
 }
 
 static int add_parents_only(struct rev_info *revs, const char *arg, int flags)
@@ -524,6 +574,7 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	revs->prefix = prefix;
 	revs->max_age = -1;
 	revs->min_age = -1;
+	revs->skip_count = -1;
 	revs->max_count = -1;
 
 	revs->prune_fn = NULL;
@@ -640,7 +691,7 @@ int handle_revision_arg(const char *arg, struct rev_info *revs,
 				add_pending_commit_list(revs, exclude,
 							flags_exclude);
 				free_commit_list(exclude);
-				a->object.flags |= flags;
+				a->object.flags |= flags | SYMMETRIC_LEFT;
 			} else
 				a->object.flags |= flags_exclude;
 			b->object.flags |= flags;
@@ -760,6 +811,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->max_count = atoi(arg + 12);
 				continue;
 			}
+			if (!strncmp(arg, "--skip=", 7)) {
+				revs->skip_count = atoi(arg + 7);
+				continue;
+			}
 			/* accept -<digit>, like traditional "head" */
 			if ((*arg == '-') && isdigit(arg[1])) {
 				revs->max_count = atoi(arg + 1);
@@ -801,6 +856,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "--all")) {
 				handle_all(revs, flags);
+				continue;
+			}
+			if (!strcmp(arg, "--reflog")) {
+				handle_reflog(revs, flags);
 				continue;
 			}
 			if (!strcmp(arg, "--not")) {
@@ -848,6 +907,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "--boundary")) {
 				revs->boundary = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--left-right")) {
+				revs->left_right = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--objects")) {
@@ -1123,22 +1186,10 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 			   commit->buffer, strlen(commit->buffer));
 }
 
-struct commit *get_revision(struct rev_info *revs)
+static struct commit *get_revision_1(struct rev_info *revs)
 {
-	struct commit_list *list = revs->commits;
-
-	if (!list)
+	if (!revs->commits)
 		return NULL;
-
-	/* Check the max_count ... */
-	switch (revs->max_count) {
-	case -1:
-		break;
-	case 0:
-		return NULL;
-	default:
-		revs->max_count--;
-	}
 
 	do {
 		struct commit_list *entry = revs->commits;
@@ -1205,4 +1256,29 @@ struct commit *get_revision(struct rev_info *revs)
 		return commit;
 	} while (revs->commits);
 	return NULL;
+}
+
+struct commit *get_revision(struct rev_info *revs)
+{
+	struct commit *c = NULL;
+
+	if (0 < revs->skip_count) {
+		while ((c = get_revision_1(revs)) != NULL) {
+			if (revs->skip_count-- <= 0)
+				break;
+		}
+	}
+
+	/* Check the max_count ... */
+	switch (revs->max_count) {
+	case -1:
+		break;
+	case 0:
+		return NULL;
+	default:
+		revs->max_count--;
+	}
+	if (c)
+		return c;
+	return get_revision_1(revs);
 }

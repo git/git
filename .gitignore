@@ -2,6 +2,7 @@ GIT-CFLAGS
 GIT-VERSION-FILE
 git
 git-add
+git-add--interactive
 git-am
 git-annotate
 git-apply
@@ -10,6 +11,7 @@ git-applypatch
 git-archimport
 git-archive
 git-bisect
+git-blame
 git-branch
 git-cat-file
 git-check-ref-format
@@ -60,13 +62,13 @@ git-mailsplit
 git-merge
 git-merge-base
 git-merge-index
+git-merge-file
 git-merge-tree
 git-merge-octopus
 git-merge-one-file
 git-merge-ours
 git-merge-recur
 git-merge-recursive
-git-merge-recursive-old
 git-merge-resolve
 git-merge-stupid
 git-mktag
@@ -87,6 +89,7 @@ git-quiltimport
 git-read-tree
 git-rebase
 git-receive-pack
+git-reflog
 git-relink
 git-repack
 git-repo-config
@@ -152,4 +155,3 @@ config.status
 config.mak.autogen
 config.mak.append
 configure
-git-blame

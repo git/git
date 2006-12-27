@@ -3,15 +3,14 @@
  *
  * Copyright (C) 2006 Linus Torvalds
  */
-#include <fnmatch.h>
-
 #include "cache.h"
 #include "builtin.h"
 #include "dir.h"
+#include "exec_cmd.h"
 #include "cache-tree.h"
 
 static const char builtin_add_usage[] =
-"git-add [-n] [-v] <filepattern>...";
+"git-add [-n] [-v] [-f] [--interactive] [--] <filepattern>...";
 
 static void prune_directory(struct dir_struct *dir, const char **pathspec, int prefix)
 {
@@ -27,7 +26,14 @@ static void prune_directory(struct dir_struct *dir, const char **pathspec, int p
 	i = dir->nr;
 	while (--i >= 0) {
 		struct dir_entry *entry = *src++;
-		if (!match_pathspec(pathspec, entry->name, entry->len, prefix, seen)) {
+		int how = match_pathspec(pathspec, entry->name, entry->len,
+					 prefix, seen);
+		/*
+		 * ignored entries can be added with exact match,
+		 * but not with glob nor recursive.
+		 */
+		if (!how ||
+		    (entry->ignored_entry && how != MATCHED_EXACTLY)) {
 			free(entry);
 			continue;
 		}
@@ -56,6 +62,8 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec)
 
 	/* Set up the default git porcelain excludes */
 	memset(dir, 0, sizeof(*dir));
+	if (pathspec)
+		dir->show_both = 1;
 	dir->exclude_per_dir = ".gitignore";
 	path = git_path("info/exclude");
 	if (!access(path, R_OK))
@@ -83,19 +91,33 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec)
 
 static struct lock_file lock_file;
 
+static const char ignore_warning[] =
+"The following paths are ignored by one of your .gitignore files:\n";
+
 int cmd_add(int argc, const char **argv, const char *prefix)
 {
 	int i, newfd;
-	int verbose = 0, show_only = 0;
+	int verbose = 0, show_only = 0, ignored_too = 0;
 	const char **pathspec;
 	struct dir_struct dir;
+	int add_interactive = 0;
+
+	for (i = 1; i < argc; i++) {
+		if (!strcmp("--interactive", argv[i]))
+			add_interactive++;
+	}
+	if (add_interactive) {
+		const char *args[] = { "add--interactive", NULL };
+
+		if (add_interactive != 1 || argc != 2)
+			die("add --interactive does not take any parameters");
+		execv_git_cmd(args);
+		exit(1);
+	}
 
 	git_config(git_default_config);
 
 	newfd = hold_lock_file_for_update(&lock_file, get_index_file(), 1);
-
-	if (read_cache() < 0)
-		die("index file corrupt");
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -110,11 +132,20 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			show_only = 1;
 			continue;
 		}
+		if (!strcmp(arg, "-f")) {
+			ignored_too = 1;
+			continue;
+		}
 		if (!strcmp(arg, "-v")) {
 			verbose = 1;
 			continue;
 		}
 		usage(builtin_add_usage);
+	}
+	if (argc <= i) {
+		fprintf(stderr, "Nothing specified, nothing added.\n");
+		fprintf(stderr, "Maybe you wanted to say 'git add .'?\n");
+		return 0;
 	}
 	pathspec = get_pathspec(prefix, argv + i);
 
@@ -123,12 +154,35 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (show_only) {
 		const char *sep = "", *eof = "";
 		for (i = 0; i < dir.nr; i++) {
+			if (!ignored_too && dir.entries[i]->ignored_entry)
+				continue;
 			printf("%s%s", sep, dir.entries[i]->name);
 			sep = " ";
 			eof = "\n";
 		}
 		fputs(eof, stdout);
 		return 0;
+	}
+
+	if (read_cache() < 0)
+		die("index file corrupt");
+
+	if (!ignored_too) {
+		int has_ignored = -1;
+		for (i = 0; has_ignored < 0 && i < dir.nr; i++)
+			if (dir.entries[i]->ignored_entry)
+				has_ignored = i;
+		if (0 <= has_ignored) {
+			fprintf(stderr, ignore_warning);
+			for (i = has_ignored; i < dir.nr; i++) {
+				if (!dir.entries[i]->ignored_entry)
+					continue;
+				fprintf(stderr, "%s\n", dir.entries[i]->name);
+			}
+			fprintf(stderr,
+				"Use -f if you really want to add them.\n");
+			exit(1);
+		}
 	}
 
 	for (i = 0; i < dir.nr; i++)

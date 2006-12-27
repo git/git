@@ -19,11 +19,7 @@ modification *should* take notice and update the test vectors here.
 '
 
 ################################################################
-# It appears that people are getting bitten by not installing
-# 'merge' (usually part of RCS package in binary distributions)
-# or have too old python without subprocess.  Check them and error
-# out before running any tests.  Also catch the bogosity of trying
-# to run tests without building while we are at it.
+# It appears that people try to run tests without building...
 
 ../git >/dev/null
 if test $? != 1
@@ -32,21 +28,7 @@ then
 	exit 1
 fi
 
-merge >/dev/null 2>/dev/null
-if test $? = 127
-then
-	echo >&2 'You do not seem to have "merge" installed.
-Please check INSTALL document.'
-	exit 1
-fi
-
 . ./test-lib.sh
-
-test "$no_python" || "$PYTHON" -c 'import subprocess' || {
-	echo >&2 'Your python seem to lack "subprocess" module.
-Please check INSTALL document.'
-	exit 1
-}
 
 ################################################################
 # init-db has been done in an empty repository.
@@ -289,5 +271,14 @@ test_expect_success \
 	 sed -n -e "s/^parent //p" -e "/^author /q" |
 	 wc -l) &&
      test $numparent = 1'
+
+test_expect_success 'update-index D/F conflict' '
+	mv path0 tmp &&
+	mv path2 path0 &&
+	mv tmp path2 &&
+	git update-index --add --replace path2 path0/file2 &&
+	numpath0=$(git ls-files path0 | wc -l) &&
+	test $numpath0 = 1
+'
 
 test_done

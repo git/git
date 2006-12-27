@@ -13,7 +13,8 @@
 
 
 struct dir_entry {
-	int len;
+	unsigned ignored_entry : 1;
+	unsigned int len : 15;
 	char name[FLEX_ARRAY]; /* more */
 };
 
@@ -29,7 +30,8 @@ struct exclude_list {
 
 struct dir_struct {
 	int nr, alloc;
-	unsigned int show_ignored:1,
+	unsigned int show_both: 1,
+		     show_ignored:1,
 		     show_other_directories:1,
 		     hide_empty_directories:1;
 	struct dir_entry **entries;
@@ -40,9 +42,16 @@ struct dir_struct {
 };
 
 extern int common_prefix(const char **pathspec);
+
+#define MATCHED_RECURSIVELY 1
+#define MATCHED_FNMATCH 2
+#define MATCHED_EXACTLY 3
 extern int match_pathspec(const char **pathspec, const char *name, int namelen, int prefix, char *seen);
 
 extern int read_directory(struct dir_struct *, const char *path, const char *base, int baselen);
+extern int push_exclude_per_directory(struct dir_struct *, const char *, int);
+extern void pop_exclude_per_directory(struct dir_struct *, int);
+
 extern int excluded(struct dir_struct *, const char *);
 extern void add_excludes_from_file(struct dir_struct *, const char *fname);
 extern void add_exclude(const char *string, const char *base,

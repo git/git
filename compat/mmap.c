@@ -1,21 +1,11 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
 #include "../git-compat-util.h"
 
-void *gitfakemmap(void *start, size_t length, int prot , int flags, int fd, off_t offset)
+void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
 {
-	int n = 0;
-	off_t current_offset = lseek(fd, 0, SEEK_CUR);
+	size_t n = 0;
 
 	if (start != NULL || !(flags & MAP_PRIVATE))
-		die("Invalid usage of gitfakemmap.");
-
-	if (lseek(fd, offset, SEEK_SET) < 0) {
-		errno = EINVAL;
-		return MAP_FAILED;
-	}
+		die("Invalid usage of mmap when built with NO_MMAP");
 
 	start = xmalloc(length);
 	if (start == NULL) {
@@ -24,14 +14,16 @@ void *gitfakemmap(void *start, size_t length, int prot , int flags, int fd, off_
 	}
 
 	while (n < length) {
-		int count = read(fd, start+n, length-n);
+		ssize_t count = pread(fd, (char *)start + n, length - n, offset + n);
 
 		if (count == 0) {
-			memset(start+n, 0, length-n);
+			memset((char *)start+n, 0, length-n);
 			break;
 		}
 
 		if (count < 0) {
+			if (errno == EAGAIN || errno == EINTR)
+				continue;
 			free(start);
 			errno = EACCES;
 			return MAP_FAILED;
@@ -40,15 +32,10 @@ void *gitfakemmap(void *start, size_t length, int prot , int flags, int fd, off_
 		n += count;
 	}
 
-	if (current_offset != lseek(fd, current_offset, SEEK_SET)) {
-		errno = EINVAL;
-		return MAP_FAILED;
-	}
-
 	return start;
 }
 
-int gitfakemunmap(void *start, size_t length)
+int git_munmap(void *start, size_t length)
 {
 	free(start);
 	return 0;

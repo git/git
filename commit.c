@@ -902,11 +902,11 @@ void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
 
 /* merge-rebase stuff */
 
-/* bits #0..7 in revision.h */
-#define PARENT1		(1u<< 8)
-#define PARENT2		(1u<< 9)
-#define STALE		(1u<<10)
-#define RESULT		(1u<<11)
+/* bits #0..15 in revision.h */
+#define PARENT1		(1u<<16)
+#define PARENT2		(1u<<17)
+#define STALE		(1u<<18)
+#define RESULT		(1u<<19)
 
 static struct commit *interesting(struct commit_list *list)
 {
@@ -1042,4 +1042,21 @@ struct commit_list *get_merge_bases(struct commit *one,
 	}
 	free(rslt);
 	return result;
+}
+
+int in_merge_bases(struct commit *rev1, struct commit *rev2)
+{
+	struct commit_list *bases, *b;
+	int ret = 0;
+
+	bases = get_merge_bases(rev1, rev2, 1);
+	for (b = bases; b; b = b->next) {
+		if (!hashcmp(rev1->object.sha1, b->item->object.sha1)) {
+			ret = 1;
+			break;
+		}
+	}
+
+	free_commit_list(bases);
+	return ret;
 }

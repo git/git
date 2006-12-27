@@ -54,6 +54,12 @@ static void show_commit(struct commit *commit)
 		fputs(header_prefix, stdout);
 	if (commit->object.flags & BOUNDARY)
 		putchar('-');
+	else if (revs.left_right) {
+		if (commit->object.flags & SYMMETRIC_LEFT)
+			putchar('<');
+		else
+			putchar('>');
+	}
 	if (revs.abbrev_commit && revs.abbrev)
 		fputs(find_unique_abbrev(commit->object.sha1, revs.abbrev),
 		      stdout);

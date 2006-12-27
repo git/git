@@ -1,9 +1,8 @@
 #include "builtin.h"
 #include "cache.h"
-#include <regex.h>
 
 static const char git_config_set_usage[] =
-"git-repo-config [ --global ] [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --unset | --unset-all] name [value [value_regex]] | --list";
+"git-repo-config [ --global ] [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --list";
 
 static char *key;
 static regex_t *key_regexp;
@@ -67,10 +66,10 @@ static int get_value(const char* key_, const char* regex_)
 	char *global = NULL, *repo_config = NULL;
 	const char *local;
 
-	local = getenv("GIT_CONFIG");
+	local = getenv(CONFIG_ENVIRONMENT);
 	if (!local) {
 		const char *home = getenv("HOME");
-		local = getenv("GIT_CONFIG_LOCAL");
+		local = getenv(CONFIG_LOCAL_ENVIRONMENT);
 		if (!local)
 			local = repo_config = xstrdup(git_path("config"));
 		if (home)
@@ -148,6 +147,18 @@ int cmd_repo_config(int argc, const char **argv, const char *prefix)
 			} else {
 				die("$HOME not set");
 			}
+		} else if (!strcmp(argv[1], "--rename-section")) {
+			int ret;
+			if (argc != 4)
+				usage(git_config_set_usage);
+			ret = git_config_rename_section(argv[2], argv[3]);
+			if (ret < 0)
+				return ret;
+			if (ret == 0) {
+				fprintf(stderr, "No such section!\n");
+				return 1;
+			}
+			return 0;
 		} else
 			break;
 		argc--;
@@ -190,7 +201,9 @@ int cmd_repo_config(int argc, const char **argv, const char *prefix)
 			use_key_regexp = 1;
 			do_all = 1;
 			return get_value(argv[2], argv[3]);
-		} else if (!strcmp(argv[1], "--replace-all"))
+		} else if (!strcmp(argv[1], "--add"))
+			return git_config_set_multivar(argv[2], argv[3], "^$", 0);
+		else if (!strcmp(argv[1], "--replace-all"))
 
 			return git_config_set_multivar(argv[2], argv[3], NULL, 1);
 		else

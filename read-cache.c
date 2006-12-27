@@ -358,7 +358,7 @@ int add_file_to_index(const char *path, int verbose)
 
 	if (index_path(ce->sha1, path, &st, 1))
 		die("unable to index file %s", path);
-	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD))
+	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE))
 		die("unable to add %s to index",path);
 	if (verbose)
 		printf("add '%s'\n", path);
@@ -517,7 +517,7 @@ static int has_dir_name(const struct cache_entry *ce, int pos, int ok_to_replace
 		pos = cache_name_pos(name, ntohs(create_ce_flags(len, stage)));
 		if (pos >= 0) {
 			retval = -1;
-			if (ok_to_replace)
+			if (!ok_to_replace)
 				break;
 			remove_cache_entry_at(pos);
 			continue;
@@ -609,7 +609,7 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	if (!skip_df_check &&
 	    check_file_directory_conflict(ce, pos, ok_to_replace)) {
 		if (!ok_to_replace)
-			return -1;
+			return error("'%s' appears as both a file and as a directory", ce->name);
 		pos = cache_name_pos(ce->name, ntohs(ce->ce_flags));
 		pos = -pos-1;
 	}

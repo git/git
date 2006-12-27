@@ -3,8 +3,6 @@
  *
  * Copyright (C) 2006 Johannes Schindelin
  */
-#include <fnmatch.h>
-
 #include "cache.h"
 #include "builtin.h"
 #include "dir.h"
@@ -146,21 +144,24 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				&& lstat(dst, &st) == 0)
 			bad = "cannot move directory over file";
 		else if (src_is_dir) {
+			const char *src_w_slash = add_slash(src);
+			int len_w_slash = length + 1;
 			int first, last;
 
 			modes[i] = WORKING_DIRECTORY;
 
-			first = cache_name_pos(src, length);
+			first = cache_name_pos(src_w_slash, len_w_slash);
 			if (first >= 0)
-				die ("Huh? %s/ is in index?", src);
+				die ("Huh? %.*s is in index?",
+						len_w_slash, src_w_slash);
 
 			first = -1 - first;
 			for (last = first; last < active_nr; last++) {
 				const char *path = active_cache[last]->name;
-				if (strncmp(path, src, length)
-						|| path[length] != '/')
+				if (strncmp(path, src_w_slash, len_w_slash))
 					break;
 			}
+			free((char *)src_w_slash);
 
 			if (last - first < 1)
 				bad = "source directory is empty";

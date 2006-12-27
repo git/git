@@ -1,5 +1,5 @@
-#include "wt-status.h"
 #include "cache.h"
+#include "wt-status.h"
 
 extern int wt_status_use_color;
 

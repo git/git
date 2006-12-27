@@ -24,13 +24,6 @@
 
 #include "cache.h"
 
-#include <assert.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netdb.h>
-
 typedef struct store_conf {
 	char *name;
 	const char *path; /* should this be here? its interpretation is driver-specific */
@@ -103,8 +96,8 @@ typedef struct {
 
 static int Verbose, Quiet;
 
-static void info( const char *, ... );
-static void warn( const char *, ... );
+static void imap_info( const char *, ... );
+static void imap_warn( const char *, ... );
 
 static char *next_arg( char ** );
 
@@ -304,7 +297,7 @@ buffer_gets( buffer_t * b, char **s )
 }
 
 static void
-info( const char *msg, ... )
+imap_info( const char *msg, ... )
 {
 	va_list va;
 
@@ -317,7 +310,7 @@ info( const char *msg, ... )
 }
 
 static void
-warn( const char *msg, ... )
+imap_warn( const char *msg, ... )
 {
 	va_list va;
 
@@ -910,7 +903,7 @@ imap_open_store( imap_server_conf_t *srvc )
 	/* open connection to IMAP server */
 
 	if (srvc->tunnel) {
-		info( "Starting tunnel '%s'... ", srvc->tunnel );
+		imap_info( "Starting tunnel '%s'... ", srvc->tunnel );
 
 		if (socketpair( PF_UNIX, SOCK_STREAM, 0, a )) {
 			perror( "socketpair" );
@@ -933,31 +926,31 @@ imap_open_store( imap_server_conf_t *srvc )
 
 		imap->buf.sock.fd = a[1];
 
-		info( "ok\n" );
+		imap_info( "ok\n" );
 	} else {
 		memset( &addr, 0, sizeof(addr) );
 		addr.sin_port = htons( srvc->port );
 		addr.sin_family = AF_INET;
 
-		info( "Resolving %s... ", srvc->host );
+		imap_info( "Resolving %s... ", srvc->host );
 		he = gethostbyname( srvc->host );
 		if (!he) {
 			perror( "gethostbyname" );
 			goto bail;
 		}
-		info( "ok\n" );
+		imap_info( "ok\n" );
 
 		addr.sin_addr.s_addr = *((int *) he->h_addr_list[0]);
 
 		s = socket( PF_INET, SOCK_STREAM, 0 );
 
-		info( "Connecting to %s:%hu... ", inet_ntoa( addr.sin_addr ), ntohs( addr.sin_port ) );
+		imap_info( "Connecting to %s:%hu... ", inet_ntoa( addr.sin_addr ), ntohs( addr.sin_port ) );
 		if (connect( s, (struct sockaddr *)&addr, sizeof(addr) )) {
 			close( s );
 			perror( "connect" );
 			goto bail;
 		}
-		info( "ok\n" );
+		imap_info( "ok\n" );
 
 		imap->buf.sock.fd = s;
 
@@ -986,7 +979,7 @@ imap_open_store( imap_server_conf_t *srvc )
 
 	if (!preauth) {
 
-		info ("Logging in...\n");
+		imap_info ("Logging in...\n");
 		if (!srvc->user) {
 			fprintf( stderr, "Skipping server %s, no user\n", srvc->host );
 			goto bail;
@@ -1013,7 +1006,7 @@ imap_open_store( imap_server_conf_t *srvc )
 			fprintf( stderr, "Skipping account %s@%s, server forbids LOGIN\n", srvc->user, srvc->host );
 			goto bail;
 		}
-		warn( "*** IMAP Warning *** Password is being sent in the clear\n" );
+		imap_warn( "*** IMAP Warning *** Password is being sent in the clear\n" );
 		if (imap_exec( ctx, NULL, "LOGIN \"%s\" \"%s\"", srvc->user, srvc->pass ) != RESP_OK) {
 			fprintf( stderr, "IMAP error: LOGIN failed\n" );
 			goto bail;

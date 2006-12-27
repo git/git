@@ -18,11 +18,8 @@
  *  licensing gets turned into GPLv2 within this project.
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include "delta.h"
-
 #include "git-compat-util.h"
+#include "delta.h"
 
 /* maximum hash entry list for the same hash bucket */
 #define HASH_LIMIT 64

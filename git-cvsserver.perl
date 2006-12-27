@@ -17,6 +17,7 @@
 
 use strict;
 use warnings;
+use bytes;
 
 use Fcntl;
 use File::Temp qw/tempdir tempfile/;
@@ -945,7 +946,7 @@ sub req_update
 
             $log->debug("Temporary directory for merge is $dir");
 
-            my $return = system("merge", $file_local, $file_old, $file_new);
+            my $return = system("git", "merge-file", $file_local, $file_old, $file_new);
             $return >>= 8;
 
             if ( $return == 0 )

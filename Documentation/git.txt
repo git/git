@@ -351,6 +351,9 @@ gitlink:git-init-db[1]::
 	Creates an empty git object database, or reinitialize an
 	existing one.
 
+gitlink:git-merge-file[1]::
+	Runs a threeway merge.
+
 gitlink:git-merge-index[1]::
 	Runs a merge for files needing merging.
 
@@ -639,11 +642,35 @@ git Commits
 git Diffs
 ~~~~~~~~~
 'GIT_DIFF_OPTS'::
+	Only valid setting is "--unified=??" or "-u??" to set the
+	number of context lines shown when a unified diff is created.
+	This takes precedence over any "-U" or "--unified" option
+	value passed on the git diff command line.
+
 'GIT_EXTERNAL_DIFF'::
-	see the "generating patches" section in :
-	gitlink:git-diff-index[1];
-	gitlink:git-diff-files[1];
-	gitlink:git-diff-tree[1]
+	When the environment variable 'GIT_EXTERNAL_DIFF' is set, the
+	program named by it is called, instead of the diff invocation
+	described above.  For a path that is added, removed, or modified,
+        'GIT_EXTERNAL_DIFF' is called with 7 parameters:
+
+	path old-file old-hex old-mode new-file new-hex new-mode
++
+where:
+
+	<old|new>-file:: are files GIT_EXTERNAL_DIFF can use to read the
+                         contents of <old|new>,
+	<old|new>-hex:: are the 40-hexdigit SHA1 hashes,
+	<old|new>-mode:: are the octal representation of the file modes.
+
++
+The file parameters can point at the user's working file
+(e.g. `new-file` in "git-diff-files"), `/dev/null` (e.g. `old-file`
+when a new file is added), or a temporary file (e.g. `old-file` in the
+index).  'GIT_EXTERNAL_DIFF' should not worry about unlinking the
+temporary file --- it is removed when 'GIT_EXTERNAL_DIFF' exits.
++
+For a path that is unmerged, 'GIT_EXTERNAL_DIFF' is called with 1
+parameter, <path>.
 
 other
 ~~~~~

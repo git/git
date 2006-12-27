@@ -5,8 +5,6 @@
 #include "diff.h"
 #include "diffcore.h"
 
-#include <regex.h>
-
 static unsigned int contains(struct diff_filespec *one,
 			     const char *needle, unsigned long len,
 			     regex_t *regexp)

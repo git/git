@@ -1,6 +1,5 @@
-#include <signal.h>
-#include <sys/time.h>
 #include "cache.h"
+#include "dir.h"
 #include "tree.h"
 #include "tree-walk.h"
 #include "cache-tree.h"
@@ -77,6 +76,12 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 {
 	int baselen = strlen(base);
 	int src_size = len + 1;
+	int i_stk = i_stk;
+	int retval = 0;
+
+	if (o->dir)
+		i_stk = push_exclude_per_directory(o->dir, base, strlen(base));
+
 	do {
 		int i;
 		const char *first;
@@ -143,7 +148,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 		}
 		/* No name means we're done */
 		if (!first)
-			return 0;
+			goto leave_directory;
 
 		pathlen = strlen(first);
 		ce_size = cache_entry_size(baselen + pathlen);
@@ -240,13 +245,20 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			newbase[baselen + pathlen] = '/';
 			newbase[baselen + pathlen + 1] = '\0';
 			if (unpack_trees_rec(subposns, len, newbase, o,
-					     indpos, df_conflict_list))
-				return -1;
+					     indpos, df_conflict_list)) {
+				retval = -1;
+				goto leave_directory;
+			}
 			free(newbase);
 		}
 		free(subposns);
 		free(src);
 	} while (1);
+
+ leave_directory:
+	if (o->dir)
+		pop_exclude_per_directory(o->dir, i_stk);
+	return retval;
 }
 
 /* Unlink the last component and attempt to remove leading
@@ -370,7 +382,7 @@ int unpack_trees(struct object_list *trees, struct unpack_trees_options *o)
 	int i;
 	struct object_list *posn = trees;
 	struct tree_entry_list df_conflict_list;
-	struct cache_entry df_conflict_entry;
+	static struct cache_entry *dfc;
 
 	memset(&df_conflict_list, 0, sizeof(df_conflict_list));
 	df_conflict_list.next = &df_conflict_list;
@@ -381,8 +393,10 @@ int unpack_trees(struct object_list *trees, struct unpack_trees_options *o)
 	state.refresh_cache = 1;
 
 	o->merge_size = len;
-	memset(&df_conflict_entry, 0, sizeof(df_conflict_entry));
-	o->df_conflict_entry = &df_conflict_entry;
+
+	if (!dfc)
+		dfc = xcalloc(1, sizeof(struct cache_entry) + 1);
+	o->df_conflict_entry = dfc;
 
 	if (len) {
 		posns = xmalloc(len * sizeof(struct tree_entry_list *));
@@ -456,7 +470,7 @@ static void invalidate_ce_path(struct cache_entry *ce)
 
 /*
  * We do not want to remove or overwrite a working tree file that
- * is not tracked.
+ * is not tracked, unless it is ignored.
  */
 static void verify_absent(const char *path, const char *action,
 		struct unpack_trees_options *o)
@@ -465,7 +479,7 @@ static void verify_absent(const char *path, const char *action,
 
 	if (o->index_only || o->reset || !o->update)
 		return;
-	if (!lstat(path, &st))
+	if (!lstat(path, &st) && !(o->dir && excluded(o->dir, path)))
 		die("Untracked working tree file '%s' "
 		    "would be %s by merge.", path, action);
 }

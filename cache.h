@@ -122,7 +122,12 @@ extern int cache_errno;
 #define DB_ENVIRONMENT "GIT_OBJECT_DIRECTORY"
 #define INDEX_ENVIRONMENT "GIT_INDEX_FILE"
 #define GRAFT_ENVIRONMENT "GIT_GRAFT_FILE"
+#define TEMPLATE_DIR_ENVIRONMENT "GIT_TEMPLATE_DIR"
+#define CONFIG_ENVIRONMENT "GIT_CONFIG"
+#define CONFIG_LOCAL_ENVIRONMENT "GIT_CONFIG_LOCAL"
+#define EXEC_PATH_ENVIRONMENT "GIT_EXEC_PATH"
 
+extern int is_bare_git_dir(const char *dir);
 extern const char *get_git_dir(void);
 extern char *get_object_directory(void);
 extern char *get_refs_directory(void);
@@ -308,6 +313,7 @@ void datestamp(char *buf, int bufsize);
 unsigned long approxidate(const char *);
 
 extern int setup_ident(void);
+extern void ignore_missing_committer_name();
 extern const char *git_author_info(int);
 extern const char *git_committer_info(int);
 
@@ -403,6 +409,7 @@ extern int git_config_int(const char *, const char *);
 extern int git_config_bool(const char *, const char *);
 extern int git_config_set(const char *, const char *);
 extern int git_config_set_multivar(const char *, const char *, const char *, int);
+extern int git_config_rename_section(const char *, const char *);
 extern int check_repository_format_version(const char *var, const char *value);
 
 #define MAX_GITNAME (1000)

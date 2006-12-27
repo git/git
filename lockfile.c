@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2005, Junio C Hamano
  */
-#include <signal.h>
 #include "cache.h"
 
 static struct lock_file *lock_file_list;

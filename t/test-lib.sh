@@ -76,7 +76,8 @@ do
 	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
 		verbose=t; shift ;;
 	--no-python)
-		no_python=t; shift ;;
+		# noop now...
+		shift ;;
 	*)
 		break ;;
 	esac
@@ -207,21 +208,10 @@ test_done () {
 # t/ subdirectory and are run in trash subdirectory.
 PATH=$(pwd)/..:$PATH
 GIT_EXEC_PATH=$(pwd)/..
+GIT_TEMPLATE_DIR=$(pwd)/../templates/blt
 HOME=$(pwd)/trash
-export PATH GIT_EXEC_PATH HOME
+export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR HOME
 
-# Similarly use ../compat/subprocess.py if our python does not
-# have subprocess.py on its own.
-PYTHON=`sed -e '1{
-	s/^#!//
-	q
-}' ../git-merge-recursive-old` || {
-	error "You haven't built things yet, have you?"
-}
-"$PYTHON" -c 'import subprocess' 2>/dev/null || {
-	PYTHONPATH=$(pwd)/../compat
-	export PYTHONPATH
-}
 GITPERLLIB=$(pwd)/../perl/blib/lib:$(pwd)/../perl/blib/arch/auto/Git
 export GITPERLLIB
 test -d ../templates/blt || {

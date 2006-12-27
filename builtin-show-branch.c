@@ -1,12 +1,10 @@
-#include <stdlib.h>
-#include <fnmatch.h>
 #include "cache.h"
 #include "commit.h"
 #include "refs.h"
 #include "builtin.h"
 
 static const char show_branch_usage[] =
-"git-show-branch [--sparse] [--current] [--all] [--heads] [--tags] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...]";
+"git-show-branch [--sparse] [--current] [--all] [--remotes] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...] | --reflog[=n] <branch>";
 
 static int default_num;
 static int default_alloc;
@@ -16,6 +14,8 @@ static const char **default_arg;
 
 #define REV_SHIFT	 2
 #define MAX_REVS	(FLAG_BITS - REV_SHIFT) /* should not exceed bits_per_int - REV_SHIFT */
+
+#define DEFAULT_REFLOG	4
 
 static struct commit *interesting(struct commit_list *list)
 {
@@ -383,6 +383,20 @@ static int append_head_ref(const char *refname, const unsigned char *sha1, int f
 	return append_ref(refname + ofs, sha1, flag, cb_data);
 }
 
+static int append_remote_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+{
+	unsigned char tmp[20];
+	int ofs = 13;
+	if (strncmp(refname, "refs/remotes/", ofs))
+		return 0;
+	/* If both heads/foo and tags/foo exists, get_sha1 would
+	 * get confused.
+	 */
+	if (get_sha1(refname + ofs, tmp) || hashcmp(tmp, sha1))
+		ofs = 5;
+	return append_ref(refname + ofs, sha1, flag, cb_data);
+}
+
 static int append_tag_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	if (strncmp(refname, "refs/tags/", 10))
@@ -423,16 +437,16 @@ static int append_matching_ref(const char *refname, const unsigned char *sha1, i
 	return append_ref(refname, sha1, flag, cb_data);
 }
 
-static void snarf_refs(int head, int tag)
+static void snarf_refs(int head, int remotes)
 {
 	if (head) {
 		int orig_cnt = ref_name_cnt;
 		for_each_ref(append_head_ref, NULL);
 		sort_ref_range(orig_cnt, ref_name_cnt);
 	}
-	if (tag) {
+	if (remotes) {
 		int orig_cnt = ref_name_cnt;
-		for_each_ref(append_tag_ref, NULL);
+		for_each_ref(append_remote_ref, NULL);
 		sort_ref_range(orig_cnt, ref_name_cnt);
 	}
 }
@@ -554,7 +568,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	struct commit_list *list = NULL, *seen = NULL;
 	unsigned int rev_mask[MAX_REVS];
 	int num_rev, i, extra = 0;
-	int all_heads = 0, all_tags = 0;
+	int all_heads = 0, all_remotes = 0;
 	int all_mask, all_revs;
 	int lifo = 1;
 	char head[128];
@@ -570,6 +584,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	int head_at = -1;
 	int topics = 0;
 	int dense = 1;
+	int reflog = 0;
 
 	git_config(git_show_branch_config);
 
@@ -585,12 +600,10 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			ac--; av++;
 			break;
 		}
-		else if (!strcmp(arg, "--all"))
-			all_heads = all_tags = 1;
-		else if (!strcmp(arg, "--heads"))
-			all_heads = 1;
-		else if (!strcmp(arg, "--tags"))
-			all_tags = 1;
+		else if (!strcmp(arg, "--all") || !strcmp(arg, "-a"))
+			all_heads = all_remotes = 1;
+		else if (!strcmp(arg, "--remotes") || !strcmp(arg, "-r"))
+			all_remotes = 1;
 		else if (!strcmp(arg, "--more"))
 			extra = 1;
 		else if (!strcmp(arg, "--list"))
@@ -615,6 +628,15 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			dense = 0;
 		else if (!strcmp(arg, "--date-order"))
 			lifo = 0;
+		else if (!strcmp(arg, "--reflog")) {
+			reflog = DEFAULT_REFLOG;
+		}
+		else if (!strncmp(arg, "--reflog=", 9)) {
+			char *end;
+			reflog = strtoul(arg + 9, &end, 10);
+			if (*end != '\0')
+				die("unrecognized reflog count '%s'", arg + 9);
+		}
 		else
 			usage(show_branch_usage);
 		ac--; av++;
@@ -622,18 +644,31 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	ac--; av++;
 
 	/* Only one of these is allowed */
-	if (1 < independent + merge_base + (extra != 0))
+	if (1 < independent + merge_base + (extra != 0) + (!!reflog))
 		usage(show_branch_usage);
 
 	/* If nothing is specified, show all branches by default */
-	if (ac + all_heads + all_tags == 0)
+	if (ac + all_heads + all_remotes == 0)
 		all_heads = 1;
 
-	if (all_heads + all_tags)
-		snarf_refs(all_heads, all_tags);
-	while (0 < ac) {
-		append_one_rev(*av);
-		ac--; av++;
+	if (all_heads + all_remotes)
+		snarf_refs(all_heads, all_remotes);
+	if (reflog) {
+		int reflen;
+		if (!ac)
+			die("--reflog option needs one branch name");
+		reflen = strlen(*av);
+		for (i = 0; i < reflog; i++) {
+			char *name = xmalloc(reflen + 20);
+			sprintf(name, "%s@{%d}", *av, i);
+			append_one_rev(name);
+		}
+	}
+	else {
+		while (0 < ac) {
+			append_one_rev(*av);
+			ac--; av++;
+		}
 	}
 
 	head_p = resolve_ref("HEAD", head_sha1, 1, NULL);

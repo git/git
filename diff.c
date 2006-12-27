@@ -1,9 +1,6 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <signal.h>
 #include "cache.h"
 #include "quote.h"
 #include "diff.h"
@@ -11,6 +8,12 @@
 #include "delta.h"
 #include "xdiff-interface.h"
 #include "color.h"
+
+#ifdef NO_FAST_WORKING_DIRECTORY
+#define FAST_WORKING_DIRECTORY 0
+#else
+#define FAST_WORKING_DIRECTORY 1
+#endif
 
 static int use_size_cache;
 
@@ -60,7 +63,7 @@ int git_diff_ui_config(const char *var, const char *value)
 		diff_rename_limit_default = git_config_int(var, value);
 		return 0;
 	}
-	if (!strcmp(var, "diff.color")) {
+	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
 		diff_use_color_default = git_config_colorbool(var, value);
 		return 0;
 	}
@@ -74,7 +77,7 @@ int git_diff_ui_config(const char *var, const char *value)
 			diff_detect_rename_default = DIFF_DETECT_RENAME;
 		return 0;
 	}
-	if (!strncmp(var, "diff.color.", 11)) {
+	if (!strncmp(var, "diff.color.", 11) || !strncmp(var, "color.diff.", 11)) {
 		int slot = parse_diff_color_slot(var, 11);
 		color_parse(value, var, diff_colors[slot]);
 		return 0;
@@ -795,6 +798,35 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 	       set, total_files, adds, dels, reset);
 }
 
+static void show_shortstats(struct diffstat_t* data)
+{
+	int i, adds = 0, dels = 0, total_files = data->nr;
+
+	if (data->nr == 0)
+		return;
+
+	for (i = 0; i < data->nr; i++) {
+		if (!data->files[i]->is_binary &&
+		    !data->files[i]->is_unmerged) {
+			int added = data->files[i]->added;
+			int deleted= data->files[i]->deleted;
+			if (!data->files[i]->is_renamed &&
+			    (added + deleted == 0)) {
+				total_files--;
+			} else {
+				adds += added;
+				dels += deleted;
+			}
+		}
+		free(data->files[i]->name);
+		free(data->files[i]);
+	}
+	free(data->files);
+
+	printf(" %d files changed, %d insertions(+), %d deletions(-)\n",
+	       total_files, adds, dels);
+}
+
 static void show_numstat(struct diffstat_t* data, struct diff_options *options)
 {
 	int i;
@@ -802,7 +834,10 @@ static void show_numstat(struct diffstat_t* data, struct diff_options *options)
 	for (i = 0; i < data->nr; i++) {
 		struct diffstat_file *file = data->files[i];
 
-		printf("%d\t%d\t", file->added, file->deleted);
+		if (file->is_binary)
+			printf("-\t-\t");
+		else
+			printf("%d\t%d\t", file->added, file->deleted);
 		if (options->line_termination &&
 		    quote_c_style(file->name, NULL, NULL, 0))
 			quote_c_style(file->name, NULL, stdout, 0);
@@ -825,8 +860,6 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 	if (line[0] == '+') {
 		int i, spaces = 0;
 
-		data->lineno++;
-
 		/* check space before tab */
 		for (i = 1; i < len && (line[i] == ' ' || line[i] == '\t'); i++)
 			if (line[i] == ' ')
@@ -841,6 +874,8 @@ static void checkdiff_consume(void *priv, char *line, unsigned long len)
 		if (isspace(line[len - 1]))
 			printf("%s:%d: white space at end: %.*s\n",
 				data->filename, data->lineno, (int)len, line);
+
+		data->lineno++;
 	} else if (line[0] == ' ')
 		data->lineno++;
 	else if (line[0] == '@') {
@@ -1155,7 +1190,7 @@ void fill_filespec(struct diff_filespec *spec, const unsigned char *sha1,
  * the work tree has that object contents, return true, so that
  * prepare_temp_file() does not have to inflate and extract.
  */
-static int work_tree_matches(const char *name, const unsigned char *sha1)
+static int reuse_worktree_file(const char *name, const unsigned char *sha1, int want_file)
 {
 	struct cache_entry *ce;
 	struct stat st;
@@ -1174,6 +1209,18 @@ static int work_tree_matches(const char *name, const unsigned char *sha1)
 	 * calling us.
 	 */
 	if (!active_cache)
+		return 0;
+
+	/* We want to avoid the working directory if our caller
+	 * doesn't need the data in a normal file, this system
+	 * is rather slow with its stat/open/mmap/close syscalls,
+	 * and the object is contained in a pack file.  The pack
+	 * is probably already open and will be faster to obtain
+	 * the data through than the working directory.  Loose
+	 * objects however would tend to be slower as they need
+	 * to be individually opened and inflated.
+	 */
+	if (!FAST_WORKING_DIRECTORY && !want_file && has_sha1_pack(sha1, NULL))
 		return 0;
 
 	len = strlen(name);
@@ -1262,7 +1309,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 	if (s->data)
 		return err;
 	if (!s->sha1_valid ||
-	    work_tree_matches(s->path, s->sha1)) {
+	    reuse_worktree_file(s->path, s->sha1, 0)) {
 		struct stat st;
 		int fd;
 		if (lstat(s->path, &st) < 0) {
@@ -1369,7 +1416,7 @@ static void prepare_temp_file(const char *name,
 	}
 
 	if (!one->sha1_valid ||
-	    work_tree_matches(name, one->sha1)) {
+	    reuse_worktree_file(name, one->sha1, 1)) {
 		struct stat st;
 		if (lstat(name, &st) < 0) {
 			if (errno == ENOENT)
@@ -1750,6 +1797,7 @@ int diff_setup_done(struct diff_options *options)
 		options->output_format &= ~(DIFF_FORMAT_RAW |
 					    DIFF_FORMAT_NUMSTAT |
 					    DIFF_FORMAT_DIFFSTAT |
+					    DIFF_FORMAT_SHORTSTAT |
 					    DIFF_FORMAT_SUMMARY |
 					    DIFF_FORMAT_PATCH);
 
@@ -1760,6 +1808,7 @@ int diff_setup_done(struct diff_options *options)
 	if (options->output_format & (DIFF_FORMAT_PATCH |
 				      DIFF_FORMAT_NUMSTAT |
 				      DIFF_FORMAT_DIFFSTAT |
+				      DIFF_FORMAT_SHORTSTAT |
 				      DIFF_FORMAT_SUMMARY |
 				      DIFF_FORMAT_CHECKDIFF))
 		options->recursive = 1;
@@ -1850,6 +1899,9 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "--numstat")) {
 		options->output_format |= DIFF_FORMAT_NUMSTAT;
+	}
+	else if (!strcmp(arg, "--shortstat")) {
+		options->output_format |= DIFF_FORMAT_SHORTSTAT;
 	}
 	else if (!strncmp(arg, "--stat", 6)) {
 		char *end;
@@ -2625,7 +2677,7 @@ void diff_flush(struct diff_options *options)
 		separator++;
 	}
 
-	if (output_format & (DIFF_FORMAT_DIFFSTAT|DIFF_FORMAT_NUMSTAT)) {
+	if (output_format & (DIFF_FORMAT_DIFFSTAT|DIFF_FORMAT_SHORTSTAT|DIFF_FORMAT_NUMSTAT)) {
 		struct diffstat_t diffstat;
 
 		memset(&diffstat, 0, sizeof(struct diffstat_t));
@@ -2639,6 +2691,8 @@ void diff_flush(struct diff_options *options)
 			show_numstat(&diffstat, options);
 		if (output_format & DIFF_FORMAT_DIFFSTAT)
 			show_stats(&diffstat, options);
+		else if (output_format & DIFF_FORMAT_SHORTSTAT)
+			show_shortstats(&diffstat);
 		separator++;
 	}
 

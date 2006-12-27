@@ -10,10 +10,7 @@
 #include "tag.h"
 #include "tree-walk.h"
 #include "builtin.h"
-#include <regex.h>
 #include "grep.h"
-#include <fnmatch.h>
-#include <sys/wait.h>
 
 /*
  * git grep pathspecs are somewhat different from diff-tree pathspecs;
@@ -268,7 +265,7 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
 		char *name;
-		if (ce_stage(ce) || !S_ISREG(ntohl(ce->ce_mode)))
+		if (!S_ISREG(ntohl(ce->ce_mode)))
 			continue;
 		if (!pathspec_matches(paths, ce->name))
 			continue;
@@ -280,12 +277,19 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 			memcpy(name + 2, ce->name, len + 1);
 		}
 		argv[argc++] = name;
-		if (argc < MAXARGS)
+		if (argc < MAXARGS && !ce_stage(ce))
 			continue;
 		status = exec_grep(argc, argv);
 		if (0 < status)
 			hit = 1;
 		argc = nr;
+		if (ce_stage(ce)) {
+			do {
+				i++;
+			} while (i < active_nr &&
+				 !strcmp(ce->name, active_cache[i]->name));
+			i--; /* compensate for loop control */
+		}
 	}
 	if (argc > nr) {
 		status = exec_grep(argc, argv);
@@ -316,14 +320,24 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 
 	for (nr = 0; nr < active_nr; nr++) {
 		struct cache_entry *ce = active_cache[nr];
-		if (ce_stage(ce) || !S_ISREG(ntohl(ce->ce_mode)))
+		if (!S_ISREG(ntohl(ce->ce_mode)))
 			continue;
 		if (!pathspec_matches(paths, ce->name))
 			continue;
-		if (cached)
+		if (cached) {
+			if (ce_stage(ce))
+				continue;
 			hit |= grep_sha1(opt, ce->sha1, ce->name, 0);
+		}
 		else
 			hit |= grep_file(opt, ce->name);
+		if (ce_stage(ce)) {
+			do {
+				nr++;
+			} while (nr < active_nr &&
+				 !strcmp(ce->name, active_cache[nr]->name));
+			nr--; /* compensate for loop control */
+		}
 	}
 	free_grep_patterns(opt);
 	return hit;

@@ -554,7 +554,7 @@ proc makewindow {} {
     pack .ctop.top.lbar.vlabel -side left -fill y
     global viewhlmenu selectedhlview
     set viewhlmenu [tk_optionMenu .ctop.top.lbar.vhl selectedhlview None]
-    $viewhlmenu entryconf 0 -command delvhighlight
+    $viewhlmenu entryconf None -command delvhighlight
     $viewhlmenu conf -font $uifont
     .ctop.top.lbar.vhl conf -font $uifont
     pack .ctop.top.lbar.vhl -side left -fill y
@@ -1474,7 +1474,7 @@ proc doviewmenu {m first cmd op argv} {
 proc allviewmenus {n op args} {
     global viewhlmenu
 
-    doviewmenu .bar.view 7 [list showview $n] $op $args
+    doviewmenu .bar.view 5 [list showview $n] $op $args
     doviewmenu $viewhlmenu 1 [list addvhighlight $n] $op $args
 }
 
@@ -1516,7 +1516,7 @@ proc newviewok {top n} {
 	set viewperm($n) $newviewperm($n)
 	if {$newviewname($n) ne $viewname($n)} {
 	    set viewname($n) $newviewname($n)
-	    doviewmenu .bar.view 7 [list showview $n] \
+	    doviewmenu .bar.view 5 [list showview $n] \
 		entryconf [list -label $viewname($n)]
 	    doviewmenu $viewhlmenu 1 [list addvhighlight $n] \
 		entryconf [list -label $viewname($n) -value $viewname($n)]
@@ -1632,8 +1632,8 @@ proc showview {n} {
 
     set curview $n
     set selectedview $n
-    .bar.view entryconf 2 -state [expr {$n == 0? "disabled": "normal"}]
-    .bar.view entryconf 3 -state [expr {$n == 0? "disabled": "normal"}]
+    .bar.view entryconf Edit* -state [expr {$n == 0? "disabled": "normal"}]
+    .bar.view entryconf Delete* -state [expr {$n == 0? "disabled": "normal"}]
 
     if {![info exists viewdata($n)]} {
 	set pending_select $selid
@@ -4899,9 +4899,9 @@ proc rowmenu {x y id} {
     } else {
 	set state normal
     }
-    $rowctxmenu entryconfigure 0 -state $state
-    $rowctxmenu entryconfigure 1 -state $state
-    $rowctxmenu entryconfigure 2 -state $state
+    $rowctxmenu entryconfigure "Diff this*" -state $state
+    $rowctxmenu entryconfigure "Diff selected*" -state $state
+    $rowctxmenu entryconfigure "Make patch" -state $state
     set rowmenuid $id
     tk_popup $rowctxmenu $x $y
 }
@@ -6305,8 +6305,8 @@ if {$cmdline_files ne {} || $revtreeargs ne {}} {
     set viewargs(1) $revtreeargs
     set viewperm(1) 0
     addviewmenu 1
-    .bar.view entryconf 2 -state normal
-    .bar.view entryconf 3 -state normal
+    .bar.view entryconf Edit* -state normal
+    .bar.view entryconf Delete* -state normal
 }
 
 if {[info exists permviews]} {

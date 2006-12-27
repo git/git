@@ -37,8 +37,6 @@ test_expect_success 'tree' "test 8988da15d077d4829fc51d8544c097def6644dbb = $tre
 
 output="$(echo "Initial commit" | git-commit-tree $(git-write-tree) 2>&1 > .git/refs/heads/master)"
 
-test_expect_success 'commit' "test 'Committing initial tree 8988da15d077d4829fc51d8544c097def6644dbb' = \"$output\""
-
 git-diff-index -p HEAD > diff.output
 test_expect_success 'git-diff-index -p HEAD' 'cmp diff.expect diff.output'
 

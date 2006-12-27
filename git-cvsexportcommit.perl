@@ -2,9 +2,8 @@
 
 # Known limitations:
 # - does not propagate permissions
-# - tells "ready for commit" even when things could not be completed
-#   (not sure this is true anymore, more testing is needed)
-# - does not handle whitespace in pathnames at all.
+# - error handling has not been extensively tested
+#
 
 use strict;
 use Getopt::Std;
@@ -115,47 +114,40 @@ if ($opt_a) {
 }
 close MSG;
 
-my (@afiles, @dfiles, @mfiles, @dirs);
-my @files = safe_pipe_capture('git-diff-tree', '-r', $parent, $commit);
-#print @files;
-$? && die "Error in git-diff-tree";
-foreach my $f (@files) {
-    chomp $f;
-    my @fields = split(m!\s+!, $f);
-    if ($fields[4] eq 'A') {
-        my $path = $fields[5];
-	push @afiles, $path;
-        # add any needed parent directories
-	$path = dirname $path;
-	while (!-d $path and ! grep { $_ eq $path } @dirs) {
-	    unshift @dirs, $path;
-	    $path = dirname $path;
-	}
-    }
-    if ($fields[4] eq 'M') {
-	push @mfiles, $fields[5];
-    }
-    if ($fields[4] eq 'D') {
-	push @dfiles, $fields[5];
-    }
-}
-my (@binfiles, @abfiles, @dbfiles, @bfiles, @mbfiles);
-@binfiles = grep m/^Binary files/, safe_pipe_capture('git-diff-tree', '-p', $parent, $commit);
-map { chomp } @binfiles;
-@abfiles = grep s/^Binary files \/dev\/null and b\/(.*) differ$/$1/, @binfiles;
-@dbfiles = grep s/^Binary files a\/(.*) and \/dev\/null differ$/$1/, @binfiles;
-@mbfiles = grep s/^Binary files a\/(.*) and b\/(.*) differ$/$1/, @binfiles;
-push @bfiles, @abfiles;
-push @bfiles, @dbfiles;
-push @bfiles, @mbfiles;
-push @mfiles, @mbfiles;
+`git-diff-tree --binary -p $parent $commit >.cvsexportcommit.diff`;# || die "Cannot diff";
 
-$opt_v && print "The commit affects:\n ";
-$opt_v && print join ("\n ", @afiles,@mfiles,@dfiles) . "\n\n";
-undef @files; # don't need it anymore
+## apply non-binary changes
+my $fuzz = $opt_p ? 0 : 2;
+
+print "Checking if patch will apply\n";
+
+my @stat;
+open APPLY, "GIT_DIR= git-apply -C$fuzz --binary --summary --numstat<.cvsexportcommit.diff|" || die "cannot patch";
+@stat=<APPLY>;
+close APPLY || die "Cannot patch";
+my (@bfiles,@files,@afiles,@dfiles);
+chomp @stat;
+foreach (@stat) {
+	push (@bfiles,$1) if m/^-\t-\t(.*)$/;
+	push (@files, $1) if m/^-\t-\t(.*)$/;
+	push (@files, $1) if m/^\d+\t\d+\t(.*)$/;
+	push (@afiles,$1) if m/^ create mode [0-7]+ (.*)$/;
+	push (@dfiles,$1) if m/^ delete mode [0-7]+ (.*)$/;
+}
+map { s/^"(.*)"$/$1/g } @bfiles,@files;
+map { s/\\([0-7]{3})/sprintf('%c',oct $1)/eg } @bfiles,@files;
 
 # check that the files are clean and up to date according to cvs
 my $dirty;
+my @dirs;
+foreach my $p (@afiles) {
+    my $path = dirname $p;
+    while (!-d $path and ! grep { $_ eq $path } @dirs) {
+	unshift @dirs, $path;
+	$path = dirname $path;
+    }
+}
+
 foreach my $d (@dirs) {
     if (-e $d) {
 	$dirty = 1;
@@ -178,7 +170,8 @@ foreach my $f (@afiles) {
     }
 }
 
-foreach my $f (@mfiles, @dfiles) {
+foreach my $f (@files) {
+    next if grep { $_ eq $f } @afiles;
     # TODO:we need to handle removed in cvs
     my @status = grep(m/^File/,  safe_pipe_capture('cvs', '-q', 'status' ,$f));
     if (@status > 1) { warn 'Strange! cvs status returned more than one line?'};
@@ -195,76 +188,16 @@ if ($dirty) {
     }
 }
 
-###
-### NOTE: if you are planning to die() past this point
-###       you MUST call cleanupcvs(@files) before die()
-###
+print "Applying\n";
+`GIT_DIR= git-apply -C$fuzz --binary --summary --numstat --apply <.cvsexportcommit.diff` || die "cannot patch";
 
-
-print "Creating new directories\n";
+print "Patch applied successfully. Adding new files and directories to CVS\n";
+my $dirtypatch = 0;
 foreach my $d (@dirs) {
-    unless (mkdir $d) {
-        warn "Could not mkdir $d: $!";
-	$dirty = 1;
-    }
-    `cvs add $d`;
-    if ($?) {
-	$dirty = 1;
+    if (system('cvs','add',$d)) {
+	$dirtypatch = 1;
 	warn "Failed to cvs add directory $d -- you may need to do it manually";
     }
-}
-
-print "'Patching' binary files\n";
-
-foreach my $f (@bfiles) {
-    # check that the file in cvs matches the "old" file
-    # extract the file to $tmpdir and compare with cmp
-    if (not(grep { $_ eq $f } @afiles)) {
-        my $tree = safe_pipe_capture('git-rev-parse', "$parent^{tree}");
-	chomp $tree;
-	my $blob = `git-ls-tree $tree "$f" | cut -f 1 | cut -d ' ' -f 3`;
-	chomp $blob;
-        `git-cat-file blob $blob > $tmpdir/blob`;
-        if (system('cmp', '-s', $f, "$tmpdir/blob")) {
-	    warn "Binary file $f in CVS does not match parent.\n";
-	    if (not $opt_f) {
-	        $dirty = 1;
-		next;
-	    }
-        }
-    }
-    if (not(grep { $_ eq $f } @dfiles)) {
-	my $tree = safe_pipe_capture('git-rev-parse', "$commit^{tree}");
-	chomp $tree;
-	my $blob = `git-ls-tree $tree "$f" | cut -f 1 | cut -d ' ' -f 3`;
-	chomp $blob;
-	# replace with the new file
-	`git-cat-file blob $blob > $f`;
-    }
-
-    # TODO: something smart with file modes
-
-}
-if ($dirty) {
-    cleanupcvs(@files);
-    die "Exiting: Binary files in CVS do not match parent";
-}
-
-## apply non-binary changes
-my $fuzz = $opt_p ? 0 : 2;
-
-print "Patching non-binary files\n";
-
-if (scalar(@afiles)+scalar(@dfiles)+scalar(@mfiles) != scalar(@bfiles)) {
-    print `(git-diff-tree -p $parent -p $commit | patch -p1 -F $fuzz ) 2>&1`;
-}
-
-my $dirtypatch = 0;
-if (($? >> 8) == 2) {
-    cleanupcvs(@files);
-    die "Exiting: Patch reported serious trouble -- you will have to apply this patch manually";
-} elsif (($? >> 8) == 1) { # some hunks failed to apply
-    $dirtypatch = 1;
 }
 
 foreach my $f (@afiles) {
@@ -274,7 +207,7 @@ foreach my $f (@afiles) {
       system('cvs', 'add', $f);
     }
     if ($?) {
-	$dirty = 1;
+	$dirtypatch = 1;
 	warn "Failed to cvs add $f -- you may need to do it manually";
     }
 }
@@ -282,51 +215,45 @@ foreach my $f (@afiles) {
 foreach my $f (@dfiles) {
     system('cvs', 'rm', '-f', $f);
     if ($?) {
-	$dirty = 1;
+	$dirtypatch = 1;
 	warn "Failed to cvs rm -f $f -- you may need to do it manually";
     }
 }
 
 print "Commit to CVS\n";
-print "Patch: $title\n";
-my $commitfiles = join(' ', @afiles, @mfiles, @dfiles);
-my $cmd = "cvs commit -F .msg $commitfiles";
+print "Patch title (first comment line): $title\n";
+my @commitfiles = map { unless (m/\s/) { '\''.$_.'\''; } else { $_; }; } (@files);
+my $cmd = "cvs commit -F .msg @commitfiles";
 
 if ($dirtypatch) {
     print "NOTE: One or more hunks failed to apply cleanly.\n";
-    print "Resolve the conflicts and then commit using:\n";
+    print "You'll need to apply the patch in .cvsexportcommit.diff manually\n";
+    print "using a patch program. After applying the patch and resolving the\n";
+    print "problems you may commit using:";
     print "\n    $cmd\n\n";
     exit(1);
 }
 
-
 if ($opt_c) {
     print "Autocommit\n  $cmd\n";
-    print safe_pipe_capture('cvs', 'commit', '-F', '.msg', @afiles, @mfiles, @dfiles);
+    print safe_pipe_capture('cvs', 'commit', '-F', '.msg', @files);
     if ($?) {
-	cleanupcvs(@files);
 	die "Exiting: The commit did not succeed";
     }
     print "Committed successfully to CVS\n";
 } else {
     print "Ready for you to commit, just run:\n\n   $cmd\n";
 }
+
+# clean up
+unlink(".cvsexportcommit.diff");
+unlink(".msg");
+
 sub usage {
 	print STDERR <<END;
 Usage: GIT_DIR=/path/to/.git ${\basename $0} [-h] [-p] [-v] [-c] [-f] [-m msgprefix] [ parent ] commit
 END
 	exit(1);
-}
-
-# ensure cvs is clean before we die
-sub cleanupcvs {
-    my @files = @_;
-    foreach my $f (@files) {
-	system('cvs', '-q', 'update', '-C', $f);
-	if ($?) {
-	    warn "Warning! Failed to cleanup state of $f\n";
-	}
-    }
 }
 
 # An alternative to `command` that allows input to be passed as an array
@@ -341,4 +268,17 @@ sub safe_pipe_capture {
 	exec(@_) or die "$! $?"; # exec() can fail the executable can't be found
     }
     return wantarray ? @output : join('',@output);
+}
+
+sub safe_pipe_capture_blob {
+    my $output;
+    if (my $pid = open my $child, '-|') {
+        local $/;
+	undef $/;
+	$output = (<$child>);
+	close $child or die join(' ',@_).": $! $?";
+    } else {
+	exec(@_) or die "$! $?"; # exec() can fail the executable can't be found
+    }
+    return $output;
 }

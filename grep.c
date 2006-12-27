@@ -1,5 +1,4 @@
 #include "cache.h"
-#include <regex.h>
 #include "grep.h"
 
 void append_grep_pattern(struct grep_opt *opt, const char *pat,

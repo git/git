@@ -12,14 +12,12 @@
 #include "diff.h"
 #include "revision.h"
 #include "list-objects.h"
-#include <sys/time.h>
-#include <signal.h>
 
 static const char pack_usage[] = "\
 git-pack-objects [{ -q | --progress | --all-progress }] \n\
 	[--local] [--incremental] [--window=N] [--depth=N] \n\
 	[--no-reuse-delta] [--delta-base-offset] [--non-empty] \n\
-	[--revs [--unpacked | --all]*] [--stdout | base-name] \n\
+	[--revs [--unpacked | --all]*] [--reflog] [--stdout | base-name] \n\
 	[<ref-list | <object-list]";
 
 struct object_entry {
@@ -514,6 +512,8 @@ static void write_pack_file(void)
 	if (do_progress)
 		fputc('\n', stderr);
  done:
+	if (written != nr_result)
+		die("wrote %d objects while expecting %d", written, nr_result);
 	sha1close(f, pack_file_sha1, 1);
 }
 
@@ -1575,6 +1575,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp("--unpacked", arg) ||
 		    !strncmp("--unpacked=", arg, 11) ||
+		    !strcmp("--reflog", arg) ||
 		    !strcmp("--all", arg)) {
 			use_internal_rev_list = 1;
 			if (ARRAY_SIZE(rp_av) - 1 <= rp_ac)
@@ -1662,7 +1663,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		}
 	}
 	if (progress)
-		fprintf(stderr, "Total %d, written %d (delta %d), reused %d (delta %d)\n",
-			nr_result, written, written_delta, reused, reused_delta);
+		fprintf(stderr, "Total %d (delta %d), reused %d (delta %d)\n",
+			written, written_delta, reused, reused_delta);
 	return 0;
 }

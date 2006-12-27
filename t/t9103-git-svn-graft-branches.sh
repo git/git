@@ -1,6 +1,8 @@
 test_description='git-svn graft-branches'
 . ./lib-git-svn.sh
 
+svnrepo="$svnrepo/test-git-svn"
+
 test_expect_success 'initialize repo' "
 	mkdir import &&
 	cd import &&

@@ -62,11 +62,13 @@ case ",$all_into_one," in
 esac
 
 args="$args $local $quiet $no_reuse_delta$extra"
-name=$(git-pack-objects --non-empty --all $args </dev/null "$PACKTMP") ||
+name=$(git-pack-objects --non-empty --all --reflog $args </dev/null "$PACKTMP") ||
 	exit 1
 if [ -z "$name" ]; then
 	echo Nothing new to pack.
 else
+	chmod a-w "$PACKTMP-$name.pack"
+	chmod a-w "$PACKTMP-$name.idx"
 	if test "$quiet" != '-q'; then
 	    echo "Pack pack-$name created."
 	fi

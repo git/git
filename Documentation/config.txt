@@ -31,6 +31,11 @@ Example
 		external = "/usr/local/bin/gnu-diff -u"
 		renames = true
 
+	[branch "devel"]
+		remote = origin
+		merge = refs/heads/devel
+
+
 Variables
 ~~~~~~~~~
 
@@ -79,8 +84,11 @@ core.logAllRefUpdates::
 	file is automatically created for branch heads.
 
 	This information can be used to determine what commit
-	was the tip of a branch "2 days ago".  This value is
-	false by default (no automated creation of log files).
+	was the tip of a branch "2 days ago".
+
+	This value is true by default in a repository that has
+	a working directory associated with it, and false by
+	default in a bare repository.
 
 core.repositoryFormatVersion::
 	Internal variable identifying the repository format and layout
@@ -125,21 +133,24 @@ apply.whitespace::
 
 branch.<name>.remote::
 	When in branch <name>, it tells `git fetch` which remote to fetch.
+	If this option is not given, `git fetch` defaults to remote "origin".
 
 branch.<name>.merge::
-	When in branch <name>, it tells `git fetch` the default remote branch
-	to be merged.
+	When in branch <name>, it tells `git fetch` the default refspec to
+	be marked for merging in FETCH_HEAD. The value has exactly to match
+	a remote part of one of the refspecs which are fetched from the remote
+	given by "branch.<name>.remote".
+	The merge information is used by `git pull` (which at first calls
+	`git fetch`) to lookup the default branch for merging. Without
+	this option, `git pull` defaults to merge the first refspec fetched.
+	Specify multiple values to get an octopus merge.
 
-pager.color::
-	A boolean to enable/disable colored output when the pager is in
-	use (default is true).
-
-diff.color::
+color.diff::
 	When true (or `always`), always use colors in patch.
 	When false (or `never`), never.  When set to `auto`, use
 	colors only when the output is to the terminal.
 
-diff.color.<slot>::
+color.diff.<slot>::
 	Use customized color for diff colorization.  `<slot>`
 	specifies which part of the patch to use the specified
 	color, and is one of `plain` (context text), `meta`
@@ -149,6 +160,24 @@ diff.color.<slot>::
 	`dim`, `ul`, `blink`, `reverse`, `reset`, `black`,
 	`red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, or
 	`white`.
+
+color.pager::
+	A boolean to enable/disable colored output when the pager is in
+	use (default is true).
+
+color.status::
+	A boolean to enable/disable color in the output of
+	gitlink:git-status[1]. May be set to `true` (or `always`),
+	`false` (or `never`) or `auto`, in which case colors are used
+	only when the output is to a terminal. Defaults to false.
+
+color.status.<slot>::
+	Use customized color for status colorization. `<slot>` is
+	one of `header` (the header text of the status message),
+	`added` or `updated` (files which are added but not committed),
+	`changed` (files which are changed but not added in the index),
+	or `untracked` (files which are not tracked by git). The values of
+	these variables may be specified as in color.diff.<slot>.
 
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename
@@ -263,20 +292,6 @@ show.difftree::
 showbranch.default::
 	The default set of branches for gitlink:git-show-branch[1].
 	See gitlink:git-show-branch[1].
-
-status.color::
-	A boolean to enable/disable color in the output of
-	gitlink:git-status[1]. May be set to `true` (or `always`),
-	`false` (or `never`) or `auto`, in which case colors are used
-	only when the output is to a terminal. Defaults to false.
-
-status.color.<slot>::
-	Use customized color for status colorization. `<slot>` is
-	one of `header` (the header text of the status message),
-	`updated` (files which are updated but not committed),
-	`changed` (files which are changed but not updated in the index),
-	or `untracked` (files which are not tracked by git). The values of
-	these variables may be specified as in diff.color.<slot>.
 
 tar.umask::
 	By default, gitlink:git-tar-tree[1] sets file and directories modes

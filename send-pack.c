@@ -271,6 +271,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	int new_refs;
 	int ret = 0;
 	int ask_for_status_report = 0;
+	int allow_deleting_refs = 0;
 	int expect_status_report = 0;
 
 	/* No funny business with the matcher */
@@ -280,6 +281,8 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	/* Does the other end support the reporting? */
 	if (server_supports("report-status"))
 		ask_for_status_report = 1;
+	if (server_supports("delete-refs"))
+		allow_deleting_refs = 1;
 
 	/* match them up */
 	if (!remote_tail)
@@ -299,9 +302,19 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	new_refs = 0;
 	for (ref = remote_refs; ref; ref = ref->next) {
 		char old_hex[60], *new_hex;
+		int delete_ref;
+
 		if (!ref->peer_ref)
 			continue;
-		if (!hashcmp(ref->old_sha1, ref->peer_ref->new_sha1)) {
+
+		delete_ref = is_null_sha1(ref->peer_ref->new_sha1);
+		if (delete_ref && !allow_deleting_refs) {
+			error("remote does not support deleting refs");
+			ret = -2;
+			continue;
+		}
+		if (!delete_ref &&
+		    !hashcmp(ref->old_sha1, ref->peer_ref->new_sha1)) {
 			if (verbose)
 				fprintf(stderr, "'%s': up-to-date\n", ref->name);
 			continue;
@@ -321,9 +334,13 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 		 *
 		 * (3) if both new and old are commit-ish, and new is a
 		 *     descendant of old, it is OK.
+		 *
+		 * (4) regardless of all of the above, removing :B is
+		 *     always allowed.
 		 */
 
 		if (!force_update &&
+		    !delete_ref &&
 		    !is_zero_sha1(ref->old_sha1) &&
 		    !ref->force) {
 			if (!has_sha1_file(ref->old_sha1) ||
@@ -347,12 +364,8 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 			}
 		}
 		hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
-		if (is_zero_sha1(ref->new_sha1)) {
-			error("cannot happen anymore");
-			ret = -3;
-			continue;
-		}
-		new_refs++;
+		if (!delete_ref)
+			new_refs++;
 		strcpy(old_hex, sha1_to_hex(ref->old_sha1));
 		new_hex = sha1_to_hex(ref->new_sha1);
 
@@ -366,10 +379,16 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 		else
 			packet_write(out, "%s %s %s",
 				     old_hex, new_hex, ref->name);
-		fprintf(stderr, "updating '%s'", ref->name);
-		if (strcmp(ref->name, ref->peer_ref->name))
-			fprintf(stderr, " using '%s'", ref->peer_ref->name);
-		fprintf(stderr, "\n  from %s\n  to   %s\n", old_hex, new_hex);
+		if (delete_ref)
+			fprintf(stderr, "deleting '%s'\n", ref->name);
+		else {
+			fprintf(stderr, "updating '%s'", ref->name);
+			if (strcmp(ref->name, ref->peer_ref->name))
+				fprintf(stderr, " using '%s'",
+					ref->peer_ref->name);
+			fprintf(stderr, "\n  from %s\n  to   %s\n",
+				old_hex, new_hex);
+		}
 	}
 
 	packet_flush(out);
@@ -387,6 +406,25 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	return ret;
 }
 
+static void verify_remote_names(int nr_heads, char **heads)
+{
+	int i;
+
+	for (i = 0; i < nr_heads; i++) {
+		const char *remote = strchr(heads[i], ':');
+
+		remote = remote ? (remote + 1) : heads[i];
+		switch (check_ref_format(remote)) {
+		case 0: /* ok */
+		case -2: /* ok but a single level -- that is fine for
+			  * a match pattern.
+			  */
+			continue;
+		}
+		die("remote part of refspec is not a valid name in %s",
+		    heads[i]);
+	}
+}
 
 int main(int argc, char **argv)
 {
@@ -438,6 +476,8 @@ int main(int argc, char **argv)
 		usage(send_pack_usage);
 	if (heads && send_all)
 		usage(send_pack_usage);
+	verify_remote_names(nr_heads, heads);
+
 	pid = git_connect(fd, dest, exec);
 	if (pid < 0)
 		return 1;

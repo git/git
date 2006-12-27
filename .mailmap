@@ -1,0 +1,37 @@
+#
+# This list is used by git-shortlog to fix a few botched name translations
+# in the git archive, either because the author's full name was messed up
+# and/or not always written the same way, making contributions from the
+# same person appearing not to be so.
+#
+
+Aneesh Kumar K.V <aneesh.kumar@gmail.com>
+Chris Shoemaker <c.shoemaker@cox.net>
+Daniel Barkalow <barkalow@iabervon.org>
+David Kågedal <davidk@lysator.liu.se>
+Fredrik Kuivinen <freku045@student.liu.se>
+H. Peter Anvin <hpa@bonde.sc.orionmulti.com>
+H. Peter Anvin <hpa@tazenda.sc.orionmulti.com>
+H. Peter Anvin <hpa@trantor.hos.anvin.org>
+Horst H. von Brand <vonbrand@inf.utfsm.cl>
+Joachim Berdal Haga <cjhaga@fys.uio.no>
+Jon Loeliger <jdl@freescale.com>
+Jon Seymour <jon@blackcubes.dyndns.org>
+Karl Hasselström <kha@treskal.com>
+Kent Engstrom <kent@lysator.liu.se>
+Lars Doelle <lars.doelle@on-line.de>
+Lars Doelle <lars.doelle@on-line ! de>
+Lukas Sandström <lukass@etek.chalmers.se>
+Martin Langhoff <martin@catalyst.net.nz>
+Nguyễn Thái Ngọc Duy <pclouds@gmail.com>
+Ramsay Allan Jones <ramsay@ramsay1.demon.co.uk>
+René Scharfe <rene.scharfe@lsrfire.ath.cx>
+Robert Fitzsimons <robfitz@273k.net>
+Santi Béjar <sbejar@gmail.com>
+Sean Estabrooks <seanlkml@sympatico.ca>
+Shawn O. Pearce <spearce@spearce.org>
+Tony Luck <tony.luck@intel.com>
+Ville Skyttä <scop@xemacs.org>
+YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org>
+anonymous <linux@horizon.com>
+anonymous <linux@horizon.net>

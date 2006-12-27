@@ -43,19 +43,19 @@ test_expect_success \
 
 test_expect_success \
     'Test that git-rm foo succeeds' \
-    'git-rm foo'
+    'git-rm --cached foo'
 
 test_expect_success \
     'Post-check that foo exists but is not in index after git-rm foo' \
     '[ -f foo ] && ! git-ls-files --error-unmatch foo'
 
 test_expect_success \
-    'Pre-check that bar exists and is in index before "git-rm -f bar"' \
+    'Pre-check that bar exists and is in index before "git-rm bar"' \
     '[ -f bar ] && git-ls-files --error-unmatch bar'
 
 test_expect_success \
-    'Test that "git-rm -f bar" succeeds' \
-    'git-rm -f bar'
+    'Test that "git-rm bar" succeeds' \
+    'git-rm bar'
 
 test_expect_success \
     'Post-check that bar does not exist and is not in index after "git-rm -f bar"' \
@@ -83,5 +83,75 @@ fi
 test_expect_success \
     'When the rm in "git-rm -f" fails, it should not remove the file from the index' \
     'git-ls-files --error-unmatch baz'
+
+# Now, failure cases.
+test_expect_success 'Re-add foo and baz' '
+	git add foo baz &&
+	git ls-files --error-unmatch foo baz
+'
+
+test_expect_success 'Modify foo -- rm should refuse' '
+	echo >>foo &&
+	! git rm foo baz &&
+	test -f foo &&
+	test -f baz &&
+	git ls-files --error-unmatch foo baz
+'
+
+test_expect_success 'Modified foo -- rm -f should work' '
+	git rm -f foo baz &&
+	test ! -f foo &&
+	test ! -f baz &&
+	! git ls-files --error-unmatch foo &&
+	! git ls-files --error-unmatch bar
+'
+
+test_expect_success 'Re-add foo and baz for HEAD tests' '
+	echo frotz >foo &&
+	git checkout HEAD -- baz &&
+	git add foo baz &&
+	git ls-files --error-unmatch foo baz
+'
+
+test_expect_success 'foo is different in index from HEAD -- rm should refuse' '
+	! git rm foo baz &&
+	test -f foo &&
+	test -f baz &&
+	git ls-files --error-unmatch foo baz
+'
+
+test_expect_success 'but with -f it should work.' '
+	git rm -f foo baz &&
+	test ! -f foo &&
+	test ! -f baz &&
+	! git ls-files --error-unmatch foo
+	! git ls-files --error-unmatch baz
+'
+
+test_expect_success 'Recursive test setup' '
+	mkdir -p frotz &&
+	echo qfwfq >frotz/nitfol &&
+	git add frotz &&
+	git commit -m "subdir test"
+'
+
+test_expect_success 'Recursive without -r fails' '
+	! git rm frotz &&
+	test -d frotz &&
+	test -f frotz/nitfol
+'
+
+test_expect_success 'Recursive with -r but dirty' '
+	echo qfwfq >>frotz/nitfol
+	! git rm -r frotz &&
+	test -d frotz &&
+	test -f frotz/nitfol
+'
+
+test_expect_success 'Recursive with -r -f' '
+	git rm -f -r frotz &&
+	! test -f frotz/nitfol &&
+	! test -d frotz
+'
 
 test_done

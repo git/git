@@ -2,7 +2,13 @@
 #
 
 USAGE='<fetch-options> <repository> <refspec>...'
+SUBDIRECTORY_OK=Yes
 . git-sh-setup
+TOP=$(git-rev-parse --show-cdup)
+if test ! -z "$TOP"
+then
+	cd "$TOP"
+fi
 . git-parse-remote
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
@@ -95,6 +101,10 @@ if test "" = "$append"
 then
 	: >"$GIT_DIR/FETCH_HEAD"
 fi
+
+# Global that is reused later
+ls_remote_result=$(git ls-remote $upload_pack "$remote") ||
+	die "Cannot get the repository state from $remote"
 
 append_fetch_head () {
     head_="$1"
@@ -240,11 +250,8 @@ esac
 reflist=$(get_remote_refs_for_fetch "$@")
 if test "$tags"
 then
-	taglist=`IFS="	" &&
-		  (
-			git-ls-remote $upload_pack --tags "$remote" ||
-			echo fail ouch
-		  ) |
+	taglist=`IFS='	' &&
+		  echo "$ls_remote_result" |
 	          while read sha1 name
 		  do
 			case "$sha1" in
@@ -253,6 +260,8 @@ then
 			esac
 			case "$name" in
 			*^*) continue ;;
+			refs/tags/*) ;;
+			*) continue ;;
 			esac
 		  	if git-check-ref-format "$name"
 			then
@@ -314,22 +323,20 @@ fetch_main () {
 		"`git-repo-config --bool http.noEPSV`" = true ]; then
 	      noepsv_opt="--disable-epsv"
 	  fi
-	  max_depth=5
-	  depth=0
-	  head="ref: $remote_name"
-	  while (expr "z$head" : "zref:" && expr $depth \< $max_depth) >/dev/null
-	  do
-	    remote_name_quoted=$(@@PERL@@ -e '
-	      my $u = $ARGV[0];
-              $u =~ s/^ref:\s*//;
-	      $u =~ s{([^-a-zA-Z0-9/.])}{sprintf"%%%02x",ord($1)}eg;
-	      print "$u";
-	  ' "$head")
-	    head=$(curl -nsfL $curl_extra_args $noepsv_opt "$remote/$remote_name_quoted")
-	    depth=$( expr \( $depth + 1 \) )
-	  done
+
+	  # Find $remote_name from ls-remote output.
+	  head=$(
+		IFS='	'
+		echo "$ls_remote_result" |
+		while read sha1 name
+		do
+			test "z$name" = "z$remote_name" || continue
+			echo "$sha1"
+			break
+		done
+	  )
 	  expr "z$head" : "z$_x40\$" >/dev/null ||
-	      die "Failed to fetch $remote_name from $remote"
+		die "No such ref $remote_name at $remote"
 	  echo >&2 "Fetching $remote_name from $remote using $proto"
 	  git-http-fetch -v -a "$head" "$remote/" || exit
 	  ;;
@@ -371,7 +378,7 @@ fetch_main () {
       esac
 
       append_fetch_head "$head" "$remote" \
-	  "$remote_name" "$remote_nick" "$local_name" "$not_for_merge"
+	  "$remote_name" "$remote_nick" "$local_name" "$not_for_merge" || exit
 
   done
 
@@ -425,15 +432,16 @@ fetch_main () {
 	  done
 	  local_name=$(expr "z$found" : 'z[^:]*:\(.*\)')
 	  append_fetch_head "$sha1" "$remote" \
-		  "$remote_name" "$remote_nick" "$local_name" "$not_for_merge"
-      done
+		  "$remote_name" "$remote_nick" "$local_name" \
+		  "$not_for_merge" || exit
+      done &&
       if [ "$pack_lockfile" ]; then rm -f "$pack_lockfile"; fi
     ) || exit ;;
   esac
 
 }
 
-fetch_main "$reflist"
+fetch_main "$reflist" || exit
 
 # automated tag following
 case "$no_tags$tags" in
@@ -442,17 +450,11 @@ case "$no_tags$tags" in
 	*:refs/*)
 		# effective only when we are following remote branch
 		# using local tracking branch.
-		taglist=$(IFS=" " &&
-		git-ls-remote $upload_pack --tags "$remote" |
-		sed -n	-e 's|^\('"$_x40"'\)	\(refs/tags/.*\)^{}$|\1 \2|p' \
-			-e 's|^\('"$_x40"'\)	\(refs/tags/.*\)$|\1 \2|p' |
+		taglist=$(IFS='	' &&
+		echo "$ls_remote_result" |
+		git-show-ref --exclude-existing=refs/tags/ |
 		while read sha1 name
 		do
-			git-show-ref --verify --quiet -- "$name" && continue
-			git-check-ref-format "$name" || {
-				echo >&2 "warning: tag ${name} ignored"
-				continue
-			}
 			git-cat-file -t "$sha1" >/dev/null 2>&1 || continue
 			echo >&2 "Auto-following $name"
 			echo ".${name}:${name}"
@@ -463,7 +465,7 @@ case "$no_tags$tags" in
 	?*)
 		# do not deepen a shallow tree when following tags
 		shallow_depth=
-		fetch_main "$taglist" ;;
+		fetch_main "$taglist" || exit ;;
 	esac
 esac
 

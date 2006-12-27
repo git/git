@@ -5,8 +5,6 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-#include <fnmatch.h>
-
 #include "cache.h"
 #include "quote.h"
 #include "dir.h"
@@ -487,10 +485,14 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 		for (num = 0; pathspec[num]; num++) {
 			if (ps_matched[num])
 				continue;
-			error("pathspec '%s' did not match any.",
+			error("pathspec '%s' did not match any file(s) known to git.",
 			      pathspec[num] + prefix_offset);
 			errors++;
 		}
+
+		if (errors)
+			fprintf(stderr, "Did you forget to 'git add'?\n");
+
 		return errors ? 1 : 0;
 	}
 

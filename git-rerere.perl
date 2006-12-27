@@ -154,7 +154,7 @@ sub find_conflict {
 sub merge {
 	my ($name, $path) = @_;
 	record_preimage($path, "$rr_dir/$name/thisimage");
-	unless (system('merge', map { "$rr_dir/$name/${_}image" }
+	unless (system('git', 'merge-file', map { "$rr_dir/$name/${_}image" }
 		       qw(this pre post))) {
 		my $in;
 		open $in, "<$rr_dir/$name/thisimage" or
@@ -169,9 +169,66 @@ sub merge {
 	return 0;
 }
 
+sub garbage_collect_rerere {
+	# We should allow specifying these from the command line and
+	# that is why the caller gives @ARGV to us, but I am lazy.
+
+	my $cutoff_noresolve = 15; # two weeks
+	my $cutoff_resolve = 60; # two months
+	my @to_remove;
+	while (<$rr_dir/*/preimage>) {
+		my ($dir) = /^(.*)\/preimage$/;
+		my $cutoff = ((-f "$dir/postimage")
+			      ? $cutoff_resolve
+			      : $cutoff_noresolve);
+		my $age = -M "$_";
+		if ($cutoff <= $age) {
+			push @to_remove, $dir;
+		}
+	}
+	if (@to_remove) {
+		rmtree(\@to_remove);
+	}
+}
+
 -d "$rr_dir" || exit(0);
 
 read_rr();
+
+if (@ARGV) {
+	my $arg = shift @ARGV;
+	if ($arg eq 'clear') {
+		for my $path (keys %merge_rr) {
+			my $name = $merge_rr{$path};
+			if (-d "$rr_dir/$name" &&
+			    ! -f "$rr_dir/$name/postimage") {
+				rmtree(["$rr_dir/$name"]);
+			}
+		}
+		unlink $merge_rr;
+	}
+	elsif ($arg eq 'status') {
+		for my $path (keys %merge_rr) {
+			print $path, "\n";
+		}
+	}
+	elsif ($arg eq 'diff') {
+		for my $path (keys %merge_rr) {
+			my $name = $merge_rr{$path};
+			system('diff', ((@ARGV == 0) ? ('-u') : @ARGV),
+				'-L', "a/$path", '-L', "b/$path",
+				"$rr_dir/$name/preimage", $path);
+		}
+	}
+	elsif ($arg eq 'gc') {
+		garbage_collect_rerere(@ARGV);
+	}
+	else {
+		die "$0 unknown command: $arg\n";
+	}
+	exit 0;
+}
+
 my %conflict = map { $_ => 1 } find_conflict();
 
 # MERGE_RR records paths with conflicts immediately after merge

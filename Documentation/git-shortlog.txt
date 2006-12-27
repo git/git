@@ -8,6 +8,7 @@ git-shortlog - Summarize 'git log' output
 SYNOPSIS
 --------
 git-log --pretty=short | 'git-shortlog' [-h] [-n] [-s]
+git-shortlog [-n|--number] [-s|--summary] [<committish>...]
 
 DESCRIPTION
 -----------

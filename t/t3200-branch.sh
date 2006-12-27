@@ -70,4 +70,51 @@ test_expect_success \
         git-branch -d l/m &&
         git-branch l'
 
+test_expect_success \
+    'git branch -m m m/m should work' \
+       'git-branch -l m &&
+        git-branch -m m m/m &&
+        test -f .git/logs/refs/heads/m/m'
+
+test_expect_success \
+    'git branch -m n/n n should work' \
+       'git-branch -l n/n &&
+        git-branch -m n/n n
+        test -f .git/logs/refs/heads/n'
+
+test_expect_failure \
+    'git branch -m o/o o should fail when o/p exists' \
+       'git-branch o/o &&
+        git-branch o/p &&
+        git-branch -m o/o o'
+
+test_expect_failure \
+    'git branch -m q r/q should fail when r exists' \
+       'git-branch q &&
+         git-branch r &&
+         git-branch -m q r/q'
+
+git-repo-config branch.s/s.dummy Hello
+
+test_expect_success \
+    'git branch -m s/s s should work when s/t is deleted' \
+       'git-branch -l s/s &&
+        test -f .git/logs/refs/heads/s/s &&
+        git-branch -l s/t &&
+        test -f .git/logs/refs/heads/s/t &&
+        git-branch -d s/t &&
+        git-branch -m s/s s &&
+        test -f .git/logs/refs/heads/s'
+
+test_expect_success 'config information was renamed, too' \
+	"test $(git-repo-config branch.s.dummy) = Hello &&
+	 ! git-repo-config branch.s/s/dummy"
+
+test_expect_failure \
+    'git-branch -m u v should fail when the reflog for u is a symlink' \
+    'git-branch -l u &&
+     mv .git/logs/refs/heads/u real-u &&
+     ln -s real-u .git/logs/refs/heads/u &&
+     git-branch -m u v'
+
 test_done

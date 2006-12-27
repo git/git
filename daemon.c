@@ -1,19 +1,9 @@
-#include <signal.h>
-#include <sys/wait.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/poll.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <syslog.h>
-#include <pwd.h>
-#include <grp.h>
-#include <limits.h>
-#include "pkt-line.h"
 #include "cache.h"
+#include "pkt-line.h"
 #include "exec_cmd.h"
 #include "interpolate.h"
+
+#include <syslog.h>
 
 #ifndef HOST_NAME_MAX
 #define HOST_NAME_MAX 256

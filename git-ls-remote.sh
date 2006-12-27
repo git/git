@@ -94,7 +94,7 @@ while read sha1 path
 do
 	case "$sha1" in
 	failed)
-		die "Failed to find remote refs"
+		exit 1 ;;
 	esac
 	case "$path" in
 	refs/heads/*)

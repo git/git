@@ -8,9 +8,10 @@ git-show-branch - Show branches and their commits
 SYNOPSIS
 --------
 [verse]
-'git-show-branch' [--all] [--heads] [--tags] [--topo-order] [--current]
+'git-show-branch' [--all] [--remotes] [--topo-order] [--current]
 		[--more=<n> | --list | --independent | --merge-base]
-		[--no-name | --sha1-name] [<rev> | <glob>]...
+		[--no-name | --sha1-name] [--topics] [<rev> | <glob>]...
+'git-show-branch' --reflog[=<n>] <ref>
 
 DESCRIPTION
 -----------
@@ -37,9 +38,11 @@ OPTIONS
 	branches under $GIT_DIR/refs/heads/topic, giving
 	`topic/*` would show all of them.
 
---all --heads --tags::
-	Show all refs under $GIT_DIR/refs, $GIT_DIR/refs/heads,
-	and $GIT_DIR/refs/tags, respectively.
+-r|--remotes::
+	Show the remote-tracking branches.
+
+-a|--all::
+	Show both remote-tracking branches and local branches.
 
 --current::
 	With this option, the command includes the current
@@ -85,6 +88,18 @@ OPTIONS
 	them from heads (e.g. "master~2" to mean the grandparent
 	of "master"), name them with the unique prefix of their
 	object names.
+
+--topics::
+	Shows only commits that are NOT on the first branch given.
+	This helps track topic branches by hiding any commit that
+	is already in the main line of development.  When given
+	"git show-branch --topics master topic1 topic2", this
+	will show the revisions given by "git rev-list {caret}master
+	topic1 topic2"
+
+--reflog[=<n>] <ref>::
+	Shows <n> most recent ref-log entries for the given ref.
+
 
 Note that --more, --list, --independent and --merge-base options
 are mutually exclusive.

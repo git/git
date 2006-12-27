@@ -7,51 +7,54 @@ git-rm - Remove files from the working tree and from the index
 
 SYNOPSIS
 --------
-'git-rm' [-f] [-n] [-v] [--] <file>...
+'git-rm' [-f] [-n] [-r] [--cached] [--] <file>...
 
 DESCRIPTION
 -----------
-A convenience wrapper for git-update-index --remove. For those coming
-from cvs, git-rm provides an operation similar to "cvs rm" or "cvs
-remove".
+Remove files from the working tree and from the index.  The
+files have to be identical to the tip of the branch, and no
+updates to its contents must have been placed in the staging
+area (aka index).
 
 
 OPTIONS
 -------
 <file>...::
-	Files to remove from the index and optionally, from the
-	working tree as well.
+	Files to remove.  Fileglobs (e.g. `*.c`) can be given to
+	remove all matching files.  Also a leading directory name
+	(e.g. `dir` to add `dir/file1` and `dir/file2`) can be
+	given to remove all files in the directory, recursively,
+	but this requires `-r` option to be given for safety.
 
 -f::
-	Remove files from the working tree as well as from the index.
+	Override the up-to-date check.
 
 -n::
         Don't actually remove the file(s), just show if they exist in
         the index.
 
--v::
-        Be verbose.
+-r::
+        Allow recursive removal when a leading directory name is
+        given.
 
 \--::
 	This option can be used to separate command-line options from
 	the list of files, (useful when filenames might be mistaken
 	for command-line options).
 
+\--cached::
+	This option can be used to tell the command to remove
+	the paths only from the index, leaving working tree
+	files.
+
 
 DISCUSSION
 ----------
 
-The list of <file> given to the command is fed to `git-ls-files`
-command to list files that are registered in the index and
-are not ignored/excluded by `$GIT_DIR/info/exclude` file or
-`.gitignore` file in each directory.  This means two things:
-
-. You can put the name of a directory on the command line, and the
-  command will remove all files in it and its subdirectories (the
-  directories themselves are never removed from the working tree);
-
-. Giving the name of a file that is not in the index does not
-  remove that file.
+The list of <file> given to the command can be exact pathnames,
+file glob patterns, or leading directory name.  The command
+removes only the paths that is known to git.  Giving the name of
+a file that you have not told git about does not remove that file.
 
 
 EXAMPLES
@@ -69,10 +72,10 @@ subdirectories of `Documentation/` directory.
 git-rm -f git-*.sh::
 
 	Remove all git-*.sh scripts that are in the index. The files
-	are removed from the index, and (because of the -f option),
-	from the working tree as well. Because this example lets the
-	shell expand the asterisk (i.e. you are listing the files
-	explicitly), it does not remove `subdir/git-foo.sh`.
+	are removed from the index, and from the working
+	tree. Because this example lets the shell expand the
+	asterisk (i.e. you are listing the files explicitly), it
+	does not remove `subdir/git-foo.sh`.
 
 See Also
 --------

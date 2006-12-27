@@ -19,29 +19,22 @@ argument to see on which branch your working tree is on.
 Give two arguments, create or update a symbolic ref <name> to
 point at the given branch <ref>.
 
-Traditionally, `.git/HEAD` is a symlink pointing at
-`refs/heads/master`.  When we want to switch to another branch,
-we did `ln -sf refs/heads/newbranch .git/HEAD`, and when we want
+A symbolic ref is a regular file that stores a string that
+begins with `ref: refs/`.  For example, your `.git/HEAD` is
+a regular file whose contents is `ref: refs/heads/master`.
+
+NOTES
+-----
+In the past, `.git/HEAD` was a symbolic link pointing at
+`refs/heads/master`.  When we wanted to switch to another branch,
+we did `ln -sf refs/heads/newbranch .git/HEAD`, and when we wanted
 to find out which branch we are on, we did `readlink .git/HEAD`.
 This was fine, and internally that is what still happens by
 default, but on platforms that do not have working symlinks,
 or that do not have the `readlink(1)` command, this was a bit
 cumbersome.  On some platforms, `ln -sf` does not even work as
-advertised (horrors).
-
-A symbolic ref can be a regular file that stores a string that
-begins with `ref: refs/`.  For example, your `.git/HEAD` *can*
-be a regular file whose contents is `ref: refs/heads/master`.
-This can be used on a filesystem that does not support symbolic
-links.  Instead of doing `readlink .git/HEAD`, `git-symbolic-ref
-HEAD` can be used to find out which branch we are on.  To point
-the HEAD to `newbranch`, instead of `ln -sf refs/heads/newbranch
-.git/HEAD`, `git-symbolic-ref HEAD refs/heads/newbranch` can be
-used.
-
-Currently, .git/HEAD uses a regular file symbolic ref on Cygwin,
-and everywhere else it is implemented as a symlink.  This can be
-changed at compilation time.
+advertised (horrors).  Therefore symbolic links are now deprecated
+and symbolic refs are used by default.
 
 Author
 ------

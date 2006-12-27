@@ -15,14 +15,12 @@
 #include "revision.h"
 #include "xdiff-interface.h"
 
-#include <time.h>
-#include <sys/time.h>
-#include <regex.h>
-
 static char blame_usage[] =
 "git-blame [-c] [-l] [-t] [-f] [-n] [-p] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [commit] [--] file\n"
 "  -c, --compatibility Use the same output mode as git-annotate (Default: off)\n"
+"  -b                  Show blank SHA-1 for boundary commits (Default: off)\n"
 "  -l, --long          Show long commit SHA1 (Default: off)\n"
+"  --root              Do not treat root commits as boundaries (Default: off)\n"
 "  -t, --time          Show raw timestamp (Default: off)\n"
 "  -f, --show-name     Show original filename (Default: auto)\n"
 "  -n, --show-number   Show original linenumber (Default: off)\n"
@@ -36,6 +34,8 @@ static int longest_author;
 static int max_orig_digits;
 static int max_digits;
 static int max_score_digits;
+static int show_root;
+static int blank_boundary;
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -1090,6 +1090,14 @@ static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
 		if (!(commit->object.flags & UNINTERESTING) &&
 		    !(revs->max_age != -1 && commit->date  < revs->max_age))
 			pass_blame(sb, suspect, opt);
+		else {
+			commit->object.flags |= UNINTERESTING;
+			if (commit->object.parsed)
+				mark_parents_uninteresting(commit);
+		}
+		/* treat root commit as boundary */
+		if (!commit->parents && !show_root)
+			commit->object.flags |= UNINTERESTING;
 
 		/* Take responsibility for the remaining entries */
 		for (ent = sb->ent; ent; ent = ent->next)
@@ -1273,6 +1281,8 @@ static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent)
 		printf("committer-tz %s\n", ci.committer_tz);
 		printf("filename %s\n", suspect->path);
 		printf("summary %s\n", ci.summary);
+		if (suspect->commit->object.flags & UNINTERESTING)
+			printf("boundary\n");
 	}
 	else if (suspect->commit->object.flags & MORE_THAN_ONE_PATH)
 		printf("filename %s\n", suspect->path);
@@ -1308,8 +1318,18 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 	cp = nth_line(sb, ent->lno);
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {
 		char ch;
+		int length = (opt & OUTPUT_LONG_OBJECT_NAME) ? 40 : 8;
 
-		printf("%.*s", (opt & OUTPUT_LONG_OBJECT_NAME) ? 40 : 8, hex);
+		if (suspect->commit->object.flags & UNINTERESTING) {
+			if (!blank_boundary) {
+				length--;
+				putchar('^');
+			}
+			else
+				memset(hex, ' ', length);
+		}
+
+		printf("%.*s", length, hex);
 		if (opt & OUTPUT_ANNOTATE_COMPAT)
 			printf("\t(%10s\t%10s\t%d)", ci.author,
 			       format_time(ci.author_time, ci.author_tz,
@@ -1435,14 +1455,14 @@ static void find_alignment(struct scoreboard *sb, int *option)
 		struct commit_info ci;
 		int num;
 
+		if (strcmp(suspect->path, sb->path))
+			*option |= OUTPUT_SHOW_NAME;
+		num = strlen(suspect->path);
+		if (longest_file < num)
+			longest_file = num;
 		if (!(suspect->commit->object.flags & METAINFO_SHOWN)) {
 			suspect->commit->object.flags |= METAINFO_SHOWN;
 			get_commit_info(suspect->commit, &ci, 1);
-			if (strcmp(suspect->path, sb->path))
-				*option |= OUTPUT_SHOW_NAME;
-			num = strlen(suspect->path);
-			if (longest_file < num)
-				longest_file = num;
 			num = strlen(ci.author);
 			if (longest_author < num)
 				longest_author = num;
@@ -1626,6 +1646,19 @@ static void prepare_blame_range(struct scoreboard *sb,
 		usage(blame_usage);
 }
 
+static int git_blame_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "blame.showroot")) {
+		show_root = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "blame.blankboundary")) {
+		blank_boundary = git_config_bool(var, value);
+		return 0;
+	}
+	return git_default_config(var, value);
+}
+
 int cmd_blame(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
@@ -1641,6 +1674,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	char type[10];
 	const char *bottomtop = NULL;
 
+	git_config(git_blame_config);
 	save_commit_buffer = 0;
 
 	opt = 0;
@@ -1649,6 +1683,10 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		const char *arg = argv[i];
 		if (*arg != '-')
 			break;
+		else if (!strcmp("-b", arg))
+			blank_boundary = 1;
+		else if (!strcmp("--root", arg))
+			show_root = 1;
 		else if (!strcmp("-c", arg))
 			output_option |= OUTPUT_ANNOTATE_COMPAT;
 		else if (!strcmp("-t", arg))
@@ -1787,6 +1825,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	/* Now we got rev and path.  We do not want the path pruning
 	 * but we may want "bottom" processing.
 	 */
+	argv[unk++] = "--"; /* terminate the rev name */
 	argv[unk] = NULL;
 
 	init_revisions(&revs, NULL);

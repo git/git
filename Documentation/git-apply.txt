@@ -33,8 +33,9 @@ OPTIONS
 --numstat::
 	Similar to \--stat, but shows number of added and
 	deleted lines in decimal notation and pathname without
-	abbreviation, to make it more machine friendly.  Turns
-	off "apply".
+	abbreviation, to make it more machine friendly.  For
+	binary files, outputs two `-` instead of saying
+	`0 0`.  Turns off "apply".
 
 --summary::
 	Instead of applying the patch, output a condensed

@@ -29,6 +29,7 @@ typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 #define DIFF_FORMAT_NUMSTAT	0x0004
 #define DIFF_FORMAT_SUMMARY	0x0008
 #define DIFF_FORMAT_PATCH	0x0010
+#define DIFF_FORMAT_SHORTSTAT	0x0020
 
 /* These override all above */
 #define DIFF_FORMAT_NAME	0x0100

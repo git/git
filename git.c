@@ -1,19 +1,7 @@
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdarg.h>
-#include "git-compat-util.h"
+#include "builtin.h"
 #include "exec_cmd.h"
 #include "cache.h"
 #include "quote.h"
-
-#include "builtin.h"
 
 const char git_usage_string[] =
 	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate] [--bare] [--git-dir=GIT_DIR] [--help] COMMAND [ARGS]";
@@ -71,8 +59,10 @@ static int handle_options(const char*** argv, int* argc)
 		} else if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
 			setup_pager();
 		} else if (!strcmp(cmd, "--git-dir")) {
-			if (*argc < 1)
-				return -1;
+			if (*argc < 2) {
+				fprintf(stderr, "No directory given for --git-dir.\n" );
+				usage(git_usage_string);
+			}
 			setenv("GIT_DIR", (*argv)[1], 1);
 			(*argv)++;
 			(*argc)--;
@@ -247,6 +237,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "ls-tree", cmd_ls_tree, RUN_SETUP },
 		{ "mailinfo", cmd_mailinfo },
 		{ "mailsplit", cmd_mailsplit },
+		{ "merge-file", cmd_merge_file },
 		{ "mv", cmd_mv, RUN_SETUP },
 		{ "name-rev", cmd_name_rev, RUN_SETUP },
 		{ "pack-objects", cmd_pack_objects, RUN_SETUP },
@@ -255,11 +246,14 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "prune-packed", cmd_prune_packed, RUN_SETUP },
 		{ "push", cmd_push, RUN_SETUP },
 		{ "read-tree", cmd_read_tree, RUN_SETUP },
+		{ "reflog", cmd_reflog, RUN_SETUP },
 		{ "repo-config", cmd_repo_config },
+		{ "rerere", cmd_rerere, RUN_SETUP },
 		{ "rev-list", cmd_rev_list, RUN_SETUP },
 		{ "rev-parse", cmd_rev_parse, RUN_SETUP },
 		{ "rm", cmd_rm, RUN_SETUP },
 		{ "runstatus", cmd_runstatus, RUN_SETUP },
+		{ "shortlog", cmd_shortlog, RUN_SETUP | USE_PAGER },
 		{ "show-branch", cmd_show_branch, RUN_SETUP },
 		{ "show", cmd_show, RUN_SETUP | USE_PAGER },
 		{ "stripspace", cmd_stripspace },

@@ -6,7 +6,6 @@
 #include "tree.h"
 #include "blob.h"
 #include "quote.h"
-#include <fnmatch.h>
 
 /* Quoting styles */
 #define QUOTE_NONE 0

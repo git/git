@@ -1,12 +1,16 @@
-#include "refs.h"
 #include "cache.h"
+#include "refs.h"
+#include "object.h"
+#include "tag.h"
 
-#include <errno.h>
+/* ISSYMREF=01 and ISPACKED=02 are public interfaces */
+#define REF_KNOWS_PEELED 04
 
 struct ref_list {
 	struct ref_list *next;
 	unsigned char flag; /* ISSYMREF? ISPACKED? */
 	unsigned char sha1[20];
+	unsigned char peeled[20];
 	char name[FLEX_ARRAY];
 };
 
@@ -34,11 +38,13 @@ static const char *parse_ref_line(char *line, unsigned char *sha1)
 	if (line[len] != '\n')
 		return NULL;
 	line[len] = 0;
+
 	return line;
 }
 
 static struct ref_list *add_ref(const char *name, const unsigned char *sha1,
-				int flag, struct ref_list *list)
+				int flag, struct ref_list *list,
+				struct ref_list **new_entry)
 {
 	int len;
 	struct ref_list **p = &list, *entry;
@@ -50,8 +56,11 @@ static struct ref_list *add_ref(const char *name, const unsigned char *sha1,
 			break;
 
 		/* Same as existing entry? */
-		if (!cmp)
+		if (!cmp) {
+			if (new_entry)
+				*new_entry = entry;
 			return list;
+		}
 		p = &entry->next;
 	}
 
@@ -59,10 +68,13 @@ static struct ref_list *add_ref(const char *name, const unsigned char *sha1,
 	len = strlen(name) + 1;
 	entry = xmalloc(sizeof(struct ref_list) + len);
 	hashcpy(entry->sha1, sha1);
+	hashclr(entry->peeled);
 	memcpy(entry->name, name, len);
 	entry->flag = flag;
 	entry->next = *p;
 	*p = entry;
+	if (new_entry)
+		*new_entry = entry;
 	return list;
 }
 
@@ -98,25 +110,50 @@ static void invalidate_cached_refs(void)
 	ca->did_loose = ca->did_packed = 0;
 }
 
+static void read_packed_refs(FILE *f, struct cached_refs *cached_refs)
+{
+	struct ref_list *list = NULL;
+	struct ref_list *last = NULL;
+	char refline[PATH_MAX];
+	int flag = REF_ISPACKED;
+
+	while (fgets(refline, sizeof(refline), f)) {
+		unsigned char sha1[20];
+		const char *name;
+		static const char header[] = "# pack-refs with:";
+
+		if (!strncmp(refline, header, sizeof(header)-1)) {
+			const char *traits = refline + sizeof(header) - 1;
+			if (strstr(traits, " peeled "))
+				flag |= REF_KNOWS_PEELED;
+			/* perhaps other traits later as well */
+			continue;
+		}
+
+		name = parse_ref_line(refline, sha1);
+		if (name) {
+			list = add_ref(name, sha1, flag, list, &last);
+			continue;
+		}
+		if (last &&
+		    refline[0] == '^' &&
+		    strlen(refline) == 42 &&
+		    refline[41] == '\n' &&
+		    !get_sha1_hex(refline + 1, sha1))
+			hashcpy(last->peeled, sha1);
+	}
+	cached_refs->packed = list;
+}
+
 static struct ref_list *get_packed_refs(void)
 {
 	if (!cached_refs.did_packed) {
-		struct ref_list *refs = NULL;
 		FILE *f = fopen(git_path("packed-refs"), "r");
+		cached_refs.packed = NULL;
 		if (f) {
-			struct ref_list *list = NULL;
-			char refline[PATH_MAX];
-			while (fgets(refline, sizeof(refline), f)) {
-				unsigned char sha1[20];
-				const char *name = parse_ref_line(refline, sha1);
-				if (!name)
-					continue;
-				list = add_ref(name, sha1, REF_ISPACKED, list);
-			}
+			read_packed_refs(f, &cached_refs);
 			fclose(f);
-			refs = list;
 		}
-		cached_refs.packed = refs;
 		cached_refs.did_packed = 1;
 	}
 	return cached_refs.packed;
@@ -159,7 +196,7 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 				error("%s points nowhere!", ref);
 				continue;
 			}
-			list = add_ref(ref, sha1, flag, list);
+			list = add_ref(ref, sha1, flag, list, NULL);
 		}
 		free(ref);
 		closedir(dir);
@@ -336,6 +373,43 @@ static int do_one_ref(const char *base, each_ref_fn fn, int trim,
 	return fn(entry->name + trim, entry->sha1, entry->flag, cb_data);
 }
 
+int peel_ref(const char *ref, unsigned char *sha1)
+{
+	int flag;
+	unsigned char base[20];
+	struct object *o;
+
+	if (!resolve_ref(ref, base, 1, &flag))
+		return -1;
+
+	if ((flag & REF_ISPACKED)) {
+		struct ref_list *list = get_packed_refs();
+
+		while (list) {
+			if (!strcmp(list->name, ref)) {
+				if (list->flag & REF_KNOWS_PEELED) {
+					hashcpy(sha1, list->peeled);
+					return 0;
+				}
+				/* older pack-refs did not leave peeled ones */
+				break;
+			}
+			list = list->next;
+		}
+	}
+
+	/* fallback - callers should not call this for unpacked refs */
+	o = parse_object(base);
+	if (o->type == OBJ_TAG) {
+		o = deref_tag(o, ref, 0);
+		if (o) {
+			hashcpy(sha1, o->sha1);
+			return 0;
+		}
+	}
+	return -1;
+}
+
 static int do_for_each_ref(const char *base, each_ref_fn fn, int trim,
 			   void *cb_data)
 {
@@ -458,7 +532,7 @@ int check_ref_format(const char *ref)
 		level++;
 		if (!ch) {
 			if (level < 2)
-				return -1; /* at least of form "heads/blah" */
+				return -2; /* at least of form "heads/blah" */
 			return 0;
 		}
 	}
@@ -534,6 +608,29 @@ static int remove_empty_directories(char *file)
 	return remove_empty_dir_recursive(path, len);
 }
 
+static int is_refname_available(const char *ref, const char *oldref,
+				struct ref_list *list, int quiet)
+{
+	int namlen = strlen(ref); /* e.g. 'foo/bar' */
+	while (list) {
+		/* list->name could be 'foo' or 'foo/bar/baz' */
+		if (!oldref || strcmp(oldref, list->name)) {
+			int len = strlen(list->name);
+			int cmplen = (namlen < len) ? namlen : len;
+			const char *lead = (namlen < len) ? list->name : ref;
+			if (!strncmp(ref, list->name, cmplen) &&
+			    lead[cmplen] == '/') {
+				if (!quiet)
+					error("'%s' exists; cannot create '%s'",
+					      list->name, ref);
+				return 0;
+			}
+		}
+		list = list->next;
+	}
+	return 1;
+}
+
 static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char *old_sha1, int *flag)
 {
 	char *ref_file;
@@ -567,29 +664,14 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 			orig_ref, strerror(errno));
 		goto error_return;
 	}
-	if (is_null_sha1(lock->old_sha1)) {
-		/* The ref did not exist and we are creating it.
-		 * Make sure there is no existing ref that is packed
-		 * whose name begins with our refname, nor a ref whose
-		 * name is a proper prefix of our refname.
-		 */
-		int namlen = strlen(ref); /* e.g. 'foo/bar' */
-		struct ref_list *list = get_packed_refs();
-		while (list) {
-			/* list->name could be 'foo' or 'foo/bar/baz' */
-			int len = strlen(list->name);
-			int cmplen = (namlen < len) ? namlen : len;
-			const char *lead = (namlen < len) ? list->name : ref;
-
-			if (!strncmp(ref, list->name, cmplen) &&
-			    lead[cmplen] == '/') {
-				error("'%s' exists; cannot create '%s'",
-				      list->name, ref);
-				goto error_return;
-			}
-			list = list->next;
-		}
-	}
+	/* When the ref did not exist and we are creating it,
+	 * make sure there is no existing ref that is packed
+	 * whose name begins with our refname, nor a ref whose
+	 * name is a proper prefix of our refname.
+	 */
+	if (is_null_sha1(lock->old_sha1) &&
+            !is_refname_available(ref, NULL, get_packed_refs(), 0))
+		goto error_return;
 
 	lock->lk = xcalloc(1, sizeof(struct lock_file));
 
@@ -698,6 +780,127 @@ int delete_ref(const char *refname, unsigned char *sha1)
 	invalidate_cached_refs();
 	unlock_ref(lock);
 	return ret;
+}
+
+int rename_ref(const char *oldref, const char *newref, const char *logmsg)
+{
+	static const char renamed_ref[] = "RENAMED-REF";
+	unsigned char sha1[20], orig_sha1[20];
+	int flag = 0, logmoved = 0;
+	struct ref_lock *lock;
+	struct stat loginfo;
+	int log = !lstat(git_path("logs/%s", oldref), &loginfo);
+
+	if (S_ISLNK(loginfo.st_mode))
+		return error("reflog for %s is a symlink", oldref);
+
+	if (!resolve_ref(oldref, orig_sha1, 1, &flag))
+		return error("refname %s not found", oldref);
+
+	if (!is_refname_available(newref, oldref, get_packed_refs(), 0))
+		return 1;
+
+	if (!is_refname_available(newref, oldref, get_loose_refs(), 0))
+		return 1;
+
+	lock = lock_ref_sha1_basic(renamed_ref, NULL, NULL);
+	if (!lock)
+		return error("unable to lock %s", renamed_ref);
+	lock->force_write = 1;
+	if (write_ref_sha1(lock, orig_sha1, logmsg))
+		return error("unable to save current sha1 in %s", renamed_ref);
+
+	if (log && rename(git_path("logs/%s", oldref), git_path("tmp-renamed-log")))
+		return error("unable to move logfile logs/%s to tmp-renamed-log: %s",
+			oldref, strerror(errno));
+
+	if (delete_ref(oldref, orig_sha1)) {
+		error("unable to delete old %s", oldref);
+		goto rollback;
+	}
+
+	if (resolve_ref(newref, sha1, 1, &flag) && delete_ref(newref, sha1)) {
+		if (errno==EISDIR) {
+			if (remove_empty_directories(git_path("%s", newref))) {
+				error("Directory not empty: %s", newref);
+				goto rollback;
+			}
+		} else {
+			error("unable to delete existing %s", newref);
+			goto rollback;
+		}
+	}
+
+	if (log && safe_create_leading_directories(git_path("logs/%s", newref))) {
+		error("unable to create directory for %s", newref);
+		goto rollback;
+	}
+
+ retry:
+	if (log && rename(git_path("tmp-renamed-log"), git_path("logs/%s", newref))) {
+		if (errno==EISDIR) {
+			if (remove_empty_directories(git_path("logs/%s", newref))) {
+				error("Directory not empty: logs/%s", newref);
+				goto rollback;
+			}
+			goto retry;
+		} else {
+			error("unable to move logfile tmp-renamed-log to logs/%s: %s",
+				newref, strerror(errno));
+			goto rollback;
+		}
+	}
+	logmoved = log;
+
+	lock = lock_ref_sha1_basic(newref, NULL, NULL);
+	if (!lock) {
+		error("unable to lock %s for update", newref);
+		goto rollback;
+	}
+
+	lock->force_write = 1;
+	hashcpy(lock->old_sha1, orig_sha1);
+	if (write_ref_sha1(lock, orig_sha1, logmsg)) {
+		error("unable to write current sha1 into %s", newref);
+		goto rollback;
+	}
+
+	if (!strncmp(oldref, "refs/heads/", 11) &&
+			!strncmp(newref, "refs/heads/", 11)) {
+		char oldsection[1024], newsection[1024];
+
+		snprintf(oldsection, 1024, "branch.%s", oldref + 11);
+		snprintf(newsection, 1024, "branch.%s", newref + 11);
+		if (git_config_rename_section(oldsection, newsection) < 0)
+			return 1;
+	}
+
+	return 0;
+
+ rollback:
+	lock = lock_ref_sha1_basic(oldref, NULL, NULL);
+	if (!lock) {
+		error("unable to lock %s for rollback", oldref);
+		goto rollbacklog;
+	}
+
+	lock->force_write = 1;
+	flag = log_all_ref_updates;
+	log_all_ref_updates = 0;
+	if (write_ref_sha1(lock, orig_sha1, NULL))
+		error("unable to write current sha1 into %s", oldref);
+	log_all_ref_updates = flag;
+
+ rollbacklog:
+	if (logmoved && rename(git_path("logs/%s", newref), git_path("logs/%s", oldref)))
+		error("unable to restore logfile %s from %s: %s",
+			oldref, newref, strerror(errno));
+	if (!logmoved && log &&
+	    rename(git_path("tmp-renamed-log"), git_path("logs/%s", oldref)))
+		error("unable to restore logfile %s from tmp-renamed-log: %s",
+			oldref, strerror(errno));
+
+	return 1;
 }
 
 void unlock_ref(struct ref_lock *lock)
@@ -810,7 +1013,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 {
 	const char *logfile, *logdata, *logend, *rec, *lastgt, *lastrec;
 	char *tz_c;
-	int logfd, tz;
+	int logfd, tz, reccnt = 0;
 	struct stat st;
 	unsigned long date;
 	unsigned char logged_sha1[20];
@@ -828,6 +1031,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	lastrec = NULL;
 	rec = logend = logdata + st.st_size;
 	while (logdata < rec) {
+		reccnt++;
 		if (logdata < rec && *(rec-1) == '\n')
 			rec--;
 		lastgt = NULL;
@@ -884,7 +1088,37 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	if (get_sha1_hex(logdata, sha1))
 		die("Log %s is corrupt.", logfile);
 	munmap((void*)logdata, st.st_size);
-	fprintf(stderr, "warning: Log %s only goes back to %s.\n",
-		logfile, show_rfc2822_date(date, tz));
+	if (at_time)
+		fprintf(stderr, "warning: Log %s only goes back to %s.\n",
+			logfile, show_rfc2822_date(date, tz));
+	else
+		fprintf(stderr, "warning: Log %s only has %d entries.\n",
+			logfile, reccnt);
 	return 0;
 }
+
+void for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
+{
+	const char *logfile;
+	FILE *logfp;
+	char buf[1024];
+
+	logfile = git_path("logs/%s", ref);
+	logfp = fopen(logfile, "r");
+	if (!logfp)
+		return;
+	while (fgets(buf, sizeof(buf), logfp)) {
+		unsigned char osha1[20], nsha1[20];
+		int len;
+
+		/* old SP new SP name <email> SP time TAB msg LF */
+		len = strlen(buf);
+		if (len < 83 || buf[len-1] != '\n' ||
+		    get_sha1_hex(buf, osha1) || buf[40] != ' ' ||
+		    get_sha1_hex(buf + 41, nsha1) || buf[81] != ' ')
+			continue; /* corrupt? */
+		fn(osha1, nsha1, buf+82, cb_data);
+	}
+	fclose(logfp);
+}
+

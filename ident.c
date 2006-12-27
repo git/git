@@ -7,9 +7,6 @@
  */
 #include "cache.h"
 
-#include <pwd.h>
-#include <netdb.h>
-
 static char git_default_date[50];
 
 static void copy_gecos(struct passwd *w, char *name, int sz)
@@ -158,12 +155,17 @@ static int copy(char *buf, int size, int offset, const char *src)
 static const char au_env[] = "GIT_AUTHOR_NAME";
 static const char co_env[] = "GIT_COMMITTER_NAME";
 static const char *env_hint =
-"\n*** Environment problem:\n"
+"\n"
 "*** Your name cannot be determined from your system services (gecos).\n"
-"*** You would need to set %s and %s\n"
-"*** environment variables; otherwise you won't be able to perform\n"
-"*** certain operations because of \"empty ident\" errors.\n"
-"*** Alternatively, you can use user.name configuration variable.\n\n";
+"\n"
+"Run\n"
+"\n"
+"  git repo-config user.email \"you@email.com\"\n"
+"  git repo-config user.name \"Your Name\"\n"
+"\n"
+"To set the identity in this repository.\n"
+"Add --global to set your account\'s default\n"
+"\n";
 
 static const char *get_ident(const char *name, const char *email,
 			     const char *date_str, int error_on_no_name)
@@ -215,4 +217,19 @@ const char *git_committer_info(int error_on_no_name)
 			 getenv("GIT_COMMITTER_EMAIL"),
 			 getenv("GIT_COMMITTER_DATE"),
 			 error_on_no_name);
+}
+
+void ignore_missing_committer_name()
+{
+	/* If we did not get a name from the user's gecos entry then
+	 * git_default_name is empty; so instead load the username
+	 * into it as a 'good enough for now' approximation of who
+	 * this user is.
+	 */
+	if (!*git_default_name) {
+		struct passwd *pw = getpwuid(getuid());
+		if (!pw)
+			die("You don't exist. Go away!");
+		strlcpy(git_default_name, pw->pw_name, sizeof(git_default_name));
+	}
 }

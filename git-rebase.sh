@@ -139,6 +139,10 @@ do
 	--skip)
 		if test -d "$dotest"
 		then
+			if test -d "$GIT_DIR/rr-cache"
+			then
+				git-rerere clear
+			fi
 			prev_head="`cat $dotest/prev_head`"
 			end="`cat $dotest/end`"
 			msgnum="`cat $dotest/msgnum`"
@@ -157,6 +161,10 @@ do
 		exit
 		;;
 	--abort)
+		if test -d "$GIT_DIR/rr-cache"
+		then
+			git-rerere clear
+		fi
 		if test -d "$dotest"
 		then
 			rm -r "$dotest"
@@ -284,6 +292,7 @@ then
 fi
 
 # Rewind the head to "$onto"; this saves our current head in ORIG_HEAD.
+echo "First, rewinding head to replay your work on top of it..."
 git-reset --hard "$onto"
 
 # If the $onto is a proper descendant of the tip of the branch, then
@@ -300,15 +309,6 @@ then
 	git am --binary -3 -k --resolvemsg="$RESOLVEMSG" \
 		--reflog-action=rebase
 	exit $?
-fi
-
-if test "@@NO_PYTHON@@" && test "$strategy" = "recursive-old"
-then
-	die 'The recursive-old merge strategy is written in Python,
-which this installation of git was not configured with.  Please consider
-a different merge strategy (e.g. recursive, resolve, or stupid)
-or install Python and git with Python support.'
-
 fi
 
 # start doing a rebase with git-merge
