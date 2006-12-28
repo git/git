@@ -20,6 +20,14 @@ usage() {
 	die "Usage: $0 $USAGE"
 }
 
+set_reflog_action() {
+	if [ -z "${GIT_REFLOG_ACTION:+set}" ]
+	then
+		GIT_REFLOG_ACTION="$*"
+		export GIT_REFLOG_ACTION
+	fi
+}
+
 if [ -z "$LONG_USAGE" ]
 then
 	LONG_USAGE="Usage: $0 $USAGE"

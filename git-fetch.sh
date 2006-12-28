@@ -4,6 +4,8 @@
 USAGE='<fetch-options> <repository> <refspec>...'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
+set_reflog_action "fetch $*"
+
 TOP=$(git-rev-parse --show-cdup)
 if test ! -z "$TOP"
 then
@@ -17,7 +19,6 @@ LF='
 '
 IFS="$LF"
 
-rloga=fetch
 no_tags=
 tags=
 append=
@@ -59,9 +60,6 @@ do
 	-k|--k|--ke|--kee|--keep)
 		keep='-k -k'
 		;;
-	--reflog-action=*)
-		rloga=`expr "z$1" : 'z-[^=]*=\(.*\)'`
-		;;
 	-*)
 		usage
 		;;
@@ -85,9 +83,6 @@ remote=$(get_remote_url "$@")
 refs=
 rref=
 rsync_slurped_objects=
-
-rloga="$rloga $remote_nick"
-test "$remote_nick" = "$remote" || rloga="$rloga $remote"
 
 if test "" = "$append"
 then
@@ -172,12 +167,12 @@ update_local_ref () {
 		else
 			echo >&2 "* $1: updating with $3"
 			echo >&2 "  $label_: $newshort_"
-			git-update-ref -m "$rloga: updating tag" "$1" "$2"
+			git-update-ref -m "$GIT_REFLOG_ACTION: updating tag" "$1" "$2"
 		fi
 	else
 		echo >&2 "* $1: storing $3"
 		echo >&2 "  $label_: $newshort_"
-		git-update-ref -m "$rloga: storing tag" "$1" "$2"
+		git-update-ref -m "$GIT_REFLOG_ACTION: storing tag" "$1" "$2"
 	fi
 	;;
 
@@ -200,7 +195,7 @@ update_local_ref () {
 	    *,$local)
 		echo >&2 "* $1: fast forward to $3"
 		echo >&2 "  old..new: $oldshort_..$newshort_"
-		git-update-ref -m "$rloga: fast-forward" "$1" "$2" "$local"
+		git-update-ref -m "$GIT_REFLOG_ACTION: fast-forward" "$1" "$2" "$local"
 		;;
 	    *)
 		false
@@ -210,7 +205,7 @@ update_local_ref () {
 		*,t,*)
 			echo >&2 "* $1: forcing update to non-fast forward $3"
 			echo >&2 "  old...new: $oldshort_...$newshort_"
-			git-update-ref -m "$rloga: forced-update" "$1" "$2" "$local"
+			git-update-ref -m "$GIT_REFLOG_ACTION: forced-update" "$1" "$2" "$local"
 			;;
 		*)
 			echo >&2 "* $1: not updating to non-fast forward $3"
@@ -222,7 +217,7 @@ update_local_ref () {
 	else
 	    echo >&2 "* $1: storing $3"
 	    echo >&2 "  $label_: $newshort_"
-	    git-update-ref -m "$rloga: storing head" "$1" "$2"
+	    git-update-ref -m "$GIT_REFLOG_ACTION: storing head" "$1" "$2"
 	fi
 	;;
     esac
@@ -465,7 +460,7 @@ case "$orig_head" in
 	if test "$curr_head" != "$orig_head"
 	then
 	    git-update-ref \
-			-m "$rloga: Undoing incorrectly fetched HEAD." \
+			-m "$GIT_REFLOG_ACTION: Undoing incorrectly fetched HEAD." \
 			HEAD "$orig_head"
 		die "Cannot fetch into the current branch."
 	fi

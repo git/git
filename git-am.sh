@@ -6,6 +6,7 @@ USAGE='[--signoff] [--dotest=<dir>] [--utf8] [--binary] [--3way]
   [--interactive] [--whitespace=<option>] <mbox>...
   or, when resuming [--skip | --resolved]'
 . git-sh-setup
+set_reflog_action am
 
 git var GIT_COMMITTER_IDENT >/dev/null || exit
 
@@ -101,7 +102,6 @@ It does not apply to blobs recorded in its index."
 }
 
 prec=4
-rloga=am
 dotest=.dotest sign= utf8= keep= skip= interactive= resolved= binary= ws= resolvemsg=
 
 while case "$#" in 0) break;; esac
@@ -140,9 +140,6 @@ do
 
 	--resolvemsg=*)
 	resolvemsg=$(echo "$1" | sed -e "s/^--resolvemsg=//"); shift ;;
-
-	--reflog-action=*)
-	rloga=`expr "z$1" : 'z-[^=]*=\(.*\)'`; shift ;;
 
 	--)
 	shift; break ;;
@@ -452,7 +449,7 @@ do
 	parent=$(git-rev-parse --verify HEAD) &&
 	commit=$(git-commit-tree $tree -p $parent <"$dotest/final-commit") &&
 	echo Committed: $commit &&
-	git-update-ref -m "$rloga: $SUBJECT" HEAD $commit $parent ||
+	git-update-ref -m "$GIT_REFLOG_ACTION: $SUBJECT" HEAD $commit $parent ||
 	stop_here $this
 
 	if test -x "$GIT_DIR"/hooks/post-applypatch

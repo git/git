@@ -28,6 +28,7 @@ Example:       git-rebase master~1 topic
   D---E---F---G master          D---E---F---G master
 '
 . git-sh-setup
+set_reflog_action rebase
 
 RESOLVEMSG="
 When you have resolved this problem run \"git rebase --continue\".
@@ -132,8 +133,7 @@ do
 			finish_rb_merge
 			exit
 		fi
-		git am --resolved --3way --resolvemsg="$RESOLVEMSG" \
-			--reflog-action=rebase
+		git am --resolved --3way --resolvemsg="$RESOLVEMSG"
 		exit
 		;;
 	--skip)
@@ -156,8 +156,7 @@ do
 			finish_rb_merge
 			exit
 		fi
-		git am -3 --skip --resolvemsg="$RESOLVEMSG" \
-			--reflog-action=rebase
+		git am -3 --skip --resolvemsg="$RESOLVEMSG"
 		exit
 		;;
 	--abort)
@@ -306,8 +305,7 @@ fi
 if test -z "$do_merge"
 then
 	git-format-patch -k --stdout --full-index --ignore-if-in-upstream "$upstream"..ORIG_HEAD |
-	git am --binary -3 -k --resolvemsg="$RESOLVEMSG" \
-		--reflog-action=rebase
+	git am --binary -3 -k --resolvemsg="$RESOLVEMSG"
 	exit $?
 fi
 

@@ -7,6 +7,7 @@
 USAGE='[-n | --no-summary] [--no-commit] [-s strategy]... [<fetch-options>] <repo> <head>...'
 LONG_USAGE='Fetch one or more remote refs and merge it/them into the current HEAD.'
 . git-sh-setup
+set_reflog_action "pull $*"
 
 strategy_args= no_summary= no_commit= squash=
 while case "$#,$1" in 0) break ;; *,-*) ;; *) break ;; esac
@@ -45,7 +46,7 @@ do
 done
 
 orig_head=$(git-rev-parse --verify HEAD 2>/dev/null)
-git-fetch --update-head-ok --reflog-action=pull "$@" || exit 1
+git-fetch --update-head-ok "$@" || exit 1
 
 curr_head=$(git-rev-parse --verify HEAD 2>/dev/null)
 if test "$curr_head" != "$orig_head"
@@ -118,6 +119,5 @@ case "$strategy_args" in
 esac
 
 merge_name=$(git-fmt-merge-msg <"$GIT_DIR/FETCH_HEAD") || exit
-git-merge "--reflog-action=pull $*" \
-	$no_summary $no_commit $squash $strategy_args \
+git-merge $no_summary $no_commit $squash $strategy_args \
 	"$merge_name" HEAD $merge_head
