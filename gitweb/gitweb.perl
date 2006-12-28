@@ -1271,7 +1271,7 @@ sub parse_tag {
 }
 
 sub parse_commit_text {
-	my ($commit_text) = @_;
+	my ($commit_text, $withparents) = @_;
 	my @commit_lines = split '\n', $commit_text;
 	my %co;
 
@@ -1281,13 +1281,12 @@ sub parse_commit_text {
 	if (!($header =~ m/^[0-9a-fA-F]{40}/)) {
 		return;
 	}
-	$co{'id'} = $header;
-	my @parents;
+	($co{'id'}, my @parents) = split ' ', $header;
 	while (my $line = shift @commit_lines) {
 		last if $line eq "\n";
 		if ($line =~ m/^tree ([0-9a-fA-F]{40})$/) {
 			$co{'tree'} = $1;
-		} elsif ($line =~ m/^parent ([0-9a-fA-F]{40})$/) {
+		} elsif ((!defined $withparents) && ($line =~ m/^parent ([0-9a-fA-F]{40})$/)) {
 			push @parents, $1;
 		} elsif ($line =~ m/^author (.*) ([0-9]+) (.*)$/) {
 			$co{'author'} = $1;
@@ -1373,12 +1372,13 @@ sub parse_commit {
 	local $/ = "\0";
 
 	open my $fd, "-|", git_cmd(), "rev-list",
+		"--parents",
 		"--header",
 		"--max-count=1",
 		$commit_id,
 		"--",
 		or die_error(undef, "Open git-rev-list failed");
-	%co = parse_commit_text(<$fd>);
+	%co = parse_commit_text(<$fd>, 1);
 	close $fd;
 
 	return %co;

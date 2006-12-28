@@ -10,6 +10,6 @@ SUBDIRECTORY_OK=Yes
 
 git-pack-refs --prune &&
 git-reflog expire --all &&
-git-repack -a -d &&
+git-repack -a -d -l &&
 git-prune &&
 git-rerere gc || exit
