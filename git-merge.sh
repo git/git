@@ -227,9 +227,21 @@ case "$use_strategies" in
 '')
 	case "$#" in
 	1)
-		use_strategies="$default_twohead_strategies" ;;
+		var="`git-repo-config --get pull.twohead`"
+		if test -n "$var"
+		then
+			use_strategies="$var"
+		else
+			use_strategies="$default_twohead_strategies"
+		fi ;;
 	*)
-		use_strategies="$default_octopus_strategies" ;;
+		var="`git-repo-config --get pull.octopus`"
+		if test -n "$var"
+		then
+			use_strategies="$var"
+		else
+			use_strategies="$default_octopus_strategies"
+		fi ;;
 	esac
 	;;
 esac
