@@ -176,7 +176,7 @@ test_create_repo () {
 	repo="$1"
 	mkdir "$repo"
 	cd "$repo" || error "Cannot setup test environment"
-	"$GIT_EXEC_PATH/git" init-db --template=$GIT_EXEC_PATH/templates/blt/ 2>/dev/null ||
+	"$GIT_EXEC_PATH/git" init-db --template=$GIT_EXEC_PATH/templates/blt/ >/dev/null 2>&1 ||
 	error "cannot run git init-db -- have you built things yet?"
 	mv .git/hooks .git/hooks-disabled
 	cd "$owd"
