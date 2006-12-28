@@ -806,7 +806,8 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 		if (!strcmp(argv[1], "-k"))
 			keep_subject = 1;
 		else if (!strcmp(argv[1], "-u"))
-			metainfo_charset = git_commit_encoding;
+			metainfo_charset = (git_commit_encoding
+					    ? git_commit_encoding : "utf-8");
 		else if (!strncmp(argv[1], "--encoding=", 11))
 			metainfo_charset = argv[1] + 11;
 		else

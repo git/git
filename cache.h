@@ -416,8 +416,8 @@ extern int check_repository_format_version(const char *var, const char *value);
 extern char git_default_email[MAX_GITNAME];
 extern char git_default_name[MAX_GITNAME];
 
-#define MAX_ENCODING_LENGTH 64
-extern char git_commit_encoding[MAX_ENCODING_LENGTH];
+extern char *git_commit_encoding;
+extern char *git_log_output_encoding;
 
 extern int copy_fd(int ifd, int ofd);
 extern void write_or_die(int fd, const void *buf, size_t count);

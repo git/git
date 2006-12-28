@@ -33,13 +33,10 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		const char *arg = argv[i];
 		if (!strncmp(arg, "--encoding=", 11)) {
 			arg += 11;
-			if (MAX_ENCODING_LENGTH <= strlen(arg))
-				die(" Value of output encoding '%s' too long",
-				    arg);
 			if (strcmp(arg, "none"))
-				strcpy(git_commit_encoding, arg);
+				git_log_output_encoding = strdup(arg);
 			else
-				git_commit_encoding[0] = 0;
+				git_log_output_encoding = "";
 		}
 		else
 			die("unrecognized argument: %s", arg);
