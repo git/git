@@ -19,7 +19,7 @@ ref_type=$(git cat-file -t "$3")
 case "$1","$ref_type" in
 refs/tags/*,commit)
 	echo "*** Un-annotated tags are not allowed in this repo" >&2
-	echo "*** Use 'git tag [ -a | -s ]' for tags you want to propagate."
+	echo "*** Use 'git tag [ -a | -s ]' for tags you want to propagate." >&2
 	exit 1;;
 refs/tags/*,tag)
 	echo "### Pushing version '${1##refs/tags/}' to the masses" >&2
