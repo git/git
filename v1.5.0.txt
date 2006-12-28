@@ -182,6 +182,16 @@ Updates in v1.5.0 since v1.4.4 series
    defaults to UTF-8. 
 
 
+* Foreign SCM interfaces
+
+  - git-svn now requires the Perl SVN:: libraries, the
+    command-line backend was too slow and limited.
+
+  - the 'commit' command has been renamed to 'set-tree', and
+    'dcommit' is the recommended replacement for day-to-day
+    work.
+
+
 * User support
 
  - Quite a lot of documentation updates.
