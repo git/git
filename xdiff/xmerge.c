@@ -190,6 +190,10 @@ static int xdl_refine_conflicts(xdfenv_t *xe1, xdfenv_t *xe2, xdmerge_t *m,
 		if (m->mode)
 			continue;
 
+		/* no sense refining a conflict when one side is empty */
+		if (m->chg1 == 0 || m->chg2 == 0)
+			continue;
+
 		/*
 		 * This probably does not work outside git, since
 		 * we have a very simple mmfile structure.
