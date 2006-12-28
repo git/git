@@ -18,6 +18,10 @@ use File::Find qw();
 use File::Basename qw(basename);
 binmode STDOUT, ':utf8';
 
+BEGIN {
+	CGI->compile() if $ENV{MOD_PERL};
+}
+
 our $cgi = new CGI;
 our $version = "++GIT_VERSION++";
 our $my_url = $cgi->url();
@@ -1711,6 +1715,7 @@ sub git_header_html {
 	}
 	print $cgi->header(-type=>$content_type, -charset => 'utf-8',
 	                   -status=> $status, -expires => $expires);
+	my $mod_perl_version = $ENV{'MOD_PERL'} ? " $ENV{'MOD_PERL'}" : '';
 	print <<EOF;
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -1719,7 +1724,7 @@ sub git_header_html {
 <!-- git core binaries version $git_version -->
 <head>
 <meta http-equiv="content-type" content="$content_type; charset=utf-8"/>
-<meta name="generator" content="gitweb/$version git/$git_version"/>
+<meta name="generator" content="gitweb/$version git/$git_version$mod_perl_version"/>
 <meta name="robots" content="index, nofollow"/>
 <title>$title</title>
 EOF

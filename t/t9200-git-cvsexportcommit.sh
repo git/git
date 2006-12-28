@@ -14,16 +14,18 @@ then
     exit
 fi
 
-export CVSROOT=$(pwd)/cvsroot
-export CVSWORK=$(pwd)/cvswork
+CVSROOT=$(pwd)/cvsroot
+CVSWORK=$(pwd)/cvswork
+GIT_DIR=$(pwd)/.git
+export CVSROOT CVSWORK GIT_DIR
+
 rm -rf "$CVSROOT" "$CVSWORK"
 mkdir "$CVSROOT" &&
 cvs init &&
 cvs -Q co -d "$CVSWORK" . &&
-export GIT_DIR=$(pwd)/.git &&
 echo >empty &&
 git add empty &&
-git commit -a -m "Initial" 2>/dev/null ||
+git commit -q -a -m "Initial" 2>/dev/null ||
 exit 1
 
 test_expect_success \

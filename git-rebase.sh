@@ -28,6 +28,7 @@ Example:       git-rebase master~1 topic
   D---E---F---G master          D---E---F---G master
 '
 . git-sh-setup
+set_reflog_action rebase
 
 RESOLVEMSG="
 When you have resolved this problem run \"git rebase --continue\".
@@ -80,10 +81,18 @@ continue_merge () {
 call_merge () {
 	cmt="$(cat $dotest/cmt.$1)"
 	echo "$cmt" > "$dotest/current"
-	git-merge-$strategy "$cmt^" -- HEAD "$cmt"
+	hd=$(git-rev-parse --verify HEAD)
+	cmt_name=$(git-symbolic-ref HEAD)
+	msgnum=$(cat $dotest/msgnum)
+	end=$(cat $dotest/end)
+	eval GITHEAD_$cmt='"${cmt_name##refs/heads/}~$(($end - $msgnum))"'
+	eval GITHEAD_$hd='"$(cat $dotest/onto_name)"'
+	export GITHEAD_$cmt GITHEAD_$hd
+	git-merge-$strategy "$cmt^" -- "$hd" "$cmt"
 	rv=$?
 	case "$rv" in
 	0)
+		unset GITHEAD_$cmt GITHEAD_$hd
 		return
 		;;
 	1)
@@ -132,8 +141,7 @@ do
 			finish_rb_merge
 			exit
 		fi
-		git am --resolved --3way --resolvemsg="$RESOLVEMSG" \
-			--reflog-action=rebase
+		git am --resolved --3way --resolvemsg="$RESOLVEMSG"
 		exit
 		;;
 	--skip)
@@ -156,8 +164,7 @@ do
 			finish_rb_merge
 			exit
 		fi
-		git am -3 --skip --resolvemsg="$RESOLVEMSG" \
-			--reflog-action=rebase
+		git am -3 --skip --resolvemsg="$RESOLVEMSG"
 		exit
 		;;
 	--abort)
@@ -306,8 +313,7 @@ fi
 if test -z "$do_merge"
 then
 	git-format-patch -k --stdout --full-index --ignore-if-in-upstream "$upstream"..ORIG_HEAD |
-	git am --binary -3 -k --resolvemsg="$RESOLVEMSG" \
-		--reflog-action=rebase
+	git am --binary -3 -k --resolvemsg="$RESOLVEMSG"
 	exit $?
 fi
 
@@ -316,6 +322,7 @@ fi
 
 mkdir -p "$dotest"
 echo "$onto" > "$dotest/onto"
+echo "$onto_name" > "$dotest/onto_name"
 prev_head=`git-rev-parse HEAD^0`
 echo "$prev_head" > "$dotest/prev_head"
 

@@ -3,9 +3,10 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-USAGE='[-n] [--no-commit] [--squash] [-s <strategy>] [--reflog-action=<action>] [-m=<merge-message>] <commit>+'
+USAGE='[-n] [--no-commit] [--squash] [-s <strategy>] [-m=<merge-message>] <commit>+'
 
 . git-sh-setup
+set_reflog_action "merge $*"
 
 LF='
 '
@@ -57,10 +58,10 @@ squash_message () {
 finish () {
 	if test '' = "$2"
 	then
-		rlogm="$rloga"
+		rlogm="$GIT_REFLOG_ACTION"
 	else
 		echo "$2"
-		rlogm="$rloga: $2"
+		rlogm="$GIT_REFLOG_ACTION: $2"
 	fi
 	case "$squash" in
 	t)
@@ -154,7 +155,7 @@ merge_name () {
 
 case "$#" in 0) usage ;; esac
 
-rloga= have_message=
+have_message=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -183,9 +184,6 @@ do
 		*)
 			die "available strategies are: $all_strategies" ;;
 		esac
-		;;
-	--reflog-action=*)
-		rloga=`expr "z$1" : 'z-[^=]*=\(.*\)'`
 		;;
 	-m=*|--m=*|--me=*|--mes=*|--mess=*|--messa=*|--messag=*|--message=*)
 		merge_msg=`expr "z$1" : 'z-[^=]*=\(.*\)'`
@@ -258,7 +256,6 @@ head=$(git-rev-parse --verify "$head_arg"^0) || usage
 
 # All the rest are remote heads
 test "$#" = 0 && usage ;# we need at least one remote head.
-test "$rloga" = '' && rloga="merge: $@"
 
 remoteheads=
 for remote
@@ -275,9 +272,21 @@ case "$use_strategies" in
 '')
 	case "$#" in
 	1)
-		use_strategies="$default_twohead_strategies" ;;
+		var="`git-repo-config --get pull.twohead`"
+		if test -n "$var"
+		then
+			use_strategies="$var"
+		else
+			use_strategies="$default_twohead_strategies"
+		fi ;;
 	*)
-		use_strategies="$default_octopus_strategies" ;;
+		var="`git-repo-config --get pull.octopus`"
+		if test -n "$var"
+		then
+			use_strategies="$var"
+		else
+			use_strategies="$default_octopus_strategies"
+		fi ;;
 	esac
 	;;
 esac
