@@ -90,18 +90,6 @@ case "$merge_head" in
 		echo >&2 "Cannot merge multiple branches into empty head"
 		exit 1
 	fi
-	var=`git-repo-config --get pull.octopus`
-	if test -n "$var"
-	then
-		strategy_default_args="-s $var"
-	fi
-	;;
-*)
-	var=`git-repo-config --get pull.twohead`
-	if test -n "$var"
-        then
-		strategy_default_args="-s $var"
-	fi
 	;;
 esac
 
@@ -111,12 +99,6 @@ then
 	git-read-tree --reset -u HEAD || exit 1
 	exit
 fi
-
-case "$strategy_args" in
-'')
-	strategy_args=$strategy_default_args
-	;;
-esac
 
 merge_name=$(git-fmt-merge-msg <"$GIT_DIR/FETCH_HEAD") || exit
 exec git-merge $no_summary $no_commit $squash $strategy_args \
