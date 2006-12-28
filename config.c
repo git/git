@@ -309,9 +309,15 @@ int git_default_config(const char *var, const char *value)
 	}
 
 	if (!strcmp(var, "i18n.commitencoding")) {
-		strlcpy(git_commit_encoding, value, sizeof(git_commit_encoding));
+		git_commit_encoding = strdup(value);
 		return 0;
 	}
+
+	if (!strcmp(var, "i18n.logoutputencoding")) {
+		git_log_output_encoding = strdup(value);
+		return 0;
+	}
+
 
 	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
 		pager_use_color = git_config_bool(var,value);

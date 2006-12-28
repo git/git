@@ -592,12 +592,20 @@ static char *get_header(const struct commit *commit, const char *key)
 
 static char *logmsg_reencode(const struct commit *commit)
 {
-	char *encoding = get_header(commit, "encoding");
+	char *encoding;
 	char *out;
+	char *output_encoding = (git_log_output_encoding
+				 ? git_log_output_encoding
+				 : git_commit_encoding);
 
-	if (!encoding || !strcmp(encoding, git_commit_encoding))
+	if (!output_encoding)
 		return NULL;
-	out = reencode_string(commit->buffer, git_commit_encoding, encoding);
+	encoding = get_header(commit, "encoding");
+	if (!encoding || !strcmp(encoding, output_encoding)) {
+		free(encoding);
+		return NULL;
+	}
+	out = reencode_string(commit->buffer, output_encoding, encoding);
 	free(encoding);
 	if (!out)
 		return NULL;
@@ -618,15 +626,10 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 	int parents_shown = 0;
 	const char *msg = commit->buffer;
 	int plain_non_ascii = 0;
-	char *reencoded = NULL;
+	char *reencoded = logmsg_reencode(commit);
 
-	if (*git_commit_encoding) {
-		reencoded = logmsg_reencode(commit);
-		if (reencoded) {
-			msg = reencoded;
-			len = strlen(msg);
-		}
-	}
+	if (reencoded)
+		msg = reencoded;
 
 	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
 		indent = 0;
@@ -643,7 +646,7 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 		for (in_body = i = 0; (ch = msg[i]) && i < len; i++) {
 			if (!in_body) {
 				/* author could be non 7-bit ASCII but
-				 * the log may so; skip over the
+				 * the log may be so; skip over the
 				 * header part first.
 				 */
 				if (ch == '\n' &&

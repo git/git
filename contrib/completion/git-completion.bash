@@ -711,6 +711,7 @@ _git_repo_config ()
 		core.compression
 		core.legacyHeaders
 		i18n.commitEncoding
+		i18n.logOutputEncoding
 		diff.color
 		color.diff
 		diff.renameLimit

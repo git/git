@@ -248,6 +248,10 @@ i18n.commitEncoding::
 	browser (and possibly at other places in the future or in other
 	porcelains). See e.g. gitlink:git-mailinfo[1]. Defaults to 'utf-8'.
 
+i18n.logOutputEncoding::
+	Character encoding the commit messages are converted to when
+	running `git-log` and friends.
+
 log.showroot::
 	If true, the initial commit will be shown as a big creation event.
 	This is equivalent to a diff against an empty tree.
