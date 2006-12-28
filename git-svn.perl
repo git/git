@@ -216,7 +216,7 @@ information.
 }
 
 sub version {
-	print "git-svn version $VERSION\n";
+	print "git-svn version $VERSION (svn $SVN::Core::VERSION)\n";
 	exit 0;
 }
 
