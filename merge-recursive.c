@@ -1248,6 +1248,18 @@ static int merge(struct commit *h1,
 	return clean;
 }
 
+static const char *better_branch_name(const char *branch)
+{
+	static char githead_env[8 + 40 + 1];
+	char *name;
+
+	if (strlen(branch) != 40)
+		return branch;
+	sprintf(githead_env, "GITHEAD_%s", branch);
+	name = getenv(githead_env);
+	return name ? name : branch;
+}
+
 static struct commit *get_ref(const char *ref)
 {
 	unsigned char sha1[20];
@@ -1261,18 +1273,6 @@ static struct commit *get_ref(const char *ref)
 	if (parse_commit((struct commit *)object))
 		die("Could not parse commit '%s'", sha1_to_hex(object->sha1));
 	return (struct commit *)object;
-}
-
-static const char *better_branch_name(const char *branch)
-{
-	static char githead_env[8 + 40 + 1];
-	char *name;
-
-	if (strlen(branch) != 40)
-		return branch;
-	sprintf(githead_env, "GITHEAD_%s", branch);
-	name = getenv(githead_env);
-	return name ? name : branch;
 }
 
 int main(int argc, char *argv[])
