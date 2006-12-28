@@ -5,6 +5,7 @@
 USAGE='[--mixed | --soft | --hard]  [<commit-ish>] [ [--] <paths>...]'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
+set_reflog_action "reset $*"
 
 update= reset_type=--mixed
 unset rev
@@ -81,7 +82,7 @@ then
 else
 	rm -f "$GIT_DIR/ORIG_HEAD"
 fi
-git-update-ref -m "reset $reset_type $*" HEAD "$rev"
+git-update-ref -m "$GIT_REFLOG_ACTION" HEAD "$rev"
 update_ref_status=$?
 
 case "$reset_type" in
