@@ -1,0 +1,580 @@
+Major changes that are not news
+-------------------------------
+
+There were a handful big changes that happened before this major
+release.
+
+This section is for people who are upgrading from ancient
+versions.  Some of them are one-way street upgrades -- once you
+use the feature your repository cannot be used with ancient git.
+
+ - There is a new configuration variable core.legacyheaders that
+   changes the format of loose objects to more efficient to pack
+   and send out of the repository over git native protocol.
+   However, this format cannot be read by git older than v1.4.2;
+   people fetching from your repository using older clients over
+   dumb transports (e.g. http) will also be affected.  This is
+   not enabled by default.
+
+ - Another configuration repack.usedeltabaseoffset further
+   allows packfile to be created in more space efficient format,
+   which cannot be read  by git older than v1.4.3.  This is not
+   enabled by default.
+
+ - 'git pack-refs' appeared in v1.4.4; this command allows tags
+   to be accessed much more efficiently than the traditional
+   'one-file-per-tag' format.  Older git-native client can fetch
+   from a repository that packed its tags, but older dumb
+   transports cannot.  This is done by an explicit user action,
+   either by use of "git pack-refs --prune" command or by use of
+   "git gc" command.
+
+ - 'git -p' to paginate anything -- many commands do pagination
+   by default on a tty.  Introduced between v1.4.1 and v1.4.2;
+   this may surprise old timer users.
+
+ - 'git archive' superseded 'git tar' in v1.4.3;
+
+ - 'git cvsserver' was new invention in v1.3.0;
+
+ - 'git repo-config', 'git grep', 'git rebase' and 'gitk' were
+   seriously enhanced during v1.4.0 timeperiod.
+
+ - 'gitweb' became part of git.git during v1.4.0 timeperiod and
+   seriously modified since then.
+
+ - reflog is an v1.4.0 invention.
+
+
+Updates in v1.5.0 since v1.4.4 series
+-------------------------------------
+
+* Index manipulation
+
+ - git-add is to add contents to the index (aka "staging area"
+   for the next commit), whether the file the contents happen to
+   be is an existing one or a newly created one.
+
+ - git-add without any argument does not add everything
+   anymore.  Use 'git-add .' instead.  Also you can add
+   otherwise ignored files with an -f option.
+
+ - git-add tries to be more friendly to users by offering an
+   interactive mode.
+
+ - git-commit <path> used to refuse to commit if <path> was
+   different between HEAD and the index (i.e. update-index was
+   used on it earlier).  This check was removed.
+
+ - git-rm is much saner and safer.  It is used to remove paths
+   from both the index file and the working tree, and makes sure
+   you are not losing any local modification before doing so.
+
+ - git-reset <tree> <paths>... can be used to revert index
+   entries for selected paths.
+
+ - git-update-index is much less visible.
+
+
+* Repository layout and objects transfer
+
+ - The data for origin repository is stored in the configuration
+   file $GIT_DIR/config, not in $GIT_DIR/remotes/, for newly
+   created clones (the latter is still supported).
+
+ - git-clone always uses what is known as "separate remote"
+   layout for a newly created repository with a working tree;
+   i.e. tracking branches in $GIT_DIR/refs/remotes/origin/ are
+   used to track branches from the origin.  New branches that
+   appear on the origin side after a clone is made are also
+   tracked automatically.
+
+ - git-branch and git-show-branch know remote tracking branches.
+
+ - git-push can now be used to delete a remote branch or a tag.
+   This requires the updated git on the remote side.
+
+ - git-push more agressively keeps the transferred objects
+   packed.  Earlier we recommended to monitor amount of loose
+   objects and repack regularly, but you should repack when you
+   accumulated too many small packs this way as well.  Updated
+   git-count-objects helps you with this.
+
+
+* Reflog
+
+ - Reflog records the history of where the tip of each branch
+   was at each moment.  This facility is enabled by default for
+   repositories with working trees, and can be accessed with the
+   "branch@{time}" and "branch@{Nth}" notation.
+
+ - "git show-branch" learned showing the reflog data with the
+   new --reflog option.
+
+ - The commits referred to by reflog entries are now protected
+   against pruning.  The new command "git reflog expire" can be
+   used to truncate older reflog entries and entries that refer
+   to commits that have been pruned away previously with older
+   versions of git.
+
+   Existing repositories that have been using reflog may get
+   complaints from fsck-objects; please run "git reflog expire
+   --all" first to remove reflog entries that refer to commits
+   that are no longer in the repository before attempting to
+   repack it.
+
+ - git-branch knows how to rename branches and moves existing
+   reflog data from the old branch to the new one.
+
+
+* Packed refs
+
+ - Repositories with hundreds of tags have been paying large
+   overhead, both in storage and in runtime.  A new command,
+   git-pack-refs, can be used to "pack" them in more efficient
+   representation.
+
+ - Clones and fetches over dumb transports are now aware of
+   packed refs and can download from repositories that use
+   them.
+
+
+* Configuration
+
+ - configuration related to colorize setting are consolidated
+   under color.* namespace (older diff.color.*, status.color.*
+   are still supported).
+
+
+* Less external dependency
+
+ - We no longer require the "merge" program from the RCS suite.
+   All 3-way file-level merges are now done internally.
+
+ - The original implementation of git-merge-recursive which was
+   in Python has been removed; we have C implementation of it
+   now.
+
+ - git-shortlog is no longer a Perl script.  It no longer
+   requires output piped from git-log; it can accept revision
+   parameters directly on the command line.
+
+
+* I18n
+
+ - We have always encouraged the commit message to be encoded in
+   UTF-8, but the users are allowed to use legacy encoding as
+   appropriate for their projects.  This will continue to be the
+   case.  However, a non UTF-8 commit encoding _must_ be
+   explicitly set with i18n.commitencoding in the repository
+   where a commit is made; otherwise git-commit-tree will
+   complain if the log message does not look like a valid UTF-8
+   string.
+
+ - The value of i18n.commitencoding in the originating
+   repository is recorded in the commit object on the "encoding"
+   header, if it is not UTF-8.  git-log and friends notice this,
+   and reencodes the message to the log output encoding when
+   displaying, if they are different.  The log output encoding
+   is determined by "git log --encoding=<encoding>",
+   i18n.logoutputencoding configuration, or i18n.commitencoding
+   configuration, in the decreasing order of preference, and
+   defaults to UTF-8. 
+
+
+* User support
+
+ - Quite a lot of documentation updates.
+
+ - Bash completion scripts have been updated heavily.
+
+ - Better error messages for often used Porcelainish commands.
+
+
+----------------------------------------------------------------
+Alex Riesen (1):
+ Make perl/ build procedure ActiveState friendly.
+
+Alexandre Julliard (1):
+ vc-git: Ignore errors caused by a non-existent directory in vc-git-registered.
+
+Andreas Ericsson (2):
+ ls-files: Give hints when errors happen.
+ git-diff: Introduce --index and deprecate --cached.
+
+Andy Parkins (8):
+ Improve git-prune -n output
+ Add support to git-branch to show local and remote branches
+ Use .git/config for storing "origin" shortcut repository
+ De-emphasise the symbolic link documentation.
+ Explicitly add the default "git pull" behaviour to .git/config on clone
+ Colourise git-branch output
+ Allow subcommand.color and color.subcommand color configuration
+ git-status always says what branch it's on
+
+Aneesh Kumar K.V (1):
+ Add config example with respect to branch
+
+Brian Gernhardt (6):
+ Add --add option to git-repo-config
+ Make git-diff documentation use [--] when it should.
+ Add documentation for show-branch --topics
+ Remove COLLISION_CHECK from Makefile since it's not used.
+ Keep "git --git-dir" from causing a bus error.
+ Make git-show-branch options similar to git-branch.
+
+David Miller (1):
+ Pass -M to diff in request-pull
+
+Eric Wong (29):
+ git-svn: handle authentication without relying on cached tokens on disk
+ git-svn: correctly access repos when only given partial read permissions
+ git-svn: exit with status 1 for test failures
+ git-svn: allow SVN:: lib users to track the root of the repository (again)
+ git-svn: use ~/.subversion config files when using SVN:: libraries
+ git-svn: enable delta transfers during fetches when using SVN:: libs
+ git-svn: update tests for recent changes
+ git-svn: error out when the SVN connection fails during a fetch
+ git-svn: fix output reporting from the delta fetcher
+ git-svn: color support for the log command
+ git-svn: documentation updates
+ git-svn: fix multi-init
+ git-svn: avoid network timeouts for long-running fetches
+ git-svn: extra error check to ensure we open a file correctly
+ git-svn: use do_switch for --follow-parent if the SVN library supports it
+ rerere: add clear, diff, and status commands
+ rerere: record (or avoid misrecording) resolved, skipped or aborted rebase/am
+ git-svn: enable logging of information not supported by git
+ git-svn: allow dcommit to take an alternate head
+ git-svn: correctly display fatal() error messages
+ git-svn: correctly handle packed-refs in refs/remotes/
+ git-svn: correctly handle "(no author)" when using an authors file
+ git-svn: convert to using Git.pm
+ git-svn: remove support for the svn command-line client
+ git-svn: rename 'commit' command to 'set-tree'
+ git-cvsserver: fix breakage when calling git merge-file
+ Remove NO_ACCURATE_DIFF options from build systems
+ git-svn: enable common fetch/commit options for dcommit
+ Makefile: add quick-install-doc for installing pre-built manpages
+
+Han-Wen Nienhuys (2):
+ git-tag: allow empty tag message if -m is given explicitly.
+ ident.c: Trim hint printed when gecos is empty.
+
+Iñaki Arenaza (1):
+ git-cvsimport: add support for CVS pserver method HTTP/1.x proxying
+
+J. Bruce Fields (5):
+ Documentation: clarify tutorial pull/merge discussion
+ cvs-migration: improved section titles, better push/commit explanation
+ Documentation: reorganize cvs-migration.txt
+ Documentation: update git-clone man page with new behavior
+ Documentation: simpler shared repository creation
+
+Jakub Narebski (26):
+ gitweb: Protect against possible warning in git_commitdiff
+ gitweb: Buffer diff header to deal with split patches + git_patchset_body refactoring
+ gitweb: Default to $hash_base or HEAD for $hash in "commit" and "commitdiff"
+ gitweb: New improved formatting of chunk header in diff
+ gitweb: Add an option to href() to return full URL
+ gitweb: Refactor feed generation, make output prettier, add Atom feed
+ gitweb: Finish restoring "blob" links in git_difftree_body
+ gitweb: Replace SPC with &nbsp; also in tag comment
+ gitweb: Do not use esc_html in esc_path
+ gitweb: Use git-show-ref instead of git-peek-remote
+ gitweb: Add author and committer email extraction to parse_commit
+ gitweb: Add author and contributor email to Atom feed
+ gitweb: Use author_epoch for pubdate in gitweb feeds
+ gitweb: Make project description in projects list link to summary view
+ gitweb: Fix Atom feed <logo>: it is $logo, not $logo_url
+ git-clone: Rename --use-immingled-remote option to --no-separate-remote
+ Document git-diff whitespace flags -b and -w
+ gitweb: Allow PNG, GIF, JPEG images to be displayed in "blob" view
+ gitweb: Don't use Content-Encoding: header in git_snapshot
+ gitweb: Show target of symbolic link in "tree" view
+ gitweb: Add generic git_object subroutine to display object of any type
+ gitweb: Hyperlink target of symbolic link in "tree" view (if possible)
+ gitweb: SHA-1 in commit log message links to "object" view
+ gitweb: Do not show difftree for merges in "commit" view
+ gitweb: Add title attribute to ref marker with full ref name
+ gitweb: Add "next" link to commit view
+
+Jeff King (2):
+ shortlog: fix segfault on empty authorname
+ vim syntax: follow recent changes to commit template
+
+Jim Meyering (1):
+ Set permissions of each new file before "cvs add"ing it.
+
+Johannes Schindelin (30):
+ Build in shortlog
+ shortlog: do not crash on parsing "[PATCH"
+ shortlog: read mailmap from ./.mailmap again
+ shortlog: handle email addresses case-insensitively
+ shortlog: fix "-n"
+ shortlog: use pager
+ sha1_object_info(): be consistent with read_sha1_file()
+ xdiff: add xdl_merge()
+ xdl_merge(): fix an off-by-one bug
+ xdl_merge(): fix thinko
+ diff -b: ignore whitespace at end of line
+ xdl_merge(): fix and simplify conflict handling
+ cvs-migration document: make the need for "push" more obvious
+ Add builtin merge-file, a minimal replacement for RCS merge
+ merge-file: support -p and -q; fix compile warnings
+ Get rid of the dependency on RCS' merge program
+ merge-recursive: add/add really is modify/modify with an empty base
+ INSTALL: no need to have GNU diff installed
+ git-show: grok blobs, trees and tags, too
+ Document git-merge-file
+ add a function to rename sections in the config
+ git-branch: rename config vars branch.<branch>.*, too
+ Introduce GIT_TEMPLATE_DIR
+ Use git-merge-file in git-merge-one-file, too
+ git-tag: support -F <file> option
+ git-reset --hard: tell the user what the HEAD was reset to
+ move read_mmfile() into xdiff-interface
+ Add a test for git-rerere
+ Make git-rerere a builtin
+ commit-tree: encourage UTF-8 commit messages.
+
+Josef Weidendorfer (2):
+ Add branch.*.merge warning and documentation update
+ Move "no merge candidate" warning into git-pull
+
+Junio C Hamano (126):
+ upload-pack: stop the other side when they have more roots than we do.
+ apply --numstat: mark binary diffstat with - -, not 0 0
+ pack-objects: tweak "do not even attempt delta" heuristics
+ Store peeled refs in packed-refs file.
+ remove merge-recursive-old
+ git-merge: make it usable as the first class UI
+ merge: allow merging into a yet-to-be-born branch.
+ Store peeled refs in packed-refs (take 2).
+ git-fetch: reuse ls-remote result.
+ git-fetch: fix dumb protocol transport to fetch from pack-pruned ref
+ git-fetch: allow glob pattern in refspec
+ refs outside refs/{heads,tags} match less strongly.
+ Typefix builtin-prune.c::prune_object()
+ Allow git push to delete remote ref.
+ gitweb: (style) use chomp without parentheses consistently.
+ git-clone: stop dumb protocol from copying refs outside heads/ and tags/.
+ git-branch -D: make it work even when on a yet-to-be-born branch
+ git-shortlog: fix common repository prefix abbreviation.
+ git-shortlog: make common repository prefix configurable with .mailmap
+ git-commit: show --summary after successful commit.
+ git-fetch: exit with non-zero status when fast-forward check fails
+ git-fetch: allow forcing glob pattern in refspec
+ fetch-pack: do not barf when duplicate re patterns are given
+ grep: do not skip unmerged entries when grepping in the working tree.
+ git-merge: tighten error checking.
+ git-merge: do not leak rev-parse output used for checking internally.
+ cvsimport: style fixup.
+ git-merge: fix confusion between tag and branch
+ xmerge: make return value from xdl_merge() more usable.
+ merge-recursive: use xdl_merge().
+ read-tree: further loosen "working file will be lost" check.
+ Loosen "working file will be lost" check in Porcelain-ish
+ read-tree: document --exclude-per-directory
+ git-merge: squelch needless error message.
+ git-merge: fix "fix confusion between tag and branch" for real
+ Fix perl/ build.
+ git-rerere: add 'gc' command.
+ Documentation/git-commit: rewrite to make it more end-user friendly.
+ git-commit: allow --only to lose what was staged earlier.
+ shortlog: remove "[PATCH]" prefix from shortlog output
+ shortlog: fix segfault on empty authorname
+ diff --numstat: show binary with '-' to match "apply --numstat"
+ add test case for recursive merge
+ git-push: document removal of remote ref with :<dst> pathspec
+ Revert "git-diff: Introduce --index and deprecate --cached."
+ git merge: reword failure message.
+ spurious .sp in manpages
+ git-push: accept tag <tag> as advertised.
+ send-pack: tighten checks for remote names
+ branch --color: change default color selection.
+ git-blame: show lines attributed to boundary commits differently.
+ config documentation: group color items together.
+ git-svn: allow both diff.color and color.diff
+ Update git-diff documentation
+ git-fetch: make it work from within a subdirectory.
+ git-reset: make it work from within a subdirectory.
+ git-reset [--mixed] <tree> [--] <paths>...
+ merge: give a bit prettier merge message to "merge branch~$n"
+ git-clone: use wildcard specification for tracking branches
+ git-pull: refuse default merge without branch.*.merge
+ git-clone: lose the artificial "first" fetch refspec
+ git-clone: lose the traditional 'no-separate-remote' layout
+ update-index: make D/F conflict error a bit more verbose.
+ git-add: remove conflicting entry when adding.
+ Fix check_file_directory_conflict().
+ Fix mis-mark-up in git-merge-file.txt documentation
+ markup fix in svnimport documentation.
+ rev-list --left-right
+ Teach all of log family --left-right output.
+ Make left-right automatic.
+ Teach show-branch how to show ref-log data.
+ git-fetch: Avoid reading packed refs over and over again
+ avoid accessing _all_ loose refs in git-show-ref --verify
+ show-ref: fix --quiet --verify
+ show-ref: fix --verify --hash=length
+ parse-remote::expand_refs_wildcard()
+ show-ref: fix --exclude-existing
+ racy-git: documentation updates.
+ rerere: fix breakage of resolving.
+ fix testsuite: make sure they use templates freshly built from the source
+ Teach git-branch to delete tracking branches with -r -d
+ blame: -b (blame.blankboundary) and --root (blame.showroot)
+ git-add --interactive
+ git-add --interactive: hunk splitting
+ Revert "fix testsuite: make sure they use templates freshly built from the source"
+ Do not create $GIT_DIR/remotes/ directory anymore.
+ Use preprocessor constants for environment variable names.
+ Revert "Make left-right automatic."
+ fix populate-filespec
+ config_rename_section: fix FILE* leak
+ simplify inclusion of system header files.
+ revision: --skip=<n>
+ git-add: error out when given no arguments.
+ compat/inet_ntop: do not use u_int
+ diff documentation: mostly talk about <commit>
+ add for_each_reflog_ent() iterator
+ Protect commits recorded in reflog from pruning.
+ Teach git-repack to preserve objects referred to by reflog entries.
+ reflog: fix warning message.
+ Move in_merge_bases() to commit.c
+ git reflog expire
+ Revert "git-pull: refuse default merge without branch.*.merge"
+ parse-remote: mark all refs not for merge only when fetching more than one
+ _XOPEN_SOURCE problem also exists on FreeBSD
+ commit-tree: do not overflow MAXPARENT
+ reflog expire: prune commits that are not incomplete
+ merge and reset: adjust for "reset --hard" messages
+ default pull: forget about "newbie protection" for now.
+ Do not support "partial URL shorthand" anymore.
+ Really fix headers for __FreeBSD__
+ git-tag: lose exit after die
+ reflog expire: do not punt on tags that point at non commits.
+ Allow branch.*.merge to talk about remote tracking branches.
+ git-add --interactive: add documentation
+ match_pathspec() -- return how well the spec matched
+ git-rm: update to saner semantics
+ t3600: update the test for updated git rm
+ git-rm: Documentation
+ read_directory: show_both option.
+ git-add: add ignored files when asked explicitly.
+ git-add: warn when adding an ignored file with an explicit request.
+ git-add -f: allow adding otherwise ignored files.
+ GIT v1.5.0 preview
+ Move encoding conversion routine out of mailinfo to utf8.c
+ i18n.logToUTF8: convert commit log message to UTF-8
+ Teach log family --encoding
+
+Lars Hjemli (4):
+ Add -v and --abbrev options to git-branch
+ git-branch: add options and tests for branch renaming
+ rename_ref: use lstat(2) when testing for symlink
+ git-branch: let caller specify logmsg
+
+Luben Tuikov (1):
+ Export PERL_PATH
+
+Michael Loeffler (1):
+ git-fetch: ignore dereferenced tags in expand_refs_wildcard
+
+Nicolas Pitre (12):
+ builtin git-shortlog is broken
+ pack-objects: remove redundent status information
+ make 'git add' a first class user friendly interface to the index
+ change the unpack limit treshold to a saner value
+ repacked packs should be read-only
+ make commit message a little more consistent and conforting
+ make patch_delta() error cases a bit more verbose
+ make git a bit less cryptic on fetch errors
+ index-pack usage of mmap() is unacceptably slower on many OSes other than Linux
+ clarify some error messages wrt unknown object types
+ checkout: make the message about the need for a new branch a bit clearer
+ add .mailmap for git-shortlog output with the git repository
+
+Paul Mackerras (1):
+ gitk: Fix enabling/disabling of menu items on Mac OS X
+
+Peter Baumann (1):
+ config option log.showroot to show the diff of root commits
+
+Petr Baudis (1):
+ Make git-clone --use-separate-remote the default
+
+Quy Tonthat (4):
+ git-clone documentation
+ Documentation: new option -P for git-svnimport
+ git-branch -d: do not stop at the first failure.
+ Documentation/git-branch: new -r to delete remote-tracking branches.
+
+René Scharfe (1):
+ shortlog: remove range check
+
+Robert Fitzsimons (17):
+ gitweb: Show '...' links in "summary" view only if there are more items
+ gitweb: Add missing show '...' links change.
+ gitweb: optimize git_get_last_activity.
+ gitweb: optimize git_shortlog_body.
+ gitweb: optimize git_summary.
+ gitweb: Use rev-list pattern search options.
+ gitweb: Require a minimum of two character for the search text.
+ gitweb: Allow search to be disabled from the config file.
+ gitweb: Paginate commit/author/committer search output
+ gitweb: Add parse_commits, used to bulk load commit objects.
+ gitweb: We do longer need the --parents flag in rev-list.
+ gitweb: Change summary, shortlog actions to use parse_commits.
+ gitweb: Change log action to use parse_commits.
+ gitweb: Change header search action to use parse_commits.
+ gitweb: Change atom, rss actions to use parse_commits.
+ gitweb: Change history action to use parse_commits.
+ gitweb: Use rev-list --skip option.
+
+Robin Rosenberg (1):
+ Make cvsexportcommit work with filenames with spaces and non-ascii characters.
+
+Sean Estabrooks (1):
+ Update documentation to remove incorrect GIT_DIFF_OPTS example.
+
+Shawn O. Pearce (31):
+ Teach git-completion.bash how to complete git-merge.
+ Hide plumbing/transport commands from bash completion.
+ Teach bash how to complete options for git-name-rev.
+ Add current branch in PS1 support to git-completion.bash.
+ Teach bash how to complete git-format-patch.
+ Teach bash how to complete git-cherry-pick.
+ Teach bash how to complete git-rebase.
+ Teach bash about git log/show/whatchanged options.
+ Support bash completion of refs/remote.
+ Teach bash about git-repo-config.
+ Support --strategy=x completion in addition to --strategy x.
+ Cache the list of merge strategies and available commands during load.
+ Teach bash about git-am/git-apply and their whitespace options.
+ Teach bash how to complete long options for git-commit.
+ Fix broken bash completion of local refs.
+ Remove uncontested renamed files during merge.
+ Avoid accessing a slow working copy during diffcore operations.
+ Provide more meaningful output from 'git init-db'.
+ Enable reflogs by default in any repository with a working directory.
+ Teach bash the new features of 'git show'.
+ Suggest use of "git add file1 file2" when there is nothing to commit.
+ Align section headers of 'git status' to new 'git add'.
+ Default GIT_COMMITTER_NAME to login name in recieve-pack.
+ Suggest 'add' in am/revert/cherry-pick.
+ Rename imap-send's internal info/warn functions.
+ Introduce a global level warn() function.
+ Don't crash during repack of a reflog with pruned commits.
+ Use extended SHA1 syntax in merge-recursive conflicts.
+ Display 'theirs' branch name when possible in merge.
+ Rename gitfakemmap to git_mmap.
+ Switch git_mmap to use pread.
+
+Terje Sten Bjerkseth (1):
+ Fix system header problems on Mac OS X
+
+Uwe Zeisberger (1):
+ Fix documentation copy&paste typo
+
