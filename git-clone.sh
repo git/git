@@ -14,7 +14,7 @@ die() {
 }
 
 usage() {
-	die "Usage: $0 [--template=<template_directory>] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [-n] <repo> [<dir>]"
+	die "Usage: $0 [--template=<template_directory>] [--reference <reference-repo>] [--bare] [-l [-s]] [-q] [-u <upload-pack>] [--origin <name>] [--depth <n>] [-n] <repo> [<dir>]"
 }
 
 get_repo_base() {
@@ -120,6 +120,7 @@ reference=
 origin=
 origin_override=
 use_separate_remote=t
+depth=
 while
 	case "$#,$1" in
 	0,*) break ;;
@@ -163,6 +164,10 @@ while
 	*,-u|*,--upload-pack)
 		shift
 		upload_pack="--exec=$1" ;;
+	1,--depth) usage;;
+	*,--depth)
+		shift
+		depth="--depth=$1";;
 	*,-*) usage ;;
 	*) break ;;
 	esac
@@ -267,6 +272,10 @@ yes,yes)
 *)
 	case "$repo" in
 	rsync://*)
+		case "$depth" in
+		"") ;;
+		*) die "shallow over rsync not supported" ;;
+		esac
 		rsync $quiet -av --ignore-existing  \
 			--exclude info "$repo/objects/" "$GIT_DIR/objects/" ||
 		exit
@@ -295,6 +304,10 @@ yes,yes)
 		git-ls-remote "$repo" >"$GIT_DIR/CLONE_HEAD" || exit 1
 		;;
 	https://*|http://*|ftp://*)
+		case "$depth" in
+		"") ;;
+		*) die "shallow over http or ftp not supported" ;;
+		esac
 		if test -z "@@NO_CURL@@"
 		then
 			clone_dumb_http "$repo" "$D"
@@ -304,8 +317,8 @@ yes,yes)
 		;;
 	*)
 		case "$upload_pack" in
-		'') git-fetch-pack --all -k $quiet "$repo" ;;
-		*) git-fetch-pack --all -k $quiet "$upload_pack" "$repo" ;;
+		'') git-fetch-pack --all -k $quiet $depth "$repo" ;;
+		*) git-fetch-pack --all -k $quiet "$upload_pack" $depth "$repo" ;;
 		esac >"$GIT_DIR/CLONE_HEAD" ||
 			die "fetch-pack from '$repo' failed."
 		;;

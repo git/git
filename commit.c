@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "tag.h"
 #include "commit.h"
+#include "pkt-line.h"
 
 int save_commit_buffer = 1;
 
@@ -221,6 +222,8 @@ static void prepare_commit_graft(void)
 		return;
 	graft_file = get_graft_file();
 	read_graft_file(graft_file);
+	/* make sure shallows are read */
+	is_repository_shallow();
 	commit_graft_prepared = 1;
 }
 
@@ -232,6 +235,37 @@ static struct commit_graft *lookup_commit_graft(const unsigned char *sha1)
 	if (pos < 0)
 		return NULL;
 	return commit_graft[pos];
+}
+
+int write_shallow_commits(int fd, int use_pack_protocol)
+{
+	int i, count = 0;
+	for (i = 0; i < commit_graft_nr; i++)
+		if (commit_graft[i]->nr_parent < 0) {
+			const char *hex =
+				sha1_to_hex(commit_graft[i]->sha1);
+			count++;
+			if (use_pack_protocol)
+				packet_write(fd, "shallow %s", hex);
+			else {
+				write(fd, hex,  40);
+				write(fd, "\n", 1);
+			}
+		}
+	return count;
+}
+
+int unregister_shallow(const unsigned char *sha1)
+{
+	int pos = commit_graft_pos(sha1);
+	if (pos < 0)
+		return -1;
+	if (pos + 1 < commit_graft_nr)
+		memcpy(commit_graft + pos, commit_graft + pos + 1,
+				sizeof(struct commit_graft *)
+				* (commit_graft_nr - pos - 1));
+	commit_graft_nr--;
+	return 0;
 }
 
 int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)

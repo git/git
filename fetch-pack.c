@@ -10,8 +10,9 @@ static int keep_pack;
 static int quiet;
 static int verbose;
 static int fetch_all;
+static int depth;
 static const char fetch_pack_usage[] =
-"git-fetch-pack [--all] [-q] [-v] [-k] [--thin] [--exec=upload-pack] [host:]directory <refs>...";
+"git-fetch-pack [--all] [-q] [-v] [-k] [--thin] [--exec=upload-pack] [--depth=<n>] [host:]directory <refs>...";
 static const char *exec = "git-upload-pack";
 
 #define COMPLETE	(1U << 0)
@@ -179,9 +180,40 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 			packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
 		fetching++;
 	}
+	if (is_repository_shallow())
+		write_shallow_commits(fd[1], 1);
+	if (depth > 0)
+		packet_write(fd[1], "deepen %d", depth);
 	packet_flush(fd[1]);
 	if (!fetching)
 		return 1;
+
+	if (depth > 0) {
+		char line[1024];
+		unsigned char sha1[20];
+		int len;
+
+		while ((len = packet_read_line(fd[0], line, sizeof(line)))) {
+			if (!strncmp("shallow ", line, 8)) {
+				if (get_sha1_hex(line + 8, sha1))
+					die("invalid shallow line: %s", line);
+				register_shallow(sha1);
+				continue;
+			}
+			if (!strncmp("unshallow ", line, 10)) {
+				if (get_sha1_hex(line + 10, sha1))
+					die("invalid unshallow line: %s", line);
+				if (!lookup_object(sha1))
+					die("object not found: %s", line);
+				/* make sure that it is parsed as shallow */
+				parse_object(sha1);
+				if (unregister_shallow(sha1))
+					die("no shallow found: %s", line);
+				continue;
+			}
+			die("expected shallow/unshallow, got %s", line);
+		}
+	}
 
 	flushes = 0;
 	retval = -1;
@@ -309,7 +341,8 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 		if (!memcmp(ref->name, "refs/", 5) &&
 		    check_ref_format(ref->name + 5))
 			; /* trash */
-		else if (fetch_all) {
+		else if (fetch_all &&
+			 (!depth || strncmp(ref->name, "refs/tags/", 10) )) {
 			*newtail = ref;
 			ref->next = NULL;
 			newtail = &ref->next;
@@ -368,9 +401,11 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 		}
 	}
 
-	for_each_ref(mark_complete, NULL);
-	if (cutoff)
-		mark_recent_complete_commits(cutoff);
+	if (!depth) {
+		for_each_ref(mark_complete, NULL);
+		if (cutoff)
+			mark_recent_complete_commits(cutoff);
+	}
 
 	/*
 	 * Mark all complete remote refs as common refs.
@@ -522,6 +557,8 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 	int status;
 
 	get_remote_heads(fd[0], &ref, 0, NULL, 0);
+	if (is_repository_shallow() && !server_supports("shallow"))
+		die("Server does not support shallow clients");
 	if (server_supports("multi_ack")) {
 		if (verbose)
 			fprintf(stderr, "Server supports multi_ack\n");
@@ -594,6 +631,8 @@ int main(int argc, char **argv)
 	char *dest = NULL, **heads;
 	int fd[2];
 	pid_t pid;
+	struct stat st;
+	struct lock_file lock;
 
 	setup_git_directory();
 
@@ -627,6 +666,12 @@ int main(int argc, char **argv)
 				verbose = 1;
 				continue;
 			}
+			if (!strncmp("--depth=", arg, 8)) {
+				depth = strtol(arg + 8, NULL, 0);
+				if (stat(git_path("shallow"), &st))
+					st.st_mtime = 0;
+				continue;
+			}
 			usage(fetch_pack_usage);
 		}
 		dest = arg;
@@ -657,6 +702,35 @@ int main(int argc, char **argv)
 				error("no such remote ref %s", heads[i]);
 				ret = 1;
 			}
+	}
+
+	if (!ret && depth > 0) {
+		struct cache_time mtime;
+		char *shallow = git_path("shallow");
+		int fd;
+
+		mtime.sec = st.st_mtime;
+#ifdef USE_NSEC
+		mtime.usec = st.st_mtim.usec;
+#endif
+		if (stat(shallow, &st)) {
+			if (mtime.sec)
+				die("shallow file was removed during fetch");
+		} else if (st.st_mtime != mtime.sec
+#ifdef USE_NSEC
+				|| st.st_mtim.usec != mtime.usec
+#endif
+			  )
+			die("shallow file was changed during fetch");
+
+		fd = hold_lock_file_for_update(&lock, shallow, 1);
+		if (!write_shallow_commits(fd, 0)) {
+			unlink(shallow);
+			rollback_lock_file(&lock);
+		} else {
+			close(fd);
+			commit_lock_file(&lock);
+		}
 	}
 
 	return !!ret;
