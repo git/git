@@ -26,7 +26,7 @@ test_expect_success 'no encoding header for base case' '
 	test z = "z$E"
 '
 
-for H in ISO-8859-1 EUCJP ISO2022JP
+for H in ISO-8859-1 EUCJP ISO-2022-JP
 do
 	test_expect_success "$H setup" '
 		git-repo-config i18n.commitencoding $H &&
@@ -36,7 +36,7 @@ do
 	'
 done
 
-for H in ISO-8859-1 EUCJP ISO2022JP
+for H in ISO-8859-1 EUCJP ISO-2022-JP
 do
 	test_expect_success "check encoding header for $H" '
 		E=$(git-cat-file commit '$H' | sed -ne "s/^encoding //p") &&
@@ -60,7 +60,7 @@ test_expect_success 'ISO-8859-1 should be shown in UTF-8 now' '
 	compare_with ISO-8859-1 ../t3900/1-UTF-8.txt
 '
 
-for H in EUCJP ISO2022JP
+for H in EUCJP ISO-2022-JP
 do
 	test_expect_success "$H should be shown in UTF-8 now" '
 		compare_with '$H' ../t3900/2-UTF-8.txt
@@ -78,7 +78,7 @@ test_expect_success 'repo-config to add customization' '
 	fi
 '
 
-for H in ISO-8859-1 EUCJP ISO2022JP
+for H in ISO-8859-1 EUCJP ISO-2022-JP
 do
 	test_expect_success "$H should be shown in itself now" '
 		git-repo-config i18n.commitencoding '$H' &&
@@ -94,7 +94,7 @@ test_expect_success 'ISO-8859-1 should be shown in UTF-8 now' '
 	compare_with ISO-8859-1 ../t3900/1-UTF-8.txt
 '
 
-for H in EUCJP ISO2022JP
+for H in EUCJP ISO-2022-JP
 do
 	test_expect_success "$H should be shown in UTF-8 now" '
 		compare_with '$H' ../t3900/2-UTF-8.txt
