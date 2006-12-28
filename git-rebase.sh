@@ -81,10 +81,18 @@ continue_merge () {
 call_merge () {
 	cmt="$(cat $dotest/cmt.$1)"
 	echo "$cmt" > "$dotest/current"
-	git-merge-$strategy "$cmt^" -- HEAD "$cmt"
+	hd=$(git-rev-parse --verify HEAD)
+	cmt_name=$(git-symbolic-ref HEAD)
+	msgnum=$(cat $dotest/msgnum)
+	end=$(cat $dotest/end)
+	eval GITHEAD_$cmt='"${cmt_name##refs/heads/}~$(($end - $msgnum))"'
+	eval GITHEAD_$hd='"$(cat $dotest/onto_name)"'
+	export GITHEAD_$cmt GITHEAD_$hd
+	git-merge-$strategy "$cmt^" -- "$hd" "$cmt"
 	rv=$?
 	case "$rv" in
 	0)
+		unset GITHEAD_$cmt GITHEAD_$hd
 		return
 		;;
 	1)
@@ -314,6 +322,7 @@ fi
 
 mkdir -p "$dotest"
 echo "$onto" > "$dotest/onto"
+echo "$onto_name" > "$dotest/onto_name"
 prev_head=`git-rev-parse HEAD^0`
 echo "$prev_head" > "$dotest/prev_head"
 
