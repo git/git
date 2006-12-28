@@ -1,0 +1,64 @@
+git-gc(1)
+=========
+
+NAME
+----
+git-gc - Cleanup unnecessary files and optimize the local repository
+
+
+SYNOPSIS
+--------
+'git-gc'
+
+DESCRIPTION
+-----------
+Runs a number of housekeeping tasks within the current repository,
+such as compressing file revisions (to reduce disk space and increase
+performance) and removing unreachable objects which may have been
+created from prior invocations of gitlink:git-add[1].
+
+Users are encouraged to run this task on a regular basis within
+each repository to maintain good disk space utilization and good
+operating performance.
+
+Configuration
+-------------
+
+The optional configuration variable 'gc.reflogExpire' can be
+set to indicate how long historical entries within each branch's
+reflog should remain available in this repository.  The setting is
+expressed as a length of time, for example '90 days' or '3 months'.
+It defaults to '90 days'.
+
+The optional configuration variable 'gc.reflogExpireUnreachable'
+can be set to indicate how long historical reflog entries which
+are not part of the current branch should remain available in
+this repository.  These types of entries are generally created as
+a result of using `git commit \--amend` or `git rebase` and are the
+commits prior to the amend or rebase occuring.  Since these changes
+are not part of the current project most users will want to expire
+them sooner.  This option defaults to '30 days'.
+
+The optional configuration variable 'gc.rerereresolved' indicates
+how long records of conflicted merge you resolved earlier are
+kept.  This defaults to 60 days.
+
+The optional configuration variable 'gc.rerereunresolved' indicates
+how long records of conflicted merge you have not resolved are
+kept.  This defaults to 15 days.
+
+
+See Also
+--------
+gitlink:git-prune[1]
+gitlink:git-reflog[1]
+gitlink:git-repack[1]
+gitlink:git-rerere[1]
+
+Author
+------
+Written by Shawn O. Pearce <spearce@spearce.org>
+
+GIT
+---
+Part of the gitlink:git[7] suite
