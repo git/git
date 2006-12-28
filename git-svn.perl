@@ -1098,7 +1098,8 @@ sub read_uuid {
 
 sub verify_ref {
 	my ($ref) = @_;
-	eval { command_oneline([ 'rev-parse', $ref ], { STDERR => 0 }) };
+	eval { command_oneline([ 'rev-parse', '--verify', $ref ],
+	                       { STDERR => 0 }); };
 }
 
 sub repo_path_split {
