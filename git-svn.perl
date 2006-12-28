@@ -2481,7 +2481,7 @@ sub libsvn_ls_fullurl {
 	my $pool = SVN::Pool->new;
 	my $r = defined $_revision ? $_revision : $ra->get_latest_revnum;
 	my ($dirent, undef, undef) = $ra->get_dir('', $r, $pool);
-	foreach my $d (keys %$dirent) {
+	foreach my $d (sort keys %$dirent) {
 		if ($dirent->{$d}->kind == $SVN::Node::dir) {
 			push @ret, "$d/"; # add '/' for compat with cli svn
 		}
