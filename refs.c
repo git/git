@@ -838,6 +838,15 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 
  retry:
 	if (log && rename(git_path("tmp-renamed-log"), git_path("logs/%s", newref))) {
+#ifdef __MINGW32__
+		if (errno == EEXIST) {
+			struct stat st;
+			if (stat(git_path("logs/%s", newref), &st) == 0 && S_ISDIR(st.st_mode))
+				errno = EISDIR;
+			else
+				errno = EEXIST;
+		}
+#endif
 		if (errno==EISDIR || errno==ENOTDIR) {
 			/*
 			 * rename(a, b) when b is an existing
@@ -946,6 +955,15 @@ static int log_ref_write(struct ref_lock *lock,
 		if (!(oflags & O_CREAT) && errno == ENOENT)
 			return 0;
 
+#ifdef __MINGW32__
+		if ((oflags & O_CREAT) && errno == EACCES) {
+			struct stat st;
+			if (stat(lock->log_file, &st) == 0 && S_ISDIR(st.st_mode))
+				errno = EISDIR;
+			else
+				errno = EACCES;
+		}
+#endif
 		if ((oflags & O_CREAT) && errno == EISDIR) {
 			if (remove_empty_directories(lock->log_file)) {
 				return error("There are still logs under '%s'",
