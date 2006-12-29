@@ -20,6 +20,8 @@ void add_head(struct rev_info *revs);
 static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		      struct rev_info *rev)
 {
+	int i;
+
 	rev->abbrev = DEFAULT_ABBREV;
 	rev->commit_format = CMIT_FMT_DEFAULT;
 	rev->verbose_header = 1;
@@ -27,8 +29,18 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	argc = setup_revisions(argc, argv, rev, "HEAD");
 	if (rev->diffopt.pickaxe || rev->diffopt.filter)
 		rev->always_show_header = 0;
-	if (argc > 1)
-		die("unrecognized argument: %s", argv[1]);
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+		if (!strncmp(arg, "--encoding=", 11)) {
+			arg += 11;
+			if (strcmp(arg, "none"))
+				git_log_output_encoding = strdup(arg);
+			else
+				git_log_output_encoding = "";
+		}
+		else
+			die("unrecognized argument: %s", arg);
+	}
 }
 
 static int cmd_log_walk(struct rev_info *rev)

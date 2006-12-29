@@ -2,6 +2,7 @@
 #include "tag.h"
 #include "commit.h"
 #include "pkt-line.h"
+#include "utf8.h"
 
 int save_commit_buffer = 1;
 
@@ -597,10 +598,61 @@ static int add_merge_info(enum cmit_fmt fmt, char *buf, const struct commit *com
 	return offset;
 }
 
-unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit,
-				  unsigned long len, char *buf, unsigned long space,
+static char *get_header(const struct commit *commit, const char *key)
+{
+	int key_len = strlen(key);
+	const char *line = commit->buffer;
+
+	for (;;) {
+		const char *eol = strchr(line, '\n'), *next;
+
+		if (line == eol)
+			return NULL;
+		if (!eol) {
+			eol = line + strlen(line);
+			next = NULL;
+		} else
+			next = eol + 1;
+		if (!strncmp(line, key, key_len) && line[key_len] == ' ') {
+			int len = eol - line - key_len;
+			char *ret = xmalloc(len);
+			memcpy(ret, line + key_len + 1, len - 1);
+			ret[len - 1] = '\0';
+			return ret;
+		}
+		line = next;
+	}
+}
+
+static char *logmsg_reencode(const struct commit *commit)
+{
+	char *encoding;
+	char *out;
+	char *output_encoding = (git_log_output_encoding
+				 ? git_log_output_encoding
+				 : git_commit_encoding);
+
+	if (!output_encoding)
+		return NULL;
+	encoding = get_header(commit, "encoding");
+	if (!encoding || !strcmp(encoding, output_encoding)) {
+		free(encoding);
+		return NULL;
+	}
+	out = reencode_string(commit->buffer, output_encoding, encoding);
+	free(encoding);
+	if (!out)
+		return NULL;
+	return out;
+}
+
+unsigned long pretty_print_commit(enum cmit_fmt fmt,
+				  const struct commit *commit,
+				  unsigned long len,
+				  char *buf, unsigned long space,
 				  int abbrev, const char *subject,
-				  const char *after_subject, int relative_date)
+				  const char *after_subject,
+				  int relative_date)
 {
 	int hdr = 1, body = 0;
 	unsigned long offset = 0;
@@ -608,6 +660,10 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 	int parents_shown = 0;
 	const char *msg = commit->buffer;
 	int plain_non_ascii = 0;
+	char *reencoded = logmsg_reencode(commit);
+
+	if (reencoded)
+		msg = reencoded;
 
 	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
 		indent = 0;
@@ -624,7 +680,7 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 		for (in_body = i = 0; (ch = msg[i]) && i < len; i++) {
 			if (!in_body) {
 				/* author could be non 7-bit ASCII but
-				 * the log may so; skip over the
+				 * the log may be so; skip over the
 				 * header part first.
 				 */
 				if (ch == '\n' &&
@@ -755,6 +811,8 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 	if (fmt == CMIT_FMT_EMAIL && !body)
 		buf[offset++] = '\n';
 	buf[offset] = '\0';
+
+	free(reencoded);
 	return offset;
 }
 

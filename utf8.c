@@ -276,3 +276,57 @@ void print_wrapped_text(const char *text, int indent, int indent2, int width)
 		}
 	}
 }
+
+/*
+ * Given a buffer and its encoding, return it re-encoded
+ * with iconv.  If the conversion fails, returns NULL.
+ */
+#ifndef NO_ICONV
+char *reencode_string(const char *in, const char *out_encoding, const char *in_encoding)
+{
+	iconv_t conv;
+	size_t insz, outsz, outalloc;
+	char *out, *outpos, *cp;
+
+	if (!in_encoding)
+		return NULL;
+	conv = iconv_open(out_encoding, in_encoding);
+	if (conv == (iconv_t) -1)
+		return NULL;
+	insz = strlen(in);
+	outsz = insz;
+	outalloc = outsz + 1; /* for terminating NUL */
+	out = xmalloc(outalloc);
+	outpos = out;
+	cp = (char *)in;
+
+	while (1) {
+		size_t cnt = iconv(conv, &cp, &insz, &outpos, &outsz);
+
+		if (cnt == -1) {
+			size_t sofar;
+			if (errno != E2BIG) {
+				free(out);
+				iconv_close(conv);
+				return NULL;
+			}
+			/* insz has remaining number of bytes.
+			 * since we started outsz the same as insz,
+			 * it is likely that insz is not enough for
+			 * converting the rest.
+			 */
+			sofar = outpos - out;
+			outalloc = sofar + insz * 2 + 32;
+			out = xrealloc(out, outalloc);
+			outpos = out + sofar;
+			outsz = outalloc - sofar - 1;
+		}
+		else {
+			*outpos = '\0';
+			break;
+		}
+	}
+	iconv_close(conv);
+	return out;
+}
+#endif
