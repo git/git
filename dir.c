@@ -260,8 +260,7 @@ int excluded(struct dir_struct *dir, const char *pathname)
 	return 0;
 }
 
-static void add_name(struct dir_struct *dir, const char *pathname, int len,
-		     int ignored_entry)
+static void add_name(struct dir_struct *dir, const char *pathname, int len)
 {
 	struct dir_entry *ent;
 
@@ -274,7 +273,6 @@ static void add_name(struct dir_struct *dir, const char *pathname, int len,
 		dir->entries = xrealloc(dir->entries, alloc*sizeof(ent));
 	}
 	ent = xmalloc(sizeof(*ent) + len + 1);
-	ent->ignored_entry = ignored_entry;
 	ent->len = len;
 	memcpy(ent->name, pathname, len);
 	ent->name[len] = 0;
@@ -316,7 +314,6 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 
 		while ((de = readdir(fdir)) != NULL) {
 			int len;
-			int ignored_entry;
 
 			if ((de->d_name[0] == '.') &&
 			    (de->d_name[1] == 0 ||
@@ -325,12 +322,11 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 				continue;
 			len = strlen(de->d_name);
 			memcpy(fullname + baselen, de->d_name, len+1);
-			ignored_entry = excluded(dir, fullname);
-
-			if (!dir->show_both &&
-			    (ignored_entry != dir->show_ignored) &&
-			    (!dir->show_ignored || DTYPE(de) != DT_DIR))
-				continue;
+			if (excluded(dir, fullname) != dir->show_ignored) {
+				if (!dir->show_ignored || DTYPE(de) != DT_DIR) {
+					continue;
+				}
+			}
 
 			switch (DTYPE(de)) {
 			struct stat st;
@@ -368,8 +364,7 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 			if (check_only)
 				goto exit_early;
 			else
-				add_name(dir, fullname, baselen + len,
-					 ignored_entry);
+				add_name(dir, fullname, baselen + len);
 		}
 exit_early:
 		closedir(fdir);

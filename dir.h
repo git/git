@@ -13,8 +13,7 @@
 
 
 struct dir_entry {
-	unsigned ignored_entry : 1;
-	unsigned int len : 15;
+	int len;
 	char name[FLEX_ARRAY]; /* more */
 };
 
@@ -30,8 +29,7 @@ struct exclude_list {
 
 struct dir_struct {
 	int nr, alloc;
-	unsigned int show_both: 1,
-		     show_ignored:1,
+	unsigned int show_ignored:1,
 		     show_other_directories:1,
 		     hide_empty_directories:1;
 	struct dir_entry **entries;
