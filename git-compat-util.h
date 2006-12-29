@@ -306,6 +306,8 @@ int syslog(int type, char *bufp, ...);
 #define LOG_DAEMON 4
 unsigned int alarm(unsigned int seconds);
 #include <winsock2.h>
+void mingw_execve(const char *cmd, const char **argv, const char **env);
+#define execve mingw_execve
 int fork();
 typedef int pid_t;
 pid_t waitpid(pid_t pid, int *status, int options);
