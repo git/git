@@ -51,4 +51,37 @@ test_expect_success \
 	 *) echo fail; git-ls-files --stage xfoo3; (exit 1);;
 	 esac'
 
+test_expect_success '.gitignore test setup' '
+	echo "*.ig" >.gitignore &&
+	mkdir c.if d.ig &&
+	>a.ig && >b.if &&
+	>c.if/c.if && >c.if/c.ig &&
+	>d.ig/d.if && >d.ig/d.ig
+'
+
+test_expect_success '.gitignore is honored' '
+	git-add . &&
+	! git-ls-files | grep "\\.ig"
+'
+
+test_expect_success 'error out when attempting to add ignored ones without -f' '
+	! git-add a.?? &&
+	! git-ls-files | grep "\\.ig"
+'
+
+test_expect_success 'error out when attempting to add ignored ones without -f' '
+	! git-add d.?? &&
+	! git-ls-files | grep "\\.ig"
+'
+
+test_expect_success 'add ignored ones with -f' '
+	git-add -f a.?? &&
+	git-ls-files --error-unmatch a.ig
+'
+
+test_expect_success 'add ignored ones with -f' '
+	git-add -f d.??/* &&
+	git-ls-files --error-unmatch d.ig/d.if d.ig/d.ig
+'
+
 test_done

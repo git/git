@@ -96,6 +96,17 @@ test_count=0
 
 trap 'echo >&5 "FATAL: Unexpected exit with code $?"; exit 1' exit
 
+test_tick () {
+	if test -z "${test_tick+set}"
+	then
+		test_tick=432630000
+	else
+		test_tick=$(($test_tick + 60))
+	fi
+	GIT_COMMITTER_DATE=$test_tick
+	GIT_AUTHOR_DATE=$test_tick
+	export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
+}
 
 # You are not expected to call test_ok_ and test_failure_ directly, use
 # the text_expect_* functions instead.

@@ -13,8 +13,9 @@
 
 
 struct dir_entry {
-	unsigned ignored_entry : 1;
-	unsigned int len : 15;
+	unsigned int ignored : 1;
+	unsigned int ignored_dir : 1;
+	unsigned int len : 30;
 	char name[FLEX_ARRAY]; /* more */
 };
 
@@ -30,8 +31,7 @@ struct exclude_list {
 
 struct dir_struct {
 	int nr, alloc;
-	unsigned int show_both: 1,
-		     show_ignored:1,
+	unsigned int show_ignored:1,
 		     show_other_directories:1,
 		     hide_empty_directories:1;
 	struct dir_entry **entries;
@@ -57,5 +57,6 @@ extern void add_excludes_from_file(struct dir_struct *, const char *fname);
 extern void add_exclude(const char *string, const char *base,
 			int baselen, struct exclude_list *which);
 extern int file_exists(const char *);
+extern struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len);
 
 #endif
