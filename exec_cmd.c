@@ -44,6 +44,8 @@ int execv_git_cmd(const char **argv)
 		const char *exec_dir = paths[i];
 		const char *tmp;
 
+		if (!exec_dir || !*exec_dir) continue;
+
 #ifdef __MINGW32__
 		if (*exec_dir != '/' && exec_dir[1] != ':') {
 #else
