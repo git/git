@@ -540,6 +540,7 @@ static void open_packed_git(struct packed_git *p)
 	struct pack_header hdr;
 	unsigned char sha1[20];
 	unsigned char *idx_sha1;
+	long fd_flag;
 
 	p->pack_fd = open(p->pack_name, O_RDONLY);
 	if (p->pack_fd < 0 || fstat(p->pack_fd, &st))
@@ -552,6 +553,16 @@ static void open_packed_git(struct packed_git *p)
 		p->pack_size = st.st_size;
 	} else if (p->pack_size != st.st_size)
 		die("packfile %s size changed", p->pack_name);
+
+	/* We leave these file descriptors open with sliding mmap;
+	 * there is no point keeping them open across exec(), though.
+	 */
+	fd_flag = fcntl(p->pack_fd, F_GETFD, 0);
+	if (fd_flag < 0)
+		die("cannot determine file descriptor flags");
+	fd_flag |= FD_CLOEXEC;
+	if (fcntl(p->pack_fd, F_SETFD, fd_flag) == -1)
+		die("cannot set FD_CLOEXEC");
 
 	/* Verify we recognize this pack file format. */
 	read_or_die(p->pack_fd, &hdr, sizeof(hdr));
