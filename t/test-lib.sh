@@ -125,16 +125,43 @@ test_run_ () {
 	return 0
 }
 
+test_skip () {
+	this_test=$(expr "./$0" : '.*/\(t[0-9]*\)-[^/]*$')
+	this_test="$this_test.$(expr "$test_count" + 1)"
+	to_skip=
+	for skp in $GIT_SKIP_TESTS
+	do
+		case "$this_test" in
+		$skp)
+			to_skip=t
+		esac
+	done
+	case "$to_skip" in
+	t)
+		say >&3 "skipping test: $@"
+		test_count=$(expr "$test_count" + 1)
+		say "skip $test_count: $1"
+		: true
+		;;
+	*)
+		false
+		;;
+	esac
+}
+
 test_expect_failure () {
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 parameters to test-expect-failure"
-	say >&3 "expecting failure: $2"
-	test_run_ "$2"
-	if [ "$?" = 0 -a "$eval_ret" != 0 -a "$eval_ret" -lt 129 ]
+	if ! test_skip "$@"
 	then
-		test_ok_ "$1"
-	else
-		test_failure_ "$@"
+		say >&3 "expecting failure: $2"
+		test_run_ "$2"
+		if [ "$?" = 0 -a "$eval_ret" != 0 -a "$eval_ret" -lt 129 ]
+		then
+			test_ok_ "$1"
+		else
+			test_failure_ "$@"
+		fi
 	fi
 	echo >&3 ""
 }
@@ -142,13 +169,16 @@ test_expect_failure () {
 test_expect_success () {
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 parameters to test-expect-success"
-	say >&3 "expecting success: $2"
-	test_run_ "$2"
-	if [ "$?" = 0 -a "$eval_ret" = 0 ]
+	if ! test_skip "$@"
 	then
-		test_ok_ "$1"
-	else
-		test_failure_ "$@"
+		say >&3 "expecting success: $2"
+		test_run_ "$2"
+		if [ "$?" = 0 -a "$eval_ret" = 0 ]
+		then
+			test_ok_ "$1"
+		else
+			test_failure_ "$@"
+		fi
 	fi
 	echo >&3 ""
 }
@@ -156,13 +186,16 @@ test_expect_success () {
 test_expect_code () {
 	test "$#" = 3 ||
 	error "bug in the test script: not 3 parameters to test-expect-code"
-	say >&3 "expecting exit code $1: $3"
-	test_run_ "$3"
-	if [ "$?" = 0 -a "$eval_ret" = "$1" ]
+	if ! test_skip "$@"
 	then
-		test_ok_ "$2"
-	else
-		test_failure_ "$@"
+		say >&3 "expecting exit code $1: $3"
+		test_run_ "$3"
+		if [ "$?" = 0 -a "$eval_ret" = "$1" ]
+		then
+			test_ok_ "$2"
+		else
+			test_failure_ "$@"
+		fi
 	fi
 	echo >&3 ""
 }
@@ -223,3 +256,22 @@ test=trash
 rm -fr "$test"
 test_create_repo $test
 cd "$test"
+
+this_test=$(expr "./$0" : '.*/\(t[0-9]*\)-[^/]*$')
+for skp in $GIT_SKIP_TESTS
+do
+	to_skip=
+	for skp in $GIT_SKIP_TESTS
+	do
+		case "$this_test" in
+		$skp)
+			to_skip=t
+		esac
+	done
+	case "$to_skip" in
+	t)
+		say >&3 "skipping test $this_test altogether"
+		say "skip all tests in $this_test"
+		test_done
+	esac
+done

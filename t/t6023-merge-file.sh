@@ -112,5 +112,27 @@ EOF
 test_expect_success "expected conflict markers, with -L" \
 	"diff -u test.txt expect.txt"
 
+sed "s/ tu / TU /" < new1.txt > new5.txt
+test_expect_failure "conflict in removed tail" \
+	"git-merge-file -p orig.txt new1.txt new5.txt > out"
+
+cat > expect << EOF
+Dominus regit me,
+et nihil mihi deerit.
+In loco pascuae ibi me collocavit,
+super aquam refectionis educavit me;
+animam meam convertit,
+deduxit me super semitas jusitiae,
+propter nomen suum.
+<<<<<<< orig.txt
+=======
+Nam et si ambulavero in medio umbrae mortis,
+non timebo mala, quoniam TU mecum es:
+virga tua et baculus tuus ipsa me consolata sunt.
+>>>>>>> new5.txt
+EOF
+
+test_expect_success "expected conflict markers" "diff -u expect out"
+
 test_done
 

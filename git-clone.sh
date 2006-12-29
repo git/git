@@ -388,7 +388,7 @@ then
 
 		# Set up the mappings to track the remote branches.
 		git-repo-config remote."$origin".fetch \
-			"refs/heads/*:$remote_top/*" '^$' &&
+			"+refs/heads/*:$remote_top/*" '^$' &&
 		rm -f "refs/remotes/$origin/HEAD"
 		git-symbolic-ref "refs/remotes/$origin/HEAD" \
 			"refs/remotes/$origin/$head_points_at" &&
