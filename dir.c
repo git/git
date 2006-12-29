@@ -260,12 +260,12 @@ int excluded(struct dir_struct *dir, const char *pathname)
 	return 0;
 }
 
-static void add_name(struct dir_struct *dir, const char *pathname, int len)
+struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
 {
 	struct dir_entry *ent;
 
 	if (cache_name_pos(pathname, len) >= 0)
-		return;
+		return NULL;
 
 	if (dir->nr == dir->alloc) {
 		int alloc = alloc_nr(dir->alloc);
@@ -273,10 +273,12 @@ static void add_name(struct dir_struct *dir, const char *pathname, int len)
 		dir->entries = xrealloc(dir->entries, alloc*sizeof(ent));
 	}
 	ent = xmalloc(sizeof(*ent) + len + 1);
+	ent->ignored = ent->ignored_dir = 0;
 	ent->len = len;
 	memcpy(ent->name, pathname, len);
 	ent->name[len] = 0;
 	dir->entries[dir->nr++] = ent;
+	return ent;
 }
 
 static int dir_exists(const char *dirname, int len)
@@ -364,7 +366,7 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 			if (check_only)
 				goto exit_early;
 			else
-				add_name(dir, fullname, baselen + len);
+				dir_add_name(dir, fullname, baselen + len);
 		}
 exit_early:
 		closedir(fdir);
