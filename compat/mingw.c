@@ -122,8 +122,6 @@ char *mingw_getcwd(char *pointer, int len)
 		return ret;
 	if (pointer[0] != 0 && pointer[1] == ':') {
 		int i;
-		pointer[1] = pointer[0];
-		pointer[0] = '/';
 		for (i = 2; pointer[i]; i++)
 			/* Thanks, Bill. You'll burn in hell for that. */
 			if (pointer[i] == '\\')

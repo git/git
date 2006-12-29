@@ -173,6 +173,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	static char cwd[PATH_MAX+1];
 	const char *gitdirenv;
 	int len, offset;
+	int minoffset = 0;
 
 	/*
 	 * If GIT_DIR is set explicitly, we're not going
@@ -192,8 +193,15 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		die("Not a git repository: '%s'", gitdirenv);
 	}
 
+#ifdef __MINGW32__
+	if (!getcwd(cwd, sizeof(cwd)) || !(cwd[0] == '/' || cwd[1] == ':'))
+		die("Unable to read current working directory");
+	if (cwd[1] == ':')
+		minoffset = 2;
+#else
 	if (!getcwd(cwd, sizeof(cwd)) || cwd[0] != '/')
 		die("Unable to read current working directory");
+#endif
 
 	offset = len = strlen(cwd);
 	for (;;) {
@@ -201,7 +209,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			break;
 		chdir("..");
 		do {
-			if (!offset) {
+			if (offset <= minoffset) {
 				if (is_git_directory(cwd)) {
 					if (chdir(cwd))
 						die("Cannot come back to cwd");
@@ -216,7 +224,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 				}
 				die("Not a git repository");
 			}
-		} while (cwd[--offset] != '/');
+		} while (offset > minoffset && cwd[--offset] != '/');
 	}
 
 	if (offset == len)
