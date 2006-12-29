@@ -58,7 +58,7 @@ static void exec_rev_list(struct ref *refs)
 /*
  * Run "rev-list --stdin | pack-objects" pipe.
  */
-static void rev_list(int fd, struct ref *refs)
+static void rev_list(struct ref *refs)
 {
 	int pipe_fd[2];
 	pid_t pack_objects_pid;
@@ -71,10 +71,8 @@ static void rev_list(int fd, struct ref *refs)
 		 * and writes to the original fd
 		 */
 		dup2(pipe_fd[0], 0);
-		dup2(fd, 1);
 		close(pipe_fd[0]);
 		close(pipe_fd[1]);
-		close(fd);
 		exec_pack_objects();
 		die("pack-objects setup failed");
 	}
@@ -85,7 +83,6 @@ static void rev_list(int fd, struct ref *refs)
 	dup2(pipe_fd[1], 1);
 	close(pipe_fd[0]);
 	close(pipe_fd[1]);
-	close(fd);
 	exec_rev_list(refs);
 }
 
@@ -111,7 +108,7 @@ static void rev_list_generate(int fd, struct ref *refs)
 		close(pipe_fd[0]);
 		close(pipe_fd[1]);
 		close(fd);
-		rev_list(fd, refs);
+		rev_list(refs);
 		die("rev-list setup failed");
 	}
 	if (rev_list_generate_pid < 0)
