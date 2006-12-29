@@ -20,7 +20,11 @@ static void prepend_to_path(const char *dir, int len)
 	path = xmalloc(path_len + 1);
 
 	memcpy(path, dir, len);
+#ifdef __MINGW32__
+	path[len] = ';';
+#else
 	path[len] = ':';
+#endif
 	memcpy(path + len + 1, old_path, path_len - len);
 
 	setenv("PATH", path, 1);
