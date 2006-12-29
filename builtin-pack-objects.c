@@ -1003,6 +1003,7 @@ static void check_object(struct object_entry *entry)
 		if (!no_reuse_delta) {
 			unsigned char c, *base_name;
 			unsigned long ofs;
+			unsigned long used_0;
 			/* there is at least 20 bytes left in the pack */
 			switch (entry->in_pack_type) {
 			case OBJ_REF_DELTA:
@@ -1013,14 +1014,15 @@ static void check_object(struct object_entry *entry)
 			case OBJ_OFS_DELTA:
 				buf = use_pack(p, &w_curs,
 					entry->in_pack_offset + used, NULL);
-				c = buf[used++];
+				used_0 = 0;
+				c = buf[used_0++];
 				ofs = c & 127;
 				while (c & 128) {
 					ofs += 1;
 					if (!ofs || ofs & ~(~0UL >> 7))
 						die("delta base offset overflow in pack for %s",
 						    sha1_to_hex(entry->sha1));
-					c = buf[used++];
+					c = buf[used_0++];
 					ofs = (ofs << 7) + (c & 127);
 				}
 				if (ofs >= entry->in_pack_offset)
@@ -1028,6 +1030,7 @@ static void check_object(struct object_entry *entry)
 					    sha1_to_hex(entry->sha1));
 				ofs = entry->in_pack_offset - ofs;
 				base_name = find_packed_object_name(p, ofs);
+				used += used_0;
 				break;
 			default:
 				base_name = NULL;
