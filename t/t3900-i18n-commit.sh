@@ -101,4 +101,15 @@ do
 	'
 done
 
+for J in EUCJP ISO-2022-JP
+do
+	git-repo-config i18n.logoutputencoding $J
+	for H in EUCJP ISO-2022-JP
+	do
+		test_expect_success "$H should be shown in $J now" '
+			compare_with '$H' ../t3900/'$J'.txt
+		'
+	done
+done
+
 test_done
