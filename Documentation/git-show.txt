@@ -30,8 +30,8 @@ This manual page describes only the most frequently used options.
 
 OPTIONS
 -------
-<commitid>::
-	ID of the commit to show.
+<object>::
+	The name of the object to show.
 
 include::pretty-formats.txt[]
 
@@ -40,7 +40,8 @@ EXAMPLES
 --------
 
 git show v1.0.0::
-	Shows the tag `v1.0.0`.
+	Shows the tag `v1.0.0`, along with the object the tags
+	points at.
 
 git show v1.0.0^{tree}::
 	Shows the tree pointed to by the tag `v1.0.0`.
@@ -62,7 +63,8 @@ include::i18n.txt[]
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org> and
-Junio C Hamano <junkio@cox.net>
+Junio C Hamano <junkio@cox.net>.  Significantly enhanced by
+Johannes Schindelin <Johannes.Schindelin@gmx.de>.
 
 
 Documentation
