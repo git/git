@@ -8,7 +8,7 @@ test_description='commit and log output encodings'
 . ./test-lib.sh
 
 compare_with () {
-	git-show -s "$1" | sed -e '1,/^$/d' -e 's/^    //' -e '$d' >current &&
+	git-show -s $1 | sed -e '1,/^$/d' -e 's/^    //' -e '$d' >current &&
 	diff -u current "$2"
 }
 
@@ -110,6 +110,13 @@ do
 			compare_with '$H' ../t3900/'$J'.txt
 		'
 	done
+done
+
+for H in ISO-8859-1 EUCJP ISO-2022-JP
+do
+	test_expect_success "No conversion with $H" '
+		compare_with "--encoding=none '$H'" ../t3900/'$H'.txt
+	'
 done
 
 test_done
