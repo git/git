@@ -119,8 +119,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	}
 
 	/* Not having i18n.commitencoding is the same as having utf-8 */
-	encoding_is_utf8 = (!git_commit_encoding ||
-			    !strcmp(git_commit_encoding, "utf-8"));
+	encoding_is_utf8 = is_encoding_utf8(git_commit_encoding);
 
 	init_buffer(&buffer, &size);
 	add_buffer(&buffer, &size, "tree %s\n", sha1_to_hex(tree_sha1));
