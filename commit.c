@@ -633,6 +633,8 @@ static char *logmsg_reencode(const struct commit *commit)
 				 : git_commit_encoding);
 
 	if (!output_encoding)
+		output_encoding = "utf-8";
+	else if (!*output_encoding)
 		return NULL;
 	encoding = get_header(commit, "encoding");
 	if (!encoding || !strcmp(encoding, output_encoding)) {
