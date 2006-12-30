@@ -1,0 +1,57 @@
+At the core level, git is character encoding agnostic.
+
+ - The pathnames recorded in the index and in the tree objects
+   are treated as uninterpreted sequences of non-NUL bytes.
+   What readdir(2) returns are what are recorded and compared
+   with the data git keeps track of, which in turn are expected
+   to be what lstat(2) and creat(2) accepts.  There is no such
+   thing as pathname encoding translation.
+
+ - The contents of the blob objects are uninterpreted sequence
+   of bytes.  There is no encoding translation at the core
+   level.
+
+ - The commit log messages are uninterpreted sequence of non-NUL
+   bytes.
+
+Although we encourage that the commit log messages are encoded
+in UTF-8, both the core and git Porcelain are designed not to
+force UTF-8 on projects.  If all participants of a particular
+project find it more convenient to use legacy encodings, git
+does not forbid it.  However, there are a few things to keep in
+mind.
+
+. `git-commit-tree` (hence, `git-commit` which uses it) issues
+  an warning if the commit log message given to it does not look
+  like a valid UTF-8 string, unless you explicitly say your
+  project uses a legacy encoding.  The way to say this is to
+  have core.commitencoding in `.git/config` file, like this:
++
+------------
+[core]
+	commitencoding = ISO-8859-1
+------------
++
+Commit objects created with the above setting record the value
+of `core.commitencoding` in its `encoding` header.  This is to
+help other people who look at them later.  Lack of this header
+implies that the commit log message is encoded in UTF-8.
+
+. `git-log`, `git-show` and friends looks at the `encoding`
+  header of a commit object, and tries to re-code the log
+  message into UTF-8 unless otherwise specified.  You can
+  specify the desired output encoding with
+  `core.logoutputencoding` in `.git/config` file, like this:
++
+------------
+[core]
+	logoutputencoding = ISO-8859-1
+------------
++
+If you do not have this configuration variable, the value of
+`core.commitencoding` is used instead.
+
+Note that we deliberately chose not to re-code the commit log
+message when a commit is made to force UTF-8 at the commit
+object level, because re-coding to UTF-8 is not necessarily a
+reversible operation.

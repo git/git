@@ -54,6 +54,11 @@ git show master:Makefile master:t/Makefile
 	Concatenates the contents of said Makefiles in the head
 	of the branch `master`.
 
+Discussion
+----------
+
+include::i18n.txt[]
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org> and

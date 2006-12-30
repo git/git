@@ -63,6 +63,12 @@ git log -r --name-status release..test::
 	in the "release" branch, along with the list of paths
 	each commit modifies.
 
+Discussion
+----------
+
+include::i18n.txt[]
+
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>

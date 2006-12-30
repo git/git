@@ -223,6 +223,11 @@ should be recorded as a single commit.  In fact, the command
 refuses to run when given pathnames (but see `-i` option).
 
 
+DISCUSSION
+----------
+
+include::i18n.txt[]
+
 ENVIRONMENT VARIABLES
 ---------------------
 The command specified by either the VISUAL or EDITOR environment
