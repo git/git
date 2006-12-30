@@ -624,6 +624,48 @@ static char *get_header(const struct commit *commit, const char *key)
 	}
 }
 
+static char *replace_encoding_header(char *buf, char *encoding)
+{
+	char *encoding_header = strstr(buf, "\nencoding ");
+	char *end_of_encoding_header;
+	int encoding_header_pos;
+	int encoding_header_len;
+	int new_len;
+	int need_len;
+	int buflen = strlen(buf) + 1;
+
+	if (!encoding_header)
+		return buf; /* should not happen but be defensive */
+	encoding_header++;
+	end_of_encoding_header = strchr(encoding_header, '\n');
+	if (!end_of_encoding_header)
+		return buf; /* should not happen but be defensive */
+	end_of_encoding_header++;
+
+	encoding_header_len = end_of_encoding_header - encoding_header;
+	encoding_header_pos = encoding_header - buf;
+
+	if (is_encoding_utf8(encoding)) {
+		/* we have re-coded to UTF-8; drop the header */
+		memmove(encoding_header, end_of_encoding_header,
+			buflen - (encoding_header_pos + encoding_header_len));
+		return buf;
+	}
+	new_len = strlen(encoding);
+	need_len = new_len + strlen("encoding \n");
+	if (encoding_header_len < need_len) {
+		buf = xrealloc(buf, buflen + (need_len - encoding_header_len));
+		encoding_header = buf + encoding_header_pos;
+		end_of_encoding_header = encoding_header + encoding_header_len;
+	}
+	memmove(end_of_encoding_header + (need_len - encoding_header_len),
+		end_of_encoding_header,
+		buflen - (encoding_header_pos + encoding_header_len));
+	memcpy(encoding_header + 9, encoding, strlen(encoding));
+	encoding_header[9 + new_len] = '\n';
+	return buf;
+}
+
 static char *logmsg_reencode(const struct commit *commit)
 {
 	char *encoding;
@@ -642,6 +684,9 @@ static char *logmsg_reencode(const struct commit *commit)
 		return NULL;
 	}
 	out = reencode_string(commit->buffer, output_encoding, encoding);
+	if (out)
+		out = replace_encoding_header(out, output_encoding);
+
 	free(encoding);
 	if (!out)
 		return NULL;
