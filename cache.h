@@ -196,6 +196,8 @@ extern int warn_ambiguous_refs;
 extern int shared_repository;
 extern const char *apply_default_whitespace;
 extern int zlib_compression_level;
+extern size_t packed_git_window_size;
+extern size_t packed_git_limit;
 
 #define GIT_REPO_VERSION 0
 extern int repository_format_version;
@@ -335,14 +337,22 @@ extern struct alternate_object_database {
 } *alt_odb_list;
 extern void prepare_alt_odb(void);
 
+struct pack_window {
+	struct pack_window *next;
+	unsigned char *base;
+	off_t offset;
+	size_t len;
+	unsigned int last_used;
+	unsigned int inuse_cnt;
+};
+
 extern struct packed_git {
 	struct packed_git *next;
-	unsigned long index_size;
-	unsigned long pack_size;
+	struct pack_window *windows;
 	unsigned int *index_base;
-	void *pack_base;
-	unsigned int pack_last_used;
-	unsigned int pack_use_cnt;
+	off_t index_size;
+	off_t pack_size;
+	int pack_fd;
 	int pack_local;
 	unsigned char sha1[20];
 	/* something like ".git/objects/pack/xxxxx.pack" */
@@ -388,13 +398,14 @@ extern void install_packed_git(struct packed_git *pack);
 extern struct packed_git *find_sha1_pack(const unsigned char *sha1, 
 					 struct packed_git *packs);
 
-extern int use_packed_git(struct packed_git *);
-extern void unuse_packed_git(struct packed_git *);
+extern void pack_report();
+extern unsigned char* use_pack(struct packed_git *, struct pack_window **, unsigned long, unsigned int *);
+extern void unuse_pack(struct pack_window **);
 extern struct packed_git *add_packed_git(char *, int, int);
 extern int num_packed_objects(const struct packed_git *p);
 extern int nth_packed_object_sha1(const struct packed_git *, int, unsigned char*);
 extern unsigned long find_pack_entry_one(const unsigned char *, struct packed_git *);
-extern void *unpack_entry_gently(struct packed_git *, unsigned long, char *, unsigned long *);
+extern void *unpack_entry(struct packed_git *, unsigned long, char *, unsigned long *);
 extern unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
 extern void packed_object_info_detail(struct packed_git *, unsigned long, char *, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
 
@@ -420,6 +431,7 @@ extern char *git_commit_encoding;
 extern char *git_log_output_encoding;
 
 extern int copy_fd(int ifd, int ofd);
+extern void read_or_die(int fd, void *buf, size_t count);
 extern void write_or_die(int fd, const void *buf, size_t count);
 extern int write_or_whine(int fd, const void *buf, size_t count, const char *msg);
 

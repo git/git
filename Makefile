@@ -72,6 +72,9 @@ all:
 # Define NO_FAST_WORKING_DIRECTORY if accessing objects in pack files is
 # generally faster on your platform than accessing the working directory.
 #
+# Define NO_TRUSTABLE_FILEMODE if your filesystem may claim to support
+# the executable mode bit, but doesn't really do so.
+#
 # Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
 #
 # Define NO_SOCKADDR_STORAGE if your platform does not have struct
@@ -361,6 +364,7 @@ ifeq ($(uname_O),Cygwin)
 	NEEDS_LIBICONV = YesPlease
 	NO_C99_FORMAT = YesPlease
 	NO_FAST_WORKING_DIRECTORY = UnfortunatelyYes
+	NO_TRUSTABLE_FILEMODE = UnfortunatelyYes
 	# There are conflicting reports about this.
 	# On some boxes NO_MMAP is needed, and not so elsewhere.
 	# Try commenting this out if you suspect MMAP is more efficient
@@ -520,6 +524,9 @@ ifdef NO_MMAP
 endif
 ifdef NO_FAST_WORKING_DIRECTORY
 	BASIC_CFLAGS += -DNO_FAST_WORKING_DIRECTORY
+endif
+ifdef NO_TRUSTABLE_FILEMODE
+	BASIC_CFLAGS += -DNO_TRUSTABLE_FILEMODE
 endif
 ifdef NO_IPV6
 	BASIC_CFLAGS += -DNO_IPV6

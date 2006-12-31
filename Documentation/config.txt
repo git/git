@@ -82,13 +82,13 @@ core.logAllRefUpdates::
 	only when the file exists.  If this configuration
 	variable is set to true, missing "$GIT_DIR/logs/<ref>"
 	file is automatically created for branch heads.
-
-	This information can be used to determine what commit
-	was the tip of a branch "2 days ago".
-
-	This value is true by default in a repository that has
-	a working directory associated with it, and false by
-	default in a bare repository.
++
+This information can be used to determine what commit
+was the tip of a branch "2 days ago".
++
+This value is true by default in a repository that has
+a working directory associated with it, and false by
+default in a bare repository.
 
 core.repositoryFormatVersion::
 	Internal variable identifying the repository format and layout
@@ -117,6 +117,30 @@ core.legacyheaders::
 	you want to interoperate with old clients accessing the object
 	database directly (where the "http://" and "rsync://" protocols
 	count as direct access).
+
+core.packedGitWindowSize::
+	Number of bytes of a pack file to map into memory in a
+	single mapping operation.  Larger window sizes may allow
+	your system to process a smaller number of large pack files
+	more quickly.  Smaller window sizes will negatively affect
+	performance due to increased calls to the operating system's
+	memory manager, but may improve performance when accessing
+	a large number of large pack files.  Default is 32 MiB,
+	which should be reasonable for all users/operating systems.
+	You probably do not need to adjust this value.
++
+Common unit suffixes of 'k', 'm', or 'g' are supported.
+
+core.packedGitLimit::
+	Maximum number of bytes to map simultaneously into memory
+	from pack files.  If Git needs to access more than this many
+	bytes at once to complete an operation it will unmap existing
+	regions to reclaim virtual address space within the process.
+	Default is 256 MiB, which should be reasonable for all
+	users/operating systems, except on the largest projects.
+	You probably do not need to adjust this value.
++
+Common unit suffixes of 'k', 'm', or 'g' are supported.
 
 alias.*::
 	Command aliases for the gitlink:git[1] command wrapper - e.g.

@@ -131,28 +131,46 @@ const char **get_pathspec(const char *prefix, const char **pathspec)
 }
 
 /*
- * Test if it looks like we're at the top level git directory.
+ * Test if it looks like we're at a git directory.
  * We want to see:
  *
- *  - either a .git/objects/ directory _or_ the proper
+ *  - either a objects/ directory _or_ the proper
  *    GIT_OBJECT_DIRECTORY environment variable
- *  - a refs/ directory under ".git"
+ *  - a refs/ directory
  *  - either a HEAD symlink or a HEAD file that is formatted as
  *    a proper "ref:".
  */
-static int is_toplevel_directory(void)
+static int is_git_directory(const char *suspect)
 {
-	if (access(".git/refs/", X_OK) ||
-	    access(getenv(DB_ENVIRONMENT) ?
-		   getenv(DB_ENVIRONMENT) : ".git/objects/", X_OK) ||
-	    validate_symref(".git/HEAD"))
+	char path[PATH_MAX];
+	size_t len = strlen(suspect);
+
+	strcpy(path, suspect);
+	if (getenv(DB_ENVIRONMENT)) {
+		if (access(getenv(DB_ENVIRONMENT), X_OK))
+			return 0;
+	}
+	else {
+		strcpy(path + len, "/objects");
+		if (access(path, X_OK))
+			return 0;
+	}
+
+	strcpy(path + len, "/refs");
+	if (access(path, X_OK))
 		return 0;
+
+	strcpy(path + len, "/HEAD");
+	if (validate_symref(path))
+		return 0;
+
 	return 1;
 }
 
 const char *setup_git_directory_gently(int *nongit_ok)
 {
 	static char cwd[PATH_MAX+1];
+	const char *gitdirenv;
 	int len, offset;
 
 	/*
@@ -160,36 +178,17 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	 * to do any discovery, but we still do repository
 	 * validation.
 	 */
-	if (getenv(GIT_DIR_ENVIRONMENT)) {
-		char path[PATH_MAX];
-		int len = strlen(getenv(GIT_DIR_ENVIRONMENT));
-		if (sizeof(path) - 40 < len)
+	gitdirenv = getenv(GIT_DIR_ENVIRONMENT);
+	if (gitdirenv) {
+		if (PATH_MAX - 40 < strlen(gitdirenv))
 			die("'$%s' too big", GIT_DIR_ENVIRONMENT);
-		memcpy(path, getenv(GIT_DIR_ENVIRONMENT), len);
-		
-		strcpy(path + len, "/refs");
-		if (access(path, X_OK))
-			goto bad_dir_environ;
-		strcpy(path + len, "/HEAD");
-		if (validate_symref(path))
-			goto bad_dir_environ;
-		if (getenv(DB_ENVIRONMENT)) {
-			if (access(getenv(DB_ENVIRONMENT), X_OK))
-				goto bad_dir_environ;
-		}
-		else {
-			strcpy(path + len, "/objects");
-			if (access(path, X_OK))
-				goto bad_dir_environ;
-		}
-		return NULL;
-	bad_dir_environ:
+		if (is_git_directory(gitdirenv))
+			return NULL;
 		if (nongit_ok) {
 			*nongit_ok = 1;
 			return NULL;
 		}
-		path[len] = 0;
-		die("Not a git repository: '%s'", path);
+		die("Not a git repository: '%s'", gitdirenv);
 	}
 
 	if (!getcwd(cwd, sizeof(cwd)) || cwd[0] != '/')
@@ -197,11 +196,17 @@ const char *setup_git_directory_gently(int *nongit_ok)
 
 	offset = len = strlen(cwd);
 	for (;;) {
-		if (is_toplevel_directory())
+		if (is_git_directory(".git"))
 			break;
 		chdir("..");
 		do {
 			if (!offset) {
+				if (is_git_directory(cwd)) {
+					if (chdir(cwd))
+						die("Cannot come back to cwd");
+					setenv(GIT_DIR_ENVIRONMENT, cwd, 1);
+					return NULL;
+				}
 				if (nongit_ok) {
 					if (chdir(cwd))
 						die("Cannot come back to cwd");

@@ -2,19 +2,20 @@
 #include "run-command.h"
 #include "exec_cmd.h"
 
-int run_command_v_opt(int argc, const char **argv, int flags)
+int run_command_v_opt(const char **argv, int flags)
 {
 	pid_t pid = fork();
 
 	if (pid < 0)
 		return -ERR_RUN_COMMAND_FORK;
 	if (!pid) {
-		if (flags & RUN_COMMAND_NO_STDIO) {
+		if (flags & RUN_COMMAND_NO_STDIN) {
 			int fd = open("/dev/null", O_RDWR);
 			dup2(fd, 0);
-			dup2(fd, 1);
 			close(fd);
 		}
+		if (flags & RUN_COMMAND_STDOUT_TO_STDERR)
+			dup2(2, 1);
 		if (flags & RUN_GIT_CMD) {
 			execv_git_cmd(argv);
 		} else {
@@ -46,19 +47,17 @@ int run_command_v_opt(int argc, const char **argv, int flags)
 	}
 }
 
-int run_command_v(int argc, const char **argv)
+int run_command_v(const char **argv)
 {
-	return run_command_v_opt(argc, argv, 0);
+	return run_command_v_opt(argv, 0);
 }
 
-int run_command(const char *cmd, ...)
+static int run_command_va_opt(int opt, const char *cmd, va_list param)
 {
 	int argc;
 	const char *argv[MAX_RUN_COMMAND_ARGS];
 	const char *arg;
-	va_list param;
 
-	va_start(param, cmd);
 	argv[0] = (char*) cmd;
 	argc = 1;
 	while (argc < MAX_RUN_COMMAND_ARGS) {
@@ -66,8 +65,29 @@ int run_command(const char *cmd, ...)
 		if (!arg)
 			break;
 	}
-	va_end(param);
 	if (MAX_RUN_COMMAND_ARGS <= argc)
 		return error("too many args to run %s", cmd);
-	return run_command_v_opt(argc, argv, 0);
+	return run_command_v_opt(argv, opt);
+}
+
+int run_command_opt(int opt, const char *cmd, ...)
+{
+	va_list params;
+	int r;
+
+	va_start(params, cmd);
+	r = run_command_va_opt(opt, cmd, params);
+	va_end(params);
+	return r;
+}
+
+int run_command(const char *cmd, ...)
+{
+	va_list params;
+	int r;
+
+	va_start(params, cmd);
+	r = run_command_va_opt(0, cmd, params);
+	va_end(params);
+	return r;
 }

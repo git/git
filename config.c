@@ -238,6 +238,12 @@ int git_config_int(const char *name, const char *value)
 		int val = strtol(value, &end, 0);
 		if (!*end)
 			return val;
+		if (!strcasecmp(end, "k"))
+			return val * 1024;
+		if (!strcasecmp(end, "m"))
+			return val * 1024 * 1024;
+		if (!strcasecmp(end, "g"))
+			return val * 1024 * 1024 * 1024;
 	}
 	die("bad config value for '%s' in %s", name, config_file_name);
 }
@@ -295,6 +301,21 @@ int git_default_config(const char *var, const char *value)
 		else if (level < 0 || level > Z_BEST_COMPRESSION)
 			die("bad zlib compression level %d", level);
 		zlib_compression_level = level;
+		return 0;
+	}
+
+	if (!strcmp(var, "core.packedgitwindowsize")) {
+		int pgsz = getpagesize();
+		packed_git_window_size = git_config_int(var, value);
+		packed_git_window_size /= pgsz;
+		if (packed_git_window_size < 2)
+			packed_git_window_size = 2;
+		packed_git_window_size *= pgsz;
+		return 0;
+	}
+
+	if (!strcmp(var, "core.packedgitlimit")) {
+		packed_git_limit = git_config_int(var, value);
 		return 0;
 	}
 
@@ -689,7 +710,7 @@ int git_config_set_multivar(const char* key, const char* value,
 		}
 
 		fstat(in_fd, &st);
-		contents = mmap(NULL, st.st_size, PROT_READ,
+		contents = xmmap(NULL, st.st_size, PROT_READ,
 			MAP_PRIVATE, in_fd, 0);
 		close(in_fd);
 

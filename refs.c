@@ -1026,7 +1026,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	fstat(logfd, &st);
 	if (!st.st_size)
 		die("Log %s is empty.", logfile);
-	logdata = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, logfd, 0);
+	logdata = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, logfd, 0);
 	close(logfd);
 
 	lastrec = NULL;

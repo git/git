@@ -166,6 +166,8 @@ static int xdl_fill_merge_buffer(xdfenv_t *xe1, const char *name1,
 			size += xdl_recs_copy(xe2, m->i2 - m->i1 + i1,
 					m->i1 + m->chg2 - i1, 0,
 					dest ? dest + size : NULL);
+		else
+			continue;
 		i1 = m->i1 + m->chg1;
 	}
 	size += xdl_recs_copy(xe1, i1, xe1->xdf2.nrec - i1, 0,
@@ -213,9 +215,10 @@ static int xdl_refine_conflicts(xdfenv_t *xe1, xdfenv_t *xe2, xdmerge_t *m,
 			return -1;
 		}
 		if (!xscr) {
-			/* If this happens, it's a bug. */
+			/* If this happens, the changes are identical. */
 			xdl_free_env(&xe);
-			return -2;
+			m->mode = 4;
+			continue;
 		}
 		x = xscr;
 		m->i1 = xscr->i1 + i1;

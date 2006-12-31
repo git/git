@@ -10,6 +10,12 @@
 #define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates/"
 #endif
 
+#ifdef NO_TRUSTABLE_FILEMODE
+#define TEST_FILEMODE 0
+#else
+#define TEST_FILEMODE 1
+#endif
+
 static void safe_create_dir(const char *dir, int share)
 {
 	if (mkdir(dir, 0777) < 0) {
@@ -175,6 +181,7 @@ static int create_default_files(const char *git_dir, const char *template_path)
 	struct stat st1;
 	char repo_version_string[10];
 	int reinit;
+	int filemode;
 
 	if (len > sizeof(path)-50)
 		die("insane git directory %s", git_dir);
@@ -236,14 +243,14 @@ static int create_default_files(const char *git_dir, const char *template_path)
 	strcpy(path + len, "config");
 
 	/* Check filemode trustability */
-	if (!lstat(path, &st1)) {
+	filemode = TEST_FILEMODE;
+	if (TEST_FILEMODE && !lstat(path, &st1)) {
 		struct stat st2;
-		int filemode = (!chmod(path, st1.st_mode ^ S_IXUSR) &&
+		filemode = (!chmod(path, st1.st_mode ^ S_IXUSR) &&
 				!lstat(path, &st2) &&
 				st1.st_mode != st2.st_mode);
-		git_config_set("core.filemode",
-			       filemode ? "true" : "false");
 	}
+	git_config_set("core.filemode", filemode ? "true" : "false");
 
 	/* Enable logAllRefUpdates if a working tree is attached */
 	if (!is_bare_git_dir(git_dir))

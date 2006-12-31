@@ -275,7 +275,7 @@ static int do_push(const char *repo)
 		argv[dest_argc] = NULL;
 		if (verbose)
 			fprintf(stderr, "Pushing to %s\n", dest);
-		err = run_command_v(argc, argv);
+		err = run_command_v(argv);
 		if (!err)
 			continue;
 		switch (err) {
