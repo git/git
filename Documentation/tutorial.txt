@@ -323,20 +323,25 @@ $ git pull
 
 Note that he doesn't need to give the path to Alice's repository;
 when Bob cloned Alice's repository, git stored the location of her
-repository in the file .git/remotes/origin, and that location is used
-as the default for pulls.
-
-Bob may also notice a branch in his repository that he didn't create:
+repository in the repository configuration, and that location is
+used for pulls:
 
 -------------------------------------
-$ git branch
-* master
-  origin
+$ git repo-config --get remote.origin.url
+/home/bob/myrepo
 -------------------------------------
 
-The "origin" branch, which was created automatically by "git clone",
-is a pristine copy of Alice's master branch; Bob should never commit
-to it.
+(The complete configuration created by git-clone is visible using
+"git repo-config -l", and the gitlink:git-repo-config[1] man page
+explains the meaning of each option.)
+
+Git also keeps a pristine copy of Alice's master branch under the
+name "origin/master":
+
+-------------------------------------
+$ git branch -r
+  origin/master
+-------------------------------------
 
 If Bob later decides to work from a different host, he can still
 perform clones and pulls using the ssh protocol:
