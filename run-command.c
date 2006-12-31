@@ -9,12 +9,12 @@ int run_command_v_opt(const char **argv, int flags)
 	if (pid < 0)
 		return -ERR_RUN_COMMAND_FORK;
 	if (!pid) {
-		if (flags & RUN_COMMAND_NO_STDIO) {
+		if (flags & RUN_COMMAND_NO_STDIN) {
 			int fd = open("/dev/null", O_RDWR);
 			dup2(fd, 0);
-			dup2(fd, 1);
 			close(fd);
-		} else if (flags & RUN_COMMAND_STDOUT_TO_STDERR)
+		}
+		if (flags & RUN_COMMAND_STDOUT_TO_STDERR)
 			dup2(2, 1);
 		if (flags & RUN_GIT_CMD) {
 			execv_git_cmd(argv);

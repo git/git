@@ -11,7 +11,7 @@ enum {
 	ERR_RUN_COMMAND_WAITPID_NOEXIT,
 };
 
-#define RUN_COMMAND_NO_STDIO 1
+#define RUN_COMMAND_NO_STDIN 1
 #define RUN_GIT_CMD	     2	/*If this is to be git sub-command */
 #define RUN_COMMAND_STDOUT_TO_STDERR 4
 int run_command_v_opt(const char **argv, int opt);

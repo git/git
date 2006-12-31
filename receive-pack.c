@@ -73,7 +73,8 @@ static int run_update_hook(const char *refname,
 
 	if (access(update_hook, X_OK) < 0)
 		return 0;
-	code = run_command_opt(RUN_COMMAND_STDOUT_TO_STDERR,
+	code = run_command_opt(RUN_COMMAND_NO_STDIN
+		| RUN_COMMAND_STDOUT_TO_STDERR,
 		update_hook, refname, old_hex, new_hex, NULL);
 	switch (code) {
 	case 0:
@@ -188,7 +189,8 @@ static void run_update_post_hook(struct command *cmd)
 		argc++;
 	}
 	argv[argc] = NULL;
-	run_command_v_opt(argv, RUN_COMMAND_NO_STDIO);
+	run_command_v_opt(argv, RUN_COMMAND_NO_STDIN
+		| RUN_COMMAND_STDOUT_TO_STDERR);
 }
 
 /*
