@@ -188,11 +188,12 @@ octopus::
 	predator.
 
 origin::
-	The default upstream tracking branch. Most projects have at
+	The default upstream repository. Most projects have at
 	least one upstream project which they track. By default
 	'origin' is used for that purpose.  New upstream updates
-	will be fetched into this branch; you should never commit
-	to it yourself.
+	will be fetched into remote tracking branches named
+	origin/name-of-upstream-branch, which you can see using
+	"git branch -r".
 
 pack::
 	A set of objects which have been compressed into one file (to save
