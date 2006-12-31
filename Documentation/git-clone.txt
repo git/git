@@ -75,16 +75,13 @@ OPTIONS
 	Also the branch heads at the remote are copied directly
 	to corresponding local branch heads, without mapping
 	them to `refs/remotes/origin/`.  When this option is
-	used, neither the `origin` branch nor the default
-	`remotes/origin` file is created.
+	used, neither remote-tracking branches nor the related
+	configuration variables are created.
 
 --origin <name>::
 -o <name>::
-	Instead of using the branch name 'origin' to keep track
-	of the upstream repository, use <name> instead.  Note
-	that the shorthand name stored in `remotes/origin` is
-	not affected, but the local branch name to pull the
-	remote `master` branch into is.
+	Instead of using the remote name 'origin' to keep track
+	of the upstream repository, use <name> instead.
 
 --upload-pack <upload-pack>::
 -u <upload-pack>::
