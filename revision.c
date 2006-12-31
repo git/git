@@ -1039,6 +1039,14 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				all_match = 1;
 				continue;
 			}
+			if (!strncmp(arg, "--encoding=", 11)) {
+				arg += 11;
+				if (strcmp(arg, "none"))
+					git_log_output_encoding = strdup(arg);
+				else
+					git_log_output_encoding = "";
+				continue;
+			}
 
 			opts = diff_opt_parse(&revs->diffopt, argv+i, argc-i);
 			if (opts > 0) {
