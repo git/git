@@ -14,17 +14,6 @@ static int send_all;
 static int force_update;
 static int use_thin_pack;
 
-static int is_zero_sha1(const unsigned char *sha1)
-{
-	int i;
-
-	for (i = 0; i < 20; i++) {
-		if (*sha1++)
-			return 0;
-	}
-	return 1;
-}
-
 static void exec_pack_objects(void)
 {
 	static const char *args[] = {
@@ -338,7 +327,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 
 		if (!force_update &&
 		    !delete_ref &&
-		    !is_zero_sha1(ref->old_sha1) &&
+		    !is_null_sha1(ref->old_sha1) &&
 		    !ref->force) {
 			if (!has_sha1_file(ref->old_sha1) ||
 			    !ref_newer(ref->peer_ref->new_sha1,
