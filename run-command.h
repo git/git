@@ -13,8 +13,10 @@ enum {
 
 #define RUN_COMMAND_NO_STDIO 1
 #define RUN_GIT_CMD	     2	/*If this is to be git sub-command */
+#define RUN_COMMAND_STDOUT_TO_STDERR 4
 int run_command_v_opt(const char **argv, int opt);
 int run_command_v(const char **argv);
+int run_command_opt(int opt, const char *cmd, ...);
 int run_command(const char *cmd, ...);
 
 #endif
