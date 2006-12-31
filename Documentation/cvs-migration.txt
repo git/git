@@ -34,13 +34,10 @@ them first before running git pull.
 
 [NOTE]
 ================================
-The first `git clone` places the following in the
-`my-project/.git/remotes/origin` file, and that's why the previous step
-and the next step both work.
-------------
-URL: foo.com:/pub/project.git/
-Pull: refs/heads/master:refs/remotes/origin/master
-------------
+The `pull` command knows where to get updates from because of certain
+configuration variables that were set by the first `git clone`
+command; see `git repo-config -l` and the gitlink:git-repo-config[1] man
+page for details.
 ================================
 
 You can update the shared repository with your changes by first committing
