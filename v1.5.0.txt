@@ -7,36 +7,37 @@ Old news
 This section is for people who are upgrading from ancient
 versions of git.  Although all of the changes in this section
 happened before the current v1.4.4 release, they are summarized
-here in the v1.5.0 release notes for people who skip versions
-between upgrading.
+here in the v1.5.0 release notes for people who skipped earlier
+versions.
 
-In general, you should not have to worry about incompatibility.
-There is no need to perform "repository conversion".  However,
-some of the changes are one-way street upgrades -- once you use
-the feature your repository cannot be used with ancient git.
+In general, you should not have to worry about incompatibility,
+and there is no need to perform "repository conversion" if you
+are updating to v1.5.0.  However, some of the changes are
+one-way street upgrades; once you use them your repository
+can no longer be used with ancient git.
 
- - There is a new configuration variable core.legacyheaders that
+ - There is a configuration variable core.legacyheaders that
    changes the format of loose objects so that they are more
    efficient to pack and to send out of the repository over git
-   native protocol.  However, this format cannot be read by git
-   older than v1.4.2; people fetching from your repository using
-   older clients over dumb transports (e.g. http) using older
-   versions of git will also be affected.  This is not enabled
-   by default.
+   native protocol, since v1.4.2.  However, this format cannot
+   be read by git older than that version; people fetching from
+   your repository using older clients over dumb transports
+   (e.g. http) using older versions of git will also be
+   affected.  This is not enabled by default.
 
- - Another configuration repack.usedeltabaseoffset further
-   allows packfile to be created in more space efficient format,
-   which cannot be read by git older than v1.4.3.  This is not
+ - Since v1.4.3, configuration repack.usedeltabaseoffset allows
+   packfile to be created in more space efficient format, which
+   cannot be read by git older than that version.  This is not
    enabled by default.
 
  - 'git pack-refs' appeared in v1.4.4; this command allows tags
    to be accessed much more efficiently than the traditional
    'one-file-per-tag' format.  Older git-native clients can
-   fetch from a repository that packed its tags (the server side
-   needs to run the up-to-date version of git), but older dumb
-   transports cannot.  Packing of refs is done by an explicit
-   user action, either by use of "git pack-refs --prune" command
-   or by use of "git gc" command.
+   still fetch from a repository that packed and pruned refs
+   (the server side needs to run the up-to-date version of git),
+   but older dumb transports cannot.  Packing of refs is done by
+   an explicit user action, either by use of "git pack-refs
+   --prune" command or by use of "git gc" command.
 
  - 'git -p' to paginate anything -- many commands do pagination
    by default on a tty.  Introduced between v1.4.1 and v1.4.2;
