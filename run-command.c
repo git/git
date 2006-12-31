@@ -2,7 +2,7 @@
 #include "run-command.h"
 #include "exec_cmd.h"
 
-int run_command_v_opt(int argc, const char **argv, int flags)
+int run_command_v_opt(const char **argv, int flags)
 {
 	pid_t pid = fork();
 
@@ -46,9 +46,9 @@ int run_command_v_opt(int argc, const char **argv, int flags)
 	}
 }
 
-int run_command_v(int argc, const char **argv)
+int run_command_v(const char **argv)
 {
-	return run_command_v_opt(argc, argv, 0);
+	return run_command_v_opt(argv, 0);
 }
 
 int run_command(const char *cmd, ...)
@@ -69,5 +69,5 @@ int run_command(const char *cmd, ...)
 	va_end(param);
 	if (MAX_RUN_COMMAND_ARGS <= argc)
 		return error("too many args to run %s", cmd);
-	return run_command_v_opt(argc, argv, 0);
+	return run_command_v_opt(argv, 0);
 }

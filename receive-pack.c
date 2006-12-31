@@ -187,7 +187,7 @@ static void run_update_post_hook(struct command *cmd)
 		argc++;
 	}
 	argv[argc] = NULL;
-	run_command_v_opt(argc, argv, RUN_COMMAND_NO_STDIO);
+	run_command_v_opt(argv, RUN_COMMAND_NO_STDIO);
 }
 
 /*
@@ -283,7 +283,7 @@ static const char *unpack(void)
 		unpacker[0] = "unpack-objects";
 		unpacker[1] = hdr_arg;
 		unpacker[2] = NULL;
-		code = run_command_v_opt(1, unpacker, RUN_GIT_CMD);
+		code = run_command_v_opt(unpacker, RUN_GIT_CMD);
 		switch (code) {
 		case 0:
 			return NULL;
