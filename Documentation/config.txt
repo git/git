@@ -82,13 +82,13 @@ core.logAllRefUpdates::
 	only when the file exists.  If this configuration
 	variable is set to true, missing "$GIT_DIR/logs/<ref>"
 	file is automatically created for branch heads.
-
-	This information can be used to determine what commit
-	was the tip of a branch "2 days ago".
-
-	This value is true by default in a repository that has
-	a working directory associated with it, and false by
-	default in a bare repository.
++
+This information can be used to determine what commit
+was the tip of a branch "2 days ago".
++
+This value is true by default in a repository that has
+a working directory associated with it, and false by
+default in a bare repository.
 
 core.repositoryFormatVersion::
 	Internal variable identifying the repository format and layout

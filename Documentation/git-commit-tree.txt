@@ -81,6 +81,11 @@ Your parents must have hated you!::
 Your sysadmin must hate you!::
     The password(5) name field is longer than a giant static buffer.
 
+Discussion
+----------
+
+include::i18n.txt[]
+
 See Also
 --------
 gitlink:git-write-tree[1]
