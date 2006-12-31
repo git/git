@@ -123,11 +123,13 @@ core.packedGitWindowSize::
 	single mapping operation.  Larger window sizes may allow
 	your system to process a smaller number of large pack files
 	more quickly.  Smaller window sizes will negatively affect
-	performance due to increased calls to the opreating system's
+	performance due to increased calls to the operating system's
 	memory manager, but may improve performance when accessing
 	a large number of large pack files.  Default is 32 MiB,
 	which should be reasonable for all users/operating systems.
 	You probably do not need to adjust this value.
++
+Common unit suffixes of 'k', 'm', or 'g' are supported.
 
 core.packedGitLimit::
 	Maximum number of bytes to map simultaneously into memory
@@ -135,8 +137,10 @@ core.packedGitLimit::
 	bytes at once to complete an operation it will unmap existing
 	regions to reclaim virtual address space within the process.
 	Default is 256 MiB, which should be reasonable for all
-	users/operating systems, except on largest Git projects.
+	users/operating systems, except on the largest projects.
 	You probably do not need to adjust this value.
++
+Common unit suffixes of 'k', 'm', or 'g' are supported.
 
 alias.*::
 	Command aliases for the gitlink:git[1] command wrapper - e.g.
