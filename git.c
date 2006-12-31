@@ -63,14 +63,14 @@ static int handle_options(const char*** argv, int* argc)
 				fprintf(stderr, "No directory given for --git-dir.\n" );
 				usage(git_usage_string);
 			}
-			setenv("GIT_DIR", (*argv)[1], 1);
+			setenv(GIT_DIR_ENVIRONMENT, (*argv)[1], 1);
 			(*argv)++;
 			(*argc)--;
 		} else if (!strncmp(cmd, "--git-dir=", 10)) {
-			setenv("GIT_DIR", cmd + 10, 1);
+			setenv(GIT_DIR_ENVIRONMENT, cmd + 10, 1);
 		} else if (!strcmp(cmd, "--bare")) {
 			static char git_dir[PATH_MAX+1];
-			setenv("GIT_DIR", getcwd(git_dir, sizeof(git_dir)), 1);
+			setenv(GIT_DIR_ENVIRONMENT, getcwd(git_dir, sizeof(git_dir)), 1);
 		} else {
 			fprintf(stderr, "Unknown option: %s\n", cmd);
 			usage(git_usage_string);
