@@ -3,6 +3,7 @@
 USAGE='[-f] [-b <new_branch>] [-m] [<branch>] [<paths>...]'
 SUBDIRECTORY_OK=Sometimes
 . git-sh-setup
+require_work_tree
 
 old_name=HEAD
 old=$(git-rev-parse --verify $old_name 2>/dev/null)

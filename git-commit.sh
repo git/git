@@ -6,6 +6,7 @@
 USAGE='[-a] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit>] [-u] [--amend] [-e] [--author <author>] [[-i | -o] <path>...]'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
+require_work_tree
 
 git-rev-parse --verify HEAD >/dev/null 2>&1 || initial_commit=t
 

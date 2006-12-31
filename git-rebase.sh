@@ -29,6 +29,7 @@ Example:       git-rebase master~1 topic
 '
 . git-sh-setup
 set_reflog_action rebase
+require_work_tree
 
 RESOLVEMSG="
 When you have resolved this problem run \"git rebase --continue\".

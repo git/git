@@ -8,6 +8,7 @@ USAGE='[-n | --no-summary] [--no-commit] [-s strategy]... [<fetch-options>] <rep
 LONG_USAGE='Fetch one or more remote refs and merge it/them into the current HEAD.'
 . git-sh-setup
 set_reflog_action "pull $*"
+require_work_tree
 
 test -z "$(git ls-files -u)" ||
 	die "You are in a middle of conflicted merge."
