@@ -69,8 +69,8 @@ static int handle_options(const char*** argv, int* argc)
 		} else if (!strncmp(cmd, "--git-dir=", 10)) {
 			setenv("GIT_DIR", cmd + 10, 1);
 		} else if (!strcmp(cmd, "--bare")) {
-			static char git_dir[1024];
-			setenv("GIT_DIR", getcwd(git_dir, 1024), 1);
+			static char git_dir[PATH_MAX+1];
+			setenv("GIT_DIR", getcwd(git_dir, sizeof(git_dir)), 1);
 		} else {
 			fprintf(stderr, "Unknown option: %s\n", cmd);
 			usage(git_usage_string);
