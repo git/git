@@ -87,7 +87,10 @@ OPTIONS
 	git-repo-config will ensure that the output is "true" or "false"
 
 --int::
-	git-repo-config will ensure that the output is a simple decimal number
+	git-repo-config will ensure that the output is a simple
+	decimal number.  An optional value suffix of 'k', 'm', or 'g'
+	in the config file will cause the value to be multiplied
+	by 1024, 1048576, or 1073741824 prior to output.
 
 
 ENVIRONMENT

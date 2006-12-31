@@ -391,5 +391,15 @@ EOF
 
 test_expect_success "rename succeeded" "diff -u expect .git/config"
 
+test_expect_success numbers '
+
+	git-repo-config kilo.gram 1k &&
+	git-repo-config mega.ton 1m &&
+	k=$(git-repo-config --int --get kilo.gram) &&
+	test z1024 = "z$k" &&
+	m=$(git-repo-config --int --get mega.ton) &&
+	test z1048576 = "z$m"
+'
+
 test_done
 
