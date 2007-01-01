@@ -27,86 +27,37 @@ Overall operation
 Pack_objects pipeline
 ---------------------
 
-This function gets one file descriptor (`out`) which is either a
+This function gets one file descriptor (`fd`) which is either a
 socket (over the network) or a pipe (local).  What's written to
 this fd goes to git-receive-pack to be unpacked.
 
     send-pack ---> fd ---> receive-pack
 
-It somehow forks once, but does not wait for it.  I am not sure
-why.
-
-The forked child calls rev_list_generate() with that file
-descriptor (while the parent closes `out` -- the child will be
-the one that writes the packfile to the other end).
+The function pack_objects creates a pipe and then forks.  The
+forked child execs pack-objects with --revs to receive revision
+parameters from its standard input. This process will write the
+packfile to the other end.
 
     send-pack
        |
-       rev-list-generate ---> fd ---> receive-pack
-
-
-Then rev-list-generate forks after creates a pipe; the child
-will become a pipeline "rev-list --stdin | pack-objects", which
-is the rev_list() function, while the parent feeds that pipeline
-the list of refs.
-
-    send-pack
-       |
-       rev-list-generate ---> fd ---> receive-pack
+       pack_objects() ---> fd ---> receive-pack
           | ^ (pipe)
 	  v |
-         rev-list
+         (child)
 
-The child process, before calling rev-list, rearranges the file
-descriptors:
-
-. what it reads from rev-list-generate via pipe becomes the
-  stdin; this is to feed the upstream of the pipeline which will
-  be git-rev-list process.
-
-. what it writes to its stdout goes to the fd connected to
-  receive-pack.
-
-On the other hand, the parent process, before starting to feed
-the child pipeline, closes the reading side of the pipe and fd
-to receive-pack.
+The child dup2's to arrange its standard output to go back to
+the other end, and read its standard input to come from the
+pipe.  After that it exec's pack-objects.  On the other hand,
+the parent process, before starting to feed the child pipeline,
+closes the reading side of the pipe and fd to receive-pack.
 
     send-pack
        |
-       rev-list-generate
+       pack_objects(parent)
           |
 	  v [0]
-         rev-list [1] ---> receive-pack
-
-The parent then writes to the pipe and later closes it.  There
-is a commented out waitpid to wait for the rev-list side before
-it exits, I again do not understand why.
-
-The rev-list function further sets up a pipe and forks to run
-git-rev-list piped to git-pack-objects.  The child side, before
-exec'ing git-pack-objects, rearranges the file descriptors:
-
-. what it reads from the pipe becomes the stdin; this gets the
-  list of objects from the git-rev-list process.
-
-. its stdout is already connected to receive-pack, so what it
-  generates goes there.
-
-The parent process arranges its file descriptors before exec'ing
-git-rev-list:
-
-. its stdout is sent to the pipe to feed git-pack-objects.
-
-. its stdin is already connected to rev-list-generate and will
-  read the set of refs from it.
+         pack-objects [0] ---> receive-pack
 
 
-    send-pack
-       |
-       rev-list-generate
-          |
-	  v [0]
-	  git-rev-list [1] ---> [0] git-pack-objects [1] ---> receive-pack
-
-
-
+[jc: the pipeline was much more complex and needed documentation before
+ I understood an earlier bug, but now it is trivial and straightforward.]
