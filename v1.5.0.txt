@@ -215,3 +215,27 @@ Updates in v1.5.0 since v1.4.4 series
 
  - Better error messages for often used Porcelainish commands.
 
+
+* Shallow clones
+
+ - There is a partial support for 'shallow' repositories that
+   keeps only recent history now.  A 'shallow clone' is created
+   by specifying how deep that truncated history should be.
+
+   Currently a shallow repository has number of limitations:
+
+   - Cloning and fetching _from_ a shallow clone are not
+     supported (nor tested -- so they might work by accident but
+     they are not expected to).
+
+   - Pushing from nor into a shallow clone are not expected to
+     work.
+
+   - Merging inside a shallow repository would work as long as a
+     merge base is found in the recent history, but otherwise it
+     will be like merging unrelated histories and may result in
+     huge conflicts.
+
+   but this would be more than adequate for people who want to
+   look at near the tip of a big project with a deep history and
+   send patches in e-mail format.
