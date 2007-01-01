@@ -382,13 +382,22 @@ fetch_main () {
       ;; # we are already done.
   *)
     ( : subshell because we muck with IFS
-      pack_lockfile=
       IFS=" 	$LF"
       (
-	  git-fetch-pack --thin $exec $keep $shallow_depth "$remote" $rref || echo failed "$remote"
+	  git-fetch-pack --thin $exec $keep $shallow_depth "$remote" $rref ||
+	  echo failed "$remote"
       ) |
-      while read sha1 remote_name
-      do
+      (
+	trap '
+		if test -n "$keepfile" && test -f "$keepfile"
+		then
+			rm -f "$keepfile"
+		fi
+	' 0
+
+        keepfile=
+	while read sha1 remote_name
+	do
 	  case "$sha1" in
 	  failed)
 		  echo >&2 "Fetch failure: $remote"
@@ -397,7 +406,7 @@ fetch_main () {
 	  pack)
 		  continue ;;
 	  keep)
-		  pack_lockfile="$GIT_OBJECT_DIRECTORY/pack/pack-$remote_name.keep"
+		  keepfile="$GIT_OBJECT_DIRECTORY/pack/pack-$remote_name.keep"
 		  continue ;;
 	  esac
 	  found=
@@ -429,8 +438,8 @@ fetch_main () {
 	  append_fetch_head "$sha1" "$remote" \
 		  "$remote_name" "$remote_nick" "$local_name" \
 		  "$not_for_merge" || exit
-      done &&
-      if [ "$pack_lockfile" ]; then rm -f "$pack_lockfile"; fi
+        done
+      )
     ) || exit ;;
   esac
 
