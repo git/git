@@ -41,3 +41,8 @@
 	implementing your own Porcelain you are not supposed to
 	use it.
 
+\--depth=<depth>::
+	Deepen the history of a 'shallow' repository created by
+	`git clone` with `--depth=<depth>` option (see gitlink:git-clone[1])
+	by the specified number of commits.
+
