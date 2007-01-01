@@ -17,7 +17,6 @@ test_expect_success 'initialize repo' "
 	cd wc &&
 	echo world >> trunk/readme &&
 	svn commit -m 'another commit' &&
-	svn up &&
 	svn mv -m 'rename to thunk' trunk thunk &&
 	svn up &&
 	echo goodbye >> thunk/readme &&
