@@ -76,16 +76,32 @@ get_remote_default_refs_for_push () {
 # from get_remote_refs_for_fetch when it deals with refspecs
 # supplied on the command line.  $ls_remote_result has the list
 # of refs available at remote.
+#
+# The first token returned is either "explicit" or "glob"; this
+# is to help prevent randomly "globbed" ref from being chosen as
+# a merge candidate
 expand_refs_wildcard () {
+	first_one=yes
 	for ref
 	do
 		lref=${ref#'+'}
 		# a non glob pattern is given back as-is.
 		expr "z$lref" : 'zrefs/.*/\*:refs/.*/\*$' >/dev/null || {
+			if test -n "$first_one"
+			then
+				echo "explicit"
+				first_one=
+			fi
 			echo "$ref"
 			continue
 		}
 
+		# glob
+		if test -n "$first_one"
+		then
+			echo "glob"
+			first_one=
+		fi
 		from=`expr "z$lref" : 'z\(refs/.*/\)\*:refs/.*/\*$'`
 		to=`expr "z$lref" : 'zrefs/.*/\*:\(refs/.*/\)\*$'`
 		local_force=
@@ -116,7 +132,8 @@ canon_refs_list_for_fetch () {
 	if test "$1" = "-d"
 	then
 		shift ; remote="$1" ; shift
-		set x $(expand_refs_wildcard "$@")
+		set $(expand_refs_wildcard "$@")
+		is_explicit="$1"
 		shift
 		if test "$remote" = "$(get_default_remote)"
 		then
@@ -124,6 +141,10 @@ canon_refs_list_for_fetch () {
 			    sed -e 's|^refs/heads/||')
 			merge_branches=$(git-repo-config \
 			    --get-all "branch.${curr_branch}.merge")
+		fi
+		if test -z "$merge_branches" && test $is_explicit != explicit
+		then
+			merge_branches=..this.will.never.match.any.ref..
 		fi
 	fi
 	for ref

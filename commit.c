@@ -679,11 +679,13 @@ static char *logmsg_reencode(const struct commit *commit)
 	else if (!*output_encoding)
 		return NULL;
 	encoding = get_header(commit, "encoding");
-	if (!encoding || !strcmp(encoding, output_encoding)) {
-		free(encoding);
+	if (!encoding)
 		return NULL;
-	}
-	out = reencode_string(commit->buffer, output_encoding, encoding);
+	if (!strcmp(encoding, output_encoding))
+		out = strdup(commit->buffer);
+	else
+		out = reencode_string(commit->buffer,
+				      output_encoding, encoding);
 	if (out)
 		out = replace_encoding_header(out, output_encoding);
 

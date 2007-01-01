@@ -126,9 +126,9 @@ Another use suggested on the mailing list is to use this hook to
 implement access control which is finer grained than the one
 based on filesystem group.
 
-The standard output of this hook is sent to `/dev/null`; if you
+The standard output of this hook is sent to `stderr`, so if you
 want to report something to the `git-send-pack` on the other end,
-you can redirect your output to your `stderr`.
+you can simply `echo` your messages.
 
 
 post-update
