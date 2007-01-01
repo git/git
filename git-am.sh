@@ -88,10 +88,12 @@ It does not apply to blobs recorded in its index."
     # This is not so wrong.  Depending on which base we picked,
     # orig_tree may be wildly different from ours, but his_tree
     # has the same set of wildly different changes in parts the
-    # patch did not touch, so resolve ends up canceling them,
+    # patch did not touch, so recursive ends up canceling them,
     # saying that we reverted all those changes.
 
-    git-merge-resolve $orig_tree -- HEAD $his_tree || {
+    eval GITHEAD_$his_tree='"$SUBJECT"'
+    export GITHEAD_$his_tree
+    git-merge-recursive $orig_tree -- HEAD $his_tree || {
 	    if test -d "$GIT_DIR/rr-cache"
 	    then
 		git-rerere
@@ -99,6 +101,7 @@ It does not apply to blobs recorded in its index."
 	    echo Failed to merge in the changes.
 	    exit 1
     }
+    unset GITHEAD_$his_tree
 }
 
 prec=4
