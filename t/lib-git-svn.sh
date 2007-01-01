@@ -7,25 +7,9 @@ then
 	exit
 fi
 
-perl -e 'use SVN::Core; $SVN::Core::VERSION gt "1.1.0" or die' >/dev/null 2>&1
-if test $? -ne 0
-then
-	test_expect_success 'Perl SVN libraries not found, skipping test' :
-	test_done
-	exit
-fi
-
 GIT_DIR=$PWD/.git
 GIT_SVN_DIR=$GIT_DIR/svn/git-svn
 SVN_TREE=$GIT_SVN_DIR/svn-tree
-
-svnadmin >/dev/null 2>&1
-if test $? -ne 1
-then
-    test_expect_success 'skipping git-svn tests, svnadmin not found' :
-    test_done
-    exit
-fi
 
 svn >/dev/null 2>&1
 if test $? -ne 1
@@ -37,13 +21,24 @@ fi
 
 svnrepo=$PWD/svnrepo
 
-set -e
-
-if svnadmin create --help | grep fs-type >/dev/null
+perl -w -e "
+use SVN::Core;
+use SVN::Repos;
+\$SVN::Core::VERSION gt '1.1.0' or exit(42);
+SVN::Repos::create('$svnrepo', undef, undef, undef,
+                           { 'fs-config' => 'fsfs'});
+"
+x=$?
+if test $x -ne 0
 then
-	svnadmin create --fs-type fsfs "$svnrepo"
-else
-	svnadmin create "$svnrepo"
+	if test $x -eq 42; then
+		err='Perl SVN libraries must be >= 1.1.0'
+	else
+		err='Perl SVN libraries not found or unusable, skipping test'
+	fi
+	test_expect_success "$err" :
+	test_done
+	exit
 fi
 
 svnrepo="file://$svnrepo"

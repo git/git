@@ -36,6 +36,13 @@
 -u, \--update-head-ok::
 	By default `git-fetch` refuses to update the head which
 	corresponds to the current branch.  This flag disables the
-	check.  Note that fetching into the current branch will not
-	update the index and working directory, so use it with care.
+	check.  This is purely for the internal use for `git-pull`
+	to communicate with `git-fetch`, and unless you are
+	implementing your own Porcelain you are not supposed to
+	use it.
+
+\--depth=<depth>::
+	Deepen the history of a 'shallow' repository created by
+	`git clone` with `--depth=<depth>` option (see gitlink:git-clone[1])
+	by the specified number of commits.
 

@@ -8,6 +8,9 @@ USAGE='[-n] [--no-commit] [--squash] [-s <strategy>] [-m=<merge-message>] <commi
 . git-sh-setup
 set_reflog_action "merge $*"
 
+test -z "$(git ls-files -u)" ||
+	die "You are in a middle of conflicted merge."
+
 LF='
 '
 

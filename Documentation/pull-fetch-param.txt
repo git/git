@@ -39,10 +39,6 @@ checkout -b my-B remote-B`).  Run `git fetch` to keep track of
 the progress of the remote side, and when you see something new
 on the remote branch, merge it into your development branch with
 `git pull . remote-B`, while you are on `my-B` branch.
-The common `Pull: master:origin` mapping of a remote `master`
-branch to a local `origin` branch, which is then merged to a
-local development branch, again typically named `master`, is made
-when you run `git clone` for you to follow this pattern.
 +
 [NOTE]
 There is a difference between listing multiple <refspec>

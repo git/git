@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git-clone' [--template=<template_directory>] [-l [-s]] [-q] [-n] [--bare]
 	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
-	  <repository> [<directory>]
+	  [--depth=<depth>] <repository> [<directory>]
 
 DESCRIPTION
 -----------
@@ -30,6 +30,7 @@ This default configuration is achieved by creating references to
 the remote branch heads under `$GIT_DIR/refs/remotes/origin` and
 by initializing `remote.origin.url` and `remote.origin.fetch`
 configuration variables.
+
 
 OPTIONS
 -------
@@ -94,6 +95,15 @@ OPTIONS
 	Specify the directory from which templates will be used;
 	if unset the templates are taken from the installation
 	defined default, typically `/usr/share/git-core/templates`.
+
+--depth=<depth>::
+	Create a 'shallow' clone with a history truncated to the
+	specified number of revs.  A shallow repository has
+	number of limitations (you cannot clone or fetch from
+	it, nor push from nor into it), but is adequate if you
+	want to only look at near the tip of a large project
+	with a long history, and would want to send in a fixes
+	as patches.
 
 <repository>::
 	The (possibly remote) repository to clone from.  It can
