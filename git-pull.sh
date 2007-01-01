@@ -9,6 +9,9 @@ LONG_USAGE='Fetch one or more remote refs and merge it/them into the current HEA
 . git-sh-setup
 set_reflog_action "pull $*"
 
+test -z "$(git ls-files -u)" ||
+	die "You are in a middle of conflicted merge."
+
 strategy_args= no_summary= no_commit= squash=
 while case "$#,$1" in 0) break ;; *,-*) ;; *) break ;; esac
 do
