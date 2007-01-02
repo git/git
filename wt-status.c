@@ -41,8 +41,6 @@ void wt_status_prepare(struct wt_status *s)
 	unsigned char sha1[20];
 	const char *head;
 
-	s->is_initial = get_sha1("HEAD", sha1) ? 1 : 0;
-
 	head = resolve_ref("HEAD", sha1, 0, NULL);
 	s->branch = head ? xstrdup(head) : NULL;
 
@@ -277,6 +275,9 @@ static void wt_status_print_verbose(struct wt_status *s)
 
 void wt_status_print(struct wt_status *s)
 {
+	unsigned char sha1[20];
+	s->is_initial = get_sha1(s->reference, sha1) ? 1 : 0;
+
 	if (s->branch)
 		color_printf_ln(color(WT_STATUS_HEADER),
 			"# On branch %s", s->branch);
