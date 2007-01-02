@@ -160,10 +160,20 @@ apache2_conf () {
 	test "$local" = true && bind='127.0.0.1:'
 	echo 'text/css css' > $fqgitdir/mime.types
 	cat > "$conf" <<EOF
+ServerName "git-instaweb"
 ServerRoot "$fqgitdir/gitweb"
 DocumentRoot "$fqgitdir/gitweb"
 PidFile "$fqgitdir/pid"
 Listen $bind$port
+EOF
+
+	for mod in mime dir; do
+		if test -e $module_path/mod_${mod}.so; then
+			echo "LoadModule ${mod}_module " \
+			     "$module_path/mod_${mod}.so" >> "$conf"
+		fi
+	done
+	cat >> "$conf" <<EOF
 TypesConfig $fqgitdir/mime.types
 DirectoryIndex gitweb.cgi
 EOF
