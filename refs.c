@@ -644,7 +644,6 @@ static int repack_without_ref(const char *refname)
 	}
 	if (!found)
 		return 0;
-	memset(&packlock, 0, sizeof(packlock));
 	fd = hold_lock_file_for_update(&packlock, git_path("packed-refs"), 0);
 	if (fd < 0)
 		return error("cannot delete '%s' from packed refs", refname);
