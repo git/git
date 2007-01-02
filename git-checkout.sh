@@ -144,13 +144,19 @@ fi
 # are switching to, then we'd better just be checking out
 # what we already had
 
-[ -z "$branch$newbranch" ] &&
-	[ "$new" != "$old" ] &&
-	die "git checkout: provided reference cannot be checked out directly
-
-  You need -b to associate a new branch with the wanted checkout. Example:
+if test -z "$branch$newbranch" && test "$new" != "$old"
+then
+	# NEEDSWORK: we would want to have this command here
+	# that allows us to detach the HEAD atomically.
+	# git update-ref --detach HEAD "$new"
+	rm -f "$GIT_DIR/HEAD"
+	echo "$new" >"$GIT_DIR/HEAD"
+	echo >&2 "WARNING: you are not on ANY branch anymore.
+If you meant to create a new branch from the commit, you need -b to
+associate a new branch with the wanted checkout.  Example:
   git checkout -b <new_branch_name> $arg
 "
+fi
 
 if [ "X$old" = X ]
 then

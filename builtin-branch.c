@@ -308,7 +308,8 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev)
 	free_ref_list(&ref_list);
 }
 
-static void create_branch(const char *name, const char *start,
+static void create_branch(const char *name, const char *start_name,
+			  unsigned char *start_sha1,
 			  int force, int reflog)
 {
 	struct ref_lock *lock;
@@ -327,9 +328,14 @@ static void create_branch(const char *name, const char *start,
 			die("Cannot force update the current branch.");
 	}
 
-	if (get_sha1(start, sha1) ||
-	    (commit = lookup_commit_reference(sha1)) == NULL)
-		die("Not a valid branch point: '%s'.", start);
+	if (start_sha1)
+		/* detached HEAD */
+		hashcpy(sha1, start_sha1);
+	else if (get_sha1(start_name, sha1))
+		die("Not a valid object name: '%s'.", start_name);
+
+	if ((commit = lookup_commit_reference(sha1)) == NULL)
+		die("Not a valid branch point: '%s'.", start_name);
 	hashcpy(sha1, commit->object.sha1);
 
 	lock = lock_any_ref_for_update(ref, NULL);
@@ -338,7 +344,8 @@ static void create_branch(const char *name, const char *start,
 
 	if (reflog) {
 		log_all_ref_updates = 1;
-		snprintf(msg, sizeof msg, "branch: Created from %s", start);
+		snprintf(msg, sizeof msg, "branch: Created from %s",
+			 start_name);
 	}
 
 	if (write_ref_sha1(lock, sha1, msg) < 0)
@@ -349,6 +356,9 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 {
 	char oldref[PATH_MAX], newref[PATH_MAX], logmsg[PATH_MAX*2 + 100];
 	unsigned char sha1[20];
+
+	if (!oldname)
+		die("cannot rename the curren branch while not on any.");
 
 	if (snprintf(oldref, sizeof(oldref), "refs/heads/%s", oldname) > sizeof(oldref))
 		die("Old branchname too long");
@@ -474,9 +484,9 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	else if (rename && (i == argc - 2))
 		rename_branch(argv[i], argv[i + 1], force_rename);
 	else if (i == argc - 1)
-		create_branch(argv[i], head, force_create, reflog);
+		create_branch(argv[i], head, head_sha1, force_create, reflog);
 	else if (i == argc - 2)
-		create_branch(argv[i], argv[i + 1], force_create, reflog);
+		create_branch(argv[i], argv[i+1], NULL, force_create, reflog);
 	else
 		usage(builtin_branch_usage);
 
