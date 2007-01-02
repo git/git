@@ -15,7 +15,7 @@ static char wt_status_colors[][COLOR_MAXLEN] = {
 	"\033[31m", /* WT_STATUS_CHANGED: red */
 	"\033[31m", /* WT_STATUS_UNTRACKED: red */
 };
-static const char* use_add_msg = "use \"git add file1 file2\" to include for commit";
+static const char* use_add_msg = "use \"git add <file>...\" to incrementally add content to commit";
 
 static int parse_status_slot(const char *var, int offset)
 {
