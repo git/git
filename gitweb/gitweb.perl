@@ -2813,8 +2813,12 @@ sub git_tags_body {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
-		print "<td><i>$tag{'age'}</i></td>\n" .
-		      "<td>" .
+		if (defined $tag{'age'}) {
+			print "<td><i>$tag{'age'}</i></td>\n";
+		} else {
+			print "<td></td>\n";
+		}
+		print "<td>" .
 		      $cgi->a({-href => href(action=>$tag{'reftype'}, hash=>$tag{'refid'}),
 		               -class => "list name"}, esc_html($tag{'name'})) .
 		      "</td>\n" .
