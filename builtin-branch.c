@@ -275,7 +275,7 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 	}
 }
 
-static void print_ref_list(int kinds, int verbose, int abbrev)
+static void print_ref_list(int kinds, int detached, int verbose, int abbrev)
 {
 	int i;
 	struct ref_list ref_list;
@@ -286,8 +286,20 @@ static void print_ref_list(int kinds, int verbose, int abbrev)
 
 	qsort(ref_list.list, ref_list.index, sizeof(struct ref_item), ref_cmp);
 
+	detached = (detached && (kinds & REF_LOCAL_BRANCH));
+	if (detached) {
+		struct ref_item item;
+		item.name = "(no branch)";
+		item.kind = REF_LOCAL_BRANCH;
+		hashcpy(item.sha1, head_sha1);
+		if (strlen(item.name) > ref_list.maxwidth)
+			      ref_list.maxwidth = strlen(item.name);
+		print_ref_item(&item, ref_list.maxwidth, verbose, abbrev, 1);
+	}
+
 	for (i = 0; i < ref_list.index; i++) {
-		int current = (ref_list.list[i].kind == REF_LOCAL_BRANCH) &&
+		int current = !detached &&
+			(ref_list.list[i].kind == REF_LOCAL_BRANCH) &&
 			!strcmp(ref_list.list[i].name, head);
 		print_ref_item(&ref_list.list[i], ref_list.maxwidth, verbose,
 			       abbrev, current);
@@ -367,7 +379,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 {
 	int delete = 0, force_delete = 0, force_create = 0;
 	int rename = 0, force_rename = 0;
-	int verbose = 0, abbrev = DEFAULT_ABBREV;
+	int verbose = 0, abbrev = DEFAULT_ABBREV, detached = 0;
 	int reflog = 0;
 	int kinds = REF_LOCAL_BRANCH;
 	int i;
@@ -444,14 +456,19 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	head = xstrdup(resolve_ref("HEAD", head_sha1, 0, NULL));
 	if (!head)
 		die("Failed to resolve HEAD as a valid ref.");
-	if (strncmp(head, "refs/heads/", 11))
-		die("HEAD not found below refs/heads!");
-	head += 11;
+	if (!strcmp(head, "HEAD")) {
+		detached = 1;
+	}
+	else {
+		if (strncmp(head, "refs/heads/", 11))
+			die("HEAD not found below refs/heads!");
+		head += 11;
+	}
 
 	if (delete)
 		return delete_branches(argc - i, argv + i, force_delete, kinds);
 	else if (i == argc)
-		print_ref_list(kinds, verbose, abbrev);
+		print_ref_list(kinds, detached, verbose, abbrev);
 	else if (rename && (i == argc - 1))
 		rename_branch(head, argv[i], force_rename);
 	else if (rename && (i == argc - 2))
