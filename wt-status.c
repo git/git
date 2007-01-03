@@ -288,9 +288,18 @@ void wt_status_print(struct wt_status *s)
 	unsigned char sha1[20];
 	s->is_initial = get_sha1(s->reference, sha1) ? 1 : 0;
 
-	if (s->branch)
+	if (s->branch) {
+		const char *on_what = "On branch ";
+		const char *branch_name = s->branch;
+		if (!strncmp(branch_name, "refs/heads/", 11))
+			branch_name += 11;
+		else if (!strcmp(branch_name, "HEAD")) {
+			branch_name = "";
+			on_what = "Not currently on any branch.";
+		}
 		color_printf_ln(color(WT_STATUS_HEADER),
-			"# On branch %s", s->branch);
+			"# %s%s", on_what, branch_name);
+	}
 
 	if (s->is_initial) {
 		color_printf_ln(color(WT_STATUS_HEADER), "#");
