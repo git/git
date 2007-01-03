@@ -145,6 +145,21 @@ branch.<name>.merge::
 	this option, `git pull` defaults to merge the first refspec fetched.
 	Specify multiple values to get an octopus merge.
 
+color.branch::
+	A boolean to enable/disable color in the output of
+	gitlink:git-branch[1]. May be set to `true` (or `always`),
+	`false` (or `never`) or `auto`, in which case colors are used
+	only when the output is to a terminal. Defaults to false.
+
+color.branch.<slot>::
+	Use customized color for branch coloration. `<slot>` is one of
+	`current` (the current branch), `local` (a local branch),
+	`remote` (a tracking branch in refs/remotes/), `plain` (other
+	refs), or `reset` (the normal terminal color).  The value for
+	these configuration variables can be one of: `normal`, `bold`,
+	`dim`, `ul`, `blink`, `reverse`, `reset`, `black`, `red`,
+	`green`, `yellow`, `blue`, `magenta`, `cyan`, or `white`.
+
 color.diff::
 	When true (or `always`), always use colors in patch.
 	When false (or `never`), never.  When set to `auto`, use
@@ -155,11 +170,8 @@ color.diff.<slot>::
 	specifies which part of the patch to use the specified
 	color, and is one of `plain` (context text), `meta`
 	(metainformation), `frag` (hunk header), `old` (removed
-	lines), or `new` (added lines).  The value for these
-	configuration variables can be one of: `normal`, `bold`,
-	`dim`, `ul`, `blink`, `reverse`, `reset`, `black`,
-	`red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, or
-	`white`.
+	lines), or `new` (added lines).  The values of these
+	variables may be specified as in color.branch.<slot>.
 
 color.pager::
 	A boolean to enable/disable colored output when the pager is in
@@ -177,7 +189,7 @@ color.status.<slot>::
 	`added` or `updated` (files which are added but not committed),
 	`changed` (files which are changed but not added in the index),
 	or `untracked` (files which are not tracked by git). The values of
-	these variables may be specified as in color.diff.<slot>.
+	these variables may be specified as in color.branch.<slot>.
 
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename
