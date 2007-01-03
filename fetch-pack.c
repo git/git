@@ -625,6 +625,8 @@ static int remove_duplicates(int nr_heads, char **heads)
 	return dst;
 }
 
+static struct lock_file lock;
+
 int main(int argc, char **argv)
 {
 	int i, ret, nr_heads;
@@ -632,7 +634,6 @@ int main(int argc, char **argv)
 	int fd[2];
 	pid_t pid;
 	struct stat st;
-	struct lock_file lock;
 
 	setup_git_directory();
 

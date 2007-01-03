@@ -8,7 +8,6 @@ SUBDIRECTORY_OK=Yes
 . git-sh-setup
 
 git-rev-parse --verify HEAD >/dev/null 2>&1 || initial_commit=t
-branch=$(GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD)
 
 case "$0" in
 *status)

@@ -432,6 +432,7 @@ extern char *git_log_output_encoding;
 
 extern int copy_fd(int ifd, int ofd);
 extern void read_or_die(int fd, void *buf, size_t count);
+extern int write_in_full(int fd, const void *buf, size_t count, const char *);
 extern void write_or_die(int fd, const void *buf, size_t count);
 extern int write_or_whine(int fd, const void *buf, size_t count, const char *msg);
 

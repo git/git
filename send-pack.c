@@ -65,12 +65,16 @@ static int pack_objects(int fd, struct ref *refs)
 			memcpy(buf + 1, sha1_to_hex(refs->old_sha1), 40);
 			buf[0] = '^';
 			buf[41] = '\n';
-			write(pipe_fd[1], buf, 42);
+			if (!write_in_full(pipe_fd[1], buf, 42,
+						"send-pack: send refs"))
+				break;
 		}
 		if (!is_null_sha1(refs->new_sha1)) {
 			memcpy(buf, sha1_to_hex(refs->new_sha1), 40);
 			buf[40] = '\n';
-			write(pipe_fd[1], buf, 41);
+			if (!write_in_full(pipe_fd[1], buf, 41,
+						"send-pack: send refs"))
+				break;
 		}
 		refs = refs->next;
 	}
