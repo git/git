@@ -9,7 +9,7 @@ git-tag - Create a tag object signed with GPG
 SYNOPSIS
 --------
 [verse]
-'git-tag' [-a | -s | -u <key-id>] [-f | -d] [-m <msg> | -F <file>]
+'git-tag' [-a | -s | -u <key-id>] [-f | -d | -v] [-m <msg> | -F <file>]
 	 <name> [<head>]
 'git-tag' -l [<pattern>]
 
@@ -35,6 +35,8 @@ GnuPG key for signing.
 
 `-d <tag>` deletes the tag.
 
+`-v <tag>` verifies the gpg signature of the tag.
+
 `-l <pattern>` lists tags that match the given pattern (or all
 if no pattern is given).
 
@@ -54,6 +56,9 @@ OPTIONS
 
 -d::
 	Delete an existing tag with the given name
+
+-v::
+	Verify the gpg signature of given the tag
 
 -l <pattern>::
 	List tags that match the given pattern (or all if no pattern is given).
