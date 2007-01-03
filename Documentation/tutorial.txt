@@ -232,6 +232,15 @@ $ gitk
 
 will show a nice graphical representation of the resulting history.
 
+At this point you could delete the experimental branch with
+
+------------------------------------------------
+$ git branch -d experimental
+------------------------------------------------
+
+This command ensures that the changes in the experimental branch are
+already in the current branch.
+
 If you develop on a branch crazy-idea, then regret it, you can always
 delete the branch with
 
@@ -401,8 +410,8 @@ $ git show HEAD		# the tip of the current branch
 $ git show experimental	# the tip of the "experimental" branch
 -------------------------------------
 
-Every commit has at least one "parent" commit, which points to the
-previous state of the project:
+Every commit usually has one "parent" commit
+which points to the previous state of the project:
 
 -------------------------------------
 $ git show HEAD^  # to see the parent of HEAD
@@ -520,10 +529,10 @@ of the file:
 $ git diff v2.5:Makefile HEAD:Makefile.in
 -------------------------------------
 
-You can also use "git cat-file -p" to see any such file:
+You can also use "git show" to see any such file:
 
 -------------------------------------
-$ git cat-file -p v2.5:Makefile
+$ git show v2.5:Makefile
 -------------------------------------
 
 Next Steps
