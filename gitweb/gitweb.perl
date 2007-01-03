@@ -2274,7 +2274,7 @@ sub git_difftree_body {
 			my $mode_chnge = "";
 			if ($diff{'from_mode'} != $diff{'to_mode'}) {
 				$mode_chnge = "<span class=\"file_status mode_chnge\">[changed";
-				if ($from_file_type != $to_file_type) {
+				if ($from_file_type ne $to_file_type) {
 					$mode_chnge .= " from $from_file_type to $to_file_type";
 				}
 				if (($from_mode_oct & 0777) != ($to_mode_oct & 0777)) {
