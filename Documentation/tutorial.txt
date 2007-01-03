@@ -65,16 +65,19 @@ Try modifying some files, then run
 $ git diff
 ------------------------------------------------
 
-to review your changes.  When you're done,
+to review your changes.  When you're done, tell git that you
+want the updated contents of these files in the commit and then
+make a commit, like this:
 
 ------------------------------------------------
-$ git commit file1 file2...
+$ git add file1 file...
+$ git commit
 ------------------------------------------------
 
-will again prompt your for a message describing the change, and then
+This will again prompt your for a message describing the change, and then
 record the new versions of the files you listed.  It is cumbersome
-to list all files and you can say `-a` (which stands for 'all')
-instead.
+to list all files and you can say `git commit -a` (which stands for 'all')
+instead of running `git add` beforehand.
 
 ------------------------------------------------
 $ git commit -a
@@ -84,7 +87,7 @@ A note on commit messages: Though not required, it's a good idea to
 begin the commit message with a single short (less than 50 character)
 line summarizing the change, followed by a blank line and then a more
 thorough description.  Tools that turn commits into email, for
-example, use the first line on the Subject line and the rest of the
+example, use the first line on the Subject: line and the rest of the
 commit in the body.
 
 
@@ -140,6 +143,13 @@ If you also want to see complete diffs at each step, use
 
 ------------------------------------------------
 $ git log -p
+------------------------------------------------
+
+Often the overview of the change is useful to get a feel of
+each step
+
+------------------------------------------------
+$ git log --stat --summary
 ------------------------------------------------
 
 Managing branches
@@ -381,7 +391,7 @@ commit.
 $ git show c82a22c39cbc32576f64f5c6b3f24b99ea8149c7
 -------------------------------------
 
-But there other ways to refer to commits.  You can use any initial
+But there are other ways to refer to commits.  You can use any initial
 part of the name that is long enough to uniquely identify the commit:
 
 -------------------------------------
