@@ -34,7 +34,10 @@ t)
 	;;
 esac
 
+trap 'rm -f "$GIT_DIR/.tmp-vtag"' 0
+
 git-cat-file tag "$1" >"$GIT_DIR/.tmp-vtag" || exit 1
+
 cat "$GIT_DIR/.tmp-vtag" |
 sed '/-----BEGIN PGP/Q' |
 gpg --verify "$GIT_DIR/.tmp-vtag" - || exit 1

@@ -703,7 +703,7 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 				  const char *after_subject,
 				  int relative_date)
 {
-	int hdr = 1, body = 0;
+	int hdr = 1, body = 0, seen_title = 0;
 	unsigned long offset = 0;
 	int indent = 4;
 	int parents_shown = 0;
@@ -809,6 +809,8 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 			body = 1;
 
 		if (is_empty_line(line, &linelen)) {
+			if (!seen_title)
+				continue;
 			if (!body)
 				continue;
 			if (subject)
@@ -817,6 +819,7 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 				break;
 		}
 
+		seen_title = 1;
 		if (subject) {
 			int slen = strlen(subject);
 			memcpy(buf + offset, subject, slen);

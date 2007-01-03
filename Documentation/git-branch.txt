@@ -8,7 +8,7 @@ git-branch - List, create, or delete branches.
 SYNOPSIS
 --------
 [verse]
-'git-branch' [-r | -a] [-v [--abbrev=<length>]]
+'git-branch' [--color | --no-color] [-r | -a] [-v [--abbrev=<length>]]
 'git-branch' [-l] [-f] <branchname> [<start-point>]
 'git-branch' (-m | -M) [<oldbranch>] <newbranch>
 'git-branch' (-d | -D) [-r] <branchname>...
@@ -59,6 +59,13 @@ OPTIONS
 
 -M::
 	Move/rename a branch even if the new branchname already exists.
+
+--color::
+	Color branches to highlight current, local, and remote branches.
+
+--no-color::
+	Turn off branch colors, even when the configuration file gives the
+	default to color output.
 
 -r::
 	List or delete (if used with -d) the remote-tracking branches.

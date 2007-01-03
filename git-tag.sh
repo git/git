@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright (c) 2005 Linus Torvalds
 
-USAGE='-l [<pattern>] | [-a | -s | -u <key-id>] [-f | -d] [-m <msg>] <tagname> [<head>]'
+USAGE='-l [<pattern>] | [-a | -s | -u <key-id>] [-f | -d | -v] [-m <msg>] <tagname> [<head>]'
 SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
@@ -12,6 +12,7 @@ force=
 message=
 username=
 list=
+verify=
 while case "$#" in 0) break ;; esac
 do
     case "$1" in
@@ -67,6 +68,14 @@ do
 		die "Seriously, what tag are you talking about?"
 	git-update-ref -m 'tag: delete' -d "refs/tags/$tag_name" "$tag" &&
 		echo "Deleted tag $tag_name."
+	exit $?
+	;;
+    -v)
+	shift
+	tag_name="$1"
+	tag=$(git-show-ref --verify --hash -- "refs/tags/$tag_name") ||
+		die "Seriously, what tag are you talking about?"
+	git-verify-tag -v "$tag"
 	exit $?
 	;;
     -*)

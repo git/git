@@ -12,7 +12,7 @@
 #include "builtin.h"
 
 static const char builtin_branch_usage[] =
-  "git-branch [-r] (-d | -D) <branchname> | [-l] [-f] <branchname> [<start-point>] | (-m | -M) [<oldbranch>] <newbranch> | [-r | -a] [-v [--abbrev=<length>]]";
+  "git-branch [-r] (-d | -D) <branchname> | [-l] [-f] <branchname> [<start-point>] | (-m | -M) [<oldbranch>] <newbranch> | [--color | --no-color] [-r | -a] [-v [--abbrev=<length>]]";
 
 #define REF_UNKNOWN_TYPE    0x00
 #define REF_LOCAL_BRANCH    0x01
@@ -231,29 +231,54 @@ static int ref_cmp(const void *r1, const void *r2)
 	return strcmp(c1->name, c2->name);
 }
 
-static void print_ref_info(const unsigned char *sha1, int abbrev)
+static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
+			   int abbrev, int current)
 {
+	char c;
+	int color;
 	struct commit *commit;
 	char subject[256];
 
+	switch (item->kind) {
+	case REF_LOCAL_BRANCH:
+		color = COLOR_BRANCH_LOCAL;
+		break;
+	case REF_REMOTE_BRANCH:
+		color = COLOR_BRANCH_REMOTE;
+		break;
+	default:
+		color = COLOR_BRANCH_PLAIN;
+		break;
+	}
 
-	commit = lookup_commit(sha1);
-	if (commit && !parse_commit(commit))
-		pretty_print_commit(CMIT_FMT_ONELINE, commit, ~0,
-				    subject, sizeof(subject), 0,
-				    NULL, NULL, 0);
-	else
-		strcpy(subject, " **** invalid ref ****");
+	c = ' ';
+	if (current) {
+		c = '*';
+		color = COLOR_BRANCH_CURRENT;
+	}
 
-	printf(" %s %s\n", find_unique_abbrev(sha1, abbrev), subject);
+	if (verbose) {
+		commit = lookup_commit(item->sha1);
+		if (commit && !parse_commit(commit))
+			pretty_print_commit(CMIT_FMT_ONELINE, commit, ~0,
+					    subject, sizeof(subject), 0,
+					    NULL, NULL, 0);
+		else
+			strcpy(subject, " **** invalid ref ****");
+		printf("%c %s%-*s%s %s %s\n", c, branch_get_color(color),
+		       maxwidth, item->name,
+		       branch_get_color(COLOR_BRANCH_RESET),
+		       find_unique_abbrev(item->sha1, abbrev), subject);
+	} else {
+		printf("%c %s%s%s\n", c, branch_get_color(color), item->name,
+		       branch_get_color(COLOR_BRANCH_RESET));
+	}
 }
 
 static void print_ref_list(int kinds, int verbose, int abbrev)
 {
 	int i;
-	char c;
 	struct ref_list ref_list;
-	int color;
 
 	memset(&ref_list, 0, sizeof(ref_list));
 	ref_list.kinds = kinds;
@@ -262,38 +287,10 @@ static void print_ref_list(int kinds, int verbose, int abbrev)
 	qsort(ref_list.list, ref_list.index, sizeof(struct ref_item), ref_cmp);
 
 	for (i = 0; i < ref_list.index; i++) {
-		switch( ref_list.list[i].kind ) {
-			case REF_LOCAL_BRANCH:
-				color = COLOR_BRANCH_LOCAL;
-				break;
-			case REF_REMOTE_BRANCH:
-				color = COLOR_BRANCH_REMOTE;
-				break;
-			default:
-				color = COLOR_BRANCH_PLAIN;
-				break;
-		}
-
-		c = ' ';
-		if (ref_list.list[i].kind == REF_LOCAL_BRANCH &&
-				!strcmp(ref_list.list[i].name, head)) {
-			c = '*';
-			color = COLOR_BRANCH_CURRENT;
-		}
-
-		if (verbose) {
-			printf("%c %s%-*s%s", c,
-					branch_get_color(color),
-					ref_list.maxwidth,
-					ref_list.list[i].name,
-					branch_get_color(COLOR_BRANCH_RESET));
-			print_ref_info(ref_list.list[i].sha1, abbrev);
-		}
-		else
-			printf("%c %s%s%s\n", c,
-					branch_get_color(color),
-					ref_list.list[i].name,
-					branch_get_color(COLOR_BRANCH_RESET));
+		int current = (ref_list.list[i].kind == REF_LOCAL_BRANCH) &&
+			!strcmp(ref_list.list[i].name, head);
+		print_ref_item(&ref_list.list[i], ref_list.maxwidth, verbose,
+			       abbrev, current);
 	}
 
 	free_ref_list(&ref_list);

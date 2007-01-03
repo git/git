@@ -37,7 +37,6 @@ show
 show-branch
 status
 tag
-verify-tag
 EOF
 while read cmd
 do

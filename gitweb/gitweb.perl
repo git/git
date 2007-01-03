@@ -2274,7 +2274,7 @@ sub git_difftree_body {
 			my $mode_chnge = "";
 			if ($diff{'from_mode'} != $diff{'to_mode'}) {
 				$mode_chnge = "<span class=\"file_status mode_chnge\">[changed";
-				if ($from_file_type != $to_file_type) {
+				if ($from_file_type ne $to_file_type) {
 					$mode_chnge .= " from $from_file_type to $to_file_type";
 				}
 				if (($from_mode_oct & 0777) != ($to_mode_oct & 0777)) {
@@ -2527,7 +2527,7 @@ sub git_patchset_body {
 		print "<div class=\"diff from_file\">$patch_line</div>\n";
 
 		$patch_line = <$fd>;
-		#last PATCH unless $patch_line;
+		last PATCH unless $patch_line;
 		chomp $patch_line;
 
 		#assert($patch_line =~ m/^+++/) if DEBUG;
@@ -2995,7 +2995,7 @@ sub git_project_index {
 
 	foreach my $pr (@projects) {
 		if (!exists $pr->{'owner'}) {
-			$pr->{'owner'} = get_file_owner("$projectroot/$project");
+			$pr->{'owner'} = get_file_owner("$projectroot/$pr->{'path'}");
 		}
 
 		my ($path, $owner) = ($pr->{'path'}, $pr->{'owner'});
@@ -4423,7 +4423,7 @@ sub git_shortlog {
 	}
 	my $refs = git_get_references();
 
-	my @commitlist = parse_commits($head, 101, (100 * $page));
+	my @commitlist = parse_commits($hash, 101, (100 * $page));
 
 	my $paging_nav = format_paging_nav('shortlog', $hash, $head, $page, (100 * ($page+1)));
 	my $next_link = '';
