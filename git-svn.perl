@@ -40,7 +40,6 @@ if ($SVN::Core::VERSION lt '1.1.0') {
 }
 push @SVN::Git::Editor::ISA, 'SVN::Delta::Editor';
 push @SVN::Git::Fetcher::ISA, 'SVN::Delta::Editor';
-*SVN::Git::Fetcher::process_rm = *process_rm;
 use Carp qw/croak/;
 use IO::File qw//;
 use File::Basename qw/dirname basename/;
@@ -2181,28 +2180,6 @@ sub libsvn_log_entry {
 	  revprops => $rp }
 }
 
-sub process_rm {
-	my ($gui, $last_commit, $f, $q) = @_;
-	# remove entire directories.
-	if (command('ls-tree',$last_commit,'--',$f) =~ /^040000 tree/) {
-		my ($ls, $ctx) = command_output_pipe(qw/ls-tree
-		                                     -r --name-only -z/,
-				                     $last_commit,'--',$f);
-		local $/ = "\0";
-		while (<$ls>) {
-			print $gui '0 ',0 x 40,"\t",$_ or croak $!;
-			print "\tD\t$_\n" unless $q;
-		}
-		print "\tD\t$f/\n" unless $q;
-		command_close_pipe($ls, $ctx);
-		return $SVN::Node::dir;
-	} else {
-		print $gui '0 ',0 x 40,"\t",$f,"\0" or croak $!;
-		print "\tD\t$f\n" unless $q;
-		return $SVN::Node::file;
-	}
-}
-
 sub libsvn_fetch {
 	my ($last_commit, $paths, $rev, $author, $date, $msg) = @_;
 	my $pool = SVN::Pool->new;
@@ -2634,8 +2611,25 @@ sub open_directory {
 
 sub delete_entry {
 	my ($self, $path, $rev, $pb) = @_;
-	my $t = process_rm($self->{gui}, $self->{c}, $path, $self->{q});
-	$self->{empty}->{$path} = 0 if $t == $SVN::Node::dir;
+	my $gui = $self->{gui};
+
+	# remove entire directories.
+	if (command('ls-tree', $self->{c}, '--', $path) =~ /^040000 tree/) {
+		my ($ls, $ctx) = command_output_pipe(qw/ls-tree
+		                                     -r --name-only -z/,
+				                     $self->{c}, '--', $path);
+		local $/ = "\0";
+		while (<$ls>) {
+			print $gui '0 ',0 x 40,"\t",$_ or croak $!;
+			print "\tD\t$_\n" unless $self->{q};
+		}
+		print "\tD\t$path/\n" unless $self->{q};
+		command_close_pipe($ls, $ctx);
+		$self->{empty}->{$path} = 0
+	} else {
+		print $gui '0 ',0 x 40,"\t",$path,"\0" or croak $!;
+		print "\tD\t$path\n" unless $self->{q};
+	}
 	undef;
 }
 
