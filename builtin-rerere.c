@@ -350,11 +350,10 @@ static int do_plain_rerere(struct path_list *rr, int fd)
 		fprintf(stderr, "Recorded resolution for '%s'.\n", path);
 		copy_file(path, rr_path(name, "postimage"));
 tail_optimization:
-		if (i < rr->nr - 1) {
+		if (i < rr->nr - 1)
 			memmove(rr->items + i,
-					rr->items + i + 1,
-					rr->nr - i - 1);
-		}
+				rr->items + i + 1,
+				sizeof(rr->items[0]) * (rr->nr - i - 1));
 		rr->nr--;
 		i--;
 	}
