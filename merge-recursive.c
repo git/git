@@ -954,8 +954,6 @@ static int process_renames(struct path_list *a_renames,
 	path_list_clear(&a_by_dst, 0);
 	path_list_clear(&b_by_dst, 0);
 
-	if (cache_dirty)
-		flush_cache();
 	return clean_merge;
 }
 
@@ -1083,9 +1081,6 @@ static int process_entry(const char *path, struct stage_data *entry,
 	} else
 		die("Fatal merge failure, shouldn't happen.");
 
-	if (cache_dirty)
-		flush_cache();
-
 	return clean_merge;
 }
 
@@ -1133,6 +1128,8 @@ static int merge_trees(struct tree *head,
 			if (!process_entry(path, e, branch1, branch2))
 				clean = 0;
 		}
+		if (cache_dirty)
+			flush_cache();
 
 		path_list_clear(re_merge, 0);
 		path_list_clear(re_head, 0);
