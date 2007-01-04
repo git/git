@@ -818,7 +818,7 @@ test-sha1$X: test-sha1.o $(GITLIBS)
 check-sha1:: test-sha1$X
 	./test-sha1.sh
 
-check:
+check: common-cmds.h
 	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; done
 
 
