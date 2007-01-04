@@ -69,7 +69,7 @@ my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_limit, $_verbose, $_incremental, $_oneline, $_l_fmt, $_show_commit,
 	$_version, $_upgrade, $_authors, $_branch_all_refs, @_opt_m,
 	$_merge, $_strategy, $_dry_run, $_ignore_nodate, $_non_recursive,
-	$_username, $_config_dir, $_no_auth_cache,
+	$_config_dir,
 	$_pager, $_color, $_prefix);
 my (@_branch_from, %tree_map, %users, %rusers, %equiv);
 my ($_svn_can_do_switch);
@@ -83,9 +83,9 @@ my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
 		'repack:i' => \$_repack,
 		'no-metadata' => \$_no_metadata,
 		'quiet|q' => \$_q,
-		'username=s' => \$_username,
+		'username=s' => \$Git::SVN::Prompt::_username,
 		'config-dir=s' => \$_config_dir,
-		'no-auth-cache' => \$_no_auth_cache,
+		'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache,
 		'ignore-nodate' => \$_ignore_nodate,
 		'repack-flags|repack-args|repack-opts=s' => \$_repack_flags);
 
@@ -131,9 +131,9 @@ my %cmd = (
 			'Initialize multiple trees (like git-svnimport)',
 			{ %multi_opts, %init_opts,
 			 'revision|r=i' => \$_revision,
-			 'username=s' => \$_username,
+			 'username=s' => \$Git::SVN::Prompt::_username,
 			 'config-dir=s' => \$_config_dir,
-			 'no-auth-cache' => \$_no_auth_cache,
+			 'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache,
 			 'prefix=s' => \$_prefix,
 			} ],
 	'multi-fetch' => [ \&multi_fetch,
@@ -1912,7 +1912,13 @@ sub show_commit_normal {
 	}
 }
 
-sub _simple_prompt {
+package Git::SVN::Prompt;
+use strict;
+use warnings;
+require SVN::Core;
+use vars qw/$_no_auth_cache $_username/;
+
+sub simple {
 	my ($cred, $realm, $default_username, $may_save, $pool) = @_;
 	$may_save = undef if $_no_auth_cache;
 	$default_username = $_username if defined $_username;
@@ -1923,7 +1929,7 @@ sub _simple_prompt {
 		}
 		$cred->username($default_username);
 	} else {
-		_username_prompt($cred, $realm, $may_save, $pool);
+		username($cred, $realm, $may_save, $pool);
 	}
 	$cred->password(_read_password("Password for '" .
 	                               $cred->username . "': ", $realm));
@@ -1931,7 +1937,7 @@ sub _simple_prompt {
 	$SVN::_Core::SVN_NO_ERROR;
 }
 
-sub _ssl_server_trust_prompt {
+sub ssl_server_trust {
 	my ($cred, $realm, $failures, $cert_info, $may_save, $pool) = @_;
 	$may_save = undef if $_no_auth_cache;
 	print STDERR "Error validating server certificate for '$realm':\n";
@@ -1980,7 +1986,7 @@ prompt:
 	$SVN::_Core::SVN_NO_ERROR;
 }
 
-sub _ssl_client_cert_prompt {
+sub ssl_client_cert {
 	my ($cred, $realm, $may_save, $pool) = @_;
 	$may_save = undef if $_no_auth_cache;
 	print STDERR "Client certificate filename: ";
@@ -1991,7 +1997,7 @@ sub _ssl_client_cert_prompt {
 	$SVN::_Core::SVN_NO_ERROR;
 }
 
-sub _ssl_client_cert_pw_prompt {
+sub ssl_client_cert_pw {
 	my ($cred, $realm, $may_save, $pool) = @_;
 	$may_save = undef if $_no_auth_cache;
 	$cred->password(_read_password("Password: ", $realm));
@@ -1999,7 +2005,7 @@ sub _ssl_client_cert_pw_prompt {
 	$SVN::_Core::SVN_NO_ERROR;
 }
 
-sub _username_prompt {
+sub username {
 	my ($cred, $realm, $may_save, $pool) = @_;
 	$may_save = undef if $_no_auth_cache;
 	if (defined $realm && length $realm) {
@@ -2035,6 +2041,8 @@ sub _read_password {
 	$password;
 }
 
+package main;
+
 sub libsvn_connect {
 	my ($url) = @_;
 	SVN::_Core::svn_config_ensure($_config_dir, undef);
@@ -2042,16 +2050,16 @@ sub libsvn_connect {
 	    SVN::Client::get_simple_provider(),
 	    SVN::Client::get_ssl_server_trust_file_provider(),
 	    SVN::Client::get_simple_prompt_provider(
-	      \&_simple_prompt, 2),
+	      \&Git::SVN::Prompt::simple, 2),
 	    SVN::Client::get_ssl_client_cert_prompt_provider(
-	      \&_ssl_client_cert_prompt, 2),
+	      \&Git::SVN::Prompt::ssl_client_cert, 2),
 	    SVN::Client::get_ssl_client_cert_pw_prompt_provider(
-	      \&_ssl_client_cert_pw_prompt, 2),
+	      \&Git::SVN::Prompt::ssl_client_cert_pw, 2),
 	    SVN::Client::get_username_provider(),
 	    SVN::Client::get_ssl_server_trust_prompt_provider(
-	      \&_ssl_server_trust_prompt),
+	      \&Git::SVN::Prompt::ssl_server_trust),
 	    SVN::Client::get_username_prompt_provider(
-	      \&_username_prompt, 2),
+	      \&Git::SVN::username, 2),
 	  ]);
 	my $config = SVN::Core::config_get_config($_config_dir);
 	my $ra = SVN::Ra->new(url => $url, auth => $baton,
