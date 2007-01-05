@@ -102,7 +102,7 @@ my %cmt_opts = ( 'edit|e' => \$_edit,
 );
 
 my %cmd = (
-	fetch => [ \&fetch, "Download new revisions from SVN",
+	fetch => [ \&cmd_fetch, "Download new revisions from SVN",
 			{ 'revision|r=s' => \$_revision, %fc_opts } ],
 	init => [ \&init, "Initialize a repo for tracking" .
 			  " (requires URL argument)",
@@ -291,6 +291,10 @@ sub init {
 		command_noisy(@init_db);
 	}
 	setup_git_svn();
+}
+
+sub cmd_fetch {
+	fetch_child_id($GIT_SVN, @_);
 }
 
 sub fetch {
@@ -836,7 +840,6 @@ sub fetch_child_id {
 	my $ref = "$GIT_DIR/refs/remotes/$id";
 	defined(my $pid = open my $fh, '-|') or croak $!;
 	if (!$pid) {
-		$_repack = undef;
 		$GIT_SVN = $ENV{GIT_SVN_ID} = $id;
 		init_vars();
 		fetch(@_);
@@ -844,7 +847,7 @@ sub fetch_child_id {
 	}
 	while (<$fh>) {
 		print $_;
-		check_repack() if (/^r\d+ = $sha1/);
+		check_repack() if (/^r\d+ = $sha1/o);
 	}
 	close $fh or croak $?;
 }
@@ -1407,7 +1410,6 @@ sub git_commit {
 
 	# this output is read via pipe, do not change:
 	print "r$log_msg->{revision} = $commit\n";
-	check_repack();
 	return $commit;
 }
 
