@@ -1,16 +1,18 @@
 #include "cache.h"
 #include "pack.h"
 
+#define BATCH (1u<<20)
+
 static int verify_packfile(struct packed_git *p)
 {
 	unsigned long index_size = p->index_size;
 	void *index_base = p->index_base;
 	SHA_CTX ctx;
 	unsigned char sha1[20];
-	unsigned long pack_size = p->pack_size;
-	void *pack_base;
 	struct pack_header *hdr;
 	int nr_objects, err, i;
+	unsigned char *packdata;
+	unsigned long datasize;
 
 	/* Header consistency check */
 	hdr = p->pack_base;
@@ -25,11 +27,19 @@ static int verify_packfile(struct packed_git *p)
 			     "while idx size expects %d", nr_objects,
 			     num_packed_objects(p));
 
+	/* Check integrity of pack data with its SHA-1 checksum */
 	SHA1_Init(&ctx);
-	pack_base = p->pack_base;
-	SHA1_Update(&ctx, pack_base, pack_size - 20);
+	packdata = p->pack_base;
+	datasize = p->pack_size - 20;
+	while (datasize) {
+		unsigned long batch = (datasize < BATCH) ? datasize : BATCH;
+		SHA1_Update(&ctx, packdata, batch);
+		datasize -= batch;
+		packdata += batch;
+	}
 	SHA1_Final(sha1, &ctx);
-	if (hashcmp(sha1, (unsigned char *)pack_base + pack_size - 20))
+
+	if (hashcmp(sha1, (unsigned char *)(p->pack_base) + p->pack_size - 20))
 		return error("Packfile %s SHA1 mismatch with itself",
 			     p->pack_name);
 	if (hashcmp(sha1, (unsigned char *)index_base + index_size - 40))

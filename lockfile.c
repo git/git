@@ -27,9 +27,12 @@ static int lock_file(struct lock_file *lk, const char *path)
 	sprintf(lk->filename, "%s.lock", path);
 	fd = open(lk->filename, O_RDWR | O_CREAT | O_EXCL, 0666);
 	if (0 <= fd) {
-		if (!lk->next) {
+		if (!lk->on_list) {
 			lk->next = lock_file_list;
 			lock_file_list = lk;
+			lk->on_list = 1;
+		}
+		if (lock_file_list) {
 			signal(SIGINT, remove_lock_file_on_signal);
 			atexit(remove_lock_file);
 		}
@@ -37,6 +40,8 @@ static int lock_file(struct lock_file *lk, const char *path)
 			return error("cannot fix permission bits on %s",
 				     lk->filename);
 	}
+	else
+		lk->filename[0] = 0;
 	return fd;
 }
 
