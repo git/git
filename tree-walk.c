@@ -113,7 +113,6 @@ void traverse_trees(int n, struct tree_desc *t, const char *base, traverse_callb
 	struct name_entry *entry = xmalloc(n*sizeof(*entry));
 
 	for (;;) {
-		struct name_entry entry[3];
 		unsigned long mask = 0;
 		int i, last;
 

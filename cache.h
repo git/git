@@ -179,6 +179,7 @@ extern int refresh_cache(unsigned int flags);
 
 struct lock_file {
 	struct lock_file *next;
+	char on_list;
 	char filename[PATH_MAX];
 };
 extern int hold_lock_file_for_update(struct lock_file *, const char *path, int);

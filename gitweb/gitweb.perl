@@ -2813,8 +2813,12 @@ sub git_tags_body {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
-		print "<td><i>$tag{'age'}</i></td>\n" .
-		      "<td>" .
+		if (defined $tag{'age'}) {
+			print "<td><i>$tag{'age'}</i></td>\n";
+		} else {
+			print "<td></td>\n";
+		}
+		print "<td>" .
 		      $cgi->a({-href => href(action=>$tag{'reftype'}, hash=>$tag{'refid'}),
 		               -class => "list name"}, esc_html($tag{'name'})) .
 		      "</td>\n" .
@@ -3208,9 +3212,14 @@ HTML
 				      esc_html($rev));
 			print "</td>\n";
 		}
+		open (my $dd, "-|", git_cmd(), "rev-parse", "$full_rev^")
+			or die_error("could not open git-rev-parse");
+		my $parent_commit = <$dd>;
+		close $dd;
+		chomp($parent_commit);
 		my $blamed = href(action => 'blame',
 				  file_name => $meta->{'filename'},
-				  hash_base => $full_rev);
+				  hash_base => $parent_commit);
 		print "<td class=\"linenr\">";
 		print $cgi->a({ -href => "$blamed#l$orig_lineno",
 				-id => "l$lineno",

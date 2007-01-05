@@ -179,7 +179,7 @@ SCRIPT_SH = \
 SCRIPT_PERL = \
 	git-add--interactive.perl \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
-	git-cvsserver.perl \
+	git-cvsserver.perl git-remote.perl \
 	git-svnimport.perl git-cvsexportcommit.perl \
 	git-send-email.perl git-svn.perl
 
@@ -818,7 +818,7 @@ test-sha1$X: test-sha1.o $(GITLIBS)
 check-sha1:: test-sha1$X
 	./test-sha1.sh
 
-check:
+check: common-cmds.h
 	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; done
 
 

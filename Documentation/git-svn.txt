@@ -3,7 +3,7 @@ git-svn(1)
 
 NAME
 ----
-git-svn - bidirectional operation between a single Subversion branch and git
+git-svn - bidirectional operation between Subversion and git
 
 SYNOPSIS
 --------
@@ -11,24 +11,20 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-git-svn is a simple conduit for changesets between a single Subversion
-branch and git. It is not to be confused with gitlink:git-svnimport[1].
-They were designed with very different goals in mind.
+git-svn is a simple conduit for changesets between Subversion and git.
+It is not to be confused with gitlink:git-svnimport[1], which is
+read-only and geared towards tracking multiple branches.
 
-git-svn is designed for an individual developer who wants a
+git-svn was originally designed for an individual developer who wants a
 bidirectional flow of changesets between a single branch in Subversion
-and an arbitrary number of branches in git.  git-svnimport is designed
-for read-only operation on repositories that match a particular layout
-(albeit the recommended one by SVN developers).
+and an arbitrary number of branches in git.  Since its inception,
+git-svn has gained the ability to track multiple branches in a manner
+similar to git-svnimport; but it cannot (yet) automatically detect new
+branches and tags like git-svnimport does.
 
-For importing svn, git-svnimport is potentially more powerful when
-operating on repositories organized under the recommended
-trunk/branch/tags structure, and should be faster, too.
-
-git-svn mostly ignores the very limited view of branching that
-Subversion has.  This allows git-svn to be much easier to use,
-especially on repositories that are not organized in a manner that
-git-svnimport is designed for.
+git-svn is especially useful when it comes to tracking repositories
+not organized in the way Subversion developers recommend (trunk,
+branches, tags directories).
 
 COMMANDS
 --------
@@ -370,7 +366,7 @@ SVN was very wrong.
 Basic Examples
 ~~~~~~~~~~~~~~
 
-Tracking and contributing to a Subversion-managed project:
+Tracking and contributing to a the trunk of a Subversion-managed project:
 
 ------------------------------------------------------------------------
 # Initialize a repo (like git init-db):
@@ -386,6 +382,30 @@ Tracking and contributing to a Subversion-managed project:
 	git-svn fetch && git rebase remotes/git-svn
 # Append svn:ignore settings to the default git exclude file:
 	git-svn show-ignore >> .git/info/exclude
+------------------------------------------------------------------------
+
+Tracking and contributing to an entire Subversion-managed project
+(complete with a trunk, tags and branches):
+See also:
+'<<tracking-multiple-repos,Tracking Multiple Repositories or Branches>>'
+
+------------------------------------------------------------------------
+# Initialize a repo (like git init-db):
+	git-svn multi-init http://svn.foo.org/project \
+		-T trunk -b branches -t tags
+# Fetch remote revisions:
+	git-svn multi-fetch
+# Create your own branch of trunk to hack on:
+	git checkout -b my-trunk remotes/trunk
+# Do some work, and then commit your new changes to SVN, as well as
+# automatically updating your working HEAD:
+	git-svn dcommit -i trunk
+# Something has been committed to trunk, rebase the latest into your branch:
+	git-svn multi-fetch && git rebase remotes/trunk
+# Append svn:ignore settings of trunk to the default git exclude file:
+	git-svn show-ignore -i trunk >> .git/info/exclude
+# Check for new branches and tags (no arguments are needed):
+	git-svn multi-init
 ------------------------------------------------------------------------
 
 REBASE VS. PULL
