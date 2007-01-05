@@ -144,7 +144,9 @@ extern void diff_change(struct diff_options *,
 			const char *base, const char *path);
 
 extern void diff_unmerge(struct diff_options *,
-			 const char *path);
+			 const char *path,
+			 unsigned mode,
+			 const unsigned char *sha1);
 
 extern int diff_scoreopt_parse(const char *opt);
 
