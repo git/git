@@ -571,28 +571,25 @@ sub graft_branches {
 
 sub multi_init {
 	my $url = shift;
-	$_trunk ||= 'trunk';
-	$_trunk =~ s#/+$##;
-	$url =~ s#/+$## if $url;
-	if ($_trunk !~ m#^[a-z\+]+://#) {
-		$_trunk = '/' . $_trunk if ($_trunk !~ m#^/#);
-		unless ($url) {
-			print STDERR "E: '$_trunk' is not a complete URL ",
-				"and a separate URL is not specified\n";
-			exit 1;
+	unless (defined $_trunk || defined $_branches || defined $_tags) {
+		usage(1);
+	}
+	if (defined $_trunk) {
+		my $trunk_url = complete_svn_url($url, $_trunk);
+		my $ch_id;
+		if ($GIT_SVN eq 'git-svn') {
+			$ch_id = 1;
+			$GIT_SVN = $ENV{GIT_SVN_ID} = 'trunk';
 		}
-		$_trunk = $url . $_trunk;
-	}
-	my $ch_id;
-	if ($GIT_SVN eq 'git-svn') {
-		$ch_id = 1;
-		$GIT_SVN = $ENV{GIT_SVN_ID} = 'trunk';
-	}
-	init_vars();
-	unless (-d $GIT_SVN_DIR) {
-		print "GIT_SVN_ID set to 'trunk' for $_trunk\n" if $ch_id;
-		init($_trunk);
-		command_noisy('repo-config', 'svn.trunk', $_trunk);
+		init_vars();
+		unless (-d $GIT_SVN_DIR) {
+			if ($ch_id) {
+				print "GIT_SVN_ID set to 'trunk' for ",
+				      "$trunk_url ($_trunk)\n";
+			}
+			init($trunk_url);
+			command_noisy('repo-config', 'svn.trunk', $trunk_url);
+		}
 	}
 	complete_url_ls_init($url, $_branches, '--branches/-b', '');
 	complete_url_ls_init($url, $_tags, '--tags/-t', 'tags/');
@@ -872,29 +869,34 @@ sub rec_fetch {
 	}
 }
 
+sub complete_svn_url {
+	my ($url, $path) = @_;
+	$path =~ s#/+$##;
+	$url =~ s#/+$## if $url;
+	if ($path !~ m#^[a-z\+]+://#) {
+		$path = '/' . $path if ($path !~ m#^/#);
+		if (!defined $url || $url !~ m#^[a-z\+]+://#) {
+			fatal("E: '$path' is not a complete URL ",
+			      "and a separate URL is not specified\n");
+		}
+		$path = $url . $path;
+	}
+	return $path;
+}
+
 sub complete_url_ls_init {
-	my ($url, $var, $switch, $pfx) = @_;
-	unless ($var) {
+	my ($url, $path, $switch, $pfx) = @_;
+	unless ($path) {
 		print STDERR "W: $switch not specified\n";
 		return;
 	}
-	$var =~ s#/+$##;
-	if ($var !~ m#^[a-z\+]+://#) {
-		$var = '/' . $var if ($var !~ m#^/#);
-		unless ($url) {
-			print STDERR "E: '$var' is not a complete URL ",
-				"and a separate URL is not specified\n";
-			exit 1;
-		}
-		$var = $url . $var;
-	}
-	my @ls = libsvn_ls_fullurl($var);
-	my $old = $GIT_SVN;
+	my $full_url = complete_svn_url($url, $path);
+	my @ls = libsvn_ls_fullurl($full_url);
 	defined(my $pid = fork) or croak $!;
 	if (!$pid) {
-		foreach my $u (map { "$var/$_" } (grep m!/$!, @ls)) {
+		foreach my $u (map { "$full_url/$_" } (grep m!/$!, @ls)) {
 			$u =~ s#/+$##;
-			if ($u !~ m!\Q$var\E/(.+)$!) {
+			if ($u !~ m!\Q$full_url\E/(.+)$!) {
 				print STDERR "W: Unrecognized URL: $u\n";
 				die "This should never happen\n";
 			}
@@ -912,7 +914,7 @@ sub complete_url_ls_init {
 	waitpid $pid, 0;
 	croak $? if $?;
 	my ($n) = ($switch =~ /^--(\w+)/);
-	command_noisy('repo-config', "svn.$n", $var);
+	command_noisy('repo-config', "svn.$n", $full_url);
 }
 
 sub common_prefix {
