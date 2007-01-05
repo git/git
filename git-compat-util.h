@@ -97,11 +97,17 @@ extern int git_munmap(void *start, size_t length);
 #else /* NO_MMAP */
 
 #include <sys/mman.h>
-#define DEFAULT_PACKED_GIT_WINDOW_SIZE (32 * 1024 * 1024)
+#define DEFAULT_PACKED_GIT_WINDOW_SIZE \
+	(sizeof(void*) >= 8 \
+		?  1 * 1024 * 1024 * 1024 \
+		: 32 * 1024 * 1024)
 
 #endif /* NO_MMAP */
 
-#define DEFAULT_PACKED_GIT_LIMIT (256 * 1024 * 1024)
+#define DEFAULT_PACKED_GIT_LIMIT \
+	(sizeof(void*) >= 8 \
+		?   8 * 1024 * 1024 * 1024 \
+		: 256 * 1024 * 1024)
 
 #ifdef NO_SETENV
 #define setenv gitsetenv
