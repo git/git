@@ -3212,9 +3212,14 @@ HTML
 				      esc_html($rev));
 			print "</td>\n";
 		}
+		open (my $dd, "-|", git_cmd(), "rev-parse", "$full_rev^")
+			or die_error("could not open git-rev-parse");
+		my $parent_commit = <$dd>;
+		close $dd;
+		chomp($parent_commit);
 		my $blamed = href(action => 'blame',
 				  file_name => $meta->{'filename'},
-				  hash_base => $full_rev);
+				  hash_base => $parent_commit);
 		print "<td class=\"linenr\">";
 		print $cgi->a({ -href => "$blamed#l$orig_lineno",
 				-id => "l$lineno",
