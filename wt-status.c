@@ -53,6 +53,18 @@ void wt_status_prepare(struct wt_status *s)
 	s->workdir_clean = 1;
 }
 
+static void wt_status_print_cached_header(const char *reference)
+{
+	const char *c = color(WT_STATUS_HEADER);
+	color_printf_ln(c, "# Cached changes to be committed:");
+	if (reference) {
+		color_printf_ln(c, "#   (use \"git reset %s <file>...\" and \"git rm --cached <file>...\" to unstage)", reference);
+	} else {
+		color_printf_ln(c, "#   (use \"git rm --cached <file>...\" to unstage)");
+	}
+	color_printf_ln(c, "#");
+}
+
 static void wt_status_print_header(const char *main, const char *sub)
 {
 	const char *c = color(WT_STATUS_HEADER);
@@ -147,8 +159,7 @@ static void wt_status_print_updated_cb(struct diff_queue_struct *q,
 		if (q->queue[i]->status == 'U')
 			continue;
 		if (!shown_header) {
-			wt_status_print_header("Added but not yet committed",
-					"will commit");
+			wt_status_print_cached_header(s->reference);
 			s->commitable = 1;
 			shown_header = 1;
 		}
@@ -182,8 +193,7 @@ void wt_status_print_initial(struct wt_status *s)
 	read_cache();
 	if (active_nr) {
 		s->commitable = 1;
-		wt_status_print_header("Added but not yet committed",
-				"will commit");
+		wt_status_print_cached_header(NULL);
 	}
 	for (i = 0; i < active_nr; i++) {
 		color_printf(color(WT_STATUS_HEADER), "#\t");
