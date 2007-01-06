@@ -12,7 +12,6 @@
 
 static const char prune_usage[] = "git-prune [-n]";
 static int show_only;
-static struct rev_info revs;
 
 static int prune_object(char *path, const char *filename, const unsigned char *sha1)
 {
@@ -184,45 +183,48 @@ static void walk_commit_list(struct rev_info *revs)
 static int add_one_reflog_ent(unsigned char *osha1, unsigned char *nsha1, char *datail, void *cb_data)
 {
 	struct object *object;
+	struct rev_info *revs = (struct rev_info *)cb_data;
 
 	object = parse_object(osha1);
 	if (object)
-		add_pending_object(&revs, object, "");
+		add_pending_object(revs, object, "");
 	object = parse_object(nsha1);
 	if (object)
-		add_pending_object(&revs, object, "");
+		add_pending_object(revs, object, "");
 	return 0;
 }
 
 static int add_one_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *object = parse_object(sha1);
+	struct rev_info *revs = (struct rev_info *)cb_data;
+
 	if (!object)
 		die("bad object ref: %s:%s", path, sha1_to_hex(sha1));
-	add_pending_object(&revs, object, "");
+	add_pending_object(revs, object, "");
 
-	for_each_reflog_ent(path, add_one_reflog_ent, NULL);
+	for_each_reflog_ent(path, add_one_reflog_ent, cb_data);
 
 	return 0;
 }
 
-static void add_one_tree(const unsigned char *sha1)
+static void add_one_tree(const unsigned char *sha1, struct rev_info *revs)
 {
 	struct tree *tree = lookup_tree(sha1);
-	add_pending_object(&revs, &tree->object, "");
+	add_pending_object(revs, &tree->object, "");
 }
 
-static void add_cache_tree(struct cache_tree *it)
+static void add_cache_tree(struct cache_tree *it, struct rev_info *revs)
 {
 	int i;
 
 	if (it->entry_count >= 0)
-		add_one_tree(it->sha1);
+		add_one_tree(it->sha1, revs);
 	for (i = 0; i < it->subtree_nr; i++)
-		add_cache_tree(it->down[i]->cache_tree);
+		add_cache_tree(it->down[i]->cache_tree, revs);
 }
 
-static void add_cache_refs(void)
+static void add_cache_refs(struct rev_info *revs)
 {
 	int i;
 
@@ -237,12 +239,13 @@ static void add_cache_refs(void)
 		 */
 	}
 	if (active_cache_tree)
-		add_cache_tree(active_cache_tree);
+		add_cache_tree(active_cache_tree, revs);
 }
 
 int cmd_prune(int argc, const char **argv, const char *prefix)
 {
 	int i;
+	struct rev_info revs;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -264,11 +267,11 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	revs.blob_objects = 1;
 	revs.tree_objects = 1;
 
-	/* Add all external refs */
-	for_each_ref(add_one_ref, NULL);
+	/* Add all external refs, along with its reflog info */
+	for_each_ref(add_one_ref, &revs);
 
 	/* Add all refs from the index file */
-	add_cache_refs();
+	add_cache_refs(&revs);
 
 	/*
 	 * Set up the revision walk - this will move all commits
