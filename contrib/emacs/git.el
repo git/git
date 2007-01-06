@@ -49,6 +49,7 @@
 
 (eval-when-compile (require 'cl))
 (require 'ewoc)
+(require 'log-edit)
 
 
 ;;;; Customizations
@@ -146,6 +147,13 @@ if there is already one that displays the same directory."
 ;;;; ------------------------------------------------------------
 
 (defconst git-log-msg-separator "--- log message follows this line ---")
+
+(defvar git-log-edit-font-lock-keywords
+  `(("^\\(Author:\\|Date:\\|Parent:\\|Signed-off-by:\\)\\(.*\\)$"
+     (1 font-lock-keyword-face)
+     (2 font-lock-function-name-face))
+    (,(concat "^\\(" (regexp-quote git-log-msg-separator) "\\)$")
+     (1 font-lock-comment-face))))
 
 (defun git-get-env-strings (env)
   "Build a list of NAME=VALUE strings from a list of environment strings."
@@ -894,14 +902,9 @@ and returns the process output as a string."
               (sign-off
                (insert (format "\n\nSigned-off-by: %s <%s>\n"
                                (git-get-committer-name) (git-get-committer-email)))))))
-    (let ((log-edit-font-lock-keywords
-           `(("^\\(Author:\\|Date:\\|Parent:\\|Signed-off-by:\\)\\(.*\\)"
-              (1 font-lock-keyword-face)
-              (2 font-lock-function-name-face))
-             (,(concat "^\\(" (regexp-quote git-log-msg-separator) "\\)$")
-              (1 font-lock-comment-face)))))
-      (log-edit #'git-do-commit nil #'git-log-edit-files buffer)
-      (re-search-forward (regexp-quote (concat git-log-msg-separator "\n")) nil t))))
+    (log-edit #'git-do-commit nil #'git-log-edit-files buffer)
+    (setq font-lock-keywords (font-lock-compile-keywords git-log-edit-font-lock-keywords))
+    (re-search-forward (regexp-quote (concat git-log-msg-separator "\n")) nil t)))
 
 (defun git-find-file ()
   "Visit the current file in its own buffer."
