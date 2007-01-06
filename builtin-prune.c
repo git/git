@@ -203,8 +203,12 @@ static int add_one_ref(const char *path, const unsigned char *sha1, int flag, vo
 		die("bad object ref: %s:%s", path, sha1_to_hex(sha1));
 	add_pending_object(revs, object, "");
 
-	for_each_reflog_ent(path, add_one_reflog_ent, cb_data);
+	return 0;
+}
 
+static int add_one_reflog(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+{
+	for_each_reflog_ent(path, add_one_reflog_ent, cb_data);
 	return 0;
 }
 
@@ -267,11 +271,14 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	revs.blob_objects = 1;
 	revs.tree_objects = 1;
 
-	/* Add all external refs, along with its reflog info */
+	/* Add all external refs */
 	for_each_ref(add_one_ref, &revs);
 
 	/* Add all refs from the index file */
 	add_cache_refs(&revs);
+
+	/* Add all reflog info from refs */
+	for_each_ref(add_one_reflog, &revs);
 
 	/*
 	 * Set up the revision walk - this will move all commits
