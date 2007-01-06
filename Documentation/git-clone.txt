@@ -18,13 +18,13 @@ DESCRIPTION
 
 Clones a repository into a newly created directory, creates
 remote-tracking branches for each branch in the cloned repository
-(visible using `git branch -r`), and creates and checks out a master
-branch equal to the cloned repository's master branch.
+(visible using `git branch -r`), and creates and checks out an initial
+branch equal to the cloned repository's currently active branch.
 
 After the clone, a plain `git fetch` without arguments will update
 all the remote-tracking branches, and a `git pull` without
 arguments will in addition merge the remote master branch into the
-current branch.
+current master branch, if any.
 
 This default configuration is achieved by creating references to
 the remote branch heads under `$GIT_DIR/refs/remotes/origin` and
