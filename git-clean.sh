@@ -18,7 +18,6 @@ SUBDIRECTORY_OK=Yes
 ignored=
 ignoredonly=
 cleandir=
-quiet=
 rmf="rm -f --"
 rmrf="rm -rf --"
 rm_refuse="echo Not removing"
@@ -31,14 +30,13 @@ do
 		cleandir=1
 		;;
 	-n)
-		quiet=1
 		rmf="echo Would remove"
 		rmrf="echo Would remove"
 		rm_refuse="echo Would not remove"
 		echo1=":"
 		;;
 	-q)
-		quiet=1
+		echo1=":"
 		;;
 	-x)
 		ignored=1
