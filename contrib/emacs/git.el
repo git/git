@@ -777,7 +777,7 @@ and returns the process output as a string."
   (interactive)
   (let ((files (git-marked-files-state 'unmerged)))
     (when files
-      (apply #'git-run-command nil nil "update-index" "--info-only" "--" (git-get-filenames files))
+      (apply #'git-run-command nil nil "update-index" "--" (git-get-filenames files))
       (git-set-files-state files 'modified)
       (git-refresh-files))))
 
