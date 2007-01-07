@@ -31,12 +31,13 @@ $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
 our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,
-    $opt_b,$opt_r,$opt_I,$opt_A,$opt_s,$opt_l,$opt_d,$opt_D,$opt_S,$opt_F,$opt_P);
+    $opt_b,$opt_r,$opt_I,$opt_A,$opt_s,$opt_l,$opt_d,$opt_D,$opt_S,$opt_F,
+    $opt_P,$opt_R);
 
 sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from SVN
-       [-o branch-for-HEAD] [-h] [-v] [-l max_rev]
+       [-o branch-for-HEAD] [-h] [-v] [-l max_rev] [-R repack_each_revs]
        [-C GIT_repository] [-t tagname] [-T trunkname] [-b branchname]
        [-d|-D] [-i] [-u] [-r] [-I ignorefilename] [-s start_chg]
        [-m] [-M regex] [-A author_file] [-S] [-F] [-P project_name] [SVN_URL]
@@ -44,7 +45,7 @@ END
 	exit(1);
 }
 
-getopts("A:b:C:dDFhiI:l:mM:o:rs:t:T:SP:uv") or usage();
+getopts("A:b:C:dDFhiI:l:mM:o:rs:t:T:SP:R:uv") or usage();
 usage if $opt_h;
 
 my $tag_name = $opt_t || "tags";
@@ -52,6 +53,7 @@ my $trunk_name = $opt_T || "trunk";
 my $branch_name = $opt_b || "branches";
 my $project_name = $opt_P || "";
 $project_name = "/" . $project_name if ($project_name);
+my $repack_after = $opt_R || 1000;
 
 @ARGV == 1 or @ARGV == 2 or usage();
 
@@ -934,11 +936,27 @@ if ($opt_l < $current_rev) {
     exit;
 }
 
-print "Fetching from $current_rev to $opt_l ...\n" if $opt_v;
+print "Processing from $current_rev to $opt_l ...\n" if $opt_v;
 
-my $pool=SVN::Pool->new;
-$svn->{'svn'}->get_log("/",$current_rev,$opt_l,0,1,1,\&commit_all,$pool);
-$pool->clear;
+my $from_rev;
+my $to_rev = $current_rev;
+
+while ($to_rev < $opt_l) {
+	$from_rev = $to_rev;
+	$to_rev = $from_rev + $repack_after;
+	$to_rev = $opt_l if $opt_l < $to_rev;
+	print "Fetching from $from_rev to $to_rev ...\n" if $opt_v;
+	my $pool=SVN::Pool->new;
+	$svn->{'svn'}->get_log("/",$from_rev,$to_rev,0,1,1,\&commit_all,$pool);
+	$pool->clear;
+	my $pid = fork();
+	die "Fork: $!\n" unless defined $pid;
+	unless($pid) {
+		exec("git-repack", "-d")
+			or die "Cannot repack: $!\n";
+	}
+	waitpid($pid, 0);
+}
 
 
 unlink($git_index);
