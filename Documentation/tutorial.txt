@@ -43,8 +43,7 @@ Initialized empty Git repository in .git/
 
 You've now initialized the working directory--you may notice a new
 directory created, named ".git".  Tell git that you want it to track
-every file under the current directory with (notice the dot '.'
-that means the current directory):
+every file under the current directory (note the '.') with:
 
 ------------------------------------------------
 $ git add .
@@ -59,6 +58,9 @@ $ git commit
 will prompt you for a commit message, then record the current state
 of all the files to the repository.
 
+Making changes
+--------------
+
 Try modifying some files, then run
 
 ------------------------------------------------
@@ -70,18 +72,20 @@ want the updated contents of these files in the commit and then
 make a commit, like this:
 
 ------------------------------------------------
-$ git add file1 file...
+$ git add file1 file2 file3
 $ git commit
 ------------------------------------------------
 
 This will again prompt your for a message describing the change, and then
-record the new versions of the files you listed.  It is cumbersome
-to list all files and you can say `git commit -a` (which stands for 'all')
-instead of running `git add` beforehand.
+record the new versions of the files you listed.
+
+Alternatively, instead of running `git add` beforehand, you can use
 
 ------------------------------------------------
 $ git commit -a
 ------------------------------------------------
+
+which will automatically notice modified (but not new) files.
 
 A note on commit messages: Though not required, it's a good idea to
 begin the commit message with a single short (less than 50 character)
