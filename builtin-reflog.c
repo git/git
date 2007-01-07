@@ -34,35 +34,51 @@ struct expire_reflog_cb {
 	struct cmd_reflog_expire_cb *cmd;
 };
 
+#define INCOMPLETE	(1u<<10)
+#define STUDYING	(1u<<11)
+
 static int tree_is_complete(const unsigned char *sha1)
 {
 	struct tree_desc desc;
-	void *buf;
-	char type[20];
+	struct name_entry entry;
+	int complete;
+	struct tree *tree;
 
-	buf = read_sha1_file(sha1, type, &desc.size);
-	if (!buf)
+	tree = lookup_tree(sha1);
+	if (!tree)
 		return 0;
-	desc.buf = buf;
-	while (desc.size) {
-		const unsigned char *elem;
-		const char *name;
-		unsigned mode;
+	if (tree->object.flags & SEEN)
+		return 1;
+	if (tree->object.flags & INCOMPLETE)
+		return 0;
 
-		elem = tree_entry_extract(&desc, &name, &mode);
-		if (!has_sha1_file(elem) ||
-		    (S_ISDIR(mode) && !tree_is_complete(elem))) {
-			free(buf);
+	desc.buf = tree->buffer;
+	desc.size = tree->size;
+	if (!desc.buf) {
+		char type[20];
+		void *data = read_sha1_file(sha1, type, &desc.size);
+		if (!data) {
+			tree->object.flags |= INCOMPLETE;
 			return 0;
 		}
-		update_tree_entry(&desc);
+		desc.buf = data;
+		tree->buffer = data;
 	}
-	free(buf);
-	return 1;
-}
+	complete = 1;
+	while (tree_entry(&desc, &entry)) {
+		if (!has_sha1_file(entry.sha1) ||
+		    (S_ISDIR(entry.mode) && !tree_is_complete(entry.sha1))) {
+			tree->object.flags |= INCOMPLETE;
+			complete = 0;
+		}
+	}
+	free(tree->buffer);
+	tree->buffer = NULL;
 
-#define INCOMPLETE	(1u<<10)
-#define STUDYING	(1u<<11)
+	if (complete)
+		tree->object.flags |= SEEN;
+	return complete;
+}
 
 static int commit_is_complete(struct commit *commit)
 {
@@ -112,14 +128,17 @@ static int commit_is_complete(struct commit *commit)
 		}
 	}
 	if (!is_incomplete) {
-		/* make sure all commits in found have all the
+		/*
+		 * make sure all commits in "found" array have all the
 		 * necessary objects.
 		 */
-		for (i = 0; !is_incomplete && i < found.nr; i++) {
+		for (i = 0; i < found.nr; i++) {
 			struct commit *c =
 				(struct commit *)found.objects[i].item;
-			if (!tree_is_complete(c->tree->object.sha1))
+			if (!tree_is_complete(c->tree->object.sha1)) {
 				is_incomplete = 1;
+				c->object.flags |= INCOMPLETE;
+			}
 		}
 		if (!is_incomplete) {
 			/* mark all found commits as complete, iow SEEN */
@@ -132,6 +151,18 @@ static int commit_is_complete(struct commit *commit)
 		found.objects[i].item->flags &= ~STUDYING;
 	if (is_incomplete)
 		commit->object.flags |= INCOMPLETE;
+	else {
+		/*
+		 * If we come here, we have (1) traversed the ancestry chain
+		 * from the "commit" until we reach SEEN commits (which are
+		 * known to be complete), and (2) made sure that the commits
+		 * encountered during the above traversal refer to trees that
+		 * are complete.  Which means that we know *all* the commits
+		 * we have seen during this process are complete.
+		 */
+		for (i = 0; i < found.nr; i++)
+			found.objects[i].item->flags |= SEEN;
+	}
 	/* free object arrays */
 	free(study.objects);
 	free(found.objects);
