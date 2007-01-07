@@ -15,7 +15,7 @@ static char wt_status_colors[][COLOR_MAXLEN] = {
 	"\033[31m", /* WT_STATUS_CHANGED: red */
 	"\033[31m", /* WT_STATUS_UNTRACKED: red */
 };
-static const char* use_add_msg = "use \"git add file1 file2\" to include for commit";
+static const char* use_add_msg = "use \"git add <file>...\" to incrementally add content to commit";
 
 static int parse_status_slot(const char *var, int offset)
 {
@@ -41,8 +41,6 @@ void wt_status_prepare(struct wt_status *s)
 	unsigned char sha1[20];
 	const char *head;
 
-	s->is_initial = get_sha1("HEAD", sha1) ? 1 : 0;
-
 	head = resolve_ref("HEAD", sha1, 0, NULL);
 	s->branch = head ? xstrdup(head) : NULL;
 
@@ -51,6 +49,20 @@ void wt_status_prepare(struct wt_status *s)
 	s->verbose = 0;
 	s->commitable = 0;
 	s->untracked = 0;
+
+	s->workdir_clean = 1;
+}
+
+static void wt_status_print_cached_header(const char *reference)
+{
+	const char *c = color(WT_STATUS_HEADER);
+	color_printf_ln(c, "# Cached changes to be committed:");
+	if (reference) {
+		color_printf_ln(c, "#   (use \"git reset %s <file>...\" and \"git rm --cached <file>...\" to unstage)", reference);
+	} else {
+		color_printf_ln(c, "#   (use \"git rm --cached <file>...\" to unstage)");
+	}
+	color_printf_ln(c, "#");
 }
 
 static void wt_status_print_header(const char *main, const char *sub)
@@ -147,8 +159,7 @@ static void wt_status_print_updated_cb(struct diff_queue_struct *q,
 		if (q->queue[i]->status == 'U')
 			continue;
 		if (!shown_header) {
-			wt_status_print_header("Added but not yet committed",
-					"will commit");
+			wt_status_print_cached_header(s->reference);
 			s->commitable = 1;
 			shown_header = 1;
 		}
@@ -162,9 +173,12 @@ static void wt_status_print_changed_cb(struct diff_queue_struct *q,
                         struct diff_options *options,
                         void *data)
 {
+	struct wt_status *s = data;
 	int i;
-	if (q->nr)
+	if (q->nr) {
+		s->workdir_clean = 0;
 		wt_status_print_header("Changed but not added", use_add_msg);
+	}
 	for (i = 0; i < q->nr; i++)
 		wt_status_print_filepair(WT_STATUS_CHANGED, q->queue[i]);
 	if (q->nr)
@@ -179,8 +193,7 @@ void wt_status_print_initial(struct wt_status *s)
 	read_cache();
 	if (active_nr) {
 		s->commitable = 1;
-		wt_status_print_header("Added but not yet committed",
-				"will commit");
+		wt_status_print_cached_header(NULL);
 	}
 	for (i = 0; i < active_nr; i++) {
 		color_printf(color(WT_STATUS_HEADER), "#\t");
@@ -215,7 +228,7 @@ static void wt_status_print_changed(struct wt_status *s)
 	run_diff_files(&rev, 0);
 }
 
-static void wt_status_print_untracked(const struct wt_status *s)
+static void wt_status_print_untracked(struct wt_status *s)
 {
 	struct dir_struct dir;
 	const char *x;
@@ -250,6 +263,7 @@ static void wt_status_print_untracked(const struct wt_status *s)
 				continue;
 		}
 		if (!shown_header) {
+			s->workdir_clean = 0;
 			wt_status_print_header("Untracked files", use_add_msg);
 			shown_header = 1;
 		}
@@ -271,6 +285,9 @@ static void wt_status_print_verbose(struct wt_status *s)
 
 void wt_status_print(struct wt_status *s)
 {
+	unsigned char sha1[20];
+	s->is_initial = get_sha1(s->reference, sha1) ? 1 : 0;
+
 	if (s->branch)
 		color_printf_ln(color(WT_STATUS_HEADER),
 			"# On branch %s", s->branch);
@@ -291,10 +308,16 @@ void wt_status_print(struct wt_status *s)
 
 	if (s->verbose && !s->is_initial)
 		wt_status_print_verbose(s);
-	if (!s->commitable)
-		printf("%s (%s)\n",
-			s->amend ? "# No changes" : "nothing to commit",
-			use_add_msg);
+	if (!s->commitable) {
+		if (s->amend)
+			printf("# No changes\n");
+		else if (s->workdir_clean)
+			printf(s->is_initial
+			       ? "nothing to commit\n"
+			       : "nothing to commit (working directory matches HEAD)\n");
+		else
+			printf("no changes added to commit (use \"git add\" and/or \"git commit [-a|-i|-o]\")\n");
+	}
 }
 
 int git_status_config(const char *k, const char *v)
