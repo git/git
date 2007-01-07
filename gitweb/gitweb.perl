@@ -2479,11 +2479,11 @@ sub git_patchset_body {
 			# match <path>
 			if ($patch_line =~ s!^((copy|rename) from ).*$!$1! && $from{'href'}) {
 				$patch_line .= $cgi->a({-href=>$from{'href'}, -class=>"path"},
-				                        esc_path($from{'file'}));
+				                       esc_path($from{'file'}));
 			}
 			if ($patch_line =~ s!^((copy|rename) to ).*$!$1! && $to{'href'}) {
-				$patch_line = $cgi->a({-href=>$to{'href'}, -class=>"path"},
-				                      esc_path($to{'file'}));
+				$patch_line .= $cgi->a({-href=>$to{'href'}, -class=>"path"},
+				                       esc_path($to{'file'}));
 			}
 			# match <mode>
 			if ($patch_line =~ m/\s(\d{6})$/) {
