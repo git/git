@@ -304,6 +304,21 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.packedgitwindowsize")) {
+		int pgsz = getpagesize();
+		packed_git_window_size = git_config_int(var, value);
+		packed_git_window_size /= pgsz;
+		if (packed_git_window_size < 2)
+			packed_git_window_size = 2;
+		packed_git_window_size *= pgsz;
+		return 0;
+	}
+
+	if (!strcmp(var, "core.packedgitlimit")) {
+		packed_git_limit = git_config_int(var, value);
+		return 0;
+	}
+
 	if (!strcmp(var, "user.name")) {
 		strlcpy(git_default_name, value, sizeof(git_default_name));
 		return 0;
@@ -695,7 +710,7 @@ int git_config_set_multivar(const char* key, const char* value,
 		}
 
 		fstat(in_fd, &st);
-		contents = mmap(NULL, st.st_size, PROT_READ,
+		contents = xmmap(NULL, st.st_size, PROT_READ,
 			MAP_PRIVATE, in_fd, 0);
 		close(in_fd);
 

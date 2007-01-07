@@ -793,16 +793,16 @@ int read_cache_from(const char *path)
 		die("index file open failed (%s)", strerror(errno));
 	}
 
-	cache_mmap = MAP_FAILED;
 	if (!fstat(fd, &st)) {
 		cache_mmap_size = st.st_size;
 		errno = EINVAL;
 		if (cache_mmap_size >= sizeof(struct cache_header) + 20)
-			cache_mmap = mmap(NULL, cache_mmap_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-	}
+			cache_mmap = xmmap(NULL, cache_mmap_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+		else
+			die("index file smaller than expected");
+	} else
+		die("cannot stat the open index (%s)", strerror(errno));
 	close(fd);
-	if (cache_mmap == MAP_FAILED)
-		die("index file mmap failed (%s)", strerror(errno));
 
 	hdr = cache_mmap;
 	if (verify_hdr(hdr, cache_mmap_size) < 0)

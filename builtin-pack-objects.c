@@ -276,7 +276,52 @@ static int encode_header(enum object_type type, unsigned long size, unsigned cha
  * we are going to reuse the existing object data as is.  make
  * sure it is not corrupt.
  */
-static int check_inflate(unsigned char *data, unsigned long len, unsigned long expect)
+static int check_pack_inflate(struct packed_git *p,
+		struct pack_window **w_curs,
+		unsigned long offset,
+		unsigned long len,
+		unsigned long expect)
+{
+	z_stream stream;
+	unsigned char fakebuf[4096], *in;
+	int st;
+
+	memset(&stream, 0, sizeof(stream));
+	inflateInit(&stream);
+	do {
+		in = use_pack(p, w_curs, offset, &stream.avail_in);
+		stream.next_in = in;
+		stream.next_out = fakebuf;
+		stream.avail_out = sizeof(fakebuf);
+		st = inflate(&stream, Z_FINISH);
+		offset += stream.next_in - in;
+	} while (st == Z_OK || st == Z_BUF_ERROR);
+	inflateEnd(&stream);
+	return (st == Z_STREAM_END &&
+		stream.total_out == expect &&
+		stream.total_in == len) ? 0 : -1;
+}
+
+static void copy_pack_data(struct sha1file *f,
+		struct packed_git *p,
+		struct pack_window **w_curs,
+		unsigned long offset,
+		unsigned long len)
+{
+	unsigned char *in;
+	unsigned int avail;
+
+	while (len) {
+		in = use_pack(p, w_curs, offset, &avail);
+		if (avail > len)
+			avail = len;
+		sha1write(f, in, avail);
+		offset += avail;
+		len -= avail;
+	}
+}
+
+static int check_loose_inflate(unsigned char *data, unsigned long len, unsigned long expect)
 {
 	z_stream stream;
 	unsigned char fakebuf[4096];
@@ -323,7 +368,7 @@ static int revalidate_loose_object(struct object_entry *entry,
 		return -1;
 	map += used;
 	mapsize -= used;
-	return check_inflate(map, mapsize, size);
+	return check_loose_inflate(map, mapsize, size);
 }
 
 static unsigned long write_object(struct sha1file *f,
@@ -416,6 +461,8 @@ static unsigned long write_object(struct sha1file *f,
 	}
 	else {
 		struct packed_git *p = entry->in_pack;
+		struct pack_window *w_curs = NULL;
+		unsigned long offset;
 
 		if (entry->delta) {
 			obj_type = (allow_ofs_delta && entry->delta->offset) ?
@@ -437,16 +484,14 @@ static unsigned long write_object(struct sha1file *f,
 			hdrlen += 20;
 		}
 
-		use_packed_git(p);
-		buf = (char *) p->pack_base
-			+ entry->in_pack_offset
-			+ entry->in_pack_header_size;
+		offset = entry->in_pack_offset + entry->in_pack_header_size;
 		datalen = find_packed_object_size(p, entry->in_pack_offset)
 				- entry->in_pack_header_size;
-		if (!pack_to_stdout && check_inflate(buf, datalen, entry->size))
+		if (!pack_to_stdout && check_pack_inflate(p, &w_curs,
+				offset, datalen, entry->size))
 			die("corrupt delta in pack %s", sha1_to_hex(entry->sha1));
-		sha1write(f, buf, datalen);
-		unuse_packed_git(p);
+		copy_pack_data(f, p, &w_curs, offset, datalen);
+		unuse_pack(&w_curs);
 		reused++;
 	}
 	if (entry->delta)
@@ -937,22 +982,19 @@ static void check_object(struct object_entry *entry)
 
 	if (entry->in_pack && !entry->preferred_base) {
 		struct packed_git *p = entry->in_pack;
+		struct pack_window *w_curs = NULL;
 		unsigned long left = p->pack_size - entry->in_pack_offset;
 		unsigned long size, used;
 		unsigned char *buf;
 		struct object_entry *base_entry = NULL;
 
-		use_packed_git(p);
-		buf = p->pack_base;
-		buf += entry->in_pack_offset;
+		buf = use_pack(p, &w_curs, entry->in_pack_offset, NULL);
 
 		/* We want in_pack_type even if we do not reuse delta.
 		 * There is no point not reusing non-delta representations.
 		 */
 		used = unpack_object_header_gently(buf, left,
 						   &entry->in_pack_type, &size);
-		if (!used || left - used <= 20)
-			die("corrupt pack for %s", sha1_to_hex(entry->sha1));
 
 		/* Check if it is delta, and the base is also an object
 		 * we are going to pack.  If so we will reuse the existing
@@ -961,21 +1003,26 @@ static void check_object(struct object_entry *entry)
 		if (!no_reuse_delta) {
 			unsigned char c, *base_name;
 			unsigned long ofs;
+			unsigned long used_0;
 			/* there is at least 20 bytes left in the pack */
 			switch (entry->in_pack_type) {
 			case OBJ_REF_DELTA:
-				base_name = buf + used;
+				base_name = use_pack(p, &w_curs,
+					entry->in_pack_offset + used, NULL);
 				used += 20;
 				break;
 			case OBJ_OFS_DELTA:
-				c = buf[used++];
+				buf = use_pack(p, &w_curs,
+					entry->in_pack_offset + used, NULL);
+				used_0 = 0;
+				c = buf[used_0++];
 				ofs = c & 127;
 				while (c & 128) {
 					ofs += 1;
 					if (!ofs || ofs & ~(~0UL >> 7))
 						die("delta base offset overflow in pack for %s",
 						    sha1_to_hex(entry->sha1));
-					c = buf[used++];
+					c = buf[used_0++];
 					ofs = (ofs << 7) + (c & 127);
 				}
 				if (ofs >= entry->in_pack_offset)
@@ -983,6 +1030,7 @@ static void check_object(struct object_entry *entry)
 					    sha1_to_hex(entry->sha1));
 				ofs = entry->in_pack_offset - ofs;
 				base_name = find_packed_object_name(p, ofs);
+				used += used_0;
 				break;
 			default:
 				base_name = NULL;
@@ -990,7 +1038,7 @@ static void check_object(struct object_entry *entry)
 			if (base_name)
 				base_entry = locate_object_entry(base_name);
 		}
-		unuse_packed_git(p);
+		unuse_pack(&w_curs);
 		entry->in_pack_header_size = used;
 
 		if (base_entry) {

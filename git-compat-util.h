@@ -92,11 +92,20 @@ extern void set_warn_routine(void (*routine)(const char *warn, va_list params));
 extern void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
 extern int git_munmap(void *start, size_t length);
 
+#define DEFAULT_PACKED_GIT_WINDOW_SIZE (1 * 1024 * 1024)
+
 #else /* NO_MMAP */
 
 #include <sys/mman.h>
+#define DEFAULT_PACKED_GIT_WINDOW_SIZE \
+	(sizeof(void*) >= 8 \
+		?  1 * 1024 * 1024 * 1024 \
+		: 32 * 1024 * 1024)
 
 #endif /* NO_MMAP */
+
+#define DEFAULT_PACKED_GIT_LIMIT \
+	((1024L * 1024L) * (sizeof(void*) >= 8 ? 8192 : 256))
 
 #ifdef NO_SETENV
 #define setenv gitsetenv
@@ -118,11 +127,17 @@ extern char *gitstrcasestr(const char *haystack, const char *needle);
 extern size_t gitstrlcpy(char *, const char *, size_t);
 #endif
 
+extern void release_pack_memory(size_t);
+
 static inline char* xstrdup(const char *str)
 {
 	char *ret = strdup(str);
-	if (!ret)
-		die("Out of memory, strdup failed");
+	if (!ret) {
+		release_pack_memory(strlen(str) + 1);
+		ret = strdup(str);
+		if (!ret)
+			die("Out of memory, strdup failed");
+	}
 	return ret;
 }
 
@@ -131,8 +146,14 @@ static inline void *xmalloc(size_t size)
 	void *ret = malloc(size);
 	if (!ret && !size)
 		ret = malloc(1);
-	if (!ret)
-		die("Out of memory, malloc failed");
+	if (!ret) {
+		release_pack_memory(size);
+		ret = malloc(size);
+		if (!ret && !size)
+			ret = malloc(1);
+		if (!ret)
+			die("Out of memory, malloc failed");
+	}
 #ifdef XMALLOC_POISON
 	memset(ret, 0xA5, size);
 #endif
@@ -144,8 +165,14 @@ static inline void *xrealloc(void *ptr, size_t size)
 	void *ret = realloc(ptr, size);
 	if (!ret && !size)
 		ret = realloc(ptr, 1);
-	if (!ret)
-		die("Out of memory, realloc failed");
+	if (!ret) {
+		release_pack_memory(size);
+		ret = realloc(ptr, size);
+		if (!ret && !size)
+			ret = realloc(ptr, 1);
+		if (!ret)
+			die("Out of memory, realloc failed");
+	}
 	return ret;
 }
 
@@ -154,8 +181,27 @@ static inline void *xcalloc(size_t nmemb, size_t size)
 	void *ret = calloc(nmemb, size);
 	if (!ret && (!nmemb || !size))
 		ret = calloc(1, 1);
-	if (!ret)
-		die("Out of memory, calloc failed");
+	if (!ret) {
+		release_pack_memory(nmemb * size);
+		ret = calloc(nmemb, size);
+		if (!ret && (!nmemb || !size))
+			ret = calloc(1, 1);
+		if (!ret)
+			die("Out of memory, calloc failed");
+	}
+	return ret;
+}
+
+static inline void *xmmap(void *start, size_t length,
+	int prot, int flags, int fd, off_t offset)
+{
+	void *ret = mmap(start, length, prot, flags, fd, offset);
+	if (ret == MAP_FAILED) {
+		release_pack_memory(length);
+		ret = mmap(start, length, prot, flags, fd, offset);
+		if (ret == MAP_FAILED)
+			die("Out of memory? mmap failed: %s", strerror(errno));
+	}
 	return ret;
 }
 
