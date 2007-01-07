@@ -2525,7 +2525,7 @@ sub git_patchset_body {
 		last PATCH unless $patch_line;
 		next PATCH if ($patch_line =~ m/^diff /);
 		#assert($patch_line =~ m/^---/) if DEBUG;
-		if ($from{'href'}) {
+		if ($from{'href'} && $patch_line =~ m!^--- "?a/!) {
 			$patch_line = '--- a/' .
 			              $cgi->a({-href=>$from{'href'}, -class=>"path"},
 			                      esc_path($from{'file'}));
@@ -2537,7 +2537,7 @@ sub git_patchset_body {
 		chomp $patch_line;
 
 		#assert($patch_line =~ m/^+++/) if DEBUG;
-		if ($to{'href'}) {
+		if ($to{'href'} && $patch_line =~ m!^\+\+\+ "?b/!) {
 			$patch_line = '+++ b/' .
 			              $cgi->a({-href=>$to{'href'}, -class=>"path"},
 			                      esc_path($to{'file'}));
