@@ -2378,7 +2378,6 @@ sub git_patchset_body {
 	my $patch_line;
 	my $diffinfo;
 	my (%from, %to);
-	my ($from_id, $to_id);
 
 	print "<div class=\"patchset\">\n";
 
@@ -2392,6 +2391,7 @@ sub git_patchset_body {
  PATCH:
 	while ($patch_line) {
 		my @diff_header;
+		my ($from_id, $to_id);
 
 		# git diff header
 		#assert($patch_line =~ m/^diff /) if DEBUG;
@@ -2439,11 +2439,15 @@ sub git_patchset_body {
 				$from{'href'} = href(action=>"blob", hash_base=>$hash_parent,
 				                     hash=>$diffinfo->{'from_id'},
 				                     file_name=>$from{'file'});
+			} else {
+				delete $from{'href'};
 			}
 			if ($diffinfo->{'status'} ne "D") { # not deleted file
 				$to{'href'} = href(action=>"blob", hash_base=>$hash,
 				                   hash=>$diffinfo->{'to_id'},
 				                   file_name=>$to{'file'});
+			} else {
+				delete $to{'href'};
 			}
 			# this is first patch for raw difftree line with $patch_idx index
 			# we index @$difftree array from 0, but number patches from 1
