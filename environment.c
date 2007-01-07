@@ -15,7 +15,7 @@ int use_legacy_headers = 1;
 int trust_executable_bit = 1;
 int assume_unchanged;
 int prefer_symlink_refs;
-int log_all_ref_updates;
+int log_all_ref_updates = -1; /* unspecified */
 int warn_ambiguous_refs = 1;
 int repository_format_version;
 char *git_commit_encoding;
@@ -51,10 +51,9 @@ static void setup_git_env(void)
 	git_graft_file = getenv(GRAFT_ENVIRONMENT);
 	if (!git_graft_file)
 		git_graft_file = xstrdup(git_path("info/grafts"));
-	log_all_ref_updates = !is_bare_git_dir(git_dir);
 }
 
-int is_bare_git_dir (const char *dir)
+int is_bare_git_dir(const char *dir)
 {
 	const char *s;
 	if (!strcmp(dir, DEFAULT_GIT_DIR_ENVIRONMENT))
