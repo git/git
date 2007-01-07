@@ -25,7 +25,7 @@ Basic Repository[[Basic Repository]]
 
 Everybody uses these commands to maintain git repositories.
 
-  * gitlink:git-init-db[1] or gitlink:git-clone[1] to create a
+  * gitlink:git-init[1] or gitlink:git-clone[1] to create a
     new repository.
 
   * gitlink:git-fsck-objects[1] to check the repository for errors.
@@ -107,7 +107,7 @@ Use a tarball as a starting point for a new repository.::
 ------------
 $ tar zxf frotz.tar.gz
 $ cd frotz
-$ git-init-db
+$ git-init
 $ git add . <1>
 $ git commit -m 'import of frotz source tree.'
 $ git tag v2.43 <2>

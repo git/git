@@ -353,6 +353,7 @@ gitlink:git-hash-object[1]::
 gitlink:git-index-pack[1]::
 	Build pack idx file for an existing packed archive.
 
+gitlink:git-init[1]::
 gitlink:git-init-db[1]::
 	Creates an empty git object database, or reinitialize an
 	existing one.

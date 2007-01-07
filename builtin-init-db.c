@@ -259,7 +259,7 @@ static int create_default_files(const char *git_dir, const char *template_path)
 }
 
 static const char init_db_usage[] =
-"git-init-db [--template=<template-directory>] [--shared]";
+"git-init [--template=<template-directory>] [--shared]";
 
 /*
  * If you want to, you can share the DB area with any number of branches.
