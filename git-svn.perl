@@ -536,7 +536,7 @@ sub show_ignore {
 	my $repo;
 	$SVN ||= libsvn_connect($SVN_URL);
 	my $r = defined $_revision ? $_revision : $SVN->get_latest_revnum;
-	libsvn_traverse_ignore(\*STDOUT, $SVN->{svn_path}, $r);
+	libsvn_traverse_ignore(\*STDOUT, '', $r);
 }
 
 sub graft_branches {
