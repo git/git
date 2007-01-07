@@ -2403,7 +2403,7 @@ sub git_patchset_body {
 		while ($patch_line = <$fd>) {
 			chomp $patch_line;
 
-			last EXTENDED_HEADER if ($patch_line =~ m/^--- /);
+			last EXTENDED_HEADER if ($patch_line =~ m/^--- |^diff /);
 
 			if ($patch_line =~ m/^index ([0-9a-fA-F]{40})..([0-9a-fA-F]{40})/) {
 				$from_id = $1;
@@ -2522,6 +2522,8 @@ sub git_patchset_body {
 
 		# from-file/to-file diff header
 		$patch_line = $last_patch_line;
+		last PATCH unless $patch_line;
+		next PATCH if ($patch_line =~ m/^diff /);
 		#assert($patch_line =~ m/^---/) if DEBUG;
 		if ($from{'href'}) {
 			$patch_line = '--- a/' .
