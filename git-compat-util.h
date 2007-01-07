@@ -105,9 +105,7 @@ extern int git_munmap(void *start, size_t length);
 #endif /* NO_MMAP */
 
 #define DEFAULT_PACKED_GIT_LIMIT \
-	(sizeof(void*) >= 8 \
-		?   8 * 1024 * 1024 * 1024 \
-		: 256 * 1024 * 1024)
+	((1024L * 1024L) * (sizeof(void*) >= 8 ? 8192 : 256))
 
 #ifdef NO_SETENV
 #define setenv gitsetenv
