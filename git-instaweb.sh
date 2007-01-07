@@ -53,6 +53,9 @@ start_httpd () {
 				return
 			fi
 		done
+		echo "$httpd_only not found. Install $httpd_only or use" \
+		     "--httpd to specify another http daemon."
+		exit 1
 	fi
 	if test $? != 0; then
 		echo "Could not execute http daemon $httpd."

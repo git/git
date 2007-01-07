@@ -44,8 +44,10 @@ if test $# != 0
 then
 	test "$reset_type" == "--mixed" ||
 		die "Cannot do partial $reset_type reset."
-	git ls-tree -r --full-name $rev -- "$@" |
-	git update-index --add --index-info || exit
+
+	git-diff-index --cached $rev -- "$@" |
+	sed -e 's/^:\([0-7][0-7]*\) [0-7][0-7]* \([0-9a-f][0-9a-f]*\) [0-9a-f][0-9a-f]* [A-Z]	\(.*\)$/\1 \2	\3/' |
+	git update-index --add --remove --index-info || exit
 	git update-index --refresh
 	exit
 fi

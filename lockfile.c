@@ -49,7 +49,7 @@ int hold_lock_file_for_update(struct lock_file *lk, const char *path, int die_on
 {
 	int fd = lock_file(lk, path);
 	if (fd < 0 && die_on_error)
-		die("unable to create '%s': %s", path, strerror(errno));
+		die("unable to create '%s.lock': %s", path, strerror(errno));
 	return fd;
 }
 

@@ -53,11 +53,13 @@ See '<<fetch-args,Additional Fetch Arguments>>' if you are interested in
 manually joining branches on commit.
 
 'dcommit'::
-	Commit all diffs from a specified head directly to the SVN
+	Commit each diff from a specified head directly to the SVN
 	repository, and then rebase or reset (depending on whether or
-	not there is a diff between SVN and head).  It is recommended
-	that you run git-svn fetch and rebase (not pull) your commits
-	against the latest changes in the SVN repository.
+	not there is a diff between SVN and head).  This will create
+	a revision in SVN for each commit in git.
+	It is recommended that you run git-svn fetch and rebase (not
+	pull or merge) your commits against the latest changes in the
+	SVN repository.
 	An optional command-line argument may be specified as an
 	alternative to HEAD.
 	This is advantageous over 'set-tree' (below) because it produces
@@ -408,19 +410,20 @@ See also:
 	git-svn multi-init
 ------------------------------------------------------------------------
 
-REBASE VS. PULL
----------------
+REBASE VS. PULL/MERGE
+---------------------
 
 Originally, git-svn recommended that the remotes/git-svn branch be
-pulled from.  This is because the author favored 'git-svn set-tree B'
-to commit a single head rather than the 'git-svn set-tree A..B' notation
-to commit multiple commits.
+pulled or merged from.  This is because the author favored
+'git-svn set-tree B' to commit a single head rather than the
+'git-svn set-tree A..B' notation to commit multiple commits.
 
-If you use 'git-svn set-tree A..B' to commit several diffs and you do not
-have the latest remotes/git-svn merged into my-branch, you should use
-'git rebase' to update your work branch instead of 'git pull'.  'pull'
-can cause non-linear history to be flattened when committing into SVN,
-which can lead to merge commits reversing previous commits in SVN.
+If you use 'git-svn set-tree A..B' to commit several diffs and you do
+not have the latest remotes/git-svn merged into my-branch, you should
+use 'git rebase' to update your work branch instead of 'git pull' or
+'git merge'.  'pull/merge' can cause non-linear history to be flattened
+when committing into SVN, which can lead to merge commits reversing
+previous commits in SVN.
 
 DESIGN PHILOSOPHY
 -----------------

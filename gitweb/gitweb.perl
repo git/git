@@ -2378,7 +2378,6 @@ sub git_patchset_body {
 	my $patch_line;
 	my $diffinfo;
 	my (%from, %to);
-	my ($from_id, $to_id);
 
 	print "<div class=\"patchset\">\n";
 
@@ -2392,6 +2391,7 @@ sub git_patchset_body {
  PATCH:
 	while ($patch_line) {
 		my @diff_header;
+		my ($from_id, $to_id);
 
 		# git diff header
 		#assert($patch_line =~ m/^diff /) if DEBUG;
@@ -2403,7 +2403,7 @@ sub git_patchset_body {
 		while ($patch_line = <$fd>) {
 			chomp $patch_line;
 
-			last EXTENDED_HEADER if ($patch_line =~ m/^--- /);
+			last EXTENDED_HEADER if ($patch_line =~ m/^--- |^diff /);
 
 			if ($patch_line =~ m/^index ([0-9a-fA-F]{40})..([0-9a-fA-F]{40})/) {
 				$from_id = $1;
@@ -2439,11 +2439,15 @@ sub git_patchset_body {
 				$from{'href'} = href(action=>"blob", hash_base=>$hash_parent,
 				                     hash=>$diffinfo->{'from_id'},
 				                     file_name=>$from{'file'});
+			} else {
+				delete $from{'href'};
 			}
 			if ($diffinfo->{'status'} ne "D") { # not deleted file
 				$to{'href'} = href(action=>"blob", hash_base=>$hash,
 				                   hash=>$diffinfo->{'to_id'},
 				                   file_name=>$to{'file'});
+			} else {
+				delete $to{'href'};
 			}
 			# this is first patch for raw difftree line with $patch_idx index
 			# we index @$difftree array from 0, but number patches from 1
@@ -2475,11 +2479,11 @@ sub git_patchset_body {
 			# match <path>
 			if ($patch_line =~ s!^((copy|rename) from ).*$!$1! && $from{'href'}) {
 				$patch_line .= $cgi->a({-href=>$from{'href'}, -class=>"path"},
-				                        esc_path($from{'file'}));
+				                       esc_path($from{'file'}));
 			}
 			if ($patch_line =~ s!^((copy|rename) to ).*$!$1! && $to{'href'}) {
-				$patch_line = $cgi->a({-href=>$to{'href'}, -class=>"path"},
-				                      esc_path($to{'file'}));
+				$patch_line .= $cgi->a({-href=>$to{'href'}, -class=>"path"},
+				                       esc_path($to{'file'}));
 			}
 			# match <mode>
 			if ($patch_line =~ m/\s(\d{6})$/) {
@@ -2518,8 +2522,10 @@ sub git_patchset_body {
 
 		# from-file/to-file diff header
 		$patch_line = $last_patch_line;
+		last PATCH unless $patch_line;
+		next PATCH if ($patch_line =~ m/^diff /);
 		#assert($patch_line =~ m/^---/) if DEBUG;
-		if ($from{'href'}) {
+		if ($from{'href'} && $patch_line =~ m!^--- "?a/!) {
 			$patch_line = '--- a/' .
 			              $cgi->a({-href=>$from{'href'}, -class=>"path"},
 			                      esc_path($from{'file'}));
@@ -2527,11 +2533,11 @@ sub git_patchset_body {
 		print "<div class=\"diff from_file\">$patch_line</div>\n";
 
 		$patch_line = <$fd>;
-		last PATCH unless $patch_line;
+		#last PATCH unless $patch_line;
 		chomp $patch_line;
 
 		#assert($patch_line =~ m/^+++/) if DEBUG;
-		if ($to{'href'}) {
+		if ($to{'href'} && $patch_line =~ m!^\+\+\+ "?b/!) {
 			$patch_line = '+++ b/' .
 			              $cgi->a({-href=>$to{'href'}, -class=>"path"},
 			                      esc_path($to{'file'}));

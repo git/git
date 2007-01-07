@@ -2887,10 +2887,12 @@ void diff_change(struct diff_options *options,
 }
 
 void diff_unmerge(struct diff_options *options,
-		  const char *path)
+		  const char *path,
+		  unsigned mode, const unsigned char *sha1)
 {
 	struct diff_filespec *one, *two;
 	one = alloc_filespec(path);
 	two = alloc_filespec(path);
-	diff_queue(&diff_queued_diff, one, two);
+	fill_filespec(one, sha1, mode);
+	diff_queue(&diff_queued_diff, one, two)->is_unmerged = 1;
 }

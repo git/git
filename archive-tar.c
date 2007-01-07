@@ -15,7 +15,7 @@ static char block[BLOCKSIZE];
 static unsigned long offset;
 
 static time_t archive_time;
-static int tar_umask;
+static int tar_umask = 002;
 static int verbose;
 
 /* writes out the whole block, but only if it is full */
@@ -210,11 +210,10 @@ static void write_entry(const unsigned char *sha1, struct strbuf *path,
 	sprintf(header.size, "%011lo", S_ISREG(mode) ? size : 0);
 	sprintf(header.mtime, "%011lo", archive_time);
 
-	/* XXX: should we provide more meaningful info here? */
 	sprintf(header.uid, "%07o", 0);
 	sprintf(header.gid, "%07o", 0);
-	strlcpy(header.uname, "git", sizeof(header.uname));
-	strlcpy(header.gname, "git", sizeof(header.gname));
+	strlcpy(header.uname, "root", sizeof(header.uname));
+	strlcpy(header.gname, "root", sizeof(header.gname));
 	sprintf(header.devmajor, "%07o", 0);
 	sprintf(header.devminor, "%07o", 0);
 

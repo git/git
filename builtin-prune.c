@@ -253,6 +253,8 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 		usage(prune_usage);
 	}
 
+	save_commit_buffer = 0;
+
 	/*
 	 * Set up revision parsing, and mark us as being interested
 	 * in all object types, not just commits.
