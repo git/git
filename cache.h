@@ -127,7 +127,8 @@ extern int cache_errno;
 #define CONFIG_LOCAL_ENVIRONMENT "GIT_CONFIG_LOCAL"
 #define EXEC_PATH_ENVIRONMENT "GIT_EXEC_PATH"
 
-extern int is_bare_git_dir(const char *dir);
+extern int is_bare_repository_cfg;
+extern int is_bare_repository(void);
 extern const char *get_git_dir(void);
 extern char *get_object_directory(void);
 extern char *get_refs_directory(void);

@@ -252,9 +252,13 @@ static int create_default_files(const char *git_dir, const char *template_path)
 	}
 	git_config_set("core.filemode", filemode ? "true" : "false");
 
-	/* Enable logAllRefUpdates if a working tree is attached */
-	if (!is_bare_git_dir(git_dir))
+	if (is_bare_repository()) {
+		git_config_set("core.bare", "true");
+	}
+	else {
+		git_config_set("core.bare", "false");
 		git_config_set("core.logallrefupdates", "true");
+	}
 	return reinit;
 }
 
