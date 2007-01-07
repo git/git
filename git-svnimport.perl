@@ -148,6 +148,7 @@ sub file {
 	print "... $rev $path ...\n" if $opt_v;
 	my (undef, $properties);
 	my $pool = SVN::Pool->new();
+	$path =~ s#^/*##;
 	eval { (undef, $properties)
 		   = $self->{'svn'}->get_file($path,$rev,$fh,$pool); };
 	$pool->clear;
@@ -183,6 +184,7 @@ sub ignore {
 	my($self,$path,$rev) = @_;
 
 	print "... $rev $path ...\n" if $opt_v;
+	$path =~ s#^/*##;
 	my (undef,undef,$properties)
 	    = $self->{'svn'}->get_dir($path,$rev,undef);
 	if (exists $properties->{'svn:ignore'}) {
@@ -199,6 +201,7 @@ sub ignore {
 
 sub dir_list {
 	my($self,$path,$rev) = @_;
+	$path =~ s#^/*##;
 	my ($dirents,undef,$properties)
 	    = $self->{'svn'}->get_dir($path,$rev,undef);
 	return $dirents;
@@ -356,6 +359,7 @@ open BRANCHES,">>", "$git_dir/svn2git";
 sub node_kind($$) {
 	my ($svnpath, $revision) = @_;
 	my $pool=SVN::Pool->new;
+	$svnpath =~ s#^/*##;
 	my $kind = $svn->{'svn'}->check_path($svnpath,$revision,$pool);
 	$pool->clear;
 	return $kind;
