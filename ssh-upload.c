@@ -67,7 +67,7 @@ static int serve_ref(int fd_in, int fd_out)
 	int posn = 0;
 	signed char remote = 0;
 	do {
-		if (read(fd_in, ref + posn, 1) < 1)
+		if (posn >= PATH_MAX || read(fd_in, ref + posn, 1) < 1)
 			return -1;
 		posn++;
 	} while (ref[posn - 1]);
