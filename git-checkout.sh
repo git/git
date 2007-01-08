@@ -53,7 +53,7 @@ while [ "$#" != "0" ]; do
 				exit 1
 			fi
 			new="$rev"
-			new_name="$arg^0"
+			new_name="$arg"
 			if git-show-ref --verify --quiet -- "refs/heads/$arg"
 			then
 				branch="$arg"
