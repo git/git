@@ -92,7 +92,7 @@ int gettimeofday(struct timeval *tv, void *tz)
 }
 int pipe(int filedes[2])
 {
-	return -1;
+	return _pipe(filedes, 4096, 0);
 }
 
 int poll(struct pollfd *ufds, unsigned int nfds, int timeout)
