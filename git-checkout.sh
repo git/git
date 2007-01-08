@@ -140,22 +140,25 @@ fi
 
 [ -z "$new" ] && new=$old && new_name="$old_name"
 
-# If we don't have an old branch that we're switching to,
+# If we don't have an existing branch that we're switching to,
 # and we don't have a new branch name for the target we
-# are switching to, then we'd better just be checking out
-# what we already had
+# are switching to, then we are detaching our HEAD from any
+# branch.  However, if "git checkout HEAD" detaches the HEAD
+# from the current branch, even though that may be logically
+# correct, it feels somewhat funny.  More importantly, we do not
+# want "git checkout" nor "git checkout -f" to detach HEAD.
 
 if test -z "$branch$newbranch" && test "$new" != "$old"
 then
-	# NEEDSWORK: we would want to have this command here
-	# that allows us to detach the HEAD atomically.
-	# git update-ref --detach HEAD "$new"
+	# NEEDSWORK: we would want to have a command here
+	# that allows us to detach the HEAD atomically.  Perhaps
+	# something like "git update-ref --detach HEAD $new"
 	echo "$new" >"$GIT_DIR/HEAD.new" &&
 	mv "$GIT_DIR/HEAD.new" "$GIT_DIR/HEAD" || die "Cannot detach HEAD"
 
 	if test -n "$oldbranch"
 	then
-		echo >&2 "WARNING: you are not on ANY branch anymore.
+		echo >&2 "warning: you are not on ANY branch anymore.
 If you meant to create a new branch from the commit, you need -b to
 associate a new branch with the wanted checkout.  Example:
   git checkout -b <new_branch_name> $arg
@@ -165,8 +168,8 @@ fi
 
 if [ "X$old" = X ]
 then
-	echo "warning: You do not appear to currently be on a branch." >&2
-	echo "warning: Forcing checkout of $new_name." >&2
+	echo >&2 "warning: You appear to be on a branch yet to be born."
+	echo >&2 "warning: Forcing checkout of $new_name."
 	force=1
 fi
 
