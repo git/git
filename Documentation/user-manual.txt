@@ -4,6 +4,15 @@ _________________
 This manual is designed to be readable by someone with basic unix
 commandline skills, but no previous knowledge of git.
 
+Chapters 1 and 2 explain how to fetch and study a project using git--the
+tools you'd need to build and test a particular version of a software
+project, to search for regressions, and so on.
+
+Chapter 3 explains how to do development with git and share your progress
+with others.
+
+Further chapters cover more specialized topics.
+
 Comprehensive reference documentation is available through the man
 pages.  For a command such as "git clone", just use
 
@@ -1430,8 +1439,24 @@ Glossary of git terms
 
 include::glossary.txt[]
 
-Todo list for this manual
-=========================
+Notes and todo list for this manual
+===================================
+
+This is a work in progress.
+
+The basic requirements:
+	- It must be readable in order, from beginning to end, by someone
+	  intelligent with a basic grasp of the unix commandline, but
+	  without any special knowledge of git.  If necessary, any other
+	  prerequisites should be specifically mentioned as they arise.
+	- Whenever possible, section headings should clearly describe the
+	  task they explain how to do, in language that requires no more
+	  knowledge than necessary: for example, "importing patches into a
+	  project" rather than "the git-am command"
+
+Think about how to create a clear chapter dependency graph that will allow
+people to get to important topics without necessarily reading everything
+in between.
 
 Scan Documentation/ for other stuff left out; in particular:
 	howto's
@@ -1454,7 +1479,7 @@ Can also simplify beginning by suggesting disconnected head instead
 of temporary branch creation.
 
 Explain how to refer to file stages in the "how to resolve a merge"
-section: diff -1, -2, -3; :1:/path notation.
+section: diff -1, -2, -3, --ours, --theirs :1:/path notation.
 
 Include cross-references to the glossary, where appropriate.
 
