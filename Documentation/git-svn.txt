@@ -139,6 +139,24 @@ manually joining branches on commit.
 	where the repository URL ends and where the repository path
 	begins.
 
+-T<trunk_subdir>::
+--trunk=<trunk_subdir>::
+-t<tags_subdir>::
+--tags=<tags_subdir>::
+-b<branches_subdir>::
+--branches=<branches_subdir>::
+	These are the command-line options for multi-init.  Each of
+	these flags can point to a relative repository path
+	(--tags=project/tags') or a full url
+	(--tags=https://foo.org/project/tags)
+
+--prefix=<prefix>
+	This allows one to specify a prefix which is prepended to the
+	names of remotes.  The prefix does not automatically include a
+	trailing slash, so be sure you include one in the argument if
+	that is what you want.  This is useful if you wish to track
+	multiple projects that share a common repository.
+
 'multi-fetch'::
 	This runs fetch on all known SVN branches we're tracking.  This
 	will NOT discover new branches (unlike git-svnimport), so
