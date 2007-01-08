@@ -1090,6 +1090,17 @@ repository that you pulled from.
 <<fast-forwards,fast forward>>; instead, your branch will just be
 updated to point to the latest commit from the upstream branch).
 
+The git-pull command can also be given "." as the "remote" repository, in
+which case it just merges in a branch from the current repository; so
+the commands
+
+-------------------------------------------------
+$ git pull . branch
+$ git merge branch
+-------------------------------------------------
+
+are roughly equivalent.  The former is actually very commonly used.
+
 Submitting patches to a project
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1418,13 +1429,155 @@ which will display the given version of the file.
 Working with other version control systems
 ==========================================
 
-TODO: CVS, Subversion, ?
+TODO: CVS, Subversion, series-of-release-tarballs, ?
 
 [[cleaning-up-history]]
-Cleaning up history: rebasing, cherry-picking, and patch series
-===============================================================
+Rewriting history and maintaining patch series
+==============================================
 
-TODO: rebase, cherry-pick, pointers to other tools (like stgit)
+Normally commits are only added to a project, never taken away or
+replaced.  Git is designed with this assumption, and violating it will
+cause git's merge machinery (for example) to do the wrong thing.
+
+However, there is a situation in which it can be useful to violate this
+assumption.
+
+Creating the perfect patch series
+---------------------------------
+
+Suppose you are a contributor to a large project, and you want to add a
+complicated feature, and to present it to the other developers in a way
+that makes it easy for them to read your changes, verify that they are
+correct, and understand why you made each change.
+
+If you present all of your changes as a single patch (or commit), they may
+find it is too much to digest all at once.
+
+If you present them with the entire history of your work, complete with
+mistakes, corrections, and dead ends, they may be overwhelmed.
+
+So the ideal is usually to produce a series of patches such that:
+
+	1. Each patch can be applied in order.
+
+	2. Each patch includes a single logical change, together with a
+	   message explaining the change.
+
+	3. No patch introduces a regression: after applying any initial
+	   part of the series, the resulting project still compiles and
+	   works, and has no bugs that it didn't have before.
+
+	4. The complete series produces the same end result as your own
+	   (probably much messier!) development process did.
+
+We will introduce some tools that can help you do this, explain how to use
+them, and then explain some of the problems that can arise because you are
+rewriting history.
+
+Keeping a patch series up to date using git-rebase
+--------------------------------------------------
+
+Suppose you have a series of commits in a branch "mywork", which
+originally branched off from "origin".
+
+Suppose you create a branch "mywork" on a remote-tracking branch "origin",
+and created some commits on top of it:
+
+-------------------------------------------------
+$ git checkout -b mywork origin
+$ vi file.txt
+$ git commit
+$ vi otherfile.txt
+$ git commit
+...
+-------------------------------------------------
+
+You have performed no merges into mywork, so it is just a simple linear
+sequence of patches on top of "origin":
+
+
+ o--o--o <-- origin
+        \
+         o--o--o <-- mywork
+
+Some more interesting work has been done in the upstream project, and
+"origin" has advanced:
+
+ o--o--O--o--o--o <-- origin
+        \
+         a--b--c <-- mywork
+
+At this point, you could use "pull" to merge your changes back in;
+the result would create a new merge commit, like this:
+
+
+ o--o--O--o--o--o <-- origin
+        \        \
+         a--b--c--m <-- mywork
+ 
+However, if you prefer to keep the history in mywork a simple series of
+commits without any merges, you may instead choose to use
+gitlink:git-rebase[1]:
+
+-------------------------------------------------
+$ git checkout mywork
+$ git rebase origin
+-------------------------------------------------
+
+This will remove each of your commits from mywork, temporarily saving them
+as patches (in a directory named ".dotest"), update mywork to point at the
+latest version of origin, then apply each of the saved patches to the new
+mywork.  The result will look like:
+
+
+ o--o--O--o--o--o <-- origin
+		 \
+		  a'--b'--c' <-- mywork
+
+In the process, it may discover conflicts.  In that case it will stop and
+allow you to fix the conflicts as described in
+"<<resolving-a-merge,Resolving a merge>>".  Once the index is updated with
+the results of the conflict resolution, instead of creating a new commit,
+just run
+
+-------------------------------------------------
+$ git rebase --continue
+-------------------------------------------------
+
+and git will continue applying the rest of the patches.
+
+At any point you may use the --abort option to abort this process and
+return mywork to the state it had before you started the rebase:
+
+-------------------------------------------------
+$ git rebase --abort
+-------------------------------------------------
+
+Reordering or selecting from a patch series
+-------------------------------------------
+
+Given one existing commit, the gitlink:git-cherry-pick[1] command allows
+you to apply the change introduced by that commit and create a new commit
+that records it.
+
+This can be useful for modifying a patch series.
+
+TODO: elaborate
+
+Other tools
+-----------
+
+There are numerous other tools, such as stgit, which exist for the purpose
+of maintianing a patch series.  These are out of the scope of this manual.
+
+Problems with rewriting history
+-------------------------------
+
+The primary problem with rewriting the history of a branch has to do with
+merging.
+
+TODO: elaborate
+
 
 Git internals
 =============
