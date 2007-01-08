@@ -134,49 +134,51 @@ test_expect_success \
     'git-verify-pack test-1-${packname_1}.idx test-2-${packname_2}.idx'
 
 test_expect_success \
-    'corrupt a pack and see if verify catches' \
+    'verify-pack catches mismatched .idx and .pack files' \
     'cp test-1-${packname_1}.idx test-3.idx &&
      cp test-2-${packname_2}.pack test-3.pack &&
      if git-verify-pack test-3.idx
      then false
      else :;
-     fi &&
+     fi'
 
-     : PACK_SIGNATURE &&
-     cp test-1-${packname_1}.pack test-3.pack &&
+test_expect_success \
+    'verify-pack catches a corrupted pack signature' \
+    'cp test-1-${packname_1}.pack test-3.pack &&
      dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=2 &&
      if git-verify-pack test-3.idx
      then false
      else :;
-     fi &&
+     fi'
 
-     : PACK_VERSION &&
-     cp test-1-${packname_1}.pack test-3.pack &&
+test_expect_success \
+    'verify-pack catches a corrupted pack version' \
+    'cp test-1-${packname_1}.pack test-3.pack &&
      dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=7 &&
      if git-verify-pack test-3.idx
      then false
      else :;
-     fi &&
+     fi'
 
-     : TYPE/SIZE byte of the first packed object data &&
-     cp test-1-${packname_1}.pack test-3.pack &&
+test_expect_success \
+    'verify-pack catches a corrupted type/size of the 1st packed object data' \
+    'cp test-1-${packname_1}.pack test-3.pack &&
      dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=12 &&
      if git-verify-pack test-3.idx
      then false
      else :;
-     fi &&
+     fi'
 
-     : sum of the index file itself &&
-     l=`wc -c <test-3.idx` &&
+test_expect_success \
+    'verify-pack catches a corrupted sum of the index file itself' \
+    'l=`wc -c <test-3.idx` &&
      l=`expr $l - 20` &&
      cp test-1-${packname_1}.pack test-3.pack &&
      dd if=/dev/zero of=test-3.idx count=20 bs=1 conv=notrunc seek=$l &&
      if git-verify-pack test-3.pack
      then false
      else :;
-     fi &&
-
-     :'
+     fi'
 
 test_expect_success \
     'build pack index for an existing pack' \
