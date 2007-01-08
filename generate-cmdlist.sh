@@ -9,7 +9,7 @@ struct cmdname_help
 
 struct cmdname_help common_cmds[] = {"
 
-sort <<\EOF |
+/usr/bin/sort <<\EOF |
 add
 apply
 archive

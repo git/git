@@ -98,7 +98,7 @@ rsync://* )
 	fi
 	;;
 esac |
-sort -t '	' -k 2 |
+/usr/bin/sort -t '	' -k 2 |
 while read sha1 path
 do
 	case "$sha1" in

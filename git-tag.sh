@@ -32,7 +32,7 @@ do
 		set x . ;;
 	esac
 	shift
-	git rev-parse --symbolic --tags | sort | grep "$@"
+	git rev-parse --symbolic --tags | /usr/bin/sort | grep "$@"
 	exit $?
 	;;
     -m)

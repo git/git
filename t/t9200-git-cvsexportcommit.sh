@@ -43,10 +43,10 @@ test_expect_success \
      id=$(git rev-list --max-count=1 HEAD) &&
      (cd "$CVSWORK" &&
      git cvsexportcommit -c $id &&
-     test "$(echo $(sort A/CVS/Entries|cut -d/ -f2,3,5))" = "newfile1.txt/1.1/" &&
-     test "$(echo $(sort B/CVS/Entries|cut -d/ -f2,3,5))" = "newfile2.txt/1.1/" &&
-     test "$(echo $(sort C/CVS/Entries|cut -d/ -f2,3,5))" = "newfile3.png/1.1/-kb" &&
-     test "$(echo $(sort D/CVS/Entries|cut -d/ -f2,3,5))" = "newfile4.png/1.1/-kb" &&
+     test "$(echo $(/usr/bin/sort A/CVS/Entries|cut -d/ -f2,3,5))" = "newfile1.txt/1.1/" &&
+     test "$(echo $(/usr/bin/sort B/CVS/Entries|cut -d/ -f2,3,5))" = "newfile2.txt/1.1/" &&
+     test "$(echo $(/usr/bin/sort C/CVS/Entries|cut -d/ -f2,3,5))" = "newfile3.png/1.1/-kb" &&
+     test "$(echo $(/usr/bin/sort D/CVS/Entries|cut -d/ -f2,3,5))" = "newfile4.png/1.1/-kb" &&
      diff A/newfile1.txt ../A/newfile1.txt &&
      diff B/newfile2.txt ../B/newfile2.txt &&
      diff C/newfile3.png ../C/newfile3.png &&
@@ -67,12 +67,12 @@ test_expect_success \
      id=$(git rev-list --max-count=1 HEAD) &&
      (cd "$CVSWORK" &&
      git cvsexportcommit -c $id &&
-     test "$(echo $(sort A/CVS/Entries|cut -d/ -f2,3,5))" = "newfile1.txt/1.2/" &&
-     test "$(echo $(sort B/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
-     test "$(echo $(sort C/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
-     test "$(echo $(sort D/CVS/Entries|cut -d/ -f2,3,5))" = "newfile4.png/1.2/-kb" &&
-     test "$(echo $(sort E/CVS/Entries|cut -d/ -f2,3,5))" = "newfile5.txt/1.1/" &&
-     test "$(echo $(sort F/CVS/Entries|cut -d/ -f2,3,5))" = "newfile6.png/1.1/-kb" &&
+     test "$(echo $(/usr/bin/sort A/CVS/Entries|cut -d/ -f2,3,5))" = "newfile1.txt/1.2/" &&
+     test "$(echo $(/usr/bin/sort B/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
+     test "$(echo $(/usr/bin/sort C/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
+     test "$(echo $(/usr/bin/sort D/CVS/Entries|cut -d/ -f2,3,5))" = "newfile4.png/1.2/-kb" &&
+     test "$(echo $(/usr/bin/sort E/CVS/Entries|cut -d/ -f2,3,5))" = "newfile5.txt/1.1/" &&
+     test "$(echo $(/usr/bin/sort F/CVS/Entries|cut -d/ -f2,3,5))" = "newfile6.png/1.1/-kb" &&
      diff A/newfile1.txt ../A/newfile1.txt &&
      diff D/newfile4.png ../D/newfile4.png &&
      diff E/newfile5.txt ../E/newfile5.txt &&
@@ -115,12 +115,12 @@ test_expect_success \
      id=$(git rev-list --max-count=1 HEAD) &&
      (cd "$CVSWORK" &&
      git cvsexportcommit -c $id &&
-     test "$(echo $(sort A/CVS/Entries|cut -d/ -f2,3,5))" = "newfile1.txt/1.2/" &&
-     test "$(echo $(sort B/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
-     test "$(echo $(sort C/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
-     test "$(echo $(sort D/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
-     test "$(echo $(sort E/CVS/Entries|cut -d/ -f2,3,5))" = "newfile5.txt/1.1/" &&
-     test "$(echo $(sort F/CVS/Entries|cut -d/ -f2,3,5))" = "newfile6.png/1.1/-kb" &&
+     test "$(echo $(/usr/bin/sort A/CVS/Entries|cut -d/ -f2,3,5))" = "newfile1.txt/1.2/" &&
+     test "$(echo $(/usr/bin/sort B/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
+     test "$(echo $(/usr/bin/sort C/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
+     test "$(echo $(/usr/bin/sort D/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
+     test "$(echo $(/usr/bin/sort E/CVS/Entries|cut -d/ -f2,3,5))" = "newfile5.txt/1.1/" &&
+     test "$(echo $(/usr/bin/sort F/CVS/Entries|cut -d/ -f2,3,5))" = "newfile6.png/1.1/-kb" &&
      diff A/newfile1.txt ../A/newfile1.txt &&
      diff E/newfile5.txt ../E/newfile5.txt &&
      diff F/newfile6.png ../F/newfile6.png
@@ -133,12 +133,12 @@ test_expect_success \
      id=$(git rev-list --max-count=1 HEAD) &&
      (cd "$CVSWORK" &&
      git cvsexportcommit -c $id &&
-     test "$(echo $(sort A/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
-     test "$(echo $(sort B/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
-     test "$(echo $(sort C/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
-     test "$(echo $(sort D/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
-     test "$(echo $(sort E/CVS/Entries|cut -d/ -f2,3,5))" = "newfile5.txt/1.1/" &&
-     test "$(echo $(sort F/CVS/Entries|cut -d/ -f2,3,5))" = "newfile6.png/1.1/-kb" &&
+     test "$(echo $(/usr/bin/sort A/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
+     test "$(echo $(/usr/bin/sort B/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
+     test "$(echo $(/usr/bin/sort C/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
+     test "$(echo $(/usr/bin/sort D/CVS/Entries|cut -d/ -f2,3,5))" = "" &&
+     test "$(echo $(/usr/bin/sort E/CVS/Entries|cut -d/ -f2,3,5))" = "newfile5.txt/1.1/" &&
+     test "$(echo $(/usr/bin/sort F/CVS/Entries|cut -d/ -f2,3,5))" = "newfile6.png/1.1/-kb" &&
      diff E/newfile5.txt ../E/newfile5.txt &&
      diff F/newfile6.png ../F/newfile6.png
      )'
@@ -154,7 +154,7 @@ test_expect_success \
       id=$(git rev-list --max-count=1 HEAD) &&
       (cd "$CVSWORK" &&
       git-cvsexportcommit -c $id &&
-      test "$(echo $(sort "G g/CVS/Entries"|cut -d/ -f2,3,5))" = "with spaces.png/1.1/-kb with spaces.txt/1.1/"
+      test "$(echo $(/usr/bin/sort "G g/CVS/Entries"|cut -d/ -f2,3,5))" = "with spaces.png/1.1/-kb with spaces.txt/1.1/"
       )'
 
 test_expect_success \
@@ -166,7 +166,7 @@ test_expect_success \
       id=$(git rev-list --max-count=1 HEAD) &&
       (cd "$CVSWORK" &&
       git-cvsexportcommit -c $id
-      test "$(echo $(sort "G g/CVS/Entries"|cut -d/ -f2,3,5))" = "with spaces.png/1.2/-kb with spaces.txt/1.2/"
+      test "$(echo $(/usr/bin/sort "G g/CVS/Entries"|cut -d/ -f2,3,5))" = "with spaces.png/1.2/-kb with spaces.txt/1.2/"
       )'
 
 # Some filesystems mangle pathnames with UTF-8 characters --
@@ -191,7 +191,7 @@ test_expect_success \
       id=$(git rev-list --max-count=1 HEAD) &&
       (cd "$CVSWORK" &&
       git-cvsexportcommit -v -c $id &&
-      test "$(echo $(sort Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö/CVS/Entries|cut -d/ -f2,3,5))" = "gårdetsågårdet.png/1.1/-kb gårdetsågårdet.txt/1.1/"
+      test "$(echo $(/usr/bin/sortsort Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö/CVS/Entries|cut -d/ -f2,3,5))" = "gårdetsågårdet.png/1.1/-kb gårdetsågårdet.txt/1.1/"
       )'
 
 fi

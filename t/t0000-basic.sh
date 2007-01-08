@@ -289,7 +289,7 @@ test_expect_success \
     'commit2=$(echo NO | git-commit-tree $P -p $commit0 -p $commit0) &&
      parent=$(git show --pretty=raw $commit2 |
 	 sed -n -e "s/^parent //p" -e "/^author /q" |
-	 sort -u) &&
+	 /usr/bin/sort -u) &&
      test "z$commit0" = "z$parent" &&
      numparent=$(git show --pretty=raw $commit2 |
 	 sed -n -e "s/^parent //p" -e "/^author /q" |

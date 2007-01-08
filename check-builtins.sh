@@ -9,7 +9,7 @@ EOF
 } |
 make -f - sayIt 2>/dev/null |
 sed -n -e 's/.*XXX \(.*\) YYY.*/\1/p' |
-sort |
+/usr/bin/sort |
 {
     bad=0
     while read builtin
