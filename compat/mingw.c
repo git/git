@@ -165,7 +165,7 @@ static const char *quote_arg(const char *arg)
 	return q;
 }
 
-static void quote_argv(const char **dst, const char **src)
+void quote_argv(const char **dst, const char **src)
 {
 	while (*src)
 		*dst++ = quote_arg(*src++);

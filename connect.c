@@ -3,6 +3,7 @@
 #include "pkt-line.h"
 #include "quote.h"
 #include "refs.h"
+#include "spawn-pipe.h"
 
 static char *server_capabilities;
 
@@ -620,23 +621,13 @@ static void git_proxy_connect(int fd[2], char *host)
 
 	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
 		die("unable to create pipe pair for communication");
-	pid = fork();
-	if (!pid) {
-		dup2(pipefd[1][0], 0);
-		dup2(pipefd[0][1], 1);
-		close(pipefd[0][0]);
-		close(pipefd[0][1]);
-		close(pipefd[1][0]);
-		close(pipefd[1][1]);
-		execlp(git_proxy_command, git_proxy_command, host, port, NULL);
-		die("exec failed");
+
+	{
+		const char *argv[] = { NULL, host, port, NULL };
+		spawnvpe_pipe(git_proxy_command, argv, environ, pipefd[1], pipefd[0]);
 	}
-	if (pid < 0)
-		die("fork failed");
 	fd[0] = pipefd[0][0];
 	fd[1] = pipefd[1][1];
-	close(pipefd[0][1]);
-	close(pipefd[1][0]);
 }
 
 #define MAX_CMD_LEN 1024
@@ -740,53 +731,37 @@ pid_t git_connect(int fd[2], char *url, const char *prog)
 
 	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
 		die("unable to create pipe pair for communication");
-	pid = fork();
-	if (pid < 0)
-		die("unable to fork");
-	if (!pid) {
-		char command[MAX_CMD_LEN];
-		char *posn = command;
-		int size = MAX_CMD_LEN;
-		int of = 0;
 
-		of |= add_to_string(&posn, &size, prog, 0);
-		of |= add_to_string(&posn, &size, " ", 0);
-		of |= add_to_string(&posn, &size, path, 1);
+	char command[MAX_CMD_LEN];
+	char *posn = command;
+	int size = MAX_CMD_LEN;
+	int of = 0;
 
-		if (of)
-			die("command line too long");
+	of |= add_to_string(&posn, &size, prog, 0);
+	of |= add_to_string(&posn, &size, " ", 0);
+	of |= add_to_string(&posn, &size, path, 1);
 
-		dup2(pipefd[1][0], 0);
-		dup2(pipefd[0][1], 1);
-		close(pipefd[0][0]);
-		close(pipefd[0][1]);
-		close(pipefd[1][0]);
-		close(pipefd[1][1]);
-		if (protocol == PROTO_SSH) {
-			const char *ssh, *ssh_basename;
-			ssh = getenv("GIT_SSH");
-			if (!ssh) ssh = "ssh";
-			ssh_basename = strrchr(ssh, '/');
-			if (!ssh_basename)
-				ssh_basename = ssh;
-			else
-				ssh_basename++;
-			execlp(ssh, ssh_basename, host, command, NULL);
-		}
-		else {
-			unsetenv(ALTERNATE_DB_ENVIRONMENT);
-			unsetenv(DB_ENVIRONMENT);
-			unsetenv(GIT_DIR_ENVIRONMENT);
-			unsetenv(GRAFT_ENVIRONMENT);
-			unsetenv(INDEX_ENVIRONMENT);
-			execlp("sh", "sh", "-c", command, NULL);
-		}
-		die("exec failed");
+	if (of)
+		die("command line too long");
+
+	if (protocol == PROTO_SSH) {
+		const char *argv[] = { NULL, host, command, NULL };
+		const char *ssh = getenv("GIT_SSH");
+		if (!ssh) ssh = "ssh";
+		pid = spawnvpe_pipe(ssh, argv, environ, pipefd[1], pipefd[0]);
+	}
+	else {
+		const char *argv[] = { NULL, "-c", command, NULL };
+		const char **env = copy_environ();
+		env_unsetenv(env, ALTERNATE_DB_ENVIRONMENT);
+		env_unsetenv(env, DB_ENVIRONMENT);
+		env_unsetenv(env, GIT_DIR_ENVIRONMENT);
+		env_unsetenv(env, GRAFT_ENVIRONMENT);
+		env_unsetenv(env, INDEX_ENVIRONMENT);
+		pid = spawnvpe_pipe("sh", argv, env, pipefd[1], pipefd[0]);
 	}
 	fd[0] = pipefd[0][0];
 	fd[1] = pipefd[1][1];
-	close(pipefd[0][1]);
-	close(pipefd[1][0]);
 	if (free_path)
 		free(path);
 	return pid;
