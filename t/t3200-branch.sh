@@ -110,11 +110,13 @@ test_expect_success 'config information was renamed, too' \
 	"test $(git-repo-config branch.s.dummy) = Hello &&
 	 ! git-repo-config branch.s/s/dummy"
 
+test "$no_symlinks" || {
 test_expect_failure \
     'git-branch -m u v should fail when the reflog for u is a symlink' \
     'git-branch -l u &&
      mv .git/logs/refs/heads/u real-u &&
      ln -s real-u .git/logs/refs/heads/u &&
      git-branch -m u v'
+}
 
 test_done

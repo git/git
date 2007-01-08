@@ -28,6 +28,13 @@ commit id embedding:
 TAR=${TAR:-tar}
 UNZIP=${UNZIP:-unzip}
 
+test "$no_symlinks" && {
+	function ln () {
+		test "$1" = -s && shift
+		date > "$2"
+	}
+}
+
 test_expect_success \
     'populate workdir' \
     'mkdir a b c &&

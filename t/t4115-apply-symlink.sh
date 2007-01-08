@@ -9,6 +9,13 @@ test_description='git-apply symlinks and partial files
 
 . ./test-lib.sh
 
+if test "$no_symlinks"
+then
+    say 'Symbolic links not supported, skipping tests.'
+    test_done
+    exit
+fi
+
 test_expect_success setup '
 
 	ln -s path1/path2/path3/path4/path5 link1 &&

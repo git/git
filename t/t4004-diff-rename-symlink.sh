@@ -12,6 +12,13 @@ by an edit for them.
 . ./test-lib.sh
 . ../diff-lib.sh
 
+if test "$no_symlinks"
+then
+    say 'Symbolic links not supported, skipping tests.'
+    test_done
+    exit
+fi
+
 test_expect_success \
     'prepare reference tree' \
     'echo xyzzy | tr -d '\\\\'012 >yomin &&

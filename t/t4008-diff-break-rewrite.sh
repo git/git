@@ -99,6 +99,8 @@ test_expect_success \
     'validate result of -B -M (#4)' \
     'compare_diff_raw expected current'
 
+test "$no_symlinks" || {
+
 test_expect_success \
     'make file0 into something completely different' \
     'rm -f file0 &&
@@ -147,6 +149,8 @@ EOF
 test_expect_success \
     'validate result of -M (#7)' \
     'compare_diff_raw expected current'
+
+} # end symlink tests
 
 test_expect_success \
     'file1 edited to look like file0 and file0 rename-edited to file2' \
