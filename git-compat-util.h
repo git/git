@@ -310,12 +310,14 @@ void mingw_execve(const char *cmd, const char **argv, const char **env);
 #define execve mingw_execve
 int fork();
 typedef int pid_t;
-pid_t waitpid(pid_t pid, int *status, int options);
-#define WIFEXITED(x) 0
-#define WEXITSTATUS(x) 1
-#define WIFSIGNALED(x) -1
-#define WTERMSIG(x) 0
-#define WNOHANG 0
+#define waitpid(pid, status, options) \
+	((options == 0) ? _cwait((status), (pid), 0) \
+		: (errno = EINVAL, -1))
+#define WIFEXITED(x) ((unsigned)(x) < 259)	/* STILL_ACTIVE */
+#define WEXITSTATUS(x) ((x) & 0xff)
+#define WIFSIGNALED(x) ((unsigned)(x) > 259)
+#define WTERMSIG(x) (x)
+#define WNOHANG 1
 #define SIGKILL 0
 #define SIGCHLD 0
 #define SIGALRM 0

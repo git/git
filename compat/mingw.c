@@ -46,12 +46,6 @@ int fork()
 {
 	return -1;
 }
-typedef int pid_t;
-pid_t waitpid(pid_t pid, int *status, int options)
-{
-	errno = ECHILD;
-	return -1;
-}
 
 int kill(pid_t pid, int sig)
 {
