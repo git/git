@@ -249,8 +249,10 @@ int write_shallow_commits(int fd, int use_pack_protocol)
 			if (use_pack_protocol)
 				packet_write(fd, "shallow %s", hex);
 			else {
-				write(fd, hex,  40);
-				write(fd, "\n", 1);
+				if (write_in_full(fd, hex,  40) != 40)
+					break;
+				if (write_in_full(fd, "\n", 1) != 1)
+					break;
 			}
 		}
 	return count;

@@ -51,9 +51,11 @@ static int write_rr(struct path_list *rr, int out_fd)
 	int i;
 	for (i = 0; i < rr->nr; i++) {
 		const char *path = rr->items[i].path;
-		write(out_fd, rr->items[i].util, 40);
-		write(out_fd, "\t", 1);
-		write(out_fd, path, strlen(path) + 1);
+		int length = strlen(path) + 1;
+		if (write_in_full(out_fd, rr->items[i].util, 40) != 40 ||
+		    write_in_full(out_fd, "\t", 1) != 1 ||
+		    write_in_full(out_fd, path, length) != length)
+			die("unable to write rerere record");
 	}
 	close(out_fd);
 	return commit_lock_file(&write_lock);
@@ -244,7 +246,8 @@ static int outf(void *dummy, mmbuffer_t *ptr, int nbuf)
 {
 	int i;
 	for (i = 0; i < nbuf; i++)
-		write(1, ptr[i].ptr, ptr[i].size);
+		if (write_in_full(1, ptr[i].ptr, ptr[i].size) != ptr[i].size)
+			return -1;
 	return 0;
 }
 

@@ -55,6 +55,7 @@ static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
 		/* emergency quit */
 		fd = 2;
 	if (fd == 2) {
+		/* XXX: are we happy to lose stuff here? */
 		xwrite(fd, data, sz);
 		return sz;
 	}

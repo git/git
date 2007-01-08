@@ -41,7 +41,8 @@ static int serve_object(int fd_in, int fd_out) {
 		remote = -1;
 	}
 	
-	write(fd_out, &remote, 1);
+	if (write_in_full(fd_out, &remote, 1) != 1)
+		return 0;
 	
 	if (remote < 0)
 		return 0;
@@ -53,7 +54,7 @@ static int serve_version(int fd_in, int fd_out)
 {
 	if (xread(fd_in, &remote_version, 1) < 1)
 		return -1;
-	write(fd_out, &local_version, 1);
+	write_in_full(fd_out, &local_version, 1);
 	return 0;
 }
 
@@ -74,10 +75,11 @@ static int serve_ref(int fd_in, int fd_out)
 
 	if (get_ref_sha1(ref, sha1))
 		remote = -1;
-	write(fd_out, &remote, 1);
+	if (write_in_full(fd_out, &remote, 1) != 1)
+		return 0;
 	if (remote)
 		return 0;
-	write(fd_out, sha1, 20);
+	write_in_full(fd_out, sha1, 20);
         return 0;
 }
 

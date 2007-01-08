@@ -195,7 +195,7 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	int posn = 0;
 	struct transfer_request *request = (struct transfer_request *)data;
 	do {
-		ssize_t retval = write(request->local_fileno,
+		ssize_t retval = xwrite(request->local_fileno,
 				       (char *) ptr + posn, size - posn);
 		if (retval < 0)
 			return posn;

@@ -517,7 +517,7 @@ static int mkdir_p(const char *path, unsigned long mode)
 static void flush_buffer(int fd, const char *buf, unsigned long size)
 {
 	while (size > 0) {
-		long ret = xwrite(fd, buf, size);
+		long ret = write_in_full(fd, buf, size);
 		if (ret < 0) {
 			/* Ignore epipe */
 			if (errno == EPIPE)

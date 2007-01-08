@@ -20,22 +20,6 @@ static int fd_out;
 static unsigned char remote_version;
 static unsigned char local_version = 1;
 
-static ssize_t force_write(int fd, void *buffer, size_t length)
-{
-	ssize_t ret = 0;
-	while (ret < length) {
-		ssize_t size = write(fd, (char *) buffer + ret, length - ret);
-		if (size < 0) {
-			return size;
-		}
-		if (size == 0) {
-			return ret;
-		}
-		ret += size;
-	}
-	return ret;
-}
-
 static int prefetches;
 
 static struct object_list *in_transit;
@@ -53,8 +37,9 @@ void prefetch(unsigned char *sha1)
 	node->item = lookup_unknown_object(sha1);
 	*end_of_transit = node;
 	end_of_transit = &node->next;
-	force_write(fd_out, &type, 1);
-	force_write(fd_out, sha1, 20);
+	/* XXX: what if these writes fail? */
+	write_in_full(fd_out, &type, 1);
+	write_in_full(fd_out, sha1, 20);
 	prefetches++;
 }
 
@@ -97,8 +82,10 @@ int fetch(unsigned char *sha1)
 static int get_version(void)
 {
 	char type = 'v';
-	write(fd_out, &type, 1);
-	write(fd_out, &local_version, 1);
+	if (write_in_full(fd_out, &type, 1) != 1 ||
+	    write_in_full(fd_out, &local_version, 1)) {
+		return error("Couldn't request version from remote end");
+	}
 	if (xread(fd_in, &remote_version, 1) < 1) {
 		return error("Couldn't read version from remote end");
 	}
@@ -109,8 +96,10 @@ int fetch_ref(char *ref, unsigned char *sha1)
 {
 	signed char remote;
 	char type = 'r';
-	write(fd_out, &type, 1);
-	write(fd_out, ref, strlen(ref) + 1);
+	int length = strlen(ref) + 1;
+	if (write_in_full(fd_out, &type, 1) != 1 ||
+	    write_in_full(fd_out, ref, length) != length)
+		return -1;
 
 	if (read_in_full(fd_in, &remote, 1) != 1)
 		return -1;

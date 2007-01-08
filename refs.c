@@ -332,7 +332,7 @@ int create_symref(const char *ref_target, const char *refs_heads_master)
 	}
 	lockpath = mkpath("%s.lock", git_HEAD);
 	fd = open(lockpath, O_CREAT | O_EXCL | O_WRONLY, 0666);	
-	written = write(fd, ref, len);
+	written = write_in_full(fd, ref, len);
 	close(fd);
 	if (written != len) {
 		unlink(lockpath);
@@ -968,7 +968,7 @@ static int log_ref_write(struct ref_lock *lock,
 			sha1_to_hex(sha1),
 			committer);
 	}
-	written = len <= maxlen ? write(logfd, logrec, len) : -1;
+	written = len <= maxlen ? write_in_full(logfd, logrec, len) : -1;
 	free(logrec);
 	close(logfd);
 	if (written != len)
@@ -987,8 +987,8 @@ int write_ref_sha1(struct ref_lock *lock,
 		unlock_ref(lock);
 		return 0;
 	}
-	if (write(lock->lock_fd, sha1_to_hex(sha1), 40) != 40 ||
-	    write(lock->lock_fd, &term, 1) != 1
+	if (write_in_full(lock->lock_fd, sha1_to_hex(sha1), 40) != 40 ||
+	    write_in_full(lock->lock_fd, &term, 1) != 1
 		|| close(lock->lock_fd) < 0) {
 		error("Couldn't write %s", lock->lk->filename);
 		unlock_ref(lock);

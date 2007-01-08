@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 	}
 
 	fd = open (argv[4], O_WRONLY|O_CREAT|O_TRUNC, 0666);
-	if (fd < 0 || write(fd, out_buf, out_size) != out_size) {
+	if (fd < 0 || write_in_full(fd, out_buf, out_size) != out_size) {
 		perror(argv[4]);
 		return 1;
 	}

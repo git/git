@@ -33,45 +33,40 @@ void read_or_die(int fd, void *buf, size_t count)
 		die("read error (%s)", strerror(errno));
 }
 
-void write_or_die(int fd, const void *buf, size_t count)
-{
-	const char *p = buf;
-	ssize_t written;
-
-	while (count > 0) {
-		written = xwrite(fd, p, count);
-		if (written == 0)
-			die("disk full?");
-		else if (written < 0) {
-			if (errno == EPIPE)
-				exit(0);
-			die("write error (%s)", strerror(errno));
-		}
-		count -= written;
-		p += written;
-	}
-}
-
 int write_in_full(int fd, const void *buf, size_t count)
 {
 	const char *p = buf;
 	ssize_t total = 0;
-	ssize_t wcount = 0;
+	ssize_t written = 0;
 
 	while (count > 0) {
-		wcount = xwrite(fd, p, count);
-		if (wcount <= 0) {
+		written = xwrite(fd, p, count);
+		if (written <= 0) {
 			if (total)
 				return total;
 			else
-				return wcount;
+				return written;
 		}
-		count -= wcount;
-		p += wcount;
-		total += wcount;
+		count -= written;
+		p += written;
+		total += written;
 	}
 
-	return wcount;
+	return total;
+}
+
+void write_or_die(int fd, const void *buf, size_t count)
+{
+	ssize_t written;
+
+	written = write_in_full(fd, buf, count);
+	if (written == 0)
+		die("disk full?");
+	else if (written < 0) {
+		if (errno == EPIPE)
+			exit(0);
+		die("write error (%s)", strerror(errno));
+	}
 }
 
 int write_or_whine_pipe(int fd, const void *buf, size_t count, const char *msg)
