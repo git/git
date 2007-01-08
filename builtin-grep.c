@@ -136,7 +136,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	if (i < 0)
 		goto err_ret;
 	data = xmalloc(st.st_size + 1);
-	if (st.st_size != xread(i, data, st.st_size)) {
+	if (st.st_size != read_in_full(i, data, st.st_size)) {
 		error("'%s': short read %s", filename, strerror(errno));
 		close(i);
 		free(data);

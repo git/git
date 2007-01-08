@@ -184,7 +184,7 @@ int fetch_ref(char *ref, unsigned char *sha1)
 		fprintf(stderr, "cannot open %s\n", filename);
 		return -1;
 	}
-	if (read(ifd, hex, 40) != 40 || get_sha1_hex(hex, sha1)) {
+	if (read_in_full(ifd, hex, 40) != 40 || get_sha1_hex(hex, sha1)) {
 		close(ifd);
 		fprintf(stderr, "cannot read from %s\n", filename);
 		return -1;

@@ -1869,7 +1869,7 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 			if (ret != Z_OK)
 				break;
 		}
-		size = read(fd, buffer + *bufposn, bufsize - *bufposn);
+		size = xread(fd, buffer + *bufposn, bufsize - *bufposn);
 		if (size <= 0) {
 			close(local);
 			unlink(tmpfile);

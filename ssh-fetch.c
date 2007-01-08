@@ -82,7 +82,7 @@ int fetch(unsigned char *sha1)
 		remote = conn_buf[0];
 		memmove(conn_buf, conn_buf + 1, --conn_buf_posn);
 	} else {
-		if (read(fd_in, &remote, 1) < 1)
+		if (xread(fd_in, &remote, 1) < 1)
 			return -1;
 	}
 	/* fprintf(stderr, "Got %d\n", remote); */
@@ -99,7 +99,7 @@ static int get_version(void)
 	char type = 'v';
 	write(fd_out, &type, 1);
 	write(fd_out, &local_version, 1);
-	if (read(fd_in, &remote_version, 1) < 1) {
+	if (xread(fd_in, &remote_version, 1) < 1) {
 		return error("Couldn't read version from remote end");
 	}
 	return 0;
@@ -111,10 +111,13 @@ int fetch_ref(char *ref, unsigned char *sha1)
 	char type = 'r';
 	write(fd_out, &type, 1);
 	write(fd_out, ref, strlen(ref) + 1);
-	read(fd_in, &remote, 1);
+
+	if (read_in_full(fd_in, &remote, 1) != 1)
+		return -1;
 	if (remote < 0)
 		return remote;
-	read(fd_in, sha1, 20);
+	if (read_in_full(fd_in, sha1, 20) != 20)
+		return -1;
 	return 0;
 }
 

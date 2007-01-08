@@ -224,7 +224,7 @@ socket_perror( const char *func, Socket_t *sock, int ret )
 static int
 socket_read( Socket_t *sock, char *buf, int len )
 {
-	int n = read( sock->fd, buf, len );
+	int n = xread( sock->fd, buf, len );
 	if (n <= 0) {
 		socket_perror( "read", sock, n );
 		close( sock->fd );
@@ -390,7 +390,7 @@ arc4_init( void )
 		fprintf( stderr, "Fatal: no random number source available.\n" );
 		exit( 3 );
 	}
-	if (read( fd, dat, 128 ) != 128) {
+	if (read_in_full( fd, dat, 128 ) != 128) {
 		fprintf( stderr, "Fatal: cannot read random number source.\n" );
 		exit( 3 );
 	}

@@ -1,19 +1,36 @@
 #include "cache.h"
 
-void read_or_die(int fd, void *buf, size_t count)
+int read_in_full(int fd, void *buf, size_t count)
 {
 	char *p = buf;
-	ssize_t loaded;
+	ssize_t total = 0;
+	ssize_t loaded = 0;
 
 	while (count > 0) {
 		loaded = xread(fd, p, count);
-		if (loaded == 0)
-			die("unexpected end of file");
-		else if (loaded < 0)
-			die("read error (%s)", strerror(errno));
+		if (loaded <= 0) {
+			if (total)
+				return total;
+			else
+				return loaded;
+		}
 		count -= loaded;
 		p += loaded;
+		total += loaded;
 	}
+
+	return total;
+}
+
+void read_or_die(int fd, void *buf, size_t count)
+{
+	ssize_t loaded;
+
+	loaded = read_in_full(fd, buf, count);
+	if (loaded == 0)
+		die("unexpected end of file");
+	else if (loaded < 0)
+		die("read error (%s)", strerror(errno));
 }
 
 void write_or_die(int fd, const void *buf, size_t count)

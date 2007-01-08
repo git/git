@@ -242,7 +242,7 @@ static void create_pack_file(void)
 					*cp++ = buffered;
 					outsz++;
 				}
-				sz = read(pu_pipe[0], cp,
+				sz = xread(pu_pipe[0], cp,
 					  sizeof(data) - outsz);
 				if (0 < sz)
 						;
@@ -267,7 +267,7 @@ static void create_pack_file(void)
 				/* Status ready; we ship that in the side-band
 				 * or dump to the standard error.
 				 */
-				sz = read(pe_pipe[0], progress,
+				sz = xread(pe_pipe[0], progress,
 					  sizeof(progress));
 				if (0 < sz)
 					send_client_data(2, progress, sz);

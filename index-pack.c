@@ -638,7 +638,7 @@ static void readjust_pack_header_and_sha1(unsigned char *sha1)
 	/* Rewrite pack header with updated object number */
 	if (lseek(output_fd, 0, SEEK_SET) != 0)
 		die("cannot seek back: %s", strerror(errno));
-	if (xread(output_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
+	if (read_in_full(output_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
 		die("cannot read pack header back: %s", strerror(errno));
 	hdr.hdr_entries = htonl(nr_objects);
 	if (lseek(output_fd, 0, SEEK_SET) != 0)

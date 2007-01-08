@@ -284,7 +284,7 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 		fd = open(path, O_RDONLY);
 		if (fd < 0)
 			return NULL;
-		len = read(fd, buffer, sizeof(buffer)-1);
+		len = read_in_full(fd, buffer, sizeof(buffer)-1);
 		close(fd);
 
 		/*
