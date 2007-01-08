@@ -29,7 +29,7 @@ use IPC::Open2;
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our ($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A,$opt_S,$opt_L);
+our ($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A,$opt_S,$opt_L, $opt_a);
 my (%conv_author_name, %conv_author_email);
 
 sub usage() {
@@ -37,7 +37,7 @@ sub usage() {
 Usage: ${\basename $0}     # fetch/update GIT from CVS
        [-o branch-for-HEAD] [-h] [-v] [-d CVSROOT] [-A author-conv-file]
        [-p opts-for-cvsps] [-C GIT_repository] [-z fuzz] [-i] [-k] [-u]
-       [-s subst] [-m] [-M regex] [-S regex] [CVS_module]
+       [-s subst] [-a] [-m] [-M regex] [-S regex] [CVS_module]
 END
 	exit(1);
 }
@@ -105,6 +105,8 @@ if ($opt_d) {
 }
 $opt_o ||= "origin";
 $opt_s ||= "-";
+$opt_a ||= 0;
+
 my $git_tree = $opt_C;
 $git_tree ||= ".";
 
@@ -829,7 +831,7 @@ while (<CVS>) {
 			$state = 11;
 			next;
 		}
-		if ( $starttime - 300 - (defined $opt_z ? $opt_z : 300) <= $date) {
+		if (!$opt_a && $starttime - 300 - (defined $opt_z ? $opt_z : 300) <= $date) {
 			# skip if the commit is too recent
 			# that the cvsps default fuzz is 300s, we give ourselves another
 			# 300s just in case -- this also prevents skipping commits
