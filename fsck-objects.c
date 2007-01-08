@@ -399,7 +399,9 @@ static void fsck_dir(int i, char *path)
 
 static int default_refs;
 
-static int fsck_handle_reflog_ent(unsigned char *osha1, unsigned char *nsha1, char *datail, void *cb_data)
+static int fsck_handle_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
+		const char *email, unsigned long timestamp, int tz,
+		const char *message, void *cb_data)
 {
 	struct object *obj;
 

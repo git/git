@@ -104,7 +104,9 @@ static void walk_commit_list(struct rev_info *revs)
 	}
 }
 
-static int add_one_reflog_ent(unsigned char *osha1, unsigned char *nsha1, char *datail, void *cb_data)
+static int add_one_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
+		const char *email, unsigned long timestamp, int tz,
+		const char *message, void *cb_data)
 {
 	struct object *object;
 	struct rev_info *revs = (struct rev_info *)cb_data;

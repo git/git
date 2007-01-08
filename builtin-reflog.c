@@ -195,19 +195,12 @@ static int keep_entry(struct commit **it, unsigned char *sha1)
 }
 
 static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
-			     char *data, void *cb_data)
+		const char *email, unsigned long timestamp, int tz,
+		const char *message, void *cb_data)
 {
 	struct expire_reflog_cb *cb = cb_data;
-	unsigned long timestamp;
-	char *cp, *ep;
 	struct commit *old, *new;
 
-	cp = strchr(data, '>');
-	if (!cp || *++cp != ' ')
-		goto prune;
-	timestamp = strtoul(cp, &ep, 10);
-	if (*ep != ' ')
-		goto prune;
 	if (timestamp < cb->cmd->expire_total)
 		goto prune;
 
@@ -221,15 +214,20 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 	     (new && !in_merge_bases(new, cb->ref_commit))))
 		goto prune;
 
-	if (cb->newlog)
-		fprintf(cb->newlog, "%s %s %s",
-			sha1_to_hex(osha1), sha1_to_hex(nsha1), data);
+	if (cb->newlog) {
+		char sign = (tz < 0) ? '-' : '+';
+		int zone = (tz < 0) ? (-tz) : tz;
+		fprintf(cb->newlog, "%s %s %s %lu %c%04d\t%s",
+			sha1_to_hex(osha1), sha1_to_hex(nsha1),
+			email, timestamp, sign, zone,
+			message);
+	}
 	if (cb->cmd->verbose)
-		printf("keep %s", data);
+		printf("keep %s", message);
 	return 0;
  prune:
 	if (!cb->newlog || cb->cmd->verbose)
-		printf("%sprune %s", cb->newlog ? "" : "would ", data);
+		printf("%sprune %s", cb->newlog ? "" : "would ", message);
 	return 0;
 }
 
