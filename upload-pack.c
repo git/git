@@ -537,10 +537,12 @@ static void receive_needs(void)
 			use_thin_pack = 1;
 		if (strstr(line+45, "ofs-delta"))
 			use_ofs_delta = 1;
+#ifndef __MINGW32__
 		if (strstr(line+45, "side-band-64k"))
 			use_sideband = LARGE_PACKET_MAX;
 		else if (strstr(line+45, "side-band"))
 			use_sideband = DEFAULT_PACKET_MAX;
+#endif
 
 		/* We have sent all our refs already, and the other end
 		 * should have chosen out of them; otherwise they are
