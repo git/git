@@ -34,7 +34,7 @@ test_expect_success \
     'see if a branch still exists when packed' \
     'git-branch b &&
      git-pack-refs --all &&
-     rm .git/refs/heads/b &&
+     rm -f .git/refs/heads/b &&
      echo "$SHA1 refs/heads/b" >expect &&
      git-show-ref b >result &&
      diff expect result'

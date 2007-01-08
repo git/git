@@ -4,7 +4,7 @@
 #include "tag.h"
 
 static const char builtin_pack_refs_usage[] =
-"git-pack-refs [--all] [--prune]";
+"git-pack-refs [--all] [--prune | --no-prune]";
 
 struct ref_to_prune {
 	struct ref_to_prune *next;
@@ -90,10 +90,15 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 
 	memset(&cbdata, 0, sizeof(cbdata));
 
+	cbdata.prune = 1;
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--prune")) {
-			cbdata.prune = 1;
+			cbdata.prune = 1; /* now the default */
+			continue;
+		}
+		if (!strcmp(arg, "--no-prune")) {
+			cbdata.prune = 0;
 			continue;
 		}
 		if (!strcmp(arg, "--all")) {

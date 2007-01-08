@@ -7,7 +7,7 @@ git-pack-refs - Pack heads and tags for efficient repository access
 
 SYNOPSIS
 --------
-'git-pack-refs' [--all] [--prune]
+'git-pack-refs' [--all] [--no-prune]
 
 DESCRIPTION
 -----------
@@ -40,10 +40,11 @@ developed and packing their tips does not help performance.
 This option causes branch tips to be packed as well.  Useful for
 a repository with many branches of historical interests.
 
-\--prune::
+\--no-prune::
 
-After packing the refs, remove loose refs under `$GIT_DIR/refs`
-hierarchy.  This should probably become default.
+The command usually removes loose refs under `$GIT_DIR/refs`
+hierarchy after packing them.  This option tells it not to.
+
 
 Author
 ------
