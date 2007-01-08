@@ -45,12 +45,12 @@ test_expect_success \
      (p=long_path_to_a_file && cd a &&
       for depth in 1 2 3 4 5; do mkdir $p && cd $p; done &&
       echo text >file_with_long_path) &&
-     (cd a && find .) | sort >a.lst'
+     (cd a && /usr/bin/find .) | sort >a.lst'
 
 test_expect_success \
     'add files to repository' \
-    'find a -type f | xargs git-update-index --add &&
-     find a -type l | xargs git-update-index --add &&
+    '/usr/bin/find a -type f | xargs git-update-index --add &&
+     /usr/bin/find a -type l | xargs git-update-index --add &&
      treeid=`git-write-tree` &&
      echo $treeid >treeid &&
      git-update-ref HEAD $(TZ=GMT GIT_COMMITTER_DATE="2005-05-27 22:00:00" \
@@ -79,7 +79,7 @@ test_expect_success \
 
 test_expect_success \
     'validate filenames' \
-    '(cd b/a && find .) | sort >b.lst &&
+    '(cd b/a && /usr/bin/find .) | sort >b.lst &&
      diff a.lst b.lst'
 
 test_expect_success \
@@ -96,7 +96,7 @@ test_expect_success \
 
 test_expect_success \
     'validate filenames with prefix' \
-    '(cd c/prefix/a && find .) | sort >c.lst &&
+    '(cd c/prefix/a && /usr/bin/find .) | sort >c.lst &&
      diff a.lst c.lst'
 
 test_expect_success \
@@ -113,7 +113,7 @@ test_expect_success \
 
 test_expect_success \
     'validate filenames' \
-    '(cd d/a && find .) | sort >d.lst &&
+    '(cd d/a && /usr/bin/find .) | sort >d.lst &&
      diff a.lst d.lst'
 
 test_expect_success \
@@ -130,7 +130,7 @@ test_expect_success \
 
 test_expect_success \
     'validate filenames with prefix' \
-    '(cd e/prefix/a && find .) | sort >e.lst &&
+    '(cd e/prefix/a && /usr/bin/find .) | sort >e.lst &&
      diff a.lst e.lst'
 
 test_expect_success \

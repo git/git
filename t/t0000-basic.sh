@@ -50,14 +50,14 @@ test "$no_symlinks" && {
 # git-init has been done in an empty repository.
 # make sure it is empty.
 
-find .git/objects -type f -print >should-be-empty
+/usr/bin/find .git/objects -type f -print >should-be-empty
 test_expect_success \
     '.git/objects should be empty after git-init in an empty repo.' \
     'cmp -s /dev/null should-be-empty' 
 
 # also it should have 2 subdirectories; no fan-out anymore, pack, and info.
 # 3 is counting "objects" itself
-find .git/objects -type d -print >full-of-directories
+/usr/bin/find .git/objects -type d -print >full-of-directories
 test_expect_success \
     '.git/objects should have 3 subdirectories.' \
     'test $(wc -l < full-of-directories) = 3'
@@ -112,7 +112,7 @@ do
 done
 test_expect_success \
     'adding various types of objects with git-update-index --add.' \
-    'find path* ! -type d -print | xargs git-update-index --add'
+    '/usr/bin/find path* ! -type d -print | xargs git-update-index --add'
 
 # Show them and see that matches what we expect.
 test_expect_success \

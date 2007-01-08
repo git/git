@@ -75,7 +75,7 @@ cd "$TRASH/.git2"
 
 test_expect_success \
     'check unpack without delta' \
-    '(cd ../.git && find objects -type f -print) |
+    '(cd ../.git && /usr/bin/find objects -type f -print) |
      while read path
      do
          cmp $path ../.git/$path || {
@@ -105,7 +105,7 @@ unset GIT_OBJECT_DIRECTORY
 cd "$TRASH/.git2"
 test_expect_success \
     'check unpack with REF_DELTA' \
-    '(cd ../.git && find objects -type f -print) |
+    '(cd ../.git && /usr/bin/find objects -type f -print) |
      while read path
      do
          cmp $path ../.git/$path || {
@@ -135,7 +135,7 @@ unset GIT_OBJECT_DIRECTORY
 cd "$TRASH/.git2"
 test_expect_success \
     'check unpack with OFS_DELTA' \
-    '(cd ../.git && find objects -type f -print) |
+    '(cd ../.git && /usr/bin/find objects -type f -print) |
      while read path
      do
          cmp $path ../.git/$path || {

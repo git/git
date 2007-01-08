@@ -79,7 +79,7 @@ rsync://* )
 		head=$(cat "$tmpdir/$head") || exit
 	esac &&
 	echo "$head	HEAD"
-	(cd $tmpdir && find refs -type f) |
+	(cd $tmpdir && /usr/bin/find refs -type f) |
 	while read path
 	do
 		cat "$tmpdir/$path" | tr -d '\012'
