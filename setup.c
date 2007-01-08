@@ -138,7 +138,8 @@ const char **get_pathspec(const char *prefix, const char **pathspec)
  *    GIT_OBJECT_DIRECTORY environment variable
  *  - a refs/ directory
  *  - either a HEAD symlink or a HEAD file that is formatted as
- *    a proper "ref:".
+ *    a proper "ref:", or a regular file HEAD that has a properly
+ *    formatted sha1 object name.
  */
 static int is_git_directory(const char *suspect)
 {
@@ -161,7 +162,7 @@ static int is_git_directory(const char *suspect)
 		return 0;
 
 	strcpy(path + len, "/HEAD");
-	if (validate_symref(path))
+	if (validate_headref(path))
 		return 0;
 
 	return 1;

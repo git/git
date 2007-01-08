@@ -29,7 +29,7 @@ use IPC::Open2;
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our ($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A,$opt_S,$opt_L);
+our ($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A,$opt_S,$opt_L, $opt_a);
 my (%conv_author_name, %conv_author_email);
 
 sub usage() {
@@ -37,7 +37,7 @@ sub usage() {
 Usage: ${\basename $0}     # fetch/update GIT from CVS
        [-o branch-for-HEAD] [-h] [-v] [-d CVSROOT] [-A author-conv-file]
        [-p opts-for-cvsps] [-C GIT_repository] [-z fuzz] [-i] [-k] [-u]
-       [-s subst] [-m] [-M regex] [-S regex] [CVS_module]
+       [-s subst] [-a] [-m] [-M regex] [-S regex] [CVS_module]
 END
 	exit(1);
 }
@@ -105,6 +105,8 @@ if ($opt_d) {
 }
 $opt_o ||= "origin";
 $opt_s ||= "-";
+$opt_a ||= 0;
+
 my $git_tree = $opt_C;
 $git_tree ||= ".";
 
@@ -573,9 +575,11 @@ if ($opt_A) {
 # run cvsps into a file unless we are getting
 # it passed as a file via $opt_P
 #
+my $cvspsfile;
 unless ($opt_P) {
 	print "Running cvsps...\n" if $opt_v;
 	my $pid = open(CVSPS,"-|");
+	my $cvspsfh;
 	die "Cannot fork: $!\n" unless defined $pid;
 	unless ($pid) {
 		my @opt;
@@ -588,18 +592,18 @@ unless ($opt_P) {
 		exec("cvsps","--norc",@opt,"-u","-A",'--root',$opt_d,$cvs_tree);
 		die "Could not start cvsps: $!\n";
 	}
-	my ($cvspsfh, $cvspsfile) = tempfile('gitXXXXXX', SUFFIX => '.cvsps',
-					     DIR => File::Spec->tmpdir());
+	($cvspsfh, $cvspsfile) = tempfile('gitXXXXXX', SUFFIX => '.cvsps',
+					  DIR => File::Spec->tmpdir());
 	while (<CVSPS>) {
 	    print $cvspsfh $_;
 	}
 	close CVSPS;
 	close $cvspsfh;
-	$opt_P = $cvspsfile;
+} else {
+	$cvspsfile = $opt_P;
 }
 
-
-open(CVS, "<$opt_P") or die $!;
+open(CVS, "<$cvspsfile") or die $!;
 
 ## cvsps output:
 #---------------------
@@ -829,7 +833,7 @@ while (<CVS>) {
 			$state = 11;
 			next;
 		}
-		if ( $starttime - 300 - (defined $opt_z ? $opt_z : 300) <= $date) {
+		if (!$opt_a && $starttime - 300 - (defined $opt_z ? $opt_z : 300) <= $date) {
 			# skip if the commit is too recent
 			# that the cvsps default fuzz is 300s, we give ourselves another
 			# 300s just in case -- this also prevents skipping commits
@@ -933,6 +937,10 @@ while (<CVS>) {
 	}
 }
 commit() if $branch and $state != 11;
+
+unless ($opt_P) {
+	unlink($cvspsfile);
+}
 
 # The heuristic of repacking every 1024 commits can leave a
 # lot of unpacked data.  If there is more than 1MB worth of
