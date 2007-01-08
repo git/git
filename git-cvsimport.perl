@@ -575,9 +575,11 @@ if ($opt_A) {
 # run cvsps into a file unless we are getting
 # it passed as a file via $opt_P
 #
+my $cvspsfile;
 unless ($opt_P) {
 	print "Running cvsps...\n" if $opt_v;
 	my $pid = open(CVSPS,"-|");
+	my $cvspsfh;
 	die "Cannot fork: $!\n" unless defined $pid;
 	unless ($pid) {
 		my @opt;
@@ -590,18 +592,18 @@ unless ($opt_P) {
 		exec("cvsps","--norc",@opt,"-u","-A",'--root',$opt_d,$cvs_tree);
 		die "Could not start cvsps: $!\n";
 	}
-	my ($cvspsfh, $cvspsfile) = tempfile('gitXXXXXX', SUFFIX => '.cvsps',
-					     DIR => File::Spec->tmpdir());
+	($cvspsfh, $cvspsfile) = tempfile('gitXXXXXX', SUFFIX => '.cvsps',
+					  DIR => File::Spec->tmpdir());
 	while (<CVSPS>) {
 	    print $cvspsfh $_;
 	}
 	close CVSPS;
 	close $cvspsfh;
-	$opt_P = $cvspsfile;
+} else {
+	$cvspsfile = $opt_P;
 }
 
-
-open(CVS, "<$opt_P") or die $!;
+open(CVS, "<$cvspsfile") or die $!;
 
 ## cvsps output:
 #---------------------
@@ -935,6 +937,10 @@ while (<CVS>) {
 	}
 }
 commit() if $branch and $state != 11;
+
+unless ($opt_P) {
+	unlink($cvspsfile);
+}
 
 # The heuristic of repacking every 1024 commits can leave a
 # lot of unpacked data.  If there is more than 1MB worth of
