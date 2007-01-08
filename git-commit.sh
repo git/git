@@ -628,7 +628,7 @@ then
 	if test -z "$quiet"
 	then
 		echo "Created${initial_commit:+ initial} commit $commit"
-		git-diff-tree --shortstat --summary --root --no-commit-id HEAD
+		git-diff-tree --shortstat --summary --root --no-commit-id HEAD --
 	fi
 fi
 
