@@ -1086,7 +1086,7 @@ sub graft_merge_msg {
 	my ($grafts, $l_map, $u, $p, @re) = @_;
 
 	my $x = $l_map->{$u}->{$p};
-	my $rl = rev_list_raw($x);
+	my $rl = rev_list_raw("refs/remotes/$x");
 	while (my $c = next_rev_list_entry($rl)) {
 		foreach my $re (@re) {
 			my (@br) = ($c->{m} =~ /$re/g);
