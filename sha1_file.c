@@ -572,6 +572,7 @@ static void open_packed_git(struct packed_git *p)
 	} else if (p->pack_size != st.st_size)
 		die("packfile %s size changed", p->pack_name);
 
+#ifndef __MINGW32__
 	/* We leave these file descriptors open with sliding mmap;
 	 * there is no point keeping them open across exec(), though.
 	 */
@@ -581,6 +582,7 @@ static void open_packed_git(struct packed_git *p)
 	fd_flag |= FD_CLOEXEC;
 	if (fcntl(p->pack_fd, F_SETFD, fd_flag) == -1)
 		die("cannot set FD_CLOEXEC");
+#endif
 
 	/* Verify we recognize this pack file format. */
 	if (read_in_full(p->pack_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
