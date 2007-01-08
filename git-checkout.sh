@@ -14,6 +14,8 @@ branch=
 newbranch=
 newbranch_log=
 merge=
+LF='
+'
 while [ "$#" != "0" ]; do
     arg="$1"
     shift
@@ -163,6 +165,22 @@ If you meant to create a new branch from the commit, you need -b to
 associate a new branch with the wanted checkout.  Example:
   git checkout -b <new_branch_name> $arg
 "
+	fi
+elif test -z "$oldbranch" && test -n "$branch"
+then
+	# Coming back...
+	if test -z "$force"
+	then
+		mb=$(git merge-base --all $old $new) &&
+		case "$LF$mb$LF" in
+		*"$LF$old$LF"*)	: ;;
+		*)	false ;;
+		esac || {
+			echo >&2 \
+"You are not on a branch and switching to $new_name branch may lose
+your changes.  Use 'git checkout -f $new_name' if you want to."
+			exit 1;
+		}
 	fi
 fi
 
