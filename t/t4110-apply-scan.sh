@@ -9,6 +9,10 @@ test_description='git-apply test for patches which require scanning forwards and
 '
 . ./test-lib.sh
 
+cmp () {
+	diff -w "$@"
+}
+
 # setup
 
 cat > patch1.patch <<\EOF

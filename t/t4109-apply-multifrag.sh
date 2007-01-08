@@ -9,6 +9,10 @@ test_description='git-apply test patches with multiple fragments.
 '
 . ./test-lib.sh
 
+cmp () {
+	diff -w "$@"
+}
+
 # setup
 
 cat > patch1.patch <<\EOF
