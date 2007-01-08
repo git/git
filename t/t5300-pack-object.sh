@@ -10,12 +10,28 @@ test_description='git-pack-object
 
 TRASH=`pwd`
 
+x4k=xxxxxxxx
+x4k="$x4k$x4k$x4k$x4k$x4k$x4k$x4k$x4k"
+x4k="$x4k$x4k$x4k$x4k$x4k$x4k$x4k$x4k"
+x4k="$x4k$x4k$x4k$x4k$x4k$x4k$x4k$x4k"
+
+corrupt()
+{
+	(
+	read -d "" -n $4 l
+	echo -n "$l"
+	read -d "" -n $3 l
+	echo -n ${x4k:0:$3} | tr x '\0'
+	cat
+	) < $1 > $2
+}
+
 test_expect_success \
     'setup' \
     'rm -f .git/index*
      for i in a b c
      do
-	     dd if=/dev/zero bs=4k count=1 | tr "\\0" $i >$i &&
+	     echo -n "$x4k" | tr x $i >$i &&
 	     git-update-index --add $i || return 1
      done &&
      cat c >d && echo foo >>d && git-update-index --add d &&
@@ -144,8 +160,7 @@ test_expect_success \
 
 test_expect_success \
     'verify-pack catches a corrupted pack signature' \
-    'cp test-1-${packname_1}.pack test-3.pack &&
-     dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=2 &&
+    'corrupt test-1-${packname_1}.pack test-3.pack 1 2 &&
      if git-verify-pack test-3.idx
      then false
      else :;
@@ -153,8 +168,7 @@ test_expect_success \
 
 test_expect_success \
     'verify-pack catches a corrupted pack version' \
-    'cp test-1-${packname_1}.pack test-3.pack &&
-     dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=7 &&
+    'corrupt test-1-${packname_1}.pack test-3.pack 1 7 &&
      if git-verify-pack test-3.idx
      then false
      else :;
@@ -162,8 +176,7 @@ test_expect_success \
 
 test_expect_success \
     'verify-pack catches a corrupted type/size of the 1st packed object data' \
-    'cp test-1-${packname_1}.pack test-3.pack &&
-     dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=12 &&
+    'corrupt test-1-${packname_1}.pack test-3.pack 1 12 &&
      if git-verify-pack test-3.idx
      then false
      else :;
@@ -173,8 +186,7 @@ test_expect_success \
     'verify-pack catches a corrupted sum of the index file itself' \
     'l=`wc -c <test-3.idx` &&
      l=`expr $l - 20` &&
-     cp test-1-${packname_1}.pack test-3.pack &&
-     dd if=/dev/zero of=test-3.idx count=20 bs=1 conv=notrunc seek=$l &&
+     corrupt test-1-${packname_1}.pack test-3.pack 20 $l &&
      if git-verify-pack test-3.pack
      then false
      else :;

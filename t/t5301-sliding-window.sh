@@ -6,6 +6,10 @@
 test_description='mmap sliding window tests'
 . ./test-lib.sh
 
+dd () {
+	perl -e 'print pack("C", rand(256)) foreach 0 .. 32767'
+}
+
 test_expect_success \
     'setup' \
     'rm -f .git/index*

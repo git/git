@@ -10,6 +10,12 @@ This is identical to t1001, but uses -u to update the work tree as well.
 '
 . ./test-lib.sh
 
+sum ./test-lib.sh >/dev/null 2>&1 || {
+	function sum () {
+		md5sum "$@"
+	}
+}
+
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 compare_change () {
