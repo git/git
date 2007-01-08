@@ -1,0 +1,1460 @@
+Git User's Manual
+_________________
+
+This manual is designed to be readable by someone with basic unix
+commandline skills, but no previous knowledge of git.
+
+Comprehensive reference documentation is available through the man
+pages.  For a command such as "git clone", just use
+
+------------------------------------------------
+$ man git-clone
+------------------------------------------------
+
+Repositories and Branches
+=========================
+
+How to get a git repository
+---------------------------
+
+It will be useful to have a git repository to experiment with as you
+read this manual.
+
+The best way to get one is by using the gitlink:git-clone[1] command
+to download a copy of an existing repository for a project that you
+are interested in.  If you don't already have a project in mind, here
+are some interesting examples:
+
+------------------------------------------------
+	# git itself (approx. 10MB download):
+$ git clone git://git.kernel.org/pub/scm/git/git.git
+	# the linux kernel (approx. 150MB download):
+$ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git
+------------------------------------------------
+
+The initial clone may be time-consuming for a large project, but you
+will only need to clone once.
+
+The clone command creates a new directory named after the project
+("git" or "linux-2.6" in the examples above).  After you cd into this
+directory, you will see that it contains a copy of the project files,
+together with a special top-level directory named ".git", which
+contains all the information about the history of the project.
+
+In the following, examples will be taken from one of the two
+repositories above.
+
+How to check out a different version of a project
+-------------------------------------------------
+
+Git is best thought of as a tool for storing the history of a
+collection of files.  It stores the history as a compressed
+collection of interrelated snapshots (versions) of the project's
+contents.
+
+A single git repository may contain multiple branches.  Each branch
+is a bookmark referencing a particular point in the project history.
+The gitlink:git-branch[1] command shows you the list of branches:
+
+------------------------------------------------
+$ git branch
+* master
+------------------------------------------------
+
+A freshly cloned repository contains a single branch, named "master",
+and the working directory contains the version of the project
+referred to by the master branch.
+
+Most projects also use tags.  Tags, like branches, are references
+into the project's history, and can be listed using the
+gitlink:git-tag[1] command:
+
+------------------------------------------------
+$ git tag -l
+v2.6.11
+v2.6.11-tree
+v2.6.12
+v2.6.12-rc2
+v2.6.12-rc3
+v2.6.12-rc4
+v2.6.12-rc5
+v2.6.12-rc6
+v2.6.13
+...
+------------------------------------------------
+
+Create a new branch pointing to one of these versions and check it
+out using gitlink:git-checkout[1]:
+
+------------------------------------------------
+$ git checkout -b new v2.6.13
+------------------------------------------------
+
+The working directory then reflects the contents that the project had
+when it was tagged v2.6.13, and gitlink:git-branch[1] shows two
+branches, with an asterisk marking the currently checked-out branch:
+
+------------------------------------------------
+$ git branch
+  master
+* new
+------------------------------------------------
+
+If you decide that you'd rather see version 2.6.17, you can modify
+the current branch to point at v2.6.17 instead, with
+
+------------------------------------------------
+$ git reset --hard v2.6.17
+------------------------------------------------
+
+Note that if the current branch was your only reference to a
+particular point in history, then resetting that branch may leave you
+with no way to find the history it used to point to; so use this
+command carefully.
+
+Understanding History: Commits
+------------------------------
+
+Every change in the history of a project is represented by a commit.
+The gitlink:git-show[1] command shows the most recent commit on the
+current branch:
+
+------------------------------------------------
+$ git show
+commit 2b5f6dcce5bf94b9b119e9ed8d537098ec61c3d2
+Author: Jamal Hadi Salim <hadi@cyberus.ca>
+Date:   Sat Dec 2 22:22:25 2006 -0800
+
+    [XFRM]: Fix aevent structuring to be more complete.
+    
+    aevents can not uniquely identify an SA. We break the ABI with this
+    patch, but consensus is that since it is not yet utilized by any
+    (known) application then it is fine (better do it now than later).
+    
+    Signed-off-by: Jamal Hadi Salim <hadi@cyberus.ca>
+    Signed-off-by: David S. Miller <davem@davemloft.net>
+
+diff --git a/Documentation/networking/xfrm_sync.txt b/Documentation/networking/xfrm_sync.txt
+index 8be626f..d7aac9d 100644
+--- a/Documentation/networking/xfrm_sync.txt
++++ b/Documentation/networking/xfrm_sync.txt
+@@ -47,10 +47,13 @@ aevent_id structure looks like:
+ 
+    struct xfrm_aevent_id {
+              struct xfrm_usersa_id           sa_id;
++             xfrm_address_t                  saddr;
+              __u32                           flags;
++             __u32                           reqid;
+    };
+...
+------------------------------------------------
+
+As you can see, a commit shows who made the latest change, what they
+did, and why.
+
+Every commit has a 20-digit id, sometimes called the "SHA1 id", shown
+on the first line of the "git show" output.  You can usually refer to
+a commit by a shorter name, such as a tag or a branch name, but this
+longer id can also be useful.  In particular, it is a globally unique
+name for this commit: so if you tell somebody else the SHA1 id (for
+example in email), then you are guaranteed they will see the same
+commit in their repository that you do in yours.
+
+Understanding history: commits, parents, and reachability
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Every commit (except the very first commit in a project) also has a
+parent commit which shows what happened before this commit.
+Following the chain of parents will eventually take you back to the
+beginning of the project.
+
+However, the commits do not form a simple list; git allows lines of
+development to diverge and then reconverge, and the point where two
+lines of development reconverge is called a "merge".  The commit
+representing a merge can therefore have more than one parent, with
+each parent representing the most recent commit on one of the lines
+of development leading to that point.
+
+The best way to see how this works is using the gitlink:gitk[1]
+command; running gitk now on a git repository and looking for merge
+commits will help understand how the git organizes history.
+
+In the following, we say that commit X is "reachable" from commit Y
+if commit X is an ancestor of commit Y.  Equivalently, you could say
+that Y is a descendent of X, or that there is a chain of parents
+leading from commit Y to commit X.
+
+Undestanding history: History diagrams
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We will sometimes represent git history using diagrams like the one
+below.  Commits are shown as "o", and the links between them with
+lines drawn with - / and \.  Time goes left to right:
+
+         o--o--o <-- Branch A
+        /
+ o--o--o <-- master
+        \
+         o--o--o <-- Branch B
+
+If we need to talk about a particular commit, the character "o" may
+be replaced with another letter or number.
+
+Understanding history: What is a branch?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Though we've been using the word "branch" to mean a kind of reference
+to a particular commit, the word branch is also commonly used to
+refer to the line of commits leading up to that point.  In the
+example above, git may think of the branch named "A" as just a
+pointer to one particular commit, but we may refer informally to the
+line of three commits leading up to that point as all being part of
+"branch A".
+
+If we need to make it clear that we're just talking about the most
+recent commit on the branch, we may refer to that commit as the
+"head" of the branch.
+
+Manipulating branches
+---------------------
+
+Creating, deleting, and modifying branches is quick and easy; here's
+a summary of the commands:
+
+git branch::
+	list all branches
+git branch <branch>::
+	create a new branch named <branch>, referencing the same
+	point in history as the current branch
+git branch <branch> <start-point>::
+	create a new branch named <branch>, referencing
+	<start-point>, which may be specified any way you like,
+	including using a branch name or a tag name
+git branch -d <branch>::
+	delete the branch <branch>; if the branch you are deleting
+	points to a commit which is not reachable from this branch,
+	this command will fail with a warning.
+git branch -D <branch>::
+	even if the branch points to a commit not reachable
+	from the current branch, you may know that that commit
+	is still reachable from some other branch or tag.  In that
+	case it is safe to use this command to force git to delete
+	the branch.
+git checkout <branch>::
+	make the current branch <branch>, updating the working
+	directory to reflect the version referenced by <branch>
+git checkout -b <new> <start-point>::
+	create a new branch <new> referencing <start-point>, and
+	check it out.
+
+It is also useful to know that the special symbol "HEAD" can always
+be used to refer to the current branch.
+
+Examining branches from a remote repository
+-------------------------------------------
+
+The "master" branch that was created at the time you cloned is a copy
+of the HEAD in the repository that you cloned from.  That repository
+may also have had other branches, though, and your local repository
+keeps branches which track each of those remote branches, which you
+can view using the "-r" option to gitlink:git-branch[1]:
+
+------------------------------------------------
+$ git branch -r
+  origin/HEAD
+  origin/html
+  origin/maint
+  origin/man
+  origin/master
+  origin/next
+  origin/pu
+  origin/todo
+------------------------------------------------
+
+You cannot check out these remote-tracking branches, but you can
+examine them on a branch of your own, just as you would a tag:
+
+------------------------------------------------
+$ git checkout -b my-todo-copy origin/todo
+------------------------------------------------
+
+Note that the name "origin" is just the name that git uses by default
+to refer to the repository that you cloned from.
+
+[[how-git-stores-references]]
+How git stores references
+-------------------------
+
+Branches, remote-tracking branches, and tags are all references to
+commits.  Git stores these references in the ".git" directory.  Most
+of them are stored in .git/refs/:
+
+	- branches are stored in .git/refs/heads
+	- tags are stored in .git/refs/tags
+	- remote-tracking branches for "origin" are stored in
+	  .git/refs/remotes/origin/
+
+If you look at one of these files you will see that they usually
+contain just the SHA1 id of a commit:
+
+------------------------------------------------
+$ ls .git/refs/heads/
+master
+$ cat .git/refs/heads/master
+c0f982dcf188d55db9d932a39d4ea7becaa55fed
+------------------------------------------------
+
+You can refer to a reference by its path relative to the .git
+directory.  However, we've seen above that git will also accept
+shorter names; for example, "master" is an acceptable shortcut for
+"refs/heads/master", and "origin/master" is a shortcut for
+"refs/remotes/origin/master".
+
+As another useful shortcut, you can also refer to the "HEAD" of
+"origin" (or any other remote), using just the name of the remote.
+
+For the complete list of paths which git checks for references, and
+how it decides which to choose when there are multiple references
+with the same name, see the "SPECIFYING REVISIONS" section of
+gitlink:git-rev-parse[1].
+
+[[Updating-a-repository-with-git-fetch]]
+Updating a repository with git fetch
+------------------------------------
+
+Eventually the developer cloned from will do additional work in her
+repository, creating new commits and advancing the branches to point
+at the new commits.
+
+The command "git fetch", with no arguments, will update all of the
+remote-tracking branches to the latest version found in her
+repository.  It will not touch any of your own branches--not even the
+"master" branch that was created for you on clone.
+
+Fetching individual branches
+----------------------------
+
+You can also choose to update just one branch at a time:
+
+-------------------------------------------------
+$ git fetch origin todo:refs/remotes/origin/todo
+-------------------------------------------------
+
+The first argument, "origin", just tells git to fetch from the
+repository you originally cloned from.  The second argument tells git
+to fetch the branch named "todo" from the remote repository, and to
+store it locally under the name refs/remotes/origin/todo; as we saw
+above, remote-tracking branches are stored under
+refs/remotes/<name-of-repository>/<name-of-branch>.
+
+You can also fetch branches from other repositories; so
+
+-------------------------------------------------
+$ git fetch git://example.com/proj.git master:refs/remotes/example/master
+-------------------------------------------------
+
+will create a new reference named "refs/remotes/example/master" and
+store in it the branch named "master" from the repository at the
+given URL.  If you already have a branch named
+"refs/remotes/example/master", it will attempt to "fast-forward" to
+the commit given by example.com's master branch.  So next we explain
+what a fast-forward is:
+
+[[fast-forwards]]
+Understanding git history: fast-forwards
+----------------------------------------
+
+In the previous example, when updating an existing branch, "git
+fetch" checks to make sure that the most recent commit on the remote
+branch is a descendant of the most recent commit on your copy of the
+branch before updating your copy of the branch to point at the new
+commit.  Git calls this process a "fast forward".
+
+A fast forward looks something like this:
+
+ o--o--o--o <-- old head of the branch
+           \
+            o--o--o <-- new head of the branch
+
+
+In some cases it is possible that the new head will *not* actually be
+a descendant of the old head.  For example, the developer may have
+realized she made a serious mistake, and decided to backtrack,
+resulting in a situation like:
+
+ o--o--o--o--a--b <-- old head of the branch
+           \
+            o--o--o <-- new head of the branch
+
+
+
+In this case, "git fetch" will fail, and print out a warning.
+
+In that case, you can still force git to update to the new head, as
+described in the following section.  However, note that in the
+situation above this may mean losing the commits labeled "a" and "b",
+unless you've already created a reference of your own pointing to
+them.
+
+Forcing git fetch to do non-fast-forward updates
+------------------------------------------------
+
+If git fetch fails because the new head of a branch is not a
+descendant of the old head, you may force the update with:
+
+-------------------------------------------------
+$ git fetch git://example.com/proj.git +master:refs/remotes/example/master
+-------------------------------------------------
+
+Note the addition of the "+" sign.  Be aware that commits which the
+old version of example/master pointed at may be lost, as we saw in
+the previous section.
+
+Configuring remote branches
+---------------------------
+
+We saw above that "origin" is just a shortcut to refer to the
+repository which you originally cloned from.  This information is
+stored in git configuration variables, which you can see using
+gitlink:git-repo-config[1]:
+
+-------------------------------------------------
+$ git-repo-config -l
+core.repositoryformatversion=0
+core.filemode=true
+core.logallrefupdates=true
+remote.origin.url=git://git.kernel.org/pub/scm/git/git.git
+remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
+branch.master.remote=origin
+branch.master.merge=refs/heads/master
+-------------------------------------------------
+
+If there are other repositories that you also use frequently, you can
+create similar configuration options to save typing; for example,
+after
+
+-------------------------------------------------
+$ git repo-config remote.example.url=git://example.com/proj.git
+-------------------------------------------------
+
+then the following two commands will do the same thing:
+
+-------------------------------------------------
+$ git fetch git://example.com/proj.git master:refs/remotes/example/master
+$ git fetch example master:refs/remotes/example/master
+-------------------------------------------------
+
+Even better, if you add one more option:
+
+-------------------------------------------------
+$ git repo-config remote.example.fetch=master:refs/remotes/example/master
+-------------------------------------------------
+
+then the following commands will all do the same thing:
+
+-------------------------------------------------
+$ git fetch git://example.com/proj.git master:ref/remotes/example/master
+$ git fetch example master:ref/remotes/example/master
+$ git fetch example example/master
+$ git fetch example
+-------------------------------------------------
+
+You can also add a "+" to force the update each time:
+
+-------------------------------------------------
+$ git repo-config +master:ref/remotes/example/master
+-------------------------------------------------
+
+Don't do this unless you're sure you won't mind "git fetch" possibly
+throwing away commits on mybranch.
+
+Also note that all of the above configuration can be performed by
+directly editing the file .git/config instead of using
+gitlink:git-repo-config[1].
+
+See gitlink:git-repo-config[1] for more details on the configuration
+options mentioned above.
+
+Exploring git history
+=====================
+
+Git is best thought of as a tool for storing the history of a
+collection of files.  It does this by storing compressed snapshots of
+the contents of a file heirarchy, together with "commits" which show
+the relationships between these snapshots.
+
+Git provides extremely flexible and fast tools for exploring the
+history of a project.
+
+We start with one specialized tool which is useful for finding the
+commit that introduced a bug into a project.
+
+How to use bisect to find a regression
+--------------------------------------
+
+Suppose version 2.6.18 of your project worked, but the version at
+"master" crashes.  Sometimes the best way to find the cause of such a
+regression is to perform a brute-force search through the project's
+history to find the particular commit that caused the problem.  The
+gitlink:git-bisect[1] command can help you do this:
+
+-------------------------------------------------
+$ git bisect start
+$ git bisect good v2.6.18
+$ git bisect bad master
+Bisecting: 3537 revisions left to test after this
+[65934a9a028b88e83e2b0f8b36618fe503349f8e] BLOCK: Make USB storage depend on SCSI rather than selecting it [try #6]
+-------------------------------------------------
+
+If you run "git branch" at this point, you'll see that git has
+temporarily moved you to a new branch named "bisect".  This branch
+points to a commit (with commit id 65934...) that is reachable from
+v2.6.19 but not from v2.6.18.  Compile and test it, and see whether
+it crashes.  Assume it does crash.  Then:
+
+-------------------------------------------------
+$ git bisect bad
+Bisecting: 1769 revisions left to test after this
+[7eff82c8b1511017ae605f0c99ac275a7e21b867] i2c-core: Drop useless bitmaskings
+-------------------------------------------------
+
+checks out an older version.  Continue like this, telling git at each
+stage whether the version it gives you is good or bad, and notice
+that the number of revisions left to test is cut approximately in
+half each time.
+
+After about 13 tests (in this case), it will output the commit id of
+the guilty commit.  You can then examine the commit with
+gitlink:git-show[1], find out who wrote it, and mail them your bug
+report with the commit id.  Finally, run
+
+-------------------------------------------------
+$ git bisect reset
+-------------------------------------------------
+
+to return you to the branch you were on before and delete the
+temporary "bisect" branch.
+
+Note that the version which git-bisect checks out for you at each
+point is just a suggestion, and you're free to try a different
+version if you think it would be a good idea.  For example,
+occasionally you may land on a commit that broke something unrelated;
+run
+
+-------------------------------------------------
+$ git bisect-visualize
+-------------------------------------------------
+
+which will run gitk and label the commit it chose with a marker that
+says "bisect".  Chose a safe-looking commit nearby, note its commit
+id, and check it out with:
+
+-------------------------------------------------
+$ git reset --hard fb47ddb2db...
+-------------------------------------------------
+
+then test, run "bisect good" or "bisect bad" as appropriate, and
+continue.
+
+Naming commits
+--------------
+
+We have seen several ways of naming commits already:
+
+	- 20-digit SHA1 id
+	- branch name: refers to the commit at the head of the given
+	  branch
+	- tag name: refers to the commit pointed to by the given tag
+	  (we've seen branches and tags are special cases of
+	  <<how-git-stores-references,references>>).
+	- HEAD: refers to the head of the current branch
+
+There are many more; see the "SPECIFYING REVISION" section of the
+gitlink:git-rev-list[1] man page for the complete list of ways to
+name revisions.  Some examples:
+
+-------------------------------------------------
+$ git show fb47ddb2 # the first few characters of the SHA1 id
+		    # are usually enough to specify it uniquely
+$ git show HEAD^    # the parent of the HEAD commit
+$ git show HEAD^^   # the grandparent
+$ git show HEAD~4   # the great-great-grandparent
+-------------------------------------------------
+
+Recall that merge commits may have more than one parent; by default,
+^ and ~ follow the first parent listed in the commit, but you can
+also choose:
+
+-------------------------------------------------
+$ git show HEAD^1   # show the first parent of HEAD
+$ git show HEAD^2   # show the second parent of HEAD
+-------------------------------------------------
+
+In addition to HEAD, there are several other special names for
+commits:
+
+Merges (to be discussed later), as well as operations such as
+git-reset, which change the currently checked-out commit, generally
+set ORIG_HEAD to the value HEAD had before the current operation.
+
+The git-fetch operation always stores the head of the last fetched
+branch in FETCH_HEAD.  For example, if you run git fetch without
+specifying a local branch as the target of the operation
+
+-------------------------------------------------
+$ git fetch git://example.com/proj.git theirbranch
+-------------------------------------------------
+
+the fetched commits will still be available from FETCH_HEAD.
+
+When we discuss merges we'll also see the special name MERGE_HEAD,
+which refers to the other branch that we're merging in to the current
+branch.
+
+Creating tags
+-------------
+
+We can also create a tag to refer to a particular commit; after
+running
+
+-------------------------------------------------
+$ git-tag stable-1 1b2e1d63ff
+-------------------------------------------------
+
+You can use stable-1 to refer to the commit 1b2e1d63ff.
+
+This creates a "lightweight" tag.  If the tag is a tag you wish to
+share with others, and possibly sign cryptographically, then you
+should create a tag object instead; see the gitlink:git-tag[1] man
+page for details.
+
+Browsing revisions
+------------------
+
+The gitlink:git-log[1] command can show lists of commits.  On its
+own, it shows all commits reachable from the parent commit; but you
+can also make more specific requests:
+
+-------------------------------------------------
+$ git log v2.5..	# commits since (not reachable from) v2.5
+$ git log test..master	# commits reachable from master but not test
+$ git log master..test	# ...reachable from test but not master
+$ git log master...test	# ...reachable from either test or master,
+			#    but not both
+$ git log --since="2 weeks ago" # commits from the last 2 weeks
+$ git log Makefile      # commits which modify Makefile
+$ git log fs/		# ... which modify any file under fs/
+$ git log -S'foo()'	# commits which add or remove any file data
+			# matching the string 'foo()'
+-------------------------------------------------
+
+And of course you can combine all of these; the following finds
+commits since v2.5 which touch the Makefile or any file under fs:
+
+-------------------------------------------------
+$ git log v2.5.. Makefile fs/
+-------------------------------------------------
+
+You can also ask git log to show patches:
+
+-------------------------------------------------
+$ git log -p
+-------------------------------------------------
+
+See the "--pretty" option in the gitlink:git-log[1] man page for more
+display options.
+
+Note that git log starts with the most recent commit and works
+backwards through the parents; however, since git history can contain
+multiple independant lines of development, the particular order that
+commits are listed in may be somewhat arbitrary.
+
+Generating diffs
+----------------
+
+You can generate diffs between any two versions using
+gitlink:git-diff[1]:
+
+-------------------------------------------------
+$ git diff master..test
+-------------------------------------------------
+
+Sometimes what you want instead is a set of patches:
+
+-------------------------------------------------
+$ git format-patch master..test
+-------------------------------------------------
+
+will generate a file with a patch for each commit reachable from test
+but not from master.  Note that if master also has commits which are
+not reachable from test, then the combined result of these patches
+will not be the same as the diff produced by the git-diff example.
+
+Viewing old file versions
+-------------------------
+
+You can always view an old version of a file by just checking out the
+correct revision first.  But sometimes it is more convenient to be
+able to view an old version of a single file without checking
+anything out; this command does that:
+
+-------------------------------------------------
+$ git show v2.5:fs/locks.c
+-------------------------------------------------
+
+Before the colon may be anything that names a commit, and after it
+may be any path to a file tracked by git.
+
+Developing with git
+===================
+
+Telling git your name
+---------------------
+
+Before creating any commits, you should introduce yourself to git.  The
+easiest way to do so is:
+
+------------------------------------------------
+$ cat >~/.gitconfig <<\EOF
+[user]
+	name = Your Name Comes Here
+	email = you@yourdomain.example.com
+EOF
+------------------------------------------------
+
+
+Creating a new repository
+-------------------------
+
+Creating a new repository from scratch is very easy:
+
+-------------------------------------------------
+$ mkdir project
+$ cd project
+$ git init-db
+-------------------------------------------------
+
+If you have some initial content (say, a tarball):
+
+-------------------------------------------------
+$ tar -xzvf project.tar.gz
+$ cd project
+$ git init-db
+$ git add . # include everything below ./ in the first commit:
+$ git commit
+-------------------------------------------------
+
+[[how-to-make-a-commit]]
+how to make a commit
+--------------------
+
+Creating a new commit takes three steps:
+
+	1. Making some changes to the working directory using your
+	   favorite editor.
+	2. Telling git about your changes.
+	3. Creating the commit using the content you told git about
+	   in step 2.
+
+In practice, you can interleave and repeat steps 1 and 2 as many
+times as you want: in order to keep track of what you want committed
+at step 3, git maintains a snapshot of the tree's contents in a
+special staging area called "the index."
+
+By default, the content of the index is identical to that of the
+HEAD.  The command "git diff --cached" shows the difference between
+HEAD and the index, so you should no output from that command.
+
+Modifying the index is easy:
+
+To update the index with the new contents of a modified file, use
+
+-------------------------------------------------
+$ git add path/to/file
+-------------------------------------------------
+
+To add the contents of a new file to the index, use
+
+-------------------------------------------------
+$ git add path/to/file
+-------------------------------------------------
+
+To remove a file from the index that you've removed from the working
+tree,
+
+-------------------------------------------------
+$ git rm path/to/file
+-------------------------------------------------
+
+After each step you can verify that
+
+-------------------------------------------------
+$ git diff --cached
+-------------------------------------------------
+
+always shows the difference between the HEAD and the index file--this
+is what you'd commit if you created the commit now--and that
+
+-------------------------------------------------
+$ git diff
+-------------------------------------------------
+
+shows the difference between the working tree and the index file.
+
+Note that "git add" always adds just the current contents of a file
+to the index; further changes to the same file will be ignored unless
+you run git-add on the file again.
+
+When you're ready, just run
+
+-------------------------------------------------
+$ git commit
+-------------------------------------------------
+
+and git will prompt you for a commit message and then create the new
+commmit.  Check to make sure it looks like what you expected with
+
+-------------------------------------------------
+$ git show
+-------------------------------------------------
+
+As a special shortcut,
+		
+-------------------------------------------------
+$ git commit -a
+-------------------------------------------------
+
+will update the index with any files that you've modified or removed
+and create a commit, all in one step.
+
+A number of commands are useful for keeping track of what you're
+about to commit:
+
+-------------------------------------------------
+$ git diff --cached # difference between HEAD and the index; what
+		    # would be commited if you ran "commit" now.
+$ git diff	    # difference between the index file and your
+		    # working directory; changes that would not
+		    # be included if you ran "commit" now.
+$ git status	    # a brief per-file summary of the above.
+-------------------------------------------------
+
+creating good commit messages
+-----------------------------
+
+Though not required, it's a good idea to begin the commit message
+with a single short (less than 50 character) line summarizing the
+change, followed by a blank line and then a more thorough
+description.  Tools that turn commits into email, for example, use
+the first line on the Subject line and the rest of the commit in the
+body.
+
+how to merge
+------------
+
+You can rejoin two diverging branches of development using
+gitlink:git-merge[1]:
+
+-------------------------------------------------
+$ git merge branchname
+-------------------------------------------------
+
+merges the development in the branch "branchname" into the current
+branch.  If there are conflicts--for example, if the same file is
+modified in two different ways in the remote branch and the local
+branch--then you are warned; the output may look something like this:
+
+-------------------------------------------------
+$ git pull . next
+Trying really trivial in-index merge...
+fatal: Merge requires file-level merging
+Nope.
+Merging HEAD with 77976da35a11db4580b80ae27e8d65caf5208086
+Merging:
+15e2162 world
+77976da goodbye
+found 1 common ancestor(s):
+d122ed4 initial
+Auto-merging file.txt
+CONFLICT (content): Merge conflict in file.txt
+Automatic merge failed; fix conflicts and then commit the result.
+-------------------------------------------------
+
+Conflict markers are left in the problematic files, and after
+you resolve the conflicts manually, you can update the index
+with the contents and run git commit, as you normally would when
+creating a new file.
+
+If you examine the resulting commit using gitk, you will see that it
+has two parents, one pointing to the top of the current branch, and
+one to the top of the other branch.
+
+In more detail:
+
+[[resolving-a-merge]]
+Resolving a merge
+-----------------
+
+When a merge isn't resolved automatically, git leaves the index and
+the working tree in a special state that gives you all the
+information you need to help resolve the merge.
+
+Files with conflicts are marked specially in the index, so until you
+resolve the problem and update the index, git commit will fail:
+
+-------------------------------------------------
+$ git commit
+file.txt: needs merge
+-------------------------------------------------
+
+Also, git status will list those files as "unmerged".
+
+All of the changes that git was able to merge automatically are
+already added to the index file, so gitlink:git-diff[1] shows only
+the conflicts.  Also, it uses a somewhat unusual syntax:
+
+-------------------------------------------------
+$ git diff
+diff --cc file.txt
+index 802992c,2b60207..0000000
+--- a/file.txt
++++ b/file.txt
+@@@ -1,1 -1,1 +1,5 @@@
+++<<<<<<< HEAD:file.txt
+ +Hello world
+++=======
++ Goodbye
+++>>>>>>> 77976da35a11db4580b80ae27e8d65caf5208086:file.txt
+-------------------------------------------------
+
+Recall that the commit which will be commited after we resolve this
+conflict will have two parents instead of the usual one: one parent
+will be HEAD, the tip of the current branch; the other will be the
+tip of the other branch, which is stored temporarily in MERGE_HEAD.
+
+The diff above shows the differences between the working-tree version
+of file.txt and two previous version: one version from HEAD, and one
+from MERGE_HEAD.  So instead of preceding each line by a single "+"
+or "-", it now uses two columns: the first column is used for
+differences between the first parent and the working directory copy,
+and the second for differences between the second parent and the
+working directory copy.  Thus after resolving the conflict in the
+obvious way, the diff will look like:
+
+-------------------------------------------------
+$ git diff
+diff --cc file.txt
+index 802992c,2b60207..0000000
+--- a/file.txt
++++ b/file.txt
+@@@ -1,1 -1,1 +1,1 @@@
+- Hello world
+ -Goodbye
+++Goodbye world
+-------------------------------------------------
+
+This shows that our resolved version deleted "Hello world" from the
+first parent, deleted "Goodbye" from the second parent, and added
+"Goodbye world", which was previously absent from both.
+
+The gitlink:git-log[1] command also provides special help for merges:
+
+-------------------------------------------------
+$ git log --merge
+-------------------------------------------------
+
+This will list all commits which exist only on HEAD or on MERGE_HEAD,
+and which touch an unmerged file.
+
+We can now add the resolved version to the index and commit:
+
+-------------------------------------------------
+$ git add file.txt
+$ git commit
+-------------------------------------------------
+
+Note that the commit message will already be filled in for you with
+some information about the merge.  Normally you can just use this
+default message unchanged, but you may add additional commentary of
+your own if desired.
+
+[[undoing-a-merge]]
+undoing a merge
+---------------
+
+If you get stuck and decide to just give up and throw the whole mess
+away, you can always return to the pre-merge state with
+
+-------------------------------------------------
+$ git reset --hard HEAD
+-------------------------------------------------
+
+Or, if you've already commited the merge that you want to throw away,
+
+-------------------------------------------------
+$ git reset --hard HEAD^
+-------------------------------------------------
+
+However, this last command can be dangerous in some cases--never
+throw away a commit you have already committed if that commit may
+itself have been merged into another branch, as doing so may confuse
+further merges.
+
+Fast-forward merges
+-------------------
+
+There is one special case not mentioned above, which is treated
+differently.  Normally, a merge results in a merge commit, with two
+parents, one pointing at each of the two lines of development that
+were merged.
+
+However, if one of the two lines of development is completely
+contained within the other--so every commit present in the one is
+already contained in the other--then git just performs a
+<<fast-forwards,fast forward>>; the head of the current branch is
+moved forward to point at the head of the merged-in branch, without
+any new commits being created.
+
+Ensuring good performance
+-------------------------
+
+On large repositories, git depends on compression to keep the history
+information from taking up to much space on disk or in memory.
+
+This compression is not performed automatically.  Therefore you
+should occasionally run
+
+-------------------------------------------------
+$ git gc
+-------------------------------------------------
+
+to recompress the archive and to prune any commits which are no
+longer referred to anywhere.  This can be very time-consuming, and
+you should not modify the repository while it is working, so you
+should run it while you are not working.
+
+Sharing development with others
+-------------------------------
+
+[[getting-updates-with-git-pull]]
+Getting updates with git pull
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After you clone a repository and make a few changes of your own, you
+may wish to check the original repository for updates and merge them
+into your own work.
+
+We have already seen <<Updating-a-repository-with-git-fetch,how to
+keep remote tracking branches up to date>> with gitlink:git-fetch[1],
+and how to merge two branches.  So you can merge in changes from the
+original repository's master branch with:
+
+-------------------------------------------------
+$ git fetch
+$ git merge origin/master
+-------------------------------------------------
+
+However, the gitlink:git-pull[1] command provides a way to do this in
+one step:
+
+-------------------------------------------------
+$ git pull origin master
+-------------------------------------------------
+
+In fact, "origin" is normally the default repository to pull from,
+and the default branch is normally the HEAD of the remote repository,
+so often you can accomplish the above with just
+
+-------------------------------------------------
+$ git pull
+-------------------------------------------------
+
+See the descriptions of the branch.<name>.remote and
+branch.<name>.merge options in gitlink:git-repo-config[1] to learn
+how to control these defaults depending on the current branch.
+
+In addition to saving you keystrokes, "git pull" also helps you by
+producing a default commit message documenting the branch and
+repository that you pulled from.
+
+(But note that no such commit will be created in the case of a
+<<fast-forwards,fast forward>>; instead, your branch will just be
+updated to point to the latest commit from the upstream branch).
+
+Submitting patches to a project
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you just have a few changes, the simplest way to submit them may
+just be to send them as patches in email:
+
+First, use gitlink:git-format-patches[1]; for example:
+
+-------------------------------------------------
+$ git format-patches origin
+-------------------------------------------------
+
+will produce a numbered series of files in the current directory, one
+for each patch in the current branch but not in origin/HEAD.
+
+You can then import these into your mail client and send them by
+hand.  However, if you have a lot to send at once, you may prefer to
+use the gitlink:git-send-email[1] script to automate the process.
+Consult the mailing list for your project first to determine how they
+prefer such patches be handled.
+
+Importing patches to a project
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Git also provides a tool called gitlink:git-am[1] (am stands for
+"apply mailbox"), for importing such an emailed series of patches.
+Just save all of the patch-containing messages, in order, into a
+single mailbox file, say "patches.mbox", then run
+
+-------------------------------------------------
+$ git am patches.mbox
+-------------------------------------------------
+
+Git will apply each patch in order; if any conflicts are found, it
+will stop, and you can fix the conflicts as described in
+"<<resolving-a-merge,Resolving a merge>>".  Once the index is updated
+with the results of the conflict resolution, instead of creating a
+new commit, just run
+
+-------------------------------------------------
+$ git am --resolved
+-------------------------------------------------
+
+and git will create the commit for you and continue applying the
+remaining patches from the mailbox.
+
+The final result will be a series of commits, one for each patch in
+the original mailbox, with authorship and commit log message each
+taken from the message containing each patch.
+
+[[setting-up-a-public-repository]]
+Setting up a public repository
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Another way to submit changes to a project is to simply tell the
+maintainer of that project to pull from your repository, exactly as
+you did in the section "<<getting-updates-with-git-pull, Getting
+updates with git pull>>".
+
+If you and maintainer both have accounts on the same machine, then
+then you can just pull changes from each other's repositories
+directly; note that all of the command (gitlink:git-clone[1],
+git-fetch[1], git-pull[1], etc.) which accept a URL as an argument
+will also accept a local file patch; so, for example, you can
+use
+
+-------------------------------------------------
+$ git clone /path/to/repository
+$ git pull /path/to/other/repository
+-------------------------------------------------
+
+If this sort of setup is inconvenient or impossible, another (more
+common) option is to set up a public repository on a public server.
+This also allows you to cleanly separate private work in progress
+from publicly visible work.
+
+You will continue to do your day-to-day work in your personal
+repository, but periodically "push" changes from your personal
+repository into your public repository, allowing other developers to
+pull from that repository.  So the flow of changes, in a situation
+where there is one other developer with a public repository, looks
+like this:
+
+                        you push
+  your personal repo ------------------> your public repo
+  	^                                     |
+	|                                     |
+	| you pull                            | they pull
+	|                                     |
+	|                                     |
+        |               they push             V
+  their public repo <------------------- their repo
+
+Now, assume your personal repository is in the directory ~/proj.  We
+first create a new clone of the repository:
+
+-------------------------------------------------
+$ git clone --bare proj-clone.git
+-------------------------------------------------
+
+The resulting directory proj-clone.git will contains a "bare" git
+repository--it is just the contents of the ".git" directory, without
+a checked-out copy of a working directory.
+
+Next, copy proj-clone.git to the server where you plan to host the
+public repository.  You can use scp, rsync, or whatever is most
+convenient.
+
+If somebody else maintains the public server, they may already have
+set up a git service for you, and you may skip to the section
+"<<pushing-changes-to-a-public-repository,Pushing changes to a public
+repository>>", below.
+
+Otherwise, the following sections explain how to export your newly
+created public repository:
+
+[[exporting-via-http]]
+Exporting a git repository via http
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The git protocol gives better performance and reliability, but on a
+host with a web server set up, http exports may be simpler to set up.
+
+All you need to do is place the newly created bare git repository in
+a directory that is exported by the web server, and make some
+adjustments to give web clients some extra information they need:
+
+-------------------------------------------------
+$ mv proj.git /home/you/public_html/proj.git
+$ cd proj.git
+$ git update-server-info
+$ chmod a+x hooks/post-update
+-------------------------------------------------
+
+(For an explanation of the last two lines, see
+gitlink:git-update-server-info[1], and the documentation
+link:hooks.txt[Hooks used by git].)
+
+Advertise the url of proj.git.  Anybody else should then be able to
+clone or pull from that url, for example with a commandline like:
+
+-------------------------------------------------
+$ git clone http://yourserver.com/~you/proj.git
+-------------------------------------------------
+
+(See also
+link:howto/setup-git-server-over-http.txt[setup-git-server-over-http]
+for a slightly more sophisticated setup using WebDAV which also
+allows pushing over http.)
+
+[[exporting-via-git]]
+Exporting a git repository via the git protocol
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is the preferred method.
+
+For now, we refer you to the gitlink:git-daemon[1] man page for
+instructions.  (See especially the examples section.)
+
+[[pushing-changes-to-a-public-repository]]
+Pushing changes to a public repository
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Note that the two techniques outline above (exporting via
+<<exporting-via-http,http>> or <<exporting-via-git,git>>) allow other
+maintainers to fetch your latest changes, but they do not allow write
+access, which you will need to update the public repository with the
+latest changes created in your private repository.
+
+The simplest way to do this is using gitlink:git-push[1] and ssh; to
+update the remote branch named "master" with the latest state of your
+branch named "master", run
+
+-------------------------------------------------
+$ git push ssh://yourserver.com/~you/proj.git master:master
+-------------------------------------------------
+
+or just
+
+-------------------------------------------------
+$ git push ssh://yourserver.com/~you/proj.git master
+-------------------------------------------------
+
+As with git-fetch, git-push will complain if this does not result in
+a <<fast-forwards,fast forward>>.  Normally this is a sign of
+something wrong.  However, if you are sure you know what you're
+doing, you may force git-push to perform the update anyway by
+proceeding the branch name by a plus sign:
+
+-------------------------------------------------
+$ git push ssh://yourserver.com/~you/proj.git +master
+-------------------------------------------------
+
+As with git-fetch, you may also set up configuration options to
+save typing; so, for example, after
+
+-------------------------------------------------
+$ cat >.git/config <<EOF
+[remote "public-repo"]
+	url = ssh://yourserver.com/~you/proj.git
+EOF
+-------------------------------------------------
+
+you should be able to perform the above push with just
+
+-------------------------------------------------
+$ git push public-repo master
+-------------------------------------------------
+
+See the explanations of the remote.<name>.url, branch.<name>.remote,
+and remote.<name>.push options in gitlink:git-repo-config[1] for
+details.
+
+Setting up a shared repository
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Another way to collaborate is by using a model similar to that
+commonly used in CVS, where several developers with special rights
+all push to and pull from a single shared repository.  See
+link:cvs-migration.txt[git for CVS users] for instructions on how to
+set this up.
+
+Fixing mistakes
+---------------
+
+If you've messed up the working tree, but haven't yet committed your
+mistake, you can return the entire working tree to the last committed
+state with
+
+-------------------------------------------------
+$ git reset --hard HEAD
+-------------------------------------------------
+
+If you make a commit that you later wish you hadn't, there are two
+fundamentally different ways to fix the problem:
+
+	1. You can create a new commit that undoes whatever was done
+	by the previous commit.  This is the correct thing if your
+	mistake has already been made public.
+
+	2. You can go back and modify the old commit.  You should
+	never do this if you have already made the history public;
+	git does not normally expect the "history" of a project to
+	change, and cannot correctly perform repeated merges from
+	a branch that has had its history changed.
+
+Fixing a mistake with a new commit
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Creating a new commit that reverts an earlier change is very easy;
+just pass the gitlink:git-revert[1] command a reference to the bad
+commit; for example, to revert the most recent commit:
+
+-------------------------------------------------
+$ git revert HEAD
+-------------------------------------------------
+
+This will create a new commit which undoes the change in HEAD.  You
+will be given a chance to edit the commit message for the new commit.
+
+You can also revert an earlier change, for example, the next-to-last:
+
+-------------------------------------------------
+$ git revert HEAD^
+-------------------------------------------------
+
+In this case git will attempt to undo the old change while leaving
+intact any changes made since then.  If more recent changes overlap
+with the changes to be reverted, then you will be asked to fix
+conflicts manually, just as in the case of <<resolving-a-merge,
+resolving a merge>>.
+
+Fixing a mistake by editing history
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If the problematic commit is the most recent commit, and you have not
+yet made that commit public, then you may just
+<<undoing-a-merge,destroy it using git-reset>>.
+
+Alternatively, you
+can edit the working directory and update the index to fix your
+mistake, just as if you were going to <<how-to-make-a-commit,create a
+new commit>>, then run
+
+-------------------------------------------------
+$ git commit --amend
+-------------------------------------------------
+
+which will replace the old commit by a new commit incorporating your
+changes, giving you a chance to edit the old commit message first.
+
+Again, you should never do this to a commit that may already have
+been merged into another branch; use gitlink:git-revert[1] instead in
+that case.
+
+It is also possible to edit commits further back in the history, but
+this is an advanced topic to be left for
+<<cleaning-up-history,another chapter>>.
+
+Checking out an old version of a file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the process of undoing a previous bad change, you may find it
+useful to check out an older version of a particular file using
+gitlink:git-checkout[1].  We've used git checkout before to switch
+branches, but it has quite different behavior if it is given a path
+name: the command
+
+-------------------------------------------------
+$ git checkout HEAD^ path/to/file
+-------------------------------------------------
+
+replaces path/to/file by the contents it had in the commit HEAD^, and
+also updates the index to match.  It does not change branches.
+
+If you just want to look at an old version of the file, without
+modifying the working directory, you can do that with
+gitlink:git-show[1]:
+
+-------------------------------------------------
+$ git show HEAD^ path/to/file
+-------------------------------------------------
+
+which will display the given version of the file.
+
+Working with other version control systems
+==========================================
+
+TODO: CVS, Subversion, ?
+
+[[cleaning-up-history]]
+Cleaning up history: rebasing, cherry-picking, and patch series
+===============================================================
+
+TODO: rebase, cherry-pick, pointers to other tools (like stgit)
+
+Git internals
+=============
+
+Architectural overview
+----------------------
+
+TODO: Sources, README, core-tutorial, tutorial-2.txt, technical/
+
+Glossary of git terms
+=====================
+
+include::glossary.txt[]
+
+Todo list for this manual
+=========================
+
+Scan Documentation/ for other stuff left out; in particular:
+	howto's
+	README
+	some of technical/?
+	hooks
+	etc.
+
+Scan email archives for other stuff left out
+
+Scan man pages to see if any assume more background than this manual
+provides.
+
+Mention of gitweb.
+
+Update git fetch discussion to use "git remote" setup.  That will
+make things simpler.  Maybe wait till git remote is done.
+
+Can also simplify beginning by suggesting disconnected head instead
+of temporary branch creation.
+
+Explain how to refer to file stages in the "how to resolve a merge"
+section: diff -1, -2, -3; :1:/path notation.
+
+Include cross-references to the glossary, where appropriate.
+
