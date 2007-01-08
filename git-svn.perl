@@ -70,7 +70,7 @@ my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_version, $_upgrade, $_authors, $_branch_all_refs, @_opt_m,
 	$_merge, $_strategy, $_dry_run, $_ignore_nodate, $_non_recursive,
 	$_username, $_config_dir, $_no_auth_cache,
-	$_pager, $_color);
+	$_pager, $_color, $_prefix);
 my (@_branch_from, %tree_map, %users, %rusers, %equiv);
 my ($_svn_can_do_switch);
 my @repo_path_split_cache;
@@ -134,6 +134,7 @@ my %cmd = (
 			 'username=s' => \$_username,
 			 'config-dir=s' => \$_config_dir,
 			 'no-auth-cache' => \$_no_auth_cache,
+			 'prefix=s' => \$_prefix,
 			} ],
 	'multi-fetch' => [ \&multi_fetch,
 			'Fetch multiple trees (like git-svnimport)',
@@ -595,8 +596,9 @@ sub multi_init {
 			command_noisy('repo-config', 'svn.trunk', $trunk_url);
 		}
 	}
-	complete_url_ls_init($url, $_branches, '--branches/-b', '');
-	complete_url_ls_init($url, $_tags, '--tags/-t', 'tags/');
+	$_prefix = '' unless defined $_prefix;
+	complete_url_ls_init($url, $_branches, '--branches/-b', $_prefix);
+	complete_url_ls_init($url, $_tags, '--tags/-t', $_prefix . 'tags/');
 }
 
 sub multi_fetch {
@@ -1084,7 +1086,7 @@ sub graft_merge_msg {
 	my ($grafts, $l_map, $u, $p, @re) = @_;
 
 	my $x = $l_map->{$u}->{$p};
-	my $rl = rev_list_raw($x);
+	my $rl = rev_list_raw("refs/remotes/$x");
 	while (my $c = next_rev_list_entry($rl)) {
 		foreach my $re (@re) {
 			my (@br) = ($c->{m} =~ /$re/g);

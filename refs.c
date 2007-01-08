@@ -923,6 +923,9 @@ static int log_ref_write(struct ref_lock *lock,
 	char *logrec;
 	const char *committer;
 
+	if (log_all_ref_updates < 0)
+		log_all_ref_updates = !is_bare_repository();
+
 	if (log_all_ref_updates &&
 	    (!strncmp(lock->ref_name, "refs/heads/", 11) ||
 	     !strncmp(lock->ref_name, "refs/remotes/", 13))) {

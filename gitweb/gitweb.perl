@@ -2239,7 +2239,7 @@ sub git_difftree_body {
 			}
 			print $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
 			                             hash_base=>$hash, file_name=>$diff{'file'})},
-			              "blob") . " | ";
+			              "blob");
 			print "</td>\n";
 
 		} elsif ($diff{'status'} eq "D") { # deleted

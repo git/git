@@ -943,10 +943,10 @@ if ($opt_l < $current_rev) {
 print "Processing from $current_rev to $opt_l ...\n" if $opt_v;
 
 my $from_rev;
-my $to_rev = $current_rev;
+my $to_rev = $current_rev - 1;
 
 while ($to_rev < $opt_l) {
-	$from_rev = $to_rev;
+	$from_rev = $to_rev + 1;
 	$to_rev = $from_rev + $repack_after;
 	$to_rev = $opt_l if $opt_l < $to_rev;
 	print "Fetching from $from_rev to $to_rev ...\n" if $opt_v;

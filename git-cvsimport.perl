@@ -129,6 +129,11 @@ if ($opt_M) {
 	push (@mergerx, qr/$opt_M/);
 }
 
+# Remember UTC of our starting time
+# we'll want to avoid importing commits
+# that are too recent
+our $starttime = time();
+
 select(STDERR); $|=1; select(STDOUT);
 
 
@@ -821,6 +826,15 @@ while (<CVS>) {
 		if (defined $branch_date{$branch} and $branch_date{$branch} >= $date) {
 			# skip
 			print "skip patchset $patchset: $date before $branch_date{$branch}\n" if $opt_v;
+			$state = 11;
+			next;
+		}
+		if ( $starttime - 300 - (defined $opt_z ? $opt_z : 300) <= $date) {
+			# skip if the commit is too recent
+			# that the cvsps default fuzz is 300s, we give ourselves another
+			# 300s just in case -- this also prevents skipping commits
+			# due to server clock drift
+			print "skip patchset $patchset: $date too recent\n" if $opt_v;
 			$state = 11;
 			next;
 		}

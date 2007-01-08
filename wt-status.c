@@ -56,9 +56,9 @@ void wt_status_prepare(struct wt_status *s)
 static void wt_status_print_cached_header(const char *reference)
 {
 	const char *c = color(WT_STATUS_HEADER);
-	color_printf_ln(c, "# Cached changes to be committed:");
+	color_printf_ln(c, "# Changes to be committed:");
 	if (reference) {
-		color_printf_ln(c, "#   (use \"git reset %s <file>...\" and \"git rm --cached <file>...\" to unstage)", reference);
+		color_printf_ln(c, "#   (use \"git reset %s <file>...\" to unstage)", reference);
 	} else {
 		color_printf_ln(c, "#   (use \"git rm --cached <file>...\" to unstage)");
 	}

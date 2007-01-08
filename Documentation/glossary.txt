@@ -235,8 +235,11 @@ push::
 	local head, the push fails.
 
 reachable::
-	An object is reachable from a ref/commit/tree/tag, if there is a
-	chain leading from the latter to the former.
+	All of the ancestors of a given commit are said to be reachable from
+	that commit.  More generally, one object is reachable from another if
+	we can reach the one from the other by a chain that follows tags to
+	whatever they tag, commits to their parents or trees, and trees to the
+	trees or blobs that they contain.
 
 rebase::
 	To clean a branch by starting from the head of the main line of

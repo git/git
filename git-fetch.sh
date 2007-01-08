@@ -231,11 +231,12 @@ update_local_ref () {
     esac
 }
 
-case "$update_head_ok" in
-'')
+# updating the current HEAD with git-fetch in a bare
+# repository is always fine.
+if test -z "$update_head_ok" && test $(is_bare_repository) = false
+then
 	orig_head=$(git-rev-parse --verify HEAD 2>/dev/null)
-	;;
-esac
+fi
 
 # If --tags (and later --heads or --all) is specified, then we are
 # not talking about defaults stored in Pull: line of remotes or

@@ -32,7 +32,7 @@ can place it under git revision control as follows.
 ------------------------------------------------
 $ tar xzf project.tar.gz
 $ cd project
-$ git init-db
+$ git init
 ------------------------------------------------
 
 Git will reply

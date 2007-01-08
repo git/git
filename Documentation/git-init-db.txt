@@ -74,6 +74,7 @@ Running `git-init-db` in an existing repository is safe. It will not overwrite
 things that are already there. The primary reason for rerunning `git-init-db`
 is to pick up newly added templates.
 
+Note that `git-init` is the same as `git-init-db`.
 
 
 EXAMPLES
