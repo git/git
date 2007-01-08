@@ -1,29 +1,16 @@
 #include "cache.h"
+#include "spawn-pipe.h"
 
 static const char *pgm;
-static const char *arguments[8];
+static const char *arguments[9];	/* last one is always NULL */
 static int one_shot, quiet;
 static int err;
 
 static void run_program(void)
 {
-	pid_t pid = fork();
+	pid_t pid = spawnvpe_pipe(pgm, arguments, environ, NULL, NULL);
 	int status;
 
-	if (pid < 0)
-		die("unable to fork");
-	if (!pid) {
-		execlp(pgm, arguments[0],
-			    arguments[1],
-			    arguments[2],
-			    arguments[3],
-			    arguments[4],
-			    arguments[5],
-			    arguments[6],
-			    arguments[7],
-			    NULL);
-		die("unable to execute '%s'", pgm);
-	}
 	if (waitpid(pid, &status, 0) < 0 || !WIFEXITED(status) || WEXITSTATUS(status)) {
 		if (one_shot) {
 			err++;
@@ -41,7 +28,6 @@ static int merge_entry(int pos, const char *path)
 	
 	if (pos >= active_nr)
 		die("git-merge-index: %s not in the cache", path);
-	arguments[0] = pgm;
 	arguments[1] = "";
 	arguments[2] = "";
 	arguments[3] = "";

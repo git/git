@@ -8,6 +8,7 @@
 #include "delta.h"
 #include "xdiff-interface.h"
 #include "color.h"
+#include "spawn-pipe.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -1498,13 +1499,7 @@ static int spawn_prog(const char *pgm, const char **arg)
 	int status;
 
 	fflush(NULL);
-	pid = fork();
-	if (pid < 0)
-		die("unable to fork");
-	if (!pid) {
-		execvp(pgm, (char *const*) arg);
-		exit(255);
-	}
+	pid = spawnvpe_pipe(pgm, arg, environ, NULL, NULL);
 
 	while (waitpid(pid, &status, 0) < 0) {
 		if (errno == EINTR)
@@ -1545,7 +1540,7 @@ static void run_external_diff(const char *pgm,
 	int retval;
 	static int atexit_asked = 0;
 	const char *othername;
-	const char **arg = &spawn_arg[0];
+	const char **arg = &spawn_arg[1];
 
 	othername = (other? other : name);
 	if (one && two) {
@@ -1561,7 +1556,6 @@ static void run_external_diff(const char *pgm,
 	}
 
 	if (one && two) {
-		*arg++ = pgm;
 		*arg++ = name;
 		*arg++ = temp[0].name;
 		*arg++ = temp[0].hex;
@@ -1574,7 +1568,6 @@ static void run_external_diff(const char *pgm,
 			*arg++ = xfrm_msg;
 		}
 	} else {
-		*arg++ = pgm;
 		*arg++ = name;
 	}
 	*arg = NULL;
