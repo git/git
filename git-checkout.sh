@@ -6,6 +6,7 @@ SUBDIRECTORY_OK=Sometimes
 
 old_name=HEAD
 old=$(git-rev-parse --verify $old_name 2>/dev/null)
+oldbranch=$(git-symbolic-ref $old_name 2>/dev/null)
 new=
 new_name=
 force=
@@ -149,13 +150,17 @@ then
 	# NEEDSWORK: we would want to have this command here
 	# that allows us to detach the HEAD atomically.
 	# git update-ref --detach HEAD "$new"
-	rm -f "$GIT_DIR/HEAD"
-	echo "$new" >"$GIT_DIR/HEAD"
-	echo >&2 "WARNING: you are not on ANY branch anymore.
+	echo "$new" >"$GIT_DIR/HEAD.new" &&
+	mv "$GIT_DIR/HEAD.new" "$GIT_DIR/HEAD" || die "Cannot detach HEAD"
+
+	if test -n "$oldbranch"
+	then
+		echo >&2 "WARNING: you are not on ANY branch anymore.
 If you meant to create a new branch from the commit, you need -b to
 associate a new branch with the wanted checkout.  Example:
   git checkout -b <new_branch_name> $arg
 "
+	fi
 fi
 
 if [ "X$old" = X ]
