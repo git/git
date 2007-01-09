@@ -1034,24 +1034,9 @@ static struct commit *interesting(struct commit_list *list)
 	return NULL;
 }
 
-static struct commit_list *merge_bases(struct commit *one, struct commit *two)
+static struct commit_list *base_traverse(struct commit_list *list)
 {
-	struct commit_list *list = NULL;
 	struct commit_list *result = NULL;
-
-	if (one == two)
-		/* We do not mark this even with RESULT so we do not
-		 * have to clean it up.
-		 */
-		return commit_list_insert(one, &result);
-
-	parse_commit(one);
-	parse_commit(two);
-
-	one->object.flags |= PARENT1;
-	two->object.flags |= PARENT2;
-	insert_by_date(one, &list);
-	insert_by_date(two, &list);
 
 	while (interesting(list)) {
 		struct commit *commit;
@@ -1096,6 +1081,27 @@ static struct commit_list *merge_bases(struct commit *one, struct commit *two)
 		list = n;
 	}
 	return result;
+}
+
+static struct commit_list *merge_bases(struct commit *one, struct commit *two)
+{
+	struct commit_list *list = NULL;
+
+	if (one == two)
+		/* We do not mark this even with RESULT so we do not
+		 * have to clean it up.
+		 */
+		return commit_list_insert(one, &list);
+
+	parse_commit(one);
+	parse_commit(two);
+
+	one->object.flags |= PARENT1;
+	two->object.flags |= PARENT2;
+	insert_by_date(one, &list);
+	insert_by_date(two, &list);
+
+	return base_traverse(list);
 }
 
 struct commit_list *get_merge_bases(struct commit *one,
