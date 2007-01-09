@@ -1034,7 +1034,7 @@ static struct commit *interesting(struct commit_list *list)
 	return NULL;
 }
 
-static struct commit_list *base_traverse(struct commit_list *list)
+static struct commit_list *base_traverse(struct commit_list *list, struct commit *stop)
 {
 	struct commit_list *result = NULL;
 
@@ -1068,10 +1068,20 @@ static struct commit_list *base_traverse(struct commit_list *list)
 			p->object.flags |= flags;
 			insert_by_date(p, &list);
 		}
+		if (stop && (stop->object.flags & PARENT2)) {
+			free_commit_list(list);
+			list = NULL;
+			insert_by_date(stop, &list);
+			return list;
+		}
 	}
 
 	/* Clean up the result to remove stale ones */
 	free_commit_list(list);
+
+	if (stop)
+		return NULL;
+
 	list = result; result = NULL;
 	while (list) {
 		struct commit_list *n = list->next;
@@ -1101,7 +1111,7 @@ static struct commit_list *merge_bases(struct commit *one, struct commit *two)
 	insert_by_date(one, &list);
 	insert_by_date(two, &list);
 
-	return base_traverse(list);
+	return base_traverse(list, NULL);
 }
 
 struct commit_list *get_merge_bases(struct commit *one,
@@ -1166,20 +1176,30 @@ struct commit_list *get_merge_bases(struct commit *one,
 
 int in_merge_bases(struct commit *commit, struct commit **reference, int num)
 {
-	struct commit_list *bases, *b;
-	int ret = 0;
+	struct commit_list *result, *list;
+	int i, ret;
 
-	if (num == 1)
-		bases = get_merge_bases(commit, *reference, 1);
-	else
-		die("not yet");
-	for (b = bases; b; b = b->next) {
-		if (!hashcmp(commit->object.sha1, b->item->object.sha1)) {
-			ret = 1;
-			break;
+	list = NULL;
+	parse_commit(commit);
+	commit->object.flags |= PARENT1;
+	insert_by_date(commit, &list);
+
+	for (i = 0; i < num; i++) {
+		struct commit *two = reference[i];
+		parse_commit(two);
+		if (!(two->object.flags & PARENT2)) {
+			two->object.flags |= PARENT2;
+			insert_by_date(two, &list);
 		}
 	}
+	result = base_traverse(list, commit);
+	ret = !!result;
+	free_commit_list(result);
 
-	free_commit_list(bases);
+	clear_commit_marks(commit, all_flags);
+	for (i = 0; i < num; i++) {
+		struct commit *two = reference[i];
+		clear_commit_marks(two, all_flags);
+	}
 	return ret;
 }
