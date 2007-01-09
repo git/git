@@ -2184,7 +2184,10 @@ sub update
     # first lets get the commit list
     $ENV{GIT_DIR} = $self->{git_path};
 
-    my $commitinfo = `git-cat-file commit $self->{module} 2>&1`;
+    my $commitsha1 = `git rev-parse $self->{module}`;
+    chomp $commitsha1;
+
+    my $commitinfo = `git cat-file commit $self->{module} 2>&1`;
     unless ( $commitinfo =~ /tree\s+[a-zA-Z0-9]{40}/ )
     {
         die("Invalid module '$self->{module}'");
@@ -2193,6 +2196,10 @@ sub update
 
     my $git_log;
     my $lastcommit = $self->_get_prop("last_commit");
+
+    if (defined $lastcommit && $lastcommit eq $commitsha1) { # up-to-date
+         return 1;
+    }
 
     # Start exclusive lock here...
     $self->{dbh}->begin_work() or die "Cannot lock database for BEGIN";
