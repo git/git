@@ -69,6 +69,9 @@ all:
 #
 # Define NO_MMAP if you want to avoid mmap.
 #
+# Define NO_PREAD if you have a problem with pread() system call (e.g.
+# cygwin.dll before v1.5.22).
+#
 # Define NO_FAST_WORKING_DIRECTORY if accessing objects in pack files is
 # generally faster on your platform than accessing the working directory.
 #
@@ -522,6 +525,10 @@ endif
 ifdef NO_MMAP
 	COMPAT_CFLAGS += -DNO_MMAP
 	COMPAT_OBJS += compat/mmap.o
+endif
+ifdef NO_PREAD
+	COMPAT_CFLAGS += -DNO_PREAD
+	COMPAT_OBJS += compat/pread.o
 endif
 ifdef NO_FAST_WORKING_DIRECTORY
 	BASIC_CFLAGS += -DNO_FAST_WORKING_DIRECTORY
