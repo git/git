@@ -1,9 +1,7 @@
 #include "cache.h"
 #include "commit.h"
 
-static int show_all;
-
-static int merge_base(struct commit *rev1, struct commit *rev2)
+static int show_merge_base(struct commit *rev1, struct commit *rev2, int show_all)
 {
 	struct commit_list *result = get_merge_bases(rev1, rev2, 0);
 
@@ -23,16 +21,16 @@ static int merge_base(struct commit *rev1, struct commit *rev2)
 static const char merge_base_usage[] =
 "git-merge-base [--all] <commit-id> <commit-id>";
 
-int main(int argc, char **argv)
+int cmd_merge_base(int argc, const char **argv, const char *prefix)
 {
 	struct commit *rev1, *rev2;
 	unsigned char rev1key[20], rev2key[20];
+	int show_all = 0;
 
-	setup_git_directory();
 	git_config(git_default_config);
 
 	while (1 < argc && argv[1][0] == '-') {
-		char *arg = argv[1];
+		const char *arg = argv[1];
 		if (!strcmp(arg, "-a") || !strcmp(arg, "--all"))
 			show_all = 1;
 		else
@@ -49,5 +47,5 @@ int main(int argc, char **argv)
 	rev2 = lookup_commit_reference(rev2key);
 	if (!rev1 || !rev2)
 		return 1;
-	return merge_base(rev1, rev2);
+	return show_merge_base(rev1, rev2, show_all);
 }

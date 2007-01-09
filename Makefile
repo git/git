@@ -194,7 +194,6 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 PROGRAMS = \
 	git-convert-objects$X git-fetch-pack$X git-fsck-objects$X \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
-	git-merge-base$X \
 	git-daemon$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-patch-id$X \
 	git-peek-remote$X git-receive-pack$X \
@@ -289,6 +288,7 @@ BUILTIN_OBJS = \
 	builtin-ls-tree.o \
 	builtin-mailinfo.o \
 	builtin-mailsplit.o \
+	builtin-merge-base.o \
 	builtin-merge-file.o \
 	builtin-mv.o \
 	builtin-name-rev.o \
