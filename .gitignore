@@ -50,6 +50,7 @@ git-http-fetch
 git-http-push
 git-imap-send
 git-index-pack
+git-init
 git-init-db
 git-instaweb
 git-local-fetch
@@ -92,6 +93,7 @@ git-rebase
 git-receive-pack
 git-reflog
 git-relink
+git-remote
 git-repack
 git-repo-config
 git-request-pull
