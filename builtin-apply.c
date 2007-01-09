@@ -811,7 +811,8 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 			struct fragment dummy;
 			if (parse_fragment_header(line, len, &dummy) < 0)
 				continue;
-			error("patch fragment without header at line %d: %.*s", linenr, (int)len-1, line);
+			die("patch fragment without header at line %d: %.*s",
+			    linenr, (int)len-1, line);
 		}
 
 		if (size < len + 6)
