@@ -513,10 +513,22 @@ static int store_write_pair(int fd, const char* key, const char* value)
 {
 	int i;
 	int length = strlen(key+store.baselen+1);
+	int quote = 0;
+
+	/* Check to see if the value needs to be quoted. */
+	if (value[0] == ' ')
+		quote = 1;
+	for (i = 0; value[i]; i++)
+		if (value[i] == ';' || value[i] == '#')
+			quote = 1;
+	if (value[i-1] == ' ')
+		quote = 1;
 
 	if (write_in_full(fd, "\t", 1) != 1 ||
 	    write_in_full(fd, key+store.baselen+1, length) != length ||
 	    write_in_full(fd, " = ", 3) != 3)
+		return 0;
+	if (quote && write_in_full(fd, "\"", 1) != 1)
 		return 0;
 	for (i = 0; value[i]; i++)
 		switch (value[i]) {
@@ -537,6 +549,8 @@ static int store_write_pair(int fd, const char* key, const char* value)
 				return 0;
 			break;
 		}
+	if (quote && write_in_full(fd, "\"", 1) != 1)
+		return 0;
 	if (write_in_full(fd, "\n", 1) != 1)
 		return 0;
 	return 1;
