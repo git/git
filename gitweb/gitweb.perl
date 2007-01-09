@@ -2412,7 +2412,6 @@ sub git_patchset_body {
 
 			push @diff_header, $patch_line;
 		}
-		#last PATCH unless $patch_line;
 		my $last_patch_line = $patch_line;
 
 		# check if current patch belong to current raw line
@@ -2522,7 +2521,10 @@ sub git_patchset_body {
 
 		# from-file/to-file diff header
 		$patch_line = $last_patch_line;
-		last PATCH unless $patch_line;
+		if (! $patch_line) {
+			print "</div>\n"; # class="patch"
+			last PATCH;
+		}
 		next PATCH if ($patch_line =~ m/^diff /);
 		#assert($patch_line =~ m/^---/) if DEBUG;
 		if ($from{'href'} && $patch_line =~ m!^--- "?a/!) {
@@ -2533,7 +2535,6 @@ sub git_patchset_body {
 		print "<div class=\"diff from_file\">$patch_line</div>\n";
 
 		$patch_line = <$fd>;
-		#last PATCH unless $patch_line;
 		chomp $patch_line;
 
 		#assert($patch_line =~ m/^+++/) if DEBUG;
