@@ -1632,7 +1632,22 @@ Can also simplify beginning by suggesting disconnected head instead
 of temporary branch creation.
 
 Explain how to refer to file stages in the "how to resolve a merge"
-section: diff -1, -2, -3, --ours, --theirs :1:/path notation.
+section: diff -1, -2, -3, --ours, --theirs :1:/path notation.  The
+"git ls-files --unmerged --stage" thing is sorta useful too, actually.  And
+note gitk --merge.  Also what's easiest way to see common merge base?
+
+Add more good examples.  Entire sections of just cookbook examples might be a
+good idea; maybe make an "advanced examples" section a standard end-of-chapter
+section?
 
 Include cross-references to the glossary, where appropriate.
 
+Update for detached-head.
+
+Update for git-remote.  Even if the command isn't there yet, I think we should
+probably just document the repository configuration necessary to set it up, as
+the default way to keep a repository up-to-date.
+
+To document:
+	reflogs, git reflog expire
+	shallow clones??  See draft 1.5.0 release notes for some documentation.
