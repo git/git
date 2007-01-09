@@ -1181,12 +1181,15 @@ sub req_ci
         $filename = filecleanup($filename);
 
         my $meta = $updater->getmeta($filename);
+	unless (defined $meta->{revision}) {
+	  $meta->{revision} = 1;
+	}
 
         my ( $filepart, $dirpart ) = filenamesplit($filename, 1);
 
         $log->debug("Checked-in $dirpart : $filename");
 
-        if ( $meta->{filehash} eq "deleted" )
+        if ( defined $meta->{filehash} && $meta->{filehash} eq "deleted" )
         {
             print "Remove-entry $dirpart\n";
             print "$filename\n";
