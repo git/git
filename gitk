@@ -12,7 +12,7 @@ proc gitdir {} {
     if {[info exists env(GIT_DIR)]} {
 	return $env(GIT_DIR)
     } else {
-	return ".git"
+	return [exec git rev-parse --git-dir]
     }
 }
 
