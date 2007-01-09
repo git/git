@@ -114,5 +114,5 @@ extern int is_repository_shallow();
 extern struct commit_list *get_shallow_commits(struct object_array *heads,
 		int depth, int shallow_flag, int not_shallow_flag);
 
-int in_merge_bases(struct commit *rev1, struct commit *rev2);
+int in_merge_bases(struct commit *, struct commit **, int);
 #endif /* COMMIT_H */
