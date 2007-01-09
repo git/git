@@ -101,7 +101,7 @@ void trace_printf(const char *format, ...)
 	nfvasprintf(&trace_str, format, rest);
 	va_end(rest);
 
-	write_or_whine(fd, trace_str, strlen(trace_str), err_msg);
+	write_or_whine_pipe(fd, trace_str, strlen(trace_str), err_msg);
 
 	free(trace_str);
 
@@ -139,7 +139,7 @@ void trace_argv_printf(const char **argv, int count, const char *format, ...)
 	strncpy(trace_str + format_len, argv_str, argv_len);
 	strcpy(trace_str + trace_len - 1, "\n");
 
-	write_or_whine(fd, trace_str, trace_len, err_msg);
+	write_or_whine_pipe(fd, trace_str, trace_len, err_msg);
 
 	free(argv_str);
 	free(format_str);

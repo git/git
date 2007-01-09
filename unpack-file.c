@@ -17,7 +17,7 @@ static char *create_temp_file(unsigned char *sha1)
 	fd = mkstemp(path);
 	if (fd < 0)
 		die("unable to create temp-file");
-	if (write(fd, buf, size) != size)
+	if (write_in_full(fd, buf, size) != size)
 		die("unable to write temp-file");
 	close(fd);
 	return path;

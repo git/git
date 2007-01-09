@@ -114,7 +114,7 @@ int validate_headref(const char *path)
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
 		return -1;
-	len = read(fd, buffer, sizeof(buffer)-1);
+	len = read_in_full(fd, buffer, sizeof(buffer)-1);
 	close(fd);
 
 	/*

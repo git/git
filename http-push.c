@@ -195,7 +195,7 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	int posn = 0;
 	struct transfer_request *request = (struct transfer_request *)data;
 	do {
-		ssize_t retval = write(request->local_fileno,
+		ssize_t retval = xwrite(request->local_fileno,
 				       (char *) ptr + posn, size - posn);
 		if (retval < 0)
 			return posn;
@@ -288,7 +288,7 @@ static void start_fetch_loose(struct transfer_request *request)
 	prevlocal = open(prevfile, O_RDONLY);
 	if (prevlocal != -1) {
 		do {
-			prev_read = read(prevlocal, prev_buf, PREV_BUF_SIZE);
+			prev_read = xread(prevlocal, prev_buf, PREV_BUF_SIZE);
 			if (prev_read>0) {
 				if (fwrite_sha1_file(prev_buf,
 						     1,

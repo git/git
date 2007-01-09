@@ -89,7 +89,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct checkout *stat
 			return error("git-checkout-index: unable to create file %s (%s)",
 				path, strerror(errno));
 		}
-		wrote = write(fd, new, size);
+		wrote = write_in_full(fd, new, size);
 		close(fd);
 		free(new);
 		if (wrote != size)
@@ -104,7 +104,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct checkout *stat
 				return error("git-checkout-index: unable to create "
 						 "file %s (%s)", path, strerror(errno));
 			}
-			wrote = write(fd, new, size);
+			wrote = write_in_full(fd, new, size);
 			close(fd);
 			free(new);
 			if (wrote != size)

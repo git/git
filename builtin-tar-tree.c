@@ -74,7 +74,7 @@ int cmd_get_tar_commit_id(int argc, const char **argv, const char *prefix)
 	char *content = buffer + RECORDSIZE;
 	ssize_t n;
 
-	n = xread(0, buffer, HEADERSIZE);
+	n = read_in_full(0, buffer, HEADERSIZE);
 	if (n < HEADERSIZE)
 		die("git-get-tar-commit-id: read error");
 	if (header->typeflag[0] != 'g')
@@ -82,7 +82,7 @@ int cmd_get_tar_commit_id(int argc, const char **argv, const char *prefix)
 	if (memcmp(content, "52 comment=", 11))
 		return 1;
 
-	n = xwrite(1, content + 11, 41);
+	n = write_in_full(1, content + 11, 41);
 	if (n < 41)
 		die("git-get-tar-commit-id: write error");
 

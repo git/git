@@ -249,8 +249,10 @@ int write_shallow_commits(int fd, int use_pack_protocol)
 			if (use_pack_protocol)
 				packet_write(fd, "shallow %s", hex);
 			else {
-				write(fd, hex,  40);
-				write(fd, "\n", 1);
+				if (write_in_full(fd, hex,  40) != 40)
+					break;
+				if (write_in_full(fd, "\n", 1) != 1)
+					break;
 			}
 		}
 	return count;
@@ -1010,13 +1012,15 @@ void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
 	free(nodes);
 }
 
-/* merge-rebase stuff */
+/* merge-base stuff */
 
 /* bits #0..15 in revision.h */
 #define PARENT1		(1u<<16)
 #define PARENT2		(1u<<17)
 #define STALE		(1u<<18)
 #define RESULT		(1u<<19)
+
+static const unsigned all_flags = (PARENT1 | PARENT2 | STALE | RESULT);
 
 static struct commit *interesting(struct commit_list *list)
 {
@@ -1082,6 +1086,7 @@ static struct commit_list *merge_bases(struct commit *one, struct commit *two)
 	}
 
 	/* Clean up the result to remove stale ones */
+	free_commit_list(list);
 	list = result; result = NULL;
 	while (list) {
 		struct commit_list *n = list->next;
@@ -1097,7 +1102,6 @@ struct commit_list *get_merge_bases(struct commit *one,
 				    struct commit *two,
                                     int cleanup)
 {
-	const unsigned all_flags = (PARENT1 | PARENT2 | STALE | RESULT);
 	struct commit_list *list;
 	struct commit **rslt;
 	struct commit_list *result;

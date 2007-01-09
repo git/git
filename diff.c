@@ -1403,7 +1403,7 @@ static void prep_temp_blob(struct diff_tempfile *temp,
 	fd = git_mkstemp(temp->tmp_path, TEMPFILE_PATH_LEN, ".diff_XXXXXX");
 	if (fd < 0)
 		die("unable to create temp-file");
-	if (write(fd, blob, size) != size)
+	if (write_in_full(fd, blob, size) != size)
 		die("unable to write temp-file");
 	close(fd);
 	temp->name = temp->tmp_path;
