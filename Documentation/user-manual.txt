@@ -4,12 +4,12 @@ _________________
 This manual is designed to be readable by someone with basic unix
 commandline skills, but no previous knowledge of git.
 
-Chapters 1 and 2 explain how to fetch and study a project using git--the
-tools you'd need to build and test a particular version of a software
-project, to search for regressions, and so on.
+Chapters 1 and 2 explain how to fetch and study a project using
+git--the tools you'd need to build and test a particular version of a
+software project, to search for regressions, and so on.
 
-Chapter 3 explains how to do development with git and share your progress
-with others.
+Chapter 3 explains how to do development with git, and chapter 4 how
+to share that development with others.
 
 Further chapters cover more specialized topics.
 
@@ -50,7 +50,7 @@ directory, you will see that it contains a copy of the project files,
 together with a special top-level directory named ".git", which
 contains all the information about the history of the project.
 
-In the following, examples will be taken from one of the two
+In most of the following, examples will be taken from one of the two
 repositories above.
 
 How to check out a different version of a project
@@ -340,8 +340,51 @@ remote-tracking branches to the latest version found in her
 repository.  It will not touch any of your own branches--not even the
 "master" branch that was created for you on clone.
 
+Fetching branches from other repositories
+-----------------------------------------
+
+You can also track branches from repositories other than the one you
+cloned from, using gitlink:git-remote[1]:
+
+-------------------------------------------------
+$ git remote add linux-nfs git://linux-nfs.org/pub/nfs-2.6.git
+$ git fetch
+* refs/remotes/linux-nfs/master: storing branch 'master' ...
+  commit: bf81b46
+-------------------------------------------------
+
+New remote-tracking branches will be stored under the shorthand name
+that you gave "git remote add", in this case linux-nfs:
+
+-------------------------------------------------
+$ git branch -r
+linux-nfs/master
+origin/master
+-------------------------------------------------
+
+If you run "git fetch <remote>" later, the tracking branches for the
+named <remote> will be updated.
+
+If you examine the file .git/config, you will see that git has added
+a new stanza:
+
+-------------------------------------------------
+$ cat .git/config
+...
+[remote "linux-nfs"]
+        url = git://linux-nfs.org/~bfields/git.git
+	fetch = +refs/heads/*:refs/remotes/linux-nfs-read/*
+...
+-------------------------------------------------
+
+This is what causes git to track the remote's branches; you may
+modify or delete these configuration options by editing .git/config
+with a text editor.
+
 Fetching individual branches
 ----------------------------
+
+TODO: find another home for this, later on:
 
 You can also choose to update just one branch at a time:
 
@@ -1618,9 +1661,9 @@ The basic requirements:
 	  knowledge than necessary: for example, "importing patches into a
 	  project" rather than "the git-am command"
 
-Think about how to create a clear chapter dependency graph that will allow
-people to get to important topics without necessarily reading everything
-in between.
+Think about how to create a clear chapter dependency graph that will
+allow people to get to important topics without necessarily reading
+everything in between.
 
 Scan Documentation/ for other stuff left out; in particular:
 	howto's
@@ -1634,11 +1677,8 @@ Scan email archives for other stuff left out
 Scan man pages to see if any assume more background than this manual
 provides.
 
-Update git fetch discussion to use "git remote", move most of branch
-discussion till later.
-
-Can also simplify beginning by suggesting disconnected head instead
-of temporary branch creation.
+Simplify beginning by suggesting disconnected head instead of temporary
+branch creation.
 
 Explain how to refer to file stages in the "how to resolve a merge"
 section: diff -1, -2, -3, --ours, --theirs :1:/path notation.  The
