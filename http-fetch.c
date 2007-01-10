@@ -809,6 +809,7 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 		return error("Unable to start request");
 	}
 
+	target->pack_size = ftell(packfile);
 	fclose(packfile);
 
 	ret = move_temp_to_file(tmpfile, filename);
