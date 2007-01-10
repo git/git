@@ -19,16 +19,23 @@ can no longer be used with ancient git.
  - There is a configuration variable core.legacyheaders that
    changes the format of loose objects so that they are more
    efficient to pack and to send out of the repository over git
-   native protocol, since v1.4.2.  However, this format cannot
-   be read by git older than that version; people fetching from
-   your repository using older clients over dumb transports
-   (e.g. http) using older versions of git will also be
-   affected.  This is not enabled by default.
+   native protocol, since v1.4.2.  However, loose objects
+   written in the new format cannot be read by git older than
+   that version; people fetching from your repository using
+   older clients over dumb transports (e.g. http) using older
+   versions of git will also be affected.
 
  - Since v1.4.3, configuration repack.usedeltabaseoffset allows
    packfile to be created in more space efficient format, which
-   cannot be read by git older than that version.  This is not
-   enabled by default.
+   cannot be read by git older than that version.
+
+The above two are not enabled by default and you explicitly have
+to ask for them, because these two features make repositories
+unreadable by older versions of git, and in v1.5.0 we still do
+not enable them by default for the same reason.  We will change
+this default probably 1 year after 1.4.2's release, when it is
+reasonable to expect everybody to have new enough version of
+git.
 
  - 'git pack-refs' appeared in v1.4.4; this command allows tags
    to be accessed much more efficiently than the traditional
@@ -115,6 +122,26 @@ Updates in v1.5.0 since v1.4.4 series
    accumulated too many small packs this way as well.  Updated
    git-count-objects helps you with this.
 
+ - A new command, git-remote, can help you manage your remote
+   tracking branch definitions.
+
+
+* Bare repositories
+
+ - Certain commands change their behaviour in a bare repository
+   (i.e. a repository without associated working tree).  We use
+   a fairly conservative heuristic (if $GIT_DIR is ".git", or
+   ends with "/.git", the repository is not bare) to decide if a
+   repository is bare, but "core.bare" configuration variable
+   can be used to override the heuristic when it misidentifies
+   your repository.
+
+ - git-fetch used to complain updating the current branch but
+   this is now allowed for a bare repository.
+
+ - NEEDSWORK: We should disable Porcelain-ish commands that
+   require a working tree in a bare repository.
+
 
 * Reflog
 
@@ -133,13 +160,40 @@ Updates in v1.5.0 since v1.4.4 series
    versions of git.
 
    Existing repositories that have been using reflog may get
-   complaints from fsck-objects; please run "git reflog expire
-   --all" first to remove reflog entries that refer to commits
-   that are no longer in the repository before attempting to
-   repack it.
+   complaints from fsck-objects and may not be able to run
+   git-repack; please run "git reflog expire --all" first to
+   remove reflog entries that refer to commits that are no
+   longer in the repository when that happens.
 
  - git-branch knows how to rename branches and moves existing
    reflog data from the old branch to the new one.
+
+
+* Detached HEAD
+
+ - You can give non-branch to "git checkout" now.  This will
+   dissociate your HEAD from any of your branches.  A typical
+   use of this feature is to "look around".  E.g.
+
+	$ git checkout v2.6.16
+	... compile, test, etc.
+	$ git checkout v2.6.17
+	... compile, test, etc.
+
+ - After detaching your HEAD, you can go back to an existing
+   branch with usual "git checkout $branch".  Also you can
+   start a new branch using "git checkout -b $newbranch".
+
+ - You can even pull from other repositories, make merges and
+   commits while your HEAD is detached.  Also you can use "git
+   reset" to jump to arbitrary commit.
+
+   Going back to undetached state by "git checkout $branch" can
+   lose the current stat you arrived in these ways, and "git
+   checkout" refuses when the detached HEAD is not pointed by
+   any existing ref (an existing branch, a remote tracking
+   branch or a tag).  This safety can be overriden with "git
+   checout -f".
 
 
 * Packed refs
@@ -196,15 +250,23 @@ Updates in v1.5.0 since v1.4.4 series
    configuration, in the decreasing order of preference, and
    defaults to UTF-8. 
 
+ - Tools for e-mailed patch application now default to -u
+   behaviour; i.e. it always re-codes from the e-mailed encoding
+   to the encoding specified with i18n.commitencoding.  This
+   unfortunately forces projects that have happily using a
+   legacy encoding without setting i18n.commitencoding, but
+   taken with other improvement, please excuse us for this very
+   minor one-time inconvenience.
+
 
 * Foreign SCM interfaces
 
   - git-svn now requires the Perl SVN:: libraries, the
     command-line backend was too slow and limited.
 
-  - the 'commit' command has been renamed to 'set-tree', and
-    'dcommit' is the recommended replacement for day-to-day
-    work.
+  - the 'commit' subcommand of git-svn has been renamed to
+    'set-tree', and 'dcommit' is the recommended replacement for
+    day-to-day work.
 
 
 * User support
@@ -214,6 +276,15 @@ Updates in v1.5.0 since v1.4.4 series
  - Bash completion scripts have been updated heavily.
 
  - Better error messages for often used Porcelainish commands.
+
+
+* Sliding mmap
+
+ - We used to assume that we can mmap the whole packfile while
+   in use, but with a large project this consumes huge virtual
+   memory space and truly huge ones would not fit in the
+   userland address space on 32-bit platforms.  We now mmap huge
+   packfile in pieces to avoid this problem.
 
 
 * Shallow clones
