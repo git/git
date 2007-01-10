@@ -220,6 +220,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "cherry", cmd_cherry, RUN_SETUP },
 		{ "commit-tree", cmd_commit_tree, RUN_SETUP },
 		{ "count-objects", cmd_count_objects, RUN_SETUP },
+		{ "describe", cmd_describe, RUN_SETUP },
 		{ "diff", cmd_diff, RUN_SETUP | USE_PAGER },
 		{ "diff-files", cmd_diff_files, RUN_SETUP },
 		{ "diff-index", cmd_diff_index, RUN_SETUP },

@@ -2,6 +2,7 @@
 #include "commit.h"
 #include "tag.h"
 #include "refs.h"
+#include "builtin.h"
 
 #define SEEN (1u << 0)
 
@@ -139,7 +140,7 @@ static void describe(const char *arg, int last_one)
 	die("cannot describe '%s'", sha1_to_hex(cmit->object.sha1));
 }
 
-int main(int argc, char **argv)
+int cmd_describe(int argc, const char **argv, const char *prefix)
 {
 	int i;
 
@@ -161,7 +162,7 @@ int main(int argc, char **argv)
 			usage(describe_usage);
 	}
 
-	setup_git_directory();
+	save_commit_buffer = 0;
 
 	if (argc <= i)
 		describe("HEAD", 1);

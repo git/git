@@ -47,10 +47,11 @@ void wt_status_prepare(struct wt_status *s)
 	s->reference = "HEAD";
 	s->amend = 0;
 	s->verbose = 0;
-	s->commitable = 0;
 	s->untracked = 0;
 
-	s->workdir_clean = 1;
+	s->commitable = 0;
+	s->workdir_dirty = 0;
+	s->workdir_untracked = 0;
 }
 
 static void wt_status_print_cached_header(const char *reference)
@@ -176,7 +177,7 @@ static void wt_status_print_changed_cb(struct diff_queue_struct *q,
 	struct wt_status *s = data;
 	int i;
 	if (q->nr) {
-		s->workdir_clean = 0;
+		s->workdir_dirty = 1;
 		wt_status_print_header("Changed but not added", use_add_msg);
 	}
 	for (i = 0; i < q->nr; i++)
@@ -263,7 +264,7 @@ static void wt_status_print_untracked(struct wt_status *s)
 				continue;
 		}
 		if (!shown_header) {
-			s->workdir_clean = 0;
+			s->workdir_untracked = 1;
 			wt_status_print_header("Untracked files", use_add_msg);
 			shown_header = 1;
 		}
@@ -320,12 +321,14 @@ void wt_status_print(struct wt_status *s)
 	if (!s->commitable) {
 		if (s->amend)
 			printf("# No changes\n");
-		else if (s->workdir_clean)
-			printf(s->is_initial
-			       ? "nothing to commit\n"
-			       : "nothing to commit (working directory matches HEAD)\n");
-		else
+		else if (s->workdir_dirty)
 			printf("no changes added to commit (use \"git add\" and/or \"git commit [-a|-i|-o]\")\n");
+		else if (s->workdir_untracked)
+			printf("nothing added to commit but untracked files present (use \"git add\" to track)\n");
+		else if (s->is_initial)
+			printf("nothing to commit (create/copy files and use \"git add\" to track)\n");
+		else
+			printf("nothing to commit (working directory clean)\n");
 	}
 }
 
