@@ -150,21 +150,18 @@ fi
 # correct, it feels somewhat funny.  More importantly, we do not
 # want "git checkout" nor "git checkout -f" to detach HEAD.
 
+detached=
+detach_warn=
+
 if test -z "$branch$newbranch" && test "$new" != "$old"
 then
-	# NEEDSWORK: we would want to have a command here
-	# that allows us to detach the HEAD atomically.  Perhaps
-	# something like "git update-ref --detach HEAD $new"
-	echo "$new" >"$GIT_DIR/HEAD.new" &&
-	mv "$GIT_DIR/HEAD.new" "$GIT_DIR/HEAD" || die "Cannot detach HEAD"
-
+	detached="$new"
 	if test -n "$oldbranch"
 	then
-		echo >&2 "warning: you are not on ANY branch anymore.
+		detach_warn="warning: you are not on ANY branch anymore.
 If you meant to create a new branch from the commit, you need -b to
 associate a new branch with the wanted checkout.  Example:
-  git checkout -b <new_branch_name> $arg
-"
+  git checkout -b <new_branch_name> $arg"
 	fi
 elif test -z "$oldbranch" && test -n "$branch"
 then
@@ -258,8 +255,25 @@ if [ "$?" -eq 0 ]; then
 		git-update-ref -m "checkout: Created from $new_name" "refs/heads/$newbranch" $new || exit
 		branch="$newbranch"
 	fi
-	[ "$branch" ] &&
-	GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD "refs/heads/$branch"
+	if test -n "$branch"
+	then
+		GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD "refs/heads/$branch"
+	elif test -n "$detached"
+	then
+		# NEEDSWORK: we would want a command to detach the HEAD
+		# atomically, instead of this handcrafted command sequence.
+		# Perhaps:
+		#	git update-ref --detach HEAD $new
+		# or something like that...
+		#
+		echo "$detached" >"$GIT_DIR/HEAD.new" &&
+		mv "$GIT_DIR/HEAD.new" "$GIT_DIR/HEAD" ||
+			die "Cannot detach HEAD"
+		if test -n "$detach_warn"
+		then
+			echo >&2 "$detach_warn"
+		fi
+	fi
 	rm -f "$GIT_DIR/MERGE_HEAD"
 else
 	exit 1
