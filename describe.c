@@ -162,6 +162,7 @@ int main(int argc, char **argv)
 	}
 
 	setup_git_directory();
+	save_commit_buffer = 0;
 
 	if (argc <= i)
 		describe("HEAD", 1);
