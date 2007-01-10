@@ -402,6 +402,15 @@ sub make_message_id
 $cc = "";
 $time = time - scalar $#files;
 
+sub unquote_rfc2047 {
+	local ($_) = @_;
+	if (s/=\?utf-8\?q\?(.*)\?=/$1/g) {
+		s/_/ /g;
+		s/=([0-9A-F]{2})/chr(hex($1))/eg;
+	}
+	return "$_ - unquoted";
+}
+
 sub send_message
 {
 	my @recipients = unique_email_list(@to);
@@ -555,6 +564,7 @@ foreach my $t (@files) {
 	}
 	close F;
 	if (defined $author_not_sender) {
+		$author_not_sender = unquote_rfc2047($author_not_sender);
 		$message = "From: $author_not_sender\n\n$message";
 	}
 
