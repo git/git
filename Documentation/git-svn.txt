@@ -249,8 +249,7 @@ repo-config key: svn.authorsfile
 
 -q::
 --quiet::
-	Make git-svn less verbose.  This only affects git-svn if you
-	have the SVN::* libraries installed and are using them.
+	Make git-svn less verbose.
 
 --repack[=<n>]::
 --repack-flags=<flags>
@@ -321,8 +320,6 @@ for more information on using GIT_SVN_ID.
 	started tracking a branch and never tracked the trunk it was
 	descended from.
 
-	This relies on the SVN::* libraries to work.
-
 repo-config key: svn.followparent
 
 --no-metadata::
@@ -349,25 +346,6 @@ Only used with the 'rebuild' command.
 Run this if you used an old version of git-svn that used
 "git-svn-HEAD" instead of "remotes/git-svn" as the branch
 for tracking the remote.
-
---no-ignore-externals::
-Only used with the 'fetch' and 'rebuild' command.
-
-This command has no effect when you are using the SVN::*
-libraries with git, svn:externals are always avoided.
-
-By default, git-svn passes --ignore-externals to svn to avoid
-fetching svn:external trees into git.  Pass this flag to enable
-externals tracking directly via git.
-
-Versions of svn that do not support --ignore-externals are
-automatically detected and this flag will be automatically
-enabled for them.
-
-Otherwise, do not enable this flag unless you know what you're
-doing.
-
-repo-config key: svn.noignoreexternals
 
 --ignore-nodate::
 Only used with the 'fetch' command.
@@ -486,48 +464,17 @@ This allows you to tie unfetched SVN revision 375 to your current HEAD:
 	git-svn fetch 375=$(git-rev-parse HEAD)
 ------------------------------------------------
 
-Advanced Example: Tracking a Reorganized Repository
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Note: this example is now obsolete if you have SVN::* libraries
-installed.  Simply use --follow-parent when fetching.
-
 If you're tracking a directory that has moved, or otherwise been
 branched or tagged off of another directory in the repository and you
-care about the full history of the project, then you can read this
-section.
+care about the full history of the project, then you can use
+the --follow-parent option.
 
-This is how Yann Dirson tracked the trunk of the ufoai directory when
-the /trunk directory of his repository was moved to /ufoai/trunk and
-he needed to continue tracking /ufoai/trunk where /trunk left off.
-
-------------------------------------------------------------------------
-	# This log message shows when the repository was reorganized:
-	r166 | ydirson | 2006-03-02 01:36:55 +0100 (Thu, 02 Mar 2006) | 1 line
-	Changed paths:
-	   D /trunk
-	   A /ufoai/trunk (from /trunk:165)
-
-	# First we start tracking the old revisions:
-	GIT_SVN_ID=git-oldsvn git-svn init \
-			https://svn.sourceforge.net/svnroot/ufoai/trunk
-	GIT_SVN_ID=git-oldsvn git-svn fetch -r1:165
-
-	# And now, we continue tracking the new revisions:
-	GIT_SVN_ID=git-newsvn git-svn init \
-	      https://svn.sourceforge.net/svnroot/ufoai/ufoai/trunk
-	GIT_SVN_ID=git-newsvn git-svn fetch \
-	      166=`git-rev-parse refs/remotes/git-oldsvn`
-------------------------------------------------------------------------
+------------------------------------------------
+	git-svn fetch --follow-parent
+------------------------------------------------
 
 BUGS
 ----
-
-If you are not using the SVN::* Perl libraries and somebody commits a
-conflicting changeset to SVN at a bad moment (right before you commit)
-causing a conflict and your commit to fail, your svn working tree
-($GIT_DIR/git-svn/tree) may be dirtied.  The easiest thing to do is
-probably just to rm -rf $GIT_DIR/git-svn/tree and run 'rebuild'.   You
-can avoid this problem entirely by using 'dcommit'.
 
 We ignore all SVN properties except svn:executable.  Too difficult to
 map them since we rely heavily on git write-tree being _exactly_ the
