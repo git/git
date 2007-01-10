@@ -4,7 +4,7 @@
 use warnings;
 use strict;
 use vars qw/	$AUTHOR $VERSION
-		$SVN_URL $SVN_INFO $SVN_WC $SVN_UUID
+		$SVN_URL
 		$GIT_SVN_INDEX $GIT_SVN
 		$GIT_DIR $GIT_SVN_DIR $REVDB/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
@@ -38,6 +38,7 @@ require SVN::Delta;
 if ($SVN::Core::VERSION lt '1.1.0') {
 	fatal "Need SVN::Core 1.1.0 or better (got $SVN::Core::VERSION)\n";
 }
+push @Git::SVN::Ra::ISA, 'SVN::Ra';
 push @SVN::Git::Editor::ISA, 'SVN::Delta::Editor';
 push @SVN::Git::Fetcher::ISA, 'SVN::Delta::Editor';
 use Carp qw/croak/;
@@ -63,16 +64,16 @@ my $_esc_color = qr/(?:\033\[(?:(?:\d+;)*\d*)?m)*/;
 my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_find_copies_harder, $_l, $_cp_similarity, $_cp_remote,
 	$_repack, $_repack_nr, $_repack_flags, $_q,
-	$_message, $_file, $_follow_parent, $_no_metadata,
+	$_message, $_file, $_no_metadata,
 	$_template, $_shared, $_no_default_regex, $_no_graft_copy,
 	$_limit, $_verbose, $_incremental, $_oneline, $_l_fmt, $_show_commit,
 	$_version, $_upgrade, $_authors, $_branch_all_refs, @_opt_m,
 	$_merge, $_strategy, $_dry_run, $_ignore_nodate, $_non_recursive,
-	$_config_dir,
 	$_pager, $_color, $_prefix);
 my (@_branch_from, %tree_map, %users, %rusers, %equiv);
 my ($_svn_can_do_switch);
 my @repo_path_split_cache;
+use vars qw/$_follow_parent/;
 
 my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
 		'branch|b=s' => \@_branch_from,
@@ -83,7 +84,7 @@ my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
 		'no-metadata' => \$_no_metadata,
 		'quiet|q' => \$_q,
 		'username=s' => \$Git::SVN::Prompt::_username,
-		'config-dir=s' => \$_config_dir,
+		'config-dir=s' => \$Git::SVN::Ra::config_dir,
 		'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache,
 		'ignore-nodate' => \$_ignore_nodate,
 		'repack-flags|repack-args|repack-opts=s' => \$_repack_flags);
@@ -131,7 +132,7 @@ my %cmd = (
 			{ %multi_opts, %init_opts,
 			 'revision|r=i' => \$_revision,
 			 'username=s' => \$Git::SVN::Prompt::_username,
-			 'config-dir=s' => \$_config_dir,
+			 'config-dir=s' => \$Git::SVN::Ra::config_dir,
 			 'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache,
 			 'prefix=s' => \$_prefix,
 			} ],
@@ -236,6 +237,7 @@ sub rebuild {
 	my ($rev_list, $ctx) = command_output_pipe("rev-list",
 	                                           "refs/remotes/$GIT_SVN");
 	my $latest;
+	my $svn_uuid;
 	while (<$rev_list>) {
 		chomp;
 		my $c = $_;
@@ -251,7 +253,7 @@ sub rebuild {
 
 		# if we merged or otherwise started elsewhere, this is
 		# how we break out of it
-		next if (defined $SVN_UUID && ($uuid ne $SVN_UUID));
+		next if (defined $svn_uuid && ($uuid ne $svn_uuid));
 		next if (defined $SVN_URL && defined $url && ($url ne $SVN_URL));
 
 		unless (defined $latest) {
@@ -259,7 +261,7 @@ sub rebuild {
 				croak "SVN repository location required: $url\n";
 			}
 			$SVN_URL ||= $url;
-			$SVN_UUID ||= $uuid;
+			$svn_uuid ||= $uuid;
 			setup_git_svn();
 			$latest = $rev;
 		}
@@ -310,7 +312,7 @@ sub fetch {
 sub fetch_lib {
 	my (@parents) = @_;
 	$SVN_URL ||= file_to_s("$GIT_SVN_DIR/info/url");
-	$SVN ||= libsvn_connect($SVN_URL);
+	$SVN ||= Git::SVN::Ra->new($SVN_URL);
 	my ($last_rev, $last_commit) = svn_grab_base_rev();
 	my ($base, $head) = libsvn_parse_revision($last_rev);
 	if ($base > $head) {
@@ -322,7 +324,6 @@ sub fetch_lib {
 	# after processing a revision and SVN stuff seems to leak
 	my $inc = 1000;
 	my ($min, $max) = ($base, $head < $base+$inc ? $head : $base+$inc);
-	read_uuid();
 	if (defined $last_commit) {
 		unless (-e $GIT_SVN_INDEX) {
 			command_noisy('read-tree', $last_commit);
@@ -352,8 +353,7 @@ sub fetch_lib {
 			# performance sucks with it enabled, so it's much
 			# faster to fetch revision ranges instead of relying
 			# on the limiter.
-			libsvn_get_log(libsvn_dup_ra($SVN), [''],
-					$min, $max, 0, 1, 1,
+			$SVN->dup->get_log([''], $min, $max, 0, 1, 1,
 				sub {
 					my $log_msg;
 					if ($last_commit) {
@@ -378,7 +378,7 @@ sub fetch_lib {
 		$min = $max + 1;
 		$max += $inc;
 		$max = $head if ($max > $head);
-		$SVN = libsvn_connect($SVN_URL);
+		$SVN = Git::SVN::Ra->new($SVN_URL);
 	}
 	restore_index($index);
 	return { revision => $last_rev, commit => $last_commit };
@@ -424,8 +424,6 @@ sub commit_lib {
 				" current: $fetched->{revision}\n";
 		exit 1;
 	}
-	read_uuid();
-	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef, 0) : ();
 	my $commit_msg = "$GIT_SVN_DIR/.svn-commit.tmp.$$";
 
 	my $repo;
@@ -437,9 +435,10 @@ sub commit_lib {
 		# can't track down... (it's probably in the SVN code)
 		defined(my $pid = open my $fh, '-|') or croak $!;
 		if (!$pid) {
+			my $pool = SVN::Pool->new;
 			my $ed = SVN::Git::Editor->new(
 					{	r => $r_last,
-						ra => libsvn_dup_ra($SVN),
+						ra => $SVN->dup,
 						c => $c,
 						svn_path => $SVN->{svn_path},
 					},
@@ -451,8 +450,7 @@ sub commit_lib {
 								$log_msg->{msg},
 								$r_last,
 								$cmt_last)
-						},
-						@lock)
+						}, $pool)
 					);
 			my $mods = libsvn_checkout_tree($cmt_last, $c, $ed);
 			if (@$mods == 0) {
@@ -461,6 +459,7 @@ sub commit_lib {
 			} else {
 				$ed->close_edit;
 			}
+			$pool->clear;
 			exit 0;
 		}
 		my ($r_new, $cmt_new, $no);
@@ -534,7 +533,7 @@ sub dcommit {
 sub show_ignore {
 	$SVN_URL ||= file_to_s("$GIT_SVN_DIR/info/url");
 	my $repo;
-	$SVN ||= libsvn_connect($SVN_URL);
+	$SVN ||= Git::SVN::Ra->new($SVN_URL);
 	my $r = defined $_revision ? $_revision : $SVN->get_latest_revnum;
 	libsvn_traverse_ignore(\*STDOUT, '', $r);
 }
@@ -716,16 +715,16 @@ sub commit_diff {
 		$_message ||= get_commit_message($tb,
 					"$GIT_DIR/.svn-commit.tmp.$$")->{msg};
 	}
-	$SVN ||= libsvn_connect($SVN_URL);
+	$SVN ||= Git::SVN::Ra->new($SVN_URL);
 	if ($r eq 'HEAD') {
 		$r = $SVN->get_latest_revnum;
 	} elsif ($r !~ /^\d+$/) {
 		die "revision argument: $r not understood by git-svn\n";
 	}
-	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef, 0) : ();
 	my $rev_committed;
+	my $pool = SVN::Pool->new;
 	my $ed = SVN::Git::Editor->new({	r => $r,
-						ra => libsvn_dup_ra($SVN),
+						ra => $SVN->dup,
 						c => $tb,
 						svn_path => $SVN->{svn_path}
 					},
@@ -733,7 +732,8 @@ sub commit_diff {
 					sub {
 						$rev_committed = $_[0];
 						print "Committed $_[0]\n";
-					}, @lock)
+					},
+					$pool)
 				);
 	eval {
 		my $mods = libsvn_checkout_tree($ta, $tb, $ed);
@@ -744,6 +744,7 @@ sub commit_diff {
 			$ed->close_edit;
 		}
 	};
+	$pool->clear;
 	fatal "$@\n" if $@;
 	$_message = $_file = undef;
 	return $rev_committed;
@@ -1012,7 +1013,7 @@ sub graft_file_copy_lib {
 	my $tree_paths = $l_map->{$u};
 	my $pfx = common_prefix([keys %$tree_paths]);
 	my ($repo, $path) = repo_path_split($u.$pfx);
-	$SVN = libsvn_connect($repo);
+	$SVN = Git::SVN::Ra->new($repo);
 
 	my ($base, $head) = libsvn_parse_revision();
 	my $inc = 1000;
@@ -1020,14 +1021,11 @@ sub graft_file_copy_lib {
 	my $eh = $SVN::Error::handler;
 	$SVN::Error::handler = \&libsvn_skip_unknown_revs;
 	while (1) {
-		my $pool = SVN::Pool->new;
-		libsvn_get_log(libsvn_dup_ra($SVN), [$path],
-		               $min, $max, 0, 2, 1,
+		$SVN->dup->get_log([$path], $min, $max, 0, 2, 1,
 			sub {
 				libsvn_graft_file_copies($grafts, $tree_paths,
 							$path, @_);
-			}, $pool);
-		$pool->clear;
+			});
 		last if ($max >= $head);
 		$min = $max + 1;
 		$max += $inc;
@@ -1095,13 +1093,6 @@ sub graft_merge_msg {
 	}
 }
 
-sub read_uuid {
-	return if $SVN_UUID;
-	my $pool = SVN::Pool->new;
-	$SVN_UUID = $SVN->get_uuid($pool);
-	$pool->clear;
-}
-
 sub verify_ref {
 	my ($ref) = @_;
 	eval { command_oneline([ 'rev-parse', '--verify', $ref ],
@@ -1119,7 +1110,7 @@ sub repo_path_split {
 			return ($u, $full_url);
 		}
 	}
-	my $tmp = libsvn_connect($full_url);
+	my $tmp = Git::SVN::Ra->new($full_url);
 	return ($tmp->{repos_root}, $tmp->{svn_path});
 }
 
@@ -1371,10 +1362,10 @@ sub git_commit {
 			}
 			next if $skip;
 			my ($url_p, $r_p, $uuid_p) = cmt_metadata($p);
-			next if (($SVN_UUID eq $uuid_p) &&
+			next if (($SVN->uuid eq $uuid_p) &&
 						($log_msg->{revision} > $r_p));
 			next if (defined $url_p && defined $SVN_URL &&
-						($SVN_UUID eq $uuid_p) &&
+						($SVN->uuid eq $uuid_p) &&
 						($url_p eq $SVN_URL));
 			push @tmp_parents, $p;
 		}
@@ -1394,8 +1385,8 @@ sub git_commit {
 								or croak $!;
 	print $msg_fh $log_msg->{msg} or croak $!;
 	unless ($_no_metadata) {
-		print $msg_fh "\ngit-svn-id: $SVN_URL\@$log_msg->{revision}",
-					" $SVN_UUID\n" or croak $!;
+		print $msg_fh "\ngit-svn-id: $SVN_URL\@$log_msg->{revision} ",
+					$SVN->uuid,"\n" or croak $!;
 	}
 	$msg_fh->flush == 0 or croak $!;
 	close $msg_fh or croak $!;
@@ -1429,7 +1420,7 @@ sub set_commit_env {
 		$author = '(no author)';
 	}
 	my ($name,$email) = defined $users{$author} ?  @{$users{$author}}
-				: ($author,"$author\@$SVN_UUID");
+				: ($author,$author . '@' . $SVN->uuid);
 	$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} = $name;
 	$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} = $email;
 	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_msg->{date};
@@ -1589,7 +1580,6 @@ sub init_vars {
 	$REVDB = "$GIT_SVN_DIR/.rev_db";
 	$GIT_SVN_INDEX = "$GIT_SVN_DIR/index";
 	$SVN_URL = undef;
-	$SVN_WC = "$GIT_SVN_DIR/tree";
 	%tree_map = ();
 }
 
@@ -2042,60 +2032,6 @@ sub _read_password {
 
 package main;
 
-sub libsvn_connect {
-	my ($url) = @_;
-	SVN::_Core::svn_config_ensure($_config_dir, undef);
-	my ($baton, $callbacks) = SVN::Core::auth_open_helper([
-	    SVN::Client::get_simple_provider(),
-	    SVN::Client::get_ssl_server_trust_file_provider(),
-	    SVN::Client::get_simple_prompt_provider(
-	      \&Git::SVN::Prompt::simple, 2),
-	    SVN::Client::get_ssl_client_cert_prompt_provider(
-	      \&Git::SVN::Prompt::ssl_client_cert, 2),
-	    SVN::Client::get_ssl_client_cert_pw_prompt_provider(
-	      \&Git::SVN::Prompt::ssl_client_cert_pw, 2),
-	    SVN::Client::get_username_provider(),
-	    SVN::Client::get_ssl_server_trust_prompt_provider(
-	      \&Git::SVN::Prompt::ssl_server_trust),
-	    SVN::Client::get_username_prompt_provider(
-	      \&Git::SVN::username, 2),
-	  ]);
-	my $config = SVN::Core::config_get_config($_config_dir);
-	my $ra = SVN::Ra->new(url => $url, auth => $baton,
-	                      config => $config,
-	                      pool => SVN::Pool->new,
-	                      auth_provider_callbacks => $callbacks);
-	$ra->{svn_path} = $url;
-	$ra->{repos_root} = $ra->get_repos_root;
-	$ra->{svn_path} =~ s#^\Q$ra->{repos_root}\E/*##;
-	push @repo_path_split_cache, qr/^(\Q$ra->{repos_root}\E)/;
-	return $ra;
-}
-
-sub libsvn_can_do_switch {
-	unless (defined $_svn_can_do_switch) {
-		my $pool = SVN::Pool->new;
-		my $rep = eval {
-			$SVN->do_switch(1, '', 0, $SVN->{url},
-			                SVN::Delta::Editor->new, $pool);
-		};
-		if ($@) {
-			$_svn_can_do_switch = 0;
-		} else {
-			$rep->abort_report($pool);
-			$_svn_can_do_switch = 1;
-		}
-		$pool->clear;
-	}
-	$_svn_can_do_switch;
-}
-
-sub libsvn_dup_ra {
-	my ($ra) = @_;
-	SVN::Ra->new(map { $_ => $ra->{$_} } qw/config url
-	             auth auth_provider_callbacks repos_root svn_path/);
-}
-
 sub uri_encode {
 	my ($f) = @_;
 	$f =~ s#([^a-zA-Z0-9\*!\:_\./\-])#uc sprintf("%%%02x",ord($1))#eg;
@@ -2165,14 +2101,12 @@ sub libsvn_log_entry {
 	}
 
 	# revprops (make this optional? it's an extra network trip...)
-	my $pool = SVN::Pool->new;
-	my $rp = $SVN->rev_proplist($rev, $pool);
+	my $rp = $SVN->rev_proplist($rev);
 	foreach (sort keys %$rp) {
 		next if /^svn:(?:author|date|log)$/;
 		print $un "  rev_prop: ", uri_encode($_), ' ',
 		          uri_encode($rp->{$_}), "\n";
 	}
-	$pool->clear;
 	close $un or croak $!;
 
 	{ revision => $rev, date => "+0000 $Y-$m-$d $H:$M:$S",
@@ -2182,15 +2116,9 @@ sub libsvn_log_entry {
 
 sub libsvn_fetch {
 	my ($last_commit, $paths, $rev, $author, $date, $msg) = @_;
-	my $pool = SVN::Pool->new;
 	my $ed = SVN::Git::Fetcher->new({ c => $last_commit, q => $_q });
-	my $reporter = $SVN->do_update($rev, '', 1, $ed, $pool);
-	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
 	my (undef, $last_rev, undef) = cmt_metadata($last_commit);
-	$reporter->set_path('', $last_rev, 0, @lock, $pool);
-	$reporter->finish_report($pool);
-	$pool->clear;
-	unless ($ed->{git_commit_ok}) {
+	unless ($SVN->gs_do_update($last_rev, $rev, '', 1, $ed)) {
 		die "SVN connection failed somewhere...\n";
 	}
 	libsvn_log_entry($rev, $author, $date, $msg, [$last_commit], $ed);
@@ -2250,8 +2178,7 @@ sub libsvn_parse_revision {
 sub libsvn_traverse_ignore {
 	my ($fh, $path, $r) = @_;
 	$path =~ s#^/+##g;
-	my $pool = SVN::Pool->new;
-	my ($dirent, undef, $props) = $SVN->get_dir($path, $r, $pool);
+	my ($dirent, undef, $props) = $SVN->get_dir($path, $r);
 	my $p = $path;
 	$p =~ s#^\Q$SVN->{svn_path}\E/##;
 	print $fh length $p ? "\n# $p\n" : "\n# /\n";
@@ -2270,7 +2197,6 @@ sub libsvn_traverse_ignore {
 		next if $dirent->{$_}->kind != $SVN::Node::dir;
 		libsvn_traverse_ignore($fh, "$path/$_", $r);
 	}
-	$pool->clear;
 }
 
 sub revisions_eq {
@@ -2278,10 +2204,7 @@ sub revisions_eq {
 	return 1 if $r0 == $r1;
 	my $nr = 0;
 	# should be OK to use Pool here (r1 - r0) should be small
-	my $pool = SVN::Pool->new;
-	libsvn_get_log($SVN, [$path], $r0, $r1,
-			0, 0, 1, sub {$nr++}, $pool);
-	$pool->clear;
+	$SVN->get_log([$path], $r0, $r1, 0, 0, 1, sub {$nr++});
 	return 0 if ($nr > 1);
 	return 1;
 }
@@ -2337,38 +2260,21 @@ sub libsvn_find_parent_branch {
 		unlink $GIT_SVN_INDEX;
 		print STDERR "Found branch parent: ($GIT_SVN) $parent\n";
 		command_noisy('read-tree', $parent);
-		unless (libsvn_can_do_switch()) {
+		unless ($SVN->can_do_switch) {
 			return _libsvn_new_tree($paths, $rev, $author, $date,
 			                        $msg, [$parent]);
 		}
 		# do_switch works with svn/trunk >= r22312, but that is not
 		# included with SVN 1.4.2 (the latest version at the moment),
 		# so we can't rely on it.
-		my $ra = libsvn_connect("$url/$branch_from");
+		my $ra = Git::SVN::Ra->new("$url/$branch_from");
 		my $ed = SVN::Git::Fetcher->new({c => $parent, q => $_q });
-		my $pool = SVN::Pool->new;
-		my $reporter = $ra->do_switch($rev, '', 1, $SVN->{url},
-		                              $ed, $pool);
-		my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
-		$reporter->set_path('', $r0, 0, @lock, $pool);
-		$reporter->finish_report($pool);
-		$pool->clear;
-		unless ($ed->{git_commit_ok}) {
-			die "SVN connection failed somewhere...\n";
-		}
+		$ra->gs_do_switch($r0, $rev, '', 1, $SVN->{url}, $ed) or
+		                   die "SVN connection failed somewhere...\n";
 		return libsvn_log_entry($rev, $author, $date, $msg, [$parent]);
 	}
 	print STDERR "Nope, branch point not imported or unknown\n";
 	return undef;
-}
-
-sub libsvn_get_log {
-	my ($ra, @args) = @_;
-	$args[4]-- if $args[4] && ! $_follow_parent;
-	if ($SVN::Core::VERSION le '1.2.0') {
-		splice(@args, 3, 1);
-	}
-	$ra->get_log(@args);
 }
 
 sub libsvn_new_tree {
@@ -2381,14 +2287,8 @@ sub libsvn_new_tree {
 
 sub _libsvn_new_tree {
 	my ($paths, $rev, $author, $date, $msg, $parents) = @_;
-	my $pool = SVN::Pool->new;
 	my $ed = SVN::Git::Fetcher->new({q => $_q});
-	my $reporter = $SVN->do_update($rev, '', 1, $ed, $pool);
-	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
-	$reporter->set_path('', $rev, 1, @lock, $pool);
-	$reporter->finish_report($pool);
-	$pool->clear;
-	unless ($ed->{git_commit_ok}) {
+	unless ($SVN->gs_do_update($rev, $rev, '', 1, $ed)) {
 		die "SVN connection failed somewhere...\n";
 	}
 	libsvn_log_entry($rev, $author, $date, $msg, $parents, $ed);
@@ -2474,20 +2374,17 @@ sub libsvn_commit_cb {
 
 sub libsvn_ls_fullurl {
 	my $fullurl = shift;
-	my $ra = libsvn_connect($fullurl);
+	my $ra = Git::SVN::Ra->new($fullurl);
 	my @ret;
-	my $pool = SVN::Pool->new;
 	my $r = defined $_revision ? $_revision : $ra->get_latest_revnum;
-	my ($dirent, undef, undef) = $ra->get_dir('', $r, $pool);
+	my ($dirent, undef, undef) = $ra->get_dir('', $r);
 	foreach my $d (sort keys %$dirent) {
 		if ($dirent->{$d}->kind == $SVN::Node::dir) {
 			push @ret, "$d/"; # add '/' for compat with cli svn
 		}
 	}
-	$pool->clear;
 	return @ret;
 }
-
 
 sub libsvn_skip_unknown_revs {
 	my $err = shift;
@@ -2866,9 +2763,7 @@ sub rmdirs {
 
 sub open_or_add_dir {
 	my ($self, $full_path, $baton) = @_;
-	my $p = SVN::Pool->new;
-	my $t = $self->{ra}->check_path($full_path, $self->{r}, $p);
-	$p->clear;
+	my $t = $self->{ra}->check_path($full_path, $self->{r});
 	if ($t == $SVN::Node::none) {
 		return $self->add_directory($full_path, $baton,
 						undef, -1, $self->{pool});
@@ -3021,6 +2916,135 @@ sub abort_edit {
 	my ($self) = @_;
 	$self->SUPER::abort_edit($self->{pool});
 	$self->{pool}->clear;
+}
+
+package Git::SVN::Ra;
+use vars qw/@ISA $config_dir/;
+use strict;
+use warnings;
+my ($can_do_switch);
+
+BEGIN {
+	# enforce temporary pool usage for some simple functions
+	my $e;
+	foreach (qw/get_latest_revnum rev_proplist get_file
+	            check_path get_dir get_uuid get_repos_root/) {
+		$e .= "sub $_ {
+			my \$self = shift;
+			my \$pool = SVN::Pool->new;
+			my \@ret = \$self->SUPER::$_(\@_,\$pool);
+			\$pool->clear;
+			wantarray ? \@ret : \$ret[0]; }\n";
+	}
+	eval $e;
+}
+
+sub new {
+	my ($class, $url) = @_;
+	SVN::_Core::svn_config_ensure($config_dir, undef);
+	my ($baton, $callbacks) = SVN::Core::auth_open_helper([
+	    SVN::Client::get_simple_provider(),
+	    SVN::Client::get_ssl_server_trust_file_provider(),
+	    SVN::Client::get_simple_prompt_provider(
+	      \&Git::SVN::Prompt::simple, 2),
+	    SVN::Client::get_ssl_client_cert_prompt_provider(
+	      \&Git::SVN::Prompt::ssl_client_cert, 2),
+	    SVN::Client::get_ssl_client_cert_pw_prompt_provider(
+	      \&Git::SVN::Prompt::ssl_client_cert_pw, 2),
+	    SVN::Client::get_username_provider(),
+	    SVN::Client::get_ssl_server_trust_prompt_provider(
+	      \&Git::SVN::Prompt::ssl_server_trust),
+	    SVN::Client::get_username_prompt_provider(
+	      \&Git::SVN::Prompt::username, 2),
+	  ]);
+	my $config = SVN::Core::config_get_config($config_dir);
+	my $self = SVN::Ra->new(url => $url, auth => $baton,
+	                      config => $config,
+			      pool => SVN::Pool->new,
+	                      auth_provider_callbacks => $callbacks);
+	$self->{svn_path} = $url;
+	$self->{repos_root} = $self->get_repos_root;
+	$self->{svn_path} =~ s#^\Q$self->{repos_root}\E/*##;
+	bless $self, $class;
+}
+
+sub DESTROY {
+	my $self = shift;
+	$self->{pool}->clear if $self->{pool};
+	$self->SUPER::DESTROY(@_);
+}
+
+sub dup {
+	my ($self) = @_;
+	my $dup = SVN::Ra->new(pool => SVN::Pool->new,
+				map { $_ => $self->{$_} } qw/config url
+	             auth auth_provider_callbacks repos_root svn_path/);
+	bless $dup, ref $self;
+}
+
+sub get_log {
+	my ($self, @args) = @_;
+	my $pool = SVN::Pool->new;
+	$args[4]-- if $args[4] && ! $::_follow_parent;
+	splice(@args, 3, 1) if ($SVN::Core::VERSION le '1.2.0');
+	my $ret = $self->SUPER::get_log(@args, $pool);
+	$pool->clear;
+	$ret;
+}
+
+sub get_commit_editor {
+	my ($self, $msg, $cb, $pool) = @_;
+	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef, 0) : ();
+	$self->SUPER::get_commit_editor($msg, $cb, @lock, $pool);
+}
+
+sub uuid {
+	my ($self) = @_;
+	$self->{uuid} ||= $self->get_uuid;
+}
+
+sub gs_do_update {
+	my ($self, $rev_a, $rev_b, $path, $recurse, $editor) = @_;
+	my $pool = SVN::Pool->new;
+	my $reporter = $self->do_update($rev_b, $path, $recurse,
+	                                $editor, $pool);
+	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
+	my $new = ($rev_a == $rev_b);
+	$reporter->set_path($path, $rev_a, $new, @lock, $pool);
+	$reporter->finish_report($pool);
+	$pool->clear;
+	$editor->{git_commit_ok};
+}
+
+sub gs_do_switch {
+	my ($self, $rev_a, $rev_b, $path, $recurse, $url_b, $editor) = @_;
+	my $pool = SVN::Pool->new;
+	my $reporter = $self->do_switch($rev_b, $path, $recurse,
+	                                $url_b, $editor, $pool);
+	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
+	$reporter->set_path($path, $rev_a, 0, @lock, $pool);
+	$reporter->finish_report($pool);
+	$pool->clear;
+	$editor->{git_commit_ok};
+}
+
+sub can_do_switch {
+	my $self = shift;
+	unless (defined $can_do_switch) {
+		my $pool = SVN::Pool->new;
+		my $rep = eval {
+			$self->do_switch(1, '', 0, $self->{url},
+			                 SVN::Delta::Editor->new, $pool);
+		};
+		if ($@) {
+			$can_do_switch = 0;
+		} else {
+			$rep->abort_report($pool);
+			$can_do_switch = 1;
+		}
+		$pool->clear;
+	}
+	$can_do_switch;
 }
 
 __END__
