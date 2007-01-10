@@ -128,7 +128,7 @@ do
 	-s|--s|--si|--sig|--sign|--signo|--signof|--signoff)
 	sign=t; shift ;;
 	-u|--u|--ut|--utf|--utf8)
-	shift ;; # this is now default
+	utf8=t; shift ;; # this is now default
 	--no-u|--no-ut|--no-utf|--no-utf8)
 	utf8=; shift ;;
 	-k|--k|--ke|--kee|--keep)
