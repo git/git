@@ -69,6 +69,9 @@ all:
 #
 # Define NO_MMAP if you want to avoid mmap.
 #
+# Define NO_PREAD if you have a problem with pread() system call (e.g.
+# cygwin.dll before v1.5.22).
+#
 # Define NO_FAST_WORKING_DIRECTORY if accessing objects in pack files is
 # generally faster on your platform than accessing the working directory.
 #
@@ -191,7 +194,6 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 PROGRAMS = \
 	git-convert-objects$X git-fetch-pack$X git-fsck-objects$X \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
-	git-merge-base$X \
 	git-daemon$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-patch-id$X \
 	git-peek-remote$X git-receive-pack$X \
@@ -286,6 +288,7 @@ BUILTIN_OBJS = \
 	builtin-ls-tree.o \
 	builtin-mailinfo.o \
 	builtin-mailsplit.o \
+	builtin-merge-base.o \
 	builtin-merge-file.o \
 	builtin-mv.o \
 	builtin-name-rev.o \
@@ -522,6 +525,10 @@ endif
 ifdef NO_MMAP
 	COMPAT_CFLAGS += -DNO_MMAP
 	COMPAT_OBJS += compat/mmap.o
+endif
+ifdef NO_PREAD
+	COMPAT_CFLAGS += -DNO_PREAD
+	COMPAT_OBJS += compat/pread.o
 endif
 ifdef NO_FAST_WORKING_DIRECTORY
 	BASIC_CFLAGS += -DNO_FAST_WORKING_DIRECTORY

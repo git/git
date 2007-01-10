@@ -137,7 +137,6 @@ void parse_treeish_arg(const char **argv, struct archiver_args *ar_args,
 		if (err || !S_ISDIR(mode))
 			die("current working directory is untracked");
 
-		free(tree);
 		tree = parse_tree_indirect(tree_sha1);
 	}
 	ar_args->tree = tree;

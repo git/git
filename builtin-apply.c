@@ -811,7 +811,8 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 			struct fragment dummy;
 			if (parse_fragment_header(line, len, &dummy) < 0)
 				continue;
-			error("patch fragment without header at line %d: %.*s", linenr, (int)len-1, line);
+			die("patch fragment without header at line %d: %.*s",
+			    linenr, (int)len-1, line);
 		}
 
 		if (size < len + 6)
@@ -2238,8 +2239,19 @@ static void remove_file(struct patch *patch)
 			die("unable to remove %s from index", patch->old_name);
 		cache_tree_invalidate_path(active_cache_tree, patch->old_name);
 	}
-	if (!cached)
-		unlink(patch->old_name);
+	if (!cached) {
+		if (!unlink(patch->old_name)) {
+			char *name = xstrdup(patch->old_name);
+			char *end = strrchr(name, '/');
+			while (end) {
+				*end = 0;
+				if (rmdir(name))
+					break;
+				end = strrchr(name, '/');
+			}
+			free(name);
+		}
+	}
 }
 
 static void add_index_file(const char *path, unsigned mode, void *buf, unsigned long size)

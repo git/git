@@ -1034,24 +1034,9 @@ static struct commit *interesting(struct commit_list *list)
 	return NULL;
 }
 
-static struct commit_list *merge_bases(struct commit *one, struct commit *two)
+static struct commit_list *base_traverse(struct commit_list *list, struct commit *stop)
 {
-	struct commit_list *list = NULL;
 	struct commit_list *result = NULL;
-
-	if (one == two)
-		/* We do not mark this even with RESULT so we do not
-		 * have to clean it up.
-		 */
-		return commit_list_insert(one, &result);
-
-	parse_commit(one);
-	parse_commit(two);
-
-	one->object.flags |= PARENT1;
-	two->object.flags |= PARENT2;
-	insert_by_date(one, &list);
-	insert_by_date(two, &list);
 
 	while (interesting(list)) {
 		struct commit *commit;
@@ -1083,10 +1068,20 @@ static struct commit_list *merge_bases(struct commit *one, struct commit *two)
 			p->object.flags |= flags;
 			insert_by_date(p, &list);
 		}
+		if (stop && (stop->object.flags & PARENT2)) {
+			free_commit_list(list);
+			list = NULL;
+			insert_by_date(stop, &list);
+			return list;
+		}
 	}
 
 	/* Clean up the result to remove stale ones */
 	free_commit_list(list);
+
+	if (stop)
+		return NULL;
+
 	list = result; result = NULL;
 	while (list) {
 		struct commit_list *n = list->next;
@@ -1096,6 +1091,27 @@ static struct commit_list *merge_bases(struct commit *one, struct commit *two)
 		list = n;
 	}
 	return result;
+}
+
+static struct commit_list *merge_bases(struct commit *one, struct commit *two)
+{
+	struct commit_list *list = NULL;
+
+	if (one == two)
+		/* We do not mark this even with RESULT so we do not
+		 * have to clean it up.
+		 */
+		return commit_list_insert(one, &list);
+
+	parse_commit(one);
+	parse_commit(two);
+
+	one->object.flags |= PARENT1;
+	two->object.flags |= PARENT2;
+	insert_by_date(one, &list);
+	insert_by_date(two, &list);
+
+	return base_traverse(list, NULL);
 }
 
 struct commit_list *get_merge_bases(struct commit *one,
@@ -1158,19 +1174,32 @@ struct commit_list *get_merge_bases(struct commit *one,
 	return result;
 }
 
-int in_merge_bases(struct commit *rev1, struct commit *rev2)
+int in_merge_bases(struct commit *commit, struct commit **reference, int num)
 {
-	struct commit_list *bases, *b;
-	int ret = 0;
+	struct commit_list *result, *list;
+	int i, ret;
 
-	bases = get_merge_bases(rev1, rev2, 1);
-	for (b = bases; b; b = b->next) {
-		if (!hashcmp(rev1->object.sha1, b->item->object.sha1)) {
-			ret = 1;
-			break;
+	list = NULL;
+	parse_commit(commit);
+	commit->object.flags |= PARENT1;
+	insert_by_date(commit, &list);
+
+	for (i = 0; i < num; i++) {
+		struct commit *two = reference[i];
+		parse_commit(two);
+		if (!(two->object.flags & PARENT2)) {
+			two->object.flags |= PARENT2;
+			insert_by_date(two, &list);
 		}
 	}
+	result = base_traverse(list, commit);
+	ret = !!result;
+	free_commit_list(result);
 
-	free_commit_list(bases);
+	clear_commit_marks(commit, all_flags);
+	for (i = 0; i < num; i++) {
+		struct commit *two = reference[i];
+		clear_commit_marks(two, all_flags);
+	}
 	return ret;
 }

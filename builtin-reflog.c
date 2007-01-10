@@ -210,8 +210,8 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 
 	if ((timestamp < cb->cmd->expire_unreachable) &&
 	    (!cb->ref_commit ||
-	     (old && !in_merge_bases(old, cb->ref_commit)) ||
-	     (new && !in_merge_bases(new, cb->ref_commit))))
+	     (old && !in_merge_bases(old, &cb->ref_commit, 1)) ||
+	     (new && !in_merge_bases(new, &cb->ref_commit, 1))))
 		goto prune;
 
 	if (cb->newlog) {

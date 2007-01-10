@@ -770,11 +770,14 @@ static void finish_request(struct transfer_request *request)
 				request->url, curl_errorstr);
 			remote->can_update_info_refs = 0;
 		} else {
+			off_t pack_size = ftell(request->local_stream);
+
 			fclose(request->local_stream);
 			request->local_stream = NULL;
 			if (!move_temp_to_file(request->tmpfile,
 					       request->filename)) {
 				target = (struct packed_git *)request->userData;
+				target->pack_size = pack_size;
 				lst = &remote->packs;
 				while (*lst != target)
 					lst = &((*lst)->next);

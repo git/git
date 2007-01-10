@@ -280,6 +280,15 @@ and returns the process output as a string."
     (git-run-command nil nil "update-index" "--info-only" "--add" "--" (file-relative-name ignore-name)))
   (git-add-status-file (if created 'added 'modified) (file-relative-name ignore-name))))
 
+; propertize definition for XEmacs, stolen from erc-compat
+(eval-when-compile
+  (unless (fboundp 'propertize)
+    (defun propertize (string &rest props)
+      (let ((string (copy-sequence string)))
+        (while props
+          (put-text-property 0 (length string) (nth 0 props) (nth 1 props) string)
+          (setq props (cddr props)))
+        string))))
 
 ;;;; Wrappers for basic git commands
 ;;;; ------------------------------------------------------------
@@ -448,11 +457,10 @@ and returns the process output as a string."
 
 (defun git-fileinfo-prettyprint (info)
   "Pretty-printer for the git-fileinfo structure."
-  (insert (format "   %s %s %s  %s%s"
-                  (if (git-fileinfo->marked info) (propertize "*" 'face 'git-mark-face) " ")
-                  (git-status-code-as-string (git-fileinfo->state info))
-                  (git-permissions-as-string (git-fileinfo->old-perm info) (git-fileinfo->new-perm info))
-                  (git-escape-file-name (git-fileinfo->name info))
+  (insert (concat "   " (if (git-fileinfo->marked info) (propertize "*" 'face 'git-mark-face) " ")
+                  " " (git-status-code-as-string (git-fileinfo->state info))
+                  " " (git-permissions-as-string (git-fileinfo->old-perm info) (git-fileinfo->new-perm info))
+                  "  " (git-escape-file-name (git-fileinfo->name info))
                   (git-rename-as-string info))))
 
 (defun git-parse-status (status)
