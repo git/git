@@ -1,7 +1,10 @@
 #!/bin/sh
 
-: ${M=''}
 : ${J=-j2}
+while case "$1" in -pedantic) M=$1 ;; *) break ;; esac
+do
+	shift
+done
 
 test -z "$(git diff --cached --name-status)" || {
 	echo >&2 "Repository unclean."
