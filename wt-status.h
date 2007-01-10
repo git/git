@@ -12,11 +12,13 @@ struct wt_status {
 	int is_initial;
 	char *branch;
 	const char *reference;
-	int commitable;
 	int verbose;
 	int amend;
 	int untracked;
-	int workdir_clean;
+	/* These are computed during processing of the individual sections */
+	int commitable;
+	int workdir_dirty;
+	int workdir_untracked;
 };
 
 int git_status_config(const char *var, const char *value);
