@@ -28,7 +28,7 @@ while case "$#" in 0) break ;; esac
 do
 	case "$1" in
 	-u)	utf8=-u ;;
-	-n)	utf8= ;;
+	-n)	utf8=-n ;;
 	-k)	keep_subject=-k ;;
 	-q)	query_apply=t ;;
 	-c)	continue="$2"; resume=f; shift ;;

@@ -228,6 +228,8 @@ fi
 if test "$(cat "$dotest/utf8")" = t
 then
 	utf8=-u
+else
+	utf8=-n
 fi
 if test "$(cat "$dotest/keep")" = t
 then
