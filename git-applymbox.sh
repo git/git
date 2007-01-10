@@ -23,11 +23,12 @@ USAGE='[-u] [-k] [-q] [-m] (-c .dotest/<num> | mbox) [signoff]'
 
 git var GIT_COMMITTER_IDENT >/dev/null || exit
 
-keep_subject= query_apply= continue= utf8= resume=t
+keep_subject= query_apply= continue= utf8=-u resume=t
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
 	-u)	utf8=-u ;;
+	-n)	utf8=-n ;;
 	-k)	keep_subject=-k ;;
 	-q)	query_apply=t ;;
 	-c)	continue="$2"; resume=f; shift ;;
