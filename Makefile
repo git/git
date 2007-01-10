@@ -204,7 +204,7 @@ PROGRAMS = \
 	git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X \
 	git-pack-redundant$X git-var$X \
-	git-describe$X git-merge-tree$X git-imap-send$X \
+	git-merge-tree$X git-imap-send$X \
 	git-merge-recursive$X \
 	$(EXTRA_PROGRAMS)
 
@@ -275,6 +275,7 @@ BUILTIN_OBJS = \
 	builtin-check-ref-format.o \
 	builtin-commit-tree.o \
 	builtin-count-objects.o \
+	builtin-describe.o \
 	builtin-diff.o \
 	builtin-diff-files.o \
 	builtin-diff-index.o \
