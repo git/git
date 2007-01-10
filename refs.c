@@ -1097,7 +1097,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	return 0;
 }
 
-void for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
+int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 {
 	const char *logfile;
 	FILE *logfp;
@@ -1106,19 +1106,35 @@ void for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 	logfile = git_path("logs/%s", ref);
 	logfp = fopen(logfile, "r");
 	if (!logfp)
-		return;
+		return -1;
 	while (fgets(buf, sizeof(buf), logfp)) {
 		unsigned char osha1[20], nsha1[20];
-		int len;
+		char *email_end, *message;
+		unsigned long timestamp;
+		int len, ret, tz;
 
 		/* old SP new SP name <email> SP time TAB msg LF */
 		len = strlen(buf);
 		if (len < 83 || buf[len-1] != '\n' ||
 		    get_sha1_hex(buf, osha1) || buf[40] != ' ' ||
-		    get_sha1_hex(buf + 41, nsha1) || buf[81] != ' ')
+		    get_sha1_hex(buf + 41, nsha1) || buf[81] != ' ' ||
+		    !(email_end = strchr(buf + 82, '>')) ||
+		    email_end[1] != ' ' ||
+		    !(timestamp = strtoul(email_end + 2, &message, 10)) ||
+		    !message || message[0] != ' ' ||
+		    (message[1] != '+' && message[1] != '-') ||
+		    !isdigit(message[2]) || !isdigit(message[3]) ||
+		    !isdigit(message[4]) || !isdigit(message[5]) ||
+		    message[6] != '\t')
 			continue; /* corrupt? */
-		fn(osha1, nsha1, buf+82, cb_data);
+		email_end[1] = '\0';
+		tz = strtol(message + 1, NULL, 10);
+		message += 7;
+		ret = fn(osha1, nsha1, buf+82, timestamp, tz, message, cb_data);
+		if (ret)
+			return ret;
 	}
 	fclose(logfp);
+	return 0;
 }
 
