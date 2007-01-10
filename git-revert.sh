@@ -19,6 +19,7 @@ case "$0" in
 	die "What are you talking about?" ;;
 esac
 . git-sh-setup
+require_work_tree
 
 no_commit=
 while case "$#" in 0) break ;; esac

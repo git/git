@@ -7,6 +7,7 @@ USAGE='[--signoff] [--dotest=<dir>] [--utf8 | --no-utf8] [--binary] [--3way]
   or, when resuming [--skip | --resolved]'
 . git-sh-setup
 set_reflog_action am
+require_work_tree
 
 git var GIT_COMMITTER_IDENT >/dev/null || exit
 
