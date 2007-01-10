@@ -171,14 +171,14 @@ then
 	# Coming back...
 	if test -z "$force"
 	then
-		mb=$(git merge-base --all $old $new) &&
-		case "$LF$mb$LF" in
-		*"$LF$old$LF"*)	: ;;
-		*)	false ;;
-		esac || {
+		git show-ref -d -s | grep "$old" >/dev/null || {
 			echo >&2 \
-"You are not on a branch and switching to $new_name branch may lose
-your changes.  Use 'git checkout -f $new_name' if you want to."
+"You are not on any branch and switching to branch '$new_name'
+may lose your changes.  At this point, you can do one of two things:
+ (1) Decide it is Ok and say 'git checkout -f $new_name';
+ (2) Start a new branch from the current commit, by saying
+     'git checkout -b <branch-name>'.
+Leaving your HEAD detached; not switching to branch '$new_name'."
 			exit 1;
 		}
 	fi
