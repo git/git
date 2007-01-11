@@ -863,17 +863,10 @@ times as you want: in order to keep track of what you want committed
 at step 3, git maintains a snapshot of the tree's contents in a
 special staging area called "the index."
 
-By default, the content of the index is identical to that of the
-HEAD.  The command "git diff --cached" shows the difference between
-HEAD and the index, so you should no output from that command.
-
-////////////////////////////////////////////////
-
-This is talking about not "by default", but "when you start
-out".  The last sentence does not parse for me...
-
-////////////////////////////////////////////////
-
+At the beginning, the content of the index will be identical to
+that of the HEAD.  The command "git diff --cached", which shows
+the difference between the HEAD and the index, should therefore
+produce no output at that point.
 
 Modifying the index is easy:
 
@@ -1337,20 +1330,14 @@ single mailbox file, say "patches.mbox", then run
 $ git am -3 patches.mbox
 -------------------------------------------------
 
-////////////////////////////////////////////////
-
-If you allow git-am to fall back to 3-way merge with -3, you
-would see conflicts and "resolving a merge" techniques apply.
-Otherwise "conflicts" will just fail the patch and your working
-tree and index are left untouched.
-
-////////////////////////////////////////////////
-
 Git will apply each patch in order; if any conflicts are found, it
 will stop, and you can fix the conflicts as described in
-"<<resolving-a-merge,Resolving a merge>>".  Once the index is updated
-with the results of the conflict resolution, instead of creating a
-new commit, just run
+"<<resolving-a-merge,Resolving a merge>>".  (The "-3" option tells
+git to perform a merge; if you would prefer it just to abort and
+leave your tree and index untouched, you may omit that option.)
+
+Once the index is updated with the results of the conflict
+resolution, instead of creating a new commit, just run
 
 -------------------------------------------------
 $ git am --resolved
