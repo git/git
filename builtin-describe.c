@@ -183,6 +183,7 @@ static void describe(const char *arg, int last_one)
 			cur_match->depth++;
 		if (!min_match || cur_match->depth < min_match->depth)
 			min_match = cur_match;
+		free_commit_list(revs.commits);
 	}
 	printf("%s-g%s\n", min_match->name->path,
 		   find_unique_abbrev(cmit->object.sha1, abbrev));
