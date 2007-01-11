@@ -622,7 +622,7 @@ We have seen several ways of naming commits already:
 	- HEAD: refers to the head of the current branch
 
 There are many more; see the "SPECIFYING REVISION" section of the
-gitlink:git-rev-list[1] man page for the complete list of ways to
+gitlink:git-rev-parse[1] man page for the complete list of ways to
 name revisions.  Some examples:
 
 -------------------------------------------------
@@ -662,6 +662,15 @@ the fetched commits will still be available from FETCH_HEAD.
 When we discuss merges we'll also see the special name MERGE_HEAD,
 which refers to the other branch that we're merging in to the current
 branch.
+
+The gitlink:git-rev-parse[1] command is a low-level command that is
+occasionally useful for translating some name for a commit to the SHA1 id for
+that commit:
+
+-------------------------------------------------
+$ git rev-parse origin
+e05db0fd4f31dde7005f075a84f96b360d05984b
+-------------------------------------------------
 
 Creating tags
 -------------
@@ -756,6 +765,47 @@ $ git show v2.5:fs/locks.c
 
 Before the colon may be anything that names a commit, and after it
 may be any path to a file tracked by git.
+
+Examples
+--------
+
+Check whether two branches point at the same history
+----------------------------------------------------
+
+Suppose you want to check whether two branches point at the same point
+in history.
+
+-------------------------------------------------
+$ git diff origin..master
+-------------------------------------------------
+
+will tell you whether the contents of the project are the same at the two
+branches; in theory, however, it's possible that the same project contents
+could have been arrived at by two different historical routes.  You could
+compare the SHA1 id's:
+
+-------------------------------------------------
+$ git rev-list origin
+e05db0fd4f31dde7005f075a84f96b360d05984b
+$ git rev-list master
+e05db0fd4f31dde7005f075a84f96b360d05984b
+-------------------------------------------------
+
+Or you could recall that the ... operator selects all commits contained
+reachable from either one reference or the other but not both: so
+
+-------------------------------------------------
+$ git log origin...master
+-------------------------------------------------
+
+will return no commits when the two branches are equal.
+
+Check which tagged version a given fix was first included in
+------------------------------------------------------------
+
+Suppose you know that a critical fix made it into the linux kernel with commit
+e05db0fd...  You'd like to find which kernel version that commit first made it
+into.
 
 Developing with git
 ===================
@@ -1590,7 +1640,12 @@ mywork.  The result will look like:
 
 In the process, it may discover conflicts.  In that case it will stop and
 allow you to fix the conflicts as described in
-"<<resolving-a-merge,Resolving a merge>>".  Once the index is updated with
+"<<resolving-a-merge,Resolving a merge>>".
+
+XXX: no, maybe not: git diff doesn't produce very useful results, and there's
+no MERGE_HEAD.
+
+Once the index is updated with
 the results of the conflict resolution, instead of creating a new commit,
 just run
 
