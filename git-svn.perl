@@ -111,7 +111,7 @@ my %cmt_opts = ( 'edit|e' => \$_edit,
 my %cmd = (
 	fetch => [ \&cmd_fetch, "Download new revisions from SVN",
 			{ 'revision|r=s' => \$_revision, %fc_opts } ],
-	init => [ \&init, "Initialize a repo for tracking" .
+	init => [ \&cmd_init, "Initialize a repo for tracking" .
 			  " (requires URL argument)",
 			  \%init_opts ],
 	dcommit => [ \&dcommit, 'Commit several diffs to merge with upstream',
@@ -278,27 +278,24 @@ sub rebuild {
 	command_close_pipe($rev_list, $ctx);
 }
 
-sub init {
+sub cmd_init {
 	my $url = shift or die "SVN repository location required " .
 				"as a command-line argument\n";
-	$url =~ s!/+$!!; # strip trailing slash
-
 	if (my $repo_path = shift) {
 		unless (-d $repo_path) {
 			mkpath([$repo_path]);
 		}
-		$GIT_DIR = $ENV{GIT_DIR} = $repo_path . "/.git";
-		init_vars();
+		chdir $repo_path or croak $!;
+		$ENV{GIT_DIR} = $repo_path . "/.git";
 	}
 
-	$SVN_URL = $url;
-	unless (-d $GIT_DIR) {
+	unless (-d $ENV{GIT_DIR}) {
 		my @init_db = ('init');
 		push @init_db, "--template=$_template" if defined $_template;
 		push @init_db, "--shared" if defined $_shared;
 		command_noisy(@init_db);
 	}
-	setup_git_svn();
+	Git::SVN->init(undef, $url);
 }
 
 sub cmd_fetch {
@@ -596,7 +593,7 @@ sub multi_init {
 				print "GIT_SVN_ID set to 'trunk' for ",
 				      "$trunk_url ($_trunk)\n";
 			}
-			init($trunk_url);
+			cmd_init($trunk_url);
 			command_noisy('config', 'svn.trunk', $trunk_url);
 		}
 	}
@@ -917,7 +914,7 @@ sub complete_url_ls_init {
 			init_vars();
 			unless (-d $GIT_SVN_DIR) {
 				print "init $u => $id\n";
-				init($u);
+				cmd_init($u);
 			}
 		}
 		exit 0;
@@ -1582,6 +1579,7 @@ sub find_rev_before {
 
 sub init_vars {
 	$GIT_SVN ||= $ENV{GIT_SVN_ID} || 'git-svn';
+	$Git::SVN::default = $GIT_SVN;
 	$GIT_SVN_DIR = "$GIT_DIR/svn/$GIT_SVN";
 	$REVDB = "$GIT_SVN_DIR/.rev_db";
 	$GIT_SVN_INDEX = "$GIT_SVN_DIR/index";
@@ -1932,7 +1930,7 @@ sub init {
 	mkpath(["$self->{dir}/info"]);
 	if (defined $url) {
 		$url =~ s!/+$!!; # strip trailing slash
-		s_to_file($url, "$self->{dir}/info/url");
+		::s_to_file($url, "$self->{dir}/info/url");
 	}
 	$self->{url} = $url;
 	open my $fh, '>>', $self->{db_path} or croak $!;
@@ -1943,7 +1941,7 @@ sub init {
 sub new {
 	my ($class, $id) = @_;
 	my $self = _new($class, $id);
-	$self->{url} = file_to_s("$self->{dir}/info/url");
+	$self->{url} = ::file_to_s("$self->{dir}/info/url");
 	$self;
 }
 
@@ -1995,9 +1993,9 @@ sub last_rev_commit {
 	if (defined $self->{last_rev} && defined $self->{last_commit}) {
 		return ($self->{last_rev}, $self->{last_commit});
 	}
-	my $c = verify_ref($self->refname.'^0');
+	my $c = ::verify_ref($self->refname.'^0');
 	if (defined $c && length $c) {
-		my $rev = (cmt_metadata($c))[1];
+		my $rev = (::cmt_metadata($c))[1];
 		if (defined $rev) {
 			($self->{last_rev}, $self->{last_commit}) = ($rev, $c);
 			return ($rev, $c);
@@ -2090,7 +2088,7 @@ sub get_commit_parents {
 			push @tmp, $p if $p =~ /^$::sha1_short$/o;
 		}
 	}
-	if (my $cur = verify_ref($self->refname.'^0')) {
+	if (my $cur = ::verify_ref($self->refname.'^0')) {
 		push @tmp, $cur;
 	}
 	push @tmp, $_ foreach (@{$log_msg->{parents}}, @tmp);
@@ -2115,10 +2113,10 @@ sub check_upgrade_needed {
 		open my $fh, '>>', $self->{db_path} or croak $!;
 		close $fh;
 	}
-	return unless verify_ref($self->{id}.'-HEAD^0');
-	my $head = verify_ref($self->refname.'^0');
+	return unless ::verify_ref($self->{id}.'-HEAD^0');
+	my $head = ::verify_ref($self->refname.'^0');
 	if ($@ || !$head) {
-		fatal("Please run: $0 rebuild --upgrade\n");
+		::fatal("Please run: $0 rebuild --upgrade\n");
 	}
 }
 
@@ -2128,7 +2126,7 @@ sub do_git_commit {
 		croak "$log_msg->{revision} = $c already exists! ",
 		      "Why are we refetching it?\n";
 	}
-	my ($name, $email) = author_name_email($log_msg->{author}, $self->ra);
+	my ($name, $email) = ::author_name_email($log_msg->{author}, $self->ra);
 	$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} = $name;
 	$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} = $email;
 	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_msg->{date};
