@@ -833,7 +833,7 @@ Creating a new repository from scratch is very easy:
 -------------------------------------------------
 $ mkdir project
 $ cd project
-$ git init-db
+$ git init
 -------------------------------------------------
 
 If you have some initial content (say, a tarball):
@@ -841,7 +841,7 @@ If you have some initial content (say, a tarball):
 -------------------------------------------------
 $ tar -xzvf project.tar.gz
 $ cd project
-$ git init-db
+$ git init
 $ git add . # include everything below ./ in the first commit:
 $ git commit
 -------------------------------------------------
