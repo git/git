@@ -133,7 +133,7 @@ my %cmd = (
 			  'branch-all-refs|B' => \$_branch_all_refs,
 			  'no-default-regex' => \$_no_default_regex,
 			  'no-graft-copy' => \$_no_graft_copy } ],
-	'multi-init' => [ \&multi_init,
+	'multi-init' => [ \&cmd_multi_init,
 			'Initialize multiple trees (like git-svnimport)',
 			{ %multi_opts, %init_opts,
 			 'revision|r=i' => \$_revision,
@@ -278,6 +278,15 @@ sub rebuild {
 	command_close_pipe($rev_list, $ctx);
 }
 
+sub do_git_init_db {
+	unless (-d $ENV{GIT_DIR}) {
+		my @init_db = ('init');
+		push @init_db, "--template=$_template" if defined $_template;
+		push @init_db, "--shared" if defined $_shared;
+		command_noisy(@init_db);
+	}
+}
+
 sub cmd_init {
 	my $url = shift or die "SVN repository location required " .
 				"as a command-line argument\n";
@@ -288,13 +297,8 @@ sub cmd_init {
 		chdir $repo_path or croak $!;
 		$ENV{GIT_DIR} = $repo_path . "/.git";
 	}
+	do_git_init_db();
 
-	unless (-d $ENV{GIT_DIR}) {
-		my @init_db = ('init');
-		push @init_db, "--template=$_template" if defined $_template;
-		push @init_db, "--shared" if defined $_shared;
-		command_noisy(@init_db);
-	}
 	Git::SVN->init(undef, $url);
 }
 
@@ -575,29 +579,22 @@ sub graft_branches {
 	unlink "$gr_file~$gr_sha1" if $gr_sha1;
 }
 
-sub multi_init {
+sub cmd_multi_init {
 	my $url = shift;
 	unless (defined $_trunk || defined $_branches || defined $_tags) {
 		usage(1);
 	}
+	do_git_init_db();
+	$_prefix = '' unless defined $_prefix;
 	if (defined $_trunk) {
-		my $trunk_url = complete_svn_url($url, $_trunk);
-		my $ch_id;
-		if ($GIT_SVN eq 'git-svn') {
-			$ch_id = 1;
-			$GIT_SVN = $ENV{GIT_SVN_ID} = 'trunk';
-		}
-		init_vars();
-		unless (-d $GIT_SVN_DIR) {
-			if ($ch_id) {
-				print "GIT_SVN_ID set to 'trunk' for ",
-				      "$trunk_url ($_trunk)\n";
-			}
-			cmd_init($trunk_url);
+		my $gs_trunk = eval { Git::SVN->new($_prefix . 'trunk') };
+		unless ($gs_trunk) {
+			my $trunk_url = complete_svn_url($url, $_trunk);
+			$gs_trunk = Git::SVN->init($_prefix . 'trunk',
+			                           $trunk_url);
 			command_noisy('config', 'svn.trunk', $trunk_url);
 		}
 	}
-	$_prefix = '' unless defined $_prefix;
 	complete_url_ls_init($url, $_branches, '--branches/-b', $_prefix);
 	complete_url_ls_init($url, $_tags, '--tags/-t', $_prefix . 'tags/');
 }
@@ -900,27 +897,20 @@ sub complete_url_ls_init {
 	}
 	my $full_url = complete_svn_url($url, $path);
 	my @ls = libsvn_ls_fullurl($full_url);
-	defined(my $pid = fork) or croak $!;
-	if (!$pid) {
-		foreach my $u (map { "$full_url/$_" } (grep m!/$!, @ls)) {
-			$u =~ s#/+$##;
-			if ($u !~ m!\Q$full_url\E/(.+)$!) {
-				print STDERR "W: Unrecognized URL: $u\n";
-				die "This should never happen\n";
-			}
-			# don't try to init already existing refs
-			my $id = $pfx.$1;
-			$GIT_SVN = $ENV{GIT_SVN_ID} = $id;
-			init_vars();
-			unless (-d $GIT_SVN_DIR) {
-				print "init $u => $id\n";
-				cmd_init($u);
-			}
+	foreach my $u (map { "$full_url/$_" } (grep m!/$!, @ls)) {
+		$u =~ s#/+$##;
+		if ($u !~ m!\Q$full_url\E/(.+)$!) {
+			print STDERR "W: Unrecognized URL: $u\n";
+			die "This should never happen\n";
 		}
-		exit 0;
+		# don't try to init already existing refs
+		my $id = $pfx.$1;
+		my $gs = eval { Git::SVN->new($id) };
+		unless ($gs) {
+			print "init $u => $id\n";
+			Git::SVN->init($id, $u);
+		}
 	}
-	waitpid $pid, 0;
-	croak $? if $?;
 	my ($n) = ($switch =~ /^--(\w+)/);
 	command_noisy('config', "svn.$n", $full_url);
 }
