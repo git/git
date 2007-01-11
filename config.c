@@ -694,11 +694,9 @@ int git_config_set_multivar(const char* key, const char* value,
 
 		store.key = (char*)key;
 		if (!store_write_section(fd, key) ||
-		    !store_write_pair(fd, key, value)) {
-			ret = write_error();
-			goto out_free;
-		}
-	} else{
+		    !store_write_pair(fd, key, value))
+			goto write_err_out;
+	} else {
 		struct stat st;
 		char* contents;
 		int i, copy_begin, copy_end, new_line = 0;
@@ -777,31 +775,33 @@ int git_config_set_multivar(const char* key, const char* value,
 
 			/* write the first part of the config */
 			if (copy_end > copy_begin) {
-				write_in_full(fd, contents + copy_begin,
-				copy_end - copy_begin);
-				if (new_line)
-					write_in_full(fd, "\n", 1);
+				if (write_in_full(fd, contents + copy_begin,
+						  copy_end - copy_begin) <
+				    copy_end - copy_begin)
+					goto write_err_out;
+				if (new_line &&
+				    write_in_full(fd, "\n", 1) != 1)
+					goto write_err_out;
 			}
 			copy_begin = store.offset[i];
 		}
 
 		/* write the pair (value == NULL means unset) */
 		if (value != NULL) {
-			if (store.state == START)
-				if (!store_write_section(fd, key)) {
-					ret = write_error();
-					goto out_free;
-				}
-			if (!store_write_pair(fd, key, value)) {
-				ret = write_error();
-				goto out_free;
+			if (store.state == START) {
+				if (!store_write_section(fd, key))
+					goto write_err_out;
 			}
+			if (!store_write_pair(fd, key, value))
+				goto write_err_out;
 		}
 
 		/* write the rest of the config */
 		if (copy_begin < st.st_size)
-			write_in_full(fd, contents + copy_begin,
-				st.st_size - copy_begin);
+			if (write_in_full(fd, contents + copy_begin,
+					  st.st_size - copy_begin) <
+			    st.st_size - copy_begin)
+				goto write_err_out;
 
 		munmap(contents, st.st_size);
 		unlink(config_filename);
@@ -824,6 +824,11 @@ out_free:
 		free(lock_file);
 	}
 	return ret;
+
+write_err_out:
+	ret = write_error();
+	goto out_free;
+
 }
 
 int git_config_rename_section(const char *old_name, const char *new_name)
