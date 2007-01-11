@@ -172,27 +172,44 @@ void quote_argv(const char **dst, const char **src)
 	*dst = NULL;
 }
 
-static int try_shell_exec(const char *cmd, const char **argv, const char **env)
+const char *parse_interpreter(const char *cmd)
 {
-	char buf[100], *p;
-	const char **sh_argv;
-	int n;
-	int fd = open(cmd, O_RDONLY);
+	static char buf[100];
+	char *p;
+	int n, fd;
+
+	/* don't even try a .exe */
+	n = strlen(cmd);
+	if (n >= 4 && !strcasecmp(cmd+n-4, ".exe"))
+		return NULL;
+
+	fd = open(cmd, O_RDONLY);
 	if (fd < 0)
-		return 0;
+		return NULL;
 	n = read(fd, buf, sizeof(buf)-1);
 	close(fd);
-	if (n < 5)	/* at least '#!/sh' and not error */
-		return 0;
+	if (n < 4)	/* at least '#!/x' and not error */
+		return NULL;
 
-	/* check whether the interpreter is sh */
 	if (buf[0] != '#' || buf[1] != '!')
-		return 0;
+		return NULL;
 	buf[n] = '\0';
 	p = strchr(buf, '\n');
-	if (!p ||
-	    (p[-3] != '/' && p[-3] != '\\') ||
-	    p[-2] != 's' || p[-1] != 'h')
+	if (!p)
+		return NULL;
+
+	*p = '\0';
+	if (!(p = strrchr(buf+2, '/')) && !(p = strrchr(buf+2, '\\')))
+		return NULL;
+	return p+1;
+}
+
+static int try_shell_exec(const char *cmd, const char **argv, const char **env)
+{
+	const char **sh_argv;
+	int n;
+	const char *interpr = parse_interpreter(cmd);
+	if (!interpr)
 		return 0;
 
 	/*
@@ -203,7 +220,7 @@ static int try_shell_exec(const char *cmd, const char **argv, const char **env)
 	 */
 	for (n = 0; argv[n];) n++;
 	sh_argv = xmalloc((n+2)*sizeof(char*));
-	sh_argv[0] = "sh";
+	sh_argv[0] = interpr;
 	sh_argv[1] = cmd;
 	quote_argv(&sh_argv[2], &argv[1]);
 	n = spawnvpe(_P_WAIT, "sh", sh_argv, env);

@@ -22,7 +22,6 @@ int spawnvpe_pipe(const char *cmd, const char **argv, const char **env,
 #ifdef __MINGW32__
 	int s0 = -1, s1 = -1, argc;
 	const char **qargv;
-	extern void quote_argv(const char **dst, const char **src);
 
 	if (!cmd_basename)
 		cmd_basename = strrchr(cmd, '\\');

@@ -370,4 +370,7 @@ char *mingw_getcwd(char *pointer, int len);
 #define setlinebuf(x)
 #define fsync(x)
 
+extern void quote_argv(const char **dst, const char **src);
+extern const char *parse_interpreter(const char *cmd);
+
 #endif
