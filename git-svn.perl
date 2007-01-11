@@ -1907,6 +1907,491 @@ sub show_commit_normal {
 	}
 }
 
+package Git::SVN;
+use strict;
+use warnings;
+use vars qw/$default/;
+use Carp qw/croak/;
+use File::Path qw/mkpath/;
+use IPC::Open3;
+
+# properties that we do not log:
+my %SKIP_PROP;
+BEGIN {
+	%SKIP_PROP = map { $_ => 1 } qw/svn:wc:ra_dav:version-url
+	                                svn:special svn:executable
+	                                svn:entry:committed-rev
+	                                svn:entry:last-author
+	                                svn:entry:uuid
+	                                svn:entry:committed-date/;
+}
+
+sub init {
+	my ($class, $id, $url) = @_;
+	my $self = _new($class, $id);
+	mkpath(["$self->{dir}/info"]);
+	if (defined $url) {
+		$url =~ s!/+$!!; # strip trailing slash
+		s_to_file($url, "$self->{dir}/info/url");
+	}
+	$self->{url} = $url;
+	open my $fh, '>>', $self->{db_path} or croak $!;
+	close $fh or croak $!;
+	$self;
+}
+
+sub new {
+	my ($class, $id) = @_;
+	my $self = _new($class, $id);
+	$self->{url} = file_to_s("$self->{dir}/info/url");
+	$self;
+}
+
+sub refname { "refs/remotes/$_[0]->{id}" }
+
+sub ra {
+	my ($self) = shift;
+	$self->{ra} ||= Git::SVN::Ra->new($self->{url});
+}
+
+sub copy_remote_ref {
+	my ($self) = @_;
+	my $origin = $::_cp_remote ? $::_cp_remote : 'origin';
+	my $ref = $self->refname;
+	if (command('ls-remote', $origin, $ref)) {
+		command_noisy('fetch', $origin, "$ref:$ref");
+	} elsif ($::_cp_remote && !$::_upgrade) {
+		die "Unable to find remote reference: $ref on $origin\n";
+	}
+}
+
+sub traverse_ignore {
+	my ($self, $fh, $path, $r) = @_;
+	$path =~ s#^/+##g;
+	my ($dirent, undef, $props) = $self->ra->get_dir($path, $r);
+	my $p = $path;
+	$p =~ s#^\Q$self->{ra}->{svn_path}\E/##;
+	print $fh length $p ? "\n# $p\n" : "\n# /\n";
+	if (my $s = $props->{'svn:ignore'}) {
+		$s =~ s/[\r\n]+/\n/g;
+		chomp $s;
+		if (length $p == 0) {
+			$s =~ s#\n#\n/$p#g;
+			print $fh "/$s\n";
+		} else {
+			$s =~ s#\n#\n/$p/#g;
+			print $fh "/$p/$s\n";
+		}
+	}
+	foreach (sort keys %$dirent) {
+		next if $dirent->{$_}->kind != $SVN::Node::dir;
+		$self->traverse_ignore($fh, "$path/$_", $r);
+	}
+}
+
+# returns the newest SVN revision number and newest commit SHA1
+sub last_rev_commit {
+	my ($self) = @_;
+	if (defined $self->{last_rev} && defined $self->{last_commit}) {
+		return ($self->{last_rev}, $self->{last_commit});
+	}
+	my $c = verify_ref($self->refname.'^0');
+	if (defined $c && length $c) {
+		my $rev = (cmt_metadata($c))[1];
+		if (defined $rev) {
+			($self->{last_rev}, $self->{last_commit}) = ($rev, $c);
+			return ($rev, $c);
+		}
+	}
+	my $offset = -41; # from tail
+	my $rl;
+	open my $fh, '<', $self->{db_path} or
+	                         croak "$self->{db_path} not readable: $!\n";
+	seek $fh, $offset, 2;
+	$rl = readline $fh;
+	defined $rl or return (undef, undef);
+	chomp $rl;
+	while ($c ne $rl && tell $fh != 0) {
+		$offset -= 41;
+		seek $fh, $offset, 2;
+		$rl = readline $fh;
+		defined $rl or return (undef, undef);
+		chomp $rl;
+	}
+	my $rev = tell $fh;
+	croak $! if ($rev < 0);
+	$rev =  ($rev - 41) / 41;
+	close $fh or croak $!;
+	($self->{last_rev}, $self->{last_commit}) = ($rev, $c);
+	return ($rev, $c);
+}
+
+sub parse_revision {
+	my ($self, $base) = @_;
+	my $head = $self->ra->get_latest_revnum;
+	if (!defined $::_revision || $::_revision eq 'BASE:HEAD') {
+		return ($base + 1, $head) if (defined $base);
+		return (0, $head);
+	}
+	return ($1, $2) if ($::_revision =~ /^(\d+):(\d+)$/);
+	return ($::_revision, $::_revision) if ($::_revision =~ /^\d+$/);
+	if ($::_revision =~ /^BASE:(\d+)$/) {
+		return ($base + 1, $1) if (defined $base);
+		return (0, $head);
+	}
+	return ($1, $head) if ($::_revision =~ /^(\d+):HEAD$/);
+	die "revision argument: $::_revision not understood by git-svn\n",
+		"Try using the command-line svn client instead\n";
+}
+
+sub tmp_index_do {
+	my ($self, $sub) = @_;
+	my $old_index = $ENV{GIT_INDEX_FILE};
+	$ENV{GIT_INDEX_FILE} = $self->{index};
+	my @ret = &$sub;
+	if ($old_index) {
+		$ENV{GIT_INDEX_FILE} = $old_index;
+	} else {
+		delete $ENV{GIT_INDEX_FILE};
+	}
+	wantarray ? @ret : $ret[0];
+}
+
+sub assert_index_clean {
+	my ($self, $treeish) = @_;
+
+	$self->tmp_index_do(sub {
+		command_noisy('read-tree', $treeish) unless -e $self->{index};
+		my $x = command_oneline('write-tree');
+		my ($y) = (command(qw/cat-file commit/, $treeish) =~
+		           /^tree ($::sha1)/mo);
+		if ($y ne $x) {
+			unlink $self->{index} or croak $!;
+			command_noisy('read-tree', $treeish);
+		}
+		$x = command_oneline('write-tree');
+		if ($y ne $x) {
+			::fatal "trees ($treeish) $y != $x\n",
+			        "Something is seriously wrong...\n";
+		}
+	});
+}
+
+sub get_commit_parents {
+	my ($self, $log_msg, @parents) = @_;
+	my (%seen, @ret, @tmp);
+	# commit parents can be conditionally bound to a particular
+	# svn revision via: "svn_revno=commit_sha1", filter them out here:
+	foreach my $p (@parents) {
+		next unless defined $p;
+		if ($p =~ /^(\d+)=($::sha1_short)$/o) {
+			push @tmp, $2 if $1 == $log_msg->{revision};
+		} else {
+			push @tmp, $p if $p =~ /^$::sha1_short$/o;
+		}
+	}
+	if (my $cur = verify_ref($self->refname.'^0')) {
+		push @tmp, $cur;
+	}
+	push @tmp, $_ foreach (@{$log_msg->{parents}}, @tmp);
+	while (my $p = shift @tmp) {
+		next if $seen{$p};
+		$seen{$p} = 1;
+		push @ret, $p;
+		# MAXPARENT is defined to 16 in commit-tree.c:
+		last if @ret >= 16;
+	}
+	if (@tmp) {
+		die "r$log_msg->{revision}: No room for parents:\n\t",
+		    join("\n\t", @tmp), "\n";
+	}
+	@ret;
+}
+
+sub check_upgrade_needed {
+	my ($self) = @_;
+	if (!-r $self->{db_path}) {
+		-d $self->{dir} or mkpath([$self->{dir}]);
+		open my $fh, '>>', $self->{db_path} or croak $!;
+		close $fh;
+	}
+	return unless verify_ref($self->{id}.'-HEAD^0');
+	my $head = verify_ref($self->refname.'^0');
+	if ($@ || !$head) {
+		fatal("Please run: $0 rebuild --upgrade\n");
+	}
+}
+
+sub do_git_commit {
+	my ($self, $log_msg, @parents) = @_;
+	if (my $c = $self->rev_db_get($log_msg->{revision})) {
+		croak "$log_msg->{revision} = $c already exists! ",
+		      "Why are we refetching it?\n";
+	}
+	my ($name, $email) = author_name_email($log_msg->{author}, $self->ra);
+	$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} = $name;
+	$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} = $email;
+	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_msg->{date};
+
+	my $tree = $log_msg->{tree};
+	if (!defined $tree) {
+		$tree = $self->tmp_index_do(sub {
+		                            command_oneline('write-tree') });
+	}
+	die "Tree is not a valid sha1: $tree\n" if $tree !~ /^$::sha1$/o;
+
+	my @exec = ('git-commit-tree', $tree);
+	foreach ($self->get_commit_parents($log_msg, @parents)) {
+		push @exec, '-p', $_;
+	}
+	defined(my $pid = open3(my $msg_fh, my $out_fh, '>&STDERR', @exec))
+	                                                           or croak $!;
+	print $msg_fh $log_msg->{log} or croak $!;
+	print $msg_fh "\ngit-svn-id: $self->{ra}->{url}\@$log_msg->{revision}",
+	              " ", $self->ra->uuid,"\n" or croak $!;
+	$msg_fh->flush == 0 or croak $!;
+	close $msg_fh or croak $!;
+	chomp(my $commit = do { local $/; <$out_fh> });
+	close $out_fh or croak $!;
+	waitpid $pid, 0;
+	croak $? if $?;
+	if ($commit !~ /^$::sha1$/o) {
+		die "Failed to commit, invalid sha1: $commit\n";
+	}
+
+	command_noisy('update-ref',$self->refname, $commit);
+	$self->rev_db_set($log_msg->{revision}, $commit);
+
+	$self->{last_rev} = $log_msg->{revision};
+	$self->{last_commit} = $commit;
+	print "r$log_msg->{revision} = $commit\n";
+	return $commit;
+}
+
+sub do_fetch {
+	my ($self, $paths, $rev) = @_; #, $author, $date, $msg) = @_;
+	my $ed = SVN::Git::Fetcher->new($self);
+	my ($last_rev, @parents);
+	if ($self->{last_commit}) {
+		$last_rev = $self->{last_rev};
+		$ed->{c} = $self->{last_commit};
+		@parents = ($self->{last_commit});
+	} else {
+		$last_rev = $rev;
+	}
+	unless ($self->ra->do_update($last_rev, $rev, '', 1, $ed)) {
+		die "SVN connection failed somewhere...\n";
+	}
+	$self->make_log_entry($rev, \@parents, $ed);
+}
+
+sub write_untracked {
+	my ($self, $rev, $fh, $untracked) = @_;
+	my $h;
+	print $fh "r$rev\n" or croak $!;
+	$h = $untracked->{empty};
+	foreach (sort keys %$h) {
+		my $act = $h->{$_} ? '+empty_dir' : '-empty_dir';
+		print $fh "  $act: ", uri_encode($_), "\n" or croak $!;
+		warn "W: $act: $_\n";
+	}
+	foreach my $t (qw/dir_prop file_prop/) {
+		$h = $untracked->{$t} or next;
+		foreach my $path (sort keys %$h) {
+			my $ppath = $path eq '' ? '.' : $path;
+			foreach my $prop (sort keys %{$h->{$path}}) {
+				next if $SKIP{$prop};
+				my $v = $h->{$path}->{$prop};
+				if (defined $v) {
+					print $fh "  +$t: ",
+						  uri_encode($ppath), ' ',
+						  uri_encode($prop), ' ',
+						  uri_encode($v), "\n"
+						  or croak $!;
+				} else {
+					print $fh "  -$t: ",
+						  uri_encode($ppath), ' ',
+						  uri_encode($prop), "\n"
+						  or croak $!;
+				}
+			}
+		}
+	}
+	foreach my $t (qw/absent_file absent_directory/) {
+		$h = $untracked->{$t} or next;
+		foreach my $parent (sort keys %$h) {
+			foreach my $path (sort @{$h->{$parent}}) {
+				print $fh "  $t: ",
+				      uri_encode("$parent/$path"), "\n"
+				      or croak $!;
+				warn "W: $t: $parent/$path ",
+				     "Insufficient permissions?\n";
+			}
+		}
+	}
+}
+
+sub make_log_entry {
+	my ($self, $rev, $parents, $untracked) = @_;
+	my $rp = $self->ra->rev_proplist($rev);
+	my %log_entry = ( parents => $parents || [], revision => $rev,
+	                  revprops => $rp, log => '');
+	open my $un, '>>', "$self->{dir}/unhandled.log" or croak $!;
+	$self->write_untracked($rev, $un, $untracked);
+	foreach (sort keys %$rp) {
+		my $v = $rp->{$_};
+		if (/^svn:(author|date|log)$/) {
+			$log_entry{$1} = $v;
+		} else {
+			print $un "  rev_prop: ", uri_encode($_), ' ',
+		                  uri_encode($v), "\n";
+		}
+	}
+	close $un or croak $!;
+	$log_entry{date} = parse_svn_date($log_entry{date});
+	$log_entry{author} = check_author($log_entry{author});
+	$log_entry{log} .= "\n";
+	\%log_entry;
+}
+
+sub fetch {
+	my ($self, @parents) = @_;
+	my ($last_rev, $last_commit) = $self->last_rev_commit;
+	my ($base, $head) = $self->parse_revision($last_rev);
+	return if ($base > $head);
+	if (defined $last_commit) {
+		$self->assert_index_clean($last_commit);
+	}
+	my $inc = 1000;
+	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
+	my $err_handler = $SVN::Error::handler;
+	$SVN::Error::handler = \&skip_unknown_revs;
+	while (1) {
+		my @revs;
+		$self->ra->get_log([''], $min, $max, 0, 1, 1, sub {
+			my ($paths, $rev, $author, $date, $msg) = @_;
+			push @revs, $rev });
+		foreach (@revs) {
+			my $log_entry = $self->do_fetch(undef, $_);
+			$self->do_git_commit($log_entry, @parents);
+		}
+		last if $max >= $head;
+		$min = $max + 1;
+		$max += $inc;
+		$max = $head if ($max > $head);
+	}
+	$SVN::Error::handler = $err_handler;
+}
+
+sub set_tree_cb {
+	my ($self, $log_entry, $tree, $rev, $date, $author) = @_;
+	# TODO: enable and test optimized commits:
+	if (0 && $rev == ($self->{last_rev} + 1)) {
+		$log_entry->{revision} = $rev;
+		$log_entry->{author} = $author;
+		$self->do_git_commit($log_entry, "$rev=$tree");
+	} else {
+		$self->fetch("$rev=$tree");
+	}
+}
+
+sub set_tree {
+	my ($self, $tree) = (shift, shift);
+	my $log_entry = get_commit_entry($tree);
+	unless ($self->{last_rev}) {
+		fatal("Must have an existing revision to commit\n");
+	}
+	my $pool = SVN::Pool->new;
+	my $ed = SVN::Git::Editor->new({ r => $self->{last_rev},
+	                                 ra => $self->ra->dup,
+	                                 c => $tree,
+	                                 svn_path => $self->ra->{svn_path}
+	                               },
+	                               $self->ra->get_commit_editor(
+	                                 $log_entry->{log}, sub {
+	                                   $self->set_tree_cb($log_entry,
+					                      $tree, @_);
+	                               }),
+	                               $pool);
+	my $mods = $ed->apply_diff($self->{last_commit}, $tree);
+	if (@$mods == 0) {
+		print "No changes\nr$self->{last_rev} = $tree\n";
+	}
+	$pool->clear;
+}
+
+sub skip_unknown_revs {
+	my ($err) = @_;
+	my $errno = $err->apr_err();
+	# Maybe the branch we're tracking didn't
+	# exist when the repo started, so it's
+	# not an error if it doesn't, just continue
+	#
+	# Wonderfully consistent library, eh?
+	# 160013 - svn:// and file://
+	# 175002 - http(s)://
+	# 175007 - http(s):// (this repo required authorization, too...)
+	#   More codes may be discovered later...
+	if ($errno == 175007 || $errno == 175002 || $errno == 160013) {
+		return;
+	}
+	croak "Error from SVN, ($errno): ", $err->expanded_message,"\n";
+}
+
+# rev_db:
+# Tie::File seems to be prone to offset errors if revisions get sparse,
+# it's not that fast, either.  Tie::File is also not in Perl 5.6.  So
+# one of my favorite modules is out :<  Next up would be one of the DBM
+# modules, but I'm not sure which is most portable...  So I'll just
+# go with something that's plain-text, but still capable of
+# being randomly accessed.  So here's my ultra-simple fixed-width
+# database.  All records are 40 characters + "\n", so it's easy to seek
+# to a revision: (41 * rev) is the byte offset.
+# A record of 40 0s denotes an empty revision.
+# And yes, it's still pretty fast (faster than Tie::File).
+
+sub rev_db_set {
+	my ($self, $rev, $commit) = @_;
+	length $commit == 40 or croak "arg3 must be a full SHA1 hexsum\n";
+	open my $fh, '+<', $self->{db_path} or croak $!;
+	my $offset = $rev * 41;
+	# assume that append is the common case:
+	seek $fh, 0, 2 or croak $!;
+	my $pos = tell $fh;
+	if ($pos < $offset) {
+		print $fh (('0' x 40),"\n") x (($offset - $pos) / 41)
+		  or croak $!;
+	}
+	seek $fh, $offset, 0 or croak $!;
+	print $fh $commit,"\n" or croak $!;
+	close $fh or croak $!;
+}
+
+sub rev_db_get {
+	my ($self, $rev) = @_;
+	my $ret;
+	my $offset = $rev * 41;
+	open my $fh, '<', $self->{db_path} or croak $!;
+	if (seek $fh, $offset, 0) {
+		$ret = readline $fh;
+		if (defined $ret) {
+			chomp $ret;
+			$ret = undef if ($ret =~ /^0{40}$/);
+		}
+	}
+	close $fh or croak $!;
+	$ret;
+}
+
+sub _new {
+	my ($class, $id) = @_;
+	$id ||= $Git::SVN::default;
+	my $dir = "$ENV{GIT_DIR}/svn/$id";
+	bless { id => $id, dir => $dir, index => "$dir/index",
+	        db_path => "$dir/.rev_db" }, $class;
+}
+
+
 package Git::SVN::Prompt;
 use strict;
 use warnings;
