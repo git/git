@@ -161,7 +161,7 @@ index 8be626f..d7aac9d 100644
 As you can see, a commit shows who made the latest change, what they
 did, and why.
 
-Every commit has a 20-digit id, sometimes called the "SHA1 id", shown
+Every commit has a 40-hexdigit id, sometimes called the "SHA1 id", shown
 on the first line of the "git show" output.  You can usually refer to
 a commit by a shorter name, such as a tag or a branch name, but this
 longer id can also be useful.  In particular, it is a globally unique
@@ -486,7 +486,7 @@ create similar configuration options to save typing; for example,
 after
 
 -------------------------------------------------
-$ git repo-config remote.example.url=git://example.com/proj.git
+$ git repo-config remote.example.url git://example.com/proj.git
 -------------------------------------------------
 
 then the following two commands will do the same thing:
@@ -499,7 +499,7 @@ $ git fetch example master:refs/remotes/example/master
 Even better, if you add one more option:
 
 -------------------------------------------------
-$ git repo-config remote.example.fetch=master:refs/remotes/example/master
+$ git repo-config remote.example.fetch master:refs/remotes/example/master
 -------------------------------------------------
 
 then the following commands will all do the same thing:
@@ -514,7 +514,7 @@ $ git fetch example
 You can also add a "+" to force the update each time:
 
 -------------------------------------------------
-$ git repo-config +master:ref/remotes/example/master
+$ git repo-config remote.example.fetch +master:ref/remotes/example/master
 -------------------------------------------------
 
 Don't do this unless you're sure you won't mind "git fetch" possibly
@@ -613,7 +613,7 @@ Naming commits
 
 We have seen several ways of naming commits already:
 
-	- 20-digit SHA1 id
+	- 40-hexdigit SHA1 id
 	- branch name: refers to the commit at the head of the given
 	  branch
 	- tag name: refers to the commit pointed to by the given tag
@@ -621,7 +621,7 @@ We have seen several ways of naming commits already:
 	  <<how-git-stores-references,references>>).
 	- HEAD: refers to the head of the current branch
 
-There are many more; see the "SPECIFYING REVISION" section of the
+There are many more; see the "SPECIFYING REVISIONS" section of the
 gitlink:git-rev-parse[1] man page for the complete list of ways to
 name revisions.  Some examples:
 
@@ -867,6 +867,14 @@ By default, the content of the index is identical to that of the
 HEAD.  The command "git diff --cached" shows the difference between
 HEAD and the index, so you should no output from that command.
 
+////////////////////////////////////////////////
+
+This is talking about not "by default", but "when you start
+out".  The last sentence does not parse for me...
+
+////////////////////////////////////////////////
+
+
 Modifying the index is easy:
 
 To update the index with the new contents of a modified file, use
@@ -881,8 +889,7 @@ To add the contents of a new file to the index, use
 $ git add path/to/file
 -------------------------------------------------
 
-To remove a file from the index that you've removed from the working
-tree,
+To remove a file from the index and from the working tree,
 
 -------------------------------------------------
 $ git rm path/to/file
@@ -1306,7 +1313,7 @@ just be to send them as patches in email:
 First, use gitlink:git-format-patches[1]; for example:
 
 -------------------------------------------------
-$ git format-patches origin
+$ git format-patch origin
 -------------------------------------------------
 
 will produce a numbered series of files in the current directory, one
@@ -1327,8 +1334,17 @@ Just save all of the patch-containing messages, in order, into a
 single mailbox file, say "patches.mbox", then run
 
 -------------------------------------------------
-$ git am patches.mbox
+$ git am -3 patches.mbox
 -------------------------------------------------
+
+////////////////////////////////////////////////
+
+If you allow git-am to fall back to 3-way merge with -3, you
+would see conflicts and "resolving a merge" techniques apply.
+Otherwise "conflicts" will just fail the patch and your working
+tree and index are left untouched.
+
+////////////////////////////////////////////////
 
 Git will apply each patch in order; if any conflicts are found, it
 will stop, and you can fix the conflicts as described in
