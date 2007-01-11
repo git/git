@@ -26,6 +26,8 @@ void read_or_die(int fd, void *buf, size_t count)
 {
 	ssize_t loaded;
 
+	if (!count)
+		return;
 	loaded = read_in_full(fd, buf, count);
 	if (loaded == 0)
 		die("unexpected end of file");
@@ -58,6 +60,8 @@ void write_or_die(int fd, const void *buf, size_t count)
 {
 	ssize_t written;
 
+	if (!count)
+		return;
 	written = write_in_full(fd, buf, count);
 	if (written == 0)
 		die("disk full?");
@@ -72,6 +76,8 @@ int write_or_whine_pipe(int fd, const void *buf, size_t count, const char *msg)
 {
 	ssize_t written;
 
+	if (!count)
+		return 1;
 	written = write_in_full(fd, buf, count);
 	if (written == 0) {
 		fprintf(stderr, "%s: disk full?\n", msg);
@@ -92,6 +98,8 @@ int write_or_whine(int fd, const void *buf, size_t count, const char *msg)
 {
 	ssize_t written;
 
+	if (!count)
+		return 1;
 	written = write_in_full(fd, buf, count);
 	if (written == 0) {
 		fprintf(stderr, "%s: disk full?\n", msg);
