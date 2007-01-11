@@ -49,11 +49,20 @@ use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev pass_through/;
 use POSIX qw/strftime/;
 use IPC::Open3;
 use Memoize;
-use Git qw/command command_oneline command_noisy
-           command_output_pipe command_input_pipe command_close_pipe/;
+use Git;
 memoize('revisions_eq');
 memoize('cmt_metadata');
 memoize('get_commit_time');
+
+BEGIN {
+	my $s;
+	foreach (qw/command command_oneline command_noisy command_output_pipe
+	            command_input_pipe command_close_pipe/) {
+		$s .= "*SVN::Git::Editor::$_ = *SVN::Git::Fetcher::$_ = ".
+		      "*$_ = *Git::$_; ";
+	}
+	eval $s;
+}
 
 my ($SVN);
 
@@ -61,7 +70,7 @@ my $_optimize_commits = 1 unless $ENV{GIT_SVN_NO_OPTIMIZE_COMMITS};
 my $sha1 = qr/[a-f\d]{40}/;
 my $sha1_short = qr/[a-f\d]{4,40}/;
 my $_esc_color = qr/(?:\033\[(?:(?:\d+;)*\d*)?m)*/;
-my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
+my ($_revision,$_stdin,$_help,$_rmdir,$_edit,
 	$_find_copies_harder, $_l, $_cp_similarity, $_cp_remote,
 	$_repack, $_repack_nr, $_repack_flags, $_q,
 	$_message, $_file, $_no_metadata,
@@ -70,13 +79,11 @@ my ($_revision,$_stdin,$_no_ignore_ext,$_no_stop_copy,$_help,$_rmdir,$_edit,
 	$_version, $_upgrade, $_authors, $_branch_all_refs, @_opt_m,
 	$_merge, $_strategy, $_dry_run, $_ignore_nodate, $_non_recursive,
 	$_pager, $_color, $_prefix);
-my (@_branch_from, %tree_map, %users, %rusers, %equiv);
-my ($_svn_can_do_switch);
+my (@_branch_from, %tree_map, %users, %rusers);
 my @repo_path_split_cache;
 use vars qw/$_follow_parent/;
 
-my %fc_opts = ( 'no-ignore-externals' => \$_no_ignore_ext,
-		'branch|b=s' => \@_branch_from,
+my %fc_opts = ( 'branch|b=s' => \@_branch_from,
 		'follow-parent|follow' => \$_follow_parent,
 		'branch-all-refs|B' => \$_branch_all_refs,
 		'authors-file|A=s' => \$_authors,
@@ -117,8 +124,7 @@ my %cmd = (
 	'show-ignore' => [ \&show_ignore, "Show svn:ignore listings",
 			{ 'revision|r=i' => \$_revision } ],
 	rebuild => [ \&rebuild, "Rebuild git-svn metadata (after git clone)",
-			{ 'no-ignore-externals' => \$_no_ignore_ext,
-			  'copy-remote|remote=s' => \$_cp_remote,
+			{ 'copy-remote|remote=s' => \$_cp_remote,
 			  'upgrade' => \$_upgrade } ],
 	'graft-branches' => [ \&graft_branches,
 			'Detect merges/branches from already imported history',
@@ -2476,8 +2482,6 @@ use strict;
 use warnings;
 use Carp qw/croak/;
 use IO::File qw//;
-use Git qw/command command_oneline command_noisy
-           command_output_pipe command_input_pipe command_close_pipe/;
 
 # file baton members: path, mode_a, mode_b, pool, fh, blob, base
 sub new {
@@ -2684,8 +2688,6 @@ use strict;
 use warnings;
 use Carp qw/croak/;
 use IO::File;
-use Git qw/command command_oneline command_noisy
-           command_output_pipe command_input_pipe command_close_pipe/;
 
 sub new {
 	my $class = shift;
