@@ -173,7 +173,6 @@ static int keep_entry(struct commit **it, unsigned char *sha1)
 {
 	struct commit *commit;
 
-	*it = NULL;
 	if (is_null_sha1(sha1))
 		return 1;
 	commit = lookup_commit_reference_gently(sha1, 1);
@@ -204,15 +203,22 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 	if (timestamp < cb->cmd->expire_total)
 		goto prune;
 
+	old = new = NULL;
 	if (cb->cmd->stalefix &&
 	    (!keep_entry(&old, osha1) || !keep_entry(&new, nsha1)))
 		goto prune;
 
-	if ((timestamp < cb->cmd->expire_unreachable) &&
-	    (!cb->ref_commit ||
-	     (old && !in_merge_bases(old, &cb->ref_commit, 1)) ||
-	     (new && !in_merge_bases(new, &cb->ref_commit, 1))))
-		goto prune;
+	if (timestamp < cb->cmd->expire_unreachable) {
+		if (!cb->ref_commit)
+			goto prune;
+		if (!old && !is_null_sha1(osha1))
+			old = lookup_commit_reference_gently(osha1, 1);
+		if (!new && !is_null_sha1(nsha1))
+			new = lookup_commit_reference_gently(nsha1, 1);
+		if ((old && !in_merge_bases(old, &cb->ref_commit, 1)) ||
+		    (new && !in_merge_bases(new, &cb->ref_commit, 1)))
+			goto prune;
+	}
 
 	if (cb->newlog) {
 		char sign = (tz < 0) ? '-' : '+';
