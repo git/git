@@ -15,7 +15,13 @@ static char wt_status_colors[][COLOR_MAXLEN] = {
 	"\033[31m", /* WT_STATUS_CHANGED: red */
 	"\033[31m", /* WT_STATUS_UNTRACKED: red */
 };
-static const char* use_add_msg = "use \"git add <file>...\" to incrementally add content to commit";
+
+static const char use_add_msg[] =
+"use \"git add <file>...\" to update what will be committed";
+static const char use_add_rm_msg[] =
+"use \"git add/rm <file>...\" to update what will be committed";
+static const char use_add_to_include_msg[] =
+"use \"git add <file>...\" to include in what will be committed";
 
 static int parse_status_slot(const char *var, int offset)
 {
@@ -177,8 +183,14 @@ static void wt_status_print_changed_cb(struct diff_queue_struct *q,
 	struct wt_status *s = data;
 	int i;
 	if (q->nr) {
+		const char *msg = use_add_msg;
 		s->workdir_dirty = 1;
-		wt_status_print_header("Changed but not added", use_add_msg);
+		for (i = 0; i < q->nr; i++)
+			if (q->queue[i]->status == DIFF_STATUS_DELETED) {
+				msg = use_add_rm_msg;
+				break;
+			}
+		wt_status_print_header("Changed but not updated", msg);
 	}
 	for (i = 0; i < q->nr; i++)
 		wt_status_print_filepair(WT_STATUS_CHANGED, q->queue[i]);
@@ -265,7 +277,8 @@ static void wt_status_print_untracked(struct wt_status *s)
 		}
 		if (!shown_header) {
 			s->workdir_untracked = 1;
-			wt_status_print_header("Untracked files", use_add_msg);
+			wt_status_print_header("Untracked files",
+					       use_add_to_include_msg);
 			shown_header = 1;
 		}
 		color_printf(color(WT_STATUS_HEADER), "#\t");

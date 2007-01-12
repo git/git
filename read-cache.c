@@ -1010,7 +1010,7 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 		if (data &&
 		    !write_index_ext_header(&c, newfd, CACHE_EXT_TREE, sz) &&
 		    !ce_write(&c, newfd, data, sz))
-			;
+			free(data);
 		else {
 			free(data);
 			return -1;

@@ -202,6 +202,8 @@ static inline void *xmmap(void *start, size_t length,
 {
 	void *ret = mmap(start, length, prot, flags, fd, offset);
 	if (ret == MAP_FAILED) {
+		if (!length)
+			return NULL;
 		release_pack_memory(length);
 		ret = mmap(start, length, prot, flags, fd, offset);
 		if (ret == MAP_FAILED)

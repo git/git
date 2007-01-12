@@ -290,7 +290,7 @@ static int fsck_sha1(unsigned char *sha1)
 {
 	struct object *obj = parse_object(sha1);
 	if (!obj)
-		return error("%s: object not found", sha1_to_hex(sha1));
+		return error("%s: object corrupt or missing", sha1_to_hex(sha1));
 	if (obj->flags & SEEN)
 		return 0;
 	obj->flags |= SEEN;

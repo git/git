@@ -32,6 +32,10 @@ static int remove_file(const char *name)
 	char *slash;
 
 	ret = unlink(name);
+	if (ret && errno == ENOENT)
+		/* The user has removed it from the filesystem by hand */
+		ret = errno = 0;
+
 	if (!ret && (slash = strrchr(name, '/'))) {
 		char *n = xstrdup(name);
 		do {
@@ -204,7 +208,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		return 0;
 
 	/*
-	 * Then, unless we used "--cache", remove the filenames from
+	 * Then, unless we used "--cached", remove the filenames from
 	 * the workspace. If we fail to remove the first one, we
 	 * abort the "git rm" (but once we've successfully removed
 	 * any file at all, we'll go ahead and commit to it all:
