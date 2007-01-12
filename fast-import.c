@@ -36,7 +36,9 @@ Format of STDIN stream:
     tag_msg;
   tag_msg ::= data;
 
-  reset_branch ::= 'reset' sp ref_str lf;
+  reset_branch ::= 'reset' sp ref_str lf
+    ('from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)?
+    lf;
 
      # note: the first idnum in a stream should be 1 and subsequent
      # idnums should not have gaps between values as this will cause
@@ -1794,8 +1796,12 @@ static void cmd_reset_branch()
 			b->branch_tree.tree = NULL;
 		}
 	}
+	else
+		b = new_branch(sp);
 	if (str_uq)
 		free(str_uq);
+	read_next_command();
+	cmd_from(b);
 }
 
 static const char fast_import_usage[] =
