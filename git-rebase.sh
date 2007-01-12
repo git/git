@@ -27,9 +27,12 @@ Example:       git-rebase master~1 topic
        /                   -->           /
   D---E---F---G master          D---E---F---G master
 '
+
+SUBDIRECTORY_OK=Yes
 . git-sh-setup
 set_reflog_action rebase
 require_work_tree
+cd_to_toplevel
 
 RESOLVEMSG="
 When you have resolved this problem run \"git rebase --continue\".
