@@ -135,11 +135,7 @@ fi
 
 # We are switching branches and checking out trees, so
 # we *NEED* to be at the toplevel.
-cdup=$(git-rev-parse --show-cdup)
-if test ! -z "$cdup"
-then
-	cd "$cdup"
-fi
+cd_to_toplevel
 
 [ -z "$new" ] && new=$old && new_name="$old_name"
 
