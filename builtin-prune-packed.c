@@ -4,7 +4,10 @@
 static const char prune_packed_usage[] =
 "git-prune-packed [-n]";
 
-static void prune_dir(int i, DIR *dir, char *pathname, int len, int dryrun)
+#define DRY_RUN 01
+#define VERBOSE 02
+
+static void prune_dir(int i, DIR *dir, char *pathname, int len, int opts)
 {
 	struct dirent *de;
 	char hex[40];
@@ -20,7 +23,7 @@ static void prune_dir(int i, DIR *dir, char *pathname, int len, int dryrun)
 		if (!has_sha1_pack(sha1, NULL))
 			continue;
 		memcpy(pathname + len, de->d_name, 38);
-		if (dryrun)
+		if (opts & DRY_RUN)
 			printf("rm -f %s\n", pathname);
 		else if (unlink(pathname) < 0)
 			error("unable to unlink %s", pathname);
@@ -29,7 +32,7 @@ static void prune_dir(int i, DIR *dir, char *pathname, int len, int dryrun)
 	rmdir(pathname);
 }
 
-void prune_packed_objects(int dryrun)
+void prune_packed_objects(int opts)
 {
 	int i;
 	static char pathname[PATH_MAX];
@@ -46,24 +49,31 @@ void prune_packed_objects(int dryrun)
 
 		sprintf(pathname + len, "%02x/", i);
 		d = opendir(pathname);
+		if (opts == VERBOSE && (d || i == 255))
+			fprintf(stderr, "Removing unused objects %d%%...\015",
+				((i+1) * 100) / 256);
 		if (!d)
 			continue;
-		prune_dir(i, d, pathname, len + 3, dryrun);
+		prune_dir(i, d, pathname, len + 3, opts);
 		closedir(d);
 	}
+	if (opts == VERBOSE)
+		fprintf(stderr, "\nDone.\n");
 }
 
 int cmd_prune_packed(int argc, const char **argv, const char *prefix)
 {
 	int i;
-	int dryrun = 0;
+	int opts = VERBOSE;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
 		if (*arg == '-') {
 			if (!strcmp(arg, "-n"))
-				dryrun = 1;
+				opts |= DRY_RUN;
+			else if (!strcmp(arg, "-q"))
+				opts &= ~VERBOSE;
 			else
 				usage(prune_packed_usage);
 			continue;
@@ -72,6 +82,6 @@ int cmd_prune_packed(int argc, const char **argv, const char *prefix)
 		usage(prune_packed_usage);
 	}
 	sync();
-	prune_packed_objects(dryrun);
+	prune_packed_objects(opts);
 	return 0;
 }

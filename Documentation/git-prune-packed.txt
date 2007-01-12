@@ -9,7 +9,7 @@ residing in a pack file.
 
 SYNOPSIS
 --------
-'git-prune-packed' [-n]
+'git-prune-packed' [-n] [-q]
 
 
 DESCRIPTION
@@ -31,6 +31,9 @@ OPTIONS
 -n::
         Don't actually remove any objects, only show those that would have been
         removed.
+
+-q::
+	Squelch the progress indicator.
 
 Author
 ------
