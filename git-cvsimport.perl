@@ -520,7 +520,7 @@ $orig_git_index = $ENV{GIT_INDEX_FILE} if exists $ENV{GIT_INDEX_FILE};
 my %index; # holds filenames of one index per branch
 
 unless (-d $git_dir) {
-	system("git-init-db");
+	system("git-init");
 	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
 	system("git-read-tree");
 	die "Cannot init an empty tree: $?\n" if $?;
@@ -660,7 +660,7 @@ $ignorebranch{'#CVSPS_NO_BRANCH'} = 1;
 sub commit {
 	if ($branch eq $opt_o && !$index{branch} && !get_headref($branch, $git_dir)) {
 	    # looks like an initial commit
-	    # use the index primed by git-init-db
+	    # use the index primed by git-init
 	    $ENV{GIT_INDEX_FILE} = '.git/index';
 	    $index{$branch} = '.git/index';
 	} else {

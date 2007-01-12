@@ -286,7 +286,7 @@ sub init {
 
 	$SVN_URL = $url;
 	unless (-d $GIT_DIR) {
-		my @init_db = ('init-db');
+		my @init_db = ('init');
 		push @init_db, "--template=$_template" if defined $_template;
 		push @init_db, "--shared" if defined $_shared;
 		command_noisy(@init_db);

@@ -79,9 +79,7 @@ was primarily meant to initialize the object database, but over
 time it has become responsible for setting up the other aspects
 of the repository, such as installing the default hooks and
 setting the configuration variables.  The old name is retained
-because people are so used to it and many existing documents
-refer to it that way, and this will not change for some time to
-come.
+for backward compatibility reasons.
 
 
 EXAMPLES

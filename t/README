@@ -18,7 +18,7 @@ The easiest way to run tests is to say "make".  This runs all
 the tests.
 
     *** t0000-basic.sh ***
-    *   ok 1: .git/objects should be empty after git-init-db in an empty repo.
+    *   ok 1: .git/objects should be empty after git-init in an empty repo.
     *   ok 2: .git/objects should have 256 subdirectories.
     *   ok 3: git-update-index without --add should fail adding.
     ...

@@ -31,12 +31,12 @@ fi
 . ./test-lib.sh
 
 ################################################################
-# init-db has been done in an empty repository.
+# git-init has been done in an empty repository.
 # make sure it is empty.
 
 find .git/objects -type f -print >should-be-empty
 test_expect_success \
-    '.git/objects should be empty after git-init-db in an empty repo.' \
+    '.git/objects should be empty after git-init in an empty repo.' \
     'cmp -s /dev/null should-be-empty' 
 
 # also it should have 2 subdirectories; no fan-out anymore, pack, and info.

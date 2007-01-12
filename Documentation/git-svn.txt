@@ -171,7 +171,7 @@ OPTIONS
 --shared::
 --template=<template_directory>::
 	Only used with the 'init' command.
-	These are passed directly to gitlink:git-init-db[1].
+	These are passed directly to gitlink:git-init[1].
 
 -r <ARG>::
 --revision <ARG>::
@@ -367,7 +367,7 @@ Basic Examples
 Tracking and contributing to a the trunk of a Subversion-managed project:
 
 ------------------------------------------------------------------------
-# Initialize a repo (like git init-db):
+# Initialize a repo (like git init):
 	git-svn init http://svn.foo.org/project/trunk
 # Fetch remote revisions:
 	git-svn fetch
@@ -388,7 +388,7 @@ See also:
 '<<tracking-multiple-repos,Tracking Multiple Repositories or Branches>>'
 
 ------------------------------------------------------------------------
-# Initialize a repo (like git init-db):
+# Initialize a repo (like git init):
 	git-svn multi-init http://svn.foo.org/project \
 		-T trunk -b branches -t tags
 # Fetch remote revisions:

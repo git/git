@@ -3,7 +3,7 @@ Hooks used by git
 
 Hooks are little scripts you can place in `$GIT_DIR/hooks`
 directory to trigger action at certain points.  When
-`git-init-db` is run, a handful example hooks are copied in the
+`git-init` is run, a handful example hooks are copied in the
 `hooks` directory of the new repository, but by default they are
 all disabled.  To enable a hook, make it executable with `chmod +x`.
 

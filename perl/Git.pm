@@ -63,7 +63,7 @@ for doing easily operations which are not totally trivial to do over
 the generic command interface.
 
 While some commands can be executed outside of any context (e.g. 'version'
-or 'init-db'), most operations require a repository context, which in practice
+or 'init'), most operations require a repository context, which in practice
 means getting an instance of the Git object using the repository() constructor.
 (In the future, we will also get a new_repository() constructor.) All commands
 called as methods of the object are then executed in the context of the

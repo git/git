@@ -88,7 +88,7 @@ test_expect_success \
 
 test_expect_success "Michael Cassar's test case" '
 	rm -fr .git papers partA &&
-	git init-db &&
+	git init &&
 	mkdir -p papers/unsorted papers/all-papers partA &&
 	echo a > papers/unsorted/Thesis.pdf &&
 	echo b > partA/outline.txt &&
@@ -109,7 +109,7 @@ rm -fr papers partA path?
 
 test_expect_success "Sergey Vlasov's test case" '
 	rm -fr .git &&
-	git init-db &&
+	git init &&
 	mkdir ab &&
 	date >ab.c &&
 	date >ab/d &&

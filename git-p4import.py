@@ -163,7 +163,7 @@ class git_command:
             self.gitdir = self.get_single("rev-parse --git-dir")
             report(2, "gdir:", self.gitdir)
         except:
-            die("Not a git repository... did you forget to \"git init-db\" ?")
+            die("Not a git repository... did you forget to \"git init\" ?")
         try:
             self.cdup = self.get_single("rev-parse --show-cdup")
             if self.cdup != "":

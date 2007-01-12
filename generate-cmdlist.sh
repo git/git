@@ -22,7 +22,7 @@ commit
 diff
 fetch
 grep
-init-db
+init
 log
 merge
 mv
