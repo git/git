@@ -1066,13 +1066,10 @@ static int merge_trees(struct tree *head,
 		path_list_clear(re_head, 0);
 		path_list_clear(entries, 1);
 
-	} else {
-		clean = 1;
-		printf("merging of trees %s and %s resulted in %s\n",
-		       sha1_to_hex(head->object.sha1),
-		       sha1_to_hex(merge->object.sha1),
-		       sha1_to_hex((*result)->object.sha1));
 	}
+	else
+		clean = 1;
+
 	if (index_only)
 		*result = git_write_tree();
 
