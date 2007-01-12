@@ -14,6 +14,7 @@ When optional <paths>... arguments are given, the paths
 affected are further limited to those that match them.'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
+require_work_tree
 
 ignored=
 ignoredonly=

@@ -28,6 +28,19 @@ set_reflog_action() {
 	fi
 }
 
+is_bare_repository () {
+	git-repo-config --bool --get core.bare ||
+	case "$GIT_DIR" in
+	.git | */.git) echo false ;;
+	*) echo true ;;
+	esac
+}
+
+require_work_tree () {
+	test $(is_bare_repository) = false ||
+	die "fatal: $0 cannot be used without a working tree."
+}
+
 if [ -z "$LONG_USAGE" ]
 then
 	LONG_USAGE="Usage: $0 $USAGE"

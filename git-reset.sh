@@ -6,6 +6,7 @@ USAGE='[--mixed | --soft | --hard]  [<commit-ish>] [ [--] <paths>...]'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 set_reflog_action "reset $*"
+require_work_tree
 
 update= reset_type=--mixed
 unset rev
