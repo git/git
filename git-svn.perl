@@ -7,7 +7,8 @@ use vars qw/	$AUTHOR $VERSION
 		$SVN_URL
 		$GIT_SVN_INDEX $GIT_SVN
 		$GIT_DIR $GIT_SVN_DIR $REVDB
-		$_follow_parent $sha1 $sha1_short/;
+		$_follow_parent $sha1 $sha1_short $_revision
+		$_cp_remote $_upgrade/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
@@ -69,8 +70,8 @@ my ($SVN);
 my $_optimize_commits = 1 unless $ENV{GIT_SVN_NO_OPTIMIZE_COMMITS};
 $sha1 = qr/[a-f\d]{40}/;
 $sha1_short = qr/[a-f\d]{4,40}/;
-my ($_revision,$_stdin,$_help,$_rmdir,$_edit,
-	$_find_copies_harder, $_l, $_cp_similarity, $_cp_remote,
+my ($_stdin,$_help,$_rmdir,$_edit,
+	$_find_copies_harder, $_l, $_cp_similarity,
 	$_repack, $_repack_nr, $_repack_flags, $_q,
 	$_message, $_file, $_no_metadata,
 	$_template, $_shared, $_no_default_regex, $_no_graft_copy,
@@ -119,7 +120,7 @@ my %cmd = (
 			{	'stdin|' => \$_stdin, %cmt_opts, %fc_opts, } ],
 	'show-ignore' => [ \&cmd_show_ignore, "Show svn:ignore listings",
 			{ 'revision|r=i' => \$_revision } ],
-	rebuild => [ \&rebuild, "Rebuild git-svn metadata (after git clone)",
+	rebuild => [ \&cmd_rebuild, "Rebuild git-svn metadata (after git clone)",
 			{ 'copy-remote|remote=s' => \$_cp_remote,
 			  'upgrade' => \$_upgrade } ],
 	'graft-branches' => [ \&graft_branches,
@@ -223,53 +224,48 @@ sub version {
 	exit 0;
 }
 
-sub rebuild {
-	if (!verify_ref("refs/remotes/$GIT_SVN^0")) {
-		copy_remote_ref();
+sub cmd_rebuild {
+	my $url = shift;
+	my $gs = $url ? Git::SVN->init(undef, $url)
+	              : eval { Git::SVN->new };
+	$gs ||= Git::SVN->_new;
+	if (!verify_ref($gs->refname.'^0')) {
+		$gs->copy_remote_ref;
 	}
-	$SVN_URL = shift or undef;
-	my $newest_rev = 0;
 	if ($_upgrade) {
-		command_noisy('update-ref',"refs/remotes/$GIT_SVN","
-		              $GIT_SVN-HEAD");
+		command_noisy('update-ref',$gs->refname, $gs->{id}.'-HEAD');
 	} else {
-		check_upgrade_needed();
+		$gs->check_upgrade_needed;
 	}
 
-	my ($rev_list, $ctx) = command_output_pipe("rev-list",
-	                                           "refs/remotes/$GIT_SVN");
+	my ($rev_list, $ctx) = command_output_pipe("rev-list", $gs->refname);
 	my $latest;
 	my $svn_uuid;
 	while (<$rev_list>) {
 		chomp;
 		my $c = $_;
-		croak "Non-SHA1: $c\n" unless $c =~ /^$sha1$/o;
-		my @commit = grep(/^git-svn-id: /,
-		                  command(qw/cat-file commit/, $c));
-		next if (!@commit); # skip merges
-		my ($url, $rev, $uuid) = extract_metadata($commit[$#commit]);
-		if (!defined $rev || !$uuid) {
-			croak "Unable to extract revision or UUID from ",
-				"$c, $commit[$#commit]\n";
-		}
+		fatal "Non-SHA1: $c\n" unless $c =~ /^$sha1$/o;
+		my ($url, $rev, $uuid) = cmt_metadata($c);
+
+		# ignore merges (from set-tree)
+		next if (!defined $rev || !$uuid);
 
 		# if we merged or otherwise started elsewhere, this is
 		# how we break out of it
-		next if (defined $svn_uuid && ($uuid ne $svn_uuid));
-		next if (defined $SVN_URL && defined $url && ($url ne $SVN_URL));
+		if ((defined $svn_uuid && ($uuid ne $svn_uuid)) ||
+		    ($gs->{url} && $url && ($url ne $gs->{url}))) {
+			next;
+		}
 
 		unless (defined $latest) {
-			if (!$SVN_URL && !$url) {
-				croak "SVN repository location required: $url\n";
+			if (!$gs->{url} && !$url) {
+				fatal "SVN repository location required\n";
 			}
-			$SVN_URL ||= $url;
-			$svn_uuid ||= $uuid;
-			setup_git_svn();
+			$gs = Git::SVN->init(undef, $url);
 			$latest = $rev;
 		}
-		revdb_set($REVDB, $rev, $c);
+		$gs->rev_db_set($rev, $c);
 		print "r$rev = $c\n";
-		$newest_rev = $rev if ($rev > $newest_rev);
 	}
 	command_close_pipe($rev_list, $ctx);
 }
@@ -2615,17 +2611,6 @@ sub revdb_get {
 	}
 	close $fh or croak $!;
 	return $ret;
-}
-
-sub copy_remote_ref {
-	my $origin = $_cp_remote ? $_cp_remote : 'origin';
-	my $ref = "refs/remotes/$GIT_SVN";
-	if (command('ls-remote', $origin, $ref)) {
-		command_noisy('fetch', $origin, "$ref:$ref");
-	} elsif ($_cp_remote && !$_upgrade) {
-		die "Unable to find remote reference: ",
-				"refs/remotes/$GIT_SVN on $origin\n";
-	}
 }
 
 {
