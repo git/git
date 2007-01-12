@@ -1618,14 +1618,7 @@ int move_temp_to_file(const char *tmpfile, const char *filename)
 
 static int write_buffer(int fd, const void *buf, size_t len)
 {
-	ssize_t size;
-
-	if (!len)
-		return 0;
-	size = write_in_full(fd, buf, len);
-	if (!size)
-		return error("file write: disk full");
-	if (size < 0)
+	if (write_in_full(fd, buf, len) < 0)
 		return error("file write error (%s)", strerror(errno));
 	return 0;
 }
