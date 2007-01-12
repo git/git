@@ -4,16 +4,11 @@ int read_in_full(int fd, void *buf, size_t count)
 {
 	char *p = buf;
 	ssize_t total = 0;
-	ssize_t loaded = 0;
 
 	while (count > 0) {
-		loaded = xread(fd, p, count);
-		if (loaded <= 0) {
-			if (total)
-				return total;
-			else
-				return loaded;
-		}
+		ssize_t loaded = xread(fd, p, count);
+		if (loaded <= 0)
+			return total ? total : loaded;
 		count -= loaded;
 		p += loaded;
 		total += loaded;
@@ -26,13 +21,12 @@ void read_or_die(int fd, void *buf, size_t count)
 {
 	ssize_t loaded;
 
-	if (!count)
-		return;
 	loaded = read_in_full(fd, buf, count);
-	if (loaded == 0)
-		die("unexpected end of file");
-	else if (loaded < 0)
-		die("read error (%s)", strerror(errno));
+	if (loaded != count) {
+		if (loaded < 0)
+			die("read error (%s)", strerror(errno));
+		die("read error: end of file");
+	}
 }
 
 int write_in_full(int fd, const void *buf, size_t count)
