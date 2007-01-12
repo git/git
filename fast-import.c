@@ -1378,6 +1378,7 @@ static void file_change_m(struct branch *b)
 	if (*p == ':') {
 		char *x;
 		oe = find_mark(strtoul(p + 1, &x, 10));
+		hashcpy(sha1, oe->sha1);
 		p = x;
 	} else {
 		if (get_sha1_hex(p, sha1))
