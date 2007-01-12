@@ -26,6 +26,12 @@ test_expect_success 'initialize repo' "
 	git-svn multi-fetch
 	"
 
+test_expect_success 'multi-init set .git/config correctly' "
+	test '$svnrepo/trunk' = '`git repo-config --get svn.trunk`' &&
+	test '$svnrepo/branches' = '`git repo-config --get svn.branches`' &&
+	test '$svnrepo/tags' = '`git repo-config --get svn.tags`'
+	"
+
 r1=`git-rev-list remotes/trunk | tail -n1`
 r2=`git-rev-list remotes/tags/a | tail -n1`
 r3=`git-rev-list remotes/a | tail -n1`

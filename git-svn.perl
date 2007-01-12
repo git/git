@@ -595,8 +595,9 @@ sub cmd_multi_init {
 			command_noisy('config', 'svn.trunk', $trunk_url);
 		}
 	}
-	complete_url_ls_init($url, $_branches, '--branches/-b', $_prefix);
-	complete_url_ls_init($url, $_tags, '--tags/-t', $_prefix . 'tags/');
+	my $ra = $url ? Git::SVN::Ra->new($url) : undef;
+	complete_url_ls_init($ra, $_branches, '--branches/-b', $_prefix);
+	complete_url_ls_init($ra, $_tags, '--tags/-t', $_prefix . 'tags/');
 }
 
 sub multi_fetch {
@@ -890,29 +891,38 @@ sub complete_svn_url {
 }
 
 sub complete_url_ls_init {
-	my ($url, $path, $switch, $pfx) = @_;
+	my ($ra, $path, $switch, $pfx) = @_;
 	unless ($path) {
 		print STDERR "W: $switch not specified\n";
 		return;
 	}
-	my $full_url = complete_svn_url($url, $path);
-	my @ls = libsvn_ls_fullurl($full_url);
-	foreach my $u (map { "$full_url/$_" } (grep m!/$!, @ls)) {
-		$u =~ s#/+$##;
-		if ($u !~ m!\Q$full_url\E/(.+)$!) {
-			print STDERR "W: Unrecognized URL: $u\n";
-			die "This should never happen\n";
+	$path =~ s#/+$##;
+	if ($path =~ m#^[a-z\+]+://#) {
+		$ra = Git::SVN::Ra->new($path);
+		$path = '';
+	} else {
+		$path =~ s#^/+##;
+		unless ($ra) {
+			fatal("E: '$path' is not a complete URL ",
+			      "and a separate URL is not specified\n");
 		}
-		# don't try to init already existing refs
-		my $id = $pfx.$1;
+	}
+	my $r = defined $_revision ? $_revision : $ra->get_latest_revnum;
+	my ($dirent, undef, undef) = $ra->get_dir($path, $r);
+	my $url = $ra->{url} . (length $path ? "/$path" : '');
+	foreach my $d (sort keys %$dirent) {
+		next if ($dirent->{$d}->kind != $SVN::Node::dir);
+		my $u =  "$url/$d";
+		my $id = "$pfx$d";
 		my $gs = eval { Git::SVN->new($id) };
+		# don't try to init already existing refs
 		unless ($gs) {
 			print "init $u => $id\n";
 			Git::SVN->init($id, $u);
 		}
 	}
 	my ($n) = ($switch =~ /^--(\w+)/);
-	command_noisy('config', "svn.$n", $full_url);
+	command_noisy('config', "svn.$n", $url);
 }
 
 sub common_prefix {
@@ -2849,20 +2859,6 @@ sub libsvn_commit_cb {
 	} else {
 		fetch("$rev=$c");
 	}
-}
-
-sub libsvn_ls_fullurl {
-	my $fullurl = shift;
-	my $ra = Git::SVN::Ra->new($fullurl);
-	my @ret;
-	my $r = defined $_revision ? $_revision : $ra->get_latest_revnum;
-	my ($dirent, undef, undef) = $ra->get_dir('', $r);
-	foreach my $d (sort keys %$dirent) {
-		if ($dirent->{$d}->kind == $SVN::Node::dir) {
-			push @ret, "$d/"; # add '/' for compat with cli svn
-		}
-	}
-	return @ret;
 }
 
 sub libsvn_skip_unknown_revs {
