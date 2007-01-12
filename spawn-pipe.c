@@ -3,6 +3,53 @@
 
 extern char **environ;
 
+#ifdef __MINGW32__
+static char *lookup_prog(const char *dir, const char *cmd, int tryexe)
+{
+	char path[MAX_PATH];
+	snprintf(path, sizeof(path), "%s/%s.exe", dir, cmd);
+
+	if (tryexe && access(path, 0) == 0)
+		return xstrdup(path);
+	path[strlen(path)-4] = '\0';
+	if (access(path, 0) == 0)
+		return xstrdup(path);
+	return NULL;
+}
+
+/*
+ * Determines the absolute path of cmd based on the PATH environment variable.
+ * If cmd contains a slash or backslash, no lookup is performed.
+ */
+static char *path_lookup(const char *cmd)
+{
+	char *p, *envpath = getenv("PATH");
+	char *prog = NULL;
+	int len = strlen(cmd);
+	int tryexe = len < 4 || strcasecmp(cmd+len-4, ".exe");
+
+	if (strchr(cmd, '/') || strchr(cmd, '\\') ||
+	    !envpath || !*envpath)
+		envpath = "";
+	envpath = xstrdup(envpath);
+	p = envpath;
+	while (p && !prog) {
+		const char *dir = p;
+		p = strchr(p, ';');
+		if (p) *p++ = '\0';
+		if (*dir)
+			prog = lookup_prog(dir, cmd, tryexe);
+	}
+	free(envpath);
+	if (!prog) {
+		prog = lookup_prog(".", cmd, tryexe);
+		if (!prog)
+			prog = xstrdup(cmd);
+	}
+	return prog;
+}
+#endif
+
 /* cmd specifies the command to invoke.
  * argv specifies its arguments; argv[0] will be replaced by the basename of cmd.
  * env specifies the environment.
@@ -21,7 +68,8 @@ int spawnvpe_pipe(const char *cmd, const char **argv, const char **env,
 
 #ifdef __MINGW32__
 	int s0 = -1, s1 = -1, argc;
-	const char **qargv;
+	char *prog;
+	const char **qargv, *interpr;
 
 	if (!cmd_basename)
 		cmd_basename = strrchr(cmd, '\\');
@@ -79,15 +127,26 @@ int spawnvpe_pipe(const char *cmd, const char **argv, const char **env,
 		}
 	}
 
+	prog = path_lookup(cmd);
+	interpr = parse_interpreter(prog);
+
 	for (argc = 0; argv[argc];) argc++;
 	qargv = xmalloc((argc+2)*sizeof(char*));
-	quote_argv(qargv, argv);
+	if (!interpr) {
+		quote_argv(qargv, argv);
+		pid = spawnve(_P_NOWAIT, prog, qargv, env);
+	} else {
+		qargv[0] = interpr;
+		argv[0] = prog;
+		quote_argv(&qargv[1], argv);
+		pid = spawnvpe(_P_NOWAIT, interpr, qargv, env);
+	}
 
-	pid = spawnvpe(_P_NOWAIT, cmd, qargv, env);
 	if (pid < 0)
 		die("unable to run %s", cmd);
 
 	free(qargv);		/* TODO: quoted args should be freed, too */
+	free(prog);
 
 	if (s0 >= 0) {
 		dup2(s0, 0);
