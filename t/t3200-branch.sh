@@ -48,7 +48,7 @@ test_expect_success \
 	 test ! -f .git/logs/refs/heads/d/e/f'
 
 cat >expect <<EOF
-0000000000000000000000000000000000000000 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	checkout: Created from master^0
+0000000000000000000000000000000000000000 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	checkout: Created from master
 EOF
 test_expect_success \
     'git checkout -b g/h/i -l should create a branch and a log' \
