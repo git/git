@@ -20,6 +20,7 @@ Format of STDIN stream:
     'committer' sp name '<' email '>' ts tz lf
     commit_msg
     ('from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)?
+    ('merge' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)*
     file_change*
     lf;
   commit_msg ::= data;
@@ -202,6 +203,11 @@ struct dbuf
 	size_t capacity;
 };
 
+struct hash_list
+{
+	struct hash_list *next;
+	unsigned char sha1[20];
+};
 
 /* Stats and misc. counters */
 static unsigned long max_depth = 10;
@@ -1502,6 +1508,48 @@ static void cmd_from(struct branch *b)
 	read_next_command();
 }
 
+static struct hash_list* cmd_merge(unsigned int *count)
+{
+	struct hash_list *list = NULL, *n, *e;
+	const char *from, *endp;
+	char *str_uq;
+	struct branch *s;
+
+	*count = 0;
+	while (!strncmp("merge ", command_buf.buf, 6)) {
+		from = strchr(command_buf.buf, ' ') + 1;
+		str_uq = unquote_c_style(from, &endp);
+		if (str_uq) {
+			if (*endp)
+				die("Garbage after string in: %s", command_buf.buf);
+			from = str_uq;
+		}
+
+		n = xmalloc(sizeof(*n));
+		s = lookup_branch(from);
+		if (s)
+			hashcpy(n->sha1, s->sha1);
+		else if (*from == ':') {
+			unsigned long idnum = strtoul(from + 1, NULL, 10);
+			struct object_entry *oe = find_mark(idnum);
+			if (oe->type != OBJ_COMMIT)
+				die("Mark :%lu not a commit", idnum);
+			hashcpy(n->sha1, oe->sha1);
+		} else if (get_sha1(from, n->sha1))
+			die("Invalid ref name or SHA1 expression: %s", from);
+
+		n->next = NULL;
+		if (list)
+			e->next = n;
+		else
+			list = n;
+		e = n;
+		*count++;
+		read_next_command();
+	}
+	return list;
+}
+
 static void cmd_new_commit()
 {
 	struct branch *b;
@@ -1512,6 +1560,8 @@ static void cmd_new_commit()
 	char *sp;
 	char *author = NULL;
 	char *committer = NULL;
+	struct hash_list *merge_list = NULL;
+	unsigned int merge_count;
 
 	/* Obtain the branch name from the rest of our command */
 	sp = strchr(command_buf.buf, ' ') + 1;
@@ -1542,6 +1592,7 @@ static void cmd_new_commit()
 	msg = cmd_data(&msglen);
 	read_next_command();
 	cmd_from(b);
+	merge_list = cmd_merge(&merge_count);
 
 	/* ensure the branch is active/loaded */
 	if (!b->branch_tree.tree || !max_active_branches) {
@@ -1567,6 +1618,7 @@ static void cmd_new_commit()
 	hashcpy(b->branch_tree.versions[0].sha1,
 		b->branch_tree.versions[1].sha1);
 	size_dbuf(&new_data, 97 + msglen
+		+ merge_count * 49
 		+ (author
 			? strlen(author) + strlen(committer)
 			: 2 * strlen(committer)));
@@ -1575,6 +1627,12 @@ static void cmd_new_commit()
 		sha1_to_hex(b->branch_tree.versions[1].sha1));
 	if (!is_null_sha1(b->sha1))
 		sp += sprintf(sp, "parent %s\n", sha1_to_hex(b->sha1));
+	while (merge_list) {
+		struct hash_list *next = merge_list->next;
+		sp += sprintf(sp, "parent %s\n", sha1_to_hex(merge_list->sha1));
+		free(merge_list);
+		merge_list = next;
+	}
 	if (author)
 		sp += sprintf(sp, "%s\n", author);
 	else
