@@ -121,7 +121,7 @@ my %cmd = (
 			%cmt_opts, %fc_opts } ],
 	'set-tree' => [ \&commit, "Set an SVN repository to a git tree-ish",
 			{	'stdin|' => \$_stdin, %cmt_opts, %fc_opts, } ],
-	'show-ignore' => [ \&show_ignore, "Show svn:ignore listings",
+	'show-ignore' => [ \&cmd_show_ignore, "Show svn:ignore listings",
 			{ 'revision|r=i' => \$_revision } ],
 	rebuild => [ \&rebuild, "Rebuild git-svn metadata (after git clone)",
 			{ 'copy-remote|remote=s' => \$_cp_remote,
@@ -537,12 +537,10 @@ sub dcommit {
 	command_noisy(@finish, $gs);
 }
 
-sub show_ignore {
-	$SVN_URL ||= file_to_s("$GIT_SVN_DIR/info/url");
-	my $repo;
-	$SVN ||= Git::SVN::Ra->new($SVN_URL);
-	my $r = defined $_revision ? $_revision : $SVN->get_latest_revnum;
-	libsvn_traverse_ignore(\*STDOUT, '', $r);
+sub cmd_show_ignore {
+	my $gs = Git::SVN->new;
+	my $r = (defined $_revision ? $_revision : $gs->ra->get_latest_revnum);
+	$gs->traverse_ignore(\*STDOUT, '', $r);
 }
 
 sub graft_branches {
