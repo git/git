@@ -3495,7 +3495,7 @@ sub cmd_show_log {
 		process_commit($_, $r_min, $r_max) foreach reverse @k;
 	}
 out:
-	eval { command_close_pipe($log) };
+	close $log;
 	print '-' x72,"\n" unless $incremental || $oneline;
 }
 
