@@ -6,7 +6,8 @@ use strict;
 use vars qw/	$AUTHOR $VERSION
 		$SVN_URL
 		$GIT_SVN_INDEX $GIT_SVN
-		$GIT_DIR $GIT_SVN_DIR $REVDB/;
+		$GIT_DIR $GIT_SVN_DIR $REVDB
+		$_follow_parent $sha1 $sha1_short/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
@@ -15,7 +16,7 @@ $GIT_DIR = abs_path($ENV{GIT_DIR} || '.git');
 $ENV{GIT_DIR} = $GIT_DIR;
 
 my $LC_ALL = $ENV{LC_ALL};
-my $TZ = $ENV{TZ};
+$Git::SVN::Log::TZ = $ENV{TZ};
 # make sure the svn binary gives consistent output between locales and TZs:
 $ENV{TZ} = 'UTC';
 $ENV{LC_ALL} = 'C';
@@ -46,7 +47,6 @@ use IO::File qw//;
 use File::Basename qw/dirname basename/;
 use File::Path qw/mkpath/;
 use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev pass_through/;
-use POSIX qw/strftime/;
 use IPC::Open3;
 use Memoize;
 use Git;
@@ -59,7 +59,7 @@ BEGIN {
 	foreach (qw/command command_oneline command_noisy command_output_pipe
 	            command_input_pipe command_close_pipe/) {
 		$s .= "*SVN::Git::Editor::$_ = *SVN::Git::Fetcher::$_ = ".
-		      "*$_ = *Git::$_; ";
+		      "*Git::SVN::Log::$_ = *Git::SVN::$_ = *$_ = *Git::$_; ";
 	}
 	eval $s;
 }
@@ -67,21 +67,18 @@ BEGIN {
 my ($SVN);
 
 my $_optimize_commits = 1 unless $ENV{GIT_SVN_NO_OPTIMIZE_COMMITS};
-my $sha1 = qr/[a-f\d]{40}/;
-my $sha1_short = qr/[a-f\d]{4,40}/;
-my $_esc_color = qr/(?:\033\[(?:(?:\d+;)*\d*)?m)*/;
+$sha1 = qr/[a-f\d]{40}/;
+$sha1_short = qr/[a-f\d]{4,40}/;
 my ($_revision,$_stdin,$_help,$_rmdir,$_edit,
 	$_find_copies_harder, $_l, $_cp_similarity, $_cp_remote,
 	$_repack, $_repack_nr, $_repack_flags, $_q,
 	$_message, $_file, $_no_metadata,
 	$_template, $_shared, $_no_default_regex, $_no_graft_copy,
-	$_limit, $_verbose, $_incremental, $_oneline, $_l_fmt, $_show_commit,
 	$_version, $_upgrade, $_authors, $_branch_all_refs, @_opt_m,
-	$_merge, $_strategy, $_dry_run, $_ignore_nodate, $_non_recursive,
-	$_pager, $_color, $_prefix);
-my (@_branch_from, %tree_map, %users, %rusers);
+	$_merge, $_strategy, $_dry_run,
+	$_prefix);
+my (@_branch_from, %tree_map, %users);
 my @repo_path_split_cache;
-use vars qw/$_follow_parent/;
 
 my %fc_opts = ( 'branch|b=s' => \@_branch_from,
 		'follow-parent|follow' => \$_follow_parent,
@@ -93,7 +90,6 @@ my %fc_opts = ( 'branch|b=s' => \@_branch_from,
 		'username=s' => \$Git::SVN::Prompt::_username,
 		'config-dir=s' => \$Git::SVN::Ra::config_dir,
 		'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache,
-		'ignore-nodate' => \$_ignore_nodate,
 		'repack-flags|repack-args|repack-opts=s' => \$_repack_flags);
 
 my ($_trunk, $_tags, $_branches);
@@ -145,17 +141,17 @@ my %cmd = (
 	'multi-fetch' => [ \&multi_fetch,
 			'Fetch multiple trees (like git-svnimport)',
 			\%fc_opts ],
-	'log' => [ \&show_log, 'Show commit logs',
-			{ 'limit=i' => \$_limit,
+	'log' => [ \&Git::SVN::Log::cmd_show_log, 'Show commit logs',
+			{ 'limit=i' => \$Git::SVN::Log::limit,
 			  'revision|r=s' => \$_revision,
-			  'verbose|v' => \$_verbose,
-			  'incremental' => \$_incremental,
-			  'oneline' => \$_oneline,
-			  'show-commit' => \$_show_commit,
-			  'non-recursive' => \$_non_recursive,
+			  'verbose|v' => \$Git::SVN::Log::verbose,
+			  'incremental' => \$Git::SVN::Log::incremental,
+			  'oneline' => \$Git::SVN::Log::oneline,
+			  'show-commit' => \$Git::SVN::Log::show_commit,
+			  'non-recursive' => \$Git::SVN::Log::non_recursive,
 			  'authors-file|A=s' => \$_authors,
-			  'color' => \$_color,
-			  'pager=s' => \$_pager,
+			  'color' => \$Git::SVN::Log::color,
+			  'pager=s' => \$Git::SVN::Log::pager,
 			} ],
 	'commit-diff' => [ \&commit_diff, 'Commit a diff between two trees',
 			{ 'message|m=s' => \$_message,
@@ -607,81 +603,6 @@ sub multi_fetch {
 	rec_fetch('', "$GIT_DIR/svn", @_);
 }
 
-sub show_log {
-	my (@args) = @_;
-	my ($r_min, $r_max);
-	my $r_last = -1; # prevent dupes
-	rload_authors() if $_authors;
-	if (defined $TZ) {
-		$ENV{TZ} = $TZ;
-	} else {
-		delete $ENV{TZ};
-	}
-	if (defined $_revision) {
-		if ($_revision =~ /^(\d+):(\d+)$/) {
-			($r_min, $r_max) = ($1, $2);
-		} elsif ($_revision =~ /^\d+$/) {
-			$r_min = $r_max = $_revision;
-		} else {
-			print STDERR "-r$_revision is not supported, use ",
-				"standard \'git log\' arguments instead\n";
-			exit 1;
-		}
-	}
-
-	config_pager();
-	@args = (git_svn_log_cmd($r_min, $r_max), @args);
-	my $log = command_output_pipe(@args);
-	run_pager();
-	my (@k, $c, $d);
-
-	while (<$log>) {
-		if (/^${_esc_color}commit ($sha1_short)/o) {
-			my $cmt = $1;
-			if ($c && cmt_showable($c) && $c->{r} != $r_last) {
-				$r_last = $c->{r};
-				process_commit($c, $r_min, $r_max, \@k) or
-								goto out;
-			}
-			$d = undef;
-			$c = { c => $cmt };
-		} elsif (/^${_esc_color}author (.+) (\d+) ([\-\+]?\d+)$/) {
-			get_author_info($c, $1, $2, $3);
-		} elsif (/^${_esc_color}(?:tree|parent|committer) /) {
-			# ignore
-		} elsif (/^${_esc_color}:\d{6} \d{6} $sha1_short/o) {
-			push @{$c->{raw}}, $_;
-		} elsif (/^${_esc_color}[ACRMDT]\t/) {
-			# we could add $SVN->{svn_path} here, but that requires
-			# remote access at the moment (repo_path_split)...
-			s#^(${_esc_color})([ACRMDT])\t#$1   $2 #;
-			push @{$c->{changed}}, $_;
-		} elsif (/^${_esc_color}diff /) {
-			$d = 1;
-			push @{$c->{diff}}, $_;
-		} elsif ($d) {
-			push @{$c->{diff}}, $_;
-		} elsif (/^${_esc_color}    (git-svn-id:.+)$/) {
-			($c->{url}, $c->{r}, undef) = extract_metadata($1);
-		} elsif (s/^${_esc_color}    //) {
-			push @{$c->{l}}, $_;
-		}
-	}
-	if ($c && defined $c->{r} && $c->{r} != $r_last) {
-		$r_last = $c->{r};
-		process_commit($c, $r_min, $r_max, \@k);
-	}
-	if (@k) {
-		my $swap = $r_max;
-		$r_max = $r_min;
-		$r_min = $swap;
-		process_commit($_, $r_min, $r_max) foreach reverse @k;
-	}
-out:
-	close $log;
-	print '-' x72,"\n" unless $_incremental || $_oneline;
-}
-
 sub commit_diff_usage {
 	print STDERR "Usage: $0 commit-diff <tree-ish> <tree-ish> [<URL>]\n";
 	exit 1
@@ -750,90 +671,6 @@ sub commit_diff {
 }
 
 ########################### utility functions #########################
-
-sub cmt_showable {
-	my ($c) = @_;
-	return 1 if defined $c->{r};
-	if ($c->{l} && $c->{l}->[-1] eq "...\n" &&
-				$c->{a_raw} =~ /\@([a-f\d\-]+)>$/) {
-		my @msg = command(qw/cat-file commit/, $c->{c});
-		shift @msg while ($msg[0] ne "\n");
-		shift @msg;
-		@{$c->{l}} = grep !/^git-svn-id: /, @msg;
-
-		(undef, $c->{r}, undef) = extract_metadata(
-				(grep(/^git-svn-id: /, @msg))[-1]);
-	}
-	return defined $c->{r};
-}
-
-sub log_use_color {
-	return 1 if $_color;
-	my ($dc, $dcvar);
-	$dcvar = 'color.diff';
-	$dc = `git-config --get $dcvar`;
-	if ($dc eq '') {
-		# nothing at all; fallback to "diff.color"
-		$dcvar = 'diff.color';
-		$dc = `git-config --get $dcvar`;
-	}
-	chomp($dc);
-	if ($dc eq 'auto') {
-		my $pc;
-		$pc = `git-config --get color.pager`;
-		if ($pc eq '') {
-			# does not have it -- fallback to pager.color
-			$pc = `git-config --bool --get pager.color`;
-		}
-		else {
-			$pc = `git-config --bool --get color.pager`;
-			if ($?) {
-				$pc = 'false';
-			}
-		}
-		chomp($pc);
-		if (-t *STDOUT || (defined $_pager && $pc eq 'true')) {
-			return ($ENV{TERM} && $ENV{TERM} ne 'dumb');
-		}
-		return 0;
-	}
-	return 0 if $dc eq 'never';
-	return 1 if $dc eq 'always';
-	chomp($dc = `git-config --bool --get $dcvar`);
-	return ($dc eq 'true');
-}
-
-sub git_svn_log_cmd {
-	my ($r_min, $r_max) = @_;
-	my @cmd = (qw/log --abbrev-commit --pretty=raw
-			--default/, "refs/remotes/$GIT_SVN");
-	push @cmd, '-r' unless $_non_recursive;
-	push @cmd, qw/--raw --name-status/ if $_verbose;
-	push @cmd, '--color' if log_use_color();
-	return @cmd unless defined $r_max;
-	if ($r_max == $r_min) {
-		push @cmd, '--max-count=1';
-		if (my $c = revdb_get($REVDB, $r_max)) {
-			push @cmd, $c;
-		}
-	} else {
-		my ($c_min, $c_max);
-		$c_max = revdb_get($REVDB, $r_max);
-		$c_min = revdb_get($REVDB, $r_min);
-		if (defined $c_min && defined $c_max) {
-			if ($r_max > $r_max) {
-				push @cmd, "$c_min..$c_max";
-			} else {
-				push @cmd, "$c_max..$c_min";
-			}
-		} elsif ($r_max > $r_min) {
-			push @cmd, $c_max;
-		} else {
-			push @cmd, $c_min;
-		}
-	}
-	return @cmd;
-}
 
 sub fetch_child_id {
 	my $id = shift;
@@ -1484,22 +1321,16 @@ sub load_all_refs {
 # '<svn username> = real-name <email address>' mapping based on git-svnimport:
 sub load_authors {
 	open my $authors, '<', $_authors or die "Can't open $_authors $!\n";
+	my $log = $cmd eq 'log';
 	while (<$authors>) {
 		chomp;
 		next unless /^(\S+?|\(no author\))\s*=\s*(.+?)\s*<(.+)>\s*$/;
 		my ($user, $name, $email) = ($1, $2, $3);
-		$users{$user} = [$name, $email];
-	}
-	close $authors or croak $!;
-}
-
-sub rload_authors {
-	open my $authors, '<', $_authors or die "Can't open $_authors $!\n";
-	while (<$authors>) {
-		chomp;
-		next unless /^(\S+?)\s*=\s*(.+?)\s*<(.+)>\s*$/;
-		my ($user, $name, $email) = ($1, $2, $3);
-		$rusers{"$name <$email>"} = $user;
+		if ($log) {
+			$Git::SVN::Log::rusers{"$name <$email>"} = $user;
+		} else {
+			$users{$user} = [$name, $email];
+		}
 	}
 	close $authors or croak $!;
 }
@@ -1767,140 +1598,6 @@ sub tz_to_s_offset {
 	my ($tz) = @_;
 	$tz =~ s/(\d\d)$//;
 	return ($1 * 60) + ($tz * 3600);
-}
-
-# adapted from pager.c
-sub config_pager {
-	$_pager ||= $ENV{GIT_PAGER} || $ENV{PAGER};
-	if (!defined $_pager) {
-		$_pager = 'less';
-	} elsif (length $_pager == 0 || $_pager eq 'cat') {
-		$_pager = undef;
-	}
-}
-
-sub run_pager {
-	return unless -t *STDOUT;
-	pipe my $rfd, my $wfd or return;
-	defined(my $pid = fork) or croak $!;
-	if (!$pid) {
-		open STDOUT, '>&', $wfd or croak $!;
-		return;
-	}
-	open STDIN, '<&', $rfd or croak $!;
-	$ENV{LESS} ||= 'FRSX';
-	exec $_pager or croak "Can't run pager: $! ($_pager)\n";
-}
-
-sub get_author_info {
-	my ($dest, $author, $t, $tz) = @_;
-	$author =~ s/(?:^\s*|\s*$)//g;
-	$dest->{a_raw} = $author;
-	my $_a;
-	if ($_authors) {
-		$_a = $rusers{$author} || undef;
-	}
-	if (!$_a) {
-		($_a) = ($author =~ /<([^>]+)\@[^>]+>$/);
-	}
-	$dest->{t} = $t;
-	$dest->{tz} = $tz;
-	$dest->{a} = $_a;
-	# Date::Parse isn't in the standard Perl distro :(
-	if ($tz =~ s/^\+//) {
-		$t += tz_to_s_offset($tz);
-	} elsif ($tz =~ s/^\-//) {
-		$t -= tz_to_s_offset($tz);
-	}
-	$dest->{t_utc} = $t;
-}
-
-sub process_commit {
-	my ($c, $r_min, $r_max, $defer) = @_;
-	if (defined $r_min && defined $r_max) {
-		if ($r_min == $c->{r} && $r_min == $r_max) {
-			show_commit($c);
-			return 0;
-		}
-		return 1 if $r_min == $r_max;
-		if ($r_min < $r_max) {
-			# we need to reverse the print order
-			return 0 if (defined $_limit && --$_limit < 0);
-			push @$defer, $c;
-			return 1;
-		}
-		if ($r_min != $r_max) {
-			return 1 if ($r_min < $c->{r});
-			return 1 if ($r_max > $c->{r});
-		}
-	}
-	return 0 if (defined $_limit && --$_limit < 0);
-	show_commit($c);
-	return 1;
-}
-
-sub show_commit {
-	my $c = shift;
-	if ($_oneline) {
-		my $x = "\n";
-		if (my $l = $c->{l}) {
-			while ($l->[0] =~ /^\s*$/) { shift @$l }
-			$x = $l->[0];
-		}
-		$_l_fmt ||= 'A' . length($c->{r});
-		print 'r',pack($_l_fmt, $c->{r}),' | ';
-		print "$c->{c} | " if $_show_commit;
-		print $x;
-	} else {
-		show_commit_normal($c);
-	}
-}
-
-sub show_commit_changed_paths {
-	my ($c) = @_;
-	return unless $c->{changed};
-	print "Changed paths:\n", @{$c->{changed}};
-}
-
-sub show_commit_normal {
-	my ($c) = @_;
-	print '-' x72, "\nr$c->{r} | ";
-	print "$c->{c} | " if $_show_commit;
-	print "$c->{a} | ", strftime("%Y-%m-%d %H:%M:%S %z (%a, %d %b %Y)",
-				 localtime($c->{t_utc})), ' | ';
-	my $nr_line = 0;
-
-	if (my $l = $c->{l}) {
-		while ($l->[$#$l] eq "\n" && $#$l > 0
-		                          && $l->[($#$l - 1)] eq "\n") {
-			pop @$l;
-		}
-		$nr_line = scalar @$l;
-		if (!$nr_line) {
-			print "1 line\n\n\n";
-		} else {
-			if ($nr_line == 1) {
-				$nr_line = '1 line';
-			} else {
-				$nr_line .= ' lines';
-			}
-			print $nr_line, "\n";
-			show_commit_changed_paths($c);
-			print "\n";
-			print $_ foreach @$l;
-		}
-	} else {
-		print "1 line\n";
-		show_commit_changed_paths($c);
-		print "\n";
-
-	}
-	foreach my $x (qw/raw diff/) {
-		if ($c->{$x}) {
-			print "\n";
-			print $_ foreach @{$c->{$x}}
-		}
-	}
 }
 
 package Git::SVN;
@@ -3514,6 +3211,307 @@ sub can_do_switch {
 		$pool->clear;
 	}
 	$can_do_switch;
+}
+
+package Git::SVN::Log;
+use strict;
+use warnings;
+use POSIX qw/strftime/;
+use vars qw/$TZ $limit $color $pager $non_recursive $verbose $oneline
+            %rusers $show_commit $incremental/;
+my $l_fmt;
+
+sub cmt_showable {
+	my ($c) = @_;
+	return 1 if defined $c->{r};
+	if ($c->{l} && $c->{l}->[-1] eq "...\n" &&
+				$c->{a_raw} =~ /\@([a-f\d\-]+)>$/) {
+		my @msg = command(qw/cat-file commit/, $c->{c});
+		shift @msg while ($msg[0] ne "\n");
+		shift @msg;
+		@{$c->{l}} = grep !/^git-svn-id: /, @msg;
+
+		(undef, $c->{r}, undef) = ::extract_metadata(
+				(grep(/^git-svn-id: /, @msg))[-1]);
+	}
+	return defined $c->{r};
+}
+
+sub log_use_color {
+	return 1 if $color;
+	my ($dc, $dcvar);
+	$dcvar = 'color.diff';
+	$dc = `git-config --get $dcvar`;
+	if ($dc eq '') {
+		# nothing at all; fallback to "diff.color"
+		$dcvar = 'diff.color';
+		$dc = `git-config --get $dcvar`;
+	}
+	chomp($dc);
+	if ($dc eq 'auto') {
+		my $pc;
+		$pc = `git-config --get color.pager`;
+		if ($pc eq '') {
+			# does not have it -- fallback to pager.color
+			$pc = `git-config --bool --get pager.color`;
+		}
+		else {
+			$pc = `git-config --bool --get color.pager`;
+			if ($?) {
+				$pc = 'false';
+			}
+		}
+		chomp($pc);
+		if (-t *STDOUT || (defined $pager && $pc eq 'true')) {
+			return ($ENV{TERM} && $ENV{TERM} ne 'dumb');
+		}
+		return 0;
+	}
+	return 0 if $dc eq 'never';
+	return 1 if $dc eq 'always';
+	chomp($dc = `git-config --bool --get $dcvar`);
+	return ($dc eq 'true');
+}
+
+sub git_svn_log_cmd {
+	my ($r_min, $r_max) = @_;
+	my $gs = Git::SVN->_new;
+	my @cmd = (qw/log --abbrev-commit --pretty=raw --default/,
+	           $gs->refname);
+	push @cmd, '-r' unless $non_recursive;
+	push @cmd, qw/--raw --name-status/ if $verbose;
+	push @cmd, '--color' if log_use_color();
+	return @cmd unless defined $r_max;
+	if ($r_max == $r_min) {
+		push @cmd, '--max-count=1';
+		if (my $c = $gs->rev_db_get($r_max)) {
+			push @cmd, $c;
+		}
+	} else {
+		my ($c_min, $c_max);
+		$c_max = $gs->rev_db_get($r_max);
+		$c_min = $gs->rev_db_get($r_min);
+		if (defined $c_min && defined $c_max) {
+			if ($r_max > $r_max) {
+				push @cmd, "$c_min..$c_max";
+			} else {
+				push @cmd, "$c_max..$c_min";
+			}
+		} elsif ($r_max > $r_min) {
+			push @cmd, $c_max;
+		} else {
+			push @cmd, $c_min;
+		}
+	}
+	return @cmd;
+}
+
+# adapted from pager.c
+sub config_pager {
+	$pager ||= $ENV{GIT_PAGER} || $ENV{PAGER};
+	if (!defined $pager) {
+		$pager = 'less';
+	} elsif (length $pager == 0 || $pager eq 'cat') {
+		$pager = undef;
+	}
+}
+
+sub run_pager {
+	return unless -t *STDOUT;
+	pipe my $rfd, my $wfd or return;
+	defined(my $pid = fork) or ::fatal "Can't fork: $!\n";
+	if (!$pid) {
+		open STDOUT, '>&', $wfd or
+		                     ::fatal "Can't redirect to stdout: $!\n";
+		return;
+	}
+	open STDIN, '<&', $rfd or ::fatal "Can't redirect stdin: $!\n";
+	$ENV{LESS} ||= 'FRSX';
+	exec $pager or ::fatal "Can't run pager: $! ($pager)\n";
+}
+
+sub get_author_info {
+	my ($dest, $author, $t, $tz) = @_;
+	$author =~ s/(?:^\s*|\s*$)//g;
+	$dest->{a_raw} = $author;
+	my $au;
+	if ($_authors) {
+		$au = $rusers{$author} || undef;
+	}
+	if (!$au) {
+		($au) = ($author =~ /<([^>]+)\@[^>]+>$/);
+	}
+	$dest->{t} = $t;
+	$dest->{tz} = $tz;
+	$dest->{a} = $au;
+	# Date::Parse isn't in the standard Perl distro :(
+	if ($tz =~ s/^\+//) {
+		$t += ::tz_to_s_offset($tz);
+	} elsif ($tz =~ s/^\-//) {
+		$t -= ::tz_to_s_offset($tz);
+	}
+	$dest->{t_utc} = $t;
+}
+
+sub process_commit {
+	my ($c, $r_min, $r_max, $defer) = @_;
+	if (defined $r_min && defined $r_max) {
+		if ($r_min == $c->{r} && $r_min == $r_max) {
+			show_commit($c);
+			return 0;
+		}
+		return 1 if $r_min == $r_max;
+		if ($r_min < $r_max) {
+			# we need to reverse the print order
+			return 0 if (defined $limit && --$limit < 0);
+			push @$defer, $c;
+			return 1;
+		}
+		if ($r_min != $r_max) {
+			return 1 if ($r_min < $c->{r});
+			return 1 if ($r_max > $c->{r});
+		}
+	}
+	return 0 if (defined $limit && --$limit < 0);
+	show_commit($c);
+	return 1;
+}
+
+sub show_commit {
+	my $c = shift;
+	if ($oneline) {
+		my $x = "\n";
+		if (my $l = $c->{l}) {
+			while ($l->[0] =~ /^\s*$/) { shift @$l }
+			$x = $l->[0];
+		}
+		$l_fmt ||= 'A' . length($c->{r});
+		print 'r',pack($l_fmt, $c->{r}),' | ';
+		print "$c->{c} | " if $show_commit;
+		print $x;
+	} else {
+		show_commit_normal($c);
+	}
+}
+
+sub show_commit_changed_paths {
+	my ($c) = @_;
+	return unless $c->{changed};
+	print "Changed paths:\n", @{$c->{changed}};
+}
+
+sub show_commit_normal {
+	my ($c) = @_;
+	print '-' x72, "\nr$c->{r} | ";
+	print "$c->{c} | " if $show_commit;
+	print "$c->{a} | ", strftime("%Y-%m-%d %H:%M:%S %z (%a, %d %b %Y)",
+				 localtime($c->{t_utc})), ' | ';
+	my $nr_line = 0;
+
+	if (my $l = $c->{l}) {
+		while ($l->[$#$l] eq "\n" && $#$l > 0
+		                          && $l->[($#$l - 1)] eq "\n") {
+			pop @$l;
+		}
+		$nr_line = scalar @$l;
+		if (!$nr_line) {
+			print "1 line\n\n\n";
+		} else {
+			if ($nr_line == 1) {
+				$nr_line = '1 line';
+			} else {
+				$nr_line .= ' lines';
+			}
+			print $nr_line, "\n";
+			show_commit_changed_paths($c);
+			print "\n";
+			print $_ foreach @$l;
+		}
+	} else {
+		print "1 line\n";
+		show_commit_changed_paths($c);
+		print "\n";
+
+	}
+	foreach my $x (qw/raw diff/) {
+		if ($c->{$x}) {
+			print "\n";
+			print $_ foreach @{$c->{$x}}
+		}
+	}
+}
+
+sub cmd_show_log {
+	my (@args) = @_;
+	my ($r_min, $r_max);
+	my $r_last = -1; # prevent dupes
+	if (defined $TZ) {
+		$ENV{TZ} = $TZ;
+	} else {
+		delete $ENV{TZ};
+	}
+	if (defined $::_revision) {
+		if ($::_revision =~ /^(\d+):(\d+)$/) {
+			($r_min, $r_max) = ($1, $2);
+		} elsif ($::_revision =~ /^\d+$/) {
+			$r_min = $r_max = $::_revision;
+		} else {
+			::fatal "-r$::_revision is not supported, use ",
+				"standard \'git log\' arguments instead\n";
+		}
+	}
+
+	config_pager();
+	@args = (git_svn_log_cmd($r_min, $r_max), @args);
+	my $log = command_output_pipe(@args);
+	run_pager();
+	my (@k, $c, $d);
+	my $esc_color = qr/(?:\033\[(?:(?:\d+;)*\d*)?m)*/;
+	while (<$log>) {
+		if (/^${esc_color}commit ($::sha1_short)/o) {
+			my $cmt = $1;
+			if ($c && cmt_showable($c) && $c->{r} != $r_last) {
+				$r_last = $c->{r};
+				process_commit($c, $r_min, $r_max, \@k) or
+								goto out;
+			}
+			$d = undef;
+			$c = { c => $cmt };
+		} elsif (/^${esc_color}author (.+) (\d+) ([\-\+]?\d+)$/o) {
+			get_author_info($c, $1, $2, $3);
+		} elsif (/^${esc_color}(?:tree|parent|committer) /o) {
+			# ignore
+		} elsif (/^${esc_color}:\d{6} \d{6} $::sha1_short/o) {
+			push @{$c->{raw}}, $_;
+		} elsif (/^${esc_color}[ACRMDT]\t/) {
+			# we could add $SVN->{svn_path} here, but that requires
+			# remote access at the moment (repo_path_split)...
+			s#^(${esc_color})([ACRMDT])\t#$1   $2 #o;
+			push @{$c->{changed}}, $_;
+		} elsif (/^${esc_color}diff /o) {
+			$d = 1;
+			push @{$c->{diff}}, $_;
+		} elsif ($d) {
+			push @{$c->{diff}}, $_;
+		} elsif (/^${esc_color}    (git-svn-id:.+)$/o) {
+			($c->{url}, $c->{r}, undef) = ::extract_metadata($1);
+		} elsif (s/^${esc_color}    //o) {
+			push @{$c->{l}}, $_;
+		}
+	}
+	if ($c && defined $c->{r} && $c->{r} != $r_last) {
+		$r_last = $c->{r};
+		process_commit($c, $r_min, $r_max, \@k);
+	}
+	if (@k) {
+		my $swap = $r_max;
+		$r_max = $r_min;
+		$r_min = $swap;
+		process_commit($_, $r_min, $r_max) foreach reverse @k;
+	}
+out:
+	eval { command_close_pipe($log) };
+	print '-' x72,"\n" unless $incremental || $oneline;
 }
 
 __END__
