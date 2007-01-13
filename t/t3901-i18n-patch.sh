@@ -7,6 +7,29 @@ test_description='i18n settings and format-patch | am pipe'
 
 . ./test-lib.sh
 
+check_encoding () {
+	# Make sure characters are not corrupted
+	cnt="$1" header="$2" i=1 j=0 bad=0
+	while test "$i" -le $cnt
+	do
+		git format-patch --encoding=UTF-8 --stdout HEAD~$i..HEAD~$j |
+		grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD_=C3=B3=C3=BA?=" &&
+		git-cat-file commit HEAD~$j |
+		case "$header" in
+		8859)
+			grep "^encoding ISO-8859-1" ;;
+		*)
+			! grep "^encoding ISO-8859-1" ;;
+		esac || {
+			bad=1
+			break
+		}
+		j=$i
+		i=$(($i+1))
+	done
+	(exit $bad)
+}
+
 test_expect_success setup '
 	git-repo-config i18n.commitencoding UTF-8 &&
 
@@ -66,7 +89,7 @@ test_expect_success 'format-patch output (UTF-8)' '
 	grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD_=C3=B3=C3=BA?=" out-u2
 '
 
-test_expect_success 'rebase (UTF-8)' '
+test_expect_success 'rebase (U/U)' '
 	# We want the result of rebase in UTF-8
 	git-repo-config i18n.commitencoding UTF-8 &&
 
@@ -82,17 +105,10 @@ test_expect_success 'rebase (UTF-8)' '
 	git checkout -b test &&
 	git-rebase master &&
 
-	# Check the results.
-	git format-patch --stdout HEAD~2..HEAD^ >out-r1 &&
-	git format-patch --stdout HEAD^ >out-r2 &&
-	grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD_=C3=B3=C3=BA?=" out-r1 &&
-	grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD_=C3=B3=C3=BA?=" out-r2
-
-	! git-cat-file commit HEAD | grep "^encoding ISO-8859-1" &&
-	! git-cat-file commit HEAD^ | grep "^encoding ISO-8859-1"
+	check_encoding 2
 '
 
-test_expect_success 'rebase (ISO-8859-1)' '
+test_expect_success 'rebase (U/L)' '
 	git-repo-config i18n.commitencoding UTF-8 &&
 	git repo-config i18n.logoutputencoding ISO-8859-1 &&
 	. ../t3901-utf8.txt &&
@@ -100,17 +116,10 @@ test_expect_success 'rebase (ISO-8859-1)' '
 	git reset --hard side &&
 	git-rebase master &&
 
-	git repo-config i18n.logoutputencoding UTF-8 &&
-	git format-patch --stdout HEAD~2..HEAD^ >out-r1 &&
-	git format-patch --stdout HEAD^ >out-r2 &&
-	grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD_=C3=B3=C3=BA?=" out-r1 &&
-	grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD_=C3=B3=C3=BA?=" out-r2 &&
-
-	! git-cat-file commit HEAD | grep "^encoding ISO-8859-1" &&
-	! git-cat-file commit HEAD^ | grep "^encoding ISO-8859-1"
+	check_encoding 2
 '
 
-test_expect_success 'rebase (ISO-8859-1)' '
+test_expect_success 'rebase (L/L)' '
 	# In this test we want ISO-8859-1 encoded commits as the result
 	git-repo-config i18n.commitencoding ISO-8859-1 &&
 	git repo-config i18n.logoutputencoding ISO-8859-1 &&
@@ -119,18 +128,10 @@ test_expect_success 'rebase (ISO-8859-1)' '
 	git reset --hard side &&
 	git-rebase master &&
 
-	# Make sure characters are not corrupted.
-	git repo-config i18n.logoutputencoding UTF-8 &&
-	git format-patch --stdout HEAD~2..HEAD^ >out-r1 &&
-	git format-patch --stdout HEAD^ >out-r2 &&
-	grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD_=C3=B3=C3=BA?=" out-r1 &&
-	grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD_=C3=B3=C3=BA?=" out-r2 &&
-
-	git-cat-file commit HEAD | grep "^encoding ISO-8859-1" &&
-	git-cat-file commit HEAD^ | grep "^encoding ISO-8859-1"
+	check_encoding 2 8859
 '
 
-test_expect_success 'rebase (UTF-8)' '
+test_expect_success 'rebase (L/U)' '
 	# This is pathological -- use UTF-8 as intermediate form
 	# to get ISO-8859-1 results.
 	git-repo-config i18n.commitencoding ISO-8859-1 &&
@@ -140,15 +141,115 @@ test_expect_success 'rebase (UTF-8)' '
 	git reset --hard side &&
 	git-rebase master &&
 
-	# Make sure characters are not corrupted.
-	git repo-config i18n.logoutputencoding UTF-8 &&
-	git format-patch --stdout HEAD~2..HEAD^ >out-r1 &&
-	git format-patch --stdout HEAD^ >out-r2 &&
-	grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD_=C3=B3=C3=BA?=" out-r1 &&
-	grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD_=C3=B3=C3=BA?=" out-r2 &&
+	check_encoding 2 8859
+'
 
-	git-cat-file commit HEAD | grep "^encoding ISO-8859-1" &&
-	git-cat-file commit HEAD^ | grep "^encoding ISO-8859-1"
+test_expect_success 'cherry-pick(U/U)' '
+	# Both the commitencoding and logoutputencoding is set to UTF-8.
+
+	git-repo-config i18n.commitencoding UTF-8 &&
+	git repo-config i18n.logoutputencoding UTF-8 &&
+	. ../t3901-utf8.txt &&
+
+	git reset --hard master &&
+	git cherry-pick side^ &&
+	git cherry-pick side &&
+	EDITOR=: VISUAL=: git revert HEAD &&
+
+	check_encoding 3
+'
+
+test_expect_success 'cherry-pick(L/L)' '
+	# Both the commitencoding and logoutputencoding is set to ISO-8859-1
+
+	git-repo-config i18n.commitencoding ISO-8859-1 &&
+	git repo-config i18n.logoutputencoding ISO-8859-1 &&
+	. ../t3901-8859-1.txt &&
+
+	git reset --hard master &&
+	git cherry-pick side^ &&
+	git cherry-pick side &&
+	EDITOR=: VISUAL=: git revert HEAD &&
+
+	check_encoding 3 8859
+'
+
+test_expect_success 'cherry-pick(U/L)' '
+	# Commitencoding is set to UTF-8 but logoutputencoding is ISO-8859-1
+
+	git-repo-config i18n.commitencoding UTF-8 &&
+	git repo-config i18n.logoutputencoding ISO-8859-1 &&
+	. ../t3901-utf8.txt &&
+
+	git reset --hard master &&
+	git cherry-pick side^ &&
+	git cherry-pick side &&
+	EDITOR=: VISUAL=: git revert HEAD &&
+
+	check_encoding 3
+'
+
+test_expect_success 'cherry-pick(L/U)' '
+	# Again, the commitencoding is set to ISO-8859-1 but
+	# logoutputencoding is set to UTF-8.
+
+	git-repo-config i18n.commitencoding ISO-8859-1 &&
+	git repo-config i18n.logoutputencoding UTF-8 &&
+	. ../t3901-8859-1.txt &&
+
+	git reset --hard master &&
+	git cherry-pick side^ &&
+	git cherry-pick side &&
+	EDITOR=: VISUAL=: git revert HEAD &&
+
+	check_encoding 3 8859
+'
+
+test_expect_success 'rebase --merge (U/U)' '
+	git-repo-config i18n.commitencoding UTF-8 &&
+	git repo-config i18n.logoutputencoding UTF-8 &&
+	. ../t3901-utf8.txt &&
+
+	git reset --hard side &&
+	git-rebase --merge master &&
+
+	check_encoding 2
+'
+
+test_expect_success 'rebase --merge (U/L)' '
+	git-repo-config i18n.commitencoding UTF-8 &&
+	git repo-config i18n.logoutputencoding ISO-8859-1 &&
+	. ../t3901-utf8.txt &&
+
+	git reset --hard side &&
+	git-rebase --merge master &&
+
+	check_encoding 2
+'
+
+test_expect_success 'rebase --merge (L/L)' '
+	# In this test we want ISO-8859-1 encoded commits as the result
+	git-repo-config i18n.commitencoding ISO-8859-1 &&
+	git repo-config i18n.logoutputencoding ISO-8859-1 &&
+	. ../t3901-8859-1.txt &&
+
+	git reset --hard side &&
+	git-rebase --merge master &&
+
+	check_encoding 2 8859
+'
+
+test_expect_success 'rebase --merge (L/U)' '
+	# This is pathological -- use UTF-8 as intermediate form
+	# to get ISO-8859-1 results.
+	git-repo-config i18n.commitencoding ISO-8859-1 &&
+	git repo-config i18n.logoutputencoding UTF-8 &&
+	. ../t3901-8859-1.txt &&
+
+	git reset --hard side &&
+	git-rebase --merge master &&
+
+	check_encoding 2 8859
 '
 
 test_done
