@@ -12,20 +12,20 @@ static const char describe_usage[] =
 
 static int all;	/* Default to annotated tags only */
 static int tags;	/* But allow any tags if --tags is specified */
-
 static int abbrev = DEFAULT_ABBREV;
 
-static int names, allocs;
+static unsigned int names[256], allocs[256];
 static struct commit_name {
 	struct commit *commit;
 	int prio; /* annotated tag = 2, tag = 1, head = 0 */
 	char path[FLEX_ARRAY]; /* more */
-} **name_array = NULL;
+} **name_array[256];
 
 static struct commit_name *match(struct commit *cmit)
 {
-	int i = names;
-	struct commit_name **p = name_array;
+	unsigned char m = cmit->object.sha1[0];
+	unsigned int i = names[m];
+	struct commit_name **p = name_array[m];
 
 	while (i-- > 0) {
 		struct commit_name *n = *p++;
@@ -42,17 +42,19 @@ static void add_to_known_names(const char *path,
 	int idx;
 	int len = strlen(path)+1;
 	struct commit_name *name = xmalloc(sizeof(struct commit_name) + len);
+	unsigned char m = commit->object.sha1[0];
 
 	name->commit = commit;
 	name->prio = prio;
 	memcpy(name->path, path, len);
-	idx = names;
-	if (idx >= allocs) {
-		allocs = (idx + 50) * 3 / 2;
-		name_array = xrealloc(name_array, allocs*sizeof(*name_array));
+	idx = names[m];
+	if (idx >= allocs[m]) {
+		allocs[m] = (idx + 50) * 3 / 2;
+		name_array[m] = xrealloc(name_array[m],
+			allocs[m] * sizeof(*name_array));
 	}
-	name_array[idx] = name;
-	names = ++idx;
+	name_array[m][idx] = name;
+	names[m] = ++idx;
 }
 
 static int get_name(const char *path, const unsigned char *sha1, int flag, void *cb_data)
@@ -121,9 +123,12 @@ static void describe(const char *arg, int last_one)
 		die("%s is not a valid '%s' object", arg, commit_type);
 
 	if (!initialized) {
+		unsigned int m;
 		initialized = 1;
 		for_each_ref(get_name, NULL);
-		qsort(name_array, names, sizeof(*name_array), compare_names);
+		for (m = 0; m < ARRAY_SIZE(name_array); m++)
+			qsort(name_array[m], names[m],
+				sizeof(*name_array[m]), compare_names);
 	}
 
 	n = match(cmit);
