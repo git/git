@@ -429,7 +429,9 @@ then
 	fi
 elif test "$use_commit" != ""
 then
-	git-cat-file commit "$use_commit" | sed -e '1,/^$/d'
+	encoding=$(git repo-config i18n.commitencoding || echo UTF-8)
+	git show -s --pretty=raw --encoding="$encoding" "$use_commit" |
+	sed -e '1,/^$/d' -e 's/^    //'
 elif test -f "$GIT_DIR/MERGE_MSG"
 then
 	cat "$GIT_DIR/MERGE_MSG"
@@ -491,7 +493,8 @@ then
 		q
 	}
 	'
-	set_author_env=`git-cat-file commit "$use_commit" |
+	encoding=$(git repo-config i18n.commitencoding || echo UTF-8)
+	set_author_env=`git show -s --pretty=raw --encoding="$encoding" "$use_commit" |
 	LANG=C LC_ALL=C sed -ne "$pick_author_script"`
 	eval "$set_author_env"
 	export GIT_AUTHOR_NAME
