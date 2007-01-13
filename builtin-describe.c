@@ -138,6 +138,7 @@ static void describe(const char *arg, int last_one)
 	commit_list_insert(cmit, &list);
 	while (list) {
 		struct commit *c = pop_commit(&list);
+		struct commit_list *parents = c->parents;
 		n = match(c);
 		if (n) {
 			struct possible_tag *p = xmalloc(sizeof(*p));
@@ -148,17 +149,17 @@ static void describe(const char *arg, int last_one)
 			else
 				all_matches = p;
 			cur_match = p;
-		} else {
-			struct commit_list *parents = c->parents;
-			while (parents) {
-				struct commit *p = parents->item;
-				parse_commit(p);
-				if (!(p->object.flags & SEEN)) {
-					p->object.flags |= SEEN;
-					insert_by_date(p, &list);
-				}
-				parents = parents->next;
+			if (n->prio == 2)
+				continue;
+		}
+		while (parents) {
+			struct commit *p = parents->item;
+			parse_commit(p);
+			if (!(p->object.flags & SEEN)) {
+				p->object.flags |= SEEN;
+				insert_by_date(p, &list);
 			}
+			parents = parents->next;
 		}
 	}
 
@@ -181,7 +182,8 @@ static void describe(const char *arg, int last_one)
 		while ((!min_match || cur_match->depth < min_match->depth)
 			&& get_revision(&revs))
 			cur_match->depth++;
-		if (!min_match || cur_match->depth < min_match->depth)
+		if (!min_match || (cur_match->depth < min_match->depth
+			&& cur_match->name->prio >= min_match->name->prio))
 			min_match = cur_match;
 		free_commit_list(revs.commits);
 	}
