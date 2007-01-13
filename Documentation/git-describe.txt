@@ -35,6 +35,16 @@ OPTIONS
 	Instead of using the default 8 hexadecimal digits as the
 	abbreviated object name, use <n> digits.
 
+--candidates=<n>::
+	Instead of considering only the 10 most recent tags as
+	candidates to describe the input committish consider
+	up to <n> candidates.  Increasing <n> above 10 will take
+	slightly longer but may produce a more accurate result.
+
+--debug::
+	Verbosely display information about the searching strategy
+	being employed to standard error.  The tag name will still
+	be printed to standard out.
 
 EXAMPLES
 --------
@@ -62,6 +72,26 @@ the output shows the reference path as well:
 
 	[torvalds@g5 git]$ git describe --all HEAD^
 	heads/lt/describe-g975b
+
+SEARCH STRATEGY
+---------------
+
+For each committish supplied "git describe" will first look for
+a tag which tags exactly that commit.  Annotated tags will always
+be preferred over lightweight tags, and tags with newer dates will
+always be preferred over tags with older dates.  If an exact match
+is found, its name will be output and searching will stop.
+
+If an exact match was not found "git describe" will walk back
+through the commit history to locate an ancestor commit which
+has been tagged.  The ancestor's tag will be output along with an
+abbreviation of the input committish's SHA1.
+
+If multiple tags were found during the walk then the tag which
+has the fewest commits different from the input committish will be
+selected and output.  Here fewest commits different is defined as
+the number of commits which would be shown by "git log tag..input"
+will be the smallest number of commits possible.
 
 
 Author
