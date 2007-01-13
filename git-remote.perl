@@ -274,4 +274,9 @@ elsif ($ARGV[0] eq 'add') {
 	}
 	add_remote($ARGV[1], $ARGV[2]);
 }
-
+else {
+	print STDERR "Usage: git remote\n";
+	print STDERR "       git remote add <name> <url>\n";
+	print STDERR "       git remote show <name>\n";
+	exit(1);
+}
