@@ -32,7 +32,8 @@ methods:
 
 4. by using the -a switch with the 'commit' command to automatically "add"
    changes from all known files i.e. files that have already been committed
-   before, and perform the actual commit.
+   before, and to automatically "rm" files that have been
+   removed from the working tree, and perform the actual commit.
 
 The gitlink:git-status[1] command can be used to obtain a
 summary of what is included by any of the above for the next
