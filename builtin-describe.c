@@ -23,14 +23,24 @@ static struct commit_name {
 
 static struct commit_name *match(struct commit *cmit)
 {
-	unsigned char m = cmit->object.sha1[0];
-	unsigned int i = names[m];
-	struct commit_name **p = name_array[m];
+	unsigned char level0 = cmit->object.sha1[0];
+	struct commit_name **p = name_array[level0];
+	unsigned int hi = names[level0];
+	unsigned int lo = 0;
 
-	while (i-- > 0) {
-		struct commit_name *n = *p++;
-		if (n->commit == cmit)
-			return n;
+	while (lo < hi) {
+		unsigned int mi = (lo + hi) / 2;
+		int cmp = hashcmp(p[mi]->commit->object.sha1,
+			cmit->object.sha1);
+		if (!cmp) {
+			while (mi && p[mi - 1]->commit == cmit)
+				mi--;
+			return p[mi];
+		}
+		if (cmp > 0)
+			hi = mi;
+		else
+			lo = mi+1;
 	}
 	return NULL;
 }
@@ -95,7 +105,10 @@ static int compare_names(const void *_a, const void *_b)
 	struct commit_name *b = *(struct commit_name **)_b;
 	unsigned long a_date = a->commit->date;
 	unsigned long b_date = b->commit->date;
+	int cmp = hashcmp(a->commit->object.sha1, b->commit->object.sha1);
 
+	if (cmp)
+		return cmp;
 	if (a->prio != b->prio)
 		return b->prio - a->prio;
 	return (a_date > b_date) ? -1 : (a_date == b_date) ? 0 : 1;
