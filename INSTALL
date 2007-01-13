@@ -95,7 +95,7 @@ Issues of note:
    repository itself.  For example, you could:
 
 	$ mkdir manual && cd manual
-	$ git init-db
+	$ git init
 	$ git fetch-pack git://git.kernel.org/pub/scm/git/git.git man html |
 	  while read a b
 	  do

@@ -53,11 +53,7 @@ then
 	exit
 fi
 
-TOP=$(git-rev-parse --show-cdup)
-if test ! -z "$TOP"
-then
-	cd "$TOP"
-fi
+cd_to_toplevel
 
 if test "$reset_type" = "--hard"
 then

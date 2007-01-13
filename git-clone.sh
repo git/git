@@ -214,7 +214,7 @@ yes)
 	GIT_DIR="$D" ;;
 *)
 	GIT_DIR="$D/.git" ;;
-esac && export GIT_DIR && git-init-db ${template+"$template"} || usage
+esac && export GIT_DIR && git-init ${template+"$template"} || usage
 
 if test -n "$reference"
 then

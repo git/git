@@ -16,7 +16,8 @@ case "$0" in
 	me=cherry-pick
 	USAGE='[--edit] [-n] [-r] [-x] <commit-ish>'  ;;
 * )
-	die "What are you talking about?" ;;
+	echo >&2 "What are you talking about?"
+	exit 1 ;;
 esac
 . git-sh-setup
 require_work_tree

@@ -46,12 +46,12 @@ to import into git.
 For our first example, we're going to start a totally new repository from
 scratch, with no pre-existing files, and we'll call it `git-tutorial`.
 To start up, create a subdirectory for it, change into that
-subdirectory, and initialize the git infrastructure with `git-init-db`:
+subdirectory, and initialize the git infrastructure with `git-init`:
 
 ------------------------------------------------
 $ mkdir git-tutorial
 $ cd git-tutorial
-$ git-init-db
+$ git-init
 ------------------------------------------------
 
 to which git will reply
@@ -1371,11 +1371,11 @@ $ mkdir my-git.git
 ------------
 
 Then, make that directory into a git repository by running
-`git init-db`, but this time, since its name is not the usual
+`git init`, but this time, since its name is not the usual
 `.git`, we do things slightly differently:
 
 ------------
-$ GIT_DIR=my-git.git git-init-db
+$ GIT_DIR=my-git.git git-init
 ------------
 
 Make sure this directory is available for others you want your
@@ -1511,7 +1511,7 @@ A recommended workflow for a "project lead" goes like this:
 +
 If other people are pulling from your repository over dumb
 transport protocols (HTTP), you need to keep this repository
-'dumb transport friendly'.  After `git init-db`,
+'dumb transport friendly'.  After `git init`,
 `$GIT_DIR/hooks/post-update` copied from the standard templates
 would contain a call to `git-update-server-info` but the
 `post-update` hook itself is disabled by default -- enable it

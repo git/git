@@ -354,8 +354,7 @@ gitlink:git-index-pack[1]::
 	Build pack idx file for an existing packed archive.
 
 gitlink:git-init[1]::
-gitlink:git-init-db[1]::
-	Creates an empty git object database, or reinitialize an
+	Creates an empty git repository, or reinitialize an
 	existing one.
 
 gitlink:git-merge-file[1]::

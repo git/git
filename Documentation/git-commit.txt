@@ -72,12 +72,8 @@ OPTIONS
 	Add Signed-off-by line at the end of the commit message.
 
 --no-verify::
-	By default, the command looks for suspicious lines the
-	commit introduces, and aborts committing if there is one.
-	The definition of 'suspicious lines' is currently the
-	lines that has trailing whitespaces, and the lines whose
-	indentation has a SP character immediately followed by a
-	TAB character.  This option turns off the check.
+	This option bypasses the pre-commit hook.
+	See also link:hooks.html[hooks].
 
 -e|--edit::
 	The message taken from file with `-F`, command line with

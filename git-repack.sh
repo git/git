@@ -110,7 +110,7 @@ then
 		  done
 		)
 	fi
-	git-prune-packed
+	git-prune-packed $quiet
 fi
 
 case "$no_update_info" in

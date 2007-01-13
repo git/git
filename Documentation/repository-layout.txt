@@ -102,7 +102,7 @@ branches::
 hooks::
 	Hooks are customization scripts used by various git
 	commands.  A handful of sample hooks are installed when
-	`git init-db` is run, but all of them are disabled by
+	`git init` is run, but all of them are disabled by
 	default.  To enable, they need to be made executable.
 	Read link:hooks.html[hooks] for more details about
 	each hook.

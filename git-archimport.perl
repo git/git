@@ -226,7 +226,7 @@ my $import = 0;
 unless (-d $git_dir) { # initial import
     if ($psets[0]{type} eq 'i' || $psets[0]{type} eq 't') {
         print "Starting import from $psets[0]{id}\n";
-	`git-init-db`;
+	`git-init`;
 	die $! if $?;
 	$import = 1;
     } else {

@@ -259,7 +259,7 @@ refspec::
 	means "grab the master branch head from the $URL and store
 	it as my origin branch head".
 	And `git push $URL refs/heads/master:refs/heads/to-upstream`
-	means "publish my master branch head as to-upstream master head
+	means "publish my master branch head as to-upstream branch
 	at $URL".   See also gitlink:git-push[1]
 
 repository::
