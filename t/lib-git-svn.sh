@@ -25,14 +25,15 @@ perl -w -e "
 use SVN::Core;
 use SVN::Repos;
 \$SVN::Core::VERSION gt '1.1.0' or exit(42);
-SVN::Repos::create('$svnrepo', undef, undef, undef,
-                           { 'fs-config' => 'fsfs'});
+system(qw/svnadmin create --fs-type fsfs/, '$svnrepo') == 0 or exit(41);
 "
 x=$?
 if test $x -ne 0
 then
 	if test $x -eq 42; then
 		err='Perl SVN libraries must be >= 1.1.0'
+	elif test $x -eq 41; then
+		err='svnadmin failed to create fsfs repository'
 	else
 		err='Perl SVN libraries not found or unusable, skipping test'
 	fi
