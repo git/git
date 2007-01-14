@@ -22,6 +22,9 @@ static struct commit_name {
 	int prio; /* annotated tag = 2, tag = 1, head = 0 */
 	char path[FLEX_ARRAY]; /* more */
 } **name_array[256];
+static const char *prio_names[] = {
+	"head", "lightweight", "annotated",
+};
 
 static struct commit_name *match(struct commit *cmit)
 {
@@ -118,9 +121,23 @@ static int compare_names(const void *_a, const void *_b)
 
 struct possible_tag {
 	struct commit_name *name;
-	unsigned long depth;
+	int depth;
+	int found_order;
 	unsigned flag_within;
 };
+
+static int compare_pt(const void *a_, const void *b_)
+{
+	struct possible_tag *a = (struct possible_tag *)a_;
+	struct possible_tag *b = (struct possible_tag *)b_;
+	if (a->name->prio != b->name->prio)
+		return b->name->prio - a->name->prio;
+	if (a->depth != b->depth)
+		return a->depth - b->depth;
+	if (a->found_order != b->found_order)
+		return a->found_order - b->found_order;
+	return 0;
+}
 
 static void describe(const char *arg, int last_one)
 {
@@ -129,9 +146,10 @@ static void describe(const char *arg, int last_one)
 	struct commit_list *list;
 	static int initialized = 0;
 	struct commit_name *n;
-	struct possible_tag all_matches[MAX_TAGS], *min_match;
+	struct possible_tag all_matches[MAX_TAGS];
 	unsigned int match_cnt = 0, annotated_cnt = 0, cur_match;
 	unsigned long seen_commits = 0;
+	int found = 0;
 
 	if (get_sha1(arg, sha1))
 		die("Not a valid object name %s", arg);
@@ -171,6 +189,7 @@ static void describe(const char *arg, int last_one)
 				t->name = n;
 				t->depth = seen_commits - 1;
 				t->flag_within = 1u << match_cnt;
+				t->found_order = found++;
 				c->object.flags |= t->flag_within;
 				if (n->prio == 2)
 					annotated_cnt++;
@@ -205,18 +224,12 @@ static void describe(const char *arg, int last_one)
 	if (!match_cnt)
 		die("cannot describe '%s'", sha1_to_hex(cmit->object.sha1));
 
-	min_match = &all_matches[0];
-	for (cur_match = 1; cur_match < match_cnt; cur_match++) {
-		struct possible_tag *t = &all_matches[cur_match];
-		if (t->depth < min_match->depth
-			&& t->name->prio >= min_match->name->prio)
-			min_match = t;
-	}
+	qsort(all_matches, match_cnt, sizeof(all_matches[0]), compare_pt);
 	if (debug) {
 		for (cur_match = 0; cur_match < match_cnt; cur_match++) {
 			struct possible_tag *t = &all_matches[cur_match];
-			fprintf(stderr, " %c %8lu %s\n",
-				min_match == t ? '*' : ' ',
+			fprintf(stderr, " %-11s %8d %s\n",
+				prio_names[t->name->prio],
 				t->depth, t->name->path);
 		}
 		fprintf(stderr, "traversed %lu commits\n", seen_commits);
@@ -228,7 +241,7 @@ static void describe(const char *arg, int last_one)
 				sha1_to_hex(gave_up_on->object.sha1));
 		}
 	}
-	printf("%s-g%s\n", min_match->name->path,
+	printf("%s-g%s\n", all_matches[0].name->path,
 		   find_unique_abbrev(cmit->object.sha1, abbrev));
 
 	if (!last_one)
