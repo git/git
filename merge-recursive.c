@@ -724,13 +724,13 @@ static void conflict_rename_rename(struct rename *ren1,
 	const char *dst_name2 = ren2_dst;
 	if (path_list_has_path(&current_directory_set, ren1_dst)) {
 		dst_name1 = del[delp++] = unique_path(ren1_dst, branch1);
-		output(1, "%s is a directory in %s adding as %s instead",
+		output(1, "%s is a directory in %s added as %s instead",
 		       ren1_dst, branch2, dst_name1);
 		remove_file(0, ren1_dst, 0);
 	}
 	if (path_list_has_path(&current_directory_set, ren2_dst)) {
 		dst_name2 = del[delp++] = unique_path(ren2_dst, branch2);
-		output(1, "%s is a directory in %s adding as %s instead",
+		output(1, "%s is a directory in %s added as %s instead",
 		       ren2_dst, branch1, dst_name2);
 		remove_file(0, ren2_dst, 0);
 	}
@@ -744,7 +744,7 @@ static void conflict_rename_dir(struct rename *ren1,
 				const char *branch1)
 {
 	char *new_path = unique_path(ren1->pair->two->path, branch1);
-	output(1, "Renaming %s to %s instead", ren1->pair->one->path, new_path);
+	output(1, "Renamed %s to %s instead", ren1->pair->one->path, new_path);
 	remove_file(0, ren1->pair->two->path, 0);
 	update_file(0, ren1->pair->two->sha1, ren1->pair->two->mode, new_path);
 	free(new_path);
@@ -757,7 +757,7 @@ static void conflict_rename_rename_2(struct rename *ren1,
 {
 	char *new_path1 = unique_path(ren1->pair->two->path, branch1);
 	char *new_path2 = unique_path(ren2->pair->two->path, branch2);
-	output(1, "Renaming %s to %s and %s to %s instead",
+	output(1, "Renamed %s to %s and %s to %s instead",
 	       ren1->pair->one->path, new_path1,
 	       ren2->pair->one->path, new_path2);
 	remove_file(0, ren1->pair->two->path, 0);
@@ -865,10 +865,10 @@ static int process_renames(struct path_list *a_renames,
 						 branch1,
 						 branch2);
 				if (mfi.merge || !mfi.clean)
-					output(1, "Renaming %s->%s", src, ren1_dst);
+					output(1, "Renamed %s->%s", src, ren1_dst);
 
 				if (mfi.merge)
-					output(2, "Auto-merging %s", ren1_dst);
+					output(2, "Auto-merged %s", ren1_dst);
 
 				if (!mfi.clean) {
 					output(1, "CONFLICT (content): merge conflict in %s",
@@ -902,14 +902,14 @@ static int process_renames(struct path_list *a_renames,
 
 			if (path_list_has_path(&current_directory_set, ren1_dst)) {
 				clean_merge = 0;
-				output(1, "CONFLICT (rename/directory): Rename %s->%s in %s "
+				output(1, "CONFLICT (rename/directory): Renamed %s->%s in %s "
 				       " directory %s added in %s",
 				       ren1_src, ren1_dst, branch1,
 				       ren1_dst, branch2);
 				conflict_rename_dir(ren1, branch1);
 			} else if (sha_eq(src_other.sha1, null_sha1)) {
 				clean_merge = 0;
-				output(1, "CONFLICT (rename/delete): Rename %s->%s in %s "
+				output(1, "CONFLICT (rename/delete): Renamed %s->%s in %s "
 				       "and deleted in %s",
 				       ren1_src, ren1_dst, branch1,
 				       branch2);
@@ -918,19 +918,19 @@ static int process_renames(struct path_list *a_renames,
 				const char *new_path;
 				clean_merge = 0;
 				try_merge = 1;
-				output(1, "CONFLICT (rename/add): Rename %s->%s in %s. "
+				output(1, "CONFLICT (rename/add): Renamed %s->%s in %s. "
 				       "%s added in %s",
 				       ren1_src, ren1_dst, branch1,
 				       ren1_dst, branch2);
 				new_path = unique_path(ren1_dst, branch2);
-				output(1, "Adding as %s instead", new_path);
+				output(1, "Added as %s instead", new_path);
 				update_file(0, dst_other.sha1, dst_other.mode, new_path);
 			} else if ((item = path_list_lookup(ren1_dst, renames2Dst))) {
 				ren2 = item->util;
 				clean_merge = 0;
 				ren2->processed = 1;
-				output(1, "CONFLICT (rename/rename): Rename %s->%s in %s. "
-				       "Rename %s->%s in %s",
+				output(1, "CONFLICT (rename/rename): Renamed %s->%s in %s. "
+				       "Renamed %s->%s in %s",
 				       ren1_src, ren1_dst, branch1,
 				       ren2->pair->one->path, ren2->pair->two->path, branch2);
 				conflict_rename_rename_2(ren1, branch1, ren2, branch2);
@@ -954,9 +954,9 @@ static int process_renames(struct path_list *a_renames,
 						a_branch, b_branch);
 
 				if (mfi.merge || !mfi.clean)
-					output(1, "Renaming %s => %s", ren1_src, ren1_dst);
+					output(1, "Renamed %s => %s", ren1_src, ren1_dst);
 				if (mfi.merge)
-					output(2, "Auto-merging %s", ren1_dst);
+					output(2, "Auto-merged %s", ren1_dst);
 				if (!mfi.clean) {
 					output(1, "CONFLICT (rename/modify): Merge conflict in %s",
 					       ren1_dst);
@@ -1006,7 +1006,7 @@ static int process_entry(const char *path, struct stage_data *entry,
 			/* Deleted in both or deleted in one and
 			 * unchanged in the other */
 			if (a_sha)
-				output(2, "Removing %s", path);
+				output(2, "Removed %s", path);
 			/* do not touch working file if it did not exist */
 			remove_file(1, path, !a_sha);
 		} else {
@@ -1053,12 +1053,12 @@ static int process_entry(const char *path, struct stage_data *entry,
 			const char *new_path = unique_path(path, add_branch);
 			clean_merge = 0;
 			output(1, "CONFLICT (%s): There is a directory with name %s in %s. "
-			       "Adding %s as %s",
+			       "Added %s as %s",
 			       conf, path, other_branch, path, new_path);
 			remove_file(0, path, 0);
 			update_file(0, sha, mode, new_path);
 		} else {
-			output(2, "Adding %s", path);
+			output(2, "Added %s", path);
 			update_file(1, sha, mode, path);
 		}
 	} else if (a_sha && b_sha) {
@@ -1072,7 +1072,7 @@ static int process_entry(const char *path, struct stage_data *entry,
 			reason = "add/add";
 			o_sha = (unsigned char *)null_sha1;
 		}
-		output(2, "Auto-merging %s", path);
+		output(2, "Auto-merged %s", path);
 		o.path = a.path = b.path = (char *)path;
 		hashcpy(o.sha1, o_sha);
 		o.mode = o_mode;
