@@ -9,7 +9,7 @@ use vars qw/	$AUTHOR $VERSION
 		$GIT_DIR $GIT_SVN_DIR $REVDB
 		$_follow_parent $sha1 $sha1_short $_revision
 		$_cp_remote $_upgrade $_rmdir $_q $_cp_similarity
-		$_find_copies_harder $_l/;
+		$_find_copies_harder $_l $_authors %users/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
@@ -71,10 +71,10 @@ my ($_stdin, $_help, $_edit,
 	$_repack, $_repack_nr, $_repack_flags,
 	$_message, $_file, $_no_metadata,
 	$_template, $_shared, $_no_default_regex, $_no_graft_copy,
-	$_version, $_upgrade, $_authors, $_branch_all_refs, @_opt_m,
+	$_version, $_upgrade, $_branch_all_refs, @_opt_m,
 	$_merge, $_strategy, $_dry_run,
 	$_prefix);
-my (@_branch_from, %tree_map, %users);
+my (@_branch_from, %tree_map);
 my @repo_path_split_cache;
 
 my %fc_opts = ( 'branch|b=s' => \@_branch_from,
@@ -135,7 +135,7 @@ my %cmd = (
 			 'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache,
 			 'prefix=s' => \$_prefix,
 			} ],
-	'multi-fetch' => [ \&multi_fetch,
+	'multi-fetch' => [ \&cmd_multi_fetch,
 			'Fetch multiple trees (like git-svnimport)',
 			\%fc_opts ],
 	'log' => [ \&Git::SVN::Log::cmd_show_log, 'Show commit logs',
@@ -292,7 +292,12 @@ sub cmd_init {
 }
 
 sub cmd_fetch {
-	fetch_child_id($GIT_SVN, @_);
+	my $gs = Git::SVN->new;
+	$gs->fetch(@_);
+	if ($gs->{last_commit} && !verify_ref('refs/heads/master^0')) {
+		command_noisy(qw(update-ref refs/heads/master),
+		              $gs->{last_commit});
+	}
 }
 
 sub fetch {
@@ -583,13 +588,14 @@ sub cmd_multi_init {
 	complete_url_ls_init($ra, $_tags, '--tags/-t', $_prefix . 'tags/');
 }
 
-sub multi_fetch {
+sub cmd_multi_fetch {
 	# try to do trunk first, since branches/tags
 	# may be descended from it.
-	if (-e "$GIT_DIR/svn/trunk/info/url") {
-		fetch_child_id('trunk', @_);
+	if (-e "$ENV{GIT_DIR}/svn/trunk/info/url") {
+		my $gs = Git::SVN->new('trunk');
+		$gs->fetch(@_);
 	}
-	rec_fetch('', "$GIT_DIR/svn", @_);
+	rec_fetch('', "$ENV{GIT_DIR}/svn", @_);
 }
 
 # this command is special because it requires no metadata
@@ -706,24 +712,6 @@ sub commit_diff {
 
 ########################### utility functions #########################
 
-sub fetch_child_id {
-	my $id = shift;
-	print "Fetching $id\n";
-	my $ref = "$GIT_DIR/refs/remotes/$id";
-	defined(my $pid = open my $fh, '-|') or croak $!;
-	if (!$pid) {
-		$GIT_SVN = $ENV{GIT_SVN_ID} = $id;
-		init_vars();
-		fetch(@_);
-		exit 0;
-	}
-	while (<$fh>) {
-		print $_;
-		check_repack() if (/^r\d+ = $sha1/o);
-	}
-	close $fh or croak $?;
-}
-
 sub rec_fetch {
 	my ($pfx, $p, @args) = @_;
 	my @dir;
@@ -732,15 +720,16 @@ sub rec_fetch {
 			$pfx .= '/' if $pfx && $pfx !~ m!/$!;
 			my $id = $pfx . basename $_;
 			next if $id eq 'trunk';
-			fetch_child_id($id, @args);
+			my $gs = Git::SVN->new($id);
+			$gs->fetch(@args);
 		} elsif (-d $_) {
 			push @dir, $_;
 		}
 	}
 	foreach (@dir) {
 		my $x = $_;
-		$x =~ s!^\Q$GIT_DIR\E/svn/!!;
-		rec_fetch($x, $_);
+		$x =~ s!^\Q$ENV{GIT_DIR}\E/svn/!!o;
+		rec_fetch($x, $_, @args);
 	}
 }
 
@@ -1841,8 +1830,9 @@ sub do_git_commit {
 		croak "$log_entry->{revision} = $c already exists! ",
 		      "Why are we refetching it?\n";
 	}
-	my ($name, $email) = ::author_name_email($log_entry->{author},
-	                                         $self->ra);
+	my $author = $log_entry->{author};
+	my ($name, $email) = (defined $::users{$author} ? @{$::users{$author}}
+	                   : ($author, "$author\@".$self->ra->uuid));
 	$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} = $name;
 	$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} = $email;
 	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_entry->{date};
@@ -1894,7 +1884,7 @@ sub do_fetch {
 	} else {
 		$last_rev = $rev;
 	}
-	unless ($self->ra->do_update($last_rev, $rev, '', 1, $ed)) {
+	unless ($self->ra->gs_do_update($last_rev, $rev, '', 1, $ed)) {
 		die "SVN connection failed somewhere...\n";
 	}
 	$self->make_log_entry($rev, \@parents, $ed);
@@ -1944,6 +1934,25 @@ sub write_untracked {
 			}
 		}
 	}
+}
+
+sub parse_svn_date {
+	my $date = shift || return '+0000 1970-01-01 00:00:00';
+	my ($Y,$m,$d,$H,$M,$S) = ($date =~ /^(\d{4})\-(\d\d)\-(\d\d)T
+	                                    (\d\d)\:(\d\d)\:(\d\d).\d+Z$/x) or
+	                                 croak "Unable to parse date: $date\n";
+	"+0000 $Y-$m-$d $H:$M:$S";
+}
+
+sub check_author {
+	my ($author) = @_;
+	if (!defined $author || length $author == 0) {
+		$author = '(no author)';
+	}
+	if (defined $::_authors && ! defined $::users{$author}) {
+		die "Author: $author not defined in $::_authors file\n";
+	}
+	$author;
 }
 
 sub make_log_entry {
@@ -2105,6 +2114,11 @@ sub _new {
 	        db_path => "$dir/.rev_db" }, $class;
 }
 
+sub uri_encode {
+	my ($f) = @_;
+	$f =~ s#([^a-zA-Z0-9\*!\:_\./\-])#uc sprintf("%%%02x",ord($1))#eg;
+	$f
+}
 
 package Git::SVN::Prompt;
 use strict;
@@ -2662,15 +2676,14 @@ sub new {
 	my ($class, $git_svn) = @_;
 	my $self = SVN::Delta::Editor->new;
 	bless $self, $class;
-	$self->{c} = $git_svn->{c} if exists $git_svn->{c};
-	$self->{q} = $git_svn->{q};
+	$self->{c} = $git_svn->{last_commit} if exists $git_svn->{last_commit};
 	$self->{empty} = {};
 	$self->{dir_prop} = {};
 	$self->{file_prop} = {};
 	$self->{absent_dir} = {};
 	$self->{absent_file} = {};
-	($self->{gui}, $self->{ctx}) = command_input_pipe(
-	                                     qw/update-index -z --index-info/);
+	($self->{gui}, $self->{ctx}) = $git_svn->tmp_index_do(
+	       sub { command_input_pipe(qw/update-index -z --index-info/) } );
 	require Digest::MD5;
 	$self;
 }
@@ -3416,7 +3429,7 @@ sub get_author_info {
 	$author =~ s/(?:^\s*|\s*$)//g;
 	$dest->{a_raw} = $author;
 	my $au;
-	if ($_authors) {
+	if ($::_authors) {
 		$au = $rusers{$author} || undef;
 	}
 	if (!$au) {
