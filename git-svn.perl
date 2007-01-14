@@ -50,11 +50,7 @@ use File::Basename qw/dirname basename/;
 use File::Path qw/mkpath/;
 use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev pass_through/;
 use IPC::Open3;
-use Memoize;
 use Git;
-memoize('revisions_eq');
-memoize('cmt_metadata');
-memoize('get_commit_time');
 
 BEGIN {
 	my $s;
