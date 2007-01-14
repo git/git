@@ -779,10 +779,10 @@ in history.
 $ git diff origin..master
 -------------------------------------------------
 
-will tell you whether the contents of the project are the same at the two
-branches; in theory, however, it's possible that the same project contents
-could have been arrived at by two different historical routes.  You could
-compare the SHA1 id's:
+will tell you whether the contents of the project are the same at the
+two branches; in theory, however, it's possible that the same project
+contents could have been arrived at by two different historical
+routes.  You could compare the SHA1 id's:
 
 -------------------------------------------------
 $ git rev-list origin
@@ -791,8 +791,9 @@ $ git rev-list master
 e05db0fd4f31dde7005f075a84f96b360d05984b
 -------------------------------------------------
 
-Or you could recall that the ... operator selects all commits contained
-reachable from either one reference or the other but not both: so
+Or you could recall that the ... operator selects all commits
+contained reachable from either one reference or the other but not
+both: so
 
 -------------------------------------------------
 $ git log origin...master
@@ -803,9 +804,21 @@ will return no commits when the two branches are equal.
 Check which tagged version a given fix was first included in
 ------------------------------------------------------------
 
-Suppose you know that a critical fix made it into the linux kernel with commit
-e05db0fd...  You'd like to find which kernel version that commit first made it
-into.
+Suppose you know that the commit e05db0fd fixed a certain problem.
+You'd like to find the earliest tagged release that contains that
+fix.
+
+Of course, there may be more than one answer--if the history branched
+after commit e05db0fd, then there could be multiple "earliest" tagged
+releases.
+
+You could just visually inspect the commits since e05db0fd:
+
+-------------------------------------------------
+$ gitk e05db0fd..
+-------------------------------------------------
+
+...
 
 Developing with git
 ===================
