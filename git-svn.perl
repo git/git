@@ -107,7 +107,8 @@ my %cmd = (
 	init => [ \&cmd_init, "Initialize a repo for tracking" .
 			  " (requires URL argument)",
 			  \%init_opts ],
-	dcommit => [ \&dcommit, 'Commit several diffs to merge with upstream',
+	dcommit => [ \&cmd_dcommit,
+	             'Commit several diffs to merge with upstream',
 			{ 'merge|m|M' => \$_merge,
 			  'strategy|s=s' => \$_strategy,
 			  'dry-run|n' => \$_dry_run,
@@ -482,49 +483,65 @@ sub commit_lib {
 	unlink $commit_msg;
 }
 
-sub dcommit {
-	my $head = shift || 'HEAD';
-	my $gs = "refs/remotes/$GIT_SVN";
-	my @refs = command(qw/rev-list --no-merges/, "$gs..$head");
+sub cmd_dcommit {
+	my $head = shift;
+	my $gs = Git::SVN->new;
+	$head ||= 'HEAD';
+	my @refs = command(qw/rev-list --no-merges/, $gs->refname."..$head");
 	my $last_rev;
 	foreach my $d (reverse @refs) {
 		if (!verify_ref("$d~1")) {
-			die "Commit $d\n",
-			    "has no parent commit, and therefore ",
-			    "nothing to diff against.\n",
-			    "You should be working from a repository ",
-			    "originally created by git-svn\n";
+			fatal "Commit $d\n",
+			      "has no parent commit, and therefore ",
+			      "nothing to diff against.\n",
+			      "You should be working from a repository ",
+			      "originally created by git-svn\n";
 		}
 		unless (defined $last_rev) {
 			(undef, $last_rev, undef) = cmt_metadata("$d~1");
 			unless (defined $last_rev) {
-				die "Unable to extract revision information ",
-				    "from commit $d~1\n";
+				fatal "Unable to extract revision information ",
+				      "from commit $d~1\n";
 			}
 		}
 		if ($_dry_run) {
 			print "diff-tree $d~1 $d\n";
 		} else {
-			if (my $r = commit_diff("$d~1", $d, undef, $last_rev)) {
-				$last_rev = $r;
-			} # else: no changes, same $last_rev
+			my $ra = $gs->ra;
+			my $pool = SVN::Pool->new;
+			my %ed_opts = ( r => $last_rev,
+			                ra => $ra->dup,
+			                svn_path => $ra->{svn_path} );
+			my $ed = SVN::Git::Editor->new(\%ed_opts,
+			                 $ra->get_commit_editor($::_message,
+			                 sub { print "Committed r$_[0]\n";
+					       $last_rev = $_[0]; }),
+			                 $pool);
+			my $mods = $ed->apply_diff("$d~1", $d);
+			if (@$mods == 0) {
+				print "No changes\n$d~1 == $d\n";
+			}
 		}
 	}
 	return if $_dry_run;
-	fetch();
-	my @diff = command('diff-tree', 'HEAD', $gs, '--');
+	$gs->fetch;
+	# we always want to rebase against the current HEAD, not any
+	# head that was passed to us
+	my @diff = command('diff-tree', 'HEAD', $gs->refname, '--');
 	my @finish;
 	if (@diff) {
 		@finish = qw/rebase/;
 		push @finish, qw/--merge/ if $_merge;
 		push @finish, "--strategy=$_strategy" if $_strategy;
-		print STDERR "W: HEAD and $gs differ, using @finish:\n", @diff;
+		print STDERR "W: HEAD and ", $gs->refname, " differ, ",
+		             "using @finish:\n", "@diff";
 	} else {
-		print "No changes between current HEAD and $gs\n",
-		      "Resetting to the latest $gs\n";
+		print "No changes between current HEAD and ",
+		      $gs->refname, "\nResetting to the latest ",
+		      $gs->refname, "\n";
 		@finish = qw/reset --mixed/;
 	}
-	command_noisy(@finish, $gs);
+	command_noisy(@finish, $gs->refname);
 }
 
 sub cmd_show_ignore {
@@ -645,69 +662,6 @@ sub cmd_commit_diff {
 		print "No changes\n$ta == $tb\n";
 	}
 	$pool->clear;
-}
-
-sub commit_diff_usage {
-	print STDERR "Usage: $0 commit-diff <tree-ish> <tree-ish> [<URL>]\n";
-	exit 1
-}
-
-sub commit_diff {
-	my $ta = shift or commit_diff_usage();
-	my $tb = shift or commit_diff_usage();
-	if (!eval { $SVN_URL = shift || file_to_s("$GIT_SVN_DIR/info/url") }) {
-		print STDERR "Needed URL or usable git-svn id command-line\n";
-		commit_diff_usage();
-	}
-	my $r = shift;
-	unless (defined $r) {
-		if (defined $_revision) {
-			$r = $_revision
-		} else {
-			die "-r|--revision is a required argument\n";
-		}
-	}
-	if (defined $_message && defined $_file) {
-		print STDERR "Both --message/-m and --file/-F specified ",
-				"for the commit message.\n",
-				"I have no idea what you mean\n";
-		exit 1;
-	}
-	if (defined $_file) {
-		$_message = file_to_s($_file);
-	} else {
-		$_message ||= get_commit_entry($tb,
-					"$GIT_DIR/.svn-commit.tmp.$$")->{log};
-	}
-	$SVN ||= Git::SVN::Ra->new($SVN_URL);
-	if ($r eq 'HEAD') {
-		$r = $SVN->get_latest_revnum;
-	} elsif ($r !~ /^\d+$/) {
-		die "revision argument: $r not understood by git-svn\n";
-	}
-	my $rev_committed;
-	my $pool = SVN::Pool->new;
-	my $ed = SVN::Git::Editor->new({	r => $r,
-						ra => $SVN->dup,
-						svn_path => $SVN->{svn_path}
-					},
-				$SVN->get_commit_editor($_message,
-					sub {
-						$rev_committed = $_[0];
-						print "Committed $_[0]\n";
-					},
-					$pool)
-				);
-	eval {
-		my $mods = $ed->apply_diff($ta, $tb);
-		if (@$mods == 0) {
-			print "No changes\n$ta == $tb\n";
-		}
-	};
-	$pool->clear;
-	fatal "$@\n" if $@;
-	$_message = $_file = undef;
-	return $rev_committed;
 }
 
 ########################### utility functions #########################
