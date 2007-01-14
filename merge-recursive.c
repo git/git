@@ -70,13 +70,13 @@ struct stage_data
 static struct path_list current_file_set = {NULL, 0, 0, 1};
 static struct path_list current_directory_set = {NULL, 0, 0, 1};
 
-static int output_indent = 0;
+static int call_depth = 0;
 
 static void output(const char *fmt, ...)
 {
 	va_list args;
 	int i;
-	for (i = output_indent; i--;)
+	for (i = call_depth; i--;)
 		fputs("  ", stdout);
 	va_start(args, fmt);
 	vfprintf(stdout, fmt, args);
@@ -87,7 +87,7 @@ static void output(const char *fmt, ...)
 static void output_commit_title(struct commit *commit)
 {
 	int i;
-	for (i = output_indent; i--;)
+	for (i = call_depth; i--;)
 		fputs("  ", stdout);
 	if (commit->util)
 		printf("virtual %s\n", (char *)commit->util);
@@ -1095,7 +1095,6 @@ static int merge(struct commit *h1,
 		 struct commit *h2,
 		 const char *branch1,
 		 const char *branch2,
-		 int call_depth /* =0 */,
 		 struct commit_list *ca,
 		 struct commit **result)
 {
@@ -1129,7 +1128,7 @@ static int merge(struct commit *h1,
 	}
 
 	for (iter = ca; iter; iter = iter->next) {
-		output_indent = call_depth + 1;
+		call_depth++;
 		/*
 		 * When the merge fails, the result contains files
 		 * with conflict markers. The cleanness flag is
@@ -1141,17 +1140,16 @@ static int merge(struct commit *h1,
 		merge(merged_common_ancestors, iter->item,
 		      "Temporary merge branch 1",
 		      "Temporary merge branch 2",
-		      call_depth + 1,
 		      NULL,
 		      &merged_common_ancestors);
-		output_indent = call_depth;
+		call_depth--;
 
 		if (!merged_common_ancestors)
 			die("merge returned no commit");
 	}
 
 	discard_cache();
-	if (call_depth == 0) {
+	if (!call_depth) {
 		read_cache();
 		index_only = 0;
 	} else
@@ -1239,7 +1237,7 @@ int main(int argc, char *argv[])
 		struct commit *ancestor = get_ref(bases[i]);
 		ca = commit_list_insert(ancestor, &ca);
 	}
-	clean = merge(h1, h2, branch1, branch2, 0, ca, &result);
+	clean = merge(h1, h2, branch1, branch2, ca, &result);
 
 	if (active_cache_changed &&
 	    (write_cache(index_fd, active_cache, active_nr) ||
