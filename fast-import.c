@@ -136,9 +136,9 @@ struct last_object
 {
 	void *data;
 	unsigned long len;
+	unsigned long offset;
 	unsigned int depth;
-	int no_free;
-	unsigned char sha1[20];
+	unsigned no_free:1;
 };
 
 struct mem_pool
@@ -235,13 +235,10 @@ static unsigned int atom_cnt;
 static struct atom_str **atom_table;
 
 /* The .pack file being generated */
+static struct packed_git *pack_data;
 static int pack_fd;
 static unsigned long pack_size;
 static unsigned char pack_sha1[20];
-static unsigned char* pack_base;
-static unsigned long pack_moff;
-static unsigned long pack_mlen = 128*1024*1024;
-static unsigned long page_size;
 
 /* Table of objects we've written. */
 static unsigned int object_entry_alloc = 5000;
@@ -667,14 +664,23 @@ static int store_object(
 	deflateInit(&s, zlib_compression_level);
 
 	if (delta) {
+		unsigned long ofs = e->offset - last->offset;
+		unsigned pos = sizeof(hdr) - 1;
+
 		delta_count_by_type[type]++;
 		last->depth++;
 		s.next_in = delta;
 		s.avail_in = deltalen;
-		hdrlen = encode_header(OBJ_REF_DELTA, deltalen, hdr);
+
+		hdrlen = encode_header(OBJ_OFS_DELTA, deltalen, hdr);
 		write_or_die(pack_fd, hdr, hdrlen);
-		write_or_die(pack_fd, last->sha1, sizeof(sha1));
-		pack_size += hdrlen + sizeof(sha1);
+		pack_size += hdrlen;
+
+		hdr[pos] = ofs & 127;
+		while (ofs >>= 7)
+			hdr[--pos] = 128 | (--ofs & 127);
+		write_or_die(pack_fd, hdr + pos, sizeof(hdr) - pos);
+		pack_size += sizeof(hdr) - pos;
 	} else {
 		if (last)
 			last->depth = 0;
@@ -701,139 +707,17 @@ static int store_object(
 		if (last->data && !last->no_free)
 			free(last->data);
 		last->data = dat;
+		last->offset = e->offset;
 		last->len = datlen;
-		hashcpy(last->sha1, sha1);
 	}
 	return 0;
 }
 
-static unsigned char* map_pack(unsigned long offset, unsigned int *left)
+static void *gfi_unpack_entry(unsigned long ofs, unsigned long *sizep)
 {
-	if (offset >= pack_size)
-		die("object offset outside of pack file");
-	if (!pack_base
-			|| offset < pack_moff
-			|| (offset + 20) >= (pack_moff + pack_mlen)) {
-		if (pack_base)
-			munmap(pack_base, pack_mlen);
-		pack_moff = (offset / page_size) * page_size;
-		pack_base = mmap(NULL,pack_mlen,PROT_READ,MAP_SHARED,
-			pack_fd,pack_moff);
-		if (pack_base == MAP_FAILED)
-			die("Failed to map generated pack: %s", strerror(errno));
-		remap_count++;
-	}
-	offset -= pack_moff;
-	if (left)
-		*left = pack_mlen - offset;
-	return pack_base + offset;
-}
-
-static unsigned long unpack_object_header(unsigned long offset,
-	enum object_type *type,
-	unsigned long *sizep)
-{
-	unsigned shift;
-	unsigned char c;
-	unsigned long size;
-
-	c = *map_pack(offset++, NULL);
-	*type = (c >> 4) & 7;
-	size = c & 15;
-	shift = 4;
-	while (c & 0x80) {
-		c = *map_pack(offset++, NULL);
-		size += (c & 0x7f) << shift;
-		shift += 7;
-	}
-	*sizep = size;
-	return offset;
-}
-
-static void *unpack_non_delta_entry(unsigned long o, unsigned long sz)
-{
-	z_stream stream;
-	unsigned char *result;
-
-	result = xmalloc(sz + 1);
-	result[sz] = 0;
-
-	memset(&stream, 0, sizeof(stream));
-	stream.next_in = map_pack(o, &stream.avail_in);
-	stream.next_out = result;
-	stream.avail_out = sz;
-
-	inflateInit(&stream);
-	for (;;) {
-		int st = inflate(&stream, Z_FINISH);
-		if (st == Z_STREAM_END)
-			break;
-		if (st == Z_OK || st == Z_BUF_ERROR) {
-			o = stream.next_in - pack_base + pack_moff;
-			stream.next_in = map_pack(o, &stream.avail_in);
-			continue;
-		}
-		die("Error %i from zlib during inflate.", st);
-	}
-	inflateEnd(&stream);
-	if (stream.total_out != sz)
-		die("Error after inflate: sizes mismatch");
-	return result;
-}
-
-static void *gfi_unpack_entry(unsigned long offset,
-	unsigned long *sizep,
-	unsigned int *delta_depth);
-
-static void *unpack_delta_entry(unsigned long offset,
-	unsigned long delta_size,
-	unsigned long *sizep,
-	unsigned int *delta_depth)
-{
-	struct object_entry *base_oe;
-	unsigned char *base_sha1;
-	void *delta_data, *base, *result;
-	unsigned long base_size, result_size;
-
-	base_sha1 = map_pack(offset, NULL);
-	base_oe = find_object(base_sha1);
-	if (!base_oe)
-		die("I'm broken; I can't find a base I know must be here.");
-	base = gfi_unpack_entry(base_oe->offset, &base_size, delta_depth);
-	delta_data = unpack_non_delta_entry(offset + 20, delta_size);
-	result = patch_delta(base, base_size,
-			     delta_data, delta_size,
-			     &result_size);
-	if (!result)
-		die("failed to apply delta");
-	free(delta_data);
-	free(base);
-	*sizep = result_size;
-	(*delta_depth)++;
-	return result;
-}
-
-static void *gfi_unpack_entry(unsigned long offset,
-	unsigned long *sizep,
-	unsigned int *delta_depth)
-{
-	unsigned long size;
-	enum object_type kind;
-
-	offset = unpack_object_header(offset, &kind, &size);
-	switch (kind) {
-	case OBJ_REF_DELTA:
-		return unpack_delta_entry(offset, size, sizep, delta_depth);
-	case OBJ_COMMIT:
-	case OBJ_TREE:
-	case OBJ_BLOB:
-	case OBJ_TAG:
-		*sizep = size;
-		*delta_depth = 0;
-		return unpack_non_delta_entry(offset, size);
-	default:
-		die("I created an object I can't read!");
-	}
+	char type[20];
+	pack_data->pack_size = pack_size + 20;
+	return unpack_entry(pack_data, ofs, type, sizep);
 }
 
 static const char *get_mode(const char *str, unsigned int *modep)
@@ -867,7 +751,8 @@ static void load_tree(struct tree_entry *root)
 	if (myoe) {
 		if (myoe->type != OBJ_TREE)
 			die("Not a tree: %s", sha1_to_hex(sha1));
-		buf = gfi_unpack_entry(myoe->offset, &size, &t->delta_depth);
+		t->delta_depth = 0;
+		buf = gfi_unpack_entry(myoe->offset, &size);
 	} else {
 		char type[20];
 		buf = read_sha1_file(sha1, type, &size);
@@ -956,6 +841,7 @@ static void store_tree(struct tree_entry *root)
 	unsigned int i, j, del;
 	unsigned long new_len;
 	struct last_object lo;
+	struct object_entry *le;
 
 	if (!is_null_sha1(root->versions[1].sha1))
 		return;
@@ -965,17 +851,16 @@ static void store_tree(struct tree_entry *root)
 			store_tree(t->entries[i]);
 	}
 
-	if (!S_ISDIR(root->versions[0].mode)
-			|| is_null_sha1(root->versions[0].sha1)
-			|| !find_object(root->versions[0].sha1)) {
+	le = find_object(root->versions[0].sha1);
+	if (!S_ISDIR(root->versions[0].mode) || !le) {
 		lo.data = NULL;
 		lo.depth = 0;
 	} else {
 		mktree(t, 0, &lo.len, &old_tree);
 		lo.data = old_tree.buffer;
+		lo.offset = le->offset;
 		lo.depth = t->delta_depth;
 		lo.no_free = 1;
-		hashcpy(lo.sha1, root->versions[0].sha1);
 	}
 
 	mktree(t, 1, &new_len, &new_tree);
@@ -1471,12 +1356,11 @@ static void cmd_from(struct branch *b)
 		unsigned long idnum = strtoul(from + 1, NULL, 10);
 		struct object_entry *oe = find_mark(idnum);
 		unsigned long size;
-		unsigned int depth;
 		char *buf;
 		if (oe->type != OBJ_COMMIT)
 			die("Mark :%lu not a commit", idnum);
 		hashcpy(b->sha1, oe->sha1);
-		buf = gfi_unpack_entry(oe->offset, &size, &depth);
+		buf = gfi_unpack_entry(oe->offset, &size);
 		if (!buf || size < 46)
 			die("Not a valid commit: %s", from);
 		if (memcmp("tree ", buf, 5)
@@ -1818,7 +1702,6 @@ int main(int argc, const char **argv)
 
 	setup_ident();
 	git_config(git_default_config);
-	page_size = getpagesize();
 
 	for (i = 1; i < argc; i++) {
 		const char *a = argv[i];
@@ -1853,6 +1736,10 @@ int main(int argc, const char **argv)
 	pack_fd = open(pack_name, O_RDWR|O_CREAT|O_EXCL, 0666);
 	if (pack_fd < 0)
 		die("Can't create %s: %s", pack_name, strerror(errno));
+
+	pack_data = xcalloc(1, sizeof(*pack_data) + strlen(pack_name) + 2);
+	strcpy(pack_data->pack_name, pack_name);
+	pack_data->pack_fd = pack_fd;
 
 	init_pack_header();
 	alloc_objects(est_obj_cnt);
