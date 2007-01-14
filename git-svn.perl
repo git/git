@@ -8,7 +8,8 @@ use vars qw/	$AUTHOR $VERSION
 		$GIT_SVN_INDEX $GIT_SVN
 		$GIT_DIR $GIT_SVN_DIR $REVDB
 		$_follow_parent $sha1 $sha1_short $_revision
-		$_cp_remote $_upgrade/;
+		$_cp_remote $_upgrade $_rmdir $_q $_cp_similarity
+		$_find_copies_harder $_l/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
@@ -70,9 +71,8 @@ my ($SVN);
 my $_optimize_commits = 1 unless $ENV{GIT_SVN_NO_OPTIMIZE_COMMITS};
 $sha1 = qr/[a-f\d]{40}/;
 $sha1_short = qr/[a-f\d]{4,40}/;
-my ($_stdin,$_help,$_rmdir,$_edit,
-	$_find_copies_harder, $_l, $_cp_similarity,
-	$_repack, $_repack_nr, $_repack_flags, $_q,
+my ($_stdin, $_help, $_edit,
+	$_repack, $_repack_nr, $_repack_flags,
 	$_message, $_file, $_no_metadata,
 	$_template, $_shared, $_no_default_regex, $_no_graft_copy,
 	$_version, $_upgrade, $_authors, $_branch_all_refs, @_opt_m,
@@ -154,7 +154,8 @@ my %cmd = (
 			  'color' => \$Git::SVN::Log::color,
 			  'pager=s' => \$Git::SVN::Log::pager,
 			} ],
-	'commit-diff' => [ \&commit_diff, 'Commit a diff between two trees',
+	'commit-diff' => [ \&cmd_commit_diff,
+	                   'Commit a diff between two trees',
 			{ 'message|m=s' => \$_message,
 			  'file|F=s' => \$_file,
 			  'revision|r=s' => \$_revision,
@@ -354,18 +355,18 @@ sub fetch_lib {
 			# on the limiter.
 			$SVN->dup->get_log([''], $min, $max, 0, 1, 1,
 				sub {
-					my $log_msg;
+					my $log_entry;
 					if ($last_commit) {
-						$log_msg = libsvn_fetch(
+						$log_entry = libsvn_fetch(
 							$last_commit, @_);
 						$last_commit = git_commit(
-							$log_msg,
+							$log_entry,
 							$last_commit,
 							@parents);
 					} else {
-						$log_msg = libsvn_new_tree(@_);
+						$log_entry = libsvn_new_tree(@_);
 						$last_commit = git_commit(
-							$log_msg, @parents);
+							$log_entry, @parents);
 					}
 				});
 			exit 0;
@@ -428,7 +429,7 @@ sub commit_lib {
 	my $repo;
 	set_svn_commit_env();
 	foreach my $c (@revs) {
-		my $log_msg = get_commit_message($c, $commit_msg);
+		my $log_entry = get_commit_entry($c, $commit_msg);
 
 		# fork for each commit because there's a memory leak I
 		# can't track down... (it's probably in the SVN code)
@@ -438,25 +439,21 @@ sub commit_lib {
 			my $ed = SVN::Git::Editor->new(
 					{	r => $r_last,
 						ra => $SVN->dup,
-						c => $c,
 						svn_path => $SVN->{svn_path},
 					},
 					$SVN->get_commit_editor(
-						$log_msg->{msg},
+						$log_entry->{log},
 						sub {
 							libsvn_commit_cb(
 								@_, $c,
-								$log_msg->{msg},
+								$log_entry->{log},
 								$r_last,
 								$cmt_last)
 						}, $pool)
 					);
-			my $mods = libsvn_checkout_tree($cmt_last, $c, $ed);
+			my $mods = $ed->apply_diff($cmt_last, $c);
 			if (@$mods == 0) {
 				print "No changes\nr$r_last = $cmt_last\n";
-				$ed->abort_edit;
-			} else {
-				$ed->close_edit;
 			}
 			$pool->clear;
 			exit 0;
@@ -599,6 +596,55 @@ sub multi_fetch {
 	rec_fetch('', "$GIT_DIR/svn", @_);
 }
 
+# this command is special because it requires no metadata
+sub cmd_commit_diff {
+	my ($ta, $tb, $url) = @_;
+	my $usage = "Usage: $0 commit-diff -r<revision> ".
+	            "<tree-ish> <tree-ish> [<URL>]\n";
+	fatal($usage) if (!defined $ta || !defined $tb);
+	if (!defined $url) {
+		my $gs = eval { Git::SVN->new };
+		if (!$gs) {
+			fatal("Needed URL or usable git-svn --id in ",
+			      "the command-line\n", $usage);
+		}
+		$url = $gs->{url};
+	}
+	unless (defined $_revision) {
+		fatal("-r|--revision is a required argument\n", $usage);
+	}
+	if (defined $_message && defined $_file) {
+		fatal("Both --message/-m and --file/-F specified ",
+		      "for the commit message.\n",
+		      "I have no idea what you mean\n");
+	}
+	if (defined $_file) {
+		$_message = file_to_s($_file);
+	} else {
+		$_message ||= get_commit_entry($tb)->{log};
+	}
+	my $ra ||= Git::SVN::Ra->new($url);
+	my $r = $_revision;
+	if ($r eq 'HEAD') {
+		$r = $ra->get_latest_revnum;
+	} elsif ($r !~ /^\d+$/) {
+		die "revision argument: $r not understood by git-svn\n";
+	}
+	my $pool = SVN::Pool->new;
+	my %ed_opts = ( r => $r,
+	                ra => $ra->dup,
+	                svn_path => $ra->{svn_path} );
+	my $ed = SVN::Git::Editor->new(\%ed_opts,
+	                               $ra->get_commit_editor($_message,
+	                                 sub { print "Committed r$_[0]\n" }),
+	                               $pool);
+	my $mods = $ed->apply_diff($ta, $tb);
+	if (@$mods == 0) {
+		print "No changes\n$ta == $tb\n";
+	}
+	$pool->clear;
+}
+
 sub commit_diff_usage {
 	print STDERR "Usage: $0 commit-diff <tree-ish> <tree-ish> [<URL>]\n";
 	exit 1
@@ -628,8 +674,8 @@ sub commit_diff {
 	if (defined $_file) {
 		$_message = file_to_s($_file);
 	} else {
-		$_message ||= get_commit_message($tb,
-					"$GIT_DIR/.svn-commit.tmp.$$")->{msg};
+		$_message ||= get_commit_entry($tb,
+					"$GIT_DIR/.svn-commit.tmp.$$")->{log};
 	}
 	$SVN ||= Git::SVN::Ra->new($SVN_URL);
 	if ($r eq 'HEAD') {
@@ -641,7 +687,6 @@ sub commit_diff {
 	my $pool = SVN::Pool->new;
 	my $ed = SVN::Git::Editor->new({	r => $r,
 						ra => $SVN->dup,
-						c => $tb,
 						svn_path => $SVN->{svn_path}
 					},
 				$SVN->get_commit_editor($_message,
@@ -652,12 +697,9 @@ sub commit_diff {
 					$pool)
 				);
 	eval {
-		my $mods = libsvn_checkout_tree($ta, $tb, $ed);
+		my $mods = $ed->apply_diff($ta, $tb);
 		if (@$mods == 0) {
 			print "No changes\n$ta == $tb\n";
-			$ed->abort_edit;
-		} else {
-			$ed->close_edit;
 		}
 	};
 	$pool->clear;
@@ -963,7 +1005,7 @@ sub setup_git_svn {
 
 sub get_tree_from_treeish {
 	my ($treeish) = @_;
-	croak "Not a sha1: $treeish\n" unless $treeish =~ /^$sha1$/o;
+	# $treeish can be a symbolic ref, too:
 	my $type = command_oneline(qw/cat-file -t/, $treeish);
 	my $expected;
 	while ($type eq 'tag') {
@@ -972,7 +1014,7 @@ sub get_tree_from_treeish {
 	if ($type eq 'commit') {
 		$expected = (grep /^tree /, command(qw/cat-file commit/,
 		                                    $treeish))[0];
-		($expected) = ($expected =~ /^tree ($sha1)$/);
+		($expected) = ($expected =~ /^tree ($sha1)$/o);
 		die "Unable to get tree from $treeish\n" unless $expected;
 	} elsif ($type eq 'tree') {
 		$expected = $treeish;
@@ -1034,58 +1076,44 @@ sub get_diff {
 	return \@mods;
 }
 
-sub libsvn_checkout_tree {
-	my ($from, $treeish, $ed) = @_;
-	my $mods = get_diff($from, $treeish);
-	return $mods unless (scalar @$mods);
-	my %o = ( D => 1, R => 0, C => -1, A => 3, M => 3, T => 3 );
-	foreach my $m (sort { $o{$a->{chg}} <=> $o{$b->{chg}} } @$mods) {
-		my $f = $m->{chg};
-		if (defined $o{$f}) {
-			$ed->$f($m, $_q);
-		} else {
-			croak "Invalid change type: $f\n";
-		}
-	}
-	$ed->rmdirs($_q) if $_rmdir;
-	return $mods;
-}
+sub get_commit_entry {
+	my ($treeish) = shift;
+	my %log_entry = ( log => '', tree => get_tree_from_treeish($treeish) );
+	my $commit_editmsg = "$ENV{GIT_DIR}/COMMIT_EDITMSG";
+	my $commit_msg = "$ENV{GIT_DIR}/COMMIT_MSG";
+	open my $log_fh, '>', $commit_editmsg or croak $!;
 
-sub get_commit_message {
-	my ($commit, $commit_msg) = (@_);
-	my %log_msg = ( msg => '' );
-	open my $msg, '>', $commit_msg or croak $!;
-
-	my $type = command_oneline(qw/cat-file -t/, $commit);
+	my $type = command_oneline(qw/cat-file -t/, $treeish);
 	if ($type eq 'commit' || $type eq 'tag') {
 		my ($msg_fh, $ctx) = command_output_pipe('cat-file',
-		                                         $type, $commit);
+		                                         $type, $treeish);
 		my $in_msg = 0;
 		while (<$msg_fh>) {
 			if (!$in_msg) {
 				$in_msg = 1 if (/^\s*$/);
 			} elsif (/^git-svn-id: /) {
-				# skip this, we regenerate the correct one
-				# on re-fetch anyways
+				# skip this for now, we regenerate the
+				# correct one on re-fetch anyways
+				# TODO: set *:merge properties or like...
 			} else {
-				print $msg $_ or croak $!;
+				print $log_fh $_ or croak $!;
 			}
 		}
 		command_close_pipe($msg_fh, $ctx);
 	}
-	close $msg or croak $!;
+	close $log_fh or croak $!;
 
 	if ($_edit || ($type eq 'tree')) {
 		my $editor = $ENV{VISUAL} || $ENV{EDITOR} || 'vi';
-		system($editor, $commit_msg);
+		# TODO: strip out spaces, comments, like git-commit.sh
+		system($editor, $commit_editmsg);
 	}
-
-	# file_to_s removes all trailing newlines, so just use chomp() here:
-	open $msg, '<', $commit_msg or croak $!;
-	{ local $/; chomp($log_msg{msg} = <$msg>); }
-	close $msg or croak $!;
-
-	return \%log_msg;
+	rename $commit_editmsg, $commit_msg or croak $!;
+	open $log_fh, '<', $commit_msg or croak $!;
+	{ local $/; chomp($log_entry{log} = <$log_fh>); }
+	close $log_fh or croak $!;
+	unlink $commit_msg;
+	\%log_entry;
 }
 
 sub set_svn_commit_env {
@@ -1150,12 +1178,12 @@ sub assert_revision_unknown {
 }
 
 sub git_commit {
-	my ($log_msg, @parents) = @_;
-	assert_revision_unknown($log_msg->{revision});
+	my ($log_entry, @parents) = @_;
+	assert_revision_unknown($log_entry->{revision});
 	map_tree_joins() if (@_branch_from && !%tree_map);
 
 	my (@tmp_parents, @exec_parents, %seen_parent);
-	if (my $lparents = $log_msg->{parents}) {
+	if (my $lparents = $log_entry->{parents}) {
 		@tmp_parents = @$lparents
 	}
 	# commit parents can be conditionally bound to a particular
@@ -1163,14 +1191,14 @@ sub git_commit {
 	foreach my $p (@parents) {
 		next unless defined $p;
 		if ($p =~ /^(\d+)=($sha1_short)$/o) {
-			if ($1 == $log_msg->{revision}) {
+			if ($1 == $log_entry->{revision}) {
 				push @tmp_parents, $2;
 			}
 		} else {
 			push @tmp_parents, $p if $p =~ /$sha1_short/o;
 		}
 	}
-	my $tree = $log_msg->{tree};
+	my $tree = $log_entry->{tree};
 	if (!defined $tree) {
 		my $index = set_index($GIT_SVN_INDEX);
 		$tree = command_oneline('write-tree');
@@ -1197,7 +1225,7 @@ sub git_commit {
 			next if $skip;
 			my ($url_p, $r_p, $uuid_p) = cmt_metadata($p);
 			next if (($SVN->uuid eq $uuid_p) &&
-						($log_msg->{revision} > $r_p));
+						($log_entry->{revision} > $r_p));
 			next if (defined $url_p && defined $SVN_URL &&
 						($SVN->uuid eq $uuid_p) &&
 						($url_p eq $SVN_URL));
@@ -1212,14 +1240,14 @@ sub git_commit {
 		last if @exec_parents > 16;
 	}
 
-	set_commit_env($log_msg);
+	set_commit_env($log_entry);
 	my @exec = ('git-commit-tree', $tree);
 	push @exec, '-p', $_  foreach @exec_parents;
 	defined(my $pid = open3(my $msg_fh, my $out_fh, '>&STDERR', @exec))
 								or croak $!;
-	print $msg_fh $log_msg->{msg} or croak $!;
+	print $msg_fh $log_entry->{log} or croak $!;
 	unless ($_no_metadata) {
-		print $msg_fh "\ngit-svn-id: $SVN_URL\@$log_msg->{revision} ",
+		print $msg_fh "\ngit-svn-id: $SVN_URL\@$log_entry->{revision} ",
 					$SVN->uuid,"\n" or croak $!;
 	}
 	$msg_fh->flush == 0 or croak $!;
@@ -1232,10 +1260,10 @@ sub git_commit {
 		die "Failed to commit, invalid sha1: $commit\n";
 	}
 	command_noisy('update-ref',"refs/remotes/$GIT_SVN",$commit);
-	revdb_set($REVDB, $log_msg->{revision}, $commit);
+	revdb_set($REVDB, $log_entry->{revision}, $commit);
 
 	# this output is read via pipe, do not change:
-	print "r$log_msg->{revision} = $commit\n";
+	print "r$log_entry->{revision} = $commit\n";
 	return $commit;
 }
 
@@ -1248,8 +1276,8 @@ sub check_repack {
 }
 
 sub set_commit_env {
-	my ($log_msg) = @_;
-	my $author = $log_msg->{author};
+	my ($log_entry) = @_;
+	my $author = $log_entry->{author};
 	if (!defined $author || length $author == 0) {
 		$author = '(no author)';
 	}
@@ -1257,7 +1285,7 @@ sub set_commit_env {
 				: ($author,$author . '@' . $SVN->uuid);
 	$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} = $name;
 	$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} = $email;
-	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_msg->{date};
+	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_entry->{date};
 }
 
 sub check_upgrade_needed {
@@ -1767,14 +1795,14 @@ sub assert_index_clean {
 }
 
 sub get_commit_parents {
-	my ($self, $log_msg, @parents) = @_;
+	my ($self, $log_entry, @parents) = @_;
 	my (%seen, @ret, @tmp);
 	# commit parents can be conditionally bound to a particular
 	# svn revision via: "svn_revno=commit_sha1", filter them out here:
 	foreach my $p (@parents) {
 		next unless defined $p;
 		if ($p =~ /^(\d+)=($::sha1_short)$/o) {
-			push @tmp, $2 if $1 == $log_msg->{revision};
+			push @tmp, $2 if $1 == $log_entry->{revision};
 		} else {
 			push @tmp, $p if $p =~ /^$::sha1_short$/o;
 		}
@@ -1782,7 +1810,7 @@ sub get_commit_parents {
 	if (my $cur = ::verify_ref($self->refname.'^0')) {
 		push @tmp, $cur;
 	}
-	push @tmp, $_ foreach (@{$log_msg->{parents}}, @tmp);
+	push @tmp, $_ foreach (@{$log_entry->{parents}}, @tmp);
 	while (my $p = shift @tmp) {
 		next if $seen{$p};
 		$seen{$p} = 1;
@@ -1791,7 +1819,7 @@ sub get_commit_parents {
 		last if @ret >= 16;
 	}
 	if (@tmp) {
-		die "r$log_msg->{revision}: No room for parents:\n\t",
+		die "r$log_entry->{revision}: No room for parents:\n\t",
 		    join("\n\t", @tmp), "\n";
 	}
 	@ret;
@@ -1812,17 +1840,18 @@ sub check_upgrade_needed {
 }
 
 sub do_git_commit {
-	my ($self, $log_msg, @parents) = @_;
-	if (my $c = $self->rev_db_get($log_msg->{revision})) {
-		croak "$log_msg->{revision} = $c already exists! ",
+	my ($self, $log_entry, @parents) = @_;
+	if (my $c = $self->rev_db_get($log_entry->{revision})) {
+		croak "$log_entry->{revision} = $c already exists! ",
 		      "Why are we refetching it?\n";
 	}
-	my ($name, $email) = ::author_name_email($log_msg->{author}, $self->ra);
+	my ($name, $email) = ::author_name_email($log_entry->{author},
+	                                         $self->ra);
 	$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} = $name;
 	$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} = $email;
-	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_msg->{date};
+	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_entry->{date};
 
-	my $tree = $log_msg->{tree};
+	my $tree = $log_entry->{tree};
 	if (!defined $tree) {
 		$tree = $self->tmp_index_do(sub {
 		                            command_oneline('write-tree') });
@@ -1830,14 +1859,15 @@ sub do_git_commit {
 	die "Tree is not a valid sha1: $tree\n" if $tree !~ /^$::sha1$/o;
 
 	my @exec = ('git-commit-tree', $tree);
-	foreach ($self->get_commit_parents($log_msg, @parents)) {
+	foreach ($self->get_commit_parents($log_entry, @parents)) {
 		push @exec, '-p', $_;
 	}
 	defined(my $pid = open3(my $msg_fh, my $out_fh, '>&STDERR', @exec))
 	                                                           or croak $!;
-	print $msg_fh $log_msg->{log} or croak $!;
-	print $msg_fh "\ngit-svn-id: $self->{ra}->{url}\@$log_msg->{revision}",
-	              " ", $self->ra->uuid,"\n" or croak $!;
+	print $msg_fh $log_entry->{log} or croak $!;
+	print $msg_fh "\ngit-svn-id: ", $self->ra->{url}, '@',
+	              $log_entry->{revision}, ' ',
+		      $self->ra->uuid, "\n" or croak $!;
 	$msg_fh->flush == 0 or croak $!;
 	close $msg_fh or croak $!;
 	chomp(my $commit = do { local $/; <$out_fh> });
@@ -1849,16 +1879,16 @@ sub do_git_commit {
 	}
 
 	command_noisy('update-ref',$self->refname, $commit);
-	$self->rev_db_set($log_msg->{revision}, $commit);
+	$self->rev_db_set($log_entry->{revision}, $commit);
 
-	$self->{last_rev} = $log_msg->{revision};
+	$self->{last_rev} = $log_entry->{revision};
 	$self->{last_commit} = $commit;
-	print "r$log_msg->{revision} = $commit\n";
+	print "r$log_entry->{revision} = $commit\n";
 	return $commit;
 }
 
 sub do_fetch {
-	my ($self, $paths, $rev) = @_; #, $author, $date, $msg) = @_;
+	my ($self, $paths, $rev) = @_; #, $author, $date, $log) = @_;
 	my $ed = SVN::Git::Fetcher->new($self);
 	my ($last_rev, @parents);
 	if ($self->{last_commit}) {
@@ -1958,7 +1988,7 @@ sub fetch {
 	while (1) {
 		my @revs;
 		$self->ra->get_log([''], $min, $max, 0, 1, 1, sub {
-			my ($paths, $rev, $author, $date, $msg) = @_;
+			my ($paths, $rev, $author, $date, $log) = @_;
 			push @revs, $rev });
 		foreach (@revs) {
 			my $log_entry = $self->do_fetch(undef, $_);
@@ -1993,7 +2023,6 @@ sub set_tree {
 	my $pool = SVN::Pool->new;
 	my $ed = SVN::Git::Editor->new({ r => $self->{last_rev},
 	                                 ra => $self->ra->dup,
-	                                 c => $tree,
 	                                 svn_path => $self->ra->{svn_path}
 	                               },
 	                               $self->ra->get_commit_editor(
@@ -2226,7 +2255,7 @@ sub uri_decode {
 }
 
 sub libsvn_log_entry {
-	my ($rev, $author, $date, $msg, $parents, $untracked) = @_;
+	my ($rev, $author, $date, $log, $parents, $untracked) = @_;
 	my ($Y,$m,$d,$H,$M,$S) = ($date =~ /^(\d{4})\-(\d\d)\-(\d\d)T
 					 (\d\d)\:(\d\d)\:(\d\d).\d+Z$/x)
 				or die "Unable to parse date: $date\n";
@@ -2234,7 +2263,7 @@ sub libsvn_log_entry {
 	    defined $_authors && ! defined $users{$author}) {
 		die "Author: $author not defined in $_authors file\n";
 	}
-	$msg = '' if ($rev == 0 && !defined $msg);
+	$log = '' if ($rev == 0 && !defined $log);
 
 	open my $un, '>>', "$GIT_SVN_DIR/unhandled.log" or croak $!;
 	my $h;
@@ -2290,18 +2319,18 @@ sub libsvn_log_entry {
 	close $un or croak $!;
 
 	{ revision => $rev, date => "+0000 $Y-$m-$d $H:$M:$S",
-	  author => $author, msg => $msg."\n", parents => $parents || [],
+	  author => $author, log => $log."\n", parents => $parents || [],
 	  revprops => $rp }
 }
 
 sub libsvn_fetch {
-	my ($last_commit, $paths, $rev, $author, $date, $msg) = @_;
+	my ($last_commit, $paths, $rev, $author, $date, $log) = @_;
 	my $ed = SVN::Git::Fetcher->new({ c => $last_commit, q => $_q });
 	my (undef, $last_rev, undef) = cmt_metadata($last_commit);
 	unless ($SVN->gs_do_update($last_rev, $rev, '', 1, $ed)) {
 		die "SVN connection failed somewhere...\n";
 	}
-	libsvn_log_entry($rev, $author, $date, $msg, [$last_commit], $ed);
+	libsvn_log_entry($rev, $author, $date, $log, [$last_commit], $ed);
 }
 
 sub svn_grab_base_rev {
@@ -2390,7 +2419,7 @@ sub revisions_eq {
 }
 
 sub libsvn_find_parent_branch {
-	my ($paths, $rev, $author, $date, $msg) = @_;
+	my ($paths, $rev, $author, $date, $log) = @_;
 	my $svn_path = '/'.$SVN->{svn_path};
 
 	# look for a parent from another branch:
@@ -2442,7 +2471,7 @@ sub libsvn_find_parent_branch {
 		command_noisy('read-tree', $parent);
 		unless ($SVN->can_do_switch) {
 			return _libsvn_new_tree($paths, $rev, $author, $date,
-			                        $msg, [$parent]);
+			                        $log, [$parent]);
 		}
 		# do_switch works with svn/trunk >= r22312, but that is not
 		# included with SVN 1.4.2 (the latest version at the moment),
@@ -2451,7 +2480,7 @@ sub libsvn_find_parent_branch {
 		my $ed = SVN::Git::Fetcher->new({c => $parent, q => $_q });
 		$ra->gs_do_switch($r0, $rev, '', 1, $SVN->{url}, $ed) or
 		                   die "SVN connection failed somewhere...\n";
-		return libsvn_log_entry($rev, $author, $date, $msg, [$parent]);
+		return libsvn_log_entry($rev, $author, $date, $log, [$parent]);
 	}
 	print STDERR "Nope, branch point not imported or unknown\n";
 	return undef;
@@ -2461,17 +2490,17 @@ sub libsvn_new_tree {
 	if (my $log_entry = libsvn_find_parent_branch(@_)) {
 		return $log_entry;
 	}
-	my ($paths, $rev, $author, $date, $msg) = @_; # $pool is last
-	_libsvn_new_tree($paths, $rev, $author, $date, $msg, []);
+	my ($paths, $rev, $author, $date, $log) = @_; # $pool is last
+	_libsvn_new_tree($paths, $rev, $author, $date, $log, []);
 }
 
 sub _libsvn_new_tree {
-	my ($paths, $rev, $author, $date, $msg, $parents) = @_;
+	my ($paths, $rev, $author, $date, $log, $parents) = @_;
 	my $ed = SVN::Git::Fetcher->new({q => $_q});
 	unless ($SVN->gs_do_update($rev, $rev, '', 1, $ed)) {
 		die "SVN connection failed somewhere...\n";
 	}
-	libsvn_log_entry($rev, $author, $date, $msg, $parents, $ed);
+	libsvn_log_entry($rev, $author, $date, $log, $parents, $ed);
 }
 
 sub find_graft_path_commit {
@@ -2536,9 +2565,9 @@ sub restore_index {
 }
 
 sub libsvn_commit_cb {
-	my ($rev, $date, $committer, $c, $msg, $r_last, $cmt_last) = @_;
+	my ($rev, $date, $committer, $c, $log, $r_last, $cmt_last) = @_;
 	if ($_optimize_commits && $rev == ($r_last + 1)) {
-		my $log = libsvn_log_entry($rev,$committer,$date,$msg);
+		my $log = libsvn_log_entry($rev,$committer,$date,$log);
 		$log->{tree} = get_tree_from_treeish($c);
 		my $cmt = git_commit($log, $cmt_last, $c);
 		my @diff = command('diff-tree', $cmt, $c);
@@ -2843,7 +2872,7 @@ sub new {
 	my $git_svn = shift;
 	my $self = SVN::Delta::Editor->new(@_);
 	bless $self, $class;
-	foreach (qw/svn_path c r ra /) {
+	foreach (qw/svn_path r ra/) {
 		die "$_ required!\n" unless (defined $git_svn->{$_});
 		$self->{$_} = $git_svn->{$_};
 	}
@@ -2868,7 +2897,7 @@ sub url_path {
 }
 
 sub rmdirs {
-	my ($self, $q) = @_;
+	my ($self, $tree_b) = @_;
 	my $rm = $self->{rm};
 	delete $rm->{''}; # we never delete the url we're tracking
 	return unless %$rm;
@@ -2887,7 +2916,7 @@ sub rmdirs {
 	return unless %$rm;
 
 	my ($fh, $ctx) = command_output_pipe(
-	                           qw/ls-tree --name-only -r -z/, $self->{c});
+	                           qw/ls-tree --name-only -r -z/, $tree_b);
 	local $/ = "\0";
 	while (<$fh>) {
 		chomp;
@@ -2906,7 +2935,7 @@ sub rmdirs {
 	foreach my $d (sort { $b =~ tr#/#/# <=> $a =~ tr#/#/# } keys %$rm) {
 		$self->close_directory($bat->{$d}, $p);
 		my ($dn) = ($d =~ m#^(.*?)/?(?:[^/]+)$#);
-		print "\tD+\t$d/\n" unless $q;
+		print "\tD+\t$d/\n" unless $::_q;
 		$self->SUPER::delete_entry($d, $r, $bat->{$dn}, $p);
 		delete $bat->{$d};
 	}
@@ -2945,23 +2974,23 @@ sub ensure_path {
 }
 
 sub A {
-	my ($self, $m, $q) = @_;
+	my ($self, $m) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
 	my $pbat = $self->ensure_path($dir);
 	my $fbat = $self->add_file($self->repo_path($m->{file_b}), $pbat,
 					undef, -1);
-	print "\tA\t$m->{file_b}\n" unless $q;
+	print "\tA\t$m->{file_b}\n" unless $::_q;
 	$self->chg_file($fbat, $m);
 	$self->close_file($fbat,undef,$self->{pool});
 }
 
 sub C {
-	my ($self, $m, $q) = @_;
+	my ($self, $m) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
 	my $pbat = $self->ensure_path($dir);
 	my $fbat = $self->add_file($self->repo_path($m->{file_b}), $pbat,
 				$self->url_path($m->{file_a}), $self->{r});
-	print "\tC\t$m->{file_a} => $m->{file_b}\n" unless $q;
+	print "\tC\t$m->{file_a} => $m->{file_b}\n" unless $::_q;
 	$self->chg_file($fbat, $m);
 	$self->close_file($fbat,undef,$self->{pool});
 }
@@ -2975,12 +3004,12 @@ sub delete_entry {
 }
 
 sub R {
-	my ($self, $m, $q) = @_;
+	my ($self, $m) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
 	my $pbat = $self->ensure_path($dir);
 	my $fbat = $self->add_file($self->repo_path($m->{file_b}), $pbat,
 				$self->url_path($m->{file_a}), $self->{r});
-	print "\tR\t$m->{file_a} => $m->{file_b}\n" unless $q;
+	print "\tR\t$m->{file_a} => $m->{file_b}\n" unless $::_q;
 	$self->chg_file($fbat, $m);
 	$self->close_file($fbat,undef,$self->{pool});
 
@@ -2990,12 +3019,12 @@ sub R {
 }
 
 sub M {
-	my ($self, $m, $q) = @_;
+	my ($self, $m) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
 	my $pbat = $self->ensure_path($dir);
 	my $fbat = $self->open_file($self->repo_path($m->{file_b}),
 				$pbat,$self->{r},$self->{pool});
-	print "\t$m->{chg}\t$m->{file_b}\n" unless $q;
+	print "\t$m->{chg}\t$m->{file_b}\n" unless $::_q;
 	$self->chg_file($fbat, $m);
 	$self->close_file($fbat,undef,$self->{pool});
 }
@@ -3046,10 +3075,10 @@ sub chg_file {
 }
 
 sub D {
-	my ($self, $m, $q) = @_;
+	my ($self, $m) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
 	my $pbat = $self->ensure_path($dir);
-	print "\tD\t$m->{file_b}\n" unless $q;
+	print "\tD\t$m->{file_b}\n" unless $::_q;
 	$self->delete_entry($m->{file_b}, $pbat);
 }
 
@@ -3067,6 +3096,77 @@ sub abort_edit {
 	my ($self) = @_;
 	$self->SUPER::abort_edit($self->{pool});
 	$self->{pool}->clear;
+}
+
+# this drives the editor
+sub apply_diff {
+	my ($self, $tree_a, $tree_b) = @_;
+	my @diff_tree = qw(diff-tree -z -r);
+	if ($::_cp_similarity) {
+		push @diff_tree, "-C$::_cp_similarity";
+	} else {
+		push @diff_tree, '-C';
+	}
+	push @diff_tree, '--find-copies-harder' if $::_find_copies_harder;
+	push @diff_tree, "-l$::_l" if defined $::_l;
+	push @diff_tree, $tree_a, $tree_b;
+	my ($diff_fh, $ctx) = command_output_pipe(@diff_tree);
+	my $nl = $/;
+	local $/ = "\0";
+	my $state = 'meta';
+	my @mods;
+	while (<$diff_fh>) {
+		chomp $_; # this gets rid of the trailing "\0"
+		if ($state eq 'meta' && /^:(\d{6})\s(\d{6})\s
+					$::sha1\s($::sha1)\s
+					([MTCRAD])\d*$/xo) {
+			push @mods, {	mode_a => $1, mode_b => $2,
+					sha1_b => $3, chg => $4 };
+			if ($4 =~ /^(?:C|R)$/) {
+				$state = 'file_a';
+			} else {
+				$state = 'file_b';
+			}
+		} elsif ($state eq 'file_a') {
+			my $x = $mods[$#mods] or croak "Empty array\n";
+			if ($x->{chg} !~ /^(?:C|R)$/) {
+				croak "Error parsing $_, $x->{chg}\n";
+			}
+			$x->{file_a} = $_;
+			$state = 'file_b';
+		} elsif ($state eq 'file_b') {
+			my $x = $mods[$#mods] or croak "Empty array\n";
+			if (exists $x->{file_a} && $x->{chg} !~ /^(?:C|R)$/) {
+				croak "Error parsing $_, $x->{chg}\n";
+			}
+			if (!exists $x->{file_a} && $x->{chg} =~ /^(?:C|R)$/) {
+				croak "Error parsing $_, $x->{chg}\n";
+			}
+			$x->{file_b} = $_;
+			$state = 'meta';
+		} else {
+			croak "Error parsing $_\n";
+		}
+	}
+	command_close_pipe($diff_fh, $ctx);
+	$/ = $nl;
+
+	my %o = ( D => 1, R => 0, C => -1, A => 3, M => 3, T => 3 );
+	foreach my $m (sort { $o{$a->{chg}} <=> $o{$b->{chg}} } @mods) {
+		my $f = $m->{chg};
+		if (defined $o{$f}) {
+			$self->$f($m);
+		} else {
+			fatal("Invalid change type: $f\n");
+		}
+	}
+	$self->rmdirs($tree_b) if $::_rmdir;
+	if (@mods == 0) {
+		$self->abort_edit;
+	} else {
+		$self->close_edit;
+	}
+	\@mods;
 }
 
 package Git::SVN::Ra;
@@ -3144,9 +3244,9 @@ sub get_log {
 }
 
 sub get_commit_editor {
-	my ($self, $msg, $cb, $pool) = @_;
+	my ($self, $log, $cb, $pool) = @_;
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef, 0) : ();
-	$self->SUPER::get_commit_editor($msg, $cb, @lock, $pool);
+	$self->SUPER::get_commit_editor($log, $cb, @lock, $pool);
 }
 
 sub uuid {
@@ -3211,13 +3311,13 @@ sub cmt_showable {
 	return 1 if defined $c->{r};
 	if ($c->{l} && $c->{l}->[-1] eq "...\n" &&
 				$c->{a_raw} =~ /\@([a-f\d\-]+)>$/) {
-		my @msg = command(qw/cat-file commit/, $c->{c});
-		shift @msg while ($msg[0] ne "\n");
-		shift @msg;
-		@{$c->{l}} = grep !/^git-svn-id: /, @msg;
+		my @log = command(qw/cat-file commit/, $c->{c});
+		shift @log while ($log[0] ne "\n");
+		shift @log;
+		@{$c->{l}} = grep !/^git-svn-id: /, @log;
 
 		(undef, $c->{r}, undef) = ::extract_metadata(
-				(grep(/^git-svn-id: /, @msg))[-1]);
+				(grep(/^git-svn-id: /, @log))[-1]);
 	}
 	return defined $c->{r};
 }
@@ -3503,9 +3603,9 @@ __END__
 
 Data structures:
 
-$log_msg hashref as returned by libsvn_log_entry()
+$log_entry hashref as returned by libsvn_log_entry()
 {
-	msg => 'whitespace-formatted log entry
+	log => 'whitespace-formatted log entry
 ',						# trailing newline is preserved
 	revision => '8',			# integer
 	date => '2004-02-24T17:01:44.108345Z',	# commit date
