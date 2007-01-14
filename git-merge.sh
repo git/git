@@ -5,12 +5,14 @@
 
 USAGE='[-n] [--no-commit] [--squash] [-s <strategy>] [-m=<merge-message>] <commit>+'
 
+SUBDIRECTORY_OK=Yes
 . git-sh-setup
 set_reflog_action "merge $*"
 require_work_tree
+cd_to_toplevel
 
 test -z "$(git ls-files -u)" ||
-	die "You are in a middle of conflicted merge."
+	die "You are in the middle of a conflicted merge."
 
 LF='
 '

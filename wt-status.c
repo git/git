@@ -335,7 +335,7 @@ void wt_status_print(struct wt_status *s)
 		if (s->amend)
 			printf("# No changes\n");
 		else if (s->workdir_dirty)
-			printf("no changes added to commit (use \"git add\" and/or \"git commit [-a|-i|-o]\")\n");
+			printf("no changes added to commit (use \"git add\" and/or \"git commit -a\")\n");
 		else if (s->workdir_untracked)
 			printf("nothing added to commit but untracked files present (use \"git add\" to track)\n");
 		else if (s->is_initial)

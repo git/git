@@ -572,7 +572,8 @@ static void open_packed_git(struct packed_git *p)
 		die("cannot set FD_CLOEXEC");
 
 	/* Verify we recognize this pack file format. */
-	read_or_die(p->pack_fd, &hdr, sizeof(hdr));
+	if (read_in_full(p->pack_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
+		die("file %s is far too short to be a packfile", p->pack_name);
 	if (hdr.hdr_signature != htonl(PACK_SIGNATURE))
 		die("file %s is not a GIT packfile", p->pack_name);
 	if (!pack_version_ok(hdr.hdr_version))
@@ -588,7 +589,8 @@ static void open_packed_git(struct packed_git *p)
 			num_packed_objects(p));
 	if (lseek(p->pack_fd, p->pack_size - sizeof(sha1), SEEK_SET) == -1)
 		die("end of packfile %s is unavailable", p->pack_name);
-	read_or_die(p->pack_fd, sha1, sizeof(sha1));
+	if (read_in_full(p->pack_fd, sha1, sizeof(sha1)) != sizeof(sha1))
+		die("packfile %s signature is unavailable", p->pack_name);
 	idx_sha1 = ((unsigned char *)p->index_base) + p->index_size - 40;
 	if (hashcmp(sha1, idx_sha1))
 		die("packfile %s does not match index", p->pack_name);

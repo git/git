@@ -6,12 +6,14 @@
 
 USAGE='[-n | --no-summary] [--no-commit] [-s strategy]... [<fetch-options>] <repo> <head>...'
 LONG_USAGE='Fetch one or more remote refs and merge it/them into the current HEAD.'
+SUBDIRECTORY_OK=Yes
 . git-sh-setup
 set_reflog_action "pull $*"
 require_work_tree
+cd_to_toplevel
 
 test -z "$(git ls-files -u)" ||
-	die "You are in a middle of conflicted merge."
+	die "You are in the middle of a conflicted merge."
 
 strategy_args= no_summary= no_commit= squash=
 while case "$#,$1" in 0) break ;; *,-*) ;; *) break ;; esac

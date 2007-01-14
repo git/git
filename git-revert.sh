@@ -19,8 +19,11 @@ case "$0" in
 	echo >&2 "What are you talking about?"
 	exit 1 ;;
 esac
+
+SUBDIRECTORY_OK=Yes ;# we will cd up
 . git-sh-setup
 require_work_tree
+cd_to_toplevel
 
 no_commit=
 while case "$#" in 0) break ;; esac

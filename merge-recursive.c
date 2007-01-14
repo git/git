@@ -67,27 +67,75 @@ struct stage_data
 	unsigned processed:1;
 };
 
+struct output_buffer
+{
+	struct output_buffer *next;
+	char *str;
+};
+
 static struct path_list current_file_set = {NULL, 0, 0, 1};
 static struct path_list current_directory_set = {NULL, 0, 0, 1};
 
-static int output_indent = 0;
+static int call_depth = 0;
+static int verbosity = 2;
+static int buffer_output = 1;
+static int do_progress = 1;
+static unsigned last_percent;
+static unsigned merged_cnt;
+static unsigned total_cnt;
+static volatile sig_atomic_t progress_update;
+static struct output_buffer *output_list, *output_end;
 
-static void output(const char *fmt, ...)
+static int show (int v)
+{
+	return (!call_depth && verbosity >= v) || verbosity >= 5;
+}
+
+static void output(int v, const char *fmt, ...)
 {
 	va_list args;
-	int i;
-	for (i = output_indent; i--;)
-		fputs("  ", stdout);
 	va_start(args, fmt);
-	vfprintf(stdout, fmt, args);
+	if (buffer_output && show(v)) {
+		struct output_buffer *b = xmalloc(sizeof(*b));
+		nfvasprintf(&b->str, fmt, args);
+		b->next = NULL;
+		if (output_end)
+			output_end->next = b;
+		else
+			output_list = b;
+		output_end = b;
+	} else if (show(v)) {
+		int i;
+		for (i = call_depth; i--;)
+			fputs("  ", stdout);
+		vfprintf(stdout, fmt, args);
+		fputc('\n', stdout);
+	}
 	va_end(args);
-	fputc('\n', stdout);
+}
+
+static void flush_output()
+{
+	struct output_buffer *b, *n;
+	for (b = output_list; b; b = n) {
+		int i;
+		for (i = call_depth; i--;)
+			fputs("  ", stdout);
+		fputs(b->str, stdout);
+		fputc('\n', stdout);
+		n = b->next;
+		free(b->str);
+		free(b);
+	}
+	output_list = NULL;
+	output_end = NULL;
 }
 
 static void output_commit_title(struct commit *commit)
 {
 	int i;
-	for (i = output_indent; i--;)
+	flush_output();
+	for (i = call_depth; i--;)
 		fputs("  ", stdout);
 	if (commit->util)
 		printf("virtual %s\n", (char *)commit->util);
@@ -107,6 +155,39 @@ static void output_commit_title(struct commit *commit)
 				; /* do nothing */
 			printf("%.*s\n", len, s);
 		}
+	}
+}
+
+static void progress_interval(int signum)
+{
+	progress_update = 1;
+}
+
+static void setup_progress_signal(void)
+{
+	struct sigaction sa;
+	struct itimerval v;
+
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = progress_interval;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_RESTART;
+	sigaction(SIGALRM, &sa, NULL);
+
+	v.it_interval.tv_sec = 1;
+	v.it_interval.tv_usec = 0;
+	v.it_value = v.it_interval;
+	setitimer(ITIMER_REAL, &v, NULL);
+}
+
+static void display_progress()
+{
+	unsigned percent = total_cnt ? merged_cnt * 100 / total_cnt : 0;
+	if (progress_update || percent != last_percent) {
+		fprintf(stderr, "%4u%% (%u/%u) done\r",
+			percent, merged_cnt, total_cnt);
+		progress_update = 0;
+		last_percent = percent;
 	}
 }
 
@@ -272,11 +353,14 @@ static struct path_list *get_unmerged(void)
 	int i;
 
 	unmerged->strdup_paths = 1;
+	total_cnt += active_nr;
 
-	for (i = 0; i < active_nr; i++) {
+	for (i = 0; i < active_nr; i++, merged_cnt++) {
 		struct path_list_item *item;
 		struct stage_data *e;
 		struct cache_entry *ce = active_cache[i];
+		if (do_progress)
+			display_progress();
 		if (!ce_stage(ce))
 			continue;
 
@@ -640,13 +724,13 @@ static void conflict_rename_rename(struct rename *ren1,
 	const char *dst_name2 = ren2_dst;
 	if (path_list_has_path(&current_directory_set, ren1_dst)) {
 		dst_name1 = del[delp++] = unique_path(ren1_dst, branch1);
-		output("%s is a directory in %s adding as %s instead",
+		output(1, "%s is a directory in %s added as %s instead",
 		       ren1_dst, branch2, dst_name1);
 		remove_file(0, ren1_dst, 0);
 	}
 	if (path_list_has_path(&current_directory_set, ren2_dst)) {
 		dst_name2 = del[delp++] = unique_path(ren2_dst, branch2);
-		output("%s is a directory in %s adding as %s instead",
+		output(1, "%s is a directory in %s added as %s instead",
 		       ren2_dst, branch1, dst_name2);
 		remove_file(0, ren2_dst, 0);
 	}
@@ -660,7 +744,7 @@ static void conflict_rename_dir(struct rename *ren1,
 				const char *branch1)
 {
 	char *new_path = unique_path(ren1->pair->two->path, branch1);
-	output("Renaming %s to %s instead", ren1->pair->one->path, new_path);
+	output(1, "Renamed %s to %s instead", ren1->pair->one->path, new_path);
 	remove_file(0, ren1->pair->two->path, 0);
 	update_file(0, ren1->pair->two->sha1, ren1->pair->two->mode, new_path);
 	free(new_path);
@@ -673,7 +757,7 @@ static void conflict_rename_rename_2(struct rename *ren1,
 {
 	char *new_path1 = unique_path(ren1->pair->two->path, branch1);
 	char *new_path2 = unique_path(ren2->pair->two->path, branch2);
-	output("Renaming %s to %s and %s to %s instead",
+	output(1, "Renamed %s to %s and %s to %s instead",
 	       ren1->pair->one->path, new_path1,
 	       ren2->pair->one->path, new_path2);
 	remove_file(0, ren1->pair->two->path, 0);
@@ -766,7 +850,7 @@ static int process_renames(struct path_list *a_renames,
 			ren2->processed = 1;
 			if (strcmp(ren1_dst, ren2_dst) != 0) {
 				clean_merge = 0;
-				output("CONFLICT (rename/rename): "
+				output(1, "CONFLICT (rename/rename): "
 				       "Rename %s->%s in branch %s "
 				       "rename %s->%s in %s",
 				       src, ren1_dst, branch1,
@@ -781,13 +865,13 @@ static int process_renames(struct path_list *a_renames,
 						 branch1,
 						 branch2);
 				if (mfi.merge || !mfi.clean)
-					output("Renaming %s->%s", src, ren1_dst);
+					output(1, "Renamed %s->%s", src, ren1_dst);
 
 				if (mfi.merge)
-					output("Auto-merging %s", ren1_dst);
+					output(2, "Auto-merged %s", ren1_dst);
 
 				if (!mfi.clean) {
-					output("CONFLICT (content): merge conflict in %s",
+					output(1, "CONFLICT (content): merge conflict in %s",
 					       ren1_dst);
 					clean_merge = 0;
 
@@ -818,14 +902,14 @@ static int process_renames(struct path_list *a_renames,
 
 			if (path_list_has_path(&current_directory_set, ren1_dst)) {
 				clean_merge = 0;
-				output("CONFLICT (rename/directory): Rename %s->%s in %s "
+				output(1, "CONFLICT (rename/directory): Renamed %s->%s in %s "
 				       " directory %s added in %s",
 				       ren1_src, ren1_dst, branch1,
 				       ren1_dst, branch2);
 				conflict_rename_dir(ren1, branch1);
 			} else if (sha_eq(src_other.sha1, null_sha1)) {
 				clean_merge = 0;
-				output("CONFLICT (rename/delete): Rename %s->%s in %s "
+				output(1, "CONFLICT (rename/delete): Renamed %s->%s in %s "
 				       "and deleted in %s",
 				       ren1_src, ren1_dst, branch1,
 				       branch2);
@@ -834,19 +918,19 @@ static int process_renames(struct path_list *a_renames,
 				const char *new_path;
 				clean_merge = 0;
 				try_merge = 1;
-				output("CONFLICT (rename/add): Rename %s->%s in %s. "
+				output(1, "CONFLICT (rename/add): Renamed %s->%s in %s. "
 				       "%s added in %s",
 				       ren1_src, ren1_dst, branch1,
 				       ren1_dst, branch2);
 				new_path = unique_path(ren1_dst, branch2);
-				output("Adding as %s instead", new_path);
+				output(1, "Added as %s instead", new_path);
 				update_file(0, dst_other.sha1, dst_other.mode, new_path);
 			} else if ((item = path_list_lookup(ren1_dst, renames2Dst))) {
 				ren2 = item->util;
 				clean_merge = 0;
 				ren2->processed = 1;
-				output("CONFLICT (rename/rename): Rename %s->%s in %s. "
-				       "Rename %s->%s in %s",
+				output(1, "CONFLICT (rename/rename): Renamed %s->%s in %s. "
+				       "Renamed %s->%s in %s",
 				       ren1_src, ren1_dst, branch1,
 				       ren2->pair->one->path, ren2->pair->two->path, branch2);
 				conflict_rename_rename_2(ren1, branch1, ren2, branch2);
@@ -870,11 +954,11 @@ static int process_renames(struct path_list *a_renames,
 						a_branch, b_branch);
 
 				if (mfi.merge || !mfi.clean)
-					output("Renaming %s => %s", ren1_src, ren1_dst);
+					output(1, "Renamed %s => %s", ren1_src, ren1_dst);
 				if (mfi.merge)
-					output("Auto-merging %s", ren1_dst);
+					output(2, "Auto-merged %s", ren1_dst);
 				if (!mfi.clean) {
-					output("CONFLICT (rename/modify): Merge conflict in %s",
+					output(1, "CONFLICT (rename/modify): Merge conflict in %s",
 					       ren1_dst);
 					clean_merge = 0;
 
@@ -922,20 +1006,20 @@ static int process_entry(const char *path, struct stage_data *entry,
 			/* Deleted in both or deleted in one and
 			 * unchanged in the other */
 			if (a_sha)
-				output("Removing %s", path);
+				output(2, "Removed %s", path);
 			/* do not touch working file if it did not exist */
 			remove_file(1, path, !a_sha);
 		} else {
 			/* Deleted in one and changed in the other */
 			clean_merge = 0;
 			if (!a_sha) {
-				output("CONFLICT (delete/modify): %s deleted in %s "
+				output(1, "CONFLICT (delete/modify): %s deleted in %s "
 				       "and modified in %s. Version %s of %s left in tree.",
 				       path, branch1,
 				       branch2, branch2, path);
 				update_file(0, b_sha, b_mode, path);
 			} else {
-				output("CONFLICT (delete/modify): %s deleted in %s "
+				output(1, "CONFLICT (delete/modify): %s deleted in %s "
 				       "and modified in %s. Version %s of %s left in tree.",
 				       path, branch2,
 				       branch1, branch1, path);
@@ -968,13 +1052,13 @@ static int process_entry(const char *path, struct stage_data *entry,
 		if (path_list_has_path(&current_directory_set, path)) {
 			const char *new_path = unique_path(path, add_branch);
 			clean_merge = 0;
-			output("CONFLICT (%s): There is a directory with name %s in %s. "
-			       "Adding %s as %s",
+			output(1, "CONFLICT (%s): There is a directory with name %s in %s. "
+			       "Added %s as %s",
 			       conf, path, other_branch, path, new_path);
 			remove_file(0, path, 0);
 			update_file(0, sha, mode, new_path);
 		} else {
-			output("Adding %s", path);
+			output(2, "Added %s", path);
 			update_file(1, sha, mode, path);
 		}
 	} else if (a_sha && b_sha) {
@@ -988,7 +1072,7 @@ static int process_entry(const char *path, struct stage_data *entry,
 			reason = "add/add";
 			o_sha = (unsigned char *)null_sha1;
 		}
-		output("Auto-merging %s", path);
+		output(2, "Auto-merged %s", path);
 		o.path = a.path = b.path = (char *)path;
 		hashcpy(o.sha1, o_sha);
 		o.mode = o_mode;
@@ -1004,7 +1088,7 @@ static int process_entry(const char *path, struct stage_data *entry,
 			update_file(1, mfi.sha, mfi.mode, path);
 		else {
 			clean_merge = 0;
-			output("CONFLICT (%s): Merge conflict in %s",
+			output(1, "CONFLICT (%s): Merge conflict in %s",
 					reason, path);
 
 			if (index_only)
@@ -1028,7 +1112,7 @@ static int merge_trees(struct tree *head,
 {
 	int code, clean;
 	if (sha_eq(common->object.sha1, merge->object.sha1)) {
-		output("Already uptodate!");
+		output(0, "Already uptodate!");
 		*result = head;
 		return 1;
 	}
@@ -1053,13 +1137,15 @@ static int merge_trees(struct tree *head,
 		re_merge = get_renames(merge, common, head, merge, entries);
 		clean = process_renames(re_head, re_merge,
 				branch1, branch2);
-		for (i = 0; i < entries->nr; i++) {
+		total_cnt += entries->nr;
+		for (i = 0; i < entries->nr; i++, merged_cnt++) {
 			const char *path = entries->items[i].path;
 			struct stage_data *e = entries->items[i].util;
-			if (e->processed)
-				continue;
-			if (!process_entry(path, e, branch1, branch2))
+			if (!e->processed
+				&& !process_entry(path, e, branch1, branch2))
 				clean = 0;
+			if (do_progress)
+				display_progress();
 		}
 
 		path_list_clear(re_merge, 0);
@@ -1095,7 +1181,6 @@ static int merge(struct commit *h1,
 		 struct commit *h2,
 		 const char *branch1,
 		 const char *branch2,
-		 int call_depth /* =0 */,
 		 struct commit_list *ca,
 		 struct commit **result)
 {
@@ -1104,18 +1189,22 @@ static int merge(struct commit *h1,
 	struct tree *mrtree;
 	int clean;
 
-	output("Merging:");
-	output_commit_title(h1);
-	output_commit_title(h2);
+	if (show(4)) {
+		output(4, "Merging:");
+		output_commit_title(h1);
+		output_commit_title(h2);
+	}
 
 	if (!ca) {
 		ca = get_merge_bases(h1, h2, 1);
 		ca = reverse_commit_list(ca);
 	}
 
-	output("found %u common ancestor(s):", commit_list_count(ca));
-	for (iter = ca; iter; iter = iter->next)
-		output_commit_title(iter->item);
+	if (show(5)) {
+		output(5, "found %u common ancestor(s):", commit_list_count(ca));
+		for (iter = ca; iter; iter = iter->next)
+			output_commit_title(iter->item);
+	}
 
 	merged_common_ancestors = pop_commit(&ca);
 	if (merged_common_ancestors == NULL) {
@@ -1129,7 +1218,7 @@ static int merge(struct commit *h1,
 	}
 
 	for (iter = ca; iter; iter = iter->next) {
-		output_indent = call_depth + 1;
+		call_depth++;
 		/*
 		 * When the merge fails, the result contains files
 		 * with conflict markers. The cleanness flag is
@@ -1141,17 +1230,16 @@ static int merge(struct commit *h1,
 		merge(merged_common_ancestors, iter->item,
 		      "Temporary merge branch 1",
 		      "Temporary merge branch 2",
-		      call_depth + 1,
 		      NULL,
 		      &merged_common_ancestors);
-		output_indent = call_depth;
+		call_depth--;
 
 		if (!merged_common_ancestors)
 			die("merge returned no commit");
 	}
 
 	discard_cache();
-	if (call_depth == 0) {
+	if (!call_depth) {
 		read_cache();
 		index_only = 0;
 	} else
@@ -1165,6 +1253,16 @@ static int merge(struct commit *h1,
 		commit_list_insert(h1, &(*result)->parents);
 		commit_list_insert(h2, &(*result)->parents->next);
 	}
+	if (!call_depth && do_progress) {
+		/* Make sure we end at 100% */
+		if (!total_cnt)
+			total_cnt = 1;
+		merged_cnt = total_cnt;
+		progress_update = 1;
+		display_progress();
+		fputc('\n', stderr);
+	}
+	flush_output();
 	return clean;
 }
 
@@ -1198,6 +1296,15 @@ static struct commit *get_ref(const char *ref)
 	return (struct commit *)object;
 }
 
+static int merge_config(const char *var, const char *value)
+{
+	if (!strcasecmp(var, "merge.verbosity")) {
+		verbosity = git_config_int(var, value);
+		return 0;
+	}
+	return git_default_config(var, value);
+}
+
 int main(int argc, char *argv[])
 {
 	static const char *bases[20];
@@ -1209,7 +1316,9 @@ int main(int argc, char *argv[])
 	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
 	int index_fd;
 
-	git_config(git_default_config); /* core.filemode */
+	git_config(merge_config);
+	if (getenv("GIT_MERGE_VERBOSITY"))
+		verbosity = strtol(getenv("GIT_MERGE_VERBOSITY"), NULL, 10);
 
 	if (argc < 4)
 		die("Usage: %s <base>... -- <head> <remote> ...\n", argv[0]);
@@ -1222,6 +1331,12 @@ int main(int argc, char *argv[])
 	}
 	if (argc - i != 3) /* "--" "<head>" "<remote>" */
 		die("Not handling anything other than two heads merge.");
+	if (verbosity >= 5) {
+		buffer_output = 0;
+		do_progress = 0;
+	}
+	else
+		do_progress = isatty(1);
 
 	branch1 = argv[++i];
 	branch2 = argv[++i];
@@ -1231,7 +1346,11 @@ int main(int argc, char *argv[])
 
 	branch1 = better_branch_name(branch1);
 	branch2 = better_branch_name(branch2);
-	printf("Merging %s with %s\n", branch1, branch2);
+
+	if (do_progress)
+		setup_progress_signal();
+	if (show(3))
+		printf("Merging %s with %s\n", branch1, branch2);
 
 	index_fd = hold_lock_file_for_update(lock, get_index_file(), 1);
 
@@ -1239,7 +1358,7 @@ int main(int argc, char *argv[])
 		struct commit *ancestor = get_ref(bases[i]);
 		ca = commit_list_insert(ancestor, &ca);
 	}
-	clean = merge(h1, h2, branch1, branch2, 0, ca, &result);
+	clean = merge(h1, h2, branch1, branch2, ca, &result);
 
 	if (active_cache_changed &&
 	    (write_cache(index_fd, active_cache, active_nr) ||
