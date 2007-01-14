@@ -9,7 +9,7 @@ objects into pack files.
 
 SYNOPSIS
 --------
-'git-repack' [-a] [-d] [-f] [-l] [-n] [-q]
+'git-repack' [-a] [-d] [-f] [-l] [-n] [-q] [--window=N] [--depth=N]
 
 DESCRIPTION
 -----------
@@ -55,6 +55,31 @@ OPTIONS
 -n::
         Do not update the server information with
         `git update-server-info`.
+
+--window=[N], --depth=[N]::
+	These two options affect how the objects contained in the pack are
+	stored using delta compression. The objects are first internally
+	sorted by type, size and optionally names and compared against the
+	other objects within `--window` to see if using delta compression saves
+	space. `--depth` limits the maximum delta depth; making it too deep
+	affects the performance on the unpacker side, because delta data needs
+	to be applied that many times to get to the necessary object.
+	The default value for both --window and --depth is 10.
+
+
+Configuration
+-------------
+
+When configuration variable `repack.UseDeltaBaseOffset` is set
+for the repository, the command passes `--delta-base-offset`
+option to `git-pack-objects`; this typically results in slightly
+smaller packs, but the generated packs are incompatible with
+versions of git older than (and including) v1.4.3; do not set
+the variable in a repository that older version of git needs to
+be able to read (this includes repositories from which packs can
+be copied out over http or rsync, and people who obtained packs
+that way can try to use older git with it).
+
 
 Author
 ------

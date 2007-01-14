@@ -25,6 +25,12 @@ test_create_repo foo
 # clone doesn't like it if there is no HEAD. Is that a bug?
 (cd foo && touch file && git add file && git commit -m 'add file' >/dev/null 2>&1)
 
+# source repository given to git-clone should be relative to the
+# current path not to the target dir
+test_expect_failure \
+    'clone of non-existent (relative to $PWD) source should fail' \
+    'git-clone ../foo baz'
+
 test_expect_success \
     'clone should work now that source exists' \
     'git-clone foo bar'

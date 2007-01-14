@@ -70,7 +70,7 @@ DocumentRoot /where/ever/httpd.conf" to find your root:
 Initialize a bare repository
 
     $ cd my-new-repo.git
-    $ git --bare init-db
+    $ git --bare init
 
 
 Change the ownership to your web-server's credentials. Use "grep ^User

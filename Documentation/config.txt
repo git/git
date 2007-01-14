@@ -31,6 +31,11 @@ Example
 		external = "/usr/local/bin/gnu-diff -u"
 		renames = true
 
+	[branch "devel"]
+		remote = origin
+		merge = refs/heads/devel
+
+
 Variables
 ~~~~~~~~~
 
@@ -71,12 +76,19 @@ core.preferSymlinkRefs::
 	expect HEAD to be a symbolic link.
 
 core.logAllRefUpdates::
-	If true, `git-update-ref` will append a line to
-	"$GIT_DIR/logs/<ref>" listing the new SHA1 and the date/time
-	of the update.	If the file does not exist it will be
-	created automatically.	This information can be used to
-	determine what commit was the tip of a branch "2 days ago".
-	This value is false by default (no logging).
+	Updates to a ref <ref> is logged to the file
+	"$GIT_DIR/logs/<ref>", by appending the new and old
+	SHA1, the date/time and the reason of the update, but
+	only when the file exists.  If this configuration
+	variable is set to true, missing "$GIT_DIR/logs/<ref>"
+	file is automatically created for branch heads.
++
+This information can be used to determine what commit
+was the tip of a branch "2 days ago".
++
+This value is true by default in a repository that has
+a working directory associated with it, and false by
+default in a bare repository.
 
 core.repositoryFormatVersion::
 	Internal variable identifying the repository format and layout
@@ -88,7 +100,7 @@ core.sharedRepository::
 	group-writable). When 'all' (or 'world' or 'everybody'), the
 	repository will be readable by all users, additionally to being
 	group-shareable. When 'umask' (or 'false'), git will use permissions
-	reported by umask(2). See gitlink:git-init-db[1]. False by default.
+	reported by umask(2). See gitlink:git-init[1]. False by default.
 
 core.warnAmbiguousRefs::
 	If true, git will warn you if the ref name you passed it is ambiguous
@@ -106,6 +118,34 @@ core.legacyheaders::
 	database directly (where the "http://" and "rsync://" protocols
 	count as direct access).
 
+core.packedGitWindowSize::
+	Number of bytes of a pack file to map into memory in a
+	single mapping operation.  Larger window sizes may allow
+	your system to process a smaller number of large pack files
+	more quickly.  Smaller window sizes will negatively affect
+	performance due to increased calls to the operating system's
+	memory manager, but may improve performance when accessing
+	a large number of large pack files.
++
+Default is 1 MiB if NO_MMAP was set at compile time, otherwise 32
+MiB on 32 bit platforms and 1 GiB on 64 bit platforms.  This should
+be reasonable for all users/operating systems.  You probably do
+not need to adjust this value.
++
+Common unit suffixes of 'k', 'm', or 'g' are supported.
+
+core.packedGitLimit::
+	Maximum number of bytes to map simultaneously into memory
+	from pack files.  If Git needs to access more than this many
+	bytes at once to complete an operation it will unmap existing
+	regions to reclaim virtual address space within the process.
++
+Default is 256 MiB on 32 bit platforms and 8 GiB on 64 bit platforms.
+This should be reasonable for all users/operating systems, except on
+the largest projects.  You probably do not need to adjust this value.
++
+Common unit suffixes of 'k', 'm', or 'g' are supported.
+
 alias.*::
 	Command aliases for the gitlink:git[1] command wrapper - e.g.
 	after defining "alias.last = cat-file commit HEAD", the invocation
@@ -119,25 +159,65 @@ apply.whitespace::
 	Tells `git-apply` how to handle whitespaces, in the same way
 	as the '--whitespace' option. See gitlink:git-apply[1].
 
-pager.color::
-	A boolean to enable/disable colored output when the pager is in
-	use (default is true).
+branch.<name>.remote::
+	When in branch <name>, it tells `git fetch` which remote to fetch.
+	If this option is not given, `git fetch` defaults to remote "origin".
 
-diff.color::
+branch.<name>.merge::
+	When in branch <name>, it tells `git fetch` the default refspec to
+	be marked for merging in FETCH_HEAD. The value has exactly to match
+	a remote part of one of the refspecs which are fetched from the remote
+	given by "branch.<name>.remote".
+	The merge information is used by `git pull` (which at first calls
+	`git fetch`) to lookup the default branch for merging. Without
+	this option, `git pull` defaults to merge the first refspec fetched.
+	Specify multiple values to get an octopus merge.
+
+color.branch::
+	A boolean to enable/disable color in the output of
+	gitlink:git-branch[1]. May be set to `true` (or `always`),
+	`false` (or `never`) or `auto`, in which case colors are used
+	only when the output is to a terminal. Defaults to false.
+
+color.branch.<slot>::
+	Use customized color for branch coloration. `<slot>` is one of
+	`current` (the current branch), `local` (a local branch),
+	`remote` (a tracking branch in refs/remotes/), `plain` (other
+	refs), or `reset` (the normal terminal color).  The value for
+	these configuration variables can be one of: `normal`, `bold`,
+	`dim`, `ul`, `blink`, `reverse`, `reset`, `black`, `red`,
+	`green`, `yellow`, `blue`, `magenta`, `cyan`, or `white`.
+
+color.diff::
 	When true (or `always`), always use colors in patch.
 	When false (or `never`), never.  When set to `auto`, use
 	colors only when the output is to the terminal.
 
-diff.color.<slot>::
+color.diff.<slot>::
 	Use customized color for diff colorization.  `<slot>`
 	specifies which part of the patch to use the specified
 	color, and is one of `plain` (context text), `meta`
 	(metainformation), `frag` (hunk header), `old` (removed
-	lines), or `new` (added lines).  The value for these
-	configuration variables can be one of: `normal`, `bold`,
-	`dim`, `ul`, `blink`, `reverse`, `reset`, `black`,
-	`red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, or
-	`white`.
+	lines), or `new` (added lines).  The values of these
+	variables may be specified as in color.branch.<slot>.
+
+color.pager::
+	A boolean to enable/disable colored output when the pager is in
+	use (default is true).
+
+color.status::
+	A boolean to enable/disable color in the output of
+	gitlink:git-status[1]. May be set to `true` (or `always`),
+	`false` (or `never`) or `auto`, in which case colors are used
+	only when the output is to a terminal. Defaults to false.
+
+color.status.<slot>::
+	Use customized color for status colorization. `<slot>` is
+	one of `header` (the header text of the status message),
+	`added` or `updated` (files which are added but not committed),
+	`changed` (files which are changed but not added in the index),
+	or `untracked` (files which are not tracked by git). The values of
+	these variables may be specified as in color.branch.<slot>.
 
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename
@@ -151,6 +231,25 @@ diff.renames::
 format.headers::
 	Additional email headers to include in a patch to be submitted
 	by mail.  See gitlink:git-format-patch[1].
+
+gc.reflogexpire::
+	`git reflog expire` removes reflog entries older than
+	this time; defaults to 90 days.
+
+gc.reflogexpireunreachable::
+	`git reflog expire` removes reflog entries older than
+	this time and are not reachable from the current tip;
+	defaults to 30 days.
+
+gc.rerereresolved::
+	Records of conflicted merge you resolved earlier are
+	kept for this many days when `git rerere gc` is run.
+	The default is 60 days.  See gitlink:git-rerere[1].
+
+gc.rerereunresolved::
+	Records of conflicted merge you have not resolved are
+	kept for this many days when `git rerere gc` is run.
+	The default is 15 days.  See gitlink:git-rerere[1].
 
 gitcvs.enabled::
 	Whether the cvs pserver interface is enabled for this repository.
@@ -195,12 +294,28 @@ http.lowSpeedLimit, http.lowSpeedTime::
 	Can be overridden by the 'GIT_HTTP_LOW_SPEED_LIMIT' and
 	'GIT_HTTP_LOW_SPEED_TIME' environment variables.
 
+http.noEPSV::
+	A boolean which disables using of EPSV ftp command by curl.
+	This can helpful with some "poor" ftp servers which doesn't
+	support EPSV mode. Can be overridden by the 'GIT_CURL_FTP_NO_EPSV'
+	environment variable. Default is false (curl will use EPSV).
+
 i18n.commitEncoding::
 	Character encoding the commit messages are stored in; git itself
 	does not care per se, but this information is necessary e.g. when
 	importing commits from emails or in the gitk graphical history
 	browser (and possibly at other places in the future or in other
 	porcelains). See e.g. gitlink:git-mailinfo[1]. Defaults to 'utf-8'.
+
+i18n.logOutputEncoding::
+	Character encoding the commit messages are converted to when
+	running `git-log` and friends.
+
+log.showroot::
+	If true, the initial commit will be shown as a big creation event.
+	This is equivalent to a diff against an empty tree.
+	Tools like gitlink:git-log[1] or gitlink:git-whatchanged[1], which
+	normally hide the root commit will now show it. True by default.
 
 merge.summary::
 	Whether to include summaries of merged commits in newly created
@@ -216,6 +331,22 @@ pull.octopus::
 
 pull.twohead::
 	The default merge strategy to use when pulling a single branch.
+
+remote.<name>.url::
+	The URL of a remote repository.  See gitlink:git-fetch[1] or
+	gitlink:git-push[1].
+
+remote.<name>.fetch::
+	The default set of "refspec" for gitlink:git-fetch[1]. See
+	gitlink:git-fetch[1].
+
+remote.<name>.push::
+	The default set of "refspec" for gitlink:git-push[1]. See
+	gitlink:git-push[1].
+
+repack.usedeltabaseoffset::
+	Allow gitlink:git-repack[1] to create packs that uses
+	delta-base offset.  Defaults to false.
 
 show.difftree::
 	The default gitlink:git-diff-tree[1] arguments to be used
@@ -253,3 +384,19 @@ whatchanged.difftree::
 imap::
 	The configuration variables in the 'imap' section are described
 	in gitlink:git-imap-send[1].
+
+receive.unpackLimit::
+	If the number of objects received in a push is below this
+	limit then the objects will be unpacked into loose object
+	files. However if the number of received objects equals or
+	exceeds this limit then the received pack will be stored as
+	a pack, after adding any missing delta bases.  Storing the
+	pack from a push can make the push operation complete faster,
+	especially on slow filesystems.
+
+receive.denyNonFastForwards::
+	If set to true, git-receive-pack will deny a ref update which is
+	not a fast forward. Use this to prevent such an update via a push,
+	even if that push is forced. This configuration variable is
+	set when initializing a shared repository.
+

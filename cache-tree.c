@@ -2,7 +2,9 @@
 #include "tree.h"
 #include "cache-tree.h"
 
+#ifndef DEBUG
 #define DEBUG 0
+#endif
 
 struct cache_tree *cache_tree(void)
 {
@@ -280,6 +282,8 @@ static int update_one(struct cache_tree *it,
 				    baselen + sublen + 1,
 				    missing_ok,
 				    dryrun);
+		if (subcnt < 0)
+			return subcnt;
 		i += subcnt - 1;
 		sub->used = 1;
 	}
@@ -344,12 +348,8 @@ static int update_one(struct cache_tree *it,
 #endif
 	}
 
-	if (dryrun) {
-		unsigned char hdr[200];
-		int hdrlen;
-		write_sha1_file_prepare(buffer, offset, tree_type, it->sha1,
-					hdr, &hdrlen);
-	}
+	if (dryrun)
+		hash_sha1_file(buffer, offset, tree_type, it->sha1);
 	else
 		write_sha1_file(buffer, offset, tree_type, it->sha1);
 	free(buffer);

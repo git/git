@@ -93,7 +93,7 @@ inet_ntop6(src, dst, size)
 	 */
 	char tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"], *tp;
 	struct { int base, len; } best, cur;
-	u_int words[NS_IN6ADDRSZ / NS_INT16SZ];
+	unsigned int words[NS_IN6ADDRSZ / NS_INT16SZ];
 	int i;
 
 	/*

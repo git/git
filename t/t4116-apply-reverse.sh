@@ -22,25 +22,64 @@ test_expect_success setup '
 	tr "[mon]" '\''[\0\1\2]'\'' <file1 >file2 &&
 
 	git commit -a -m second &&
+	git tag second &&
 
-	git diff --binary -R initial >patch
+	git diff --binary initial second >patch
 
 '
 
 test_expect_success 'apply in forward' '
 
+	T0=`git rev-parse "second^{tree}"` &&
+	git reset --hard initial &&
 	git apply --index --binary patch &&
-	git diff initial >diff &&
-	diff -u /dev/null diff
-
+	T1=`git write-tree` &&
+	test "$T0" = "$T1"
 '
 
 test_expect_success 'apply in reverse' '
 
+	git reset --hard second &&
 	git apply --reverse --binary --index patch &&
 	git diff >diff &&
 	diff -u /dev/null diff
 
+'
+
+test_expect_success 'setup separate repository lacking postimage' '
+
+	git tar-tree initial initial | tar xf - &&
+	(
+		cd initial && git init && git add .
+	) &&
+
+	git tar-tree second second | tar xf - &&
+	(
+		cd second && git init && git add .
+	)
+
+'
+
+test_expect_success 'apply in forward without postimage' '
+
+	T0=`git rev-parse "second^{tree}"` &&
+	(
+		cd initial &&
+		git apply --index --binary ../patch &&
+		T1=`git write-tree` &&
+		test "$T0" = "$T1"
+	)
+'
+
+test_expect_success 'apply in reverse without postimage' '
+
+	T0=`git rev-parse "initial^{tree}"` &&
+	(
+		cd second &&
+		git apply --index --binary --reverse ../patch &&
+		T1=`git write-tree` &&
+		test "$T0" = "$T1"
+	)
 '
 
 test_done

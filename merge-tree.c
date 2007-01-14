@@ -177,7 +177,7 @@ static void resolve(const char *base, struct name_entry *branch1, struct name_en
 	if (!branch1)
 		return;
 
-	path = strdup(mkpath("%s%s", base, result->path));
+	path = xstrdup(mkpath("%s%s", base, result->path));
 	orig = create_entry(2, branch1->mode, branch1->sha1, path);
 	final = create_entry(0, result->mode, result->sha1, path);
 
@@ -233,7 +233,7 @@ static struct merge_list *link_entry(unsigned stage, const char *base, struct na
 	if (entry)
 		path = entry->path;
 	else
-		path = strdup(mkpath("%s%s", base, n->path));
+		path = xstrdup(mkpath("%s%s", base, n->path));
 	link = create_entry(stage, n->mode, n->sha1, path);
 	link->link = entry;
 	return link;
@@ -337,8 +337,10 @@ int main(int argc, char **argv)
 	struct tree_desc t[3];
 	void *buf1, *buf2, *buf3;
 
-	if (argc < 4)
+	if (argc != 4)
 		usage(merge_tree_usage);
+
+	setup_git_directory();
 
 	buf1 = get_tree_descriptor(t+0, argv[1]);
 	buf2 = get_tree_descriptor(t+1, argv[2]);

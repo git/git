@@ -1,0 +1,113 @@
+git-archive(1)
+==============
+
+NAME
+----
+git-archive - Creates a archive of the files in the named tree
+
+
+SYNOPSIS
+--------
+'git-archive' --format=<fmt> [--list] [--prefix=<prefix>/] [<extra>]
+	      [--remote=<repo>] <tree-ish> [path...]
+
+DESCRIPTION
+-----------
+Creates an archive of the specified format containing the tree
+structure for the named tree.  If <prefix> is specified it is
+prepended to the filenames in the archive.
+
+'git-archive' behaves differently when given a tree ID versus when
+given a commit ID or tag ID.  In the first case the current time is
+used as modification time of each file in the archive.  In the latter
+case the commit time as recorded in the referenced commit object is
+used instead.  Additionally the commit ID is stored in a global
+extended pax header if the tar format is used; it can be extracted
+using 'git-get-tar-commit-id'. In ZIP files it is stored as a file
+comment.
+
+OPTIONS
+-------
+
+--format=<fmt>::
+	Format of the resulting archive: 'tar', 'zip'...
+
+--list::
+	Show all available formats.
+
+--prefix=<prefix>/::
+	Prepend <prefix>/ to each filename in the archive.
+
+<extra>::
+	This can be any options that the archiver backend understand.
+	See next section.
+
+--remote=<repo>::
+	Instead of making a tar archive from local repository,
+	retrieve a tar archive from a remote repository.
+
+<tree-ish>::
+	The tree or commit to produce an archive for.
+
+path::
+	If one or more paths are specified, include only these in the
+	archive, otherwise include all files and subdirectories.
+
+BACKEND EXTRA OPTIONS
+---------------------
+
+zip
+~~~
+-0::
+	Store the files instead of deflating them.
+-9::
+	Highest and slowest compression level.  You can specify any
+	number from 1 to 9 to adjust compression speed and ratio.
+
+
+CONFIGURATION
+-------------
+By default, file and directories modes are set to 0666 or 0777 in tar
+archives.  It is possible to change this by setting the "umask" variable
+in the repository configuration as follows :
+
+[tar]
+        umask = 002	;# group friendly
+
+The special umask value "user" indicates that the user's current umask
+will be used instead. The default value remains 0, which means world
+readable/writable files and directories.
+
+EXAMPLES
+--------
+git archive --format=tar --prefix=junk/ HEAD | (cd /var/tmp/ && tar xf -)::
+
+	Create a tar archive that contains the contents of the
+	latest commit on the current branch, and extracts it in
+	`/var/tmp/junk` directory.
+
+git archive --format=tar --prefix=git-1.4.0/ v1.4.0 | gzip >git-1.4.0.tar.gz::
+
+	Create a compressed tarball for v1.4.0 release.
+
+git archive --format=tar --prefix=git-1.4.0/ v1.4.0{caret}\{tree\} | gzip >git-1.4.0.tar.gz::
+
+	Create a compressed tarball for v1.4.0 release, but without a
+	global extended pax header.
+
+git archive --format=zip --prefix=git-docs/ HEAD:Documentation/ > git-1.4.0-docs.zip::
+
+	Put everything in the current head's Documentation/ directory
+	into 'git-1.4.0-docs.zip', with the prefix 'git-docs/'.
+
+Author
+------
+Written by Franck Bui-Huu and Rene Scharfe.
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the gitlink:git[7] suite

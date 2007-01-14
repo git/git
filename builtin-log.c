@@ -10,8 +10,9 @@
 #include "revision.h"
 #include "log-tree.h"
 #include "builtin.h"
-#include <time.h>
-#include <sys/time.h>
+#include "tag.h"
+
+static int default_show_root = 1;
 
 /* this is in builtin-diff.c */
 void add_head(struct rev_info *revs);
@@ -19,14 +20,27 @@ void add_head(struct rev_info *revs);
 static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		      struct rev_info *rev)
 {
+	int i;
+
 	rev->abbrev = DEFAULT_ABBREV;
 	rev->commit_format = CMIT_FMT_DEFAULT;
 	rev->verbose_header = 1;
+	rev->show_root_diff = default_show_root;
 	argc = setup_revisions(argc, argv, rev, "HEAD");
 	if (rev->diffopt.pickaxe || rev->diffopt.filter)
 		rev->always_show_header = 0;
-	if (argc > 1)
-		die("unrecognized argument: %s", argv[1]);
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+		if (!strncmp(arg, "--encoding=", 11)) {
+			arg += 11;
+			if (strcmp(arg, "none"))
+				git_log_output_encoding = strdup(arg);
+			else
+				git_log_output_encoding = "";
+		}
+		else
+			die("unrecognized argument: %s", arg);
+	}
 }
 
 static int cmd_log_walk(struct rev_info *rev)
@@ -44,11 +58,20 @@ static int cmd_log_walk(struct rev_info *rev)
 	return 0;
 }
 
+static int git_log_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "log.showroot")) {
+		default_show_root = git_config_bool(var, value);
+		return 0;
+	}
+	return git_diff_ui_config(var, value);
+}
+
 int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 
-	git_config(git_diff_ui_config);
+	git_config(git_log_config);
 	init_revisions(&rev, prefix);
 	rev.diff = 1;
 	rev.diffopt.recursive = 1;
@@ -59,11 +82,45 @@ int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 	return cmd_log_walk(&rev);
 }
 
+static int show_object(const unsigned char *sha1, int suppress_header)
+{
+	unsigned long size;
+	char type[20];
+	char *buf = read_sha1_file(sha1, type, &size);
+	int offset = 0;
+
+	if (!buf)
+		return error("Could not read object %s", sha1_to_hex(sha1));
+
+	if (suppress_header)
+		while (offset < size && buf[offset++] != '\n') {
+			int new_offset = offset;
+			while (new_offset < size && buf[new_offset++] != '\n')
+				; /* do nothing */
+			offset = new_offset;
+		}
+
+	if (offset < size)
+		fwrite(buf + offset, size - offset, 1, stdout);
+	free(buf);
+	return 0;
+}
+
+static int show_tree_object(const unsigned char *sha1,
+		const char *base, int baselen,
+		const char *pathname, unsigned mode, int stage)
+{
+	printf("%s%s\n", pathname, S_ISDIR(mode) ? "/" : "");
+	return 0;
+}
+
 int cmd_show(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
+	struct object_array_entry *objects;
+	int i, count, ret = 0;
 
-	git_config(git_diff_ui_config);
+	git_config(git_log_config);
 	init_revisions(&rev, prefix);
 	rev.diff = 1;
 	rev.diffopt.recursive = 1;
@@ -73,14 +130,59 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	rev.ignore_merges = 0;
 	rev.no_walk = 1;
 	cmd_log_init(argc, argv, prefix, &rev);
-	return cmd_log_walk(&rev);
+
+	count = rev.pending.nr;
+	objects = rev.pending.objects;
+	for (i = 0; i < count && !ret; i++) {
+		struct object *o = objects[i].item;
+		const char *name = objects[i].name;
+		switch (o->type) {
+		case OBJ_BLOB:
+			ret = show_object(o->sha1, 0);
+			break;
+		case OBJ_TAG: {
+			struct tag *t = (struct tag *)o;
+
+			printf("%stag %s%s\n\n",
+					diff_get_color(rev.diffopt.color_diff,
+						DIFF_COMMIT),
+					t->tag,
+					diff_get_color(rev.diffopt.color_diff,
+						DIFF_RESET));
+			ret = show_object(o->sha1, 1);
+			objects[i].item = (struct object *)t->tagged;
+			i--;
+			break;
+		}
+		case OBJ_TREE:
+			printf("%stree %s%s\n\n",
+					diff_get_color(rev.diffopt.color_diff,
+						DIFF_COMMIT),
+					name,
+					diff_get_color(rev.diffopt.color_diff,
+						DIFF_RESET));
+			read_tree_recursive((struct tree *)o, "", 0, 0, NULL,
+					show_tree_object);
+			break;
+		case OBJ_COMMIT:
+			rev.pending.nr = rev.pending.alloc = 0;
+			rev.pending.objects = NULL;
+			add_object_array(o, name, &rev.pending);
+			ret = cmd_log_walk(&rev);
+			break;
+		default:
+			ret = error("Unknown type: %d", o->type);
+		}
+	}
+	free(objects);
+	return ret;
 }
 
 int cmd_log(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 
-	git_config(git_diff_ui_config);
+	git_config(git_log_config);
 	init_revisions(&rev, prefix);
 	rev.always_show_header = 1;
 	cmd_log_init(argc, argv, prefix, &rev);
@@ -101,15 +203,15 @@ static int git_format_config(const char *var, const char *value)
 	if (!strcmp(var, "format.headers")) {
 		int len = strlen(value);
 		extra_headers_size += len + 1;
-		extra_headers = realloc(extra_headers, extra_headers_size);
+		extra_headers = xrealloc(extra_headers, extra_headers_size);
 		extra_headers[extra_headers_size - len - 1] = 0;
 		strcat(extra_headers, value);
 		return 0;
 	}
-	if (!strcmp(var, "diff.color")) {
+	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
 		return 0;
 	}
-	return git_diff_ui_config(var, value);
+	return git_log_config(var, value);
 }
 
 
@@ -171,8 +273,11 @@ static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 static int get_patch_id(struct commit *commit, struct diff_options *options,
 		unsigned char *sha1)
 {
-	diff_tree_sha1(commit->parents->item->object.sha1, commit->object.sha1,
-			"", options);
+	if (commit->parents)
+		diff_tree_sha1(commit->parents->item->object.sha1,
+		               commit->object.sha1, "", options);
+	else
+		diff_root_tree_sha1(commit->object.sha1, "", options);
 	diffcore_std(options);
 	return diff_flush_patch_id(options, sha1);
 }
@@ -348,6 +453,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_PATCH;
 
+	if (!output_directory)
+		output_directory = prefix;
+
 	if (output_directory) {
 		if (use_stdout)
 			die("standard output, or directory, which one?");
@@ -381,7 +489,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			continue;
 
 		nr++;
-		list = realloc(list, nr * sizeof(list[0]));
+		list = xrealloc(list, nr * sizeof(list[0]));
 		list[nr - 1] = commit;
 	}
 	total = nr;
@@ -434,3 +542,109 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+static int add_pending_commit(const char *arg, struct rev_info *revs, int flags)
+{
+	unsigned char sha1[20];
+	if (get_sha1(arg, sha1) == 0) {
+		struct commit *commit = lookup_commit_reference(sha1);
+		if (commit) {
+			commit->object.flags |= flags;
+			add_pending_object(revs, &commit->object, arg);
+			return 0;
+		}
+	}
+	return -1;
+}
+
+static const char cherry_usage[] =
+"git-cherry [-v] <upstream> [<head>] [<limit>]";
+int cmd_cherry(int argc, const char **argv, const char *prefix)
+{
+	struct rev_info revs;
+	struct diff_options patch_id_opts;
+	struct commit *commit;
+	struct commit_list *list = NULL;
+	const char *upstream;
+	const char *head = "HEAD";
+	const char *limit = NULL;
+	int verbose = 0;
+
+	if (argc > 1 && !strcmp(argv[1], "-v")) {
+		verbose = 1;
+		argc--;
+		argv++;
+	}
+
+	switch (argc) {
+	case 4:
+		limit = argv[3];
+		/* FALLTHROUGH */
+	case 3:
+		head = argv[2];
+		/* FALLTHROUGH */
+	case 2:
+		upstream = argv[1];
+		break;
+	default:
+		usage(cherry_usage);
+	}
+
+	init_revisions(&revs, prefix);
+	revs.diff = 1;
+	revs.combine_merges = 0;
+	revs.ignore_merges = 1;
+	revs.diffopt.recursive = 1;
+
+	if (add_pending_commit(head, &revs, 0))
+		die("Unknown commit %s", head);
+	if (add_pending_commit(upstream, &revs, UNINTERESTING))
+		die("Unknown commit %s", upstream);
+
+	/* Don't say anything if head and upstream are the same. */
+	if (revs.pending.nr == 2) {
+		struct object_array_entry *o = revs.pending.objects;
+		if (hashcmp(o[0].item->sha1, o[1].item->sha1) == 0)
+			return 0;
+	}
+
+	get_patch_ids(&revs, &patch_id_opts, prefix);
+
+	if (limit && add_pending_commit(limit, &revs, UNINTERESTING))
+		die("Unknown commit %s", limit);
+
+	/* reverse the list of commits */
+	prepare_revision_walk(&revs);
+	while ((commit = get_revision(&revs)) != NULL) {
+		/* ignore merges */
+		if (commit->parents && commit->parents->next)
+			continue;
+
+		commit_list_insert(commit, &list);
+	}
+
+	while (list) {
+		unsigned char sha1[20];
+		char sign = '+';
+
+		commit = list->item;
+		if (!get_patch_id(commit, &patch_id_opts, sha1) &&
+		    lookup_object(sha1))
+			sign = '-';
+
+		if (verbose) {
+			static char buf[16384];
+			pretty_print_commit(CMIT_FMT_ONELINE, commit, ~0,
+			                    buf, sizeof(buf), 0, NULL, NULL, 0);
+			printf("%c %s %s\n", sign,
+			       sha1_to_hex(commit->object.sha1), buf);
+		}
+		else {
+			printf("%c %s\n", sign,
+			       sha1_to_hex(commit->object.sha1));
+		}
+
+		list = list->next;
+	}
+
+	return 0;
+}

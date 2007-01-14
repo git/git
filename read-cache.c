@@ -347,16 +347,18 @@ int add_file_to_index(const char *path, int verbose)
 	ce->ce_mode = create_ce_mode(st.st_mode);
 	if (!trust_executable_bit) {
 		/* If there is an existing entry, pick the mode bits
-		 * from it.
+		 * from it, otherwise assume unexecutable.
 		 */
 		int pos = cache_name_pos(path, namelen);
 		if (pos >= 0)
 			ce->ce_mode = active_cache[pos]->ce_mode;
+		else if (S_ISREG(st.st_mode))
+			ce->ce_mode = create_ce_mode(S_IFREG | 0666);
 	}
 
 	if (index_path(ce->sha1, path, &st, 1))
 		die("unable to index file %s", path);
-	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD))
+	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE))
 		die("unable to add %s to index",path);
 	if (verbose)
 		printf("add '%s'\n", path);
@@ -515,7 +517,7 @@ static int has_dir_name(const struct cache_entry *ce, int pos, int ok_to_replace
 		pos = cache_name_pos(name, ntohs(create_ce_flags(len, stage)));
 		if (pos >= 0) {
 			retval = -1;
-			if (ok_to_replace)
+			if (!ok_to_replace)
 				break;
 			remove_cache_entry_at(pos);
 			continue;
@@ -607,7 +609,7 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	if (!skip_df_check &&
 	    check_file_directory_conflict(ce, pos, ok_to_replace)) {
 		if (!ok_to_replace)
-			return -1;
+			return error("'%s' appears as both a file and as a directory", ce->name);
 		pos = cache_name_pos(ce->name, ntohs(ce->ce_flags));
 		pos = -pos-1;
 	}
@@ -791,16 +793,16 @@ int read_cache_from(const char *path)
 		die("index file open failed (%s)", strerror(errno));
 	}
 
-	cache_mmap = MAP_FAILED;
 	if (!fstat(fd, &st)) {
 		cache_mmap_size = st.st_size;
 		errno = EINVAL;
 		if (cache_mmap_size >= sizeof(struct cache_header) + 20)
-			cache_mmap = mmap(NULL, cache_mmap_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-	}
+			cache_mmap = xmmap(NULL, cache_mmap_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+		else
+			die("index file smaller than expected");
+	} else
+		die("cannot stat the open index (%s)", strerror(errno));
 	close(fd);
-	if (cache_mmap == MAP_FAILED)
-		die("index file mmap failed (%s)", strerror(errno));
 
 	hdr = cache_mmap;
 	if (verify_hdr(hdr, cache_mmap_size) < 0)
@@ -842,6 +844,23 @@ unmap:
 	die("index file corrupt");
 }
 
+int discard_cache(void)
+{
+	int ret;
+
+	active_nr = active_cache_changed = 0;
+	index_file_timestamp = 0;
+	cache_tree_free(&active_cache_tree);
+	if (cache_mmap == NULL)
+		return 0;
+	ret = munmap(cache_mmap, cache_mmap_size);
+	cache_mmap = NULL;
+	cache_mmap_size = 0;
+
+	/* no need to throw away allocated active_cache */
+	return ret;
+}
+
 #define WRITE_BUFFER_SIZE 8192
 static unsigned char write_buffer[WRITE_BUFFER_SIZE];
 static unsigned long write_buffer_len;
@@ -851,7 +870,7 @@ static int ce_write_flush(SHA_CTX *context, int fd)
 	unsigned int buffered = write_buffer_len;
 	if (buffered) {
 		SHA1_Update(context, write_buffer, buffered);
-		if (write(fd, write_buffer, buffered) != buffered)
+		if (write_in_full(fd, write_buffer, buffered) != buffered)
 			return -1;
 		write_buffer_len = 0;
 	}
@@ -900,7 +919,7 @@ static int ce_flush(SHA_CTX *context, int fd)
 
 	/* Flush first if not enough space for SHA1 signature */
 	if (left + 20 > WRITE_BUFFER_SIZE) {
-		if (write(fd, write_buffer, left) != left)
+		if (write_in_full(fd, write_buffer, left) != left)
 			return -1;
 		left = 0;
 	}
@@ -908,7 +927,7 @@ static int ce_flush(SHA_CTX *context, int fd)
 	/* Append the SHA1 signature at the end */
 	SHA1_Final(write_buffer + left, context);
 	left += 20;
-	return (write(fd, write_buffer, left) != left) ? -1 : 0;
+	return (write_in_full(fd, write_buffer, left) != left) ? -1 : 0;
 }
 
 static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
@@ -991,7 +1010,7 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 		if (data &&
 		    !write_index_ext_header(&c, newfd, CACHE_EXT_TREE, sz) &&
 		    !ce_write(&c, newfd, data, sz))
-			;
+			free(data);
 		else {
 			free(data);
 			return -1;

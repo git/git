@@ -6,7 +6,6 @@
  * This applies patches on top of some (arbitrary) version of the SCM.
  *
  */
-#include <fnmatch.h>
 #include "cache.h"
 #include "cache-tree.h"
 #include "quote.h"
@@ -27,8 +26,8 @@ static const char *prefix;
 static int prefix_length = -1;
 static int newfd = -1;
 
+static int unidiff_zero;
 static int p_value = 1;
-static int allow_binary_replacement;
 static int check_index;
 static int write_index;
 static int cached;
@@ -38,12 +37,14 @@ static int summary;
 static int check;
 static int apply = 1;
 static int apply_in_reverse;
+static int apply_with_reject;
+static int apply_verbosely;
 static int no_add;
 static int show_index_info;
 static int line_termination = '\n';
-static unsigned long p_context = -1;
+static unsigned long p_context = ULONG_MAX;
 static const char apply_usage[] =
-"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--cached] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>] <patch>...";
+"git-apply [--stat] [--numstat] [--summary] [--check] [--index] [--cached] [--apply] [--no-add] [--index-info] [--allow-binary-replacement] [--reverse] [--reject] [--verbose] [-z] [-pNUM] [-CNUM] [--whitespace=<nowarn|warn|error|error-all|strip>] <patch>...";
 
 static enum whitespace_eol {
 	nowarn_whitespace,
@@ -122,6 +123,7 @@ struct fragment {
 	unsigned long newpos, newlines;
 	const char *patch;
 	int size;
+	int rejected;
 	struct fragment *next;
 };
 
@@ -137,11 +139,15 @@ struct fragment {
 struct patch {
 	char *new_name, *old_name, *def_name;
 	unsigned int old_mode, new_mode;
-	int is_rename, is_copy, is_new, is_delete, is_binary;
+	int is_new, is_delete;	/* -1 = unknown, 0 = false, 1 = true */
+	int rejected;
 	unsigned long deflate_origlen;
 	int lines_added, lines_deleted;
 	int score;
-	int inaccurate_eof:1;
+	unsigned int inaccurate_eof:1;
+	unsigned int is_binary:1;
+	unsigned int is_copy:1;
+	unsigned int is_rename:1;
 	struct fragment *fragments;
 	char *result;
 	unsigned long resultsize;
@@ -149,6 +155,24 @@ struct patch {
 	char new_sha1_prefix[41];
 	struct patch *next;
 };
+
+static void say_patch_name(FILE *output, const char *pre, struct patch *patch, const char *post)
+{
+	fputs(pre, output);
+	if (patch->old_name && patch->new_name &&
+	    strcmp(patch->old_name, patch->new_name)) {
+		write_name_quoted(NULL, 0, patch->old_name, 1, output);
+		fputs(" => ", output);
+		write_name_quoted(NULL, 0, patch->new_name, 1, output);
+	}
+	else {
+		const char *n = patch->new_name;
+		if (!n)
+			n = patch->old_name;
+		write_name_quoted(NULL, 0, n, 1, output);
+	}
+	fputs(post, output);
+}
 
 #define CHUNKSIZE (8192)
 #define SLOP (16)
@@ -338,7 +362,7 @@ static int gitdiff_hdrend(const char *line, struct patch *patch)
 static char *gitdiff_verify_name(const char *line, int isnull, char *orig_name, const char *oldnew)
 {
 	if (!orig_name && !isnull)
-		return find_name(line, NULL, 1, 0);
+		return find_name(line, NULL, 1, TERM_TAB);
 
 	if (orig_name) {
 		int len;
@@ -348,7 +372,7 @@ static char *gitdiff_verify_name(const char *line, int isnull, char *orig_name, 
 		len = strlen(name);
 		if (isnull)
 			die("git-apply: bad git-diff - expected /dev/null, got %s on line %d", name, linenr);
-		another = find_name(line, NULL, 1, 0);
+		another = find_name(line, NULL, 1, TERM_TAB);
 		if (!another || memcmp(another, name, len))
 			die("git-apply: bad git-diff - inconsistent %s filename on line %d", oldnew, linenr);
 		free(another);
@@ -606,9 +630,7 @@ static char *git_header_name(char *line, int llen)
 	 * form.
 	 */
 	for (len = 0 ; ; len++) {
-		char c = name[len];
-
-		switch (c) {
+		switch (name[len]) {
 		default:
 			continue;
 		case '\n':
@@ -789,7 +811,8 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 			struct fragment dummy;
 			if (parse_fragment_header(line, len, &dummy) < 0)
 				continue;
-			error("patch fragment without header at line %d: %.*s", linenr, (int)len-1, line);
+			die("patch fragment without header at line %d: %.*s",
+			    linenr, (int)len-1, line);
 		}
 
 		if (size < len + 6)
@@ -834,12 +857,54 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 	return -1;
 }
 
+static void check_whitespace(const char *line, int len)
+{
+	const char *err = "Adds trailing whitespace";
+	int seen_space = 0;
+	int i;
+
+	/*
+	 * We know len is at least two, since we have a '+' and we
+	 * checked that the last character was a '\n' before calling
+	 * this function.  That is, an addition of an empty line would
+	 * check the '+' here.  Sneaky...
+	 */
+	if (isspace(line[len-2]))
+		goto error;
+
+	/*
+	 * Make sure that there is no space followed by a tab in
+	 * indentation.
+	 */
+	err = "Space in indent is followed by a tab";
+	for (i = 1; i < len; i++) {
+		if (line[i] == '\t') {
+			if (seen_space)
+				goto error;
+		}
+		else if (line[i] == ' ')
+			seen_space = 1;
+		else
+			break;
+	}
+	return;
+
+ error:
+	whitespace_error++;
+	if (squelch_whitespace_errors &&
+	    squelch_whitespace_errors < whitespace_error)
+		;
+	else
+		fprintf(stderr, "%s.\n%s:%d:%.*s\n",
+			err, patch_input_file, linenr, len-2, line+1);
+}
+
+
 /*
- * Parse a unified diff. Note that this really needs
- * to parse each fragment separately, since the only
- * way to know the difference between a "---" that is
- * part of a patch, and a "---" that starts the next
- * patch is to look at the line counts..
+ * Parse a unified diff. Note that this really needs to parse each
+ * fragment separately, since the only way to know the difference
+ * between a "---" that is part of a patch, and a "---" that starts
+ * the next patch is to look at the line counts..
  */
 static int parse_fragment(char *line, unsigned long size, struct patch *patch, struct fragment *fragment)
 {
@@ -856,31 +921,14 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 	leading = 0;
 	trailing = 0;
 
-	if (patch->is_new < 0) {
-		patch->is_new =  !oldlines;
-		if (!oldlines)
-			patch->old_name = NULL;
-	}
-	if (patch->is_delete < 0) {
-		patch->is_delete = !newlines;
-		if (!newlines)
-			patch->new_name = NULL;
-	}
-
-	if (patch->is_new && oldlines)
-		return error("new file depends on old contents");
-	if (patch->is_delete != !newlines) {
-		if (newlines)
-			return error("deleted file still has contents");
-		fprintf(stderr, "** warning: file %s becomes empty but is not deleted\n", patch->new_name);
-	}
-
 	/* Parse the thing.. */
 	line += len;
 	size -= len;
 	linenr++;
 	added = deleted = 0;
-	for (offset = len; size > 0; offset += len, size -= len, line += len, linenr++) {
+	for (offset = len;
+	     0 < size;
+	     offset += len, size -= len, line += len, linenr++) {
 		if (!oldlines && !newlines)
 			break;
 		len = linelen(line, size);
@@ -889,6 +937,7 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 		switch (*line) {
 		default:
 			return -1;
+		case '\n': /* newer GNU diff, an empty context line */
 		case ' ':
 			oldlines--;
 			newlines--;
@@ -902,25 +951,8 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 			trailing = 0;
 			break;
 		case '+':
-			/*
-			 * We know len is at least two, since we have a '+' and
-			 * we checked that the last character was a '\n' above.
-			 * That is, an addition of an empty line would check
-			 * the '+' here.  Sneaky...
-			 */
-			if ((new_whitespace != nowarn_whitespace) &&
-			    isspace(line[len-2])) {
-				whitespace_error++;
-				if (squelch_whitespace_errors &&
-				    squelch_whitespace_errors <
-				    whitespace_error)
-					;
-				else {
-					fprintf(stderr, "Adds trailing whitespace.\n%s:%d:%.*s\n",
-						patch_input_file,
-						linenr, len-2, line+1);
-				}
-			}
+			if (new_whitespace != nowarn_whitespace)
+				check_whitespace(line, len);
 			added++;
 			newlines--;
 			trailing = 0;
@@ -953,12 +985,18 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 
 	patch->lines_added += added;
 	patch->lines_deleted += deleted;
+
+	if (0 < patch->is_new && oldlines)
+		return error("new file depends on old contents");
+	if (0 < patch->is_delete && newlines)
+		return error("deleted file still has contents");
 	return offset;
 }
 
 static int parse_single_patch(char *line, unsigned long size, struct patch *patch)
 {
 	unsigned long offset = 0;
+	unsigned long oldlines = 0, newlines = 0, context = 0;
 	struct fragment **fragp = &patch->fragments;
 
 	while (size > 4 && !memcmp(line, "@@ -", 4)) {
@@ -969,9 +1007,11 @@ static int parse_single_patch(char *line, unsigned long size, struct patch *patc
 		len = parse_fragment(line, size, patch, fragment);
 		if (len <= 0)
 			die("corrupt patch at line %d", linenr);
-
 		fragment->patch = line;
 		fragment->size = len;
+		oldlines += fragment->oldlines;
+		newlines += fragment->newlines;
+		context += fragment->leading + fragment->trailing;
 
 		*fragp = fragment;
 		fragp = &fragment->next;
@@ -980,6 +1020,50 @@ static int parse_single_patch(char *line, unsigned long size, struct patch *patc
 		line += len;
 		size -= len;
 	}
+
+	/*
+	 * If something was removed (i.e. we have old-lines) it cannot
+	 * be creation, and if something was added it cannot be
+	 * deletion.  However, the reverse is not true; --unified=0
+	 * patches that only add are not necessarily creation even
+	 * though they do not have any old lines, and ones that only
+	 * delete are not necessarily deletion.
+	 *
+	 * Unfortunately, a real creation/deletion patch do _not_ have
+	 * any context line by definition, so we cannot safely tell it
+	 * apart with --unified=0 insanity.  At least if the patch has
+	 * more than one hunk it is not creation or deletion.
+	 */
+	if (patch->is_new < 0 &&
+	    (oldlines || (patch->fragments && patch->fragments->next)))
+		patch->is_new = 0;
+	if (patch->is_delete < 0 &&
+	    (newlines || (patch->fragments && patch->fragments->next)))
+		patch->is_delete = 0;
+	if (!unidiff_zero || context) {
+		/* If the user says the patch is not generated with
+		 * --unified=0, or if we have seen context lines,
+		 * then not having oldlines means the patch is creation,
+		 * and not having newlines means the patch is deletion.
+		 */
+		if (patch->is_new < 0 && !oldlines) {
+			patch->is_new = 1;
+			patch->old_name = NULL;
+		}
+		if (patch->is_delete < 0 && !newlines) {
+			patch->is_delete = 1;
+			patch->new_name = NULL;
+		}
+	}
+
+	if (0 < patch->is_new && oldlines)
+		die("new file %s depends on old contents", patch->new_name);
+	if (0 < patch->is_delete && newlines)
+		die("deleted file %s still has contents", patch->old_name);
+	if (!patch->is_delete && !newlines && context)
+		fprintf(stderr, "** warning: file %s becomes empty but "
+			"is not deleted\n", patch->new_name);
+
 	return offset;
 }
 
@@ -1063,8 +1147,12 @@ static struct fragment *parse_binary_hunk(char **buf_p,
 		llen = linelen(buffer, size);
 		used += llen;
 		linenr++;
-		if (llen == 1)
+		if (llen == 1) {
+			/* consume the blank line */
+			buffer++;
+			size--;
 			break;
+		}
 		/* Minimum line is "A00000\n" which is 7-byte long,
 		 * and the line length must be multiple of 5 plus 2.
 		 */
@@ -1107,8 +1195,7 @@ static struct fragment *parse_binary_hunk(char **buf_p,
 	return frag;
 
  corrupt:
-	if (data)
-		free(data);
+	free(data);
 	*status_p = -1;
 	error("corrupt binary patch at line %d: %.*s",
 	      linenr-1, llen-1, buffer);
@@ -1205,14 +1292,12 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 			}
 		}
 
-		/* Empty patch cannot be applied if:
-		 * - it is a binary patch and we do not do binary_replace, or
-		 * - text patch without metadata change
+		/* Empty patch cannot be applied if it is a text patch
+		 * without metadata change.  A binary patch appears
+		 * empty to us here.
 		 */
 		if ((apply || check) &&
-		    (patch->is_binary
-		     ? !allow_binary_replacement
-		     : !metadata_changes(patch)))
+		    (!patch->is_binary && !metadata_changes(patch)))
 			die("patch with only garbage at line %d", linenr);
 	}
 
@@ -1305,8 +1390,7 @@ static void show_stats(struct patch *patch)
 		printf(" %s%-*s |%5d %.*s%.*s\n", prefix,
 		       len, name, patch->lines_added + patch->lines_deleted,
 		       add, pluses, del, minuses);
-	if (qname)
-		free(qname);
+	free(qname);
 }
 
 static int read_old_data(struct stat *st, const char *path, void *buf, unsigned long size)
@@ -1444,22 +1528,68 @@ static int apply_line(char *output, const char *patch, int plen)
 {
 	/* plen is number of bytes to be copied from patch,
 	 * starting at patch+1 (patch[0] is '+').  Typically
-	 * patch[plen] is '\n'.
+	 * patch[plen] is '\n', unless this is the incomplete
+	 * last line.
 	 */
+	int i;
 	int add_nl_to_tail = 0;
-	if ((new_whitespace == strip_whitespace) &&
-	    1 < plen && isspace(patch[plen-1])) {
+	int fixed = 0;
+	int last_tab_in_indent = -1;
+	int last_space_in_indent = -1;
+	int need_fix_leading_space = 0;
+	char *buf;
+
+	if ((new_whitespace != strip_whitespace) || !whitespace_error) {
+		memcpy(output, patch + 1, plen);
+		return plen;
+	}
+
+	if (1 < plen && isspace(patch[plen-1])) {
 		if (patch[plen] == '\n')
 			add_nl_to_tail = 1;
 		plen--;
 		while (0 < plen && isspace(patch[plen]))
 			plen--;
-		applied_after_stripping++;
+		fixed = 1;
 	}
-	memcpy(output, patch + 1, plen);
+
+	for (i = 1; i < plen; i++) {
+		char ch = patch[i];
+		if (ch == '\t') {
+			last_tab_in_indent = i;
+			if (0 <= last_space_in_indent)
+				need_fix_leading_space = 1;
+		}
+		else if (ch == ' ')
+			last_space_in_indent = i;
+		else
+			break;
+	}
+
+	buf = output;
+	if (need_fix_leading_space) {
+		/* between patch[1..last_tab_in_indent] strip the
+		 * funny spaces, updating them to tab as needed.
+		 */
+		for (i = 1; i < last_tab_in_indent; i++, plen--) {
+			char ch = patch[i];
+			if (ch != ' ')
+				*output++ = ch;
+			else if ((i % 8) == 0)
+				*output++ = '\t';
+		}
+		fixed = 1;
+		i = last_tab_in_indent;
+	}
+	else
+		i = 1;
+
+	memcpy(output, patch + i, plen);
 	if (add_nl_to_tail)
 		output[plen++] = '\n';
-	return plen;
+	if (fixed)
+		applied_after_stripping++;
+	return output + plen - buf;
 }
 
 static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, int inaccurate_eof)
@@ -1501,6 +1631,14 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 				first = '-';
 		}
 		switch (first) {
+		case '\n':
+			/* Newer GNU diff, empty context line */
+			if (plen < 0)
+				/* ... followed by '\No newline'; nothing */
+				break;
+			old[oldsize++] = '\n';
+			new[newsize++] = '\n';
+			break;
 		case ' ':
 		case '-':
 			memcpy(old + oldsize, patch + 1, plen);
@@ -1537,14 +1675,25 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 	/*
 	 * If we don't have any leading/trailing data in the patch,
 	 * we want it to match at the beginning/end of the file.
+	 *
+	 * But that would break if the patch is generated with
+	 * --unified=0; sane people wouldn't do that to cause us
+	 * trouble, but we try to please not so sane ones as well.
 	 */
-	match_beginning = !leading && (frag->oldpos == 1);
-	match_end = !trailing;
+	if (unidiff_zero) {
+		match_beginning = (!leading && !frag->oldpos);
+		match_end = 0;
+	}
+	else {
+		match_beginning = !leading && (frag->oldpos == 1);
+		match_end = !trailing;
+	}
 
 	lines = 0;
 	pos = frag->newpos;
 	for (;;) {
-		offset = find_offset(buf, desc->size, oldlines, oldsize, pos, &lines);
+		offset = find_offset(buf, desc->size,
+				     oldlines, oldsize, pos, &lines);
 		if (match_end && offset + oldsize != desc->size)
 			offset = -1;
 		if (match_beginning && offset)
@@ -1557,8 +1706,10 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 			/* Warn if it was necessary to reduce the number
 			 * of context lines.
 			 */
-			if ((leading != frag->leading) || (trailing != frag->trailing))
-				fprintf(stderr, "Context reduced to (%ld/%ld) to apply fragment at %d\n",
+			if ((leading != frag->leading) ||
+			    (trailing != frag->trailing))
+				fprintf(stderr, "Context reduced to (%ld/%ld)"
+					" to apply fragment at %d\n",
 					leading, trailing, pos + lines);
 
 			if (size > alloc) {
@@ -1568,7 +1719,9 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 				desc->buffer = buf;
 			}
 			desc->size = size;
-			memmove(buf + offset + newsize, buf + offset + oldsize, size - offset - newsize);
+			memmove(buf + offset + newsize,
+				buf + offset + oldsize,
+				size - offset - newsize);
 			memcpy(buf + offset, newlines, newsize);
 			offset = 0;
 
@@ -1618,7 +1771,7 @@ static int apply_binary_fragment(struct buffer_desc *desc, struct patch *patch)
 				     "without the reverse hunk to '%s'",
 				     patch->new_name
 				     ? patch->new_name : patch->old_name);
-		fragment = fragment;
+		fragment = fragment->next;
 	}
 	data = (void*) fragment->patch;
 	switch (fragment->binary_patch_method) {
@@ -1646,13 +1799,6 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 {
 	const char *name = patch->old_name ? patch->old_name : patch->new_name;
 	unsigned char sha1[20];
-	unsigned char hdr[50];
-	int hdrlen;
-
-	if (!allow_binary_replacement)
-		return error("cannot apply binary patch to '%s' "
-			     "without --allow-binary-replacement",
-			     name);
 
 	/* For safety, we require patch index line to contain
 	 * full 40-byte textual SHA1 for old and new, at least for now.
@@ -1668,8 +1814,7 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 		/* See if the old one matches what the patch
 		 * applies to.
 		 */
-		write_sha1_file_prepare(desc->buffer, desc->size,
-					blob_type, sha1, hdr, &hdrlen);
+		hash_sha1_file(desc->buffer, desc->size, blob_type, sha1);
 		if (strcmp(sha1_to_hex(sha1), patch->old_sha1_prefix))
 			return error("the patch applies to '%s' (%s), "
 				     "which does not match the "
@@ -1714,10 +1859,9 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 				     name);
 
 		/* verify that the result matches */
-		write_sha1_file_prepare(desc->buffer, desc->size, blob_type,
-					sha1, hdr, &hdrlen);
+		hash_sha1_file(desc->buffer, desc->size, blob_type, sha1);
 		if (strcmp(sha1_to_hex(sha1), patch->new_sha1_prefix))
-			return error("binary patch to '%s' creates incorrect result", name);
+			return error("binary patch to '%s' creates incorrect result (expecting %s, got %s)", name, patch->new_sha1_prefix, sha1_to_hex(sha1));
 	}
 
 	return 0;
@@ -1732,9 +1876,12 @@ static int apply_fragments(struct buffer_desc *desc, struct patch *patch)
 		return apply_binary(desc, patch);
 
 	while (frag) {
-		if (apply_one_fragment(desc, frag, patch->inaccurate_eof) < 0)
-			return error("patch failed: %s:%ld",
-				     name, frag->oldpos);
+		if (apply_one_fragment(desc, frag, patch->inaccurate_eof)) {
+			error("patch failed: %s:%ld", name, frag->oldpos);
+			if (!apply_with_reject)
+				return -1;
+			frag->rejected = 1;
+		}
 		frag = frag->next;
 	}
 	return 0;
@@ -1770,8 +1917,9 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 	desc.size = size;
 	desc.alloc = alloc;
 	desc.buffer = buf;
+
 	if (apply_fragments(&desc, patch) < 0)
-		return -1;
+		return -1; /* note with --reject this succeeds. */
 
 	/* NUL terminate the result */
 	if (desc.alloc <= desc.size)
@@ -1781,7 +1929,7 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 	patch->result = desc.buffer;
 	patch->resultsize = desc.size;
 
-	if (patch->is_delete && patch->resultsize)
+	if (0 < patch->is_delete && patch->resultsize)
 		return error("removal patch leaves file contents");
 
 	return 0;
@@ -1796,6 +1944,7 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 	struct cache_entry *ce = NULL;
 	int ok_if_exists;
 
+	patch->rejected = 1; /* we will drop this after we succeed */
 	if (old_name) {
 		int changed = 0;
 		int stat_ret = 0;
@@ -1852,7 +2001,7 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 				old_name, st_mode, patch->old_mode);
 	}
 
-	if (new_name && prev_patch && prev_patch->is_delete &&
+	if (new_name && prev_patch && 0 < prev_patch->is_delete &&
 	    !strcmp(prev_patch->old_name, new_name))
 		/* A type-change diff is always split into a patch to
 		 * delete old, immediately followed by a patch to
@@ -1865,7 +2014,8 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 	else
 		ok_if_exists = 0;
 
-	if (new_name && (patch->is_new | patch->is_rename | patch->is_copy)) {
+	if (new_name &&
+	    ((0 < patch->is_new) | (0 < patch->is_rename) | patch->is_copy)) {
 		if (check_index &&
 		    cache_name_pos(new_name, strlen(new_name)) >= 0 &&
 		    !ok_if_exists)
@@ -1882,7 +2032,7 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 				return error("%s: %s", new_name, strerror(errno));
 		}
 		if (!patch->new_mode) {
-			if (patch->is_new)
+			if (0 < patch->is_new)
 				patch->new_mode = S_IFREG | 0644;
 			else
 				patch->new_mode = patch->old_mode;
@@ -1901,19 +2051,23 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 
 	if (apply_data(patch, &st, ce) < 0)
 		return error("%s: patch does not apply", name);
+	patch->rejected = 0;
 	return 0;
 }
 
 static int check_patch_list(struct patch *patch)
 {
 	struct patch *prev_patch = NULL;
-	int error = 0;
+	int err = 0;
 
 	for (prev_patch = NULL; patch ; patch = patch->next) {
-		error |= check_patch(patch, prev_patch);
+		if (apply_verbosely)
+			say_patch_name(stderr,
+				       "Checking patch ", patch, "...\n");
+		err |= check_patch(patch, prev_patch);
 		prev_patch = patch;
 	}
-	return error;
+	return err;
 }
 
 static void show_index_list(struct patch *list)
@@ -1929,7 +2083,7 @@ static void show_index_list(struct patch *list)
 		const char *name;
 
 		name = patch->old_name ? patch->old_name : patch->new_name;
-		if (patch->is_new)
+		if (0 < patch->is_new)
 			sha1_ptr = null_sha1;
 		else if (get_sha1(patch->old_sha1_prefix, sha1))
 			die("sha1 information is lacking or useless (%s).",
@@ -1965,12 +2119,16 @@ static void numstat_patch_list(struct patch *patch)
 	for ( ; patch; patch = patch->next) {
 		const char *name;
 		name = patch->new_name ? patch->new_name : patch->old_name;
-		printf("%d\t%d\t", patch->lines_added, patch->lines_deleted);
+		if (patch->is_binary)
+			printf("-\t-\t");
+		else
+			printf("%d\t%d\t",
+			       patch->lines_added, patch->lines_deleted);
 		if (line_termination && quote_c_style(name, NULL, NULL, 0))
 			quote_c_style(name, NULL, stdout, 0);
 		else
 			fputs(name, stdout);
-		putchar('\n');
+		putchar(line_termination);
 	}
 }
 
@@ -2081,8 +2239,19 @@ static void remove_file(struct patch *patch)
 			die("unable to remove %s from index", patch->old_name);
 		cache_tree_invalidate_path(active_cache_tree, patch->old_name);
 	}
-	if (!cached)
-		unlink(patch->old_name);
+	if (!cached) {
+		if (!unlink(patch->old_name)) {
+			char *name = xstrdup(patch->old_name);
+			char *end = strrchr(name, '/');
+			while (end) {
+				*end = 0;
+				if (rmdir(name))
+					break;
+				end = strrchr(name, '/');
+			}
+			free(name);
+		}
+	}
 }
 
 static void add_index_file(const char *path, unsigned mode, void *buf, unsigned long size)
@@ -2219,23 +2388,99 @@ static void write_out_one_result(struct patch *patch, int phase)
 	if (phase == 0)
 		remove_file(patch);
 	if (phase == 1)
-	create_file(patch);
+		create_file(patch);
 }
 
-static void write_out_results(struct patch *list, int skipped_patch)
+static int write_out_one_reject(struct patch *patch)
+{
+	FILE *rej;
+	char namebuf[PATH_MAX];
+	struct fragment *frag;
+	int cnt = 0;
+
+	for (cnt = 0, frag = patch->fragments; frag; frag = frag->next) {
+		if (!frag->rejected)
+			continue;
+		cnt++;
+	}
+
+	if (!cnt) {
+		if (apply_verbosely)
+			say_patch_name(stderr,
+				       "Applied patch ", patch, " cleanly.\n");
+		return 0;
+	}
+
+	/* This should not happen, because a removal patch that leaves
+	 * contents are marked "rejected" at the patch level.
+	 */
+	if (!patch->new_name)
+		die("internal error");
+
+	/* Say this even without --verbose */
+	say_patch_name(stderr, "Applying patch ", patch, " with");
+	fprintf(stderr, " %d rejects...\n", cnt);
+
+	cnt = strlen(patch->new_name);
+	if (ARRAY_SIZE(namebuf) <= cnt + 5) {
+		cnt = ARRAY_SIZE(namebuf) - 5;
+		fprintf(stderr,
+			"warning: truncating .rej filename to %.*s.rej",
+			cnt - 1, patch->new_name);
+	}
+	memcpy(namebuf, patch->new_name, cnt);
+	memcpy(namebuf + cnt, ".rej", 5);
+
+	rej = fopen(namebuf, "w");
+	if (!rej)
+		return error("cannot open %s: %s", namebuf, strerror(errno));
+
+	/* Normal git tools never deal with .rej, so do not pretend
+	 * this is a git patch by saying --git nor give extended
+	 * headers.  While at it, maybe please "kompare" that wants
+	 * the trailing TAB and some garbage at the end of line ;-).
+	 */
+	fprintf(rej, "diff a/%s b/%s\t(rejected hunks)\n",
+		patch->new_name, patch->new_name);
+	for (cnt = 1, frag = patch->fragments;
+	     frag;
+	     cnt++, frag = frag->next) {
+		if (!frag->rejected) {
+			fprintf(stderr, "Hunk #%d applied cleanly.\n", cnt);
+			continue;
+		}
+		fprintf(stderr, "Rejected hunk #%d.\n", cnt);
+		fprintf(rej, "%.*s", frag->size, frag->patch);
+		if (frag->patch[frag->size-1] != '\n')
+			fputc('\n', rej);
+	}
+	fclose(rej);
+	return -1;
+}
+
+static int write_out_results(struct patch *list, int skipped_patch)
 {
 	int phase;
+	int errs = 0;
+	struct patch *l;
 
 	if (!list && !skipped_patch)
-		die("No changes");
+		return error("No changes");
 
 	for (phase = 0; phase < 2; phase++) {
-		struct patch *l = list;
+		l = list;
 		while (l) {
-			write_out_one_result(l, phase);
+			if (l->rejected)
+				errs = 1;
+			else {
+				write_out_one_result(l, phase);
+				if (phase == 1 && write_out_one_reject(l))
+					errs = 1;
+			}
 			l = l->next;
 		}
 	}
+	return errs;
 }
 
 static struct lock_file lock_file;
@@ -2310,11 +2555,13 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 			die("unable to read index file");
 	}
 
-	if ((check || apply) && check_patch_list(list) < 0)
+	if ((check || apply) &&
+	    check_patch_list(list) < 0 &&
+	    !apply_with_reject)
 		exit(1);
 
-	if (apply)
-		write_out_results(list, skipped_patch);
+	if (apply && write_out_results(list, skipped_patch))
+		exit(1);
 
 	if (show_index_info)
 		show_index_list(list);
@@ -2335,7 +2582,7 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 static int git_apply_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "apply.whitespace")) {
-		apply_default_whitespace = strdup(value);
+		apply_default_whitespace = xstrdup(value);
 		return 0;
 	}
 	return git_default_config(var, value);
@@ -2347,6 +2594,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 	int i;
 	int read_stdin = 1;
 	int inaccurate_eof = 0;
+	int errs = 0;
 
 	const char *whitespace_option = NULL;
 
@@ -2356,7 +2604,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 		int fd;
 
 		if (!strcmp(arg, "-")) {
-			apply_patch(0, "<stdin>", inaccurate_eof);
+			errs |= apply_patch(0, "<stdin>", inaccurate_eof);
 			read_stdin = 0;
 			continue;
 		}
@@ -2382,8 +2630,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "--allow-binary-replacement") ||
 		    !strcmp(arg, "--binary")) {
-			allow_binary_replacement = 1;
-			continue;
+			continue; /* now no-op */
 		}
 		if (!strcmp(arg, "--numstat")) {
 			apply = 0;
@@ -2437,6 +2684,18 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			apply_in_reverse = 1;
 			continue;
 		}
+		if (!strcmp(arg, "--unidiff-zero")) {
+			unidiff_zero = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--reject")) {
+			apply = apply_with_reject = apply_verbosely = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--verbose")) {
+			apply_verbosely = 1;
+			continue;
+		}
 		if (!strcmp(arg, "--inaccurate-eof")) {
 			inaccurate_eof = 1;
 			continue;
@@ -2457,18 +2716,19 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			usage(apply_usage);
 		read_stdin = 0;
 		set_default_whitespace_mode(whitespace_option);
-		apply_patch(fd, arg, inaccurate_eof);
+		errs |= apply_patch(fd, arg, inaccurate_eof);
 		close(fd);
 	}
 	set_default_whitespace_mode(whitespace_option);
 	if (read_stdin)
-		apply_patch(0, "<stdin>", inaccurate_eof);
+		errs |= apply_patch(0, "<stdin>", inaccurate_eof);
 	if (whitespace_error) {
 		if (squelch_whitespace_errors &&
 		    squelch_whitespace_errors < whitespace_error) {
 			int squelched =
 				whitespace_error - squelch_whitespace_errors;
-			fprintf(stderr, "warning: squelched %d whitespace error%s\n",
+			fprintf(stderr, "warning: squelched %d "
+				"whitespace error%s\n",
 				squelched,
 				squelched == 1 ? "" : "s");
 		}
@@ -2496,5 +2756,5 @@ int cmd_apply(int argc, const char **argv, const char *prefix)
 			die("Unable to write new index file");
 	}
 
-	return 0;
+	return !!errs;
 }

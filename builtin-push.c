@@ -10,7 +10,7 @@
 
 static const char push_usage[] = "git-push [--all] [--tags] [-f | --force] <repository> [<refspec>...]";
 
-static int all, tags, force, thin = 1;
+static int all, tags, force, thin = 1, verbose;
 static const char *execute;
 
 #define BUF_SIZE (2084)
@@ -27,13 +27,13 @@ static void add_refspec(const char *ref)
 	refspec_nr = nr;
 }
 
-static int expand_one_ref(const char *ref, const unsigned char *sha1)
+static int expand_one_ref(const char *ref, const unsigned char *sha1, int flag, void *cb_data)
 {
 	/* Ignore the "refs/" at the beginning of the refname */
 	ref += 5;
 
 	if (!strncmp(ref, "tags/", 5))
-		add_refspec(strdup(ref));
+		add_refspec(xstrdup(ref));
 	return 0;
 }
 
@@ -51,17 +51,42 @@ static void expand_refspecs(void)
 	}
 	if (!tags)
 		return;
-	for_each_ref(expand_one_ref);
+	for_each_ref(expand_one_ref, NULL);
 }
 
 static void set_refspecs(const char **refs, int nr)
 {
 	if (nr) {
-		size_t bytes = nr * sizeof(char *);
-
-		refspec = xrealloc(refspec, bytes);
-		memcpy(refspec, refs, bytes);
-		refspec_nr = nr;
+		int pass;
+		for (pass = 0; pass < 2; pass++) {
+			/* pass 0 counts and allocates, pass 1 fills */
+			int i, cnt;
+			for (i = cnt = 0; i < nr; i++) {
+				if (!strcmp("tag", refs[i])) {
+					int len;
+					char *tag;
+					if (nr <= ++i)
+						die("tag <tag> shorthand without <tag>");
+					if (pass) {
+						len = strlen(refs[i]) + 11;
+						tag = xmalloc(len);
+						strcpy(tag, "refs/tags/");
+						strcat(tag, refs[i]);
+						refspec[cnt] = tag;
+					}
+					cnt++;
+					continue;
+				}
+				if (pass)
+					refspec[cnt] = refs[i];
+				cnt++;
+			}
+			if (!pass) {
+				size_t bytes = cnt * sizeof(char *);
+				refspec_nr = cnt;
+				refspec = xrealloc(refspec, bytes);
+			}
+		}
 	}
 	expand_refspecs();
 }
@@ -78,12 +103,12 @@ static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 		int is_refspec;
 		char *s, *p;
 
-		if (!strncmp("URL: ", buffer, 5)) {
+		if (!strncmp("URL:", buffer, 4)) {
 			is_refspec = 0;
-			s = buffer + 5;
-		} else if (!strncmp("Push: ", buffer, 6)) {
+			s = buffer + 4;
+		} else if (!strncmp("Push:", buffer, 5)) {
 			is_refspec = 1;
-			s = buffer + 6;
+			s = buffer + 5;
 		} else
 			continue;
 
@@ -100,12 +125,12 @@ static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 
 		if (!is_refspec) {
 			if (n < MAX_URI)
-				uri[n++] = strdup(s);
+				uri[n++] = xstrdup(s);
 			else
 				error("more than %d URL's specified, ignoring the rest", MAX_URI);
 		}
 		else if (is_refspec && !has_explicit_refspec)
-			add_refspec(strdup(s));
+			add_refspec(xstrdup(s));
 	}
 	fclose(f);
 	if (!n)
@@ -125,13 +150,13 @@ static int get_remote_config(const char* key, const char* value)
 	    !strncmp(key + 7, config_repo, config_repo_len)) {
 		if (!strcmp(key + 7 + config_repo_len, ".url")) {
 			if (config_current_uri < MAX_URI)
-				config_uri[config_current_uri++] = strdup(value);
+				config_uri[config_current_uri++] = xstrdup(value);
 			else
 				error("more than %d URL's specified, ignoring the rest", MAX_URI);
 		}
 		else if (config_get_refspecs &&
 			 !strcmp(key + 7 + config_repo_len, ".push"))
-			add_refspec(strdup(value));
+			add_refspec(xstrdup(value));
 	}
 	return 0;
 }
@@ -232,7 +257,7 @@ static int do_push(const char *repo)
 	common_argc = argc;
 
 	for (i = 0; i < n; i++) {
-		int error;
+		int err;
 		int dest_argc = common_argc;
 		int dest_refspec_nr = refspec_nr;
 		const char **dest_refspec = refspec;
@@ -248,10 +273,12 @@ static int do_push(const char *repo)
 		while (dest_refspec_nr--)
 			argv[dest_argc++] = *dest_refspec++;
 		argv[dest_argc] = NULL;
-		error = run_command_v(argc, argv);
-		if (!error)
+		if (verbose)
+			fprintf(stderr, "Pushing to %s\n", dest);
+		err = run_command_v(argv);
+		if (!err)
 			continue;
-		switch (error) {
+		switch (err) {
 		case -ERR_RUN_COMMAND_FORK:
 			die("unable to fork for %s", sender);
 		case -ERR_RUN_COMMAND_EXEC:
@@ -262,7 +289,7 @@ static int do_push(const char *repo)
 		case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
 			die("%s died with strange error", sender);
 		default:
-			return -error;
+			return -err;
 		}
 	}
 	return 0;
@@ -280,6 +307,14 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 			repo = arg;
 			i++;
 			break;
+		}
+		if (!strcmp(arg, "-v")) {
+			verbose=1;
+			continue;
+		}
+		if (!strncmp(arg, "--repo=", 7)) {
+			repo = arg+7;
+			continue;
 		}
 		if (!strcmp(arg, "--all")) {
 			all = 1;

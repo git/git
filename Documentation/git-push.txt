@@ -49,12 +49,14 @@ corresponding remotes file---see below), then all the
 refs that exist both on the local side and on the remote
 side are updated.
 +
-Some short-cut notations are also supported.
+`tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
 +
-* `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
-* A parameter <ref> without a colon is equivalent to
-  <ref>`:`<ref>, hence updates <ref> in the destination from <ref>
-  in the source.
+A parameter <ref> without a colon is equivalent to
+<ref>`:`<ref>, hence updates <ref> in the destination from <ref>
+in the source.
++
+Pushing an empty <src> allows you to delete the <dst> ref from
+the remote repository.
 
 \--all::
 	Instead of naming each ref to push, specifies that all
@@ -75,7 +77,8 @@ include::urls.txt[]
 
 Author
 ------
-Written by Junio C Hamano <junkio@cox.net>
+Written by Junio C Hamano <junkio@cox.net>, later rewritten in C
+by Linus Torvalds <torvalds@osdl.org>
 
 Documentation
 --------------

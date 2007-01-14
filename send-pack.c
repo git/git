@@ -14,118 +14,89 @@ static int send_all;
 static int force_update;
 static int use_thin_pack;
 
-static int is_zero_sha1(const unsigned char *sha1)
-{
-	int i;
-
-	for (i = 0; i < 20; i++) {
-		if (*sha1++)
-			return 0;
-	}
-	return 1;
-}
-
-static void exec_pack_objects(void)
-{
-	static const char *args[] = {
-		"pack-objects",
-		"--stdout",
-		NULL
-	};
-	execv_git_cmd(args);
-	die("git-pack-objects exec failed (%s)", strerror(errno));
-}
-
-static void exec_rev_list(struct ref *refs)
-{
-	struct ref *ref;
-	static const char *args[1000];
-	int i = 0, j;
-
-	args[i++] = "rev-list";	/* 0 */
-	if (use_thin_pack)	/* 1 */
-		args[i++] = "--objects-edge";
-	else
-		args[i++] = "--objects";
-
-	/* First send the ones we care about most */
-	for (ref = refs; ref; ref = ref->next) {
-		if (900 < i)
-			die("git-rev-list environment overflow");
-		if (!is_zero_sha1(ref->new_sha1)) {
-			char *buf = malloc(100);
-			args[i++] = buf;
-			snprintf(buf, 50, "%s", sha1_to_hex(ref->new_sha1));
-			buf += 50;
-			if (!is_zero_sha1(ref->old_sha1) &&
-			    has_sha1_file(ref->old_sha1)) {
-				args[i++] = buf;
-				snprintf(buf, 50, "^%s",
-					 sha1_to_hex(ref->old_sha1));
-			}
-		}
-	}
-
-	/* Then a handful of the remainder
-	 * NEEDSWORK: we would be better off if used the newer ones first.
-	 */
-	for (ref = refs, j = i + 16;
-	     i < 900 && i < j && ref;
-	     ref = ref->next) {
-		if (is_zero_sha1(ref->new_sha1) &&
-		    !is_zero_sha1(ref->old_sha1) &&
-		    has_sha1_file(ref->old_sha1)) {
-			char *buf = malloc(42);
-			args[i++] = buf;
-			snprintf(buf, 42, "^%s", sha1_to_hex(ref->old_sha1));
-		}
-	}
-	args[i] = NULL;
-	execv_git_cmd(args);
-	die("git-rev-list exec failed (%s)", strerror(errno));
-}
-
-static void rev_list(int fd, struct ref *refs)
+/*
+ * Make a pack stream and spit it out into file descriptor fd
+ */
+static int pack_objects(int fd, struct ref *refs)
 {
 	int pipe_fd[2];
-	pid_t pack_objects_pid;
+	pid_t pid;
 
 	if (pipe(pipe_fd) < 0)
-		die("rev-list setup: pipe failed");
-	pack_objects_pid = fork();
-	if (!pack_objects_pid) {
+		return error("send-pack: pipe failed");
+	pid = fork();
+	if (!pid) {
+		/*
+		 * The child becomes pack-objects --revs; we feed
+		 * the revision parameters to it via its stdin and
+		 * let its stdout go back to the other end.
+		 */
+		static const char *args[] = {
+			"pack-objects",
+			"--all-progress",
+			"--revs",
+			"--stdout",
+			NULL,
+			NULL,
+		};
+		if (use_thin_pack)
+			args[4] = "--thin";
 		dup2(pipe_fd[0], 0);
 		dup2(fd, 1);
 		close(pipe_fd[0]);
 		close(pipe_fd[1]);
 		close(fd);
-		exec_pack_objects();
-		die("pack-objects setup failed");
+		execv_git_cmd(args);
+		die("git-pack-objects exec failed (%s)", strerror(errno));
 	}
-	if (pack_objects_pid < 0)
-		die("pack-objects fork failed");
-	dup2(pipe_fd[1], 1);
-	close(pipe_fd[0]);
-	close(pipe_fd[1]);
-	close(fd);
-	exec_rev_list(refs);
-}
 
-static void pack_objects(int fd, struct ref *refs)
-{
-	pid_t rev_list_pid;
-
-	rev_list_pid = fork();
-	if (!rev_list_pid) {
-		rev_list(fd, refs);
-		die("rev-list setup failed");
-	}
-	if (rev_list_pid < 0)
-		die("rev-list fork failed");
 	/*
-	 * We don't wait for the rev-list pipeline in the parent:
-	 * we end up waiting for the other end instead
+	 * We feed the pack-objects we just spawned with revision
+	 * parameters by writing to the pipe.
 	 */
+	close(pipe_fd[0]);
+	close(fd);
+
+	while (refs) {
+		char buf[42];
+
+		if (!is_null_sha1(refs->old_sha1) &&
+		    has_sha1_file(refs->old_sha1)) {
+			memcpy(buf + 1, sha1_to_hex(refs->old_sha1), 40);
+			buf[0] = '^';
+			buf[41] = '\n';
+			if (!write_or_whine(pipe_fd[1], buf, 42,
+						"send-pack: send refs"))
+				break;
+		}
+		if (!is_null_sha1(refs->new_sha1)) {
+			memcpy(buf, sha1_to_hex(refs->new_sha1), 40);
+			buf[40] = '\n';
+			if (!write_or_whine(pipe_fd[1], buf, 41,
+						"send-pack: send refs"))
+				break;
+		}
+		refs = refs->next;
+	}
+	close(pipe_fd[1]);
+
+	for (;;) {
+		int status, code;
+		pid_t waiting = waitpid(pid, &status, 0);
+
+		if (waiting < 0) {
+			if (errno == EINTR)
+				continue;
+			return error("waitpid failed (%s)", strerror(errno));
+		}
+		if ((waiting != pid) || WIFSIGNALED(status) ||
+		    !WIFEXITED(status))
+			return error("pack-objects died with strange error");
+		code = WEXITSTATUS(status);
+		if (code)
+			return -code;
+		return 0;
+	}
 }
 
 static void unmark_and_free(struct commit_list *list, unsigned int mark)
@@ -180,7 +151,7 @@ static int ref_newer(const unsigned char *new_sha1,
 static struct ref *local_refs, **local_tail;
 static struct ref *remote_refs, **remote_tail;
 
-static int one_local_ref(const char *refname, const unsigned char *sha1)
+static int one_local_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct ref *ref;
 	int len = strlen(refname) + 1;
@@ -195,7 +166,7 @@ static int one_local_ref(const char *refname, const unsigned char *sha1)
 static void get_local_heads(void)
 {
 	local_tail = &local_refs;
-	for_each_ref(one_local_ref);
+	for_each_ref(one_local_ref, NULL);
 }
 
 static int receive_status(int in)
@@ -235,6 +206,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	int new_refs;
 	int ret = 0;
 	int ask_for_status_report = 0;
+	int allow_deleting_refs = 0;
 	int expect_status_report = 0;
 
 	/* No funny business with the matcher */
@@ -244,6 +216,8 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	/* Does the other end support the reporting? */
 	if (server_supports("report-status"))
 		ask_for_status_report = 1;
+	if (server_supports("delete-refs"))
+		allow_deleting_refs = 1;
 
 	/* match them up */
 	if (!remote_tail)
@@ -263,9 +237,19 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	new_refs = 0;
 	for (ref = remote_refs; ref; ref = ref->next) {
 		char old_hex[60], *new_hex;
+		int delete_ref;
+
 		if (!ref->peer_ref)
 			continue;
-		if (!hashcmp(ref->old_sha1, ref->peer_ref->new_sha1)) {
+
+		delete_ref = is_null_sha1(ref->peer_ref->new_sha1);
+		if (delete_ref && !allow_deleting_refs) {
+			error("remote does not support deleting refs");
+			ret = -2;
+			continue;
+		}
+		if (!delete_ref &&
+		    !hashcmp(ref->old_sha1, ref->peer_ref->new_sha1)) {
 			if (verbose)
 				fprintf(stderr, "'%s': up-to-date\n", ref->name);
 			continue;
@@ -285,10 +269,14 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 		 *
 		 * (3) if both new and old are commit-ish, and new is a
 		 *     descendant of old, it is OK.
+		 *
+		 * (4) regardless of all of the above, removing :B is
+		 *     always allowed.
 		 */
 
 		if (!force_update &&
-		    !is_zero_sha1(ref->old_sha1) &&
+		    !delete_ref &&
+		    !is_null_sha1(ref->old_sha1) &&
 		    !ref->force) {
 			if (!has_sha1_file(ref->old_sha1) ||
 			    !ref_newer(ref->peer_ref->new_sha1,
@@ -311,12 +299,8 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 			}
 		}
 		hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
-		if (is_zero_sha1(ref->new_sha1)) {
-			error("cannot happen anymore");
-			ret = -3;
-			continue;
-		}
-		new_refs++;
+		if (!delete_ref)
+			new_refs++;
 		strcpy(old_hex, sha1_to_hex(ref->old_sha1));
 		new_hex = sha1_to_hex(ref->new_sha1);
 
@@ -330,15 +314,21 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 		else
 			packet_write(out, "%s %s %s",
 				     old_hex, new_hex, ref->name);
-		fprintf(stderr, "updating '%s'", ref->name);
-		if (strcmp(ref->name, ref->peer_ref->name))
-			fprintf(stderr, " using '%s'", ref->peer_ref->name);
-		fprintf(stderr, "\n  from %s\n  to   %s\n", old_hex, new_hex);
+		if (delete_ref)
+			fprintf(stderr, "deleting '%s'\n", ref->name);
+		else {
+			fprintf(stderr, "updating '%s'", ref->name);
+			if (strcmp(ref->name, ref->peer_ref->name))
+				fprintf(stderr, " using '%s'",
+					ref->peer_ref->name);
+			fprintf(stderr, "\n  from %s\n  to   %s\n",
+				old_hex, new_hex);
+		}
 	}
 
 	packet_flush(out);
 	if (new_refs)
-		pack_objects(out, remote_refs);
+		ret = pack_objects(out, remote_refs);
 	close(out);
 
 	if (expect_status_report) {
@@ -351,6 +341,25 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	return ret;
 }
 
+static void verify_remote_names(int nr_heads, char **heads)
+{
+	int i;
+
+	for (i = 0; i < nr_heads; i++) {
+		const char *remote = strchr(heads[i], ':');
+
+		remote = remote ? (remote + 1) : heads[i];
+		switch (check_ref_format(remote)) {
+		case 0: /* ok */
+		case -2: /* ok but a single level -- that is fine for
+			  * a match pattern.
+			  */
+			continue;
+		}
+		die("remote part of refspec is not a valid name in %s",
+		    heads[i]);
+	}
+}
 
 int main(int argc, char **argv)
 {
@@ -402,12 +411,14 @@ int main(int argc, char **argv)
 		usage(send_pack_usage);
 	if (heads && send_all)
 		usage(send_pack_usage);
+	verify_remote_names(nr_heads, heads);
+
 	pid = git_connect(fd, dest, exec);
 	if (pid < 0)
 		return 1;
 	ret = send_pack(fd[0], fd[1], nr_heads, heads);
 	close(fd[0]);
 	close(fd[1]);
-	finish_connect(pid);
-	return ret;
+	ret |= finish_connect(pid);
+	return !!ret;
 }

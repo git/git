@@ -11,25 +11,25 @@ SYNOPSIS
 [verse]
 'git-clone' [--template=<template_directory>] [-l [-s]] [-q] [-n] [--bare]
 	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
-	  [--use-separate-remote] <repository> [<directory>]
+	  [--depth=<depth>] <repository> [<directory>]
 
 DESCRIPTION
 -----------
-Clones a repository into a newly created directory.  All remote
-branch heads are copied under `$GIT_DIR/refs/heads/`, except
-that the remote `master` is also copied to `origin` branch.
 
-In addition, `$GIT_DIR/remotes/origin` file is set up to have
-this line:
+Clones a repository into a newly created directory, creates
+remote-tracking branches for each branch in the cloned repository
+(visible using `git branch -r`), and creates and checks out an initial
+branch equal to the cloned repository's currently active branch.
 
-	Pull: master:origin
+After the clone, a plain `git fetch` without arguments will update
+all the remote-tracking branches, and a `git pull` without
+arguments will in addition merge the remote master branch into the
+current master branch, if any.
 
-This is to help the typical workflow of working off of the
-remote `master` branch.  Every time `git pull` without argument
-is run, the progress on the remote `master` branch is tracked by
-copying it into the local `origin` branch, and merged into the
-branch you are currently working on.  Remote branches other than
-`master` are also added there to be tracked.
+This default configuration is achieved by creating references to
+the remote branch heads under `$GIT_DIR/refs/remotes/origin` and
+by initializing `remote.origin.url` and `remote.origin.fetch`
+configuration variables.
 
 
 OPTIONS
@@ -71,16 +71,18 @@ OPTIONS
 	Make a 'bare' GIT repository.  That is, instead of
 	creating `<directory>` and placing the administrative
 	files in `<directory>/.git`, make the `<directory>`
-	itself the `$GIT_DIR`. This implies `-n` option.  When
-	this option is used, neither the `origin` branch nor the
-	default `remotes/origin` file is created.
+	itself the `$GIT_DIR`. This obviously implies the `-n`
+	because there is nowhere to check out the working tree.
+	Also the branch heads at the remote are copied directly
+	to corresponding local branch heads, without mapping
+	them to `refs/remotes/origin/`.  When this option is
+	used, neither remote-tracking branches nor the related
+	configuration variables are created.
 
+--origin <name>::
 -o <name>::
-	Instead of using the branch name 'origin' to keep track
-	of the upstream repository, use <name> instead.  Note
-	that the shorthand name stored in `remotes/origin` is
-	not affected, but the local branch name to pull the
-	remote `master` branch into is.
+	Instead of using the remote name 'origin' to keep track
+	of the upstream repository, use <name> instead.
 
 --upload-pack <upload-pack>::
 -u <upload-pack>::
@@ -94,10 +96,14 @@ OPTIONS
 	if unset the templates are taken from the installation
 	defined default, typically `/usr/share/git-core/templates`.
 
---use-separate-remote::
-	Save remotes heads under `$GIT_DIR/remotes/origin/` instead
-	of `$GIT_DIR/refs/heads/`.  Only the master branch is saved
-	in the latter.
+--depth=<depth>::
+	Create a 'shallow' clone with a history truncated to the
+	specified number of revs.  A shallow repository has
+	number of limitations (you cannot clone or fetch from
+	it, nor push from nor into it), but is adequate if you
+	want to only look at near the tip of a large project
+	with a long history, and would want to send in a fixes
+	as patches.
 
 <repository>::
 	The (possibly remote) repository to clone from.  It can

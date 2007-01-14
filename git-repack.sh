@@ -3,7 +3,8 @@
 # Copyright (c) 2005 Linus Torvalds
 #
 
-USAGE='[-a] [-d] [-f] [-l] [-n] [-q]'
+USAGE='[-a] [-d] [-f] [-l] [-n] [-q] [--window=N] [--depth=N]'
+SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
 no_update_info= all_into_one= remove_redundant=
@@ -24,33 +25,50 @@ do
 	shift
 done
 
-rm -f .tmp-pack-*
+# Later we will default repack.UseDeltaBaseOffset to true
+default_dbo=false
+
+case "`git repo-config --bool repack.usedeltabaseoffset ||
+       echo $default_dbo`" in
+true)
+	extra="$extra --delta-base-offset" ;;
+esac
+
 PACKDIR="$GIT_OBJECT_DIRECTORY/pack"
+PACKTMP="$GIT_DIR/.tmp-$$-pack"
+rm -f "$PACKTMP"-*
+trap 'rm -f "$PACKTMP"-*' 0 1 2 3 15
 
 # There will be more repacking strategies to come...
 case ",$all_into_one," in
 ,,)
-	rev_list='--unpacked'
-	pack_objects='--incremental'
+	args='--unpacked --incremental'
 	;;
 ,t,)
-	rev_list=
-	pack_objects=
-
-	# Redundancy check in all-into-one case is trivial.
-	existing=`cd "$PACKDIR" && \
-	    find . -type f \( -name '*.pack' -o -name '*.idx' \) -print`
+	if [ -d "$PACKDIR" ]; then
+		for e in `cd "$PACKDIR" && find . -type f -name '*.pack' \
+			| sed -e 's/^\.\///' -e 's/\.pack$//'`
+		do
+			if [ -e "$PACKDIR/$e.keep" ]; then
+				: keep
+			else
+				args="$args --unpacked=$e.pack"
+				existing="$existing $e"
+			fi
+		done
+	fi
+	[ -z "$args" ] && args='--unpacked --incremental'
 	;;
 esac
-pack_objects="$pack_objects $local $quiet $no_reuse_delta$extra"
-name=$( { git-rev-list --objects --all $rev_list ||
-	  echo "git-rev-list died with exit code $?"
-	} |
-	git-pack-objects --non-empty $pack_objects .tmp-pack) ||
+
+args="$args $local $quiet $no_reuse_delta$extra"
+name=$(git-pack-objects --non-empty --all --reflog $args </dev/null "$PACKTMP") ||
 	exit 1
 if [ -z "$name" ]; then
 	echo Nothing new to pack.
 else
+	chmod a-w "$PACKTMP-$name.pack"
+	chmod a-w "$PACKTMP-$name.idx"
 	if test "$quiet" != '-q'; then
 	    echo "Pack pack-$name created."
 	fi
@@ -64,8 +82,8 @@ else
 				"$PACKDIR/old-pack-$name.$sfx"
 		fi
 	done &&
-	mv -f .tmp-pack-$name.pack "$PACKDIR/pack-$name.pack" &&
-	mv -f .tmp-pack-$name.idx  "$PACKDIR/pack-$name.idx" &&
+	mv -f "$PACKTMP-$name.pack" "$PACKDIR/pack-$name.pack" &&
+	mv -f "$PACKTMP-$name.idx"  "$PACKDIR/pack-$name.idx" &&
 	test -f "$PACKDIR/pack-$name.pack" &&
 	test -f "$PACKDIR/pack-$name.idx" || {
 		echo >&2 "Couldn't replace the existing pack with updated one."
@@ -78,22 +96,21 @@ fi
 
 if test "$remove_redundant" = t
 then
-	# We know $existing are all redundant only when
-	# all-into-one is used.
-	if test "$all_into_one" != '' && test "$existing" != ''
+	# We know $existing are all redundant.
+	if [ -n "$existing" ]
 	then
 		sync
 		( cd "$PACKDIR" &&
 		  for e in $existing
 		  do
 			case "$e" in
-			./pack-$name.pack | ./pack-$name.idx) ;;
-			*)	rm -f $e ;;
+			pack-$name) ;;
+			*)	rm -f "$e.pack" "$e.idx" "$e.keep" ;;
 			esac
 		  done
 		)
 	fi
-	git-prune-packed
+	git-prune-packed $quiet
 fi
 
 case "$no_update_info" in

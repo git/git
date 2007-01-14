@@ -54,9 +54,9 @@ struct diff_filepair {
 	unsigned source_stays : 1; /* all of R/C are copies */
 	unsigned broken_pair : 1;
 	unsigned renamed_pair : 1;
+	unsigned is_unmerged : 1;
 };
-#define DIFF_PAIR_UNMERGED(p) \
-	(!DIFF_FILE_VALID((p)->one) && !DIFF_FILE_VALID((p)->two))
+#define DIFF_PAIR_UNMERGED(p) ((p)->is_unmerged)
 
 #define DIFF_PAIR_RENAME(p) ((p)->renamed_pair)
 

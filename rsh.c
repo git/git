@@ -1,43 +1,10 @@
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-
+#include "cache.h"
 #include "rsh.h"
 #include "quote.h"
-#include "cache.h"
 
 #define COMMAND_SIZE 4096
 
-/*
- * Append a string to a string buffer, with or without shell quoting.
- * Return true if the buffer overflowed.
- */
-static int add_to_string(char **ptrp, int *sizep, const char *str, int quote)
-{
-	char *p = *ptrp;
-	int size = *sizep;
-	int oc;
-	int err = 0;
-
-	if ( quote ) {
-		oc = sq_quote_buf(p, size, str);
-	} else {
-		oc = strlen(str);
-		memcpy(p, str, (oc >= size) ? size-1 : oc);
-	}
-
-	if ( oc >= size ) {
-		err = 1;
-		oc = size-1;
-	}
-
-	*ptrp  += oc;
-	**ptrp  = '\0';
-	*sizep -= oc;
-	return err;
-}
-
-int setup_connection(int *fd_in, int *fd_out, const char *remote_prog, 
+int setup_connection(int *fd_in, int *fd_out, const char *remote_prog,
 		     char *url, int rmt_argc, char **rmt_argv)
 {
 	char *host;

@@ -15,18 +15,23 @@ int use_legacy_headers = 1;
 int trust_executable_bit = 1;
 int assume_unchanged;
 int prefer_symlink_refs;
-int log_all_ref_updates;
+int is_bare_repository_cfg = -1; /* unspecified */
+int log_all_ref_updates = -1; /* unspecified */
 int warn_ambiguous_refs = 1;
 int repository_format_version;
-char git_commit_encoding[MAX_ENCODING_LENGTH] = "utf-8";
+char *git_commit_encoding;
+char *git_log_output_encoding;
 int shared_repository = PERM_UMASK;
 const char *apply_default_whitespace;
 int zlib_compression_level = Z_DEFAULT_COMPRESSION;
+size_t packed_git_window_size = DEFAULT_PACKED_GIT_WINDOW_SIZE;
+size_t packed_git_limit = DEFAULT_PACKED_GIT_LIMIT;
 int pager_in_use;
 int pager_use_color = 1;
 
-static char *git_dir, *git_object_dir, *git_index_file, *git_refs_dir,
-	*git_graft_file;
+static const char *git_dir;
+static char *git_object_dir, *git_index_file, *git_refs_dir, *git_graft_file;
+
 static void setup_git_env(void)
 {
 	git_dir = getenv(GIT_DIR_ENVIRONMENT);
@@ -46,10 +51,23 @@ static void setup_git_env(void)
 	}
 	git_graft_file = getenv(GRAFT_ENVIRONMENT);
 	if (!git_graft_file)
-		git_graft_file = strdup(git_path("info/grafts"));
+		git_graft_file = xstrdup(git_path("info/grafts"));
 }
 
-char *get_git_dir(void)
+int is_bare_repository(void)
+{
+	const char *dir, *s;
+	if (0 <= is_bare_repository_cfg)
+		return is_bare_repository_cfg;
+
+	dir = get_git_dir();
+	if (!strcmp(dir, DEFAULT_GIT_DIR_ENVIRONMENT))
+		return 0;
+	s = strrchr(dir, '/');
+	return !s || strcmp(s + 1, DEFAULT_GIT_DIR_ENVIRONMENT);
+}
+
+const char *get_git_dir(void)
 {
 	if (!git_dir)
 		setup_git_env();

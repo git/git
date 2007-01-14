@@ -10,9 +10,7 @@
 #include "tag.h"
 #include "tree-walk.h"
 #include "builtin.h"
-#include <regex.h>
-#include <fnmatch.h>
-#include <sys/wait.h>
+#include "grep.h"
 
 /*
  * git grep pathspecs are somewhat different from diff-tree pathspecs;
@@ -82,499 +80,6 @@ static int pathspec_matches(const char **paths, const char *name)
 	return 0;
 }
 
-enum grep_pat_token {
-	GREP_PATTERN,
-	GREP_AND,
-	GREP_OPEN_PAREN,
-	GREP_CLOSE_PAREN,
-	GREP_NOT,
-	GREP_OR,
-};
-
-struct grep_pat {
-	struct grep_pat *next;
-	const char *origin;
-	int no;
-	enum grep_pat_token token;
-	const char *pattern;
-	regex_t regexp;
-};
-
-enum grep_expr_node {
-	GREP_NODE_ATOM,
-	GREP_NODE_NOT,
-	GREP_NODE_AND,
-	GREP_NODE_OR,
-};
-
-struct grep_expr {
-	enum grep_expr_node node;
-	union {
-		struct grep_pat *atom;
-		struct grep_expr *unary;
-		struct {
-			struct grep_expr *left;
-			struct grep_expr *right;
-		} binary;
-	} u;
-};
-
-struct grep_opt {
-	struct grep_pat *pattern_list;
-	struct grep_pat **pattern_tail;
-	struct grep_expr *pattern_expression;
-	int prefix_length;
-	regex_t regexp;
-	unsigned linenum:1;
-	unsigned invert:1;
-	unsigned name_only:1;
-	unsigned unmatch_name_only:1;
-	unsigned count:1;
-	unsigned word_regexp:1;
-	unsigned fixed:1;
-#define GREP_BINARY_DEFAULT	0
-#define GREP_BINARY_NOMATCH	1
-#define GREP_BINARY_TEXT	2
-	unsigned binary:2;
-	unsigned extended:1;
-	unsigned relative:1;
-	int regflags;
-	unsigned pre_context;
-	unsigned post_context;
-};
-
-static void add_pattern(struct grep_opt *opt, const char *pat,
-			const char *origin, int no, enum grep_pat_token t)
-{
-	struct grep_pat *p = xcalloc(1, sizeof(*p));
-	p->pattern = pat;
-	p->origin = origin;
-	p->no = no;
-	p->token = t;
-	*opt->pattern_tail = p;
-	opt->pattern_tail = &p->next;
-	p->next = NULL;
-}
-
-static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
-{
-	int err = regcomp(&p->regexp, p->pattern, opt->regflags);
-	if (err) {
-		char errbuf[1024];
-		char where[1024];
-		if (p->no)
-			sprintf(where, "In '%s' at %d, ",
-				p->origin, p->no);
-		else if (p->origin)
-			sprintf(where, "%s, ", p->origin);
-		else
-			where[0] = 0;
-		regerror(err, &p->regexp, errbuf, 1024);
-		regfree(&p->regexp);
-		die("%s'%s': %s", where, p->pattern, errbuf);
-	}
-}
-
-static struct grep_expr *compile_pattern_expr(struct grep_pat **);
-static struct grep_expr *compile_pattern_atom(struct grep_pat **list)
-{
-	struct grep_pat *p;
-	struct grep_expr *x;
-
-	p = *list;
-	switch (p->token) {
-	case GREP_PATTERN: /* atom */
-		x = xcalloc(1, sizeof (struct grep_expr));
-		x->node = GREP_NODE_ATOM;
-		x->u.atom = p;
-		*list = p->next;
-		return x;
-	case GREP_OPEN_PAREN:
-		*list = p->next;
-		x = compile_pattern_expr(list);
-		if (!x)
-			return NULL;
-		if (!*list || (*list)->token != GREP_CLOSE_PAREN)
-			die("unmatched parenthesis");
-		*list = (*list)->next;
-		return x;
-	default:
-		return NULL;
-	}
-}
-
-static struct grep_expr *compile_pattern_not(struct grep_pat **list)
-{
-	struct grep_pat *p;
-	struct grep_expr *x;
-
-	p = *list;
-	switch (p->token) {
-	case GREP_NOT:
-		if (!p->next)
-			die("--not not followed by pattern expression");
-		*list = p->next;
-		x = xcalloc(1, sizeof (struct grep_expr));
-		x->node = GREP_NODE_NOT;
-		x->u.unary = compile_pattern_not(list);
-		if (!x->u.unary)
-			die("--not followed by non pattern expression");
-		return x;
-	default:
-		return compile_pattern_atom(list);
-	}
-}
-
-static struct grep_expr *compile_pattern_and(struct grep_pat **list)
-{
-	struct grep_pat *p;
-	struct grep_expr *x, *y, *z;
-
-	x = compile_pattern_not(list);
-	p = *list;
-	if (p && p->token == GREP_AND) {
-		if (!p->next)
-			die("--and not followed by pattern expression");
-		*list = p->next;
-		y = compile_pattern_and(list);
-		if (!y)
-			die("--and not followed by pattern expression");
-		z = xcalloc(1, sizeof (struct grep_expr));
-		z->node = GREP_NODE_AND;
-		z->u.binary.left = x;
-		z->u.binary.right = y;
-		return z;
-	}
-	return x;
-}
-
-static struct grep_expr *compile_pattern_or(struct grep_pat **list)
-{
-	struct grep_pat *p;
-	struct grep_expr *x, *y, *z;
-
-	x = compile_pattern_and(list);
-	p = *list;
-	if (x && p && p->token != GREP_CLOSE_PAREN) {
-		y = compile_pattern_or(list);
-		if (!y)
-			die("not a pattern expression %s", p->pattern);
-		z = xcalloc(1, sizeof (struct grep_expr));
-		z->node = GREP_NODE_OR;
-		z->u.binary.left = x;
-		z->u.binary.right = y;
-		return z;
-	}
-	return x;
-}
-
-static struct grep_expr *compile_pattern_expr(struct grep_pat **list)
-{
-	return compile_pattern_or(list);
-}
-
-static void compile_patterns(struct grep_opt *opt)
-{
-	struct grep_pat *p;
-
-	/* First compile regexps */
-	for (p = opt->pattern_list; p; p = p->next) {
-		if (p->token == GREP_PATTERN)
-			compile_regexp(p, opt);
-		else
-			opt->extended = 1;
-	}
-
-	if (!opt->extended)
-		return;
-
-	/* Then bundle them up in an expression.
-	 * A classic recursive descent parser would do.
-	 */
-	p = opt->pattern_list;
-	opt->pattern_expression = compile_pattern_expr(&p);
-#if DEBUG
-	dump_pattern_exp(opt->pattern_expression, 0);
-#endif
-	if (p)
-		die("incomplete pattern expression: %s", p->pattern);
-}
-
-static char *end_of_line(char *cp, unsigned long *left)
-{
-	unsigned long l = *left;
-	while (l && *cp != '\n') {
-		l--;
-		cp++;
-	}
-	*left = l;
-	return cp;
-}
-
-static int word_char(char ch)
-{
-	return isalnum(ch) || ch == '_';
-}
-
-static void show_line(struct grep_opt *opt, const char *bol, const char *eol,
-		      const char *name, unsigned lno, char sign)
-{
-	printf("%s%c", name, sign);
-	if (opt->linenum)
-		printf("%d%c", lno, sign);
-	printf("%.*s\n", (int)(eol-bol), bol);
-}
-
-/*
- * NEEDSWORK: share code with diff.c
- */
-#define FIRST_FEW_BYTES 8000
-static int buffer_is_binary(const char *ptr, unsigned long size)
-{
-	if (FIRST_FEW_BYTES < size)
-		size = FIRST_FEW_BYTES;
-	return !!memchr(ptr, 0, size);
-}
-
-static int fixmatch(const char *pattern, char *line, regmatch_t *match)
-{
-	char *hit = strstr(line, pattern);
-	if (!hit) {
-		match->rm_so = match->rm_eo = -1;
-		return REG_NOMATCH;
-	}
-	else {
-		match->rm_so = hit - line;
-		match->rm_eo = match->rm_so + strlen(pattern);
-		return 0;
-	}
-}
-
-static int match_one_pattern(struct grep_opt *opt, struct grep_pat *p, char *bol, char *eol)
-{
-	int hit = 0;
-	int at_true_bol = 1;
-	regmatch_t pmatch[10];
-
- again:
-	if (!opt->fixed) {
-		regex_t *exp = &p->regexp;
-		hit = !regexec(exp, bol, ARRAY_SIZE(pmatch),
-			       pmatch, 0);
-	}
-	else {
-		hit = !fixmatch(p->pattern, bol, pmatch);
-	}
-
-	if (hit && opt->word_regexp) {
-		if ((pmatch[0].rm_so < 0) ||
-		    (eol - bol) <= pmatch[0].rm_so ||
-		    (pmatch[0].rm_eo < 0) ||
-		    (eol - bol) < pmatch[0].rm_eo)
-			die("regexp returned nonsense");
-
-		/* Match beginning must be either beginning of the
-		 * line, or at word boundary (i.e. the last char must
-		 * not be a word char).  Similarly, match end must be
-		 * either end of the line, or at word boundary
-		 * (i.e. the next char must not be a word char).
-		 */
-		if ( ((pmatch[0].rm_so == 0 && at_true_bol) ||
-		      !word_char(bol[pmatch[0].rm_so-1])) &&
-		     ((pmatch[0].rm_eo == (eol-bol)) ||
-		      !word_char(bol[pmatch[0].rm_eo])) )
-			;
-		else
-			hit = 0;
-
-		if (!hit && pmatch[0].rm_so + bol + 1 < eol) {
-			/* There could be more than one match on the
-			 * line, and the first match might not be
-			 * strict word match.  But later ones could be!
-			 */
-			bol = pmatch[0].rm_so + bol + 1;
-			at_true_bol = 0;
-			goto again;
-		}
-	}
-	return hit;
-}
-
-static int match_expr_eval(struct grep_opt *opt,
-			   struct grep_expr *x,
-			   char *bol, char *eol)
-{
-	switch (x->node) {
-	case GREP_NODE_ATOM:
-		return match_one_pattern(opt, x->u.atom, bol, eol);
-		break;
-	case GREP_NODE_NOT:
-		return !match_expr_eval(opt, x->u.unary, bol, eol);
-	case GREP_NODE_AND:
-		return (match_expr_eval(opt, x->u.binary.left, bol, eol) &&
-			match_expr_eval(opt, x->u.binary.right, bol, eol));
-	case GREP_NODE_OR:
-		return (match_expr_eval(opt, x->u.binary.left, bol, eol) ||
-			match_expr_eval(opt, x->u.binary.right, bol, eol));
-	}
-	die("Unexpected node type (internal error) %d\n", x->node);
-}
-
-static int match_expr(struct grep_opt *opt, char *bol, char *eol)
-{
-	struct grep_expr *x = opt->pattern_expression;
-	return match_expr_eval(opt, x, bol, eol);
-}
-
-static int match_line(struct grep_opt *opt, char *bol, char *eol)
-{
-	struct grep_pat *p;
-	if (opt->extended)
-		return match_expr(opt, bol, eol);
-	for (p = opt->pattern_list; p; p = p->next) {
-		if (match_one_pattern(opt, p, bol, eol))
-			return 1;
-	}
-	return 0;
-}
-
-static int grep_buffer(struct grep_opt *opt, const char *name,
-		       char *buf, unsigned long size)
-{
-	char *bol = buf;
-	unsigned long left = size;
-	unsigned lno = 1;
-	struct pre_context_line {
-		char *bol;
-		char *eol;
-	} *prev = NULL, *pcl;
-	unsigned last_hit = 0;
-	unsigned last_shown = 0;
-	int binary_match_only = 0;
-	const char *hunk_mark = "";
-	unsigned count = 0;
-
-	if (buffer_is_binary(buf, size)) {
-		switch (opt->binary) {
-		case GREP_BINARY_DEFAULT:
-			binary_match_only = 1;
-			break;
-		case GREP_BINARY_NOMATCH:
-			return 0; /* Assume unmatch */
-			break;
-		default:
-			break;
-		}
-	}
-
-	if (opt->pre_context)
-		prev = xcalloc(opt->pre_context, sizeof(*prev));
-	if (opt->pre_context || opt->post_context)
-		hunk_mark = "--\n";
-
-	while (left) {
-		char *eol, ch;
-		int hit = 0;
-
-		eol = end_of_line(bol, &left);
-		ch = *eol;
-		*eol = 0;
-
-		hit = match_line(opt, bol, eol);
-
-		/* "grep -v -e foo -e bla" should list lines
-		 * that do not have either, so inversion should
-		 * be done outside.
-		 */
-		if (opt->invert)
-			hit = !hit;
-		if (opt->unmatch_name_only) {
-			if (hit)
-				return 0;
-			goto next_line;
-		}
-		if (hit) {
-			count++;
-			if (binary_match_only) {
-				printf("Binary file %s matches\n", name);
-				return 1;
-			}
-			if (opt->name_only) {
-				printf("%s\n", name);
-				return 1;
-			}
-			/* Hit at this line.  If we haven't shown the
-			 * pre-context lines, we would need to show them.
-			 * When asked to do "count", this still show
-			 * the context which is nonsense, but the user
-			 * deserves to get that ;-).
-			 */
-			if (opt->pre_context) {
-				unsigned from;
-				if (opt->pre_context < lno)
-					from = lno - opt->pre_context;
-				else
-					from = 1;
-				if (from <= last_shown)
-					from = last_shown + 1;
-				if (last_shown && from != last_shown + 1)
-					printf(hunk_mark);
-				while (from < lno) {
-					pcl = &prev[lno-from-1];
-					show_line(opt, pcl->bol, pcl->eol,
-						  name, from, '-');
-					from++;
-				}
-				last_shown = lno-1;
-			}
-			if (last_shown && lno != last_shown + 1)
-				printf(hunk_mark);
-			if (!opt->count)
-				show_line(opt, bol, eol, name, lno, ':');
-			last_shown = last_hit = lno;
-		}
-		else if (last_hit &&
-			 lno <= last_hit + opt->post_context) {
-			/* If the last hit is within the post context,
-			 * we need to show this line.
-			 */
-			if (last_shown && lno != last_shown + 1)
-				printf(hunk_mark);
-			show_line(opt, bol, eol, name, lno, '-');
-			last_shown = lno;
-		}
-		if (opt->pre_context) {
-			memmove(prev+1, prev,
-				(opt->pre_context-1) * sizeof(*prev));
-			prev->bol = bol;
-			prev->eol = eol;
-		}
-
-	next_line:
-		*eol = ch;
-		bol = eol + 1;
-		if (!left)
-			break;
-		left--;
-		lno++;
-	}
-
-	if (opt->unmatch_name_only) {
-		/* We did not see any hit, so we want to show this */
-		printf("%s\n", name);
-		return 1;
-	}
-
-	/* NEEDSWORK:
-	 * The real "grep -c foo *.c" gives many "bar.c:0" lines,
-	 * which feels mostly useless but sometimes useful.  Maybe
-	 * make it another option?  For now suppress them.
-	 */
-	if (opt->count && count)
-		printf("%s:%u\n", name, count);
-	return !!last_hit;
-}
-
 static int grep_sha1(struct grep_opt *opt, const unsigned char *sha1, const char *name, int tree_name_len)
 {
 	unsigned long size;
@@ -631,7 +136,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	if (i < 0)
 		goto err_ret;
 	data = xmalloc(st.st_size + 1);
-	if (st.st_size != xread(i, data, st.st_size)) {
+	if (st.st_size != read_in_full(i, data, st.st_size)) {
 		error("'%s': short read %s", filename, strerror(errno));
 		close(i);
 		free(data);
@@ -694,6 +199,8 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 		push_arg("-F");
 	if (opt->linenum)
 		push_arg("-n");
+	if (!opt->pathname)
+		push_arg("-h");
 	if (opt->regflags & REG_EXTENDED)
 		push_arg("-E");
 	if (opt->regflags & REG_ICASE)
@@ -758,7 +265,7 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 	for (i = 0; i < active_nr; i++) {
 		struct cache_entry *ce = active_cache[i];
 		char *name;
-		if (ce_stage(ce) || !S_ISREG(ntohl(ce->ce_mode)))
+		if (!S_ISREG(ntohl(ce->ce_mode)))
 			continue;
 		if (!pathspec_matches(paths, ce->name))
 			continue;
@@ -770,12 +277,19 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 			memcpy(name + 2, ce->name, len + 1);
 		}
 		argv[argc++] = name;
-		if (argc < MAXARGS)
+		if (argc < MAXARGS && !ce_stage(ce))
 			continue;
 		status = exec_grep(argc, argv);
 		if (0 < status)
 			hit = 1;
 		argc = nr;
+		if (ce_stage(ce)) {
+			do {
+				i++;
+			} while (i < active_nr &&
+				 !strcmp(ce->name, active_cache[i]->name));
+			i--; /* compensate for loop control */
+		}
 	}
 	if (argc > nr) {
 		status = exec_grep(argc, argv);
@@ -806,15 +320,26 @@ static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 
 	for (nr = 0; nr < active_nr; nr++) {
 		struct cache_entry *ce = active_cache[nr];
-		if (ce_stage(ce) || !S_ISREG(ntohl(ce->ce_mode)))
+		if (!S_ISREG(ntohl(ce->ce_mode)))
 			continue;
 		if (!pathspec_matches(paths, ce->name))
 			continue;
-		if (cached)
+		if (cached) {
+			if (ce_stage(ce))
+				continue;
 			hit |= grep_sha1(opt, ce->sha1, ce->name, 0);
+		}
 		else
 			hit |= grep_file(opt, ce->name);
+		if (ce_stage(ce)) {
+			do {
+				nr++;
+			} while (nr < active_nr &&
+				 !strcmp(ce->name, active_cache[nr]->name));
+			nr--; /* compensate for loop control */
+		}
 	}
+	free_grep_patterns(opt);
 	return hit;
 }
 
@@ -914,6 +439,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	memset(&opt, 0, sizeof(opt));
 	opt.prefix_length = (prefix && *prefix) ? strlen(prefix) : 0;
 	opt.relative = 1;
+	opt.pathname = 1;
 	opt.pattern_tail = &opt.pattern_list;
 	opt.regflags = REG_NEWLINE;
 
@@ -973,10 +499,12 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			opt.linenum = 1;
 			continue;
 		}
+		if (!strcmp("-h", arg)) {
+			opt.pathname = 0;
+			continue;
+		}
 		if (!strcmp("-H", arg)) {
-			/* We always show the pathname, so this
-			 * is a noop.
-			 */
+			opt.pathname = 1;
 			continue;
 		}
 		if (!strcmp("-l", arg) ||
@@ -1051,8 +579,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 				/* ignore empty line like grep does */
 				if (!buf[0])
 					continue;
-				add_pattern(&opt, strdup(buf), argv[1], ++lno,
-					    GREP_PATTERN);
+				append_grep_pattern(&opt, xstrdup(buf),
+						    argv[1], ++lno,
+						    GREP_PATTERN);
 			}
 			fclose(patterns);
 			argv++;
@@ -1060,27 +589,36 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp("--not", arg)) {
-			add_pattern(&opt, arg, "command line", 0, GREP_NOT);
+			append_grep_pattern(&opt, arg, "command line", 0,
+					    GREP_NOT);
 			continue;
 		}
 		if (!strcmp("--and", arg)) {
-			add_pattern(&opt, arg, "command line", 0, GREP_AND);
+			append_grep_pattern(&opt, arg, "command line", 0,
+					    GREP_AND);
 			continue;
 		}
 		if (!strcmp("--or", arg))
 			continue; /* no-op */
 		if (!strcmp("(", arg)) {
-			add_pattern(&opt, arg, "command line", 0, GREP_OPEN_PAREN);
+			append_grep_pattern(&opt, arg, "command line", 0,
+					    GREP_OPEN_PAREN);
 			continue;
 		}
 		if (!strcmp(")", arg)) {
-			add_pattern(&opt, arg, "command line", 0, GREP_CLOSE_PAREN);
+			append_grep_pattern(&opt, arg, "command line", 0,
+					    GREP_CLOSE_PAREN);
+			continue;
+		}
+		if (!strcmp("--all-match", arg)) {
+			opt.all_match = 1;
 			continue;
 		}
 		if (!strcmp("-e", arg)) {
 			if (1 < argc) {
-				add_pattern(&opt, argv[1], "-e option", 0,
-					    GREP_PATTERN);
+				append_grep_pattern(&opt, argv[1],
+						    "-e option", 0,
+						    GREP_PATTERN);
 				argv++;
 				argc--;
 				continue;
@@ -1102,8 +640,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 
 		/* First unrecognized non-option token */
 		if (!opt.pattern_list) {
-			add_pattern(&opt, arg, "command line", 0,
-				    GREP_PATTERN);
+			append_grep_pattern(&opt, arg, "command line", 0,
+					    GREP_PATTERN);
 			break;
 		}
 		else {
@@ -1120,8 +658,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		die("no pattern given.");
 	if ((opt.regflags != REG_NEWLINE) && opt.fixed)
 		die("cannot mix --fixed-strings and regexp");
-	if (!opt.fixed)
-		compile_patterns(&opt);
+	compile_grep_patterns(&opt);
 
 	/* Check revs and then paths */
 	for (i = 1; i < argc; i++) {
@@ -1176,5 +713,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		if (grep_object(&opt, paths, real_obj, list.objects[i].name))
 			hit = 1;
 	}
+	free_grep_patterns(&opt);
 	return !hit;
 }

@@ -1,6 +1,8 @@
 #include "cache.h"
 #include "tag.h"
 #include "commit.h"
+#include "pkt-line.h"
+#include "utf8.h"
 
 int save_commit_buffer = 1;
 
@@ -221,6 +223,8 @@ static void prepare_commit_graft(void)
 		return;
 	graft_file = get_graft_file();
 	read_graft_file(graft_file);
+	/* make sure shallows are read */
+	is_repository_shallow();
 	commit_graft_prepared = 1;
 }
 
@@ -232,6 +236,39 @@ static struct commit_graft *lookup_commit_graft(const unsigned char *sha1)
 	if (pos < 0)
 		return NULL;
 	return commit_graft[pos];
+}
+
+int write_shallow_commits(int fd, int use_pack_protocol)
+{
+	int i, count = 0;
+	for (i = 0; i < commit_graft_nr; i++)
+		if (commit_graft[i]->nr_parent < 0) {
+			const char *hex =
+				sha1_to_hex(commit_graft[i]->sha1);
+			count++;
+			if (use_pack_protocol)
+				packet_write(fd, "shallow %s", hex);
+			else {
+				if (write_in_full(fd, hex,  40) != 40)
+					break;
+				if (write_in_full(fd, "\n", 1) != 1)
+					break;
+			}
+		}
+	return count;
+}
+
+int unregister_shallow(const unsigned char *sha1)
+{
+	int pos = commit_graft_pos(sha1);
+	if (pos < 0)
+		return -1;
+	if (pos + 1 < commit_graft_nr)
+		memcpy(commit_graft + pos, commit_graft + pos + 1,
+				sizeof(struct commit_graft *)
+				* (commit_graft_nr - pos - 1));
+	commit_graft_nr--;
+	return 0;
 }
 
 int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
@@ -467,7 +504,8 @@ static int add_rfc2047(char *buf, const char *line, int len)
 	return bp - buf;
 }
 
-static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf, const char *line)
+static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf,
+			 const char *line, int relative_date)
 {
 	char *date;
 	int namelen;
@@ -507,14 +545,16 @@ static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf, const c
 	}
 	switch (fmt) {
 	case CMIT_FMT_MEDIUM:
-		ret += sprintf(buf + ret, "Date:   %s\n", show_date(time, tz));
+		ret += sprintf(buf + ret, "Date:   %s\n",
+			       show_date(time, tz, relative_date));
 		break;
 	case CMIT_FMT_EMAIL:
 		ret += sprintf(buf + ret, "Date: %s\n",
 			       show_rfc2822_date(time, tz));
 		break;
 	case CMIT_FMT_FULLER:
-		ret += sprintf(buf + ret, "%sDate: %s\n", what, show_date(time, tz));
+		ret += sprintf(buf + ret, "%sDate: %s\n", what,
+			       show_date(time, tz, relative_date));
 		break;
 	default:
 		/* notin' */
@@ -545,10 +585,13 @@ static int add_merge_info(enum cmit_fmt fmt, char *buf, const struct commit *com
 
 	while (parent) {
 		struct commit *p = parent->item;
-		const char *hex = abbrev
-			? find_unique_abbrev(p->object.sha1, abbrev)
-			: sha1_to_hex(p->object.sha1);
-		const char *dots = (abbrev && strlen(hex) != 40) ? "..." : "";
+		const char *hex = NULL;
+		const char *dots;
+		if (abbrev)
+			hex = find_unique_abbrev(p->object.sha1, abbrev);
+		if (!hex)
+			hex = sha1_to_hex(p->object.sha1);
+		dots = (abbrev && strlen(hex) != 40) ?  "..." : "";
 		parent = parent->next;
 
 		offset += sprintf(buf + offset, " %s%s", hex, dots);
@@ -557,14 +600,121 @@ static int add_merge_info(enum cmit_fmt fmt, char *buf, const struct commit *com
 	return offset;
 }
 
-unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit, unsigned long len, char *buf, unsigned long space, int abbrev, const char *subject, const char *after_subject)
+static char *get_header(const struct commit *commit, const char *key)
 {
-	int hdr = 1, body = 0;
+	int key_len = strlen(key);
+	const char *line = commit->buffer;
+
+	for (;;) {
+		const char *eol = strchr(line, '\n'), *next;
+
+		if (line == eol)
+			return NULL;
+		if (!eol) {
+			eol = line + strlen(line);
+			next = NULL;
+		} else
+			next = eol + 1;
+		if (!strncmp(line, key, key_len) && line[key_len] == ' ') {
+			int len = eol - line - key_len;
+			char *ret = xmalloc(len);
+			memcpy(ret, line + key_len + 1, len - 1);
+			ret[len - 1] = '\0';
+			return ret;
+		}
+		line = next;
+	}
+}
+
+static char *replace_encoding_header(char *buf, char *encoding)
+{
+	char *encoding_header = strstr(buf, "\nencoding ");
+	char *end_of_encoding_header;
+	int encoding_header_pos;
+	int encoding_header_len;
+	int new_len;
+	int need_len;
+	int buflen = strlen(buf) + 1;
+
+	if (!encoding_header)
+		return buf; /* should not happen but be defensive */
+	encoding_header++;
+	end_of_encoding_header = strchr(encoding_header, '\n');
+	if (!end_of_encoding_header)
+		return buf; /* should not happen but be defensive */
+	end_of_encoding_header++;
+
+	encoding_header_len = end_of_encoding_header - encoding_header;
+	encoding_header_pos = encoding_header - buf;
+
+	if (is_encoding_utf8(encoding)) {
+		/* we have re-coded to UTF-8; drop the header */
+		memmove(encoding_header, end_of_encoding_header,
+			buflen - (encoding_header_pos + encoding_header_len));
+		return buf;
+	}
+	new_len = strlen(encoding);
+	need_len = new_len + strlen("encoding \n");
+	if (encoding_header_len < need_len) {
+		buf = xrealloc(buf, buflen + (need_len - encoding_header_len));
+		encoding_header = buf + encoding_header_pos;
+		end_of_encoding_header = encoding_header + encoding_header_len;
+	}
+	memmove(end_of_encoding_header + (need_len - encoding_header_len),
+		end_of_encoding_header,
+		buflen - (encoding_header_pos + encoding_header_len));
+	memcpy(encoding_header + 9, encoding, strlen(encoding));
+	encoding_header[9 + new_len] = '\n';
+	return buf;
+}
+
+static char *logmsg_reencode(const struct commit *commit)
+{
+	char *encoding;
+	char *out;
+	char *output_encoding = (git_log_output_encoding
+				 ? git_log_output_encoding
+				 : git_commit_encoding);
+
+	if (!output_encoding)
+		output_encoding = "utf-8";
+	else if (!*output_encoding)
+		return NULL;
+	encoding = get_header(commit, "encoding");
+	if (!encoding)
+		return NULL;
+	if (!strcmp(encoding, output_encoding))
+		out = strdup(commit->buffer);
+	else
+		out = reencode_string(commit->buffer,
+				      output_encoding, encoding);
+	if (out)
+		out = replace_encoding_header(out, output_encoding);
+
+	free(encoding);
+	if (!out)
+		return NULL;
+	return out;
+}
+
+unsigned long pretty_print_commit(enum cmit_fmt fmt,
+				  const struct commit *commit,
+				  unsigned long len,
+				  char *buf, unsigned long space,
+				  int abbrev, const char *subject,
+				  const char *after_subject,
+				  int relative_date)
+{
+	int hdr = 1, body = 0, seen_title = 0;
 	unsigned long offset = 0;
 	int indent = 4;
 	int parents_shown = 0;
 	const char *msg = commit->buffer;
 	int plain_non_ascii = 0;
+	char *reencoded = logmsg_reencode(commit);
+
+	if (reencoded)
+		msg = reencoded;
 
 	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
 		indent = 0;
@@ -581,7 +731,7 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 		for (in_body = i = 0; (ch = msg[i]) && i < len; i++) {
 			if (!in_body) {
 				/* author could be non 7-bit ASCII but
-				 * the log may so; skip over the
+				 * the log may be so; skip over the
 				 * header part first.
 				 */
 				if (ch == '\n' &&
@@ -646,12 +796,14 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 			if (!memcmp(line, "author ", 7))
 				offset += add_user_info("Author", fmt,
 							buf + offset,
-							line + 7);
+							line + 7,
+							relative_date);
 			if (!memcmp(line, "committer ", 10) &&
 			    (fmt == CMIT_FMT_FULL || fmt == CMIT_FMT_FULLER))
 				offset += add_user_info("Commit", fmt,
 							buf + offset,
-							line + 10);
+							line + 10,
+							relative_date);
 			continue;
 		}
 
@@ -659,6 +811,8 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 			body = 1;
 
 		if (is_empty_line(line, &linelen)) {
+			if (!seen_title)
+				continue;
 			if (!body)
 				continue;
 			if (subject)
@@ -667,6 +821,7 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 				break;
 		}
 
+		seen_title = 1;
 		if (subject) {
 			int slen = strlen(subject);
 			memcpy(buf + offset, subject, slen);
@@ -710,6 +865,8 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *commit
 	if (fmt == CMIT_FMT_EMAIL && !body)
 		buf[offset++] = '\n';
 	buf[offset] = '\0';
+
+	free(reencoded);
 	return offset;
 }
 
@@ -855,13 +1012,15 @@ void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
 	free(nodes);
 }
 
-/* merge-rebase stuff */
+/* merge-base stuff */
 
-/* bits #0..7 in revision.h */
-#define PARENT1		(1u<< 8)
-#define PARENT2		(1u<< 9)
-#define STALE		(1u<<10)
-#define RESULT		(1u<<11)
+/* bits #0..15 in revision.h */
+#define PARENT1		(1u<<16)
+#define PARENT2		(1u<<17)
+#define STALE		(1u<<18)
+#define RESULT		(1u<<19)
+
+static const unsigned all_flags = (PARENT1 | PARENT2 | STALE | RESULT);
 
 static struct commit *interesting(struct commit_list *list)
 {
@@ -927,6 +1086,7 @@ static struct commit_list *merge_bases(struct commit *one, struct commit *two)
 	}
 
 	/* Clean up the result to remove stale ones */
+	free_commit_list(list);
 	list = result; result = NULL;
 	while (list) {
 		struct commit_list *n = list->next;
@@ -942,7 +1102,6 @@ struct commit_list *get_merge_bases(struct commit *one,
 				    struct commit *two,
                                     int cleanup)
 {
-	const unsigned all_flags = (PARENT1 | PARENT2 | STALE | RESULT);
 	struct commit_list *list;
 	struct commit **rslt;
 	struct commit_list *result;
@@ -997,4 +1156,21 @@ struct commit_list *get_merge_bases(struct commit *one,
 	}
 	free(rslt);
 	return result;
+}
+
+int in_merge_bases(struct commit *rev1, struct commit *rev2)
+{
+	struct commit_list *bases, *b;
+	int ret = 0;
+
+	bases = get_merge_bases(rev1, rev2, 1);
+	for (b = bases; b; b = b->next) {
+		if (!hashcmp(rev1->object.sha1, b->item->object.sha1)) {
+			ret = 1;
+			break;
+		}
+	}
+
+	free_commit_list(bases);
+	return ret;
 }

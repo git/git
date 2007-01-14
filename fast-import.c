@@ -604,7 +604,7 @@ static size_t encode_header(
 	int n = 1;
 	unsigned char c;
 
-	if (type < OBJ_COMMIT || type > OBJ_DELTA)
+	if (type < OBJ_COMMIT || type > OBJ_REF_DELTA)
 		die("bad type %d", type);
 
 	c = (type << 4) | (size & 15);
@@ -671,7 +671,7 @@ static int store_object(
 		last->depth++;
 		s.next_in = delta;
 		s.avail_in = deltalen;
-		hdrlen = encode_header(OBJ_DELTA, deltalen, hdr);
+		hdrlen = encode_header(OBJ_REF_DELTA, deltalen, hdr);
 		write_or_die(pack_fd, hdr, hdrlen);
 		write_or_die(pack_fd, last->sha1, sizeof(sha1));
 		pack_size += hdrlen + sizeof(sha1);
@@ -781,7 +781,7 @@ static void *unpack_non_delta_entry(unsigned long o, unsigned long sz)
 	return result;
 }
 
-static void *unpack_entry(unsigned long offset,
+static void *gfi_unpack_entry(unsigned long offset,
 	unsigned long *sizep,
 	unsigned int *delta_depth);
 
@@ -799,7 +799,7 @@ static void *unpack_delta_entry(unsigned long offset,
 	base_oe = find_object(base_sha1);
 	if (!base_oe)
 		die("I'm broken; I can't find a base I know must be here.");
-	base = unpack_entry(base_oe->offset, &base_size, delta_depth);
+	base = gfi_unpack_entry(base_oe->offset, &base_size, delta_depth);
 	delta_data = unpack_non_delta_entry(offset + 20, delta_size);
 	result = patch_delta(base, base_size,
 			     delta_data, delta_size,
@@ -813,7 +813,7 @@ static void *unpack_delta_entry(unsigned long offset,
 	return result;
 }
 
-static void *unpack_entry(unsigned long offset,
+static void *gfi_unpack_entry(unsigned long offset,
 	unsigned long *sizep,
 	unsigned int *delta_depth)
 {
@@ -822,7 +822,7 @@ static void *unpack_entry(unsigned long offset,
 
 	offset = unpack_object_header(offset, &kind, &size);
 	switch (kind) {
-	case OBJ_DELTA:
+	case OBJ_REF_DELTA:
 		return unpack_delta_entry(offset, size, sizep, delta_depth);
 	case OBJ_COMMIT:
 	case OBJ_TREE:
@@ -867,7 +867,7 @@ static void load_tree(struct tree_entry *root)
 	if (myoe) {
 		if (myoe->type != OBJ_TREE)
 			die("Not a tree: %s", sha1_to_hex(sha1));
-		buf = unpack_entry(myoe->offset, &size, &t->delta_depth);
+		buf = gfi_unpack_entry(myoe->offset, &size, &t->delta_depth);
 	} else {
 		char type[20];
 		buf = read_sha1_file(sha1, type, &size);
@@ -1212,7 +1212,7 @@ static void dump_branches()
 
 	for (i = 0; i < branch_table_sz; i++) {
 		for (b = branch_table[i]; b; b = b->table_next_branch) {
-			lock = lock_any_ref_for_update(b->name, NULL, 0);
+			lock = lock_any_ref_for_update(b->name, NULL);
 			if (!lock || write_ref_sha1(lock, b->sha1, msg) < 0)
 				die("Can't write %s", b->name);
 		}
@@ -1228,7 +1228,7 @@ static void dump_tags()
 
 	for (t = first_tag; t; t = t->next_tag) {
 		sprintf(path, "refs/tags/%s", t->name);
-		lock = lock_any_ref_for_update(path, NULL, 0);
+		lock = lock_any_ref_for_update(path, NULL);
 		if (!lock || write_ref_sha1(lock, t->sha1, msg) < 0)
 			die("Can't write %s", path);
 	}
@@ -1476,7 +1476,7 @@ static void cmd_from(struct branch *b)
 		if (oe->type != OBJ_COMMIT)
 			die("Mark :%lu not a commit", idnum);
 		hashcpy(b->sha1, oe->sha1);
-		buf = unpack_entry(oe->offset, &size, &depth);
+		buf = gfi_unpack_entry(oe->offset, &size, &depth);
 		if (!buf || size < 46)
 			die("Not a valid commit: %s", from);
 		if (memcmp("tree ", buf, 5)

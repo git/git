@@ -18,8 +18,12 @@
 #define curl_global_init(a) do { /* nothing */ } while(0)
 #endif
 
-#if LIBCURL_VERSION_NUM < 0x070c04
+#if (LIBCURL_VERSION_NUM < 0x070c04) || (LIBCURL_VERSION_NUM == 0x071000)
 #define NO_CURL_EASY_DUPHANDLE
+#endif
+
+#if LIBCURL_VERSION_NUM < 0x070a03
+#define CURLE_HTTP_RETURNED_ERROR CURLE_HTTP_NOT_FOUND
 #endif
 
 struct slot_results

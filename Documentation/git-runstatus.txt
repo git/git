@@ -1,0 +1,69 @@
+git-runstatus(1)
+================
+
+NAME
+----
+git-runstatus - A helper for git-status and git-commit
+
+
+SYNOPSIS
+--------
+'git-runstatus' [--color|--nocolor] [--amend] [--verbose] [--untracked]
+
+
+DESCRIPTION
+-----------
+Examines paths in the working tree that has changes unrecorded
+to the index file, and changes between the index file and the
+current HEAD commit.  The former paths are what you _could_
+commit by running 'git-update-index' before running 'git
+commit', and the latter paths are what you _would_ commit by
+running 'git commit'.
+
+If there is no path that is different between the index file and
+the current HEAD commit, the command exits with non-zero status.
+
+Note that this is _not_ the user level command you would want to
+run from the command line.  Use 'git-status' instead.
+
+
+OPTIONS
+-------
+--color::
+	Show colored status, highlighting modified file names.
+
+--nocolor::
+	Turn off coloring.
+
+--amend::
+	Show status based on HEAD^1, not HEAD, i.e. show what
+	'git-commit --amend' would do.
+
+--verbose::
+	Show unified diff of all file changes.
+
+--untracked::
+	Show files in untracked directories, too.  Without this
+	option only its name and a trailing slash are displayed
+	for each untracked directory.
+
+
+OUTPUT
+------
+The output from this command is designed to be used as a commit
+template comments, and all the output lines are prefixed with '#'.
+
+
+Author
+------
+Originally written by Linus Torvalds <torvalds@osdl.org> as part
+of git-commit, and later rewritten in C by Jeff King.
+
+Documentation
+--------------
+Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the gitlink:git[7] suite
+

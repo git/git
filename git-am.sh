@@ -2,10 +2,12 @@
 #
 # Copyright (c) 2005, 2006 Junio C Hamano
 
-USAGE='[--signoff] [--dotest=<dir>] [--utf8] [--binary] [--3way]
+USAGE='[--signoff] [--dotest=<dir>] [--utf8 | --no-utf8] [--binary] [--3way]
   [--interactive] [--whitespace=<option>] <mbox>...
   or, when resuming [--skip | --resolved]'
 . git-sh-setup
+set_reflog_action am
+require_work_tree
 
 git var GIT_COMMITTER_IDENT >/dev/null || exit
 
@@ -87,10 +89,12 @@ It does not apply to blobs recorded in its index."
     # This is not so wrong.  Depending on which base we picked,
     # orig_tree may be wildly different from ours, but his_tree
     # has the same set of wildly different changes in parts the
-    # patch did not touch, so resolve ends up canceling them,
+    # patch did not touch, so recursive ends up canceling them,
     # saying that we reverted all those changes.
 
-    git-merge-resolve $orig_tree -- HEAD $his_tree || {
+    eval GITHEAD_$his_tree='"$SUBJECT"'
+    export GITHEAD_$his_tree
+    git-merge-recursive $orig_tree -- HEAD $his_tree || {
 	    if test -d "$GIT_DIR/rr-cache"
 	    then
 		git-rerere
@@ -98,11 +102,11 @@ It does not apply to blobs recorded in its index."
 	    echo Failed to merge in the changes.
 	    exit 1
     }
+    unset GITHEAD_$his_tree
 }
 
 prec=4
-rloga=am
-dotest=.dotest sign= utf8= keep= skip= interactive= resolved= binary= ws= resolvemsg=
+dotest=.dotest sign= utf8=t keep= skip= interactive= resolved= binary= ws= resolvemsg=
 
 while case "$#" in 0) break;; esac
 do
@@ -125,7 +129,9 @@ do
 	-s|--s|--si|--sig|--sign|--signo|--signof|--signoff)
 	sign=t; shift ;;
 	-u|--u|--ut|--utf|--utf8)
-	utf8=t; shift ;;
+	utf8=t; shift ;; # this is now default
+	--no-u|--no-ut|--no-utf|--no-utf8)
+	utf8=; shift ;;
 	-k|--k|--ke|--kee|--keep)
 	keep=t; shift ;;
 
@@ -140,9 +146,6 @@ do
 
 	--resolvemsg=*)
 	resolvemsg=$(echo "$1" | sed -e "s/^--resolvemsg=//"); shift ;;
-
-	--reflog-action=*)
-	rloga=`expr "z$1" : 'z-[^=]*=\(.*\)'`; shift ;;
 
 	--)
 	shift; break ;;
@@ -166,10 +169,25 @@ fi
 
 if test -d "$dotest"
 then
-	if test ",$#," != ",0," || ! tty -s
-	then
-		die "previous dotest directory $dotest still exists but mbox given."
-	fi
+	case "$#,$skip$resolved" in
+	0,*t*)
+		# Explicit resume command and we do not have file, so
+		# we are happy.
+		: ;;
+	0,)
+		# No file input but without resume parameters; catch
+		# user error to feed us a patch from standard input
+		# when there is already .dotest.  This is somewhat
+		# unreliable -- stdin could be /dev/null for example
+		# and the caller did not intend to feed us a patch but
+		# wanted to continue unattended.
+		tty -s
+		;;
+	*)
+		false
+		;;
+	esac ||
+	die "previous dotest directory $dotest still exists but mbox given."
 	resume=yes
 else
 	# Make sure we are not given --skip nor --resolved
@@ -211,6 +229,8 @@ fi
 if test "$(cat "$dotest/utf8")" = t
 then
 	utf8=-u
+else
+	utf8=-n
 fi
 if test "$(cat "$dotest/keep")" = t
 then
@@ -231,6 +251,10 @@ last=`cat "$dotest/last"`
 this=`cat "$dotest/next"`
 if test "$skip" = t
 then
+	if test -d "$GIT_DIR/rr-cache"
+	then
+		git-rerere clear
+	fi
 	this=`expr "$this" + 1`
 	resume=
 fi
@@ -382,17 +406,21 @@ do
 		changed="$(git-diff-index --cached --name-only HEAD)"
 		if test '' = "$changed"
 		then
-			echo "No changes - did you forget update-index?"
+			echo "No changes - did you forget to use 'git add'?"
 			stop_here_user_resolve $this
 		fi
 		unmerged=$(git-ls-files -u)
 		if test -n "$unmerged"
 		then
 			echo "You still have unmerged paths in your index"
-			echo "did you forget update-index?"
+			echo "did you forget to use 'git add'?"
 			stop_here_user_resolve $this
 		fi
 		apply_status=0
+		if test -d "$GIT_DIR/rr-cache"
+		then
+			git rerere
+		fi
 		;;
 	esac
 
@@ -429,7 +457,7 @@ do
 	parent=$(git-rev-parse --verify HEAD) &&
 	commit=$(git-commit-tree $tree -p $parent <"$dotest/final-commit") &&
 	echo Committed: $commit &&
-	git-update-ref -m "$rloga: $SUBJECT" HEAD $commit $parent ||
+	git-update-ref -m "$GIT_REFLOG_ACTION: $SUBJECT" HEAD $commit $parent ||
 	stop_here $this
 
 	if test -x "$GIT_DIR"/hooks/post-applypatch

@@ -23,6 +23,12 @@ case "${1:-.}${2:-.}${3:-.}" in
 "$1.." | "$1.$1" | "$1$1.")
 	if [ "$2" ]; then
 		echo "Removing $4"
+	else
+		# read-tree checked that index matches HEAD already,
+		# so we know we do not have this path tracked.
+		# there may be an unrelated working tree file here,
+		# which we should just leave unmolested.
+		exit 0
 	fi
 	if test -f "$4"; then
 		rm -f -- "$4" &&
@@ -34,8 +40,16 @@ case "${1:-.}${2:-.}${3:-.}" in
 #
 # Added in one.
 #
-".$2." | "..$3" )
+".$2.")
+	# the other side did not add and we added so there is nothing
+	# to be done.
+	;;
+"..$3")
 	echo "Adding $4"
+	test -f "$4" || {
+		echo "ERROR: untracked $4 is overwritten by the merge."
+		exit 1
+	}
 	git-update-index --add --cacheinfo "$6$7" "$2$3" "$4" &&
 		exec git-checkout-index -u -f -- "$4"
 	;;
@@ -90,7 +104,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 	# Be careful for funny filename such as "-L" in "$4", which
 	# would confuse "merge" greatly.
 	src1=`git-unpack-file $2`
-	merge "$src1" "$orig" "$src2"
+	git-merge-file "$src1" "$orig" "$src2"
 	ret=$?
 
 	# Create the working tree file, using "our tree" version from the

@@ -8,19 +8,21 @@ git-daemon - A really simple server for git repositories
 SYNOPSIS
 --------
 [verse]
-'git-daemon' [--verbose] [--syslog] [--inetd | --port=n] [--export-all]
+'git-daemon' [--verbose] [--syslog] [--export-all]
              [--timeout=n] [--init-timeout=n] [--strict-paths]
              [--base-path=path] [--user-path | --user-path=path]
-	     [--reuseaddr] [--detach] [--pid-file=file] [directory...]
+             [--interpolated-path=pathtemplate]
+             [--reuseaddr] [--detach] [--pid-file=file]
+             [--enable=service] [--disable=service]
+	     [--allow-override=service] [--forbid-override=service]
+	     [--inetd | [--listen=host_or_ipaddr] [--port=n] [--user=user [--group=group]]
+	     [directory...]
 
 DESCRIPTION
 -----------
 A really simple TCP git daemon that normally listens on port "DEFAULT_GIT_PORT"
-aka 9418. It waits for a connection, and will just execute "git-upload-pack"
-when it gets one.
-
-It's careful in that there's a magic request-line that gives the command and
-what directory to upload, and it verifies that the directory is OK.
+aka 9418.  It waits for a connection asking for a service, and will serve
+that service if it is enabled.
 
 It verifies that the directory has the magic file "git-daemon-export-ok", and
 it will refuse to export any git directory that hasn't explicitly been marked
@@ -28,7 +30,14 @@ for export this way (unless the '--export-all' parameter is specified). If you
 pass some directory paths as 'git-daemon' arguments, you can further restrict
 the offers to a whitelist comprising of those.
 
-This is ideally suited for read-only updates, i.e., pulling from git repositories.
+By default, only `upload-pack` service is enabled, which serves
+`git-fetch-pack` and `git-peek-remote` clients that are invoked
+from `git-fetch`, `git-ls-remote`, and `git-clone`.
+
+This is ideally suited for read-only updates, i.e., pulling from
+git repositories.
+
+An `upload-archive` also exists to serve `git-archive`.
 
 OPTIONS
 -------
@@ -45,6 +54,16 @@ OPTIONS
 	'git://example.com/hello.git', `git-daemon` will interpret the path
 	as '/srv/git/hello.git'.
 
+--interpolated-path=pathtemplate::
+	To support virtual hosting, an interpolated path template can be
+	used to dynamically construct alternate paths.  The template
+	supports %H for the target hostname as supplied by the client but
+	converted to all lowercase, %CH for the canonical hostname,
+	%IP for the server's IP address, %P for the port number,
+	and %D for the absolute path of the named repository.
+	After interpolation, the path is validated against the directory
+	whitelist.
+
 --export-all::
 	Allow pulling from all directories that look like GIT repositories
 	(have the 'objects' and 'refs' subdirectories), even if they
@@ -52,9 +71,17 @@ OPTIONS
 
 --inetd::
 	Have the server run as an inetd service. Implies --syslog.
+	Incompatible with --port, --listen, --user and --group options.
 
---port::
-	Listen on an alternative port.
+--listen=host_or_ipaddr::
+	Listen on an a specific IP address or hostname.  IP addresses can
+	be either an IPv4 address or an IPV6 address if supported.  If IPv6
+	is not supported, then --listen=hostname is also not supported and
+	--listen must be given an IPv4 address.
+	Incompatible with '--inetd' option.
+
+--port=n::
+	Listen on an alternative port.  Incompatible with '--inetd' option.
 
 --init-timeout::
 	Timeout between the moment the connection is established and the
@@ -93,10 +120,108 @@ OPTIONS
 --pid-file=file::
 	Save the process id in 'file'.
 
+--user=user, --group=group::
+	Change daemon's uid and gid before entering the service loop.
+	When only `--user` is given without `--group`, the
+	primary group ID for the user is used.  The values of
+	the option are given to `getpwnam(3)` and `getgrnam(3)`
+	and numeric IDs are not supported.
++
+Giving these options is an error when used with `--inetd`; use
+the facility of inet daemon to achieve the same before spawning
+`git-daemon` if needed.
+
+--enable-service, --disable-service::
+	Enable/disable the service site-wide per default.  Note
+	that a service disabled site-wide can still be enabled
+	per repository if it is marked overridable and the
+	repository enables the service with an configuration
+	item.
+
+--allow-override, --forbid-override::
+	Allow/forbid overriding the site-wide default with per
+	repository configuration.  By default, all the services
+	are overridable.
+
 <directory>::
 	A directory to add to the whitelist of allowed directories. Unless
 	--strict-paths is specified this will also include subdirectories
 	of each named directory.
+
+SERVICES
+--------
+
+upload-pack::
+	This serves `git-fetch-pack` and `git-peek-remote`
+	clients.  It is enabled by default, but a repository can
+	disable it by setting `daemon.uploadpack` configuration
+	item to `false`.
+
+upload-archive::
+	This serves `git-archive --remote`.
+
+EXAMPLES
+--------
+We assume the following in /etc/services::
++
+------------
+$ grep 9418 /etc/services
+git		9418/tcp		# Git Version Control System
+------------
+
+git-daemon as inetd server::
+	To set up `git-daemon` as an inetd service that handles any
+	repository under the whitelisted set of directories, /pub/foo
+	and /pub/bar, place an entry like the following into
+	/etc/inetd all on one line:
++
+------------------------------------------------
+	git stream tcp nowait nobody  /usr/bin/git-daemon
+		git-daemon --inetd --verbose --export-all
+		/pub/foo /pub/bar
+------------------------------------------------
+
+
+git-daemon as inetd server for virtual hosts::
+	To set up `git-daemon` as an inetd service that handles
+	repositories for different virtual hosts, `www.example.com`
+	and `www.example.org`, place an entry like the following into
+	`/etc/inetd` all on one line:
++
+------------------------------------------------
+	git stream tcp nowait nobody /usr/bin/git-daemon
+		git-daemon --inetd --verbose --export-all
+		--interpolated-path=/pub/%H%D
+		/pub/www.example.org/software
+		/pub/www.example.com/software
+		/software
+------------------------------------------------
++
+In this example, the root-level directory `/pub` will contain
+a subdirectory for each virtual host name supported.
+Further, both hosts advertise repositories simply as
+`git://www.example.com/software/repo.git`.  For pre-1.4.0
+clients, a symlink from `/software` into the appropriate
+default repository could be made as well.
+
+
+git-daemon as regular daemon for virtual hosts::
+	To set up `git-daemon` as a regular, non-inetd service that
+	handles repositories for multiple virtual hosts based on
+	their IP addresses, start the daemon like this:
++
+------------------------------------------------
+	git-daemon --verbose --export-all
+		--interpolated-path=/pub/%IP/%D
+		/pub/192.168.1.200/software
+		/pub/10.10.220.23/software
+------------------------------------------------
++
+In this example, the root-level directory `/pub` will contain
+a subdirectory for each virtual host IP address supported.
+Repositories can still be accessed by hostname though, assuming
+they correspond to these IP addresses.
+
 
 Author
 ------

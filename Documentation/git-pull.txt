@@ -3,7 +3,7 @@ git-pull(1)
 
 NAME
 ----
-git-pull - Pull and merge from another repository
+git-pull - Pull and merge from another repository or a local branch
 
 
 SYNOPSIS
@@ -37,16 +37,26 @@ EXAMPLES
 --------
 
 git pull, git pull origin::
-	Fetch the default head from the repository you cloned
-	from and merge it into your current branch.
+	Update the remote-tracking branches for the repository
+	you cloned from, then merge one of them into your
+	current branch.  Normally the branch merged in is
+	the HEAD of the remote repository, but the choice is
+	determined by the branch.<name>.remote and
+	branch.<name>.merge options; see gitlink:git-repo-config[1]
+	for details.
 
-git pull -s ours . obsolete::
-	Merge local branch `obsolete` into the current branch,
-	using `ours` merge strategy.
+git pull origin next::
+	Merge into the current branch the remote branch `next`;
+	leaves a copy of `next` temporarily in FETCH_HEAD, but
+	does not update any remote-tracking branches.
 
 git pull . fixes enhancements::
 	Bundle local branch `fixes` and `enhancements` on top of
 	the current branch, making an Octopus merge.
+
+git pull -s ours . obsolete::
+	Merge local branch `obsolete` into the current branch,
+	using `ours` merge strategy.
 
 git pull --no-commit . maint::
 	Merge local branch `maint` into the current branch, but
@@ -61,48 +71,19 @@ release/version name would be acceptable.
 Command line pull of multiple branches from one repository::
 +
 ------------------------------------------------
-$ cat .git/remotes/origin
-URL: git://git.kernel.org/pub/scm/git/git.git
-Pull: master:origin
-
 $ git checkout master
-$ git fetch origin master:origin +pu:pu maint:maint
-$ git pull . origin
+$ git fetch origin +pu:pu maint:tmp
+$ git pull . tmp
 ------------------------------------------------
 +
-Here, a typical `.git/remotes/origin` file from a
-`git-clone` operation is used in combination with
-command line options to `git-fetch` to first update
-multiple branches of the local repository and then
-to merge the remote `origin` branch into the local
-`master` branch.  The local `pu` branch is updated
-even if it does not result in a fast forward update.
-Here, the pull can obtain its objects from the local
-repository using `.`, as the previous `git-fetch` is
-known to have already obtained and made available
-all the necessary objects.
-
-
-Pull of multiple branches from one repository using `.git/remotes` file::
+This updates (or creates, as necessary) branches `pu` and `tmp`
+in the local repository by fetching from the branches
+(respectively) `pu` and `maint` from the remote repository.
 +
-------------------------------------------------
-$ cat .git/remotes/origin
-URL: git://git.kernel.org/pub/scm/git/git.git
-Pull: master:origin
-Pull: +pu:pu
-Pull: maint:maint
-
-$ git checkout master
-$ git pull origin
-------------------------------------------------
+The `pu` branch will be updated even if it is does not
+fast-forward; the others will not be.
 +
-Here, a typical `.git/remotes/origin` file from a
-`git-clone` operation has been hand-modified to include
-the branch-mapping of additional remote and local
-heads directly.  A single `git-pull` operation while
-in the `master` branch will fetch multiple heads and
-merge the remote `origin` head into the current,
-local `master` branch.
+The final command then merges the newly fetched `tmp` into master.
 
 
 If you tried a pull which resulted in a complex conflicts and
@@ -112,7 +93,7 @@ gitlink:git-reset[1].
 
 SEE ALSO
 --------
-gitlink:git-fetch[1], gitlink:git-merge[1]
+gitlink:git-fetch[1], gitlink:git-merge[1], gitlink:git-repo-config[1]
 
 
 Author

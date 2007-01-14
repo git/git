@@ -7,7 +7,7 @@ git-cherry-pick - Apply the change introduced by an existing commit
 
 SYNOPSIS
 --------
-'git-cherry-pick' [--edit] [-n] [-r] <commit>
+'git-cherry-pick' [--edit] [-n] [-x] <commit>
 
 DESCRIPTION
 -----------
@@ -24,13 +24,22 @@ OPTIONS
 	With this option, `git-cherry-pick` will let you edit the commit
 	message prior committing.
 
--r|--replay::
-	Usually the command appends which commit was
+-x::
+	Cause the command to append which commit was
 	cherry-picked after the original commit message when
-	making a commit.  This option, '--replay', causes it to
-	use the original commit message intact.  This is useful
-	when you are reordering the patches in your private tree
-	before publishing.
+	making a commit.  Do not use this option if you are
+	cherry-picking from your private branch because the
+	information is useless to the recipient.  If on the
+	other hand you are cherry-picking between two publicly
+	visible branches (e.g. backporting a fix to a
+	maintenance branch for an older release from a
+	development branch), adding this information can be
+	useful.
+
+-r|--replay::
+	It used to be that the command defaulted to do `-x`
+	described above, and `-r` was to disable it.  Now the
+	default is not to do `-x` so this option is a no-op.
 
 -n|--no-commit::
 	Usually the command automatically creates a commit with

@@ -1,0 +1,8 @@
+To syntax highlight git's commit messages, you need to:
+  1. Copy syntax/gitcommit.vim to vim's syntax directory:
+     $ mkdir -p $HOME/.vim/syntax
+     $ cp syntax/gitcommit.vim $HOME/.vim/syntax
+  2. Auto-detect the editing of git commit files:
+     $ cat >>$HOME/.vimrc <<'EOF'
+     autocmd BufNewFile,BufRead COMMIT_EDITMSG set filetype=gitcommit
+     EOF

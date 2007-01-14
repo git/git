@@ -9,6 +9,7 @@
 #define BOUNDARY	(1u<<5)
 #define BOUNDARY_SHOW	(1u<<6)
 #define ADDED		(1u<<7)	/* Parents already parsed and added? */
+#define SYMMETRIC_LEFT	(1u<<8)
 
 struct rev_info;
 struct log_info;
@@ -38,8 +39,9 @@ struct rev_info {
 			blob_objects:1,
 			edge_hint:1,
 			limited:1,
-			unpacked:1,
+			unpacked:1, /* see also ignore_packed below */
 			boundary:1,
+			left_right:1,
 			parents:1;
 
 	/* Diff flags */
@@ -55,7 +57,12 @@ struct rev_info {
 
 	/* Format info */
 	unsigned int	shown_one:1,
-			abbrev_commit:1;
+			abbrev_commit:1,
+			relative_date:1;
+
+	const char **ignore_packed; /* pretend objects in these are unpacked */
+	int num_ignore_packed;
+
 	unsigned int	abbrev;
 	enum cmit_fmt	commit_format;
 	struct log_info *loginfo;
@@ -65,8 +72,13 @@ struct rev_info {
 	const char	*ref_message_id;
 	const char	*add_signoff;
 	const char	*extra_headers;
+	const char	*log_reencode;
+
+	/* Filter by commit log message */
+	struct grep_opt	*grep_filter;
 
 	/* special limits */
+	int skip_count;
 	int max_count;
 	unsigned long max_age;
 	unsigned long min_age;
@@ -89,6 +101,8 @@ extern int rev_compare_tree(struct rev_info *, struct tree *t1, struct tree *t2)
 
 extern void init_revisions(struct rev_info *revs, const char *prefix);
 extern int setup_revisions(int argc, const char **argv, struct rev_info *revs, const char *def);
+extern int handle_revision_arg(const char *arg, struct rev_info *revs,int flags,int cant_be_filename);
+
 extern void prepare_revision_walk(struct rev_info *revs);
 extern struct commit *get_revision(struct rev_info *revs);
 

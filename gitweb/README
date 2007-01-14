@@ -1,4 +1,5 @@
 GIT web Interface
+=================
 
 The one working on:
   http://www.kernel.org/git/
@@ -6,7 +7,8 @@ The one working on:
 From the git version 1.4.0 gitweb is bundled with git.
 
 
-How to configure gitweb for your local system:
+How to configure gitweb for your local system
+---------------------------------------------
 
 You can specify the following configuration variables when building GIT:
  * GITWEB_SITENAME
@@ -24,10 +26,53 @@ You can specify the following configuration variables when building GIT:
  * GITWEB_LOGO
    Points to the location where you put git-logo.png on your web server.
  * GITWEB_CONFIG
-   This file will be loaded using 'require'.  If the environment
+   This file will be loaded using 'require' and can be used to override any
+   of the options above as well as some other options - see the top of
+   'gitweb.cgi' for their full list and description.  If the environment
    $GITWEB_CONFIG is set when gitweb.cgi is executed the file in the
    environment variable will be loaded instead of the file
    specified when gitweb.cgi was created.
+
+
+Runtime gitweb configuration
+----------------------------
+
+You can adjust gitweb behaviour using the file specified in `GITWEB_CONFIG`
+(defaults to 'gitweb_config.perl' in the same directory as the CGI).
+See the top of 'gitweb.cgi' for the list of variables and some description.
+The most notable thing that is not configurable at compile time are the
+optional features, stored in the '%features' variable. You can find further
+description on how to reconfigure the default features setting in your
+`GITWEB_CONFIG` or per-project in `project.git/config` inside 'gitweb.cgi'.
+
+
+Webserver configuration
+-----------------------
+
+If you want to have one URL for both gitweb and your http://
+repositories, you can configure apache like this:
+
+<VirtualHost www:80>
+    ServerName git.domain.org
+    DocumentRoot /pub/git
+    RewriteEngine on
+    RewriteRule ^/(.*\.git/(?!/?(info|objects|refs)).*)?$ /cgi-bin/gitweb.cgi%{REQUEST_URI}  [L,PT]
+    SetEnv	GITWEB_CONFIG	/etc/gitweb.conf
+</VirtualHost>
+
+The above configuration expects your public repositories to live under
+/pub/git and will serve them as http://git.domain.org/dir-under-pub-git,
+both as cloneable GIT URL and as browseable gitweb interface.
+If you then start your git-daemon with --base-path=/pub/git --export-all
+then you can even use the git:// URL with exactly the same path.
+
+Setting the environment variable GITWEB_CONFIG will tell gitweb to use
+the named file (i.e. in this example /etc/gitweb.conf) as a
+configuration for gitweb.  Perl variables defined in here will
+override the defaults given at the head of the gitweb.perl (or
+gitweb.cgi).  Look at the comments in that file for information on
+which variables and what they mean.
+
 
 Originally written by:
   Kay Sievers <kay.sievers@vrfy.org>

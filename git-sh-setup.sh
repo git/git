@@ -20,6 +20,27 @@ usage() {
 	die "Usage: $0 $USAGE"
 }
 
+set_reflog_action() {
+	if [ -z "${GIT_REFLOG_ACTION:+set}" ]
+	then
+		GIT_REFLOG_ACTION="$*"
+		export GIT_REFLOG_ACTION
+	fi
+}
+
+is_bare_repository () {
+	git-repo-config --bool --get core.bare ||
+	case "$GIT_DIR" in
+	.git | */.git) echo false ;;
+	*) echo true ;;
+	esac
+}
+
+require_work_tree () {
+	test $(is_bare_repository) = false ||
+	die "fatal: $0 cannot be used without a working tree."
+}
+
 if [ -z "$LONG_USAGE" ]
 then
 	LONG_USAGE="Usage: $0 $USAGE"
@@ -39,7 +60,11 @@ esac
 if [ -z "$SUBDIRECTORY_OK" ]
 then
 	: ${GIT_DIR=.git}
-	GIT_DIR=$(GIT_DIR="$GIT_DIR" git-rev-parse --git-dir) || exit
+	GIT_DIR=$(GIT_DIR="$GIT_DIR" git-rev-parse --git-dir) || {
+		exit=$?
+		echo >&2 "You need to run this command from the toplevel of the working tree."
+		exit $exit
+	}
 else
 	GIT_DIR=$(git-rev-parse --git-dir) || exit
 fi

@@ -62,7 +62,7 @@ static void count_objects(DIR *d, char *path, int len, int verbose,
 		hex[40] = 0;
 		if (get_sha1_hex(hex, sha1))
 			die("internal error");
-		if (has_sha1_pack(sha1))
+		if (has_sha1_pack(sha1, NULL))
 			(*packed_loose)++;
 	}
 }
@@ -105,16 +105,19 @@ int cmd_count_objects(int ac, const char **av, const char *prefix)
 	}
 	if (verbose) {
 		struct packed_git *p;
+		unsigned long num_pack = 0;
 		if (!packed_git)
 			prepare_packed_git();
 		for (p = packed_git; p; p = p->next) {
 			if (!p->pack_local)
 				continue;
 			packed += num_packed_objects(p);
+			num_pack++;
 		}
 		printf("count: %lu\n", loose);
 		printf("size: %lu\n", loose_size / 2);
 		printf("in-pack: %lu\n", packed);
+		printf("packs: %lu\n", num_pack);
 		printf("prune-packable: %lu\n", packed_loose);
 		printf("garbage: %lu\n", garbage);
 	}

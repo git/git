@@ -2,7 +2,15 @@
 #
 
 USAGE='<fetch-options> <repository> <refspec>...'
+SUBDIRECTORY_OK=Yes
 . git-sh-setup
+set_reflog_action "fetch $*"
+
+TOP=$(git-rev-parse --show-cdup)
+if test ! -z "$TOP"
+then
+	cd "$TOP"
+fi
 . git-parse-remote
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
@@ -11,7 +19,6 @@ LF='
 '
 IFS="$LF"
 
-rloga=fetch
 no_tags=
 tags=
 append=
@@ -20,7 +27,8 @@ verbose=
 update_head_ok=
 exec=
 upload_pack=
-keep=--thin
+keep=
+shallow_depth=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -51,10 +59,14 @@ do
 		verbose=Yes
 		;;
 	-k|--k|--ke|--kee|--keep)
-		keep=--keep
+		keep='-k -k'
 		;;
-	--reflog-action=*)
-		rloga=`expr "z$1" : 'z-[^=]*=\(.*\)'`
+	--depth=*)
+		shallow_depth="--depth=`expr "z$1" : 'z-[^=]*=\(.*\)'`"
+		;;
+	--depth)
+		shift
+		shallow_depth="--depth=$1"
 		;;
 	-*)
 		usage
@@ -68,11 +80,10 @@ done
 
 case "$#" in
 0)
-	test -f "$GIT_DIR/branches/origin" ||
-		test -f "$GIT_DIR/remotes/origin" ||
-			git-repo-config --get remote.origin.url >/dev/null ||
-				die "Where do you want to fetch from today?"
-	set origin ;;
+	origin=$(get_default_remote)
+	test -n "$(get_remote_url ${origin})" ||
+		die "Where do you want to fetch from today?"
+	set x $origin ; shift ;;
 esac
 
 remote_nick="$1"
@@ -81,13 +92,14 @@ refs=
 rref=
 rsync_slurped_objects=
 
-rloga="$rloga $remote_nick"
-test "$remote_nick" = "$remote" || rloga="$rloga $remote"
-
 if test "" = "$append"
 then
 	: >"$GIT_DIR/FETCH_HEAD"
 fi
+
+# Global that is reused later
+ls_remote_result=$(git ls-remote $upload_pack "$remote") ||
+	die "Cannot get the repository state from $remote"
 
 append_fetch_head () {
     head_="$1"
@@ -130,39 +142,45 @@ append_fetch_head () {
     then
 	headc_=$(git-rev-parse --verify "$head_^0") || exit
 	echo "$headc_	$not_for_merge_	$note_" >>"$GIT_DIR/FETCH_HEAD"
-	[ "$verbose" ] && echo >&2 "* committish: $head_"
-	[ "$verbose" ] && echo >&2 "  $note_"
     else
 	echo "$head_	not-for-merge	$note_" >>"$GIT_DIR/FETCH_HEAD"
-	[ "$verbose" ] && echo >&2 "* non-commit: $head_"
-	[ "$verbose" ] && echo >&2 "  $note_"
     fi
-    if test "$local_name_" != ""
-    then
-	# We are storing the head locally.  Make sure that it is
-	# a fast forward (aka "reverse push").
-	fast_forward_local "$local_name_" "$head_" "$note_"
-    fi
+
+    update_local_ref "$local_name_" "$head_" "$note_"
 }
 
-fast_forward_local () {
-    mkdir -p "$(dirname "$GIT_DIR/$1")"
+update_local_ref () {
+    # If we are storing the head locally make sure that it is
+    # a fast forward (aka "reverse push").
+
+    label_=$(git-cat-file -t $2)
+    newshort_=$(git-rev-parse --short $2)
+    if test -z "$1" ; then
+	[ "$verbose" ] && echo >&2 "* fetched $3"
+	[ "$verbose" ] && echo >&2 "  $label_: $newshort_"
+	return 0
+    fi
+    oldshort_=$(git show-ref --hash --abbrev "$1" 2>/dev/null)
+
     case "$1" in
     refs/tags/*)
 	# Tags need not be pointing at commits so there
 	# is no way to guarantee "fast-forward" anyway.
-	if test -f "$GIT_DIR/$1"
+	if test -n "$oldshort_"
 	then
-		if now_=$(cat "$GIT_DIR/$1") && test "$now_" = "$2"
+		if now_=$(git show-ref --hash "$1") && test "$now_" = "$2"
 		then
-			[ "$verbose" ] && echo >&2 "* $1: same as $3" ||:
+			[ "$verbose" ] && echo >&2 "* $1: same as $3"
+			[ "$verbose" ] && echo >&2 "  $label_: $newshort_" ||:
 		else
 			echo >&2 "* $1: updating with $3"
-			git-update-ref -m "$rloga: updating tag" "$1" "$2"
+			echo >&2 "  $label_: $newshort_"
+			git-update-ref -m "$GIT_REFLOG_ACTION: updating tag" "$1" "$2"
 		fi
 	else
 		echo >&2 "* $1: storing $3"
-		git-update-ref -m "$rloga: storing tag" "$1" "$2"
+		echo >&2 "  $label_: $newshort_"
+		git-update-ref -m "$GIT_REFLOG_ACTION: storing tag" "$1" "$2"
 	fi
 	;;
 
@@ -179,42 +197,46 @@ fast_forward_local () {
 	        if test -n "$verbose"
 		then
 			echo >&2 "* $1: same as $3"
+			echo >&2 "  $label_: $newshort_"
 		fi
 		;;
 	    *,$local)
 		echo >&2 "* $1: fast forward to $3"
-		echo >&2 "  from $local to $2"
-		git-update-ref -m "$rloga: fast-forward" "$1" "$2" "$local"
+		echo >&2 "  old..new: $oldshort_..$newshort_"
+		git-update-ref -m "$GIT_REFLOG_ACTION: fast-forward" "$1" "$2" "$local"
 		;;
 	    *)
 		false
 		;;
 	    esac || {
-		echo >&2 "* $1: does not fast forward to $3;"
 		case ",$force,$single_force," in
 		*,t,*)
-			echo >&2 "  forcing update."
-			git-update-ref -m "$rloga: forced-update" "$1" "$2" "$local"
+			echo >&2 "* $1: forcing update to non-fast forward $3"
+			echo >&2 "  old...new: $oldshort_...$newshort_"
+			git-update-ref -m "$GIT_REFLOG_ACTION: forced-update" "$1" "$2" "$local"
 			;;
 		*)
-			echo >&2 "  not updating."
+			echo >&2 "* $1: not updating to non-fast forward $3"
+			echo >&2 "  old...new: $oldshort_...$newshort_"
 			exit 1
 			;;
 		esac
 	    }
 	else
 	    echo >&2 "* $1: storing $3"
-	    git-update-ref -m "$rloga: storing head" "$1" "$2"
+	    echo >&2 "  $label_: $newshort_"
+	    git-update-ref -m "$GIT_REFLOG_ACTION: storing head" "$1" "$2"
 	fi
 	;;
     esac
 }
 
-case "$update_head_ok" in
-'')
+# updating the current HEAD with git-fetch in a bare
+# repository is always fine.
+if test -z "$update_head_ok" && test $(is_bare_repository) = false
+then
 	orig_head=$(git-rev-parse --verify HEAD 2>/dev/null)
-	;;
-esac
+fi
 
 # If --tags (and later --heads or --all) is specified, then we are
 # not talking about defaults stored in Pull: line of remotes or
@@ -224,11 +246,8 @@ esac
 reflist=$(get_remote_refs_for_fetch "$@")
 if test "$tags"
 then
-	taglist=`IFS="	" &&
-		  (
-			git-ls-remote $upload_pack --tags "$remote" ||
-			echo fail ouch
-		  ) |
+	taglist=`IFS='	' &&
+		  echo "$ls_remote_result" |
 	          while read sha1 name
 		  do
 			case "$sha1" in
@@ -237,6 +256,8 @@ then
 			esac
 			case "$name" in
 			*^*) continue ;;
+			refs/tags/*) ;;
+			*) continue ;;
 			esac
 		  	if git-check-ref-format "$name"
 			then
@@ -258,6 +279,7 @@ fi
 fetch_main () {
   reflist="$1"
   refs=
+  rref=
 
   for ref in $reflist
   do
@@ -286,30 +308,37 @@ fetch_main () {
 
       # There are transports that can fetch only one head at a time...
       case "$remote" in
-      http://* | https://*)
+      http://* | https://* | ftp://*)
+	  test -n "$shallow_depth" &&
+		die "shallow clone with http not supported"
+	  proto=`expr "$remote" : '\([^:]*\):'`
 	  if [ -n "$GIT_SSL_NO_VERIFY" ]; then
 	      curl_extra_args="-k"
 	  fi
-	  max_depth=5
-	  depth=0
-	  head="ref: $remote_name"
-	  while (expr "z$head" : "zref:" && expr $depth \< $max_depth) >/dev/null
-	  do
-	    remote_name_quoted=$(@@PERL@@ -e '
-	      my $u = $ARGV[0];
-              $u =~ s/^ref:\s*//;
-	      $u =~ s{([^-a-zA-Z0-9/.])}{sprintf"%%%02x",ord($1)}eg;
-	      print "$u";
-	  ' "$head")
-	    head=$(curl -nsfL $curl_extra_args "$remote/$remote_name_quoted")
-	    depth=$( expr \( $depth + 1 \) )
-	  done
+	  if [ -n "$GIT_CURL_FTP_NO_EPSV" -o \
+		"`git-repo-config --bool http.noEPSV`" = true ]; then
+	      noepsv_opt="--disable-epsv"
+	  fi
+
+	  # Find $remote_name from ls-remote output.
+	  head=$(
+		IFS='	'
+		echo "$ls_remote_result" |
+		while read sha1 name
+		do
+			test "z$name" = "z$remote_name" || continue
+			echo "$sha1"
+			break
+		done
+	  )
 	  expr "z$head" : "z$_x40\$" >/dev/null ||
-	      die "Failed to fetch $remote_name from $remote"
-	  echo >&2 Fetching "$remote_name from $remote" using http
+		die "No such ref $remote_name at $remote"
+	  echo >&2 "Fetching $remote_name from $remote using $proto"
 	  git-http-fetch -v -a "$head" "$remote/" || exit
 	  ;;
       rsync://*)
+	  test -n "$shallow_depth" &&
+		die "shallow clone with rsync not supported"
 	  TMP_HEAD="$GIT_DIR/TMP_HEAD"
 	  rsync -L -q "$remote/$remote_name" "$TMP_HEAD" || exit 1
 	  head=$(git-rev-parse --verify TMP_HEAD)
@@ -345,25 +374,41 @@ fetch_main () {
       esac
 
       append_fetch_head "$head" "$remote" \
-	  "$remote_name" "$remote_nick" "$local_name" "$not_for_merge"
+	  "$remote_name" "$remote_nick" "$local_name" "$not_for_merge" || exit
 
   done
 
   case "$remote" in
-  http://* | https://* | rsync://* )
+  http://* | https://* | ftp://* | rsync://* )
       ;; # we are already done.
   *)
     ( : subshell because we muck with IFS
       IFS=" 	$LF"
       (
-	  git-fetch-pack $exec $keep "$remote" $rref || echo failed "$remote"
+	  git-fetch-pack --thin $exec $keep $shallow_depth "$remote" $rref ||
+	  echo failed "$remote"
       ) |
-      while read sha1 remote_name
-      do
+      (
+	trap '
+		if test -n "$keepfile" && test -f "$keepfile"
+		then
+			rm -f "$keepfile"
+		fi
+	' 0
+
+        keepfile=
+	while read sha1 remote_name
+	do
 	  case "$sha1" in
 	  failed)
 		  echo >&2 "Fetch failure: $remote"
 		  exit 1 ;;
+	  # special line coming from index-pack with the pack name
+	  pack)
+		  continue ;;
+	  keep)
+		  keepfile="$GIT_OBJECT_DIRECTORY/pack/pack-$remote_name.keep"
+		  continue ;;
 	  esac
 	  found=
 	  single_force=
@@ -392,14 +437,16 @@ fetch_main () {
 	  done
 	  local_name=$(expr "z$found" : 'z[^:]*:\(.*\)')
 	  append_fetch_head "$sha1" "$remote" \
-		  "$remote_name" "$remote_nick" "$local_name" "$not_for_merge"
-      done
+		  "$remote_name" "$remote_nick" "$local_name" \
+		  "$not_for_merge" || exit
+        done
+      )
     ) || exit ;;
   esac
 
 }
 
-fetch_main "$reflist"
+fetch_main "$reflist" || exit
 
 # automated tag following
 case "$no_tags$tags" in
@@ -408,16 +455,11 @@ case "$no_tags$tags" in
 	*:refs/*)
 		# effective only when we are following remote branch
 		# using local tracking branch.
-		taglist=$(IFS=" " &&
-		git-ls-remote $upload_pack --tags "$remote" |
-		sed -ne 's|^\([0-9a-f]*\)[ 	]\(refs/tags/.*\)^{}$|\1 \2|p' |
+		taglist=$(IFS='	' &&
+		echo "$ls_remote_result" |
+		git-show-ref --exclude-existing=refs/tags/ |
 		while read sha1 name
 		do
-			test -f "$GIT_DIR/$name" && continue
-			git-check-ref-format "$name" || {
-				echo >&2 "warning: tag ${name} ignored"
-				continue
-			}
 			git-cat-file -t "$sha1" >/dev/null 2>&1 || continue
 			echo >&2 "Auto-following $name"
 			echo ".${name}:${name}"
@@ -426,21 +468,23 @@ case "$no_tags$tags" in
 	case "$taglist" in
 	'') ;;
 	?*)
-		fetch_main "$taglist" ;;
+		# do not deepen a shallow tree when following tags
+		shallow_depth=
+		fetch_main "$taglist" || exit ;;
 	esac
 esac
 
 # If the original head was empty (i.e. no "master" yet), or
 # if we were told not to worry, we do not have to check.
-case ",$update_head_ok,$orig_head," in
-*,, | t,* )
+case "$orig_head" in
+'')
 	;;
-*)
+?*)
 	curr_head=$(git-rev-parse --verify HEAD 2>/dev/null)
 	if test "$curr_head" != "$orig_head"
 	then
 	    git-update-ref \
-			-m "$rloga: Undoing incorrectly fetched HEAD." \
+			-m "$GIT_REFLOG_ACTION: Undoing incorrectly fetched HEAD." \
 			HEAD "$orig_head"
 		die "Cannot fetch into the current branch."
 	fi

@@ -12,8 +12,6 @@
 #include "rsh.h"
 #include "refs.h"
 
-#include <string.h>
-
 static unsigned char local_version = 1;
 static unsigned char remote_version;
 
@@ -23,17 +21,14 @@ static int serve_object(int fd_in, int fd_out) {
 	ssize_t size;
 	unsigned char sha1[20];
 	signed char remote;
-	int posn = 0;
-	do {
-		size = read(fd_in, sha1 + posn, 20 - posn);
-		if (size < 0) {
-			perror("git-ssh-upload: read ");
-			return -1;
-		}
-		if (!size)
-			return -1;
-		posn += size;
-	} while (posn < 20);
+
+	size = read_in_full(fd_in, sha1, 20);
+	if (size < 0) {
+		perror("git-ssh-upload: read ");
+		return -1;
+	}
+	if (!size)
+		return -1;
 	
 	if (verbose)
 		fprintf(stderr, "Serving %s\n", sha1_to_hex(sha1));
@@ -46,7 +41,8 @@ static int serve_object(int fd_in, int fd_out) {
 		remote = -1;
 	}
 	
-	write(fd_out, &remote, 1);
+	if (write_in_full(fd_out, &remote, 1) != 1)
+		return 0;
 	
 	if (remote < 0)
 		return 0;
@@ -56,9 +52,9 @@ static int serve_object(int fd_in, int fd_out) {
 
 static int serve_version(int fd_in, int fd_out)
 {
-	if (read(fd_in, &remote_version, 1) < 1)
+	if (xread(fd_in, &remote_version, 1) < 1)
 		return -1;
-	write(fd_out, &local_version, 1);
+	write_in_full(fd_out, &local_version, 1);
 	return 0;
 }
 
@@ -69,7 +65,7 @@ static int serve_ref(int fd_in, int fd_out)
 	int posn = 0;
 	signed char remote = 0;
 	do {
-		if (read(fd_in, ref + posn, 1) < 1)
+		if (posn >= PATH_MAX || xread(fd_in, ref + posn, 1) < 1)
 			return -1;
 		posn++;
 	} while (ref[posn - 1]);
@@ -79,10 +75,11 @@ static int serve_ref(int fd_in, int fd_out)
 
 	if (get_ref_sha1(ref, sha1))
 		remote = -1;
-	write(fd_out, &remote, 1);
+	if (write_in_full(fd_out, &remote, 1) != 1)
+		return 0;
 	if (remote)
 		return 0;
-	write(fd_out, sha1, 20);
+	write_in_full(fd_out, sha1, 20);
         return 0;
 }
 
@@ -91,7 +88,7 @@ static void service(int fd_in, int fd_out) {
 	char type;
 	int retval;
 	do {
-		retval = read(fd_in, &type, 1);
+		retval = xread(fd_in, &type, 1);
 		if (retval < 1) {
 			if (retval < 0)
 				perror("git-ssh-upload: read ");

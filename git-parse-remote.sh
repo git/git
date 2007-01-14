@@ -7,18 +7,7 @@ GIT_DIR=$(git-rev-parse --git-dir 2>/dev/null) || :;
 get_data_source () {
 	case "$1" in
 	*/*)
-		# Not so fast.	This could be the partial URL shorthand...
-		token=$(expr "z$1" : 'z\([^/]*\)/')
-		remainder=$(expr "z$1" : 'z[^/]*/\(.*\)')
-		if test "$(git-repo-config --get "remote.$token.url")"
-		then
-			echo config-partial
-		elif test -f "$GIT_DIR/branches/$token"
-		then
-			echo branches-partial
-		else
-			echo ''
-		fi
+		echo ''
 		;;
 	*)
 		if test "$(git-repo-config --get "remote.$1.url")"
@@ -40,12 +29,7 @@ get_remote_url () {
 	data_source=$(get_data_source "$1")
 	case "$data_source" in
 	'')
-		echo "$1" ;;
-	config-partial)
-		token=$(expr "z$1" : 'z\([^/]*\)/')
-		remainder=$(expr "z$1" : 'z[^/]*/\(.*\)')
-		url=$(git-repo-config --get "remote.$token.url")
-		echo "$url/$remainder"
+		echo "$1"
 		;;
 	config)
 		git-repo-config --get "remote.$1.url"
@@ -54,24 +38,26 @@ get_remote_url () {
 		sed -ne '/^URL: */{
 			s///p
 			q
-		}' "$GIT_DIR/remotes/$1" ;;
+		}' "$GIT_DIR/remotes/$1"
+		;;
 	branches)
-		sed -e 's/#.*//' "$GIT_DIR/branches/$1" ;;
-	branches-partial)
-		token=$(expr "z$1" : 'z\([^/]*\)/')
-		remainder=$(expr "z$1" : 'z[^/]*/\(.*\)')
-		url=$(sed -e 's/#.*//' "$GIT_DIR/branches/$token")
-		echo "$url/$remainder"
+		sed -e 's/#.*//' "$GIT_DIR/branches/$1"
 		;;
 	*)
 		die "internal error: get-remote-url $1" ;;
 	esac
 }
 
+get_default_remote () {
+	curr_branch=$(git-symbolic-ref HEAD | sed -e 's|^refs/heads/||')
+	origin=$(git-repo-config --get "branch.$curr_branch.remote")
+	echo ${origin:-origin}
+}
+
 get_remote_default_refs_for_push () {
 	data_source=$(get_data_source "$1")
 	case "$data_source" in
-	'' | config-partial | branches | branches-partial)
+	'' | branches)
 		;; # no default push mapping, just send matching refs.
 	config)
 		git-repo-config --get-all "remote.$1.push" ;;
@@ -84,11 +70,83 @@ get_remote_default_refs_for_push () {
 	esac
 }
 
+# Called from canon_refs_list_for_fetch -d "$remote", which
+# is called from get_remote_default_refs_for_fetch to grok
+# refspecs that are retrieved from the configuration, but not
+# from get_remote_refs_for_fetch when it deals with refspecs
+# supplied on the command line.  $ls_remote_result has the list
+# of refs available at remote.
+#
+# The first token returned is either "explicit" or "glob"; this
+# is to help prevent randomly "globbed" ref from being chosen as
+# a merge candidate
+expand_refs_wildcard () {
+	first_one=yes
+	for ref
+	do
+		lref=${ref#'+'}
+		# a non glob pattern is given back as-is.
+		expr "z$lref" : 'zrefs/.*/\*:refs/.*/\*$' >/dev/null || {
+			if test -n "$first_one"
+			then
+				echo "explicit"
+				first_one=
+			fi
+			echo "$ref"
+			continue
+		}
+
+		# glob
+		if test -n "$first_one"
+		then
+			echo "glob"
+			first_one=
+		fi
+		from=`expr "z$lref" : 'z\(refs/.*/\)\*:refs/.*/\*$'`
+		to=`expr "z$lref" : 'zrefs/.*/\*:\(refs/.*/\)\*$'`
+		local_force=
+		test "z$lref" = "z$ref" || local_force='+'
+		echo "$ls_remote_result" |
+		sed -e '/\^{}$/d' |
+		(
+			IFS='	'
+			while read sha1 name
+			do
+				# ignore the ones that do not start with $from
+				mapped=${name#"$from"}
+				test "z$name" = "z$mapped" && continue
+				echo "${local_force}${name}:${to}${mapped}"
+			done
+		)
+	done
+}
+
 # Subroutine to canonicalize remote:local notation.
 canon_refs_list_for_fetch () {
-	# Leave only the first one alone; add prefix . to the rest
+	# If called from get_remote_default_refs_for_fetch
+	# leave the branches in branch.${curr_branch}.merge alone,
+	# or the first one otherwise; add prefix . to the rest
 	# to prevent the secondary branches to be merged by default.
-	dot_prefix=
+	merge_branches=
+	curr_branch=
+	if test "$1" = "-d"
+	then
+		shift ; remote="$1" ; shift
+		set $(expand_refs_wildcard "$@")
+		is_explicit="$1"
+		shift
+		if test "$remote" = "$(get_default_remote)"
+		then
+			curr_branch=$(git-symbolic-ref HEAD | \
+			    sed -e 's|^refs/heads/||')
+			merge_branches=$(git-repo-config \
+			    --get-all "branch.${curr_branch}.merge")
+		fi
+		if test -z "$merge_branches" && test $is_explicit != explicit
+		then
+			merge_branches=..this.will.never.match.any.ref..
+		fi
+	fi
 	for ref
 	do
 		force=
@@ -101,6 +159,22 @@ canon_refs_list_for_fetch () {
 		expr "z$ref" : 'z.*:' >/dev/null || ref="${ref}:"
 		remote=$(expr "z$ref" : 'z\([^:]*\):')
 		local=$(expr "z$ref" : 'z[^:]*:\(.*\)')
+		dot_prefix=.
+		if test -z "$merge_branches"
+		then
+			merge_branches=$remote
+			dot_prefix=
+		else
+			for merge_branch in $merge_branches
+			do
+			    if	test "$remote" = "$merge_branch" ||
+				test "$local" = "$merge_branch"
+			    then
+				    dot_prefix=
+				    break
+			    fi
+			done
+		fi
 		case "$remote" in
 		'') remote=HEAD ;;
 		refs/heads/* | refs/tags/* | refs/remotes/*) ;;
@@ -120,7 +194,6 @@ canon_refs_list_for_fetch () {
 		   die "* refusing to create funny ref '$local_ref_name' locally"
 		fi
 		echo "${dot_prefix}${force}${remote}:${local}"
-		dot_prefix=.
 	done
 }
 
@@ -128,10 +201,10 @@ canon_refs_list_for_fetch () {
 get_remote_default_refs_for_fetch () {
 	data_source=$(get_data_source "$1")
 	case "$data_source" in
-	'' | config-partial | branches-partial)
+	'')
 		echo "HEAD:" ;;
 	config)
-		canon_refs_list_for_fetch \
+		canon_refs_list_for_fetch -d "$1" \
 			$(git-repo-config --get-all "remote.$1.fetch") ;;
 	branches)
 		remote_branch=$(sed -ne '/#/s/.*#//p' "$GIT_DIR/branches/$1")
@@ -139,10 +212,7 @@ get_remote_default_refs_for_fetch () {
 		echo "refs/heads/${remote_branch}:refs/heads/$1"
 		;;
 	remotes)
-		# This prefixes the second and later default refspecs
-		# with a '.', to signal git-fetch to mark them
-		# not-for-merge.
-		canon_refs_list_for_fetch $(sed -ne '/^Pull: */{
+		canon_refs_list_for_fetch -d "$1" $(sed -ne '/^Pull: */{
 						s///p
 					}' "$GIT_DIR/remotes/$1")
 		;;

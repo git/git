@@ -2,13 +2,16 @@ GIT-CFLAGS
 GIT-VERSION-FILE
 git
 git-add
+git-add--interactive
 git-am
 git-annotate
 git-apply
 git-applymbox
 git-applypatch
 git-archimport
+git-archive
 git-bisect
+git-blame
 git-branch
 git-cat-file
 git-check-ref-format
@@ -37,8 +40,10 @@ git-fetch
 git-fetch-pack
 git-findtags
 git-fmt-merge-msg
+git-for-each-ref
 git-format-patch
 git-fsck-objects
+git-gc
 git-get-tar-commit-id
 git-grep
 git-hash-object
@@ -46,6 +51,7 @@ git-http-fetch
 git-http-push
 git-imap-send
 git-index-pack
+git-init
 git-init-db
 git-instaweb
 git-local-fetch
@@ -59,10 +65,12 @@ git-mailsplit
 git-merge
 git-merge-base
 git-merge-index
+git-merge-file
 git-merge-tree
 git-merge-octopus
 git-merge-one-file
 git-merge-ours
+git-merge-recur
 git-merge-recursive
 git-merge-resolve
 git-merge-stupid
@@ -72,6 +80,7 @@ git-name-rev
 git-mv
 git-pack-redundant
 git-pack-objects
+git-pack-refs
 git-parse-remote
 git-patch-id
 git-peek-remote
@@ -83,7 +92,9 @@ git-quiltimport
 git-read-tree
 git-rebase
 git-receive-pack
+git-reflog
 git-relink
+git-remote
 git-repack
 git-repo-config
 git-request-pull
@@ -94,6 +105,7 @@ git-rev-list
 git-rev-parse
 git-revert
 git-rm
+git-runstatus
 git-send-email
 git-send-pack
 git-sh-setup
@@ -102,6 +114,7 @@ git-shortlog
 git-show
 git-show-branch
 git-show-index
+git-show-ref
 git-ssh-fetch
 git-ssh-pull
 git-ssh-push
@@ -118,8 +131,8 @@ git-unpack-objects
 git-update-index
 git-update-ref
 git-update-server-info
+git-upload-archive
 git-upload-pack
-git-upload-tar
 git-var
 git-verify-pack
 git-verify-tag
@@ -140,9 +153,9 @@ git-core.spec
 *.py[co]
 config.mak
 autom4te.cache
+config.cache
 config.log
 config.status
 config.mak.autogen
 config.mak.append
 configure
-git-blame

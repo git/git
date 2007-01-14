@@ -5,9 +5,6 @@
  * Copyright (C) Linus Torvalds, 2005-2006
  *		 Junio Hamano, 2005-2006
  */
-#include <dirent.h>
-#include <fnmatch.h>
-
 #include "cache.h"
 #include "dir.h"
 
@@ -43,6 +40,18 @@ int common_prefix(const char **pathspec)
 	return prefix;
 }
 
+/*
+ * Does 'match' matches the given name?
+ * A match is found if
+ *
+ * (1) the 'match' string is leading directory of 'name', or
+ * (2) the 'match' string is a wildcard and matches 'name', or
+ * (3) the 'match' string is exactly the same as 'name'.
+ *
+ * and the return value tells which case it was.
+ *
+ * It returns 0 when there is no match.
+ */
 static int match_one(const char *match, const char *name, int namelen)
 {
 	int matchlen;
@@ -50,27 +59,30 @@ static int match_one(const char *match, const char *name, int namelen)
 	/* If the match was just the prefix, we matched */
 	matchlen = strlen(match);
 	if (!matchlen)
-		return 1;
+		return MATCHED_RECURSIVELY;
 
 	/*
 	 * If we don't match the matchstring exactly,
 	 * we need to match by fnmatch
 	 */
 	if (strncmp(match, name, matchlen))
-		return !fnmatch(match, name, 0);
+		return !fnmatch(match, name, 0) ? MATCHED_FNMATCH : 0;
 
-	/*
-	 * If we did match the string exactly, we still
-	 * need to make sure that it happened on a path
-	 * component boundary (ie either the last character
-	 * of the match was '/', or the next character of
-	 * the name was '/' or the terminating NUL.
-	 */
-	return	match[matchlen-1] == '/' ||
-		name[matchlen] == '/' ||
-		!name[matchlen];
+	if (!name[matchlen])
+		return MATCHED_EXACTLY;
+	if (match[matchlen-1] == '/' || name[matchlen] == '/')
+		return MATCHED_RECURSIVELY;
+	return 0;
 }
 
+/*
+ * Given a name and a list of pathspecs, see if the name matches
+ * any of the pathspecs.  The caller is also interested in seeing
+ * all pathspec matches some names it calls this function with
+ * (otherwise the user could have mistyped the unmatched pathspec),
+ * and a mark is left in seen[] array for pathspec element that
+ * actually matched anything.
+ */
 int match_pathspec(const char **pathspec, const char *name, int namelen, int prefix, char *seen)
 {
 	int retval;
@@ -80,12 +92,16 @@ int match_pathspec(const char **pathspec, const char *name, int namelen, int pre
 	namelen -= prefix;
 
 	for (retval = 0; (match = *pathspec++) != NULL; seen++) {
-		if (retval & *seen)
+		int how;
+		if (retval && *seen == MATCHED_EXACTLY)
 			continue;
 		match += prefix;
-		if (match_one(match, name, namelen)) {
-			retval = 1;
-			*seen = 1;
+		how = match_one(match, name, namelen);
+		if (how) {
+			if (retval < how)
+				retval = how;
+			if (*seen < how)
+				*seen = how;
 		}
 	}
 	return retval;
@@ -101,8 +117,8 @@ void add_exclude(const char *string, const char *base,
 	x->baselen = baselen;
 	if (which->nr == which->alloc) {
 		which->alloc = alloc_nr(which->alloc);
-		which->excludes = realloc(which->excludes,
-					  which->alloc * sizeof(x));
+		which->excludes = xrealloc(which->excludes,
+					   which->alloc * sizeof(x));
 	}
 	which->excludes[which->nr++] = x;
 }
@@ -112,23 +128,21 @@ static int add_excludes_from_file_1(const char *fname,
 				    int baselen,
 				    struct exclude_list *which)
 {
+	struct stat st;
 	int fd, i;
 	long size;
 	char *buf, *entry;
 
 	fd = open(fname, O_RDONLY);
-	if (fd < 0)
+	if (fd < 0 || fstat(fd, &st) < 0)
 		goto err;
-	size = lseek(fd, 0, SEEK_END);
-	if (size < 0)
-		goto err;
-	lseek(fd, 0, SEEK_SET);
+	size = st.st_size;
 	if (size == 0) {
 		close(fd);
 		return 0;
 	}
 	buf = xmalloc(size+1);
-	if (read(fd, buf, size) != size)
+	if (read_in_full(fd, buf, size) != size)
 		goto err;
 	close(fd);
 
@@ -158,7 +172,7 @@ void add_excludes_from_file(struct dir_struct *dir, const char *fname)
 		die("cannot use %s as an exclude file", fname);
 }
 
-static int push_exclude_per_directory(struct dir_struct *dir, const char *base, int baselen)
+int push_exclude_per_directory(struct dir_struct *dir, const char *base, int baselen)
 {
 	char exclude_file[PATH_MAX];
 	struct exclude_list *el = &dir->exclude_list[EXC_DIRS];
@@ -172,7 +186,7 @@ static int push_exclude_per_directory(struct dir_struct *dir, const char *base, 
 	return current_nr;
 }
 
-static void pop_exclude_per_directory(struct dir_struct *dir, int stk)
+void pop_exclude_per_directory(struct dir_struct *dir, int stk)
 {
 	struct exclude_list *el = &dir->exclude_list[EXC_DIRS];
 
@@ -246,12 +260,12 @@ int excluded(struct dir_struct *dir, const char *pathname)
 	return 0;
 }
 
-static void add_name(struct dir_struct *dir, const char *pathname, int len)
+struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
 {
 	struct dir_entry *ent;
 
 	if (cache_name_pos(pathname, len) >= 0)
-		return;
+		return NULL;
 
 	if (dir->nr == dir->alloc) {
 		int alloc = alloc_nr(dir->alloc);
@@ -259,10 +273,12 @@ static void add_name(struct dir_struct *dir, const char *pathname, int len)
 		dir->entries = xrealloc(dir->entries, alloc*sizeof(ent));
 	}
 	ent = xmalloc(sizeof(*ent) + len + 1);
+	ent->ignored = ent->ignored_dir = 0;
 	ent->len = len;
 	memcpy(ent->name, pathname, len);
 	ent->name[len] = 0;
 	dir->entries[dir->nr++] = ent;
+	return ent;
 }
 
 static int dir_exists(const char *dirname, int len)
@@ -285,7 +301,7 @@ static int dir_exists(const char *dirname, int len)
  * Also, we ignore the name ".git" (even if it is not a directory).
  * That likely will not change.
  */
-static int read_directory_recursive(struct dir_struct *dir, const char *path, const char *base, int baselen)
+static int read_directory_recursive(struct dir_struct *dir, const char *path, const char *base, int baselen, int check_only)
 {
 	DIR *fdir = opendir(path);
 	int contents = 0;
@@ -293,7 +309,7 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 	if (fdir) {
 		int exclude_stk;
 		struct dirent *de;
-		char fullname[MAXPATHLEN + 1];
+		char fullname[PATH_MAX + 1];
 		memcpy(fullname, base, baselen);
 
 		exclude_stk = push_exclude_per_directory(dir, base, baselen);
@@ -316,7 +332,6 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 
 			switch (DTYPE(de)) {
 			struct stat st;
-			int subdir, rewind_base;
 			default:
 				continue;
 			case DT_UNKNOWN:
@@ -330,26 +345,30 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 			case DT_DIR:
 				memcpy(fullname + baselen + len, "/", 2);
 				len++;
-				rewind_base = dir->nr;
-				subdir = read_directory_recursive(dir, fullname, fullname,
-				                        baselen + len);
 				if (dir->show_other_directories &&
-				    (subdir || !dir->hide_empty_directories) &&
 				    !dir_exists(fullname, baselen + len)) {
-					/* Rewind the read subdirectory */
-					while (dir->nr > rewind_base)
-						free(dir->entries[--dir->nr]);
+					if (dir->hide_empty_directories &&
+					    !read_directory_recursive(dir,
+						    fullname, fullname,
+						    baselen + len, 1))
+						continue;
 					break;
 				}
-				contents += subdir;
+
+				contents += read_directory_recursive(dir,
+					fullname, fullname, baselen + len, 0);
 				continue;
 			case DT_REG:
 			case DT_LNK:
 				break;
 			}
-			add_name(dir, fullname, baselen + len);
 			contents++;
+			if (check_only)
+				goto exit_early;
+			else
+				dir_add_name(dir, fullname, baselen + len);
 		}
+exit_early:
 		closedir(fdir);
 
 		pop_exclude_per_directory(dir, exclude_stk);
@@ -395,7 +414,14 @@ int read_directory(struct dir_struct *dir, const char *path, const char *base, i
 		}
 	}
 
-	read_directory_recursive(dir, path, base, baselen);
+	read_directory_recursive(dir, path, base, baselen, 0);
 	qsort(dir->entries, dir->nr, sizeof(struct dir_entry *), cmp_name);
 	return dir->nr;
+}
+
+int
+file_exists(const char *f)
+{
+  struct stat sb;
+  return stat(f, &sb) == 0;
 }

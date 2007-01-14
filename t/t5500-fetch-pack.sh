@@ -97,7 +97,7 @@ pull_to_client () {
 (
 	mkdir client &&
 	cd client &&
-	git-init-db 2>> log2.txt
+	git-init 2>> log2.txt
 )
 
 add A1
@@ -127,5 +127,55 @@ done
 pull_to_client 2nd "B" $((64*3))
 
 pull_to_client 3rd "A" $((1*3)) # old fails
+
+test_expect_success "clone shallow" "git-clone --depth 2 . shallow"
+
+(cd shallow; git-count-objects -v) > count.shallow
+
+test_expect_success "clone shallow object count" \
+	"test \"in-pack: 18\" = \"$(grep in-pack count.shallow)\""
+
+count_output () {
+	sed -e '/^in-pack:/d' -e '/^packs:/d' -e '/: 0$/d' "$1"
+}
+
+test_expect_success "clone shallow object count (part 2)" '
+	test -z "$(count_output count.shallow)"
+'
+
+test_expect_success "fsck in shallow repo" \
+	"(cd shallow; git-fsck-objects --full)"
+
+#test_done; exit
+
+add B66 $B65
+add B67 $B66
+
+test_expect_success "pull in shallow repo" \
+	"(cd shallow; git pull .. B)"
+
+(cd shallow; git-count-objects -v) > count.shallow
+test_expect_success "clone shallow object count" \
+	"test \"count: 6\" = \"$(grep count count.shallow)\""
+
+add B68 $B67
+add B69 $B68
+
+test_expect_success "deepening pull in shallow repo" \
+	"(cd shallow; git pull --depth 4 .. B)"
+
+(cd shallow; git-count-objects -v) > count.shallow
+test_expect_success "clone shallow object count" \
+	"test \"count: 12\" = \"$(grep count count.shallow)\""
+
+test_expect_success "deepening fetch in shallow repo" \
+	"(cd shallow; git fetch --depth 4 .. A:A)"
+
+(cd shallow; git-count-objects -v) > count.shallow
+test_expect_success "clone shallow object count" \
+	"test \"count: 18\" = \"$(grep count count.shallow)\""
+
+test_expect_failure "pull in shallow repo with missing merge base" \
+	"(cd shallow; git pull --depth 4 .. A)"
 
 test_done

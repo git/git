@@ -19,11 +19,7 @@ modification *should* take notice and update the test vectors here.
 '
 
 ################################################################
-# It appears that people are getting bitten by not installing
-# 'merge' (usually part of RCS package in binary distributions)
-# or have too old python without subprocess.  Check them and error
-# out before running any tests.  Also catch the bogosity of trying
-# to run tests without building while we are at it.
+# It appears that people try to run tests without building...
 
 ../git >/dev/null
 if test $? != 1
@@ -32,29 +28,15 @@ then
 	exit 1
 fi
 
-merge >/dev/null 2>/dev/null
-if test $? = 127
-then
-	echo >&2 'You do not seem to have "merge" installed.
-Please check INSTALL document.'
-	exit 1
-fi
-
 . ./test-lib.sh
 
-test "$no_python" || "$PYTHON" -c 'import subprocess' || {
-	echo >&2 'Your python seem to lack "subprocess" module.
-Please check INSTALL document.'
-	exit 1
-}
-
 ################################################################
-# init-db has been done in an empty repository.
+# git-init has been done in an empty repository.
 # make sure it is empty.
 
 find .git/objects -type f -print >should-be-empty
 test_expect_success \
-    '.git/objects should be empty after git-init-db in an empty repo.' \
+    '.git/objects should be empty after git-init in an empty repo.' \
     'cmp -s /dev/null should-be-empty' 
 
 # also it should have 2 subdirectories; no fan-out anymore, pack, and info.
@@ -209,6 +191,28 @@ test_expect_success \
     'validate object ID for a known tree.' \
     'test "$ptree" = 3c5e5399f3a333eddecce7a9b9465b63f65f51e2'
 
+cat >badobjects <<EOF
+100644 blob 1000000000000000000000000000000000000000	dir/file1
+100644 blob 2000000000000000000000000000000000000000	dir/file2
+100644 blob 3000000000000000000000000000000000000000	dir/file3
+100644 blob 4000000000000000000000000000000000000000	dir/file4
+100644 blob 5000000000000000000000000000000000000000	dir/file5
+EOF
+
+rm .git/index
+test_expect_success \
+    'put invalid objects into the index.' \
+    'git-update-index --index-info < badobjects'
+
+test_expect_failure \
+    'writing this tree without --missing-ok.' \
+    'git-write-tree'
+
+test_expect_success \
+    'writing this tree with --missing-ok.' \
+    'git-write-tree --missing-ok'
+
+
 ################################################################
 rm .git/index
 test_expect_success \
@@ -267,5 +271,14 @@ test_expect_success \
 	 sed -n -e "s/^parent //p" -e "/^author /q" |
 	 wc -l) &&
      test $numparent = 1'
+
+test_expect_success 'update-index D/F conflict' '
+	mv path0 tmp &&
+	mv path2 path0 &&
+	mv tmp path2 &&
+	git update-index --add --replace path2 path0/file2 &&
+	numpath0=$(git ls-files path0 | wc -l) &&
+	test $numpath0 = 1
+'
 
 test_done

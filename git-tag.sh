@@ -1,16 +1,18 @@
 #!/bin/sh
 # Copyright (c) 2005 Linus Torvalds
 
-USAGE='-l [<pattern>] | [-a | -s | -u <key-id>] [-f | -d] [-m <msg>] <tagname> [<head>]'
+USAGE='-l [<pattern>] | [-a | -s | -u <key-id>] [-f | -d | -v] [-m <msg>] <tagname> [<head>]'
 SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
+message_given=
 annotate=
 signed=
 force=
 message=
 username=
 list=
+verify=
 while case "$#" in 0) break ;; esac
 do
     case "$1" in
@@ -37,6 +39,21 @@ do
     	annotate=1
 	shift
 	message="$1"
+	if test "$#" = "0"; then
+	    die "error: option -m needs an argument"
+	else
+	    message_given=1
+	fi
+	;;
+    -F)
+	annotate=1
+	shift
+	if test "$#" = "0"; then
+	    die "error: option -F needs an argument"
+	else
+	    message="$(cat "$1")"
+	    message_given=1
+	fi
 	;;
     -u)
 	annotate=1
@@ -47,8 +64,18 @@ do
     -d)
     	shift
 	tag_name="$1"
-	rm "$GIT_DIR/refs/tags/$tag_name" && \
-	        echo "Deleted tag $tag_name."
+	tag=$(git-show-ref --verify --hash -- "refs/tags/$tag_name") ||
+		die "Seriously, what tag are you talking about?"
+	git-update-ref -m 'tag: delete' -d "refs/tags/$tag_name" "$tag" &&
+		echo "Deleted tag $tag_name."
+	exit $?
+	;;
+    -v)
+	shift
+	tag_name="$1"
+	tag=$(git-show-ref --verify --hash -- "refs/tags/$tag_name") ||
+		die "Seriously, what tag are you talking about?"
+	git-verify-tag -v "$tag"
 	exit $?
 	;;
     -*)
@@ -63,8 +90,11 @@ done
 
 name="$1"
 [ "$name" ] || usage
-if [ -e "$GIT_DIR/refs/tags/$name" -a -z "$force" ]; then
-    die "tag '$name' already exists"
+prev=0000000000000000000000000000000000000000
+if git-show-ref --verify --quiet -- "refs/tags/$name"
+then
+    test -n "$force" || die "tag '$name' already exists"
+    prev=`git rev-parse "refs/tags/$name"`
 fi
 shift
 git-check-ref-format "tags/$name" ||
@@ -78,7 +108,7 @@ tagger=$(git-var GIT_COMMITTER_IDENT) || exit 1
 trap 'rm -f "$GIT_DIR"/TAG_TMP* "$GIT_DIR"/TAG_FINALMSG "$GIT_DIR"/TAG_EDITMSG' 0
 
 if [ "$annotate" ]; then
-    if [ -z "$message" ]; then
+    if [ -z "$message_given" ]; then
         ( echo "#"
           echo "# Write a tag message"
           echo "#" ) > "$GIT_DIR"/TAG_EDITMSG
@@ -90,7 +120,7 @@ if [ "$annotate" ]; then
     grep -v '^#' <"$GIT_DIR"/TAG_EDITMSG |
     git-stripspace >"$GIT_DIR"/TAG_FINALMSG
 
-    [ -s "$GIT_DIR"/TAG_FINALMSG ] || {
+    [ -s "$GIT_DIR"/TAG_FINALMSG -o -n "$message_given" ] || {
 	echo >&2 "No tag message?"
 	exit 1
     }
@@ -107,6 +137,5 @@ if [ "$annotate" ]; then
     object=$(git-mktag < "$GIT_DIR"/TAG_TMP)
 fi
 
-leading=`expr "refs/tags/$name" : '\(.*\)/'` &&
-mkdir -p "$GIT_DIR/$leading" &&
-echo $object > "$GIT_DIR/refs/tags/$name"
+git update-ref "refs/tags/$name" "$object" "$prev"
+

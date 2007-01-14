@@ -86,4 +86,36 @@ test_expect_success \
     'move into "."' \
     'git-mv path1/path2/ .'
 
+test_expect_success "Michael Cassar's test case" '
+	rm -fr .git papers partA &&
+	git init &&
+	mkdir -p papers/unsorted papers/all-papers partA &&
+	echo a > papers/unsorted/Thesis.pdf &&
+	echo b > partA/outline.txt &&
+	echo c > papers/unsorted/_another &&
+	git add papers partA &&
+	T1=`git write-tree` &&
+
+	git mv papers/unsorted/Thesis.pdf papers/all-papers/moo-blah.pdf &&
+
+	T=`git write-tree` &&
+	git ls-tree -r $T | grep partA/outline.txt || {
+		git ls-tree -r $T
+		(exit 1)
+	}
+'
+
+rm -fr papers partA path?
+
+test_expect_success "Sergey Vlasov's test case" '
+	rm -fr .git &&
+	git init &&
+	mkdir ab &&
+	date >ab.c &&
+	date >ab/d &&
+	git add ab.c ab &&
+	git commit -m 'initial' &&
+	git mv ab a
+'
+
 test_done

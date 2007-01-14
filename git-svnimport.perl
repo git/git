@@ -31,25 +31,29 @@ $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
 our($opt_h,$opt_o,$opt_v,$opt_u,$opt_C,$opt_i,$opt_m,$opt_M,$opt_t,$opt_T,
-    $opt_b,$opt_r,$opt_I,$opt_A,$opt_s,$opt_l,$opt_d,$opt_D);
+    $opt_b,$opt_r,$opt_I,$opt_A,$opt_s,$opt_l,$opt_d,$opt_D,$opt_S,$opt_F,
+    $opt_P,$opt_R);
 
 sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from SVN
-       [-o branch-for-HEAD] [-h] [-v] [-l max_rev]
+       [-o branch-for-HEAD] [-h] [-v] [-l max_rev] [-R repack_each_revs]
        [-C GIT_repository] [-t tagname] [-T trunkname] [-b branchname]
        [-d|-D] [-i] [-u] [-r] [-I ignorefilename] [-s start_chg]
-       [-m] [-M regex] [-A author_file] [SVN_URL]
+       [-m] [-M regex] [-A author_file] [-S] [-F] [-P project_name] [SVN_URL]
 END
 	exit(1);
 }
 
-getopts("A:b:C:dDhiI:l:mM:o:rs:t:T:uv") or usage();
+getopts("A:b:C:dDFhiI:l:mM:o:rs:t:T:SP:R:uv") or usage();
 usage if $opt_h;
 
 my $tag_name = $opt_t || "tags";
 my $trunk_name = $opt_T || "trunk";
 my $branch_name = $opt_b || "branches";
+my $project_name = $opt_P || "";
+$project_name = "/" . $project_name if ($project_name);
+my $repack_after = $opt_R || 1000;
 
 @ARGV == 1 or @ARGV == 2 or usage();
 
@@ -144,6 +148,7 @@ sub file {
 	print "... $rev $path ...\n" if $opt_v;
 	my (undef, $properties);
 	my $pool = SVN::Pool->new();
+	$path =~ s#^/*##;
 	eval { (undef, $properties)
 		   = $self->{'svn'}->get_file($path,$rev,$fh,$pool); };
 	$pool->clear;
@@ -179,6 +184,7 @@ sub ignore {
 	my($self,$path,$rev) = @_;
 
 	print "... $rev $path ...\n" if $opt_v;
+	$path =~ s#^/*##;
 	my (undef,undef,$properties)
 	    = $self->{'svn'}->get_dir($path,$rev,undef);
 	if (exists $properties->{'svn:ignore'}) {
@@ -191,6 +197,14 @@ sub ignore {
 	} else {
 		return undef;
 	}
+}
+
+sub dir_list {
+	my($self,$path,$rev) = @_;
+	$path =~ s#^/*##;
+	my ($dirents,undef,$properties)
+	    = $self->{'svn'}->get_dir($path,$rev,undef);
+	return $dirents;
 }
 
 package main;
@@ -271,7 +285,7 @@ my $last_rev = "";
 my $last_branch;
 my $current_rev = $opt_s || 1;
 unless(-d $git_dir) {
-	system("git-init-db");
+	system("git-init");
 	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
 	system("git-read-tree");
 	die "Cannot init an empty tree: $?\n" if $?;
@@ -342,35 +356,17 @@ if ($opt_A) {
 
 open BRANCHES,">>", "$git_dir/svn2git";
 
-sub node_kind($$$) {
-	my ($branch, $path, $revision) = @_;
+sub node_kind($$) {
+	my ($svnpath, $revision) = @_;
 	my $pool=SVN::Pool->new;
-	my $kind = $svn->{'svn'}->check_path(revert_split_path($branch,$path),$revision,$pool);
+	$svnpath =~ s#^/*##;
+	my $kind = $svn->{'svn'}->check_path($svnpath,$revision,$pool);
 	$pool->clear;
 	return $kind;
 }
 
-sub revert_split_path($$) {
-	my($branch,$path) = @_;
-
-	my $svnpath;
-	$path = "" if $path eq "/"; # this should not happen, but ...
-	if($branch eq "/") {
-		$svnpath = "$trunk_name/$path";
-	} elsif($branch =~ m#^/#) {
-		$svnpath = "$tag_name$branch/$path";
-	} else {
-		$svnpath = "$branch_name/$branch/$path";
-	}
-
-	$svnpath =~ s#/+$##;
-	return $svnpath;
-}
-
 sub get_file($$$) {
-	my($rev,$branch,$path) = @_;
-
-	my $svnpath = revert_split_path($branch,$path);
+	my($svnpath,$rev,$path) = @_;
 
 	# now get it
 	my ($name,$mode);
@@ -413,10 +409,9 @@ sub get_file($$$) {
 }
 
 sub get_ignore($$$$$) {
-	my($new,$old,$rev,$branch,$path) = @_;
+	my($new,$old,$rev,$path,$svnpath) = @_;
 
 	return unless $opt_I;
-	my $svnpath = revert_split_path($branch,$path);
 	my $name = $svn->ignore("$svnpath",$rev);
 	if ($path eq '/') {
 		$path = $opt_I;
@@ -435,9 +430,23 @@ sub get_ignore($$$$$) {
 		close $F;
 		unlink $name;
 		push(@$new,['0644',$sha,$path]);
-	} else {
+	} elsif (defined $old) {
 		push(@$old,$path);
 	}
+}
+
+sub project_path($$)
+{
+	my ($path, $project) = @_;
+
+	$path = "/".$path unless ($path =~ m#^\/#) ;
+	return $1 if ($path =~ m#^$project\/(.*)$#);
+
+	$path =~ s#\.#\\\.#g;
+	$path =~ s#\+#\\\+#g;
+	return "/" if ($project =~ m#^$path.*$#);
+
+	return undef;
 }
 
 sub split_path($$) {
@@ -459,7 +468,11 @@ sub split_path($$) {
 		print STDERR "$rev: Unrecognized path: $path\n" unless (defined $no_error{$path});
 		return ()
 	}
-	$path = "/" if $path eq "";
+	if ($path eq "") {
+		$path = "/";
+	} elsif ($project_name) {
+		$path = project_path($path, $project_name);
+	}
 	return ($branch,$path);
 }
 
@@ -480,6 +493,27 @@ sub branch_rev($$) {
 	return $therev;
 }
 
+sub expand_svndir($$$);
+
+sub expand_svndir($$$)
+{
+	my ($svnpath, $rev, $path) = @_;
+	my @list;
+	get_ignore(\@list, undef, $rev, $path, $svnpath);
+	my $dirents = $svn->dir_list($svnpath, $rev);
+	foreach my $p(keys %$dirents) {
+		my $kind = node_kind($svnpath.'/'.$p, $rev);
+		if ($kind eq $SVN::Node::file) {
+			my $f = get_file($svnpath.'/'.$p, $rev, $path.'/'.$p);
+			push(@list, $f) if $f;
+		} elsif ($kind eq $SVN::Node::dir) {
+			push(@list,
+			     expand_svndir($svnpath.'/'.$p, $rev, $path.'/'.$p));
+		}
+	}
+	return @list;
+}
+
 sub copy_path($$$$$$$$) {
 	# Somebody copied a whole subdirectory.
 	# We need to find the index entries from the old version which the
@@ -488,8 +522,11 @@ sub copy_path($$$$$$$$) {
 	my($newrev,$newbranch,$path,$oldpath,$rev,$node_kind,$new,$parents) = @_;
 
 	my($srcbranch,$srcpath) = split_path($rev,$oldpath);
-	unless(defined $srcbranch) {
-		print "Path not found when copying from $oldpath @ $rev\n";
+	unless(defined $srcbranch && defined $srcpath) {
+		print "Path not found when copying from $oldpath @ $rev.\n".
+			"Will try to copy from original SVN location...\n"
+			if $opt_v;
+		push (@$new, expand_svndir($oldpath, $rev, $path));
 		return;
 	}
 	my $therev = branch_rev($srcbranch, $rev);
@@ -503,7 +540,7 @@ sub copy_path($$$$$$$$) {
 	}
 	print "$newrev:$newbranch:$path: copying from $srcbranch:$srcpath @ $rev\n" if $opt_v;
 	if ($node_kind eq $SVN::Node::dir) {
-			$srcpath =~ s#/*$#/#;
+		$srcpath =~ s#/*$#/#;
 	}
 	
 	my $pid = open my $f,'-|';
@@ -531,21 +568,34 @@ sub copy_path($$$$$$$$) {
 
 sub commit {
 	my($branch, $changed_paths, $revision, $author, $date, $message) = @_;
-	my($author_name,$author_email,$dest);
+	my($committer_name,$committer_email,$dest);
+	my($author_name,$author_email);
 	my(@old,@new,@parents);
 
 	if (not defined $author or $author eq "") {
-		$author_name = $author_email = "unknown";
+		$committer_name = $committer_email = "unknown";
 	} elsif (defined $users_file) {
 		die "User $author is not listed in $users_file\n"
 		    unless exists $users{$author};
-		($author_name,$author_email) = @{$users{$author}};
+		($committer_name,$committer_email) = @{$users{$author}};
 	} elsif ($author =~ /^(.*?)\s+<(.*)>$/) {
-		($author_name, $author_email) = ($1, $2);
+		($committer_name, $committer_email) = ($1, $2);
 	} else {
 		$author =~ s/^<(.*)>$/$1/;
-		$author_name = $author_email = $author;
+		$committer_name = $committer_email = $author;
 	}
+
+	if ($opt_F && $message =~ /From:\s+(.*?)\s+<(.*)>\s*\n/) {
+		($author_name, $author_email) = ($1, $2);
+		print "Author from From: $1 <$2>\n" if ($opt_v);;
+	} elsif ($opt_S && $message =~ /Signed-off-by:\s+(.*?)\s+<(.*)>\s*\n/) {
+		($author_name, $author_email) = ($1, $2);
+		print "Author from Signed-off-by: $1 <$2>\n" if ($opt_v);;
+	} else {
+		$author_name = $committer_name;
+		$author_email = $committer_email;
+	}
+
 	$date = pdate($date);
 
 	my $tag;
@@ -569,10 +619,12 @@ sub commit {
 		if(defined $oldpath) {
 			my $p;
 			($parent,$p) = split_path($revision,$oldpath);
-			if($parent eq "/") {
-				$parent = $opt_o;
-			} else {
-				$parent =~ s#^/##; # if it's a tag
+			if(defined $parent) {
+				if($parent eq "/") {
+					$parent = $opt_o;
+				} else {
+					$parent =~ s#^/##; # if it's a tag
+				}
 			}
 		} else {
 			$parent = undef;
@@ -638,9 +690,10 @@ sub commit {
 				push(@old,$path); # remove any old stuff
 			}
 			if(($action->[0] eq "A") || ($action->[0] eq "R")) {
-				my $node_kind = node_kind($branch,$path,$revision);
+				my $node_kind = node_kind($action->[3], $revision);
 				if ($node_kind eq $SVN::Node::file) {
-					my $f = get_file($revision,$branch,$path);
+					my $f = get_file($action->[3],
+							 $revision, $path);
 					if ($f) {
 						push(@new,$f) if $f;
 					} else {
@@ -655,19 +708,20 @@ sub commit {
 							  \@new, \@parents);
 					} else {
 						get_ignore(\@new, \@old, $revision,
-							   $branch, $path);
+							   $path, $action->[3]);
 					}
 				}
 			} elsif ($action->[0] eq "D") {
 				push(@old,$path);
 			} elsif ($action->[0] eq "M") {
-				my $node_kind = node_kind($branch,$path,$revision);
+				my $node_kind = node_kind($action->[3], $revision);
 				if ($node_kind eq $SVN::Node::file) {
-					my $f = get_file($revision,$branch,$path);
+					my $f = get_file($action->[3],
+							 $revision, $path);
 					push(@new,$f) if $f;
 				} elsif ($node_kind eq $SVN::Node::dir) {
 					get_ignore(\@new, \@old, $revision,
-						   $branch,$path);
+						   $path, $action->[3]);
 				}
 			} else {
 				die "$revision: unknown action '".$action->[0]."' for $path\n";
@@ -772,8 +826,8 @@ sub commit {
 				"GIT_AUTHOR_NAME=$author_name",
 				"GIT_AUTHOR_EMAIL=$author_email",
 				"GIT_AUTHOR_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
-				"GIT_COMMITTER_NAME=$author_name",
-				"GIT_COMMITTER_EMAIL=$author_email",
+				"GIT_COMMITTER_NAME=$committer_name",
+				"GIT_COMMITTER_EMAIL=$committer_email",
 				"GIT_COMMITTER_DATE=".strftime("+0000 %Y-%m-%d %H:%M:%S",gmtime($date)),
 				"git-commit-tree", $tree,@par);
 			die "Cannot exec git-commit-tree: $!\n";
@@ -825,7 +879,7 @@ sub commit {
 		print $out ("object $cid\n".
 		    "type commit\n".
 		    "tag $dest\n".
-		    "tagger $author_name <$author_email>\n") and
+		    "tagger $committer_name <$committer_email> 0 +0000\n") and
 		close($out)
 		    or die "Cannot create tag object $dest: $!\n";
 
@@ -870,6 +924,7 @@ sub commit_all {
 	while(my($path,$action) = each %$changed_paths) {
 		($branch,$path) = split_path($revision,$path);
 		next if not defined $branch;
+		next if not defined $path;
 		$done{$branch}{$path} = $action;
 	}
 	while(($branch,$changed_paths) = each %done) {
@@ -885,11 +940,27 @@ if ($opt_l < $current_rev) {
     exit;
 }
 
-print "Fetching from $current_rev to $opt_l ...\n" if $opt_v;
+print "Processing from $current_rev to $opt_l ...\n" if $opt_v;
 
-my $pool=SVN::Pool->new;
-$svn->{'svn'}->get_log("/",$current_rev,$opt_l,0,1,1,\&commit_all,$pool);
-$pool->clear;
+my $from_rev;
+my $to_rev = $current_rev - 1;
+
+while ($to_rev < $opt_l) {
+	$from_rev = $to_rev + 1;
+	$to_rev = $from_rev + $repack_after;
+	$to_rev = $opt_l if $opt_l < $to_rev;
+	print "Fetching from $from_rev to $to_rev ...\n" if $opt_v;
+	my $pool=SVN::Pool->new;
+	$svn->{'svn'}->get_log("/",$from_rev,$to_rev,0,1,1,\&commit_all,$pool);
+	$pool->clear;
+	my $pid = fork();
+	die "Fork: $!\n" unless defined $pid;
+	unless($pid) {
+		exec("git-repack", "-d")
+			or die "Cannot repack: $!\n";
+	}
+	waitpid($pid, 0);
+}
 
 
 unlink($git_index);

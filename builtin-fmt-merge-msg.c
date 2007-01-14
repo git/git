@@ -27,8 +27,8 @@ static void append_to_list(struct list *list, char *value, void *payload)
 {
 	if (list->nr == list->alloc) {
 		list->alloc += 32;
-		list->list = realloc(list->list, sizeof(char *) * list->alloc);
-		list->payload = realloc(list->payload,
+		list->list = xrealloc(list->list, sizeof(char *) * list->alloc);
+		list->payload = xrealloc(list->payload,
 				sizeof(char *) * list->alloc);
 	}
 	list->payload[list->nr] = payload;
@@ -55,8 +55,7 @@ static void free_list(struct list *list)
 
 	for (i = 0; i < list->nr; i++) {
 		free(list->list[i]);
-		if (list->payload[i])
-			free(list->payload[i]);
+		free(list->payload[i]);
 	}
 	free(list->list);
 	free(list->payload);
@@ -112,43 +111,43 @@ static int handle_line(char *line)
 	i = find_in_list(&srcs, src);
 	if (i < 0) {
 		i = srcs.nr;
-		append_to_list(&srcs, strdup(src),
+		append_to_list(&srcs, xstrdup(src),
 				xcalloc(1, sizeof(struct src_data)));
 	}
 	src_data = srcs.payload[i];
 
 	if (pulling_head) {
-		origin = strdup(src);
+		origin = xstrdup(src);
 		src_data->head_status |= 1;
 	} else if (!strncmp(line, "branch ", 7)) {
-		origin = strdup(line + 7);
+		origin = xstrdup(line + 7);
 		append_to_list(&src_data->branch, origin, NULL);
 		src_data->head_status |= 2;
 	} else if (!strncmp(line, "tag ", 4)) {
 		origin = line;
-		append_to_list(&src_data->tag, strdup(origin + 4), NULL);
+		append_to_list(&src_data->tag, xstrdup(origin + 4), NULL);
 		src_data->head_status |= 2;
 	} else if (!strncmp(line, "remote branch ", 14)) {
-		origin = strdup(line + 14);
+		origin = xstrdup(line + 14);
 		append_to_list(&src_data->r_branch, origin, NULL);
 		src_data->head_status |= 2;
 	} else {
-		origin = strdup(src);
-		append_to_list(&src_data->generic, strdup(line), NULL);
+		origin = xstrdup(src);
+		append_to_list(&src_data->generic, xstrdup(line), NULL);
 		src_data->head_status |= 2;
 	}
 
 	if (!strcmp(".", src) || !strcmp(src, origin)) {
 		int len = strlen(origin);
 		if (origin[0] == '\'' && origin[len - 1] == '\'') {
-			char *new_origin = malloc(len - 1);
+			char *new_origin = xmalloc(len - 1);
 			memcpy(new_origin, origin + 1, len - 2);
-			new_origin[len - 1] = 0;
+			new_origin[len - 2] = 0;
 			origin = new_origin;
 		} else
-			origin = strdup(origin);
+			origin = xstrdup(origin);
 	} else {
-		char *new_origin = malloc(strlen(origin) + strlen(src) + 5);
+		char *new_origin = xmalloc(strlen(origin) + strlen(src) + 5);
 		sprintf(new_origin, "%s of %s", origin, src);
 		origin = new_origin;
 	}
@@ -204,7 +203,7 @@ static void shortlog(const char *name, unsigned char *sha1,
 
 		bol = strstr(commit->buffer, "\n\n");
 		if (!bol) {
-			append_to_list(&subjects, strdup(sha1_to_hex(
+			append_to_list(&subjects, xstrdup(sha1_to_hex(
 							commit->object.sha1)),
 					NULL);
 			continue;
@@ -215,11 +214,11 @@ static void shortlog(const char *name, unsigned char *sha1,
 
 		if (eol) {
 			int len = eol - bol;
-			oneline = malloc(len + 1);
+			oneline = xmalloc(len + 1);
 			memcpy(oneline, bol, len);
 			oneline[len] = 0;
 		} else
-			oneline = strdup(bol);
+			oneline = xstrdup(bol);
 		append_to_list(&subjects, oneline, NULL);
 	}
 
@@ -250,7 +249,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 	FILE *in = stdin;
 	const char *sep = "";
 	unsigned char head_sha1[20];
-	const char *head, *current_branch;
+	const char *current_branch;
 
 	git_config(fmt_merge_msg_config);
 
@@ -278,10 +277,9 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 		usage(fmt_merge_msg_usage);
 
 	/* get current branch */
-	head = strdup(git_path("HEAD"));
-	current_branch = resolve_ref(head, head_sha1, 1);
-	current_branch += strlen(head) - 4;
-	free((char *)head);
+	current_branch = resolve_ref("HEAD", head_sha1, 1, NULL);
+	if (!current_branch)
+		die("No current branch");
 	if (!strncmp(current_branch, "refs/heads/", 11))
 		current_branch += 11;
 

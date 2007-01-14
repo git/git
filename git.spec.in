@@ -9,7 +9,7 @@ URL: 		http://kernel.org/pub/software/scm/git/
 Source: 	http://kernel.org/pub/software/scm/git/%{name}-%{version}.tar.gz
 BuildRequires:	zlib-devel >= 1.2, openssl-devel, curl-devel, expat-devel  %{!?_without_docs:, xmlto, asciidoc > 6.0.3}
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Requires:	git-core, git-svn, git-cvs, git-arch, git-email, gitk
+Requires:	git-core, git-svn, git-cvs, git-arch, git-email, gitk, perl-Git
 
 %description
 This is a stupid (but extremely fast) directory content manager.  It
@@ -24,7 +24,7 @@ This is a dummy package which brings in all subpackages.
 %package core
 Summary:	Core git tools
 Group:		Development/Tools
-Requires:	zlib >= 1.2, rsync, rcs, curl, less, openssh-clients, python >= 2.3, expat
+Requires:	zlib >= 1.2, rsync, curl, less, openssh-clients, expat
 %description core
 This is a stupid (but extremely fast) directory content manager.  It
 doesn't do a whole lot, but what it _does_ do is track directory
@@ -70,6 +70,16 @@ Requires:       git-core = %{version}-%{release}, tk >= 8.4
 %description -n gitk
 Git revision tree visualiser ('gitk')
 
+%package -n perl-Git
+Summary:        Perl interface to Git
+Group:          Development/Libraries
+Requires:       git-core = %{version}-%{release}
+Requires:       perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
+BuildRequires:  perl(Error)
+
+%description -n perl-Git
+Perl interface to Git
+
 %prep
 %setup -q
 
@@ -80,12 +90,18 @@ make %{_smp_mflags} CFLAGS="$RPM_OPT_FLAGS" WITH_OWN_SUBPROCESS_PY=YesPlease \
 %install
 rm -rf $RPM_BUILD_ROOT
 make %{_smp_mflags} DESTDIR=$RPM_BUILD_ROOT WITH_OWN_SUBPROCESS_PY=YesPlease \
-     prefix=%{_prefix} mandir=%{_mandir} \
+     prefix=%{_prefix} mandir=%{_mandir} INSTALLDIRS=vendor \
      install %{!?_without_docs: install-doc}
+find $RPM_BUILD_ROOT -type f -name .packlist -exec rm -f {} ';'
+find $RPM_BUILD_ROOT -type f -name '*.bs' -empty -exec rm -f {} ';'
+find $RPM_BUILD_ROOT -type f -name perllocal.pod -exec rm -f {} ';'
 
-(find $RPM_BUILD_ROOT%{_bindir} -type f | grep -vE "arch|svn|cvs|email|gitk" | sed -e s@^$RPM_BUILD_ROOT@@)               > bin-man-doc-files
+(find $RPM_BUILD_ROOT%{_bindir} -type f | grep -vE "archimport|svn|cvs|email|gitk" | sed -e s@^$RPM_BUILD_ROOT@@)               > bin-man-doc-files
+(find $RPM_BUILD_ROOT%{perl_vendorlib} -type f | sed -e s@^$RPM_BUILD_ROOT@@) >> perl-files
 %if %{!?_without_docs:1}0
-(find $RPM_BUILD_ROOT%{_mandir} $RPM_BUILD_ROOT/Documentation -type f | grep -vE "arch|svn|git-cvs|email|gitk" | sed -e s@^$RPM_BUILD_ROOT@@ -e 's/$/*/' ) >> bin-man-doc-files
+(find $RPM_BUILD_ROOT%{_mandir} $RPM_BUILD_ROOT/Documentation -type f | grep -vE "archimport|svn|git-cvs|email|gitk" | sed -e s@^$RPM_BUILD_ROOT@@ -e 's/$/*/' ) >> bin-man-doc-files
+%else
+rm -rf $RPM_BUILD_ROOT%{_mandir}
 %endif
 
 %clean
@@ -110,10 +126,10 @@ rm -rf $RPM_BUILD_ROOT
 
 %files arch
 %defattr(-,root,root)
-%doc Documentation/*arch*.txt
-%{_bindir}/*arch*
-%{!?_without_docs: %{_mandir}/man1/*arch*.1*}
-%{!?_without_docs: %doc Documentation/*arch*.html }
+%doc Documentation/git-archimport.txt
+%{_bindir}/git-archimport
+%{!?_without_docs: %{_mandir}/man1/git-archimport.1*}
+%{!?_without_docs: %doc Documentation/git-archimport.html }
 
 %files email
 %defattr(-,root,root)
@@ -128,6 +144,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/*gitk*
 %{!?_without_docs: %{_mandir}/man1/*gitk*.1*}
 %{!?_without_docs: %doc Documentation/*gitk*.html }
+
+%files -n perl-Git -f perl-files
+%defattr(-,root,root)
 
 %files core -f bin-man-doc-files
 %defattr(-,root,root)

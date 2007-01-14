@@ -19,70 +19,67 @@ n=$n_dir/fixes
 
 test_expect_success \
 	"create $m" \
-	'git-update-ref $m $A &&
-	 test $A = $(cat .git/$m)'
+	"git-update-ref $m $A &&
+	 test $A"' = $(cat .git/'"$m"')'
 test_expect_success \
 	"create $m" \
-	'git-update-ref $m $B $A &&
-	 test $B = $(cat .git/$m)'
+	"git-update-ref $m $B $A &&
+	 test $B"' = $(cat .git/'"$m"')'
 rm -f .git/$m
 
 test_expect_success \
 	"fail to create $n" \
-	'touch .git/$n_dir
-	 git-update-ref $n $A >out 2>err
-	 test $? = 1 &&
-	 test "" = "$(cat out)" &&
-	 grep "error: unable to resolve reference" err &&
-	 grep $n err'
+	"touch .git/$n_dir
+	 git-update-ref $n $A >out 2>err"'
+	 test $? != 0'
 rm -f .git/$n_dir out err
 
 test_expect_success \
 	"create $m (by HEAD)" \
-	'git-update-ref HEAD $A &&
-	 test $A = $(cat .git/$m)'
+	"git-update-ref HEAD $A &&
+	 test $A"' = $(cat .git/'"$m"')'
 test_expect_success \
 	"create $m (by HEAD)" \
-	'git-update-ref HEAD $B $A &&
-	 test $B = $(cat .git/$m)'
+	"git-update-ref HEAD $B $A &&
+	 test $B"' = $(cat .git/'"$m"')'
 rm -f .git/$m
 
 test_expect_failure \
 	'(not) create HEAD with old sha1' \
-	'git-update-ref HEAD $A $B'
+	"git-update-ref HEAD $A $B"
 test_expect_failure \
 	"(not) prior created .git/$m" \
-	'test -f .git/$m'
+	"test -f .git/$m"
 rm -f .git/$m
 
 test_expect_success \
 	"create HEAD" \
-	'git-update-ref HEAD $A'
+	"git-update-ref HEAD $A"
 test_expect_failure \
 	'(not) change HEAD with wrong SHA1' \
-	'git-update-ref HEAD $B $Z'
+	"git-update-ref HEAD $B $Z"
 test_expect_failure \
 	"(not) changed .git/$m" \
-	'test $B = $(cat .git/$m)'
+	"test $B"' = $(cat .git/'"$m"')'
 rm -f .git/$m
 
-mkdir -p .git/logs/refs/heads
-touch .git/logs/refs/heads/master
+: a repository with working tree always has reflog these days...
+: >.git/logs/refs/heads/master
 test_expect_success \
 	"create $m (logged by touch)" \
 	'GIT_COMMITTER_DATE="2005-05-26 23:30" \
-	 git-update-ref HEAD $A -m "Initial Creation" &&
-	 test $A = $(cat .git/$m)'
+	 git-update-ref HEAD '"$A"' -m "Initial Creation" &&
+	 test '"$A"' = $(cat .git/'"$m"')'
 test_expect_success \
 	"update $m (logged by touch)" \
 	'GIT_COMMITTER_DATE="2005-05-26 23:31" \
-	 git-update-ref HEAD $B $A -m "Switch" &&
-	 test $B = $(cat .git/$m)'
+	 git-update-ref HEAD'" $B $A "'-m "Switch" &&
+	 test '"$B"' = $(cat .git/'"$m"')'
 test_expect_success \
 	"set $m (logged by touch)" \
 	'GIT_COMMITTER_DATE="2005-05-26 23:41" \
-	 git-update-ref HEAD $A &&
-	 test $A = $(cat .git/$m)'
+	 git-update-ref HEAD'" $A &&
+	 test $A"' = $(cat .git/'"$m"')'
 
 cat >expect <<EOF
 $Z $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	Initial Creation
@@ -91,7 +88,7 @@ $B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150860 +0000
 EOF
 test_expect_success \
 	"verifying $m's log" \
-	'diff expect .git/logs/$m'
+	"diff expect .git/logs/$m"
 rm -rf .git/$m .git/logs expect
 
 test_expect_success \
@@ -102,18 +99,18 @@ test_expect_success \
 test_expect_success \
 	"create $m (logged by config)" \
 	'GIT_COMMITTER_DATE="2005-05-26 23:32" \
-	 git-update-ref HEAD $A -m "Initial Creation" &&
-	 test $A = $(cat .git/$m)'
+	 git-update-ref HEAD'" $A "'-m "Initial Creation" &&
+	 test '"$A"' = $(cat .git/'"$m"')'
 test_expect_success \
 	"update $m (logged by config)" \
 	'GIT_COMMITTER_DATE="2005-05-26 23:33" \
-	 git-update-ref HEAD $B $A -m "Switch" &&
-	 test $B = $(cat .git/$m)'
+	 git-update-ref HEAD'" $B $A "'-m "Switch" &&
+	 test '"$B"' = $(cat .git/'"$m"')'
 test_expect_success \
 	"set $m (logged by config)" \
 	'GIT_COMMITTER_DATE="2005-05-26 23:43" \
-	 git-update-ref HEAD $A &&
-	 test $A = $(cat .git/$m)'
+	 git-update-ref HEAD '"$A &&
+	 test $A"' = $(cat .git/'"$m"')'
 
 cat >expect <<EOF
 $Z $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150320 +0000	Initial Creation
@@ -140,50 +137,50 @@ test_expect_success \
 	'Query "master@{May 25 2005}" (before history)' \
 	'rm -f o e
 	 git-rev-parse --verify "master@{May 25 2005}" >o 2>e &&
-	 test $C = $(cat o) &&
-	 test "warning: Log .git/logs/$m only goes back to $ed." = "$(cat e)"'
+	 test '"$C"' = $(cat o) &&
+	 test "warning: Log .git/logs/'"$m only goes back to $ed"'." = "$(cat e)"'
 test_expect_success \
 	"Query master@{2005-05-25} (before history)" \
 	'rm -f o e
 	 git-rev-parse --verify master@{2005-05-25} >o 2>e &&
-	 test $C = $(cat o) &&
-	 echo test "warning: Log .git/logs/$m only goes back to $ed." = "$(cat e)"'
+	 test '"$C"' = $(cat o) &&
+	 echo test "warning: Log .git/logs/'"$m only goes back to $ed"'." = "$(cat e)"'
 test_expect_success \
 	'Query "master@{May 26 2005 23:31:59}" (1 second before history)' \
 	'rm -f o e
 	 git-rev-parse --verify "master@{May 26 2005 23:31:59}" >o 2>e &&
-	 test $C = $(cat o) &&
-	 test "warning: Log .git/logs/$m only goes back to $ed." = "$(cat e)"'
+	 test '"$C"' = $(cat o) &&
+	 test "warning: Log .git/logs/'"$m only goes back to $ed"'." = "$(cat e)"'
 test_expect_success \
 	'Query "master@{May 26 2005 23:32:00}" (exactly history start)' \
 	'rm -f o e
 	 git-rev-parse --verify "master@{May 26 2005 23:32:00}" >o 2>e &&
-	 test $A = $(cat o) &&
+	 test '"$A"' = $(cat o) &&
 	 test "" = "$(cat e)"'
 test_expect_success \
 	'Query "master@{2005-05-26 23:33:01}" (middle of history with gap)' \
 	'rm -f o e
 	 git-rev-parse --verify "master@{2005-05-26 23:33:01}" >o 2>e &&
-	 test $B = $(cat o) &&
-	 test "warning: Log .git/logs/$m has gap after $gd." = "$(cat e)"'
+	 test '"$B"' = $(cat o) &&
+	 test "warning: Log .git/logs/'"$m has gap after $gd"'." = "$(cat e)"'
 test_expect_success \
 	'Query "master@{2005-05-26 23:38:00}" (middle of history)' \
 	'rm -f o e
 	 git-rev-parse --verify "master@{2005-05-26 23:38:00}" >o 2>e &&
-	 test $Z = $(cat o) &&
+	 test '"$Z"' = $(cat o) &&
 	 test "" = "$(cat e)"'
 test_expect_success \
 	'Query "master@{2005-05-26 23:43:00}" (exact end of history)' \
 	'rm -f o e
 	 git-rev-parse --verify "master@{2005-05-26 23:43:00}" >o 2>e &&
-	 test $E = $(cat o) &&
+	 test '"$E"' = $(cat o) &&
 	 test "" = "$(cat e)"'
 test_expect_success \
 	'Query "master@{2005-05-28}" (past end of history)' \
 	'rm -f o e
 	 git-rev-parse --verify "master@{2005-05-28}" >o 2>e &&
-	 test $D = $(cat o) &&
-	 test "warning: Log .git/logs/$m unexpectedly ended on $ld." = "$(cat e)"'
+	 test '"$D"' = $(cat o) &&
+	 test "warning: Log .git/logs/'"$m unexpectedly ended on $ld"'." = "$(cat e)"'
 
 
 rm -f .git/$m .git/logs/$m expect
@@ -221,7 +218,7 @@ $h_FIXED $h_MERGED $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117151100 +0000	c
 EOF
 test_expect_success \
 	'git-commit logged updates' \
-	'diff expect .git/logs/$m'
+	"diff expect .git/logs/$m"
 unset h_TEST h_OTHER h_FIXED h_MERGED
 
 test_expect_success \

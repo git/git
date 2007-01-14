@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include "builtin.h"
 #include "cache.h"
 #include "commit.h"
@@ -75,11 +74,10 @@ copy_data:
 	}
 }
 
-static int tags_only;
-
-static int name_ref(const char *path, const unsigned char *sha1)
+static int name_ref(const char *path, const unsigned char *sha1, int flags, void *cb_data)
 {
 	struct object *o = parse_object(sha1);
+	int tags_only = *(int*)cb_data;
 	int deref = 0;
 
 	if (tags_only && strncmp(path, "refs/tags/", 10))
@@ -100,7 +98,7 @@ static int name_ref(const char *path, const unsigned char *sha1)
 		else if (!strncmp(path, "refs/", 5))
 			path = path + 5;
 
-		name_rev(commit, strdup(path), 0, 0, deref);
+		name_rev(commit, xstrdup(path), 0, 0, deref);
 	}
 	return 0;
 }
@@ -131,6 +129,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 {
 	struct object_array revs = { 0, 0, NULL };
 	int as_is = 0, all = 0, transform_stdin = 0;
+	int tags_only = 0;
 
 	git_config(git_default_config);
 
@@ -186,7 +185,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		add_object_array((struct object *)commit, *argv, &revs);
 	}
 
-	for_each_ref(name_ref);
+	for_each_ref(name_ref, &tags_only);
 
 	if (transform_stdin) {
 		char buffer[2048];

@@ -8,23 +8,33 @@ git-branch - List, create, or delete branches.
 SYNOPSIS
 --------
 [verse]
-'git-branch' [-r]
+'git-branch' [--color | --no-color] [-r | -a] [-v [--abbrev=<length>]]
 'git-branch' [-l] [-f] <branchname> [<start-point>]
-'git-branch' (-d | -D) <branchname>...
+'git-branch' (-m | -M) [<oldbranch>] <newbranch>
+'git-branch' (-d | -D) [-r] <branchname>...
 
 DESCRIPTION
 -----------
-With no arguments given (or just `-r`) a list of available branches
+With no arguments given a list of existing branches
 will be shown, the current branch will be highlighted with an asterisk.
+Option `-r` causes the remote-tracking branches to be listed,
+and option `-a` shows both.
 
 In its second form, a new branch named <branchname> will be created.
 It will start out with a head equal to the one given as <start-point>.
 If no <start-point> is given, the branch will be created with a head
 equal to that of the currently checked out branch.
 
+With a '-m' or '-M' option, <oldbranch> will be renamed to <newbranch>.
+If <oldbranch> had a corresponding reflog, it is renamed to match
+<newbranch>, and a reflog entry is created to remember the branch
+renaming. If <newbranch> exists, -M must be used to force the rename
+to happen.
+
 With a `-d` or `-D` option, `<branchname>` will be deleted.  You may
 specify more than one branch for deletion.  If the branch currently
-has a ref log then the ref log will also be deleted.
+has a ref log then the ref log will also be deleted. Use -r together with -d
+to delete remote-tracking branches.
 
 
 OPTIONS
@@ -44,8 +54,31 @@ OPTIONS
 	Force the creation of a new branch even if it means deleting
 	a branch that already exists with the same name.
 
+-m::
+	Move/rename a branch and the corresponding reflog.
+
+-M::
+	Move/rename a branch even if the new branchname already exists.
+
+--color::
+	Color branches to highlight current, local, and remote branches.
+
+--no-color::
+	Turn off branch colors, even when the configuration file gives the
+	default to color output.
+
 -r::
-	List only the "remote" branches.
+	List or delete (if used with -d) the remote-tracking branches.
+
+-a::
+	List both remote-tracking branches and local branches.
+
+-v::
+	Show sha1 and commit subjectline for each head.
+
+--abbrev=<length>::
+	Alter minimum display length for sha1 in output listing,
+	default value is 7.
 
 <branchname>::
 	The name of the branch to create or delete.
@@ -58,6 +91,12 @@ OPTIONS
 	be given as a branch name, a commit-id, or a tag.  If this option
 	is omitted, the current branch is assumed.
 
+<oldbranch>::
+	The name of an existing branch to rename.
+
+<newbranch>::
+	The new name for an existing branch. The same restrictions as for
+	<branchname> applies.
 
 
 Examples
@@ -80,10 +119,12 @@ Delete unneeded branch::
 ------------
 $ git clone git://git.kernel.org/.../git.git my.git
 $ cd my.git
-$ git branch -D todo    <1>
+$ git branch -d -r todo html man   <1>
+$ git branch -D test               <2>
 ------------
 +
-<1> delete todo branch even if the "master" branch does not have all
+<1> delete remote-tracking branches "todo", "html", "man"
+<2> delete "test" branch even if the "master" branch does not have all
 commits from todo branch.
 
 

@@ -1,6 +1,8 @@
 test_description='git-svn graft-branches'
 . ./lib-git-svn.sh
 
+svnrepo="$svnrepo/test-git-svn"
+
 test_expect_success 'initialize repo' "
 	mkdir import &&
 	cd import &&
@@ -14,25 +16,19 @@ test_expect_success 'initialize repo' "
 	cd wc &&
 	echo feedme >> branches/a/readme &&
 	svn commit -m hungry &&
-	svn up &&
 	cd trunk &&
 	svn merge -r3:4 $svnrepo/branches/a &&
 	svn commit -m 'merge with a' &&
 	cd ../.. &&
-	svn log -v $svnrepo &&
-	git-svn init -i trunk $svnrepo/trunk &&
-	git-svn init -i a $svnrepo/branches/a &&
-	git-svn init -i tags/a $svnrepo/tags/a &&
-	git-svn fetch -i tags/a &&
-	git-svn fetch -i a &&
-	git-svn fetch -i trunk
+	git-svn multi-init $svnrepo -T trunk -b branches -t tags &&
+	git-svn multi-fetch
 	"
 
 r1=`git-rev-list remotes/trunk | tail -n1`
 r2=`git-rev-list remotes/tags/a | tail -n1`
 r3=`git-rev-list remotes/a | tail -n1`
-r4=`git-rev-list remotes/a | head -n1`
-r5=`git-rev-list remotes/trunk | head -n1`
+r4=`git-rev-parse remotes/a`
+r5=`git-rev-parse remotes/trunk`
 
 test_expect_success 'test graft-branches regexes and copies' "
 	test -n "$r1" &&

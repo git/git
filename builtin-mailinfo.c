@@ -2,17 +2,9 @@
  * Another stupid program, this one parsing the headers of an
  * email to figure out authorship and subject
  */
-#define _GNU_SOURCE
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#ifndef NO_ICONV
-#include <iconv.h>
-#endif
-#include "git-compat-util.h"
 #include "cache.h"
 #include "builtin.h"
+#include "utf8.h"
 
 static FILE *cmitmsg, *patchfile, *fin, *fout;
 
@@ -451,17 +443,6 @@ static int read_one_header_line(char *line, int sz, FILE *in)
 	return ofs;
 }
 
-static unsigned hexval(int c)
-{
-	if (c >= '0' && c <= '9')
-		return c - '0';
-	if (c >= 'a' && c <= 'f')
-		return c - 'a' + 10;
-	if (c >= 'A' && c <= 'F')
-		return c - 'A' + 10;
-	return ~0;
-}
-
 static int decode_q_segment(char *in, char *ot, char *ep, int rfc2047)
 {
 	int c;
@@ -530,40 +511,15 @@ static int decode_b_segment(char *in, char *ot, char *ep)
 
 static void convert_to_utf8(char *line, char *charset)
 {
-#ifndef NO_ICONV
-	char *in, *out;
-	size_t insize, outsize, nrc;
-	char outbuf[4096]; /* cheat */
 	static char latin_one[] = "latin1";
 	char *input_charset = *charset ? charset : latin_one;
-	iconv_t conv = iconv_open(metainfo_charset, input_charset);
+	char *out = reencode_string(line, metainfo_charset, input_charset);
 
-	if (conv == (iconv_t) -1) {
-		static int warned_latin1_once = 0;
-		if (input_charset != latin_one) {
-			fprintf(stderr, "cannot convert from %s to %s\n",
-				input_charset, metainfo_charset);
-			*charset = 0;
-		}
-		else if (!warned_latin1_once) {
-			warned_latin1_once = 1;
-			fprintf(stderr, "tried to convert from %s to %s, "
-				"but your iconv does not work with it.\n",
-				input_charset, metainfo_charset);
-		}
-		return;
-	}
-	in = line;
-	insize = strlen(in);
-	out = outbuf;
-	outsize = sizeof(outbuf);
-	nrc = iconv(conv, &in, &insize, &out, &outsize);
-	iconv_close(conv);
-	if (nrc == (size_t) -1)
-		return;
-	*out = 0;
-	strcpy(line, outbuf);
-#endif
+	if (!out)
+		die("cannot convert from %s to %s\n",
+		    input_charset, metainfo_charset);
+	strcpy(line, out);
+	free(out);
 }
 
 static int decode_header_bq(char *it)
@@ -838,16 +794,23 @@ static const char mailinfo_usage[] =
 
 int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 {
+	const char *def_charset;
+
 	/* NEEDSWORK: might want to do the optional .git/ directory
 	 * discovery
 	 */
 	git_config(git_default_config);
 
+	def_charset = (git_commit_encoding ? git_commit_encoding : "utf-8");
+	metainfo_charset = def_charset;
+
 	while (1 < argc && argv[1][0] == '-') {
 		if (!strcmp(argv[1], "-k"))
 			keep_subject = 1;
 		else if (!strcmp(argv[1], "-u"))
-			metainfo_charset = git_commit_encoding;
+			metainfo_charset = def_charset;
+		else if (!strcmp(argv[1], "-n"))
+			metainfo_charset = NULL;
 		else if (!strncmp(argv[1], "--encoding=", 11))
 			metainfo_charset = argv[1] + 11;
 		else

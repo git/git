@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano.
 #
 
-USAGE='[--onto <newbase>] <upstream> [<branch>]'
+USAGE='[-v] [--onto <newbase>] <upstream> [<branch>]'
 LONG_USAGE='git-rebase replaces <branch> with a new branch of the
 same name.  When the --onto option is provided the new branch starts
 out with a HEAD equal to <newbase>, otherwise it is equal to <upstream>
@@ -28,6 +28,8 @@ Example:       git-rebase master~1 topic
   D---E---F---G master          D---E---F---G master
 '
 . git-sh-setup
+set_reflog_action rebase
+require_work_tree
 
 RESOLVEMSG="
 When you have resolved this problem run \"git rebase --continue\".
@@ -39,6 +41,7 @@ strategy=recursive
 do_merge=
 dotest=$GIT_DIR/.dotest-merge
 prec=4
+verbose=
 
 continue_merge () {
 	test -n "$prev_head" || die "prev_head must be defined"
@@ -79,10 +82,18 @@ continue_merge () {
 call_merge () {
 	cmt="$(cat $dotest/cmt.$1)"
 	echo "$cmt" > "$dotest/current"
-	git-merge-$strategy "$cmt^" -- HEAD "$cmt"
+	hd=$(git-rev-parse --verify HEAD)
+	cmt_name=$(git-symbolic-ref HEAD)
+	msgnum=$(cat $dotest/msgnum)
+	end=$(cat $dotest/end)
+	eval GITHEAD_$cmt='"${cmt_name##refs/heads/}~$(($end - $msgnum))"'
+	eval GITHEAD_$hd='"$(cat $dotest/onto_name)"'
+	export GITHEAD_$cmt GITHEAD_$hd
+	git-merge-$strategy "$cmt^" -- "$hd" "$cmt"
 	rv=$?
 	case "$rv" in
 	0)
+		unset GITHEAD_$cmt GITHEAD_$hd
 		return
 		;;
 	1)
@@ -131,13 +142,16 @@ do
 			finish_rb_merge
 			exit
 		fi
-		git am --resolved --3way --resolvemsg="$RESOLVEMSG" \
-			--reflog-action=rebase
+		git am --resolved --3way --resolvemsg="$RESOLVEMSG"
 		exit
 		;;
 	--skip)
 		if test -d "$dotest"
 		then
+			if test -d "$GIT_DIR/rr-cache"
+			then
+				git-rerere clear
+			fi
 			prev_head="`cat $dotest/prev_head`"
 			end="`cat $dotest/end`"
 			msgnum="`cat $dotest/msgnum`"
@@ -151,11 +165,14 @@ do
 			finish_rb_merge
 			exit
 		fi
-		git am -3 --skip --resolvemsg="$RESOLVEMSG" \
-			--reflog-action=rebase
+		git am -3 --skip --resolvemsg="$RESOLVEMSG"
 		exit
 		;;
 	--abort)
+		if test -d "$GIT_DIR/rr-cache"
+		then
+			git-rerere clear
+		fi
 		if test -d "$dotest"
 		then
 			rm -r "$dotest"
@@ -189,6 +206,9 @@ do
 			shift ;;
 		esac
 		do_merge=t
+		;;
+	-v|--verbose)
+		verbose=t
 		;;
 	-*)
 		usage
@@ -273,7 +293,14 @@ then
 	exit 0
 fi
 
+if test -n "$verbose"
+then
+	echo "Changes from $mb to $onto:"
+	git-diff-tree --stat --summary "$mb" "$onto"
+fi
+
 # Rewind the head to "$onto"; this saves our current head in ORIG_HEAD.
+echo "First, rewinding head to replay your work on top of it..."
 git-reset --hard "$onto"
 
 # If the $onto is a proper descendant of the tip of the branch, then
@@ -286,19 +313,9 @@ fi
 
 if test -z "$do_merge"
 then
-	git-format-patch -k --stdout --full-index "$upstream"..ORIG_HEAD |
-	git am --binary -3 -k --resolvemsg="$RESOLVEMSG" \
-		--reflog-action=rebase
+	git-format-patch -k --stdout --full-index --ignore-if-in-upstream "$upstream"..ORIG_HEAD |
+	git am --binary -3 -k --resolvemsg="$RESOLVEMSG"
 	exit $?
-fi
-
-if test "@@NO_PYTHON@@" && test "$strategy" = "recursive"
-then
-	die 'The recursive merge strategy currently relies on Python,
-which this installation of git was not configured with.  Please consider
-a different merge strategy (e.g. octopus, resolve, stupid, ours)
-or install Python and git with Python support.'
-
 fi
 
 # start doing a rebase with git-merge
@@ -306,6 +323,7 @@ fi
 
 mkdir -p "$dotest"
 echo "$onto" > "$dotest/onto"
+echo "$onto_name" > "$dotest/onto_name"
 prev_head=`git-rev-parse HEAD^0`
 echo "$prev_head" > "$dotest/prev_head"
 

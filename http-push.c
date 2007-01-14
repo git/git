@@ -195,7 +195,7 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	int posn = 0;
 	struct transfer_request *request = (struct transfer_request *)data;
 	do {
-		ssize_t retval = write(request->local_fileno,
+		ssize_t retval = xwrite(request->local_fileno,
 				       (char *) ptr + posn, size - posn);
 		if (retval < 0)
 			return posn;
@@ -288,7 +288,7 @@ static void start_fetch_loose(struct transfer_request *request)
 	prevlocal = open(prevfile, O_RDONLY);
 	if (prevlocal != -1) {
 		do {
-			prev_read = read(prevlocal, prev_buf, PREV_BUF_SIZE);
+			prev_read = xread(prevlocal, prev_buf, PREV_BUF_SIZE);
 			if (prev_read>0) {
 				if (fwrite_sha1_file(prev_buf,
 						     1,
@@ -770,11 +770,14 @@ static void finish_request(struct transfer_request *request)
 				request->url, curl_errorstr);
 			remote->can_update_info_refs = 0;
 		} else {
+			off_t pack_size = ftell(request->local_stream);
+
 			fclose(request->local_stream);
 			request->local_stream = NULL;
 			if (!move_temp_to_file(request->tmpfile,
 					       request->filename)) {
 				target = (struct packed_git *)request->userData;
+				target->pack_size = pack_size;
 				lst = &remote->packs;
 				while (*lst != target)
 					lst = &((*lst)->next);
@@ -1238,10 +1241,8 @@ xml_start_tag(void *userData, const char *name, const char **atts)
 	strcat(ctx->name, ".");
 	strcat(ctx->name, c);
 
-	if (ctx->cdata) {
-		free(ctx->cdata);
-		ctx->cdata = NULL;
-	}
+	free(ctx->cdata);
+	ctx->cdata = NULL;
 
 	ctx->userFunc(ctx, 0);
 }
@@ -1268,8 +1269,7 @@ static void
 xml_cdata(void *userData, const XML_Char *s, int len)
 {
 	struct xml_ctx *ctx = (struct xml_ctx *)userData;
-	if (ctx->cdata)
-		free(ctx->cdata);
+	free(ctx->cdata);
 	ctx->cdata = xmalloc(len + 1);
 	strlcpy(ctx->cdata, s, len + 1);
 }
@@ -1518,9 +1518,7 @@ static void handle_remote_ls_ctx(struct xml_ctx *ctx, int tag_closed)
 			ls->dentry_flags |= IS_DIR;
 		}
 	} else if (!strcmp(ctx->name, DAV_PROPFIND_RESP)) {
-		if (ls->dentry_name) {
-			free(ls->dentry_name);
-		}
+		free(ls->dentry_name);
 		ls->dentry_name = NULL;
 		ls->dentry_flags = 0;
 	}
@@ -1544,7 +1542,7 @@ static void remote_ls(const char *path, int flags,
 	struct remote_ls_ctx ls;
 
 	ls.flags = flags;
-	ls.path = strdup(path);
+	ls.path = xstrdup(path);
 	ls.dentry_name = NULL;
 	ls.dentry_flags = 0;
 	ls.userData = userData;
@@ -1700,7 +1698,7 @@ static int locking_available(void)
 	return lock_flags;
 }
 
-struct object_list **add_one_object(struct object *obj, struct object_list **p)
+static struct object_list **add_one_object(struct object *obj, struct object_list **p)
 {
 	struct object_list *entry = xmalloc(sizeof(struct object_list));
 	entry->item = obj;
@@ -1743,7 +1741,7 @@ static struct object_list **process_tree(struct tree *tree,
 		die("bad tree object %s", sha1_to_hex(obj->sha1));
 
 	obj->flags |= SEEN;
-	name = strdup(name);
+	name = xstrdup(name);
 	p = add_one_object(obj, p);
 	me.up = path;
 	me.elem = name;
@@ -1869,7 +1867,7 @@ static int update_remote(unsigned char *sha1, struct remote_lock *lock)
 static struct ref *local_refs, **local_tail;
 static struct ref *remote_refs, **remote_tail;
 
-static int one_local_ref(const char *refname, const unsigned char *sha1)
+static int one_local_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct ref *ref;
 	int len = strlen(refname) + 1;
@@ -1918,7 +1916,7 @@ static void one_remote_ref(char *refname)
 static void get_local_heads(void)
 {
 	local_tail = &local_refs;
-	for_each_ref(one_local_ref);
+	for_each_ref(one_local_ref, NULL);
 }
 
 static void get_dav_remote_heads(void)
@@ -2472,7 +2470,7 @@ int main(int argc, char **argv)
 
 		/* Set up revision info for this refspec */
 		commit_argc = 3;
-		new_sha1_hex = strdup(sha1_to_hex(ref->new_sha1));
+		new_sha1_hex = xstrdup(sha1_to_hex(ref->new_sha1));
 		old_sha1_hex = NULL;
 		commit_argv[1] = "--objects";
 		commit_argv[2] = new_sha1_hex;

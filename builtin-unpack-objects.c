@@ -8,31 +8,27 @@
 #include "tag.h"
 #include "tree.h"
 
-#include <sys/time.h>
-
-static int dry_run, quiet;
-static const char unpack_usage[] = "git-unpack-objects [-n] [-q] < pack-file";
+static int dry_run, quiet, recover, has_errors;
+static const char unpack_usage[] = "git-unpack-objects [-n] [-q] [-r] < pack-file";
 
 /* We always read in 4kB chunks. */
 static unsigned char buffer[4096];
-static unsigned long offset, len, eof;
+static unsigned long offset, len, consumed_bytes;
 static SHA_CTX ctx;
 
 /*
  * Make sure at least "min" bytes are available in the buffer, and
  * return the pointer to the buffer.
  */
-static void * fill(int min)
+static void *fill(int min)
 {
 	if (min <= len)
 		return buffer + offset;
-	if (eof)
-		die("unable to fill input");
 	if (min > sizeof(buffer))
 		die("cannot fill %d bytes", min);
 	if (offset) {
 		SHA1_Update(&ctx, buffer, offset);
-		memcpy(buffer, buffer + offset, len);
+		memmove(buffer, buffer + offset, len);
 		offset = 0;
 	}
 	do {
@@ -53,6 +49,7 @@ static void use(int bytes)
 		die("used more bytes than were available");
 	len -= bytes;
 	offset += bytes;
+	consumed_bytes += bytes;
 }
 
 static void *get_data(unsigned long size)
@@ -73,8 +70,15 @@ static void *get_data(unsigned long size)
 		use(len - stream.avail_in);
 		if (stream.total_out == size && ret == Z_STREAM_END)
 			break;
-		if (ret != Z_OK)
-			die("inflate returned %d\n", ret);
+		if (ret != Z_OK) {
+			error("inflate returned %d\n", ret);
+			free(buf);
+			buf = NULL;
+			if (!recover)
+				exit(1);
+			has_errors = 1;
+			break;
+		}
 		stream.next_in = fill(1);
 		stream.avail_in = len;
 	}
@@ -84,37 +88,51 @@ static void *get_data(unsigned long size)
 
 struct delta_info {
 	unsigned char base_sha1[20];
+	unsigned long base_offset;
 	unsigned long size;
 	void *delta;
+	unsigned nr;
 	struct delta_info *next;
 };
 
 static struct delta_info *delta_list;
 
-static void add_delta_to_list(unsigned char *base_sha1, void *delta, unsigned long size)
+static void add_delta_to_list(unsigned nr, unsigned const char *base_sha1,
+			      unsigned long base_offset,
+			      void *delta, unsigned long size)
 {
 	struct delta_info *info = xmalloc(sizeof(*info));
 
 	hashcpy(info->base_sha1, base_sha1);
+	info->base_offset = base_offset;
 	info->size = size;
 	info->delta = delta;
+	info->nr = nr;
 	info->next = delta_list;
 	delta_list = info;
 }
 
-static void added_object(unsigned char *sha1, const char *type, void *data, unsigned long size);
-
-static void write_object(void *buf, unsigned long size, const char *type)
-{
+struct obj_info {
+	unsigned long offset;
 	unsigned char sha1[20];
-	if (write_sha1_file(buf, size, type, sha1) < 0)
+};
+
+static struct obj_info *obj_list;
+
+static void added_object(unsigned nr, const char *type, void *data,
+			 unsigned long size);
+
+static void write_object(unsigned nr, void *buf, unsigned long size,
+			 const char *type)
+{
+	if (write_sha1_file(buf, size, type, obj_list[nr].sha1) < 0)
 		die("failed to write object");
-	added_object(sha1, type, buf, size);
+	added_object(nr, type, buf, size);
 }
 
-static int resolve_delta(const char *type,
-	void *base, unsigned long base_size,
-	void *delta, unsigned long delta_size)
+static void resolve_delta(unsigned nr, const char *type,
+			  void *base, unsigned long base_size,
+			  void *delta, unsigned long delta_size)
 {
 	void *result;
 	unsigned long result_size;
@@ -125,21 +143,23 @@ static int resolve_delta(const char *type,
 	if (!result)
 		die("failed to apply delta");
 	free(delta);
-	write_object(result, result_size, type);
+	write_object(nr, result, result_size, type);
 	free(result);
-	return 0;
 }
 
-static void added_object(unsigned char *sha1, const char *type, void *data, unsigned long size)
+static void added_object(unsigned nr, const char *type, void *data,
+			 unsigned long size)
 {
 	struct delta_info **p = &delta_list;
 	struct delta_info *info;
 
 	while ((info = *p) != NULL) {
-		if (!hashcmp(info->base_sha1, sha1)) {
+		if (!hashcmp(info->base_sha1, obj_list[nr].sha1) ||
+		    info->base_offset == obj_list[nr].offset) {
 			*p = info->next;
 			p = &delta_list;
-			resolve_delta(type, data, size, info->delta, info->size);
+			resolve_delta(info->nr, type, data, size,
+				      info->delta, info->size);
 			free(info);
 			continue;
 		}
@@ -147,7 +167,8 @@ static void added_object(unsigned char *sha1, const char *type, void *data, unsi
 	}
 }
 
-static int unpack_non_delta_entry(enum object_type kind, unsigned long size)
+static void unpack_non_delta_entry(enum object_type kind, unsigned long size,
+				   unsigned nr)
 {
 	void *buf = get_data(size);
 	const char *type;
@@ -159,39 +180,92 @@ static int unpack_non_delta_entry(enum object_type kind, unsigned long size)
 	case OBJ_TAG:    type = tag_type; break;
 	default: die("bad type %d", kind);
 	}
-	if (!dry_run)
-		write_object(buf, size, type);
+	if (!dry_run && buf)
+		write_object(nr, buf, size, type);
 	free(buf);
-	return 0;
 }
 
-static int unpack_delta_entry(unsigned long delta_size)
+static void unpack_delta_entry(enum object_type kind, unsigned long delta_size,
+			       unsigned nr)
 {
 	void *delta_data, *base;
 	unsigned long base_size;
 	char type[20];
 	unsigned char base_sha1[20];
-	int result;
 
-	hashcpy(base_sha1, fill(20));
-	use(20);
+	if (kind == OBJ_REF_DELTA) {
+		hashcpy(base_sha1, fill(20));
+		use(20);
+		delta_data = get_data(delta_size);
+		if (dry_run || !delta_data) {
+			free(delta_data);
+			return;
+		}
+		if (!has_sha1_file(base_sha1)) {
+			hashcpy(obj_list[nr].sha1, null_sha1);
+			add_delta_to_list(nr, base_sha1, 0, delta_data, delta_size);
+			return;
+		}
+	} else {
+		unsigned base_found = 0;
+		unsigned char *pack, c;
+		unsigned long base_offset;
+		unsigned lo, mid, hi;
 
-	delta_data = get_data(delta_size);
-	if (dry_run) {
-		free(delta_data);
-		return 0;
+		pack = fill(1);
+		c = *pack;
+		use(1);
+		base_offset = c & 127;
+		while (c & 128) {
+			base_offset += 1;
+			if (!base_offset || base_offset & ~(~0UL >> 7))
+				die("offset value overflow for delta base object");
+			pack = fill(1);
+			c = *pack;
+			use(1);
+			base_offset = (base_offset << 7) + (c & 127);
+		}
+		base_offset = obj_list[nr].offset - base_offset;
+
+		delta_data = get_data(delta_size);
+		if (dry_run || !delta_data) {
+			free(delta_data);
+			return;
+		}
+		lo = 0;
+		hi = nr;
+		while (lo < hi) {
+			mid = (lo + hi)/2;
+			if (base_offset < obj_list[mid].offset) {
+				hi = mid;
+			} else if (base_offset > obj_list[mid].offset) {
+				lo = mid + 1;
+			} else {
+				hashcpy(base_sha1, obj_list[mid].sha1);
+				base_found = !is_null_sha1(base_sha1);
+				break;
+			}
+		}
+		if (!base_found) {
+			/* The delta base object is itself a delta that
+			   has not been	resolved yet. */
+			hashcpy(obj_list[nr].sha1, null_sha1);
+			add_delta_to_list(nr, null_sha1, base_offset, delta_data, delta_size);
+			return;
+		}
 	}
 
-	if (!has_sha1_file(base_sha1)) {
-		add_delta_to_list(base_sha1, delta_data, delta_size);
-		return 0;
-	}
 	base = read_sha1_file(base_sha1, type, &base_size);
-	if (!base)
-		die("failed to read delta-pack base object %s", sha1_to_hex(base_sha1));
-	result = resolve_delta(type, base, base_size, delta_data, delta_size);
+	if (!base) {
+		error("failed to read delta-pack base object %s",
+		      sha1_to_hex(base_sha1));
+		if (!recover)
+			exit(1);
+		has_errors = 1;
+		return;
+	}
+	resolve_delta(nr, type, base, base_size, delta_data, delta_size);
 	free(base);
-	return result;
 }
 
 static void unpack_one(unsigned nr, unsigned total)
@@ -201,6 +275,8 @@ static void unpack_one(unsigned nr, unsigned total)
 	unsigned long size;
 	enum object_type type;
 
+	obj_list[nr].offset = consumed_bytes;
+
 	pack = fill(1);
 	c = *pack;
 	use(1);
@@ -209,7 +285,7 @@ static void unpack_one(unsigned nr, unsigned total)
 	shift = 4;
 	while (c & 0x80) {
 		pack = fill(1);
-		c = *pack++;
+		c = *pack;
 		use(1);
 		size += (c & 0x7f) << shift;
 		shift += 7;
@@ -218,13 +294,14 @@ static void unpack_one(unsigned nr, unsigned total)
 		static unsigned long last_sec;
 		static unsigned last_percent;
 		struct timeval now;
-		unsigned percentage = (nr * 100) / total;
+		unsigned percentage = ((nr+1) * 100) / total;
 
 		gettimeofday(&now, NULL);
 		if (percentage != last_percent || now.tv_sec != last_sec) {
 			last_sec = now.tv_sec;
 			last_percent = percentage;
-			fprintf(stderr, "%4u%% (%u/%u) done\r", percentage, nr, total);
+			fprintf(stderr, "%4u%% (%u/%u) done\r",
+					percentage, (nr+1), total);
 		}
 	}
 	switch (type) {
@@ -232,13 +309,18 @@ static void unpack_one(unsigned nr, unsigned total)
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
-		unpack_non_delta_entry(type, size);
+		unpack_non_delta_entry(type, size, nr);
 		return;
-	case OBJ_DELTA:
-		unpack_delta_entry(size);
+	case OBJ_REF_DELTA:
+	case OBJ_OFS_DELTA:
+		unpack_delta_entry(type, size, nr);
 		return;
 	default:
-		die("bad object type %d", type);
+		error("bad object type %d", type);
+		has_errors = 1;
+		if (recover)
+			return;
+		exit(1);
 	}
 }
 
@@ -254,9 +336,10 @@ static void unpack_all(void)
 		die("unknown pack file version %d", ntohl(hdr->hdr_version));
 	fprintf(stderr, "Unpacking %d objects\n", nr_objects);
 
+	obj_list = xmalloc(nr_objects * sizeof(*obj_list));
 	use(sizeof(struct pack_header));
 	for (i = 0; i < nr_objects; i++)
-		unpack_one(i+1, nr_objects);
+		unpack_one(i, nr_objects);
 	if (delta_list)
 		die("unresolved deltas left after unpacking");
 }
@@ -280,6 +363,25 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "-q")) {
 				quiet = 1;
+				continue;
+			}
+			if (!strcmp(arg, "-r")) {
+				recover = 1;
+				continue;
+			}
+			if (!strncmp(arg, "--pack_header=", 14)) {
+				struct pack_header *hdr;
+				char *c;
+
+				hdr = (struct pack_header *)buffer;
+				hdr->hdr_signature = htonl(PACK_SIGNATURE);
+				hdr->hdr_version = htonl(strtoul(arg + 14, &c, 10));
+				if (*c != ',')
+					die("bad %s", arg);
+				hdr->hdr_entries = htonl(strtoul(c + 1, &c, 10));
+				if (*c)
+					die("bad %s", arg);
+				len = sizeof(*hdr);
 				continue;
 			}
 			usage(unpack_usage);
@@ -308,5 +410,5 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 	/* All done */
 	if (!quiet)
 		fprintf(stderr, "\n");
-	return 0;
+	return has_errors;
 }

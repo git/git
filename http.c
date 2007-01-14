@@ -23,6 +23,7 @@ char *ssl_capath = NULL;
 char *ssl_cainfo = NULL;
 long curl_low_speed_limit = -1;
 long curl_low_speed_time = -1;
+int curl_ftp_no_epsv = 0;
 
 struct curl_slist *pragma_header;
 
@@ -155,6 +156,11 @@ static int http_options(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp("http.noepsv", var)) {
+		curl_ftp_no_epsv = git_config_bool(var, value);
+		return 0;
+	}
+
 	/* Fall back on the default ones */
 	return git_default_config(var, value);
 }
@@ -195,6 +201,9 @@ static CURL* get_curl_handle(void)
 		curl_easy_setopt(result, CURLOPT_VERBOSE, 1);
 
 	curl_easy_setopt(result, CURLOPT_USERAGENT, GIT_USER_AGENT);
+
+	if (curl_ftp_no_epsv)
+		curl_easy_setopt(result, CURLOPT_FTP_USE_EPSV, 0);
 
 	return result;
 }
@@ -250,6 +259,9 @@ void http_init(void)
 	if (max_requests < 1)
 		max_requests = DEFAULT_MAX_REQUESTS;
 #endif
+
+	if (getenv("GIT_CURL_FTP_NO_EPSV"))
+		curl_ftp_no_epsv = 1;
 
 #ifndef NO_CURL_EASY_DUPHANDLE
 	curl_default = get_curl_handle();

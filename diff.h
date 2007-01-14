@@ -8,6 +8,7 @@
 
 struct rev_info;
 struct diff_options;
+struct diff_queue_struct;
 
 typedef void (*change_fn_t)(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
@@ -20,25 +21,33 @@ typedef void (*add_remove_fn_t)(struct diff_options *options,
 		    const unsigned char *sha1,
 		    const char *base, const char *path);
 
+typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
+		struct diff_options *options, void *data);
+
 #define DIFF_FORMAT_RAW		0x0001
 #define DIFF_FORMAT_DIFFSTAT	0x0002
-#define DIFF_FORMAT_SUMMARY	0x0004
-#define DIFF_FORMAT_PATCH	0x0008
+#define DIFF_FORMAT_NUMSTAT	0x0004
+#define DIFF_FORMAT_SUMMARY	0x0008
+#define DIFF_FORMAT_PATCH	0x0010
+#define DIFF_FORMAT_SHORTSTAT	0x0020
 
 /* These override all above */
-#define DIFF_FORMAT_NAME	0x0010
-#define DIFF_FORMAT_NAME_STATUS	0x0020
-#define DIFF_FORMAT_CHECKDIFF	0x0040
+#define DIFF_FORMAT_NAME	0x0100
+#define DIFF_FORMAT_NAME_STATUS	0x0200
+#define DIFF_FORMAT_CHECKDIFF	0x0400
 
 /* Same as output_format = 0 but we know that -s flag was given
  * and we should not give default value to output_format.
  */
-#define DIFF_FORMAT_NO_OUTPUT	0x0080
+#define DIFF_FORMAT_NO_OUTPUT	0x0800
+
+#define DIFF_FORMAT_CALLBACK	0x1000
 
 struct diff_options {
 	const char *filter;
 	const char *orderfile;
 	const char *pickaxe;
+	const char *single_follow;
 	unsigned recursive:1,
 		 tree_in_recursive:1,
 		 binary:1,
@@ -63,11 +72,16 @@ struct diff_options {
 	const char *stat_sep;
 	long xdl_opts;
 
+	int stat_width;
+	int stat_name_width;
+
 	int nr_paths;
 	const char **paths;
 	int *pathlens;
 	change_fn_t change;
 	add_remove_fn_t add_remove;
+	diff_format_fn_t format_callback;
+	void *format_callback_data;
 };
 
 enum color_diff {
@@ -78,6 +92,7 @@ enum color_diff {
 	DIFF_FILE_OLD = 4,
 	DIFF_FILE_NEW = 5,
 	DIFF_COMMIT = 6,
+	DIFF_WHITESPACE = 7,
 };
 const char *diff_get_color(int diff_use_color, enum color_diff ix);
 
@@ -89,6 +104,8 @@ extern int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 		     const char *base, struct diff_options *opt);
 extern int diff_tree_sha1(const unsigned char *old, const unsigned char *new,
 			  const char *base, struct diff_options *opt);
+extern int diff_root_tree_sha1(const unsigned char *new, const char *base,
+                               struct diff_options *opt);
 
 struct combine_diff_path {
 	struct combine_diff_path *next;
@@ -127,7 +144,9 @@ extern void diff_change(struct diff_options *,
 			const char *base, const char *path);
 
 extern void diff_unmerge(struct diff_options *,
-			 const char *path);
+			 const char *path,
+			 unsigned mode,
+			 const unsigned char *sha1);
 
 extern int diff_scoreopt_parse(const char *opt);
 
@@ -158,6 +177,7 @@ extern void diffcore_std_no_resolve(struct diff_options *);
 "  --patch-with-raw\n" \
 "                output both a patch and the diff-raw format.\n" \
 "  --stat        show diffstat instead of patch.\n" \
+"  --numstat     show numeric diffstat instead of patch.\n" \
 "  --patch-with-stat\n" \
 "                output a patch and prepend its diffstat.\n" \
 "  --name-only   show only names of changed files.\n" \

@@ -3,13 +3,16 @@
 #include "pkt-line.h"
 #include "commit.h"
 #include "tag.h"
+#include "exec_cmd.h"
+#include "sideband.h"
 
 static int keep_pack;
 static int quiet;
 static int verbose;
 static int fetch_all;
+static int depth;
 static const char fetch_pack_usage[] =
-"git-fetch-pack [--all] [-q] [-v] [-k] [--thin] [--exec=upload-pack] [host:]directory <refs>...";
+"git-fetch-pack [--all] [-q] [-v] [-k] [--thin] [--exec=upload-pack] [--depth=<n>] [host:]directory <refs>...";
 static const char *exec = "git-upload-pack";
 
 #define COMPLETE	(1U << 0)
@@ -42,7 +45,7 @@ static void rev_list_push(struct commit *commit, int mark)
 	}
 }
 
-static int rev_list_insert_ref(const char *path, const unsigned char *sha1)
+static int rev_list_insert_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *o = deref_tag(parse_object(sha1), path, 0);
 
@@ -143,7 +146,7 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 	unsigned in_vain = 0;
 	int got_continue = 0;
 
-	for_each_ref(rev_list_insert_ref);
+	for_each_ref(rev_list_insert_ref, NULL);
 
 	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
@@ -166,18 +169,51 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		}
 
 		if (!fetching)
-			packet_write(fd[1], "want %s%s%s%s\n",
+			packet_write(fd[1], "want %s%s%s%s%s%s\n",
 				     sha1_to_hex(remote),
 				     (multi_ack ? " multi_ack" : ""),
-				     (use_sideband ? " side-band" : ""),
-				     (use_thin_pack ? " thin-pack" : ""));
+				     (use_sideband == 2 ? " side-band-64k" : ""),
+				     (use_sideband == 1 ? " side-band" : ""),
+				     (use_thin_pack ? " thin-pack" : ""),
+				     " ofs-delta");
 		else
 			packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
 		fetching++;
 	}
+	if (is_repository_shallow())
+		write_shallow_commits(fd[1], 1);
+	if (depth > 0)
+		packet_write(fd[1], "deepen %d", depth);
 	packet_flush(fd[1]);
 	if (!fetching)
 		return 1;
+
+	if (depth > 0) {
+		char line[1024];
+		unsigned char sha1[20];
+		int len;
+
+		while ((len = packet_read_line(fd[0], line, sizeof(line)))) {
+			if (!strncmp("shallow ", line, 8)) {
+				if (get_sha1_hex(line + 8, sha1))
+					die("invalid shallow line: %s", line);
+				register_shallow(sha1);
+				continue;
+			}
+			if (!strncmp("unshallow ", line, 10)) {
+				if (get_sha1_hex(line + 10, sha1))
+					die("invalid unshallow line: %s", line);
+				if (!lookup_object(sha1))
+					die("object not found: %s", line);
+				/* make sure that it is parsed as shallow */
+				parse_object(sha1);
+				if (unregister_shallow(sha1))
+					die("no shallow found: %s", line);
+				continue;
+			}
+			die("expected shallow/unshallow, got %s", line);
+		}
+	}
 
 	flushes = 0;
 	retval = -1;
@@ -252,7 +288,7 @@ done:
 
 static struct commit_list *complete;
 
-static int mark_complete(const char *path, const unsigned char *sha1)
+static int mark_complete(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *o = parse_object(sha1);
 
@@ -305,7 +341,8 @@ static void filter_refs(struct ref **refs, int nr_match, char **match)
 		if (!memcmp(ref->name, "refs/", 5) &&
 		    check_ref_format(ref->name + 5))
 			; /* trash */
-		else if (fetch_all) {
+		else if (fetch_all &&
+			 (!depth || strncmp(ref->name, "refs/tags/", 10) )) {
 			*newtail = ref;
 			ref->next = NULL;
 			newtail = &ref->next;
@@ -364,9 +401,11 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 		}
 	}
 
-	for_each_ref(mark_complete);
-	if (cutoff)
-		mark_recent_complete_commits(cutoff);
+	if (!depth) {
+		for_each_ref(mark_complete, NULL);
+		if (cutoff)
+			mark_recent_complete_commits(cutoff);
+	}
 
 	/*
 	 * Mark all complete remote refs as common refs.
@@ -414,6 +453,103 @@ static int everything_local(struct ref **refs, int nr_match, char **match)
 	return retval;
 }
 
+static pid_t setup_sideband(int fd[2], int xd[2])
+{
+	pid_t side_pid;
+
+	if (!use_sideband) {
+		fd[0] = xd[0];
+		fd[1] = xd[1];
+		return 0;
+	}
+	/* xd[] is talking with upload-pack; subprocess reads from
+	 * xd[0], spits out band#2 to stderr, and feeds us band#1
+	 * through our fd[0].
+	 */
+	if (pipe(fd) < 0)
+		die("fetch-pack: unable to set up pipe");
+	side_pid = fork();
+	if (side_pid < 0)
+		die("fetch-pack: unable to fork off sideband demultiplexer");
+	if (!side_pid) {
+		/* subprocess */
+		close(fd[0]);
+		if (xd[0] != xd[1])
+			close(xd[1]);
+		if (recv_sideband("fetch-pack", xd[0], fd[1], 2))
+			exit(1);
+		exit(0);
+	}
+	close(xd[0]);
+	close(fd[1]);
+	fd[1] = xd[1];
+	return side_pid;
+}
+
+static int get_pack(int xd[2], const char **argv)
+{
+	int status;
+	pid_t pid, side_pid;
+	int fd[2];
+
+	side_pid = setup_sideband(fd, xd);
+	pid = fork();
+	if (pid < 0)
+		die("fetch-pack: unable to fork off %s", argv[0]);
+	if (!pid) {
+		dup2(fd[0], 0);
+		close(fd[0]);
+		close(fd[1]);
+		execv_git_cmd(argv);
+		die("%s exec failed", argv[0]);
+	}
+	close(fd[0]);
+	close(fd[1]);
+	while (waitpid(pid, &status, 0) < 0) {
+		if (errno != EINTR)
+			die("waiting for %s: %s", argv[0], strerror(errno));
+	}
+	if (WIFEXITED(status)) {
+		int code = WEXITSTATUS(status);
+		if (code)
+			die("%s died with error code %d", argv[0], code);
+		return 0;
+	}
+	if (WIFSIGNALED(status)) {
+		int sig = WTERMSIG(status);
+		die("%s died of signal %d", argv[0], sig);
+	}
+	die("%s died of unnatural causes %d", argv[0], status);
+}
+
+static int explode_rx_pack(int xd[2])
+{
+	const char *argv[3] = { "unpack-objects", quiet ? "-q" : NULL, NULL };
+	return get_pack(xd, argv);
+}
+
+static int keep_rx_pack(int xd[2])
+{
+	const char *argv[6];
+	char keep_arg[256];
+	int n = 0;
+
+	argv[n++] = "index-pack";
+	argv[n++] = "--stdin";
+	if (!quiet)
+		argv[n++] = "-v";
+	if (use_thin_pack)
+		argv[n++] = "--fix-thin";
+	if (keep_pack > 1) {
+		int s = sprintf(keep_arg, "--keep=fetch-pack %i on ", getpid());
+		if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
+			strcpy(keep_arg + s, "localhost");
+		argv[n++] = keep_arg;
+	}
+	argv[n] = NULL;
+	return get_pack(xd, argv);
+}
+
 static int fetch_pack(int fd[2], int nr_match, char **match)
 {
 	struct ref *ref;
@@ -421,12 +557,19 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 	int status;
 
 	get_remote_heads(fd[0], &ref, 0, NULL, 0);
+	if (is_repository_shallow() && !server_supports("shallow"))
+		die("Server does not support shallow clients");
 	if (server_supports("multi_ack")) {
 		if (verbose)
 			fprintf(stderr, "Server supports multi_ack\n");
 		multi_ack = 1;
 	}
-	if (server_supports("side-band")) {
+	if (server_supports("side-band-64k")) {
+		if (verbose)
+			fprintf(stderr, "Server supports side-band-64k\n");
+		use_sideband = 2;
+	}
+	else if (server_supports("side-band")) {
 		if (verbose)
 			fprintf(stderr, "Server supports side-band\n");
 		use_sideband = 1;
@@ -440,17 +583,13 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 		goto all_done;
 	}
 	if (find_common(fd, sha1, ref) < 0)
-		if (!keep_pack)
+		if (keep_pack != 1)
 			/* When cloning, it is not unusual to have
 			 * no common commit.
 			 */
 			fprintf(stderr, "warning: no common commits\n");
 
-	if (keep_pack)
-		status = receive_keep_pack(fd, "git-fetch-pack", quiet, use_sideband);
-	else
-		status = receive_unpack_pack(fd, "git-fetch-pack", quiet, use_sideband);
-
+	status = (keep_pack) ? keep_rx_pack(fd) : explode_rx_pack(fd);
 	if (status)
 		die("git-fetch-pack: fetch failed.");
 
@@ -463,12 +602,38 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 	return 0;
 }
 
+static int remove_duplicates(int nr_heads, char **heads)
+{
+	int src, dst;
+
+	for (src = dst = 0; src < nr_heads; src++) {
+		/* If heads[src] is different from any of
+		 * heads[0..dst], push it in.
+		 */
+		int i;
+		for (i = 0; i < dst; i++) {
+			if (!strcmp(heads[i], heads[src]))
+				break;
+		}
+		if (i < dst)
+			continue;
+		if (src != dst)
+			heads[dst] = heads[src];
+		dst++;
+	}
+	heads[dst] = 0;
+	return dst;
+}
+
+static struct lock_file lock;
+
 int main(int argc, char **argv)
 {
 	int i, ret, nr_heads;
 	char *dest = NULL, **heads;
 	int fd[2];
 	pid_t pid;
+	struct stat st;
 
 	setup_git_directory();
 
@@ -487,7 +652,7 @@ int main(int argc, char **argv)
 				continue;
 			}
 			if (!strcmp("--keep", arg) || !strcmp("-k", arg)) {
-				keep_pack = 1;
+				keep_pack++;
 				continue;
 			}
 			if (!strcmp("--thin", arg)) {
@@ -502,6 +667,12 @@ int main(int argc, char **argv)
 				verbose = 1;
 				continue;
 			}
+			if (!strncmp("--depth=", arg, 8)) {
+				depth = strtol(arg + 8, NULL, 0);
+				if (stat(git_path("shallow"), &st))
+					st.st_mtime = 0;
+				continue;
+			}
 			usage(fetch_pack_usage);
 		}
 		dest = arg;
@@ -511,15 +682,15 @@ int main(int argc, char **argv)
 	}
 	if (!dest)
 		usage(fetch_pack_usage);
-	if (keep_pack)
-		use_thin_pack = 0;
 	pid = git_connect(fd, dest, exec);
 	if (pid < 0)
 		return 1;
+	if (heads && nr_heads)
+		nr_heads = remove_duplicates(nr_heads, heads);
 	ret = fetch_pack(fd, nr_heads, heads);
 	close(fd[0]);
 	close(fd[1]);
-	finish_connect(pid);
+	ret |= finish_connect(pid);
 
 	if (!ret && nr_heads) {
 		/* If the heads to pull were given, we should have
@@ -534,5 +705,34 @@ int main(int argc, char **argv)
 			}
 	}
 
-	return ret;
+	if (!ret && depth > 0) {
+		struct cache_time mtime;
+		char *shallow = git_path("shallow");
+		int fd;
+
+		mtime.sec = st.st_mtime;
+#ifdef USE_NSEC
+		mtime.usec = st.st_mtim.usec;
+#endif
+		if (stat(shallow, &st)) {
+			if (mtime.sec)
+				die("shallow file was removed during fetch");
+		} else if (st.st_mtime != mtime.sec
+#ifdef USE_NSEC
+				|| st.st_mtim.usec != mtime.usec
+#endif
+			  )
+			die("shallow file was changed during fetch");
+
+		fd = hold_lock_file_for_update(&lock, shallow, 1);
+		if (!write_shallow_commits(fd, 0)) {
+			unlink(shallow);
+			rollback_lock_file(&lock);
+		} else {
+			close(fd);
+			commit_lock_file(&lock);
+		}
+	}
+
+	return !!ret;
 }

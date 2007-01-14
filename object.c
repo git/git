@@ -73,7 +73,7 @@ static void grow_object_hash(void)
 	int new_hash_size = obj_hash_size < 32 ? 32 : 2 * obj_hash_size;
 	struct object **new_hash;
 
-	new_hash = calloc(new_hash_size, sizeof(struct object *));
+	new_hash = xcalloc(new_hash_size, sizeof(struct object *));
 	for (i = 0; i < obj_hash_size; i++) {
 		struct object *obj = obj_hash[i];
 		if (!obj)
@@ -138,42 +138,56 @@ struct object *lookup_unknown_object(const unsigned char *sha1)
 	return obj;
 }
 
+struct object *parse_object_buffer(const unsigned char *sha1, const char *type, unsigned long size, void *buffer, int *eaten_p)
+{
+	struct object *obj;
+	int eaten = 0;
+
+	if (!strcmp(type, blob_type)) {
+		struct blob *blob = lookup_blob(sha1);
+		parse_blob_buffer(blob, buffer, size);
+		obj = &blob->object;
+	} else if (!strcmp(type, tree_type)) {
+		struct tree *tree = lookup_tree(sha1);
+		obj = &tree->object;
+		if (!tree->object.parsed) {
+			parse_tree_buffer(tree, buffer, size);
+			eaten = 1;
+		}
+	} else if (!strcmp(type, commit_type)) {
+		struct commit *commit = lookup_commit(sha1);
+		parse_commit_buffer(commit, buffer, size);
+		if (!commit->buffer) {
+			commit->buffer = buffer;
+			eaten = 1;
+		}
+		obj = &commit->object;
+	} else if (!strcmp(type, tag_type)) {
+		struct tag *tag = lookup_tag(sha1);
+		parse_tag_buffer(tag, buffer, size);
+		obj = &tag->object;
+	} else {
+		obj = NULL;
+	}
+	*eaten_p = eaten;
+	return obj;
+}
+
 struct object *parse_object(const unsigned char *sha1)
 {
 	unsigned long size;
 	char type[20];
+	int eaten;
 	void *buffer = read_sha1_file(sha1, type, &size);
+
 	if (buffer) {
 		struct object *obj;
 		if (check_sha1_signature(sha1, buffer, size, type) < 0)
 			printf("sha1 mismatch %s\n", sha1_to_hex(sha1));
-		if (!strcmp(type, blob_type)) {
-			struct blob *blob = lookup_blob(sha1);
-			parse_blob_buffer(blob, buffer, size);
-			obj = &blob->object;
-		} else if (!strcmp(type, tree_type)) {
-			struct tree *tree = lookup_tree(sha1);
-			obj = &tree->object;
-			if (!tree->object.parsed) {
-				parse_tree_buffer(tree, buffer, size);
-				buffer = NULL;
-			}
-		} else if (!strcmp(type, commit_type)) {
-			struct commit *commit = lookup_commit(sha1);
-			parse_commit_buffer(commit, buffer, size);
-			if (!commit->buffer) {
-				commit->buffer = buffer;
-				buffer = NULL;
-			}
-			obj = &commit->object;
-		} else if (!strcmp(type, tag_type)) {
-			struct tag *tag = lookup_tag(sha1);
-			parse_tag_buffer(tag, buffer, size);
-			obj = &tag->object;
-		} else {
-			obj = NULL;
-		}
-		free(buffer);
+
+		obj = parse_object_buffer(sha1, type, size, buffer, &eaten);
+		if (!eaten)
+			free(buffer);
 		return obj;
 	}
 	return NULL;

@@ -1,25 +1,28 @@
-#include <signal.h>
-#include <sys/wait.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/poll.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <syslog.h>
-#include "pkt-line.h"
 #include "cache.h"
+#include "pkt-line.h"
 #include "exec_cmd.h"
+#include "interpolate.h"
+
+#include <syslog.h>
+
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 256
+#endif
 
 static int log_syslog;
 static int verbose;
 static int reuseaddr;
 
 static const char daemon_usage[] =
-"git-daemon [--verbose] [--syslog] [--inetd | --port=n] [--export-all]\n"
+"git-daemon [--verbose] [--syslog] [--export-all]\n"
 "           [--timeout=n] [--init-timeout=n] [--strict-paths]\n"
 "           [--base-path=path] [--user-path | --user-path=path]\n"
-"           [--reuseaddr] [--detach] [--pid-file=file] [directory...]";
+"           [--interpolated-path=path]\n"
+"           [--reuseaddr] [--detach] [--pid-file=file]\n"
+"           [--[enable|disable|allow-override|forbid-override]=service]\n"
+"           [--inetd | [--listen=host_or_ipaddr] [--port=n]\n"
+"                      [--user=user [--group=group]]\n"
+"           [directory...]";
 
 /* List of acceptable pathname prefixes */
 static char **ok_paths;
@@ -30,6 +33,10 @@ static int export_all_trees;
 
 /* Take all paths relative to this one if non-NULL */
 static char *base_path;
+static char *interpolated_path;
+
+/* Flag indicating client sent extra args. */
+static int saw_extended_args;
 
 /* If defined, ~user notation is allowed and the string is inserted
  * after ~user/.  E.g. a request to git://host/~alice/frotz would
@@ -40,6 +47,27 @@ static const char *user_path;
 /* Timeout, and initial timeout */
 static unsigned int timeout;
 static unsigned int init_timeout;
+
+/*
+ * Static table for now.  Ugh.
+ * Feel free to make dynamic as needed.
+ */
+#define INTERP_SLOT_HOST	(0)
+#define INTERP_SLOT_CANON_HOST	(1)
+#define INTERP_SLOT_IP		(2)
+#define INTERP_SLOT_PORT	(3)
+#define INTERP_SLOT_DIR		(4)
+#define INTERP_SLOT_PERCENT	(5)
+
+static struct interp interp_table[] = {
+	{ "%H", 0},
+	{ "%CH", 0},
+	{ "%IP", 0},
+	{ "%P", 0},
+	{ "%D", 0},
+	{ "%%", 0},
+};
+
 
 static void logreport(int priority, const char *err, va_list params)
 {
@@ -74,7 +102,7 @@ static void logreport(int priority, const char *err, va_list params)
 	buf[buflen++] = '\n';
 	buf[buflen] = '\0';
 
-	write(2, buf, buflen);
+	write_in_full(2, buf, buflen);
 }
 
 static void logerror(const char *err, ...)
@@ -148,10 +176,14 @@ static int avoid_alias(char *p)
 	}
 }
 
-static char *path_ok(char *dir)
+static char *path_ok(struct interp *itable)
 {
 	static char rpath[PATH_MAX];
+	static char interp_path[PATH_MAX];
 	char *path;
+	char *dir;
+
+	dir = itable[INTERP_SLOT_DIR].value;
 
 	if (avoid_alias(dir)) {
 		logerror("'%s': aliased", dir);
@@ -180,16 +212,27 @@ static char *path_ok(char *dir)
 			dir = rpath;
 		}
 	}
+	else if (interpolated_path && saw_extended_args) {
+		if (*dir != '/') {
+			/* Allow only absolute */
+			logerror("'%s': Non-absolute path denied (interpolated-path active)", dir);
+			return NULL;
+		}
+
+		interpolate(interp_path, PATH_MAX, interpolated_path,
+			    interp_table, ARRAY_SIZE(interp_table));
+		loginfo("Interpolated dir '%s'", interp_path);
+
+		dir = interp_path;
+	}
 	else if (base_path) {
 		if (*dir != '/') {
 			/* Allow only absolute */
 			logerror("'%s': Non-absolute path denied (base-path active)", dir);
 			return NULL;
 		}
-		else {
-			snprintf(rpath, PATH_MAX, "%s%s", base_path, dir);
-			dir = rpath;
-		}
+		snprintf(rpath, PATH_MAX, "%s%s", base_path, dir);
+		dir = rpath;
 	}
 
 	path = enter_repo(dir, strict_paths);
@@ -229,15 +272,46 @@ static char *path_ok(char *dir)
 	return NULL;		/* Fallthrough. Deny by default */
 }
 
-static int upload(char *dir)
+typedef int (*daemon_service_fn)(void);
+struct daemon_service {
+	const char *name;
+	const char *config_name;
+	daemon_service_fn fn;
+	int enabled;
+	int overridable;
+};
+
+static struct daemon_service *service_looking_at;
+static int service_enabled;
+
+static int git_daemon_config(const char *var, const char *value)
 {
-	/* Timeout as string */
-	char timeout_buf[64];
+	if (!strncmp(var, "daemon.", 7) &&
+	    !strcmp(var + 7, service_looking_at->config_name)) {
+		service_enabled = git_config_bool(var, value);
+		return 0;
+	}
+
+	/* we are not interested in parsing any other configuration here */
+	return 0;
+}
+
+static int run_service(struct interp *itable, struct daemon_service *service)
+{
 	const char *path;
+	int enabled = service->enabled;
 
-	loginfo("Request for '%s'", dir);
+	loginfo("Request %s for '%s'",
+		service->name,
+		itable[INTERP_SLOT_DIR].value);
 
-	if (!(path = path_ok(dir)))
+	if (!enabled && !service->overridable) {
+		logerror("'%s': service not enabled.", service->name);
+		errno = EACCES;
+		return -1;
+	}
+
+	if (!(path = path_ok(itable)))
 		return -1;
 
 	/*
@@ -257,11 +331,33 @@ static int upload(char *dir)
 		return -1;
 	}
 
+	if (service->overridable) {
+		service_looking_at = service;
+		service_enabled = -1;
+		git_config(git_daemon_config);
+		if (0 <= service_enabled)
+			enabled = service_enabled;
+	}
+	if (!enabled) {
+		logerror("'%s': service not enabled for '%s'",
+			 service->name, path);
+		errno = EACCES;
+		return -1;
+	}
+
 	/*
 	 * We'll ignore SIGTERM from now on, we have a
 	 * good client.
 	 */
 	signal(SIGTERM, SIG_IGN);
+
+	return service->fn();
+}
+
+static int upload_pack(void)
+{
+	/* Timeout as string */
+	char timeout_buf[64];
 
 	snprintf(timeout_buf, sizeof timeout_buf, "--timeout=%u", timeout);
 
@@ -270,10 +366,143 @@ static int upload(char *dir)
 	return -1;
 }
 
+static int upload_archive(void)
+{
+	execl_git_cmd("upload-archive", ".", NULL);
+	return -1;
+}
+
+static struct daemon_service daemon_service[] = {
+	{ "upload-archive", "uploadarch", upload_archive, 0, 1 },
+	{ "upload-pack", "uploadpack", upload_pack, 1, 1 },
+};
+
+static void enable_service(const char *name, int ena) {
+	int i;
+	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
+		if (!strcmp(daemon_service[i].name, name)) {
+			daemon_service[i].enabled = ena;
+			return;
+		}
+	}
+	die("No such service %s", name);
+}
+
+static void make_service_overridable(const char *name, int ena) {
+	int i;
+	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
+		if (!strcmp(daemon_service[i].name, name)) {
+			daemon_service[i].overridable = ena;
+			return;
+		}
+	}
+	die("No such service %s", name);
+}
+
+/*
+ * Separate the "extra args" information as supplied by the client connection.
+ * Any resulting data is squirrelled away in the given interpolation table.
+ */
+static void parse_extra_args(struct interp *table, char *extra_args, int buflen)
+{
+	char *val;
+	int vallen;
+	char *end = extra_args + buflen;
+
+	while (extra_args < end && *extra_args) {
+		saw_extended_args = 1;
+		if (strncasecmp("host=", extra_args, 5) == 0) {
+			val = extra_args + 5;
+			vallen = strlen(val) + 1;
+			if (*val) {
+				/* Split <host>:<port> at colon. */
+				char *host = val;
+				char *port = strrchr(host, ':');
+				if (port) {
+					*port = 0;
+					port++;
+					interp_set_entry(table, INTERP_SLOT_PORT, port);
+				}
+				interp_set_entry(table, INTERP_SLOT_HOST, host);
+			}
+
+			/* On to the next one */
+			extra_args = val + vallen;
+		}
+	}
+}
+
+void fill_in_extra_table_entries(struct interp *itable)
+{
+	char *hp;
+
+	/*
+	 * Replace literal host with lowercase-ized hostname.
+	 */
+	hp = interp_table[INTERP_SLOT_HOST].value;
+	if (!hp)
+		return;
+	for ( ; *hp; hp++)
+		*hp = tolower(*hp);
+
+	/*
+	 * Locate canonical hostname and its IP address.
+	 */
+#ifndef NO_IPV6
+	{
+		struct addrinfo hints;
+		struct addrinfo *ai, *ai0;
+		int gai;
+		static char addrbuf[HOST_NAME_MAX + 1];
+
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_flags = AI_CANONNAME;
+
+		gai = getaddrinfo(interp_table[INTERP_SLOT_HOST].value, 0, &hints, &ai0);
+		if (!gai) {
+			for (ai = ai0; ai; ai = ai->ai_next) {
+				struct sockaddr_in *sin_addr = (void *)ai->ai_addr;
+
+				inet_ntop(AF_INET, &sin_addr->sin_addr,
+					  addrbuf, sizeof(addrbuf));
+				interp_set_entry(interp_table,
+						 INTERP_SLOT_CANON_HOST, ai->ai_canonname);
+				interp_set_entry(interp_table,
+						 INTERP_SLOT_IP, addrbuf);
+				break;
+			}
+			freeaddrinfo(ai0);
+		}
+	}
+#else
+	{
+		struct hostent *hent;
+		struct sockaddr_in sa;
+		char **ap;
+		static char addrbuf[HOST_NAME_MAX + 1];
+
+		hent = gethostbyname(interp_table[INTERP_SLOT_HOST].value);
+
+		ap = hent->h_addr_list;
+		memset(&sa, 0, sizeof sa);
+		sa.sin_family = hent->h_addrtype;
+		sa.sin_port = htons(0);
+		memcpy(&sa.sin_addr, *ap, hent->h_length);
+
+		inet_ntop(hent->h_addrtype, &sa.sin_addr,
+			  addrbuf, sizeof(addrbuf));
+
+		interp_set_entry(interp_table, INTERP_SLOT_CANON_HOST, hent->h_name);
+		interp_set_entry(interp_table, INTERP_SLOT_IP, addrbuf);
+	}
+#endif
+}
+
+
 static int execute(struct sockaddr *addr)
 {
 	static char line[1000];
-	int pktlen, len;
+	int pktlen, len, i;
 
 	if (addr) {
 		char addrbuf[256] = "";
@@ -307,11 +536,37 @@ static int execute(struct sockaddr *addr)
 		loginfo("Extended attributes (%d bytes) exist <%.*s>",
 			(int) pktlen - len,
 			(int) pktlen - len, line + len + 1);
-	if (len && line[len-1] == '\n')
+	if (len && line[len-1] == '\n') {
 		line[--len] = 0;
+		pktlen--;
+	}
 
-	if (!strncmp("git-upload-pack ", line, 16))
-		return upload(line+16);
+	/*
+	 * Initialize the path interpolation table for this connection.
+	 */
+	interp_clear_table(interp_table, ARRAY_SIZE(interp_table));
+	interp_set_entry(interp_table, INTERP_SLOT_PERCENT, "%");
+
+	if (len != pktlen) {
+	    parse_extra_args(interp_table, line + len + 1, pktlen - len - 1);
+	    fill_in_extra_table_entries(interp_table);
+	}
+
+	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
+		struct daemon_service *s = &(daemon_service[i]);
+		int namelen = strlen(s->name);
+		if (!strncmp("git-", line, 4) &&
+		    !strncmp(s->name, line + 4, namelen) &&
+		    line[namelen + 4] == ' ') {
+			/*
+			 * Note: The directory here is probably context sensitive,
+			 * and might depend on the actual service being performed.
+			 */
+			interp_set_entry(interp_table,
+					 INTERP_SLOT_DIR, line + namelen + 5);
+			return run_service(interp_table, s);
+		}
+	}
 
 	logerror("Protocol error: '%s'", line);
 	return -1;
@@ -504,29 +759,27 @@ static int set_reuse_addr(int sockfd)
 
 #ifndef NO_IPV6
 
-static int socksetup(int port, int **socklist_p)
+static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 {
 	int socknum = 0, *socklist = NULL;
 	int maxfd = -1;
 	char pbuf[NI_MAXSERV];
-
 	struct addrinfo hints, *ai0, *ai;
 	int gai;
 
-	sprintf(pbuf, "%d", port);
+	sprintf(pbuf, "%d", listen_port);
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 	hints.ai_flags = AI_PASSIVE;
 
-	gai = getaddrinfo(NULL, pbuf, &hints, &ai0);
+	gai = getaddrinfo(listen_addr, pbuf, &hints, &ai0);
 	if (gai)
 		die("getaddrinfo() failed: %s\n", gai_strerror(gai));
 
 	for (ai = ai0; ai; ai = ai->ai_next) {
 		int sockfd;
-		int *newlist;
 
 		sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (sockfd < 0)
@@ -560,11 +813,7 @@ static int socksetup(int port, int **socklist_p)
 			continue;	/* not fatal */
 		}
 
-		newlist = realloc(socklist, sizeof(int) * (socknum + 1));
-		if (!newlist)
-			die("memory allocation failed: %s", strerror(errno));
-
-		socklist = newlist;
+		socklist = xrealloc(socklist, sizeof(int) * (socknum + 1));
 		socklist[socknum++] = sockfd;
 
 		if (maxfd < sockfd)
@@ -579,19 +828,26 @@ static int socksetup(int port, int **socklist_p)
 
 #else /* NO_IPV6 */
 
-static int socksetup(int port, int **socklist_p)
+static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 {
 	struct sockaddr_in sin;
 	int sockfd;
 
+	memset(&sin, 0, sizeof sin);
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(listen_port);
+
+	if (listen_addr) {
+		/* Well, host better be an IP address here. */
+		if (inet_pton(AF_INET, listen_addr, &sin.sin_addr.s_addr) <= 0)
+			return 0;
+	} else {
+		sin.sin_addr.s_addr = htonl(INADDR_ANY);
+	}
+
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd < 0)
 		return 0;
-
-	memset(&sin, 0, sizeof sin);
-	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = htonl(INADDR_ANY);
-	sin.sin_port = htons(port);
 
 	if (set_reuse_addr(sockfd)) {
 		close(sockfd);
@@ -701,23 +957,33 @@ static void store_pid(const char *path)
 	fclose(f);
 }
 
-static int serve(int port)
+static int serve(char *listen_addr, int listen_port, struct passwd *pass, gid_t gid)
 {
 	int socknum, *socklist;
 
-	socknum = socksetup(port, &socklist);
+	socknum = socksetup(listen_addr, listen_port, &socklist);
 	if (socknum == 0)
-		die("unable to allocate any listen sockets on port %u", port);
+		die("unable to allocate any listen sockets on host %s port %u",
+		    listen_addr, listen_port);
+
+	if (pass && gid &&
+	    (initgroups(pass->pw_name, gid) || setgid (gid) ||
+	     setuid(pass->pw_uid)))
+		die("cannot drop privileges");
 
 	return service_loop(socknum, socklist);
 }
 
 int main(int argc, char **argv)
 {
-	int port = DEFAULT_GIT_PORT;
+	int listen_port = 0;
+	char *listen_addr = NULL;
 	int inetd_mode = 0;
-	const char *pid_file = NULL;
+	const char *pid_file = NULL, *user_name = NULL, *group_name = NULL;
 	int detach = 0;
+	struct passwd *pass = NULL;
+	struct group *group;
+	gid_t gid = 0;
 	int i;
 
 	/* Without this we cannot rely on waitpid() to tell
@@ -728,12 +994,20 @@ int main(int argc, char **argv)
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
 
+		if (!strncmp(arg, "--listen=", 9)) {
+		    char *p = arg + 9;
+		    char *ph = listen_addr = xmalloc(strlen(arg + 9) + 1);
+		    while (*p)
+			*ph++ = tolower(*p++);
+		    *ph = 0;
+		    continue;
+		}
 		if (!strncmp(arg, "--port=", 7)) {
 			char *end;
 			unsigned long n;
 			n = strtoul(arg+7, &end, 0);
 			if (arg[7] && !*end) {
-				port = n;
+				listen_port = n;
 				continue;
 			}
 		}
@@ -770,6 +1044,10 @@ int main(int argc, char **argv)
 			base_path = arg+12;
 			continue;
 		}
+		if (!strncmp(arg, "--interpolated-path=", 20)) {
+			interpolated_path = arg+20;
+			continue;
+		}
 		if (!strcmp(arg, "--reuseaddr")) {
 			reuseaddr = 1;
 			continue;
@@ -791,6 +1069,30 @@ int main(int argc, char **argv)
 			log_syslog = 1;
 			continue;
 		}
+		if (!strncmp(arg, "--user=", 7)) {
+			user_name = arg + 7;
+			continue;
+		}
+		if (!strncmp(arg, "--group=", 8)) {
+			group_name = arg + 8;
+			continue;
+		}
+		if (!strncmp(arg, "--enable=", 9)) {
+			enable_service(arg + 9, 1);
+			continue;
+		}
+		if (!strncmp(arg, "--disable=", 10)) {
+			enable_service(arg + 10, 0);
+			continue;
+		}
+		if (!strncmp(arg, "--allow-override=", 17)) {
+			make_service_overridable(arg + 17, 1);
+			continue;
+		}
+		if (!strncmp(arg, "--forbid-override=", 18)) {
+			make_service_overridable(arg + 18, 0);
+			continue;
+		}
 		if (!strcmp(arg, "--")) {
 			ok_paths = &argv[i+1];
 			break;
@@ -800,6 +1102,33 @@ int main(int argc, char **argv)
 		}
 
 		usage(daemon_usage);
+	}
+
+	if (inetd_mode && (group_name || user_name))
+		die("--user and --group are incompatible with --inetd");
+
+	if (inetd_mode && (listen_port || listen_addr))
+		die("--listen= and --port= are incompatible with --inetd");
+	else if (listen_port == 0)
+		listen_port = DEFAULT_GIT_PORT;
+
+	if (group_name && !user_name)
+		die("--group supplied without --user");
+
+	if (user_name) {
+		pass = getpwnam(user_name);
+		if (!pass)
+			die("user not found - %s", user_name);
+
+		if (!group_name)
+			gid = pass->pw_gid;
+		else {
+			group = getgrnam(group_name);
+			if (!group)
+				die("group not found - %s", group_name);
+
+			gid = group->gr_gid;
+		}
 	}
 
 	if (log_syslog) {
@@ -831,5 +1160,5 @@ int main(int argc, char **argv)
 	if (pid_file)
 		store_pid(pid_file);
 
-	return serve(port);
+	return serve(listen_addr, listen_port, pass, gid);
 }

@@ -1,31 +1,64 @@
 #!/bin/sh
-
-USAGE='[--mixed | --soft | --hard]  [<commit-ish>]'
+#
+# Copyright (c) 2005, 2006 Linus Torvalds and Junio C Hamano
+#
+USAGE='[--mixed | --soft | --hard]  [<commit-ish>] [ [--] <paths>...]'
+SUBDIRECTORY_OK=Yes
 . git-sh-setup
+set_reflog_action "reset $*"
+require_work_tree
 
-tmp=${GIT_DIR}/reset.$$
-trap 'rm -f $tmp-*' 0 1 2 3 15
+update= reset_type=--mixed
+unset rev
 
-update=
-reset_type=--mixed
-case "$1" in
---mixed | --soft | --hard)
-	reset_type="$1"
+while case $# in 0) break ;; esac
+do
+	case "$1" in
+	--mixed | --soft | --hard)
+		reset_type="$1"
+		;;
+	--)
+		break
+		;;
+	-*)
+		usage
+		;;
+	*)
+		rev=$(git-rev-parse --verify "$1") || exit
+		shift
+		break
+		;;
+	esac
 	shift
-	;;
--*)
-        usage ;;
-esac
+done
 
-case $# in
-0) rev=HEAD ;;
-1) rev=$(git-rev-parse --verify "$1") || exit ;;
-*) usage ;;
-esac
+: ${rev=HEAD}
 rev=$(git-rev-parse --verify $rev^0) || exit
 
-# We need to remember the set of paths that _could_ be left
-# behind before a hard reset, so that we can remove them.
+# Skip -- in "git reset HEAD -- foo" and "git reset -- foo".
+case "$1" in --) shift ;; esac
+
+# git reset --mixed tree [--] paths... can be used to
+# load chosen paths from the tree into the index without
+# affecting the working tree nor HEAD.
+if test $# != 0
+then
+	test "$reset_type" == "--mixed" ||
+		die "Cannot do partial $reset_type reset."
+
+	git-diff-index --cached $rev -- "$@" |
+	sed -e 's/^:\([0-7][0-7]*\) [0-7][0-7]* \([0-9a-f][0-9a-f]*\) [0-9a-f][0-9a-f]* [A-Z]	\(.*\)$/\1 \2	\3/' |
+	git update-index --add --remove --index-info || exit
+	git update-index --refresh
+	exit
+fi
+
+TOP=$(git-rev-parse --show-cdup)
+if test ! -z "$TOP"
+then
+	cd "$TOP"
+fi
+
 if test "$reset_type" = "--hard"
 then
 	update=-u
@@ -52,12 +85,17 @@ then
 else
 	rm -f "$GIT_DIR/ORIG_HEAD"
 fi
-git-update-ref -m "reset $reset_type $*" HEAD "$rev"
+git-update-ref -m "$GIT_REFLOG_ACTION" HEAD "$rev"
 update_ref_status=$?
 
 case "$reset_type" in
 --hard )
-	;; # Nothing else to do
+	test $update_ref_status = 0 && {
+		echo -n "HEAD is now at "
+		GIT_PAGER= git log --max-count=1 --pretty=oneline \
+			--abbrev-commit HEAD
+	}
+	;;
 --soft )
 	;; # Nothing else to do
 --mixed )
@@ -66,6 +104,7 @@ case "$reset_type" in
 	;;
 esac
 
-rm -f "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/rr-cache/MERGE_RR" "$GIT_DIR/SQUASH_MSG"
+rm -f "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/rr-cache/MERGE_RR" \
+	"$GIT_DIR/SQUASH_MSG" "$GIT_DIR/MERGE_MSG"
 
 exit $update_ref_status

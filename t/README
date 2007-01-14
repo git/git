@@ -18,7 +18,7 @@ The easiest way to run tests is to say "make".  This runs all
 the tests.
 
     *** t0000-basic.sh ***
-    *   ok 1: .git/objects should be empty after git-init-db in an empty repo.
+    *   ok 1: .git/objects should be empty after git-init in an empty repo.
     *   ok 2: .git/objects should have 256 subdirectories.
     *   ok 3: git-update-index without --add should fail adding.
     ...
@@ -74,6 +74,8 @@ First digit tells the family:
 	5 - the pull and exporting commands
 	6 - the revision tree commands (even e.g. merge-base)
 	7 - the porcelainish commands concerning the working tree
+	8 - the porcelainish commands concerning forensics
+	9 - the git tools
 
 Second digit tells the particular command we are testing.
 

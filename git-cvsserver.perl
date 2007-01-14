@@ -17,6 +17,7 @@
 
 use strict;
 use warnings;
+use bytes;
 
 use Fcntl;
 use File::Temp qw/tempdir tempfile/;
@@ -275,7 +276,7 @@ sub req_Directory
     $state->{directory} = "" if ( $state->{directory} eq "." );
     $state->{directory} .= "/" if ( $state->{directory} =~ /\S/ );
 
-    if ( not defined($state->{prependdir}) and $state->{localdir} eq "." and $state->{path} =~ /\S/ )
+    if ( (not defined($state->{prependdir}) or $state->{prependdir} eq '') and $state->{localdir} eq "." and $state->{path} =~ /\S/ )
     {
         $log->info("Setting prepend to '$state->{path}'");
         $state->{prependdir} = $state->{path};
@@ -805,7 +806,14 @@ sub req_update
             $meta = $updater->getmeta($filename);
         }
 
-        next unless ( $meta->{revision} );
+	if ( ! defined $meta )
+	{
+	    $meta = {
+	        name => $filename,
+	        revision => 0,
+	        filehash => 'added'
+	    };
+	}
 
         my $oldmeta = $meta;
 
@@ -835,7 +843,7 @@ sub req_update
              and not exists ( $state->{opt}{C} ) )
         {
             $log->info("Tell the client the file is modified");
-            print "MT text U\n";
+            print "MT text M \n";
             print "MT fname $filename\n";
             print "MT newline\n";
             next;
@@ -855,15 +863,36 @@ sub req_update
 	    }
         }
         elsif ( not defined ( $state->{entries}{$filename}{modified_hash} )
-		or $state->{entries}{$filename}{modified_hash} eq $oldmeta->{filehash} )
+		or $state->{entries}{$filename}{modified_hash} eq $oldmeta->{filehash}
+		or $meta->{filehash} eq 'added' )
         {
-            $log->info("Updating '$filename'");
-            # normal update, just send the new revision (either U=Update, or A=Add, or R=Remove)
-            print "MT +updated\n";
-            print "MT text U\n";
-            print "MT fname $filename\n";
-            print "MT newline\n";
-            print "MT -updated\n";
+            # normal update, just send the new revision (either U=Update,
+            # or A=Add, or R=Remove)
+	    if ( defined($wrev) && $wrev < 0 )
+	    {
+	        $log->info("Tell the client the file is scheduled for removal");
+		print "MT text R \n";
+                print "MT fname $filename\n";
+                print "MT newline\n";
+		next;
+	    }
+	    elsif ( !defined($wrev) || $wrev == 0 )
+	    {
+	        $log->info("Tell the client the file will be added");
+		print "MT text A \n";
+                print "MT fname $filename\n";
+                print "MT newline\n";
+		next;
+
+	    }
+	    else {
+                $log->info("Updating '$filename' $wrev");
+                print "MT +updated\n";
+                print "MT text U \n";
+                print "MT fname $filename\n";
+                print "MT newline\n";
+		print "MT -updated\n";
+	    }
 
             my ( $filepart, $dirpart ) = filenamesplit($filename,1);
 
@@ -917,7 +946,7 @@ sub req_update
 
             $log->debug("Temporary directory for merge is $dir");
 
-            my $return = system("merge", $file_local, $file_old, $file_new);
+            my $return = system("git", "merge-file", $file_local, $file_old, $file_new);
             $return >>= 8;
 
             if ( $return == 0 )
@@ -1152,12 +1181,15 @@ sub req_ci
         $filename = filecleanup($filename);
 
         my $meta = $updater->getmeta($filename);
+	unless (defined $meta->{revision}) {
+	  $meta->{revision} = 1;
+	}
 
         my ( $filepart, $dirpart ) = filenamesplit($filename, 1);
 
         $log->debug("Checked-in $dirpart : $filename");
 
-        if ( $meta->{filehash} eq "deleted" )
+        if ( defined $meta->{filehash} && $meta->{filehash} eq "deleted" )
         {
             print "Remove-entry $dirpart\n";
             print "$filename\n";
@@ -1709,6 +1741,17 @@ sub argsfromdir
 
     return if ( scalar ( @{$state->{args}} ) > 1 );
 
+    my @gethead = @{$updater->gethead};
+
+    # push added files
+    foreach my $file (keys %{$state->{entries}}) {
+	if ( exists $state->{entries}{$file}{revision} &&
+		$state->{entries}{$file}{revision} == 0 )
+	{
+	    push @gethead, { name => $file, filehash => 'added' };
+	}
+    }
+
     if ( scalar(@{$state->{args}}) == 1 )
     {
         my $arg = $state->{args}[0];
@@ -1716,7 +1759,7 @@ sub argsfromdir
 
         $log->info("Only one arg specified, checking for directory expansion on '$arg'");
 
-        foreach my $file ( @{$updater->gethead} )
+        foreach my $file ( @gethead )
         {
             next if ( $file->{filehash} eq "deleted" and not defined ( $state->{entries}{$file->{name}} ) );
             next unless ( $file->{name} =~ /^$arg\// or $file->{name} eq $arg  );
@@ -1729,7 +1772,7 @@ sub argsfromdir
 
         $state->{args} = [];
 
-        foreach my $file ( @{$updater->gethead} )
+        foreach my $file ( @gethead )
         {
             next if ( $file->{filehash} eq "deleted" and not defined ( $state->{entries}{$file->{name}} ) );
             next unless ( $file->{name} =~ s/^$state->{prependdir}// );
@@ -2079,9 +2122,17 @@ sub new
                 mode       TEXT NOT NULL
             )
         ");
+        $self->{dbh}->do("
+            CREATE INDEX revision_ix1
+            ON revision (name,revision)
+        ");
+        $self->{dbh}->do("
+            CREATE INDEX revision_ix2
+            ON revision (name,commithash)
+        ");
     }
 
-    # Construct the revision table if required
+    # Construct the head table if required
     unless ( $self->{tables}{head} )
     {
         $self->{dbh}->do("
@@ -2094,6 +2145,10 @@ sub new
                 modified   TEXT NOT NULL,
                 mode       TEXT NOT NULL
             )
+        ");
+        $self->{dbh}->do("
+            CREATE INDEX head_ix1
+            ON head (name)
         ");
     }
 
@@ -2132,7 +2187,10 @@ sub update
     # first lets get the commit list
     $ENV{GIT_DIR} = $self->{git_path};
 
-    my $commitinfo = `git-cat-file commit $self->{module} 2>&1`;
+    my $commitsha1 = `git rev-parse $self->{module}`;
+    chomp $commitsha1;
+
+    my $commitinfo = `git cat-file commit $self->{module} 2>&1`;
     unless ( $commitinfo =~ /tree\s+[a-zA-Z0-9]{40}/ )
     {
         die("Invalid module '$self->{module}'");
@@ -2141,6 +2199,10 @@ sub update
 
     my $git_log;
     my $lastcommit = $self->_get_prop("last_commit");
+
+    if (defined $lastcommit && $lastcommit eq $commitsha1) { # up-to-date
+         return 1;
+    }
 
     # Start exclusive lock here...
     $self->{dbh}->begin_work() or die "Cannot lock database for BEGIN";
@@ -2292,67 +2354,72 @@ sub update
 
         if ( defined ( $lastpicked ) )
         {
-            my $filepipe = open(FILELIST, '-|', 'git-diff-tree', '-r', $lastpicked, $commit->{hash}) or die("Cannot call git-diff-tree : $!");
+            my $filepipe = open(FILELIST, '-|', 'git-diff-tree', '-z', '-r', $lastpicked, $commit->{hash}) or die("Cannot call git-diff-tree : $!");
+	    local ($/) = "\0";
             while ( <FILELIST> )
             {
-                unless ( /^:\d{6}\s+\d{3}(\d)\d{2}\s+[a-zA-Z0-9]{40}\s+([a-zA-Z0-9]{40})\s+(\w)\s+(.*)$/o )
+		chomp;
+                unless ( /^:\d{6}\s+\d{3}(\d)\d{2}\s+[a-zA-Z0-9]{40}\s+([a-zA-Z0-9]{40})\s+(\w)$/o )
                 {
                     die("Couldn't process git-diff-tree line : $_");
                 }
+		my ($mode, $hash, $change) = ($1, $2, $3);
+		my $name = <FILELIST>;
+		chomp($name);
 
-                # $log->debug("File mode=$1, hash=$2, change=$3, name=$4");
+                # $log->debug("File mode=$mode, hash=$hash, change=$change, name=$name");
 
                 my $git_perms = "";
-                $git_perms .= "r" if ( $1 & 4 );
-                $git_perms .= "w" if ( $1 & 2 );
-                $git_perms .= "x" if ( $1 & 1 );
+                $git_perms .= "r" if ( $mode & 4 );
+                $git_perms .= "w" if ( $mode & 2 );
+                $git_perms .= "x" if ( $mode & 1 );
                 $git_perms = "rw" if ( $git_perms eq "" );
 
-                if ( $3 eq "D" )
+                if ( $change eq "D" )
                 {
-                    #$log->debug("DELETE   $4");
-                    $head->{$4} = {
-                        name => $4,
-                        revision => $head->{$4}{revision} + 1,
+                    #$log->debug("DELETE   $name");
+                    $head->{$name} = {
+                        name => $name,
+                        revision => $head->{$name}{revision} + 1,
                         filehash => "deleted",
                         commithash => $commit->{hash},
                         modified => $commit->{date},
                         author => $commit->{author},
                         mode => $git_perms,
                     };
-                    $self->insert_rev($4, $head->{$4}{revision}, $2, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
                 }
-                elsif ( $3 eq "M" )
+                elsif ( $change eq "M" )
                 {
-                    #$log->debug("MODIFIED $4");
-                    $head->{$4} = {
-                        name => $4,
-                        revision => $head->{$4}{revision} + 1,
-                        filehash => $2,
+                    #$log->debug("MODIFIED $name");
+                    $head->{$name} = {
+                        name => $name,
+                        revision => $head->{$name}{revision} + 1,
+                        filehash => $hash,
                         commithash => $commit->{hash},
                         modified => $commit->{date},
                         author => $commit->{author},
                         mode => $git_perms,
                     };
-                    $self->insert_rev($4, $head->{$4}{revision}, $2, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
                 }
-                elsif ( $3 eq "A" )
+                elsif ( $change eq "A" )
                 {
-                    #$log->debug("ADDED    $4");
-                    $head->{$4} = {
-                        name => $4,
+                    #$log->debug("ADDED    $name");
+                    $head->{$name} = {
+                        name => $name,
                         revision => 1,
-                        filehash => $2,
+                        filehash => $hash,
                         commithash => $commit->{hash},
                         modified => $commit->{date},
                         author => $commit->{author},
                         mode => $git_perms,
                     };
-                    $self->insert_rev($4, $head->{$4}{revision}, $2, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $commit->{date}, $commit->{author}, $git_perms);
                 }
                 else
                 {
-                    $log->warn("UNKNOWN FILE CHANGE mode=$1, hash=$2, change=$3, name=$4");
+                    $log->warn("UNKNOWN FILE CHANGE mode=$mode, hash=$hash, change=$change, name=$name");
                     die;
                 }
             }
@@ -2361,10 +2428,12 @@ sub update
             # this is used to detect files removed from the repo
             my $seen_files = {};
 
-            my $filepipe = open(FILELIST, '-|', 'git-ls-tree', '-r', $commit->{hash}) or die("Cannot call git-ls-tree : $!");
+            my $filepipe = open(FILELIST, '-|', 'git-ls-tree', '-z', '-r', $commit->{hash}) or die("Cannot call git-ls-tree : $!");
+	    local $/ = "\0";
             while ( <FILELIST> )
             {
-                unless ( /^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\s+(.*)$/o )
+		chomp;
+                unless ( /^(\d+)\s+(\w+)\s+([a-zA-Z0-9]+)\t(.*)$/o )
                 {
                     die("Couldn't process git-ls-tree line : $_");
                 }

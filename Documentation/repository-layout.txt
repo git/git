@@ -52,9 +52,20 @@ objects/info/packs::
 	by default.
 
 objects/info/alternates::
-	This file records absolute filesystem paths of alternate
-	object stores that this object store borrows objects
-	from, one pathname per line.
+	This file records paths to alternate object stores that
+	this object store borrows objects from, one pathname per
+	line. Note that not only native Git tools use it locally,
+	but the HTTP fetcher also tries to use it remotely; this
+	will usually work if you have relative paths (relative
+	to the object database, not to the repository!) in your
+	alternates file, but it will not work if you use absolute
+	paths unless the absolute path in filesystem and web URL
+	is the same. See also 'objects/info/http-alternates'.
+
+objects/info/http-alternates::
+	This file records URLs to alternate object stores that
+	this object store borrows objects from, to be used when
+	the repository is fetched over HTTP.
 
 refs::
 	References are stored in subdirectories of this
@@ -70,12 +81,16 @@ refs/tags/`name`::
 	object, or a tag object that points at a commit object).
 
 HEAD::
-	A symlink of the form `refs/heads/'name'` to point at
-	the current branch, if exists.  It does not mean much if
-	the repository is not associated with any working tree
+	A symref (see glossary) to the `refs/heads/` namespace
+	describing the currently active branch.  It does not mean
+	much if the repository is not associated with any working tree
 	(i.e. a 'bare' repository), but a valid git repository
-	*must* have such a symlink here.  It is legal if the
-	named branch 'name' does not (yet) exist.
+	*must* have the HEAD file; some porcelains may use it to
+	guess the designated "default" branch of the repository
+	(usually 'master').  It is legal if the named branch
+	'name' does not (yet) exist.  In some legacy setups, it is
+	a symbolic link instead of a symref that points at the current
+	branch.
 
 branches::
 	A slightly deprecated way to store shorthands to be used
@@ -87,7 +102,7 @@ branches::
 hooks::
 	Hooks are customization scripts used by various git
 	commands.  A handful of sample hooks are installed when
-	`git init-db` is run, but all of them are disabled by
+	`git init` is run, but all of them are disabled by
 	default.  To enable, they need to be made executable.
 	Read link:hooks.html[hooks] for more details about
 	each hook.

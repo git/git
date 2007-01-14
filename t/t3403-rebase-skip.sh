@@ -10,12 +10,6 @@ test_description='git rebase --merge --skip tests'
 # we assume the default git-am -3 --skip strategy is tested independently
 # and always works :)
 
-if test "$no_python"; then
-	echo "Skipping: no python => no recursive merge"
-	test_done
-	exit 0
-fi
-
 test_expect_success setup '
 	echo hello > hello &&
 	git add hello &&
@@ -37,7 +31,9 @@ test_expect_success setup '
 	git branch skip-merge skip-reference
 	'
 
-test_expect_failure 'rebase with git am -3 (default)' 'git rebase master'
+test_expect_failure 'rebase with git am -3 (default)' '
+	git rebase master
+'
 
 test_expect_success 'rebase --skip with am -3' '
 	git reset --hard HEAD &&

@@ -1,22 +1,10 @@
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdarg.h>
-#include "git-compat-util.h"
+#include "builtin.h"
 #include "exec_cmd.h"
 #include "cache.h"
 #include "quote.h"
 
-#include "builtin.h"
-
 const char git_usage_string[] =
-	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [--help] COMMAND [ ARGS ]";
+	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate] [--bare] [--git-dir=GIT_DIR] [--help] COMMAND [ARGS]";
 
 static void prepend_to_path(const char *dir, int len)
 {
@@ -29,13 +17,15 @@ static void prepend_to_path(const char *dir, int len)
 
 	path_len = len + strlen(old_path) + 1;
 
-	path = malloc(path_len + 1);
+	path = xmalloc(path_len + 1);
 
 	memcpy(path, dir, len);
 	path[len] = ':';
 	memcpy(path + len + 1, old_path, path_len - len);
 
 	setenv("PATH", path, 1);
+
+	free(path);
 }
 
 static int handle_options(const char*** argv, int* argc)
@@ -69,16 +59,18 @@ static int handle_options(const char*** argv, int* argc)
 		} else if (!strcmp(cmd, "-p") || !strcmp(cmd, "--paginate")) {
 			setup_pager();
 		} else if (!strcmp(cmd, "--git-dir")) {
-			if (*argc < 1)
-				return -1;
-			setenv("GIT_DIR", (*argv)[1], 1);
+			if (*argc < 2) {
+				fprintf(stderr, "No directory given for --git-dir.\n" );
+				usage(git_usage_string);
+			}
+			setenv(GIT_DIR_ENVIRONMENT, (*argv)[1], 1);
 			(*argv)++;
 			(*argc)--;
 		} else if (!strncmp(cmd, "--git-dir=", 10)) {
-			setenv("GIT_DIR", cmd + 10, 1);
+			setenv(GIT_DIR_ENVIRONMENT, cmd + 10, 1);
 		} else if (!strcmp(cmd, "--bare")) {
-			static char git_dir[1024];
-			setenv("GIT_DIR", getcwd(git_dir, 1024), 1);
+			static char git_dir[PATH_MAX+1];
+			setenv(GIT_DIR_ENVIRONMENT, getcwd(git_dir, sizeof(git_dir)), 1);
 		} else {
 			fprintf(stderr, "Unknown option: %s\n", cmd);
 			usage(git_usage_string);
@@ -97,7 +89,7 @@ static char *alias_string;
 static int git_alias_config(const char *var, const char *value)
 {
 	if (!strncmp(var, "alias.", 6) && !strcmp(var + 6, alias_command)) {
-		alias_string = strdup(value);
+		alias_string = xstrdup(value);
 	}
 	return 0;
 }
@@ -120,7 +112,7 @@ static int split_cmdline(char *cmdline, const char ***argv)
 				; /* skip */
 			if (count >= size) {
 				size += 16;
-				*argv = realloc(*argv, sizeof(char*) * size);
+				*argv = xrealloc(*argv, sizeof(char*) * size);
 			}
 			(*argv)[count++] = cmdline + dst;
 		} else if(!quoted && (c == '\'' || c == '"')) {
@@ -179,20 +171,12 @@ static int handle_alias(int *argcp, const char ***argv)
 		if (!strcmp(alias_command, new_argv[0]))
 			die("recursive alias: %s", alias_command);
 
-		if (getenv("GIT_TRACE")) {
-			int i;
-			fprintf(stderr, "trace: alias expansion: %s =>",
-				alias_command);
-			for (i = 0; i < count; ++i) {
-				fputc(' ', stderr);
-				sq_quote_print(stderr, new_argv[i]);
-			}
-			fputc('\n', stderr);
-			fflush(stderr);
-		}
+		trace_argv_printf(new_argv, count,
+				  "trace: alias expansion: %s =>",
+				  alias_command);
 
-		new_argv = realloc(new_argv, sizeof(char*) *
-				   (count + *argcp + 1));
+		new_argv = xrealloc(new_argv, sizeof(char*) *
+				    (count + *argcp + 1));
 		/* insert after command name */
 		memcpy(new_argv + count, *argv + 1, sizeof(char*) * *argcp);
 		new_argv[count+*argcp] = NULL;
@@ -215,6 +199,11 @@ const char git_version_string[] = GIT_VERSION;
 
 #define RUN_SETUP	(1<<0)
 #define USE_PAGER	(1<<1)
+/*
+ * require working tree to be present -- anything uses this needs
+ * RUN_SETUP for reading from the configuration file.
+ */
+#define NOT_BARE 	(1<<2)
 
 static void handle_internal_command(int argc, const char **argv, char **envp)
 {
@@ -224,53 +213,69 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		int (*fn)(int, const char **, const char *);
 		int option;
 	} commands[] = {
-		{ "add", cmd_add, RUN_SETUP },
+		{ "add", cmd_add, RUN_SETUP | NOT_BARE },
+		{ "annotate", cmd_annotate, },
 		{ "apply", cmd_apply },
+		{ "archive", cmd_archive },
+		{ "blame", cmd_blame, RUN_SETUP | USE_PAGER },
+		{ "branch", cmd_branch, RUN_SETUP },
 		{ "cat-file", cmd_cat_file, RUN_SETUP },
 		{ "checkout-index", cmd_checkout_index, RUN_SETUP },
 		{ "check-ref-format", cmd_check_ref_format },
+		{ "cherry", cmd_cherry, RUN_SETUP },
 		{ "commit-tree", cmd_commit_tree, RUN_SETUP },
-		{ "count-objects", cmd_count_objects },
-		{ "diff", cmd_diff, RUN_SETUP },
+		{ "count-objects", cmd_count_objects, RUN_SETUP },
+		{ "describe", cmd_describe, RUN_SETUP },
+		{ "diff", cmd_diff, RUN_SETUP | USE_PAGER },
 		{ "diff-files", cmd_diff_files, RUN_SETUP },
 		{ "diff-index", cmd_diff_index, RUN_SETUP },
 		{ "diff-stages", cmd_diff_stages, RUN_SETUP },
 		{ "diff-tree", cmd_diff_tree, RUN_SETUP },
 		{ "fmt-merge-msg", cmd_fmt_merge_msg, RUN_SETUP },
+		{ "for-each-ref", cmd_for_each_ref, RUN_SETUP },
 		{ "format-patch", cmd_format_patch, RUN_SETUP },
 		{ "get-tar-commit-id", cmd_get_tar_commit_id },
 		{ "grep", cmd_grep, RUN_SETUP },
 		{ "help", cmd_help },
+		{ "init", cmd_init_db },
 		{ "init-db", cmd_init_db },
 		{ "log", cmd_log, RUN_SETUP | USE_PAGER },
 		{ "ls-files", cmd_ls_files, RUN_SETUP },
 		{ "ls-tree", cmd_ls_tree, RUN_SETUP },
 		{ "mailinfo", cmd_mailinfo },
 		{ "mailsplit", cmd_mailsplit },
-		{ "mv", cmd_mv, RUN_SETUP },
+		{ "merge-file", cmd_merge_file },
+		{ "mv", cmd_mv, RUN_SETUP | NOT_BARE },
 		{ "name-rev", cmd_name_rev, RUN_SETUP },
 		{ "pack-objects", cmd_pack_objects, RUN_SETUP },
+		{ "pickaxe", cmd_blame, RUN_SETUP | USE_PAGER },
 		{ "prune", cmd_prune, RUN_SETUP },
 		{ "prune-packed", cmd_prune_packed, RUN_SETUP },
 		{ "push", cmd_push, RUN_SETUP },
 		{ "read-tree", cmd_read_tree, RUN_SETUP },
+		{ "reflog", cmd_reflog, RUN_SETUP },
 		{ "repo-config", cmd_repo_config },
+		{ "rerere", cmd_rerere, RUN_SETUP },
 		{ "rev-list", cmd_rev_list, RUN_SETUP },
 		{ "rev-parse", cmd_rev_parse, RUN_SETUP },
-		{ "rm", cmd_rm, RUN_SETUP },
+		{ "rm", cmd_rm, RUN_SETUP | NOT_BARE },
+		{ "runstatus", cmd_runstatus, RUN_SETUP | NOT_BARE },
+		{ "shortlog", cmd_shortlog, RUN_SETUP | USE_PAGER },
 		{ "show-branch", cmd_show_branch, RUN_SETUP },
 		{ "show", cmd_show, RUN_SETUP | USE_PAGER },
 		{ "stripspace", cmd_stripspace },
 		{ "symbolic-ref", cmd_symbolic_ref, RUN_SETUP },
-		{ "tar-tree", cmd_tar_tree, RUN_SETUP },
+		{ "tar-tree", cmd_tar_tree },
 		{ "unpack-objects", cmd_unpack_objects, RUN_SETUP },
 		{ "update-index", cmd_update_index, RUN_SETUP },
 		{ "update-ref", cmd_update_ref, RUN_SETUP },
-		{ "upload-tar", cmd_upload_tar },
+		{ "upload-archive", cmd_upload_archive },
 		{ "version", cmd_version },
 		{ "whatchanged", cmd_whatchanged, RUN_SETUP | USE_PAGER },
 		{ "write-tree", cmd_write_tree, RUN_SETUP },
 		{ "verify-pack", cmd_verify_pack },
+		{ "show-ref", cmd_show_ref, RUN_SETUP },
+		{ "pack-refs", cmd_pack_refs, RUN_SETUP },
 	};
 	int i;
 
@@ -291,16 +296,9 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 			prefix = setup_git_directory();
 		if (p->option & USE_PAGER)
 			setup_pager();
-		if (getenv("GIT_TRACE")) {
-			int i;
-			fprintf(stderr, "trace: built-in: git");
-			for (i = 0; i < argc; ++i) {
-				fputc(' ', stderr);
-				sq_quote_print(stderr, argv[i]);
-			}
-			putc('\n', stderr);
-			fflush(stderr);
-		}
+		if ((p->option & NOT_BARE) && is_bare_repository())
+			die("%s cannot be used in a bare git directory", cmd);
+		trace_argv_printf(argv, argc, "trace: built-in: git");
 
 		exit(p->fn(argc, argv, prefix));
 	}
@@ -308,7 +306,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 
 int main(int argc, const char **argv, char **envp)
 {
-	const char *cmd = argv[0];
+	const char *cmd = argv[0] ? argv[0] : "git-help";
 	char *slash = strrchr(cmd, '/');
 	const char *exec_path = NULL;
 	int done_alias = 0;

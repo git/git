@@ -24,13 +24,6 @@
 
 #include "cache.h"
 
-#include <assert.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netdb.h>
-
 typedef struct store_conf {
 	char *name;
 	const char *path; /* should this be here? its interpretation is driver-specific */
@@ -103,14 +96,13 @@ typedef struct {
 
 static int Verbose, Quiet;
 
-static void info( const char *, ... );
-static void warn( const char *, ... );
+static void imap_info( const char *, ... );
+static void imap_warn( const char *, ... );
 
 static char *next_arg( char ** );
 
 static void free_generic_messages( message_t * );
 
-static int nfvasprintf( char **str, const char *fmt, va_list va );
 static int nfsnprintf( char *buf, int blen, const char *fmt, ... );
 
 
@@ -232,7 +224,7 @@ socket_perror( const char *func, Socket_t *sock, int ret )
 static int
 socket_read( Socket_t *sock, char *buf, int len )
 {
-	int n = read( sock->fd, buf, len );
+	int n = xread( sock->fd, buf, len );
 	if (n <= 0) {
 		socket_perror( "read", sock, n );
 		close( sock->fd );
@@ -244,7 +236,7 @@ socket_read( Socket_t *sock, char *buf, int len )
 static int
 socket_write( Socket_t *sock, const char *buf, int len )
 {
-	int n = write( sock->fd, buf, len );
+	int n = write_in_full( sock->fd, buf, len );
 	if (n != len) {
 		socket_perror( "write", sock, n );
 		close( sock->fd );
@@ -273,7 +265,7 @@ buffer_gets( buffer_t * b, char **s )
 				n = b->bytes - start;
 
 				if (n)
-					memcpy( b->buf, b->buf + start, n );
+					memmove(b->buf, b->buf + start, n);
 				b->offset -= start;
 				b->bytes = n;
 				start = 0;
@@ -305,7 +297,7 @@ buffer_gets( buffer_t * b, char **s )
 }
 
 static void
-info( const char *msg, ... )
+imap_info( const char *msg, ... )
 {
 	va_list va;
 
@@ -318,7 +310,7 @@ info( const char *msg, ... )
 }
 
 static void
-warn( const char *msg, ... )
+imap_warn( const char *msg, ... )
 {
 	va_list va;
 
@@ -372,21 +364,6 @@ free_generic_messages( message_t *msgs )
 }
 
 static int
-git_vasprintf( char **strp, const char *fmt, va_list ap )
-{
-	int len;
-	char tmp[1024];
-
-	if ((len = vsnprintf( tmp, sizeof(tmp), fmt, ap )) < 0 || !(*strp = xmalloc( len + 1 )))
-		return -1;
-	if (len >= (int)sizeof(tmp))
-		vsprintf( *strp, fmt, ap );
-	else
-		memcpy( *strp, tmp, len + 1 );
-	return len;
-}
-
-static int
 nfsnprintf( char *buf, int blen, const char *fmt, ... )
 {
 	int ret;
@@ -396,15 +373,6 @@ nfsnprintf( char *buf, int blen, const char *fmt, ... )
 	if (blen <= 0 || (unsigned)(ret = vsnprintf( buf, blen, fmt, va )) >= (unsigned)blen)
 		die( "Fatal: buffer too small. Please report a bug.\n");
 	va_end( va );
-	return ret;
-}
-
-static int
-nfvasprintf( char **str, const char *fmt, va_list va )
-{
-	int ret = git_vasprintf( str, fmt, va );
-	if (ret < 0)
-		die( "Fatal: Out of memory\n");
 	return ret;
 }
 
@@ -422,7 +390,7 @@ arc4_init( void )
 		fprintf( stderr, "Fatal: no random number source available.\n" );
 		exit( 3 );
 	}
-	if (read( fd, dat, 128 ) != 128) {
+	if (read_in_full( fd, dat, 128 ) != 128) {
 		fprintf( stderr, "Fatal: cannot read random number source.\n" );
 		exit( 3 );
 	}
@@ -935,7 +903,7 @@ imap_open_store( imap_server_conf_t *srvc )
 	/* open connection to IMAP server */
 
 	if (srvc->tunnel) {
-		info( "Starting tunnel '%s'... ", srvc->tunnel );
+		imap_info( "Starting tunnel '%s'... ", srvc->tunnel );
 
 		if (socketpair( PF_UNIX, SOCK_STREAM, 0, a )) {
 			perror( "socketpair" );
@@ -958,31 +926,31 @@ imap_open_store( imap_server_conf_t *srvc )
 
 		imap->buf.sock.fd = a[1];
 
-		info( "ok\n" );
+		imap_info( "ok\n" );
 	} else {
 		memset( &addr, 0, sizeof(addr) );
 		addr.sin_port = htons( srvc->port );
 		addr.sin_family = AF_INET;
 
-		info( "Resolving %s... ", srvc->host );
+		imap_info( "Resolving %s... ", srvc->host );
 		he = gethostbyname( srvc->host );
 		if (!he) {
 			perror( "gethostbyname" );
 			goto bail;
 		}
-		info( "ok\n" );
+		imap_info( "ok\n" );
 
 		addr.sin_addr.s_addr = *((int *) he->h_addr_list[0]);
 
 		s = socket( PF_INET, SOCK_STREAM, 0 );
 
-		info( "Connecting to %s:%hu... ", inet_ntoa( addr.sin_addr ), ntohs( addr.sin_port ) );
+		imap_info( "Connecting to %s:%hu... ", inet_ntoa( addr.sin_addr ), ntohs( addr.sin_port ) );
 		if (connect( s, (struct sockaddr *)&addr, sizeof(addr) )) {
 			close( s );
 			perror( "connect" );
 			goto bail;
 		}
-		info( "ok\n" );
+		imap_info( "ok\n" );
 
 		imap->buf.sock.fd = s;
 
@@ -1011,7 +979,7 @@ imap_open_store( imap_server_conf_t *srvc )
 
 	if (!preauth) {
 
-		info ("Logging in...\n");
+		imap_info ("Logging in...\n");
 		if (!srvc->user) {
 			fprintf( stderr, "Skipping server %s, no user\n", srvc->host );
 			goto bail;
@@ -1032,13 +1000,13 @@ imap_open_store( imap_server_conf_t *srvc )
 			 * getpass() returns a pointer to a static buffer.  make a copy
 			 * for long term storage.
 			 */
-			srvc->pass = strdup( arg );
+			srvc->pass = xstrdup( arg );
 		}
 		if (CAP(NOLOGIN)) {
 			fprintf( stderr, "Skipping account %s@%s, server forbids LOGIN\n", srvc->user, srvc->host );
 			goto bail;
 		}
-		warn( "*** IMAP Warning *** Password is being sent in the clear\n" );
+		imap_warn( "*** IMAP Warning *** Password is being sent in the clear\n" );
 		if (imap_exec( ctx, NULL, "LOGIN \"%s\" \"%s\"", srvc->user, srvc->pass ) != RESP_OK) {
 			fprintf( stderr, "IMAP error: LOGIN failed\n" );
 			goto bail;
@@ -1251,6 +1219,14 @@ split_msg( msg_data_t *all_msgs, msg_data_t *msg, int *ofs )
 	if (msg->len < 5 || strncmp( data, "From ", 5 ))
 		return 0;
 
+	p = strchr( data, '\n' );
+	if (p) {
+		p = &p[1];
+		msg->len -= p-data;
+		*ofs += p-data;
+		data = p;
+	}
+
 	p = strstr( data, "\nFrom " );
 	if (p)
 		msg->len = &p[1] - data;
@@ -1288,7 +1264,7 @@ git_imap_config(const char *key, const char *val)
 	key += sizeof imap_key - 1;
 
 	if (!strcmp( "folder", key )) {
-		imap_folder = strdup( val );
+		imap_folder = xstrdup( val );
 	} else if (!strcmp( "host", key )) {
 		{
 			if (!strncmp( "imap:", val, 5 ))
@@ -1298,16 +1274,16 @@ git_imap_config(const char *key, const char *val)
 		}
 		if (!strncmp( "//", val, 2 ))
 			val += 2;
-		server.host = strdup( val );
+		server.host = xstrdup( val );
 	}
 	else if (!strcmp( "user", key ))
-		server.user = strdup( val );
+		server.user = xstrdup( val );
 	else if (!strcmp( "pass", key ))
-		server.pass = strdup( val );
+		server.pass = xstrdup( val );
 	else if (!strcmp( "port", key ))
 		server.port = git_config_int( key, val );
 	else if (!strcmp( "tunnel", key ))
-		server.tunnel = strdup( val );
+		server.tunnel = xstrdup( val );
 	return 0;
 }
 

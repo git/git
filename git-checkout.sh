@@ -3,9 +3,11 @@
 USAGE='[-f] [-b <new_branch>] [-m] [<branch>] [<paths>...]'
 SUBDIRECTORY_OK=Sometimes
 . git-sh-setup
+require_work_tree
 
-old=$(git-rev-parse HEAD)
 old_name=HEAD
+old=$(git-rev-parse --verify $old_name 2>/dev/null)
+oldbranch=$(git-symbolic-ref $old_name 2>/dev/null)
 new=
 new_name=
 force=
@@ -13,6 +15,8 @@ branch=
 newbranch=
 newbranch_log=
 merge=
+LF='
+'
 while [ "$#" != "0" ]; do
     arg="$1"
     shift
@@ -22,7 +26,7 @@ while [ "$#" != "0" ]; do
 		shift
 		[ -z "$newbranch" ] &&
 			die "git checkout: -b needs a branch name"
-		[ -e "$GIT_DIR/refs/heads/$newbranch" ] &&
+		git-show-ref --verify --quiet -- "refs/heads/$newbranch" &&
 			die "git checkout: branch $newbranch already exists"
 		git-check-ref-format "heads/$newbranch" ||
 			die "git checkout: we do not like '$newbranch' as a branch name."
@@ -50,8 +54,9 @@ while [ "$#" != "0" ]; do
 				exit 1
 			fi
 			new="$rev"
-			new_name="$arg^0"
-			if [ -f "$GIT_DIR/refs/heads/$arg" ]; then
+			new_name="$arg"
+			if git-show-ref --verify --quiet -- "refs/heads/$arg"
+			then
 				branch="$arg"
 			fi
 		elif rev=$(git-rev-parse --verify "$arg^{tree}" 2>/dev/null)
@@ -75,6 +80,11 @@ while [ "$#" != "0" ]; do
 		;;
     esac
 done
+
+case "$force$merge" in
+11)
+	die "git checkout: -f and -m are incompatible"
+esac
 
 # The behaviour of the command with and without explicit path
 # parameters is quite different.
@@ -106,7 +116,11 @@ Did you intend to checkout '$@' which can not be resolved as commit?"
 		git-ls-tree --full-name -r "$new" "$@" |
 		git-update-index --index-info || exit $?
 	fi
-	git-checkout-index -f -u -- "$@"
+
+	# Make sure the request is about existing paths.
+	git-ls-files --error-unmatch -- "$@" >/dev/null || exit
+	git-ls-files -- "$@" |
+	git-checkout-index -f -u --stdin
 	exit $?
 else
 	# Make sure we did not fall back on $arg^{tree} codepath
@@ -129,22 +143,58 @@ fi
 
 [ -z "$new" ] && new=$old && new_name="$old_name"
 
-# If we don't have an old branch that we're switching to,
+# If we don't have an existing branch that we're switching to,
 # and we don't have a new branch name for the target we
-# are switching to, then we'd better just be checking out
-# what we already had
+# are switching to, then we are detaching our HEAD from any
+# branch.  However, if "git checkout HEAD" detaches the HEAD
+# from the current branch, even though that may be logically
+# correct, it feels somewhat funny.  More importantly, we do not
+# want "git checkout" nor "git checkout -f" to detach HEAD.
 
-[ -z "$branch$newbranch" ] &&
-	[ "$new" != "$old" ] &&
-	die "git checkout: to checkout the requested commit you need to specify 
-              a name for a new branch which is created and switched to"
+detached=
+detach_warn=
+
+if test -z "$branch$newbranch" && test "$new" != "$old"
+then
+	detached="$new"
+	if test -n "$oldbranch"
+	then
+		detach_warn="warning: you are not on ANY branch anymore.
+If you meant to create a new branch from the commit, you need -b to
+associate a new branch with the wanted checkout.  Example:
+  git checkout -b <new_branch_name> $arg"
+	fi
+elif test -z "$oldbranch" && test -n "$branch"
+then
+	# Coming back...
+	if test -z "$force"
+	then
+		git show-ref -d -s | grep "$old" >/dev/null || {
+			echo >&2 \
+"You are not on any branch and switching to branch '$new_name'
+may lose your changes.  At this point, you can do one of two things:
+ (1) Decide it is Ok and say 'git checkout -f $new_name';
+ (2) Start a new branch from the current commit, by saying
+     'git checkout -b <branch-name>'.
+Leaving your HEAD detached; not switching to branch '$new_name'."
+			exit 1;
+		}
+	fi
+fi
+
+if [ "X$old" = X ]
+then
+	echo >&2 "warning: You appear to be on a branch yet to be born."
+	echo >&2 "warning: Forcing checkout of $new_name."
+	force=1
+fi
 
 if [ "$force" ]
 then
     git-read-tree --reset -u $new
 else
     git-update-index --refresh >/dev/null
-    merge_error=$(git-read-tree -m -u $old $new 2>&1) || (
+    merge_error=$(git-read-tree -m -u --exclude-per-directory=.gitignore $old $new 2>&1) || (
 	case "$merge" in
 	'')
 		echo >&2 "$merge_error"
@@ -155,7 +205,8 @@ else
     	git diff-files --name-only | git update-index --remove --stdin &&
 	work=`git write-tree` &&
 	git read-tree --reset -u $new &&
-	git read-tree -m -u --aggressive $old $new $work || exit
+	git read-tree -m -u --aggressive --exclude-per-directory=.gitignore $old $new $work ||
+	exit
 
 	if result=`git write-tree 2>/dev/null`
 	then
@@ -205,8 +256,25 @@ if [ "$?" -eq 0 ]; then
 		git-update-ref -m "checkout: Created from $new_name" "refs/heads/$newbranch" $new || exit
 		branch="$newbranch"
 	fi
-	[ "$branch" ] &&
-	GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD "refs/heads/$branch"
+	if test -n "$branch"
+	then
+		GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD "refs/heads/$branch"
+	elif test -n "$detached"
+	then
+		# NEEDSWORK: we would want a command to detach the HEAD
+		# atomically, instead of this handcrafted command sequence.
+		# Perhaps:
+		#	git update-ref --detach HEAD $new
+		# or something like that...
+		#
+		echo "$detached" >"$GIT_DIR/HEAD.new" &&
+		mv "$GIT_DIR/HEAD.new" "$GIT_DIR/HEAD" ||
+			die "Cannot detach HEAD"
+		if test -n "$detach_warn"
+		then
+			echo >&2 "$detach_warn"
+		fi
+	fi
 	rm -f "$GIT_DIR/MERGE_HEAD"
 else
 	exit 1

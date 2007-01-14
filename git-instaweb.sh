@@ -53,6 +53,9 @@ start_httpd () {
 				return
 			fi
 		done
+		echo "$httpd_only not found. Install $httpd_only or use" \
+		     "--httpd to specify another http daemon."
+		exit 1
 	fi
 	if test $? != 0; then
 		echo "Could not execute http daemon $httpd."
@@ -160,10 +163,20 @@ apache2_conf () {
 	test "$local" = true && bind='127.0.0.1:'
 	echo 'text/css css' > $fqgitdir/mime.types
 	cat > "$conf" <<EOF
+ServerName "git-instaweb"
 ServerRoot "$fqgitdir/gitweb"
 DocumentRoot "$fqgitdir/gitweb"
 PidFile "$fqgitdir/pid"
 Listen $bind$port
+EOF
+
+	for mod in mime dir; do
+		if test -e $module_path/mod_${mod}.so; then
+			echo "LoadModule ${mod}_module " \
+			     "$module_path/mod_${mod}.so" >> "$conf"
+		fi
+	done
+	cat >> "$conf" <<EOF
 TypesConfig $fqgitdir/mime.types
 DirectoryIndex gitweb.cgi
 EOF

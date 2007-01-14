@@ -4,9 +4,6 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 
-#include <time.h>
-#include <sys/time.h>
-
 #include "cache.h"
 
 static time_t my_mktime(struct tm *tm)
@@ -37,6 +34,16 @@ static const char *weekday_names[] = {
 	"Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"
 };
 
+static time_t gm_time_t(unsigned long time, int tz)
+{
+	int minutes;
+
+	minutes = tz < 0 ? -tz : tz;
+	minutes = (minutes / 100)*60 + (minutes % 100);
+	minutes = tz < 0 ? -minutes : minutes;
+	return time + minutes * 60;
+}
+
 /*
  * The "tz" thing is passed in as this strange "decimal parse of tz"
  * thing, which means that tz -0100 is passed in as the integer -100,
@@ -44,20 +51,57 @@ static const char *weekday_names[] = {
  */
 static struct tm *time_to_tm(unsigned long time, int tz)
 {
-	time_t t;
-	int minutes;
-
-	minutes = tz < 0 ? -tz : tz;
-	minutes = (minutes / 100)*60 + (minutes % 100);
-	minutes = tz < 0 ? -minutes : minutes;
-	t = time + minutes * 60;
+	time_t t = gm_time_t(time, tz);
 	return gmtime(&t);
 }
 
-const char *show_date(unsigned long time, int tz)
+const char *show_date(unsigned long time, int tz, int relative)
 {
 	struct tm *tm;
 	static char timebuf[200];
+
+	if (relative) {
+		unsigned long diff;
+		time_t t = gm_time_t(time, tz);
+		struct timeval now;
+		gettimeofday(&now, NULL);
+		if (now.tv_sec < t)
+			return "in the future";
+		diff = now.tv_sec - t;
+		if (diff < 90) {
+			snprintf(timebuf, sizeof(timebuf), "%lu seconds ago", diff);
+			return timebuf;
+		}
+		/* Turn it into minutes */
+		diff = (diff + 30) / 60;
+		if (diff < 90) {
+			snprintf(timebuf, sizeof(timebuf), "%lu minutes ago", diff);
+			return timebuf;
+		}
+		/* Turn it into hours */
+		diff = (diff + 30) / 60;
+		if (diff < 36) {
+			snprintf(timebuf, sizeof(timebuf), "%lu hours ago", diff);
+			return timebuf;
+		}
+		/* We deal with number of days from here on */
+		diff = (diff + 12) / 24;
+		if (diff < 14) {
+			snprintf(timebuf, sizeof(timebuf), "%lu days ago", diff);
+			return timebuf;
+		}
+		/* Say weeks for the past 10 weeks or so */
+		if (diff < 70) {
+			snprintf(timebuf, sizeof(timebuf), "%lu weeks ago", (diff + 3) / 7);
+			return timebuf;
+		}
+		/* Say months for the past 12 months or so */
+		if (diff < 360) {
+			snprintf(timebuf, sizeof(timebuf), "%lu months ago", (diff + 15) / 30);
+			return timebuf;
+		}
+		/* Else fall back on absolute format.. */
+	}
 
 	tm = time_to_tm(time, tz);
 	if (!tm)
@@ -209,8 +253,12 @@ static int match_alpha(const char *date, struct tm *tm, int *offset)
 	}
 
 	if (match_string(date, "PM") == 2) {
-		if (tm->tm_hour > 0 && tm->tm_hour < 12)
-			tm->tm_hour += 12;
+		tm->tm_hour = (tm->tm_hour % 12) + 12;
+		return 2;
+	}
+
+	if (match_string(date, "AM") == 2) {
+		tm->tm_hour = (tm->tm_hour % 12) + 0;
 		return 2;
 	}
 
@@ -551,6 +599,34 @@ static void date_tea(struct tm *tm, int *num)
 	date_time(tm, 17);
 }
 
+static void date_pm(struct tm *tm, int *num)
+{
+	int hour, n = *num;
+	*num = 0;
+
+	hour = tm->tm_hour;
+	if (n) {
+		hour = n;
+		tm->tm_min = 0;
+		tm->tm_sec = 0;
+	}
+	tm->tm_hour = (hour % 12) + 12;
+}
+
+static void date_am(struct tm *tm, int *num)
+{
+	int hour, n = *num;
+	*num = 0;
+
+	hour = tm->tm_hour;
+	if (n) {
+		hour = n;
+		tm->tm_min = 0;
+		tm->tm_sec = 0;
+	}
+	tm->tm_hour = (hour % 12);
+}
+
 static const struct special {
 	const char *name;
 	void (*fn)(struct tm *, int *);
@@ -559,6 +635,8 @@ static const struct special {
 	{ "noon", date_noon },
 	{ "midnight", date_midnight },
 	{ "tea", date_tea },
+	{ "PM", date_pm },
+	{ "AM", date_am },
 	{ NULL }
 };
 
@@ -584,10 +662,10 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, int *num)
 	const struct typelen *tl;
 	const struct special *s;
 	const char *end = date;
-	int n = 1, i;
+	int i;
 
-	while (isalpha(*++end))
-		n++;
+	while (isalpha(*++end));
+		;
 
 	for (i = 0; i < 12; i++) {
 		int match = match_string(date, month_names[i]);
@@ -665,6 +743,27 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, int *num)
 	return end;
 }
 
+static const char *approxidate_digit(const char *date, struct tm *tm, int *num)
+{
+	char *end;
+	unsigned long number = strtoul(date, &end, 10);
+
+	switch (*end) {
+	case ':':
+	case '.':
+	case '/':
+	case '-':
+		if (isdigit(end[1])) {
+			int match = match_multi_number(number, *end, date, end, tm);
+			if (match)
+				return date + match;
+		}
+	}
+
+	*num = number;
+	return end;
+}
+
 unsigned long approxidate(const char *date)
 {
 	int number = 0;
@@ -684,9 +783,7 @@ unsigned long approxidate(const char *date)
 			break;
 		date++;
 		if (isdigit(c)) {
-			char *end;
-			number = strtoul(date-1, &end, 10);
-			date = end;
+			date = approxidate_digit(date-1, &tm, &number);
 			continue;
 		}
 		if (isalpha(c))

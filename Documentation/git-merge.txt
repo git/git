@@ -8,12 +8,13 @@ git-merge - Grand Unified Merge Driver
 
 SYNOPSIS
 --------
-'git-merge' [-n] [--no-commit] [-s <strategy>]... <msg> <head> <remote> <remote>...
-
+[verse]
+'git-merge' [-n] [--no-commit] [--squash] [-s <strategy>]...
+	-m=<msg> <remote> <remote>...
 
 DESCRIPTION
 -----------
-This is the top-level user interface to the merge machinery
+This is the top-level interface to the merge machinery
 which drives multiple merge strategy scripts.
 
 
@@ -27,10 +28,11 @@ include::merge-options.txt[]
 	to give a good default for automated `git-merge` invocations.
 
 <head>::
-	our branch head commit.
+	Our branch head commit.  This has to be `HEAD`, so new
+	syntax does not require it
 
 <remote>::
-	other branch head merged into our branch.  You need at
+	Other branch head merged into our branch.  You need at
 	least one <remote>.  Specifying more than one <remote>
 	obviously means you are trying an Octopus.
 

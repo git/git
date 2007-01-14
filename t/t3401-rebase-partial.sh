@@ -52,13 +52,10 @@ test_expect_success \
     'rebase topic branch against new master and check git-am did not get halted' \
     'git-rebase master && test ! -d .dotest'
 
-if test -z "$no_python"
-then
-    test_expect_success \
+test_expect_success \
 	'rebase --merge topic branch that was partially merged upstream' \
 	'git-checkout -f my-topic-branch-merge &&
 	 git-rebase --merge master-merge &&
 	 test ! -d .git/.dotest-merge'
-fi
 
 test_done

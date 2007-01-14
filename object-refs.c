@@ -30,7 +30,7 @@ static void grow_refs_hash(void)
 	int new_hash_size = (refs_hash_size + 1000) * 3 / 2;
 	struct object_refs **new_hash;
 
-	new_hash = calloc(new_hash_size, sizeof(struct object_refs *));
+	new_hash = xcalloc(new_hash_size, sizeof(struct object_refs *));
 	for (i = 0; i < refs_hash_size; i++) {
 		struct object_refs *ref = refs_hash[i];
 		if (!ref)
@@ -55,9 +55,13 @@ static void add_object_refs(struct object *obj, struct object_refs *ref)
 
 struct object_refs *lookup_object_refs(struct object *obj)
 {
-	int j = hash_obj(obj, refs_hash_size);
 	struct object_refs *ref;
+	int j;
 
+	/* nothing to lookup */
+	if (!refs_hash_size)
+		return NULL;
+	j = hash_obj(obj, refs_hash_size);
 	while ((ref = refs_hash[j]) != NULL) {
 		if (ref->base == obj)
 			break;
@@ -125,9 +129,6 @@ void mark_reachable(struct object *obj, unsigned int mask)
 
 	if (!track_object_refs)
 		die("cannot do reachability with object refs turned off");
-	/* nothing to lookup */
-	if (!refs_hash_size)
-		return;
 	/* If we've been here already, don't bother */
 	if (obj->flags & mask)
 		return;

@@ -4,13 +4,6 @@
  * It just splits a mbox into a list of files: "0001" "0002" ..
  * so you can process them further from there.
  */
-#include <unistd.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <stdio.h>
 #include "cache.h"
 #include "builtin.h"
 

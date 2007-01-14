@@ -1,19 +1,41 @@
 #include "cache.h"
+#include "pack.h"
 #include "refs.h"
 #include "pkt-line.h"
 #include "run-command.h"
-#include <sys/wait.h>
+#include "exec_cmd.h"
+#include "commit.h"
+#include "object.h"
 
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
-static const char *unpacker[] = { "unpack-objects", NULL };
-
+static int deny_non_fast_forwards = 0;
+static int unpack_limit = 100;
 static int report_status;
 
-static char capabilities[] = "report-status";
+static char capabilities[] = " report-status delete-refs ";
 static int capabilities_sent;
 
-static int show_ref(const char *path, const unsigned char *sha1)
+static int receive_pack_config(const char *var, const char *value)
+{
+	git_default_config(var, value);
+
+	if (strcmp(var, "receive.denynonfastforwards") == 0)
+	{
+		deny_non_fast_forwards = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (strcmp(var, "receive.unpacklimit") == 0)
+	{
+		unpack_limit = git_config_int(var, value);
+		return 0;
+	}
+
+	return 0;
+}
+
+static int show_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	if (capabilities_sent)
 		packet_write(1, "%s %s\n", sha1_to_hex(sha1), path);
@@ -26,9 +48,9 @@ static int show_ref(const char *path, const unsigned char *sha1)
 
 static void write_head_info(void)
 {
-	for_each_ref(show_ref);
+	for_each_ref(show_ref, NULL);
 	if (!capabilities_sent)
-		show_ref("capabilities^{}", null_sha1);
+		show_ref("capabilities^{}", null_sha1, 0, NULL);
 
 }
 
@@ -42,34 +64,6 @@ struct command {
 
 static struct command *commands;
 
-static int is_all_zeroes(const char *hex)
-{
-	int i;
-	for (i = 0; i < 40; i++)
-		if (*hex++ != '0')
-			return 0;
-	return 1;
-}
-
-static int verify_old_ref(const char *name, char *hex_contents)
-{
-	int fd, ret;
-	char buffer[60];
-
-	if (is_all_zeroes(hex_contents))
-		return 0;
-	fd = open(name, O_RDONLY);
-	if (fd < 0)
-		return -1;
-	ret = read(fd, buffer, 40);
-	close(fd);
-	if (ret != 40)
-		return -1;
-	if (memcmp(buffer, hex_contents, 40))
-		return -1;
-	return 0;
-}
-
 static char update_hook[] = "hooks/update";
 
 static int run_update_hook(const char *refname,
@@ -79,7 +73,9 @@ static int run_update_hook(const char *refname,
 
 	if (access(update_hook, X_OK) < 0)
 		return 0;
-	code = run_command(update_hook, refname, old_hex, new_hex, NULL);
+	code = run_command_opt(RUN_COMMAND_NO_STDIN
+		| RUN_COMMAND_STDOUT_TO_STDERR,
+		update_hook, refname, old_hex, new_hex, NULL);
 	switch (code) {
 	case 0:
 		return 0;
@@ -106,8 +102,8 @@ static int update(struct command *cmd)
 	const char *name = cmd->ref_name;
 	unsigned char *old_sha1 = cmd->old_sha1;
 	unsigned char *new_sha1 = cmd->new_sha1;
-	char new_hex[60], *old_hex, *lock_name;
-	int newfd, namelen, written;
+	char new_hex[41], old_hex[41];
+	struct ref_lock *lock;
 
 	cmd->error_string = NULL;
 	if (!strncmp(name, "refs/", 5) && check_ref_format(name + 5)) {
@@ -116,59 +112,53 @@ static int update(struct command *cmd)
 			     name);
 	}
 
-	namelen = strlen(name);
-	lock_name = xmalloc(namelen + 10);
-	memcpy(lock_name, name, namelen);
-	memcpy(lock_name + namelen, ".lock", 6);
-
 	strcpy(new_hex, sha1_to_hex(new_sha1));
-	old_hex = sha1_to_hex(old_sha1);
-	if (!has_sha1_file(new_sha1)) {
+	strcpy(old_hex, sha1_to_hex(old_sha1));
+
+	if (!is_null_sha1(new_sha1) && !has_sha1_file(new_sha1)) {
 		cmd->error_string = "bad pack";
 		return error("unpack should have generated %s, "
 			     "but I can't find it!", new_hex);
 	}
-	safe_create_leading_directories(lock_name);
+	if (deny_non_fast_forwards && !is_null_sha1(new_sha1) &&
+	    !is_null_sha1(old_sha1) &&
+	    !strncmp(name, "refs/heads/", 11)) {
+		struct commit *old_commit, *new_commit;
+		struct commit_list *bases, *ent;
 
-	newfd = open(lock_name, O_CREAT | O_EXCL | O_WRONLY, 0666);
-	if (newfd < 0) {
-		cmd->error_string = "can't lock";
-		return error("unable to create %s (%s)",
-			     lock_name, strerror(errno));
-	}
-
-	/* Write the ref with an ending '\n' */
-	new_hex[40] = '\n';
-	new_hex[41] = 0;
-	written = write(newfd, new_hex, 41);
-	/* Remove the '\n' again */
-	new_hex[40] = 0;
-
-	close(newfd);
-	if (written != 41) {
-		unlink(lock_name);
-		cmd->error_string = "can't write";
-		return error("unable to write %s", lock_name);
-	}
-	if (verify_old_ref(name, old_hex) < 0) {
-		unlink(lock_name);
-		cmd->error_string = "raced";
-		return error("%s changed during push", name);
+		old_commit = (struct commit *)parse_object(old_sha1);
+		new_commit = (struct commit *)parse_object(new_sha1);
+		bases = get_merge_bases(old_commit, new_commit, 1);
+		for (ent = bases; ent; ent = ent->next)
+			if (!hashcmp(old_sha1, ent->item->object.sha1))
+				break;
+		free_commit_list(bases);
+		if (!ent)
+			return error("denying non-fast forward;"
+				     " you should pull first");
 	}
 	if (run_update_hook(name, old_hex, new_hex)) {
-		unlink(lock_name);
 		cmd->error_string = "hook declined";
 		return error("hook declined to update %s", name);
 	}
-	else if (rename(lock_name, name) < 0) {
-		unlink(lock_name);
-		cmd->error_string = "can't rename";
-		return error("unable to replace %s", name);
+
+	if (is_null_sha1(new_sha1)) {
+		if (delete_ref(name, old_sha1)) {
+			cmd->error_string = "failed to delete";
+			return error("failed to delete %s", name);
+		}
+		fprintf(stderr, "%s: %s -> deleted\n", name, old_hex);
 	}
 	else {
+		lock = lock_any_ref_for_update(name, old_sha1);
+		if (!lock) {
+			cmd->error_string = "failed to lock";
+			return error("failed to lock %s", name);
+		}
+		write_ref_sha1(lock, new_sha1, "push");
 		fprintf(stderr, "%s: %s -> %s\n", name, old_hex, new_hex);
-		return 0;
 	}
+	return 0;
 }
 
 static char update_post_hook[] = "hooks/post-update";
@@ -199,7 +189,8 @@ static void run_update_post_hook(struct command *cmd)
 		argc++;
 	}
 	argv[argc] = NULL;
-	run_command_v_opt(argc, argv, RUN_COMMAND_NO_STDIO);
+	run_command_v_opt(argv, RUN_COMMAND_NO_STDIN
+		| RUN_COMMAND_STDOUT_TO_STDERR);
 }
 
 /*
@@ -257,29 +248,127 @@ static void read_head_info(void)
 	}
 }
 
-static const char *unpack(int *error_code)
+static const char *parse_pack_header(struct pack_header *hdr)
 {
-	int code = run_command_v_opt(1, unpacker, RUN_GIT_CMD);
+	char *c = (char*)hdr;
+	ssize_t remaining = sizeof(struct pack_header);
+	do {
+		ssize_t r = xread(0, c, remaining);
+		if (r <= 0)
+			return "eof before pack header was fully read";
+		remaining -= r;
+		c += r;
+	} while (remaining > 0);
+	if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
+		return "protocol error (pack signature mismatch detected)";
+	if (!pack_version_ok(hdr->hdr_version))
+		return "protocol error (pack version unsupported)";
+	return NULL;
+}
 
-	*error_code = 0;
-	switch (code) {
-	case 0:
-		return NULL;
-	case -ERR_RUN_COMMAND_FORK:
-		return "unpack fork failed";
-	case -ERR_RUN_COMMAND_EXEC:
-		return "unpack execute failed";
-	case -ERR_RUN_COMMAND_WAITPID:
-		return "waitpid failed";
-	case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
-		return "waitpid is confused";
-	case -ERR_RUN_COMMAND_WAITPID_SIGNAL:
-		return "unpacker died of signal";
-	case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
-		return "unpacker died strangely";
-	default:
-		*error_code = -code;
-		return "unpacker exited with error code";
+static const char *pack_lockfile;
+
+static const char *unpack(void)
+{
+	struct pack_header hdr;
+	const char *hdr_err;
+	char hdr_arg[38];
+
+	hdr_err = parse_pack_header(&hdr);
+	if (hdr_err)
+		return hdr_err;
+	snprintf(hdr_arg, sizeof(hdr_arg), "--pack_header=%u,%u",
+			ntohl(hdr.hdr_version), ntohl(hdr.hdr_entries));
+
+	if (ntohl(hdr.hdr_entries) < unpack_limit) {
+		int code;
+		const char *unpacker[3];
+		unpacker[0] = "unpack-objects";
+		unpacker[1] = hdr_arg;
+		unpacker[2] = NULL;
+		code = run_command_v_opt(unpacker, RUN_GIT_CMD);
+		switch (code) {
+		case 0:
+			return NULL;
+		case -ERR_RUN_COMMAND_FORK:
+			return "unpack fork failed";
+		case -ERR_RUN_COMMAND_EXEC:
+			return "unpack execute failed";
+		case -ERR_RUN_COMMAND_WAITPID:
+			return "waitpid failed";
+		case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
+			return "waitpid is confused";
+		case -ERR_RUN_COMMAND_WAITPID_SIGNAL:
+			return "unpacker died of signal";
+		case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
+			return "unpacker died strangely";
+		default:
+			return "unpacker exited with error code";
+		}
+	} else {
+		const char *keeper[6];
+		int fd[2], s, len, status;
+		pid_t pid;
+		char keep_arg[256];
+		char packname[46];
+
+		s = sprintf(keep_arg, "--keep=receive-pack %i on ", getpid());
+		if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
+			strcpy(keep_arg + s, "localhost");
+
+		keeper[0] = "index-pack";
+		keeper[1] = "--stdin";
+		keeper[2] = "--fix-thin";
+		keeper[3] = hdr_arg;
+		keeper[4] = keep_arg;
+		keeper[5] = NULL;
+
+		if (pipe(fd) < 0)
+			return "index-pack pipe failed";
+		pid = fork();
+		if (pid < 0)
+			return "index-pack fork failed";
+		if (!pid) {
+			dup2(fd[1], 1);
+			close(fd[1]);
+			close(fd[0]);
+			execv_git_cmd(keeper);
+			die("execv of index-pack failed");
+		}
+		close(fd[1]);
+
+		/*
+		 * The first thing we expects from index-pack's output
+		 * is "pack\t%40s\n" or "keep\t%40s\n" (46 bytes) where
+		 * %40s is the newly created pack SHA1 name.  In the "keep"
+		 * case, we need it to remove the corresponding .keep file
+		 * later on.  If we don't get that then tough luck with it.
+		 */
+		for (len = 0;
+		     len < 46 && (s = xread(fd[0], packname+len, 46-len)) > 0;
+		     len += s);
+		close(fd[0]);
+		if (len == 46 && packname[45] == '\n' &&
+		    memcmp(packname, "keep\t", 5) == 0) {
+			char path[PATH_MAX];
+			packname[45] = 0;
+			snprintf(path, sizeof(path), "%s/pack/pack-%s.keep",
+				 get_object_directory(), packname + 5);
+			pack_lockfile = xstrdup(path);
+		}
+
+		/* Then wrap our index-pack process. */
+		while (waitpid(pid, &status, 0) < 0)
+			if (errno != EINTR)
+				return "waitpid failed";
+		if (WIFEXITED(status)) {
+			int code = WEXITSTATUS(status);
+			if (code)
+				return "index-pack exited with error code";
+			reprepare_packed_git();
+			return NULL;
+		}
+		return "index-pack abnormal exit";
 	}
 }
 
@@ -297,6 +386,16 @@ static void report(const char *unpack_status)
 				     cmd->ref_name, cmd->error_string);
 	}
 	packet_flush(1);
+}
+
+static int delete_only(struct command *cmd)
+{
+	while (cmd) {
+		if (!is_null_sha1(cmd->new_sha1))
+			return 0;
+		cmd = cmd->next;
+	}
+	return 1;
 }
 
 int main(int argc, char **argv)
@@ -319,8 +418,13 @@ int main(int argc, char **argv)
 	if (!dir)
 		usage(receive_pack_usage);
 
-	if(!enter_repo(dir, 0))
+	if (!enter_repo(dir, 0))
 		die("'%s': unable to chdir or not a git archive", dir);
+
+	setup_ident();
+	/* don't die if gecos is empty */
+	ignore_missing_committer_name();
+	git_config(receive_pack_config);
 
 	write_head_info();
 
@@ -329,10 +433,14 @@ int main(int argc, char **argv)
 
 	read_head_info();
 	if (commands) {
-		int code;
-		const char *unpack_status = unpack(&code);
+		const char *unpack_status = NULL;
+
+		if (!delete_only(commands))
+			unpack_status = unpack();
 		if (!unpack_status)
 			execute_commands();
+		if (pack_lockfile)
+			unlink(pack_lockfile);
 		if (report_status)
 			report(unpack_status);
 	}

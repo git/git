@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Johannes Schindelin
 #
 
-test_description='Test git-rev-parse with different parent options'
+test_description='A simple turial in the form of a test case'
 
 . ./test-lib.sh
 
@@ -36,8 +36,6 @@ tree=$(git-write-tree 2>/dev/null)
 test_expect_success 'tree' "test 8988da15d077d4829fc51d8544c097def6644dbb = $tree"
 
 output="$(echo "Initial commit" | git-commit-tree $(git-write-tree) 2>&1 > .git/refs/heads/master)"
-
-test_expect_success 'commit' "test 'Committing initial tree 8988da15d077d4829fc51d8544c097def6644dbb' = \"$output\""
 
 git-diff-index -p HEAD > diff.output
 test_expect_success 'git-diff-index -p HEAD' 'cmp diff.expect diff.output'

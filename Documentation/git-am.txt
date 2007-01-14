@@ -9,7 +9,7 @@ git-am - Apply a series of patches in a mailbox
 SYNOPSIS
 --------
 [verse]
-'git-am' [--signoff] [--dotest=<dir>] [--utf8] [--binary] [--3way]
+'git-am' [--signoff] [--dotest=<dir>] [--utf8 | --no-utf8] [--binary] [--3way]
          [--interactive] [--whitespace=<option>] <mbox>...
 'git-am' [--skip | --resolved]
 
@@ -29,8 +29,21 @@ OPTIONS
 	Instead of `.dotest` directory, use <dir> as a working
 	area to store extracted patches.
 
---utf8, --keep::
-	Pass `-u` and `-k` flags to `git-mailinfo` (see
+--keep::
+	Pass `-k` flag to `git-mailinfo` (see gitlink:git-mailinfo[1]).
+
+--utf8::
+	Pass `-u` flag to `git-mailinfo` (see gitlink:git-mailinfo[1]).
+	The proposed commit log message taken from the e-mail
+	are re-coded into UTF-8 encoding (configuration variable
+	`i18n.commitencoding` can be used to specify project's
+	preferred encoding if it is not UTF-8).
++
+This was optional in prior versions of git, but now it is the
+default.   You could use `--no-utf8` to override this.
+
+--no-utf8::
+	Do not pass `-u` flag to `git-mailinfo` (see
 	gitlink:git-mailinfo[1]).
 
 --binary::

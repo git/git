@@ -4,35 +4,6 @@
 #include "fetch.h"
 #include "http.h"
 
-#ifndef NO_EXPAT
-#include <expat.h>
-
-/* Definitions for DAV requests */
-#define DAV_PROPFIND "PROPFIND"
-#define DAV_PROPFIND_RESP ".multistatus.response"
-#define DAV_PROPFIND_NAME ".multistatus.response.href"
-#define DAV_PROPFIND_COLLECTION ".multistatus.response.propstat.prop.resourcetype.collection"
-#define PROPFIND_ALL_REQUEST "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<D:propfind xmlns:D=\"DAV:\">\n<D:allprop/>\n</D:propfind>"
-
-/* Definitions for processing XML DAV responses */
-#ifndef XML_STATUS_OK
-enum XML_Status {
-  XML_STATUS_OK = 1,
-  XML_STATUS_ERROR = 0
-};
-#define XML_STATUS_OK    1
-#define XML_STATUS_ERROR 0
-#endif
-
-/* Flags that control remote_ls processing */
-#define PROCESS_FILES (1u << 0)
-#define PROCESS_DIRS  (1u << 1)
-#define RECURSIVE     (1u << 2)
-
-/* Flags that remote_ls passes to callback functions */
-#define IS_DIR (1u << 0)
-#endif
-
 #define PREV_BUF_SIZE 4096
 #define RANGE_HEADER_SIZE 30
 
@@ -90,30 +61,6 @@ struct alternates_request {
 	int http_specific;
 };
 
-#ifndef NO_EXPAT
-struct xml_ctx
-{
-	char *name;
-	int len;
-	char *cdata;
-	void (*userFunc)(struct xml_ctx *ctx, int tag_closed);
-	void *userData;
-};
-
-struct remote_ls_ctx
-{
-	struct alt_base *repo;
-	char *path;
-	void (*userFunc)(struct remote_ls_ctx *ls);
-	void *userData;
-	int flags;
-	char *dentry_name;
-	int dentry_flags;
-	int rc;
-	struct remote_ls_ctx *parent;
-};
-#endif
-
 static struct object_request *object_queue_head;
 
 static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
@@ -124,7 +71,7 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	int posn = 0;
 	struct object_request *obj_req = (struct object_request *)data;
 	do {
-		ssize_t retval = write(obj_req->local,
+		ssize_t retval = xwrite(obj_req->local,
 				       (char *) ptr + posn, size - posn);
 		if (retval < 0)
 			return posn;
@@ -143,6 +90,19 @@ static size_t fwrite_sha1_file(void *ptr, size_t eltsize, size_t nmemb,
 	data_received++;
 	return size;
 }
+
+static int missing__target(int code, int result)
+{
+	return	/* file:// URL -- do we ever use one??? */
+		(result == CURLE_FILE_COULDNT_READ_FILE) ||
+		/* http:// and https:// URL */
+		(code == 404 && result == CURLE_HTTP_RETURNED_ERROR) ||
+		/* ftp:// URL */
+		(code == 550 && result == CURLE_FTP_COULDNT_RETR_FILE)
+		;
+}
+
+#define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
 
 static void fetch_alternates(const char *base);
 
@@ -215,7 +175,7 @@ static void start_object_request(struct object_request *obj_req)
 	prevlocal = open(prevfile, O_RDONLY);
 	if (prevlocal != -1) {
 		do {
-			prev_read = read(prevlocal, prev_buf, PREV_BUF_SIZE);
+			prev_read = xread(prevlocal, prev_buf, PREV_BUF_SIZE);
 			if (prev_read>0) {
 				if (fwrite_sha1_file(prev_buf,
 						     1,
@@ -323,8 +283,7 @@ static void process_object_response(void *callback_data)
 	obj_req->state = COMPLETE;
 
 	/* Use alternates if necessary */
-	if (obj_req->http_code == 404 ||
-	    obj_req->curl_result == CURLE_FILE_COULDNT_READ_FILE) {
+	if (missing_target(obj_req)) {
 		fetch_alternates(alt->base);
 		if (obj_req->repo->next != NULL) {
 			obj_req->repo =
@@ -537,8 +496,7 @@ static void process_alternates_response(void *callback_data)
 			return;
 		}
 	} else if (slot->curl_result != CURLE_OK) {
-		if (slot->http_code != 404 &&
-		    slot->curl_result != CURLE_FILE_COULDNT_READ_FILE) {
+		if (!missing_target(slot)) {
 			got_alternates = -1;
 			return;
 		}
@@ -559,9 +517,36 @@ static void process_alternates_response(void *callback_data)
 			char *target = NULL;
 			char *path;
 			if (data[i] == '/') {
-				serverlen = strchr(base + 8, '/') - base;
-				okay = 1;
+				/* This counts
+				 * http://git.host/pub/scm/linux.git/
+				 * -----------here^
+				 * so memcpy(dst, base, serverlen) will
+				 * copy up to "...git.host".
+				 */
+				const char *colon_ss = strstr(base,"://");
+				if (colon_ss) {
+					serverlen = (strchr(colon_ss + 3, '/')
+						     - base);
+					okay = 1;
+				}
 			} else if (!memcmp(data + i, "../", 3)) {
+				/* Relative URL; chop the corresponding
+				 * number of subpath from base (and ../
+				 * from data), and concatenate the result.
+				 *
+				 * The code first drops ../ from data, and
+				 * then drops one ../ from data and one path
+				 * from base.  IOW, one extra ../ is dropped
+				 * from data than path is dropped from base.
+				 *
+				 * This is not wrong.  The alternate in
+				 *     http://git.host/pub/scm/linux.git/
+				 * to borrow from
+				 *     http://git.host/pub/scm/linus.git/
+				 * is ../../linus.git/objects/.  You need
+				 * two ../../ to borrow from your direct
+				 * neighbour.
+				 */
 				i += 3;
 				serverlen = strlen(base);
 				while (i + 2 < posn &&
@@ -583,11 +568,13 @@ static void process_alternates_response(void *callback_data)
 					okay = 1;
 				}
 			}
-			/* skip 'objects' at end */
+			/* skip "objects\n" at end */
 			if (okay) {
 				target = xmalloc(serverlen + posn - i - 6);
-				strlcpy(target, base, serverlen);
-				strlcpy(target + serverlen, data + i, posn - i - 6);
+				memcpy(target, base, serverlen);
+				memcpy(target + serverlen, data + i,
+				       posn - i - 7);
+				target[serverlen + posn - i - 7] = 0;
 				if (get_verbosely)
 					fprintf(stderr,
 						"Also look at %s\n", target);
@@ -674,209 +661,6 @@ static void fetch_alternates(const char *base)
 	free(url);
 }
 
-#ifndef NO_EXPAT
-static void
-xml_start_tag(void *userData, const char *name, const char **atts)
-{
-	struct xml_ctx *ctx = (struct xml_ctx *)userData;
-	const char *c = strchr(name, ':');
-	int new_len;
-
-	if (c == NULL)
-		c = name;
-	else
-		c++;
-
-	new_len = strlen(ctx->name) + strlen(c) + 2;
-
-	if (new_len > ctx->len) {
-		ctx->name = xrealloc(ctx->name, new_len);
-		ctx->len = new_len;
-	}
-	strcat(ctx->name, ".");
-	strcat(ctx->name, c);
-
-	if (ctx->cdata) {
-		free(ctx->cdata);
-		ctx->cdata = NULL;
-	}
-
-	ctx->userFunc(ctx, 0);
-}
-
-static void
-xml_end_tag(void *userData, const char *name)
-{
-	struct xml_ctx *ctx = (struct xml_ctx *)userData;
-	const char *c = strchr(name, ':');
-	char *ep;
-
-	ctx->userFunc(ctx, 1);
-
-	if (c == NULL)
-		c = name;
-	else
-		c++;
-
-	ep = ctx->name + strlen(ctx->name) - strlen(c) - 1;
-	*ep = 0;
-}
-
-static void
-xml_cdata(void *userData, const XML_Char *s, int len)
-{
-	struct xml_ctx *ctx = (struct xml_ctx *)userData;
-	if (ctx->cdata)
-		free(ctx->cdata);
-	ctx->cdata = xmalloc(len + 1);
-	strlcpy(ctx->cdata, s, len + 1);
-}
-
-static int remote_ls(struct alt_base *repo, const char *path, int flags,
-		     void (*userFunc)(struct remote_ls_ctx *ls),
-		     void *userData);
-
-static void handle_remote_ls_ctx(struct xml_ctx *ctx, int tag_closed)
-{
-	struct remote_ls_ctx *ls = (struct remote_ls_ctx *)ctx->userData;
-
-	if (tag_closed) {
-		if (!strcmp(ctx->name, DAV_PROPFIND_RESP) && ls->dentry_name) {
-			if (ls->dentry_flags & IS_DIR) {
-				if (ls->flags & PROCESS_DIRS) {
-					ls->userFunc(ls);
-				}
-				if (strcmp(ls->dentry_name, ls->path) &&
-				    ls->flags & RECURSIVE) {
-					ls->rc = remote_ls(ls->repo,
-							   ls->dentry_name,
-							   ls->flags,
-							   ls->userFunc,
-							   ls->userData);
-				}
-			} else if (ls->flags & PROCESS_FILES) {
-				ls->userFunc(ls);
-			}
-		} else if (!strcmp(ctx->name, DAV_PROPFIND_NAME) && ctx->cdata) {
-			ls->dentry_name = xmalloc(strlen(ctx->cdata) -
-						  ls->repo->path_len + 1);
-			strcpy(ls->dentry_name, ctx->cdata + ls->repo->path_len);
-		} else if (!strcmp(ctx->name, DAV_PROPFIND_COLLECTION)) {
-			ls->dentry_flags |= IS_DIR;
-		}
-	} else if (!strcmp(ctx->name, DAV_PROPFIND_RESP)) {
-		if (ls->dentry_name) {
-			free(ls->dentry_name);
-		}
-		ls->dentry_name = NULL;
-		ls->dentry_flags = 0;
-	}
-}
-
-static int remote_ls(struct alt_base *repo, const char *path, int flags,
-		     void (*userFunc)(struct remote_ls_ctx *ls),
-		     void *userData)
-{
-	char *url = xmalloc(strlen(repo->base) + strlen(path) + 1);
-	struct active_request_slot *slot;
-	struct slot_results results;
-	struct buffer in_buffer;
-	struct buffer out_buffer;
-	char *in_data;
-	char *out_data;
-	XML_Parser parser = XML_ParserCreate(NULL);
-	enum XML_Status result;
-	struct curl_slist *dav_headers = NULL;
-	struct xml_ctx ctx;
-	struct remote_ls_ctx ls;
-
-	ls.flags = flags;
-	ls.repo = repo;
-	ls.path = strdup(path);
-	ls.dentry_name = NULL;
-	ls.dentry_flags = 0;
-	ls.userData = userData;
-	ls.userFunc = userFunc;
-	ls.rc = 0;
-
-	sprintf(url, "%s%s", repo->base, path);
-
-	out_buffer.size = strlen(PROPFIND_ALL_REQUEST);
-	out_data = xmalloc(out_buffer.size + 1);
-	snprintf(out_data, out_buffer.size + 1, PROPFIND_ALL_REQUEST);
-	out_buffer.posn = 0;
-	out_buffer.buffer = out_data;
-
-	in_buffer.size = 4096;
-	in_data = xmalloc(in_buffer.size);
-	in_buffer.posn = 0;
-	in_buffer.buffer = in_data;
-
-	dav_headers = curl_slist_append(dav_headers, "Depth: 1");
-	dav_headers = curl_slist_append(dav_headers, "Content-Type: text/xml");
-
-	slot = get_active_slot();
-	slot->results = &results;
-	curl_easy_setopt(slot->curl, CURLOPT_INFILE, &out_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_INFILESIZE, out_buffer.size);
-	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, fread_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_FILE, &in_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
-	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
-	curl_easy_setopt(slot->curl, CURLOPT_UPLOAD, 1);
-	curl_easy_setopt(slot->curl, CURLOPT_CUSTOMREQUEST, DAV_PROPFIND);
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, dav_headers);
-
-	if (start_active_slot(slot)) {
-		run_active_slot(slot);
-		if (results.curl_result == CURLE_OK) {
-			ctx.name = xcalloc(10, 1);
-			ctx.len = 0;
-			ctx.cdata = NULL;
-			ctx.userFunc = handle_remote_ls_ctx;
-			ctx.userData = &ls;
-			XML_SetUserData(parser, &ctx);
-			XML_SetElementHandler(parser, xml_start_tag,
-					      xml_end_tag);
-			XML_SetCharacterDataHandler(parser, xml_cdata);
-			result = XML_Parse(parser, in_buffer.buffer,
-					   in_buffer.posn, 1);
-			free(ctx.name);
-
-			if (result != XML_STATUS_OK) {
-				ls.rc = error("XML error: %s",
-					      XML_ErrorString(
-						      XML_GetErrorCode(parser)));
-			}
-		} else {
-			ls.rc = -1;
-		}
-	} else {
-		ls.rc = error("Unable to start PROPFIND request");
-	}
-
-	free(ls.path);
-	free(url);
-	free(out_data);
-	free(in_buffer.buffer);
-	curl_slist_free_all(dav_headers);
-
-	return ls.rc;
-}
-
-static void process_ls_pack(struct remote_ls_ctx *ls)
-{
-	unsigned char sha1[20];
-
-	if (strlen(ls->dentry_name) == 63 &&
-	    !strncmp(ls->dentry_name, "objects/pack/pack-", 18) &&
-	    has_extension(ls->dentry_name, ".pack")) {
-		get_sha1_hex(ls->dentry_name + 18, sha1);
-		setup_index(ls->repo, sha1);
-	}
-}
-#endif
-
 static int fetch_indices(struct alt_base *repo)
 {
 	unsigned char sha1[20];
@@ -899,12 +683,6 @@ static int fetch_indices(struct alt_base *repo)
 	if (get_verbosely)
 		fprintf(stderr, "Getting pack list for %s\n", repo->base);
 
-#ifndef NO_EXPAT
-	if (remote_ls(repo, "objects/pack/", PROCESS_FILES,
-		      process_ls_pack, NULL) == 0)
-		return 0;
-#endif
-
 	url = xmalloc(strlen(repo->base) + 21);
 	sprintf(url, "%s/objects/info/packs", repo->base);
 
@@ -917,8 +695,7 @@ static int fetch_indices(struct alt_base *repo)
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
 		if (results.curl_result != CURLE_OK) {
-			if (results.http_code == 404 ||
-			    results.curl_result == CURLE_FILE_COULDNT_READ_FILE) {
+			if (missing_target(&results)) {
 				repo->got_indices = 1;
 				free(buffer.buffer);
 				return 0;
@@ -1032,6 +809,7 @@ static int fetch_pack(struct alt_base *repo, unsigned char *sha1)
 		return error("Unable to start request");
 	}
 
+	target->pack_size = ftell(packfile);
 	fclose(packfile);
 
 	ret = move_temp_to_file(tmpfile, filename);
@@ -1099,8 +877,7 @@ static int fetch_object(struct alt_base *repo, unsigned char *sha1)
 		ret = error("Request for %s aborted", hex);
 	} else if (obj_req->curl_result != CURLE_OK &&
 		   obj_req->http_code != 416) {
-		if (obj_req->http_code == 404 ||
-		    obj_req->curl_result == CURLE_FILE_COULDNT_READ_FILE)
+		if (missing_target(obj_req))
 			ret = -1; /* Be silent, it is probably in a pack. */
 		else
 			ret = error("%s (curl_result = %d, http_code = %ld, sha1 = %s)",

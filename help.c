@@ -3,12 +3,11 @@
  *
  * Builtin help-related commands (help, usage, version)
  */
-#include <sys/ioctl.h>
 #include "cache.h"
 #include "builtin.h"
 #include "exec_cmd.h"
 #include "common-cmds.h"
-
+#include <sys/ioctl.h>
 
 /* most GUI terminals set COLUMNS (although some don't export it) */
 static int term_columns(void)
@@ -184,7 +183,7 @@ static void show_man_page(const char *git_cmd)
 		page = git_cmd;
 	else {
 		int page_len = strlen(git_cmd) + 4;
-		char *p = malloc(page_len + 1);
+		char *p = xmalloc(page_len + 1);
 		strcpy(p, "git-");
 		strcpy(p + 4, git_cmd);
 		p[page_len] = 0;

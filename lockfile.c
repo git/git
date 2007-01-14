@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2005, Junio C Hamano
  */
-#include <signal.h>
 #include "cache.h"
 
 static struct lock_file *lock_file_list;
@@ -28,9 +27,12 @@ static int lock_file(struct lock_file *lk, const char *path)
 	sprintf(lk->filename, "%s.lock", path);
 	fd = open(lk->filename, O_RDWR | O_CREAT | O_EXCL, 0666);
 	if (0 <= fd) {
-		if (!lk->next) {
+		if (!lk->on_list) {
 			lk->next = lock_file_list;
 			lock_file_list = lk;
+			lk->on_list = 1;
+		}
+		if (lock_file_list) {
 			signal(SIGINT, remove_lock_file_on_signal);
 			atexit(remove_lock_file);
 		}
@@ -38,6 +40,8 @@ static int lock_file(struct lock_file *lk, const char *path)
 			return error("cannot fix permission bits on %s",
 				     lk->filename);
 	}
+	else
+		lk->filename[0] = 0;
 	return fd;
 }
 
@@ -45,7 +49,7 @@ int hold_lock_file_for_update(struct lock_file *lk, const char *path, int die_on
 {
 	int fd = lock_file(lk, path);
 	if (fd < 0 && die_on_error)
-		die("unable to create '%s': %s", path, strerror(errno));
+		die("unable to create '%s.lock': %s", path, strerror(errno));
 	return fd;
 }
 

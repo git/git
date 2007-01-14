@@ -3,26 +3,56 @@ gitk(1)
 
 NAME
 ----
-gitk - Some git command not yet documented.
-
+gitk - git repository browser
 
 SYNOPSIS
 --------
-'gitk' [ --option ] <args>...
+'gitk' [<option>...] [<revs>] [--] [<path>...]
 
 DESCRIPTION
 -----------
-Does something not yet documented.
+Displays changes in a repository or a selected set of commits. This includes
+visualizing the commit graph, showing information related to each commit, and
+the files in the trees of each revision.
 
+Historically, gitk was the first repository browser. It's written in tcl/tk
+and started off in a separate repository but was later merged into the main
+git repository.
 
 OPTIONS
 -------
---option::
-	Some option not yet documented.
+To control which revisions to shown, the command takes options applicable to
+the gitlink:git-rev-list[1] command. This manual page describes only the most
+frequently used options.
 
-<args>...::
-	Some argument not yet documented.
+-n <number>, --max-count=<number>::
 
+	Limits the number of commits to show.
+
+--since=<date>::
+
+	Show commits more recent than a specific date.
+
+--until=<date>::
+
+	Show commits older than a specific date.
+
+--all::
+
+	Show all branches.
+
+<revs>::
+
+	Limit the revisions to show. This can be either a single revision
+	meaning show from the given revision and back, or it can be a range in
+	the form "'<from>'..'<to>'" to show all revisions between '<from>' and
+	back to '<to>'. Note, more advanced revision selection can be applied.
+
+<path>::
+
+	Limit commits to the ones touching files in the given paths. Note, to
+	avoid ambiguity wrt. revision names use "--" to separate the paths
+	from any preceeding options.
 
 Examples
 --------
@@ -37,13 +67,32 @@ gitk --since="2 weeks ago" \-- gitk::
 	The "--" is necessary to avoid confusion with the *branch* named
 	'gitk'
 
+gitk --max-count=100 --all -- Makefile::
+
+	Show at most 100 changes made to the file 'Makefile'. Instead of only
+	looking for changes in the current branch look in all branches.
+
+See Also
+--------
+'qgit(1)'::
+	A repository browser written in C++ using Qt.
+
+'gitview(1)'::
+	A repository browser written in Python using Gtk. It's based on
+	'bzrk(1)' and distributed in the contrib area of the git repository.
+
+'tig(1)'::
+	A minimal repository browser and git tool output highlighter written
+	in C using Ncurses.
+
 Author
 ------
-Written by Paul Mackerras <paulus@samba.org>
+Written by Paul Mackerras <paulus@samba.org>.
 
 Documentation
 --------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
+Documentation by Junio C Hamano, Jonas Fonseca, and the git-list
+<git@vger.kernel.org>.
 
 GIT
 ---

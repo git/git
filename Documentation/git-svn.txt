@@ -3,7 +3,7 @@ git-svn(1)
 
 NAME
 ----
-git-svn - bidirectional operation between a single Subversion branch and git
+git-svn - bidirectional operation between Subversion and git
 
 SYNOPSIS
 --------
@@ -11,49 +11,84 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-git-svn is a simple conduit for changesets between a single Subversion
-branch and git.
+git-svn is a simple conduit for changesets between Subversion and git.
+It is not to be confused with gitlink:git-svnimport[1], which is
+read-only and geared towards tracking multiple branches.
 
-git-svn is not to be confused with git-svnimport.  The were designed
-with very different goals in mind.
-
-git-svn is designed for an individual developer who wants a
+git-svn was originally designed for an individual developer who wants a
 bidirectional flow of changesets between a single branch in Subversion
-and an arbitrary number of branches in git.  git-svnimport is designed
-for read-only operation on repositories that match a particular layout
-(albeit the recommended one by SVN developers).
+and an arbitrary number of branches in git.  Since its inception,
+git-svn has gained the ability to track multiple branches in a manner
+similar to git-svnimport; but it cannot (yet) automatically detect new
+branches and tags like git-svnimport does.
 
-For importing svn, git-svnimport is potentially more powerful when
-operating on repositories organized under the recommended
-trunk/branch/tags structure, and should be faster, too.
-
-git-svn mostly ignores the very limited view of branching that
-Subversion has.  This allows git-svn to be much easier to use,
-especially on repositories that are not organized in a manner that
-git-svnimport is designed for.
+git-svn is especially useful when it comes to tracking repositories
+not organized in the way Subversion developers recommend (trunk,
+branches, tags directories).
 
 COMMANDS
 --------
-init::
+--
+
+'init'::
 	Creates an empty git repository with additional metadata
 	directories for git-svn.  The Subversion URL must be specified
-	as a command-line argument.
+	as a command-line argument.  Optionally, the target directory
+	to operate on can be specified as a second argument.  Normally
+	this command initializes the current directory.
 
-fetch::
-	Fetch unfetched revisions from the Subversion URL we are
-	tracking.  refs/remotes/git-svn will be updated to the
-	latest revision.
+'fetch'::
 
-	Note: You should never attempt to modify the remotes/git-svn
-	branch outside of git-svn.  Instead, create a branch from
-	remotes/git-svn and work on that branch.  Use the 'commit'
-	command (see below) to write git commits back to
-	remotes/git-svn.
+Fetch unfetched revisions from the Subversion URL we are
+tracking.  refs/remotes/git-svn will be updated to the
+latest revision.
 
-	See 'Additional Fetch Arguments' if you are interested in
-	manually joining branches on commit.
+Note: You should never attempt to modify the remotes/git-svn
+branch outside of git-svn.  Instead, create a branch from
+remotes/git-svn and work on that branch.  Use the 'dcommit'
+command (see below) to write git commits back to
+remotes/git-svn.
 
-commit::
+See '<<fetch-args,Additional Fetch Arguments>>' if you are interested in
+manually joining branches on commit.
+
+'dcommit'::
+	Commit each diff from a specified head directly to the SVN
+	repository, and then rebase or reset (depending on whether or
+	not there is a diff between SVN and head).  This will create
+	a revision in SVN for each commit in git.
+	It is recommended that you run git-svn fetch and rebase (not
+	pull or merge) your commits against the latest changes in the
+	SVN repository.
+	An optional command-line argument may be specified as an
+	alternative to HEAD.
+	This is advantageous over 'set-tree' (below) because it produces
+	cleaner, more linear history.
+
+'log'::
+	This should make it easy to look up svn log messages when svn
+	users refer to -r/--revision numbers.
+
+	The following features from `svn log' are supported:
+
+	--revision=<n>[:<n>] - is supported, non-numeric args are not:
+	                       HEAD, NEXT, BASE, PREV, etc ...
+	-v/--verbose         - it's not completely compatible with
+	                       the --verbose output in svn log, but
+			       reasonably close.
+	--limit=<n>          - is NOT the same as --max-count,
+	                       doesn't count merged/excluded commits
+	--incremental        - supported
+
+	New features:
+
+	--show-commit        - shows the git commit sha1, as well
+	--oneline            - our version of --pretty=oneline
+
+	Any other arguments are passed directly to `git log'
+
+'set-tree'::
+	You should consider using 'dcommit' instead of this command.
 	Commit specified commit or tree objects to SVN.  This relies on
 	your imported fetch data being up-to-date.  This makes
 	absolutely no attempts to do patching when committing to SVN, it
@@ -61,9 +96,9 @@ commit::
 	commit.  All merging is assumed to have taken place
 	independently of git-svn functions.
 
-rebuild::
+'rebuild'::
 	Not a part of daily usage, but this is a useful command if
-	you've just cloned a repository (using git-clone) that was
+	you've just cloned a repository (using gitlink:git-clone[1]) that was
 	tracked with git-svn.  Unfortunately, git-clone does not clone
 	git-svn metadata and the svn working tree that git-svn uses for
 	its operations.  This rebuilds the metadata so git-svn can
@@ -71,176 +106,344 @@ rebuild::
 	specified at the command-line if the directory/repository you're
 	tracking has moved or changed protocols.
 
-show-ignore::
+'show-ignore'::
 	Recursively finds and lists the svn:ignore property on
 	directories.  The output is suitable for appending to
 	the $GIT_DIR/info/exclude file.
 
+'commit-diff'::
+	Commits the diff of two tree-ish arguments from the
+	command-line.  This command is intended for interopability with
+	git-svnimport and does not rely on being inside an git-svn
+	init-ed repository.  This command takes three arguments, (a) the
+	original tree to diff against, (b) the new tree result, (c) the
+	URL of the target Subversion repository.  The final argument
+	(URL) may be omitted if you are working from a git-svn-aware
+	repository (that has been init-ed with git-svn).
+	The -r<revision> option is required for this.
+
+'graft-branches'::
+	This command attempts to detect merges/branches from already
+	imported history.  Techniques used currently include regexes,
+	file copies, and tree-matches).  This command generates (or
+	modifies) the $GIT_DIR/info/grafts file.  This command is
+	considered experimental, and inherently flawed because
+	merge-tracking in SVN is inherently flawed and inconsistent
+	across different repositories.
+
+'multi-init'::
+	This command supports git-svnimport-like command-line syntax for
+	importing repositories that are layed out as recommended by the
+	SVN folks.  This is a bit more tolerant than the git-svnimport
+	command-line syntax and doesn't require the user to figure out
+	where the repository URL ends and where the repository path
+	begins.
+
+-T<trunk_subdir>::
+--trunk=<trunk_subdir>::
+-t<tags_subdir>::
+--tags=<tags_subdir>::
+-b<branches_subdir>::
+--branches=<branches_subdir>::
+	These are the command-line options for multi-init.  Each of
+	these flags can point to a relative repository path
+	(--tags=project/tags') or a full url
+	(--tags=https://foo.org/project/tags)
+
+--prefix=<prefix>
+	This allows one to specify a prefix which is prepended to the
+	names of remotes.  The prefix does not automatically include a
+	trailing slash, so be sure you include one in the argument if
+	that is what you want.  This is useful if you wish to track
+	multiple projects that share a common repository.
+
+'multi-fetch'::
+	This runs fetch on all known SVN branches we're tracking.  This
+	will NOT discover new branches (unlike git-svnimport), so
+	multi-init will need to be re-run (it's idempotent).
+
+--
+
 OPTIONS
 -------
+--
+
+--shared::
+--template=<template_directory>::
+	Only used with the 'init' command.
+	These are passed directly to gitlink:git-init[1].
+
 -r <ARG>::
 --revision <ARG>::
-	Only used with the 'fetch' command.
 
-	Takes any valid -r<argument> svn would accept and passes it
-	directly to svn. -r<ARG1>:<ARG2> ranges and "{" DATE "}" syntax
-	is also supported.  This is passed directly to svn, see svn
-	documentation for more details.
+Only used with the 'fetch' command.
 
-	This can allow you to make partial mirrors when running fetch.
+Takes any valid -r<argument> svn would accept and passes it
+directly to svn. -r<ARG1>:<ARG2> ranges and "{" DATE "}" syntax
+is also supported.  This is passed directly to svn, see svn
+documentation for more details.
+
+This can allow you to make partial mirrors when running fetch.
 
 -::
 --stdin::
-	Only used with the 'commit' command.
 
-	Read a list of commits from stdin and commit them in reverse
-	order.  Only the leading sha1 is read from each line, so
-	git-rev-list --pretty=oneline output can be used.
+Only used with the 'set-tree' command.
+
+Read a list of commits from stdin and commit them in reverse
+order.  Only the leading sha1 is read from each line, so
+git-rev-list --pretty=oneline output can be used.
 
 --rmdir::
-	Only used with the 'commit' command.
 
-	Remove directories from the SVN tree if there are no files left
-	behind.  SVN can version empty directories, and they are not
-	removed by default if there are no files left in them.  git
-	cannot version empty directories.  Enabling this flag will make
-	the commit to SVN act like git.
+Only used with the 'dcommit', 'set-tree' and 'commit-diff' commands.
 
-	repo-config key: svn.rmdir
+Remove directories from the SVN tree if there are no files left
+behind.  SVN can version empty directories, and they are not
+removed by default if there are no files left in them.  git
+cannot version empty directories.  Enabling this flag will make
+the commit to SVN act like git.
+
+repo-config key: svn.rmdir
 
 -e::
 --edit::
-	Only used with the 'commit' command.
 
-	Edit the commit message before committing to SVN.  This is off by
-	default for objects that are commits, and forced on when committing
-	tree objects.
+Only used with the 'dcommit', 'set-tree' and 'commit-diff' commands.
 
-	repo-config key: svn.edit
+Edit the commit message before committing to SVN.  This is off by
+default for objects that are commits, and forced on when committing
+tree objects.
+
+repo-config key: svn.edit
 
 -l<num>::
 --find-copies-harder::
-	Both of these are only used with the 'commit' command.
 
-	They are both passed directly to git-diff-tree see
-	git-diff-tree(1) for more information.
+Only used with the 'dcommit', 'set-tree' and 'commit-diff' commands.
 
-	repo-config key: svn.l
-	repo-config key: svn.findcopiesharder
+They are both passed directly to git-diff-tree see
+gitlink:git-diff-tree[1] for more information.
+
+[verse]
+repo-config key: svn.l
+repo-config key: svn.findcopiesharder
 
 -A<filename>::
 --authors-file=<filename>::
 
-	Syntax is compatible with the files used by git-svnimport and
-	git-cvsimport:
+Syntax is compatible with the files used by git-svnimport and
+git-cvsimport:
 
 ------------------------------------------------------------------------
-loginname = Joe User <user@example.com>
+	loginname = Joe User <user@example.com>
 ------------------------------------------------------------------------
 
-	If this option is specified and git-svn encounters an SVN
-	committer name that does not exist in the authors-file, git-svn
-	will abort operation. The user will then have to add the
-	appropriate entry.  Re-running the previous git-svn command
-	after the authors-file is modified should continue operation.
+If this option is specified and git-svn encounters an SVN
+committer name that does not exist in the authors-file, git-svn
+will abort operation. The user will then have to add the
+appropriate entry.  Re-running the previous git-svn command
+after the authors-file is modified should continue operation.
 
-	repo-config key: svn.authors-file
+repo-config key: svn.authorsfile
+
+-q::
+--quiet::
+	Make git-svn less verbose.
+
+--repack[=<n>]::
+--repack-flags=<flags>
+	These should help keep disk usage sane for large fetches
+	with many revisions.
+
+	--repack takes an optional argument for the number of revisions
+	to fetch before repacking.  This defaults to repacking every
+	1000 commits fetched if no argument is specified.
+
+	--repack-flags are passed directly to gitlink:git-repack[1].
+
+repo-config key: svn.repack
+repo-config key: svn.repackflags
+
+-m::
+--merge::
+-s<strategy>::
+--strategy=<strategy>::
+
+These are only used with the 'dcommit' command.
+
+Passed directly to git-rebase when using 'dcommit' if a
+'git-reset' cannot be used (see dcommit).
+
+-n::
+--dry-run::
+
+This is only used with the 'dcommit' command.
+
+Print out the series of git arguments that would show
+which diffs would be committed to SVN.
+
+--
 
 ADVANCED OPTIONS
 ----------------
+--
+
 -b<refname>::
 --branch <refname>::
-	Used with 'fetch' or 'commit'.
+Used with 'fetch', 'dcommit' or 'set-tree'.
 
-	This can be used to join arbitrary git branches to remotes/git-svn
-	on new commits where the tree object is equivalent.
+This can be used to join arbitrary git branches to remotes/git-svn
+on new commits where the tree object is equivalent.
 
-	When used with different GIT_SVN_ID values, tags and branches in
-	SVN can be tracked this way, as can some merges where the heads
-	end up having completely equivalent content.  This can even be
-	used to track branches across multiple SVN _repositories_.
+When used with different GIT_SVN_ID values, tags and branches in
+SVN can be tracked this way, as can some merges where the heads
+end up having completely equivalent content.  This can even be
+used to track branches across multiple SVN _repositories_.
 
-	This option may be specified multiple times, once for each
-	branch.
+This option may be specified multiple times, once for each
+branch.
 
-	repo-config key: svn.branch
+repo-config key: svn.branch
 
 -i<GIT_SVN_ID>::
 --id <GIT_SVN_ID>::
-	This sets GIT_SVN_ID (instead of using the environment).  See
-	the section on "Tracking Multiple Repositories or Branches" for
-	more information on using GIT_SVN_ID.
+
+This sets GIT_SVN_ID (instead of using the environment).  See the
+section on
+'<<tracking-multiple-repos,Tracking Multiple Repositories or Branches>>'
+for more information on using GIT_SVN_ID.
+
+--follow-parent::
+	This is especially helpful when we're tracking a directory
+	that has been moved around within the repository, or if we
+	started tracking a branch and never tracked the trunk it was
+	descended from.
+
+repo-config key: svn.followparent
+
+--no-metadata::
+	This gets rid of the git-svn-id: lines at the end of every commit.
+
+	With this, you lose the ability to use the rebuild command.  If
+	you ever lose your .git/svn/git-svn/.rev_db file, you won't be
+	able to fetch again, either.  This is fine for one-shot imports.
+
+	The 'git-svn log' command will not work on repositories using this,
+	either.
+
+repo-config key: svn.nometadata
+
+--
 
 COMPATIBILITY OPTIONS
 ---------------------
+--
+
 --upgrade::
-	Only used with the 'rebuild' command.
+Only used with the 'rebuild' command.
 
-	Run this if you used an old version of git-svn that used
-	"git-svn-HEAD" instead of "remotes/git-svn" as the branch
-	for tracking the remote.
+Run this if you used an old version of git-svn that used
+"git-svn-HEAD" instead of "remotes/git-svn" as the branch
+for tracking the remote.
 
---no-ignore-externals::
-	Only used with the 'fetch' and 'rebuild' command.
+--ignore-nodate::
+Only used with the 'fetch' command.
 
-	By default, git-svn passes --ignore-externals to svn to avoid
-	fetching svn:external trees into git.  Pass this flag to enable
-	externals tracking directly via git.
+By default git-svn will crash if it tries to import a revision
+from SVN which has '(no date)' listed as the date of the revision.
+This is repository corruption on SVN's part, plain and simple.
+But sometimes you really need those revisions anyway.
 
-	Versions of svn that do not support --ignore-externals are
-	automatically detected and this flag will be automatically
-	enabled for them.
+If supplied git-svn will convert '(no date)' entries to the UNIX
+epoch (midnight on Jan. 1, 1970).  Yes, that's probably very wrong.
+SVN was very wrong.
 
-	Otherwise, do not enable this flag unless you know what you're
-	doing.
-
-	repo-config key: svn.noignoreexternals
+--
 
 Basic Examples
 ~~~~~~~~~~~~~~
 
-Tracking and contributing to an Subversion managed-project:
+Tracking and contributing to a the trunk of a Subversion-managed project:
 
 ------------------------------------------------------------------------
-# Initialize a tree (like git init-db):
+# Initialize a repo (like git init):
 	git-svn init http://svn.foo.org/project/trunk
 # Fetch remote revisions:
 	git-svn fetch
 # Create your own branch to hack on:
 	git checkout -b my-branch remotes/git-svn
-# Commit only the git commits you want to SVN:
-	git-svn commit <tree-ish> [<tree-ish_2> ...]
-# Commit all the git commits from my-branch that don't exist in SVN:
-	git-svn commit remotes/git-svn..my-branch
-# Something is committed to SVN, pull the latest into your branch:
-	git-svn fetch && git pull . remotes/git-svn
+# Do some work, and then commit your new changes to SVN, as well as
+# automatically updating your working HEAD:
+	git-svn dcommit
+# Something is committed to SVN, rebase the latest into your branch:
+	git-svn fetch && git rebase remotes/git-svn
 # Append svn:ignore settings to the default git exclude file:
 	git-svn show-ignore >> .git/info/exclude
 ------------------------------------------------------------------------
 
+Tracking and contributing to an entire Subversion-managed project
+(complete with a trunk, tags and branches):
+See also:
+'<<tracking-multiple-repos,Tracking Multiple Repositories or Branches>>'
+
+------------------------------------------------------------------------
+# Initialize a repo (like git init):
+	git-svn multi-init http://svn.foo.org/project \
+		-T trunk -b branches -t tags
+# Fetch remote revisions:
+	git-svn multi-fetch
+# Create your own branch of trunk to hack on:
+	git checkout -b my-trunk remotes/trunk
+# Do some work, and then commit your new changes to SVN, as well as
+# automatically updating your working HEAD:
+	git-svn dcommit -i trunk
+# Something has been committed to trunk, rebase the latest into your branch:
+	git-svn multi-fetch && git rebase remotes/trunk
+# Append svn:ignore settings of trunk to the default git exclude file:
+	git-svn show-ignore -i trunk >> .git/info/exclude
+# Check for new branches and tags (no arguments are needed):
+	git-svn multi-init
+------------------------------------------------------------------------
+
+REBASE VS. PULL/MERGE
+---------------------
+
+Originally, git-svn recommended that the remotes/git-svn branch be
+pulled or merged from.  This is because the author favored
+'git-svn set-tree B' to commit a single head rather than the
+'git-svn set-tree A..B' notation to commit multiple commits.
+
+If you use 'git-svn set-tree A..B' to commit several diffs and you do
+not have the latest remotes/git-svn merged into my-branch, you should
+use 'git rebase' to update your work branch instead of 'git pull' or
+'git merge'.  'pull/merge' can cause non-linear history to be flattened
+when committing into SVN, which can lead to merge commits reversing
+previous commits in SVN.
+
 DESIGN PHILOSOPHY
 -----------------
 Merge tracking in Subversion is lacking and doing branched development
-with Subversion is cumbersome as a result.  git-svn completely forgoes
-any automated merge/branch tracking on the Subversion side and leaves it
-entirely up to the user on the git side.  It's simply not worth it to do
-a useful translation when the original signal is weak.
+with Subversion is cumbersome as a result.  git-svn does not do
+automated merge/branch tracking by default and leaves it entirely up to
+the user on the git side.
 
+[[tracking-multiple-repos]]
 TRACKING MULTIPLE REPOSITORIES OR BRANCHES
 ------------------------------------------
-This is for advanced users, most users should ignore this section.
-
 Because git-svn does not care about relationships between different
 branches or directories in a Subversion repository, git-svn has a simple
 hack to allow it to track an arbitrary number of related _or_ unrelated
-SVN repositories via one git repository.  Simply set the GIT_SVN_ID
-environment variable to a name other other than "git-svn" (the default)
-and git-svn will ignore the contents of the $GIT_DIR/git-svn directory
-and instead do all of its work in $GIT_DIR/$GIT_SVN_ID for that
-invocation.  The interface branch will be remotes/$GIT_SVN_ID, instead of
-remotes/git-svn.  Any remotes/$GIT_SVN_ID branch should never be modified
-by the user outside of git-svn commands.
+SVN repositories via one git repository.  Simply use the --id/-i flag or
+set the GIT_SVN_ID environment variable to a name other other than
+"git-svn" (the default) and git-svn will ignore the contents of the
+$GIT_DIR/svn/git-svn directory and instead do all of its work in
+$GIT_DIR/svn/$GIT_SVN_ID for that invocation.  The interface branch will
+be remotes/$GIT_SVN_ID, instead of remotes/git-svn.  Any
+remotes/$GIT_SVN_ID branch should never be modified by the user outside
+of git-svn commands.
 
+[[fetch-args]]
 ADDITIONAL FETCH ARGUMENTS
 --------------------------
 This is for advanced users, most users should ignore this section.
@@ -251,57 +454,32 @@ optionally be specified in the form of sha1 hex sums at the
 command-line.  Unfetched SVN revisions may also be tied to particular
 git commits with the following syntax:
 
+------------------------------------------------
 	svn_revision_number=git_commit_sha1
+------------------------------------------------
 
-This allows you to tie unfetched SVN revision 375 to your current HEAD::
+This allows you to tie unfetched SVN revision 375 to your current HEAD:
 
-	`git-svn fetch 375=$(git-rev-parse HEAD)`
+------------------------------------------------
+	git-svn fetch 375=$(git-rev-parse HEAD)
+------------------------------------------------
 
-Advanced Example: Tracking a Reorganized Repository
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you're tracking a directory that has moved, or otherwise been
 branched or tagged off of another directory in the repository and you
-care about the full history of the project, then you can read this
-section.
+care about the full history of the project, then you can use
+the --follow-parent option.
 
-This is how Yann Dirson tracked the trunk of the ufoai directory when
-the /trunk directory of his repository was moved to /ufoai/trunk and
-he needed to continue tracking /ufoai/trunk where /trunk left off.
-
-------------------------------------------------------------------------
-	# This log message shows when the repository was reorganized:
-	r166 | ydirson | 2006-03-02 01:36:55 +0100 (Thu, 02 Mar 2006) | 1 line
-	Changed paths:
-	   D /trunk
-	   A /ufoai/trunk (from /trunk:165)
-
-	# First we start tracking the old revisions:
-	GIT_SVN_ID=git-oldsvn git-svn init \
-			https://svn.sourceforge.net/svnroot/ufoai/trunk
-	GIT_SVN_ID=git-oldsvn git-svn fetch -r1:165
-
-	# And now, we continue tracking the new revisions:
-	GIT_SVN_ID=git-newsvn git-svn init \
-	      https://svn.sourceforge.net/svnroot/ufoai/ufoai/trunk
-	GIT_SVN_ID=git-newsvn git-svn fetch \
-	      166=`git-rev-parse refs/remotes/git-oldsvn`
-------------------------------------------------------------------------
+------------------------------------------------
+	git-svn fetch --follow-parent
+------------------------------------------------
 
 BUGS
 ----
-If somebody commits a conflicting changeset to SVN at a bad moment
-(right before you commit) causing a conflict and your commit to fail,
-your svn working tree ($GIT_DIR/git-svn/tree) may be dirtied.  The
-easiest thing to do is probably just to rm -rf $GIT_DIR/git-svn/tree and
-run 'rebuild'.
 
 We ignore all SVN properties except svn:executable.  Too difficult to
 map them since we rely heavily on git write-tree being _exactly_ the
 same on both the SVN and git working trees and I prefer not to clutter
 working trees with metadata files.
-
-svn:keywords can't be ignored in Subversion (at least I don't know of
-a way to ignore them).
 
 Renamed and copied directories are not detected by git and hence not
 tracked when committing to SVN.  I do not plan on adding support for
@@ -309,6 +487,10 @@ this as it's quite difficult and time-consuming to get working for all
 the possible corner cases (git doesn't do it, either).  Renamed and
 copied files are fully supported if they're similar enough for git to
 detect them.
+
+SEE ALSO
+--------
+gitlink:git-rebase[1]
 
 Author
 ------

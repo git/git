@@ -2,7 +2,7 @@
 # Tcl ignores the next line -*- tcl -*- \
 exec wish "$0" -- "$@"
 
-# Copyright (C) 2005 Paul Mackerras.  All rights reserved.
+# Copyright (C) 2005-2006 Paul Mackerras.  All rights reserved.
 # This program is free software; it may be used, copied, modified
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
@@ -17,13 +17,12 @@ proc gitdir {} {
 }
 
 proc start_rev_list {view} {
-    global startmsecs nextupdate ncmupdate
+    global startmsecs nextupdate
     global commfd leftover tclencoding datemode
     global viewargs viewfiles commitidx
 
     set startmsecs [clock clicks -milliseconds]
     set nextupdate [expr {$startmsecs + 100}]
-    set ncmupdate 1
     set commitidx($view) 0
     set args $viewargs($view)
     if {$viewfiles($view) ne {}} {
@@ -79,7 +78,7 @@ proc getcommitlines {fd view}  {
     global parentlist childlist children curview hlview
     global vparentlist vchildlist vdisporder vcmitlisted
 
-    set stuff [read $fd]
+    set stuff [read $fd 500000]
     if {$stuff == {}} {
 	if {![eof $fd]} return
 	global viewname
@@ -185,7 +184,7 @@ proc getcommitlines {fd view}  {
     }
     if {$gotsome} {
 	if {$view == $curview} {
-	    layoutmore
+	    while {[layoutmore $nextupdate]} doupdate
 	} elseif {[info exists hlview] && $view == $hlview} {
 	    vhighlightmore
 	}
@@ -196,20 +195,13 @@ proc getcommitlines {fd view}  {
 }
 
 proc doupdate {} {
-    global commfd nextupdate numcommits ncmupdate
+    global commfd nextupdate numcommits
 
     foreach v [array names commfd] {
 	fileevent $commfd($v) readable {}
     }
     update
     set nextupdate [expr {[clock clicks -milliseconds] + 100}]
-    if {$numcommits < 100} {
-	set ncmupdate [expr {$numcommits + 1}]
-    } elseif {$numcommits < 10000} {
-	set ncmupdate [expr {$numcommits + 10}]
-    } else {
-	set ncmupdate [expr {$numcommits + 100}]
-    }
     foreach v [array names commfd] {
 	set fd $commfd($v)
 	fileevent $fd readable [list getcommitlines $fd $v]
@@ -341,13 +333,13 @@ proc readrefs {} {
 	    set tag {}
 	    catch {
 		set commit [exec git rev-parse "$id^0"]
-		if {"$commit" != "$id"} {
+		if {$commit != $id} {
 		    set tagids($name) $commit
 		    lappend idtags($commit) $name
 		}
 	    }		
 	    catch {
-	        set tagcontents($name) [exec git cat-file tag "$id"]
+	        set tagcontents($name) [exec git cat-file tag $id]
 	    }
 	} elseif { $type == "heads" } {
 	    set headids($name) $id
@@ -384,6 +376,23 @@ proc error_popup msg {
     show_error $w $w $msg
 }
 
+proc confirm_popup msg {
+    global confirm_ok
+    set confirm_ok 0
+    set w .confirm
+    toplevel $w
+    wm transient $w .
+    message $w.m -text $msg -justify center -aspect 400
+    pack $w.m -side top -fill x -padx 20 -pady 20
+    button $w.ok -text OK -command "set confirm_ok 1; destroy $w"
+    pack $w.ok -side left -fill x
+    button $w.cancel -text Cancel -command "destroy $w"
+    pack $w.cancel -side right -fill x
+    bind $w <Visibility> "grab $w; focus $w"
+    tkwait window $w
+    return $confirm_ok
+}
+
 proc makewindow {} {
     global canv canv2 canv3 linespc charspc ctext cflist
     global textfont mainfont uifont
@@ -394,6 +403,7 @@ proc makewindow {} {
     global highlight_files gdttype
     global searchstring sstring
     global bgcolor fgcolor bglist fglist diffcolors
+    global headctxmenu
 
     menu .bar
     .bar add cascade -label "File" -menu .bar.file
@@ -544,7 +554,7 @@ proc makewindow {} {
     pack .ctop.top.lbar.vlabel -side left -fill y
     global viewhlmenu selectedhlview
     set viewhlmenu [tk_optionMenu .ctop.top.lbar.vhl selectedhlview None]
-    $viewhlmenu entryconf 0 -command delvhighlight
+    $viewhlmenu entryconf None -command delvhighlight
     $viewhlmenu conf -font $uifont
     .ctop.top.lbar.vhl conf -font $uifont
     pack .ctop.top.lbar.vhl -side left -fill y
@@ -711,6 +721,16 @@ proc makewindow {} {
     $rowctxmenu add command -label "Make patch" -command mkpatch
     $rowctxmenu add command -label "Create tag" -command mktag
     $rowctxmenu add command -label "Write commit to file" -command writecommit
+    $rowctxmenu add command -label "Create new branch" -command mkbranch
+    $rowctxmenu add command -label "Cherry-pick this commit" \
+	-command cherrypick
+
+    set headctxmenu .headctxmenu
+    menu $headctxmenu -tearoff 0
+    $headctxmenu add command -label "Check out this branch" \
+	-command cobranch
+    $headctxmenu add command -label "Remove this branch" \
+	-command rmbranch
 }
 
 # mouse-2 makes all windows scan vertically, but only the one
@@ -1454,7 +1474,7 @@ proc doviewmenu {m first cmd op argv} {
 proc allviewmenus {n op args} {
     global viewhlmenu
 
-    doviewmenu .bar.view 7 [list showview $n] $op $args
+    doviewmenu .bar.view 5 [list showview $n] $op $args
     doviewmenu $viewhlmenu 1 [list addvhighlight $n] $op $args
 }
 
@@ -1496,7 +1516,7 @@ proc newviewok {top n} {
 	set viewperm($n) $newviewperm($n)
 	if {$newviewname($n) ne $viewname($n)} {
 	    set viewname($n) $newviewname($n)
-	    doviewmenu .bar.view 7 [list showview $n] \
+	    doviewmenu .bar.view 5 [list showview $n] \
 		entryconf [list -label $viewname($n)]
 	    doviewmenu $viewhlmenu 1 [list addvhighlight $n] \
 		entryconf [list -label $viewname($n) -value $viewname($n)]
@@ -1612,8 +1632,8 @@ proc showview {n} {
 
     set curview $n
     set selectedview $n
-    .bar.view entryconf 2 -state [expr {$n == 0? "disabled": "normal"}]
-    .bar.view entryconf 3 -state [expr {$n == 0? "disabled": "normal"}]
+    .bar.view entryconf Edit* -state [expr {$n == 0? "disabled": "normal"}]
+    .bar.view entryconf Delete* -state [expr {$n == 0? "disabled": "normal"}]
 
     if {![info exists viewdata($n)]} {
 	set pending_select $selid
@@ -1669,7 +1689,7 @@ proc showview {n} {
 	    show_status "Reading commits..."
 	}
 	if {[info exists commfd($n)]} {
-	    layoutmore
+	    layoutmore {}
 	} else {
 	    finishcommits
 	}
@@ -2350,20 +2370,38 @@ proc visiblerows {} {
     return [list $r0 $r1]
 }
 
-proc layoutmore {} {
+proc layoutmore {tmax} {
     global rowlaidout rowoptim commitidx numcommits optim_delay
     global uparrowlen curview
 
-    set row $rowlaidout
-    set rowlaidout [layoutrows $row $commitidx($curview) 0]
-    set orow [expr {$rowlaidout - $uparrowlen - 1}]
-    if {$orow > $rowoptim} {
-	optimize_rows $rowoptim 0 $orow
-	set rowoptim $orow
-    }
-    set canshow [expr {$rowoptim - $optim_delay}]
-    if {$canshow > $numcommits} {
-	showstuff $canshow
+    while {1} {
+	if {$rowoptim - $optim_delay > $numcommits} {
+	    showstuff [expr {$rowoptim - $optim_delay}]
+	} elseif {$rowlaidout - $uparrowlen - 1 > $rowoptim} {
+	    set nr [expr {$rowlaidout - $uparrowlen - 1 - $rowoptim}]
+	    if {$nr > 100} {
+		set nr 100
+	    }
+	    optimize_rows $rowoptim 0 [expr {$rowoptim + $nr}]
+	    incr rowoptim $nr
+	} elseif {$commitidx($curview) > $rowlaidout} {
+	    set nr [expr {$commitidx($curview) - $rowlaidout}]
+	    # may need to increase this threshold if uparrowlen or
+	    # mingaplen are increased...
+	    if {$nr > 150} {
+		set nr 150
+	    }
+	    set row $rowlaidout
+	    set rowlaidout [layoutrows $row [expr {$row + $nr}] 0]
+	    if {$rowlaidout == $row} {
+		return 0
+	    }
+	} else {
+	    return 0
+	}
+	if {$tmax ne {} && [clock clicks -milliseconds] >= $tmax} {
+	    return 1
+	}
     }
 }
 
@@ -3236,6 +3274,8 @@ proc drawtags {id x xt y1} {
 		   -font $font -tags [list tag.$id text]]
 	if {$ntags >= 0} {
 	    $canv bind $t <1> [list showtag $tag 1]
+	} elseif {$nheads >= 0} {
+	    $canv bind $t <Button-3> [list headmenu %X %Y $id $tag]
 	}
     }
     return $xt
@@ -3263,8 +3303,7 @@ proc show_status {msg} {
 
 proc finishcommits {} {
     global commitidx phase curview
-    global canv mainfont ctext maincursor textcursor
-    global findinprogress pending_select
+    global pending_select
 
     if {$commitidx($curview) > 0} {
 	drawrest
@@ -3273,6 +3312,108 @@ proc finishcommits {} {
     }
     set phase {}
     catch {unset pending_select}
+}
+
+# Insert a new commit as the child of the commit on row $row.
+# The new commit will be displayed on row $row and the commits
+# on that row and below will move down one row.
+proc insertrow {row newcmit} {
+    global displayorder parentlist childlist commitlisted
+    global commitrow curview rowidlist rowoffsets numcommits
+    global rowrangelist idrowranges rowlaidout rowoptim numcommits
+    global linesegends selectedline
+
+    if {$row >= $numcommits} {
+	puts "oops, inserting new row $row but only have $numcommits rows"
+	return
+    }
+    set p [lindex $displayorder $row]
+    set displayorder [linsert $displayorder $row $newcmit]
+    set parentlist [linsert $parentlist $row $p]
+    set kids [lindex $childlist $row]
+    lappend kids $newcmit
+    lset childlist $row $kids
+    set childlist [linsert $childlist $row {}]
+    set commitlisted [linsert $commitlisted $row 1]
+    set l [llength $displayorder]
+    for {set r $row} {$r < $l} {incr r} {
+	set id [lindex $displayorder $r]
+	set commitrow($curview,$id) $r
+    }
+
+    set idlist [lindex $rowidlist $row]
+    set offs [lindex $rowoffsets $row]
+    set newoffs {}
+    foreach x $idlist {
+	if {$x eq {} || ($x eq $p && [llength $kids] == 1)} {
+	    lappend newoffs {}
+	} else {
+	    lappend newoffs 0
+	}
+    }
+    if {[llength $kids] == 1} {
+	set col [lsearch -exact $idlist $p]
+	lset idlist $col $newcmit
+    } else {
+	set col [llength $idlist]
+	lappend idlist $newcmit
+	lappend offs {}
+	lset rowoffsets $row $offs
+    }
+    set rowidlist [linsert $rowidlist $row $idlist]
+    set rowoffsets [linsert $rowoffsets [expr {$row+1}] $newoffs]
+
+    set rowrangelist [linsert $rowrangelist $row {}]
+    set l [llength $rowrangelist]
+    for {set r 0} {$r < $l} {incr r} {
+	set ranges [lindex $rowrangelist $r]
+	if {$ranges ne {} && [lindex $ranges end] >= $row} {
+	    set newranges {}
+	    foreach x $ranges {
+		if {$x >= $row} {
+		    lappend newranges [expr {$x + 1}]
+		} else {
+		    lappend newranges $x
+		}
+	    }
+	    lset rowrangelist $r $newranges
+	}
+    }
+    if {[llength $kids] > 1} {
+	set rp1 [expr {$row + 1}]
+	set ranges [lindex $rowrangelist $rp1]
+	if {$ranges eq {}} {
+	    set ranges [list $row $rp1]
+	} elseif {[lindex $ranges end-1] == $rp1} {
+	    lset ranges end-1 $row
+	}
+	lset rowrangelist $rp1 $ranges
+    }
+    foreach id [array names idrowranges] {
+	set ranges $idrowranges($id)
+	if {$ranges ne {} && [lindex $ranges end] >= $row} {
+	    set newranges {}
+	    foreach x $ranges {
+		if {$x >= $row} {
+		    lappend newranges [expr {$x + 1}]
+		} else {
+		    lappend newranges $x
+		}
+	    }
+	    set idrowranges($id) $newranges
+	}
+    }
+
+    set linesegends [linsert $linesegends $row {}]
+
+    incr rowlaidout
+    incr rowoptim
+    incr numcommits
+
+    if {[info exists selectedline] && $selectedline >= $row} {
+	incr selectedline
+    }
+    redisplay
 }
 
 # Don't change the text pane cursor if it is currently the hand cursor,
@@ -3307,9 +3448,7 @@ proc notbusy {what} {
 }
 
 proc drawrest {} {
-    global numcommits
     global startmsecs
-    global canvy0 numcommits linespc
     global rowlaidout commitidx curview
     global pending_select
 
@@ -3323,6 +3462,7 @@ proc drawrest {} {
     }
 
     set drawmsecs [expr {[clock clicks -milliseconds] - $startmsecs}]
+    #global numcommits
     #puts "overall $drawmsecs ms for $numcommits commits"
 }
 
@@ -3603,27 +3743,20 @@ proc viewnextline {dir} {
 
 # add a list of tag or branch names at position pos
 # returns the number of names inserted
-proc appendrefs {pos l var} {
-    global ctext commitrow linknum curview idtags $var
+proc appendrefs {pos tags var} {
+    global ctext commitrow linknum curview $var
 
     if {[catch {$ctext index $pos}]} {
 	return 0
     }
-    set tags {}
-    foreach id $l {
-	foreach tag [set $var\($id\)] {
-	    lappend tags [concat $tag $id]
-	}
-    }
-    set tags [lsort -index 1 $tags]
+    set tags [lsort $tags]
     set sep {}
     foreach tag $tags {
-	set name [lindex $tag 0]
-	set id [lindex $tag 1]
+	set id [set $var\($tag\)]
 	set lk link$linknum
 	incr linknum
 	$ctext insert $pos $sep
-	$ctext insert $pos $name $lk
+	$ctext insert $pos $tag $lk
 	$ctext tag conf $lk -foreground blue
 	if {[info exists commitrow($curview,$id)]} {
 	    $ctext tag bind $lk <1> \
@@ -3637,6 +3770,18 @@ proc appendrefs {pos l var} {
     return [llength $tags]
 }
 
+proc taglist {ids} {
+    global idtags
+
+    set tags {}
+    foreach id $ids {
+	foreach tag $idtags($id) {
+	    lappend tags $tag
+	}
+    }
+    return $tags
+}
+
 # called when we have finished computing the nearby tags
 proc dispneartags {} {
     global selectedline currentid ctext anc_tags desc_tags showneartags
@@ -3646,15 +3791,15 @@ proc dispneartags {} {
     set id $currentid
     $ctext conf -state normal
     if {[info exists desc_heads($id)]} {
-	if {[appendrefs branch $desc_heads($id) idheads] > 1} {
+	if {[appendrefs branch $desc_heads($id) headids] > 1} {
 	    $ctext insert "branch -2c" "es"
 	}
     }
     if {[info exists anc_tags($id)]} {
-	appendrefs follows $anc_tags($id) idtags
+	appendrefs follows [taglist $anc_tags($id)] tagids
     }
     if {[info exists desc_tags($id)]} {
-	appendrefs precedes $desc_tags($id) idtags
+	appendrefs precedes [taglist $desc_tags($id)] tagids
     }
     $ctext conf -state disabled
 }
@@ -3787,7 +3932,7 @@ proc selectline {l isnew} {
 	$ctext mark set branch "end -1c"
 	$ctext mark gravity branch left
 	if {[info exists desc_heads($id)]} {
-	    if {[appendrefs branch $desc_heads($id) idheads] > 1} {
+	    if {[appendrefs branch $desc_heads($id) headids] > 1} {
 		# turn "Branch" into "Branches"
 		$ctext insert "branch -2c" "es"
 	    }
@@ -3796,13 +3941,13 @@ proc selectline {l isnew} {
 	$ctext mark set follows "end -1c"
 	$ctext mark gravity follows left
 	if {[info exists anc_tags($id)]} {
-	    appendrefs follows $anc_tags($id) idtags
+	    appendrefs follows [taglist $anc_tags($id)] tagids
 	}
 	$ctext insert end "\nPrecedes: "
 	$ctext mark set precedes "end -1c"
 	$ctext mark gravity precedes left
 	if {[info exists desc_tags($id)]} {
-	    appendrefs precedes $desc_tags($id) idtags
+	    appendrefs precedes [taglist $desc_tags($id)] tagids
 	}
 	$ctext insert end "\n"
     }
@@ -4295,12 +4440,27 @@ proc getblobdiffline {bdf ids} {
     }
 }
 
+proc prevfile {} {
+    global difffilestart ctext
+    set prev [lindex $difffilestart 0]
+    set here [$ctext index @0,0]
+    foreach loc $difffilestart {
+	if {[$ctext compare $loc >= $here]} {
+	    $ctext yview $prev
+	    return
+	}
+	set prev $loc
+    }
+    $ctext yview $prev
+}
+
 proc nextfile {} {
     global difffilestart ctext
     set here [$ctext index @0,0]
     foreach loc $difffilestart {
 	if {[$ctext compare $loc > $here]} {
 	    $ctext yview $loc
+	    return
 	}
     }
 }
@@ -4463,6 +4623,7 @@ proc redisplay {} {
     drawvisible
     if {[info exists selectedline]} {
 	selectline $selectedline 0
+	allcanvs yview moveto [lindex $span 0]
     }
 }
 
@@ -4738,9 +4899,9 @@ proc rowmenu {x y id} {
     } else {
 	set state normal
     }
-    $rowctxmenu entryconfigure 0 -state $state
-    $rowctxmenu entryconfigure 1 -state $state
-    $rowctxmenu entryconfigure 2 -state $state
+    $rowctxmenu entryconfigure "Diff this*" -state $state
+    $rowctxmenu entryconfigure "Diff selected*" -state $state
+    $rowctxmenu entryconfigure "Make patch" -state $state
     set rowmenuid $id
     tk_popup $rowctxmenu $x $y
 }
@@ -4930,6 +5091,7 @@ proc domktag {} {
     set tagids($tag) $id
     lappend idtags($id) $tag
     redrawtags $id
+    addedtag $id
 }
 
 proc redrawtags {id} {
@@ -5020,10 +5182,164 @@ proc wrcomcan {} {
     unset wrcomtop
 }
 
+proc mkbranch {} {
+    global rowmenuid mkbrtop
+
+    set top .makebranch
+    catch {destroy $top}
+    toplevel $top
+    label $top.title -text "Create new branch"
+    grid $top.title - -pady 10
+    label $top.id -text "ID:"
+    entry $top.sha1 -width 40 -relief flat
+    $top.sha1 insert 0 $rowmenuid
+    $top.sha1 conf -state readonly
+    grid $top.id $top.sha1 -sticky w
+    label $top.nlab -text "Name:"
+    entry $top.name -width 40
+    grid $top.nlab $top.name -sticky w
+    frame $top.buts
+    button $top.buts.go -text "Create" -command [list mkbrgo $top]
+    button $top.buts.can -text "Cancel" -command "catch {destroy $top}"
+    grid $top.buts.go $top.buts.can
+    grid columnconfigure $top.buts 0 -weight 1 -uniform a
+    grid columnconfigure $top.buts 1 -weight 1 -uniform a
+    grid $top.buts - -pady 10 -sticky ew
+    focus $top.name
+}
+
+proc mkbrgo {top} {
+    global headids idheads
+
+    set name [$top.name get]
+    set id [$top.sha1 get]
+    if {$name eq {}} {
+	error_popup "Please specify a name for the new branch"
+	return
+    }
+    catch {destroy $top}
+    nowbusy newbranch
+    update
+    if {[catch {
+	exec git branch $name $id
+    } err]} {
+	notbusy newbranch
+	error_popup $err
+    } else {
+	addedhead $id $name
+	# XXX should update list of heads displayed for selected commit
+	notbusy newbranch
+	redrawtags $id
+    }
+}
+
+proc cherrypick {} {
+    global rowmenuid curview commitrow
+    global mainhead desc_heads anc_tags desc_tags allparents allchildren
+
+    if {[info exists desc_heads($rowmenuid)]
+	&& [lsearch -exact $desc_heads($rowmenuid) $mainhead] >= 0} {
+	set ok [confirm_popup "Commit [string range $rowmenuid 0 7] is already\
+			included in branch $mainhead -- really re-apply it?"]
+	if {!$ok} return
+    }
+    nowbusy cherrypick
+    update
+    set oldhead [exec git rev-parse HEAD]
+    # Unfortunately git-cherry-pick writes stuff to stderr even when
+    # no error occurs, and exec takes that as an indication of error...
+    if {[catch {exec sh -c "git cherry-pick -r $rowmenuid 2>&1"} err]} {
+	notbusy cherrypick
+	error_popup $err
+	return
+    }
+    set newhead [exec git rev-parse HEAD]
+    if {$newhead eq $oldhead} {
+	notbusy cherrypick
+	error_popup "No changes committed"
+	return
+    }
+    set allparents($newhead) $oldhead
+    lappend allchildren($oldhead) $newhead
+    set desc_heads($newhead) $mainhead
+    if {[info exists anc_tags($oldhead)]} {
+	set anc_tags($newhead) $anc_tags($oldhead)
+    }
+    set desc_tags($newhead) {}
+    if {[info exists commitrow($curview,$oldhead)]} {
+	insertrow $commitrow($curview,$oldhead) $newhead
+	if {$mainhead ne {}} {
+	    movedhead $newhead $mainhead
+	}
+	redrawtags $oldhead
+	redrawtags $newhead
+    }
+    notbusy cherrypick
+}
+
+# context menu for a head
+proc headmenu {x y id head} {
+    global headmenuid headmenuhead headctxmenu
+
+    set headmenuid $id
+    set headmenuhead $head
+    tk_popup $headctxmenu $x $y
+}
+
+proc cobranch {} {
+    global headmenuid headmenuhead mainhead headids
+
+    # check the tree is clean first??
+    set oldmainhead $mainhead
+    nowbusy checkout
+    update
+    if {[catch {
+	exec git checkout $headmenuhead
+    } err]} {
+	notbusy checkout
+	error_popup $err
+    } else {
+	notbusy checkout
+	set mainhead $headmenuhead
+	if {[info exists headids($oldmainhead)]} {
+	    redrawtags $headids($oldmainhead)
+	}
+	redrawtags $headmenuid
+    }
+}
+
+proc rmbranch {} {
+    global desc_heads headmenuid headmenuhead mainhead
+    global headids idheads
+
+    set head $headmenuhead
+    set id $headmenuid
+    if {$head eq $mainhead} {
+	error_popup "Cannot delete the currently checked-out branch"
+	return
+    }
+    if {$desc_heads($id) eq $head} {
+	# the stuff on this branch isn't on any other branch
+	if {![confirm_popup "The commits on branch $head aren't on any other\
+			branch.\nReally delete branch $head?"]} return
+    }
+    nowbusy rmbranch
+    update
+    if {[catch {exec git branch -D $head} err]} {
+	notbusy rmbranch
+	error_popup $err
+	return
+    }
+    removedhead $id $head
+    redrawtags $id
+    notbusy rmbranch
+}
+
 # Stuff for finding nearby tags
 proc getallcommits {} {
-    global allcstart allcommits allcfd
+    global allcstart allcommits allcfd allids
 
+    set allids {}
     set fd [open [concat | git rev-list --all --topo-order --parents] r]
     set allcfd $fd
     fconfigure $fd -blocking 0
@@ -5107,10 +5423,52 @@ proc combine_atags {l1 l2} {
     return $res
 }
 
+proc forward_pass {id children} {
+    global idtags desc_tags idheads desc_heads alldtags tagisdesc
+
+    set dtags {}
+    set dheads {}
+    foreach child $children {
+	if {[info exists idtags($child)]} {
+	    set ctags [list $child]
+	} else {
+	    set ctags $desc_tags($child)
+	}
+	if {$dtags eq {}} {
+	    set dtags $ctags
+	} elseif {$ctags ne $dtags} {
+	    set dtags [combine_dtags $dtags $ctags]
+	}
+	set cheads $desc_heads($child)
+	if {$dheads eq {}} {
+	    set dheads $cheads
+	} elseif {$cheads ne $dheads} {
+	    set dheads [lsort -unique [concat $dheads $cheads]]
+	}
+    }
+    set desc_tags($id) $dtags
+    if {[info exists idtags($id)]} {
+	set adt $dtags
+	foreach tag $dtags {
+	    set adt [concat $adt $alldtags($tag)]
+	}
+	set adt [lsort -unique $adt]
+	set alldtags($id) $adt
+	foreach tag $adt {
+	    set tagisdesc($id,$tag) -1
+	    set tagisdesc($tag,$id) 1
+	}
+    }
+    if {[info exists idheads($id)]} {
+	set dheads [concat $dheads $idheads($id)]
+    }
+    set desc_heads($id) $dheads
+}
+
 proc getallclines {fd} {
     global allparents allchildren allcommits allcstart
-    global desc_tags anc_tags idtags alldtags tagisdesc allids
-    global desc_heads idheads
+    global desc_tags anc_tags idtags tagisdesc allids
+    global idheads travindex
 
     while {[gets $fd line] >= 0} {
 	set id [lindex $line 0]
@@ -5125,43 +5483,7 @@ proc getallclines {fd} {
 	}
 	# compute nearest tagged descendents as we go
 	# also compute descendent heads
-	set dtags {}
-	set dheads {}
-	foreach child $allchildren($id) {
-	    if {[info exists idtags($child)]} {
-		set ctags [list $child]
-	    } else {
-		set ctags $desc_tags($child)
-	    }
-	    if {$dtags eq {}} {
-		set dtags $ctags
-	    } elseif {$ctags ne $dtags} {
-		set dtags [combine_dtags $dtags $ctags]
-	    }
-	    set cheads $desc_heads($child)
-	    if {$dheads eq {}} {
-		set dheads $cheads
-	    } elseif {$cheads ne $dheads} {
-		set dheads [lsort -unique [concat $dheads $cheads]]
-	    }
-	}
-	set desc_tags($id) $dtags
-	if {[info exists idtags($id)]} {
-	    set adt $dtags
-	    foreach tag $dtags {
-		set adt [concat $adt $alldtags($tag)]
-	    }
-	    set adt [lsort -unique $adt]
-	    set alldtags($id) $adt
-	    foreach tag $adt {
-		set tagisdesc($id,$tag) -1
-		set tagisdesc($tag,$id) 1
-	    }
-	}
-	if {[info exists idheads($id)]} {
-	    lappend dheads $id
-	}
-	set desc_heads($id) $dheads
+	forward_pass $id $allchildren($id)
 	if {[clock clicks -milliseconds] - $allcstart >= 50} {
 	    fileevent $fd readable {}
 	    after idle restartgetall $fd
@@ -5169,7 +5491,9 @@ proc getallclines {fd} {
 	}
     }
     if {[eof $fd]} {
-	after idle restartatags [llength $allids]
+	set travindex [llength $allids]
+	set allcommits "traversing"
+	after idle restartatags
 	if {[catch {close $fd} err]} {
 	    error_popup "Error reading full commit graph: $err.\n\
 			 Results may be incomplete."
@@ -5178,10 +5502,11 @@ proc getallclines {fd} {
 }
 
 # walk backward through the tree and compute nearest tagged ancestors
-proc restartatags {i} {
-    global allids allparents idtags anc_tags t0
+proc restartatags {} {
+    global allids allparents idtags anc_tags travindex
 
     set t0 [clock clicks -milliseconds]
+    set i $travindex
     while {[incr i -1] >= 0} {
 	set id [lindex $allids $i]
 	set atags {}
@@ -5199,17 +5524,195 @@ proc restartatags {i} {
 	}
 	set anc_tags($id) $atags
 	if {[clock clicks -milliseconds] - $t0 >= 50} {
-	    after idle restartatags $i
+	    set travindex $i
+	    after idle restartatags
 	    return
 	}
     }
     set allcommits "done"
+    set travindex 0
     notbusy allcommits
     dispneartags
 }
 
+# update the desc_tags and anc_tags arrays for a new tag just added
+proc addedtag {id} {
+    global desc_tags anc_tags allparents allchildren allcommits
+    global idtags tagisdesc alldtags
+
+    if {![info exists desc_tags($id)]} return
+    set adt $desc_tags($id)
+    foreach t $desc_tags($id) {
+	set adt [concat $adt $alldtags($t)]
+    }
+    set adt [lsort -unique $adt]
+    set alldtags($id) $adt
+    foreach t $adt {
+	set tagisdesc($id,$t) -1
+	set tagisdesc($t,$id) 1
+    }
+    if {[info exists anc_tags($id)]} {
+	set todo $anc_tags($id)
+	while {$todo ne {}} {
+	    set do [lindex $todo 0]
+	    set todo [lrange $todo 1 end]
+	    if {[info exists tagisdesc($id,$do)]} continue
+	    set tagisdesc($do,$id) -1
+	    set tagisdesc($id,$do) 1
+	    if {[info exists anc_tags($do)]} {
+		set todo [concat $todo $anc_tags($do)]
+	    }
+	}
+    }
+
+    set lastold $desc_tags($id)
+    set lastnew [list $id]
+    set nup 0
+    set nch 0
+    set todo $allparents($id)
+    while {$todo ne {}} {
+	set do [lindex $todo 0]
+	set todo [lrange $todo 1 end]
+	if {![info exists desc_tags($do)]} continue
+	if {$desc_tags($do) ne $lastold} {
+	    set lastold $desc_tags($do)
+	    set lastnew [combine_dtags $lastold [list $id]]
+	    incr nch
+	}
+	if {$lastold eq $lastnew} continue
+	set desc_tags($do) $lastnew
+	incr nup
+	if {![info exists idtags($do)]} {
+	    set todo [concat $todo $allparents($do)]
+	}
+    }
+
+    if {![info exists anc_tags($id)]} return
+    set lastold $anc_tags($id)
+    set lastnew [list $id]
+    set nup 0
+    set nch 0
+    set todo $allchildren($id)
+    while {$todo ne {}} {
+	set do [lindex $todo 0]
+	set todo [lrange $todo 1 end]
+	if {![info exists anc_tags($do)]} continue
+	if {$anc_tags($do) ne $lastold} {
+	    set lastold $anc_tags($do)
+	    set lastnew [combine_atags $lastold [list $id]]
+	    incr nch
+	}
+	if {$lastold eq $lastnew} continue
+	set anc_tags($do) $lastnew
+	incr nup
+	if {![info exists idtags($do)]} {
+	    set todo [concat $todo $allchildren($do)]
+	}
+    }
+}
+
+# update the desc_heads array for a new head just added
+proc addedhead {hid head} {
+    global desc_heads allparents headids idheads
+
+    set headids($head) $hid
+    lappend idheads($hid) $head
+
+    set todo [list $hid]
+    while {$todo ne {}} {
+	set do [lindex $todo 0]
+	set todo [lrange $todo 1 end]
+	if {![info exists desc_heads($do)] ||
+	    [lsearch -exact $desc_heads($do) $head] >= 0} continue
+	set oldheads $desc_heads($do)
+	lappend desc_heads($do) $head
+	set heads $desc_heads($do)
+	while {1} {
+	    set p $allparents($do)
+	    if {[llength $p] != 1 || ![info exists desc_heads($p)] ||
+		$desc_heads($p) ne $oldheads} break
+	    set do $p
+	    set desc_heads($do) $heads
+	}
+	set todo [concat $todo $p]
+    }
+}
+
+# update the desc_heads array for a head just removed
+proc removedhead {hid head} {
+    global desc_heads allparents headids idheads
+
+    unset headids($head)
+    if {$idheads($hid) eq $head} {
+	unset idheads($hid)
+    } else {
+	set i [lsearch -exact $idheads($hid) $head]
+	if {$i >= 0} {
+	    set idheads($hid) [lreplace $idheads($hid) $i $i]
+	}
+    }
+
+    set todo [list $hid]
+    while {$todo ne {}} {
+	set do [lindex $todo 0]
+	set todo [lrange $todo 1 end]
+	if {![info exists desc_heads($do)]} continue
+	set i [lsearch -exact $desc_heads($do) $head]
+	if {$i < 0} continue
+	set oldheads $desc_heads($do)
+	set heads [lreplace $desc_heads($do) $i $i]
+	while {1} {
+	    set desc_heads($do) $heads
+	    set p $allparents($do)
+	    if {[llength $p] != 1 || ![info exists desc_heads($p)] ||
+		$desc_heads($p) ne $oldheads} break
+	    set do $p
+	}
+	set todo [concat $todo $p]
+    }
+}
+
+# update things for a head moved to a child of its previous location
+proc movedhead {id name} {
+    global headids idheads
+
+    set oldid $headids($name)
+    set headids($name) $id
+    if {$idheads($oldid) eq $name} {
+	unset idheads($oldid)
+    } else {
+	set i [lsearch -exact $idheads($oldid) $name]
+	if {$i >= 0} {
+	    set idheads($oldid) [lreplace $idheads($oldid) $i $i]
+	}
+    }
+    lappend idheads($id) $name
+}
+
+proc changedrefs {} {
+    global desc_heads desc_tags anc_tags allcommits allids
+    global allchildren allparents idtags travindex
+
+    if {![info exists allcommits]} return
+    catch {unset desc_heads}
+    catch {unset desc_tags}
+    catch {unset anc_tags}
+    catch {unset alldtags}
+    catch {unset tagisdesc}
+    foreach id $allids {
+	forward_pass $id $allchildren($id)
+    }
+    if {$allcommits ne "reading"} {
+	set travindex [llength $allids]
+	if {$allcommits ne "traversing"} {
+	    set allcommits "traversing"
+	    after idle restartatags
+	}
+    }
+}
+
 proc rereadrefs {} {
-    global idtags idheads idotherrefs
+    global idtags idheads idotherrefs mainhead
 
     set refids [concat [array names idtags] \
 		    [array names idheads] [array names idotherrefs]]
@@ -5218,12 +5721,16 @@ proc rereadrefs {} {
 	    set ref($id) [listrefs $id]
 	}
     }
+    set oldmainhead $mainhead
     readrefs
+    changedrefs
     set refids [lsort -unique [concat $refids [array names idtags] \
 			[array names idheads] [array names idotherrefs]]]
     foreach id $refids {
 	set v [listrefs $id]
-	if {![info exists ref($id)] || $ref($id) != $v} {
+	if {![info exists ref($id)] || $ref($id) != $v ||
+	    ($id eq $oldmainhead && $id ne $mainhead) ||
+	    ($id eq $mainhead && $id ne $oldmainhead)} {
 	    redrawtags $id
 	}
     }
@@ -5798,8 +6305,8 @@ if {$cmdline_files ne {} || $revtreeargs ne {}} {
     set viewargs(1) $revtreeargs
     set viewperm(1) 0
     addviewmenu 1
-    .bar.view entryconf 2 -state normal
-    .bar.view entryconf 3 -state normal
+    .bar.view entryconf Edit* -state normal
+    .bar.view entryconf Delete* -state normal
 }
 
 if {[info exists permviews]} {

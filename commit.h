@@ -52,7 +52,7 @@ enum cmit_fmt {
 };
 
 extern enum cmit_fmt get_commit_format(const char *arg);
-extern unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *, unsigned long len, char *buf, unsigned long space, int abbrev, const char *subject, const char *after_subject);
+extern unsigned long pretty_print_commit(enum cmit_fmt fmt, const struct commit *, unsigned long len, char *buf, unsigned long space, int abbrev, const char *subject, const char *after_subject, int relative_date);
 
 /** Removes the first commit from a list sorted by date, and adds all
  * of its parents.
@@ -97,7 +97,7 @@ void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
 
 struct commit_graft {
 	unsigned char sha1[20];
-	int nr_parent;
+	int nr_parent; /* < 0 if shallow commit */
 	unsigned char parent[FLEX_ARRAY][20]; /* more */
 };
 
@@ -107,4 +107,12 @@ int read_graft_file(const char *graft_file);
 
 extern struct commit_list *get_merge_bases(struct commit *rev1, struct commit *rev2, int cleanup);
 
+extern int register_shallow(const unsigned char *sha1);
+extern int unregister_shallow(const unsigned char *sha1);
+extern int write_shallow_commits(int fd, int use_pack_protocol);
+extern int is_repository_shallow();
+extern struct commit_list *get_shallow_commits(struct object_array *heads,
+		int depth, int shallow_flag, int not_shallow_flag);
+
+int in_merge_bases(struct commit *rev1, struct commit *rev2);
 #endif /* COMMIT_H */

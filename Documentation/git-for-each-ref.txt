@@ -1,0 +1,185 @@
+git-for-each-ref(1)
+===================
+
+NAME
+----
+git-for-each-ref - Output information on each ref
+
+SYNOPSIS
+--------
+'git-for-each-ref' [--count=<count>]\* [--shell|--perl|--python] [--sort=<key>]\* [--format=<format>] [<pattern>]
+
+DESCRIPTION
+-----------
+
+Iterate over all refs that match `<pattern>` and show them
+according to the given `<format>`, after sorting them according
+to the given set of `<key>`.  If `<max>` is given, stop after
+showing that many refs.  The interporated values in `<format>`
+can optionally be quoted as string literals in the specified
+host language allowing their direct evaluation in that language.
+
+OPTIONS
+-------
+<count>::
+	By default the command shows all refs that match
+	`<pattern>`.  This option makes it stop after showing
+	that many refs.
+
+<key>::
+	A field name to sort on.  Prefix `-` to sort in
+	descending order of the value.  When unspecified,
+	`refname` is used.  More than one sort keys can be
+	given.
+
+<format>::
+	A string that interpolates `%(fieldname)` from the
+	object pointed at by a ref being shown.  If `fieldname`
+	is prefixed with an asterisk (`*`) and the ref points
+	at a tag object, the value for the field in the object
+	tag refers is used.  When unspecified, defaults to
+	`%(objectname) SPC %(objecttype) TAB %(refname)`.
+	It also interpolates `%%` to `%`, and `%xx` where `xx`
+	are hex digits interpolates to character with hex code
+	`xx`; for example `%00` interpolates to `\0` (NUL),
+	`%09` to `\t` (TAB) and `%0a` to `\n` (LF).
+
+<pattern>::
+	If given, the name of the ref is matched against this
+	using fnmatch(3).  Refs that do not match the pattern
+	are not shown.
+
+--shell, --perl, --python::
+	If given, strings that substitute `%(fieldname)`
+	placeholders are quoted as string literals suitable for
+	the specified host language.  This is meant to produce
+	a scriptlet that can directly be `eval`ed.
+
+
+FIELD NAMES
+-----------
+
+Various values from structured fields in referenced objects can
+be used to interpolate into the resulting output, or as sort
+keys.
+
+For all objects, the following names can be used:
+
+refname::
+	The name of the ref (the part after $GIT_DIR/refs/).
+
+objecttype::
+	The type of the object (`blob`, `tree`, `commit`, `tag`).
+
+objectsize::
+	The size of the object (the same as `git-cat-file -s` reports).
+
+objectname::
+	The object name (aka SHA-1).
+
+In addition to the above, for commit and tag objects, the header
+field names (`tree`, `parent`, `object`, `type`, and `tag`) can
+be used to specify the value in the header field.
+
+Fields that have name-email-date tuple as its value (`author`,
+`committer`, and `tagger`) can be suffixed with `name`, `email`,
+and `date` to extract the named component.
+
+The first line of the message in a commit and tag object is
+`subject`, the remaining lines are `body`.  The whole message
+is `contents`.
+
+For sorting purposes, fields with numeric values sort in numeric
+order (`objectsize`, `authordate`, `committerdate`, `taggerdate`).
+All other fields are used to sort in their byte-value order.
+
+In any case, a field name that refers to a field inapplicable to
+the object referred by the ref does not cause an error.  It
+returns an empty string instead.
+
+
+EXAMPLES
+--------
+
+An example directly producing formatted text.  Show the most recent
+3 tagged commits::
+
+------------
+#!/bin/sh
+
+git-for-each-ref --count=3 --sort='-*authordate' \
+--format='From: %(*authorname) %(*authoremail)
+Subject: %(*subject)
+Date: %(*authordate)
+Ref: %(*refname)
+
+%(*body)
+' 'refs/tags'
+------------
+
+
+A simple example showing the use of shell eval on the output,
+demonstrating the use of --shell.  List the prefixes of all heads::
+------------
+#!/bin/sh
+
+git-for-each-ref --shell --format="ref=%(refname)" refs/heads | \
+while read entry
+do
+	eval "$entry"
+	echo `dirname $ref`
+done
+------------
+
+
+A bit more elaborate report on tags, demonstrating that the format
+may be an entire script::
+------------
+#!/bin/sh
+
+fmt='
+	r=%(refname)
+	t=%(*objecttype)
+	T=${r#refs/tags/}
+
+	o=%(*objectname)
+	n=%(*authorname)
+	e=%(*authoremail)
+	s=%(*subject)
+	d=%(*authordate)
+	b=%(*body)
+
+	kind=Tag
+	if test "z$t" = z
+	then
+		# could be a lightweight tag
+		t=%(objecttype)
+		kind="Lightweight tag"
+		o=%(objectname)
+		n=%(authorname)
+		e=%(authoremail)
+		s=%(subject)
+		d=%(authordate)
+		b=%(body)
+	fi
+	echo "$kind $T points at a $t object $o"
+	if test "z$t" = zcommit
+	then
+		echo "The commit was authored by $n $e
+at $d, and titled
+
+    $s
+
+Its message reads as:
+"
+		echo "$b" | sed -e "s/^/    /"
+		echo
+	fi
+'
+
+eval=`git-for-each-ref --shell --format="$fmt" \
+	--sort='*objecttype' \
+	--sort=-taggerdate \
+	refs/tags`
+eval "$eval"
+------------

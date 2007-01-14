@@ -86,11 +86,10 @@ static void xdl_find_func(xdfile_t *xf, long i, char *buf, long sz, long *ll) {
 		if (len > 0 &&
 		    (isalpha((unsigned char)*rec) || /* identifier? */
 		     *rec == '_' ||	/* also identifier? */
-		     *rec == '(' ||	/* lisp defun? */
-		     *rec == '#')) {	/* #define? */
+		     *rec == '$')) {	/* mysterious GNU diff's invention */
 			if (len > sz)
 				len = sz;
-			if (len && rec[len - 1] == '\n')
+			while (0 < len && isspace((unsigned char)rec[len - 1]))
 				len--;
 			memcpy(buf, rec, len);
 			*ll = len;
@@ -119,7 +118,7 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 		  xdemitconf_t const *xecfg) {
 	long s1, s2, e1, e2, lctx;
 	xdchange_t *xch, *xche;
-	char funcbuf[40];
+	char funcbuf[80];
 	long funclen = 0;
 
 	if (xecfg->flags & XDL_EMIT_COMMON)

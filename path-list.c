@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "cache.h"
 #include "path-list.h"
 
@@ -45,7 +44,7 @@ static int add_entry(struct path_list *list, const char *path)
 				(list->nr - index)
 				* sizeof(struct path_list_item));
 	list->items[index].path = list->strdup_paths ?
-		strdup(path) : (char *)path;
+		xstrdup(path) : (char *)path;
 	list->items[index].util = NULL;
 	list->nr++;
 
@@ -57,7 +56,7 @@ struct path_list_item *path_list_insert(const char *path, struct path_list *list
 	int index = add_entry(list, path);
 
 	if (index < 0)
-		index = 1 - index;
+		index = -1 - index;
 
 	return list->items + index;
 }
@@ -85,8 +84,7 @@ void path_list_clear(struct path_list *list, int free_items)
 			for (i = 0; i < list->nr; i++) {
 				if (list->strdup_paths)
 					free(list->items[i].path);
-				if (list->items[i].util)
-					free(list->items[i].util);
+				free(list->items[i].util);
 			}
 		free(list->items);
 	}

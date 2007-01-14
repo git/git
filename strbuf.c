@@ -1,7 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "strbuf.h"
 #include "cache.h"
+#include "strbuf.h"
 
 void strbuf_init(struct strbuf *sb) {
 	sb->buf = NULL;

@@ -8,8 +8,9 @@ git - the stupid content tracker
 
 SYNOPSIS
 --------
+[verse]
 'git' [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate]
-	[--bare] [--git-dir=GIT_DIR] [--help] COMMAND [ARGS]
+    [--bare] [--git-dir=GIT_DIR] [--help] COMMAND [ARGS]
 
 DESCRIPTION
 -----------
@@ -71,186 +72,6 @@ GIT COMMANDS
 We divide git into high level ("porcelain") commands and low level
 ("plumbing") commands.
 
-Low-level commands (plumbing)
------------------------------
-
-Although git includes its
-own porcelain layer, its low-level commands are sufficient to support
-development of alternative porcelains.  Developers of such porcelains
-might start by reading about gitlink:git-update-index[1] and
-gitlink:git-read-tree[1].
-
-We divide the low-level commands into commands that manipulate objects (in
-the repository, index, and working tree), commands that interrogate and
-compare objects, and commands that move objects and references between
-repositories.
-
-Manipulation commands
-~~~~~~~~~~~~~~~~~~~~~
-gitlink:git-apply[1]::
-	Reads a "diff -up1" or git generated patch file and
-	applies it to the working tree.
-
-gitlink:git-checkout-index[1]::
-	Copy files from the index to the working tree.
-
-gitlink:git-commit-tree[1]::
-	Creates a new commit object.
-
-gitlink:git-hash-object[1]::
-	Computes the object ID from a file.
-
-gitlink:git-index-pack[1]::
-	Build pack idx file for an existing packed archive.
-
-gitlink:git-init-db[1]::
-	Creates an empty git object database, or reinitialize an
-	existing one.
-
-gitlink:git-merge-index[1]::
-	Runs a merge for files needing merging.
-
-gitlink:git-mktag[1]::
-	Creates a tag object.
-
-gitlink:git-mktree[1]::
-	Build a tree-object from ls-tree formatted text.
-
-gitlink:git-pack-objects[1]::
-	Creates a packed archive of objects.
-
-gitlink:git-prune-packed[1]::
-	Remove extra objects that are already in pack files.
-
-gitlink:git-read-tree[1]::
-	Reads tree information into the index.
-
-gitlink:git-repo-config[1]::
-	Get and set options in .git/config.
-
-gitlink:git-unpack-objects[1]::
-	Unpacks objects out of a packed archive.
-
-gitlink:git-update-index[1]::
-	Registers files in the working tree to the index.
-
-gitlink:git-write-tree[1]::
-	Creates a tree from the index.
-
-
-Interrogation commands
-~~~~~~~~~~~~~~~~~~~~~~
-
-gitlink:git-cat-file[1]::
-	Provide content or type/size information for repository objects.
-
-gitlink:git-describe[1]::
-	Show the most recent tag that is reachable from a commit.
-
-gitlink:git-diff-index[1]::
-	Compares content and mode of blobs between the index and repository.
-
-gitlink:git-diff-files[1]::
-	Compares files in the working tree and the index.
-
-gitlink:git-diff-stages[1]::
-	Compares two "merge stages" in the index.
-
-gitlink:git-diff-tree[1]::
-	Compares the content and mode of blobs found via two tree objects.
-
-gitlink:git-fsck-objects[1]::
-	Verifies the connectivity and validity of the objects in the database.
-
-gitlink:git-ls-files[1]::
-	Information about files in the index and the working tree.
-
-gitlink:git-ls-tree[1]::
-	Displays a tree object in human readable form.
-
-gitlink:git-merge-base[1]::
-	Finds as good common ancestors as possible for a merge.
-
-gitlink:git-name-rev[1]::
-	Find symbolic names for given revs.
-
-gitlink:git-pack-redundant[1]::
-	Find redundant pack files.
-
-gitlink:git-rev-list[1]::
-	Lists commit objects in reverse chronological order.
-
-gitlink:git-show-index[1]::
-	Displays contents of a pack idx file.
-
-gitlink:git-tar-tree[1]::
-	Creates a tar archive of the files in the named tree object.
-
-gitlink:git-unpack-file[1]::
-	Creates a temporary file with a blob's contents.
-
-gitlink:git-var[1]::
-	Displays a git logical variable.
-
-gitlink:git-verify-pack[1]::
-	Validates packed git archive files.
-
-In general, the interrogate commands do not touch the files in
-the working tree.
-
-
-Synching repositories
-~~~~~~~~~~~~~~~~~~~~~
-
-gitlink:git-fetch-pack[1]::
-	Updates from a remote repository (engine for ssh and
-	local transport).
-
-gitlink:git-http-fetch[1]::
-	Downloads a remote git repository via HTTP by walking
-	commit chain.
-
-gitlink:git-local-fetch[1]::
-	Duplicates another git repository on a local system by
-	walking commit chain.
-
-gitlink:git-peek-remote[1]::
-	Lists references on a remote repository using
-	upload-pack protocol (engine for ssh and local
-	transport).
-
-gitlink:git-receive-pack[1]::
-	Invoked by 'git-send-pack' to receive what is pushed to it.
-
-gitlink:git-send-pack[1]::
-	Pushes to a remote repository, intelligently.
-
-gitlink:git-http-push[1]::
-	Push missing objects using HTTP/DAV.
-
-gitlink:git-shell[1]::
-	Restricted shell for GIT-only SSH access.
-
-gitlink:git-ssh-fetch[1]::
-	Pulls from a remote repository over ssh connection by
-	walking commit chain.
-
-gitlink:git-ssh-upload[1]::
-	Helper "server-side" program used by git-ssh-fetch.
-
-gitlink:git-update-server-info[1]::
-	Updates auxiliary information on a dumb server to help
-	clients discover references and packs on it.
-
-gitlink:git-upload-pack[1]::
-	Invoked by 'git-fetch-pack' to push
-	what are asked for.
-
-gitlink:git-upload-tar[1]::
-	Invoked by 'git-tar-tree --remote' to return the tar
-	archive the other end asked for.
-
-
 High-level commands (porcelain)
 -------------------------------
 
@@ -268,6 +89,9 @@ gitlink:git-am[1]::
 
 gitlink:git-applymbox[1]::
 	Apply patches from a mailbox, original version by Linus.
+
+gitlink:git-archive[1]::
+	Creates an archive of files from a named tree.
 
 gitlink:git-bisect[1]::
 	Find the change that introduced a bug by binary search.
@@ -302,6 +126,9 @@ gitlink:git-format-patch[1]::
 gitlink:git-grep[1]::
 	Print lines matching a pattern.
 
+gitlink:gitk[1]::
+	The git repository browser.
+
 gitlink:git-log[1]::
 	Shows commit logs.
 
@@ -314,8 +141,11 @@ gitlink:git-merge[1]::
 gitlink:git-mv[1]::
 	Move or rename a file, a directory, or a symlink.
 
+gitlink:git-pack-refs[1]::
+	Pack heads and tags for efficient repository access.
+
 gitlink:git-pull[1]::
-	Fetch from and merge with a remote repository.
+	Fetch from and merge with a remote repository or a local branch.
 
 gitlink:git-push[1]::
 	Update remote refs along with associated objects.
@@ -382,6 +212,9 @@ gitlink:git-cvsexportcommit[1]::
 gitlink:git-cvsserver[1]::
 	A CVS server emulator for git.
 
+gitlink:git-gc[1]::
+	Cleanup unnecessary files and optimize the local repository.
+
 gitlink:git-lost-found[1]::
 	Recover lost refs that luckily have not yet been pruned.
 
@@ -393,6 +226,9 @@ gitlink:git-prune[1]::
 
 gitlink:git-quiltimport[1]::
 	Applies a quilt patchset onto the current branch.
+
+gitlink:git-reflog[1]::
+	Manage reflog information.
 
 gitlink:git-relink[1]::
 	Hardlink common objects in local repositories.
@@ -422,7 +258,7 @@ gitlink:git-annotate[1]::
 	Annotate file lines with commit info.
 
 gitlink:git-blame[1]::
-	Blame file lines on commits.
+	Find out where each line in a file came from.
 
 gitlink:git-check-ref-format[1]::
 	Make sure ref name is well formed.
@@ -472,6 +308,9 @@ gitlink:git-request-pull[1]::
 gitlink:git-rev-parse[1]::
 	Pick out and massage parameters.
 
+gitlink:git-runstatus[1]::
+	A helper for git-status and git-commit.
+
 gitlink:git-send-email[1]::
 	Send patch e-mails out of "format-patch --mbox" output.
 
@@ -482,11 +321,192 @@ gitlink:git-stripspace[1]::
 	Filter out empty lines.
 
 
-Commands not yet documented
----------------------------
+Low-level commands (plumbing)
+-----------------------------
 
-gitlink:gitk[1]::
-	The gitk repository browser.
+Although git includes its
+own porcelain layer, its low-level commands are sufficient to support
+development of alternative porcelains.  Developers of such porcelains
+might start by reading about gitlink:git-update-index[1] and
+gitlink:git-read-tree[1].
+
+We divide the low-level commands into commands that manipulate objects (in
+the repository, index, and working tree), commands that interrogate and
+compare objects, and commands that move objects and references between
+repositories.
+
+Manipulation commands
+~~~~~~~~~~~~~~~~~~~~~
+gitlink:git-apply[1]::
+	Reads a "diff -up1" or git generated patch file and
+	applies it to the working tree.
+
+gitlink:git-checkout-index[1]::
+	Copy files from the index to the working tree.
+
+gitlink:git-commit-tree[1]::
+	Creates a new commit object.
+
+gitlink:git-hash-object[1]::
+	Computes the object ID from a file.
+
+gitlink:git-index-pack[1]::
+	Build pack idx file for an existing packed archive.
+
+gitlink:git-init[1]::
+	Creates an empty git repository, or reinitialize an
+	existing one.
+
+gitlink:git-merge-file[1]::
+	Runs a threeway merge.
+
+gitlink:git-merge-index[1]::
+	Runs a merge for files needing merging.
+
+gitlink:git-mktag[1]::
+	Creates a tag object.
+
+gitlink:git-mktree[1]::
+	Build a tree-object from ls-tree formatted text.
+
+gitlink:git-pack-objects[1]::
+	Creates a packed archive of objects.
+
+gitlink:git-prune-packed[1]::
+	Remove extra objects that are already in pack files.
+
+gitlink:git-read-tree[1]::
+	Reads tree information into the index.
+
+gitlink:git-repo-config[1]::
+	Get and set options in .git/config.
+
+gitlink:git-unpack-objects[1]::
+	Unpacks objects out of a packed archive.
+
+gitlink:git-update-index[1]::
+	Registers files in the working tree to the index.
+
+gitlink:git-write-tree[1]::
+	Creates a tree from the index.
+
+
+Interrogation commands
+~~~~~~~~~~~~~~~~~~~~~~
+
+gitlink:git-cat-file[1]::
+	Provide content or type/size information for repository objects.
+
+gitlink:git-describe[1]::
+	Show the most recent tag that is reachable from a commit.
+
+gitlink:git-diff-index[1]::
+	Compares content and mode of blobs between the index and repository.
+
+gitlink:git-diff-files[1]::
+	Compares files in the working tree and the index.
+
+gitlink:git-diff-stages[1]::
+	Compares two "merge stages" in the index.
+
+gitlink:git-diff-tree[1]::
+	Compares the content and mode of blobs found via two tree objects.
+
+gitlink:git-for-each-ref[1]::
+	Output information on each ref.
+
+gitlink:git-fsck-objects[1]::
+	Verifies the connectivity and validity of the objects in the database.
+
+gitlink:git-ls-files[1]::
+	Information about files in the index and the working tree.
+
+gitlink:git-ls-tree[1]::
+	Displays a tree object in human readable form.
+
+gitlink:git-merge-base[1]::
+	Finds as good common ancestors as possible for a merge.
+
+gitlink:git-name-rev[1]::
+	Find symbolic names for given revs.
+
+gitlink:git-pack-redundant[1]::
+	Find redundant pack files.
+
+gitlink:git-rev-list[1]::
+	Lists commit objects in reverse chronological order.
+
+gitlink:git-show-index[1]::
+	Displays contents of a pack idx file.
+
+gitlink:git-show-ref[1]::
+	List references in a local repository.
+
+gitlink:git-tar-tree[1]::
+	Creates a tar archive of the files in the named tree object.
+
+gitlink:git-unpack-file[1]::
+	Creates a temporary file with a blob's contents.
+
+gitlink:git-var[1]::
+	Displays a git logical variable.
+
+gitlink:git-verify-pack[1]::
+	Validates packed git archive files.
+
+In general, the interrogate commands do not touch the files in
+the working tree.
+
+
+Synching repositories
+~~~~~~~~~~~~~~~~~~~~~
+
+gitlink:git-fetch-pack[1]::
+	Updates from a remote repository (engine for ssh and
+	local transport).
+
+gitlink:git-http-fetch[1]::
+	Downloads a remote git repository via HTTP by walking
+	commit chain.
+
+gitlink:git-local-fetch[1]::
+	Duplicates another git repository on a local system by
+	walking commit chain.
+
+gitlink:git-peek-remote[1]::
+	Lists references on a remote repository using
+	upload-pack protocol (engine for ssh and local
+	transport).
+
+gitlink:git-receive-pack[1]::
+	Invoked by 'git-send-pack' to receive what is pushed to it.
+
+gitlink:git-send-pack[1]::
+	Pushes to a remote repository, intelligently.
+
+gitlink:git-http-push[1]::
+	Push missing objects using HTTP/DAV.
+
+gitlink:git-shell[1]::
+	Restricted shell for GIT-only SSH access.
+
+gitlink:git-ssh-fetch[1]::
+	Pulls from a remote repository over ssh connection by
+	walking commit chain.
+
+gitlink:git-ssh-upload[1]::
+	Helper "server-side" program used by git-ssh-fetch.
+
+gitlink:git-update-server-info[1]::
+	Updates auxiliary information on a dumb server to help
+	clients discover references and packs on it.
+
+gitlink:git-upload-archive[1]::
+	Invoked by 'git-archive' to send a generated archive.
+
+gitlink:git-upload-pack[1]::
+	Invoked by 'git-fetch-pack' to push
+	what are asked for.
 
 
 Configuration Mechanism
@@ -563,6 +583,9 @@ HEAD::
 	a valid head 'name'
 	(i.e. the contents of `$GIT_DIR/refs/heads/<head>`).
 
+For a more complete list of ways to spell object names, see
+"SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
+
 
 File/Directory Structure
 ------------------------
@@ -625,11 +648,35 @@ git Commits
 git Diffs
 ~~~~~~~~~
 'GIT_DIFF_OPTS'::
+	Only valid setting is "--unified=??" or "-u??" to set the
+	number of context lines shown when a unified diff is created.
+	This takes precedence over any "-U" or "--unified" option
+	value passed on the git diff command line.
+
 'GIT_EXTERNAL_DIFF'::
-	see the "generating patches" section in :
-	gitlink:git-diff-index[1];
-	gitlink:git-diff-files[1];
-	gitlink:git-diff-tree[1]
+	When the environment variable 'GIT_EXTERNAL_DIFF' is set, the
+	program named by it is called, instead of the diff invocation
+	described above.  For a path that is added, removed, or modified,
+        'GIT_EXTERNAL_DIFF' is called with 7 parameters:
+
+	path old-file old-hex old-mode new-file new-hex new-mode
++
+where:
+
+	<old|new>-file:: are files GIT_EXTERNAL_DIFF can use to read the
+                         contents of <old|new>,
+	<old|new>-hex:: are the 40-hexdigit SHA1 hashes,
+	<old|new>-mode:: are the octal representation of the file modes.
+
++
+The file parameters can point at the user's working file
+(e.g. `new-file` in "git-diff-files"), `/dev/null` (e.g. `old-file`
+when a new file is added), or a temporary file (e.g. `old-file` in the
+index).  'GIT_EXTERNAL_DIFF' should not worry about unlinking the
+temporary file --- it is removed when 'GIT_EXTERNAL_DIFF' exits.
++
+For a path that is unmerged, 'GIT_EXTERNAL_DIFF' is called with 1
+parameter, <path>.
 
 other
 ~~~~~
@@ -637,9 +684,18 @@ other
 	This environment variable overrides `$PAGER`.
 
 'GIT_TRACE'::
-	If this variable is set git will print `trace:` messages on
+	If this variable is set to "1", "2" or "true" (comparison
+	is case insensitive), git will print `trace:` messages on
 	stderr telling about alias expansion, built-in command
 	execution and external command execution.
+	If this variable is set to an integer value greater than 1
+	and lower than 10 (strictly) then git will interpret this
+	value as an open file descriptor and will try to write the
+	trace messages into this file descriptor.
+	Alternatively, if this variable is set to an absolute path
+	(starting with a '/' character), git will interpret this
+	as a file path and will try to write the trace messages
+	into it.
 
 Discussion[[Discussion]]
 ------------------------

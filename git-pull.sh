@@ -7,6 +7,11 @@
 USAGE='[-n | --no-summary] [--no-commit] [-s strategy]... [<fetch-options>] <repo> <head>...'
 LONG_USAGE='Fetch one or more remote refs and merge it/them into the current HEAD.'
 . git-sh-setup
+set_reflog_action "pull $*"
+require_work_tree
+
+test -z "$(git ls-files -u)" ||
+	die "You are in a middle of conflicted merge."
 
 strategy_args= no_summary= no_commit= squash=
 while case "$#,$1" in 0) break ;; *,-*) ;; *) break ;; esac
@@ -44,10 +49,10 @@ do
 	shift
 done
 
-orig_head=$(git-rev-parse --verify HEAD) || die "Pulling into a black hole?"
-git-fetch --update-head-ok --reflog-action=pull "$@" || exit 1
+orig_head=$(git-rev-parse --verify HEAD 2>/dev/null)
+git-fetch --update-head-ok "$@" || exit 1
 
-curr_head=$(git-rev-parse --verify HEAD)
+curr_head=$(git-rev-parse --verify HEAD 2>/dev/null)
 if test "$curr_head" != "$orig_head"
 then
 	# The fetch involved updating the current branch.
@@ -58,7 +63,7 @@ then
 
 	echo >&2 "Warning: fetch updated the current branch head."
 	echo >&2 "Warning: fast forwarding your working tree from"
-	echo >&2 "Warning: $orig_head commit."
+	echo >&2 "Warning: commit $orig_head."
 	git-update-index --refresh 2>/dev/null
 	git-read-tree -u -m "$orig_head" "$curr_head" ||
 		die 'Cannot fast-forward your working tree.
@@ -76,32 +81,29 @@ merge_head=$(sed -e '/	not-for-merge	/d' \
 
 case "$merge_head" in
 '')
+	curr_branch=$(git-symbolic-ref HEAD | \
+		sed -e 's|^refs/heads/||')
+	echo >&2 "Warning: No merge candidate found because value of config option
+         \"branch.${curr_branch}.merge\" does not match any remote branch fetched."
 	echo >&2 "No changes."
 	exit 0
 	;;
 ?*' '?*)
-	var=`git-repo-config --get pull.octopus`
-	if test -n "$var"
+	if test -z "$orig_head"
 	then
-		strategy_default_args="-s $var"
-	fi
-	;;
-*)
-	var=`git-repo-config --get pull.twohead`
-	if test -n "$var"
-        then
-		strategy_default_args="-s $var"
+		echo >&2 "Cannot merge multiple branches into empty head"
+		exit 1
 	fi
 	;;
 esac
 
-case "$strategy_args" in
-'')
-	strategy_args=$strategy_default_args
-	;;
-esac
+if test -z "$orig_head"
+then
+	git-update-ref -m "initial pull" HEAD $merge_head "" &&
+	git-read-tree --reset -u HEAD || exit 1
+	exit
+fi
 
 merge_name=$(git-fmt-merge-msg <"$GIT_DIR/FETCH_HEAD") || exit
-git-merge "--reflog-action=pull $*" \
-	$no_summary $no_commit $squash $strategy_args \
+exec git-merge $no_summary $no_commit $squash $strategy_args \
 	"$merge_name" HEAD $merge_head

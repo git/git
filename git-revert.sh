@@ -7,18 +7,22 @@
 case "$0" in
 *-revert* )
 	test -t 0 && edit=-e
+	replay=
 	me=revert
 	USAGE='[--edit | --no-edit] [-n] <commit-ish>' ;;
 *-cherry-pick* )
+	replay=t
 	edit=
 	me=cherry-pick
-	USAGE='[--edit] [-n] [-r] <commit-ish>'  ;;
+	USAGE='[--edit] [-n] [-r] [-x] <commit-ish>'  ;;
 * )
-	die "What are you talking about?" ;;
+	echo >&2 "What are you talking about?"
+	exit 1 ;;
 esac
 . git-sh-setup
+require_work_tree
 
-no_commit= replay=
+no_commit=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -32,8 +36,10 @@ do
 	--n|--no|--no-|--no-e|--no-ed|--no-edi|--no-edit)
 		edit=
 		;;
-	-r|--r|--re|--rep|--repl|--repla|--replay)
-		replay=t
+	-r)
+		: no-op ;;
+	-x|--i-really-want-to-expose-my-private-commit-object-name)
+		replay=
 		;;
 	-*)
 		usage
@@ -121,7 +127,7 @@ cherry-pick)
 	git-cat-file commit $commit | sed -e '1,/^$/d'
 	case "$replay" in
 	'')
-		echo "(cherry picked from $commit commit)"
+		echo "(cherry picked from commit $commit)"
 		test "$rev" = "$commit" ||
 		echo "(original 'git cherry-pick' arguments: $@)"
 		;;
@@ -141,9 +147,18 @@ git-read-tree -m -u --aggressive $base $head $next &&
 result=$(git-write-tree 2>/dev/null) || {
     echo >&2 "Simple $me fails; trying Automatic $me."
     git-merge-index -o git-merge-one-file -a || {
+	    mv -f .msg "$GIT_DIR/MERGE_MSG"
+	    {
+		echo '
+Conflicts:
+'
+		git ls-files --unmerged |
+		sed -e 's/^[^	]*	/	/' |
+		uniq
+	    } >>"$GIT_DIR/MERGE_MSG"
 	    echo >&2 "Automatic $me failed.  After resolving the conflicts,"
-	    echo >&2 "mark the corrected paths with 'git-update-index <paths>'"
-	    echo >&2 "and commit with 'git commit -F .msg'"
+	    echo >&2 "mark the corrected paths with 'git-add <paths>'"
+	    echo >&2 "and commit the result."
 	    case "$me" in
 	    cherry-pick)
 		echo >&2 "You may choose to use the following when making"

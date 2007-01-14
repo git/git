@@ -75,43 +75,15 @@ GIT_ARG_SET_PATH(shell)
 # Define PERL_PATH to provide path to Perl.
 GIT_ARG_SET_PATH(perl)
 #
-# Define NO_PYTHON if you want to lose all benefits of the recursive merge.
-# Define PYTHON_PATH to provide path to Python.
-AC_ARG_WITH(python,[AS_HELP_STRING([--with-python=PATH], [provide PATH to python])
-AS_HELP_STRING([--without-python], [don't use python scripts])],
- [if test "$withval" = "no"; then \
-    NO_PYTHON=YesPlease; \
-  elif test "$withval" = "yes"; then \
-    NO_PYTHON=; \
-  else \
-    NO_PYTHON=; \
-    PYTHON_PATH=$withval; \
-  fi; \
- ])
-AC_SUBST(NO_PYTHON)
-AC_SUBST(PYTHON_PATH)
 
 
 ## Checks for programs.
 AC_MSG_NOTICE([CHECKS for programs])
 #
-AC_PROG_CC
+AC_PROG_CC([cc gcc])
 #AC_PROG_INSTALL		# needs install-sh or install.sh in sources
 AC_CHECK_TOOL(AR, ar, :)
 AC_CHECK_PROGS(TAR, [gtar tar])
-#
-# Define NO_PYTHON if you want to lose all benefits of the recursive merge.
-# Define PYTHON_PATH to provide path to Python.
-if test -z "$NO_PYTHON"; then
-	if test -z "$PYTHON_PATH"; then
-		AC_PATH_PROGS(PYTHON_PATH, [python python2.4 python2.3 python2])
-	fi
-	if test -n "$PYTHON_PATH"; then
-		GIT_CONF_APPEND_LINE([PYTHON_PATH=@PYTHON_PATH@])
-		NO_PYTHON=""
-	fi
-fi
-
 
 ## Checks for libraries.
 AC_MSG_NOTICE([CHECKS for libraries])
@@ -143,10 +115,15 @@ AC_CHECK_LIB([expat], [XML_ParserCreate],
 AC_SUBST(NO_EXPAT)
 #
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin).
+# Define NO_ICONV if neither libc nor libiconv support iconv.
 AC_CHECK_LIB([c], [iconv],
-[NEEDS_LIBICONV=],
-[NEEDS_LIBICONV=YesPlease])
+	[NEEDS_LIBICONV=],
+	AC_CHECK_LIB([iconv], [iconv],
+		[NEEDS_LIBICONV=YesPlease],
+		[NO_ICONV=YesPlease]))
 AC_SUBST(NEEDS_LIBICONV)
+AC_SUBST(NO_ICONV)
+test -n "$NEEDS_LIBICONV" && LIBS="$LIBS -liconv"
 #
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
@@ -204,8 +181,8 @@ AC_SUBST(NO_IPV6)
 # do not support the 'size specifiers' introduced by C99, namely ll, hh,
 # j, z, t. (representing long long int, char, intmax_t, size_t, ptrdiff_t).
 # some C compilers supported these specifiers prior to C99 as an extension.
-AC_CACHE_CHECK(whether formatted IO functions support C99 size specifiers,
- ac_cv_c_c99_format,
+AC_CACHE_CHECK([whether formatted IO functions support C99 size specifiers],
+ [ac_cv_c_c99_format],
 [# Actually git uses only %z (%zu) in alloc.c, and %t (%td) in mktag.c
 AC_RUN_IFELSE(
 	[AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
@@ -258,12 +235,6 @@ AC_SUBST(NO_SETENV)
 #
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
 # Enable it on Windows.  By default, symrefs are still used.
-#
-# Define WITH_OWN_SUBPROCESS_PY if you want to use with python 2.3.
-#
-# Define NO_ACCURATE_DIFF if your diff program at least sometimes misses
-# a missing newline at the end of the file.
-
 
 ## Site configuration (override autodetection)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE
@@ -329,12 +300,18 @@ GIT_PARSE_WITH(expat))
 # library directories by defining CFLAGS and LDFLAGS appropriately.
 #
 # Define NO_MMAP if you want to avoid mmap.
+#
+# Define NO_ICONV if your libc does not properly support iconv.
+AC_ARG_WITH(iconv,
+AS_HELP_STRING([--without-iconv],
+[if your architecture doesn't properly support iconv])
+AS_HELP_STRING([--with-iconv=PATH],
+[PATH is prefix for libiconv library and headers])
+AS_HELP_STRING([],
+[used only if you need linking with libiconv]),
+GIT_PARSE_WITH(iconv))
 
 ## --enable-FEATURE[=ARG] and --disable-FEATURE
-#
-# Define COLLISION_CHECK below if you believe that SHA1's
-# 1461501637330902918203684832716283019655932542976 hashes do not give you
-# sufficient guarantee that no collisions between objects will ever happen.
 #
 # Define USE_NSEC below if you want git to care about sub-second file mtimes
 # and ctimes. Note that you need recent glibc (at least 2.2.4) for this, and

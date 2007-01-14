@@ -57,13 +57,10 @@ test_expect_success 'setup some commits to svn' \
 	'cd test_wc &&
 		echo Greetings >> kw.c &&
 		svn commit -m "Not yet an Id" &&
-		svn up &&
 		echo Hello world >> kw.c &&
 		svn commit -m "Modified file, but still not yet an Id" &&
-		svn up &&
 		svn propset svn:keywords Id kw.c &&
-		svn commit -m "Propset Id" &&
-		svn up &&
+		svn commit -m "Propset Id"
 	cd ..'
 
 test_expect_success 'initialize git-svn' "git-svn init $svnrepo"
@@ -74,7 +71,7 @@ test_expect_success "$name" \
 	'git checkout -b mybranch remotes/git-svn &&
 	echo Hi again >> kw.c &&
 	git commit -a -m "test keywoards ignoring" &&
-	git-svn commit remotes/git-svn..mybranch &&
+	git-svn set-tree remotes/git-svn..mybranch &&
 	git pull . remotes/git-svn'
 
 expect='/* $Id$ */'
@@ -86,8 +83,7 @@ test_expect_success "propset CR on crlf files" \
 		svn propset svn:eol-style CR empty &&
 		svn propset svn:eol-style CR crlf &&
 		svn propset svn:eol-style CR ne_crlf &&
-		svn commit -m "propset CR on crlf files" &&
-		svn up &&
+		svn commit -m "propset CR on crlf files"
 	 cd ..'
 
 test_expect_success 'fetch and pull latest from svn and checkout a new wc' \
@@ -111,8 +107,7 @@ cd test_wc
 	 svn propset svn:eol-style CRLF ne_cr &&
 	 svn propset svn:keywords Id cr &&
 	 svn propset svn:keywords Id ne_cr &&
-	 svn commit -m "propset CRLF on cr files" &&
-	 svn up'
+	 svn commit -m "propset CRLF on cr files"'
 cd ..
 test_expect_success 'fetch and pull latest from svn' \
 	'git-svn fetch && git pull . remotes/git-svn'

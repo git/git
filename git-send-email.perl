@@ -21,6 +21,7 @@ use warnings;
 use Term::ReadLine;
 use Getopt::Long;
 use Data::Dumper;
+use Git;
 
 package FakeTerm;
 sub new {
@@ -82,16 +83,18 @@ sub cleanup_compose_files();
 my $compose_filename = ".msg.$$";
 
 # Variables we fill in automatically, or via prompting:
-my (@to,@cc,@initial_cc,@bcclist,
+my (@to,@cc,@initial_cc,@bcclist,@xh,
 	$initial_reply_to,$initial_subject,@files,$from,$compose,$time);
 
 # Behavior modification variables
-my ($chain_reply_to, $quiet, $suppress_from, $no_signed_off_cc) = (1, 0, 0, 0);
+my ($chain_reply_to, $quiet, $suppress_from, $no_signed_off_cc,
+	$dry_run) = (1, 0, 0, 0, 0);
 my $smtp_server;
 
 # Example reply to:
 #$initial_reply_to = ''; #<20050203173208.GA23964@foobar.com>';
 
+my $repo = Git->repository();
 my $term = eval {
 	new Term::ReadLine 'git-send-email';
 };
@@ -114,6 +117,7 @@ my $rc = GetOptions("from=s" => \$from,
 		    "quiet" => \$quiet,
 		    "suppress-from" => \$suppress_from,
 		    "no-signed-off-cc|no-signed-off-by-cc" => \$no_signed_off_cc,
+		    "dry-run" => \$dry_run,
 	 );
 
 # Verify the user input
@@ -132,33 +136,12 @@ foreach my $entry (@bcclist) {
 
 # Now, let's fill any that aren't set in with defaults:
 
-sub gitvar {
-    my ($var) = @_;
-    my $fh;
-    my $pid = open($fh, '-|');
-    die "$!" unless defined $pid;
-    if (!$pid) {
-	exec('git-var', $var) or die "$!";
-    }
-    my ($val) = <$fh>;
-    close $fh or die "$!";
-    chomp($val);
-    return $val;
-}
-
-sub gitvar_ident {
-    my ($name) = @_;
-    my $val = gitvar($name);
-    my @field = split(/\s+/, $val);
-    return join(' ', @field[0...(@field-3)]);
-}
-
-my ($author) = gitvar_ident('GIT_AUTHOR_IDENT');
-my ($committer) = gitvar_ident('GIT_COMMITTER_IDENT');
+my ($author) = $repo->ident_person('author');
+my ($committer) = $repo->ident_person('committer');
 
 my %aliases;
-chomp(my @alias_files = `git-repo-config --get-all sendemail.aliasesfile`);
-chomp(my $aliasfiletype = `git-repo-config sendemail.aliasfiletype`);
+my @alias_files = $repo->config('sendemail.aliasesfile');
+my $aliasfiletype = $repo->config('sendemail.aliasfiletype');
 my %parse_alias = (
 	# multiline formats can be supported in the future
 	mutt => sub { my $fh = shift; while (<$fh>) {
@@ -183,7 +166,7 @@ my %parse_alias = (
 		}}}
 );
 
-if (@alias_files && defined $parse_alias{$aliasfiletype}) {
+if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 	foreach my $file (@alias_files) {
 		open my $fh, '<', $file or die "opening $file: $!\n";
 		$parse_alias{$aliasfiletype}->($fh);
@@ -195,11 +178,10 @@ my $prompting = 0;
 if (!defined $from) {
 	$from = $author || $committer;
 	do {
-		$_ = $term->readline("Who should the emails appear to be from? ",
-			$from);
+		$_ = $term->readline("Who should the emails appear to be from? [$from] ");
 	} while (!defined $_);
 
-	$from = $_;
+	$from = $_ if ($_);
 	print "Emails will be sent from: ", $from, "\n";
 	$prompting++;
 }
@@ -247,6 +229,9 @@ if (!defined $initial_reply_to && $prompting) {
 	$initial_reply_to =~ s/(^\s+|\s+$)//g;
 }
 
+if (!$smtp_server) {
+	$smtp_server = $repo->config('sendemail.smtpserver');
+}
 if (!$smtp_server) {
 	foreach (qw( /usr/sbin/sendmail /usr/lib/sendmail )) {
 		if (-x $_) {
@@ -417,6 +402,15 @@ sub make_message_id
 $cc = "";
 $time = time - scalar $#files;
 
+sub unquote_rfc2047 {
+	local ($_) = @_;
+	if (s/=\?utf-8\?q\?(.*)\?=/$1/g) {
+		s/_/ /g;
+		s/=([0-9A-F]{2})/chr(hex($1))/eg;
+	}
+	return "$_ - unquoted";
+}
+
 sub send_message
 {
 	my @recipients = unique_email_list(@to);
@@ -425,12 +419,14 @@ sub send_message
 	my $date = format_2822_time($time++);
 	my $gitversion = '@@GIT_VERSION@@';
 	if ($gitversion =~ m/..GIT_VERSION../) {
-	    $gitversion = `git --version`;
-	    chomp $gitversion;
-	    # keep only what's after the last space
-	    $gitversion =~ s/^.* //;
+	    $gitversion = Git::version();
 	}
 
+	my ($author_name) = ($from =~ /^(.*?)\s+</);
+	if ($author_name && $author_name =~ /\./ && $author_name !~ /^".*"$/) {
+		my ($name, $addr) = ($from =~ /^(.*?)(\s+<.*)/);
+		$from = "\"$name\"$addr";
+	}
 	my $header = "From: $from
 To: $to
 Cc: $cc
@@ -444,8 +440,13 @@ X-Mailer: git-send-email $gitversion
 		$header .= "In-Reply-To: $reply_to\n";
 		$header .= "References: $references\n";
 	}
+	if (@xh) {
+		$header .= join("\n", @xh) . "\n";
+	}
 
-	if ($smtp_server =~ m#^/#) {
+	if ($dry_run) {
+		# We don't want to send the email.
+	} elsif ($smtp_server =~ m#^/#) {
 		my $pid = open my $sm, '|-';
 		defined $pid or die $!;
 		if (!$pid) {
@@ -494,15 +495,22 @@ foreach my $t (@files) {
 
 	my $author_not_sender = undef;
 	@cc = @initial_cc;
-	my $found_mbox = 0;
+	@xh = ();
+	my $input_format = undef;
 	my $header_done = 0;
 	$message = "";
 	while(<F>) {
 		if (!$header_done) {
-			$found_mbox = 1, next if (/^From /);
+			if (/^From /) {
+				$input_format = 'mbox';
+				next;
+			}
 			chomp;
+			if (!defined $input_format && /^[-A-Za-z]+:\s/) {
+				$input_format = 'mbox';
+			}
 
-			if ($found_mbox) {
+			if (defined $input_format && $input_format eq 'mbox') {
 				if (/^Subject:\s+(.*)$/) {
 					$subject = $1;
 
@@ -517,6 +525,9 @@ foreach my $t (@files) {
 						$2, $_) unless $quiet;
 					push @cc, $2;
 				}
+				elsif (!/^Date:\s/ && /^[-A-Za-z]+:\s+\S/) {
+					push @xh, $_;
+				}
 
 			} else {
 				# In the traditional
@@ -524,6 +535,7 @@ foreach my $t (@files) {
 				# line 1 = cc
 				# line 2 = subject
 				# So let's support that, too.
+				$input_format = 'lots';
 				if (@cc == 0) {
 					printf("(non-mbox) Adding cc: %s from line '%s'\n",
 						$_, $_) unless $quiet;
@@ -552,6 +564,7 @@ foreach my $t (@files) {
 	}
 	close F;
 	if (defined $author_not_sender) {
+		$author_not_sender = unquote_rfc2047($author_not_sender);
 		$message = "From: $author_not_sender\n\n$message";
 	}
 
@@ -560,7 +573,7 @@ foreach my $t (@files) {
 	send_message();
 
 	# set up for the next message
-	if ($chain_reply_to || length($reply_to) == 0) {
+	if ($chain_reply_to || !defined $reply_to || length($reply_to) == 0) {
 		$reply_to = $message_id;
 		if (length $references > 0) {
 			$references .= " $message_id";

@@ -112,11 +112,13 @@ static int add_file_to_cache(const char *path)
 	ce->ce_mode = create_ce_mode(st.st_mode);
 	if (!trust_executable_bit) {
 		/* If there is an existing entry, pick the mode bits
-		 * from it.
+		 * from it, otherwise assume unexecutable.
 		 */
 		int pos = cache_name_pos(path, namelen);
 		if (0 <= pos)
 			ce->ce_mode = active_cache[pos]->ce_mode;
+		else if (S_ISREG(st.st_mode))
+			ce->ce_mode = create_ce_mode(S_IFREG | 0666);
 	}
 
 	if (index_path(ce->sha1, path, &st, !info_only))
@@ -306,7 +308,7 @@ static void read_index_info(int line_termination)
 }
 
 static const char update_index_usage[] =
-"git-update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--really-refresh] [--cacheinfo] [--chmod=(+|-)x] [--assume-unchanged] [--info-only] [--force-remove] [--stdin] [--index-info] [--unresolve] [--again] [--ignore-missing] [-z] [--verbose] [--] <file>...";
+"git-update-index [-q] [--add] [--replace] [--remove] [--unmerged] [--refresh] [--really-refresh] [--cacheinfo] [--chmod=(+|-)x] [--assume-unchanged] [--info-only] [--force-remove] [--stdin] [--index-info] [--unresolve] [--again | -g] [--ignore-missing] [-z] [--verbose] [--] <file>...";
 
 static unsigned char head_sha1[20];
 static unsigned char merge_head_sha1[20];
@@ -404,9 +406,9 @@ static int unresolve_one(const char *path)
 
 static void read_head_pointers(void)
 {
-	if (read_ref(git_path("HEAD"), head_sha1))
+	if (read_ref("HEAD", head_sha1))
 		die("No HEAD -- no initial commit yet?\n");
-	if (read_ref(git_path("MERGE_HEAD"), merge_head_sha1)) {
+	if (read_ref("MERGE_HEAD", merge_head_sha1)) {
 		fprintf(stderr, "Not in the middle of a merge.\n");
 		exit(0);
 	}
@@ -443,7 +445,7 @@ static int do_reupdate(int ac, const char **av,
 	int has_head = 1;
 	const char **pathspec = get_pathspec(prefix, av + 1);
 
-	if (read_ref(git_path("HEAD"), head_sha1))
+	if (read_ref("HEAD", head_sha1))
 		/* If there is no HEAD, that means it is an initial
 		 * commit.  Update everything in the index.
 		 */
@@ -595,7 +597,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 					active_cache_changed = 0;
 				goto finish;
 			}
-			if (!strcmp(path, "--again")) {
+			if (!strcmp(path, "--again") || !strcmp(path, "-g")) {
 				has_errors = do_reupdate(argc - i, argv + i,
 							 prefix, prefix_length);
 				if (has_errors)

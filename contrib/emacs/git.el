@@ -49,6 +49,7 @@
 
 (eval-when-compile (require 'cl))
 (require 'ewoc)
+(require 'log-edit)
 
 
 ;;;; Customizations
@@ -146,6 +147,13 @@ if there is already one that displays the same directory."
 ;;;; ------------------------------------------------------------
 
 (defconst git-log-msg-separator "--- log message follows this line ---")
+
+(defvar git-log-edit-font-lock-keywords
+  `(("^\\(Author:\\|Date:\\|Parent:\\|Signed-off-by:\\)\\(.*\\)$"
+     (1 font-lock-keyword-face)
+     (2 font-lock-function-name-face))
+    (,(concat "^\\(" (regexp-quote git-log-msg-separator) "\\)$")
+     (1 font-lock-comment-face))))
 
 (defun git-get-env-strings (env)
   "Build a list of NAME=VALUE strings from a list of environment strings."
@@ -272,6 +280,15 @@ and returns the process output as a string."
     (git-run-command nil nil "update-index" "--info-only" "--add" "--" (file-relative-name ignore-name)))
   (git-add-status-file (if created 'added 'modified) (file-relative-name ignore-name))))
 
+; propertize definition for XEmacs, stolen from erc-compat
+(eval-when-compile
+  (unless (fboundp 'propertize)
+    (defun propertize (string &rest props)
+      (let ((string (copy-sequence string)))
+        (while props
+          (put-text-property 0 (length string) (nth 0 props) (nth 1 props) string)
+          (setq props (cddr props)))
+        string))))
 
 ;;;; Wrappers for basic git commands
 ;;;; ------------------------------------------------------------
@@ -422,8 +439,8 @@ and returns the process output as a string."
         (propertize
          (concat "   ("
                  (if (eq state 'copy) "copied from "
-                   (if (eq (git-fileinfo->state info) 'added) "renamed to "
-                     "renamed from "))
+                   (if (eq (git-fileinfo->state info) 'added) "renamed from "
+                     "renamed to "))
                  (git-escape-file-name (git-fileinfo->orig-name info))
                  ")") 'face 'git-status-face)
       "")))
@@ -440,11 +457,10 @@ and returns the process output as a string."
 
 (defun git-fileinfo-prettyprint (info)
   "Pretty-printer for the git-fileinfo structure."
-  (insert (format "   %s %s %s  %s%s"
-                  (if (git-fileinfo->marked info) (propertize "*" 'face 'git-mark-face) " ")
-                  (git-status-code-as-string (git-fileinfo->state info))
-                  (git-permissions-as-string (git-fileinfo->old-perm info) (git-fileinfo->new-perm info))
-                  (git-escape-file-name (git-fileinfo->name info))
+  (insert (concat "   " (if (git-fileinfo->marked info) (propertize "*" 'face 'git-mark-face) " ")
+                  " " (git-status-code-as-string (git-fileinfo->state info))
+                  " " (git-permissions-as-string (git-fileinfo->old-perm info) (git-fileinfo->new-perm info))
+                  "  " (git-escape-file-name (git-fileinfo->name info))
                   (git-rename-as-string info))))
 
 (defun git-parse-status (status)
@@ -589,6 +605,7 @@ and returns the process output as a string."
                           (let ((commit (git-commit-tree buffer tree head)))
                             (git-update-ref "HEAD" commit head)
                             (condition-case nil (delete-file ".git/MERGE_HEAD") (error nil))
+                            (condition-case nil (delete-file ".git/MERGE_MSG") (error nil))
                             (with-current-buffer buffer (erase-buffer))
                             (git-set-files-state files 'uptodate)
                             (when (file-directory-p ".git/rr-cache")
@@ -670,6 +687,32 @@ and returns the process output as a string."
   (unless git-status (error "Not in git-status buffer."))
   (ewoc-goto-prev git-status n))
 
+(defun git-next-unmerged-file (&optional n)
+  "Move the selection down N unmerged files."
+  (interactive "p")
+  (unless git-status (error "Not in git-status buffer."))
+  (let* ((last (ewoc-locate git-status))
+         (node (ewoc-next git-status last)))
+    (while (and node (> n 0))
+      (when (eq 'unmerged (git-fileinfo->state (ewoc-data node)))
+        (setq n (1- n))
+        (setq last node))
+      (setq node (ewoc-next git-status node)))
+    (ewoc-goto-node git-status last)))
+
+(defun git-prev-unmerged-file (&optional n)
+  "Move the selection up N unmerged files."
+  (interactive "p")
+  (unless git-status (error "Not in git-status buffer."))
+  (let* ((last (ewoc-locate git-status))
+         (node (ewoc-prev git-status last)))
+    (while (and node (> n 0))
+      (when (eq 'unmerged (git-fileinfo->state (ewoc-data node)))
+        (setq n (1- n))
+        (setq last node))
+      (setq node (ewoc-prev git-status node)))
+    (ewoc-goto-node git-status last)))
+
 (defun git-add-file ()
   "Add marked file(s) to the index cache."
   (interactive)
@@ -750,7 +793,7 @@ and returns the process output as a string."
   (interactive)
   (let ((files (git-marked-files-state 'unmerged)))
     (when files
-      (apply #'git-run-command nil nil "update-index" "--info-only" "--" (git-get-filenames files))
+      (apply #'git-run-command nil nil "update-index" "--" (git-get-filenames files))
       (git-set-files-state files 'modified)
       (git-refresh-files))))
 
@@ -862,18 +905,14 @@ and returns the process output as a string."
           'face 'git-header-face)
          (propertize git-log-msg-separator 'face 'git-separator-face)
          "\n")
-        (cond ((and merge-heads (file-readable-p ".git/MERGE_MSG"))
+        (cond ((file-readable-p ".git/MERGE_MSG")
                (insert-file-contents ".git/MERGE_MSG"))
               (sign-off
                (insert (format "\n\nSigned-off-by: %s <%s>\n"
                                (git-get-committer-name) (git-get-committer-email)))))))
-    (let ((log-edit-font-lock-keywords
-           `(("^\\(Author:\\|Date:\\|Parent:\\|Signed-off-by:\\)\\(.*\\)"
-              (1 font-lock-keyword-face)
-              (2 font-lock-function-name-face))
-             (,(concat "^\\(" (regexp-quote git-log-msg-separator) "\\)$")
-              (1 font-lock-comment-face)))))
-      (log-edit #'git-do-commit nil #'git-log-edit-files buffer))))
+    (log-edit #'git-do-commit nil #'git-log-edit-files buffer)
+    (setq font-lock-keywords (font-lock-compile-keywords git-log-edit-font-lock-keywords))
+    (re-search-forward (regexp-quote (concat git-log-msg-separator "\n")) nil t)))
 
 (defun git-find-file ()
   "Visit the current file in its own buffer."
@@ -881,6 +920,15 @@ and returns the process output as a string."
   (unless git-status (error "Not in git-status buffer."))
   (let ((info (ewoc-data (ewoc-locate git-status))))
     (find-file (git-fileinfo->name info))
+    (when (eq 'unmerged (git-fileinfo->state info))
+      (smerge-mode))))
+
+(defun git-find-file-other-window ()
+  "Visit the current file in its own buffer in another window."
+  (interactive)
+  (unless git-status (error "Not in git-status buffer."))
+  (let ((info (ewoc-data (ewoc-locate git-status))))
+    (find-file-other-window (git-fileinfo->name info))
     (when (eq 'unmerged (git-fileinfo->state info))
       (smerge-mode))))
 
@@ -967,7 +1015,10 @@ and returns the process output as a string."
     (define-key map "m"   'git-mark-file)
     (define-key map "M"   'git-mark-all)
     (define-key map "n"   'git-next-file)
+    (define-key map "N"   'git-next-unmerged-file)
+    (define-key map "o"   'git-find-file-other-window)
     (define-key map "p"   'git-prev-file)
+    (define-key map "P"   'git-prev-unmerged-file)
     (define-key map "q"   'git-status-quit)
     (define-key map "r"   'git-remove-file)
     (define-key map "R"   'git-resolve-file)

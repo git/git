@@ -29,7 +29,7 @@ use IPC::Open2;
 $SIG{'PIPE'}="IGNORE";
 $ENV{'TZ'}="UTC";
 
-our($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A,$opt_S,$opt_L);
+our ($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A,$opt_S,$opt_L, $opt_a);
 my (%conv_author_name, %conv_author_email);
 
 sub usage() {
@@ -37,7 +37,7 @@ sub usage() {
 Usage: ${\basename $0}     # fetch/update GIT from CVS
        [-o branch-for-HEAD] [-h] [-v] [-d CVSROOT] [-A author-conv-file]
        [-p opts-for-cvsps] [-C GIT_repository] [-z fuzz] [-i] [-k] [-u]
-       [-s subst] [-m] [-M regex] [-S regex] [CVS_module]
+       [-s subst] [-a] [-m] [-M regex] [-S regex] [CVS_module]
 END
 	exit(1);
 }
@@ -90,21 +90,23 @@ usage if $opt_h;
 
 @ARGV <= 1 or usage();
 
-if($opt_d) {
+if ($opt_d) {
 	$ENV{"CVSROOT"} = $opt_d;
-} elsif(-f 'CVS/Root') {
+} elsif (-f 'CVS/Root') {
 	open my $f, '<', 'CVS/Root' or die 'Failed to open CVS/Root';
 	$opt_d = <$f>;
 	chomp $opt_d;
 	close $f;
 	$ENV{"CVSROOT"} = $opt_d;
-} elsif($ENV{"CVSROOT"}) {
+} elsif ($ENV{"CVSROOT"}) {
 	$opt_d = $ENV{"CVSROOT"};
 } else {
 	die "CVSROOT needs to be set";
 }
 $opt_o ||= "origin";
 $opt_s ||= "-";
+$opt_a ||= 0;
+
 my $git_tree = $opt_C;
 $git_tree ||= ".";
 
@@ -129,6 +131,11 @@ if ($opt_M) {
 	push (@mergerx, qr/$opt_M/);
 }
 
+# Remember UTC of our starting time
+# we'll want to avoid importing commits
+# that are too recent
+our $starttime = time();
+
 select(STDERR); $|=1; select(STDOUT);
 
 
@@ -141,7 +148,7 @@ use File::Temp qw(tempfile);
 use POSIX qw(strftime dup2);
 
 sub new {
-	my($what,$repo,$subdir) = @_;
+	my ($what,$repo,$subdir) = @_;
 	$what=ref($what) if ref($what);
 
 	my $self = {};
@@ -161,24 +168,38 @@ sub new {
 sub conn {
 	my $self = shift;
 	my $repo = $self->{'fullrep'};
-	if($repo =~ s/^:pserver:(?:(.*?)(?::(.*?))?@)?([^:\/]*)(?::(\d*))?//) {
-		my($user,$pass,$serv,$port) = ($1,$2,$3,$4);
+	if ($repo =~ s/^:pserver(?:([^:]*)):(?:(.*?)(?::(.*?))?@)?([^:\/]*)(?::(\d*))?//) {
+		my ($param,$user,$pass,$serv,$port) = ($1,$2,$3,$4,$5);
+
+		my ($proxyhost,$proxyport);
+		if ($param && ($param =~ m/proxy=([^;]+)/)) {
+			$proxyhost = $1;
+			# Default proxyport, if not specified, is 8080.
+			$proxyport = 8080;
+			if ($ENV{"CVS_PROXY_PORT"}) {
+				$proxyport = $ENV{"CVS_PROXY_PORT"};
+			}
+			if ($param =~ m/proxyport=([^;]+)/) {
+				$proxyport = $1;
+			}
+		}
+
 		$user="anonymous" unless defined $user;
 		my $rr2 = "-";
-		unless($port) {
+		unless ($port) {
 			$rr2 = ":pserver:$user\@$serv:$repo";
 			$port=2401;
 		}
 		my $rr = ":pserver:$user\@$serv:$port$repo";
 
-		unless($pass) {
+		unless ($pass) {
 			open(H,$ENV{'HOME'}."/.cvspass") and do {
 				# :pserver:cvs@mea.tmt.tele.fi:/cvsroot/zmailer Ah<Z
-				while(<H>) {
+				while (<H>) {
 					chomp;
 					s/^\/\d+\s+//;
 					my ($w,$p) = split(/\s/,$_,2);
-					if($w eq $rr or $w eq $rr2) {
+					if ($w eq $rr or $w eq $rr2) {
 						$pass = $p;
 						last;
 					}
@@ -187,15 +208,45 @@ sub conn {
 		}
 		$pass="A" unless $pass;
 
-		my $s = IO::Socket::INET->new(PeerHost => $serv, PeerPort => $port);
-		die "Socket to $serv: $!\n" unless defined $s;
+		my ($s, $rep);
+		if ($proxyhost) {
+
+			# Use a HTTP Proxy. Only works for HTTP proxies that
+			# don't require user authentication
+			#
+			# See: http://www.ietf.org/rfc/rfc2817.txt
+
+			$s = IO::Socket::INET->new(PeerHost => $proxyhost, PeerPort => $proxyport);
+			die "Socket to $proxyhost: $!\n" unless defined $s;
+			$s->write("CONNECT $serv:$port HTTP/1.1\r\nHost: $serv:$port\r\n\r\n")
+	                        or die "Write to $proxyhost: $!\n";
+	                $s->flush();
+
+			$rep = <$s>;
+
+			# The answer should look like 'HTTP/1.x 2yy ....'
+			if (!($rep =~ m#^HTTP/1\.. 2[0-9][0-9]#)) {
+				die "Proxy connect: $rep\n";
+			}
+			# Skip up to the empty line of the proxy server output
+			# including the response headers.
+			while ($rep = <$s>) {
+				last if (!defined $rep ||
+					 $rep eq "\n" ||
+					 $rep eq "\r\n");
+			}
+		} else {
+			$s = IO::Socket::INET->new(PeerHost => $serv, PeerPort => $port);
+			die "Socket to $serv: $!\n" unless defined $s;
+		}
+
 		$s->write("BEGIN AUTH REQUEST\n$repo\n$user\n$pass\nEND AUTH REQUEST\n")
 			or die "Write to $serv: $!\n";
 		$s->flush();
 
-		my $rep = <$s>;
+		$rep = <$s>;
 
-		if($rep ne "I LOVE YOU\n") {
+		if ($rep ne "I LOVE YOU\n") {
 			$rep="<unknown>" unless $rep;
 			die "AuthReply: $rep\n";
 		}
@@ -227,7 +278,7 @@ sub conn {
 		    }
 		}
 
-		unless($pid) {
+		unless ($pid) {
 			$pr->writer();
 			$pw->reader();
 			dup2($pw->fileno(),0);
@@ -250,7 +301,7 @@ sub conn {
 	$self->{'socketo'}->flush();
 
 	chomp(my $rep=$self->readline());
-	if($rep !~ s/^Valid-requests\s*//) {
+	if ($rep !~ s/^Valid-requests\s*//) {
 		$rep="<unknown>" unless $rep;
 		die "Expected Valid-requests from server, but got: $rep\n";
 	}
@@ -262,14 +313,14 @@ sub conn {
 }
 
 sub readline {
-	my($self) = @_;
+	my ($self) = @_;
 	return $self->{'socketi'}->getline();
 }
 
 sub _file {
 	# Request a file with a given revision.
 	# Trial and error says this is a good way to do it. :-/
-	my($self,$fn,$rev) = @_;
+	my ($self,$fn,$rev) = @_;
 	$self->{'socketo'}->write("Argument -N\n") or return undef;
 	$self->{'socketo'}->write("Argument -P\n") or return undef;
 	# -kk: Linus' version doesn't use it - defaults to off
@@ -291,12 +342,12 @@ sub _file {
 sub _line {
 	# Read a line from the server.
 	# ... except that 'line' may be an entire file. ;-)
-	my($self, $fh) = @_;
+	my ($self, $fh) = @_;
 	die "Not in lines" unless defined $self->{'lines'};
 
 	my $line;
 	my $res=0;
-	while(defined($line = $self->readline())) {
+	while (defined($line = $self->readline())) {
 		# M U gnupg-cvs-rep/AUTHORS
 		# Updated gnupg-cvs-rep/
 		# /daten/src/rsync/gnupg-cvs-rep/AUTHORS
@@ -305,7 +356,7 @@ sub _line {
 		# 0
 		# ok
 
-		if($line =~ s/^(?:Created|Updated) //) {
+		if ($line =~ s/^(?:Created|Updated) //) {
 			$line = $self->readline(); # path
 			$line = $self->readline(); # Entries line
 			my $mode = $self->readline(); chomp $mode;
@@ -316,12 +367,12 @@ sub _line {
 			die "Duh: Filesize $cnt" if $cnt !~ /^\d+$/;
 			$line="";
 			$res = $self->_fetchfile($fh, $cnt);
-		} elsif($line =~ s/^ //) {
+		} elsif ($line =~ s/^ //) {
 			print $fh $line;
 			$res += length($line);
-		} elsif($line =~ /^M\b/) {
+		} elsif ($line =~ /^M\b/) {
 			# output, do nothing
-		} elsif($line =~ /^Mbinary\b/) {
+		} elsif ($line =~ /^Mbinary\b/) {
 			my $cnt;
 			die "EOF from server after 'Mbinary'" unless defined ($cnt = $self->readline());
 			chomp $cnt;
@@ -330,12 +381,12 @@ sub _line {
 			$res += $self->_fetchfile($fh, $cnt);
 		} else {
 			chomp $line;
-			if($line eq "ok") {
+			if ($line eq "ok") {
 				# print STDERR "S: ok (".length($res).")\n";
 				return $res;
-			} elsif($line =~ s/^E //) {
+			} elsif ($line =~ s/^E //) {
 				# print STDERR "S: $line\n";
-			} elsif($line =~ /^(Remove-entry|Removed) /i) {
+			} elsif ($line =~ /^(Remove-entry|Removed) /i) {
 				$line = $self->readline(); # filename
 				$line = $self->readline(); # OK
 				chomp $line;
@@ -349,7 +400,7 @@ sub _line {
 	return undef;
 }
 sub file {
-	my($self,$fn,$rev) = @_;
+	my ($self,$fn,$rev) = @_;
 	my $res;
 
 	my ($fh, $name) = tempfile('gitcvs.XXXXXX', 
@@ -373,7 +424,7 @@ sub _fetchfile {
 	my ($self, $fh, $cnt) = @_;
 	my $res = 0;
 	my $bufsize = 1024 * 1024;
-	while($cnt) {
+	while ($cnt) {
 	    if ($bufsize > $cnt) {
 		$bufsize = $cnt;
 	    }
@@ -394,7 +445,7 @@ my $cvs = CVSconn->new($opt_d, $cvs_tree);
 
 
 sub pdate($) {
-	my($d) = @_;
+	my ($d) = @_;
 	m#(\d{2,4})/(\d\d)/(\d\d)\s(\d\d):(\d\d)(?::(\d\d))?#
 		or die "Unparseable date: $d\n";
 	my $y=$1; $y-=1900 if $y>1900;
@@ -402,22 +453,22 @@ sub pdate($) {
 }
 
 sub pmode($) {
-	my($mode) = @_;
+	my ($mode) = @_;
 	my $m = 0;
 	my $mm = 0;
 	my $um = 0;
 	for my $x(split(//,$mode)) {
-		if($x eq ",") {
+		if ($x eq ",") {
 			$m |= $mm&$um;
 			$mm = 0;
 			$um = 0;
-		} elsif($x eq "u") { $um |= 0700;
-		} elsif($x eq "g") { $um |= 0070;
-		} elsif($x eq "o") { $um |= 0007;
-		} elsif($x eq "r") { $mm |= 0444;
-		} elsif($x eq "w") { $mm |= 0222;
-		} elsif($x eq "x") { $mm |= 0111;
-		} elsif($x eq "=") { # do nothing
+		} elsif ($x eq "u") { $um |= 0700;
+		} elsif ($x eq "g") { $um |= 0070;
+		} elsif ($x eq "o") { $um |= 0007;
+		} elsif ($x eq "r") { $mm |= 0444;
+		} elsif ($x eq "w") { $mm |= 0222;
+		} elsif ($x eq "x") { $mm |= 0111;
+		} elsif ($x eq "=") { # do nothing
 		} else { die "Unknown mode: $mode\n";
 		}
 	}
@@ -441,7 +492,7 @@ sub get_headref ($$) {
     my $git_dir = shift; 
     
     my $f = "$git_dir/refs/heads/$name";
-    if(open(my $fh, $f)) {
+    if (open(my $fh, $f)) {
 	    chomp(my $r = <$fh>);
 	    is_sha1($r) or die "Cannot get head id for $name ($r): $!";
 	    return $r;
@@ -468,8 +519,8 @@ $orig_git_index = $ENV{GIT_INDEX_FILE} if exists $ENV{GIT_INDEX_FILE};
 
 my %index; # holds filenames of one index per branch
 
-unless(-d $git_dir) {
-	system("git-init-db");
+unless (-d $git_dir) {
+	system("git-init");
 	die "Cannot init the GIT db at $git_tree: $?\n" if $?;
 	system("git-read-tree");
 	die "Cannot init an empty tree: $?\n" if $?;
@@ -487,7 +538,7 @@ unless(-d $git_dir) {
 	chomp ($last_branch = <F>);
 	$last_branch = basename($last_branch);
 	close(F);
-	unless($last_branch) {
+	unless ($last_branch) {
 		warn "Cannot read the last branch name: $! -- assuming 'master'\n";
 		$last_branch = "master";
 	}
@@ -495,22 +546,17 @@ unless(-d $git_dir) {
 	$tip_at_start = `git-rev-parse --verify HEAD`;
 
 	# Get the last import timestamps
-	opendir(D,"$git_dir/refs/heads");
-	while(defined(my $head = readdir(D))) {
-		next if $head =~ /^\./;
-		open(F,"$git_dir/refs/heads/$head")
-			or die "Bad head branch: $head: $!\n";
-		chomp(my $ftag = <F>);
-		close(F);
-		open(F,"git-cat-file commit $ftag |");
-		while(<F>) {
-			next unless /^author\s.*\s(\d+)\s[-+]\d{4}$/;
-			$branch_date{$head} = $1;
-			last;
-		}
-		close(F);
+	my $fmt = '($ref, $author) = (%(refname), %(author));';
+	open(H, "git-for-each-ref --perl --format='$fmt' refs/heads |") or
+		die "Cannot run git-for-each-ref: $!\n";
+	while (defined(my $entry = <H>)) {
+		my ($ref, $author);
+		eval($entry) || die "cannot eval refs list: $@";
+		my ($head) = ($ref =~ m|^refs/heads/(.*)|);
+		$author =~ /^.*\s(\d+)\s[-+]\d{4}$/;
+		$branch_date{$head} = $1;
 	}
-	closedir(D);
+	close(H);
 }
 
 -d $git_dir
@@ -529,11 +575,13 @@ if ($opt_A) {
 # run cvsps into a file unless we are getting
 # it passed as a file via $opt_P
 #
+my $cvspsfile;
 unless ($opt_P) {
 	print "Running cvsps...\n" if $opt_v;
 	my $pid = open(CVSPS,"-|");
+	my $cvspsfh;
 	die "Cannot fork: $!\n" unless defined $pid;
-	unless($pid) {
+	unless ($pid) {
 		my @opt;
 		@opt = split(/,/,$opt_p) if defined $opt_p;
 		unshift @opt, '-z', $opt_z if defined $opt_z;
@@ -544,18 +592,18 @@ unless ($opt_P) {
 		exec("cvsps","--norc",@opt,"-u","-A",'--root',$opt_d,$cvs_tree);
 		die "Could not start cvsps: $!\n";
 	}
-	my ($cvspsfh, $cvspsfile) = tempfile('gitXXXXXX', SUFFIX => '.cvsps',
-					     DIR => File::Spec->tmpdir());
+	($cvspsfh, $cvspsfile) = tempfile('gitXXXXXX', SUFFIX => '.cvsps',
+					  DIR => File::Spec->tmpdir());
 	while (<CVSPS>) {
 	    print $cvspsfh $_;
 	}
 	close CVSPS;
 	close $cvspsfh;
-	$opt_P = $cvspsfile;
+} else {
+	$cvspsfile = $opt_P;
 }
 
-
-open(CVS, "<$opt_P") or die $!;
+open(CVS, "<$cvspsfile") or die $!;
 
 ## cvsps output:
 #---------------------
@@ -603,8 +651,8 @@ sub write_tree () {
 	return $tree;
 }
 
-my($patchset,$date,$author_name,$author_email,$branch,$ancestor,$tag,$logmsg);
-my(@old,@new,@skipped,%ignorebranch);
+my ($patchset,$date,$author_name,$author_email,$branch,$ancestor,$tag,$logmsg);
+my (@old,@new,@skipped,%ignorebranch);
 
 # commits that cvsps cannot place anywhere...
 $ignorebranch{'#CVSPS_NO_BRANCH'} = 1;
@@ -612,7 +660,7 @@ $ignorebranch{'#CVSPS_NO_BRANCH'} = 1;
 sub commit {
 	if ($branch eq $opt_o && !$index{branch} && !get_headref($branch, $git_dir)) {
 	    # looks like an initial commit
-	    # use the index primed by git-init-db
+	    # use the index primed by git-init
 	    $ENV{GIT_INDEX_FILE} = '.git/index';
 	    $index{$branch} = '.git/index';
 	} else {
@@ -645,7 +693,7 @@ sub commit {
 	foreach my $rx (@mergerx) {
 		next unless $logmsg =~ $rx && $1;
 		my $mparent = $1 eq 'HEAD' ? $opt_o : $1;
-		if(my $sha1 = get_headref($mparent, $git_dir)) {
+		if (my $sha1 = get_headref($mparent, $git_dir)) {
 			push @commit_args, '-p', $mparent;
 			print "Merge parent branch: $mparent\n" if $opt_v;
 		}
@@ -686,9 +734,9 @@ sub commit {
 	system("git-update-ref refs/heads/$branch $cid") == 0
 		or die "Cannot write branch $branch for update: $!\n";
 
-	if($tag) {
-		my($in, $out) = ('','');
-	        my($xtag) = $tag;
+	if ($tag) {
+		my ($in, $out) = ('','');
+	        my ($xtag) = $tag;
 		$xtag =~ s/\s+\*\*.*$//; # Remove stuff like ** INVALID ** and ** FUNKY **
 		$xtag =~ tr/_/\./ if ( $opt_u );
 		$xtag =~ s/[\/]/$opt_s/g;
@@ -723,25 +771,25 @@ sub commit {
 };
 
 my $commitcount = 1;
-while(<CVS>) {
+while (<CVS>) {
 	chomp;
-	if($state == 0 and /^-+$/) {
+	if ($state == 0 and /^-+$/) {
 		$state = 1;
-	} elsif($state == 0) {
+	} elsif ($state == 0) {
 		$state = 1;
 		redo;
-	} elsif(($state==0 or $state==1) and s/^PatchSet\s+//) {
+	} elsif (($state==0 or $state==1) and s/^PatchSet\s+//) {
 		$patchset = 0+$_;
 		$state=2;
-	} elsif($state == 2 and s/^Date:\s+//) {
+	} elsif ($state == 2 and s/^Date:\s+//) {
 		$date = pdate($_);
-		unless($date) {
+		unless ($date) {
 			print STDERR "Could not parse date: $_\n";
 			$state=0;
 			next;
 		}
 		$state=3;
-	} elsif($state == 3 and s/^Author:\s+//) {
+	} elsif ($state == 3 and s/^Author:\s+//) {
 		s/\s+$//;
 		if (/^(.*?)\s+<(.*)>/) {
 		    ($author_name, $author_email) = ($1, $2);
@@ -752,36 +800,45 @@ while(<CVS>) {
 		    $author_name = $author_email = $_;
 		}
 		$state = 4;
-	} elsif($state == 4 and s/^Branch:\s+//) {
+	} elsif ($state == 4 and s/^Branch:\s+//) {
 		s/\s+$//;
 		s/[\/]/$opt_s/g;
 		$branch = $_;
 		$state = 5;
-	} elsif($state == 5 and s/^Ancestor branch:\s+//) {
+	} elsif ($state == 5 and s/^Ancestor branch:\s+//) {
 		s/\s+$//;
 		$ancestor = $_;
 		$ancestor = $opt_o if $ancestor eq "HEAD";
 		$state = 6;
-	} elsif($state == 5) {
+	} elsif ($state == 5) {
 		$ancestor = undef;
 		$state = 6;
 		redo;
-	} elsif($state == 6 and s/^Tag:\s+//) {
+	} elsif ($state == 6 and s/^Tag:\s+//) {
 		s/\s+$//;
-		if($_ eq "(none)") {
+		if ($_ eq "(none)") {
 			$tag = undef;
 		} else {
 			$tag = $_;
 		}
 		$state = 7;
-	} elsif($state == 7 and /^Log:/) {
+	} elsif ($state == 7 and /^Log:/) {
 		$logmsg = "";
 		$state = 8;
-	} elsif($state == 8 and /^Members:/) {
+	} elsif ($state == 8 and /^Members:/) {
 		$branch = $opt_o if $branch eq "HEAD";
-		if(defined $branch_date{$branch} and $branch_date{$branch} >= $date) {
+		if (defined $branch_date{$branch} and $branch_date{$branch} >= $date) {
 			# skip
 			print "skip patchset $patchset: $date before $branch_date{$branch}\n" if $opt_v;
+			$state = 11;
+			next;
+		}
+		if (!$opt_a && $starttime - 300 - (defined $opt_z ? $opt_z : 300) <= $date) {
+			# skip if the commit is too recent
+			# that the cvsps default fuzz is 300s, we give ourselves another
+			# 300s just in case -- this also prevents skipping commits
+			# due to server clock drift
+			print "skip patchset $patchset: $date too recent\n" if $opt_v;
 			$state = 11;
 			next;
 		}
@@ -790,17 +847,17 @@ while(<CVS>) {
 			$state = 11;
 			next;
 		}
-		if($ancestor) {
-			if($ancestor eq $branch) {
+		if ($ancestor) {
+			if ($ancestor eq $branch) {
 				print STDERR "Branch $branch erroneously stems from itself -- changed ancestor to $opt_o\n";
 				$ancestor = $opt_o;
 			}
-			if(-f "$git_dir/refs/heads/$branch") {
+			if (-f "$git_dir/refs/heads/$branch") {
 				print STDERR "Branch $branch already exists!\n";
 				$state=11;
 				next;
 			}
-			unless(open(H,"$git_dir/refs/heads/$ancestor")) {
+			unless (open(H,"$git_dir/refs/heads/$ancestor")) {
 				print STDERR "Branch $ancestor does not exist!\n";
 				$ignorebranch{$branch} = 1;
 				$state=11;
@@ -808,7 +865,7 @@ while(<CVS>) {
 			}
 			chomp(my $id = <H>);
 			close(H);
-			unless(open(H,"> $git_dir/refs/heads/$branch")) {
+			unless (open(H,"> $git_dir/refs/heads/$branch")) {
 				print STDERR "Could not create branch $branch: $!\n";
 				$ignorebranch{$branch} = 1;
 				$state=11;
@@ -821,9 +878,9 @@ while(<CVS>) {
 		}
 		$last_branch = $branch if $branch ne $last_branch;
 		$state = 9;
-	} elsif($state == 8) {
+	} elsif ($state == 8) {
 		$logmsg .= "$_\n";
-	} elsif($state == 9 and /^\s+(.+?):(INITIAL|\d+(?:\.\d+)+)->(\d+(?:\.\d+)+)\s*$/) {
+	} elsif ($state == 9 and /^\s+(.+?):(INITIAL|\d+(?:\.\d+)+)->(\d+(?:\.\d+)+)\s*$/) {
 #	VERSION:1.96->1.96.2.1
 		my $init = ($2 eq "INITIAL");
 		my $fn = $1;
@@ -836,7 +893,7 @@ while(<CVS>) {
 		}
 		print "Fetching $fn   v $rev\n" if $opt_v;
 		my ($tmpname, $size) = $cvs->file($fn,$rev);
-		if($size == -1) {
+		if ($size == -1) {
 			push(@old,$fn);
 			print "Drop $fn\n" if $opt_v;
 		} else {
@@ -854,14 +911,14 @@ while(<CVS>) {
 			push(@new,[$mode, $sha, $fn]); # may be resurrected!
 		}
 		unlink($tmpname);
-	} elsif($state == 9 and /^\s+(.+?):\d+(?:\.\d+)+->(\d+(?:\.\d+)+)\(DEAD\)\s*$/) {
+	} elsif ($state == 9 and /^\s+(.+?):\d+(?:\.\d+)+->(\d+(?:\.\d+)+)\(DEAD\)\s*$/) {
 		my $fn = $1;
 		$fn =~ s#^/+##;
 		push(@old,$fn);
 		print "Delete $fn\n" if $opt_v;
-	} elsif($state == 9 and /^\s*$/) {
+	} elsif ($state == 9 and /^\s*$/) {
 		$state = 10;
-	} elsif(($state == 9 or $state == 10) and /^-+$/) {
+	} elsif (($state == 9 or $state == 10) and /^-+$/) {
 		$commitcount++;
 		if ($opt_L && $commitcount > $opt_L) {
 			last;
@@ -871,15 +928,29 @@ while(<CVS>) {
 			system("git repack -a -d");
 		}
 		$state = 1;
-	} elsif($state == 11 and /^-+$/) {
+	} elsif ($state == 11 and /^-+$/) {
 		$state = 1;
-	} elsif(/^-+$/) { # end of unknown-line processing
+	} elsif (/^-+$/) { # end of unknown-line processing
 		$state = 1;
-	} elsif($state != 11) { # ignore stuff when skipping
+	} elsif ($state != 11) { # ignore stuff when skipping
 		print "* UNKNOWN LINE * $_\n";
 	}
 }
 commit() if $branch and $state != 11;
+
+unless ($opt_P) {
+	unlink($cvspsfile);
+}
+
+# The heuristic of repacking every 1024 commits can leave a
+# lot of unpacked data.  If there is more than 1MB worth of
+# not-packed objects, repack once more.
+my $line = `git-count-objects`;
+if ($line =~ /^(\d+) objects, (\d+) kilobytes$/) {
+  my ($n_objects, $kb) = ($1, $2);
+  1024 < $kb
+    and system("git repack -a -d");
+}
 
 foreach my $git_index (values %index) {
     if ($git_index ne '.git/index') {
@@ -894,7 +965,7 @@ if (defined $orig_git_index) {
 }
 
 # Now switch back to the branch we were in before all of this happened
-if($orig_branch) {
+if ($orig_branch) {
 	print "DONE.\n" if $opt_v;
 	if ($opt_i) {
 		exit 0;

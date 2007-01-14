@@ -1,0 +1,85 @@
+--pretty[='<format>']::
+
+        Pretty-prints the details of a commit.  `--pretty`
+	without an explicit `=<format>` defaults to 'medium'.
+	If the commit is a merge, and if the pretty-format
+        is not 'oneline', 'email' or 'raw', an additional line is
+        inserted before the 'Author:' line.  This line begins with
+        "Merge: " and the sha1s of ancestral commits are printed,
+        separated by spaces.  Note that the listed commits may not
+        necessarily be the list of the *direct* parent commits if you
+        have limited your view of history: for example, if you are
+        only interested in changes related to a certain directory or
+        file.  Here are some additional details for each format:
+
+        * 'oneline'
+
+	  <sha1> <title line>
++
+This is designed to be as compact as possible.
+
+        * 'short'
+
+	  commit <sha1>
+	  Author: <author>
+
+	      <title line>
+
+        * 'medium'
+
+	  commit <sha1>
+	  Author: <author>
+	  Date: <date>
+
+	      <title line>
+
+	      <full commit message>
+
+        * 'full'
+
+	  commit <sha1>
+	  Author: <author>
+	  Commit: <committer>
+
+	      <title line>
+
+	      <full commit message>
+
+        * 'fuller'
+
+	  commit <sha1>
+	  Author: <author>
+	  AuthorDate: <date & time>
+	  Commit: <committer>
+	  CommitDate: <date & time>
+
+	       <title line>
+
+	       <full commit message>
+
+
+        * 'email'
+
+	  From <sha1> <date>
+	  From: <author>
+	  Date: <date & time>
+	  Subject: [PATCH] <title line>
+
+	  full commit message>
+
+
+	* 'raw'
++
+The 'raw' format shows the entire commit exactly as
+stored in the commit object.  Notably, the SHA1s are
+displayed in full, regardless of whether --abbrev or
+--no-abbrev are used, and 'parents' information show the
+true parent commits, without taking grafts nor history
+simplification into account.
+
+--encoding[=<encoding>]::
+	The commit objects record the encoding used for the log message
+	in their encoding header; this option can be used to tell the
+	command to re-code the commit log message in the encoding
+	preferred by the user.  For non plumbing commands this
+	defaults to UTF-8.

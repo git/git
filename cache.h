@@ -122,8 +122,14 @@ extern int cache_errno;
 #define DB_ENVIRONMENT "GIT_OBJECT_DIRECTORY"
 #define INDEX_ENVIRONMENT "GIT_INDEX_FILE"
 #define GRAFT_ENVIRONMENT "GIT_GRAFT_FILE"
+#define TEMPLATE_DIR_ENVIRONMENT "GIT_TEMPLATE_DIR"
+#define CONFIG_ENVIRONMENT "GIT_CONFIG"
+#define CONFIG_LOCAL_ENVIRONMENT "GIT_CONFIG_LOCAL"
+#define EXEC_PATH_ENVIRONMENT "GIT_EXEC_PATH"
 
-extern char *get_git_dir(void);
+extern int is_bare_repository_cfg;
+extern int is_bare_repository(void);
+extern const char *get_git_dir(void);
 extern char *get_object_directory(void);
 extern char *get_refs_directory(void);
 extern char *get_index_file(void);
@@ -145,6 +151,7 @@ extern void verify_non_filename(const char *prefix, const char *name);
 extern int read_cache(void);
 extern int read_cache_from(const char *path);
 extern int write_cache(int newfd, struct cache_entry **cache, int entries);
+extern int discard_cache(void);
 extern int verify_path(const char *path);
 extern int cache_name_pos(const char *name, int namelen);
 #define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
@@ -173,11 +180,13 @@ extern int refresh_cache(unsigned int flags);
 
 struct lock_file {
 	struct lock_file *next;
+	char on_list;
 	char filename[PATH_MAX];
 };
 extern int hold_lock_file_for_update(struct lock_file *, const char *path, int);
 extern int commit_lock_file(struct lock_file *);
 extern void rollback_lock_file(struct lock_file *);
+extern int delete_ref(const char *, unsigned char *sha1);
 
 /* Environment bits from configuration mechanism */
 extern int use_legacy_headers;
@@ -189,6 +198,8 @@ extern int warn_ambiguous_refs;
 extern int shared_repository;
 extern const char *apply_default_whitespace;
 extern int zlib_compression_level;
+extern size_t packed_git_window_size;
+extern size_t packed_git_limit;
 
 #define GIT_REPO_VERSION 0
 extern int repository_format_version;
@@ -243,28 +254,41 @@ char *enter_repo(char *path, int strict);
 extern int sha1_object_info(const unsigned char *, char *, unsigned long *);
 extern void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned long *size);
 extern void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size);
+extern int hash_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *sha1);
 extern int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *return_sha1);
-extern char *write_sha1_file_prepare(void *buf,
-				     unsigned long len,
-				     const char *type,
-				     unsigned char *sha1,
-				     unsigned char *hdr,
-				     int *hdrlen);
 
 extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
 
 extern int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 			      size_t bufsize, size_t *bufposn);
 extern int write_sha1_to_fd(int fd, const unsigned char *sha1);
-extern int move_temp_to_file(const char *tmpfile, char *filename);
+extern int move_temp_to_file(const char *tmpfile, const char *filename);
 
-extern int has_sha1_pack(const unsigned char *sha1);
+extern int has_sha1_pack(const unsigned char *sha1, const char **ignore);
 extern int has_sha1_file(const unsigned char *sha1);
 extern void *map_sha1_file(const unsigned char *sha1, unsigned long *);
 extern int legacy_loose_object(unsigned char *);
 
 extern int has_pack_file(const unsigned char *sha1);
 extern int has_pack_index(const unsigned char *sha1);
+
+enum object_type {
+	OBJ_NONE = 0,
+	OBJ_COMMIT = 1,
+	OBJ_TREE = 2,
+	OBJ_BLOB = 3,
+	OBJ_TAG = 4,
+	/* 5 for future expansion */
+	OBJ_OFS_DELTA = 6,
+	OBJ_REF_DELTA = 7,
+	OBJ_BAD,
+};
+
+extern signed char hexval_table[256];
+static inline unsigned int hexval(unsigned int c)
+{
+	return hexval_table[c];
+}
 
 /* Convert to/from hex/sha1 representation */
 #define MINIMUM_ABBREV 4
@@ -274,9 +298,9 @@ extern int get_sha1(const char *str, unsigned char *sha1);
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 extern int read_ref(const char *filename, unsigned char *sha1);
-extern const char *resolve_ref(const char *path, unsigned char *sha1, int);
-extern int create_symref(const char *git_HEAD, const char *refs_heads_master);
-extern int validate_symref(const char *git_HEAD);
+extern const char *resolve_ref(const char *path, unsigned char *sha1, int, int *);
+extern int create_symref(const char *ref, const char *refs_heads_master);
+extern int validate_headref(const char *ref);
 
 extern int base_name_compare(const char *name1, int len1, int mode1, const char *name2, int len2, int mode2);
 extern int cache_name_compare(const char *name1, int len1, const char *name2, int len2);
@@ -286,13 +310,14 @@ extern void *read_object_with_reference(const unsigned char *sha1,
 					unsigned long *size,
 					unsigned char *sha1_ret);
 
-const char *show_date(unsigned long time, int timezone);
+const char *show_date(unsigned long time, int timezone, int relative);
 const char *show_rfc2822_date(unsigned long time, int timezone);
 int parse_date(const char *date, char *buf, int bufsize);
 void datestamp(char *buf, int bufsize);
 unsigned long approxidate(const char *);
 
 extern int setup_ident(void);
+extern void ignore_missing_committer_name();
 extern const char *git_author_info(int);
 extern const char *git_committer_info(int);
 
@@ -314,14 +339,22 @@ extern struct alternate_object_database {
 } *alt_odb_list;
 extern void prepare_alt_odb(void);
 
+struct pack_window {
+	struct pack_window *next;
+	unsigned char *base;
+	off_t offset;
+	size_t len;
+	unsigned int last_used;
+	unsigned int inuse_cnt;
+};
+
 extern struct packed_git {
 	struct packed_git *next;
-	unsigned long index_size;
-	unsigned long pack_size;
+	struct pack_window *windows;
 	unsigned int *index_base;
-	void *pack_base;
-	unsigned int pack_last_used;
-	unsigned int pack_use_cnt;
+	off_t index_size;
+	off_t pack_size;
+	int pack_fd;
 	int pack_local;
 	unsigned char sha1[20];
 	/* something like ".git/objects/pack/xxxxx.pack" */
@@ -347,7 +380,7 @@ struct ref {
 #define REF_HEADS	(1u << 1)
 #define REF_TAGS	(1u << 2)
 
-extern int git_connect(int fd[2], char *url, const char *prog);
+extern pid_t git_connect(int fd[2], char *url, const char *prog);
 extern int finish_connect(pid_t pid);
 extern int path_match(const char *path, int nr, char **match);
 extern int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
@@ -361,19 +394,22 @@ extern struct packed_git *parse_pack_index_file(const unsigned char *sha1,
 						char *idx_path);
 
 extern void prepare_packed_git(void);
+extern void reprepare_packed_git(void);
 extern void install_packed_git(struct packed_git *pack);
 
 extern struct packed_git *find_sha1_pack(const unsigned char *sha1, 
 					 struct packed_git *packs);
 
-extern int use_packed_git(struct packed_git *);
-extern void unuse_packed_git(struct packed_git *);
+extern void pack_report();
+extern unsigned char* use_pack(struct packed_git *, struct pack_window **, unsigned long, unsigned int *);
+extern void unuse_pack(struct pack_window **);
 extern struct packed_git *add_packed_git(char *, int, int);
 extern int num_packed_objects(const struct packed_git *p);
 extern int nth_packed_object_sha1(const struct packed_git *, int, unsigned char*);
-extern int find_pack_entry_one(const unsigned char *, struct pack_entry *, struct packed_git *);
-extern void *unpack_entry_gently(struct pack_entry *, char *, unsigned long *);
-extern void packed_object_info_detail(struct pack_entry *, char *, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
+extern unsigned long find_pack_entry_one(const unsigned char *, struct packed_git *);
+extern void *unpack_entry(struct packed_git *, unsigned long, char *, unsigned long *);
+extern unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
+extern void packed_object_info_detail(struct packed_git *, unsigned long, char *, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
 
 /* Dumb servers support */
 extern int update_server_info(int);
@@ -386,21 +422,23 @@ extern int git_config_int(const char *, const char *);
 extern int git_config_bool(const char *, const char *);
 extern int git_config_set(const char *, const char *);
 extern int git_config_set_multivar(const char *, const char *, const char *, int);
+extern int git_config_rename_section(const char *, const char *);
 extern int check_repository_format_version(const char *var, const char *value);
 
 #define MAX_GITNAME (1000)
 extern char git_default_email[MAX_GITNAME];
 extern char git_default_name[MAX_GITNAME];
 
-#define MAX_ENCODING_LENGTH 64
-extern char git_commit_encoding[MAX_ENCODING_LENGTH];
+extern char *git_commit_encoding;
+extern char *git_log_output_encoding;
 
 extern int copy_fd(int ifd, int ofd);
+extern int read_in_full(int fd, void *buf, size_t count);
+extern void read_or_die(int fd, void *buf, size_t count);
+extern int write_in_full(int fd, const void *buf, size_t count);
 extern void write_or_die(int fd, const void *buf, size_t count);
-
-/* Finish off pack transfer receiving end */
-extern int receive_unpack_pack(int fd[2], const char *me, int quiet, int);
-extern int receive_keep_pack(int fd[2], const char *me, int quiet, int);
+extern int write_or_whine(int fd, const void *buf, size_t count, const char *msg);
+extern int write_or_whine_pipe(int fd, const void *buf, size_t count, const char *msg);
 
 /* pager.c */
 extern void setup_pager(void);
@@ -421,5 +459,10 @@ extern struct tree *alloc_tree_node(void);
 extern struct commit *alloc_commit_node(void);
 extern struct tag *alloc_tag_node(void);
 extern void alloc_report(void);
+
+/* trace.c */
+extern int nfvasprintf(char **str, const char *fmt, va_list va);
+extern void trace_printf(const char *format, ...);
+extern void trace_argv_printf(const char **argv, int count, const char *format, ...);
 
 #endif /* CACHE_H */

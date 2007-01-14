@@ -38,6 +38,19 @@ Issues of note:
    has been actively developed since 1997, and people have moved over to
    graphical file managers.
 
+ - You can use git after building but without installing if you
+   wanted to.  Various git commands need to find other git
+   commands and scripts to do their work, so you would need to
+   arrange a few environment variables to tell them that their
+   friends will be found in your built source area instead of at
+   their standard installation area.  Something like this works
+   for me:
+
+	GIT_EXEC_PATH=`pwd`
+	PATH=`pwd`:$PATH
+	GITPERLLIB=`pwd`/perl/blib/lib
+	export GIT_EXEC_PATH PATH GITPERLLIB
+
  - Git is reasonably self-sufficient, but does depend on a few external
    programs and libraries:
 
@@ -59,25 +72,6 @@ Issues of note:
 	- expat library; git-http-push uses it for remote lock
 	  management over DAV.  Similar to "curl" above, this is optional.
 
-	- "GNU diff" to generate patches.  Of course, you don't _have_ to
-	  generate patches if you don't want to, but let's face it, you'll
-	  be wanting to. Or why did you get git in the first place?
-
-	  Non-GNU versions of the diff/patch programs don't generally support
-	  the unified patch format (which is the one git uses), so you
-	  really do want to get the GNU one.  Trust me, you will want to
-	  do that even if it wasn't for git.  There's no point in living
-	  in the dark ages any more. 
-
-	- "merge", the standard UNIX three-way merge program.  It usually
-	  comes with the "rcs" package on most Linux distributions, so if
-	  you have a developer install you probably have it already, but a
-	  "graphical user desktop" install might have left it out.
-
-	  You'll only need the merge program if you do development using
-	  git, and if you only use git to track other peoples work you'll
-	  never notice the lack of it. 
-
         - "wish", the Tcl/Tk windowing shell is used in gitk to show the
           history graphically
 
@@ -85,9 +79,6 @@ Issues of note:
 
 	- "perl" and POSIX-compliant shells are needed to use most of
 	  the barebone Porcelainish scripts.
-
-	- "python" 2.3 or more recent; if you have 2.3, you may need
-          to build with "make WITH_OWN_SUBPROCESS_PY=YesPlease".
 
  - Some platform specific issues are dealt with Makefile rules,
    but depending on your specific installation, you may not
@@ -104,7 +95,7 @@ Issues of note:
    repository itself.  For example, you could:
 
 	$ mkdir manual && cd manual
-	$ git init-db
+	$ git init
 	$ git fetch-pack git://git.kernel.org/pub/scm/git/git.git man html |
 	  while read a b
 	  do

@@ -3,12 +3,6 @@
 #include "pkt-line.h"
 #include "quote.h"
 #include "refs.h"
-#include <sys/wait.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <signal.h>
 
 static char *server_capabilities;
 
@@ -17,7 +11,7 @@ static int check_ref(const char *name, int len, unsigned int flags)
 	if (!flags)
 		return 1;
 
-	if (len > 45 || memcmp(name, "refs/", 5))
+	if (len < 5 || memcmp(name, "refs/", 5))
 		return 0;
 
 	/* Skip the "refs/" part */
@@ -69,7 +63,7 @@ struct ref **get_remote_heads(int in, struct ref **list,
 		if (len != name_len + 41) {
 			if (server_capabilities)
 				free(server_capabilities);
-			server_capabilities = strdup(name + name_len + 1);
+			server_capabilities = xstrdup(name + name_len + 1);
 		}
 
 		if (!check_ref(name, name_len, flags))
@@ -144,6 +138,7 @@ struct refspec {
  * +A:B means overwrite remote B with local A.
  * +A is a shorthand for +A:A.
  * A is a shorthand for A:A.
+ * :B means delete remote B.
  */
 static struct refspec *parse_ref_spec(int nr_refspec, char **refspec)
 {
@@ -174,21 +169,58 @@ static int count_refspec_match(const char *pattern,
 			       struct ref *refs,
 			       struct ref **matched_ref)
 {
-	int match;
 	int patlen = strlen(pattern);
+	struct ref *matched_weak = NULL;
+	struct ref *matched = NULL;
+	int weak_match = 0;
+	int match = 0;
 
-	for (match = 0; refs; refs = refs->next) {
+	for (weak_match = match = 0; refs; refs = refs->next) {
 		char *name = refs->name;
 		int namelen = strlen(name);
+		int weak_match;
+
 		if (namelen < patlen ||
 		    memcmp(name + namelen - patlen, pattern, patlen))
 			continue;
 		if (namelen != patlen && name[namelen - patlen - 1] != '/')
 			continue;
-		match++;
-		*matched_ref = refs;
+
+		/* A match is "weak" if it is with refs outside
+		 * heads or tags, and did not specify the pattern
+		 * in full (e.g. "refs/remotes/origin/master") or at
+		 * least from the toplevel (e.g. "remotes/origin/master");
+		 * otherwise "git push $URL master" would result in
+		 * ambiguity between remotes/origin/master and heads/master
+		 * at the remote site.
+		 */
+		if (namelen != patlen &&
+		    patlen != namelen - 5 &&
+		    strncmp(name, "refs/heads/", 11) &&
+		    strncmp(name, "refs/tags/", 10)) {
+			/* We want to catch the case where only weak
+			 * matches are found and there are multiple
+			 * matches, and where more than one strong
+			 * matches are found, as ambiguous.  One
+			 * strong match with zero or more weak matches
+			 * are acceptable as a unique match.
+			 */
+			matched_weak = refs;
+			weak_match++;
+		}
+		else {
+			matched = refs;
+			match++;
+		}
 	}
-	return match;
+	if (!matched) {
+		*matched_ref = matched_weak;
+		return weak_match;
+	}
+	else {
+		*matched_ref = matched;
+		return match;
+	}
 }
 
 static void link_dst_tail(struct ref *ref, struct ref ***tail)
@@ -203,6 +235,13 @@ static struct ref *try_explicit_object_name(const char *name)
 	unsigned char sha1[20];
 	struct ref *ref;
 	int len;
+
+	if (!*name) {
+		ref = xcalloc(1, sizeof(*ref) + 20);
+		strcpy(ref->name, "(delete)");
+		hashclr(ref->new_sha1);
+		return ref;
+	}
 	if (get_sha1(name, sha1))
 		return NULL;
 	len = strlen(name) + 1;
@@ -225,7 +264,8 @@ static int match_explicit_refs(struct ref *src, struct ref *dst,
 			break;
 		case 0:
 			/* The source could be in the get_sha1() format
-			 * not a reference name.
+			 * not a reference name.  :refs/other is a
+			 * way to delete 'other' ref at the remote end.
 			 */
 			matched_src = try_explicit_object_name(rs[i].src);
 			if (matched_src)
@@ -599,12 +639,19 @@ static void git_proxy_connect(int fd[2], char *host)
 	close(pipefd[1][0]);
 }
 
+#define MAX_CMD_LEN 1024
+
 /*
- * Yeah, yeah, fixme. Need to pass in the heads etc.
+ * This returns 0 if the transport protocol does not need fork(2),
+ * or a process id if it does.  Once done, finish the connection
+ * with finish_connect() with the value returned from this function
+ * (it is safe to call finish_connect() with 0 to support the former
+ * case).
+ *
+ * Does not return a negative value on error; it just dies.
  */
-int git_connect(int fd[2], char *url, const char *prog)
+pid_t git_connect(int fd[2], char *url, const char *prog)
 {
-	char command[1024];
 	char *host, *path = url;
 	char *end;
 	int c;
@@ -661,7 +708,7 @@ int git_connect(int fd[2], char *url, const char *prog)
 		if (path[1] == '~')
 			path++;
 		else {
-			path = strdup(ptr);
+			path = xstrdup(ptr);
 			free_path = 1;
 		}
 
@@ -672,7 +719,7 @@ int git_connect(int fd[2], char *url, const char *prog)
 		/* These underlying connection commands die() if they
 		 * cannot connect.
 		 */
-		char *target_host = strdup(host);
+		char *target_host = xstrdup(host);
 		if (git_use_proxy(host))
 			git_proxy_connect(fd, host);
 		else
@@ -697,8 +744,18 @@ int git_connect(int fd[2], char *url, const char *prog)
 	if (pid < 0)
 		die("unable to fork");
 	if (!pid) {
-		snprintf(command, sizeof(command), "%s %s", prog,
-			 sq_quote(path));
+		char command[MAX_CMD_LEN];
+		char *posn = command;
+		int size = MAX_CMD_LEN;
+		int of = 0;
+
+		of |= add_to_string(&posn, &size, prog, 0);
+		of |= add_to_string(&posn, &size, " ", 0);
+		of |= add_to_string(&posn, &size, path, 1);
+
+		if (of)
+			die("command line too long");
+
 		dup2(pipefd[1][0], 0);
 		dup2(pipefd[0][1], 1);
 		close(pipefd[0][0]);
@@ -737,6 +794,9 @@ int git_connect(int fd[2], char *url, const char *prog)
 
 int finish_connect(pid_t pid)
 {
+	if (pid == 0)
+		return 0;
+
 	while (waitpid(pid, NULL, 0) < 0) {
 		if (errno != EINTR)
 			return -1;

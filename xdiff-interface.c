@@ -69,9 +69,9 @@ int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
 	for (i = 0; i < nbuf; i++) {
 		if (mb[i].ptr[mb[i].size-1] != '\n') {
 			/* Incomplete line */
-			priv->remainder = realloc(priv->remainder,
-						  priv->remainder_size +
-						  mb[i].size);
+			priv->remainder = xrealloc(priv->remainder,
+						   priv->remainder_size +
+						   mb[i].size);
 			memcpy(priv->remainder + priv->remainder_size,
 			       mb[i].ptr, mb[i].size);
 			priv->remainder_size += mb[i].size;
@@ -83,9 +83,9 @@ int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
 			consume_one(priv, mb[i].ptr, mb[i].size);
 			continue;
 		}
-		priv->remainder = realloc(priv->remainder,
-					  priv->remainder_size +
-					  mb[i].size);
+		priv->remainder = xrealloc(priv->remainder,
+					   priv->remainder_size +
+					   mb[i].size);
 		memcpy(priv->remainder + priv->remainder_size,
 		       mb[i].ptr, mb[i].size);
 		consume_one(priv, priv->remainder,
@@ -102,3 +102,22 @@ int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
 	}
 	return 0;
 }
+
+int read_mmfile(mmfile_t *ptr, const char *filename)
+{
+	struct stat st;
+	FILE *f;
+
+	if (stat(filename, &st))
+		return error("Could not stat %s", filename);
+	if ((f = fopen(filename, "rb")) == NULL)
+		return error("Could not open %s", filename);
+	ptr->ptr = xmalloc(st.st_size);
+	if (fread(ptr->ptr, st.st_size, 1, f) != 1)
+		return error("Could not read %s", filename);
+	fclose(f);
+	ptr->size = st.st_size;
+	return 0;
+}
+
+

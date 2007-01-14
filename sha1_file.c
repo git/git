@@ -22,20 +22,50 @@
 #endif
 #endif
 
+#ifdef NO_C99_FORMAT
+#define SZ_FMT "lu"
+#else
+#define SZ_FMT "zu"
+#endif
+
 const unsigned char null_sha1[20];
 
 static unsigned int sha1_file_open_flag = O_NOATIME;
 
-static unsigned hexval(char c)
-{
-	if (c >= '0' && c <= '9')
-		return c - '0';
-	if (c >= 'a' && c <= 'f')
-		return c - 'a' + 10;
-	if (c >= 'A' && c <= 'F')
-		return c - 'A' + 10;
-	return ~0;
-}
+signed char hexval_table[256] = {
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 00-07 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 08-0f */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 10-17 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 18-1f */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 20-27 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 28-2f */
+	  0,  1,  2,  3,  4,  5,  6,  7,		/* 30-37 */
+	  8,  9, -1, -1, -1, -1, -1, -1,		/* 38-3f */
+	 -1, 10, 11, 12, 13, 14, 15, -1,		/* 40-47 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 48-4f */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 50-57 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 58-5f */
+	 -1, 10, 11, 12, 13, 14, 15, -1,		/* 60-67 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 68-67 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 70-77 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 78-7f */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 80-87 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 88-8f */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 90-97 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 98-9f */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* a0-a7 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* a8-af */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* b0-b7 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* b8-bf */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* c0-c7 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* c8-cf */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* d0-d7 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* d8-df */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* e0-e7 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* e8-ef */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* f0-f7 */
+	 -1, -1, -1, -1, -1, -1, -1, -1,		/* f8-ff */
+};
 
 int get_sha1_hex(const char *hex, unsigned char *sha1)
 {
@@ -115,7 +145,7 @@ static void fill_sha1_path(char *pathbuf, const unsigned char *sha1)
 
 /*
  * NOTE! This returns a statically allocated buffer, so you have to be
- * careful about using it. Do a "strdup()" if you need to save the
+ * careful about using it. Do a "xstrdup()" if you need to save the
  * filename.
  *
  * Also note that this returns the location for creating.  Reading
@@ -331,10 +361,8 @@ static void read_info_alternates(const char * relative_base, int depth)
 		close(fd);
 		return;
 	}
-	map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	map = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
-	if (map == MAP_FAILED)
-		return;
 
 	link_alt_odb_entries(map, map + st.st_size, '\n', relative_base, depth);
 
@@ -373,10 +401,35 @@ static char *find_sha1_file(const unsigned char *sha1, struct stat *st)
 	return NULL;
 }
 
-#define PACK_MAX_SZ (1<<26)
-static int pack_used_ctr;
-static unsigned long pack_mapped;
+static unsigned int pack_used_ctr;
+static unsigned int pack_mmap_calls;
+static unsigned int peak_pack_open_windows;
+static unsigned int pack_open_windows;
+static size_t peak_pack_mapped;
+static size_t pack_mapped;
+static size_t page_size;
 struct packed_git *packed_git;
+
+void pack_report()
+{
+	fprintf(stderr,
+		"pack_report: getpagesize()            = %10" SZ_FMT "\n"
+		"pack_report: core.packedGitWindowSize = %10" SZ_FMT "\n"
+		"pack_report: core.packedGitLimit      = %10" SZ_FMT "\n",
+		page_size,
+		packed_git_window_size,
+		packed_git_limit);
+	fprintf(stderr,
+		"pack_report: pack_used_ctr            = %10u\n"
+		"pack_report: pack_mmap_calls          = %10u\n"
+		"pack_report: pack_open_windows        = %10u / %10u\n"
+		"pack_report: pack_mapped              = "
+			"%10" SZ_FMT " / %10" SZ_FMT "\n",
+		pack_used_ctr,
+		pack_mmap_calls,
+		pack_open_windows, peak_pack_open_windows,
+		pack_mapped, peak_pack_mapped);
+}
 
 static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 				void **idx_map_)
@@ -394,10 +447,8 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 		return -1;
 	}
 	idx_size = st.st_size;
-	idx_map = mmap(NULL, idx_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	idx_map = xmmap(NULL, idx_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
-	if (idx_map == MAP_FAILED)
-		return -1;
 
 	index = idx_map;
 	*idx_map_ = idx_map;
@@ -427,86 +478,198 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 	return 0;
 }
 
-static int unuse_one_packed_git(void)
+static void scan_windows(struct packed_git *p,
+	struct packed_git **lru_p,
+	struct pack_window **lru_w,
+	struct pack_window **lru_l)
 {
-	struct packed_git *p, *lru = NULL;
+	struct pack_window *w, *w_l;
 
-	for (p = packed_git; p; p = p->next) {
-		if (p->pack_use_cnt || !p->pack_base)
-			continue;
-		if (!lru || p->pack_last_used < lru->pack_last_used)
-			lru = p;
+	for (w_l = NULL, w = p->windows; w; w = w->next) {
+		if (!w->inuse_cnt) {
+			if (!*lru_w || w->last_used < (*lru_w)->last_used) {
+				*lru_p = p;
+				*lru_w = w;
+				*lru_l = w_l;
+			}
+		}
+		w_l = w;
 	}
-	if (!lru)
-		return 0;
-	munmap(lru->pack_base, lru->pack_size);
-	lru->pack_base = NULL;
-	return 1;
 }
 
-void unuse_packed_git(struct packed_git *p)
+static int unuse_one_window(struct packed_git *current)
 {
-	p->pack_use_cnt--;
+	struct packed_git *p, *lru_p = NULL;
+	struct pack_window *lru_w = NULL, *lru_l = NULL;
+
+	if (current)
+		scan_windows(current, &lru_p, &lru_w, &lru_l);
+	for (p = packed_git; p; p = p->next)
+		scan_windows(p, &lru_p, &lru_w, &lru_l);
+	if (lru_p) {
+		munmap(lru_w->base, lru_w->len);
+		pack_mapped -= lru_w->len;
+		if (lru_l)
+			lru_l->next = lru_w->next;
+		else {
+			lru_p->windows = lru_w->next;
+			if (!lru_p->windows && lru_p != current) {
+				close(lru_p->pack_fd);
+				lru_p->pack_fd = -1;
+			}
+		}
+		free(lru_w);
+		pack_open_windows--;
+		return 1;
+	}
+	return 0;
 }
 
-int use_packed_git(struct packed_git *p)
+void release_pack_memory(size_t need)
 {
+	size_t cur = pack_mapped;
+	while (need >= (cur - pack_mapped) && unuse_one_window(NULL))
+		; /* nothing */
+}
+
+void unuse_pack(struct pack_window **w_cursor)
+{
+	struct pack_window *w = *w_cursor;
+	if (w) {
+		w->inuse_cnt--;
+		*w_cursor = NULL;
+	}
+}
+
+static void open_packed_git(struct packed_git *p)
+{
+	struct stat st;
+	struct pack_header hdr;
+	unsigned char sha1[20];
+	unsigned char *idx_sha1;
+	long fd_flag;
+
+	p->pack_fd = open(p->pack_name, O_RDONLY);
+	if (p->pack_fd < 0 || fstat(p->pack_fd, &st))
+		die("packfile %s cannot be opened", p->pack_name);
+
+	/* If we created the struct before we had the pack we lack size. */
 	if (!p->pack_size) {
-		struct stat st;
-		/* We created the struct before we had the pack */
-		stat(p->pack_name, &st);
 		if (!S_ISREG(st.st_mode))
 			die("packfile %s not a regular file", p->pack_name);
 		p->pack_size = st.st_size;
-	}
-	if (!p->pack_base) {
-		int fd;
-		struct stat st;
-		void *map;
-		struct pack_header *hdr;
+	} else if (p->pack_size != st.st_size)
+		die("packfile %s size changed", p->pack_name);
 
-		pack_mapped += p->pack_size;
-		while (PACK_MAX_SZ < pack_mapped && unuse_one_packed_git())
-			; /* nothing */
-		fd = open(p->pack_name, O_RDONLY);
-		if (fd < 0)
-			die("packfile %s cannot be opened", p->pack_name);
-		if (fstat(fd, &st)) {
-			close(fd);
-			die("packfile %s cannot be opened", p->pack_name);
+	/* We leave these file descriptors open with sliding mmap;
+	 * there is no point keeping them open across exec(), though.
+	 */
+	fd_flag = fcntl(p->pack_fd, F_GETFD, 0);
+	if (fd_flag < 0)
+		die("cannot determine file descriptor flags");
+	fd_flag |= FD_CLOEXEC;
+	if (fcntl(p->pack_fd, F_SETFD, fd_flag) == -1)
+		die("cannot set FD_CLOEXEC");
+
+	/* Verify we recognize this pack file format. */
+	read_or_die(p->pack_fd, &hdr, sizeof(hdr));
+	if (hdr.hdr_signature != htonl(PACK_SIGNATURE))
+		die("file %s is not a GIT packfile", p->pack_name);
+	if (!pack_version_ok(hdr.hdr_version))
+		die("packfile %s is version %u and not supported"
+			" (try upgrading GIT to a newer version)",
+			p->pack_name, ntohl(hdr.hdr_version));
+
+	/* Verify the pack matches its index. */
+	if (num_packed_objects(p) != ntohl(hdr.hdr_entries))
+		die("packfile %s claims to have %u objects"
+			" while index size indicates %u objects",
+			p->pack_name, ntohl(hdr.hdr_entries),
+			num_packed_objects(p));
+	if (lseek(p->pack_fd, p->pack_size - sizeof(sha1), SEEK_SET) == -1)
+		die("end of packfile %s is unavailable", p->pack_name);
+	read_or_die(p->pack_fd, sha1, sizeof(sha1));
+	idx_sha1 = ((unsigned char *)p->index_base) + p->index_size - 40;
+	if (hashcmp(sha1, idx_sha1))
+		die("packfile %s does not match index", p->pack_name);
+}
+
+static int in_window(struct pack_window *win, unsigned long offset)
+{
+	/* We must promise at least 20 bytes (one hash) after the
+	 * offset is available from this window, otherwise the offset
+	 * is not actually in this window and a different window (which
+	 * has that one hash excess) must be used.  This is to support
+	 * the object header and delta base parsing routines below.
+	 */
+	off_t win_off = win->offset;
+	return win_off <= offset
+		&& (offset + 20) <= (win_off + win->len);
+}
+
+unsigned char* use_pack(struct packed_git *p,
+		struct pack_window **w_cursor,
+		unsigned long offset,
+		unsigned int *left)
+{
+	struct pack_window *win = *w_cursor;
+
+	if (p->pack_fd == -1)
+		open_packed_git(p);
+
+	/* Since packfiles end in a hash of their content and its
+	 * pointless to ask for an offset into the middle of that
+	 * hash, and the in_window function above wouldn't match
+	 * don't allow an offset too close to the end of the file.
+	 */
+	if (offset > (p->pack_size - 20))
+		die("offset beyond end of packfile (truncated pack?)");
+
+	if (!win || !in_window(win, offset)) {
+		if (win)
+			win->inuse_cnt--;
+		for (win = p->windows; win; win = win->next) {
+			if (in_window(win, offset))
+				break;
 		}
-		if (st.st_size != p->pack_size)
-			die("packfile %s size mismatch.", p->pack_name);
-		map = mmap(NULL, p->pack_size, PROT_READ, MAP_PRIVATE, fd, 0);
-		close(fd);
-		if (map == MAP_FAILED)
-			die("packfile %s cannot be mapped.", p->pack_name);
-		p->pack_base = map;
-
-		/* Check if we understand this pack file.  If we don't we're
-		 * likely too old to handle it.
-		 */
-		hdr = map;
-		if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
-			die("packfile %s isn't actually a pack.", p->pack_name);
-		if (!pack_version_ok(hdr->hdr_version))
-			die("packfile %s is version %i and not supported"
-				" (try upgrading GIT to a newer version)",
-				p->pack_name, ntohl(hdr->hdr_version));
-
-		/* Check if the pack file matches with the index file.
-		 * this is cheap.
-		 */
-		if (hashcmp((unsigned char *)(p->index_base) +
-			    p->index_size - 40,
-			    (unsigned char *)p->pack_base +
-			    p->pack_size - 20)) {
-			die("packfile %s does not match index.", p->pack_name);
+		if (!win) {
+			if (!page_size)
+				page_size = getpagesize();
+			win = xcalloc(1, sizeof(*win));
+			win->offset = (offset / page_size) * page_size;
+			win->len = p->pack_size - win->offset;
+			if (win->len > packed_git_window_size)
+				win->len = packed_git_window_size;
+			pack_mapped += win->len;
+			while (packed_git_limit < pack_mapped
+				&& unuse_one_window(p))
+				; /* nothing */
+			win->base = xmmap(NULL, win->len,
+				PROT_READ, MAP_PRIVATE,
+				p->pack_fd, win->offset);
+			if (win->base == MAP_FAILED)
+				die("packfile %s cannot be mapped: %s",
+					p->pack_name,
+					strerror(errno));
+			pack_mmap_calls++;
+			pack_open_windows++;
+			if (pack_mapped > peak_pack_mapped)
+				peak_pack_mapped = pack_mapped;
+			if (pack_open_windows > peak_pack_open_windows)
+				peak_pack_open_windows = pack_open_windows;
+			win->next = p->windows;
+			p->windows = win;
 		}
 	}
-	p->pack_last_used = pack_used_ctr++;
-	p->pack_use_cnt++;
-	return 0;
+	if (win != *w_cursor) {
+		win->last_used = pack_used_ctr++;
+		win->inuse_cnt++;
+		*w_cursor = win;
+	}
+	offset -= win->offset;
+	if (left)
+		*left = win->len - offset;
+	return win->base + offset;
 }
 
 struct packed_git *add_packed_git(char *path, int path_len, int local)
@@ -535,9 +698,8 @@ struct packed_git *add_packed_git(char *path, int path_len, int local)
 	p->pack_size = st.st_size;
 	p->index_base = idx_map;
 	p->next = NULL;
-	p->pack_base = NULL;
-	p->pack_last_used = 0;
-	p->pack_use_cnt = 0;
+	p->windows = NULL;
+	p->pack_fd = -1;
 	p->pack_local = local;
 	if ((path_len > 44) && !get_sha1_hex(path + path_len - 44, sha1))
 		hashcpy(p->sha1, sha1);
@@ -568,9 +730,8 @@ struct packed_git *parse_pack_index_file(const unsigned char *sha1, char *idx_pa
 	p->pack_size = 0;
 	p->index_base = idx_map;
 	p->next = NULL;
-	p->pack_base = NULL;
-	p->pack_last_used = 0;
-	p->pack_use_cnt = 0;
+	p->windows = NULL;
+	p->pack_fd = -1;
 	hashcpy(p->sha1, sha1);
 	return p;
 }
@@ -639,7 +800,7 @@ void prepare_packed_git(void)
 	prepare_packed_git_run_once = 1;
 }
 
-static void reprepare_packed_git(void)
+void reprepare_packed_git(void)
 {
 	prepare_packed_git_run_once = 0;
 	prepare_packed_git();
@@ -647,14 +808,8 @@ static void reprepare_packed_git(void)
 
 int check_sha1_signature(const unsigned char *sha1, void *map, unsigned long size, const char *type)
 {
-	char header[100];
 	unsigned char real_sha1[20];
-	SHA_CTX c;
-
-	SHA1_Init(&c);
-	SHA1_Update(&c, header, 1+sprintf(header, "%s %lu", type, size));
-	SHA1_Update(&c, map, size);
-	SHA1_Final(real_sha1, &c);
+	hash_sha1_file(map, size, type, real_sha1);
 	return hashcmp(sha1, real_sha1) ? -1 : 0;
 }
 
@@ -687,10 +842,8 @@ void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 		 */
 		sha1_file_open_flag = 0;
 	}
-	map = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	map = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
-	if (map == MAP_FAILED)
-		return NULL;
 	*size = st.st_size;
 	return map;
 }
@@ -711,17 +864,39 @@ int legacy_loose_object(unsigned char *map)
 		return 0;
 }
 
+unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep)
+{
+	unsigned shift;
+	unsigned char c;
+	unsigned long size;
+	unsigned long used = 0;
+
+	c = buf[used++];
+	*type = (c >> 4) & 7;
+	size = c & 15;
+	shift = 4;
+	while (c & 0x80) {
+		if (len <= used)
+			return 0;
+		if (sizeof(long) * 8 <= shift)
+			return 0;
+		c = buf[used++];
+		size += (c & 0x7f) << shift;
+		shift += 7;
+	}
+	*sizep = size;
+	return used;
+}
+
 static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz)
 {
-	unsigned char c;
-	unsigned int bits;
-	unsigned long size;
-	static const char *typename[8] = {
-		NULL,	/* OBJ_EXT */
-		"commit", "tree", "blob", "tag",
-		NULL, NULL, NULL
+	unsigned long size, used;
+	static const char valid_loose_object_type[8] = {
+		0, /* OBJ_EXT */
+		1, 1, 1, 1, /* "commit", "tree", "blob", "tag" */
+		0, /* "delta" and others are invalid in a loose object */
 	};
-	const char *type;
+	enum object_type type;
 
 	/* Get the data stream */
 	memset(stream, 0, sizeof(*stream));
@@ -735,22 +910,11 @@ static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned lon
 		return inflate(stream, 0);
 	}
 
-	c = *map++;
-	mapsize--;
-	type = typename[(c >> 4) & 7];
-	if (!type)
+	used = unpack_object_header_gently(map, mapsize, &type, &size);
+	if (!used || !valid_loose_object_type[type])
 		return -1;
-
-	bits = 4;
-	size = c & 0xf;
-	while ((c & 0x80)) {
-		if (bits >= 8*sizeof(long))
-			return -1;
-		c = *map++;
-		size += (c & 0x7f) << bits;
-		bits += 7;
-		mapsize--;
-	}
+	map += used;
+	mapsize -= used;
 
 	/* Set up the stream for the rest.. */
 	stream->next_in = map;
@@ -758,7 +922,8 @@ static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned lon
 	inflateInit(stream);
 
 	/* And generate the fake traditional header */
-	stream->total_out = 1 + snprintf(buffer, bufsiz, "%s %lu", type, size);
+	stream->total_out = 1 + snprintf(buffer, bufsiz, "%s %lu",
+					 type_names[type], size);
 	return 0;
 }
 
@@ -847,52 +1012,94 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 	return unpack_sha1_rest(&stream, hdr, *size);
 }
 
+static unsigned long get_delta_base(struct packed_git *p,
+				    struct pack_window **w_curs,
+				    unsigned long offset,
+				    enum object_type kind,
+				    unsigned long delta_obj_offset,
+				    unsigned long *base_obj_offset)
+{
+	unsigned char *base_info = use_pack(p, w_curs, offset, NULL);
+	unsigned long base_offset;
+
+	/* use_pack() assured us we have [base_info, base_info + 20)
+	 * as a range that we can look at without walking off the
+	 * end of the mapped window.  Its actually the hash size
+	 * that is assured.  An OFS_DELTA longer than the hash size
+	 * is stupid, as then a REF_DELTA would be smaller to store.
+	 */
+	if (kind == OBJ_OFS_DELTA) {
+		unsigned used = 0;
+		unsigned char c = base_info[used++];
+		base_offset = c & 127;
+		while (c & 128) {
+			base_offset += 1;
+			if (!base_offset || base_offset & ~(~0UL >> 7))
+				die("offset value overflow for delta base object");
+			c = base_info[used++];
+			base_offset = (base_offset << 7) + (c & 127);
+		}
+		base_offset = delta_obj_offset - base_offset;
+		if (base_offset >= delta_obj_offset)
+			die("delta base offset out of bound");
+		offset += used;
+	} else if (kind == OBJ_REF_DELTA) {
+		/* The base entry _must_ be in the same pack */
+		base_offset = find_pack_entry_one(base_info, p);
+		if (!base_offset)
+			die("failed to find delta-pack base object %s",
+				sha1_to_hex(base_info));
+		offset += 20;
+	} else
+		die("I am totally screwed");
+	*base_obj_offset = base_offset;
+	return offset;
+}
+
 /* forward declaration for a mutually recursive function */
-static int packed_object_info(struct pack_entry *entry,
+static int packed_object_info(struct packed_git *p, unsigned long offset,
 			      char *type, unsigned long *sizep);
 
-static int packed_delta_info(unsigned char *base_sha1,
-			     unsigned long delta_size,
-			     unsigned long left,
+static int packed_delta_info(struct packed_git *p,
+			     struct pack_window **w_curs,
+			     unsigned long offset,
+			     enum object_type kind,
+			     unsigned long obj_offset,
 			     char *type,
-			     unsigned long *sizep,
-			     struct packed_git *p)
+			     unsigned long *sizep)
 {
-	struct pack_entry base_ent;
+	unsigned long base_offset;
 
-	if (left < 20)
-		die("truncated pack file");
-
-	/* The base entry _must_ be in the same pack */
-	if (!find_pack_entry_one(base_sha1, &base_ent, p))
-		die("failed to find delta-pack base object %s",
-		    sha1_to_hex(base_sha1));
+	offset = get_delta_base(p, w_curs, offset, kind,
+		obj_offset, &base_offset);
 
 	/* We choose to only get the type of the base object and
 	 * ignore potentially corrupt pack file that expects the delta
 	 * based on a base with a wrong size.  This saves tons of
 	 * inflate() calls.
 	 */
-
-	if (packed_object_info(&base_ent, type, NULL))
+	if (packed_object_info(p, base_offset, type, NULL))
 		die("cannot get info for delta-pack base");
 
 	if (sizep) {
 		const unsigned char *data;
-		unsigned char delta_head[64];
+		unsigned char delta_head[20], *in;
 		unsigned long result_size;
 		z_stream stream;
 		int st;
 
 		memset(&stream, 0, sizeof(stream));
-
-		data = stream.next_in = base_sha1 + 20;
-		stream.avail_in = left - 20;
 		stream.next_out = delta_head;
 		stream.avail_out = sizeof(delta_head);
 
 		inflateInit(&stream);
-		st = inflate(&stream, Z_FINISH);
+		do {
+			in = use_pack(p, w_curs, offset, &stream.avail_in);
+			stream.next_in = in;
+			st = inflate(&stream, Z_FINISH);
+			offset += stream.next_in - in;
+		} while ((st == Z_OK || st == Z_BUF_ERROR)
+			&& stream.total_out < sizeof(delta_head));
 		inflateEnd(&stream);
 		if ((st != Z_STREAM_END) &&
 		    stream.total_out != sizeof(delta_head))
@@ -913,192 +1120,164 @@ static int packed_delta_info(unsigned char *base_sha1,
 	return 0;
 }
 
-static unsigned long unpack_object_header(struct packed_git *p, unsigned long offset,
-	enum object_type *type, unsigned long *sizep)
+static unsigned long unpack_object_header(struct packed_git *p,
+		struct pack_window **w_curs,
+		unsigned long offset,
+		enum object_type *type,
+		unsigned long *sizep)
 {
-	unsigned shift;
-	unsigned char *pack, c;
-	unsigned long size;
+	unsigned char *base;
+	unsigned int left;
+	unsigned long used;
 
-	if (offset >= p->pack_size)
+	/* use_pack() assures us we have [base, base + 20) available
+	 * as a range that we can look at at.  (Its actually the hash
+	 * size that is assurred.)  With our object header encoding
+	 * the maximum deflated object size is 2^137, which is just
+	 * insane, so we know won't exceed what we have been given.
+	 */
+	base = use_pack(p, w_curs, offset, &left);
+	used = unpack_object_header_gently(base, left, type, sizep);
+	if (!used)
 		die("object offset outside of pack file");
 
-	pack =  (unsigned char *) p->pack_base + offset;
-	c = *pack++;
-	offset++;
-	*type = (c >> 4) & 7;
-	size = c & 15;
-	shift = 4;
-	while (c & 0x80) {
-		if (offset >= p->pack_size)
-			die("object offset outside of pack file");
-		c = *pack++;
-		offset++;
-		size += (c & 0x7f) << shift;
-		shift += 7;
-	}
-	*sizep = size;
-	return offset;
+	return offset + used;
 }
 
-int check_reuse_pack_delta(struct packed_git *p, unsigned long offset,
-			   unsigned char *base, unsigned long *sizep,
-			   enum object_type *kindp)
-{
-	unsigned long ptr;
-	int status = -1;
-
-	use_packed_git(p);
-	ptr = offset;
-	ptr = unpack_object_header(p, ptr, kindp, sizep);
-	if (*kindp != OBJ_DELTA)
-		goto done;
-	hashcpy(base, (unsigned char *) p->pack_base + ptr);
-	status = 0;
- done:
-	unuse_packed_git(p);
-	return status;
-}
-
-void packed_object_info_detail(struct pack_entry *e,
+void packed_object_info_detail(struct packed_git *p,
+			       unsigned long offset,
 			       char *type,
 			       unsigned long *size,
 			       unsigned long *store_size,
 			       unsigned int *delta_chain_length,
 			       unsigned char *base_sha1)
 {
-	struct packed_git *p = e->p;
-	unsigned long offset;
-	unsigned char *pack;
+	struct pack_window *w_curs = NULL;
+	unsigned long obj_offset, val;
+	unsigned char *next_sha1;
 	enum object_type kind;
 
-	offset = unpack_object_header(p, e->offset, &kind, size);
-	pack = (unsigned char *) p->pack_base + offset;
-	if (kind != OBJ_DELTA)
-		*delta_chain_length = 0;
-	else {
-		unsigned int chain_length = 0;
-		if (p->pack_size <= offset + 20)
-			die("pack file %s records an incomplete delta base",
-			    p->pack_name);
-		hashcpy(base_sha1, pack);
-		do {
-			struct pack_entry base_ent;
-			unsigned long junk;
+	*delta_chain_length = 0;
+	obj_offset = offset;
+	offset = unpack_object_header(p, &w_curs, offset, &kind, size);
 
-			find_pack_entry_one(pack, &base_ent, p);
-			offset = unpack_object_header(p, base_ent.offset,
-						      &kind, &junk);
-			pack = (unsigned char *) p->pack_base + offset;
-			chain_length++;
-		} while (kind == OBJ_DELTA);
-		*delta_chain_length = chain_length;
+	for (;;) {
+		switch (kind) {
+		default:
+			die("pack %s contains unknown object type %d",
+			    p->pack_name, kind);
+		case OBJ_COMMIT:
+		case OBJ_TREE:
+		case OBJ_BLOB:
+		case OBJ_TAG:
+			strcpy(type, type_names[kind]);
+			*store_size = 0; /* notyet */
+			unuse_pack(&w_curs);
+			return;
+		case OBJ_OFS_DELTA:
+			get_delta_base(p, &w_curs, offset, kind,
+				obj_offset, &offset);
+			if (*delta_chain_length == 0) {
+				/* TODO: find base_sha1 as pointed by offset */
+			}
+			break;
+		case OBJ_REF_DELTA:
+			next_sha1 = use_pack(p, &w_curs, offset, NULL);
+			if (*delta_chain_length == 0)
+				hashcpy(base_sha1, next_sha1);
+			offset = find_pack_entry_one(next_sha1, p);
+			break;
+		}
+		obj_offset = offset;
+		offset = unpack_object_header(p, &w_curs, offset, &kind, &val);
+		(*delta_chain_length)++;
 	}
-	switch (kind) {
-	case OBJ_COMMIT:
-		strcpy(type, commit_type);
-		break;
-	case OBJ_TREE:
-		strcpy(type, tree_type);
-		break;
-	case OBJ_BLOB:
-		strcpy(type, blob_type);
-		break;
-	case OBJ_TAG:
-		strcpy(type, tag_type);
-		break;
-	default:
-		die("corrupted pack file %s containing object of kind %d",
-		    p->pack_name, kind);
-	}
-	*store_size = 0; /* notyet */
 }
 
-static int packed_object_info(struct pack_entry *entry,
+static int packed_object_info(struct packed_git *p, unsigned long offset,
 			      char *type, unsigned long *sizep)
 {
-	struct packed_git *p = entry->p;
-	unsigned long offset, size, left;
-	unsigned char *pack;
+	struct pack_window *w_curs = NULL;
+	unsigned long size, obj_offset = offset;
 	enum object_type kind;
-	int retval;
+	int r;
 
-	if (use_packed_git(p))
-		die("cannot map packed file");
-
-	offset = unpack_object_header(p, entry->offset, &kind, &size);
-	pack = (unsigned char *) p->pack_base + offset;
-	left = p->pack_size - offset;
+	offset = unpack_object_header(p, &w_curs, offset, &kind, &size);
 
 	switch (kind) {
-	case OBJ_DELTA:
-		retval = packed_delta_info(pack, size, left, type, sizep, p);
-		unuse_packed_git(p);
-		return retval;
+	case OBJ_OFS_DELTA:
+	case OBJ_REF_DELTA:
+		r = packed_delta_info(p, &w_curs, offset, kind,
+			obj_offset, type, sizep);
+		unuse_pack(&w_curs);
+		return r;
 	case OBJ_COMMIT:
-		strcpy(type, commit_type);
-		break;
 	case OBJ_TREE:
-		strcpy(type, tree_type);
-		break;
 	case OBJ_BLOB:
-		strcpy(type, blob_type);
-		break;
 	case OBJ_TAG:
-		strcpy(type, tag_type);
+		strcpy(type, type_names[kind]);
+		unuse_pack(&w_curs);
 		break;
 	default:
-		die("corrupted pack file %s containing object of kind %d",
+		die("pack %s contains unknown object type %d",
 		    p->pack_name, kind);
 	}
 	if (sizep)
 		*sizep = size;
-	unuse_packed_git(p);
 	return 0;
 }
 
-static void *unpack_delta_entry(unsigned char *base_sha1,
-				unsigned long delta_size,
-				unsigned long left,
-				char *type,
-				unsigned long *sizep,
-				struct packed_git *p)
+static void *unpack_compressed_entry(struct packed_git *p,
+				    struct pack_window **w_curs,
+				    unsigned long offset,
+				    unsigned long size)
 {
-	struct pack_entry base_ent;
-	void *data, *delta_data, *result, *base;
-	unsigned long data_size, result_size, base_size;
-	z_stream stream;
 	int st;
+	z_stream stream;
+	unsigned char *buffer, *in;
 
-	if (left < 20)
-		die("truncated pack file");
-
-	/* The base entry _must_ be in the same pack */
-	if (!find_pack_entry_one(base_sha1, &base_ent, p))
-		die("failed to find delta-pack base object %s",
-		    sha1_to_hex(base_sha1));
-	base = unpack_entry_gently(&base_ent, type, &base_size);
-	if (!base)
-		die("failed to read delta-pack base object %s",
-		    sha1_to_hex(base_sha1));
-
-	data = base_sha1 + 20;
-	data_size = left - 20;
-	delta_data = xmalloc(delta_size);
-
+	buffer = xmalloc(size + 1);
+	buffer[size] = 0;
 	memset(&stream, 0, sizeof(stream));
-
-	stream.next_in = data;
-	stream.avail_in = data_size;
-	stream.next_out = delta_data;
-	stream.avail_out = delta_size;
+	stream.next_out = buffer;
+	stream.avail_out = size;
 
 	inflateInit(&stream);
-	st = inflate(&stream, Z_FINISH);
+	do {
+		in = use_pack(p, w_curs, offset, &stream.avail_in);
+		stream.next_in = in;
+		st = inflate(&stream, Z_FINISH);
+		offset += stream.next_in - in;
+	} while (st == Z_OK || st == Z_BUF_ERROR);
 	inflateEnd(&stream);
-	if ((st != Z_STREAM_END) || stream.total_out != delta_size)
-		die("delta data unpack failed");
+	if ((st != Z_STREAM_END) || stream.total_out != size) {
+		free(buffer);
+		return NULL;
+	}
 
+	return buffer;
+}
+
+static void *unpack_delta_entry(struct packed_git *p,
+				struct pack_window **w_curs,
+				unsigned long offset,
+				unsigned long delta_size,
+				enum object_type kind,
+				unsigned long obj_offset,
+				char *type,
+				unsigned long *sizep)
+{
+	void *delta_data, *result, *base;
+	unsigned long result_size, base_size, base_offset;
+
+	offset = get_delta_base(p, w_curs, offset, kind,
+		obj_offset, &base_offset);
+	base = unpack_entry(p, base_offset, type, &base_size);
+	if (!base)
+		die("failed to read delta base object at %lu from %s",
+		    base_offset, p->pack_name);
+
+	delta_data = unpack_compressed_entry(p, w_curs, offset, delta_size);
 	result = patch_delta(base, base_size,
 			     delta_data, delta_size,
 			     &result_size);
@@ -1110,82 +1289,33 @@ static void *unpack_delta_entry(unsigned char *base_sha1,
 	return result;
 }
 
-static void *unpack_non_delta_entry(unsigned char *data,
-				    unsigned long size,
-				    unsigned long left)
-{
-	int st;
-	z_stream stream;
-	unsigned char *buffer;
-
-	buffer = xmalloc(size + 1);
-	buffer[size] = 0;
-	memset(&stream, 0, sizeof(stream));
-	stream.next_in = data;
-	stream.avail_in = left;
-	stream.next_out = buffer;
-	stream.avail_out = size;
-
-	inflateInit(&stream);
-	st = inflate(&stream, Z_FINISH);
-	inflateEnd(&stream);
-	if ((st != Z_STREAM_END) || stream.total_out != size) {
-		free(buffer);
-		return NULL;
-	}
-
-	return buffer;
-}
-
-static void *unpack_entry(struct pack_entry *entry,
+void *unpack_entry(struct packed_git *p, unsigned long offset,
 			  char *type, unsigned long *sizep)
 {
-	struct packed_git *p = entry->p;
-	void *retval;
-
-	if (use_packed_git(p))
-		die("cannot map packed file");
-	retval = unpack_entry_gently(entry, type, sizep);
-	unuse_packed_git(p);
-	if (!retval)
-		die("corrupted pack file %s", p->pack_name);
-	return retval;
-}
-
-/* The caller is responsible for use_packed_git()/unuse_packed_git() pair */
-void *unpack_entry_gently(struct pack_entry *entry,
-			  char *type, unsigned long *sizep)
-{
-	struct packed_git *p = entry->p;
-	unsigned long offset, size, left;
-	unsigned char *pack;
+	struct pack_window *w_curs = NULL;
+	unsigned long size, obj_offset = offset;
 	enum object_type kind;
 	void *retval;
 
-	offset = unpack_object_header(p, entry->offset, &kind, &size);
-	pack = (unsigned char *) p->pack_base + offset;
-	left = p->pack_size - offset;
+	offset = unpack_object_header(p, &w_curs, offset, &kind, &size);
 	switch (kind) {
-	case OBJ_DELTA:
-		retval = unpack_delta_entry(pack, size, left, type, sizep, p);
-		return retval;
+	case OBJ_OFS_DELTA:
+	case OBJ_REF_DELTA:
+		retval = unpack_delta_entry(p, &w_curs, offset, size,
+			kind, obj_offset, type, sizep);
+		break;
 	case OBJ_COMMIT:
-		strcpy(type, commit_type);
-		break;
 	case OBJ_TREE:
-		strcpy(type, tree_type);
-		break;
 	case OBJ_BLOB:
-		strcpy(type, blob_type);
-		break;
 	case OBJ_TAG:
-		strcpy(type, tag_type);
+		strcpy(type, type_names[kind]);
+		*sizep = size;
+		retval = unpack_compressed_entry(p, &w_curs, offset, size);
 		break;
 	default:
-		return NULL;
+		die("unknown object type %i in %s", kind, p->pack_name);
 	}
-	*sizep = size;
-	retval = unpack_non_delta_entry(pack, size, left);
+	unuse_pack(&w_curs);
 	return retval;
 }
 
@@ -1205,8 +1335,8 @@ int nth_packed_object_sha1(const struct packed_git *p, int n,
 	return 0;
 }
 
-int find_pack_entry_one(const unsigned char *sha1,
-			struct pack_entry *e, struct packed_git *p)
+unsigned long find_pack_entry_one(const unsigned char *sha1,
+				  struct packed_git *p)
 {
 	unsigned int *level1_ofs = p->index_base;
 	int hi = ntohl(level1_ofs[*sha1]);
@@ -1216,12 +1346,8 @@ int find_pack_entry_one(const unsigned char *sha1,
 	do {
 		int mi = (lo + hi) / 2;
 		int cmp = hashcmp((unsigned char *)index + (24 * mi) + 4, sha1);
-		if (!cmp) {
-			e->offset = ntohl(*((unsigned int *) ((char *) index + (24 * mi))));
-			hashcpy(e->sha1, sha1);
-			e->p = p;
-			return 1;
-		}
+		if (!cmp)
+			return ntohl(*((unsigned int *) ((char *) index + (24 * mi))));
 		if (cmp > 0)
 			hi = mi;
 		else
@@ -1230,14 +1356,47 @@ int find_pack_entry_one(const unsigned char *sha1,
 	return 0;
 }
 
-static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
+static int matches_pack_name(struct packed_git *p, const char *ig)
+{
+	const char *last_c, *c;
+
+	if (!strcmp(p->pack_name, ig))
+		return 0;
+
+	for (c = p->pack_name, last_c = c; *c;)
+		if (*c == '/')
+			last_c = ++c;
+		else
+			++c;
+	if (!strcmp(last_c, ig))
+		return 0;
+
+	return 1;
+}
+
+static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e, const char **ignore_packed)
 {
 	struct packed_git *p;
+	unsigned long offset;
+
 	prepare_packed_git();
 
 	for (p = packed_git; p; p = p->next) {
-		if (find_pack_entry_one(sha1, e, p))
+		if (ignore_packed) {
+			const char **ig;
+			for (ig = ignore_packed; *ig; ig++)
+				if (!matches_pack_name(p, *ig))
+					break;
+			if (*ig)
+				continue;
+		}
+		offset = find_pack_entry_one(sha1, p);
+		if (offset) {
+			e->offset = offset;
+			e->p = p;
+			hashcpy(e->sha1, sha1);
 			return 1;
+		}
 	}
 	return 0;
 }
@@ -1246,17 +1405,16 @@ struct packed_git *find_sha1_pack(const unsigned char *sha1,
 				  struct packed_git *packs)
 {
 	struct packed_git *p;
-	struct pack_entry e;
 
 	for (p = packs; p; p = p->next) {
-		if (find_pack_entry_one(sha1, &e, p))
+		if (find_pack_entry_one(sha1, p))
 			return p;
 	}
 	return NULL;
 	
 }
 
-int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep)
+static int sha1_loose_object_info(const unsigned char *sha1, char *type, unsigned long *sizep)
 {
 	int status;
 	unsigned long mapsize, size;
@@ -1265,16 +1423,8 @@ int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep
 	char hdr[128];
 
 	map = map_sha1_file(sha1, &mapsize);
-	if (!map) {
-		struct pack_entry e;
-
-		if (find_pack_entry(sha1, &e))
-			return packed_object_info(&e, type, sizep);
-		reprepare_packed_git();
-		if (find_pack_entry(sha1, &e))
-			return packed_object_info(&e, type, sizep);
+	if (!map)
 		return error("unable to find %s", sha1_to_hex(sha1));
-	}
 	if (unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr)) < 0)
 		status = error("unable to unpack %s header",
 			       sha1_to_hex(sha1));
@@ -1290,15 +1440,27 @@ int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep
 	return status;
 }
 
+int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep)
+{
+	struct pack_entry e;
+
+	if (!find_pack_entry(sha1, &e, NULL)) {
+		reprepare_packed_git();
+		if (!find_pack_entry(sha1, &e, NULL))
+			return sha1_loose_object_info(sha1, type, sizep);
+	}
+	return packed_object_info(e.p, e.offset, type, sizep);
+}
+
 static void *read_packed_sha1(const unsigned char *sha1, char *type, unsigned long *size)
 {
 	struct pack_entry e;
 
-	if (!find_pack_entry(sha1, &e)) {
+	if (!find_pack_entry(sha1, &e, NULL)) {
 		error("cannot read sha1_file for %s", sha1_to_hex(sha1));
 		return NULL;
 	}
-	return unpack_entry(&e, type, size);
+	return unpack_entry(e.p, e.offset, type, size);
 }
 
 void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
@@ -1307,7 +1469,7 @@ void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size
 	void *map, *buf;
 	struct pack_entry e;
 
-	if (find_pack_entry(sha1, &e))
+	if (find_pack_entry(sha1, &e, NULL))
 		return read_packed_sha1(sha1, type, size);
 	map = map_sha1_file(sha1, &mapsize);
 	if (map) {
@@ -1316,7 +1478,7 @@ void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size
 		return buf;
 	}
 	reprepare_packed_git();
-	if (find_pack_entry(sha1, &e))
+	if (find_pack_entry(sha1, &e, NULL))
 		return read_packed_sha1(sha1, type, size);
 	return NULL;
 }
@@ -1367,12 +1529,9 @@ void *read_object_with_reference(const unsigned char *sha1,
 	}
 }
 
-char *write_sha1_file_prepare(void *buf,
-			      unsigned long len,
-			      const char *type,
-			      unsigned char *sha1,
-			      unsigned char *hdr,
-			      int *hdrlen)
+static void write_sha1_file_prepare(void *buf, unsigned long len,
+                                    const char *type, unsigned char *sha1,
+                                    unsigned char *hdr, int *hdrlen)
 {
 	SHA_CTX c;
 
@@ -1384,8 +1543,6 @@ char *write_sha1_file_prepare(void *buf,
 	SHA1_Update(&c, hdr, *hdrlen);
 	SHA1_Update(&c, buf, len);
 	SHA1_Final(sha1, &c);
-
-	return sha1_file_name(sha1);
 }
 
 /*
@@ -1394,7 +1551,7 @@ char *write_sha1_file_prepare(void *buf,
  *
  * Returns the errno on failure, 0 on success.
  */
-static int link_temp_to_file(const char *tmpfile, char *filename)
+static int link_temp_to_file(const char *tmpfile, const char *filename)
 {
 	int ret;
 	char *dir;
@@ -1413,9 +1570,10 @@ static int link_temp_to_file(const char *tmpfile, char *filename)
 	dir = strrchr(filename, '/');
 	if (dir) {
 		*dir = 0;
-		mkdir(filename, 0777);
-		if (adjust_shared_perm(filename))
+		if (!mkdir(filename, 0777) && adjust_shared_perm(filename)) {
+			*dir = '/';
 			return -2;
+		}
 		*dir = '/';
 		if (!link(tmpfile, filename))
 			return 0;
@@ -1427,7 +1585,7 @@ static int link_temp_to_file(const char *tmpfile, char *filename)
 /*
  * Move the just written object into its final resting place
  */
-int move_temp_to_file(const char *tmpfile, char *filename)
+int move_temp_to_file(const char *tmpfile, const char *filename)
 {
 	int ret = link_temp_to_file(tmpfile, filename);
 
@@ -1450,8 +1608,7 @@ int move_temp_to_file(const char *tmpfile, char *filename)
 	unlink(tmpfile);
 	if (ret) {
 		if (ret != EEXIST) {
-			fprintf(stderr, "unable to write sha1 filename %s: %s\n", filename, strerror(ret));
-			return -1;
+			return error("unable to write sha1 filename %s: %s\n", filename, strerror(ret));
 		}
 		/* FIXME!!! Collision check here ? */
 	}
@@ -1461,20 +1618,8 @@ int move_temp_to_file(const char *tmpfile, char *filename)
 
 static int write_buffer(int fd, const void *buf, size_t len)
 {
-	while (len) {
-		ssize_t size;
-
-		size = write(fd, buf, len);
-		if (!size)
-			return error("file write: disk full");
-		if (size < 0) {
-			if (errno == EINTR || errno == EAGAIN)
-				continue;
-			return error("file write error (%s)", strerror(errno));
-		}
-		len -= size;
-		buf = (char *) buf + size;
-	}
+	if (write_in_full(fd, buf, len) < 0)
+		return error("file write error (%s)", strerror(errno));
 	return 0;
 }
 
@@ -1521,6 +1666,15 @@ static void setup_object_header(z_stream *stream, const char *type, unsigned lon
 	stream->avail_out -= hdr;
 }
 
+int hash_sha1_file(void *buf, unsigned long len, const char *type,
+                   unsigned char *sha1)
+{
+	unsigned char hdr[50];
+	int hdrlen;
+	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
+	return 0;
+}
+
 int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
 {
 	int size;
@@ -1535,7 +1689,8 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	/* Normally if we have it in the pack then we do not bother writing
 	 * it out into .git/objects/??/?{38} file.
 	 */
-	filename = write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
+	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
+	filename = sha1_file_name(sha1);
 	if (returnsha1)
 		hashcpy(returnsha1, sha1);
 	if (has_sha1_file(sha1))
@@ -1551,16 +1706,17 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	}
 
 	if (errno != ENOENT) {
-		fprintf(stderr, "sha1 file %s: %s\n", filename, strerror(errno));
-		return -1;
+		return error("sha1 file %s: %s\n", filename, strerror(errno));
 	}
 
 	snprintf(tmpfile, sizeof(tmpfile), "%s/obj_XXXXXX", get_object_directory());
 
 	fd = mkstemp(tmpfile);
 	if (fd < 0) {
-		fprintf(stderr, "unable to create temporary sha1 filename %s: %s\n", tmpfile, strerror(errno));
-		return -1;
+		if (errno == EPERM)
+			return error("insufficient permission for adding an object to repository database %s\n", get_object_directory());
+		else
+			return error("unable to create temporary sha1 filename %s: %s\n", tmpfile, strerror(errno));
 	}
 
 	/* Set it up */
@@ -1675,9 +1831,12 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 	snprintf(tmpfile, sizeof(tmpfile), "%s/obj_XXXXXX", get_object_directory());
 
 	local = mkstemp(tmpfile);
-	if (local < 0)
-		return error("Couldn't open %s for %s",
-			     tmpfile, sha1_to_hex(sha1));
+	if (local < 0) {
+		if (errno == EPERM)
+			return error("insufficient permission for adding an object to repository database %s\n", get_object_directory());
+		else
+			return error("unable to create temporary sha1 filename %s: %s\n", tmpfile, strerror(errno));
+	}
 
 	memset(&stream, 0, sizeof(stream));
 
@@ -1705,7 +1864,7 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 			if (ret != Z_OK)
 				break;
 		}
-		size = read(fd, buffer + *bufposn, bufsize - *bufposn);
+		size = xread(fd, buffer + *bufposn, bufsize - *bufposn);
 		if (size <= 0) {
 			close(local);
 			unlink(tmpfile);
@@ -1748,10 +1907,10 @@ int has_pack_file(const unsigned char *sha1)
 	return 1;
 }
 
-int has_sha1_pack(const unsigned char *sha1)
+int has_sha1_pack(const unsigned char *sha1, const char **ignore_packed)
 {
 	struct pack_entry e;
-	return find_pack_entry(sha1, &e);
+	return find_pack_entry(sha1, &e, ignore_packed);
 }
 
 int has_sha1_file(const unsigned char *sha1)
@@ -1759,7 +1918,7 @@ int has_sha1_file(const unsigned char *sha1)
 	struct stat st;
 	struct pack_entry e;
 
-	if (find_pack_entry(sha1, &e))
+	if (find_pack_entry(sha1, &e, NULL))
 		return 1;
 	return find_sha1_file(sha1, &st) ? 1 : 0;
 }
@@ -1786,7 +1945,7 @@ int read_pipe(int fd, char** return_buf, unsigned long* return_size)
 			off += iret;
 			if (off == size) {
 				size *= 2;
-				buf = realloc(buf, size);
+				buf = xrealloc(buf, size);
 			}
 		}
 	} while (iret > 0);
@@ -1802,10 +1961,8 @@ int read_pipe(int fd, char** return_buf, unsigned long* return_size)
 int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
 {
 	unsigned long size = 4096;
-	char *buf = malloc(size);
+	char *buf = xmalloc(size);
 	int ret;
-	unsigned char hdr[50];
-	int hdrlen;
 
 	if (read_pipe(fd, &buf, &size)) {
 		free(buf);
@@ -1816,10 +1973,8 @@ int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
 		type = blob_type;
 	if (write_object)
 		ret = write_sha1_file(buf, size, type, sha1);
-	else {
-		write_sha1_file_prepare(buf, size, type, sha1, hdr, &hdrlen);
-		ret = 0;
-	}
+	else
+		ret = hash_sha1_file(buf, size, type, sha1);
 	free(buf);
 	return ret;
 }
@@ -1829,24 +1984,18 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 	unsigned long size = st->st_size;
 	void *buf;
 	int ret;
-	unsigned char hdr[50];
-	int hdrlen;
 
 	buf = "";
 	if (size)
-		buf = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+		buf = xmmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
-	if (buf == MAP_FAILED)
-		return -1;
 
 	if (!type)
 		type = blob_type;
 	if (write_object)
 		ret = write_sha1_file(buf, size, type, sha1);
-	else {
-		write_sha1_file_prepare(buf, size, type, sha1, hdr, &hdrlen);
-		ret = 0;
-	}
+	else
+		ret = hash_sha1_file(buf, size, type, sha1);
 	if (size)
 		munmap(buf, size);
 	return ret;
@@ -1875,12 +2024,9 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, int write
 			return error("readlink(\"%s\"): %s", path,
 			             errstr);
 		}
-		if (!write_object) {
-			unsigned char hdr[50];
-			int hdrlen;
-			write_sha1_file_prepare(target, st->st_size, blob_type,
-						sha1, hdr, &hdrlen);
-		} else if (write_sha1_file(target, st->st_size, blob_type, sha1))
+		if (!write_object)
+			hash_sha1_file(target, st->st_size, blob_type, sha1);
+		else if (write_sha1_file(target, st->st_size, blob_type, sha1))
 			return error("%s: failed to insert into database",
 				     path);
 		free(target);

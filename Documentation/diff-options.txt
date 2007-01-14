@@ -10,8 +10,23 @@
 --patch-with-raw::
 	Synonym for "-p --raw".
 
---stat::
-	Generate a diffstat.
+--stat[=width[,name-width]]::
+	Generate a diffstat.  You can override the default
+	output width for 80-column terminal by "--stat=width".
+	The width of the filename part can be controlled by
+	giving another width to it separated by a comma.
+
+--numstat::
+	Similar to \--stat, but shows number of added and
+	deleted lines in decimal notation and pathname without
+	abbreviation, to make it more machine friendly.  For
+	binary files, outputs two `-` instead of saying
+	`0 0`.
+
+--shortstat::
+	Output only the last line of the --stat format containing total
+	number of modified files, as well as number of added and deleted
+	lines.
 
 --summary::
 	Output a condensed summary of extended header information
@@ -120,6 +135,22 @@
 
 -a::
 	Shorthand for "--text".
+
+--ignore-space-change::
+	Ignore changes in amount of white space.  This ignores white
+	space at line end, and consider all other sequences of one or
+	more white space characters to be equivalent.
+
+-b::
+	Shorthand for "--ignore-space-change".
+
+--ignore-all-space::
+	Ignore white space when comparing lines.  This ignores
+	difference even if one line has white space where the other
+	line has none.
+
+-w::
+	Shorthand for "--ignore-all-space".
 
 For more detailed explanation on these common options, see also
 link:diffcore.html[diffcore documentation].

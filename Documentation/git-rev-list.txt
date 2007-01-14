@@ -10,6 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git-rev-list' [ \--max-count=number ]
+	     [ \--skip=number ]
 	     [ \--max-age=timestamp ]
 	     [ \--min-age=timestamp ]
 	     [ \--sparse ]
@@ -17,8 +18,11 @@ SYNOPSIS
 	     [ \--remove-empty ]
 	     [ \--not ]
 	     [ \--all ]
+	     [ \--stdin ]
 	     [ \--topo-order ]
 	     [ \--parents ]
+	     [ \--encoding[=<encoding>] ]
+	     [ \--(author|committer|grep)=<pattern> ]
 	     [ [\--objects | \--objects-edge] [ \--unpacked ] ]
 	     [ \--pretty | \--header ]
 	     [ \--bisect ]
@@ -27,106 +31,248 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
+
 Lists commit objects in reverse chronological order starting at the
 given commit(s), taking ancestry relationship into account.  This is
 useful to produce human-readable log output.
 
-Commits which are stated with a preceding '{caret}' cause listing to stop at
-that point. Their parents are implied. "git-rev-list foo bar {caret}baz" thus
+Commits which are stated with a preceding '{caret}' cause listing to
+stop at that point. Their parents are implied. Thus the following
+command:
+
+-----------------------------------------------------------------------
+	$ git-rev-list foo bar ^baz
+-----------------------------------------------------------------------
+
 means "list all the commits which are included in 'foo' and 'bar', but
 not in 'baz'".
 
-A special notation <commit1>..<commit2> can be used as a
-short-hand for {caret}<commit1> <commit2>.
+A special notation "'<commit1>'..'<commit2>'" can be used as a
+short-hand for "{caret}'<commit1>' '<commit2>'". For example, either of
+the following may be used interchangeably:
 
-Another special notation is <commit1>...<commit2> which is useful for
-merges.  The resulting set of commits is the symmetric difference
+-----------------------------------------------------------------------
+	$ git-rev-list origin..HEAD
+	$ git-rev-list HEAD ^origin
+-----------------------------------------------------------------------
+
+Another special notation is "'<commit1>'...'<commit2>'" which is useful
+for merges.  The resulting set of commits is the symmetric difference
 between the two operands.  The following two commands are equivalent:
 
-------------
-$ git-rev-list A B --not $(git-merge-base --all A B)
-$ git-rev-list A...B
-------------
+-----------------------------------------------------------------------
+	$ git-rev-list A B --not $(git-merge-base --all A B)
+	$ git-rev-list A...B
+-----------------------------------------------------------------------
+
+gitlink:git-rev-list[1] is a very essential git program, since it
+provides the ability to build and traverse commit ancestry graphs. For
+this reason, it has a lot of different options that enables it to be
+used by commands as different as gitlink:git-bisect[1] and
+gitlink:git-repack[1].
 
 OPTIONS
 -------
---pretty::
-	Print the contents of the commit changesets in human-readable form.
+
+Commit Formatting
+~~~~~~~~~~~~~~~~~
+
+Using these options, gitlink:git-rev-list[1] will act similar to the
+more specialized family of commit log tools: gitlink:git-log[1],
+gitlink:git-show[1], and gitlink:git-whatchanged[1]
+
+include::pretty-formats.txt[]
+
+--relative-date::
+
+	Show dates relative to the current time, e.g. "2 hours ago".
+	Only takes effect for dates shown in human-readable format, such
+	as when using "--pretty".
 
 --header::
-	Print the contents of the commit in raw-format; each
-	record is separated with a NUL character.
+
+	Print the contents of the commit in raw-format; each record is
+	separated with a NUL character.
 
 --parents::
+
 	Print the parents of the commit.
 
---objects::
-	Print the object IDs of any object referenced by the listed commits.
-	'git-rev-list --objects foo ^bar' thus means "send me all object IDs
-	which I need to download if I have the commit object 'bar', but
-	not 'foo'".
+Diff Formatting
+~~~~~~~~~~~~~~~
 
---objects-edge::
-	Similar to `--objects`, but also print the IDs of
-	excluded commits prefixed with a `-` character.  This is
-	used by `git-pack-objects` to build 'thin' pack, which
-	records objects in deltified form based on objects
-	contained in these excluded commits to reduce network
-	traffic.
+Below are listed options that control the formatting of diff output.
+Some of them are specific to gitlink:git-rev-list[1], however other diff
+options may be given. See gitlink:git-diff-files[1] for more options.
 
---unpacked::
-	Only useful with `--objects`; print the object IDs that
-	are not in packs.
+-c::
 
---bisect::
-	Limit output to the one commit object which is roughly halfway
-	between the included and excluded commits. Thus, if 'git-rev-list
-	--bisect foo {caret}bar {caret}baz' outputs 'midpoint', the output
-	of 'git-rev-list foo {caret}midpoint' and 'git-rev-list midpoint
-	{caret}bar {caret}baz' would be of roughly the same length.
-	Finding the change
-	which introduces a regression is thus reduced to a binary search:
-	repeatedly generate and test new 'midpoint's until the commit chain
-	is of length one.
+	This flag changes the way a merge commit is displayed.  It shows
+	the differences from each of the parents to the merge result
+	simultaneously instead of showing pairwise diff between a parent
+	and the result one at a time. Furthermore, it lists only files
+	which were modified from all parents.
 
---max-count::
+--cc::
+
+	This flag implies the '-c' options and further compresses the
+	patch output by omitting hunks that show differences from only
+	one parent, or show the same change from all but one parent for
+	an Octopus merge.
+
+-r::
+
+	Show recursive diffs.
+
+-t::
+
+	Show the tree objects in the diff output. This implies '-r'.
+
+Commit Limiting
+~~~~~~~~~~~~~~~
+
+Besides specifying a range of commits that should be listed using the
+special notations explained in the description, additional commit
+limiting may be applied.
+
+--
+
+-n 'number', --max-count='number'::
+
 	Limit the number of commits output.
 
---max-age=timestamp, --min-age=timestamp::
+--skip='number'::
+
+	Skip 'number' commits before starting to show the commit output.
+
+--since='date', --after='date'::
+
+	Show commits more recent than a specific date.
+
+--until='date', --before='date'::
+
+	Show commits older than a specific date.
+
+--max-age='timestamp', --min-age='timestamp'::
+
 	Limit the commits output to specified time range.
 
---sparse::
-	When optional paths are given, the command outputs only
-	the commits that changes at least one of them, and also
-	ignores merges that do not touch the given paths.  This
-	flag makes the command output all eligible commits
-	(still subject to count and age limitation), but apply
-	merge simplification nevertheless.
+--author='pattern', --committer='pattern'::
+
+	Limit the commits output to ones with author/committer
+	header lines that match the specified pattern.
+
+--grep='pattern'::
+
+	Limit the commits output to ones with log message that
+	matches the specified pattern.
 
 --remove-empty::
+
 	Stop when a given path disappears from the tree.
 
 --no-merges::
+
 	Do not print commits with more than one parent.
 
 --not::
-	Reverses the meaning of the '{caret}' prefix (or lack
-	thereof) for all following revision specifiers, up to
-	the next `--not`.
+
+	Reverses the meaning of the '{caret}' prefix (or lack thereof)
+	for all following revision specifiers, up to the next '--not'.
 
 --all::
-	Pretend as if all the refs in `$GIT_DIR/refs/` are
-	listed on the command line as <commit>.
 
---topo-order::
-	By default, the commits are shown in reverse
-	chronological order.  This option makes them appear in
-	topological order (i.e. descendant commits are shown
-	before their parents).
+	Pretend as if all the refs in `$GIT_DIR/refs/` are listed on the
+	command line as '<commit>'.
+
+--stdin::
+
+	In addition to the '<commit>' listed on the command
+	line, read them from the standard input.
 
 --merge::
+
 	After a failed merge, show refs that touch files having a
 	conflict and don't exist on all heads to merge.
+
+--boundary::
+
+	Output uninteresting commits at the boundary, which are usually
+	not shown.
+
+--dense, --sparse::
+
+When optional paths are given, the default behaviour ('--dense') is to
+only output commits that changes at least one of them, and also ignore
+merges that do not touch the given paths.
+
+Use the '--sparse' flag to makes the command output all eligible commits
+(still subject to count and age limitation), but apply merge
+simplification nevertheless.
+
+--bisect::
+
+Limit output to the one commit object which is roughly halfway between
+the included and excluded commits. Thus, if
+
+-----------------------------------------------------------------------
+	$ git-rev-list --bisect foo ^bar ^baz
+-----------------------------------------------------------------------
+
+outputs 'midpoint', the output of the two commands
+
+-----------------------------------------------------------------------
+	$ git-rev-list foo ^midpoint
+	$ git-rev-list midpoint ^bar ^baz
+-----------------------------------------------------------------------
+
+would be of roughly the same length.  Finding the change which
+introduces a regression is thus reduced to a binary search: repeatedly
+generate and test new 'midpoint's until the commit chain is of length
+one.
+
+--
+
+Commit Ordering
+~~~~~~~~~~~~~~~
+
+By default, the commits are shown in reverse chronological order.
+
+--topo-order::
+
+	This option makes them appear in topological order (i.e.
+	descendant commits are shown before their parents).
+
+--date-order::
+
+	This option is similar to '--topo-order' in the sense that no
+	parent comes before all of its children, but otherwise things
+	are still ordered in the commit timestamp order.
+
+Object Traversal
+~~~~~~~~~~~~~~~~
+
+These options are mostly targeted for packing of git repositories.
+
+--objects::
+
+	Print the object IDs of any object referenced by the listed
+	commits.  'git-rev-list --objects foo ^bar' thus means "send me
+	all object IDs which I need to download if I have the commit
+	object 'bar', but not 'foo'".
+
+--objects-edge::
+
+	Similar to '--objects', but also print the IDs of excluded
+	commits prefixed with a "-" character.  This is used by
+	gitlink:git-pack-objects[1] to build "thin" pack, which records
+	objects in deltified form based on objects contained in these
+	excluded commits to reduce network traffic.
+
+--unpacked::
+
+	Only useful with '--objects'; print the object IDs that are not
+	in packs.
 
 Author
 ------
@@ -134,9 +280,9 @@ Written by Linus Torvalds <torvalds@osdl.org>
 
 Documentation
 --------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+Documentation by David Greaves, Junio C Hamano, Jonas Fonseca
+and the git-list <git@vger.kernel.org>.
 
 GIT
 ---
 Part of the gitlink:git[7] suite
-

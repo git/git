@@ -34,7 +34,7 @@ OPTIONS
 	Report the list of objects being walked locally and the
 	list of objects successfully sent to the remote repository.
 
-<ref>...:
+<ref>...::
 	The remote refs to update.
 
 

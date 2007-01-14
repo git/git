@@ -1,9 +1,8 @@
 #include "builtin.h"
 #include "cache.h"
-#include <regex.h>
 
 static const char git_config_set_usage[] =
-"git-repo-config [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --unset | --unset-all] name [value [value_regex]] | --list";
+"git-repo-config [ --global ] [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --list";
 
 static char *key;
 static regex_t *key_regexp;
@@ -67,24 +66,24 @@ static int get_value(const char* key_, const char* regex_)
 	char *global = NULL, *repo_config = NULL;
 	const char *local;
 
-	local = getenv("GIT_CONFIG");
+	local = getenv(CONFIG_ENVIRONMENT);
 	if (!local) {
 		const char *home = getenv("HOME");
-		local = getenv("GIT_CONFIG_LOCAL");
+		local = getenv(CONFIG_LOCAL_ENVIRONMENT);
 		if (!local)
-			local = repo_config = strdup(git_path("config"));
+			local = repo_config = xstrdup(git_path("config"));
 		if (home)
-			global = strdup(mkpath("%s/.gitconfig", home));
+			global = xstrdup(mkpath("%s/.gitconfig", home));
 	}
 
-	key = strdup(key_);
+	key = xstrdup(key_);
 	for (tl=key+strlen(key)-1; tl >= key && *tl != '.'; --tl)
 		*tl = tolower(*tl);
 	for (tl=key; *tl && *tl != '.'; ++tl)
 		*tl = tolower(*tl);
 
 	if (use_key_regexp) {
-		key_regexp = (regex_t*)malloc(sizeof(regex_t));
+		key_regexp = (regex_t*)xmalloc(sizeof(regex_t));
 		if (regcomp(key_regexp, key, REG_EXTENDED)) {
 			fprintf(stderr, "Invalid key pattern: %s\n", key_);
 			goto free_strings;
@@ -97,7 +96,7 @@ static int get_value(const char* key_, const char* regex_)
 			regex_++;
 		}
 
-		regexp = (regex_t*)malloc(sizeof(regex_t));
+		regexp = (regex_t*)xmalloc(sizeof(regex_t));
 		if (regcomp(regexp, regex_, REG_EXTENDED)) {
 			fprintf(stderr, "Invalid pattern: %s\n", regex_);
 			goto free_strings;
@@ -119,13 +118,11 @@ static int get_value(const char* key_, const char* regex_)
 	if (do_all)
 		ret = !seen;
 	else
-		ret =  (seen == 1) ? 0 : 1;
+		ret = (seen == 1) ? 0 : seen > 1 ? 2 : 1;
 
 free_strings:
-	if (repo_config)
-		free(repo_config);
-	if (global)
-		free(global);
+	free(repo_config);
+	free(global);
 	return ret;
 }
 
@@ -141,7 +138,28 @@ int cmd_repo_config(int argc, const char **argv, const char *prefix)
 			type = T_BOOL;
 		else if (!strcmp(argv[1], "--list") || !strcmp(argv[1], "-l"))
 			return git_config(show_all_config);
-		else
+		else if (!strcmp(argv[1], "--global")) {
+			char *home = getenv("HOME");
+			if (home) {
+				char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
+				setenv("GIT_CONFIG", user_config, 1);
+				free(user_config);
+			} else {
+				die("$HOME not set");
+			}
+		} else if (!strcmp(argv[1], "--rename-section")) {
+			int ret;
+			if (argc != 4)
+				usage(git_config_set_usage);
+			ret = git_config_rename_section(argv[2], argv[3]);
+			if (ret < 0)
+				return ret;
+			if (ret == 0) {
+				fprintf(stderr, "No such section!\n");
+				return 1;
+			}
+			return 0;
+		} else
 			break;
 		argc--;
 		argv++;
@@ -183,7 +201,9 @@ int cmd_repo_config(int argc, const char **argv, const char *prefix)
 			use_key_regexp = 1;
 			do_all = 1;
 			return get_value(argv[2], argv[3]);
-		} else if (!strcmp(argv[1], "--replace-all"))
+		} else if (!strcmp(argv[1], "--add"))
+			return git_config_set_multivar(argv[2], argv[3], "^$", 0);
+		else if (!strcmp(argv[1], "--replace-all"))
 
 			return git_config_set_multivar(argv[2], argv[3], NULL, 1);
 		else

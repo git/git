@@ -1,0 +1,76 @@
+git-remote(1)
+============
+
+NAME
+----
+git-remote - manage set of tracked repositories
+
+
+SYNOPSIS
+--------
+[verse]
+'git-remote'
+'git-remote' add <name> <url>
+'git-remote' show <name>
+
+DESCRIPTION
+-----------
+
+Manage the set of repositories ("remotes") whose branches you track.
+
+With no arguments, shows a list of existing remotes.
+
+In the second form, adds a remote named <name> for the repository at
+<url>.  The command `git fetch <name>` can then be used to create and
+update remote-tracking branches <name>/<branch>.
+
+In the third form, gives some information about the remote <name>.
+
+The remote configuration is achieved using the `remote.origin.url` and
+`remote.origin.fetch` configuration variables.  (See
+gitlink:git-repo-config[1]).
+
+Examples
+--------
+
+Add a new remote, fetch, and check out a branch from it:
+
+------------
+$ git remote
+origin
+$ git branch -r
+origin/master
+$ git remote add linux-nfs git://linux-nfs.org/pub/nfs-2.6.git
+$ git remote
+linux-nfs
+origin
+$ git fetch
+* refs/remotes/linux-nfs/master: storing branch 'master' ...
+  commit: bf81b46
+$ git branch -r
+origin/master
+linux-nfs/master
+$ git checkout -b nfs linux-nfs/master
+...
+------------
+
+See Also
+--------
+gitlink:git-fetch[1]
+gitlink:git-branch[1]
+gitlink:git-repo-config[1]
+
+Author
+------
+Written by Junio Hamano
+
+
+Documentation
+--------------
+Documentation by J. Bruce Fields and the git-list <git@vger.kernel.org>.
+
+
+GIT
+---
+Part of the gitlink:git[7] suite
+

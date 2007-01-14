@@ -93,7 +93,7 @@ perforce branch into a branch named "jammy", like so:
 ------------
 $ mkdir -p /home/sean/import/jam
 $ cd /home/sean/import/jam
-$ git init-db
+$ git init
 $ git p4import //public/jam jammy
 ------------
 

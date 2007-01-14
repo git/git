@@ -24,14 +24,16 @@ This manual page describes only the most frequently used options.
 
 OPTIONS
 -------
---pretty=<format>::
-	Controls the way the commit log is formatted.
+
+include::pretty-formats.txt[]
 
 --max-count=<n>::
 	Limits the number of commits to show.
 
 <since>..<until>::
-	Show only commits between the named two commits.
+	Show only commits between the named two commits.  When
+	either <since> or <until> is omitted, it defaults to
+	`HEAD`, i.e. the tip of the current branch.
 
 -p::
 	Show the change the commit introduces in a patch form.
@@ -62,6 +64,12 @@ git log -r --name-status release..test::
 	Show the commits that are in the "test" branch but not yet
 	in the "release" branch, along with the list of paths
 	each commit modifies.
+
+Discussion
+----------
+
+include::i18n.txt[]
+
 
 Author
 ------

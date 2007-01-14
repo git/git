@@ -11,6 +11,18 @@ diff" with:
 $ man git-diff
 ------------------------------------------------
 
+It is a good idea to introduce yourself to git before doing any
+operation.  The easiest way to do so is:
+
+------------------------------------------------
+$ cat >~/.gitconfig <<\EOF
+[user]
+	name = Your Name Comes Here
+	email = you@yourdomain.example.com
+EOF
+------------------------------------------------
+
+
 Importing a new project
 -----------------------
 
@@ -20,18 +32,18 @@ can place it under git revision control as follows.
 ------------------------------------------------
 $ tar xzf project.tar.gz
 $ cd project
-$ git init-db
+$ git init
 ------------------------------------------------
 
 Git will reply
 
 ------------------------------------------------
-defaulting to local storage area
+Initialized empty Git repository in .git/
 ------------------------------------------------
 
 You've now initialized the working directory--you may notice a new
 directory created, named ".git".  Tell git that you want it to track
-every file under the current directory with
+every file under the current directory (note the '.') with:
 
 ------------------------------------------------
 $ git add .
@@ -40,11 +52,14 @@ $ git add .
 Finally,
 
 ------------------------------------------------
-$ git commit -a
+$ git commit
 ------------------------------------------------
 
 will prompt you for a commit message, then record the current state
 of all the files to the repository.
+
+Making changes
+--------------
 
 Try modifying some files, then run
 
@@ -52,30 +67,75 @@ Try modifying some files, then run
 $ git diff
 ------------------------------------------------
 
-to review your changes.  When you're done,
+to review your changes.  When you're done, tell git that you
+want the updated contents of these files in the commit and then
+make a commit, like this:
+
+------------------------------------------------
+$ git add file1 file2 file3
+$ git commit
+------------------------------------------------
+
+This will again prompt your for a message describing the change, and then
+record the new versions of the files you listed.
+
+Alternatively, instead of running `git add` beforehand, you can use
 
 ------------------------------------------------
 $ git commit -a
 ------------------------------------------------
 
-will again prompt your for a message describing the change, and then
-record the new versions of the modified files.
+which will automatically notice modified (but not new) files.
 
 A note on commit messages: Though not required, it's a good idea to
 begin the commit message with a single short (less than 50 character)
 line summarizing the change, followed by a blank line and then a more
 thorough description.  Tools that turn commits into email, for
-example, use the first line on the Subject line and the rest of the
+example, use the first line on the Subject: line and the rest of the
 commit in the body.
 
-To add a new file, first create the file, then
 
-------------------------------------------------
-$ git add path/to/new/file
-------------------------------------------------
+Git tracks content not files
+----------------------------
 
-then commit as usual.  No special command is required when removing a
-file; just remove it, then commit.
+With git you have to explicitly "add" all the changed _content_ you
+want to commit together. This can be done in a few different ways:
+
+1) By using 'git add <file_spec>...'
+
+   This can be performed multiple times before a commit.  Note that this
+   is not only for adding new files.  Even modified files must be
+   added to the set of changes about to be committed.  The "git status"
+   command gives you a summary of what is included so far for the
+   next commit.  When done you should use the 'git commit' command to
+   make it real.
+
+   Note: don't forget to 'add' a file again if you modified it after the
+   first 'add' and before 'commit'. Otherwise only the previous added
+   state of that file will be committed. This is because git tracks
+   content, so what you're really 'add'ing to the commit is the *content*
+   of the file in the state it is in when you 'add' it.
+
+2) By using 'git commit -a' directly
+
+   This is a quick way to automatically 'add' the content from all files
+   that were modified since the previous commit, and perform the actual
+   commit without having to separately 'add' them beforehand.  This will
+   not add content from new files i.e. files that were never added before.
+   Those files still have to be added explicitly before performing a
+   commit.
+
+But here's a twist. If you do 'git commit <file1> <file2> ...' then only
+the  changes belonging to those explicitly specified files will be
+committed, entirely bypassing the current "added" changes. Those "added"
+changes will still remain available for a subsequent commit though.
+
+However, for normal usage you only have to remember 'git add' + 'git commit'
+and/or 'git commit -a'.
+
+
+Viewing the changelog
+---------------------
 
 At any point you can view the history of your changes using
 
@@ -87,6 +147,13 @@ If you also want to see complete diffs at each step, use
 
 ------------------------------------------------
 $ git log -p
+------------------------------------------------
+
+Often the overview of the change is useful to get a feel of
+each step
+
+------------------------------------------------
+$ git log --stat --summary
 ------------------------------------------------
 
 Managing branches
@@ -141,7 +208,7 @@ $ git commit -a
 ------------------------------------------------
 
 at this point the two branches have diverged, with different changes
-made in each.  To merge the changes made in the two branches, run
+made in each.  To merge the changes made in experimental into master, run
 
 ------------------------------------------------
 $ git pull . experimental
@@ -168,6 +235,15 @@ $ gitk
 ------------------------------------------------
 
 will show a nice graphical representation of the resulting history.
+
+At this point you could delete the experimental branch with
+
+------------------------------------------------
+$ git branch -d experimental
+------------------------------------------------
+
+This command ensures that the changes in the experimental branch are
+already in the current branch.
 
 If you develop on a branch crazy-idea, then regret it, you can always
 delete the branch with
@@ -209,29 +285,28 @@ at /home/bob/myrepo.  She does this with:
 
 ------------------------------------------------
 $ cd /home/alice/project
-$ git pull /home/bob/myrepo
+$ git pull /home/bob/myrepo master
 ------------------------------------------------
 
-This actually pulls changes from the branch in Bob's repository named
-"master".  Alice could request a different branch by adding the name
-of the branch to the end of the git pull command line.
+This merges the changes from Bob's "master" branch into Alice's
+current branch.  If Alice has made her own changes in the meantime,
+then she may need to manually fix any conflicts.  (Note that the
+"master" argument in the above command is actually unnecessary, as it
+is the default.)
 
-This merges Bob's changes into her repository; "git log" will
-now show the new commits.  If Alice has made her own changes in the
-meantime, then Bob's changes will be merged in, and she will need to
-manually fix any conflicts.
+The "pull" command thus performs two operations: it fetches changes
+from a remote branch, then merges them into the current branch.
 
-A more cautious Alice might wish to examine Bob's changes before
-pulling them.  She can do this by creating a temporary branch just
-for the purpose of studying Bob's changes:
+You can perform the first operation alone using the "git fetch"
+command.  For example, Alice could create a temporary branch just to
+track Bob's changes, without merging them with her own, using:
 
 -------------------------------------
 $ git fetch /home/bob/myrepo master:bob-incoming
 -------------------------------------
 
 which fetches the changes from Bob's master branch into a new branch
-named bob-incoming.  (Unlike git pull, git fetch just fetches a copy
-of Bob's line of development without doing any merging).  Then
+named bob-incoming.  Then
 
 -------------------------------------
 $ git log -p master..bob-incoming
@@ -240,8 +315,8 @@ $ git log -p master..bob-incoming
 shows a list of all the changes that Bob made since he branched from
 Alice's master branch.
 
-After examining those changes, and possibly fixing things, Alice can
-pull the changes into her master branch:
+After examining those changes, and possibly fixing things, Alice
+could pull the changes into her master branch:
 
 -------------------------------------
 $ git checkout master
@@ -251,6 +326,18 @@ $ git pull . bob-incoming
 The last command is a pull from the "bob-incoming" branch in Alice's
 own repository.
 
+Alice could also perform both steps at once with:
+
+-------------------------------------
+$ git pull /home/bob/myrepo master:bob-incoming
+-------------------------------------
+
+This is just like the "git pull /home/bob/myrepo master" that we saw
+before, except that it also stores the unmerged changes from bob's
+master branch in bob-incoming before merging them into Alice's
+current branch.  Note that git pull always merges into the current
+branch, regardless of what else is given on the commandline.
+
 Later, Bob can update his repo with Alice's latest changes using
 
 -------------------------------------
@@ -259,20 +346,25 @@ $ git pull
 
 Note that he doesn't need to give the path to Alice's repository;
 when Bob cloned Alice's repository, git stored the location of her
-repository in the file .git/remotes/origin, and that location is used
-as the default for pulls.
-
-Bob may also notice a branch in his repository that he didn't create:
+repository in the repository configuration, and that location is
+used for pulls:
 
 -------------------------------------
-$ git branch
-* master
-  origin
+$ git repo-config --get remote.origin.url
+/home/bob/myrepo
 -------------------------------------
 
-The "origin" branch, which was created automatically by "git clone",
-is a pristine copy of Alice's master branch; Bob should never commit
-to it.
+(The complete configuration created by git-clone is visible using
+"git repo-config -l", and the gitlink:git-repo-config[1] man page
+explains the meaning of each option.)
+
+Git also keeps a pristine copy of Alice's master branch under the
+name "origin/master":
+
+-------------------------------------
+$ git branch -r
+  origin/master
+-------------------------------------
 
 If Bob later decides to work from a different host, he can still
 perform clones and pulls using the ssh protocol:
@@ -312,7 +404,7 @@ commit.
 $ git show c82a22c39cbc32576f64f5c6b3f24b99ea8149c7
 -------------------------------------
 
-But there other ways to refer to commits.  You can use any initial
+But there are other ways to refer to commits.  You can use any initial
 part of the name that is long enough to uniquely identify the commit:
 
 -------------------------------------
@@ -322,8 +414,8 @@ $ git show HEAD		# the tip of the current branch
 $ git show experimental	# the tip of the "experimental" branch
 -------------------------------------
 
-Every commit has at least one "parent" commit, which points to the
-previous state of the project:
+Every commit usually has one "parent" commit
+which points to the previous state of the project:
 
 -------------------------------------
 $ git show HEAD^  # to see the parent of HEAD
@@ -441,10 +533,10 @@ of the file:
 $ git diff v2.5:Makefile HEAD:Makefile.in
 -------------------------------------
 
-You can also use "git cat-file -p" to see any such file:
+You can also use "git show" to see any such file:
 
 -------------------------------------
-$ git cat-file -p v2.5:Makefile
+$ git show v2.5:Makefile
 -------------------------------------
 
 Next Steps

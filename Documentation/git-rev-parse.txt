@@ -111,7 +111,9 @@ SPECIFYING REVISIONS
 
 A revision parameter typically, but not necessarily, names a
 commit object.  They use what is called an 'extended SHA1'
-syntax.
+syntax.  Here are various ways to spell object names.  The
+ones listed near the end of this list are to name trees and
+blobs contained in a commit.
 
 * The full SHA1 object name (40-byte hexadecimal string), or
   a substring of such that is unique within the repository.
@@ -119,12 +121,31 @@ syntax.
   name the same commit object if there are no other object in
   your repository whose object name starts with dae86e.
 
+* An output from `git-describe`; i.e. a closest tag, followed by a
+  dash, a `g`, and an abbreviated object name.
+
 * A symbolic ref name.  E.g. 'master' typically means the commit
   object referenced by $GIT_DIR/refs/heads/master.  If you
   happen to have both heads/master and tags/master, you can
   explicitly say 'heads/master' to tell git which one you mean.
+  When ambiguous, a `<name>` is disambiguated by taking the
+  first match in the following rules:
 
-* A suffix '@' followed by a date specification enclosed in a brace
+  . if `$GIT_DIR/<name>` exists, that is what you mean (this is usually
+    useful only for `HEAD`, `FETCH_HEAD` and `MERGE_HEAD`);
+
+  . otherwise, `$GIT_DIR/refs/<name>` if exists;
+
+  . otherwise, `$GIT_DIR/refs/tags/<name>` if exists;
+
+  . otherwise, `$GIT_DIR/refs/heads/<name>` if exists;
+
+  . otherwise, `$GIT_DIR/refs/remotes/<name>` if exists;
+
+  . otherwise, `$GIT_DIR/refs/remotes/<name>/HEAD` if exists.
+
+* A ref followed by the suffix '@' with a date specification
+  enclosed in a brace
   pair (e.g. '\{yesterday\}', '\{1 month 2 weeks 3 days 1 hour 1
   second ago\}' or '\{1979-02-26 18:30:00\}') to specify the value
   of the ref at a prior point in time.  This suffix may only be
@@ -138,11 +159,12 @@ syntax.
   'rev{caret}0' means the commit itself and is used when 'rev' is the
   object name of a tag object that refers to a commit object.
 
-* A suffix '~<n>' to a revision parameter means the commit
+* A suffix '{tilde}<n>' to a revision parameter means the commit
   object that is the <n>th generation grand-parent of the named
   commit object, following only the first parent.  I.e. rev~3 is
-  equivalent to rev{caret}{caret}{caret} which is equivalent to\
-  rev{caret}1{caret}1{caret}1.
+  equivalent to rev{caret}{caret}{caret} which is equivalent to
+  rev{caret}1{caret}1{caret}1.  See below for a illustration of
+  the usage of this form.
 
 * A suffix '{caret}' followed by an object type name enclosed in
   brace pair (e.g. `v0.99.8{caret}\{commit\}`) means the object
@@ -155,6 +177,15 @@ syntax.
   (e.g. `v0.99.8{caret}\{\}`) means the object could be a tag,
   and dereference the tag recursively until a non-tag object is
   found.
+
+* A suffix ':' followed by a path; this names the blob or tree
+  at the given path in the tree-ish object named by the part
+  before the colon.
+
+* A colon, optionally followed by a stage number (0 to 3) and a
+  colon, followed by a path; this names a blob object in the
+  index at the given path.  Missing stage number (and the colon
+  that follows it) names an stage 0 entry.
 
 Here is an illustration, by Jon Loeliger.  Both node B and C are
 a commit parents of commit node A.  Parent commits are ordered
@@ -208,14 +239,21 @@ of `r1` and `r2` and is defined as
 It it the set of commits that are reachable from either one of
 `r1` or `r2` but not from both.
 
-Here are a few examples:
+Two other shorthands for naming a set that is formed by a commit
+and its parent commits exists.  `r1{caret}@` notation means all
+parents of `r1`.  `r1{caret}!` includes commit `r1` but excludes
+its all parents.
+
+Here are a handful examples:
 
    D                A B D
    D F              A B C D F
-   ^A G		    B D
+   ^A G             B D
    ^A F             B C F
    G...I            C D F G I
-   ^B G I	    C D F G I
+   ^B G I           C D F G I
+   F^@              A B C
+   F^! H            D F H
 
 Author
 ------

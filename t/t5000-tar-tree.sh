@@ -26,6 +26,7 @@ commit id embedding:
 
 . ./test-lib.sh
 TAR=${TAR:-tar}
+UNZIP=${UNZIP:-unzip}
 
 test_expect_success \
     'populate workdir' \
@@ -94,5 +95,39 @@ test_expect_success \
 test_expect_success \
     'validate file contents with prefix' \
     'diff -r a c/prefix/a'
+
+test_expect_success \
+    'git-archive --format=zip' \
+    'git-archive --format=zip HEAD >d.zip'
+
+test_expect_success \
+    'extract ZIP archive' \
+    '(mkdir d && cd d && $UNZIP ../d.zip)'
+
+test_expect_success \
+    'validate filenames' \
+    '(cd d/a && find .) | sort >d.lst &&
+     diff a.lst d.lst'
+
+test_expect_success \
+    'validate file contents' \
+    'diff -r a d/a'
+
+test_expect_success \
+    'git-archive --format=zip with prefix' \
+    'git-archive --format=zip --prefix=prefix/ HEAD >e.zip'
+
+test_expect_success \
+    'extract ZIP archive with prefix' \
+    '(mkdir e && cd e && $UNZIP ../e.zip)'
+
+test_expect_success \
+    'validate filenames with prefix' \
+    '(cd e/prefix/a && find .) | sort >e.lst &&
+     diff a.lst e.lst'
+
+test_expect_success \
+    'validate file contents with prefix' \
+    'diff -r a e/prefix/a'
 
 test_done

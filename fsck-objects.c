@@ -1,6 +1,3 @@
-#include <sys/types.h>
-#include <dirent.h>
-
 #include "cache.h"
 #include "commit.h"
 #include "tree.h"
@@ -293,7 +290,7 @@ static int fsck_sha1(unsigned char *sha1)
 {
 	struct object *obj = parse_object(sha1);
 	if (!obj)
-		return error("%s: object not found", sha1_to_hex(sha1));
+		return error("%s: object corrupt or missing", sha1_to_hex(sha1));
 	if (obj->flags & SEEN)
 		return 0;
 	obj->flags |= SEEN;
@@ -402,7 +399,28 @@ static void fsck_dir(int i, char *path)
 
 static int default_refs;
 
-static int fsck_handle_ref(const char *refname, const unsigned char *sha1)
+static int fsck_handle_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
+		const char *email, unsigned long timestamp, int tz,
+		const char *message, void *cb_data)
+{
+	struct object *obj;
+
+	if (!is_null_sha1(osha1)) {
+		obj = lookup_object(osha1);
+		if (obj) {
+			obj->used = 1;
+			mark_reachable(obj, REACHABLE);
+		}
+	}
+	obj = lookup_object(nsha1);
+	if (obj) {
+		obj->used = 1;
+		mark_reachable(obj, REACHABLE);
+	}
+	return 0;
+}
+
+static int fsck_handle_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *obj;
 
@@ -419,14 +437,32 @@ static int fsck_handle_ref(const char *refname, const unsigned char *sha1)
 	default_refs++;
 	obj->used = 1;
 	mark_reachable(obj, REACHABLE);
+
+	for_each_reflog_ent(refname, fsck_handle_reflog_ent, NULL);
+
 	return 0;
 }
 
 static void get_default_heads(void)
 {
-	for_each_ref(fsck_handle_ref);
-	if (!default_refs)
-		die("No default references");
+	for_each_ref(fsck_handle_ref, NULL);
+
+	/*
+	 * Not having any default heads isn't really fatal, but
+	 * it does mean that "--unreachable" no longer makes any
+	 * sense (since in this case everything will obviously
+	 * be unreachable by definition.
+	 *
+	 * Showing dangling objects is valid, though (as those
+	 * dangling objects are likely lost heads).
+	 *
+	 * So we just print a warning about it, and clear the
+	 * "show_unreachable" flag.
+	 */
+	if (!default_refs) {
+		error("No default references");
+		show_unreachable = 0;
+	}
 }
 
 static void fsck_object_dir(const char *path)
@@ -443,15 +479,14 @@ static void fsck_object_dir(const char *path)
 static int fsck_head_link(void)
 {
 	unsigned char sha1[20];
-	const char *git_HEAD = strdup(git_path("HEAD"));
-	const char *git_refs_heads_master = resolve_ref(git_HEAD, sha1, 1);
-	int pfxlen = strlen(git_HEAD) - 4; /* strip .../.git/ part */
+	int flag;
+	const char *head_points_at = resolve_ref("HEAD", sha1, 1, &flag);
 
-	if (!git_refs_heads_master)
+	if (!head_points_at || !(flag & REF_ISSYMREF))
 		return error("HEAD is not a symbolic ref");
-	if (strncmp(git_refs_heads_master + pfxlen, "refs/heads/", 11))
+	if (strncmp(head_points_at, "refs/heads/", 11))
 		return error("HEAD points to something strange (%s)",
-			     git_refs_heads_master + pfxlen);
+			     head_points_at);
 	if (is_null_sha1(sha1))
 		return error("HEAD: not a valid git pointer");
 	return 0;

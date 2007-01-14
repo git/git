@@ -15,7 +15,7 @@ SYNOPSIS
 	     [--cacheinfo <mode> <object> <file>]\*
 	     [--chmod=(+|-)x]
 	     [--assume-unchanged | --no-assume-unchanged]
-	     [--really-refresh] [--unresolve] [--again]
+	     [--really-refresh] [--unresolve] [--again | -g]
 	     [--info-only] [--index-info]
 	     [-z] [--stdin]
 	     [--verbose]
@@ -80,7 +80,7 @@ OPTIONS
 	filesystem that has very slow lstat(2) system call
 	(e.g. cifs).
 
---again::
+--again, -g::
 	Runs `git-update-index` itself on the paths whose index
 	entries are different from those from the `HEAD` commit.
 
@@ -216,8 +216,8 @@ $ git ls-files -s
 ------------
 
 
-Using "assume unchanged" bit
-----------------------------
+Using ``assume unchanged'' bit
+------------------------------
 
 Many operations in git depend on your filesystem to have an
 efficient `lstat(2)` implementation, so that `st_mtime`

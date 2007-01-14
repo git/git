@@ -5,6 +5,10 @@
 # Resolve two trees.
 #
 
+echo 'WARNING: This command is DEPRECATED and will be removed very soon.' >&2
+echo 'WARNING: Please use git-merge or git-pull instead.' >&2
+sleep 2
+
 USAGE='<head> <remote> <merge-message>'
 . git-sh-setup
 
@@ -42,7 +46,7 @@ case "$common" in
 	exit 0
 	;;
 "$head")
-	echo "Updating from $head to $merge"
+	echo "Updating $(git-rev-parse --short $head)..$(git-rev-parse --short $merge)"
 	git-read-tree -u -m $head $merge || exit 1
 	git-update-ref -m "resolve $merge_name: Fast forward" \
 		HEAD "$merge" "$head"

@@ -54,7 +54,7 @@ static void pprint_tag(const unsigned char *sha1, const char *buf, unsigned long
 					write_or_die(1, tagger, sp - tagger);
 					date = strtoul(sp, &ep, 10);
 					tz = strtol(ep, NULL, 10);
-					sp = show_date(date, tz);
+					sp = show_date(date, tz, 0);
 					write_or_die(1, sp, strlen(sp));
 					xwrite(1, "\n", 1);
 					break;

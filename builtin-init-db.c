@@ -10,6 +10,12 @@
 #define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates/"
 #endif
 
+#ifdef NO_TRUSTABLE_FILEMODE
+#define TEST_FILEMODE 0
+#else
+#define TEST_FILEMODE 1
+#endif
+
 static void safe_create_dir(const char *dir, int share)
 {
 	if (mkdir(dir, 0777) < 0) {
@@ -50,7 +56,7 @@ static void copy_templates_1(char *path, int baselen,
 
 	/* Note: if ".git/hooks" file exists in the repository being
 	 * re-initialized, /etc/core-git/templates/hooks/update would
-	 * cause git-init-db to fail here.  I think this is sane but
+	 * cause git-init to fail here.  I think this is sane but
 	 * it means that the set of templates we ship by default, along
 	 * with the way the namespace under .git/ is organized, should
 	 * be really carefully chosen.
@@ -124,8 +130,11 @@ static void copy_templates(const char *git_dir, int len, const char *template_di
 	int template_len;
 	DIR *dir;
 
-	if (!template_dir)
-		template_dir = DEFAULT_GIT_TEMPLATE_DIR;
+	if (!template_dir) {
+		template_dir = getenv(TEMPLATE_DIR_ENVIRONMENT);
+		if (!template_dir)
+			template_dir = DEFAULT_GIT_TEMPLATE_DIR;
+	}
 	strcpy(template_path, template_dir);
 	template_len = strlen(template_path);
 	if (template_path[template_len-1] != '/') {
@@ -164,13 +173,15 @@ static void copy_templates(const char *git_dir, int len, const char *template_di
 	closedir(dir);
 }
 
-static void create_default_files(const char *git_dir, const char *template_path)
+static int create_default_files(const char *git_dir, const char *template_path)
 {
 	unsigned len = strlen(git_dir);
 	static char path[PATH_MAX];
 	unsigned char sha1[20];
 	struct stat st1;
 	char repo_version_string[10];
+	int reinit;
+	int filemode;
 
 	if (len > sizeof(path)-50)
 		die("insane git directory %s", git_dir);
@@ -218,8 +229,9 @@ static void create_default_files(const char *git_dir, const char *template_path)
 	 * branch, if it does not exist yet.
 	 */
 	strcpy(path + len, "HEAD");
-	if (read_ref(path, sha1) < 0) {
-		if (create_symref(path, "refs/heads/master") < 0)
+	reinit = !read_ref("HEAD", sha1);
+	if (!reinit) {
+		if (create_symref("HEAD", "refs/heads/master") < 0)
 			exit(1);
 	}
 
@@ -231,18 +243,27 @@ static void create_default_files(const char *git_dir, const char *template_path)
 	strcpy(path + len, "config");
 
 	/* Check filemode trustability */
-	if (!lstat(path, &st1)) {
+	filemode = TEST_FILEMODE;
+	if (TEST_FILEMODE && !lstat(path, &st1)) {
 		struct stat st2;
-		int filemode = (!chmod(path, st1.st_mode ^ S_IXUSR) &&
+		filemode = (!chmod(path, st1.st_mode ^ S_IXUSR) &&
 				!lstat(path, &st2) &&
 				st1.st_mode != st2.st_mode);
-		git_config_set("core.filemode",
-			       filemode ? "true" : "false");
 	}
+	git_config_set("core.filemode", filemode ? "true" : "false");
+
+	if (is_bare_repository()) {
+		git_config_set("core.bare", "true");
+	}
+	else {
+		git_config_set("core.bare", "false");
+		git_config_set("core.logallrefupdates", "true");
+	}
+	return reinit;
 }
 
 static const char init_db_usage[] =
-"git-init-db [--template=<template-directory>] [--shared]";
+"git-init [--template=<template-directory>] [--shared]";
 
 /*
  * If you want to, you can share the DB area with any number of branches.
@@ -256,7 +277,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	const char *sha1_dir;
 	const char *template_dir = NULL;
 	char *path;
-	int len, i;
+	int len, i, reinit;
 
 	for (i = 1; i < argc; i++, argv++) {
 		const char *arg = argv[1];
@@ -274,10 +295,8 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	 * Set up the default .git directory contents
 	 */
 	git_dir = getenv(GIT_DIR_ENVIRONMENT);
-	if (!git_dir) {
+	if (!git_dir)
 		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
-		fprintf(stderr, "defaulting to local storage area\n");
-	}
 	safe_create_dir(git_dir, 0);
 
 	/* Check to see if the repository version is right.
@@ -287,7 +306,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	 */
 	check_repository_format();
 
-	create_default_files(git_dir, template_dir);
+	reinit = create_default_files(git_dir, template_dir);
 
 	/*
 	 * And set up the object store.
@@ -311,7 +330,13 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 		 */
 		sprintf(buf, "%d", shared_repository);
 		git_config_set("core.sharedrepository", buf);
+		git_config_set("receive.denyNonFastforwards", "true");
 	}
+
+	printf("%s%s Git repository in %s/\n",
+		reinit ? "Reinitialized existing" : "Initialized empty",
+		shared_repository ? " shared" : "",
+		git_dir);
 
 	return 0;
 }

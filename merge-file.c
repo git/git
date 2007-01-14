@@ -3,52 +3,6 @@
 #include "xdiff-interface.h"
 #include "blob.h"
 
-static void rm_temp_file(const char *filename)
-{
-	unlink(filename);
-	free((void *)filename);
-}
-
-static const char *write_temp_file(mmfile_t *f)
-{
-	int fd;
-	const char *tmp = getenv("TMPDIR");
-	char *filename;
-
-	if (!tmp)
-		tmp = "/tmp";
-	filename = mkpath("%s/%s", tmp, "git-tmp-XXXXXX");
-	fd = mkstemp(filename);
-	if (fd < 0)
-		return NULL;
-	filename = strdup(filename);
-	if (f->size != xwrite(fd, f->ptr, f->size)) {
-		rm_temp_file(filename);
-		return NULL;
-	}
-	close(fd);
-	return filename;
-}
-
-static void *read_temp_file(const char *filename, unsigned long *size)
-{
-	struct stat st;
-	char *buf = NULL;
-	int fd = open(filename, O_RDONLY);
-	if (fd < 0)
-		return NULL;
-	if (!fstat(fd, &st)) {
-		*size = st.st_size;
-		buf = xmalloc(st.st_size);
-		if (st.st_size != xread(fd, buf, st.st_size)) {
-			free(buf);
-			buf = NULL;
-		}
-	}
-	close(fd);
-	return buf;
-}
-
 static int fill_mmfile_blob(mmfile_t *f, struct blob *obj)
 {
 	void *buf;
@@ -72,22 +26,19 @@ static void free_mmfile(mmfile_t *f)
 
 static void *three_way_filemerge(mmfile_t *base, mmfile_t *our, mmfile_t *their, unsigned long *size)
 {
-	void *res;
-	const char *t1, *t2, *t3;
+	mmbuffer_t res;
+	xpparam_t xpp;
+	int merge_status;
 
-	t1 = write_temp_file(base);
-	t2 = write_temp_file(our);
-	t3 = write_temp_file(their);
-	res = NULL;
-	if (t1 && t2 && t3) {
-		int code = run_command("merge", t2, t1, t3, NULL);
-		if (!code || code == -1)
-			res = read_temp_file(t2, size);
-	}
-	rm_temp_file(t1);
-	rm_temp_file(t2);
-	rm_temp_file(t3);
-	return res;
+	memset(&xpp, 0, sizeof(xpp));
+	merge_status = xdl_merge(base, our, ".our", their, ".their",
+		&xpp, XDL_MERGE_ZEALOUS, &res);
+
+	if (merge_status < 0)
+		return NULL;
+
+	*size = res.size;
+	return res.ptr;
 }
 
 static int common_outf(void *priv_, mmbuffer_t *mb, int nbuf)

@@ -1,0 +1,55 @@
+git-pack-refs(1)
+================
+
+NAME
+----
+git-pack-refs - Pack heads and tags for efficient repository access
+
+SYNOPSIS
+--------
+'git-pack-refs' [--all] [--no-prune]
+
+DESCRIPTION
+-----------
+
+Traditionally, tips of branches and tags (collectively known as
+'refs') were stored one file per ref under `$GIT_DIR/refs`
+directory.  While many branch tips tend to be updated often,
+most tags and some branch tips are never updated.  When a
+repository has hundreds or thousands of tags, this
+one-file-per-ref format both wastes storage and hurts
+performance.
+
+This command is used to solve the storage and performance
+problem by stashing the refs in a single file,
+`$GIT_DIR/packed-refs`.  When a ref is missing from the
+traditional `$GIT_DIR/refs` hierarchy, it is looked up in this
+file and used if found.
+
+Subsequent updates to branches always creates new file under
+`$GIT_DIR/refs` hierarchy.
+
+OPTIONS
+-------
+
+\--all::
+
+The command by default packs all tags and leaves branch tips
+alone.  This is because branches are expected to be actively
+developed and packing their tips does not help performance.
+This option causes branch tips to be packed as well.  Useful for
+a repository with many branches of historical interests.
+
+\--no-prune::
+
+The command usually removes loose refs under `$GIT_DIR/refs`
+hierarchy after packing them.  This option tells it not to.
+
+
+Author
+------
+Written by Linus Torvalds <torvalds@osdl.org>
+
+GIT
+---
+Part of the gitlink:git[7] suite

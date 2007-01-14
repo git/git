@@ -7,17 +7,33 @@ git-cherry - Find commits not merged upstream
 
 SYNOPSIS
 --------
-'git-cherry' [-v] <upstream> [<head>]
+'git-cherry' [-v] <upstream> [<head>] [<limit>]
 
 DESCRIPTION
 -----------
 The changeset (or "diff") of each commit between the fork-point and <head>
 is compared against each commit between the fork-point and <upstream>.
 
-Every commit with a changeset that doesn't exist in the other branch
-has its id (sha1) reported, prefixed by a symbol.  Those existing only
+Every commit that doesn't exist in the <upstream> branch
+has its id (sha1) reported, prefixed by a symbol.  The ones that have
+equivalent change already
 in the <upstream> branch are prefixed with a minus (-) sign, and those
-that only exist in the <head> branch are prefixed with a plus (+) symbol.
+that only exist in the <head> branch are prefixed with a plus (+) symbol:
+
+               __*__*__*__*__> <upstream>
+              /
+    fork-point
+              \__+__+__-__+__+__-__+__> <head>
+
+
+If a <limit> has been given then the commits along the <head> branch up
+to and including <limit> are not reported:
+
+               __*__*__*__*__> <upstream>
+              /
+    fork-point
+              \__*__*__<limit>__-__+__> <head>
+
 
 Because git-cherry compares the changeset rather than the commit id
 (sha1), you can use git-cherry to find out if a commit you made locally

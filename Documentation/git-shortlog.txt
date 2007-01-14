@@ -7,15 +7,29 @@ git-shortlog - Summarize 'git log' output
 
 SYNOPSIS
 --------
-git-log --pretty=short | 'git-shortlog'
+git-log --pretty=short | 'git-shortlog' [-h] [-n] [-s]
+git-shortlog [-n|--number] [-s|--summary] [<committish>...]
 
 DESCRIPTION
 -----------
 Summarizes 'git log' output in a format suitable for inclusion
-in release announcements. Each commit will be grouped by author
+in release announcements. Each commit will be grouped by author and
 the first line of the commit message will be shown.
 
 Additionally, "[PATCH]" will be stripped from the commit description.
+
+OPTIONS
+-------
+
+-h::
+	Print a short usage message and exit.
+
+-n::
+	Sort output according to the number of commits per author instead
+	of author alphabetic order.
+
+-s::
+	Supress commit description and provide a commit count summary only.
 
 FILES
 -----

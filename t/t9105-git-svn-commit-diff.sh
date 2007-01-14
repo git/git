@@ -4,13 +4,6 @@
 test_description='git-svn commit-diff'
 . ./lib-git-svn.sh
 
-if test -n "$GIT_SVN_NO_LIB" && test "$GIT_SVN_NO_LIB" -ne 0
-then
-	echo 'Skipping: commit-diff needs SVN libraries'
-	test_done
-	exit 0
-fi
-
 test_expect_success 'initialize repo' "
 	mkdir import &&
 	cd import &&
@@ -33,7 +26,7 @@ prev=`git rev-parse --verify HEAD^1`
 
 test_expect_success 'test the commit-diff command' "
 	test -n '$prev' && test -n '$head' &&
-	git-svn commit-diff '$prev' '$head' '$svnrepo' &&
+	git-svn commit-diff -r1 '$prev' '$head' '$svnrepo' &&
 	svn co $svnrepo wc &&
 	cmp readme wc/readme
 	"

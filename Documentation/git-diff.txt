@@ -8,36 +8,54 @@ git-diff - Show changes between commits, commit and working tree, etc
 
 SYNOPSIS
 --------
-'git-diff' [ --diff-options ] <tree-ish>{0,2} [<path>...]
+'git-diff' [ --diff-options ] <commit>{0,2} [--] [<path>...]
 
 DESCRIPTION
 -----------
 Show changes between two trees, a tree and the working tree, a
 tree and the index file, or the index file and the working tree.
-The combination of what is compared with what is determined by
-the number of trees given to the command.
 
-* When no <tree-ish> is given, the working tree and the index
-  file are compared, using `git-diff-files`.
+'git-diff' [--options] [--] [<path>...]::
 
-* When one <tree-ish> is given, the working tree and the named
-  tree are compared, using `git-diff-index`.  The option
-  `--cached` can be given to compare the index file and
-  the named tree.
+	This form is to view the changes you made relative to
+	the index (staging area for the next commit).  In other
+	words, the differences are what you _could_ tell git to
+	further add to the index but you still haven't.  You can
+	stage these changes by using gitlink:git-add[1].
 
-* When two <tree-ish>s are given, these two trees are compared
-  using `git-diff-tree`.
+'git-diff' [--options] --cached [<commit>] [--] [<path>...]::
+
+	This form is to view the changes you staged for the next
+	commit relative to the named <commit>.  Typically you
+	would want comparison with the latest commit, so if you
+	do not give <commit>, it defaults to HEAD.
+
+'git-diff' [--options] <commit> [--] [<path>...]::
+
+	This form is to view the changes you have in your
+	working tree relative to the named <commit>.  You can
+	use HEAD to compare it with the latest commit, or a
+	branch name to compare with the tip of a different
+	branch.
+
+'git-diff' [--options] <commit> <commit> [--] [<path>...]::
+
+	This form is to view the changes between two <commit>,
+	for example, tips of two branches.
+
+Just in case if you are doing something exotic, it should be
+noted that all of the <commit> in the above description can be
+any <tree-ish>.
+
 
 OPTIONS
 -------
---diff-options::
-	'--diff-options' are passed to the `git-diff-files`,
-	`git-diff-index`, and `git-diff-tree` commands.  See the
-	documentation for these commands for description.
+include::diff-options.txt[]
 
 <path>...::
-	The <path> arguments are also passed to `git-diff-\*`
-	commands.
+	The <paths> parameters, when given, are used to limit
+	the diff to the named paths (you can give directory
+	names and get diff for all files under them).
 
 
 EXAMPLES
@@ -51,7 +69,7 @@ $ git diff --cached   <2>
 $ git diff HEAD       <3>
 ------------
 +
-<1> changes in the working tree since your last git-update-index.
+<1> changes in the working tree not yet staged for the next commit.
 <2> changes between the index and your last commit; what you
 would be committing if you run "git commit" without "-a" option.
 <3> changes in the working tree since your last commit; what you

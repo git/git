@@ -113,7 +113,6 @@ void traverse_trees(int n, struct tree_desc *t, const char *base, traverse_callb
 	struct name_entry *entry = xmalloc(n*sizeof(*entry));
 
 	for (;;) {
-		struct name_entry entry[3];
 		unsigned long mask = 0;
 		int i, last;
 
@@ -200,10 +199,17 @@ int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned ch
 	int retval;
 	void *tree;
 	struct tree_desc t;
+	unsigned char root[20];
 
-	tree = read_object_with_reference(tree_sha1, tree_type, &t.size, NULL);
+	tree = read_object_with_reference(tree_sha1, tree_type, &t.size, root);
 	if (!tree)
 		return -1;
+
+	if (name[0] == '\0') {
+		hashcpy(sha1, root);
+		return 0;
+	}
+
 	t.buf = tree;
 	retval = find_tree_entry(&t, name, sha1, mode);
 	free(tree);

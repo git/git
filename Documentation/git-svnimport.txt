@@ -15,6 +15,7 @@ SYNOPSIS
 		[ -b branch_subdir ] [ -T trunk_subdir ] [ -t tag_subdir ]
 		[ -s start_chg ] [ -m ] [ -r ] [ -M regex ]
 		[ -I <ignorefile_name> ] [ -A <author_file> ]
+		[ -R <repack_each_revs>] [ -P <path_from_trunk> ]
 		<SVN_repository_URL> [ <path> ]
 
 
@@ -103,9 +104,25 @@ repository without -A.
 
 -l <max_rev>::
 	Specify a maximum revision number to pull.
++
+Formerly, this option controlled how many revisions to pull,
+due to SVN memory leaks. (These have been worked around.)
 
-	Formerly, this option controlled how many revisions to pull,
-	due to SVN memory leaks. (These have been worked around.)
+-R <repack_each_revs>::
+	Specify how often git repository should be repacked.
++
+The default value is 1000. git-svnimport will do import in chunks of 1000
+revisions, after each chunk git repository will be repacked. To disable
+this behavior specify some big value here which is mote than number of
+revisions to import.
+
+-P <path_from_trunk>::
+	Partial import of the SVN tree.
++
+By default, the whole tree on the SVN trunk (/trunk) is imported.
+'-P my/proj' will import starting only from '/trunk/my/proj'.
+This option is useful when you want to import one project from a
+svn repo which hosts multiple projects under the same trunk.
 
 -v::
 	Verbosity: let 'svnimport' report what it is doing.

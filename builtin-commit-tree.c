@@ -7,6 +7,7 @@
 #include "commit.h"
 #include "tree.h"
 #include "builtin.h"
+#include "utf8.h"
 
 #define BLOCKING (1ul << 14)
 
@@ -32,7 +33,7 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
 	len = vsnprintf(one_line, sizeof(one_line), fmt, args);
 	va_end(args);
 	size = *sizep;
-	newsize = size + len;
+	newsize = size + len + 1;
 	alloc = (size + 32767) & ~32767;
 	buf = *bufp;
 	if (newsize > alloc) {
@@ -40,7 +41,7 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
 		buf = xrealloc(buf, alloc);
 		*bufp = buf;
 	}
-	*sizep = newsize;
+	*sizep = newsize - 1;
 	memcpy(buf + size, one_line, len);
 }
 
@@ -77,6 +78,11 @@ static int new_parent(int idx)
 	return 1;
 }
 
+static const char commit_utf8_warn[] =
+"Warning: commit message does not conform to UTF-8.\n"
+"You may want to amend it after fixing the message, or set the config\n"
+"variable i18n.commitencoding to the encoding your project uses.\n";
+
 int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 {
 	int i;
@@ -86,6 +92,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	char comment[1000];
 	char *buffer;
 	unsigned int size;
+	int encoding_is_utf8;
 
 	setup_ident();
 	git_config(git_default_config);
@@ -101,14 +108,18 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 		a = argv[i]; b = argv[i+1];
 		if (!b || strcmp(a, "-p"))
 			usage(commit_tree_usage);
+
+		if (parents >= MAXPARENT)
+			die("Too many parents (%d max)", MAXPARENT);
 		if (get_sha1(b, parent_sha1[parents]))
 			die("Not a valid object name %s", b);
 		check_valid(parent_sha1[parents], commit_type);
 		if (new_parent(parents))
 			parents++;
 	}
-	if (!parents)
-		fprintf(stderr, "Committing initial tree %s\n", argv[1]);
+
+	/* Not having i18n.commitencoding is the same as having utf-8 */
+	encoding_is_utf8 = is_encoding_utf8(git_commit_encoding);
 
 	init_buffer(&buffer, &size);
 	add_buffer(&buffer, &size, "tree %s\n", sha1_to_hex(tree_sha1));
@@ -123,11 +134,20 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 
 	/* Person/date information */
 	add_buffer(&buffer, &size, "author %s\n", git_author_info(1));
-	add_buffer(&buffer, &size, "committer %s\n\n", git_committer_info(1));
+	add_buffer(&buffer, &size, "committer %s\n", git_committer_info(1));
+	if (!encoding_is_utf8)
+		add_buffer(&buffer, &size,
+				"encoding %s\n", git_commit_encoding);
+	add_buffer(&buffer, &size, "\n");
 
 	/* And add the comment */
 	while (fgets(comment, sizeof(comment), stdin) != NULL)
 		add_buffer(&buffer, &size, "%s", comment);
+
+	/* And check the encoding */
+	buffer[size] = '\0';
+	if (encoding_is_utf8 && !is_utf8(buffer))
+		fprintf(stderr, commit_utf8_warn);
 
 	if (!write_sha1_file(buffer, size, commit_type, commit_sha1)) {
 		printf("%s\n", sha1_to_hex(commit_sha1));

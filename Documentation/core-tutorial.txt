@@ -46,18 +46,18 @@ to import into git.
 For our first example, we're going to start a totally new repository from
 scratch, with no pre-existing files, and we'll call it `git-tutorial`.
 To start up, create a subdirectory for it, change into that
-subdirectory, and initialize the git infrastructure with `git-init-db`:
+subdirectory, and initialize the git infrastructure with `git-init`:
 
 ------------------------------------------------
 $ mkdir git-tutorial
 $ cd git-tutorial
-$ git-init-db
+$ git-init
 ------------------------------------------------
 
 to which git will reply
 
 ----------------
-defaulting to local storage area
+Initialized empty Git repository in .git/
 ----------------
 
 which is just git's way of saying that you haven't been doing anything
@@ -336,17 +336,9 @@ $ commit=$(echo 'Initial commit' | git-commit-tree $tree)
 $ git-update-ref HEAD $commit
 ------------------------------------------------
 
-which will say:
-
-----------------
-Committing initial tree 8988da15d077d4829fc51d8544c097def6644dbb
-----------------
-
-just to warn you about the fact that it created a totally new commit
-that is not related to anything else. Normally you do this only *once*
-for a project ever, and all later commits will be parented on top of an
-earlier commit, and you'll never see this "Committing initial tree"
-message ever again.
+In this case this creates a totally new commit that is not related to
+anything else. Normally you do this only *once* for a project ever, and
+all later commits will be parented on top of an earlier commit.
 
 Again, normally you'd never actually do this by hand. There is a
 helpful script called `git commit` that will do all of this for you. So
@@ -1379,11 +1371,11 @@ $ mkdir my-git.git
 ------------
 
 Then, make that directory into a git repository by running
-`git init-db`, but this time, since its name is not the usual
+`git init`, but this time, since its name is not the usual
 `.git`, we do things slightly differently:
 
 ------------
-$ GIT_DIR=my-git.git git-init-db
+$ GIT_DIR=my-git.git git-init
 ------------
 
 Make sure this directory is available for others you want your
@@ -1519,7 +1511,7 @@ A recommended workflow for a "project lead" goes like this:
 +
 If other people are pulling from your repository over dumb
 transport protocols (HTTP), you need to keep this repository
-'dumb transport friendly'.  After `git init-db`,
+'dumb transport friendly'.  After `git init`,
 `$GIT_DIR/hooks/post-update` copied from the standard templates
 would contain a call to `git-update-server-info` but the
 `post-update` hook itself is disabled by default -- enable it
@@ -1620,7 +1612,7 @@ suggested in the previous section may be new to you. You do not
 have to worry. git supports "shared public repository" style of
 cooperation you are probably more familiar with as well.
 
-See link:cvs-migration.txt[git for CVS users] for the details.
+See link:cvs-migration.html[git for CVS users] for the details.
 
 Bundling your work together
 ---------------------------

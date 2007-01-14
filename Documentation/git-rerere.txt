@@ -7,8 +7,7 @@ git-rerere - Reuse recorded resolve
 
 SYNOPSIS
 --------
-'git-rerere'
-
+'git-rerere' [clear|diff|status|gc]
 
 DESCRIPTION
 -----------
@@ -26,6 +25,42 @@ results and applying the previously recorded hand resolution.
 [NOTE]
 You need to create `$GIT_DIR/rr-cache` directory to enable this
 command.
+
+
+COMMANDS
+--------
+
+Normally, git-rerere is run without arguments or user-intervention.
+However, it has several commands that allow it to interact with
+its working state.
+
+'clear'::
+
+This resets the metadata used by rerere if a merge resolution is to be
+is aborted.  Calling gitlink:git-am[1] --skip or gitlink:git-rebase[1]
+[--skip|--abort] will automatcally invoke this command.
+
+'diff'::
+
+This displays diffs for the current state of the resolution.  It is
+useful for tracking what has changed while the user is resolving
+conflicts.  Additional arguments are passed directly to the system
+diff(1) command installed in PATH.
+
+'status'::
+
+Like diff, but this only prints the filenames that will be tracked
+for resolutions.
+
+'gc'::
+
+This command is used to prune records of conflicted merge that
+occurred long time ago.  By default, conflicts older than 15
+days that you have not recorded their resolution, and conflicts
+older than 60 days, are pruned.  These are controlled with
+`gc.rerereunresolved` and `gc.rerereresolved` configuration
+variables.
+
 
 DISCUSSION
 ----------

@@ -44,7 +44,7 @@ test_expect_success \
     'unpack without delta' \
     "GIT_OBJECT_DIRECTORY=.git2/objects &&
      export GIT_OBJECT_DIRECTORY &&
-     git-init-db &&
+     git-init &&
      git-unpack-objects -n <test-1-${packname_1}.pack &&
      git-unpack-objects <test-1-${packname_1}.pack"
 
@@ -75,7 +75,7 @@ test_expect_success \
     'unpack with delta' \
     'GIT_OBJECT_DIRECTORY=.git2/objects &&
      export GIT_OBJECT_DIRECTORY &&
-     git-init-db &&
+     git-init &&
      git-unpack-objects -n <test-2-${packname_2}.pack &&
      git-unpack-objects <test-2-${packname_2}.pack'
 
@@ -100,7 +100,7 @@ test_expect_success \
     'use packed objects' \
     'GIT_OBJECT_DIRECTORY=.git2/objects &&
      export GIT_OBJECT_DIRECTORY &&
-     git-init-db &&
+     git-init &&
      cp test-1-${packname_1}.pack test-1-${packname_1}.idx .git2/objects/pack && {
 	 git-diff-tree --root -p $commit &&
 	 while read object

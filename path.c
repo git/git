@@ -11,10 +11,15 @@
  * which is what it's designed for.
  */
 #include "cache.h"
-#include <pwd.h>
 
-static char pathname[PATH_MAX];
 static char bad_path[] = "/bad-path/";
+
+static char *get_pathname(void)
+{
+	static char pathname_array[4][PATH_MAX];
+	static int index;
+	return pathname_array[3 & ++index];
+}
 
 static char *cleanup_path(char *path)
 {
@@ -31,6 +36,7 @@ char *mkpath(const char *fmt, ...)
 {
 	va_list args;
 	unsigned len;
+	char *pathname = get_pathname();
 
 	va_start(args, fmt);
 	len = vsnprintf(pathname, PATH_MAX, fmt, args);
@@ -43,6 +49,7 @@ char *mkpath(const char *fmt, ...)
 char *git_path(const char *fmt, ...)
 {
 	const char *git_dir = get_git_dir();
+	char *pathname = get_pathname();
 	va_list args;
 	unsigned len;
 
@@ -83,10 +90,11 @@ int git_mkstemp(char *path, size_t len, const char *template)
 }
 
 
-int validate_symref(const char *path)
+int validate_headref(const char *path)
 {
 	struct stat st;
 	char *buf, buffer[256];
+	unsigned char sha1[20];
 	int len, fd;
 
 	if (lstat(path, &st) < 0)
@@ -106,20 +114,29 @@ int validate_symref(const char *path)
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
 		return -1;
-	len = read(fd, buffer, sizeof(buffer)-1);
+	len = read_in_full(fd, buffer, sizeof(buffer)-1);
 	close(fd);
 
 	/*
 	 * Is it a symbolic ref?
 	 */
-	if (len < 4 || memcmp("ref:", buffer, 4))
+	if (len < 4)
 		return -1;
-	buf = buffer + 4;
-	len -= 4;
-	while (len && isspace(*buf))
-		buf++, len--;
-	if (len >= 5 && !memcmp("refs/", buf, 5))
+	if (!memcmp("ref:", buffer, 4)) {
+		buf = buffer + 4;
+		len -= 4;
+		while (len && isspace(*buf))
+			buf++, len--;
+		if (len >= 5 && !memcmp("refs/", buf, 5))
+			return 0;
+	}
+
+	/*
+	 * Is this a detached HEAD?
+	 */
+	if (!get_sha1_hex(buffer, sha1))
 		return 0;
+
 	return -1;
 }
 
@@ -234,7 +251,7 @@ char *enter_repo(char *path, int strict)
 		return NULL;
 
 	if (access("objects", X_OK) == 0 && access("refs", X_OK) == 0 &&
-	    validate_symref("HEAD") == 0) {
+	    validate_headref("HEAD") == 0) {
 		putenv("GIT_DIR=.");
 		check_repository_format();
 		return path;
@@ -271,7 +288,7 @@ int adjust_shared_perm(const char *path)
 			    : 0));
 	if (S_ISDIR(mode))
 		mode |= S_ISGID;
-	if (chmod(path, mode) < 0)
+	if ((mode & st.st_mode) != mode && chmod(path, mode) < 0)
 		return -2;
 	return 0;
 }

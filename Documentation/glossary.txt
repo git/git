@@ -179,7 +179,7 @@ object name::
 	character hexadecimal encoding of the hash of the object (possibly
 	followed by a white space).
 
-object type:
+object type::
 	One of the identifiers "commit","tree","tag" and "blob" describing
 	the type of an object.
 
@@ -188,11 +188,12 @@ octopus::
 	predator.
 
 origin::
-	The default upstream tracking branch. Most projects have at
+	The default upstream repository. Most projects have at
 	least one upstream project which they track. By default
 	'origin' is used for that purpose.  New upstream updates
-	will be fetched into this branch; you should never commit
-	to it yourself.
+	will be fetched into remote tracking branches named
+	origin/name-of-upstream-branch, which you can see using
+	"git branch -r".
 
 pack::
 	A set of objects which have been compressed into one file (to save
@@ -234,8 +235,11 @@ push::
 	local head, the push fails.
 
 reachable::
-	An object is reachable from a ref/commit/tree/tag, if there is a
-	chain leading from the latter to the former.
+	All of the ancestors of a given commit are said to be reachable from
+	that commit.  More generally, one object is reachable from another if
+	we can reach the one from the other by a chain that follows tags to
+	whatever they tag, commits to their parents or trees, and trees to the
+	trees or blobs that they contain.
 
 rebase::
 	To clean a branch by starting from the head of the main line of
@@ -255,7 +259,7 @@ refspec::
 	means "grab the master branch head from the $URL and store
 	it as my origin branch head".
 	And `git push $URL refs/heads/master:refs/heads/to-upstream`
-	means "publish my master branch head as to-upstream master head
+	means "publish my master branch head as to-upstream branch
 	at $URL".   See also gitlink:git-push[1]
 
 repository::
@@ -281,6 +285,13 @@ SCM::
 
 SHA1::
 	Synonym for object name.
+
+symref::
+	Symbolic reference: instead of containing the SHA1 id itself, it
+	is of the format 'ref: refs/some/thing' and when referenced, it
+	recursively dereferences to this reference. 'HEAD' is a prime
+	example of a symref. Symbolic references are manipulated with
+	the gitlink:git-symbolic-ref[1] command.
 
 topic branch::
 	A regular git branch that is used by a developer to
@@ -324,7 +335,7 @@ tag::
 	A tag is most typically used to mark a particular point in the
 	commit ancestry chain.
 
-unmerged index:
+unmerged index::
 	An index which contains unmerged index entries.
 
 working tree::

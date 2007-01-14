@@ -21,7 +21,7 @@ test_expect_success 'mirror via git-svn' "
 test_expect_success 'Try a commit on rmdir' "
 	git rm -f deeply/nested/directory/number/2/another &&
 	git commit -a -m 'remove another' &&
-	git-svn commit --rmdir HEAD &&
+	git-svn set-tree --rmdir HEAD &&
 	svn ls -R $svnrepo | grep ^deeply/nested/directory/number/1
 	"
 
