@@ -5,12 +5,8 @@ USAGE='<fetch-options> <repository> <refspec>...'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 set_reflog_action "fetch $*"
+cd_to_toplevel ;# probably unnecessary...
 
-TOP=$(git-rev-parse --show-cdup)
-if test ! -z "$TOP"
-then
-	cd "$TOP"
-fi
 . git-parse-remote
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"

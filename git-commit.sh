@@ -316,22 +316,16 @@ esac
 ################################################################
 # Prepare index to have a tree to be committed
 
-TOP=`git-rev-parse --show-cdup`
-if test -z "$TOP"
-then
-	TOP=./
-fi
-
 case "$all,$also" in
 t,)
 	save_index &&
 	(
-		cd "$TOP"
-		GIT_INDEX_FILE="$NEXT_INDEX"
-		export GIT_INDEX_FILE
+		cd_to_toplevel &&
+		GIT_INDEX_FILE="$NEXT_INDEX" &&
+		export GIT_INDEX_FILE &&
 		git-diff-files --name-only -z |
 		git-update-index --remove -z --stdin
-	)
+	) || exit
 	;;
 ,t)
 	save_index &&
@@ -339,11 +333,11 @@ t,)
 
 	git-diff-files --name-only -z -- "$@"  |
 	(
-		cd "$TOP"
-		GIT_INDEX_FILE="$NEXT_INDEX"
-		export GIT_INDEX_FILE
+		cd_to_toplevel &&
+		GIT_INDEX_FILE="$NEXT_INDEX" &&
+		export GIT_INDEX_FILE &&
 		git-update-index --remove -z --stdin
-	)
+	) || exit
 	;;
 ,)
 	case "$#" in
