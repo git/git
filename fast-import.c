@@ -678,10 +678,15 @@ static void write_index(const char *idx_name)
 	idx = xmalloc(object_count * sizeof(struct object_entry*));
 	c = idx;
 	for (o = blocks; o; o = o->next_pool)
-		for (e = o->entries; e != o->next_free; e++)
-			if (pack_id == e->pack_id)
-				*c++ = e;
+		for (e = o->next_free; e-- != o->entries;) {
+			if (pack_id != e->pack_id)
+				goto sort_index;
+			*c++ = e;
+		}
+sort_index:
 	last = idx + object_count;
+	if (c != last)
+		die("internal consistency error creating the index");
 	qsort(idx, object_count, sizeof(struct object_entry*), oecmp);
 
 	/* Generate the fan-out array. */
