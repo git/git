@@ -217,7 +217,6 @@ static unsigned long alloc_count;
 static unsigned long branch_count;
 static unsigned long branch_load_count;
 static unsigned long object_count;
-static unsigned long duplicate_count;
 static unsigned long marks_set_count;
 static unsigned long object_count_by_type[1 << TYPE_BITS];
 static unsigned long duplicate_count_by_type[1 << TYPE_BITS];
@@ -765,7 +764,6 @@ static int store_object(
 	if (mark)
 		insert_mark(mark, e);
 	if (e->offset) {
-		duplicate_count++;
 		duplicate_count_by_type[type]++;
 		return 1;
 	}
@@ -1722,7 +1720,7 @@ int main(int argc, const char **argv)
 {
 	int i;
 	unsigned long est_obj_cnt = object_entry_alloc;
-	struct stat sb;
+	unsigned long duplicate_count;
 
 	setup_ident();
 	git_config(git_default_config);
@@ -1783,6 +1781,9 @@ int main(int argc, const char **argv)
 	dump_marks();
 	if (branch_log)
 		fclose(branch_log);
+
+	for (i = 0; i < ARRAY_SIZE(duplicate_count_by_type); i++)
+		duplicate_count += duplicate_count_by_type[i];
 
 	fprintf(stderr, "%s statistics:\n", argv[0]);
 	fprintf(stderr, "---------------------------------------------------------------------\n");
