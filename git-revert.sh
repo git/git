@@ -146,6 +146,12 @@ cherry-pick)
 
 esac >.msg
 
+eval GITHEAD_$head=HEAD
+eval GITHEAD_$next='`git show -s \
+	--pretty=oneline --encoding="$encoding" "$commit" |
+	sed -e "s/^[^ ]* //"`'
+export GITHEAD_$head GITHEAD_$next
+
 # This three way merge is an interesting one.  We are at
 # $head, and would want to apply the change between $commit
 # and $prev on top of us (when reverting), or the change between
