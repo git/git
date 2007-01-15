@@ -60,7 +60,7 @@ git.
  - 'gitweb' became part of git.git during v1.4.0 timeperiod and
    seriously modified since then.
 
- - reflog is an v1.4.0 invention.  This alows you to name a
+ - reflog is an v1.4.0 invention.  This allows you to name a
    revision that a branch used to be at (e.g. "git diff
    master@{yesterday} master" allows you to see changes since
    yesterday's tip of the branch).
@@ -161,9 +161,9 @@ Updates in v1.5.0 since v1.4.4 series
 
    Existing repositories that have been using reflog may get
    complaints from fsck-objects and may not be able to run
-   git-repack; please run "git reflog expire --all" first to
-   remove reflog entries that refer to commits that are no
-   longer in the repository when that happens.
+   git-repack; please run "git reflog expire --stale-fix --all"
+   first to remove reflog entries that refer to commits that are
+   no longer in the repository when that happens.
 
  - git-branch knows how to rename branches and moves existing
    reflog data from the old branch to the new one.
