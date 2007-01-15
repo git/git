@@ -110,8 +110,8 @@ Format of STDIN stream:
 struct object_entry
 {
 	struct object_entry *next;
-	enum object_type type;
 	unsigned long offset;
+	unsigned type : TYPE_BITS;
 	unsigned char sha1[20];
 };
 
@@ -220,9 +220,9 @@ static unsigned long remap_count;
 static unsigned long object_count;
 static unsigned long duplicate_count;
 static unsigned long marks_set_count;
-static unsigned long object_count_by_type[9];
-static unsigned long duplicate_count_by_type[9];
-static unsigned long delta_count_by_type[9];
+static unsigned long object_count_by_type[1 << TYPE_BITS];
+static unsigned long duplicate_count_by_type[1 << TYPE_BITS];
+static unsigned long delta_count_by_type[1 << TYPE_BITS];
 
 /* Memory pools */
 static size_t mem_pool_alloc = 2*1024*1024 - sizeof(struct mem_pool);
@@ -276,7 +276,7 @@ static struct dbuf new_data;
 static FILE* branch_log;
 
 
-static void alloc_objects(int cnt)
+static void alloc_objects(unsigned int cnt)
 {
 	struct object_entry_pool *b;
 
