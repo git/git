@@ -24,16 +24,6 @@ $ENV{TZ} = 'UTC';
 $ENV{LC_ALL} = 'C';
 $| = 1; # unbuffer STDOUT
 
-# properties that we do not log:
-my %SKIP = ( 'svn:wc:ra_dav:version-url' => 1,
-             'svn:special' => 1,
-             'svn:executable' => 1,
-             'svn:entry:committed-rev' => 1,
-             'svn:entry:last-author' => 1,
-             'svn:entry:uuid' => 1,
-             'svn:entry:committed-date' => 1,
-);
-
 sub fatal (@) { print STDERR @_; exit 1 }
 require SVN::Core; # use()-ing this causes segfaults for me... *shrug*
 require SVN::Ra;
@@ -113,8 +103,9 @@ my %cmd = (
 			  'strategy|s=s' => \$_strategy,
 			  'dry-run|n' => \$_dry_run,
 			%cmt_opts, %fc_opts } ],
-	'set-tree' => [ \&commit, "Set an SVN repository to a git tree-ish",
-			{	'stdin|' => \$_stdin, %cmt_opts, %fc_opts, } ],
+	'set-tree' => [ \&cmd_set_tree,
+	                "Set an SVN repository to a git tree-ish",
+			{ 'stdin|' => \$_stdin, %cmt_opts, %fc_opts, } ],
 	'show-ignore' => [ \&cmd_show_ignore, "Show svn:ignore listings",
 			{ 'revision|r=i' => \$_revision } ],
 	rebuild => [ \&cmd_rebuild, "Rebuild git-svn metadata (after git clone)",
@@ -301,94 +292,8 @@ sub cmd_fetch {
 	}
 }
 
-sub fetch {
-	check_upgrade_needed();
-	$SVN_URL ||= file_to_s("$GIT_SVN_DIR/info/url");
-	my $ret = fetch_lib(@_);
-	if ($ret->{commit} && !verify_ref('refs/heads/master^0')) {
-		command_noisy(qw(update-ref refs/heads/master),$ret->{commit});
-	}
-	return $ret;
-}
-
-sub fetch_lib {
-	my (@parents) = @_;
-	$SVN_URL ||= file_to_s("$GIT_SVN_DIR/info/url");
-	$SVN ||= Git::SVN::Ra->new($SVN_URL);
-	my ($last_rev, $last_commit) = svn_grab_base_rev();
-	my ($base, $head) = libsvn_parse_revision($last_rev);
-	if ($base > $head) {
-		return { revision => $last_rev, commit => $last_commit }
-	}
-	my $index = set_index($GIT_SVN_INDEX);
-
-	# limit ourselves and also fork() since get_log won't release memory
-	# after processing a revision and SVN stuff seems to leak
-	my $inc = 1000;
-	my ($min, $max) = ($base, $head < $base+$inc ? $head : $base+$inc);
-	if (defined $last_commit) {
-		unless (-e $GIT_SVN_INDEX) {
-			command_noisy('read-tree', $last_commit);
-		}
-		my $x = command_oneline('write-tree');
-		my ($y) = (command(qw/cat-file commit/, $last_commit)
-							=~ /^tree ($sha1)/m);
-		if ($y ne $x) {
-			unlink $GIT_SVN_INDEX or croak $!;
-			command_noisy('read-tree', $last_commit);
-		}
-		$x = command_oneline('write-tree');
-		if ($y ne $x) {
-			print STDERR "trees ($last_commit) $y != $x\n",
-				 "Something is seriously wrong...\n";
-		}
-	}
-	while (1) {
-		# fork, because using SVN::Pool with get_log() still doesn't
-		# seem to help enough to keep memory usage down.
-		defined(my $pid = fork) or croak $!;
-		if (!$pid) {
-			$SVN::Error::handler = \&libsvn_skip_unknown_revs;
-
-			# Yes I'm perfectly aware that the fourth argument
-			# below is the limit revisions number.  Unfortunately
-			# performance sucks with it enabled, so it's much
-			# faster to fetch revision ranges instead of relying
-			# on the limiter.
-			$SVN->dup->get_log([''], $min, $max, 0, 1, 1,
-				sub {
-					my $log_entry;
-					if ($last_commit) {
-						$log_entry = libsvn_fetch(
-							$last_commit, @_);
-						$last_commit = git_commit(
-							$log_entry,
-							$last_commit,
-							@parents);
-					} else {
-						$log_entry = libsvn_new_tree(@_);
-						$last_commit = git_commit(
-							$log_entry, @parents);
-					}
-				});
-			exit 0;
-		}
-		waitpid $pid, 0;
-		croak $? if $?;
-		($last_rev, $last_commit) = svn_grab_base_rev();
-		last if ($max >= $head);
-		$min = $max + 1;
-		$max += $inc;
-		$max = $head if ($max > $head);
-		$SVN = Git::SVN::Ra->new($SVN_URL);
-	}
-	restore_index($index);
-	return { revision => $last_rev, commit => $last_commit };
-}
-
-sub commit {
+sub cmd_set_tree {
 	my (@commits) = @_;
-	check_upgrade_needed();
 	if ($_stdin || !@commits) {
 		print "Reading from stdin...\n";
 		@commits = ();
@@ -406,81 +311,20 @@ sub commit {
 		} elsif (scalar @tmp > 1) {
 			push @revs, reverse(command('rev-list',@tmp));
 		} else {
-			die "Failed to rev-parse $c\n";
+			fatal "Failed to rev-parse $c\n";
 		}
 	}
-	commit_lib(@revs);
+	my $gs = Git::SVN->new;
+	my ($r_last, $cmt_last) = $gs->last_rev_commit;
+	$gs->fetch;
+	if ($r_last != $gs->{last_rev}) {
+		fatal "There are new revisions that were fetched ",
+		      "and need to be merged (or acknowledged) ",
+		      "before committing.\nlast rev: $r_last\n",
+		      " current: $gs->{last_rev}\n";
+	}
+	$gs->set_tree($_) foreach @revs;
 	print "Done committing ",scalar @revs," revisions to SVN\n";
-}
-
-sub commit_lib {
-	my (@revs) = @_;
-	my ($r_last, $cmt_last) = svn_grab_base_rev();
-	defined $r_last or die "Must have an existing revision to commit\n";
-	my $fetched = fetch();
-	if ($r_last != $fetched->{revision}) {
-		print STDERR "There are new revisions that were fetched ",
-				"and need to be merged (or acknowledged) ",
-				"before committing.\n",
-				"last rev: $r_last\n",
-				" current: $fetched->{revision}\n";
-		exit 1;
-	}
-	my $commit_msg = "$GIT_SVN_DIR/.svn-commit.tmp.$$";
-
-	my $repo;
-	set_svn_commit_env();
-	foreach my $c (@revs) {
-		my $log_entry = get_commit_entry($c, $commit_msg);
-
-		# fork for each commit because there's a memory leak I
-		# can't track down... (it's probably in the SVN code)
-		defined(my $pid = open my $fh, '-|') or croak $!;
-		if (!$pid) {
-			my $pool = SVN::Pool->new;
-			my $ed = SVN::Git::Editor->new(
-					{	r => $r_last,
-						ra => $SVN->dup,
-						svn_path => $SVN->{svn_path},
-					},
-					$SVN->get_commit_editor(
-						$log_entry->{log},
-						sub {
-							libsvn_commit_cb(
-								@_, $c,
-								$log_entry->{log},
-								$r_last,
-								$cmt_last)
-						}, $pool)
-					);
-			my $mods = $ed->apply_diff($cmt_last, $c);
-			if (@$mods == 0) {
-				print "No changes\nr$r_last = $cmt_last\n";
-			}
-			$pool->clear;
-			exit 0;
-		}
-		my ($r_new, $cmt_new, $no);
-		while (<$fh>) {
-			print $_;
-			chomp;
-			if (/^r(\d+) = ($sha1)$/o) {
-				($r_new, $cmt_new) = ($1, $2);
-			} elsif ($_ eq 'No changes') {
-				$no = 1;
-			}
-		}
-		close $fh or exit 1;
-		if (! defined $r_new && ! defined $cmt_new) {
-			unless ($no) {
-				die "Failed to parse revision information\n";
-			}
-		} else {
-			($r_last, $cmt_last) = ($r_new, $cmt_new);
-		}
-	}
-	$ENV{LC_ALL} = 'C';
-	unlink $commit_msg;
 }
 
 sub cmd_dcommit {
@@ -1055,14 +899,6 @@ sub get_commit_entry {
 	\%log_entry;
 }
 
-sub set_svn_commit_env {
-	if (defined $LC_ALL) {
-		$ENV{LC_ALL} = $LC_ALL;
-	} else {
-		delete $ENV{LC_ALL};
-	}
-}
-
 sub rev_list_raw {
 	my ($fh, $c) = command_output_pipe(qw/rev-list --pretty=raw/, @_);
 	return { fh => $fh, ctx => $c, t => { } };
@@ -1107,124 +943,6 @@ sub file_to_s {
 	close $fd or croak $!;
 	$ret =~ s/\s*$//s;
 	return $ret;
-}
-
-sub assert_revision_unknown {
-	my $r = shift;
-	if (my $c = revdb_get($REVDB, $r)) {
-		croak "$r = $c already exists! Why are we refetching it?";
-	}
-}
-
-sub git_commit {
-	my ($log_entry, @parents) = @_;
-	assert_revision_unknown($log_entry->{revision});
-	map_tree_joins() if (@_branch_from && !%tree_map);
-
-	my (@tmp_parents, @exec_parents, %seen_parent);
-	if (my $lparents = $log_entry->{parents}) {
-		@tmp_parents = @$lparents
-	}
-	# commit parents can be conditionally bound to a particular
-	# svn revision via: "svn_revno=commit_sha1", filter them out here:
-	foreach my $p (@parents) {
-		next unless defined $p;
-		if ($p =~ /^(\d+)=($sha1_short)$/o) {
-			if ($1 == $log_entry->{revision}) {
-				push @tmp_parents, $2;
-			}
-		} else {
-			push @tmp_parents, $p if $p =~ /$sha1_short/o;
-		}
-	}
-	my $tree = $log_entry->{tree};
-	if (!defined $tree) {
-		my $index = set_index($GIT_SVN_INDEX);
-		$tree = command_oneline('write-tree');
-		croak $? if $?;
-		restore_index($index);
-	}
-	# just in case we clobber the existing ref, we still want that ref
-	# as our parent:
-	if (my $cur = verify_ref("refs/remotes/$GIT_SVN^0")) {
-		chomp $cur;
-		push @tmp_parents, $cur;
-	}
-
-	if (exists $tree_map{$tree}) {
-		foreach my $p (@{$tree_map{$tree}}) {
-			my $skip;
-			foreach (@tmp_parents) {
-				# see if a common parent is found
-				my $mb = eval { command('merge-base', $_, $p) };
-				next if ($@ || $?);
-				$skip = 1;
-				last;
-			}
-			next if $skip;
-			my ($url_p, $r_p, $uuid_p) = cmt_metadata($p);
-			next if (($SVN->uuid eq $uuid_p) &&
-						($log_entry->{revision} > $r_p));
-			next if (defined $url_p && defined $SVN_URL &&
-						($SVN->uuid eq $uuid_p) &&
-						($url_p eq $SVN_URL));
-			push @tmp_parents, $p;
-		}
-	}
-	foreach (@tmp_parents) {
-		next if $seen_parent{$_};
-		$seen_parent{$_} = 1;
-		push @exec_parents, $_;
-		# MAXPARENT is defined to 16 in commit-tree.c:
-		last if @exec_parents > 16;
-	}
-
-	set_commit_env($log_entry);
-	my @exec = ('git-commit-tree', $tree);
-	push @exec, '-p', $_  foreach @exec_parents;
-	defined(my $pid = open3(my $msg_fh, my $out_fh, '>&STDERR', @exec))
-								or croak $!;
-	print $msg_fh $log_entry->{log} or croak $!;
-	unless ($_no_metadata) {
-		print $msg_fh "\ngit-svn-id: $SVN_URL\@$log_entry->{revision} ",
-					$SVN->uuid,"\n" or croak $!;
-	}
-	$msg_fh->flush == 0 or croak $!;
-	close $msg_fh or croak $!;
-	chomp(my $commit = do { local $/; <$out_fh> });
-	close $out_fh or croak $!;
-	waitpid $pid, 0;
-	croak $? if $?;
-	if ($commit !~ /^$sha1$/o) {
-		die "Failed to commit, invalid sha1: $commit\n";
-	}
-	command_noisy('update-ref',"refs/remotes/$GIT_SVN",$commit);
-	revdb_set($REVDB, $log_entry->{revision}, $commit);
-
-	# this output is read via pipe, do not change:
-	print "r$log_entry->{revision} = $commit\n";
-	return $commit;
-}
-
-sub check_repack {
-	if ($_repack && (--$_repack_nr == 0)) {
-		$_repack_nr = $_repack;
-		# repack doesn't use any arguments with spaces in them, does it?
-		command_noisy('repack', split(/\s+/, $_repack_flags));
-	}
-}
-
-sub set_commit_env {
-	my ($log_entry) = @_;
-	my $author = $log_entry->{author};
-	if (!defined $author || length $author == 0) {
-		$author = '(no author)';
-	}
-	my ($name,$email) = defined $users{$author} ?  @{$users{$author}}
-				: ($author,$author . '@' . $SVN->uuid);
-	$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} = $name;
-	$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} = $email;
-	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_entry->{date};
 }
 
 sub check_upgrade_needed {
@@ -1859,7 +1577,7 @@ sub write_untracked {
 		foreach my $path (sort keys %$h) {
 			my $ppath = $path eq '' ? '.' : $path;
 			foreach my $prop (sort keys %{$h->{$path}}) {
-				next if $SKIP{$prop};
+				next if $SKIP_PROP{$prop};
 				my $v = $h->{$path}->{$prop};
 				if (defined $v) {
 					print $fh "  +$t: ",
@@ -1975,7 +1693,7 @@ sub set_tree_cb {
 
 sub set_tree {
 	my ($self, $tree) = (shift, shift);
-	my $log_entry = get_commit_entry($tree);
+	my $log_entry = ::get_commit_entry($tree);
 	unless ($self->{last_rev}) {
 		fatal("Must have an existing revision to commit\n");
 	}
@@ -2218,118 +1936,6 @@ sub uri_decode {
 	$f
 }
 
-sub libsvn_log_entry {
-	my ($rev, $author, $date, $log, $parents, $untracked) = @_;
-	my ($Y,$m,$d,$H,$M,$S) = ($date =~ /^(\d{4})\-(\d\d)\-(\d\d)T
-					 (\d\d)\:(\d\d)\:(\d\d).\d+Z$/x)
-				or die "Unable to parse date: $date\n";
-	if (defined $author && length $author > 0 &&
-	    defined $_authors && ! defined $users{$author}) {
-		die "Author: $author not defined in $_authors file\n";
-	}
-	$log = '' if ($rev == 0 && !defined $log);
-
-	open my $un, '>>', "$GIT_SVN_DIR/unhandled.log" or croak $!;
-	my $h;
-	print $un "r$rev\n" or croak $!;
-	$h = $untracked->{empty};
-	foreach (sort keys %$h) {
-		my $act = $h->{$_} ? '+empty_dir' : '-empty_dir';
-		print $un "  $act: ", uri_encode($_), "\n" or croak $!;
-		warn "W: $act: $_\n";
-	}
-	foreach my $t (qw/dir_prop file_prop/) {
-		$h = $untracked->{$t} or next;
-		foreach my $path (sort keys %$h) {
-			my $ppath = $path eq '' ? '.' : $path;
-			foreach my $prop (sort keys %{$h->{$path}}) {
-				next if $SKIP{$prop};
-				my $v = $h->{$path}->{$prop};
-				if (defined $v) {
-					print $un "  +$t: ",
-						  uri_encode($ppath), ' ',
-						  uri_encode($prop), ' ',
-						  uri_encode($v), "\n"
-						  or croak $!;
-				} else {
-					print $un "  -$t: ",
-						  uri_encode($ppath), ' ',
-						  uri_encode($prop), "\n"
-						  or croak $!;
-				}
-			}
-		}
-	}
-	foreach my $t (qw/absent_file absent_directory/) {
-		$h = $untracked->{$t} or next;
-		foreach my $parent (sort keys %$h) {
-			foreach my $path (sort @{$h->{$parent}}) {
-				print $un "  $t: ",
-				      uri_encode("$parent/$path"), "\n"
-				      or croak $!;
-				warn "W: $t: $parent/$path ",
-				     "Insufficient permissions?\n";
-			}
-		}
-	}
-
-	# revprops (make this optional? it's an extra network trip...)
-	my $rp = $SVN->rev_proplist($rev);
-	foreach (sort keys %$rp) {
-		next if /^svn:(?:author|date|log)$/;
-		print $un "  rev_prop: ", uri_encode($_), ' ',
-		          uri_encode($rp->{$_}), "\n";
-	}
-	close $un or croak $!;
-
-	{ revision => $rev, date => "+0000 $Y-$m-$d $H:$M:$S",
-	  author => $author, log => $log."\n", parents => $parents || [],
-	  revprops => $rp }
-}
-
-sub libsvn_fetch {
-	my ($last_commit, $paths, $rev, $author, $date, $log) = @_;
-	my $ed = SVN::Git::Fetcher->new({ c => $last_commit, q => $_q });
-	my (undef, $last_rev, undef) = cmt_metadata($last_commit);
-	unless ($SVN->gs_do_update($last_rev, $rev, '', 1, $ed)) {
-		die "SVN connection failed somewhere...\n";
-	}
-	libsvn_log_entry($rev, $author, $date, $log, [$last_commit], $ed);
-}
-
-sub svn_grab_base_rev {
-	my $c = eval { command_oneline([qw/rev-parse --verify/,
-	                                "refs/remotes/$GIT_SVN^0"],
-				        { STDERR => 0 }) };
-	if (defined $c && length $c) {
-		my ($url, $rev, $uuid) = cmt_metadata($c);
-		return ($rev, $c) if defined $rev;
-	}
-	if ($_no_metadata) {
-		my $offset = -41; # from tail
-		my $rl;
-		open my $fh, '<', $REVDB or
-			die "--no-metadata specified and $REVDB not readable\n";
-		seek $fh, $offset, 2;
-		$rl = readline $fh;
-		defined $rl or return (undef, undef);
-		chomp $rl;
-		while ($c ne $rl && tell $fh != 0) {
-			$offset -= 41;
-			seek $fh, $offset, 2;
-			$rl = readline $fh;
-			defined $rl or return (undef, undef);
-			chomp $rl;
-		}
-		my $rev = tell $fh;
-		croak $! if ($rev < -1);
-		$rev =  ($rev - 41) / 41;
-		close $fh or croak $!;
-		return ($rev, $c);
-	}
-	return (undef, undef);
-}
-
 sub libsvn_parse_revision {
 	my $base = shift;
 	my $head = $SVN->get_latest_revnum();
@@ -2450,14 +2056,6 @@ sub libsvn_find_parent_branch {
 	return undef;
 }
 
-sub libsvn_new_tree {
-	if (my $log_entry = libsvn_find_parent_branch(@_)) {
-		return $log_entry;
-	}
-	my ($paths, $rev, $author, $date, $log) = @_; # $pool is last
-	_libsvn_new_tree($paths, $rev, $author, $date, $log, []);
-}
-
 sub _libsvn_new_tree {
 	my ($paths, $rev, $author, $date, $log, $parents) = @_;
 	my $ed = SVN::Git::Fetcher->new({q => $_q});
@@ -2511,82 +2109,6 @@ sub libsvn_graft_file_copies {
 		next unless $c;
 		find_graft_path_parents($grafts, $tree_paths, $c, $p0, $r0);
 	}
-}
-
-sub set_index {
-	my $old = $ENV{GIT_INDEX_FILE};
-	$ENV{GIT_INDEX_FILE} = shift;
-	return $old;
-}
-
-sub restore_index {
-	my ($old) = @_;
-	if (defined $old) {
-		$ENV{GIT_INDEX_FILE} = $old;
-	} else {
-		delete $ENV{GIT_INDEX_FILE};
-	}
-}
-
-sub libsvn_commit_cb {
-	my ($rev, $date, $committer, $c, $log, $r_last, $cmt_last) = @_;
-	if ($_optimize_commits && $rev == ($r_last + 1)) {
-		my $log = libsvn_log_entry($rev,$committer,$date,$log);
-		$log->{tree} = get_tree_from_treeish($c);
-		my $cmt = git_commit($log, $cmt_last, $c);
-		my @diff = command('diff-tree', $cmt, $c);
-		if (@diff) {
-			print STDERR "Trees differ: $cmt $c\n",
-					join('',@diff),"\n";
-			exit 1;
-		}
-	} else {
-		fetch("$rev=$c");
-	}
-}
-
-sub libsvn_skip_unknown_revs {
-	my $err = shift;
-	my $errno = $err->apr_err();
-	# Maybe the branch we're tracking didn't
-	# exist when the repo started, so it's
-	# not an error if it doesn't, just continue
-	#
-	# Wonderfully consistent library, eh?
-	# 160013 - svn:// and file://
-	# 175002 - http(s)://
-	# 175007 - http(s):// (this repo required authorization, too...)
-	#   More codes may be discovered later...
-	if ($errno == 175007 || $errno == 175002 || $errno == 160013) {
-		return;
-	}
-	croak "Error from SVN, ($errno): ", $err->expanded_message,"\n";
-};
-
-# Tie::File seems to be prone to offset errors if revisions get sparse,
-# it's not that fast, either.  Tie::File is also not in Perl 5.6.  So
-# one of my favorite modules is out :<  Next up would be one of the DBM
-# modules, but I'm not sure which is most portable...  So I'll just
-# go with something that's plain-text, but still capable of
-# being randomly accessed.  So here's my ultra-simple fixed-width
-# database.  All records are 40 characters + "\n", so it's easy to seek
-# to a revision: (41 * rev) is the byte offset.
-# A record of 40 0s denotes an empty revision.
-# And yes, it's still pretty fast (faster than Tie::File).
-sub revdb_set {
-	my ($file, $rev, $commit) = @_;
-	length $commit == 40 or croak "arg3 must be a full SHA1 hexsum\n";
-	open my $fh, '+<', $file or croak $!;
-	my $offset = $rev * 41;
-	# assume that append is the common case:
-	seek $fh, 0, 2 or croak $!;
-	my $pos = tell $fh;
-	if ($pos < $offset) {
-		print $fh (('0' x 40),"\n") x (($offset - $pos) / 41);
-	}
-	seek $fh, $offset, 0 or croak $!;
-	print $fh $commit,"\n";
-	close $fh or croak $!;
 }
 
 sub revdb_get {
