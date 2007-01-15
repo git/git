@@ -906,18 +906,13 @@ of it as it can automatically (which in this case is just merge the `example`
 file, which had no differences in the `mybranch` branch), and say:
 
 ----------------
-	Trying really trivial in-index merge...
-	fatal: Merge requires file-level merging
-	Nope.
-	...
 	Auto-merging hello 
 	CONFLICT (content): Merge conflict in hello 
 	Automatic merge failed; fix up by hand
 ----------------
 
-which is way too verbose, but it basically tells you that it failed the
-really trivial merge ("Simple merge") and did an "Automatic merge"
-instead, but that too failed due to conflicts in `hello`.
+It tells you that it did an "Automatic merge", which
+failed due to conflicts in `hello`.
 
 Not to worry. It left the (trivial) conflict in `hello` in the same form you
 should already be well used to if you've ever used CVS, so let's just
