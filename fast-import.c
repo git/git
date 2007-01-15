@@ -719,6 +719,8 @@ static void end_packfile()
 	if (object_count) {
 		fixup_header_footer();
 		write_index(idx_name);
+		fprintf(stdout, "%s\n", old_p->pack_name);
+		fflush(stdout);
 
 		/* Register the packfile with core git's machinary. */
 		new_p = add_packed_git(idx_name, strlen(idx_name), 1);
