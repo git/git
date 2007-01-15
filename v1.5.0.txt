@@ -107,9 +107,16 @@ Updates in v1.5.0 since v1.4.4 series
  - git-clone always uses what is known as "separate remote"
    layout for a newly created repository with a working tree;
    i.e. tracking branches in $GIT_DIR/refs/remotes/origin/ are
-   used to track branches from the origin.  New branches that
-   appear on the origin side after a clone is made are also
-   tracked automatically.
+   used to track branches from the origin.  
+
+ - New branches that appear on the origin side after a clone is
+   made are also tracked automatically.  This is done with an
+   wildcard refspec "refs/heads/*:refs/remotes/origin/*", which
+   older git does not understand, so if you clone with 1.5.0,
+   you would need to downgrade remote.*.fetch in the
+   configuration file to specify each branch you are interested
+   in individually if you plan to fetch into the repository with
+   older versions of git (but why would you?).
 
  - git-branch and git-show-branch know remote tracking branches.
 
