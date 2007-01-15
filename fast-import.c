@@ -217,6 +217,8 @@ struct hash_list
 
 /* Stats and misc. counters */
 static unsigned long max_depth = 10;
+static unsigned long max_objects = -1;
+static unsigned long max_packsize = -1;
 static unsigned long alloc_count;
 static unsigned long branch_count;
 static unsigned long branch_load_count;
@@ -303,7 +305,6 @@ static struct object_entry* new_object(unsigned char *sha1)
 		alloc_objects(object_entry_alloc);
 
 	e = blocks->next_free++;
-	e->pack_id = pack_id;
 	hashcpy(e->sha1, sha1);
 	return e;
 }
@@ -678,12 +679,9 @@ static void write_index(const char *idx_name)
 	idx = xmalloc(object_count * sizeof(struct object_entry*));
 	c = idx;
 	for (o = blocks; o; o = o->next_pool)
-		for (e = o->next_free; e-- != o->entries;) {
-			if (pack_id != e->pack_id)
-				goto sort_index;
-			*c++ = e;
-		}
-sort_index:
+		for (e = o->next_free; e-- != o->entries;)
+			if (pack_id == e->pack_id)
+				*c++ = e;
 	last = idx + object_count;
 	if (c != last)
 		die("internal consistency error creating the index");
@@ -746,6 +744,12 @@ static void end_packfile()
 	last_blob.depth = 0;
 }
 
+static void checkpoint()
+{
+	end_packfile();
+	start_packfile();
+}
+
 static size_t encode_header(
 	enum object_type type,
 	size_t size,
@@ -800,20 +804,64 @@ static int store_object(
 		duplicate_count_by_type[type]++;
 		return 1;
 	}
-	e->type = type;
-	e->offset = pack_size;
-	object_count++;
-	object_count_by_type[type]++;
 
-	if (last && last->data && last->depth < max_depth)
+	if (last && last->data && last->depth < max_depth) {
 		delta = diff_delta(last->data, last->len,
 			dat, datlen,
 			&deltalen, 0);
-	else
-		delta = 0;
+		if (delta && deltalen >= datlen) {
+			free(delta);
+			delta = NULL;
+		}
+	} else
+		delta = NULL;
 
 	memset(&s, 0, sizeof(s));
 	deflateInit(&s, zlib_compression_level);
+	if (delta) {
+		s.next_in = delta;
+		s.avail_in = deltalen;
+	} else {
+		s.next_in = dat;
+		s.avail_in = datlen;
+	}
+	s.avail_out = deflateBound(&s, s.avail_in);
+	s.next_out = out = xmalloc(s.avail_out);
+	while (deflate(&s, Z_FINISH) == Z_OK)
+		/* nothing */;
+	deflateEnd(&s);
+
+	/* Determine if we should auto-checkpoint. */
+	if ((object_count + 1) > max_objects
+		|| (object_count + 1) < object_count
+		|| (pack_size + 60 + s.total_out) > max_packsize
+		|| (pack_size + 60 + s.total_out) < pack_size) {
+
+		/* This new object needs to *not* have the current pack_id. */
+		e->pack_id = pack_id + 1;
+		checkpoint();
+
+		/* We cannot carry a delta into the new pack. */
+		if (delta) {
+			free(delta);
+			delta = NULL;
+		}
+		memset(&s, 0, sizeof(s));
+		deflateInit(&s, zlib_compression_level);
+		s.next_in = dat;
+		s.avail_in = datlen;
+		s.avail_out = deflateBound(&s, s.avail_in);
+		s.next_out = out;
+		while (deflate(&s, Z_FINISH) == Z_OK)
+			/* nothing */;
+		deflateEnd(&s);
+	}
+
+	e->type = type;
+	e->pack_id = pack_id;
+	e->offset = pack_size;
+	object_count++;
+	object_count_by_type[type]++;
 
 	if (delta) {
 		unsigned long ofs = e->offset - last->offset;
@@ -821,8 +869,6 @@ static int store_object(
 
 		delta_count_by_type[type]++;
 		last->depth++;
-		s.next_in = delta;
-		s.avail_in = deltalen;
 
 		hdrlen = encode_header(OBJ_OFS_DELTA, deltalen, hdr);
 		write_or_die(pack_fd, hdr, hdrlen);
@@ -836,18 +882,10 @@ static int store_object(
 	} else {
 		if (last)
 			last->depth = 0;
-		s.next_in = dat;
-		s.avail_in = datlen;
 		hdrlen = encode_header(type, datlen, hdr);
 		write_or_die(pack_fd, hdr, hdrlen);
 		pack_size += hdrlen;
 	}
-
-	s.avail_out = deflateBound(&s, s.avail_in);
-	s.next_out = out = xmalloc(s.avail_out);
-	while (deflate(&s, Z_FINISH) == Z_OK)
-		/* nothing */;
-	deflateEnd(&s);
 
 	write_or_die(pack_fd, out, s.total_out);
 	pack_size += s.total_out;
@@ -1754,10 +1792,8 @@ static void cmd_reset_branch()
 
 static void cmd_checkpoint()
 {
-	if (object_count) {
-		end_packfile();
-		start_packfile();
-	}
+	if (object_count)
+		checkpoint();
 	read_next_command();
 }
 
@@ -1780,6 +1816,10 @@ int main(int argc, const char **argv)
 			break;
 		else if (!strncmp(a, "--objects=", 10))
 			est_obj_cnt = strtoul(a + 10, NULL, 0);
+		else if (!strncmp(a, "--max-objects-per-pack=", 23))
+			max_objects = strtoul(a + 23, NULL, 0);
+		else if (!strncmp(a, "--max-pack-size=", 16))
+			max_packsize = strtoul(a + 16, NULL, 0) * 1024 * 1024;
 		else if (!strncmp(a, "--depth=", 8))
 			max_depth = strtoul(a + 8, NULL, 0);
 		else if (!strncmp(a, "--active-branches=", 18))
