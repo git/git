@@ -713,17 +713,23 @@ static void end_packfile()
 {
 	struct packed_git *old_p = pack_data, *new_p;
 
-	fixup_header_footer();
-	write_index(idx_name);
+	if (object_count) {
+		fixup_header_footer();
+		write_index(idx_name);
 
-	/* Register the packfile with core git's machinary. */
-	new_p = add_packed_git(idx_name, strlen(idx_name), 1);
-	if (!new_p)
-		die("core git rejected index %s", idx_name);
-	new_p->windows = old_p->windows;
-	new_p->pack_fd = old_p->pack_fd;
-	all_packs[pack_id++] = new_p;
-	install_packed_git(new_p);
+		/* Register the packfile with core git's machinary. */
+		new_p = add_packed_git(idx_name, strlen(idx_name), 1);
+		if (!new_p)
+			die("core git rejected index %s", idx_name);
+		new_p->windows = old_p->windows;
+		new_p->pack_fd = old_p->pack_fd;
+		all_packs[pack_id++] = new_p;
+		install_packed_git(new_p);
+	}
+	else {
+		close(pack_fd);
+		unlink(old_p->pack_name);
+	}
 	free(old_p);
 	free(idx_name);
 
