@@ -146,8 +146,8 @@ Updates in v1.5.0 since v1.4.4 series
  - git-fetch used to complain updating the current branch but
    this is now allowed for a bare repository.
 
- - NEEDSWORK: We should disable Porcelain-ish commands that
-   require a working tree in a bare repository.
+ - Porcelain-ish commands that require a working tree refuses to
+   work in a bare repository.
 
 
 * Reflog
