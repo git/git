@@ -216,7 +216,6 @@ static unsigned long max_depth = 10;
 static unsigned long alloc_count;
 static unsigned long branch_count;
 static unsigned long branch_load_count;
-static unsigned long remap_count;
 static unsigned long object_count;
 static unsigned long duplicate_count;
 static unsigned long marks_set_count;
@@ -235,6 +234,10 @@ static unsigned int atom_cnt;
 static struct atom_str **atom_table;
 
 /* The .pack file being generated */
+static const char *base_name;
+static unsigned int pack_count;
+static char *pack_name;
+static char *idx_name;
 static struct packed_git *pack_data;
 static int pack_fd;
 static unsigned long pack_size;
@@ -591,6 +594,124 @@ static void yread(int fd, void *buffer, size_t length)
 			die("Read from descriptor %i: %s", fd, strerror(errno));
 		ret += size;
 	}
+}
+
+static void start_packfile()
+{
+	struct pack_header hdr;
+
+	pack_count++;
+	pack_name = xmalloc(strlen(base_name) + 11);
+	idx_name = xmalloc(strlen(base_name) + 11);
+	sprintf(pack_name, "%s%5.5i.pack", base_name, pack_count);
+	sprintf(idx_name, "%s%5.5i.idx", base_name, pack_count);
+
+	pack_fd = open(pack_name, O_RDWR|O_CREAT|O_EXCL, 0666);
+	if (pack_fd < 0)
+		die("Can't create %s: %s", pack_name, strerror(errno));
+
+	pack_data = xcalloc(1, sizeof(*pack_data) + strlen(pack_name) + 2);
+	strcpy(pack_data->pack_name, pack_name);
+	pack_data->pack_fd = pack_fd;
+
+	hdr.hdr_signature = htonl(PACK_SIGNATURE);
+	hdr.hdr_version = htonl(2);
+	hdr.hdr_entries = 0;
+
+	write_or_die(pack_fd, &hdr, sizeof(hdr));
+	pack_size = sizeof(hdr);
+	object_count = 0;
+}
+
+static void fixup_header_footer()
+{
+	SHA_CTX c;
+	char hdr[8];
+	unsigned long cnt;
+	char *buf;
+
+	if (lseek(pack_fd, 0, SEEK_SET) != 0)
+		die("Failed seeking to start: %s", strerror(errno));
+
+	SHA1_Init(&c);
+	yread(pack_fd, hdr, 8);
+	SHA1_Update(&c, hdr, 8);
+
+	cnt = htonl(object_count);
+	SHA1_Update(&c, &cnt, 4);
+	write_or_die(pack_fd, &cnt, 4);
+
+	buf = xmalloc(128 * 1024);
+	for (;;) {
+		size_t n = xread(pack_fd, buf, 128 * 1024);
+		if (n <= 0)
+			break;
+		SHA1_Update(&c, buf, n);
+	}
+	free(buf);
+
+	SHA1_Final(pack_sha1, &c);
+	write_or_die(pack_fd, pack_sha1, sizeof(pack_sha1));
+}
+
+static int oecmp (const void *a_, const void *b_)
+{
+	struct object_entry *a = *((struct object_entry**)a_);
+	struct object_entry *b = *((struct object_entry**)b_);
+	return hashcmp(a->sha1, b->sha1);
+}
+
+static void write_index(const char *idx_name)
+{
+	struct sha1file *f;
+	struct object_entry **idx, **c, **last, *e;
+	struct object_entry_pool *o;
+	unsigned int array[256];
+	int i;
+
+	/* Build the sorted table of object IDs. */
+	idx = xmalloc(object_count * sizeof(struct object_entry*));
+	c = idx;
+	for (o = blocks; o; o = o->next_pool)
+		for (e = o->entries; e != o->next_free; e++)
+			*c++ = e;
+	last = idx + object_count;
+	qsort(idx, object_count, sizeof(struct object_entry*), oecmp);
+
+	/* Generate the fan-out array. */
+	c = idx;
+	for (i = 0; i < 256; i++) {
+		struct object_entry **next = c;;
+		while (next < last) {
+			if ((*next)->sha1[0] != i)
+				break;
+			next++;
+		}
+		array[i] = htonl(next - idx);
+		c = next;
+	}
+
+	f = sha1create("%s", idx_name);
+	sha1write(f, array, 256 * sizeof(int));
+	for (c = idx; c != last; c++) {
+		unsigned int offset = htonl((*c)->offset);
+		sha1write(f, &offset, 4);
+		sha1write(f, (*c)->sha1, sizeof((*c)->sha1));
+	}
+	sha1write(f, pack_sha1, sizeof(pack_sha1));
+	sha1close(f, NULL, 1);
+	free(idx);
+}
+
+static void end_packfile()
+{
+	fixup_header_footer();
+	close(pack_fd);
+	write_index(idx_name);
+
+	free(pack_name);
+	free(idx_name);
+	free(pack_data);
 }
 
 static size_t encode_header(
@@ -992,100 +1113,6 @@ del_entry:
 	hashclr(e->versions[1].sha1);
 	hashclr(root->versions[1].sha1);
 	return 1;
-}
-
-static void init_pack_header()
-{
-	struct pack_header hdr;
-
-	hdr.hdr_signature = htonl(PACK_SIGNATURE);
-	hdr.hdr_version = htonl(2);
-	hdr.hdr_entries = 0;
-
-	write_or_die(pack_fd, &hdr, sizeof(hdr));
-	pack_size = sizeof(hdr);
-}
-
-static void fixup_header_footer()
-{
-	SHA_CTX c;
-	char hdr[8];
-	unsigned long cnt;
-	char *buf;
-	size_t n;
-
-	if (lseek(pack_fd, 0, SEEK_SET) != 0)
-		die("Failed seeking to start: %s", strerror(errno));
-
-	SHA1_Init(&c);
-	yread(pack_fd, hdr, 8);
-	SHA1_Update(&c, hdr, 8);
-
-	cnt = htonl(object_count);
-	SHA1_Update(&c, &cnt, 4);
-	write_or_die(pack_fd, &cnt, 4);
-
-	buf = xmalloc(128 * 1024);
-	for (;;) {
-		n = xread(pack_fd, buf, 128 * 1024);
-		if (n <= 0)
-			break;
-		SHA1_Update(&c, buf, n);
-	}
-	free(buf);
-
-	SHA1_Final(pack_sha1, &c);
-	write_or_die(pack_fd, pack_sha1, sizeof(pack_sha1));
-}
-
-static int oecmp (const void *_a, const void *_b)
-{
-	struct object_entry *a = *((struct object_entry**)_a);
-	struct object_entry *b = *((struct object_entry**)_b);
-	return hashcmp(a->sha1, b->sha1);
-}
-
-static void write_index(const char *idx_name)
-{
-	struct sha1file *f;
-	struct object_entry **idx, **c, **last;
-	struct object_entry *e;
-	struct object_entry_pool *o;
-	unsigned int array[256];
-	int i;
-
-	/* Build the sorted table of object IDs. */
-	idx = xmalloc(object_count * sizeof(struct object_entry*));
-	c = idx;
-	for (o = blocks; o; o = o->next_pool)
-		for (e = o->entries; e != o->next_free; e++)
-			*c++ = e;
-	last = idx + object_count;
-	qsort(idx, object_count, sizeof(struct object_entry*), oecmp);
-
-	/* Generate the fan-out array. */
-	c = idx;
-	for (i = 0; i < 256; i++) {
-		struct object_entry **next = c;;
-		while (next < last) {
-			if ((*next)->sha1[0] != i)
-				break;
-			next++;
-		}
-		array[i] = htonl(next - idx);
-		c = next;
-	}
-
-	f = sha1create("%s", idx_name);
-	sha1write(f, array, 256 * sizeof(int));
-	for (c = idx; c != last; c++) {
-		unsigned int offset = htonl((*c)->offset);
-		sha1write(f, &offset, 4);
-		sha1write(f, (*c)->sha1, sizeof((*c)->sha1));
-	}
-	sha1write(f, pack_sha1, sizeof(pack_sha1));
-	sha1close(f, NULL, 1);
-	free(idx);
 }
 
 static void dump_branches()
@@ -1693,11 +1720,8 @@ static const char fast_import_usage[] =
 
 int main(int argc, const char **argv)
 {
-	const char *base_name;
 	int i;
 	unsigned long est_obj_cnt = object_entry_alloc;
-	char *pack_name;
-	char *idx_name;
 	struct stat sb;
 
 	setup_ident();
@@ -1728,20 +1752,6 @@ int main(int argc, const char **argv)
 		usage(fast_import_usage);
 	base_name = argv[i];
 
-	pack_name = xmalloc(strlen(base_name) + 6);
-	sprintf(pack_name, "%s.pack", base_name);
-	idx_name = xmalloc(strlen(base_name) + 5);
-	sprintf(idx_name, "%s.idx", base_name);
-
-	pack_fd = open(pack_name, O_RDWR|O_CREAT|O_EXCL, 0666);
-	if (pack_fd < 0)
-		die("Can't create %s: %s", pack_name, strerror(errno));
-
-	pack_data = xcalloc(1, sizeof(*pack_data) + strlen(pack_name) + 2);
-	strcpy(pack_data->pack_name, pack_name);
-	pack_data->pack_fd = pack_fd;
-
-	init_pack_header();
 	alloc_objects(est_obj_cnt);
 	strbuf_init(&command_buf);
 
@@ -1750,6 +1760,7 @@ int main(int argc, const char **argv)
 	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
 	marks = pool_calloc(1, sizeof(struct mark_set));
 
+	start_packfile();
 	for (;;) {
 		read_next_command();
 		if (command_buf.eof)
@@ -1765,10 +1776,8 @@ int main(int argc, const char **argv)
 		else
 			die("Unsupported command: %s", command_buf.buf);
 	}
+	end_packfile();
 
-	fixup_header_footer();
-	close(pack_fd);
-	write_index(idx_name);
 	dump_branches();
 	dump_tags();
 	dump_marks();
@@ -1789,13 +1798,7 @@ int main(int argc, const char **argv)
 	fprintf(stderr, "Memory total:    %10lu KiB\n", (total_allocd + alloc_count*sizeof(struct object_entry))/1024);
 	fprintf(stderr, "       pools:    %10lu KiB\n", total_allocd/1024);
 	fprintf(stderr, "     objects:    %10lu KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
-	fprintf(stderr, "Pack remaps:     %10lu\n", remap_count);
-	stat(pack_name, &sb);
-	fprintf(stderr, "Pack size:       %10lu KiB\n", (unsigned long)(sb.st_size/1024));
-	stat(idx_name, &sb);
-	fprintf(stderr, "Index size:      %10lu KiB\n", (unsigned long)(sb.st_size/1024));
 	fprintf(stderr, "---------------------------------------------------------------------\n");
-
 	fprintf(stderr, "\n");
 
 	return 0;
