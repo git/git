@@ -44,6 +44,10 @@ cumbersome.  On some platforms, `ln -sf` does not even work as
 advertised (horrors).  Therefore symbolic links are now deprecated
 and symbolic refs are used by default.
 
+git-symbolic-ref will exit with status 0 if the contents of the
+symbolic ref were printed correctly, with status 1 if the requested
+name is not a symbolic ref, or 128 if another error occurs.
+
 Author
 ------
 Written by Junio C Hamano <junkio@cox.net>
