@@ -16,60 +16,27 @@ static int tags;	/* But allow any tags if --tags is specified */
 static int abbrev = DEFAULT_ABBREV;
 static int max_candidates = 10;
 
-static unsigned int names[256], allocs[256];
-static struct commit_name {
-	struct commit *commit;
+struct commit_name {
 	int prio; /* annotated tag = 2, tag = 1, head = 0 */
 	char path[FLEX_ARRAY]; /* more */
-} **name_array[256];
+};
 static const char *prio_names[] = {
 	"head", "lightweight", "annotated",
 };
-
-static struct commit_name *match(struct commit *cmit)
-{
-	unsigned char level0 = cmit->object.sha1[0];
-	struct commit_name **p = name_array[level0];
-	unsigned int hi = names[level0];
-	unsigned int lo = 0;
-
-	while (lo < hi) {
-		unsigned int mi = (lo + hi) / 2;
-		int cmp = hashcmp(p[mi]->commit->object.sha1,
-			cmit->object.sha1);
-		if (!cmp) {
-			while (mi && p[mi - 1]->commit == cmit)
-				mi--;
-			return p[mi];
-		}
-		if (cmp > 0)
-			hi = mi;
-		else
-			lo = mi+1;
-	}
-	return NULL;
-}
 
 static void add_to_known_names(const char *path,
 			       struct commit *commit,
 			       int prio)
 {
-	int idx;
-	int len = strlen(path)+1;
-	struct commit_name *name = xmalloc(sizeof(struct commit_name) + len);
-	unsigned char m = commit->object.sha1[0];
-
-	name->commit = commit;
-	name->prio = prio;
-	memcpy(name->path, path, len);
-	idx = names[m];
-	if (idx >= allocs[m]) {
-		allocs[m] = (idx + 50) * 3 / 2;
-		name_array[m] = xrealloc(name_array[m],
-			allocs[m] * sizeof(*name_array));
+	struct commit_name *e = commit->util;
+	if (!e || e->prio < prio) {
+		size_t len = strlen(path)+1;
+		free(e);
+		e = xmalloc(sizeof(struct commit_name) + len);
+		e->prio = prio;
+		memcpy(e->path, path, len);
+		commit->util = e;
 	}
-	name_array[m][idx] = name;
-	names[m] = ++idx;
 }
 
 static int get_name(const char *path, const unsigned char *sha1, int flag, void *cb_data)
@@ -102,21 +69,6 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 	}
 	add_to_known_names(all ? path + 5 : path + 10, commit, prio);
 	return 0;
-}
-
-static int compare_names(const void *_a, const void *_b)
-{
-	struct commit_name *a = *(struct commit_name **)_a;
-	struct commit_name *b = *(struct commit_name **)_b;
-	unsigned long a_date = a->commit->date;
-	unsigned long b_date = b->commit->date;
-	int cmp = hashcmp(a->commit->object.sha1, b->commit->object.sha1);
-
-	if (cmp)
-		return cmp;
-	if (a->prio != b->prio)
-		return b->prio - a->prio;
-	return (a_date > b_date) ? -1 : (a_date == b_date) ? 0 : 1;
 }
 
 struct possible_tag {
@@ -158,15 +110,11 @@ static void describe(const char *arg, int last_one)
 		die("%s is not a valid '%s' object", arg, commit_type);
 
 	if (!initialized) {
-		unsigned int m;
 		initialized = 1;
 		for_each_ref(get_name, NULL);
-		for (m = 0; m < ARRAY_SIZE(name_array); m++)
-			qsort(name_array[m], names[m],
-				sizeof(*name_array[m]), compare_names);
 	}
 
-	n = match(cmit);
+	n = cmit->util;
 	if (n) {
 		printf("%s\n", n->path);
 		return;
@@ -182,7 +130,7 @@ static void describe(const char *arg, int last_one)
 		struct commit *c = pop_commit(&list);
 		struct commit_list *parents = c->parents;
 		seen_commits++;
-		n = match(c);
+		n = c->util;
 		if (n) {
 			if (match_cnt < max_candidates) {
 				struct possible_tag *t = &all_matches[match_cnt++];
