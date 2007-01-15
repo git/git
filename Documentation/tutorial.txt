@@ -11,15 +11,13 @@ diff" with:
 $ man git-diff
 ------------------------------------------------
 
-It is a good idea to introduce yourself to git before doing any
-operation.  The easiest way to do so is:
+It is a good idea to introduce yourself to git with your name and
+public email address before doing any operation.  The easiest
+way to do so is:
 
 ------------------------------------------------
-$ cat >~/.gitconfig <<\EOF
-[user]
-	name = Your Name Comes Here
-	email = you@yourdomain.example.com
-EOF
+$ git repo-config --global user.name "Your Name Comes Here"
+$ git repo-config --global user.email you@yourdomain.example.com
 ------------------------------------------------
 
 
@@ -211,7 +209,7 @@ at this point the two branches have diverged, with different changes
 made in each.  To merge the changes made in experimental into master, run
 
 ------------------------------------------------
-$ git pull . experimental
+$ git merge experimental
 ------------------------------------------------
 
 If the changes don't conflict, you're done.  If there are conflicts,
@@ -316,14 +314,14 @@ shows a list of all the changes that Bob made since he branched from
 Alice's master branch.
 
 After examining those changes, and possibly fixing things, Alice
-could pull the changes into her master branch:
+could merge the changes into her master branch:
 
 -------------------------------------
 $ git checkout master
-$ git pull . bob-incoming
+$ git merge bob-incoming
 -------------------------------------
 
-The last command is a pull from the "bob-incoming" branch in Alice's
+The last command is a merge from the "bob-incoming" branch in Alice's
 own repository.
 
 Alice could also perform both steps at once with:

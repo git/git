@@ -2,57 +2,41 @@
 #include "commit.h"
 #include "tag.h"
 #include "refs.h"
-#include "diff.h"
-#include "diffcore.h"
-#include "revision.h"
 #include "builtin.h"
+
+#define SEEN		(1u<<0)
+#define MAX_TAGS	(FLAG_BITS - 1)
 
 static const char describe_usage[] =
 "git-describe [--all] [--tags] [--abbrev=<n>] <committish>*";
 
+static int debug;	/* Display lots of verbose info */
 static int all;	/* Default to annotated tags only */
 static int tags;	/* But allow any tags if --tags is specified */
-
 static int abbrev = DEFAULT_ABBREV;
+static int max_candidates = 10;
 
-static int names, allocs;
-static struct commit_name {
-	struct commit *commit;
+struct commit_name {
 	int prio; /* annotated tag = 2, tag = 1, head = 0 */
 	char path[FLEX_ARRAY]; /* more */
-} **name_array = NULL;
-
-static struct commit_name *match(struct commit *cmit)
-{
-	int i = names;
-	struct commit_name **p = name_array;
-
-	while (i-- > 0) {
-		struct commit_name *n = *p++;
-		if (n->commit == cmit)
-			return n;
-	}
-	return NULL;
-}
+};
+static const char *prio_names[] = {
+	"head", "lightweight", "annotated",
+};
 
 static void add_to_known_names(const char *path,
 			       struct commit *commit,
 			       int prio)
 {
-	int idx;
-	int len = strlen(path)+1;
-	struct commit_name *name = xmalloc(sizeof(struct commit_name) + len);
-
-	name->commit = commit;
-	name->prio = prio;
-	memcpy(name->path, path, len);
-	idx = names;
-	if (idx >= allocs) {
-		allocs = (idx + 50) * 3 / 2;
-		name_array = xrealloc(name_array, allocs*sizeof(*name_array));
+	struct commit_name *e = commit->util;
+	if (!e || e->prio < prio) {
+		size_t len = strlen(path)+1;
+		free(e);
+		e = xmalloc(sizeof(struct commit_name) + len);
+		e->prio = prio;
+		memcpy(e->path, path, len);
+		commit->util = e;
 	}
-	name_array[idx] = name;
-	names = ++idx;
 }
 
 static int get_name(const char *path, const unsigned char *sha1, int flag, void *cb_data)
@@ -87,32 +71,37 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 	return 0;
 }
 
-static int compare_names(const void *_a, const void *_b)
-{
-	struct commit_name *a = *(struct commit_name **)_a;
-	struct commit_name *b = *(struct commit_name **)_b;
-	unsigned long a_date = a->commit->date;
-	unsigned long b_date = b->commit->date;
-
-	if (a->prio != b->prio)
-		return b->prio - a->prio;
-	return (a_date > b_date) ? -1 : (a_date == b_date) ? 0 : 1;
-}
-
 struct possible_tag {
-	struct possible_tag *next;
 	struct commit_name *name;
-	unsigned long depth;
+	int depth;
+	int found_order;
+	unsigned flag_within;
 };
+
+static int compare_pt(const void *a_, const void *b_)
+{
+	struct possible_tag *a = (struct possible_tag *)a_;
+	struct possible_tag *b = (struct possible_tag *)b_;
+	if (a->name->prio != b->name->prio)
+		return b->name->prio - a->name->prio;
+	if (a->depth != b->depth)
+		return a->depth - b->depth;
+	if (a->found_order != b->found_order)
+		return a->found_order - b->found_order;
+	return 0;
+}
 
 static void describe(const char *arg, int last_one)
 {
 	unsigned char sha1[20];
-	struct commit *cmit;
+	struct commit *cmit, *gave_up_on = NULL;
 	struct commit_list *list;
 	static int initialized = 0;
 	struct commit_name *n;
-	struct possible_tag *all_matches, *min_match, *cur_match;
+	struct possible_tag all_matches[MAX_TAGS];
+	unsigned int match_cnt = 0, annotated_cnt = 0, cur_match;
+	unsigned long seen_commits = 0;
+	int found = 0;
 
 	if (get_sha1(arg, sha1))
 		die("Not a valid object name %s", arg);
@@ -123,78 +112,88 @@ static void describe(const char *arg, int last_one)
 	if (!initialized) {
 		initialized = 1;
 		for_each_ref(get_name, NULL);
-		qsort(name_array, names, sizeof(*name_array), compare_names);
 	}
 
-	n = match(cmit);
+	n = cmit->util;
 	if (n) {
 		printf("%s\n", n->path);
 		return;
 	}
 
+	if (debug)
+		fprintf(stderr, "searching to describe %s\n", arg);
+
 	list = NULL;
-	all_matches = NULL;
-	cur_match = NULL;
+	cmit->object.flags = SEEN;
 	commit_list_insert(cmit, &list);
 	while (list) {
 		struct commit *c = pop_commit(&list);
-		n = match(c);
+		struct commit_list *parents = c->parents;
+		seen_commits++;
+		n = c->util;
 		if (n) {
-			struct possible_tag *p = xmalloc(sizeof(*p));
-			p->name = n;
-			p->next = NULL;
-			if (cur_match)
-				cur_match->next = p;
-			else
-				all_matches = p;
-			cur_match = p;
-		} else {
-			struct commit_list *parents = c->parents;
-			while (parents) {
-				struct commit *p = parents->item;
-				parse_commit(p);
-				if (!(p->object.flags & SEEN)) {
-					p->object.flags |= SEEN;
-					insert_by_date(p, &list);
-				}
-				parents = parents->next;
+			if (match_cnt < max_candidates) {
+				struct possible_tag *t = &all_matches[match_cnt++];
+				t->name = n;
+				t->depth = seen_commits - 1;
+				t->flag_within = 1u << match_cnt;
+				t->found_order = found++;
+				c->object.flags |= t->flag_within;
+				if (n->prio == 2)
+					annotated_cnt++;
+			}
+			else {
+				gave_up_on = c;
+				break;
 			}
 		}
+		for (cur_match = 0; cur_match < match_cnt; cur_match++) {
+			struct possible_tag *t = &all_matches[cur_match];
+			if (!(c->object.flags & t->flag_within))
+				t->depth++;
+		}
+		if (annotated_cnt && !list) {
+			if (debug)
+				fprintf(stderr, "finished search at %s\n",
+					sha1_to_hex(c->object.sha1));
+			break;
+		}
+		while (parents) {
+			struct commit *p = parents->item;
+			parse_commit(p);
+			if (!(p->object.flags & SEEN))
+				insert_by_date(p, &list);
+			p->object.flags |= c->object.flags;
+			parents = parents->next;
+		}
 	}
+	free_commit_list(list);
 
-	if (!all_matches)
+	if (!match_cnt)
 		die("cannot describe '%s'", sha1_to_hex(cmit->object.sha1));
 
-	min_match = NULL;
-	for (cur_match = all_matches; cur_match; cur_match = cur_match->next) {
-		struct rev_info revs;
-		struct commit *tagged = cur_match->name->commit;
-
-		clear_commit_marks(cmit, -1);
-		init_revisions(&revs, NULL);
-		tagged->object.flags |= UNINTERESTING;
-		add_pending_object(&revs, &tagged->object, NULL);
-		add_pending_object(&revs, &cmit->object, NULL);
-
-		prepare_revision_walk(&revs);
-		cur_match->depth = 0;
-		while ((!min_match || cur_match->depth < min_match->depth)
-			&& get_revision(&revs))
-			cur_match->depth++;
-		if (!min_match || cur_match->depth < min_match->depth)
-			min_match = cur_match;
-		free_commit_list(revs.commits);
+	qsort(all_matches, match_cnt, sizeof(all_matches[0]), compare_pt);
+	if (debug) {
+		for (cur_match = 0; cur_match < match_cnt; cur_match++) {
+			struct possible_tag *t = &all_matches[cur_match];
+			fprintf(stderr, " %-11s %8d %s\n",
+				prio_names[t->name->prio],
+				t->depth, t->name->path);
+		}
+		fprintf(stderr, "traversed %lu commits\n", seen_commits);
+		if (gave_up_on) {
+			fprintf(stderr,
+				"more than %i tags found; listed %i most recent\n"
+				"gave up search at %s\n",
+				max_candidates, max_candidates,
+				sha1_to_hex(gave_up_on->object.sha1));
+		}
 	}
-	printf("%s-g%s\n", min_match->name->path,
+	printf("%s-g%s\n", all_matches[0].name->path,
 		   find_unique_abbrev(cmit->object.sha1, abbrev));
 
-	if (!last_one) {
-		for (cur_match = all_matches; cur_match; cur_match = min_match) {
-			min_match = cur_match->next;
-			free(cur_match);
-		}
-		clear_commit_marks(cmit, SEEN);
-	}
+	if (!last_one)
+		clear_commit_marks(cmit, -1);
 }
 
 int cmd_describe(int argc, const char **argv, const char *prefix)
@@ -206,6 +205,8 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 
 		if (*arg != '-')
 			break;
+		else if (!strcmp(arg, "--debug"))
+			debug = 1;
 		else if (!strcmp(arg, "--all"))
 			all = 1;
 		else if (!strcmp(arg, "--tags"))
@@ -214,6 +215,13 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 			abbrev = strtoul(arg + 9, NULL, 10);
 			if (abbrev < MINIMUM_ABBREV || 40 < abbrev)
 				abbrev = DEFAULT_ABBREV;
+		}
+		else if (!strncmp(arg, "--candidates=", 13)) {
+			max_candidates = strtoul(arg + 13, NULL, 10);
+			if (max_candidates < 1)
+				max_candidates = 1;
+			else if (max_candidates > MAX_TAGS)
+				max_candidates = MAX_TAGS;
 		}
 		else
 			usage(describe_usage);

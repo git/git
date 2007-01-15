@@ -81,7 +81,7 @@ One way to do it is to pull master into the topic branch:
 
 ------------
 	$ git checkout topic
-	$ git pull . master
+	$ git merge master
 
               o---*---o---+ topic
              /           /
@@ -103,10 +103,10 @@ in which case the final commit graph would look like this:
 
 ------------
 	$ git checkout topic
-	$ git pull . master
+	$ git merge master
 	$ ... work on both topic and master branches
 	$ git checkout master
-	$ git pull . topic
+	$ git merge topic
 
               o---*---o---+---o---o topic
              /           /         \
@@ -126,11 +126,11 @@ top of the tip before the test merge:
 
 ------------
 	$ git checkout topic
-	$ git pull . master
+	$ git merge master
 	$ git reset --hard HEAD^ ;# rewind the test merge
 	$ ... work on both topic and master branches
 	$ git checkout master
-	$ git pull . topic
+	$ git merge topic
 
               o---*---o-------o---o topic
              /                     \

@@ -151,32 +151,27 @@ esac >.msg
 # and $prev on top of us (when reverting), or the change between
 # $prev and $commit on top of us (when cherry-picking or replaying).
 
-echo >&2 "First trying simple merge strategy to $me."
-git-read-tree -m -u --aggressive $base $head $next &&
+git-merge-recursive $base -- $head $next &&
 result=$(git-write-tree 2>/dev/null) || {
-    echo >&2 "Simple $me fails; trying Automatic $me."
-    git-merge-index -o git-merge-one-file -a || {
-	    mv -f .msg "$GIT_DIR/MERGE_MSG"
-	    {
-		echo '
+	mv -f .msg "$GIT_DIR/MERGE_MSG"
+	{
+	    echo '
 Conflicts:
 '
 		git ls-files --unmerged |
 		sed -e 's/^[^	]*	/	/' |
 		uniq
-	    } >>"$GIT_DIR/MERGE_MSG"
-	    echo >&2 "Automatic $me failed.  After resolving the conflicts,"
-	    echo >&2 "mark the corrected paths with 'git-add <paths>'"
-	    echo >&2 "and commit the result."
-	    case "$me" in
-	    cherry-pick)
+	} >>"$GIT_DIR/MERGE_MSG"
+	echo >&2 "Automatic $me failed.  After resolving the conflicts,"
+	echo >&2 "mark the corrected paths with 'git-add <paths>'"
+	echo >&2 "and commit the result."
+	case "$me" in
+	cherry-pick)
 		echo >&2 "You may choose to use the following when making"
 		echo >&2 "the commit:"
 		echo >&2 "$set_author_env"
-	    esac
-	    exit 1
-    }
-    result=$(git-write-tree) || exit
+	esac
+	exit 1
 }
 echo >&2 "Finished one $me."
 

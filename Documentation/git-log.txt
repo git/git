@@ -27,7 +27,7 @@ OPTIONS
 
 include::pretty-formats.txt[]
 
---max-count=<n>::
+-<n>::
 	Limits the number of commits to show.
 
 <since>..<until>::
