@@ -80,7 +80,7 @@ it:
 ------------------------------------------------
 $ mkdir /pub/my-repo.git
 $ cd /pub/my-repo.git
-$ git --bare init-db --shared
+$ git --bare init --shared
 $ git --bare fetch /home/alice/myproject master:master
 ------------------------------------------------
 

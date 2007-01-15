@@ -793,16 +793,16 @@ int read_cache_from(const char *path)
 		die("index file open failed (%s)", strerror(errno));
 	}
 
-	cache_mmap = MAP_FAILED;
 	if (!fstat(fd, &st)) {
 		cache_mmap_size = st.st_size;
 		errno = EINVAL;
 		if (cache_mmap_size >= sizeof(struct cache_header) + 20)
-			cache_mmap = mmap(NULL, cache_mmap_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-	}
+			cache_mmap = xmmap(NULL, cache_mmap_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+		else
+			die("index file smaller than expected");
+	} else
+		die("cannot stat the open index (%s)", strerror(errno));
 	close(fd);
-	if (cache_mmap == MAP_FAILED)
-		die("index file mmap failed (%s)", strerror(errno));
 
 	hdr = cache_mmap;
 	if (verify_hdr(hdr, cache_mmap_size) < 0)
@@ -870,7 +870,7 @@ static int ce_write_flush(SHA_CTX *context, int fd)
 	unsigned int buffered = write_buffer_len;
 	if (buffered) {
 		SHA1_Update(context, write_buffer, buffered);
-		if (write(fd, write_buffer, buffered) != buffered)
+		if (write_in_full(fd, write_buffer, buffered) != buffered)
 			return -1;
 		write_buffer_len = 0;
 	}
@@ -919,7 +919,7 @@ static int ce_flush(SHA_CTX *context, int fd)
 
 	/* Flush first if not enough space for SHA1 signature */
 	if (left + 20 > WRITE_BUFFER_SIZE) {
-		if (write(fd, write_buffer, left) != left)
+		if (write_in_full(fd, write_buffer, left) != left)
 			return -1;
 		left = 0;
 	}
@@ -927,7 +927,7 @@ static int ce_flush(SHA_CTX *context, int fd)
 	/* Append the SHA1 signature at the end */
 	SHA1_Final(write_buffer + left, context);
 	left += 20;
-	return (write(fd, write_buffer, left) != left) ? -1 : 0;
+	return (write_in_full(fd, write_buffer, left) != left) ? -1 : 0;
 }
 
 static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
@@ -1010,7 +1010,7 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 		if (data &&
 		    !write_index_ext_header(&c, newfd, CACHE_EXT_TREE, sz) &&
 		    !ce_write(&c, newfd, data, sz))
-			;
+			free(data);
 		else {
 			free(data);
 			return -1;

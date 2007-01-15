@@ -284,7 +284,7 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 		fd = open(path, O_RDONLY);
 		if (fd < 0)
 			return NULL;
-		len = read(fd, buffer, sizeof(buffer)-1);
+		len = read_in_full(fd, buffer, sizeof(buffer)-1);
 		close(fd);
 
 		/*
@@ -332,7 +332,7 @@ int create_symref(const char *ref_target, const char *refs_heads_master)
 	}
 	lockpath = mkpath("%s.lock", git_HEAD);
 	fd = open(lockpath, O_CREAT | O_EXCL | O_WRONLY, 0666);	
-	written = write(fd, ref, len);
+	written = write_in_full(fd, ref, len);
 	close(fd);
 	if (written != len) {
 		unlink(lockpath);
@@ -923,6 +923,9 @@ static int log_ref_write(struct ref_lock *lock,
 	char *logrec;
 	const char *committer;
 
+	if (log_all_ref_updates < 0)
+		log_all_ref_updates = !is_bare_repository();
+
 	if (log_all_ref_updates &&
 	    (!strncmp(lock->ref_name, "refs/heads/", 11) ||
 	     !strncmp(lock->ref_name, "refs/remotes/", 13))) {
@@ -968,7 +971,7 @@ static int log_ref_write(struct ref_lock *lock,
 			sha1_to_hex(sha1),
 			committer);
 	}
-	written = len <= maxlen ? write(logfd, logrec, len) : -1;
+	written = len <= maxlen ? write_in_full(logfd, logrec, len) : -1;
 	free(logrec);
 	close(logfd);
 	if (written != len)
@@ -987,8 +990,8 @@ int write_ref_sha1(struct ref_lock *lock,
 		unlock_ref(lock);
 		return 0;
 	}
-	if (write(lock->lock_fd, sha1_to_hex(sha1), 40) != 40 ||
-	    write(lock->lock_fd, &term, 1) != 1
+	if (write_in_full(lock->lock_fd, sha1_to_hex(sha1), 40) != 40 ||
+	    write_in_full(lock->lock_fd, &term, 1) != 1
 		|| close(lock->lock_fd) < 0) {
 		error("Couldn't write %s", lock->lk->filename);
 		unlock_ref(lock);
@@ -1025,7 +1028,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	fstat(logfd, &st);
 	if (!st.st_size)
 		die("Log %s is empty.", logfile);
-	logdata = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, logfd, 0);
+	logdata = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, logfd, 0);
 	close(logfd);
 
 	lastrec = NULL;
@@ -1097,7 +1100,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	return 0;
 }
 
-void for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
+int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 {
 	const char *logfile;
 	FILE *logfp;
@@ -1106,19 +1109,35 @@ void for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 	logfile = git_path("logs/%s", ref);
 	logfp = fopen(logfile, "r");
 	if (!logfp)
-		return;
+		return -1;
 	while (fgets(buf, sizeof(buf), logfp)) {
 		unsigned char osha1[20], nsha1[20];
-		int len;
+		char *email_end, *message;
+		unsigned long timestamp;
+		int len, ret, tz;
 
 		/* old SP new SP name <email> SP time TAB msg LF */
 		len = strlen(buf);
 		if (len < 83 || buf[len-1] != '\n' ||
 		    get_sha1_hex(buf, osha1) || buf[40] != ' ' ||
-		    get_sha1_hex(buf + 41, nsha1) || buf[81] != ' ')
+		    get_sha1_hex(buf + 41, nsha1) || buf[81] != ' ' ||
+		    !(email_end = strchr(buf + 82, '>')) ||
+		    email_end[1] != ' ' ||
+		    !(timestamp = strtoul(email_end + 2, &message, 10)) ||
+		    !message || message[0] != ' ' ||
+		    (message[1] != '+' && message[1] != '-') ||
+		    !isdigit(message[2]) || !isdigit(message[3]) ||
+		    !isdigit(message[4]) || !isdigit(message[5]) ||
+		    message[6] != '\t')
 			continue; /* corrupt? */
-		fn(osha1, nsha1, buf+82, cb_data);
+		email_end[1] = '\0';
+		tz = strtol(message + 1, NULL, 10);
+		message += 7;
+		ret = fn(osha1, nsha1, buf+82, timestamp, tz, message, cb_data);
+		if (ret)
+			return ret;
 	}
 	fclose(logfp);
+	return 0;
 }
 

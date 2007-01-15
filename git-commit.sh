@@ -6,6 +6,7 @@
 USAGE='[-a] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit>] [-u] [--amend] [-e] [--author <author>] [[-i | -o] <path>...]'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
+require_work_tree
 
 git-rev-parse --verify HEAD >/dev/null 2>&1 || initial_commit=t
 
@@ -315,22 +316,16 @@ esac
 ################################################################
 # Prepare index to have a tree to be committed
 
-TOP=`git-rev-parse --show-cdup`
-if test -z "$TOP"
-then
-	TOP=./
-fi
-
 case "$all,$also" in
 t,)
 	save_index &&
 	(
-		cd "$TOP"
-		GIT_INDEX_FILE="$NEXT_INDEX"
-		export GIT_INDEX_FILE
+		cd_to_toplevel &&
+		GIT_INDEX_FILE="$NEXT_INDEX" &&
+		export GIT_INDEX_FILE &&
 		git-diff-files --name-only -z |
 		git-update-index --remove -z --stdin
-	)
+	) || exit
 	;;
 ,t)
 	save_index &&
@@ -338,11 +333,11 @@ t,)
 
 	git-diff-files --name-only -z -- "$@"  |
 	(
-		cd "$TOP"
-		GIT_INDEX_FILE="$NEXT_INDEX"
-		export GIT_INDEX_FILE
+		cd_to_toplevel &&
+		GIT_INDEX_FILE="$NEXT_INDEX" &&
+		export GIT_INDEX_FILE &&
 		git-update-index --remove -z --stdin
-	)
+	) || exit
 	;;
 ,)
 	case "$#" in
@@ -434,7 +429,9 @@ then
 	fi
 elif test "$use_commit" != ""
 then
-	git-cat-file commit "$use_commit" | sed -e '1,/^$/d'
+	encoding=$(git repo-config i18n.commitencoding || echo UTF-8)
+	git show -s --pretty=raw --encoding="$encoding" "$use_commit" |
+	sed -e '1,/^$/d' -e 's/^    //'
 elif test -f "$GIT_DIR/MERGE_MSG"
 then
 	cat "$GIT_DIR/MERGE_MSG"
@@ -496,7 +493,8 @@ then
 		q
 	}
 	'
-	set_author_env=`git-cat-file commit "$use_commit" |
+	encoding=$(git repo-config i18n.commitencoding || echo UTF-8)
+	set_author_env=`git show -s --pretty=raw --encoding="$encoding" "$use_commit" |
 	LANG=C LC_ALL=C sed -ne "$pick_author_script"`
 	eval "$set_author_env"
 	export GIT_AUTHOR_NAME
@@ -628,7 +626,7 @@ then
 	if test -z "$quiet"
 	then
 		echo "Created${initial_commit:+ initial} commit $commit"
-		git-diff-tree --shortstat --summary --root --no-commit-id HEAD
+		git-diff-tree --shortstat --summary --root --no-commit-id HEAD --
 	fi
 fi
 

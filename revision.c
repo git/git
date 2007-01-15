@@ -505,7 +505,9 @@ static void handle_one_reflog_commit(unsigned char *sha1, void *cb_data)
 	}
 }
 
-static int handle_one_reflog_ent(unsigned char *osha1, unsigned char *nsha1, char *detail, void *cb_data)
+static int handle_one_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
+		const char *email, unsigned long timestamp, int tz,
+		const char *message, void *cb_data)
 {
 	handle_one_reflog_commit(osha1, cb_data);
 	handle_one_reflog_commit(nsha1, cb_data);
@@ -1119,21 +1121,23 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 void prepare_revision_walk(struct rev_info *revs)
 {
 	int nr = revs->pending.nr;
-	struct object_array_entry *list = revs->pending.objects;
+	struct object_array_entry *e, *list;
 
+	e = list = revs->pending.objects;
 	revs->pending.nr = 0;
 	revs->pending.alloc = 0;
 	revs->pending.objects = NULL;
 	while (--nr >= 0) {
-		struct commit *commit = handle_commit(revs, list->item, list->name);
+		struct commit *commit = handle_commit(revs, e->item, e->name);
 		if (commit) {
 			if (!(commit->object.flags & SEEN)) {
 				commit->object.flags |= SEEN;
 				insert_by_date(commit, &revs->commits);
 			}
 		}
-		list++;
+		e++;
 	}
+	free(list);
 
 	if (revs->no_walk)
 		return;

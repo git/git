@@ -73,7 +73,7 @@ test_expect_success 'fetch following tags' '
 
 	mkdir four &&
 	cd four &&
-	git init-db &&
+	git init &&
 
 	git fetch .. :track &&
 	git show-ref --verify refs/tags/anno &&

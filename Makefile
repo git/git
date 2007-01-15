@@ -1,5 +1,5 @@
 # The default target of this Makefile is...
-all:
+all::
 
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
 # This also implies MOZILLA_SHA1.
@@ -68,6 +68,9 @@ all:
 # Patrick Mauritz).
 #
 # Define NO_MMAP if you want to avoid mmap.
+#
+# Define NO_PREAD if you have a problem with pread() system call (e.g.
+# cygwin.dll before v1.5.22).
 #
 # Define NO_FAST_WORKING_DIRECTORY if accessing objects in pack files is
 # generally faster on your platform than accessing the working directory.
@@ -179,7 +182,7 @@ SCRIPT_SH = \
 SCRIPT_PERL = \
 	git-add--interactive.perl \
 	git-archimport.perl git-cvsimport.perl git-relink.perl \
-	git-cvsserver.perl \
+	git-cvsserver.perl git-remote.perl \
 	git-svnimport.perl git-cvsexportcommit.perl \
 	git-send-email.perl git-svn.perl
 
@@ -201,7 +204,7 @@ PROGRAMS = \
 	git-update-server-info$X \
 	git-upload-pack$X git-verify-pack$X \
 	git-pack-redundant$X git-var$X \
-	git-describe$X git-merge-tree$X git-imap-send$X \
+	git-merge-tree$X git-imap-send$X \
 	git-merge-recursive$X \
 	$(EXTRA_PROGRAMS)
 
@@ -210,7 +213,7 @@ EXTRA_PROGRAMS =
 
 BUILT_INS = \
 	git-format-patch$X git-show$X git-whatchanged$X git-cherry$X \
-	git-get-tar-commit-id$X \
+	git-get-tar-commit-id$X git-init$X \
 	$(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
 
 # what 'all' will build and 'install' will install, in gitexecdir
@@ -251,6 +254,7 @@ LIB_OBJS = \
 	interpolate.o \
 	lockfile.o \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o sideband.o \
+	reachable.o \
 	quote.o read-cache.o refs.o run-command.o dir.o object-refs.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
@@ -271,6 +275,7 @@ BUILTIN_OBJS = \
 	builtin-check-ref-format.o \
 	builtin-commit-tree.o \
 	builtin-count-objects.o \
+	builtin-describe.o \
 	builtin-diff.o \
 	builtin-diff-files.o \
 	builtin-diff-index.o \
@@ -522,6 +527,10 @@ ifdef NO_MMAP
 	COMPAT_CFLAGS += -DNO_MMAP
 	COMPAT_OBJS += compat/mmap.o
 endif
+ifdef NO_PREAD
+	COMPAT_CFLAGS += -DNO_PREAD
+	COMPAT_OBJS += compat/pread.o
+endif
 ifdef NO_FAST_WORKING_DIRECTORY
 	BASIC_CFLAGS += -DNO_FAST_WORKING_DIRECTORY
 endif
@@ -596,9 +605,12 @@ export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
 
 ### Build rules
 
-all: $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk gitweb/gitweb.cgi
+all:: $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk gitweb/gitweb.cgi
+ifneq (,$X)
+	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_PROGRAMS) $(BUILT_INS) git$X)), rm -f '$p';)
+endif
 
-all:
+all::
 	$(MAKE) -C perl PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' all
 	$(MAKE) -C templates
 
@@ -840,6 +852,9 @@ install: all
 			'$(DESTDIR_SQ)$(gitexecdir_SQ)/git$X'; \
 	fi
 	$(foreach p,$(BUILT_INS), rm -f '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' && ln '$(DESTDIR_SQ)$(gitexecdir_SQ)/git$X' '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' ;)
+ifneq (,$X)
+	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_PROGRAMS) $(BUILT_INS) git$X)), rm -f '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p';)
+endif
 
 install-doc:
 	$(MAKE) -C Documentation install

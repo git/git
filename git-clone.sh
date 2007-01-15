@@ -214,7 +214,7 @@ yes)
 	GIT_DIR="$D" ;;
 *)
 	GIT_DIR="$D/.git" ;;
-esac && export GIT_DIR && git-init-db ${template+"$template"} || usage
+esac && export GIT_DIR && git-init ${template+"$template"} || usage
 
 if test -n "$reference"
 then
@@ -355,7 +355,7 @@ then
 	# The name under $remote_top the remote HEAD seems to point at.
 	head_points_at=$(
 		(
-			echo "master"
+			test -f "$GIT_DIR/$remote_top/master" && echo "master"
 			cd "$GIT_DIR/$remote_top" &&
 			find . -type f -print | sed -e 's/^\.\///'
 		) | (

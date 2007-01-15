@@ -32,7 +32,8 @@ methods:
 
 4. by using the -a switch with the 'commit' command to automatically "add"
    changes from all known files i.e. files that have already been committed
-   before, and perform the actual commit.
+   before, and to automatically "rm" files that have been
+   removed from the working tree, and perform the actual commit.
 
 The gitlink:git-status[1] command can be used to obtain a
 summary of what is included by any of the above for the next
@@ -72,12 +73,8 @@ OPTIONS
 	Add Signed-off-by line at the end of the commit message.
 
 --no-verify::
-	By default, the command looks for suspicious lines the
-	commit introduces, and aborts committing if there is one.
-	The definition of 'suspicious lines' is currently the
-	lines that has trailing whitespaces, and the lines whose
-	indentation has a SP character immediately followed by a
-	TAB character.  This option turns off the check.
+	This option bypasses the pre-commit hook.
+	See also link:hooks.html[hooks].
 
 -e|--edit::
 	The message taken from file with `-F`, command line with

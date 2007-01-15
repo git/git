@@ -17,7 +17,7 @@ test_expect_success setup '
 test_expect_success 'pulling into void' '
 	mkdir cloned &&
 	cd cloned &&
-	git init-db &&
+	git init &&
 	git pull ..
 '
 

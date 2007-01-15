@@ -199,6 +199,11 @@ const char git_version_string[] = GIT_VERSION;
 
 #define RUN_SETUP	(1<<0)
 #define USE_PAGER	(1<<1)
+/*
+ * require working tree to be present -- anything uses this needs
+ * RUN_SETUP for reading from the configuration file.
+ */
+#define NOT_BARE 	(1<<2)
 
 static void handle_internal_command(int argc, const char **argv, char **envp)
 {
@@ -208,7 +213,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		int (*fn)(int, const char **, const char *);
 		int option;
 	} commands[] = {
-		{ "add", cmd_add, RUN_SETUP },
+		{ "add", cmd_add, RUN_SETUP | NOT_BARE },
 		{ "annotate", cmd_annotate, },
 		{ "apply", cmd_apply },
 		{ "archive", cmd_archive },
@@ -220,6 +225,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "cherry", cmd_cherry, RUN_SETUP },
 		{ "commit-tree", cmd_commit_tree, RUN_SETUP },
 		{ "count-objects", cmd_count_objects, RUN_SETUP },
+		{ "describe", cmd_describe, RUN_SETUP },
 		{ "diff", cmd_diff, RUN_SETUP | USE_PAGER },
 		{ "diff-files", cmd_diff_files, RUN_SETUP },
 		{ "diff-index", cmd_diff_index, RUN_SETUP },
@@ -231,6 +237,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "get-tar-commit-id", cmd_get_tar_commit_id },
 		{ "grep", cmd_grep, RUN_SETUP },
 		{ "help", cmd_help },
+		{ "init", cmd_init_db },
 		{ "init-db", cmd_init_db },
 		{ "log", cmd_log, RUN_SETUP | USE_PAGER },
 		{ "ls-files", cmd_ls_files, RUN_SETUP },
@@ -238,7 +245,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "mailinfo", cmd_mailinfo },
 		{ "mailsplit", cmd_mailsplit },
 		{ "merge-file", cmd_merge_file },
-		{ "mv", cmd_mv, RUN_SETUP },
+		{ "mv", cmd_mv, RUN_SETUP | NOT_BARE },
 		{ "name-rev", cmd_name_rev, RUN_SETUP },
 		{ "pack-objects", cmd_pack_objects, RUN_SETUP },
 		{ "pickaxe", cmd_blame, RUN_SETUP | USE_PAGER },
@@ -251,8 +258,8 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "rerere", cmd_rerere, RUN_SETUP },
 		{ "rev-list", cmd_rev_list, RUN_SETUP },
 		{ "rev-parse", cmd_rev_parse, RUN_SETUP },
-		{ "rm", cmd_rm, RUN_SETUP },
-		{ "runstatus", cmd_runstatus, RUN_SETUP },
+		{ "rm", cmd_rm, RUN_SETUP | NOT_BARE },
+		{ "runstatus", cmd_runstatus, RUN_SETUP | NOT_BARE },
 		{ "shortlog", cmd_shortlog, RUN_SETUP | USE_PAGER },
 		{ "show-branch", cmd_show_branch, RUN_SETUP },
 		{ "show", cmd_show, RUN_SETUP | USE_PAGER },
@@ -289,6 +296,8 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 			prefix = setup_git_directory();
 		if (p->option & USE_PAGER)
 			setup_pager();
+		if ((p->option & NOT_BARE) && is_bare_repository())
+			die("%s cannot be used in a bare git directory", cmd);
 		trace_argv_printf(argv, argc, "trace: built-in: git");
 
 		exit(p->fn(argc, argv, prefix));

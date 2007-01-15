@@ -1,0 +1,201 @@
+#include "cache.h"
+#include "refs.h"
+#include "tag.h"
+#include "commit.h"
+#include "blob.h"
+#include "diff.h"
+#include "revision.h"
+#include "reachable.h"
+#include "cache-tree.h"
+
+static void process_blob(struct blob *blob,
+			 struct object_array *p,
+			 struct name_path *path,
+			 const char *name)
+{
+	struct object *obj = &blob->object;
+
+	if (obj->flags & SEEN)
+		return;
+	obj->flags |= SEEN;
+	/* Nothing to do, really .. The blob lookup was the important part */
+}
+
+static void process_tree(struct tree *tree,
+			 struct object_array *p,
+			 struct name_path *path,
+			 const char *name)
+{
+	struct object *obj = &tree->object;
+	struct tree_desc desc;
+	struct name_entry entry;
+	struct name_path me;
+
+	if (obj->flags & SEEN)
+		return;
+	obj->flags |= SEEN;
+	if (parse_tree(tree) < 0)
+		die("bad tree object %s", sha1_to_hex(obj->sha1));
+	name = xstrdup(name);
+	add_object(obj, p, path, name);
+	me.up = path;
+	me.elem = name;
+	me.elem_len = strlen(name);
+
+	desc.buf = tree->buffer;
+	desc.size = tree->size;
+
+	while (tree_entry(&desc, &entry)) {
+		if (S_ISDIR(entry.mode))
+			process_tree(lookup_tree(entry.sha1), p, &me, entry.path);
+		else
+			process_blob(lookup_blob(entry.sha1), p, &me, entry.path);
+	}
+	free(tree->buffer);
+	tree->buffer = NULL;
+}
+
+static void process_tag(struct tag *tag, struct object_array *p, const char *name)
+{
+	struct object *obj = &tag->object;
+	struct name_path me;
+
+	if (obj->flags & SEEN)
+		return;
+	obj->flags |= SEEN;
+
+	me.up = NULL;
+	me.elem = "tag:/";
+	me.elem_len = 5;
+
+	if (parse_tag(tag) < 0)
+		die("bad tag object %s", sha1_to_hex(obj->sha1));
+	add_object(tag->tagged, p, NULL, name);
+}
+
+static void walk_commit_list(struct rev_info *revs)
+{
+	int i;
+	struct commit *commit;
+	struct object_array objects = { 0, 0, NULL };
+
+	/* Walk all commits, process their trees */
+	while ((commit = get_revision(revs)) != NULL)
+		process_tree(commit->tree, &objects, NULL, "");
+
+	/* Then walk all the pending objects, recursively processing them too */
+	for (i = 0; i < revs->pending.nr; i++) {
+		struct object_array_entry *pending = revs->pending.objects + i;
+		struct object *obj = pending->item;
+		const char *name = pending->name;
+		if (obj->type == OBJ_TAG) {
+			process_tag((struct tag *) obj, &objects, name);
+			continue;
+		}
+		if (obj->type == OBJ_TREE) {
+			process_tree((struct tree *)obj, &objects, NULL, name);
+			continue;
+		}
+		if (obj->type == OBJ_BLOB) {
+			process_blob((struct blob *)obj, &objects, NULL, name);
+			continue;
+		}
+		die("unknown pending object %s (%s)", sha1_to_hex(obj->sha1), name);
+	}
+}
+
+static int add_one_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
+		const char *email, unsigned long timestamp, int tz,
+		const char *message, void *cb_data)
+{
+	struct object *object;
+	struct rev_info *revs = (struct rev_info *)cb_data;
+
+	object = parse_object(osha1);
+	if (object)
+		add_pending_object(revs, object, "");
+	object = parse_object(nsha1);
+	if (object)
+		add_pending_object(revs, object, "");
+	return 0;
+}
+
+static int add_one_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+{
+	struct object *object = parse_object(sha1);
+	struct rev_info *revs = (struct rev_info *)cb_data;
+
+	if (!object)
+		die("bad object ref: %s:%s", path, sha1_to_hex(sha1));
+	add_pending_object(revs, object, "");
+
+	return 0;
+}
+
+static int add_one_reflog(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+{
+	for_each_reflog_ent(path, add_one_reflog_ent, cb_data);
+	return 0;
+}
+
+static void add_one_tree(const unsigned char *sha1, struct rev_info *revs)
+{
+	struct tree *tree = lookup_tree(sha1);
+	add_pending_object(revs, &tree->object, "");
+}
+
+static void add_cache_tree(struct cache_tree *it, struct rev_info *revs)
+{
+	int i;
+
+	if (it->entry_count >= 0)
+		add_one_tree(it->sha1, revs);
+	for (i = 0; i < it->subtree_nr; i++)
+		add_cache_tree(it->down[i]->cache_tree, revs);
+}
+
+static void add_cache_refs(struct rev_info *revs)
+{
+	int i;
+
+	read_cache();
+	for (i = 0; i < active_nr; i++) {
+		lookup_blob(active_cache[i]->sha1);
+		/*
+		 * We could add the blobs to the pending list, but quite
+		 * frankly, we don't care. Once we've looked them up, and
+		 * added them as objects, we've really done everything
+		 * there is to do for a blob
+		 */
+	}
+	if (active_cache_tree)
+		add_cache_tree(active_cache_tree, revs);
+}
+
+void mark_reachable_objects(struct rev_info *revs, int mark_reflog)
+{
+	/*
+	 * Set up revision parsing, and mark us as being interested
+	 * in all object types, not just commits.
+	 */
+	revs->tag_objects = 1;
+	revs->blob_objects = 1;
+	revs->tree_objects = 1;
+
+	/* Add all refs from the index file */
+	add_cache_refs(revs);
+
+	/* Add all external refs */
+	for_each_ref(add_one_ref, revs);
+
+	/* Add all reflog info from refs */
+	if (mark_reflog)
+		for_each_ref(add_one_reflog, revs);
+
+	/*
+	 * Set up the revision walk - this will move all commits
+	 * from the pending list to the commit walking list.
+	 */
+	prepare_revision_walk(revs);
+	walk_commit_list(revs);
+}

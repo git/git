@@ -90,7 +90,8 @@ If you need to pass multiple options, separate them with a comma.
 	Print a short usage message and exit.
 
 -z <fuzz>::
-        Pass the timestamp fuzz factor to cvsps.
+	Pass the timestamp fuzz factor to cvsps, in seconds. If unset,
+	cvsps defaults to 300s.
 
 -s <subst>::
 	Substitute the character "/" in branch names with <subst>
@@ -99,6 +100,18 @@ If you need to pass multiple options, separate them with a comma.
 	CVS by default uses the unix username when writing its
 	commit logs. Using this option and an author-conv-file
 	in this format
+
+-a::
+	Import all commits, including recent ones. cvsimport by default
+	skips commits that have a timestamp less than 10 minutes ago.
+
+-S <regex>::
+	Skip paths matching the regex.
+
+-L <limit>::
+	Limit the number of commits imported. Workaround for cases where
+	cvsimport leaks memory.
+
 +
 ---------
 	exon=Andreas Ericsson <ae@op5.se>

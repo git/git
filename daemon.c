@@ -102,7 +102,7 @@ static void logreport(int priority, const char *err, va_list params)
 	buf[buflen++] = '\n';
 	buf[buflen] = '\0';
 
-	write(2, buf, buflen);
+	write_in_full(2, buf, buflen);
 }
 
 static void logerror(const char *err, ...)

@@ -97,7 +97,7 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 			 * Show the diff for the 'ce' if we found the one
 			 * from the desired stage.
 			 */
-			diff_unmerge(&revs->diffopt, ce->name);
+			diff_unmerge(&revs->diffopt, ce->name, 0, null_sha1);
 			if (ce_stage(ce) != diff_unmerged_stage)
 				continue;
 		}
@@ -297,9 +297,12 @@ static int diff_cache(struct rev_info *revs,
 			    !show_modified(revs, ce, ac[1], 0,
 					   cached, match_missing))
 				break;
-			/* fallthru */
+			diff_unmerge(&revs->diffopt, ce->name,
+				     ntohl(ce->ce_mode), ce->sha1);
+			break;
 		case 3:
-			diff_unmerge(&revs->diffopt, ce->name);
+			diff_unmerge(&revs->diffopt, ce->name,
+				     0, null_sha1);
 			break;
 
 		default:

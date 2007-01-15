@@ -28,6 +28,30 @@ set_reflog_action() {
 	fi
 }
 
+is_bare_repository () {
+	git-repo-config --bool --get core.bare ||
+	case "$GIT_DIR" in
+	.git | */.git) echo false ;;
+	*) echo true ;;
+	esac
+}
+
+cd_to_toplevel () {
+	cdup=$(git-rev-parse --show-cdup)
+	if test ! -z "$cdup"
+	then
+		cd "$cdup" || {
+			echo >&2 "Cannot chdir to $cdup, the toplevel of the working tree"
+			exit 1
+		}
+	fi
+}
+
+require_work_tree () {
+	test $(is_bare_repository) = false ||
+	die "fatal: $0 cannot be used without a working tree."
+}
+
 if [ -z "$LONG_USAGE" ]
 then
 	LONG_USAGE="Usage: $0 $USAGE"
@@ -47,7 +71,11 @@ esac
 if [ -z "$SUBDIRECTORY_OK" ]
 then
 	: ${GIT_DIR=.git}
-	GIT_DIR=$(GIT_DIR="$GIT_DIR" git-rev-parse --git-dir) || exit
+	GIT_DIR=$(GIT_DIR="$GIT_DIR" git-rev-parse --git-dir) || {
+		exit=$?
+		echo >&2 "You need to run this command from the toplevel of the working tree."
+		exit $exit
+	}
 else
 	GIT_DIR=$(git-rev-parse --git-dir) || exit
 fi

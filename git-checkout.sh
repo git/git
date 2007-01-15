@@ -3,9 +3,11 @@
 USAGE='[-f] [-b <new_branch>] [-m] [<branch>] [<paths>...]'
 SUBDIRECTORY_OK=Sometimes
 . git-sh-setup
+require_work_tree
 
 old_name=HEAD
 old=$(git-rev-parse --verify $old_name 2>/dev/null)
+oldbranch=$(git-symbolic-ref $old_name 2>/dev/null)
 new=
 new_name=
 force=
@@ -13,6 +15,8 @@ branch=
 newbranch=
 newbranch_log=
 merge=
+LF='
+'
 while [ "$#" != "0" ]; do
     arg="$1"
     shift
@@ -50,7 +54,7 @@ while [ "$#" != "0" ]; do
 				exit 1
 			fi
 			new="$rev"
-			new_name="$arg^0"
+			new_name="$arg"
 			if git-show-ref --verify --quiet -- "refs/heads/$arg"
 			then
 				branch="$arg"
@@ -131,31 +135,53 @@ fi
 
 # We are switching branches and checking out trees, so
 # we *NEED* to be at the toplevel.
-cdup=$(git-rev-parse --show-cdup)
-if test ! -z "$cdup"
-then
-	cd "$cdup"
-fi
+cd_to_toplevel
 
 [ -z "$new" ] && new=$old && new_name="$old_name"
 
-# If we don't have an old branch that we're switching to,
+# If we don't have an existing branch that we're switching to,
 # and we don't have a new branch name for the target we
-# are switching to, then we'd better just be checking out
-# what we already had
+# are switching to, then we are detaching our HEAD from any
+# branch.  However, if "git checkout HEAD" detaches the HEAD
+# from the current branch, even though that may be logically
+# correct, it feels somewhat funny.  More importantly, we do not
+# want "git checkout" nor "git checkout -f" to detach HEAD.
 
-[ -z "$branch$newbranch" ] &&
-	[ "$new" != "$old" ] &&
-	die "git checkout: provided reference cannot be checked out directly
+detached=
+detach_warn=
 
-  You need -b to associate a new branch with the wanted checkout. Example:
-  git checkout -b <new_branch_name> $arg
-"
+if test -z "$branch$newbranch" && test "$new" != "$old"
+then
+	detached="$new"
+	if test -n "$oldbranch"
+	then
+		detach_warn="warning: you are not on ANY branch anymore.
+If you meant to create a new branch from the commit, you need -b to
+associate a new branch with the wanted checkout.  Example:
+  git checkout -b <new_branch_name> $arg"
+	fi
+elif test -z "$oldbranch" && test -n "$branch"
+then
+	# Coming back...
+	if test -z "$force"
+	then
+		git show-ref -d -s | grep "$old" >/dev/null || {
+			echo >&2 \
+"You are not on any branch and switching to branch '$new_name'
+may lose your changes.  At this point, you can do one of two things:
+ (1) Decide it is Ok and say 'git checkout -f $new_name';
+ (2) Start a new branch from the current commit, by saying
+     'git checkout -b <branch-name>'.
+Leaving your HEAD detached; not switching to branch '$new_name'."
+			exit 1;
+		}
+	fi
+fi
 
 if [ "X$old" = X ]
 then
-	echo "warning: You do not appear to currently be on a branch." >&2
-	echo "warning: Forcing checkout of $new_name." >&2
+	echo >&2 "warning: You appear to be on a branch yet to be born."
+	echo >&2 "warning: Forcing checkout of $new_name."
 	force=1
 fi
 
@@ -226,8 +252,25 @@ if [ "$?" -eq 0 ]; then
 		git-update-ref -m "checkout: Created from $new_name" "refs/heads/$newbranch" $new || exit
 		branch="$newbranch"
 	fi
-	[ "$branch" ] &&
-	GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD "refs/heads/$branch"
+	if test -n "$branch"
+	then
+		GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD "refs/heads/$branch"
+	elif test -n "$detached"
+	then
+		# NEEDSWORK: we would want a command to detach the HEAD
+		# atomically, instead of this handcrafted command sequence.
+		# Perhaps:
+		#	git update-ref --detach HEAD $new
+		# or something like that...
+		#
+		echo "$detached" >"$GIT_DIR/HEAD.new" &&
+		mv "$GIT_DIR/HEAD.new" "$GIT_DIR/HEAD" ||
+			die "Cannot detach HEAD"
+		if test -n "$detach_warn"
+		then
+			echo >&2 "$detach_warn"
+		fi
+	fi
 	rm -f "$GIT_DIR/MERGE_HEAD"
 else
 	exit 1

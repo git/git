@@ -16,9 +16,14 @@ case "$0" in
 	me=cherry-pick
 	USAGE='[--edit] [-n] [-r] [-x] <commit-ish>'  ;;
 * )
-	die "What are you talking about?" ;;
+	echo >&2 "What are you talking about?"
+	exit 1 ;;
 esac
+
+SUBDIRECTORY_OK=Yes ;# we will cd up
 . git-sh-setup
+require_work_tree
+cd_to_toplevel
 
 no_commit=
 while case "$#" in 0) break ;; esac
@@ -76,6 +81,8 @@ prev=$(git-rev-parse --verify "$commit^1" 2>/dev/null) ||
 git-rev-parse --verify "$commit^2" >/dev/null 2>&1 &&
 	die "Cannot run $me a multi-parent commit."
 
+encoding=$(git repo-config i18n.commitencoding || echo UTF-8)
+
 # "commit" is an existing commit.  We would want to apply
 # the difference it introduces since its first parent "prev"
 # on top of the current HEAD if we are cherry-pick.  Or the
@@ -83,10 +90,11 @@ git-rev-parse --verify "$commit^2" >/dev/null 2>&1 &&
 
 case "$me" in
 revert)
-	git-rev-list --pretty=oneline --max-count=1 $commit |
+	git show -s --pretty=oneline --encoding="$encoding" $commit |
 	sed -e '
 		s/^[^ ]* /Revert "/
-		s/$/"/'
+		s/$/"/
+	'
 	echo
 	echo "This reverts commit $commit."
 	test "$rev" = "$commit" ||
@@ -115,14 +123,17 @@ cherry-pick)
 
 		q
 	}'
-	set_author_env=`git-cat-file commit "$commit" |
+
+	logmsg=`git show -s --pretty=raw --encoding="$encoding" "$commit"`
+	set_author_env=`echo "$logmsg" |
 	LANG=C LC_ALL=C sed -ne "$pick_author_script"`
 	eval "$set_author_env"
 	export GIT_AUTHOR_NAME
 	export GIT_AUTHOR_EMAIL
 	export GIT_AUTHOR_DATE
 
-	git-cat-file commit $commit | sed -e '1,/^$/d'
+	echo "$logmsg" |
+	sed -e '1,/^$/d' -e 's/^    //'
 	case "$replay" in
 	'')
 		echo "(cherry picked from commit $commit)"

@@ -5,11 +5,14 @@
 
 USAGE='[-n] [--no-commit] [--squash] [-s <strategy>] [-m=<merge-message>] <commit>+'
 
+SUBDIRECTORY_OK=Yes
 . git-sh-setup
 set_reflog_action "merge $*"
+require_work_tree
+cd_to_toplevel
 
 test -z "$(git ls-files -u)" ||
-	die "You are in a middle of conflicted merge."
+	die "You are in the middle of a conflicted merge."
 
 LF='
 '
@@ -298,24 +301,30 @@ f,*)
 	;;
 ?,1,*,)
 	# We are not doing octopus, not fast forward, and have only
-	# one common.  See if it is really trivial.
-	git var GIT_COMMITTER_IDENT >/dev/null || exit
-
-	echo "Trying really trivial in-index merge..."
+	# one common.
 	git-update-index --refresh 2>/dev/null
-	if git-read-tree --trivial -m -u -v $common $head "$1" &&
-	   result_tree=$(git-write-tree)
-	then
-	    echo "Wonderful."
-	    result_commit=$(
-	        echo "$merge_msg" |
-	        git-commit-tree $result_tree -p HEAD -p "$1"
-	    ) || exit
-	    finish "$result_commit" "In-index merge"
-	    dropsave
-	    exit 0
-	fi
-	echo "Nope."
+	case " $use_strategies " in
+	*' recursive '*|*' recur '*)
+		: run merge later
+		;;
+	*)
+		# See if it is really trivial.
+		git var GIT_COMMITTER_IDENT >/dev/null || exit
+		echo "Trying really trivial in-index merge..."
+		if git-read-tree --trivial -m -u -v $common $head "$1" &&
+		   result_tree=$(git-write-tree)
+		then
+			echo "Wonderful."
+			result_commit=$(
+				echo "$merge_msg" |
+				git-commit-tree $result_tree -p HEAD -p "$1"
+			) || exit
+			finish "$result_commit" "In-index merge"
+			dropsave
+			exit 0
+		fi
+		echo "Nope."
+	esac
 	;;
 *)
 	# An octopus.  If we can reach all the remote we are up to date.

@@ -42,13 +42,13 @@ OPTIONS
 	and the current tree.
 
 -u::
-	By default, the commit log message, author name and
-	author email are taken from the e-mail without any
-	charset conversion, after minimally decoding MIME
-	transfer encoding.  This flag causes the resulting
-	commit to be encoded in utf-8 by transliterating them.
-	Note that the patch is always used as is without charset
-	conversion, even with this flag.
+	The commit log message, author name and author email are
+	taken from the e-mail, and after minimally decoding MIME
+	transfer encoding, re-coded in UTF-8 by transliterating
+	them.  This used to be optional but now it is the default.
++
+Note that the patch is always used as-is without charset
+conversion, even with this flag.
 
 -c .dotest/<num>::
 	When the patch contained in an e-mail does not cleanly

@@ -269,6 +269,11 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.bare")) {
+		is_bare_repository_cfg = git_config_bool(var, value);
+		return 0;
+	}
+
 	if (!strcmp(var, "core.ignorestat")) {
 		assume_unchanged = git_config_bool(var, value);
 		return 0;
@@ -301,6 +306,21 @@ int git_default_config(const char *var, const char *value)
 		else if (level < 0 || level > Z_BEST_COMPRESSION)
 			die("bad zlib compression level %d", level);
 		zlib_compression_level = level;
+		return 0;
+	}
+
+	if (!strcmp(var, "core.packedgitwindowsize")) {
+		int pgsz = getpagesize();
+		packed_git_window_size = git_config_int(var, value);
+		packed_git_window_size /= pgsz;
+		if (packed_git_window_size < 2)
+			packed_git_window_size = 2;
+		packed_git_window_size *= pgsz;
+		return 0;
+	}
+
+	if (!strcmp(var, "core.packedgitlimit")) {
+		packed_git_limit = git_config_int(var, value);
 		return 0;
 	}
 
@@ -449,7 +469,15 @@ static int store_aux(const char* key, const char* value)
 	return 0;
 }
 
-static void store_write_section(int fd, const char* key)
+static int write_error()
+{
+	fprintf(stderr, "Failed to write new configuration file\n");
+
+	/* Same error code as "failed to rename". */
+	return 4;
+}
+
+static int store_write_section(int fd, const char* key)
 {
 	const char *dot = strchr(key, '.');
 	int len1 = store.baselen, len2 = -1;
@@ -463,37 +491,74 @@ static void store_write_section(int fd, const char* key)
 		}
 	}
 
-	write(fd, "[", 1);
-	write(fd, key, len1);
+	if (write_in_full(fd, "[", 1) != 1 ||
+	    write_in_full(fd, key, len1) != len1)
+		return 0;
 	if (len2 >= 0) {
-		write(fd, " \"", 2);
+		if (write_in_full(fd, " \"", 2) != 2)
+			return 0;
 		while (--len2 >= 0) {
 			unsigned char c = *++dot;
 			if (c == '"')
-				write(fd, "\\", 1);
-			write(fd, &c, 1);
+				if (write_in_full(fd, "\\", 1) != 1)
+					return 0;
+			if (write_in_full(fd, &c, 1) != 1)
+				return 0;
 		}
-		write(fd, "\"", 1);
+		if (write_in_full(fd, "\"", 1) != 1)
+			return 0;
 	}
-	write(fd, "]\n", 2);
+	if (write_in_full(fd, "]\n", 2) != 2)
+		return 0;
+
+	return 1;
 }
 
-static void store_write_pair(int fd, const char* key, const char* value)
+static int store_write_pair(int fd, const char* key, const char* value)
 {
 	int i;
+	int length = strlen(key+store.baselen+1);
+	int quote = 0;
 
-	write(fd, "\t", 1);
-	write(fd, key+store.baselen+1,
-		strlen(key+store.baselen+1));
-	write(fd, " = ", 3);
+	/* Check to see if the value needs to be quoted. */
+	if (value[0] == ' ')
+		quote = 1;
+	for (i = 0; value[i]; i++)
+		if (value[i] == ';' || value[i] == '#')
+			quote = 1;
+	if (value[i-1] == ' ')
+		quote = 1;
+
+	if (write_in_full(fd, "\t", 1) != 1 ||
+	    write_in_full(fd, key+store.baselen+1, length) != length ||
+	    write_in_full(fd, " = ", 3) != 3)
+		return 0;
+	if (quote && write_in_full(fd, "\"", 1) != 1)
+		return 0;
 	for (i = 0; value[i]; i++)
 		switch (value[i]) {
-		case '\n': write(fd, "\\n", 2); break;
-		case '\t': write(fd, "\\t", 2); break;
-		case '"': case '\\': write(fd, "\\", 1);
-		default: write(fd, value+i, 1);
-	}
-	write(fd, "\n", 1);
+		case '\n':
+			if (write_in_full(fd, "\\n", 2) != 2)
+				return 0;
+			break;
+		case '\t':
+			if (write_in_full(fd, "\\t", 2) != 2)
+				return 0;
+			break;
+		case '"':
+		case '\\':
+			if (write_in_full(fd, "\\", 1) != 1)
+				return 0;
+		default:
+			if (write_in_full(fd, value+i, 1) != 1)
+				return 0;
+			break;
+		}
+	if (quote && write_in_full(fd, "\"", 1) != 1)
+		return 0;
+	if (write_in_full(fd, "\n", 1) != 1)
+		return 0;
+	return 1;
 }
 
 static int find_beginning_of_line(const char* contents, int size,
@@ -633,9 +698,10 @@ int git_config_set_multivar(const char* key, const char* value,
 		}
 
 		store.key = (char*)key;
-		store_write_section(fd, key);
-		store_write_pair(fd, key, value);
-	} else{
+		if (!store_write_section(fd, key) ||
+		    !store_write_pair(fd, key, value))
+			goto write_err_out;
+	} else {
 		struct stat st;
 		char* contents;
 		int i, copy_begin, copy_end, new_line = 0;
@@ -695,7 +761,7 @@ int git_config_set_multivar(const char* key, const char* value,
 		}
 
 		fstat(in_fd, &st);
-		contents = mmap(NULL, st.st_size, PROT_READ,
+		contents = xmmap(NULL, st.st_size, PROT_READ,
 			MAP_PRIVATE, in_fd, 0);
 		close(in_fd);
 
@@ -714,25 +780,33 @@ int git_config_set_multivar(const char* key, const char* value,
 
 			/* write the first part of the config */
 			if (copy_end > copy_begin) {
-				write(fd, contents + copy_begin,
-				copy_end - copy_begin);
-				if (new_line)
-					write(fd, "\n", 1);
+				if (write_in_full(fd, contents + copy_begin,
+						  copy_end - copy_begin) <
+				    copy_end - copy_begin)
+					goto write_err_out;
+				if (new_line &&
+				    write_in_full(fd, "\n", 1) != 1)
+					goto write_err_out;
 			}
 			copy_begin = store.offset[i];
 		}
 
 		/* write the pair (value == NULL means unset) */
 		if (value != NULL) {
-			if (store.state == START)
-				store_write_section(fd, key);
-			store_write_pair(fd, key, value);
+			if (store.state == START) {
+				if (!store_write_section(fd, key))
+					goto write_err_out;
+			}
+			if (!store_write_pair(fd, key, value))
+				goto write_err_out;
 		}
 
 		/* write the rest of the config */
 		if (copy_begin < st.st_size)
-			write(fd, contents + copy_begin,
-				st.st_size - copy_begin);
+			if (write_in_full(fd, contents + copy_begin,
+					  st.st_size - copy_begin) <
+			    st.st_size - copy_begin)
+				goto write_err_out;
 
 		munmap(contents, st.st_size);
 		unlink(config_filename);
@@ -755,6 +829,11 @@ out_free:
 		free(lock_file);
 	}
 	return ret;
+
+write_err_out:
+	ret = write_error();
+	goto out_free;
+
 }
 
 int git_config_rename_section(const char *old_name, const char *new_name)
@@ -785,6 +864,7 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 
 	while (fgets(buf, sizeof(buf), config_file)) {
 		int i;
+		int length;
 		for (i = 0; buf[i] && isspace(buf[i]); i++)
 			; /* do nothing */
 		if (buf[i] == '[') {
@@ -815,15 +895,22 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 				/* old_name matches */
 				ret++;
 				store.baselen = strlen(new_name);
-				store_write_section(out_fd, new_name);
+				if (!store_write_section(out_fd, new_name)) {
+					ret = write_error();
+					goto out;
+				}
 				continue;
 			}
 		}
-		write(out_fd, buf, strlen(buf));
+		length = strlen(buf);
+		if (write_in_full(out_fd, buf, length) != length) {
+			ret = write_error();
+			goto out;
+		}
 	}
 	fclose(config_file);
 	if (close(out_fd) || commit_lock_file(lock) < 0)
-		ret = error("Cannot commit config file!");
+			ret = error("Cannot commit config file!");
  out:
 	free(config_filename);
 	return ret;

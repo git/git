@@ -1341,10 +1341,8 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		fd = open(s->path, O_RDONLY);
 		if (fd < 0)
 			goto err_empty;
-		s->data = mmap(NULL, s->size, PROT_READ, MAP_PRIVATE, fd, 0);
+		s->data = xmmap(NULL, s->size, PROT_READ, MAP_PRIVATE, fd, 0);
 		close(fd);
-		if (s->data == MAP_FAILED)
-			goto err_empty;
 		s->should_munmap = 1;
 	}
 	else {
@@ -1391,7 +1389,7 @@ static void prep_temp_blob(struct diff_tempfile *temp,
 	fd = git_mkstemp(temp->tmp_path, TEMPFILE_PATH_LEN, ".diff_XXXXXX");
 	if (fd < 0)
 		die("unable to create temp-file");
-	if (write(fd, blob, size) != size)
+	if (write_in_full(fd, blob, size) != size)
 		die("unable to write temp-file");
 	close(fd);
 	temp->name = temp->tmp_path;
@@ -2875,10 +2873,12 @@ void diff_change(struct diff_options *options,
 }
 
 void diff_unmerge(struct diff_options *options,
-		  const char *path)
+		  const char *path,
+		  unsigned mode, const unsigned char *sha1)
 {
 	struct diff_filespec *one, *two;
 	one = alloc_filespec(path);
 	two = alloc_filespec(path);
-	diff_queue(&diff_queued_diff, one, two);
+	fill_filespec(one, sha1, mode);
+	diff_queue(&diff_queued_diff, one, two)->is_unmerged = 1;
 }

@@ -401,5 +401,22 @@ test_expect_success numbers '
 	test z1048576 = "z$m"
 '
 
+rm .git/config
+
+git-repo-config quote.leading " test"
+git-repo-config quote.ending "test "
+git-repo-config quote.semicolon "test;test"
+git-repo-config quote.hash "test#test"
+
+cat > expect << EOF
+[quote]
+	leading = " test"
+	ending = "test "
+	semicolon = "test;test"
+	hash = "test#test"
+EOF
+
+test_expect_success 'quoting' 'cmp .git/config expect'
+
 test_done
 

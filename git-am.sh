@@ -2,11 +2,12 @@
 #
 # Copyright (c) 2005, 2006 Junio C Hamano
 
-USAGE='[--signoff] [--dotest=<dir>] [--utf8] [--binary] [--3way]
+USAGE='[--signoff] [--dotest=<dir>] [--utf8 | --no-utf8] [--binary] [--3way]
   [--interactive] [--whitespace=<option>] <mbox>...
   or, when resuming [--skip | --resolved]'
 . git-sh-setup
 set_reflog_action am
+require_work_tree
 
 git var GIT_COMMITTER_IDENT >/dev/null || exit
 
@@ -105,7 +106,7 @@ It does not apply to blobs recorded in its index."
 }
 
 prec=4
-dotest=.dotest sign= utf8= keep= skip= interactive= resolved= binary= ws= resolvemsg=
+dotest=.dotest sign= utf8=t keep= skip= interactive= resolved= binary= ws= resolvemsg=
 
 while case "$#" in 0) break;; esac
 do
@@ -128,7 +129,9 @@ do
 	-s|--s|--si|--sig|--sign|--signo|--signof|--signoff)
 	sign=t; shift ;;
 	-u|--u|--ut|--utf|--utf8)
-	utf8=t; shift ;;
+	utf8=t; shift ;; # this is now default
+	--no-u|--no-ut|--no-utf|--no-utf8)
+	utf8=; shift ;;
 	-k|--k|--ke|--kee|--keep)
 	keep=t; shift ;;
 
@@ -226,6 +229,8 @@ fi
 if test "$(cat "$dotest/utf8")" = t
 then
 	utf8=-u
+else
+	utf8=-n
 fi
 if test "$(cat "$dotest/keep")" = t
 then

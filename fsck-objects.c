@@ -290,7 +290,7 @@ static int fsck_sha1(unsigned char *sha1)
 {
 	struct object *obj = parse_object(sha1);
 	if (!obj)
-		return error("%s: object not found", sha1_to_hex(sha1));
+		return error("%s: object corrupt or missing", sha1_to_hex(sha1));
 	if (obj->flags & SEEN)
 		return 0;
 	obj->flags |= SEEN;
@@ -399,7 +399,9 @@ static void fsck_dir(int i, char *path)
 
 static int default_refs;
 
-static int fsck_handle_reflog_ent(unsigned char *osha1, unsigned char *nsha1, char *datail, void *cb_data)
+static int fsck_handle_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
+		const char *email, unsigned long timestamp, int tz,
+		const char *message, void *cb_data)
 {
 	struct object *obj;
 

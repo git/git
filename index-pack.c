@@ -638,7 +638,7 @@ static void readjust_pack_header_and_sha1(unsigned char *sha1)
 	/* Rewrite pack header with updated object number */
 	if (lseek(output_fd, 0, SEEK_SET) != 0)
 		die("cannot seek back: %s", strerror(errno));
-	if (xread(output_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
+	if (read_in_full(output_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
 		die("cannot read pack header back: %s", strerror(errno));
 	hdr.hdr_entries = htonl(nr_objects);
 	if (lseek(output_fd, 0, SEEK_SET) != 0)
@@ -814,7 +814,7 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		char buf[48];
 		int len = snprintf(buf, sizeof(buf), "%s\t%s\n",
 				   report, sha1_to_hex(sha1));
-		xwrite(1, buf, len);
+		write_or_die(1, buf, len);
 
 		/*
 		 * Let's just mimic git-unpack-objects here and write

@@ -515,12 +515,9 @@ static void convert_to_utf8(char *line, char *charset)
 	char *input_charset = *charset ? charset : latin_one;
 	char *out = reencode_string(line, metainfo_charset, input_charset);
 
-	if (!out) {
-		fprintf(stderr, "cannot convert from %s to %s\n",
-			input_charset, metainfo_charset);
-		*charset = 0;
-		return;
-	}
+	if (!out)
+		die("cannot convert from %s to %s\n",
+		    input_charset, metainfo_charset);
 	strcpy(line, out);
 	free(out);
 }
@@ -797,17 +794,23 @@ static const char mailinfo_usage[] =
 
 int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 {
+	const char *def_charset;
+
 	/* NEEDSWORK: might want to do the optional .git/ directory
 	 * discovery
 	 */
 	git_config(git_default_config);
 
+	def_charset = (git_commit_encoding ? git_commit_encoding : "utf-8");
+	metainfo_charset = def_charset;
+
 	while (1 < argc && argv[1][0] == '-') {
 		if (!strcmp(argv[1], "-k"))
 			keep_subject = 1;
 		else if (!strcmp(argv[1], "-u"))
-			metainfo_charset = (git_commit_encoding
-					    ? git_commit_encoding : "utf-8");
+			metainfo_charset = def_charset;
+		else if (!strcmp(argv[1], "-n"))
+			metainfo_charset = NULL;
 		else if (!strncmp(argv[1], "--encoding=", 11))
 			metainfo_charset = argv[1] + 11;
 		else
