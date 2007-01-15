@@ -40,6 +40,9 @@ Format of STDIN stream:
     ('from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)?
     lf;
 
+  checkpoint ::= 'checkpoint' lf
+    lf;
+
      # note: the first idnum in a stream should be 1 and subsequent
      # idnums should not have gaps between values as this will cause
      # the stream parser to reserve space for the gapped values.  An
@@ -112,6 +115,7 @@ struct object_entry
 	struct object_entry *next;
 	unsigned long offset;
 	unsigned type : TYPE_BITS;
+	unsigned pack_id : 16;
 	unsigned char sha1[20];
 };
 
@@ -234,10 +238,10 @@ static struct atom_str **atom_table;
 
 /* The .pack file being generated */
 static const char *base_name;
-static unsigned int pack_count;
-static char *pack_name;
+static unsigned int pack_id;
 static char *idx_name;
 static struct packed_git *pack_data;
+static struct packed_git **all_packs;
 static int pack_fd;
 static unsigned long pack_size;
 static unsigned char pack_sha1[20];
@@ -299,6 +303,7 @@ static struct object_entry* new_object(unsigned char *sha1)
 		alloc_objects(object_entry_alloc);
 
 	e = blocks->next_free++;
+	e->pack_id = pack_id;
 	hashcpy(e->sha1, sha1);
 	return e;
 }
@@ -597,29 +602,30 @@ static void yread(int fd, void *buffer, size_t length)
 
 static void start_packfile()
 {
+	struct packed_git *p;
 	struct pack_header hdr;
 
-	pack_count++;
-	pack_name = xmalloc(strlen(base_name) + 11);
 	idx_name = xmalloc(strlen(base_name) + 11);
-	sprintf(pack_name, "%s%5.5i.pack", base_name, pack_count);
-	sprintf(idx_name, "%s%5.5i.idx", base_name, pack_count);
+	p = xcalloc(1, sizeof(*p) + strlen(base_name) + 13);
+	sprintf(p->pack_name, "%s%5.5i.pack", base_name, pack_id + 1);
+	sprintf(idx_name, "%s%5.5i.idx", base_name, pack_id + 1);
 
-	pack_fd = open(pack_name, O_RDWR|O_CREAT|O_EXCL, 0666);
+	pack_fd = open(p->pack_name, O_RDWR|O_CREAT|O_EXCL, 0666);
 	if (pack_fd < 0)
-		die("Can't create %s: %s", pack_name, strerror(errno));
-
-	pack_data = xcalloc(1, sizeof(*pack_data) + strlen(pack_name) + 2);
-	strcpy(pack_data->pack_name, pack_name);
-	pack_data->pack_fd = pack_fd;
+		die("Can't create %s: %s", p->pack_name, strerror(errno));
+	p->pack_fd = pack_fd;
 
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
 	hdr.hdr_version = htonl(2);
 	hdr.hdr_entries = 0;
-
 	write_or_die(pack_fd, &hdr, sizeof(hdr));
+
+	pack_data = p;
 	pack_size = sizeof(hdr);
 	object_count = 0;
+
+	all_packs = xrealloc(all_packs, sizeof(*all_packs) * (pack_id + 1));
+	all_packs[pack_id] = p;
 }
 
 static void fixup_header_footer()
@@ -673,7 +679,8 @@ static void write_index(const char *idx_name)
 	c = idx;
 	for (o = blocks; o; o = o->next_pool)
 		for (e = o->entries; e != o->next_free; e++)
-			*c++ = e;
+			if (pack_id == e->pack_id)
+				*c++ = e;
 	last = idx + object_count;
 	qsort(idx, object_count, sizeof(struct object_entry*), oecmp);
 
@@ -704,13 +711,28 @@ static void write_index(const char *idx_name)
 
 static void end_packfile()
 {
+	struct packed_git *old_p = pack_data, *new_p;
+
 	fixup_header_footer();
-	close(pack_fd);
 	write_index(idx_name);
 
-	free(pack_name);
+	/* Register the packfile with core git's machinary. */
+	new_p = add_packed_git(idx_name, strlen(idx_name), 1);
+	if (!new_p)
+		die("core git rejected index %s", idx_name);
+	new_p->windows = old_p->windows;
+	new_p->pack_fd = old_p->pack_fd;
+	all_packs[pack_id++] = new_p;
+	install_packed_git(new_p);
+	free(old_p);
 	free(idx_name);
-	free(pack_data);
+
+	/* We can't carry a delta across packfiles. */
+	free(last_blob.data);
+	last_blob.data = NULL;
+	last_blob.len = 0;
+	last_blob.offset = 0;
+	last_blob.depth = 0;
 }
 
 static size_t encode_header(
@@ -832,11 +854,15 @@ static int store_object(
 	return 0;
 }
 
-static void *gfi_unpack_entry(unsigned long ofs, unsigned long *sizep)
+static void *gfi_unpack_entry(
+	struct object_entry *oe,
+	unsigned long *sizep)
 {
-	char type[20];
-	pack_data->pack_size = pack_size + 20;
-	return unpack_entry(pack_data, ofs, type, sizep);
+	static char type[20];
+	struct packed_git *p = all_packs[oe->pack_id];
+	if (p == pack_data)
+		p->pack_size = pack_size + 20;
+	return unpack_entry(p, oe->offset, type, sizep);
 }
 
 static const char *get_mode(const char *str, unsigned int *modep)
@@ -871,7 +897,7 @@ static void load_tree(struct tree_entry *root)
 		if (myoe->type != OBJ_TREE)
 			die("Not a tree: %s", sha1_to_hex(sha1));
 		t->delta_depth = 0;
-		buf = gfi_unpack_entry(myoe->offset, &size);
+		buf = gfi_unpack_entry(myoe, &size);
 	} else {
 		char type[20];
 		buf = read_sha1_file(sha1, type, &size);
@@ -971,7 +997,9 @@ static void store_tree(struct tree_entry *root)
 	}
 
 	le = find_object(root->versions[0].sha1);
-	if (!S_ISDIR(root->versions[0].mode) || !le) {
+	if (!S_ISDIR(root->versions[0].mode)
+		|| !le
+		|| le->pack_id != pack_id) {
 		lo.data = NULL;
 		lo.depth = 0;
 	} else {
@@ -1385,7 +1413,7 @@ static void cmd_from(struct branch *b)
 		if (oe->type != OBJ_COMMIT)
 			die("Mark :%lu not a commit", idnum);
 		hashcpy(b->sha1, oe->sha1);
-		buf = gfi_unpack_entry(oe->offset, &size);
+		buf = gfi_unpack_entry(oe, &size);
 		if (!buf || size < 46)
 			die("Not a valid commit: %s", from);
 		if (memcmp("tree ", buf, 5)
@@ -1713,6 +1741,15 @@ static void cmd_reset_branch()
 	cmd_from(b);
 }
 
+static void cmd_checkpoint()
+{
+	if (object_count) {
+		end_packfile();
+		start_packfile();
+	}
+	read_next_command();
+}
+
 static const char fast_import_usage[] =
 "git-fast-import [--objects=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file] [--branch-log=log] temp.pack";
 
@@ -1771,6 +1808,8 @@ int main(int argc, const char **argv)
 			cmd_new_tag();
 		else if (!strncmp("reset ", command_buf.buf, 6))
 			cmd_reset_branch();
+		else if (!strcmp("checkpoint", command_buf.buf))
+			cmd_checkpoint();
 		else
 			die("Unsupported command: %s", command_buf.buf);
 	}
@@ -1799,6 +1838,8 @@ int main(int argc, const char **argv)
 	fprintf(stderr, "Memory total:    %10lu KiB\n", (total_allocd + alloc_count*sizeof(struct object_entry))/1024);
 	fprintf(stderr, "       pools:    %10lu KiB\n", total_allocd/1024);
 	fprintf(stderr, "     objects:    %10lu KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
+	fprintf(stderr, "---------------------------------------------------------------------\n");
+	pack_report();
 	fprintf(stderr, "---------------------------------------------------------------------\n");
 	fprintf(stderr, "\n");
 
