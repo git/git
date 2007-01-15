@@ -52,7 +52,8 @@ git pull origin next::
 
 git pull . fixes enhancements::
 	Bundle local branch `fixes` and `enhancements` on top of
-	the current branch, making an Octopus merge.
+	the current branch, making an Octopus merge.  This `git pull .`
+	syntax is equivalent to `git merge`.
 
 git pull -s ours . obsolete::
 	Merge local branch `obsolete` into the current branch,

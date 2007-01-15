@@ -148,8 +148,7 @@ modification will be caught if you do `git commit -a` later.
 <8> redo the commit undone in the previous step, using the message
 you originally wrote.
 <9> switch to the master branch.
-<10> merge a topic branch into your master branch.  You can also use
-`git pull . alsa-audio`, i.e. pull from the local repository.
+<10> merge a topic branch into your master branch.
 <11> review commit logs; other forms to limit output can be
 combined and include `\--max-count=10` (show 10 commits),
 `\--until=2005-12-10`, etc.
