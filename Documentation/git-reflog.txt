@@ -9,7 +9,7 @@ git-reflog - Manage reflog information
 SYNOPSIS
 --------
 [verse]
-'git-reflog' expire [--dry-run]
+'git-reflog' expire [--dry-run] [--stale-fix]
 	[--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...
 
 
