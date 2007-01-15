@@ -49,7 +49,7 @@ get_remote_url () {
 }
 
 get_default_remote () {
-	curr_branch=$(git-symbolic-ref HEAD | sed -e 's|^refs/heads/||')
+	curr_branch=$(git-symbolic-ref -q HEAD | sed -e 's|^refs/heads/||')
 	origin=$(git-repo-config --get "branch.$curr_branch.remote")
 	echo ${origin:-origin}
 }
@@ -137,7 +137,7 @@ canon_refs_list_for_fetch () {
 		shift
 		if test "$remote" = "$(get_default_remote)"
 		then
-			curr_branch=$(git-symbolic-ref HEAD | \
+			curr_branch=$(git-symbolic-ref -q HEAD | \
 			    sed -e 's|^refs/heads/||')
 			merge_branches=$(git-repo-config \
 			    --get-all "branch.${curr_branch}.merge")

@@ -7,7 +7,7 @@ git-symbolic-ref - read and modify symbolic refs
 
 SYNOPSIS
 --------
-'git-symbolic-ref' <name> [<ref>]
+'git-symbolic-ref' [-q] <name> [<ref>]
 
 DESCRIPTION
 -----------
@@ -22,6 +22,14 @@ point at the given branch <ref>.
 A symbolic ref is a regular file that stores a string that
 begins with `ref: refs/`.  For example, your `.git/HEAD` is
 a regular file whose contents is `ref: refs/heads/master`.
+
+OPTIONS
+-------
+
+-q::
+	Do not issue an error message if the <name> is not a
+	symbolic ref but a detached HEAD; instead exit with
+	non-zero status silently.
 
 NOTES
 -----
