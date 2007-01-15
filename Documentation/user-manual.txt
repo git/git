@@ -770,7 +770,7 @@ Examples
 --------
 
 Check whether two branches point at the same history
-----------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Suppose you want to check whether two branches point at the same point
 in history.
@@ -802,7 +802,7 @@ $ git log origin...master
 will return no commits when the two branches are equal.
 
 Check which tagged version a given fix was first included in
-------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Suppose you know that the commit e05db0fd fixed a certain problem.
 You'd like to find the earliest tagged release that contains that
@@ -1723,14 +1723,15 @@ Notes and todo list for this manual
 This is a work in progress.
 
 The basic requirements:
-	- It must be readable in order, from beginning to end, by someone
-	  intelligent with a basic grasp of the unix commandline, but
-	  without any special knowledge of git.  If necessary, any other
-	  prerequisites should be specifically mentioned as they arise.
-	- Whenever possible, section headings should clearly describe the
-	  task they explain how to do, in language that requires no more
-	  knowledge than necessary: for example, "importing patches into a
-	  project" rather than "the git-am command"
+	- It must be readable in order, from beginning to end, by
+	  someone intelligent with a basic grasp of the unix
+	  commandline, but without any special knowledge of git.  If
+	  necessary, any other prerequisites should be specifically
+	  mentioned as they arise.
+	- Whenever possible, section headings should clearly describe
+	  the task they explain how to do, in language that requires
+	  no more knowledge than necessary: for example, "importing
+	  patches into a project" rather than "the git-am command"
 
 Think about how to create a clear chapter dependency graph that will
 allow people to get to important topics without necessarily reading
@@ -1748,19 +1749,24 @@ Scan email archives for other stuff left out
 Scan man pages to see if any assume more background than this manual
 provides.
 
-Simplify beginning by suggesting disconnected head instead of temporary
-branch creation.
+Simplify beginning by suggesting disconnected head instead of
+temporary branch creation.
 
 Explain how to refer to file stages in the "how to resolve a merge"
 section: diff -1, -2, -3, --ours, --theirs :1:/path notation.  The
-"git ls-files --unmerged --stage" thing is sorta useful too, actually.  And
-note gitk --merge.  Also what's easiest way to see common merge base?
+"git ls-files --unmerged --stage" thing is sorta useful too,
+actually.  And note gitk --merge.  Also what's easiest way to see
+common merge base?  Note also text where I claim rebase and am
+conflicts are resolved like merges isn't generally true, at least by
+default--fix.
 
-Add more good examples.  Entire sections of just cookbook examples might
-be a good idea; maybe make an "advanced examples" section a standard
-end-of-chapter section?
+Add more good examples.  Entire sections of just cookbook examples
+might be a good idea; maybe make an "advanced examples" section a
+standard end-of-chapter section?
 
 Include cross-references to the glossary, where appropriate.
+
+Add quickstart as first chapter.
 
 To document:
 	reflogs, git reflog expire
