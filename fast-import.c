@@ -215,18 +215,20 @@ struct hash_list
 	unsigned char sha1[20];
 };
 
-/* Stats and misc. counters */
+/* Configured limits on output */
 static unsigned long max_depth = 10;
-static unsigned long max_objects = -1;
 static unsigned long max_packsize = -1;
-static unsigned long alloc_count;
+static uintmax_t max_objects = -1;
+
+/* Stats and misc. counters */
+static uintmax_t alloc_count;
+static uintmax_t object_count;
+static uintmax_t marks_set_count;
+static uintmax_t object_count_by_type[1 << TYPE_BITS];
+static uintmax_t duplicate_count_by_type[1 << TYPE_BITS];
+static uintmax_t delta_count_by_type[1 << TYPE_BITS];
 static unsigned long branch_count;
 static unsigned long branch_load_count;
-static unsigned long object_count;
-static unsigned long marks_set_count;
-static unsigned long object_count_by_type[1 << TYPE_BITS];
-static unsigned long duplicate_count_by_type[1 << TYPE_BITS];
-static unsigned long delta_count_by_type[1 << TYPE_BITS];
 
 /* Memory pools */
 static size_t mem_pool_alloc = 2*1024*1024 - sizeof(struct mem_pool);
@@ -279,7 +281,7 @@ static struct tag *last_tag;
 
 /* Input stream parsing */
 static struct strbuf command_buf;
-static unsigned long next_mark;
+static uintmax_t next_mark;
 static struct dbuf new_data;
 static FILE* branch_log;
 
@@ -406,7 +408,7 @@ static void size_dbuf(struct dbuf *b, size_t maxlen)
 	b->buffer = xmalloc(b->capacity);
 }
 
-static void insert_mark(unsigned long idnum, struct object_entry *oe)
+static void insert_mark(uintmax_t idnum, struct object_entry *oe)
 {
 	struct mark_set *s = marks;
 	while ((idnum >> s->shift) >= 1024) {
@@ -416,7 +418,7 @@ static void insert_mark(unsigned long idnum, struct object_entry *oe)
 		marks = s;
 	}
 	while (s->shift) {
-		unsigned long i = idnum >> s->shift;
+		uintmax_t i = idnum >> s->shift;
 		idnum -= i << s->shift;
 		if (!s->data.sets[i]) {
 			s->data.sets[i] = pool_calloc(1, sizeof(struct mark_set));
@@ -429,14 +431,14 @@ static void insert_mark(unsigned long idnum, struct object_entry *oe)
 	s->data.marked[idnum] = oe;
 }
 
-static struct object_entry* find_mark(unsigned long idnum)
+static struct object_entry* find_mark(uintmax_t idnum)
 {
-	unsigned long orig_idnum = idnum;
+	uintmax_t orig_idnum = idnum;
 	struct mark_set *s = marks;
 	struct object_entry *oe = NULL;
 	if ((idnum >> s->shift) < 1024) {
 		while (s && s->shift) {
-			unsigned long i = idnum >> s->shift;
+			uintmax_t i = idnum >> s->shift;
 			idnum -= i << s->shift;
 			s = s->data.sets[i];
 		}
@@ -444,7 +446,7 @@ static struct object_entry* find_mark(unsigned long idnum)
 			oe = s->data.marked[idnum];
 	}
 	if (!oe)
-		die("mark :%lu not declared", orig_idnum);
+		die("mark :%ju not declared", orig_idnum);
 	return oe;
 }
 
@@ -781,7 +783,7 @@ static int store_object(
 	size_t datlen,
 	struct last_object *last,
 	unsigned char *sha1out,
-	unsigned long mark)
+	uintmax_t mark)
 {
 	void *out, *delta;
 	struct object_entry *e;
@@ -1225,10 +1227,10 @@ static void dump_tags()
 }
 
 static void dump_marks_helper(FILE *f,
-	unsigned long base,
+	uintmax_t base,
 	struct mark_set *m)
 {
-	int k;
+	uintmax_t k;
 	if (m->shift) {
 		for (k = 0; k < 1024; k++) {
 			if (m->data.sets[k])
@@ -1238,7 +1240,7 @@ static void dump_marks_helper(FILE *f,
 	} else {
 		for (k = 0; k < 1024; k++) {
 			if (m->data.marked[k])
-				fprintf(f, ":%lu %s\n", base + k,
+				fprintf(f, ":%ju %s\n", base + k,
 					sha1_to_hex(m->data.marked[k]->sha1));
 		}
 	}
@@ -1262,7 +1264,7 @@ static void read_next_command()
 static void cmd_mark()
 {
 	if (!strncmp("mark :", command_buf.buf, 6)) {
-		next_mark = strtoul(command_buf.buf + 6, NULL, 10);
+		next_mark = strtoumax(command_buf.buf + 6, NULL, 10);
 		read_next_command();
 	}
 	else
@@ -1375,7 +1377,7 @@ static void file_change_m(struct branch *b)
 
 	if (*p == ':') {
 		char *x;
-		oe = find_mark(strtoul(p + 1, &x, 10));
+		oe = find_mark(strtoumax(p + 1, &x, 10));
 		hashcpy(sha1, oe->sha1);
 		p = x;
 	} else {
@@ -1458,12 +1460,12 @@ static void cmd_from(struct branch *b)
 		hashcpy(b->branch_tree.versions[0].sha1, t);
 		hashcpy(b->branch_tree.versions[1].sha1, t);
 	} else if (*from == ':') {
-		unsigned long idnum = strtoul(from + 1, NULL, 10);
+		uintmax_t idnum = strtoumax(from + 1, NULL, 10);
 		struct object_entry *oe = find_mark(idnum);
 		unsigned long size;
 		char *buf;
 		if (oe->type != OBJ_COMMIT)
-			die("Mark :%lu not a commit", idnum);
+			die("Mark :%ju not a commit", idnum);
 		hashcpy(b->sha1, oe->sha1);
 		buf = gfi_unpack_entry(oe, &size);
 		if (!buf || size < 46)
@@ -1521,10 +1523,10 @@ static struct hash_list* cmd_merge(unsigned int *count)
 		if (s)
 			hashcpy(n->sha1, s->sha1);
 		else if (*from == ':') {
-			unsigned long idnum = strtoul(from + 1, NULL, 10);
+			uintmax_t idnum = strtoumax(from + 1, NULL, 10);
 			struct object_entry *oe = find_mark(idnum);
 			if (oe->type != OBJ_COMMIT)
-				die("Mark :%lu not a commit", idnum);
+				die("Mark :%ju not a commit", idnum);
 			hashcpy(n->sha1, oe->sha1);
 		} else if (get_sha1(from, n->sha1))
 			die("Invalid ref name or SHA1 expression: %s", from);
@@ -1650,7 +1652,7 @@ static void cmd_new_commit()
 			fputc('"', branch_log);
 		} else
 			fprintf(branch_log, "%s", b->name);
-		fprintf(branch_log," :%lu %s\n",next_mark,sha1_to_hex(b->sha1));
+		fprintf(branch_log," :%ju %s\n",next_mark,sha1_to_hex(b->sha1));
 	}
 }
 
@@ -1665,7 +1667,7 @@ static void cmd_new_tag()
 	void *msg;
 	size_t msglen;
 	struct tag *t;
-	unsigned long from_mark = 0;
+	uintmax_t from_mark = 0;
 	unsigned char sha1[20];
 
 	/* Obtain the new tag name from the rest of our command */
@@ -1704,10 +1706,10 @@ static void cmd_new_tag()
 	if (s) {
 		hashcpy(sha1, s->sha1);
 	} else if (*from == ':') {
-		from_mark = strtoul(from + 1, NULL, 10);
+		from_mark = strtoumax(from + 1, NULL, 10);
 		struct object_entry *oe = find_mark(from_mark);
 		if (oe->type != OBJ_COMMIT)
-			die("Mark :%lu not a commit", from_mark);
+			die("Mark :%ju not a commit", from_mark);
 		hashcpy(sha1, oe->sha1);
 	} else if (!get_sha1(from, sha1)) {
 		unsigned long size;
@@ -1758,7 +1760,7 @@ static void cmd_new_tag()
 			fputc('"', branch_log);
 		} else
 			fprintf(branch_log, "%s", t->name);
-		fprintf(branch_log," :%lu %s\n",from_mark,sha1_to_hex(t->sha1));
+		fprintf(branch_log," :%ju %s\n",from_mark,sha1_to_hex(t->sha1));
 	}
 }
 
@@ -1806,8 +1808,8 @@ static const char fast_import_usage[] =
 int main(int argc, const char **argv)
 {
 	int i;
-	unsigned long est_obj_cnt = object_entry_alloc;
-	unsigned long duplicate_count;
+	uintmax_t est_obj_cnt = object_entry_alloc;
+	uintmax_t duplicate_count;
 
 	setup_ident();
 	git_config(git_default_config);
@@ -1818,11 +1820,11 @@ int main(int argc, const char **argv)
 		if (*a != '-' || !strcmp(a, "--"))
 			break;
 		else if (!strncmp(a, "--objects=", 10))
-			est_obj_cnt = strtoul(a + 10, NULL, 0);
+			est_obj_cnt = strtoumax(a + 10, NULL, 0);
 		else if (!strncmp(a, "--max-objects-per-pack=", 23))
-			max_objects = strtoul(a + 23, NULL, 0);
+			max_objects = strtoumax(a + 23, NULL, 0);
 		else if (!strncmp(a, "--max-pack-size=", 16))
-			max_packsize = strtoul(a + 16, NULL, 0) * 1024 * 1024;
+			max_packsize = strtoumax(a + 16, NULL, 0) * 1024 * 1024;
 		else if (!strncmp(a, "--depth=", 8))
 			max_depth = strtoul(a + 8, NULL, 0);
 		else if (!strncmp(a, "--active-branches=", 18))
@@ -1875,23 +1877,24 @@ int main(int argc, const char **argv)
 	if (branch_log)
 		fclose(branch_log);
 
+	duplicate_count = 0;
 	for (i = 0; i < ARRAY_SIZE(duplicate_count_by_type); i++)
 		duplicate_count += duplicate_count_by_type[i];
 
 	fprintf(stderr, "%s statistics:\n", argv[0]);
 	fprintf(stderr, "---------------------------------------------------------------------\n");
-	fprintf(stderr, "Alloc'd objects: %10lu (%10lu overflow  )\n", alloc_count, alloc_count - est_obj_cnt);
-	fprintf(stderr, "Total objects:   %10lu (%10lu duplicates                  )\n", object_count, duplicate_count);
-	fprintf(stderr, "      blobs  :   %10lu (%10lu duplicates %10lu deltas)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB], delta_count_by_type[OBJ_BLOB]);
-	fprintf(stderr, "      trees  :   %10lu (%10lu duplicates %10lu deltas)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE], delta_count_by_type[OBJ_TREE]);
-	fprintf(stderr, "      commits:   %10lu (%10lu duplicates %10lu deltas)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT], delta_count_by_type[OBJ_COMMIT]);
-	fprintf(stderr, "      tags   :   %10lu (%10lu duplicates %10lu deltas)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG], delta_count_by_type[OBJ_TAG]);
+	fprintf(stderr, "Alloc'd objects: %10ju (%10ju overflow  )\n", alloc_count, alloc_count - est_obj_cnt);
+	fprintf(stderr, "Total objects:   %10ju (%10ju duplicates                  )\n", object_count, duplicate_count);
+	fprintf(stderr, "      blobs  :   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB], delta_count_by_type[OBJ_BLOB]);
+	fprintf(stderr, "      trees  :   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE], delta_count_by_type[OBJ_TREE]);
+	fprintf(stderr, "      commits:   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT], delta_count_by_type[OBJ_COMMIT]);
+	fprintf(stderr, "      tags   :   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG], delta_count_by_type[OBJ_TAG]);
 	fprintf(stderr, "Total branches:  %10lu (%10lu loads     )\n", branch_count, branch_load_count);
-	fprintf(stderr, "      marks:     %10u (%10lu unique    )\n", (1 << marks->shift) * 1024, marks_set_count);
+	fprintf(stderr, "      marks:     %10ju (%10ju unique    )\n", (((uintmax_t)1) << marks->shift) * 1024, marks_set_count);
 	fprintf(stderr, "      atoms:     %10u\n", atom_cnt);
-	fprintf(stderr, "Memory total:    %10lu KiB\n", (total_allocd + alloc_count*sizeof(struct object_entry))/1024);
+	fprintf(stderr, "Memory total:    %10ju KiB\n", (total_allocd + alloc_count*sizeof(struct object_entry))/1024);
 	fprintf(stderr, "       pools:    %10lu KiB\n", total_allocd/1024);
-	fprintf(stderr, "     objects:    %10lu KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
+	fprintf(stderr, "     objects:    %10ju KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
 	fprintf(stderr, "---------------------------------------------------------------------\n");
 	pack_report();
 	fprintf(stderr, "---------------------------------------------------------------------\n");
