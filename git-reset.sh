@@ -87,7 +87,7 @@ update_ref_status=$?
 case "$reset_type" in
 --hard )
 	test $update_ref_status = 0 && {
-		echo -n "HEAD is now at "
+		printf "HEAD is now at "
 		GIT_PAGER= git log --max-count=1 --pretty=oneline \
 			--abbrev-commit HEAD
 	}

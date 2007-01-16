@@ -52,7 +52,7 @@ super aquam refectionis educavit me;
 animam meam convertit,
 deduxit me super semitas jusitiae,
 EOF
-echo -n "propter nomen suum." >> new4.txt
+printf "propter nomen suum." >> new4.txt
 
 cp new1.txt test.txt
 test_expect_success "merge without conflict" \
