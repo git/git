@@ -244,7 +244,6 @@ static struct atom_str **atom_table;
 static unsigned int pack_id;
 static struct packed_git *pack_data;
 static struct packed_git **all_packs;
-static int pack_fd;
 static unsigned long pack_size;
 
 /* Table of objects we've written. */
@@ -592,6 +591,7 @@ static void start_packfile()
 	static char tmpfile[PATH_MAX];
 	struct packed_git *p;
 	struct pack_header hdr;
+	int pack_fd;
 
 	snprintf(tmpfile, sizeof(tmpfile),
 		"%s/pack_XXXXXX", get_object_directory());
@@ -605,7 +605,7 @@ static void start_packfile()
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
 	hdr.hdr_version = htonl(2);
 	hdr.hdr_entries = 0;
-	write_or_die(pack_fd, &hdr, sizeof(hdr));
+	write_or_die(p->pack_fd, &hdr, sizeof(hdr));
 
 	pack_data = p;
 	pack_size = sizeof(hdr);
@@ -617,6 +617,7 @@ static void start_packfile()
 
 static void fixup_header_footer()
 {
+	int pack_fd = pack_data->pack_fd;
 	SHA_CTX c;
 	char hdr[8];
 	unsigned long cnt;
@@ -912,23 +913,23 @@ static int store_object(
 		last->depth++;
 
 		hdrlen = encode_header(OBJ_OFS_DELTA, deltalen, hdr);
-		write_or_die(pack_fd, hdr, hdrlen);
+		write_or_die(pack_data->pack_fd, hdr, hdrlen);
 		pack_size += hdrlen;
 
 		hdr[pos] = ofs & 127;
 		while (ofs >>= 7)
 			hdr[--pos] = 128 | (--ofs & 127);
-		write_or_die(pack_fd, hdr + pos, sizeof(hdr) - pos);
+		write_or_die(pack_data->pack_fd, hdr + pos, sizeof(hdr) - pos);
 		pack_size += sizeof(hdr) - pos;
 	} else {
 		if (last)
 			last->depth = 0;
 		hdrlen = encode_header(type, datlen, hdr);
-		write_or_die(pack_fd, hdr, hdrlen);
+		write_or_die(pack_data->pack_fd, hdr, hdrlen);
 		pack_size += hdrlen;
 	}
 
-	write_or_die(pack_fd, out, s.total_out);
+	write_or_die(pack_data->pack_fd, out, s.total_out);
 	pack_size += s.total_out;
 
 	free(out);
