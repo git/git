@@ -268,7 +268,101 @@ then
 	fi
 fi
 
-fetch_main () {
+fetch_native () {
+  reflist="$1"
+  refs=
+  rref=
+
+  for ref in $reflist
+  do
+      refs="$refs$LF$ref"
+
+      # These are relative path from $GIT_DIR, typically starting at refs/
+      # but may be HEAD
+      if expr "z$ref" : 'z\.' >/dev/null
+      then
+	  not_for_merge=t
+	  ref=$(expr "z$ref" : 'z\.\(.*\)')
+      else
+	  not_for_merge=
+      fi
+      if expr "z$ref" : 'z+' >/dev/null
+      then
+	  single_force=t
+	  ref=$(expr "z$ref" : 'z+\(.*\)')
+      else
+	  single_force=
+      fi
+      remote_name=$(expr "z$ref" : 'z\([^:]*\):')
+      local_name=$(expr "z$ref" : 'z[^:]*:\(.*\)')
+
+      rref="$rref$LF$remote_name"
+  done
+
+    ( : subshell because we muck with IFS
+      IFS=" 	$LF"
+      (
+	  git-fetch-pack --thin $exec $keep $shallow_depth "$remote" $rref ||
+	  echo failed "$remote"
+      ) |
+      (
+	trap '
+		if test -n "$keepfile" && test -f "$keepfile"
+		then
+			rm -f "$keepfile"
+		fi
+	' 0
+
+        keepfile=
+	while read sha1 remote_name
+	do
+	  case "$sha1" in
+	  failed)
+		  echo >&2 "Fetch failure: $remote"
+		  exit 1 ;;
+	  # special line coming from index-pack with the pack name
+	  pack)
+		  continue ;;
+	  keep)
+		  keepfile="$GIT_OBJECT_DIRECTORY/pack/pack-$remote_name.keep"
+		  continue ;;
+	  esac
+	  found=
+	  single_force=
+	  for ref in $refs
+	  do
+	      case "$ref" in
+	      +$remote_name:*)
+		  single_force=t
+		  not_for_merge=
+		  found="$ref"
+		  break ;;
+	      .+$remote_name:*)
+		  single_force=t
+		  not_for_merge=t
+		  found="$ref"
+		  break ;;
+	      .$remote_name:*)
+		  not_for_merge=t
+		  found="$ref"
+		  break ;;
+	      $remote_name:*)
+		  not_for_merge=
+		  found="$ref"
+		  break ;;
+	      esac
+	  done
+	  local_name=$(expr "z$found" : 'z[^:]*:\(.*\)')
+	  append_fetch_head "$sha1" "$remote" \
+		  "$remote_name" "$remote_nick" "$local_name" \
+		  "$not_for_merge" || exit
+        done
+      )
+    ) || exit
+
+}
+
+fetch_dumb () {
   reflist="$1"
   refs=
   rref=
@@ -360,9 +454,6 @@ fetch_main () {
 	      rsync_slurped_objects=t
 	  }
 	  ;;
-      *)
-	  # We will do git native transport with just one call later.
-	  continue ;;
       esac
 
       append_fetch_head "$head" "$remote" \
@@ -370,72 +461,17 @@ fetch_main () {
 
   done
 
-  case "$remote" in
-  http://* | https://* | ftp://* | rsync://* )
-      ;; # we are already done.
-  *)
-    ( : subshell because we muck with IFS
-      IFS=" 	$LF"
-      (
-	  git-fetch-pack --thin $exec $keep $shallow_depth "$remote" $rref ||
-	  echo failed "$remote"
-      ) |
-      (
-	trap '
-		if test -n "$keepfile" && test -f "$keepfile"
-		then
-			rm -f "$keepfile"
-		fi
-	' 0
+}
 
-        keepfile=
-	while read sha1 remote_name
-	do
-	  case "$sha1" in
-	  failed)
-		  echo >&2 "Fetch failure: $remote"
-		  exit 1 ;;
-	  # special line coming from index-pack with the pack name
-	  pack)
-		  continue ;;
-	  keep)
-		  keepfile="$GIT_OBJECT_DIRECTORY/pack/pack-$remote_name.keep"
-		  continue ;;
-	  esac
-	  found=
-	  single_force=
-	  for ref in $refs
-	  do
-	      case "$ref" in
-	      +$remote_name:*)
-		  single_force=t
-		  not_for_merge=
-		  found="$ref"
-		  break ;;
-	      .+$remote_name:*)
-		  single_force=t
-		  not_for_merge=t
-		  found="$ref"
-		  break ;;
-	      .$remote_name:*)
-		  not_for_merge=t
-		  found="$ref"
-		  break ;;
-	      $remote_name:*)
-		  not_for_merge=
-		  found="$ref"
-		  break ;;
-	      esac
-	  done
-	  local_name=$(expr "z$found" : 'z[^:]*:\(.*\)')
-	  append_fetch_head "$sha1" "$remote" \
-		  "$remote_name" "$remote_nick" "$local_name" \
-		  "$not_for_merge" || exit
-        done
-      )
-    ) || exit ;;
-  esac
-
+fetch_main () {
+	case "$remote" in
+	http://* | https://* | ftp://* | rsync://* )
+		fetch_dumb "$@"
+		;;
+	*)
+		fetch_native "$@"
+		;;
+	esac
 }
 
 fetch_main "$reflist" || exit
