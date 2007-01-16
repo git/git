@@ -8,7 +8,7 @@ git-push - Update remote refs along with associated objects
 
 SYNOPSIS
 --------
-'git-push' [--all] [--tags] [-f | --force] <repository> <refspec>...
+'git-push' [--all] [--tags] [--exec=<receive-pack>] [-f | --force] <repository> <refspec>...
 
 DESCRIPTION
 -----------
@@ -66,6 +66,12 @@ the remote repository.
 	All refs under `$GIT_DIR/refs/tags` are pushed, in
 	addition to refspecs explicitly listed on the command
 	line.
+
+\--exec::
+	Path to the 'git-receive-pack' program on the remote
+	end.  Sometimes useful when pushing to a remote
+	repository over ssh, and you do not have the program in
+	a directory on the default $PATH.
 
 -f, \--force::
 	Usually, the command refuses to update a remote ref that is
