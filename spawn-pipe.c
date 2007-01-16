@@ -18,29 +18,72 @@ static char *lookup_prog(const char *dir, const char *cmd, int tryexe)
 }
 
 /*
- * Determines the absolute path of cmd based on the PATH environment variable.
+ * Splits the PATH into parts.
+ */
+char **get_path_split()
+{
+	char *p, **path, *envpath = getenv("PATH");
+	int i, n = 0;
+
+	if (!envpath || !*envpath)
+		return NULL;
+
+	envpath = xstrdup(envpath);
+	p = envpath;
+	while (p) {
+		char *dir = p;
+		p = strchr(p, ';');
+		if (p) *p++ = '\0';
+		if (*dir) {	/* not earlier, catches series of ; */
+			++n;
+		}
+	}
+	if (!n)
+		return NULL;
+
+	path = xmalloc((n+1)*sizeof(char*));
+	p = envpath;
+	i = 0;
+	do {
+		if (*p)
+			path[i++] = xstrdup(p);
+		p = p+strlen(p)+1;
+	} while (i < n);
+	path[i] = NULL;
+
+	free(envpath);
+
+	return path;
+}
+
+void free_path_split(char **path)
+{
+	if (!path)
+		return;
+
+	char **p = path;
+	while (*p)
+		free(*p++);
+	free(path);
+}
+
+/*
+ * Determines the absolute path of cmd using the the split path in path.
  * If cmd contains a slash or backslash, no lookup is performed.
  */
-static char *path_lookup(const char *cmd)
+static char *path_lookup(const char *cmd, char **path)
 {
-	char *p, *envpath = getenv("PATH");
+	char **p = path;
 	char *prog = NULL;
 	int len = strlen(cmd);
 	int tryexe = len < 4 || strcasecmp(cmd+len-4, ".exe");
 
-	if (strchr(cmd, '/') || strchr(cmd, '\\') ||
-	    !envpath || !*envpath)
-		envpath = "";
-	envpath = xstrdup(envpath);
-	p = envpath;
-	while (p && !prog) {
-		const char *dir = p;
-		p = strchr(p, ';');
-		if (p) *p++ = '\0';
-		if (*dir)
-			prog = lookup_prog(dir, cmd, tryexe);
+	if (strchr(cmd, '/') || strchr(cmd, '\\'))
+		p = NULL;
+
+	while (*p && !prog) {
+		prog = lookup_prog(*p++, cmd, tryexe);
 	}
-	free(envpath);
 	if (!prog) {
 		prog = lookup_prog(".", cmd, tryexe);
 		if (!prog)
@@ -61,6 +104,19 @@ static char *path_lookup(const char *cmd)
  * indicate that no processing shall occur.
  */
 int spawnvpe_pipe(const char *cmd, const char **argv, const char **env,
+		  int pin[], int pout[])
+{
+	char **path = get_path_split();
+
+	pid_t pid = spawnvppe_pipe(cmd, argv, env, path, pin, pout);
+
+	free_path_split(path);
+
+	return pid;
+}
+
+int spawnvppe_pipe(const char *cmd, const char **argv, const char **env,
+		  char **path,
 		  int pin[], int pout[])
 {
 	const char *cmd_basename = strrchr(cmd, '/');
@@ -127,7 +183,7 @@ int spawnvpe_pipe(const char *cmd, const char **argv, const char **env,
 		}
 	}
 
-	prog = path_lookup(cmd);
+	prog = path_lookup(cmd, path);
 	interpr = parse_interpreter(prog);
 
 	for (argc = 0; argv[argc];) argc++;
