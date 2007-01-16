@@ -837,7 +837,12 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 
  retry:
 	if (log && rename(git_path("tmp-renamed-log"), git_path("logs/%s", newref))) {
-		if (errno==EISDIR) {
+		if (errno==EISDIR || errno==ENOTDIR) {
+			/*
+			 * rename(a, b) when b is an existing
+			 * directory ought to result in ISDIR, but
+			 * Solaris 5.8 gives ENOTDIR.  Sheesh.
+			 */
 			if (remove_empty_directories(git_path("logs/%s", newref))) {
 				error("Directory not empty: logs/%s", newref);
 				goto rollback;
