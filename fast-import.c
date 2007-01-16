@@ -222,11 +222,11 @@ static uintmax_t max_objects = -1;
 
 /* Stats and misc. counters */
 static uintmax_t alloc_count;
-static uintmax_t object_count;
 static uintmax_t marks_set_count;
 static uintmax_t object_count_by_type[1 << TYPE_BITS];
 static uintmax_t duplicate_count_by_type[1 << TYPE_BITS];
 static uintmax_t delta_count_by_type[1 << TYPE_BITS];
+static unsigned long object_count;
 static unsigned long branch_count;
 static unsigned long branch_load_count;
 
@@ -1846,7 +1846,7 @@ int main(int argc, const char **argv)
 {
 	int i;
 	uintmax_t est_obj_cnt = object_entry_alloc;
-	uintmax_t duplicate_count;
+	uintmax_t total_count, duplicate_count;
 
 	setup_ident();
 	git_config(git_default_config);
@@ -1914,6 +1914,9 @@ int main(int argc, const char **argv)
 	if (branch_log)
 		fclose(branch_log);
 
+	total_count = 0;
+	for (i = 0; i < ARRAY_SIZE(object_count_by_type); i++)
+		total_count += object_count_by_type[i];
 	duplicate_count = 0;
 	for (i = 0; i < ARRAY_SIZE(duplicate_count_by_type); i++)
 		duplicate_count += duplicate_count_by_type[i];
@@ -1921,7 +1924,7 @@ int main(int argc, const char **argv)
 	fprintf(stderr, "%s statistics:\n", argv[0]);
 	fprintf(stderr, "---------------------------------------------------------------------\n");
 	fprintf(stderr, "Alloc'd objects: %10ju (%10ju overflow  )\n", alloc_count, alloc_count - est_obj_cnt);
-	fprintf(stderr, "Total objects:   %10ju (%10ju duplicates                  )\n", object_count, duplicate_count);
+	fprintf(stderr, "Total objects:   %10ju (%10ju duplicates                  )\n", total_count, duplicate_count);
 	fprintf(stderr, "      blobs  :   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB], delta_count_by_type[OBJ_BLOB]);
 	fprintf(stderr, "      trees  :   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE], delta_count_by_type[OBJ_TREE]);
 	fprintf(stderr, "      commits:   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT], delta_count_by_type[OBJ_COMMIT]);
