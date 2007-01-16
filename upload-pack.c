@@ -96,6 +96,42 @@ static void show_edge(struct commit *commit)
 	fprintf(pack_pipe, "-%s\n", sha1_to_hex(commit->object.sha1));
 }
 
+static void do_rev_list(int create_full_pack)
+{
+	int i;
+	struct rev_info revs;
+
+	if (create_full_pack)
+		use_thin_pack = 0; /* no point doing it */
+	init_revisions(&revs, NULL);
+	revs.tag_objects = 1;
+	revs.tree_objects = 1;
+	revs.blob_objects = 1;
+	if (use_thin_pack)
+		revs.edge_hint = 1;
+
+	if (create_full_pack) {
+		const char *args[] = {"rev-list", "--all", NULL};
+		setup_revisions(2, args, &revs, NULL);
+	} else {
+		for (i = 0; i < want_obj.nr; i++) {
+			struct object *o = want_obj.objects[i].item;
+			/* why??? */
+			o->flags &= ~UNINTERESTING;
+			add_pending_object(&revs, o, NULL);
+		}
+		for (i = 0; i < have_obj.nr; i++) {
+			struct object *o = have_obj.objects[i].item;
+			o->flags |= UNINTERESTING;
+			add_pending_object(&revs, o, NULL);
+		}
+		setup_revisions(0, NULL, &revs, NULL);
+	}
+	prepare_revision_walk(&revs);
+	mark_edges_uninteresting(revs.commits, &revs, show_edge);
+	traverse_commit_list(&revs, show_commit, show_object);
+}
+
 static void create_pack_file(void)
 {
 	/* Pipes between rev-list to pack-objects, pack-objects to us
@@ -116,40 +152,8 @@ static void create_pack_file(void)
 		die("git-upload-pack: unable to fork git-rev-list");
 
 	if (!pid_rev_list) {
-		int i;
-		struct rev_info revs;
-
 		pack_pipe = fdopen(lp_pipe[1], "w");
-
-		if (create_full_pack)
-			use_thin_pack = 0; /* no point doing it */
-		init_revisions(&revs, NULL);
-		revs.tag_objects = 1;
-		revs.tree_objects = 1;
-		revs.blob_objects = 1;
-		if (use_thin_pack)
-			revs.edge_hint = 1;
-
-		if (create_full_pack) {
-			const char *args[] = {"rev-list", "--all", NULL};
-			setup_revisions(2, args, &revs, NULL);
-		} else {
-			for (i = 0; i < want_obj.nr; i++) {
-				struct object *o = want_obj.objects[i].item;
-				/* why??? */
-				o->flags &= ~UNINTERESTING;
-				add_pending_object(&revs, o, NULL);
-			}
-			for (i = 0; i < have_obj.nr; i++) {
-				struct object *o = have_obj.objects[i].item;
-				o->flags |= UNINTERESTING;
-				add_pending_object(&revs, o, NULL);
-			}
-			setup_revisions(0, NULL, &revs, NULL);
-		}
-		prepare_revision_walk(&revs);
-		mark_edges_uninteresting(revs.commits, &revs, show_edge);
-		traverse_commit_list(&revs, show_commit, show_object);
+		do_rev_list(create_full_pack);
 		exit(0);
 	}
 
