@@ -590,19 +590,6 @@ static void release_tree_entry(struct tree_entry *e)
 	avail_tree_entry = e;
 }
 
-static void yread(int fd, void *buffer, size_t length)
-{
-	ssize_t ret = 0;
-	while (ret < length) {
-		ssize_t size = xread(fd, (char *) buffer + ret, length - ret);
-		if (!size)
-			die("Read from descriptor %i: end of stream", fd);
-		if (size < 0)
-			die("Read from descriptor %i: %s", fd, strerror(errno));
-		ret += size;
-	}
-}
-
 static void start_packfile()
 {
 	struct packed_git *p;
@@ -642,7 +629,8 @@ static void fixup_header_footer()
 		die("Failed seeking to start: %s", strerror(errno));
 
 	SHA1_Init(&c);
-	yread(pack_fd, hdr, 8);
+	if (read_in_full(pack_fd, hdr, 8) != 8)
+		die("Unable to reread header of %s", pack_data->pack_name);
 	SHA1_Update(&c, hdr, 8);
 
 	cnt = htonl(object_count);
