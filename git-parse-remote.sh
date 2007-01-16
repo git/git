@@ -81,51 +81,7 @@ get_remote_default_refs_for_push () {
 # is to help prevent randomly "globbed" ref from being chosen as
 # a merge candidate
 expand_refs_wildcard () {
-	remote="$1"
-	shift
-	first_one=yes
-	if test "$#" = 0
-	then
-		echo empty
-		echo >&2 "Nothing specified for fetching with remote.$remote.fetch"
-	fi
-	for ref
-	do
-		lref=${ref#'+'}
-		# a non glob pattern is given back as-is.
-		expr "z$lref" : 'zrefs/.*/\*:refs/.*/\*$' >/dev/null || {
-			if test -n "$first_one"
-			then
-				echo "explicit"
-				first_one=
-			fi
-			echo "$ref"
-			continue
-		}
-
-		# glob
-		if test -n "$first_one"
-		then
-			echo "glob"
-			first_one=
-		fi
-		from=`expr "z$lref" : 'z\(refs/.*/\)\*:refs/.*/\*$'`
-		to=`expr "z$lref" : 'zrefs/.*/\*:\(refs/.*/\)\*$'`
-		local_force=
-		test "z$lref" = "z$ref" || local_force='+'
-		echo "$ls_remote_result" |
-		sed -e '/\^{}$/d' |
-		(
-			IFS='	'
-			while read sha1 name
-			do
-				# ignore the ones that do not start with $from
-				mapped=${name#"$from"}
-				test "z$name" = "z$mapped" && continue
-				echo "${local_force}${name}:${to}${mapped}"
-			done
-		)
-	done
+	git fetch--tool expand-refs-wildcard "$ls_remote_result" "$@"
 }
 
 # Subroutine to canonicalize remote:local notation.
