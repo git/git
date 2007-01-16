@@ -155,35 +155,9 @@ then
 fi
 
 fetch_native () {
-  reflist="$1"
-  refs=
-  rref=
 
-  for ref in $reflist
-  do
-      refs="$refs$LF$ref"
-
-      # These are relative path from $GIT_DIR, typically starting at refs/
-      # but may be HEAD
-      if expr "z$ref" : 'z\.' >/dev/null
-      then
-	  not_for_merge=t
-	  ref=$(expr "z$ref" : 'z\.\(.*\)')
-      else
-	  not_for_merge=
-      fi
-      if expr "z$ref" : 'z+' >/dev/null
-      then
-	  single_force=t
-	  ref=$(expr "z$ref" : 'z+\(.*\)')
-      else
-	  single_force=
-      fi
-      remote_name=$(expr "z$ref" : 'z\([^:]*\):')
-      local_name=$(expr "z$ref" : 'z[^:]*:\(.*\)')
-
-      rref="$rref$LF$remote_name"
-  done
+  eval=$(git-fetch--tool parse-reflist "$1")
+  eval "$eval"
 
     ( : subshell because we muck with IFS
       IFS=" 	$LF"
