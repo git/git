@@ -847,16 +847,17 @@ static int store_object(
 		if (delta) {
 			free(delta);
 			delta = NULL;
+
+			memset(&s, 0, sizeof(s));
+			deflateInit(&s, zlib_compression_level);
+			s.next_in = dat;
+			s.avail_in = datlen;
+			s.avail_out = deflateBound(&s, s.avail_in);
+			s.next_out = out = xrealloc(out, s.avail_out);
+			while (deflate(&s, Z_FINISH) == Z_OK)
+				/* nothing */;
+			deflateEnd(&s);
 		}
-		memset(&s, 0, sizeof(s));
-		deflateInit(&s, zlib_compression_level);
-		s.next_in = dat;
-		s.avail_in = datlen;
-		s.avail_out = deflateBound(&s, s.avail_in);
-		s.next_out = out;
-		while (deflate(&s, Z_FINISH) == Z_OK)
-			/* nothing */;
-		deflateEnd(&s);
 	}
 
 	e->type = type;
