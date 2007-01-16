@@ -217,7 +217,7 @@ struct hash_list
 
 /* Configured limits on output */
 static unsigned long max_depth = 10;
-static unsigned long max_packsize = -1;
+static unsigned long max_packsize = (1LL << 32) - 1;
 static uintmax_t max_objects = -1;
 
 /* Stats and misc. counters */
