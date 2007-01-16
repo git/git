@@ -60,16 +60,13 @@ $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_stdin, $_help, $_edit,
 	$_repack, $_repack_nr, $_repack_flags,
 	$_message, $_file, $_no_metadata,
-	$_template, $_shared, $_no_default_regex, $_no_graft_copy,
-	$_version, $_upgrade, $_branch_all_refs, @_opt_m,
+	$_template, $_shared,
+	$_version, $_upgrade,
 	$_merge, $_strategy, $_dry_run,
 	$_prefix);
-my (@_branch_from, %tree_map);
 my @repo_path_split_cache;
 
-my %fc_opts = ( 'branch|b=s' => \@_branch_from,
-		'follow-parent|follow' => \$_follow_parent,
-		'branch-all-refs|B' => \$_branch_all_refs,
+my %fc_opts = ( 'follow-parent|follow' => \$_follow_parent,
 		'authors-file|A=s' => \$_authors,
 		'repack:i' => \$_repack,
 		'no-metadata' => \$_no_metadata,
@@ -111,13 +108,6 @@ my %cmd = (
 	rebuild => [ \&cmd_rebuild, "Rebuild git-svn metadata (after git clone)",
 			{ 'copy-remote|remote=s' => \$_cp_remote,
 			  'upgrade' => \$_upgrade } ],
-	'graft-branches' => [ \&graft_branches,
-			'Detect merges/branches from already imported history',
-			{ 'merge-rx|m' => \@_opt_m,
-			  'branch|b=s' => \@_branch_from,
-			  'branch-all-refs|B' => \$_branch_all_refs,
-			  'no-default-regex' => \$_no_default_regex,
-			  'no-graft-copy' => \$_no_graft_copy } ],
 	'multi-init' => [ \&cmd_multi_init,
 			'Initialize multiple trees (like git-svnimport)',
 			{ %multi_opts, %init_opts,
@@ -167,13 +157,11 @@ my $rv = GetOptions(%opts, 'help|H|h' => \$_help,
 				'id|i=s' => \$GIT_SVN);
 exit 1 if (!$rv && $cmd ne 'log');
 
-set_default_vals();
 usage(0) if $_help;
 version() if $_version;
 usage(1) unless defined $cmd;
 init_vars();
 load_authors() if $_authors;
-load_all_refs() if $_branch_all_refs;
 migration_check() unless $cmd =~ /^(?:init|rebuild|multi-init|commit-diff)$/;
 $cmd{$cmd}->[0]->(@ARGV);
 exit 0;
@@ -394,40 +382,6 @@ sub cmd_show_ignore {
 	$gs->traverse_ignore(\*STDOUT, '', $r);
 }
 
-sub graft_branches {
-	my $gr_file = "$GIT_DIR/info/grafts";
-	my ($grafts, $comments) = read_grafts($gr_file);
-	my $gr_sha1;
-
-	if (%$grafts) {
-		# temporarily disable our grafts file to make this idempotent
-		chomp($gr_sha1 = command(qw/hash-object -w/,$gr_file));
-		rename $gr_file, "$gr_file~$gr_sha1" or croak $!;
-	}
-
-	my $l_map = read_url_paths();
-	my @re = map { qr/$_/is } @_opt_m if @_opt_m;
-	unless ($_no_default_regex) {
-		push @re, (qr/\b(?:merge|merging|merged)\s+with\s+([\w\.\-]+)/i,
-			qr/\b(?:merge|merging|merged)\s+([\w\.\-]+)/i,
-			qr/\b(?:from|of)\s+([\w\.\-]+)/i );
-	}
-	foreach my $u (keys %$l_map) {
-		if (@re) {
-			foreach my $p (keys %{$l_map->{$u}}) {
-				graft_merge_msg($grafts,$l_map,$u,$p,@re);
-			}
-		}
-		unless ($_no_graft_copy) {
-			graft_file_copy_lib($grafts,$l_map,$u);
-		}
-	}
-	graft_tree_joins($grafts);
-
-	write_grafts($grafts, $comments, $gr_file);
-	unlink "$gr_file~$gr_sha1" if $gr_sha1;
-}
-
 sub cmd_multi_init {
 	my $url = shift;
 	unless (defined $_trunk || defined $_branches || defined $_tags) {
@@ -601,157 +555,6 @@ sub common_prefix {
 	return '';
 }
 
-# grafts set here are 'stronger' in that they're based on actual tree
-# matches, and won't be deleted from merge-base checking in write_grafts()
-sub graft_tree_joins {
-	my $grafts = shift;
-	map_tree_joins() if (@_branch_from && !%tree_map);
-	return unless %tree_map;
-
-	git_svn_each(sub {
-		my $i = shift;
-		my @args = (qw/rev-list --pretty=raw/, "refs/remotes/$i");
-		my ($fh, $ctx) = command_output_pipe(@args);
-		while (<$fh>) {
-			next unless /^commit ($sha1)$/o;
-			my $c = $1;
-			my ($t) = (<$fh> =~ /^tree ($sha1)$/o);
-			next unless $tree_map{$t};
-
-			my $l;
-			do {
-				$l = readline $fh;
-			} until ($l =~ /^committer (?:.+) (\d+) ([\-\+]?\d+)$/);
-
-			my ($s, $tz) = ($1, $2);
-			if ($tz =~ s/^\+//) {
-				$s += tz_to_s_offset($tz);
-			} elsif ($tz =~ s/^\-//) {
-				$s -= tz_to_s_offset($tz);
-			}
-
-			my ($url_a, $r_a, $uuid_a) = cmt_metadata($c);
-
-			foreach my $p (@{$tree_map{$t}}) {
-				next if $p eq $c;
-				my $mb = eval { command('merge-base', $c, $p) };
-				next unless ($@ || $?);
-				if (defined $r_a) {
-					# see if SVN says it's a relative
-					my ($url_b, $r_b, $uuid_b) =
-							cmt_metadata($p);
-					next if (defined $url_b &&
-							defined $url_a &&
-							($url_a eq $url_b) &&
-							($uuid_a eq $uuid_b));
-					if ($uuid_a eq $uuid_b) {
-						if ($r_b < $r_a) {
-							$grafts->{$c}->{$p} = 2;
-							next;
-						} elsif ($r_b > $r_a) {
-							$grafts->{$p}->{$c} = 2;
-							next;
-						}
-					}
-				}
-				my $ct = get_commit_time($p);
-				if ($ct < $s) {
-					$grafts->{$c}->{$p} = 2;
-				} elsif ($ct > $s) {
-					$grafts->{$p}->{$c} = 2;
-				}
-				# what should we do when $ct == $s ?
-			}
-		}
-		command_close_pipe($fh, $ctx);
-	});
-}
-
-sub graft_file_copy_lib {
-	my ($grafts, $l_map, $u) = @_;
-	my $tree_paths = $l_map->{$u};
-	my $pfx = common_prefix([keys %$tree_paths]);
-	my ($repo, $path) = repo_path_split($u.$pfx);
-	$SVN = Git::SVN::Ra->new($repo);
-
-	my ($base, $head) = libsvn_parse_revision();
-	my $inc = 1000;
-	my ($min, $max) = ($base, $head < $base+$inc ? $head : $base+$inc);
-	my $eh = $SVN::Error::handler;
-	$SVN::Error::handler = \&libsvn_skip_unknown_revs;
-	while (1) {
-		$SVN->dup->get_log([$path], $min, $max, 0, 2, 1,
-			sub {
-				libsvn_graft_file_copies($grafts, $tree_paths,
-							$path, @_);
-			});
-		last if ($max >= $head);
-		$min = $max + 1;
-		$max += $inc;
-		$max = $head if ($max > $head);
-	}
-	$SVN::Error::handler = $eh;
-}
-
-sub process_merge_msg_matches {
-	my ($grafts, $l_map, $u, $p, $c, @matches) = @_;
-	my (@strong, @weak);
-	foreach (@matches) {
-		# merging with ourselves is not interesting
-		next if $_ eq $p;
-		if ($l_map->{$u}->{$_}) {
-			push @strong, $_;
-		} else {
-			push @weak, $_;
-		}
-	}
-	foreach my $w (@weak) {
-		last if @strong;
-		# no exact match, use branch name as regexp.
-		my $re = qr/\Q$w\E/i;
-		foreach (keys %{$l_map->{$u}}) {
-			if (/$re/) {
-				push @strong, $l_map->{$u}->{$_};
-				last;
-			}
-		}
-		last if @strong;
-		$w = basename($w);
-		$re = qr/\Q$w\E/i;
-		foreach (keys %{$l_map->{$u}}) {
-			if (/$re/) {
-				push @strong, $l_map->{$u}->{$_};
-				last;
-			}
-		}
-	}
-	my ($rev) = ($c->{m} =~ /^git-svn-id:\s(?:\S+?)\@(\d+)
-					\s(?:[a-f\d\-]+)$/xsm);
-	unless (defined $rev) {
-		($rev) = ($c->{m} =~/^git-svn-id:\s(\d+)
-					\@(?:[a-f\d\-]+)/xsm);
-		return unless defined $rev;
-	}
-	foreach my $m (@strong) {
-		my ($r0, $s0) = find_rev_before($rev, $m, 1);
-		$grafts->{$c->{c}}->{$s0} = 1 if defined $s0;
-	}
-}
-
-sub graft_merge_msg {
-	my ($grafts, $l_map, $u, $p, @re) = @_;
-
-	my $x = $l_map->{$u}->{$p};
-	my $rl = rev_list_raw("refs/remotes/$x");
-	while (my $c = next_rev_list_entry($rl)) {
-		foreach my $re (@re) {
-			my (@br) = ($c->{m} =~ /$re/g);
-			next unless @br;
-			process_merge_msg_matches($grafts,$l_map,$u,$p,$c,@br);
-		}
-	}
-}
-
 sub verify_ref {
 	my ($ref) = @_;
 	eval { command_oneline([ 'rev-parse', '--verify', $ref ],
@@ -807,58 +610,6 @@ sub get_tree_from_treeish {
 	return $expected;
 }
 
-sub get_diff {
-	my ($from, $treeish) = @_;
-	print "diff-tree $from $treeish\n";
-	my @diff_tree = qw(diff-tree -z -r);
-	if ($_cp_similarity) {
-		push @diff_tree, "-C$_cp_similarity";
-	} else {
-		push @diff_tree, '-C';
-	}
-	push @diff_tree, '--find-copies-harder' if $_find_copies_harder;
-	push @diff_tree, "-l$_l" if defined $_l;
-	push @diff_tree, $from, $treeish;
-	my ($diff_fh, $ctx) = command_output_pipe(@diff_tree);
-	local $/ = "\0";
-	my $state = 'meta';
-	my @mods;
-	while (<$diff_fh>) {
-		chomp $_; # this gets rid of the trailing "\0"
-		if ($state eq 'meta' && /^:(\d{6})\s(\d{6})\s
-					$sha1\s($sha1)\s([MTCRAD])\d*$/xo) {
-			push @mods, {	mode_a => $1, mode_b => $2,
-					sha1_b => $3, chg => $4 };
-			if ($4 =~ /^(?:C|R)$/) {
-				$state = 'file_a';
-			} else {
-				$state = 'file_b';
-			}
-		} elsif ($state eq 'file_a') {
-			my $x = $mods[$#mods] or croak "Empty array\n";
-			if ($x->{chg} !~ /^(?:C|R)$/) {
-				croak "Error parsing $_, $x->{chg}\n";
-			}
-			$x->{file_a} = $_;
-			$state = 'file_b';
-		} elsif ($state eq 'file_b') {
-			my $x = $mods[$#mods] or croak "Empty array\n";
-			if (exists $x->{file_a} && $x->{chg} !~ /^(?:C|R)$/) {
-				croak "Error parsing $_, $x->{chg}\n";
-			}
-			if (!exists $x->{file_a} && $x->{chg} =~ /^(?:C|R)$/) {
-				croak "Error parsing $_, $x->{chg}\n";
-			}
-			$x->{file_b} = $_;
-			$state = 'meta';
-		} else {
-			croak "Error parsing $_\n";
-		}
-	}
-	command_close_pipe($diff_fh, $ctx);
-	return \@mods;
-}
-
 sub get_commit_entry {
 	my ($treeish) = shift;
 	my %log_entry = ( log => '', tree => get_tree_from_treeish($treeish) );
@@ -899,34 +650,6 @@ sub get_commit_entry {
 	\%log_entry;
 }
 
-sub rev_list_raw {
-	my ($fh, $c) = command_output_pipe(qw/rev-list --pretty=raw/, @_);
-	return { fh => $fh, ctx => $c, t => { } };
-}
-
-sub next_rev_list_entry {
-	my $rl = shift;
-	my $fh = $rl->{fh};
-	my $x = $rl->{t};
-	while (<$fh>) {
-		if (/^commit ($sha1)$/o) {
-			if ($x->{c}) {
-				$rl->{t} = { c => $1 };
-				return $x;
-			} else {
-				$x->{c} = $1;
-			}
-		} elsif (/^parent ($sha1)$/o) {
-			$x->{p}->{$1} = 1;
-		} elsif (s/^    //) {
-			$x->{m} ||= '';
-			$x->{m} .= $_;
-		}
-	}
-	command_close_pipe($fh, $rl->{ctx});
-	return ($x != $rl->{t}) ? $x : undef;
-}
-
 sub s_to_file {
 	my ($str, $file, $mode) = @_;
 	open my $fd,'>',$file or croak $!;
@@ -960,43 +683,6 @@ sub check_upgrade_needed {
 		print STDERR "Please run: $0 rebuild --upgrade\n";
 		exit 1;
 	}
-}
-
-# fills %tree_map with a reverse mapping of trees to commits.  Useful
-# for finding parents to commit on.
-sub map_tree_joins {
-	my %seen;
-	foreach my $br (@_branch_from) {
-		my $pipe = command_output_pipe(qw/rev-list
-		                            --topo-order --pretty=raw/, $br);
-		while (<$pipe>) {
-			if (/^commit ($sha1)$/o) {
-				my $commit = $1;
-
-				# if we've seen a commit,
-				# we've seen its parents
-				last if $seen{$commit};
-				my ($tree) = (<$pipe> =~ /^tree ($sha1)$/o);
-				unless (defined $tree) {
-					die "Failed to parse commit $commit\n";
-				}
-				push @{$tree_map{$tree}}, $commit;
-				$seen{$commit} = 1;
-			}
-		}
-		close $pipe;
-	}
-}
-
-sub load_all_refs {
-	if (@_branch_from) {
-		print STDERR '--branch|-b parameters are ignored when ',
-			"--branch-all-refs|-B is passed\n";
-	}
-
-	# don't worry about rev-list on non-commit objects/tags,
-	# it shouldn't blow up if a ref is a blob or tree...
-	@_branch_from = command(qw/rev-parse --symbolic --all/);
 }
 
 # '<svn username> = real-name <email address>' mapping based on git-svnimport:
@@ -1073,20 +759,6 @@ sub migration_check {
 	print "Done upgrading.\n";
 }
 
-sub find_rev_before {
-	my ($r, $id, $eq_ok) = @_;
-	my $f = "$GIT_DIR/svn/$id/.rev_db";
-	return (undef,undef) unless -r $f;
-	--$r unless $eq_ok;
-	while ($r > 0) {
-		if (my $c = revdb_get($f, $r)) {
-			return ($r, $c);
-		}
-		--$r;
-	}
-	return (undef, undef);
-}
-
 sub init_vars {
 	$GIT_SVN ||= $ENV{GIT_SVN_ID} || 'git-svn';
 	$Git::SVN::default = $GIT_SVN;
@@ -1094,7 +766,6 @@ sub init_vars {
 	$REVDB = "$GIT_SVN_DIR/.rev_db";
 	$GIT_SVN_INDEX = "$GIT_SVN_DIR/index";
 	$SVN_URL = undef;
-	%tree_map = ();
 }
 
 # convert GetOpt::Long specs for use by git-config
@@ -1118,95 +789,6 @@ sub read_repo_config {
 			}
 		}
 	}
-}
-
-sub set_default_vals {
-	if (defined $_repack) {
-		$_repack = 1000 if ($_repack <= 0);
-		$_repack_nr = $_repack;
-		$_repack_flags ||= '-d';
-	}
-}
-
-sub read_grafts {
-	my $gr_file = shift;
-	my ($grafts, $comments) = ({}, {});
-	if (open my $fh, '<', $gr_file) {
-		my @tmp;
-		while (<$fh>) {
-			if (/^($sha1)\s+/) {
-				my $c = $1;
-				if (@tmp) {
-					@{$comments->{$c}} = @tmp;
-					@tmp = ();
-				}
-				foreach my $p (split /\s+/, $_) {
-					$grafts->{$c}->{$p} = 1;
-				}
-			} else {
-				push @tmp, $_;
-			}
-		}
-		close $fh or croak $!;
-		@{$comments->{'END'}} = @tmp if @tmp;
-	}
-	return ($grafts, $comments);
-}
-
-sub write_grafts {
-	my ($grafts, $comments, $gr_file) = @_;
-
-	open my $fh, '>', $gr_file or croak $!;
-	foreach my $c (sort keys %$grafts) {
-		if ($comments->{$c}) {
-			print $fh $_ foreach @{$comments->{$c}};
-		}
-		my $p = $grafts->{$c};
-		my %x; # real parents
-		delete $p->{$c}; # commits are not self-reproducing...
-		my $ch = command_output_pipe(qw/cat-file commit/, $c);
-		while (<$ch>) {
-			if (/^parent ($sha1)/) {
-				$x{$1} = $p->{$1} = 1;
-			} else {
-				last unless /^\S/;
-			}
-		}
-		close $ch; # breaking the pipe
-
-		# if real parents are the only ones in the grafts, drop it
-		next if join(' ',sort keys %$p) eq join(' ',sort keys %x);
-
-		my (@ip, @jp, $mb);
-		my %del = %x;
-		@ip = @jp = keys %$p;
-		foreach my $i (@ip) {
-			next if $del{$i} || $p->{$i} == 2;
-			foreach my $j (@jp) {
-				next if $i eq $j || $del{$j} || $p->{$j} == 2;
-				$mb = eval { command('merge-base', $i, $j) };
-				next unless $mb;
-				chomp $mb;
-				next if $x{$mb};
-				if ($mb eq $j) {
-					delete $p->{$i};
-					$del{$i} = 1;
-				} elsif ($mb eq $i) {
-					delete $p->{$j};
-					$del{$j} = 1;
-				}
-			}
-		}
-
-		# if real parents are the only ones in the grafts, drop it
-		next if join(' ',sort keys %$p) eq join(' ',sort keys %x);
-
-		print $fh $c, ' ', join(' ', sort keys %$p),"\n";
-	}
-	if ($comments->{'END'}) {
-		print $fh $_ foreach @{$comments->{'END'}};
-	}
-	close $fh or croak $!;
 }
 
 sub read_url_paths_all {
@@ -1936,48 +1518,6 @@ sub uri_decode {
 	$f
 }
 
-sub libsvn_parse_revision {
-	my $base = shift;
-	my $head = $SVN->get_latest_revnum();
-	if (!defined $_revision || $_revision eq 'BASE:HEAD') {
-		return ($base + 1, $head) if (defined $base);
-		return (0, $head);
-	}
-	return ($1, $2) if ($_revision =~ /^(\d+):(\d+)$/);
-	return ($_revision, $_revision) if ($_revision =~ /^\d+$/);
-	if ($_revision =~ /^BASE:(\d+)$/) {
-		return ($base + 1, $1) if (defined $base);
-		return (0, $head);
-	}
-	return ($1, $head) if ($_revision =~ /^(\d+):HEAD$/);
-	die "revision argument: $_revision not understood by git-svn\n",
-		"Try using the command-line svn client instead\n";
-}
-
-sub libsvn_traverse_ignore {
-	my ($fh, $path, $r) = @_;
-	$path =~ s#^/+##g;
-	my ($dirent, undef, $props) = $SVN->get_dir($path, $r);
-	my $p = $path;
-	$p =~ s#^\Q$SVN->{svn_path}\E/##;
-	print $fh length $p ? "\n# $p\n" : "\n# /\n";
-	if (my $s = $props->{'svn:ignore'}) {
-		$s =~ s/[\r\n]+/\n/g;
-		chomp $s;
-		if (length $p == 0) {
-			$s =~ s#\n#\n/$p#g;
-			print $fh "/$s\n";
-		} else {
-			$s =~ s#\n#\n/$p/#g;
-			print $fh "/$p/$s\n";
-		}
-	}
-	foreach (sort keys %$dirent) {
-		next if $dirent->{$_}->kind != $SVN::Node::dir;
-		libsvn_traverse_ignore($fh, "$path/$_", $r);
-	}
-}
-
 sub revisions_eq {
 	my ($path, $r0, $r1) = @_;
 	return 1 if $r0 == $r1;
@@ -2063,69 +1603,6 @@ sub _libsvn_new_tree {
 		die "SVN connection failed somewhere...\n";
 	}
 	libsvn_log_entry($rev, $author, $date, $log, $parents, $ed);
-}
-
-sub find_graft_path_commit {
-	my ($tree_paths, $p1, $r1) = @_;
-	foreach my $x (keys %$tree_paths) {
-		next unless ($p1 =~ /^\Q$x\E/);
-		my $i = $tree_paths->{$x};
-		my ($r0, $parent) = find_rev_before($r1,$i,1);
-		return $parent if (defined $r0 && $r0 == $r1);
-		print STDERR "r$r1 of $i not imported\n";
-		next;
-	}
-	return undef;
-}
-
-sub find_graft_path_parents {
-	my ($grafts, $tree_paths, $c, $p0, $r0) = @_;
-	foreach my $x (keys %$tree_paths) {
-		next unless ($p0 =~ /^\Q$x\E/);
-		my $i = $tree_paths->{$x};
-		my ($r, $parent) = find_rev_before($r0, $i, 1);
-		if (defined $r && defined $parent && revisions_eq($x,$r,$r0)) {
-			my ($url_b, undef, $uuid_b) = cmt_metadata($c);
-			my ($url_a, undef, $uuid_a) = cmt_metadata($parent);
-			next if ($url_a && $url_b && $url_a eq $url_b &&
-							$uuid_b eq $uuid_a);
-			$grafts->{$c}->{$parent} = 1;
-		}
-	}
-}
-
-sub libsvn_graft_file_copies {
-	my ($grafts, $tree_paths, $path, $paths, $rev) = @_;
-	foreach (keys %$paths) {
-		my $i = $paths->{$_};
-		my ($m, $p0, $r0) = ($i->action, $i->copyfrom_path,
-					$i->copyfrom_rev);
-		next unless (defined $p0 && defined $r0);
-
-		my $p1 = $_;
-		$p1 =~ s#^/##;
-		$p0 =~ s#^/##;
-		my $c = find_graft_path_commit($tree_paths, $p1, $rev);
-		next unless $c;
-		find_graft_path_parents($grafts, $tree_paths, $c, $p0, $r0);
-	}
-}
-
-sub revdb_get {
-	my ($file, $rev) = @_;
-	my $ret;
-	my $offset = $rev * 41;
-	open my $fh, '<', $file or croak $!;
-	seek $fh, $offset, 0;
-	if (tell $fh == $offset) {
-		$ret = readline $fh;
-		if (defined $ret) {
-			chomp $ret;
-			$ret = undef if ($ret =~ /^0{40}$/);
-		}
-	}
-	close $fh or croak $!;
-	return $ret;
 }
 
 {
