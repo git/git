@@ -192,57 +192,12 @@ fetch_native () {
 	  echo failed "$remote"
       ) |
       (
-	trap '
-		if test -n "$keepfile" && test -f "$keepfile"
-		then
-			rm -f "$keepfile"
-		fi
-	' 0
-
-        keepfile=
-	while read sha1 remote_name
-	do
-	  case "$sha1" in
-	  failed)
-		  echo >&2 "Fetch failure: $remote"
-		  exit 1 ;;
-	  # special line coming from index-pack with the pack name
-	  pack)
-		  continue ;;
-	  keep)
-		  keepfile="$GIT_OBJECT_DIRECTORY/pack/pack-$remote_name.keep"
-		  continue ;;
-	  esac
-	  found=
-	  single_force=
-	  for ref in $refs
-	  do
-	      case "$ref" in
-	      +$remote_name:*)
-		  single_force=t
-		  not_for_merge=
-		  found="$ref"
-		  break ;;
-	      .+$remote_name:*)
-		  single_force=t
-		  not_for_merge=t
-		  found="$ref"
-		  break ;;
-	      .$remote_name:*)
-		  not_for_merge=t
-		  found="$ref"
-		  break ;;
-	      $remote_name:*)
-		  not_for_merge=
-		  found="$ref"
-		  break ;;
-	      esac
-	  done
-	  local_name=$(expr "z$found" : 'z[^:]*:\(.*\)')
-	  append_fetch_head "$sha1" "$remote" \
-		  "$remote_name" "$remote_nick" "$local_name" \
-		  "$not_for_merge" || exit
-        done
+	flags=
+	test -n "$verbose" && flags="$flags -v"
+	test -n "$force" && flags="$flags -f"
+	GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION" \
+		git-fetch--tool native-store \
+			$flags "$remote" "$remote_nick" "$refs"
       )
     ) || exit
 

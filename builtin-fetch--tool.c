@@ -170,6 +170,119 @@ static int append_fetch_head(FILE *fp,
 	return update_local_ref(local_name, head, note, verbose, force);
 }
 
+static char *keep;
+static void remove_keep(void)
+{
+	if (keep && *keep)
+		unlink(keep);
+}
+
+static void remove_keep_on_signal(int signo)
+{
+	remove_keep();
+	signal(SIGINT, SIG_DFL);
+	raise(signo);
+}
+
+static char *find_local_name(const char *remote_name, const char *refs,
+			     int *force_p, int *not_for_merge_p)
+{
+	const char *ref = refs;
+	int len = strlen(remote_name);
+
+	while (ref) {
+		const char *next;
+		int single_force, not_for_merge;
+
+		while (*ref == '\n')
+			ref++;
+		if (!*ref)
+			break;
+		next = strchr(ref, '\n');
+
+		single_force = not_for_merge = 0;
+		if (*ref == '+') {
+			single_force = 1;
+			ref++;
+		}
+		if (*ref == '.') {
+			not_for_merge = 1;
+			ref++;
+			if (*ref == '+') {
+				single_force = 1;
+				ref++;
+			}
+		}
+		if (!strncmp(remote_name, ref, len) && ref[len] == ':') {
+			const char *local_part = ref + len + 1;
+			char *ret;
+			int retlen;
+
+			if (!next)
+				retlen = strlen(local_part);
+			else
+				retlen = next - local_part;
+			ret = xmalloc(retlen + 1);
+			memcpy(ret, local_part, retlen);
+			ret[retlen] = 0;
+			*force_p = single_force;
+			*not_for_merge_p = not_for_merge;
+			return ret;
+		}
+		ref = next;
+	}
+	return NULL;
+}
+
+static int fetch_native_store(FILE *fp,
+			      const char *remote,
+			      const char *remote_nick,
+			      const char *refs,
+			      int verbose, int force)
+{
+	char buffer[1024];
+	int err = 0;
+
+	signal(SIGINT, remove_keep_on_signal);
+	atexit(remove_keep);
+
+	while (fgets(buffer, sizeof(buffer), stdin)) {
+		int len;
+		char *cp;
+		char *local_name;
+		int single_force, not_for_merge;
+
+		for (cp = buffer; *cp && !isspace(*cp); cp++)
+			;
+		if (*cp)
+			*cp++ = 0;
+		len = strlen(cp);
+		if (len && cp[len-1] == '\n')
+			cp[--len] = 0;
+		if (!strcmp(buffer, "failed"))
+			die("Fetch failure: %s", remote);
+		if (!strcmp(buffer, "pack"))
+			continue;
+		if (!strcmp(buffer, "keep")) {
+			char *od = get_object_directory();
+			int len = strlen(od) + strlen(cp) + 50;
+			keep = xmalloc(len);
+			sprintf(keep, "%s/pack/pack-%s.keep", od, cp);
+			continue;
+		}
+
+		local_name = find_local_name(cp, refs,
+					     &single_force, &not_for_merge);
+		if (!local_name)
+			continue;
+		err |= append_fetch_head(fp,
+					 buffer, remote, cp, remote_nick,
+					 local_name, not_for_merge,
+					 verbose, force || single_force);
+	}
+	return err;
+}
+
 int cmd_fetch__tool(int argc, const char **argv, const char *prefix)
 {
 	int verbose = 0;
@@ -209,6 +322,18 @@ int cmd_fetch__tool(int argc, const char **argv, const char *prefix)
 			return error("update-local-ref takes 3 args");
 		return update_local_ref(argv[2], argv[3], argv[4],
 					verbose, force);
+	}
+	if (!strcmp("native-store", argv[1])) {
+		int result;
+		FILE *fp;
+
+		if (argc != 5)
+			return error("fetch-native-store takes 3 args");
+		fp = fopen(git_path("FETCH_HEAD"), "a");
+		result = fetch_native_store(fp, argv[2], argv[3], argv[4],
+					    verbose, force);
+		fclose(fp);
+		return result;
 	}
 	return error("Unknown subcommand: %s", argv[1]);
 }
