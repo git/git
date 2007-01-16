@@ -248,7 +248,6 @@ static struct packed_git *pack_data;
 static struct packed_git **all_packs;
 static int pack_fd;
 static unsigned long pack_size;
-static unsigned char pack_sha1[20];
 
 /* Table of objects we've written. */
 static unsigned int object_entry_alloc = 5000;
@@ -646,8 +645,8 @@ static void fixup_header_footer()
 	}
 	free(buf);
 
-	SHA1_Final(pack_sha1, &c);
-	write_or_die(pack_fd, pack_sha1, sizeof(pack_sha1));
+	SHA1_Final(pack_data->sha1, &c);
+	write_or_die(pack_fd, pack_data->sha1, sizeof(pack_data->sha1));
 }
 
 static int oecmp (const void *a_, const void *b_)
@@ -697,8 +696,8 @@ static void write_index(const char *idx_name)
 		sha1write(f, &offset, 4);
 		sha1write(f, (*c)->sha1, sizeof((*c)->sha1));
 	}
-	sha1write(f, pack_sha1, sizeof(pack_sha1));
-	sha1close(f, NULL, 1);
+	sha1write(f, pack_data->sha1, sizeof(pack_data->sha1));
+	sha1close(f, pack_data->sha1, 1);
 	free(idx);
 }
 
