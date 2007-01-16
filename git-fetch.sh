@@ -107,133 +107,19 @@ ls_remote_result=$(git ls-remote $exec "$remote") ||
 	die "Cannot get the repository state from $remote"
 
 append_fetch_head () {
-    head_="$1"
-    remote_="$2"
-    remote_name_="$3"
-    remote_nick_="$4"
-    local_name_="$5"
-    case "$6" in
-    t) not_for_merge_='not-for-merge' ;;
-    '') not_for_merge_= ;;
-    esac
-
-    # remote-nick is the URL given on the command line (or a shorthand)
-    # remote-name is the $GIT_DIR relative refs/ path we computed
-    # for this refspec.
-
-    # the $note_ variable will be fed to git-fmt-merge-msg for further
-    # processing.
-    case "$remote_name_" in
-    HEAD)
-	note_= ;;
-    refs/heads/*)
-	note_="$(expr "$remote_name_" : 'refs/heads/\(.*\)')"
-	note_="branch '$note_' of " ;;
-    refs/tags/*)
-	note_="$(expr "$remote_name_" : 'refs/tags/\(.*\)')"
-	note_="tag '$note_' of " ;;
-    refs/remotes/*)
-	note_="$(expr "$remote_name_" : 'refs/remotes/\(.*\)')"
-	note_="remote branch '$note_' of " ;;
-    *)
-	note_="$remote_name of " ;;
-    esac
-    remote_1_=$(expr "z$remote_" : 'z\(.*\)\.git/*$') &&
-	remote_="$remote_1_"
-    note_="$note_$remote_"
-
-    # 2.6.11-tree tag would not be happy to be fed to resolve.
-    if git-cat-file commit "$head_" >/dev/null 2>&1
-    then
-	headc_=$(git-rev-parse --verify "$head_^0") || exit
-	echo "$headc_	$not_for_merge_	$note_" >>"$GIT_DIR/FETCH_HEAD"
-    else
-	echo "$head_	not-for-merge	$note_" >>"$GIT_DIR/FETCH_HEAD"
-    fi
-
-    update_local_ref "$local_name_" "$head_" "$note_"
+	flags=
+	test -n "$verbose" && flags="$flags -v"
+	test -n "$force" && flags="$flags -f"
+	GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION" \
+		git-fetch--tool append-fetch-head $flags "$@"
 }
 
 update_local_ref () {
-    # If we are storing the head locally make sure that it is
-    # a fast forward (aka "reverse push").
-
-    label_=$(git-cat-file -t $2)
-    newshort_=$(git-rev-parse --short $2)
-    if test -z "$1" ; then
-	[ "$verbose" ] && echo >&2 "* fetched $3"
-	[ "$verbose" ] && echo >&2 "  $label_: $newshort_"
-	return 0
-    fi
-    oldshort_=$(git show-ref --hash --abbrev "$1" 2>/dev/null)
-
-    case "$1" in
-    refs/tags/*)
-	# Tags need not be pointing at commits so there
-	# is no way to guarantee "fast-forward" anyway.
-	if test -n "$oldshort_"
-	then
-		if now_=$(git show-ref --hash "$1") && test "$now_" = "$2"
-		then
-			[ "$verbose" ] && echo >&2 "* $1: same as $3"
-			[ "$verbose" ] && echo >&2 "  $label_: $newshort_" ||:
-		else
-			echo >&2 "* $1: updating with $3"
-			echo >&2 "  $label_: $newshort_"
-			git-update-ref -m "$GIT_REFLOG_ACTION: updating tag" "$1" "$2"
-		fi
-	else
-		echo >&2 "* $1: storing $3"
-		echo >&2 "  $label_: $newshort_"
-		git-update-ref -m "$GIT_REFLOG_ACTION: storing tag" "$1" "$2"
-	fi
-	;;
-
-    refs/heads/* | refs/remotes/*)
-	# $1 is the ref being updated.
-	# $2 is the new value for the ref.
-	local=$(git-rev-parse --verify "$1^0" 2>/dev/null)
-	if test "$local"
-	then
-	    # Require fast-forward.
-	    mb=$(git-merge-base "$local" "$2") &&
-	    case "$2,$mb" in
-	    $local,*)
-	        if test -n "$verbose"
-		then
-			echo >&2 "* $1: same as $3"
-			echo >&2 "  $label_: $newshort_"
-		fi
-		;;
-	    *,$local)
-		echo >&2 "* $1: fast forward to $3"
-		echo >&2 "  old..new: $oldshort_..$newshort_"
-		git-update-ref -m "$GIT_REFLOG_ACTION: fast-forward" "$1" "$2" "$local"
-		;;
-	    *)
-		false
-		;;
-	    esac || {
-		case ",$force,$single_force," in
-		*,t,*)
-			echo >&2 "* $1: forcing update to non-fast forward $3"
-			echo >&2 "  old...new: $oldshort_...$newshort_"
-			git-update-ref -m "$GIT_REFLOG_ACTION: forced-update" "$1" "$2" "$local"
-			;;
-		*)
-			echo >&2 "* $1: not updating to non-fast forward $3"
-			echo >&2 "  old...new: $oldshort_...$newshort_"
-			exit 1
-			;;
-		esac
-	    }
-	else
-	    echo >&2 "* $1: storing $3"
-	    echo >&2 "  $label_: $newshort_"
-	    git-update-ref -m "$GIT_REFLOG_ACTION: storing head" "$1" "$2"
-	fi
-	;;
-    esac
+	flags=
+	test -n "$verbose" && flags="$flags -v"
+	test -n "$force" && flags="$flags -f"
+	GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION" \
+		git-fetch--tool update-local-ref $flags "$@"
 }
 
 # updating the current HEAD with git-fetch in a bare
