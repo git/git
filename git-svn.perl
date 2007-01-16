@@ -1918,7 +1918,8 @@ sub _simple_prompt {
 	$default_username = $_username if defined $_username;
 	if (defined $default_username && length $default_username) {
 		if (defined $realm && length $realm) {
-			print "Authentication realm: $realm\n";
+			print STDERR "Authentication realm: $realm\n";
+			STDERR->flush;
 		}
 		$cred->username($default_username);
 	} else {
@@ -1933,36 +1934,38 @@ sub _simple_prompt {
 sub _ssl_server_trust_prompt {
 	my ($cred, $realm, $failures, $cert_info, $may_save, $pool) = @_;
 	$may_save = undef if $_no_auth_cache;
-	print "Error validating server certificate for '$realm':\n";
+	print STDERR "Error validating server certificate for '$realm':\n";
 	if ($failures & $SVN::Auth::SSL::UNKNOWNCA) {
-		print " - The certificate is not issued by a trusted ",
+		print STDERR " - The certificate is not issued by a trusted ",
 		      "authority. Use the\n",
 	              "   fingerprint to validate the certificate manually!\n";
 	}
 	if ($failures & $SVN::Auth::SSL::CNMISMATCH) {
-		print " - The certificate hostname does not match.\n";
+		print STDERR " - The certificate hostname does not match.\n";
 	}
 	if ($failures & $SVN::Auth::SSL::NOTYETVALID) {
-		print " - The certificate is not yet valid.\n";
+		print STDERR " - The certificate is not yet valid.\n";
 	}
 	if ($failures & $SVN::Auth::SSL::EXPIRED) {
-		print " - The certificate has expired.\n";
+		print STDERR " - The certificate has expired.\n";
 	}
 	if ($failures & $SVN::Auth::SSL::OTHER) {
-		print " - The certificate has an unknown error.\n";
+		print STDERR " - The certificate has an unknown error.\n";
 	}
-	printf( "Certificate information:\n".
+	printf STDERR
+	        "Certificate information:\n".
 	        " - Hostname: %s\n".
 	        " - Valid: from %s until %s\n".
 	        " - Issuer: %s\n".
 	        " - Fingerprint: %s\n",
 	        map $cert_info->$_, qw(hostname valid_from valid_until
-	                               issuer_dname fingerprint) );
+	                               issuer_dname fingerprint);
 	my $choice;
 prompt:
-	print $may_save ?
+	print STDERR $may_save ?
 	      "(R)eject, accept (t)emporarily or accept (p)ermanently? " :
 	      "(R)eject or accept (t)emporarily? ";
+	STDERR->flush;
 	$choice = lc(substr(<STDIN> || 'R', 0, 1));
 	if ($choice =~ /^t$/i) {
 		$cred->may_save(undef);
@@ -1980,7 +1983,8 @@ prompt:
 sub _ssl_client_cert_prompt {
 	my ($cred, $realm, $may_save, $pool) = @_;
 	$may_save = undef if $_no_auth_cache;
-	print "Client certificate filename: ";
+	print STDERR "Client certificate filename: ";
+	STDERR->flush;
 	chomp(my $filename = <STDIN>);
 	$cred->cert_file($filename);
 	$cred->may_save($may_save);
@@ -1999,13 +2003,14 @@ sub _username_prompt {
 	my ($cred, $realm, $may_save, $pool) = @_;
 	$may_save = undef if $_no_auth_cache;
 	if (defined $realm && length $realm) {
-		print "Authentication realm: $realm\n";
+		print STDERR "Authentication realm: $realm\n";
 	}
 	my $username;
 	if (defined $_username) {
 		$username = $_username;
 	} else {
-		print "Username: ";
+		print STDERR "Username: ";
+		STDERR->flush;
 		chomp($username = <STDIN>);
 	}
 	$cred->username($username);
@@ -2015,7 +2020,8 @@ sub _username_prompt {
 
 sub _read_password {
 	my ($prompt, $realm) = @_;
-	print $prompt;
+	print STDERR $prompt;
+	STDERR->flush;
 	require Term::ReadKey;
 	Term::ReadKey::ReadMode('noecho');
 	my $password = '';
@@ -2024,7 +2030,8 @@ sub _read_password {
 		$password .= $key;
 	}
 	Term::ReadKey::ReadMode('restore');
-	print "\n";
+	print STDERR "\n";
+	STDERR->flush;
 	$password;
 }
 

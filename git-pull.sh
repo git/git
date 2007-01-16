@@ -83,8 +83,17 @@ merge_head=$(sed -e '/	not-for-merge	/d' \
 
 case "$merge_head" in
 '')
-	curr_branch=$(git-symbolic-ref HEAD | \
-		sed -e 's|^refs/heads/||')
+	curr_branch=$(git-symbolic-ref -q HEAD)
+	case $? in
+	  0) ;;
+	  1) echo >&2 "You are not currently on a branch; you must explicitly"
+	     echo >&2 "specify which branch you wish to merge:"
+	     echo >&2 "  git pull <remote> <branch>"
+	     exit 1;;
+	  *) exit $?;;
+	esac
+	curr_branch=${curr_branch#refs/heads/}
+
 	echo >&2 "Warning: No merge candidate found because value of config option
          \"branch.${curr_branch}.merge\" does not match any remote branch fetched."
 	echo >&2 "No changes."

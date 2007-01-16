@@ -1,3 +1,4 @@
+#!/bin/sh
 test_description='git-svn graft-branches'
 . ./lib-git-svn.sh
 

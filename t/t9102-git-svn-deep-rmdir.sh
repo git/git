@@ -1,3 +1,4 @@
+#!/bin/sh
 test_description='git-svn rmdir'
 . ./lib-git-svn.sh
 

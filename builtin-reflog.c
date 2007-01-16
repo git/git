@@ -13,7 +13,7 @@
  */
 
 static const char reflog_expire_usage[] =
-"git-reflog expire [--verbose] [--dry-run] [--fix-stale] [--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...";
+"git-reflog expire [--verbose] [--dry-run] [--stale-fix] [--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...";
 
 static unsigned long default_reflog_expire;
 static unsigned long default_reflog_expire_unreachable;

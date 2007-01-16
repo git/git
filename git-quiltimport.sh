@@ -89,7 +89,7 @@ for patch_name in $(cat "$QUILT_PATCHES/series" | grep -v '^#'); do
 			echo "No author found in $patch_name" >&2;
 			echo "---"
 			cat $tmp_msg
-			echo -n "Author: ";
+			printf "Author: ";
 			read patch_author
 
 			echo "$patch_author"
