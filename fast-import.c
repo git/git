@@ -645,6 +645,7 @@ static void fixup_header_footer()
 
 	SHA1_Final(pack_data->sha1, &c);
 	write_or_die(pack_fd, pack_data->sha1, sizeof(pack_data->sha1));
+	close(pack_fd);
 }
 
 static int oecmp (const void *a_, const void *b_)
@@ -768,14 +769,11 @@ static void end_packfile()
 		if (!new_p)
 			die("core git rejected index %s", idx_name);
 		new_p->windows = old_p->windows;
-		new_p->pack_fd = old_p->pack_fd;
 		all_packs[pack_id++] = new_p;
 		install_packed_git(new_p);
 	}
-	else {
-		close(pack_fd);
+	else
 		unlink(old_p->pack_name);
-	}
 	free(old_p);
 
 	/* We can't carry a delta across packfiles. */
