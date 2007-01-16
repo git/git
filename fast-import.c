@@ -241,9 +241,7 @@ static unsigned int atom_cnt;
 static struct atom_str **atom_table;
 
 /* The .pack file being generated */
-static const char *base_name;
 static unsigned int pack_id;
-static char *idx_name;
 static struct packed_git *pack_data;
 static struct packed_git **all_packs;
 static int pack_fd;
@@ -591,17 +589,17 @@ static void release_tree_entry(struct tree_entry *e)
 
 static void start_packfile()
 {
+	static char tmpfile[PATH_MAX];
 	struct packed_git *p;
 	struct pack_header hdr;
 
-	idx_name = xmalloc(strlen(base_name) + 11);
-	p = xcalloc(1, sizeof(*p) + strlen(base_name) + 13);
-	sprintf(p->pack_name, "%s%5.5i.pack", base_name, pack_id + 1);
-	sprintf(idx_name, "%s%5.5i.idx", base_name, pack_id + 1);
-
-	pack_fd = open(p->pack_name, O_RDWR|O_CREAT|O_EXCL, 0666);
+	snprintf(tmpfile, sizeof(tmpfile),
+		"%s/pack_XXXXXX", get_object_directory());
+	pack_fd = mkstemp(tmpfile);
 	if (pack_fd < 0)
-		die("Can't create %s: %s", p->pack_name, strerror(errno));
+		die("Can't create %s: %s", tmpfile, strerror(errno));
+	p = xcalloc(1, sizeof(*p) + strlen(tmpfile) + 2);
+	strcpy(p->pack_name, tmpfile);
 	p->pack_fd = pack_fd;
 
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
@@ -656,13 +654,15 @@ static int oecmp (const void *a_, const void *b_)
 	return hashcmp(a->sha1, b->sha1);
 }
 
-static void write_index(const char *idx_name)
+static char* create_index()
 {
+	static char tmpfile[PATH_MAX];
+	SHA_CTX ctx;
 	struct sha1file *f;
 	struct object_entry **idx, **c, **last, *e;
 	struct object_entry_pool *o;
 	unsigned int array[256];
-	int i;
+	int i, idx_fd;
 
 	/* Build the sorted table of object IDs. */
 	idx = xmalloc(object_count * sizeof(struct object_entry*));
@@ -689,16 +689,68 @@ static void write_index(const char *idx_name)
 		c = next;
 	}
 
-	f = sha1create("%s", idx_name);
+	snprintf(tmpfile, sizeof(tmpfile),
+		"%s/index_XXXXXX", get_object_directory());
+	idx_fd = mkstemp(tmpfile);
+	if (idx_fd < 0)
+		die("Can't create %s: %s", tmpfile, strerror(errno));
+	f = sha1fd(idx_fd, tmpfile);
 	sha1write(f, array, 256 * sizeof(int));
+	SHA1_Init(&ctx);
 	for (c = idx; c != last; c++) {
 		unsigned int offset = htonl((*c)->offset);
 		sha1write(f, &offset, 4);
 		sha1write(f, (*c)->sha1, sizeof((*c)->sha1));
+		SHA1_Update(&ctx, (*c)->sha1, 20);
 	}
 	sha1write(f, pack_data->sha1, sizeof(pack_data->sha1));
-	sha1close(f, pack_data->sha1, 1);
+	sha1close(f, NULL, 1);
 	free(idx);
+	SHA1_Final(pack_data->sha1, &ctx);
+	return tmpfile;
+}
+
+static char* keep_pack(char *curr_index_name)
+{
+	static char name[PATH_MAX];
+	static char *keep_msg = "fast-import";
+	int keep_fd;
+
+	chmod(pack_data->pack_name, 0444);
+	chmod(curr_index_name, 0444);
+
+	snprintf(name, sizeof(name), "%s/pack/pack-%s.keep",
+		 get_object_directory(), sha1_to_hex(pack_data->sha1));
+	keep_fd = open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
+	if (keep_fd < 0)
+		die("cannot create keep file");
+	write(keep_fd, keep_msg, strlen(keep_msg));
+	close(keep_fd);
+
+	snprintf(name, sizeof(name), "%s/pack/pack-%s.pack",
+		 get_object_directory(), sha1_to_hex(pack_data->sha1));
+	if (move_temp_to_file(pack_data->pack_name, name))
+		die("cannot store pack file");
+	printf("%s\n", name);
+
+	snprintf(name, sizeof(name), "%s/pack/pack-%s.idx",
+		 get_object_directory(), sha1_to_hex(pack_data->sha1));
+	if (move_temp_to_file(curr_index_name, name))
+		die("cannot store index file");
+	return name;
+}
+
+static void unkeep_all_packs()
+{
+	static char name[PATH_MAX];
+	int k;
+
+	for (k = 0; k < pack_id; k++) {
+		struct packed_git *p = all_packs[k];
+		snprintf(name, sizeof(name), "%s/pack/pack-%s.keep",
+			 get_object_directory(), sha1_to_hex(p->sha1));
+		unlink(name);
+	}
 }
 
 static void end_packfile()
@@ -706,10 +758,10 @@ static void end_packfile()
 	struct packed_git *old_p = pack_data, *new_p;
 
 	if (object_count) {
+		char *idx_name;
+
 		fixup_header_footer();
-		write_index(idx_name);
-		fprintf(stdout, "%s\n", old_p->pack_name);
-		fflush(stdout);
+		idx_name = keep_pack(create_index());
 
 		/* Register the packfile with core git's machinary. */
 		new_p = add_packed_git(idx_name, strlen(idx_name), 1);
@@ -725,7 +777,6 @@ static void end_packfile()
 		unlink(old_p->pack_name);
 	}
 	free(old_p);
-	free(idx_name);
 
 	/* We can't carry a delta across packfiles. */
 	free(last_blob.data);
@@ -1790,7 +1841,7 @@ static void cmd_checkpoint()
 }
 
 static const char fast_import_usage[] =
-"git-fast-import [--objects=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file] [--branch-log=log] temp.pack";
+"git-fast-import [--objects=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file] [--branch-log=log]";
 
 int main(int argc, const char **argv)
 {
@@ -1826,9 +1877,8 @@ int main(int argc, const char **argv)
 		else
 			die("unknown option %s", a);
 	}
-	if ((i+1) != argc)
+	if (i != argc)
 		usage(fast_import_usage);
-	base_name = argv[i];
 
 	alloc_objects(est_obj_cnt);
 	strbuf_init(&command_buf);
@@ -1860,6 +1910,7 @@ int main(int argc, const char **argv)
 
 	dump_branches();
 	dump_tags();
+	unkeep_all_packs();
 	dump_marks();
 	if (branch_log)
 		fclose(branch_log);
