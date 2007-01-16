@@ -193,6 +193,7 @@ struct branch
 	const char *name;
 	unsigned long last_commit;
 	struct tree_entry branch_tree;
+	unsigned int pack_id;
 	unsigned char sha1[20];
 };
 
@@ -200,6 +201,7 @@ struct tag
 {
 	struct tag *next_tag;
 	const char *name;
+	unsigned int pack_id;
 	unsigned char sha1[20];
 };
 
@@ -733,7 +735,6 @@ static char* keep_pack(char *curr_index_name)
 		 get_object_directory(), sha1_to_hex(pack_data->sha1));
 	if (move_temp_to_file(pack_data->pack_name, name))
 		die("cannot store pack file");
-	printf("%s\n", name);
 
 	snprintf(name, sizeof(name), "%s/pack/pack-%s.idx",
 		 get_object_directory(), sha1_to_hex(pack_data->sha1));
@@ -761,6 +762,9 @@ static void end_packfile()
 
 	if (object_count) {
 		char *idx_name;
+		int i;
+		struct branch *b;
+		struct tag *t;
 
 		fixup_header_footer();
 		idx_name = keep_pack(create_index());
@@ -770,8 +774,24 @@ static void end_packfile()
 		if (!new_p)
 			die("core git rejected index %s", idx_name);
 		new_p->windows = old_p->windows;
-		all_packs[pack_id++] = new_p;
+		all_packs[pack_id] = new_p;
 		install_packed_git(new_p);
+
+		/* Print the boundary */
+		fprintf(stdout, "%s:", new_p->pack_name);
+		for (i = 0; i < branch_table_sz; i++) {
+			for (b = branch_table[i]; b; b = b->table_next_branch) {
+				if (b->pack_id == pack_id)
+					fprintf(stdout, " %s", sha1_to_hex(b->sha1));
+			}
+		}
+		for (t = first_tag; t; t = t->next_tag) {
+			if (t->pack_id == pack_id)
+				fprintf(stdout, " %s", sha1_to_hex(t->sha1));
+		}
+		fputc('\n', stdout);
+
+		pack_id++;
 	}
 	else
 		unlink(old_p->pack_name);
@@ -1679,6 +1699,7 @@ static void cmd_new_commit()
 		new_data.buffer, sp - (char*)new_data.buffer,
 		NULL, b->sha1, next_mark);
 	b->last_commit = object_count_by_type[OBJ_COMMIT];
+	b->pack_id = pack_id;
 
 	if (branch_log) {
 		int need_dq = quote_c_style(b->name, NULL, NULL, 0);
@@ -1787,6 +1808,7 @@ static void cmd_new_tag()
 
 	store_object(OBJ_TAG, new_data.buffer, sp - (char*)new_data.buffer,
 		NULL, t->sha1, 0);
+	t->pack_id = pack_id;
 
 	if (branch_log) {
 		int need_dq = quote_c_style(t->name, NULL, NULL, 0);
