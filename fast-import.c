@@ -130,11 +130,11 @@ struct object_entry_pool
 
 struct mark_set
 {
-	int shift;
 	union {
 		struct object_entry *marked[1024];
 		struct mark_set *sets[1024];
 	} data;
+	unsigned int shift;
 };
 
 struct last_object
@@ -157,7 +157,7 @@ struct mem_pool
 struct atom_str
 {
 	struct atom_str *next_atom;
-	int str_len;
+	unsigned int str_len;
 	char str_dat[FLEX_ARRAY]; /* more */
 };
 
@@ -192,8 +192,8 @@ struct branch
 	struct branch *table_next_branch;
 	struct branch *active_next_branch;
 	const char *name;
-	unsigned long last_commit;
 	struct tree_entry branch_tree;
+	unsigned long last_commit;
 	unsigned int pack_id;
 	unsigned char sha1[20];
 };
