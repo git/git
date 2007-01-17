@@ -561,7 +561,7 @@ static struct tree_content* grow_tree_content(
 	return r;
 }
 
-static struct tree_entry* new_tree_entry()
+static struct tree_entry* new_tree_entry(void)
 {
 	struct tree_entry *e;
 
@@ -589,7 +589,7 @@ static void release_tree_entry(struct tree_entry *e)
 	avail_tree_entry = e;
 }
 
-static void start_packfile()
+static void start_packfile(void)
 {
 	static char tmpfile[PATH_MAX];
 	struct packed_git *p;
@@ -618,7 +618,7 @@ static void start_packfile()
 	all_packs[pack_id] = p;
 }
 
-static void fixup_header_footer()
+static void fixup_header_footer(void)
 {
 	int pack_fd = pack_data->pack_fd;
 	SHA_CTX c;
@@ -659,7 +659,7 @@ static int oecmp (const void *a_, const void *b_)
 	return hashcmp(a->sha1, b->sha1);
 }
 
-static char* create_index()
+static char* create_index(void)
 {
 	static char tmpfile[PATH_MAX];
 	SHA_CTX ctx;
@@ -744,7 +744,7 @@ static char* keep_pack(char *curr_index_name)
 	return name;
 }
 
-static void unkeep_all_packs()
+static void unkeep_all_packs(void)
 {
 	static char name[PATH_MAX];
 	int k;
@@ -757,7 +757,7 @@ static void unkeep_all_packs()
 	}
 }
 
-static void end_packfile()
+static void end_packfile(void)
 {
 	struct packed_git *old_p = pack_data, *new_p;
 
@@ -806,7 +806,7 @@ static void end_packfile()
 	last_blob.depth = 0;
 }
 
-static void checkpoint()
+static void checkpoint(void)
 {
 	end_packfile();
 	start_packfile();
@@ -1253,7 +1253,7 @@ del_entry:
 	return 1;
 }
 
-static void dump_branches()
+static void dump_branches(void)
 {
 	static const char *msg = "fast-import";
 	unsigned int i;
@@ -1269,7 +1269,7 @@ static void dump_branches()
 	}
 }
 
-static void dump_tags()
+static void dump_tags(void)
 {
 	static const char *msg = "fast-import";
 	struct tag *t;
@@ -1304,7 +1304,7 @@ static void dump_marks_helper(FILE *f,
 	}
 }
 
-static void dump_marks()
+static void dump_marks(void)
 {
 	if (mark_file)
 	{
@@ -1314,12 +1314,12 @@ static void dump_marks()
 	}
 }
 
-static void read_next_command()
+static void read_next_command(void)
 {
 	read_line(&command_buf, stdin, '\n');
 }
 
-static void cmd_mark()
+static void cmd_mark(void)
 {
 	if (!strncmp("mark :", command_buf.buf, 6)) {
 		next_mark = strtoumax(command_buf.buf + 6, NULL, 10);
@@ -1355,7 +1355,7 @@ static void* cmd_data (size_t *size)
 	return buffer;
 }
 
-static void cmd_new_blob()
+static void cmd_new_blob(void)
 {
 	size_t l;
 	void *d;
@@ -1368,7 +1368,7 @@ static void cmd_new_blob()
 		free(d);
 }
 
-static void unload_one_branch()
+static void unload_one_branch(void)
 {
 	while (cur_active_branches
 		&& cur_active_branches >= max_active_branches) {
@@ -1601,7 +1601,7 @@ static struct hash_list* cmd_merge(unsigned int *count)
 	return list;
 }
 
-static void cmd_new_commit()
+static void cmd_new_commit(void)
 {
 	struct branch *b;
 	void *msg;
@@ -1715,7 +1715,7 @@ static void cmd_new_commit()
 	}
 }
 
-static void cmd_new_tag()
+static void cmd_new_tag(void)
 {
 	char *str_uq;
 	const char *endp;
@@ -1824,7 +1824,7 @@ static void cmd_new_tag()
 	}
 }
 
-static void cmd_reset_branch()
+static void cmd_reset_branch(void)
 {
 	struct branch *b;
 	char *str_uq;
@@ -1855,7 +1855,7 @@ static void cmd_reset_branch()
 	cmd_from(b);
 }
 
-static void cmd_checkpoint()
+static void cmd_checkpoint(void)
 {
 	if (object_count)
 		checkpoint();
