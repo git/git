@@ -218,6 +218,12 @@ refuses to run when given pathnames (but see `-i` option).
 DISCUSSION
 ----------
 
+Though not required, it's a good idea to begin the commit message
+with a single short (less than 50 character) line summarizing the
+change, followed by a blank line and then a more thorough description.
+Tools that turn commits into email, for example, use the first line
+on the Subject: line and the rest of the commit in the body.
+
 include::i18n.txt[]
 
 ENVIRONMENT VARIABLES
