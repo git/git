@@ -126,6 +126,9 @@ git-format-patch -M -B origin::
 	understand renaming patches, so use it only when you know
 	the recipient uses git to apply your patch.
 
+git-format-patch -3::
+	Extract three topmost commits from the current branch
+	and format them as e-mailable patches.
 
 See Also
 --------

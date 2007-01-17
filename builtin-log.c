@@ -482,8 +482,13 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	}
 
 	if (rev.pending.nr == 1) {
-		rev.pending.objects[0].item->flags |= UNINTERESTING;
-		add_head(&rev);
+		if (rev.max_count < 0) {
+			rev.pending.objects[0].item->flags |= UNINTERESTING;
+			add_head(&rev);
+		}
+		/* Otherwise, it is "format-patch -22 HEAD", and
+		 * get_revision() would return only the specified count.
+		 */
 	}
 
 	if (ignore_if_in_upstream)
