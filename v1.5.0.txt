@@ -50,7 +50,7 @@ git.
    by default on a tty.  Introduced between v1.4.1 and v1.4.2;
    this may surprise old timers.
 
- - 'git archive' superseded 'git tar' in v1.4.3;
+ - 'git archive' superseded 'git tar-tree' in v1.4.3;
 
  - 'git cvsserver' was new invention in v1.3.0;
 
