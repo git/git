@@ -168,9 +168,10 @@ Updates in v1.5.0 since v1.4.4 series
 
    Existing repositories that have been using reflog may get
    complaints from fsck-objects and may not be able to run
-   git-repack; please run "git reflog expire --stale-fix --all"
-   first to remove reflog entries that refer to commits that are
-   no longer in the repository when that happens.
+   git-repack, if you had run git-prune from older git; please
+   run "git reflog expire --stale-fix --all" first to remove
+   reflog entries that refer to commits that are no longer in
+   the repository when that happens.
 
  - git-branch knows how to rename branches and moves existing
    reflog data from the old branch to the new one.
@@ -200,13 +201,14 @@ Updates in v1.5.0 since v1.4.4 series
    checkout" refuses when the detached HEAD is not pointed by
    any existing ref (an existing branch, a remote tracking
    branch or a tag).  This safety can be overriden with "git
-   checout -f".
+   checkout -f $branch".
 
 
 * Packed refs
 
  - Repositories with hundreds of tags have been paying large
-   overhead, both in storage and in runtime.  A new command,
+   overhead, both in storage and in runtime, due to the
+   traditional one-ref-per-file format.  A new command,
    git-pack-refs, can be used to "pack" them in more efficient
    representation.
 
@@ -217,9 +219,9 @@ Updates in v1.5.0 since v1.4.4 series
 
 * Configuration
 
- - configuration related to colorize setting are consolidated
-   under color.* namespace (older diff.color.*, status.color.*
-   are still supported).
+ - configuration related to color setting are consolidated under
+   color.* namespace (older diff.color.*, status.color.* are
+   still supported).
 
 
 * Less external dependency
@@ -260,10 +262,10 @@ Updates in v1.5.0 since v1.4.4 series
  - Tools for e-mailed patch application now default to -u
    behaviour; i.e. it always re-codes from the e-mailed encoding
    to the encoding specified with i18n.commitencoding.  This
-   unfortunately forces projects that have happily using a
-   legacy encoding without setting i18n.commitencoding, but
-   taken with other improvement, please excuse us for this very
-   minor one-time inconvenience.
+   unfortunately forces projects that have happily been using a
+   legacy encoding without setting i18n.commitencoding to set
+   the configuration, but taken with other improvement, please
+   excuse us for this very minor one-time inconvenience.
 
 
 * Foreign SCM interfaces
@@ -297,8 +299,8 @@ Updates in v1.5.0 since v1.4.4 series
 * Shallow clones
 
  - There is a partial support for 'shallow' repositories that
-   keeps only recent history now.  A 'shallow clone' is created
-   by specifying how deep that truncated history should be.
+   keeps only recent history.  A 'shallow clone' is created by
+   specifying how deep that truncated history should be.
 
    Currently a shallow repository has number of limitations:
 
