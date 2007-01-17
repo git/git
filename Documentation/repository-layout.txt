@@ -91,6 +91,12 @@ HEAD::
 	'name' does not (yet) exist.  In some legacy setups, it is
 	a symbolic link instead of a symref that points at the current
 	branch.
++
+HEAD can also record a specific commit directly, instead of
+being a symref to point at the current branch.  Such a state
+is often called 'detached HEAD', and almost all commands work
+identically as normal.  See gitlink:git-checkout[1] for
+details.
 
 branches::
 	A slightly deprecated way to store shorthands to be used
