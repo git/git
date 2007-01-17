@@ -12,6 +12,9 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
+This is usually not what an end user wants to run directly.  See
+gitlink:git-am[1] instead.
+
 Takes three files <msg>, <patch>, and <info> prepared from an
 e-mail message by 'git-mailinfo', and creates a commit.  It is
 usually not necessary to use this command directly.

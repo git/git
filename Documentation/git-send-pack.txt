@@ -12,6 +12,9 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
+Usually you would want to use gitlink:git-push[1] which is a
+higher level wrapper of this command instead.
+
 Invokes 'git-receive-pack' on a possibly remote repository, and
 updates it from the current repository, sending named refs.
 
