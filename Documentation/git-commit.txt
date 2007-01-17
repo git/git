@@ -142,11 +142,6 @@ $ git add hello.c
 $ git commit
 ------------
 
-////////////
-We should fix 'git rm' to remove goodbye.c from both index and
-working tree for the above example.
-////////////
-
 Instead of staging files after each individual change, you can
 tell `git commit` to notice the changes to the files whose
 contents are tracked in
