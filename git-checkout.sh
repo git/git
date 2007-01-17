@@ -201,8 +201,9 @@ else
     	git diff-files --name-only | git update-index --remove --stdin &&
 	work=`git write-tree` &&
 	git read-tree --reset -u $new &&
-	git read-tree -m -u --aggressive --exclude-per-directory=.gitignore $old $new $work ||
-	exit
+	eval GITHEAD_$new=${new_name:-${branch:-$new}} GITHEAD_$work=local &&
+	export GITHEAD_$new GITHEAD_$work &&
+	git merge-recursive $old -- $new $work || exit
 
 	if result=`git write-tree 2>/dev/null`
 	then
