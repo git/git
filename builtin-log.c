@@ -197,6 +197,7 @@ static int istitlechar(char c)
 
 static char *extra_headers = NULL;
 static int extra_headers_size = 0;
+static const char *fmt_patch_suffix = ".txt";
 
 static int git_format_config(const char *var, const char *value)
 {
@@ -206,6 +207,12 @@ static int git_format_config(const char *var, const char *value)
 		extra_headers = xrealloc(extra_headers, extra_headers_size);
 		extra_headers[extra_headers_size - len - 1] = 0;
 		strcat(extra_headers, value);
+		return 0;
+	}
+	if (!strcmp(var, "format.suffix")) {
+		if (!value)
+			die("format.suffix without value");
+		fmt_patch_suffix = xstrdup(value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
@@ -223,9 +230,10 @@ static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 	char filename[1024];
 	char *sol;
 	int len = 0;
+	int suffix_len = strlen(fmt_patch_suffix) + 10; /* ., NUL and slop */
 
 	if (output_directory) {
-		strlcpy(filename, output_directory, 1010);
+		strlcpy(filename, output_directory, 1000);
 		len = strlen(filename);
 		if (filename[len - 1] != '/')
 			filename[len++] = '/';
@@ -249,7 +257,10 @@ static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 			}
 		}
 
-		for (j = 0; len < 1024 - 6 && sol[j] && sol[j] != '\n'; j++) {
+		for (j = 0;
+		     len < sizeof(filename) - suffix_len &&
+			     sol[j] && sol[j] != '\n';
+		     j++) {
 			if (istitlechar(sol[j])) {
 				if (space) {
 					filename[len++] = '-';
@@ -265,7 +276,7 @@ static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 		while (filename[len - 1] == '.' || filename[len - 1] == '-')
 			len--;
 	}
-	strcpy(filename + len, ".txt");
+	strcpy(filename + len, fmt_patch_suffix);
 	fprintf(realstdout, "%s\n", filename);
 	freopen(filename, "w", stdout);
 }
@@ -436,6 +447,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 				die("Need a Message-Id for --in-reply-to");
 			in_reply_to = argv[i];
 		}
+		else if (!strncmp(argv[i], "--suffix=", 9))
+			fmt_patch_suffix = argv[i] + 9;
 		else
 			argv[j++] = argv[i];
 	}

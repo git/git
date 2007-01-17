@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git-format-patch' [-n | -k] [-o <dir> | --stdout] [--attach] [--thread]
 	           [-s | --signoff] [--diff-options] [--start-number <n>]
-		   [--in-reply-to=Message-Id]
+		   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
 		   <since>[..<until>]
 
 DESCRIPTION
@@ -78,6 +78,16 @@ OPTIONS
 	reply to the given Message-Id, which avoids breaking threads to
 	provide a new patch series.
 
+--suffix=.<sfx>::
+	Instead of using `.txt` as the suffix for generated
+	filenames, use specifed suffix.  A common alternative is
+	`--suffix=.patch`.
++
+Note that you would need to include the leading dot `.` if you
+want a filename like `0001-description-of-my-change.patch`, and
+the first letter does not have to be a dot.  Leaving it empty would
+not add any suffix.
+
 CONFIGURATION
 -------------
 You can specify extra mail header lines to be added to each
@@ -85,6 +95,11 @@ message in the repository configuration as follows:
 
 [format]
         headers = "Organization: git-foo\n"
+
+You can specify default suffix used:
+
+[format]
+        suffix = .patch
 
 
 EXAMPLES
