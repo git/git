@@ -699,7 +699,7 @@ other
 
 Discussion[[Discussion]]
 ------------------------
-include::README[]
+include::core-intro.txt[]
 
 Authors
 -------
