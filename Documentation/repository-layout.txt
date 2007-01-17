@@ -18,6 +18,8 @@ could have only commit objects without associated blobs and
 trees this way, for example.  A repository with this kind of
 incomplete object store is not suitable to be published to the
 outside world but sometimes useful for private repository.
+. You also could have an incomplete but locally usable repository
+by cloning shallowly.  See gitlink:git-clone[1].
 . You can be using `objects/info/alternates` mechanism, or
 `$GIT_ALTERNATE_OBJECT_DIRECTORIES` mechanism to 'borrow'
 objects from other object stores.  A repository with this kind
@@ -162,3 +164,9 @@ logs/refs/heads/`name`::
 
 logs/refs/tags/`name`::
 	Records all changes made to the tag named `name`.
+
+shallow::
+	This is similar to `info/grafts` but is internally used
+	and maintained by shallow clone mechanism.  See `--depth`
+	option to gitlink:git-clone[1] and gitlink:git-fetch[1].
+
