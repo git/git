@@ -283,12 +283,10 @@ at /home/bob/myrepo.  She does this with:
 
 ------------------------------------------------
 $ cd /home/alice/project
-$ git remote add bob /home/bob/myrepo
-$ git pull bob master
+$ git pull /home/bob/myrepo master
 ------------------------------------------------
 
-First it adds the "remote" Bob's repository with the name "bob" and
-then it merges the changes from Bob's "master" branch into Alice's
+This merges the changes from Bob's "master" branch into Alice's
 current branch.  If Alice has made her own changes in the meantime,
 then she may need to manually fix any conflicts.  (Note that the
 "master" argument in the above command is actually unnecessary, as it
@@ -297,14 +295,27 @@ is the default.)
 The "pull" command thus performs two operations: it fetches changes
 from a remote branch, then merges them into the current branch.
 
-You can perform the first operation alone using the "git fetch"
-command without merging them with her own branch, using:
+When you are working in a small closely knit group, it is not
+unusual to interact with the same repository over and over
+again.  By defining 'remote' repository shorthand, you can make
+it easier:
+
+------------------------------------------------
+$ git remote add bob /home/bob/myrepo
+------------------------------------------------
+
+With this, you can perform the first operation alone using the
+"git fetch" command without merging them with her own branch,
+using:
 
 -------------------------------------
 $ git fetch bob
 -------------------------------------
 
-which fetches the changes from Bob's branches.  Then
+Unlike the longhand form, when Alice fetches from Bob using a
+remote repository shorthand set up with `git remote`, what was
+fetched is stored in a remote tracking branch, in this case
+`bob/master`.  So after this:
 
 -------------------------------------
 $ git log -p master..bob/master
@@ -313,28 +324,22 @@ $ git log -p master..bob/master
 shows a list of all the changes that Bob made since he branched from
 Alice's master branch.
 
-After examining those changes, and possibly fixing things, Alice
+After examining those changes, Alice
 could merge the changes into her master branch:
 
 -------------------------------------
-$ git checkout master
 $ git merge bob/master
 -------------------------------------
 
-The last command is a merge of the "bob/master" branch in Alice's
-own repository.
-
-Alice could also perform both steps at once with:
+This `merge` can also be done by 'pulling from her own remote
+tracking branch', like this:
 
 -------------------------------------
-$ git pull bob
+$ git pull . remotes/bob/master
 -------------------------------------
 
-This is just like the "git pull bob master" that we saw
-before, except that it also stores the unmerged changes from bob's
-master branch in bob/master before merging them into Alice's
-current branch.  Note that git pull always merges into the current
-branch, regardless of what else is given on the commandline.
+Note that git pull always merges into the current branch,
+regardless of what else is given on the commandline.
 
 Later, Bob can update his repo with Alice's latest changes using
 
