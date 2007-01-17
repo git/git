@@ -106,7 +106,7 @@ prepare #2 and #3 for e-mail submission.
 
     $ git format-patch master^^ master
 
-This creates two files, 0001-XXXX.txt and 0002-XXXX.txt.  Send
+This creates two files, 0001-XXXX.patch and 0002-XXXX.patch.  Send
 them out "To: " your project maintainer and "Cc: " your mailing
 list.  You could use contributed script git-send-email if
 your host has necessary perl modules for this, but your usual

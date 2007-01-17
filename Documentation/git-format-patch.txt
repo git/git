@@ -81,9 +81,9 @@ OPTIONS
 	provide a new patch series.
 
 --suffix=.<sfx>::
-	Instead of using `.txt` as the suffix for generated
+	Instead of using `.patch` as the suffix for generated
 	filenames, use specifed suffix.  A common alternative is
-	`--suffix=.patch`.
+	`--suffix=.txt`.
 +
 Note that you would need to include the leading dot `.` if you
 want a filename like `0001-description-of-my-change.patch`, and
@@ -93,15 +93,14 @@ not add any suffix.
 CONFIGURATION
 -------------
 You can specify extra mail header lines to be added to each
-message in the repository configuration as follows:
+message in the repository configuration.  Also you can specify
+the default suffix different from the built-in one:
 
+------------
 [format]
         headers = "Organization: git-foo\n"
-
-You can specify default suffix used:
-
-[format]
-        suffix = .patch
+        suffix = .txt
+------------
 
 
 EXAMPLES

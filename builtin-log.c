@@ -197,7 +197,7 @@ static int istitlechar(char c)
 
 static char *extra_headers = NULL;
 static int extra_headers_size = 0;
-static const char *fmt_patch_suffix = ".txt";
+static const char *fmt_patch_suffix = ".patch";
 
 static int git_format_config(const char *var, const char *value)
 {
