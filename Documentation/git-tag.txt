@@ -3,7 +3,7 @@ git-tag(1)
 
 NAME
 ----
-git-tag - Create a tag object signed with GPG
+git-tag - Create or verify a tag object signed with GPG
 
 
 SYNOPSIS
