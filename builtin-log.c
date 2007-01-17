@@ -202,7 +202,11 @@ static const char *fmt_patch_suffix = ".txt";
 static int git_format_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "format.headers")) {
-		int len = strlen(value);
+		int len;
+
+		if (!value)
+			die("format.headers without value");
+		len = strlen(value);
 		extra_headers_size += len + 1;
 		extra_headers = xrealloc(extra_headers, extra_headers_size);
 		extra_headers[extra_headers_size - len - 1] = 0;
