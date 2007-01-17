@@ -34,7 +34,7 @@ objects/[0-9a-f][0-9a-f]::
 	two letters from its object name to keep the number of
 	directory entries `objects` directory itself needs to
 	hold.  Objects found here are often called 'unpacked'
-	objects.
+	(or 'loose') objects.
 
 objects/pack::
 	Packs (files that store many object in compressed form,
