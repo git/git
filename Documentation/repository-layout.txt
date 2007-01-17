@@ -18,6 +18,8 @@ could have only commit objects without associated blobs and
 trees this way, for example.  A repository with this kind of
 incomplete object store is not suitable to be published to the
 outside world but sometimes useful for private repository.
+. You also could have an incomplete but locally usable repository
+by cloning shallowly.  See gitlink:git-clone[1].
 . You can be using `objects/info/alternates` mechanism, or
 `$GIT_ALTERNATE_OBJECT_DIRECTORIES` mechanism to 'borrow'
 objects from other object stores.  A repository with this kind
@@ -32,7 +34,7 @@ objects/[0-9a-f][0-9a-f]::
 	two letters from its object name to keep the number of
 	directory entries `objects` directory itself needs to
 	hold.  Objects found here are often called 'unpacked'
-	objects.
+	(or 'loose') objects.
 
 objects/pack::
 	Packs (files that store many object in compressed form,
@@ -80,6 +82,15 @@ refs/tags/`name`::
 	records any object name (not necessarily a commit
 	object, or a tag object that points at a commit object).
 
+refs/remotes/`name`::
+	records tip-of-the-tree commit objects of branches copied
+	from a remote repository.
+
+packed-refs::
+	records the same information as refs/heads/, refs/tags/,
+	and friends record in a more efficient way.  See
+	gitlink:git-pack-refs[1].
+
 HEAD::
 	A symref (see glossary) to the `refs/heads/` namespace
 	describing the currently active branch.  It does not mean
@@ -91,6 +102,12 @@ HEAD::
 	'name' does not (yet) exist.  In some legacy setups, it is
 	a symbolic link instead of a symref that points at the current
 	branch.
++
+HEAD can also record a specific commit directly, instead of
+being a symref to point at the current branch.  Such a state
+is often called 'detached HEAD', and almost all commands work
+identically as normal.  See gitlink:git-checkout[1] for
+details.
 
 branches::
 	A slightly deprecated way to store shorthands to be used
@@ -156,3 +173,9 @@ logs/refs/heads/`name`::
 
 logs/refs/tags/`name`::
 	Records all changes made to the tag named `name`.
+
+shallow::
+	This is similar to `info/grafts` but is internally used
+	and maintained by shallow clone mechanism.  See `--depth`
+	option to gitlink:git-clone[1] and gitlink:git-fetch[1].
+

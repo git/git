@@ -50,7 +50,7 @@ History Viewers
    gitview is a GTK based repository browser for git
 
 
-   - *gitweb* (ftp://ftp.kernel.org/pub/software/scm/gitweb/)
+   - *gitweb* (shipped with git-core)
 
    GITweb provides full-fledged web interface for GIT repositories.
 
@@ -63,12 +63,18 @@ History Viewers
    Currently it is the fastest and most feature rich among the git
    viewers and commit tools.
 
+   - *tig* (http://jonas.nitro.dk/tig/)
+
+   tig by Jonas Fonseca is a simple git repository browser
+   written using ncurses. Basically, it just acts as a front-end
+   for git-log and git-show/git-diff. Additionally, you can also
+   use it as a pager for git commands.
 
 
 Foreign SCM interface
 ---------------------
 
-   - *git-svn* (contrib/)
+   - *git-svn* (shipped with git-core)
 
    git-svn is a simple conduit for changesets between a single Subversion
    branch and git.
@@ -95,3 +101,7 @@ Others
    This is an Emacs interface for git. The user interface is modeled on
    pcl-cvs. It has been developed on Emacs 21 and will probably need some
    tweaking to work on XEmacs.
+
+
+http://git.or.cz/gitwiki/InterfacesFrontendsAndTools has more
+comprehensive list.

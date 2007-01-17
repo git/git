@@ -12,14 +12,51 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Sets up the normal git environment variables and a few helper functions
-(currently just "die()"), and returns OK if it all looks like a git archive.
-So, to make the rest of the git scripts more careful and readable,
-use it as follows:
+This is not a command the end user would want to run.  Ever.
+This documentation is meant for people who are studying the
+Porcelain-ish scripts and/or are writing new ones.
 
--------------------------------------------------
-. git-sh-setup || die "Not a git archive"
--------------------------------------------------
+The `git-sh-setup` scriptlet is designed to be sourced (using
+`.`) by other shell scripts to set up some variables pointing at
+the normal git directories and a few helper shell functions.
+
+Before sourcing it, your script should set up a few variables;
+`USAGE` (and `LONG_USAGE`, if any) is used to define message
+given by `usage()` shell function.  `SUBDIRECTORY_OK` can be set
+if the script can run from a subdirectory of the working tree
+(some commands do not).
+
+The scriptlet sets `GIT_DIR` and `GIT_OBJECT_DIRECTORY` shell
+variables, but does *not* export them to the environment.
+
+FUNCTIONS
+---------
+
+die::
+	exit after emitting the supplied error message to the
+	standard error stream.
+
+usage::
+	die with the usage message.
+
+set_reflog_action::
+	set the message that will be recorded to describe the
+	end-user action in the reflog, when the script updates a
+	ref.
+
+is_bare_repository::
+	outputs `true` or `false` to the standard output stream
+	to indicate if the repository is a bare repository
+	(i.e. without an associated working tree).
+
+cd_to_toplevel::
+	runs chdir to the toplevel of the working tree.
+
+require_work_tree::
+	checks if the repository is a bare repository, and dies
+	if so.  Used by scripts that require working tree
+	(e.g. `checkout`).
+
 
 Author
 ------

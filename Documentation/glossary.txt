@@ -286,6 +286,18 @@ SCM::
 SHA1::
 	Synonym for object name.
 
+shallow repository::
+	A shallow repository has an incomplete history some of
+	whose commits have parents cauterized away (in other
+	words, git is told to pretend that these commits do not
+	have the parents, even though they are recorded in the
+	commit object).  This is sometimes useful when you are
+	interested only in the recent history of a project even
+	though the real history recorded in the upstream is
+	much larger.  A shallow repository is created by giving
+	`--depth` option to gitlink:git-clone[1], and its
+	history can be later deepened with gitlink:git-fetch[1].
+
 symref::
 	Symbolic reference: instead of containing the SHA1 id itself, it
 	is of the format 'ref: refs/some/thing' and when referenced, it

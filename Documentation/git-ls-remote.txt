@@ -29,7 +29,7 @@ OPTIONS
 -u <exec>, --upload-pack=<exec>::
 	Specify the full path of gitlink:git-upload-pack[1] on the remote
 	host. This allows listing references from repositories accessed via
-	SSH and where the SSH deamon does not use the PATH configured by the
+	SSH and where the SSH daemon does not use the PATH configured by the
 	user. Also see the '--exec' option for gitlink:git-peek-remote[1].
 
 <repository>::

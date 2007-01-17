@@ -246,7 +246,7 @@ gitlink:git-symbolic-ref[1]::
 	Read and modify symbolic refs.
 
 gitlink:git-tag[1]::
-	An example script to create a tag object signed with GPG.
+	Create or verify a tag object signed with GPG.
 
 gitlink:git-update-ref[1]::
 	Update the object name stored in a ref safely.
@@ -699,7 +699,7 @@ other
 
 Discussion[[Discussion]]
 ------------------------
-include::README[]
+include::core-intro.txt[]
 
 Authors
 -------

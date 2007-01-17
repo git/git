@@ -91,7 +91,7 @@ OPTIONS
 	combined by 'or'.
 
 --and | --or | --not | ( | )::
-	Specify how multiple patterns are combined using boolean
+	Specify how multiple patterns are combined using Boolean
 	expressions.  `--or` is the default operator.  `--and` has
 	higher precedence than `--or`.  `-e` has to be used for all
 	patterns.

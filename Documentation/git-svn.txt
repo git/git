@@ -113,7 +113,7 @@ manually joining branches on commit.
 
 'commit-diff'::
 	Commits the diff of two tree-ish arguments from the
-	command-line.  This command is intended for interopability with
+	command-line.  This command is intended for interoperability with
 	git-svnimport and does not rely on being inside an git-svn
 	init-ed repository.  This command takes three arguments, (a) the
 	original tree to diff against, (b) the new tree result, (c) the

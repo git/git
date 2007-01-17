@@ -10,7 +10,7 @@
 #include "tree-walk.h"
 
 static const char builtin_rm_usage[] =
-"git-rm [-n] [-f] [--cached] <filepattern>...";
+"git-rm [-f] [-n] [-r] [--cached] [--] <file>...";
 
 static struct {
 	int nr, alloc;

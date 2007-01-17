@@ -71,14 +71,11 @@ doc.dep : $(wildcard *.txt) build-docdep.perl
 
 -include doc.dep
 
-git.7: README
-
-README: ../README
-	cp $< $@
+git.7 git.html: git.txt core-intro.txt
 
 
 clean:
-	rm -f *.xml *.html *.1 *.7 howto-index.txt howto/*.html doc.dep README
+	rm -f *.xml *.html *.1 *.7 howto-index.txt howto/*.html doc.dep
 
 %.html : %.txt
 	asciidoc -b xhtml11 -d manpage -f asciidoc.conf $<
@@ -88,8 +85,6 @@ clean:
 
 %.xml : %.txt
 	asciidoc -b docbook -d manpage -f asciidoc.conf $<
-
-git.html: git.txt README
 
 glossary.html : glossary.txt sort_glossary.pl
 	cat $< | \

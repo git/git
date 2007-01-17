@@ -24,7 +24,7 @@ replaced; you need to use a tool such as gitlink:git-diff[1] or the "pickaxe"
 interface briefly mentioned in the following paragraph.
 
 Apart from supporting file annotation, git also supports searching the
-development history for when a code snippet occured in a change. This makes it
+development history for when a code snippet occurred in a change. This makes it
 possible to track when a code snippet was added to a file, moved or copied
 between files, and eventually deleted or replaced. It works by searching for
 a text string in the diff. A small example:
@@ -89,7 +89,7 @@ THE PORCELAIN FORMAT
 --------------------
 
 In this format, each line is output after a header; the
-header at the minumum has the first line which has:
+header at the minimum has the first line which has:
 
 - 40-byte SHA-1 of the commit the line is attributed to;
 - the line number of the line in the original file;
@@ -112,8 +112,8 @@ header, prefixed by a TAB. This is to allow adding more
 header elements later.
 
 
-SPECIFIYING RANGES
-------------------
+SPECIFYING RANGES
+-----------------
 
 Unlike `git-blame` and `git-annotate` in older git, the extent
 of annotation can be limited to both line ranges and revision
