@@ -283,10 +283,12 @@ at /home/bob/myrepo.  She does this with:
 
 ------------------------------------------------
 $ cd /home/alice/project
-$ git pull /home/bob/myrepo master
+$ git remote add bob /home/bob/myrepo
+$ git pull bob master
 ------------------------------------------------
 
-This merges the changes from Bob's "master" branch into Alice's
+First it adds the "remote" Bob's repository with the name "bob" and
+then it merges the changes from Bob's "master" branch into Alice's
 current branch.  If Alice has made her own changes in the meantime,
 then she may need to manually fix any conflicts.  (Note that the
 "master" argument in the above command is actually unnecessary, as it
@@ -296,18 +298,16 @@ The "pull" command thus performs two operations: it fetches changes
 from a remote branch, then merges them into the current branch.
 
 You can perform the first operation alone using the "git fetch"
-command.  For example, Alice could create a temporary branch just to
-track Bob's changes, without merging them with her own, using:
+command without merging them with her own branch, using:
 
 -------------------------------------
-$ git fetch /home/bob/myrepo master:bob-incoming
+$ git fetch bob
 -------------------------------------
 
-which fetches the changes from Bob's master branch into a new branch
-named bob-incoming.  Then
+which fetches the changes from Bob's branches.  Then
 
 -------------------------------------
-$ git log -p master..bob-incoming
+$ git log -p master..bob/master
 -------------------------------------
 
 shows a list of all the changes that Bob made since he branched from
@@ -318,21 +318,21 @@ could merge the changes into her master branch:
 
 -------------------------------------
 $ git checkout master
-$ git merge bob-incoming
+$ git merge bob/master
 -------------------------------------
 
-The last command is a merge from the "bob-incoming" branch in Alice's
+The last command is a merge of the "bob/master" branch in Alice's
 own repository.
 
 Alice could also perform both steps at once with:
 
 -------------------------------------
-$ git pull /home/bob/myrepo master:bob-incoming
+$ git pull bob
 -------------------------------------
 
-This is just like the "git pull /home/bob/myrepo master" that we saw
+This is just like the "git pull bob master" that we saw
 before, except that it also stores the unmerged changes from bob's
-master branch in bob-incoming before merging them into Alice's
+master branch in bob/master before merging them into Alice's
 current branch.  Note that git pull always merges into the current
 branch, regardless of what else is given on the commandline.
 
