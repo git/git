@@ -111,12 +111,15 @@ Format of STDIN stream:
 #include "strbuf.h"
 #include "quote.h"
 
+#define PACK_ID_BITS 16
+#define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
+
 struct object_entry
 {
 	struct object_entry *next;
 	unsigned long offset;
 	unsigned type : TYPE_BITS;
-	unsigned pack_id : 16;
+	unsigned pack_id : PACK_ID_BITS;
 	unsigned char sha1[20];
 };
 
@@ -193,7 +196,7 @@ struct branch
 	struct branch *active_next_branch;
 	const char *name;
 	struct tree_entry branch_tree;
-	unsigned long last_commit;
+	uintmax_t last_commit;
 	unsigned int pack_id;
 	unsigned char sha1[20];
 };
@@ -494,6 +497,7 @@ static struct branch* new_branch(const char *name)
 	b->table_next_branch = branch_table[hc];
 	b->branch_tree.versions[0].mode = S_IFDIR;
 	b->branch_tree.versions[1].mode = S_IFDIR;
+	b->pack_id = MAX_PACK_ID;
 	branch_table[hc] = b;
 	branch_count++;
 	return b;
@@ -1696,11 +1700,11 @@ static void cmd_new_commit(void)
 	free(committer);
 	free(msg);
 
-	store_object(OBJ_COMMIT,
+	if (!store_object(OBJ_COMMIT,
 		new_data.buffer, sp - (char*)new_data.buffer,
-		NULL, b->sha1, next_mark);
+		NULL, b->sha1, next_mark))
+		b->pack_id = pack_id;
 	b->last_commit = object_count_by_type[OBJ_COMMIT];
-	b->pack_id = pack_id;
 
 	if (branch_log) {
 		int need_dq = quote_c_style(b->name, NULL, NULL, 0);
@@ -1807,9 +1811,12 @@ static void cmd_new_tag(void)
 	free(tagger);
 	free(msg);
 
-	store_object(OBJ_TAG, new_data.buffer, sp - (char*)new_data.buffer,
-		NULL, t->sha1, 0);
-	t->pack_id = pack_id;
+	if (store_object(OBJ_TAG, new_data.buffer,
+		sp - (char*)new_data.buffer,
+		NULL, t->sha1, 0))
+		t->pack_id = MAX_PACK_ID;
+	else
+		t->pack_id = pack_id;
 
 	if (branch_log) {
 		int need_dq = quote_c_style(t->name, NULL, NULL, 0);
