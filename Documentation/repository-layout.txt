@@ -82,6 +82,15 @@ refs/tags/`name`::
 	records any object name (not necessarily a commit
 	object, or a tag object that points at a commit object).
 
+refs/remotes/`name`::
+	records tip-of-the-tree commit objects of branches copied
+	from a remote repository.
+
+packed-refs::
+	records the same information as refs/heads/, refs/tags/,
+	and friends record in a more efficient way.  See
+	gitlink:git-pack-refs[1].
+
 HEAD::
 	A symref (see glossary) to the `refs/heads/` namespace
 	describing the currently active branch.  It does not mean
