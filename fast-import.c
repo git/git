@@ -72,6 +72,7 @@ Format of STDIN stream:
   path_str    ::= path    | '"' quoted(path)    '"' ;
 
   declen ::= # unsigned 32 bit value, ascii base10 notation;
+  bigint ::= # unsigned integer value, ascii base10 notation;
   binary_data ::= # file content, not interpreted;
 
   sp ::= # ASCII space character;
@@ -81,7 +82,7 @@ Format of STDIN stream:
 	 # an idnum.  This is to distinguish it from a ref or tag name as
      # GIT does not permit ':' in ref or tag strings.
 	 #
-  idnum   ::= ':' declen;
+  idnum   ::= ':' bigint;
   path    ::= # GIT style file path, e.g. "a/b/c";
   ref     ::= # GIT ref name, e.g. "refs/heads/MOZ_GECKO_EXPERIMENT";
   tag     ::= # GIT tag name, e.g. "FIREFOX_1_5";
