@@ -470,6 +470,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_SUMMARY | DIFF_FORMAT_PATCH;
 
+	if (!rev.diffopt.text)
+		rev.diffopt.binary = 1;
+
 	if (!output_directory)
 		output_directory = prefix;
 
