@@ -29,7 +29,7 @@ OPTIONS
 	of author alphabetic order.
 
 -s::
-	Supress commit description and provide a commit count summary only.
+	Suppress commit description and provide a commit count summary only.
 
 FILES
 -----
