@@ -12,6 +12,13 @@ static void run_pager(const char *pager)
 	execlp(pager, pager, NULL);
 	execl("/bin/sh", "sh", "-c", pager, NULL);
 }
+#else
+static pid_t pager_pid;
+static void collect_pager(void)
+{
+	close(1);	/* signals EOF to pager */
+	cwait(NULL, pager_pid, 0);
+}
 #endif
 
 void setup_pager(void)
@@ -65,11 +72,15 @@ void setup_pager(void)
 #else
 	/* spawn the pager */
 	pager_argv[2] = pager;
-	if (spawnvpe_pipe(pager_argv[0], pager_argv, environ, fd, NULL) < 0)
+	pager_pid = spawnvpe_pipe(pager_argv[0], pager_argv, environ, fd, NULL);
+	if (pager_pid < 0)
 		return;
 
 	/* original process continues, but writes to the pipe */
 	dup2(fd[1], 1);
 	close(fd[1]);
+
+	/* this makes sure that the parent terminates after the pager */
+	atexit(collect_pager);
 #endif
 }
