@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "exec_cmd.h"
 #include "quote.h"
+#include "spawn-pipe.h"
 #define MAX_ARGS	32
 
 extern char **environ;
@@ -136,4 +137,87 @@ int execl_git_cmd(const char *cmd,...)
 
 	argv[argc] = NULL;
 	return execv_git_cmd(argv);
+}
+
+int spawnv_git_cmd(const char **argv, int pin[2], int pout[2])
+{
+	char cmd[100];
+	int i, rc;
+	pid_t pid;
+	const char *paths[] = { current_exec_path,
+				getenv(EXEC_PATH_ENVIRONMENT),
+				builtin_exec_path };
+	char p[3][PATH_MAX + 1];
+	char *usedpaths[4], **up = usedpaths;
+	const char *tmp;
+
+	for (i = 0; i < ARRAY_SIZE(paths); ++i) {
+		size_t len;
+		const char *exec_dir = paths[i];
+
+		if (!exec_dir || !*exec_dir) continue;
+
+#ifdef __MINGW32__
+		if (*exec_dir != '/' && exec_dir[1] != ':') {
+#else
+		if (*exec_dir != '/') {
+#endif
+			if (!getcwd(p[i], sizeof(p[i]))) {
+				fprintf(stderr, "git: cannot determine "
+					"current directory: %s\n",
+					strerror(errno));
+				return -1;
+			}
+			len = strlen(p[i]);
+
+			/* Trivial cleanup */
+			while (!strncmp(exec_dir, "./", 2)) {
+				exec_dir += 2;
+				while (*exec_dir == '/')
+					exec_dir++;
+			}
+
+			rc = snprintf(p[i] + len,
+				      sizeof(p[i]) - len, "/%s",
+				      exec_dir);
+			if (rc < 0 || rc >= sizeof(p[i]) - len) {
+				fprintf(stderr, "git: command name given "
+					"is too long.\n");
+				return -1;
+			}
+		} else {
+			if (strlen(exec_dir) + 1 > sizeof(p[i])) {
+				fprintf(stderr, "git: command name given "
+					"is too long.\n");
+				return -1;
+			}
+			strcpy(p[i], exec_dir);
+		}
+		*up++ = p[i];
+	}
+	*up = NULL;
+
+	rc = snprintf(cmd, sizeof(cmd), "git-%s", argv[0]);
+	if (rc < 0 || rc >= sizeof(cmd)) {
+		fprintf(stderr,
+			"git: command name given is too long.\n");
+		return -1;
+	}
+
+	/* argv[0] must be the git command, but the argv array
+	 * belongs to the caller.  Save argv[0] and
+	 * restore it later.
+	 */
+
+	tmp = argv[0];
+	argv[0] = cmd;
+
+	trace_argv_printf(argv, -1, "trace: exec:");
+
+	pid = spawnvppe_pipe(cmd, argv, environ, usedpaths,
+		pin, pout);
+
+	argv[0] = tmp;
+	return pid;
+
 }

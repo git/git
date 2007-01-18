@@ -493,17 +493,9 @@ static int get_pack(int xd[2], const char **argv)
 	int fd[2];
 
 	side_pid = setup_sideband(fd, xd);
-	pid = fork();
+	pid = spawnv_git_cmd(argv, fd, NULL);
 	if (pid < 0)
 		die("fetch-pack: unable to fork off %s", argv[0]);
-	if (!pid) {
-		dup2(fd[0], 0);
-		close(fd[0]);
-		close(fd[1]);
-		execv_git_cmd(argv);
-		die("%s exec failed", argv[0]);
-	}
-	close(fd[0]);
 	close(fd[1]);
 	while (waitpid(pid, &status, 0) < 0) {
 		if (errno != EINTR)
