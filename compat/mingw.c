@@ -66,6 +66,7 @@ int setitimer(int __which, const struct itimerval *__value,
 }
 unsigned int sleep (unsigned int __seconds)
 {
+	Sleep(__seconds*1000);
 	return 0;
 }
 const char *inet_ntop(int af, const void *src,
