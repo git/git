@@ -1,0 +1,60 @@
+gitlink:git-cat-file[1]::
+	Provide content or type/size information for repository objects.
+
+gitlink:git-describe[1]::
+	Show the most recent tag that is reachable from a commit.
+
+gitlink:git-diff-index[1]::
+	Compares content and mode of blobs between the index and repository.
+
+gitlink:git-diff-files[1]::
+	Compares files in the working tree and the index.
+
+gitlink:git-diff-stages[1]::
+	Compares two "merge stages" in the index.
+
+gitlink:git-diff-tree[1]::
+	Compares the content and mode of blobs found via two tree objects.
+
+gitlink:git-for-each-ref[1]::
+	Output information on each ref.
+
+gitlink:git-fsck-objects[1]::
+	Verifies the connectivity and validity of the objects in the database.
+
+gitlink:git-ls-files[1]::
+	Information about files in the index and the working tree.
+
+gitlink:git-ls-tree[1]::
+	Displays a tree object in human readable form.
+
+gitlink:git-merge-base[1]::
+	Finds as good common ancestors as possible for a merge.
+
+gitlink:git-name-rev[1]::
+	Find symbolic names for given revs.
+
+gitlink:git-pack-redundant[1]::
+	Find redundant pack files.
+
+gitlink:git-rev-list[1]::
+	Lists commit objects in reverse chronological order.
+
+gitlink:git-show-index[1]::
+	Displays contents of a pack idx file.
+
+gitlink:git-show-ref[1]::
+	List references in a local repository.
+
+gitlink:git-tar-tree[1]::
+	Creates a tar archive of the files in the named tree object.
+
+gitlink:git-unpack-file[1]::
+	Creates a temporary file with a blob's contents.
+
+gitlink:git-var[1]::
+	Displays a git logical variable.
+
+gitlink:git-verify-pack[1]::
+	Validates packed git archive files.
+

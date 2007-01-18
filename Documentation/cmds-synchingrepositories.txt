@@ -1,0 +1,46 @@
+gitlink:git-fetch-pack[1]::
+	Updates from a remote repository (engine for ssh and
+	local transport).
+
+gitlink:git-http-fetch[1]::
+	Downloads a remote git repository via HTTP by walking
+	commit chain.
+
+gitlink:git-local-fetch[1]::
+	Duplicates another git repository on a local system by
+	walking commit chain.
+
+gitlink:git-peek-remote[1]::
+	Lists references on a remote repository using
+	upload-pack protocol (engine for ssh and local
+	transport).
+
+gitlink:git-receive-pack[1]::
+	Invoked by 'git-send-pack' to receive what is pushed to it.
+
+gitlink:git-send-pack[1]::
+	Pushes to a remote repository, intelligently.
+
+gitlink:git-http-push[1]::
+	Push missing objects using HTTP/DAV.
+
+gitlink:git-shell[1]::
+	Restricted shell for GIT-only SSH access.
+
+gitlink:git-ssh-fetch[1]::
+	Pulls from a remote repository over ssh connection by
+	walking commit chain.
+
+gitlink:git-ssh-upload[1]::
+	Helper "server-side" program used by git-ssh-fetch.
+
+gitlink:git-update-server-info[1]::
+	Updates auxiliary information on a dumb server to help
+	clients discover references and packs on it.
+
+gitlink:git-upload-archive[1]::
+	Invoked by 'git-archive' to send a generated archive.
+
+gitlink:git-upload-pack[1]::
+	Invoked by 'git-fetch-pack' to push
+	what are asked for.

@@ -1,0 +1,65 @@
+gitlink:git-annotate[1]::
+	Annotate file lines with commit info.
+
+gitlink:git-blame[1]::
+	Find out where each line in a file came from.
+
+gitlink:git-check-ref-format[1]::
+	Make sure ref name is well formed.
+
+gitlink:git-cherry[1]::
+	Find commits not merged upstream.
+
+gitlink:git-count-objects[1]::
+	Count unpacked number of objects and their disk consumption.
+
+gitlink:git-daemon[1]::
+	A really simple server for git repositories.
+
+gitlink:git-fmt-merge-msg[1]::
+	Produce a merge commit message.
+
+gitlink:git-get-tar-commit-id[1]::
+	Extract commit ID from an archive created using git-tar-tree.
+
+gitlink:git-imap-send[1]::
+	Dump a mailbox from stdin into an imap folder.
+
+gitlink:git-instaweb[1]::
+	Instantly browse your working repository in gitweb.
+
+gitlink:git-mailinfo[1]::
+	Extracts patch and authorship information from a single
+	e-mail message, optionally transliterating the commit
+	message into utf-8.
+
+gitlink:git-mailsplit[1]::
+	A stupid program to split UNIX mbox format mailbox into
+	individual pieces of e-mail.
+
+gitlink:git-merge-tree[1]::
+	Show three-way merge without touching index.
+
+gitlink:git-patch-id[1]::
+	Compute unique ID for a patch.
+
+gitlink:git-parse-remote[1]::
+	Routines to help parsing `$GIT_DIR/remotes/` files.
+
+gitlink:git-request-pull[1]::
+	git-request-pull.
+
+gitlink:git-rev-parse[1]::
+	Pick out and massage parameters.
+
+gitlink:git-runstatus[1]::
+	A helper for git-status and git-commit.
+
+gitlink:git-send-email[1]::
+	Send patch e-mails out of "format-patch --mbox" output.
+
+gitlink:git-symbolic-ref[1]::
+	Read and modify symbolic refs.
+
+gitlink:git-stripspace[1]::
+	Filter out empty lines.
