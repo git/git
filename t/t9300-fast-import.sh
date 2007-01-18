@@ -17,6 +17,12 @@ in 3rd file
 file4_data=abcd
 file4_len=4
 
+file5_data='an inline file.
+  we should see it later.'
+
+file6_data='#!/bin/sh
+echo "$@"'
+
 ###
 ### series A
 ###
@@ -180,5 +186,58 @@ git-diff-tree -M -r master branch >actual
 test_expect_success \
 	'C: validate rename result' \
 	'compare_diff_raw expect actual'
+
+###
+### series D
+###
+
+test_tick
+cat >input <<INPUT_END
+commit refs/heads/branch
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+third
+COMMIT
+
+from refs/heads/branch^0
+M 644 inline newdir/interesting
+data <<EOF
+$file5_data
+EOF
+
+M 755 inline newdir/exec.sh
+data <<EOF
+$file6_data
+EOF
+
+INPUT_END
+test_expect_success \
+    'D: inline data in commit' \
+    'git-fast-import <input &&
+	 git-whatchanged branch'
+test_expect_success \
+	'D: verify pack' \
+	'for p in .git/objects/pack/*.pack;do git-verify-pack $p||exit;done'
+
+cat >expect <<EOF
+:000000 100755 0000000000000000000000000000000000000000 35a59026a33beac1569b1c7f66f3090ce9c09afc A	newdir/exec.sh
+:000000 100644 0000000000000000000000000000000000000000 046d0371e9220107917db0d0e030628de8a1de9b A	newdir/interesting
+EOF
+git-diff-tree -M -r branch^ branch >actual
+test_expect_success \
+	'D: validate new files added' \
+	'compare_diff_raw expect actual'
+
+echo "$file5_data" >expect
+test_expect_success \
+	'D: verify file5' \
+	'git-cat-file blob branch:newdir/interesting >actual &&
+	 diff -u expect actual'
+
+echo "$file6_data" >expect
+test_expect_success \
+	'D: verify file6' \
+	'git-cat-file blob branch:newdir/exec.sh >actual &&
+	 diff -u expect actual'
 
 test_done

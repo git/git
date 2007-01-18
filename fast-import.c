@@ -25,10 +25,11 @@ Format of STDIN stream:
     lf;
   commit_msg ::= data;
 
-  file_change ::= 'M' sp mode sp (hexsha1 | idnum) sp path_str lf
-                | 'D' sp path_str lf
-                ;
-  mode ::= '644' | '755';
+  file_change ::= file_del | file_obm | file_inm;
+  file_del ::= 'D' sp path_str lf;
+  file_obm ::= 'M' sp mode sp (hexsha1 | idnum) sp path_str lf;
+  file_inm ::= 'M' sp mode sp 'inline' sp path_str lf
+    data;
 
   new_tag ::= 'tag' sp tag_str lf
     'from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf
@@ -77,6 +78,10 @@ Format of STDIN stream:
   sha1exp_str ::= sha1exp | '"' quoted(sha1exp) '"' ;
   tag_str     ::= tag     | '"' quoted(tag)     '"' ;
   path_str    ::= path    | '"' quoted(path)    '"' ;
+  mode        ::= '100644' | '644'
+                | '100755' | '755'
+                | '140000'
+                ;
 
   declen ::= # unsigned 32 bit value, ascii base10 notation;
   bigint ::= # unsigned integer value, ascii base10 notation;
@@ -1452,7 +1457,7 @@ static void file_change_m(struct branch *b)
 	const char *endp;
 	struct object_entry *oe;
 	unsigned char sha1[20];
-	unsigned int mode;
+	unsigned int mode, inline_data = 0;
 	char type[20];
 
 	p = get_mode(p, &mode);
@@ -1475,6 +1480,9 @@ static void file_change_m(struct branch *b)
 		oe = find_mark(strtoumax(p + 1, &x, 10));
 		hashcpy(sha1, oe->sha1);
 		p = x;
+	} else if (!strncmp("inline", p, 6)) {
+		inline_data = 1;
+		p += 6;
 	} else {
 		if (get_sha1_hex(p, sha1))
 			die("Invalid SHA1: %s", command_buf.buf);
@@ -1491,7 +1499,16 @@ static void file_change_m(struct branch *b)
 		p = p_uq;
 	}
 
-	if (oe) {
+	if (inline_data) {
+		size_t l;
+		void *d;
+		if (!p_uq)
+			p = p_uq = xstrdup(p);
+		read_next_command();
+		d = cmd_data(&l);
+		if (store_object(OBJ_BLOB, d, l, &last_blob, sha1, 0))
+			free(d);
+	} else if (oe) {
 		if (oe->type != OBJ_BLOB)
 			die("Not a blob (actually a %s): %s",
 				command_buf.buf, type_names[oe->type]);
