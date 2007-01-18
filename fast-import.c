@@ -224,7 +224,6 @@ struct hash_list
 /* Configured limits on output */
 static unsigned long max_depth = 10;
 static unsigned long max_packsize = (1LL << 32) - 1;
-static uintmax_t max_objects = -1;
 
 /* Stats and misc. counters */
 static uintmax_t alloc_count;
@@ -900,9 +899,7 @@ static int store_object(
 	deflateEnd(&s);
 
 	/* Determine if we should auto-checkpoint. */
-	if ((object_count + 1) > max_objects
-		|| (object_count + 1) < object_count
-		|| (pack_size + 60 + s.total_out) > max_packsize
+	if ((pack_size + 60 + s.total_out) > max_packsize
 		|| (pack_size + 60 + s.total_out) < pack_size) {
 
 		/* This new object needs to *not* have the current pack_id. */
@@ -1872,12 +1869,11 @@ static void cmd_checkpoint(void)
 }
 
 static const char fast_import_usage[] =
-"git-fast-import [--objects=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file] [--branch-log=log]";
+"git-fast-import [--depth=n] [--active-branches=n] [--export-marks=marks.file] [--branch-log=log]";
 
 int main(int argc, const char **argv)
 {
 	int i;
-	uintmax_t est_obj_cnt = object_entry_alloc;
 	uintmax_t total_count, duplicate_count;
 
 	setup_ident();
@@ -1888,10 +1884,6 @@ int main(int argc, const char **argv)
 
 		if (*a != '-' || !strcmp(a, "--"))
 			break;
-		else if (!strncmp(a, "--objects=", 10))
-			est_obj_cnt = strtoumax(a + 10, NULL, 0);
-		else if (!strncmp(a, "--max-objects-per-pack=", 23))
-			max_objects = strtoumax(a + 23, NULL, 0);
 		else if (!strncmp(a, "--max-pack-size=", 16))
 			max_packsize = strtoumax(a + 16, NULL, 0) * 1024 * 1024;
 		else if (!strncmp(a, "--depth=", 8))
@@ -1911,7 +1903,7 @@ int main(int argc, const char **argv)
 	if (i != argc)
 		usage(fast_import_usage);
 
-	alloc_objects(est_obj_cnt);
+	alloc_objects(object_entry_alloc);
 	strbuf_init(&command_buf);
 
 	atom_table = xcalloc(atom_table_sz, sizeof(struct atom_str*));
@@ -1955,7 +1947,7 @@ int main(int argc, const char **argv)
 
 	fprintf(stderr, "%s statistics:\n", argv[0]);
 	fprintf(stderr, "---------------------------------------------------------------------\n");
-	fprintf(stderr, "Alloc'd objects: %10ju (%10ju overflow  )\n", alloc_count, alloc_count - est_obj_cnt);
+	fprintf(stderr, "Alloc'd objects: %10ju\n", alloc_count);
 	fprintf(stderr, "Total objects:   %10ju (%10ju duplicates                  )\n", total_count, duplicate_count);
 	fprintf(stderr, "      blobs  :   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB], delta_count_by_type[OBJ_BLOB]);
 	fprintf(stderr, "      trees  :   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE], delta_count_by_type[OBJ_TREE]);
