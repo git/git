@@ -456,12 +456,23 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 
 	/* check index map */
 	if (idx_size < 4*256 + 20 + 20)
-		return error("index file too small");
+		return error("index file %s is too small", path);
+
+	/* a future index format would start with this, as older git
+	 * binaries would fail the non-monotonic index check below.
+	 * give a nicer warning to the user if we can.
+	 */
+	if (index[0] == htonl(PACK_IDX_SIGNATURE))
+		return error("index file %s is a newer version"
+			" and is not supported by this binary"
+			" (try upgrading GIT to a newer version)",
+			path);
+
 	nr = 0;
 	for (i = 0; i < 256; i++) {
 		unsigned int n = ntohl(index[i]);
 		if (n < nr)
-			return error("non-monotonic index");
+			return error("non-monotonic index %s", path);
 		nr = n;
 	}
 
@@ -473,7 +484,7 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 	 *  - 20-byte SHA1 file checksum
 	 */
 	if (idx_size != 4*256 + nr * 24 + 20 + 20)
-		return error("wrong index file size");
+		return error("wrong index file size in %s", path);
 
 	return 0;
 }
