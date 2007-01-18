@@ -435,7 +435,7 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 				void **idx_map_)
 {
 	void *idx_map;
-	unsigned int *index;
+	uint32_t *index;
 	unsigned long idx_size;
 	int nr, i;
 	int fd = open(path, O_RDONLY);
@@ -1351,7 +1351,7 @@ int nth_packed_object_sha1(const struct packed_git *p, int n,
 unsigned long find_pack_entry_one(const unsigned char *sha1,
 				  struct packed_git *p)
 {
-	unsigned int *level1_ofs = p->index_base;
+	uint32_t *level1_ofs = p->index_base;
 	int hi = ntohl(level1_ofs[*sha1]);
 	int lo = ((*sha1 == 0x0) ? 0 : ntohl(level1_ofs[*sha1 - 1]));
 	void *index = p->index_base + 256;
@@ -1360,7 +1360,7 @@ unsigned long find_pack_entry_one(const unsigned char *sha1,
 		int mi = (lo + hi) / 2;
 		int cmp = hashcmp((unsigned char *)index + (24 * mi) + 4, sha1);
 		if (!cmp)
-			return ntohl(*((unsigned int *) ((char *) index + (24 * mi))));
+			return ntohl(*((uint32_t *)((char *)index + (24 * mi))));
 		if (cmp > 0)
 			hi = mi;
 		else
