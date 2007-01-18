@@ -672,7 +672,7 @@ static char* create_index(void)
 	struct sha1file *f;
 	struct object_entry **idx, **c, **last, *e;
 	struct object_entry_pool *o;
-	unsigned int array[256];
+	uint32_t array[256];
 	int i, idx_fd;
 
 	/* Build the sorted table of object IDs. */
@@ -709,7 +709,7 @@ static char* create_index(void)
 	sha1write(f, array, 256 * sizeof(int));
 	SHA1_Init(&ctx);
 	for (c = idx; c != last; c++) {
-		unsigned int offset = htonl((*c)->offset);
+		uint32_t offset = htonl((*c)->offset);
 		sha1write(f, &offset, 4);
 		sha1write(f, (*c)->sha1, sizeof((*c)->sha1));
 		SHA1_Update(&ctx, (*c)->sha1, 20);

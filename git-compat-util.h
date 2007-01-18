@@ -46,6 +46,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <pwd.h>
+#include <stdint.h>
 #include <grp.h>
 
 #ifndef NO_ICONV
