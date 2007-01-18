@@ -332,7 +332,7 @@ echo "$prev_head" > "$dotest/prev_head"
 
 msgnum=0
 for cmt in `git-rev-list --no-merges "$upstream"..ORIG_HEAD \
-			| @@PERL@@ -e 'print reverse <>'`
+			| sed -ne '1!G;$p;h'`
 do
 	msgnum=$(($msgnum + 1))
 	echo "$cmt" > "$dotest/cmt.$msgnum"
