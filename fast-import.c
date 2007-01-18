@@ -50,14 +50,21 @@ Format of STDIN stream:
      # a new mark directive with the old idnum.
 	 #
   mark ::= 'mark' sp idnum lf;
+  data ::= (delimited_data | exact_data)
+    lf;
+
+    # note: delim may be any string but must not contain lf.
+    # data_line may contain any data but must not be exactly
+    # delim.
+  delimited_data ::= 'data' sp '<<' delim lf
+    (data_line lf)*
+	delim lf;
 
      # note: declen indicates the length of binary_data in bytes.
-     # declen does not include the lf preceeding or trailing the
-     # binary data.
+     # declen does not include the lf preceeding the binary data.
      #
-  data ::= 'data' sp declen lf
-    binary_data
-	lf;
+  exact_data ::= 'data' sp declen lf
+    binary_data;
 
      # note: quoted strings are C-style quoting supporting \c for
      # common escapes of 'c' (e..g \n, \t, \\, \") or \nnn where nnn
@@ -1334,21 +1341,48 @@ static void cmd_mark(void)
 
 static void* cmd_data (size_t *size)
 {
-	size_t n = 0;
-	void *buffer;
 	size_t length;
+	char *buffer;
 
 	if (strncmp("data ", command_buf.buf, 5))
 		die("Expected 'data n' command, found: %s", command_buf.buf);
 
-	length = strtoul(command_buf.buf + 5, NULL, 10);
-	buffer = xmalloc(length);
-
-	while (n < length) {
-		size_t s = fread((char*)buffer + n, 1, length - n, stdin);
-		if (!s && feof(stdin))
-			die("EOF in data (%lu bytes remaining)", length - n);
-		n += s;
+	if (!strncmp("<<", command_buf.buf + 5, 2)) {
+		char *term = xstrdup(command_buf.buf + 5 + 2);
+		size_t sz = 8192, term_len = command_buf.len - 5 - 2;
+		length = 0;
+		buffer = xmalloc(sz);
+		for (;;) {
+			read_next_command();
+			if (command_buf.eof)
+				die("EOF in data (terminator '%s' not found)", term);
+			if (term_len == command_buf.len
+				&& !strcmp(term, command_buf.buf))
+				break;
+			if (sz < (length + command_buf.len)) {
+				sz = sz * 3 / 2 + 16;
+				if (sz < (length + command_buf.len))
+					sz = length + command_buf.len;
+				buffer = xrealloc(buffer, sz);
+			}
+			memcpy(buffer + length,
+				command_buf.buf,
+				command_buf.len - 1);
+			length += command_buf.len - 1;
+			buffer[length++] = '\n';
+		}
+		free(term);
+	}
+	else {
+		size_t n = 0;
+		length = strtoul(command_buf.buf + 5, NULL, 10);
+		buffer = xmalloc(length);
+		while (n < length) {
+			size_t s = fread(buffer + n, 1, length - n, stdin);
+			if (!s && feof(stdin))
+				die("EOF in data (%lu bytes remaining)", length - n);
+			n += s;
+		}
 	}
 
 	if (fgetc(stdin) != '\n')
