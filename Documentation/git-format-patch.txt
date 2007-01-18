@@ -20,7 +20,9 @@ DESCRIPTION
 Prepare each commit between <since> and <until> with its patch in
 one file per commit, formatted to resemble UNIX mailbox format.
 If ..<until> is not specified, the head of the current working
-tree is implied.
+tree is implied.  For a more complete list of ways to spell
+<since> and <until>, see "SPECIFYING REVISIONS" section in
+gitlink:git-rev-parse[1].
 
 The output of this command is convenient for e-mail submission or
 for use with gitlink:git-am[1].
