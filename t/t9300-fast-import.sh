@@ -7,6 +7,16 @@ test_description='test git-fast-import utility'
 . ./test-lib.sh
 . ../diff-lib.sh ;# test-lib chdir's into trash
 
+file2_data='file2
+second line of EOF'
+
+file3_data='EOF
+in 3rd file
+ END'
+
+file4_data=abcd
+file4_len=4
+
 ###
 ### series A
 ###
@@ -16,22 +26,19 @@ cat >input <<INPUT_END
 blob
 mark :2
 data <<EOF
-file2
-second line of EOF
+$file2_data
 EOF
 
 blob
 mark :3
 data <<END
-EOF
-in 3rd file
- END
+$file3_data
 END
 
 blob
 mark :4
-data 4
-abcd
+data $file4_len
+$file4_data
 commit refs/heads/master
 mark :5
 committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
@@ -73,24 +80,17 @@ test_expect_success \
 	'git-cat-file -p master^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
 	 diff -u expect actual'
 
-cat >expect <<EOF
-file2
-second line of EOF
-EOF
+echo "$file2_data" >expect
 test_expect_success \
 	'A: verify file2' \
 	'git-cat-file blob master:file2 >actual && diff -u expect actual'
 
-cat >expect <<END
-EOF
-in 3rd file
- END
-END
+echo "$file3_data" >expect
 test_expect_success \
 	'A: verify file3' \
 	'git-cat-file blob master:file3 >actual && diff -u expect actual'
 
-printf abcd >expect
+printf "$file4_data" >expect
 test_expect_success \
 	'A: verify file4' \
 	'git-cat-file blob master:file4 >actual && diff -u expect actual'
