@@ -43,7 +43,7 @@ case "$1" in --) shift ;; esac
 # affecting the working tree nor HEAD.
 if test $# != 0
 then
-	test "$reset_type" == "--mixed" ||
+	test "$reset_type" = "--mixed" ||
 		die "Cannot do partial $reset_type reset."
 
 	git-diff-index --cached $rev -- "$@" |
