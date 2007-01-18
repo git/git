@@ -624,29 +624,31 @@ static void start_packfile(void)
 
 static void fixup_header_footer(void)
 {
+	static const int buf_sz = 128 * 1024;
 	int pack_fd = pack_data->pack_fd;
 	SHA_CTX c;
-	char hdr[8];
-	unsigned long cnt;
+	struct pack_header hdr;
 	char *buf;
 
 	if (lseek(pack_fd, 0, SEEK_SET) != 0)
 		die("Failed seeking to start: %s", strerror(errno));
+	if (read_in_full(pack_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
+		die("Unable to reread header of %s", pack_data->pack_name);
+	if (lseek(pack_fd, 0, SEEK_SET) != 0)
+		die("Failed seeking to start: %s", strerror(errno));
+	hdr.hdr_entries = htonl(object_count);
+	write_or_die(pack_fd, &hdr, sizeof(hdr));
 
 	SHA1_Init(&c);
-	if (read_in_full(pack_fd, hdr, 8) != 8)
-		die("Unable to reread header of %s", pack_data->pack_name);
-	SHA1_Update(&c, hdr, 8);
+	SHA1_Update(&c, &hdr, sizeof(hdr));
 
-	cnt = htonl(object_count);
-	SHA1_Update(&c, &cnt, 4);
-	write_or_die(pack_fd, &cnt, 4);
-
-	buf = xmalloc(128 * 1024);
+	buf = xmalloc(buf_sz);
 	for (;;) {
-		size_t n = xread(pack_fd, buf, 128 * 1024);
-		if (n <= 0)
+		size_t n = xread(pack_fd, buf, buf_sz);
+		if (!n)
 			break;
+		if (n < 0)
+			die("Failed to checksum %s", pack_data->pack_name);
 		SHA1_Update(&c, buf, n);
 	}
 	free(buf);
