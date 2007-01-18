@@ -3,7 +3,7 @@ git-commit-tree(1)
 
 NAME
 ----
-git-commit-tree - Creates a new commit object
+git-commit-tree - Create a new commit object
 
 
 SYNOPSIS

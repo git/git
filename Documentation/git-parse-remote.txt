@@ -3,7 +3,7 @@ git-parse-remote(1)
 
 NAME
 ----
-git-parse-remote - Routines to help parsing $GIT_DIR/remotes/
+git-parse-remote - Routines to help parsing remote repository access parameters
 
 
 SYNOPSIS

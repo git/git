@@ -3,7 +3,7 @@ git-symbolic-ref(1)
 
 NAME
 ----
-git-symbolic-ref - read and modify symbolic refs
+git-symbolic-ref - Read and modify symbolic refs
 
 SYNOPSIS
 --------

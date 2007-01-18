@@ -3,7 +3,7 @@ git-bisect(1)
 
 NAME
 ----
-git-bisect - Find the change that introduced a bug
+git-bisect - Find the change that introduced a bug by binary search
 
 
 SYNOPSIS

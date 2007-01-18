@@ -2,7 +2,7 @@ gitlink:git-annotate[1]::
 	Annotate file lines with commit info.
 
 gitlink:git-blame[1]::
-	Find out where each line in a file came from.
+	Show what revision and author last modified each line of a file.
 
 gitlink:git-check-ref-format[1]::
 	Make sure ref name is well formed.
@@ -29,25 +29,22 @@ gitlink:git-instaweb[1]::
 	Instantly browse your working repository in gitweb.
 
 gitlink:git-mailinfo[1]::
-	Extracts patch and authorship information from a single
-	e-mail message, optionally transliterating the commit
-	message into utf-8.
+	Extracts patch and authorship from a single e-mail message.
 
 gitlink:git-mailsplit[1]::
-	A stupid program to split UNIX mbox format mailbox into
-	individual pieces of e-mail.
+	Simple UNIX mbox splitter program.
 
 gitlink:git-merge-tree[1]::
 	Show three-way merge without touching index.
 
+gitlink:git-parse-remote[1]::
+	Routines to help parsing remote repository access parameters.
+
 gitlink:git-patch-id[1]::
 	Compute unique ID for a patch.
 
-gitlink:git-parse-remote[1]::
-	Routines to help parsing `$GIT_DIR/remotes/` files.
-
 gitlink:git-request-pull[1]::
-	git-request-pull.
+	Generates a summary of pending changes.
 
 gitlink:git-rev-parse[1]::
 	Pick out and massage parameters.
@@ -56,10 +53,11 @@ gitlink:git-runstatus[1]::
 	A helper for git-status and git-commit.
 
 gitlink:git-send-email[1]::
-	Send patch e-mails out of "format-patch --mbox" output.
+	Send a collection of patches as emails.
+
+gitlink:git-stripspace[1]::
+	Filter out empty lines.
 
 gitlink:git-symbolic-ref[1]::
 	Read and modify symbolic refs.
 
-gitlink:git-stripspace[1]::
-	Filter out empty lines.

@@ -3,7 +3,7 @@ git-write-tree(1)
 
 NAME
 ----
-git-write-tree - Creates a tree object from the current index
+git-write-tree - Create a tree object from the current index
 
 
 SYNOPSIS

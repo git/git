@@ -1,11 +1,11 @@
 gitlink:git-add[1]::
-	Add paths to the index.
+	Add file contents to the changeset to be committed next.
 
 gitlink:git-am[1]::
-	Apply patches from a mailbox, but cooler.
+	Apply a series of patches from a mailbox.
 
 gitlink:git-applymbox[1]::
-	Apply patches from a mailbox, original version by Linus.
+	Apply a series of patches in a mailbox.
 
 gitlink:git-archive[1]::
 	Creates an archive of files from a named tree.
@@ -14,13 +14,13 @@ gitlink:git-bisect[1]::
 	Find the change that introduced a bug by binary search.
 
 gitlink:git-branch[1]::
-	Create and Show branches.
+	List, create, or delete branches.
 
 gitlink:git-checkout[1]::
 	Checkout and switch to a branch.
 
 gitlink:git-cherry-pick[1]::
-	Cherry-pick the effect of an existing commit.
+	Apply the change introduced by an existing commit.
 
 gitlink:git-clean[1]::
 	Remove untracked files from the working tree.
@@ -35,7 +35,7 @@ gitlink:git-diff[1]::
 	Show changes between commits, commit and working tree, etc.
 
 gitlink:git-fetch[1]::
-	Download from a remote repository via various protocols.
+	Download objects and refs from another repository.
 
 gitlink:git-format-patch[1]::
 	Prepare patches for e-mail submission.
@@ -47,13 +47,13 @@ gitlink:gitk[1]::
 	The git repository browser.
 
 gitlink:git-log[1]::
-	Shows commit logs.
+	Show commit logs.
 
 gitlink:git-ls-remote[1]::
-	Shows references in a remote or local repository.
+	List references in a remote repository.
 
 gitlink:git-merge[1]::
-	Grand unified merge driver.
+	Join two or more development histories together.
 
 gitlink:git-mv[1]::
 	Move or rename a file, a directory, or a symlink.
@@ -62,13 +62,13 @@ gitlink:git-pack-refs[1]::
 	Pack heads and tags for efficient repository access.
 
 gitlink:git-pull[1]::
-	Fetch from and merge with a remote repository or a local branch.
+	Fetch from and merge with another repository or a local branch.
 
 gitlink:git-push[1]::
 	Update remote refs along with associated objects.
 
 gitlink:git-rebase[1]::
-	Rebase local commits to the updated upstream head.
+	Forward-port local commits to the updated upstream head.
 
 gitlink:git-repack[1]::
 	Pack unpacked objects in a repository.
@@ -89,19 +89,20 @@ gitlink:git-rm[1]::
 	Remove files from the working tree and from the index.
 
 gitlink:git-shortlog[1]::
-	Summarizes 'git log' output.
+	Summarize 'git log' output.
 
 gitlink:git-show[1]::
-	Show one commit log and its diff.
+	Show various types of objects.
 
 gitlink:git-show-branch[1]::
 	Show branches and their commits.
 
 gitlink:git-status[1]::
-	Shows the working tree status.
+	Show the working tree status.
 
 gitlink:git-verify-tag[1]::
 	Check the GPG signature of tag.
 
 gitlink:git-whatchanged[1]::
-	Shows commit logs and differences they introduce.
+	Show logs with difference each commit introduces.
+

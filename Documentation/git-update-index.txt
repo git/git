@@ -3,7 +3,7 @@ git-update-index(1)
 
 NAME
 ----
-git-update-index - Modifies the index or directory cache
+git-update-index - Register file contents in the working tree to the index
 
 
 SYNOPSIS

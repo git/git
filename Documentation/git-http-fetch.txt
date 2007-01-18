@@ -3,7 +3,7 @@ git-http-fetch(1)
 
 NAME
 ----
-git-http-fetch - downloads a remote git repository via HTTP
+git-http-fetch - Download from a remote git repository via HTTP
 
 
 SYNOPSIS

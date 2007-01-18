@@ -3,7 +3,7 @@ git-shell(1)
 
 NAME
 ----
-git-shell - Restricted login shell for GIT over SSH only
+git-shell - Restricted login shell for GIT-only SSH access
 
 
 SYNOPSIS

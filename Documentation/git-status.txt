@@ -3,7 +3,7 @@ git-status(1)
 
 NAME
 ----
-git-status - Show working tree status
+git-status - Show the working tree status
 
 
 SYNOPSIS

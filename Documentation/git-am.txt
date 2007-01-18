@@ -3,7 +3,7 @@ git-am(1)
 
 NAME
 ----
-git-am - Apply a series of patches in a mailbox
+git-am - Apply a series of patches from a mailbox
 
 
 SYNOPSIS

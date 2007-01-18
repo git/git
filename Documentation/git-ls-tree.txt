@@ -3,7 +3,7 @@ git-ls-tree(1)
 
 NAME
 ----
-git-ls-tree - Lists the contents of a tree object
+git-ls-tree - List the contents of a tree object
 
 
 SYNOPSIS

@@ -3,7 +3,7 @@ git-mailinfo(1)
 
 NAME
 ----
-git-mailinfo - Extracts patch from a single e-mail message
+git-mailinfo - Extracts patch and authorship from a single e-mail message
 
 
 SYNOPSIS

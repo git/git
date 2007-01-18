@@ -3,7 +3,7 @@ git-tar-tree(1)
 
 NAME
 ----
-git-tar-tree - Creates a tar archive of the files in the named tree
+git-tar-tree - Create a tar archive of the files in the named tree object
 
 
 SYNOPSIS

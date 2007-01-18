@@ -3,7 +3,7 @@ git-var(1)
 
 NAME
 ----
-git-var - Print the git users identity
+git-var - Show a git logical variable
 
 
 SYNOPSIS

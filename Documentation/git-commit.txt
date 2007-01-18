@@ -3,7 +3,7 @@ git-commit(1)
 
 NAME
 ----
-git-commit - Record your changes
+git-commit - Record changes to the repository
 
 SYNOPSIS
 --------

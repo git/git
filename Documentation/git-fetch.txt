@@ -3,7 +3,7 @@ git-fetch(1)
 
 NAME
 ----
-git-fetch - Download objects and a head from another repository
+git-fetch - Download objects and refs from another repository
 
 
 SYNOPSIS

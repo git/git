@@ -2,16 +2,16 @@ gitlink:git-applypatch[1]::
 	Apply one patch extracted from an e-mail.
 
 gitlink:git-archimport[1]::
-	Import an arch repository into git.
+	Import an Arch repository into git.
 
 gitlink:git-convert-objects[1]::
 	Converts old-style git repository.
 
-gitlink:git-cvsimport[1]::
-	Salvage your data out of another SCM people love to hate.
-
 gitlink:git-cvsexportcommit[1]::
 	Export a single commit to a CVS checkout.
+
+gitlink:git-cvsimport[1]::
+	Salvage your data out of another SCM people love to hate.
 
 gitlink:git-cvsserver[1]::
 	A CVS server emulator for git.
@@ -23,7 +23,7 @@ gitlink:git-lost-found[1]::
 	Recover lost refs that luckily have not yet been pruned.
 
 gitlink:git-merge-one-file[1]::
-	The standard helper program to use with `git-merge-index`.
+	The standard helper program to use with git-merge-index.
 
 gitlink:git-prune[1]::
 	Prunes all unreachable objects from the object database.
@@ -37,14 +37,14 @@ gitlink:git-reflog[1]::
 gitlink:git-relink[1]::
 	Hardlink common objects in local repositories.
 
+gitlink:git-sh-setup[1]::
+	Common git shell script setup code.
+
 gitlink:git-svn[1]::
 	Bidirectional operation between a single Subversion branch and git.
 
 gitlink:git-svnimport[1]::
 	Import a SVN repository into git.
-
-gitlink:git-sh-setup[1]::
-	Common git shell script setup code.
 
 gitlink:git-symbolic-ref[1]::
 	Read and modify symbolic refs.

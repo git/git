@@ -3,7 +3,7 @@ git-svn(1)
 
 NAME
 ----
-git-svn - bidirectional operation between Subversion and git
+git-svn - Bidirectional operation between a single Subversion branch and git
 
 SYNOPSIS
 --------

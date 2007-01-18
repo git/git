@@ -3,7 +3,7 @@ gitk(1)
 
 NAME
 ----
-gitk - git repository browser
+gitk - The git repository browser
 
 SYNOPSIS
 --------

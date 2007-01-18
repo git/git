@@ -3,7 +3,7 @@ git-mv(1)
 
 NAME
 ----
-git-mv - Move or rename a file, directory or symlink
+git-mv - Move or rename a file, a directory, or a symlink
 
 
 SYNOPSIS

@@ -3,7 +3,7 @@ git-mailsplit(1)
 
 NAME
 ----
-git-mailsplit - Totally braindamaged mbox splitter program
+git-mailsplit - Simple UNIX mbox splitter program
 
 SYNOPSIS
 --------

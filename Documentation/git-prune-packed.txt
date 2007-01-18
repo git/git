@@ -3,8 +3,7 @@ git-prune-packed(1)
 
 NAME
 ----
-git-prune-packed - Program used to remove the extra object files that are now
-residing in a pack file.
+git-prune-packed - Remove extra objects that are already in pack files
 
 
 SYNOPSIS
