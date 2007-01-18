@@ -120,29 +120,29 @@ case "$(date -d @11111111 +%s 2>/dev/null)" in
 	just_over_15_days_ago=$(($now-1-15*86400))
 	almost_60_days_ago=$(($now+60-60*86400))
 	just_over_60_days_ago=$(($now-1-60*86400))
-	predate1="$(date -d "@$almost_60_days_ago" +%c)"
-	predate2="$(date -d "@$almost_15_days_ago" +%c)"
-	postdate1="$(date -d "@$just_over_60_days_ago" +%c)"
-	postdate2="$(date -d "@$just_over_15_days_ago" +%c)"
+	predate1="$(date -d "@$almost_60_days_ago" +%Y%m%d%H%M.%S)"
+	predate2="$(date -d "@$almost_15_days_ago" +%Y%m%d%H%M.%S)"
+	postdate1="$(date -d "@$just_over_60_days_ago" +%Y%m%d%H%M.%S)"
+	postdate2="$(date -d "@$just_over_15_days_ago" +%Y%m%d%H%M.%S)"
 	;;
 *)
 	# it is not GNU date. oh, well.
-	predate1="$(date)"
-	predate2="$(date)"
-	postdate1='1 Oct 2006 00:00:00'
-	postdate2='1 Dec 2006 00:00:00'
+	predate1="$(date +%Y%m%d%H%M.%S)"
+	predate2="$(date +%Y%m%d%H%M.%S)"
+	postdate1='200610010000.00'
+	postdate2='200612010000.00'
 esac
 
-touch -m -d "$predate1" $rr/preimage
-touch -m -d "$predate2" $rr2/preimage
+touch -m -t "$predate1" $rr/preimage
+touch -m -t "$predate2" $rr2/preimage
 
 test_expect_success 'garbage collection (part1)' 'git rerere gc'
 
 test_expect_success 'young records still live' \
 	"test -f $rr/preimage -a -f $rr2/preimage"
 
-touch -m -d "$postdate1" $rr/preimage
-touch -m -d "$postdate2" $rr2/preimage
+touch -m -t "$postdate1" $rr/preimage
+touch -m -t "$postdate2" $rr2/preimage
 
 test_expect_success 'garbage collection (part2)' 'git rerere gc'
 
