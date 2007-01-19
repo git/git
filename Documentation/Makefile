@@ -78,7 +78,7 @@ cmds_txt = cmds-ancillaryinterrogators.txt \
 	cmds-plumbingmanipulators.txt \
 	cmds-synchingrepositories.txt
 
-$(cmds_txt): cmd-list.perl $(MAN1_TXT) $(MAN7_TXT)
+$(cmds_txt): cmd-list.perl $(MAN1_TXT)
 	perl ./cmd-list.perl
 
 git.7 git.html: git.txt core-intro.txt
