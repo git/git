@@ -1025,6 +1025,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	struct stat st;
 	unsigned long date;
 	unsigned char logged_sha1[20];
+	void *log_mapped;
 
 	logfile = git_path("logs/%s", ref);
 	logfd = open(logfile, O_RDONLY, 0);
@@ -1033,7 +1034,8 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	fstat(logfd, &st);
 	if (!st.st_size)
 		die("Log %s is empty.", logfile);
-	logdata = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, logfd, 0);
+	log_mapped = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, logfd, 0);
+	logdata = log_mapped;
 	close(logfd);
 
 	lastrec = NULL;
@@ -1078,7 +1080,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 						logfile, show_rfc2822_date(date, tz));
 				}
 			}
-			munmap((void*)logdata, st.st_size);
+			munmap(log_mapped, st.st_size);
 			return 0;
 		}
 		lastrec = rec;
@@ -1095,7 +1097,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	tz = strtoul(tz_c, NULL, 10);
 	if (get_sha1_hex(logdata, sha1))
 		die("Log %s is corrupt.", logfile);
-	munmap((void*)logdata, st.st_size);
+	munmap(log_mapped, st.st_size);
 	if (at_time)
 		fprintf(stderr, "warning: Log %s only goes back to %s.\n",
 			logfile, show_rfc2822_date(date, tz));
