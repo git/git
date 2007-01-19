@@ -13,9 +13,8 @@ use vars qw/	$AUTHOR $VERSION
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
-use Cwd qw/abs_path/;
-$GIT_DIR = abs_path($ENV{GIT_DIR} || '.git');
-$ENV{GIT_DIR} = $GIT_DIR;
+$ENV{GIT_DIR} ||= '.git';
+$Git::SVN::default_repo_id = $ENV{GIT_SVN_ID} || 'git-svn';
 
 my $LC_ALL = $ENV{LC_ALL};
 $Git::SVN::Log::TZ = $ENV{TZ};
@@ -47,6 +46,7 @@ BEGIN {
 	foreach (qw/command command_oneline command_noisy command_output_pipe
 	            command_input_pipe command_close_pipe/) {
 		$s .= "*SVN::Git::Editor::$_ = *SVN::Git::Fetcher::$_ = ".
+		      "*Git::SVN::Migration::$_ = ".
 		      "*Git::SVN::Log::$_ = *Git::SVN::$_ = *$_ = *Git::$_; ";
 	}
 	eval $s;
@@ -64,17 +64,17 @@ my ($_stdin, $_help, $_edit,
 	$_version, $_upgrade,
 	$_merge, $_strategy, $_dry_run,
 	$_prefix);
-my @repo_path_split_cache;
 
+my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
+                    'config-dir=s' => \$Git::SVN::Ra::config_dir,
+                    'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache );
 my %fc_opts = ( 'follow-parent|follow' => \$_follow_parent,
 		'authors-file|A=s' => \$_authors,
 		'repack:i' => \$_repack,
 		'no-metadata' => \$_no_metadata,
 		'quiet|q' => \$_q,
-		'username=s' => \$Git::SVN::Prompt::_username,
-		'config-dir=s' => \$Git::SVN::Ra::config_dir,
-		'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache,
-		'repack-flags|repack-args|repack-opts=s' => \$_repack_flags);
+		'repack-flags|repack-args|repack-opts=s' => \$_repack_flags,
+		%remote_opts );
 
 my ($_trunk, $_tags, $_branches);
 my %multi_opts = ( 'trunk|T=s' => \$_trunk,
@@ -110,16 +110,20 @@ my %cmd = (
 			  'upgrade' => \$_upgrade } ],
 	'multi-init' => [ \&cmd_multi_init,
 			'Initialize multiple trees (like git-svnimport)',
-			{ %multi_opts, %init_opts,
+			{ %multi_opts, %init_opts, %remote_opts,
 			 'revision|r=i' => \$_revision,
-			 'username=s' => \$Git::SVN::Prompt::_username,
-			 'config-dir=s' => \$Git::SVN::Ra::config_dir,
-			 'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache,
 			 'prefix=s' => \$_prefix,
 			} ],
 	'multi-fetch' => [ \&cmd_multi_fetch,
 			'Fetch multiple trees (like git-svnimport)',
 			\%fc_opts ],
+	'migrate' => [ sub { },
+	               # no-op, we automatically run this anyways,
+		       # we may add a flag to automatically optimize the
+		       # configuration to avoid reconnects in the future
+	               'Migrate configuration/metadata/layout from
+		        previous versions of git-svn',
+			\%remote_opts ],
 	'log' => [ \&Git::SVN::Log::cmd_show_log, 'Show commit logs',
 			{ 'limit=i' => \$Git::SVN::Log::limit,
 			  'revision|r=s' => \$_revision,
@@ -154,15 +158,16 @@ my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 read_repo_config(\%opts);
 my $rv = GetOptions(%opts, 'help|H|h' => \$_help,
 				'version|V' => \$_version,
-				'id|i=s' => \$GIT_SVN);
+				'id|i=s' => \$Git::SVN::default_repo_id);
 exit 1 if (!$rv && $cmd ne 'log');
 
 usage(0) if $_help;
 version() if $_version;
 usage(1) unless defined $cmd;
-init_vars();
 load_authors() if $_authors;
-migration_check() unless $cmd =~ /^(?:init|rebuild|multi-init|commit-diff)$/;
+unless ($cmd =~ /^(?:init|rebuild|multi-init|commit-diff)$/) {
+	Git::SVN::Migration::migration_check();
+}
 $cmd{$cmd}->[0]->(@ARGV);
 exit 0;
 
@@ -203,16 +208,11 @@ sub version {
 
 sub cmd_rebuild {
 	my $url = shift;
-	my $gs = $url ? Git::SVN->init(undef, $url)
+	my $gs = $url ? Git::SVN->init($url)
 	              : eval { Git::SVN->new };
 	$gs ||= Git::SVN->_new;
 	if (!verify_ref($gs->refname.'^0')) {
 		$gs->copy_remote_ref;
-	}
-	if ($_upgrade) {
-		command_noisy('update-ref',$gs->refname, $gs->{id}.'-HEAD');
-	} else {
-		$gs->check_upgrade_needed;
 	}
 
 	my ($rev_list, $ctx) = command_output_pipe("rev-list", $gs->refname);
@@ -238,7 +238,7 @@ sub cmd_rebuild {
 			if (!$gs->{url} && !$url) {
 				fatal "SVN repository location required\n";
 			}
-			$gs = Git::SVN->init(undef, $url);
+			$gs = Git::SVN->init($url);
 			$latest = $rev;
 		}
 		$gs->rev_db_set($rev, $c);
@@ -268,7 +268,7 @@ sub cmd_init {
 	}
 	do_git_init_db();
 
-	Git::SVN->init(undef, $url);
+	Git::SVN->init($url);
 }
 
 sub cmd_fetch {
@@ -389,28 +389,35 @@ sub cmd_multi_init {
 	}
 	do_git_init_db();
 	$_prefix = '' unless defined $_prefix;
+	$url =~ s#/+$## if defined $url;
 	if (defined $_trunk) {
-		my $gs_trunk = eval { Git::SVN->new($_prefix . 'trunk') };
+		my $trunk_ref = $_prefix . 'trunk';
+		# try both old-style and new-style lookups:
+		my $gs_trunk = eval { Git::SVN->new($trunk_ref) };
 		unless ($gs_trunk) {
-			my $trunk_url = complete_svn_url($url, $_trunk);
-			$gs_trunk = Git::SVN->init($_prefix . 'trunk',
-			                           $trunk_url);
-			command_noisy('config', 'svn.trunk', $trunk_url);
+			my ($trunk_url, $trunk_path) =
+			                      complete_svn_url($url, $_trunk);
+			$gs_trunk = Git::SVN->init($trunk_url, $trunk_path,
+						   undef, $trunk_ref);
 		}
 	}
+	return unless defined $_branches || defined $_tags;
 	my $ra = $url ? Git::SVN::Ra->new($url) : undef;
 	complete_url_ls_init($ra, $_branches, '--branches/-b', $_prefix);
 	complete_url_ls_init($ra, $_tags, '--tags/-t', $_prefix . 'tags/');
 }
 
 sub cmd_multi_fetch {
-	# try to do trunk first, since branches/tags
-	# may be descended from it.
-	if (-e "$ENV{GIT_DIR}/svn/trunk/info/url") {
-		my $gs = Git::SVN->new('trunk');
-		$gs->fetch(@_);
+	my @gs;
+	foreach (command(qw/config -l/)) {
+		next unless m!^svn-remote\.(.+)\.fetch=
+		              \s*(.*)\s*:\s*refs/remotes/(.+)\s*$!x;
+		my ($repo_id, $path, $ref_id) = ($1, $2, $3);
+		push @gs, Git::SVN->new($ref_id, $repo_id, $path);
 	}
-	rec_fetch('', "$ENV{GIT_DIR}/svn", @_);
+	foreach (@gs) {
+		$_->fetch;
+	}
 }
 
 # this command is special because it requires no metadata
@@ -464,129 +471,56 @@ sub cmd_commit_diff {
 
 ########################### utility functions #########################
 
-sub rec_fetch {
-	my ($pfx, $p, @args) = @_;
-	my @dir;
-	foreach (sort <$p/*>) {
-		if (-r "$_/info/url") {
-			$pfx .= '/' if $pfx && $pfx !~ m!/$!;
-			my $id = $pfx . basename $_;
-			next if $id eq 'trunk';
-			my $gs = Git::SVN->new($id);
-			$gs->fetch(@args);
-		} elsif (-d $_) {
-			push @dir, $_;
-		}
-	}
-	foreach (@dir) {
-		my $x = $_;
-		$x =~ s!^\Q$ENV{GIT_DIR}\E/svn/!!o;
-		rec_fetch($x, $_, @args);
-	}
-}
-
 sub complete_svn_url {
 	my ($url, $path) = @_;
 	$path =~ s#/+$##;
-	$url =~ s#/+$## if $url;
 	if ($path !~ m#^[a-z\+]+://#) {
-		$path = '/' . $path if ($path !~ m#^/#);
 		if (!defined $url || $url !~ m#^[a-z\+]+://#) {
 			fatal("E: '$path' is not a complete URL ",
 			      "and a separate URL is not specified\n");
 		}
-		$path = $url . $path;
+		return ($url, $path);
 	}
-	return $path;
+	return ($path, '');
 }
 
 sub complete_url_ls_init {
-	my ($ra, $path, $switch, $pfx) = @_;
-	unless ($path) {
+	my ($ra, $repo_path, $switch, $pfx) = @_;
+	unless ($repo_path) {
 		print STDERR "W: $switch not specified\n";
 		return;
 	}
-	$path =~ s#/+$##;
-	if ($path =~ m#^[a-z\+]+://#) {
-		$ra = Git::SVN::Ra->new($path);
-		$path = '';
+	$repo_path =~ s#/+$##;
+	if ($repo_path =~ m#^[a-z\+]+://#) {
+		$ra = Git::SVN::Ra->new($repo_path);
+		$repo_path = '';
 	} else {
-		$path =~ s#^/+##;
+		$repo_path =~ s#^/+##;
 		unless ($ra) {
-			fatal("E: '$path' is not a complete URL ",
+			fatal("E: '$repo_path' is not a complete URL ",
 			      "and a separate URL is not specified\n");
 		}
 	}
 	my $r = defined $_revision ? $_revision : $ra->get_latest_revnum;
-	my ($dirent, undef, undef) = $ra->get_dir($path, $r);
-	my $url = $ra->{url} . (length $path ? "/$path" : '');
+	my ($dirent, undef, undef) = $ra->get_dir($repo_path, $r);
+	my $url = $ra->{url};
 	foreach my $d (sort keys %$dirent) {
 		next if ($dirent->{$d}->kind != $SVN::Node::dir);
-		my $u =  "$url/$d";
-		my $id = "$pfx$d";
-		my $gs = eval { Git::SVN->new($id) };
+		my $path =  "$repo_path/$d";
+		my $ref = "$pfx$d";
+		my $gs = eval { Git::SVN->new($ref) };
 		# don't try to init already existing refs
 		unless ($gs) {
-			print "init $u => $id\n";
-			Git::SVN->init($id, $u);
+			print "init $url/$path => $ref\n";
+			Git::SVN->init($url, $path, undef, $ref);
 		}
 	}
-	my ($n) = ($switch =~ /^--(\w+)/);
-	command_noisy('config', "svn.$n", $url);
-}
-
-sub common_prefix {
-	my $paths = shift;
-	my %common;
-	foreach (@$paths) {
-		my @tmp = split m#/#, $_;
-		my $p = '';
-		while (my $x = shift @tmp) {
-			$p .= "/$x";
-			$common{$p} ||= 0;
-			$common{$p}++;
-		}
-	}
-	foreach (sort {length $b <=> length $a} keys %common) {
-		if ($common{$_} == @$paths) {
-			return $_;
-		}
-	}
-	return '';
 }
 
 sub verify_ref {
 	my ($ref) = @_;
 	eval { command_oneline([ 'rev-parse', '--verify', $ref ],
 	                       { STDERR => 0 }); };
-}
-
-sub repo_path_split {
-	my $full_url = shift;
-	$full_url =~ s#/+$##;
-
-	foreach (@repo_path_split_cache) {
-		if ($full_url =~ s#$_##) {
-			my $u = $1;
-			$full_url =~ s#^/+##;
-			return ($u, $full_url);
-		}
-	}
-	my $tmp = Git::SVN::Ra->new($full_url);
-	return ($tmp->{repos_root}, $tmp->{svn_path});
-}
-
-sub setup_git_svn {
-	defined $SVN_URL or croak "SVN repository location required\n";
-	unless (-d $GIT_DIR) {
-		croak "GIT_DIR=$GIT_DIR does not exist!\n";
-	}
-	mkpath([$GIT_SVN_DIR]);
-	mkpath(["$GIT_SVN_DIR/info"]);
-	open my $fh, '>>',$REVDB or croak $!;
-	close $fh;
-	s_to_file($SVN_URL,"$GIT_SVN_DIR/info/url");
-
 }
 
 sub get_tree_from_treeish {
@@ -668,23 +602,6 @@ sub file_to_s {
 	return $ret;
 }
 
-sub check_upgrade_needed {
-	if (!-r $REVDB) {
-		-d $GIT_SVN_DIR or mkpath([$GIT_SVN_DIR]);
-		open my $fh, '>>',$REVDB or croak $!;
-		close $fh;
-	}
-	return unless eval {
-		command([qw/rev-parse --verify/,"$GIT_SVN-HEAD^0"],
-		        {STDERR => 0});
-	};
-	my $head = eval { command('rev-parse',"refs/remotes/$GIT_SVN") };
-	if ($@ || !$head) {
-		print STDERR "Please run: $0 rebuild --upgrade\n";
-		exit 1;
-	}
-}
-
 # '<svn username> = real-name <email address>' mapping based on git-svnimport:
 sub load_authors {
 	open my $authors, '<', $_authors or die "Can't open $_authors $!\n";
@@ -702,75 +619,9 @@ sub load_authors {
 	close $authors or croak $!;
 }
 
-sub git_svn_each {
-	my $sub = shift;
-	foreach (command(qw/rev-parse --symbolic --all/)) {
-		next unless s#^refs/remotes/##;
-		chomp $_;
-		next unless -f "$GIT_DIR/svn/$_/info/url";
-		&$sub($_);
-	}
-}
-
-sub migrate_revdb {
-	git_svn_each(sub {
-		my $id = shift;
-		defined(my $pid = fork) or croak $!;
-		if (!$pid) {
-			$GIT_SVN = $ENV{GIT_SVN_ID} = $id;
-			init_vars();
-			exit 0 if -r $REVDB;
-			print "Upgrading svn => git mapping...\n";
-			-d $GIT_SVN_DIR or mkpath([$GIT_SVN_DIR]);
-			open my $fh, '>>',$REVDB or croak $!;
-			close $fh;
-			rebuild();
-			print "Done upgrading. You may now delete the ",
-				"deprecated $GIT_SVN_DIR/revs directory\n";
-			exit 0;
-		}
-		waitpid $pid, 0;
-		croak $? if $?;
-	});
-}
-
-sub migration_check {
-	migrate_revdb() unless (-e $REVDB);
-	return if (-d "$GIT_DIR/svn" || !-d $GIT_DIR);
-	print "Upgrading repository...\n";
-	unless (-d "$GIT_DIR/svn") {
-		mkdir "$GIT_DIR/svn" or croak $!;
-	}
-	print "Data from a previous version of git-svn exists, but\n\t",
-				"$GIT_SVN_DIR\n\t(required for this version ",
-				"($VERSION) of git-svn) does not.\n";
-
-	foreach my $x (command(qw/rev-parse --symbolic --all/)) {
-		next unless $x =~ s#^refs/remotes/##;
-		chomp $x;
-		next unless -f "$GIT_DIR/$x/info/url";
-		my $u = eval { file_to_s("$GIT_DIR/$x/info/url") };
-		next unless $u;
-		my $dn = dirname("$GIT_DIR/svn/$x");
-		mkpath([$dn]) unless -d $dn;
-		rename "$GIT_DIR/$x", "$GIT_DIR/svn/$x" or croak "$!: $x";
-	}
-	migrate_revdb() if (-d $GIT_SVN_DIR && !-w $REVDB);
-	print "Done upgrading.\n";
-}
-
-sub init_vars {
-	$GIT_SVN ||= $ENV{GIT_SVN_ID} || 'git-svn';
-	$Git::SVN::default = $GIT_SVN;
-	$GIT_SVN_DIR = "$GIT_DIR/svn/$GIT_SVN";
-	$REVDB = "$GIT_SVN_DIR/.rev_db";
-	$GIT_SVN_INDEX = "$GIT_SVN_DIR/index";
-	$SVN_URL = undef;
-}
-
 # convert GetOpt::Long specs for use by git-config
 sub read_repo_config {
-	return unless -d $GIT_DIR;
+	return unless -d $ENV{GIT_DIR};
 	my $opts = shift;
 	foreach my $o (keys %$opts) {
 		my $v = $opts->{$o};
@@ -789,38 +640,6 @@ sub read_repo_config {
 			}
 		}
 	}
-}
-
-sub read_url_paths_all {
-	my ($l_map, $pfx, $p) = @_;
-	my @dir;
-	foreach (<$p/*>) {
-		if (-r "$_/info/url") {
-			$pfx .= '/' if $pfx && $pfx !~ m!/$!;
-			my $id = $pfx . basename $_;
-			my $url = file_to_s("$_/info/url");
-			my ($u, $p) = repo_path_split($url);
-			$l_map->{$u}->{$p} = $id;
-		} elsif (-d $_) {
-			push @dir, $_;
-		}
-	}
-	foreach (@dir) {
-		my $x = $_;
-		$x =~ s!^\Q$GIT_DIR\E/svn/!!o;
-		read_url_paths_all($l_map, $x, $_);
-	}
-}
-
-# this one only gets ids that have been imported, not new ones
-sub read_url_paths {
-	my $l_map = {};
-	git_svn_each(sub { my $x = shift;
-			my $url = file_to_s("$GIT_DIR/svn/$x/info/url");
-			my ($u, $p) = repo_path_split($url);
-			$l_map->{$u}->{$p} = $x;
-			});
-	return $l_map;
 }
 
 sub extract_metadata {
@@ -866,7 +685,7 @@ sub tz_to_s_offset {
 package Git::SVN;
 use strict;
 use warnings;
-use vars qw/$default/;
+use vars qw/$default_repo_id/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use IPC::Open3;
@@ -882,28 +701,76 @@ BEGIN {
 	                                svn:entry:committed-date/;
 }
 
+# we allow dashes, unlike remotes2config.sh
+sub sanitize_remote_name {
+	my ($name) = @_;
+	$name =~ tr/A-Za-z0-9-/./c;
+	$name;
+}
+
 sub init {
-	my ($class, $id, $url) = @_;
-	my $self = _new($class, $id);
-	mkpath(["$self->{dir}/info"]);
+	my ($class, $url, $path, $repo_id, $ref_id) = @_;
+	my $self = _new($class, $repo_id, $ref_id, $path);
+	mkpath([$self->{dir}]);
 	if (defined $url) {
 		$url =~ s!/+$!!; # strip trailing slash
-		::s_to_file($url, "$self->{dir}/info/url");
+		my $orig_url = eval {
+			command_oneline('config', '--get',
+			                "svn-remote.$repo_id.url")
+		};
+		if ($orig_url) {
+			if ($orig_url ne $url) {
+				die "svn-remote.$repo_id.url already set: ",
+				    "$orig_url\nwanted to set to: $url\n";
+			}
+		} else {
+			command_noisy('config',
+			              "svn-remote.$repo_id.url", $url);
+		}
+		command_noisy('config', '--add',
+		              "svn-remote.$repo_id.fetch",
+		              "$path:".$self->refname);
 	}
 	$self->{url} = $url;
-	open my $fh, '>>', $self->{db_path} or croak $!;
-	close $fh or croak $!;
+	unless (-f $self->{db_path}) {
+		open my $fh, '>>', $self->{db_path} or croak $!;
+		close $fh or croak $!;
+	}
 	$self;
+}
+
+sub find_ref {
+	my ($ref_id) = @_;
+	foreach (command(qw/config -l/)) {
+		next unless m!^svn-remote\.(.+)\.fetch=
+		              \s*(.*)\s*:\s*refs/remotes/(.+)\s*$!x;
+		my ($repo_id, $path, $ref) = ($1, $2, $3);
+		if ($ref eq $ref_id) {
+			$path = '' if ($path =~ m#^\./?#);
+			return ($repo_id, $path);
+		}
+	}
+	(undef, undef, undef);
 }
 
 sub new {
-	my ($class, $id) = @_;
-	my $self = _new($class, $id);
-	$self->{url} = ::file_to_s("$self->{dir}/info/url");
+	my ($class, $ref_id, $repo_id, $path) = @_;
+	if (defined $ref_id && !defined $repo_id && !defined $path) {
+		($repo_id, $path) = find_ref($ref_id);
+		if (!defined $repo_id) {
+			die "Could not find a \"svn-remote.*.fetch\" key ",
+			    "in the repository configuration matching: ",
+			    "refs/remotes/$ref_id\n";
+		}
+	}
+	my $self = _new($class, $repo_id, $ref_id, $path);
+	$self->{url} = command_oneline('config', '--get',
+	                               "svn-remote.$repo_id.url") or
+                  die "Failed to read \"svn-remote.$repo_id.url\" in config\n";
 	$self;
 }
 
-sub refname { "refs/remotes/$_[0]->{id}" }
+sub refname { "refs/remotes/$_[0]->{ref_id}" }
 
 sub ra {
 	my ($self) = shift;
@@ -952,7 +819,7 @@ sub last_rev_commit {
 		return ($self->{last_rev}, $self->{last_commit});
 	}
 	my $c = ::verify_ref($self->refname.'^0');
-	if (defined $c && length $c) {
+	if ($c) {
 		my $rev = (::cmt_metadata($c))[1];
 		if (defined $rev) {
 			($self->{last_rev}, $self->{last_commit}) = ($rev, $c);
@@ -1064,18 +931,9 @@ sub get_commit_parents {
 	@ret;
 }
 
-sub check_upgrade_needed {
+sub full_url {
 	my ($self) = @_;
-	if (!-r $self->{db_path}) {
-		-d $self->{dir} or mkpath([$self->{dir}]);
-		open my $fh, '>>', $self->{db_path} or croak $!;
-		close $fh;
-	}
-	return unless ::verify_ref($self->{id}.'-HEAD^0');
-	my $head = ::verify_ref($self->refname.'^0');
-	if ($@ || !$head) {
-		::fatal("Please run: $0 rebuild --upgrade\n");
-	}
+	$self->ra->{url} . (length $self->{path} ? '/' . $self->{path} : '');
 }
 
 sub do_git_commit {
@@ -1105,7 +963,7 @@ sub do_git_commit {
 	defined(my $pid = open3(my $msg_fh, my $out_fh, '>&STDERR', @exec))
 	                                                           or croak $!;
 	print $msg_fh $log_entry->{log} or croak $!;
-	print $msg_fh "\ngit-svn-id: ", $self->ra->{url}, '@',
+	print $msg_fh "\ngit-svn-id: ", $self->full_url, '@',
 	              $log_entry->{revision}, ' ',
 		      $self->ra->uuid, "\n" or croak $!;
 	$msg_fh->flush == 0 or croak $!;
@@ -1128,7 +986,7 @@ sub do_git_commit {
 }
 
 sub do_fetch {
-	my ($self, $paths, $rev) = @_; #, $author, $date, $log) = @_;
+	my ($self, $paths, $rev) = @_;
 	my $ed = SVN::Git::Fetcher->new($self);
 	my ($last_rev, @parents);
 	if ($self->{last_commit}) {
@@ -1138,7 +996,8 @@ sub do_fetch {
 	} else {
 		$last_rev = $rev;
 	}
-	unless ($self->ra->gs_do_update($last_rev, $rev, '', 1, $ed)) {
+	unless ($self->ra->gs_do_update($last_rev, $rev,
+	                                $self->{path}, 1, $ed)) {
 		die "SVN connection failed somewhere...\n";
 	}
 	$self->make_log_entry($rev, \@parents, $ed);
@@ -1361,11 +1220,19 @@ sub rev_db_get {
 }
 
 sub _new {
-	my ($class, $id) = @_;
-	$id ||= $Git::SVN::default;
-	my $dir = "$ENV{GIT_DIR}/svn/$id";
-	bless { id => $id, dir => $dir, index => "$dir/index",
-	        db_path => "$dir/.rev_db" }, $class;
+	my ($class, $repo_id, $ref_id, $path) = @_;
+	unless (defined $repo_id && length $repo_id) {
+		$repo_id = $Git::SVN::default_repo_id;
+	}
+	unless (defined $ref_id && length $ref_id) {
+		$_[2] = $ref_id = $repo_id;
+	}
+	$_[1] = $repo_id = sanitize_remote_name($repo_id);
+	my $dir = "$ENV{GIT_DIR}/svn/$ref_id";
+	$_[3] = $path = '' unless (defined $path);
+	bless { ref_id => $ref_id, dir => $dir, index => "$dir/index",
+	        path => $path,
+	        db_path => "$dir/.rev_db", repo_id => $repo_id }, $class;
 }
 
 sub uri_encode {
@@ -1630,6 +1497,9 @@ sub new {
 	my $self = SVN::Delta::Editor->new;
 	bless $self, $class;
 	$self->{c} = $git_svn->{last_commit} if exists $git_svn->{last_commit};
+	if (length $git_svn->{path}) {
+		$self->{path_strip} = qr/\Q$git_svn->{path}\E\/?/;
+	}
 	$self->{empty} = {};
 	$self->{dir_prop} = {};
 	$self->{file_prop} = {};
@@ -1650,33 +1520,41 @@ sub open_directory {
 	{ path => $path };
 }
 
+sub git_path {
+	my ($self, $path) = @_;
+	$path =~ s!$self->{path_strip}!! if $self->{path_strip};
+	$path;
+}
+
 sub delete_entry {
 	my ($self, $path, $rev, $pb) = @_;
 	my $gui = $self->{gui};
 
+	my $gpath = $self->git_path($path);
 	# remove entire directories.
-	if (command('ls-tree', $self->{c}, '--', $path) =~ /^040000 tree/) {
+	if (command('ls-tree', $self->{c}, '--', $gpath) =~ /^040000 tree/) {
 		my ($ls, $ctx) = command_output_pipe(qw/ls-tree
 		                                     -r --name-only -z/,
-				                     $self->{c}, '--', $path);
+				                     $self->{c}, '--', $gpath);
 		local $/ = "\0";
 		while (<$ls>) {
 			print $gui '0 ',0 x 40,"\t",$_ or croak $!;
 			print "\tD\t$_\n" unless $self->{q};
 		}
-		print "\tD\t$path/\n" unless $self->{q};
+		print "\tD\t$gpath/\n" unless $self->{q};
 		command_close_pipe($ls, $ctx);
 		$self->{empty}->{$path} = 0
 	} else {
-		print $gui '0 ',0 x 40,"\t",$path,"\0" or croak $!;
-		print "\tD\t$path\n" unless $self->{q};
+		print $gui '0 ',0 x 40,"\t",$gpath,"\0" or croak $!;
+		print "\tD\t$gpath\n" unless $self->{q};
 	}
 	undef;
 }
 
 sub open_file {
 	my ($self, $path, $pb, $rev) = @_;
-	my ($mode, $blob) = (command('ls-tree', $self->{c}, '--',$path)
+	my $gpath = $self->git_path($path);
+	my ($mode, $blob) = (command('ls-tree', $self->{c}, '--', $gpath)
 	                     =~ /^(\d{6}) blob ([a-f\d]{40})\t/);
 	unless (defined $mode && defined $blob) {
 		die "$path was not found in commit $self->{c} (r$rev)\n";
@@ -1775,7 +1653,7 @@ sub apply_textdelta {
 sub close_file {
 	my ($self, $fb, $exp) = @_;
 	my $hash;
-	my $path = $fb->{path};
+	my $path = $self->git_path($fb->{path});
 	if (my $fh = $fb->{fh}) {
 		seek($fh, 0, 0) or croak $!;
 		my $md5 = Digest::MD5->new;
@@ -2223,7 +2101,7 @@ sub gs_do_update {
 	                                $editor, $pool);
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
 	my $new = ($rev_a == $rev_b);
-	$reporter->set_path($path, $rev_a, $new, @lock, $pool);
+	$reporter->set_path('', $rev_a, $new, @lock, $pool);
 	$reporter->finish_report($pool);
 	$pool->clear;
 	$editor->{git_commit_ok};
@@ -2559,6 +2437,153 @@ sub cmd_show_log {
 out:
 	close $log;
 	print '-' x72,"\n" unless $incremental || $oneline;
+}
+
+package Git::SVN::Migration;
+# these version numbers do NOT correspond to actual version numbers
+# of git nor git-svn.  They are just relative.
+#
+# v0 layout: .git/$id/info/url, refs/heads/$id-HEAD
+#
+# v1 layout: .git/$id/info/url, refs/remotes/$id
+#
+# v2 layout: .git/svn/$id/info/url, refs/remotes/$id
+#
+# v3 layout: .git/svn/$id, refs/remotes/$id
+#            - info/url may remain for backwards compatibility
+#            - this is what we migrate up to this layout automatically,
+#            - this will be used by git svn init on single branches
+#
+# v4 layout: .git/svn/$repo_id/$id, refs/remotes/$repo_id/$id
+#            - this is only created for newly multi-init-ed
+#              repositories.  Similar in spirit to the
+#              --use-separate-remotes option in git-clone (now default)
+#            - we do not automatically migrate to this (following
+#              the example set by core git)
+use strict;
+use warnings;
+use Carp qw/croak/;
+use File::Path qw/mkpath/;
+use File::Basename qw/dirname/;
+
+sub migrate_from_v0 {
+	my $git_dir = $ENV{GIT_DIR};
+	return undef unless -d $git_dir;
+	my ($fh, $ctx) = command_output_pipe(qw/rev-parse --symbolic --all/);
+	my $migrated = 0;
+	while (<$fh>) {
+		chomp;
+		my ($id, $orig_ref) = ($_, $_);
+		next unless $id =~ s#^refs/heads/(.+)-HEAD$#$1#;
+		next unless -f "$git_dir/$id/info/url";
+		my $new_ref = "refs/remotes/$id";
+		if (::verify_ref("$new_ref^0")) {
+			print STDERR "W: $orig_ref is probably an old ",
+			             "branch used by an ancient version of ",
+				     "git-svn.\n",
+				     "However, $new_ref also exists.\n",
+				     "We will not be able ",
+				     "to use this branch until this ",
+				     "ambiguity is resolved.\n";
+			next;
+		}
+		print STDERR "Migrating from v0 layout...\n" if !$migrated;
+		print STDERR "Renaming ref: $orig_ref => $new_ref\n";
+		command_noisy('update-ref', $new_ref, $orig_ref);
+		command_noisy('update-ref', '-d', $orig_ref, $orig_ref);
+		$migrated++;
+	}
+	command_close_pipe($fh, $ctx);
+	print STDERR "Done migrating from v0 layout...\n" if $migrated;
+	$migrated;
+}
+
+sub migrate_from_v1 {
+	my $git_dir = $ENV{GIT_DIR};
+	my $migrated = 0;
+	return $migrated unless -d $git_dir;
+	my $svn_dir = "$git_dir/svn";
+
+	# just in case somebody used 'svn' as their $id at some point...
+	return $migrated if -d $svn_dir && ! -f "$svn_dir/info/url";
+
+	print STDERR "Migrating from a git-svn v1 layout...\n";
+	mkpath([$svn_dir]);
+	print STDERR "Data from a previous version of git-svn exists, but\n\t",
+	             "$svn_dir\n\t(required for this version ",
+	             "($::VERSION) of git-svn) does not. exist\n";
+	my ($fh, $ctx) = command_output_pipe(qw/rev-parse --symbolic --all/);
+	while (<$fh>) {
+		my $x = $_;
+		next unless $x =~ s#^refs/remotes/##;
+		chomp $x;
+		next unless -f "$git_dir/$x/info/url";
+		my $u = eval { ::file_to_s("$git_dir/$x/info/url") };
+		next unless $u;
+		my $dn = dirname("$git_dir/svn/$x");
+		mkpath([$dn]) unless -d $dn;
+		if ($x eq 'svn') { # they used 'svn' as GIT_SVN_ID:
+			mkpath(["$git_dir/svn/svn"]);
+			print STDERR " - $git_dir/$x/info => ",
+			                "$git_dir/svn/$x/info\n";
+			rename "$git_dir/$x/info", "$git_dir/svn/$x/info" or
+			       croak "$!: $x";
+			# don't worry too much about these, they probably
+			# don't exist with repos this old (save for index,
+			# and we can easily regenerate that)
+			foreach my $f (qw/unhandled.log index .rev_db/) {
+				rename "$git_dir/$x/$f", "$git_dir/svn/$x/$f";
+			}
+		} else {
+			print STDERR " - $git_dir/$x => $git_dir/svn/$x\n";
+			rename "$git_dir/$x", "$git_dir/svn/$x" or
+			       croak "$!: $x";
+		}
+		$migrated++;
+	}
+	command_close_pipe($fh, $ctx);
+	print STDERR "Done migrating from a git-svn v1 layout\n";
+	$migrated;
+}
+
+sub read_old_urls {
+	my ($l_map, $pfx, $path) = @_;
+	my @dir;
+	foreach (<$path/*>) {
+		if (-r "$_/info/url") {
+			$pfx .= '/' if $pfx && $pfx !~ m!/$!;
+			my $ref_id = $pfx . basename $_;
+			my $url = ::file_to_s("$_/info/url");
+			$l_map->{$ref_id} = $url;
+		} elsif (-d $_) {
+			push @dir, $_;
+		}
+	}
+	foreach (@dir) {
+		my $x = $_;
+		$x =~ s!^\Q$ENV{GIT_DIR}\E/svn/!!o;
+		read_old_urls($l_map, $x, $_);
+	}
+}
+
+sub migrate_from_v2 {
+	my @cfg = command(qw/config -l/);
+	return if grep /^svn-remote\..+\.url=/, @cfg;
+	my %l_map;
+	read_old_urls(\%l_map, '', "$ENV{GIT_DIR}/svn");
+	my $migrated = 0;
+
+	foreach my $ref_id (sort keys %l_map) {
+		Git::SVN->init($l_map{$ref_id}, $ref_id);
+		$migrated++;
+	}
+	$migrated;
+}
+
+sub migration_check {
+	migrate_from_v0();
+	migrate_from_v1();
+	migrate_from_v2();
 }
 
 __END__
