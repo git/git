@@ -304,6 +304,9 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		/* Is it asking for N-th entry, or approxidate? */
 		int nth, i;
 		unsigned long at_time;
+		unsigned long co_time;
+		int co_tz, co_cnt;
+
 		for (i = nth = 0; 0 <= nth && i < reflog_len; i++) {
 			char ch = str[at+2+i];
 			if ('0' <= ch && ch <= '9')
@@ -315,7 +318,18 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 			at_time = 0;
 		else
 			at_time = approxidate(str + at + 2);
-		read_ref_at(real_ref, at_time, nth, sha1);
+		if (read_ref_at(real_ref, at_time, nth, sha1, NULL,
+				&co_time, &co_tz, &co_cnt)) {
+			if (at_time)
+				fprintf(stderr,
+					"warning: Log for '%.*s' only goes "
+					"back to %s.\n", len, str,
+					show_rfc2822_date(co_time, co_tz));
+			else
+				fprintf(stderr,
+					"warning: Log for '%.*s' only has "
+					"%d entries.\n", len, str, co_cnt);
+		}
 	}
 
 	free(real_ref);

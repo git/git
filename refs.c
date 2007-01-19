@@ -1017,7 +1017,21 @@ int write_ref_sha1(struct ref_lock *lock,
 	return 0;
 }
 
-int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *sha1)
+static char *ref_msg(const char *line, const char *endp)
+{
+	const char *ep;
+	char *msg;
+
+	line += 82;
+	for (ep = line; ep < endp && *ep != '\n'; ep++)
+		;
+	msg = xmalloc(ep - line + 1);
+	memcpy(msg, line, ep - line);
+	msg[ep - line] = 0;
+	return msg;
+}
+
+int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *sha1, char **msg, unsigned long *cutoff_time, int *cutoff_tz, int *cutoff_cnt)
 {
 	const char *logfile, *logdata, *logend, *rec, *lastgt, *lastrec;
 	char *tz_c;
@@ -1054,6 +1068,14 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 			die("Log %s is corrupt.", logfile);
 		date = strtoul(lastgt + 1, &tz_c, 10);
 		if (date <= at_time || cnt == 0) {
+			if (msg)
+				*msg = ref_msg(rec, logend);
+			if (cutoff_time)
+				*cutoff_time = date;
+			if (cutoff_tz)
+				*cutoff_tz = tz;
+			if (cutoff_cnt)
+				*cutoff_cnt = reccnt;
 			if (lastrec) {
 				if (get_sha1_hex(lastrec, logged_sha1))
 					die("Log %s is corrupt.", logfile);
@@ -1097,14 +1119,17 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	tz = strtoul(tz_c, NULL, 10);
 	if (get_sha1_hex(logdata, sha1))
 		die("Log %s is corrupt.", logfile);
+	if (msg)
+		*msg = ref_msg(logdata, logend);
 	munmap(log_mapped, st.st_size);
-	if (at_time)
-		fprintf(stderr, "warning: Log %s only goes back to %s.\n",
-			logfile, show_rfc2822_date(date, tz));
-	else
-		fprintf(stderr, "warning: Log %s only has %d entries.\n",
-			logfile, reccnt);
-	return 0;
+
+	if (cutoff_time)
+		*cutoff_time = date;
+	if (cutoff_tz)
+		*cutoff_tz = tz;
+	if (cutoff_cnt)
+		*cutoff_cnt = reccnt;
+	return 1;
 }
 
 int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
