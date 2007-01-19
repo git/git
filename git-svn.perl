@@ -2015,6 +2015,7 @@ use vars qw/@ISA $config_dir/;
 use strict;
 use warnings;
 my ($can_do_switch);
+my %RA;
 
 BEGIN {
 	# enforce temporary pool usage for some simple functions
@@ -2033,6 +2034,9 @@ BEGIN {
 
 sub new {
 	my ($class, $url) = @_;
+	$url =~ s!/+$!!;
+	return $RA{$url} if $RA{$url};
+
 	SVN::_Core::svn_config_ensure($config_dir, undef);
 	my ($baton, $callbacks) = SVN::Core::auth_open_helper([
 	    SVN::Client::get_simple_provider(),
@@ -2057,13 +2061,11 @@ sub new {
 	$self->{svn_path} = $url;
 	$self->{repos_root} = $self->get_repos_root;
 	$self->{svn_path} =~ s#^\Q$self->{repos_root}\E/*##;
-	bless $self, $class;
+	$RA{$url} = bless $self, $class;
 }
 
 sub DESTROY {
-	my $self = shift;
-	$self->{pool}->clear if $self->{pool};
-	$self->SUPER::DESTROY(@_);
+	# do not call the real DESTROY since we store ourselves in %RA
 }
 
 sub dup {
