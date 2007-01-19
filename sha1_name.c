@@ -235,7 +235,7 @@ static int ambiguous_path(const char *path, int len)
 	return slash;
 }
 
-static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
+int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 {
 	static const char *fmt[] = {
 		"%.*s",
@@ -246,13 +246,32 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		"refs/remotes/%.*s/HEAD",
 		NULL
 	};
+	const char **p, *r;
+	int refs_found = 0;
+
+	*ref = NULL;
+	for (p = fmt; *p; p++) {
+		unsigned char sha1_from_ref[20];
+		unsigned char *this_result;
+
+		this_result = refs_found ? sha1_from_ref : sha1;
+		r = resolve_ref(mkpath(*p, len, str), this_result, 1, NULL);
+		if (r) {
+			if (!refs_found++)
+				*ref = xstrdup(r);
+			if (!warn_ambiguous_refs)
+				break;
+		}
+	}
+	return refs_found;
+}
+
+static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
+{
 	static const char *warning = "warning: refname '%.*s' is ambiguous.\n";
-	const char **p, *ref;
 	char *real_ref = NULL;
 	int refs_found = 0;
 	int at, reflog_len;
-	unsigned char *this_result;
-	unsigned char sha1_from_ref[20];
 
 	if (len == 40 && !get_sha1_hex(str, sha1))
 		return 0;
@@ -273,16 +292,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	if (ambiguous_path(str, len))
 		return -1;
 
-	for (p = fmt; *p; p++) {
-		this_result = refs_found ? sha1_from_ref : sha1;
-		ref = resolve_ref(mkpath(*p, len, str), this_result, 1, NULL);
-		if (ref) {
-			if (!refs_found++)
-				real_ref = xstrdup(ref);
-			if (!warn_ambiguous_refs)
-				break;
-		}
-	}
+	refs_found = dwim_ref(str, len, sha1, &real_ref);
 
 	if (!refs_found)
 		return -1;
