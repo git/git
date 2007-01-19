@@ -6,9 +6,9 @@
 #include "exec_cmd.h"
 
 static const char send_pack_usage[] =
-"git-send-pack [--all] [--force] [--exec=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
+"git-send-pack [--all] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
 "  --all and explicit <ref> specification are mutually exclusive.";
-static const char *exec = "git-receive-pack";
+static const char *receivepack = "git-receive-pack";
 static int verbose;
 static int send_all;
 static int force_update;
@@ -377,8 +377,12 @@ int main(int argc, char **argv)
 		char *arg = *argv;
 
 		if (*arg == '-') {
+			if (!strncmp(arg, "--receive-pack=", 15)) {
+				receivepack = arg + 15;
+				continue;
+			}
 			if (!strncmp(arg, "--exec=", 7)) {
-				exec = arg + 7;
+				receivepack = arg + 7;
 				continue;
 			}
 			if (!strcmp(arg, "--all")) {
@@ -413,7 +417,7 @@ int main(int argc, char **argv)
 		usage(send_pack_usage);
 	verify_remote_names(nr_heads, heads);
 
-	pid = git_connect(fd, dest, exec);
+	pid = git_connect(fd, dest, receivepack);
 	if (pid < 0)
 		return 1;
 	ret = send_pack(fd[0], fd[1], nr_heads, heads);

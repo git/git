@@ -8,10 +8,10 @@
 
 #define MAX_URI (16)
 
-static const char push_usage[] = "git-push [--all] [--tags] [--exec=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]";
+static const char push_usage[] = "git-push [--all] [--tags] [--receive-pack=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]";
 
 static int all, tags, force, thin = 1, verbose;
-static const char *execute;
+static const char *receivepack;
 
 #define BUF_SIZE (2084)
 static char buffer[BUF_SIZE];
@@ -160,10 +160,10 @@ static int get_remote_config(const char* key, const char* value)
 			add_refspec(xstrdup(value));
 		else if (config_get_receivepack &&
 			 !strcmp(key + 7 + config_repo_len, ".receivepack")) {
-			if (!execute) {
-				char *ex = xmalloc(strlen(value) + 8);
-				sprintf(ex, "--exec=%s", value);
-				execute = ex;
+			if (!receivepack) {
+				char *rp = xmalloc(strlen(value) + 16);
+				sprintf(rp, "--receive-pack=%s", value);
+				receivepack = rp;
 			} else
 				error("more than one receivepack given, using the first");
 		}
@@ -178,7 +178,7 @@ static int get_config_remotes_uri(const char *repo, const char *uri[MAX_URI])
 	config_current_uri = 0;
 	config_uri = uri;
 	config_get_refspecs = !(refspec_nr || all || tags);
-	config_get_receivepack = (execute == NULL);
+	config_get_receivepack = (receivepack == NULL);
 
 	git_config(get_remote_config);
 	return config_current_uri;
@@ -263,8 +263,8 @@ static int do_push(const char *repo)
 		argv[argc++] = "--all";
 	if (force)
 		argv[argc++] = "--force";
-	if (execute)
-		argv[argc++] = execute;
+	if (receivepack)
+		argv[argc++] = receivepack;
 	common_argc = argc;
 
 	for (i = 0; i < n; i++) {
@@ -347,8 +347,12 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 			thin = 0;
 			continue;
 		}
+		if (!strncmp(arg, "--receive-pack=", 15)) {
+			receivepack = arg;
+			continue;
+		}
 		if (!strncmp(arg, "--exec=", 7)) {
-			execute = arg;
+			receivepack = arg;
 			continue;
 		}
 		usage(push_usage);
