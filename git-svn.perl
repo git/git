@@ -339,13 +339,14 @@ sub cmd_dcommit {
 		if ($_dry_run) {
 			print "diff-tree $d~1 $d\n";
 		} else {
+			my $log = get_commit_entry($d)->{log};
 			my $ra = $gs->ra;
 			my $pool = SVN::Pool->new;
 			my %ed_opts = ( r => $last_rev,
 			                ra => $ra->dup,
 			                svn_path => $ra->{svn_path} );
 			my $ed = SVN::Git::Editor->new(\%ed_opts,
-			                 $ra->get_commit_editor($::_message,
+			                 $ra->get_commit_editor($log,
 			                 sub { print "Committed r$_[0]\n";
 					       $last_rev = $_[0]; }),
 			                 $pool);
