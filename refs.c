@@ -1110,6 +1110,7 @@ int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 	const char *logfile;
 	FILE *logfp;
 	char buf[1024];
+	int ret = 0;
 
 	logfile = git_path("logs/%s", ref);
 	logfp = fopen(logfile, "r");
@@ -1119,7 +1120,7 @@ int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 		unsigned char osha1[20], nsha1[20];
 		char *email_end, *message;
 		unsigned long timestamp;
-		int len, ret, tz;
+		int len, tz;
 
 		/* old SP new SP name <email> SP time TAB msg LF */
 		len = strlen(buf);
@@ -1140,9 +1141,9 @@ int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 		message += 7;
 		ret = fn(osha1, nsha1, buf+82, timestamp, tz, message, cb_data);
 		if (ret)
-			return ret;
+			break;
 	}
 	fclose(logfp);
-	return 0;
+	return ret;
 }
 
