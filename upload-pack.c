@@ -96,7 +96,7 @@ static void show_edge(struct commit *commit)
 	fprintf(pack_pipe, "-%s\n", sha1_to_hex(commit->object.sha1));
 }
 
-static void do_rev_list(int create_full_pack)
+static void do_rev_list(void *create_full_pack)
 {
 	int i;
 	struct rev_info revs;
@@ -130,10 +130,13 @@ static void do_rev_list(int create_full_pack)
 	prepare_revision_walk(&revs);
 	mark_edges_uninteresting(revs.commits, &revs, show_edge);
 	traverse_commit_list(&revs, show_commit, show_object);
+	fflush(pack_pipe);
+	fclose(pack_pipe);
 }
 
 static void create_pack_file(void)
 {
+#ifndef __MINGW32__
 	/* Pipes between rev-list to pack-objects, pack-objects to us
 	 * and pack-objects error stream for progress bar.
 	 */
@@ -339,6 +342,86 @@ static void create_pack_file(void)
 		kill(pid_rev_list, SIGKILL);
 	send_client_data(3, abort_msg, sizeof(abort_msg));
 	die("git-upload-pack: %s", abort_msg);
+#else
+	/* Pipes between rev-list to pack-objects, pack-objects to us. */
+	int lp_pipe[2], pu_pipe[2];
+	pid_t pid_pack_objects;
+	int create_full_pack = (nr_our_refs == want_obj.nr && !have_obj.nr);
+	char data[8193];
+	char abort_msg[] = "aborting due to possible repository "
+		"corruption on the remote side.";
+	int buffered = -1;
+	ssize_t sz;
+	char *cp;
+	const char* argv[] = { "pack-objects", "--stdout", "-q",
+		      use_ofs_delta ? "--delta-base-offset" : NULL,
+		      NULL };
+
+	if (pipe(lp_pipe) < 0)
+		die("git-upload-pack: unable to create pipe");
+	pack_pipe = fdopen(lp_pipe[1], "w");
+	if (_beginthread(do_rev_list, 0, create_full_pack ? &create_full_pack : NULL) < 0)
+		die("git-upload-pack: unable to run rev-list: %s", strerror(errno));
+
+	if (pipe(pu_pipe) < 0)
+		die("git-upload-pack: unable to create pipe");
+
+	pid_pack_objects = spawnv_git_cmd(argv, lp_pipe, pu_pipe);
+	if (pid_pack_objects < 0)
+		die("git-upload-pack: unable to run git-pack-objects");
+
+	/* We read from pu_pipe[0] to capture the pack data. */
+
+	while ((sz = xread(pu_pipe[0], data+1, sizeof(data)-1)) > 0) {
+		cp = data+1;
+		/* Data ready; we keep the last byte to ourselves in case we
+		 * detect broken rev-list, so that we can leave the stream
+		 * corrupted.  This is unfortunate -- unpack-objects would
+		 * happily accept a valid pack data with trailing garbage, so
+		 * appending garbage after we pass all the pack data is not
+		 * good enough to signal breakage to downstream.
+		 */
+		if (0 <= buffered) {
+			*--cp = buffered;
+			sz++;
+		}
+		if (1 < sz) {
+			buffered = cp[sz-1] & 0xFF;
+			sz--;
+		}
+		else
+			buffered = -1;
+		sz = send_client_data(1, cp, sz);
+		if (sz < 0)
+			goto fail;
+	}
+	if (sz == 0) {
+		close(pu_pipe[0]);
+		pu_pipe[0] = -1;
+	}
+	else
+		goto fail;
+
+	/* flush the data */
+	if (0 <= buffered) {
+		data[0] = buffered;
+		sz = send_client_data(1, data, 1);
+		if (sz < 0)
+			goto fail;
+		fprintf(stderr, "flushed.\n");
+	}
+	if (use_sideband)
+		packet_flush(1);
+	if (waitpid(pid_pack_objects, NULL, 0) < 0)
+		die("git-upload-pack: waiting for pack-objects: %s",
+			strerror(errno));
+	return;
+
+ fail:
+	kill(pid_pack_objects, SIGKILL);
+	send_client_data(3, abort_msg, sizeof(abort_msg));
+	die("git-upload-pack: %s", abort_msg);
+#endif
 }
 
 static int got_sha1(char *hex, unsigned char *sha1)
