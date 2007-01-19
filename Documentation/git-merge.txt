@@ -3,7 +3,7 @@ git-merge(1)
 
 NAME
 ----
-git-merge - Grand Unified Merge Driver
+git-merge - Join two or more development histories together
 
 
 SYNOPSIS

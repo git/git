@@ -3,7 +3,7 @@ git-merge-base(1)
 
 NAME
 ----
-git-merge-base - Finds as good a common ancestor as possible for a merge
+git-merge-base - Find as good common ancestors as possible for a merge
 
 
 SYNOPSIS

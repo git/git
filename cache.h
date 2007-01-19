@@ -351,7 +351,7 @@ struct pack_window {
 extern struct packed_git {
 	struct packed_git *next;
 	struct pack_window *windows;
-	unsigned int *index_base;
+	uint32_t *index_base;
 	off_t index_size;
 	off_t pack_size;
 	int pack_fd;

@@ -3,7 +3,7 @@ git-local-fetch(1)
 
 NAME
 ----
-git-local-fetch - Duplicates another git repository on a local system
+git-local-fetch - Duplicate another git repository on a local system
 
 
 SYNOPSIS

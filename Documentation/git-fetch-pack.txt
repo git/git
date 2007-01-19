@@ -12,6 +12,9 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
+Usually you would want to use gitlink:git-fetch[1] which is a
+higher level wrapper of this command instead.
+
 Invokes 'git-upload-pack' on a potentially remote repository,
 and asks it to send objects missing from this repository, to
 update the named heads.  The list of commits available locally

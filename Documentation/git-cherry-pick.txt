@@ -19,6 +19,8 @@ OPTIONS
 -------
 <commit>::
 	Commit to cherry-pick.
+	For a more complete list of ways to spell commits, see
+	"SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
 
 -e|--edit::
 	With this option, `git-cherry-pick` will let you edit the commit

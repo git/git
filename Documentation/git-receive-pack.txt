@@ -3,7 +3,7 @@ git-receive-pack(1)
 
 NAME
 ----
-git-receive-pack - Receive what is pushed into it
+git-receive-pack - Receive what is pushed into the repository
 
 
 SYNOPSIS

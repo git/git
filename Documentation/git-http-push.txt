@@ -3,7 +3,7 @@ git-http-push(1)
 
 NAME
 ----
-git-http-push - Push missing objects using HTTP/DAV
+git-http-push - Push objects over HTTP/DAV to another repository
 
 
 SYNOPSIS

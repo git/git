@@ -3,7 +3,7 @@ git-apply(1)
 
 NAME
 ----
-git-apply - Apply patch on a git index file and a work tree
+git-apply - Apply a patch on a git index file and a working tree
 
 
 SYNOPSIS

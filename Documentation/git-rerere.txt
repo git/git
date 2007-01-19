@@ -3,7 +3,7 @@ git-rerere(1)
 
 NAME
 ----
-git-rerere - Reuse recorded resolve
+git-rerere - Reuse recorded resolution of conflicted merges
 
 SYNOPSIS
 --------

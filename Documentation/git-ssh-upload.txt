@@ -3,7 +3,7 @@ git-ssh-upload(1)
 
 NAME
 ----
-git-ssh-upload - Pushes to a remote repository over ssh connection
+git-ssh-upload - Push to a remote repository over ssh connection
 
 
 SYNOPSIS

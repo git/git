@@ -3,7 +3,7 @@ git-branch(1)
 
 NAME
 ----
-git-branch - List, create, or delete branches.
+git-branch - List, create, or delete branches
 
 SYNOPSIS
 --------

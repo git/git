@@ -3,7 +3,7 @@ git-cat-file(1)
 
 NAME
 ----
-git-cat-file - Provide content or type information for repository objects
+git-cat-file - Provide content or type/size information for repository objects
 
 
 SYNOPSIS

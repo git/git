@@ -3,7 +3,7 @@ git-merge-one-file(1)
 
 NAME
 ----
-git-merge-one-file - The standard helper program to use with "git-merge-index"
+git-merge-one-file - The standard helper program to use with git-merge-index
 
 
 SYNOPSIS

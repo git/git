@@ -569,7 +569,7 @@ static void write_index_file(void)
 					sha1_to_hex(object_list_sha1), "idx");
 	struct object_entry **list = sorted_by_sha;
 	struct object_entry **last = list + nr_result;
-	unsigned int array[256];
+	uint32_t array[256];
 
 	/*
 	 * Write the first-level table (the list is sorted,
@@ -587,7 +587,7 @@ static void write_index_file(void)
 		array[i] = htonl(next - sorted_by_sha);
 		list = next;
 	}
-	sha1write(f, array, 256 * sizeof(int));
+	sha1write(f, array, 256 * 4);
 
 	/*
 	 * Write the actual SHA1 entries..
@@ -595,7 +595,7 @@ static void write_index_file(void)
 	list = sorted_by_sha;
 	for (i = 0; i < nr_result; i++) {
 		struct object_entry *entry = *list++;
-		unsigned int offset = htonl(entry->offset);
+		uint32_t offset = htonl(entry->offset);
 		sha1write(f, &offset, 4);
 		sha1write(f, entry->sha1, 20);
 	}

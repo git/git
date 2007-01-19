@@ -3,7 +3,7 @@ git-cvsimport(1)
 
 NAME
 ----
-git-cvsimport - Import a CVS repository into git
+git-cvsimport - Salvage your data out of another SCM people love to hate
 
 
 SYNOPSIS

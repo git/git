@@ -197,7 +197,7 @@ static int istitlechar(char c)
 
 static char *extra_headers = NULL;
 static int extra_headers_size = 0;
-static const char *fmt_patch_suffix = ".txt";
+static const char *fmt_patch_suffix = ".patch";
 
 static int git_format_config(const char *var, const char *value)
 {
@@ -468,7 +468,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		die ("unrecognized argument: %s", argv[1]);
 
 	if (!rev.diffopt.output_format)
-		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_PATCH;
+		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_SUMMARY | DIFF_FORMAT_PATCH;
+
+	if (!rev.diffopt.text)
+		rev.diffopt.binary = 1;
 
 	if (!output_directory)
 		output_directory = prefix;
@@ -482,8 +485,13 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	}
 
 	if (rev.pending.nr == 1) {
-		rev.pending.objects[0].item->flags |= UNINTERESTING;
-		add_head(&rev);
+		if (rev.max_count < 0) {
+			rev.pending.objects[0].item->flags |= UNINTERESTING;
+			add_head(&rev);
+		}
+		/* Otherwise, it is "format-patch -22 HEAD", and
+		 * get_revision() would return only the specified count.
+		 */
 	}
 
 	if (ignore_if_in_upstream)

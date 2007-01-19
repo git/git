@@ -71,11 +71,21 @@ doc.dep : $(wildcard *.txt) build-docdep.perl
 
 -include doc.dep
 
-git.7 git.html: git.txt core-intro.txt
+cmds_txt = cmds-ancillaryinterrogators.txt \
+	cmds-ancillarymanipulators.txt \
+	cmds-mainporcelain.txt \
+	cmds-plumbinginterrogators.txt \
+	cmds-plumbingmanipulators.txt \
+	cmds-synchingrepositories.txt
 
+$(cmds_txt): cmd-list.perl $(MAN1_TXT) $(MAN7_TXT)
+	perl ./cmd-list.perl
+
+git.7 git.html: git.txt core-intro.txt
 
 clean:
 	rm -f *.xml *.html *.1 *.7 howto-index.txt howto/*.html doc.dep
+	rm -f $(cmds_txt)
 
 %.html : %.txt
 	asciidoc -b xhtml11 -d manpage -f asciidoc.conf $<

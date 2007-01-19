@@ -3,7 +3,7 @@ git-send-pack(1)
 
 NAME
 ----
-git-send-pack - Push missing objects packed
+git-send-pack - Push objects over git protocol to another reposiotory
 
 
 SYNOPSIS
@@ -12,6 +12,9 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
+Usually you would want to use gitlink:git-push[1] which is a
+higher level wrapper of this command instead.
+
 Invokes 'git-receive-pack' on a possibly remote repository, and
 updates it from the current repository, sending named refs.
 

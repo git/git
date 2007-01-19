@@ -3,7 +3,7 @@ git-checkout-index(1)
 
 NAME
 ----
-git-checkout-index - Copy files from the index to the working directory
+git-checkout-index - Copy files from the index to the working tree
 
 
 SYNOPSIS

@@ -3,7 +3,7 @@ git-ssh-fetch(1)
 
 NAME
 ----
-git-ssh-fetch - Pulls from a remote repository over ssh connection
+git-ssh-fetch - Fetch from a remote repository over ssh connection
 
 
 

@@ -3,7 +3,7 @@ git-merge-index(1)
 
 NAME
 ----
-git-merge-index - Runs a merge for files needing merging
+git-merge-index - Run a merge for files needing merging
 
 
 SYNOPSIS

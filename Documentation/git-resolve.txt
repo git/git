@@ -12,6 +12,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
+DEPRECATED.  Use `git-merge` instead.
+
 Given two commits and a merge message, merge the <merged> commit
 into <current> commit, with the commit log message <message>.
 

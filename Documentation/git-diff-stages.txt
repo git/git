@@ -3,7 +3,7 @@ git-diff-stages(1)
 
 NAME
 ----
-git-diff-stages - Compares content and mode of blobs between stages in an unmerged index file
+git-diff-stages - Compares two merge stages in the index
 
 
 SYNOPSIS

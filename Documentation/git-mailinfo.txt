@@ -3,7 +3,7 @@ git-mailinfo(1)
 
 NAME
 ----
-git-mailinfo - Extracts patch from a single e-mail message
+git-mailinfo - Extracts patch and authorship from a single e-mail message
 
 
 SYNOPSIS
@@ -18,7 +18,7 @@ writes the commit log message in <msg> file, and the patches in
 <patch> file.  The author name, e-mail and e-mail subject are
 written out to the standard output to be used by git-applypatch
 to create a commit.  It is usually not necessary to use this
-command directly.
+command directly.  See gitlink:git-am[1] instead.
 
 
 OPTIONS

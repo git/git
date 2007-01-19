@@ -3,7 +3,7 @@ git-commit-tree(1)
 
 NAME
 ----
-git-commit-tree - Creates a new commit object
+git-commit-tree - Create a new commit object
 
 
 SYNOPSIS
@@ -12,6 +12,9 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
+This is usually not what an end user wants to run directly.  See
+gitlink:git-commit[1] instead.
+
 Creates a new commit object based on the provided tree object and
 emits the new commit object id on stdout. If no parent is given then
 it is considered to be an initial tree.

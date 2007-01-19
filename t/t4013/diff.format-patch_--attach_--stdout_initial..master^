@@ -19,6 +19,7 @@ This is the second commit.
  file0   |    3 +++
  file2   |    3 ---
  3 files changed, 5 insertions(+), 3 deletions(-)
+ delete mode 100644 file2
 --------------g-i-t--v-e-r-s-i-o-n
 Content-Type: text/x-patch;
  name="1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44.diff"
@@ -77,6 +78,7 @@ Content-Transfer-Encoding: 8bit
  dir/sub |    2 ++
  file1   |    3 +++
  2 files changed, 5 insertions(+), 0 deletions(-)
+ create mode 100644 file1
 --------------g-i-t--v-e-r-s-i-o-n
 Content-Type: text/x-patch;
  name="9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0.diff"

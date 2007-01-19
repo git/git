@@ -118,9 +118,12 @@ SPECIFYING RANGES
 Unlike `git-blame` and `git-annotate` in older git, the extent
 of annotation can be limited to both line ranges and revision
 ranges.  When you are interested in finding the origin for
-ll. 40-60 for file `foo`, you can use `-L` option like this:
+ll. 40-60 for file `foo`, you can use `-L` option like these
+(they mean the same thing -- both ask for 21 lines starting at
+line 40):
 
 	git blame -L 40,60 foo
+	git blame -L 40,+21 foo
 
 Also you can use regular expression to specify the line range.
 

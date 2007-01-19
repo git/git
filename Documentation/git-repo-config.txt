@@ -3,7 +3,7 @@ git-repo-config(1)
 
 NAME
 ----
-git-repo-config - Get and set repository or global options.
+git-repo-config - Get and set repository or global options
 
 
 SYNOPSIS
