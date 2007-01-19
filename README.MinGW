@@ -1,0 +1,53 @@
+This is a port of GIT to Windows using MinGW.
+
+The goal of this port is to have the tools runnable from the Windows
+command line, not from MinGW's rxvt+bash environment.
+
+(Note: This file was written after-the-fact and may contain errors.
+If you are trying this, please make notes and update it.)
+
+
+INSTALLATION
+------------
+
+In order to compile this code you need:
+
+- MSYS, e.g. MSYS-1.0.11-2004.04.30-1.exe
+- MinGW, e.g. MinGW-5.0.2.exe
+- mingwruntime, e.g. mingw-runtime-3.9.tar.gz
+- compilers and tools:
+	binutils-2.15.91-20040904-1.tar.gz
+	gcc-core-3.4.2-20040916-1.tar.gz
+	gcc-g++-3.4.2-20040916-1.tar.gz
+	gdb-6.3-2.exe
+	mingw32-make-3.80.0-3.tar.gz
+	unzip-5.51-1-bin.zip (this is not from MinGW, iirc)
+- additional libraries:
+	zlib-1.2.3-mingwPORT-1.tar
+	w32api-3.6.tar.gz
+	regex-0.12.tar.gz (from the GNU site)
+		compile this into regex.o, ar it into libregex.a
+		and install it in /mingw/lib, include file into
+		/mingw/include
+	tcltk-8.4.1-1.exe (for gitk, but it's untested so far)
+
+It is absolutely necessary that you install MSYS in a path that does not
+contain special characters, like spaces. I have it in
+
+	D:\MSYS\1.0
+	D:\MSYS\1.0\mingw
+
+STATUS
+------
+
+This code base will not compile on a POSIX system, although any help
+to introduce the necessary #ifdefs is welcome.  As such the status quo
+is in no way intended to be merged upstream.
+
+The toolset has only been used to run the test suite.
+The plumbing that does the repository manipulation works, as well as
+the porcelains that you need for daily (local!) work.
+
+pull, clone, fetch, do not work. This means that you must copy a repo
+to your Windows using some plain copy instructions (be it Explorer
+or command line).
