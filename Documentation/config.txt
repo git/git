@@ -356,6 +356,10 @@ remote.<name>.push::
 	The default set of "refspec" for gitlink:git-push[1]. See
 	gitlink:git-push[1].
 
+remote.<name>.receivepack::
+	The default program to execute on the remote side when pulling.  See
+	option \--exec of gitlink:git-push[1].
+
 repack.usedeltabaseoffset::
 	Allow gitlink:git-repack[1] to create packs that uses
 	delta-base offset.  Defaults to false.

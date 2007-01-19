@@ -143,6 +143,7 @@ static const char *config_repo;
 static int config_repo_len;
 static int config_current_uri;
 static int config_get_refspecs;
+static int config_get_receivepack;
 
 static int get_remote_config(const char* key, const char* value)
 {
@@ -157,6 +158,15 @@ static int get_remote_config(const char* key, const char* value)
 		else if (config_get_refspecs &&
 			 !strcmp(key + 7 + config_repo_len, ".push"))
 			add_refspec(xstrdup(value));
+		else if (config_get_receivepack &&
+			 !strcmp(key + 7 + config_repo_len, ".receivepack")) {
+			if (!execute) {
+				char *ex = xmalloc(strlen(value) + 8);
+				sprintf(ex, "--exec=%s", value);
+				execute = ex;
+			} else
+				error("more than one receivepack given, using the first");
+		}
 	}
 	return 0;
 }
@@ -168,6 +178,7 @@ static int get_config_remotes_uri(const char *repo, const char *uri[MAX_URI])
 	config_current_uri = 0;
 	config_uri = uri;
 	config_get_refspecs = !(refspec_nr || all || tags);
+	config_get_receivepack = (execute == NULL);
 
 	git_config(get_remote_config);
 	return config_current_uri;
