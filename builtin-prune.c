@@ -5,8 +5,9 @@
 #include "builtin.h"
 #include "reachable.h"
 
-static const char prune_usage[] = "git-prune [-n]";
+static const char prune_usage[] = "git-prune [-n] [--grace=time]";
 static int show_only;
+static int prune_grace_period;
 
 static int prune_object(char *path, const char *filename, const unsigned char *sha1)
 {
@@ -38,6 +39,7 @@ static int prune_dir(int i, char *path)
 		char name[100];
 		unsigned char sha1[20];
 		int len = strlen(de->d_name);
+		struct stat st;
 
 		switch (len) {
 		case 2:
@@ -60,6 +62,11 @@ static int prune_dir(int i, char *path)
 			if (lookup_object(sha1))
 				continue;
 
+			if (prune_grace_period > 0 &&
+			    !stat(mkpath("%s/%s", path, de->d_name), &st) &&
+			    st.st_mtime > prune_grace_period)
+				continue;
+
 			prune_object(path, de->d_name, sha1);
 			continue;
 		}
@@ -79,15 +86,37 @@ static void prune_object_dir(const char *path)
 	}
 }
 
+static int git_prune_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "gc.prunegrace")) {
+		if (!strcmp(value, "off"))
+			prune_grace_period = 0;
+		else
+			prune_grace_period = approxidate(value);
+		return 0;
+	}
+	return git_default_config(var, value);
+}
+
 int cmd_prune(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	struct rev_info revs;
+	prune_grace_period = time(NULL)-24*60*60;
+
+	git_config(git_prune_config);
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!strcmp(arg, "-n")) {
 			show_only = 1;
+			continue;
+		}
+		if (!strncmp(arg, "--grace=", 8)) {
+			if (!strcmp(arg+8, "off"))
+				prune_grace_period = 0;
+			else
+				prune_grace_period = approxidate(arg+8);
 			continue;
 		}
 		usage(prune_usage);

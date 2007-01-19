@@ -96,7 +96,7 @@ test_expect_success setup '
 
 	check_have A B C D E F G H I J K L &&
 
-	git prune &&
+	git prune --grace=off &&
 
 	check_have A B C D E F G H I J K L &&
 
@@ -115,7 +115,7 @@ test_expect_success rewind '
 
 	check_have A B C D E F G H I J K L &&
 
-	git prune &&
+	git prune --grace=off &&
 
 	check_have A B C D E F G H I J K L &&
 
@@ -160,7 +160,7 @@ test_expect_success 'reflog expire' '
 
 test_expect_success 'prune and fsck' '
 
-	git prune &&
+	git prune --grace=off &&
 	check_fsck &&
 
 	check_have A B C D E H L &&
