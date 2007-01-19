@@ -6,8 +6,8 @@
 #include "exec_cmd.h"
 
 static const char send_pack_usage[] =
-"git-send-pack [--all] [--exec=git-receive-pack] <remote> [<head>...]\n"
-"  --all and explicit <head> specification are mutually exclusive.";
+"git-send-pack [--all] [--force] [--exec=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
+"  --all and explicit <ref> specification are mutually exclusive.";
 static const char *exec = "git-receive-pack";
 static int verbose;
 static int send_all;

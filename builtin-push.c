@@ -8,7 +8,7 @@
 
 #define MAX_URI (16)
 
-static const char push_usage[] = "git-push [--all] [--tags] [-f | --force] <repository> [<refspec>...]";
+static const char push_usage[] = "git-push [--all] [--tags] [--exec=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]";
 
 static int all, tags, force, thin = 1, verbose;
 static const char *execute;

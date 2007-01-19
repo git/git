@@ -8,7 +8,7 @@ git-push - Update remote refs along with associated objects
 
 SYNOPSIS
 --------
-'git-push' [--all] [--tags] [--exec=<receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]
+'git-push' [--all] [--tags] [--exec=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]
 
 DESCRIPTION
 -----------
