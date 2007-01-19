@@ -1068,6 +1068,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 			die("Log %s is corrupt.", logfile);
 		date = strtoul(lastgt + 1, &tz_c, 10);
 		if (date <= at_time || cnt == 0) {
+			tz = strtoul(tz_c, NULL, 10);
 			if (msg)
 				*msg = ref_msg(rec, logend);
 			if (cutoff_time)
@@ -1075,14 +1076,13 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 			if (cutoff_tz)
 				*cutoff_tz = tz;
 			if (cutoff_cnt)
-				*cutoff_cnt = reccnt;
+				*cutoff_cnt = reccnt - 1;
 			if (lastrec) {
 				if (get_sha1_hex(lastrec, logged_sha1))
 					die("Log %s is corrupt.", logfile);
 				if (get_sha1_hex(rec + 41, sha1))
 					die("Log %s is corrupt.", logfile);
 				if (hashcmp(logged_sha1, sha1)) {
-					tz = strtoul(tz_c, NULL, 10);
 					fprintf(stderr,
 						"warning: Log %s has gap after %s.\n",
 						logfile, show_rfc2822_date(date, tz));
@@ -1096,7 +1096,6 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 				if (get_sha1_hex(rec + 41, logged_sha1))
 					die("Log %s is corrupt.", logfile);
 				if (hashcmp(logged_sha1, sha1)) {
-					tz = strtoul(tz_c, NULL, 10);
 					fprintf(stderr,
 						"warning: Log %s unexpectedly ended on %s.\n",
 						logfile, show_rfc2822_date(date, tz));
