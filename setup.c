@@ -95,6 +95,8 @@ void verify_non_filename(const char *prefix, const char *arg)
 	const char *name;
 	struct stat st;
 
+	if (is_inside_git_dir())
+		return;
 	if (*arg == '-')
 		return; /* flag */
 	name = prefix ? prefix_filename(prefix, strlen(prefix), arg) : arg;
@@ -168,6 +170,28 @@ static int is_git_directory(const char *suspect)
 	return 1;
 }
 
+static int inside_git_dir = -1;
+
+int is_inside_git_dir(void)
+{
+	if (inside_git_dir < 0) {
+		char buffer[1024];
+
+		if (is_bare_repository())
+			return (inside_git_dir = 1);
+		if (getcwd(buffer, sizeof(buffer))) {
+			const char *git_dir = get_git_dir(), *cwd = buffer;
+			while (*git_dir && *git_dir == *cwd) {
+				git_dir++;
+				cwd++;
+			}
+			inside_git_dir = !*git_dir;
+		} else
+			inside_git_dir = 0;
+	}
+	return inside_git_dir;
+}
+
 const char *setup_git_directory_gently(int *nongit_ok)
 {
 	static char cwd[PATH_MAX+1];
@@ -206,6 +230,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 					if (chdir(cwd))
 						die("Cannot come back to cwd");
 					setenv(GIT_DIR_ENVIRONMENT, cwd, 1);
+					inside_git_dir = 1;
 					return NULL;
 				}
 				if (nongit_ok) {
@@ -226,6 +251,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	offset++;
 	cwd[len++] = '/';
 	cwd[len] = 0;
+	inside_git_dir = !strncmp(cwd + offset, ".git/", 5);
 	return cwd + offset;
 }
 
