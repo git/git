@@ -1429,6 +1429,7 @@ proc write_update_indexinfo {fd pathList totalCnt batch msg after} {
 		switch -glob -- [lindex $s 0] {
 		A? {set new _O}
 		M? {set new _M}
+		D_ {set new _D}
 		D? {set new _?}
 		?? {continue}
 		}
@@ -1945,6 +1946,7 @@ foreach i {
 
 		{_D i question "Missing"}
 		{DD i removed  "Removed by commit"}
+		{D_ i removed  "Removed by commit"}
 		{DO i removed  "Removed (still exists)"}
 		{DM i removed  "Removed (but modified)"}
 
