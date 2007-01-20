@@ -4,6 +4,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "path-list.h"
+#include "reflog-walk.h"
 
 struct complete_reflogs {
 	char *ref;
