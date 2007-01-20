@@ -418,5 +418,11 @@ EOF
 
 test_expect_success 'quoting' 'cmp .git/config expect'
 
+test_expect_failure 'key with newline' 'git repo-config key.with\\\
+newline 123'
+
+test_expect_success 'value with newline' 'git repo-config key.sub value.with\\\
+newline'
+
 test_done
 
