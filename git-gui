@@ -2429,9 +2429,9 @@ proc revert_helper {txt paths} {
 	set reply [tk_dialog \
 		.confirm_revert \
 		"$appname ($reponame)" \
-		"Revert unincluded changes in $s?
+		"Revert changes in $s?
 
-Any unincluded changes will be permanently lost by the revert." \
+Any unadded changes will be permanently lost by the revert." \
 		question \
 		1 \
 		{Do Nothing} \
