@@ -63,12 +63,21 @@ do
 	;;
     -d)
     	shift
-	tag_name="$1"
-	tag=$(git-show-ref --verify --hash -- "refs/tags/$tag_name") ||
-		die "Seriously, what tag are you talking about?"
-	git-update-ref -m 'tag: delete' -d "refs/tags/$tag_name" "$tag" &&
-		echo "Deleted tag $tag_name."
-	exit $?
+	had_error=0
+	for tag
+	do
+		cur=$(git-show-ref --verify --hash -- "refs/tags/$tag") || {
+			echo >&2 "Seriously, what tag are you talking about?"
+			had_error=1
+			continue
+		}
+		git-update-ref -m 'tag: delete' -d "refs/tags/$tag" "$cur" || {
+			had_error=1
+			continue
+		}
+		echo "Deleted tag $tag."
+	done
+	exit $had_error
 	;;
     -v)
 	shift
