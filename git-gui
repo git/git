@@ -2217,13 +2217,9 @@ proc do_gitk {revs} {
 	}
 }
 
-proc do_repack {} {
-	set w [new_console {repack} \
-		{Repacking the object database}]
-	set cmd [list git repack]
-	lappend cmd -a
-	lappend cmd -d
-	console_exec $w $cmd
+proc do_gc {} {
+	set w [new_console {gc} {Compressing the object database}]
+	console_exec $w {git gc}
 }
 
 proc do_fsck_objects {} {
@@ -3033,8 +3029,8 @@ if {![is_MacOSX]} {
 .mbar.repository add separator
 
 if {!$single_commit} {
-	.mbar.repository add command -label {Repack Database} \
-		-command do_repack \
+	.mbar.repository add command -label {Compress Database} \
+		-command do_gc \
 		-font font_ui
 
 	.mbar.repository add command -label {Verify Database} \
