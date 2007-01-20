@@ -12,7 +12,7 @@ static int verbose;
 static int fetch_all;
 static int depth;
 static const char fetch_pack_usage[] =
-"git-fetch-pack [--all] [-q] [-v] [-k] [--thin] [--exec=upload-pack] [--depth=<n>] [host:]directory <refs>...";
+"git-fetch-pack [--all] [--quiet|-q] [--keep|-k] [--thin] [--exec=<git-upload-pack>] [--depth=<n>] [-v] [<host>:]<directory> [<refs>...]";
 static const char *exec = "git-upload-pack";
 
 #define COMPLETE	(1U << 0)

@@ -299,6 +299,8 @@ extern int get_sha1_hex(const char *hex, unsigned char *sha1);
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 extern int read_ref(const char *filename, unsigned char *sha1);
 extern const char *resolve_ref(const char *path, unsigned char *sha1, int, int *);
+extern int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
+
 extern int create_symref(const char *ref, const char *refs_heads_master);
 extern int validate_headref(const char *ref);
 

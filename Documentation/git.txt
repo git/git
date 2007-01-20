@@ -93,6 +93,16 @@ Interrogators:
 
 include::cmds-ancillaryinterrogators.txt[]
 
+
+Interacting with Others
+~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are to interact with foreign SCM and with other
+people via patch over e-mail.
+
+include::cmds-foreignscminterface.txt[]
+
+
 Low-level commands (plumbing)
 -----------------------------
 
@@ -102,10 +112,19 @@ development of alternative porcelains.  Developers of such porcelains
 might start by reading about gitlink:git-update-index[1] and
 gitlink:git-read-tree[1].
 
-We divide the low-level commands into commands that manipulate objects (in
+The interface (input, output, set of options and the semantics)
+to these low-level commands are meant to be a lot more stable
+than Porcelain level commands, because these commands are
+primarily for scripted use.  The interface to Porcelain commands
+on the other hand are subject to change in order to improve the
+end user experience.
+
+The following description divides
+the low-level commands into commands that manipulate objects (in
 the repository, index, and working tree), commands that interrogate and
 compare objects, and commands that move objects and references between
 repositories.
+
 
 Manipulation commands
 ~~~~~~~~~~~~~~~~~~~~~
@@ -126,6 +145,20 @@ Synching repositories
 ~~~~~~~~~~~~~~~~~~~~~
 
 include::cmds-synchingrepositories.txt[]
+
+The following are helper programs used by the above; end users
+typically do not use them directly.
+
+include::cmds-synchelpers.txt[]
+
+
+Internal helper commands
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+These are internal helper commands used by other commands; end
+users typically do not use them directly.
+
+include::cmds-purehelpers.txt[]
 
 
 Configuration Mechanism
