@@ -4,7 +4,9 @@
 #include "builtin.h"
 
 static const char show_branch_usage[] =
-"git-show-branch [--sparse] [--current] [--all] [--remotes] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...] | --reflog[=n] <branch>";
+"git-show-branch [--sparse] [--current] [--all] [--remotes] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...] | --reflog[=n[,b]] <branch>";
+static const char show_branch_usage_reflog[] =
+"--reflog is incompatible with --all, --remotes, --independent or --merge-base";
 
 static int default_num;
 static int default_alloc;
@@ -664,12 +666,14 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		 */
 		if (independent || merge_base)
 			usage(show_branch_usage);
-		if (!!reflog && (0 < extra))
+		if (!!reflog && ((0 < extra) || all_heads || all_remotes))
 			/*
 			 * Asking for --more in reflog mode does not
-			 * make sense.
+			 * make sense.  --list is Ok.
+			 *
+			 * Also --all and --remotes do not make sense either.
 			 */
-			usage(show_branch_usage);
+			usage(show_branch_usage_reflog);
 	}
 
 	/* If nothing is specified, show all branches by default */
@@ -685,6 +689,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		int base = 0;
 		if (ac != 1)
 			die("--reflog option needs one branch name");
+		if (MAX_REVS < reflog)
+			die("Only %d entries can be shown at one time.",
+			    MAX_REVS);
 		if (!dwim_ref(*av, strlen(*av), sha1, &ref))
 			die("No such ref %s", *av);
 
