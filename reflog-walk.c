@@ -145,6 +145,9 @@ void add_reflog_for_walk(struct reflog_walk_info *info,
 	char *branch, *at = strchr(name, '@');
 	struct commit_reflog *commit_reflog;
 
+	if (commit->object.flags & UNINTERESTING)
+		die ("Cannot walk reflogs for %s", name);
+
 	branch = xstrdup(name);
 	if (at && at[1] == '{') {
 		char *ep;
