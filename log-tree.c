@@ -225,7 +225,8 @@ void show_log(struct rev_info *opt, const char *sep)
 		       diff_get_color(opt->diffopt.color_diff, DIFF_RESET));
 		putchar(opt->commit_format == CMIT_FMT_ONELINE ? ' ' : '\n');
 		if (opt->reflog_info)
-			show_reflog_message(opt->reflog_info);
+			show_reflog_message(opt->reflog_info,
+				    opt->commit_format == CMIT_FMT_ONELINE);;
 	}
 
 	/*

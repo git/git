@@ -6,6 +6,6 @@ extern void add_reflog_for_walk(struct reflog_walk_info *info,
 		struct commit *commit, const char *name);
 extern void fake_reflog_parent(struct reflog_walk_info *info,
 		struct commit *commit);
-extern void show_reflog_message(struct reflog_walk_info* info);
+extern void show_reflog_message(struct reflog_walk_info *info, int);
 
 #endif
