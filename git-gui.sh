@@ -2505,7 +2505,7 @@ proc do_commit {} {
 }
 
 proc do_about {} {
-	global appname copyright
+	global appname appvers copyright
 	global tcl_patchLevel tk_patchLevel
 
 	set w .about_dialog
@@ -2534,8 +2534,9 @@ $copyright" \
 		-font font_ui
 	pack $w.desc -side top -fill x -padx 5 -pady 5
 
-	set v [exec git --version]
-	append v "\n\n"
+	set v {}
+	append v "$appname version $appvers\n\n"
+	append v "[exec git --version]\n\n"
 	if {$tcl_patchLevel eq $tk_patchLevel} {
 		append v "Tcl/Tk version $tcl_patchLevel"
 	} else {
