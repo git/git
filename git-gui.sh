@@ -1512,26 +1512,15 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 		incr update_index_cp
 
 		switch -glob -- [lindex $file_states($path) 0] {
-		AD -
-		MD -
-		UD -
-		_D {set new D_}
-
-		_M -
-		MM -
-		UM -
-		U_ -
-		M_ {set new M_}
-
+		AD {set new __}
+		?D {set new D_}
 		_O -
-		AM -
-		A_ {set new A_}
-
+		AM {set new A_}
+		U_ -
+		?M {set new M_}
 		?? {continue}
 		}
-
-		puts -nonewline $fd $path
-		puts -nonewline $fd "\0"
+		puts -nonewline $fd "$path\0"
 		display_file $path $new
 	}
 
@@ -2333,14 +2322,10 @@ proc add_helper {txt paths} {
 	set after {}
 	foreach path $paths {
 		switch -glob -- [lindex $file_states($path) 0] {
-		AM -
-		AD -
-		MM -
-		MD -
-		U? -
-		_M -
-		_D -
-		_O {
+		_O -
+		?M -
+		?D -
+		U? {
 			lappend pathList $path
 			if {$path eq $current_diff} {
 				set after {reshow_diff;}
@@ -2377,18 +2362,13 @@ proc do_add_all {} {
 
 	set paths [list]
 	foreach path [array names file_states] {
-		switch -- [lindex $file_states($path) 0] {
-		AM -
-		AD -
-		MM -
-		MD -
-		_M -
-		_D {lappend paths $path}
+		switch -glob -- [lindex $file_states($path) 0] {
+		U? {continue}
+		?M -
+		?D {lappend paths $path}
 		}
 	}
-	add_helper \
-		{Adding all modified files} \
-		$paths
+	add_helper {Adding all changed files} $paths
 }
 
 proc revert_helper {txt paths} {
