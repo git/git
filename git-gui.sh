@@ -33,9 +33,12 @@ proc appname {} {
 	return $_appname
 }
 
-proc gitdir {} {
+proc gitdir {args} {
 	global _gitdir
-	return $_gitdir
+	if {$args eq {}} {
+		return $_gitdir
+	}
+	return [eval [concat [list file join $_gitdir] $args]]
 }
 
 proc reponame {} {
@@ -305,7 +308,7 @@ proc repository_state {ctvar hdvar mhvar} {
 		return
 	}
 
-	set merge_head [file join [gitdir] MERGE_HEAD]
+	set merge_head [gitdir MERGE_HEAD]
 	if {[file exists $merge_head]} {
 		set ct merge
 		set fd_mh [open $merge_head r]
@@ -392,7 +395,7 @@ proc rescan_stage2 {fd after} {
 
 	set ls_others [list | git ls-files --others -z \
 		--exclude-per-directory=.gitignore]
-	set info_exclude [file join [gitdir] info exclude]
+	set info_exclude [gitdir info exclude]
 	if {[file readable $info_exclude]} {
 		lappend ls_others "--exclude-from=$info_exclude"
 	}
@@ -418,7 +421,7 @@ proc rescan_stage2 {fd after} {
 proc load_message {file} {
 	global ui_comm
 
-	set f [file join [gitdir] $file]
+	set f [gitdir $file]
 	if {[file isfile $f]} {
 		if {[catch {set fd [open $f r]}]} {
 			return 0
@@ -951,7 +954,7 @@ A good commit message has the following format:
 proc commit_prehook {curHEAD msg} {
 	global ui_status_value pch_error
 
-	set pchook [file join [gitdir] hooks pre-commit]
+	set pchook [gitdir hooks pre-commit]
 
 	# On Cygwin [file executable] might lie so we need to ask
 	# the shell if the hook is executable.  Yes that's annoying.
@@ -1060,20 +1063,20 @@ proc commit_committree {fd_wt curHEAD msg} {
 
 	# -- Cleanup after ourselves.
 	#
-	catch {file delete [file join [gitdir] MERGE_HEAD]}
-	catch {file delete [file join [gitdir] MERGE_MSG]}
-	catch {file delete [file join [gitdir] SQUASH_MSG]}
-	catch {file delete [file join [gitdir] GITGUI_MSG]}
+	catch {file delete [gitdir MERGE_HEAD]}
+	catch {file delete [gitdir MERGE_MSG]}
+	catch {file delete [gitdir SQUASH_MSG]}
+	catch {file delete [gitdir GITGUI_MSG]}
 
 	# -- Let rerere do its thing.
 	#
-	if {[file isdirectory [file join [gitdir] rr-cache]]} {
+	if {[file isdirectory [gitdir rr-cache]]} {
 		catch {exec git rerere}
 	}
 
 	# -- Run the post-commit hook.
 	#
-	set pchook [file join [gitdir] hooks post-commit]
+	set pchook [gitdir hooks post-commit]
 	if {[is_Windows] && [file isfile $pchook]} {
 		set pchook [list sh -c [concat \
 			"if test -x \"$pchook\";" \
@@ -1738,7 +1741,7 @@ proc load_all_remotes {} {
 	set all_remotes [list]
 	array unset tracking_branches
 
-	set rm_dir [file join [gitdir] remotes]
+	set rm_dir [gitdir remotes]
 	if {[file isdirectory $rm_dir]} {
 		set all_remotes [glob \
 			-types f \
@@ -1792,7 +1795,7 @@ proc populate_fetch_menu {m} {
 			}
 		} else {
 			catch {
-				set fd [open [file join [gitdir] remotes $r] r]
+				set fd [open [gitdir remotes $r] r]
 				while {[gets $fd n] >= 0} {
 					if {[regexp {^Pull:[ \t]*([^:]+):} $n]} {
 						set enable 1
@@ -1823,7 +1826,7 @@ proc populate_push_menu {m} {
 			}
 		} else {
 			catch {
-				set fd [open [file join [gitdir] remotes $r] r]
+				set fd [open [gitdir remotes $r] r]
 				while {[gets $fd n] >= 0} {
 					if {[regexp {^Push:[ \t]*([^:]+):} $n]} {
 						set enable 1
@@ -1858,7 +1861,7 @@ proc populate_pull_menu {m} {
 			}
 		} else {
 			catch {
-				set fd [open [file join [gitdir] remotes $remote] r]
+				set fd [open [gitdir remotes $remote] r]
 				while {[gets $fd line] >= 0} {
 					if {[regexp {^Pull:[ \t]*([^:]+):} $line line rb]} {
 						lappend rb_list $rb
@@ -2264,7 +2267,7 @@ proc do_quit {} {
 
 	# -- Stash our current commit buffer.
 	#
-	set save [file join [gitdir] GITGUI_MSG]
+	set save [gitdir GITGUI_MSG]
 	set msg [string trim [$ui_comm get 0.0 end]]
 	if {![string match amend* $commit_type]
 		&& [$ui_comm edit modified]
