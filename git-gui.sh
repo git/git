@@ -1629,16 +1629,27 @@ proc write_checkout_index {fd pathList totalCnt batch msg after} {
 ##
 ## branch management
 
+proc is_tracking_branch {name} {
+	global tracking_branches
+
+	if {![catch {set info $tracking_branches($name)}]} {
+		return 1
+	}
+	foreach t [array names tracking_branches] {
+		if {[string match {*/\*} $t] && [string match $t $name]} {
+			return 1
+		}
+	}
+	return 0
+}
+
 proc load_all_heads {} {
-	global all_heads tracking_branches
+	global all_heads
 
 	set all_heads [list]
-	set cmd [list git for-each-ref]
-	lappend cmd --format=%(refname)
-	lappend cmd refs/heads
-	set fd [open "| $cmd" r]
+	set fd [open "| git for-each-ref --format=%(refname) refs/heads" r]
 	while {[gets $fd line] > 0} {
-		if {![catch {set info $tracking_branches($line)}]} continue
+		if {[is_tracking_branch $line]} continue
 		if {![regsub ^refs/heads/ $line {} name]} continue
 		lappend all_heads $name
 	}
@@ -1682,11 +1693,26 @@ proc populate_branch_menu {} {
 proc all_tracking_branches {} {
 	global tracking_branches
 
-	set all_trackings [list]
-	foreach b [array names tracking_branches] {
-		regsub ^refs/(heads|remotes)/ $b {} b
-		lappend all_trackings $b
+	set all_trackings {}
+	set cmd {}
+	foreach name [array names tracking_branches] {
+		if {[regsub {/\*$} $name {} name]} {
+			lappend cmd $name
+		} else {
+			regsub ^refs/(heads|remotes)/ $name {} name
+			lappend all_trackings $name
+		}
 	}
+
+	if {$cmd ne {}} {
+		set fd [open "| git for-each-ref --format=%(refname) $cmd" r]
+		while {[gets $fd name] > 0} {
+			regsub ^refs/(heads|remotes)/ $name {} name
+			lappend all_trackings $name
+		}
+		close $fd
+	}
+
 	return [lsort -unique $all_trackings]
 }
 
