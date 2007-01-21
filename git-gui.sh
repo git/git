@@ -1622,8 +1622,24 @@ proc load_all_heads {} {
 	set all_heads [lsort $all_heads]
 }
 
-proc populate_branch_menu {m} {
+proc populate_branch_menu {} {
 	global all_heads disable_on_lock
+
+	set m .mbar.branch
+	set last [$m index last]
+	for {set i 0} {$i <= $last} {incr i} {
+		if {[$m type $i] eq {separator}} {
+			$m delete $i last
+			set new_dol [list]
+			foreach a $disable_on_lock {
+				if {[lindex $a 0] ne $m || [lindex $a 2] < $i} {
+					lappend new_dol $a
+				}
+			}
+			set disable_on_lock $new_dol
+			break
+		}
+	}
 
 	$m add separator
 	foreach b $all_heads {
@@ -1638,8 +1654,169 @@ proc populate_branch_menu {m} {
 	}
 }
 
+proc do_create_branch_action {w} {
+	global all_heads null_sha1
+	global create_branch_checkout create_branch_revtype create_branch_head
+
+	set newbranch [string trim [$w.name.t get 0.0 end]]
+	if {![catch {exec git show-ref --verify -- "refs/heads/$newbranch"}]} {
+		tk_messageBox \
+			-icon error \
+			-type ok \
+			-title [wm title $w] \
+			-parent $w \
+			-message "Branch '$newbranch' already exists."
+		focus $w.name.t
+		return
+	}
+	if {[catch {exec git check-ref-format "heads/$newbranch"}]} {
+		tk_messageBox \
+			-icon error \
+			-type ok \
+			-title [wm title $w] \
+			-parent $w \
+			-message "We do not like '$newbranch' as a branch name."
+		focus $w.name.t
+		return
+	}
+
+	set rev {}
+	switch -- $create_branch_revtype {
+	head {set rev $create_branch_head}
+	expression {set rev [string trim [$w.from.exp.t get 0.0 end]]}
+	}
+	if {[catch {set cmt [exec git rev-parse --verify "${rev}^0"]}]} {
+		tk_messageBox \
+			-icon error \
+			-type ok \
+			-title [wm title $w] \
+			-parent $w \
+			-message "Invalid starting revision: $rev"
+		return
+	}
+	set cmd [list git update-ref]
+	lappend cmd -m
+	lappend cmd "branch: Created from $rev"
+	lappend cmd "refs/heads/$newbranch"
+	lappend cmd $cmt
+	lappend cmd $null_sha1
+	if {[catch {eval exec $cmd} err]} {
+		tk_messageBox \
+			-icon error \
+			-type ok \
+			-title [wm title $w] \
+			-parent $w \
+			-message "Failed to create '$newbranch'.\n\n$err"
+		return
+	}
+
+	lappend all_heads $newbranch
+	set all_heads [lsort $all_heads]
+	populate_branch_menu
+
+	destroy $w
+}
+
 proc do_create_branch {} {
-	error "NOT IMPLEMENTED"
+	global all_heads current_branch
+	global create_branch_checkout create_branch_revtype create_branch_head
+
+	set create_branch_checkout true
+	set create_branch_revtype head
+	set create_branch_head $current_branch
+
+	set w .branch_editor
+	toplevel $w
+	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
+
+	label $w.header -text {Create New Branch} \
+		-font font_uibold
+	pack $w.header -side top -fill x
+
+	frame $w.buttons
+	button $w.buttons.create -text Create \
+		-font font_ui \
+		-default active \
+		-command [list do_create_branch_action $w]
+	pack $w.buttons.create -side right
+	button $w.buttons.cancel -text {Cancel} \
+		-font font_ui \
+		-command [list destroy $w]
+	pack $w.buttons.cancel -side right -padx 5
+	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
+
+	labelframe $w.name \
+		-text {Branch Description} \
+		-font font_ui
+	label $w.name.l -text {Name:} -font font_ui
+	text $w.name.t \
+		-height 1 \
+		-width 40 \
+		-font font_ui
+	bind $w.name.t <Shift-Key-Tab> "focus $w.postActions.checkout;break"
+	bind $w.name.t <Key-Tab> "focus $w.from.exp.t;break"
+	bind $w.name.t <Key-Return> "do_create_branch_action $w;break"
+	bind $w.name.t <Key> {
+		if {{%K} ne {BackSpace}
+			&& {%K} ne {Tab}
+			&& {%K} ne {Escape}
+			&& {%K} ne {Return}} {
+			if {%k <= 32} break
+			if {[string first %A {~^:?*[}] >= 0} break
+		}
+	}
+	pack $w.name.l -side left -padx 5
+	pack $w.name.t -side left -fill x -expand 1
+	pack $w.name -anchor nw -fill x -pady 5 -padx 5
+
+	labelframe $w.from \
+		-text {Starting Revision} \
+		-font font_ui
+	frame $w.from.head
+	radiobutton $w.from.head.r \
+		-text {Local Branch:} \
+		-value head \
+		-variable create_branch_revtype \
+		-font font_ui
+	eval tk_optionMenu $w.from.head.m create_branch_head $all_heads
+	pack $w.from.head.r -side left
+	pack $w.from.head.m -side left
+	frame $w.from.exp
+	radiobutton $w.from.exp.r \
+		-text {Revision Expression:} \
+		-value expression \
+		-variable create_branch_revtype \
+		-font font_ui
+	text $w.from.exp.t \
+		-height 1 \
+		-width 50 \
+		-font font_ui
+	bind $w.from.exp.t <Shift-Key-Tab> "focus $w.name.t;break"
+	bind $w.from.exp.t <Key-Tab> "focus $w.postActions.checkout;break"
+	bind $w.from.exp.t <Key-Return> "do_create_branch_action $w;break"
+	pack $w.from.exp.r -side left
+	pack $w.from.exp.t -side left -fill x -expand 1
+	pack $w.from.head -padx 5 -fill x -expand 1
+	pack $w.from.exp -padx 5 -fill x -expand 1
+	pack $w.from -anchor nw -fill x -pady 5 -padx 5
+
+	labelframe $w.postActions \
+		-text {Post Creation Actions} \
+		-font font_ui
+	checkbutton $w.postActions.checkout \
+		-text {Checkout after creation} \
+		-offvalue false \
+		-onvalue true \
+		-variable create_branch_checkout \
+		-font font_ui
+	pack $w.postActions.checkout -anchor nw
+	pack $w.postActions -anchor nw -fill x -pady 5 -padx 5
+
+	bind $w <Visibility> "grab $w; focus $w.name.t"
+	bind $w <Key-Escape> "destroy $w"
+	bind $w <Key-Return> "do_create_branch_action $w;break"
+	wm title $w "[appname] ([reponame]): Create Branch"
+	tkwait window $w
 }
 
 proc do_delete_branch {} {
@@ -3734,7 +3911,7 @@ if {!$single_commit} {
 	load_all_remotes
 	load_all_heads
 
-	populate_branch_menu .mbar.branch
+	populate_branch_menu
 	populate_fetch_menu .mbar.fetch
 	populate_pull_menu .mbar.pull
 	populate_push_menu .mbar.push
