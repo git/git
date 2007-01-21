@@ -1957,24 +1957,24 @@ set all_icons(O$ui_workdir) file_plain
 set max_status_desc 0
 foreach i {
 		{__ "Unmodified"}
-		{_M "Modified"}
-		{M_ "Added to commit"}
-		{MM "Partially added"}
-		{MD "Added (but gone)"}
 
-		{_O "Untracked"}
-		{A_ "Added by commit"}
-		{AM "Partially added"}
-		{AD "Added (but gone)"}
+		{_M "Modified, not staged"}
+		{M_ "Staged for commit"}
+		{MM "Portions staged for commit"}
+		{MD "Staged for commit, missing"}
+
+		{_O "Untracked, not staged"}
+		{A_ "Staged for commit"}
+		{AM "Portions staged for commit"}
+		{AD "Staged for commit, missing"}
 
 		{_D "Missing"}
-		{D_ "Removed by commit"}
-		{DO "Removed (still exists)"}
-		{DM "Removed (but modified)"}
+		{D_ "Staged for removal"}
+		{DO "Staged for removal, still present"}
 
-		{UD "Merge conflicts"}
-		{UM "Merge conflicts"}
-		{U_ "Merge conflicts"}
+		{U_ "Requires merge resolution"}
+		{UM "Requires merge resolution"}
+		{UD "Requires merge resolution"}
 	} {
 	if {$max_status_desc < [string length [lindex $i 1]]} {
 		set max_status_desc [string length [lindex $i 1]]
