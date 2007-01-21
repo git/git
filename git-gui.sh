@@ -825,6 +825,7 @@ proc committer_ident {} {
 
 proc commit_tree {} {
 	global HEAD commit_type file_states ui_comm repo_config
+	global ui_status_value pch_error
 
 	if {![lock_index update]} return
 	if {[committer_ident] eq {}} return
@@ -900,12 +901,8 @@ A good commit message has the following format:
 		return
 	}
 
-	commit_prehook $curHEAD $msg
-}
-
-proc commit_prehook {curHEAD msg} {
-	global ui_status_value pch_error
-
+	# -- Run the pre-commit hook.
+	#
 	set pchook [gitdir hooks pre-commit]
 
 	# On Cygwin [file executable] might lie so we need to ask
