@@ -1691,12 +1691,13 @@ proc all_tracking_branches {} {
 }
 
 proc do_create_branch_action {w} {
-	global all_heads null_sha1
+	global all_heads null_sha1 repo_config
 	global create_branch_checkout create_branch_revtype
 	global create_branch_head create_branch_trackinghead
 
 	set newbranch [string trim [$w.desc.name_t get 0.0 end]]
-	if {$newbranch eq {}} {
+	if {$newbranch eq {}
+		|| $newbranch eq $repo_config(gui.newbranchtemplate)} {
 		tk_messageBox \
 			-icon error \
 			-type ok \
@@ -1768,7 +1769,7 @@ proc do_create_branch_action {w} {
 }
 
 proc do_create_branch {} {
-	global all_heads current_branch
+	global all_heads current_branch repo_config
 	global create_branch_checkout create_branch_revtype
 	global create_branch_head create_branch_trackinghead
 
@@ -1807,6 +1808,7 @@ proc do_create_branch {} {
 		-height 1 \
 		-width 40 \
 		-font font_ui
+	$w.desc.name_t insert 0.0 $repo_config(gui.newbranchtemplate)
 	grid $w.desc.name_l $w.desc.name_t -stick we -padx {0 5}
 	bind $w.desc.name_t <Shift-Key-Tab> "focus $w.postActions.checkout;break"
 	bind $w.desc.name_t <Key-Tab> "focus $w.from.exp_t;break"
@@ -2986,7 +2988,10 @@ proc do_options {} {
 	pack $w.buttons.restore -side left
 	button $w.buttons.save -text Save \
 		-font font_ui \
-		-command [list do_save_config $w]
+		-command "
+			catch {eval \[bind \[focus -displayof $w\] <FocusOut>\]}
+			do_save_config $w
+		"
 	pack $w.buttons.save -side right
 	button $w.buttons.cancel -text {Cancel} \
 		-font font_ui \
@@ -3007,6 +3012,7 @@ proc do_options {} {
 		{b pullsummary {Show Pull Summary}}
 		{b trustmtime  {Trust File Modification Timestamps}}
 		{i diffcontext {Number of Diff Context Lines}}
+		{t newbranchtemplate {New Branch Name Template}}
 		} {
 		set type [lindex $option 0]
 		set name [lindex $option 1]
@@ -3030,7 +3036,29 @@ proc do_options {} {
 					-from 1 -to 99 -increment 1 \
 					-width 3 \
 					-font font_ui
-				pack $w.$f.$name.v -side right -anchor e
+				pack $w.$f.$name.v -side right -anchor e -padx 5
+				pack $w.$f.$name -side top -anchor w -fill x
+			}
+			t {
+				frame $w.$f.$name
+				label $w.$f.$name.l -text "$text:" -font font_ui
+				text $w.$f.$name.v \
+					-borderwidth 1 \
+					-relief sunken \
+					-height 1 \
+					-width 20 \
+					-font font_ui
+				$w.$f.$name.v insert 0.0 [set ${f}_config_new(gui.$name)]
+				bind $w.$f.$name.v <Key-Tab> break
+				bind $w.$f.$name.v <Key-Return> break
+				bind $w.$f.$name.v <FocusOut> "
+					set ${f}_config_new(gui.$name) \
+					\[string trim \[$w.$f.$name.v get 0.0 end\]\]
+				"
+				pack $w.$f.$name.l -side left -anchor w
+				pack $w.$f.$name.v -side left -anchor w \
+					-fill x -expand 1 \
+					-padx 5
 				pack $w.$f.$name -side top -anchor w -fill x
 			}
 			}
@@ -3364,6 +3392,7 @@ proc apply_config {} {
 set default_config(gui.trustmtime) false
 set default_config(gui.pullsummary) true
 set default_config(gui.diffcontext) 5
+set default_config(gui.newbranchtemplate) {}
 set default_config(gui.fontui) [font configure font_ui]
 set default_config(gui.fontdiff) [font configure font_diff]
 set font_descs {
