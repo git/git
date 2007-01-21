@@ -1679,6 +1679,17 @@ proc populate_branch_menu {} {
 	}
 }
 
+proc all_tracking_branches {} {
+	global tracking_branches
+
+	set all_trackings [list]
+	foreach b [array names tracking_branches] {
+		regsub ^refs/(heads|remotes)/ $b {} b
+		lappend all_trackings $b
+	}
+	return [lsort -unique $all_trackings]
+}
+
 proc do_create_branch_action {w} {
 	global all_heads null_sha1
 	global create_branch_checkout create_branch_revtype
@@ -1747,7 +1758,7 @@ proc do_create_branch_action {w} {
 }
 
 proc do_create_branch {} {
-	global all_heads current_branch tracking_branches
+	global all_heads current_branch
 	global create_branch_checkout create_branch_revtype
 	global create_branch_head create_branch_trackinghead
 
@@ -1802,16 +1813,6 @@ proc do_create_branch {} {
 	grid columnconfigure $w.desc 1 -weight 1
 	pack $w.desc -anchor nw -fill x -pady 5 -padx 5
 
-	set all_trackings [list]
-	foreach b [array names tracking_branches] {
-		regsub ^refs/(heads|remotes)/ $b {} b
-		lappend all_trackings $b
-	}
-	set all_trackings [lsort -unique $all_trackings]
-	if {$all_trackings ne {}} {
-		set create_branch_trackinghead [lindex $all_trackings 0]
-	}
-
 	labelframe $w.from \
 		-text {Starting Revision} \
 		-font font_ui
@@ -1822,15 +1823,19 @@ proc do_create_branch {} {
 		-font font_ui
 	eval tk_optionMenu $w.from.head_m create_branch_head $all_heads
 	grid $w.from.head_r $w.from.head_m -sticky w
-	radiobutton $w.from.tracking_r \
-		-text {Tracking Branch:} \
-		-value tracking \
-		-variable create_branch_revtype \
-		-font font_ui
-	eval tk_optionMenu $w.from.tracking_m \
-		create_branch_trackinghead \
-		$all_trackings
-	grid $w.from.tracking_r $w.from.tracking_m -sticky w
+	set all_trackings [all_tracking_branches]
+	if {$all_trackings ne {}} {
+		set create_branch_trackinghead [lindex $all_trackings 0]
+		radiobutton $w.from.tracking_r \
+			-text {Tracking Branch:} \
+			-value tracking \
+			-variable create_branch_revtype \
+			-font font_ui
+		eval tk_optionMenu $w.from.tracking_m \
+			create_branch_trackinghead \
+			$all_trackings
+		grid $w.from.tracking_r $w.from.tracking_m -sticky w
+	}
 	radiobutton $w.from.exp_r \
 		-text {Revision Expression:} \
 		-value expression \
@@ -2000,16 +2005,6 @@ proc do_delete_branch {} {
 	pack $w.list.l -fill both -pady 5 -padx 5
 	pack $w.list -fill both -pady 5 -padx 5
 
-	set all_trackings [list]
-	foreach b [array names tracking_branches] {
-		regsub ^refs/(heads|remotes)/ $b {} b
-		lappend all_trackings $b
-	}
-	set all_trackings [lsort -unique $all_trackings]
-	if {$all_trackings ne {} && $delete_branch_trackinghead eq {}} {
-		set delete_branch_trackinghead [lindex $all_trackings 0]
-	}
-
 	labelframe $w.validate \
 		-text {Delete Only If} \
 		-font font_ui
@@ -2020,15 +2015,19 @@ proc do_delete_branch {} {
 		-font font_ui
 	eval tk_optionMenu $w.validate.head_m delete_branch_head $all_heads
 	grid $w.validate.head_r $w.validate.head_m -sticky w
-	radiobutton $w.validate.tracking_r \
-		-text {Merged Into Tracking Branch:} \
-		-value tracking \
-		-variable delete_branch_checktype \
-		-font font_ui
-	eval tk_optionMenu $w.validate.tracking_m \
-		delete_branch_trackinghead \
-		$all_trackings
-	grid $w.validate.tracking_r $w.validate.tracking_m -sticky w
+	set all_trackings [all_tracking_branches]
+	if {$all_trackings ne {}} {
+		set delete_branch_trackinghead [lindex $all_trackings 0]
+		radiobutton $w.validate.tracking_r \
+			-text {Merged Into Tracking Branch:} \
+			-value tracking \
+			-variable delete_branch_checktype \
+			-font font_ui
+		eval tk_optionMenu $w.validate.tracking_m \
+			delete_branch_trackinghead \
+			$all_trackings
+		grid $w.validate.tracking_r $w.validate.tracking_m -sticky w
+	}
 	radiobutton $w.validate.always_r \
 		-text {Always (Do not perform merge checks)} \
 		-value always \
