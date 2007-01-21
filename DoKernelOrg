@@ -46,7 +46,7 @@ maint | master)
 	hera.kernel.org)
 		narch='x86_64 i386'
 		arch=x86_64 ;;
-	demeter.kernel.org|demeter|old-hera.kernel.org)
+	demeter.kernel.org|demeter|old-hera.kernel.org|kunrun-vmw-fc5)
 		arch=i386 ;;
 	*)	echo >&2 "What are you talking about???"
 		exit 1 ;;
@@ -57,8 +57,9 @@ maint | master)
 	make $J git >./:all.log 2>&1 &&
 	V=`./git --version | sed -e 's/git version //'` &&
 	make rpm >>./:all.log 2>&1 &&
-	case "$arch" in
-	i386)
+	case "$narch" in
+	'')
+		# This is not the primary build machine.
 		status=$?
 		case "$status" in
 		0)
@@ -76,25 +77,33 @@ maint | master)
 			;;
 		esac
 		exit $status ;;
+	*)
+		ln git-$V.tar.gz $G/. &&
+		make dist-doc >>./:all.log 2>&1 &&
+		ln git-htmldocs-$V.tar.gz git-manpages-$V.tar.gz $G/.
+		;;
 	esac >>./:all.log 2>&1 &&
-	make dist-doc >>./:all.log 2>&1 &&
-	mkdir -p $G/RPMS/$arch $G/RPMS/SRPMS &&
-	ln git-$V.tar.gz git-htmldocs-$V.tar.gz git-manpages-$V.tar.gz $G/. &&
-	for a in $narch
-	do
-		mkdir -p "$G/RPMS/$a"
-		ln $HOME/rpms/RPMS/$a/*-$V-*.$a.rpm $G/RPMS/$a/.
-	done &&
-	ln $HOME/rpms/SRPMS/git-$V-*.src.rpm $G/RPMS/SRPMS/. &&
-	{
-		# I do not know how it exits, and I do not care much.
+	case "$NO_RPM_PLEASE" in
+	'')
+		mkdir -p $G/RPMS/$arch $G/RPMS/SRPMS &&
 		for a in $narch
 		do
-			/usr/local/bin/yummy $G/RPMS/$a
-		done
-		/usr/local/bin/yummy $G/RPMS/SRPMS
-		:
-	} >>./:all.log 2>&1 &&
+			mkdir -p "$G/RPMS/$a"
+			ln $HOME/rpms/RPMS/$a/*-$V-*.$a.rpm $G/RPMS/$a/.
+		done &&
+		ln $HOME/rpms/SRPMS/git-$V-*.src.rpm $G/RPMS/SRPMS/. &&
+		{
+			# I do not know how it exits, and I do not care much.
+			for a in $narch
+			do
+				/usr/local/bin/yummy $G/RPMS/$a
+			done
+			/usr/local/bin/yummy $G/RPMS/SRPMS
+			:
+		} >>./:all.log 2>&1 ;;
+	*)
+		echo Skipping RPM ;;
+	esac &&
 	make clean &&
 
 	: ;;
