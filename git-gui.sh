@@ -1336,7 +1336,7 @@ proc display_file {path state} {
 	if {[string index $old_m 0] eq {U}} {
 		set o U
 	} else {
-		set o [string index $old_m 0]
+		set o [string index $old_m 1]
 	}
 	if {[string index $new_m 0] eq {U}} {
 		set n U
