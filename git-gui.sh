@@ -195,6 +195,25 @@ proc info_popup {msg} {
 		-message $msg
 }
 
+proc ask_popup {msg} {
+	global gitdir appname
+
+	set title $appname
+	if {$gitdir ne {}} {
+		append title { (}
+		append title [lindex \
+			[file split [file normalize [file dirname $gitdir]]] \
+			end]
+		append title {)}
+	}
+	return [tk_messageBox \
+		-parent . \
+		-icon question \
+		-type yesno \
+		-title $title \
+		-message $msg]
+}
+
 ######################################################################
 ##
 ## repository setup
@@ -3788,6 +3807,27 @@ if {!$single_commit} {
 	populate_fetch_menu .mbar.fetch
 	populate_pull_menu .mbar.pull
 	populate_push_menu .mbar.push
+}
+
+# -- Only suggest a gc run if we are going to stay running.
+#
+if {!$single_commit} {
+	set object_limit 2000
+	if {[is_Windows]} {set object_limit 200}
+	regexp {^([0-9]+) objects,} [exec git count-objects] _junk objects_current
+	if {$objects_current >= $object_limit} {
+		if {[ask_popup \
+			"This repository currently has $objects_current loose objects.
+
+To maintain optimal performance it is strongly
+recommended that you compress the database
+when more than $object_limit loose objects exist.
+
+Compress the database now?"] eq yes} {
+			do_gc
+		}
+	}
+	unset object_limit _junk objects_current
 }
 
 lock_index begin-read
