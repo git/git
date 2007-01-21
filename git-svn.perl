@@ -119,8 +119,6 @@ my %cmd = (
 			\%fc_opts ],
 	'migrate' => [ sub { },
 	               # no-op, we automatically run this anyways,
-		       # we may add a flag to automatically optimize the
-		       # configuration to avoid reconnects in the future
 	               'Migrate configuration/metadata/layout from
 		        previous versions of git-svn',
 			\%remote_opts ],
@@ -158,6 +156,8 @@ my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 read_repo_config(\%opts);
 my $rv = GetOptions(%opts, 'help|H|h' => \$_help,
 				'version|V' => \$_version,
+				'minimize-connections' =>
+				  \$Git::SVN::Migration::_minimize,
 				'id|i=s' => \$Git::SVN::default_repo_id);
 exit 1 if (!$rv && $cmd ne 'log');
 
@@ -702,10 +702,22 @@ BEGIN {
 	                                svn:entry:committed-date/;
 }
 
-# we allow dashes, unlike remotes2config.sh
+sub read_all_remotes {
+	my $r = {};
+	foreach (grep { s/^svn-remote\.// } command(qw/repo-config -l/)) {
+		if (m!^(.+)\.fetch=\s*(.*)\s*:\s*refs/remotes/(.+)\s*$!) {
+			$r->{$1}->{fetch}->{$2} = $3;
+		} elsif (m!^(.+)\.url=\s*(.*)\s*$!) {
+			$r->{$1}->{url} = $2;
+		}
+	}
+	$r;
+}
+
+# we allow more chars than remotes2config.sh...
 sub sanitize_remote_name {
 	my ($name) = @_;
-	$name =~ tr/A-Za-z0-9-/./c;
+	$name =~ tr{A-Za-z0-9:,/+-}{.}c;
 	$name;
 }
 
@@ -2467,7 +2479,8 @@ use strict;
 use warnings;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
-use File::Basename qw/dirname/;
+use File::Basename qw/dirname basename/;
+use vars qw/$_minimize/;
 
 sub migrate_from_v0 {
 	my $git_dir = $ENV{GIT_DIR};
@@ -2577,16 +2590,101 @@ sub migrate_from_v2 {
 	my $migrated = 0;
 
 	foreach my $ref_id (sort keys %l_map) {
-		Git::SVN->init($l_map{$ref_id}, $ref_id);
+		Git::SVN->init($l_map{$ref_id}, '', $ref_id, $ref_id);
 		$migrated++;
 	}
 	$migrated;
+}
+
+sub minimize_connections {
+	my $r = Git::SVN::read_all_remotes();
+	my $new_urls = {};
+	my $root_repos = {};
+	foreach my $repo_id (keys %$r) {
+		my $url = $r->{$repo_id}->{url} or next;
+		my $fetch = $r->{$repo_id}->{fetch} or next;
+		my $ra = Git::SVN::Ra->new($url);
+
+		# skip existing cases where we already connect to the root
+		if (($ra->{url} eq $ra->{repos_root}) ||
+		    (Git::SVN::sanitize_remote_name($ra->{repos_root}) eq
+		     $repo_id)) {
+			$root_repos->{$ra->{url}} = $repo_id;
+			next;
+		}
+
+		my $root_ra = Git::SVN::Ra->new($ra->{repos_root});
+		my $root_path = $ra->{url};
+		$root_path =~ s#^\Q$ra->{repos_root}\E/*##;
+		foreach my $path (keys %$fetch) {
+			my $ref_id = $fetch->{$path};
+			my $gs = Git::SVN->new($ref_id, $repo_id, $path);
+
+			# make sure we can read when connecting to
+			# a higher level of a repository
+			my ($last_rev, undef) = $gs->last_rev_commit;
+			if (!defined $last_rev) {
+				$last_rev = eval {
+					$root_ra->get_latest_revnum;
+				};
+				next if $@;
+			}
+			my $new = $root_path;
+			$new .= length $path ? "/$path" : '';
+			eval {
+				$root_ra->get_log([$new], $last_rev, $last_rev,
+			                          0, 0, 1, sub { });
+			};
+			next if $@;
+			$new_urls->{$ra->{repos_root}}->{$new} =
+			        { ref_id => $ref_id,
+				  old_repo_id => $repo_id,
+				  old_path => $path };
+		}
+	}
+
+	my @emptied;
+	foreach my $url (keys %$new_urls) {
+		# see if we can re-use an existing [svn-remote "repo_id"]
+		# instead of creating a(n ugly) new section:
+		my $repo_id = $root_repos->{$url} ||
+		              Git::SVN::sanitize_remote_name($url);
+
+		my $fetch = $new_urls->{$url};
+		foreach my $path (keys %$fetch) {
+			my $x = $fetch->{$path};
+			Git::SVN->init($url, $path, $repo_id, $x->{ref_id});
+			my $pfx = "svn-remote.$x->{old_repo_id}";
+
+			my $old_fetch = quotemeta("$x->{old_path}:".
+			                          "refs/remotes/$x->{ref_id}");
+			command_noisy(qw/repo-config --unset/,
+			              "$pfx.fetch", '^'. $old_fetch . '$');
+			delete $r->{$x->{old_repo_id}}->
+			       {fetch}->{$x->{old_path}};
+			if (!keys %{$r->{$x->{old_repo_id}}->{fetch}}) {
+				command_noisy(qw/repo-config --unset/,
+				              "$pfx.url");
+				push @emptied, $x->{old_repo_id}
+			}
+		}
+	}
+	if (@emptied) {
+		my $file = $ENV{GIT_CONFIG} || $ENV{GIT_CONFIG_LOCAL} ||
+		           "$ENV{GIT_DIR}/config";
+		print STDERR <<EOF;
+The following [svn-remote] sections in your config file ($file) are empty
+and can be safely removed:
+EOF
+		print STDERR "[svn-remote \"$_\"]\n" foreach @emptied;
+	}
 }
 
 sub migration_check {
 	migrate_from_v0();
 	migrate_from_v1();
 	migrate_from_v2();
+	minimize_connections() if $_minimize;
 }
 
 __END__

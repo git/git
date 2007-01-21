@@ -46,6 +46,7 @@ test_expect_success 'initialize a multi-repository repo' "
 	grep '^tags/0\.3:refs/remotes/tags/0\.3$' fetch.out
 	"
 
+# refs should all be different, but the trees should all be the same:
 test_expect_success 'multi-fetch works on partial urls + paths' "
 	git-svn multi-fetch &&
 	for i in trunk a b tags/0.1 tags/0.2 tags/0.3; do
@@ -57,6 +58,30 @@ test_expect_success 'multi-fetch works on partial urls + paths' "
 		if test \$j != \$i; then continue; fi
 	    test -z \"\`git diff refs/remotes/\$i \
 	                         refs/remotes/\$j\`\" ||exit 1; done; done
+	"
+
+test_expect_success 'migrate --minimize on old multi-inited layout' "
+	git repo-config --unset-all svn-remote.git-svn.fetch &&
+	git repo-config --unset-all svn-remote.git-svn.url &&
+	rm -rf $GIT_DIR/svn &&
+	for i in \`cat fetch.out\`; do
+		path=\`expr \$i : '\\([^:]*\\):.*$'\`
+		ref=\`expr \$i : '[^:]*:refs/remotes/\\(.*\\)$'\`
+		if test -z \"\$ref\"; then continue; fi
+		if test -n \"\$path\"; then path=\"/\$path\"; fi
+		( mkdir -p $GIT_DIR/svn/\$ref/info/ &&
+		echo $svnrepo\$path > $GIT_DIR/svn/\$ref/info/url ) || exit 1;
+	done &&
+	git-svn migrate --minimize &&
+	test -z \"\`git-repo-config -l |grep -v '^svn-remote\.git-svn\.'\`\" &&
+	git-repo-config --get-all svn-remote.git-svn.fetch > fetch.out &&
+	grep '^trunk:refs/remotes/trunk$' fetch.out &&
+	grep '^branches/a:refs/remotes/a$' fetch.out &&
+	grep '^branches/b:refs/remotes/b$' fetch.out &&
+	grep '^tags/0\.1:refs/remotes/tags/0\.1$' fetch.out &&
+	grep '^tags/0\.2:refs/remotes/tags/0\.2$' fetch.out &&
+	grep '^tags/0\.3:refs/remotes/tags/0\.3$' fetch.out
+	grep '^:refs/remotes/git-svn' fetch.out
 	"
 
 test_done
