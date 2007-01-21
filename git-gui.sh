@@ -2,6 +2,7 @@
 # Tcl ignores the next line -*- tcl -*- \
 exec wish "$0" -- "$@"
 
+set appvers {@@GIT_VERSION@@}
 set copyright {
 Copyright © 2006, 2007 Shawn Pearce, Paul Mackerras.
 
@@ -19,9 +20,28 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA}
 
-set appvers {@@GIT_VERSION@@}
-set appname [lindex [file split $argv0] end]
-set gitdir {}
+######################################################################
+##
+## read only globals
+
+set _appname [lindex [file split $argv0] end]
+set _gitdir {}
+set _reponame {}
+
+proc appname {} {
+	global _appname
+	return $_appname
+}
+
+proc gitdir {} {
+	global _gitdir
+	return $_gitdir
+}
+
+proc reponame {} {
+	global _reponame
+	return $_reponame
+}
 
 ######################################################################
 ##
@@ -133,15 +153,9 @@ proc save_config {} {
 }
 
 proc error_popup {msg} {
-	global gitdir appname
-
-	set title $appname
-	if {$gitdir ne {}} {
-		append title { (}
-		append title [lindex \
-			[file split [file normalize [file dirname $gitdir]]] \
-			end]
-		append title {)}
+	set title [appname]
+	if {[reponame] ne {}} {
+		append title " ([reponame])"
 	}
 	set cmd [list tk_messageBox \
 		-icon error \
@@ -155,15 +169,9 @@ proc error_popup {msg} {
 }
 
 proc warn_popup {msg} {
-	global gitdir appname
-
-	set title $appname
-	if {$gitdir ne {}} {
-		append title { (}
-		append title [lindex \
-			[file split [file normalize [file dirname $gitdir]]] \
-			end]
-		append title {)}
+	set title [appname]
+	if {[reponame] ne {}} {
+		append title " ([reponame])"
 	}
 	set cmd [list tk_messageBox \
 		-icon warning \
@@ -177,15 +185,9 @@ proc warn_popup {msg} {
 }
 
 proc info_popup {msg} {
-	global gitdir appname
-
-	set title $appname
-	if {$gitdir ne {}} {
-		append title { (}
-		append title [lindex \
-			[file split [file normalize [file dirname $gitdir]]] \
-			end]
-		append title {)}
+	set title [appname]
+	if {[reponame] ne {}} {
+		append title " ([reponame])"
 	}
 	tk_messageBox \
 		-parent . \
@@ -196,15 +198,9 @@ proc info_popup {msg} {
 }
 
 proc ask_popup {msg} {
-	global gitdir appname
-
-	set title $appname
-	if {$gitdir ne {}} {
-		append title { (}
-		append title [lindex \
-			[file split [file normalize [file dirname $gitdir]]] \
-			end]
-		append title {)}
+	set title [appname]
+	if {[reponame] ne {}} {
+		append title " ([reponame])"
 	}
 	return [tk_messageBox \
 		-parent . \
@@ -218,33 +214,33 @@ proc ask_popup {msg} {
 ##
 ## repository setup
 
-if {   [catch {set gitdir $env(GIT_DIR)}]
-	&& [catch {set gitdir [exec git rev-parse --git-dir]} err]} {
+if {   [catch {set _gitdir $env(GIT_DIR)}]
+	&& [catch {set _gitdir [exec git rev-parse --git-dir]} err]} {
 	catch {wm withdraw .}
 	error_popup "Cannot find the git directory:\n\n$err"
 	exit 1
 }
-if {![file isdirectory $gitdir]} {
+if {![file isdirectory $_gitdir]} {
 	catch {wm withdraw .}
-	error_popup "Git directory not found:\n\n$gitdir"
+	error_popup "Git directory not found:\n\n$_gitdir"
 	exit 1
 }
-if {[lindex [file split $gitdir] end] ne {.git}} {
+if {[lindex [file split $_gitdir] end] ne {.git}} {
 	catch {wm withdraw .}
 	error_popup "Cannot use funny .git directory:\n\n$gitdir"
 	exit 1
 }
-if {[catch {cd [file dirname $gitdir]} err]} {
+if {[catch {cd [file dirname $_gitdir]} err]} {
 	catch {wm withdraw .}
-	error_popup "No working directory [file dirname $gitdir]:\n\n$err"
+	error_popup "No working directory [file dirname $_gitdir]:\n\n$err"
 	exit 1
 }
-set reponame [lindex [file split \
-	[file normalize [file dirname $gitdir]]] \
+set _reponame [lindex [file split \
+	[file normalize [file dirname $_gitdir]]] \
 	end]
 
 set single_commit 0
-if {$appname eq {git-citool}} {
+if {[appname] eq {git-citool}} {
 	set single_commit 1
 }
 
@@ -289,7 +285,7 @@ proc unlock_index {} {
 ## status
 
 proc repository_state {ctvar hdvar mhvar} {
-	global gitdir current_branch
+	global current_branch
 	upvar $ctvar ct $hdvar hd $mhvar mh
 
 	set mh [list]
@@ -309,7 +305,7 @@ proc repository_state {ctvar hdvar mhvar} {
 		return
 	}
 
-	set merge_head [file join $gitdir MERGE_HEAD]
+	set merge_head [file join [gitdir] MERGE_HEAD]
 	if {[file exists $merge_head]} {
 		set ct merge
 		set fd_mh [open $merge_head r]
@@ -385,7 +381,7 @@ proc rescan {after} {
 }
 
 proc rescan_stage2 {fd after} {
-	global gitdir ui_status_value
+	global ui_status_value
 	global rescan_active buf_rdi buf_rdf buf_rlo
 
 	if {$fd ne {}} {
@@ -396,7 +392,7 @@ proc rescan_stage2 {fd after} {
 
 	set ls_others [list | git ls-files --others -z \
 		--exclude-per-directory=.gitignore]
-	set info_exclude [file join $gitdir info exclude]
+	set info_exclude [file join [gitdir] info exclude]
 	if {[file readable $info_exclude]} {
 		lappend ls_others "--exclude-from=$info_exclude"
 	}
@@ -420,9 +416,9 @@ proc rescan_stage2 {fd after} {
 }
 
 proc load_message {file} {
-	global gitdir ui_comm
+	global ui_comm
 
-	set f [file join $gitdir $file]
+	set f [file join [gitdir] $file]
 	if {[file isfile $f]} {
 		if {[catch {set fd [open $f r]}]} {
 			return 0
@@ -953,9 +949,9 @@ A good commit message has the following format:
 }
 
 proc commit_prehook {curHEAD msg} {
-	global gitdir ui_status_value pch_error
+	global ui_status_value pch_error
 
-	set pchook [file join $gitdir hooks pre-commit]
+	set pchook [file join [gitdir] hooks pre-commit]
 
 	# On Cygwin [file executable] might lie so we need to ask
 	# the shell if the hook is executable.  Yes that's annoying.
@@ -1010,7 +1006,7 @@ proc commit_writetree {curHEAD msg} {
 
 proc commit_committree {fd_wt curHEAD msg} {
 	global HEAD PARENT MERGE_HEAD commit_type
-	global single_commit gitdir
+	global single_commit
 	global ui_status_value ui_comm selected_commit_type
 	global file_states selected_paths rescan_active
 
@@ -1064,20 +1060,20 @@ proc commit_committree {fd_wt curHEAD msg} {
 
 	# -- Cleanup after ourselves.
 	#
-	catch {file delete [file join $gitdir MERGE_HEAD]}
-	catch {file delete [file join $gitdir MERGE_MSG]}
-	catch {file delete [file join $gitdir SQUASH_MSG]}
-	catch {file delete [file join $gitdir GITGUI_MSG]}
+	catch {file delete [file join [gitdir] MERGE_HEAD]}
+	catch {file delete [file join [gitdir] MERGE_MSG]}
+	catch {file delete [file join [gitdir] SQUASH_MSG]}
+	catch {file delete [file join [gitdir] GITGUI_MSG]}
 
 	# -- Let rerere do its thing.
 	#
-	if {[file isdirectory [file join $gitdir rr-cache]]} {
+	if {[file isdirectory [file join [gitdir] rr-cache]]} {
 		catch {exec git rerere}
 	}
 
 	# -- Run the post-commit hook.
 	#
-	set pchook [file join $gitdir hooks post-commit]
+	set pchook [file join [gitdir] hooks post-commit]
 	if {[is_Windows] && [file isfile $pchook]} {
 		set pchook [list sh -c [concat \
 			"if test -x \"$pchook\";" \
@@ -1736,13 +1732,13 @@ The rescan will be automatically started now.
 ## remote management
 
 proc load_all_remotes {} {
-	global gitdir repo_config
+	global repo_config
 	global all_remotes tracking_branches
 
 	set all_remotes [list]
 	array unset tracking_branches
 
-	set rm_dir [file join $gitdir remotes]
+	set rm_dir [file join [gitdir] remotes]
 	if {[file isdirectory $rm_dir]} {
 		set all_remotes [glob \
 			-types f \
@@ -1786,7 +1782,7 @@ proc load_all_remotes {} {
 }
 
 proc populate_fetch_menu {m} {
-	global gitdir all_remotes repo_config
+	global all_remotes repo_config
 
 	foreach r $all_remotes {
 		set enable 0
@@ -1796,7 +1792,7 @@ proc populate_fetch_menu {m} {
 			}
 		} else {
 			catch {
-				set fd [open [file join $gitdir remotes $r] r]
+				set fd [open [file join [gitdir] remotes $r] r]
 				while {[gets $fd n] >= 0} {
 					if {[regexp {^Pull:[ \t]*([^:]+):} $n]} {
 						set enable 1
@@ -1817,7 +1813,7 @@ proc populate_fetch_menu {m} {
 }
 
 proc populate_push_menu {m} {
-	global gitdir all_remotes repo_config
+	global all_remotes repo_config
 
 	foreach r $all_remotes {
 		set enable 0
@@ -1827,7 +1823,7 @@ proc populate_push_menu {m} {
 			}
 		} else {
 			catch {
-				set fd [open [file join $gitdir remotes $r] r]
+				set fd [open [file join [gitdir] remotes $r] r]
 				while {[gets $fd n] >= 0} {
 					if {[regexp {^Push:[ \t]*([^:]+):} $n]} {
 						set enable 1
@@ -1848,7 +1844,7 @@ proc populate_push_menu {m} {
 }
 
 proc populate_pull_menu {m} {
-	global gitdir repo_config all_remotes disable_on_lock
+	global repo_config all_remotes disable_on_lock
 
 	foreach remote $all_remotes {
 		set rb_list [list]
@@ -1862,7 +1858,7 @@ proc populate_pull_menu {m} {
 			}
 		} else {
 			catch {
-				set fd [open [file join $gitdir remotes $remote] r]
+				set fd [open [file join [gitdir] remotes $remote] r]
 				while {[gets $fd line] >= 0} {
 					if {[regexp {^Pull:[ \t]*([^:]+):} $line line rb]} {
 						lappend rb_list $rb
@@ -2033,8 +2029,6 @@ proc incr_font_size {font {amt 1}} {
 }
 
 proc hook_failed_popup {hook msg} {
-	global gitdir appname
-
 	set w .hookfail
 	toplevel $w
 
@@ -2072,9 +2066,7 @@ proc hook_failed_popup {hook msg} {
 
 	bind $w <Visibility> "grab $w; focus $w"
 	bind $w <Key-Return> "destroy $w"
-	wm title $w "$appname ([lindex [file split \
-		[file normalize [file dirname $gitdir]]] \
-		end]): error"
+	wm title $w "[appname] ([reponame]): error"
 	tkwait window $w
 }
 
@@ -2088,8 +2080,7 @@ proc new_console {short_title long_title} {
 }
 
 proc console_init {w} {
-	global console_cr console_data
-	global gitdir appname M1B
+	global console_cr console_data M1B
 
 	set console_cr($w) 1.0
 	toplevel $w
@@ -2141,9 +2132,7 @@ proc console_init {w} {
 	bind $w.m.t <$M1B-Key-a> "$w.m.t tag add sel 0.0 end;break"
 	bind $w.m.t <$M1B-Key-A> "$w.m.t tag add sel 0.0 end;break"
 	bind $w <Visibility> "focus $w"
-	wm title $w "$appname ([lindex [file split \
-		[file normalize [file dirname $gitdir]]] \
-		end]): [lindex $console_data($w) 0]"
+	wm title $w "[appname] ([reponame]): [lindex $console_data($w) 0]"
 	return $w
 }
 
@@ -2268,14 +2257,14 @@ proc do_fsck_objects {} {
 set is_quitting 0
 
 proc do_quit {} {
-	global gitdir ui_comm is_quitting repo_config commit_type
+	global ui_comm is_quitting repo_config commit_type
 
 	if {$is_quitting} return
 	set is_quitting 1
 
 	# -- Stash our current commit buffer.
 	#
-	set save [file join $gitdir GITGUI_MSG]
+	set save [file join [gitdir] GITGUI_MSG]
 	set msg [string trim [$ui_comm get 0.0 end]]
 	if {![string match amend* $commit_type]
 		&& [$ui_comm edit modified]
@@ -2420,7 +2409,6 @@ proc do_include_all {} {
 }
 
 proc revert_helper {txt paths} {
-	global gitdir appname reponame
 	global file_states current_diff
 
 	if {![lock_index begin-update]} return
@@ -2455,7 +2443,7 @@ proc revert_helper {txt paths} {
 
 	set reply [tk_dialog \
 		.confirm_revert \
-		"$appname ($reponame)" \
+		"[appname] ([reponame])" \
 		"Revert changes in $s?
 
 Any unadded changes will be permanently lost by the revert." \
@@ -2531,14 +2519,14 @@ proc do_commit {} {
 }
 
 proc do_about {} {
-	global appname appvers copyright
+	global appvers copyright
 	global tcl_patchLevel tk_patchLevel
 
 	set w .about_dialog
 	toplevel $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
-	label $w.header -text "About $appname" \
+	label $w.header -text "About [appname]" \
 		-font font_uibold
 	pack $w.header -side top -fill x
 
@@ -2550,7 +2538,7 @@ proc do_about {} {
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
 	label $w.desc \
-		-text "$appname - a commit creation tool for Git.
+		-text "[appname] - a commit creation tool for Git.
 $copyright" \
 		-padx 5 -pady 5 \
 		-justify left \
@@ -2561,7 +2549,7 @@ $copyright" \
 	pack $w.desc -side top -fill x -padx 5 -pady 5
 
 	set v {}
-	append v "$appname version $appvers\n"
+	append v "[appname] version $appvers\n"
 	append v "[exec git version]\n"
 	append v "\n"
 	if {$tcl_patchLevel eq $tk_patchLevel} {
@@ -2593,13 +2581,12 @@ $copyright" \
 	bind $w <Visibility> "grab $w; focus $w"
 	bind $w <Key-Escape> "destroy $w"
 	bind_button3 $w.vers "tk_popup $w.ctxm %X %Y; grab $w; focus $w"
-	wm title $w "About $appname"
+	wm title $w "About [appname]"
 	tkwait window $w
 }
 
 proc do_options {} {
-	global appname gitdir reponame font_descs
-	global repo_config global_config
+	global repo_config global_config font_descs
 	global repo_config_new global_config_new
 
 	array unset repo_config_new
@@ -2622,7 +2609,7 @@ proc do_options {} {
 	toplevel $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
-	label $w.header -text "$appname Options" \
+	label $w.header -text "[appname] Options" \
 		-font font_uibold
 	pack $w.header -side top -fill x
 
@@ -2641,7 +2628,7 @@ proc do_options {} {
 	pack $w.buttons.cancel -side right
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.repo -text "$reponame Repository" \
+	labelframe $w.repo -text "[reponame] Repository" \
 		-font font_ui \
 		-relief raised -borderwidth 2
 	labelframe $w.global -text {Global (All Repositories)} \
@@ -2714,7 +2701,7 @@ proc do_options {} {
 
 	bind $w <Visibility> "grab $w; focus $w"
 	bind $w <Key-Escape> "destroy $w"
-	wm title $w "$appname ($reponame): Options"
+	wm title $w "[appname] ([reponame]): Options"
 	tkwait window $w
 }
 
@@ -2752,7 +2739,7 @@ proc do_save_config {w} {
 }
 
 proc do_windows_shortcut {} {
-	global gitdir appname reponame argv0
+	global argv0
 
 	if {[catch {
 		set desktop [exec cygpath \
@@ -2765,9 +2752,9 @@ proc do_windows_shortcut {} {
 	}
 	set fn [tk_getSaveFile \
 		-parent . \
-		-title "$appname ($reponame): Create Desktop Icon" \
+		-title "[appname] ([reponame]): Create Desktop Icon" \
 		-initialdir $desktop \
-		-initialfile "Git $reponame.bat"]
+		-initialfile "Git [reponame].bat"]
 	if {$fn != {}} {
 		if {[catch {
 				set fd [open $fn w]
@@ -2782,7 +2769,7 @@ proc do_windows_shortcut {} {
 				set gd [exec cygpath \
 					--unix \
 					--absolute \
-					$gitdir]
+					[gitdir]]
 				regsub -all ' $me "'\\''" me
 				regsub -all ' $gd "'\\''" gd
 				puts $fd "@ECHO Starting git-gui... Please wait..."
@@ -2798,13 +2785,13 @@ proc do_windows_shortcut {} {
 }
 
 proc do_macosx_app {} {
-	global gitdir appname reponame argv0 env
+	global argv0 env
 
 	set fn [tk_getSaveFile \
 		-parent . \
-		-title "$appname ($reponame): Create Desktop Icon" \
+		-title "[appname] ([reponame]): Create Desktop Icon" \
 		-initialdir [file join $env(HOME) Desktop] \
-		-initialfile "Git $reponame.app"]
+		-initialfile "Git [reponame].app"]
 	if {$fn != {}} {
 		if {[catch {
 				set Contents [file join $fn Contents]
@@ -2839,7 +2826,7 @@ proc do_macosx_app {} {
 				close $fd
 
 				set fd [open $exe w]
-				set gd [file normalize $gitdir]
+				set gd [file normalize [gitdir]]
 				set ep [file normalize [exec git --exec-path]]
 				regsub -all ' $gd "'\\''" gd
 				regsub -all ' $ep "'\\''" ep
@@ -3223,10 +3210,10 @@ if {[is_MacOSX]} {
 	.mbar add cascade -label Apple -menu .mbar.apple
 	menu .mbar.apple
 
-	.mbar.apple add command -label "About $appname" \
+	.mbar.apple add command -label "About [appname]" \
 		-command do_about \
 		-font font_ui
-	.mbar.apple add command -label "$appname Options..." \
+	.mbar.apple add command -label "[appname] Options..." \
 		-command do_options \
 		-font font_ui
 } else {
@@ -3242,7 +3229,7 @@ if {[is_MacOSX]} {
 	if {[file exists /usr/local/miga/lib/gui-miga]
 		&& [file exists .pvcsrc]} {
 	proc do_miga {} {
-		global gitdir ui_status_value
+		global ui_status_value
 		if {![lock_index update]} return
 		set cmd [list sh --login -c "/usr/local/miga/lib/gui-miga \"[pwd]\""]
 		set miga_fd [open "|$cmd" r]
@@ -3272,7 +3259,7 @@ if {[is_MacOSX]} {
 	.mbar add cascade -label Help -menu .mbar.help
 	menu .mbar.help
 
-	.mbar.help add command -label "About $appname" \
+	.mbar.help add command -label "About [appname]" \
 		-command do_about \
 		-font font_ui
 }
@@ -3727,7 +3714,7 @@ set current_branch {}
 set current_diff {}
 set selected_commit_type new
 
-wm title . "$appname ([file normalize [file dirname $gitdir]])"
+wm title . "[appname] ([file normalize [file dirname [gitdir]]])"
 focus -force $ui_comm
 
 # -- Warn the user about environmental problems.  Cygwin's Tcl
@@ -3741,7 +3728,7 @@ if {[is_Windows]} {
 
 The following environment variables are probably
 going to be ignored by any Git subprocess run
-by $appname:
+by [appname]:
 
 "
 	foreach name [array names env] {
