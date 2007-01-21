@@ -2287,7 +2287,7 @@ proc do_rescan {} {
 	rescan {set ui_status_value {Ready.}}
 }
 
-proc remove_helper {txt paths} {
+proc unstage_helper {txt paths} {
 	global file_states current_diff
 
 	if {![lock_index begin-update]} return
@@ -2316,21 +2316,21 @@ proc remove_helper {txt paths} {
 	}
 }
 
-proc do_remove_selection {} {
+proc do_unstage_selection {} {
 	global current_diff selected_paths
 
 	if {[array size selected_paths] > 0} {
-		remove_helper \
-			{Removing selected files from commit} \
+		unstage_helper \
+			{Unstaging selected files from commit} \
 			[array names selected_paths]
 	} elseif {$current_diff ne {}} {
-		remove_helper \
-			"Removing [short_path $current_diff] from commit" \
+		unstage_helper \
+			"Unstaging [short_path $current_diff] from commit" \
 			[list $current_diff]
 	}
 }
 
-proc include_helper {txt paths} {
+proc add_helper {txt paths} {
 	global file_states current_diff
 
 	if {![lock_index begin-update]} return
@@ -2364,21 +2364,21 @@ proc include_helper {txt paths} {
 	}
 }
 
-proc do_include_selection {} {
+proc do_add_selection {} {
 	global current_diff selected_paths
 
 	if {[array size selected_paths] > 0} {
-		include_helper \
+		add_helper \
 			{Adding selected files} \
 			[array names selected_paths]
 	} elseif {$current_diff ne {}} {
-		include_helper \
+		add_helper \
 			"Adding [short_path $current_diff]" \
 			[list $current_diff]
 	}
 }
 
-proc do_include_all {} {
+proc do_add_all {} {
 	global file_states
 
 	set paths [list]
@@ -2392,7 +2392,7 @@ proc do_include_all {} {
 		_D {lappend paths $path}
 		}
 	}
-	include_helper \
+	add_helper \
 		{Adding all modified files} \
 		$paths
 }
@@ -2873,7 +2873,7 @@ proc toggle_or_diff {w x y} {
 		D_ -
 		DO {
 			update_indexinfo \
-				"Removing [short_path $path] from commit" \
+				"Unstaging [short_path $path] from commit" \
 				[list $path] \
 				[concat $after {set ui_status_value {Ready.}}]
 		}
@@ -3151,20 +3151,20 @@ lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
 .mbar.commit add command -label {Add To Commit} \
-	-command do_include_selection \
+	-command do_add_selection \
 	-font font_ui
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
 .mbar.commit add command -label {Add All To Commit} \
-	-command do_include_all \
+	-command do_add_all \
 	-accelerator $M1T-I \
 	-font font_ui
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-.mbar.commit add command -label {Remove From Commit} \
-	-command do_remove_selection \
+.mbar.commit add command -label {Unstage From Commit} \
+	-command do_unstage_selection \
 	-font font_ui
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
@@ -3355,7 +3355,7 @@ lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.rescan conf -state}
 
 button .vpane.lower.commarea.buttons.incall -text {Add All} \
-	-command do_include_all \
+	-command do_add_all \
 	-font font_ui
 pack .vpane.lower.commarea.buttons.incall -side top -fill x
 lappend disable_on_lock \
@@ -3651,8 +3651,8 @@ unset gm
 # -- Key Bindings
 #
 bind $ui_comm <$M1B-Key-Return> {do_commit;break}
-bind $ui_comm <$M1B-Key-i> {do_include_all;break}
-bind $ui_comm <$M1B-Key-I> {do_include_all;break}
+bind $ui_comm <$M1B-Key-i> {do_add_all;break}
+bind $ui_comm <$M1B-Key-I> {do_add_all;break}
 bind $ui_comm <$M1B-Key-x> {tk_textCut %W;break}
 bind $ui_comm <$M1B-Key-X> {tk_textCut %W;break}
 bind $ui_comm <$M1B-Key-c> {tk_textCopy %W;break}
@@ -3681,8 +3681,8 @@ bind all <$M1B-Key-r> do_rescan
 bind all <$M1B-Key-R> do_rescan
 bind .   <$M1B-Key-s> do_signoff
 bind .   <$M1B-Key-S> do_signoff
-bind .   <$M1B-Key-i> do_include_all
-bind .   <$M1B-Key-I> do_include_all
+bind .   <$M1B-Key-i> do_add_all
+bind .   <$M1B-Key-I> do_add_all
 bind .   <$M1B-Key-Return> do_commit
 bind all <$M1B-Key-q> do_quit
 bind all <$M1B-Key-Q> do_quit
