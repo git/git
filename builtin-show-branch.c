@@ -725,7 +725,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 				msg++;
 			m = xmalloc(strlen(msg) + 200);
 			sprintf(m, "(%s) %s",
-				show_date(timestamp, 0, 1),
+				show_date(timestamp, tz, 1),
 				msg);
 			reflog_msg[i] = m;
 			free(logmsg);
