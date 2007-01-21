@@ -42,7 +42,8 @@ struct rev_info {
 			unpacked:1, /* see also ignore_packed below */
 			boundary:1,
 			left_right:1,
-			parents:1;
+			parents:1,
+			reverse:2;
 
 	/* Diff flags */
 	unsigned int	diff:1,
@@ -89,6 +90,8 @@ struct rev_info {
 
 	topo_sort_set_fn_t topo_setter;
 	topo_sort_get_fn_t topo_getter;
+
+	struct reflog_walk_info *reflog_info;
 };
 
 #define REV_TREE_SAME		0

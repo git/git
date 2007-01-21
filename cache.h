@@ -129,6 +129,7 @@ extern int cache_errno;
 
 extern int is_bare_repository_cfg;
 extern int is_bare_repository(void);
+extern int is_inside_git_dir(void);
 extern const char *get_git_dir(void);
 extern char *get_object_directory(void);
 extern char *get_refs_directory(void);

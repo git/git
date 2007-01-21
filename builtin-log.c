@@ -50,8 +50,11 @@ static int cmd_log_walk(struct rev_info *rev)
 	prepare_revision_walk(rev);
 	while ((commit = get_revision(rev)) != NULL) {
 		log_tree_commit(rev, commit);
-		free(commit->buffer);
-		commit->buffer = NULL;
+		if (!rev->reflog_info) {
+			/* we allow cycles in reflog ancestry */
+			free(commit->buffer);
+			commit->buffer = NULL;
+		}
 		free_commit_list(commit->parents);
 		commit->parents = NULL;
 	}
