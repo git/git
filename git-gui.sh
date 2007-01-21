@@ -2867,22 +2867,16 @@ proc toggle_or_diff {w x y} {
 		} else {
 			set after {}
 		}
-		switch -glob -- [lindex $file_states($path) 0] {
-		A_ -
-		M_ -
-		D_ -
-		DO {
+		if {$w eq $ui_index} {
 			update_indexinfo \
 				"Unstaging [short_path $path] from commit" \
 				[list $path] \
 				[concat $after {set ui_status_value {Ready.}}]
-		}
-		?? {
+		} elseif {$w eq $ui_workdir} {
 			update_index \
 				"Adding [short_path $path]" \
 				[list $path] \
 				[concat $after {set ui_status_value {Ready.}}]
-		}
 		}
 	} else {
 		show_diff $path $w $lno
