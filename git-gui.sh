@@ -915,7 +915,7 @@ File [short_path $path] cannot be committed by this program.
 		}
 	}
 	if {!$files_ready} {
-		error_popup {No changes to commit.
+		info_popup {No changes to commit.
 
 You must add at least 1 file before you can commit.
 }
