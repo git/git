@@ -556,14 +556,17 @@ proc clear_diff {} {
 }
 
 proc reshow_diff {} {
-	global ui_status_value file_states
+	global ui_status_value file_states file_lists
 	global current_diff_path current_diff_side
 
-	if {$current_diff_path eq {}
-		|| [catch {set s $file_states($current_diff_path)}]} {
+	set p $current_diff_path
+	if {$p eq {}
+		|| $current_diff_side eq {}
+		|| [catch {set s $file_states($p)}]
+		|| [lsearch -sorted $file_lists($current_diff_side) $p] == -1} {
 		clear_diff
 	} else {
-		show_diff $current_diff_path $current_diff_side
+		show_diff $p $current_diff_side
 	}
 }
 
