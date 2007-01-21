@@ -654,7 +654,11 @@ proc show_diff {path w {lno {}}} {
 		lappend cmd diff-index
 		lappend cmd --cached
 	} elseif {$w eq $ui_workdir} {
-		lappend cmd diff-files
+		if {[string index $m 0] eq {U}} {
+			lappend cmd diff
+		} else {
+			lappend cmd diff-files
+		}
 	}
 
 	lappend cmd -p
@@ -1293,12 +1297,20 @@ proc display_file {path state} {
 	set new_m [lindex $s 0]
 	set icon_name [lindex $s 1]
 
+	set s [string index $new_m 0]
+	if {$s eq {U}} {
+		set s _
+	}
 	display_file_helper	$ui_index $path $icon_name \
-		[string index $old_m 0] \
-		[string index $new_m 0]
+		[string index $old_m 0] $s
+
+	if {[string index $new_m 0] eq {U}} {
+		set s U
+	} else {
+		set s [string index $new_m 1]
+	}
 	display_file_helper	$ui_workdir $path $icon_name \
-		[string index $old_m 1] \
-		[string index $new_m 1]
+		[string index $old_m 1] $s
 
 	if {$new_m eq {__}} {
 		unset file_states($path)
@@ -1338,13 +1350,20 @@ proc display_all_files {} {
 		set m [lindex $s 0]
 		set icon_name [lindex $s 1]
 
-		if {[string index $m 0] ne {_}} {
+		set s [string index $m 0]
+		if {$s ne {U} && $s ne {_}} {
 			display_all_files_helper $ui_index $path \
-				$icon_name [string index $m 0]
+				$icon_name $s
 		}
-		if {[string index $m 1] ne {_}} {
+
+		if {[string index $m 0] eq {U}} {
+			set s U
+		} else {
+			set s [string index $m 1]
+		}
+		if {$s ne {_}} {
 			display_all_files_helper $ui_workdir $path \
-				$icon_name [string index $m 1]
+				$icon_name $s
 		}
 	}
 
@@ -1479,7 +1498,13 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 		?D {set new D_}
 		_O -
 		AM {set new A_}
-		U_ -
+		U? {
+			if {[file exists $path]} {
+				set new M_
+			} else {
+				set new D_
+			}
+		}
 		?M {set new M_}
 		?? {continue}
 		}
@@ -2244,6 +2269,7 @@ set all_icons(U$ui_index)   file_merge
 set all_icons(_$ui_workdir) file_plain
 set all_icons(M$ui_workdir) file_mod
 set all_icons(D$ui_workdir) file_question
+set all_icons(U$ui_workdir) file_merge
 set all_icons(O$ui_workdir) file_plain
 
 set max_status_desc 0
@@ -2265,6 +2291,7 @@ foreach i {
 		{DO "Staged for removal, still present"}
 
 		{U_ "Requires merge resolution"}
+		{UU "Requires merge resolution"}
 		{UM "Requires merge resolution"}
 		{UD "Requires merge resolution"}
 	} {
