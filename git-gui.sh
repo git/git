@@ -1683,7 +1683,7 @@ proc do_create_branch_action {w} {
 	global create_branch_checkout create_branch_revtype
 	global create_branch_head create_branch_trackinghead
 
-	set newbranch [string trim [$w.name.t get 0.0 end]]
+	set newbranch [string trim [$w.desc.name.t get 0.0 end]]
 	if {![catch {exec git show-ref --verify -- "refs/heads/$newbranch"}]} {
 		tk_messageBox \
 			-icon error \
@@ -1691,7 +1691,7 @@ proc do_create_branch_action {w} {
 			-title [wm title $w] \
 			-parent $w \
 			-message "Branch '$newbranch' already exists."
-		focus $w.name.t
+		focus $w.desc.name.t
 		return
 	}
 	if {[catch {exec git check-ref-format "heads/$newbranch"}]} {
@@ -1701,7 +1701,7 @@ proc do_create_branch_action {w} {
 			-title [wm title $w] \
 			-parent $w \
 			-message "We do not like '$newbranch' as a branch name."
-		focus $w.name.t
+		focus $w.desc.name.t
 		return
 	}
 
@@ -1775,20 +1775,21 @@ proc do_create_branch {} {
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.name \
+	labelframe $w.desc \
 		-text {Branch Description} \
 		-font font_ui
-	label $w.name.l -text {Name:} -font font_ui
-	text $w.name.t \
+	frame $w.desc.name
+	label $w.desc.name.l -text {Name:} -font font_ui
+	text $w.desc.name.t \
 		-borderwidth 1 \
 		-relief sunken \
 		-height 1 \
 		-width 40 \
 		-font font_ui
-	bind $w.name.t <Shift-Key-Tab> "focus $w.postActions.checkout;break"
-	bind $w.name.t <Key-Tab> "focus $w.from.exp.t;break"
-	bind $w.name.t <Key-Return> "do_create_branch_action $w;break"
-	bind $w.name.t <Key> {
+	bind $w.desc.name.t <Shift-Key-Tab> "focus $w.postActions.checkout;break"
+	bind $w.desc.name.t <Key-Tab> "focus $w.from.exp.t;break"
+	bind $w.desc.name.t <Key-Return> "do_create_branch_action $w;break"
+	bind $w.desc.name.t <Key> {
 		if {{%K} ne {BackSpace}
 			&& {%K} ne {Tab}
 			&& {%K} ne {Escape}
@@ -1797,9 +1798,10 @@ proc do_create_branch {} {
 			if {[string first %A {~^:?*[}] >= 0} break
 		}
 	}
-	pack $w.name.l -side left -padx 5
-	pack $w.name.t -side left -fill x -expand 1
-	pack $w.name -anchor nw -fill x -pady 5 -padx 5
+	pack $w.desc.name.l -side left -padx 5
+	pack $w.desc.name.t -side left -fill x -expand 1
+	pack $w.desc.name -padx 5 -fill x -expand 1
+	pack $w.desc -anchor nw -fill x -pady 5 -padx 5
 
 	set all_trackings [list]
 	foreach b [array names tracking_branches] {
@@ -1846,7 +1848,7 @@ proc do_create_branch {} {
 		-height 1 \
 		-width 50 \
 		-font font_ui
-	bind $w.from.exp.t <Shift-Key-Tab> "focus $w.name.t;break"
+	bind $w.from.exp.t <Shift-Key-Tab> "focus $w.desc.name.t;break"
 	bind $w.from.exp.t <Key-Tab> "focus $w.postActions.checkout;break"
 	bind $w.from.exp.t <Key-Return> "do_create_branch_action $w;break"
 	pack $w.from.exp.r -side left
@@ -1866,7 +1868,7 @@ proc do_create_branch {} {
 	pack $w.postActions.checkout -anchor nw
 	pack $w.postActions -anchor nw -fill x -pady 5 -padx 5
 
-	bind $w <Visibility> "grab $w; focus $w.name.t"
+	bind $w <Visibility> "grab $w; focus $w.desc.name.t"
 	bind $w <Key-Escape> "destroy $w"
 	bind $w <Key-Return> "do_create_branch_action $w;break"
 	wm title $w "[appname] ([reponame]): Create Branch"
