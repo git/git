@@ -896,12 +896,12 @@ The rescan will be automatically started now.
 		_? {continue}
 		A? -
 		D? -
-		M? {set files_ready 1; break}
+		M? {set files_ready 1}
 		U? {
 			error_popup "Unmerged files cannot be committed.
 
 File [short_path $path] has merge conflicts.
-You must resolve them and include the file before committing.
+You must resolve them and add the file before committing.
 "
 			unlock_index
 			return
@@ -915,9 +915,9 @@ File [short_path $path] cannot be committed by this program.
 		}
 	}
 	if {!$files_ready} {
-		error_popup {No included files to commit.
+		error_popup {No changes to commit.
 
-You must include at least 1 file before you can commit.
+You must add at least 1 file before you can commit.
 }
 		unlock_index
 		return
