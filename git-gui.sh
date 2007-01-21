@@ -3232,7 +3232,8 @@ if {[is_MacOSX]} {
 
 	# -- Tools Menu
 	#
-	if {[file exists /usr/local/miga/lib/gui-miga]} {
+	if {[file exists /usr/local/miga/lib/gui-miga]
+		&& [file exists .pvcsrc]} {
 	proc do_miga {} {
 		global gitdir ui_status_value
 		if {![lock_index update]} return
