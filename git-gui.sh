@@ -610,16 +610,7 @@ files list, to prevent possible confusion.
 	}
 
 	clear_diff
-	set old_w [mapcol [lindex $file_states($path) 0] $path]
-	set lno [lsearch -sorted $file_lists($old_w) $path]
-	if {$lno >= 0} {
-		set file_lists($old_w) \
-			[lreplace $file_lists($old_w) $lno $lno]
-		incr lno
-		$old_w conf -state normal
-		$old_w delete $lno.0 [expr {$lno + 1}].0
-		$old_w conf -state disabled
-	}
+	display_file $path __
 }
 
 proc show_diff {path {w {}} {lno {}}} {
@@ -1230,21 +1221,11 @@ proc push_to {remote} {
 ##
 ## ui helpers
 
-proc mapcol {state path} {
-	global all_cols ui_workdir
-
-	if {[catch {set r $all_cols($state)}]} {
-		puts "error: no column for state={$state} $path"
-		return $ui_workdir
-	}
-	return $r
-}
-
-proc mapicon {state path} {
+proc mapicon {w state path} {
 	global all_icons
 
-	if {[catch {set r $all_icons($state)}]} {
-		puts "error: no icon for state={$state} $path"
+	if {[catch {set r $all_icons($state$w)}]} {
+		puts "error: no icon for $w state={$state} $path"
 		return file_plain
 	}
 	return $r
@@ -1307,64 +1288,69 @@ proc merge_state {path new_state {head_info {}} {index_info {}}} {
 	return $state
 }
 
+proc display_file_helper {w path icon_name old_m new_m} {
+	global file_lists
+
+	if {$new_m eq {_}} {
+		set lno [lsearch -sorted $file_lists($w) $path]
+		if {$lno >= 0} {
+			set file_lists($w) [lreplace $file_lists($w) $lno $lno]
+			incr lno
+			$w conf -state normal
+			$w delete $lno.0 [expr {$lno + 1}].0
+			$w conf -state disabled
+		}
+	} elseif {$old_m eq {_} && $new_m ne {_}} {
+		lappend file_lists($w) $path
+		set file_lists($w) [lsort -unique $file_lists($w)]
+		set lno [lsearch -sorted $file_lists($w) $path]
+		incr lno
+		$w conf -state normal
+		$w image create $lno.0 \
+			-align center -padx 5 -pady 1 \
+			-name $icon_name \
+			-image [mapicon $w $new_m $path]
+		$w insert $lno.1 "[escape_path $path]\n"
+		$w conf -state disabled
+	} elseif {$old_m ne $new_m} {
+		$w conf -state normal
+		$w image conf $icon_name -image [mapicon $w $new_m $path]
+		$w conf -state disabled
+	}
+}
+
 proc display_file {path state} {
-	global file_states file_lists selected_paths
+	global file_states selected_paths
+	global ui_index ui_workdir
 
 	set old_m [merge_state $path $state]
 	set s $file_states($path)
 	set new_m [lindex $s 0]
-	set new_w [mapcol $new_m $path] 
-	set old_w [mapcol $old_m $path]
-	set new_icon [mapicon $new_m $path]
+	set icon_name [lindex $s 1]
+
+	display_file_helper	$ui_index $path $icon_name \
+		[string index $old_m 0] \
+		[string index $new_m 0]
+	display_file_helper	$ui_workdir $path $icon_name \
+		[string index $old_m 1] \
+		[string index $new_m 1]
 
 	if {$new_m eq {__}} {
-		set lno [lsearch -sorted $file_lists($old_w) $path]
-		if {$lno >= 0} {
-			set file_lists($old_w) \
-				[lreplace $file_lists($old_w) $lno $lno]
-			incr lno
-			$old_w conf -state normal
-			$old_w delete $lno.0 [expr {$lno + 1}].0
-			$old_w conf -state disabled
-		}
 		unset file_states($path)
 		catch {unset selected_paths($path)}
-		return
 	}
+}
 
-	if {$new_w ne $old_w} {
-		set lno [lsearch -sorted $file_lists($old_w) $path]
-		if {$lno >= 0} {
-			set file_lists($old_w) \
-				[lreplace $file_lists($old_w) $lno $lno]
-			incr lno
-			$old_w conf -state normal
-			$old_w delete $lno.0 [expr {$lno + 1}].0
-			$old_w conf -state disabled
-		}
+proc display_all_files_helper {w path icon_name m} {
+	global file_lists
 
-		lappend file_lists($new_w) $path
-		set file_lists($new_w) [lsort $file_lists($new_w)]
-		set lno [lsearch -sorted $file_lists($new_w) $path]
-		incr lno
-		$new_w conf -state normal
-		$new_w image create $lno.0 \
-			-align center -padx 5 -pady 1 \
-			-name [lindex $s 1] \
-			-image $new_icon
-		$new_w insert $lno.1 "[escape_path $path]\n"
-		if {[catch {set in_sel $selected_paths($path)}]} {
-			set in_sel 0
-		}
-		if {$in_sel} {
-			$new_w tag add in_sel $lno.0 [expr {$lno + 1}].0
-		}
-		$new_w conf -state disabled
-	} elseif {$new_icon ne [mapicon $old_m $path]} {
-		$new_w conf -state normal
-		$new_w image conf [lindex $s 1] -image $new_icon
-		$new_w conf -state disabled
-	}
+	lappend file_lists($w) $path
+	set lno [expr {[lindex [split [$w index end] .] 0] - 1}]
+	$w image create end \
+		-align center -padx 5 -pady 1 \
+		-name $icon_name \
+		-image [mapicon $w $m $path]
+	$w insert end "[escape_path $path]\n"
 }
 
 proc display_all_files {} {
@@ -1385,19 +1371,15 @@ proc display_all_files {} {
 	foreach path [lsort [array names file_states]] {
 		set s $file_states($path)
 		set m [lindex $s 0]
-		set w [mapcol $m $path]
-		lappend file_lists($w) $path
-		set lno [expr {[lindex [split [$w index end] .] 0] - 1}]
-		$w image create end \
-			-align center -padx 5 -pady 1 \
-			-name [lindex $s 1] \
-			-image [mapicon $m $path]
-		$w insert end "[escape_path $path]\n"
-		if {[catch {set in_sel $selected_paths($path)}]} {
-			set in_sel 0
+		set icon_name [lindex $s 1]
+
+		if {[string index $m 0] ne {_}} {
+			display_all_files_helper $ui_index $path \
+				$icon_name [string index $m 0]
 		}
-		if {$in_sel} {
-			$w tag add in_sel $lno.0 [expr {$lno + 1}].0
+		if {[string index $m 1] ne {_}} {
+			display_all_files_helper $ui_workdir $path \
+				$icon_name [string index $m 1]
 		}
 	}
 
@@ -1961,41 +1943,47 @@ static unsigned char file_merge_bits[] = {
 
 set ui_index .vpane.files.index.list
 set ui_workdir .vpane.files.workdir.list
+
+set all_icons(_$ui_index)   file_plain
+set all_icons(A$ui_index)   file_fulltick
+set all_icons(M$ui_index)   file_fulltick
+set all_icons(D$ui_index)   file_removed
+set all_icons(U$ui_index)   file_merge
+
+set all_icons(_$ui_workdir) file_plain
+set all_icons(M$ui_workdir) file_mod
+set all_icons(D$ui_workdir) file_question
+set all_icons(O$ui_workdir) file_plain
+
 set max_status_desc 0
 foreach i {
-		{__ i plain    "Unmodified"}
-		{_M i mod      "Modified"}
-		{M_ i fulltick "Added to commit"}
-		{MM i parttick "Partially included"}
-		{MD i question "Added (but gone)"}
+		{__ "Unmodified"}
+		{_M "Modified"}
+		{M_ "Added to commit"}
+		{MM "Partially added"}
+		{MD "Added (but gone)"}
 
-		{_O o plain    "Untracked"}
-		{A_ o fulltick "Added by commit"}
-		{AM o parttick "Partially added"}
-		{AD o question "Added (but gone)"}
+		{_O "Untracked"}
+		{A_ "Added by commit"}
+		{AM "Partially added"}
+		{AD "Added (but gone)"}
 
-		{_D i question "Missing"}
-		{DD i removed  "Removed by commit"}
-		{D_ i removed  "Removed by commit"}
-		{DO i removed  "Removed (still exists)"}
-		{DM i removed  "Removed (but modified)"}
+		{_D "Missing"}
+		{DD "Removed by commit"}
+		{D_ "Removed by commit"}
+		{DO "Removed (still exists)"}
+		{DM "Removed (but modified)"}
 
-		{UD i merge    "Merge conflicts"}
-		{UM i merge    "Merge conflicts"}
-		{U_ i merge    "Merge conflicts"}
+		{UD "Merge conflicts"}
+		{UM "Merge conflicts"}
+		{U_ "Merge conflicts"}
 	} {
-	if {$max_status_desc < [string length [lindex $i 3]]} {
-		set max_status_desc [string length [lindex $i 3]]
+	if {$max_status_desc < [string length [lindex $i 1]]} {
+		set max_status_desc [string length [lindex $i 1]]
 	}
-	if {[lindex $i 1] eq {i}} {
-		set all_cols([lindex $i 0]) $ui_index
-	} else {
-		set all_cols([lindex $i 0]) $ui_workdir
-	}
-	set all_icons([lindex $i 0]) file_[lindex $i 2]
-	set all_descs([lindex $i 0]) [lindex $i 3]
+	set all_descs([lindex $i 0]) [lindex $i 1]
 }
-unset filemask i
+unset i
 
 ######################################################################
 ##
@@ -3302,7 +3290,7 @@ pack .vpane -anchor n -side top -fill both -expand 1
 # -- Index File List
 #
 frame .vpane.files.index -height 100 -width 400
-label .vpane.files.index.title -text {Modified Files} \
+label .vpane.files.index.title -text {Changes To Be Committed} \
 	-background green \
 	-font font_ui
 text $ui_index -background white -borderwidth 0 \
@@ -3320,7 +3308,7 @@ pack $ui_index -side left -fill both -expand 1
 # -- Working Directory File List
 #
 frame .vpane.files.workdir -height 100 -width 100
-label .vpane.files.workdir.title -text {Untracked Files} \
+label .vpane.files.workdir.title -text {Changed But Not Updated} \
 	-background red \
 	-font font_ui
 text $ui_workdir -background white -borderwidth 0 \
