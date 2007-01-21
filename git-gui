@@ -1935,9 +1935,9 @@ set max_status_desc 0
 foreach i {
 		{__ i plain    "Unmodified"}
 		{_M i mod      "Modified"}
-		{M_ i fulltick "Included in commit"}
+		{M_ i fulltick "Added to commit"}
 		{MM i parttick "Partially included"}
-		{MD i question "Included (but gone)"}
+		{MD i question "Added (but gone)"}
 
 		{_O o plain    "Untracked"}
 		{A_ o fulltick "Added by commit"}
@@ -2360,11 +2360,11 @@ proc do_include_selection {} {
 
 	if {[array size selected_paths] > 0} {
 		include_helper \
-			{Including selected files} \
+			{Adding selected files} \
 			[array names selected_paths]
 	} elseif {$current_diff ne {}} {
 		include_helper \
-			"Including [short_path $current_diff]" \
+			"Adding [short_path $current_diff]" \
 			[list $current_diff]
 	}
 }
@@ -2384,7 +2384,7 @@ proc do_include_all {} {
 		}
 	}
 	include_helper \
-		{Including all modified files} \
+		{Adding all modified files} \
 		$paths
 }
 
@@ -2615,7 +2615,7 @@ proc do_options {} {
 	pack $w.global -side right -fill both -expand 1 -pady 5 -padx 5
 
 	foreach option {
-		{b partialinclude {Allow Partially Included Files}}
+		{b partialinclude {Allow Partially Added Files}}
 		{b pullsummary {Show Pull Summary}}
 		{b trustmtime  {Trust File Modification Timestamps}}
 		{i diffcontext {Number of Diff Context Lines}}
@@ -2871,7 +2871,7 @@ proc toggle_or_diff {w x y} {
 		}
 		?? {
 			update_index \
-				"Including [short_path $path]" \
+				"Adding [short_path $path]" \
 				[list $path] \
 				[concat $after {set ui_status_value {Ready.}}]
 		}
