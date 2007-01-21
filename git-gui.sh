@@ -1674,6 +1674,9 @@ proc do_create_branch_action {w} {
 	set all_heads [lsort $all_heads]
 	populate_branch_menu
 	destroy $w
+	if {$create_branch_checkout} {
+		switch_branch $newbranch
+	}
 }
 
 proc do_create_branch {} {
@@ -1681,7 +1684,7 @@ proc do_create_branch {} {
 	global create_branch_checkout create_branch_revtype
 	global create_branch_head create_branch_trackinghead
 
-	set create_branch_checkout true
+	set create_branch_checkout 1
 	set create_branch_revtype head
 	set create_branch_head $current_branch
 	set create_branch_trackinghead {}
@@ -1792,8 +1795,6 @@ proc do_create_branch {} {
 		-font font_ui
 	checkbutton $w.postActions.checkout \
 		-text {Checkout after creation} \
-		-offvalue false \
-		-onvalue true \
 		-variable create_branch_checkout \
 		-font font_ui
 	pack $w.postActions.checkout -anchor nw
