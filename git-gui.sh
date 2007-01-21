@@ -2563,8 +2563,18 @@ $copyright" \
 		-font font_ui
 	pack $w.vers -side top -fill x -padx 5 -pady 5
 
+	menu $w.ctxm -tearoff 0
+	$w.ctxm add command \
+		-label {Copy} \
+		-font font_ui \
+		-command "
+		clipboard clear
+		clipboard append -format STRING -type STRING -- \[$w.vers cget -text\]
+	"
+
 	bind $w <Visibility> "grab $w; focus $w"
 	bind $w <Key-Escape> "destroy $w"
+	bind_button3 $w.vers "tk_popup $w.ctxm %X %Y; grab $w; focus $w"
 	wm title $w "About $appname"
 	tkwait window $w
 }
