@@ -1355,7 +1355,7 @@ proc display_all_files_helper {w path icon_name m} {
 proc display_all_files {} {
 	global ui_index ui_workdir
 	global file_states file_lists
-	global last_clicked selected_paths
+	global last_clicked
 
 	$ui_index conf -state normal
 	$ui_workdir conf -state normal
@@ -2852,16 +2852,19 @@ proc toggle_or_diff {w x y} {
 }
 
 proc add_one_to_selection {w x y} {
-	global file_lists
-	global last_clicked selected_paths
+	global file_lists last_clicked selected_paths
 
-	set pos [split [$w index @$x,$y] .]
-	set lno [lindex $pos 0]
-	set col [lindex $pos 1]
+	set lno [lindex [split [$w index @$x,$y] .] 0]
 	set path [lindex $file_lists($w) [expr {$lno - 1}]]
 	if {$path eq {}} {
 		set last_clicked {}
 		return
+	}
+
+	if {$last_clicked ne {}
+		&& [lindex $last_clicked 0] ne $w} {
+		array unset selected_paths
+		[lindex $last_clicked 0] tag remove in_sel 0.0 end
 	}
 
 	set last_clicked [list $w $lno]
@@ -2878,16 +2881,14 @@ proc add_one_to_selection {w x y} {
 }
 
 proc add_range_to_selection {w x y} {
-	global file_lists
-	global last_clicked selected_paths
+	global file_lists last_clicked selected_paths
 
 	if {[lindex $last_clicked 0] ne $w} {
 		toggle_or_diff $w $x $y
 		return
 	}
 
-	set pos [split [$w index @$x,$y] .]
-	set lno [lindex $pos 0]
+	set lno [lindex [split [$w index @$x,$y] .] 0]
 	set lc [lindex $last_clicked 1]
 	if {$lc < $lno} {
 		set begin $lc
