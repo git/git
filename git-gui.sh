@@ -543,33 +543,33 @@ proc prune_selection {} {
 ## diff
 
 proc clear_diff {} {
-	global ui_diff current_diff ui_index ui_workdir
+	global ui_diff current_diff_path ui_index ui_workdir
 
 	$ui_diff conf -state normal
 	$ui_diff delete 0.0 end
 	$ui_diff conf -state disabled
 
-	set current_diff {}
+	set current_diff_path {}
 
 	$ui_index tag remove in_diff 0.0 end
 	$ui_workdir tag remove in_diff 0.0 end
 }
 
 proc reshow_diff {} {
-	global current_diff ui_status_value file_states
+	global current_diff_path ui_status_value file_states
 
-	if {$current_diff eq {}
-		|| [catch {set s $file_states($current_diff)}]} {
+	if {$current_diff_path eq {}
+		|| [catch {set s $file_states($current_diff_path)}]} {
 		clear_diff
 	} else {
-		show_diff $current_diff
+		show_diff $current_diff_path
 	}
 }
 
 proc handle_empty_diff {} {
-	global current_diff file_states file_lists
+	global current_diff_path file_states file_lists
 
-	set path $current_diff
+	set path $current_diff_path
 	set s $file_states($path)
 	if {[lindex $s 0] ne {_M}} return
 
@@ -598,7 +598,7 @@ files list, to prevent possible confusion.
 proc show_diff {path {w {}} {lno {}}} {
 	global file_states file_lists
 	global is_3way_diff diff_active repo_config
-	global ui_diff current_diff ui_status_value
+	global ui_diff current_diff_path ui_status_value
 
 	if {$diff_active || ![lock_index read]} return
 
@@ -620,7 +620,7 @@ proc show_diff {path {w {}} {lno {}}} {
 	set m [lindex $s 0]
 	set is_3way_diff 0
 	set diff_active 1
-	set current_diff $path
+	set current_diff_path $path
 	set ui_status_value "Loading diff of [escape_path $path]..."
 
 	set cmd [list | git diff-index]
@@ -1379,7 +1379,7 @@ proc update_indexinfo {msg pathList after} {
 
 proc write_update_indexinfo {fd pathList totalCnt batch msg after} {
 	global update_index_cp ui_status_value
-	global file_states current_diff
+	global file_states current_diff_path
 
 	if {$update_index_cp >= $totalCnt} {
 		close $fd
@@ -1451,7 +1451,7 @@ proc update_index {msg pathList after} {
 
 proc write_update_index {fd pathList totalCnt batch msg after} {
 	global update_index_cp ui_status_value
-	global file_states current_diff
+	global file_states current_diff_path
 
 	if {$update_index_cp >= $totalCnt} {
 		close $fd
@@ -1527,7 +1527,7 @@ proc checkout_index {msg pathList after} {
 
 proc write_checkout_index {fd pathList totalCnt batch msg after} {
 	global update_index_cp ui_status_value
-	global file_states current_diff
+	global file_states current_diff_path
 
 	if {$update_index_cp >= $totalCnt} {
 		close $fd
@@ -2572,7 +2572,7 @@ proc do_rescan {} {
 }
 
 proc unstage_helper {txt paths} {
-	global file_states current_diff
+	global file_states current_diff_path
 
 	if {![lock_index begin-update]} return
 
@@ -2584,7 +2584,7 @@ proc unstage_helper {txt paths} {
 		M? -
 		D? {
 			lappend pathList $path
-			if {$path eq $current_diff} {
+			if {$path eq $current_diff_path} {
 				set after {reshow_diff;}
 			}
 		}
@@ -2601,21 +2601,21 @@ proc unstage_helper {txt paths} {
 }
 
 proc do_unstage_selection {} {
-	global current_diff selected_paths
+	global current_diff_path selected_paths
 
 	if {[array size selected_paths] > 0} {
 		unstage_helper \
 			{Unstaging selected files from commit} \
 			[array names selected_paths]
-	} elseif {$current_diff ne {}} {
+	} elseif {$current_diff_path ne {}} {
 		unstage_helper \
-			"Unstaging [short_path $current_diff] from commit" \
-			[list $current_diff]
+			"Unstaging [short_path $current_diff_path] from commit" \
+			[list $current_diff_path]
 	}
 }
 
 proc add_helper {txt paths} {
-	global file_states current_diff
+	global file_states current_diff_path
 
 	if {![lock_index begin-update]} return
 
@@ -2628,7 +2628,7 @@ proc add_helper {txt paths} {
 		?D -
 		U? {
 			lappend pathList $path
-			if {$path eq $current_diff} {
+			if {$path eq $current_diff_path} {
 				set after {reshow_diff;}
 			}
 		}
@@ -2645,16 +2645,16 @@ proc add_helper {txt paths} {
 }
 
 proc do_add_selection {} {
-	global current_diff selected_paths
+	global current_diff_path selected_paths
 
 	if {[array size selected_paths] > 0} {
 		add_helper \
 			{Adding selected files} \
 			[array names selected_paths]
-	} elseif {$current_diff ne {}} {
+	} elseif {$current_diff_path ne {}} {
 		add_helper \
-			"Adding [short_path $current_diff]" \
-			[list $current_diff]
+			"Adding [short_path $current_diff_path]" \
+			[list $current_diff_path]
 	}
 }
 
@@ -2673,7 +2673,7 @@ proc do_add_all {} {
 }
 
 proc revert_helper {txt paths} {
-	global file_states current_diff
+	global file_states current_diff_path
 
 	if {![lock_index begin-update]} return
 
@@ -2685,7 +2685,7 @@ proc revert_helper {txt paths} {
 		?M -
 		?D {
 			lappend pathList $path
-			if {$path eq $current_diff} {
+			if {$path eq $current_diff_path} {
 				set after {reshow_diff;}
 			}
 		}
@@ -2724,16 +2724,16 @@ Any unadded changes will be permanently lost by the revert." \
 }
 
 proc do_revert_selection {} {
-	global current_diff selected_paths
+	global current_diff_path selected_paths
 
 	if {[array size selected_paths] > 0} {
 		revert_helper \
 			{Reverting selected files} \
 			[array names selected_paths]
-	} elseif {$current_diff ne {}} {
+	} elseif {$current_diff_path ne {}} {
 		revert_helper \
-			"Reverting [short_path $current_diff]" \
-			[list $current_diff]
+			"Reverting [short_path $current_diff_path]" \
+			[list $current_diff_path]
 	}
 }
 
@@ -3115,7 +3115,7 @@ proc do_macosx_app {} {
 }
 
 proc toggle_or_diff {w x y} {
-	global file_states file_lists current_diff ui_index ui_workdir
+	global file_states file_lists current_diff_path ui_index ui_workdir
 	global last_clicked selected_paths
 
 	set pos [split [$w index @$x,$y] .]
@@ -3133,7 +3133,7 @@ proc toggle_or_diff {w x y} {
 	$ui_workdir tag remove in_sel 0.0 end
 
 	if {$col == 0} {
-		if {$current_diff eq $path} {
+		if {$current_diff_path eq $path} {
 			set after {reshow_diff;}
 		} else {
 			set after {}
@@ -3739,17 +3739,17 @@ bind_button3 $ui_comm "tk_popup $ctxm %X %Y"
 
 # -- Diff Header
 #
-set current_diff {}
+set current_diff_path {}
 set diff_actions [list]
-proc trace_current_diff {varname args} {
-	global current_diff diff_actions file_states
-	if {$current_diff eq {}} {
+proc trace_current_diff_path {varname args} {
+	global current_diff_path diff_actions file_states
+	if {$current_diff_path eq {}} {
 		set s {}
 		set f {}
 		set p {}
 		set o disabled
 	} else {
-		set p $current_diff
+		set p $current_diff_path
 		set s [mapdesc [lindex $file_states($p) 0] $p]
 		set f {File:}
 		set p [escape_path $p]
@@ -3763,7 +3763,7 @@ proc trace_current_diff {varname args} {
 		uplevel #0 $w $o
 	}
 }
-trace add variable current_diff write trace_current_diff
+trace add variable current_diff_path write trace_current_diff_path
 
 frame .vpane.lower.diff.header -background orange
 label .vpane.lower.diff.header.status \
@@ -3795,7 +3795,7 @@ $ctxm add command \
 		clipboard append \
 			-format STRING \
 			-type STRING \
-			-- $current_diff
+			-- $current_diff_path
 	}
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 bind_button3 .vpane.lower.diff.header.path "tk_popup $ctxm %X %Y"
@@ -3975,7 +3975,7 @@ set MERGE_HEAD [list]
 set commit_type {}
 set empty_tree {}
 set current_branch {}
-set current_diff {}
+set current_diff_path {}
 set selected_commit_type new
 
 wm title . "[appname] ([file normalize [file dirname [gitdir]]])"
