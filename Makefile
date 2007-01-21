@@ -1,9 +1,12 @@
 all::
 
+GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
+	@$(SHELL_PATH) ./GIT-VERSION-GEN
+-include GIT-VERSION-FILE
+
 SCRIPT_SH = git-gui.sh
 GITGUI_BUILT_INS = git-citool
 ALL_PROGRAMS = $(GITGUI_BUILT_INS) $(patsubst %.sh,%,$(SCRIPT_SH))
-GITGUI_VERSION := $(shell git describe)
 
 ifndef SHELL_PATH
 	SHELL_PATH = /bin/sh
@@ -20,13 +23,16 @@ SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	rm -f $@ $@+
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
-		-e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
+		-e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 		$@.sh >$@+
 	chmod +x $@+
 	mv $@+ $@
 
 $(GITGUI_BUILT_INS): git-gui
 	rm -f $@ && ln git-gui $@
+
+# These can record GIT_VERSION
+$(patsubst %.sh,%,$(SCRIPT_SH)): GIT-VERSION-FILE
 
 all:: $(ALL_PROGRAMS)
 
@@ -36,4 +42,7 @@ install: all
 	$(foreach p,$(GITGUI_BUILT_INS), rm -f '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' && ln '$(DESTDIR_SQ)$(gitexecdir_SQ)/git-gui' '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' ;)
 
 clean::
-	rm -f $(ALL_PROGRAMS)
+	rm -f $(ALL_PROGRAMS) GIT-VERSION-FILE
+
+.PHONY: all install clean
+.PHONY: .FORCE-GIT-VERSION-FILE

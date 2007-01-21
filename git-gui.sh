@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA}
 
-set appvers {@@GITGUI_VERSION@@}
+set appvers {@@GIT_VERSION@@}
 set appname [lindex [file split $argv0] end]
 set gitdir {}
 
@@ -2543,8 +2543,9 @@ $copyright" \
 	pack $w.desc -side top -fill x -padx 5 -pady 5
 
 	set v {}
-	append v "$appname version $appvers\n\n"
-	append v "[exec git --version]\n\n"
+	append v "$appname version $appvers\n"
+	append v "[exec git version]\n"
+	append v "\n"
 	if {$tcl_patchLevel eq $tk_patchLevel} {
 		append v "Tcl/Tk version $tcl_patchLevel"
 	} else {
