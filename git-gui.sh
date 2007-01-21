@@ -524,24 +524,6 @@ proc rescan_done {fd buf after} {
 	prune_selection
 	unlock_index
 	display_all_files
-
-	if {$repo_config(gui.partialinclude) ne {true}} {
-		set pathList [list]
-		foreach path [array names file_states] {
-			switch -- [lindex $file_states($path) 0] {
-			A? -
-			M? {lappend pathList $path}
-			}
-		}
-		if {$pathList ne {}} {
-			update_index \
-				"Updating included files" \
-				$pathList \
-				[concat {reshow_diff;} $after]
-			return
-		}
-	}
-
 	reshow_diff
 	uplevel #0 $after
 }
@@ -916,27 +898,6 @@ A good commit message has the following format:
 }
 		unlock_index
 		return
-	}
-
-	# -- Update included files if partialincludes are off.
-	#
-	if {$repo_config(gui.partialinclude) ne {true}} {
-		set pathList [list]
-		foreach path [array names file_states] {
-			switch -glob -- [lindex $file_states($path) 0] {
-			A? -
-			M? {lappend pathList $path}
-			}
-		}
-		if {$pathList ne {}} {
-			unlock_index
-			update_index \
-				"Updating included files" \
-				$pathList \
-				[concat {lock_index update;} \
-					[list commit_prehook $curHEAD $msg]]
-			return
-		}
 	}
 
 	commit_prehook $curHEAD $msg
@@ -2939,7 +2900,6 @@ proc do_options {} {
 	pack $w.global -side right -fill both -expand 1 -pady 5 -padx 5
 
 	foreach option {
-		{b partialinclude {Allow Partially Added Files}}
 		{b pullsummary {Show Pull Summary}}
 		{b trustmtime  {Trust File Modification Timestamps}}
 		{i diffcontext {Number of Diff Context Lines}}
@@ -3299,7 +3259,6 @@ proc apply_config {} {
 
 set default_config(gui.trustmtime) false
 set default_config(gui.pullsummary) true
-set default_config(gui.partialinclude) false
 set default_config(gui.diffcontext) 5
 set default_config(gui.fontui) [font configure font_ui]
 set default_config(gui.fontdiff) [font configure font_diff]
