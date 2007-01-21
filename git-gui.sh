@@ -337,7 +337,7 @@ proc PARENT {} {
 
 proc rescan {after} {
 	global HEAD PARENT MERGE_HEAD commit_type
-	global ui_index ui_other ui_status_value ui_comm
+	global ui_index ui_workdir ui_status_value ui_comm
 	global rescan_active file_states
 	global repo_config
 
@@ -561,7 +561,7 @@ proc prune_selection {} {
 ## diff
 
 proc clear_diff {} {
-	global ui_diff current_diff ui_index ui_other
+	global ui_diff current_diff ui_index ui_workdir
 
 	$ui_diff conf -state normal
 	$ui_diff delete 0.0 end
@@ -570,7 +570,7 @@ proc clear_diff {} {
 	set current_diff {}
 
 	$ui_index tag remove in_diff 0.0 end
-	$ui_other tag remove in_diff 0.0 end
+	$ui_workdir tag remove in_diff 0.0 end
 }
 
 proc reshow_diff {} {
@@ -1231,11 +1231,11 @@ proc push_to {remote} {
 ## ui helpers
 
 proc mapcol {state path} {
-	global all_cols ui_other
+	global all_cols ui_workdir
 
 	if {[catch {set r $all_cols($state)}]} {
 		puts "error: no column for state={$state} $path"
-		return $ui_other
+		return $ui_workdir
 	}
 	return $r
 }
@@ -1368,19 +1368,19 @@ proc display_file {path state} {
 }
 
 proc display_all_files {} {
-	global ui_index ui_other
+	global ui_index ui_workdir
 	global file_states file_lists
 	global last_clicked selected_paths
 
 	$ui_index conf -state normal
-	$ui_other conf -state normal
+	$ui_workdir conf -state normal
 
 	$ui_index delete 0.0 end
-	$ui_other delete 0.0 end
+	$ui_workdir delete 0.0 end
 	set last_clicked {}
 
 	set file_lists($ui_index) [list]
-	set file_lists($ui_other) [list]
+	set file_lists($ui_workdir) [list]
 
 	foreach path [lsort [array names file_states]] {
 		set s $file_states($path)
@@ -1402,7 +1402,7 @@ proc display_all_files {} {
 	}
 
 	$ui_index conf -state disabled
-	$ui_other conf -state disabled
+	$ui_workdir conf -state disabled
 }
 
 proc update_indexinfo {msg pathList after} {
@@ -1960,7 +1960,7 @@ static unsigned char file_merge_bits[] = {
 } -maskdata $filemask
 
 set ui_index .vpane.files.index.list
-set ui_other .vpane.files.other.list
+set ui_workdir .vpane.files.workdir.list
 set max_status_desc 0
 foreach i {
 		{__ i plain    "Unmodified"}
@@ -1990,7 +1990,7 @@ foreach i {
 	if {[lindex $i 1] eq {i}} {
 		set all_cols([lindex $i 0]) $ui_index
 	} else {
-		set all_cols([lindex $i 0]) $ui_other
+		set all_cols([lindex $i 0]) $ui_workdir
 	}
 	set all_icons([lindex $i 0]) file_[lindex $i 2]
 	set all_descs([lindex $i 0]) [lindex $i 3]
@@ -2858,7 +2858,7 @@ proc do_macosx_app {} {
 }
 
 proc toggle_or_diff {w x y} {
-	global file_states file_lists current_diff ui_index ui_other
+	global file_states file_lists current_diff ui_index ui_workdir
 	global last_clicked selected_paths
 
 	set pos [split [$w index @$x,$y] .]
@@ -2873,7 +2873,7 @@ proc toggle_or_diff {w x y} {
 	set last_clicked [list $w $lno]
 	array unset selected_paths
 	$ui_index tag remove in_sel 0.0 end
-	$ui_other tag remove in_sel 0.0 end
+	$ui_workdir tag remove in_sel 0.0 end
 
 	if {$col == 0} {
 		if {$current_diff eq $path} {
@@ -3317,25 +3317,25 @@ pack .vpane.files.index.sb -side right -fill y
 pack $ui_index -side left -fill both -expand 1
 .vpane.files add .vpane.files.index -sticky nsew
 
-# -- Other (Add) File List
+# -- Working Directory File List
 #
-frame .vpane.files.other -height 100 -width 100
-label .vpane.files.other.title -text {Untracked Files} \
+frame .vpane.files.workdir -height 100 -width 100
+label .vpane.files.workdir.title -text {Untracked Files} \
 	-background red \
 	-font font_ui
-text $ui_other -background white -borderwidth 0 \
+text $ui_workdir -background white -borderwidth 0 \
 	-width 40 -height 10 \
 	-font font_ui \
 	-cursor $cursor_ptr \
-	-yscrollcommand {.vpane.files.other.sb set} \
+	-yscrollcommand {.vpane.files.workdir.sb set} \
 	-state disabled
-scrollbar .vpane.files.other.sb -command [list $ui_other yview]
-pack .vpane.files.other.title -side top -fill x
-pack .vpane.files.other.sb -side right -fill y
-pack $ui_other -side left -fill both -expand 1
-.vpane.files add .vpane.files.other -sticky nsew
+scrollbar .vpane.files.workdir.sb -command [list $ui_workdir yview]
+pack .vpane.files.workdir.title -side top -fill x
+pack .vpane.files.workdir.sb -side right -fill y
+pack $ui_workdir -side left -fill both -expand 1
+.vpane.files add .vpane.files.workdir -sticky nsew
 
-foreach i [list $ui_index $ui_other] {
+foreach i [list $ui_index $ui_workdir] {
 	$i tag conf in_diff -font font_uibold
 	$i tag conf in_sel \
 		-background [$i cget -foreground] \
@@ -3703,7 +3703,7 @@ bind all <$M1B-Key-q> do_quit
 bind all <$M1B-Key-Q> do_quit
 bind all <$M1B-Key-w> {destroy [winfo toplevel %W]}
 bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
-foreach i [list $ui_index $ui_other] {
+foreach i [list $ui_index $ui_workdir] {
 	bind $i <Button-1>       "toggle_or_diff         $i %x %y; break"
 	bind $i <$M1B-Button-1>  "add_one_to_selection   $i %x %y; break"
 	bind $i <Shift-Button-1> "add_range_to_selection $i %x %y; break"
@@ -3711,7 +3711,7 @@ foreach i [list $ui_index $ui_other] {
 unset i
 
 set file_lists($ui_index) [list]
-set file_lists($ui_other) [list]
+set file_lists($ui_workdir) [list]
 
 set HEAD {}
 set PARENT {}
