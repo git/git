@@ -1656,7 +1656,8 @@ proc populate_branch_menu {} {
 
 proc do_create_branch_action {w} {
 	global all_heads null_sha1
-	global create_branch_checkout create_branch_revtype create_branch_head
+	global create_branch_checkout create_branch_revtype
+	global create_branch_head create_branch_trackinghead
 
 	set newbranch [string trim [$w.name.t get 0.0 end]]
 	if {![catch {exec git show-ref --verify -- "refs/heads/$newbranch"}]} {
@@ -1683,6 +1684,7 @@ proc do_create_branch_action {w} {
 	set rev {}
 	switch -- $create_branch_revtype {
 	head {set rev $create_branch_head}
+	tracking {set rev $create_branch_trackinghead}
 	expression {set rev [string trim [$w.from.exp.t get 0.0 end]]}
 	}
 	if {[catch {set cmt [exec git rev-parse --verify "${rev}^0"]}]} {
@@ -1717,12 +1719,14 @@ proc do_create_branch_action {w} {
 }
 
 proc do_create_branch {} {
-	global all_heads current_branch
-	global create_branch_checkout create_branch_revtype create_branch_head
+	global all_heads current_branch tracking_branches
+	global create_branch_checkout create_branch_revtype
+	global create_branch_head create_branch_trackinghead
 
 	set create_branch_checkout true
 	set create_branch_revtype head
 	set create_branch_head $current_branch
+	set create_branch_trackinghead {}
 
 	set w .branch_editor
 	toplevel $w
@@ -1768,6 +1772,16 @@ proc do_create_branch {} {
 	pack $w.name.t -side left -fill x -expand 1
 	pack $w.name -anchor nw -fill x -pady 5 -padx 5
 
+	set all_trackings [list]
+	foreach b [array names tracking_branches] {
+		regsub ^refs/(heads|remotes)/ $b {} b
+		lappend all_trackings $b
+	}
+	set all_trackings [lsort -unique $all_trackings]
+	if {$all_trackings ne {}} {
+		set create_branch_trackinghead [lindex $all_trackings 0]
+	}
+
 	labelframe $w.from \
 		-text {Starting Revision} \
 		-font font_ui
@@ -1780,6 +1794,17 @@ proc do_create_branch {} {
 	eval tk_optionMenu $w.from.head.m create_branch_head $all_heads
 	pack $w.from.head.r -side left
 	pack $w.from.head.m -side left
+	frame $w.from.tracking
+	radiobutton $w.from.tracking.r \
+		-text {Tracking Branch:} \
+		-value tracking \
+		-variable create_branch_revtype \
+		-font font_ui
+	eval tk_optionMenu $w.from.tracking.m \
+		create_branch_trackinghead \
+		$all_trackings
+	pack $w.from.tracking.r -side left
+	pack $w.from.tracking.m -side left
 	frame $w.from.exp
 	radiobutton $w.from.exp.r \
 		-text {Revision Expression:} \
@@ -1796,6 +1821,7 @@ proc do_create_branch {} {
 	pack $w.from.exp.r -side left
 	pack $w.from.exp.t -side left -fill x -expand 1
 	pack $w.from.head -padx 5 -fill x -expand 1
+	pack $w.from.tracking -padx 5 -fill x -expand 1
 	pack $w.from.exp -padx 5 -fill x -expand 1
 	pack $w.from -anchor nw -fill x -pady 5 -padx 5
 
