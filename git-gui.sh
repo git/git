@@ -1597,20 +1597,14 @@ proc write_checkout_index {fd pathList totalCnt batch msg after} {
 		{incr i -1} {
 		set path [lindex $pathList $update_index_cp]
 		incr update_index_cp
-
 		switch -glob -- [lindex $file_states($path) 0] {
-		AM -
-		AD {set new A_}
-		MM -
-		MD {set new M_}
-		_M -
-		_D {set new __}
-		?? {continue}
+		U? {continue}
+		?M -
+		?D {
+			puts -nonewline $fd "$path\0"
+			display_file $path ?_
 		}
-
-		puts -nonewline $fd $path
-		puts -nonewline $fd "\0"
-		display_file $path $new
+		}
 	}
 
 	set ui_status_value [format \
@@ -2406,12 +2400,9 @@ proc revert_helper {txt paths} {
 	set after {}
 	foreach path $paths {
 		switch -glob -- [lindex $file_states($path) 0] {
-		AM -
-		AD -
-		MM -
-		MD -
-		_M -
-		_D {
+		U? {continue}
+		?M -
+		?D {
 			lappend pathList $path
 			if {$path eq $current_diff} {
 				set after {reshow_diff;}
