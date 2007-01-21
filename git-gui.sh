@@ -1320,20 +1320,27 @@ proc display_file {path state} {
 	set new_m [lindex $s 0]
 	set icon_name [lindex $s 1]
 
-	set s [string index $new_m 0]
-	if {$s eq {U}} {
-		set s _
+	set o [string index $old_m 0]
+	set n [string index $new_m 0]
+	if {$o eq {U}} {
+		set o _
 	}
-	display_file_helper	$ui_index $path $icon_name \
-		[string index $old_m 0] $s
+	if {$n eq {U}} {
+		set n _
+	}
+	display_file_helper	$ui_index $path $icon_name $o $n
 
-	if {[string index $new_m 0] eq {U}} {
-		set s U
+	if {[string index $old_m 0] eq {U}} {
+		set o U
 	} else {
-		set s [string index $new_m 1]
+		set o [string index $old_m 0]
 	}
-	display_file_helper	$ui_workdir $path $icon_name \
-		[string index $old_m 1] $s
+	if {[string index $new_m 0] eq {U}} {
+		set n U
+	} else {
+		set n [string index $new_m 1]
+	}
+	display_file_helper	$ui_workdir $path $icon_name $o $n
 
 	if {$new_m eq {__}} {
 		unset file_states($path)
