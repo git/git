@@ -3,7 +3,7 @@
 exec wish "$0" -- "$@"
 
 set copyright {
-Copyright © 2006 Shawn Pearce, Paul Mackerras.
+Copyright © 2006, 2007 Shawn Pearce, Paul Mackerras.
 
 All rights reserved.
 
@@ -11,6 +11,7 @@ This program is free software; it may be used, copied, modified
 and distributed under the terms of the GNU General Public Licence,
 either version 2, or (at your option) any later version.}
 
+set appvers {@@GITGUI_VERSION@@}
 set appname [lindex [file split $argv0] end]
 set gitdir {}
 
