@@ -3922,6 +3922,10 @@ $ui_diff tag conf d>>>>>>> \
 set ctxm .vpane.lower.diff.body.ctxm
 menu $ctxm -tearoff 0
 $ctxm add command \
+	-label {Refresh} \
+	-font font_ui \
+	-command reshow_diff
+$ctxm add command \
 	-label {Copy} \
 	-font font_ui \
 	-command {tk_textCopy $ui_diff}
