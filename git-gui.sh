@@ -2582,7 +2582,7 @@ proc do_options {} {
 	button $w.buttons.cancel -text {Cancel} \
 		-font font_ui \
 		-command [list destroy $w]
-	pack $w.buttons.cancel -side right
+	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
 	labelframe $w.repo -text "[reponame] Repository" \
