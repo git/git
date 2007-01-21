@@ -1810,8 +1810,8 @@ proc do_create_branch {} {
 		-font font_ui
 	$w.desc.name_t insert 0.0 $repo_config(gui.newbranchtemplate)
 	grid $w.desc.name_l $w.desc.name_t -stick we -padx {0 5}
-	bind $w.desc.name_t <Shift-Key-Tab> "focus $w.postActions.checkout;break"
-	bind $w.desc.name_t <Key-Tab> "focus $w.from.exp_t;break"
+	bind $w.desc.name_t <Shift-Key-Tab> {focus [tk_focusPrev %W];break}
+	bind $w.desc.name_t <Key-Tab> {focus [tk_focusNext %W];break}
 	bind $w.desc.name_t <Key-Return> "do_create_branch_action $w;break"
 	bind $w.desc.name_t <Key> {
 		if {{%K} ne {BackSpace}
@@ -1860,8 +1860,8 @@ proc do_create_branch {} {
 		-width 50 \
 		-font font_ui
 	grid $w.from.exp_r $w.from.exp_t -stick we -padx {0 5}
-	bind $w.from.exp_t <Shift-Key-Tab> "focus $w.desc.name_t;break"
-	bind $w.from.exp_t <Key-Tab> "focus $w.postActions.checkout;break"
+	bind $w.from.exp_t <Shift-Key-Tab> {focus [tk_focusPrev %W];break}
+	bind $w.from.exp_t <Key-Tab> {focus [tk_focusNext %W];break}
 	bind $w.from.exp_t <Key-Return> "do_create_branch_action $w;break"
 	grid columnconfigure $w.from 1 -weight 1
 	pack $w.from -anchor nw -fill x -pady 5 -padx 5
@@ -3049,7 +3049,8 @@ proc do_options {} {
 					-width 20 \
 					-font font_ui
 				$w.$f.$name.v insert 0.0 [set ${f}_config_new(gui.$name)]
-				bind $w.$f.$name.v <Key-Tab> break
+				bind $w.$f.$name.v <Shift-Key-Tab> {focus [tk_focusPrev %W];break}
+				bind $w.$f.$name.v <Key-Tab> {focus [tk_focusNext %W];break}
 				bind $w.$f.$name.v <Key-Return> break
 				bind $w.$f.$name.v <FocusOut> "
 					set ${f}_config_new(gui.$name) \
