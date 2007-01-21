@@ -1104,7 +1104,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 		__ -
 		A_ -
 		M_ -
-		DD {
+		D_ {
 			unset file_states($path)
 			catch {unset selected_paths($path)}
 		}
@@ -1516,7 +1516,7 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 		AD -
 		MD -
 		UD -
-		_D {set new DD}
+		_D {set new D_}
 
 		_M -
 		MM -
@@ -1969,7 +1969,6 @@ foreach i {
 		{AD "Added (but gone)"}
 
 		{_D "Missing"}
-		{DD "Removed by commit"}
 		{D_ "Removed by commit"}
 		{DO "Removed (still exists)"}
 		{DM "Removed (but modified)"}
@@ -2872,7 +2871,7 @@ proc toggle_or_diff {w x y} {
 		switch -glob -- [lindex $file_states($path) 0] {
 		A_ -
 		M_ -
-		DD -
+		D_ -
 		DO -
 		DM {
 			update_indexinfo \
