@@ -3036,6 +3036,7 @@ proc do_options {} {
 					-from 1 -to 99 -increment 1 \
 					-width 3 \
 					-font font_ui
+				bind $w.$f.$name.v <FocusIn> {%W selection range 0 end}
 				pack $w.$f.$name.v -side right -anchor e -padx 5
 				pack $w.$f.$name -side top -anchor w -fill x
 			}
@@ -3052,6 +3053,7 @@ proc do_options {} {
 				bind $w.$f.$name.v <Shift-Key-Tab> {focus [tk_focusPrev %W];break}
 				bind $w.$f.$name.v <Key-Tab> {focus [tk_focusNext %W];break}
 				bind $w.$f.$name.v <Key-Return> break
+				bind $w.$f.$name.v <FocusIn> "$w.$f.$name.v tag add sel 0.0 end"
 				bind $w.$f.$name.v <FocusOut> "
 					set ${f}_config_new(gui.$name) \
 					\[string trim \[$w.$f.$name.v get 0.0 end\]\]
@@ -3088,6 +3090,7 @@ proc do_options {} {
 			-from 2 -to 80 -increment 1 \
 			-width 3 \
 			-font font_ui
+		bind $w.global.$name.size <FocusIn> {%W selection range 0 end}
 		pack $w.global.$name.size -side right -anchor e
 		pack $w.global.$name.family -side right -anchor e
 		pack $w.global.$name -side top -anchor w -fill x
