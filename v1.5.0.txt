@@ -144,7 +144,8 @@ Updates in v1.5.0 since v1.4.4 series
    your repository.
 
  - git-fetch used to complain updating the current branch but
-   this is now allowed for a bare repository.
+   this is now allowed for a bare repository.  So is the use of
+   'git-branch -f' to update the current branch.
 
  - Porcelain-ish commands that require a working tree refuses to
    work in a bare repository.
@@ -158,7 +159,11 @@ Updates in v1.5.0 since v1.4.4 series
    "branch@{time}" and "branch@{Nth}" notation.
 
  - "git show-branch" learned showing the reflog data with the
-   new --reflog option.
+   new --reflog option.  "git log" has --walk-reflogs option to
+   view reflog entries in a more verbose manner.
+
+ - git-branch knows how to rename branches and moves existing
+   reflog data from the old branch to the new one.
 
  - The commits referred to by reflog entries are now protected
    against pruning.  The new command "git reflog expire" can be
@@ -173,8 +178,21 @@ Updates in v1.5.0 since v1.4.4 series
    reflog entries that refer to commits that are no longer in
    the repository when that happens.
 
- - git-branch knows how to rename branches and moves existing
-   reflog data from the old branch to the new one.
+
+* Crufts removal
+
+ - We used to say "old commits are retrievable using reflog and
+   'master@{yesterday}' syntax as long as you haven't run
+   git-prune".  We no longer have to say the latter half of the
+   above sentence, as git-prune does not remove things reachable
+   from reflog entries.
+
+ - 'git-prune' by default does not remove _everything_
+   unreachable, as there is a one-day grace period built-in.
+
+ - There is a toplevel garbage collector script, 'git-gc', that
+   is an easy way to run 'git-repack -a -d', 'git-reflog gc',
+   and 'git-prune'.
 
 
 * Detached HEAD
@@ -266,6 +284,21 @@ Updates in v1.5.0 since v1.4.4 series
    legacy encoding without setting i18n.commitencoding to set
    the configuration, but taken with other improvement, please
    excuse us for this very minor one-time inconvenience.
+
+
+* e-mailed patches
+
+ - See the above I18n section.
+
+ - git-format-patch now enables --binary without being asked.
+   git-am does _not_ default to it, as sending binary patch via
+   e-mail is unusual and is harder to review than textual
+   patches and it is prudent to require the person who is
+   applying the patch to explicitly ask for it.
+
+ - The default suffix for git-format-patch output is now ".patch",
+   not ".txt".  This can be changed with --suffix=.txt option,
+   or "format.suffix = .txt" in the configuration.
 
 
 * Foreign SCM interfaces
