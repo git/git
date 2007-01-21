@@ -1816,6 +1816,7 @@ proc do_delete_branch_action {w} {
 		set b [$w.list.l get $i]
 		if {[catch {set o [exec git rev-parse --verify $b]}]} continue
 		if {$delete_branch_checkhead} {
+			if {$b eq $delete_branch_head} continue
 			if {[catch {set m [exec git merge-base $o $delete_branch_head]}]} continue
 			if {$o ne $m} {
 				lappend not_merged $b
