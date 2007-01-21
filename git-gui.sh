@@ -1447,10 +1447,7 @@ proc write_update_indexinfo {fd pathList totalCnt batch msg after} {
 		set info [lindex $s 2]
 		if {$info eq {}} continue
 
-		puts -nonewline $fd $info
-		puts -nonewline $fd "\t"
-		puts -nonewline $fd $path
-		puts -nonewline $fd "\0"
+		puts -nonewline $fd "$info\t$path\0"
 		display_file $path $new
 	}
 
