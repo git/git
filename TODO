@@ -6,9 +6,11 @@ Items outstanding:
 
  * Make use of the new default merge data stored in repo-config.
 
- * Checkout or create a different local branch.
+ * Checkout a different local branch.
 
- * Delete a local branch.
+ * Push any local branch to a remote branch.
+
+ * Merge any local branches through a real merge UI.
 
  * Allow user to define keyboard shortcuts for frequently used fetch
    or merge operations.  Or maybe just define a keyboard shortcut
@@ -40,10 +42,3 @@ Known bugs:
    process is just terminating due to a segfault or something,
    as the do_quit proc in git-gui doesn't run.  It often seems to
    occur while writing a commit message in the buffer.  Odd.
-
- * At one point after using git-gui for a while to make many commits
-   to a repository I reverted one file through git-gui and another
-   manually in my editor; during commit git-gui crashed with an
-   error about the icon name it was trying to update no longer
-   existed in the widget.  I suspect something didn't update right
-   in file_states...
