@@ -1114,8 +1114,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 		AM -
 		AD -
 		MM -
-		MD -
-		DM {
+		MD {
 			set file_states($path) [list \
 				_[string index $m 1] \
 				[lindex $s 1] \
@@ -2872,8 +2871,7 @@ proc toggle_or_diff {w x y} {
 		A_ -
 		M_ -
 		D_ -
-		DO -
-		DM {
+		DO {
 			update_indexinfo \
 				"Removing [short_path $path] from commit" \
 				[list $path] \
