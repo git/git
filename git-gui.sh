@@ -1753,6 +1753,8 @@ proc do_create_branch {} {
 		-font font_ui
 	label $w.name.l -text {Name:} -font font_ui
 	text $w.name.t \
+		-borderwidth 1 \
+		-relief sunken \
 		-height 1 \
 		-width 40 \
 		-font font_ui
@@ -1812,6 +1814,8 @@ proc do_create_branch {} {
 		-variable create_branch_revtype \
 		-font font_ui
 	text $w.from.exp.t \
+		-borderwidth 1 \
+		-relief sunken \
 		-height 1 \
 		-width 50 \
 		-font font_ui
