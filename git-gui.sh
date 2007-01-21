@@ -1867,16 +1867,34 @@ proc do_create_branch {} {
 
 proc do_delete_branch_action {w} {
 	global all_heads
-	global delete_branch_checkhead delete_branch_head
+	global delete_branch_checktype delete_branch_head delete_branch_trackinghead
+
+	set check_rev {}
+	switch -- $delete_branch_checktype {
+	head {set check_rev $delete_branch_head}
+	tracking {set check_rev $delete_branch_trackinghead}
+	always {set check_rev {:none}}
+	}
+	if {$check_rev eq {:none}} {
+		set check_cmt {}
+	} elseif {[catch {set check_cmt [exec git rev-parse --verify "${check_rev}^0"]}]} {
+		tk_messageBox \
+			-icon error \
+			-type ok \
+			-title [wm title $w] \
+			-parent $w \
+			-message "Invalid check revision: $check_rev"
+		return
+	}
 
 	set to_delete [list]
 	set not_merged [list]
 	foreach i [$w.list.l curselection] {
 		set b [$w.list.l get $i]
 		if {[catch {set o [exec git rev-parse --verify $b]}]} continue
-		if {$delete_branch_checkhead} {
-			if {$b eq $delete_branch_head} continue
-			if {[catch {set m [exec git merge-base $o $delete_branch_head]}]} continue
+		if {$check_cmt ne {}} {
+			if {$b eq $check_rev} continue
+			if {[catch {set m [exec git merge-base $o $check_cmt]}]} continue
 			if {$o ne $m} {
 				lappend not_merged $b
 				continue
@@ -1885,7 +1903,7 @@ proc do_delete_branch_action {w} {
 		lappend to_delete [list $b $o]
 	}
 	if {$not_merged ne {}} {
-		set msg "The following branches are not completely merged into $delete_branch_head:
+		set msg "The following branches are not completely merged into $check_rev:
 
  - [join $not_merged "\n - "]"
 		tk_messageBox \
@@ -1896,7 +1914,7 @@ proc do_delete_branch_action {w} {
 			-message $msg
 	}
 	if {$to_delete eq {}} return
-	if {!$delete_branch_checkhead} {
+	if {$delete_branch_checktype eq {always}} {
 		set msg {Recovering deleted branches is difficult.
 
 Delete the selected branches?}
@@ -1940,10 +1958,11 @@ Delete the selected branches?}
 
 proc do_delete_branch {} {
 	global all_heads tracking_branches current_branch
-	global delete_branch_checkhead delete_branch_head
+	global delete_branch_checktype delete_branch_head delete_branch_trackinghead
 
-	set delete_branch_checkhead 1
+	set delete_branch_checktype head
 	set delete_branch_head $current_branch
+	set delete_branch_trackinghead {}
 
 	set w .branch_editor
 	toplevel $w
@@ -1985,21 +2004,37 @@ proc do_delete_branch {} {
 		regsub ^refs/(heads|remotes)/ $b {} b
 		lappend all_trackings $b
 	}
+	set all_trackings [lsort -unique $all_trackings]
+	if {$all_trackings ne {} && $delete_branch_trackinghead eq {}} {
+		set delete_branch_trackinghead [lindex $all_trackings 0]
+	}
 
 	labelframe $w.validate \
-		-text {Only Delete If} \
+		-text {Delete Only If} \
 		-font font_ui
-	frame $w.validate.head
-	checkbutton $w.validate.head.r \
-		-text {Already Merged Into:} \
-		-variable delete_branch_checkhead \
+	radiobutton $w.validate.head_r \
+		-text {Merged Into Local Branch:} \
+		-value head \
+		-variable delete_branch_checktype \
 		-font font_ui
-	eval tk_optionMenu $w.validate.head.m delete_branch_head \
-		$all_heads \
-		[lsort -unique $all_trackings]
-	pack $w.validate.head.r -side left
-	pack $w.validate.head.m -side left
-	pack $w.validate.head -padx 5 -fill x -expand 1
+	eval tk_optionMenu $w.validate.head_m delete_branch_head $all_heads
+	grid $w.validate.head_r $w.validate.head_m -sticky w
+	radiobutton $w.validate.tracking_r \
+		-text {Merged Into Tracking Branch:} \
+		-value tracking \
+		-variable delete_branch_checktype \
+		-font font_ui
+	eval tk_optionMenu $w.validate.tracking_m \
+		delete_branch_trackinghead \
+		$all_trackings
+	grid $w.validate.tracking_r $w.validate.tracking_m -sticky w
+	radiobutton $w.validate.always_r \
+		-text {Always (Do not perform merge checks)} \
+		-value always \
+		-variable delete_branch_checktype \
+		-font font_ui
+	grid $w.validate.always_r -columnspan 2 -sticky w
+	grid columnconfigure $w.validate 1 -weight 1
 	pack $w.validate -anchor nw -fill x -pady 5 -padx 5
 
 	bind $w <Visibility> "grab $w; focus $w"
