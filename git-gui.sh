@@ -239,6 +239,9 @@ if {[catch {cd [file dirname $gitdir]} err]} {
 	error_popup "No working directory [file dirname $gitdir]:\n\n$err"
 	exit 1
 }
+set reponame [lindex [file split \
+	[file normalize [file dirname $gitdir]]] \
+	end]
 
 set single_commit 0
 if {$appname eq {git-citool}} {
@@ -2417,7 +2420,7 @@ proc do_include_all {} {
 }
 
 proc revert_helper {txt paths} {
-	global gitdir appname
+	global gitdir appname reponame
 	global file_states current_diff
 
 	if {![lock_index begin-update]} return
@@ -2449,10 +2452,6 @@ proc revert_helper {txt paths} {
 	} else {
 		set s "these $n files"
 	}
-
-	set reponame [lindex [file split \
-		[file normalize [file dirname $gitdir]]] \
-		end]
 
 	set reply [tk_dialog \
 		.confirm_revert \
@@ -2599,7 +2598,7 @@ $copyright" \
 }
 
 proc do_options {} {
-	global appname gitdir font_descs
+	global appname gitdir reponame font_descs
 	global repo_config global_config
 	global repo_config_new global_config_new
 
@@ -2618,9 +2617,6 @@ proc do_options {} {
 	foreach name [array names global_config] {
 		set global_config_new($name) $global_config($name)
 	}
-	set reponame [lindex [file split \
-		[file normalize [file dirname $gitdir]]] \
-		end]
 
 	set w .options_editor
 	toplevel $w
@@ -2756,11 +2752,7 @@ proc do_save_config {w} {
 }
 
 proc do_windows_shortcut {} {
-	global gitdir appname argv0
-
-	set reponame [lindex [file split \
-		[file normalize [file dirname $gitdir]]] \
-		end]
+	global gitdir appname reponame argv0
 
 	if {[catch {
 		set desktop [exec cygpath \
@@ -2806,11 +2798,7 @@ proc do_windows_shortcut {} {
 }
 
 proc do_macosx_app {} {
-	global gitdir appname argv0 env
-
-	set reponame [lindex [file split \
-		[file normalize [file dirname $gitdir]]] \
-		end]
+	global gitdir appname reponame argv0 env
 
 	set fn [tk_getSaveFile \
 		-parent . \
