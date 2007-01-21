@@ -3916,24 +3916,24 @@ pack $ui_diff -side left -fill both -expand 1
 pack .vpane.lower.diff.header -side top -fill x
 pack .vpane.lower.diff.body -side bottom -fill both -expand 1
 
-$ui_diff tag conf d_@ -font font_diffbold
-$ui_diff tag conf d_+ -foreground blue
+$ui_diff tag conf d_@ -foreground blue -font font_diffbold
+$ui_diff tag conf d_+ -foreground {#00a000}
 $ui_diff tag conf d_- -foreground red
 
-$ui_diff tag conf d_++ -foreground blue
+$ui_diff tag conf d_++ -foreground {#00a000}
 $ui_diff tag conf d_-- -foreground red
 $ui_diff tag conf d_+s \
-	-foreground blue \
-	-background azure2
+	-foreground {#00a000} \
+	-background {#e2effa}
 $ui_diff tag conf d_-s \
 	-foreground red \
-	-background azure2
+	-background {#e2effa}
 $ui_diff tag conf d_s+ \
-	-foreground blue \
-	-background {light goldenrod yellow}
+	-foreground {#00a000} \
+	-background ivory1
 $ui_diff tag conf d_s- \
 	-foreground red \
-	-background {light goldenrod yellow}
+	-background ivory1
 
 $ui_diff tag conf d<<<<<<< \
 	-foreground orange \
@@ -3944,6 +3944,8 @@ $ui_diff tag conf d======= \
 $ui_diff tag conf d>>>>>>> \
 	-foreground orange \
 	-font font_diffbold
+
+$ui_diff tag raise sel
 
 # -- Diff Body Context Menu
 #
