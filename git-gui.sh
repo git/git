@@ -1811,43 +1811,43 @@ proc do_delete_branch_action {w} {
 	global delete_branch_checkhead delete_branch_head
 
 	set to_delete [list]
-	set msg {Are you sure you want to delete the following branches?
-
-}
+	set not_merged [list]
 	foreach i [$w.list.l curselection] {
 		set b [$w.list.l get $i]
 		if {[catch {set o [exec git rev-parse --verify $b]}]} continue
 		if {$delete_branch_checkhead} {
 			if {[catch {set m [exec git merge-base $o $delete_branch_head]}]} continue
-			if {$o ne $m} continue
+			if {$o ne $m} {
+				lappend not_merged $b
+				continue
+			}
 		}
 		lappend to_delete [list $b $o]
-		append msg " - $b\n"
 	}
-	if {$to_delete eq {}} {
+	if {$not_merged ne {}} {
+		set msg "The following branches are not completely merged into $delete_branch_head:
+
+ - [join $not_merged "\n - "]"
 		tk_messageBox \
 			-icon info \
 			-type ok \
 			-title [wm title $w] \
 			-parent $w \
-			-message {No branches are able to be deleted.
-
-This is likely because you did not select any branches,
-or all selected branches are not completely merged.
-}
-		return
+			-message $msg
 	}
-	append msg {
-It can be difficult to recover deleted branches.
+	if {$to_delete eq {}} return
+	if {!$delete_branch_checkhead} {
+		set msg {Recovering deleted branches is difficult.
 
-Delete the above branches?}
-	if {[tk_messageBox \
-		-icon warning \
-		-type yesno \
-		-title [wm title $w] \
-		-parent $w \
-		-message $msg] ne yes} {
-		return
+Delete the selected branches?}
+		if {[tk_messageBox \
+			-icon warning \
+			-type yesno \
+			-title [wm title $w] \
+			-parent $w \
+			-message $msg] ne yes} {
+			return
+		}
 	}
 
 	set failed {}
