@@ -997,7 +997,7 @@ proc commit_writetree {curHEAD msg} {
 
 proc commit_committree {fd_wt curHEAD msg} {
 	global HEAD PARENT MERGE_HEAD commit_type
-	global single_commit
+	global single_commit all_heads current_branch
 	global ui_status_value ui_comm selected_commit_type
 	global file_states selected_paths rescan_active
 
@@ -1047,6 +1047,14 @@ proc commit_committree {fd_wt curHEAD msg} {
 		set ui_status_value {Commit failed.}
 		unlock_index
 		return
+	}
+
+	# -- Make sure our current branch exists.
+	#
+	if {$commit_type eq {initial}} {
+		lappend all_heads $current_branch
+		set all_heads [lsort -unique $all_heads]
+		populate_branch_menu
 	}
 
 	# -- Cleanup after ourselves.
