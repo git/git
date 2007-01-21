@@ -1891,7 +1891,7 @@ Delete the above branches?}
 }
 
 proc do_delete_branch {} {
-	global all_heads current_branch
+	global all_heads tracking_branches current_branch
 	global delete_branch_checkhead delete_branch_head
 
 	set delete_branch_checkhead 1
@@ -1932,15 +1932,23 @@ proc do_delete_branch {} {
 	pack $w.list.l -fill both -pady 5 -padx 5
 	pack $w.list -fill both -pady 5 -padx 5
 
+	set all_trackings [list]
+	foreach b [array names tracking_branches] {
+		regsub ^refs/(heads|remotes)/ $b {} b
+		lappend all_trackings $b
+	}
+
 	labelframe $w.validate \
 		-text {Only Delete If} \
 		-font font_ui
 	frame $w.validate.head
 	checkbutton $w.validate.head.r \
-		-text {Already Merged Into Local Branch:} \
+		-text {Already Merged Into:} \
 		-variable delete_branch_checkhead \
 		-font font_ui
-	eval tk_optionMenu $w.validate.head.m delete_branch_head $all_heads
+	eval tk_optionMenu $w.validate.head.m delete_branch_head \
+		$all_heads \
+		[lsort -unique $all_trackings]
 	pack $w.validate.head.r -side left
 	pack $w.validate.head.m -side left
 	pack $w.validate.head -padx 5 -fill x -expand 1
