@@ -3654,13 +3654,17 @@ label .vpane.files.index.title -text {Changes To Be Committed} \
 	-font font_ui
 text $ui_index -background white -borderwidth 0 \
 	-width 40 -height 10 \
+	-wrap none \
 	-font font_ui \
 	-cursor $cursor_ptr \
-	-yscrollcommand {.vpane.files.index.sb set} \
+	-xscrollcommand {.vpane.files.index.sx set} \
+	-yscrollcommand {.vpane.files.index.sy set} \
 	-state disabled
-scrollbar .vpane.files.index.sb -command [list $ui_index yview]
+scrollbar .vpane.files.index.sx -orient h -command [list $ui_index xview]
+scrollbar .vpane.files.index.sy -orient v -command [list $ui_index yview]
 pack .vpane.files.index.title -side top -fill x
-pack .vpane.files.index.sb -side right -fill y
+pack .vpane.files.index.sx -side bottom -fill x
+pack .vpane.files.index.sy -side right -fill y
 pack $ui_index -side left -fill both -expand 1
 .vpane.files add .vpane.files.index -sticky nsew
 
@@ -3672,13 +3676,17 @@ label .vpane.files.workdir.title -text {Changed But Not Updated} \
 	-font font_ui
 text $ui_workdir -background white -borderwidth 0 \
 	-width 40 -height 10 \
+	-wrap none \
 	-font font_ui \
 	-cursor $cursor_ptr \
-	-yscrollcommand {.vpane.files.workdir.sb set} \
+	-xscrollcommand {.vpane.files.workdir.sx set} \
+	-yscrollcommand {.vpane.files.workdir.sy set} \
 	-state disabled
-scrollbar .vpane.files.workdir.sb -command [list $ui_workdir yview]
+scrollbar .vpane.files.workdir.sx -orient h -command [list $ui_workdir xview]
+scrollbar .vpane.files.workdir.sy -orient v -command [list $ui_workdir yview]
 pack .vpane.files.workdir.title -side top -fill x
-pack .vpane.files.workdir.sb -side right -fill y
+pack .vpane.files.workdir.sx -side bottom -fill x
+pack .vpane.files.workdir.sy -side right -fill y
 pack $ui_workdir -side left -fill both -expand 1
 .vpane.files add .vpane.files.workdir -sticky nsew
 
