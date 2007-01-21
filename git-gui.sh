@@ -1713,7 +1713,6 @@ proc do_create_branch_action {w} {
 	lappend all_heads $newbranch
 	set all_heads [lsort $all_heads]
 	populate_branch_menu
-
 	destroy $w
 }
 
@@ -1819,8 +1818,138 @@ proc do_create_branch {} {
 	tkwait window $w
 }
 
+proc do_delete_branch_action {w} {
+	global all_heads
+	global delete_branch_checkhead delete_branch_head
+
+	set to_delete [list]
+	set msg {Are you sure you want to delete the following branches?
+
+}
+	foreach i [$w.list.l curselection] {
+		set b [$w.list.l get $i]
+		if {[catch {set o [exec git rev-parse --verify $b]}]} continue
+		if {$delete_branch_checkhead} {
+			if {[catch {set m [exec git merge-base $o $delete_branch_head]}]} continue
+			if {$o ne $m} continue
+		}
+		lappend to_delete [list $b $o]
+		append msg " - $b\n"
+	}
+	if {$to_delete eq {}} {
+		tk_messageBox \
+			-icon info \
+			-type ok \
+			-title [wm title $w] \
+			-parent $w \
+			-message {No branches are able to be deleted.
+
+This is likely because you did not select any branches,
+or all selected branches are not completely merged.
+}
+		return
+	}
+	append msg {
+It can be difficult to recover deleted branches.
+
+Delete the above branches?}
+	if {[tk_messageBox \
+		-icon warning \
+		-type yesno \
+		-title [wm title $w] \
+		-parent $w \
+		-message $msg] ne yes} {
+		return
+	}
+
+	set failed {}
+	foreach i $to_delete {
+		set b [lindex $i 0]
+		set o [lindex $i 1]
+		if {[catch {exec git update-ref -d "refs/heads/$b" $o} err]} {
+			append failed " - $b: $err\n"
+		} else {
+			set x [lsearch -sorted $all_heads $b]
+			if {$x >= 0} {
+				set all_heads [lreplace $all_heads $x $x]
+			}
+		}
+	}
+
+	if {$failed ne {}} {
+		tk_messageBox \
+			-icon error \
+			-type ok \
+			-title [wm title $w] \
+			-parent $w \
+			-message "Failed to delete branches:\n$failed"
+	}
+
+	set all_heads [lsort $all_heads]
+	populate_branch_menu
+	destroy $w
+}
+
 proc do_delete_branch {} {
-	error "NOT IMPLEMENTED"
+	global all_heads current_branch
+	global delete_branch_checkhead delete_branch_head
+
+	set delete_branch_checkhead 1
+	set delete_branch_head $current_branch
+
+	set w .branch_editor
+	toplevel $w
+	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
+
+	label $w.header -text {Delete Local Branch} \
+		-font font_uibold
+	pack $w.header -side top -fill x
+
+	frame $w.buttons
+	button $w.buttons.create -text Delete \
+		-font font_ui \
+		-command [list do_delete_branch_action $w]
+	pack $w.buttons.create -side right
+	button $w.buttons.cancel -text {Cancel} \
+		-font font_ui \
+		-command [list destroy $w]
+	pack $w.buttons.cancel -side right -padx 5
+	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
+
+	labelframe $w.list \
+		-text {Local Branches} \
+		-font font_ui
+	listbox $w.list.l \
+		-height 10 \
+		-width 50 \
+		-selectmode extended \
+		-font font_ui
+	foreach h $all_heads {
+		if {$h ne $current_branch} {
+			$w.list.l insert end $h
+		}
+	}
+	pack $w.list.l -fill both -pady 5 -padx 5
+	pack $w.list -fill both -pady 5 -padx 5
+
+	labelframe $w.validate \
+		-text {Only Delete If} \
+		-font font_ui
+	frame $w.validate.head
+	checkbutton $w.validate.head.r \
+		-text {Already Merged Into Local Branch:} \
+		-variable delete_branch_checkhead \
+		-font font_ui
+	eval tk_optionMenu $w.validate.head.m delete_branch_head $all_heads
+	pack $w.validate.head.r -side left
+	pack $w.validate.head.m -side left
+	pack $w.validate.head -padx 5 -fill x -expand 1
+	pack $w.validate -anchor nw -fill x -pady 5 -padx 5
+
+	bind $w <Visibility> "grab $w; focus $w"
+	bind $w <Key-Escape> "destroy $w"
+	wm title $w "[appname] ([reponame]): Delete Branch"
+	tkwait window $w
 }
 
 proc switch_branch {b} {
