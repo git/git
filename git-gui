@@ -2742,7 +2742,6 @@ proc do_windows_shortcut {} {
 				set sh [exec cygpath \
 					--windows \
 					--absolute \
-					--long-name \
 					/bin/sh]
 				set me [exec cygpath \
 					--unix \
@@ -2754,6 +2753,7 @@ proc do_windows_shortcut {} {
 					$gitdir]
 				regsub -all ' $me "'\\''" me
 				regsub -all ' $gd "'\\''" gd
+				puts $fd "@ECHO Starting git-gui... Please wait..."
 				puts -nonewline $fd "\"$sh\" --login -c \""
 				puts -nonewline $fd "GIT_DIR='$gd'"
 				puts -nonewline $fd " '$me'"
