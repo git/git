@@ -693,6 +693,7 @@ proc read_diff {fd} {
 		# -- Cleanup uninteresting diff header lines.
 		#
 		if {[string match {diff --git *}      $line]} continue
+		if {[string match {diff --cc *}       $line]} continue
 		if {[string match {diff --combined *} $line]} continue
 		if {[string match {--- *}             $line]} continue
 		if {[string match {+++ *}             $line]} continue
@@ -704,27 +705,49 @@ proc read_diff {fd} {
 		#
 		if {[string match {@@@ *} $line]} {set is_3way_diff 1}
 
-		# -- Reformat a 3 way diff, 'cause its too weird.
-		#
-		if {$is_3way_diff} {
+		if {[string match {index *} $line]} {
+			set tags {}
+		} elseif {$is_3way_diff} {
 			set op [string range $line 0 1]
 			switch -- $op {
+			{  } {set tags {}}
 			{@@} {set tags d_@}
-			{++} {set tags d_+ ; set op { +}}
-			{--} {set tags d_- ; set op { -}}
-			{ +} {set tags d_++; set op {++}}
-			{ -} {set tags d_--; set op {--}}
-			{+ } {set tags d_-+; set op {-+}}
-			{- } {set tags d_+-; set op {+-}}
-			default {set tags {}}
+			{ +} {set tags d_s+}
+			{ -} {set tags d_s-}
+			{+ } {set tags d_+s}
+			{- } {set tags d_-s}
+			{--} {set tags d_--}
+			{++} {
+				if {[regexp {^\+\+([<>]{7} |={7})} $line _g op]} {
+					set line [string replace $line 0 1 {  }]
+					set tags d$op
+				} else {
+					set tags d_++
+				}
 			}
-			set line [string replace $line 0 1 $op]
+			default {
+				puts "error: Unhandled 3 way diff marker: {$op}"
+				set tags {}
+			}
+			}
 		} else {
-			switch -- [string index $line 0] {
-			@ {set tags d_@}
-			+ {set tags d_+}
-			- {set tags d_-}
-			default {set tags {}}
+			set op [string index $line 0]
+			switch -- $op {
+			{ } {set tags {}}
+			{@} {set tags d_@}
+			{-} {set tags d_-}
+			{+} {
+				if {[regexp {^\+([<>]{7} |={7})} $line _g op]} {
+					set line [string replace $line 0 0 { }]
+					set tags d$op
+				} else {
+					set tags d_+
+				}
+			}
+			default {
+				puts "error: Unhandled 2 way diff marker: {$op}"
+				set tags {}
+			}
 			}
 		}
 		$ui_diff insert end $line $tags
@@ -3856,16 +3879,33 @@ pack .vpane.lower.diff.header -side top -fill x
 pack .vpane.lower.diff.body -side bottom -fill both -expand 1
 
 $ui_diff tag conf d_@ -font font_diffbold
-$ui_diff tag conf d_+  -foreground blue
-$ui_diff tag conf d_-  -foreground red
-$ui_diff tag conf d_++ -foreground {#00a000}
-$ui_diff tag conf d_-- -foreground {#a000a0}
-$ui_diff tag conf d_+- \
-	-foreground red \
-	-background {light goldenrod yellow}
-$ui_diff tag conf d_-+ \
+$ui_diff tag conf d_+ -foreground blue
+$ui_diff tag conf d_- -foreground red
+
+$ui_diff tag conf d_++ -foreground blue
+$ui_diff tag conf d_-- -foreground red
+$ui_diff tag conf d_+s \
 	-foreground blue \
 	-background azure2
+$ui_diff tag conf d_-s \
+	-foreground red \
+	-background azure2
+$ui_diff tag conf d_s+ \
+	-foreground blue \
+	-background {light goldenrod yellow}
+$ui_diff tag conf d_s- \
+	-foreground red \
+	-background {light goldenrod yellow}
+
+$ui_diff tag conf d<<<<<<< \
+	-foreground orange \
+	-font font_diffbold
+$ui_diff tag conf d======= \
+	-foreground orange \
+	-font font_diffbold
+$ui_diff tag conf d>>>>>>> \
+	-foreground orange \
+	-font font_diffbold
 
 # -- Diff Body Context Menu
 #
