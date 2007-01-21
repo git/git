@@ -2754,7 +2754,7 @@ proc do_windows_shortcut {} {
 				regsub -all ' $me "'\\''" me
 				regsub -all ' $gd "'\\''" gd
 				puts $fd "@ECHO Starting git-gui... Please wait..."
-				puts -nonewline $fd "\"$sh\" --login -c \""
+				puts -nonewline $fd "@\"$sh\" --login -c \""
 				puts -nonewline $fd "GIT_DIR='$gd'"
 				puts -nonewline $fd " '$me'"
 				puts $fd "&\""
