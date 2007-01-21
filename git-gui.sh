@@ -556,13 +556,14 @@ proc clear_diff {} {
 }
 
 proc reshow_diff {} {
-	global current_diff_path ui_status_value file_states
+	global ui_status_value file_states
+	global current_diff_path current_diff_side
 
 	if {$current_diff_path eq {}
 		|| [catch {set s $file_states($current_diff_path)}]} {
 		clear_diff
 	} else {
-		show_diff $current_diff_path
+		show_diff $current_diff_path $current_diff_side
 	}
 }
 
@@ -595,10 +596,11 @@ files list, to prevent possible confusion.
 	display_file $path __
 }
 
-proc show_diff {path {w {}} {lno {}}} {
+proc show_diff {path w {lno {}}} {
 	global file_states file_lists
 	global is_3way_diff diff_active repo_config
-	global ui_diff current_diff_path ui_status_value
+	global ui_diff ui_status_value ui_index ui_workdir
+	global current_diff_path current_diff_side
 
 	if {$diff_active || ![lock_index read]} return
 
@@ -621,20 +623,12 @@ proc show_diff {path {w {}} {lno {}}} {
 	set is_3way_diff 0
 	set diff_active 1
 	set current_diff_path $path
+	set current_diff_side $w
 	set ui_status_value "Loading diff of [escape_path $path]..."
 
-	set cmd [list | git diff-index]
-	lappend cmd --no-color
-	if {$repo_config(gui.diffcontext) > 0} {
-		lappend cmd "-U$repo_config(gui.diffcontext)"
-	}
-	lappend cmd -p
-
-	switch $m {
-	MM {
-		lappend cmd -c
-	}
-	_O {
+	# - Git won't give us the diff, there's nothing to compare to!
+	#
+	if {$m eq {_O}} {
 		if {[catch {
 				set fd [open $path r]
 				set content [read $fd]
@@ -654,9 +648,23 @@ proc show_diff {path {w {}} {lno {}}} {
 		set ui_status_value {Ready.}
 		return
 	}
+
+	set cmd [list | git]
+	if {$w eq $ui_index} {
+		lappend cmd diff-index
+		lappend cmd --cached
+	} elseif {$w eq $ui_workdir} {
+		lappend cmd diff-files
 	}
 
-	lappend cmd [PARENT]
+	lappend cmd -p
+	lappend cmd --no-color
+	if {$repo_config(gui.diffcontext) > 0} {
+		lappend cmd "-U$repo_config(gui.diffcontext)"
+	}
+	if {$w eq $ui_index} {
+		lappend cmd [PARENT]
+	}
 	lappend cmd --
 	lappend cmd $path
 
