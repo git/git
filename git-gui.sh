@@ -1768,15 +1768,25 @@ proc do_create_branch_action {w} {
 	}
 }
 
+proc radio_selector {varname value args} {
+	upvar #0 $varname var
+	set var $value
+}
+
+trace add variable create_branch_head write \
+	[list radio_selector create_branch_revtype head]
+trace add variable create_branch_trackinghead write \
+	[list radio_selector create_branch_revtype tracking]
+
+trace add variable delete_branch_head write \
+	[list radio_selector delete_branch_checktype head]
+trace add variable delete_branch_trackinghead write \
+	[list radio_selector delete_branch_checktype tracking]
+
 proc do_create_branch {} {
 	global all_heads current_branch repo_config
 	global create_branch_checkout create_branch_revtype
 	global create_branch_head create_branch_trackinghead
-
-	set create_branch_checkout 1
-	set create_branch_revtype head
-	set create_branch_head $current_branch
-	set create_branch_trackinghead {}
 
 	set w .branch_editor
 	toplevel $w
@@ -1863,6 +1873,8 @@ proc do_create_branch {} {
 	bind $w.from.exp_t <Shift-Key-Tab> {focus [tk_focusPrev %W];break}
 	bind $w.from.exp_t <Key-Tab> {focus [tk_focusNext %W];break}
 	bind $w.from.exp_t <Key-Return> "do_create_branch_action $w;break"
+	bind $w.from.exp_t <Key-space> break
+	bind $w.from.exp_t <Key> {set create_branch_revtype expression}
 	grid columnconfigure $w.from 1 -weight 1
 	pack $w.from -anchor nw -fill x -pady 5 -padx 5
 
@@ -1875,6 +1887,10 @@ proc do_create_branch {} {
 		-font font_ui
 	pack $w.postActions.checkout -anchor nw
 	pack $w.postActions -anchor nw -fill x -pady 5 -padx 5
+
+	set create_branch_checkout 1
+	set create_branch_head $current_branch
+	set create_branch_revtype head
 
 	bind $w <Visibility> "grab $w; focus $w.desc.name_t"
 	bind $w <Key-Escape> "destroy $w"
@@ -1978,10 +1994,6 @@ proc do_delete_branch {} {
 	global all_heads tracking_branches current_branch
 	global delete_branch_checktype delete_branch_head delete_branch_trackinghead
 
-	set delete_branch_checktype head
-	set delete_branch_head $current_branch
-	set delete_branch_trackinghead {}
-
 	set w .branch_editor
 	toplevel $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
@@ -2048,6 +2060,9 @@ proc do_delete_branch {} {
 	grid $w.validate.always_r -columnspan 2 -sticky w
 	grid columnconfigure $w.validate 1 -weight 1
 	pack $w.validate -anchor nw -fill x -pady 5 -padx 5
+
+	set delete_branch_head $current_branch
+	set delete_branch_checktype head
 
 	bind $w <Visibility> "grab $w; focus $w"
 	bind $w <Key-Escape> "destroy $w"
