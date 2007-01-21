@@ -3248,6 +3248,7 @@ if {!$single_commit} {
 
 	.mbar.branch add command -label {Create...} \
 		-command do_create_branch \
+		-accelerator $M1T-N \
 		-font font_ui
 	lappend disable_on_lock [list .mbar.branch entryconf \
 		[.mbar.branch index last] -state]
@@ -3814,6 +3815,11 @@ bind $ui_diff <Key-Up>     {catch {%W yview scroll -1 units};break}
 bind $ui_diff <Key-Down>   {catch {%W yview scroll  1 units};break}
 bind $ui_diff <Key-Left>   {catch {%W xview scroll -1 units};break}
 bind $ui_diff <Key-Right>  {catch {%W xview scroll  1 units};break}
+
+if {!$single_commit} {
+	bind . <$M1B-Key-n> do_create_branch
+	bind . <$M1B-Key-N> do_create_branch
+}
 
 bind .   <Destroy> do_quit
 bind all <Key-F5> do_rescan
