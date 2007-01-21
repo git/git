@@ -2215,7 +2215,7 @@ proc console_read {w fd after} {
 ##
 ## ui commands
 
-set starting_gitk_msg {Please wait... Starting gitk...}
+set starting_gitk_msg {Starting gitk... please wait...}
 
 proc do_gitk {revs} {
 	global ui_status_value starting_gitk_msg
