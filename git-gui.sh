@@ -3726,17 +3726,17 @@ pack .branch -side top -fill x
 #
 panedwindow .vpane -orient vertical
 panedwindow .vpane.files -orient horizontal
-.vpane add .vpane.files -sticky nsew -height 100 -width 400
+.vpane add .vpane.files -sticky nsew -height 100 -width 200
 pack .vpane -anchor n -side top -fill both -expand 1
 
 # -- Index File List
 #
-frame .vpane.files.index -height 100 -width 400
+frame .vpane.files.index -height 100 -width 200
 label .vpane.files.index.title -text {Changes To Be Committed} \
 	-background green \
 	-font font_ui
 text $ui_index -background white -borderwidth 0 \
-	-width 40 -height 10 \
+	-width 20 -height 10 \
 	-wrap none \
 	-font font_ui \
 	-cursor $cursor_ptr \
@@ -3753,12 +3753,12 @@ pack $ui_index -side left -fill both -expand 1
 
 # -- Working Directory File List
 #
-frame .vpane.files.workdir -height 100 -width 100
+frame .vpane.files.workdir -height 100 -width 200
 label .vpane.files.workdir.title -text {Changed But Not Updated} \
 	-background red \
 	-font font_ui
 text $ui_workdir -background white -borderwidth 0 \
-	-width 40 -height 10 \
+	-width 20 -height 10 \
 	-wrap none \
 	-font font_ui \
 	-cursor $cursor_ptr \
