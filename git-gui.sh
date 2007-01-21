@@ -1696,6 +1696,16 @@ proc do_create_branch_action {w} {
 	global create_branch_head create_branch_trackinghead
 
 	set newbranch [string trim [$w.desc.name_t get 0.0 end]]
+	if {$newbranch eq {}} {
+		tk_messageBox \
+			-icon error \
+			-type ok \
+			-title [wm title $w] \
+			-parent $w \
+			-message "Please supply a branch name."
+		focus $w.desc.name_t
+		return
+	}
 	if {![catch {exec git show-ref --verify -- "refs/heads/$newbranch"}]} {
 		tk_messageBox \
 			-icon error \
