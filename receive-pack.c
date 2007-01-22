@@ -421,6 +421,9 @@ int main(int argc, char **argv)
 	if (!enter_repo(dir, 0))
 		die("'%s': unable to chdir or not a git archive", dir);
 
+	if (is_repository_shallow())
+		die("attempt to push into a shallow repository");
+
 	setup_ident();
 	/* don't die if gecos is empty */
 	ignore_missing_committer_name();
