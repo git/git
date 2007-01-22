@@ -49,6 +49,18 @@ test_expect_success 'init and fetch from one svn-remote' "
                  sed -n -e '3p'\`\" = goodbye
         "
 
+test_expect_success 'follow deleted parent' "
+        svn cp -m 'resurrecting trunk as junk' \
+               -r2 $svnrepo/trunk $svnrepo/junk &&
+        git-repo-config --add svn-remote.git-svn.fetch \
+          junk:refs/remotes/svn/junk &&
+        git-svn fetch --follow-parent -i svn/thunk &&
+        git-svn fetch -i svn/junk --follow-parent &&
+        test -z \"\`git diff svn/junk svn/trunk\`\" &&
+        test \"\`git merge-base svn/junk svn/trunk\`\" \
+           = \"\`git rev-parse svn/trunk\`\"
+        "
+
 test_debug 'gitk --all &'
 
 test_done

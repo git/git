@@ -1091,7 +1091,7 @@ sub find_parent_branch {
 	}
 	if (defined $r0 && defined $parent && $gs->revisions_eq($r0, $r)) {
 		print STDERR "Found branch parent: ($self->{ref_id}) $parent\n";
-		command_noisy('read-tree', $parent);
+		$self->assert_index_clean($parent);
 		my $ed;
 		if ($self->ra->can_do_switch) {
 			print STDERR "Following parent with do_switch\n";
