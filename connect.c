@@ -680,7 +680,8 @@ pid_t git_connect(int fd[2], char *url, const char *prog)
 
 	path = strchr(end, c);
 	if (c == ':') {
-		if (path) {
+		/* host must have at least 2 chars to catch DOS C:/path */
+		if (path && path - end > 1) {
 			protocol = PROTO_SSH;
 			*path++ = '\0';
 		} else
