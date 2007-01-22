@@ -29,7 +29,7 @@ echo "Hello World" > file1 &&
 git add file1 &&
 git commit -m "Initial commit" file1 &&
 git repack -a -d &&
-git prune --grace=off'
+git prune'
 
 cd "$base_dir"
 
@@ -39,7 +39,7 @@ echo "foo bar" > file2 &&
 git add file2 &&
 git commit -m "next commit" file2 &&
 git repack -a -d -l &&
-git prune --grace=off'
+git prune'
 
 cd "$base_dir"
 
@@ -49,7 +49,7 @@ echo "Goodbye, cruel world" > file3 &&
 git add file3 &&
 git commit -m "one more" file3 &&
 git repack -a -d -l &&
-git prune --grace=off'
+git prune'
 
 cd "$base_dir"
 
