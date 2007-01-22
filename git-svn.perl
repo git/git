@@ -790,6 +790,16 @@ sub ra {
 	$self->{ra} ||= Git::SVN::Ra->new($self->{url});
 }
 
+sub rel_path {
+	my ($self) = @_;
+	my $repos_root = $self->ra->{repos_root};
+	return $self->{path} if ($self->{url} eq $repos_root);
+	my $url = $self->{url} .
+	          (length $self->{path} ? "/$self->{path}" : $self->{path});
+	$url =~ s!^\Q$repos_root\E/*!!g;
+	$url;
+}
+
 sub copy_remote_ref {
 	my ($self) = @_;
 	my $origin = $::_cp_remote ? $::_cp_remote : 'origin';
@@ -998,16 +1008,97 @@ sub do_git_commit {
 	return $commit;
 }
 
+sub revisions_eq {
+	my ($self, $r0, $r1) = @_;
+	return 1 if $r0 == $r1;
+	my $nr = 0;
+	$self->ra->get_log([$self->{path}], $r0, $r1,
+	                   0, 0, 1, sub { $nr++ });
+	return 0 if ($nr > 1);
+	return 1;
+}
+
+sub find_parent_branch {
+	my ($self, $paths, $rev) = @_;
+
+	# look for a parent from another branch:
+	my $i = $paths->{'/'.$self->rel_path} or return;
+	my $branch_from = $i->copyfrom_path or return;
+	my $r = $i->copyfrom_rev;
+	my $repos_root = $self->ra->{repos_root};
+	my $url = $self->ra->{url};
+	my $new_url = $repos_root . $branch_from;
+	print STDERR  "Found possible branch point: ",
+	              "$new_url => ", $self->full_url, ", $r\n";
+	$branch_from =~ s#^/##;
+	my $remotes = read_all_remotes();
+	my $gs;
+	foreach my $repo_id (keys %$remotes) {
+		my $u = $remotes->{$repo_id}->{url} or next;
+		next if $url ne $u;
+		my $fetch = $remotes->{$repo_id}->{fetch};
+		foreach my $f (keys %$fetch) {
+			next if $f ne $branch_from;
+			$gs = Git::SVN->new($fetch->{$f}, $repo_id, $f);
+			last;
+		}
+		last if $gs;
+	}
+	unless ($gs) {
+		my $ref_id = $branch_from;
+		$ref_id .= "\@$r" if find_ref($ref_id);
+		# just grow a tail if we're not unique enough :x
+		$ref_id .= '-' while find_ref($ref_id);
+		$gs = Git::SVN->init($new_url, '', $ref_id, $ref_id);
+	}
+	my ($r0, $parent) = $gs->find_rev_before($r, 1);
+	if ($::_follow_parent && (!defined $r0 || !defined $parent)) {
+		foreach (0 .. $r) {
+			my $log_entry = eval { $gs->do_fetch(undef, $_) };
+			$gs->do_git_commit($log_entry) if $log_entry;
+		}
+		($r0, $parent) = $gs->last_rev_commit;
+	}
+	if (defined $r0 && defined $parent && $gs->revisions_eq($r0, $r)) {
+		print STDERR "Found branch parent: ($self->{ref_id}) $parent\n";
+		command_noisy('read-tree', $parent);
+		my $ed;
+		if ($self->ra->can_do_switch) {
+			# do_switch works with svn/trunk >= r22312, but that
+			# is not included with SVN 1.4.2 (the latest version
+			# at the moment), so we can't rely on it
+			$self->{last_commit} = $parent;
+			$ed = SVN::Git::Fetcher->new($self);
+			$gs->ra->gs_do_switch($r0, $rev, $gs->{path}, 1,
+					      $self->full_url, $ed)
+			  or die "SVN connection failed somewhere...\n";
+		} else {
+			$ed = SVN::Git::Fetcher->new($self);
+			$self->ra->gs_do_update($rev, $rev, $self->{path},
+			                        1, $ed)
+			  or die "SVN connection failed somewhere...\n";
+		}
+		return $self->make_log_entry($rev, [$parent], $ed);
+	}
+	print STDERR "Branch parent not found...\n";
+	return undef;
+}
+
 sub do_fetch {
 	my ($self, $paths, $rev) = @_;
-	my $ed = SVN::Git::Fetcher->new($self);
+	my $ed;
 	my ($last_rev, @parents);
 	if ($self->{last_commit}) {
+		$ed = SVN::Git::Fetcher->new($self);
 		$last_rev = $self->{last_rev};
 		$ed->{c} = $self->{last_commit};
 		@parents = ($self->{last_commit});
 	} else {
 		$last_rev = $rev;
+		if (my $log_entry = $self->find_parent_branch($paths, $rev)) {
+			return $log_entry;
+		}
+		$ed = SVN::Git::Fetcher->new($self);
 	}
 	unless ($self->ra->gs_do_update($last_rev, $rev,
 	                                $self->{path}, 1, $ed)) {
@@ -1120,9 +1211,9 @@ sub fetch {
 		my @revs;
 		$self->ra->get_log([''], $min, $max, 0, 1, 1, sub {
 			my ($paths, $rev, $author, $date, $log) = @_;
-			push @revs, $rev });
+			push @revs, [ $paths, $rev ] });
 		foreach (@revs) {
-			my $log_entry = $self->do_fetch(undef, $_);
+			my $log_entry = $self->do_fetch(@$_);
 			$self->do_git_commit($log_entry, @parents);
 		}
 		last if $max >= $head;
@@ -1230,6 +1321,18 @@ sub rev_db_get {
 	}
 	close $fh or croak $!;
 	$ret;
+}
+
+sub find_rev_before {
+	my ($self, $rev, $eq_ok) = @_;
+	--$rev unless $eq_ok;
+	while ($rev > 0) {
+		if (my $c = $self->rev_db_get($rev)) {
+			return ($rev, $c);
+		}
+		--$rev;
+	}
+	return (undef, undef);
 }
 
 sub _new {
@@ -1396,93 +1499,6 @@ sub uri_decode {
 	$f =~ tr/+/ /;
 	$f =~ s/%([A-F0-9]{2})/chr hex($1)/ge;
 	$f
-}
-
-sub revisions_eq {
-	my ($path, $r0, $r1) = @_;
-	return 1 if $r0 == $r1;
-	my $nr = 0;
-	# should be OK to use Pool here (r1 - r0) should be small
-	$SVN->get_log([$path], $r0, $r1, 0, 0, 1, sub {$nr++});
-	return 0 if ($nr > 1);
-	return 1;
-}
-
-sub libsvn_find_parent_branch {
-	my ($paths, $rev, $author, $date, $log) = @_;
-	my $svn_path = '/'.$SVN->{svn_path};
-
-	# look for a parent from another branch:
-	my $i = $paths->{$svn_path} or return;
-	my $branch_from = $i->copyfrom_path or return;
-	my $r = $i->copyfrom_rev;
-	print STDERR  "Found possible branch point: ",
-				"$branch_from => $svn_path, $r\n";
-	$branch_from =~ s#^/##;
-	my $l_map = {};
-	read_url_paths_all($l_map, '', "$GIT_DIR/svn");
-	my $url = $SVN->{repos_root};
-	defined $l_map->{$url} or return;
-	my $id = $l_map->{$url}->{$branch_from};
-	if (!defined $id && $_follow_parent) {
-		print STDERR "Following parent: $branch_from\@$r\n";
-		# auto create a new branch and follow it
-		$id = basename($branch_from);
-		$id .= '@'.$r if -r "$GIT_DIR/svn/$id";
-		while (-r "$GIT_DIR/svn/$id") {
-			# just grow a tail if we're not unique enough :x
-			$id .= '-';
-		}
-	}
-	return unless defined $id;
-
-	my ($r0, $parent) = find_rev_before($r,$id,1);
-	if ($_follow_parent && (!defined $r0 || !defined $parent)) {
-		defined(my $pid = fork) or croak $!;
-		if (!$pid) {
-			$GIT_SVN = $ENV{GIT_SVN_ID} = $id;
-			init_vars();
-			$SVN_URL = "$url/$branch_from";
-			$SVN = undef;
-			setup_git_svn();
-			# we can't assume SVN_URL exists at r+1:
-			$_revision = "0:$r";
-			fetch_lib();
-			exit 0;
-		}
-		waitpid $pid, 0;
-		croak $? if $?;
-		($r0, $parent) = find_rev_before($r,$id,1);
-	}
-	return unless (defined $r0 && defined $parent);
-	if (revisions_eq($branch_from, $r0, $r)) {
-		unlink $GIT_SVN_INDEX;
-		print STDERR "Found branch parent: ($GIT_SVN) $parent\n";
-		command_noisy('read-tree', $parent);
-		unless ($SVN->can_do_switch) {
-			return _libsvn_new_tree($paths, $rev, $author, $date,
-			                        $log, [$parent]);
-		}
-		# do_switch works with svn/trunk >= r22312, but that is not
-		# included with SVN 1.4.2 (the latest version at the moment),
-		# so we can't rely on it.
-		my $ra = Git::SVN::Ra->new("$url/$branch_from");
-		my $ed = SVN::Git::Fetcher->new({c => $parent, q => $_q });
-		$ra->gs_do_switch($r0, $rev, '', 1, $SVN->{url}, $ed) or
-		                   die "SVN connection failed somewhere...\n";
-		return libsvn_log_entry($rev, $author, $date, $log, [$parent]);
-	}
-	print STDERR "Nope, branch point not imported or unknown\n";
-	return undef;
-}
-
-sub _libsvn_new_tree {
-	my ($paths, $rev, $author, $date, $log, $parents) = @_;
-	my $ed = SVN::Git::Fetcher->new({q => $_q});
-	unless ($SVN->gs_do_update($rev, $rev, '', 1, $ed)) {
-		die "SVN connection failed somewhere...\n";
-	}
-	libsvn_log_entry($rev, $author, $date, $log, $parents, $ed);
 }
 
 {
