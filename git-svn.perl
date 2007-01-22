@@ -14,7 +14,8 @@ $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
 $ENV{GIT_DIR} ||= '.git';
-$Git::SVN::default_repo_id = $ENV{GIT_SVN_ID} || 'git-svn';
+$Git::SVN::default_repo_id = 'git-svn';
+$Git::SVN::default_ref_id = $ENV{GIT_SVN_ID} || 'git-svn';
 
 my $LC_ALL = $ENV{LC_ALL};
 $Git::SVN::Log::TZ = $ENV{TZ};
@@ -158,7 +159,7 @@ my $rv = GetOptions(%opts, 'help|H|h' => \$_help,
 				'version|V' => \$_version,
 				'minimize-connections' =>
 				  \$Git::SVN::Migration::_minimize,
-				'id|i=s' => \$Git::SVN::default_repo_id);
+				'id|i=s' => \$Git::SVN::default_ref_id);
 exit 1 if (!$rv && $cmd ne 'log');
 
 usage(0) if $_help;
@@ -686,7 +687,7 @@ sub tz_to_s_offset {
 package Git::SVN;
 use strict;
 use warnings;
-use vars qw/$default_repo_id/;
+use vars qw/$default_repo_id $default_ref_id/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use IPC::Open3;
@@ -704,7 +705,7 @@ BEGIN {
 
 sub read_all_remotes {
 	my $r = {};
-	foreach (grep { s/^svn-remote\.// } command(qw/repo-config -l/)) {
+	foreach (grep { s/^svn-remote\.// } command(qw/config -l/)) {
 		if (m!^(.+)\.fetch=\s*(.*)\s*:\s*refs/remotes/(.+)\s*$!) {
 			$r->{$1}->{fetch}->{$2} = $3;
 		} elsif (m!^(.+)\.url=\s*(.*)\s*$!) {
@@ -724,7 +725,6 @@ sub sanitize_remote_name {
 sub init {
 	my ($class, $url, $path, $repo_id, $ref_id) = @_;
 	my $self = _new($class, $repo_id, $ref_id, $path);
-	mkpath([$self->{dir}]);
 	if (defined $url) {
 		$url =~ s!/+$!!; # strip trailing slash
 		my $orig_url = eval {
@@ -745,10 +745,6 @@ sub init {
 		              "$path:".$self->refname);
 	}
 	$self->{url} = $url;
-	unless (-f $self->{db_path}) {
-		open my $fh, '>>', $self->{db_path} or croak $!;
-		close $fh or croak $!;
-	}
 	$self;
 }
 
@@ -777,6 +773,14 @@ sub new {
 		}
 	}
 	my $self = _new($class, $repo_id, $ref_id, $path);
+	if (!defined $self->{path} || !length $self->{path}) {
+		my $fetch = command_oneline('config', '--get',
+		                            "svn-remote.$repo_id.fetch",
+		                            ":refs/remotes/$ref_id\$") or
+		     die "Failed to read \"svn-remote.$repo_id.fetch\" ",
+		         "\":refs/remotes/$ref_id\$\" in config\n";
+		($self->{path}, undef) = split(/\s*:\s*/, $fetch);
+	}
 	$self->{url} = command_oneline('config', '--get',
 	                               "svn-remote.$repo_id.url") or
                   die "Failed to read \"svn-remote.$repo_id.url\" in config\n";
@@ -1064,6 +1068,7 @@ sub find_parent_branch {
 		command_noisy('read-tree', $parent);
 		my $ed;
 		if ($self->ra->can_do_switch) {
+			print STDERR "Following parent with do_switch\n";
 			# do_switch works with svn/trunk >= r22312, but that
 			# is not included with SVN 1.4.2 (the latest version
 			# at the moment), so we can't rely on it
@@ -1073,6 +1078,7 @@ sub find_parent_branch {
 					      $self->full_url, $ed)
 			  or die "SVN connection failed somewhere...\n";
 		} else {
+			print STDERR "Following parent with do_update\n";
 			$ed = SVN::Git::Fetcher->new($self);
 			$self->ra->gs_do_update($rev, $rev, $self->{path},
 			                        1, $ed)
@@ -1209,7 +1215,7 @@ sub fetch {
 	$SVN::Error::handler = \&skip_unknown_revs;
 	while (1) {
 		my @revs;
-		$self->ra->get_log([''], $min, $max, 0, 1, 1, sub {
+		$self->ra->get_log([$self->{path}], $min, $max, 0, 1, 1, sub {
 			my ($paths, $rev, $author, $date, $log) = @_;
 			push @revs, [ $paths, $rev ] });
 		foreach (@revs) {
@@ -1341,11 +1347,16 @@ sub _new {
 		$repo_id = $Git::SVN::default_repo_id;
 	}
 	unless (defined $ref_id && length $ref_id) {
-		$_[2] = $ref_id = $repo_id;
+		$_[2] = $ref_id = $Git::SVN::default_ref_id;
 	}
 	$_[1] = $repo_id = sanitize_remote_name($repo_id);
 	my $dir = "$ENV{GIT_DIR}/svn/$ref_id";
 	$_[3] = $path = '' unless (defined $path);
+	mkpath([$dir]);
+	unless (-f "$dir/.rev_db") {
+		open my $fh, '>>', "$dir/.rev_db" or croak $!;
+		close $fh or croak $!;
+	}
 	bless { ref_id => $ref_id, dir => $dir, index => "$dir/index",
 	        path => $path,
 	        db_path => "$dir/.rev_db", repo_id => $repo_id }, $class;
@@ -1526,9 +1537,6 @@ sub new {
 	my $self = SVN::Delta::Editor->new;
 	bless $self, $class;
 	$self->{c} = $git_svn->{last_commit} if exists $git_svn->{last_commit};
-	if (length $git_svn->{path}) {
-		$self->{path_strip} = qr/\Q$git_svn->{path}\E\/?/;
-	}
 	$self->{empty} = {};
 	$self->{dir_prop} = {};
 	$self->{file_prop} = {};
@@ -1538,6 +1546,11 @@ sub new {
 	       sub { command_input_pipe(qw/update-index -z --index-info/) } );
 	require Digest::MD5;
 	$self;
+}
+
+sub set_path_strip {
+	my ($self, $path) = @_;
+	$self->{path_strip} = qr/^\Q$path\E\/?/;
 }
 
 sub open_root {
@@ -2128,6 +2141,7 @@ sub uuid {
 sub gs_do_update {
 	my ($self, $rev_a, $rev_b, $path, $recurse, $editor) = @_;
 	my $pool = SVN::Pool->new;
+	$editor->set_path_strip($path);
 	my $reporter = $self->do_update($rev_b, $path, $recurse,
 	                                $editor, $pool);
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
@@ -2141,10 +2155,11 @@ sub gs_do_update {
 sub gs_do_switch {
 	my ($self, $rev_a, $rev_b, $path, $recurse, $url_b, $editor) = @_;
 	my $pool = SVN::Pool->new;
+	$editor->set_path_strip($path);
 	my $reporter = $self->do_switch($rev_b, $path, $recurse,
 	                                $url_b, $editor, $pool);
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
-	$reporter->set_path($path, $rev_a, 0, @lock, $pool);
+	$reporter->set_path('', $rev_a, 0, @lock, $pool);
 	$reporter->finish_report($pool);
 	$pool->clear;
 	$editor->{git_commit_ok};
@@ -2674,12 +2689,12 @@ sub minimize_connections {
 
 			my $old_fetch = quotemeta("$x->{old_path}:".
 			                          "refs/remotes/$x->{ref_id}");
-			command_noisy(qw/repo-config --unset/,
+			command_noisy(qw/config --unset/,
 			              "$pfx.fetch", '^'. $old_fetch . '$');
 			delete $r->{$x->{old_repo_id}}->
 			       {fetch}->{$x->{old_path}};
 			if (!keys %{$r->{$x->{old_repo_id}}->{fetch}}) {
-				command_noisy(qw/repo-config --unset/,
+				command_noisy(qw/config --unset/,
 				              "$pfx.url");
 				push @emptied, $x->{old_repo_id}
 			}

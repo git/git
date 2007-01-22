@@ -36,6 +36,19 @@ test_expect_success 'init and fetch --follow-parent a moved directory' "
                  sed -n -e '3p'\`\" = goodbye
 	"
 
+test_expect_success 'init and fetch from one svn-remote' "
+        git-repo-config svn-remote.git-svn.url $svnrepo &&
+        git-repo-config --add svn-remote.git-svn.fetch \
+          trunk:refs/remotes/svn/trunk &&
+        git-repo-config --add svn-remote.git-svn.fetch \
+          thunk:refs/remotes/svn/thunk &&
+        git-svn fetch --follow-parent -i svn/thunk &&
+	test \"\`git-rev-parse --verify refs/remotes/svn/trunk\`\" \
+           = \"\`git-rev-parse --verify refs/remotes/svn/thunk~1\`\" &&
+        test \"\`git-cat-file blob refs/remotes/svn/thunk:readme |\
+                 sed -n -e '3p'\`\" = goodbye
+        "
+
 test_debug 'gitk --all &'
 
 test_done
