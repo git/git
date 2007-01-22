@@ -304,6 +304,9 @@ v2.6.13
 ...
 ------------------------------------------------
 
+Tags are expected to always point at the same version of a project,
+while branches are expected to advance as development progresses.
+
 Create a new branch pointing to one of these versions and check it
 out using gitlink:git-checkout[1]:
 
