@@ -709,6 +709,7 @@ proc read_diff {fd} {
 		if {[string match {@@@ *} $line]} {set is_3way_diff 1}
 
 		if {[string match {index *} $line]
+			|| [string match {mode *} $line]
 			|| [regexp {^\* Unmerged path } $line]} {
 			set tags {}
 		} elseif {$is_3way_diff} {
