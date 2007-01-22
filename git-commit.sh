@@ -462,15 +462,7 @@ if test -f "$GIT_DIR/MERGE_HEAD" && test -z "$no_edit"; then
 fi >>"$GIT_DIR"/COMMIT_EDITMSG
 
 # Author
-if test '' != "$force_author"
-then
-	GIT_AUTHOR_NAME=`expr "z$force_author" : 'z\(.*[^ ]\) *<.*'` &&
-	GIT_AUTHOR_EMAIL=`expr "z$force_author" : '.*\(<.*\)'` &&
-	test '' != "$GIT_AUTHOR_NAME" &&
-	test '' != "$GIT_AUTHOR_EMAIL" ||
-	die "malformed --author parameter"
-	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
-elif test '' != "$use_commit"
+if test '' != "$use_commit"
 then
 	pick_author_script='
 	/^author /{
@@ -500,6 +492,15 @@ then
 	export GIT_AUTHOR_NAME
 	export GIT_AUTHOR_EMAIL
 	export GIT_AUTHOR_DATE
+fi
+if test '' != "$force_author"
+then
+	GIT_AUTHOR_NAME=`expr "z$force_author" : 'z\(.*[^ ]\) *<.*'` &&
+	GIT_AUTHOR_EMAIL=`expr "z$force_author" : '.*\(<.*\)'` &&
+	test '' != "$GIT_AUTHOR_NAME" &&
+	test '' != "$GIT_AUTHOR_EMAIL" ||
+	die "malformed --author parameter"
+	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
 fi
 
 PARENTS="-p HEAD"
