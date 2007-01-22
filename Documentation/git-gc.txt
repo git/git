@@ -8,7 +8,7 @@ git-gc - Cleanup unnecessary files and optimize the local repository
 
 SYNOPSIS
 --------
-'git-gc'
+'git-gc' [--prune]
 
 DESCRIPTION
 -----------
@@ -20,6 +20,21 @@ created from prior invocations of gitlink:git-add[1].
 Users are encouraged to run this task on a regular basis within
 each repository to maintain good disk space utilization and good
 operating performance.
+
+OPTIONS
+-------
+
+--prune::
+	Usually `git-gc` packs refs, expires old reflog entries,
+	packs loose objects,
+	and removes old 'rerere' records.  Removal
+	of unreferenced loose objects is an unsafe operation
+	while other git operations are in progress, so it is not
+	done by default.  Pass this option if you want it, and only
+	when you know nobody else is creating new objects in the
+	repository at the same time (e.g. never use this option
+	in a cron script).
+
 
 Configuration
 -------------
