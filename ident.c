@@ -45,8 +45,11 @@ static void copy_gecos(struct passwd *w, char *name, int sz)
 
 }
 
+#endif
+
 int setup_ident(void)
 {
+#ifndef NO_ETC_PASSWD
 	int len;
 	struct passwd *pw = getpwuid(getuid());
 
@@ -74,12 +77,11 @@ int setup_ident(void)
 		else
 			strlcpy(git_default_email + len, "(none)", sizeof(git_default_email) - len);
 	}
+#endif
 	/* And set the default date */
 	datestamp(git_default_date, sizeof(git_default_date));
 	return 0;
 }
-
-#else /* NO_ETC_PASSWD */
 
 static int add_raw(char *buf, int size, int offset, const char *str)
 {
@@ -155,13 +157,6 @@ static int copy(char *buf, int size, int offset, const char *src)
 	}
 	return offset;
 }
-
-int setup_ident(void)
-{
-	return 0;
-}
-
-#endif
 
 static const char au_env[] = "GIT_AUTHOR_NAME";
 static const char co_env[] = "GIT_COMMITTER_NAME";
