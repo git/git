@@ -55,13 +55,13 @@ test_expect_success setup '
 
 test_expect_success 'pack the source repository' '
 	git repack -a -d &&
-	git prune --grace=off
+	git prune
 '
 
 test_expect_success 'pack the destination repository' '
 	cd victim &&
 	git repack -a -d &&
-	git prune --grace=off &&
+	git prune &&
 	cd ..
 '
 

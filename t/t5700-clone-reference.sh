@@ -22,7 +22,7 @@ echo second > file2 &&
 git add file2 &&
 git commit -m addition &&
 git repack -a -d &&
-git prune --grace=off'
+git prune'
 
 cd "$base_dir"
 
@@ -56,7 +56,7 @@ echo third > file3 &&
 git add file3 &&
 git commit -m update &&
 git repack -a -d &&
-git prune --grace=off'
+git prune'
 
 cd "$base_dir"
 

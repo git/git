@@ -8,7 +8,7 @@ git-prune - Prunes all unreachable objects from the object database
 
 SYNOPSIS
 --------
-'git-prune' [-n] [--grace=<time>]
+'git-prune' [-n] [--] [<head>...]
 
 DESCRIPTION
 -----------
@@ -28,12 +28,6 @@ OPTIONS
 	Do not remove anything; just report what it would
 	remove.
 
---grace=<time>::
-	Do not prune loose objects that are younger than the
-	specified time.  This gives a grace period to newly
-	created objects from getting pruned.
-
-////////////////////////////////////////////
 \--::
 	Do not interpret any more arguments as options.
 
@@ -52,7 +46,6 @@ borrows from your repository via its
 ------------
 $ git prune $(cd ../another && $(git-rev-parse --all))
 ------------
-////////////////////////////////////////////
 
 Author
 ------
