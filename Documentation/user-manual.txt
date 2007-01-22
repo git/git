@@ -1447,16 +1447,14 @@ On large repositories, git depends on compression to keep the history
 information from taking up to much space on disk or in memory.
 
 This compression is not performed automatically.  Therefore you
-should occasionally run
+should occasionally run gitlink:git-gc[1]:
 
 -------------------------------------------------
 $ git gc
 -------------------------------------------------
 
-to recompress the archive and to prune any commits which are no
-longer referred to anywhere.  This can be very time-consuming, and
-you should not modify the repository while it is working, so you
-should run it while you are not working.
+to recompress the archive.  This can be very time-consuming, so
+you may prefer to run git-gc when you are not doing other work.
 
 Sharing development with others
 ===============================
