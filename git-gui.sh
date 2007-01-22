@@ -335,7 +335,7 @@ proc PARENT {} {
 	return $empty_tree
 }
 
-proc rescan {after} {
+proc rescan {after {honor_trustmtime 1}} {
 	global HEAD PARENT MERGE_HEAD commit_type
 	global ui_index ui_workdir ui_status_value ui_comm
 	global rescan_active file_states
@@ -366,7 +366,7 @@ proc rescan {after} {
 		$ui_comm edit modified false
 	}
 
-	if {$repo_config(gui.trustmtime) eq {true}} {
+	if {$honor_trustmtime && $repo_config(gui.trustmtime) eq {true}} {
 		rescan_stage2 {} $after
 	} else {
 		set rescan_active 1
@@ -586,17 +586,11 @@ by another application and you currently have
 the Trust File Modification Timestamps option
 enabled, so Git did not automatically detect
 that there are no content differences in this
-file.
-
-This file will now be removed from the modified
-files list, to prevent possible confusion.
-"
-	if {[catch {exec git update-index -- $path} err]} {
-		error_popup "Failed to refresh index:\n\n$err"
-	}
+file."
 
 	clear_diff
 	display_file $path __
+	rescan {set ui_status_value {Ready.}} 0
 }
 
 proc show_diff {path w {lno {}}} {
