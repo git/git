@@ -876,9 +876,9 @@ sub req_update
                 print "MT newline\n";
 		next;
 	    }
-	    elsif ( !defined($wrev) || $wrev == 0 )
+	    elsif ( (!defined($wrev) || $wrev == 0) && (!defined($meta->{revision}) || $meta->{revision} == 0) )
 	    {
-	        $log->info("Tell the client the file will be added");
+	        $log->info("Tell the client the file is scheduled for addition");
 		print "MT text A \n";
                 print "MT fname $filename\n";
                 print "MT newline\n";
@@ -886,7 +886,7 @@ sub req_update
 
 	    }
 	    else {
-                $log->info("Updating '$filename' $wrev");
+                $log->info("Updating '$filename' to ".$meta->{revision});
                 print "MT +updated\n";
                 print "MT text U \n";
                 print "MT fname $filename\n";
