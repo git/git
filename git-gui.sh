@@ -2539,7 +2539,7 @@ proc console_init {w} {
 		-command "tk_textCopy $w.m.t"
 	$w.ctxm add command -label "Select All" \
 		-font font_ui \
-		-command "$w.m.t tag add sel 0.0 end"
+		-command "focus $w.m.t;$w.m.t tag add sel 0.0 end"
 	$w.ctxm add command -label "Copy All" \
 		-font font_ui \
 		-command "
@@ -3913,7 +3913,7 @@ $ctxm add separator
 $ctxm add command \
 	-label {Select All} \
 	-font font_ui \
-	-command {$ui_comm tag add sel 0.0 end}
+	-command {focus $ui_comm;$ui_comm tag add sel 0.0 end}
 $ctxm add command \
 	-label {Copy All} \
 	-font font_ui \
@@ -4059,7 +4059,7 @@ lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add command \
 	-label {Select All} \
 	-font font_ui \
-	-command {$ui_diff tag add sel 0.0 end}
+	-command {focus $ui_diff;$ui_diff tag add sel 0.0 end}
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add command \
 	-label {Copy All} \
