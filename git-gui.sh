@@ -704,6 +704,8 @@ proc read_diff {fd} {
 
 		if {[string match {index *} $line]
 			|| [string match {mode *} $line]
+			|| [string match {new file *} $line]
+			|| [string match {deleted file *} $line]
 			|| [regexp {^\* Unmerged path } $line]} {
 			set tags {}
 		} elseif {$is_3way_diff} {
