@@ -277,8 +277,13 @@ sub cmd_init {
 }
 
 sub cmd_fetch {
+	if (@_) {
+		die "Additional fetch arguments are no longer supported.\n",
+		    "Use --follow-parent if you have moved/copied directories
+		    instead.\n";
+	}
 	my $gs = Git::SVN->new;
-	$gs->fetch(@_);
+	$gs->fetch;
 	if ($gs->{last_commit} && !verify_ref('refs/heads/master^0')) {
 		command_noisy(qw(update-ref refs/heads/master),
 		              $gs->{last_commit});

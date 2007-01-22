@@ -49,9 +49,6 @@ remotes/git-svn and work on that branch.  Use the 'dcommit'
 command (see below) to write git commits back to
 remotes/git-svn.
 
-See '<<fetch-args,Additional Fetch Arguments>>' if you are interested in
-manually joining branches on commit.
-
 'dcommit'::
 	Commit each diff from a specified head directly to the SVN
 	repository, and then rebase or reset (depending on whether or
@@ -442,27 +439,6 @@ $GIT_DIR/svn/$GIT_SVN_ID for that invocation.  The interface branch will
 be remotes/$GIT_SVN_ID, instead of remotes/git-svn.  Any
 remotes/$GIT_SVN_ID branch should never be modified by the user outside
 of git-svn commands.
-
-[[fetch-args]]
-ADDITIONAL FETCH ARGUMENTS
---------------------------
-This is for advanced users, most users should ignore this section.
-
-Unfetched SVN revisions may be imported as children of existing commits
-by specifying additional arguments to 'fetch'.  Additional parents may
-optionally be specified in the form of sha1 hex sums at the
-command-line.  Unfetched SVN revisions may also be tied to particular
-git commits with the following syntax:
-
-------------------------------------------------
-	svn_revision_number=git_commit_sha1
-------------------------------------------------
-
-This allows you to tie unfetched SVN revision 375 to your current HEAD:
-
-------------------------------------------------
-	git-svn fetch 375=$(git-rev-parse HEAD)
-------------------------------------------------
 
 If you're tracking a directory that has moved, or otherwise been
 branched or tagged off of another directory in the repository and you
