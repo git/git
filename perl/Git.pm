@@ -742,7 +742,13 @@ sub _command_common_pipe {
 		#	warn 'ignoring STDERR option - running w/ ActiveState';
 		$direction eq '-|' or
 			die 'input pipe for ActiveState not implemented';
-		tie ($fh, 'Git::activestate_pipe', $cmd, @args);
+		# the strange construction with *ACPIPE is just to
+		# explain the tie below that we want to bind to
+		# a handle class, not scalar. It is not known if
+		# it is something specific to ActiveState Perl or
+		# just a Perl quirk.
+		tie (*ACPIPE, 'Git::activestate_pipe', $cmd, @args);
+		$fh = *ACPIPE;
 
 	} else {
 		my $pid = open($fh, $direction);
