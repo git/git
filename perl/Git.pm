@@ -275,7 +275,7 @@ sub command {
 
 	} else {
 		my @lines = <$fh>;
-		chomp @lines;
+		defined and chomp for @lines;
 		try {
 			_cmd_close($fh, $ctx);
 		} catch Git::Error::Command with {
