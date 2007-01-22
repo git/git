@@ -80,7 +80,7 @@ Updates in v1.5.0 since v1.4.4 series
    otherwise ignored files with an -f option.
 
  - git-add tries to be more friendly to users by offering an
-   interactive mode.
+   interactive mode ("git-add -i").
 
  - git-commit <path> used to refuse to commit if <path> was
    different between HEAD and the index (i.e. update-index was
@@ -107,7 +107,9 @@ Updates in v1.5.0 since v1.4.4 series
  - git-clone always uses what is known as "separate remote"
    layout for a newly created repository with a working tree;
    i.e. tracking branches in $GIT_DIR/refs/remotes/origin/ are
-   used to track branches from the origin.  
+   used to track branches from the origin, instead of
+   $GIT_DIR/refs/heads/, making the difference between remotely
+   tracked and local branches more obvious.
 
  - New branches that appear on the origin side after a clone is
    made are also tracked automatically.  This is done with an
@@ -118,10 +120,12 @@ Updates in v1.5.0 since v1.4.4 series
    in individually if you plan to fetch into the repository with
    older versions of git (but why would you?).
 
- - git-branch and git-show-branch know remote tracking branches.
+ - git-branch and git-show-branch know remote tracking branches
+   (use the command line switch "-r" to list only tracked branches).
 
  - git-push can now be used to delete a remote branch or a tag.
-   This requires the updated git on the remote side.
+   This requires the updated git on the remote side (use "git
+   push <remote> :refs/heads/<branch>" to delete "branch").
 
  - git-push more agressively keeps the transferred objects
    packed.  Earlier we recommended to monitor amount of loose
@@ -153,10 +157,14 @@ Updates in v1.5.0 since v1.4.4 series
 
 * Reflog
 
- - Reflog records the history of where the tip of each branch
-   was at each moment.  This facility is enabled by default for
-   repositories with working trees, and can be accessed with the
-   "branch@{time}" and "branch@{Nth}" notation.
+ - Reflog records the history from the view point of the local
+   repository. In other words, regardless of the real history,
+   the reflog shows the history as seen by one particular
+   repository (this enables you to ask "what was the current
+   revision in _this_ repository, yesterday at 1pm?").  This
+   facility is enabled by default for repositories with working
+   trees, and can be accessed with the "branch@{time}" and
+   "branch@{Nth}" notation.
 
  - "git show-branch" learned showing the reflog data with the
    new --reflog option.  "git log" has --walk-reflogs option to
@@ -208,18 +216,20 @@ Updates in v1.5.0 since v1.4.4 series
 
  - After detaching your HEAD, you can go back to an existing
    branch with usual "git checkout $branch".  Also you can
-   start a new branch using "git checkout -b $newbranch".
+   start a new branch using "git checkout -b $newbranch" to
+   start a new branch at that commit.
 
  - You can even pull from other repositories, make merges and
    commits while your HEAD is detached.  Also you can use "git
-   reset" to jump to arbitrary commit.
+   reset" to jump to arbitrary commit, while still keeping your
+   HEAD detached.
 
-   Going back to undetached state by "git checkout $branch" can
-   lose the current stat you arrived in these ways, and "git
-   checkout" refuses when the detached HEAD is not pointed by
-   any existing ref (an existing branch, a remote tracking
-   branch or a tag).  This safety can be overriden with "git
-   checkout -f $branch".
+   Going back to attached state (i.e. on a particular branch) by
+   "git checkout $branch" can lose the current stat you arrived
+   in these ways, and "git checkout" refuses when the detached
+   HEAD is not pointed by any existing ref (an existing branch,
+   a remote tracking branch or a tag).  This safety can be
+   overriden with "git checkout -f $branch".
 
 
 * Packed refs
@@ -248,7 +258,7 @@ Updates in v1.5.0 since v1.4.4 series
    All 3-way file-level merges are now done internally.
 
  - The original implementation of git-merge-recursive which was
-   in Python has been removed; we have C implementation of it
+   in Python has been removed; we have a C implementation of it
    now.
 
  - git-shortlog is no longer a Perl script.  It no longer
@@ -298,7 +308,7 @@ Updates in v1.5.0 since v1.4.4 series
 
  - The default suffix for git-format-patch output is now ".patch",
    not ".txt".  This can be changed with --suffix=.txt option,
-   or "format.suffix = .txt" in the configuration.
+   or setting the config variable "format.suffix" to ".txt".
 
 
 * Foreign SCM interfaces
