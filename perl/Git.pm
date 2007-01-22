@@ -736,7 +736,7 @@ sub _command_common_pipe {
 	_check_valid_cmd($cmd);
 
 	my $fh;
-	if ($^O eq '##INSERT_ACTIVESTATE_STRING_HERE##') {
+	if ($^O eq 'MSWin32') {
 		# ActiveState Perl
 		#defined $opts{STDERR} and
 		#	warn 'ignoring STDERR option - running w/ ActiveState';
@@ -809,8 +809,9 @@ sub TIEHANDLE {
 	# FIXME: This is probably horrible idea and the thing will explode
 	# at the moment you give it arguments that require some quoting,
 	# but I have no ActiveState clue... --pasky
-	my $cmdline = join " ", @params;
-	my @data = qx{$cmdline};
+	# Let's just hope ActiveState Perl does at least the quoting
+	# correctly.
+	my @data = qx{git @params};
 	bless { i => 0, data => \@data }, $class;
 }
 
