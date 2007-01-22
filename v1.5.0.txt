@@ -10,11 +10,11 @@ happened before the current v1.4.4 release, they are summarized
 here in the v1.5.0 release notes for people who skipped earlier
 versions.
 
-In general, you should not have to worry about incompatibility,
-and there is no need to perform "repository conversion" if you
-are updating to v1.5.0.  However, some of the changes are
-one-way street upgrades; once you use them your repository
-can no longer be used with ancient git.
+As of git v1.5.0 there are some optional features that changes
+the repository to allow data to be stored and transferred more
+efficiently.  These features are not enabled by default, as they
+will make the repository unusable with older versions of git.
+Specifically, the available options are:
 
  - There is a configuration variable core.legacyheaders that
    changes the format of loose objects so that they are more
@@ -93,7 +93,9 @@ Updates in v1.5.0 since v1.4.4 series
  - git-reset <tree> <paths>... can be used to revert index
    entries for selected paths.
 
- - git-update-index is much less visible.
+ - git-update-index is much less visible.  Many suggestions to
+  use the command in git output and documentation have now been
+  replaced by simpler commands such as "git add" or "git rm".
 
 
 * Repository layout and objects transfer
@@ -200,14 +202,17 @@ Updates in v1.5.0 since v1.4.4 series
 
  - There is a toplevel garbage collector script, 'git-gc', that
    runs periodic cleanup functions, including 'git-repack -a -d',
-   'git-reflog expire', 'git-pack-refs --prune', and 'git-rerere gc'.
+   'git-reflog expire', 'git-pack-refs --prune', and 'git-rerere
+   gc'.
 
 
 * Detached HEAD
 
- - You can give non-branch to "git checkout" now.  This will
-   dissociate your HEAD from any of your branches.  A typical
-   use of this feature is to "look around".  E.g.
+ - You can use 'git-checkout' to check out an arbitrary revision
+   or a tag as well, instead of named branches.  This will
+   dissociate your HEAD from the branch you are currently on.
+
+   A typical use of this feature is to "look around".  E.g.
 
 	$ git checkout v2.6.16
 	... compile, test, etc.
@@ -238,7 +243,7 @@ Updates in v1.5.0 since v1.4.4 series
    overhead, both in storage and in runtime, due to the
    traditional one-ref-per-file format.  A new command,
    git-pack-refs, can be used to "pack" them in more efficient
-   representation.
+   representation (you can let git-gc do this for you).
 
  - Clones and fetches over dumb transports are now aware of
    packed refs and can download from repositories that use
@@ -343,7 +348,8 @@ Updates in v1.5.0 since v1.4.4 series
 
  - There is a partial support for 'shallow' repositories that
    keeps only recent history.  A 'shallow clone' is created by
-   specifying how deep that truncated history should be.
+   specifying how deep that truncated history should be
+   (e.g. "git clone --depth=5 git://some.where/repo.git").
 
    Currently a shallow repository has number of limitations:
 
