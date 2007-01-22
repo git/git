@@ -506,41 +506,33 @@ Note that the name "origin" is just the name that git uses by default
 to refer to the repository that you cloned from.
 
 [[how-git-stores-references]]
-How git stores references
--------------------------
+Naming branches, tags, and other references
+-------------------------------------------
 
 Branches, remote-tracking branches, and tags are all references to
-commits.  Git stores these references in the ".git" directory.  Most
-of them are stored in .git/refs/:
+commits.  All references are named with a slash-separated path name
+starting with "refs"; the names we've been using so far are actually
+shorthand:
 
-	- branches are stored in .git/refs/heads
-	- tags are stored in .git/refs/tags
-	- remote-tracking branches for "origin" are stored in
-	  .git/refs/remotes/origin/
+	- The branch "test" is short for "refs/heads/test".
+	- The tag "v2.6.18" is short for "refs/tags/v2.6.18".
+	- "origin/master" is short for "refs/remotes/origin/master".
 
-If you look at one of these files you will see that they usually
-contain just the SHA1 id of a commit:
+The full name is occasionally useful if, for example, there ever
+exists a tag and a branch with the same name.
 
-------------------------------------------------
-$ ls .git/refs/heads/
-master
-$ cat .git/refs/heads/master
-c0f982dcf188d55db9d932a39d4ea7becaa55fed
-------------------------------------------------
+As another useful shortcut, if the repository "origin" posesses only
+a single branch, you can refer to that branch as just "origin".
 
-You can refer to a reference by its path relative to the .git
-directory.  However, we've seen above that git will also accept
-shorter names; for example, "master" is an acceptable shortcut for
-"refs/heads/master", and "origin/master" is a shortcut for
-"refs/remotes/origin/master".
-
-As another useful shortcut, you can also refer to the "HEAD" of
-"origin" (or any other remote), using just the name of the remote.
+More generally, if you have defined a remote repository named
+"example", you can refer to the branch in that repository as
+"example".  And for a repository with multiple branches, this will
+refer to the branch designated as the "HEAD" branch.
 
 For the complete list of paths which git checks for references, and
-how it decides which to choose when there are multiple references
-with the same name, see the "SPECIFYING REVISIONS" section of
-gitlink:git-rev-parse[1].
+the order it uses to decide which to choose when there are multiple
+references with the same shorthand name, see the "SPECIFYING
+REVISIONS" section of gitlink:git-rev-parse[1].
 
 [[Updating-a-repository-with-git-fetch]]
 Updating a repository with git fetch
