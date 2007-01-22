@@ -215,4 +215,15 @@ echo tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904 >> expected
 
 test_expect_success "$name" "diff -u a expected"
 
+test_expect_failure 'exit if remote refs are ambigious' "
+        git-repo-config --add svn-remote.git-svn.fetch \
+                              bar:refs/remotes/git-svn &&
+        git-svn migrate
+        "
+test_expect_failure 'exit if init-ing a would clobber a URL' "
+        git-repo-config --unset svn-remote.git-svn.fetch \
+                                '^bar:refs/remotes/git-svn$' &&
+        git-svn init $svnrepo/bar
+        "
+
 test_done

@@ -169,7 +169,11 @@ load_authors() if $_authors;
 unless ($cmd =~ /^(?:init|rebuild|multi-init|commit-diff)$/) {
 	Git::SVN::Migration::migration_check();
 }
-$cmd{$cmd}->[0]->(@ARGV);
+eval {
+	Git::SVN::verify_remotes_sanity();
+	$cmd{$cmd}->[0]->(@ARGV);
+};
+fatal $@ if $@;
 exit 0;
 
 ####################### primary functions ######################
@@ -715,6 +719,22 @@ sub read_all_remotes {
 	$r;
 }
 
+sub verify_remotes_sanity {
+	my %seen;
+	foreach (command(qw/config -l/)) {
+		if (m!^svn-remote\.(?:.+)\.fetch=.*:refs/remotes/(\S+)\s*$!) {
+			if ($seen{$1}) {
+				die "Remote ref refs/remote/$1 is tracked by",
+				    "\n  \"$_\"\nand\n  \"$seen{$1}\"\n",
+				    "Please resolve this ambiguity in ",
+				    "your git configuration file before ",
+				    "continuing\n";
+			}
+			$seen{$1} = $_;
+		}
+	}
+}
+
 # we allow more chars than remotes2config.sh...
 sub sanitize_remote_name {
 	my ($name) = @_;
@@ -727,16 +747,22 @@ sub init {
 	my $self = _new($class, $repo_id, $ref_id, $path);
 	if (defined $url) {
 		$url =~ s!/+$!!; # strip trailing slash
+
+		# verify that we aren't overwriting anything:
 		my $orig_url = eval {
 			command_oneline('config', '--get',
 			                "svn-remote.$repo_id.url")
 		};
-		if ($orig_url) {
-			if ($orig_url ne $url) {
-				die "svn-remote.$repo_id.url already set: ",
-				    "$orig_url\nwanted to set to: $url\n";
-			}
-		} else {
+		if ($orig_url && ($orig_url ne $url)) {
+			die "svn-remote.$repo_id.url already set: ",
+			    "$orig_url\nwanted to set to: $url\n";
+		}
+		my ($xrepo_id, $xpath) = find_ref($self->refname);
+		if (defined $xpath) {
+			die "svn-remote.$xrepo_id.fetch already set to track ",
+			    "$xpath:refs/remotes/", $self->refname, "\n";
+		}
+		if (!$orig_url) {
 			command_noisy('config',
 			              "svn-remote.$repo_id.url", $url);
 		}
