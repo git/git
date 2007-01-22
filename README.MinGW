@@ -22,6 +22,7 @@ In order to compile this code you need:
 	gdb-6.3-2.exe
 	mingw32-make-3.80.0-3.tar.gz
 	unzip-5.51-1-bin.zip (this is not from MinGW, iirc)
+	msysDTK-1.0.1.exe (contains ssh, perl)
 - additional libraries:
 	zlib-1.2.3-mingwPORT-1.tar
 	w32api-3.6.tar.gz
