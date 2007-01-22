@@ -199,8 +199,8 @@ Updates in v1.5.0 since v1.4.4 series
    unreachable, as there is a one-day grace period built-in.
 
  - There is a toplevel garbage collector script, 'git-gc', that
-   is an easy way to run 'git-repack -a -d', 'git-reflog gc',
-   and 'git-prune'.
+   runs periodic cleanup functions, including 'git-repack -a -d',
+   'git-reflog expire', 'git-pack-refs --prune', and 'git-rerere gc'.
 
 
 * Detached HEAD
