@@ -187,8 +187,8 @@ $ git pull git://example.com/project.git master
 $ git pull . test  # equivalent to git merge test
 -----------------------------------------------
 
-Sharing development
--------------------
+Sharing your changes
+--------------------
 
 Importing or exporting patches:
 
@@ -196,12 +196,6 @@ Importing or exporting patches:
 $ git format-patch origin..HEAD # format a patch for each commit
 				# in HEAD but not in origin
 $ git-am mbox # import patches from the mailbox "mbox"
------------------------------------------------
-
-Fetch a branch from a different git repository:
-
------------------------------------------------
-$ git fetch git://example.com/project.git theirbranch:mybranch
 -----------------------------------------------
 
 Fetch a branch in a different git repository, then merge into the
@@ -216,6 +210,26 @@ current branch:
 
 -----------------------------------------------
 $ git pull git://example.com/project.git theirbranch:mybranch
+-----------------------------------------------
+
+After creating commits on a local branch, update the remote
+branch with your commits:
+
+-----------------------------------------------
+$ git push ssh://example.com/project.git mybranch:theirbranch
+-----------------------------------------------
+
+When remote and local branch are both named "test":
+
+-----------------------------------------------
+$ git push ssh://example.com/project.git test
+-----------------------------------------------
+
+Shortcut version for a frequently used remote repository:
+
+-----------------------------------------------
+$ git remote add example ssh://example.com/project.git
+$ git push example test
 -----------------------------------------------
 
 Repositories and Branches
