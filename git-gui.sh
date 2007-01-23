@@ -640,6 +640,14 @@ proc show_diff {path w {lno {}}} {
 			return
 		}
 		$ui_diff conf -state normal
+		if {![catch {set type [exec file $path]}]} {
+			set n [string length $path]
+			if {[string equal -length $n $path $type]} {
+				set type [string range $type $n end]
+				regsub {^:?\s*} $type {} type
+			}
+			$ui_diff insert end "* $type\n" d_@
+		}
 		if {[string first "\0" $content] != -1} {
 			$ui_diff insert end \
 				"* Binary file (not showing content)." \
