@@ -95,6 +95,8 @@ static int handle_line(char *line)
 		return 3;
 
 	if (line[len - 1] == '\n')
+		line[len - 1] = 0, --len;
+	if (line[len - 1] == '\r')
 		line[len - 1] = 0;
 	line += 42;
 
