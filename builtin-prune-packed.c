@@ -26,10 +26,6 @@ static void prune_dir(int i, DIR *dir, char *pathname, int len, int opts)
 		if (opts & DRY_RUN)
 			printf("rm -f %s\n", pathname);
 		else {
-#ifdef __MINGW32__
-			/* read-only files cannot be removed */
-			chmod(pathname, 0666);
-#endif
 			if (unlink(pathname) < 0)
 				error("unable to unlink %s", pathname);
 		}

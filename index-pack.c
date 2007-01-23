@@ -700,10 +700,6 @@ static const char *write_index_file(const char *index_name, unsigned char *sha1)
 		fd = mkstemp(tmpfile);
 		index_name = xstrdup(tmpfile);
 	} else {
-#ifdef __MINGW32__
-		/* read-only files cannot be removed */
-		chmod(index_name, 0666);
-#endif
 		unlink(index_name);
 		fd = open(index_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
 	}

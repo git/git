@@ -359,6 +359,13 @@ static inline int git_mkdir(const char *path, int mode)
 }
 #define mkdir git_mkdir
 
+static inline int git_unlink(const char *pathname) {
+	/* read-only files cannot be removed */
+	chmod(pathname, 0666);
+	return unlink(pathname);
+}
+#define unlink git_unlink
+
 #include <time.h>
 struct tm *gmtime_r(const time_t *timep, struct tm *result);
 struct tm *localtime_r(const time_t *timep, struct tm *result);
