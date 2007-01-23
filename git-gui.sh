@@ -637,6 +637,9 @@ proc show_diff {path w {lno {}}} {
 			error_popup "Error loading file:\n\n$err"
 			return
 		}
+		if {[string first "\0" [string range $content 0 8000]] != -1} {
+			set content {* Binary file (not showing content).}
+		}
 		$ui_diff conf -state normal
 		$ui_diff insert end $content
 		$ui_diff conf -state disabled
