@@ -257,7 +257,9 @@ static int create_default_files(const char *git_dir, const char *template_path)
 	}
 	else {
 		git_config_set("core.bare", "false");
-		git_config_set("core.logallrefupdates", "true");
+		/* allow template config file to override the default */
+		if (log_all_ref_updates == -1)
+		    git_config_set("core.logallrefupdates", "true");
 	}
 	return reinit;
 }
