@@ -476,7 +476,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (!rev.diffopt.text)
 		rev.diffopt.binary = 1;
 
-	if (!output_directory)
+	if (!output_directory && !use_stdout)
 		output_directory = prefix;
 
 	if (output_directory) {

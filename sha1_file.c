@@ -1469,21 +1469,20 @@ static void *read_packed_sha1(const unsigned char *sha1, char *type, unsigned lo
 {
 	struct pack_entry e;
 
-	if (!find_pack_entry(sha1, &e, NULL)) {
-		error("cannot read sha1_file for %s", sha1_to_hex(sha1));
+	if (!find_pack_entry(sha1, &e, NULL))
 		return NULL;
-	}
-	return unpack_entry(e.p, e.offset, type, size);
+	else
+		return unpack_entry(e.p, e.offset, type, size);
 }
 
 void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
 {
 	unsigned long mapsize;
 	void *map, *buf;
-	struct pack_entry e;
 
-	if (find_pack_entry(sha1, &e, NULL))
-		return read_packed_sha1(sha1, type, size);
+	buf = read_packed_sha1(sha1, type, size);
+	if (buf)
+		return buf;
 	map = map_sha1_file(sha1, &mapsize);
 	if (map) {
 		buf = unpack_sha1_file(map, mapsize, type, size);
@@ -1491,9 +1490,7 @@ void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size
 		return buf;
 	}
 	reprepare_packed_git();
-	if (find_pack_entry(sha1, &e, NULL))
-		return read_packed_sha1(sha1, type, size);
-	return NULL;
+	return read_packed_sha1(sha1, type, size);
 }
 
 void *read_object_with_reference(const unsigned char *sha1,
@@ -1781,6 +1778,8 @@ static void *repack_object(const unsigned char *sha1, unsigned long *objsize)
 
 	/* need to unpack and recompress it by itself */
 	unpacked = read_packed_sha1(sha1, type, &len);
+	if (!unpacked)
+		error("cannot read sha1_file for %s", sha1_to_hex(sha1));
 
 	hdrlen = sprintf(hdr, "%s %lu", type, len) + 1;
 

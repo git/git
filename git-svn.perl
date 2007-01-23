@@ -2856,7 +2856,7 @@ sub rmdirs {
 	foreach my $d (sort { $b =~ tr#/#/# <=> $a =~ tr#/#/# } keys %$rm) {
 		$self->close_directory($bat->{$d}, $p);
 		my ($dn) = ($d =~ m#^(.*?)/?(?:[^/]+)$#);
-		print "\tD+\t/$d/\n" unless $q;
+		print "\tD+\t$d/\n" unless $q;
 		$self->SUPER::delete_entry($d, $r, $bat->{$dn}, $p);
 		delete $bat->{$d};
 	}

@@ -85,7 +85,7 @@ sub write_author_info($) {
 	close ($f);
 }
 
-getopts("hivmkuo:d:p:C:z:s:M:P:A:S:L:") or usage();
+getopts("haivmkuo:d:p:C:z:s:M:P:A:S:L:") or usage();
 usage if $opt_h;
 
 @ARGV <= 1 or usage();

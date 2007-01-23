@@ -275,7 +275,7 @@ sub command {
 
 	} else {
 		my @lines = <$fh>;
-		chomp @lines;
+		defined and chomp for @lines;
 		try {
 			_cmd_close($fh, $ctx);
 		} catch Git::Error::Command with {
@@ -736,13 +736,19 @@ sub _command_common_pipe {
 	_check_valid_cmd($cmd);
 
 	my $fh;
-	if ($^O eq '##INSERT_ACTIVESTATE_STRING_HERE##') {
+	if ($^O eq 'MSWin32') {
 		# ActiveState Perl
 		#defined $opts{STDERR} and
 		#	warn 'ignoring STDERR option - running w/ ActiveState';
 		$direction eq '-|' or
 			die 'input pipe for ActiveState not implemented';
-		tie ($fh, 'Git::activestate_pipe', $cmd, @args);
+		# the strange construction with *ACPIPE is just to
+		# explain the tie below that we want to bind to
+		# a handle class, not scalar. It is not known if
+		# it is something specific to ActiveState Perl or
+		# just a Perl quirk.
+		tie (*ACPIPE, 'Git::activestate_pipe', $cmd, @args);
+		$fh = *ACPIPE;
 
 	} else {
 		my $pid = open($fh, $direction);
@@ -809,8 +815,9 @@ sub TIEHANDLE {
 	# FIXME: This is probably horrible idea and the thing will explode
 	# at the moment you give it arguments that require some quoting,
 	# but I have no ActiveState clue... --pasky
-	my $cmdline = join " ", @params;
-	my @data = qx{$cmdline};
+	# Let's just hope ActiveState Perl does at least the quoting
+	# correctly.
+	my @data = qx{git @params};
 	bless { i => 0, data => \@data }, $class;
 }
 
