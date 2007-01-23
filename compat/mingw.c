@@ -164,13 +164,11 @@ char *mingw_getcwd(char *pointer, int len)
 	}
 	return ret;
 }
-const char *strptime(char *buf, const char *format, struct tm *tm)
-{
-	die("MinGW does not yet support strptime!");
-}
+
 void sync(void)
 {
 }
+
 void openlog(const char *ident, int option, int facility)
 {
 }
