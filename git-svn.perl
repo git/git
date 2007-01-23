@@ -1056,10 +1056,12 @@ sub revisions_eq {
 
 sub find_parent_branch {
 	my ($self, $paths, $rev) = @_;
+	return undef unless $::_follow_parent;
 
 	# look for a parent from another branch:
-	my $i = $paths->{'/'.$self->rel_path} or return;
-	my $branch_from = $i->copyfrom_path or return;
+	my $abs_path = '/'.$self->rel_path;
+	my $i = $paths->{$abs_path} or goto not_found;
+	my $branch_from = $i->copyfrom_path or goto not_found;
 	my $r = $i->copyfrom_rev;
 	my $repos_root = $self->ra->{repos_root};
 	my $url = $self->ra->{url};
@@ -1118,7 +1120,16 @@ sub find_parent_branch {
 		}
 		return $self->make_log_entry($rev, [$parent], $ed);
 	}
-	print STDERR "Branch parent not found...\n";
+not_found:
+	print STDERR "Branch parent for path: '$abs_path' not found\n";
+	return undef unless $paths;
+	foreach my $p (sort keys %$paths) {
+		print STDERR '  ', $p->action, '  ', $p;
+		if (my $cp_from = $p->copyfrom_path) {
+			print STDERR "(from $cp_from:", $p->copyfrom_rev, ')';
+		}
+		print STDERR "\n";
+	}
 	return undef;
 }
 
