@@ -163,7 +163,9 @@ while
 	1,-u|1,--upload-pack) usage ;;
 	*,-u|*,--upload-pack)
 		shift
-		upload_pack="--exec=$1" ;;
+		upload_pack="--upload-pack=$1" ;;
+	*,--upload-pack=*)
+		upload_pack=--upload-pack=$(expr "$1" : '-[^=]*=\(.*\)') ;;
 	1,--depth) usage;;
 	*,--depth)
 		shift
