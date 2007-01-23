@@ -725,6 +725,7 @@ sub read_all_remotes {
 }
 
 sub verify_remotes_sanity {
+	return unless -d $ENV{GIT_DIR};
 	my %seen;
 	foreach (command(qw/config -l/)) {
 		if (m!^svn-remote\.(?:.+)\.fetch=.*:refs/remotes/(\S+)\s*$!) {
