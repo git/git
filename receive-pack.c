@@ -250,20 +250,22 @@ static void read_head_info(void)
 
 static const char *parse_pack_header(struct pack_header *hdr)
 {
-	char *c = (char*)hdr;
-	ssize_t remaining = sizeof(struct pack_header);
-	do {
-		ssize_t r = xread(0, c, remaining);
-		if (r <= 0)
-			return "eof before pack header was fully read";
-		remaining -= r;
-		c += r;
-	} while (remaining > 0);
-	if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
+	switch (read_pack_header(0, hdr)) {
+	case PH_ERROR_EOF:
+		return "eof before pack header was fully read";
+
+	case PH_ERROR_PACK_SIGNATURE:
 		return "protocol error (pack signature mismatch detected)";
-	if (!pack_version_ok(hdr->hdr_version))
+
+	case PH_ERROR_PROTOCOL:
 		return "protocol error (pack version unsupported)";
-	return NULL;
+
+	default:
+		return "unknown error in parse_pack_header";
+
+	case 0:
+		return NULL;
+	}
 }
 
 static const char *pack_lockfile;
