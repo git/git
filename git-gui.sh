@@ -706,6 +706,7 @@ proc read_diff {fd} {
 			|| [string match {mode *} $line]
 			|| [string match {new file *} $line]
 			|| [string match {deleted file *} $line]
+			|| $line eq {\ No newline at end of file}
 			|| [regexp {^\* Unmerged path } $line]} {
 			set tags {}
 		} elseif {$is_3way_diff} {
