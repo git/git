@@ -12,8 +12,8 @@ static int verbose;
 static int fetch_all;
 static int depth;
 static const char fetch_pack_usage[] =
-"git-fetch-pack [--all] [--quiet|-q] [--keep|-k] [--thin] [--exec=<git-upload-pack>] [--depth=<n>] [-v] [<host>:]<directory> [<refs>...]";
-static const char *exec = "git-upload-pack";
+"git-fetch-pack [--all] [--quiet|-q] [--keep|-k] [--thin] [--upload-pack=<git-upload-pack>] [--depth=<n>] [-v] [<host>:]<directory> [<refs>...]";
+static const char *uploadpack = "git-upload-pack";
 
 #define COMPLETE	(1U << 0)
 #define COMMON		(1U << 1)
@@ -643,8 +643,12 @@ int main(int argc, char **argv)
 		char *arg = argv[i];
 
 		if (*arg == '-') {
+			if (!strncmp("--upload-pack=", arg, 14)) {
+				uploadpack = arg + 14;
+				continue;
+			}
 			if (!strncmp("--exec=", arg, 7)) {
-				exec = arg + 7;
+				uploadpack = arg + 7;
 				continue;
 			}
 			if (!strcmp("--quiet", arg) || !strcmp("-q", arg)) {
@@ -682,7 +686,7 @@ int main(int argc, char **argv)
 	}
 	if (!dest)
 		usage(fetch_pack_usage);
-	pid = git_connect(fd, dest, exec);
+	pid = git_connect(fd, dest, uploadpack);
 	if (pid < 0)
 		return 1;
 	if (heads && nr_heads)

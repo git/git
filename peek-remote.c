@@ -3,8 +3,8 @@
 #include "pkt-line.h"
 
 static const char peek_remote_usage[] =
-"git-peek-remote [--exec=upload-pack] [host:]directory";
-static const char *exec = "git-upload-pack";
+"git-peek-remote [--upload-pack=<git-upload-pack>] [<host>:]<directory>";
+static const char *uploadpack = "git-upload-pack";
 
 static int peek_remote(int fd[2], unsigned flags)
 {
@@ -35,8 +35,12 @@ int main(int argc, char **argv)
 		char *arg = argv[i];
 
 		if (*arg == '-') {
+			if (!strncmp("--upload-pack=", arg, 14)) {
+				uploadpack = arg + 14;
+				continue;
+			}
 			if (!strncmp("--exec=", arg, 7)) {
-				exec = arg + 7;
+				uploadpack = arg + 7;
 				continue;
 			}
 			if (!strcmp("--tags", arg)) {
@@ -60,7 +64,7 @@ int main(int argc, char **argv)
 	if (!dest || i != argc - 1)
 		usage(peek_remote_usage);
 
-	pid = git_connect(fd, dest, exec);
+	pid = git_connect(fd, dest, uploadpack);
 	if (pid < 0)
 		return 1;
 	ret = peek_remote(fd, flags);
