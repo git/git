@@ -107,11 +107,44 @@ Updates in v1.5.0 since v1.4.4 series
    already comfortable with your workflow with the layout.
 
  - git-clone always uses what is known as "separate remote"
-   layout for a newly created repository with a working tree;
-   i.e. tracking branches in $GIT_DIR/refs/remotes/origin/ are
-   used to track branches from the origin, instead of
-   $GIT_DIR/refs/heads/, making the difference between remotely
-   tracked and local branches more obvious.
+   layout for a newly created repository with a working tree.
+
+   A repository with the separate remote layout starts with only
+   one default branch, 'master', to be used for your own
+   development.  Unlike the traditional layout that copied all
+   the upstream branches into your branch namespace (while
+   renaming their 'master' to your 'origin'), the new layout
+   puts upstream branches into local "remote-tracking branches"
+   with their own namespace. These can be referenced with names
+   such as "origin/$upstream_branch_name" and are stored in
+   .git/refs/remotes rather than .git/refs/heads where normal
+   branches are stored.
+
+   This layout keeps your own branch namespace less cluttered,
+   avoids name collision with your upstream, makes it possible
+   to automatically track new branches created at the remote
+   after you clone from it, and makes it easier to interact with
+   more than one remote repository (you can use "git remote" to
+   add other repositories to track).  There might be some
+   surprises:
+
+   * 'git branch' does not show the remote tracking branches.
+     It only lists your own branches.  Use '-r' option to view
+     the tracking branches.
+
+   * If you are forking off of a branch obtained from the
+     upstream, you would have done something like 'git branch
+     my-next next', because traditional layout dropped the
+     tracking branch 'next' into your own branch namespace.
+     With the separate remote layout, you say 'git branch next
+     origin/next', which allows you to use the matching name
+     'next' for your own branch.  It also allows you to track a
+     remote other than 'origin' (i.e. where you initially cloned
+     from) and fork off of a branch from there the same way
+     (e.g. "git branch mingw j6t/master").
+
+   Repositories initialized with the traditional layout continue
+   to work.
 
  - New branches that appear on the origin side after a clone is
    made are also tracked automatically.  This is done with an
