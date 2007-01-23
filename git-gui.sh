@@ -657,7 +657,6 @@ proc show_diff {path w {lno {}}} {
 				$ui_diff insert end \
 "* Untracked file is $sz bytes.
 * Showing only first $max_sz bytes.
-
 " d_@
 			}
 			$ui_diff insert end $content
