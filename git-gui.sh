@@ -805,6 +805,7 @@ proc read_diff {fd} {
 
 proc load_last_commit {} {
 	global HEAD PARENT MERGE_HEAD commit_type ui_comm
+	global repo_config
 
 	if {[llength $PARENT] == 0} {
 		error_popup {There is nothing to amend.
@@ -831,11 +832,18 @@ current merge activity.
 	set parents [list]
 	if {[catch {
 			set fd [open "| git cat-file commit $curHEAD" r]
+			fconfigure $fd -encoding binary -translation lf
+			if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
+				set enc utf-8
+			}
 			while {[gets $fd line] > 0} {
 				if {[string match {parent *} $line]} {
 					lappend parents [string range $line 7 end]
+				} elseif {[string match {encoding *} $line]} {
+					set enc [string tolower [string range $line 9 end]]
 				}
 			}
+			fconfigure $fd -encoding $enc
 			set msg [string trim [read $fd]]
 			close $fd
 		} err]} {
@@ -1027,6 +1035,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 	global single_commit all_heads current_branch
 	global ui_status_value ui_comm selected_commit_type
 	global file_states selected_paths rescan_active
+	global repo_config
 
 	gets $fd_wt tree_id
 	if {$tree_id eq {} || [catch {close $fd_wt} err]} {
@@ -1035,6 +1044,17 @@ proc commit_committree {fd_wt curHEAD msg} {
 		unlock_index
 		return
 	}
+
+	# -- Build the message.
+	#
+	set msg_p [gitdir COMMIT_EDITMSG]
+	set msg_wt [open $msg_p w]
+	if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
+		set enc utf-8
+	}
+	fconfigure $msg_wt -encoding $enc -translation binary
+	puts -nonewline $msg_wt $msg
+	close $msg_wt
 
 	# -- Create the commit.
 	#
@@ -1048,7 +1068,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 		# git commit-tree writes to stderr during initial commit.
 		lappend cmd 2>/dev/null
 	}
-	lappend cmd << $msg
+	lappend cmd <$msg_p
 	if {[catch {set cmt_id [eval exec $cmd]} err]} {
 		error_popup "commit-tree failed:\n\n$err"
 		set ui_status_value {Commit failed.}
@@ -1086,6 +1106,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 
 	# -- Cleanup after ourselves.
 	#
+	catch {file delete $msg_p}
 	catch {file delete [gitdir MERGE_HEAD]}
 	catch {file delete [gitdir MERGE_MSG]}
 	catch {file delete [gitdir SQUASH_MSG]}
