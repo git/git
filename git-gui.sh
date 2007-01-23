@@ -626,10 +626,12 @@ proc show_diff {path w {lno {}}} {
 	# - Git won't give us the diff, there's nothing to compare to!
 	#
 	if {$m eq {_O}} {
+		set max_sz [expr {128 * 1024}]
 		if {[catch {
 				set fd [open $path r]
-				set content [read $fd]
+				set content [read $fd $max_sz]
 				close $fd
+				set sz [file size $path]
 			} err ]} {
 			set diff_active 0
 			unlock_index
@@ -637,11 +639,27 @@ proc show_diff {path w {lno {}}} {
 			error_popup "Error loading file:\n\n$err"
 			return
 		}
-		if {[string first "\0" [string range $content 0 8000]] != -1} {
-			set content {* Binary file (not showing content).}
-		}
 		$ui_diff conf -state normal
-		$ui_diff insert end $content
+		if {[string first "\0" $content] != -1} {
+			$ui_diff insert end \
+				"* Binary file (not showing content)." \
+				d_@
+		} else {
+			if {$sz > $max_sz} {
+				$ui_diff insert end \
+"* Untracked file is $sz bytes.
+* Showing only first $max_sz bytes.
+
+" d_@
+			}
+			$ui_diff insert end $content
+			if {$sz > $max_sz} {
+				$ui_diff insert end "
+* Untracked file clipped here by [appname].
+* To see the entire file, use an external editor.
+" d_@
+			}
+		}
 		$ui_diff conf -state disabled
 		set diff_active 0
 		unlock_index
