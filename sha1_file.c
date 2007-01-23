@@ -80,13 +80,21 @@ int get_sha1_hex(const char *hex, unsigned char *sha1)
 	return 0;
 }
 
+/* returns the number of chars to skip to first component */
+static inline int is_path_absolute(const char *path)
+{
+#ifdef __MINGW32__
+	if (isalpha(path[0]) && path[1] == ':')
+		return 2 + (path[2] == '/');
+	/* TODO: C:dir/file 'relative' paths are not catered for */
+#endif
+	return *path == '/';
+}
+
 int safe_create_leading_directories(char *path)
 {
-	char *pos = path;
+	char *pos = path + is_path_absolute(path);
 	struct stat st;
-
-	if (*pos == '/')
-		pos++;
 
 	while (pos) {
 		pos = strchr(pos, '/');
@@ -252,7 +260,7 @@ static int link_alt_odb_entry(const char * entry, int len, const char * relative
 	int entlen = pfxlen + 43;
 	int base_len = -1;
 
-	if (*entry != '/' && relative_base) {
+	if (!is_path_absolute(entry) && relative_base) {
 		/* Relative alt-odb */
 		if (base_len < 0)
 			base_len = strlen(relative_base) + 1;
@@ -261,7 +269,7 @@ static int link_alt_odb_entry(const char * entry, int len, const char * relative
 	}
 	ent = xmalloc(sizeof(*ent) + entlen);
 
-	if (*entry != '/' && relative_base) {
+	if (!is_path_absolute(entry) && relative_base) {
 		memcpy(ent->base, relative_base, base_len - 1);
 		ent->base[base_len - 1] = '/';
 		memcpy(ent->base + base_len, entry, len);
@@ -332,7 +340,7 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
 		while (cp < ep && *cp != sep)
 			cp++;
 		if (last != cp) {
-			if ((*last != '/') && depth) {
+			if (!is_path_absolute(last) && depth) {
 				error("%s: ignoring relative alternate object store %s",
 						relative_base, last);
 			} else {
