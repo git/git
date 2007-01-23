@@ -582,11 +582,11 @@ proc handle_empty_diff {} {
 [short_path $path] has no changes.
 
 The modification date of this file was updated
-by another application and you currently have
-the Trust File Modification Timestamps option
-enabled, so Git did not automatically detect
-that there are no content differences in this
-file."
+by another application, but the content within
+the file was not changed.
+
+A rescan will be automatically started to find
+other files which may have the same state."
 
 	clear_diff
 	display_file $path __
@@ -683,7 +683,6 @@ proc show_diff {path w {lno {}}} {
 
 proc read_diff {fd} {
 	global ui_diff ui_status_value is_3way_diff diff_active
-	global repo_config
 
 	$ui_diff conf -state normal
 	while {[gets $fd line] >= 0} {
@@ -763,8 +762,7 @@ proc read_diff {fd} {
 		unlock_index
 		set ui_status_value {Ready.}
 
-		if {$repo_config(gui.trustmtime) eq {true}
-			&& [$ui_diff index end] eq {2.0}} {
+		if {[$ui_diff index end] eq {2.0}} {
 			handle_empty_diff
 		}
 	}
