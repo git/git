@@ -410,9 +410,9 @@ proc rescan_stage2 {fd after} {
 	set fd_df [open "| git diff-files -z" r]
 	set fd_lo [open $ls_others r]
 
-	fconfigure $fd_di -blocking 0 -translation binary
-	fconfigure $fd_df -blocking 0 -translation binary
-	fconfigure $fd_lo -blocking 0 -translation binary
+	fconfigure $fd_di -blocking 0 -translation binary -encoding binary
+	fconfigure $fd_df -blocking 0 -translation binary -encoding binary
+	fconfigure $fd_lo -blocking 0 -translation binary -encoding binary
 	fileevent $fd_di readable [list read_diff_index $fd_di $after]
 	fileevent $fd_df readable [list read_diff_files $fd_df $after]
 	fileevent $fd_lo readable [list read_ls_others $fd_lo $after]
@@ -450,8 +450,9 @@ proc read_diff_index {fd after} {
 
 		incr c
 		set i [split [string range $buf_rdi $c [expr {$z1 - 2}]] { }]
+		set p [string range $buf_rdi $z1 [expr {$z2 - 1}]]
 		merge_state \
-			[string range $buf_rdi $z1 [expr {$z2 - 1}]] \
+			[encoding convertfrom $p] \
 			[lindex $i 4]? \
 			[list [lindex $i 0] [lindex $i 2]] \
 			[list]
@@ -482,8 +483,9 @@ proc read_diff_files {fd after} {
 
 		incr c
 		set i [split [string range $buf_rdf $c [expr {$z1 - 2}]] { }]
+		set p [string range $buf_rdf $z1 [expr {$z2 - 1}]]
 		merge_state \
-			[string range $buf_rdf $z1 [expr {$z2 - 1}]] \
+			[encoding convertfrom $p] \
 			?[lindex $i 4] \
 			[list] \
 			[list [lindex $i 0] [lindex $i 2]]
@@ -506,7 +508,7 @@ proc read_ls_others {fd after} {
 	set pck [split $buf_rlo "\0"]
 	set buf_rlo [lindex $pck end]
 	foreach p [lrange $pck 0 end-1] {
-		merge_state $p ?O
+		merge_state [encoding convertfrom $p] ?O
 	}
 	rescan_done $fd buf_rlo $after
 }
@@ -1459,6 +1461,7 @@ proc update_indexinfo {msg pathList after} {
 		-blocking 0 \
 		-buffering full \
 		-buffersize 512 \
+		-encoding binary \
 		-translation binary
 	fileevent $fd writable [list \
 		write_update_indexinfo \
@@ -1499,7 +1502,7 @@ proc write_update_indexinfo {fd pathList totalCnt batch msg after} {
 		set info [lindex $s 2]
 		if {$info eq {}} continue
 
-		puts -nonewline $fd "$info\t$path\0"
+		puts -nonewline $fd "$info\t[encoding convertto $path]\0"
 		display_file $path $new
 	}
 
@@ -1531,6 +1534,7 @@ proc update_index {msg pathList after} {
 		-blocking 0 \
 		-buffering full \
 		-buffersize 512 \
+		-encoding binary \
 		-translation binary
 	fileevent $fd writable [list \
 		write_update_index \
@@ -1575,7 +1579,7 @@ proc write_update_index {fd pathList totalCnt batch msg after} {
 		?M {set new M_}
 		?? {continue}
 		}
-		puts -nonewline $fd "$path\0"
+		puts -nonewline $fd "[encoding convertto $path]\0"
 		display_file $path $new
 	}
 
@@ -1613,6 +1617,7 @@ proc checkout_index {msg pathList after} {
 		-blocking 0 \
 		-buffering full \
 		-buffersize 512 \
+		-encoding binary \
 		-translation binary
 	fileevent $fd writable [list \
 		write_checkout_index \
@@ -1645,7 +1650,7 @@ proc write_checkout_index {fd pathList totalCnt batch msg after} {
 		U? {continue}
 		?M -
 		?D {
-			puts -nonewline $fd "$path\0"
+			puts -nonewline $fd "[encoding convertto $path]\0"
 			display_file $path ?_
 		}
 		}
