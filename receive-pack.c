@@ -325,17 +325,9 @@ static const char *unpack(void)
 
 		if (pipe(fd) < 0)
 			return "index-pack pipe failed";
-		pid = fork();
+		pid = spawnv_git_cmd(keeper, NULL, fd);
 		if (pid < 0)
 			return "index-pack fork failed";
-		if (!pid) {
-			dup2(fd[1], 1);
-			close(fd[1]);
-			close(fd[0]);
-			execv_git_cmd(keeper);
-			die("execv of index-pack failed");
-		}
-		close(fd[1]);
 
 		/*
 		 * The first thing we expects from index-pack's output

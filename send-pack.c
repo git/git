@@ -20,44 +20,35 @@ static int use_thin_pack;
 static int pack_objects(int fd, struct ref *refs)
 {
 	int pipe_fd[2];
+	int pack_fd[2] = { -1, fd };
 	pid_t pid;
+
+	/*
+	 * The child becomes pack-objects --revs; we feed
+	 * the revision parameters to it via its stdin and
+	 * let its stdout go back to the other end.
+	 */
+	static const char *args[] = {
+		"pack-objects",
+		"--all-progress",
+		"--revs",
+		"--stdout",
+		NULL,
+		NULL,
+	};
+	if (use_thin_pack)
+		args[4] = "--thin";
 
 	if (pipe(pipe_fd) < 0)
 		return error("send-pack: pipe failed");
-	pid = fork();
+	pid = spawnv_git_cmd(args, pipe_fd, pack_fd);
 	if (pid < 0)
 		return error("send-pack: unable to fork git-pack-objects");
-	if (!pid) {
-		/*
-		 * The child becomes pack-objects --revs; we feed
-		 * the revision parameters to it via its stdin and
-		 * let its stdout go back to the other end.
-		 */
-		static const char *args[] = {
-			"pack-objects",
-			"--all-progress",
-			"--revs",
-			"--stdout",
-			NULL,
-			NULL,
-		};
-		if (use_thin_pack)
-			args[4] = "--thin";
-		dup2(pipe_fd[0], 0);
-		dup2(fd, 1);
-		close(pipe_fd[0]);
-		close(pipe_fd[1]);
-		close(fd);
-		execv_git_cmd(args);
-		die("git-pack-objects exec failed (%s)", strerror(errno));
-	}
 
 	/*
 	 * We feed the pack-objects we just spawned with revision
 	 * parameters by writing to the pipe.
 	 */
-	close(pipe_fd[0]);
-	close(fd);
 
 	while (refs) {
 		char buf[42];
