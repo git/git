@@ -61,6 +61,23 @@ test_expect_success 'follow deleted parent' "
            = \"\`git rev-parse svn/trunk\`\"
         "
 
+test_expect_success 'follow larger parent' "
+        mkdir -p import/trunk/thunk/bump/thud &&
+        echo hi > import/trunk/thunk/bump/thud/file &&
+        svn import -m 'import a larger parent' import $svnrepo/larger-parent &&
+        svn cp -m 'hi' $svnrepo/larger-parent $svnrepo/another-larger &&
+        git-svn init -i larger $svnrepo/another-larger/trunk/thunk/bump/thud &&
+        git-svn fetch -i larger --follow-parent &&
+        git-rev-parse --verify refs/remotes/larger &&
+        git-rev-parse --verify \
+           refs/remotes/larger-parent/trunk/thunk/bump/thud &&
+        test \"\`git-merge-base \
+                 refs/remotes/larger-parent/trunk/thunk/bump/thud \
+                 refs/remotes/larger\`\" = \
+             \"\`git-rev-parse refs/remotes/larger\`\"
+        true
+        "
+
 test_debug 'gitk --all &'
 
 test_done

@@ -1102,9 +1102,21 @@ sub find_parent_branch {
 	return undef unless $::_follow_parent;
 
 	# look for a parent from another branch:
-	my $abs_path = '/'.$self->rel_path;
-	my $i = $paths->{$abs_path} or goto not_found;
+	my @b_path_components = split m#/#, $self->rel_path;
+	my @a_path_components;
+	my $i;
+	while (@b_path_components) {
+		$i = $paths->{'/'.join('/', @b_path_components)};
+		last if $i;
+		unshift(@a_path_components, pop(@b_path_components));
+	}
+	goto not_found unless defined $i;
 	my $branch_from = $i->copyfrom_path or goto not_found;
+	if (@a_path_components) {
+		print STDERR "branch_from: $branch_from => ";
+		$branch_from .= '/'.join('/', @a_path_components);
+		print STDERR $branch_from, "\n";
+	}
 	my $r = $i->copyfrom_rev;
 	my $repos_root = $self->ra->{repos_root};
 	my $url = $self->ra->{url};
@@ -1134,10 +1146,11 @@ sub find_parent_branch {
 	}
 	my ($r0, $parent) = $gs->find_rev_before($r, 1);
 	if ($::_follow_parent && (!defined $r0 || !defined $parent)) {
-		foreach (0 .. $r) {
-			my $log_entry = eval { $gs->do_fetch(undef, $_) };
+		$gs->ra->get_log([$gs->{path}], 0, $r, 0, 1, 1, sub {
+			my ($paths, $rev) = @_;
+			my $log_entry = eval { $gs->do_fetch($paths, $rev) };
 			$gs->do_git_commit($log_entry) if $log_entry;
-		}
+		});
 		($r0, $parent) = $gs->last_rev_commit;
 	}
 	if (defined $r0 && defined $parent && $gs->revisions_eq($r0, $r)) {
@@ -1164,10 +1177,12 @@ sub find_parent_branch {
 		return $self->make_log_entry($rev, [$parent], $ed);
 	}
 not_found:
-	print STDERR "Branch parent for path: '$abs_path' not found\n";
+	print STDERR "Branch parent for path: '/",
+	             $self->rel_path, "' not found\n";
 	return undef unless $paths;
-	foreach my $p (sort keys %$paths) {
-		print STDERR '  ', $p->action, '  ', $p;
+	foreach my $x (sort keys %$paths) {
+		my $p = $paths->{$x};
+		print STDERR '  ', $p->action, '  ', $x;
 		if (my $cp_from = $p->copyfrom_path) {
 			print STDERR "(from $cp_from:", $p->copyfrom_rev, ')';
 		}
