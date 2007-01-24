@@ -220,10 +220,22 @@ test_expect_failure 'exit if remote refs are ambigious' "
                               bar:refs/remotes/git-svn &&
         git-svn migrate
         "
+
 test_expect_failure 'exit if init-ing a would clobber a URL' "
+        svnadmin create ${PWD}/svnrepo2 &&
+        svn mkdir -m 'mkdir bar' ${svnrepo}2/bar &&
         git-repo-config --unset svn-remote.git-svn.fetch \
                                 '^bar:refs/remotes/git-svn$' &&
-        git-svn init $svnrepo/bar
+        git-svn init ${svnrepo}2/bar
+        "
+
+test_expect_success \
+  'init allows us to connect to another directory in the same repo' "
+        git-svn init -i bar $svnrepo/bar &&
+        git repo-config --get svn-remote.git-svn.fetch \
+                              '^bar:refs/remotes/bar$' &&
+        git repo-config --get svn-remote.git-svn.fetch \
+                              '^:refs/remotes/git-svn$'
         "
 
 test_done

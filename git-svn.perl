@@ -748,35 +748,78 @@ sub sanitize_remote_name {
 	$name;
 }
 
+sub find_existing_remote {
+	my ($url, $remotes) = @_;
+	my $existing;
+	foreach my $repo_id (keys %$remotes) {
+		my $u = $remotes->{$repo_id}->{url} or next;
+		next if $u ne $url;
+		$existing = $repo_id;
+		last;
+	}
+	$existing;
+}
+
+sub init_remote_config {
+	my ($self, $url) = @_;
+	$url =~ s!/+$!!; # strip trailing slash
+	my $r = read_all_remotes();
+	my $existing = find_existing_remote($url, $r);
+	if ($existing) {
+		print STDERR "Using existing ",
+			     "[svn-remote \"$existing\"]\n";
+		$self->{repo_id} = $existing;
+	} else {
+		my $min_url = Git::SVN::Ra->new($url)->minimize_url;
+		$existing = find_existing_remote($min_url, $r);
+		if ($existing) {
+			print STDERR "Using existing ",
+				     "[svn-remote \"$existing\"]\n";
+			$self->{repo_id} = $existing;
+		}
+		if ($min_url ne $url) {
+			print STDERR "Using higher level of URL: ",
+			             "$url => $min_url\n";
+			my $old_path = $self->{path};
+			$self->{path} = $url;
+			$self->{path} =~ s!^\Q$min_url\E/*!!;
+			if (length $old_path) {
+				$self->{path} .= "/$old_path";
+			}
+			$url = $min_url;
+		}
+	}
+	my $orig_url;
+	if (!$existing) {
+		# verify that we aren't overwriting anything:
+		$orig_url = eval {
+			command_oneline('config', '--get',
+					"svn-remote.$self->{repo_id}.url")
+		};
+		if ($orig_url && ($orig_url ne $url)) {
+			die "svn-remote.$self->{repo_id}.url already set: ",
+			    "$orig_url\nwanted to set to: $url\n";
+		}
+	}
+	my ($xrepo_id, $xpath) = find_ref($self->refname);
+	if (defined $xpath) {
+		die "svn-remote.$xrepo_id.fetch already set to track ",
+		    "$xpath:refs/remotes/", $self->refname, "\n";
+	}
+	command_noisy('config',
+		      "svn-remote.$self->{repo_id}.url", $url);
+	command_noisy('config', '--add',
+		      "svn-remote.$self->{repo_id}.fetch",
+		      "$self->{path}:".$self->refname);
+	$self->{url} = $url;
+}
+
 sub init {
 	my ($class, $url, $path, $repo_id, $ref_id) = @_;
 	my $self = _new($class, $repo_id, $ref_id, $path);
 	if (defined $url) {
-		$url =~ s!/+$!!; # strip trailing slash
-
-		# verify that we aren't overwriting anything:
-		my $orig_url = eval {
-			command_oneline('config', '--get',
-			                "svn-remote.$repo_id.url")
-		};
-		if ($orig_url && ($orig_url ne $url)) {
-			die "svn-remote.$repo_id.url already set: ",
-			    "$orig_url\nwanted to set to: $url\n";
-		}
-		my ($xrepo_id, $xpath) = find_ref($self->refname);
-		if (defined $xpath) {
-			die "svn-remote.$xrepo_id.fetch already set to track ",
-			    "$xpath:refs/remotes/", $self->refname, "\n";
-		}
-		if (!$orig_url) {
-			command_noisy('config',
-			              "svn-remote.$repo_id.url", $url);
-		}
-		command_noisy('config', '--add',
-		              "svn-remote.$repo_id.fetch",
-		              "$path:".$self->refname);
+		$self->init_remote_config($url);
 	}
-	$self->{url} = $url;
 	$self;
 }
 
@@ -2206,6 +2249,19 @@ sub gs_do_switch {
 	$reporter->finish_report($pool);
 	$pool->clear;
 	$editor->{git_commit_ok};
+}
+
+sub minimize_url {
+	my ($self) = @_;
+	return $self->{url} if ($self->{url} eq $self->{repos_root});
+	my $url = $self->{repos_root};
+	my @components = split(m!/!, $self->{svn_path});
+	my $c = '';
+	do {
+		$url .= "/$c" if length $c;
+		eval { (ref $self)->new($url)->get_latest_revnum };
+	} while ($@ && ($c = shift @components));
+	$url;
 }
 
 sub can_do_switch {
