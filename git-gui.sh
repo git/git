@@ -2155,15 +2155,10 @@ proc do_delete_branch {} {
 	tkwait window $w
 }
 
-proc switch_branch {b} {
-	global HEAD commit_type file_states current_branch
-	global selected_commit_type ui_comm
+proc switch_branch {new_branch} {
+	global HEAD commit_type current_branch repo_config
 
 	if {![lock_index switch]} return
-
-	# -- Backup the selected branch (repository_state resets it)
-	#
-	set new_branch $current_branch
 
 	# -- Our in memory state should match the repository.
 	#
@@ -2185,19 +2180,110 @@ The rescan will be automatically started now.
 		return
 	}
 
-	# -- Toss the message buffer if we are in amend mode.
+	if {$repo_config(gui.trustmtime) eq {true}} {
+		switch_branch_stage2 {} $new_branch
+	} else {
+		set ui_status_value {Refreshing file status...}
+		set cmd [list git update-index]
+		lappend cmd -q
+		lappend cmd --unmerged
+		lappend cmd --ignore-missing
+		lappend cmd --refresh
+		set fd_rf [open "| $cmd" r]
+		fconfigure $fd_rf -blocking 0 -translation binary
+		fileevent $fd_rf readable \
+			[list switch_branch_stage2 $fd_rf $new_branch]
+	}
+}
+
+proc switch_branch_stage2 {fd_rf new_branch} {
+	global ui_status_value HEAD
+
+	if {$fd_rf ne {}} {
+		read $fd_rf
+		if {![eof $fd_rf]} return
+		close $fd_rf
+	}
+
+	set ui_status_value "Updating working directory to '$new_branch'..."
+	set cmd [list git read-tree]
+	lappend cmd -m
+	lappend cmd -u
+	lappend cmd --exclude-per-directory=.gitignore
+	lappend cmd $HEAD
+	lappend cmd $new_branch
+	set fd_rt [open "| $cmd" r]
+	fconfigure $fd_rt -blocking 0 -translation binary
+	fileevent $fd_rt readable \
+		[list switch_branch_readtree_wait $fd_rt $new_branch]
+}
+
+proc switch_branch_readtree_wait {fd_rt new_branch} {
+	global selected_commit_type commit_type HEAD MERGE_HEAD PARENT
+	global current_branch
+	global ui_comm ui_status_value
+
+	# -- We never get interesting output on stdout; only stderr.
 	#
-	if {[string match amend* $curType]} {
+	read $fd_rt
+	fconfigure $fd_rt -blocking 1
+	if {![eof $fd_rt]} {
+		fconfigure $fd_rt -blocking 0
+		return
+	}
+
+	# -- The working directory wasn't in sync with the index and
+	#    we'd have to overwrite something to make the switch. A
+	#    merge is required.
+	#
+	if {[catch {close $fd_rt} err]} {
+		regsub {^fatal: } $err {} err
+		warn_popup "File level merge required.
+
+$err
+
+Staying on branch '$current_branch'."
+		set ui_status_value "Aborted checkout of '$new_branch' (file level merging is required)."
+		unlock_index
+		return
+	}
+
+	# -- Update the symbolic ref.  Core git doesn't even check for failure
+	#    here, it Just Works(tm).  If it doesn't we are in some really ugly
+	#    state that is difficult to recover from within git-gui.
+	#
+	if {[catch {exec git symbolic-ref HEAD "refs/heads/$new_branch"} err]} {
+		error_popup "Failed to set current branch.
+
+This working directory is only partially switched.
+We successfully updated your files, but failed to
+update an internal Git file.
+
+This should not have occurred.  [appname] will now
+close and give up.
+
+$err"
+		do_quit
+		return
+	}
+
+	# -- Update our repository state.  If we were previously in amend mode
+	#    we need to toss the current buffer and do a full rescan to update
+	#    our file lists.  If we weren't in amend mode our file lists are
+	#    accurate and we can avoid the rescan.
+	#
+	unlock_index
+	set selected_commit_type new
+	if {[string match amend* $commit_type]} {
 		$ui_comm delete 0.0 end
 		$ui_comm edit reset
 		$ui_comm edit modified false
+		rescan {set ui_status_value "Checked out branch '$current_branch'."}
+	} else {
+		repository_state commit_type HEAD MERGE_HEAD
+		set PARENT $HEAD
+		set ui_status_value "Checked out branch '$current_branch'."
 	}
-
-	set selected_commit_type new
-	set current_branch $new_branch
-
-	unlock_index
-	error "NOT FINISHED"
 }
 
 ######################################################################
