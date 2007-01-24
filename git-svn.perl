@@ -1643,8 +1643,7 @@ sub new {
 	$self->{file_prop} = {};
 	$self->{absent_dir} = {};
 	$self->{absent_file} = {};
-	($self->{gui}, $self->{ctx}) = $git_svn->tmp_index_do(
-	       sub { command_input_pipe(qw/update-index -z --index-info/) } );
+	$self->{gii} = $git_svn->tmp_index_do(sub { Git::IndexInfo->new });
 	require Digest::MD5;
 	$self;
 }
@@ -1671,7 +1670,6 @@ sub git_path {
 
 sub delete_entry {
 	my ($self, $path, $rev, $pb) = @_;
-	my $gui = $self->{gui};
 
 	my $gpath = $self->git_path($path);
 	# remove entire directories.
@@ -1681,14 +1679,15 @@ sub delete_entry {
 				                     $self->{c}, '--', $gpath);
 		local $/ = "\0";
 		while (<$ls>) {
-			print $gui '0 ',0 x 40,"\t",$_ or croak $!;
+			chomp;
+			$self->{gii}->remove($_);
 			print "\tD\t$_\n" unless $self->{q};
 		}
 		print "\tD\t$gpath/\n" unless $self->{q};
 		command_close_pipe($ls, $ctx);
 		$self->{empty}->{$path} = 0
 	} else {
-		print $gui '0 ',0 x 40,"\t",$gpath,"\0" or croak $!;
+		$self->{gii}->remove($gpath);
 		print "\tD\t$gpath\n" unless $self->{q};
 	}
 	undef;
@@ -1824,22 +1823,23 @@ sub close_file {
 		$hash = $fb->{blob} or die "no blob information\n";
 	}
 	$fb->{pool}->clear;
-	my $gui = $self->{gui};
-	print $gui "$fb->{mode_b} $hash\t$path\0" or croak $!;
+	$self->{gii}->update($fb->{mode_b}, $hash, $path) or croak $!;
 	print "\t$fb->{action}\t$path\n" if $fb->{action} && ! $self->{q};
 	undef;
 }
 
 sub abort_edit {
 	my $self = shift;
-	eval { command_close_pipe($self->{gui}, $self->{ctx}) };
+	$self->{nr} = $self->{gii}->{nr};
+	delete $self->{gii};
 	$self->SUPER::abort_edit(@_);
 }
 
 sub close_edit {
 	my $self = shift;
-	command_close_pipe($self->{gui}, $self->{ctx});
 	$self->{git_commit_ok} = 1;
+	$self->{nr} = $self->{gii}->{nr};
+	delete $self->{gii};
 	$self->SUPER::close_edit(@_);
 }
 
@@ -2830,6 +2830,38 @@ sub migration_check {
 	migrate_from_v1();
 	migrate_from_v2();
 	minimize_connections() if $_minimize;
+}
+
+package Git::IndexInfo;
+use strict;
+use warnings;
+use Git qw/command_input_pipe command_close_pipe/;
+
+sub new {
+	my ($class) = @_;
+	my ($gui, $ctx) = command_input_pipe(qw/update-index -z --index-info/);
+	bless { gui => $gui, ctx => $ctx, nr => 0}, $class;
+}
+
+sub remove {
+	my ($self, $path) = @_;
+	if (print { $self->{gui} } '0 ', 0 x 40, "\t", $path, "\0") {
+		return ++$self->{nr};
+	}
+	undef;
+}
+
+sub update {
+	my ($self, $mode, $hash, $path) = @_;
+	if (print { $self->{gui} } $mode, ' ', $hash, "\t", $path, "\0") {
+		return ++$self->{nr};
+	}
+	undef;
+}
+
+sub DESTROY {
+	my ($self) = @_;
+	command_close_pipe($self->{gui}, $self->{ctx});
 }
 
 __END__
