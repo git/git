@@ -24,12 +24,27 @@ while test $# -gt 0; do
 	shift
 done
 
+filterdirs() {
+	while read f; do
+		if test -d "$f"; then
+			# list only empty directories
+			if test -z "$(ls -A "$f")"; then
+				echo "$f"
+			fi
+		else
+			echo "$f"
+		fi
+	done
+}
+
 case $mode in
 o)
 	tar --create --file=- $null --files-from=-
 	;;
 p)
-	tar --create --file=- $null --files-from=- |
+	test -z "$null" || die "cpio: cannot use -0 in pass-through mode"
+	filterdirs |
+	tar --create --file=- --files-from=- |
 	tar --extract --directory="$dir" --file=-
 	;;
 *)
