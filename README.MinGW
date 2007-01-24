@@ -45,10 +45,34 @@ This code base will not compile on a POSIX system, although any help
 to introduce the necessary #ifdefs is welcome.  As such the status quo
 is in no way intended to be merged upstream.
 
-The toolset has only been used to run the test suite.
-The plumbing that does the repository manipulation works, as well as
-the porcelains that you need for daily (local!) work.
+This works:
 
-pull, clone, fetch, do not work. This means that you must copy a repo
-to your Windows using some plain copy instructions (be it Explorer
-or command line).
+- All the plumbings.
+- Many porcelains, in particular, checkout, add, rm, commit, diff,
+  branch, merge, rebase, log, show, bisect, grep...
+- pull, clone, fetch via ssh.
+- local pull, clone, fetch.
+- gitk, if invoked as "wish84 <prefix>\bin\gitk", but there are
+  artefacts in its layout.
+
+This does not work:
+
+- pull, clone, fetch via native GIT protocol.
+- push
+- blame
+- daemon, svn, *import, cvs*
+- and certainly a lot more that I never have found a need to look at.
+
+Caveats (aka bugs):
+
+- The automatic pager of commands like log or diff does not work
+  correctly: It does not display some portion of text at the end.
+  That is, if what you should see is less than 4K, you see nothing at
+  all; otherwise something up to 4K at the end is missing.  Use
+  `git log | less' in these cases. Or `set PAGER=cat' (which is
+  optimized to skip the pager entirely).
+- Internally, the ported tools must do their own command line quoting
+  when other plumbings are executed. This sort of quoting is currently
+  implemented *very* simplistic: It just watches out for whitespace
+  and double quote `"' characters. This may become a problem if you have
+  exotic characters in your file names.
