@@ -79,9 +79,9 @@ static char *path_lookup(const char *cmd, char **path)
 	int tryexe = len < 4 || strcasecmp(cmd+len-4, ".exe");
 
 	if (strchr(cmd, '/') || strchr(cmd, '\\'))
-		p = NULL;
+		prog = xstrdup(cmd);
 
-	while (*p && !prog) {
+	while (!prog && *p) {
 		prog = lookup_prog(*p++, cmd, tryexe);
 	}
 	if (!prog) {
