@@ -25,6 +25,8 @@ static int pack_objects(int fd, struct ref *refs)
 	if (pipe(pipe_fd) < 0)
 		return error("send-pack: pipe failed");
 	pid = fork();
+	if (pid < 0)
+		return error("send-pack: unable to fork git-pack-objects");
 	if (!pid) {
 		/*
 		 * The child becomes pack-objects --revs; we feed
