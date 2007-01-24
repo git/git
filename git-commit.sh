@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 # Copyright (c) 2006 Junio C Hamano
 
-USAGE='[-a] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit>] [-u] [--amend] [-e] [--author <author>] [[-i | -o] <path>...]'
+USAGE='[-a] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit> | --amend] [-u] [-e] [--author <author>] [[-i | -o] <path>...]'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 require_work_tree
@@ -284,9 +284,9 @@ esac
 
 case "$log_given" in
 tt*)
-	die "Only one of -c/-C/-F can be used." ;;
+	die "Only one of -c/-C/-F/--amend can be used." ;;
 *tm*|*mt*)
-	die "Option -m cannot be combined with -c/-C/-F." ;;
+	die "Option -m cannot be combined with -c/-C/-F/--amend." ;;
 esac
 
 case "$#,$also,$only,$amend" in
