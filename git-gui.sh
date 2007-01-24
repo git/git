@@ -3243,11 +3243,9 @@ proc do_options {} {
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
 	labelframe $w.repo -text "[reponame] Repository" \
-		-font font_ui \
-		-relief raised -borderwidth 2
+		-font font_ui
 	labelframe $w.global -text {Global (All Repositories)} \
-		-font font_ui \
-		-relief raised -borderwidth 2
+		-font font_ui
 	pack $w.repo -side left -fill both -expand 1 -pady 5 -padx 5
 	pack $w.global -side right -fill both -expand 1 -pady 5 -padx 5
 
