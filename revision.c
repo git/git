@@ -868,7 +868,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				handle_reflog(revs, flags);
 				continue;
 			}
-			if (!strcmp(arg, "--walk-reflogs")) {
+			if (!strcmp(arg, "-g") ||
+					!strcmp(arg, "--walk-reflogs")) {
 				init_reflog_walk(&revs->reflog_info);
 				continue;
 			}

@@ -191,7 +191,7 @@ limiting may be applied.
 	In addition to the '<commit>' listed on the command
 	line, read them from the standard input.
 
---walk-reflogs::
+-g, --walk-reflogs::
 
 	Instead of walking the commit ancestry chain, walk
 	reflog entries from the most recent one to older ones.

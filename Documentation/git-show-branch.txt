@@ -11,7 +11,7 @@ SYNOPSIS
 'git-show-branch' [--all] [--remotes] [--topo-order] [--current]
 		[--more=<n> | --list | --independent | --merge-base]
 		[--no-name | --sha1-name] [--topics] [<rev> | <glob>]...
-'git-show-branch' --reflog[=<n>[,<base>]] [--list] <ref>
+'git-show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] <ref>
 
 DESCRIPTION
 -----------
@@ -100,8 +100,8 @@ OPTIONS
 --reflog[=<n>[,<base>]] <ref>::
 	Shows <n> most recent ref-log entries for the given
 	ref.  If <base> is given, <n> entries going back from
-	that entry.  <base> can be specified as count or date
-
+	that entry.  <base> can be specified as count or date.
+	`-g` can be used as a short-hand for this option.
 
 Note that --more, --list, --independent and --merge-base options
 are mutually exclusive.
