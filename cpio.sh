@@ -7,11 +7,11 @@ die() {
 	exit 1
 }
 
-tr0=cat
+null=
 
 while test $# -gt 0; do
 	case "$1" in
-	-0)	tr0="tr '\0' ' '";;
+	-0)	null=--null;;
 	-o)	mode=o;;
 	-iuv)	;;
 	-pumd|-pumdl)
@@ -26,20 +26,12 @@ done
 
 case $mode in
 o)
-	files=.cpiofiles$$
-	$tr0 > $files
-	tar --create --file=- --files-from=$files --exclude=$files
-	rc=$?
-	rm -f $files
-	exit $rc
+	tar --create --file=- $null --files-from=-
 	;;
 p)
-	files=.cpiofiles$$
-	$tr0 > $files
-	tar --create --file=- --files-from=$files --exclude=$files |
+	tar --create --file=- $null --files-from=- |
 	tar --extract --directory="$dir" --file=-
-	rm -f $files
 	;;
 *)
-	tar xvf - || exit
+	tar xvf -
 esac
