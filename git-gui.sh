@@ -1904,7 +1904,7 @@ proc do_create_branch {} {
 		-width 40 \
 		-font font_ui
 	$w.desc.name_t insert 0.0 $repo_config(gui.newbranchtemplate)
-	grid $w.desc.name_l $w.desc.name_t -stick we -padx {0 5}
+	grid $w.desc.name_l $w.desc.name_t -sticky we -padx {0 5}
 	bind $w.desc.name_t <Shift-Key-Tab> {focus [tk_focusPrev %W];break}
 	bind $w.desc.name_t <Key-Tab> {focus [tk_focusNext %W];break}
 	bind $w.desc.name_t <Key-Return> "do_create_branch_action $w;break"
@@ -1954,7 +1954,7 @@ proc do_create_branch {} {
 		-height 1 \
 		-width 50 \
 		-font font_ui
-	grid $w.from.exp_r $w.from.exp_t -stick we -padx {0 5}
+	grid $w.from.exp_r $w.from.exp_t -sticky we -padx {0 5}
 	bind $w.from.exp_t <Shift-Key-Tab> {focus [tk_focusPrev %W];break}
 	bind $w.from.exp_t <Key-Tab> {focus [tk_focusNext %W];break}
 	bind $w.from.exp_t <Key-Return> "do_create_branch_action $w;break"
@@ -2717,6 +2717,63 @@ proc do_gitk {revs} {
 			}
 		}
 	}
+}
+
+proc do_stats {} {
+	set fd [open "| git count-objects -v" r]
+	while {[gets $fd line] > 0} {
+		if {[regexp {^([^:]+): (\d+)$} $line _ name value]} {
+			set stats($name) $value
+		}
+	}
+	close $fd
+
+	set w .stats_view
+	toplevel $w
+	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
+
+	label $w.header -text {Database Statistics} \
+		-font font_uibold
+	pack $w.header -side top -fill x
+
+	frame $w.buttons -border 1
+	button $w.buttons.close -text Close \
+		-font font_ui \
+		-command [list destroy $w]
+	button $w.buttons.gc -text {Compress Database} \
+		-font font_ui \
+		-command "destroy $w;do_gc"
+	pack $w.buttons.close -side right
+	pack $w.buttons.gc -side left
+	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
+
+	frame $w.stat -borderwidth 1 -relief solid
+	foreach s {
+		{count           {Number of loose objects}}
+		{size            {Disk space used by loose objects} { KiB}}
+		{in-pack         {Number of packed objects}}
+		{packs           {Number of packs}}
+		{prune-packable  {Packed objects waiting for pruning}}
+		{garbage         {Garbage files}}
+		} {
+		set name [lindex $s 0]
+		set label [lindex $s 1]
+		if {[catch {set value $stats($name)}]} continue
+		if {[llength $s] > 2} {
+			set value "$value[lindex $s 2]"
+		}
+
+		label $w.stat.l_$name -text "$label:" -anchor w -font font_ui
+		label $w.stat.v_$name -text $value -anchor w -font font_ui
+		grid $w.stat.l_$name $w.stat.v_$name -sticky we -padx {0 5}
+	}
+	pack $w.stat
+
+	bind $w <Visibility> "grab $w; focus $w"
+	bind $w <Key-Escape> [list destroy $w]
+	bind $w <Key-Return> [list destroy $w]
+	wm title $w "[appname] ([reponame]): Database Statistics"
+	tkwait window $w
 }
 
 proc do_gc {} {
@@ -3542,6 +3599,10 @@ if {![is_MacOSX]} {
 .mbar.repository add separator
 
 if {!$single_commit} {
+	.mbar.repository add command -label {Database Statistics} \
+		-command do_stats \
+		-font font_ui
+
 	.mbar.repository add command -label {Compress Database} \
 		-command do_gc \
 		-font font_ui
@@ -3847,7 +3908,7 @@ frame .vpane.lower.commarea
 frame .vpane.lower.diff -relief sunken -borderwidth 1
 pack .vpane.lower.commarea -side top -fill x
 pack .vpane.lower.diff -side bottom -fill both -expand 1
-.vpane add .vpane.lower -stick nsew
+.vpane add .vpane.lower -sticky nsew
 
 # -- Commit Area Buttons
 #
