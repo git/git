@@ -3772,12 +3772,10 @@ menu .mbar.repository
 	-label {Visualize Current Branch} \
 	-command {do_gitk {}} \
 	-font font_ui
-if {![is_MacOSX]} {
-	.mbar.repository add command \
-		-label {Visualize All Branches} \
-		-command {do_gitk {--all}} \
-		-font font_ui
-}
+.mbar.repository add command \
+	-label {Visualize All Branches} \
+	-command {do_gitk {--all}} \
+	-font font_ui
 .mbar.repository add separator
 
 if {!$single_commit} {
