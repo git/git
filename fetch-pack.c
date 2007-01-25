@@ -4,16 +4,20 @@
 #include "commit.h"
 #include "tag.h"
 #include "exec_cmd.h"
+#include "pack.h"
 #include "sideband.h"
 
 static int keep_pack;
+static int transfer_unpack_limit = -1;
+static int fetch_unpack_limit = -1;
+static int unpack_limit = 100;
 static int quiet;
 static int verbose;
 static int fetch_all;
 static int depth;
 static const char fetch_pack_usage[] =
-"git-fetch-pack [--all] [--quiet|-q] [--keep|-k] [--thin] [--exec=<git-upload-pack>] [--depth=<n>] [-v] [<host>:]<directory> [<refs>...]";
-static const char *exec = "git-upload-pack";
+"git-fetch-pack [--all] [--quiet|-q] [--keep|-k] [--thin] [--upload-pack=<git-upload-pack>] [--depth=<n>] [-v] [<host>:]<directory> [<refs>...]";
+static const char *uploadpack = "git-upload-pack";
 
 #define COMPLETE	(1U << 0)
 #define COMMON		(1U << 1)
@@ -486,13 +490,58 @@ static pid_t setup_sideband(int fd[2], int xd[2])
 	return side_pid;
 }
 
-static int get_pack(int xd[2], const char **argv)
+static int get_pack(int xd[2])
 {
 	int status;
 	pid_t pid, side_pid;
 	int fd[2];
+	const char *argv[20];
+	char keep_arg[256];
+	char hdr_arg[256];
+	const char **av;
+	int do_keep = keep_pack;
 
 	side_pid = setup_sideband(fd, xd);
+
+	av = argv;
+	*hdr_arg = 0;
+	if (unpack_limit) {
+		struct pack_header header;
+
+		if (read_pack_header(fd[0], &header))
+			die("protocol error: bad pack header");
+		snprintf(hdr_arg, sizeof(hdr_arg), "--pack_header=%u,%u",
+			 ntohl(header.hdr_version), ntohl(header.hdr_entries));
+		if (ntohl(header.hdr_entries) < unpack_limit)
+			do_keep = 0;
+		else
+			do_keep = 1;
+	}
+
+	if (do_keep) {
+		*av++ = "index-pack";
+		*av++ = "--stdin";
+		if (!quiet)
+			*av++ = "-v";
+		if (use_thin_pack)
+			*av++ = "--fix-thin";
+		if (keep_pack > 1 || unpack_limit) {
+			int s = sprintf(keep_arg,
+					"--keep=fetch-pack %d on ", getpid());
+			if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
+				strcpy(keep_arg + s, "localhost");
+			*av++ = keep_arg;
+		}
+	}
+	else {
+		*av++ = "unpack-objects";
+		if (quiet)
+			*av++ = "-q";
+	}
+	if (*hdr_arg)
+		*av++ = hdr_arg;
+	*av++ = NULL;
+
 	pid = fork();
 	if (pid < 0)
 		die("fetch-pack: unable to fork off %s", argv[0]);
@@ -522,39 +571,10 @@ static int get_pack(int xd[2], const char **argv)
 	die("%s died of unnatural causes %d", argv[0], status);
 }
 
-static int explode_rx_pack(int xd[2])
-{
-	const char *argv[3] = { "unpack-objects", quiet ? "-q" : NULL, NULL };
-	return get_pack(xd, argv);
-}
-
-static int keep_rx_pack(int xd[2])
-{
-	const char *argv[6];
-	char keep_arg[256];
-	int n = 0;
-
-	argv[n++] = "index-pack";
-	argv[n++] = "--stdin";
-	if (!quiet)
-		argv[n++] = "-v";
-	if (use_thin_pack)
-		argv[n++] = "--fix-thin";
-	if (keep_pack > 1) {
-		int s = sprintf(keep_arg, "--keep=fetch-pack %i on ", getpid());
-		if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
-			strcpy(keep_arg + s, "localhost");
-		argv[n++] = keep_arg;
-	}
-	argv[n] = NULL;
-	return get_pack(xd, argv);
-}
-
 static int fetch_pack(int fd[2], int nr_match, char **match)
 {
 	struct ref *ref;
 	unsigned char sha1[20];
-	int status;
 
 	get_remote_heads(fd[0], &ref, 0, NULL, 0);
 	if (is_repository_shallow() && !server_supports("shallow"))
@@ -589,8 +609,7 @@ static int fetch_pack(int fd[2], int nr_match, char **match)
 			 */
 			fprintf(stderr, "warning: no common commits\n");
 
-	status = (keep_pack) ? keep_rx_pack(fd) : explode_rx_pack(fd);
-	if (status)
+	if (get_pack(fd))
 		die("git-fetch-pack: fetch failed.");
 
  all_done:
@@ -625,6 +644,21 @@ static int remove_duplicates(int nr_heads, char **heads)
 	return dst;
 }
 
+static int fetch_pack_config(const char *var, const char *value)
+{
+	if (strcmp(var, "fetch.unpacklimit") == 0) {
+		fetch_unpack_limit = git_config_int(var, value);
+		return 0;
+	}
+
+	if (strcmp(var, "transfer.unpacklimit") == 0) {
+		transfer_unpack_limit = git_config_int(var, value);
+		return 0;
+	}
+
+	return git_default_config(var, value);
+}
+
 static struct lock_file lock;
 
 int main(int argc, char **argv)
@@ -636,6 +670,13 @@ int main(int argc, char **argv)
 	struct stat st;
 
 	setup_git_directory();
+	setup_ident();
+	git_config(fetch_pack_config);
+
+	if (0 <= transfer_unpack_limit)
+		unpack_limit = transfer_unpack_limit;
+	else if (0 <= fetch_unpack_limit)
+		unpack_limit = fetch_unpack_limit;
 
 	nr_heads = 0;
 	heads = NULL;
@@ -643,8 +684,12 @@ int main(int argc, char **argv)
 		char *arg = argv[i];
 
 		if (*arg == '-') {
+			if (!strncmp("--upload-pack=", arg, 14)) {
+				uploadpack = arg + 14;
+				continue;
+			}
 			if (!strncmp("--exec=", arg, 7)) {
-				exec = arg + 7;
+				uploadpack = arg + 7;
 				continue;
 			}
 			if (!strcmp("--quiet", arg) || !strcmp("-q", arg)) {
@@ -653,6 +698,7 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp("--keep", arg) || !strcmp("-k", arg)) {
 				keep_pack++;
+				unpack_limit = 0;
 				continue;
 			}
 			if (!strcmp("--thin", arg)) {
@@ -682,7 +728,7 @@ int main(int argc, char **argv)
 	}
 	if (!dest)
 		usage(fetch_pack_usage);
-	pid = git_connect(fd, dest, exec);
+	pid = git_connect(fd, dest, uploadpack);
 	if (pid < 0)
 		return 1;
 	if (heads && nr_heads)

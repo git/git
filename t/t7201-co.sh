@@ -100,7 +100,33 @@ test_expect_success "checkout -m with dirty tree, renamed" '
 	git checkout -m renamer &&
 	fill 1 3 4 5 7 8 >expect &&
 	diff expect uno &&
-	! test -f one
+	! test -f one &&
+	git diff --cached >current &&
+	! test -s current
+
+'
+
+test_expect_success 'checkout -m with merge conflict' '
+
+	git checkout -f master && git clean &&
+
+	fill 1 T 3 4 5 6 S 8 >one &&
+	if git checkout renamer
+	then
+		echo Not happy
+		false
+	else
+		echo "happy - failed correctly"
+	fi &&
+
+	git checkout -m renamer &&
+
+	git diff master:one :3:uno |
+	sed -e "1,/^@@/d" -e "/^ /d" -e "s/^-/d/" -e "s/^+/a/" >current &&
+	fill d2 aT d7 aS >expect &&
+	diff current expect &&
+	git diff --cached two >current &&
+	! test -s current
 '
 
 test_done

@@ -44,4 +44,9 @@ struct pack_header {
 #define PACK_IDX_SIGNATURE 0xff744f63	/* "\377tOc" */
 
 extern int verify_pack(struct packed_git *, int);
+
+#define PH_ERROR_EOF		(-1)
+#define PH_ERROR_PACK_SIGNATURE	(-2)
+#define PH_ERROR_PROTOCOL	(-3)
+extern int read_pack_header(int fd, struct pack_header *);
 #endif

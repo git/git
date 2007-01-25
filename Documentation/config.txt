@@ -37,8 +37,8 @@ in the section header, like in example below:
 
 --------
 
-Subsection names can contain any characters (doublequote '`"`', backslash
-'`\`' and newline have to be entered escaped as '`\"`', '`\\`' and '`\n`',
+Subsection names can contain any characters except newline (doublequote
+'`"`' and backslash have to be escaped as '`\"`' and '`\\`',
 respecitvely) and are case sensitive.  Section header cannot span multiple
 lines.  Variables may belong directly to a section or to a given subsection.
 You can have `[section]` if you have `[section "subsection"]`, but you
@@ -295,6 +295,16 @@ diff.renames::
 	will enable basic rename detection.  If set to "copies" or
 	"copy", it will detect copies, as well.
 
+fetch.unpackLimit::
+	If the number of objects fetched over the git native
+	transfer is below this
+	limit, then the objects will be unpacked into loose object
+	files. However if the number of received objects equals or
+	exceeds this limit then the received pack will be stored as
+	a pack, after adding any missing delta bases.  Storing the
+	pack from a push can make the push operation complete faster,
+	especially on slow filesystems.
+
 format.headers::
 	Additional email headers to include in a patch to be submitted
 	by mail.  See gitlink:git-format-patch[1].
@@ -477,4 +487,9 @@ receive.denyNonFastForwards::
 	not a fast forward. Use this to prevent such an update via a push,
 	even if that push is forced. This configuration variable is
 	set when initializing a shared repository.
+
+transfer.unpackLimit::
+	When `fetch.unpackLimit` or `receive.unpackLimit` are
+	not set, the value of this variable is used instead.
+
 

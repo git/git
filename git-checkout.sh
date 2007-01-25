@@ -203,17 +203,12 @@ else
 	# Match the index to the working tree, and do a three-way.
     	git diff-files --name-only | git update-index --remove --stdin &&
 	work=`git write-tree` &&
-	git read-tree --reset -u $new &&
-	eval GITHEAD_$new=${new_name:-${branch:-$new}} GITHEAD_$work=local &&
-	export GITHEAD_$new GITHEAD_$work &&
-	git merge-recursive $old -- $new $work || exit
+	git read-tree --reset -u $new || exit
 
-	if result=`git write-tree 2>/dev/null`
-	then
-	    echo >&2 "Trivially automerged."
-	else
-	    git merge-index -o git-merge-one-file -a
-	fi
+	eval GITHEAD_$new=${new_name:-${branch:-$new}} &&
+	eval GITHEAD_$work=local &&
+	export GITHEAD_$new GITHEAD_$work &&
+	git merge-recursive $old -- $new $work
 
 	# Do not register the cleanly merged paths in the index yet.
 	# this is not a real merge before committing, but just carrying

@@ -2048,3 +2048,24 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, int write
 	}
 	return 0;
 }
+
+int read_pack_header(int fd, struct pack_header *header)
+{
+	char *c = (char*)header;
+	ssize_t remaining = sizeof(struct pack_header);
+	do {
+		ssize_t r = xread(fd, c, remaining);
+		if (r <= 0)
+			/* "eof before pack header was fully read" */
+			return PH_ERROR_EOF;
+		remaining -= r;
+		c += r;
+	} while (remaining > 0);
+	if (header->hdr_signature != htonl(PACK_SIGNATURE))
+		/* "protocol error (pack signature mismatch detected)" */
+		return PH_ERROR_PACK_SIGNATURE;
+	if (!pack_version_ok(header->hdr_version))
+		/* "protocol error (pack version unsupported)" */
+		return PH_ERROR_PROTOCOL;
+	return 0;
+}

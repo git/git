@@ -131,14 +131,14 @@ Giving these options is an error when used with `--inetd`; use
 the facility of inet daemon to achieve the same before spawning
 `git-daemon` if needed.
 
---enable-service, --disable-service::
+--enable=service, --disable=service::
 	Enable/disable the service site-wide per default.  Note
 	that a service disabled site-wide can still be enabled
 	per repository if it is marked overridable and the
 	repository enables the service with an configuration
 	item.
 
---allow-override, --forbid-override::
+--allow-override=service, --forbid-override=service::
 	Allow/forbid overriding the site-wide default with per
 	repository configuration.  By default, all the services
 	are overridable.

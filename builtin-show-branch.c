@@ -649,11 +649,13 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			dense = 0;
 		else if (!strcmp(arg, "--date-order"))
 			lifo = 0;
-		else if (!strcmp(arg, "--reflog")) {
+		else if (!strcmp(arg, "--reflog") || !strcmp(arg, "-g")) {
 			reflog = DEFAULT_REFLOG;
 		}
 		else if (!strncmp(arg, "--reflog=", 9))
 			parse_reflog_param(arg + 9, &reflog, &reflog_base);
+		else if (!strncmp(arg, "-g=", 3))
+			parse_reflog_param(arg + 3, &reflog, &reflog_base);
 		else
 			usage(show_branch_usage);
 		ac--; av++;
