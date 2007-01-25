@@ -4261,6 +4261,7 @@ $ctxm add command \
 	-label {Refresh} \
 	-font font_ui \
 	-command reshow_diff
+lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add command \
 	-label {Copy} \
 	-font font_ui \
