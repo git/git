@@ -78,6 +78,21 @@ test_expect_success 'follow larger parent' "
         true
         "
 
+# This seems to cause segfaults over HTTP...
+test_expect_success 'follow higher-level parent' "
+        svn mkdir -m 'follow higher-level parent' $svnrepo/blob &&
+        svn co $svnrepo/blob blob &&
+        cd blob &&
+                echo hi > hi &&
+                svn add hi &&
+                svn commit -m 'hi' &&
+                cd ..
+        svn mkdir -m 'new glob at top level' $svnrepo/glob &&
+        svn mv -m 'move blob down a level' $svnrepo/blob $svnrepo/glob/blob &&
+        git-svn init -i blob $svnrepo/glob/blob &&
+        git-svn fetch -i blob --follow-parent
+        "
+
 test_debug 'gitk --all &'
 
 test_done
