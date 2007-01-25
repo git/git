@@ -1,28 +1,31 @@
 #include "cache.h"
 #include "run-command.h"
 #include "exec_cmd.h"
+#include "spawn-pipe.h"
 
 int run_command_v_opt(const char **argv, int flags)
 {
-	pid_t pid = fork();
+	pid_t pid;
+	int fd_i[2] = { -1, -1 };
+	int fd_o[2] = { -1, -1 };
 
+	if (flags & RUN_COMMAND_NO_STDIN) {
+#ifndef __MINGW32__
+		fd_i[0] = open("/dev/null", O_RDWR);
+#else
+		fd_i[0] = open("nul", O_RDWR);
+#endif
+	}
+	if (flags & RUN_COMMAND_STDOUT_TO_STDERR)
+		fd_o[1] = dup(2);
+
+	if (flags & RUN_GIT_CMD) {
+		pid = spawnv_git_cmd(argv, fd_i, fd_o);
+	} else {
+		pid = spawnvpe_pipe(argv[0], argv, environ, fd_i, fd_o);
+	}
 	if (pid < 0)
 		return -ERR_RUN_COMMAND_FORK;
-	if (!pid) {
-		if (flags & RUN_COMMAND_NO_STDIN) {
-			int fd = open("/dev/null", O_RDWR);
-			dup2(fd, 0);
-			close(fd);
-		}
-		if (flags & RUN_COMMAND_STDOUT_TO_STDERR)
-			dup2(2, 1);
-		if (flags & RUN_GIT_CMD) {
-			execv_git_cmd(argv);
-		} else {
-			execvp(argv[0], (char *const*) argv);
-		}
-		die("exec %s failed.", argv[0]);
-	}
 	for (;;) {
 		int status, code;
 		pid_t waiting = waitpid(pid, &status, 0);
