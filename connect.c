@@ -624,8 +624,11 @@ static void git_proxy_connect(int fd[2], char *host)
 
 	{
 		const char *argv[] = { NULL, host, port, NULL };
-		spawnvpe_pipe(git_proxy_command, argv, environ, pipefd[1], pipefd[0]);
+		pid = spawnvpe_pipe(git_proxy_command, argv, environ,
+				pipefd[1], pipefd[0]);
 	}
+	if (pid < 0)
+		die("fork failed");
 	fd[0] = pipefd[0][0];
 	fd[1] = pipefd[1][1];
 }
@@ -761,6 +764,8 @@ pid_t git_connect(int fd[2], char *url, const char *prog)
 		env_unsetenv(env, INDEX_ENVIRONMENT);
 		pid = spawnvpe_pipe("sh", argv, env, pipefd[1], pipefd[0]);
 	}
+	if (pid < 0)
+		die("unable to fork");
 	fd[0] = pipefd[0][0];
 	fd[1] = pipefd[1][1];
 	if (free_path)

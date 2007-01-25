@@ -1500,6 +1500,8 @@ static int spawn_prog(const char *pgm, const char **arg)
 
 	fflush(NULL);
 	pid = spawnvpe_pipe(pgm, arg, environ, NULL, NULL);
+	if (pid < 0)
+		die("unable to fork");
 
 	while (waitpid(pid, &status, 0) < 0) {
 		if (errno == EINTR)

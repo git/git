@@ -11,6 +11,9 @@ static void run_program(void)
 	pid_t pid = spawnvpe_pipe(pgm, arguments, environ, NULL, NULL);
 	int status;
 
+	if (pid < 0)
+		die("unable to fork");
+
 	if (waitpid(pid, &status, 0) < 0 || !WIFEXITED(status) || WEXITSTATUS(status)) {
 		if (one_shot) {
 			err++;

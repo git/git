@@ -198,9 +198,6 @@ int spawnvppe_pipe(const char *cmd, const char **argv, const char **env,
 		pid = spawnvpe(_P_NOWAIT, interpr, qargv, env);
 	}
 
-	if (pid < 0)
-		die("unable to run %s", cmd);
-
 	free(qargv);		/* TODO: quoted args should be freed, too */
 	free(prog);
 
