@@ -2814,6 +2814,16 @@ proc do_stats {} {
 	}
 	close $fd
 
+	set packed_sz 0
+	foreach p [glob -directory [gitdir objects pack] \
+		-type f \
+		-nocomplain -- *] {
+		incr packed_sz [file size $p]
+	}
+	if {$packed_sz > 0} {
+		set stats(size-pack) [expr {$packed_sz / 1024}]
+	}
+
 	set w .stats_view
 	toplevel $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
@@ -2839,6 +2849,7 @@ proc do_stats {} {
 		{size            {Disk space used by loose objects} { KiB}}
 		{in-pack         {Number of packed objects}}
 		{packs           {Number of packs}}
+		{size-pack       {Disk space used by packed objects} { KiB}}
 		{prune-packable  {Packed objects waiting for pruning}}
 		{garbage         {Garbage files}}
 		} {
