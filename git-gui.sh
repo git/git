@@ -1865,8 +1865,9 @@ proc do_create_branch_action {w} {
 	global all_heads null_sha1 repo_config
 	global create_branch_checkout create_branch_revtype
 	global create_branch_head create_branch_trackinghead
+	global create_branch_name create_branch_revexp
 
-	set newbranch [string trim [$w.desc.name_t get 0.0 end]]
+	set newbranch $create_branch_name
 	if {$newbranch eq {}
 		|| $newbranch eq $repo_config(gui.newbranchtemplate)} {
 		tk_messageBox \
@@ -1903,7 +1904,7 @@ proc do_create_branch_action {w} {
 	switch -- $create_branch_revtype {
 	head {set rev $create_branch_head}
 	tracking {set rev $create_branch_trackinghead}
-	expression {set rev [string trim [$w.from.exp_t get 0.0 end]]}
+	expression {set rev $create_branch_revexp}
 	}
 	if {[catch {set cmt [exec git rev-parse --verify "${rev}^0"]}]} {
 		tk_messageBox \
@@ -1958,6 +1959,7 @@ proc do_create_branch {} {
 	global all_heads current_branch repo_config
 	global create_branch_checkout create_branch_revtype
 	global create_branch_head create_branch_trackinghead
+	global create_branch_name create_branch_revexp
 
 	set w .branch_editor
 	toplevel $w
@@ -1983,26 +1985,18 @@ proc do_create_branch {} {
 		-text {Branch Description} \
 		-font font_ui
 	label $w.desc.name_l -text {Name:} -font font_ui
-	text $w.desc.name_t \
+	entry $w.desc.name_t \
 		-borderwidth 1 \
 		-relief sunken \
-		-height 1 \
 		-width 40 \
-		-font font_ui
-	$w.desc.name_t insert 0.0 $repo_config(gui.newbranchtemplate)
-	grid $w.desc.name_l $w.desc.name_t -sticky we -padx {0 5}
-	bind $w.desc.name_t <Shift-Key-Tab> {focus [tk_focusPrev %W];break}
-	bind $w.desc.name_t <Key-Tab> {focus [tk_focusNext %W];break}
-	bind $w.desc.name_t <Key-Return> "do_create_branch_action $w;break"
-	bind $w.desc.name_t <Key> {
-		if {{%K} ne {BackSpace}
-			&& {%K} ne {Tab}
-			&& {%K} ne {Escape}
-			&& {%K} ne {Return}} {
-			if {%k <= 32} break
-			if {[string first %A {~^:?*[}] >= 0} break
+		-textvariable create_branch_name \
+		-font font_ui \
+		-validate key \
+		-validatecommand {
+			if {%d == 1 && [regexp {[~^:?*\[\0- ]} %S]} {return 0}
+			return 1
 		}
-	}
+	grid $w.desc.name_l $w.desc.name_t -sticky we -padx {0 5}
 	grid columnconfigure $w.desc 1 -weight 1
 	pack $w.desc -anchor nw -fill x -pady 5 -padx 5
 
@@ -2034,18 +2028,21 @@ proc do_create_branch {} {
 		-value expression \
 		-variable create_branch_revtype \
 		-font font_ui
-	text $w.from.exp_t \
+	entry $w.from.exp_t \
 		-borderwidth 1 \
 		-relief sunken \
-		-height 1 \
 		-width 50 \
-		-font font_ui
+		-textvariable create_branch_revexp \
+		-font font_ui \
+		-validate key \
+		-validatecommand {
+			if {%d == 1 && [regexp {\s} %S]} {return 0}
+			if {%d == 1 && [string length %S] > 0} {
+				set create_branch_revtype expression
+			}
+			return 1
+		}
 	grid $w.from.exp_r $w.from.exp_t -sticky we -padx {0 5}
-	bind $w.from.exp_t <Shift-Key-Tab> {focus [tk_focusPrev %W];break}
-	bind $w.from.exp_t <Key-Tab> {focus [tk_focusNext %W];break}
-	bind $w.from.exp_t <Key-Return> "do_create_branch_action $w;break"
-	bind $w.from.exp_t <Key-space> break
-	bind $w.from.exp_t <Key> {set create_branch_revtype expression}
 	grid columnconfigure $w.from 1 -weight 1
 	pack $w.from -anchor nw -fill x -pady 5 -padx 5
 
@@ -2062,8 +2059,14 @@ proc do_create_branch {} {
 	set create_branch_checkout 1
 	set create_branch_head $current_branch
 	set create_branch_revtype head
+	set create_branch_name $repo_config(gui.newbranchtemplate)
+	set create_branch_revexp {}
 
-	bind $w <Visibility> "grab $w; focus $w.desc.name_t"
+	bind $w <Visibility> "
+		grab $w
+		$w.desc.name_t icursor end
+		focus $w.desc.name_t
+	"
 	bind $w <Key-Escape> "destroy $w"
 	bind $w <Key-Return> "do_create_branch_action $w;break"
 	wm title $w "[appname] ([reponame]): Create Branch"
@@ -3329,10 +3332,7 @@ proc do_options {} {
 	pack $w.buttons.restore -side left
 	button $w.buttons.save -text Save \
 		-font font_ui \
-		-command "
-			catch {eval \[bind \[focus -displayof $w\] <FocusOut>\]}
-			do_save_config $w
-		"
+		-command [list do_save_config $w]
 	pack $w.buttons.save -side right
 	button $w.buttons.cancel -text {Cancel} \
 		-font font_ui \
@@ -3382,21 +3382,12 @@ proc do_options {} {
 			t {
 				frame $w.$f.$name
 				label $w.$f.$name.l -text "$text:" -font font_ui
-				text $w.$f.$name.v \
+				entry $w.$f.$name.v \
 					-borderwidth 1 \
 					-relief sunken \
-					-height 1 \
 					-width 20 \
+					-textvariable ${f}_config_new(gui.$name) \
 					-font font_ui
-				$w.$f.$name.v insert 0.0 [set ${f}_config_new(gui.$name)]
-				bind $w.$f.$name.v <Shift-Key-Tab> {focus [tk_focusPrev %W];break}
-				bind $w.$f.$name.v <Key-Tab> {focus [tk_focusNext %W];break}
-				bind $w.$f.$name.v <Key-Return> break
-				bind $w.$f.$name.v <FocusIn> "$w.$f.$name.v tag add sel 0.0 end"
-				bind $w.$f.$name.v <FocusOut> "
-					set ${f}_config_new(gui.$name) \
-					\[string trim \[$w.$f.$name.v get 0.0 end\]\]
-				"
 				pack $w.$f.$name.l -side left -anchor w
 				pack $w.$f.$name.v -side left -anchor w \
 					-fill x -expand 1 \
