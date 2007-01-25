@@ -4419,6 +4419,7 @@ bind_button3 $ui_diff "
 	}
 	tk_popup $ctxm %X %Y
 "
+unset ui_diff_applyhunk
 
 # -- Status Bar
 #
