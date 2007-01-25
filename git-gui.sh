@@ -2950,7 +2950,7 @@ proc do_stats {} {
 		label $w.stat.v_$name -text $value -anchor w -font font_ui
 		grid $w.stat.l_$name $w.stat.v_$name -sticky we -padx {0 5}
 	}
-	pack $w.stat
+	pack $w.stat -pady 10 -padx 10
 
 	bind $w <Visibility> "grab $w; focus $w"
 	bind $w <Key-Escape> [list destroy $w]
