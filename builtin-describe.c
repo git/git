@@ -101,7 +101,6 @@ static void describe(const char *arg, int last_one)
 	struct possible_tag all_matches[MAX_TAGS];
 	unsigned int match_cnt = 0, annotated_cnt = 0, cur_match;
 	unsigned long seen_commits = 0;
-	int found = 0;
 
 	if (get_sha1(arg, sha1))
 		die("Not a valid object name %s", arg);
@@ -137,7 +136,7 @@ static void describe(const char *arg, int last_one)
 				t->name = n;
 				t->depth = seen_commits - 1;
 				t->flag_within = 1u << match_cnt;
-				t->found_order = found++;
+				t->found_order = match_cnt;
 				c->object.flags |= t->flag_within;
 				if (n->prio == 2)
 					annotated_cnt++;
