@@ -545,13 +545,15 @@ proc prune_selection {} {
 ## diff
 
 proc clear_diff {} {
-	global ui_diff current_diff_path ui_index ui_workdir
+	global ui_diff current_diff_path current_diff_header
+	global ui_index ui_workdir
 
 	$ui_diff conf -state normal
 	$ui_diff delete 0.0 end
 	$ui_diff conf -state disabled
 
 	set current_diff_path {}
+	set current_diff_header {}
 
 	$ui_index tag remove in_diff 0.0 end
 	$ui_workdir tag remove in_diff 0.0 end
@@ -599,7 +601,7 @@ proc show_diff {path w {lno {}}} {
 	global file_states file_lists
 	global is_3way_diff diff_active repo_config
 	global ui_diff ui_status_value ui_index ui_workdir
-	global current_diff_path current_diff_side
+	global current_diff_path current_diff_side current_diff_header
 
 	if {$diff_active || ![lock_index read]} return
 
@@ -623,6 +625,7 @@ proc show_diff {path w {lno {}}} {
 	set diff_active 1
 	set current_diff_path $path
 	set current_diff_side $w
+	set current_diff_header {}
 	set ui_status_value "Loading diff of [escape_path $path]..."
 
 	# - Git won't give us the diff, there's nothing to compare to!
@@ -707,22 +710,30 @@ proc show_diff {path w {lno {}}} {
 		return
 	}
 
-	fconfigure $fd -blocking 0 -translation auto
+	fconfigure $fd \
+		-blocking 0 \
+		-encoding binary \
+		-translation binary
 	fileevent $fd readable [list read_diff $fd]
 }
 
 proc read_diff {fd} {
-	global ui_diff ui_status_value is_3way_diff diff_active
+	global ui_diff ui_status_value diff_active
+	global is_3way_diff current_diff_header
 
 	$ui_diff conf -state normal
 	while {[gets $fd line] >= 0} {
 		# -- Cleanup uninteresting diff header lines.
 		#
-		if {[string match {diff --git *}      $line]} continue
-		if {[string match {diff --cc *}       $line]} continue
-		if {[string match {diff --combined *} $line]} continue
-		if {[string match {--- *}             $line]} continue
-		if {[string match {+++ *}             $line]} continue
+		if {   [string match {diff --git *}      $line]
+			|| [string match {diff --cc *}       $line]
+			|| [string match {diff --combined *} $line]
+			|| [string match {--- *}             $line]
+			|| [string match {+++ *}             $line]} {
+			append current_diff_header $line "\n"
+			continue
+		}
+		if {[string match {index *} $line]} continue
 		if {$line eq {deleted file mode 120000}} {
 			set line "deleted symlink"
 		}
@@ -731,8 +742,7 @@ proc read_diff {fd} {
 		#
 		if {[string match {@@@ *} $line]} {set is_3way_diff 1}
 
-		if {[string match {index *} $line]
-			|| [string match {mode *} $line]
+		if {[string match {mode *} $line]
 			|| [string match {new file *} $line]
 			|| [string match {deleted file *} $line]
 			|| [string match {Binary files * and * differ} $line]
@@ -796,6 +806,77 @@ proc read_diff {fd} {
 		if {[$ui_diff index end] eq {2.0}} {
 			handle_empty_diff
 		}
+	}
+}
+
+proc apply_hunk {x y} {
+	global current_diff_path current_diff_header current_diff_side
+	global ui_diff ui_index file_states
+
+	if {$current_diff_path eq {} || $current_diff_header eq {}} return
+	if {![lock_index apply_hunk]} return
+
+	set apply_cmd {git apply --cached --whitespace=nowarn}
+	set mi [lindex $file_states($current_diff_path) 0]
+	if {$current_diff_side eq $ui_index} {
+		set mode unstage
+		lappend apply_cmd --reverse
+		if {[string index $mi 0] ne {M}} {
+			unlock_index
+			return
+		}
+	} else {
+		set mode stage
+		if {[string index $mi 1] ne {M}} {
+			unlock_index
+			return
+		}
+	}
+
+	set s_lno [lindex [split [$ui_diff index @$x,$y] .] 0]
+	set s_lno [$ui_diff search -backwards -regexp ^@@ $s_lno.0 0.0]
+	if {$s_lno eq {}} {
+		unlock_index
+		return
+	}
+
+	set e_lno [$ui_diff search -forwards -regexp ^@@ "$s_lno + 1 lines" end]
+	if {$e_lno eq {}} {
+		set e_lno end
+	}
+
+	if {[catch {
+		set p [open "| $apply_cmd" w]
+		fconfigure $p -translation binary -encoding binary
+		puts -nonewline $p $current_diff_header
+		puts -nonewline $p [$ui_diff get $s_lno $e_lno]
+		close $p} err]} {
+		error_popup "Failed to $mode selected hunk.\n\n$err"
+		unlock_index
+		return
+	}
+
+	$ui_diff conf -state normal
+	$ui_diff delete $s_lno $e_lno
+	$ui_diff conf -state disabled
+
+	if {[$ui_diff get 1.0 end] eq "\n"} {
+		set o _
+	} else {
+		set o ?
+	}
+
+	if {$current_diff_side eq $ui_index} {
+		set mi ${o}M
+	} elseif {[string index $mi 0] eq {_}} {
+		set mi M$o
+	} else {
+		set mi ?$o
+	}
+	unlock_index
+	display_file $current_diff_path $mi
+	if {$o eq {_}} {
+		clear_diff
 	}
 }
 
@@ -4142,6 +4223,7 @@ bind_button3 $ui_comm "tk_popup $ctxm %X %Y"
 # -- Diff Header
 #
 set current_diff_path {}
+set current_diff_side {}
 set diff_actions [list]
 proc trace_current_diff_path {varname args} {
 	global current_diff_path diff_actions file_states
@@ -4283,6 +4365,13 @@ $ctxm add command \
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add separator
 $ctxm add command \
+	-label {Apply/Reverse Hunk} \
+	-font font_ui \
+	-command {apply_hunk $cursorX $cursorY}
+set ui_diff_applyhunk [$ctxm index last]
+lappend diff_actions [list $ctxm entryconf $ui_diff_applyhunk -state]
+$ctxm add separator
+$ctxm add command \
 	-label {Decrease Font Size} \
 	-font font_ui \
 	-command {incr_font_size font_diff -1}
@@ -4313,7 +4402,16 @@ $ctxm add separator
 $ctxm add command -label {Options...} \
 	-font font_ui \
 	-command do_options
-bind_button3 $ui_diff "tk_popup $ctxm %X %Y"
+bind_button3 $ui_diff "
+	set cursorX %x
+	set cursorY %y
+	if {\$ui_index eq \$current_diff_side} {
+		$ctxm entryconf $ui_diff_applyhunk -label {Unstage Hunk From Commit}
+	} else {
+		$ctxm entryconf $ui_diff_applyhunk -label {Stage Hunk For Commit}
+	}
+	tk_popup $ctxm %X %Y
+"
 
 # -- Status Bar
 #
