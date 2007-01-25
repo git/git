@@ -793,6 +793,9 @@ proc read_diff {fd} {
 			}
 		}
 		$ui_diff insert end $line $tags
+		if {[string index $line end] eq "\r"} {
+			$ui_diff tag add d_cr {end - 2c}
+		}
 		$ui_diff insert end "\n" $tags
 	}
 	$ui_diff conf -state disabled
@@ -4304,6 +4307,7 @@ pack $ui_diff -side left -fill both -expand 1
 pack .vpane.lower.diff.header -side top -fill x
 pack .vpane.lower.diff.body -side bottom -fill both -expand 1
 
+$ui_diff tag conf d_cr -elide true
 $ui_diff tag conf d_@ -foreground blue -font font_diffbold
 $ui_diff tag conf d_+ -foreground {#00a000}
 $ui_diff tag conf d_- -foreground red
