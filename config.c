@@ -661,6 +661,11 @@ int git_config_set_multivar(const char* key, const char* value,
 				goto out_free;
 			}
 			c = tolower(c);
+		} else if (c == '\n') {
+			fprintf(stderr, "invalid key (newline): %s\n", key);
+			free(store.key);
+			ret = 1;
+			goto out_free;
 		}
 		store.key[i] = c;
 	}

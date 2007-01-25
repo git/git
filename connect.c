@@ -530,7 +530,7 @@ static void git_tcp_connect(int fd[2], char *host)
 	int sockfd = git_tcp_connect_sock(host);
 
 	fd[0] = sockfd;
-	fd[1] = sockfd;
+	fd[1] = dup(sockfd);
 }
 
 

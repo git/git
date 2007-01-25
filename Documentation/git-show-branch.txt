@@ -11,7 +11,7 @@ SYNOPSIS
 'git-show-branch' [--all] [--remotes] [--topo-order] [--current]
 		[--more=<n> | --list | --independent | --merge-base]
 		[--no-name | --sha1-name] [--topics] [<rev> | <glob>]...
-'git-show-branch' --reflog[=<n>] <ref>
+'git-show-branch' (-g|--reflog)[=<n>[,<base>]] [--list] <ref>
 
 DESCRIPTION
 -----------
@@ -97,9 +97,11 @@ OPTIONS
 	will show the revisions given by "git rev-list {caret}master
 	topic1 topic2"
 
---reflog[=<n>] <ref>::
-	Shows <n> most recent ref-log entries for the given ref.
-
+--reflog[=<n>[,<base>]] <ref>::
+	Shows <n> most recent ref-log entries for the given
+	ref.  If <base> is given, <n> entries going back from
+	that entry.  <base> can be specified as count or date.
+	`-g` can be used as a short-hand for this option.
 
 Note that --more, --list, --independent and --merge-base options
 are mutually exclusive.
@@ -165,6 +167,13 @@ With this, `git show-branch` without extra parameters would show
 only the primary branches.  In addition, if you happen to be on
 your topic branch, it is shown as well.
 
+------------
+$ git show-branch --reflog='10,1 hour ago' --list master
+------------
+
+shows 10 reflog entries going back from the tip as of 1 hour ago.
+Without `--list`, the output also shows how these tips are
+topologically related with each other.
 
 
 Author

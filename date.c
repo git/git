@@ -62,12 +62,11 @@ const char *show_date(unsigned long time, int tz, int relative)
 
 	if (relative) {
 		unsigned long diff;
-		time_t t = gm_time_t(time, tz);
 		struct timeval now;
 		gettimeofday(&now, NULL);
-		if (now.tv_sec < t)
+		if (now.tv_sec < time)
 			return "in the future";
-		diff = now.tv_sec - t;
+		diff = now.tv_sec - time;
 		if (diff < 90) {
 			snprintf(timebuf, sizeof(timebuf), "%lu seconds ago", diff);
 			return timebuf;

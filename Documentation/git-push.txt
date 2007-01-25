@@ -8,7 +8,7 @@ git-push - Update remote refs along with associated objects
 
 SYNOPSIS
 --------
-'git-push' [--all] [--tags] [--exec=<receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]
+'git-push' [--all] [--tags] [--receive-pack=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]
 
 DESCRIPTION
 -----------
@@ -67,11 +67,14 @@ the remote repository.
 	addition to refspecs explicitly listed on the command
 	line.
 
-\--exec::
+\--receive-pack=<git-receive-pack>::
 	Path to the 'git-receive-pack' program on the remote
 	end.  Sometimes useful when pushing to a remote
 	repository over ssh, and you do not have the program in
 	a directory on the default $PATH.
+
+\--exec=<git-receive-pack>::
+	Same as \--receive-pack=<git-receive-pack>.
 
 -f, \--force::
 	Usually, the command refuses to update a remote ref that is

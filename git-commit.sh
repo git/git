@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 # Copyright (c) 2006 Junio C Hamano
 
-USAGE='[-a] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit>] [-u] [--amend] [-e] [--author <author>] [[-i | -o] <path>...]'
+USAGE='[-a] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit> | --amend] [-u] [-e] [--author <author>] [[-i | -o] <path>...]'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 require_work_tree
@@ -284,9 +284,9 @@ esac
 
 case "$log_given" in
 tt*)
-	die "Only one of -c/-C/-F can be used." ;;
+	die "Only one of -c/-C/-F/--amend can be used." ;;
 *tm*|*mt*)
-	die "Option -m cannot be combined with -c/-C/-F." ;;
+	die "Option -m cannot be combined with -c/-C/-F/--amend." ;;
 esac
 
 case "$#,$also,$only,$amend" in
@@ -462,15 +462,7 @@ if test -f "$GIT_DIR/MERGE_HEAD" && test -z "$no_edit"; then
 fi >>"$GIT_DIR"/COMMIT_EDITMSG
 
 # Author
-if test '' != "$force_author"
-then
-	GIT_AUTHOR_NAME=`expr "z$force_author" : 'z\(.*[^ ]\) *<.*'` &&
-	GIT_AUTHOR_EMAIL=`expr "z$force_author" : '.*\(<.*\)'` &&
-	test '' != "$GIT_AUTHOR_NAME" &&
-	test '' != "$GIT_AUTHOR_EMAIL" ||
-	die "malformed --author parameter"
-	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
-elif test '' != "$use_commit"
+if test '' != "$use_commit"
 then
 	pick_author_script='
 	/^author /{
@@ -500,6 +492,15 @@ then
 	export GIT_AUTHOR_NAME
 	export GIT_AUTHOR_EMAIL
 	export GIT_AUTHOR_DATE
+fi
+if test '' != "$force_author"
+then
+	GIT_AUTHOR_NAME=`expr "z$force_author" : 'z\(.*[^ ]\) *<.*'` &&
+	GIT_AUTHOR_EMAIL=`expr "z$force_author" : '.*\(<.*\)'` &&
+	test '' != "$GIT_AUTHOR_NAME" &&
+	test '' != "$GIT_AUTHOR_EMAIL" ||
+	die "malformed --author parameter"
+	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
 fi
 
 PARENTS="-p HEAD"

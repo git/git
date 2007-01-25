@@ -4,7 +4,9 @@
 #include "builtin.h"
 
 static const char show_branch_usage[] =
-"git-show-branch [--sparse] [--current] [--all] [--remotes] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...] | --reflog[=n] <branch>";
+"git-show-branch [--sparse] [--current] [--all] [--remotes] [--topo-order] [--more=count | --list | --independent | --merge-base ] [--topics] [<refs>...] | --reflog[=n[,b]] <branch>";
+static const char show_branch_usage_reflog[] =
+"--reflog is incompatible with --all, --remotes, --independent or --merge-base";
 
 static int default_num;
 static int default_alloc;
@@ -346,18 +348,21 @@ static void sort_ref_range(int bottom, int top)
 	      compare_ref_name);
 }
 
-static int append_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+static int append_ref(const char *refname, const unsigned char *sha1,
+		      int allow_dups)
 {
 	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
 	int i;
 
 	if (!commit)
 		return 0;
-	/* Avoid adding the same thing twice */
-	for (i = 0; i < ref_name_cnt; i++)
-		if (!strcmp(refname, ref_name[i]))
-			return 0;
 
+	if (!allow_dups) {
+		/* Avoid adding the same thing twice */
+		for (i = 0; i < ref_name_cnt; i++)
+			if (!strcmp(refname, ref_name[i]))
+				return 0;
+	}
 	if (MAX_REVS <= ref_name_cnt) {
 		fprintf(stderr, "warning: ignoring %s; "
 			"cannot handle more than %d refs\n",
@@ -380,7 +385,7 @@ static int append_head_ref(const char *refname, const unsigned char *sha1, int f
 	 */
 	if (get_sha1(refname + ofs, tmp) || hashcmp(tmp, sha1))
 		ofs = 5;
-	return append_ref(refname + ofs, sha1, flag, cb_data);
+	return append_ref(refname + ofs, sha1, 0);
 }
 
 static int append_remote_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
@@ -394,14 +399,14 @@ static int append_remote_ref(const char *refname, const unsigned char *sha1, int
 	 */
 	if (get_sha1(refname + ofs, tmp) || hashcmp(tmp, sha1))
 		ofs = 5;
-	return append_ref(refname + ofs, sha1, flag, cb_data);
+	return append_ref(refname + ofs, sha1, 0);
 }
 
 static int append_tag_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	if (strncmp(refname, "refs/tags/", 10))
 		return 0;
-	return append_ref(refname + 5, sha1, flag, cb_data);
+	return append_ref(refname + 5, sha1, 0);
 }
 
 static const char *match_ref_pattern = NULL;
@@ -434,7 +439,7 @@ static int append_matching_ref(const char *refname, const unsigned char *sha1, i
 		return append_head_ref(refname, sha1, flag, cb_data);
 	if (!strncmp("refs/tags/", refname, 10))
 		return append_tag_ref(refname, sha1, flag, cb_data);
-	return append_ref(refname, sha1, flag, cb_data);
+	return append_ref(refname, sha1, 0);
 }
 
 static void snarf_refs(int head, int remotes)
@@ -507,7 +512,7 @@ static void append_one_rev(const char *av)
 {
 	unsigned char revkey[20];
 	if (!get_sha1(av, revkey)) {
-		append_ref(av, revkey, 0, NULL);
+		append_ref(av, revkey, 0);
 		return;
 	}
 	if (strchr(av, '*') || strchr(av, '?') || strchr(av, '[')) {
@@ -562,9 +567,24 @@ static int omit_in_dense(struct commit *commit, struct commit **rev, int n)
 	return 0;
 }
 
+static void parse_reflog_param(const char *arg, int *cnt, const char **base)
+{
+	char *ep;
+	*cnt = strtoul(arg, &ep, 10);
+	if (*ep == ',')
+		*base = ep + 1;
+	else if (*ep)
+		die("unrecognized reflog param '%s'", arg + 9);
+	else
+		*base = NULL;
+	if (*cnt <= 0)
+		*cnt = DEFAULT_REFLOG;
+}
+
 int cmd_show_branch(int ac, const char **av, const char *prefix)
 {
 	struct commit *rev[MAX_REVS], *commit;
+	char *reflog_msg[MAX_REVS];
 	struct commit_list *list = NULL, *seen = NULL;
 	unsigned int rev_mask[MAX_REVS];
 	int num_rev, i, extra = 0;
@@ -585,6 +605,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	int topics = 0;
 	int dense = 1;
 	int reflog = 0;
+	const char *reflog_base = NULL;
 
 	git_config(git_show_branch_config);
 
@@ -628,24 +649,34 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			dense = 0;
 		else if (!strcmp(arg, "--date-order"))
 			lifo = 0;
-		else if (!strcmp(arg, "--reflog")) {
+		else if (!strcmp(arg, "--reflog") || !strcmp(arg, "-g")) {
 			reflog = DEFAULT_REFLOG;
 		}
-		else if (!strncmp(arg, "--reflog=", 9)) {
-			char *end;
-			reflog = strtoul(arg + 9, &end, 10);
-			if (*end != '\0')
-				die("unrecognized reflog count '%s'", arg + 9);
-		}
+		else if (!strncmp(arg, "--reflog=", 9))
+			parse_reflog_param(arg + 9, &reflog, &reflog_base);
+		else if (!strncmp(arg, "-g=", 3))
+			parse_reflog_param(arg + 3, &reflog, &reflog_base);
 		else
 			usage(show_branch_usage);
 		ac--; av++;
 	}
 	ac--; av++;
 
-	/* Only one of these is allowed */
-	if (1 < independent + merge_base + (extra != 0) + (!!reflog))
-		usage(show_branch_usage);
+	if (!!extra || !!reflog) {
+		/* "listing" mode is incompatible with
+		 * independent nor merge-base modes.
+		 */
+		if (independent || merge_base)
+			usage(show_branch_usage);
+		if (!!reflog && ((0 < extra) || all_heads || all_remotes))
+			/*
+			 * Asking for --more in reflog mode does not
+			 * make sense.  --list is Ok.
+			 *
+			 * Also --all and --remotes do not make sense either.
+			 */
+			usage(show_branch_usage_reflog);
+	}
 
 	/* If nothing is specified, show all branches by default */
 	if (ac + all_heads + all_remotes == 0)
@@ -654,14 +685,54 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	if (all_heads + all_remotes)
 		snarf_refs(all_heads, all_remotes);
 	if (reflog) {
-		int reflen;
-		if (!ac)
+		unsigned char sha1[20];
+		char nth_desc[256];
+		char *ref;
+		int base = 0;
+		if (ac != 1)
 			die("--reflog option needs one branch name");
-		reflen = strlen(*av);
+		if (MAX_REVS < reflog)
+			die("Only %d entries can be shown at one time.",
+			    MAX_REVS);
+		if (!dwim_ref(*av, strlen(*av), sha1, &ref))
+			die("No such ref %s", *av);
+
+		/* Has the base been specified? */
+		if (reflog_base) {
+			char *ep;
+			base = strtoul(reflog_base, &ep, 10);
+			if (*ep) {
+				/* Ah, that is a date spec... */
+				unsigned long at;
+				at = approxidate(reflog_base);
+				read_ref_at(ref, at, -1, sha1, NULL,
+					    NULL, NULL, &base);
+			}
+		}
+
 		for (i = 0; i < reflog; i++) {
-			char *name = xmalloc(reflen + 20);
-			sprintf(name, "%s@{%d}", *av, i);
-			append_one_rev(name);
+			char *logmsg, *msg, *m;
+			unsigned long timestamp;
+			int tz;
+
+			if (read_ref_at(ref, 0, base+i, sha1, &logmsg,
+					&timestamp, &tz, NULL)) {
+				reflog = i;
+				break;
+			}
+			msg = strchr(logmsg, '\t');
+			if (!msg)
+				msg = "(none)";
+			else
+				msg++;
+			m = xmalloc(strlen(msg) + 200);
+			sprintf(m, "(%s) %s",
+				show_date(timestamp, tz, 1),
+				msg);
+			reflog_msg[i] = m;
+			free(logmsg);
+			sprintf(nth_desc, "%s@{%d}", *av, base+i);
+			append_ref(nth_desc, sha1, 1);
 		}
 	}
 	else {
@@ -760,8 +831,14 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 				printf("%c [%s] ",
 				       is_head ? '*' : '!', ref_name[i]);
 			}
-			/* header lines never need name */
-			show_one_commit(rev[i], 1);
+
+			if (!reflog) {
+				/* header lines never need name */
+				show_one_commit(rev[i], 1);
+			}
+			else
+				puts(reflog_msg[i]);
+
 			if (is_head)
 				head_at = i;
 		}

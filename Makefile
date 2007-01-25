@@ -240,7 +240,7 @@ LIB_H = \
 	diff.h object.h pack.h pkt-line.h quote.h refs.h list-objects.h sideband.h \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
 	tree-walk.h log-tree.h dir.h path-list.h unpack-trees.h builtin.h \
-	spawn-pipe.h utf8.h
+	spawn-pipe.h utf8.h reflog-walk.h
 
 DIFF_OBJS = \
 	diff.o diff-lib.o diffcore-break.o diffcore-order.o \
@@ -254,7 +254,7 @@ LIB_OBJS = \
 	lockfile.o \
 	spawn-pipe.o \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o sideband.o \
-	reachable.o \
+	reachable.o reflog-walk.o \
 	quote.o read-cache.o refs.o run-command.o dir.o object-refs.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \

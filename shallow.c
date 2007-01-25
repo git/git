@@ -17,7 +17,7 @@ int register_shallow(const unsigned char *sha1)
 	return register_commit_graft(graft, 0);
 }
 
-int is_repository_shallow()
+int is_repository_shallow(void)
 {
 	FILE *fp;
 	char buf[1024];

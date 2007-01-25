@@ -23,7 +23,11 @@ do
   -u|--u|--up|--upl|--uploa|--upload|--upload-|--upload-p|--upload-pa|\
   --upload-pac|--upload-pack)
 	shift
-	exec="--exec=$1"
+	exec="--upload-pack=$1"
+	shift;;
+  -u=*|--u=*|--up=*|--upl=*|--uplo=*|--uploa=*|--upload=*|\
+  --upload-=*|--upload-p=*|--upload-pa=*|--upload-pac=*|--upload-pack=*)
+	exec=--upload-pack=$(expr "$1" : '-[^=]*=\(.*\)')
 	shift;;
   --)
   shift; break ;;

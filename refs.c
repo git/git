@@ -1036,7 +1036,21 @@ int write_ref_sha1(struct ref_lock *lock,
 	return 0;
 }
 
-int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *sha1)
+static char *ref_msg(const char *line, const char *endp)
+{
+	const char *ep;
+	char *msg;
+
+	line += 82;
+	for (ep = line; ep < endp && *ep != '\n'; ep++)
+		;
+	msg = xmalloc(ep - line + 1);
+	memcpy(msg, line, ep - line);
+	msg[ep - line] = 0;
+	return msg;
+}
+
+int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *sha1, char **msg, unsigned long *cutoff_time, int *cutoff_tz, int *cutoff_cnt)
 {
 	const char *logfile, *logdata, *logend, *rec, *lastgt, *lastrec;
 	char *tz_c;
@@ -1044,6 +1058,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	struct stat st;
 	unsigned long date;
 	unsigned char logged_sha1[20];
+	void *log_mapped;
 
 	logfile = git_path("logs/%s", ref);
 	logfd = open(logfile, O_RDONLY, 0);
@@ -1052,7 +1067,8 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	fstat(logfd, &st);
 	if (!st.st_size)
 		die("Log %s is empty.", logfile);
-	logdata = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, logfd, 0);
+	log_mapped = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, logfd, 0);
+	logdata = log_mapped;
 	close(logfd);
 
 	lastrec = NULL;
@@ -1071,13 +1087,21 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 			die("Log %s is corrupt.", logfile);
 		date = strtoul(lastgt + 1, &tz_c, 10);
 		if (date <= at_time || cnt == 0) {
+			tz = strtoul(tz_c, NULL, 10);
+			if (msg)
+				*msg = ref_msg(rec, logend);
+			if (cutoff_time)
+				*cutoff_time = date;
+			if (cutoff_tz)
+				*cutoff_tz = tz;
+			if (cutoff_cnt)
+				*cutoff_cnt = reccnt - 1;
 			if (lastrec) {
 				if (get_sha1_hex(lastrec, logged_sha1))
 					die("Log %s is corrupt.", logfile);
 				if (get_sha1_hex(rec + 41, sha1))
 					die("Log %s is corrupt.", logfile);
 				if (hashcmp(logged_sha1, sha1)) {
-					tz = strtoul(tz_c, NULL, 10);
 					fprintf(stderr,
 						"warning: Log %s has gap after %s.\n",
 						logfile, show_rfc2822_date(date, tz));
@@ -1091,13 +1115,12 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 				if (get_sha1_hex(rec + 41, logged_sha1))
 					die("Log %s is corrupt.", logfile);
 				if (hashcmp(logged_sha1, sha1)) {
-					tz = strtoul(tz_c, NULL, 10);
 					fprintf(stderr,
 						"warning: Log %s unexpectedly ended on %s.\n",
 						logfile, show_rfc2822_date(date, tz));
 				}
 			}
-			munmap((void*)logdata, st.st_size);
+			munmap(log_mapped, st.st_size);
 			return 0;
 		}
 		lastrec = rec;
@@ -1114,14 +1137,17 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	tz = strtoul(tz_c, NULL, 10);
 	if (get_sha1_hex(logdata, sha1))
 		die("Log %s is corrupt.", logfile);
-	munmap((void*)logdata, st.st_size);
-	if (at_time)
-		fprintf(stderr, "warning: Log %s only goes back to %s.\n",
-			logfile, show_rfc2822_date(date, tz));
-	else
-		fprintf(stderr, "warning: Log %s only has %d entries.\n",
-			logfile, reccnt);
-	return 0;
+	if (msg)
+		*msg = ref_msg(logdata, logend);
+	munmap(log_mapped, st.st_size);
+
+	if (cutoff_time)
+		*cutoff_time = date;
+	if (cutoff_tz)
+		*cutoff_tz = tz;
+	if (cutoff_cnt)
+		*cutoff_cnt = reccnt;
+	return 1;
 }
 
 int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
@@ -1129,6 +1155,7 @@ int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 	const char *logfile;
 	FILE *logfp;
 	char buf[1024];
+	int ret = 0;
 
 	logfile = git_path("logs/%s", ref);
 	logfp = fopen(logfile, "r");
@@ -1138,7 +1165,7 @@ int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 		unsigned char osha1[20], nsha1[20];
 		char *email_end, *message;
 		unsigned long timestamp;
-		int len, ret, tz;
+		int len, tz;
 
 		/* old SP new SP name <email> SP time TAB msg LF */
 		len = strlen(buf);
@@ -1159,9 +1186,9 @@ int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 		message += 7;
 		ret = fn(osha1, nsha1, buf+82, timestamp, tz, message, cb_data);
 		if (ret)
-			return ret;
+			break;
 	}
 	fclose(logfp);
-	return 0;
+	return ret;
 }
 
