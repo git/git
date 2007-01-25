@@ -429,8 +429,12 @@ remote.<name>.push::
 	gitlink:git-push[1].
 
 remote.<name>.receivepack::
-	The default program to execute on the remote side when pulling.  See
+	The default program to execute on the remote side when pushing.  See
 	option \--exec of gitlink:git-push[1].
+
+remote.<name>.uploadpack::
+	The default program to execute on the remote side when fetching.  See
+	option \--exec of gitlink:git-fetch-pack[1].
 
 repack.usedeltabaseoffset::
 	Allow gitlink:git-repack[1] to create packs that uses
