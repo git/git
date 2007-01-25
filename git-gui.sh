@@ -4472,6 +4472,7 @@ bind $ui_diff <Key-Up>     {catch {%W yview scroll -1 units};break}
 bind $ui_diff <Key-Down>   {catch {%W yview scroll  1 units};break}
 bind $ui_diff <Key-Left>   {catch {%W xview scroll -1 units};break}
 bind $ui_diff <Key-Right>  {catch {%W xview scroll  1 units};break}
+bind $ui_diff <Button-1>   {focus %W}
 
 if {!$single_commit} {
 	bind . <$M1B-Key-n> do_create_branch
