@@ -211,8 +211,6 @@ tree d667270a1f7b109f5eb3aaea21ede14b56bfdd6e
 tree 8f51f74cf0163afc9ad68a4b1537288c4558b5a4
 EOF
 
-echo tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904 >> expected
-
 test_expect_success "$name" "diff -u a expected"
 
 test_expect_failure 'exit if remote refs are ambigious' "

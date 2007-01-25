@@ -5,13 +5,17 @@ test_description='git-svn metadata migrations from previous versions'
 
 test_expect_success 'setup old-looking metadata' "
 	cp $GIT_DIR/config $GIT_DIR/config-old-git-svn &&
+	mkdir import &&
+	cd import
+		for i in trunk branches/a branches/b \
+		         tags/0.1 tags/0.2 tags/0.3; do
+			mkdir -p \$i && \
+			echo hello >> \$i/README || exit 1
+		done && \
+		svn import -m test . $svnrepo
+		cd .. &&
 	git-svn init $svnrepo &&
 	git-svn fetch &&
-	for i in trunk branches/a branches/b tags/0.1 tags/0.2 tags/0.3; do
-		mkdir -p \$i && echo hello >> \$i/README || exit 1; done &&
-	git ls-files -o trunk branches tags | git update-index --add --stdin &&
-	git commit -m 'test' &&
-	git-svn dcommit &&
 	mv $GIT_DIR/svn/* $GIT_DIR/ &&
 	rmdir $GIT_DIR/svn &&
 	git-update-ref refs/heads/git-svn-HEAD refs/remotes/git-svn &&

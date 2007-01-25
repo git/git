@@ -315,7 +315,7 @@ sub cmd_set_tree {
 	my $gs = Git::SVN->new;
 	my ($r_last, $cmt_last) = $gs->last_rev_commit;
 	$gs->fetch;
-	if ($r_last != $gs->{last_rev}) {
+	if (defined $gs->{last_rev} && $r_last != $gs->{last_rev}) {
 		fatal "There are new revisions that were fetched ",
 		      "and need to be merged (or acknowledged) ",
 		      "before committing.\nlast rev: $r_last\n",
@@ -1214,50 +1214,46 @@ sub do_fetch {
 	$self->make_log_entry($rev, \@parents, $ed);
 }
 
-sub write_untracked {
-	my ($self, $rev, $fh, $untracked) = @_;
-	my $h;
-	print $fh "r$rev\n" or croak $!;
-	$h = $untracked->{empty};
+sub get_untracked {
+	my ($self, $ed) = @_;
+	my @out;
+	my $h = $ed->{empty};
 	foreach (sort keys %$h) {
 		my $act = $h->{$_} ? '+empty_dir' : '-empty_dir';
-		print $fh "  $act: ", uri_encode($_), "\n" or croak $!;
+		push @out, "  $act: " . uri_encode($_);
 		warn "W: $act: $_\n";
 	}
 	foreach my $t (qw/dir_prop file_prop/) {
-		$h = $untracked->{$t} or next;
+		$h = $ed->{$t} or next;
 		foreach my $path (sort keys %$h) {
 			my $ppath = $path eq '' ? '.' : $path;
 			foreach my $prop (sort keys %{$h->{$path}}) {
 				next if $SKIP_PROP{$prop};
 				my $v = $h->{$path}->{$prop};
+				my $t_ppath_prop = "$t: " .
+				                    uri_encode($ppath) . ' ' .
+				                    uri_encode($prop);
 				if (defined $v) {
-					print $fh "  +$t: ",
-						  uri_encode($ppath), ' ',
-						  uri_encode($prop), ' ',
-						  uri_encode($v), "\n"
-						  or croak $!;
+					push @out, "  +$t_ppath_prop " .
+					           uri_encode($v);
 				} else {
-					print $fh "  -$t: ",
-						  uri_encode($ppath), ' ',
-						  uri_encode($prop), "\n"
-						  or croak $!;
+					push @out, "  -$t_ppath_prop";
 				}
 			}
 		}
 	}
 	foreach my $t (qw/absent_file absent_directory/) {
-		$h = $untracked->{$t} or next;
+		$h = $ed->{$t} or next;
 		foreach my $parent (sort keys %$h) {
 			foreach my $path (sort @{$h->{$parent}}) {
-				print $fh "  $t: ",
-				      uri_encode("$parent/$path"), "\n"
-				      or croak $!;
+				push @out, "  $t: " .
+				           uri_encode("$parent/$path");
 				warn "W: $t: $parent/$path ",
 				     "Insufficient permissions?\n";
 			}
 		}
 	}
+	\@out;
 }
 
 sub parse_svn_date {
@@ -1280,12 +1276,15 @@ sub check_author {
 }
 
 sub make_log_entry {
-	my ($self, $rev, $parents, $untracked) = @_;
-	my $rp = $self->ra->rev_proplist($rev);
-	my %log_entry = ( parents => $parents || [], revision => $rev,
-	                  revprops => $rp, log => '');
+	my ($self, $rev, $parents, $ed) = @_;
+	my $untracked = $self->get_untracked($ed);
+
 	open my $un, '>>', "$self->{dir}/unhandled.log" or croak $!;
-	$self->write_untracked($rev, $un, $untracked);
+	print $un "r$rev\n" or croak $!;
+	print $un $_, "\n" foreach @$untracked;
+	my %log_entry = ( parents => $parents || [], revision => $rev,
+	                  log => '');
+	my $rp = $self->ra->rev_proplist($rev);
 	foreach (sort keys %$rp) {
 		my $v = $rp->{$_};
 		if (/^svn:(author|date|log)$/) {
@@ -1296,6 +1295,11 @@ sub make_log_entry {
 		}
 	}
 	close $un or croak $!;
+
+	delete $rp->{'svn:date'}; # this is the only revprop for r0
+	return undef if ($ed->{nr} == 0 && scalar @$untracked == 0 &&
+	                 scalar keys %$rp == 0);
+
 	$log_entry{date} = parse_svn_date($log_entry{date});
 	$log_entry{author} = check_author($log_entry{author});
 	$log_entry{log} .= "\n";
@@ -1320,8 +1324,9 @@ sub fetch {
 			my ($paths, $rev, $author, $date, $log) = @_;
 			push @revs, [ $paths, $rev ] });
 		foreach (@revs) {
-			my $log_entry = $self->do_fetch(@$_);
-			$self->do_git_commit($log_entry, @parents);
+			if (my $log_entry = $self->do_fetch(@$_)) {
+				$self->do_git_commit($log_entry, @parents);
+			}
 		}
 		last if $max >= $head;
 		$min = $max + 1;
