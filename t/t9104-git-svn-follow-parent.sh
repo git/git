@@ -85,13 +85,22 @@ test_expect_success 'follow higher-level parent' "
         cd blob &&
                 echo hi > hi &&
                 svn add hi &&
-                svn commit -m 'hi' &&
+                svn commit -m 'hihi' &&
                 cd ..
         svn mkdir -m 'new glob at top level' $svnrepo/glob &&
         svn mv -m 'move blob down a level' $svnrepo/blob $svnrepo/glob/blob &&
         git-svn init -i blob $svnrepo/glob/blob &&
         git-svn fetch -i blob --follow-parent
         "
+
+test_expect_success 'follow deleted directory' "
+	svn mv -m 'bye!' $svnrepo/glob/blob/hi $svnrepo/glob/blob/bye&&
+	svn rm -m 'remove glob' $svnrepo/glob &&
+	git-svn init -i glob $svnrepo/glob &&
+	git-svn fetch -i glob &&
+	test \"\`git cat-file blob refs/remotes/glob~1:blob/bye\`\" = hi &&
+	test -z \"\`git ls-tree -z refs/remotes/glob\`\"
+	"
 
 test_debug 'gitk --all &'
 

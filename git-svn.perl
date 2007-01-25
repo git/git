@@ -1100,6 +1100,11 @@ sub revisions_eq {
 sub find_parent_branch {
 	my ($self, $paths, $rev) = @_;
 	return undef unless $::_follow_parent;
+	unless (defined $paths) {
+		$self->ra->get_log([''], $rev, $rev, 0, 1, 1,
+		                   sub { $paths = $_[0] });
+	}
+	return undef unless defined $paths;
 
 	# look for a parent from another branch:
 	my @b_path_components = split m#/#, $self->rel_path;
@@ -1146,11 +1151,11 @@ sub find_parent_branch {
 	}
 	my ($r0, $parent) = $gs->find_rev_before($r, 1);
 	if ($::_follow_parent && (!defined $r0 || !defined $parent)) {
-		$gs->ra->get_log([$gs->{path}], 0, $r, 0, 1, 1, sub {
-			my ($paths, $rev) = @_;
-			my $log_entry = eval { $gs->do_fetch($paths, $rev) };
-			$gs->do_git_commit($log_entry) if $log_entry;
-		});
+		foreach (1 .. $r) {
+			if (my $log_entry = $gs->do_fetch(undef, $_)) {
+				$gs->do_git_commit($log_entry);
+			}
+		}
 		($r0, $parent) = $gs->last_rev_commit;
 	}
 	if (defined $r0 && defined $parent && $gs->revisions_eq($r0, $r)) {
@@ -1178,16 +1183,8 @@ sub find_parent_branch {
 	}
 not_found:
 	print STDERR "Branch parent for path: '/",
-	             $self->rel_path, "' not found\n";
-	return undef unless $paths;
-	foreach my $x (sort keys %$paths) {
-		my $p = $paths->{$x};
-		print STDERR '  ', $p->action, '  ', $x;
-		if (my $cp_from = $p->copyfrom_path) {
-			print STDERR "(from $cp_from:", $p->copyfrom_rev, ')';
-		}
-		print STDERR "\n";
-	}
+	             $self->rel_path, "' @ $rev not found\n";
+	print STDERR '  ', $_, "\n" foreach (sort keys %$paths);
 	return undef;
 }
 
@@ -1279,6 +1276,8 @@ sub make_log_entry {
 	my ($self, $rev, $parents, $ed) = @_;
 	my $untracked = $self->get_untracked($ed);
 
+	return undef if ($ed->{nr} == 0 && scalar @$untracked == 0);
+
 	open my $un, '>>', "$self->{dir}/unhandled.log" or croak $!;
 	print $un "r$rev\n" or croak $!;
 	print $un $_, "\n" foreach @$untracked;
@@ -1295,10 +1294,6 @@ sub make_log_entry {
 		}
 	}
 	close $un or croak $!;
-
-	delete $rp->{'svn:date'}; # this is the only revprop for r0
-	return undef if ($ed->{nr} == 0 && scalar @$untracked == 0 &&
-	                 scalar keys %$rp == 0);
 
 	$log_entry{date} = parse_svn_date($log_entry{date});
 	$log_entry{author} = check_author($log_entry{author});
@@ -1317,18 +1312,26 @@ sub fetch {
 	my $inc = 1000;
 	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
 	my $err_handler = $SVN::Error::handler;
-	$SVN::Error::handler = \&skip_unknown_revs;
+	my $err;
+	$SVN::Error::handler = sub { ($err) = @_; skip_unknown_revs($err); } ;
 	while (1) {
 		my @revs;
 		$self->ra->get_log([$self->{path}], $min, $max, 0, 1, 1, sub {
 			my ($paths, $rev, $author, $date, $log) = @_;
 			push @revs, [ $paths, $rev ] });
+		if (! @revs && $err) {
+			print STDERR "Branch probably deleted:\n  ",
+			             $err->expanded_message,
+				     "\nWill attempt to follow revisions ",
+				     "committed before the deletion\n";
+			@revs = map { [ undef, $_ ] } ($min .. $max);
+		}
 		foreach (@revs) {
 			if (my $log_entry = $self->do_fetch(@$_)) {
 				$self->do_git_commit($log_entry, @parents);
 			}
 		}
-		last if $max >= $head;
+		last if $max >= $head || $err;
 		$min = $max + 1;
 		$max += $inc;
 		$max = $head if ($max > $head);
@@ -2226,7 +2229,6 @@ sub dup {
 sub get_log {
 	my ($self, @args) = @_;
 	my $pool = SVN::Pool->new;
-	$args[4]-- if $args[4] && ! $::_follow_parent;
 	splice(@args, 3, 1) if ($SVN::Core::VERSION le '1.2.0');
 	my $ret = $self->SUPER::get_log(@args, $pool);
 	$pool->clear;
