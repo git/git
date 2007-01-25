@@ -5,6 +5,8 @@ TAR ?= tar
 prefix ?= $(HOME)
 template_dir ?= $(prefix)/share/git-core/templates/
 # DESTDIR=
+# set NOEXECTEMPL to non-empty to change the names of hook scripts
+# so that the tools will not find them
 
 # Shell quote (do not use $(call) to accomodate ancient setups);
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
@@ -27,7 +29,11 @@ boilerplates.made : $(bpsrc)
 		mkdir -p blt/$$dir && \
 		case "$$boilerplate" in \
 		*--) ;; \
-		*) cp $$boilerplate blt/$$dst ;; \
+		*) if head -1 $$boilerplate | grep -q '^#!/'; then \
+			cp $$boilerplate blt/$${dst}$(NOEXECTEMPL); \
+		   else \
+			cp $$boilerplate blt/$$dst; \
+		   fi ;; \
 		esac || exit; \
 	done || exit
 	date >$@

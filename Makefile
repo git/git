@@ -434,6 +434,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch.o
 	EXTLIBS += -lws2_32 -lregex
 	X = .exe
+	NOEXECTEMPL = .noexec
 endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
@@ -635,7 +636,7 @@ endif
 
 all::
 	$(MAKE) -C perl PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' all
-	$(MAKE) -C templates
+	$(MAKE) -C templates NOEXECTEMPL='$(NOEXECTEMPL)'
 
 strip: $(PROGRAMS) git$X
 	$(STRIP) $(STRIP_OPTS) $(PROGRAMS) git$X
