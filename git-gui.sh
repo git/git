@@ -2271,6 +2271,13 @@ The rescan will be automatically started now.
 		return
 	}
 
+	# -- Don't do a pointless switch.
+	#
+	if {$current_branch eq $new_branch} {
+		unlock_index
+		return
+	}
+
 	if {$repo_config(gui.trustmtime) eq {true}} {
 		switch_branch_stage2 {} $new_branch
 	} else {
