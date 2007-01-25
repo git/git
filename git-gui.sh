@@ -1822,7 +1822,9 @@ proc populate_branch_menu {} {
 		}
 	}
 
-	$m add separator
+	if {$all_heads ne {}} {
+		$m add separator
+	}
 	foreach b $all_heads {
 		$m add radiobutton \
 			-label $b \
@@ -2429,9 +2431,10 @@ proc load_all_remotes {} {
 	set all_remotes [lsort -unique $all_remotes]
 }
 
-proc populate_fetch_menu {m} {
+proc populate_fetch_menu {} {
 	global all_remotes repo_config
 
+	set m .mbar.fetch
 	foreach r $all_remotes {
 		set enable 0
 		if {![catch {set a $repo_config(remote.$r.url)}]} {
@@ -2460,9 +2463,10 @@ proc populate_fetch_menu {m} {
 	}
 }
 
-proc populate_push_menu {m} {
+proc populate_push_menu {} {
 	global all_remotes repo_config
 
+	set m .mbar.push
 	foreach r $all_remotes {
 		set enable 0
 		if {![catch {set a $repo_config(remote.$r.url)}]} {
@@ -2487,43 +2491,6 @@ proc populate_push_menu {m} {
 				-label "Push to $r..." \
 				-command [list push_to $r] \
 				-font font_ui
-		}
-	}
-}
-
-proc populate_pull_menu {m} {
-	global repo_config all_remotes disable_on_lock
-
-	foreach remote $all_remotes {
-		set rb_list [list]
-		if {[array get repo_config remote.$remote.url] ne {}} {
-			if {[array get repo_config remote.$remote.fetch] ne {}} {
-				foreach line $repo_config(remote.$remote.fetch) {
-					if {[regexp {^([^:]+):} $line line rb]} {
-						lappend rb_list $rb
-					}
-				}
-			}
-		} else {
-			catch {
-				set fd [open [gitdir remotes $remote] r]
-				while {[gets $fd line] >= 0} {
-					if {[regexp {^Pull:[ \t]*([^:]+):} $line line rb]} {
-						lappend rb_list $rb
-					}
-				}
-				close $fd
-			}
-		}
-
-		foreach rb $rb_list {
-			regsub ^refs/heads/ $rb {} rb_short
-			$m add command \
-				-label "Branch $rb_short from $remote..." \
-				-command [list pull_remote $remote $rb] \
-				-font font_ui
-			lappend disable_on_lock \
-				[list $m entryconf [$m index last] -state]
 		}
 	}
 }
@@ -3751,7 +3718,6 @@ if {!$single_commit} {
 .mbar add cascade -label Commit -menu .mbar.commit
 if {!$single_commit} {
 	.mbar add cascade -label Fetch -menu .mbar.fetch
-	.mbar add cascade -label Pull -menu .mbar.pull
 	.mbar add cascade -label Push -menu .mbar.push
 }
 . configure -menu .mbar
@@ -3929,7 +3895,6 @@ lappend disable_on_lock \
 #
 if {!$single_commit} {
 	menu .mbar.fetch
-	menu .mbar.pull
 	menu .mbar.push
 }
 
@@ -4565,9 +4530,8 @@ if {!$single_commit} {
 	load_all_heads
 
 	populate_branch_menu
-	populate_fetch_menu .mbar.fetch
-	populate_pull_menu .mbar.pull
-	populate_push_menu .mbar.push
+	populate_fetch_menu
+	populate_push_menu
 }
 
 # -- Only suggest a gc run if we are going to stay running.
