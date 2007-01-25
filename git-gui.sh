@@ -428,6 +428,7 @@ proc load_message {file} {
 		}
 		set content [string trim [read $fd]]
 		close $fd
+		regsub -all -line {[ \r\t]+$} $content {} content
 		$ui_comm delete 0.0 end
 		$ui_comm insert end $content
 		return 1
@@ -1046,6 +1047,7 @@ You must add at least 1 file before you can commit.
 	# -- A message is required.
 	#
 	set msg [string trim [$ui_comm get 1.0 end]]
+	regsub -all -line {[ \t\r]+$} $msg {} msg
 	if {$msg eq {}} {
 		error_popup {Please supply a commit message.
 
@@ -2984,12 +2986,13 @@ proc do_quit {} {
 	#
 	set save [gitdir GITGUI_MSG]
 	set msg [string trim [$ui_comm get 0.0 end]]
-	if {![string match amend* $commit_type]
-		&& [$ui_comm edit modified]
+	regsub -all -line {[ \r\t]+$} $msg {} msg
+	if {(![string match amend* $commit_type]
+		|| [$ui_comm edit modified])
 		&& $msg ne {}} {
 		catch {
 			set fd [open $save w]
-			puts $fd [string trim [$ui_comm get 0.0 end]]
+			puts -nonewline $fd $msg
 			close $fd
 		}
 	} else {
