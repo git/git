@@ -10,6 +10,8 @@
 static const char receive_pack_usage[] = "git-receive-pack <git-dir>";
 
 static int deny_non_fast_forwards = 0;
+static int receive_unpack_limit = -1;
+static int transfer_unpack_limit = -1;
 static int unpack_limit = 100;
 static int report_status;
 
@@ -18,21 +20,22 @@ static int capabilities_sent;
 
 static int receive_pack_config(const char *var, const char *value)
 {
-	git_default_config(var, value);
-
-	if (strcmp(var, "receive.denynonfastforwards") == 0)
-	{
+	if (strcmp(var, "receive.denynonfastforwards") == 0) {
 		deny_non_fast_forwards = git_config_bool(var, value);
 		return 0;
 	}
 
-	if (strcmp(var, "receive.unpacklimit") == 0)
-	{
-		unpack_limit = git_config_int(var, value);
+	if (strcmp(var, "receive.unpacklimit") == 0) {
+		receive_unpack_limit = git_config_int(var, value);
 		return 0;
 	}
 
-	return 0;
+	if (strcmp(var, "transfer.unpacklimit") == 0) {
+		transfer_unpack_limit = git_config_int(var, value);
+		return 0;
+	}
+
+	return git_default_config(var, value);
 }
 
 static int show_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
@@ -430,6 +433,11 @@ int main(int argc, char **argv)
 	/* don't die if gecos is empty */
 	ignore_missing_committer_name();
 	git_config(receive_pack_config);
+
+	if (0 <= transfer_unpack_limit)
+		unpack_limit = transfer_unpack_limit;
+	else if (0 <= receive_unpack_limit)
+		unpack_limit = receive_unpack_limit;
 
 	write_head_info();
 

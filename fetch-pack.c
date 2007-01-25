@@ -8,6 +8,8 @@
 #include "sideband.h"
 
 static int keep_pack;
+static int transfer_unpack_limit = -1;
+static int fetch_unpack_limit = -1;
 static int unpack_limit = 100;
 static int quiet;
 static int verbose;
@@ -645,7 +647,12 @@ static int remove_duplicates(int nr_heads, char **heads)
 static int fetch_pack_config(const char *var, const char *value)
 {
 	if (strcmp(var, "fetch.unpacklimit") == 0) {
-		unpack_limit = git_config_int(var, value);
+		fetch_unpack_limit = git_config_int(var, value);
+		return 0;
+	}
+
+	if (strcmp(var, "transfer.unpacklimit") == 0) {
+		transfer_unpack_limit = git_config_int(var, value);
 		return 0;
 	}
 
@@ -665,6 +672,11 @@ int main(int argc, char **argv)
 	setup_git_directory();
 	setup_ident();
 	git_config(fetch_pack_config);
+
+	if (0 <= transfer_unpack_limit)
+		unpack_limit = transfer_unpack_limit;
+	else if (0 <= fetch_unpack_limit)
+		unpack_limit = fetch_unpack_limit;
 
 	nr_heads = 0;
 	heads = NULL;
