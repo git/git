@@ -8,7 +8,7 @@
 #include "sideband.h"
 
 static int keep_pack;
-static int keep_auto;
+static int unpack_limit = 100;
 static int quiet;
 static int verbose;
 static int fetch_all;
@@ -503,14 +503,14 @@ static int get_pack(int xd[2])
 
 	av = argv;
 	*hdr_arg = 0;
-	if (keep_auto) {
+	if (unpack_limit) {
 		struct pack_header header;
 
 		if (read_pack_header(fd[0], &header))
 			die("protocol error: bad pack header");
 		snprintf(hdr_arg, sizeof(hdr_arg), "--pack_header=%u,%u",
 			 ntohl(header.hdr_version), ntohl(header.hdr_entries));
-		if (ntohl(header.hdr_entries) < keep_auto)
+		if (ntohl(header.hdr_entries) < unpack_limit)
 			do_keep = 0;
 		else
 			do_keep = 1;
@@ -523,7 +523,7 @@ static int get_pack(int xd[2])
 			*av++ = "-v";
 		if (use_thin_pack)
 			*av++ = "--fix-thin";
-		if (keep_pack > 1 || keep_auto) {
+		if (keep_pack > 1 || unpack_limit) {
 			int s = sprintf(keep_arg,
 					"--keep=fetch-pack %d on ", getpid());
 			if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
@@ -642,6 +642,16 @@ static int remove_duplicates(int nr_heads, char **heads)
 	return dst;
 }
 
+static int fetch_pack_config(const char *var, const char *value)
+{
+	if (strcmp(var, "fetch.unpacklimit") == 0) {
+		unpack_limit = git_config_int(var, value);
+		return 0;
+	}
+
+	return git_default_config(var, value);
+}
+
 static struct lock_file lock;
 
 int main(int argc, char **argv)
@@ -653,6 +663,8 @@ int main(int argc, char **argv)
 	struct stat st;
 
 	setup_git_directory();
+	setup_ident();
+	git_config(fetch_pack_config);
 
 	nr_heads = 0;
 	heads = NULL;
@@ -674,16 +686,7 @@ int main(int argc, char **argv)
 			}
 			if (!strcmp("--keep", arg) || !strcmp("-k", arg)) {
 				keep_pack++;
-				continue;
-			}
-			if (!strcmp("--keep-auto", arg)) {
-				keep_auto = 100;
-				continue;
-			}
-			if (!strncmp("--keep-auto=", arg, 12)) {
-				keep_auto = strtoul(arg + 12, NULL, 0);
-				if (keep_auto < 20)
-					keep_auto = 20;
+				unpack_limit = 0;
 				continue;
 			}
 			if (!strcmp("--thin", arg)) {
