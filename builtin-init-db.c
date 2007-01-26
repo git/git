@@ -231,7 +231,7 @@ static int create_default_files(const char *git_dir, const char *template_path)
 	strcpy(path + len, "HEAD");
 	reinit = !read_ref("HEAD", sha1);
 	if (!reinit) {
-		if (create_symref("HEAD", "refs/heads/master") < 0)
+		if (create_symref("HEAD", "refs/heads/master", NULL) < 0)
 			exit(1);
 	}
 

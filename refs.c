@@ -986,18 +986,23 @@ int write_ref_sha1(struct ref_lock *lock,
 	return 0;
 }
 
-int create_symref(const char *ref_target, const char *refs_heads_master)
+int create_symref(const char *ref_target, const char *refs_heads_master,
+		  const char *logmsg)
 {
 	const char *lockpath;
 	char ref[1000];
 	int fd, len, written;
 	const char *git_HEAD = git_path("%s", ref_target);
+	unsigned char old_sha1[20], new_sha1[20];
+
+	if (logmsg && read_ref(ref_target, old_sha1))
+		hashclr(old_sha1);
 
 #ifndef NO_SYMLINK_HEAD
 	if (prefer_symlink_refs) {
 		unlink(git_HEAD);
 		if (!symlink(refs_heads_master, git_HEAD))
-			return 0;
+			goto done;
 		fprintf(stderr, "no symlink - falling back to symbolic ref\n");
 	}
 #endif
@@ -1030,6 +1035,11 @@ int create_symref(const char *ref_target, const char *refs_heads_master)
 		error("Unable to fix permissions on %s", lockpath);
 		return -4;
 	}
+
+	done:
+	if (logmsg && !read_ref(refs_heads_master, new_sha1))
+		log_ref_write(ref_target, old_sha1, new_sha1, logmsg);
+
 	return 0;
 }
 
