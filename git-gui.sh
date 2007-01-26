@@ -187,13 +187,13 @@ proc warn_popup {msg} {
 	eval $cmd
 }
 
-proc info_popup {msg} {
+proc info_popup {msg {parent .}} {
 	set title [appname]
 	if {[reponame] ne {}} {
 		append title " ([reponame])"
 	}
 	tk_messageBox \
-		-parent . \
+		-parent $parent \
 		-icon info \
 		-type ok \
 		-title $title \
@@ -2697,16 +2697,36 @@ than 15 branches, merge the branches in batches.
 	set msg "Merging $current_branch, [join $names {, }]"
 	set ui_status_value "$msg..."
 	set cons [new_console "Merge" $msg]
-	console_exec $cons $cmd finish_merge
+	console_exec $cons $cmd [list finish_merge $revcnt]
 	bind $w <Destroy> {}
 	destroy $w
 }
 
-proc finish_merge {w ok} {
+proc finish_merge {revcnt w ok} {
 	console_done $w $ok
 	if {$ok} {
 		set msg {Merge completed successfully.}
 	} else {
+		if {$revcnt != 1} {
+			info_popup "Octopus merge failed.
+
+Your merge of $revcnt branches has failed.
+
+There are file-level conflicts between the
+branches which must be resolved manually.
+
+The working directory will now be reset.
+
+You can attempt this merge again
+by merging only one branch at a time." $w
+
+			set fd [open "| git read-tree --reset -u HEAD" r]
+			fconfigure $fd -blocking 0 -translation binary
+			fileevent $fd readable [list reset_hard_wait $fd]
+			set ui_status_value {Aborting... please wait...}
+			return
+		}
+
 		set msg {Merge failed.  Conflict resolution is required.}
 	}
 	unlock_index
