@@ -469,6 +469,13 @@ user.name::
 	Can be overridden by the 'GIT_AUTHOR_NAME' and 'GIT_COMMITTER_NAME'
 	environment variables.  See gitlink:git-commit-tree[1].
 
+user.signingkey::
+	If gitlink:git-tag[1] is not selecting the key you want it to
+	automatically when creating a signed tag, you can override the
+	default selection with this variable.  This option is passed
+	unchanged to gpg's --local-user parameter, so you may specify a key
+	using any method that gpg supports.
+
 whatchanged.difftree::
 	The default gitlink:git-diff-tree[1] arguments to be used
 	for gitlink:git-whatchanged[1].
