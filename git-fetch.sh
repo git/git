@@ -85,6 +85,12 @@ case "$#" in
 	set x $origin ; shift ;;
 esac
 
+if test -z "$exec"
+then
+	# No command line override and we have configuration for the remote.
+	exec="--upload-pack=$(get_uploadpack $1)"
+fi
+
 remote_nick="$1"
 remote=$(get_remote_url "$@")
 refs=

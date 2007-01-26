@@ -37,7 +37,9 @@ static int handle_one_ref(const char *path, const unsigned char *sha1,
 	if ((flags & REF_ISSYMREF))
 		return 0;
 	is_tag_ref = !strncmp(path, "refs/tags/", 10);
-	if (!cb->all && !is_tag_ref)
+
+	/* ALWAYS pack refs that were already packed or are tags */
+	if (!cb->all && !is_tag_ref && !(flags & REF_ISPACKED))
 		return 0;
 
 	fprintf(cb->refs_file, "%s %s\n", sha1_to_hex(sha1), path);

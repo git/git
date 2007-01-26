@@ -46,7 +46,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <pwd.h>
-#include <stdint.h>
+#include <inttypes.h>
 #undef _ALL_SOURCE /* AIX 5.3L defines a struct list with _ALL_SOURCE. */
 #include <grp.h>
 #define _ALL_SOURCE 1

@@ -958,7 +958,7 @@ static int log_ref_write(struct ref_lock *lock,
 				     lock->log_file, strerror(errno));
 	}
 
-	committer = git_committer_info(1);
+	committer = git_committer_info(-1);
 	if (msg) {
 		maxlen = strlen(committer) + strlen(msg) + 2*40 + 5;
 		logrec = xmalloc(maxlen);

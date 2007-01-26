@@ -81,7 +81,14 @@ get_remote_default_refs_for_push () {
 # is to help prevent randomly "globbed" ref from being chosen as
 # a merge candidate
 expand_refs_wildcard () {
+	remote="$1"
+	shift
 	first_one=yes
+	if test "$#" = 0
+	then
+		echo empty
+		echo >&2 "Nothing specified for fetching with remote.$remote.fetch"
+	fi
 	for ref
 	do
 		lref=${ref#'+'}
@@ -132,7 +139,7 @@ canon_refs_list_for_fetch () {
 	if test "$1" = "-d"
 	then
 		shift ; remote="$1" ; shift
-		set $(expand_refs_wildcard "$@")
+		set $(expand_refs_wildcard "$remote" "$@")
 		is_explicit="$1"
 		shift
 		if test "$remote" = "$(get_default_remote)"
@@ -278,4 +285,17 @@ resolve_alternates () {
 			exit 1 ;;
 		esac
 	done
+}
+
+get_uploadpack () {
+	data_source=$(get_data_source "$1")
+	case "$data_source" in
+	config)
+		uplp=$(git-repo-config --get "remote.$1.uploadpack")
+		echo ${uplp:-git-upload-pack}
+		;;
+	*)
+		echo "git-upload-pack"
+		;;
+	esac
 }
