@@ -2129,16 +2129,19 @@ proc do_delete_branch {} {
 		-font font_ui
 	listbox $w.list.l \
 		-height 10 \
-		-width 50 \
+		-width 70 \
 		-selectmode extended \
+		-yscrollcommand [list $w.list.sby set] \
 		-font font_ui
 	foreach h $all_heads {
 		if {$h ne $current_branch} {
 			$w.list.l insert end $h
 		}
 	}
-	pack $w.list.l -fill both -pady 5 -padx 5
-	pack $w.list -fill both -pady 5 -padx 5
+	scrollbar $w.list.sby -command [list $w.list.l yview]
+	pack $w.list.sby -side right -fill y
+	pack $w.list.l -side left -fill both -expand 1
+	pack $w.list -fill both -expand 1 -pady 5 -padx 5
 
 	labelframe $w.validate \
 		-text {Delete Only If} \
@@ -2510,8 +2513,9 @@ proc do_push_anywhere {} {
 		-font font_ui
 	listbox $w.source.l \
 		-height 10 \
-		-width 50 \
+		-width 70 \
 		-selectmode extended \
+		-yscrollcommand [list $w.source.sby set] \
 		-font font_ui
 	foreach h $all_heads {
 		$w.source.l insert end $h
@@ -2519,8 +2523,10 @@ proc do_push_anywhere {} {
 			$w.source.l select set end
 		}
 	}
-	pack $w.source.l -fill both -pady 5 -padx 5
-	pack $w.source -fill both -pady 5 -padx 5
+	scrollbar $w.source.sby -command [list $w.source.l yview]
+	pack $w.source.sby -side right -fill y
+	pack $w.source.l -side left -fill both -expand 1
+	pack $w.source -fill both -expand 1 -pady 5 -padx 5
 
 	labelframe $w.dest \
 		-text {Destination Repository} \
@@ -2782,7 +2788,7 @@ proc do_local_merge {} {
 		-font font_ui
 	listbox $w.source.l \
 		-height 10 \
-		-width 25 \
+		-width 70 \
 		-selectmode extended \
 		-yscrollcommand [list $w.source.sby set] \
 		-font font_ui
