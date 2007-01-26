@@ -1456,6 +1456,27 @@ $ git gc
 to recompress the archive.  This can be very time-consuming, so
 you may prefer to run git-gc when you are not doing other work.
 
+Ensuring reliability
+--------------------
+
+Checking the repository for corruption
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO:
+	git-fsck
+	"dangling objects" explanation
+		Brief explanation here,
+		include forward reference to longer explanation from
+			Linus, to be added to later chapter
+
+Recovering lost changes
+~~~~~~~~~~~~~~~~~~~~~~~
+
+TODO:
+	reflog
+	git-fsck
+	low-level examination of objects
+
 Sharing development with others
 ===============================
 
