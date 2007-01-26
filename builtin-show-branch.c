@@ -662,13 +662,13 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	}
 	ac--; av++;
 
-	if (!!extra || !!reflog) {
+	if (extra || reflog) {
 		/* "listing" mode is incompatible with
 		 * independent nor merge-base modes.
 		 */
 		if (independent || merge_base)
 			usage(show_branch_usage);
-		if (!!reflog && ((0 < extra) || all_heads || all_remotes))
+		if (reflog && ((0 < extra) || all_heads || all_remotes))
 			/*
 			 * Asking for --more in reflog mode does not
 			 * make sense.  --list is Ok.
@@ -682,15 +682,22 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	if (ac + all_heads + all_remotes == 0)
 		all_heads = 1;
 
-	if (all_heads + all_remotes)
-		snarf_refs(all_heads, all_remotes);
 	if (reflog) {
 		unsigned char sha1[20];
 		char nth_desc[256];
 		char *ref;
 		int base = 0;
+
+		if (ac == 0) {
+			static const char *fake_av[2];
+			fake_av[0] = "HEAD";
+			fake_av[1] = NULL;
+			av = fake_av;
+			ac = 1;
+		}
 		if (ac != 1)
 			die("--reflog option needs one branch name");
+
 		if (MAX_REVS < reflog)
 			die("Only %d entries can be shown at one time.",
 			    MAX_REVS);
@@ -735,6 +742,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			append_ref(nth_desc, sha1, 1);
 		}
 	}
+	else if (all_heads + all_remotes)
+		snarf_refs(all_heads, all_remotes);
 	else {
 		while (0 < ac) {
 			append_one_rev(*av);
