@@ -2471,6 +2471,7 @@ proc populate_push_menu {} {
 	global all_remotes repo_config
 
 	set m .mbar.push
+	set fast_count 0
 	foreach r $all_remotes {
 		set enable 0
 		if {![catch {set a $repo_config(remote.$r.url)}]} {
@@ -2491,12 +2492,165 @@ proc populate_push_menu {} {
 		}
 
 		if {$enable} {
+			if {!$fast_count} {
+				$m add separator
+			}
 			$m add command \
 				-label "Push to $r..." \
 				-command [list push_to $r] \
 				-font font_ui
+			incr fast_count
 		}
 	}
+}
+
+proc start_push_anywhere_action {w} {
+	global push_urltype push_remote push_url push_thin push_tags
+
+	set r_url {}
+	switch -- $push_urltype {
+	remote {set r_url $push_remote}
+	url {set r_url $push_url}
+	}
+	if {$r_url eq {}} return
+
+	set cmd [list git push]
+	lappend cmd -v
+	if {$push_thin} {
+		lappend cmd --thin
+	}
+	if {$push_tags} {
+		lappend cmd --tags
+	}
+	lappend cmd $r_url
+	set cnt 0
+	foreach i [$w.source.l curselection] {
+		set b [$w.source.l get $i]
+		lappend cmd "refs/heads/$b:refs/heads/$b"
+		incr cnt
+	}
+	if {$cnt == 0} {
+		return
+	} elseif {$cnt == 1} {
+		set unit branch
+	} else {
+		set unit branches
+	}
+
+	set cons [new_console "push $r_url" "Pushing $cnt $unit to $r_url"]
+	console_exec $cons $cmd
+	destroy $w
+}
+
+trace add variable push_remote write \
+	[list radio_selector push_urltype remote]
+
+proc do_push_anywhere {} {
+	global all_heads all_remotes current_branch
+	global push_urltype push_remote push_url push_thin push_tags
+
+	set w .push_setup
+	toplevel $w
+	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
+
+	label $w.header -text {Push Branches} -font font_uibold
+	pack $w.header -side top -fill x
+
+	frame $w.buttons
+	button $w.buttons.create -text Push \
+		-font font_ui \
+		-command [list start_push_anywhere_action $w]
+	pack $w.buttons.create -side right
+	button $w.buttons.cancel -text {Cancel} \
+		-font font_ui \
+		-command [list destroy $w]
+	pack $w.buttons.cancel -side right -padx 5
+	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
+
+	labelframe $w.source \
+		-text {Source Branches} \
+		-font font_ui
+	listbox $w.source.l \
+		-height 10 \
+		-width 50 \
+		-selectmode extended \
+		-font font_ui
+	foreach h $all_heads {
+		$w.source.l insert end $h
+		if {$h eq $current_branch} {
+			$w.source.l select set end
+		}
+	}
+	pack $w.source.l -fill both -pady 5 -padx 5
+	pack $w.source -fill both -pady 5 -padx 5
+
+	labelframe $w.dest \
+		-text {Destination Repository} \
+		-font font_ui
+	if {$all_remotes ne {}} {
+		radiobutton $w.dest.remote_r \
+			-text {Remote:} \
+			-value remote \
+			-variable push_urltype \
+			-font font_ui
+		eval tk_optionMenu $w.dest.remote_m push_remote $all_remotes
+		grid $w.dest.remote_r $w.dest.remote_m -sticky w
+		if {[lsearch -sorted -exact $all_remotes origin] != -1} {
+			set push_remote origin
+		} else {
+			set push_remote [lindex $all_remotes 0]
+		}
+		set push_urltype remote
+	} else {
+		set push_urltype url
+	}
+	radiobutton $w.dest.url_r \
+		-text {Arbitrary URL:} \
+		-value url \
+		-variable push_urltype \
+		-font font_ui
+	entry $w.dest.url_t \
+		-borderwidth 1 \
+		-relief sunken \
+		-width 50 \
+		-textvariable push_url \
+		-font font_ui \
+		-validate key \
+		-validatecommand {
+			if {%d == 1 && [regexp {\s} %S]} {return 0}
+			if {%d == 1 && [string length %S] > 0} {
+				set push_urltype url
+			}
+			return 1
+		}
+	grid $w.dest.url_r $w.dest.url_t -sticky we -padx {0 5}
+	grid columnconfigure $w.dest 1 -weight 1
+	pack $w.dest -anchor nw -fill x -pady 5 -padx 5
+
+	labelframe $w.options \
+		-text {Transfer Options} \
+		-font font_ui
+	checkbutton $w.options.thin \
+		-text {Use thin pack (for slow network connections)} \
+		-variable push_thin \
+		-font font_ui
+	grid $w.options.thin -columnspan 2 -sticky w
+	checkbutton $w.options.tags \
+		-text {Include tags} \
+		-variable push_tags \
+		-font font_ui
+	grid $w.options.tags -columnspan 2 -sticky w
+	grid columnconfigure $w.options 1 -weight 1
+	pack $w.options -anchor nw -fill x -pady 5 -padx 5
+
+	set push_url {}
+	set push_thin 0
+	set push_tags 0
+
+	bind $w <Visibility> "grab $w"
+	bind $w <Key-Escape> "destroy $w"
+	wm title $w "[appname] ([reponame]): Push"
+	tkwait window $w
 }
 
 ######################################################################
@@ -3900,6 +4054,10 @@ lappend disable_on_lock \
 if {!$single_commit} {
 	menu .mbar.fetch
 	menu .mbar.push
+
+	.mbar.push add command -label {Push...} \
+		-command do_push_anywhere \
+		-font font_ui
 }
 
 if {[is_MacOSX]} {
