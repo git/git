@@ -2629,6 +2629,9 @@ The rescan will be automatically started now.
 
 	foreach path [array names file_states] {
 		switch -glob -- [lindex $file_states($path) 0] {
+		_O {
+			continue; # and pray it works!
+		}
 		U? {
 			error_popup "You are in the middle of a conflicted merge.
 
@@ -2637,6 +2640,18 @@ File [short_path $path] has merge conflicts.
 You must resolve them, add the file, and commit to
 complete the current merge.  Only then can you
 begin another merge.
+"
+			unlock_index
+			return 0
+		}
+		?? {
+			error_popup "You are in the middle of a change.
+
+File [short_path $path] is modified.
+
+You should complete the current commit before
+starting a merge.  Doing so will help you abort
+a failed merge, should the need arise.
 "
 			unlock_index
 			return 0
