@@ -2786,6 +2786,61 @@ proc do_local_merge {} {
 	tkwait window $w
 }
 
+proc do_reset_hard {} {
+	global HEAD commit_type file_states
+
+	if {[string match amend* $commit_type]} {
+		info_popup {Cannot abort while amending.
+
+You must finish amending this commit.
+}
+		return
+	}
+
+	if {![lock_index abort]} return
+
+	if {[string match *merge* $commit_type]} {
+		set op merge
+	} else {
+		set op commit
+	}
+
+	if {[ask_popup "Abort $op?
+
+Aborting the current $op will cause
+*ALL* uncommitted changes to be lost.
+
+Continue with aborting the current $op?"] eq {yes}} {
+		set fd [open "| git read-tree --reset -u HEAD" r]
+		fconfigure $fd -blocking 0 -translation binary
+		fileevent $fd readable [list reset_hard_wait $fd]
+		set ui_status_value {Aborting... please wait...}
+	} else {
+		unlock_index
+	}
+}
+
+proc reset_hard_wait {fd} {
+	global ui_comm
+
+	read $fd
+	if {[eof $fd]} {
+		close $fd
+		unlock_index
+
+		$ui_comm delete 0.0 end
+		$ui_comm edit modified false
+
+		catch {file delete [gitdir MERGE_HEAD]}
+		catch {file delete [gitdir rr-cache MERGE_RR]}
+		catch {file delete [gitdir SQUASH_MSG]}
+		catch {file delete [gitdir MERGE_MSG]}
+		catch {file delete [gitdir GITGUI_MSG]}
+
+		rescan {set ui_status_value {Abort completed.  Ready.}}
+	}
+}
+
 ######################################################################
 ##
 ## icons
@@ -4322,6 +4377,12 @@ if {!$single_commit} {
 		-font font_ui
 	lappend disable_on_lock \
 		[list .mbar.merge entryconf [.mbar.merge index last] -state]
+	.mbar.merge add command -label {Abort Merge...} \
+		-command do_reset_hard \
+		-font font_ui
+	lappend disable_on_lock \
+		[list .mbar.merge entryconf [.mbar.merge index last] -state]
+
 
 	menu .mbar.fetch
 
