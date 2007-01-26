@@ -1269,83 +1269,20 @@ proc commit_committree {fd_wt curHEAD msg} {
 
 ######################################################################
 ##
-## fetch pull push
+## fetch push
 
 proc fetch_from {remote} {
-	set w [new_console "fetch $remote" \
+	set w [new_console \
+		"fetch $remote" \
 		"Fetching new changes from $remote"]
 	set cmd [list git fetch]
 	lappend cmd $remote
 	console_exec $w $cmd
 }
 
-proc pull_remote {remote branch} {
-	global HEAD commit_type file_states repo_config
-
-	if {![lock_index update]} return
-
-	# -- Our in memory state should match the repository.
-	#
-	repository_state curType curHEAD curMERGE_HEAD
-	if {$commit_type ne $curType || $HEAD ne $curHEAD} {
-		info_popup {Last scanned state does not match repository state.
-
-Another Git program has modified this repository
-since the last scan.  A rescan must be performed
-before a pull operation can be started.
-
-The rescan will be automatically started now.
-}
-		unlock_index
-		rescan {set ui_status_value {Ready.}}
-		return
-	}
-
-	# -- No differences should exist before a pull.
-	#
-	if {[array size file_states] != 0} {
-		error_popup {Uncommitted but modified files are present.
-
-You should not perform a pull with unmodified
-files in your working directory as Git will be
-unable to recover from an incorrect merge.
-
-You should commit or revert all changes before
-starting a pull operation.
-}
-		unlock_index
-		return
-	}
-
-	set w [new_console "pull $remote $branch" \
-		"Pulling new changes from branch $branch in $remote"]
-	set cmd [list git pull]
-	if {$repo_config(gui.pullsummary) eq {false}} {
-		lappend cmd --no-summary
-	}
-	lappend cmd $remote
-	lappend cmd $branch
-	console_exec $w $cmd [list post_pull_remote $remote $branch]
-}
-
-proc post_pull_remote {remote branch success} {
-	global HEAD PARENT MERGE_HEAD commit_type selected_commit_type
-	global ui_status_value
-
-	unlock_index
-	if {$success} {
-		repository_state commit_type HEAD MERGE_HEAD
-		set PARENT $HEAD
-		set selected_commit_type new
-		set ui_status_value "Pulling $branch from $remote complete."
-	} else {
-		rescan [list set ui_status_value \
-			"Conflicts detected while pulling $branch from $remote."]
-	}
-}
-
 proc push_to {remote} {
-	set w [new_console "push $remote" \
+	set w [new_console \
+		"push $remote" \
 		"Pushing changes to $remote"]
 	set cmd [list git push]
 	lappend cmd $remote
