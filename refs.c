@@ -309,53 +309,6 @@ const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *
 	return ref;
 }
 
-int create_symref(const char *ref_target, const char *refs_heads_master)
-{
-	const char *lockpath;
-	char ref[1000];
-	int fd, len, written;
-	const char *git_HEAD = git_path("%s", ref_target);
-
-#ifndef NO_SYMLINK_HEAD
-	if (prefer_symlink_refs) {
-		unlink(git_HEAD);
-		if (!symlink(refs_heads_master, git_HEAD))
-			return 0;
-		fprintf(stderr, "no symlink - falling back to symbolic ref\n");
-	}
-#endif
-
-	len = snprintf(ref, sizeof(ref), "ref: %s\n", refs_heads_master);
-	if (sizeof(ref) <= len) {
-		error("refname too long: %s", refs_heads_master);
-		return -1;
-	}
-	lockpath = mkpath("%s.lock", git_HEAD);
-	fd = open(lockpath, O_CREAT | O_EXCL | O_WRONLY, 0666);
-	if (fd < 0) {
-		error("Unable to open %s for writing", lockpath);
-		return -5;
-	}
-	written = write_in_full(fd, ref, len);
-	close(fd);
-	if (written != len) {
-		unlink(lockpath);
-		error("Unable to write to %s", lockpath);
-		return -2;
-	}
-	if (rename(lockpath, git_HEAD) < 0) {
-		unlink(lockpath);
-		error("Unable to create %s", git_HEAD);
-		return -3;
-	}
-	if (adjust_shared_perm(git_HEAD)) {
-		unlink(lockpath);
-		error("Unable to fix permissions on %s", lockpath);
-		return -4;
-	}
-	return 0;
-}
-
 int read_ref(const char *ref, unsigned char *sha1)
 {
 	if (resolve_ref(ref, sha1, 1, NULL))
@@ -1030,6 +983,53 @@ int write_ref_sha1(struct ref_lock *lock,
 	}
 	lock->lock_fd = -1;
 	unlock_ref(lock);
+	return 0;
+}
+
+int create_symref(const char *ref_target, const char *refs_heads_master)
+{
+	const char *lockpath;
+	char ref[1000];
+	int fd, len, written;
+	const char *git_HEAD = git_path("%s", ref_target);
+
+#ifndef NO_SYMLINK_HEAD
+	if (prefer_symlink_refs) {
+		unlink(git_HEAD);
+		if (!symlink(refs_heads_master, git_HEAD))
+			return 0;
+		fprintf(stderr, "no symlink - falling back to symbolic ref\n");
+	}
+#endif
+
+	len = snprintf(ref, sizeof(ref), "ref: %s\n", refs_heads_master);
+	if (sizeof(ref) <= len) {
+		error("refname too long: %s", refs_heads_master);
+		return -1;
+	}
+	lockpath = mkpath("%s.lock", git_HEAD);
+	fd = open(lockpath, O_CREAT | O_EXCL | O_WRONLY, 0666);
+	if (fd < 0) {
+		error("Unable to open %s for writing", lockpath);
+		return -5;
+	}
+	written = write_in_full(fd, ref, len);
+	close(fd);
+	if (written != len) {
+		unlink(lockpath);
+		error("Unable to write to %s", lockpath);
+		return -2;
+	}
+	if (rename(lockpath, git_HEAD) < 0) {
+		unlink(lockpath);
+		error("Unable to create %s", git_HEAD);
+		return -3;
+	}
+	if (adjust_shared_perm(git_HEAD)) {
+		unlink(lockpath);
+		error("Unable to fix permissions on %s", lockpath);
+		return -4;
+	}
 	return 0;
 }
 
