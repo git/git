@@ -242,7 +242,7 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 	struct cmd_reflog_expire_cb *cmd = cb_data;
 	struct expire_reflog_cb cb;
 	struct ref_lock *lock;
-	char *newlog_path = NULL;
+	char *log_file, *newlog_path = NULL;
 	int status = 0;
 
 	if (strncmp(ref, "refs/", 5))
@@ -255,7 +255,8 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 	lock = lock_ref_sha1(ref + 5, sha1);
 	if (!lock)
 		return error("cannot lock ref '%s'", ref);
-	if (!file_exists(lock->log_file))
+	log_file = xstrdup(git_path("logs/%s", ref));
+	if (!file_exists(log_file))
 		goto finish;
 	if (!cmd->dry_run) {
 		newlog_path = xstrdup(git_path("logs/%s.lock", ref));
@@ -271,13 +272,14 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 		if (fclose(cb.newlog))
 			status |= error("%s: %s", strerror(errno),
 					newlog_path);
-		if (rename(newlog_path, lock->log_file)) {
+		if (rename(newlog_path, log_file)) {
 			status |= error("cannot rename %s to %s",
-					newlog_path, lock->log_file);
+					newlog_path, log_file);
 			unlink(newlog_path);
 		}
 	}
 	free(newlog_path);
+	free(log_file);
 	unlock_ref(lock);
 	return status;
 }

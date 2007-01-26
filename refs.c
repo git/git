@@ -680,7 +680,6 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 	lock->lk = xcalloc(1, sizeof(struct lock_file));
 
 	lock->ref_name = xstrdup(ref);
-	lock->log_file = xstrdup(git_path("logs/%s", ref));
 	ref_file = git_path("%s", ref);
 	lock->force_write = lstat(ref_file, &st) && errno == ENOENT;
 
@@ -776,10 +775,10 @@ int delete_ref(const char *refname, unsigned char *sha1)
 	 */
 	ret |= repack_without_ref(refname);
 
-	err = unlink(lock->log_file);
+	err = unlink(git_path("logs/%s", lock->ref_name));
 	if (err && errno != ENOENT)
 		fprintf(stderr, "warning: unlink(%s) failed: %s",
-			lock->log_file, strerror(errno));
+			git_path("logs/%s", lock->ref_name), strerror(errno));
 	invalidate_cached_refs();
 	unlock_ref(lock);
 	return ret;
@@ -920,47 +919,48 @@ void unlock_ref(struct ref_lock *lock)
 			rollback_lock_file(lock->lk);
 	}
 	free(lock->ref_name);
-	free(lock->log_file);
 	free(lock);
 }
 
-static int log_ref_write(struct ref_lock *lock,
-	const unsigned char *sha1, const char *msg)
+static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
+			 const unsigned char *new_sha1, const char *msg)
 {
 	int logfd, written, oflags = O_APPEND | O_WRONLY;
 	unsigned maxlen, len;
 	int msglen;
-	char *logrec;
+	char *log_file, *logrec;
 	const char *committer;
 
 	if (log_all_ref_updates < 0)
 		log_all_ref_updates = !is_bare_repository();
 
+	log_file = git_path("logs/%s", ref_name);
+
 	if (log_all_ref_updates &&
-	    (!strncmp(lock->ref_name, "refs/heads/", 11) ||
-	     !strncmp(lock->ref_name, "refs/remotes/", 13))) {
-		if (safe_create_leading_directories(lock->log_file) < 0)
+	    (!strncmp(ref_name, "refs/heads/", 11) ||
+	     !strncmp(ref_name, "refs/remotes/", 13))) {
+		if (safe_create_leading_directories(log_file) < 0)
 			return error("unable to create directory for %s",
-				lock->log_file);
+				     log_file);
 		oflags |= O_CREAT;
 	}
 
-	logfd = open(lock->log_file, oflags, 0666);
+	logfd = open(log_file, oflags, 0666);
 	if (logfd < 0) {
 		if (!(oflags & O_CREAT) && errno == ENOENT)
 			return 0;
 
 		if ((oflags & O_CREAT) && errno == EISDIR) {
-			if (remove_empty_directories(lock->log_file)) {
+			if (remove_empty_directories(log_file)) {
 				return error("There are still logs under '%s'",
-					     lock->log_file);
+					     log_file);
 			}
-			logfd = open(lock->log_file, oflags, 0666);
+			logfd = open(log_file, oflags, 0666);
 		}
 
 		if (logfd < 0)
 			return error("Unable to append to %s: %s",
-				     lock->log_file, strerror(errno));
+				     log_file, strerror(errno));
 	}
 
 	msglen = 0;
@@ -982,8 +982,8 @@ static int log_ref_write(struct ref_lock *lock,
 	maxlen = strlen(committer) + msglen + 100;
 	logrec = xmalloc(maxlen);
 	len = sprintf(logrec, "%s %s %s\n",
-		      sha1_to_hex(lock->old_sha1),
-		      sha1_to_hex(sha1),
+		      sha1_to_hex(old_sha1),
+		      sha1_to_hex(new_sha1),
 		      committer);
 	if (msglen)
 		len += sprintf(logrec + len - 1, "\t%.*s\n", msglen, msg) - 1;
@@ -991,7 +991,7 @@ static int log_ref_write(struct ref_lock *lock,
 	free(logrec);
 	close(logfd);
 	if (written != len)
-		return error("Unable to append to %s", lock->log_file);
+		return error("Unable to append to %s", log_file);
 	return 0;
 }
 
@@ -1014,7 +1014,7 @@ int write_ref_sha1(struct ref_lock *lock,
 		return -1;
 	}
 	invalidate_cached_refs();
-	if (log_ref_write(lock, sha1, logmsg) < 0) {
+	if (log_ref_write(lock->ref_name, lock->old_sha1, sha1, logmsg) < 0) {
 		unlock_ref(lock);
 		return -1;
 	}
