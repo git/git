@@ -2658,7 +2658,7 @@ proc visualize_local_merge {w} {
 }
 
 proc start_local_merge_action {w} {
-	global HEAD
+	global HEAD ui_status_value current_branch
 
 	set cmd [list git merge]
 	set names {}
@@ -2694,7 +2694,9 @@ than 15 branches, merge the branches in batches.
 		return
 	}
 
-	set cons [new_console "Merge" "Merging [join $names {, }]"]
+	set msg "Merging $current_branch, [join $names {, }]"
+	set ui_status_value "$msg..."
+	set cons [new_console "Merge" $msg]
 	console_exec $cons $cmd finish_merge
 	bind $w <Destroy> {}
 	destroy $w
