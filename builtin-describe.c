@@ -188,8 +188,11 @@ static void describe(const char *arg, int last_one)
 				sha1_to_hex(gave_up_on->object.sha1));
 		}
 	}
-	printf("%s-g%s\n", all_matches[0].name->path,
-		   find_unique_abbrev(cmit->object.sha1, abbrev));
+	if (abbrev == 0)
+		printf("%s\n", all_matches[0].name->path );
+	else
+		printf("%s-g%s\n", all_matches[0].name->path,
+			   find_unique_abbrev(cmit->object.sha1, abbrev));
 
 	if (!last_one)
 		clear_commit_marks(cmit, -1);
@@ -212,7 +215,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 			tags = 1;
 		else if (!strncmp(arg, "--abbrev=", 9)) {
 			abbrev = strtoul(arg + 9, NULL, 10);
-			if (abbrev < MINIMUM_ABBREV || 40 < abbrev)
+			if (abbrev != 0 && (abbrev < MINIMUM_ABBREV || 40 < abbrev))
 				abbrev = DEFAULT_ABBREV;
 		}
 		else if (!strncmp(arg, "--candidates=", 13)) {
