@@ -1277,7 +1277,7 @@ proc fetch_from {remote} {
 		"Fetching new changes from $remote"]
 	set cmd [list git fetch]
 	lappend cmd $remote
-	console_exec $w $cmd
+	console_exec $w $cmd console_done
 }
 
 proc push_to {remote} {
@@ -1287,7 +1287,7 @@ proc push_to {remote} {
 	set cmd [list git push]
 	lappend cmd -v
 	lappend cmd $remote
-	console_exec $w $cmd
+	console_exec $w $cmd console_done
 }
 
 ######################################################################
@@ -2476,7 +2476,7 @@ proc start_push_anywhere_action {w} {
 	}
 
 	set cons [new_console "push $r_url" "Pushing $cnt $unit to $r_url"]
-	console_exec $cons $cmd
+	console_exec $cons $cmd console_done
 	destroy $w
 }
 
@@ -2854,7 +2854,7 @@ proc console_init {w} {
 	return $w
 }
 
-proc console_exec {w cmd {after {}}} {
+proc console_exec {w cmd after} {
 	# -- Windows tosses the enviroment when we exec our child.
 	#    But most users need that so we have to relogin. :-(
 	#
@@ -2873,7 +2873,7 @@ proc console_exec {w cmd {after {}}} {
 }
 
 proc console_read {w fd after} {
-	global console_cr console_data
+	global console_cr
 
 	set buf [read $fd]
 	if {$buf ne {}} {
@@ -2907,23 +2907,34 @@ proc console_read {w fd after} {
 	fconfigure $fd -blocking 1
 	if {[eof $fd]} {
 		if {[catch {close $fd}]} {
-			if {![winfo exists $w]} {console_init $w}
-			$w.m.s conf -background red -text {Error: Command Failed}
-			$w.ok conf -state normal
 			set ok 0
-		} elseif {[winfo exists $w]} {
-			$w.m.s conf -background green -text {Success}
-			$w.ok conf -state normal
+		} else {
 			set ok 1
 		}
-		array unset console_cr $w
-		array unset console_data $w
-		if {$after ne {}} {
-			uplevel #0 $after $ok
-		}
+		uplevel #0 $after $w $ok
 		return
 	}
 	fconfigure $fd -blocking 0
+}
+
+proc console_done {w ok} {
+	global console_cr console_data
+
+	if {$ok} {
+		if {[winfo exists $w]} {
+			$w.m.s conf -background green -text {Success}
+			$w.ok conf -state normal
+		}
+	} else {
+		if {![winfo exists $w]} {
+			console_init $w
+		}
+		$w.m.s conf -background red -text {Error: Command Failed}
+		$w.ok conf -state normal
+	}
+
+	array unset console_cr $w
+	array unset console_data $w
 }
 
 ######################################################################
@@ -3027,7 +3038,7 @@ proc do_stats {} {
 
 proc do_gc {} {
 	set w [new_console {gc} {Compressing the object database}]
-	console_exec $w {git gc}
+	console_exec $w {git gc} console_done
 }
 
 proc do_fsck_objects {} {
@@ -3037,7 +3048,7 @@ proc do_fsck_objects {} {
 	lappend cmd --full
 	lappend cmd --cache
 	lappend cmd --strict
-	console_exec $w $cmd
+	console_exec $w $cmd console_done
 }
 
 set is_quitting 0
