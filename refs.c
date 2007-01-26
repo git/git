@@ -940,7 +940,8 @@ static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 
 	if (log_all_ref_updates &&
 	    (!strncmp(ref_name, "refs/heads/", 11) ||
-	     !strncmp(ref_name, "refs/remotes/", 13))) {
+	     !strncmp(ref_name, "refs/remotes/", 13) ||
+	     !strcmp(ref_name, "HEAD"))) {
 		if (safe_create_leading_directories(log_file) < 0)
 			return error("unable to create directory for %s",
 				     log_file);
@@ -1016,7 +1017,9 @@ int write_ref_sha1(struct ref_lock *lock,
 		return -1;
 	}
 	invalidate_cached_refs();
-	if (log_ref_write(lock->ref_name, lock->old_sha1, sha1, logmsg) < 0) {
+	if (log_ref_write(lock->ref_name, lock->old_sha1, sha1, logmsg) < 0 ||
+	    (strcmp(lock->ref_name, lock->orig_ref_name) &&
+	     log_ref_write(lock->orig_ref_name, lock->old_sha1, sha1, logmsg) < 0)) {
 		unlock_ref(lock);
 		return -1;
 	}
