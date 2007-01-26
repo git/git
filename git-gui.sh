@@ -60,6 +60,17 @@ proc is_many_config {name} {
 	}
 }
 
+proc is_config_true {name} {
+	global repo_config
+	if {[catch {set v $repo_config($name)}]} {
+		return 0
+	} elseif {$v eq {true} || $v eq {1} || $v eq {yes}} {
+		return 1
+	} else {
+		return 0
+	}
+}
+
 proc load_config {include_global} {
 	global repo_config global_config default_config
 
@@ -2682,6 +2693,10 @@ proc start_local_merge_action {w} {
 	global HEAD ui_status_value current_branch
 
 	set cmd [list git merge]
+	if {![is_config_true merge.summary]} {
+		lappend cmd --no-summary
+	}
+
 	set names {}
 	set revcnt 0
 	foreach i [$w.source.l curselection] {
@@ -3755,52 +3770,59 @@ proc do_options {} {
 	pack $w.repo -side left -fill both -expand 1 -pady 5 -padx 5
 	pack $w.global -side right -fill both -expand 1 -pady 5 -padx 5
 
+	set optid 0
 	foreach option {
-		{b pullsummary {Show Pull Summary}}
-		{b trustmtime  {Trust File Modification Timestamps}}
-		{i diffcontext {Number of Diff Context Lines}}
-		{t newbranchtemplate {New Branch Name Template}}
+		{b merge.summary {Show Merge Summary}}
+		{i-1..5 merge.verbosity {Merge Verbosity}}
+
+		{b gui.trustmtime  {Trust File Modification Timestamps}}
+		{i-1..99 gui.diffcontext {Number of Diff Context Lines}}
+		{t gui.newbranchtemplate {New Branch Name Template}}
 		} {
 		set type [lindex $option 0]
 		set name [lindex $option 1]
 		set text [lindex $option 2]
+		incr optid
 		foreach f {repo global} {
-			switch $type {
+			switch -glob -- $type {
 			b {
-				checkbutton $w.$f.$name -text $text \
-					-variable ${f}_config_new(gui.$name) \
+				checkbutton $w.$f.$optid -text $text \
+					-variable ${f}_config_new($name) \
 					-onvalue true \
 					-offvalue false \
 					-font font_ui
-				pack $w.$f.$name -side top -anchor w
+				pack $w.$f.$optid -side top -anchor w
 			}
-			i {
-				frame $w.$f.$name
-				label $w.$f.$name.l -text "$text:" -font font_ui
-				pack $w.$f.$name.l -side left -anchor w -fill x
-				spinbox $w.$f.$name.v \
-					-textvariable ${f}_config_new(gui.$name) \
-					-from 1 -to 99 -increment 1 \
-					-width 3 \
+			i-* {
+				regexp -- {-(\d+)\.\.(\d+)$} $type _junk min max
+				frame $w.$f.$optid
+				label $w.$f.$optid.l -text "$text:" -font font_ui
+				pack $w.$f.$optid.l -side left -anchor w -fill x
+				spinbox $w.$f.$optid.v \
+					-textvariable ${f}_config_new($name) \
+					-from $min \
+					-to $max \
+					-increment 1 \
+					-width [expr {1 + [string length $max]}] \
 					-font font_ui
-				bind $w.$f.$name.v <FocusIn> {%W selection range 0 end}
-				pack $w.$f.$name.v -side right -anchor e -padx 5
-				pack $w.$f.$name -side top -anchor w -fill x
+				bind $w.$f.$optid.v <FocusIn> {%W selection range 0 end}
+				pack $w.$f.$optid.v -side right -anchor e -padx 5
+				pack $w.$f.$optid -side top -anchor w -fill x
 			}
 			t {
-				frame $w.$f.$name
-				label $w.$f.$name.l -text "$text:" -font font_ui
-				entry $w.$f.$name.v \
+				frame $w.$f.$optid
+				label $w.$f.$optid.l -text "$text:" -font font_ui
+				entry $w.$f.$optid.v \
 					-borderwidth 1 \
 					-relief sunken \
 					-width 20 \
-					-textvariable ${f}_config_new(gui.$name) \
+					-textvariable ${f}_config_new($name) \
 					-font font_ui
-				pack $w.$f.$name.l -side left -anchor w
-				pack $w.$f.$name.v -side left -anchor w \
+				pack $w.$f.$optid.l -side left -anchor w
+				pack $w.$f.$optid.v -side left -anchor w \
 					-fill x -expand 1 \
 					-padx 5
-				pack $w.$f.$name -side top -anchor w -fill x
+				pack $w.$f.$optid -side top -anchor w -fill x
 			}
 			}
 		}
@@ -4131,8 +4153,9 @@ proc apply_config {} {
 	}
 }
 
+set default_config(merge.summary) true
+set default_config(merge.verbosity) 2
 set default_config(gui.trustmtime) false
-set default_config(gui.pullsummary) true
 set default_config(gui.diffcontext) 5
 set default_config(gui.newbranchtemplate) {}
 set default_config(gui.fontui) [font configure font_ui]
