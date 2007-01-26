@@ -23,6 +23,8 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 			msg = argv[++i];
 			if (!*msg)
 				die("Refusing to perform update with empty message.");
+			if (strchr(msg, '\n'))
+				die("Refusing to perform update with \\n in message.");
 			continue;
 		}
 		if (!strcmp("-d", argv[i])) {
