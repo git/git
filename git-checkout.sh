@@ -250,7 +250,7 @@ if [ "$?" -eq 0 ]; then
 	fi
 	if test -n "$branch"
 	then
-		GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD "refs/heads/$branch"
+		GIT_DIR="$GIT_DIR" git-symbolic-ref -m "checkout: moving to $branch" HEAD "refs/heads/$branch"
 	elif test -n "$detached"
 	then
 		# NEEDSWORK: we would want a command to detach the HEAD
