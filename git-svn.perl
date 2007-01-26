@@ -354,7 +354,7 @@ sub cmd_dcommit {
 			my $pool = SVN::Pool->new;
 			my %ed_opts = ( r => $last_rev,
 			                ra => $ra->dup,
-			                svn_path => $ra->{svn_path} );
+			                svn_path => $gs->{path} );
 			my $ed = SVN::Git::Editor->new(\%ed_opts,
 			                 $ra->get_commit_editor($log,
 			                 sub { print "Committed r$_[0]\n";
@@ -437,6 +437,7 @@ sub cmd_commit_diff {
 	my $usage = "Usage: $0 commit-diff -r<revision> ".
 	            "<tree-ish> <tree-ish> [<URL>]\n";
 	fatal($usage) if (!defined $ta || !defined $tb);
+	my $svn_path;
 	if (!defined $url) {
 		my $gs = eval { Git::SVN->new };
 		if (!$gs) {
@@ -444,6 +445,7 @@ sub cmd_commit_diff {
 			      "the command-line\n", $usage);
 		}
 		$url = $gs->{url};
+		$svn_path = $gs->{path};
 	}
 	unless (defined $_revision) {
 		fatal("-r|--revision is a required argument\n", $usage);
@@ -459,6 +461,7 @@ sub cmd_commit_diff {
 		$_message ||= get_commit_entry($tb)->{log};
 	}
 	my $ra ||= Git::SVN::Ra->new($url);
+	$svn_path ||= $ra->{svn_path};
 	my $r = $_revision;
 	if ($r eq 'HEAD') {
 		$r = $ra->get_latest_revnum;
@@ -468,7 +471,7 @@ sub cmd_commit_diff {
 	my $pool = SVN::Pool->new;
 	my %ed_opts = ( r => $r,
 	                ra => $ra->dup,
-	                svn_path => $ra->{svn_path} );
+	                svn_path => $svn_path );
 	my $ed = SVN::Git::Editor->new(\%ed_opts,
 	                               $ra->get_commit_editor($_message,
 	                                 sub { print "Committed r$_[0]\n" }),
@@ -1374,7 +1377,7 @@ sub set_tree {
 	my $pool = SVN::Pool->new;
 	my $ed = SVN::Git::Editor->new({ r => $self->{last_rev},
 	                                 ra => $self->ra->dup,
-	                                 svn_path => $self->ra->{svn_path}
+	                                 svn_path => $self->{path}
 	                               },
 	                               $self->ra->get_commit_editor(
 	                                 $log_entry->{log}, sub {
@@ -1902,6 +1905,8 @@ sub new {
 	$self->{pool} = SVN::Pool->new;
 	$self->{bat} = { '' => $self->open_root($self->{r}, $self->{pool}) };
 	$self->{rm} = { };
+	$self->{path_prefix} = length $self->{svn_path} ?
+	                       "$self->{svn_path}/" : '';
 	require Digest::MD5;
 	return $self;
 }
@@ -1911,7 +1916,8 @@ sub split_path {
 }
 
 sub repo_path {
-	(defined $_[1] && length $_[1]) ? $_[1] : ''
+	my ($self, $path) = @_;
+	$self->{path_prefix}.(defined $path ? $path : '');
 }
 
 sub url_path {
