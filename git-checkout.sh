@@ -156,9 +156,9 @@ then
 	if test -n "$oldbranch"
 	then
 		detach_warn="warning: you are not on ANY branch anymore.
-If you meant to create a new branch from the commit, you need -b to
-associate a new branch with the wanted checkout.  Example:
-  git checkout -b <new_branch_name> $arg"
+If you meant to create a new branch from this checkout, you may still do
+so (now or later) by using -b with the checkout command again.  Example:
+  git checkout -b <new_branch_name>"
 	fi
 elif test -z "$oldbranch" && test -n "$branch"
 then
