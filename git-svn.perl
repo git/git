@@ -283,7 +283,7 @@ sub cmd_fetch {
 		    instead.\n";
 	}
 	my $gs = Git::SVN->new;
-	$gs->fetch;
+	$gs->fetch(parse_revision_argument());
 	if ($gs->{last_commit} && !verify_ref('refs/heads/master^0')) {
 		command_noisy(qw(update-ref refs/heads/master),
 		              $gs->{last_commit});
@@ -481,6 +481,18 @@ sub cmd_commit_diff {
 }
 
 ########################### utility functions #########################
+
+sub parse_revision_argument {
+	if (!defined $_revision || $_revision eq 'BASE:HEAD') {
+		return (undef, undef);
+	}
+	return ($1, $2) if ($_revision =~ /^(\d+):(\d+)$/);
+	return ($_revision, $_revision) if ($_revision =~ /^\d+$/);
+	return (undef, $1) if ($_revision =~ /^BASE:(\d+)$/);
+	return ($1, undef) if ($_revision =~ /^(\d+):HEAD$/);
+	die "revision argument: $_revision not understood by git-svn\n",
+	    "Try using the command-line svn client instead\n";
+}
 
 sub complete_svn_url {
 	my ($url, $path) = @_;
@@ -914,6 +926,9 @@ sub traverse_ignore {
 	}
 }
 
+sub last_rev { ($_[0]->last_rev_commit)[0] }
+sub last_commit { ($_[0]->last_rev_commit)[1] }
+
 # returns the newest SVN revision number and newest commit SHA1
 sub last_rev_commit {
 	my ($self) = @_;
@@ -951,22 +966,11 @@ sub last_rev_commit {
 	return ($rev, $c);
 }
 
-sub parse_revision {
-	my ($self, $base) = @_;
-	my $head = $self->ra->get_latest_revnum;
-	if (!defined $::_revision || $::_revision eq 'BASE:HEAD') {
-		return ($base + 1, $head) if (defined $base);
-		return (0, $head);
-	}
-	return ($1, $2) if ($::_revision =~ /^(\d+):(\d+)$/);
-	return ($::_revision, $::_revision) if ($::_revision =~ /^\d+$/);
-	if ($::_revision =~ /^BASE:(\d+)$/) {
-		return ($base + 1, $1) if (defined $base);
-		return (0, $head);
-	}
-	return ($1, $head) if ($::_revision =~ /^(\d+):HEAD$/);
-	die "revision argument: $::_revision not understood by git-svn\n",
-		"Try using the command-line svn client instead\n";
+sub get_fetch_range {
+	my ($self, $min, $max) = @_;
+	$max ||= $self->ra->get_latest_revnum;
+	$min ||= $self->last_rev || 0;
+	(++$min, $max);
 }
 
 sub tmp_index_do {
@@ -1101,8 +1105,8 @@ sub find_parent_branch {
 	my ($self, $paths, $rev) = @_;
 	return undef unless $::_follow_parent;
 	unless (defined $paths) {
-		$self->ra->get_log([''], $rev, $rev, 0, 1, 1,
-		                   sub { $paths = $_[0] });
+		$self->ra->get_log([$self->{path}], $rev, $rev, 0, 1, 1,
+		                   sub { $paths = dup_changed_paths($_[0]) });
 	}
 	return undef unless defined $paths;
 
@@ -1116,13 +1120,13 @@ sub find_parent_branch {
 		unshift(@a_path_components, pop(@b_path_components));
 	}
 	goto not_found unless defined $i;
-	my $branch_from = $i->copyfrom_path or goto not_found;
+	my $branch_from = $i->{copyfrom_path} or goto not_found;
 	if (@a_path_components) {
 		print STDERR "branch_from: $branch_from => ";
 		$branch_from .= '/'.join('/', @a_path_components);
 		print STDERR $branch_from, "\n";
 	}
-	my $r = $i->copyfrom_rev;
+	my $r = $i->{copyfrom_rev};
 	my $repos_root = $self->ra->{repos_root};
 	my $url = $self->ra->{url};
 	my $new_url = $repos_root . $branch_from;
@@ -1151,11 +1155,7 @@ sub find_parent_branch {
 	}
 	my ($r0, $parent) = $gs->find_rev_before($r, 1);
 	if ($::_follow_parent && (!defined $r0 || !defined $parent)) {
-		foreach (1 .. $r) {
-			if (my $log_entry = $gs->do_fetch(undef, $_)) {
-				$gs->do_git_commit($log_entry);
-			}
-		}
+		$gs->fetch(0, $r);
 		($r0, $parent) = $gs->last_rev_commit;
 	}
 	if (defined $r0 && defined $parent && $gs->revisions_eq($r0, $r)) {
@@ -1183,8 +1183,19 @@ sub find_parent_branch {
 	}
 not_found:
 	print STDERR "Branch parent for path: '/",
-	             $self->rel_path, "' @ $rev not found\n";
-	print STDERR '  ', $_, "\n" foreach (sort keys %$paths);
+	             $self->rel_path, "' @ r$rev not found:\n";
+	return undef unless $paths;
+	print STDERR "Changed paths:\n";
+	foreach my $x (sort keys %$paths) {
+		my $p = $paths->{$x};
+		print STDERR "\t$p->{action}\t$x";
+		if ($p->{copyfrom_path}) {
+			print STDERR "(from $p->{copyfrom_path}: ",
+			             "$p->{copyfrom_rev})";
+		}
+		print STDERR "\n";
+	}
+	print STDERR '-'x72, "\n";
 	return undef;
 }
 
@@ -1302,9 +1313,9 @@ sub make_log_entry {
 }
 
 sub fetch {
-	my ($self, @parents) = @_;
+	my ($self, $min_rev, $max_rev, @parents) = @_;
 	my ($last_rev, $last_commit) = $self->last_rev_commit;
-	my ($base, $head) = $self->parse_revision($last_rev);
+	my ($base, $head) = $self->get_fetch_range($min_rev, $max_rev);
 	return if ($base > $head);
 	if (defined $last_commit) {
 		$self->assert_index_clean($last_commit);
@@ -1316,13 +1327,16 @@ sub fetch {
 	$SVN::Error::handler = sub { ($err) = @_; skip_unknown_revs($err); } ;
 	while (1) {
 		my @revs;
-		$self->ra->get_log([$self->{path}], $min, $max, 0, 1, 1, sub {
-			my ($paths, $rev, $author, $date, $log) = @_;
-			push @revs, [ $paths, $rev ] });
-		if (! @revs && $err) {
+		$self->ra->get_log([$self->{path}], $min, $max, 0, 1, 1,
+		    sub {
+			my ($paths, $rev) = @_;
+			push @revs, [ dup_changed_paths($paths), $rev ];
+			});
+		if (! @revs && $err && $max >= $head) {
 			print STDERR "Branch probably deleted:\n  ",
 			             $err->expanded_message,
 				     "\nWill attempt to follow revisions ",
+				     "r$min .. r$max",
 				     "committed before the deletion\n";
 			@revs = map { [ undef, $_ ] } ($min .. $max);
 		}
@@ -1331,7 +1345,7 @@ sub fetch {
 				$self->do_git_commit($log_entry, @parents);
 			}
 		}
-		last if $max >= $head || $err;
+		last if $max >= $head;
 		$min = $max + 1;
 		$max += $inc;
 		$max = $head if ($max > $head);
@@ -1347,7 +1361,7 @@ sub set_tree_cb {
 		$log_entry->{author} = $author;
 		$self->do_git_commit($log_entry, "$rev=$tree");
 	} else {
-		$self->fetch("$rev=$tree");
+		$self->fetch(undef, undef, "$rev=$tree");
 	}
 }
 
@@ -1391,6 +1405,24 @@ sub skip_unknown_revs {
 		return;
 	}
 	croak "Error from SVN, ($errno): ", $err->expanded_message,"\n";
+}
+
+# svn_log_changed_path_t objects passed to get_log are likely to be
+# overwritten even if only the refs are copied to an external variable,
+# so we should dup the structures in their entirety.  Using an externally
+# passed pool (instead of our temporary and quickly cleared pool in
+# Git::SVN::Ra) does not help matters at all...
+sub dup_changed_paths {
+	my ($paths) = @_;
+	return undef unless $paths;
+	my %ret;
+	foreach my $p (keys %$paths) {
+		my $i = $paths->{$p};
+		my %s = map { $_ => $i->$_ }
+		              qw/copyfrom_path copyfrom_rev action/;
+		$ret{$p} = \%s;
+	}
+	\%ret;
 }
 
 # rev_db:

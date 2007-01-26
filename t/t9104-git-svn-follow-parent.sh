@@ -78,7 +78,6 @@ test_expect_success 'follow larger parent' "
         true
         "
 
-# This seems to cause segfaults over HTTP...
 test_expect_success 'follow higher-level parent' "
         svn mkdir -m 'follow higher-level parent' $svnrepo/blob &&
         svn co $svnrepo/blob blob &&
