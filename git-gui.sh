@@ -2917,8 +2917,44 @@ proc console_read {w fd after} {
 	fconfigure $fd -blocking 0
 }
 
-proc console_done {w ok} {
+proc console_chain {cmdlist w {ok 1}} {
+	if {$ok} {
+		if {[llength $cmdlist] == 0} {
+			console_done $w $ok
+			return
+		}
+
+		set cmd [lindex $cmdlist 0]
+		set cmdlist [lrange $cmdlist 1 end]
+
+		if {[lindex $cmd 0] eq {console_exec}} {
+			console_exec $w \
+				[lindex $cmd 1] \
+				[list console_chain $cmdlist]
+		} else {
+			uplevel #0 $cmd $cmdlist $w $ok
+		}
+	} else {
+		console_done $w $ok
+	}
+}
+
+proc console_done {args} {
 	global console_cr console_data
+
+	switch -- [llength $args] {
+	2 {
+		set w [lindex $args 0]
+		set ok [lindex $args 1]
+	}
+	3 {
+		set w [lindex $args 1]
+		set ok [lindex $args 2]
+	}
+	default {
+		error "wrong number of args: console_done ?ignored? w ok"
+	}
+	}
 
 	if {$ok} {
 		if {[winfo exists $w]} {
@@ -3038,7 +3074,12 @@ proc do_stats {} {
 
 proc do_gc {} {
 	set w [new_console {gc} {Compressing the object database}]
-	console_exec $w {git gc} console_done
+	console_chain {
+		{console_exec {git pack-refs --prune}}
+		{console_exec {git reflog expire --all}}
+		{console_exec {git repack -a -d -l}}
+		{console_exec {git rerere gc}}
+	} $w
 }
 
 proc do_fsck_objects {} {
