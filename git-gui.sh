@@ -1285,6 +1285,7 @@ proc push_to {remote} {
 		"push $remote" \
 		"Pushing changes to $remote"]
 	set cmd [list git push]
+	lappend cmd -v
 	lappend cmd $remote
 	console_exec $w $cmd
 }
