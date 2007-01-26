@@ -46,7 +46,7 @@ then
 		if [ "$ref_type" = tag ]; then
 			eval $(git cat-file tag $3 | \
 				sed -n '4s/tagger \([^>]*>\)[^0-9]*\([0-9]*\).*/tagger="\1" ts="\2"/p')
-			date=$(date --date="1970-01-01 00:00:00 $ts seconds" +"$date_format")
+			date=$(date --date="1970-01-01 00:00:00 +0000 $ts seconds" +"$date_format")
 			echo "Tag '$tag' created by $tagger at $date"
 			git cat-file tag $3 | sed -n '5,$p'
 			echo
