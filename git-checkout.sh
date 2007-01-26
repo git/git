@@ -259,8 +259,9 @@ if [ "$?" -eq 0 ]; then
 		#	git update-ref --detach HEAD $new
 		# or something like that...
 		#
-		echo "$detached" >"$GIT_DIR/HEAD.new" &&
-		mv "$GIT_DIR/HEAD.new" "$GIT_DIR/HEAD" ||
+		git-rev-parse HEAD >"$GIT_DIR/HEAD.new" &&
+		mv "$GIT_DIR/HEAD.new" "$GIT_DIR/HEAD" &&
+		git-update-ref -m "checkout: moving to $arg" HEAD "$detached" ||
 			die "Cannot detach HEAD"
 		if test -n "$detach_warn"
 		then
