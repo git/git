@@ -607,16 +607,13 @@ proc show_diff {path w {lno {}}} {
 	if {$diff_active || ![lock_index read]} return
 
 	clear_diff
-	if {$w eq {} || $lno == {}} {
-		foreach w [array names file_lists] {
-			set lno [lsearch -sorted $file_lists($w) $path]
-			if {$lno >= 0} {
-				incr lno
-				break
-			}
+	if {$lno == {}} {
+		set lno [lsearch -sorted $file_lists($w) $path]
+		if {$lno >= 0} {
+			incr lno
 		}
 	}
-	if {$w ne {} && $lno >= 1} {
+	if {$lno >= 1} {
 		$w tag add in_diff $lno.0 [expr {$lno + 1}].0
 	}
 
