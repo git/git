@@ -680,6 +680,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 	lock->lk = xcalloc(1, sizeof(struct lock_file));
 
 	lock->ref_name = xstrdup(ref);
+	lock->orig_ref_name = xstrdup(orig_ref);
 	ref_file = git_path("%s", ref);
 	lock->force_write = lstat(ref_file, &st) && errno == ENOENT;
 
@@ -919,6 +920,7 @@ void unlock_ref(struct ref_lock *lock)
 			rollback_lock_file(lock->lk);
 	}
 	free(lock->ref_name);
+	free(lock->orig_ref_name);
 	free(lock);
 }
 
