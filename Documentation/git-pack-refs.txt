@@ -29,12 +29,23 @@ file and used if found.
 Subsequent updates to branches always creates new file under
 `$GIT_DIR/refs` hierarchy.
 
+A recommended practice to deal with a repository with too many
+refs is to pack its refs with `--all --prune` once, and
+occasionally run `git-pack-refs \--prune`.  Tags are by
+definition stationary and are not expected to change.  Branch
+heads will be packed with the initial `pack-refs --all`, but
+only the currently active branch heads will become unpacked,
+and next `pack-refs` (without `--all`) will leave them
+unpacked.
+
+
 OPTIONS
 -------
 
 \--all::
 
-The command by default packs all tags and leaves branch tips
+The command by default packs all tags and refs that are already
+packed, and leaves other refs
 alone.  This is because branches are expected to be actively
 developed and packing their tips does not help performance.
 This option causes branch tips to be packed as well.  Useful for
