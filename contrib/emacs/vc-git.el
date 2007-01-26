@@ -53,10 +53,6 @@
   (let ((name (file-relative-name file)))
     (eq 0 (apply #'call-process "git" nil (get-buffer "*Messages") nil (append args (list name))))))
 
-(defun vc-git--run-command-out (output &rest args)
-  "Run a git command, output to output."
-  (eq 0 (apply #'call-process "git" nil output nil (append args))))
-
 (defun vc-git-registered (file)
   "Check whether FILE is registered with git."
   (with-temp-buffer
@@ -125,26 +121,14 @@
 
 (defun vc-git-checkout (file &optional editable rev destfile)
   (if destfile
-      (let ((mybuff (get-buffer-create "vc-git-checkout-tmp")))
-	(let ((rv
-	       (vc-git--run-command-out
-		mybuff "cat-file" "blob"
-		(concat (or rev "HEAD")
-			":"
-			(let ((output (vc-git--run-command-string
-				       (file-relative-name file)
-				       "ls-files" "--full-name")))
-			  (string-match "\\(.*\\)" output)
-			  (match-string 1 output))
-			)))
-	      )
-	  (if rv
-	      (save-current-buffer
-		(set-buffer mybuff)
-		(set-visited-file-name destfile t)
-		(save-buffer)
-		)
-	    rv)))
+      (let ((fullname (substring
+                       (vc-git--run-command-string file "ls-files" "-z" "--full-name" "--")
+                       0 -1))
+            (coding-system-for-read 'no-conversion)
+            (coding-system-for-write 'no-conversion))
+        (with-temp-file destfile
+          (eq 0 (call-process "git" nil t nil "cat-file" "blob"
+                              (concat (or rev "HEAD") ":" fullname)))))
     (vc-git--run-command file "checkout" (or rev "HEAD"))))
 
 (defun vc-git-annotate-command (file buf &optional rev)
