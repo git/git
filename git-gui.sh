@@ -983,8 +983,8 @@ proc commit_tree {} {
 	global HEAD commit_type file_states ui_comm repo_config
 	global ui_status_value pch_error
 
-	if {![lock_index update]} return
 	if {[committer_ident] eq {}} return
+	if {![lock_index update]} return
 
 	# -- Our in memory state should match the repository.
 	#
@@ -2593,6 +2593,201 @@ proc do_push_anywhere {} {
 
 ######################################################################
 ##
+## merge
+
+proc can_merge {} {
+	global HEAD commit_type file_states
+
+	if {[string match amend* $commit_type]} {
+		info_popup {Cannot merge while amending.
+
+You must finish amending this commit before
+starting any type of merge.
+}
+		return 0
+	}
+
+	if {[committer_ident] eq {}} {return 0}
+	if {![lock_index merge]} {return 0}
+
+	# -- Our in memory state should match the repository.
+	#
+	repository_state curType curHEAD curMERGE_HEAD
+	if {$commit_type ne $curType || $HEAD ne $curHEAD} {
+		info_popup {Last scanned state does not match repository state.
+
+Another Git program has modified this repository
+since the last scan.  A rescan must be performed
+before a merge can be performed.
+
+The rescan will be automatically started now.
+}
+		unlock_index
+		rescan {set ui_status_value {Ready.}}
+		return 0
+	}
+
+	foreach path [array names file_states] {
+		switch -glob -- [lindex $file_states($path) 0] {
+		U? {
+			error_popup "You are in the middle of a conflicted merge.
+
+File [short_path $path] has merge conflicts.
+
+You must resolve them, add the file, and commit to
+complete the current merge.  Only then can you
+begin another merge.
+"
+			unlock_index
+			return 0
+		}
+		}
+	}
+
+	return 1
+}
+
+proc visualize_local_merge {w} {
+	set revs {}
+	foreach i [$w.source.l curselection] {
+		lappend revs [$w.source.l get $i]
+	}
+	if {$revs eq {}} return
+	lappend revs --not HEAD
+	do_gitk $revs
+}
+
+proc start_local_merge_action {w} {
+	global HEAD
+
+	set cmd [list git merge]
+	set names {}
+	set revcnt 0
+	foreach i [$w.source.l curselection] {
+		set b [$w.source.l get $i]
+		lappend cmd $b
+		lappend names $b
+		incr revcnt
+	}
+
+	if {$revcnt == 0} {
+		return
+	} elseif {$revcnt == 1} {
+		set unit branch
+	} elseif {$revcnt <= 15} {
+		set unit branches
+	} else {
+		tk_messageBox \
+			-icon error \
+			-type ok \
+			-title [wm title $w] \
+			-parent $w \
+			-message "Too many branches selected.
+
+You have requested to merge $revcnt branches
+in an octopus merge.  This exceeds Git's
+internal limit of 15 branches per merge.
+
+Please select fewer branches.  To merge more
+than 15 branches, merge the branches in batches.
+"
+		return
+	}
+
+	set cons [new_console "Merge" "Merging [join $names {, }]"]
+	console_exec $cons $cmd finish_merge
+	bind $w <Destroy> {}
+	destroy $w
+}
+
+proc finish_merge {w ok} {
+	console_done $w $ok
+	if {$ok} {
+		set msg {Merge completed successfully.}
+	} else {
+		set msg {Merge failed.  Conflict resolution is required.}
+	}
+	unlock_index
+	rescan [list set ui_status_value $msg]
+}
+
+proc do_local_merge {} {
+	global current_branch
+
+	if {![can_merge]} return
+
+	set w .merge_setup
+	toplevel $w
+	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
+
+	label $w.header \
+		-text "Merge Into $current_branch" \
+		-font font_uibold
+	pack $w.header -side top -fill x
+
+	frame $w.buttons
+	button $w.buttons.visualize -text Visualize \
+		-font font_ui \
+		-command [list visualize_local_merge $w]
+	pack $w.buttons.visualize -side left
+	button $w.buttons.create -text Merge \
+		-font font_ui \
+		-command [list start_local_merge_action $w]
+	pack $w.buttons.create -side right
+	button $w.buttons.cancel -text {Cancel} \
+		-font font_ui \
+		-command [list destroy $w]
+	pack $w.buttons.cancel -side right -padx 5
+	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
+
+	labelframe $w.source \
+		-text {Source Branches} \
+		-font font_ui
+	listbox $w.source.l \
+		-height 10 \
+		-width 25 \
+		-selectmode extended \
+		-yscrollcommand [list $w.source.sby set] \
+		-font font_ui
+	scrollbar $w.source.sby -command [list $w.source.l yview]
+	pack $w.source.sby -side right -fill y
+	pack $w.source.l -side left -fill both -expand 1
+	pack $w.source -fill both -expand 1 -pady 5 -padx 5
+
+	set cmd [list git for-each-ref]
+	lappend cmd {--format=%(objectname) %(refname)}
+	lappend cmd refs/heads
+	lappend cmd refs/remotes
+	set fr_fd [open "| $cmd" r]
+	fconfigure $fr_fd -translation binary
+	while {[gets $fr_fd line] > 0} {
+		set line [split $line { }]
+		set sha1([lindex $line 0]) [lindex $line 1]
+	}
+	close $fr_fd
+
+	set to_show {}
+	set fr_fd [open "| git rev-list --all --not HEAD"]
+	while {[gets $fr_fd line] > 0} {
+		if {[catch {set ref $sha1($line)}]} continue
+		regsub ^refs/(heads|remotes)/ $ref {} ref
+		lappend to_show $ref
+	}
+	close $fr_fd
+
+	foreach ref [lsort -unique $to_show] {
+		$w.source.l insert end $ref
+	}
+
+	bind $w <Visibility> "grab $w"
+	bind $w <Key-Escape> "unlock_index;destroy $w"
+	bind $w <Destroy> unlock_index
+	wm title $w "[appname] ([reponame]): Merge"
+	tkwait window $w
+}
+
+######################################################################
+##
 ## icons
 
 set filemask {
@@ -3865,6 +4060,7 @@ if {!$single_commit} {
 }
 .mbar add cascade -label Commit -menu .mbar.commit
 if {!$single_commit} {
+	.mbar add cascade -label Merge -menu .mbar.merge
 	.mbar add cascade -label Fetch -menu .mbar.fetch
 	.mbar add cascade -label Push -menu .mbar.push
 }
@@ -4039,17 +4235,6 @@ lappend disable_on_lock \
 lappend disable_on_lock \
 	[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-# -- Transport menus
-#
-if {!$single_commit} {
-	menu .mbar.fetch
-	menu .mbar.push
-
-	.mbar.push add command -label {Push...} \
-		-command do_push_anywhere \
-		-font font_ui
-}
-
 if {[is_MacOSX]} {
 	# -- Apple Menu (Mac OS X only)
 	#
@@ -4129,6 +4314,22 @@ label .branch.cb \
 pack .branch.l1 -side left
 pack .branch.cb -side left -fill x
 pack .branch -side top -fill x
+
+if {!$single_commit} {
+	menu .mbar.merge
+	.mbar.merge add command -label {Local Merge...} \
+		-command do_local_merge \
+		-font font_ui
+	lappend disable_on_lock \
+		[list .mbar.merge entryconf [.mbar.merge index last] -state]
+
+	menu .mbar.fetch
+
+	menu .mbar.push
+	.mbar.push add command -label {Push...} \
+		-command do_push_anywhere \
+		-font font_ui
+}
 
 # -- Main Window Layout
 #
