@@ -568,7 +568,7 @@ proc reshow_diff {} {
 	if {$p eq {}
 		|| $current_diff_side eq {}
 		|| [catch {set s $file_states($p)}]
-		|| [lsearch -sorted $file_lists($current_diff_side) $p] == -1} {
+		|| [lsearch -sorted -exact $file_lists($current_diff_side) $p] == -1} {
 		clear_diff
 	} else {
 		show_diff $p $current_diff_side
@@ -608,7 +608,7 @@ proc show_diff {path w {lno {}}} {
 
 	clear_diff
 	if {$lno == {}} {
-		set lno [lsearch -sorted $file_lists($w) $path]
+		set lno [lsearch -sorted -exact $file_lists($w) $path]
 		if {$lno >= 0} {
 			incr lno
 		}
@@ -1427,7 +1427,7 @@ proc display_file_helper {w path icon_name old_m new_m} {
 	global file_lists
 
 	if {$new_m eq {_}} {
-		set lno [lsearch -sorted $file_lists($w) $path]
+		set lno [lsearch -sorted -exact $file_lists($w) $path]
 		if {$lno >= 0} {
 			set file_lists($w) [lreplace $file_lists($w) $lno $lno]
 			incr lno
@@ -1438,7 +1438,7 @@ proc display_file_helper {w path icon_name old_m new_m} {
 	} elseif {$old_m eq {_} && $new_m ne {_}} {
 		lappend file_lists($w) $path
 		set file_lists($w) [lsort -unique $file_lists($w)]
-		set lno [lsearch -sorted $file_lists($w) $path]
+		set lno [lsearch -sorted -exact $file_lists($w) $path]
 		incr lno
 		$w conf -state normal
 		$w image create $lno.0 \
@@ -2142,7 +2142,7 @@ Delete the selected branches?}
 		if {[catch {exec git update-ref -d "refs/heads/$b" $o} err]} {
 			append failed " - $b: $err\n"
 		} else {
-			set x [lsearch -sorted $all_heads $b]
+			set x [lsearch -sorted -exact $all_heads $b]
 			if {$x >= 0} {
 				set all_heads [lreplace $all_heads $x $x]
 			}
