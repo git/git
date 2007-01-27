@@ -2693,10 +2693,6 @@ proc start_local_merge_action {w} {
 	global HEAD ui_status_value current_branch
 
 	set cmd [list git merge]
-	if {![is_config_true merge.summary]} {
-		lappend cmd --no-summary
-	}
-
 	set names {}
 	set revcnt 0
 	foreach i [$w.source.l curselection] {
@@ -3772,7 +3768,7 @@ proc do_options {} {
 
 	set optid 0
 	foreach option {
-		{b merge.summary {Show Merge Summary}}
+		{b merge.summary {Summarize Merge Commits}}
 		{i-1..5 merge.verbosity {Merge Verbosity}}
 
 		{b gui.trustmtime  {Trust File Modification Timestamps}}
@@ -4153,7 +4149,7 @@ proc apply_config {} {
 	}
 }
 
-set default_config(merge.summary) true
+set default_config(merge.summary) false
 set default_config(merge.verbosity) 2
 set default_config(gui.trustmtime) false
 set default_config(gui.diffcontext) 5
