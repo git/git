@@ -91,6 +91,39 @@ static int compare_pt(const void *a_, const void *b_)
 	return 0;
 }
 
+static unsigned long finish_depth_computation(
+	struct commit_list **list,
+	struct possible_tag *best)
+{
+	unsigned long seen_commits = 0;
+	while (*list) {
+		struct commit *c = pop_commit(list);
+		struct commit_list *parents = c->parents;
+		seen_commits++;
+		if (c->object.flags & best->flag_within) {
+			struct commit_list *a = *list;
+			while (a) {
+				struct commit *i = a->item;
+				if (!(i->object.flags & best->flag_within))
+					break;
+				a = a->next;
+			}
+			if (!a)
+				break;
+		} else
+			best->depth++;
+		while (parents) {
+			struct commit *p = parents->item;
+			parse_commit(p);
+			if (!(p->object.flags & SEEN))
+				insert_by_date(p, list);
+			p->object.flags |= c->object.flags;
+			parents = parents->next;
+		}
+	}
+	return seen_commits;
+}
+
 static void describe(const char *arg, int last_one)
 {
 	unsigned char sha1[20];
@@ -166,12 +199,19 @@ static void describe(const char *arg, int last_one)
 			parents = parents->next;
 		}
 	}
-	free_commit_list(list);
 
 	if (!match_cnt)
 		die("cannot describe '%s'", sha1_to_hex(cmit->object.sha1));
 
 	qsort(all_matches, match_cnt, sizeof(all_matches[0]), compare_pt);
+
+	if (gave_up_on) {
+		insert_by_date(gave_up_on, &list);
+		seen_commits--;
+	}
+	seen_commits += finish_depth_computation(&list, &all_matches[0]);
+	free_commit_list(list);
+
 	if (debug) {
 		for (cur_match = 0; cur_match < match_cnt; cur_match++) {
 			struct possible_tag *t = &all_matches[cur_match];
