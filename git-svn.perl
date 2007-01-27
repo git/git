@@ -679,29 +679,6 @@ sub cmt_metadata {
 		command(qw/cat-file commit/, shift)))[-1]);
 }
 
-sub get_commit_time {
-	my $cmt = shift;
-	my $fh = command_output_pipe(qw/rev-list --pretty=raw -n1/, $cmt);
-	while (<$fh>) {
-		/^committer\s(?:.+) (\d+) ([\-\+]?\d+)$/ or next;
-		my ($s, $tz) = ($1, $2);
-		if ($tz =~ s/^\+//) {
-			$s += tz_to_s_offset($tz);
-		} elsif ($tz =~ s/^\-//) {
-			$s -= tz_to_s_offset($tz);
-		}
-		close $fh;
-		return $s;
-	}
-	die "Can't get commit time for commit: $cmt\n";
-}
-
-sub tz_to_s_offset {
-	my ($tz) = @_;
-	$tz =~ s/(\d\d)$//;
-	return ($1 * 60) + ($tz * 3600);
-}
-
 package Git::SVN;
 use strict;
 use warnings;
@@ -2496,6 +2473,12 @@ sub run_pager {
 	exec $pager or ::fatal "Can't run pager: $! ($pager)\n";
 }
 
+sub tz_to_s_offset {
+	my ($tz) = @_;
+	$tz =~ s/(\d\d)$//;
+	return ($1 * 60) + ($tz * 3600);
+}
+
 sub get_author_info {
 	my ($dest, $author, $t, $tz) = @_;
 	$author =~ s/(?:^\s*|\s*$)//g;
@@ -2512,9 +2495,9 @@ sub get_author_info {
 	$dest->{a} = $au;
 	# Date::Parse isn't in the standard Perl distro :(
 	if ($tz =~ s/^\+//) {
-		$t += ::tz_to_s_offset($tz);
+		$t += tz_to_s_offset($tz);
 	} elsif ($tz =~ s/^\-//) {
-		$t -= ::tz_to_s_offset($tz);
+		$t -= tz_to_s_offset($tz);
 	}
 	$dest->{t_utc} = $t;
 }
