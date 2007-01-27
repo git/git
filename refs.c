@@ -331,7 +331,11 @@ int create_symref(const char *ref_target, const char *refs_heads_master)
 		return -1;
 	}
 	lockpath = mkpath("%s.lock", git_HEAD);
-	fd = open(lockpath, O_CREAT | O_EXCL | O_WRONLY, 0666);	
+	fd = open(lockpath, O_CREAT | O_EXCL | O_WRONLY, 0666);
+	if (fd < 0) {
+		error("Unable to open %s for writing", lockpath);
+		return -5;
+	}
 	written = write_in_full(fd, ref, len);
 	close(fd);
 	if (written != len) {
@@ -925,6 +929,7 @@ static int log_ref_write(struct ref_lock *lock,
 {
 	int logfd, written, oflags = O_APPEND | O_WRONLY;
 	unsigned maxlen, len;
+	int msglen;
 	char *logrec;
 	const char *committer;
 
@@ -958,24 +963,30 @@ static int log_ref_write(struct ref_lock *lock,
 				     lock->log_file, strerror(errno));
 	}
 
-	committer = git_committer_info(-1);
+	msglen = 0;
 	if (msg) {
-		maxlen = strlen(committer) + strlen(msg) + 2*40 + 5;
-		logrec = xmalloc(maxlen);
-		len = snprintf(logrec, maxlen, "%s %s %s\t%s\n",
-			sha1_to_hex(lock->old_sha1),
-			sha1_to_hex(sha1),
-			committer,
-			msg);
+		/* clean up the message and make sure it is a single line */
+		for ( ; *msg; msg++)
+			if (!isspace(*msg))
+				break;
+		if (*msg) {
+			const char *ep = strchr(msg, '\n');
+			if (ep)
+				msglen = ep - msg;
+			else
+				msglen = strlen(msg);
+		}
 	}
-	else {
-		maxlen = strlen(committer) + 2*40 + 4;
-		logrec = xmalloc(maxlen);
-		len = snprintf(logrec, maxlen, "%s %s %s\n",
-			sha1_to_hex(lock->old_sha1),
-			sha1_to_hex(sha1),
-			committer);
-	}
+
+	committer = git_committer_info(-1);
+	maxlen = strlen(committer) + msglen + 100;
+	logrec = xmalloc(maxlen);
+	len = sprintf(logrec, "%s %s %s\n",
+		      sha1_to_hex(lock->old_sha1),
+		      sha1_to_hex(sha1),
+		      committer);
+	if (msglen)
+		len += sprintf(logrec + len - 1, "\t%.*s\n", msglen, msg) - 1;
 	written = len <= maxlen ? write_in_full(logfd, logrec, len) : -1;
 	free(logrec);
 	close(logfd);

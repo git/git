@@ -7,7 +7,6 @@ USAGE='[-n] [--no-commit] [--squash] [-s <strategy>] [-m=<merge-message>] <commi
 
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
-set_reflog_action "merge $*"
 require_work_tree
 cd_to_toplevel
 
@@ -262,6 +261,7 @@ head=$(git-rev-parse --verify "$head_arg"^0) || usage
 
 # All the rest are remote heads
 test "$#" = 0 && usage ;# we need at least one remote head.
+set_reflog_action "merge $*"
 
 remoteheads=
 for remote
