@@ -352,16 +352,22 @@ sub cmd_dcommit {
 			my $log = get_commit_entry($d)->{log};
 			my $ra = $gs->ra;
 			my $pool = SVN::Pool->new;
+			my $mods = generate_diff("$d~1", $d);
+			my $types = check_diff_paths($ra,
+			                             $gs->{path},
+			                             $last_rev,
+						     $mods);
 			my %ed_opts = ( r => $last_rev,
-			                ra => $ra->dup,
+			                mods => $mods,
+					url => $ra->{url},
+					types => $types,
 			                svn_path => $gs->{path} );
 			my $ed = SVN::Git::Editor->new(\%ed_opts,
 			                 $ra->get_commit_editor($log,
 			                 sub { print "Committed r$_[0]\n";
 					       $last_rev = $_[0]; }),
 			                 $pool);
-			my $mods = $ed->apply_diff("$d~1", $d);
-			if (@$mods == 0) {
+			if (!$ed->apply_diff($mods, $d)) {
 				print "No changes\n$d~1 == $d\n";
 			}
 		}
@@ -469,15 +475,15 @@ sub cmd_commit_diff {
 		die "revision argument: $r not understood by git-svn\n";
 	}
 	my $pool = SVN::Pool->new;
-	my %ed_opts = ( r => $r,
-	                ra => $ra->dup,
-	                svn_path => $svn_path );
+	my $mods = generate_diff($ta, $tb);
+	my $types = check_diff_paths($ra, $svn_path, $r, $mods);
+	my %ed_opts = ( r => $r, url => $ra->{url}, svn_path => $svn_path,
+	                mods => $mods, types => $types );
 	my $ed = SVN::Git::Editor->new(\%ed_opts,
 	                               $ra->get_commit_editor($_message,
 	                                 sub { print "Committed r$_[0]\n" }),
 	                               $pool);
-	my $mods = $ed->apply_diff($ta, $tb);
-	if (@$mods == 0) {
+	if (!$ed->apply_diff($mods, $tb)) {
 		print "No changes\n$ta == $tb\n";
 	}
 	$pool->clear;
@@ -706,6 +712,92 @@ sub tz_to_s_offset {
 	my ($tz) = @_;
 	$tz =~ s/(\d\d)$//;
 	return ($1 * 60) + ($tz * 3600);
+}
+
+sub generate_diff {
+	my ($tree_a, $tree_b) = @_;
+	my @diff_tree = qw(diff-tree -z -r);
+	if ($_cp_similarity) {
+		push @diff_tree, "-C$_cp_similarity";
+	} else {
+		push @diff_tree, '-C';
+	}
+	push @diff_tree, '--find-copies-harder' if $_find_copies_harder;
+	push @diff_tree, "-l$_l" if defined $_l;
+	push @diff_tree, $tree_a, $tree_b;
+	my ($diff_fh, $ctx) = command_output_pipe(@diff_tree);
+	local $/ = "\0";
+	my $state = 'meta';
+	my @mods;
+	while (<$diff_fh>) {
+		chomp $_; # this gets rid of the trailing "\0"
+		if ($state eq 'meta' && /^:(\d{6})\s(\d{6})\s
+					$sha1\s($sha1)\s
+					([MTCRAD])\d*$/xo) {
+			push @mods, {	mode_a => $1, mode_b => $2,
+					sha1_b => $3, chg => $4 };
+			if ($4 =~ /^(?:C|R)$/) {
+				$state = 'file_a';
+			} else {
+				$state = 'file_b';
+			}
+		} elsif ($state eq 'file_a') {
+			my $x = $mods[$#mods] or croak "Empty array\n";
+			if ($x->{chg} !~ /^(?:C|R)$/) {
+				croak "Error parsing $_, $x->{chg}\n";
+			}
+			$x->{file_a} = $_;
+			$state = 'file_b';
+		} elsif ($state eq 'file_b') {
+			my $x = $mods[$#mods] or croak "Empty array\n";
+			if (exists $x->{file_a} && $x->{chg} !~ /^(?:C|R)$/) {
+				croak "Error parsing $_, $x->{chg}\n";
+			}
+			if (!exists $x->{file_a} && $x->{chg} =~ /^(?:C|R)$/) {
+				croak "Error parsing $_, $x->{chg}\n";
+			}
+			$x->{file_b} = $_;
+			$state = 'meta';
+		} else {
+			croak "Error parsing $_\n";
+		}
+	}
+	command_close_pipe($diff_fh, $ctx);
+	\@mods;
+}
+
+sub check_diff_paths {
+	my ($ra, $pfx, $rev, $mods) = @_;
+	my %types;
+	$pfx .= '/' if length $pfx;
+
+	sub type_diff_paths {
+		my ($ra, $types, $path, $rev) = @_;
+		my @p = split m#/+#, $path;
+		my $c = shift @p;
+		unless (defined $types->{$c}) {
+			$types->{$c} = $ra->check_path($c, $rev);
+		}
+		while (@p) {
+			$c .= '/' . shift @p;
+			next if defined $types->{$c};
+			$types->{$c} = $ra->check_path($c, $rev);
+		}
+	}
+
+	foreach my $m (@$mods) {
+		foreach my $f (qw/file_a file_b/) {
+			next unless defined $m->{$f};
+			my ($dir) = ($m->{$f} =~ m#^(.*?)/?(?:[^/]+)$#);
+			if (length $pfx.$dir && ! defined $types{$dir}) {
+				type_diff_paths($ra, \%types, $pfx.$dir, $rev);
+			}
+		}
+	}
+	use Data::Dumper;
+	warn Dumper \%types;
+	warn Dumper $mods;
+	\%types;
 }
 
 package Git::SVN;
@@ -1375,18 +1467,20 @@ sub set_tree {
 		fatal("Must have an existing revision to commit\n");
 	}
 	my $pool = SVN::Pool->new;
-	my $ed = SVN::Git::Editor->new({ r => $self->{last_rev},
-	                                 ra => $self->ra->dup,
-	                                 svn_path => $self->{path}
-	                               },
+	my $mods = ::generate_diff($self->{last_commit}, $tree);
+	my $types = ::check_diff_paths($self->ra, $self->{path},
+	                             $self->{last_rev}, $mods);
+	my %ed_opts = ( r => $self->{last_rev}, url => $self->ra->{url},
+	                svn_path => $self->{path},
+	                mods => $mods, types => $types );
+	my $ed = SVN::Git::Editor->new(\%ed_opts,
 	                               $self->ra->get_commit_editor(
 	                                 $log_entry->{log}, sub {
 	                                   $self->set_tree_cb($log_entry,
 					                      $tree, @_);
 	                               }),
 	                               $pool);
-	my $mods = $ed->apply_diff($self->{last_commit}, $tree);
-	if (@$mods == 0) {
+	if (!$ed->apply_diff($mods, $tree)) {
 		print "No changes\nr$self->{last_rev} = $tree\n";
 	}
 	$pool->clear;
@@ -1898,7 +1992,7 @@ sub new {
 	my $git_svn = shift;
 	my $self = SVN::Delta::Editor->new(@_);
 	bless $self, $class;
-	foreach (qw/svn_path r ra/) {
+	foreach (qw/svn_path mods url types r/) {
 		die "$_ required!\n" unless (defined $git_svn->{$_});
 		$self->{$_} = $git_svn->{$_};
 	}
@@ -1922,7 +2016,7 @@ sub repo_path {
 
 sub url_path {
 	my ($self, $path) = @_;
-	$self->{ra}->{url} . '/' . $self->repo_path($path);
+	$self->{url} . '/' . $self->repo_path($path);
 }
 
 sub rmdirs {
@@ -1972,7 +2066,10 @@ sub rmdirs {
 
 sub open_or_add_dir {
 	my ($self, $full_path, $baton) = @_;
-	my $t = $self->{ra}->check_path($full_path, $self->{r});
+	my $t = $self->{types}->{$full_path};
+	if (!defined $t) {
+		die "$full_path not known in r$self->{r} or we have a bug!\n";
+	}
 	if ($t == $SVN::Node::none) {
 		return $self->add_directory($full_path, $baton,
 						undef, -1, $self->{pool});
@@ -1989,9 +2086,9 @@ sub open_or_add_dir {
 sub ensure_path {
 	my ($self, $path) = @_;
 	my $bat = $self->{bat};
-	$path = $self->repo_path($path);
-	return $bat->{''} unless (length $path);
-	my @p = split m#/+#, $path;
+	my $repo_path = $self->repo_path($path);
+	return $bat->{''} unless (length $repo_path);
+	my @p = split m#/+#, $repo_path;
 	my $c = shift @p;
 	$bat->{$c} ||= $self->open_or_add_dir($c, $bat->{''});
 	while (@p) {
@@ -2129,59 +2226,9 @@ sub abort_edit {
 
 # this drives the editor
 sub apply_diff {
-	my ($self, $tree_a, $tree_b) = @_;
-	my @diff_tree = qw(diff-tree -z -r);
-	if ($::_cp_similarity) {
-		push @diff_tree, "-C$::_cp_similarity";
-	} else {
-		push @diff_tree, '-C';
-	}
-	push @diff_tree, '--find-copies-harder' if $::_find_copies_harder;
-	push @diff_tree, "-l$::_l" if defined $::_l;
-	push @diff_tree, $tree_a, $tree_b;
-	my ($diff_fh, $ctx) = command_output_pipe(@diff_tree);
-	my $nl = $/;
-	local $/ = "\0";
-	my $state = 'meta';
-	my @mods;
-	while (<$diff_fh>) {
-		chomp $_; # this gets rid of the trailing "\0"
-		if ($state eq 'meta' && /^:(\d{6})\s(\d{6})\s
-					$::sha1\s($::sha1)\s
-					([MTCRAD])\d*$/xo) {
-			push @mods, {	mode_a => $1, mode_b => $2,
-					sha1_b => $3, chg => $4 };
-			if ($4 =~ /^(?:C|R)$/) {
-				$state = 'file_a';
-			} else {
-				$state = 'file_b';
-			}
-		} elsif ($state eq 'file_a') {
-			my $x = $mods[$#mods] or croak "Empty array\n";
-			if ($x->{chg} !~ /^(?:C|R)$/) {
-				croak "Error parsing $_, $x->{chg}\n";
-			}
-			$x->{file_a} = $_;
-			$state = 'file_b';
-		} elsif ($state eq 'file_b') {
-			my $x = $mods[$#mods] or croak "Empty array\n";
-			if (exists $x->{file_a} && $x->{chg} !~ /^(?:C|R)$/) {
-				croak "Error parsing $_, $x->{chg}\n";
-			}
-			if (!exists $x->{file_a} && $x->{chg} =~ /^(?:C|R)$/) {
-				croak "Error parsing $_, $x->{chg}\n";
-			}
-			$x->{file_b} = $_;
-			$state = 'meta';
-		} else {
-			croak "Error parsing $_\n";
-		}
-	}
-	command_close_pipe($diff_fh, $ctx);
-	$/ = $nl;
-
+	my ($self, $mods, $tree_b) = @_;
 	my %o = ( D => 1, R => 0, C => -1, A => 3, M => 3, T => 3 );
-	foreach my $m (sort { $o{$a->{chg}} <=> $o{$b->{chg}} } @mods) {
+	foreach my $m (sort { $o{$a->{chg}} <=> $o{$b->{chg}} } @$mods) {
 		my $f = $m->{chg};
 		if (defined $o{$f}) {
 			$self->$f($m);
@@ -2190,12 +2237,12 @@ sub apply_diff {
 		}
 	}
 	$self->rmdirs($tree_b) if $::_rmdir;
-	if (@mods == 0) {
+	if (@$mods == 0) {
 		$self->abort_edit;
 	} else {
 		$self->close_edit;
 	}
-	\@mods;
+	return scalar @$mods;
 }
 
 package Git::SVN::Ra;
@@ -2254,14 +2301,6 @@ sub new {
 
 sub DESTROY {
 	# do not call the real DESTROY since we store ourselves in %RA
-}
-
-sub dup {
-	my ($self) = @_;
-	my $dup = SVN::Ra->new(pool => SVN::Pool->new,
-				map { $_ => $self->{$_} } qw/config url
-	             auth auth_provider_callbacks repos_root svn_path/);
-	bless $dup, ref $self;
 }
 
 sub get_log {
@@ -2922,6 +2961,8 @@ $log_entry hashref as returned by libsvn_log_entry()
 	author => 'committer name'
 };
 
+
+# this is generated by generate_diff();
 @mods = array of diff-index line hashes, each element represents one line
 	of diff-index output
 
