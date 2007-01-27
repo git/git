@@ -331,7 +331,11 @@ int create_symref(const char *ref_target, const char *refs_heads_master)
 		return -1;
 	}
 	lockpath = mkpath("%s.lock", git_HEAD);
-	fd = open(lockpath, O_CREAT | O_EXCL | O_WRONLY, 0666);	
+	fd = open(lockpath, O_CREAT | O_EXCL | O_WRONLY, 0666);
+	if (fd < 0) {
+		error("Unable to open %s for writing", lockpath);
+		return -5;
+	}
 	written = write_in_full(fd, ref, len);
 	close(fd);
 	if (written != len) {
