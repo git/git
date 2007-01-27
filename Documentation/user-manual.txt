@@ -5,7 +5,7 @@ This manual is designed to be readable by someone with basic unix
 commandline skills, but no previous knowledge of git.
 
 Chapter 1 gives a brief overview of git commands, without any
-explanation; you can skip to chapter 2 on a first reading.
+explanation; you may prefer to skip to chapter 2 on a first reading.
 
 Chapters 2 and 3 explain how to fetch and study a project using
 git--the tools you'd need to build and test a particular version of a
@@ -99,16 +99,16 @@ Keep a list of repositories you work with regularly:
 
 -----------------------------------------------
 $ git remote add example git://example.com/project.git
-$ git remote		# list remote repositories
+$ git remote			# list remote repositories
 example
 origin
-$ git remote show example # get details
+$ git remote show example	# get details
 * remote example
   URL: git://example.com/project.git
   Tracked remote branches
     master next ...
-$ git fetch example	# update branches from example
-$ git branch -r		# list all remote branches
+$ git fetch example		# update branches from example
+$ git branch -r			# list all remote branches
 -----------------------------------------------
 
 
@@ -134,7 +134,7 @@ $ git grep v2.6.15 "foo()"  # search old tree for "foo()"
 $ git show v2.6.15:a.txt    # look at old version of a.txt
 -----------------------------------------------
 
-Searching for regressions:
+Search for regressions:
 
 -----------------------------------------------
 $ git bisect start
@@ -173,7 +173,7 @@ $ git commit
 Or, prepare and create the commit in one step:
 
 -----------------------------------------------
-$ git commit d.txt # use latest content of d.txt
+$ git commit d.txt # use latest content only of d.txt
 $ git commit -a	   # use latest content of all tracked files
 -----------------------------------------------
 
@@ -230,6 +230,21 @@ Shortcut version for a frequently used remote repository:
 -----------------------------------------------
 $ git remote add example ssh://example.com/project.git
 $ git push example test
+-----------------------------------------------
+
+Repository maintenance
+----------------------
+
+Check for corruption:
+
+-----------------------------------------------
+$ git fsck-objects
+-----------------------------------------------
+
+Recompress, remove unused cruft:
+
+-----------------------------------------------
+$ git gc
 -----------------------------------------------
 
 Repositories and Branches
@@ -376,13 +391,15 @@ index 8be626f..d7aac9d 100644
 As you can see, a commit shows who made the latest change, what they
 did, and why.
 
-Every commit has a 40-hexdigit id, sometimes called the "SHA1 id", shown
-on the first line of the "git show" output.  You can usually refer to
-a commit by a shorter name, such as a tag or a branch name, but this
-longer id can also be useful.  In particular, it is a globally unique
-name for this commit: so if you tell somebody else the SHA1 id (for
-example in email), then you are guaranteed they will see the same
-commit in their repository that you do in yours.
+Every commit has a 40-hexdigit id, sometimes called the "object name"
+or the "SHA1 id", shown on the first line of the "git show" output.
+You can usually refer to a commit by a shorter name, such as a tag or a
+branch name, but this longer name can also be useful.  Most
+importantly, it is a globally unique name for this commit: so if you
+tell somebody else the object name (for example in email), then you are
+guaranteed that name will refer to the same commit in their repository
+that you it does in yours (assuming their repository has that commit at
+all).
 
 Understanding history: commits, parents, and reachability
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -587,152 +604,6 @@ $ cat .git/config
 This is what causes git to track the remote's branches; you may
 modify or delete these configuration options by editing .git/config
 with a text editor.
-
-Fetching individual branches
-----------------------------
-
-TODO: find another home for this, later on:
-
-You can also choose to update just one branch at a time:
-
--------------------------------------------------
-$ git fetch origin todo:refs/remotes/origin/todo
--------------------------------------------------
-
-The first argument, "origin", just tells git to fetch from the
-repository you originally cloned from.  The second argument tells git
-to fetch the branch named "todo" from the remote repository, and to
-store it locally under the name refs/remotes/origin/todo; as we saw
-above, remote-tracking branches are stored under
-refs/remotes/<name-of-repository>/<name-of-branch>.
-
-You can also fetch branches from other repositories; so
-
--------------------------------------------------
-$ git fetch git://example.com/proj.git master:refs/remotes/example/master
--------------------------------------------------
-
-will create a new reference named "refs/remotes/example/master" and
-store in it the branch named "master" from the repository at the
-given URL.  If you already have a branch named
-"refs/remotes/example/master", it will attempt to "fast-forward" to
-the commit given by example.com's master branch.  So next we explain
-what a fast-forward is:
-
-[[fast-forwards]]
-Understanding git history: fast-forwards
-----------------------------------------
-
-In the previous example, when updating an existing branch, "git
-fetch" checks to make sure that the most recent commit on the remote
-branch is a descendant of the most recent commit on your copy of the
-branch before updating your copy of the branch to point at the new
-commit.  Git calls this process a "fast forward".
-
-A fast forward looks something like this:
-
- o--o--o--o <-- old head of the branch
-           \
-            o--o--o <-- new head of the branch
-
-
-In some cases it is possible that the new head will *not* actually be
-a descendant of the old head.  For example, the developer may have
-realized she made a serious mistake, and decided to backtrack,
-resulting in a situation like:
-
- o--o--o--o--a--b <-- old head of the branch
-           \
-            o--o--o <-- new head of the branch
-
-
-
-In this case, "git fetch" will fail, and print out a warning.
-
-In that case, you can still force git to update to the new head, as
-described in the following section.  However, note that in the
-situation above this may mean losing the commits labeled "a" and "b",
-unless you've already created a reference of your own pointing to
-them.
-
-Forcing git fetch to do non-fast-forward updates
-------------------------------------------------
-
-If git fetch fails because the new head of a branch is not a
-descendant of the old head, you may force the update with:
-
--------------------------------------------------
-$ git fetch git://example.com/proj.git +master:refs/remotes/example/master
--------------------------------------------------
-
-Note the addition of the "+" sign.  Be aware that commits which the
-old version of example/master pointed at may be lost, as we saw in
-the previous section.
-
-Configuring remote branches
----------------------------
-
-We saw above that "origin" is just a shortcut to refer to the
-repository which you originally cloned from.  This information is
-stored in git configuration variables, which you can see using
-gitlink:git-repo-config[1]:
-
--------------------------------------------------
-$ git-repo-config -l
-core.repositoryformatversion=0
-core.filemode=true
-core.logallrefupdates=true
-remote.origin.url=git://git.kernel.org/pub/scm/git/git.git
-remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
-branch.master.remote=origin
-branch.master.merge=refs/heads/master
--------------------------------------------------
-
-If there are other repositories that you also use frequently, you can
-create similar configuration options to save typing; for example,
-after
-
--------------------------------------------------
-$ git repo-config remote.example.url git://example.com/proj.git
--------------------------------------------------
-
-then the following two commands will do the same thing:
-
--------------------------------------------------
-$ git fetch git://example.com/proj.git master:refs/remotes/example/master
-$ git fetch example master:refs/remotes/example/master
--------------------------------------------------
-
-Even better, if you add one more option:
-
--------------------------------------------------
-$ git repo-config remote.example.fetch master:refs/remotes/example/master
--------------------------------------------------
-
-then the following commands will all do the same thing:
-
--------------------------------------------------
-$ git fetch git://example.com/proj.git master:ref/remotes/example/master
-$ git fetch example master:ref/remotes/example/master
-$ git fetch example example/master
-$ git fetch example
--------------------------------------------------
-
-You can also add a "+" to force the update each time:
-
--------------------------------------------------
-$ git repo-config remote.example.fetch +master:ref/remotes/example/master
--------------------------------------------------
-
-Don't do this unless you're sure you won't mind "git fetch" possibly
-throwing away commits on mybranch.
-
-Also note that all of the above configuration can be performed by
-directly editing the file .git/config instead of using
-gitlink:git-repo-config[1].
-
-See gitlink:git-repo-config[1] for more details on the configuration
-options mentioned above.
 
 Exploring git history
 =====================
@@ -1008,8 +879,8 @@ $ git log origin...master
 
 will return no commits when the two branches are equal.
 
-Check which tagged version a given fix was first included in
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Find first tagged version including a given fix
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Suppose you know that the commit e05db0fd fixed a certain problem.
 You'd like to find the earliest tagged release that contains that
@@ -1025,7 +896,47 @@ You could just visually inspect the commits since e05db0fd:
 $ gitk e05db0fd..
 -------------------------------------------------
 
-...
+Or you can use gitlink:git-name-rev[1], which will give the commit a
+name based on any tag it finds pointing to one of the commit's
+descendants:
+
+-------------------------------------------------
+$ git name-rev e05db0fd
+e05db0fd tags/v1.5.0-rc1^0~23
+-------------------------------------------------
+
+The gitlink:git-describe[1] command does the opposite, naming the
+revision using a tag on which the given commit is based:
+
+-------------------------------------------------
+$ git describe e05db0fd
+v1.5.0-rc0-ge05db0f
+-------------------------------------------------
+
+but that may sometimes help you guess which tags might come after the
+given commit.
+
+If you just want to verify whether a given tagged version contains a
+given commit, you could use gitlink:git-merge-base[1]:
+
+-------------------------------------------------
+$ git merge-base e05db0fd v1.5.0-rc1
+e05db0fd4f31dde7005f075a84f96b360d05984b
+-------------------------------------------------
+
+The merge-base command finds a common ancestor of the given commits,
+and always returns one or the other in the case where one is a
+descendant of the other; so the above output shows that e05db0fd
+actually is an ancestor of v1.5.0-rc1.
+
+Alternatively, note that
+
+-------------------------------------------------
+$ git log v1.5.0-rc1..305db0fd
+-------------------------------------------------
+
+will produce empty output if and only if v1.5.0-rc1 includes 305db0fd,
+because it outputs only commits that are not reachable from v1.5.0-rc1.
 
 Developing with git
 ===================
@@ -1775,7 +1686,7 @@ TODO: topic branches, typical roles as in everyday.txt, ?
 Working with other version control systems
 ==========================================
 
-TODO: CVS, Subversion, series-of-release-tarballs, ?
+TODO: CVS, Subversion, series-of-release-tarballs, etc.
 
 [[cleaning-up-history]]
 Rewriting history and maintaining patch series
@@ -1796,8 +1707,8 @@ complicated feature, and to present it to the other developers in a way
 that makes it easy for them to read your changes, verify that they are
 correct, and understand why you made each change.
 
-If you present all of your changes as a single patch (or commit), they may
-find it is too much to digest all at once.
+If you present all of your changes as a single patch (or commit), they
+may find it is too much to digest all at once.
 
 If you present them with the entire history of your work, complete with
 mistakes, corrections, and dead ends, they may be overwhelmed.
@@ -1816,9 +1727,9 @@ So the ideal is usually to produce a series of patches such that:
 	4. The complete series produces the same end result as your own
 	   (probably much messier!) development process did.
 
-We will introduce some tools that can help you do this, explain how to use
-them, and then explain some of the problems that can arise because you are
-rewriting history.
+We will introduce some tools that can help you do this, explain how to
+use them, and then explain some of the problems that can arise because
+you are rewriting history.
 
 Keeping a patch series up to date using git-rebase
 --------------------------------------------------
@@ -1826,8 +1737,8 @@ Keeping a patch series up to date using git-rebase
 Suppose you have a series of commits in a branch "mywork", which
 originally branched off from "origin".
 
-Suppose you create a branch "mywork" on a remote-tracking branch "origin",
-and created some commits on top of it:
+Suppose you create a branch "mywork" on a remote-tracking branch
+"origin", and created some commits on top of it:
 
 -------------------------------------------------
 $ git checkout -b mywork origin
@@ -1870,26 +1781,20 @@ $ git checkout mywork
 $ git rebase origin
 -------------------------------------------------
 
-This will remove each of your commits from mywork, temporarily saving them
-as patches (in a directory named ".dotest"), update mywork to point at the
-latest version of origin, then apply each of the saved patches to the new
-mywork.  The result will look like:
+This will remove each of your commits from mywork, temporarily saving
+them as patches (in a directory named ".dotest"), update mywork to
+point at the latest version of origin, then apply each of the saved
+patches to the new mywork.  The result will look like:
 
 
  o--o--O--o--o--o <-- origin
 		 \
 		  a'--b'--c' <-- mywork
 
-In the process, it may discover conflicts.  In that case it will stop and
-allow you to fix the conflicts as described in
-"<<resolving-a-merge,Resolving a merge>>".
-
-XXX: no, maybe not: git diff doesn't produce very useful results, and there's
-no MERGE_HEAD.
-
-Once the index is updated with
-the results of the conflict resolution, instead of creating a new commit,
-just run
+In the process, it may discover conflicts.  In that case it will stop
+and allow you to fix the conflicts; after fixing conflicts, use "git
+add" to update the index with those contents, and then, instead of
+running git-commit, just run
 
 -------------------------------------------------
 $ git rebase --continue
@@ -1907,36 +1812,886 @@ $ git rebase --abort
 Reordering or selecting from a patch series
 -------------------------------------------
 
-Given one existing commit, the gitlink:git-cherry-pick[1] command allows
-you to apply the change introduced by that commit and create a new commit
-that records it.
+Given one existing commit, the gitlink:git-cherry-pick[1] command
+allows you to apply the change introduced by that commit and create a
+new commit that records it.  So, for example, if "mywork" points to a
+series of patches on top of "origin", you might do something like:
 
-This can be useful for modifying a patch series.
+-------------------------------------------------
+$ git checkout -b mywork-new origin
+$ gitk origin..mywork &
+-------------------------------------------------
 
-TODO: elaborate
+And browse through the list of patches in the mywork branch using gitk,
+applying them (possibly in a different order) to mywork-new using
+cherry-pick, and possibly modifying them as you go using commit
+--amend.
+
+Another technique is to use git-format-patch to create a series of
+patches, then reset the state to before the patches:
+
+-------------------------------------------------
+$ git format-patch origin
+$ git reset --hard origin
+-------------------------------------------------
+
+Then modify, reorder, or eliminate patches as preferred before applying
+them again with gitlink:git-am[1].
 
 Other tools
 -----------
 
-There are numerous other tools, such as stgit, which exist for the purpose
-of maintianing a patch series.  These are out of the scope of this manual.
+There are numerous other tools, such as stgit, which exist for the
+purpose of maintaining a patch series.  These are out of the scope of
+this manual.
 
 Problems with rewriting history
 -------------------------------
 
-The primary problem with rewriting the history of a branch has to do with
-merging.
+The primary problem with rewriting the history of a branch has to do
+with merging.  Suppose somebody fetches your branch and merges it into
+their branch, with a result something like this:
 
-TODO: elaborate
+ o--o--O--o--o--o <-- origin
+        \        \
+         t--t--t--m <-- their branch:
+
+Then suppose you modify the last three commits:
+
+	 o--o--o <-- new head of origin
+	/
+ o--o--O--o--o--o <-- old head of origin
+
+If we examined all this history together in one repository, it will
+look like:
+
+	 o--o--o <-- new head of origin
+	/
+ o--o--O--o--o--o <-- old head of origin
+        \        \
+         t--t--t--m <-- their branch:
+
+Git has no way of knowing that the new head is an updated version of
+the old head; it treats this situation exactly the same as it would if
+two developers had independently done the work on the old and new heads
+in parallel.  At this point, if someone attempts to merge the new head
+in to their branch, git will attempt to merge together the two (old and
+new) lines of development, instead of trying to replace the old by the
+new.  The results are likely to be unexpected.
+
+You may still choose to publish branches whose history is rewritten,
+and it may be useful for others to be able to fetch those branches in
+order to examine or test them, but they should not attempt to pull such
+branches into their own work.
+
+For true distributed development that supports proper merging,
+published branches should never be rewritten.
+
+Advanced branch management
+==========================
+
+Fetching individual branches
+----------------------------
+
+Instead of using gitlink:git-remote[1], you can also choose just
+to update one branch at a time, and to store it locally under an
+arbitrary name:
+
+-------------------------------------------------
+$ git fetch origin todo:my-todo-work
+-------------------------------------------------
+
+The first argument, "origin", just tells git to fetch from the
+repository you originally cloned from.  The second argument tells git
+to fetch the branch named "todo" from the remote repository, and to
+store it locally under the name refs/heads/my-todo-work.
+
+You can also fetch branches from other repositories; so
+
+-------------------------------------------------
+$ git fetch git://example.com/proj.git master:example-master
+-------------------------------------------------
+
+will create a new branch named "example-master" and store in it the
+branch named "master" from the repository at the given URL.  If you
+already have a branch named example-master, it will attempt to
+"fast-forward" to the commit given by example.com's master branch.  So
+next we explain what a fast-forward is:
+
+[[fast-forwards]]
+Understanding git history: fast-forwards
+----------------------------------------
+
+In the previous example, when updating an existing branch, "git
+fetch" checks to make sure that the most recent commit on the remote
+branch is a descendant of the most recent commit on your copy of the
+branch before updating your copy of the branch to point at the new
+commit.  Git calls this process a "fast forward".
+
+A fast forward looks something like this:
+
+ o--o--o--o <-- old head of the branch
+           \
+            o--o--o <-- new head of the branch
+
+
+In some cases it is possible that the new head will *not* actually be
+a descendant of the old head.  For example, the developer may have
+realized she made a serious mistake, and decided to backtrack,
+resulting in a situation like:
+
+ o--o--o--o--a--b <-- old head of the branch
+           \
+            o--o--o <-- new head of the branch
+
+
+
+In this case, "git fetch" will fail, and print out a warning.
+
+In that case, you can still force git to update to the new head, as
+described in the following section.  However, note that in the
+situation above this may mean losing the commits labeled "a" and "b",
+unless you've already created a reference of your own pointing to
+them.
+
+Forcing git fetch to do non-fast-forward updates
+------------------------------------------------
+
+If git fetch fails because the new head of a branch is not a
+descendant of the old head, you may force the update with:
+
+-------------------------------------------------
+$ git fetch git://example.com/proj.git +master:refs/remotes/example/master
+-------------------------------------------------
+
+Note the addition of the "+" sign.  Be aware that commits which the
+old version of example/master pointed at may be lost, as we saw in
+the previous section.
+
+Configuring remote branches
+---------------------------
+
+We saw above that "origin" is just a shortcut to refer to the
+repository which you originally cloned from.  This information is
+stored in git configuration variables, which you can see using
+gitlink:git-repo-config[1]:
+
+-------------------------------------------------
+$ git-repo-config -l
+core.repositoryformatversion=0
+core.filemode=true
+core.logallrefupdates=true
+remote.origin.url=git://git.kernel.org/pub/scm/git/git.git
+remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
+branch.master.remote=origin
+branch.master.merge=refs/heads/master
+-------------------------------------------------
+
+If there are other repositories that you also use frequently, you can
+create similar configuration options to save typing; for example,
+after
+
+-------------------------------------------------
+$ git repo-config remote.example.url git://example.com/proj.git
+-------------------------------------------------
+
+then the following two commands will do the same thing:
+
+-------------------------------------------------
+$ git fetch git://example.com/proj.git master:refs/remotes/example/master
+$ git fetch example master:refs/remotes/example/master
+-------------------------------------------------
+
+Even better, if you add one more option:
+
+-------------------------------------------------
+$ git repo-config remote.example.fetch master:refs/remotes/example/master
+-------------------------------------------------
+
+then the following commands will all do the same thing:
+
+-------------------------------------------------
+$ git fetch git://example.com/proj.git master:ref/remotes/example/master
+$ git fetch example master:ref/remotes/example/master
+$ git fetch example example/master
+$ git fetch example
+-------------------------------------------------
+
+You can also add a "+" to force the update each time:
+
+-------------------------------------------------
+$ git repo-config remote.example.fetch +master:ref/remotes/example/master
+-------------------------------------------------
+
+Don't do this unless you're sure you won't mind "git fetch" possibly
+throwing away commits on mybranch.
+
+Also note that all of the above configuration can be performed by
+directly editing the file .git/config instead of using
+gitlink:git-repo-config[1].
+
+See gitlink:git-repo-config[1] for more details on the configuration
+options mentioned above.
 
 
 Git internals
 =============
 
-Architectural overview
+There are two object abstractions: the "object database", and the
+"current directory cache" aka "index".
+
+The Object Database
+-------------------
+
+The object database is literally just a content-addressable collection
+of objects.  All objects are named by their content, which is
+approximated by the SHA1 hash of the object itself.  Objects may refer
+to other objects (by referencing their SHA1 hash), and so you can
+build up a hierarchy of objects.
+
+All objects have a statically determined "type" aka "tag", which is
+determined at object creation time, and which identifies the format of
+the object (i.e. how it is used, and how it can refer to other
+objects).  There are currently four different object types: "blob",
+"tree", "commit" and "tag".
+
+A "blob" object cannot refer to any other object, and is, like the type
+implies, a pure storage object containing some user data.  It is used to
+actually store the file data, i.e. a blob object is associated with some
+particular version of some file. 
+
+A "tree" object is an object that ties one or more "blob" objects into a
+directory structure. In addition, a tree object can refer to other tree
+objects, thus creating a directory hierarchy. 
+
+A "commit" object ties such directory hierarchies together into
+a DAG of revisions - each "commit" is associated with exactly one tree
+(the directory hierarchy at the time of the commit). In addition, a
+"commit" refers to one or more "parent" commit objects that describe the
+history of how we arrived at that directory hierarchy.
+
+As a special case, a commit object with no parents is called the "root"
+object, and is the point of an initial project commit.  Each project
+must have at least one root, and while you can tie several different
+root objects together into one project by creating a commit object which
+has two or more separate roots as its ultimate parents, that's probably
+just going to confuse people.  So aim for the notion of "one root object
+per project", even if git itself does not enforce that. 
+
+A "tag" object symbolically identifies and can be used to sign other
+objects. It contains the identifier and type of another object, a
+symbolic name (of course!) and, optionally, a signature.
+
+Regardless of object type, all objects share the following
+characteristics: they are all deflated with zlib, and have a header
+that not only specifies their type, but also provides size information
+about the data in the object.  It's worth noting that the SHA1 hash
+that is used to name the object is the hash of the original data
+plus this header, so `sha1sum` 'file' does not match the object name
+for 'file'.
+(Historical note: in the dawn of the age of git the hash
+was the sha1 of the 'compressed' object.)
+
+As a result, the general consistency of an object can always be tested
+independently of the contents or the type of the object: all objects can
+be validated by verifying that (a) their hashes match the content of the
+file and (b) the object successfully inflates to a stream of bytes that
+forms a sequence of <ascii type without space> + <space> + <ascii decimal
+size> + <byte\0> + <binary object data>. 
+
+The structured objects can further have their structure and
+connectivity to other objects verified. This is generally done with
+the `git-fsck-objects` program, which generates a full dependency graph
+of all objects, and verifies their internal consistency (in addition
+to just verifying their superficial consistency through the hash).
+
+The object types in some more detail:
+
+Blob Object
+-----------
+
+A "blob" object is nothing but a binary blob of data, and doesn't
+refer to anything else.  There is no signature or any other
+verification of the data, so while the object is consistent (it 'is'
+indexed by its sha1 hash, so the data itself is certainly correct), it
+has absolutely no other attributes.  No name associations, no
+permissions.  It is purely a blob of data (i.e. normally "file
+contents").
+
+In particular, since the blob is entirely defined by its data, if two
+files in a directory tree (or in multiple different versions of the
+repository) have the same contents, they will share the same blob
+object. The object is totally independent of its location in the
+directory tree, and renaming a file does not change the object that
+file is associated with in any way.
+
+A blob is typically created when gitlink:git-update-index[1]
+is run, and its data can be accessed by gitlink:git-cat-file[1].
+
+Tree Object
+-----------
+
+The next hierarchical object type is the "tree" object.  A tree object
+is a list of mode/name/blob data, sorted by name.  Alternatively, the
+mode data may specify a directory mode, in which case instead of
+naming a blob, that name is associated with another TREE object.
+
+Like the "blob" object, a tree object is uniquely determined by the
+set contents, and so two separate but identical trees will always
+share the exact same object. This is true at all levels, i.e. it's
+true for a "leaf" tree (which does not refer to any other trees, only
+blobs) as well as for a whole subdirectory.
+
+For that reason a "tree" object is just a pure data abstraction: it
+has no history, no signatures, no verification of validity, except
+that since the contents are again protected by the hash itself, we can
+trust that the tree is immutable and its contents never change.
+
+So you can trust the contents of a tree to be valid, the same way you
+can trust the contents of a blob, but you don't know where those
+contents 'came' from.
+
+Side note on trees: since a "tree" object is a sorted list of
+"filename+content", you can create a diff between two trees without
+actually having to unpack two trees.  Just ignore all common parts,
+and your diff will look right.  In other words, you can effectively
+(and efficiently) tell the difference between any two random trees by
+O(n) where "n" is the size of the difference, rather than the size of
+the tree.
+
+Side note 2 on trees: since the name of a "blob" depends entirely and
+exclusively on its contents (i.e. there are no names or permissions
+involved), you can see trivial renames or permission changes by
+noticing that the blob stayed the same.  However, renames with data
+changes need a smarter "diff" implementation.
+
+A tree is created with gitlink:git-write-tree[1] and
+its data can be accessed by gitlink:git-ls-tree[1].
+Two trees can be compared with gitlink:git-diff-tree[1].
+
+Commit Object
+-------------
+
+The "commit" object is an object that introduces the notion of
+history into the picture.  In contrast to the other objects, it
+doesn't just describe the physical state of a tree, it describes how
+we got there, and why.
+
+A "commit" is defined by the tree-object that it results in, the
+parent commits (zero, one or more) that led up to that point, and a
+comment on what happened.  Again, a commit is not trusted per se:
+the contents are well-defined and "safe" due to the cryptographically
+strong signatures at all levels, but there is no reason to believe
+that the tree is "good" or that the merge information makes sense.
+The parents do not have to actually have any relationship with the
+result, for example.
+
+Note on commits: unlike real SCM's, commits do not contain
+rename information or file mode change information.  All of that is
+implicit in the trees involved (the result tree, and the result trees
+of the parents), and describing that makes no sense in this idiotic
+file manager.
+
+A commit is created with gitlink:git-commit-tree[1] and
+its data can be accessed by gitlink:git-cat-file[1].
+
+Trust
+-----
+
+An aside on the notion of "trust". Trust is really outside the scope
+of "git", but it's worth noting a few things.  First off, since
+everything is hashed with SHA1, you 'can' trust that an object is
+intact and has not been messed with by external sources.  So the name
+of an object uniquely identifies a known state - just not a state that
+you may want to trust.
+
+Furthermore, since the SHA1 signature of a commit refers to the
+SHA1 signatures of the tree it is associated with and the signatures
+of the parent, a single named commit specifies uniquely a whole set
+of history, with full contents.  You can't later fake any step of the
+way once you have the name of a commit.
+
+So to introduce some real trust in the system, the only thing you need
+to do is to digitally sign just 'one' special note, which includes the
+name of a top-level commit.  Your digital signature shows others
+that you trust that commit, and the immutability of the history of
+commits tells others that they can trust the whole history.
+
+In other words, you can easily validate a whole archive by just
+sending out a single email that tells the people the name (SHA1 hash)
+of the top commit, and digitally sign that email using something
+like GPG/PGP.
+
+To assist in this, git also provides the tag object...
+
+Tag Object
+----------
+
+Git provides the "tag" object to simplify creating, managing and
+exchanging symbolic and signed tokens.  The "tag" object at its
+simplest simply symbolically identifies another object by containing
+the sha1, type and symbolic name.
+
+However it can optionally contain additional signature information
+(which git doesn't care about as long as there's less than 8k of
+it). This can then be verified externally to git.
+
+Note that despite the tag features, "git" itself only handles content
+integrity; the trust framework (and signature provision and
+verification) has to come from outside.
+
+A tag is created with gitlink:git-mktag[1],
+its data can be accessed by gitlink:git-cat-file[1],
+and the signature can be verified by
+gitlink:git-verify-tag[1].
+
+
+The "index" aka "Current Directory Cache"
+-----------------------------------------
+
+The index is a simple binary file, which contains an efficient
+representation of a virtual directory content at some random time.  It
+does so by a simple array that associates a set of names, dates,
+permissions and content (aka "blob") objects together.  The cache is
+always kept ordered by name, and names are unique (with a few very
+specific rules) at any point in time, but the cache has no long-term
+meaning, and can be partially updated at any time.
+
+In particular, the index certainly does not need to be consistent with
+the current directory contents (in fact, most operations will depend on
+different ways to make the index 'not' be consistent with the directory
+hierarchy), but it has three very important attributes:
+
+'(a) it can re-generate the full state it caches (not just the
+directory structure: it contains pointers to the "blob" objects so
+that it can regenerate the data too)'
+
+As a special case, there is a clear and unambiguous one-way mapping
+from a current directory cache to a "tree object", which can be
+efficiently created from just the current directory cache without
+actually looking at any other data.  So a directory cache at any one
+time uniquely specifies one and only one "tree" object (but has
+additional data to make it easy to match up that tree object with what
+has happened in the directory)
+
+'(b) it has efficient methods for finding inconsistencies between that
+cached state ("tree object waiting to be instantiated") and the
+current state.'
+
+'(c) it can additionally efficiently represent information about merge
+conflicts between different tree objects, allowing each pathname to be
+associated with sufficient information about the trees involved that
+you can create a three-way merge between them.'
+
+Those are the three ONLY things that the directory cache does.  It's a
+cache, and the normal operation is to re-generate it completely from a
+known tree object, or update/compare it with a live tree that is being
+developed.  If you blow the directory cache away entirely, you generally
+haven't lost any information as long as you have the name of the tree
+that it described. 
+
+At the same time, the index is at the same time also the
+staging area for creating new trees, and creating a new tree always
+involves a controlled modification of the index file.  In particular,
+the index file can have the representation of an intermediate tree that
+has not yet been instantiated.  So the index can be thought of as a
+write-back cache, which can contain dirty information that has not yet
+been written back to the backing store.
+
+
+
+The Workflow
+------------
+
+Generally, all "git" operations work on the index file. Some operations
+work *purely* on the index file (showing the current state of the
+index), but most operations move data to and from the index file. Either
+from the database or from the working directory. Thus there are four
+main combinations: 
+
+working directory -> index
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You update the index with information from the working directory with
+the gitlink:git-update-index[1] command.  You
+generally update the index information by just specifying the filename
+you want to update, like so:
+
+-------------------------------------------------
+$ git-update-index filename
+-------------------------------------------------
+
+but to avoid common mistakes with filename globbing etc, the command
+will not normally add totally new entries or remove old entries,
+i.e. it will normally just update existing cache entries.
+
+To tell git that yes, you really do realize that certain files no
+longer exist, or that new files should be added, you
+should use the `--remove` and `--add` flags respectively.
+
+NOTE! A `--remove` flag does 'not' mean that subsequent filenames will
+necessarily be removed: if the files still exist in your directory
+structure, the index will be updated with their new status, not
+removed. The only thing `--remove` means is that update-cache will be
+considering a removed file to be a valid thing, and if the file really
+does not exist any more, it will update the index accordingly.
+
+As a special case, you can also do `git-update-index --refresh`, which
+will refresh the "stat" information of each index to match the current
+stat information. It will 'not' update the object status itself, and
+it will only update the fields that are used to quickly test whether
+an object still matches its old backing store object.
+
+index -> object database
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+You write your current index file to a "tree" object with the program
+
+-------------------------------------------------
+$ git-write-tree
+-------------------------------------------------
+
+that doesn't come with any options - it will just write out the
+current index into the set of tree objects that describe that state,
+and it will return the name of the resulting top-level tree. You can
+use that tree to re-generate the index at any time by going in the
+other direction:
+
+object database -> index
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+You read a "tree" file from the object database, and use that to
+populate (and overwrite - don't do this if your index contains any
+unsaved state that you might want to restore later!) your current
+index.  Normal operation is just
+
+-------------------------------------------------
+$ git-read-tree <sha1 of tree>
+-------------------------------------------------
+
+and your index file will now be equivalent to the tree that you saved
+earlier. However, that is only your 'index' file: your working
+directory contents have not been modified.
+
+index -> working directory
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You update your working directory from the index by "checking out"
+files. This is not a very common operation, since normally you'd just
+keep your files updated, and rather than write to your working
+directory, you'd tell the index files about the changes in your
+working directory (i.e. `git-update-index`).
+
+However, if you decide to jump to a new version, or check out somebody
+else's version, or just restore a previous tree, you'd populate your
+index file with read-tree, and then you need to check out the result
+with
+
+-------------------------------------------------
+$ git-checkout-index filename
+-------------------------------------------------
+
+or, if you want to check out all of the index, use `-a`.
+
+NOTE! git-checkout-index normally refuses to overwrite old files, so
+if you have an old version of the tree already checked out, you will
+need to use the "-f" flag ('before' the "-a" flag or the filename) to
+'force' the checkout.
+
+
+Finally, there are a few odds and ends which are not purely moving
+from one representation to the other:
+
+Tying it all together
+~~~~~~~~~~~~~~~~~~~~~
+
+To commit a tree you have instantiated with "git-write-tree", you'd
+create a "commit" object that refers to that tree and the history
+behind it - most notably the "parent" commits that preceded it in
+history.
+
+Normally a "commit" has one parent: the previous state of the tree
+before a certain change was made. However, sometimes it can have two
+or more parent commits, in which case we call it a "merge", due to the
+fact that such a commit brings together ("merges") two or more
+previous states represented by other commits.
+
+In other words, while a "tree" represents a particular directory state
+of a working directory, a "commit" represents that state in "time",
+and explains how we got there.
+
+You create a commit object by giving it the tree that describes the
+state at the time of the commit, and a list of parents:
+
+-------------------------------------------------
+$ git-commit-tree <tree> -p <parent> [-p <parent2> ..]
+-------------------------------------------------
+
+and then giving the reason for the commit on stdin (either through
+redirection from a pipe or file, or by just typing it at the tty).
+
+git-commit-tree will return the name of the object that represents
+that commit, and you should save it away for later use. Normally,
+you'd commit a new `HEAD` state, and while git doesn't care where you
+save the note about that state, in practice we tend to just write the
+result to the file pointed at by `.git/HEAD`, so that we can always see
+what the last committed state was.
+
+Here is an ASCII art by Jon Loeliger that illustrates how
+various pieces fit together.
+
+------------
+
+                     commit-tree
+                      commit obj
+                       +----+
+                       |    |
+                       |    |
+                       V    V
+                    +-----------+
+                    | Object DB |
+                    |  Backing  |
+                    |   Store   |
+                    +-----------+
+                       ^
+           write-tree  |     |
+             tree obj  |     |
+                       |     |  read-tree
+                       |     |  tree obj
+                             V
+                    +-----------+
+                    |   Index   |
+                    |  "cache"  |
+                    +-----------+
+         update-index  ^
+             blob obj  |     |
+                       |     |
+    checkout-index -u  |     |  checkout-index
+             stat      |     |  blob obj
+                             V
+                    +-----------+
+                    |  Working  |
+                    | Directory |
+                    +-----------+
+
+------------
+
+
+Examining the data
+------------------
+
+You can examine the data represented in the object database and the
+index with various helper tools. For every object, you can use
+gitlink:git-cat-file[1] to examine details about the
+object:
+
+-------------------------------------------------
+$ git-cat-file -t <objectname>
+-------------------------------------------------
+
+shows the type of the object, and once you have the type (which is
+usually implicit in where you find the object), you can use
+
+-------------------------------------------------
+$ git-cat-file blob|tree|commit|tag <objectname>
+-------------------------------------------------
+
+to show its contents. NOTE! Trees have binary content, and as a result
+there is a special helper for showing that content, called
+`git-ls-tree`, which turns the binary content into a more easily
+readable form.
+
+It's especially instructive to look at "commit" objects, since those
+tend to be small and fairly self-explanatory. In particular, if you
+follow the convention of having the top commit name in `.git/HEAD`,
+you can do
+
+-------------------------------------------------
+$ git-cat-file commit HEAD
+-------------------------------------------------
+
+to see what the top commit was.
+
+Merging multiple trees
 ----------------------
 
-TODO: Sources, README, core-tutorial, tutorial-2.txt, technical/
+Git helps you do a three-way merge, which you can expand to n-way by
+repeating the merge procedure arbitrary times until you finally
+"commit" the state.  The normal situation is that you'd only do one
+three-way merge (two parents), and commit it, but if you like to, you
+can do multiple parents in one go.
+
+To do a three-way merge, you need the two sets of "commit" objects
+that you want to merge, use those to find the closest common parent (a
+third "commit" object), and then use those commit objects to find the
+state of the directory ("tree" object) at these points.
+
+To get the "base" for the merge, you first look up the common parent
+of two commits with
+
+-------------------------------------------------
+$ git-merge-base <commit1> <commit2>
+-------------------------------------------------
+
+which will return you the commit they are both based on.  You should
+now look up the "tree" objects of those commits, which you can easily
+do with (for example)
+
+-------------------------------------------------
+$ git-cat-file commit <commitname> | head -1
+-------------------------------------------------
+
+since the tree object information is always the first line in a commit
+object.
+
+Once you know the three trees you are going to merge (the one
+"original" tree, aka the common case, and the two "result" trees, aka
+the branches you want to merge), you do a "merge" read into the
+index. This will complain if it has to throw away your old index contents, so you should
+make sure that you've committed those - in fact you would normally
+always do a merge against your last commit (which should thus match
+what you have in your current index anyway).
+
+To do the merge, do
+
+-------------------------------------------------
+$ git-read-tree -m -u <origtree> <yourtree> <targettree>
+-------------------------------------------------
+
+which will do all trivial merge operations for you directly in the
+index file, and you can just write the result out with
+`git-write-tree`.
+
+
+Merging multiple trees, continued
+---------------------------------
+
+Sadly, many merges aren't trivial. If there are files that have
+been added.moved or removed, or if both branches have modified the
+same file, you will be left with an index tree that contains "merge
+entries" in it. Such an index tree can 'NOT' be written out to a tree
+object, and you will have to resolve any such merge clashes using
+other tools before you can write out the result.
+
+You can examine such index state with `git-ls-files --unmerged`
+command.  An example:
+
+------------------------------------------------
+$ git-read-tree -m $orig HEAD $target
+$ git-ls-files --unmerged
+100644 263414f423d0e4d70dae8fe53fa34614ff3e2860 1	hello.c
+100644 06fa6a24256dc7e560efa5687fa84b51f0263c3a 2	hello.c
+100644 cc44c73eb783565da5831b4d820c962954019b69 3	hello.c
+------------------------------------------------
+
+Each line of the `git-ls-files --unmerged` output begins with
+the blob mode bits, blob SHA1, 'stage number', and the
+filename.  The 'stage number' is git's way to say which tree it
+came from: stage 1 corresponds to `$orig` tree, stage 2 `HEAD`
+tree, and stage3 `$target` tree.
+
+Earlier we said that trivial merges are done inside
+`git-read-tree -m`.  For example, if the file did not change
+from `$orig` to `HEAD` nor `$target`, or if the file changed
+from `$orig` to `HEAD` and `$orig` to `$target` the same way,
+obviously the final outcome is what is in `HEAD`.  What the
+above example shows is that file `hello.c` was changed from
+`$orig` to `HEAD` and `$orig` to `$target` in a different way.
+You could resolve this by running your favorite 3-way merge
+program, e.g.  `diff3` or `merge`, on the blob objects from
+these three stages yourself, like this:
+
+------------------------------------------------
+$ git-cat-file blob 263414f... >hello.c~1
+$ git-cat-file blob 06fa6a2... >hello.c~2
+$ git-cat-file blob cc44c73... >hello.c~3
+$ merge hello.c~2 hello.c~1 hello.c~3
+------------------------------------------------
+
+This would leave the merge result in `hello.c~2` file, along
+with conflict markers if there are conflicts.  After verifying
+the merge result makes sense, you can tell git what the final
+merge result for this file is by:
+
+-------------------------------------------------
+$ mv -f hello.c~2 hello.c
+$ git-update-index hello.c
+-------------------------------------------------
+
+When a path is in unmerged state, running `git-update-index` for
+that path tells git to mark the path resolved.
+
+The above is the description of a git merge at the lowest level,
+to help you understand what conceptually happens under the hood.
+In practice, nobody, not even git itself, uses three `git-cat-file`
+for this.  There is `git-merge-index` program that extracts the
+stages to temporary files and calls a "merge" script on it:
+
+-------------------------------------------------
+$ git-merge-index git-merge-one-file hello.c
+-------------------------------------------------
+
+and that is what higher level `git resolve` is implemented with.
+
+How git stores objects efficiently: pack files
+----------------------------------------------
+
+We've seen how git stores each object in a file named after the
+object's SHA1 hash.
+
+Unfortunately this system becomes inefficient once a project has a
+lot of objects.  Try this on an old project:
+
+------------------------------------------------
+$ git count-objects
+6930 objects, 47620 kilobytes
+------------------------------------------------
+
+The first number is the number of objects which are kept in
+individual files.  The second is the amount of space taken up by
+those "loose" objects.
+
+You can save space and make git faster by moving these loose objects in
+to a "pack file", which stores a group of objects in an efficient
+compressed format; the details of how pack files are formatted can be
+found in link:technical/pack-format.txt[technical/pack-format.txt].
+
+To put the loose objects into a pack, just run git repack:
+
+------------------------------------------------
+$ git repack
+Generating pack...
+Done counting 6020 objects.
+Deltifying 6020 objects.
+ 100% (6020/6020) done
+Writing 6020 objects.
+ 100% (6020/6020) done
+Total 6020, written 6020 (delta 4070), reused 0 (delta 0)
+Pack pack-3e54ad29d5b2e05838c75df582c65257b8d08e1c created.
+------------------------------------------------
+
+You can then run
+
+------------------------------------------------
+$ git prune
+------------------------------------------------
+
+to remove any of the "loose" objects that are now contained in the
+pack.  This will also remove any unreferenced objects (which may be
+created when, for example, you use "git reset" to remove a commit).
+You can verify that the loose objects are gone by looking at the
+.git/objects directory or by running
+
+------------------------------------------------
+$ git count-objects
+0 objects, 0 kilobytes
+------------------------------------------------
+
+Although the object files are gone, any commands that refer to those
+objects will work exactly as they did before.
+
+The gitlink:git-gc[1] command performs packing, pruning, and more for
+you, so is normally the only high-level command you need.
 
 Glossary of git terms
 =====================
@@ -1976,23 +2731,18 @@ Scan man pages to see if any assume more background than this manual
 provides.
 
 Simplify beginning by suggesting disconnected head instead of
-temporary branch creation.
+temporary branch creation?
 
 Explain how to refer to file stages in the "how to resolve a merge"
 section: diff -1, -2, -3, --ours, --theirs :1:/path notation.  The
 "git ls-files --unmerged --stage" thing is sorta useful too,
-actually.  And note gitk --merge.  Also what's easiest way to see
-common merge base?  Note also text where I claim rebase and am
-conflicts are resolved like merges isn't generally true, at least by
-default--fix.
+actually.  And note gitk --merge.
 
 Add more good examples.  Entire sections of just cookbook examples
 might be a good idea; maybe make an "advanced examples" section a
 standard end-of-chapter section?
 
 Include cross-references to the glossary, where appropriate.
-
-Add quickstart as first chapter.
 
 To document:
 	reflogs, git reflog expire
