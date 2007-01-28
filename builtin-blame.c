@@ -13,6 +13,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "revision.h"
+#include "quote.h"
 #include "xdiff-interface.h"
 
 static char blame_usage[] =
@@ -27,6 +28,7 @@ static char blame_usage[] =
 "  -p, --porcelain     Show in a format designed for machine consumption\n"
 "  -L n,m              Process only line range n,m, counting from 1\n"
 "  -M, -C              Find line movements within and across files\n"
+"  --incremental       Show blame entries as we find them, incrementally\n"
 "  -S revs-file        Use revisions from revs-file instead of calling git-rev-list\n";
 
 static int longest_file;
@@ -36,6 +38,7 @@ static int max_digits;
 static int max_score_digits;
 static int show_root;
 static int blank_boundary;
+static int incremental;
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -1069,72 +1072,6 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 		origin_decref(parent_origin[i]);
 }
 
-static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
-{
-	while (1) {
-		struct blame_entry *ent;
-		struct commit *commit;
-		struct origin *suspect = NULL;
-
-		/* find one suspect to break down */
-		for (ent = sb->ent; !suspect && ent; ent = ent->next)
-			if (!ent->guilty)
-				suspect = ent->suspect;
-		if (!suspect)
-			return; /* all done */
-
-		origin_incref(suspect);
-		commit = suspect->commit;
-		if (!commit->object.parsed)
-			parse_commit(commit);
-		if (!(commit->object.flags & UNINTERESTING) &&
-		    !(revs->max_age != -1 && commit->date  < revs->max_age))
-			pass_blame(sb, suspect, opt);
-		else {
-			commit->object.flags |= UNINTERESTING;
-			if (commit->object.parsed)
-				mark_parents_uninteresting(commit);
-		}
-		/* treat root commit as boundary */
-		if (!commit->parents && !show_root)
-			commit->object.flags |= UNINTERESTING;
-
-		/* Take responsibility for the remaining entries */
-		for (ent = sb->ent; ent; ent = ent->next)
-			if (!cmp_suspect(ent->suspect, suspect))
-				ent->guilty = 1;
-		origin_decref(suspect);
-
-		if (DEBUG) /* sanity */
-			sanity_check_refcnt(sb);
-	}
-}
-
-static const char *format_time(unsigned long time, const char *tz_str,
-			       int show_raw_time)
-{
-	static char time_buf[128];
-	time_t t = time;
-	int minutes, tz;
-	struct tm *tm;
-
-	if (show_raw_time) {
-		sprintf(time_buf, "%lu %s", time, tz_str);
-		return time_buf;
-	}
-
-	tz = atoi(tz_str);
-	minutes = tz < 0 ? -tz : tz;
-	minutes = (minutes / 100)*60 + (minutes % 100);
-	minutes = tz < 0 ? -minutes : minutes;
-	t = time + minutes * 60;
-	tm = gmtime(&t);
-
-	strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S ", tm);
-	strcat(time_buf, tz_str);
-	return time_buf;
-}
-
 struct commit_info
 {
 	char *author;
@@ -1243,6 +1180,105 @@ static void get_commit_info(struct commit *commit,
 		goto error_out;
 	memcpy(summary_buf, tmp, len);
 	summary_buf[len] = 0;
+}
+
+static void found_guilty_entry(struct blame_entry *ent)
+{
+	if (ent->guilty)
+		return;
+	ent->guilty = 1;
+	if (incremental) {
+		struct origin *suspect = ent->suspect;
+
+		printf("%s %d %d %d\n",
+		       sha1_to_hex(suspect->commit->object.sha1),
+		       ent->s_lno + 1, ent->lno + 1, ent->num_lines);
+		if (!(suspect->commit->object.flags & METAINFO_SHOWN)) {
+			struct commit_info ci;
+			suspect->commit->object.flags |= METAINFO_SHOWN;
+			get_commit_info(suspect->commit, &ci, 1);
+			printf("author %s\n", ci.author);
+			printf("author-mail %s\n", ci.author_mail);
+			printf("author-time %lu\n", ci.author_time);
+			printf("author-tz %s\n", ci.author_tz);
+			printf("committer %s\n", ci.committer);
+			printf("committer-mail %s\n", ci.committer_mail);
+			printf("committer-time %lu\n", ci.committer_time);
+			printf("committer-tz %s\n", ci.committer_tz);
+			printf("summary %s\n", ci.summary);
+			if (suspect->commit->object.flags & UNINTERESTING)
+				printf("boundary\n");
+		}
+		printf("filename ");
+		write_name_quoted(NULL, 0, suspect->path, 1, stdout);
+		putchar('\n');
+	}
+}
+
+static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
+{
+	while (1) {
+		struct blame_entry *ent;
+		struct commit *commit;
+		struct origin *suspect = NULL;
+
+		/* find one suspect to break down */
+		for (ent = sb->ent; !suspect && ent; ent = ent->next)
+			if (!ent->guilty)
+				suspect = ent->suspect;
+		if (!suspect)
+			return; /* all done */
+
+		origin_incref(suspect);
+		commit = suspect->commit;
+		if (!commit->object.parsed)
+			parse_commit(commit);
+		if (!(commit->object.flags & UNINTERESTING) &&
+		    !(revs->max_age != -1 && commit->date  < revs->max_age))
+			pass_blame(sb, suspect, opt);
+		else {
+			commit->object.flags |= UNINTERESTING;
+			if (commit->object.parsed)
+				mark_parents_uninteresting(commit);
+		}
+		/* treat root commit as boundary */
+		if (!commit->parents && !show_root)
+			commit->object.flags |= UNINTERESTING;
+
+		/* Take responsibility for the remaining entries */
+		for (ent = sb->ent; ent; ent = ent->next)
+			if (!cmp_suspect(ent->suspect, suspect))
+				found_guilty_entry(ent);
+		origin_decref(suspect);
+
+		if (DEBUG) /* sanity */
+			sanity_check_refcnt(sb);
+	}
+}
+
+static const char *format_time(unsigned long time, const char *tz_str,
+			       int show_raw_time)
+{
+	static char time_buf[128];
+	time_t t = time;
+	int minutes, tz;
+	struct tm *tm;
+
+	if (show_raw_time) {
+		sprintf(time_buf, "%lu %s", time, tz_str);
+		return time_buf;
+	}
+
+	tz = atoi(tz_str);
+	minutes = tz < 0 ? -tz : tz;
+	minutes = (minutes / 100)*60 + (minutes % 100);
+	minutes = tz < 0 ? -minutes : minutes;
+	t = time + minutes * 60;
+	tm = gmtime(&t);
+
+	strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S ", tm);
+	strcat(time_buf, tz_str);
+	return time_buf;
 }
 
 #define OUTPUT_ANNOTATE_COMPAT	001
@@ -1717,6 +1753,8 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 				die("More than one '-L n,m' option given");
 			bottomtop = arg;
 		}
+		else if (!strcmp("--incremental", arg))
+			incremental = 1;
 		else if (!strcmp("--score-debug", arg))
 			output_option |= OUTPUT_SHOW_SCORE;
 		else if (!strcmp("-f", arg) ||
@@ -1906,6 +1944,9 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		    revs_file, strerror(errno));
 
 	assign_blame(&sb, &revs, opt);
+
+	if (incremental)
+		return 0;
 
 	coalesce(&sb);
 
