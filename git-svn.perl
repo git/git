@@ -416,15 +416,11 @@ sub cmd_multi_init {
 }
 
 sub cmd_multi_fetch {
-	my @gs;
-	foreach (command(qw/config -l/)) {
-		next unless m!^svn-remote\.(.+)\.fetch=
-		              \s*(.*)\s*:\s*refs/remotes/(.+)\s*$!x;
-		my ($repo_id, $path, $ref_id) = ($1, $2, $3);
-		push @gs, Git::SVN->new($ref_id, $repo_id, $path);
-	}
-	foreach (@gs) {
-		$_->fetch;
+	my $remotes = Git::SVN::read_all_remotes();
+	foreach my $repo_id (sort keys %$remotes) {
+		my $url = $remotes->{$repo_id}->{url} or next;
+		my $fetch = $remotes->{$repo_id}->{fetch} or next;
+		Git::SVN::fetch_all($repo_id, $url, $fetch);
 	}
 }
 
@@ -696,6 +692,28 @@ BEGIN {
 	                                svn:entry:last-author
 	                                svn:entry:uuid
 	                                svn:entry:committed-date/;
+}
+
+sub fetch_all {
+	my ($repo_id, $url, $fetch) = @_;
+	my @gs;
+	my $ra = Git::SVN::Ra->new($url);
+	my $head = $ra->get_latest_revnum;
+	my $base = $head;
+	my $new_remote;
+	foreach my $p (sort keys %$fetch) {
+		my $gs = Git::SVN->new($fetch->{$p}, $repo_id, $p);
+		my $lr = $gs->last_rev;
+		if (defined $lr) {
+			$base = $lr if ($lr < $base);
+		} else {
+			$new_remote = 1;
+		}
+		push @gs, $gs;
+	}
+	$base = 0 if $new_remote;
+	return if (++$base > $head);
+	$ra->gs_fetch_loop_common($base, $head, @gs);
 }
 
 sub read_all_remotes {
@@ -981,16 +999,12 @@ sub assert_index_clean {
 }
 
 sub get_commit_parents {
-	my ($self, $log_entry, @parents) = @_;
+	my ($self, $log_entry) = @_;
 	my (%seen, @ret, @tmp);
-	# commit parents can be conditionally bound to a particular
-	# svn revision via: "svn_revno=commit_sha1", filter them out here:
-	foreach my $p (@parents) {
-		next unless defined $p;
-		if ($p =~ /^(\d+)=($::sha1_short)$/o) {
-			push @tmp, $2 if $1 == $log_entry->{revision};
-		} else {
-			push @tmp, $p if $p =~ /^$::sha1_short$/o;
+	# legacy support for 'set-tree'; this is only used by set_tree_cb:
+	if (my $ip = $self->{inject_parents}) {
+		if (my $commit = delete $ip->{$log_entry->{revision}}) {
+			push @tmp, $commit;
 		}
 	}
 	if (my $cur = ::verify_ref($self->refname.'^0')) {
@@ -1017,7 +1031,7 @@ sub full_url {
 }
 
 sub do_git_commit {
-	my ($self, $log_entry, @parents) = @_;
+	my ($self, $log_entry) = @_;
 	if (my $c = $self->rev_db_get($log_entry->{revision})) {
 		croak "$log_entry->{revision} = $c already exists! ",
 		      "Why are we refetching it?\n";
@@ -1037,7 +1051,7 @@ sub do_git_commit {
 	die "Tree is not a valid sha1: $tree\n" if $tree !~ /^$::sha1$/o;
 
 	my @exec = ('git-commit-tree', $tree);
-	foreach ($self->get_commit_parents($log_entry, @parents)) {
+	foreach ($self->get_commit_parents($log_entry)) {
 		push @exec, '-p', $_;
 	}
 	defined(my $pid = open3(my $msg_fh, my $out_fh, '>&STDERR', @exec))
@@ -1291,40 +1305,7 @@ sub fetch {
 	my ($last_rev, $last_commit) = $self->last_rev_commit;
 	my ($base, $head) = $self->get_fetch_range($min_rev, $max_rev);
 	return if ($base > $head);
-	if (defined $last_commit) {
-		$self->assert_index_clean($last_commit);
-	}
-	my $inc = 1000;
-	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
-	my $err_handler = $SVN::Error::handler;
-	my $err;
-	$SVN::Error::handler = sub { ($err) = @_; skip_unknown_revs($err); } ;
-	while (1) {
-		my @revs;
-		$self->ra->get_log([$self->{path}], $min, $max, 0, 1, 1,
-		    sub {
-			my ($paths, $rev) = @_;
-			push @revs, [ dup_changed_paths($paths), $rev ];
-			});
-		if (! @revs && $err && $max >= $head) {
-			print STDERR "Branch probably deleted:\n  ",
-			             $err->expanded_message,
-				     "\nWill attempt to follow revisions ",
-				     "r$min .. r$max",
-				     "committed before the deletion\n";
-			@revs = map { [ undef, $_ ] } ($min .. $max);
-		}
-		foreach (@revs) {
-			if (my $log_entry = $self->do_fetch(@$_)) {
-				$self->do_git_commit($log_entry, @parents);
-			}
-		}
-		last if $max >= $head;
-		$min = $max + 1;
-		$max += $inc;
-		$max = $head if ($max > $head);
-	}
-	$SVN::Error::handler = $err_handler;
+	$self->ra->gs_fetch_loop_common($base, $head, $self);
 }
 
 sub set_tree_cb {
@@ -1335,7 +1316,8 @@ sub set_tree_cb {
 		$log_entry->{author} = $author;
 		$self->do_git_commit($log_entry, "$rev=$tree");
 	} else {
-		$self->fetch(undef, undef, "$rev=$tree");
+		$self->{inject_parents} = { $rev => $tree };
+		$self->fetch(undef, undef);
 	}
 }
 
@@ -1356,42 +1338,6 @@ sub set_tree {
 	if (!SVN::Git::Editor->new(\%ed_opts)->apply_diff) {
 		print "No changes\nr$self->{last_rev} = $tree\n";
 	}
-}
-
-sub skip_unknown_revs {
-	my ($err) = @_;
-	my $errno = $err->apr_err();
-	# Maybe the branch we're tracking didn't
-	# exist when the repo started, so it's
-	# not an error if it doesn't, just continue
-	#
-	# Wonderfully consistent library, eh?
-	# 160013 - svn:// and file://
-	# 175002 - http(s)://
-	# 175007 - http(s):// (this repo required authorization, too...)
-	#   More codes may be discovered later...
-	if ($errno == 175007 || $errno == 175002 || $errno == 160013) {
-		return;
-	}
-	croak "Error from SVN, ($errno): ", $err->expanded_message,"\n";
-}
-
-# svn_log_changed_path_t objects passed to get_log are likely to be
-# overwritten even if only the refs are copied to an external variable,
-# so we should dup the structures in their entirety.  Using an externally
-# passed pool (instead of our temporary and quickly cleared pool in
-# Git::SVN::Ra) does not help matters at all...
-sub dup_changed_paths {
-	my ($paths) = @_;
-	return undef unless $paths;
-	my %ret;
-	foreach my $p (keys %$paths) {
-		my $i = $paths->{$p};
-		my %s = map { $_ => $i->$_ }
-		              qw/copyfrom_path copyfrom_rev action/;
-		$ret{$p} = \%s;
-	}
-	\%ret;
 }
 
 # rev_db:
@@ -2324,6 +2270,53 @@ sub gs_do_switch {
 	$editor->{git_commit_ok};
 }
 
+sub gs_fetch_loop_common {
+	my ($self, $base, $head, @gs) = @_;
+	my $inc = 1000;
+	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
+	my $err_handler = $SVN::Error::handler;
+	my $err;
+	$SVN::Error::handler = sub { ($err) = @_; skip_unknown_revs($err); };
+	my @paths = @gs == 1 ? ($gs[0]->{path}) : ('');
+	foreach my $gs (@gs) {
+		if (my $last_commit = $gs->last_commit) {
+			$gs->assert_index_clean($last_commit);
+		}
+		$gs->{path_regex} = qr/^\/\Q$gs->{path}\E\/?/;
+	}
+	while (1) {
+		my @revs;
+		$self->get_log(\@paths, $min, $max, 0, 1, 1,
+		    sub { push @revs, [ dup_changed_paths($_[0]), $_[1] ]; });
+		if (! @revs && $err && $max >= $head) {
+			print STDERR "Branch probably deleted:\n  ",
+			             $err->expanded_message,
+			             "\nWill attempt to follow revisions ",
+			             "r$min .. r$max ",
+			             "committed before the deletion\n";
+			@revs = map { [ undef, $_ ] } ($min .. $max);
+		}
+		foreach (@revs) {
+			my ($paths, $r) = @$_;
+			foreach my $gs (@gs) {
+				if ($paths) {
+					grep /$gs->{path_regex}/, keys %$paths
+					   or next;
+				}
+				next if defined $gs->rev_db_get($r);
+				if (my $log_entry = $gs->do_fetch($paths, $r)) {
+					$gs->do_git_commit($log_entry);
+				}
+			}
+		}
+		last if $max >= $head;
+		$min = $max + 1;
+		$max += $inc;
+		$max = $head if ($max > $head);
+	}
+	$SVN::Error::handler = $err_handler;
+}
+
 sub minimize_url {
 	my ($self) = @_;
 	return $self->{url} if ($self->{url} eq $self->{repos_root});
@@ -2354,6 +2347,42 @@ sub can_do_switch {
 		$pool->clear;
 	}
 	$can_do_switch;
+}
+
+sub skip_unknown_revs {
+	my ($err) = @_;
+	my $errno = $err->apr_err();
+	# Maybe the branch we're tracking didn't
+	# exist when the repo started, so it's
+	# not an error if it doesn't, just continue
+	#
+	# Wonderfully consistent library, eh?
+	# 160013 - svn:// and file://
+	# 175002 - http(s)://
+	# 175007 - http(s):// (this repo required authorization, too...)
+	#   More codes may be discovered later...
+	if ($errno == 175007 || $errno == 175002 || $errno == 160013) {
+		return;
+	}
+	die "Error from SVN, ($errno): ", $err->expanded_message,"\n";
+}
+
+# svn_log_changed_path_t objects passed to get_log are likely to be
+# overwritten even if only the refs are copied to an external variable,
+# so we should dup the structures in their entirety.  Using an externally
+# passed pool (instead of our temporary and quickly cleared pool in
+# Git::SVN::Ra) does not help matters at all...
+sub dup_changed_paths {
+	my ($paths) = @_;
+	return undef unless $paths;
+	my %ret;
+	foreach my $p (keys %$paths) {
+		my $i = $paths->{$p};
+		my %s = map { $_ => $i->$_ }
+		              qw/copyfrom_path copyfrom_rev action/;
+		$ret{$p} = \%s;
+	}
+	\%ret;
 }
 
 package Git::SVN::Log;
