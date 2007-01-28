@@ -101,6 +101,37 @@ test_expect_success 'follow deleted directory' "
 	test -z \"\`git ls-tree -z refs/remotes/glob\`\"
 	"
 
+# ref: r9270 of the Subversion repository: (http://svn.collab.net/repos/svn)
+# in trunk/subversion/bindings/swig/perl
+test_expect_success '' "
+	mkdir -p import/trunk/subversion/bindings/swig/perl/t &&
+	for i in a b c ; do \
+	  echo \$i > import/trunk/subversion/bindings/swig/perl/\$i.pm &&
+	  echo _\$i > import/trunk/subversion/bindings/swig/perl/t/\$i.t; \
+	done &&
+	  echo 'bad delete test' > \
+	   import/trunk/subversion/bindings/swig/perl/t/larger-parent &&
+	  echo 'bad delete test 2' > \
+	   import/trunk/subversion/bindings/swig/perl/another-larger &&
+	cd import &&
+	  svn import -m 'r9270 test' . $svnrepo/r9270 &&
+	cd .. &&
+	svn co $svnrepo/r9270/trunk/subversion/bindings/swig/perl r9270 &&
+	cd r9270 &&
+	  svn mkdir native &&
+	  svn mv t native/t &&
+	  for i in a b c; do svn mv \$i.pm native/\$i.pm; done &&
+	  echo z >> native/t/c.t &&
+	  svn commit -m 'reorg test' &&
+	cd .. &&
+	git-svn init -i r9270-t \
+	  $svnrepo/r9270/trunk/subversion/bindings/swig/perl/native/t &&
+	git-svn fetch -i r9270-t --follow-parent &&
+	test \`git rev-list r9270-t | wc -l\` -eq 2 &&
+	test \"\`git ls-tree --name-only r9270-t~1\`\" = \
+	     \"\`git ls-tree --name-only r9270-t\`\"
+	"
+
 test_debug 'gitk --all &'
 
 test_done

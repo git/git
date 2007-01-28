@@ -1153,7 +1153,7 @@ sub find_parent_branch {
 		if ($self->ra->can_do_switch) {
 			print STDERR "Following parent with do_switch\n";
 			# do_switch works with svn/trunk >= r22312, but that
-			# is not included with SVN 1.4.2 (the latest version
+			# is not included with SVN 1.4.3 (the latest version
 			# at the moment), so we can't rely on it
 			$self->{last_commit} = $parent;
 			$ed = SVN::Git::Fetcher->new($self);
@@ -1621,7 +1621,10 @@ sub open_directory {
 
 sub git_path {
 	my ($self, $path) = @_;
-	$path =~ s!$self->{path_strip}!! if $self->{path_strip};
+	if ($self->{path_strip}) {
+		$path =~ s!$self->{path_strip}!! or
+		  die "Failed to strip path '$path' ($self->{path_strip})\n";
+	}
 	$path;
 }
 
@@ -2249,25 +2252,52 @@ sub gs_do_update {
 	my ($self, $rev_a, $rev_b, $path, $recurse, $editor) = @_;
 	my $pool = SVN::Pool->new;
 	$editor->set_path_strip($path);
-	my $reporter = $self->do_update($rev_b, $path, $recurse,
-	                                $editor, $pool);
+	my (@pc) = split m#/#, $path;
+	my $reporter = $self->do_update($rev_b, (@pc ? shift @pc : ''),
+	                                $recurse, $editor, $pool);
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
+
+	# Since we can't rely on svn_ra_reparent being available, we'll
+	# just have to do some magic with set_path to make it so
+	# we only want a partial path.
+	my $sp = '';
+	my $final = join('/', @pc);
+	while (@pc) {
+		$reporter->set_path($sp, $rev_b, 0, @lock, $pool);
+		$sp .= '/' if length $sp;
+		$sp .= shift @pc;
+	}
+	die "BUG: '$sp' != '$final'\n" if ($sp ne $final);
+
 	my $new = ($rev_a == $rev_b);
-	$reporter->set_path('', $rev_a, $new, @lock, $pool);
+	$reporter->set_path($sp, $rev_a, $new, @lock, $pool);
+
 	$reporter->finish_report($pool);
 	$pool->clear;
 	$editor->{git_commit_ok};
 }
 
+# this requires SVN 1.4.3 or later (do_switch didn't work before 1.4.3, and
+# svn_ra_reparent didn't work before 1.4)
 sub gs_do_switch {
 	my ($self, $rev_a, $rev_b, $path, $recurse, $url_b, $editor) = @_;
 	my $pool = SVN::Pool->new;
-	$editor->set_path_strip($path);
-	my $reporter = $self->do_switch($rev_b, $path, $recurse,
-	                                $url_b, $editor, $pool);
+
+	my $full_url = $self->{url};
+	my $old_url = $full_url;
+	$full_url .= "/$path" if length $path;
+	SVN::_Ra::svn_ra_reparent($self->{session}, $full_url, $pool);
+	$self->{url} = $full_url;
+
+	my $reporter = $self->do_switch($rev_b, '',
+	                                $recurse, $url_b, $editor, $pool);
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
 	$reporter->set_path('', $rev_a, 0, @lock, $pool);
 	$reporter->finish_report($pool);
+
+	SVN::_Ra::svn_ra_reparent($self->{session}, $old_url, $pool);
+	$self->{url} = $old_url;
+
 	$pool->clear;
 	$editor->{git_commit_ok};
 }
