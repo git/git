@@ -1003,7 +1003,6 @@ int main(int argc, const char **argv)
 	int arg = 1;
 	int rc = 0;
 
-	setup_ident();
 	setup_git_directory();
 	git_config(git_default_config);
 

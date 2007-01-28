@@ -43,19 +43,13 @@ static void copy_gecos(struct passwd *w, char *name, int sz)
 
 }
 
-int setup_ident(void)
+static void copy_email(struct passwd *pw)
 {
-	int len;
-	struct passwd *pw = getpwuid(getuid());
-
-	if (!pw)
-		die("You don't exist. Go away!");
-
-	/* Get the name ("gecos") */
-	copy_gecos(pw, git_default_name, sizeof(git_default_name));
-
-	/* Make up a fake email address (name + '@' + hostname [+ '.' + domainname]) */
-	len = strlen(pw->pw_name);
+	/*
+	 * Make up a fake email address
+	 * (name + '@' + hostname [+ '.' + domainname])
+	 */
+	int len = strlen(pw->pw_name);
 	if (len > sizeof(git_default_email)/2)
 		die("Your sysadmin must hate you!");
 	memcpy(git_default_email, pw->pw_name, len);
@@ -68,13 +62,37 @@ int setup_ident(void)
 		len = strlen(git_default_email);
 		git_default_email[len++] = '.';
 		if (he && (domainname = strchr(he->h_name, '.')))
-			strlcpy(git_default_email + len, domainname + 1, sizeof(git_default_email) - len);
+			strlcpy(git_default_email + len, domainname + 1,
+				sizeof(git_default_email) - len);
 		else
-			strlcpy(git_default_email + len, "(none)", sizeof(git_default_email) - len);
+			strlcpy(git_default_email + len, "(none)",
+				sizeof(git_default_email) - len);
 	}
+}
+
+static void setup_ident(void)
+{
+	struct passwd *pw = NULL;
+
+	/* Get the name ("gecos") */
+	if (!git_default_name[0]) {
+		pw = getpwuid(getuid());
+		if (!pw)
+			die("You don't exist. Go away!");
+		copy_gecos(pw, git_default_name, sizeof(git_default_name));
+	}
+
+	if (!git_default_email[0]) {
+		if (!pw)
+			pw = getpwuid(getuid());
+		if (!pw)
+			die("You don't exist. Go away!");
+		copy_email(pw);
+	}
+
 	/* And set the default date */
-	datestamp(git_default_date, sizeof(git_default_date));
-	return 0;
+	if (!git_default_date[0])
+		datestamp(git_default_date, sizeof(git_default_date));
 }
 
 static int add_raw(char *buf, int size, int offset, const char *str)
@@ -174,6 +192,7 @@ static const char *get_ident(const char *name, const char *email,
 	char date[50];
 	int i;
 
+	setup_ident();
 	if (!name)
 		name = git_default_name;
 	if (!email)

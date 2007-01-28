@@ -56,7 +56,6 @@ int main(int argc, char **argv)
 	}
 
 	setup_git_directory();
-	setup_ident();
 	val = NULL;
 
 	if (strcmp(argv[1], "-l") == 0) {

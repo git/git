@@ -58,6 +58,10 @@
 	Turn off rename detection, even when the configuration
 	file gives the default to do so.
 
+--check::
+	Warn if changes introduce trailing whitespace
+	or an indent that uses a space before a tab.
+
 --full-index::
 	Instead of the first handful characters, show full
 	object name of pre- and post-image blob on the "index"

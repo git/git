@@ -13,7 +13,6 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 	int i, delete;
 
 	delete = 0;
-	setup_ident();
 	git_config(git_default_config);
 
 	for (i = 1; i < argc; i++) {
