@@ -1182,6 +1182,13 @@ static void get_commit_info(struct commit *commit,
 	summary_buf[len] = 0;
 }
 
+static void write_filename_info(const char *path)
+{
+	printf("filename ");
+	write_name_quoted(NULL, 0, path, 1, stdout);
+	putchar('\n');
+}
+
 static void found_guilty_entry(struct blame_entry *ent)
 {
 	if (ent->guilty)
@@ -1209,9 +1216,7 @@ static void found_guilty_entry(struct blame_entry *ent)
 			if (suspect->commit->object.flags & UNINTERESTING)
 				printf("boundary\n");
 		}
-		printf("filename ");
-		write_name_quoted(NULL, 0, suspect->path, 1, stdout);
-		putchar('\n');
+		write_filename_info(suspect->path);
 	}
 }
 
@@ -1315,13 +1320,13 @@ static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent)
 		printf("committer-mail %s\n", ci.committer_mail);
 		printf("committer-time %lu\n", ci.committer_time);
 		printf("committer-tz %s\n", ci.committer_tz);
-		printf("filename %s\n", suspect->path);
+		write_filename_info(suspect->path);
 		printf("summary %s\n", ci.summary);
 		if (suspect->commit->object.flags & UNINTERESTING)
 			printf("boundary\n");
 	}
 	else if (suspect->commit->object.flags & MORE_THAN_ONE_PATH)
-		printf("filename %s\n", suspect->path);
+		write_filename_info(suspect->path);
 
 	cp = nth_line(sb, ent->lno);
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {
