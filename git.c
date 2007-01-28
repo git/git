@@ -217,7 +217,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "annotate", cmd_annotate, USE_PAGER },
 		{ "apply", cmd_apply },
 		{ "archive", cmd_archive },
-		{ "blame", cmd_blame, RUN_SETUP | USE_PAGER },
+		{ "blame", cmd_blame, RUN_SETUP },
 		{ "branch", cmd_branch, RUN_SETUP },
 		{ "cat-file", cmd_cat_file, RUN_SETUP },
 		{ "checkout-index", cmd_checkout_index, RUN_SETUP },
