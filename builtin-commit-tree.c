@@ -94,7 +94,6 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	unsigned int size;
 	int encoding_is_utf8;
 
-	setup_ident();
 	git_config(git_default_config);
 
 	if (argc < 2)

@@ -394,7 +394,6 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	int kinds = REF_LOCAL_BRANCH;
 	int i;
 
-	setup_ident();
 	git_config(git_branch_config);
 
 	for (i = 1; i < argc; i++) {

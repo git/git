@@ -670,7 +670,6 @@ int main(int argc, char **argv)
 	struct stat st;
 
 	setup_git_directory();
-	setup_ident();
 	git_config(fetch_pack_config);
 
 	if (0 <= transfer_unpack_limit)
