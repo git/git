@@ -1167,6 +1167,7 @@ sub find_parent_branch {
 			                        1, $ed)
 			  or die "SVN connection failed somewhere...\n";
 		}
+		$ed->{new_fetch} = 1;
 		return $self->make_log_entry($rev, [$parent], $ed);
 	}
 not_found:
@@ -1202,6 +1203,7 @@ sub do_fetch {
 			return $log_entry;
 		}
 		$ed = SVN::Git::Fetcher->new($self);
+		$ed->{new_fetch} = 1;
 	}
 	unless ($self->ra->gs_do_update($last_rev, $rev,
 	                                $self->{path}, 1, $ed)) {
@@ -1275,7 +1277,7 @@ sub make_log_entry {
 	my ($self, $rev, $parents, $ed) = @_;
 	my $untracked = $self->get_untracked($ed);
 
-	return undef if ($ed->{nr} == 0 && scalar @$untracked == 0);
+	return undef if (! $ed->{new_fetch} && ! $ed->{nr} && ! @$untracked);
 
 	open my $un, '>>', "$self->{dir}/unhandled.log" or croak $!;
 	print $un "r$rev\n" or croak $!;
