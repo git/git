@@ -1412,10 +1412,82 @@ For more about dangling objects, see <<dangling-objects>>.
 Recovering lost changes
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-TODO:
-	reflog
-	git-fsck
-	low-level examination of objects
+Reflogs
+^^^^^^^
+
+Say you modify a branch with gitlink:git-reset[1] --hard, and then
+realize that the branch was the only reference you had to that point in
+history.
+
+Fortunately, git also keeps a log, called a "reflog", of all the
+previous values of each branch.  So in this case you can still find the
+old history using, for example, 
+
+-------------------------------------------------
+$ git log master@{1}
+-------------------------------------------------
+
+This lists the commits reachable from the previous version of the head.
+This syntax can be used to with any git command that accepts a commit,
+not just with git log.  Some other examples:
+
+-------------------------------------------------
+$ git show master@{2}		# See where the branch pointed 2,
+$ git show master@{3}		# 3, ... changes ago.
+$ gitk master@{yesterday}	# See where it pointed yesterday,
+$ gitk master@{"1 week ago"}	# ... or last week
+-------------------------------------------------
+
+The reflogs are kept by default for 30 days, after which they may be
+pruned.  See gitlink:git-reflink[1] and gitlink:git-gc[1] to learn
+how to control this pruning, and see the "SPECIFYING REVISIONS"
+section of gitlink:git-rev-parse[1] for details.
+
+Note that the reflog history is very different from normal git history.
+While normal history is shared by every repository that works on the
+same project, the reflog history is not shared: it tells you only about
+how the branches in your local repository have changed over time.
+
+Examining dangling objects
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In some situations the reflog may not be able to save you.  For
+example, suppose you delete a branch, then realize you need the history
+it pointed you.  The reflog is also deleted; however, if you have not
+yet pruned the repository, then you may still be able to find
+the lost commits; run git-fsck and watch for output that mentions
+"dangling commits":
+
+-------------------------------------------------
+$ git fsck
+dangling commit 7281251ddd2a61e38657c827739c57015671a6b3
+dangling commit 2706a059f258c6b245f298dc4ff2ccd30ec21a63
+dangling commit 13472b7c4b80851a1bc551779171dcb03655e9b5
+...
+-------------------------------------------------
+
+and watch for output that mentions "dangling commits".  You can examine
+one of those dangling commits with, for example,
+
+------------------------------------------------
+$ gitk 7281251ddd --not --all
+------------------------------------------------
+
+which does what it sounds like: it says that you want to see the commit
+history that is described by the dangling commit(s), but not the
+history that is described by all your existing branches and tags.  Thus
+you get exactly the history reachable from that commit that is lost.
+(And notice that it might not be just one commit: we only report the
+"tip of the line" as being dangling, but there might be a whole deep
+and complex commit history that was gotten dropped.)
+
+If you decide you want the history back, you can always create a new
+reference pointing to it, for example, a new branch:
+
+------------------------------------------------
+$ git branch recovered-branch 7281251ddd 
+------------------------------------------------
+
 
 Sharing development with others
 ===============================
@@ -2756,21 +2828,12 @@ you recover your old tree (say, you did a rebase, and realized that you
 really didn't want to - you can look at what dangling objects you have, 
 and decide to reset your head to some old dangling state).
 
-For commits, the most useful thing to do with dangling objects tends to be 
-to do a simple
+For commits, the most useful thing to do with dangling objects tends to
+be to do a simple
 
 ------------------------------------------------
 $ gitk <dangling-commit-sha-goes-here> --not --all
 ------------------------------------------------
-
-which means exactly what it sounds like: it says that you want to see the 
-commit history that is described by the dangling commit(s), but you do NOT 
-want to see the history that is described by all your branches and tags 
-(which are the things you normally reach). That basically shows you in a 
-nice way what the dangling commit was (and notice that it might not be 
-just one commit: we only report the "tip of the line" as being dangling, 
-but there might be a whole deep and complex commit history that has gotten 
-dropped - rebasing will do that).
 
 For blobs and trees, you can't do the same, but you can examine them. You 
 can just do
