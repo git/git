@@ -692,7 +692,7 @@ Naming commits
 
 We have seen several ways of naming commits already:
 
-	- 40-hexdigit SHA1 id
+	- 40-hexdigit object name
 	- branch name: refers to the commit at the head of the given
 	  branch
 	- tag name: refers to the commit pointed to by the given tag
@@ -705,7 +705,7 @@ gitlink:git-rev-parse[1] man page for the complete list of ways to
 name revisions.  Some examples:
 
 -------------------------------------------------
-$ git show fb47ddb2 # the first few characters of the SHA1 id
+$ git show fb47ddb2 # the first few characters of the object name
 		    # are usually enough to specify it uniquely
 $ git show HEAD^    # the parent of the HEAD commit
 $ git show HEAD^^   # the grandparent
@@ -743,8 +743,8 @@ which refers to the other branch that we're merging in to the current
 branch.
 
 The gitlink:git-rev-parse[1] command is a low-level command that is
-occasionally useful for translating some name for a commit to the SHA1 id for
-that commit:
+occasionally useful for translating some name for a commit to the object
+name for that commit:
 
 -------------------------------------------------
 $ git rev-parse origin
@@ -861,7 +861,7 @@ $ git diff origin..master
 will tell you whether the contents of the project are the same at the
 two branches; in theory, however, it's possible that the same project
 contents could have been arrived at by two different historical
-routes.  You could compare the SHA1 id's:
+routes.  You could compare the object names:
 
 -------------------------------------------------
 $ git rev-list origin
