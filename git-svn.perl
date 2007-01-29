@@ -1135,10 +1135,12 @@ sub find_parent_branch {
 		last if $gs;
 	}
 	unless ($gs) {
-		my $ref_id = $branch_from;
-		$ref_id .= "\@$r" if find_ref($ref_id);
+		my $ref_id = $self->{ref_id};
+		$ref_id =~ s/\@\d+$//;
+		$ref_id .= "\@$r";
 		# just grow a tail if we're not unique enough :x
 		$ref_id .= '-' while find_ref($ref_id);
+		print STDERR "Initializing parent: $ref_id\n";
 		$gs = Git::SVN->init($new_url, '', $ref_id, $ref_id);
 	}
 	my ($r0, $parent) = $gs->find_rev_before($r, 1);

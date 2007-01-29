@@ -30,10 +30,12 @@ test_expect_success 'initialize repo' "
 test_expect_success 'init and fetch --follow-parent a moved directory' "
 	git-svn init -i thunk $svnrepo/thunk &&
 	git-svn fetch --follow-parent -i thunk &&
-	test \"\`git-rev-parse --verify refs/remotes/trunk\`\" \
+	test \"\`git-rev-parse --verify refs/remotes/thunk@2\`\" \
            = \"\`git-rev-parse --verify refs/remotes/thunk~1\`\" &&
         test \"\`git-cat-file blob refs/remotes/thunk:readme |\
-                 sed -n -e '3p'\`\" = goodbye
+                 sed -n -e '3p'\`\" = goodbye &&
+	test -n \"\`git-config --get svn-remote.git-svn.fetch \
+	         '^trunk:refs/remotes/thunk@2$'\`\"
 	"
 
 test_expect_success 'init and fetch from one svn-remote' "
