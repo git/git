@@ -3190,6 +3190,25 @@ proc show_blame {commit path} {
 	$w.out add $w.out.date
 	lappend texts $w.out.date
 
+	text $w.out.filename -background white -borderwidth 0 \
+		-state disabled \
+		-wrap none \
+		-height 40 \
+		-width 20 \
+		-font font_diff
+	$w.out add $w.out.filename
+	lappend texts $w.out.filename
+
+	text $w.out.origlinenumber -background white -borderwidth 0 \
+		-state disabled \
+		-wrap none \
+		-height 40 \
+		-width 5 \
+		-font font_diff
+	$w.out.origlinenumber tag conf linenumber -justify right
+	$w.out add $w.out.origlinenumber
+	lappend texts $w.out.origlinenumber
+
 	text $w.out.linenumber -background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
@@ -3286,7 +3305,9 @@ proc read_blame_catfile {fd w commit path texts w_lno w_file} {
 	}
 }
 
-proc read_blame_incremental {fd w w_commit w_author w_date w_lno w_file} {
+proc read_blame_incremental {fd w
+	w_commit w_author w_date w_filename w_olno
+	w_lno w_file} {
 	global blame_status blame_data
 
 	if {![winfo exists $w_commit]} {
@@ -3297,6 +3318,8 @@ proc read_blame_incremental {fd w w_commit w_author w_date w_lno w_file} {
 	$w_commit conf -state normal
 	$w_author conf -state normal
 	$w_date conf -state normal
+	$w_filename conf -state normal
+	$w_olno conf -state normal
 
 	while {[gets $fd line] >= 0} {
 		if {[regexp {^([a-z0-9]{40}) (\d+) (\d+) (\d+)$} $line line \
@@ -3308,6 +3331,7 @@ proc read_blame_incremental {fd w w_commit w_author w_date w_lno w_file} {
 		} elseif {[string match {filename *} $line]} {
 			set n $blame_data($w,line_count)
 			set lno $blame_data($w,final_line)
+			set ol $blame_data($w,original_line)
 			set file [string range $line 9 end]
 			set commit $blame_data($w,commit)
 			set abbrev [string range $commit 0 8]
@@ -3327,14 +3351,20 @@ proc read_blame_incremental {fd w w_commit w_author w_date w_lno w_file} {
 				$w_commit delete $lno.0 "$lno.0 lineend"
 				$w_author delete $lno.0 "$lno.0 lineend"
 				$w_date delete $lno.0 "$lno.0 lineend"
+				$w_filename delete $lno.0 "$lno.0 lineend"
+				$w_olno delete $lno.0 "$lno.0 lineend"
 
 				$w_commit insert $lno.0 $abbrev
 				$w_author insert $lno.0 $author
 				$w_date insert $lno.0 $atime
+				$w_filename insert $lno.0 $file
+				$w_olno insert $lno.0 $ol linenumber
+
 				set blame_data($w,line$lno,commit) $commit
 
 				incr n -1
 				incr lno
+				incr ol
 			}
 		} elseif {[regexp {^([a-z-]+) (.*)$} $line line header data]} {
 			set blame_data($w,$blame_data($w,commit),$header) $data
@@ -3344,6 +3374,8 @@ proc read_blame_incremental {fd w w_commit w_author w_date w_lno w_file} {
 	$w_commit conf -state disabled
 	$w_author conf -state disabled
 	$w_date conf -state disabled
+	$w_filename conf -state disabled
+	$w_olno conf -state disabled
 
 	if {[eof $fd]} {
 		close $fd
