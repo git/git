@@ -2724,7 +2724,7 @@ you, so is normally the only high-level command you need.
 
 [[dangling-objects]]
 Dangling objects
-^^^^^^^^^^^^^^^^
+----------------
 
 The gitlink:git-fsck[1] command will sometimes complain about dangling
 objects.  They are not a problem.
