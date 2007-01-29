@@ -710,6 +710,8 @@ struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1)
 
 struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1)
 {
+	if (check_ref_format(ref) == -1)
+		return NULL;
 	return lock_ref_sha1_basic(ref, old_sha1, NULL);
 }
 
