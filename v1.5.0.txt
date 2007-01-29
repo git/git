@@ -168,8 +168,18 @@ Updates in v1.5.0 since v1.4.4 series
    accumulated too many small packs this way as well.  Updated
    git-count-objects helps you with this.
 
+ - git-fetch also more agressively keeps the transferred objects
+   packed.  This behaviour of git-push and git-fetch can be
+   tweaked with a single configuration transfer.unpacklimit (but
+   usually there should not be any need for a user to tweak it).
+
  - A new command, git-remote, can help you manage your remote
    tracking branch definitions.
+
+ - You may need to specify explicit paths for upload-pack and/or
+   receive-pack due to your ssh daemon configuration on the
+   other end.  This can now be done via remote.*.uploadpack and
+   remote.*.receivepack configuration.
 
 
 * Bare repositories
@@ -238,6 +248,12 @@ Updates in v1.5.0 since v1.4.4 series
    'git-reflog expire', 'git-pack-refs --prune', and 'git-rerere
    gc'.
 
+ - The output from fsck ("fsck-objects" is called just "fsck"
+   now, but the old name continues to work) was needlessly
+   alarming in that it warned missing objects that are reachable
+   only from dangling objects.  This has been corrected and the
+   output is much more useful.
+
 
 * Detached HEAD
 
@@ -288,6 +304,35 @@ Updates in v1.5.0 since v1.4.4 series
  - configuration related to color setting are consolidated under
    color.* namespace (older diff.color.*, status.color.* are
    still supported).
+
+ - 'git-repo-config' command is accessible as 'git-config' now.
+
+
+* Updated features
+
+ - git-describe uses better criteria to pick a base ref.  It
+   used to pick the one with the newest timestamp, but now it
+   picks the one that is topologically the closest (that is,
+   among ancestors of commit C, the ref T that has the shortest
+   output from "git-rev-list T..C" is chosen).
+
+ - git-describe gives the number of commits since the base ref
+   between the refname and the hash suffix.  E.g. the commit one
+   before v2.6.20-rc6 in the kernel repository is:
+
+	v2.6.20-rc5-306-ga21b069
+
+   which tells you that its object name begins with a21b069,
+   v2.6.20-rc5 is an ancestor of it (meaning, the commit
+   contains everything -rc5 has), and there are 306 commits
+   since v2.6.20-rc5.
+
+ - git-describe with --abbrev=0 can be used to show only the
+   name of the base ref.
+
+ - git-blame learned a new option, --incremental, that tells it
+   to output the blames as they are assigned.  A sample script
+   to use it is also included as contrib/blameview.
 
 
 * Less external dependency
