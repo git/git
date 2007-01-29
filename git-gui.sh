@@ -4401,17 +4401,57 @@ if {[is_MacOSX]} {
 	lappend disable_on_lock \
 		[list .mbar.tools entryconf [.mbar.tools index last] -state]
 	}
+}
 
-	# -- Help Menu
-	#
-	.mbar add cascade -label Help -menu .mbar.help
-	menu .mbar.help
+# -- Help Menu
+#
+.mbar add cascade -label Help -menu .mbar.help
+menu .mbar.help
 
+if {![is_MacOSX]} {
 	.mbar.help add command -label "About [appname]" \
 		-command do_about \
 		-font font_ui
 }
 
+set browser {}
+catch {set browser $repo_config(instaweb.browser)}
+set doc_path [file dirname [exec git --exec-path]]
+set doc_path [file join $doc_path Documentation index.html]
+
+if {[is_Windows]} {
+	set doc_path [exec cygpath --windows $doc_path]
+}
+
+if {$browser eq {}} {
+	if {[is_MacOSX]} {
+		set browser open
+	} elseif {[is_Windows]} {
+		set program_files [file dirname [exec cygpath --windir]]
+		set program_files [file join $program_files {Program Files}]
+		set firefox [file join $program_files {Mozilla Firefox} firefox.exe]
+		set ie [file join $program_files {Internet Explorer} IEXPLORE.EXE]
+		if {[file exists $firefox]} {
+			set browser $firefox
+		} elseif {[file exists $ie]} {
+			set browser $ie
+		}
+		unset program_files firefox ie
+	}
+}
+
+if {[file isfile $doc_path]} {
+	set doc_url "file:$doc_path"
+} else {
+	set doc_url {http://www.kernel.org/pub/software/scm/git/docs/}
+}
+
+if {$browser ne {}} {
+	.mbar.help add command -label {Online Documentation} \
+		-command [list exec $browser $doc_url &] \
+		-font font_ui
+}
+unset browser doc_path doc_url
 
 # -- Branch Control
 #
