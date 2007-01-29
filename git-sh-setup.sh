@@ -29,7 +29,7 @@ set_reflog_action() {
 }
 
 is_bare_repository () {
-	git-repo-config --bool --get core.bare ||
+	git-config --bool --get core.bare ||
 	case "$GIT_DIR" in
 	.git | */.git) echo false ;;
 	*) echo true ;;

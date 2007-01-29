@@ -62,7 +62,7 @@ The values following the equals sign in variable assign are all either
 a string, an integer, or a boolean.  Boolean values may be given as yes/no,
 0/1 or true/false.  Case is not significant in boolean values, when
 converting value to the canonical form using '--bool' type specifier;
-`git-repo-config` will ensure that the output is "true" or "false".
+`git-config` will ensure that the output is "true" or "false".
 
 String values may be entirely or partially enclosed in double quotes.
 You need to enclose variable value in double quotes if you want to

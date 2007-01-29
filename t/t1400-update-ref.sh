@@ -93,8 +93,8 @@ rm -rf .git/$m .git/logs expect
 
 test_expect_success \
 	'enable core.logAllRefUpdates' \
-	'git-repo-config core.logAllRefUpdates true &&
-	 test true = $(git-repo-config --bool --get core.logAllRefUpdates)'
+	'git-config core.logAllRefUpdates true &&
+	 test true = $(git-config --bool --get core.logAllRefUpdates)'
 
 test_expect_success \
 	"create $m (logged by config)" \

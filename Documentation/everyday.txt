@@ -212,12 +212,12 @@ Push into another repository.::
 ------------
 satellite$ git clone mothership:frotz frotz <1>
 satellite$ cd frotz
-satellite$ git repo-config --get-regexp '^(remote|branch)\.' <2>
+satellite$ git config --get-regexp '^(remote|branch)\.' <2>
 remote.origin.url mothership:frotz
 remote.origin.fetch refs/heads/*:refs/remotes/origin/*
 branch.master.remote origin
 branch.master.merge refs/heads/master
-satellite$ git repo-config remote.origin.push \
+satellite$ git config remote.origin.push \
            master:refs/remotes/satellite/master <3>
 satellite$ edit/compile/test/commit
 satellite$ git push origin <4>

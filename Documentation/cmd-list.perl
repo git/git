@@ -144,7 +144,7 @@ git-receive-pack                        synchelpers
 git-reflog                              ancillarymanipulators
 git-relink                              ancillarymanipulators
 git-repack                              ancillarymanipulators
-git-repo-config                         ancillarymanipulators
+git-config                              ancillarymanipulators
 git-request-pull                        foreignscminterface
 git-rerere                              ancillaryinterrogators
 git-reset                               mainporcelain

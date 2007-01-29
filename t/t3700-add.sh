@@ -21,7 +21,7 @@ test_expect_success \
 
 test_expect_success \
 	'git-add: Test that executable bit is not used if core.filemode=0' \
-	'git repo-config core.filemode 0 &&
+	'git config core.filemode 0 &&
 	 echo foo >xfoo1 &&
 	 chmod 755 xfoo1 &&
 	 git-add xfoo1 &&
@@ -32,7 +32,7 @@ test_expect_success \
 
 test_expect_success \
 	'git-update-index --add: Test that executable bit is not used...' \
-	'git repo-config core.filemode 0 &&
+	'git config core.filemode 0 &&
 	 echo foo >xfoo2 &&
 	 chmod 755 xfoo2 &&
 	 git-update-index --add xfoo2 &&
@@ -43,7 +43,7 @@ test_expect_success \
 
 test_expect_success \
 	'git-update-index --add: Test that executable bit is not used...' \
-	'git repo-config core.filemode 0 &&
+	'git config core.filemode 0 &&
 	 ln -s xfoo2 xfoo3 &&
 	 git-update-index --add xfoo3 &&
 	 case "`git-ls-files --stage xfoo3`" in

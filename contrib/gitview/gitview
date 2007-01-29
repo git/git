@@ -497,7 +497,7 @@ class GitView:
 		fp.close()
 
 	def get_encoding(self):
-		fp = os.popen("git repo-config --get i18n.commitencoding")
+		fp = os.popen("git config --get i18n.commitencoding")
 		self.encoding=string.strip(fp.readline())
 		fp.close()
 		if (self.encoding == ""):

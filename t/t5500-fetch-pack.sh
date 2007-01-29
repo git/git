@@ -98,7 +98,7 @@ pull_to_client () {
 	mkdir client &&
 	cd client &&
 	git-init 2>> log2.txt &&
-	git repo-config transfer.unpacklimit 0
+	git config transfer.unpacklimit 0
 )
 
 add A1

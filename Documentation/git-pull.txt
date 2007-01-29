@@ -42,7 +42,7 @@ git pull, git pull origin::
 	current branch.  Normally the branch merged in is
 	the HEAD of the remote repository, but the choice is
 	determined by the branch.<name>.remote and
-	branch.<name>.merge options; see gitlink:git-repo-config[1]
+	branch.<name>.merge options; see gitlink:git-config[1]
 	for details.
 
 git pull origin next::
@@ -94,7 +94,7 @@ gitlink:git-reset[1].
 
 SEE ALSO
 --------
-gitlink:git-fetch[1], gitlink:git-merge[1], gitlink:git-repo-config[1]
+gitlink:git-fetch[1], gitlink:git-merge[1], gitlink:git-config[1]
 
 
 Author

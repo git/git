@@ -64,7 +64,7 @@ sub list_remote {
 	my ($git) = @_;
 	my %seen = ();
 	my @remotes = eval {
-		$git->command(qw(repo-config --get-regexp), '^remote\.');
+		$git->command(qw(config --get-regexp), '^remote\.');
 	};
 	for (@remotes) {
 		if (/^remote\.([^.]*)\.(\S*)\s+(.*)$/) {
@@ -103,7 +103,7 @@ sub list_branch {
 	my ($git) = @_;
 	my %seen = ();
 	my @branches = eval {
-		$git->command(qw(repo-config --get-regexp), '^branch\.');
+		$git->command(qw(config --get-regexp), '^branch\.');
 	};
 	for (@branches) {
 		if (/^branch\.([^.]*)\.(\S*)\s+(.*)$/) {
@@ -238,8 +238,8 @@ sub add_remote {
 		print STDERR "remote $name already exists.\n";
 		exit(1);
 	}
-	$git->command('repo-config', "remote.$name.url", $url);
-	$git->command('repo-config', "remote.$name.fetch",
+	$git->command('config', "remote.$name.url", $url);
+	$git->command('config', "remote.$name.fetch",
 		      "+refs/heads/*:refs/remotes/$name/*");
 }
 

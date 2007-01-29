@@ -15,11 +15,11 @@ case "$GIT_DIR" in
 	fqgitdir="$PWD/$GIT_DIR" ;;
 esac
 
-local="`git repo-config --bool --get instaweb.local`"
-httpd="`git repo-config --get instaweb.httpd`"
-browser="`git repo-config --get instaweb.browser`"
-port=`git repo-config --get instaweb.port`
-module_path="`git repo-config --get instaweb.modulepath`"
+local="`git config --bool --get instaweb.local`"
+httpd="`git config --get instaweb.httpd`"
+browser="`git config --get instaweb.browser`"
+port=`git config --get instaweb.port`
+module_path="`git config --get instaweb.modulepath`"
 
 conf=$GIT_DIR/gitweb/httpd.conf
 

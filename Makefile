@@ -213,7 +213,7 @@ EXTRA_PROGRAMS =
 
 BUILT_INS = \
 	git-format-patch$X git-show$X git-whatchanged$X git-cherry$X \
-	git-get-tar-commit-id$X git-init$X \
+	git-get-tar-commit-id$X git-init$X git-repo-config$X \
 	$(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
 
 # what 'all' will build and 'install' will install, in gitexecdir
@@ -299,7 +299,7 @@ BUILTIN_OBJS = \
 	builtin-push.o \
 	builtin-read-tree.o \
 	builtin-reflog.o \
-	builtin-repo-config.o \
+	builtin-config.o \
 	builtin-rerere.o \
 	builtin-rev-list.o \
 	builtin-rev-parse.o \

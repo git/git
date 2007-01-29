@@ -172,11 +172,11 @@ sub req_Root
        return 0;
     }
 
-    my @gitvars = `git-repo-config -l`;
+    my @gitvars = `git-config -l`;
     if ($?) {
-       print "E problems executing git-repo-config on the server -- this is not a git repository or the PATH is not set correctly.\n";
+       print "E problems executing git-config on the server -- this is not a git repository or the PATH is not set correctly.\n";
         print "E \n";
-        print "error 1 - problem executing git-repo-config\n";
+        print "error 1 - problem executing git-config\n";
        return 0;
     }
     foreach my $line ( @gitvars )
