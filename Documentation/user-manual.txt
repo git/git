@@ -1406,7 +1406,7 @@ This may be time-consuming.  Unlike most other git operations (including git-gc
 when run without any options), it is not safe to prune while other git
 operations are in progress in the same repository.
 
-For more about dangling merges, see <<dangling-merges>>.
+For more about dangling objects, see <<dangling-objects>>.
 
 
 Recovering lost changes
