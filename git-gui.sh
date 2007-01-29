@@ -3163,70 +3163,120 @@ proc show_blame {commit path} {
 		-font font_uibold
 	pack $w.path -anchor w -side top -fill x
 
-	text $w.out.commit -background white -borderwidth 0 \
+	set hbg #e2effa
+	frame $w.out.commit -width 10 -height 10
+	label $w.out.commit.l -text Commit \
+		-background $hbg \
+		-font font_uibold
+	text $w.out.commit.t \
+		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
-		-width 8 \
+		-width 9 \
 		-font font_diff
+	pack $w.out.commit.l -side top -fill x
+	pack $w.out.commit.t -fill both
 	$w.out add $w.out.commit
-	lappend texts $w.out.commit
+	lappend texts $w.out.commit.t
 
-	text $w.out.author -background white -borderwidth 0 \
+	frame $w.out.author -width 10 -height 10
+	label $w.out.author.l -text Author \
+		-background $hbg \
+		-font font_uibold
+	text $w.out.author.t \
+		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
 		-width 20 \
 		-font font_diff
+	pack $w.out.author.l -side top -fill x
+	pack $w.out.author.t -fill both
 	$w.out add $w.out.author
-	lappend texts $w.out.author
+	lappend texts $w.out.author.t
 
-	text $w.out.date -background white -borderwidth 0 \
+	frame $w.out.date -width 10 -height 10
+	label $w.out.date.l -text Date \
+		-background $hbg \
+		-font font_uibold
+	text $w.out.date.t \
+		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
 		-width [string length "yyyy-mm-dd hh:mm:ss"] \
 		-font font_diff
+	pack $w.out.date.l -side top -fill x
+	pack $w.out.date.t -fill both
 	$w.out add $w.out.date
-	lappend texts $w.out.date
+	lappend texts $w.out.date.t
 
-	text $w.out.filename -background white -borderwidth 0 \
+	frame $w.out.filename -width 10 -height 10
+	label $w.out.filename.l -text Filename \
+		-background $hbg \
+		-font font_uibold
+	text $w.out.filename.t \
+		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
 		-width 20 \
 		-font font_diff
+	pack $w.out.filename.l -side top -fill x
+	pack $w.out.filename.t -fill both
 	$w.out add $w.out.filename
-	lappend texts $w.out.filename
+	lappend texts $w.out.filename.t
 
-	text $w.out.origlinenumber -background white -borderwidth 0 \
+	frame $w.out.origlinenumber -width 10 -height 10
+	label $w.out.origlinenumber.l -text {Orig Line} \
+		-background $hbg \
+		-font font_uibold
+	text $w.out.origlinenumber.t \
+		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
 		-width 5 \
 		-font font_diff
-	$w.out.origlinenumber tag conf linenumber -justify right
+	$w.out.origlinenumber.t tag conf linenumber -justify right
+	pack $w.out.origlinenumber.l -side top -fill x
+	pack $w.out.origlinenumber.t -fill both
 	$w.out add $w.out.origlinenumber
-	lappend texts $w.out.origlinenumber
+	lappend texts $w.out.origlinenumber.t
 
-	text $w.out.linenumber -background white -borderwidth 0 \
+	frame $w.out.linenumber -width 10 -height 10
+	label $w.out.linenumber.l -text {Curr Line} \
+		-background $hbg \
+		-font font_uibold
+	text $w.out.linenumber.t \
+		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
 		-width 5 \
 		-font font_diff
-	$w.out.linenumber tag conf linenumber -justify right
+	$w.out.linenumber.t tag conf linenumber -justify right
+	pack $w.out.linenumber.l -side top -fill x
+	pack $w.out.linenumber.t -fill both
 	$w.out add $w.out.linenumber
-	lappend texts $w.out.linenumber
+	lappend texts $w.out.linenumber.t
 
-	text $w.out.file -background white -borderwidth 0 \
+	frame $w.out.file -width 10 -height 10
+	label $w.out.file.l -text {File Content} \
+		-background $hbg \
+		-font font_uibold
+	text $w.out.file.t \
+		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
 		-width 80 \
 		-font font_diff
+	pack $w.out.file.l -side top -fill x
+	pack $w.out.file.t -fill both
 	$w.out add $w.out.file
-	lappend texts $w.out.file
+	lappend texts $w.out.file.t
 
 	label $w.status -textvariable blame_status($w) \
 		-anchor w \
@@ -3236,7 +3286,8 @@ proc show_blame {commit path} {
 		-font font_ui
 	pack $w.status -anchor w -side bottom -fill x
 
-	scrollbar $w.sby -orient v -command [list scrollbar2many $texts yview]
+	scrollbar $w.sby -orient v \
+		-command [list scrollbar2many $texts yview]
 	pack $w.sby -side right -fill y
 	pack $w.out -side left -fill both -expand 1
 
@@ -3249,7 +3300,8 @@ proc show_blame {commit path} {
 		$i tag conf in_sel \
 			-background [$i cget -foreground] \
 			-foreground [$i cget -background]
-		$i conf -yscrollcommand [list many2scrollbar $texts yview $w.sby]
+		$i conf -yscrollcommand \
+			[list many2scrollbar $texts yview $w.sby]
 		bind $i <Button-1> "blame_highlight $i @%x,%y $texts;break"
 		bind_button3 $i "
 			set cursorX %x
@@ -3270,8 +3322,9 @@ proc show_blame {commit path} {
 	set cmd [list git cat-file blob "$commit:$path"]
 	set fd [open "| $cmd" r]
 	fconfigure $fd -blocking 0 -translation lf -encoding binary
-	fileevent $fd readable [list read_blame_catfile $fd $w $commit $path \
-		$texts $w.out.linenumber $w.out.file]
+	fileevent $fd readable [list read_blame_catfile \
+		$fd $w $commit $path \
+		$texts $w.out.linenumber.t $w.out.file.t]
 }
 
 proc read_blame_catfile {fd w commit path texts w_lno w_file} {
