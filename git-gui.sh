@@ -26,7 +26,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA}
 
 set _appname [lindex [file split $argv0] end]
 set _gitdir {}
+set _gitexec {}
 set _reponame {}
+set _iscygwin {}
 
 proc appname {} {
 	global _appname
@@ -41,9 +43,54 @@ proc gitdir {args} {
 	return [eval [concat [list file join $_gitdir] $args]]
 }
 
+proc gitexec {args} {
+	global _gitexec
+	if {$_gitexec eq {}} {
+		if {[catch {set _gitexec [exec git --exec-path]} err]} {
+			error "Git not installed?\n\n$err"
+		}
+	}
+	if {$args eq {}} {
+		return $_gitexec
+	}
+	return [eval [concat [list file join $_gitexec] $args]]
+}
+
 proc reponame {} {
 	global _reponame
 	return $_reponame
+}
+
+proc is_MacOSX {} {
+	global tcl_platform tk_library
+	if {[tk windowingsystem] eq {aqua}} {
+		return 1
+	}
+	return 0
+}
+
+proc is_Windows {} {
+	global tcl_platform
+	if {$tcl_platform(platform) eq {windows}} {
+		return 1
+	}
+	return 0
+}
+
+proc is_Cygwin {} {
+	global tcl_platform _iscygwin
+	if {$_iscygwin eq {}} {
+		if {$tcl_platform(platform) eq {windows}} {
+			if {[catch {set p [exec cygpath --windir]} err]} {
+				set _iscygwin 0
+			} else {
+				set _iscygwin 1
+			}
+		} else {
+			set _iscygwin 0
+		}
+	}
+	return $_iscygwin
 }
 
 ######################################################################
@@ -234,6 +281,9 @@ if {   [catch {set _gitdir $env(GIT_DIR)}]
 	error_popup "Cannot find the git directory:\n\n$err"
 	exit 1
 }
+if {![file isdirectory $_gitdir] && [is_Cygwin]} {
+	catch {set _gitdir [exec cygpath --unix $_gitdir]}
+}
 if {![file isdirectory $_gitdir]} {
 	catch {wm withdraw .}
 	error_popup "Git directory not found:\n\n$_gitdir"
@@ -241,7 +291,7 @@ if {![file isdirectory $_gitdir]} {
 }
 if {[lindex [file split $_gitdir] end] ne {.git}} {
 	catch {wm withdraw .}
-	error_popup "Cannot use funny .git directory:\n\n$gitdir"
+	error_popup "Cannot use funny .git directory:\n\n$_gitdir"
 	exit 1
 }
 if {[catch {cd [file dirname $_gitdir]} err]} {
@@ -1076,7 +1126,7 @@ A good commit message has the following format:
 	# On Cygwin [file executable] might lie so we need to ask
 	# the shell if the hook is executable.  Yes that's annoying.
 	#
-	if {[is_Windows] && [file isfile $pchook]} {
+	if {[is_Cygwin] && [file isfile $pchook]} {
 		set pchook [list sh -c [concat \
 			"if test -x \"$pchook\";" \
 			"then exec \"$pchook\" 2>&1;" \
@@ -1215,7 +1265,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 	# -- Run the post-commit hook.
 	#
 	set pchook [gitdir hooks post-commit]
-	if {[is_Windows] && [file isfile $pchook]} {
+	if {[is_Cygwin] && [file isfile $pchook]} {
 		set pchook [list sh -c [concat \
 			"if test -x \"$pchook\";" \
 			"then exec \"$pchook\";" \
@@ -3020,22 +3070,6 @@ unset i
 ##
 ## util
 
-proc is_MacOSX {} {
-	global tcl_platform tk_library
-	if {[tk windowingsystem] eq {aqua}} {
-		return 1
-	}
-	return 0
-}
-
-proc is_Windows {} {
-	global tcl_platform
-	if {$tcl_platform(platform) eq {windows}} {
-		return 1
-	}
-	return 0
-}
-
 proc bind_button3 {w cmd} {
 	bind $w <Any-Button-3> $cmd
 	if {[is_MacOSX]} {
@@ -3159,10 +3193,10 @@ proc console_init {w} {
 }
 
 proc console_exec {w cmd after} {
-	# -- Windows tosses the enviroment when we exec our child.
+	# -- Cygwin's Tcl tosses the enviroment when we exec our child.
 	#    But most users need that so we have to relogin. :-(
 	#
-	if {[is_Windows]} {
+	if {[is_Cygwin]} {
 		set cmd [list sh --login -c "cd \"[pwd]\" && [join $cmd { }]"]
 	}
 
@@ -3284,19 +3318,27 @@ proc console_done {args} {
 set starting_gitk_msg {Starting gitk... please wait...}
 
 proc do_gitk {revs} {
-	global ui_status_value starting_gitk_msg
+	global env ui_status_value starting_gitk_msg
 
-	set cmd gitk
+	# -- On Windows gitk is severly broken, and right now it seems like
+	#    nobody cares about fixing it.  The only known workaround is to
+	#    always delete ~/.gitk before starting the program.
+	#
+	if {[is_Windows]} {
+		catch {file delete [file join $env(HOME) .gitk]}
+	}
+
+	# -- Always start gitk through whatever we were loaded with.  This
+	#    lets us bypass using shell process on Windows systems.
+	#
+	set cmd [info nameofexecutable]
+	lappend cmd [gitexec gitk]
 	if {$revs ne {}} {
 		append cmd { }
 		append cmd $revs
 	}
-	if {[is_Windows]} {
-		set cmd "sh -c \"exec $cmd\""
-	}
-	append cmd { &}
 
-	if {[catch {eval exec $cmd} err]} {
+	if {[catch {eval exec $cmd &} err]} {
 		error_popup "Failed to start gitk:\n\n$err"
 	} else {
 		set ui_status_value $starting_gitk_msg
@@ -3894,6 +3936,29 @@ proc do_save_config {w} {
 proc do_windows_shortcut {} {
 	global argv0
 
+	set fn [tk_getSaveFile \
+		-parent . \
+		-title "[appname] ([reponame]): Create Desktop Icon" \
+		-initialfile "Git [reponame].bat"]
+	if {$fn != {}} {
+		if {[catch {
+				set fd [open $fn w]
+				puts $fd "@ECHO Entering [reponame]"
+				puts $fd "@ECHO Starting git-gui... please wait..."
+				puts $fd "@SET PATH=[file normalize [gitexec]];%PATH%"
+				puts $fd "@SET GIT_DIR=[file normalize [gitdir]]"
+				puts -nonewline $fd "@\"[info nameofexecutable]\""
+				puts $fd " \"[file normalize $argv0]\""
+				close $fd
+			} err]} {
+			error_popup "Cannot write script:\n\n$err"
+		}
+	}
+}
+
+proc do_cygwin_shortcut {} {
+	global argv0
+
 	if {[catch {
 		set desktop [exec cygpath \
 			--windows \
@@ -3985,7 +4050,7 @@ proc do_macosx_app {} {
 
 				set fd [open $exe w]
 				set gd [file normalize [gitdir]]
-				set ep [file normalize [exec git --exec-path]]
+				set ep [file normalize [gitexec]]
 				regsub -all ' $gd "'\\''" gd
 				regsub -all ' $ep "'\\''" ep
 				puts $fd "#!/bin/sh"
@@ -4211,7 +4276,12 @@ if {!$single_commit} {
 
 	.mbar.repository add separator
 
-	if {[is_Windows]} {
+	if {[is_Cygwin]} {
+		.mbar.repository add command \
+			-label {Create Desktop Icon} \
+			-command do_cygwin_shortcut \
+			-font font_ui
+	} elseif {[is_Windows]} {
 		.mbar.repository add command \
 			-label {Create Desktop Icon} \
 			-command do_windows_shortcut \
@@ -4416,17 +4486,17 @@ if {![is_MacOSX]} {
 
 set browser {}
 catch {set browser $repo_config(instaweb.browser)}
-set doc_path [file dirname [exec git --exec-path]]
+set doc_path [file dirname [gitexec]]
 set doc_path [file join $doc_path Documentation index.html]
 
-if {[is_Windows]} {
+if {[is_Cygwin]} {
 	set doc_path [exec cygpath --windows $doc_path]
 }
 
 if {$browser eq {}} {
 	if {[is_MacOSX]} {
 		set browser open
-	} elseif {[is_Windows]} {
+	} elseif {[is_Cygwin]} {
 		set program_files [file dirname [exec cygpath --windir]]
 		set program_files [file join $program_files {Program Files}]
 		set firefox [file join $program_files {Mozilla Firefox} firefox.exe]
@@ -4988,7 +5058,7 @@ focus -force $ui_comm
 #    does *not* pass its env array onto any processes it spawns.
 #    This means that git processes get none of our environment.
 #
-if {[is_Windows]} {
+if {[is_Cygwin]} {
 	set ignored_env 0
 	set suggest_user {}
 	set msg "Possible environment issues exist.
