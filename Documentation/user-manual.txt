@@ -1450,7 +1450,7 @@ $ git pull
 -------------------------------------------------
 
 See the descriptions of the branch.<name>.remote and
-branch.<name>.merge options in gitlink:git-repo-config[1] to learn
+branch.<name>.merge options in gitlink:git-config[1] to learn
 how to control these defaults depending on the current branch.
 
 In addition to saving you keystrokes, "git pull" also helps you by
@@ -1685,7 +1685,7 @@ $ git push public-repo master
 -------------------------------------------------
 
 See the explanations of the remote.<name>.url, branch.<name>.remote,
-and remote.<name>.push options in gitlink:git-repo-config[1] for
+and remote.<name>.push options in gitlink:git-config[1] for
 details.
 
 Setting up a shared repository
@@ -1999,10 +1999,10 @@ Configuring remote branches
 We saw above that "origin" is just a shortcut to refer to the
 repository which you originally cloned from.  This information is
 stored in git configuration variables, which you can see using
-gitlink:git-repo-config[1]:
+gitlink:git-config[1]:
 
 -------------------------------------------------
-$ git-repo-config -l
+$ git config -l
 core.repositoryformatversion=0
 core.filemode=true
 core.logallrefupdates=true
@@ -2017,7 +2017,7 @@ create similar configuration options to save typing; for example,
 after
 
 -------------------------------------------------
-$ git repo-config remote.example.url git://example.com/proj.git
+$ git config remote.example.url git://example.com/proj.git
 -------------------------------------------------
 
 then the following two commands will do the same thing:
@@ -2030,7 +2030,7 @@ $ git fetch example master:refs/remotes/example/master
 Even better, if you add one more option:
 
 -------------------------------------------------
-$ git repo-config remote.example.fetch master:refs/remotes/example/master
+$ git config remote.example.fetch master:refs/remotes/example/master
 -------------------------------------------------
 
 then the following commands will all do the same thing:
@@ -2045,7 +2045,7 @@ $ git fetch example
 You can also add a "+" to force the update each time:
 
 -------------------------------------------------
-$ git repo-config remote.example.fetch +master:ref/remotes/example/master
+$ git config remote.example.fetch +master:ref/remotes/example/master
 -------------------------------------------------
 
 Don't do this unless you're sure you won't mind "git fetch" possibly
@@ -2053,9 +2053,9 @@ throwing away commits on mybranch.
 
 Also note that all of the above configuration can be performed by
 directly editing the file .git/config instead of using
-gitlink:git-repo-config[1].
+gitlink:git-config[1].
 
-See gitlink:git-repo-config[1] for more details on the configuration
+See gitlink:git-config[1] for more details on the configuration
 options mentioned above.
 
 
