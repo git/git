@@ -3087,7 +3087,8 @@ proc ls_tree {w tree_id name} {
 	lappend browser_stack($w) [list $tree_id $name]
 	$w conf -state disabled
 
-	set fd [open "| git ls-tree -z $tree_id" r]
+	set cmd [list git ls-tree -z $tree_id]
+	set fd [open "| $cmd" r]
 	fconfigure $fd -blocking 0 -translation binary -encoding binary
 	fileevent $fd readable [list read_ls_tree $fd $w]
 }
@@ -3247,7 +3248,8 @@ proc show_blame {commit path} {
 	wm title $w "[appname] ([reponame]): File Viewer"
 
 	set blame_data($w,total_lines) 0
-	set fd [open "| git cat-file blob $commit:$path" r]
+	set cmd [list git cat-file blob "$commit:$path"]
+	set fd [open "| $cmd" r]
 	fconfigure $fd -blocking 0 -translation lf -encoding binary
 	fileevent $fd readable [list read_blame_catfile $fd $w $commit $path \
 		$texts $w.out.linenumber $w.out.file]
