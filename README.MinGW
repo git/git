@@ -51,14 +51,13 @@ This works:
 - Many porcelains, in particular, checkout, add, rm, commit, diff,
   branch, merge, rebase, log, show, bisect, grep...
 - pull, clone, fetch, push via ssh.
-- local pull, clone, fetch, push.
+- Local pull, clone, fetch, push.
 - gitk, if invoked as "wish84 <prefix>\bin\gitk", but there are
   artefacts in its layout.
 
 This does not work:
 
 - pull, clone, fetch, push via native GIT protocol.
-- blame
 - daemon, svn, *import, cvs*
 - and certainly a lot more that I never have found a need to look at.
 
