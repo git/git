@@ -8,8 +8,8 @@ use vars qw/	$AUTHOR $VERSION
 		$GIT_SVN_INDEX $GIT_SVN
 		$GIT_DIR $GIT_SVN_DIR $REVDB
 		$_follow_parent $sha1 $sha1_short $_revision
-		$_cp_remote $_upgrade $_rmdir $_q $_cp_similarity
-		$_find_copies_harder $_l $_authors %users/;
+		$_cp_remote $_upgrade $_q
+		$_authors %users/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
@@ -83,10 +83,10 @@ my %multi_opts = ( 'trunk|T=s' => \$_trunk,
 		'branches|b=s' => \$_branches );
 my %init_opts = ( 'template=s' => \$_template, 'shared' => \$_shared );
 my %cmt_opts = ( 'edit|e' => \$_edit,
-		'rmdir' => \$_rmdir,
-		'find-copies-harder' => \$_find_copies_harder,
-		'l=i' => \$_l,
-		'copy-similarity|C=i'=> \$_cp_similarity
+		'rmdir' => \$SVN::Git::Editor::_rmdir,
+		'find-copies-harder' => \$SVN::Git::Editor::_find_copies_harder,
+		'l=i' => \$SVN::Git::Editor::_rename_limit,
+		'copy-similarity|C=i'=> \$SVN::Git::Editor::_cp_similarity
 );
 
 my %cmd = (
@@ -1559,19 +1559,6 @@ sub _read_password {
 
 package main;
 
-sub uri_encode {
-	my ($f) = @_;
-	$f =~ s#([^a-zA-Z0-9\*!\:_\./\-])#uc sprintf("%%%02x",ord($1))#eg;
-	$f
-}
-
-sub uri_decode {
-	my ($f) = @_;
-	$f =~ tr/+/ /;
-	$f =~ s/%([A-F0-9]{2})/chr hex($1)/ge;
-	$f
-}
-
 {
 	my $kill_stupid_warnings = $SVN::Node::none.$SVN::Node::file.
 				$SVN::Node::dir.$SVN::Node::unknown.
@@ -1806,7 +1793,7 @@ sub close_edit {
 }
 
 package SVN::Git::Editor;
-use vars qw/@ISA/;
+use vars qw/@ISA $_rmdir $_cp_similarity $_find_copies_harder $_rename_limit/;
 use strict;
 use warnings;
 use Carp qw/croak/;
@@ -1846,13 +1833,13 @@ sub new {
 sub generate_diff {
 	my ($tree_a, $tree_b) = @_;
 	my @diff_tree = qw(diff-tree -z -r);
-	if ($::_cp_similarity) {
-		push @diff_tree, "-C$::_cp_similarity";
+	if ($_cp_similarity) {
+		push @diff_tree, "-C$_cp_similarity";
 	} else {
 		push @diff_tree, '-C';
 	}
-	push @diff_tree, '--find-copies-harder' if $::_find_copies_harder;
-	push @diff_tree, "-l$::_l" if defined $::_l;
+	push @diff_tree, '--find-copies-harder' if $_find_copies_harder;
+	push @diff_tree, "-l$_rename_limit" if defined $_rename_limit;
 	push @diff_tree, $tree_a, $tree_b;
 	my ($diff_fh, $ctx) = command_output_pipe(@diff_tree);
 	local $/ = "\0";
@@ -2163,7 +2150,7 @@ sub apply_diff {
 			fatal("Invalid change type: $f\n");
 		}
 	}
-	$self->rmdirs if $::_rmdir;
+	$self->rmdirs if $_rmdir;
 	if (@$mods == 0) {
 		$self->abort_edit;
 	} else {
