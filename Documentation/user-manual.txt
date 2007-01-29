@@ -1465,7 +1465,7 @@ $ gitk master@{"1 week ago"}	# ... or last week
 -------------------------------------------------
 
 The reflogs are kept by default for 30 days, after which they may be
-pruned.  See gitlink:git-reflink[1] and gitlink:git-gc[1] to learn
+pruned.  See gitlink:git-reflog[1] and gitlink:git-gc[1] to learn
 how to control this pruning, and see the "SPECIFYING REVISIONS"
 section of gitlink:git-rev-parse[1] for details.
 
@@ -1580,7 +1580,7 @@ Submitting patches to a project
 If you just have a few changes, the simplest way to submit them may
 just be to send them as patches in email:
 
-First, use gitlink:git-format-patches[1]; for example:
+First, use gitlink:git-format-patch[1]; for example:
 
 -------------------------------------------------
 $ git format-patch origin
