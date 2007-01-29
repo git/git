@@ -1377,8 +1377,8 @@ Ensuring reliability
 Checking the repository for corruption
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The gitlink:git-fsck[1] command runs a number of self-consistency
-checks on the repository, and reports on any problems.  This may take some
+The gitlink:git-fsck[1] command runs a number of self-consistency checks
+on the repository, and reports on any problems.  This may take some
 time.  The most common warning by far is about "dangling" objects:
 
 -------------------------------------------------
@@ -1394,17 +1394,17 @@ dangling tree b24c2473f1fd3d91352a624795be026d64c8841f
 ...
 -------------------------------------------------
 
-Dangling objects are objects that are harmless, but also unnecessary; you can
-remove them at any time with gitlink:git-prune[1] or the --prune option to
-gitlink:git-gc[1]:
+Dangling objects are objects that are harmless, but also unnecessary;
+you can remove them at any time with gitlink:git-prune[1] or the --prune
+option to gitlink:git-gc[1]:
 
 -------------------------------------------------
 $ git gc --prune
 -------------------------------------------------
 
-This may be time-consuming.  Unlike most other git operations (including git-gc
-when run without any options), it is not safe to prune while other git
-operations are in progress in the same repository.
+This may be time-consuming.  Unlike most other git operations (including
+git-gc when run without any options), it is not safe to prune while
+other git operations are in progress in the same repository.
 
 For more about dangling objects, see <<dangling-objects>>.
 
@@ -1537,8 +1537,8 @@ repository that you pulled from.
 <<fast-forwards,fast forward>>; instead, your branch will just be
 updated to point to the latest commit from the upstream branch).
 
-The git-pull command can also be given "." as the "remote" repository, in
-which case it just merges in a branch from the current repository; so
+The git-pull command can also be given "." as the "remote" repository,
+in which case it just merges in a branch from the current repository; so
 the commands
 
 -------------------------------------------------
@@ -2645,13 +2645,13 @@ $ git-cat-file commit <commitname> | head -1
 since the tree object information is always the first line in a commit
 object.
 
-Once you know the three trees you are going to merge (the one
-"original" tree, aka the common case, and the two "result" trees, aka
-the branches you want to merge), you do a "merge" read into the
-index. This will complain if it has to throw away your old index contents, so you should
+Once you know the three trees you are going to merge (the one "original"
+tree, aka the common case, and the two "result" trees, aka the branches
+you want to merge), you do a "merge" read into the index. This will
+complain if it has to throw away your old index contents, so you should
 make sure that you've committed those - in fact you would normally
-always do a merge against your last commit (which should thus match
-what you have in your current index anyway).
+always do a merge against your last commit (which should thus match what
+you have in your current index anyway).
 
 To do the merge, do
 
@@ -2801,32 +2801,34 @@ Dangling objects
 The gitlink:git-fsck[1] command will sometimes complain about dangling
 objects.  They are not a problem.
 
-The most common cause of dangling objects is that you've rebased a branch, or
-you have pulled from somebody else who rebased a branch--see
-<<cleaning-up-history>>.  In that case, the old head of the original branch
-still exists, as does obviously everything it pointed to. The branch pointer
-itself just doesn't, since you replaced it with another one.
+The most common cause of dangling objects is that you've rebased a
+branch, or you have pulled from somebody else who rebased a branch--see
+<<cleaning-up-history>>.  In that case, the old head of the original
+branch still exists, as does obviously everything it pointed to. The
+branch pointer itself just doesn't, since you replaced it with another
+one.
 
-There are also other situations too that cause dangling objects. For example, a
-"dangling blob" may arise because you did a "git add" of a file, but then,
-before you actually committed it and made it part of the bigger picture, you
-changed something else in that file and committed that *updated* thing - the
-old state that you added originally ends up not being pointed to by any
-commit or tree, so it's now a dangling blob object.
+There are also other situations too that cause dangling objects. For
+example, a "dangling blob" may arise because you did a "git add" of a
+file, but then, before you actually committed it and made it part of the
+bigger picture, you changed something else in that file and committed
+that *updated* thing - the old state that you added originally ends up
+not being pointed to by any commit or tree, so it's now a dangling blob
+object.
 
-Similarly, when the "recursive" merge strategy runs, and finds that there 
-are criss-cross merges and thus more than one merge base (which is fairly 
-unusual, but it does happen), it will generate one temporary midway tree 
-(or possibly even more, if you had lots of criss-crossing merges and 
-more than two merge bases) as a temporary internal merge base, and again, 
-those are real objects, but the end result will not end up pointing to 
-them, so they end up "dangling" in your repository.
+Similarly, when the "recursive" merge strategy runs, and finds that
+there are criss-cross merges and thus more than one merge base (which is
+fairly unusual, but it does happen), it will generate one temporary
+midway tree (or possibly even more, if you had lots of criss-crossing
+merges and more than two merge bases) as a temporary internal merge
+base, and again, those are real objects, but the end result will not end
+up pointing to them, so they end up "dangling" in your repository.
 
-Generally, dangling objects aren't anything to worry about. They can even 
-be very useful: if you screw something up, the dangling objects can be how 
-you recover your old tree (say, you did a rebase, and realized that you 
-really didn't want to - you can look at what dangling objects you have, 
-and decide to reset your head to some old dangling state).
+Generally, dangling objects aren't anything to worry about. They can
+even be very useful: if you screw something up, the dangling objects can
+be how you recover your old tree (say, you did a rebase, and realized
+that you really didn't want to - you can look at what dangling objects
+you have, and decide to reset your head to some old dangling state).
 
 For commits, the most useful thing to do with dangling objects tends to
 be to do a simple
@@ -2835,23 +2837,24 @@ be to do a simple
 $ gitk <dangling-commit-sha-goes-here> --not --all
 ------------------------------------------------
 
-For blobs and trees, you can't do the same, but you can examine them. You 
-can just do
+For blobs and trees, you can't do the same, but you can examine them.
+You can just do
 
 ------------------------------------------------
 $ git show <dangling-blob/tree-sha-goes-here>
 ------------------------------------------------
 
-to show what the contents of the blob were (or, for a tree, basically what 
-the "ls" for that directory was), and that may give you some idea of what 
-the operation was that left that dangling object.
+to show what the contents of the blob were (or, for a tree, basically
+what the "ls" for that directory was), and that may give you some idea
+of what the operation was that left that dangling object.
 
-Usually, dangling blobs and trees aren't very interesting. They're almost 
-always the result of either being a half-way mergebase (the blob will 
-often even have the conflict markers from a merge in it, if you have had 
-conflicting merges that you fixed up by hand), or simply because you 
-interrupted a "git fetch" with ^C or something like that, leaving _some_ 
-of the new objects in the object database, but just dangling and useless.
+Usually, dangling blobs and trees aren't very interesting. They're
+almost always the result of either being a half-way mergebase (the blob
+will often even have the conflict markers from a merge in it, if you
+have had conflicting merges that you fixed up by hand), or simply
+because you interrupted a "git fetch" with ^C or something like that,
+leaving _some_ of the new objects in the object database, but just
+dangling and useless.
 
 Anyway, once you are sure that you're not interested in any dangling 
 state, you can just prune all unreachable objects:
@@ -2860,9 +2863,9 @@ state, you can just prune all unreachable objects:
 $ git prune
 ------------------------------------------------
 
-and they'll be gone. But you should only run "git prune" on a quiescent 
-repository - it's kind of like doing a filesystem fsck recovery: you don't 
-want to do that while the filesystem is mounted.
+and they'll be gone. But you should only run "git prune" on a quiescent
+repository - it's kind of like doing a filesystem fsck recovery: you
+don't want to do that while the filesystem is mounted.
 
 (The same is true of "git-fsck" itself, btw - but since 
 git-fsck never actually *changes* the repository, it just reports 
