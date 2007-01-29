@@ -7,7 +7,6 @@ USAGE='[-n] [--no-commit] [--squash] [-s <strategy>] [-m=<merge-message>] <commi
 
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
-set_reflog_action "merge $*"
 require_work_tree
 cd_to_toplevel
 
@@ -262,6 +261,7 @@ head=$(git-rev-parse --verify "$head_arg"^0) || usage
 
 # All the rest are remote heads
 test "$#" = 0 && usage ;# we need at least one remote head.
+set_reflog_action "merge $*"
 
 remoteheads=
 for remote
@@ -278,7 +278,7 @@ case "$use_strategies" in
 '')
 	case "$#" in
 	1)
-		var="`git-repo-config --get pull.twohead`"
+		var="`git-config --get pull.twohead`"
 		if test -n "$var"
 		then
 			use_strategies="$var"
@@ -286,7 +286,7 @@ case "$use_strategies" in
 			use_strategies="$default_twohead_strategies"
 		fi ;;
 	*)
-		var="`git-repo-config --get pull.octopus`"
+		var="`git-config --get pull.octopus`"
 		if test -n "$var"
 		then
 			use_strategies="$var"

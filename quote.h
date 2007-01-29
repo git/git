@@ -55,5 +55,6 @@ extern void write_name_quoted(const char *prefix, int prefix_len,
 /* quoting as a string literal for other languages */
 extern void perl_quote_print(FILE *stream, const char *src);
 extern void python_quote_print(FILE *stream, const char *src);
+extern void tcl_quote_print(FILE *stream, const char *src);
 
 #endif

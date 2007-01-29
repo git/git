@@ -429,7 +429,7 @@ then
 	fi
 elif test "$use_commit" != ""
 then
-	encoding=$(git repo-config i18n.commitencoding || echo UTF-8)
+	encoding=$(git config i18n.commitencoding || echo UTF-8)
 	git show -s --pretty=raw --encoding="$encoding" "$use_commit" |
 	sed -e '1,/^$/d' -e 's/^    //'
 elif test -f "$GIT_DIR/MERGE_MSG"
@@ -485,7 +485,7 @@ then
 		q
 	}
 	'
-	encoding=$(git repo-config i18n.commitencoding || echo UTF-8)
+	encoding=$(git config i18n.commitencoding || echo UTF-8)
 	set_author_env=`git show -s --pretty=raw --encoding="$encoding" "$use_commit" |
 	LANG=C LC_ALL=C sed -ne "$pick_author_script"`
 	eval "$set_author_env"

@@ -17,7 +17,7 @@ reachable_via() {
 }
 
 test_valid_repo() {
-	git fsck-objects --full > fsck.log &&
+	git fsck --full > fsck.log &&
 	test `wc -l < fsck.log` = 0
 }
 

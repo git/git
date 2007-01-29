@@ -13,7 +13,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-This runs `git-fsck-objects --unreachable` using all the refs
+This runs `git-fsck --unreachable` using all the refs
 available in `$GIT_DIR/refs`, optionally with additional set of
 objects specified on the command line, and prunes all
 objects unreachable from any of these head objects from the object database.

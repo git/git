@@ -82,7 +82,7 @@ size> + <byte\0> + <binary object data>.
 
 The structured objects can further have their structure and
 connectivity to other objects verified. This is generally done with
-the `git-fsck-objects` program, which generates a full dependency graph
+the `git-fsck` program, which generates a full dependency graph
 of all objects, and verifies their internal consistency (in addition
 to just verifying their superficial consistency through the hash).
 

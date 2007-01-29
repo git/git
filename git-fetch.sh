@@ -85,6 +85,12 @@ case "$#" in
 	set x $origin ; shift ;;
 esac
 
+if test -z "$exec"
+then
+	# No command line override and we have configuration for the remote.
+	exec="--upload-pack=$(get_uploadpack $1)"
+fi
+
 remote_nick="$1"
 remote=$(get_remote_url "$@")
 refs=
@@ -315,7 +321,7 @@ fetch_main () {
 	      curl_extra_args="-k"
 	  fi
 	  if [ -n "$GIT_CURL_FTP_NO_EPSV" -o \
-		"`git-repo-config --bool http.noEPSV`" = true ]; then
+		"`git-config --bool http.noEPSV`" = true ]; then
 	      noepsv_opt="--disable-epsv"
 	  fi
 

@@ -421,9 +421,6 @@ int main(int argc, char **argv)
 	if (is_repository_shallow())
 		die("attempt to push into a shallow repository");
 
-	setup_ident();
-	/* don't die if gecos is empty */
-	ignore_missing_committer_name();
 	git_config(receive_pack_config);
 
 	if (0 <= transfer_unpack_limit)

@@ -156,9 +156,9 @@ then
 	if test -n "$oldbranch"
 	then
 		detach_warn="warning: you are not on ANY branch anymore.
-If you meant to create a new branch from the commit, you need -b to
-associate a new branch with the wanted checkout.  Example:
-  git checkout -b <new_branch_name> $arg"
+If you meant to create a new branch from this checkout, you may still do
+so (now or later) by using -b with the checkout command again.  Example:
+  git checkout -b <new_branch_name>"
 	fi
 elif test -z "$oldbranch" && test -n "$branch"
 then
@@ -257,7 +257,7 @@ if [ "$?" -eq 0 ]; then
 	fi
 	if test -n "$branch"
 	then
-		GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD "refs/heads/$branch"
+		GIT_DIR="$GIT_DIR" git-symbolic-ref -m "checkout: moving to $branch" HEAD "refs/heads/$branch"
 	elif test -n "$detached"
 	then
 		# NEEDSWORK: we would want a command to detach the HEAD
@@ -266,8 +266,9 @@ if [ "$?" -eq 0 ]; then
 		#	git update-ref --detach HEAD $new
 		# or something like that...
 		#
-		echo "$detached" >"$GIT_DIR/HEAD.new" &&
-		mv "$GIT_DIR/HEAD.new" "$GIT_DIR/HEAD" ||
+		git-rev-parse HEAD >"$GIT_DIR/HEAD.new" &&
+		mv "$GIT_DIR/HEAD.new" "$GIT_DIR/HEAD" &&
+		git-update-ref -m "checkout: moving to $arg" HEAD "$detached" ||
 			die "Cannot detach HEAD"
 		if test -n "$detach_warn"
 		then

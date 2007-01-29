@@ -20,7 +20,7 @@ check_have () {
 }
 
 check_fsck () {
-	output=$(git fsck-objects --full)
+	output=$(git fsck --full)
 	case "$1" in
 	'')
 		test -z "$output" ;;
@@ -71,7 +71,7 @@ test_expect_success setup '
 	check_fsck &&
 
 	chmod +x C &&
-	( test "`git repo-config --bool core.filemode`" != false ||
+	( test "`git config --bool core.filemode`" != false ||
 	  echo executable >>C ) &&
 	git add C &&
 	test_tick && git commit -m dragon &&

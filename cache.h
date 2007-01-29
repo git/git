@@ -303,7 +303,7 @@ extern int read_ref(const char *filename, unsigned char *sha1);
 extern const char *resolve_ref(const char *path, unsigned char *sha1, int, int *);
 extern int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
 
-extern int create_symref(const char *ref, const char *refs_heads_master);
+extern int create_symref(const char *ref, const char *refs_heads_master, const char *logmsg);
 extern int validate_headref(const char *ref);
 
 extern int base_name_compare(const char *name1, int len1, int mode1, const char *name2, int len2, int mode2);
@@ -320,8 +320,6 @@ int parse_date(const char *date, char *buf, int bufsize);
 void datestamp(char *buf, int bufsize);
 unsigned long approxidate(const char *);
 
-extern int setup_ident(void);
-extern void ignore_missing_committer_name(void);
 extern const char *git_author_info(int);
 extern const char *git_committer_info(int);
 

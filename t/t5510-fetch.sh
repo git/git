@@ -22,14 +22,14 @@ test_expect_success "clone and setup child repos" '
 	cd .. &&
 	git clone . two &&
 	cd two &&
-	git repo-config branch.master.remote one &&
-	git repo-config remote.one.url ../one/.git/ &&
-	git repo-config remote.one.fetch refs/heads/master:refs/heads/one &&
+	git config branch.master.remote one &&
+	git config remote.one.url ../one/.git/ &&
+	git config remote.one.fetch refs/heads/master:refs/heads/one &&
 	cd .. &&
 	git clone . three &&
 	cd three &&
-	git repo-config branch.master.remote two &&
-	git repo-config branch.master.merge refs/heads/one &&
+	git config branch.master.remote two &&
+	git config branch.master.merge refs/heads/one &&
 	mkdir -p .git/remotes &&
 	{
 		echo "URL: ../two/.git/"

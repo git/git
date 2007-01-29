@@ -352,7 +352,7 @@ static void get_patch_ids(struct rev_info *rev, struct diff_options *options, co
 
 static void gen_message_id(char *dest, unsigned int length, char *base)
 {
-	const char *committer = git_committer_info(1);
+	const char *committer = git_committer_info(-1);
 	const char *email_start = strrchr(committer, '<');
 	const char *email_end = strrchr(committer, '>');
 	if(!email_start || !email_end || email_start > email_end - 1)
@@ -380,7 +380,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	char message_id[1024];
 	char ref_message_id[1024];
 
-	setup_ident();
 	git_config(git_format_config);
 	init_revisions(&rev, prefix);
 	rev.commit_format = CMIT_FMT_EMAIL;

@@ -28,7 +28,7 @@ test_expect_success \
     'git-diff-files -p >current'
 
 # that's as far as it comes
-if [ "$(git repo-config --get core.filemode)" = false ]
+if [ "$(git config --get core.filemode)" = false ]
 then
 	say 'filemode disabled on the filesystem'
 	test_done

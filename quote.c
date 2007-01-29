@@ -387,3 +387,37 @@ void python_quote_print(FILE *stream, const char *src)
 	}
 	fputc(sq, stream);
 }
+
+void tcl_quote_print(FILE *stream, const char *src)
+{
+	char c;
+
+	fputc('"', stream);
+	while ((c = *src++)) {
+		switch (c) {
+		case '[': case ']':
+		case '{': case '}':
+		case '$': case '\\': case '"':
+			fputc('\\', stream);
+		default:
+			fputc(c, stream);
+			break;
+		case '\f':
+			fputs("\\f", stream);
+			break;
+		case '\r':
+			fputs("\\r", stream);
+			break;
+		case '\n':
+			fputs("\\n", stream);
+			break;
+		case '\t':
+			fputs("\\t", stream);
+			break;
+		case '\v':
+			fputs("\\v", stream);
+			break;
+		}
+	}
+	fputc('"', stream);
+}

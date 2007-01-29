@@ -7,7 +7,7 @@ git-symbolic-ref - Read and modify symbolic refs
 
 SYNOPSIS
 --------
-'git-symbolic-ref' [-q] <name> [<ref>]
+'git-symbolic-ref' [-q] [-m <reason>] <name> [<ref>]
 
 DESCRIPTION
 -----------
@@ -30,6 +30,10 @@ OPTIONS
 	Do not issue an error message if the <name> is not a
 	symbolic ref but a detached HEAD; instead exit with
 	non-zero status silently.
+
+-m::
+	Update the reflog for <name> with <reason>.  This is valid only
+	when creating or updating a symbolic ref.
 
 NOTES
 -----

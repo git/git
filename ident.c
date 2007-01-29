@@ -45,22 +45,13 @@ static void copy_gecos(struct passwd *w, char *name, int sz)
 
 }
 
-#endif
-
-int setup_ident(void)
+static void copy_email(struct passwd *pw)
 {
-#ifndef NO_ETC_PASSWD
-	int len;
-	struct passwd *pw = getpwuid(getuid());
-
-	if (!pw)
-		die("You don't exist. Go away!");
-
-	/* Get the name ("gecos") */
-	copy_gecos(pw, git_default_name, sizeof(git_default_name));
-
-	/* Make up a fake email address (name + '@' + hostname [+ '.' + domainname]) */
-	len = strlen(pw->pw_name);
+	/*
+	 * Make up a fake email address
+	 * (name + '@' + hostname [+ '.' + domainname])
+	 */
+	int len = strlen(pw->pw_name);
 	if (len > sizeof(git_default_email)/2)
 		die("Your sysadmin must hate you!");
 	memcpy(git_default_email, pw->pw_name, len);
@@ -73,14 +64,41 @@ int setup_ident(void)
 		len = strlen(git_default_email);
 		git_default_email[len++] = '.';
 		if (he && (domainname = strchr(he->h_name, '.')))
-			strlcpy(git_default_email + len, domainname + 1, sizeof(git_default_email) - len);
+			strlcpy(git_default_email + len, domainname + 1,
+				sizeof(git_default_email) - len);
 		else
-			strlcpy(git_default_email + len, "(none)", sizeof(git_default_email) - len);
+			strlcpy(git_default_email + len, "(none)",
+				sizeof(git_default_email) - len);
+	}
+}
+
+#endif
+
+static void setup_ident(void)
+{
+#ifndef NO_ETC_PASSWD
+	struct passwd *pw = NULL;
+
+	/* Get the name ("gecos") */
+	if (!git_default_name[0]) {
+		pw = getpwuid(getuid());
+		if (!pw)
+			die("You don't exist. Go away!");
+		copy_gecos(pw, git_default_name, sizeof(git_default_name));
+	}
+
+	if (!git_default_email[0]) {
+		if (!pw)
+			pw = getpwuid(getuid());
+		if (!pw)
+			die("You don't exist. Go away!");
+		copy_email(pw);
 	}
 #endif
+
 	/* And set the default date */
-	datestamp(git_default_date, sizeof(git_default_date));
-	return 0;
+	if (!git_default_date[0])
+		datestamp(git_default_date, sizeof(git_default_date));
 }
 
 static int add_raw(char *buf, int size, int offset, const char *str)
@@ -166,8 +184,8 @@ static const char *env_hint =
 "\n"
 "Run\n"
 "\n"
-"  git repo-config user.email \"you@email.com\"\n"
-"  git repo-config user.name \"Your Name\"\n"
+"  git config user.email \"you@email.com\"\n"
+"  git config user.name \"Your Name\"\n"
 "\n"
 "To set the identity in this repository.\n"
 "Add --global to set your account\'s default\n"
@@ -180,18 +198,35 @@ static const char *get_ident(const char *name, const char *email,
 	char date[50];
 	int i;
 
+	setup_ident();
 	if (!name)
 		name = git_default_name;
 	if (!email)
 		email = git_default_email;
 
 	if (!*name) {
-		if (name == git_default_name && env_hint) {
+#ifndef NO_ETC_PASSWD
+		struct passwd *pw;
+#endif
+
+		if (0 <= error_on_no_name &&
+		    name == git_default_name && env_hint) {
 			fprintf(stderr, env_hint, au_env, co_env);
 			env_hint = NULL; /* warn only once, for "git-var -l" */
 		}
-		if (error_on_no_name)
+		if (0 < error_on_no_name)
 			die("empty ident %s <%s> not allowed", name, email);
+#ifndef NO_ETC_PASSWD
+		pw = getpwuid(getuid());
+		if (!pw)
+			die("You don't exist. Go away!");
+		strlcpy(git_default_name, pw->pw_name,
+			sizeof(git_default_name));
+#else
+		strlcpy(git_default_name, "unknown",
+			sizeof(git_default_name));
+#endif
+		name = git_default_name;
 	}
 
 	strcpy(date, git_default_date);
@@ -224,29 +259,3 @@ const char *git_committer_info(int error_on_no_name)
 			 getenv("GIT_COMMITTER_DATE"),
 			 error_on_no_name);
 }
-
-#ifndef NO_ETC_PASSWD
-
-void ignore_missing_committer_name()
-{
-	/* If we did not get a name from the user's gecos entry then
-	 * git_default_name is empty; so instead load the username
-	 * into it as a 'good enough for now' approximation of who
-	 * this user is.
-	 */
-	if (!*git_default_name) {
-		struct passwd *pw = getpwuid(getuid());
-		if (!pw)
-			die("You don't exist. Go away!");
-		strlcpy(git_default_name, pw->pw_name, sizeof(git_default_name));
-	}
-}
-
-#else
-
-void ignore_missing_committer_name()
-{
-	strcpy(git_default_name, "unknown");
-}
-
-#endif

@@ -3,7 +3,7 @@
 
 struct ref_lock {
 	char *ref_name;
-	char *log_file;
+	char *orig_ref_name;
 	struct lock_file *lk;
 	unsigned char old_sha1[20];
 	int lock_fd;

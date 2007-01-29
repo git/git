@@ -6193,7 +6193,7 @@ set wrcomcmd "git diff-tree --stdin -p --pretty"
 
 set gitencoding {}
 catch {
-    set gitencoding [exec git repo-config --get i18n.commitencoding]
+    set gitencoding [exec git config --get i18n.commitencoding]
 }
 if {$gitencoding == ""} {
     set gitencoding "utf-8"

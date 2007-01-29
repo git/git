@@ -205,7 +205,7 @@ To check whether all is OK, do:
 Now, add the remote in your existing repository which contains the project
 you want to export:
 
-   $ git-repo-config remote.upload.url \
+   $ git-config remote.upload.url \
        http://<username>@<servername>/my-new-repo.git/
 
 It is important to put the last '/'; Without it, the server will send
@@ -222,7 +222,7 @@ From your client repository, do
 
 This pushes branch 'master' (which is assumed to be the branch you
 want to export) to repository called 'upload', which we previously
-defined with git-repo-config.
+defined with git-config.
 
 
 Troubleshooting:

@@ -233,7 +233,7 @@ void show_reflog_message(struct reflog_walk_info* info, int oneline)
 			else
 				printf("%d", commit_reflog->reflogs->nr
 				       - 2 - commit_reflog->recno);
-			printf("}: ");
+			printf("}: %s", info->message);
 		}
 		else {
 			printf("Reflog: %s@{", commit_reflog->reflogs->ref);

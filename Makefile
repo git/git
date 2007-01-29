@@ -193,7 +193,7 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
-	git-fetch-pack$X git-fsck-objects$X \
+	git-fetch-pack$X git-fsck$X \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-patch-id$X \
 	git-peek-remote$X git-receive-pack$X \
@@ -212,7 +212,8 @@ EXTRA_PROGRAMS =
 
 BUILT_INS = \
 	git-format-patch$X git-show$X git-whatchanged$X git-cherry$X \
-	git-get-tar-commit-id$X git-init$X \
+	git-get-tar-commit-id$X git-init$X git-repo-config$X \
+	git-fsck-objects$X \
 	$(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
 
 # what 'all' will build and 'install' will install, in gitexecdir
@@ -300,7 +301,7 @@ BUILTIN_OBJS = \
 	builtin-push.o \
 	builtin-read-tree.o \
 	builtin-reflog.o \
-	builtin-repo-config.o \
+	builtin-config.o \
 	builtin-rerere.o \
 	builtin-rev-list.o \
 	builtin-rev-parse.o \

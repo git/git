@@ -145,7 +145,7 @@ __git_remotes ()
 		echo ${i#$d/remotes/}
 	done
 	[ "$ngoff" ] && shopt -u nullglob
-	for i in $(git --git-dir="$d" repo-config --list); do
+	for i in $(git --git-dir="$d" config --list); do
 		case "$i" in
 		remote.*.url=*)
 			i="${i#remote.}"
@@ -286,7 +286,7 @@ __git_commandlist="$(__git_commands 2>/dev/null)"
 __git_aliases ()
 {
 	local i IFS=$'\n'
-	for i in $(git --git-dir="$(__gitdir)" repo-config --list); do
+	for i in $(git --git-dir="$(__gitdir)" config --list); do
 		case "$i" in
 		alias.*)
 			i="${i#alias.}"
@@ -299,7 +299,7 @@ __git_aliases ()
 __git_aliased_command ()
 {
 	local word cmdline=$(git --git-dir="$(__gitdir)" \
-		repo-config --get "alias.$1")
+		config --get "alias.$1")
 	for word in $cmdline; do
 		if [ "${word##-*}" ]; then
 			echo $word
@@ -629,7 +629,7 @@ _git_rebase ()
 	COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
 }
 
-_git_repo_config ()
+_git_config ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	local prv="${COMP_WORDS[COMP_CWORD-1]}"
@@ -806,6 +806,7 @@ _git ()
 	checkout)    _git_checkout ;;
 	cherry-pick) _git_cherry_pick ;;
 	commit)      _git_commit ;;
+	config)      _git_config ;;
 	diff)        _git_diff ;;
 	diff-tree)   _git_diff_tree ;;
 	fetch)       _git_fetch ;;
@@ -819,7 +820,7 @@ _git ()
 	pull)        _git_pull ;;
 	push)        _git_push ;;
 	rebase)      _git_rebase ;;
-	repo-config) _git_repo_config ;;
+	repo-config) _git_config ;;
 	reset)       _git_reset ;;
 	show)        _git_show ;;
 	show-branch) _git_log ;;
@@ -856,7 +857,7 @@ complete -o default            -F _git_name_rev git-name-rev
 complete -o default -o nospace -F _git_pull git-pull
 complete -o default -o nospace -F _git_push git-push
 complete -o default            -F _git_rebase git-rebase
-complete -o default            -F _git_repo_config git-repo-config
+complete -o default            -F _git_config git-config
 complete -o default            -F _git_reset git-reset
 complete -o default -o nospace -F _git_show git-show
 complete -o default -o nospace -F _git_log git-show-branch
@@ -879,7 +880,7 @@ complete -o default -o nospace -F _git_ls_tree git-ls-tree.exe
 complete -o default            -F _git_merge_base git-merge-base.exe
 complete -o default            -F _git_name_rev git-name-rev.exe
 complete -o default -o nospace -F _git_push git-push.exe
-complete -o default            -F _git_repo_config git-repo-config
+complete -o default            -F _git_config git-config
 complete -o default -o nospace -F _git_show git-show.exe
 complete -o default -o nospace -F _git_log git-show-branch.exe
 complete -o default -o nospace -F _git_log git-whatchanged.exe

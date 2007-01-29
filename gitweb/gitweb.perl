@@ -986,7 +986,7 @@ sub git_get_project_config {
 	$key =~ s/^gitweb\.//;
 	return if ($key =~ m/\W/);
 
-	my @x = (git_cmd(), 'repo-config');
+	my @x = (git_cmd(), 'config');
 	if (defined $type) { push @x, $type; }
 	push @x, "--get";
 	push @x, "gitweb.$key";

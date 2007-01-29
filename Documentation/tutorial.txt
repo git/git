@@ -16,8 +16,8 @@ public email address before doing any operation.  The easiest
 way to do so is:
 
 ------------------------------------------------
-$ git repo-config --global user.name "Your Name Comes Here"
-$ git repo-config --global user.email you@yourdomain.example.com
+$ git config --global user.name "Your Name Comes Here"
+$ git config --global user.email you@yourdomain.example.com
 ------------------------------------------------
 
 
@@ -353,12 +353,12 @@ repository in the repository configuration, and that location is
 used for pulls:
 
 -------------------------------------
-$ git repo-config --get remote.origin.url
+$ git config --get remote.origin.url
 /home/bob/myrepo
 -------------------------------------
 
 (The complete configuration created by git-clone is visible using
-"git repo-config -l", and the gitlink:git-repo-config[1] man page
+"git config -l", and the gitlink:git-config[1] man page
 explains the meaning of each option.)
 
 Git also keeps a pristine copy of Alice's master branch under the

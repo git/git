@@ -81,7 +81,7 @@ prev=$(git-rev-parse --verify "$commit^1" 2>/dev/null) ||
 git-rev-parse --verify "$commit^2" >/dev/null 2>&1 &&
 	die "Cannot run $me a multi-parent commit."
 
-encoding=$(git repo-config i18n.commitencoding || echo UTF-8)
+encoding=$(git config i18n.commitencoding || echo UTF-8)
 
 # "commit" is an existing commit.  We would want to apply
 # the difference it introduces since its first parent "prev"

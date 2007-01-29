@@ -24,7 +24,7 @@ link:everyday.html[Everyday Git] for a useful minimum set of commands, and
 also want to read link:cvs-migration.html[CVS migration].
 
 The COMMAND is either a name of a Git command (see below) or an alias
-as defined in the configuration file (see gitlink:git-repo-config[1]).
+as defined in the configuration file (see gitlink:git-config[1]).
 
 OPTIONS
 -------
