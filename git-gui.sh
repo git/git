@@ -3309,6 +3309,8 @@ proc show_blame {commit path} {
 		"
 	}
 
+	set blame_data($w,colors) {}
+
 	bind $w <Visibility> "focus $w"
 	bind $w <Destroy> "
 		array unset blame_status $w
@@ -3366,6 +3368,15 @@ proc read_blame_incremental {fd w
 		return
 	}
 
+	set all [list \
+		$w_commit \
+		$w_author \
+		$w_date \
+		$w_filename \
+		$w_olno \
+		$w_lno \
+		$w_file]
+
 	$w_commit conf -state normal
 	$w_author conf -state normal
 	$w_date conf -state normal
@@ -3374,36 +3385,65 @@ proc read_blame_incremental {fd w
 
 	while {[gets $fd line] >= 0} {
 		if {[regexp {^([a-z0-9]{40}) (\d+) (\d+) (\d+)$} $line line \
-			commit original_line final_line line_count]} {
-			set blame_data($w,commit) $commit
+			cmit original_line final_line line_count]} {
+			set blame_data($w,commit) $cmit
 			set blame_data($w,original_line) $original_line
 			set blame_data($w,final_line) $final_line
 			set blame_data($w,line_count) $line_count
+
+			if {[catch {set g $blame_data($w,$cmit,seen)}]} {
+				if {$blame_data($w,colors) eq {}} {
+					set blame_data($w,colors) {
+						yellow
+						red
+						pink
+						orange
+						green
+						grey
+					}
+				}
+				set c [lindex $blame_data($w,colors) 0]
+				set blame_data($w,colors) \
+					[lrange $blame_data($w,colors) 1 end]
+				foreach t $all {
+					$t tag conf g$cmit -background $c
+				}
+			} else {
+				set blame_data($w,$cmit,seen) 1
+			}
 		} elseif {[string match {filename *} $line]} {
 			set n $blame_data($w,line_count)
 			set lno $blame_data($w,final_line)
 			set ol $blame_data($w,original_line)
 			set file [string range $line 9 end]
-			set commit $blame_data($w,commit)
-			set abbrev [string range $commit 0 8]
+			set cmit $blame_data($w,commit)
+			set abbrev [string range $cmit 0 8]
 
-			if {[catch {set author $blame_data($w,$commit,author)} err]} {
-			puts $err
+			if {[catch {set author $blame_data($w,$cmit,author)} err]} {
 				set author {}
 			}
 
-			if {[catch {set atime $blame_data($w,$commit,author-time)}]} {
+			if {[catch {set atime $blame_data($w,$cmit,author-time)}]} {
 				set atime {}
 			} else {
 				set atime [clock format $atime -format {%Y-%m-%d %T}]
 			}
 
 			while {$n > 0} {
-				$w_commit delete $lno.0 "$lno.0 lineend"
-				$w_author delete $lno.0 "$lno.0 lineend"
-				$w_date delete $lno.0 "$lno.0 lineend"
-				$w_filename delete $lno.0 "$lno.0 lineend"
-				$w_olno delete $lno.0 "$lno.0 lineend"
+				if {![catch {set g g$blame_data($w,line$lno,commit)}]} {
+					foreach t $all {
+						$t tag remove $g $lno.0 "$lno.0 lineend + 1c"
+					}
+				}
+
+				foreach t [list \
+					$w_commit \
+					$w_author \
+					$w_date \
+					$w_filename \
+					$w_olno] {
+					$t delete $lno.0 "$lno.0 lineend"
+				}
 
 				$w_commit insert $lno.0 $abbrev
 				$w_author insert $lno.0 $author
@@ -3411,7 +3451,12 @@ proc read_blame_incremental {fd w
 				$w_filename insert $lno.0 $file
 				$w_olno insert $lno.0 $ol linenumber
 
-				set blame_data($w,line$lno,commit) $commit
+				set g g$cmit
+				foreach t $all {
+					$t tag add $g $lno.0 "$lno.0 lineend + 1c"
+				}
+
+				set blame_data($w,line$lno,commit) $cmit
 
 				incr n -1
 				incr lno
