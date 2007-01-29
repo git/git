@@ -933,11 +933,37 @@ actually is an ancestor of v1.5.0-rc1.
 Alternatively, note that
 
 -------------------------------------------------
-$ git log v1.5.0-rc1..305db0fd
+$ git log v1.5.0-rc1..e05db0fd
 -------------------------------------------------
 
-will produce empty output if and only if v1.5.0-rc1 includes 305db0fd,
+will produce empty output if and only if v1.5.0-rc1 includes e05db0fd,
 because it outputs only commits that are not reachable from v1.5.0-rc1.
+
+As yet another alternative, the gitlink:git-show-branch[1] command lists
+the commits reachable from its arguments with a display on the left-hand
+side that indicates which arguments that commit is reachable from.  So,
+you can run something like
+
+-------------------------------------------------
+$ git show-branch e05db0fd v1.5.0-rc0 v1.5.0-rc1 v1.5.0-rc2
+! [e05db0fd] Fix warnings in sha1_file.c - use C99 printf format if
+available
+ ! [v1.5.0-rc0] GIT v1.5.0 preview
+  ! [v1.5.0-rc1] GIT v1.5.0-rc1
+   ! [v1.5.0-rc2] GIT v1.5.0-rc2
+...
+-------------------------------------------------
+
+then search for a line that looks like
+
+-------------------------------------------------
++ ++ [e05db0fd] Fix warnings in sha1_file.c - use C99 printf format if
+available
+-------------------------------------------------
+
+Which shows that e05db0fd is reachable from itself, from v1.5.0-rc1, and
+from v1.5.0-rc2, but not from v1.5.0-rc0.
+
 
 Developing with git
 ===================
