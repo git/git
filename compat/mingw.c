@@ -81,10 +81,26 @@ int mkstemp (char *__template)
 		return -1;
 	return open(filename, O_RDWR | O_CREAT);
 }
+
 int gettimeofday(struct timeval *tv, void *tz)
 {
-	return -1;
+	extern time_t my_mktime(struct tm *tm);
+	SYSTEMTIME st;
+	struct tm tm;
+	GetSystemTime(&st);
+	tm.tm_year = st.wYear-1900;
+	tm.tm_mon = st.wMonth-1;
+	tm.tm_mday = st.wDay;
+	tm.tm_hour = st.wHour;
+	tm.tm_min = st.wMinute;
+	tm.tm_sec = st.wSecond;
+	tv->tv_sec = my_mktime(&tm);
+	if (tv->tv_sec < 0)
+		return -1;
+	tv->tv_usec = st.wMilliseconds*1000;
+	return 0;
 }
+
 int pipe(int filedes[2])
 {
 	int fd;
