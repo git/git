@@ -601,9 +601,10 @@ $ cat .git/config
 ...
 -------------------------------------------------
 
-This is what causes git to track the remote's branches; you may
-modify or delete these configuration options by editing .git/config
-with a text editor.
+This is what causes git to track the remote's branches; you may modify
+or delete these configuration options by editing .git/config with a
+text editor.  (See the "CONFIGURATION FILE" section of
+gitlink:git-config[1] for details.)
 
 Exploring git history
 =====================
@@ -954,6 +955,9 @@ $ cat >~/.gitconfig <<\EOF
 	email = you@yourdomain.example.com
 EOF
 ------------------------------------------------
+
+(See the "CONFIGURATION FILE" section of gitlink:git-config[1] for
+details on the configuration file.)
 
 
 Creating a new repository
