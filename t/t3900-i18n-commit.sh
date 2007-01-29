@@ -29,7 +29,7 @@ test_expect_success 'no encoding header for base case' '
 for H in ISO-8859-1 EUCJP ISO-2022-JP
 do
 	test_expect_success "$H setup" '
-		git-repo-config i18n.commitencoding $H &&
+		git-config i18n.commitencoding $H &&
 		git-checkout -b $H C0 &&
 		echo $H >F &&
 		git-commit -a -F ../t3900/$H.txt
@@ -44,16 +44,16 @@ do
 	'
 done
 
-test_expect_success 'repo-config to remove customization' '
-	git-repo-config --unset-all i18n.commitencoding &&
-	if Z=$(git-repo-config --get-all i18n.commitencoding)
+test_expect_success 'config to remove customization' '
+	git-config --unset-all i18n.commitencoding &&
+	if Z=$(git-config --get-all i18n.commitencoding)
 	then
 		echo Oops, should have failed.
 		false
 	else
 		test z = "z$Z"
 	fi &&
-	git-repo-config i18n.commitencoding utf-8
+	git-config i18n.commitencoding utf-8
 '
 
 test_expect_success 'ISO-8859-1 should be shown in UTF-8 now' '
@@ -67,9 +67,9 @@ do
 	'
 done
 
-test_expect_success 'repo-config to add customization' '
-	git-repo-config --unset-all i18n.commitencoding &&
-	if Z=$(git-repo-config --get-all i18n.commitencoding)
+test_expect_success 'config to add customization' '
+	git-config --unset-all i18n.commitencoding &&
+	if Z=$(git-config --get-all i18n.commitencoding)
 	then
 		echo Oops, should have failed.
 		false
@@ -81,13 +81,13 @@ test_expect_success 'repo-config to add customization' '
 for H in ISO-8859-1 EUCJP ISO-2022-JP
 do
 	test_expect_success "$H should be shown in itself now" '
-		git-repo-config i18n.commitencoding '$H' &&
+		git-config i18n.commitencoding '$H' &&
 		compare_with '$H' ../t3900/'$H'.txt
 	'
 done
 
-test_expect_success 'repo-config to tweak customization' '
-	git-repo-config i18n.logoutputencoding utf-8
+test_expect_success 'config to tweak customization' '
+	git-config i18n.logoutputencoding utf-8
 '
 
 test_expect_success 'ISO-8859-1 should be shown in UTF-8 now' '
@@ -103,7 +103,7 @@ done
 
 for J in EUCJP ISO-2022-JP
 do
-	git-repo-config i18n.logoutputencoding $J
+	git-config i18n.logoutputencoding $J
 	for H in EUCJP ISO-2022-JP
 	do
 		test_expect_success "$H should be shown in $J now" '

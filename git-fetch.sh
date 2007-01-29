@@ -321,7 +321,7 @@ fetch_main () {
 	      curl_extra_args="-k"
 	  fi
 	  if [ -n "$GIT_CURL_FTP_NO_EPSV" -o \
-		"`git-repo-config --bool http.noEPSV`" = true ]; then
+		"`git-config --bool http.noEPSV`" = true ]; then
 	      noepsv_opt="--disable-epsv"
 	  fi
 

@@ -278,7 +278,7 @@ case "$use_strategies" in
 '')
 	case "$#" in
 	1)
-		var="`git-repo-config --get pull.twohead`"
+		var="`git-config --get pull.twohead`"
 		if test -n "$var"
 		then
 			use_strategies="$var"
@@ -286,7 +286,7 @@ case "$use_strategies" in
 			use_strategies="$default_twohead_strategies"
 		fi ;;
 	*)
-		var="`git-repo-config --get pull.octopus`"
+		var="`git-config --get pull.octopus`"
 		if test -n "$var"
 		then
 			use_strategies="$var"

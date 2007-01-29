@@ -36,7 +36,7 @@ clone_dumb_http () {
 	clone_tmp="$GIT_DIR/clone-tmp" &&
 	mkdir -p "$clone_tmp" || exit 1
 	if [ -n "$GIT_CURL_FTP_NO_EPSV" -o \
-		"`git-repo-config --bool http.noEPSV`" = true ]; then
+		"`git-config --bool http.noEPSV`" = true ]; then
 		curl_extra_args="${curl_extra_args} --disable-epsv"
 	fi
 	http_fetch "$1/info/refs" "$clone_tmp/refs" ||
@@ -386,17 +386,17 @@ then
 		git-update-ref HEAD "$head_sha1" &&
 
 		# Upstream URL
-		git-repo-config remote."$origin".url "$repo" &&
+		git-config remote."$origin".url "$repo" &&
 
 		# Set up the mappings to track the remote branches.
-		git-repo-config remote."$origin".fetch \
+		git-config remote."$origin".fetch \
 			"+refs/heads/*:$remote_top/*" '^$' &&
 		rm -f "refs/remotes/$origin/HEAD"
 		git-symbolic-ref "refs/remotes/$origin/HEAD" \
 			"refs/remotes/$origin/$head_points_at" &&
 
-		git-repo-config branch."$head_points_at".remote "$origin" &&
-		git-repo-config branch."$head_points_at".merge "refs/heads/$head_points_at"
+		git-config branch."$head_points_at".remote "$origin" &&
+		git-config branch."$head_points_at".merge "refs/heads/$head_points_at"
 	esac
 
 	case "$no_checkout" in

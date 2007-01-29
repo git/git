@@ -21,7 +21,7 @@ given will be ignored when checking which packs are required. This makes the
 following command useful when wanting to remove packs which contain unreachable
 objects.
 
-git-fsck-objects --full --unreachable | cut -d ' ' -f3 | \
+git-fsck --full --unreachable | cut -d ' ' -f3 | \
 git-pack-redundant --all | xargs rm
 
 OPTIONS

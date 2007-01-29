@@ -36,7 +36,7 @@ them first before running git pull.
 ================================
 The `pull` command knows where to get updates from because of certain
 configuration variables that were set by the first `git clone`
-command; see `git repo-config -l` and the gitlink:git-repo-config[1] man
+command; see `git config -l` and the gitlink:git-config[1] man
 page for details.
 ================================
 

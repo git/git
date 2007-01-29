@@ -482,14 +482,14 @@ sub wc_chdir {
 
 =item config ( VARIABLE )
 
-Retrieve the configuration C<VARIABLE> in the same manner as C<repo-config>
+Retrieve the configuration C<VARIABLE> in the same manner as C<config>
 does. In scalar context requires the variable to be set only one time
 (exception is thrown otherwise), in array context returns allows the
 variable to be set multiple times and returns all the values.
 
 Must be called on a repository instance.
 
-This currently wraps command('repo-config') so it is not so fast.
+This currently wraps command('config') so it is not so fast.
 
 =cut
 
@@ -500,9 +500,9 @@ sub config {
 
 	try {
 		if (wantarray) {
-			return $self->command('repo-config', '--get-all', $var);
+			return $self->command('config', '--get-all', $var);
 		} else {
-			return $self->command_oneline('repo-config', '--get', $var);
+			return $self->command_oneline('config', '--get', $var);
 		}
 	} catch Git::Error::Command with {
 		my $E = shift;

@@ -15,7 +15,7 @@ test_expect_success \
      tree=`git-write-tree` &&
      echo $tree'
 
-if [ "$(git repo-config --get core.filemode)" = false ]
+if [ "$(git config --get core.filemode)" = false ]
 then
 	say 'filemode disabled on the filesystem, using update-index --chmod=+x'
 	test_expect_success \

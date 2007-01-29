@@ -593,7 +593,7 @@ sub multi_init {
 				      "$trunk_url ($_trunk)\n";
 			}
 			init($trunk_url);
-			command_noisy('repo-config', 'svn.trunk', $trunk_url);
+			command_noisy('config', 'svn.trunk', $trunk_url);
 		}
 	}
 	$_prefix = '' unless defined $_prefix;
@@ -772,22 +772,22 @@ sub log_use_color {
 	return 1 if $_color;
 	my ($dc, $dcvar);
 	$dcvar = 'color.diff';
-	$dc = `git-repo-config --get $dcvar`;
+	$dc = `git-config --get $dcvar`;
 	if ($dc eq '') {
 		# nothing at all; fallback to "diff.color"
 		$dcvar = 'diff.color';
-		$dc = `git-repo-config --get $dcvar`;
+		$dc = `git-config --get $dcvar`;
 	}
 	chomp($dc);
 	if ($dc eq 'auto') {
 		my $pc;
-		$pc = `git-repo-config --get color.pager`;
+		$pc = `git-config --get color.pager`;
 		if ($pc eq '') {
 			# does not have it -- fallback to pager.color
-			$pc = `git-repo-config --bool --get pager.color`;
+			$pc = `git-config --bool --get pager.color`;
 		}
 		else {
-			$pc = `git-repo-config --bool --get color.pager`;
+			$pc = `git-config --bool --get color.pager`;
 			if ($?) {
 				$pc = 'false';
 			}
@@ -800,7 +800,7 @@ sub log_use_color {
 	}
 	return 0 if $dc eq 'never';
 	return 1 if $dc eq 'always';
-	chomp($dc = `git-repo-config --bool --get $dcvar`);
+	chomp($dc = `git-config --bool --get $dcvar`);
 	return ($dc eq 'true');
 }
 
@@ -919,7 +919,7 @@ sub complete_url_ls_init {
 	waitpid $pid, 0;
 	croak $? if $?;
 	my ($n) = ($switch =~ /^--(\w+)/);
-	command_noisy('repo-config', "svn.$n", $full_url);
+	command_noisy('config', "svn.$n", $full_url);
 }
 
 sub common_prefix {
@@ -1594,7 +1594,7 @@ sub init_vars {
 	%tree_map = ();
 }
 
-# convert GetOpt::Long specs for use by git-repo-config
+# convert GetOpt::Long specs for use by git-config
 sub read_repo_config {
 	return unless -d $GIT_DIR;
 	my $opts = shift;
@@ -1602,7 +1602,7 @@ sub read_repo_config {
 		my $v = $opts->{$o};
 		my ($key) = ($o =~ /^([a-z\-]+)/);
 		$key =~ s/-//g;
-		my $arg = 'git-repo-config';
+		my $arg = 'git-config';
 		$arg .= ' --int' if ($o =~ /[:=]i$/);
 		$arg .= ' --bool' if ($o !~ /[:=][sfi]$/);
 		if (ref $v eq 'ARRAY') {

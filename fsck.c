@@ -606,7 +606,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (*arg == '-')
-			usage("git-fsck-objects [--tags] [--root] [[--unreachable] [--cache] [--full] [--strict] <head-sha1>*]");
+			usage("git-fsck [--tags] [--root] [[--unreachable] [--cache] [--full] [--strict] <head-sha1>*]");
 	}
 
 	fsck_head_link();

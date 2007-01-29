@@ -106,7 +106,7 @@ export HOME ;# this way we force the victim/.git/config to be used.
 test_expect_success \
         'pushing with --force should be denied with denyNonFastforwards' '
 	cd victim &&
-	git-repo-config receive.denyNonFastforwards true &&
+	git-config receive.denyNonFastforwards true &&
 	cd .. &&
 	git-update-ref refs/heads/master master^ &&
 	git-send-pack --force ./victim/.git/ master &&

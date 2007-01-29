@@ -62,7 +62,7 @@ The values following the equals sign in variable assign are all either
 a string, an integer, or a boolean.  Boolean values may be given as yes/no,
 0/1 or true/false.  Case is not significant in boolean values, when
 converting value to the canonical form using '--bool' type specifier;
-`git-repo-config` will ensure that the output is "true" or "false".
+`git-config` will ensure that the output is "true" or "false".
 
 String values may be entirely or partially enclosed in double quotes.
 You need to enclose variable value in double quotes if you want to
@@ -250,10 +250,15 @@ color.branch.<slot>::
 	Use customized color for branch coloration. `<slot>` is one of
 	`current` (the current branch), `local` (a local branch),
 	`remote` (a tracking branch in refs/remotes/), `plain` (other
-	refs), or `reset` (the normal terminal color).  The value for
-	these configuration variables can be one of: `normal`, `bold`,
-	`dim`, `ul`, `blink`, `reverse`, `reset`, `black`, `red`,
-	`green`, `yellow`, `blue`, `magenta`, `cyan`, or `white`.
+	refs).
++
+The value for these configuration variables is a list of colors (at most
+two) and attributes (at most one), separated by spaces.  The colors
+accepted are `normal`, `black`, `red`, `green`, `yellow`, `blue`,
+`magenta`, `cyan` and `white`; the attributes are `bold`, `dim`, `ul`,
+`blink` and `reverse`.  The first color given is the foreground; the
+second is the background.  The position of the attribute, if any,
+doesn't matter.
 
 color.diff::
 	When true (or `always`), always use colors in patch.
@@ -261,12 +266,13 @@ color.diff::
 	colors only when the output is to the terminal.
 
 color.diff.<slot>::
-	Use customized color for diff colorization.  `<slot>`
-	specifies which part of the patch to use the specified
-	color, and is one of `plain` (context text), `meta`
-	(metainformation), `frag` (hunk header), `old` (removed
-	lines), or `new` (added lines).  The values of these
-	variables may be specified as in color.branch.<slot>.
+	Use customized color for diff colorization.  `<slot>` specifies
+	which part of the patch to use the specified color, and is one
+	of `plain` (context text), `meta` (metainformation), `frag`
+	(hunk header), `old` (removed lines), `new` (added lines),
+	`commit` (commit headers), or `whitespace` (highlighting dubious
+	whitespace).  The values of these variables may be specified as
+	in color.branch.<slot>.
 
 color.pager::
 	A boolean to enable/disable colored output when the pager is in
