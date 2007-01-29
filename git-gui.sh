@@ -2951,13 +2951,13 @@ proc reset_hard_wait {fd} {
 
 set next_browser_id 0
 
-proc new_browser {} {
+proc new_browser {commit} {
 	global next_browser_id cursor_ptr
 	global browser_commit browser_status browser_stack browser_path browser_busy
 
 	set w .browser[incr next_browser_id]
 	set w_list $w.list.l
-	set browser_commit($w_list) HEAD
+	set browser_commit($w_list) $commit
 	set browser_status($w_list) {Starting...}
 	set browser_stack($w_list) {}
 	set browser_path($w_list) $browser_commit($w_list):
@@ -4714,7 +4714,7 @@ menu .mbar.repository
 
 .mbar.repository add command \
 	-label {Browse Current Branch} \
-	-command new_browser \
+	-command {new_browser $current_branch} \
 	-font font_ui
 .mbar.repository add separator
 
