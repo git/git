@@ -1784,11 +1784,6 @@ Examples
 TODO: topic branches, typical roles as in everyday.txt, ?
 
 
-Working with other version control systems
-==========================================
-
-TODO: CVS, Subversion, series-of-release-tarballs, etc.
-
 [[cleaning-up-history]]
 Rewriting history and maintaining patch series
 ==============================================
@@ -2902,7 +2897,6 @@ everything in between.
 
 Scan Documentation/ for other stuff left out; in particular:
 	howto's
-	README
 	some of technical/?
 	hooks
 	etc.
@@ -2926,6 +2920,9 @@ standard end-of-chapter section?
 
 Include cross-references to the glossary, where appropriate.
 
-To document:
-	reflogs, git reflog expire
-	shallow clones??  See draft 1.5.0 release notes for some documentation.
+Document shallow clones?  See draft 1.5.0 release notes for some
+documentation.
+
+Add a sectin on working with other version control systems, including
+CVS, Subversion, and just imports of series of release tarballs.
+
