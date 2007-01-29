@@ -284,6 +284,7 @@ BUILTIN_OBJS = \
 	builtin-diff-tree.o \
 	builtin-fmt-merge-msg.o \
 	builtin-for-each-ref.o \
+	builtin-fsck.o \
 	builtin-grep.o \
 	builtin-init-db.o \
 	builtin-log.o \
