@@ -442,8 +442,11 @@ fi | git-stripspace >"$GIT_DIR"/COMMIT_EDITMSG
 
 case "$signoff" in
 t)
+	need_blank_before_signoff=
+	tail -n 1 "$GIT_DIR"/COMMIT_EDITMSG |
+	grep 'Signed-off-by:' >/dev/null || need_blank_before_signoff=yes
 	{
-		echo
+		test -z "$need_blank_before_signoff" || echo
 		git-var GIT_COMMITTER_IDENT | sed -e '
 			s/>.*/>/
 			s/^/Signed-off-by: /
