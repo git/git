@@ -4270,6 +4270,9 @@ proc do_options {} {
 
 	set optid 0
 	foreach option {
+		{t user.name {User Name}}
+		{t user.email {Email Address}}
+
 		{b merge.summary {Summarize Merge Commits}}
 		{i-1..5 merge.verbosity {Merge Verbosity}}
 
@@ -4676,6 +4679,9 @@ proc apply_config {} {
 
 set default_config(merge.summary) false
 set default_config(merge.verbosity) 2
+set default_config(user.name) {}
+set default_config(user.email) {}
+
 set default_config(gui.trustmtime) false
 set default_config(gui.diffcontext) 5
 set default_config(gui.newbranchtemplate) {}
