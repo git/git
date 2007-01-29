@@ -42,6 +42,7 @@ git-findtags
 git-fmt-merge-msg
 git-for-each-ref
 git-format-patch
+git-fsck
 git-fsck-objects
 git-gc
 git-get-tar-commit-id

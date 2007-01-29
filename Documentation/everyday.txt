@@ -28,7 +28,7 @@ Everybody uses these commands to maintain git repositories.
   * gitlink:git-init[1] or gitlink:git-clone[1] to create a
     new repository.
 
-  * gitlink:git-fsck-objects[1] to check the repository for errors.
+  * gitlink:git-fsck[1] to check the repository for errors.
 
   * gitlink:git-prune[1] to remove unused objects in the repository.
 
@@ -43,7 +43,7 @@ Examples
 Check health and remove cruft.::
 +
 ------------
-$ git fsck-objects <1>
+$ git fsck <1>
 $ git count-objects <2>
 $ git repack <3>
 $ git gc <4>

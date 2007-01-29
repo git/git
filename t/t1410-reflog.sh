@@ -20,7 +20,7 @@ check_have () {
 }
 
 check_fsck () {
-	output=$(git fsck-objects --full)
+	output=$(git fsck --full)
 	case "$1" in
 	'')
 		test -z "$output" ;;
