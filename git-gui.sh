@@ -3276,7 +3276,9 @@ proc read_blame_catfile {fd w commit path texts w_lno w_file} {
 	if {[eof $fd]} {
 		close $fd
 		set blame_status($w) {Loading annotations...}
-		set fd [open "| git blame --incremental $commit -- $path" r]
+		set cmd [list git blame -M -C --incremental]
+		lappend cmd $commit -- $path
+		set fd [open "| $cmd" r]
 		fconfigure $fd -blocking 0 -translation lf -encoding binary
 		fileevent $fd readable "read_blame_incremental $fd $w $texts"
 	}
