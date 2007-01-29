@@ -238,7 +238,7 @@ Repository maintenance
 Check for corruption:
 
 -----------------------------------------------
-$ git fsck-objects
+$ git fsck
 -----------------------------------------------
 
 Recompress, remove unused cruft:
@@ -1373,12 +1373,12 @@ Ensuring reliability
 Checking the repository for corruption
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The gitlink:git-fsck-objects[1] command runs a number of self-consistency
+The gitlink:git-fsck[1] command runs a number of self-consistency
 checks on the repository, and reports on any problems.  This may take some
 time.  The most common warning by far is about "dangling" objects:
 
 -------------------------------------------------
-$ git fsck-objects
+$ git fsck
 dangling commit 7281251ddd2a61e38657c827739c57015671a6b3
 dangling commit 2706a059f258c6b245f298dc4ff2ccd30ec21a63
 dangling commit 13472b7c4b80851a1bc551779171dcb03655e9b5
@@ -2126,7 +2126,7 @@ size> + <byte\0> + <binary object data>.
 
 The structured objects can further have their structure and
 connectivity to other objects verified. This is generally done with
-the `git-fsck-objects` program, which generates a full dependency graph
+the `git-fsck` program, which generates a full dependency graph
 of all objects, and verifies their internal consistency (in addition
 to just verifying their superficial consistency through the hash).
 
@@ -2722,7 +2722,7 @@ you, so is normally the only high-level command you need.
 Dangling objects
 ^^^^^^^^^^^^^^^^
 
-The gitlink:git-fsck-objects[1] command will sometimes complain about dangling
+The gitlink:git-fsck[1] command will sometimes complain about dangling
 objects.  They are not a problem.
 
 The most common cause of dangling objects is that you've rebased a branch, or
@@ -2797,9 +2797,9 @@ and they'll be gone. But you should only run "git prune" on a quiescent
 repository - it's kind of like doing a filesystem fsck recovery: you don't 
 want to do that while the filesystem is mounted.
 
-(The same is true of "git-fsck-objects" itself, btw - but since 
-git-fsck-objects never actually *changes* the repository, it just reports 
-on what it found, git-fsck-objects itself is never "dangerous" to run. 
+(The same is true of "git-fsck" itself, btw - but since 
+git-fsck never actually *changes* the repository, it just reports 
+on what it found, git-fsck itself is never "dangerous" to run. 
 Running it while somebody is actually changing the repository can cause 
 confusing and scary messages, but it won't actually do anything bad. In 
 contrast, running "git prune" while somebody is actively changing the 
