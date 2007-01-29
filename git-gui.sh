@@ -2947,6 +2947,431 @@ proc reset_hard_wait {fd} {
 
 ######################################################################
 ##
+## browser
+
+set next_browser_id 0
+
+proc new_browser {} {
+	global next_browser_id cursor_ptr
+	global browser_commit browser_status browser_stack browser_path browser_busy
+
+	set w .browser[incr next_browser_id]
+	set w_list $w.list.l
+	set browser_commit($w_list) HEAD
+	set browser_status($w_list) {Starting...}
+	set browser_stack($w_list) {}
+	set browser_path($w_list) $browser_commit($w_list):
+	set browser_busy($w_list) 1
+
+	toplevel $w
+	label $w.path -textvariable browser_path($w_list) \
+		-anchor w \
+		-justify left \
+		-borderwidth 1 \
+		-relief sunken \
+		-font font_uibold
+	pack $w.path -anchor w -side top -fill x
+
+	frame $w.list
+	text $w_list -background white -borderwidth 0 \
+		-cursor $cursor_ptr \
+		-state disabled \
+		-wrap none \
+		-height 20 \
+		-width 70 \
+		-xscrollcommand [list $w.list.sbx set] \
+		-yscrollcommand [list $w.list.sby set] \
+		-font font_ui
+	$w_list tag conf in_sel \
+		-background [$w_list cget -foreground] \
+		-foreground [$w_list cget -background]
+	scrollbar $w.list.sbx -orient h -command [list $w_list xview]
+	scrollbar $w.list.sby -orient v -command [list $w_list yview]
+	pack $w.list.sbx -side bottom -fill x
+	pack $w.list.sby -side right -fill y
+	pack $w_list -side left -fill both -expand 1
+	pack $w.list -side top -fill both -expand 1
+
+	label $w.status -textvariable browser_status($w_list) \
+		-anchor w \
+		-justify left \
+		-borderwidth 1 \
+		-relief sunken \
+		-font font_ui
+	pack $w.status -anchor w -side bottom -fill x
+
+	bind $w_list <Button-1>        "browser_click 0 $w_list @%x,%y;break"
+	bind $w_list <Double-Button-1> "browser_click 1 $w_list @%x,%y;break"
+
+	bind $w <Visibility> "focus $w"
+	bind $w <Destroy> "
+		array unset browser_buffer $w_list
+		array unset browser_files $w_list
+		array unset browser_status $w_list
+		array unset browser_stack $w_list
+		array unset browser_path $w_list
+		array unset browser_commit $w_list
+		array unset browser_busy $w_list
+	"
+	wm title $w "[appname] ([reponame]): File Browser"
+	ls_tree $w_list $browser_commit($w_list) {}
+}
+
+proc browser_click {was_double_click w pos} {
+	global browser_files browser_status browser_path
+	global browser_commit browser_stack browser_busy
+
+	if {$browser_busy($w)} return
+	set lno [lindex [split [$w index $pos] .] 0]
+	set info [lindex $browser_files($w) [expr {$lno - 1}]]
+
+	$w conf -state normal
+	$w tag remove sel 0.0 end
+	$w tag remove in_sel 0.0 end
+	if {$info ne {}} {
+		$w tag add in_sel $lno.0 [expr {$lno + 1}].0
+		if {$was_double_click} {
+			switch -- [lindex $info 0] {
+			parent {
+				set parent [lindex $browser_stack($w) end-1]
+				set browser_stack($w) [lrange $browser_stack($w) 0 end-2]
+				if {$browser_stack($w) eq {}} {
+					regsub {:.*$} $browser_path($w) {:} browser_path($w)
+				} else {
+					regsub {/[^/]+$} $browser_path($w) {} browser_path($w)
+				}
+				set browser_status($w) "Loading $browser_path($w)..."
+				ls_tree $w [lindex $parent 0] [lindex $parent 1]
+			}
+			tree {
+				set name [lindex $info 2]
+				set escn [escape_path $name]
+				set browser_status($w) "Loading $escn..."
+				append browser_path($w) $escn
+				ls_tree $w [lindex $info 1] $name
+			}
+			blob {
+				set name [lindex $info 2]
+				set p {}
+				foreach n $browser_stack($w) {
+					append p [lindex $n 1]
+				}
+				append p $name
+				show_blame $browser_commit($w) $p
+			}
+			}
+		}
+	}
+	$w conf -state disabled
+}
+
+proc ls_tree {w tree_id name} {
+	global browser_buffer browser_files browser_stack browser_busy
+
+	set browser_buffer($w) {}
+	set browser_files($w) {}
+	set browser_busy($w) 1
+
+	$w conf -state normal
+	$w tag remove in_sel 0.0 end
+	$w tag remove sel 0.0 end
+	$w delete 0.0 end
+	if {$browser_stack($w) ne {}} {
+		$w image create end \
+			-align center -padx 5 -pady 1 \
+			-name icon0 \
+			-image file_uplevel
+		$w insert end {[Up To Parent]}
+		lappend browser_files($w) parent
+	}
+	lappend browser_stack($w) [list $tree_id $name]
+	$w conf -state disabled
+
+	set fd [open "| git ls-tree -z $tree_id" r]
+	fconfigure $fd -blocking 0 -translation binary -encoding binary
+	fileevent $fd readable [list read_ls_tree $fd $w]
+}
+
+proc read_ls_tree {fd w} {
+	global browser_buffer browser_files browser_status browser_busy
+
+	if {![winfo exists $w]} {
+		catch {close $fd}
+		return
+	}
+
+	append browser_buffer($w) [read $fd]
+	set pck [split $browser_buffer($w) "\0"]
+	set browser_buffer($w) [lindex $pck end]
+
+	set n [llength $browser_files($w)]
+	$w conf -state normal
+	foreach p [lrange $pck 0 end-1] {
+		set info [split $p "\t"]
+		set path [lindex $info 1]
+		set info [split [lindex $info 0] { }]
+		set type [lindex $info 1]
+		set object [lindex $info 2]
+
+		switch -- $type {
+		blob {
+			set image file_plain
+		}
+		tree {
+			set image file_dir
+			append path /
+		}
+		default {
+			set image file_question
+		}
+		}
+
+		if {$n > 0} {$w insert end "\n"}
+		$w image create end \
+			-align center -padx 5 -pady 1 \
+			-name icon[incr n] \
+			-image $image
+		$w insert end [escape_path $path]
+		lappend browser_files($w) [list $type $object $path]
+	}
+	$w conf -state disabled
+
+	if {[eof $fd]} {
+		close $fd
+		set browser_status($w) Ready.
+		set browser_busy($w) 0
+		array unset browser_buffer $w
+	}
+}
+
+proc show_blame {commit path} {
+	global next_browser_id blame_status blame_data
+
+	set w .browser[incr next_browser_id]
+	set blame_status($w) {Loading current file content...}
+	set texts [list]
+
+	toplevel $w
+	panedwindow $w.out -orient horizontal
+
+	label $w.path -text "$commit:$path" \
+		-anchor w \
+		-justify left \
+		-borderwidth 1 \
+		-relief sunken \
+		-font font_uibold
+	pack $w.path -anchor w -side top -fill x
+
+	text $w.out.commit -background white -borderwidth 0 \
+		-state disabled \
+		-wrap none \
+		-height 40 \
+		-width 8 \
+		-font font_diff
+	$w.out add $w.out.commit
+	lappend texts $w.out.commit
+
+	text $w.out.author -background white -borderwidth 0 \
+		-state disabled \
+		-wrap none \
+		-height 40 \
+		-width 20 \
+		-font font_diff
+	$w.out add $w.out.author
+	lappend texts $w.out.author
+
+	text $w.out.date -background white -borderwidth 0 \
+		-state disabled \
+		-wrap none \
+		-height 40 \
+		-width [string length "yyyy-mm-dd hh:mm:ss"] \
+		-font font_diff
+	$w.out add $w.out.date
+	lappend texts $w.out.date
+
+	text $w.out.linenumber -background white -borderwidth 0 \
+		-state disabled \
+		-wrap none \
+		-height 40 \
+		-width 5 \
+		-font font_diff
+	$w.out.linenumber tag conf linenumber -justify right
+	$w.out add $w.out.linenumber
+	lappend texts $w.out.linenumber
+
+	text $w.out.file -background white -borderwidth 0 \
+		-state disabled \
+		-wrap none \
+		-height 40 \
+		-width 80 \
+		-font font_diff
+	$w.out add $w.out.file
+	lappend texts $w.out.file
+
+	label $w.status -textvariable blame_status($w) \
+		-anchor w \
+		-justify left \
+		-borderwidth 1 \
+		-relief sunken \
+		-font font_ui
+	pack $w.status -anchor w -side bottom -fill x
+
+	scrollbar $w.sby -orient v -command [list scrollbar2many $texts yview]
+	pack $w.sby -side right -fill y
+	pack $w.out -side left -fill both -expand 1
+
+	menu $w.ctxm -tearoff 0
+	$w.ctxm add command -label "Copy Commit" \
+		-font font_ui \
+		-command "blame_copycommit $w \$cursorW @\$cursorX,\$cursorY"
+
+	foreach i $texts {
+		$i tag conf in_sel \
+			-background [$i cget -foreground] \
+			-foreground [$i cget -background]
+		$i conf -yscrollcommand [list many2scrollbar $texts yview $w.sby]
+		bind $i <Button-1> "blame_highlight $i @%x,%y $texts;break"
+		bind_button3 $i "
+			set cursorX %x
+			set cursorY %y
+			set cursorW %W
+			tk_popup $w.ctxm %X %Y
+		"
+	}
+
+	bind $w <Visibility> "focus $w"
+	bind $w <Destroy> "
+		array unset blame_status $w
+		array unset blame_data $w,*
+	"
+	wm title $w "[appname] ([reponame]): File Viewer"
+
+	set blame_data($w,total_lines) 0
+	set fd [open "| git cat-file blob $commit:$path" r]
+	fconfigure $fd -blocking 0 -translation lf -encoding binary
+	fileevent $fd readable [list read_blame_catfile $fd $w $commit $path \
+		$texts $w.out.linenumber $w.out.file]
+}
+
+proc read_blame_catfile {fd w commit path texts w_lno w_file} {
+	global blame_status blame_data
+
+	if {![winfo exists $w_file]} {
+		catch {close $fd}
+		return
+	}
+
+	set n $blame_data($w,total_lines)
+	foreach i $texts {$i conf -state normal}
+	while {[gets $fd line] >= 0} {
+		regsub "\r\$" $line {} line
+		incr n
+		$w_lno insert end $n linenumber
+		$w_file insert end $line
+		foreach i $texts {$i insert end "\n"}
+	}
+	foreach i $texts {$i conf -state disabled}
+	set blame_data($w,total_lines) $n
+
+	if {[eof $fd]} {
+		close $fd
+		set blame_status($w) {Loading annotations...}
+		set fd [open "| git blame --incremental $commit -- $path" r]
+		fconfigure $fd -blocking 0 -translation lf -encoding binary
+		fileevent $fd readable "read_blame_incremental $fd $w $texts"
+	}
+}
+
+proc read_blame_incremental {fd w w_commit w_author w_date w_lno w_file} {
+	global blame_status blame_data
+
+	if {![winfo exists $w_commit]} {
+		catch {close $fd}
+		return
+	}
+
+	$w_commit conf -state normal
+	$w_author conf -state normal
+	$w_date conf -state normal
+
+	while {[gets $fd line] >= 0} {
+		if {[regexp {^([a-z0-9]{40}) (\d+) (\d+) (\d+)$} $line line \
+			commit original_line final_line line_count]} {
+			set blame_data($w,commit) $commit
+			set blame_data($w,original_line) $original_line
+			set blame_data($w,final_line) $final_line
+			set blame_data($w,line_count) $line_count
+		} elseif {[string match {filename *} $line]} {
+			set n $blame_data($w,line_count)
+			set lno $blame_data($w,final_line)
+			set file [string range $line 9 end]
+			set commit $blame_data($w,commit)
+			set abbrev [string range $commit 0 8]
+
+			if {[catch {set author $blame_data($w,$commit,author)} err]} {
+			puts $err
+				set author {}
+			}
+
+			if {[catch {set atime $blame_data($w,$commit,author-time)}]} {
+				set atime {}
+			} else {
+				set atime [clock format $atime -format {%Y-%m-%d %T}]
+			}
+
+			while {$n > 0} {
+				$w_commit delete $lno.0 "$lno.0 lineend"
+				$w_author delete $lno.0 "$lno.0 lineend"
+				$w_date delete $lno.0 "$lno.0 lineend"
+
+				$w_commit insert $lno.0 $abbrev
+				$w_author insert $lno.0 $author
+				$w_date insert $lno.0 $atime
+				set blame_data($w,line$lno,commit) $commit
+
+				incr n -1
+				incr lno
+			}
+		} elseif {[regexp {^([a-z-]+) (.*)$} $line line header data]} {
+			set blame_data($w,$blame_data($w,commit),$header) $data
+		}
+	}
+
+	$w_commit conf -state disabled
+	$w_author conf -state disabled
+	$w_date conf -state disabled
+
+	if {[eof $fd]} {
+		close $fd
+		set blame_status($w) {Annotation complete.}
+	}
+}
+
+proc blame_highlight {w pos args} {
+	set lno [lindex [split [$w index $pos] .] 0]
+	foreach i $args {
+		$i tag remove in_sel 0.0 end
+	}
+	if {$lno eq {}} return
+	foreach i $args {
+		$i tag add in_sel $lno.0 "$lno.0 + 1 line"
+	}
+}
+
+proc blame_copycommit {w i pos} {
+	global blame_data
+	set lno [lindex [split [$i index $pos] .] 0]
+	if {![catch {set commit $blame_data($w,line$lno,commit)}]} {
+		clipboard clear
+		clipboard append \
+			-format STRING \
+			-type STRING \
+			-- $commit
+	}
+}
+
+######################################################################
+##
 ## icons
 
 set filemask {
@@ -3021,6 +3446,24 @@ static unsigned char file_merge_bits[] = {
    0xfa, 0x17, 0x02, 0x10, 0xfe, 0x1f};
 } -maskdata $filemask
 
+image create bitmap file_dir -background white -foreground blue -data {
+#define mod_width 14
+#define mod_height 15
+static unsigned char mod_bits[] = {
+   0xfe, 0x01, 0x02, 0x03, 0x7a, 0x05, 0x02, 0x09, 0x7a, 0x1f, 0x02, 0x10,
+   0xfa, 0x17, 0x02, 0x10, 0xfa, 0x17, 0x02, 0x10, 0xfa, 0x17, 0x02, 0x10,
+   0xfa, 0x17, 0x02, 0x10, 0xfe, 0x1f};
+} -maskdata $filemask
+
+image create bitmap file_uplevel -background white -foreground blue -data {
+#define mod_width 14
+#define mod_height 15
+static unsigned char mod_bits[] = {
+   0xfe, 0x01, 0x02, 0x03, 0x7a, 0x05, 0x02, 0x09, 0x7a, 0x1f, 0x02, 0x10,
+   0xfa, 0x17, 0x02, 0x10, 0xfa, 0x17, 0x02, 0x10, 0xfa, 0x17, 0x02, 0x10,
+   0xfa, 0x17, 0x02, 0x10, 0xfe, 0x1f};
+} -maskdata $filemask
+
 set ui_index .vpane.files.index.list
 set ui_workdir .vpane.files.workdir.list
 
@@ -3075,6 +3518,15 @@ proc bind_button3 {w cmd} {
 	if {[is_MacOSX]} {
 		bind $w <Control-Button-1> $cmd
 	}
+}
+
+proc scrollbar2many {list mode args} {
+	foreach w $list {eval $w $mode $args}
+}
+
+proc many2scrollbar {list mode sb top bottom} {
+	$sb set $top $bottom
+	foreach w $list {$w $mode moveto $top}
 }
 
 proc incr_font_size {font {amt 1}} {
@@ -4251,6 +4703,13 @@ if {!$single_commit} {
 # -- Repository Menu
 #
 menu .mbar.repository
+
+.mbar.repository add command \
+	-label {Browse Current Branch} \
+	-command new_browser \
+	-font font_ui
+.mbar.repository add separator
+
 .mbar.repository add command \
 	-label {Visualize Current Branch} \
 	-command {do_gitk {}} \
