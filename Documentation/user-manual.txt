@@ -2927,7 +2927,7 @@ Scan Documentation/ for other stuff left out; in particular:
 	howto's
 	some of technical/?
 	hooks
-	etc.
+	list of commands in gitlink:git[1]
 
 Scan email archives for other stuff left out
 
@@ -2955,3 +2955,5 @@ Add a sectin on working with other version control systems, including
 CVS, Subversion, and just imports of series of release tarballs.
 
 More details on gitweb?
+
+Write a chapter on using plumbing and writing scripts.
