@@ -1802,7 +1802,9 @@ set this up.
 Allow web browsing of a repository
 ----------------------------------
 
-TODO: Brief setup-instructions for gitweb
+The gitweb cgi script provides users an easy way to browse your
+project's files and history without having to install git; see the file
+gitweb/README in the git source tree for instructions on setting it up.
 
 Examples
 --------
@@ -2952,3 +2954,4 @@ documentation.
 Add a sectin on working with other version control systems, including
 CVS, Subversion, and just imports of series of release tarballs.
 
+More details on gitweb?
