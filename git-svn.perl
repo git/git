@@ -1577,6 +1577,7 @@ use strict;
 use warnings;
 use Carp qw/croak/;
 use IO::File qw//;
+use Digest::MD5;
 
 # file baton members: path, mode_a, mode_b, pool, fh, blob, base
 sub new {
@@ -1590,7 +1591,6 @@ sub new {
 	$self->{absent_dir} = {};
 	$self->{absent_file} = {};
 	$self->{gii} = $git_svn->tmp_index_do(sub { Git::IndexInfo->new });
-	require Digest::MD5;
 	$self;
 }
 
@@ -1798,6 +1798,7 @@ use strict;
 use warnings;
 use Carp qw/croak/;
 use IO::File;
+use Digest::MD5;
 
 sub new {
 	my ($class, $opts) = @_;
@@ -1826,7 +1827,6 @@ sub new {
 	$self->{rm} = { };
 	$self->{path_prefix} = length $self->{svn_path} ?
 	                       "$self->{svn_path}/" : '';
-	require Digest::MD5;
 	return $self;
 }
 
