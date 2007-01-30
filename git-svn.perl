@@ -1090,6 +1090,19 @@ sub revisions_eq {
 	return 1;
 }
 
+sub match_paths {
+	my ($self, $paths) = @_;
+	return 1 if $paths->{'/'};
+	$self->{path_regex} ||= qr/^\/\Q$self->{path}\E\/?/;
+	grep /$self->{path_regex}/, keys %$paths and return 1;
+	my $c = '';
+	foreach (split m#/#, $self->rel_path) {
+		$c .= "/$_";
+		return 1 if $paths->{$c};
+	}
+	return 0;
+}
+
 sub find_parent_branch {
 	my ($self, $paths, $rev) = @_;
 	return undef unless $::_follow_parent;
@@ -2313,7 +2326,6 @@ sub gs_fetch_loop_common {
 		if (my $last_commit = $gs->last_commit) {
 			$gs->assert_index_clean($last_commit);
 		}
-		$gs->{path_regex} = qr/^\/\Q$gs->{path}\E\/?/;
 	}
 	while (1) {
 		my @revs;
@@ -2339,8 +2351,7 @@ sub gs_fetch_loop_common {
 			my ($paths, $r) = @$_;
 			foreach my $gs (@gs) {
 				if ($paths) {
-					grep /$gs->{path_regex}/, keys %$paths
-					   or next;
+					$gs->match_paths($paths) or next;
 				}
 				next if defined $gs->rev_db_get($r);
 				if (my $log_entry = $gs->do_fetch($paths, $r)) {

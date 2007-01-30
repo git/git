@@ -105,7 +105,7 @@ test_expect_success 'follow deleted directory' "
 
 # ref: r9270 of the Subversion repository: (http://svn.collab.net/repos/svn)
 # in trunk/subversion/bindings/swig/perl
-test_expect_success '' "
+test_expect_success 'follow-parent avoids deleting relevant info' "
 	mkdir -p import/trunk/subversion/bindings/swig/perl/t &&
 	for i in a b c ; do \
 	  echo \$i > import/trunk/subversion/bindings/swig/perl/\$i.pm &&
@@ -132,6 +132,18 @@ test_expect_success '' "
 	test \`git rev-list r9270-t | wc -l\` -eq 2 &&
 	test \"\`git ls-tree --name-only r9270-t~1\`\" = \
 	     \"\`git ls-tree --name-only r9270-t\`\"
+	"
+
+test_expect_success "track initial change if it was only made to parent" "
+	svn cp -m 'wheee!' $svnrepo/r9270/trunk $svnrepo/r9270/drunk &&
+	git-svn init -i r9270-d \
+	  $svnrepo/r9270/drunk/subversion/bindings/swig/perl/native/t &&
+	git-svn fetch -i r9270-d --follow-parent &&
+	test \`git rev-list r9270-d | wc -l\` -eq 3 &&
+	test \"\`git ls-tree --name-only r9270-t\`\" = \
+	     \"\`git ls-tree --name-only r9270-d\`\" &&
+	test \"\`git rev-parse r9270-t\`\" = \
+	     \"\`git rev-parse r9270-d~1\`\"
 	"
 
 test_debug 'gitk --all &'
