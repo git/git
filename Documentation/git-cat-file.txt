@@ -19,7 +19,9 @@ or '-s' is used to find the object size.
 OPTIONS
 -------
 <object>::
-	The sha1 identifier of the object.
+	The name of the object to show.
+	For a more complete list of ways to spell object names, see
+	"SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
 
 -t::
 	Instead of the content, show the object type identified by
