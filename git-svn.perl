@@ -1169,6 +1169,7 @@ sub find_parent_branch {
 			                        1, $ed)
 			  or die "SVN connection failed somewhere...\n";
 		}
+		print STDERR "Successfully followed parent\n";
 		$ed->{new_fetch} = 1;
 		return $self->make_log_entry($rev, [$parent], $ed);
 	}
@@ -2295,9 +2296,6 @@ sub gs_fetch_loop_common {
 	my ($self, $base, $head, @gs) = @_;
 	my $inc = 1000;
 	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
-	my $err_handler = $SVN::Error::handler;
-	my $err;
-	$SVN::Error::handler = sub { ($err) = @_; skip_unknown_revs($err); };
 	my @paths = @gs == 1 ? ($gs[0]->{path}) : ('');
 	foreach my $gs (@gs) {
 		if (my $last_commit = $gs->last_commit) {
@@ -2307,8 +2305,16 @@ sub gs_fetch_loop_common {
 	}
 	while (1) {
 		my @revs;
+		my $err;
+		my $err_handler = $SVN::Error::handler;
+		$SVN::Error::handler = sub {
+			($err) = @_;
+			skip_unknown_revs($err);
+		};
 		$self->get_log(\@paths, $min, $max, 0, 1, 1,
 		    sub { push @revs, [ dup_changed_paths($_[0]), $_[1] ]; });
+		$SVN::Error::handler = $err_handler;
+
 		if (! @revs && $err && $max >= $head) {
 			print STDERR "Branch probably deleted:\n  ",
 			             $err->expanded_message,
@@ -2335,7 +2341,6 @@ sub gs_fetch_loop_common {
 		$max += $inc;
 		$max = $head if ($max > $head);
 	}
-	$SVN::Error::handler = $err_handler;
 }
 
 sub minimize_url {
