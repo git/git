@@ -106,9 +106,6 @@ my %cmd = (
 			{ 'stdin|' => \$_stdin, %cmt_opts, %fc_opts, } ],
 	'show-ignore' => [ \&cmd_show_ignore, "Show svn:ignore listings",
 			{ 'revision|r=i' => \$_revision } ],
-	rebuild => [ \&cmd_rebuild, "Rebuild git-svn metadata (after git clone)",
-			{ 'copy-remote|remote=s' => \$_cp_remote,
-			  'upgrade' => \$_upgrade } ],
 	'multi-init' => [ \&cmd_multi_init,
 			'Initialize multiple trees (like git-svnimport)',
 			{ %multi_opts, %init_opts, %remote_opts,
@@ -166,7 +163,7 @@ usage(0) if $_help;
 version() if $_version;
 usage(1) unless defined $cmd;
 load_authors() if $_authors;
-unless ($cmd =~ /^(?:init|rebuild|multi-init|commit-diff)$/) {
+unless ($cmd =~ /^(?:init|multi-init|commit-diff)$/) {
 	Git::SVN::Migration::migration_check();
 }
 eval {
@@ -209,47 +206,6 @@ information.
 sub version {
 	print "git-svn version $VERSION (svn $SVN::Core::VERSION)\n";
 	exit 0;
-}
-
-sub cmd_rebuild {
-	my $url = shift;
-	my $gs = $url ? Git::SVN->init($url)
-	              : eval { Git::SVN->new };
-	$gs ||= Git::SVN->_new;
-	if (!verify_ref($gs->refname.'^0')) {
-		$gs->copy_remote_ref;
-	}
-
-	my ($rev_list, $ctx) = command_output_pipe("rev-list", $gs->refname);
-	my $latest;
-	my $svn_uuid;
-	while (<$rev_list>) {
-		chomp;
-		my $c = $_;
-		fatal "Non-SHA1: $c\n" unless $c =~ /^$sha1$/o;
-		my ($url, $rev, $uuid) = cmt_metadata($c);
-
-		# ignore merges (from set-tree)
-		next if (!defined $rev || !$uuid);
-
-		# if we merged or otherwise started elsewhere, this is
-		# how we break out of it
-		if ((defined $svn_uuid && ($uuid ne $svn_uuid)) ||
-		    ($gs->{url} && $url && ($url ne $gs->{url}))) {
-			next;
-		}
-
-		unless (defined $latest) {
-			if (!$gs->{url} && !$url) {
-				fatal "SVN repository location required\n";
-			}
-			$gs = Git::SVN->init($url);
-			$latest = $rev;
-		}
-		$gs->rev_db_set($rev, $c);
-		print "r$rev = $c\n";
-	}
-	command_close_pipe($rev_list, $ctx);
 }
 
 sub do_git_init_db {
@@ -863,6 +819,9 @@ sub new {
 	$self->{url} = command_oneline('config', '--get',
 	                               "svn-remote.$repo_id.url") or
                   die "Failed to read \"svn-remote.$repo_id.url\" in config\n";
+	if (-z $self->{db_path} && ::verify_ref($self->refname.'^0')) {
+		$self->rebuild;
+	}
 	$self;
 }
 
@@ -881,17 +840,6 @@ sub rel_path {
 	          (length $self->{path} ? "/$self->{path}" : $self->{path});
 	$url =~ s!^\Q$repos_root\E/*!!g;
 	$url;
-}
-
-sub copy_remote_ref {
-	my ($self) = @_;
-	my $origin = $::_cp_remote ? $::_cp_remote : 'origin';
-	my $ref = $self->refname;
-	if (command('ls-remote', $origin, $ref)) {
-		command_noisy('fetch', $origin, "$ref:$ref");
-	} elsif ($::_cp_remote && !$::_upgrade) {
-		die "Unable to find remote reference: $ref on $origin\n";
-	}
 }
 
 sub traverse_ignore {
@@ -1357,6 +1305,38 @@ sub set_tree {
 	if (!SVN::Git::Editor->new(\%ed_opts)->apply_diff) {
 		print "No changes\nr$self->{last_rev} = $tree\n";
 	}
+}
+
+sub rebuild {
+	my ($self) = @_;
+	print "Rebuilding $self->{db_path} ...\n";
+	my ($rev_list, $ctx) = command_output_pipe("rev-list", $self->refname);
+	my $latest;
+	my $full_url = $self->full_url;
+	my $svn_uuid;
+	while (<$rev_list>) {
+		chomp;
+		my $c = $_;
+		die "Non-SHA1: $c\n" unless $c =~ /^$::sha1$/o;
+		my ($url, $rev, $uuid) = ::cmt_metadata($c);
+
+		# ignore merges (from set-tree)
+		next if (!defined $rev || !$uuid);
+
+		# if we merged or otherwise started elsewhere, this is
+		# how we break out of it
+		if ((defined $svn_uuid && ($uuid ne $svn_uuid)) ||
+		    ($full_url && $url && ($url ne $full_url))) {
+			next;
+		}
+		$latest ||= $rev;
+		$svn_uuid ||= $uuid;
+
+		$self->rev_db_set($rev, $c);
+		print "r$rev = $c\n";
+	}
+	command_close_pipe($rev_list, $ctx);
+	print "Done rebuilding $self->{db_path}\n";
 }
 
 # rev_db:

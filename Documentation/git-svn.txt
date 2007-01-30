@@ -93,16 +93,6 @@ remotes/git-svn.
 	commit.  All merging is assumed to have taken place
 	independently of git-svn functions.
 
-'rebuild'::
-	Not a part of daily usage, but this is a useful command if
-	you've just cloned a repository (using gitlink:git-clone[1]) that was
-	tracked with git-svn.  Unfortunately, git-clone does not clone
-	git-svn metadata and the svn working tree that git-svn uses for
-	its operations.  This rebuilds the metadata so git-svn can
-	resume fetch operations.  A Subversion URL may be optionally
-	specified at the command-line if the directory/repository you're
-	tracking has moved or changed protocols.
-
 'show-ignore'::
 	Recursively finds and lists the svn:ignore property on
 	directories.  The output is suitable for appending to
@@ -322,39 +312,14 @@ config key: svn.followparent
 --no-metadata::
 	This gets rid of the git-svn-id: lines at the end of every commit.
 
-	With this, you lose the ability to use the rebuild command.  If
-	you ever lose your .git/svn/git-svn/.rev_db file, you won't be
-	able to fetch again, either.  This is fine for one-shot imports.
+	If you lose your .git/svn/git-svn/.rev_db file, git-svn will not
+	be able to rebuild it and you won't be able to fetch again,
+	either.  This is fine for one-shot imports.
 
 	The 'git-svn log' command will not work on repositories using this,
 	either.
 
 config key: svn.nometadata
-
---
-
-COMPATIBILITY OPTIONS
----------------------
---
-
---upgrade::
-Only used with the 'rebuild' command.
-
-Run this if you used an old version of git-svn that used
-"git-svn-HEAD" instead of "remotes/git-svn" as the branch
-for tracking the remote.
-
---ignore-nodate::
-Only used with the 'fetch' command.
-
-By default git-svn will crash if it tries to import a revision
-from SVN which has '(no date)' listed as the date of the revision.
-This is repository corruption on SVN's part, plain and simple.
-But sometimes you really need those revisions anyway.
-
-If supplied git-svn will convert '(no date)' entries to the UNIX
-epoch (midnight on Jan. 1, 1970).  Yes, that's probably very wrong.
-SVN was very wrong.
 
 --
 
