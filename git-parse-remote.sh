@@ -183,7 +183,7 @@ canon_refs_list_for_fetch () {
 			done
 		fi
 		case "$remote" in
-		'') remote=HEAD ;;
+		'' | HEAD ) remote=HEAD ;;
 		refs/heads/* | refs/tags/* | refs/remotes/*) ;;
 		heads/* | tags/* | remotes/* ) remote="refs/$remote" ;;
 		*) remote="refs/heads/$remote" ;;
