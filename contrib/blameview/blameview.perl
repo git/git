@@ -28,7 +28,8 @@ $fileview->get_column(0)->set_spacing(0);
 $fileview->set_size_request(1024, 768);
 $fileview->set_rules_hint(1);
 
-open(my $fh, '<', $fn)
+my $fh;
+open($fh, '-|', "git cat-file blob HEAD:$fn")
   or die "unable to open $fn: $!";
 while(<$fh>) {
   chomp;
