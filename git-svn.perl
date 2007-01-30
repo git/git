@@ -1038,27 +1038,15 @@ sub revisions_eq {
 	return 1;
 }
 
-sub match_paths {
-	my ($self, $paths) = @_;
-	return 1 if $paths->{'/'};
-	$self->{path_regex} ||= qr/^\/\Q$self->{path}\E\/?/;
-	grep /$self->{path_regex}/, keys %$paths and return 1;
-	my $c = '';
-	foreach (split m#/#, $self->rel_path) {
-		$c .= "/$_";
-		return 1 if $paths->{$c};
-	}
-	return 0;
-}
-
 sub find_parent_branch {
 	my ($self, $paths, $rev) = @_;
 	return undef unless $_follow_parent;
 	unless (defined $paths) {
 		my $err_handler = $SVN::Error::handler;
 		$SVN::Error::handler = \&Git::SVN::Ra::skip_unknown_revs;
-		$self->ra->get_log([$self->{path}], $rev, $rev, 0, 1, 1,
-		                   sub { $paths = dup_changed_paths($_[0]) });
+		$self->ra->get_log([$self->{path}], $rev, $rev, 0, 1, 1, sub {
+		                   $paths =
+				      Git::SVN::Ra::dup_changed_paths($_[0]) });
 		$SVN::Error::handler = $err_handler;
 	}
 	return undef unless defined $paths;
@@ -1134,7 +1122,6 @@ sub find_parent_branch {
 			  or die "SVN connection failed somewhere...\n";
 		}
 		print STDERR "Successfully followed parent\n";
-		$ed->{new_fetch} = 1;
 		return $self->make_log_entry($rev, [$parent], $ed);
 	}
 not_found:
@@ -1170,7 +1157,6 @@ sub do_fetch {
 			return $log_entry;
 		}
 		$ed = SVN::Git::Fetcher->new($self);
-		$ed->{new_fetch} = 1;
 	}
 	unless ($self->ra->gs_do_update($last_rev, $rev, $self, $ed)) {
 		die "SVN connection failed somewhere...\n";
@@ -1242,8 +1228,6 @@ sub check_author {
 sub make_log_entry {
 	my ($self, $rev, $parents, $ed) = @_;
 	my $untracked = $self->get_untracked($ed);
-
-	return undef if (! $ed->{new_fetch} && ! $ed->{nr} && ! @$untracked);
 
 	open my $un, '>>', "$self->{dir}/unhandled.log" or croak $!;
 	print $un "r$rev\n" or croak $!;
@@ -2314,38 +2298,53 @@ sub gs_fetch_loop_common {
 	my ($self, $base, $head, @gs) = @_;
 	my $inc = 1000;
 	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
-	my @paths = @gs == 1 ? ($gs[0]->{path}) : ('');
 	foreach my $gs (@gs) {
 		if (my $last_commit = $gs->last_commit) {
 			$gs->assert_index_clean($last_commit);
 		}
 	}
 	while (1) {
-		my @revs;
+		my %revs;
 		my $err;
 		my $err_handler = $SVN::Error::handler;
 		$SVN::Error::handler = sub {
 			($err) = @_;
 			skip_unknown_revs($err);
 		};
-		$self->get_log(\@paths, $min, $max, 0, 1, 1,
-		    sub { push @revs, [ dup_changed_paths($_[0]), $_[1] ]; });
-		$SVN::Error::handler = $err_handler;
+		foreach my $gs (@gs) {
+			$self->get_log([$gs->{path}], $min, $max, 0, 1, 1, sub
+			               { my ($paths, $rev) = @_;
+			                 push @{$revs{$rev}},
+			                      [ $gs,
+			                        dup_changed_paths($paths) ] });
 
-		if (! @revs && $err && $max >= $head) {
-			print STDERR "Branch probably deleted:\n  ",
-			             $err->expanded_message,
-			             "\nWill attempt to follow revisions ",
-			             "r$min .. r$max ",
-			             "committed before the deletion\n";
-			@revs = map { [ undef, $_ ] } ($min .. $max);
-		}
-		foreach (@revs) {
-			my ($paths, $r) = @$_;
-			foreach my $gs (@gs) {
-				if ($paths) {
-					$gs->match_paths($paths) or next;
+			next unless ($err && $max >= $head);
+
+			print STDERR "Path '$gs->{path}' ",
+				     "was probably deleted:\n",
+				     $err->expanded_message,
+				     "\nWill attempt to follow ",
+				     "revisions r$min .. r$max ",
+				     "committed before the deletion\n";
+			my $hi = $max;
+			while (--$hi >= $min) {
+				my $ok;
+				$self->get_log([$gs->{path}], $min, $hi,
+					       0, 1, 1, sub {
+					my ($paths, $rev) = @_;
+					$ok = $rev;
+					push @{$revs{$rev}}, [ $gs,
+					   dup_changed_paths($_[0])]});
+				if ($ok) {
+					print STDERR "r$min .. r$ok OK\n";
+					last;
 				}
+			}
+		}
+		$SVN::Error::handler = $err_handler;
+		foreach my $r (sort {$a <=> $b} keys %revs) {
+			foreach (@{$revs{$r}}) {
+				my ($gs, $paths) = @$_;
 				my $lr = $gs->last_rev;
 				next if defined $lr && $lr >= $r;
 				next if defined $gs->rev_db_get($r);
