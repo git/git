@@ -309,9 +309,9 @@ proc readrefs {} {
     foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
 	catch {unset $v}
     }
-    set refd [open [list | git ls-remote [gitdir]] r]
+    set refd [open [list | git show-ref] r]
     while {0 <= [set n [gets $refd line]]} {
-	if {![regexp {^([0-9a-f]{40})	refs/([^^]*)$} $line \
+	if {![regexp {^([0-9a-f]{40}) refs/([^^]*)$} $line \
 	    match id path]} {
 	    continue
 	}
