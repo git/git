@@ -123,7 +123,7 @@ while
 		shift
 		upload_pack="--upload-pack=$1" ;;
 	*,--upload-pack=*)
-		upload_pack=--upload-pack=$(expr "$1" : '-[^=]*=\(.*\)') ;;
+		upload_pack=--upload-pack=$(expr "z$1" : 'z-[^=]*=\(.*\)') ;;
 	1,--depth) usage;;
 	*,--depth)
 		shift
