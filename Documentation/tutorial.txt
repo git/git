@@ -11,15 +11,13 @@ diff" with:
 $ man git-diff
 ------------------------------------------------
 
-It is a good idea to introduce yourself to git before doing any
-operation.  The easiest way to do so is:
+It is a good idea to introduce yourself to git with your name and
+public email address before doing any operation.  The easiest
+way to do so is:
 
 ------------------------------------------------
-$ cat >~/.gitconfig <<\EOF
-[user]
-	name = Your Name Comes Here
-	email = you@yourdomain.example.com
-EOF
+$ git config --global user.name "Your Name Comes Here"
+$ git config --global user.email you@yourdomain.example.com
 ------------------------------------------------
 
 
@@ -211,7 +209,7 @@ at this point the two branches have diverged, with different changes
 made in each.  To merge the changes made in experimental into master, run
 
 ------------------------------------------------
-$ git pull . experimental
+$ git merge experimental
 ------------------------------------------------
 
 If the changes don't conflict, you're done.  If there are conflicts,
@@ -297,46 +295,51 @@ is the default.)
 The "pull" command thus performs two operations: it fetches changes
 from a remote branch, then merges them into the current branch.
 
-You can perform the first operation alone using the "git fetch"
-command.  For example, Alice could create a temporary branch just to
-track Bob's changes, without merging them with her own, using:
+When you are working in a small closely knit group, it is not
+unusual to interact with the same repository over and over
+again.  By defining 'remote' repository shorthand, you can make
+it easier:
+
+------------------------------------------------
+$ git remote add bob /home/bob/myrepo
+------------------------------------------------
+
+With this, you can perform the first operation alone using the
+"git fetch" command without merging them with her own branch,
+using:
 
 -------------------------------------
-$ git fetch /home/bob/myrepo master:bob-incoming
+$ git fetch bob
 -------------------------------------
 
-which fetches the changes from Bob's master branch into a new branch
-named bob-incoming.  Then
+Unlike the longhand form, when Alice fetches from Bob using a
+remote repository shorthand set up with `git remote`, what was
+fetched is stored in a remote tracking branch, in this case
+`bob/master`.  So after this:
 
 -------------------------------------
-$ git log -p master..bob-incoming
+$ git log -p master..bob/master
 -------------------------------------
 
 shows a list of all the changes that Bob made since he branched from
 Alice's master branch.
 
-After examining those changes, and possibly fixing things, Alice
-could pull the changes into her master branch:
+After examining those changes, Alice
+could merge the changes into her master branch:
 
 -------------------------------------
-$ git checkout master
-$ git pull . bob-incoming
+$ git merge bob/master
 -------------------------------------
 
-The last command is a pull from the "bob-incoming" branch in Alice's
-own repository.
-
-Alice could also perform both steps at once with:
+This `merge` can also be done by 'pulling from her own remote
+tracking branch', like this:
 
 -------------------------------------
-$ git pull /home/bob/myrepo master:bob-incoming
+$ git pull . remotes/bob/master
 -------------------------------------
 
-This is just like the "git pull /home/bob/myrepo master" that we saw
-before, except that it also stores the unmerged changes from bob's
-master branch in bob-incoming before merging them into Alice's
-current branch.  Note that git pull always merges into the current
-branch, regardless of what else is given on the commandline.
+Note that git pull always merges into the current branch,
+regardless of what else is given on the commandline.
 
 Later, Bob can update his repo with Alice's latest changes using
 
@@ -350,12 +353,12 @@ repository in the repository configuration, and that location is
 used for pulls:
 
 -------------------------------------
-$ git repo-config --get remote.origin.url
+$ git config --get remote.origin.url
 /home/bob/myrepo
 -------------------------------------
 
 (The complete configuration created by git-clone is visible using
-"git repo-config -l", and the gitlink:git-repo-config[1] man page
+"git config -l", and the gitlink:git-config[1] man page
 explains the meaning of each option.)
 
 Git also keeps a pristine copy of Alice's master branch under the

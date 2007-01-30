@@ -1927,7 +1927,6 @@ int main(int argc, const char **argv)
 	int i;
 	uintmax_t total_count, duplicate_count;
 
-	setup_ident();
 	git_config(git_default_config);
 
 	for (i = 1; i < argc; i++) {

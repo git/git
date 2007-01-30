@@ -28,7 +28,7 @@ Everybody uses these commands to maintain git repositories.
   * gitlink:git-init[1] or gitlink:git-clone[1] to create a
     new repository.
 
-  * gitlink:git-fsck-objects[1] to check the repository for errors.
+  * gitlink:git-fsck[1] to check the repository for errors.
 
   * gitlink:git-prune[1] to remove unused objects in the repository.
 
@@ -43,7 +43,7 @@ Examples
 Check health and remove cruft.::
 +
 ------------
-$ git fsck-objects <1>
+$ git fsck <1>
 $ git count-objects <2>
 $ git repack <3>
 $ git gc <4>
@@ -148,8 +148,7 @@ modification will be caught if you do `git commit -a` later.
 <8> redo the commit undone in the previous step, using the message
 you originally wrote.
 <9> switch to the master branch.
-<10> merge a topic branch into your master branch.  You can also use
-`git pull . alsa-audio`, i.e. pull from the local repository.
+<10> merge a topic branch into your master branch.
 <11> review commit logs; other forms to limit output can be
 combined and include `\--max-count=10` (show 10 commits),
 `\--until=2005-12-10`, etc.
@@ -213,12 +212,12 @@ Push into another repository.::
 ------------
 satellite$ git clone mothership:frotz frotz <1>
 satellite$ cd frotz
-satellite$ git repo-config --get-regexp '^(remote|branch)\.' <2>
+satellite$ git config --get-regexp '^(remote|branch)\.' <2>
 remote.origin.url mothership:frotz
 remote.origin.fetch refs/heads/*:refs/remotes/origin/*
 branch.master.remote origin
 branch.master.merge refs/heads/master
-satellite$ git repo-config remote.origin.push \
+satellite$ git config remote.origin.push \
            master:refs/remotes/satellite/master <3>
 satellite$ edit/compile/test/commit
 satellite$ git push origin <4>

@@ -3,7 +3,7 @@ git-hash-object(1)
 
 NAME
 ----
-git-hash-object - Computes object ID and optionally creates a blob from a file
+git-hash-object - Compute object ID and optionally creates a blob from a file
 
 
 SYNOPSIS

@@ -15,8 +15,9 @@
 #define _XOPEN_SOURCE 600 /* glibc2 and AIX 5.3L need 500, OpenBSD needs 600 for S_ISLNK() */
 #define _XOPEN_SOURCE_EXTENDED 1 /* AIX 5.3L needs this */
 #endif
-#define _GNU_SOURCE
-#define _BSD_SOURCE
+#define _ALL_SOURCE 1
+#define _GNU_SOURCE 1
+#define _BSD_SOURCE 1
 
 #include <unistd.h>
 #include <stdio.h>
@@ -28,7 +29,6 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
-#include <inttypes.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -46,8 +46,10 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <pwd.h>
-#include <stdint.h>
+#include <inttypes.h>
+#undef _ALL_SOURCE /* AIX 5.3L defines a struct list with _ALL_SOURCE. */
 #include <grp.h>
+#define _ALL_SOURCE 1
 
 #ifndef NO_ICONV
 #include <iconv.h>

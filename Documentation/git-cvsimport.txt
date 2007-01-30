@@ -3,7 +3,7 @@ git-cvsimport(1)
 
 NAME
 ----
-git-cvsimport - Import a CVS repository into git
+git-cvsimport - Salvage your data out of another SCM people love to hate
 
 
 SYNOPSIS
@@ -97,7 +97,7 @@ If you need to pass multiple options, separate them with a comma.
 	Substitute the character "/" in branch names with <subst>
 
 -A <author-conv-file>::
-	CVS by default uses the unix username when writing its
+	CVS by default uses the Unix username when writing its
 	commit logs. Using this option and an author-conv-file
 	in this format
 

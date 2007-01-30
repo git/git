@@ -3,37 +3,50 @@ git-send-pack(1)
 
 NAME
 ----
-git-send-pack - Push missing objects packed
+git-send-pack - Push objects over git protocol to another reposiotory
 
 
 SYNOPSIS
 --------
-'git-send-pack' [--all] [--force] [--exec=<git-receive-pack>] [<host>:]<directory> [<ref>...]
+'git-send-pack' [--all] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]
 
 DESCRIPTION
 -----------
+Usually you would want to use gitlink:git-push[1] which is a
+higher level wrapper of this command instead.
+
 Invokes 'git-receive-pack' on a possibly remote repository, and
 updates it from the current repository, sending named refs.
 
 
 OPTIONS
 -------
---exec=<git-receive-pack>::
+\--receive-pack=<git-receive-pack>::
 	Path to the 'git-receive-pack' program on the remote
 	end.  Sometimes useful when pushing to a remote
 	repository over ssh, and you do not have the program in
 	a directory on the default $PATH.
 
---all::
+\--exec=<git-receive-pack>::
+	Same as \--receive-pack=<git-receive-pack>.
+
+\--all::
 	Instead of explicitly specifying which refs to update,
 	update all refs that locally exist.
 
---force::
+\--force::
 	Usually, the command refuses to update a remote ref that
 	is not an ancestor of the local ref used to overwrite it.
 	This flag disables the check.  What this means is that
 	the remote repository can lose commits; use it with
 	care.
+
+\--verbose::
+	Run verbosely.
+
+\--thin::
+	Spend extra cycles to minimize the number of objects to be sent.
+	Use it on slower connection.
 
 <host>::
 	A remote host to house the repository.  When this

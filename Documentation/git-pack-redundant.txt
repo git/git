@@ -3,7 +3,7 @@ git-pack-redundant(1)
 
 NAME
 ----
-git-pack-redundant - Program used to find redundant pack files
+git-pack-redundant - Find redundant pack files
 
 
 SYNOPSIS
@@ -21,7 +21,7 @@ given will be ignored when checking which packs are required. This makes the
 following command useful when wanting to remove packs which contain unreachable
 objects.
 
-git-fsck-objects --full --unreachable | cut -d ' ' -f3 | \
+git-fsck --full --unreachable | cut -d ' ' -f3 | \
 git-pack-redundant --all | xargs rm
 
 OPTIONS

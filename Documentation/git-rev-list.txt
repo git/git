@@ -27,6 +27,7 @@ SYNOPSIS
 	     [ \--pretty | \--header ]
 	     [ \--bisect ]
 	     [ \--merge ]
+	     [ \--walk-reflogs ]
 	     <commit>... [ \-- <paths>... ]
 
 DESCRIPTION
@@ -189,6 +190,22 @@ limiting may be applied.
 
 	In addition to the '<commit>' listed on the command
 	line, read them from the standard input.
+
+-g, --walk-reflogs::
+
+	Instead of walking the commit ancestry chain, walk
+	reflog entries from the most recent one to older ones.
+	When this option is used you cannot specify commits to
+	exclude (that is, '{caret}commit', 'commit1..commit2',
+	nor 'commit1...commit2' notations cannot be used).
++
+With '\--pretty' format other than oneline (for obvious reasons),
+this causes the output to have two extra lines of information
+taken from the reflog.  By default, 'commit@{Nth}' notation is
+used in the output.  When the starting commit is specified as
+'commit@{now}', output also uses 'commit@{timestamp}' notation
+instead.  Under '\--pretty=oneline', the commit message is
+prefixed with this information on the same line.
 
 --merge::
 

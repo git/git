@@ -6,12 +6,14 @@
 
 USAGE='[-n | --no-summary] [--no-commit] [-s strategy]... [<fetch-options>] <repo> <head>...'
 LONG_USAGE='Fetch one or more remote refs and merge it/them into the current HEAD.'
+SUBDIRECTORY_OK=Yes
 . git-sh-setup
 set_reflog_action "pull $*"
 require_work_tree
+cd_to_toplevel
 
 test -z "$(git ls-files -u)" ||
-	die "You are in a middle of conflicted merge."
+	die "You are in the middle of a conflicted merge."
 
 strategy_args= no_summary= no_commit= squash=
 while case "$#,$1" in 0) break ;; *,-*) ;; *) break ;; esac
@@ -81,8 +83,17 @@ merge_head=$(sed -e '/	not-for-merge	/d' \
 
 case "$merge_head" in
 '')
-	curr_branch=$(git-symbolic-ref HEAD | \
-		sed -e 's|^refs/heads/||')
+	curr_branch=$(git-symbolic-ref -q HEAD)
+	case $? in
+	  0) ;;
+	  1) echo >&2 "You are not currently on a branch; you must explicitly"
+	     echo >&2 "specify which branch you wish to merge:"
+	     echo >&2 "  git pull <remote> <branch>"
+	     exit 1;;
+	  *) exit $?;;
+	esac
+	curr_branch=${curr_branch#refs/heads/}
+
 	echo >&2 "Warning: No merge candidate found because value of config option
          \"branch.${curr_branch}.merge\" does not match any remote branch fetched."
 	echo >&2 "No changes."

@@ -8,7 +8,7 @@ git-gc - Cleanup unnecessary files and optimize the local repository
 
 SYNOPSIS
 --------
-'git-gc'
+'git-gc' [--prune]
 
 DESCRIPTION
 -----------
@@ -20,6 +20,21 @@ created from prior invocations of gitlink:git-add[1].
 Users are encouraged to run this task on a regular basis within
 each repository to maintain good disk space utilization and good
 operating performance.
+
+OPTIONS
+-------
+
+--prune::
+	Usually `git-gc` packs refs, expires old reflog entries,
+	packs loose objects,
+	and removes old 'rerere' records.  Removal
+	of unreferenced loose objects is an unsafe operation
+	while other git operations are in progress, so it is not
+	done by default.  Pass this option if you want it, and only
+	when you know nobody else is creating new objects in the
+	repository at the same time (e.g. never use this option
+	in a cron script).
+
 
 Configuration
 -------------
@@ -35,7 +50,7 @@ can be set to indicate how long historical reflog entries which
 are not part of the current branch should remain available in
 this repository.  These types of entries are generally created as
 a result of using `git commit \--amend` or `git rebase` and are the
-commits prior to the amend or rebase occuring.  Since these changes
+commits prior to the amend or rebase occurring.  Since these changes
 are not part of the current project most users will want to expire
 them sooner.  This option defaults to '30 days'.
 

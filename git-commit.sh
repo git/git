@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 # Copyright (c) 2006 Junio C Hamano
 
-USAGE='[-a] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit>] [-u] [--amend] [-e] [--author <author>] [[-i | -o] <path>...]'
+USAGE='[-a] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit> | --amend] [-u] [-e] [--author <author>] [[-i | -o] <path>...]'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 require_work_tree
@@ -284,9 +284,9 @@ esac
 
 case "$log_given" in
 tt*)
-	die "Only one of -c/-C/-F can be used." ;;
+	die "Only one of -c/-C/-F/--amend can be used." ;;
 *tm*|*mt*)
-	die "Option -m cannot be combined with -c/-C/-F." ;;
+	die "Option -m cannot be combined with -c/-C/-F/--amend." ;;
 esac
 
 case "$#,$also,$only,$amend" in
@@ -316,22 +316,16 @@ esac
 ################################################################
 # Prepare index to have a tree to be committed
 
-TOP=`git-rev-parse --show-cdup`
-if test -z "$TOP"
-then
-	TOP=./
-fi
-
 case "$all,$also" in
 t,)
 	save_index &&
 	(
-		cd "$TOP"
-		GIT_INDEX_FILE="$NEXT_INDEX"
-		export GIT_INDEX_FILE
+		cd_to_toplevel &&
+		GIT_INDEX_FILE="$NEXT_INDEX" &&
+		export GIT_INDEX_FILE &&
 		git-diff-files --name-only -z |
 		git-update-index --remove -z --stdin
-	)
+	) || exit
 	;;
 ,t)
 	save_index &&
@@ -339,11 +333,11 @@ t,)
 
 	git-diff-files --name-only -z -- "$@"  |
 	(
-		cd "$TOP"
-		GIT_INDEX_FILE="$NEXT_INDEX"
-		export GIT_INDEX_FILE
+		cd_to_toplevel &&
+		GIT_INDEX_FILE="$NEXT_INDEX" &&
+		export GIT_INDEX_FILE &&
 		git-update-index --remove -z --stdin
-	)
+	) || exit
 	;;
 ,)
 	case "$#" in
@@ -435,7 +429,9 @@ then
 	fi
 elif test "$use_commit" != ""
 then
-	git-cat-file commit "$use_commit" | sed -e '1,/^$/d'
+	encoding=$(git config i18n.commitencoding || echo UTF-8)
+	git show -s --pretty=raw --encoding="$encoding" "$use_commit" |
+	sed -e '1,/^$/d' -e 's/^    //'
 elif test -f "$GIT_DIR/MERGE_MSG"
 then
 	cat "$GIT_DIR/MERGE_MSG"
@@ -446,8 +442,11 @@ fi | git-stripspace >"$GIT_DIR"/COMMIT_EDITMSG
 
 case "$signoff" in
 t)
+	need_blank_before_signoff=
+	tail -n 1 "$GIT_DIR"/COMMIT_EDITMSG |
+	grep 'Signed-off-by:' >/dev/null || need_blank_before_signoff=yes
 	{
-		echo
+		test -z "$need_blank_before_signoff" || echo
 		git-var GIT_COMMITTER_IDENT | sed -e '
 			s/>.*/>/
 			s/^/Signed-off-by: /
@@ -466,15 +465,7 @@ if test -f "$GIT_DIR/MERGE_HEAD" && test -z "$no_edit"; then
 fi >>"$GIT_DIR"/COMMIT_EDITMSG
 
 # Author
-if test '' != "$force_author"
-then
-	GIT_AUTHOR_NAME=`expr "z$force_author" : 'z\(.*[^ ]\) *<.*'` &&
-	GIT_AUTHOR_EMAIL=`expr "z$force_author" : '.*\(<.*\)'` &&
-	test '' != "$GIT_AUTHOR_NAME" &&
-	test '' != "$GIT_AUTHOR_EMAIL" ||
-	die "malformed --author parameter"
-	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
-elif test '' != "$use_commit"
+if test '' != "$use_commit"
 then
 	pick_author_script='
 	/^author /{
@@ -497,12 +488,22 @@ then
 		q
 	}
 	'
-	set_author_env=`git-cat-file commit "$use_commit" |
+	encoding=$(git config i18n.commitencoding || echo UTF-8)
+	set_author_env=`git show -s --pretty=raw --encoding="$encoding" "$use_commit" |
 	LANG=C LC_ALL=C sed -ne "$pick_author_script"`
 	eval "$set_author_env"
 	export GIT_AUTHOR_NAME
 	export GIT_AUTHOR_EMAIL
 	export GIT_AUTHOR_DATE
+fi
+if test '' != "$force_author"
+then
+	GIT_AUTHOR_NAME=`expr "z$force_author" : 'z\(.*[^ ]\) *<.*'` &&
+	GIT_AUTHOR_EMAIL=`expr "z$force_author" : '.*\(<.*\)'` &&
+	test '' != "$GIT_AUTHOR_NAME" &&
+	test '' != "$GIT_AUTHOR_EMAIL" ||
+	die "malformed --author parameter"
+	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
 fi
 
 PARENTS="-p HEAD"

@@ -435,7 +435,7 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 				void **idx_map_)
 {
 	void *idx_map;
-	unsigned int *index;
+	uint32_t *index;
 	unsigned long idx_size;
 	int nr, i;
 	int fd = open(path, O_RDONLY);
@@ -456,12 +456,23 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 
 	/* check index map */
 	if (idx_size < 4*256 + 20 + 20)
-		return error("index file too small");
+		return error("index file %s is too small", path);
+
+	/* a future index format would start with this, as older git
+	 * binaries would fail the non-monotonic index check below.
+	 * give a nicer warning to the user if we can.
+	 */
+	if (index[0] == htonl(PACK_IDX_SIGNATURE))
+		return error("index file %s is a newer version"
+			" and is not supported by this binary"
+			" (try upgrading GIT to a newer version)",
+			path);
+
 	nr = 0;
 	for (i = 0; i < 256; i++) {
 		unsigned int n = ntohl(index[i]);
 		if (n < nr)
-			return error("non-monotonic index");
+			return error("non-monotonic index %s", path);
 		nr = n;
 	}
 
@@ -473,7 +484,7 @@ static int check_packed_git_idx(const char *path, unsigned long *idx_size_,
 	 *  - 20-byte SHA1 file checksum
 	 */
 	if (idx_size != 4*256 + nr * 24 + 20 + 20)
-		return error("wrong index file size");
+		return error("wrong index file size in %s", path);
 
 	return 0;
 }
@@ -572,7 +583,8 @@ static void open_packed_git(struct packed_git *p)
 		die("cannot set FD_CLOEXEC");
 
 	/* Verify we recognize this pack file format. */
-	read_or_die(p->pack_fd, &hdr, sizeof(hdr));
+	if (read_in_full(p->pack_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
+		die("file %s is far too short to be a packfile", p->pack_name);
 	if (hdr.hdr_signature != htonl(PACK_SIGNATURE))
 		die("file %s is not a GIT packfile", p->pack_name);
 	if (!pack_version_ok(hdr.hdr_version))
@@ -588,7 +600,8 @@ static void open_packed_git(struct packed_git *p)
 			num_packed_objects(p));
 	if (lseek(p->pack_fd, p->pack_size - sizeof(sha1), SEEK_SET) == -1)
 		die("end of packfile %s is unavailable", p->pack_name);
-	read_or_die(p->pack_fd, sha1, sizeof(sha1));
+	if (read_in_full(p->pack_fd, sha1, sizeof(sha1)) != sizeof(sha1))
+		die("packfile %s signature is unavailable", p->pack_name);
 	idx_sha1 = ((unsigned char *)p->index_base) + p->index_size - 40;
 	if (hashcmp(sha1, idx_sha1))
 		die("packfile %s does not match index", p->pack_name);
@@ -1338,7 +1351,7 @@ int nth_packed_object_sha1(const struct packed_git *p, int n,
 unsigned long find_pack_entry_one(const unsigned char *sha1,
 				  struct packed_git *p)
 {
-	unsigned int *level1_ofs = p->index_base;
+	uint32_t *level1_ofs = p->index_base;
 	int hi = ntohl(level1_ofs[*sha1]);
 	int lo = ((*sha1 == 0x0) ? 0 : ntohl(level1_ofs[*sha1 - 1]));
 	void *index = p->index_base + 256;
@@ -1347,7 +1360,7 @@ unsigned long find_pack_entry_one(const unsigned char *sha1,
 		int mi = (lo + hi) / 2;
 		int cmp = hashcmp((unsigned char *)index + (24 * mi) + 4, sha1);
 		if (!cmp)
-			return ntohl(*((unsigned int *) ((char *) index + (24 * mi))));
+			return ntohl(*((uint32_t *)((char *)index + (24 * mi))));
 		if (cmp > 0)
 			hi = mi;
 		else
@@ -1456,21 +1469,20 @@ static void *read_packed_sha1(const unsigned char *sha1, char *type, unsigned lo
 {
 	struct pack_entry e;
 
-	if (!find_pack_entry(sha1, &e, NULL)) {
-		error("cannot read sha1_file for %s", sha1_to_hex(sha1));
+	if (!find_pack_entry(sha1, &e, NULL))
 		return NULL;
-	}
-	return unpack_entry(e.p, e.offset, type, size);
+	else
+		return unpack_entry(e.p, e.offset, type, size);
 }
 
 void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
 {
 	unsigned long mapsize;
 	void *map, *buf;
-	struct pack_entry e;
 
-	if (find_pack_entry(sha1, &e, NULL))
-		return read_packed_sha1(sha1, type, size);
+	buf = read_packed_sha1(sha1, type, size);
+	if (buf)
+		return buf;
 	map = map_sha1_file(sha1, &mapsize);
 	if (map) {
 		buf = unpack_sha1_file(map, mapsize, type, size);
@@ -1478,9 +1490,7 @@ void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size
 		return buf;
 	}
 	reprepare_packed_git();
-	if (find_pack_entry(sha1, &e, NULL))
-		return read_packed_sha1(sha1, type, size);
-	return NULL;
+	return read_packed_sha1(sha1, type, size);
 }
 
 void *read_object_with_reference(const unsigned char *sha1,
@@ -1768,6 +1778,8 @@ static void *repack_object(const unsigned char *sha1, unsigned long *objsize)
 
 	/* need to unpack and recompress it by itself */
 	unpacked = read_packed_sha1(sha1, type, &len);
+	if (!unpacked)
+		error("cannot read sha1_file for %s", sha1_to_hex(sha1));
 
 	hdrlen = sprintf(hdr, "%s %lu", type, len) + 1;
 
@@ -2034,5 +2046,26 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, int write
 	default:
 		return error("%s: unsupported file type", path);
 	}
+	return 0;
+}
+
+int read_pack_header(int fd, struct pack_header *header)
+{
+	char *c = (char*)header;
+	ssize_t remaining = sizeof(struct pack_header);
+	do {
+		ssize_t r = xread(fd, c, remaining);
+		if (r <= 0)
+			/* "eof before pack header was fully read" */
+			return PH_ERROR_EOF;
+		remaining -= r;
+		c += r;
+	} while (remaining > 0);
+	if (header->hdr_signature != htonl(PACK_SIGNATURE))
+		/* "protocol error (pack signature mismatch detected)" */
+		return PH_ERROR_PACK_SIGNATURE;
+	if (!pack_version_ok(header->hdr_version))
+		/* "protocol error (pack version unsupported)" */
+		return PH_ERROR_PROTOCOL;
 	return 0;
 }

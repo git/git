@@ -3,7 +3,7 @@ git-update-index(1)
 
 NAME
 ----
-git-update-index - Modifies the index or directory cache
+git-update-index - Register file contents in the working tree to the index
 
 
 SYNOPSIS
@@ -289,7 +289,7 @@ Configuration
 
 The command honors `core.filemode` configuration variable.  If
 your repository is on an filesystem whose executable bits are
-unreliable, this should be set to 'false' (see gitlink:git-repo-config[1]).
+unreliable, this should be set to 'false' (see gitlink:git-config[1]).
 This causes the command to ignore differences in file modes recorded
 in the index and the file mode on the filesystem if they differ only on
 executable bit.   On such an unfortunate filesystem, you may
@@ -301,7 +301,7 @@ The command looks at `core.ignorestat` configuration variable.  See
 
 See Also
 --------
-gitlink:git-repo-config[1]
+gitlink:git-config[1]
 
 
 Author

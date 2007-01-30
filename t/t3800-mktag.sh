@@ -88,7 +88,7 @@ check_verify_failure '"type" line label check'
 #  5. type line eol check
 
 echo "object 779e9b33986b1c2670fff52c5067603117b3e895" >tag.sig
-echo -n "type tagsssssssssssssssssssssssssssssss" >>tag.sig
+printf "type tagsssssssssssssssssssssssssssssss" >>tag.sig
 
 cat >expect.pat <<EOF
 ^error: char48: .*"[\]n"$

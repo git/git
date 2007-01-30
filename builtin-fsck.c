@@ -54,6 +54,99 @@ static int objwarning(struct object *obj, const char *err, ...)
 	return -1;
 }
 
+/*
+ * Check a single reachable object
+ */
+static void check_reachable_object(struct object *obj)
+{
+	const struct object_refs *refs;
+
+	/*
+	 * We obviously want the object to be parsed,
+	 * except if it was in a pack-file and we didn't
+	 * do a full fsck
+	 */
+	if (!obj->parsed) {
+		if (has_sha1_file(obj->sha1))
+			return; /* it is in pack - forget about it */
+		printf("missing %s %s\n", typename(obj->type), sha1_to_hex(obj->sha1));
+		return;
+	}
+
+	/*
+	 * Check that everything that we try to reference is also good.
+	 */
+	refs = lookup_object_refs(obj);
+	if (refs) {
+		unsigned j;
+		for (j = 0; j < refs->count; j++) {
+			struct object *ref = refs->ref[j];
+			if (ref->parsed ||
+			    (has_sha1_file(ref->sha1)))
+				continue;
+			printf("broken link from %7s %s\n",
+			       typename(obj->type), sha1_to_hex(obj->sha1));
+			printf("              to %7s %s\n",
+			       typename(ref->type), sha1_to_hex(ref->sha1));
+		}
+	}
+}
+
+/*
+ * Check a single unreachable object
+ */
+static void check_unreachable_object(struct object *obj)
+{
+	/*
+	 * Missing unreachable object? Ignore it. It's not like
+	 * we miss it (since it can't be reached), nor do we want
+	 * to complain about it being unreachable (since it does
+	 * not exist).
+	 */
+	if (!obj->parsed)
+		return;
+
+	/*
+	 * Unreachable object that exists? Show it if asked to,
+	 * since this is something that is prunable.
+	 */
+	if (show_unreachable) {
+		printf("unreachable %s %s\n", typename(obj->type), sha1_to_hex(obj->sha1));
+		return;
+	}
+
+	/*
+	 * "!used" means that nothing at all points to it, including
+	 * other unreacahble objects. In other words, it's the "tip"
+	 * of some set of unreachable objects, usually a commit that
+	 * got dropped.
+	 *
+	 * Such starting points are more interesting than some random
+	 * set of unreachable objects, so we show them even if the user
+	 * hasn't asked for _all_ unreachable objects. If you have
+	 * deleted a branch by mistake, this is a prime candidate to
+	 * start looking at, for example.
+	 */
+	if (!obj->used) {
+		printf("dangling %s %s\n", typename(obj->type),
+		       sha1_to_hex(obj->sha1));
+		return;
+	}
+
+	/*
+	 * Otherwise? It's there, it's unreachable, and some other unreachable
+	 * object points to it. Ignore it - it's not interesting, and we showed
+	 * all the interesting cases above.
+	 */
+}
+
+static void check_object(struct object *obj)
+{
+	if (obj->flags & REACHABLE)
+		check_reachable_object(obj);
+	else
+		check_unreachable_object(obj);
+}
 
 static void check_connectivity(void)
 {
@@ -62,46 +155,10 @@ static void check_connectivity(void)
 	/* Look up all the requirements, warn about missing objects.. */
 	max = get_max_object_index();
 	for (i = 0; i < max; i++) {
-		const struct object_refs *refs;
 		struct object *obj = get_indexed_object(i);
 
-		if (!obj)
-			continue;
-
-		if (!obj->parsed) {
-			if (has_sha1_file(obj->sha1))
-				; /* it is in pack */
-			else
-				printf("missing %s %s\n",
-				       typename(obj->type), sha1_to_hex(obj->sha1));
-			continue;
-		}
-
-		refs = lookup_object_refs(obj);
-		if (refs) {
-			unsigned j;
-			for (j = 0; j < refs->count; j++) {
-				struct object *ref = refs->ref[j];
-				if (ref->parsed ||
-				    (has_sha1_file(ref->sha1)))
-					continue;
-				printf("broken link from %7s %s\n",
-				       typename(obj->type), sha1_to_hex(obj->sha1));
-				printf("              to %7s %s\n",
-				       typename(ref->type), sha1_to_hex(ref->sha1));
-			}
-		}
-
-		if (show_unreachable && !(obj->flags & REACHABLE)) {
-			printf("unreachable %s %s\n",
-			       typename(obj->type), sha1_to_hex(obj->sha1));
-			continue;
-		}
-
-		if (!obj->used) {
-			printf("dangling %s %s\n", typename(obj->type),
-			       sha1_to_hex(obj->sha1));
-		}
+		if (obj)
+			check_object(obj);
 	}
 }
 
@@ -514,12 +571,11 @@ static int fsck_cache_tree(struct cache_tree *it)
 	return err;
 }
 
-int main(int argc, char **argv)
+int cmd_fsck(int argc, char **argv, const char *prefix)
 {
 	int i, heads;
 
 	track_object_refs = 1;
-	setup_git_directory();
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -549,7 +605,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (*arg == '-')
-			usage("git-fsck-objects [--tags] [--root] [[--unreachable] [--cache] [--full] [--strict] <head-sha1>*]");
+			usage("git-fsck [--tags] [--root] [[--unreachable] [--cache] [--full] [--strict] <head-sha1>*]");
 	}
 
 	fsck_head_link();

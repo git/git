@@ -10,7 +10,7 @@ get_data_source () {
 		echo ''
 		;;
 	*)
-		if test "$(git-repo-config --get "remote.$1.url")"
+		if test "$(git-config --get "remote.$1.url")"
 		then
 			echo config
 		elif test -f "$GIT_DIR/remotes/$1"
@@ -32,7 +32,7 @@ get_remote_url () {
 		echo "$1"
 		;;
 	config)
-		git-repo-config --get "remote.$1.url"
+		git-config --get "remote.$1.url"
 		;;
 	remotes)
 		sed -ne '/^URL: */{
@@ -49,8 +49,8 @@ get_remote_url () {
 }
 
 get_default_remote () {
-	curr_branch=$(git-symbolic-ref HEAD | sed -e 's|^refs/heads/||')
-	origin=$(git-repo-config --get "branch.$curr_branch.remote")
+	curr_branch=$(git-symbolic-ref -q HEAD | sed -e 's|^refs/heads/||')
+	origin=$(git-config --get "branch.$curr_branch.remote")
 	echo ${origin:-origin}
 }
 
@@ -60,7 +60,7 @@ get_remote_default_refs_for_push () {
 	'' | branches)
 		;; # no default push mapping, just send matching refs.
 	config)
-		git-repo-config --get-all "remote.$1.push" ;;
+		git-config --get-all "remote.$1.push" ;;
 	remotes)
 		sed -ne '/^Push: */{
 			s///p
@@ -81,7 +81,14 @@ get_remote_default_refs_for_push () {
 # is to help prevent randomly "globbed" ref from being chosen as
 # a merge candidate
 expand_refs_wildcard () {
+	remote="$1"
+	shift
 	first_one=yes
+	if test "$#" = 0
+	then
+		echo empty
+		echo >&2 "Nothing specified for fetching with remote.$remote.fetch"
+	fi
 	for ref
 	do
 		lref=${ref#'+'}
@@ -132,14 +139,14 @@ canon_refs_list_for_fetch () {
 	if test "$1" = "-d"
 	then
 		shift ; remote="$1" ; shift
-		set $(expand_refs_wildcard "$@")
+		set $(expand_refs_wildcard "$remote" "$@")
 		is_explicit="$1"
 		shift
 		if test "$remote" = "$(get_default_remote)"
 		then
-			curr_branch=$(git-symbolic-ref HEAD | \
+			curr_branch=$(git-symbolic-ref -q HEAD | \
 			    sed -e 's|^refs/heads/||')
-			merge_branches=$(git-repo-config \
+			merge_branches=$(git-config \
 			    --get-all "branch.${curr_branch}.merge")
 		fi
 		if test -z "$merge_branches" && test $is_explicit != explicit
@@ -176,7 +183,7 @@ canon_refs_list_for_fetch () {
 			done
 		fi
 		case "$remote" in
-		'') remote=HEAD ;;
+		'' | HEAD ) remote=HEAD ;;
 		refs/heads/* | refs/tags/* | refs/remotes/*) ;;
 		heads/* | tags/* | remotes/* ) remote="refs/$remote" ;;
 		*) remote="refs/heads/$remote" ;;
@@ -205,7 +212,7 @@ get_remote_default_refs_for_fetch () {
 		echo "HEAD:" ;;
 	config)
 		canon_refs_list_for_fetch -d "$1" \
-			$(git-repo-config --get-all "remote.$1.fetch") ;;
+			$(git-config --get-all "remote.$1.fetch") ;;
 	branches)
 		remote_branch=$(sed -ne '/#/s/.*#//p' "$GIT_DIR/branches/$1")
 		case "$remote_branch" in '') remote_branch=master ;; esac
@@ -278,4 +285,17 @@ resolve_alternates () {
 			exit 1 ;;
 		esac
 	done
+}
+
+get_uploadpack () {
+	data_source=$(get_data_source "$1")
+	case "$data_source" in
+	config)
+		uplp=$(git-config --get "remote.$1.uploadpack")
+		echo ${uplp:-git-upload-pack}
+		;;
+	*)
+		echo "git-upload-pack"
+		;;
+	esac
 }

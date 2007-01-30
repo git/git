@@ -235,7 +235,7 @@ static int ambiguous_path(const char *path, int len)
 	return slash;
 }
 
-static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
+int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 {
 	static const char *fmt[] = {
 		"%.*s",
@@ -246,13 +246,32 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		"refs/remotes/%.*s/HEAD",
 		NULL
 	};
+	const char **p, *r;
+	int refs_found = 0;
+
+	*ref = NULL;
+	for (p = fmt; *p; p++) {
+		unsigned char sha1_from_ref[20];
+		unsigned char *this_result;
+
+		this_result = refs_found ? sha1_from_ref : sha1;
+		r = resolve_ref(mkpath(*p, len, str), this_result, 1, NULL);
+		if (r) {
+			if (!refs_found++)
+				*ref = xstrdup(r);
+			if (!warn_ambiguous_refs)
+				break;
+		}
+	}
+	return refs_found;
+}
+
+static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
+{
 	static const char *warning = "warning: refname '%.*s' is ambiguous.\n";
-	const char **p, *ref;
 	char *real_ref = NULL;
 	int refs_found = 0;
 	int at, reflog_len;
-	unsigned char *this_result;
-	unsigned char sha1_from_ref[20];
 
 	if (len == 40 && !get_sha1_hex(str, sha1))
 		return 0;
@@ -273,16 +292,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	if (ambiguous_path(str, len))
 		return -1;
 
-	for (p = fmt; *p; p++) {
-		this_result = refs_found ? sha1_from_ref : sha1;
-		ref = resolve_ref(mkpath(*p, len, str), this_result, 1, NULL);
-		if (ref) {
-			if (!refs_found++)
-				real_ref = xstrdup(ref);
-			if (!warn_ambiguous_refs)
-				break;
-		}
-	}
+	refs_found = dwim_ref(str, len, sha1, &real_ref);
 
 	if (!refs_found)
 		return -1;
@@ -294,6 +304,9 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		/* Is it asking for N-th entry, or approxidate? */
 		int nth, i;
 		unsigned long at_time;
+		unsigned long co_time;
+		int co_tz, co_cnt;
+
 		for (i = nth = 0; 0 <= nth && i < reflog_len; i++) {
 			char ch = str[at+2+i];
 			if ('0' <= ch && ch <= '9')
@@ -305,7 +318,18 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 			at_time = 0;
 		else
 			at_time = approxidate(str + at + 2);
-		read_ref_at(real_ref, at_time, nth, sha1);
+		if (read_ref_at(real_ref, at_time, nth, sha1, NULL,
+				&co_time, &co_tz, &co_cnt)) {
+			if (at_time)
+				fprintf(stderr,
+					"warning: Log for '%.*s' only goes "
+					"back to %s.\n", len, str,
+					show_rfc2822_date(co_time, co_tz));
+			else
+				fprintf(stderr,
+					"warning: Log for '%.*s' only has "
+					"%d entries.\n", len, str, co_cnt);
+		}
 	}
 
 	free(real_ref);

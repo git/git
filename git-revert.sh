@@ -19,8 +19,11 @@ case "$0" in
 	echo >&2 "What are you talking about?"
 	exit 1 ;;
 esac
+
+SUBDIRECTORY_OK=Yes ;# we will cd up
 . git-sh-setup
 require_work_tree
+cd_to_toplevel
 
 no_commit=
 while case "$#" in 0) break ;; esac
@@ -78,6 +81,8 @@ prev=$(git-rev-parse --verify "$commit^1" 2>/dev/null) ||
 git-rev-parse --verify "$commit^2" >/dev/null 2>&1 &&
 	die "Cannot run $me a multi-parent commit."
 
+encoding=$(git config i18n.commitencoding || echo UTF-8)
+
 # "commit" is an existing commit.  We would want to apply
 # the difference it introduces since its first parent "prev"
 # on top of the current HEAD if we are cherry-pick.  Or the
@@ -85,10 +90,11 @@ git-rev-parse --verify "$commit^2" >/dev/null 2>&1 &&
 
 case "$me" in
 revert)
-	git-rev-list --pretty=oneline --max-count=1 $commit |
+	git show -s --pretty=oneline --encoding="$encoding" $commit |
 	sed -e '
 		s/^[^ ]* /Revert "/
-		s/$/"/'
+		s/$/"/
+	'
 	echo
 	echo "This reverts commit $commit."
 	test "$rev" = "$commit" ||
@@ -117,14 +123,17 @@ cherry-pick)
 
 		q
 	}'
-	set_author_env=`git-cat-file commit "$commit" |
+
+	logmsg=`git show -s --pretty=raw --encoding="$encoding" "$commit"`
+	set_author_env=`echo "$logmsg" |
 	LANG=C LC_ALL=C sed -ne "$pick_author_script"`
 	eval "$set_author_env"
 	export GIT_AUTHOR_NAME
 	export GIT_AUTHOR_EMAIL
 	export GIT_AUTHOR_DATE
 
-	git-cat-file commit $commit | sed -e '1,/^$/d'
+	echo "$logmsg" |
+	sed -e '1,/^$/d' -e 's/^    //'
 	case "$replay" in
 	'')
 		echo "(cherry picked from commit $commit)"
@@ -137,37 +146,38 @@ cherry-pick)
 
 esac >.msg
 
+eval GITHEAD_$head=HEAD
+eval GITHEAD_$next='`git show -s \
+	--pretty=oneline --encoding="$encoding" "$commit" |
+	sed -e "s/^[^ ]* //"`'
+export GITHEAD_$head GITHEAD_$next
+
 # This three way merge is an interesting one.  We are at
 # $head, and would want to apply the change between $commit
 # and $prev on top of us (when reverting), or the change between
 # $prev and $commit on top of us (when cherry-picking or replaying).
 
-echo >&2 "First trying simple merge strategy to $me."
-git-read-tree -m -u --aggressive $base $head $next &&
+git-merge-recursive $base -- $head $next &&
 result=$(git-write-tree 2>/dev/null) || {
-    echo >&2 "Simple $me fails; trying Automatic $me."
-    git-merge-index -o git-merge-one-file -a || {
-	    mv -f .msg "$GIT_DIR/MERGE_MSG"
-	    {
-		echo '
+	mv -f .msg "$GIT_DIR/MERGE_MSG"
+	{
+	    echo '
 Conflicts:
 '
 		git ls-files --unmerged |
 		sed -e 's/^[^	]*	/	/' |
 		uniq
-	    } >>"$GIT_DIR/MERGE_MSG"
-	    echo >&2 "Automatic $me failed.  After resolving the conflicts,"
-	    echo >&2 "mark the corrected paths with 'git-add <paths>'"
-	    echo >&2 "and commit the result."
-	    case "$me" in
-	    cherry-pick)
+	} >>"$GIT_DIR/MERGE_MSG"
+	echo >&2 "Automatic $me failed.  After resolving the conflicts,"
+	echo >&2 "mark the corrected paths with 'git-add <paths>'"
+	echo >&2 "and commit the result."
+	case "$me" in
+	cherry-pick)
 		echo >&2 "You may choose to use the following when making"
 		echo >&2 "the commit:"
 		echo >&2 "$set_author_env"
-	    esac
-	    exit 1
-    }
-    result=$(git-write-tree) || exit
+	esac
+	exit 1
 }
 echo >&2 "Finished one $me."
 

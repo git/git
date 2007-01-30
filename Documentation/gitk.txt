@@ -3,7 +3,7 @@ gitk(1)
 
 NAME
 ----
-gitk - git repository browser
+gitk - The git repository browser
 
 SYNOPSIS
 --------
@@ -47,6 +47,8 @@ frequently used options.
 	meaning show from the given revision and back, or it can be a range in
 	the form "'<from>'..'<to>'" to show all revisions between '<from>' and
 	back to '<to>'. Note, more advanced revision selection can be applied.
+	For a more complete list of ways to spell object names, see
+	"SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
 
 <path>::
 

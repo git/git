@@ -63,12 +63,21 @@ do
 	;;
     -d)
     	shift
-	tag_name="$1"
-	tag=$(git-show-ref --verify --hash -- "refs/tags/$tag_name") ||
-		die "Seriously, what tag are you talking about?"
-	git-update-ref -m 'tag: delete' -d "refs/tags/$tag_name" "$tag" &&
-		echo "Deleted tag $tag_name."
-	exit $?
+	had_error=0
+	for tag
+	do
+		cur=$(git-show-ref --verify --hash -- "refs/tags/$tag") || {
+			echo >&2 "Seriously, what tag are you talking about?"
+			had_error=1
+			continue
+		}
+		git-update-ref -m 'tag: delete' -d "refs/tags/$tag" "$cur" || {
+			had_error=1
+			continue
+		}
+		echo "Deleted tag $tag."
+	done
+	exit $had_error
 	;;
     -v)
 	shift
@@ -103,7 +112,9 @@ git-check-ref-format "tags/$name" ||
 object=$(git-rev-parse --verify --default HEAD "$@") || exit 1
 type=$(git-cat-file -t $object) || exit 1
 tagger=$(git-var GIT_COMMITTER_IDENT) || exit 1
-: ${username:=$(expr "z$tagger" : 'z\(.*>\)')}
+
+keyid=$(git-repo-config user.signingkey) ||
+	keyid=$(expr "z$tagger" : 'z\(.*>\)')
 
 trap 'rm -f "$GIT_DIR"/TAG_TMP* "$GIT_DIR"/TAG_FINALMSG "$GIT_DIR"/TAG_EDITMSG' 0
 
@@ -130,7 +141,7 @@ if [ "$annotate" ]; then
       cat "$GIT_DIR"/TAG_FINALMSG ) >"$GIT_DIR"/TAG_TMP
     rm -f "$GIT_DIR"/TAG_TMP.asc "$GIT_DIR"/TAG_FINALMSG
     if [ "$signed" ]; then
-	gpg -bsa -u "$username" "$GIT_DIR"/TAG_TMP &&
+	gpg -bsa -u "$keyid" "$GIT_DIR"/TAG_TMP &&
 	cat "$GIT_DIR"/TAG_TMP.asc >>"$GIT_DIR"/TAG_TMP ||
 	die "failed to sign the tag with GPG."
     fi

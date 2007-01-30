@@ -7,6 +7,7 @@
 #include "refs.h"
 #include "revision.h"
 #include "grep.h"
+#include "reflog-walk.h"
 
 static char *path_name(struct name_path *path, const char *name)
 {
@@ -116,6 +117,9 @@ void mark_parents_uninteresting(struct commit *commit)
 void add_pending_object(struct rev_info *revs, struct object *obj, const char *name)
 {
 	add_object_array(obj, name, &revs->pending);
+	if (revs->reflog_info && obj->type == OBJ_COMMIT)
+		add_reflog_for_walk(revs->reflog_info,
+				(struct commit *)obj, name);
 }
 
 static struct object *get_reference(struct rev_info *revs, const char *name, const unsigned char *sha1, unsigned int flags)
@@ -864,6 +868,11 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				handle_reflog(revs, flags);
 				continue;
 			}
+			if (!strcmp(arg, "-g") ||
+					!strcmp(arg, "--walk-reflogs")) {
+				init_reflog_walk(&revs->reflog_info);
+				continue;
+			}
 			if (!strcmp(arg, "--not")) {
 				flags ^= UNINTERESTING;
 				continue;
@@ -1209,6 +1218,9 @@ static struct commit *get_revision_1(struct rev_info *revs)
 
 		revs->commits = entry->next;
 		free(entry);
+
+		if (revs->reflog_info)
+			fake_reflog_parent(revs->reflog_info, commit);
 
 		/*
 		 * If we haven't done the list limiting, we need to look at

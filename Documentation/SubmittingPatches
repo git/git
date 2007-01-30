@@ -23,7 +23,8 @@ probably need to split up your commit to finer grained pieces.
 
 Oh, another thing.  I am picky about whitespaces.  Make sure your
 changes do not trigger errors with the sample pre-commit hook shipped
-in templates/hooks--pre-commit.
+in templates/hooks--pre-commit.  To help ensure this does not happen,
+run git diff --check on your changes before you commit.
 
 
 (2) Generate your patch using git tools out of your commits.
@@ -72,7 +73,9 @@ other than the commit message itself.  Place such "cover letter"
 material between the three dash lines and the diffstat.
 
 Do not attach the patch as a MIME attachment, compressed or not.
-Do not let your e-mail client send quoted-printable.  Many
+Do not let your e-mail client send quoted-printable.  Do not let
+your e-mail client send format=flowed which would destroy
+whitespaces in your patches. Many
 popular e-mail applications will not always transmit a MIME
 attachment as plain text, making it impossible to comment on
 your code.  A MIME attachment also takes a bit more time to
@@ -311,4 +314,20 @@ settings but I haven't tried, yet.
 	mail.html_compose			=> false
 	mail.identity.default.compose_html	=> false
 	mail.identity.id?.compose_html		=> false
+
+
+
+Gnus
+----
+
+'|' in the *Summary* buffer can be used to pipe the current
+message to an external program, and this is a handy way to drive
+"git am".  However, if the message is MIME encoded, what is
+piped into the program is the representation you see in your
+*Article* buffer after unwrapping MIME.  This is often not what
+you would want for two reasons.  It tends to screw up non ASCII
+characters (most notably in people's names), and also
+whitespaces (fatal in patches).  Running 'C-u g' to display the
+message in raw form before using '|' to run the pipe can work
+this problem around.
 

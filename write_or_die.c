@@ -17,25 +17,13 @@ int read_in_full(int fd, void *buf, size_t count)
 	return total;
 }
 
-void read_or_die(int fd, void *buf, size_t count)
-{
-	ssize_t loaded;
-
-	loaded = read_in_full(fd, buf, count);
-	if (loaded != count) {
-		if (loaded < 0)
-			die("read error (%s)", strerror(errno));
-		die("read error: end of file");
-	}
-}
-
 int write_in_full(int fd, const void *buf, size_t count)
 {
 	const char *p = buf;
 	ssize_t total = 0;
 
 	while (count > 0) {
-		size_t written = xwrite(fd, p, count);
+		ssize_t written = xwrite(fd, p, count);
 		if (written < 0)
 			return -1;
 		if (!written) {

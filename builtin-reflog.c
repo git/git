@@ -13,7 +13,7 @@
  */
 
 static const char reflog_expire_usage[] =
-"git-reflog expire [--verbose] [--dry-run] [--fix-stale] [--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...";
+"git-reflog expire [--verbose] [--dry-run] [--stale-fix] [--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...";
 
 static unsigned long default_reflog_expire;
 static unsigned long default_reflog_expire_unreachable;
@@ -263,9 +263,6 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 	}
 
 	cb.ref_commit = lookup_commit_reference_gently(sha1, 1);
-	if (!cb.ref_commit)
-		fprintf(stderr,
-			"warning: ref '%s' does not point at a commit\n", ref);
 	cb.ref = ref;
 	cb.cmd = cmd;
 	for_each_reflog_ent(ref, expire_reflog_ent, &cb);

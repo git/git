@@ -3,7 +3,7 @@ git-rerere(1)
 
 NAME
 ----
-git-rerere - Reuse recorded resolve
+git-rerere - Reuse recorded resolution of conflicted merges
 
 SYNOPSIS
 --------
@@ -38,7 +38,7 @@ its working state.
 
 This resets the metadata used by rerere if a merge resolution is to be
 is aborted.  Calling gitlink:git-am[1] --skip or gitlink:git-rebase[1]
-[--skip|--abort] will automatcally invoke this command.
+[--skip|--abort] will automatically invoke this command.
 
 'diff'::
 
@@ -81,7 +81,7 @@ One way to do it is to pull master into the topic branch:
 
 ------------
 	$ git checkout topic
-	$ git pull . master
+	$ git merge master
 
               o---*---o---+ topic
              /           /
@@ -103,10 +103,10 @@ in which case the final commit graph would look like this:
 
 ------------
 	$ git checkout topic
-	$ git pull . master
+	$ git merge master
 	$ ... work on both topic and master branches
 	$ git checkout master
-	$ git pull . topic
+	$ git merge topic
 
               o---*---o---+---o---o topic
              /           /         \
@@ -126,11 +126,11 @@ top of the tip before the test merge:
 
 ------------
 	$ git checkout topic
-	$ git pull . master
+	$ git merge master
 	$ git reset --hard HEAD^ ;# rewind the test merge
 	$ ... work on both topic and master branches
 	$ git checkout master
-	$ git pull . topic
+	$ git merge topic
 
               o---*---o-------o---o topic
              /                     \

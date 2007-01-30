@@ -464,20 +464,29 @@ static int get_one_line(const char *msg, unsigned long len)
 	return ret;
 }
 
-static int is_rfc2047_special(char ch)
+/* High bit set, or ISO-2022-INT */
+static int non_ascii(int ch)
 {
-	return ((ch & 0x80) || (ch == '=') || (ch == '?') || (ch == '_'));
+	ch = (ch & 0xff);
+	return ((ch & 0x80) || (ch == 0x1b));
 }
 
-static int add_rfc2047(char *buf, const char *line, int len)
+static int is_rfc2047_special(char ch)
+{
+	return (non_ascii(ch) || (ch == '=') || (ch == '?') || (ch == '_'));
+}
+
+static int add_rfc2047(char *buf, const char *line, int len,
+		       const char *encoding)
 {
 	char *bp = buf;
 	int i, needquote;
-	static const char q_utf8[] = "=?utf-8?q?";
+	char q_encoding[128];
+	const char *q_encoding_fmt = "=?%s?q?";
 
 	for (i = needquote = 0; !needquote && i < len; i++) {
-		unsigned ch = line[i];
-		if (ch & 0x80)
+		int ch = line[i];
+		if (non_ascii(ch))
 			needquote++;
 		if ((i + 1 < len) &&
 		    (ch == '=' && line[i+1] == '?'))
@@ -486,8 +495,11 @@ static int add_rfc2047(char *buf, const char *line, int len)
 	if (!needquote)
 		return sprintf(buf, "%.*s", len, line);
 
-	memcpy(bp, q_utf8, sizeof(q_utf8)-1);
-	bp += sizeof(q_utf8)-1;
+	i = snprintf(q_encoding, sizeof(q_encoding), q_encoding_fmt, encoding);
+	if (sizeof(q_encoding) < i)
+		die("Insanely long encoding name %s", encoding);
+	memcpy(bp, q_encoding, i);
+	bp += i;
 	for (i = 0; i < len; i++) {
 		unsigned ch = line[i] & 0xFF;
 		if (is_rfc2047_special(ch)) {
@@ -505,7 +517,8 @@ static int add_rfc2047(char *buf, const char *line, int len)
 }
 
 static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf,
-			 const char *line, int relative_date)
+			 const char *line, int relative_date,
+			 const char *encoding)
 {
 	char *date;
 	int namelen;
@@ -533,7 +546,8 @@ static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf,
 		filler = "";
 		strcpy(buf, "From: ");
 		ret = strlen(buf);
-		ret += add_rfc2047(buf + ret, line, display_name_length);
+		ret += add_rfc2047(buf + ret, line, display_name_length,
+				   encoding);
 		memcpy(buf + ret, name_tail, namelen - display_name_length);
 		ret += namelen - display_name_length;
 		buf[ret++] = '\n';
@@ -668,21 +682,18 @@ static char *replace_encoding_header(char *buf, char *encoding)
 	return buf;
 }
 
-static char *logmsg_reencode(const struct commit *commit)
+static char *logmsg_reencode(const struct commit *commit,
+			     char *output_encoding)
 {
 	char *encoding;
 	char *out;
-	char *output_encoding = (git_log_output_encoding
-				 ? git_log_output_encoding
-				 : git_commit_encoding);
+	char *utf8 = "utf-8";
 
-	if (!output_encoding)
-		output_encoding = "utf-8";
-	else if (!*output_encoding)
+	if (!*output_encoding)
 		return NULL;
 	encoding = get_header(commit, "encoding");
 	if (!encoding)
-		return NULL;
+		encoding = utf8;
 	if (!strcmp(encoding, output_encoding))
 		out = strdup(commit->buffer);
 	else
@@ -691,7 +702,8 @@ static char *logmsg_reencode(const struct commit *commit)
 	if (out)
 		out = replace_encoding_header(out, output_encoding);
 
-	free(encoding);
+	if (encoding != utf8)
+		free(encoding);
 	if (!out)
 		return NULL;
 	return out;
@@ -711,8 +723,15 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 	int parents_shown = 0;
 	const char *msg = commit->buffer;
 	int plain_non_ascii = 0;
-	char *reencoded = logmsg_reencode(commit);
+	char *reencoded;
+	char *encoding;
 
+	encoding = (git_log_output_encoding
+		    ? git_log_output_encoding
+		    : git_commit_encoding);
+	if (!encoding)
+		encoding = "utf-8";
+	reencoded = logmsg_reencode(commit, encoding);
 	if (reencoded)
 		msg = reencoded;
 
@@ -738,7 +757,7 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 				    i + 1 < len && msg[i+1] == '\n')
 					in_body = 1;
 			}
-			else if (ch & 0x80) {
+			else if (non_ascii(ch)) {
 				plain_non_ascii = 1;
 				break;
 			}
@@ -797,13 +816,15 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 				offset += add_user_info("Author", fmt,
 							buf + offset,
 							line + 7,
-							relative_date);
+							relative_date,
+							encoding);
 			if (!memcmp(line, "committer ", 10) &&
 			    (fmt == CMIT_FMT_FULL || fmt == CMIT_FMT_FULLER))
 				offset += add_user_info("Commit", fmt,
 							buf + offset,
 							line + 10,
-							relative_date);
+							relative_date,
+							encoding);
 			continue;
 		}
 
@@ -826,7 +847,8 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 			int slen = strlen(subject);
 			memcpy(buf + offset, subject, slen);
 			offset += slen;
-			offset += add_rfc2047(buf + offset, line, linelen);
+			offset += add_rfc2047(buf + offset, line, linelen,
+					      encoding);
 		}
 		else {
 			memset(buf + offset, ' ', indent);
@@ -837,11 +859,17 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 		if (fmt == CMIT_FMT_ONELINE)
 			break;
 		if (subject && plain_non_ascii) {
-			static const char header[] =
-				"Content-Type: text/plain; charset=UTF-8\n"
+			int sz;
+			char header[512];
+			const char *header_fmt =
+				"Content-Type: text/plain; charset=%s\n"
 				"Content-Transfer-Encoding: 8bit\n";
-			memcpy(buf + offset, header, sizeof(header)-1);
-			offset += sizeof(header)-1;
+			sz = snprintf(header, sizeof(header), header_fmt,
+				      encoding);
+			if (sizeof(header) < sz)
+				die("Encoding name %s too long", encoding);
+			memcpy(buf + offset, header, sz);
+			offset += sz;
 		}
 		if (after_subject) {
 			int slen = strlen(after_subject);

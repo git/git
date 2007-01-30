@@ -3,7 +3,7 @@ git-branch(1)
 
 NAME
 ----
-git-branch - List, create, or delete branches.
+git-branch - List, create, or delete branches
 
 SYNOPSIS
 --------
@@ -74,7 +74,7 @@ OPTIONS
 	List both remote-tracking branches and local branches.
 
 -v::
-	Show sha1 and commit subjectline for each head.
+	Show sha1 and commit subject line for each head.
 
 --abbrev=<length>::
 	Alter minimum display length for sha1 in output listing,

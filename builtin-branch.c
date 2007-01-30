@@ -324,7 +324,7 @@ static void create_branch(const char *name, const char *start_name,
 	if (resolve_ref(ref, sha1, 1, NULL)) {
 		if (!force)
 			die("A branch named '%s' already exists.", name);
-		else if (!strcmp(head, name))
+		else if (!is_bare_repository() && !strcmp(head, name))
 			die("Cannot force update the current branch.");
 	}
 
@@ -394,7 +394,6 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	int kinds = REF_LOCAL_BRANCH;
 	int i;
 
-	setup_ident();
 	git_config(git_branch_config);
 
 	for (i = 1; i < argc; i++) {

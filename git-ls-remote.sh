@@ -23,7 +23,11 @@ do
   -u|--u|--up|--upl|--uploa|--upload|--upload-|--upload-p|--upload-pa|\
   --upload-pac|--upload-pack)
 	shift
-	exec="--exec=$1"
+	exec="--upload-pack=$1"
+	shift;;
+  -u=*|--u=*|--up=*|--upl=*|--uplo=*|--uploa=*|--upload=*|\
+  --upload-=*|--upload-p=*|--upload-pa=*|--upload-pac=*|--upload-pack=*)
+	exec=--upload-pack=$(expr "$1" : '-[^=]*=\(.*\)')
 	shift;;
   --)
   shift; break ;;
@@ -54,7 +58,7 @@ http://* | https://* | ftp://* )
             curl_extra_args="-k"
         fi
 	if [ -n "$GIT_CURL_FTP_NO_EPSV" -o \
-		"`git-repo-config --bool http.noEPSV`" = true ]; then
+		"`git-config --bool http.noEPSV`" = true ]; then
 		curl_extra_args="${curl_extra_args} --disable-epsv"
 	fi
 	curl -nsf $curl_extra_args --header "Pragma: no-cache" "$peek_repo/info/refs" ||

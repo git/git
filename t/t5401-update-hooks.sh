@@ -23,7 +23,7 @@ test_expect_success setup '
 cat >victim/.git/hooks/update <<'EOF'
 #!/bin/sh
 echo "$@" >$GIT_DIR/update.args
-read x; echo -n "$x" >$GIT_DIR/update.stdin
+read x; printf "$x" >$GIT_DIR/update.stdin
 echo STDOUT update
 echo STDERR update >&2
 EOF
@@ -32,7 +32,7 @@ chmod u+x victim/.git/hooks/update
 cat >victim/.git/hooks/post-update <<'EOF'
 #!/bin/sh
 echo "$@" >$GIT_DIR/post-update.args
-read x; echo -n "$x" >$GIT_DIR/post-update.stdin
+read x; printf "$x" >$GIT_DIR/post-update.stdin
 echo STDOUT post-update
 echo STDERR post-update >&2
 EOF

@@ -13,7 +13,6 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 	int i, delete;
 
 	delete = 0;
-	setup_ident();
 	git_config(git_default_config);
 
 	for (i = 1; i < argc; i++) {
@@ -62,10 +61,8 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 
 	lock = lock_any_ref_for_update(refname, oldval ? oldsha1 : NULL);
 	if (!lock)
-		return 1;
+		die("%s: cannot lock the ref", refname);
 	if (write_ref_sha1(lock, sha1, msg) < 0)
-		return 1;
-
-	/* write_ref_sha1 always unlocks the ref, no need to do it explicitly */
+		die("%s: cannot update the ref", refname);
 	return 0;
 }

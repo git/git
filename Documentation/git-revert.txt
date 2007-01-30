@@ -19,6 +19,8 @@ OPTIONS
 -------
 <commit>::
 	Commit to revert.
+	For a more complete list of ways to spell commit names, see
+	"SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
 
 -e|--edit::
 	With this option, `git-revert` will let you edit the commit

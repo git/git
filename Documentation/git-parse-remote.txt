@@ -3,7 +3,7 @@ git-parse-remote(1)
 
 NAME
 ----
-git-parse-remote - Routines to help parsing $GIT_DIR/remotes/
+git-parse-remote - Routines to help parsing remote repository access parameters
 
 
 SYNOPSIS
@@ -14,7 +14,8 @@ DESCRIPTION
 -----------
 This script is included in various scripts to supply
 routines to parse files under $GIT_DIR/remotes/ and
-$GIT_DIR/branches/.
+$GIT_DIR/branches/ and configuration variables that are related
+to fetching, pulling and pushing.
 
 The primary entry points are:
 
@@ -25,7 +26,8 @@ get_remote_refs_for_fetch::
 	(e.g. `refs/heads/foo`).  When `<refspec>...` is empty
 	the returned list of refs consists of the defaults
 	for the given `<repo>`, if specified in
-	`$GIT_DIR/remotes/` or `$GIT_DIR/branches/`.
+	`$GIT_DIR/remotes/`, `$GIT_DIR/branches/`, or `remote.*.fetch`
+	configuration.
 
 get_remote_refs_for_push::
 	Given the list of user-supplied `<repo> <refspec>...`,

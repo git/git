@@ -129,6 +129,7 @@ extern int cache_errno;
 
 extern int is_bare_repository_cfg;
 extern int is_bare_repository(void);
+extern int is_inside_git_dir(void);
 extern const char *get_git_dir(void);
 extern char *get_object_directory(void);
 extern char *get_refs_directory(void);
@@ -299,6 +300,8 @@ extern int get_sha1_hex(const char *hex, unsigned char *sha1);
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 extern int read_ref(const char *filename, unsigned char *sha1);
 extern const char *resolve_ref(const char *path, unsigned char *sha1, int, int *);
+extern int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
+
 extern int create_symref(const char *ref, const char *refs_heads_master);
 extern int validate_headref(const char *ref);
 
@@ -316,8 +319,6 @@ int parse_date(const char *date, char *buf, int bufsize);
 void datestamp(char *buf, int bufsize);
 unsigned long approxidate(const char *);
 
-extern int setup_ident(void);
-extern void ignore_missing_committer_name();
 extern const char *git_author_info(int);
 extern const char *git_committer_info(int);
 
@@ -351,7 +352,7 @@ struct pack_window {
 extern struct packed_git {
 	struct packed_git *next;
 	struct pack_window *windows;
-	unsigned int *index_base;
+	uint32_t *index_base;
 	off_t index_size;
 	off_t pack_size;
 	int pack_fd;
@@ -400,7 +401,7 @@ extern void install_packed_git(struct packed_git *pack);
 extern struct packed_git *find_sha1_pack(const unsigned char *sha1, 
 					 struct packed_git *packs);
 
-extern void pack_report();
+extern void pack_report(void);
 extern unsigned char* use_pack(struct packed_git *, struct pack_window **, unsigned long, unsigned int *);
 extern void unuse_pack(struct pack_window **);
 extern struct packed_git *add_packed_git(char *, int, int);
@@ -434,7 +435,6 @@ extern char *git_log_output_encoding;
 
 extern int copy_fd(int ifd, int ofd);
 extern int read_in_full(int fd, void *buf, size_t count);
-extern void read_or_die(int fd, void *buf, size_t count);
 extern int write_in_full(int fd, const void *buf, size_t count);
 extern void write_or_die(int fd, const void *buf, size_t count);
 extern int write_or_whine(int fd, const void *buf, size_t count, const char *msg);

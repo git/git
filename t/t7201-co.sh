@@ -14,15 +14,23 @@ fill () {
 	done
 }
 
+
 test_expect_success setup '
 
-	fill 1 2 3 4 5 >one &&
+	fill 1 2 3 4 5 6 7 8 >one &&
 	fill a b c d e >two &&
 	git add one two &&
 	git commit -m "Initial A one, A two" &&
 
-	git checkout -b side &&
-	fill 1 2 3 >one &&
+	git checkout -b renamer &&
+	rm -f one &&
+	fill 1 3 4 5 6 7 8 >uno &&
+	git add uno &&
+	fill a b c d e f >two &&
+	git commit -a -m "Renamer R one->uno, M two" &&
+
+	git checkout -b side master &&
+	fill 1 2 3 4 5 6 7 >one &&
 	fill A B C D E >three &&
 	rm -f two &&
 	git update-index --add --remove one two three &&
@@ -42,7 +50,7 @@ test_expect_success "checkout from non-existing branch" '
 
 test_expect_success "checkout with dirty tree without -m" '
 
-	fill 0 1 2 3 4 5 >one &&
+	fill 0 1 2 3 4 5 6 7 8 >one &&
 	if git checkout side
 	then
 		echo Not happy
@@ -58,12 +66,10 @@ test_expect_success "checkout -m with dirty tree" '
 	git checkout -f master &&
 	git clean &&
 
-	fill 0 1 2 3 4 5 >one &&
+	fill 0 1 2 3 4 5 6 7 8 >one &&
 	git checkout -m side &&
 
-	fill "  master" "* side" >expect.branch &&
-	git branch >current.branch &&
-	diff expect.branch current.branch &&
+	test "$(git symbolic-ref HEAD)" = "refs/heads/side" &&
 
 	fill "M	one" "A	three" "D	two" >expect.master &&
 	git diff --name-status master >current.master &&
@@ -76,6 +82,51 @@ test_expect_success "checkout -m with dirty tree" '
 	: >expect.index &&
 	git diff --cached >current.index &&
 	diff expect.index current.index
+'
+
+test_expect_success "checkout -m with dirty tree, renamed" '
+
+	git checkout -f master && git clean &&
+
+	fill 1 2 3 4 5 7 8 >one &&
+	if git checkout renamer
+	then
+		echo Not happy
+		false
+	else
+		echo "happy - failed correctly"
+	fi &&
+
+	git checkout -m renamer &&
+	fill 1 3 4 5 7 8 >expect &&
+	diff expect uno &&
+	! test -f one &&
+	git diff --cached >current &&
+	! test -s current
+
+'
+
+test_expect_success 'checkout -m with merge conflict' '
+
+	git checkout -f master && git clean &&
+
+	fill 1 T 3 4 5 6 S 8 >one &&
+	if git checkout renamer
+	then
+		echo Not happy
+		false
+	else
+		echo "happy - failed correctly"
+	fi &&
+
+	git checkout -m renamer &&
+
+	git diff master:one :3:uno |
+	sed -e "1,/^@@/d" -e "/^ /d" -e "s/^-/d/" -e "s/^+/a/" >current &&
+	fill d2 aT d7 aS >expect &&
+	diff current expect &&
+	git diff --cached two >current &&
+	! test -s current
 '
 
 test_done

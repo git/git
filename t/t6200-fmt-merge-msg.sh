@@ -108,7 +108,7 @@ EOF
 
 test_expect_success 'merge-msg test #3' '
 
-	git repo-config merge.summary true &&
+	git config merge.summary true &&
 
 	git checkout master &&
 	setdate &&
@@ -138,7 +138,7 @@ EOF
 
 test_expect_success 'merge-msg test #4' '
 
-	git repo-config merge.summary true &&
+	git config merge.summary true &&
 
 	git checkout master &&
 	setdate &&
@@ -150,7 +150,7 @@ test_expect_success 'merge-msg test #4' '
 
 test_expect_success 'merge-msg test #5' '
 
-	git repo-config merge.summary yes &&
+	git config merge.summary yes &&
 
 	git checkout master &&
 	setdate &&

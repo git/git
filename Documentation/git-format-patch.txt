@@ -11,7 +11,8 @@ SYNOPSIS
 [verse]
 'git-format-patch' [-n | -k] [-o <dir> | --stdout] [--attach] [--thread]
 	           [-s | --signoff] [--diff-options] [--start-number <n>]
-		   [--in-reply-to=Message-Id]
+		   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
+		   [--ignore-if-in-upstream]
 		   <since>[..<until>]
 
 DESCRIPTION
@@ -20,7 +21,9 @@ DESCRIPTION
 Prepare each commit between <since> and <until> with its patch in
 one file per commit, formatted to resemble UNIX mailbox format.
 If ..<until> is not specified, the head of the current working
-tree is implied.
+tree is implied.  For a more complete list of ways to spell
+<since> and <until>, see "SPECIFYING REVISIONS" section in
+gitlink:git-rev-parse[1].
 
 The output of this command is convenient for e-mail submission or
 for use with gitlink:git-am[1].
@@ -78,13 +81,34 @@ OPTIONS
 	reply to the given Message-Id, which avoids breaking threads to
 	provide a new patch series.
 
+--ignore-if-in-upstream::
+	Do not include a patch that matches a commit in
+	<until>..<since>.  This will examine all patches reachable
+	from <since> but not from <until> and compare them with the
+	patches being generated, and any patch that matches is
+	ignored.
+
+--suffix=.<sfx>::
+	Instead of using `.patch` as the suffix for generated
+	filenames, use specifed suffix.  A common alternative is
+	`--suffix=.txt`.
++
+Note that you would need to include the leading dot `.` if you
+want a filename like `0001-description-of-my-change.patch`, and
+the first letter does not have to be a dot.  Leaving it empty would
+not add any suffix.
+
 CONFIGURATION
 -------------
 You can specify extra mail header lines to be added to each
-message in the repository configuration as follows:
+message in the repository configuration.  Also you can specify
+the default suffix different from the built-in one:
 
+------------
 [format]
         headers = "Organization: git-foo\n"
+        suffix = .txt
+------------
 
 
 EXAMPLES
@@ -109,6 +133,9 @@ git-format-patch -M -B origin::
 	understand renaming patches, so use it only when you know
 	the recipient uses git to apply your patch.
 
+git-format-patch -3::
+	Extract three topmost commits from the current branch
+	and format them as e-mailable patches.
 
 See Also
 --------

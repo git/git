@@ -27,7 +27,7 @@ OPTIONS
 	output format that is useful only to tell the changed
 	paths and their nature of changes.
 
---max-count=<n>::
+-<n>::
 	Limit output to <n> commits.
 
 <since>..<until>::

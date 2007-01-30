@@ -7,7 +7,7 @@ git-add - Add file contents to the changeset to be committed next
 
 SYNOPSIS
 --------
-'git-add' [-n] [-v] [-f] [--interactive] [--] <file>...
+'git-add' [-n] [-v] [-f] [--interactive | -i] [--] <file>...
 
 DESCRIPTION
 -----------
@@ -52,7 +52,7 @@ OPTIONS
 -f::
 	Allow adding otherwise ignored files.
 
-\--interactive::
+\i, \--interactive::
 	Add modified contents in the working tree interactively to
 	the index.
 
@@ -83,7 +83,7 @@ git-add git-*.sh::
 Interactive mode
 ----------------
 When the command enters the interactive mode, it shows the
-output of the 'status' subcommand, and then goes into ints
+output of the 'status' subcommand, and then goes into its
 interactive command loop.
 
 The command loop shows the list of subcommands available, and

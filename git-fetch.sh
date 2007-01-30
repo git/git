@@ -5,12 +5,8 @@ USAGE='<fetch-options> <repository> <refspec>...'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 set_reflog_action "fetch $*"
+cd_to_toplevel ;# probably unnecessary...
 
-TOP=$(git-rev-parse --show-cdup)
-if test ! -z "$TOP"
-then
-	cd "$TOP"
-fi
 . git-parse-remote
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
@@ -26,7 +22,6 @@ force=
 verbose=
 update_head_ok=
 exec=
-upload_pack=
 keep=
 shallow_depth=
 while case "$#" in 0) break ;; esac
@@ -38,8 +33,12 @@ do
 	--upl|--uplo|--uploa|--upload|--upload-|--upload-p|\
 	--upload-pa|--upload-pac|--upload-pack)
 		shift
-		exec="--exec=$1" 
-		upload_pack="-u $1"
+		exec="--upload-pack=$1"
+		;;
+	--upl=*|--uplo=*|--uploa=*|--upload=*|\
+	--upload-=*|--upload-p=*|--upload-pa=*|--upload-pac=*|--upload-pack=*)
+		exec=--upload-pack=$(expr "$1" : '-[^=]*=\(.*\)')
+		shift
 		;;
 	-f|--f|--fo|--for|--forc|--force)
 		force=t
@@ -86,6 +85,12 @@ case "$#" in
 	set x $origin ; shift ;;
 esac
 
+if test -z "$exec"
+then
+	# No command line override and we have configuration for the remote.
+	exec="--upload-pack=$(get_uploadpack $1)"
+fi
+
 remote_nick="$1"
 remote=$(get_remote_url "$@")
 refs=
@@ -98,7 +103,7 @@ then
 fi
 
 # Global that is reused later
-ls_remote_result=$(git ls-remote $upload_pack "$remote") ||
+ls_remote_result=$(git ls-remote $exec "$remote") ||
 	die "Cannot get the repository state from $remote"
 
 append_fetch_head () {
@@ -316,7 +321,7 @@ fetch_main () {
 	      curl_extra_args="-k"
 	  fi
 	  if [ -n "$GIT_CURL_FTP_NO_EPSV" -o \
-		"`git-repo-config --bool http.noEPSV`" = true ]; then
+		"`git-config --bool http.noEPSV`" = true ]; then
 	      noepsv_opt="--disable-epsv"
 	  fi
 

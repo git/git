@@ -89,6 +89,8 @@ struct rev_info {
 
 	topo_sort_set_fn_t topo_setter;
 	topo_sort_get_fn_t topo_getter;
+
+	struct reflog_walk_info *reflog_info;
 };
 
 #define REV_TREE_SAME		0

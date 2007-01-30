@@ -135,11 +135,7 @@ fi
 
 # We are switching branches and checking out trees, so
 # we *NEED* to be at the toplevel.
-cdup=$(git-rev-parse --show-cdup)
-if test ! -z "$cdup"
-then
-	cd "$cdup"
-fi
+cd_to_toplevel
 
 [ -z "$new" ] && new=$old && new_name="$old_name"
 
@@ -160,9 +156,9 @@ then
 	if test -n "$oldbranch"
 	then
 		detach_warn="warning: you are not on ANY branch anymore.
-If you meant to create a new branch from the commit, you need -b to
-associate a new branch with the wanted checkout.  Example:
-  git checkout -b <new_branch_name> $arg"
+If you meant to create a new branch from this checkout, you may still do
+so (now or later) by using -b with the checkout command again.  Example:
+  git checkout -b <new_branch_name>"
 	fi
 elif test -z "$oldbranch" && test -n "$branch"
 then
@@ -204,16 +200,12 @@ else
 	# Match the index to the working tree, and do a three-way.
     	git diff-files --name-only | git update-index --remove --stdin &&
 	work=`git write-tree` &&
-	git read-tree --reset -u $new &&
-	git read-tree -m -u --aggressive --exclude-per-directory=.gitignore $old $new $work ||
-	exit
+	git read-tree --reset -u $new || exit
 
-	if result=`git write-tree 2>/dev/null`
-	then
-	    echo >&2 "Trivially automerged."
-	else
-	    git merge-index -o git-merge-one-file -a
-	fi
+	eval GITHEAD_$new=${new_name:-${branch:-$new}} &&
+	eval GITHEAD_$work=local &&
+	export GITHEAD_$new GITHEAD_$work &&
+	git merge-recursive $old -- $new $work
 
 	# Do not register the cleanly merged paths in the index yet.
 	# this is not a real merge before committing, but just carrying

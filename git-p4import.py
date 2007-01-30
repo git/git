@@ -193,13 +193,13 @@ class git_command:
 
     def get_config(self, variable):
         try:
-            return self.git("repo-config --get %s" % variable)[0].rstrip()
+            return self.git("config --get %s" % variable)[0].rstrip()
         except:
             return None
 
     def set_config(self, variable, value):
         try:
-            self.git("repo-config %s %s"%(variable, value) )
+            self.git("config %s %s"%(variable, value) )
         except:
             die("Could not set %s to " % variable, value)
 

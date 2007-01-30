@@ -2299,7 +2299,6 @@ int main(int argc, char **argv)
 	struct ref *ref;
 
 	setup_git_directory();
-	setup_ident();
 
 	remote = xcalloc(sizeof(*remote), 1);
 

@@ -343,8 +343,8 @@ And, as you can see with cat-file, this new entry refers to the
 current contents of the file:
 
 ------------------------------------------------
-$ git cat-file blob a6b11f7a
-goodbye, word
+$ git cat-file blob 8b9743b2
+goodbye, world
 ------------------------------------------------
 
 The "status" command is a useful way to get a quick summary of the

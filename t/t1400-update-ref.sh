@@ -93,8 +93,8 @@ rm -rf .git/$m .git/logs expect
 
 test_expect_success \
 	'enable core.logAllRefUpdates' \
-	'git-repo-config core.logAllRefUpdates true &&
-	 test true = $(git-repo-config --bool --get core.logAllRefUpdates)'
+	'git-config core.logAllRefUpdates true &&
+	 test true = $(git-config --bool --get core.logAllRefUpdates)'
 
 test_expect_success \
 	"create $m (logged by config)" \
@@ -138,19 +138,19 @@ test_expect_success \
 	'rm -f o e
 	 git-rev-parse --verify "master@{May 25 2005}" >o 2>e &&
 	 test '"$C"' = $(cat o) &&
-	 test "warning: Log .git/logs/'"$m only goes back to $ed"'." = "$(cat e)"'
+	 test "warning: Log for '\'master\'' only goes back to $ed." = "$(cat e)"'
 test_expect_success \
 	"Query master@{2005-05-25} (before history)" \
 	'rm -f o e
 	 git-rev-parse --verify master@{2005-05-25} >o 2>e &&
 	 test '"$C"' = $(cat o) &&
-	 echo test "warning: Log .git/logs/'"$m only goes back to $ed"'." = "$(cat e)"'
+	 echo test "warning: Log for '\'master\'' only goes back to $ed." = "$(cat e)"'
 test_expect_success \
 	'Query "master@{May 26 2005 23:31:59}" (1 second before history)' \
 	'rm -f o e
 	 git-rev-parse --verify "master@{May 26 2005 23:31:59}" >o 2>e &&
 	 test '"$C"' = $(cat o) &&
-	 test "warning: Log .git/logs/'"$m only goes back to $ed"'." = "$(cat e)"'
+	 test "warning: Log for '\''master'\'' only goes back to $ed." = "$(cat e)"'
 test_expect_success \
 	'Query "master@{May 26 2005 23:32:00}" (exactly history start)' \
 	'rm -f o e

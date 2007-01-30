@@ -12,7 +12,7 @@ proc gitdir {} {
     if {[info exists env(GIT_DIR)]} {
 	return $env(GIT_DIR)
     } else {
-	return ".git"
+	return [exec git rev-parse --git-dir]
     }
 }
 
@@ -6193,7 +6193,7 @@ set wrcomcmd "git diff-tree --stdin -p --pretty"
 
 set gitencoding {}
 catch {
-    set gitencoding [exec git repo-config --get i18n.commitencoding]
+    set gitencoding [exec git config --get i18n.commitencoding]
 }
 if {$gitencoding == ""} {
     set gitencoding "utf-8"
@@ -6293,6 +6293,7 @@ set stuffsaved 0
 set patchnum 0
 setcoords
 makewindow
+wm title . "[file tail $argv0]: [file tail [pwd]]"
 readrefs
 
 if {$cmdline_files ne {} || $revtreeargs ne {}} {

@@ -17,6 +17,7 @@ Content-Transfer-Encoding: 8bit
  file0   |    3 +++
  file3   |    4 ++++
  3 files changed, 9 insertions(+), 0 deletions(-)
+ create mode 100644 file3
 --------------g-i-t--v-e-r-s-i-o-n
 Content-Type: text/x-patch;
  name="c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a.diff"

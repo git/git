@@ -3,12 +3,12 @@ git-peek-remote(1)
 
 NAME
 ----
-git-peek-remote - Lists the references in a remote repository
+git-peek-remote - List the references in a remote repository
 
 
 SYNOPSIS
 --------
-'git-peek-remote' [--exec=<git-upload-pack>] [<host>:]<directory>
+'git-peek-remote' [--upload-pack=<git-upload-pack>] [<host>:]<directory>
 
 DESCRIPTION
 -----------
@@ -17,7 +17,7 @@ stores them in the local repository under the same name.
 
 OPTIONS
 -------
---exec=<git-upload-pack>::
+\--upload-pack=<git-upload-pack>::
 	Use this to specify the path to 'git-upload-pack' on the
 	remote side, if it is not found on your $PATH. Some
 	installations of sshd ignores the user's environment
@@ -28,6 +28,9 @@ OPTIONS
 	who do not want to pay the overhead for non-interactive
 	shells, but prefer having a lean .bashrc file (they set most of
 	the things up in .bash_profile).
+
+\--exec=<git-upload-pack>::
+	Same \--upload-pack=<git-upload-pack>.
 
 <host>::
 	A remote host that houses the repository.  When this

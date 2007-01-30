@@ -3,11 +3,11 @@ git-symbolic-ref(1)
 
 NAME
 ----
-git-symbolic-ref - read and modify symbolic refs
+git-symbolic-ref - Read and modify symbolic refs
 
 SYNOPSIS
 --------
-'git-symbolic-ref' <name> [<ref>]
+'git-symbolic-ref' [-q] <name> [<ref>]
 
 DESCRIPTION
 -----------
@@ -23,6 +23,14 @@ A symbolic ref is a regular file that stores a string that
 begins with `ref: refs/`.  For example, your `.git/HEAD` is
 a regular file whose contents is `ref: refs/heads/master`.
 
+OPTIONS
+-------
+
+-q::
+	Do not issue an error message if the <name> is not a
+	symbolic ref but a detached HEAD; instead exit with
+	non-zero status silently.
+
 NOTES
 -----
 In the past, `.git/HEAD` was a symbolic link pointing at
@@ -35,6 +43,10 @@ or that do not have the `readlink(1)` command, this was a bit
 cumbersome.  On some platforms, `ln -sf` does not even work as
 advertised (horrors).  Therefore symbolic links are now deprecated
 and symbolic refs are used by default.
+
+git-symbolic-ref will exit with status 0 if the contents of the
+symbolic ref were printed correctly, with status 1 if the requested
+name is not a symbolic ref, or 128 if another error occurs.
 
 Author
 ------

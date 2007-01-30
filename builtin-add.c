@@ -10,7 +10,7 @@
 #include "cache-tree.h"
 
 static const char builtin_add_usage[] =
-"git-add [-n] [-v] [-f] [--interactive] [--] <filepattern>...";
+"git-add [-n] [-v] [-f] [--interactive | -i] [--] <filepattern>...";
 
 static void prune_directory(struct dir_struct *dir, const char **pathspec, int prefix)
 {
@@ -102,7 +102,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	int add_interactive = 0;
 
 	for (i = 1; i < argc; i++) {
-		if (!strcmp("--interactive", argv[i]))
+		if (!strcmp("--interactive", argv[i]) ||
+		    !strcmp("-i", argv[i]))
 			add_interactive++;
 	}
 	if (add_interactive) {

@@ -3,13 +3,13 @@ git-commit(1)
 
 NAME
 ----
-git-commit - Record your changes
+git-commit - Record changes to the repository
 
 SYNOPSIS
 --------
 [verse]
-'git-commit' [-a] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg>]
-	   [--no-verify] [--amend] [-e] [--author <author>]
+'git-commit' [-a] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg> |
+	    --amend] [--no-verify] [-e] [--author <author>]
 	   [--] [[-i | -o ]<file>...]
 
 DESCRIPTION
@@ -111,7 +111,7 @@ but can be used to amend a merge commit.
 	are concluding a conflicted merge.
 
 -q|--quiet::
-	Supress commit summary message.
+	Suppress commit summary message.
 
 \--::
 	Do not interpret any more arguments as options.
@@ -141,11 +141,6 @@ $ git rm goodbye.c
 $ git add hello.c
 $ git commit
 ------------
-
-////////////
-We should fix 'git rm' to remove goodbye.c from both index and
-working tree for the above example.
-////////////
 
 Instead of staging files after each individual change, you can
 tell `git commit` to notice the changes to the files whose
@@ -222,6 +217,12 @@ refuses to run when given pathnames (but see `-i` option).
 
 DISCUSSION
 ----------
+
+Though not required, it's a good idea to begin the commit message
+with a single short (less than 50 character) line summarizing the
+change, followed by a blank line and then a more thorough description.
+Tools that turn commits into email, for example, use the first line
+on the Subject: line and the rest of the commit in the body.
 
 include::i18n.txt[]
 

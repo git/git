@@ -1003,7 +1003,6 @@ int main(int argc, const char **argv)
 	int arg = 1;
 	int rc = 0;
 
-	setup_ident();
 	setup_git_directory();
 	git_config(git_default_config);
 
@@ -1070,7 +1069,7 @@ int main(int argc, const char **argv)
 		fprintf(stderr,
 "Some loose object were found to be corrupt, but they might be just\n"
 "a false '404 Not Found' error message sent with incorrect HTTP\n"
-"status code.  Suggest running git fsck-objects.\n");
+"status code.  Suggest running git-fsck.\n");
 	}
 	return rc;
 }

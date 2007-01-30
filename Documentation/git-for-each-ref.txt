@@ -7,7 +7,7 @@ git-for-each-ref - Output information on each ref
 
 SYNOPSIS
 --------
-'git-for-each-ref' [--count=<count>]\* [--shell|--perl|--python] [--sort=<key>]\* [--format=<format>] [<pattern>]
+'git-for-each-ref' [--count=<count>]\* [--shell|--perl|--python|--tcl] [--sort=<key>]\* [--format=<format>] [<pattern>]
 
 DESCRIPTION
 -----------
@@ -15,7 +15,7 @@ DESCRIPTION
 Iterate over all refs that match `<pattern>` and show them
 according to the given `<format>`, after sorting them according
 to the given set of `<key>`.  If `<max>` is given, stop after
-showing that many refs.  The interporated values in `<format>`
+showing that many refs.  The interpolated values in `<format>`
 can optionally be quoted as string literals in the specified
 host language allowing their direct evaluation in that language.
 
@@ -49,7 +49,7 @@ OPTIONS
 	using fnmatch(3).  Refs that do not match the pattern
 	are not shown.
 
---shell, --perl, --python::
+--shell, --perl, --python, --tcl::
 	If given, strings that substitute `%(fieldname)`
 	placeholders are quoted as string literals suitable for
 	the specified host language.  This is meant to produce

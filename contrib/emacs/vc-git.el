@@ -120,7 +120,16 @@
     (vc-git--run-command file "commit" "-m" comment "--only" "--")))
 
 (defun vc-git-checkout (file &optional editable rev destfile)
-  (vc-git--run-command file "checkout" (or rev "HEAD")))
+  (if destfile
+      (let ((fullname (substring
+                       (vc-git--run-command-string file "ls-files" "-z" "--full-name" "--")
+                       0 -1))
+            (coding-system-for-read 'no-conversion)
+            (coding-system-for-write 'no-conversion))
+        (with-temp-file destfile
+          (eq 0 (call-process "git" nil t nil "cat-file" "blob"
+                              (concat (or rev "HEAD") ":" fullname)))))
+    (vc-git--run-command file "checkout" (or rev "HEAD"))))
 
 (defun vc-git-annotate-command (file buf &optional rev)
   ; FIXME: rev is ignored

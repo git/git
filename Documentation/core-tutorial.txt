@@ -906,18 +906,13 @@ of it as it can automatically (which in this case is just merge the `example`
 file, which had no differences in the `mybranch` branch), and say:
 
 ----------------
-	Trying really trivial in-index merge...
-	fatal: Merge requires file-level merging
-	Nope.
-	...
 	Auto-merging hello 
 	CONFLICT (content): Merge conflict in hello 
 	Automatic merge failed; fix up by hand
 ----------------
 
-which is way too verbose, but it basically tells you that it failed the
-really trivial merge ("Simple merge") and did an "Automatic merge"
-instead, but that too failed due to conflicts in `hello`.
+It tells you that it did an "Automatic merge", which
+failed due to conflicts in `hello`.
 
 Not to worry. It left the (trivial) conflict in `hello` in the same form you
 should already be well used to if you've ever used CVS, so let's just
@@ -1129,46 +1124,26 @@ juggle multiple lines of development simultaneously. Of
 course, you will pay the price of more disk usage to hold
 multiple working trees, but disk space is cheap these days.
 
-[NOTE]
-You could even pull from your own repository by
-giving '.' as <remote-repository> parameter to `git pull`.  This
-is useful when you want to merge a local branch (or more, if you
-are making an Octopus) into the current branch.
-
 It is likely that you will be pulling from the same remote
 repository from time to time. As a short hand, you can store
-the remote repository URL in a file under .git/remotes/
-directory, like this:
+the remote repository URL in the local repository's config file
+like this:
 
 ------------------------------------------------
-$ mkdir -p .git/remotes/
-$ cat >.git/remotes/linus <<\EOF
-URL: http://www.kernel.org/pub/scm/git/git.git/
-EOF
+$ git config remote.linus.url http://www.kernel.org/pub/scm/git/git.git/
 ------------------------------------------------
 
-and use the filename to `git pull` instead of the full URL.
-The URL specified in such file can even be a prefix
-of a full URL, like this:
-
-------------------------------------------------
-$ cat >.git/remotes/jgarzik <<\EOF
-URL: http://www.kernel.org/pub/scm/linux/git/jgarzik/
-EOF
-------------------------------------------------
-
+and use the "linus" keyword with `git pull` instead of the full URL.
 
 Examples.
 
 . `git pull linus`
 . `git pull linus tag v0.99.1`
-. `git pull jgarzik/netdev-2.6.git/ e100`
 
 the above are equivalent to:
 
 . `git pull http://www.kernel.org/pub/scm/git/git.git/ HEAD`
 . `git pull http://www.kernel.org/pub/scm/git/git.git/ tag v0.99.1`
-. `git pull http://www.kernel.org/pub/.../jgarzik/netdev-2.6.git e100`
 
 
 How does the merge work?
@@ -1546,7 +1521,8 @@ on that project and has an own "public repository" goes like this:
 
 1. Prepare your work repository, by `git clone` the public
    repository of the "project lead". The URL used for the
-   initial cloning is stored in `.git/remotes/origin`.
+   initial cloning is stored in the remote.origin.url
+   configuration variable.
 
 2. Prepare a public repository accessible to others, just like
    the "project lead" person does.
@@ -1586,14 +1562,15 @@ like this:
 1. Prepare your work repository, by `git clone` the public
    repository of the "project lead" (or a "subsystem
    maintainer", if you work on a subsystem). The URL used for
-   the initial cloning is stored in `.git/remotes/origin`.
+   the initial cloning is stored in the remote.origin.url
+   configuration variable.
 
 2. Do your work in your repository on 'master' branch.
 
 3. Run `git fetch origin` from the public repository of your
    upstream every once in a while. This does only the first
    half of `git pull` but does not merge. The head of the
-   public repository is stored in `.git/refs/heads/origin`.
+   public repository is stored in `.git/refs/remotes/origin/master`.
 
 4. Use `git cherry origin` to see which ones of your patches
    were accepted, and/or use `git rebase origin` to port your
@@ -1681,11 +1658,11 @@ $ git reset --hard master~2
 
 You can make sure 'git show-branch' matches the state before
 those two 'git merge' you just did.  Then, instead of running
-two 'git merge' commands in a row, you would pull these two
+two 'git merge' commands in a row, you would merge these two
 branch heads (this is known as 'making an Octopus'):
 
 ------------
-$ git pull . commit-fix diff-fix
+$ git merge commit-fix diff-fix
 $ git show-branch
 ! [commit-fix] Fix commit message normalization.
  ! [diff-fix] Fix rename detection.
@@ -1701,7 +1678,7 @@ $ git show-branch
 
 Note that you should not do Octopus because you can.  An octopus
 is a valid thing to do and often makes it easier to view the
-commit history if you are pulling more than two independent
+commit history if you are merging more than two independent
 changes at the same time.  However, if you have merge conflicts
 with any of the branches you are merging in and need to hand
 resolve, that is an indication that the development happened in

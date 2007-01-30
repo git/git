@@ -3,7 +3,7 @@ git-update-ref(1)
 
 NAME
 ----
-git-update-ref - update the object name stored in a ref safely
+git-update-ref - Update the object name stored in a ref safely
 
 SYNOPSIS
 --------

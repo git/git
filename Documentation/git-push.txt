@@ -8,7 +8,7 @@ git-push - Update remote refs along with associated objects
 
 SYNOPSIS
 --------
-'git-push' [--all] [--tags] [-f | --force] <repository> <refspec>...
+'git-push' [--all] [--tags] [--receive-pack=<git-receive-pack>] [--repo=all] [-f | --force] [-v] [<repository> <refspec>...]
 
 DESCRIPTION
 -----------
@@ -67,11 +67,32 @@ the remote repository.
 	addition to refspecs explicitly listed on the command
 	line.
 
+\--receive-pack=<git-receive-pack>::
+	Path to the 'git-receive-pack' program on the remote
+	end.  Sometimes useful when pushing to a remote
+	repository over ssh, and you do not have the program in
+	a directory on the default $PATH.
+
+\--exec=<git-receive-pack>::
+	Same as \--receive-pack=<git-receive-pack>.
+
 -f, \--force::
 	Usually, the command refuses to update a remote ref that is
 	not a descendant of the local ref used to overwrite it.
 	This flag disables the check.  This can cause the
 	remote repository to lose commits; use it with care.
+
+\--repo=<repo>::
+	When no repository is specified the command defaults to
+	"origin"; this overrides it.
+
+\--thin, \--no-thin::
+	These options are passed to `git-send-pack`.  Thin
+	transfer spends extra cycles to minimize the number of
+	objects to be sent and meant to be used on slower connection.
+
+-v::
+	Run verbosely.
 
 include::urls.txt[]
 

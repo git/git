@@ -9,6 +9,7 @@ Subject: [PATCH] Side
  file0   |    3 +++
  file3   |    4 ++++
  3 files changed, 9 insertions(+), 0 deletions(-)
+ create mode 100644 file3
 
 diff --git a/dir/sub b/dir/sub
 index 35d242b..7289e35 100644

@@ -30,19 +30,19 @@ test_expect_success \
 
 test_expect_success \
     'verify-pack -v, packedGitWindowSize == 1 page' \
-    'git-repo-config core.packedGitWindowSize 512 &&
+    'git-config core.packedGitWindowSize 512 &&
      git-verify-pack -v "$pack1"'
 
 test_expect_success \
     'verify-pack -v, packedGit{WindowSize,Limit} == 1 page' \
-    'git-repo-config core.packedGitWindowSize 512 &&
-     git-repo-config core.packedGitLimit 512 &&
+    'git-config core.packedGitWindowSize 512 &&
+     git-config core.packedGitLimit 512 &&
      git-verify-pack -v "$pack1"'
 
 test_expect_success \
     'repack -a -d, packedGit{WindowSize,Limit} == 1 page' \
-    'git-repo-config core.packedGitWindowSize 512 &&
-     git-repo-config core.packedGitLimit 512 &&
+    'git-config core.packedGitWindowSize 512 &&
+     git-config core.packedGitLimit 512 &&
      commit2=`git-commit-tree $tree -p $commit1 </dev/null` &&
      git-update-ref HEAD $commit2 &&
      git-repack -a -d &&
@@ -53,8 +53,8 @@ test_expect_success \
 
 test_expect_success \
     'verify-pack -v, defaults' \
-    'git-repo-config --unset core.packedGitWindowSize &&
-     git-repo-config --unset core.packedGitLimit &&
+    'git-config --unset core.packedGitWindowSize &&
+     git-config --unset core.packedGitLimit &&
      git-verify-pack -v "$pack2"'
 
 test_done

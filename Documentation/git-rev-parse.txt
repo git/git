@@ -152,6 +152,14 @@ blobs contained in a commit.
   used immediately following a ref name and the ref must have an
   existing log ($GIT_DIR/logs/<ref>).
 
+* A ref followed by the suffix '@' with an ordinal specification
+  enclosed in a brace pair (e.g. '\{1\}', '\{15\}') to specify
+  the n-th prior value of that ref.  For example 'master@\{1\}'
+  is the immediate prior value of 'master' while 'master@\{5\}'
+  is the 5th prior value of 'master'. This suffix may only be used
+  immediately following a ref name and the ref must have an existing
+  log ($GIT_DIR/logs/<ref>).
+
 * A suffix '{caret}' to a revision parameter means the first parent of
   that commit object.  '{caret}<n>' means the <n>th parent (i.e.
   'rev{caret}'

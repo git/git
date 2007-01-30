@@ -14,6 +14,8 @@ static unsigned int contains(struct diff_filespec *one,
 	const char *data;
 	if (diff_populate_filespec(one, 0))
 		return 0;
+	if (!len)
+		return 0;
 
 	sz = one->size;
 	data = one->data;

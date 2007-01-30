@@ -8,10 +8,13 @@ git-fetch-pack - Receive missing objects from another repository
 
 SYNOPSIS
 --------
-'git-fetch-pack' [-q] [-k] [--exec=<git-upload-pack>] [<host>:]<directory> [<refs>...]
+'git-fetch-pack' [--all] [--quiet|-q] [--keep|-k] [--thin] [--upload-pack=<git-upload-pack>] [--depth=<n>] [-v] [<host>:]<directory> [<refs>...]
 
 DESCRIPTION
 -----------
+Usually you would want to use gitlink:git-fetch[1] which is a
+higher level wrapper of this command instead.
+
 Invokes 'git-upload-pack' on a potentially remote repository,
 and asks it to send objects missing from this repository, to
 update the named heads.  The list of commits available locally
@@ -25,17 +28,24 @@ have a common ancestor commit.
 
 OPTIONS
 -------
--q::
+\--all::
+	Fetch all remote refs.
+
+\--quiet, \-q::
 	Pass '-q' flag to 'git-unpack-objects'; this makes the
 	cloning process less verbose.
 
--k::
+\--keep, \-k::
 	Do not invoke 'git-unpack-objects' on received data, but
 	create a single packfile out of it instead, and store it
 	in the object database. If provided twice then the pack is
 	locked against repacking.
 
---exec=<git-upload-pack>::
+\--thin::
+	Spend extra cycles to minimize the number of objects to be sent.
+	Use it on slower connection.
+
+\--upload-pack=<git-upload-pack>::
 	Use this to specify the path to 'git-upload-pack' on the
 	remote side, if is not found on your $PATH.
 	Installations of sshd ignores the user's environment
@@ -46,6 +56,15 @@ OPTIONS
 	who do not want to pay the overhead for non-interactive
 	shells by having a lean .bashrc file (they set most of
 	the things up in .bash_profile).
+
+\--exec=<git-upload-pack>::
+	Same as \--upload-pack=<git-upload-pack>.
+
+\--depth=<n>::
+	Limit fetching to ancestor-chains not longer than n.
+
+\-v::
+	Run verbosely.
 
 <host>::
 	A remote host that houses the repository.  When this

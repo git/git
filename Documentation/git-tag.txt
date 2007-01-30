@@ -3,14 +3,14 @@ git-tag(1)
 
 NAME
 ----
-git-tag - Create a tag object signed with GPG
+git-tag - Create, list, delete or verify a tag object signed with GPG
 
 
 SYNOPSIS
 --------
 [verse]
-'git-tag' [-a | -s | -u <key-id>] [-f | -d | -v] [-m <msg> | -F <file>]
-	 <name> [<head>]
+'git-tag' [-a | -s | -u <key-id>] [-f | -v] [-m <msg> | -F <file>]  <name> [<head>]
+'git-tag' -d <name>...
 'git-tag' -l [<pattern>]
 
 DESCRIPTION
@@ -55,7 +55,7 @@ OPTIONS
 	Replace an existing tag with the given name (instead of failing)
 
 -d::
-	Delete an existing tag with the given name
+	Delete existing tags with the given names.
 
 -v::
 	Verify the gpg signature of given the tag
@@ -69,6 +69,16 @@ OPTIONS
 -F <file>::
 	Take the tag message from the given file.  Use '-' to
 	read the message from the standard input.
+
+CONFIGURATION
+-------------
+By default, git-tag in sign-with-default mode (-s) will use your
+committer identity (of the form "Your Name <your@email.address>") to
+find a key.  If you want to use a different default key, you can specify
+it in the repository configuration as follows:
+
+[user]
+    signingkey = <gpg-key-id>
 
 Author
 ------

@@ -3,7 +3,7 @@ git-merge-file(1)
 
 NAME
 ----
-git-merge-file - three-way file merge
+git-merge-file - Run a three-way file merge
 
 
 SYNOPSIS

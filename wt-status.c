@@ -335,7 +335,7 @@ void wt_status_print(struct wt_status *s)
 		if (s->amend)
 			printf("# No changes\n");
 		else if (s->workdir_dirty)
-			printf("no changes added to commit (use \"git add\" and/or \"git commit [-a|-i|-o]\")\n");
+			printf("no changes added to commit (use \"git add\" and/or \"git commit -a\")\n");
 		else if (s->workdir_untracked)
 			printf("nothing added to commit but untracked files present (use \"git add\" to track)\n");
 		else if (s->is_initial)
@@ -351,7 +351,7 @@ int git_status_config(const char *k, const char *v)
 		wt_status_use_color = git_config_colorbool(k, v);
 		return 0;
 	}
-	if (!strncmp(k, "status.color.", 13) || !strncmp(k, "color.status", 13)) {
+	if (!strncmp(k, "status.color.", 13) || !strncmp(k, "color.status.", 13)) {
 		int slot = parse_status_slot(k, 13);
 		color_parse(v, k, wt_status_colors[slot]);
 	}

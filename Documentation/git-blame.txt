@@ -8,7 +8,7 @@ git-blame - Show what revision and author last modified each line of a file
 SYNOPSIS
 --------
 [verse]
-'git-blame' [-c] [-l] [-t] [-f] [-n] [-p] [-L n,m] [-S <revs-file>]
+'git-blame' [-c] [-l] [-t] [-f] [-n] [-p] [--incremental] [-L n,m] [-S <revs-file>]
             [-M] [-C] [-C] [--since=<date>] [<rev>] [--] <file>
 
 DESCRIPTION
@@ -24,7 +24,7 @@ replaced; you need to use a tool such as gitlink:git-diff[1] or the "pickaxe"
 interface briefly mentioned in the following paragraph.
 
 Apart from supporting file annotation, git also supports searching the
-development history for when a code snippet occured in a change. This makes it
+development history for when a code snippet occurred in a change. This makes it
 possible to track when a code snippet was added to a file, moved or copied
 between files, and eventually deleted or replaced. It works by searching for
 a text string in the diff. A small example:
@@ -63,6 +63,10 @@ OPTIONS
 -p, --porcelain::
 	Show in a format designed for machine consumption.
 
+--incremental::
+	Show the result incrementally in a format designed for
+	machine consumption.
+
 -M::
 	Detect moving lines in the file as well.  When a commit
 	moves a block of lines in a file (e.g. the original file
@@ -89,7 +93,7 @@ THE PORCELAIN FORMAT
 --------------------
 
 In this format, each line is output after a header; the
-header at the minumum has the first line which has:
+header at the minimum has the first line which has:
 
 - 40-byte SHA-1 of the commit the line is attributed to;
 - the line number of the line in the original file;
@@ -112,15 +116,18 @@ header, prefixed by a TAB. This is to allow adding more
 header elements later.
 
 
-SPECIFIYING RANGES
-------------------
+SPECIFYING RANGES
+-----------------
 
 Unlike `git-blame` and `git-annotate` in older git, the extent
 of annotation can be limited to both line ranges and revision
 ranges.  When you are interested in finding the origin for
-ll. 40-60 for file `foo`, you can use `-L` option like this:
+ll. 40-60 for file `foo`, you can use `-L` option like these
+(they mean the same thing -- both ask for 21 lines starting at
+line 40):
 
 	git blame -L 40,60 foo
+	git blame -L 40,+21 foo
 
 Also you can use regular expression to specify the line range.
 
@@ -153,6 +160,47 @@ and then annotate the change between the commit and its
 parents, using `commit{caret}!` notation:
 
 	git blame -C -C -f $commit^! -- foo
+
+
+INCREMENTAL OUTPUT
+------------------
+
+When called with `--incremental` option, the command outputs the
+result as it is built.  The output generally will talk about
+lines touched by more recent commits first (i.e. the lines will
+be annotated out of order) and is meant to be used by
+interactive viewers.
+
+The output format is similar to the Porcelain format, but it
+does not contain the actual lines from the file that is being
+annotated.
+
+. Each blame entry always starts with a line of:
+
+	<40-byte hex sha1> <sourceline> <resultline> <num_lines>
++
+Line numbers count from 1.
+
+. The first time that commit shows up in the stream, it has various
+  other information about it printed out with a one-word tag at the
+  beginning of each line about that "extended commit info" (author,
+  email, committer, dates, summary etc).
+
+. Unlike Porcelain format, the filename information is always
+  given and terminates the entry:
+
+	"filename" <whitespace-quoted-filename-goes-here>
++
+and thus it's really quite easy to parse for some line- and word-oriented
+parser (which should be quite natural for most scripting languages).
++
+[NOTE]
+For people who do parsing: to make it more robust, just ignore any
+lines in between the first and last one ("<sha1>" and "filename" lines)
+where you don't recognize the tag-words (or care about that particular
+one) at the beginning of the "extended information" lines. That way, if
+there is ever added information (like the commit encoding or extended
+commit commentary), a blame viewer won't ever care.
 
 
 SEE ALSO

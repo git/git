@@ -3,7 +3,7 @@ git-var(1)
 
 NAME
 ----
-git-var - Print the git users identity
+git-var - Show a git logical variable
 
 
 SYNOPSIS
@@ -20,7 +20,7 @@ OPTIONS
 	Cause the logical variables to be listed. In addition, all the
 	variables of the git configuration file .git/config are listed
 	as well. (However, the configuration variables listing functionality
-	is deprecated in favor of `git-repo-config -l`.)
+	is deprecated in favor of `git-config -l`.)
 
 EXAMPLE
 --------
@@ -49,7 +49,7 @@ See Also
 --------
 gitlink:git-commit-tree[1]
 gitlink:git-tag[1]
-gitlink:git-repo-config[1]
+gitlink:git-config[1]
 
 Author
 ------

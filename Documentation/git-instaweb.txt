@@ -3,7 +3,7 @@ git-instaweb(1)
 
 NAME
 ----
-git-instaweb - instantly browse your working repository in gitweb
+git-instaweb - Instantly browse your working repository in gitweb
 
 SYNOPSIS
 --------

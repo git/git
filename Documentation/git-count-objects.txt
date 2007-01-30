@@ -3,7 +3,7 @@ git-count-objects(1)
 
 NAME
 ----
-git-count-objects - Reports on unpacked objects
+git-count-objects - Count unpacked number of objects and their disk consumption
 
 SYNOPSIS
 --------

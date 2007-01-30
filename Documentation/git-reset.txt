@@ -121,10 +121,6 @@ Undo a merge or pull::
 +
 ------------
 $ git pull                         <1>
-Trying really trivial in-index merge...
-fatal: Merge requires file-level merging
-Nope.
-...
 Auto-merging nitfol
 CONFLICT (content): Merge conflict in nitfol
 Automatic merge failed/prevented; fix up by hand

@@ -3,8 +3,7 @@ git-repack(1)
 
 NAME
 ----
-git-repack - Script used to pack a repository from a collection of
-objects into pack files.
+git-repack - Pack unpacked objects in a repository
 
 
 SYNOPSIS

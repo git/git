@@ -29,11 +29,22 @@ set_reflog_action() {
 }
 
 is_bare_repository () {
-	git-repo-config --bool --get core.bare ||
+	git-config --bool --get core.bare ||
 	case "$GIT_DIR" in
 	.git | */.git) echo false ;;
 	*) echo true ;;
 	esac
+}
+
+cd_to_toplevel () {
+	cdup=$(git-rev-parse --show-cdup)
+	if test ! -z "$cdup"
+	then
+		cd "$cdup" || {
+			echo >&2 "Cannot chdir to $cdup, the toplevel of the working tree"
+			exit 1
+		}
+	fi
 }
 
 require_work_tree () {

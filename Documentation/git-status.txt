@@ -3,7 +3,7 @@ git-status(1)
 
 NAME
 ----
-git-status - Show working tree status
+git-status - Show the working tree status
 
 
 SYNOPSIS
@@ -32,6 +32,15 @@ OUTPUT
 ------
 The output from this command is designed to be used as a commit
 template comments, and all the output lines are prefixed with '#'.
+
+
+CONFIGURATION
+-------------
+
+The command honors `color.status` (or `status.color` -- they
+mean the same thing and the latter is kept for backward
+compatibility) and `color.status.<slot>` configuration variables
+to colorize its output.
 
 
 Author

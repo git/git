@@ -172,11 +172,11 @@ sub req_Root
        return 0;
     }
 
-    my @gitvars = `git-repo-config -l`;
+    my @gitvars = `git-config -l`;
     if ($?) {
-       print "E problems executing git-repo-config on the server -- this is not a git repository or the PATH is not set correctly.\n";
+       print "E problems executing git-config on the server -- this is not a git repository or the PATH is not set correctly.\n";
         print "E \n";
-        print "error 1 - problem executing git-repo-config\n";
+        print "error 1 - problem executing git-config\n";
        return 0;
     }
     foreach my $line ( @gitvars )
@@ -876,9 +876,9 @@ sub req_update
                 print "MT newline\n";
 		next;
 	    }
-	    elsif ( !defined($wrev) || $wrev == 0 )
+	    elsif ( (!defined($wrev) || $wrev == 0) && (!defined($meta->{revision}) || $meta->{revision} == 0) )
 	    {
-	        $log->info("Tell the client the file will be added");
+	        $log->info("Tell the client the file is scheduled for addition");
 		print "MT text A \n";
                 print "MT fname $filename\n";
                 print "MT newline\n";
@@ -886,7 +886,7 @@ sub req_update
 
 	    }
 	    else {
-                $log->info("Updating '$filename' $wrev");
+                $log->info("Updating '$filename' to ".$meta->{revision});
                 print "MT +updated\n";
                 print "MT text U \n";
                 print "MT fname $filename\n";

@@ -3,7 +3,7 @@ git-cvsexportcommit(1)
 
 NAME
 ----
-git-cvsexportcommit - Export a commit to a CVS checkout
+git-cvsexportcommit - Export a single commit to a CVS checkout
 
 
 SYNOPSIS

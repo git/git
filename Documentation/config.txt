@@ -2,21 +2,84 @@ CONFIGURATION FILE
 ------------------
 
 The git configuration file contains a number of variables that affect
-the git command's behavior. They can be used by both the git plumbing
+the git command's behavior. `.git/config` file for each repository
+is used to store the information for that repository, and
+`$HOME/.gitconfig` is used to store per user information to give
+fallback values for `.git/config` file.
+
+They can be used by both the git plumbing
 and the porcelains. The variables are divided into sections, where
 in the fully qualified variable name the variable itself is the last
 dot-separated segment and the section name is everything before the last
 dot. The variable names are case-insensitive and only alphanumeric
 characters are allowed. Some variables may appear multiple times.
 
+Syntax
+~~~~~~
+
 The syntax is fairly flexible and permissive; whitespaces are mostly
-ignored. The '#' and ';' characters begin comments to the end of line,
-blank lines are ignored, lines containing strings enclosed in square
-brackets start sections and all the other lines are recognized
-as setting variables, in the form 'name = value'. If there is no equal
-sign on the line, the entire line is taken as 'name' and the variable
-is recognized as boolean "true". String values may be entirely or partially
-enclosed in double quotes; some variables may require special value format.
+ignored.  The '#' and ';' characters begin comments to the end of line,
+blank lines are ignored.
+
+The file consists of sections and variables.  A section begins with
+the name of the section in square brackets and continues until the next
+section begins.  Section names are not case sensitive.  Only alphanumeric
+characters, '`-`' and '`.`' are allowed in section names.  Each variable
+must belong to some section, which means that there must be section
+header before first setting of a variable.
+
+Sections can be further divided into subsections.  To begin a subsection
+put its name in double quotes, separated by space from the section name,
+in the section header, like in example below:
+
+--------
+	[section "subsection"]
+
+--------
+
+Subsection names can contain any characters except newline (doublequote
+'`"`' and backslash have to be escaped as '`\"`' and '`\\`',
+respecitvely) and are case sensitive.  Section header cannot span multiple
+lines.  Variables may belong directly to a section or to a given subsection.
+You can have `[section]` if you have `[section "subsection"]`, but you
+don't need to.
+
+There is also (case insensitive) alternative `[section.subsection]` syntax.
+In this syntax subsection names follow the same restrictions as for section
+name.
+
+All the other lines are recognized as setting variables, in the form
+'name = value'.  If there is no equal sign on the line, the entire line
+is taken as 'name' and the variable is recognized as boolean "true".
+The variable names are case-insensitive and only alphanumeric
+characters and '`-`' are allowed.  There can be more than one value
+for a given variable; we say then that variable is multivalued.
+
+Leading and trailing whitespace in a variable value is discarded.
+Internal whitespace within a variable value is retained verbatim.
+
+The values following the equals sign in variable assign are all either
+a string, an integer, or a boolean.  Boolean values may be given as yes/no,
+0/1 or true/false.  Case is not significant in boolean values, when
+converting value to the canonical form using '--bool' type specifier;
+`git-config` will ensure that the output is "true" or "false".
+
+String values may be entirely or partially enclosed in double quotes.
+You need to enclose variable value in double quotes if you want to
+preserve leading or trailing whitespace, or if variable value contains
+beginning of comment characters (if it contains '#' or ';').
+Double quote '`"`' and backslash '`\`' characters in variable value must
+be escaped: use '`\"`' for '`"`' and '`\\`' for '`\`'.
+
+The following escape sequences (beside '`\"`' and '`\\`') are recognized:
+'`\n`' for newline character (NL), '`\t`' for horizontal tabulation (HT, TAB)
+and '`\b`' for backspace (BS).  No other char escape sequence, nor octal
+char sequences are valid.
+
+Variable value ending in a '`\`' is continued on the next line in the
+customary UNIX fashion.
+
+Some variables may require special value format.
 
 Example
 ~~~~~~~
@@ -35,6 +98,10 @@ Example
 		remote = origin
 		merge = refs/heads/devel
 
+	# Proxy settings
+	[core]
+		gitProxy="ssh" for "ssh://kernel.org/"
+		gitProxy=default-proxy ; for the rest
 
 Variables
 ~~~~~~~~~
@@ -183,10 +250,15 @@ color.branch.<slot>::
 	Use customized color for branch coloration. `<slot>` is one of
 	`current` (the current branch), `local` (a local branch),
 	`remote` (a tracking branch in refs/remotes/), `plain` (other
-	refs), or `reset` (the normal terminal color).  The value for
-	these configuration variables can be one of: `normal`, `bold`,
-	`dim`, `ul`, `blink`, `reverse`, `reset`, `black`, `red`,
-	`green`, `yellow`, `blue`, `magenta`, `cyan`, or `white`.
+	refs).
++
+The value for these configuration variables is a list of colors (at most
+two) and attributes (at most one), separated by spaces.  The colors
+accepted are `normal`, `black`, `red`, `green`, `yellow`, `blue`,
+`magenta`, `cyan` and `white`; the attributes are `bold`, `dim`, `ul`,
+`blink` and `reverse`.  The first color given is the foreground; the
+second is the background.  The position of the attribute, if any,
+doesn't matter.
 
 color.diff::
 	When true (or `always`), always use colors in patch.
@@ -194,12 +266,13 @@ color.diff::
 	colors only when the output is to the terminal.
 
 color.diff.<slot>::
-	Use customized color for diff colorization.  `<slot>`
-	specifies which part of the patch to use the specified
-	color, and is one of `plain` (context text), `meta`
-	(metainformation), `frag` (hunk header), `old` (removed
-	lines), or `new` (added lines).  The values of these
-	variables may be specified as in color.branch.<slot>.
+	Use customized color for diff colorization.  `<slot>` specifies
+	which part of the patch to use the specified color, and is one
+	of `plain` (context text), `meta` (metainformation), `frag`
+	(hunk header), `old` (removed lines), `new` (added lines),
+	`commit` (commit headers), or `whitespace` (highlighting dubious
+	whitespace).  The values of these variables may be specified as
+	in color.branch.<slot>.
 
 color.pager::
 	A boolean to enable/disable colored output when the pager is in
@@ -227,6 +300,16 @@ diff.renames::
 	Tells git to detect renames.  If set to any boolean value, it
 	will enable basic rename detection.  If set to "copies" or
 	"copy", it will detect copies, as well.
+
+fetch.unpackLimit::
+	If the number of objects fetched over the git native
+	transfer is below this
+	limit, then the objects will be unpacked into loose object
+	files. However if the number of received objects equals or
+	exceeds this limit then the received pack will be stored as
+	a pack, after adding any missing delta bases.  Storing the
+	pack from a push can make the push operation complete faster,
+	especially on slow filesystems.
 
 format.headers::
 	Additional email headers to include in a patch to be submitted
@@ -321,6 +404,13 @@ merge.summary::
 	Whether to include summaries of merged commits in newly created
 	merge commit messages. False by default.
 
+merge.verbosity::
+	Controls the amount of output shown by the recursive merge
+	strategy.  Level 0 outputs nothing except a final error
+	message if conflicts were detected. Level 1 outputs only
+	conflicts, 2 outputs conflicts and file changes.  Level 5 and
+	above outputs debugging information.  The default is level 2.
+
 pack.window::
 	The size of the window used by gitlink:git-pack-objects[1] when no
 	window size is given on the command line. Defaults to 10.
@@ -343,6 +433,14 @@ remote.<name>.fetch::
 remote.<name>.push::
 	The default set of "refspec" for gitlink:git-push[1]. See
 	gitlink:git-push[1].
+
+remote.<name>.receivepack::
+	The default program to execute on the remote side when pushing.  See
+	option \--exec of gitlink:git-push[1].
+
+remote.<name>.uploadpack::
+	The default program to execute on the remote side when fetching.  See
+	option \--exec of gitlink:git-fetch-pack[1].
 
 repack.usedeltabaseoffset::
 	Allow gitlink:git-repack[1] to create packs that uses
@@ -377,6 +475,13 @@ user.name::
 	Can be overridden by the 'GIT_AUTHOR_NAME' and 'GIT_COMMITTER_NAME'
 	environment variables.  See gitlink:git-commit-tree[1].
 
+user.signingkey::
+	If gitlink:git-tag[1] is not selecting the key you want it to
+	automatically when creating a signed tag, you can override the
+	default selection with this variable.  This option is passed
+	unchanged to gpg's --local-user parameter, so you may specify a key
+	using any method that gpg supports.
+
 whatchanged.difftree::
 	The default gitlink:git-diff-tree[1] arguments to be used
 	for gitlink:git-whatchanged[1].
@@ -399,4 +504,9 @@ receive.denyNonFastForwards::
 	not a fast forward. Use this to prevent such an update via a push,
 	even if that push is forced. This configuration variable is
 	set when initializing a shared repository.
+
+transfer.unpackLimit::
+	When `fetch.unpackLimit` or `receive.unpackLimit` are
+	not set, the value of this variable is used instead.
+
 

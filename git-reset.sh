@@ -43,7 +43,7 @@ case "$1" in --) shift ;; esac
 # affecting the working tree nor HEAD.
 if test $# != 0
 then
-	test "$reset_type" == "--mixed" ||
+	test "$reset_type" = "--mixed" ||
 		die "Cannot do partial $reset_type reset."
 
 	git-diff-index --cached $rev -- "$@" |
@@ -53,11 +53,7 @@ then
 	exit
 fi
 
-TOP=$(git-rev-parse --show-cdup)
-if test ! -z "$TOP"
-then
-	cd "$TOP"
-fi
+cd_to_toplevel
 
 if test "$reset_type" = "--hard"
 then
@@ -91,7 +87,7 @@ update_ref_status=$?
 case "$reset_type" in
 --hard )
 	test $update_ref_status = 0 && {
-		echo -n "HEAD is now at "
+		printf "HEAD is now at "
 		GIT_PAGER= git log --max-count=1 --pretty=oneline \
 			--abbrev-commit HEAD
 	}

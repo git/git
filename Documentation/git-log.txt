@@ -27,13 +27,16 @@ OPTIONS
 
 include::pretty-formats.txt[]
 
---max-count=<n>::
+-<n>::
 	Limits the number of commits to show.
 
 <since>..<until>::
 	Show only commits between the named two commits.  When
 	either <since> or <until> is omitted, it defaults to
 	`HEAD`, i.e. the tip of the current branch.
+	For a more complete list of ways to spell <since>
+	and <until>, see "SPECIFYING REVISIONS" section in
+	gitlink:git-rev-parse[1].
 
 -p::
 	Show the change the commit introduces in a patch form.

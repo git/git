@@ -3,7 +3,7 @@ git-init(1)
 
 NAME
 ----
-git-init - Creates an empty git repository
+git-init - Create an empty git repository or reinitialize an existing one
 
 
 SYNOPSIS

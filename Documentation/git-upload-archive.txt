@@ -3,7 +3,7 @@ git-upload-archive(1)
 
 NAME
 ----
-git-upload-archive - Send archive
+git-upload-archive - Send archive back to git-archive
 
 
 SYNOPSIS

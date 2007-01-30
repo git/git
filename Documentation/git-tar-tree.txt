@@ -3,7 +3,7 @@ git-tar-tree(1)
 
 NAME
 ----
-git-tar-tree - Creates a tar archive of the files in the named tree
+git-tar-tree - Create a tar archive of the files in the named tree object
 
 
 SYNOPSIS
@@ -50,7 +50,7 @@ repository configuration as follows :
         umask = 002	;# group friendly
 
 The special umask value "user" indicates that the user's current umask
-will be used instead. The default value remains 0, which means world
+will be used instead.  The default value is 002, which means group
 readable/writable files and directories.
 
 EXAMPLES

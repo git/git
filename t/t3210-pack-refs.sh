@@ -96,4 +96,13 @@ test_expect_success \
      git-branch -d n/o/p &&
      git-branch n'
 
+test_expect_success 'pack, prune and repack' '
+	git-tag foo &&
+	git-pack-refs --all --prune &&
+	git-show-ref >all-of-them &&
+	git-pack-refs &&
+	git-show-ref >again &&
+	diff all-of-them again
+'
+
 test_done

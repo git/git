@@ -63,13 +63,13 @@ pull_to_client () {
 	case "$heads" in *B*) echo $BTIP > .git/refs/heads/B;; esac
 	git-symbolic-ref HEAD refs/heads/`echo $heads | sed -e 's/^\(.\).*$/\1/'`
 
-	test_expect_success "fsck" 'git-fsck-objects --full > fsck.txt 2>&1'
+	test_expect_success "fsck" 'git-fsck --full > fsck.txt 2>&1'
 
 	test_expect_success 'check downloaded results' \
 	'mv .git/objects/pack/pack-* . &&
 	 p=`ls -1 pack-*.pack` &&
 	 git-unpack-objects <$p &&
-	 git-fsck-objects --full'
+	 git-fsck --full'
 
 	test_expect_success "new object count after $number pull" \
 	'idx=`echo pack-*.idx` &&
@@ -97,7 +97,8 @@ pull_to_client () {
 (
 	mkdir client &&
 	cd client &&
-	git-init 2>> log2.txt
+	git-init 2>> log2.txt &&
+	git config transfer.unpacklimit 0
 )
 
 add A1
@@ -144,7 +145,7 @@ test_expect_success "clone shallow object count (part 2)" '
 '
 
 test_expect_success "fsck in shallow repo" \
-	"(cd shallow; git-fsck-objects --full)"
+	"(cd shallow; git-fsck --full)"
 
 #test_done; exit
 

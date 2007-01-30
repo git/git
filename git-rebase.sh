@@ -27,9 +27,12 @@ Example:       git-rebase master~1 topic
        /                   -->           /
   D---E---F---G master          D---E---F---G master
 '
+
+SUBDIRECTORY_OK=Yes
 . git-sh-setup
 set_reflog_action rebase
 require_work_tree
+cd_to_toplevel
 
 RESOLVEMSG="
 When you have resolved this problem run \"git rebase --continue\".
@@ -272,8 +275,12 @@ case "$#" in
 	git-checkout "$2" || usage
 	;;
 *)
-	branch_name=`git symbolic-ref HEAD` || die "No current branch"
-	branch_name=`expr "z$branch_name" : 'zrefs/heads/\(.*\)'`
+	if branch_name=`git symbolic-ref -q HEAD`
+	then
+		branch_name=`expr "z$branch_name" : 'zrefs/heads/\(.*\)'`
+	else
+		branch_name=HEAD ;# detached
+	fi
 	;;
 esac
 branch=$(git-rev-parse --verify "${branch_name}^0") || exit

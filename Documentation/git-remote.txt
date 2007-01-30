@@ -28,7 +28,7 @@ In the third form, gives some information about the remote <name>.
 
 The remote configuration is achieved using the `remote.origin.url` and
 `remote.origin.fetch` configuration variables.  (See
-gitlink:git-repo-config[1]).
+gitlink:git-config[1]).
 
 Examples
 --------
@@ -58,7 +58,7 @@ See Also
 --------
 gitlink:git-fetch[1]
 gitlink:git-branch[1]
-gitlink:git-repo-config[1]
+gitlink:git-config[1]
 
 Author
 ------

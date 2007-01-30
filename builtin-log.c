@@ -50,8 +50,11 @@ static int cmd_log_walk(struct rev_info *rev)
 	prepare_revision_walk(rev);
 	while ((commit = get_revision(rev)) != NULL) {
 		log_tree_commit(rev, commit);
-		free(commit->buffer);
-		commit->buffer = NULL;
+		if (!rev->reflog_info) {
+			/* we allow cycles in reflog ancestry */
+			free(commit->buffer);
+			commit->buffer = NULL;
+		}
 		free_commit_list(commit->parents);
 		commit->parents = NULL;
 	}
@@ -197,15 +200,26 @@ static int istitlechar(char c)
 
 static char *extra_headers = NULL;
 static int extra_headers_size = 0;
+static const char *fmt_patch_suffix = ".patch";
 
 static int git_format_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "format.headers")) {
-		int len = strlen(value);
+		int len;
+
+		if (!value)
+			die("format.headers without value");
+		len = strlen(value);
 		extra_headers_size += len + 1;
 		extra_headers = xrealloc(extra_headers, extra_headers_size);
 		extra_headers[extra_headers_size - len - 1] = 0;
 		strcat(extra_headers, value);
+		return 0;
+	}
+	if (!strcmp(var, "format.suffix")) {
+		if (!value)
+			die("format.suffix without value");
+		fmt_patch_suffix = xstrdup(value);
 		return 0;
 	}
 	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
@@ -223,9 +237,10 @@ static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 	char filename[1024];
 	char *sol;
 	int len = 0;
+	int suffix_len = strlen(fmt_patch_suffix) + 10; /* ., NUL and slop */
 
 	if (output_directory) {
-		strlcpy(filename, output_directory, 1010);
+		strlcpy(filename, output_directory, 1000);
 		len = strlen(filename);
 		if (filename[len - 1] != '/')
 			filename[len++] = '/';
@@ -249,7 +264,10 @@ static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 			}
 		}
 
-		for (j = 0; len < 1024 - 6 && sol[j] && sol[j] != '\n'; j++) {
+		for (j = 0;
+		     len < sizeof(filename) - suffix_len &&
+			     sol[j] && sol[j] != '\n';
+		     j++) {
 			if (istitlechar(sol[j])) {
 				if (space) {
 					filename[len++] = '-';
@@ -265,7 +283,7 @@ static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 		while (filename[len - 1] == '.' || filename[len - 1] == '-')
 			len--;
 	}
-	strcpy(filename + len, ".txt");
+	strcpy(filename + len, fmt_patch_suffix);
 	fprintf(realstdout, "%s\n", filename);
 	freopen(filename, "w", stdout);
 }
@@ -334,7 +352,7 @@ static void get_patch_ids(struct rev_info *rev, struct diff_options *options, co
 
 static void gen_message_id(char *dest, unsigned int length, char *base)
 {
-	const char *committer = git_committer_info(1);
+	const char *committer = git_committer_info(-1);
 	const char *email_start = strrchr(committer, '<');
 	const char *email_end = strrchr(committer, '>');
 	if(!email_start || !email_end || email_start > email_end - 1)
@@ -362,7 +380,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	char message_id[1024];
 	char ref_message_id[1024];
 
-	setup_ident();
 	git_config(git_format_config);
 	init_revisions(&rev, prefix);
 	rev.commit_format = CMIT_FMT_EMAIL;
@@ -436,6 +453,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 				die("Need a Message-Id for --in-reply-to");
 			in_reply_to = argv[i];
 		}
+		else if (!strncmp(argv[i], "--suffix=", 9))
+			fmt_patch_suffix = argv[i] + 9;
 		else
 			argv[j++] = argv[i];
 	}
@@ -451,9 +470,12 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		die ("unrecognized argument: %s", argv[1]);
 
 	if (!rev.diffopt.output_format)
-		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_PATCH;
+		rev.diffopt.output_format = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_SUMMARY | DIFF_FORMAT_PATCH;
 
-	if (!output_directory)
+	if (!rev.diffopt.text)
+		rev.diffopt.binary = 1;
+
+	if (!output_directory && !use_stdout)
 		output_directory = prefix;
 
 	if (output_directory) {
@@ -465,8 +487,13 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	}
 
 	if (rev.pending.nr == 1) {
-		rev.pending.objects[0].item->flags |= UNINTERESTING;
-		add_head(&rev);
+		if (rev.max_count < 0) {
+			rev.pending.objects[0].item->flags |= UNINTERESTING;
+			add_head(&rev);
+		}
+		/* Otherwise, it is "format-patch -22 HEAD", and
+		 * get_revision() would return only the specified count.
+		 */
 	}
 
 	if (ignore_if_in_upstream)

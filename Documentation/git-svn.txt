@@ -3,7 +3,7 @@ git-svn(1)
 
 NAME
 ----
-git-svn - bidirectional operation between Subversion and git
+git-svn - Bidirectional operation between a single Subversion branch and git
 
 SYNOPSIS
 --------
@@ -113,7 +113,7 @@ manually joining branches on commit.
 
 'commit-diff'::
 	Commits the diff of two tree-ish arguments from the
-	command-line.  This command is intended for interopability with
+	command-line.  This command is intended for interoperability with
 	git-svnimport and does not rely on being inside an git-svn
 	init-ed repository.  This command takes three arguments, (a) the
 	original tree to diff against, (b) the new tree result, (c) the
@@ -204,7 +204,7 @@ removed by default if there are no files left in them.  git
 cannot version empty directories.  Enabling this flag will make
 the commit to SVN act like git.
 
-repo-config key: svn.rmdir
+config key: svn.rmdir
 
 -e::
 --edit::
@@ -215,7 +215,7 @@ Edit the commit message before committing to SVN.  This is off by
 default for objects that are commits, and forced on when committing
 tree objects.
 
-repo-config key: svn.edit
+config key: svn.edit
 
 -l<num>::
 --find-copies-harder::
@@ -226,8 +226,8 @@ They are both passed directly to git-diff-tree see
 gitlink:git-diff-tree[1] for more information.
 
 [verse]
-repo-config key: svn.l
-repo-config key: svn.findcopiesharder
+config key: svn.l
+config key: svn.findcopiesharder
 
 -A<filename>::
 --authors-file=<filename>::
@@ -245,7 +245,7 @@ will abort operation. The user will then have to add the
 appropriate entry.  Re-running the previous git-svn command
 after the authors-file is modified should continue operation.
 
-repo-config key: svn.authorsfile
+config key: svn.authorsfile
 
 -q::
 --quiet::
@@ -262,8 +262,8 @@ repo-config key: svn.authorsfile
 
 	--repack-flags are passed directly to gitlink:git-repack[1].
 
-repo-config key: svn.repack
-repo-config key: svn.repackflags
+config key: svn.repack
+config key: svn.repackflags
 
 -m::
 --merge::
@@ -304,7 +304,7 @@ used to track branches across multiple SVN _repositories_.
 This option may be specified multiple times, once for each
 branch.
 
-repo-config key: svn.branch
+config key: svn.branch
 
 -i<GIT_SVN_ID>::
 --id <GIT_SVN_ID>::
@@ -320,7 +320,7 @@ for more information on using GIT_SVN_ID.
 	started tracking a branch and never tracked the trunk it was
 	descended from.
 
-repo-config key: svn.followparent
+config key: svn.followparent
 
 --no-metadata::
 	This gets rid of the git-svn-id: lines at the end of every commit.
@@ -332,7 +332,7 @@ repo-config key: svn.followparent
 	The 'git-svn log' command will not work on repositories using this,
 	either.
 
-repo-config key: svn.nometadata
+config key: svn.nometadata
 
 --
 

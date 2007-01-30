@@ -192,7 +192,7 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
-	git-convert-objects$X git-fetch-pack$X git-fsck-objects$X \
+	git-convert-objects$X git-fetch-pack$X git-fsck$X \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
 	git-fast-import$X \
 	git-merge-base$X \
@@ -214,7 +214,8 @@ EXTRA_PROGRAMS =
 
 BUILT_INS = \
 	git-format-patch$X git-show$X git-whatchanged$X git-cherry$X \
-	git-get-tar-commit-id$X git-init$X \
+	git-get-tar-commit-id$X git-init$X git-repo-config$X \
+	git-fsck-objects$X \
 	$(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
 
 # what 'all' will build and 'install' will install, in gitexecdir
@@ -242,7 +243,7 @@ LIB_H = \
 	diff.h object.h pack.h pkt-line.h quote.h refs.h list-objects.h sideband.h \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
 	tree-walk.h log-tree.h dir.h path-list.h unpack-trees.h builtin.h \
-	utf8.h
+	utf8.h reflog-walk.h
 
 DIFF_OBJS = \
 	diff.o diff-lib.o diffcore-break.o diffcore-order.o \
@@ -255,7 +256,7 @@ LIB_OBJS = \
 	interpolate.o \
 	lockfile.o \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o sideband.o \
-	reachable.o \
+	reachable.o reflog-walk.o \
 	quote.o read-cache.o refs.o run-command.o dir.o object-refs.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
@@ -284,6 +285,7 @@ BUILTIN_OBJS = \
 	builtin-diff-tree.o \
 	builtin-fmt-merge-msg.o \
 	builtin-for-each-ref.o \
+	builtin-fsck.o \
 	builtin-grep.o \
 	builtin-init-db.o \
 	builtin-log.o \
@@ -300,7 +302,7 @@ BUILTIN_OBJS = \
 	builtin-push.o \
 	builtin-read-tree.o \
 	builtin-reflog.o \
-	builtin-repo-config.o \
+	builtin-config.o \
 	builtin-rerere.o \
 	builtin-rev-list.o \
 	builtin-rev-parse.o \

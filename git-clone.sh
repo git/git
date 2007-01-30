@@ -36,7 +36,7 @@ clone_dumb_http () {
 	clone_tmp="$GIT_DIR/clone-tmp" &&
 	mkdir -p "$clone_tmp" || exit 1
 	if [ -n "$GIT_CURL_FTP_NO_EPSV" -o \
-		"`git-repo-config --bool http.noEPSV`" = true ]; then
+		"`git-config --bool http.noEPSV`" = true ]; then
 		curl_extra_args="${curl_extra_args} --disable-epsv"
 	fi
 	http_fetch "$1/info/refs" "$clone_tmp/refs" ||
@@ -65,48 +65,6 @@ Perhaps git-update-server-info needs to be run there?"
 	http_fetch "$1/HEAD" "$GIT_DIR/REMOTE_HEAD" ||
 	rm -f "$GIT_DIR/REMOTE_HEAD"
 }
-
-# Read git-fetch-pack -k output and store the remote branches.
-copy_refs='
-use File::Path qw(mkpath);
-use File::Basename qw(dirname);
-my $git_dir = $ARGV[0];
-my $use_separate_remote = $ARGV[1];
-my $origin = $ARGV[2];
-
-my $branch_top = ($use_separate_remote ? "remotes/$origin" : "heads");
-my $tag_top = "tags";
-
-sub store {
-	my ($sha1, $name, $top) = @_;
-	$name = "$git_dir/refs/$top/$name";
-	mkpath(dirname($name));
-	open O, ">", "$name";
-	print O "$sha1\n";
-	close O;
-}
-
-open FH, "<", "$git_dir/CLONE_HEAD";
-while (<FH>) {
-	my ($sha1, $name) = /^([0-9a-f]{40})\s(.*)$/;
-	next if ($name =~ /\^\173/);
-	if ($name eq "HEAD") {
-		open O, ">", "$git_dir/REMOTE_HEAD";
-		print O "$sha1\n";
-		close O;
-		next;
-	}
-	if ($name =~ s/^refs\/heads\///) {
-		store($sha1, $name, $branch_top);
-		next;
-	}
-	if ($name =~ s/^refs\/tags\///) {
-		store($sha1, $name, $tag_top);
-		next;
-	}
-}
-close FH;
-'
 
 quiet=
 local=no
@@ -163,7 +121,9 @@ while
 	1,-u|1,--upload-pack) usage ;;
 	*,-u|*,--upload-pack)
 		shift
-		upload_pack="--exec=$1" ;;
+		upload_pack="--upload-pack=$1" ;;
+	*,--upload-pack=*)
+		upload_pack=--upload-pack=$(expr "$1" : '-[^=]*=\(.*\)') ;;
 	1,--depth) usage;;
 	*,--depth)
 		shift
@@ -330,8 +290,29 @@ test -d "$GIT_DIR/refs/reference-tmp" && rm -fr "$GIT_DIR/refs/reference-tmp"
 if test -f "$GIT_DIR/CLONE_HEAD"
 then
 	# Read git-fetch-pack -k output and store the remote branches.
-	@@PERL@@ -e "$copy_refs" "$GIT_DIR" "$use_separate_remote" "$origin" ||
-	exit
+	if [ -n "$use_separate_remote" ]
+	then
+		branch_top="remotes/$origin"
+	else
+		branch_top="heads"
+	fi
+	tag_top="tags"
+	while read sha1 name
+	do
+		case "$name" in
+		*'^{}')
+			continue ;;
+		HEAD)
+			destname="REMOTE_HEAD" ;;
+		refs/heads/*)
+			destname="refs/$branch_top/${name#refs/heads/}" ;;
+		refs/tags/*)
+			destname="refs/$tag_top/${name#refs/tags/}" ;;
+		*)
+			continue ;;
+		esac
+		git-update-ref -m "clone: from $repo" "$destname" "$sha1" ""
+	done < "$GIT_DIR/CLONE_HEAD"
 fi
 
 cd "$D" || exit
@@ -384,17 +365,17 @@ then
 		git-update-ref HEAD "$head_sha1" &&
 
 		# Upstream URL
-		git-repo-config remote."$origin".url "$repo" &&
+		git-config remote."$origin".url "$repo" &&
 
 		# Set up the mappings to track the remote branches.
-		git-repo-config remote."$origin".fetch \
+		git-config remote."$origin".fetch \
 			"+refs/heads/*:$remote_top/*" '^$' &&
 		rm -f "refs/remotes/$origin/HEAD"
 		git-symbolic-ref "refs/remotes/$origin/HEAD" \
 			"refs/remotes/$origin/$head_points_at" &&
 
-		git-repo-config branch."$head_points_at".remote "$origin" &&
-		git-repo-config branch."$head_points_at".merge "refs/heads/$head_points_at"
+		git-config branch."$head_points_at".remote "$origin" &&
+		git-config branch."$head_points_at".merge "refs/heads/$head_points_at"
 	esac
 
 	case "$no_checkout" in

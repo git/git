@@ -20,6 +20,10 @@ if ($@) {
 my %extra;
 $extra{DESTDIR} = $ENV{DESTDIR} if $ENV{DESTDIR};
 
+# redirect stdout, otherwise the message "Writing perl.mak for Git"
+# disrupts the output for the target 'instlibdir'
+open STDOUT, ">&STDERR";
+
 WriteMakefile(
 	NAME            => 'Git',
 	VERSION_FROM    => 'Git.pm',
