@@ -870,7 +870,7 @@ sub refname { "refs/remotes/$_[0]->{ref_id}" }
 
 sub ra {
 	my ($self) = shift;
-	$self->{ra} ||= Git::SVN::Ra->new($self->{url});
+	Git::SVN::Ra->new($self->{url});
 }
 
 sub rel_path {
@@ -897,9 +897,10 @@ sub copy_remote_ref {
 sub traverse_ignore {
 	my ($self, $fh, $path, $r) = @_;
 	$path =~ s#^/+##g;
-	my ($dirent, undef, $props) = $self->ra->get_dir($path, $r);
+	my $ra = $self->ra;
+	my ($dirent, undef, $props) = $ra->get_dir($path, $r);
 	my $p = $path;
-	$p =~ s#^\Q$self->{ra}->{svn_path}\E/##;
+	$p =~ s#^\Q$ra->{svn_path}\E/##;
 	print $fh length $p ? "\n# $p\n" : "\n# /\n";
 	if (my $s = $props->{'svn:ignore'}) {
 		$s =~ s/[\r\n]+/\n/g;
@@ -1027,7 +1028,7 @@ sub get_commit_parents {
 
 sub full_url {
 	my ($self) = @_;
-	$self->ra->{url} . (length $self->{path} ? '/' . $self->{path} : '');
+	$self->{url} . (length $self->{path} ? '/' . $self->{path} : '');
 }
 
 sub do_git_commit {
@@ -2165,7 +2166,7 @@ use vars qw/@ISA $config_dir/;
 use strict;
 use warnings;
 my ($can_do_switch);
-my %RA;
+my $RA;
 
 BEGIN {
 	# enforce temporary pool usage for some simple functions
@@ -2185,7 +2186,7 @@ BEGIN {
 sub new {
 	my ($class, $url) = @_;
 	$url =~ s!/+$!!;
-	return $RA{$url} if $RA{$url};
+	return $RA if ($RA && $RA->{url} eq $url);
 
 	SVN::_Core::svn_config_ensure($config_dir, undef);
 	my ($baton, $callbacks) = SVN::Core::auth_open_helper([
@@ -2211,11 +2212,11 @@ sub new {
 	$self->{svn_path} = $url;
 	$self->{repos_root} = $self->get_repos_root;
 	$self->{svn_path} =~ s#^\Q$self->{repos_root}\E/*##;
-	$RA{$url} = bless $self, $class;
+	$RA = bless $self, $class;
 }
 
 sub DESTROY {
-	# do not call the real DESTROY since we store ourselves in %RA
+	# do not call the real DESTROY since we store ourselves in $RA
 }
 
 sub get_log {
@@ -2276,17 +2277,28 @@ sub gs_do_switch {
 	my $full_url = $self->{url};
 	my $old_url = $full_url;
 	$full_url .= "/$path" if length $path;
-	SVN::_Ra::svn_ra_reparent($self->{session}, $full_url, $pool);
-	$self->{url} = $full_url;
-
-	my $reporter = $self->do_switch($rev_b, '',
-	                                $recurse, $url_b, $editor, $pool);
+	my ($ra, $reparented);
+	if ($old_url ne $full_url) {
+		if ($old_url !~ m#^svn(\+ssh)?://#) {
+			SVN::_Ra::svn_ra_reparent($self->{session}, $full_url,
+			                          $pool);
+			$self->{url} = $full_url;
+			$reparented = 1;
+		} else {
+			$ra = Git::SVN::Ra->new($full_url);
+		}
+	}
+	$ra ||= $self;
+	my $reporter = $ra->do_switch($rev_b, '',
+	                              $recurse, $url_b, $editor, $pool);
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
 	$reporter->set_path('', $rev_a, 0, @lock, $pool);
 	$reporter->finish_report($pool);
 
-	SVN::_Ra::svn_ra_reparent($self->{session}, $old_url, $pool);
-	$self->{url} = $old_url;
+	if ($reparented) {
+		SVN::_Ra::svn_ra_reparent($self->{session}, $old_url, $pool);
+		$self->{url} = $old_url;
+	}
 
 	$pool->clear;
 	$editor->{git_commit_ok};
