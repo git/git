@@ -51,53 +51,29 @@ def p4Cmd(cmd):
     return result
 
 def describe(change):
-    output = os.popen("p4 describe %s" % change).readlines()
+    describeOutput = p4Cmd("describe %s" % change)
 
-    firstLine = output[0]
+    author = describeOutput["user"]
+    epoch = describeOutput["time"]
 
-    splitted = firstLine.split(" ")
-    author = splitted[3]
-    author = author[:author.find("@")]
-    tm = time.strptime(splitted[5] + " " + splitted[6], "%Y/%m/%d %H:%M:%S ")
-    epoch = int(time.mktime(tm))
-
-    filesSection = 0
-    try:
-        filesSection = output.index("Affected files ...\n")
-    except ValueError:
-        sys.stderr.write("Change %s doesn't seem to affect any files. Weird.\n" % change)
-        return [], [], [], [], []
-
-    differencesSection = 0
-    try:
-        differencesSection = output.index("Differences ...\n")
-    except ValueError:
-        sys.stderr.write("Change %s doesn't seem to have a differences section. Weird.\n" % change)
-        return [], [], [], [], []
-
-    log = output[2:filesSection - 1]
-
-    lines = output[filesSection + 2:differencesSection - 1]
+    log = describeOutput["desc"]
 
     changed = []
     removed = []
 
-    for line in lines:
-        # chop off "... " and trailing newline
-        line = line[4:len(line) - 1]
+    i = 0
+    while describeOutput.has_key("depotFile%s" % i):
+        path = describeOutput["depotFile%s" % i]
+        rev = describeOutput["rev%s" % i]
+        action = describeOutput["action%s" % i]
+        path = path + "#" + rev
 
-        lastSpace = line.rfind(" ")
-        if lastSpace == -1:
-            sys.stderr.write("trouble parsing line %s, skipping!\n" % line)
-            continue
-
-        operation = line[lastSpace + 1:]
-        path = line[:lastSpace]
-
-        if operation == "delete":
+        if action == "delete":
             removed.append(path)
         else:
             changed.append(path)
+
+        i = i + 1
 
     return author, log, epoch, changed, removed
 
@@ -161,8 +137,7 @@ for change in changes:
     else:
         gitStream.write("committer %s <a@b> %s %s\n" % (author, epoch, tz))
     gitStream.write("data <<EOT\n")
-    for l in log:
-        gitStream.write(l)
+    gitStream.write(log)
     gitStream.write("EOT\n\n")
 
     for f in changedFiles:
