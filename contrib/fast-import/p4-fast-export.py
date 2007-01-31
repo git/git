@@ -98,12 +98,17 @@ for change in changes:
     author = description["user"]
 
     gitStream.write("commit refs/heads/master\n")
+    committer = ""
     if author in users:
-        gitStream.write("committer %s %s %s\n" % (users[author], epoch, tz))
+        committer = "%s %s %s" % (users[author], epoch, tz)
     else:
-        gitStream.write("committer %s <a@b> %s %s\n" % (author, epoch, tz))
+        committer = "%s <a@b> %s %s" % (author, epoch, tz)
+
+    gitStream.write("committer %s\n" % committer)
+
     gitStream.write("data <<EOT\n")
     gitStream.write(description["desc"])
+    gitStream.write("\n[ imported from %s; change %s ]\n" % (prefix, change))
     gitStream.write("EOT\n\n")
 
     fnum = 0
@@ -136,6 +141,12 @@ for change in changes:
         fnum = fnum + 1
 
     gitStream.write("\n")
+
+    gitStream.write("tag p4/%s\n" % change)
+    gitStream.write("from refs/heads/master\n");
+    gitStream.write("tagger %s\n" % committer);
+    gitStream.write("data 0\n\n")
+
 
 gitStream.close()
 gitOutput.close()
