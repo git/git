@@ -14,6 +14,7 @@
 #       - don't hardcode the import to master
 #
 import os, string, sys, time
+import marshal
 
 if len(sys.argv) != 2:
     sys.stderr.write("usage: %s //depot/path[@revRange]\n" % sys.argv[0]);
@@ -36,6 +37,18 @@ except ValueError:
 
 if not prefix.endswith("/"):
     prefix += "/"
+
+def p4Cmd(cmd):
+    pipe = os.popen("p4 -G %s" % cmd, "rb")
+    result = {}
+    try:
+        while True:
+            entry = marshal.load(pipe)
+            result.update(entry)
+    except EOFError:
+        pass
+    pipe.close()
+    return result
 
 def describe(change):
     output = os.popen("p4 describe %s" % change).readlines()
@@ -87,9 +100,6 @@ def describe(change):
             changed.append(path)
 
     return author, log, epoch, changed, removed
-
-def p4cat(path):
-    return os.popen("p4 print -q \"%s\"" % path).read()
 
 def p4Stat(path):
     output = os.popen("p4 fstat -Ol \"%s\"" % path).readlines()
