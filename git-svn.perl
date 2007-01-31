@@ -1345,8 +1345,9 @@ sub rev_db_set {
 	seek $fh, 0, 2 or croak $!;
 	my $pos = tell $fh;
 	if ($pos < $offset) {
-		print $fh (('0' x 40),"\n") x (($offset - $pos) / 41)
-		  or croak $!;
+		for (1 .. (($offset - $pos) / 41)) {
+			print $fh (('0' x 40),"\n") or croak $!;
+		}
 	}
 	seek $fh, $offset, 0 or croak $!;
 	print $fh $commit,"\n" or croak $!;
