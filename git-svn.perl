@@ -981,6 +981,12 @@ sub full_url {
 
 sub do_git_commit {
 	my ($self, $log_entry) = @_;
+	my $lr = $self->last_rev;
+	if (defined $lr && $lr >= $log_entry->{revision}) {
+		die "Last fetched revision of ", $self->refname,
+		    " was r$lr, but we are about to fetch: ",
+		    "r$log_entry->{revision}!\n";
+	}
 	if (my $c = $self->rev_db_get($log_entry->{revision})) {
 		croak "$log_entry->{revision} = $c already exists! ",
 		      "Why are we refetching it?\n";
@@ -1024,7 +1030,7 @@ sub do_git_commit {
 
 	$self->{last_rev} = $log_entry->{revision};
 	$self->{last_commit} = $commit;
-	print "r$log_entry->{revision} = $commit\n";
+	print "r$log_entry->{revision} = $commit ($self->{ref_id})\n";
 	return $commit;
 }
 
@@ -1121,14 +1127,13 @@ sub find_parent_branch {
 			# at the moment), so we can't rely on it
 			$self->{last_commit} = $parent;
 			$ed = SVN::Git::Fetcher->new($self);
-			$gs->ra->gs_do_switch($r0, $rev, $gs->{path}, 1,
+			$gs->ra->gs_do_switch($r0, $rev, $gs,
 					      $self->full_url, $ed)
 			  or die "SVN connection failed somewhere...\n";
 		} else {
 			print STDERR "Following parent with do_update\n";
 			$ed = SVN::Git::Fetcher->new($self);
-			$self->ra->gs_do_update($rev, $rev, $self->{path},
-			                        1, $ed)
+			$self->ra->gs_do_update($rev, $rev, $self, $ed)
 			  or die "SVN connection failed somewhere...\n";
 		}
 		print STDERR "Successfully followed parent\n";
@@ -1170,8 +1175,7 @@ sub do_fetch {
 		$ed = SVN::Git::Fetcher->new($self);
 		$ed->{new_fetch} = 1;
 	}
-	unless ($self->ra->gs_do_update($last_rev, $rev,
-	                                $self->{path}, 1, $ed)) {
+	unless ($self->ra->gs_do_update($last_rev, $rev, $self, $ed)) {
 		die "SVN connection failed somewhere...\n";
 	}
 	$self->make_log_entry($rev, \@parents, $ed);
@@ -1616,6 +1620,8 @@ sub delete_entry {
 	my ($self, $path, $rev, $pb) = @_;
 
 	my $gpath = $self->git_path($path);
+	return undef if ($gpath eq '');
+
 	# remove entire directories.
 	if (command('ls-tree', $self->{c}, '--', $gpath) =~ /^040000 tree/) {
 		my ($ls, $ctx) = command_output_pipe(qw/ls-tree
@@ -2233,12 +2239,23 @@ sub uuid {
 }
 
 sub gs_do_update {
-	my ($self, $rev_a, $rev_b, $path, $recurse, $editor) = @_;
+	my ($self, $rev_a, $rev_b, $gs, $editor) = @_;
+	my $new = ($rev_a == $rev_b);
+	my $path = $gs->{path};
+
+	my $ta = $self->check_path($path, $rev_a);
+	my $tb = $new ? $ta : $self->check_path($path, $rev_b);
+	return 1 if ($tb != $SVN::Node::dir && $ta != $SVN::Node::dir);
+	if ($ta == $SVN::Node::none) {
+		$rev_a = $rev_b;
+		$new = 1;
+	}
+
 	my $pool = SVN::Pool->new;
 	$editor->set_path_strip($path);
 	my (@pc) = split m#/#, $path;
 	my $reporter = $self->do_update($rev_b, (@pc ? shift @pc : ''),
-	                                $recurse, $editor, $pool);
+	                                1, $editor, $pool);
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
 
 	# Since we can't rely on svn_ra_reparent being available, we'll
@@ -2253,7 +2270,6 @@ sub gs_do_update {
 	}
 	die "BUG: '$sp' != '$final'\n" if ($sp ne $final);
 
-	my $new = ($rev_a == $rev_b);
 	$reporter->set_path($sp, $rev_a, $new, @lock, $pool);
 
 	$reporter->finish_report($pool);
@@ -2264,7 +2280,8 @@ sub gs_do_update {
 # this requires SVN 1.4.3 or later (do_switch didn't work before 1.4.3, and
 # svn_ra_reparent didn't work before 1.4)
 sub gs_do_switch {
-	my ($self, $rev_a, $rev_b, $path, $recurse, $url_b, $editor) = @_;
+	my ($self, $rev_a, $rev_b, $gs, $url_b, $editor) = @_;
+	my $path = $gs->{path};
 	my $pool = SVN::Pool->new;
 
 	my $full_url = $self->{url};
@@ -2282,8 +2299,7 @@ sub gs_do_switch {
 		}
 	}
 	$ra ||= $self;
-	my $reporter = $ra->do_switch($rev_b, '',
-	                              $recurse, $url_b, $editor, $pool);
+	my $reporter = $ra->do_switch($rev_b, '', 1, $url_b, $editor, $pool);
 	my @lock = $SVN::Core::VERSION ge '1.2.0' ? (undef) : ();
 	$reporter->set_path('', $rev_a, 0, @lock, $pool);
 	$reporter->finish_report($pool);
@@ -2333,6 +2349,8 @@ sub gs_fetch_loop_common {
 				if ($paths) {
 					$gs->match_paths($paths) or next;
 				}
+				my $lr = $gs->last_rev;
+				next if defined $lr && $lr >= $r;
 				next if defined $gs->rev_db_get($r);
 				if (my $log_entry = $gs->do_fetch($paths, $r)) {
 					$gs->do_git_commit($log_entry);

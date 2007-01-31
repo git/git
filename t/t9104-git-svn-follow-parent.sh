@@ -95,12 +95,12 @@ test_expect_success 'follow higher-level parent' "
         "
 
 test_expect_success 'follow deleted directory' "
-	svn mv -m 'bye!' $svnrepo/glob/blob/hi $svnrepo/glob/blob/bye&&
+	svn mv -m 'bye!' $svnrepo/glob/blob/hi $svnrepo/glob/blob/bye &&
 	svn rm -m 'remove glob' $svnrepo/glob &&
 	git-svn init -i glob $svnrepo/glob &&
 	git-svn fetch -i glob &&
-	test \"\`git cat-file blob refs/remotes/glob~1:blob/bye\`\" = hi &&
-	test -z \"\`git ls-tree -z refs/remotes/glob\`\"
+	test \"\`git cat-file blob refs/remotes/glob:blob/bye\`\" = hi &&
+	test \"\`git ls-tree refs/remotes/glob | wc -l \`\" -eq 1
 	"
 
 # ref: r9270 of the Subversion repository: (http://svn.collab.net/repos/svn)
@@ -144,6 +144,16 @@ test_expect_success "track initial change if it was only made to parent" "
 	     \"\`git ls-tree --name-only r9270-d\`\" &&
 	test \"\`git rev-parse r9270-t\`\" = \
 	     \"\`git rev-parse r9270-d~1\`\"
+	"
+
+test_expect_success "multi-fetch continues to work" "
+	git-svn multi-fetch --follow-parent
+	"
+
+test_expect_success "multi-fetch works off a 'clean' repository" "
+	rm -r $GIT_DIR/svn $GIT_DIR/refs/remotes $GIT_DIR/logs &&
+	mkdir $GIT_DIR/svn &&
+	git-svn multi-fetch --follow-parent
 	"
 
 test_debug 'gitk --all &'
