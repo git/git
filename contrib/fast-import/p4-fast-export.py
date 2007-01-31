@@ -35,6 +35,9 @@ try:
 except ValueError:
     changeRange = ""
 
+if prefix.endswith("..."):
+    prefix = prefix[:-3]
+
 if not prefix.endswith("/"):
     prefix += "/"
 
