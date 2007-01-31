@@ -57,9 +57,6 @@ def p4Cmd(cmd):
         result.update(entry)
     return result;
 
-def p4FileSize(path):
-    return int(p4Cmd("fstat -Ol \"%s\"" % path)["fileSize"])
-
 def getUserMap():
     users = {}
 
@@ -121,14 +118,15 @@ for change in changes:
         if action == "delete":
             gitStream.write("D %s\n" % relPath)
         else:
-            fileSize = p4FileSize(depotPath)
             mode = 644
             if description["type%s" % fnum].startswith("x"):
                 mode = 755
 
+            data = os.popen("p4 print -q \"%s\"" % depotPath, "rb").read()
+
             gitStream.write("M %s inline %s\n" % (mode, relPath))
-            gitStream.write("data %s\n" % fileSize)
-            gitStream.write(os.popen("p4 print -q \"%s\"" % depotPath).read())
+            gitStream.write("data %s\n" % len(data))
+            gitStream.write(data)
             gitStream.write("\n")
 
         fnum = fnum + 1
