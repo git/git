@@ -26,6 +26,8 @@ if len(sys.argv) != 2:
     print ""
     sys.exit(1)
 
+master = "refs/heads/p4"
+branch = "refs/heads/p4-import"
 prefix = sys.argv[1]
 changeRange = ""
 try:
@@ -70,6 +72,25 @@ def getUserMap():
     return users
 
 users = getUserMap()
+topMerge = ""
+
+incremental = 0
+# try incremental import
+if len(changeRange) == 0:
+    try:
+        sout, sin, serr = popen2.popen3("git-name-rev --tags `git-rev-parse %s`" % master)
+        output = sout.read()
+        tagIdx = output.index(" tags/p4/")
+        caretIdx = output.index("^")
+        revision = int(output[tagIdx + 9 : caretIdx]) + 1
+        changeRange = "@%s,#head" % revision
+        topMerge = os.popen("git-rev-parse %s" % master).read()[:-1]
+        incremental = 1
+    except:
+        pass
+
+if incremental == 0:
+    branch = master
 
 output = os.popen("p4 changes %s...%s" % (prefix, changeRange)).readlines()
 
@@ -79,6 +100,10 @@ for line in output:
     changes.append(changeNum)
 
 changes.reverse()
+
+if len(changes) == 0:
+    print "no changes to import!"
+    sys.exit(1)
 
 sys.stderr.write("\n")
 
@@ -97,7 +122,7 @@ for change in changes:
     epoch = description["time"]
     author = description["user"]
 
-    gitStream.write("commit refs/heads/master\n")
+    gitStream.write("commit %s\n" % branch)
     committer = ""
     if author in users:
         committer = "%s %s %s" % (users[author], epoch, tz)
@@ -110,6 +135,10 @@ for change in changes:
     gitStream.write(description["desc"])
     gitStream.write("\n[ imported from %s; change %s ]\n" % (prefix, change))
     gitStream.write("EOT\n\n")
+
+    if len(topMerge) > 0:
+        gitStream.write("merge %s\n" % topMerge)
+        topMerge = ""
 
     fnum = 0
     while description.has_key("depotFile%s" % fnum):
@@ -143,7 +172,7 @@ for change in changes:
     gitStream.write("\n")
 
     gitStream.write("tag p4/%s\n" % change)
-    gitStream.write("from refs/heads/master\n");
+    gitStream.write("from %s\n" % branch);
     gitStream.write("tagger %s\n" % committer);
     gitStream.write("data 0\n\n")
 
@@ -151,5 +180,9 @@ for change in changes:
 gitStream.close()
 gitOutput.close()
 gitError.close()
+
+if incremental == 1:
+    os.popen("git rebase p4-import p4")
+    os.popen("git branch -d p4-import")
 
 print ""
