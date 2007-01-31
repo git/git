@@ -52,7 +52,6 @@ my $_optimize_commits = 1 unless $ENV{GIT_SVN_NO_OPTIMIZE_COMMITS};
 $sha1 = qr/[a-f\d]{40}/;
 $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_stdin, $_help, $_edit,
-	$_repack, $_repack_nr, $_repack_flags,
 	$_message, $_file,
 	$_template, $_shared,
 	$_version,
@@ -64,10 +63,11 @@ my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache );
 my %fc_opts = ( 'follow-parent|follow' => \$Git::SVN::_follow_parent,
 		'authors-file|A=s' => \$_authors,
-		'repack:i' => \$_repack,
+		'repack:i' => \$Git::SVN::_repack,
 		'no-metadata' => \$Git::SVN::_no_metadata,
 		'quiet|q' => \$_q,
-		'repack-flags|repack-args|repack-opts=s' => \$_repack_flags,
+		'repack-flags|repack-args|repack-opts=s' =>
+		   \$Git::SVN::_repack_flags,
 		%remote_opts );
 
 my ($_trunk, $_tags, $_branches);
@@ -158,6 +158,7 @@ load_authors() if $_authors;
 unless ($cmd =~ /^(?:init|multi-init|commit-diff)$/) {
 	Git::SVN::Migration::migration_check();
 }
+Git::SVN::init_vars();
 eval {
 	Git::SVN::verify_remotes_sanity();
 	$cmd{$cmd}->[0]->(@ARGV);
@@ -626,11 +627,13 @@ sub cmt_metadata {
 package Git::SVN;
 use strict;
 use warnings;
-use vars qw/$default_repo_id $default_ref_id $_no_metadata $_follow_parent/;
+use vars qw/$default_repo_id $default_ref_id $_no_metadata $_follow_parent
+            $_repack $_repack_flags/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use IPC::Open3;
 
+my $_repack_nr;
 # properties that we do not log:
 my %SKIP_PROP;
 BEGIN {
@@ -674,6 +677,14 @@ sub read_all_remotes {
 		}
 	}
 	$r;
+}
+
+sub init_vars {
+	if (defined $_repack) {
+		$_repack = 1000 if ($_repack <= 0);
+		$_repack_nr = $_repack;
+		$_repack_flags ||= '-d';
+	}
 }
 
 sub verify_remotes_sanity {
@@ -1025,6 +1036,13 @@ sub do_git_commit {
 	$self->{last_rev} = $log_entry->{revision};
 	$self->{last_commit} = $commit;
 	print "r$log_entry->{revision} = $commit ($self->{ref_id})\n";
+	if (defined $_repack && (--$_repack_nr == 0)) {
+		$_repack_nr = $_repack;
+		# repack doesn't use any arguments with spaces in them, does it?
+		print "Running git repack $_repack_flags ...\n";
+		command_noisy('repack', split(/\s+/, $_repack_flags));
+		print "Done repacking\n";
+	}
 	return $commit;
 }
 
