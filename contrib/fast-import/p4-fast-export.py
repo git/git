@@ -91,6 +91,7 @@ for change in changes:
     description = p4Cmd("describe %s" % change)
 
     sys.stdout.write("\rimporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
+    sys.stdout.flush()
     cnt = cnt + 1
 
     epoch = description["time"]
