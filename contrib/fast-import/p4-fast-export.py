@@ -5,12 +5,11 @@
 # Author: Simon Hausmann <hausmann@kde.org>
 # License: MIT <http://www.opensource.org/licenses/mit-license.php>
 #
-# TODO:  - support integrations (at least p4i)
+# TODO:
+#       - support integrations (at least p4i)
 #       - support incremental imports
 #       - create tags
 #       - instead of reading all files into a variable try to pipe from
-#       - p4 print directly to stdout. need to figure out file size somehow
-#         though.
 #       - support p4 submit (hah!)
 #       - don't hardcode the import to master
 #
@@ -92,6 +91,17 @@ def describe(change):
 def p4cat(path):
     return os.popen("p4 print -q \"%s\"" % path).read()
 
+def p4Stat(path):
+    output = os.popen("p4 fstat -Ol \"%s\"" % path).readlines()
+    fileSize = 0
+    mode = 644
+    for line in output:
+        if line.startswith("... headType x"):
+            mode = 755
+        elif line.startswith("... fileSize "):
+            fileSize = long(line[12:])
+    return mode, fileSize
+
 def stripRevision(path):
     hashPos = path.rindex("#")
     return path[:hashPos]
@@ -111,7 +121,6 @@ def getUserMap():
         users[key] = name + " " + email
 
     return users
-
 
 users = getUserMap()
 
@@ -133,9 +142,6 @@ for change in changes:
     [ author, log, epoch, changedFiles, removedFiles ] = describe(change)
     sys.stderr.write("\rimporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
     cnt = cnt + 1
-#    sys.stderr.write("%s\n" % log)
-#    sys.stderr.write("%s\n" % changedFiles)
-#    sys.stderr.write("%s\n" % removedFiles)
 
     print "commit refs/heads/master"
     if author in users:
@@ -154,10 +160,13 @@ for change in changes:
             sys.stderr.write("\nchanged files: ignoring path %s outside of %s in change %s\n" % (f, prefix, change))
             continue
         relpath = f[len(prefix):]
-        print "M 644 inline %s" % stripRevision(relpath)
-        data = p4cat(f)
-        print "data %s" % len(data)
-        sys.stdout.write(data)
+
+        [mode, fileSize] = p4Stat(f)
+
+        print "M %s inline %s" % (mode, stripRevision(relpath))
+        print "data %s" % fileSize
+        sys.stdout.flush();
+        os.system("p4 print -q \"%s\"" % f)
         print ""
 
     for f in removedFiles:
