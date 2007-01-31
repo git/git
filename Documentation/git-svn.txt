@@ -301,6 +301,12 @@ section on
 '<<tracking-multiple-repos,Tracking Multiple Repositories or Branches>>'
 for more information on using GIT_SVN_ID.
 
+-R<remote name>::
+--svn-remote <remote name>::
+	Specify the [svn-remote "<remote name>"] section to use,
+	this allows multiple repositories to be tracked.
+	Default: git-svn
+
 --follow-parent::
 	This is especially helpful when we're tracking a directory
 	that has been moved around within the repository, or if we

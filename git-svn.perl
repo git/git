@@ -4,12 +4,8 @@
 use warnings;
 use strict;
 use vars qw/	$AUTHOR $VERSION
-		$SVN_URL
-		$GIT_SVN_INDEX $GIT_SVN
-		$GIT_DIR $GIT_SVN_DIR $REVDB
-		$_follow_parent $sha1 $sha1_short $_revision
-		$_cp_remote $_upgrade $_q
-		$_authors %users/;
+		$sha1 $sha1_short $_revision
+		$_q $_authors %users/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
@@ -17,11 +13,8 @@ $ENV{GIT_DIR} ||= '.git';
 $Git::SVN::default_repo_id = 'git-svn';
 $Git::SVN::default_ref_id = $ENV{GIT_SVN_ID} || 'git-svn';
 
-my $LC_ALL = $ENV{LC_ALL};
 $Git::SVN::Log::TZ = $ENV{TZ};
-# make sure the svn binary gives consistent output between locales and TZs:
 $ENV{TZ} = 'UTC';
-$ENV{LC_ALL} = 'C';
 $| = 1; # unbuffer STDOUT
 
 sub fatal (@) { print STDERR @_; exit 1 }
@@ -60,19 +53,19 @@ $sha1 = qr/[a-f\d]{40}/;
 $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_stdin, $_help, $_edit,
 	$_repack, $_repack_nr, $_repack_flags,
-	$_message, $_file, $_no_metadata,
+	$_message, $_file,
 	$_template, $_shared,
-	$_version, $_upgrade,
+	$_version,
 	$_merge, $_strategy, $_dry_run,
 	$_prefix);
 
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
                     'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache );
-my %fc_opts = ( 'follow-parent|follow' => \$_follow_parent,
+my %fc_opts = ( 'follow-parent|follow' => \$Git::SVN::_follow_parent,
 		'authors-file|A=s' => \$_authors,
 		'repack:i' => \$_repack,
-		'no-metadata' => \$_no_metadata,
+		'no-metadata' => \$Git::SVN::_no_metadata,
 		'quiet|q' => \$_q,
 		'repack-flags|repack-args|repack-opts=s' => \$_repack_flags,
 		%remote_opts );
@@ -152,11 +145,10 @@ for (my $i = 0; $i < @ARGV; $i++) {
 my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 
 read_repo_config(\%opts);
-my $rv = GetOptions(%opts, 'help|H|h' => \$_help,
-				'version|V' => \$_version,
-				'minimize-connections' =>
-				  \$Git::SVN::Migration::_minimize,
-				'id|i=s' => \$Git::SVN::default_ref_id);
+my $rv = GetOptions(%opts, 'help|H|h' => \$_help, 'version|V' => \$_version,
+                    'minimize-connections' => \$Git::SVN::Migration::_minimize,
+                    'id|i=s' => \$Git::SVN::default_ref_id,
+                    'svn-remote|remote|R=s' => \$Git::SVN::default_repo_id);
 exit 1 if (!$rv && $cmd ne 'log');
 
 usage(0) if $_help;
@@ -634,7 +626,7 @@ sub cmt_metadata {
 package Git::SVN;
 use strict;
 use warnings;
-use vars qw/$default_repo_id $default_ref_id/;
+use vars qw/$default_repo_id $default_ref_id $_no_metadata $_follow_parent/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use IPC::Open3;
@@ -1012,9 +1004,11 @@ sub do_git_commit {
 	defined(my $pid = open3(my $msg_fh, my $out_fh, '>&STDERR', @exec))
 	                                                           or croak $!;
 	print $msg_fh $log_entry->{log} or croak $!;
-	print $msg_fh "\ngit-svn-id: ", $self->full_url, '@',
-	              $log_entry->{revision}, ' ',
-		      $self->ra->uuid, "\n" or croak $!;
+	unless ($_no_metadata) {
+		print $msg_fh "\ngit-svn-id: ", $self->full_url, '@',
+		              $log_entry->{revision}, ' ',
+		              $self->ra->uuid, "\n" or croak $!;
+	}
 	$msg_fh->flush == 0 or croak $!;
 	close $msg_fh or croak $!;
 	chomp(my $commit = do { local $/; <$out_fh> });
@@ -1059,7 +1053,7 @@ sub match_paths {
 
 sub find_parent_branch {
 	my ($self, $paths, $rev) = @_;
-	return undef unless $::_follow_parent;
+	return undef unless $_follow_parent;
 	unless (defined $paths) {
 		$self->ra->get_log([$self->{path}], $rev, $rev, 0, 1, 1,
 		                   sub { $paths = dup_changed_paths($_[0]) });
@@ -1112,7 +1106,7 @@ sub find_parent_branch {
 		$gs = Git::SVN->init($new_url, '', $ref_id, $ref_id);
 	}
 	my ($r0, $parent) = $gs->find_rev_before($r, 1);
-	if ($::_follow_parent && (!defined $r0 || !defined $parent)) {
+	if ($_follow_parent && (!defined $r0 || !defined $parent)) {
 		$gs->fetch(0, $r);
 		($r0, $parent) = $gs->last_rev_commit;
 	}
