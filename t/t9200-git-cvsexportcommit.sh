@@ -197,6 +197,10 @@ test_expect_success \
       ! git-cvsexportcommit -c $id
       )'
 
+case "$(git repo-config --bool core.filemode)" in
+false)
+	;;
+*)
 test_expect_success \
      'Retain execute bit' \
      'mkdir G &&
@@ -211,5 +215,7 @@ test_expect_success \
       test -x G/on &&
       ! test -x G/off
       )'
+	;;
+esac
 
 test_done
