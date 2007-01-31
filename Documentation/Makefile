@@ -17,7 +17,7 @@ ARTICLES += hooks
 ARTICLES += everyday
 ARTICLES += git-tools
 # with their own formatting rules.
-SP_ARTICLES = glossary howto/revert-branch-rebase
+SP_ARTICLES = glossary howto/revert-branch-rebase user-manual
 
 DOC_HTML += $(patsubst %,%.html,$(ARTICLES) $(SP_ARTICLES))
 
@@ -98,6 +98,12 @@ clean:
 
 %.xml : %.txt
 	asciidoc -b docbook -d manpage -f asciidoc.conf $<
+
+user-manual.xml: user-manual.txt user-manual.conf
+	asciidoc -b docbook -d book $<
+
+user-manual.html: user-manual.xml
+	xmlto -m /etc/asciidoc/docbook-xsl/xhtml.xsl html-nochunks $<
 
 glossary.html : glossary.txt sort_glossary.pl
 	cat $< | \
