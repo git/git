@@ -57,47 +57,8 @@ def p4Cmd(cmd):
         result.update(entry)
     return result;
 
-def describe(change):
-    describeOutput = p4Cmd("describe %s" % change)
-
-    author = describeOutput["user"]
-    epoch = describeOutput["time"]
-
-    log = describeOutput["desc"]
-
-    changed = []
-    removed = []
-
-    i = 0
-    while describeOutput.has_key("depotFile%s" % i):
-        path = describeOutput["depotFile%s" % i]
-        rev = describeOutput["rev%s" % i]
-        action = describeOutput["action%s" % i]
-        path = path + "#" + rev
-
-        if action == "delete":
-            removed.append(path)
-        else:
-            changed.append(path)
-
-        i = i + 1
-
-    return author, log, epoch, changed, removed
-
-def p4Stat(path):
-    output = os.popen("p4 fstat -Ol \"%s\"" % path).readlines()
-    fileSize = 0
-    mode = 644
-    for line in output:
-        if line.startswith("... headType x"):
-            mode = 755
-        elif line.startswith("... fileSize "):
-            fileSize = long(line[12:])
-    return mode, fileSize
-
-def stripRevision(path):
-    hashPos = path.rindex("#")
-    return path[:hashPos]
+def p4FileSize(path):
+    return int(p4Cmd("fstat -Ol \"%s\"" % path)["fileSize"])
 
 def getUserMap():
     users = {}
@@ -127,9 +88,13 @@ gitOutput, gitStream, gitError = popen2.popen3("git-fast-import")
 
 cnt = 1
 for change in changes:
-    [ author, log, epoch, changedFiles, removedFiles ] = describe(change)
+    description = p4Cmd("describe %s" % change)
+
     sys.stdout.write("\rimporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
     cnt = cnt + 1
+
+    epoch = description["time"]
+    author = description["user"]
 
     gitStream.write("commit refs/heads/master\n")
     if author in users:
@@ -137,28 +102,36 @@ for change in changes:
     else:
         gitStream.write("committer %s <a@b> %s %s\n" % (author, epoch, tz))
     gitStream.write("data <<EOT\n")
-    gitStream.write(log)
+    gitStream.write(description["desc"])
     gitStream.write("EOT\n\n")
 
-    for f in changedFiles:
-        if not f.startswith(prefix):
-            sys.stderr.write("\nchanged files: ignoring path %s outside of %s in change %s\n" % (f, prefix, change))
+    fnum = 0
+    while description.has_key("depotFile%s" % fnum):
+        path = description["depotFile%s" % fnum]
+        if not path.startswith(prefix):
+            print "\nchanged files: ignoring path %s outside of %s in change %s" % (path, prefix, change)
+            fnum = fnum + 1
             continue
-        relpath = f[len(prefix):]
 
-        [mode, fileSize] = p4Stat(f)
+        rev = description["rev%s" % fnum]
+        depotPath = path + "#" + rev
+        relPath = path[len(prefix):]
+        action = description["action%s" % fnum]
 
-        gitStream.write("M %s inline %s\n" % (mode, stripRevision(relpath)))
-        gitStream.write("data %s\n" % fileSize)
-        gitStream.write(os.popen("p4 print -q \"%s\"" % f).read())
-        gitStream.write("\n")
+        if action == "delete":
+            gitStream.write("D %s\n" % relPath)
+        else:
+            fileSize = p4FileSize(depotPath)
+            mode = 644
+            if description["type%s" % fnum].startswith("x"):
+                mode = 755
 
-    for f in removedFiles:
-        if not f.startswith(prefix):
-            sys.stderr.write("\ndeleted files: ignoring path %s outside of %s in change %s\n" % (f, prefix, change))
-            continue
-        relpath = f[len(prefix):]
-        gitStream.write("D %s\n" % stripRevision(relpath))
+            gitStream.write("M %s inline %s\n" % (mode, relPath))
+            gitStream.write("data %s\n" % fileSize)
+            gitStream.write(os.popen("p4 print -q \"%s\"" % depotPath).read())
+            gitStream.write("\n")
+
+        fnum = fnum + 1
 
     gitStream.write("\n")
 
