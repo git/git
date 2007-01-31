@@ -1055,8 +1055,11 @@ sub find_parent_branch {
 	my ($self, $paths, $rev) = @_;
 	return undef unless $_follow_parent;
 	unless (defined $paths) {
+		my $err_handler = $SVN::Error::handler;
+		$SVN::Error::handler = \&Git::SVN::Ra::skip_unknown_revs;
 		$self->ra->get_log([$self->{path}], $rev, $rev, 0, 1, 1,
 		                   sub { $paths = dup_changed_paths($_[0]) });
+		$SVN::Error::handler = $err_handler;
 	}
 	return undef unless defined $paths;
 
