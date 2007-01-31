@@ -20,8 +20,10 @@ import os, string, sys
 if len(sys.argv) != 2:
     sys.stderr.write("usage: %s //depot/path[@revRange]\n" % sys.argv[0]);
     sys.stderr.write("\n    example:\n");
-    sys.stderr.write("    %s //depot/my/project -- to import everything\n");
-    sys.stderr.write("    %s //depot/my/project@1,6 -- to import only from revision 1 to 6\n");
+    sys.stderr.write("    %s //depot/my/project/ -- to import everything\n");
+    sys.stderr.write("    %s //depot/my/project/@1,6 -- to import only from revision 1 to 6\n");
+    sys.stderr.write("\n");
+    sys.stderr.write("    (a ... is not needed in the path p4 specification, it's added implicitly)\n");
     sys.stderr.write("\n");
     sys.exit(1)
 
@@ -33,6 +35,9 @@ try:
     prefix = prefix[0:atIdx]
 except ValueError:
     changeRange = ""
+
+if not prefix.endswith("/"):
+    prefix += "/"
 
 def describe(change):
     output = os.popen("p4 describe %s" % change).readlines()
