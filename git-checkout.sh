@@ -155,9 +155,9 @@ then
 	detached="$new"
 	if test -n "$oldbranch"
 	then
-		detach_warn="warning: you are not on ANY branch anymore.
-If you meant to create a new branch from this checkout, you may still do
-so (now or later) by using -b with the checkout command again.  Example:
+		detach_warn="Note: you are not on ANY branch anymore.
+If you want to create a new branch from this checkout, you may do so
+(now or later) by using -b with the checkout command again. Example:
   git checkout -b <new_branch_name>"
 	fi
 elif test -z "$oldbranch" && test -n "$branch"
