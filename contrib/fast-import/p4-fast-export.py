@@ -17,10 +17,22 @@
 #
 import os, string, sys
 
-# yep, that's hardcoded right. will fix to a commandline option rsn :)
-prefix = "//depot/qt/main/"
-# that's in revision range syntax, for example @2342,523634
+if len(sys.argv) != 2:
+    sys.stderr.write("usage: %s //depot/path[@revRange]\n" % sys.argv[0]);
+    sys.stderr.write("\n    example:\n");
+    sys.stderr.write("    %s //depot/my/project -- to import everything\n");
+    sys.stderr.write("    %s //depot/my/project@1,6 -- to import only from revision 1 to 6\n");
+    sys.stderr.write("\n");
+    sys.exit(1)
+
+prefix = sys.argv[1]
 changeRange = ""
+try:
+    atIdx = prefix.index("@")
+    changeRange = prefix[atIdx:]
+    prefix = prefix[0:atIdx]
+except ValueError:
+    changeRange = ""
 
 def describe(change):
     output = os.popen("p4 describe %s" % change).readlines()
