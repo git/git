@@ -38,17 +38,24 @@ except ValueError:
 if not prefix.endswith("/"):
     prefix += "/"
 
-def p4Cmd(cmd):
+def p4CmdList(cmd):
     pipe = os.popen("p4 -G %s" % cmd, "rb")
-    result = {}
+    result = []
     try:
         while True:
             entry = marshal.load(pipe)
-            result.update(entry)
+            result.append(entry)
     except EOFError:
         pass
     pipe.close()
     return result
+
+def p4Cmd(cmd):
+    list = p4CmdList(cmd)
+    result = {}
+    for entry in list:
+        result.update(entry)
+    return result;
 
 def describe(change):
     describeOutput = p4Cmd("describe %s" % change)
@@ -94,18 +101,11 @@ def stripRevision(path):
 
 def getUserMap():
     users = {}
-    output = os.popen("p4 users")
-    for line in output:
-        firstSpace = line.index(" ")
-        secondSpace = line.index(" ", firstSpace + 1)
-        key = line[:firstSpace]
-        email = line[firstSpace + 1:secondSpace]
-        openParenPos = line.index("(", secondSpace)
-        closedParenPos = line.index(")", openParenPos)
-        name = line[openParenPos + 1:closedParenPos]
 
-        users[key] = name + " " + email
-
+    for output in p4CmdList("users"):
+        if not output.has_key("User"):
+            continue
+        users[output["User"]] = output["FullName"] + " <" + output["Email"] + ">"
     return users
 
 users = getUserMap()
