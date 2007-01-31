@@ -14,16 +14,16 @@
 #       - don't hardcode the import to master
 #
 import os, string, sys, time
-import marshal
+import marshal, popen2
 
 if len(sys.argv) != 2:
-    sys.stderr.write("usage: %s //depot/path[@revRange]\n" % sys.argv[0]);
-    sys.stderr.write("\n    example:\n");
-    sys.stderr.write("    %s //depot/my/project/ -- to import everything\n");
-    sys.stderr.write("    %s //depot/my/project/@1,6 -- to import only from revision 1 to 6\n");
-    sys.stderr.write("\n");
-    sys.stderr.write("    (a ... is not needed in the path p4 specification, it's added implicitly)\n");
-    sys.stderr.write("\n");
+    print "usage: %s //depot/path[@revRange]" % sys.argv[0]
+    print "\n    example:"
+    print "    %s //depot/my/project/ -- to import everything"
+    print "    %s //depot/my/project/@1,6 -- to import only from revision 1 to 6"
+    print ""
+    print "    (a ... is not needed in the path p4 specification, it's added implicitly)"
+    print ""
     sys.exit(1)
 
 prefix = sys.argv[1]
@@ -147,23 +147,23 @@ sys.stderr.write("\n")
 
 tz = - time.timezone / 36
 
+gitOutput, gitStream, gitError = popen2.popen3("git-fast-import")
+
 cnt = 1
 for change in changes:
     [ author, log, epoch, changedFiles, removedFiles ] = describe(change)
-    sys.stderr.write("\rimporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
+    sys.stdout.write("\rimporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
     cnt = cnt + 1
 
-    print "commit refs/heads/master"
+    gitStream.write("commit refs/heads/master\n")
     if author in users:
-        print "committer %s %s %s" % (users[author], epoch, tz)
+        gitStream.write("committer %s %s %s\n" % (users[author], epoch, tz))
     else:
-        print "committer %s <a@b> %s %s" % (author, epoch, tz)
-    print "data <<EOT"
+        gitStream.write("committer %s <a@b> %s %s\n" % (author, epoch, tz))
+    gitStream.write("data <<EOT\n")
     for l in log:
-        print l[:len(l) - 1]
-    print "EOT"
-
-    print ""
+        gitStream.write(l)
+    gitStream.write("EOT\n\n")
 
     for f in changedFiles:
         if not f.startswith(prefix):
@@ -173,20 +173,22 @@ for change in changes:
 
         [mode, fileSize] = p4Stat(f)
 
-        print "M %s inline %s" % (mode, stripRevision(relpath))
-        print "data %s" % fileSize
-        sys.stdout.flush();
-        os.system("p4 print -q \"%s\"" % f)
-        print ""
+        gitStream.write("M %s inline %s\n" % (mode, stripRevision(relpath)))
+        gitStream.write("data %s\n" % fileSize)
+        gitStream.write(os.popen("p4 print -q \"%s\"" % f).read())
+        gitStream.write("\n")
 
     for f in removedFiles:
         if not f.startswith(prefix):
             sys.stderr.write("\ndeleted files: ignoring path %s outside of %s in change %s\n" % (f, prefix, change))
             continue
         relpath = f[len(prefix):]
-        print "D %s" % stripRevision(relpath)
+        gitStream.write("D %s\n" % stripRevision(relpath))
 
-    print ""
+    gitStream.write("\n")
 
-sys.stderr.write("\n")
+gitStream.close()
+gitOutput.close()
+gitError.close()
 
+print ""
