@@ -46,7 +46,7 @@ def describe(change):
     splitted = firstLine.split(" ")
     author = splitted[3]
     author = author[:author.find("@")]
-    tm = time.strptime(splitted[5] + " " + splitted[6] + time.tzname[0], "%Y/%m/%d %H:%M:%S %Z")
+    tm = time.strptime(splitted[5] + " " + splitted[6], "%Y/%m/%d %H:%M:%S ")
     epoch = int(time.mktime(tm))
 
     filesSection = 0
@@ -126,6 +126,8 @@ changes.reverse()
 
 sys.stderr.write("\n")
 
+tz = - time.timezone / 36
+
 cnt = 1
 for change in changes:
     [ author, log, epoch, changedFiles, removedFiles ] = describe(change)
@@ -137,9 +139,9 @@ for change in changes:
 
     print "commit refs/heads/master"
     if author in users:
-        print "committer %s %s +0000" % (users[author], epoch)
+        print "committer %s %s %s" % (users[author], epoch, tz)
     else:
-        print "committer %s <a@b> %s +0000" % (author, epoch)
+        print "committer %s <a@b> %s %s" % (author, epoch, tz)
     print "data <<EOT"
     for l in log:
         print l[:len(l) - 1]
