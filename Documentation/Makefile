@@ -103,7 +103,7 @@ user-manual.xml: user-manual.txt user-manual.conf
 	asciidoc -b docbook -d book $<
 
 user-manual.html: user-manual.xml
-	xmlto -m /etc/asciidoc/docbook-xsl/xhtml.xsl html-nochunks $<
+	xmlto html-nochunks $<
 
 glossary.html : glossary.txt sort_glossary.pl
 	cat $< | \
