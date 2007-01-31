@@ -631,6 +631,7 @@ use vars qw/$default_repo_id $default_ref_id $_no_metadata $_follow_parent
             $_repack $_repack_flags/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
+use File::Copy qw/copy/;
 use IPC::Open3;
 
 my $_repack_nr;
@@ -644,6 +645,9 @@ BEGIN {
 	                                svn:entry:uuid
 	                                svn:entry:committed-date/;
 }
+
+my %LOCKFILES;
+END { unlink keys %LOCKFILES if %LOCKFILES }
 
 sub fetch_all {
 	my ($repo_id, $url, $fetch) = @_;
@@ -1030,8 +1034,7 @@ sub do_git_commit {
 		die "Failed to commit, invalid sha1: $commit\n";
 	}
 
-	command_noisy('update-ref',$self->refname, $commit);
-	$self->rev_db_set($log_entry->{revision}, $commit);
+	$self->rev_db_set($log_entry->{revision}, $commit, 1);
 
 	$self->{last_rev} = $log_entry->{revision};
 	$self->{last_commit} = $commit;
@@ -1353,11 +1356,28 @@ sub rebuild {
 # to a revision: (41 * rev) is the byte offset.
 # A record of 40 0s denotes an empty revision.
 # And yes, it's still pretty fast (faster than Tie::File).
+# These files are disposable unless --no-metadata is set
 
 sub rev_db_set {
-	my ($self, $rev, $commit) = @_;
+	my ($self, $rev, $commit, $update_ref) = @_;
 	length $commit == 40 or croak "arg3 must be a full SHA1 hexsum\n";
-	open my $fh, '+<', $self->{db_path} or croak $!;
+	my ($db, $db_lock) = ($self->{db_path}, "$self->{db_path}.lock");
+	my $sig;
+	if ($update_ref) {
+		$SIG{INT} = $SIG{HUP} = $SIG{TERM} = $SIG{ALRM} = $SIG{PIPE} =
+		            $SIG{USR1} = $SIG{USR2} = sub { $sig = $_[0] };
+	}
+	$LOCKFILES{$db_lock} = 1;
+	if ($_no_metadata) {
+		copy($db, $db_lock) or die "rev_db_set(@_): ",
+		                           "Failed to copy: ",
+					   "$db => $db_lock ($!)\n";
+	} else {
+		rename $db, $db_lock or die "rev_db_set(@_): ",
+		                            "Failed to rename: ",
+					    "$db => $db_lock ($!)\n";
+	}
+	open my $fh, '+<', $db_lock or croak $!;
 	my $offset = $rev * 41;
 	# assume that append is the common case:
 	seek $fh, 0, 2 or croak $!;
@@ -1370,6 +1390,18 @@ sub rev_db_set {
 	seek $fh, $offset, 0 or croak $!;
 	print $fh $commit,"\n" or croak $!;
 	close $fh or croak $!;
+	if ($update_ref) {
+		command_noisy('update-ref', '-m', "r$rev",
+		              $self->refname, $commit);
+	}
+	rename $db_lock, $db or die "rev_db_set(@_): ", "Failed to rename: ",
+	                            "$db_lock => $db ($!)\n";
+	delete $LOCKFILES{$db_lock};
+	if ($update_ref) {
+		$SIG{INT} = $SIG{HUP} = $SIG{TERM} = $SIG{ALRM} = $SIG{PIPE} =
+		            $SIG{USR1} = $SIG{USR2} = 'DEFAULT';
+		kill $sig, $$ if defined $sig;
+	}
 }
 
 sub rev_db_get {
