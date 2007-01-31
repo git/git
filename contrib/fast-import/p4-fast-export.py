@@ -5,8 +5,7 @@
 # Author: Simon Hausmann <hausmann@kde.org>
 # License: MIT <http://www.opensource.org/licenses/mit-license.php>
 #
-# TODO: - fix date parsing (how hard can it be?)
-#       - support integrations (at least p4i)
+# TODO:  - support integrations (at least p4i)
 #       - support incremental imports
 #       - create tags
 #       - instead of reading all files into a variable try to pipe from
@@ -15,7 +14,7 @@
 #       - support p4 submit (hah!)
 #       - don't hardcode the import to master
 #
-import os, string, sys
+import os, string, sys, time
 
 if len(sys.argv) != 2:
     sys.stderr.write("usage: %s //depot/path[@revRange]\n" % sys.argv[0]);
@@ -44,22 +43,25 @@ def describe(change):
 
     firstLine = output[0]
 
-    author = firstLine.split(" ")[3]
+    splitted = firstLine.split(" ")
+    author = splitted[3]
     author = author[:author.find("@")]
+    tm = time.strptime(splitted[5] + " " + splitted[6] + time.tzname[0], "%Y/%m/%d %H:%M:%S %Z")
+    epoch = int(time.mktime(tm))
 
     filesSection = 0
     try:
         filesSection = output.index("Affected files ...\n")
     except ValueError:
         sys.stderr.write("Change %s doesn't seem to affect any files. Weird.\n" % change)
-        return [], [], [], []
+        return [], [], [], [], []
 
     differencesSection = 0
     try:
         differencesSection = output.index("Differences ...\n")
     except ValueError:
         sys.stderr.write("Change %s doesn't seem to have a differences section. Weird.\n" % change)
-        return [], [], [], []
+        return [], [], [], [], []
 
     log = output[2:filesSection - 1]
 
@@ -85,7 +87,7 @@ def describe(change):
         else:
             changed.append(path)
 
-    return author, log, changed, removed
+    return author, log, epoch, changed, removed
 
 def p4cat(path):
     return os.popen("p4 print -q \"%s\"" % path).read()
@@ -124,9 +126,9 @@ changes.reverse()
 
 sys.stderr.write("\n")
 
-cnt = 0
+cnt = 1
 for change in changes:
-    [ author, log, changedFiles, removedFiles ] = describe(change)
+    [ author, log, epoch, changedFiles, removedFiles ] = describe(change)
     sys.stderr.write("\rimporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
     cnt = cnt + 1
 #    sys.stderr.write("%s\n" % log)
@@ -135,9 +137,9 @@ for change in changes:
 
     print "commit refs/heads/master"
     if author in users:
-        print "committer %s 1 2" % users[author]
+        print "committer %s %s +0000" % (users[author], epoch)
     else:
-        print "committer %s <a@b> 1 2" % author
+        print "committer %s <a@b> %s +0000" % (author, epoch)
     print "data <<EOT"
     for l in log:
         print l[:len(l) - 1]
@@ -164,4 +166,6 @@ for change in changes:
         print "D %s" % stripRevision(relpath)
 
     print ""
+
+sys.stderr.write("\n")
 
