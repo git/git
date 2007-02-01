@@ -155,7 +155,7 @@ then
 	detached="$new"
 	if test -n "$oldbranch"
 	then
-		detach_warn="Note: you are not on ANY branch anymore.
+		detach_warn="Note: you are not on any branch and are at commit \"$new_name\"
 If you want to create a new branch from this checkout, you may do so
 (now or later) by using -b with the checkout command again. Example:
   git checkout -b <new_branch_name>"
@@ -228,7 +228,7 @@ else
     saved_err=$?
     if test "$saved_err" = 0
     then
-	test "$new" = "$old" || git diff-index --name-status "$new"
+	git diff-index --name-status "$new"
     fi
     (exit $saved_err)
 fi
@@ -251,6 +251,12 @@ if [ "$?" -eq 0 ]; then
 	if test -n "$branch"
 	then
 		GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD "refs/heads/$branch"
+		if test -n "$newbranch"
+		then
+			echo >&2 "Switched to a new branch \"$branch\""
+		else
+			echo >&2 "Switched to branch \"$branch\""
+		fi
 	elif test -n "$detached"
 	then
 		# NEEDSWORK: we would want a command to detach the HEAD
