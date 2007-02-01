@@ -779,7 +779,7 @@ static void prepare_packed_git_one(char *objdir, int local)
 		if (!has_extension(de->d_name, ".idx"))
 			continue;
 
-		/* we have .idx.  Is it a file we can map? */
+		/* Don't reopen a pack we already have. */
 		strcpy(path + len, de->d_name);
 		for (p = packed_git; p; p = p->next) {
 			if (!memcmp(path, p->pack_name, len + namelen - 4))
@@ -787,6 +787,9 @@ static void prepare_packed_git_one(char *objdir, int local)
 		}
 		if (p)
 			continue;
+		/* See if it really is a valid .idx file with corresponding
+		 * .pack file that we can map.
+		 */
 		p = add_packed_git(path, len + namelen, local);
 		if (!p)
 			continue;
