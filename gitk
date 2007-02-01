@@ -427,7 +427,7 @@ proc makewindow {} {
     .bar.view add separator
     .bar.view add radiobutton -label "All files" -command {showview 0} \
 	-variable selectedview -value 0
-    
+
     menu .bar.help
     .bar add cascade -label "Help" -menu .bar.help
     .bar.help add command -label "About gitk" -command about
@@ -1402,7 +1402,7 @@ proc newview {ishighlight} {
     set newviewname($nextviewnum) "View $nextviewnum"
     set newviewperm($nextviewnum) 0
     set newviewargs($nextviewnum) [shellarglist $revtreeargs]
-    vieweditor $top $nextviewnum "Gitk view definition" 
+    vieweditor $top $nextviewnum "Gitk view definition"
 }
 
 proc editview {} {
@@ -3897,7 +3897,7 @@ proc selectline {l isnew} {
 	}
 	$ctext insert end "\n"
     }
- 
+
     set headers {}
     set olds [lindex $parentlist $l]
     if {[llength $olds] > 1} {
@@ -4006,7 +4006,7 @@ proc selnextpage {dir} {
         set l [expr $numcommits - 1]
     }
     unmarkmatches
-    selectline $l 1    
+    selectline $l 1
 }
 
 proc unselectline {} {
