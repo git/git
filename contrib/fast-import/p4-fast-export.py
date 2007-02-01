@@ -25,15 +25,21 @@ if len(sys.argv) != 2:
 branch = "refs/heads/p4"
 prefix = sys.argv[1]
 changeRange = ""
+revision = ""
 users = {}
 initialParent = ""
 
-try:
+if prefix.find("@") != -1:
     atIdx = prefix.index("@")
     changeRange = prefix[atIdx:]
+    if changeRange.find(",") == -1:
+        revision = changeRange
+        changeRange = ""
     prefix = prefix[0:atIdx]
-except ValueError:
-    changeRange = ""
+elif prefix.find("#") != -1:
+    hashIdx = prefix.index("#")
+    revision = prefix[hashIdx:]
+    prefix = prefix[0:hashIdx]
 
 if prefix.endswith("..."):
     prefix = prefix[:-3]
@@ -78,7 +84,7 @@ def commit(details):
 
     gitStream.write("data <<EOT\n")
     gitStream.write(details["desc"])
-    gitStream.write("\n[ imported from %s; change %s ]\n" % (prefix, change))
+    gitStream.write("\n[ imported from %s; change %s ]\n" % (prefix, details["change"]))
     gitStream.write("EOT\n\n")
 
     if len(initialParent) > 0:
@@ -116,7 +122,7 @@ def commit(details):
 
     gitStream.write("\n")
 
-    gitStream.write("tag p4/%s\n" % change)
+    gitStream.write("tag p4/%s\n" % details["change"])
     gitStream.write("from %s\n" % branch);
     gitStream.write("tagger %s\n" % committer);
     gitStream.write("data 0\n\n")
@@ -139,43 +145,73 @@ if len(changeRange) == 0:
         output = sout.read()
         tagIdx = output.index(" tags/p4/")
         caretIdx = output.index("^")
-        revision = int(output[tagIdx + 9 : caretIdx]) + 1
-        changeRange = "@%s,#head" % revision
+        rev = int(output[tagIdx + 9 : caretIdx]) + 1
+        changeRange = "@%s,#head" % rev
         initialParent = os.popen("git-rev-parse %s" % branch).read()[:-1]
     except:
         pass
-
-output = os.popen("p4 changes %s...%s" % (prefix, changeRange)).readlines()
-
-changes = []
-for line in output:
-    changeNum = line.split(" ")[1]
-    changes.append(changeNum)
-
-changes.reverse()
-
-if len(changes) == 0:
-    print "no changes to import!"
-    sys.exit(1)
 
 sys.stderr.write("\n")
 
 tz = - time.timezone / 36
 
-gitOutput, gitStream, gitError = popen2.popen3("git-fast-import")
+if len(revision) > 0:
+    print "Doing initial import of %s from revision %s" % (prefix, revision)
 
-cnt = 1
-for change in changes:
-    description = p4Cmd("describe %s" % change)
+    details = { "user" : "git perforce import user", "time" : int(time.time()) }
+    details["desc"] = "Initial import of %s from the state at revision %s" % (prefix, revision)
+    details["change"] = revision
+    newestRevision = 0
 
-    sys.stdout.write("\rimporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
-    sys.stdout.flush()
-    cnt = cnt + 1
+    fileCnt = 0
+    for info in p4CmdList("files %s...%s" % (prefix, revision)):
+        if info["action"] == "delete":
+            continue
+        for prop in [ "depotFile", "rev", "action", "type" ]:
+            details["%s%s" % (prop, fileCnt)] = info[prop]
 
-    commit(description)
+        change = info["change"]
+        if change > newestRevision:
+            newestRevision = change
 
-gitStream.close()
-gitOutput.close()
-gitError.close()
+        fileCnt = fileCnt + 1
+
+    details["change"] = newestRevision
+
+    gitOutput, gitStream, gitError = popen2.popen3("git-fast-import")
+    commit(details)
+
+    gitStream.close()
+    gitOutput.close()
+    gitError.close()
+else:
+    output = os.popen("p4 changes %s...%s" % (prefix, changeRange)).readlines()
+
+    changes = []
+    for line in output:
+        changeNum = line.split(" ")[1]
+        changes.append(changeNum)
+
+    changes.reverse()
+
+    if len(changes) == 0:
+        print "no changes to import!"
+        sys.exit(1)
+
+    gitOutput, gitStream, gitError = popen2.popen3("git-fast-import")
+
+    cnt = 1
+    for change in changes:
+        description = p4Cmd("describe %s" % change)
+
+        sys.stdout.write("\rimporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
+        sys.stdout.flush()
+        cnt = cnt + 1
+
+        commit(description)
+
+    gitStream.close()
+    gitOutput.close()
+    gitError.close()
 
 print ""
