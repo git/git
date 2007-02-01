@@ -891,23 +891,20 @@ sub last_rev_commit {
 	my $rl;
 	open my $fh, '<', $self->{db_path} or
 	                         croak "$self->{db_path} not readable: $!\n";
-	seek $fh, $offset, 2;
-	$rl = readline $fh;
-	defined $rl or return (undef, undef);
+	sysseek($fh, $offset, 2); # don't care for errors
+	sysread($fh, $rl, 41) == 41 or return (undef, undef);
 	chomp $rl;
-	while (('0' x40) eq $rl && tell $fh != 0) {
+	while (('0' x40) eq $rl && sysseek($fh, 0, 1) != 0) {
 		$offset -= 41;
-		seek $fh, $offset, 2;
-		$rl = readline $fh;
-		defined $rl or return (undef, undef);
+		sysseek($fh, $offset, 2); # don't care for errors
+		sysread($fh, $rl, 41) == 41 or return (undef, undef);
 		chomp $rl;
 	}
 	if ($c) {
 		die "$self->{db_path} and ", $self->refname,
 		    " inconsistent!:\n$c != $rl\n";
 	}
-	my $rev = tell $fh;
-	croak $! if ($rev < 0);
+	my $rev = sysseek($fh, 0, 1) or croak $!;
 	$rev =  ($rev - 41) / 41;
 	close $fh or croak $!;
 	($self->{last_rev}, $self->{last_commit}) = ($rev, $c);
@@ -1419,12 +1416,9 @@ sub rev_db_get {
 	my $ret;
 	my $offset = $rev * 41;
 	open my $fh, '<', $self->{db_path} or croak $!;
-	if (seek $fh, $offset, 0) {
-		$ret = readline $fh;
-		if (defined $ret) {
-			chomp $ret;
-			$ret = undef if ($ret =~ /^0{40}$/);
-		}
+	if (sysseek($fh, $offset, 0) == $offset) {
+		my $read = sysread($fh, $ret, 40);
+		$ret = undef if ($read != 40 || $ret eq ('0'x40));
 	}
 	close $fh or croak $!;
 	$ret;
