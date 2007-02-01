@@ -301,12 +301,26 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		fprintf(stderr, warning, len, str);
 
 	if (reflog_len) {
-		/* Is it asking for N-th entry, or approxidate? */
 		int nth, i;
 		unsigned long at_time;
 		unsigned long co_time;
 		int co_tz, co_cnt;
 
+		/*
+		 * We'll have an independent reflog for "HEAD" eventually
+		 * which won't be a synonym for the current branch reflog.
+		 * In the mean time prevent people from getting used to
+		 * such a synonym until the work is completed.
+		 */
+		if (!strncmp("HEAD", str, len) &&
+		    !strncmp(real_ref, "refs/", 5)) {
+			error("reflog for HEAD has not been implemented yet\n"
+			      "Maybe you could try %s%s instead.",
+			      strchr(real_ref+5, '/')+1, str + len);
+			exit(-1);
+		}
+
+		/* Is it asking for N-th entry, or approxidate? */
 		for (i = nth = 0; 0 <= nth && i < reflog_len; i++) {
 			char ch = str[at+2+i];
 			if ('0' <= ch && ch <= '9')
