@@ -8,7 +8,7 @@ git-checkout - Checkout and switch to a branch
 SYNOPSIS
 --------
 [verse]
-'git-checkout' [-f] [-b <new_branch> [-l]] [-m] [<branch>]
+'git-checkout' [-q] [-f] [-b <new_branch> [-l]] [-m] [<branch>]
 'git-checkout' [<tree-ish>] <paths>...
 
 DESCRIPTION
@@ -33,6 +33,9 @@ working tree.
 
 OPTIONS
 -------
+-q::
+	Quiet, supress feedback messages.
+
 -f::
 	Force a re-read of everything.
 
