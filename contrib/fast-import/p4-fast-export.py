@@ -25,6 +25,9 @@ if len(sys.argv) != 2:
 branch = "refs/heads/p4"
 prefix = sys.argv[1]
 changeRange = ""
+users = {}
+initialParent = ""
+
 try:
     atIdx = prefix.index("@")
     changeRange = prefix[atIdx:]
@@ -57,6 +60,68 @@ def p4Cmd(cmd):
         result.update(entry)
     return result;
 
+def commit(details):
+    global initialParent
+    global users
+
+    epoch = details["time"]
+    author = details["user"]
+
+    gitStream.write("commit %s\n" % branch)
+    committer = ""
+    if author in users:
+        committer = "%s %s %s" % (users[author], epoch, tz)
+    else:
+        committer = "%s <a@b> %s %s" % (author, epoch, tz)
+
+    gitStream.write("committer %s\n" % committer)
+
+    gitStream.write("data <<EOT\n")
+    gitStream.write(details["desc"])
+    gitStream.write("\n[ imported from %s; change %s ]\n" % (prefix, change))
+    gitStream.write("EOT\n\n")
+
+    if len(initialParent) > 0:
+        gitStream.write("merge %s\n" % initialParent)
+        initialParent = ""
+
+    fnum = 0
+    while details.has_key("depotFile%s" % fnum):
+        path = details["depotFile%s" % fnum]
+        if not path.startswith(prefix):
+            print "\nchanged files: ignoring path %s outside of %s in change %s" % (path, prefix, change)
+            fnum = fnum + 1
+            continue
+
+        rev = details["rev%s" % fnum]
+        depotPath = path + "#" + rev
+        relPath = path[len(prefix):]
+        action = details["action%s" % fnum]
+
+        if action == "delete":
+            gitStream.write("D %s\n" % relPath)
+        else:
+            mode = 644
+            if details["type%s" % fnum].startswith("x"):
+                mode = 755
+
+            data = os.popen("p4 print -q \"%s\"" % depotPath, "rb").read()
+
+            gitStream.write("M %s inline %s\n" % (mode, relPath))
+            gitStream.write("data %s\n" % len(data))
+            gitStream.write(data)
+            gitStream.write("\n")
+
+        fnum = fnum + 1
+
+    gitStream.write("\n")
+
+    gitStream.write("tag p4/%s\n" % change)
+    gitStream.write("from %s\n" % branch);
+    gitStream.write("tagger %s\n" % committer);
+    gitStream.write("data 0\n\n")
+
+
 def getUserMap():
     users = {}
 
@@ -67,7 +132,6 @@ def getUserMap():
     return users
 
 users = getUserMap()
-topMerge = ""
 
 if len(changeRange) == 0:
     try:
@@ -77,7 +141,7 @@ if len(changeRange) == 0:
         caretIdx = output.index("^")
         revision = int(output[tagIdx + 9 : caretIdx]) + 1
         changeRange = "@%s,#head" % revision
-        topMerge = os.popen("git-rev-parse %s" % branch).read()[:-1]
+        initialParent = os.popen("git-rev-parse %s" % branch).read()[:-1]
     except:
         pass
 
@@ -108,63 +172,7 @@ for change in changes:
     sys.stdout.flush()
     cnt = cnt + 1
 
-    epoch = description["time"]
-    author = description["user"]
-
-    gitStream.write("commit %s\n" % branch)
-    committer = ""
-    if author in users:
-        committer = "%s %s %s" % (users[author], epoch, tz)
-    else:
-        committer = "%s <a@b> %s %s" % (author, epoch, tz)
-
-    gitStream.write("committer %s\n" % committer)
-
-    gitStream.write("data <<EOT\n")
-    gitStream.write(description["desc"])
-    gitStream.write("\n[ imported from %s; change %s ]\n" % (prefix, change))
-    gitStream.write("EOT\n\n")
-
-    if len(topMerge) > 0:
-        gitStream.write("merge %s\n" % topMerge)
-        topMerge = ""
-
-    fnum = 0
-    while description.has_key("depotFile%s" % fnum):
-        path = description["depotFile%s" % fnum]
-        if not path.startswith(prefix):
-            print "\nchanged files: ignoring path %s outside of %s in change %s" % (path, prefix, change)
-            fnum = fnum + 1
-            continue
-
-        rev = description["rev%s" % fnum]
-        depotPath = path + "#" + rev
-        relPath = path[len(prefix):]
-        action = description["action%s" % fnum]
-
-        if action == "delete":
-            gitStream.write("D %s\n" % relPath)
-        else:
-            mode = 644
-            if description["type%s" % fnum].startswith("x"):
-                mode = 755
-
-            data = os.popen("p4 print -q \"%s\"" % depotPath, "rb").read()
-
-            gitStream.write("M %s inline %s\n" % (mode, relPath))
-            gitStream.write("data %s\n" % len(data))
-            gitStream.write(data)
-            gitStream.write("\n")
-
-        fnum = fnum + 1
-
-    gitStream.write("\n")
-
-    gitStream.write("tag p4/%s\n" % change)
-    gitStream.write("from %s\n" % branch);
-    gitStream.write("tagger %s\n" % committer);
-    gitStream.write("data 0\n\n")
-
+    commit(description)
 
 gitStream.close()
 gitOutput.close()
