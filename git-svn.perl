@@ -1059,16 +1059,6 @@ sub do_git_commit {
 	return $commit;
 }
 
-sub revisions_eq {
-	my ($self, $r0, $r1) = @_;
-	return 1 if $r0 == $r1;
-	my $nr = 0;
-	$self->ra->get_log([$self->{path}], $r0, $r1,
-	                   0, 0, 1, sub { $nr++ });
-	return 0 if ($nr > 1);
-	return 1;
-}
-
 sub find_parent_branch {
 	my ($self, $paths, $rev) = @_;
 	return undef unless $_follow_parent;
@@ -1132,7 +1122,7 @@ sub find_parent_branch {
 		$gs->fetch(0, $r);
 		($r0, $parent) = $gs->last_rev_commit;
 	}
-	if (defined $r0 && defined $parent && $gs->revisions_eq($r0, $r)) {
+	if (defined $r0 && defined $parent) {
 		print STDERR "Found branch parent: ($self->{ref_id}) $parent\n";
 		$self->assert_index_clean($parent);
 		my $ed;
