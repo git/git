@@ -2370,7 +2370,12 @@ sub gs_fetch_loop_common {
 			skip_unknown_revs($err);
 		};
 		foreach my $gs (@gs) {
-			$self->get_log([$gs->{path}], $min, $max, 0, 1, 1, sub
+			my $min_r = $min;
+			my $rdb_max = $gs->rev_db_max;
+			next if $rdb_max >= $max;
+			$min_r = $rdb_max + 1 if ($rdb_max > $min_r);
+			$self->get_log([$gs->{path}], $min_r, $max,
+			               0, 1, 1, sub
 			               { my ($paths, $rev) = @_;
 			                 push @{$revs{$rev}},
 			                      [ $gs,
