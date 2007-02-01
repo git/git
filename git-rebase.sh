@@ -249,7 +249,8 @@ fi
 git-update-index --refresh || exit
 diff=$(git-diff-index --cached --name-status -r HEAD)
 case "$diff" in
-?*)	echo "$diff"
+?*)	echo "cannot rebase: your index is not up-to-date"
+	echo "$diff"
 	exit 1
 	;;
 esac

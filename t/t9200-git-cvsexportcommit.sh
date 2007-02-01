@@ -169,19 +169,19 @@ test_expect_success \
       test "$(echo $(sort "G g/CVS/Entries"|cut -d/ -f2,3,5))" = "with spaces.png/1.2/-kb with spaces.txt/1.2/"
       )'
 
-# This test contains ISO-8859-1 characters
+# This test contains UTF-8 characters
 test_expect_success \
      'File with non-ascii file name' \
-     'mkdir -p ≈/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/Â/‰/ˆ &&
-      echo Foo >≈/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/Â/‰/ˆ/gÂrdetsÂgÂrdet.txt &&
-      git add ≈/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/Â/‰/ˆ/gÂrdetsÂgÂrdet.txt &&
-      cp ../test9200a.png ≈/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/Â/‰/ˆ/gÂrdetsÂgÂrdet.png &&
-      git add ≈/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/Â/‰/ˆ/gÂrdetsÂgÂrdet.png &&
-      git commit -a -m "GÂr det sÂ gÂr det" && \
+     'mkdir -p √Ö/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/√•/√§/√∂ &&
+      echo Foo >√Ö/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/√•/√§/√∂/g√•rdets√•g√•rdet.txt &&
+      git add √Ö/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/√•/√§/√∂/g√•rdets√•g√•rdet.txt &&
+      cp ../test9200a.png √Ö/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/√•/√§/√∂/g√•rdets√•g√•rdet.png &&
+      git add √Ö/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/√•/√§/√∂/g√•rdets√•g√•rdet.png &&
+      git commit -a -m "G√•r det s√• g√•r det" && \
       id=$(git rev-list --max-count=1 HEAD) &&
       (cd "$CVSWORK" &&
       git-cvsexportcommit -v -c $id &&
-      test "$(echo $(sort ≈/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/Â/‰/ˆ/CVS/Entries|cut -d/ -f2,3,5))" = "gÂrdetsÂgÂrdet.png/1.1/-kb gÂrdetsÂgÂrdet.txt/1.1/"
+      test "$(echo $(sort √Ö/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/√•/√§/√∂/CVS/Entries|cut -d/ -f2,3,5))" = "g√•rdets√•g√•rdet.png/1.1/-kb g√•rdets√•g√•rdet.txt/1.1/"
       )'
 
 test_expect_success \
@@ -197,6 +197,10 @@ test_expect_success \
       ! git-cvsexportcommit -c $id
       )'
 
+case "$(git repo-config --bool core.filemode)" in
+false)
+	;;
+*)
 test_expect_success \
      'Retain execute bit' \
      'mkdir G &&
@@ -211,5 +215,7 @@ test_expect_success \
       test -x G/on &&
       ! test -x G/off
       )'
+	;;
+esac
 
 test_done
