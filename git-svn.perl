@@ -2945,7 +2945,10 @@ sub migrate_from_v2 {
 	my $migrated = 0;
 
 	foreach my $ref_id (sort keys %l_map) {
-		Git::SVN->init($l_map{$ref_id}, '', $ref_id, $ref_id);
+		eval { Git::SVN->init($l_map{$ref_id}, '', undef, $ref_id) };
+		if ($@) {
+			Git::SVN->init($l_map{$ref_id}, '', $ref_id, $ref_id);
+		}
 		$migrated++;
 	}
 	$migrated;
