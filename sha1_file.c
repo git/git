@@ -790,8 +790,7 @@ static void prepare_packed_git_one(char *objdir, int local)
 		p = add_packed_git(path, len + namelen, local);
 		if (!p)
 			continue;
-		p->next = packed_git;
-		packed_git = p;
+		install_packed_git(p);
 	}
 	closedir(dir);
 }
