@@ -655,18 +655,14 @@ sub fetch_all {
 	my $ra = Git::SVN::Ra->new($url);
 	my $head = $ra->get_latest_revnum;
 	my $base = $head;
-	my $new_remote;
 	foreach my $p (sort keys %$fetch) {
 		my $gs = Git::SVN->new($fetch->{$p}, $repo_id, $p);
-		my $lr = $gs->last_rev;
+		my $lr = $gs->rev_db_max;
 		if (defined $lr) {
 			$base = $lr if ($lr < $base);
-		} else {
-			$new_remote = 1;
 		}
 		push @gs, $gs;
 	}
-	$base = 0 if $new_remote;
 	return if (++$base > $head);
 	$ra->gs_fetch_loop_common($base, $head, @gs);
 }
@@ -899,12 +895,16 @@ sub last_rev_commit {
 	$rl = readline $fh;
 	defined $rl or return (undef, undef);
 	chomp $rl;
-	while ($c ne $rl && tell $fh != 0) {
+	while (('0' x40) eq $rl && tell $fh != 0) {
 		$offset -= 41;
 		seek $fh, $offset, 2;
 		$rl = readline $fh;
 		defined $rl or return (undef, undef);
 		chomp $rl;
+	}
+	if ($c) {
+		die "$self->{db_path} and ", $self->refname,
+		    " inconsistent!:\n$c != $rl\n";
 	}
 	my $rev = tell $fh;
 	croak $! if ($rev < 0);
@@ -917,7 +917,7 @@ sub last_rev_commit {
 sub get_fetch_range {
 	my ($self, $min, $max) = @_;
 	$max ||= $self->ra->get_latest_revnum;
-	$min ||= $self->last_rev || 0;
+	$min ||= $self->rev_db_max;
 	(++$min, $max);
 }
 
@@ -1402,6 +1402,16 @@ sub rev_db_set {
 		            $SIG{USR1} = $SIG{USR2} = 'DEFAULT';
 		kill $sig, $$ if defined $sig;
 	}
+}
+
+sub rev_db_max {
+	my ($self) = @_;
+	my @stat = stat $self->{db_path} or
+	                die "Couldn't stat $self->{db_path}: $!\n";
+	($stat[7] % 41) == 0 or
+	                die "$self->{db_path} inconsistent size:$stat[7]\n";
+	my $max = $stat[7] / 41;
+	(($max > 0) ? $max - 1 : 0);
 }
 
 sub rev_db_get {
@@ -2403,6 +2413,12 @@ sub gs_fetch_loop_common {
 					$gs->do_git_commit($log_entry);
 				}
 			}
+		}
+		# pre-fill the .rev_db since it'll eventually get filled in
+		# with '0' x40 if something new gets committed
+		foreach my $gs (@gs) {
+			next if defined $gs->rev_db_get($max);
+			$gs->rev_db_set($max, 0 x40);
 		}
 		last if $max >= $head;
 		$min = $max + 1;
