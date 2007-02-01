@@ -155,7 +155,7 @@ then
 	detached="$new"
 	if test -n "$oldbranch"
 	then
-		detach_warn="Note: you are not on any branch and are at commit \"$new_name\"
+		detach_warn="Note: moving to \"$new_name\" which isn't a local branch
 If you want to create a new branch from this checkout, you may do so
 (now or later) by using -b with the checkout command again. Example:
   git checkout -b <new_branch_name>"
