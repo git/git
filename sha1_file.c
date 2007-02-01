@@ -1408,6 +1408,18 @@ static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e, cons
 		}
 		offset = find_pack_entry_one(sha1, p);
 		if (offset) {
+			/*
+			 * We are about to tell the caller where they can
+			 * locate the requested object.  We better make
+			 * sure the packfile is still here and can be
+			 * accessed before supplying that answer, as
+			 * it may have been deleted since the index
+			 * was loaded!
+			 */
+			if (p->pack_fd == -1 && open_packed_git(p)) {
+				error("packfile %s cannot be accessed", p->pack_name);
+				continue;
+			}
 			e->offset = offset;
 			e->p = p;
 			hashcpy(e->sha1, sha1);
