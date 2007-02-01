@@ -469,6 +469,8 @@ sub complete_url_ls_init {
 	my $r = defined $_revision ? $_revision : $ra->get_latest_revnum;
 	my ($dirent, undef, undef) = $ra->get_dir($repo_path, $r);
 	my $url = $ra->{url};
+	my $remote_id;
+	my $remote_path;
 	foreach my $d (sort keys %$dirent) {
 		next if ($dirent->{$d}->kind != $SVN::Node::dir);
 		my $path =  "$repo_path/$d";
@@ -477,8 +479,17 @@ sub complete_url_ls_init {
 		# don't try to init already existing refs
 		unless ($gs) {
 			print "init $url/$path => $ref\n";
-			Git::SVN->init($url, $path, undef, $ref);
+			$gs = Git::SVN->init($url, $path, undef, $ref);
 		}
+		$remote_id ||= $gs->{repo_id} if $gs;
+	}
+	if (defined $remote_id) {
+		$remote_path = "$ra->{svn_path}/$repo_path/*";
+		$remote_path =~ s#/+#/#g;
+		$remote_path =~ s#^/##g;
+		my ($n) = ($switch =~ /^--(\w+)/);
+		command_noisy('config', "svn-remote.$remote_id.$n",
+		                        $remote_path);
 	}
 }
 
