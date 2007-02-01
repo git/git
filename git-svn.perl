@@ -724,7 +724,7 @@ sub find_existing_remote {
 }
 
 sub init_remote_config {
-	my ($self, $url) = @_;
+	my ($self, $url, $no_write) = @_;
 	$url =~ s!/+$!!; # strip trailing slash
 	my $r = read_all_remotes();
 	my $existing = find_existing_remote($url, $r);
@@ -769,19 +769,21 @@ sub init_remote_config {
 		die "svn-remote.$xrepo_id.fetch already set to track ",
 		    "$xpath:refs/remotes/", $self->refname, "\n";
 	}
-	command_noisy('config',
-		      "svn-remote.$self->{repo_id}.url", $url);
-	command_noisy('config', '--add',
-		      "svn-remote.$self->{repo_id}.fetch",
-		      "$self->{path}:".$self->refname);
+	unless ($no_write) {
+		command_noisy('config',
+			      "svn-remote.$self->{repo_id}.url", $url);
+		command_noisy('config', '--add',
+			      "svn-remote.$self->{repo_id}.fetch",
+			      "$self->{path}:".$self->refname);
+	}
 	$self->{url} = $url;
 }
 
 sub init {
-	my ($class, $url, $path, $repo_id, $ref_id) = @_;
+	my ($class, $url, $path, $repo_id, $ref_id, $no_write) = @_;
 	my $self = _new($class, $repo_id, $ref_id, $path);
 	if (defined $url) {
-		$self->init_remote_config($url);
+		$self->init_remote_config($url, $no_write);
 	}
 	$self;
 }
@@ -1112,7 +1114,7 @@ sub find_parent_branch {
 		# just grow a tail if we're not unique enough :x
 		$ref_id .= '-' while find_ref($ref_id);
 		print STDERR "Initializing parent: $ref_id\n";
-		$gs = Git::SVN->init($new_url, '', $ref_id, $ref_id);
+		$gs = Git::SVN->init($new_url, '', $ref_id, $ref_id, 1);
 	}
 	my ($r0, $parent) = $gs->find_rev_before($r, 1);
 	if ($_follow_parent && (!defined $r0 || !defined $parent)) {

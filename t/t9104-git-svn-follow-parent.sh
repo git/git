@@ -34,7 +34,7 @@ test_expect_success 'init and fetch --follow-parent a moved directory' "
            = \"\`git-rev-parse --verify refs/remotes/thunk~1\`\" &&
         test \"\`git-cat-file blob refs/remotes/thunk:readme |\
                  sed -n -e '3p'\`\" = goodbye &&
-	test -n \"\`git-config --get svn-remote.git-svn.fetch \
+	test -z \"\`git-config --get svn-remote.git-svn.fetch \
 	         '^trunk:refs/remotes/thunk@2$'\`\"
 	"
 
