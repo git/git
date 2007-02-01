@@ -7,11 +7,7 @@
 #
 # TODO:
 #       - support integrations (at least p4i)
-#       - support incremental imports
-#       - create tags
-#       - instead of reading all files into a variable try to pipe from
 #       - support p4 submit (hah!)
-#       - don't hardcode the import to master
 #
 import os, string, sys, time
 import marshal, popen2
@@ -26,8 +22,7 @@ if len(sys.argv) != 2:
     print ""
     sys.exit(1)
 
-master = "refs/heads/p4"
-branch = "refs/heads/p4-import"
+branch = "refs/heads/p4"
 prefix = sys.argv[1]
 changeRange = ""
 try:
@@ -74,23 +69,17 @@ def getUserMap():
 users = getUserMap()
 topMerge = ""
 
-incremental = 0
-# try incremental import
 if len(changeRange) == 0:
     try:
-        sout, sin, serr = popen2.popen3("git-name-rev --tags `git-rev-parse %s`" % master)
+        sout, sin, serr = popen2.popen3("git-name-rev --tags `git-rev-parse %s`" % branch)
         output = sout.read()
         tagIdx = output.index(" tags/p4/")
         caretIdx = output.index("^")
         revision = int(output[tagIdx + 9 : caretIdx]) + 1
         changeRange = "@%s,#head" % revision
-        topMerge = os.popen("git-rev-parse %s" % master).read()[:-1]
-        incremental = 1
+        topMerge = os.popen("git-rev-parse %s" % branch).read()[:-1]
     except:
         pass
-
-if incremental == 0:
-    branch = master
 
 output = os.popen("p4 changes %s...%s" % (prefix, changeRange)).readlines()
 
@@ -180,9 +169,5 @@ for change in changes:
 gitStream.close()
 gitOutput.close()
 gitError.close()
-
-if incremental == 1:
-    os.popen("git rebase p4-import p4")
-    os.popen("git branch -d p4-import")
 
 print ""
