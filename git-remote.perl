@@ -130,7 +130,7 @@ sub update_ls_remote {
 	$info->{'LS_REMOTE'} = \@ref;
 }
 
-sub show_wildcard_mapping {
+sub list_wildcard_mapping {
 	my ($forced, $ours, $ls) = @_;
 	my %refs;
 	for (@$ls) {
@@ -156,25 +156,14 @@ sub show_wildcard_mapping {
 			push @tracked, $_;
 		}
 	}
-	if (@new) {
-		print "  New remote branches (next fetch will store in remotes/$ours)\n";
-		print "    @new\n";
-	}
-	if (@stale) {
-		print "  Stale tracking branches in remotes/$ours (you'd better remove them)\n";
-		print "    @stale\n";
-	}
-	if (@tracked) {
-		print "  Tracked remote branches\n";
-		print "    @tracked\n";
-	}
+	return \@new, \@stale, \@tracked;
 }
 
-sub show_mapping {
+sub list_mapping {
 	my ($name, $info) = @_;
 	my $fetch = $info->{'FETCH'};
 	my $ls = $info->{'LS_REMOTE'};
-	my (@stale, @tracked);
+	my (@new, @stale, @tracked);
 
 	for (@$fetch) {
 		next unless (/(\+)?([^:]+):(.*)/);
@@ -182,7 +171,11 @@ sub show_mapping {
 		if ($theirs eq 'refs/heads/*' &&
 		    $ours =~ /^refs\/remotes\/(.*)\/\*$/) {
 			# wildcard mapping
-			show_wildcard_mapping($forced, $1, $ls);
+			my ($w_new, $w_stale, $w_tracked)
+				= list_wildcard_mapping($forced, $1, $ls);
+			push @new, @$w_new;
+			push @stale, @$w_stale;
+			push @tracked, @$w_tracked;
 		}
 		elsif ($theirs =~ /\*/ || $ours =~ /\*/) {
 			print STDERR "Warning: unrecognized mapping in remotes.$name.fetch: $_\n";
@@ -196,13 +189,23 @@ sub show_mapping {
 			}
 		}
 	}
-	if (@stale) {
-		print "  Stale tracking branches in remotes/$name (you'd better remove them)\n";
-		print "    @stale\n";
+	return \@new, \@stale, \@tracked;
+}
+
+sub show_mapping {
+	my ($name, $info) = @_;
+	my ($new, $stale, $tracked) = list_mapping($name, $info);
+	if (@$new) {
+		print "  New remote branches (next fetch will store in remotes/$name)\n";
+		print "    @$new\n";
 	}
-	if (@tracked) {
+	if (@$stale) {
+		print "  Stale tracking branches in remotes/$name (you'd better remove them)\n";
+		print "    @$stale\n";
+	}
+	if (@$tracked) {
 		print "  Tracked remote branches\n";
-		print "    @tracked\n";
+		print "    @$tracked\n";
 	}
 }
 
