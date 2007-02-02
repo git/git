@@ -12,6 +12,7 @@ SYNOPSIS
 'git-remote'
 'git-remote' add <name> <url>
 'git-remote' show <name>
+'git-remote' prune <name>
 
 DESCRIPTION
 -----------
@@ -25,6 +26,10 @@ In the second form, adds a remote named <name> for the repository at
 update remote-tracking branches <name>/<branch>.
 
 In the third form, gives some information about the remote <name>.
+
+In the fourth form, deletes all stale tracking branches under <name>.
+These stale branches have already been removed from the remote repository
+referenced by <name>, but are still locally available in "remotes/<name>".
 
 The remote configuration is achieved using the `remote.origin.url` and
 `remote.origin.fetch` configuration variables.  (See

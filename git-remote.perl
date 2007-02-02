@@ -200,12 +200,29 @@ sub show_mapping {
 		print "    @$new\n";
 	}
 	if (@$stale) {
-		print "  Stale tracking branches in remotes/$name (you'd better remove them)\n";
+		print "  Stale tracking branches in remotes/$name (use 'git remote prune')\n";
 		print "    @$stale\n";
 	}
 	if (@$tracked) {
 		print "  Tracked remote branches\n";
 		print "    @$tracked\n";
+	}
+}
+
+sub prune_remote {
+	my ($name, $ls_remote) = @_;
+	if (!exists $remote->{$name}) {
+		print STDERR "No such remote $name\n";
+		return;
+	}
+	my $info = $remote->{$name};
+	update_ls_remote($ls_remote, $info);
+
+	my ($new, $stale, $tracked) = list_mapping($name, $info);
+	my $prefix = "refs/remotes/$name";
+	foreach my $to_prune (@$stale) {
+		my @v = $git->command(qw(rev-parse --verify), "$prefix/$to_prune");
+		$git->command(qw(update-ref -d), "$prefix/$to_prune", $v[0]);
 	}
 }
 
@@ -270,6 +287,25 @@ elsif ($ARGV[0] eq 'show') {
 		show_remote($ARGV[$i], $ls_remote);
 	}
 }
+elsif ($ARGV[0] eq 'prune') {
+	my $ls_remote = 1;
+	my $i;
+	for ($i = 1; $i < @ARGV; $i++) {
+		if ($ARGV[$i] eq '-n') {
+			$ls_remote = 0;
+		}
+		else {
+			last;
+		}
+	}
+	if ($i >= @ARGV) {
+		print STDERR "Usage: git remote prune <remote>\n";
+		exit(1);
+	}
+	for (; $i < @ARGV; $i++) {
+		prune_remote($ARGV[$i], $ls_remote);
+	}
+}
 elsif ($ARGV[0] eq 'add') {
 	if (@ARGV != 3) {
 		print STDERR "Usage: git remote add <name> <url>\n";
@@ -281,5 +317,6 @@ else {
 	print STDERR "Usage: git remote\n";
 	print STDERR "       git remote add <name> <url>\n";
 	print STDERR "       git remote show <name>\n";
+	print STDERR "       git remote prune <name>\n";
 	exit(1);
 }
