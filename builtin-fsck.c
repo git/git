@@ -571,12 +571,11 @@ static int fsck_cache_tree(struct cache_tree *it)
 	return err;
 }
 
-int main(int argc, char **argv)
+int cmd_fsck(int argc, char **argv, const char *prefix)
 {
 	int i, heads;
 
 	track_object_refs = 1;
-	setup_git_directory();
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];

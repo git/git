@@ -37,7 +37,7 @@ do
 		;;
 	--upl=*|--uplo=*|--uploa=*|--upload=*|\
 	--upload-=*|--upload-p=*|--upload-pa=*|--upload-pac=*|--upload-pack=*)
-		exec=--upload-pack=$(expr "$1" : '-[^=]*=\(.*\)')
+		exec=--upload-pack=$(expr "z$1" : 'z-[^=]*=\(.*\)')
 		shift
 		;;
 	-f|--f|--fo|--for|--forc|--force)

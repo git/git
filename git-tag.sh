@@ -113,8 +113,9 @@ object=$(git-rev-parse --verify --default HEAD "$@") || exit 1
 type=$(git-cat-file -t $object) || exit 1
 tagger=$(git-var GIT_COMMITTER_IDENT) || exit 1
 
-keyid=$(git-repo-config user.signingkey) ||
-	keyid=$(expr "z$tagger" : 'z\(.*>\)')
+test -n "$username" ||
+	username=$(git-repo-config user.signingkey) ||
+	username=$(expr "z$tagger" : 'z\(.*>\)')
 
 trap 'rm -f "$GIT_DIR"/TAG_TMP* "$GIT_DIR"/TAG_FINALMSG "$GIT_DIR"/TAG_EDITMSG' 0
 
@@ -141,7 +142,7 @@ if [ "$annotate" ]; then
       cat "$GIT_DIR"/TAG_FINALMSG ) >"$GIT_DIR"/TAG_TMP
     rm -f "$GIT_DIR"/TAG_TMP.asc "$GIT_DIR"/TAG_FINALMSG
     if [ "$signed" ]; then
-	gpg -bsa -u "$keyid" "$GIT_DIR"/TAG_TMP &&
+	gpg -bsa -u "$username" "$GIT_DIR"/TAG_TMP &&
 	cat "$GIT_DIR"/TAG_TMP.asc >>"$GIT_DIR"/TAG_TMP ||
 	die "failed to sign the tag with GPG."
     fi
