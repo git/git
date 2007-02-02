@@ -165,6 +165,14 @@ void add_reflog_for_walk(struct reflog_walk_info *info,
 	if (item)
 		reflogs = item->util;
 	else {
+		if (*branch == '\0') {
+			unsigned char sha1[20];
+			const char *head = resolve_ref("HEAD", sha1, 0, NULL);
+			if (!head)
+				die ("No current branch");
+			free(branch);
+			branch = xstrdup(head);
+		}
 		reflogs = read_complete_reflog(branch);
 		if (!reflogs || reflogs->nr == 0)
 			die("No reflogs found for '%s'", branch);

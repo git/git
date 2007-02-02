@@ -279,7 +279,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	/* basic@{time or number} format to query ref-log */
 	reflog_len = at = 0;
 	if (str[len-1] == '}') {
-		for (at = 1; at < len - 1; at++) {
+		for (at = 0; at < len - 1; at++) {
 			if (str[at] == '@' && str[at+1] == '{') {
 				reflog_len = (len-1) - (at+2);
 				len = at;
@@ -289,10 +289,14 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	}
 
 	/* Accept only unambiguous ref paths. */
-	if (ambiguous_path(str, len))
+	if (len && ambiguous_path(str, len))
 		return -1;
 
-	refs_found = dwim_ref(str, len, sha1, &real_ref);
+	if (!len && reflog_len) {
+		/* allow "@{...}" to mean the current branch reflog */
+		refs_found = dwim_ref("HEAD", 4, sha1, &real_ref);
+	} else
+		refs_found = dwim_ref(str, len, sha1, &real_ref);
 
 	if (!refs_found)
 		return -1;
@@ -301,12 +305,27 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		fprintf(stderr, warning, len, str);
 
 	if (reflog_len) {
-		/* Is it asking for N-th entry, or approxidate? */
 		int nth, i;
 		unsigned long at_time;
 		unsigned long co_time;
 		int co_tz, co_cnt;
 
+		/*
+		 * We'll have an independent reflog for "HEAD" eventually
+		 * which won't be a synonym for the current branch reflog.
+		 * In the mean time prevent people from getting used to
+		 * such a synonym until the work is completed.
+		 */
+		if (len && !strncmp("HEAD", str, len) &&
+		    !strncmp(real_ref, "refs/", 5)) {
+			error("reflog for HEAD has not been implemented yet\n"
+			      "Maybe you could try %s%s instead, "
+			      "or just %s for current branch..",
+			      strchr(real_ref+5, '/')+1, str+len, str+len);
+			exit(-1);
+		}
+
+		/* Is it asking for N-th entry, or approxidate? */
 		for (i = nth = 0; 0 <= nth && i < reflog_len; i++) {
 			char ch = str[at+2+i];
 			if ('0' <= ch && ch <= '9')
