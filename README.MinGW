@@ -50,14 +50,14 @@ This works:
 - All the plumbings.
 - Many porcelains, in particular, checkout, add, rm, commit, diff,
   branch, merge, rebase, log, show, bisect, grep...
-- pull, clone, fetch, push via ssh.
+- pull, clone, fetch, push via native git protocal as well as ssh.
 - Local pull, clone, fetch, push.
 - gitk, if invoked as "wish84 <prefix>\bin\gitk", but there are
-  artefacts in its layout.
+  artefacts in its layout. A workaround by Mark Levedahl is in
+  branch 'devel'.
 
 This does not work:
 
-- pull, clone, fetch, push via native GIT protocol.
 - daemon, svn, *import, cvs*
 - and certainly a lot more that I never have found a need to look at.
 

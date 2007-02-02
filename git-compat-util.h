@@ -374,6 +374,9 @@ struct tm *localtime_r(const time_t *timep, struct tm *result);
 char *mingw_getcwd(char *pointer, int len);
 #define getcwd mingw_getcwd
 
+int mingw_socket(int domain, int type, int protocol);
+#define socket mingw_socket
+
 #define setlinebuf(x)
 #define fsync(x)
 
