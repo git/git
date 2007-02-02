@@ -398,7 +398,7 @@ branch name, but this longer name can also be useful.  Most
 importantly, it is a globally unique name for this commit: so if you
 tell somebody else the object name (for example in email), then you are
 guaranteed that name will refer to the same commit in their repository
-that you it does in yours (assuming their repository has that commit at
+that it does in yours (assuming their repository has that commit at
 all).
 
 Understanding history: commits, parents, and reachability
@@ -617,7 +617,7 @@ the relationships between these snapshots.
 Git provides extremely flexible and fast tools for exploring the
 history of a project.
 
-We start with one specialized tool which is useful for finding the
+We start with one specialized tool that is useful for finding the
 commit that introduced a bug into a project.
 
 How to use bisect to find a regression
@@ -1492,7 +1492,7 @@ dangling commit 13472b7c4b80851a1bc551779171dcb03655e9b5
 ...
 -------------------------------------------------
 
-and watch for output that mentions "dangling commits".  You can examine
+You can examine
 one of those dangling commits with, for example,
 
 ------------------------------------------------
@@ -2922,6 +2922,8 @@ The basic requirements:
 Think about how to create a clear chapter dependency graph that will
 allow people to get to important topics without necessarily reading
 everything in between.
+
+Say something about .gitignore.
 
 Scan Documentation/ for other stuff left out; in particular:
 	howto's

@@ -624,7 +624,7 @@ name for the state at that point.
 Copying repositories
 --------------------
 
-git repositories are normally totally self-sufficient and relocatable
+git repositories are normally totally self-sufficient and relocatable.
 Unlike CVS, for example, there is no separate notion of
 "repository" and "working tree". A git repository normally *is* the
 working tree, with the local git information hidden in the `.git`
@@ -1118,7 +1118,7 @@ You could do without using any branches at all, by
 keeping as many local repositories as you would like to have
 branches, and merging between them with `git pull`, just like
 you merge between branches. The advantage of this approach is
-that it lets you keep set of files for each `branch` checked
+that it lets you keep a set of files for each `branch` checked
 out and you may find it easier to switch back and forth if you
 juggle multiple lines of development simultaneously. Of
 course, you will pay the price of more disk usage to hold
@@ -1300,7 +1300,7 @@ differences since stage 2 (i.e. your version).
 Publishing your work
 --------------------
 
-So we can use somebody else's work from a remote repository; but
+So, we can use somebody else's work from a remote repository, but
 how can *you* prepare a repository to let other people pull from
 it?
 
