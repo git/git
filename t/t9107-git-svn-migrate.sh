@@ -34,14 +34,14 @@ test_expect_success 'initialize old-style (v0) git-svn layout' "
 	! test -d $GIT_DIR/git-svn &&
 	git-rev-parse --verify refs/remotes/git-svn^0 &&
 	git-rev-parse --verify refs/remotes/svn^0 &&
-	test \`git repo-config --get svn-remote.git-svn.url\` = '$svnrepo' &&
-	test \`git repo-config --get svn-remote.git-svn.fetch\` = \
+	test \`git repo-config --get svn-remote.svn.url\` = '$svnrepo' &&
+	test \`git repo-config --get svn-remote.svn.fetch\` = \
              ':refs/remotes/git-svn'
 	"
 
 test_expect_success 'initialize a multi-repository repo' "
 	git-svn multi-init $svnrepo -T trunk -t tags -b branches &&
-	git-repo-config --get-all svn-remote.git-svn.fetch > fetch.out &&
+	git-repo-config --get-all svn-remote.svn.fetch > fetch.out &&
 	grep '^trunk:refs/remotes/trunk$' fetch.out &&
 	grep '^branches/a:refs/remotes/a$' fetch.out &&
 	grep '^branches/b:refs/remotes/b$' fetch.out &&
@@ -65,8 +65,8 @@ test_expect_success 'multi-fetch works on partial urls + paths' "
 	"
 
 test_expect_success 'migrate --minimize on old multi-inited layout' "
-	git repo-config --unset-all svn-remote.git-svn.fetch &&
-	git repo-config --unset-all svn-remote.git-svn.url &&
+	git repo-config --unset-all svn-remote.svn.fetch &&
+	git repo-config --unset-all svn-remote.svn.url &&
 	rm -rf $GIT_DIR/svn &&
 	for i in \`cat fetch.out\`; do
 		path=\`expr \$i : '\\([^:]*\\):.*$'\`
@@ -78,7 +78,7 @@ test_expect_success 'migrate --minimize on old multi-inited layout' "
 	done &&
 	git-svn migrate --minimize &&
 	test -z \"\`git-repo-config -l |grep -v '^svn-remote\.git-svn\.'\`\" &&
-	git-repo-config --get-all svn-remote.git-svn.fetch > fetch.out &&
+	git-repo-config --get-all svn-remote.svn.fetch > fetch.out &&
 	grep '^trunk:refs/remotes/trunk$' fetch.out &&
 	grep '^branches/a:refs/remotes/a$' fetch.out &&
 	grep '^branches/b:refs/remotes/b$' fetch.out &&

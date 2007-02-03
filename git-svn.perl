@@ -10,7 +10,7 @@ $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
 $ENV{GIT_DIR} ||= '.git';
-$Git::SVN::default_repo_id = 'git-svn';
+$Git::SVN::default_repo_id = 'svn';
 $Git::SVN::default_ref_id = $ENV{GIT_SVN_ID} || 'git-svn';
 
 $Git::SVN::Log::TZ = $ENV{TZ};

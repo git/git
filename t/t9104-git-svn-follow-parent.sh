@@ -34,15 +34,15 @@ test_expect_success 'init and fetch --follow-parent a moved directory' "
            = \"\`git-rev-parse --verify refs/remotes/thunk~1\`\" &&
         test \"\`git-cat-file blob refs/remotes/thunk:readme |\
                  sed -n -e '3p'\`\" = goodbye &&
-	test -z \"\`git-config --get svn-remote.git-svn.fetch \
+	test -z \"\`git-config --get svn-remote.svn.fetch \
 	         '^trunk:refs/remotes/thunk@2$'\`\"
 	"
 
 test_expect_success 'init and fetch from one svn-remote' "
-        git-repo-config svn-remote.git-svn.url $svnrepo &&
-        git-repo-config --add svn-remote.git-svn.fetch \
+        git-repo-config svn-remote.svn.url $svnrepo &&
+        git-repo-config --add svn-remote.svn.fetch \
           trunk:refs/remotes/svn/trunk &&
-        git-repo-config --add svn-remote.git-svn.fetch \
+        git-repo-config --add svn-remote.svn.fetch \
           thunk:refs/remotes/svn/thunk &&
         git-svn fetch --follow-parent -i svn/thunk &&
 	test \"\`git-rev-parse --verify refs/remotes/svn/trunk\`\" \
@@ -54,7 +54,7 @@ test_expect_success 'init and fetch from one svn-remote' "
 test_expect_success 'follow deleted parent' "
         svn cp -m 'resurrecting trunk as junk' \
                -r2 $svnrepo/trunk $svnrepo/junk &&
-        git-repo-config --add svn-remote.git-svn.fetch \
+        git-repo-config --add svn-remote.svn.fetch \
           junk:refs/remotes/svn/junk &&
         git-svn fetch --follow-parent -i svn/thunk &&
         git-svn fetch -i svn/junk --follow-parent &&
