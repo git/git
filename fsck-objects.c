@@ -477,6 +477,12 @@ static int fsck_handle_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 	return 0;
 }
 
+static int fsck_handle_reflog(const char *logname, const unsigned char *sha1, int flag, void *cb_data)
+{
+	for_each_reflog_ent(logname, fsck_handle_reflog_ent, NULL);
+	return 0;
+}
+
 static int fsck_handle_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *obj;
@@ -495,14 +501,13 @@ static int fsck_handle_ref(const char *refname, const unsigned char *sha1, int f
 	obj->used = 1;
 	mark_reachable(obj, REACHABLE);
 
-	for_each_reflog_ent(refname, fsck_handle_reflog_ent, NULL);
-
 	return 0;
 }
 
 static void get_default_heads(void)
 {
 	for_each_ref(fsck_handle_ref, NULL);
+	for_each_reflog(fsck_handle_reflog, NULL);
 
 	/*
 	 * Not having any default heads isn't really fatal, but
