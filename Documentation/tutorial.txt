@@ -101,27 +101,27 @@ want to commit together. This can be done in a few different ways:
 
 1) By using 'git add <file_spec>...'
 
-   This can be performed multiple times before a commit.  Note that this
-   is not only for adding new files.  Even modified files must be
-   added to the set of changes about to be committed.  The "git status"
-   command gives you a summary of what is included so far for the
-   next commit.  When done you should use the 'git commit' command to
-   make it real.
+This can be performed multiple times before a commit.  Note that this
+is not only for adding new files.  Even modified files must be
+added to the set of changes about to be committed.  The "git status"
+command gives you a summary of what is included so far for the
+next commit.  When done you should use the 'git commit' command to
+make it real.
 
-   Note: don't forget to 'add' a file again if you modified it after the
-   first 'add' and before 'commit'. Otherwise only the previous added
-   state of that file will be committed. This is because git tracks
-   content, so what you're really 'add'ing to the commit is the *content*
-   of the file in the state it is in when you 'add' it.
+Note: don't forget to 'add' a file again if you modified it after the
+first 'add' and before 'commit'. Otherwise only the previous added
+state of that file will be committed. This is because git tracks
+content, so what you're really 'add'ing to the commit is the *content*
+of the file in the state it is in when you 'add' it.
 
 2) By using 'git commit -a' directly
 
-   This is a quick way to automatically 'add' the content from all files
-   that were modified since the previous commit, and perform the actual
-   commit without having to separately 'add' them beforehand.  This will
-   not add content from new files i.e. files that were never added before.
-   Those files still have to be added explicitly before performing a
-   commit.
+This is a quick way to automatically 'add' the content from all files
+that were modified since the previous commit, and perform the actual
+commit without having to separately 'add' them beforehand.  This will
+not add content from new files i.e. files that were never added before.
+Those files still have to be added explicitly before performing a
+commit.
 
 But here's a twist. If you do 'git commit <file1> <file2> ...' then only
 the  changes belonging to those explicitly specified files will be
