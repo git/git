@@ -367,9 +367,10 @@ sub cmd_multi_init {
 sub cmd_multi_fetch {
 	my $remotes = Git::SVN::read_all_remotes();
 	foreach my $repo_id (sort keys %$remotes) {
-		my $url = $remotes->{$repo_id}->{url} or next;
-		my $fetch = $remotes->{$repo_id}->{fetch} or next;
-		Git::SVN::fetch_all($repo_id, $url, $fetch);
+		if ($remotes->{$repo_id}->{url} &&
+		    $remotes->{$repo_id}->{fetch}) {
+			Git::SVN::fetch_all($repo_id, $remotes);
+		}
 	}
 }
 
@@ -479,9 +480,12 @@ sub complete_url_ls_init {
 		# don't try to init already existing refs
 		unless ($gs) {
 			print "init $url/$path => $ref\n";
-			$gs = Git::SVN->init($url, $path, undef, $ref);
+			$gs = Git::SVN->init($url, $path, undef, $ref, 1);
 		}
-		$remote_id ||= $gs->{repo_id} if $gs;
+		if ($gs) {
+			$remote_id = $gs->{repo_id};
+			last;
+		}
 	}
 	if (defined $remote_id) {
 		$remote_path = "$ra->{svn_path}/$repo_path/*";
@@ -489,7 +493,7 @@ sub complete_url_ls_init {
 		$remote_path =~ s#^/##g;
 		my ($n) = ($switch =~ /^--(\w+)/);
 		command_noisy('config', "svn-remote.$remote_id.$n",
-		                        $remote_path);
+		                        "$remote_path:refs/remotes/$pfx*");
 	}
 }
 
@@ -660,9 +664,48 @@ BEGIN {
 my %LOCKFILES;
 END { unlink keys %LOCKFILES if %LOCKFILES }
 
+sub resolve_local_globs {
+	my ($url, $fetch, $glob_spec) = @_;
+	return unless defined $glob_spec;
+	my $ref = $glob_spec->{ref};
+	my $path = $glob_spec->{path};
+	foreach (command(qw#for-each-ref --format=%(refname) refs/remotes#)) {
+		next unless m#^refs/remotes/$ref->{regex}$#;
+		my $p = $1;
+		my $pathname = $path->full_path($p);
+		my $refname = $ref->full_path($p);
+		if (my $existing = $fetch->{$pathname}) {
+			if ($existing ne $refname) {
+				die "Refspec conflict:\n",
+				    "existing: refs/remotes/$existing\n",
+				    " globbed: refs/remotes/$refname\n";
+			}
+			my $u = (::cmt_metadata("refs/remotes/$refname"))[0];
+			$u =~ s!^\Q$url\E/?!! or die
+			  "refs/remotes/$refname: '$url' not found in '$u'\n";
+			if ($pathname ne $u) {
+				warn "W: Refspec glob conflict ",
+				     "(ref: refs/remotes/$refname):\n",
+				     "expected path: $pathname\n",
+				     "    real path: $u\n",
+				     "Continuing ahead with $u\n";
+				next;
+			}
+		} else {
+			warn "Globbed ($path->{glob}:$ref->{glob}): ",
+			     "$pathname == $refname\n";
+			$fetch->{$pathname} = $refname;
+		}
+	}
+}
+
 sub fetch_all {
-	my ($repo_id, $url, $fetch) = @_;
+	my ($repo_id, $remotes) = @_;
+	my $fetch = $remotes->{$repo_id}->{fetch};
+	my $url = $remotes->{$repo_id}->{url};
 	my @gs;
+	resolve_local_globs($url, $fetch, $remotes->{$repo_id}->{branches});
+	resolve_local_globs($url, $fetch, $remotes->{$repo_id}->{tags});
 	my $ra = Git::SVN::Ra->new($url);
 	my $head = $ra->get_latest_revnum;
 	my $base = $head;
@@ -685,6 +728,16 @@ sub read_all_remotes {
 			$r->{$1}->{fetch}->{$2} = $3;
 		} elsif (m!^(.+)\.url=\s*(.*)\s*$!) {
 			$r->{$1}->{url} = $2;
+		} elsif (m!^(.+)\.(branches|tags)=
+		           (.*):refs/remotes/(.+)\s*$/!x) {
+			my ($p, $g) = ($3, $4);
+			my $rs = $r->{$1}->{$2} = {
+			                  path => Git::SVN::GlobSpec->new($p),
+			                  ref => Git::SVN::GlobSpec->new($g) };
+			if (length($rs->{ref}->{right}) != 0) {
+				die "The '*' glob character must be the last ",
+				    "character of '$g'\n";
+			}
 		}
 	}
 	$r;
@@ -3072,9 +3125,66 @@ sub DESTROY {
 	command_close_pipe($self->{gui}, $self->{ctx});
 }
 
+package Git::SVN::GlobSpec;
+use strict;
+use warnings;
+
+sub new {
+	my ($class, $glob) = @_;
+	warn "glob: $glob\n";
+	my $re = $glob;
+	$re =~ s!/+$!!g; # no need for trailing slashes
+	my $nr = ($re =~ s!^(.*/?)\*(/?.*)$!\(\[^/\]+\)!g);
+	my ($left, $right) = ($1, $2);
+	if ($nr > 1) {
+		warn "Only one '*' wildcard expansion ",
+		     "is supported (got $nr): '$glob'\n";
+	} elsif ($nr == 0) {
+		warn "One '*' is needed for glob: '$glob'\n";
+	}
+	$re = quotemeta($left) . $re . quotemeta($right);
+	$left =~ s!/+$!!g;
+	$right =~ s!^/+!!g;
+	bless { left => $left, right => $right,
+	        regex => qr/$re/, glob => $glob }, $class;
+}
+
+sub full_path {
+	my ($self, $path) = @_;
+	return (length $self->{left} ? "$self->{left}/" : '') .
+	       $path . (length $self->{right} ? "/$self->{right}" : '');
+}
+
 __END__
 
 Data structures:
+
+
+$remotes = { # returned by read_all_remotes()
+	'svn' => {
+		# svn-remote.svn.url=https://svn.musicpd.org
+		url => 'https://svn.musicpd.org',
+		# svn-remote.svn.fetch=mpd/trunk:trunk
+		fetch => {
+			'mpd/trunk' => 'trunk',
+		},
+		# svn-remote.svn.tags=mpd/tags/*:tags/*
+		tags => {
+			path => {
+				left => 'mpd/tags',
+				right => '',
+				regex => qr!mpd/tags/([^/]+)$!,
+				glob => 'tags/*',
+			},
+			ref => {
+				left => 'tags',
+				right => '',
+				regex => qr!tags/([^/]+)$!,
+				glob => 'tags/*',
+			},
+		}
+	}
+};
 
 $log_entry hashref as returned by libsvn_log_entry()
 {

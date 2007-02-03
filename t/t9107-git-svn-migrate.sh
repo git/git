@@ -6,7 +6,7 @@ test_description='git-svn metadata migrations from previous versions'
 test_expect_success 'setup old-looking metadata' "
 	cp $GIT_DIR/config $GIT_DIR/config-old-git-svn &&
 	mkdir import &&
-	cd import
+	cd import &&
 		for i in trunk branches/a branches/b \
 		         tags/0.1 tags/0.2 tags/0.3; do
 			mkdir -p \$i && \
@@ -43,11 +43,19 @@ test_expect_success 'initialize a multi-repository repo' "
 	git-svn multi-init $svnrepo -T trunk -t tags -b branches &&
 	git-repo-config --get-all svn-remote.svn.fetch > fetch.out &&
 	grep '^trunk:refs/remotes/trunk$' fetch.out &&
-	grep '^branches/a:refs/remotes/a$' fetch.out &&
-	grep '^branches/b:refs/remotes/b$' fetch.out &&
-	grep '^tags/0\.1:refs/remotes/tags/0\.1$' fetch.out &&
-	grep '^tags/0\.2:refs/remotes/tags/0\.2$' fetch.out &&
-	grep '^tags/0\.3:refs/remotes/tags/0\.3$' fetch.out
+	test -n \"\`git-config --get svn-remote.svn.branches \
+	            '^branches/\*:refs/remotes/\*$'\`\" &&
+	test -n \"\`git-config --get svn-remote.svn.tags \
+	            '^tags/\*:refs/remotes/tags/\*$'\`\" &&
+	git config --unset svn-remote.svn.branches \
+	                        '^branches/\*:refs/remotes/\*$' &&
+	git config --unset svn-remote.svn.tags \
+	                        '^tags/\*:refs/remotes/tags/\*$' &&
+	git-config --add svn-remote.svn.fetch 'branches/a:refs/remotes/a' &&
+	git-config --add svn-remote.svn.fetch 'branches/b:refs/remotes/b' &&
+	for i in tags/0.1 tags/0.2 tags/0.3; do
+		git-config --add svn-remote.svn.fetch \
+		                 \$i:refs/remotes/\$i || exit 1; done
 	"
 
 # refs should all be different, but the trees should all be the same:
