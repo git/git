@@ -90,9 +90,6 @@ parameter, and is invoked after a commit is made.
 This hook is meant primarily for notification, and cannot affect
 the outcome of `git-commit`.
 
-The default 'post-commit' hook, when enabled, demonstrates how to
-send out a commit notification e-mail.
-
 update
 ------
 
@@ -130,6 +127,8 @@ The standard output of this hook is sent to `stderr`, so if you
 want to report something to the `git-send-pack` on the other end,
 you can simply `echo` your messages.
 
+The default 'update' hook, when enabled, demonstrates how to
+send out a notification e-mail.
 
 post-update
 -----------

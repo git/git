@@ -552,7 +552,11 @@ void unuse_pack(struct pack_window **w_cursor)
 	}
 }
 
-static int open_packed_git(struct packed_git *p)
+/*
+ * Do not call this directly as this leaks p->pack_fd on error return;
+ * call open_packed_git() instead.
+ */
+static int open_packed_git_1(struct packed_git *p)
 {
 	struct stat st;
 	struct pack_header hdr;
@@ -606,6 +610,17 @@ static int open_packed_git(struct packed_git *p)
 	if (hashcmp(sha1, idx_sha1))
 		return error("packfile %s does not match index", p->pack_name);
 	return 0;
+}
+
+static int open_packed_git(struct packed_git *p)
+{
+	if (!open_packed_git_1(p))
+		return 0;
+	if (p->pack_fd != -1) {
+		close(p->pack_fd);
+		p->pack_fd = -1;
+	}
+	return -1;
 }
 
 static int in_window(struct pack_window *win, unsigned long offset)
