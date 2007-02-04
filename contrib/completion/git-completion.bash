@@ -1,7 +1,7 @@
 #
 # bash completion support for core Git.
 #
-# Copyright (C) 2006 Shawn Pearce
+# Copyright (C) 2006,2007 Shawn Pearce
 # Conceptually based on gitcompletion (http://gitweb.hawaga.org.uk/).
 #
 # The contained completion routines provide support for completing:
@@ -235,6 +235,7 @@ __git_commands ()
 	for i in $(git help -a|egrep '^ ')
 	do
 		case $i in
+		cat-file)         : plumbing;;
 		check-ref-format) : plumbing;;
 		commit-tree)      : plumbing;;
 		convert-objects)  : plumbing;;
@@ -258,6 +259,7 @@ __git_commands ()
 		peek-remote)      : plumbing;;
 		read-tree)        : plumbing;;
 		receive-pack)     : plumbing;;
+		reflog)           : plumbing;;
 		rerere)           : plumbing;;
 		rev-list)         : plumbing;;
 		rev-parse)        : plumbing;;
@@ -360,22 +362,6 @@ _git_branch ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
-}
-
-_git_cat_file ()
-{
-	local cur="${COMP_WORDS[COMP_CWORD]}"
-	case "${COMP_WORDS[0]},$COMP_CWORD" in
-	git-cat-file*,1)
-		COMPREPLY=($(compgen -W "-p -t blob tree commit tag" -- "$cur"))
-		;;
-	git,2)
-		COMPREPLY=($(compgen -W "-p -t blob tree commit tag" -- "$cur"))
-		;;
-	*)
-		__git_complete_file
-		;;
-	esac
 }
 
 _git_checkout ()
@@ -802,7 +788,6 @@ _git ()
 	am)          _git_am ;;
 	apply)       _git_apply ;;
 	branch)      _git_branch ;;
-	cat-file)    _git_cat_file ;;
 	checkout)    _git_checkout ;;
 	cherry-pick) _git_cherry_pick ;;
 	commit)      _git_commit ;;
@@ -840,7 +825,6 @@ complete -o default            -F _gitk gitk
 complete -o default            -F _git_am git-am
 complete -o default            -F _git_apply git-apply
 complete -o default            -F _git_branch git-branch
-complete -o default -o nospace -F _git_cat_file git-cat-file
 complete -o default            -F _git_checkout git-checkout
 complete -o default            -F _git_cherry_pick git-cherry-pick
 complete -o default            -F _git_commit git-commit
@@ -871,7 +855,6 @@ if [ Cygwin = "$(uname -o 2>/dev/null)" ]; then
 complete -o default            -F _git_apply git-apply.exe
 complete -o default -o nospace -F _git git.exe
 complete -o default            -F _git_branch git-branch.exe
-complete -o default -o nospace -F _git_cat_file git-cat-file.exe
 complete -o default -o nospace -F _git_diff git-diff.exe
 complete -o default -o nospace -F _git_diff_tree git-diff-tree.exe
 complete -o default -o nospace -F _git_format_patch git-format-patch.exe
