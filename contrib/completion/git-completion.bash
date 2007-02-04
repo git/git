@@ -250,16 +250,24 @@ __git_commands ()
 	do
 		case $i in
 		add--interactive) : plumbing;;
+		applymbox)        : ask gittus;;
+		applypatch)       : ask gittus;;
+		archimport)       : import;;
 		cat-file)         : plumbing;;
 		check-ref-format) : plumbing;;
 		commit-tree)      : plumbing;;
 		convert-objects)  : plumbing;;
+		cvsexportcommit)  : export;;
+		cvsimport)        : import;;
 		cvsserver)        : daemon;;
 		daemon)           : daemon;;
+		fsck-objects)     : plumbing;;
 		fetch-pack)       : plumbing;;
+		fmt-merge-msg)    : plumbing;;
 		hash-object)      : plumbing;;
 		http-*)           : transport;;
 		index-pack)       : plumbing;;
+		init-db)          : deprecated;;
 		local-fetch)      : plumbing;;
 		mailinfo)         : plumbing;;
 		mailsplit)        : plumbing;;
@@ -272,9 +280,13 @@ __git_commands ()
 		parse-remote)     : plumbing;;
 		patch-id)         : plumbing;;
 		peek-remote)      : plumbing;;
+		prune)            : plumbing;;
+		prune-packed)     : plumbing;;
+		quiltimport)      : import;;
 		read-tree)        : plumbing;;
 		receive-pack)     : plumbing;;
 		reflog)           : plumbing;;
+		repo-config)      : plumbing;;
 		rerere)           : plumbing;;
 		rev-list)         : plumbing;;
 		rev-parse)        : plumbing;;
@@ -285,14 +297,19 @@ __git_commands ()
 		show-index)       : plumbing;;
 		ssh-*)            : transport;;
 		stripspace)       : plumbing;;
+		svn)              : import export;;
+		svnimport)        : import;;
 		symbolic-ref)     : plumbing;;
+		tar-tree)         : deprecated;;
 		unpack-file)      : plumbing;;
 		unpack-objects)   : plumbing;;
+		update-index)     : plumbing;;
 		update-ref)       : plumbing;;
 		update-server-info) : daemon;;
 		upload-archive)   : plumbing;;
 		upload-pack)      : plumbing;;
 		write-tree)       : plumbing;;
+		verify-tag)       : plumbing;;
 		*) echo $i;;
 		esac
 	done
@@ -834,7 +851,6 @@ _git ()
 	pull)        _git_pull ;;
 	push)        _git_push ;;
 	rebase)      _git_rebase ;;
-	repo-config) _git_config ;;
 	reset)       _git_reset ;;
 	show)        _git_show ;;
 	show-branch) _git_log ;;
