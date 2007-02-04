@@ -5,9 +5,11 @@ maint_at=$(git rev-parse --verify refs/heads/maint)
 master_at=$(git rev-parse --verify refs/heads/master)
 
 log () {
-	git log --no-merges "$@" |
-	git shortlog |
-	perl -pe 'if (!/^    / && !/^$/) { s/^/   / }'
+	git shortlog --no-merges "$@" |
+	perl -pe '
+		if (/^      /) { s//  /; }
+		elsif (!/^$/) { s/^/ / }
+	'
 }
 
 echo "To: git@vger.kernel.org"
