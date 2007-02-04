@@ -190,7 +190,34 @@ then
 		(cd "$GIT_DIR/refs" &&
 		 mkdir reference-tmp &&
 		 cd reference-tmp &&
-		 tar xf -)
+		 tar xf - &&
+		 find refs ! -type d -print |
+		 while read ref
+		 do
+			if test -h "$ref"
+			then
+				# Old-style symbolic link ref.  Not likely
+				# to appear under refs/ but we might as well
+				# deal with them.
+				:
+			elif test -f "$ref"
+			then
+				point=$(cat "$ref") &&
+					case "$point" in
+					'ref: '*) ;;
+					*) continue ;;
+					esac
+			fi
+			# The above makes true ref to 'continue' and
+			# we will come here when we are looking at
+			# symbolic link ref or a textual symref (or
+			# garbage, like fifo).
+			# The true ref pointed at by it is enough to
+			# ensure that we do not fetch objects reachable
+			# from it.
+			rm -f "$ref"
+		 done
+		)
 	else
 		die "reference repository '$reference' is not a local directory."
 	fi
