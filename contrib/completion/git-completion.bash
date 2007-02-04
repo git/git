@@ -359,7 +359,7 @@ _git_apply ()
 _git_branch ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	COMPREPLY=($(compgen -W "-l -f -d -D $(__git_refs)" -- "$cur"))
+	COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
 }
 
 _git_cat_file ()
@@ -381,7 +381,7 @@ _git_cat_file ()
 _git_checkout ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	COMPREPLY=($(compgen -W "-l -b $(__git_refs)" -- "$cur"))
+	COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
 }
 
 _git_cherry_pick ()
@@ -421,7 +421,7 @@ _git_diff ()
 _git_diff_tree ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	COMPREPLY=($(compgen -W "-r -p -M $(__git_refs)" -- "$cur"))
+	COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
 }
 
 _git_fetch ()
