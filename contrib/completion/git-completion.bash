@@ -494,6 +494,7 @@ _git_format_patch ()
 			--signoff
 			--in-reply-to=
 			--full-index --binary
+			--not --all
 			"
 		return
 		;;
@@ -532,6 +533,7 @@ _git_log ()
 			--author= --committer= --grep=
 			--all-match
 			--pretty= --name-status --name-only
+			--not --all
 			"
 		return
 		;;
@@ -898,7 +900,7 @@ _gitk ()
 		return
 		;;
 	esac
-	__gitcomp "$(__git_refs)"
+	__git_complete_revlist
 }
 
 complete -o default -o nospace -F _git git
