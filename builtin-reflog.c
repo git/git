@@ -245,14 +245,11 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 	char *log_file, *newlog_path = NULL;
 	int status = 0;
 
-	if (strncmp(ref, "refs/", 5))
-		return error("not a ref '%s'", ref);
-
 	memset(&cb, 0, sizeof(cb));
 	/* we take the lock for the ref itself to prevent it from
 	 * getting updated.
 	 */
-	lock = lock_ref_sha1(ref + 5, sha1);
+	lock = lock_any_ref_for_update(ref, sha1);
 	if (!lock)
 		return error("cannot lock ref '%s'", ref);
 	log_file = xstrdup(git_path("logs/%s", ref));
@@ -353,7 +350,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	}
 
 	if (do_all)
-		status |= for_each_ref(expire_reflog, &cb);
+		status |= for_each_reflog(expire_reflog, &cb);
 	while (i < argc) {
 		const char *ref = argv[i++];
 		unsigned char sha1[20];

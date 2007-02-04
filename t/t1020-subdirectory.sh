@@ -106,21 +106,21 @@ test_expect_success 'read-tree' '
 	cmp ../one ../original.one
 '
 
-test_expect_success 'no file/rev ambuguity check inside .git' '
+test_expect_success 'no file/rev ambiguity check inside .git' '
 	cd $HERE &&
 	git commit -a -m 1 &&
 	cd $HERE/.git &&
 	git show -s HEAD
 '
 
-test_expect_success 'no file/rev ambuguity check inside a bare repo' '
+test_expect_success 'no file/rev ambiguity check inside a bare repo' '
 	cd $HERE &&
 	git clone -s --bare .git foo.git &&
 	cd foo.git && GIT_DIR=. git show -s HEAD
 '
 
 # This still does not work as it should...
-: test_expect_success 'no file/rev ambuguity check inside a bare repo' '
+: test_expect_success 'no file/rev ambiguity check inside a bare repo' '
 	cd $HERE &&
 	git clone -s --bare .git foo.git &&
 	cd foo.git && git show -s HEAD

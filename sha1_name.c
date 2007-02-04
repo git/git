@@ -235,22 +235,23 @@ static int ambiguous_path(const char *path, int len)
 	return slash;
 }
 
+static const char *ref_fmt[] = {
+	"%.*s",
+	"refs/%.*s",
+	"refs/tags/%.*s",
+	"refs/heads/%.*s",
+	"refs/remotes/%.*s",
+	"refs/remotes/%.*s/HEAD",
+	NULL
+};
+
 int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 {
-	static const char *fmt[] = {
-		"%.*s",
-		"refs/%.*s",
-		"refs/tags/%.*s",
-		"refs/heads/%.*s",
-		"refs/remotes/%.*s",
-		"refs/remotes/%.*s/HEAD",
-		NULL
-	};
 	const char **p, *r;
 	int refs_found = 0;
 
 	*ref = NULL;
-	for (p = fmt; *p; p++) {
+	for (p = ref_fmt; *p; p++) {
 		unsigned char sha1_from_ref[20];
 		unsigned char *this_result;
 
@@ -264,6 +265,28 @@ int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 		}
 	}
 	return refs_found;
+}
+
+static int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
+{
+	const char **p;
+	int logs_found = 0;
+
+	*log = NULL;
+	for (p = ref_fmt; *p; p++) {
+		struct stat st;
+		char *path = mkpath(*p, len, str);
+		if (!stat(git_path("logs/%s", path), &st) &&
+		    S_ISREG(st.st_mode)) {
+			if (!logs_found++) {
+				*log = xstrdup(path);
+				resolve_ref(path, sha1, 0, NULL);
+			}
+			if (!warn_ambiguous_refs)
+				break;
+		}
+	}
+	return logs_found;
 }
 
 static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
@@ -295,7 +318,9 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 	if (!len && reflog_len) {
 		/* allow "@{...}" to mean the current branch reflog */
 		refs_found = dwim_ref("HEAD", 4, sha1, &real_ref);
-	} else
+	} else if (reflog_len)
+		refs_found = dwim_log(str, len, sha1, &real_ref);
+	else
 		refs_found = dwim_ref(str, len, sha1, &real_ref);
 
 	if (!refs_found)
@@ -309,21 +334,6 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		unsigned long at_time;
 		unsigned long co_time;
 		int co_tz, co_cnt;
-
-		/*
-		 * We'll have an independent reflog for "HEAD" eventually
-		 * which won't be a synonym for the current branch reflog.
-		 * In the mean time prevent people from getting used to
-		 * such a synonym until the work is completed.
-		 */
-		if (len && !strncmp("HEAD", str, len) &&
-		    !strncmp(real_ref, "refs/", 5)) {
-			error("reflog for HEAD has not been implemented yet\n"
-			      "Maybe you could try %s%s instead, "
-			      "or just %s for current branch..",
-			      strchr(real_ref+5, '/')+1, str+len, str+len);
-			exit(-1);
-		}
 
 		/* Is it asking for N-th entry, or approxidate? */
 		for (i = nth = 0; 0 <= nth && i < reflog_len; i++) {

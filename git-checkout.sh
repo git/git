@@ -164,22 +164,9 @@ If you want to create a new branch from this checkout, you may do so
 (now or later) by using -b with the checkout command again. Example:
   git checkout -b <new_branch_name>"
 	fi
-elif test -z "$oldbranch" && test -n "$branch"
+elif test -z "$oldbranch" && test -z "$quiet"
 then
-	# Coming back...
-	if test -z "$force"
-	then
-		git show-ref -d -s | grep "$old" >/dev/null || {
-			echo >&2 \
-"You are not on any branch and switching to branch '$new_name'
-may lose your changes.  At this point, you can do one of two things:
- (1) Decide it is Ok and say 'git checkout -f $new_name';
- (2) Start a new branch from the current commit, by saying
-     'git checkout -b <branch-name>'.
-Leaving your HEAD detached; not switching to branch '$new_name'."
-			exit 1;
-		}
-	fi
+	echo >&2 "Previous HEAD position was $old"
 fi
 
 if [ "X$old" = X ]
@@ -265,7 +252,6 @@ if [ "$?" -eq 0 ]; then
 	if test -n "$branch"
 	then
 		GIT_DIR="$GIT_DIR" git-symbolic-ref -m "checkout: moving to $branch" HEAD "refs/heads/$branch"
-		GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD "refs/heads/$branch"
 		if test -z "$quiet"
 		then
 			echo >&2 "Switched to${newbranch:+ a new} branch \"$branch\""

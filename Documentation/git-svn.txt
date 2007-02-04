@@ -133,7 +133,7 @@ manually joining branches on commit.
 
 'multi-init'::
 	This command supports git-svnimport-like command-line syntax for
-	importing repositories that are layed out as recommended by the
+	importing repositories that are laid out as recommended by the
 	SVN folks.  This is a bit more tolerant than the git-svnimport
 	command-line syntax and doesn't require the user to figure out
 	where the repository URL ends and where the repository path

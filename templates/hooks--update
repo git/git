@@ -61,7 +61,7 @@ newrev_type=$(git-cat-file -t "$newrev")
 
 case "$refname","$newrev_type" in
 	refs/tags/*,commit)
-		# un-annoted tag
+		# un-annotated tag
 		refname_type="tag"
 		short_refname=${refname##refs/tags/}
 		if [ $allowunannotated != "true" ]; then

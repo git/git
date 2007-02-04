@@ -18,7 +18,7 @@
  * %r0 - temp
  * %r3 - argument (pointer to 5 words of SHA state)
  * %r4 - argument (pointer to data to hash)
- * %r5 - Contant K in SHA round (initially number of blocks to hash)
+ * %r5 - Constant K in SHA round (initially number of blocks to hash)
  * %r6-%r10 - Working copies of SHA variables A..E (actually E..A order)
  * %r11-%r26 - Data being hashed W[].
  * %r27-%r31 - Previous copies of A..E, for final add back.
@@ -48,7 +48,7 @@
  * E += ROTL(A,5) + F(B,C,D) + W[i] + K;  B = ROTL(B,30)
  * Then the variables are renamed: (A,B,C,D,E) = (E,A,B,C,D).
  *
- * Every 20 rounds, the function F() and the contant K changes:
+ * Every 20 rounds, the function F() and the constant K changes:
  * - 20 rounds of f0(b,c,d) = "bit wise b ? c : d" =  (^b & d) + (b & c)
  * - 20 rounds of f1(b,c,d) = b^c^d = (b^d)^c
  * - 20 rounds of f2(b,c,d) = majority(b,c,d) = (b&d) + ((b^d)&c)
@@ -57,7 +57,7 @@
  * These are all scheduled for near-optimal performance on a G4.
  * The G4 is a 3-issue out-of-order machine with 3 ALUs, but it can only
  * *consider* starting the oldest 3 instructions per cycle.  So to get
- * maximum performace out of it, you have to treat it as an in-order
+ * maximum performance out of it, you have to treat it as an in-order
  * machine.  Which means interleaving the computation round t with the
  * computation of W[t+4].
  *

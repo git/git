@@ -458,9 +458,9 @@ $ git reset --hard HEAD^ # reset your current branch and working
 Be careful with that last command: in addition to losing any changes
 in the working directory, it will also remove all later commits from
 this branch.  If this branch is the only branch containing those
-commits, they will be lost.  (Also, don't use "git reset" on a
-publicly-visible branch that other developers pull from, as git will
-be confused by history that disappears in this way.)
+commits, they will be lost.  Also, don't use "git reset" on a
+publicly-visible branch that other developers pull from, as it will
+force needless merges on other developers to clean up the history.
 
 The git grep command can search for strings in any version of your
 project, so

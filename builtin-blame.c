@@ -550,7 +550,7 @@ static void free_patch(struct patch *p)
 }
 
 /*
- * Link in a new blame entry to the scorebord.  Entries that cover the
+ * Link in a new blame entry to the scoreboard.  Entries that cover the
  * same line range have been removed from the scoreboard previously.
  */
 static void add_blame_entry(struct scoreboard *sb, struct blame_entry *e)
@@ -1392,7 +1392,7 @@ static void found_guilty_entry(struct blame_entry *ent)
 
 /*
  * The main loop -- while the scoreboard has lines whose true origin
- * is still unknown, pick one brame_entry, and allow its current
+ * is still unknown, pick one blame_entry, and allow its current
  * suspect to pass blames to its parents.
  */
 static void assign_blame(struct scoreboard *sb, struct rev_info *revs, int opt)
@@ -2001,7 +2001,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	/*
 	 * We have collected options unknown to us in argv[1..unk]
 	 * which are to be passed to revision machinery if we are
-	 * going to do the "bottom" procesing.
+	 * going to do the "bottom" processing.
 	 *
 	 * The remaining are:
 	 *

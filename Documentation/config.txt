@@ -39,7 +39,7 @@ in the section header, like in example below:
 
 Subsection names can contain any characters except newline (doublequote
 '`"`' and backslash have to be escaped as '`\"`' and '`\\`',
-respecitvely) and are case sensitive.  Section header cannot span multiple
+respectively) and are case sensitive.  Section header cannot span multiple
 lines.  Variables may belong directly to a section or to a given subsection.
 You can have `[section]` if you have `[section "subsection"]`, but you
 don't need to.

@@ -425,8 +425,8 @@ if commit X is an ancestor of commit Y.  Equivalently, you could say
 that Y is a descendent of X, or that there is a chain of parents
 leading from commit Y to commit X.
 
-Undestanding history: History diagrams
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Understanding history: History diagrams
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We will sometimes represent git history using diagrams like the one
 below.  Commits are shown as "o", and the links between them with
@@ -806,7 +806,7 @@ display options.
 
 Note that git log starts with the most recent commit and works
 backwards through the parents; however, since git history can contain
-multiple independant lines of development, the particular order that
+multiple independent lines of development, the particular order that
 commits are listed in may be somewhat arbitrary.
 
 Generating diffs
@@ -1075,7 +1075,7 @@ $ git commit
 -------------------------------------------------
 
 and git will prompt you for a commit message and then create the new
-commmit.  Check to make sure it looks like what you expected with
+commit.  Check to make sure it looks like what you expected with
 
 -------------------------------------------------
 $ git show
@@ -2953,7 +2953,7 @@ Include cross-references to the glossary, where appropriate.
 Document shallow clones?  See draft 1.5.0 release notes for some
 documentation.
 
-Add a sectin on working with other version control systems, including
+Add a section on working with other version control systems, including
 CVS, Subversion, and just imports of series of release tarballs.
 
 More details on gitweb?

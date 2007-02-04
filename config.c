@@ -896,7 +896,7 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 				if (buf[i] != old_name[j++])
 					break;
 			}
-			if (buf[i] == ']') {
+			if (buf[i] == ']' && old_name[j] == 0) {
 				/* old_name matches */
 				ret++;
 				store.baselen = strlen(new_name);

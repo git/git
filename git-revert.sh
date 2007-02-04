@@ -54,6 +54,8 @@ do
 	shift
 done
 
+set_reflog_action "$me"
+
 test "$me,$replay" = "revert,t" && usage
 
 case "$no_commit" in
