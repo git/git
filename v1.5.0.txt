@@ -212,11 +212,19 @@ Updates in v1.5.0 since v1.4.4 series
    "branch@{Nth}" notation.
 
  - "git show-branch" learned showing the reflog data with the
-   new --reflog option.  "git log" has --walk-reflogs option to
-   view reflog entries in a more verbose manner.
+   new -g option.  "git log" has -s option to view reflog
+   entries in a more verbose manner.
 
  - git-branch knows how to rename branches and moves existing
    reflog data from the old branch to the new one.
+
+ - In addition to the reflog support in v1.4.4 series, HEAD
+   reference maintains its own log.  "HEAD@{5.minutes.ago}"
+   means the commit you were at 5 minutes ago, which takes
+   branch switching into account.  If you want to know where the
+   tip of your current branch was at 5 minutes ago, you need to
+   explicitly say its name (e.g. "master@{5.minutes.ago}") or
+   omit the refname altogether i.e. "@{5.minutes.ago}".
 
  - The commits referred to by reflog entries are now protected
    against pruning.  The new command "git reflog expire" can be
