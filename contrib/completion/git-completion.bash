@@ -64,14 +64,19 @@ __git_ps1 ()
 __gitcomp ()
 {
 	local all c s=$'\n' IFS=' '$'\t'$'\n'
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	if [ -n "$2" ]; then
+		cur="$3"
+	fi
 	for c in $1; do
-		case "$c" in
-		--*=*) all="$all$c$s" ;;
-		*)     all="$all$c $s" ;;
+		case "$c$4" in
+		--*=*) all="$all$c$4$s" ;;
+		*.)    all="$all$c$4$s" ;;
+		*)     all="$all$c$4 $s" ;;
 		esac
 	done
 	IFS=$s
-	COMPREPLY=($(compgen -W "$all" -- "${COMP_WORDS[COMP_CWORD]}"))
+	COMPREPLY=($(compgen -P "$2" -W "$all" -- "$cur"))
 	return
 }
 
@@ -666,26 +671,40 @@ _git_config ()
 	local prv="${COMP_WORDS[COMP_CWORD-1]}"
 	case "$prv" in
 	branch.*.remote)
-		COMPREPLY=($(compgen -W "$(__git_remotes)" -- "$cur"))
+		__gitcomp "$(__git_remotes)"
 		return
 		;;
 	branch.*.merge)
-		COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
+		__gitcomp "$(__git_refs)"
 		return
 		;;
 	remote.*.fetch)
 		local remote="${prv#remote.}"
 		remote="${remote%.fetch}"
-		COMPREPLY=($(compgen -W "$(__git_refs_remotes "$remote")" \
-			-- "$cur"))
+		__gitcomp "$(__git_refs_remotes "$remote")"
 		return
 		;;
 	remote.*.push)
 		local remote="${prv#remote.}"
 		remote="${remote%.push}"
-		COMPREPLY=($(compgen -W "$(git --git-dir="$(__gitdir)" \
+		__gitcomp "$(git --git-dir="$(__gitdir)" \
 			for-each-ref --format='%(refname):%(refname)' \
-			refs/heads)" -- "$cur"))
+			refs/heads)"
+		return
+		;;
+	pull.twohead|pull.octopus)
+		__gitcomp "$(__git_merge_strategies)"
+		return
+		;;
+	color.branch|color.diff|color.status)
+		__gitcomp "always never auto"
+		return
+		;;
+	color.*.*)
+		__gitcomp "
+			black red green yellow blue magenta cyan white
+			bold dim ul blink reverse
+			"
 		return
 		;;
 	*.*)
@@ -695,41 +714,39 @@ _git_config ()
 	esac
 	case "$cur" in
 	--*)
-		COMPREPLY=($(compgen -W "
+		__gitcomp "
 			--global --list --replace-all
 			--get --get-all --get-regexp
 			--unset --unset-all
-			" -- "$cur"))
+			"
 		return
 		;;
 	branch.*.*)
 		local pfx="${cur%.*}."
 		cur="${cur##*.}"
-		COMPREPLY=($(compgen -P "$pfx" -W "remote merge" -- "$cur"))
+		__gitcomp "remote merge" "$pfx" "$cur"
 		return
 		;;
 	branch.*)
 		local pfx="${cur%.*}."
 		cur="${cur#*.}"
-		COMPREPLY=($(compgen -P "$pfx" -S . \
-			-W "$(__git_heads)" -- "$cur"))
+		__gitcomp "$(__git_heads)" "$pfx" "$cur" "."
 		return
 		;;
 	remote.*.*)
 		local pfx="${cur%.*}."
 		cur="${cur##*.}"
-		COMPREPLY=($(compgen -P "$pfx" -W "url fetch push" -- "$cur"))
+		__gitcomp "url fetch push" "$pfx" "$cur"
 		return
 		;;
 	remote.*)
 		local pfx="${cur%.*}."
 		cur="${cur#*.}"
-		COMPREPLY=($(compgen -P "$pfx" -S . \
-			-W "$(__git_remotes)" -- "$cur"))
+		__gitcomp "$(__git_remotes)" "$pfx" "$cur" "."
 		return
 		;;
 	esac
-	COMPREPLY=($(compgen -W "
+	__gitcomp "
 		apply.whitespace
 		core.fileMode
 		core.gitProxy
@@ -741,40 +758,67 @@ _git_config ()
 		core.warnAmbiguousRefs
 		core.compression
 		core.legacyHeaders
-		i18n.commitEncoding
-		i18n.logOutputEncoding
-		diff.color
+		core.packedGitWindowSize
+		core.packedGitLimit
+		color.branch
+		color.branch.current
+		color.branch.local
+		color.branch.remote
+		color.branch.plain
 		color.diff
+		color.diff.plain
+		color.diff.meta
+		color.diff.frag
+		color.diff.old
+		color.diff.new
+		color.diff.commit
+		color.diff.whitespace
+		color.pager
+		color.status
+		color.status.header
+		color.status.added
+		color.status.changed
+		color.status.untracked
 		diff.renameLimit
 		diff.renames
-		pager.color
-		color.pager
-		status.color
-		color.status
-		log.showroot
-		show.difftree
-		showbranch.default
-		whatchanged.difftree
+		fetch.unpackLimit
+		format.headers
+		gitcvs.enabled
+		gitcvs.logfile
+		gc.reflogexpire
+		gc.reflogexpireunreachable
+		gc.rerereresolved
+		gc.rerereunresolved
 		http.sslVerify
 		http.sslCert
 		http.sslKey
 		http.sslCAInfo
 		http.sslCAPath
 		http.maxRequests
-		http.lowSpeedLimit http.lowSpeedTime
+		http.lowSpeedLimit
+		http.lowSpeedTime
 		http.noEPSV
-		pack.window
-		repack.useDeltaBaseOffset
-		pull.octopus pull.twohead
+		i18n.commitEncoding
+		i18n.logOutputEncoding
+		log.showroot
 		merge.summary
+		merge.verbosity
+		pack.window
+		pull.octopus
+		pull.twohead
+		repack.useDeltaBaseOffset
+		show.difftree
+		showbranch.default
+		tar.umask
+		transfer.unpackLimit
 		receive.unpackLimit
 		receive.denyNonFastForwards
-		user.name user.email
-		tar.umask
-		gitcvs.enabled
-		gitcvs.logfile
+		user.name
+		user.email
+		user.signingkey
+		whatchanged.difftree
 		branch. remote.
-	" -- "$cur"))
+	"
 }
 
 _git_reset ()
