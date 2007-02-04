@@ -781,7 +781,7 @@ that is a plain string. (Unless C<$Error::ObjectifyCallback> is modified)
 
 This variable holds a reference to a subroutine that converts errors that
 are plain strings to objects. It is used by Error.pm to convert textual
-errors to objects, and can be overrided by the user.
+errors to objects, and can be overridden by the user.
 
 It accepts a single argument which is a hash reference to named parameters.
 Currently the only named parameter passed is C<'text'> which is the text

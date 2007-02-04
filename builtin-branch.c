@@ -364,7 +364,7 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	unsigned char sha1[20];
 
 	if (!oldname)
-		die("cannot rename the curren branch while not on any.");
+		die("cannot rename the current branch while not on any.");
 
 	if (snprintf(oldref, sizeof(oldref), "refs/heads/%s", oldname) > sizeof(oldref))
 		die("Old branchname too long");

@@ -117,7 +117,7 @@ static void check_unreachable_object(struct object *obj)
 
 	/*
 	 * "!used" means that nothing at all points to it, including
-	 * other unreacahble objects. In other words, it's the "tip"
+	 * other unreachable objects. In other words, it's the "tip"
 	 * of some set of unreachable objects, usually a commit that
 	 * got dropped.
 	 *

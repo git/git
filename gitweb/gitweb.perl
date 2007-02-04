@@ -834,7 +834,7 @@ sub file_type_long {
 
 ## ----------------------------------------------------------------------
 ## functions returning short HTML fragments, or transforming HTML fragments
-## which don't beling to other sections
+## which don't belong to other sections
 
 # format line of commit message.
 sub format_log_line_html {
