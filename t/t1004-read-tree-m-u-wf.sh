@@ -87,7 +87,7 @@ test_expect_success 'three-way not complaining on an untracked path in both' '
 	git-read-tree -m -u branch-point master side
 '
 
-test_expect_success 'three-way not cloberring a working tree file' '
+test_expect_success 'three-way not clobbering a working tree file' '
 
 	git reset --hard &&
 	rm -f file2 subdir/file2 file3 subdir/file3 &&

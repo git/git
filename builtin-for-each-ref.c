@@ -12,6 +12,7 @@
 #define QUOTE_SHELL 1
 #define QUOTE_PERL 2
 #define QUOTE_PYTHON 3
+#define QUOTE_TCL 4
 
 typedef enum { FIELD_STR, FIELD_ULONG, FIELD_TIME } cmp_type;
 
@@ -134,7 +135,7 @@ static const char *find_next(const char *cp)
 	while (*cp) {
 		if (*cp == '%') {
 			/* %( is the start of an atom;
-			 * %% is a quoteed per-cent.
+			 * %% is a quoted per-cent.
 			 */
 			if (cp[1] == '(')
 				return cp;
@@ -723,6 +724,9 @@ static void print_value(struct refinfo *ref, int atom, int quote_style)
 	case QUOTE_PYTHON:
 		python_quote_print(stdout, v->s);
 		break;
+	case QUOTE_TCL:
+		tcl_quote_print(stdout, v->s);
+		break;
 	}
 }
 
@@ -832,6 +836,12 @@ int cmd_for_each_ref(int ac, const char **av, char *prefix)
 			if (0 <= quote_style)
 				die("more than one quoting style?");
 			quote_style = QUOTE_PYTHON;
+			continue;
+		}
+		if (!strcmp(arg, "--tcl") ) {
+			if (0 <= quote_style)
+				die("more than one quoting style?");
+			quote_style = QUOTE_TCL;
 			continue;
 		}
 		if (!strncmp(arg, "--count=", 8)) {

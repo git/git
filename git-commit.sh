@@ -429,7 +429,7 @@ then
 	fi
 elif test "$use_commit" != ""
 then
-	encoding=$(git repo-config i18n.commitencoding || echo UTF-8)
+	encoding=$(git config i18n.commitencoding || echo UTF-8)
 	git show -s --pretty=raw --encoding="$encoding" "$use_commit" |
 	sed -e '1,/^$/d' -e 's/^    //'
 elif test -f "$GIT_DIR/MERGE_MSG"
@@ -442,8 +442,11 @@ fi | git-stripspace >"$GIT_DIR"/COMMIT_EDITMSG
 
 case "$signoff" in
 t)
+	need_blank_before_signoff=
+	tail -n 1 "$GIT_DIR"/COMMIT_EDITMSG |
+	grep 'Signed-off-by:' >/dev/null || need_blank_before_signoff=yes
 	{
-		echo
+		test -z "$need_blank_before_signoff" || echo
 		git-var GIT_COMMITTER_IDENT | sed -e '
 			s/>.*/>/
 			s/^/Signed-off-by: /
@@ -485,7 +488,7 @@ then
 		q
 	}
 	'
-	encoding=$(git repo-config i18n.commitencoding || echo UTF-8)
+	encoding=$(git config i18n.commitencoding || echo UTF-8)
 	set_author_env=`git show -s --pretty=raw --encoding="$encoding" "$use_commit" |
 	LANG=C LC_ALL=C sed -ne "$pick_author_script"`
 	eval "$set_author_env"
@@ -525,6 +528,7 @@ else
 	rloga='commit (initial)'
 	current=''
 fi
+set_reflog_action "$rloga"
 
 if test -z "$no_edit"
 then
@@ -599,7 +603,7 @@ then
 	fi &&
 	commit=$(cat "$GIT_DIR"/COMMIT_MSG | git-commit-tree $tree $PARENTS) &&
 	rlogm=$(sed -e 1q "$GIT_DIR"/COMMIT_MSG) &&
-	git-update-ref -m "$rloga: $rlogm" HEAD $commit "$current" &&
+	git-update-ref -m "$GIT_REFLOG_ACTION: $rlogm" HEAD $commit "$current" &&
 	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" &&
 	if test -f "$NEXT_INDEX"
 	then

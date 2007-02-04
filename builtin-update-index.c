@@ -501,6 +501,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 
 	for (i = 1 ; i < argc; i++) {
 		const char *path = argv[i];
+		const char *p;
 
 		if (allow_options && *path == '-') {
 			if (!strcmp(path, "--")) {
@@ -616,9 +617,12 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				usage(update_index_usage);
 			die("unknown option %s", path);
 		}
-		update_one(path, prefix, prefix_length);
+		p = prefix_path(prefix, prefix_length, path);
+		update_one(p, NULL, 0);
 		if (set_executable_bit)
-			chmod_path(set_executable_bit, path);
+			chmod_path(set_executable_bit, p);
+		if (p < path || p > path + strlen(path))
+			free((char*)p);
 	}
 	if (read_from_stdin) {
 		struct strbuf buf;

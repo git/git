@@ -152,7 +152,7 @@ bisect_next() {
 	nr=$(eval "git-rev-list $rev $good -- $(cat $GIT_DIR/BISECT_NAMES)" | wc -l) || exit
 	echo "Bisecting: $nr revisions left to test after this"
 	echo "$rev" > "$GIT_DIR/refs/heads/new-bisect"
-	git checkout new-bisect || exit
+	git checkout -q new-bisect || exit
 	mv "$GIT_DIR/refs/heads/new-bisect" "$GIT_DIR/refs/heads/bisect" &&
 	GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD refs/heads/bisect
 	git-show-branch "$rev"

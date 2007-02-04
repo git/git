@@ -47,7 +47,8 @@ enum cmit_fmt get_commit_format(const char *arg)
 	if (*arg == '=')
 		arg++;
 	for (i = 0; i < ARRAY_SIZE(cmt_fmts); i++) {
-		if (!strncmp(arg, cmt_fmts[i].n, cmt_fmts[i].cmp_len))
+		if (!strncmp(arg, cmt_fmts[i].n, cmt_fmts[i].cmp_len) &&
+		    !strncmp(arg, cmt_fmts[i].n, strlen(arg)))
 			return cmt_fmts[i].v;
 	}
 

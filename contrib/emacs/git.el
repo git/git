@@ -222,7 +222,7 @@ and returns the process output as a string."
   "Return the name to use as GIT_COMMITTER_NAME."
   ; copied from log-edit
   (or git-committer-name
-      (git-repo-config "user.name")
+      (git-config "user.name")
       (and (boundp 'add-log-full-name) add-log-full-name)
       (and (fboundp 'user-full-name) (user-full-name))
       (and (boundp 'user-full-name) user-full-name)))
@@ -231,7 +231,7 @@ and returns the process output as a string."
   "Return the email address to use as GIT_COMMITTER_EMAIL."
   ; copied from log-edit
   (or git-committer-email
-      (git-repo-config "user.email")
+      (git-config "user.email")
       (and (boundp 'add-log-mailing-address) add-log-mailing-address)
       (and (fboundp 'user-mail-address) (user-mail-address))
       (and (boundp 'user-mail-address) user-mail-address)))
@@ -298,9 +298,9 @@ and returns the process output as a string."
   (git-get-string-sha1
    (git-call-process-env-string nil "rev-parse" rev)))
 
-(defun git-repo-config (key)
+(defun git-config (key)
   "Retrieve the value associated to KEY in the git repository config file."
-  (let ((str (git-call-process-env-string nil "repo-config" key)))
+  (let ((str (git-call-process-env-string nil "config" key)))
     (and str (car (split-string str "\n")))))
 
 (defun git-symbolic-ref (ref)

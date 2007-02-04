@@ -37,7 +37,7 @@ do
 		;;
 	--upl=*|--uplo=*|--uploa=*|--upload=*|\
 	--upload-=*|--upload-p=*|--upload-pa=*|--upload-pac=*|--upload-pack=*)
-		exec=--upload-pack=$(expr "$1" : '-[^=]*=\(.*\)')
+		exec=--upload-pack=$(expr "z$1" : 'z-[^=]*=\(.*\)')
 		shift
 		;;
 	-f|--f|--fo|--for|--forc|--force)
@@ -321,7 +321,7 @@ fetch_main () {
 	      curl_extra_args="-k"
 	  fi
 	  if [ -n "$GIT_CURL_FTP_NO_EPSV" -o \
-		"`git-repo-config --bool http.noEPSV`" = true ]; then
+		"`git-config --bool http.noEPSV`" = true ]; then
 	      noepsv_opt="--disable-epsv"
 	  fi
 

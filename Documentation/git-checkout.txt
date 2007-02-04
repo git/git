@@ -8,8 +8,8 @@ git-checkout - Checkout and switch to a branch
 SYNOPSIS
 --------
 [verse]
-'git-checkout' [-f] [-b <new_branch> [-l]] [-m] [<branch>]
-'git-checkout' [<branch>] <paths>...
+'git-checkout' [-q] [-f] [-b <new_branch> [-l]] [-m] [<branch>]
+'git-checkout' [<tree-ish>] <paths>...
 
 DESCRIPTION
 -----------
@@ -22,15 +22,20 @@ be created.
 
 When <paths> are given, this command does *not* switch
 branches.  It updates the named paths in the working tree from
-the index file (i.e. it runs `git-checkout-index -f -u`).  In
+the index file (i.e. it runs `git-checkout-index -f -u`), or a
+named commit.  In
 this case, `-f` and `-b` options are meaningless and giving
-either of them results in an error.  <branch> argument can be
-used to specify a specific tree-ish to update the index for the
-given paths before updating the working tree.
+either of them results in an error.  <tree-ish> argument can be
+used to specify a specific tree-ish (i.e. commit, tag or tree)
+to update the index for the given paths before updating the
+working tree.
 
 
 OPTIONS
 -------
+-q::
+	Quiet, supress feedback messages.
+
 -f::
 	Force a re-read of everything.
 

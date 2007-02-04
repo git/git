@@ -117,7 +117,7 @@ static void check_unreachable_object(struct object *obj)
 
 	/*
 	 * "!used" means that nothing at all points to it, including
-	 * other unreacahble objects. In other words, it's the "tip"
+	 * other unreachable objects. In other words, it's the "tip"
 	 * of some set of unreachable objects, usually a commit that
 	 * got dropped.
 	 *
@@ -576,12 +576,11 @@ static int fsck_cache_tree(struct cache_tree *it)
 	return err;
 }
 
-int main(int argc, char **argv)
+int cmd_fsck(int argc, char **argv, const char *prefix)
 {
 	int i, heads;
 
 	track_object_refs = 1;
-	setup_git_directory();
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -611,7 +610,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 		if (*arg == '-')
-			usage("git-fsck-objects [--tags] [--root] [[--unreachable] [--cache] [--full] [--strict] <head-sha1>*]");
+			usage("git-fsck [--tags] [--root] [[--unreachable] [--cache] [--full] [--strict] <head-sha1>*]");
 	}
 
 	fsck_head_link();

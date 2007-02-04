@@ -834,7 +834,7 @@ sub file_type_long {
 
 ## ----------------------------------------------------------------------
 ## functions returning short HTML fragments, or transforming HTML fragments
-## which don't beling to other sections
+## which don't belong to other sections
 
 # format line of commit message.
 sub format_log_line_html {
@@ -986,7 +986,7 @@ sub git_get_project_config {
 	$key =~ s/^gitweb\.//;
 	return if ($key =~ m/\W/);
 
-	my @x = (git_cmd(), 'repo-config');
+	my @x = (git_cmd(), 'config');
 	if (defined $type) { push @x, $type; }
 	push @x, "--get";
 	push @x, "gitweb.$key";

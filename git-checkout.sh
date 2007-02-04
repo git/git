@@ -1,6 +1,6 @@
 #!/bin/sh
 
-USAGE='[-f] [-b <new_branch>] [-m] [<branch>] [<paths>...]'
+USAGE='[-q] [-f] [-b <new_branch>] [-m] [<branch>] [<paths>...]'
 SUBDIRECTORY_OK=Sometimes
 . git-sh-setup
 require_work_tree
@@ -15,6 +15,7 @@ branch=
 newbranch=
 newbranch_log=
 merge=
+quiet=
 LF='
 '
 while [ "$#" != "0" ]; do
@@ -39,6 +40,9 @@ while [ "$#" != "0" ]; do
 		;;
 	-m)
 		merge=1
+		;;
+	"-q")
+		quiet=1
 		;;
 	--)
 		break
@@ -153,11 +157,11 @@ detach_warn=
 if test -z "$branch$newbranch" && test "$new" != "$old"
 then
 	detached="$new"
-	if test -n "$oldbranch"
+	if test -n "$oldbranch" && test -z "$quiet"
 	then
-		detach_warn="warning: you are not on ANY branch anymore.
-If you meant to create a new branch from this checkout, you may still do
-so (now or later) by using -b with the checkout command again.  Example:
+		detach_warn="Note: moving to \"$new_name\" which isn't a local branch
+If you want to create a new branch from this checkout, you may do so
+(now or later) by using -b with the checkout command again. Example:
   git checkout -b <new_branch_name>"
 	fi
 elif test -z "$oldbranch" && test -n "$branch"
@@ -180,8 +184,11 @@ fi
 
 if [ "X$old" = X ]
 then
-	echo >&2 "warning: You appear to be on a branch yet to be born."
-	echo >&2 "warning: Forcing checkout of $new_name."
+	if test -z "$quiet"
+	then
+		echo >&2 "warning: You appear to be on a branch yet to be born."
+		echo >&2 "warning: Forcing checkout of $new_name."
+	fi
 	force=1
 fi
 
@@ -226,9 +233,9 @@ else
 	exit 0
     )
     saved_err=$?
-    if test "$saved_err" = 0
+    if test "$saved_err" = 0 && test -z "$quiet"
     then
-	test "$new" = "$old" || git diff-index --name-status "$new"
+	git diff-index --name-status "$new"
     fi
     (exit $saved_err)
 fi
@@ -251,6 +258,10 @@ if [ "$?" -eq 0 ]; then
 	if test -n "$branch"
 	then
 		GIT_DIR="$GIT_DIR" git-symbolic-ref -m "checkout: moving to $branch" HEAD "refs/heads/$branch"
+		if test -z "$quiet"
+		then
+			echo >&2 "Switched to${newbranch:+ a new} branch \"$branch\""
+		fi
 	elif test -n "$detached"
 	then
 		# NEEDSWORK: we would want a command to detach the HEAD

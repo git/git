@@ -2,7 +2,7 @@
 #include "cache.h"
 
 static const char git_config_set_usage[] =
-"git-repo-config [ --global ] [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --list";
+"git-config [ --global ] [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --list";
 
 static char *key;
 static regex_t *key_regexp;
@@ -126,7 +126,7 @@ free_strings:
 	return ret;
 }
 
-int cmd_repo_config(int argc, const char **argv, const char *prefix)
+int cmd_config(int argc, const char **argv, const char *prefix)
 {
 	int nongit = 0;
 	setup_git_directory_gently(&nongit);

@@ -54,7 +54,7 @@ frequently used options.
 
 	Limit commits to the ones touching files in the given paths. Note, to
 	avoid ambiguity wrt. revision names use "--" to separate the paths
-	from any preceeding options.
+	from any preceding options.
 
 Examples
 --------

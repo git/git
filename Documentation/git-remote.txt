@@ -12,23 +12,43 @@ SYNOPSIS
 'git-remote'
 'git-remote' add <name> <url>
 'git-remote' show <name>
+'git-remote' prune <name>
 
 DESCRIPTION
 -----------
 
 Manage the set of repositories ("remotes") whose branches you track.
 
-With no arguments, shows a list of existing remotes.
 
-In the second form, adds a remote named <name> for the repository at
+COMMANDS
+--------
+
+With no arguments, shows a list of existing remotes.  Several
+subcommands are available to perform operations on the remotes.
+
+'add'::
+
+Adds a remote named <name> for the repository at
 <url>.  The command `git fetch <name>` can then be used to create and
 update remote-tracking branches <name>/<branch>.
 
-In the third form, gives some information about the remote <name>.
+'show'::
+
+Gives some information about the remote <name>.
+
+'prune'::
+
+Deletes all stale tracking branches under <name>.
+These stale branches have already been removed from the remote repository
+referenced by <name>, but are still locally available in "remotes/<name>".
+
+
+DISCUSSION
+----------
 
 The remote configuration is achieved using the `remote.origin.url` and
 `remote.origin.fetch` configuration variables.  (See
-gitlink:git-repo-config[1]).
+gitlink:git-config[1]).
 
 Examples
 --------
@@ -58,7 +78,7 @@ See Also
 --------
 gitlink:git-fetch[1]
 gitlink:git-branch[1]
-gitlink:git-repo-config[1]
+gitlink:git-config[1]
 
 Author
 ------

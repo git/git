@@ -70,7 +70,7 @@ name='test svn:keywords ignoring'
 test_expect_success "$name" \
 	'git checkout -b mybranch remotes/git-svn &&
 	echo Hi again >> kw.c &&
-	git commit -a -m "test keywoards ignoring" &&
+	git commit -a -m "test keywords ignoring" &&
 	git-svn set-tree remotes/git-svn..mybranch &&
 	git pull . remotes/git-svn'
 

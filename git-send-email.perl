@@ -408,7 +408,7 @@ sub unquote_rfc2047 {
 		s/_/ /g;
 		s/=([0-9A-F]{2})/chr(hex($1))/eg;
 	}
-	return "$_ - unquoted";
+	return "$_";
 }
 
 sub send_message
