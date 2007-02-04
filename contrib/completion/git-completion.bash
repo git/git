@@ -61,6 +61,20 @@ __git_ps1 ()
 	fi
 }
 
+__gitcomp ()
+{
+	local all c s=$'\n' IFS=' '$'\t'$'\n'
+	for c in $1; do
+		case "$c" in
+		--*=*) all="$all$c$s" ;;
+		*)     all="$all$c $s" ;;
+		esac
+	done
+	IFS=$s
+	COMPREPLY=($(compgen -W "$all" -- "${COMP_WORDS[COMP_CWORD]}"))
+	return
+}
+
 __git_heads ()
 {
 	local cmd i is_hash=y dir="$(__gitdir "$1")"
@@ -787,12 +801,12 @@ _git ()
 	done
 
 	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
-		COMPREPLY=($(compgen -W "
-			--git-dir= --version --exec-path
-			$(__git_commands)
-			$(__git_aliases)
-			" -- "${COMP_WORDS[COMP_CWORD]}"))
-		return;
+		case "${COMP_WORDS[COMP_CWORD]}" in
+		--*=*) COMPREPLY=() ;;
+		--*)   __gitcomp "--git-dir= --bare --version --exec-path" ;;
+		*)     __gitcomp "$(__git_commands) $(__git_aliases)" ;;
+		esac
+		return
 	fi
 
 	local expansion=$(__git_aliased_command "$command")
