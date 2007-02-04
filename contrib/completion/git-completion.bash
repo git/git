@@ -235,6 +235,7 @@ __git_commands ()
 	for i in $(git help -a|egrep '^ ')
 	do
 		case $i in
+		add--interactive) : plumbing;;
 		cat-file)         : plumbing;;
 		check-ref-format) : plumbing;;
 		commit-tree)      : plumbing;;
@@ -352,6 +353,19 @@ _git_apply ()
 			--cached --index-info --reverse --reject --unidiff-zero
 			--apply --no-add --exclude=
 			--whitespace= --inaccurate-eof --verbose
+			" -- "$cur"))
+		return
+	esac
+	COMPREPLY=()
+}
+
+_git_add ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		COMPREPLY=($(compgen -W "
+			--interactive
 			" -- "$cur"))
 		return
 	esac
@@ -786,6 +800,7 @@ _git ()
 
 	case "$command" in
 	am)          _git_am ;;
+	add)         _git_add ;;
 	apply)       _git_apply ;;
 	branch)      _git_branch ;;
 	checkout)    _git_checkout ;;
@@ -852,6 +867,7 @@ complete -o default -o nospace -F _git_log git-whatchanged
 # included the '.exe' suffix.
 #
 if [ Cygwin = "$(uname -o 2>/dev/null)" ]; then
+complete -o default            -F _git_add git-add.exe
 complete -o default            -F _git_apply git-apply.exe
 complete -o default -o nospace -F _git git.exe
 complete -o default            -F _git_branch git-branch.exe
