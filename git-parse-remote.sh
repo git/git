@@ -174,12 +174,8 @@ canon_refs_list_for_fetch () {
 		else
 			for merge_branch in $merge_branches
 			do
-			    if	test "$remote" = "$merge_branch" ||
-				test "$local" = "$merge_branch"
-			    then
-				    dot_prefix=
-				    break
-			    fi
+			    [ "$remote" = "$merge_branch" ] &&
+			    dot_prefix= && break
 			done
 		fi
 		case "$remote" in

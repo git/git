@@ -95,6 +95,15 @@ $ENV{'TMPDIR'} = $opt_t if $opt_t; # $ENV{TMPDIR} will affect tempdir() calls:
 my $tmp = tempdir('git-archimport-XXXXXX', TMPDIR => 1, CLEANUP => 1);
 $opt_v && print "+ Using $tmp as temporary directory\n";
 
+unless (-d $git_dir) { # initial import needs empty directory
+    opendir DIR, '.' or die "Unable to open current directory: $!\n";
+    while (my $entry = readdir DIR) {
+        $entry =~ /^\.\.?$/ or
+            die "Initial import needs an empty current working directory.\n"
+    }
+    closedir DIR
+}
+
 my %reachable = ();             # Arch repositories we can access
 my %unreachable = ();           # Arch repositories we can't access :<
 my @psets  = ();                # the collection

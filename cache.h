@@ -321,6 +321,7 @@ unsigned long approxidate(const char *);
 
 extern const char *git_author_info(int);
 extern const char *git_committer_info(int);
+extern const char *fmt_ident(const char *name, const char *email, const char *date_str, int);
 
 struct checkout {
 	const char *base_dir;
