@@ -415,6 +415,11 @@ _git_checkout ()
 	__gitcomp "$(__git_refs)"
 }
 
+_git_cherry ()
+{
+	__gitcomp "$(__git_refs)"
+}
+
 _git_cherry_pick ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -867,6 +872,7 @@ _git ()
 	apply)       _git_apply ;;
 	branch)      _git_branch ;;
 	checkout)    _git_checkout ;;
+	cherry)      _git_cherry ;;
 	cherry-pick) _git_cherry_pick ;;
 	commit)      _git_commit ;;
 	config)      _git_config ;;
@@ -909,6 +915,7 @@ complete -o default -o nospace -F _git_am git-am
 complete -o default -o nospace -F _git_apply git-apply
 complete -o default -o nospace -F _git_branch git-branch
 complete -o default -o nospace -F _git_checkout git-checkout
+complete -o default -o nospace -F _git_cherry git-cherry
 complete -o default -o nospace -F _git_cherry_pick git-cherry-pick
 complete -o default -o nospace -F _git_commit git-commit
 complete -o default -o nospace -F _git_diff git-diff
@@ -939,6 +946,7 @@ complete -o default -o nospace -F _git_add git-add.exe
 complete -o default -o nospace -F _git_apply git-apply.exe
 complete -o default -o nospace -F _git git.exe
 complete -o default -o nospace -F _git_branch git-branch.exe
+complete -o default -o nospace -F _git_cherry git-cherry.exe
 complete -o default -o nospace -F _git_diff git-diff.exe
 complete -o default -o nospace -F _git_diff_tree git-diff-tree.exe
 complete -o default -o nospace -F _git_format_patch git-format-patch.exe
