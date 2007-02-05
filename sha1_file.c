@@ -1505,10 +1505,67 @@ static void *read_packed_sha1(const unsigned char *sha1, char *type, unsigned lo
 		return unpack_entry(e.p, e.offset, type, size);
 }
 
+/*
+ * This is meant to hold a *small* number of objects that you would
+ * want read_sha1_file() to be able to return, but yet you do not want
+ * to write them into the object store (e.g. a browse-only
+ * application).
+ */
+static struct cached_object {
+	unsigned char sha1[20];
+	const char *type;
+	void *buf;
+	unsigned long size;
+} *cached_objects;
+static int cached_object_nr, cached_object_alloc;
+
+static struct cached_object *find_cached_object(const unsigned char *sha1)
+{
+	int i;
+	struct cached_object *co = cached_objects;
+
+	for (i = 0; i < cached_object_nr; i++, co++) {
+		if (!hashcmp(co->sha1, sha1))
+			return co;
+	}
+	return NULL;
+}
+
+int pretend_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *sha1)
+{
+	struct cached_object *co;
+
+	hash_sha1_file(buf, len, type, sha1);
+	if (has_sha1_file(sha1) || find_cached_object(sha1))
+		return 0;
+	if (cached_object_alloc <= cached_object_nr) {
+		cached_object_alloc = alloc_nr(cached_object_alloc);
+		cached_objects = xrealloc(cached_objects,
+					  sizeof(*cached_objects) *
+					  cached_object_alloc);
+	}
+	co = &cached_objects[cached_object_nr++];
+	co->size = len;
+	co->type = strdup(type);
+	hashcpy(co->sha1, sha1);
+	return 0;
+}
+
 void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
 {
 	unsigned long mapsize;
 	void *map, *buf;
+	struct cached_object *co;
+
+	co = find_cached_object(sha1);
+	if (co) {
+		buf = xmalloc(co->size + 1);
+		memcpy(buf, co->buf, co->size);
+		((char*)buf)[co->size] = 0;
+		strcpy(type, co->type);
+		*size = co->size;
+		return buf;
+	}
 
 	buf = read_packed_sha1(sha1, type, size);
 	if (buf)
