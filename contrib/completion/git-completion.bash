@@ -407,6 +407,35 @@ _git_add ()
 	COMPREPLY=()
 }
 
+_git_bisect ()
+{
+	local i c=1 command
+	while [ $c -lt $COMP_CWORD ]; do
+		i="${COMP_WORDS[c]}"
+		case "$i" in
+		start|bad|good|reset|visualize|replay|log)
+			command="$i"
+			break
+			;;
+		esac
+		c=$((++c))
+	done
+
+	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
+		__gitcomp "start bad good reset visualize replay log"
+		return
+	fi
+
+	case "$command" in
+	bad|good|reset)
+		__gitcomp "$(__git_refs)"
+		;;
+	*)
+		COMPREPLY=()
+		;;
+	esac
+}
+
 _git_branch ()
 {
 	__gitcomp "$(__git_refs)"
@@ -884,6 +913,7 @@ _git ()
 	am)          _git_am ;;
 	add)         _git_add ;;
 	apply)       _git_apply ;;
+	bisect)      _git_bisect ;;
 	branch)      _git_branch ;;
 	checkout)    _git_checkout ;;
 	cherry)      _git_cherry ;;
@@ -928,6 +958,7 @@ complete -o default -o nospace -F _git git
 complete -o default -o nospace -F _gitk gitk
 complete -o default -o nospace -F _git_am git-am
 complete -o default -o nospace -F _git_apply git-apply
+complete -o default -o nospace -F _git_bisect git-bisect
 complete -o default -o nospace -F _git_branch git-branch
 complete -o default -o nospace -F _git_checkout git-checkout
 complete -o default -o nospace -F _git_cherry git-cherry
