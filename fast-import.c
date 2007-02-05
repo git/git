@@ -7,6 +7,7 @@ Format of STDIN stream:
         | new_commit
         | new_tag
         | reset_branch
+        | checkpoint
         ;
 
   new_blob ::= 'blob' lf
