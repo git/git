@@ -508,6 +508,18 @@ _git_format_patch ()
 	__git_complete_revlist
 }
 
+_git_gc ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "--prune"
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
 _git_ls_remote ()
 {
 	__gitcomp "$(__git_remotes)"
@@ -881,6 +893,7 @@ _git ()
 	diff-tree)   _git_diff_tree ;;
 	fetch)       _git_fetch ;;
 	format-patch) _git_format_patch ;;
+	gc)          _git_gc ;;
 	log)         _git_log ;;
 	ls-remote)   _git_ls_remote ;;
 	ls-tree)     _git_ls_tree ;;
@@ -923,6 +936,7 @@ complete -o default -o nospace -F _git_diff git-diff
 complete -o default -o nospace -F _git_diff_tree git-diff-tree
 complete -o default -o nospace -F _git_fetch git-fetch
 complete -o default -o nospace -F _git_format_patch git-format-patch
+complete -o default -o nospace -F _git_gc git-gc
 complete -o default -o nospace -F _git_log git-log
 complete -o default -o nospace -F _git_ls_remote git-ls-remote
 complete -o default -o nospace -F _git_ls_tree git-ls-tree
