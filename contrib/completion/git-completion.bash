@@ -719,7 +719,7 @@ _git_config ()
 		__gitcomp "
 			--global --list --replace-all
 			--get --get-all --get-regexp
-			--unset --unset-all
+			--add --unset --unset-all
 			"
 		return
 		;;
