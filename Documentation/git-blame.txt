@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git-blame' [-c] [-l] [-t] [-f] [-n] [-p] [--incremental] [-L n,m] [-S <revs-file>]
-            [-M] [-C] [-C] [--since=<date>] [<rev>] [--] <file>
+            [-M] [-C] [-C] [--since=<date>] [<rev> | --contents <file>] [--] <file>
 
 DESCRIPTION
 -----------
@@ -66,6 +66,13 @@ OPTIONS
 --incremental::
 	Show the result incrementally in a format designed for
 	machine consumption.
+
+--contents <file>::
+	When <rev> is not specified, the command annotates the
+	changes starting backwards from the working tree copy.
+	This flag makes the command pretend as if the working
+	tree copy has the contents of he named file (specify
+	`-` to make the command read from the standard input).
 
 -M::
 	Detect moving lines in the file as well.  When a commit
