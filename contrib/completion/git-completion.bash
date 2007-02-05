@@ -297,6 +297,7 @@ __git_commands ()
 		reflog)           : plumbing;;
 		repo-config)      : plumbing;;
 		rerere)           : plumbing;;
+		resolve)          : dead dont use;;
 		rev-list)         : plumbing;;
 		rev-parse)        : plumbing;;
 		runstatus)        : plumbing;;
