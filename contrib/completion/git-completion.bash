@@ -675,7 +675,7 @@ _git_push ()
 _git_rebase ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	if [ -d .dotest ]; then
+	if [ -d .dotest ] || [ -d .git/.dotest-merge ]; then
 		__gitcomp "--continue --skip --abort"
 		return
 	fi
