@@ -3,7 +3,7 @@
 
 struct ref_lock {
 	char *ref_name;
-	char *log_file;
+	char *orig_ref_name;
 	struct lock_file *lk;
 	unsigned char old_sha1[20];
 	int lock_fd;
@@ -47,6 +47,12 @@ extern int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned
 /* iterate over reflog entries */
 typedef int each_reflog_ent_fn(unsigned char *osha1, unsigned char *nsha1, const char *, unsigned long, int, const char *, void *);
 int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data);
+
+/*
+ * Calls the specified function for each reflog file until it returns nonzero,
+ * and returns the value
+ */
+extern int for_each_reflog(each_ref_fn, void *);
 
 /** Returns 0 if target has the right format for a ref. **/
 extern int check_ref_format(const char *target);

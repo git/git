@@ -3,7 +3,7 @@
 #include "refs.h"
 
 static const char git_symbolic_ref_usage[] =
-"git-symbolic-ref [-q] name [ref]";
+"git-symbolic-ref [-q] [-m <reason>] name [ref]";
 
 static void check_symref(const char *HEAD, int quiet)
 {
@@ -25,6 +25,7 @@ static void check_symref(const char *HEAD, int quiet)
 int cmd_symbolic_ref(int argc, const char **argv, const char *prefix)
 {
 	int quiet = 0;
+	const char *msg = NULL;
 
 	git_config(git_default_config);
 
@@ -34,6 +35,17 @@ int cmd_symbolic_ref(int argc, const char **argv, const char *prefix)
 			break;
 		else if (!strcmp("-q", arg))
 			quiet = 1;
+		else if (!strcmp("-m", arg)) {
+			argc--;
+			argv++;
+			if (argc <= 1)
+				break;
+			msg = argv[1];
+			if (!*msg)
+				die("Refusing to perform update with empty message");
+			if (strchr(msg, '\n'))
+				die("Refusing to perform update with \\n in message");
+		}
 		else if (!strcmp("--", arg)) {
 			argc--;
 			argv++;
@@ -50,7 +62,7 @@ int cmd_symbolic_ref(int argc, const char **argv, const char *prefix)
 		check_symref(argv[1], quiet);
 		break;
 	case 3:
-		create_symref(argv[1], argv[2]);
+		create_symref(argv[1], argv[2], msg);
 		break;
 	default:
 		usage(git_symbolic_ref_usage);

@@ -387,7 +387,8 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	if (rename_ref(oldref, newref, logmsg))
 		die("Branch rename failed");
 
-	if (!strcmp(oldname, head) && create_symref("HEAD", newref))
+	/* no need to pass logmsg here as HEAD didn't really move */
+	if (!strcmp(oldname, head) && create_symref("HEAD", newref, NULL))
 		die("Branch renamed to %s, but HEAD is not updated!", newname);
 }
 
