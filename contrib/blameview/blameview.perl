@@ -3,7 +3,17 @@
 use Gtk2 -init;
 use Gtk2::SimpleList;
 
-my $fn = shift or die "require filename to blame";
+my $hash;
+my $fn;
+if ( @ARGV == 1 ) {
+	$hash = "HEAD";
+	$fn = shift;
+} elsif ( @ARGV == 2 ) {
+	$hash = shift;
+	$fn = shift;
+} else {
+	die "Usage blameview [<rev>] <filename>";
+}
 
 Gtk2::Rc->parse_string(<<'EOS');
 style "treeview_style"
@@ -27,17 +37,24 @@ $scrolled_window->add($fileview);
 $fileview->get_column(0)->set_spacing(0);
 $fileview->set_size_request(1024, 768);
 $fileview->set_rules_hint(1);
+$fileview->signal_connect (row_activated => sub {
+		my ($sl, $path, $column) = @_;
+		my $row_ref = $sl->get_row_data_from_path ($path);
+		system("blameview @$row_ref[0] $fn");
+		# $row_ref is now an array ref to the double-clicked row's data.
+		});
 
 my $fh;
-open($fh, '-|', "git cat-file blob HEAD:$fn")
+open($fh, '-|', "git cat-file blob $hash:$fn")
   or die "unable to open $fn: $!";
+
 while(<$fh>) {
   chomp;
   $fileview->{data}->[$.] = ['HEAD', '?', "$fn:$.", $_];
 }
 
 my $blame;
-open($blame, '-|', qw(git blame --incremental --), $fn)
+open($blame, '-|', qw(git blame --incremental --), $fn, $hash)
     or die "cannot start git-blame $fn";
 
 Glib::IO->add_watch(fileno($blame), 'in', \&read_blame_line);

@@ -7,6 +7,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "revision.h"
+#include "cache-tree.h"
 
 /*
  * diff-files
@@ -271,7 +272,7 @@ static int diff_cache(struct rev_info *revs,
 				break;
 			}
 			/* Show difference between old and new */
-			show_modified(revs,ac[1], ce, 1,
+			show_modified(revs, ac[1], ce, 1,
 				      cached, match_missing);
 			break;
 		case 1:
@@ -371,4 +372,45 @@ int run_diff_index(struct rev_info *revs, int cached)
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 	return ret;
+}
+
+int do_diff_cache(const unsigned char *tree_sha1, struct diff_options *opt)
+{
+	struct tree *tree;
+	struct rev_info revs;
+	int i;
+	struct cache_entry **dst;
+	struct cache_entry *last = NULL;
+
+	/*
+	 * This is used by git-blame to run diff-cache internally;
+	 * it potentially needs to repeatedly run this, so we will
+	 * start by removing the higher order entries the last round
+	 * left behind.
+	 */
+	dst = active_cache;
+	for (i = 0; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+		if (ce_stage(ce)) {
+			if (last && !strcmp(ce->name, last->name))
+				continue;
+			cache_tree_invalidate_path(active_cache_tree,
+						   ce->name);
+			last = ce;
+			ce->ce_mode = 0;
+			ce->ce_flags &= ~htons(CE_STAGEMASK);
+		}
+		*dst++ = ce;
+	}
+	active_nr = dst - active_cache;
+
+	init_revisions(&revs, NULL);
+	revs.prune_data = opt->paths;
+	tree = parse_tree_indirect(tree_sha1);
+	if (!tree)
+		die("bad tree object %s", sha1_to_hex(tree_sha1));
+	if (read_tree(tree, 1, opt->paths))
+		return error("unable to read tree %s", sha1_to_hex(tree_sha1));
+	return diff_cache(&revs, active_cache, active_nr, revs.prune_data,
+			  1, 0);
 }

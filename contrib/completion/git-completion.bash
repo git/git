@@ -269,6 +269,7 @@ __git_commands ()
 		cvsimport)        : import;;
 		cvsserver)        : daemon;;
 		daemon)           : daemon;;
+		diff-stages)      : nobody uses it;;
 		fsck-objects)     : plumbing;;
 		fetch-pack)       : plumbing;;
 		fmt-merge-msg)    : plumbing;;
@@ -296,6 +297,7 @@ __git_commands ()
 		reflog)           : plumbing;;
 		repo-config)      : plumbing;;
 		rerere)           : plumbing;;
+		resolve)          : dead dont use;;
 		rev-list)         : plumbing;;
 		rev-parse)        : plumbing;;
 		runstatus)        : plumbing;;
@@ -405,12 +407,46 @@ _git_add ()
 	COMPREPLY=()
 }
 
+_git_bisect ()
+{
+	local i c=1 command
+	while [ $c -lt $COMP_CWORD ]; do
+		i="${COMP_WORDS[c]}"
+		case "$i" in
+		start|bad|good|reset|visualize|replay|log)
+			command="$i"
+			break
+			;;
+		esac
+		c=$((++c))
+	done
+
+	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
+		__gitcomp "start bad good reset visualize replay log"
+		return
+	fi
+
+	case "$command" in
+	bad|good|reset)
+		__gitcomp "$(__git_refs)"
+		;;
+	*)
+		COMPREPLY=()
+		;;
+	esac
+}
+
 _git_branch ()
 {
 	__gitcomp "$(__git_refs)"
 }
 
 _git_checkout ()
+{
+	__gitcomp "$(__git_refs)"
+}
+
+_git_cherry ()
 {
 	__gitcomp "$(__git_refs)"
 }
@@ -500,6 +536,18 @@ _git_format_patch ()
 		;;
 	esac
 	__git_complete_revlist
+}
+
+_git_gc ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "--prune"
+		return
+		;;
+	esac
+	COMPREPLY=()
 }
 
 _git_ls_remote ()
@@ -700,7 +748,7 @@ _git_config ()
 		__gitcomp "
 			--global --list --replace-all
 			--get --get-all --get-regexp
-			--unset --unset-all
+			--add --unset --unset-all
 			"
 		return
 		;;
@@ -865,8 +913,10 @@ _git ()
 	am)          _git_am ;;
 	add)         _git_add ;;
 	apply)       _git_apply ;;
+	bisect)      _git_bisect ;;
 	branch)      _git_branch ;;
 	checkout)    _git_checkout ;;
+	cherry)      _git_cherry ;;
 	cherry-pick) _git_cherry_pick ;;
 	commit)      _git_commit ;;
 	config)      _git_config ;;
@@ -874,6 +924,7 @@ _git ()
 	diff-tree)   _git_diff_tree ;;
 	fetch)       _git_fetch ;;
 	format-patch) _git_format_patch ;;
+	gc)          _git_gc ;;
 	log)         _git_log ;;
 	ls-remote)   _git_ls_remote ;;
 	ls-tree)     _git_ls_tree ;;
@@ -907,14 +958,17 @@ complete -o default -o nospace -F _git git
 complete -o default -o nospace -F _gitk gitk
 complete -o default -o nospace -F _git_am git-am
 complete -o default -o nospace -F _git_apply git-apply
+complete -o default -o nospace -F _git_bisect git-bisect
 complete -o default -o nospace -F _git_branch git-branch
 complete -o default -o nospace -F _git_checkout git-checkout
+complete -o default -o nospace -F _git_cherry git-cherry
 complete -o default -o nospace -F _git_cherry_pick git-cherry-pick
 complete -o default -o nospace -F _git_commit git-commit
 complete -o default -o nospace -F _git_diff git-diff
 complete -o default -o nospace -F _git_diff_tree git-diff-tree
 complete -o default -o nospace -F _git_fetch git-fetch
 complete -o default -o nospace -F _git_format_patch git-format-patch
+complete -o default -o nospace -F _git_gc git-gc
 complete -o default -o nospace -F _git_log git-log
 complete -o default -o nospace -F _git_ls_remote git-ls-remote
 complete -o default -o nospace -F _git_ls_tree git-ls-tree
@@ -939,6 +993,7 @@ complete -o default -o nospace -F _git_add git-add.exe
 complete -o default -o nospace -F _git_apply git-apply.exe
 complete -o default -o nospace -F _git git.exe
 complete -o default -o nospace -F _git_branch git-branch.exe
+complete -o default -o nospace -F _git_cherry git-cherry.exe
 complete -o default -o nospace -F _git_diff git-diff.exe
 complete -o default -o nospace -F _git_diff_tree git-diff-tree.exe
 complete -o default -o nospace -F _git_format_patch git-format-patch.exe

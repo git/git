@@ -347,6 +347,11 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				printf("%s/.git\n", cwd);
 				continue;
 			}
+			if (!strcmp(arg, "--is-inside-git-dir")) {
+				printf("%s\n", is_inside_git_dir() ? "true"
+						: "false");
+				continue;
+			}
 			if (!strncmp(arg, "--since=", 8)) {
 				show_datestring("--max-age=", arg+8);
 				continue;

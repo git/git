@@ -1690,7 +1690,7 @@ sub git_header_html {
 
 	my $title = "$site_name";
 	if (defined $project) {
-		$title .= " - $project";
+		$title .= " - " . to_utf8($project);
 		if (defined $action) {
 			$title .= "/$action";
 			if (defined $file_name) {
@@ -1963,7 +1963,7 @@ sub git_print_page_path {
 
 	print "<div class=\"page_path\">";
 	print $cgi->a({-href => href(action=>"tree", hash_base=>$hb),
-	              -title => 'tree root'}, "[$project]");
+	              -title => 'tree root'}, to_utf8("[$project]");
 	print " / ";
 	if (defined $name) {
 		my @dirname = split '/', $name;
@@ -3610,7 +3610,7 @@ sub git_snapshot {
 		$hash = git_get_head_hash($project);
 	}
 
-	my $filename = basename($project) . "-$hash.tar.$suffix";
+	my $filename = to_utf8(basename($project)) . "-$hash.tar.$suffix";
 
 	print $cgi->header(
 		-type => "application/$ctype",

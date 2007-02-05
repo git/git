@@ -114,6 +114,27 @@ would result in:
 
 This is useful when topicB does not depend on topicA.
 
+A range of commits could also be removed with rebase.  If we have
+the following situation:
+
+------------
+    E---F---G---H---I---J  topicA
+------------
+
+then the command
+
+    git-rebase --onto topicA~5 topicA~2 topicA
+
+would result in the removal of commits F and G:
+
+------------
+    E---H'---I'---J'  topicA
+------------
+
+This is useful if F and G were flawed in some way, or should not be
+part of topicA.  Note that the argument to --onto and the <upstream>
+parameter can be any valid commit-ish.
+
 In case of conflict, git-rebase will stop at the first problematic commit
 and leave conflict markers in the tree.  You can use git diff to locate
 the markers (<<<<<<) and make edits to resolve the conflict.  For each
@@ -141,10 +162,12 @@ OPTIONS
 <newbase>::
 	Starting point at which to create the new commits. If the
 	--onto option is not specified, the starting point is
-	<upstream>.
+	<upstream>.  May be any valid commit, and not just an
+	existing branch name.
 
 <upstream>::
-	Upstream branch to compare against.
+	Upstream branch to compare against.  May be any valid commit,
+	not just an existing branch name.
 
 <branch>::
 	Working branch; defaults to HEAD.

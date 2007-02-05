@@ -222,6 +222,7 @@ extern int run_diff_files(struct rev_info *revs, int silent_on_removed);
 
 extern int run_diff_index(struct rev_info *revs, int cached);
 
+extern int do_diff_cache(const unsigned char *, struct diff_options *);
 extern int diff_flush_patch_id(struct diff_options *, unsigned char *);
 
 #endif /* DIFF_H */

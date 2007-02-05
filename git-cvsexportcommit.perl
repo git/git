@@ -15,9 +15,9 @@ unless ($ENV{GIT_DIR} && -r $ENV{GIT_DIR}){
     die "GIT_DIR is not defined or is unreadable";
 }
 
-our ($opt_h, $opt_p, $opt_v, $opt_c, $opt_f, $opt_a, $opt_m );
+our ($opt_h, $opt_P, $opt_p, $opt_v, $opt_c, $opt_f, $opt_a, $opt_m );
 
-getopts('hpvcfam:');
+getopts('hPpvcfam:');
 
 $opt_h && usage();
 
@@ -89,7 +89,7 @@ if ($parent) {
 	    last;
 	}; # found it
     }
-    die "Did not find $parent in the parents for this commit!" if !$found;
+    die "Did not find $parent in the parents for this commit!" if !$found and !$opt_P;
 } else { # we don't have a parent from the cmdline...
     if (@parents == 1) { # it's safe to get it from the commit
 	$parent = $parents[0];

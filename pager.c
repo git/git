@@ -1,5 +1,7 @@
 #include "cache.h"
 
+#include <sys/select.h>
+
 /*
  * This is split up from the rest of git so that we might do
  * something different on Windows, for example.
@@ -7,6 +9,16 @@
 
 static void run_pager(const char *pager)
 {
+	/*
+	 * Work around bug in "less" by not starting it until we
+	 * have real input
+	 */
+	fd_set in;
+
+	FD_ZERO(&in);
+	FD_SET(0, &in);
+	select(1, &in, NULL, &in, NULL);
+
 	execlp(pager, pager, NULL);
 	execl("/bin/sh", "sh", "-c", pager, NULL);
 }

@@ -300,8 +300,9 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 			prefix = setup_git_directory();
 		if (p->option & USE_PAGER)
 			setup_pager();
-		if ((p->option & NOT_BARE) && is_bare_repository())
-			die("%s cannot be used in a bare git directory", cmd);
+		if ((p->option & NOT_BARE) &&
+				(is_bare_repository() || is_inside_git_dir()))
+			die("%s must be run in a work tree", cmd);
 		trace_argv_printf(argv, argc, "trace: built-in: git");
 
 		exit(p->fn(argc, argv, prefix));

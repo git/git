@@ -11,6 +11,7 @@ git bisect replay <logfile>	replay bisection log
 git bisect log			show bisect log.'
 
 . git-sh-setup
+require_work_tree
 
 sq() {
 	@@PERL@@ -e '

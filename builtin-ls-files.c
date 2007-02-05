@@ -323,7 +323,7 @@ static const char ls_files_usage[] =
 int cmd_ls_files(int argc, const char **argv, const char *prefix)
 {
 	int i;
-	int exc_given = 0;
+	int exc_given = 0, require_work_tree = 0;
 	struct dir_struct dir;
 
 	memset(&dir, 0, sizeof(dir));
@@ -363,14 +363,17 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "-m") || !strcmp(arg, "--modified")) {
 			show_modified = 1;
+			require_work_tree = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-o") || !strcmp(arg, "--others")) {
 			show_others = 1;
+			require_work_tree = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-i") || !strcmp(arg, "--ignored")) {
 			dir.show_ignored = 1;
+			require_work_tree = 1;
 			continue;
 		}
 		if (!strcmp(arg, "-s") || !strcmp(arg, "--stage")) {
@@ -379,6 +382,7 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "-k") || !strcmp(arg, "--killed")) {
 			show_killed = 1;
+			require_work_tree = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--directory")) {
@@ -446,6 +450,10 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 			usage(ls_files_usage);
 		break;
 	}
+
+	if (require_work_tree &&
+			(is_bare_repository() || is_inside_git_dir()))
+		die("This operation must be run in a work tree");
 
 	pathspec = get_pathspec(prefix, argv + i);
 

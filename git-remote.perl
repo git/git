@@ -253,14 +253,30 @@ sub show_remote {
 }
 
 sub add_remote {
-	my ($name, $url) = @_;
+	my ($name, $url, $opts) = @_;
 	if (exists $remote->{$name}) {
 		print STDERR "remote $name already exists.\n";
 		exit(1);
 	}
 	$git->command('config', "remote.$name.url", $url);
-	$git->command('config', "remote.$name.fetch",
-		      "+refs/heads/*:refs/remotes/$name/*");
+	my $track = $opts->{'track'} || ["*"];
+
+	for (@$track) {
+		$git->command('config', '--add', "remote.$name.fetch",
+			      "+refs/heads/$_:refs/remotes/$name/$_");
+	}
+	if ($opts->{'fetch'}) {
+		$git->command('fetch', $name);
+	}
+	if (exists $opts->{'master'}) {
+		$git->command('symbolic-ref', "refs/remotes/$name/HEAD",
+			      "refs/remotes/$name/$opts->{'master'}");
+	}
+}
+
+sub add_usage {
+	print STDERR "Usage: git remote add [-f] [-t track]* [-m master] <name> <url>\n";
+	exit(1);
 }
 
 if (!@ARGV) {
@@ -307,11 +323,37 @@ elsif ($ARGV[0] eq 'prune') {
 	}
 }
 elsif ($ARGV[0] eq 'add') {
-	if (@ARGV != 3) {
-		print STDERR "Usage: git remote add <name> <url>\n";
-		exit(1);
+	my %opts = ();
+	while (1 < @ARGV && $ARGV[1] =~ /^-/) {
+		my $opt = $ARGV[1];
+		shift @ARGV;
+		if ($opt eq '-f' || $opt eq '--fetch') {
+			$opts{'fetch'} = 1;
+			next;
+		}
+		if ($opt eq '-t' || $opt eq '--track') {
+			if (@ARGV < 1) {
+				add_usage();
+			}
+			$opts{'track'} ||= [];
+			push @{$opts{'track'}}, $ARGV[1];
+			shift @ARGV;
+			next;
+		}
+		if ($opt eq '-m' || $opt eq '--master') {
+			if ((@ARGV < 1) || exists $opts{'master'}) {
+				add_usage();
+			}
+			$opts{'master'} = $ARGV[1];
+			shift @ARGV;
+			next;
+		}
+		add_usage();
 	}
-	add_remote($ARGV[1], $ARGV[2]);
+	if (@ARGV != 3) {
+		add_usage();
+	}
+	add_remote($ARGV[1], $ARGV[2], \%opts);
 }
 else {
 	print STDERR "Usage: git remote\n";
