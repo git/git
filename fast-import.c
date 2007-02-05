@@ -130,7 +130,7 @@ Format of STDIN stream:
 struct object_entry
 {
 	struct object_entry *next;
-	unsigned long offset;
+	uint32_t offset;
 	unsigned type : TYPE_BITS;
 	unsigned pack_id : PACK_ID_BITS;
 	unsigned char sha1[20];
@@ -157,7 +157,7 @@ struct last_object
 {
 	void *data;
 	unsigned long len;
-	unsigned long offset;
+	uint32_t offset;
 	unsigned int depth;
 	unsigned no_free:1;
 };
@@ -173,7 +173,7 @@ struct mem_pool
 struct atom_str
 {
 	struct atom_str *next_atom;
-	unsigned int str_len;
+	unsigned short str_len;
 	char str_dat[FLEX_ARRAY]; /* more */
 };
 
@@ -184,7 +184,7 @@ struct tree_entry
 	struct atom_str* name;
 	struct tree_entry_ms
 	{
-		unsigned int mode;
+		uint16_t mode;
 		unsigned char sha1[20];
 	} versions[2];
 };
@@ -464,7 +464,7 @@ static struct object_entry* find_mark(uintmax_t idnum)
 	return oe;
 }
 
-static struct atom_str* to_atom(const char *s, size_t len)
+static struct atom_str* to_atom(const char *s, unsigned short len)
 {
 	unsigned int hc = hc_str(s, len) % atom_table_sz;
 	struct atom_str *c;
@@ -993,10 +993,10 @@ static void *gfi_unpack_entry(
 	return unpack_entry(p, oe->offset, type, sizep);
 }
 
-static const char *get_mode(const char *str, unsigned int *modep)
+static const char *get_mode(const char *str, uint16_t *modep)
 {
 	unsigned char c;
-	unsigned int mode = 0;
+	uint16_t mode = 0;
 
 	while ((c = *str++) != ' ') {
 		if (c < '0' || c > '7')
@@ -1046,7 +1046,7 @@ static void load_tree(struct tree_entry *root)
 		if (!c)
 			die("Corrupt mode in %s", sha1_to_hex(sha1));
 		e->versions[0].mode = e->versions[1].mode;
-		e->name = to_atom(c, strlen(c));
+		e->name = to_atom(c, (unsigned short)strlen(c));
 		c += e->name->str_len + 1;
 		hashcpy(e->versions[0].sha1, (unsigned char*)c);
 		hashcpy(e->versions[1].sha1, (unsigned char*)c);
@@ -1098,7 +1098,7 @@ static void mktree(struct tree_content *t,
 		struct tree_entry *e = t->entries[i];
 		if (!e->versions[v].mode)
 			continue;
-		c += sprintf(c, "%o", e->versions[v].mode);
+		c += sprintf(c, "%o", (unsigned int)e->versions[v].mode);
 		*c++ = ' ';
 		strcpy(c, e->name->str_dat);
 		c += e->name->str_len + 1;
@@ -1161,7 +1161,7 @@ static int tree_content_set(
 	struct tree_entry *root,
 	const char *p,
 	const unsigned char *sha1,
-	const unsigned int mode)
+	const uint16_t mode)
 {
 	struct tree_content *t = root->tree;
 	const char *slash1;
@@ -1207,7 +1207,7 @@ static int tree_content_set(
 	if (t->entry_count == t->entry_capacity)
 		root->tree = t = grow_tree_content(t, 8);
 	e = new_tree_entry();
-	e->name = to_atom(p, n);
+	e->name = to_atom(p, (unsigned short)n);
 	e->versions[0].mode = 0;
 	hashclr(e->versions[0].sha1);
 	t->entries[t->entry_count++] = e;
@@ -1458,7 +1458,7 @@ static void file_change_m(struct branch *b)
 	const char *endp;
 	struct object_entry *oe;
 	unsigned char sha1[20];
-	unsigned int mode, inline_data = 0;
+	uint16_t mode, inline_data = 0;
 	char type[20];
 
 	p = get_mode(p, &mode);
