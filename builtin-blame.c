@@ -2005,7 +2005,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 	buf[fin_size] = 0;
 	origin->file.ptr = buf;
 	origin->file.size = fin_size;
-	write_sha1_file(buf, fin_size, blob_type, origin->blob_sha1);
+	pretend_sha1_file(buf, fin_size, blob_type, origin->blob_sha1);
 	commit->util = origin;
 
 	/*
