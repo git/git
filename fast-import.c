@@ -969,10 +969,9 @@ static int store_object(
 	pack_size += s.total_out;
 
 	free(out);
-	if (delta)
-		free(delta);
+	free(delta);
 	if (last) {
-		if (last->data && !last->no_free)
+		if (!last->no_free)
 			free(last->data);
 		last->data = dat;
 		last->offset = e->offset;
@@ -1521,9 +1520,7 @@ static void file_change_m(struct branch *b)
 	}
 
 	tree_content_set(&b->branch_tree, p, sha1, S_IFREG | mode);
-
-	if (p_uq)
-		free(p_uq);
+	free(p_uq);
 }
 
 static void file_change_d(struct branch *b)
@@ -1539,8 +1536,7 @@ static void file_change_d(struct branch *b)
 		p = p_uq;
 	}
 	tree_content_remove(&b->branch_tree, p);
-	if (p_uq)
-		free(p_uq);
+	free(p_uq);
 }
 
 static void cmd_from(struct branch *b)
@@ -1719,8 +1715,7 @@ static void cmd_new_commit(void)
 	sp += sprintf(sp, "%s\n\n", committer);
 	memcpy(sp, msg, msglen);
 	sp += msglen;
-	if (author)
-		free(author);
+	free(author);
 	free(committer);
 	free(msg);
 
