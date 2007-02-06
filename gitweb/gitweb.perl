@@ -1963,7 +1963,7 @@ sub git_print_page_path {
 
 	print "<div class=\"page_path\">";
 	print $cgi->a({-href => href(action=>"tree", hash_base=>$hb),
-	              -title => 'tree root'}, to_utf8("[$project]");
+	              -title => 'tree root'}, to_utf8("[$project]"));
 	print " / ";
 	if (defined $name) {
 		my @dirname = split '/', $name;
