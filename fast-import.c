@@ -297,7 +297,6 @@ static struct tag *last_tag;
 static struct strbuf command_buf;
 static uintmax_t next_mark;
 static struct dbuf new_data;
-static FILE* branch_log;
 
 
 static void alloc_objects(unsigned int cnt)
@@ -1730,18 +1729,6 @@ static void cmd_new_commit(void)
 		NULL, b->sha1, next_mark))
 		b->pack_id = pack_id;
 	b->last_commit = object_count_by_type[OBJ_COMMIT];
-
-	if (branch_log) {
-		int need_dq = quote_c_style(b->name, NULL, NULL, 0);
-		fprintf(branch_log, "commit ");
-		if (need_dq) {
-			fputc('"', branch_log);
-			quote_c_style(b->name, NULL, branch_log, 0);
-			fputc('"', branch_log);
-		} else
-			fprintf(branch_log, "%s", b->name);
-		fprintf(branch_log," :%ju %s\n",next_mark,sha1_to_hex(b->sha1));
-	}
 }
 
 static void cmd_new_tag(void)
@@ -1821,18 +1808,6 @@ static void cmd_new_tag(void)
 		t->pack_id = MAX_PACK_ID;
 	else
 		t->pack_id = pack_id;
-
-	if (branch_log) {
-		int need_dq = quote_c_style(t->name, NULL, NULL, 0);
-		fprintf(branch_log, "tag ");
-		if (need_dq) {
-			fputc('"', branch_log);
-			quote_c_style(t->name, NULL, branch_log, 0);
-			fputc('"', branch_log);
-		} else
-			fprintf(branch_log, "%s", t->name);
-		fprintf(branch_log," :%ju %s\n",from_mark,sha1_to_hex(t->sha1));
-	}
 }
 
 static void cmd_reset_branch(void)
@@ -1886,11 +1861,6 @@ int main(int argc, const char **argv)
 			max_active_branches = strtoul(a + 18, NULL, 0);
 		else if (!strncmp(a, "--export-marks=", 15))
 			mark_file = a + 15;
-		else if (!strncmp(a, "--branch-log=", 13)) {
-			branch_log = fopen(a + 13, "w");
-			if (!branch_log)
-				die("Can't create %s: %s", a + 13, strerror(errno));
-		}
 		else
 			die("unknown option %s", a);
 	}
@@ -1929,8 +1899,6 @@ int main(int argc, const char **argv)
 	dump_tags();
 	unkeep_all_packs();
 	dump_marks();
-	if (branch_log)
-		fclose(branch_log);
 
 	total_count = 0;
 	for (i = 0; i < ARRAY_SIZE(object_count_by_type); i++)

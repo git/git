@@ -53,13 +53,6 @@ OPTIONS
 	Frontends can use this file to validate imports after they
 	have been completed.
 
---branch-log=<file>::
-	Records every tag and commit made to a log file.  (This file
-	can be quite verbose on large imports.)  This particular
-	option has been primarily intended to facilitate debugging
-	gfi and has limited usefulness in other contexts.  It may
-	be removed in future versions.
-
 
 Performance
 -----------
