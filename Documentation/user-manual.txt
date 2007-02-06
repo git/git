@@ -3952,3 +3952,7 @@ CVS, Subversion, and just imports of series of release tarballs.
 More details on gitweb?
 
 Write a chapter on using plumbing and writing scripts.
+
+Alternates, clone -reference, etc.
+
+git unpack-objects -r for recovery
