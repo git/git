@@ -226,8 +226,8 @@ The time of the change is specified by `<time>` as the number of
 seconds since the UNIX epoc (midnight, Jan 1, 1970, UTC) and is
 written in base-10 notation using US-ASCII digits.  The committer's
 timezone is specified by `<tz>` as a positive or negative offset
-from UTC, in minutes.  For example EST would be expressed in `<tz>`
-by ``-0500''.
+from UTC.  For example EST (which is typically 5 hours behind GMT)
+would be expressed in `<tz>` by ``-0500'' while GMT is ``+0000''.
 
 `from`
 ^^^^^^
