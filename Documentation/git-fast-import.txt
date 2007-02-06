@@ -32,6 +32,12 @@ the frontend program in use.
 
 OPTIONS
 -------
+--date-format=<fmt>::
+	Specify the type of dates the frontend will supply to
+	gfi within `author`, `committer` and `tagger` commands.
+	See ``Date Formats'' below for details about which formats
+	are supported, and their syntax.
+
 --max-pack-size=<n>::
 	Maximum size of each output packfile, expressed in MiB.
 	The default is 4096 (4 GiB) as that is the maximum allowed
@@ -52,7 +58,6 @@ OPTIONS
 	Marks are written one per line as `:markid SHA-1`.
 	Frontends can use this file to validate imports after they
 	have been completed.
-
 
 Performance
 -----------
@@ -127,6 +132,78 @@ results, such as branch names or file names with leading or trailing
 spaces in their name, or early termination of gfi when it encounters
 unexpected input.
 
+Date Formats
+~~~~~~~~~~~~
+The following date formats are supported.  A frontend should select
+the format it will use for this import by passing the format name
+in the `--date-format=<fmt>` command line option.
+
+`raw`::
+	This is the Git native format and is `<time> SP <tz>`.
+	It is also gfi's default format, if `--date-format` was
+	not specified.
++
+The time of the event is specified by `<time>` as the number of
+seconds since the UNIX epoch (midnight, Jan 1, 1970, UTC) and is
+written as an ASCII decimal integer.
++
+The timezone is specified by `<tz>` as a positive or negative offset
+from UTC.  For example EST (which is typically 5 hours behind GMT)
+would be expressed in `<tz>` by ``-0500'' while GMT is ``+0000''.
++
+If the timezone is not available in the source material, use
+``+0000'', or the most common local timezone.  For example many
+organizations have a CVS repository which has only ever been accessed
+by users who are located in the same location and timezone.  In this
+case the user's timezone can be easily assumed.
++
+Unlike the `rfc2822` format, this format is very strict.  Any
+variation in formatting will cause gfi to reject the value.
+
+`rfc2822`::
+	This is the standard email format as described by RFC 2822.
++
+An example value is ``Tue Feb 6 11:22:18 2007 -0500''.  The Git
+parser is accurate, but a little on the lenient side.  Its the
+same parser used by gitlink:git-am[1] when applying patches
+received from email.
++
+Some malformed strings may be accepted as valid dates.  In some of
+these cases Git will still be able to obtain the correct date from
+the malformed string.  There are also some types of malformed
+strings which Git will parse wrong, and yet consider valid.
+Seriously malformed strings will be rejected.
++
+If the source material is formatted in RFC 2822 style dates,
+the frontend should let gfi handle the parsing and conversion
+(rather than attempting to do it itself) as the Git parser has
+been well tested in the wild.
++
+Frontends should prefer the `raw` format if the source material
+is already in UNIX-epoch format, or is easily convertible to
+that format, as there is no ambiguity in parsing.
+
+`now`::
+	Always use the current time and timezone.  The literal
+	`now` must always be supplied for `<when>`.
++
+This is a toy format.  The current time and timezone of this system
+is always copied into the identity string at the time it is being
+created by gfi.  There is no way to specify a different time or
+timezone.
++
+This particular format is supplied as its short to implement and
+may be useful to a process that wants to create a new commit
+right now, without needing to use a working directory or
+gitlink:git-update-index[1].
++
+If separate `author` and `committer` commands are used in a `commit`
+the timestamps may not match, as the system clock will be polled
+twice (once for each command).  The only way to ensure that both
+author and committer identity information has the same timestamp
+is to omit `author` (thus copying from `committer`) or to use a
+date format other than `now`.
+
 Commands
 ~~~~~~~~
 gfi accepts several commands to update the current repository
@@ -168,8 +245,8 @@ change to the project.
 ....
 	'commit' SP <ref> LF
 	mark?
-	('author' SP <name> SP LT <email> GT SP <time> SP <tz> LF)?
-	'committer' SP <name> SP LT <email> GT SP <time> SP <tz> LF
+	('author' SP <name> SP LT <email> GT SP <when> LF)?
+	'committer' SP <name> SP LT <email> GT SP <when> LF
 	data
 	('from' SP <committish> LF)?
 	('merge' SP <committish> LF)?
@@ -222,12 +299,10 @@ the email address from the other fields in the line.  Note that
 `<name>` is free-form and may contain any sequence of bytes, except
 `LT` and `LF`.  It is typically UTF-8 encoded.
 
-The time of the change is specified by `<time>` as the number of
-seconds since the UNIX epoc (midnight, Jan 1, 1970, UTC) and is
-written as an ASCII decimal integer.  The committer's
-timezone is specified by `<tz>` as a positive or negative offset
-from UTC.  For example EST (which is typically 5 hours behind GMT)
-would be expressed in `<tz>` by ``-0500'' while GMT is ``+0000''.
+The time of the change is specified by `<when>` using the date format
+that was selected by the `--date-format=<fmt>` command line option.
+See ``Date Formats'' above for the set of supported formats, and
+their syntax.
 
 `from`
 ^^^^^^
@@ -394,7 +469,7 @@ lightweight (non-annotated) tags see the `reset` command below.
 ....
 	'tag' SP <name> LF
 	'from' SP <committish> LF
-	'tagger' SP <name> SP LT <email> GT SP <time> SP <tz> LF
+	'tagger' SP <name> SP LT <email> GT SP <when> LF
 	data
 	LF
 ....

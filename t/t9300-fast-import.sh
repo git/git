@@ -240,4 +240,40 @@ test_expect_success \
 	'git-cat-file blob branch:newdir/exec.sh >actual &&
 	 diff -u expect actual'
 
+###
+### series E
+###
+
+cat >input <<INPUT_END
+commit refs/heads/branch
+author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> Tue Feb 6 11:22:18 2007 -0500
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> Tue Feb 6 12:35:02 2007 -0500
+data <<COMMIT
+RFC 2822 type date
+COMMIT
+
+from refs/heads/branch^0
+
+INPUT_END
+test_expect_failure \
+    'E: rfc2822 date, --date-format=raw' \
+    'git-fast-import --date-format=raw <input'
+test_expect_success \
+    'E: rfc2822 date, --date-format=rfc2822' \
+    'git-fast-import --date-format=rfc2822 <input'
+test_expect_success \
+	'E: verify pack' \
+	'for p in .git/objects/pack/*.pack;do git-verify-pack $p||exit;done'
+
+cat >expect <<EOF
+author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> 1170778938 -0500
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1170783302 -0500
+
+RFC 2822 type date
+EOF
+test_expect_success \
+	'E: verify commit' \
+	'git-cat-file commit branch | sed 1,2d >actual &&
+	diff -u expect actual'
+
 test_done

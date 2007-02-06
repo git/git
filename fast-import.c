@@ -17,8 +17,8 @@ Format of STDIN stream:
 
   new_commit ::= 'commit' sp ref_str lf
     mark?
-    ('author' sp name '<' email '>' ts tz lf)?
-    'committer' sp name '<' email '>' ts tz lf
+    ('author' sp name '<' email '>' when lf)?
+    'committer' sp name '<' email '>' when lf
     commit_msg
     ('from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)?
     ('merge' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf)*
@@ -34,7 +34,7 @@ Format of STDIN stream:
 
   new_tag ::= 'tag' sp tag_str lf
     'from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf
-	'tagger' sp name '<' email '>' ts tz lf
+	'tagger' sp name '<' email '>' when lf
     tag_msg;
   tag_msg ::= data;
 
@@ -87,6 +87,10 @@ Format of STDIN stream:
   declen ::= # unsigned 32 bit value, ascii base10 notation;
   bigint ::= # unsigned integer value, ascii base10 notation;
   binary_data ::= # file content, not interpreted;
+
+  when         ::= raw_when | rfc2822_when;
+  raw_when     ::= ts sp tz;
+  rfc2822_when ::= # Valid RFC 2822 date and time;
 
   sp ::= # ASCII space character;
   lf ::= # ASCII newline (LF) character;
@@ -234,6 +238,12 @@ struct hash_list
 	unsigned char sha1[20];
 };
 
+typedef enum {
+	WHENSPEC_RAW = 1,
+	WHENSPEC_RFC2822,
+	WHENSPEC_NOW,
+} whenspec_type;
+
 /* Configured limits on output */
 static unsigned long max_depth = 10;
 static unsigned long max_packsize = (1LL << 32) - 1;
@@ -294,6 +304,7 @@ static struct tag *first_tag;
 static struct tag *last_tag;
 
 /* Input stream parsing */
+static whenspec_type whenspec = WHENSPEC_RAW;
 static struct strbuf command_buf;
 static uintmax_t next_mark;
 static struct dbuf new_data;
@@ -1396,6 +1407,64 @@ static void *cmd_data (size_t *size)
 	return buffer;
 }
 
+static int validate_raw_date(const char *src, char *result, int maxlen)
+{
+	const char *orig_src = src;
+	char *endp, sign;
+
+	strtoul(src, &endp, 10);
+	if (endp == src || *endp != ' ')
+		return -1;
+
+	src = endp + 1;
+	if (*src != '-' && *src != '+')
+		return -1;
+	sign = *src;
+
+	strtoul(src + 1, &endp, 10);
+	if (endp == src || *endp || (endp - orig_src) >= maxlen)
+		return -1;
+
+	strcpy(result, orig_src);
+	return 0;
+}
+
+static char *parse_ident(const char *buf)
+{
+	const char *gt;
+	size_t name_len;
+	char *ident;
+
+	gt = strrchr(buf, '>');
+	if (!gt)
+		die("Missing > in ident string: %s", buf);
+	gt++;
+	if (*gt != ' ')
+		die("Missing space after > in ident string: %s", buf);
+	gt++;
+	name_len = gt - buf;
+	ident = xmalloc(name_len + 24);
+	strncpy(ident, buf, name_len);
+
+	switch (whenspec) {
+	case WHENSPEC_RAW:
+		if (validate_raw_date(gt, ident + name_len, 24) < 0)
+			die("Invalid raw date \"%s\" in ident: %s", gt, buf);
+		break;
+	case WHENSPEC_RFC2822:
+		if (parse_date(gt, ident + name_len, 24) < 0)
+			die("Invalid rfc2822 date \"%s\" in ident: %s", gt, buf);
+		break;
+	case WHENSPEC_NOW:
+		if (strcmp("now", gt))
+			die("Date in ident must be 'now': %s", buf);
+		datestamp(ident + name_len, 24);
+		break;
+	}
+
+	return ident;
+}
+
 static void cmd_new_blob(void)
 {
 	size_t l;
@@ -1655,11 +1724,11 @@ static void cmd_new_commit(void)
 	read_next_command();
 	cmd_mark();
 	if (!strncmp("author ", command_buf.buf, 7)) {
-		author = strdup(command_buf.buf);
+		author = parse_ident(command_buf.buf + 7);
 		read_next_command();
 	}
 	if (!strncmp("committer ", command_buf.buf, 10)) {
-		committer = strdup(command_buf.buf);
+		committer = parse_ident(command_buf.buf + 10);
 		read_next_command();
 	}
 	if (!committer)
@@ -1692,7 +1761,7 @@ static void cmd_new_commit(void)
 	store_tree(&b->branch_tree);
 	hashcpy(b->branch_tree.versions[0].sha1,
 		b->branch_tree.versions[1].sha1);
-	size_dbuf(&new_data, 97 + msglen
+	size_dbuf(&new_data, 114 + msglen
 		+ merge_count * 49
 		+ (author
 			? strlen(author) + strlen(committer)
@@ -1708,11 +1777,9 @@ static void cmd_new_commit(void)
 		free(merge_list);
 		merge_list = next;
 	}
-	if (author)
-		sp += sprintf(sp, "%s\n", author);
-	else
-		sp += sprintf(sp, "author %s\n", committer + 10);
-	sp += sprintf(sp, "%s\n\n", committer);
+	sp += sprintf(sp, "author %s\n", author ? author : committer);
+	sp += sprintf(sp, "committer %s\n", committer);
+	*sp++ = '\n';
 	memcpy(sp, msg, msglen);
 	sp += msglen;
 	free(author);
@@ -1780,7 +1847,7 @@ static void cmd_new_tag(void)
 	/* tagger ... */
 	if (strncmp("tagger ", command_buf.buf, 7))
 		die("Expected tagger command, got %s", command_buf.buf);
-	tagger = strdup(command_buf.buf);
+	tagger = parse_ident(command_buf.buf + 7);
 
 	/* tag payload/message */
 	read_next_command();
@@ -1792,7 +1859,8 @@ static void cmd_new_tag(void)
 	sp += sprintf(sp, "object %s\n", sha1_to_hex(sha1));
 	sp += sprintf(sp, "type %s\n", type_names[OBJ_COMMIT]);
 	sp += sprintf(sp, "tag %s\n", t->name);
-	sp += sprintf(sp, "%s\n\n", tagger);
+	sp += sprintf(sp, "tagger %s\n", tagger);
+	*sp++ = '\n';
 	memcpy(sp, msg, msglen);
 	sp += msglen;
 	free(tagger);
@@ -1835,7 +1903,7 @@ static void cmd_checkpoint(void)
 }
 
 static const char fast_import_usage[] =
-"git-fast-import [--depth=n] [--active-branches=n] [--export-marks=marks.file] [--branch-log=log]";
+"git-fast-import [--date-format=f] [--max-pack-size=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file]";
 
 int main(int argc, const char **argv)
 {
@@ -1849,6 +1917,17 @@ int main(int argc, const char **argv)
 
 		if (*a != '-' || !strcmp(a, "--"))
 			break;
+		else if (!strncmp(a, "--date-format=", 14)) {
+			const char *fmt = a + 14;
+			if (!strcmp(fmt, "raw"))
+				whenspec = WHENSPEC_RAW;
+			else if (!strcmp(fmt, "rfc2822"))
+				whenspec = WHENSPEC_RFC2822;
+			else if (!strcmp(fmt, "now"))
+				whenspec = WHENSPEC_NOW;
+			else
+				die("unknown --date-format argument %s", fmt);
+		}
 		else if (!strncmp(a, "--max-pack-size=", 16))
 			max_packsize = strtoumax(a + 16, NULL, 0) * 1024 * 1024;
 		else if (!strncmp(a, "--depth=", 8))
