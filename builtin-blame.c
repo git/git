@@ -41,6 +41,7 @@ static int max_score_digits;
 static int show_root;
 static int blank_boundary;
 static int incremental;
+static int cmd_is_annotate;
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -1554,12 +1555,12 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 		int length = (opt & OUTPUT_LONG_OBJECT_NAME) ? 40 : 8;
 
 		if (suspect->commit->object.flags & UNINTERESTING) {
-			if (!blank_boundary) {
+			if (blank_boundary)
+				memset(hex, ' ', length);
+			else if (!cmd_is_annotate) {
 				length--;
 				putchar('^');
 			}
-			else
-				memset(hex, ' ', length);
 		}
 
 		printf("%.*s", length, hex);
@@ -2069,6 +2070,8 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	char type[10];
 	const char *bottomtop = NULL;
 	const char *contents_from = NULL;
+
+	cmd_is_annotate = !strcmp(argv[0], "annotate");
 
 	git_config(git_blame_config);
 	save_commit_buffer = 0;

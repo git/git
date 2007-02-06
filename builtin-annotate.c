@@ -12,7 +12,7 @@ int cmd_annotate(int argc, const char **argv, const char *prefix)
 	int i;
 	nargv = xmalloc(sizeof(char *) * (argc + 2));
 
-	nargv[0] = "blame";
+	nargv[0] = "annotate";
 	nargv[1] = "-c";
 
 	for (i = 1; i < argc; i++) {
