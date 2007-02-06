@@ -1,6 +1,6 @@
 #!/bin/sh
 
-USAGE='[start|bad|good|next|reset|visualize]'
+USAGE='[start|bad|good|next|reset|visualize|replay|log]'
 LONG_USAGE='git bisect start [<pathspec>]	reset bisect state and start bisection.
 git bisect bad [<rev>]		mark <rev> a known-bad revision.
 git bisect good [<rev>...]	mark <rev>... known-good revisions.
