@@ -1455,7 +1455,7 @@ static void file_change_m(struct branch *b)
 	const char *p = command_buf.buf + 2;
 	char *p_uq;
 	const char *endp;
-	struct object_entry *oe;
+	struct object_entry *oe = oe;
 	unsigned char sha1[20];
 	uint16_t mode, inline_data = 0;
 	char type[20];
@@ -1607,7 +1607,7 @@ static void cmd_from(struct branch *b)
 
 static struct hash_list* cmd_merge(unsigned int *count)
 {
-	struct hash_list *list = NULL, *n, *e;
+	struct hash_list *list = NULL, *n, *e = e;
 	const char *from;
 	struct branch *s;
 
@@ -1633,7 +1633,7 @@ static struct hash_list* cmd_merge(unsigned int *count)
 		else
 			list = n;
 		e = n;
-		*count++;
+		(*count)++;
 		read_next_command();
 	}
 	return list;
@@ -1763,8 +1763,9 @@ static void cmd_new_tag(void)
 	if (s) {
 		hashcpy(sha1, s->sha1);
 	} else if (*from == ':') {
+		struct object_entry *oe;
 		from_mark = strtoumax(from + 1, NULL, 10);
-		struct object_entry *oe = find_mark(from_mark);
+		oe = find_mark(from_mark);
 		if (oe->type != OBJ_COMMIT)
 			die("Mark :%ju not a commit", from_mark);
 		hashcpy(sha1, oe->sha1);
