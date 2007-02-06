@@ -276,4 +276,84 @@ test_expect_success \
 	'git-cat-file commit branch | sed 1,2d >actual &&
 	diff -u expect actual'
 
+###
+### series F
+###
+
+old_branch=`git-rev-parse --verify branch^0`
+test_tick
+cat >input <<INPUT_END
+commit refs/heads/branch
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+losing things already?
+COMMIT
+
+from refs/heads/branch~1
+
+reset refs/heads/other
+from refs/heads/branch
+
+INPUT_END
+test_expect_success \
+    'F: non-fast-forward update skips' \
+    'if git-fast-import <input
+	 then
+		echo BAD gfi did not fail
+		return 1
+	 else
+		if test $old_branch = `git-rev-parse --verify branch^0`
+		then
+			: branch unaffected and failure returned
+			return 0
+		else
+			echo BAD gfi changed branch $old_branch
+			return 1
+		fi
+	 fi
+	'
+test_expect_success \
+	'F: verify pack' \
+	'for p in .git/objects/pack/*.pack;do git-verify-pack $p||exit;done'
+
+cat >expect <<EOF
+tree `git-rev-parse branch~1^{tree}`
+parent `git-rev-parse branch~1`
+author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+
+losing things already?
+EOF
+test_expect_success \
+	'F: verify other commit' \
+	'git-cat-file commit other >actual &&
+	diff -u expect actual'
+
+###
+### series G
+###
+
+old_branch=`git-rev-parse --verify branch^0`
+test_tick
+cat >input <<INPUT_END
+commit refs/heads/branch
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+losing things already?
+COMMIT
+
+from refs/heads/branch~1
+
+INPUT_END
+test_expect_success \
+    'G: non-fast-forward update forced' \
+    'git-fast-import --force <input'
+test_expect_success \
+	'G: verify pack' \
+	'for p in .git/objects/pack/*.pack;do git-verify-pack $p||exit;done'
+test_expect_success \
+	'G: branch changed, but logged' \
+	'test $old_branch != `git-rev-parse --verify branch^0` &&
+	 test $old_branch = `git-rev-parse --verify branch@{1}`'
+
 test_done

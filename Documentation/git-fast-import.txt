@@ -38,6 +38,11 @@ OPTIONS
 	See ``Date Formats'' below for details about which formats
 	are supported, and their syntax.
 
+--force::
+	Force updating modified existing branches, even if doing
+	so would cause commits to be lost (as the new commit does
+	not contain the old commit).
+
 --max-pack-size=<n>::
 	Maximum size of each output packfile, expressed in MiB.
 	The default is 4096 (4 GiB) as that is the maximum allowed
@@ -92,11 +97,18 @@ run alongside parallel `git repack -a -d` or `git gc` invocations,
 or any other Git operation (including `git prune`, as loose objects
 are never used by gfi).
 
-However, gfi does not lock the branch or tag refs it is actively
-importing.  After EOF, during its ref update phase, gfi blindly
-overwrites each imported branch or tag ref.  Consequently it is not
-safe to modify refs that are currently being used by a running gfi
-instance, as work could be lost when gfi overwrites the refs.
+gfi does not lock the branch or tag refs it is actively importing.
+After the import, during its ref update phase, gfi tests each
+existing branch ref to verify the update will be a fast-forward
+update (the commit stored in the ref is contained in the new
+history of the commit to be written).  If the update is not a
+fast-forward update, gfi will skip updating that ref and instead
+prints a warning message.  gfi will always attempt to update all
+branch refs, and does not stop on the first failure.
+
+Branch updates can be forced with `--force`, but its recommended that
+this only be used on an otherwise quiet repository.  Using `--force`
+is not necessary for an initial import into an empty repository.
 
 
 Technical Discussion

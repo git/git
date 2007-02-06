@@ -121,6 +121,7 @@ Format of STDIN stream:
 #include "object.h"
 #include "blob.h"
 #include "tree.h"
+#include "commit.h"
 #include "delta.h"
 #include "pack.h"
 #include "refs.h"
@@ -247,6 +248,7 @@ typedef enum {
 /* Configured limits on output */
 static unsigned long max_depth = 10;
 static unsigned long max_packsize = (1LL << 32) - 1;
+static int force_update;
 
 /* Stats and misc. counters */
 static uintmax_t alloc_count;
@@ -257,6 +259,7 @@ static uintmax_t delta_count_by_type[1 << TYPE_BITS];
 static unsigned long object_count;
 static unsigned long branch_count;
 static unsigned long branch_load_count;
+static int failure;
 
 /* Memory pools */
 static size_t mem_pool_alloc = 2*1024*1024 - sizeof(struct mem_pool);
@@ -1278,19 +1281,48 @@ del_entry:
 	return 1;
 }
 
-static void dump_branches(void)
+static int update_branch(struct branch *b)
 {
 	static const char *msg = "fast-import";
+	struct ref_lock *lock;
+	unsigned char old_sha1[20];
+
+	if (read_ref(b->name, old_sha1))
+		hashclr(old_sha1);
+	lock = lock_any_ref_for_update(b->name, old_sha1);
+	if (!lock)
+		return error("Unable to lock %s", b->name);
+	if (!force_update && !is_null_sha1(old_sha1)) {
+		struct commit *old_cmit, *new_cmit;
+
+		old_cmit = lookup_commit_reference_gently(old_sha1, 0);
+		new_cmit = lookup_commit_reference_gently(b->sha1, 0);
+		if (!old_cmit || !new_cmit) {
+			unlock_ref(lock);
+			return error("Branch %s is missing commits.", b->name);
+		}
+
+		if (!in_merge_bases(old_cmit, new_cmit)) {
+			unlock_ref(lock);
+			warn("Not updating %s"
+				" (new tip %s does not contain %s)",
+				b->name, sha1_to_hex(b->sha1), sha1_to_hex(old_sha1));
+			return -1;
+		}
+	}
+	if (write_ref_sha1(lock, b->sha1, msg) < 0)
+		return error("Unable to update %s", b->name);
+	return 0;
+}
+
+static void dump_branches(void)
+{
 	unsigned int i;
 	struct branch *b;
-	struct ref_lock *lock;
 
 	for (i = 0; i < branch_table_sz; i++) {
-		for (b = branch_table[i]; b; b = b->table_next_branch) {
-			lock = lock_any_ref_for_update(b->name, NULL);
-			if (!lock || write_ref_sha1(lock, b->sha1, msg) < 0)
-				die("Can't write %s", b->name);
-		}
+		for (b = branch_table[i]; b; b = b->table_next_branch)
+			failure |= update_branch(b);
 	}
 }
 
@@ -1299,13 +1331,13 @@ static void dump_tags(void)
 	static const char *msg = "fast-import";
 	struct tag *t;
 	struct ref_lock *lock;
-	char path[PATH_MAX];
+	char ref_name[PATH_MAX];
 
 	for (t = first_tag; t; t = t->next_tag) {
-		sprintf(path, "refs/tags/%s", t->name);
-		lock = lock_any_ref_for_update(path, NULL);
+		sprintf(ref_name, "tags/%s", t->name);
+		lock = lock_ref_sha1(ref_name, NULL);
 		if (!lock || write_ref_sha1(lock, t->sha1, msg) < 0)
-			die("Can't write %s", path);
+			failure |= error("Unable to update %s", ref_name);
 	}
 }
 
@@ -1936,6 +1968,8 @@ int main(int argc, const char **argv)
 			max_active_branches = strtoul(a + 18, NULL, 0);
 		else if (!strncmp(a, "--export-marks=", 15))
 			mark_file = a + 15;
+		else if (!strcmp(a, "--force"))
+			force_update = 1;
 		else
 			die("unknown option %s", a);
 	}
@@ -2001,5 +2035,5 @@ int main(int argc, const char **argv)
 	fprintf(stderr, "---------------------------------------------------------------------\n");
 	fprintf(stderr, "\n");
 
-	return 0;
+	return failure ? 1 : 0;
 }
