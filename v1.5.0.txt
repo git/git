@@ -155,6 +155,11 @@ Updates in v1.5.0 since v1.4.4 series
    in individually if you plan to fetch into the repository with
    older versions of git (but why would you?).
 
+ - Similarly, wildcard refspec "refs/heads/*:refs/remotes/me/*"
+   can be given to "git-push" command to update the tracking
+   branches that is used to track the repository you are pushing
+   from on the remote side.
+
  - git-branch and git-show-branch know remote tracking branches
    (use the command line switch "-r" to list only tracked branches).
 
@@ -342,6 +347,8 @@ Updates in v1.5.0 since v1.4.4 series
    to output the blames as they are assigned.  A sample script
    to use it is also included as contrib/blameview.
 
+ - git-blame starts annotating from the working tree by default.
+
 
 * Less external dependency
 
@@ -410,6 +417,8 @@ Updates in v1.5.0 since v1.4.4 series
   - the 'commit' subcommand of git-svn has been renamed to
     'set-tree', and 'dcommit' is the recommended replacement for
     day-to-day work.
+
+  - git fast-import backend.
 
 
 * User support
