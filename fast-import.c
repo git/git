@@ -81,7 +81,7 @@ Format of STDIN stream:
   path_str    ::= path    | '"' quoted(path)    '"' ;
   mode        ::= '100644' | '644'
                 | '100755' | '755'
-                | '140000'
+                | '120000'
                 ;
 
   declen ::= # unsigned 32 bit value, ascii base10 notation;

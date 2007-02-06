@@ -416,7 +416,7 @@ in octal.  Git only supports the following modes:
   of files in most projects use this mode.  If in doubt, this is
   what you want.
 * `100755` or `755`: A normal, but executable, file.
-* `140000`: A symlink, the content of the file will be the link target.
+* `120000`: A symlink, the content of the file will be the link target.
 
 In both formats `<path>` is the complete path of the file to be added
 (if not already existing) or modified (if already existing).
