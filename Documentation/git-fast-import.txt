@@ -224,7 +224,7 @@ the email address from the other fields in the line.  Note that
 
 The time of the change is specified by `<time>` as the number of
 seconds since the UNIX epoc (midnight, Jan 1, 1970, UTC) and is
-written in base-10 notation using US-ASCII digits.  The committer's
+written as an ASCII decimal integer.  The committer's
 timezone is specified by `<tz>` as a positive or negative offset
 from UTC.  For example EST (which is typically 5 hours behind GMT)
 would be expressed in `<tz>` by ``-0500'' while GMT is ``+0000''.
@@ -293,7 +293,7 @@ Here `<committish>` is any of the commit specification expressions
 also accepted by `from` (see above).
 
 `filemodify`
-^^^^^^^^^^
+^^^^^^^^^^^^
 Included in a `commit` command to add a new file or change the
 content of an existing file.  This command has two different means
 of specifying the content of the file.
@@ -351,9 +351,8 @@ The value of `<path>` must be in canoncial form. That is it must not:
 
 It is recommended that `<path>` always be encoded using UTF-8.
 
-
 `filedelete`
-^^^^^^^^^^
+^^^^^^^^^^^^
 Included in a `commit` command to remove a file from the branch.
 If the file removal makes its directory empty, the directory will
 be automatically removed too.  This cascades up the tree until the
@@ -379,8 +378,8 @@ command the `mark` command appears within.  This can be `commit`,
 ....
 
 where `<idnum>` is the number assigned by the frontend to this mark.
-The value of `<idnum>` is expressed in base 10 notation using
-US-ASCII digits.  The value 0 is reserved and cannot be used as
+The value of `<idnum>` is expressed as an ASCII decimal integer.
+The value 0 is reserved and cannot be used as
 a mark.  Only values greater than or equal to 1 may be used as marks.
 
 New marks are created automatically.  Existing marks can be moved
@@ -485,26 +484,31 @@ intended for production-quality conversions should always use the
 exact byte count format, as it is more robust and performs better.
 The delimited format is intended primarily for testing gfi.
 
-Exact byte count format:
-
+Exact byte count format::
+	The frontend must specify the number of bytes of data.
++
 ....
 	'data' SP <count> LF
 	<raw> LF
 ....
-
++
 where `<count>` is the exact number of bytes appearing within
-`<raw>`.  The value of `<count>` is expressed in base 10 notation
-using US-ASCII digits.  The `LF` on either side of `<raw>` is not
+`<raw>`.  The value of `<count>` is expressed as an ASCII decimal
+integer.  The `LF` on either side of `<raw>` is not
 included in `<count>` and will not be included in the imported data.
 
-Delimited format:
-
+Delimited format::
+	A delimiter string is used to mark the end of the data.
+	gfi will compute the length by searching for the delimiter.
+	This format is primarly useful for testing and is not
+	recommended for real data.
++
 ....
 	'data' SP '<<' <delim> LF
 	<raw> LF
 	<delim> LF
 ....
-
++
 where `<delim>` is the chosen delimiter string.  The string `<delim>`
 must not appear on a line by itself within `<raw>`, as otherwise
 gfi will think the data ends earlier than it really does.  The `LF`
