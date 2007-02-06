@@ -312,7 +312,7 @@ static void alloc_objects(unsigned int cnt)
 	alloc_count += cnt;
 }
 
-static struct object_entry* new_object(unsigned char *sha1)
+static struct object_entry *new_object(unsigned char *sha1)
 {
 	struct object_entry *e;
 
@@ -324,7 +324,7 @@ static struct object_entry* new_object(unsigned char *sha1)
 	return e;
 }
 
-static struct object_entry* find_object(unsigned char *sha1)
+static struct object_entry *find_object(unsigned char *sha1)
 {
 	unsigned int h = sha1[0] << 8 | sha1[1];
 	struct object_entry *e;
@@ -334,7 +334,7 @@ static struct object_entry* find_object(unsigned char *sha1)
 	return NULL;
 }
 
-static struct object_entry* insert_object(unsigned char *sha1)
+static struct object_entry *insert_object(unsigned char *sha1)
 {
 	unsigned int h = sha1[0] << 8 | sha1[1];
 	struct object_entry *e = object_table[h];
@@ -365,7 +365,7 @@ static unsigned int hc_str(const char *s, size_t len)
 	return r;
 }
 
-static void* pool_alloc(size_t len)
+static void *pool_alloc(size_t len)
 {
 	struct mem_pool *p;
 	void *r;
@@ -395,7 +395,7 @@ static void* pool_alloc(size_t len)
 	return r;
 }
 
-static void* pool_calloc(size_t count, size_t size)
+static void *pool_calloc(size_t count, size_t size)
 {
 	size_t len = count * size;
 	void *r = pool_alloc(len);
@@ -403,7 +403,7 @@ static void* pool_calloc(size_t count, size_t size)
 	return r;
 }
 
-static char* pool_strdup(const char *s)
+static char *pool_strdup(const char *s)
 {
 	char *r = pool_alloc(strlen(s) + 1);
 	strcpy(r, s);
@@ -444,7 +444,7 @@ static void insert_mark(uintmax_t idnum, struct object_entry *oe)
 	s->data.marked[idnum] = oe;
 }
 
-static struct object_entry* find_mark(uintmax_t idnum)
+static struct object_entry *find_mark(uintmax_t idnum)
 {
 	uintmax_t orig_idnum = idnum;
 	struct mark_set *s = marks;
@@ -463,7 +463,7 @@ static struct object_entry* find_mark(uintmax_t idnum)
 	return oe;
 }
 
-static struct atom_str* to_atom(const char *s, unsigned short len)
+static struct atom_str *to_atom(const char *s, unsigned short len)
 {
 	unsigned int hc = hc_str(s, len) % atom_table_sz;
 	struct atom_str *c;
@@ -482,7 +482,7 @@ static struct atom_str* to_atom(const char *s, unsigned short len)
 	return c;
 }
 
-static struct branch* lookup_branch(const char *name)
+static struct branch *lookup_branch(const char *name)
 {
 	unsigned int hc = hc_str(name, strlen(name)) % branch_table_sz;
 	struct branch *b;
@@ -493,7 +493,7 @@ static struct branch* lookup_branch(const char *name)
 	return NULL;
 }
 
-static struct branch* new_branch(const char *name)
+static struct branch *new_branch(const char *name)
 {
 	unsigned int hc = hc_str(name, strlen(name)) % branch_table_sz;
 	struct branch* b = lookup_branch(name);
@@ -520,7 +520,7 @@ static unsigned int hc_entries(unsigned int cnt)
 	return cnt < avail_tree_table_sz ? cnt : avail_tree_table_sz - 1;
 }
 
-static struct tree_content* new_tree_content(unsigned int cnt)
+static struct tree_content *new_tree_content(unsigned int cnt)
 {
 	struct avail_tree_content *f, *l = NULL;
 	struct tree_content *t;
@@ -564,7 +564,7 @@ static void release_tree_content_recursive(struct tree_content *t)
 	release_tree_content(t);
 }
 
-static struct tree_content* grow_tree_content(
+static struct tree_content *grow_tree_content(
 	struct tree_content *t,
 	int amt)
 {
@@ -576,7 +576,7 @@ static struct tree_content* grow_tree_content(
 	return r;
 }
 
-static struct tree_entry* new_tree_entry(void)
+static struct tree_entry *new_tree_entry(void)
 {
 	struct tree_entry *e;
 
@@ -676,7 +676,7 @@ static int oecmp (const void *a_, const void *b_)
 	return hashcmp(a->sha1, b->sha1);
 }
 
-static char* create_index(void)
+static char *create_index(void)
 {
 	static char tmpfile[PATH_MAX];
 	SHA_CTX ctx;
@@ -732,7 +732,7 @@ static char* create_index(void)
 	return tmpfile;
 }
 
-static char* keep_pack(char *curr_index_name)
+static char *keep_pack(char *curr_index_name)
 {
 	static char name[PATH_MAX];
 	static char *keep_msg = "fast-import";
@@ -1344,7 +1344,7 @@ static void cmd_mark(void)
 		next_mark = 0;
 }
 
-static void* cmd_data (size_t *size)
+static void *cmd_data (size_t *size)
 {
 	size_t length;
 	char *buffer;
@@ -1605,7 +1605,7 @@ static void cmd_from(struct branch *b)
 	read_next_command();
 }
 
-static struct hash_list* cmd_merge(unsigned int *count)
+static struct hash_list *cmd_merge(unsigned int *count)
 {
 	struct hash_list *list = NULL, *n, *e = e;
 	const char *from;
