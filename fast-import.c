@@ -75,9 +75,9 @@ Format of STDIN stream:
      # stream formatting is: \, " and LF.  Otherwise these values
 	 # are UTF8.
      #
-  ref_str     ::= ref     | '"' quoted(ref)     '"' ;
-  sha1exp_str ::= sha1exp | '"' quoted(sha1exp) '"' ;
-  tag_str     ::= tag     | '"' quoted(tag)     '"' ;
+  ref_str     ::= ref;
+  sha1exp_str ::= sha1exp;
+  tag_str     ::= tag;
   path_str    ::= path    | '"' quoted(path)    '"' ;
   mode        ::= '100644' | '644'
                 | '100755' | '755'
@@ -1546,8 +1546,7 @@ static void file_change_d(struct branch *b)
 
 static void cmd_from(struct branch *b)
 {
-	const char *from, *endp;
-	char *str_uq;
+	const char *from;
 	struct branch *s;
 
 	if (strncmp("from ", command_buf.buf, 5))
@@ -1557,13 +1556,6 @@ static void cmd_from(struct branch *b)
 		die("Can't reinitailize branch %s", b->name);
 
 	from = strchr(command_buf.buf, ' ') + 1;
-	str_uq = unquote_c_style(from, &endp);
-	if (str_uq) {
-		if (*endp)
-			die("Garbage after string in: %s", command_buf.buf);
-		from = str_uq;
-	}
-
 	s = lookup_branch(from);
 	if (b == s)
 		die("Can't create a branch from itself: %s", b->name);
@@ -1617,20 +1609,12 @@ static void cmd_from(struct branch *b)
 static struct hash_list* cmd_merge(unsigned int *count)
 {
 	struct hash_list *list = NULL, *n, *e;
-	const char *from, *endp;
-	char *str_uq;
+	const char *from;
 	struct branch *s;
 
 	*count = 0;
 	while (!strncmp("merge ", command_buf.buf, 6)) {
 		from = strchr(command_buf.buf, ' ') + 1;
-		str_uq = unquote_c_style(from, &endp);
-		if (str_uq) {
-			if (*endp)
-				die("Garbage after string in: %s", command_buf.buf);
-			from = str_uq;
-		}
-
 		n = xmalloc(sizeof(*n));
 		s = lookup_branch(from);
 		if (s)
@@ -1661,8 +1645,6 @@ static void cmd_new_commit(void)
 	struct branch *b;
 	void *msg;
 	size_t msglen;
-	char *str_uq;
-	const char *endp;
 	char *sp;
 	char *author = NULL;
 	char *committer = NULL;
@@ -1671,17 +1653,9 @@ static void cmd_new_commit(void)
 
 	/* Obtain the branch name from the rest of our command */
 	sp = strchr(command_buf.buf, ' ') + 1;
-	str_uq = unquote_c_style(sp, &endp);
-	if (str_uq) {
-		if (*endp)
-			die("Garbage after ref in: %s", command_buf.buf);
-		sp = str_uq;
-	}
 	b = lookup_branch(sp);
 	if (!b)
 		b = new_branch(sp);
-	if (str_uq)
-		free(str_uq);
 
 	read_next_command();
 	cmd_mark();
@@ -1772,8 +1746,6 @@ static void cmd_new_commit(void)
 
 static void cmd_new_tag(void)
 {
-	char *str_uq;
-	const char *endp;
 	char *sp;
 	const char *from;
 	char *tagger;
@@ -1786,12 +1758,6 @@ static void cmd_new_tag(void)
 
 	/* Obtain the new tag name from the rest of our command */
 	sp = strchr(command_buf.buf, ' ') + 1;
-	str_uq = unquote_c_style(sp, &endp);
-	if (str_uq) {
-		if (*endp)
-			die("Garbage after tag name in: %s", command_buf.buf);
-		sp = str_uq;
-	}
 	t = pool_alloc(sizeof(struct tag));
 	t->next_tag = NULL;
 	t->name = pool_strdup(sp);
@@ -1800,22 +1766,12 @@ static void cmd_new_tag(void)
 	else
 		first_tag = t;
 	last_tag = t;
-	if (str_uq)
-		free(str_uq);
 	read_next_command();
 
 	/* from ... */
 	if (strncmp("from ", command_buf.buf, 5))
 		die("Expected from command, got %s", command_buf.buf);
-
 	from = strchr(command_buf.buf, ' ') + 1;
-	str_uq = unquote_c_style(from, &endp);
-	if (str_uq) {
-		if (*endp)
-			die("Garbage after string in: %s", command_buf.buf);
-		from = str_uq;
-	}
-
 	s = lookup_branch(from);
 	if (s) {
 		hashcpy(sha1, s->sha1);
@@ -1836,9 +1792,6 @@ static void cmd_new_tag(void)
 		free(buf);
 	} else
 		die("Invalid ref name or SHA1 expression: %s", from);
-
-	if (str_uq)
-		free(str_uq);
 	read_next_command();
 
 	/* tagger ... */
@@ -1885,18 +1838,10 @@ static void cmd_new_tag(void)
 static void cmd_reset_branch(void)
 {
 	struct branch *b;
-	char *str_uq;
-	const char *endp;
 	char *sp;
 
 	/* Obtain the branch name from the rest of our command */
 	sp = strchr(command_buf.buf, ' ') + 1;
-	str_uq = unquote_c_style(sp, &endp);
-	if (str_uq) {
-		if (*endp)
-			die("Garbage after ref in: %s", command_buf.buf);
-		sp = str_uq;
-	}
 	b = lookup_branch(sp);
 	if (b) {
 		b->last_commit = 0;
@@ -1907,8 +1852,6 @@ static void cmd_reset_branch(void)
 	}
 	else
 		b = new_branch(sp);
-	if (str_uq)
-		free(str_uq);
 	read_next_command();
 	cmd_from(b);
 }
