@@ -650,16 +650,30 @@ a data chunk which does not have an LF as its last byte.
 
 `checkpoint`
 ~~~~~~~~~~~~
-Forces gfi to close the current packfile and start a new one.
-As this requires a significant amount of CPU time and disk IO
-(to compute the overall pack SHA-1 checksum and generate the
-corresponding index file) it can easily take several minutes for
-a single `checkpoint` command to complete.
+Forces gfi to close the current packfile, start a new one, and to
+save out all current branch refs, tags and marks.
 
 ....
 	'checkpoint' LF
 	LF
 ....
+
+Note that gfi automatically switches packfiles when the current
+packfile reaches \--max-pack-size, or 4 GiB, whichever limit is
+smaller.  During an automatic packfile switch gfi does not update
+the branch refs, tags or marks.
+
+As a `checkpoint` can require a significant amount of CPU time and
+disk IO (to compute the overall pack SHA-1 checksum, generate the
+corresponding index file, and update the refs) it can easily take
+several minutes for a single `checkpoint` command to complete.
+
+Frontends may choose to issue checkpoints during extremely large
+and long running imports, or when they need to allow another Git
+process access to a branch.  However given that a 30 GiB Subversion
+repository can be loaded into Git through gfi in about 3 hours,
+explicit checkpointing may not be necessary.
+
 
 Packfile Optimization
 ---------------------

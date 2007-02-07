@@ -838,7 +838,7 @@ static void end_packfile(void)
 	last_blob.depth = 0;
 }
 
-static void checkpoint(void)
+static void cycle_packfile(void)
 {
 	end_packfile();
 	start_packfile();
@@ -931,7 +931,7 @@ static int store_object(
 
 		/* This new object needs to *not* have the current pack_id. */
 		e->pack_id = pack_id + 1;
-		checkpoint();
+		cycle_packfile();
 
 		/* We cannot carry a delta into the new pack. */
 		if (delta) {
@@ -1940,8 +1940,12 @@ static void cmd_reset_branch(void)
 
 static void cmd_checkpoint(void)
 {
-	if (object_count)
-		checkpoint();
+	if (object_count) {
+		cycle_packfile();
+		dump_branches();
+		dump_tags();
+		dump_marks();
+	}
 	read_next_command();
 }
 
