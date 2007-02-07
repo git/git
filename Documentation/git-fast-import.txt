@@ -64,6 +64,18 @@ OPTIONS
 	Frontends can use this file to validate imports after they
 	have been completed.
 
+--quiet::
+	Disable all non-fatal output, making gfi silent when it
+	is successful.	This option disables the output shown by
+	\--stats.
+
+--stats::
+	Display some basic statistics about the objects gfi has
+	created, the packfiles they were stored into, and the
+	memory used by gfi during this run.  Showing this output
+	is currently the default, but can be disabled with \--quiet.
+
+
 Performance
 -----------
 The design of gfi allows it to import large projects in a minimum
@@ -106,8 +118,8 @@ fast-forward update, gfi will skip updating that ref and instead
 prints a warning message.  gfi will always attempt to update all
 branch refs, and does not stop on the first failure.
 
-Branch updates can be forced with `--force`, but its recommended that
-this only be used on an otherwise quiet repository.  Using `--force`
+Branch updates can be forced with \--force, but its recommended that
+this only be used on an otherwise quiet repository.  Using \--force
 is not necessary for an initial import into an empty repository.
 
 
@@ -148,11 +160,11 @@ Date Formats
 ~~~~~~~~~~~~
 The following date formats are supported.  A frontend should select
 the format it will use for this import by passing the format name
-in the `--date-format=<fmt>` command line option.
+in the \--date-format=<fmt> command line option.
 
 `raw`::
 	This is the Git native format and is `<time> SP <offutc>`.
-	It is also gfi's default format, if `--date-format` was
+	It is also gfi's default format, if \--date-format was
 	not specified.
 +
 The time of the event is specified by `<time>` as the number of
@@ -321,7 +333,7 @@ the email address from the other fields in the line.  Note that
 `LT` and `LF`.  It is typically UTF-8 encoded.
 
 The time of the change is specified by `<when>` using the date format
-that was selected by the `--date-format=<fmt>` command line option.
+that was selected by the \--date-format=<fmt> command line option.
 See ``Date Formats'' above for the set of supported formats, and
 their syntax.
 
@@ -735,7 +747,7 @@ branch, their in-memory storage size can grow to a considerable size
 gfi automatically moves active branches to inactive status based on
 a simple least-recently-used algorithm.  The LRU chain is updated on
 each `commit` command.  The maximum number of active branches can be
-increased or decreased on the command line with `--active-branches=`.
+increased or decreased on the command line with \--active-branches=.
 
 per active tree
 ~~~~~~~~~~~~~~~

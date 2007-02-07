@@ -1950,8 +1950,7 @@ static const char fast_import_usage[] =
 
 int main(int argc, const char **argv)
 {
-	int i;
-	uintmax_t total_count, duplicate_count;
+	int i, show_stats = 1;
 
 	git_config(git_default_config);
 
@@ -1981,6 +1980,10 @@ int main(int argc, const char **argv)
 			mark_file = a + 15;
 		else if (!strcmp(a, "--force"))
 			force_update = 1;
+		else if (!strcmp(a, "--quiet"))
+			show_stats = 0;
+		else if (!strcmp(a, "--stats"))
+			show_stats = 1;
 		else
 			die("unknown option %s", a);
 	}
@@ -2020,31 +2023,32 @@ int main(int argc, const char **argv)
 	unkeep_all_packs();
 	dump_marks();
 
-	total_count = 0;
-	for (i = 0; i < ARRAY_SIZE(object_count_by_type); i++)
-		total_count += object_count_by_type[i];
-	duplicate_count = 0;
-	for (i = 0; i < ARRAY_SIZE(duplicate_count_by_type); i++)
-		duplicate_count += duplicate_count_by_type[i];
+	if (show_stats) {
+		uintmax_t total_count = 0, duplicate_count = 0;
+		for (i = 0; i < ARRAY_SIZE(object_count_by_type); i++)
+			total_count += object_count_by_type[i];
+		for (i = 0; i < ARRAY_SIZE(duplicate_count_by_type); i++)
+			duplicate_count += duplicate_count_by_type[i];
 
-	fprintf(stderr, "%s statistics:\n", argv[0]);
-	fprintf(stderr, "---------------------------------------------------------------------\n");
-	fprintf(stderr, "Alloc'd objects: %10ju\n", alloc_count);
-	fprintf(stderr, "Total objects:   %10ju (%10ju duplicates                  )\n", total_count, duplicate_count);
-	fprintf(stderr, "      blobs  :   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB], delta_count_by_type[OBJ_BLOB]);
-	fprintf(stderr, "      trees  :   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE], delta_count_by_type[OBJ_TREE]);
-	fprintf(stderr, "      commits:   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT], delta_count_by_type[OBJ_COMMIT]);
-	fprintf(stderr, "      tags   :   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG], delta_count_by_type[OBJ_TAG]);
-	fprintf(stderr, "Total branches:  %10lu (%10lu loads     )\n", branch_count, branch_load_count);
-	fprintf(stderr, "      marks:     %10ju (%10ju unique    )\n", (((uintmax_t)1) << marks->shift) * 1024, marks_set_count);
-	fprintf(stderr, "      atoms:     %10u\n", atom_cnt);
-	fprintf(stderr, "Memory total:    %10ju KiB\n", (total_allocd + alloc_count*sizeof(struct object_entry))/1024);
-	fprintf(stderr, "       pools:    %10lu KiB\n", total_allocd/1024);
-	fprintf(stderr, "     objects:    %10ju KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
-	fprintf(stderr, "---------------------------------------------------------------------\n");
-	pack_report();
-	fprintf(stderr, "---------------------------------------------------------------------\n");
-	fprintf(stderr, "\n");
+		fprintf(stderr, "%s statistics:\n", argv[0]);
+		fprintf(stderr, "---------------------------------------------------------------------\n");
+		fprintf(stderr, "Alloc'd objects: %10ju\n", alloc_count);
+		fprintf(stderr, "Total objects:   %10ju (%10ju duplicates                  )\n", total_count, duplicate_count);
+		fprintf(stderr, "      blobs  :   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB], delta_count_by_type[OBJ_BLOB]);
+		fprintf(stderr, "      trees  :   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE], delta_count_by_type[OBJ_TREE]);
+		fprintf(stderr, "      commits:   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT], delta_count_by_type[OBJ_COMMIT]);
+		fprintf(stderr, "      tags   :   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG], delta_count_by_type[OBJ_TAG]);
+		fprintf(stderr, "Total branches:  %10lu (%10lu loads     )\n", branch_count, branch_load_count);
+		fprintf(stderr, "      marks:     %10ju (%10ju unique    )\n", (((uintmax_t)1) << marks->shift) * 1024, marks_set_count);
+		fprintf(stderr, "      atoms:     %10u\n", atom_cnt);
+		fprintf(stderr, "Memory total:    %10ju KiB\n", (total_allocd + alloc_count*sizeof(struct object_entry))/1024);
+		fprintf(stderr, "       pools:    %10lu KiB\n", total_allocd/1024);
+		fprintf(stderr, "     objects:    %10ju KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
+		fprintf(stderr, "---------------------------------------------------------------------\n");
+		pack_report();
+		fprintf(stderr, "---------------------------------------------------------------------\n");
+		fprintf(stderr, "\n");
+	}
 
 	return failure ? 1 : 0;
 }
