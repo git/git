@@ -13,7 +13,7 @@ import os, string, sys, time
 import marshal, popen2
 
 branch = "refs/heads/p4"
-prefix = os.popen("git-repo-config --get p4.depotpath").read()
+prefix = previousDepotPath = os.popen("git-repo-config --get p4.depotpath").read()
 if len(prefix) != 0:
     prefix = prefix[:-1]
 
@@ -22,7 +22,8 @@ if len(sys.argv) == 1 and len(prefix) != 0:
 elif len(sys.argv) != 2:
     print "usage: %s //depot/path[@revRange]" % sys.argv[0]
     print "\n    example:"
-    print "    %s //depot/my/project/ -- to import everything"
+    print "    %s //depot/my/project/ -- to import the current head"
+    print "    %s //depot/my/project/@all -- to import everything"
     print "    %s //depot/my/project/@1,6 -- to import only from revision 1 to 6"
     print ""
     print "    (a ... is not needed in the path p4 specification, it's added implicitly)"
@@ -42,7 +43,9 @@ initialParent = ""
 if prefix.find("@") != -1:
     atIdx = prefix.index("@")
     changeRange = prefix[atIdx:]
-    if changeRange.find(",") == -1:
+    if changeRange == "@all":
+        changeRange = ""
+    elif changeRange.find(",") == -1:
         revision = changeRange
         changeRange = ""
     prefix = prefix[0:atIdx]
@@ -50,6 +53,8 @@ elif prefix.find("#") != -1:
     hashIdx = prefix.index("#")
     revision = prefix[hashIdx:]
     prefix = prefix[0:hashIdx]
+elif len(previousDepotPath) == 0:
+    revision = "#head"
 
 if prefix.endswith("..."):
     prefix = prefix[:-3]
