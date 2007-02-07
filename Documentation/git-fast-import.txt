@@ -64,6 +64,18 @@ OPTIONS
 	Frontends can use this file to validate imports after they
 	have been completed.
 
+--quiet::
+	Disable all non-fatal output, making gfi silent when it
+	is successful.	This option disables the output shown by
+	\--stats.
+
+--stats::
+	Display some basic statistics about the objects gfi has
+	created, the packfiles they were stored into, and the
+	memory used by gfi during this run.  Showing this output
+	is currently the default, but can be disabled with \--quiet.
+
+
 Performance
 -----------
 The design of gfi allows it to import large projects in a minimum
@@ -106,8 +118,8 @@ fast-forward update, gfi will skip updating that ref and instead
 prints a warning message.  gfi will always attempt to update all
 branch refs, and does not stop on the first failure.
 
-Branch updates can be forced with `--force`, but its recommended that
-this only be used on an otherwise quiet repository.  Using `--force`
+Branch updates can be forced with \--force, but its recommended that
+this only be used on an otherwise quiet repository.  Using \--force
 is not necessary for an initial import into an empty repository.
 
 
@@ -148,26 +160,28 @@ Date Formats
 ~~~~~~~~~~~~
 The following date formats are supported.  A frontend should select
 the format it will use for this import by passing the format name
-in the `--date-format=<fmt>` command line option.
+in the \--date-format=<fmt> command line option.
 
 `raw`::
-	This is the Git native format and is `<time> SP <tz>`.
-	It is also gfi's default format, if `--date-format` was
+	This is the Git native format and is `<time> SP <offutc>`.
+	It is also gfi's default format, if \--date-format was
 	not specified.
 +
 The time of the event is specified by `<time>` as the number of
 seconds since the UNIX epoch (midnight, Jan 1, 1970, UTC) and is
 written as an ASCII decimal integer.
 +
-The timezone is specified by `<tz>` as a positive or negative offset
-from UTC.  For example EST (which is typically 5 hours behind GMT)
-would be expressed in `<tz>` by ``-0500'' while GMT is ``+0000''.
+The local offset is specified by `<offutc>` as a positive or negative
+offset from UTC.  For example EST (which is 5 hours behind UTC)
+would be expressed in `<tz>` by ``-0500'' while UTC is ``+0000''.
+The local offset does not affect `<time>`; it is used only as an
+advisement to help formatting routines display the timestamp.
 +
-If the timezone is not available in the source material, use
-``+0000'', or the most common local timezone.  For example many
+If the local offset is not available in the source material, use
+``+0000'', or the most common local offset.  For example many
 organizations have a CVS repository which has only ever been accessed
 by users who are located in the same location and timezone.  In this
-case the user's timezone can be easily assumed.
+case the offset from UTC can be easily assumed.
 +
 Unlike the `rfc2822` format, this format is very strict.  Any
 variation in formatting will cause gfi to reject the value.
@@ -185,6 +199,11 @@ these cases Git will still be able to obtain the correct date from
 the malformed string.  There are also some types of malformed
 strings which Git will parse wrong, and yet consider valid.
 Seriously malformed strings will be rejected.
++
+Unlike the `raw` format above, the timezone/UTC offset information
+contained in an RFC 2822 date string is used to adjust the date
+value to UTC prior to storage.  Therefore it is important that
+this information be as accurate as possible.
 +
 If the source material is formatted in RFC 2822 style dates,
 the frontend should let gfi handle the parsing and conversion
@@ -262,7 +281,7 @@ change to the project.
 	data
 	('from' SP <committish> LF)?
 	('merge' SP <committish> LF)?
-	(filemodify | filedelete)*
+	(filemodify | filedelete | filedeleteall)*
 	LF
 ....
 
@@ -285,10 +304,12 @@ commit message use a 0 length data.  Commit messages are free-form
 and are not interpreted by Git.  Currently they must be encoded in
 UTF-8, as gfi does not permit other encodings to be specified.
 
-Zero or more `filemodify` and `filedelete` commands may be
-included to update the contents of the branch prior to the commit.
-These commands can be supplied in any order, gfi is not sensitive
-to pathname or operation ordering.
+Zero or more `filemodify`, `filedelete` and `filedeleteall` commands
+may be included to update the contents of the branch prior to
+creating the commit.  These commands may be supplied in any order.
+However it is recommended that a `filedeleteall` command preceed
+all `filemodify` commands in the same commit, as `filedeleteall`
+wipes the branch clean (see below).
 
 `author`
 ^^^^^^^^
@@ -312,7 +333,7 @@ the email address from the other fields in the line.  Note that
 `LT` and `LF`.  It is typically UTF-8 encoded.
 
 The time of the change is specified by `<when>` using the date format
-that was selected by the `--date-format=<fmt>` command line option.
+that was selected by the \--date-format=<fmt> command line option.
 See ``Date Formats'' above for the set of supported formats, and
 their syntax.
 
@@ -451,6 +472,30 @@ first non-empty directory or the root is reached.
 
 here `<path>` is the complete path of the file to be removed.
 See `filemodify` above for a detailed description of `<path>`.
+
+`filedeleteall`
+^^^^^^^^^^^^^^^
+Included in a `commit` command to remove all files (and also all
+directories) from the branch.  This command resets the internal
+branch structure to have no files in it, allowing the frontend
+to subsequently add all interesting files from scratch.
+
+....
+	'deleteall' LF
+....
+
+This command is extremely useful if the frontend does not know
+(or does not care to know) what files are currently on the branch,
+and therefore cannot generate the proper `filedelete` commands to
+update the content.
+
+Issuing a `filedeleteall` followed by the needed `filemodify`
+commands to set the correct content will produce the same results
+as sending only the needed `filemodify` and `filedelete` commands.
+The `filedeleteall` approach may however require gfi to use slightly
+more memory per active branch (less than 1 MiB for even most large
+projects); so frontends that can easily obtain only the affected
+paths for a commit are encouraged to do so.
 
 `mark`
 ~~~~~~
@@ -605,16 +650,116 @@ a data chunk which does not have an LF as its last byte.
 
 `checkpoint`
 ~~~~~~~~~~~~
-Forces gfi to close the current packfile and start a new one.
-As this requires a significant amount of CPU time and disk IO
-(to compute the overall pack SHA-1 checksum and generate the
-corresponding index file) it can easily take several minutes for
-a single `checkpoint` command to complete.
+Forces gfi to close the current packfile, start a new one, and to
+save out all current branch refs, tags and marks.
 
 ....
 	'checkpoint' LF
 	LF
 ....
+
+Note that gfi automatically switches packfiles when the current
+packfile reaches \--max-pack-size, or 4 GiB, whichever limit is
+smaller.  During an automatic packfile switch gfi does not update
+the branch refs, tags or marks.
+
+As a `checkpoint` can require a significant amount of CPU time and
+disk IO (to compute the overall pack SHA-1 checksum, generate the
+corresponding index file, and update the refs) it can easily take
+several minutes for a single `checkpoint` command to complete.
+
+Frontends may choose to issue checkpoints during extremely large
+and long running imports, or when they need to allow another Git
+process access to a branch.  However given that a 30 GiB Subversion
+repository can be loaded into Git through gfi in about 3 hours,
+explicit checkpointing may not be necessary.
+
+
+Tips and Tricks
+---------------
+The following tips and tricks have been collected from various
+users of gfi, and are offered here as suggestions.
+
+Use One Mark Per Commit
+~~~~~~~~~~~~~~~~~~~~~~~
+When doing a repository conversion, use a unique mark per commit
+(`mark :<n>`) and supply the \--export-marks option on the command
+line.  gfi will dump a file which lists every mark and the Git
+object SHA-1 that corresponds to it.  If the frontend can tie
+the marks back to the source repository, it is easy to verify the
+accuracy and completeness of the import by comparing each Git
+commit to the corresponding source revision.
+
+Coming from a system such as Perforce or Subversion this should be
+quite simple, as the gfi mark can also be the Perforce changeset
+number or the Subversion revision number.
+
+Freely Skip Around Branches
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Don't bother trying to optimize the frontend to stick to one branch
+at a time during an import.  Although doing so might be slightly
+faster for gfi, it tends to increase the complexity of the frontend
+code considerably.
+
+The branch LRU builtin to gfi tends to behave very well, and the
+cost of activating an inactive branch is so low that bouncing around
+between branches has virtually no impact on import performance.
+
+Use Tag Fixup Branches
+~~~~~~~~~~~~~~~~~~~~~~
+Some other SCM systems let the user create a tag from multiple
+files which are not from the same commit/changeset.  Or to create
+tags which are a subset of the files available in the repository.
+
+Importing these tags as-is in Git is impossible without making at
+least one commit which ``fixes up'' the files to match the content
+of the tag.  Use gfi's `reset` command to reset a dummy branch
+outside of your normal branch space to the base commit for the tag,
+then commit one or more file fixup commits, and finally tag the
+dummy branch.
+
+For example since all normal branches are stored under `refs/heads/`
+name the tag fixup branch `TAG_FIXUP`.  This way it is impossible for
+the fixup branch used by the importer to have namespace conflicts
+with real branches imported from the source (the name `TAG_FIXUP`
+is not `refs/heads/TAG_FIXUP`).
+
+When committing fixups, consider using `merge` to connect the
+commit(s) which are supplying file revisions to the fixup branch.
+Doing so will allow tools such as gitlink:git-blame[1] to track
+through the real commit history and properly annotate the source
+files.
+
+After gfi terminates the frontend will need to do `rm .git/TAG_FIXUP`
+to remove the dummy branch.
+
+Import Now, Repack Later
+~~~~~~~~~~~~~~~~~~~~~~~~
+As soon as gfi completes the Git repository is completely valid
+and ready for use.  Typicallly this takes only a very short time,
+even for considerably large projects (100,000+ commits).
+
+However repacking the repository is necessary to improve data
+locality and access performance.  It can also take hours on extremely
+large projects (especially if -f and a large \--window parameter is
+used).  Since repacking is safe to run alongside readers and writers,
+run the repack in the background and let it finish when it finishes.
+There is no reason to wait to explore your new Git project!
+
+If you choose to wait for the repack, don't try to run benchmarks
+or performance tests until repacking is completed.  gfi outputs
+suboptimal packfiles that are simply never seen in real use
+situations.
+
+Repacking Historical Data
+~~~~~~~~~~~~~~~~~~~~~~~~~
+If you are repacking very old imported data (e.g. older than the
+last year), consider expending some extra CPU time and supplying
+\--window=50 (or higher) when you run gitlink:git-repack[1].
+This will take longer, but will also produce a smaller packfile.
+You only need to expend the effort once, and everyone using your
+project will benefit from the smaller repository.
+
 
 Packfile Optimization
 ---------------------
@@ -645,6 +790,7 @@ Git to reorganize the packfiles for faster data access.  If blob
 deltas are suboptimal (see above) then also adding the `-f` option
 to force recomputation of all deltas can significantly reduce the
 final packfile size (30-50% smaller can be quite typical).
+
 
 Memory Utilization
 ------------------
@@ -702,7 +848,7 @@ branch, their in-memory storage size can grow to a considerable size
 gfi automatically moves active branches to inactive status based on
 a simple least-recently-used algorithm.  The LRU chain is updated on
 each `commit` command.  The maximum number of active branches can be
-increased or decreased on the command line with `--active-branches=`.
+increased or decreased on the command line with \--active-branches=.
 
 per active tree
 ~~~~~~~~~~~~~~~
