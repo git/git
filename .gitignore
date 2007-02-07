@@ -101,7 +101,6 @@ git-repo-config
 git-request-pull
 git-rerere
 git-reset
-git-resolve
 git-rev-list
 git-rev-parse
 git-revert

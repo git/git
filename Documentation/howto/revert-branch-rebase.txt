@@ -85,7 +85,7 @@ Fortunately I did not have to; what I have in the current branch
 
 ------------------------------------------------
 $ git checkout master
-$ git resolve master revert-c99 fast ;# this should be a fast forward
+$ git merge revert-c99 ;# this should be a fast forward
 Updating from 10d781b9caa4f71495c7b34963bef137216f86a8 to e3a693c...
  cache.h        |    8 ++++----
  commit.c       |    2 +-
@@ -94,13 +94,6 @@ Updating from 10d781b9caa4f71495c7b34963bef137216f86a8 to e3a693c...
  server-info.c  |    2 +-
  5 files changed, 8 insertions(+), 8 deletions(-)
 ------------------------------------------------
-
-The 'fast' in the above 'git resolve' is not a magic.  I knew this
-'resolve' would result in a fast forward merge, and if not, there is
-something very wrong (so I would do 'git reset' on the 'master' branch
-and examine the situation).  When a fast forward merge is done, the
-message parameter to 'git resolve' is discarded, because no new commit
-is created.  You could have said 'junk' or 'nothing' there as well.
 
 There is no need to redo the test at this point.  We fast forwarded
 and we know 'master' matches 'revert-c99' exactly.  In fact:
