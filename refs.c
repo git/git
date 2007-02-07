@@ -1206,7 +1206,7 @@ int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 static int do_for_each_reflog(const char *base, each_ref_fn fn, void *cb_data)
 {
 	DIR *dir = opendir(git_path("logs/%s", base));
-	int retval = errno;
+	int retval = 0;
 
 	if (dir) {
 		struct dirent *de;
@@ -1246,6 +1246,8 @@ static int do_for_each_reflog(const char *base, each_ref_fn fn, void *cb_data)
 		free(log);
 		closedir(dir);
 	}
+	else
+		return errno;
 	return retval;
 }
 
