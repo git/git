@@ -2433,21 +2433,62 @@ sub gs_fetch_loop_common {
 	my ($self, $base, $head, @gs) = @_;
 	my $inc = 1000;
 	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
+
+	my %common;
 	foreach my $gs (@gs) {
 		if (my $last_commit = $gs->last_commit) {
 			$gs->assert_index_clean($last_commit);
 		}
+		my @tmp = split m#/#, $gs->{path};
+		my $p = '';
+		foreach (@tmp) {
+			$p .= length($p) ? "/$_" : $_;
+			$common{$p} ||= 0;
+			$common{$p}++;
+		}
+	}
+	my $longest_path = '';
+	foreach (sort {length $b <=> length $a} keys %common) {
+		if ($common{$_} == @gs) {
+			$longest_path = $_;
+			last;
+		}
 	}
 	while (1) {
 		my %revs;
+		my $err;
 		my $err_handler = $SVN::Error::handler;
-		$SVN::Error::handler = \&skip_unknown_revs;
-		$self->get_log([''], $min, $max, 0, 1, 1, sub {
-		               my ($paths, $r, $author, $date, $log) = @_;
-			       $revs{$r} = [ dup_changed_paths($paths),
-			                     { author => $author,
-					       date => $date,
-					       log => $log } ] });
+		$SVN::Error::handler = sub {
+			($err) = @_;
+			skip_unknown_revs($err);
+		};
+		sub _cb {
+			my ($paths, $r, $author, $date, $log) = @_;
+			[ dup_changed_paths($paths),
+			  { author => $author, date => $date, log => $log } ];
+		}
+		$self->get_log([$longest_path], $min, $max, 0, 1, 1,
+		               sub { $revs{$_[1]} = _cb(@_) });
+		if ($err && $max >= $head) {
+			print STDERR "Path '$longest_path' ",
+				     "was probably deleted:\n",
+				     $err->expanded_message,
+				     "\nWill attempt to follow ",
+				     "revisions r$min .. r$max ",
+				     "committed before the deletion\n";
+			my $hi = $max;
+			while (--$hi >= $min) {
+				my $ok;
+				$self->get_log([$longest_path], $min, $hi,
+				               0, 1, 1, sub {
+				               $ok ||= $_[1];
+				               $revs{$_[1]} = _cb(@_) });
+				if ($ok) {
+					print STDERR "r$min .. r$ok OK\n";
+					last;
+				}
+			}
+		}
 		$SVN::Error::handler = $err_handler;
 
 		foreach my $r (sort {$a <=> $b} keys %revs) {
