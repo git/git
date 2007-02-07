@@ -88,7 +88,7 @@ def commit(details):
     gitStream.write("EOT\n\n")
 
     if len(initialParent) > 0:
-        gitStream.write("merge %s\n" % initialParent)
+        gitStream.write("from %s\n" % initialParent)
         initialParent = ""
 
     fnum = 0
