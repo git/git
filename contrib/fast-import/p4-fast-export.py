@@ -154,6 +154,9 @@ if len(changeRange) == 0:
 sys.stderr.write("\n")
 
 tz = - time.timezone / 36
+tzsign = ("%s" % tz)[0]
+if tzsign != '+' and tzsign != '-':
+    tz = "+" + ("%s" % tz)
 
 if len(revision) > 0:
     print "Doing initial import of %s from revision %s" % (prefix, revision)
@@ -165,21 +168,25 @@ if len(revision) > 0:
 
     fileCnt = 0
     for info in p4CmdList("files %s...%s" % (prefix, revision)):
-        if info["action"] == "delete":
-            continue
-        for prop in [ "depotFile", "rev", "action", "type" ]:
-            details["%s%s" % (prop, fileCnt)] = info[prop]
-
         change = info["change"]
         if change > newestRevision:
             newestRevision = change
+
+        if info["action"] == "delete":
+            continue
+
+        for prop in [ "depotFile", "rev", "action", "type" ]:
+            details["%s%s" % (prop, fileCnt)] = info[prop]
 
         fileCnt = fileCnt + 1
 
     details["change"] = newestRevision
 
     gitOutput, gitStream, gitError = popen2.popen3("git-fast-import")
-    commit(details)
+    try:
+        commit(details)
+    except:
+        print gitError.read()
 
     gitStream.close()
     gitOutput.close()
