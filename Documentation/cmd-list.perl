@@ -92,6 +92,7 @@ git-diff-index                          plumbinginterrogators
 git-diff                                mainporcelain
 git-diff-stages                         plumbinginterrogators
 git-diff-tree                           plumbinginterrogators
+git-fast-import				ancillarymanipulators
 git-fetch                               mainporcelain
 git-fetch-pack                          synchingrepositories
 git-fmt-merge-msg                       purehelpers

@@ -12,6 +12,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
+DEPRECATED and will be removed in 1.5.1.
+
 Compares the content and mode of the blobs in two stages in an
 unmerged index file.
 

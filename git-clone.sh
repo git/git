@@ -178,46 +178,32 @@ esac && export GIT_DIR && git-init ${template+"$template"} || usage
 
 if test -n "$reference"
 then
+	ref_git=
 	if test -d "$reference"
 	then
 		if test -d "$reference/.git/objects"
 		then
-			reference="$reference/.git"
+			ref_git="$reference/.git"
+		elif test -d "$reference/objects"
+		then
+			ref_git="$reference"
 		fi
-		reference=$(cd "$reference" && pwd)
-		echo "$reference/objects" >"$GIT_DIR/objects/info/alternates"
-		(cd "$reference" && tar cf - refs) |
-		(cd "$GIT_DIR/refs" &&
-		 mkdir reference-tmp &&
-		 cd reference-tmp &&
-		 tar xf - &&
-		 find refs ! -type d -print |
-		 while read ref
-		 do
-			if test -h "$ref"
-			then
-				# Old-style symbolic link ref.  Not likely
-				# to appear under refs/ but we might as well
-				# deal with them.
-				:
-			elif test -f "$ref"
-			then
-				point=$(cat "$ref") &&
-					case "$point" in
-					'ref: '*) ;;
-					*) continue ;;
-					esac
-			fi
-			# The above makes true ref to 'continue' and
-			# we will come here when we are looking at
-			# symbolic link ref or a textual symref (or
-			# garbage, like fifo).
-			# The true ref pointed at by it is enough to
-			# ensure that we do not fetch objects reachable
-			# from it.
-			rm -f "$ref"
-		 done
-		)
+	fi
+	if test -n "$ref_git"
+	then
+		ref_git=$(cd "$ref_git" && pwd)
+		echo "$ref_git/objects" >"$GIT_DIR/objects/info/alternates"
+		(
+			GIT_DIR="$ref_git" git for-each-ref \
+				--format='%(objectname) %(*objectname)'
+		) |
+		while read a b
+		do
+			test -z "$a" ||
+			git update-ref "refs/reference-tmp/$a" "$a"
+			test -z "$b" ||
+			git update-ref "refs/reference-tmp/$b" "$b"
+		done
 	else
 		die "reference repository '$reference' is not a local directory."
 	fi

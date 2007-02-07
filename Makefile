@@ -194,6 +194,8 @@ SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 PROGRAMS = \
 	git-convert-objects$X git-fetch-pack$X git-fsck$X \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
+	git-fast-import$X \
+	git-merge-base$X \
 	git-daemon$X \
 	git-merge-index$X git-mktag$X git-mktree$X git-patch-id$X \
 	git-peek-remote$X git-receive-pack$X \
@@ -217,8 +219,7 @@ BUILT_INS = \
 	$(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
 
 # what 'all' will build and 'install' will install, in gitexecdir
-ALL_PROGRAMS = $(PROGRAMS) $(SCRIPTS) \
-	git-merge-recur$X
+ALL_PROGRAMS = $(PROGRAMS) $(SCRIPTS)
 
 # Backward compatibility -- to be removed after 1.0
 PROGRAMS += git-ssh-pull$X git-ssh-push$X
@@ -626,9 +627,6 @@ git$X: git.c common-cmds.h $(BUILTIN_OBJS) $(GITLIBS) GIT-CFLAGS
 
 help.o: common-cmds.h
 
-git-merge-recur$X: git-merge-recursive$X
-	rm -f $@ && ln git-merge-recursive$X $@
-
 $(BUILT_INS): git$X
 	rm -f $@ && ln git$X $@
 
@@ -935,7 +933,7 @@ check-docs::
 	do \
 		case "$$v" in \
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
-		git-merge-resolve | git-merge-stupid | git-merge-recur | \
+		git-merge-resolve | git-merge-stupid | \
 		git-ssh-pull | git-ssh-push ) continue ;; \
 		esac ; \
 		test -f "Documentation/$$v.txt" || \

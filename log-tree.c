@@ -143,7 +143,7 @@ void show_log(struct rev_info *opt, const char *sep)
 	if (*sep != '\n' && opt->commit_format == CMIT_FMT_ONELINE)
 		extra = "\n";
 	if (opt->shown_one && opt->commit_format != CMIT_FMT_ONELINE)
-		putchar('\n');
+		putchar(opt->diffopt.line_termination);
 	opt->shown_one = 1;
 
 	/*
@@ -270,9 +270,8 @@ int log_tree_diff_flush(struct rev_info *opt)
 		    opt->commit_format != CMIT_FMT_ONELINE) {
 			int pch = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_PATCH;
 			if ((pch & opt->diffopt.output_format) == pch)
-				printf("---%c", opt->diffopt.line_termination);
-			else
-				putchar(opt->diffopt.line_termination);
+				printf("---");
+			putchar('\n');
 		}
 	}
 	diff_flush(&opt->diffopt);

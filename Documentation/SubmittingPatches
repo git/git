@@ -316,7 +316,6 @@ settings but I haven't tried, yet.
 	mail.identity.id?.compose_html		=> false
 
 
-
 Gnus
 ----
 
@@ -331,3 +330,20 @@ whitespaces (fatal in patches).  Running 'C-u g' to display the
 message in raw form before using '|' to run the pipe can work
 this problem around.
 
+
+KMail
+-----
+
+This should help you to submit patches inline using KMail.
+
+1) Prepare the patch as a text file.
+
+2) Click on New Mail.
+
+3) Go under "Options" in the Composer window and be sure that
+"Word wrap" is not set.
+
+4) Use Message -> Insert file... and insert the patch.
+
+5) Back in the compose window: add whatever other text you wish to the
+message, complete the addressing and subject fields, and press send.

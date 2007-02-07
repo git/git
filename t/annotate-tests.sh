@@ -113,7 +113,8 @@ test_expect_success \
 
 test_expect_success \
     'some edit' \
-    'perl -p -i.orig -e "s/^1A.*\n$//; s/^3A/99/" file &&
+    'mv file file.orig &&
+    sed -e "s/^3A/99/" -e "/^1A/d" < file.orig > file &&
     GIT_AUTHOR_NAME="D" git commit -a -m "edit"'
 
 test_expect_success \
