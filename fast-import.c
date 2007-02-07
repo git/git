@@ -1367,8 +1367,12 @@ static void dump_marks(void)
 	if (mark_file)
 	{
 		FILE *f = fopen(mark_file, "w");
-		dump_marks_helper(f, 0, marks);
-		fclose(f);
+		if (f) {
+			dump_marks_helper(f, 0, marks);
+			fclose(f);
+		} else
+			failure |= error("Unable to write marks file %s: %s",
+				mark_file, strerror(errno));
 	}
 }
 
