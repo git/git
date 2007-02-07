@@ -151,7 +151,7 @@ the format it will use for this import by passing the format name
 in the `--date-format=<fmt>` command line option.
 
 `raw`::
-	This is the Git native format and is `<time> SP <tz>`.
+	This is the Git native format and is `<time> SP <offutc>`.
 	It is also gfi's default format, if `--date-format` was
 	not specified.
 +
@@ -159,15 +159,17 @@ The time of the event is specified by `<time>` as the number of
 seconds since the UNIX epoch (midnight, Jan 1, 1970, UTC) and is
 written as an ASCII decimal integer.
 +
-The timezone is specified by `<tz>` as a positive or negative offset
-from UTC.  For example EST (which is typically 5 hours behind GMT)
-would be expressed in `<tz>` by ``-0500'' while GMT is ``+0000''.
+The local offset is specified by `<offutc>` as a positive or negative
+offset from UTC.  For example EST (which is 5 hours behind UTC)
+would be expressed in `<tz>` by ``-0500'' while UTC is ``+0000''.
+The local offset does not affect `<time>`; it is used only as an
+advisement to help formatting routines display the timestamp.
 +
-If the timezone is not available in the source material, use
-``+0000'', or the most common local timezone.  For example many
+If the local offset is not available in the source material, use
+``+0000'', or the most common local offset.  For example many
 organizations have a CVS repository which has only ever been accessed
 by users who are located in the same location and timezone.  In this
-case the user's timezone can be easily assumed.
+case the offset from UTC can be easily assumed.
 +
 Unlike the `rfc2822` format, this format is very strict.  Any
 variation in formatting will cause gfi to reject the value.
@@ -185,6 +187,11 @@ these cases Git will still be able to obtain the correct date from
 the malformed string.  There are also some types of malformed
 strings which Git will parse wrong, and yet consider valid.
 Seriously malformed strings will be rejected.
++
+Unlike the `raw` format above, the timezone/UTC offset information
+contained in an RFC 2822 date string is used to adjust the date
+value to UTC prior to storage.  Therefore it is important that
+this information be as accurate as possible.
 +
 If the source material is formatted in RFC 2822 style dates,
 the frontend should let gfi handle the parsing and conversion
