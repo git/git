@@ -675,6 +675,92 @@ repository can be loaded into Git through gfi in about 3 hours,
 explicit checkpointing may not be necessary.
 
 
+Tips and Tricks
+---------------
+The following tips and tricks have been collected from various
+users of gfi, and are offered here as suggestions.
+
+Use One Mark Per Commit
+~~~~~~~~~~~~~~~~~~~~~~~
+When doing a repository conversion, use a unique mark per commit
+(`mark :<n>`) and supply the \--export-marks option on the command
+line.  gfi will dump a file which lists every mark and the Git
+object SHA-1 that corresponds to it.  If the frontend can tie
+the marks back to the source repository, it is easy to verify the
+accuracy and completeness of the import by comparing each Git
+commit to the corresponding source revision.
+
+Coming from a system such as Perforce or Subversion this should be
+quite simple, as the gfi mark can also be the Perforce changeset
+number or the Subversion revision number.
+
+Freely Skip Around Branches
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Don't bother trying to optimize the frontend to stick to one branch
+at a time during an import.  Although doing so might be slightly
+faster for gfi, it tends to increase the complexity of the frontend
+code considerably.
+
+The branch LRU builtin to gfi tends to behave very well, and the
+cost of activating an inactive branch is so low that bouncing around
+between branches has virtually no impact on import performance.
+
+Use Tag Fixup Branches
+~~~~~~~~~~~~~~~~~~~~~~
+Some other SCM systems let the user create a tag from multiple
+files which are not from the same commit/changeset.  Or to create
+tags which are a subset of the files available in the repository.
+
+Importing these tags as-is in Git is impossible without making at
+least one commit which ``fixes up'' the files to match the content
+of the tag.  Use gfi's `reset` command to reset a dummy branch
+outside of your normal branch space to the base commit for the tag,
+then commit one or more file fixup commits, and finally tag the
+dummy branch.
+
+For example since all normal branches are stored under `refs/heads/`
+name the tag fixup branch `TAG_FIXUP`.  This way it is impossible for
+the fixup branch used by the importer to have namespace conflicts
+with real branches imported from the source (the name `TAG_FIXUP`
+is not `refs/heads/TAG_FIXUP`).
+
+When committing fixups, consider using `merge` to connect the
+commit(s) which are supplying file revisions to the fixup branch.
+Doing so will allow tools such as gitlink:git-blame[1] to track
+through the real commit history and properly annotate the source
+files.
+
+After gfi terminates the frontend will need to do `rm .git/TAG_FIXUP`
+to remove the dummy branch.
+
+Import Now, Repack Later
+~~~~~~~~~~~~~~~~~~~~~~~~
+As soon as gfi completes the Git repository is completely valid
+and ready for use.  Typicallly this takes only a very short time,
+even for considerably large projects (100,000+ commits).
+
+However repacking the repository is necessary to improve data
+locality and access performance.  It can also take hours on extremely
+large projects (especially if -f and a large \--window parameter is
+used).  Since repacking is safe to run alongside readers and writers,
+run the repack in the background and let it finish when it finishes.
+There is no reason to wait to explore your new Git project!
+
+If you choose to wait for the repack, don't try to run benchmarks
+or performance tests until repacking is completed.  gfi outputs
+suboptimal packfiles that are simply never seen in real use
+situations.
+
+Repacking Historical Data
+~~~~~~~~~~~~~~~~~~~~~~~~~
+If you are repacking very old imported data (e.g. older than the
+last year), consider expending some extra CPU time and supplying
+\--window=50 (or higher) when you run gitlink:git-repack[1].
+This will take longer, but will also produce a smaller packfile.
+You only need to expend the effort once, and everyone using your
+project will benefit from the smaller repository.
+
+
 Packfile Optimization
 ---------------------
 When packing a blob gfi always attempts to deltify against the last
@@ -704,6 +790,7 @@ Git to reorganize the packfiles for faster data access.  If blob
 deltas are suboptimal (see above) then also adding the `-f` option
 to force recomputation of all deltas can significantly reduce the
 final packfile size (30-50% smaller can be quite typical).
+
 
 Memory Utilization
 ------------------
