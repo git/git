@@ -1,6 +1,5 @@
 #!/usr/bin/perl -w
 
-
 use strict;
 
 sub run_cmd_pipe {
@@ -282,7 +281,7 @@ sub update_cmd {
 				       HEADER => $status_head, },
 				     @mods);
 	if (@update) {
-		system(qw(git update-index --add --),
+		system(qw(git update-index --add --remove --),
 		       map { $_->{VALUE} } @update);
 		say_n_paths('updated', @update);
 	}
