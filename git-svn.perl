@@ -1112,6 +1112,24 @@ sub do_git_commit {
 	return $commit;
 }
 
+sub match_paths {
+	my ($self, $paths, $r) = @_;
+	$self->{path_regex} ||= qr/^\/\Q$self->{path}\E\/?/;
+	if (grep /$self->{path_regex}/, keys %$paths) {
+		return 1;
+	}
+	my $c = '';
+	foreach (split m#/#, $self->{path}) {
+		$c .= "/$_";
+		next unless ($paths->{$c} && ($paths->{$c}->{action} eq 'A'));
+		my @x = eval { $self->ra->get_dir($self->{path}, $r) };
+		if (scalar @x == 3) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 sub find_parent_branch {
 	my ($self, $paths, $rev) = @_;
 	return undef unless $_follow_parent;
@@ -1308,15 +1326,21 @@ sub make_log_entry {
 	print $un $_, "\n" foreach @$untracked;
 	my %log_entry = ( parents => $parents || [], revision => $rev,
 	                  log => '');
-	my $rp = $self->ra->rev_proplist($rev);
-	foreach (sort keys %$rp) {
-		my $v = $rp->{$_};
-		if (/^svn:(author|date|log)$/) {
-			$log_entry{$1} = $v;
-		} else {
-			print $un "  rev_prop: ", uri_encode($_), ' ',
-		                  uri_encode($v), "\n";
+
+	my $logged = delete $self->{logged_rev_props};
+	if (!$logged || $self->{-want_extra_revprops}) {
+		my $rp = $self->ra->rev_proplist($rev);
+		foreach (sort keys %$rp) {
+			my $v = $rp->{$_};
+			if (/^svn:(author|date|log)$/) {
+				$log_entry{$1} = $v;
+			} else {
+				print $un "  rev_prop: ", uri_encode($_), ' ',
+					  uri_encode($v), "\n";
+			}
 		}
+	} else {
+		map { $log_entry{$_} = $logged->{$_} } keys %$logged;
 	}
 	close $un or croak $!;
 
@@ -2416,55 +2440,26 @@ sub gs_fetch_loop_common {
 	}
 	while (1) {
 		my %revs;
-		my $err;
 		my $err_handler = $SVN::Error::handler;
-		$SVN::Error::handler = sub {
-			($err) = @_;
-			skip_unknown_revs($err);
-		};
-		foreach my $gs (@gs) {
-			my $min_r = $min;
-			my $rdb_max = $gs->rev_db_max;
-			next if $rdb_max >= $max;
-			$min_r = $rdb_max + 1 if ($rdb_max > $min_r);
-			$self->get_log([$gs->{path}], $min_r, $max,
-			               0, 1, 1, sub
-			               { my ($paths, $rev) = @_;
-			                 push @{$revs{$rev}},
-			                      [ $gs,
-			                        dup_changed_paths($paths) ] });
-
-			next unless ($err && $max >= $head);
-
-			print STDERR "Path '$gs->{path}' ",
-				     "was probably deleted:\n",
-				     $err->expanded_message,
-				     "\nWill attempt to follow ",
-				     "revisions r$min .. r$max ",
-				     "committed before the deletion\n";
-			my $hi = $max;
-			while (--$hi >= $min) {
-				my $ok;
-				$self->get_log([$gs->{path}], $min, $hi,
-					       0, 1, 1, sub {
-					my ($paths, $rev) = @_;
-					$ok = $rev;
-					push @{$revs{$rev}}, [ $gs,
-					   dup_changed_paths($_[0])]});
-				if ($ok) {
-					print STDERR "r$min .. r$ok OK\n";
-					last;
-				}
-			}
-		}
+		$SVN::Error::handler = \&skip_unknown_revs;
+		$self->get_log([''], $min, $max, 0, 1, 1, sub {
+		               my ($paths, $r, $author, $date, $log) = @_;
+			       $revs{$r} = [ dup_changed_paths($paths),
+			                     { author => $author,
+					       date => $date,
+					       log => $log } ] });
 		$SVN::Error::handler = $err_handler;
+
 		foreach my $r (sort {$a <=> $b} keys %revs) {
-			foreach (@{$revs{$r}}) {
-				my ($gs, $paths) = @$_;
-				my $lr = $gs->last_rev;
-				next if defined $lr && $lr >= $r;
-				next if defined $gs->rev_db_get($r);
-				if (my $log_entry = $gs->do_fetch($paths, $r)) {
+			my ($paths, $logged) = @{$revs{$r}};
+			foreach my $gs (@gs) {
+				if ($gs->rev_db_max >= $r) {
+					next;
+				}
+				next unless $gs->match_paths($paths, $r);
+				$gs->{logged_rev_props} = $logged;
+				my $log_entry = $gs->do_fetch($paths, $r);
+				if ($log_entry) {
 					$gs->do_git_commit($log_entry);
 				}
 			}
