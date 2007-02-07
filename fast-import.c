@@ -883,7 +883,8 @@ static int store_object(
 	SHA_CTX c;
 	z_stream s;
 
-	hdrlen = sprintf((char*)hdr,"%s %lu",type_names[type],datlen) + 1;
+	hdrlen = sprintf((char*)hdr,"%s %lu", type_names[type],
+		(unsigned long)datlen) + 1;
 	SHA1_Init(&c);
 	SHA1_Update(&c, hdr, hdrlen);
 	SHA1_Update(&c, dat, datlen);
@@ -1432,7 +1433,8 @@ static void *cmd_data (size_t *size)
 		while (n < length) {
 			size_t s = fread(buffer + n, 1, length - n, stdin);
 			if (!s && feof(stdin))
-				die("EOF in data (%lu bytes remaining)", length - n);
+				die("EOF in data (%lu bytes remaining)",
+					(unsigned long)(length - n));
 			n += s;
 		}
 	}
@@ -2050,7 +2052,7 @@ int main(int argc, const char **argv)
 		fprintf(stderr, "      marks:     %10ju (%10ju unique    )\n", (((uintmax_t)1) << marks->shift) * 1024, marks_set_count);
 		fprintf(stderr, "      atoms:     %10u\n", atom_cnt);
 		fprintf(stderr, "Memory total:    %10ju KiB\n", (total_allocd + alloc_count*sizeof(struct object_entry))/1024);
-		fprintf(stderr, "       pools:    %10lu KiB\n", total_allocd/1024);
+		fprintf(stderr, "       pools:    %10lu KiB\n", (unsigned long)(total_allocd/1024));
 		fprintf(stderr, "     objects:    %10ju KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
 		fprintf(stderr, "---------------------------------------------------------------------\n");
 		pack_report();
