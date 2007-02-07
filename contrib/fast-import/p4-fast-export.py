@@ -12,7 +12,14 @@
 import os, string, sys, time
 import marshal, popen2
 
-if len(sys.argv) != 2:
+branch = "refs/heads/p4"
+prefix = os.popen("git-repo-config --get p4.depotpath").read()
+if len(prefix) != 0:
+    prefix = prefix[:-1]
+
+if len(sys.argv) == 1 and len(prefix) != 0:
+    print "[using previously specified depot path %s]" % prefix
+elif len(sys.argv) != 2:
     print "usage: %s //depot/path[@revRange]" % sys.argv[0]
     print "\n    example:"
     print "    %s //depot/my/project/ -- to import everything"
@@ -21,9 +28,12 @@ if len(sys.argv) != 2:
     print "    (a ... is not needed in the path p4 specification, it's added implicitly)"
     print ""
     sys.exit(1)
+else:
+    if len(prefix) != 0 and prefix != sys.argv[1]:
+        print "previous import used depot path %s and now %s was specified. this doesn't work!" % (prefix, sys.argv[1])
+        sys.exit(1)
+    prefix = sys.argv[1]
 
-branch = "refs/heads/p4"
-prefix = sys.argv[1]
 changeRange = ""
 revision = ""
 users = {}
@@ -222,3 +232,6 @@ else:
     gitError.close()
 
 print ""
+
+os.popen("git-repo-config p4.depotpath %s" % prefix).read()
+
