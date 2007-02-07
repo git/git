@@ -183,7 +183,7 @@ if len(revision) > 0:
 
     fileCnt = 0
     for info in p4CmdList("files %s...%s" % (prefix, revision)):
-        change = info["change"]
+        change = int(info["change"])
         if change > newestRevision:
             newestRevision = change
 
