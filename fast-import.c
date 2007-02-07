@@ -26,7 +26,8 @@ Format of STDIN stream:
     lf;
   commit_msg ::= data;
 
-  file_change ::= file_del | file_obm | file_inm;
+  file_change ::= file_clr | file_del | file_obm | file_inm;
+  file_clr ::= 'deleteall' lf;
   file_del ::= 'D' sp path_str lf;
   file_obm ::= 'M' sp mode sp (hexsha1 | idnum) sp path_str lf;
   file_inm ::= 'M' sp mode sp 'inline' sp path_str lf
@@ -1640,6 +1641,14 @@ static void file_change_d(struct branch *b)
 	free(p_uq);
 }
 
+static void file_change_deleteall(struct branch *b)
+{
+	release_tree_content_recursive(b->branch_tree.tree);
+	hashclr(b->branch_tree.versions[0].sha1);
+	hashclr(b->branch_tree.versions[1].sha1);
+	load_tree(&b->branch_tree);
+}
+
 static void cmd_from(struct branch *b)
 {
 	const char *from;
@@ -1784,6 +1793,8 @@ static void cmd_new_commit(void)
 			file_change_m(b);
 		else if (!strncmp("D ", command_buf.buf, 2))
 			file_change_d(b);
+		else if (!strcmp("deleteall", command_buf.buf))
+			file_change_deleteall(b);
 		else
 			die("Unsupported file_change: %s", command_buf.buf);
 		read_next_command();

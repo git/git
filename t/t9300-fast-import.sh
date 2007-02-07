@@ -356,4 +356,55 @@ test_expect_success \
 	'test $old_branch != `git-rev-parse --verify branch^0` &&
 	 test $old_branch = `git-rev-parse --verify branch@{1}`'
 
+###
+### series H
+###
+
+test_tick
+cat >input <<INPUT_END
+commit refs/heads/H
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+third
+COMMIT
+
+from refs/heads/branch^0
+M 644 inline i-will-die
+data <<EOF
+this file will never exist.
+EOF
+
+deleteall
+M 644 inline h/e/l/lo
+data <<EOF
+$file5_data
+EOF
+
+INPUT_END
+test_expect_success \
+    'H: deletall, add 1' \
+    'git-fast-import <input &&
+	 git-whatchanged H'
+test_expect_success \
+	'H: verify pack' \
+	'for p in .git/objects/pack/*.pack;do git-verify-pack $p||exit;done'
+
+cat >expect <<EOF
+:100755 000000 f1fb5da718392694d0076d677d6d0e364c79b0bc 0000000000000000000000000000000000000000 D	file2/newf
+:100644 000000 7123f7f44e39be127c5eb701e5968176ee9d78b1 0000000000000000000000000000000000000000 D	file2/oldf
+:100755 000000 85df50785d62d3b05ab03d9cbf7e4a0b49449730 0000000000000000000000000000000000000000 D	file4
+:100644 100644 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 R100	newdir/interesting	h/e/l/lo
+:100755 000000 e74b7d465e52746be2b4bae983670711e6e66657 0000000000000000000000000000000000000000 D	newdir/exec.sh
+EOF
+git-diff-tree -M -r H^ H >actual
+test_expect_success \
+	'H: validate old files removed, new files added' \
+	'compare_diff_raw expect actual'
+
+echo "$file5_data" >expect
+test_expect_success \
+	'H: verify file' \
+	'git-cat-file blob H:h/e/l/lo >actual &&
+	 diff -u expect actual'
+
 test_done

@@ -269,7 +269,7 @@ change to the project.
 	data
 	('from' SP <committish> LF)?
 	('merge' SP <committish> LF)?
-	(filemodify | filedelete)*
+	(filemodify | filedelete | filedeleteall)*
 	LF
 ....
 
@@ -292,10 +292,12 @@ commit message use a 0 length data.  Commit messages are free-form
 and are not interpreted by Git.  Currently they must be encoded in
 UTF-8, as gfi does not permit other encodings to be specified.
 
-Zero or more `filemodify` and `filedelete` commands may be
-included to update the contents of the branch prior to the commit.
-These commands can be supplied in any order, gfi is not sensitive
-to pathname or operation ordering.
+Zero or more `filemodify`, `filedelete` and `filedeleteall` commands
+may be included to update the contents of the branch prior to
+creating the commit.  These commands may be supplied in any order.
+However it is recommended that a `filedeleteall` command preceed
+all `filemodify` commands in the same commit, as `filedeleteall`
+wipes the branch clean (see below).
 
 `author`
 ^^^^^^^^
@@ -458,6 +460,30 @@ first non-empty directory or the root is reached.
 
 here `<path>` is the complete path of the file to be removed.
 See `filemodify` above for a detailed description of `<path>`.
+
+`filedeleteall`
+^^^^^^^^^^^^^^^
+Included in a `commit` command to remove all files (and also all
+directories) from the branch.  This command resets the internal
+branch structure to have no files in it, allowing the frontend
+to subsequently add all interesting files from scratch.
+
+....
+	'deleteall' LF
+....
+
+This command is extremely useful if the frontend does not know
+(or does not care to know) what files are currently on the branch,
+and therefore cannot generate the proper `filedelete` commands to
+update the content.
+
+Issuing a `filedeleteall` followed by the needed `filemodify`
+commands to set the correct content will produce the same results
+as sending only the needed `filemodify` and `filedelete` commands.
+The `filedeleteall` approach may however require gfi to use slightly
+more memory per active branch (less than 1 MiB for even most large
+projects); so frontends that can easily obtain only the affected
+paths for a commit are encouraged to do so.
 
 `mark`
 ~~~~~~
