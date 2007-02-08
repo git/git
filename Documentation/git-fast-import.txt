@@ -380,9 +380,9 @@ current branch value should be written as:
 ----
 	from refs/heads/branch^0
 ----
-The `^0` suffix is necessary as gfi does not permit a branch to
+The `{caret}0` suffix is necessary as gfi does not permit a branch to
 start from itself, and the branch is created in memory before the
-`from` command is even read from the input.  Adding `^0` will force
+`from` command is even read from the input.  Adding `{caret}0` will force
 gfi to resolve the commit through Git's revision parsing library,
 rather than its internal branch table, thereby loading in the
 existing value of the branch.
