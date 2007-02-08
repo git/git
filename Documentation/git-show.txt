@@ -25,6 +25,9 @@ with \--name-only).
 
 For plain blobs, it shows the plain contents.
 
+The command takes options applicable to the gitlink:git-diff-tree[1] command to
+control how the changes the commit introduces are shown.
+
 This manual page describes only the most frequently used options.
 
 
