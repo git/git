@@ -10,16 +10,26 @@
 #       - support p4 submit (hah!)
 #
 import os, string, sys, time
-import marshal, popen2
+import marshal, popen2, getopt
 
 branch = "refs/heads/p4"
 prefix = previousDepotPath = os.popen("git-repo-config --get p4.depotpath").read()
 if len(prefix) != 0:
     prefix = prefix[:-1]
 
-if len(sys.argv) == 1 and len(prefix) != 0:
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "", [ "branch=" ])
+except getopt.GetoptError:
+    print "fixme, syntax error"
+    sys.exit(1)
+
+for o, a in opts:
+    if o == "--branch":
+        branch = "refs/heads/" + a
+
+if len(args) == 0 and len(prefix) != 0:
     print "[using previously specified depot path %s]" % prefix
-elif len(sys.argv) != 2:
+elif len(args) != 1:
     print "usage: %s //depot/path[@revRange]" % sys.argv[0]
     print "\n    example:"
     print "    %s //depot/my/project/ -- to import the current head"
@@ -30,10 +40,10 @@ elif len(sys.argv) != 2:
     print ""
     sys.exit(1)
 else:
-    if len(prefix) != 0 and prefix != sys.argv[1]:
-        print "previous import used depot path %s and now %s was specified. this doesn't work!" % (prefix, sys.argv[1])
+    if len(prefix) != 0 and prefix != args[0]:
+        print "previous import used depot path %s and now %s was specified. this doesn't work!" % (prefix, args[0])
         sys.exit(1)
-    prefix = sys.argv[1]
+    prefix = args[0]
 
 changeRange = ""
 revision = ""
