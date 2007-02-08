@@ -4126,34 +4126,36 @@ proc do_quit {} {
 	if {$is_quitting} return
 	set is_quitting 1
 
-	# -- Stash our current commit buffer.
-	#
-	set save [gitdir GITGUI_MSG]
-	set msg [string trim [$ui_comm get 0.0 end]]
-	regsub -all -line {[ \r\t]+$} $msg {} msg
-	if {(![string match amend* $commit_type]
-		|| [$ui_comm edit modified])
-		&& $msg ne {}} {
-		catch {
-			set fd [open $save w]
-			puts -nonewline $fd $msg
-			close $fd
+	if {[winfo exists $ui_comm]} {
+		# -- Stash our current commit buffer.
+		#
+		set save [gitdir GITGUI_MSG]
+		set msg [string trim [$ui_comm get 0.0 end]]
+		regsub -all -line {[ \r\t]+$} $msg {} msg
+		if {(![string match amend* $commit_type]
+			|| [$ui_comm edit modified])
+			&& $msg ne {}} {
+			catch {
+				set fd [open $save w]
+				puts -nonewline $fd $msg
+				close $fd
+			}
+		} else {
+			catch {file delete $save}
 		}
-	} else {
-		catch {file delete $save}
-	}
 
-	# -- Stash our current window geometry into this repository.
-	#
-	set cfg_geometry [list]
-	lappend cfg_geometry [wm geometry .]
-	lappend cfg_geometry [lindex [.vpane sash coord 0] 1]
-	lappend cfg_geometry [lindex [.vpane.files sash coord 0] 0]
-	if {[catch {set rc_geometry $repo_config(gui.geometry)}]} {
-		set rc_geometry {}
-	}
-	if {$cfg_geometry ne $rc_geometry} {
-		catch {exec git repo-config gui.geometry $cfg_geometry}
+		# -- Stash our current window geometry into this repository.
+		#
+		set cfg_geometry [list]
+		lappend cfg_geometry [wm geometry .]
+		lappend cfg_geometry [lindex [.vpane sash coord 0] 1]
+		lappend cfg_geometry [lindex [.vpane.files sash coord 0] 0]
+		if {[catch {set rc_geometry $repo_config(gui.geometry)}]} {
+			set rc_geometry {}
+		}
+		if {$cfg_geometry ne $rc_geometry} {
+			catch {exec git repo-config gui.geometry $cfg_geometry}
+		}
 	}
 
 	destroy .
