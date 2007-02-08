@@ -230,7 +230,11 @@ else:
         sys.stdout.flush()
         cnt = cnt + 1
 
-        commit(description)
+        try:
+            commit(description)
+        except:
+            print gitError.read()
+            sys.exit(1)
 
     gitStream.close()
     gitOutput.close()
@@ -240,3 +244,4 @@ print ""
 
 os.popen("git-repo-config p4.depotpath %s" % prefix).read()
 
+sys.exit(0)
