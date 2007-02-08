@@ -2957,7 +2957,7 @@ proc reset_hard_wait {fd} {
 set next_browser_id 0
 
 proc new_browser {commit} {
-	global next_browser_id cursor_ptr
+	global next_browser_id cursor_ptr M1B
 	global browser_commit browser_status browser_stack browser_path browser_busy
 
 	set w .browser[incr next_browser_id]
@@ -3007,6 +3007,16 @@ proc new_browser {commit} {
 
 	bind $w_list <Button-1>        "browser_click 0 $w_list @%x,%y;break"
 	bind $w_list <Double-Button-1> "browser_click 1 $w_list @%x,%y;break"
+	bind $w_list <$M1B-Up>         "browser_parent $w_list;break"
+	bind $w_list <$M1B-Left>       "browser_parent $w_list;break"
+	bind $w_list <Up>              "browser_move -1 $w_list;break"
+	bind $w_list <Down>            "browser_move 1 $w_list;break"
+	bind $w_list <$M1B-Right>      "browser_enter $w_list;break"
+	bind $w_list <Return>          "browser_enter $w_list;break"
+	bind $w_list <Prior>           "browser_page -1 $w_list;break"
+	bind $w_list <Next>            "browser_page 1 $w_list;break"
+	bind $w_list <Left>            break
+	bind $w_list <Right>           break
 
 	bind $w <Visibility> "focus $w"
 	bind $w <Destroy> "
@@ -3022,52 +3032,100 @@ proc new_browser {commit} {
 	ls_tree $w_list $browser_commit($w_list) {}
 }
 
-proc browser_click {was_double_click w pos} {
+proc browser_move {dir w} {
+	global browser_files browser_busy
+
+	if {$browser_busy($w)} return
+	set lno [lindex [split [$w index in_sel.first] .] 0]
+	incr lno $dir
+	if {[lindex $browser_files($w) [expr {$lno - 1}]] ne {}} {
+		$w tag remove in_sel 0.0 end
+		$w tag add in_sel $lno.0 [expr {$lno + 1}].0
+		$w see $lno.0
+	}
+}
+
+proc browser_page {dir w} {
+	global browser_files browser_busy
+
+	if {$browser_busy($w)} return
+	$w yview scroll $dir pages
+	set lno [expr {int(
+		  [lindex [$w yview] 0]
+		* [llength $browser_files($w)]
+		+ 1)}]
+	if {[lindex $browser_files($w) [expr {$lno - 1}]] ne {}} {
+		$w tag remove in_sel 0.0 end
+		$w tag add in_sel $lno.0 [expr {$lno + 1}].0
+		$w see $lno.0
+	}
+}
+
+proc browser_parent {w} {
+	global browser_files browser_status browser_path
+	global browser_stack browser_busy
+
+	if {$browser_busy($w)} return
+	set info [lindex $browser_files($w) 0]
+	if {[lindex $info 0] eq {parent}} {
+		set parent [lindex $browser_stack($w) end-1]
+		set browser_stack($w) [lrange $browser_stack($w) 0 end-2]
+		if {$browser_stack($w) eq {}} {
+			regsub {:.*$} $browser_path($w) {:} browser_path($w)
+		} else {
+			regsub {/[^/]+$} $browser_path($w) {} browser_path($w)
+		}
+		set browser_status($w) "Loading $browser_path($w)..."
+		ls_tree $w [lindex $parent 0] [lindex $parent 1]
+	}
+}
+
+proc browser_enter {w} {
 	global browser_files browser_status browser_path
 	global browser_commit browser_stack browser_busy
 
 	if {$browser_busy($w)} return
-	set lno [lindex [split [$w index $pos] .] 0]
+	set lno [lindex [split [$w index in_sel.first] .] 0]
 	set info [lindex $browser_files($w) [expr {$lno - 1}]]
-
-	$w conf -state normal
-	$w tag remove sel 0.0 end
-	$w tag remove in_sel 0.0 end
 	if {$info ne {}} {
-		$w tag add in_sel $lno.0 [expr {$lno + 1}].0
-		if {$was_double_click} {
-			switch -- [lindex $info 0] {
-			parent {
-				set parent [lindex $browser_stack($w) end-1]
-				set browser_stack($w) [lrange $browser_stack($w) 0 end-2]
-				if {$browser_stack($w) eq {}} {
-					regsub {:.*$} $browser_path($w) {:} browser_path($w)
-				} else {
-					regsub {/[^/]+$} $browser_path($w) {} browser_path($w)
-				}
-				set browser_status($w) "Loading $browser_path($w)..."
-				ls_tree $w [lindex $parent 0] [lindex $parent 1]
+		switch -- [lindex $info 0] {
+		parent {
+			browser_parent $w
+		}
+		tree {
+			set name [lindex $info 2]
+			set escn [escape_path $name]
+			set browser_status($w) "Loading $escn..."
+			append browser_path($w) $escn
+			ls_tree $w [lindex $info 1] $name
+		}
+		blob {
+			set name [lindex $info 2]
+			set p {}
+			foreach n $browser_stack($w) {
+				append p [lindex $n 1]
 			}
-			tree {
-				set name [lindex $info 2]
-				set escn [escape_path $name]
-				set browser_status($w) "Loading $escn..."
-				append browser_path($w) $escn
-				ls_tree $w [lindex $info 1] $name
-			}
-			blob {
-				set name [lindex $info 2]
-				set p {}
-				foreach n $browser_stack($w) {
-					append p [lindex $n 1]
-				}
-				append p $name
-				show_blame $browser_commit($w) $p
-			}
-			}
+			append p $name
+			show_blame $browser_commit($w) $p
+		}
 		}
 	}
-	$w conf -state disabled
+}
+
+proc browser_click {was_double_click w pos} {
+	global browser_files browser_busy
+
+	if {$browser_busy($w)} return
+	set lno [lindex [split [$w index $pos] .] 0]
+	focus $w
+
+	if {[lindex $browser_files($w) [expr {$lno - 1}]] ne {}} {
+		$w tag remove in_sel 0.0 end
+		$w tag add in_sel $lno.0 [expr {$lno + 1}].0
+		if {$was_double_click} {
+			browser_enter $w
+		}
+	}
 }
 
 proc ls_tree {w tree_id name} {
@@ -3079,7 +3137,6 @@ proc ls_tree {w tree_id name} {
 
 	$w conf -state normal
 	$w tag remove in_sel 0.0 end
-	$w tag remove sel 0.0 end
 	$w delete 0.0 end
 	if {$browser_stack($w) ne {}} {
 		$w image create end \
@@ -3147,6 +3204,10 @@ proc read_ls_tree {fd w} {
 		set browser_status($w) Ready.
 		set browser_busy($w) 0
 		array unset browser_buffer $w
+		if {$n > 0} {
+			$w tag add in_sel 1.0 2.0
+			focus -force $w
+		}
 	}
 }
 
