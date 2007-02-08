@@ -280,7 +280,6 @@ BUILTIN_OBJS = \
 	builtin-diff.o \
 	builtin-diff-files.o \
 	builtin-diff-index.o \
-	builtin-diff-stages.o \
 	builtin-diff-tree.o \
 	builtin-fmt-merge-msg.o \
 	builtin-for-each-ref.o \

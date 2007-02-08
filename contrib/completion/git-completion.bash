@@ -269,7 +269,6 @@ __git_commands ()
 		cvsimport)        : import;;
 		cvsserver)        : daemon;;
 		daemon)           : daemon;;
-		diff-stages)      : nobody uses it;;
 		fast-import)      : import;;
 		fsck-objects)     : plumbing;;
 		fetch-pack)       : plumbing;;
