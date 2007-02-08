@@ -1000,6 +1000,9 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 	if (logmsg && read_ref(ref_target, old_sha1))
 		hashclr(old_sha1);
 
+	if (safe_create_leading_directories(git_HEAD) < 0)
+		return error("unable to create directory for %s", git_HEAD);
+
 #ifndef NO_SYMLINK_HEAD
 	if (prefer_symlink_refs) {
 		unlink(git_HEAD);
