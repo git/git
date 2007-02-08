@@ -400,7 +400,7 @@ proc rescan {after {honor_trustmtime 1}} {
 	global HEAD PARENT MERGE_HEAD commit_type
 	global ui_index ui_workdir ui_status_value ui_comm
 	global rescan_active file_states
-	global repo_config
+	global repo_config single_commit
 
 	if {$rescan_active > 0 || ![lock_index read]} return
 
@@ -425,6 +425,11 @@ proc rescan {after {honor_trustmtime 1}} {
 		}
 		$ui_comm edit reset
 		$ui_comm edit modified false
+	}
+
+	if {!$single_commit} {
+		load_all_heads
+		populate_branch_menu
 	}
 
 	if {$honor_trustmtime && $repo_config(gui.trustmtime) eq {true}} {
