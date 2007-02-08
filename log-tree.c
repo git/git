@@ -226,7 +226,8 @@ void show_log(struct rev_info *opt, const char *sep)
 		putchar(opt->commit_format == CMIT_FMT_ONELINE ? ' ' : '\n');
 		if (opt->reflog_info) {
 			show_reflog_message(opt->reflog_info,
-				    opt->commit_format == CMIT_FMT_ONELINE);;
+				    opt->commit_format == CMIT_FMT_ONELINE,
+				    opt->relative_date);
 			if (opt->commit_format == CMIT_FMT_ONELINE) {
 				printf("%s", sep);
 				return;
