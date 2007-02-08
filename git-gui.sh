@@ -1381,6 +1381,7 @@ proc mapdesc {state path} {
 }
 
 proc escape_path {path} {
+	regsub -all {\\} $path "\\\\" path
 	regsub -all "\n" $path "\\n" path
 	return $path
 }
