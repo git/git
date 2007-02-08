@@ -701,14 +701,32 @@ sub resolve_local_globs {
 
 sub fetch_all {
 	my ($repo_id, $remotes) = @_;
-	my $fetch = $remotes->{$repo_id}->{fetch};
-	my $url = $remotes->{$repo_id}->{url};
-	my @gs;
-	resolve_local_globs($url, $fetch, $remotes->{$repo_id}->{branches});
-	resolve_local_globs($url, $fetch, $remotes->{$repo_id}->{tags});
+	my $remote = $remotes->{$repo_id};
+	my $fetch = $remote->{fetch};
+	my $url = $remote->{url};
+	my (@gs, @globs);
 	my $ra = Git::SVN::Ra->new($url);
+	my $uuid = $ra->uuid;
 	my $head = $ra->get_latest_revnum;
 	my $base = $head;
+
+	# read the max revs for wildcard expansion (branches/*, tags/*)
+	foreach my $t (qw/branches tags/) {
+		defined $remote->{$t} or next;
+		push @globs, $remote->{$t};
+		my $f = "$ENV{GIT_DIR}/svn/.$uuid.$t";
+		if (open my $fh, '<', $f) {
+			chomp(my $max_rev = <$fh>);
+			close $fh or die "Error closing $f: $!\n";
+
+			if ($max_rev !~ /^\d+$/) {
+				die "$max_rev (in $f) is not an integer!\n";
+			}
+			$remote->{$t}->{max_rev} = $max_rev;
+			$base = $max_rev if ($max_rev < $base);
+		}
+	}
+
 	foreach my $p (sort keys %$fetch) {
 		my $gs = Git::SVN->new($fetch->{$p}, $repo_id, $p);
 		my $lr = $gs->rev_db_max;
@@ -717,8 +735,7 @@ sub fetch_all {
 		}
 		push @gs, $gs;
 	}
-	return if (++$base > $head);
-	$ra->gs_fetch_loop_common($base, $head, @gs);
+	$ra->gs_fetch_loop_common($base, $head, \@gs, \@globs);
 }
 
 sub read_all_remotes {
@@ -732,6 +749,7 @@ sub read_all_remotes {
 		           (.*):refs/remotes/(.+)\s*$/!x) {
 			my ($p, $g) = ($3, $4);
 			my $rs = $r->{$1}->{$2} = {
+			                  t => $2,
 			                  path => Git::SVN::GlobSpec->new($p),
 			                  ref => Git::SVN::GlobSpec->new($g) };
 			if (length($rs->{ref}->{right}) != 0) {
@@ -793,20 +811,26 @@ sub init_remote_config {
 	my $r = read_all_remotes();
 	my $existing = find_existing_remote($url, $r);
 	if ($existing) {
-		print STDERR "Using existing ",
-			     "[svn-remote \"$existing\"]\n";
+		unless ($no_write) {
+			print STDERR "Using existing ",
+				     "[svn-remote \"$existing\"]\n";
+		}
 		$self->{repo_id} = $existing;
 	} else {
 		my $min_url = Git::SVN::Ra->new($url)->minimize_url;
 		$existing = find_existing_remote($min_url, $r);
 		if ($existing) {
-			print STDERR "Using existing ",
-				     "[svn-remote \"$existing\"]\n";
+			unless ($no_write) {
+				print STDERR "Using existing ",
+					     "[svn-remote \"$existing\"]\n";
+			}
 			$self->{repo_id} = $existing;
 		}
 		if ($min_url ne $url) {
-			print STDERR "Using higher level of URL: ",
-			             "$url => $min_url\n";
+			unless ($no_write) {
+				print STDERR "Using higher level of URL: ",
+					     "$url => $min_url\n";
+			}
 			my $old_path = $self->{path};
 			$self->{path} = $url;
 			$self->{path} =~ s!^\Q$min_url\E/*!!;
@@ -1122,8 +1146,8 @@ sub match_paths {
 	foreach (split m#/#, $self->{path}) {
 		$c .= "/$_";
 		next unless ($paths->{$c} && ($paths->{$c}->{action} eq 'A'));
-		my @x = eval { $self->ra->get_dir($self->{path}, $r) };
-		if (scalar @x == 3) {
+		if ($self->ra->check_path($self->{path}, $r) ==
+		    $SVN::Node::dir) {
 			return 1;
 		}
 	}
@@ -1172,6 +1196,10 @@ sub find_parent_branch {
 		my $u = $remotes->{$repo_id}->{url} or next;
 		next if $url ne $u;
 		my $fetch = $remotes->{$repo_id}->{fetch};
+		foreach (qw/branches tags/) {
+			resolve_local_globs($url, $fetch,
+			                    $remotes->{$repo_id}->{$_});
+		}
 		foreach my $f (keys %$fetch) {
 			next if $f ne $branch_from;
 			$gs = Git::SVN->new($fetch->{$f}, $repo_id, $f);
@@ -1238,7 +1266,7 @@ sub do_fetch {
 	my ($self, $paths, $rev) = @_;
 	my $ed;
 	my ($last_rev, @parents);
-	if ($self->{last_commit}) {
+	if ($self->last_commit) {
 		$ed = SVN::Git::Fetcher->new($self);
 		$last_rev = $self->{last_rev};
 		$ed->{c} = $self->{last_commit};
@@ -1354,8 +1382,7 @@ sub fetch {
 	my ($self, $min_rev, $max_rev, @parents) = @_;
 	my ($last_rev, $last_commit) = $self->last_rev_commit;
 	my ($base, $head) = $self->get_fetch_range($min_rev, $max_rev);
-	return if ($base > $head);
-	$self->ra->gs_fetch_loop_common($base, $head, $self);
+	$self->ra->gs_fetch_loop_common($base, $head, [$self]);
 }
 
 sub set_tree_cb {
@@ -2430,12 +2457,14 @@ sub gs_do_switch {
 }
 
 sub gs_fetch_loop_common {
-	my ($self, $base, $head, @gs) = @_;
+	my ($self, $base, $head, $gsv, $globs) = @_;
+	return if ($base > $head);
 	my $inc = 1000;
 	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
-
 	my %common;
-	foreach my $gs (@gs) {
+	my $common_max = scalar @$gsv;
+
+	foreach my $gs (@$gsv) {
 		if (my $last_commit = $gs->last_commit) {
 			$gs->assert_index_clean($last_commit);
 		}
@@ -2447,9 +2476,21 @@ sub gs_fetch_loop_common {
 			$common{$p}++;
 		}
 	}
+	$globs ||= [];
+	$common_max += scalar @$globs;
+	foreach my $glob (@$globs) {
+		my @tmp = split m#/#, $glob->{path}->{left};
+		my $p = '';
+		foreach (@tmp) {
+			$p .= length($p) ? "/$_" : $_;
+			$common{$p} ||= 0;
+			$common{$p}++;
+		}
+	}
+
 	my $longest_path = '';
 	foreach (sort {length $b <=> length $a} keys %common) {
-		if ($common{$_} == @gs) {
+		if ($common{$_} == $common_max) {
 			$longest_path = $_;
 			last;
 		}
@@ -2491,9 +2532,12 @@ sub gs_fetch_loop_common {
 		}
 		$SVN::Error::handler = $err_handler;
 
+		my %exists = map { $_->{path} => $_ } @$gsv;
 		foreach my $r (sort {$a <=> $b} keys %revs) {
 			my ($paths, $logged) = @{$revs{$r}};
-			foreach my $gs (@gs) {
+
+			foreach my $gs ($self->match_globs(\%exists, $paths,
+			                                   $globs, $r)) {
 				if ($gs->rev_db_max >= $r) {
 					next;
 				}
@@ -2504,10 +2548,22 @@ sub gs_fetch_loop_common {
 					$gs->do_git_commit($log_entry);
 				}
 			}
+			foreach my $g (@$globs) {
+				my $f = "$ENV{GIT_DIR}/svn/." .
+				        $self->uuid . ".$g->{t}";
+				open my $fh, '>', "$f.tmp" or
+				      die "Can't open $f.tmp for writing: $!";
+				print $fh "$r\n" or
+				      die "Couldn't write to $f: $!\n";
+				close $fh or die "Error closing $f: $!\n";
+				rename "$f.tmp", $f or
+				       die "Couldn't rename ",
+				           "$f.tmp => $f: $!\n";
+			}
 		}
 		# pre-fill the .rev_db since it'll eventually get filled in
 		# with '0' x40 if something new gets committed
-		foreach my $gs (@gs) {
+		foreach my $gs (@$gsv) {
 			next if defined $gs->rev_db_get($max);
 			$gs->rev_db_set($max, 0 x40);
 		}
@@ -2516,6 +2572,43 @@ sub gs_fetch_loop_common {
 		$max += $inc;
 		$max = $head if ($max > $head);
 	}
+}
+
+sub match_globs {
+	my ($self, $exists, $paths, $globs, $r) = @_;
+	foreach my $g (@$globs) {
+		foreach (keys %$paths) {
+			next unless /$g->{path}->{regex}/;
+			my $p = $1;
+			my $pathname = $g->{path}->full_path($p);
+			next if $exists->{$pathname};
+			$exists->{$pathname} = Git::SVN->init(
+			                      $self->{url}, $pathname, undef,
+			                      $g->{ref}->full_path($p), 1);
+		}
+		my $c = '';
+		foreach (split m#/#, $g->{path}->{left}) {
+			$c .= "/$_";
+			next unless ($paths->{$c} &&
+			             ($paths->{$c}->{action} eq 'A'));
+			my @x = eval { $self->get_dir($g->{path}->{left}, $r) };
+			next unless scalar @x == 3;
+			my $dirents = $x[0];
+			foreach my $de (keys %$dirents) {
+				next if $dirents->{$de}->kind !=
+				        $SVN::Node::dir;
+				my $p = $g->{path}->full_path($de);
+				next if $exists->{$p};
+				next if (length $g->{path}->{right} &&
+				         ($self->check_path($p, $r) !=
+				          $SVN::Node::dir));
+				$exists->{$p} = Git::SVN->init($self->{url},
+				                 $p, undef,
+						 $g->{ref}->full_path($de), 1);
+			}
+		}
+	}
+	values %$exists;
 }
 
 sub minimize_url {
@@ -3167,16 +3260,15 @@ use warnings;
 
 sub new {
 	my ($class, $glob) = @_;
-	warn "glob: $glob\n";
 	my $re = $glob;
 	$re =~ s!/+$!!g; # no need for trailing slashes
 	my $nr = ($re =~ s!^(.*/?)\*(/?.*)$!\(\[^/\]+\)!g);
 	my ($left, $right) = ($1, $2);
 	if ($nr > 1) {
-		warn "Only one '*' wildcard expansion ",
-		     "is supported (got $nr): '$glob'\n";
+		die "Only one '*' wildcard expansion ",
+		    "is supported (got $nr): '$glob'\n";
 	} elsif ($nr == 0) {
-		warn "One '*' is needed for glob: '$glob'\n";
+		die "One '*' is needed for glob: '$glob'\n";
 	}
 	$re = quotemeta($left) . $re . quotemeta($right);
 	$left =~ s!/+$!!g;
