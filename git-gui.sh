@@ -320,8 +320,13 @@ set _reponame [lindex [file split \
 	end]
 
 enable_option multicommit
+enable_option branch
+enable_option transport
+
 if {[appname] eq {git-citool}} {
 	disable_option multicommit
+	disable_option branch
+	disable_option transport
 }
 
 ######################################################################
@@ -443,7 +448,7 @@ proc rescan {after {honor_trustmtime 1}} {
 		$ui_comm edit modified false
 	}
 
-	if {[is_enabled multicommit]} {
+	if {[is_enabled branch]} {
 		load_all_heads
 		populate_branch_menu
 	}
@@ -4918,11 +4923,11 @@ apply_config
 menu .mbar -tearoff 0
 .mbar add cascade -label Repository -menu .mbar.repository
 .mbar add cascade -label Edit -menu .mbar.edit
-if {[is_enabled multicommit]} {
+if {[is_enabled branch]} {
 	.mbar add cascade -label Branch -menu .mbar.branch
 }
 .mbar add cascade -label Commit -menu .mbar.commit
-if {[is_enabled multicommit]} {
+if {[is_enabled transport]} {
 	.mbar add cascade -label Merge -menu .mbar.merge
 	.mbar add cascade -label Fetch -menu .mbar.fetch
 	.mbar add cascade -label Push -menu .mbar.push
@@ -5023,7 +5028,7 @@ menu .mbar.edit
 
 # -- Branch Menu
 #
-if {[is_enabled multicommit]} {
+if {[is_enabled branch]} {
 	menu .mbar.branch
 
 	.mbar.branch add command -label {Create...} \
@@ -5230,7 +5235,7 @@ pack .branch.l1 -side left
 pack .branch.cb -side left -fill x
 pack .branch -side top -fill x
 
-if {[is_enabled multicommit]} {
+if {[is_enabled branch]} {
 	menu .mbar.merge
 	.mbar.merge add command -label {Local Merge...} \
 		-command do_local_merge \
@@ -5702,7 +5707,7 @@ bind $ui_diff <Key-Left>   {catch {%W xview scroll -1 units};break}
 bind $ui_diff <Key-Right>  {catch {%W xview scroll  1 units};break}
 bind $ui_diff <Button-1>   {focus %W}
 
-if {[is_enabled multicommit]} {
+if {[is_enabled branch]} {
 	bind . <$M1B-Key-n> do_create_branch
 	bind . <$M1B-Key-N> do_create_branch
 }
@@ -5799,7 +5804,7 @@ user.email settings into your personal
 
 # -- Only initialize complex UI if we are going to stay running.
 #
-if {[is_enabled multicommit]} {
+if {[is_enabled transport]} {
 	load_all_remotes
 	load_all_heads
 
