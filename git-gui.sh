@@ -93,6 +93,22 @@ proc is_Cygwin {} {
 	return $_iscygwin
 }
 
+proc is_enabled {option} {
+	global enabled_options
+	if {[catch {set on $enabled_options($option)}]} {return 0}
+	return $on
+}
+
+proc enable_option {option} {
+	global enabled_options
+	set enabled_options($option) 1
+}
+
+proc disable_option {option} {
+	global enabled_options
+	set enabled_options($option) 0
+}
+
 ######################################################################
 ##
 ## config
@@ -303,9 +319,9 @@ set _reponame [lindex [file split \
 	[file normalize [file dirname $_gitdir]]] \
 	end]
 
-set single_commit 0
+enable_option multicommit
 if {[appname] eq {git-citool}} {
-	set single_commit 1
+	disable_option multicommit
 }
 
 ######################################################################
@@ -400,7 +416,7 @@ proc rescan {after {honor_trustmtime 1}} {
 	global HEAD PARENT MERGE_HEAD commit_type
 	global ui_index ui_workdir ui_status_value ui_comm
 	global rescan_active file_states
-	global repo_config single_commit
+	global repo_config
 
 	if {$rescan_active > 0 || ![lock_index read]} return
 
@@ -427,7 +443,7 @@ proc rescan {after {honor_trustmtime 1}} {
 		$ui_comm edit modified false
 	}
 
-	if {!$single_commit} {
+	if {[is_enabled multicommit]} {
 		load_all_heads
 		populate_branch_menu
 	}
@@ -1181,7 +1197,7 @@ proc commit_writetree {curHEAD msg} {
 
 proc commit_committree {fd_wt curHEAD msg} {
 	global HEAD PARENT MERGE_HEAD commit_type
-	global single_commit all_heads current_branch
+	global all_heads current_branch
 	global ui_status_value ui_comm selected_commit_type
 	global file_states selected_paths rescan_active
 	global repo_config
@@ -1286,7 +1302,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 	$ui_comm edit reset
 	$ui_comm edit modified false
 
-	if {$single_commit} do_quit
+	if {![is_enabled multicommit]} do_quit
 
 	# -- Update in memory status
 	#
@@ -4902,11 +4918,11 @@ apply_config
 menu .mbar -tearoff 0
 .mbar add cascade -label Repository -menu .mbar.repository
 .mbar add cascade -label Edit -menu .mbar.edit
-if {!$single_commit} {
+if {[is_enabled multicommit]} {
 	.mbar add cascade -label Branch -menu .mbar.branch
 }
 .mbar add cascade -label Commit -menu .mbar.commit
-if {!$single_commit} {
+if {[is_enabled multicommit]} {
 	.mbar add cascade -label Merge -menu .mbar.merge
 	.mbar add cascade -label Fetch -menu .mbar.fetch
 	.mbar add cascade -label Push -menu .mbar.push
@@ -4933,7 +4949,7 @@ menu .mbar.repository
 	-font font_ui
 .mbar.repository add separator
 
-if {!$single_commit} {
+if {[is_enabled multicommit]} {
 	.mbar.repository add command -label {Database Statistics} \
 		-command do_stats \
 		-font font_ui
@@ -5007,7 +5023,7 @@ menu .mbar.edit
 
 # -- Branch Menu
 #
-if {!$single_commit} {
+if {[is_enabled multicommit]} {
 	menu .mbar.branch
 
 	.mbar.branch add command -label {Create...} \
@@ -5214,7 +5230,7 @@ pack .branch.l1 -side left
 pack .branch.cb -side left -fill x
 pack .branch -side top -fill x
 
-if {!$single_commit} {
+if {[is_enabled multicommit]} {
 	menu .mbar.merge
 	.mbar.merge add command -label {Local Merge...} \
 		-command do_local_merge \
@@ -5686,7 +5702,7 @@ bind $ui_diff <Key-Left>   {catch {%W xview scroll -1 units};break}
 bind $ui_diff <Key-Right>  {catch {%W xview scroll  1 units};break}
 bind $ui_diff <Button-1>   {focus %W}
 
-if {!$single_commit} {
+if {[is_enabled multicommit]} {
 	bind . <$M1B-Key-n> do_create_branch
 	bind . <$M1B-Key-N> do_create_branch
 }
@@ -5783,7 +5799,7 @@ user.email settings into your personal
 
 # -- Only initialize complex UI if we are going to stay running.
 #
-if {!$single_commit} {
+if {[is_enabled multicommit]} {
 	load_all_remotes
 	load_all_heads
 
@@ -5794,7 +5810,7 @@ if {!$single_commit} {
 
 # -- Only suggest a gc run if we are going to stay running.
 #
-if {!$single_commit} {
+if {[is_enabled multicommit]} {
 	set object_limit 2000
 	if {[is_Windows]} {set object_limit 200}
 	regexp {^([0-9]+) objects,} [exec git count-objects] _junk objects_current
