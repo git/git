@@ -44,9 +44,20 @@
 
 ;;; Installation:
 ;;
-;;  1) Load into emacs: M-x load-file RET git-blame.el RET
-;;  2) Open a git-controlled file
-;;  3) Blame: M-x git-blame-mode
+;; To use this package, put it somewhere in `load-path' (or add
+;; directory with git-blame.el to `load-path'), and add the following
+;; line to your .emacs:
+;;
+;;    (require 'git-blame)
+;;
+;; If you do not want to load this package before it is necessary, you
+;; can make use of the `autoload' feature, e.g. by adding to your .emacs
+;; the following lines
+;;
+;;    (autoload 'git-blame-mode "git-blame"
+;;              "Minor mode for incremental blame for Git." t)
+;;
+;; Then first use of `M-x git-blame-mode' would load the package.
 
 ;;; Compatibility:
 ;;
@@ -102,8 +113,12 @@
 
 (defvar git-blame-mode nil)
 (make-variable-buffer-local 'git-blame-mode)
-(push (list 'git-blame-mode " blame") minor-mode-alist)
+(unless (assq 'git-blame-mode minor-mode-alist)
+  (setq minor-mode-alist
+	(cons (list 'git-blame-mode " blame")
+	      minor-mode-alist)))
 
+;;;###autoload
 (defun git-blame-mode (&optional arg)
   (interactive "P")
   (if arg
