@@ -95,16 +95,10 @@
     colors))
 
 (defvar git-blame-dark-colors
-  (color-scale '("00" "04" "08" "0c"
-                 "10" "14" "18" "1c"
-                 "20" "24" "28" "2c"
-                 "30" "34" "38" "3c")))
+  (color-scale '("0c" "04" "24" "1c" "2c" "34" "14" "3c")))
 
 (defvar git-blame-light-colors
-  (color-scale '("c0" "c4" "c8" "cc"
-                 "d0" "d4" "d8" "dc"
-                 "e0" "e4" "e8" "ec"
-                 "f0" "f4" "f8" "fc")))
+  (color-scale '("c4" "d4" "cc" "dc" "f4" "e4" "fc" "ec")))
 
 (defvar git-blame-ancient-color "dark green")
 
@@ -127,13 +121,15 @@
   (make-local-variable 'git-blame-overlays)
   (make-local-variable 'git-blame-colors)
   (make-local-variable 'git-blame-cache)
-  (let ((bgmode (cdr (assoc 'background-mode (frame-parameters)))))
-    (if (eq bgmode 'dark)
-        (setq git-blame-colors git-blame-dark-colors)
-      (setq git-blame-colors git-blame-light-colors)))
+  (git-blame-cleanup)
   (if git-blame-mode
-      (git-blame-run)
-    (git-blame-cleanup)))
+      (progn
+        (let ((bgmode (cdr (assoc 'background-mode (frame-parameters)))))
+          (if (eq bgmode 'dark)
+              (setq git-blame-colors git-blame-dark-colors)
+            (setq git-blame-colors git-blame-light-colors)))
+        (setq git-blame-cache (make-hash-table :test 'equal))
+        (git-blame-run))))
 
 (defun git-blame-run ()
   (let* ((display-buf (current-buffer))
