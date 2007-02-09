@@ -123,6 +123,7 @@
 
 ;;;###autoload
 (defun git-blame-mode (&optional arg)
+  "Minor mode for displaying Git blame"
   (interactive "P")
   (if arg
       (setq git-blame-mode (eq arg 1))
@@ -170,20 +171,25 @@
       (process-send-region git-blame-proc (point-min) (point-max))
       (process-send-eof git-blame-proc))))
 
+(defun remove-git-blame-text-properties (start end)
+  (let ((modified (buffer-modified-p))
+        (inhibit-read-only t))
+    (remove-text-properties start end '(point-entered nil))
+    (set-buffer-modified-p modified)))
+
 (defun git-blame-cleanup ()
   "Remove all blame properties"
     (mapcar 'delete-overlay git-blame-overlays)
     (setq git-blame-overlays nil)
-    (let ((modified (buffer-modified-p)))
-      (remove-text-properties (point-min) (point-max) '(point-entered nil))
-      (set-buffer-modified-p modified)))
+    (remove-git-blame-text-properties (point-min) (point-max)))
 
 (defun git-blame-sentinel (proc status)
   (with-current-buffer (process-buffer proc)
     (with-current-buffer git-blame-file
       (setq git-blame-proc nil)))
   ;;(kill-buffer (process-buffer proc))
-  (message "git blame finished"))
+  ;;(message "git blame finished")
+  )
 
 (defvar in-blame-filter nil)
 
