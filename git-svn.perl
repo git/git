@@ -1770,14 +1770,14 @@ sub delete_entry {
 		while (<$ls>) {
 			chomp;
 			$self->{gii}->remove($_);
-			print "\tD\t$_\n" unless $self->{q};
+			print "\tD\t$_\n" unless $::_q;
 		}
-		print "\tD\t$gpath/\n" unless $self->{q};
+		print "\tD\t$gpath/\n" unless $::_q;
 		command_close_pipe($ls, $ctx);
 		$self->{empty}->{$path} = 0
 	} else {
 		$self->{gii}->remove($gpath);
-		print "\tD\t$gpath\n" unless $self->{q};
+		print "\tD\t$gpath\n" unless $::_q;
 	}
 	undef;
 }
@@ -1913,7 +1913,7 @@ sub close_file {
 	}
 	$fb->{pool}->clear;
 	$self->{gii}->update($fb->{mode_b}, $hash, $path) or croak $!;
-	print "\t$fb->{action}\t$path\n" if $fb->{action} && ! $self->{q};
+	print "\t$fb->{action}\t$path\n" if $fb->{action} && ! $::_q;
 	undef;
 }
 
