@@ -5124,7 +5124,7 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-	.mbar.commit add command -label {Add All To Commit} \
+	.mbar.commit add command -label {Add Existing To Commit} \
 		-command do_add_all \
 		-accelerator $M1T-I \
 		-font font_ui
@@ -5423,7 +5423,7 @@ pack .vpane.lower.commarea.buttons.rescan -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.rescan conf -state}
 
-button .vpane.lower.commarea.buttons.incall -text {Add All} \
+button .vpane.lower.commarea.buttons.incall -text {Add Existing} \
 	-command do_add_all \
 	-font font_ui
 pack .vpane.lower.commarea.buttons.incall -side top -fill x
