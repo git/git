@@ -1266,11 +1266,19 @@ sub do_fetch {
 	my ($self, $paths, $rev) = @_;
 	my $ed;
 	my ($last_rev, @parents);
-	if ($self->last_commit) {
+	if (my $lc = $self->last_commit) {
+		# we can have a branch that was deleted, then re-added
+		# under the same name but copied from another path, in
+		# which case we'll have multiple parents (we don't
+		# want to break the original ref, nor lose copypath info):
+		if (my $log_entry = $self->find_parent_branch($paths, $rev)) {
+			push @{$log_entry->{parents}}, $lc;
+			return $log_entry;
+		}
 		$ed = SVN::Git::Fetcher->new($self);
 		$last_rev = $self->{last_rev};
-		$ed->{c} = $self->{last_commit};
-		@parents = ($self->{last_commit});
+		$ed->{c} = $lc;
+		@parents = ($lc);
 	} else {
 		$last_rev = $rev;
 		if (my $log_entry = $self->find_parent_branch($paths, $rev)) {

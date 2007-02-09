@@ -146,6 +146,13 @@ test_expect_success "track initial change if it was only made to parent" "
 	     \"\`git rev-parse r9270-d~1\`\"
 	"
 
+test_expect_success "track multi-parent paths" "
+	svn cp -m 'resurrect /glob' $svnrepo/r9270 $svnrepo/glob &&
+	git-svn multi-fetch --follow-parent &&
+	test \`git cat-file commit refs/remotes/glob | \
+	       grep '^parent ' | wc -l\` -eq 2
+	"
+
 test_expect_success "multi-fetch continues to work" "
 	git-svn multi-fetch --follow-parent
 	"
