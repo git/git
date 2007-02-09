@@ -4917,20 +4917,32 @@ apply_config
 ##
 ## feature option selection
 
+if {[regexp {^git-(.+)$} [appname] _junk subcommand]} {
+	unset _junk
+} else {
+	set subcommand gui
+}
+if {$subcommand eq {gui.sh}} {
+	set subcommand gui
+}
+if {$subcommand eq {gui} && [llength $argv] > 0} {
+	set subcommand [lindex $argv 0]
+	set argv [lrange $argv 1 end]
+}
+
 enable_option multicommit
 enable_option branch
 enable_option transport
 
-if {[appname] eq {git-citool}} {
-	enable_option singlecommit
-
+switch -- $subcommand {
+blame {
 	disable_option multicommit
 	disable_option branch
 	disable_option transport
 }
+citool {
+	enable_option singlecommit
 
-switch -- [lindex $argv 0] {
-blame {
 	disable_option multicommit
 	disable_option branch
 	disable_option transport
@@ -5257,20 +5269,30 @@ bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
 
 # -- Not a normal commit type invocation?  Do that instead!
 #
-switch -- [lindex $argv 0] {
+switch -- $subcommand {
 blame {
-	if {[llength $argv] == 3} {
-		set current_branch [lindex $argv 1]
-		show_blame $current_branch [lindex $argv 2]
-		return
-	} else {
+	if {[llength $argv] != 2} {
 		puts stderr "usage: $argv0 blame commit path"
 		exit 1
 	}
+	set current_branch [lindex $argv 0]
+	show_blame $current_branch [lindex $argv 1]
+	return
 }
-{} {}
+citool -
+gui {
+	if {[llength $argv] != 0} {
+		puts -nonewline stderr "usage: $argv0"
+		if {$subcommand ne {gui} && [appname] ne "git-$subcommand"} {
+			puts -nonewline stderr " $subcommand"
+		}
+		puts stderr {}
+		exit 1
+	}
+	# fall through to setup UI for commits
+}
 default {
-	puts stderr "usage: $argv0 \[{blame}\]"
+	puts stderr "usage: $argv0 \[{blame|citool}\]"
 	exit 1
 }
 }
