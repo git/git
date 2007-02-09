@@ -57,11 +57,11 @@ my ($_stdin, $_help, $_edit,
 	$_version,
 	$_merge, $_strategy, $_dry_run,
 	$_prefix);
-
+$Git::SVN::_follow_parent = 1;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
                     'no-auth-cache' => \$Git::SVN::Prompt::_no_auth_cache );
-my %fc_opts = ( 'follow-parent|follow' => \$Git::SVN::_follow_parent,
+my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'authors-file|A=s' => \$_authors,
 		'repack:i' => \$Git::SVN::_repack,
 		'no-metadata' => \$Git::SVN::_no_metadata,

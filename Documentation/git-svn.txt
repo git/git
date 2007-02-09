@@ -311,7 +311,8 @@ for more information on using GIT_SVN_ID.
 	This is especially helpful when we're tracking a directory
 	that has been moved around within the repository, or if we
 	started tracking a branch and never tracked the trunk it was
-	descended from.
+	descended from. This feature is enabled by default, use
+	--no-follow-parent to disable it.
 
 config key: svn.followparent
 
