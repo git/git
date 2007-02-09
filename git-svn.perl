@@ -1138,6 +1138,9 @@ sub do_git_commit {
 
 sub match_paths {
 	my ($self, $paths, $r) = @_;
+	if (my $path = $paths->{"/$self->{path}"}) {
+		return ($path->{action} eq 'D') ? 0 : 1;
+	}
 	$self->{path_regex} ||= qr/^\/\Q$self->{path}\E\/?/;
 	if (grep /$self->{path_regex}/, keys %$paths) {
 		return 1;
@@ -2393,14 +2396,6 @@ sub gs_do_update {
 	my ($self, $rev_a, $rev_b, $gs, $editor) = @_;
 	my $new = ($rev_a == $rev_b);
 	my $path = $gs->{path};
-
-	my $ta = $self->check_path($path, $rev_a);
-	my $tb = $new ? $ta : $self->check_path($path, $rev_b);
-	return 1 if ($tb != $SVN::Node::dir && $ta != $SVN::Node::dir);
-	if ($ta == $SVN::Node::none) {
-		$rev_a = $rev_b;
-		$new = 1;
-	}
 
 	my $pool = SVN::Pool->new;
 	$editor->set_path_strip($path);
