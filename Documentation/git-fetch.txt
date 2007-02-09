@@ -20,6 +20,14 @@ The ref names and their object names of fetched refs are stored
 in `.git/FETCH_HEAD`.  This information is left for a later merge
 operation done by "git merge".
 
+When <refspec> stores the fetched result in tracking branches,
+the tags that point at these branches are automatically
+followed.  This is done by first fetching from the remote using
+the given <refspec>s, and if the repository has objects that are
+pointed by remote tags that it does not yet have, then fetch
+those missing tags.  If the other end has tags that point at
+branches you are not interested in, you will not get them.
+
 
 OPTIONS
 -------
