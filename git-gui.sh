@@ -3425,7 +3425,12 @@ proc read_blame_incremental {fd w w_cmit w_line w_file} {
 				$w_line tag add g$cmit $lno.0 "$lno.0 lineend + 1c"
 				$w_file tag add g$cmit $lno.0 "$lno.0 lineend + 1c"
 
-				if {$blame_data($w,highlight_line) == $lno} {
+				if {$blame_data($w,highlight_line) == -1} {
+					if {[lindex [$w_file yview] 0] == 0} {
+						$w_file see $lno.0
+						blame_showcommit $w $w_cmit $w_line $w_file $lno
+					}
+				} elseif {$blame_data($w,highlight_line) == $lno} {
 					blame_showcommit $w $w_cmit $w_line $w_file $lno
 				}
 
