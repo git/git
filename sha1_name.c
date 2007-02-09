@@ -267,7 +267,7 @@ int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 	return refs_found;
 }
 
-static int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
+int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 {
 	const char **p;
 	int logs_found = 0;

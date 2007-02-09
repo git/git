@@ -174,6 +174,19 @@ void add_reflog_for_walk(struct reflog_walk_info *info,
 			branch = xstrdup(head);
 		}
 		reflogs = read_complete_reflog(branch);
+		if (!reflogs || reflogs->nr == 0) {
+			unsigned char sha1[20];
+			char *b;
+			if (dwim_log(branch, strlen(branch), sha1, &b) == 1) {
+				if (reflogs) {
+					free(reflogs->ref);
+					free(reflogs);
+				}
+				free(branch);
+				branch = b;
+				reflogs = read_complete_reflog(branch);
+			}
+		}
 		if (!reflogs || reflogs->nr == 0)
 			die("No reflogs found for '%s'", branch);
 		path_list_insert(branch, &info->complete_reflogs)->util
