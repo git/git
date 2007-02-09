@@ -692,8 +692,6 @@ sub resolve_local_globs {
 				next;
 			}
 		} else {
-			warn "Globbed ($path->{glob}:$ref->{glob}): ",
-			     "$pathname == $refname\n";
 			$fetch->{$pathname} = $refname;
 		}
 	}
@@ -1179,8 +1177,8 @@ sub find_parent_branch {
 		last if $i;
 		unshift(@a_path_components, pop(@b_path_components));
 	}
-	goto not_found unless defined $i;
-	my $branch_from = $i->{copyfrom_path} or goto not_found;
+	return undef unless defined $i;
+	my $branch_from = $i->{copyfrom_path} or return undef;
 	if (@a_path_components) {
 		print STDERR "branch_from: $branch_from => ";
 		$branch_from .= '/'.join('/', @a_path_components);
@@ -1247,21 +1245,6 @@ sub find_parent_branch {
 		print STDERR "Successfully followed parent\n";
 		return $self->make_log_entry($rev, [$parent], $ed);
 	}
-not_found:
-	print STDERR "Branch parent for path: '/",
-	             $self->rel_path, "' @ r$rev not found:\n";
-	return undef unless $paths;
-	print STDERR "Changed paths:\n";
-	foreach my $x (sort keys %$paths) {
-		my $p = $paths->{$x};
-		print STDERR "\t$p->{action}\t$x";
-		if ($p->{copyfrom_path}) {
-			print STDERR "(from $p->{copyfrom_path}: ",
-			             "$p->{copyfrom_rev})";
-		}
-		print STDERR "\n";
-	}
-	print STDERR '-'x72, "\n";
 	return undef;
 }
 
