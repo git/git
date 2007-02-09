@@ -3,7 +3,7 @@
 # Copyright (c) 2005, 2006 Junio C Hamano
 
 USAGE='[--signoff] [--dotest=<dir>] [--utf8 | --no-utf8] [--binary] [--3way]
-  [--interactive] [--whitespace=<option>] <mbox>...
+  [--interactive] [--whitespace=<option>] [-CNUM] <mbox>...
   or, when resuming [--skip | --resolved]'
 . git-sh-setup
 set_reflog_action am
@@ -106,7 +106,8 @@ It does not apply to blobs recorded in its index."
 }
 
 prec=4
-dotest=.dotest sign= utf8=t keep= skip= interactive= resolved= binary= ws= resolvemsg=
+dotest=.dotest sign= utf8=t keep= skip= interactive= resolved= binary= resolvemsg=
+git_apply_opt=
 
 while case "$#" in 0) break;; esac
 do
@@ -142,7 +143,10 @@ do
 	skip=t; shift ;;
 
 	--whitespace=*)
-	ws=$1; shift ;;
+	git_apply_opt="$git_apply_opt $1"; shift ;;
+
+	-C*)
+	git_apply_opt="$git_apply_opt $1"; shift ;;
 
 	--resolvemsg=*)
 	resolvemsg=$(echo "$1" | sed -e "s/^--resolvemsg=//"); shift ;;
@@ -394,7 +398,7 @@ do
 
 	case "$resolved" in
 	'')
-		git-apply $binary --index $ws "$dotest/patch"
+		git-apply $git_apply_opt $binary --index "$dotest/patch"
 		apply_status=$?
 		;;
 	t)

@@ -13,7 +13,7 @@
  */
 
 static const char reflog_expire_usage[] =
-"git-reflog expire [--verbose] [--dry-run] [--stale-fix] [--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...";
+"git-reflog (show|expire) [--verbose] [--dry-run] [--stale-fix] [--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...";
 
 static unsigned long default_reflog_expire;
 static unsigned long default_reflog_expire_unreachable;
@@ -372,10 +372,16 @@ static const char reflog_usage[] =
 
 int cmd_reflog(int argc, const char **argv, const char *prefix)
 {
-	if (argc < 2)
-		usage(reflog_usage);
-	else if (!strcmp(argv[1], "expire"))
+	/* With no command, we default to showing it. */
+	if (argc < 2 || *argv[1] == '-')
+		return cmd_log_reflog(argc, argv, prefix);
+
+	if (!strcmp(argv[1], "show"))
+		return cmd_log_reflog(argc - 1, argv + 1, prefix);
+
+	if (!strcmp(argv[1], "expire"))
 		return cmd_reflog_expire(argc - 1, argv + 1, prefix);
-	else
-		usage(reflog_usage);
+
+	/* Not a recognized reflog command..*/
+	usage(reflog_usage);
 }

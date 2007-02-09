@@ -7,7 +7,7 @@ git-rebase - Forward-port local commits to the updated upstream head
 
 SYNOPSIS
 --------
-'git-rebase' [-v] [--merge] [--onto <newbase>] <upstream> [<branch>]
+'git-rebase' [-v] [--merge] [-CNUM] [--onto <newbase>] <upstream> [<branch>]
 
 'git-rebase' --continue | --skip | --abort
 
@@ -195,6 +195,12 @@ OPTIONS
 
 -v, \--verbose::
 	Display a diffstat of what changed upstream since the last rebase.
+
+-C<n>::
+	Ensure at least <n> lines of surrounding context match before
+	and after each change.  When fewer lines of surrounding
+	context exist they all must match.  By default no context is
+	ever ignored.
 
 include::merge-strategies.txt[]
 

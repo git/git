@@ -64,6 +64,10 @@ default.   You could use `--no-utf8` to override this.
 	This flag is passed to the `git-apply` program that applies
 	the patch.
 
+-C<n>::
+	This flag is passed to the `git-apply` program that applies
+	the patch.
+
 --interactive::
 	Run interactively, just like git-applymbox.
 

@@ -267,7 +267,7 @@ int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref)
 	return refs_found;
 }
 
-static int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
+int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 {
 	const char **p;
 	int logs_found = 0;
@@ -275,16 +275,29 @@ static int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 	*log = NULL;
 	for (p = ref_fmt; *p; p++) {
 		struct stat st;
-		char *path = mkpath(*p, len, str);
+		unsigned char hash[20];
+		char path[PATH_MAX];
+		const char *ref, *it;
+
+		strcpy(path, mkpath(*p, len, str));
+		ref = resolve_ref(path, hash, 0, NULL);
+		if (!ref)
+			continue;
 		if (!stat(git_path("logs/%s", path), &st) &&
-		    S_ISREG(st.st_mode)) {
-			if (!logs_found++) {
-				*log = xstrdup(path);
-				resolve_ref(path, sha1, 0, NULL);
-			}
-			if (!warn_ambiguous_refs)
-				break;
+		    S_ISREG(st.st_mode))
+			it = path;
+		else if (strcmp(ref, path) &&
+			 !stat(git_path("logs/%s", ref), &st) &&
+			 S_ISREG(st.st_mode))
+			it = ref;
+		else
+			continue;
+		if (!logs_found++) {
+			*log = xstrdup(it);
+			hashcpy(sha1, hash);
 		}
+		if (!warn_ambiguous_refs)
+			break;
 	}
 	return logs_found;
 }

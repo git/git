@@ -1000,6 +1000,9 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 	if (logmsg && read_ref(ref_target, old_sha1))
 		hashclr(old_sha1);
 
+	if (safe_create_leading_directories(git_HEAD) < 0)
+		return error("unable to create directory for %s", git_HEAD);
+
 #ifndef NO_SYMLINK_HEAD
 	if (prefer_symlink_refs) {
 		unlink(git_HEAD);
@@ -1189,12 +1192,14 @@ int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 		    !message || message[0] != ' ' ||
 		    (message[1] != '+' && message[1] != '-') ||
 		    !isdigit(message[2]) || !isdigit(message[3]) ||
-		    !isdigit(message[4]) || !isdigit(message[5]) ||
-		    message[6] != '\t')
+		    !isdigit(message[4]) || !isdigit(message[5]))
 			continue; /* corrupt? */
 		email_end[1] = '\0';
 		tz = strtol(message + 1, NULL, 10);
-		message += 7;
+		if (message[6] != '\t')
+			message += 6;
+		else
+			message += 7;
 		ret = fn(osha1, nsha1, buf+82, timestamp, tz, message, cb_data);
 		if (ret)
 			break;

@@ -85,7 +85,35 @@ sub write_author_info($) {
 	close ($f);
 }
 
-getopts("haivmkuo:d:p:C:z:s:M:P:A:S:L:") or usage();
+# convert getopts specs for use by git-repo-config
+sub read_repo_config {
+    # Split the string between characters, unless there is a ':'
+    # So "abc:de" becomes ["a", "b", "c:", "d", "e"]
+	my @opts = split(/ *(?!:)/, shift);
+	foreach my $o (@opts) {
+		my $key = $o;
+		$key =~ s/://g;
+		my $arg = 'git-repo-config';
+		$arg .= ' --bool' if ($o !~ /:$/);
+
+        chomp(my $tmp = `$arg --get cvsimport.$key`);
+		if ($tmp && !($arg =~ /--bool/ && $tmp eq 'false')) {
+            no strict 'refs';
+            my $opt_name = "opt_" . $key;
+            if (!$$opt_name) {
+                $$opt_name = $tmp;
+            }
+		}
+	}
+    if (@ARGV == 0) {
+        chomp(my $module = `git-repo-config --get cvsimport.module`);
+        push(@ARGV, $module);
+    }
+}
+
+my $opts = "haivmkuo:d:p:C:z:s:M:P:A:S:L:";
+read_repo_config($opts);
+getopts($opts) or usage();
 usage if $opt_h;
 
 @ARGV <= 1 or usage();

@@ -33,6 +33,60 @@ include::urls.txt[]
 
 include::merge-strategies.txt[]
 
+DEFAULT BEHAVIOUR
+-----------------
+
+Often people use `git pull` without giving any parameter.
+Traditionally, this has been equivalent to saying `git pull
+origin`.  However, when configuration `branch.<name>.remote` is
+present while on branch `<name>`, that value is used instead of
+`origin`.
+
+In order to determine what URL to use to fetch from, the value
+of the configuration `remote.<origin>.url` is consulted
+and if there is not any such variable, the value on `URL: ` line
+in `$GIT_DIR/remotes/<origin>` file is used.
+
+In order to determine what remote branches to fetch (and
+optionally store in the tracking branches) when the command is
+run without any refspec parameters on the command line, values
+of the configuration variable `remote.<origin>.fetch` are
+consulted, and if there aren't any, `$GIT_DIR/remotes/<origin>`
+file is consulted and its `Pull: ` lines are used.
+In addition to the refspec formats described in the OPTIONS
+section, you can have a globbing refspec that looks like this:
+
+------------
+refs/heads/*:refs/remotes/origin/*
+------------
+
+A globbing refspec must have a non-empty RHS (i.e. must store
+what were fetched in tracking branches), and its LHS and RHS
+must end with `/*`.  The above specifies that all remote
+branches are tracked using tracking branches in
+`refs/remotes/origin/` hierarchy under the same name.
+
+The rule to determine which remote branch to merge after
+fetching is a bit involved, in order not to break backward
+compatibility.
+
+If explicit refspecs were given on the command
+line of `git pull`, they are all merged.
+
+When no refspec was given on the command line, then `git pull`
+uses the refspec from the configuration or
+`$GIT_DIR/remotes/<origin>`.  In such cases, the following
+rules apply:
+
+. If `branch.<name>.merge` configuration for the current
+  branch `<name>` exists, that is the name of the branch at the
+  remote site that is merged.
+
+. If the refspec is a globbing one, nothing is merged.
+
+. Otherwise the remote branch of the first refspec is merged.
+
+
 EXAMPLES
 --------
 

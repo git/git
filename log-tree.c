@@ -102,6 +102,16 @@ static int append_signoff(char *buf, int buf_sz, int at, const char *signoff)
 	return at;
 }
 
+static unsigned int digits_in_number(unsigned int number)
+{
+	unsigned int i = 10, result = 1;
+	while (i <= number) {
+		i *= 10;
+		result++;
+	}
+	return result;
+}
+
 void show_log(struct rev_info *opt, const char *sep)
 {
 	static char this_header[16384];
@@ -155,7 +165,8 @@ void show_log(struct rev_info *opt, const char *sep)
 		if (opt->total > 0) {
 			static char buffer[64];
 			snprintf(buffer, sizeof(buffer),
-					"Subject: [PATCH %d/%d] ",
+					"Subject: [PATCH %0*d/%d] ",
+					digits_in_number(opt->total),
 					opt->nr, opt->total);
 			subject = buffer;
 		} else if (opt->total == 0)
@@ -226,7 +237,8 @@ void show_log(struct rev_info *opt, const char *sep)
 		putchar(opt->commit_format == CMIT_FMT_ONELINE ? ' ' : '\n');
 		if (opt->reflog_info) {
 			show_reflog_message(opt->reflog_info,
-				    opt->commit_format == CMIT_FMT_ONELINE);;
+				    opt->commit_format == CMIT_FMT_ONELINE,
+				    opt->relative_date);
 			if (opt->commit_format == CMIT_FMT_ONELINE) {
 				printf("%s", sep);
 				return;
