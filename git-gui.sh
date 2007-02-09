@@ -3339,7 +3339,7 @@ proc show_blame {commit path} {
 				$w.out.linenumber_t \\
 				$w.out.file_t \\
 				$i @%x,%y
-			break
+			focus $i
 		"
 		bind_button3 $i "
 			set cursorX %x
@@ -3349,6 +3349,7 @@ proc show_blame {commit path} {
 		"
 	}
 
+	bind $w.cm.t <Button-1> "focus $w.cm.t"
 	bind $tl <Visibility> "focus $tl"
 	bind $tl <Destroy> "
 		array unset blame_status {$w}
@@ -3428,6 +3429,7 @@ proc read_blame_incremental {fd w w_load w_cmit w_line w_file} {
 				$w_file tag conf g$cmit
 				$w_line tag raise in_sel
 				$w_file tag raise in_sel
+				$w_file tag raise sel
 				set blame_data($w,$cmit,order) $blame_data($w,commit_count)
 				incr blame_data($w,commit_count)
 				lappend blame_data($w,commit_list) $cmit
