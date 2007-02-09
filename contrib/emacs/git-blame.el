@@ -187,8 +187,10 @@
                (res-line (string-to-number (match-string 3)))
                (num-lines (string-to-number (match-string 4))))
            (setq git-blame-current
-                 (git-blame-new-commit
-                  hash src-line res-line num-lines)))
+                 (if (string= hash "0000000000000000000000000000000000000000")
+                     nil
+                   (git-blame-new-commit
+                    hash src-line res-line num-lines))))
          (delete-region (point) (match-end 0))
          t)
         ((looking-at "filename \\(.+\\)\n")
@@ -220,6 +222,7 @@
           (unless color
             (setq color git-blame-ancient-color))
           (setq info (list hash src-line res-line num-lines
+                           (git-describe-commit hash)
                            (cons 'color color))))
         (puthash hash info git-blame-cache))
       (goto-line res-line)
@@ -233,7 +236,8 @@
             (overlay-put ovl 'git-blame info)
             (overlay-put ovl 'help-echo hash)
             (overlay-put ovl 'face (list :background
-                                         (cdr (assq 'color (cddddr info)))))
+                                         (cdr (assq 'color (nthcdr 5 info)))))
+            ;; the point-entered property doesn't seem to work in overlays
             ;;(overlay-put ovl 'point-entered
             ;;             `(lambda (x y) (git-blame-identify ,hash)))
             (let ((modified (buffer-modified-p)))
@@ -253,11 +257,21 @@
         (car info)
       (error "No commit info"))))
 
+(defun git-describe-commit (hash)
+  (with-temp-buffer
+    (call-process "git" nil t nil
+                  "log" "-1" "--pretty=oneline"
+                  hash)
+    (buffer-substring (point-min) (1- (point-max)))))
+
+(defvar git-blame-last-identification nil)
+(make-variable-buffer-local 'git-blame-last-identification)
 (defun git-blame-identify (&optional hash)
   (interactive)
-  (shell-command
-   (format "git log -1 --pretty=oneline %s" (or hash
-                                                (git-blame-current-commit)))))
+  (let ((info (gethash (or hash (git-blame-current-commit)) git-blame-cache)))
+    (when (and info (not (eq info git-blame-last-identification)))
+      (message "%s" (nth 4 info))
+      (setq git-blame-last-identification info))))
 
 (provide 'git-blame)
 
