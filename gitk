@@ -725,7 +725,7 @@ proc makewindow {} {
     bind . <Control-KP_Add> {incrfont 1}
     bind . <Control-minus> {incrfont -1}
     bind . <Control-KP_Subtract> {incrfont -1}
-    bind . <Destroy> {savestuff %W}
+    wm protocol . WM_DELETE_WINDOW doquit
     bind . <Button-1> "click %W"
     bind $fstring <Key-Return> dofind
     bind $sha1entry <Key-Return> gotocommit
@@ -829,12 +829,12 @@ proc savestuff {w} {
 	puts $f [list set colors $colors]
 	puts $f [list set diffcolors $diffcolors]
 
-        puts $f "set geometry(main) [winfo geometry .]"
+	puts $f "set geometry(main) [wm geometry .]"
 	puts $f "set geometry(topwidth) [winfo width .tf]"
 	puts $f "set geometry(topheight) [winfo height .tf]"
-	puts $f "set geometry(canv) [expr {[winfo width $canv]-0}]"
-	puts $f "set geometry(canv2) [expr {[winfo width $canv2]-0}]"
-	puts $f "set geometry(canv3) [expr {[winfo width $canv3]-0}]"
+	puts $f "set geometry(canv) [winfo width $canv]"
+	puts $f "set geometry(canv2) [winfo width $canv2]"
+	puts $f "set geometry(canv3) [winfo width $canv3]"
 	puts $f "set geometry(botwidth) [winfo width .bleft]"
 	puts $f "set geometry(botheight) [winfo height .bleft]"
 
@@ -5800,6 +5800,7 @@ proc showtag {tag isnew} {
 proc doquit {} {
     global stopped
     set stopped 100
+    savestuff .
     destroy .
 }
 
