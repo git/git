@@ -102,8 +102,17 @@
 
 (defvar git-blame-ancient-color "dark green")
 
-(defvar git-blame-overlays nil)
-(defvar git-blame-cache nil)
+(defvar git-blame-proc nil
+  "The running git-blame process")
+(make-variable-buffer-local 'git-blame-proc)
+
+(defvar git-blame-overlays nil
+  "The git-blame overlays used in the current buffer.")
+(make-variable-buffer-local 'git-blame-overlays)
+
+(defvar git-blame-cache nil
+  "A cache of git-blame information for the current buffer")
+(make-variable-buffer-local 'git-blame-cache)
 
 (defvar git-blame-mode nil)
 (make-variable-buffer-local 'git-blame-mode)
@@ -118,9 +127,7 @@
   (if arg
       (setq git-blame-mode (eq arg 1))
     (setq git-blame-mode (not git-blame-mode)))
-  (make-local-variable 'git-blame-overlays)
   (make-local-variable 'git-blame-colors)
-  (make-local-variable 'git-blame-cache)
   (git-blame-cleanup)
   (if git-blame-mode
       (progn
@@ -131,24 +138,37 @@
         (setq git-blame-cache (make-hash-table :test 'equal))
         (git-blame-run))))
 
+;;;###autoload
+(defun git-reblame ()
+  "Recalculate all blame information in the current buffer"
+  (unless git-blame-mode
+    (error "git-blame is not active"))
+  (interactive)
+  (git-blame-cleanup)
+  (git-blame-run))
+
 (defun git-blame-run ()
-  (let* ((display-buf (current-buffer))
-         (blame-buf (get-buffer-create
-                     (concat " git blame for " (buffer-name))))
-         (proc (start-process "git-blame" blame-buf
-                             "git" "blame" "--incremental"
-                             (file-name-nondirectory buffer-file-name))))
-    (mapcar 'delete-overlay git-blame-overlays)
-    (setq git-blame-overlays nil)
-    (setq git-blame-cache (make-hash-table :test 'equal))
-    (with-current-buffer blame-buf
-      (erase-buffer)
-      (make-local-variable 'git-blame-file)
-      (make-local-variable 'git-blame-current)
-      (setq git-blame-file display-buf)
-      (setq git-blame-current nil))
-    (set-process-filter proc 'git-blame-filter)
-    (set-process-sentinel proc 'git-blame-sentinel)))
+  (if git-blame-proc
+      ;; Should maybe queue up a new run here
+      (message "Already running git blame")
+    (let ((display-buf (current-buffer))
+          (blame-buf (get-buffer-create
+                      (concat " git blame for " (buffer-name)))))
+      (setq git-blame-proc
+            (start-process "git-blame" blame-buf
+                           "git" "blame"
+                           "--incremental" "--contents" "-"
+                           (file-name-nondirectory buffer-file-name)))
+      (with-current-buffer blame-buf
+        (erase-buffer)
+        (make-local-variable 'git-blame-file)
+        (make-local-variable 'git-blame-current)
+        (setq git-blame-file display-buf)
+        (setq git-blame-current nil))
+      (set-process-filter git-blame-proc 'git-blame-filter)
+      (set-process-sentinel git-blame-proc 'git-blame-sentinel)
+      (process-send-region git-blame-proc (point-min) (point-max))
+      (process-send-eof git-blame-proc))))
 
 (defun git-blame-cleanup ()
   "Remove all blame properties"
@@ -159,6 +179,9 @@
       (set-buffer-modified-p modified)))
 
 (defun git-blame-sentinel (proc status)
+  (with-current-buffer (process-buffer proc)
+    (with-current-buffer git-blame-file
+      (setq git-blame-proc nil)))
   ;;(kill-buffer (process-buffer proc))
   (message "git blame finished"))
 
