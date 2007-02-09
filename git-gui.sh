@@ -140,7 +140,7 @@ proc load_config {include_global} {
 	array unset global_config
 	if {$include_global} {
 		catch {
-			set fd_rc [open "| git repo-config --global --list" r]
+			set fd_rc [open "| git config --global --list" r]
 			while {[gets $fd_rc line] >= 0} {
 				if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
 					if {[is_many_config $name]} {
@@ -156,7 +156,7 @@ proc load_config {include_global} {
 
 	array unset repo_config
 	catch {
-		set fd_rc [open "| git repo-config --list" r]
+		set fd_rc [open "| git config --list" r]
 		while {[gets $fd_rc line] >= 0} {
 			if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
 				if {[is_many_config $name]} {
@@ -202,14 +202,14 @@ proc save_config {} {
 		set value $global_config_new($name)
 		if {$value ne $global_config($name)} {
 			if {$value eq $default_config($name)} {
-				catch {exec git repo-config --global --unset $name}
+				catch {exec git config --global --unset $name}
 			} else {
 				regsub -all "\[{}\]" $value {"} value
-				exec git repo-config --global $name $value
+				exec git config --global $name $value
 			}
 			set global_config($name) $value
 			if {$value eq $repo_config($name)} {
-				catch {exec git repo-config --unset $name}
+				catch {exec git config --unset $name}
 				set repo_config($name) $value
 			}
 		}
@@ -219,10 +219,10 @@ proc save_config {} {
 		set value $repo_config_new($name)
 		if {$value ne $repo_config($name)} {
 			if {$value eq $global_config($name)} {
-				catch {exec git repo-config --unset $name}
+				catch {exec git config --unset $name}
 			} else {
 				regsub -all "\[{}\]" $value {"} value
-				exec git repo-config $name $value
+				exec git config $name $value
 			}
 			set repo_config($name) $value
 		}
@@ -4151,7 +4151,7 @@ proc do_quit {} {
 			set rc_geometry {}
 		}
 		if {$cfg_geometry ne $rc_geometry} {
-			catch {exec git repo-config gui.geometry $cfg_geometry}
+			catch {exec git config gui.geometry $cfg_geometry}
 		}
 	}
 
