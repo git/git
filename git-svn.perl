@@ -492,6 +492,9 @@ sub complete_url_ls_init {
 		$remote_path =~ s#/+#/#g;
 		$remote_path =~ s#^/##g;
 		my ($n) = ($switch =~ /^--(\w+)/);
+		if (length $pfx && $pfx !~ m#/$#) {
+			die "--prefix='$pfx' must have a trailing slash '/'\n";
+		}
 		command_noisy('config', "svn-remote.$remote_id.$n",
 		                        "$remote_path:refs/remotes/$pfx*");
 	}
@@ -681,7 +684,7 @@ sub resolve_local_globs {
 				    " globbed: refs/remotes/$refname\n";
 			}
 			my $u = (::cmt_metadata("refs/remotes/$refname"))[0];
-			$u =~ s!^\Q$url\E/?!! or die
+			$u =~ s!^\Q$url\E(/|$)!! or die
 			  "refs/remotes/$refname: '$url' not found in '$u'\n";
 			if ($pathname ne $u) {
 				warn "W: Refspec glob conflict ",
@@ -831,7 +834,7 @@ sub init_remote_config {
 			}
 			my $old_path = $self->{path};
 			$self->{path} = $url;
-			$self->{path} =~ s!^\Q$min_url\E/*!!;
+			$self->{path} =~ s!^\Q$min_url\E(/|$)!!;
 			if (length $old_path) {
 				$self->{path} .= "/$old_path";
 			}
@@ -927,10 +930,8 @@ sub rel_path {
 	my ($self) = @_;
 	my $repos_root = $self->ra->{repos_root};
 	return $self->{path} if ($self->{url} eq $repos_root);
-	my $url = $self->{url} .
-	          (length $self->{path} ? "/$self->{path}" : $self->{path});
-	$url =~ s!^\Q$repos_root\E/*!!g;
-	$url;
+	die "BUG: rel_path failed! repos_root: $repos_root, Ra URL: ",
+	    $self->ra->{url}, " path: $self->{path},  URL: $self->{url}\n";
 }
 
 sub traverse_ignore {
@@ -1136,10 +1137,11 @@ sub do_git_commit {
 
 sub match_paths {
 	my ($self, $paths, $r) = @_;
+	return 1 if $self->{path} eq '';
 	if (my $path = $paths->{"/$self->{path}"}) {
 		return ($path->{action} eq 'D') ? 0 : 1;
 	}
-	$self->{path_regex} ||= qr/^\/\Q$self->{path}\E\/?/;
+	$self->{path_regex} ||= qr/^\/\Q$self->{path}\E\//;
 	if (grep /$self->{path_regex}/, keys %$paths) {
 		return 1;
 	}
@@ -1732,7 +1734,7 @@ sub new {
 
 sub set_path_strip {
 	my ($self, $path) = @_;
-	$self->{path_strip} = qr/^\Q$path\E\/?/;
+	$self->{path_strip} = qr/^\Q$path\E(\/|$)/ if length $path;
 }
 
 sub open_root {
@@ -2347,7 +2349,7 @@ sub new {
 	                      auth_provider_callbacks => $callbacks);
 	$self->{svn_path} = $url;
 	$self->{repos_root} = $self->get_repos_root;
-	$self->{svn_path} =~ s#^\Q$self->{repos_root}\E/*##;
+	$self->{svn_path} =~ s#^\Q$self->{repos_root}\E(/|$)##;
 	$RA = bless $self, $class;
 }
 
@@ -3136,7 +3138,7 @@ sub minimize_connections {
 
 		my $root_ra = Git::SVN::Ra->new($ra->{repos_root});
 		my $root_path = $ra->{url};
-		$root_path =~ s#^\Q$ra->{repos_root}\E/*##;
+		$root_path =~ s#^\Q$ra->{repos_root}\E(/|$)##;
 		foreach my $path (keys %$fetch) {
 			my $ref_id = $fetch->{$path};
 			my $gs = Git::SVN->new($ref_id, $repo_id, $path);
@@ -3248,7 +3250,7 @@ sub new {
 	my ($class, $glob) = @_;
 	my $re = $glob;
 	$re =~ s!/+$!!g; # no need for trailing slashes
-	my $nr = ($re =~ s!^(.*/?)\*(/?.*)$!\(\[^/\]+\)!g);
+	my $nr = ($re =~ s!^(.*)\*(.*)$!\(\[^/\]+\)!g);
 	my ($left, $right) = ($1, $2);
 	if ($nr > 1) {
 		die "Only one '*' wildcard expansion ",
@@ -3257,8 +3259,12 @@ sub new {
 		die "One '*' is needed for glob: '$glob'\n";
 	}
 	$re = quotemeta($left) . $re . quotemeta($right);
-	$left =~ s!/+$!!g;
-	$right =~ s!^/+!!g;
+	if (length $left && !($left =~ s!/+$!!g)) {
+		die "Missing trailing '/' on left side of: '$glob' ($left)\n";
+	}
+	if (length $right && !($right =~ s!^/+!!g)) {
+		die "Missing leading '/' on right side of: '$glob' ($right)\n";
+	}
 	bless { left => $left, right => $right,
 	        regex => qr/$re/, glob => $glob }, $class;
 }
