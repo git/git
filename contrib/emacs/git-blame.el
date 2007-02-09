@@ -1,8 +1,73 @@
-;;; git-blame.el
-;; David Kågedal <davidk@lysator.liu.se>
+;;; git-blame.el --- Minor mode for incremental blame for Git  -*- coding: utf-8 -*-
+;;
+;; Copyright (C) 2007  David Kågedal
+;;
+;; Authors:    David Kågedal <davidk@lysator.liu.se>
+;; Created:    31 Jan 2007
 ;; Message-ID: <87iren2vqx.fsf@morpheus.local>
+;; License:    GPL
+;; Keywords:   git, version control, release management
+;;
+;; Compatibility: Emacs21
 
-(require 'cl)
+
+;; This file is *NOT* part of GNU Emacs.
+;; This file is distributed under the same terms as GNU Emacs.
+
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2 of
+;; the License, or (at your option) any later version.
+
+;; This program is distributed in the hope that it will be
+;; useful, but WITHOUT ANY WARRANTY; without even the implied
+;; warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+;; PURPOSE.  See the GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public
+;; License along with this program; if not, write to the Free
+;; Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+;; MA 02111-1307 USA
+
+;; http://www.fsf.org/copyleft/gpl.html
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;; Commentary:
+;;
+;; Here is an Emacs implementation of incremental git-blame.  When you
+;; turn it on while viewing a file, the editor buffer will be updated by
+;; setting the background of individual lines to a color that reflects
+;; which commit it comes from.  And when you move around the buffer, a
+;; one-line summary will be shown in the echo area.
+
+;;; Installation:
+;;
+;;  1) Load into emacs: M-x load-file RET git-blame.el RET
+;;  2) Open a git-controlled file
+;;  3) Blame: M-x git-blame-mode
+
+;;; Compatibility:
+;;
+;; It requires GNU Emacs 21.  If you'are using Emacs 20, try
+;; changing this:
+;;
+;;            (overlay-put ovl 'face (list :background
+;;                                         (cdr (assq 'color (cddddr info)))))
+;;
+;; to
+;;
+;;            (overlay-put ovl 'face (cons 'background-color
+;;                                         (cdr (assq 'color (cddddr info)))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;; Code:
+
+(require 'cl)			      ; to use `push', `pop'
+
 (defun color-scale (l)
   (let* ((colors ())
          r g b)
@@ -178,3 +243,7 @@
   (shell-command
    (format "git log -1 --pretty=oneline %s" (or hash
                                                 (git-blame-current-commit)))))
+
+(provide 'git-blame)
+
+;;; git-blame.el ends here
