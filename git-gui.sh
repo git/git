@@ -3245,6 +3245,15 @@ proc show_blame {commit path} {
 	pack $w.path -side top -fill x
 
 	frame $w.out
+	text $w.out.loaded_t \
+		-background white -borderwidth 0 \
+		-state disabled \
+		-wrap none \
+		-height 40 \
+		-width 1 \
+		-font font_diff
+	$w.out.loaded_t tag conf annotated -background grey
+
 	text $w.out.linenumber_t \
 		-background white -borderwidth 0 \
 		-state disabled \
@@ -3252,7 +3261,6 @@ proc show_blame {commit path} {
 		-height 40 \
 		-width 5 \
 		-font font_diff
-	$w.out.linenumber_t tag conf annotated -background grey
 	$w.out.linenumber_t tag conf linenumber -justify right
 
 	text $w.out.file_t \
@@ -3267,12 +3275,18 @@ proc show_blame {commit path} {
 	scrollbar $w.out.sbx -orient h -command [list $w.out.file_t xview]
 	scrollbar $w.out.sby -orient v \
 		-command [list scrollbar2many [list \
+		$w.out.loaded_t \
 		$w.out.linenumber_t \
 		$w.out.file_t \
 		] yview]
-	grid $w.out.linenumber_t $w.out.file_t $w.out.sby -sticky nsew
-	grid conf $w.out.sbx -column 1 -sticky we
-	grid columnconfigure $w.out 1 -weight 1
+	grid \
+		$w.out.linenumber_t \
+		$w.out.loaded_t \
+		$w.out.file_t \
+		$w.out.sby \
+		-sticky nsew
+	grid conf $w.out.sbx -column 2 -sticky we
+	grid columnconfigure $w.out 2 -weight 1
 	grid rowconfigure $w.out 0 -weight 1
 	pack $w.out -fill both -expand 1
 
@@ -3306,17 +3320,21 @@ proc show_blame {commit path} {
 		-font font_ui \
 		-command "blame_copycommit $w \$cursorW @\$cursorX,\$cursorY"
 
-	foreach i [list $w.out.linenumber_t $w.out.file_t] {
+	foreach i [list \
+		$w.out.loaded_t \
+		$w.out.linenumber_t \
+		$w.out.file_t] {
 		$i tag conf in_sel \
 			-background [$i cget -foreground] \
 			-foreground [$i cget -background]
 		$i conf -yscrollcommand \
 			[list many2scrollbar [list \
+			$w.out.loaded_t \
 			$w.out.linenumber_t \
 			$w.out.file_t \
 			] yview $w.out.sby]
 		bind $i <Button-1> "
-			blame_highlight {$w} \\
+			blame_click {$w} \\
 				$w.cm.t \\
 				$w.out.linenumber_t \\
 				$w.out.file_t \\
@@ -3338,19 +3356,22 @@ proc show_blame {commit path} {
 	"
 	wm title $tl "[appname] ([reponame]): File Viewer"
 
+	set blame_data($w,commit_count) 0
+	set blame_data($w,commit_list) {}
 	set blame_data($w,total_lines) 0
 	set blame_data($w,blame_lines) 0
 	set blame_data($w,highlight_commit) {}
 	set blame_data($w,highlight_line) -1
+
 	set cmd [list git cat-file blob "$commit:$path"]
 	set fd [open "| $cmd" r]
 	fconfigure $fd -blocking 0 -translation lf -encoding binary
 	fileevent $fd readable [list read_blame_catfile \
 		$fd $w $commit $path \
-		$w.cm.t $w.out.linenumber_t $w.out.file_t]
+		$w.cm.t $w.out.loaded_t $w.out.linenumber_t $w.out.file_t]
 }
 
-proc read_blame_catfile {fd w commit path w_cmit w_line w_file} {
+proc read_blame_catfile {fd w commit path w_cmit w_load w_line w_file} {
 	global blame_status blame_data
 
 	if {![winfo exists $w_file]} {
@@ -3359,14 +3380,17 @@ proc read_blame_catfile {fd w commit path w_cmit w_line w_file} {
 	}
 
 	set n $blame_data($w,total_lines)
+	$w_load conf -state normal
 	$w_line conf -state normal
 	$w_file conf -state normal
 	while {[gets $fd line] >= 0} {
 		regsub "\r\$" $line {} line
 		incr n
+		$w_load insert end "\n"
 		$w_line insert end "$n\n" linenumber
 		$w_file insert end "$line\n"
 	}
+	$w_load conf -state disabled
 	$w_line conf -state disabled
 	$w_file conf -state disabled
 	set blame_data($w,total_lines) $n
@@ -3379,11 +3403,11 @@ proc read_blame_catfile {fd w commit path w_cmit w_line w_file} {
 		set fd [open "| $cmd" r]
 		fconfigure $fd -blocking 0 -translation lf -encoding binary
 		fileevent $fd readable [list read_blame_incremental $fd $w \
-			$w_cmit $w_line $w_file]
+			$w_load $w_cmit $w_line $w_file]
 	}
 }
 
-proc read_blame_incremental {fd w w_cmit w_line w_file} {
+proc read_blame_incremental {fd w w_load w_cmit w_line w_file} {
 	global blame_status blame_data
 
 	if {![winfo exists $w_file]} {
@@ -3399,12 +3423,14 @@ proc read_blame_incremental {fd w w_cmit w_line w_file} {
 			set blame_data($w,final_line) $final_line
 			set blame_data($w,line_count) $line_count
 
-			if {[catch {set g $blame_data($w,$cmit,seen)}]} {
+			if {[catch {set g $blame_data($w,$cmit,order)}]} {
 				$w_line tag conf g$cmit
 				$w_file tag conf g$cmit
 				$w_line tag raise in_sel
 				$w_file tag raise in_sel
-				set blame_data($w,$cmit,seen) 1
+				set blame_data($w,$cmit,order) $blame_data($w,commit_count)
+				incr blame_data($w,commit_count)
+				lappend blame_data($w,commit_list) $cmit
 			}
 		} elseif {[string match {filename *} $line]} {
 			set file [string range $line 9 end]
@@ -3414,7 +3440,7 @@ proc read_blame_incremental {fd w w_cmit w_line w_file} {
 
 			while {$n > 0} {
 				if {[catch {set g g$blame_data($w,line$lno,commit)}]} {
-					$w_line tag add annotated $lno.0 "$lno.0 lineend + 1c"
+					$w_load tag add annotated $lno.0 "$lno.0 lineend + 1c"
 				} else {
 					$w_line tag remove g$g $lno.0 "$lno.0 lineend + 1c"
 					$w_file tag remove g$g $lno.0 "$lno.0 lineend + 1c"
@@ -3437,6 +3463,14 @@ proc read_blame_incremental {fd w w_cmit w_line w_file} {
 				incr n -1
 				incr lno
 				incr blame_data($w,blame_lines)
+			}
+
+			set hc $blame_data($w,highlight_commit)
+			if {$hc ne {}
+				&& [expr {$blame_data($w,$hc,order) + 1}]
+					== $blame_data($w,$cmit,order)} {
+				blame_showcommit $w $w_cmit $w_line $w_file \
+					$blame_data($w,highlight_line)
 			}
 		} elseif {[regexp {^([a-z-]+) (.*)$} $line line header data]} {
 			set blame_data($w,$blame_data($w,commit),$header) $data
@@ -3462,7 +3496,7 @@ proc blame_incremental_status {w} {
 			/ $blame_data($w,total_lines)}]]
 }
 
-proc blame_highlight {w w_cmit w_line w_file cur_w pos} {
+proc blame_click {w w_cmit w_line w_file cur_w pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
 	if {$lno eq {}} return
 
@@ -3474,25 +3508,41 @@ proc blame_highlight {w w_cmit w_line w_file cur_w pos} {
 	blame_showcommit $w $w_cmit $w_line $w_file $lno
 }
 
+set blame_colors {
+	#ff4040
+	#ff40ff
+	#4040ff
+}
+
 proc blame_showcommit {w w_cmit w_line w_file lno} {
-	global blame_data repo_config
+	global blame_colors blame_data repo_config
 
 	set cmit $blame_data($w,highlight_commit)
 	if {$cmit ne {}} {
-		$w_line tag conf g$cmit -background white
-		$w_file tag conf g$cmit -background white
-		$w_line tag raise annotated g$cmit
+		set idx $blame_data($w,$cmit,order)
+		set i 0
+		foreach c $blame_colors {
+			set h [lindex $blame_data($w,commit_list) [expr {$idx - 1 + $i}]]
+			$w_line tag conf g$h -background white
+			$w_file tag conf g$h -background white
+			incr i
+		}
 	}
 
 	$w_cmit conf -state normal
 	$w_cmit delete 0.0 end
 	if {[catch {set cmit $blame_data($w,line$lno,commit)}]} {
 		set cmit {}
-		$w_cmit insert end "Computing..."
+		$w_cmit insert end "Loading annotation..."
 	} else {
-		$w_line tag conf g$cmit -background yellow
-		$w_file tag conf g$cmit -background yellow
-		$w_line tag raise g$cmit annotated
+		set idx $blame_data($w,$cmit,order)
+		set i 0
+		foreach c $blame_colors {
+			set h [lindex $blame_data($w,commit_list) [expr {$idx - 1 + $i}]]
+			$w_line tag conf g$h -background $c
+			$w_file tag conf g$h -background $c
+			incr i
+		}
 
 		if {[catch {set msg $blame_data($w,$cmit,message)}]} {
 			set msg {}
