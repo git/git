@@ -319,16 +319,6 @@ set _reponame [lindex [file split \
 	[file normalize [file dirname $_gitdir]]] \
 	end]
 
-enable_option multicommit
-enable_option branch
-enable_option transport
-
-if {[appname] eq {git-citool}} {
-	disable_option multicommit
-	disable_option branch
-	disable_option transport
-}
-
 ######################################################################
 ##
 ## task management
@@ -1307,7 +1297,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 	$ui_comm edit reset
 	$ui_comm edit modified false
 
-	if {![is_enabled multicommit]} do_quit
+	if {[is_enabled singlecommit]} do_quit
 
 	# -- Update in memory status
 	#
@@ -3236,11 +3226,16 @@ proc read_ls_tree {fd w} {
 proc show_blame {commit path} {
 	global next_browser_id blame_status blame_data
 
-	set w .browser[incr next_browser_id]
+	if {[winfo ismapped .]} {
+		set w .browser[incr next_browser_id]
+		set tl $w
+		toplevel $w
+	} else {
+		set w {}
+		set tl .
+	}
 	set blame_status($w) {Loading current file content...}
 	set texts [list]
-
-	toplevel $w
 
 	label $w.path -text "$commit:$path" \
 		-anchor w \
@@ -3399,12 +3394,12 @@ proc show_blame {commit path} {
 
 	set blame_data($w,colors) {}
 
-	bind $w <Visibility> "focus $w"
-	bind $w <Destroy> "
-		array unset blame_status $w
+	bind $tl <Visibility> "focus $tl"
+	bind $tl <Destroy> "
+		array unset blame_status {$w}
 		array unset blame_data $w,*
 	"
-	wm title $w "[appname] ([reponame]): File Viewer"
+	wm title $tl "[appname] ([reponame]): File Viewer"
 
 	set blame_data($w,total_lines) 0
 	set cmd [list git cat-file blob "$commit:$path"]
@@ -3442,7 +3437,9 @@ proc read_blame_catfile {fd w commit path texts w_lno w_file} {
 		lappend cmd $commit -- $path
 		set fd [open "| $cmd" r]
 		fconfigure $fd -blocking 0 -translation lf -encoding binary
-		fileevent $fd readable "read_blame_incremental $fd $w $texts"
+		set handler [list read_blame_incremental $fd $w]
+		append handler " $texts"
+		fileevent $fd readable $handler
 	}
 }
 
@@ -4918,7 +4915,33 @@ apply_config
 
 ######################################################################
 ##
+## feature option selection
+
+enable_option multicommit
+enable_option branch
+enable_option transport
+
+if {[appname] eq {git-citool}} {
+	enable_option singlecommit
+
+	disable_option multicommit
+	disable_option branch
+	disable_option transport
+}
+
+switch -- [lindex $argv 0] {
+blame {
+	disable_option multicommit
+	disable_option branch
+	disable_option transport
+}
+}
+
+######################################################################
+##
 ## ui construction
+
+set ui_comm {}
 
 # -- Menu Bar
 #
@@ -4928,7 +4951,9 @@ menu .mbar -tearoff 0
 if {[is_enabled branch]} {
 	.mbar add cascade -label Branch -menu .mbar.branch
 }
-.mbar add cascade -label Commit -menu .mbar.commit
+if {[is_enabled multicommit] || [is_enabled singlecommit]} {
+	.mbar add cascade -label Commit -menu .mbar.commit
+}
 if {[is_enabled transport]} {
 	.mbar add cascade -label Merge -menu .mbar.merge
 	.mbar add cascade -label Fetch -menu .mbar.fetch
@@ -4944,15 +4969,17 @@ menu .mbar.repository
 	-label {Browse Current Branch} \
 	-command {new_browser $current_branch} \
 	-font font_ui
+trace add variable current_branch write ".mbar.repository entryconf [.mbar.repository index last] -label \"Browse \$current_branch\" ;#"
 .mbar.repository add separator
 
 .mbar.repository add command \
 	-label {Visualize Current Branch} \
-	-command {do_gitk {}} \
+	-command {do_gitk $current_branch} \
 	-font font_ui
+trace add variable current_branch write ".mbar.repository entryconf [.mbar.repository index last] -label \"Visualize \$current_branch\" ;#"
 .mbar.repository add command \
 	-label {Visualize All Branches} \
-	-command {do_gitk {--all}} \
+	-command {do_gitk --all} \
 	-font font_ui
 .mbar.repository add separator
 
@@ -5049,73 +5076,75 @@ if {[is_enabled branch]} {
 
 # -- Commit Menu
 #
-menu .mbar.commit
+if {[is_enabled multicommit] || [is_enabled singlecommit]} {
+	menu .mbar.commit
 
-.mbar.commit add radiobutton \
-	-label {New Commit} \
-	-command do_select_commit_type \
-	-variable selected_commit_type \
-	-value new \
-	-font font_ui
-lappend disable_on_lock \
-	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+	.mbar.commit add radiobutton \
+		-label {New Commit} \
+		-command do_select_commit_type \
+		-variable selected_commit_type \
+		-value new \
+		-font font_ui
+	lappend disable_on_lock \
+		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-.mbar.commit add radiobutton \
-	-label {Amend Last Commit} \
-	-command do_select_commit_type \
-	-variable selected_commit_type \
-	-value amend \
-	-font font_ui
-lappend disable_on_lock \
-	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+	.mbar.commit add radiobutton \
+		-label {Amend Last Commit} \
+		-command do_select_commit_type \
+		-variable selected_commit_type \
+		-value amend \
+		-font font_ui
+	lappend disable_on_lock \
+		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-.mbar.commit add separator
+	.mbar.commit add separator
 
-.mbar.commit add command -label Rescan \
-	-command do_rescan \
-	-accelerator F5 \
-	-font font_ui
-lappend disable_on_lock \
-	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+	.mbar.commit add command -label Rescan \
+		-command do_rescan \
+		-accelerator F5 \
+		-font font_ui
+	lappend disable_on_lock \
+		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-.mbar.commit add command -label {Add To Commit} \
-	-command do_add_selection \
-	-font font_ui
-lappend disable_on_lock \
-	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+	.mbar.commit add command -label {Add To Commit} \
+		-command do_add_selection \
+		-font font_ui
+	lappend disable_on_lock \
+		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-.mbar.commit add command -label {Add All To Commit} \
-	-command do_add_all \
-	-accelerator $M1T-I \
-	-font font_ui
-lappend disable_on_lock \
-	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+	.mbar.commit add command -label {Add All To Commit} \
+		-command do_add_all \
+		-accelerator $M1T-I \
+		-font font_ui
+	lappend disable_on_lock \
+		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-.mbar.commit add command -label {Unstage From Commit} \
-	-command do_unstage_selection \
-	-font font_ui
-lappend disable_on_lock \
-	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+	.mbar.commit add command -label {Unstage From Commit} \
+		-command do_unstage_selection \
+		-font font_ui
+	lappend disable_on_lock \
+		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-.mbar.commit add command -label {Revert Changes} \
-	-command do_revert_selection \
-	-font font_ui
-lappend disable_on_lock \
-	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+	.mbar.commit add command -label {Revert Changes} \
+		-command do_revert_selection \
+		-font font_ui
+	lappend disable_on_lock \
+		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
-.mbar.commit add separator
+	.mbar.commit add separator
 
-.mbar.commit add command -label {Sign Off} \
-	-command do_signoff \
-	-accelerator $M1T-S \
-	-font font_ui
+	.mbar.commit add command -label {Sign Off} \
+		-command do_signoff \
+		-accelerator $M1T-S \
+		-font font_ui
 
-.mbar.commit add command -label Commit \
-	-command do_commit \
-	-accelerator $M1T-Return \
-	-font font_ui
-lappend disable_on_lock \
-	[list .mbar.commit entryconf [.mbar.commit index last] -state]
+	.mbar.commit add command -label Commit \
+		-command do_commit \
+		-accelerator $M1T-Return \
+		-font font_ui
+	lappend disable_on_lock \
+		[list .mbar.commit entryconf [.mbar.commit index last] -state]
+}
 
 if {[is_MacOSX]} {
 	# -- Apple Menu (Mac OS X only)
@@ -5217,6 +5246,34 @@ if {$browser ne {}} {
 		-font font_ui
 }
 unset browser doc_path doc_url
+
+# -- Standard bindings
+#
+bind .   <Destroy> do_quit
+bind all <$M1B-Key-q> do_quit
+bind all <$M1B-Key-Q> do_quit
+bind all <$M1B-Key-w> {destroy [winfo toplevel %W]}
+bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
+
+# -- Not a normal commit type invocation?  Do that instead!
+#
+switch -- [lindex $argv 0] {
+blame {
+	if {[llength $argv] == 3} {
+		set current_branch [lindex $argv 1]
+		show_blame $current_branch [lindex $argv 2]
+		return
+	} else {
+		puts stderr "usage: $argv0 blame commit path"
+		exit 1
+	}
+}
+{} {}
+default {
+	puts stderr "usage: $argv0 \[{blame}\]"
+	exit 1
+}
+}
 
 # -- Branch Control
 #
@@ -5714,7 +5771,6 @@ if {[is_enabled branch]} {
 	bind . <$M1B-Key-N> do_create_branch
 }
 
-bind .   <Destroy> do_quit
 bind all <Key-F5> do_rescan
 bind all <$M1B-Key-r> do_rescan
 bind all <$M1B-Key-R> do_rescan
@@ -5723,10 +5779,6 @@ bind .   <$M1B-Key-S> do_signoff
 bind .   <$M1B-Key-i> do_add_all
 bind .   <$M1B-Key-I> do_add_all
 bind .   <$M1B-Key-Return> do_commit
-bind all <$M1B-Key-q> do_quit
-bind all <$M1B-Key-Q> do_quit
-bind all <$M1B-Key-w> {destroy [winfo toplevel %W]}
-bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
 foreach i [list $ui_index $ui_workdir] {
 	bind $i <Button-1>       "toggle_or_diff         $i %x %y; break"
 	bind $i <$M1B-Button-1>  "add_one_to_selection   $i %x %y; break"
