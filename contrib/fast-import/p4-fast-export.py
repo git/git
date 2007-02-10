@@ -183,6 +183,8 @@ tzsign = ("%s" % tz)[0]
 if tzsign != '+' and tzsign != '-':
     tz = "+" + ("%s" % tz)
 
+gitOutput, gitStream, gitError = popen2.popen3("git-fast-import")
+
 if len(revision) > 0:
     print "Doing initial import of %s from revision %s" % (prefix, revision)
 
@@ -207,15 +209,11 @@ if len(revision) > 0:
 
     details["change"] = newestRevision
 
-    gitOutput, gitStream, gitError = popen2.popen3("git-fast-import")
     try:
         commit(details)
     except:
         print gitError.read()
 
-    gitStream.close()
-    gitOutput.close()
-    gitError.close()
 else:
     output = os.popen("p4 changes %s...%s" % (prefix, changeRange)).readlines()
 
@@ -229,8 +227,6 @@ else:
     if len(changes) == 0:
         print "no changes to import!"
         sys.exit(1)
-
-    gitOutput, gitStream, gitError = popen2.popen3("git-fast-import")
 
     cnt = 1
     for change in changes:
@@ -246,11 +242,11 @@ else:
             print gitError.read()
             sys.exit(1)
 
-    gitStream.close()
-    gitOutput.close()
-    gitError.close()
-
 print ""
+
+gitStream.close()
+gitOutput.close()
+gitError.close()
 
 os.popen("git-repo-config p4.depotpath %s" % prefix).read()
 
