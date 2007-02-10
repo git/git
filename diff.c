@@ -545,6 +545,24 @@ static char *pprint_rename(const char *a, const char *b)
 	int pfx_length, sfx_length;
 	int len_a = strlen(a);
 	int len_b = strlen(b);
+	int qlen_a = quote_c_style(a, NULL, NULL, 0);
+	int qlen_b = quote_c_style(b, NULL, NULL, 0);
+
+	if (qlen_a || qlen_b) {
+		if (qlen_a) len_a = qlen_a;
+		if (qlen_b) len_b = qlen_b;
+		name = xmalloc( len_a + len_b + 5 );
+		if (qlen_a)
+			quote_c_style(a, name, NULL, 0);
+		else
+			memcpy(name, a, len_a);
+		memcpy(name + len_a, " => ", 4);
+		if (qlen_b)
+			quote_c_style(b, name + len_a + 4, NULL, 0);
+		else
+			memcpy(name + len_a + 4, b, len_b + 1);
+		return name;
+	}
 
 	/* Find common prefix */
 	pfx_length = 0;
@@ -701,12 +719,14 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 		struct diffstat_file *file = data->files[i];
 		int change = file->added + file->deleted;
 
-		len = quote_c_style(file->name, NULL, NULL, 0);
-		if (len) {
-			char *qname = xmalloc(len + 1);
-			quote_c_style(file->name, qname, NULL, 0);
-			free(file->name);
-			file->name = qname;
+		if (!file->is_renamed) {  /* renames are already quoted by pprint_rename */
+			len = quote_c_style(file->name, NULL, NULL, 0);
+			if (len) {
+				char *qname = xmalloc(len + 1);
+				quote_c_style(file->name, qname, NULL, 0);
+				free(file->name);
+				file->name = qname;
+			}
 		}
 
 		len = strlen(file->name);
@@ -838,7 +858,7 @@ static void show_numstat(struct diffstat_t* data, struct diff_options *options)
 			printf("-\t-\t");
 		else
 			printf("%d\t%d\t", file->added, file->deleted);
-		if (options->line_termination &&
+		if (options->line_termination && !file->is_renamed &&
 		    quote_c_style(file->name, NULL, NULL, 0))
 			quote_c_style(file->name, NULL, stdout, 0);
 		else
