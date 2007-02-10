@@ -47,5 +47,9 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 	if (rev.pending.nr ||
 	    rev.min_age != -1 || rev.max_age != -1)
 		usage(diff_files_usage);
+	if (read_cache() < 0) {
+		perror("read_cache");
+		return -1;
+	}
 	return run_diff_files(&rev, silent);
 }

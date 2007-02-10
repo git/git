@@ -56,6 +56,10 @@ static int builtin_diff_files(struct rev_info *revs,
 	if (revs->max_count < 0 &&
 	    (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
 		revs->combine_merges = revs->dense_combined_merges = 1;
+	if (read_cache() < 0) {
+		perror("read_cache");
+		return -1;
+	}
 	return run_diff_files(revs, silent);
 }
 
@@ -151,6 +155,10 @@ static int builtin_diff_index(struct rev_info *revs,
 	    revs->max_count != -1 || revs->min_age != -1 ||
 	    revs->max_age != -1)
 		usage(builtin_diff_usage);
+	if (read_cache() < 0) {
+		perror("read_cache");
+		return -1;
+	}
 	return run_diff_index(revs, cached);
 }
 

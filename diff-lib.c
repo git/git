@@ -20,11 +20,7 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 
 	if (diff_unmerged_stage < 0)
 		diff_unmerged_stage = 2;
-	entries = read_cache();
-	if (entries < 0) {
-		perror("read_cache");
-		return -1;
-	}
+	entries = active_nr;
 	for (i = 0; i < entries; i++) {
 		struct stat st;
 		unsigned int oldmode, newmode;
@@ -354,10 +350,6 @@ int run_diff_index(struct rev_info *revs, int cached)
 	if (!revs->ignore_merges)
 		match_missing = 1;
 
-	if (read_cache() < 0) {
-		perror("read_cache");
-		return -1;
-	}
 	mark_merge_entries();
 
 	ent = revs->pending.objects[0].item;
