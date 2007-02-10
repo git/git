@@ -48,7 +48,6 @@ BEGIN {
 
 my ($SVN);
 
-my $_optimize_commits = 1 unless $ENV{GIT_SVN_NO_OPTIMIZE_COMMITS};
 $sha1 = qr/[a-f\d]{40}/;
 $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_stdin, $_help, $_edit,
@@ -1384,15 +1383,8 @@ sub fetch {
 
 sub set_tree_cb {
 	my ($self, $log_entry, $tree, $rev, $date, $author) = @_;
-	# TODO: enable and test optimized commits:
-	if (0 && $rev == ($self->{last_rev} + 1)) {
-		$log_entry->{revision} = $rev;
-		$log_entry->{author} = $author;
-		$self->do_git_commit($log_entry, "$rev=$tree");
-	} else {
-		$self->{inject_parents} = { $rev => $tree };
-		$self->fetch(undef, undef);
-	}
+	$self->{inject_parents} = { $rev => $tree };
+	$self->fetch(undef, undef);
 }
 
 sub set_tree {
