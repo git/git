@@ -2430,34 +2430,11 @@ static void show_mode_change(struct diff_filepair *p, int show_name)
 
 static void show_rename_copy(const char *renamecopy, struct diff_filepair *p)
 {
-	const char *old, *new;
+	char *names = pprint_rename(p->one->path, p->two->path);
 
-	/* Find common prefix */
-	old = p->one->path;
-	new = p->two->path;
-	while (1) {
-		const char *slash_old, *slash_new;
-		slash_old = strchr(old, '/');
-		slash_new = strchr(new, '/');
-		if (!slash_old ||
-		    !slash_new ||
-		    slash_old - old != slash_new - new ||
-		    memcmp(old, new, slash_new - new))
-			break;
-		old = slash_old + 1;
-		new = slash_new + 1;
-	}
-	/* p->one->path thru old is the common prefix, and old and new
-	 * through the end of names are renames
-	 */
-	if (old != p->one->path)
-		printf(" %s %.*s{%s => %s} (%d%%)\n", renamecopy,
-		       (int)(old - p->one->path), p->one->path,
-		       old, new, (int)(0.5 + p->score * 100.0/MAX_SCORE));
-	else
-		printf(" %s %s => %s (%d%%)\n", renamecopy,
-		       p->one->path, p->two->path,
-		       (int)(0.5 + p->score * 100.0/MAX_SCORE));
+	printf(" %s %s (%d%%)\n", renamecopy, names,
+	       (int)(0.5 + p->score * 100.0/MAX_SCORE));
+	free(names);
 	show_mode_change(p, 0);
 }
 
