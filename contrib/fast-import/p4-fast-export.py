@@ -49,6 +49,9 @@ changeRange = ""
 revision = ""
 users = {}
 initialParent = ""
+lastChange = ""
+lastCommitter = ""
+initialTag = ""
 
 if prefix.find("@") != -1:
     atIdx = prefix.index("@")
@@ -94,6 +97,8 @@ def p4Cmd(cmd):
 def commit(details):
     global initialParent
     global users
+    global lastChange
+    global lastCommitter
 
     epoch = details["time"]
     author = details["user"]
@@ -147,11 +152,8 @@ def commit(details):
 
     gitStream.write("\n")
 
-    gitStream.write("tag p4/%s\n" % details["change"])
-    gitStream.write("from %s\n" % branch);
-    gitStream.write("tagger %s\n" % committer);
-    gitStream.write("data 0\n\n")
-
+    lastChange = details["change"]
+    lastCommitter = committer
 
 def getUserMap():
     users = {}
@@ -173,6 +175,7 @@ if len(changeRange) == 0:
         rev = int(output[tagIdx + 9 : caretIdx]) + 1
         changeRange = "@%s,#head" % rev
         initialParent = os.popen("git-rev-parse %s" % branch).read()[:-1]
+        initialTag = "p4/%s" % (int(rev) - 1)
     except:
         pass
 
@@ -244,10 +247,17 @@ else:
 
 print ""
 
+gitStream.write("tag p4/%s\n" % lastChange)
+gitStream.write("from %s\n" % branch);
+gitStream.write("tagger %s\n" % lastCommitter);
+gitStream.write("data 0\n\n")
+
 gitStream.close()
 gitOutput.close()
 gitError.close()
 
 os.popen("git-repo-config p4.depotpath %s" % prefix).read()
+if len(initialTag) > 0:
+    os.popen("git tag -d %s" % initialTag).read()
 
 sys.exit(0)
