@@ -2409,19 +2409,24 @@ static void flush_one_pair(struct diff_filepair *p, struct diff_options *opt)
 
 static void show_file_mode_name(const char *newdelete, struct diff_filespec *fs)
 {
+	char *name = quote_one(fs->path);
 	if (fs->mode)
-		printf(" %s mode %06o %s\n", newdelete, fs->mode, fs->path);
+		printf(" %s mode %06o %s\n", newdelete, fs->mode, name);
 	else
-		printf(" %s %s\n", newdelete, fs->path);
+		printf(" %s %s\n", newdelete, name);
+	free(name);
 }
 
 
 static void show_mode_change(struct diff_filepair *p, int show_name)
 {
 	if (p->one->mode && p->two->mode && p->one->mode != p->two->mode) {
-		if (show_name)
+		if (show_name) {
+			char *name = quote_one(p->two->path);
 			printf(" mode change %06o => %06o %s\n",
-			       p->one->mode, p->two->mode, p->two->path);
+			       p->one->mode, p->two->mode, name);
+			free(name);
+		}
 		else
 			printf(" mode change %06o => %06o\n",
 			       p->one->mode, p->two->mode);
@@ -2455,8 +2460,10 @@ static void diff_summary(struct diff_filepair *p)
 		break;
 	default:
 		if (p->score) {
-			printf(" rewrite %s (%d%%)\n", p->two->path,
+			char *name = quote_one(p->two->path);
+			printf(" rewrite %s (%d%%)\n", name,
 				(int)(0.5 + p->score * 100.0/MAX_SCORE));
+			free(name);
 			show_mode_change(p, 0);
 		} else	show_mode_change(p, 1);
 		break;
