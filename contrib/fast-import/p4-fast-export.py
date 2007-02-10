@@ -12,7 +12,7 @@
 import os, string, sys, time
 import marshal, popen2, getopt
 
-branch = "refs/heads/p4"
+branch = "refs/heads/master"
 prefix = previousDepotPath = os.popen("git-repo-config --get p4.depotpath").read()
 if len(prefix) != 0:
     prefix = prefix[:-1]
