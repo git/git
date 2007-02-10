@@ -2191,13 +2191,13 @@ static void diff_flush_raw(struct diff_filepair *p,
 		free((void*)path_two);
 }
 
-static void diff_flush_name(struct diff_filepair *p, int line_termination)
+static void diff_flush_name(struct diff_filepair *p, struct diff_options *opt)
 {
 	char *path = p->two->path;
 
-	if (line_termination)
+	if (opt->line_termination)
 		path = quote_one(p->two->path);
-	printf("%s%c", path, line_termination);
+	printf("%s%c", path, opt->line_termination);
 	if (p->two->path != path)
 		free(path);
 }
@@ -2404,7 +2404,7 @@ static void flush_one_pair(struct diff_filepair *p, struct diff_options *opt)
 	else if (fmt & (DIFF_FORMAT_RAW | DIFF_FORMAT_NAME_STATUS))
 		diff_flush_raw(p, opt);
 	else if (fmt & DIFF_FORMAT_NAME)
-		diff_flush_name(p, opt->line_termination);
+		diff_flush_name(p, opt);
 }
 
 static void show_file_mode_name(const char *newdelete, struct diff_filespec *fs)
