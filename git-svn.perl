@@ -1148,7 +1148,8 @@ sub match_paths {
 	my $c = '';
 	foreach (split m#/#, $self->{path}) {
 		$c .= "/$_";
-		next unless ($paths->{$c} && ($paths->{$c}->{action} eq 'A'));
+		next unless ($paths->{$c} &&
+		             ($paths->{$c}->{action} =~ /^[AR]$/));
 		if ($self->ra->check_path($self->{path}, $r) ==
 		    $SVN::Node::dir) {
 			return 1;
@@ -1176,11 +1177,11 @@ sub find_parent_branch {
 	my $i;
 	while (@b_path_components) {
 		$i = $paths->{'/'.join('/', @b_path_components)};
-		last if $i;
+		last if $i && defined $i->{copyfrom_path};
 		unshift(@a_path_components, pop(@b_path_components));
 	}
-	return undef unless defined $i;
-	my $branch_from = $i->{copyfrom_path} or return undef;
+	return undef unless defined $i && defined $i->{copyfrom_path};
+	my $branch_from = $i->{copyfrom_path};
 	if (@a_path_components) {
 		print STDERR "branch_from: $branch_from => ";
 		$branch_from .= '/'.join('/', @a_path_components);
@@ -2309,8 +2310,7 @@ my $RA;
 BEGIN {
 	# enforce temporary pool usage for some simple functions
 	my $e;
-	foreach (qw/get_latest_revnum rev_proplist get_file
-	            check_path get_dir get_uuid get_repos_root/) {
+	foreach (qw/get_latest_revnum get_uuid get_repos_root/) {
 		$e .= "sub $_ {
 			my \$self = shift;
 			my \$pool = SVN::Pool->new;
@@ -2318,7 +2318,30 @@ BEGIN {
 			\$pool->clear;
 			wantarray ? \@ret : \$ret[0]; }\n";
 	}
-	eval $e;
+
+	# get_dir needs $pool held in cache for dirents to work,
+	# check_path is cacheable and rev_proplist is close enough
+	# for our purposes.
+	foreach (qw/check_path get_dir rev_proplist/) {
+		$e .= "my \%${_}_cache; my \$${_}_rev = 0; sub $_ {
+			my \$self = shift;
+			my \$r = pop;
+			my \$k = join(\"\\0\", \@_);
+			if (my \$x = \$${_}_cache{\$r}->{\$k}) {
+				return wantarray ? \@\$x : \$x->[0];
+			}
+			my \$pool = SVN::Pool->new;
+			my \@ret = \$self->SUPER::$_(\@_, \$r, \$pool);
+			if (\$r != \$${_}_rev) {
+				\%${_}_cache = ( pool => [] );
+				\$${_}_rev = \$r;
+			}
+			\$${_}_cache{\$r}->{\$k} = \\\@ret;
+			push \@{\$${_}_cache{pool}}, \$pool;
+			wantarray ? \@ret : \$ret[0]; }\n";
+	}
+	$e .= "\n1;";
+	eval $e or die $@;
 }
 
 sub new {
@@ -2564,8 +2587,34 @@ sub gs_fetch_loop_common {
 
 sub match_globs {
 	my ($self, $exists, $paths, $globs, $r) = @_;
+
+	sub get_dir_check {
+		my ($self, $exists, $g, $r) = @_;
+		my @x = eval { $self->get_dir($g->{path}->{left}, $r) };
+		return unless scalar @x == 3;
+		my $dirents = $x[0];
+		foreach my $de (keys %$dirents) {
+			next if $dirents->{$de}->kind != $SVN::Node::dir;
+			my $p = $g->{path}->full_path($de);
+			next if $exists->{$p};
+			next if (length $g->{path}->{right} &&
+				 ($self->check_path($p, $r) !=
+				  $SVN::Node::dir));
+			$exists->{$p} = Git::SVN->init($self->{url}, $p, undef,
+					 $g->{ref}->full_path($de), 1);
+		}
+	}
 	foreach my $g (@$globs) {
+		if (my $path = $paths->{"/$g->{path}->{left}"}) {
+			if ($path->{action} =~ /^[AR]$/) {
+				get_dir_check($self, $exists, $g, $r);
+			}
+		}
 		foreach (keys %$paths) {
+			if (/$g->{path}->{left_regex}/) {
+				next if $paths->{$_}->{action} !~ /^[AR]$/;
+				get_dir_check($self, $exists, $g, $r);
+			}
 			next unless /$g->{path}->{regex}/;
 			my $p = $1;
 			my $pathname = $g->{path}->full_path($p);
@@ -2578,22 +2627,8 @@ sub match_globs {
 		foreach (split m#/#, $g->{path}->{left}) {
 			$c .= "/$_";
 			next unless ($paths->{$c} &&
-			             ($paths->{$c}->{action} eq 'A'));
-			my @x = eval { $self->get_dir($g->{path}->{left}, $r) };
-			next unless scalar @x == 3;
-			my $dirents = $x[0];
-			foreach my $de (keys %$dirents) {
-				next if $dirents->{$de}->kind !=
-				        $SVN::Node::dir;
-				my $p = $g->{path}->full_path($de);
-				next if $exists->{$p};
-				next if (length $g->{path}->{right} &&
-				         ($self->check_path($p, $r) !=
-				          $SVN::Node::dir));
-				$exists->{$p} = Git::SVN->init($self->{url},
-				                 $p, undef,
-						 $g->{ref}->full_path($de), 1);
-			}
+			             ($paths->{$c}->{action} =~ /^[AR]$/));
+			get_dir_check($self, $exists, $g, $r);
 		}
 	}
 	values %$exists;
@@ -3265,7 +3300,8 @@ sub new {
 	if (length $right && !($right =~ s!^/+!!g)) {
 		die "Missing leading '/' on right side of: '$glob' ($right)\n";
 	}
-	bless { left => $left, right => $right,
+	my $left_re = qr/^\/\Q$left\E(\/|$)/;
+	bless { left => $left, right => $right, left_regex => $left_re,
 	        regex => qr/$re/, glob => $glob }, $class;
 }
 
