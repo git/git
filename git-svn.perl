@@ -1610,7 +1610,7 @@ sub read_repo_config {
 			@$v = @tmp if @tmp;
 		} else {
 			chomp(my $tmp = `$arg --get svn.$key`);
-			if ($tmp && !($arg =~ / --bool / && $tmp eq 'false')) {
+			if ($tmp && !($arg =~ / --bool/ && $tmp eq 'false')) {
 				$$v = $tmp;
 			}
 		}
