@@ -738,16 +738,10 @@ sub fetch_all {
 	foreach my $t (qw/branches tags/) {
 		defined $remote->{$t} or next;
 		push @globs, $remote->{$t};
-		my $f = "$ENV{GIT_DIR}/svn/.$uuid.$t";
-		if (open my $fh, '<', $f) {
-			chomp(my $max_rev = <$fh>);
-			close $fh or die "Error closing $f: $!\n";
-
-			if ($max_rev !~ /^\d+$/) {
-				die "$max_rev (in $f) is not an integer!\n";
-			}
-			$remote->{$t}->{max_rev} = $max_rev;
-			$base = $max_rev if ($max_rev < $base);
+		my $max_rev = eval { tmp_config(qw/--int --get/,
+		                         "svn-remote.$repo_id.${t}-maxRev") };
+		if (defined $max_rev && ($max_rev < $base)) {
+			$base = $max_rev;
 		}
 	}
 
@@ -774,6 +768,7 @@ sub read_all_remotes {
 			my ($p, $g) = ($3, $4);
 			my $rs = $r->{$1}->{$2} = {
 			                  t => $2,
+					  remote => $1,
 			                  path => Git::SVN::GlobSpec->new($p),
 			                  ref => Git::SVN::GlobSpec->new($g) };
 			if (length($rs->{ref}->{right}) != 0) {
@@ -951,8 +946,8 @@ sub set_svm_vars {
 	# see if we have it in our config, first:
 	eval {
 		$self->{svm} = {
-		  source => $self->tmp_config('--get', "$section.svm-source"),
-		  uuid => $self->tmp_config('--get', "$section.svm-uuid"),
+		  source => tmp_config('--get', "$section.svm-source"),
+		  uuid => tmp_config('--get', "$section.svm-uuid"),
 		}
 	};
 	return $ra if ($self->{svm}->{source} && $self->{svm}->{uuid});
@@ -968,12 +963,12 @@ sub set_svm_vars {
 		# username is of no interest
 		$src =~ s{!$}{};
 		$src =~ s{(^[a-z\+]*://)[^/@]*@}{$1};
-		$self->tmp_config('--add', "$section.svm-source", $src);
+		tmp_config('--add', "$section.svm-source", $src);
 
 		my $uuid = $props->{'svm:uuid'};
 		$uuid =~ m{^[0-9a-f\-]{30,}$}
 		    or die "doesn't look right - svm:uuid is '$uuid'\n";
-		$self->tmp_config('--add', "$section.svm-uuid", $uuid);
+		tmp_config('--add', "$section.svm-uuid", $uuid);
 
 		$self->{svm} = { source => $src , uuid => $uuid };
 	}
@@ -1079,18 +1074,19 @@ sub get_fetch_range {
 }
 
 sub tmp_config {
-	my ($self, @args) = @_;
-	unless (-f $self->{config}) {
-		open my $fh, '>', $self->{config} or
-		    die "Can't open $self->{config}: $!\n";
+	my (@args) = @_;
+	my $config = "$ENV{GIT_DIR}/svn/config";
+	unless (-f $config) {
+		open my $fh, '>', $config or
+		    die "Can't open $config: $!\n";
 		print $fh "; This file is used internally by git-svn\n" or
-		      die "Couldn't write to $self->{config}: $!\n";
+		      die "Couldn't write to $config: $!\n";
 		print $fh "; You should not have to edit it\n" or
-		      die "Couldn't write to $self->{config}: $!\n";
-		close $fh or die "Couldn't close $self->{config}: $!\n";
+		      die "Couldn't write to $config: $!\n";
+		close $fh or die "Couldn't close $config: $!\n";
 	}
 	my $old_config = $ENV{GIT_CONFIG};
-	$ENV{GIT_CONFIG} = $self->{config};
+	$ENV{GIT_CONFIG} = $config;
 	$@ = undef;
 	my @ret = eval { command('config', @args) };
 	my $err = $@;
@@ -2673,16 +2669,9 @@ sub gs_fetch_loop_common {
 				}
 			}
 			foreach my $g (@$globs) {
-				my $f = "$ENV{GIT_DIR}/svn/." .
-				        $self->uuid . ".$g->{t}";
-				open my $fh, '>', "$f.tmp" or
-				      die "Can't open $f.tmp for writing: $!";
-				print $fh "$r\n" or
-				      die "Couldn't write to $f: $!\n";
-				close $fh or die "Error closing $f: $!\n";
-				rename "$f.tmp", $f or
-				       die "Couldn't rename ",
-				           "$f.tmp => $f: $!\n";
+				my $k = "svn-remote.$g->{remote}." .
+				        "$g->{t}-maxRev";
+				Git::SVN::tmp_config($k, $r);
 			}
 		}
 		# pre-fill the .rev_db since it'll eventually get filled in
