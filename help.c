@@ -168,8 +168,8 @@ static void list_common_cmds_help(void)
 
 	puts("The most commonly used git commands are:");
 	for (i = 0; i < ARRAY_SIZE(common_cmds); i++) {
-		printf("    %s", common_cmds[i].name);
-		mput_char(' ', longest - strlen(common_cmds[i].name) + 4);
+		printf("   %s   ", common_cmds[i].name);
+		mput_char(' ', longest - strlen(common_cmds[i].name));
 		puts(common_cmds[i].help);
 	}
 	puts("(use 'git help -a' to get a list of all installed git commands)");
