@@ -50,7 +50,6 @@ revision = ""
 users = {}
 initialParent = ""
 lastChange = ""
-lastCommitter = ""
 initialTag = ""
 
 if prefix.find("@") != -1:
@@ -98,7 +97,6 @@ def commit(details):
     global initialParent
     global users
     global lastChange
-    global lastCommitter
 
     epoch = details["time"]
     author = details["user"]
@@ -153,7 +151,6 @@ def commit(details):
     gitStream.write("\n")
 
     lastChange = details["change"]
-    lastCommitter = committer
 
 def getUserMap():
     users = {}
