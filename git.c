@@ -387,8 +387,15 @@ int main(int argc, const char **argv, char **envp)
 		done_alias = 1;
 	}
 
-	if (errno == ENOENT)
+	if (errno == ENOENT) {
+		if (done_alias) {
+			fprintf(stderr, "Expansion of alias '%s' failed; "
+				"'%s' is not a git-command\n",
+				cmd, argv[0]);
+			exit(1);
+		}
 		help_unknown_cmd(cmd);
+	}
 
 	fprintf(stderr, "Failed to run command '%s': %s\n",
 		cmd, strerror(errno));
