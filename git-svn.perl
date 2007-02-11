@@ -662,6 +662,29 @@ BEGIN {
 	                                svn:entry:last-author
 	                                svn:entry:uuid
 	                                svn:entry:committed-date/;
+
+	# some options are read globally, but can be overridden locally
+	# per [svn-remote "..."] section.  Command-line options will *NOT*
+	# override options set in an [svn-remote "..."] section
+	my $e;
+	foreach (qw/follow_parent no_metadata use_svm_props/) {
+		my $key = $_;
+		$key =~ tr/_//d;
+		$e .= "sub $_ {
+			my (\$self) = \@_;
+			return \$self->{-$_} if exists \$self->{-$_};
+			my \$k = \"svn-remote.\$self->{repo_id}\.$key\";
+			eval { command_oneline(qw/config --get/, \$k) };
+			if (\$@) {
+				\$self->{-$_} = \$Git::SVN::_$_;
+			} else {
+				my \$v = command_oneline(qw/config --bool/,\$k);
+				\$self->{-$_} = \$v eq 'false' ? 0 : 1;
+			}
+			return \$self->{-$_} }\n";
+	}
+	$e .= "1;\n";
+	eval $e or die $@;
 }
 
 my %LOCKFILES;
@@ -963,8 +986,11 @@ sub set_svm_vars {
 sub ra {
 	my ($self) = shift;
 	my $ra = Git::SVN::Ra->new($self->{url});
-	$self->{-use_svm_props} = $Git::SVN::_use_svm_props;
-	if ($self->{-use_svm_props} && !$self->{svm}) {
+	if ($self->use_svm_props && !$self->{svm}) {
+		if ($self->no_metadata) {
+			die "Can't have both --no-metadata and ",
+			    "--use-svm-props options set!\n";
+		}
 		$ra = $self->set_svm_vars($ra);
 		$self->{-want_revprops} = 1;
 	}
@@ -1014,7 +1040,7 @@ sub last_rev_commit {
 		return ($self->{last_rev}, $self->{last_commit});
 	}
 	my $c = ::verify_ref($self->refname.'^0');
-	if ($c) {
+	if ($c && !$self->use_svm_props && !$self->no_metadata) {
 		my $rev = (::cmt_metadata($c))[1];
 		if (defined $rev) {
 			($self->{last_rev}, $self->{last_commit}) = ($rev, $c);
@@ -1034,7 +1060,7 @@ sub last_rev_commit {
 		sysread($fh, $rl, 41) == 41 or return (undef, undef);
 		chomp $rl;
 	}
-	if ($c) {
+	if ($c && $c ne $rl) {
 		die "$self->{db_path} and ", $self->refname,
 		    " inconsistent!:\n$c != $rl\n";
 	}
@@ -1178,7 +1204,7 @@ sub do_git_commit {
 	defined(my $pid = open3(my $msg_fh, my $out_fh, '>&STDERR', @exec))
 	                                                           or croak $!;
 	print $msg_fh $log_entry->{log} or croak $!;
-	unless ($_no_metadata) {
+	unless ($self->no_metadata) {
 		print $msg_fh "\ngit-svn-id: $log_entry->{metadata}\n"
 		              or croak $!;
 	}
@@ -1236,7 +1262,7 @@ sub match_paths {
 
 sub find_parent_branch {
 	my ($self, $paths, $rev) = @_;
-	return undef unless $_follow_parent;
+	return undef unless $self->follow_parent;
 	unless (defined $paths) {
 		my $err_handler = $SVN::Error::handler;
 		$SVN::Error::handler = \&Git::SVN::Ra::skip_unknown_revs;
@@ -1297,7 +1323,7 @@ sub find_parent_branch {
 		$gs = Git::SVN->init($new_url, '', $ref_id, $ref_id, 1);
 	}
 	my ($r0, $parent) = $gs->find_rev_before($r, 1);
-	if ($_follow_parent && (!defined $r0 || !defined $parent)) {
+	if (!defined $r0 || !defined $parent) {
 		$gs->fetch(0, $r);
 		($r0, $parent) = $gs->last_rev_commit;
 	}
@@ -1451,7 +1477,7 @@ sub make_log_entry {
 	$log_entry{date} = parse_svn_date($log_entry{date});
 	$log_entry{author} = check_author($log_entry{author});
 	$log_entry{log} .= "\n";
-	if (defined $headrev && $self->{-use_svm_props}) {
+	if (defined $headrev && $self->use_svm_props) {
 		my ($uuid, $r) = $headrev =~ m{^([a-f\d\-]{30,}):(\d+)$};
 		if ($uuid ne $self->{svm}->{uuid}) {
 			die "UUID mismatch on SVM path:\n",
@@ -1556,7 +1582,7 @@ sub rev_db_set {
 		            $SIG{USR1} = $SIG{USR2} = sub { $sig = $_[0] };
 	}
 	$LOCKFILES{$db_lock} = 1;
-	if ($_no_metadata) {
+	if ($self->no_metadata) {
 		copy($db, $db_lock) or die "rev_db_set(@_): ",
 		                           "Failed to copy: ",
 					   "$db => $db_lock ($!)\n";
