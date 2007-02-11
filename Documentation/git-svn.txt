@@ -316,17 +316,33 @@ for more information on using GIT_SVN_ID.
 
 config key: svn.followparent
 
---no-metadata::
+svn.noMetadata:
+svn-remote.<name>.noMetadata:
 	This gets rid of the git-svn-id: lines at the end of every commit.
 
 	If you lose your .git/svn/git-svn/.rev_db file, git-svn will not
 	be able to rebuild it and you won't be able to fetch again,
 	either.  This is fine for one-shot imports.
 
-	The 'git-svn log' command will not work on repositories using this,
-	either.
+	The 'git-svn log' command will not work on repositories using
+	this, either.  Using this conflicts with the 'useSvmProps'
+	option for (hopefully) obvious reasons.
 
-config key: svn.nometadata
+svn.useSvmProps:
+svn-remote.<name>.useSvmProps:
+	This allows git-svn to re-map repository URLs and UUIDs from
+	mirrors created using SVN::Mirror (or svk) for metadata.
+
+	If an SVN revision has a property, "svm:headrev", it is likely
+	that the revision was created by SVN::Mirror (also used by SVK).
+	The property contains a repository UUID and a revision.  We want
+	to make it look like we are mirroring the original URL, so
+	introduce a helper function that returns the original identity
+	URL and UUID, and use it when generating metadata in commit
+	messages.
+
+	Using this conflicts with the 'noMetadata' option for
+	(hopefully) obvious reasons.
 
 --
 

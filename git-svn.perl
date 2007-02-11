@@ -63,8 +63,8 @@ my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
 my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'authors-file|A=s' => \$_authors,
 		'repack:i' => \$Git::SVN::_repack,
-		'no-metadata' => \$Git::SVN::_no_metadata,
-		'use-svm-props|svm-props' => \$Git::SVN::_use_svm_props,
+		'noMetadata' => \$Git::SVN::_no_metadata,
+		'useSvmProps' => \$Git::SVN::_use_svm_props,
 		'quiet|q' => \$_q,
 		'repack-flags|repack-args|repack-opts=s' =>
 		   \$Git::SVN::_repack_flags,
@@ -606,9 +606,14 @@ sub load_authors {
 sub read_repo_config {
 	return unless -d $ENV{GIT_DIR};
 	my $opts = shift;
+	my @config_only;
 	foreach my $o (keys %$opts) {
+		# if we have mixedCase and a long option-only, then
+		# it's a config-only variable that we don't need for
+		# the command-line.
+		push @config_only, $o if ($o =~ /[A-Z]/ && $o =~ /^[a-z]+$/i);
 		my $v = $opts->{$o};
-		my ($key) = ($o =~ /^([a-z\-]+)/);
+		my ($key) = ($o =~ /^([a-zA-Z\-]+)/);
 		$key =~ s/-//g;
 		my $arg = 'git-config';
 		$arg .= ' --int' if ($o =~ /[:=]i$/);
@@ -623,6 +628,7 @@ sub read_repo_config {
 			}
 		}
 	}
+	delete @$opts{@config_only} if @config_only;
 }
 
 sub extract_metadata {
@@ -983,8 +989,8 @@ sub ra {
 	my $ra = Git::SVN::Ra->new($self->{url});
 	if ($self->use_svm_props && !$self->{svm}) {
 		if ($self->no_metadata) {
-			die "Can't have both --no-metadata and ",
-			    "--use-svm-props options set!\n";
+			die "Can't have both 'noMetadata' and ",
+			    "'useSvmProps' options set!\n";
 		}
 		$ra = $self->set_svm_vars($ra);
 		$self->{-want_revprops} = 1;
@@ -1566,7 +1572,7 @@ sub rebuild {
 # to a revision: (41 * rev) is the byte offset.
 # A record of 40 0s denotes an empty revision.
 # And yes, it's still pretty fast (faster than Tie::File).
-# These files are disposable unless --no-metadata is set
+# These files are disposable unless noMetadata or useSvmProps is set
 
 sub rev_db_set {
 	my ($self, $rev, $commit, $update_ref) = @_;
@@ -1578,7 +1584,12 @@ sub rev_db_set {
 		            $SIG{USR1} = $SIG{USR2} = sub { $sig = $_[0] };
 	}
 	$LOCKFILES{$db_lock} = 1;
-	if ($self->no_metadata) {
+	my $sync;
+
+	# both of these options make our .rev_db file very, very important
+	# and we can't afford to lose it because rebuild() won't work
+	if ($self->use_svm_props || $self->no_metadata) {
+		$sync = 1;
 		copy($db, $db_lock) or die "rev_db_set(@_): ",
 		                           "Failed to copy: ",
 					   "$db => $db_lock ($!)\n";
@@ -1599,6 +1610,10 @@ sub rev_db_set {
 	}
 	seek $fh, $offset, 0 or croak $!;
 	print $fh $commit,"\n" or croak $!;
+	if ($sync) {
+		$fh->flush or die "Couldn't flush $db_lock: $!\n";
+		$fh->sync or die "Couldn't sync $db_lock: $!\n";
+	}
 	close $fh or croak $!;
 	if ($update_ref) {
 		command_noisy('update-ref', '-m', "r$rev",
