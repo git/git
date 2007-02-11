@@ -4015,14 +4015,6 @@ set starting_gitk_msg {Starting gitk... please wait...}
 proc do_gitk {revs} {
 	global env ui_status_value starting_gitk_msg
 
-	# -- On Windows gitk is severly broken, and right now it seems like
-	#    nobody cares about fixing it.  The only known workaround is to
-	#    always delete ~/.gitk before starting the program.
-	#
-	if {[is_Windows]} {
-		catch {file delete [file join $env(HOME) .gitk]}
-	}
-
 	# -- Always start gitk through whatever we were loaded with.  This
 	#    lets us bypass using shell process on Windows systems.
 	#
