@@ -159,6 +159,16 @@ static int handle_alias(int *argcp, const char ***argv)
 	alias_command = (*argv)[0];
 	git_config(git_alias_config);
 	if (alias_string) {
+		if (alias_string[0] == '!') {
+			trace_printf("trace: alias to shell cmd: %s => %s\n",
+				     alias_command, alias_string + 1);
+			ret = system(alias_string + 1);
+			if (ret >= 0 && WIFEXITED(ret) &&
+			    WEXITSTATUS(ret) != 127)
+				exit(WEXITSTATUS(ret));
+			die("Failed to run '%s' when expanding alias '%s'\n",
+			    alias_string + 1, alias_command);
+		}
 		count = split_cmdline(alias_string, &new_argv);
 		option_count = handle_options(&new_argv, &count);
 		memmove(new_argv - option_count, new_argv,
@@ -388,8 +398,15 @@ int main(int argc, const char **argv, char **envp)
 		done_alias = 1;
 	}
 
-	if (errno == ENOENT)
+	if (errno == ENOENT) {
+		if (done_alias) {
+			fprintf(stderr, "Expansion of alias '%s' failed; "
+				"'%s' is not a git-command\n",
+				cmd, argv[0]);
+			exit(1);
+		}
 		help_unknown_cmd(cmd);
+	}
 
 	fprintf(stderr, "Failed to run command '%s': %s\n",
 		cmd, strerror(errno));

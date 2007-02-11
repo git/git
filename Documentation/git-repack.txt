@@ -30,9 +30,9 @@ OPTIONS
 	Instead of incrementally packing the unpacked objects,
 	pack everything available into a single pack.
 	Especially useful when packing a repository that is used
-	for a private development and there no need to worry
-	about people fetching via dumb protocols from it.  Use
-	with '-d'.
+	for private development and there is no need to worry
+	about people fetching via dumb file transfer protocols
+	from it.  Use with '-d'.
 
 -d::
 	After packing, if the newly created packs make some

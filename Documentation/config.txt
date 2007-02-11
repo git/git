@@ -222,6 +222,12 @@ alias.*::
 	spaces, the usual shell quoting and escaping is supported.
 	quote pair and a backslash can be used to quote them.
 
+	If the alias expansion is prefixed with an exclamation point,
+	it will be treated as a shell command.  For example, defining
+	"alias.new = !gitk --all --not ORIG_HEAD", the invocation
+	"git new" is equivalent to running the shell command
+	"gitk --all --not ORIG_HEAD".
+
 apply.whitespace::
 	Tells `git-apply` how to handle whitespaces, in the same way
 	as the '--whitespace' option. See gitlink:git-apply[1].
