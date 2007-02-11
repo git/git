@@ -170,9 +170,14 @@ if len(changeRange) == 0:
     try:
         sout, sin, serr = popen2.popen3("git-name-rev --tags `git-rev-parse %s`" % branch)
         output = sout.read()
+        if output.endswith("\n"):
+            output = output[:-1]
         tagIdx = output.index(" tags/p4/")
-        caretIdx = output.index("^")
-        rev = int(output[tagIdx + 9 : caretIdx]) + 1
+        caretIdx = output.find("^")
+        endPos = len(output)
+        if caretIdx != -1:
+            endPos = caretIdx
+        rev = int(output[tagIdx + 9 : endPos]) + 1
         changeRange = "@%s,#head" % rev
         initialParent = os.popen("git-rev-parse %s" % branch).read()[:-1]
         initialTag = "p4/%s" % (int(rev) - 1)
@@ -247,10 +252,9 @@ else:
 
 print ""
 
-gitStream.write("tag p4/%s\n" % lastChange)
-gitStream.write("from %s\n" % branch);
-gitStream.write("tagger %s\n" % lastCommitter);
-gitStream.write("data 0\n\n")
+gitStream.write("reset refs/tags/p4/%s\n" % lastChange)
+gitStream.write("from %s\n\n" % branch);
+
 
 gitStream.close()
 gitOutput.close()
