@@ -171,6 +171,8 @@ def commit(details, files, branch, branchPrefix):
         gitStream.write("from %s\n" % initialParent)
         initialParent = ""
 
+    mergedBranches = set()
+
     for file in files:
         path = file["path"]
         if not path.startswith(branchPrefix):
@@ -202,8 +204,9 @@ def commit(details, files, branch, branchPrefix):
         relPath = source[len(globalPrefix):]
 
         for branch in knownBranches:
-            if relPath.startswith(branch):
+            if relPath.startswith(branch) and branch not in mergedBranches:
                 gitStream.write("merge refs/heads/%s\n" % branch)
+                mergedBranches.add(branch)
                 break
 
     for file in files:
