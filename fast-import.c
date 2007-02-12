@@ -1667,8 +1667,10 @@ static void cmd_from(struct branch *b)
 	if (strncmp("from ", command_buf.buf, 5))
 		return;
 
-	if (b->last_commit)
-		die("Can't reinitailize branch %s", b->name);
+	if (b->branch_tree.tree) {
+		release_tree_content_recursive(b->branch_tree.tree);
+		b->branch_tree.tree = NULL;
+	}
 
 	from = strchr(command_buf.buf, ' ') + 1;
 	s = lookup_branch(from);
@@ -1936,7 +1938,9 @@ static void cmd_reset_branch(void)
 	sp = strchr(command_buf.buf, ' ') + 1;
 	b = lookup_branch(sp);
 	if (b) {
-		b->last_commit = 0;
+		hashclr(b->sha1);
+		hashclr(b->branch_tree.versions[0].sha1);
+		hashclr(b->branch_tree.versions[1].sha1);
 		if (b->branch_tree.tree) {
 			release_tree_content_recursive(b->branch_tree.tree);
 			b->branch_tree.tree = NULL;

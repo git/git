@@ -349,17 +349,16 @@ their syntax.
 
 `from`
 ^^^^^^
-Only valid for the first commit made on this branch by this
-fast-import process.  The `from` command is used to specify the commit
-to initialize this branch from.  This revision will be the first
-ancestor of the new commit.
+The `from` command is used to specify the commit to initialize
+this branch from.  This revision will be the first ancestor of the
+new commit.
 
-Omitting the `from` command in the first commit of a new branch will
-cause fast-import to create that commit with no ancestor. This tends to be
-desired only for the initial commit of a project.  Omitting the
-`from` command on existing branches is required, as the current
-commit on that branch is automatically assumed to be the first
-ancestor of the new commit.
+Omitting the `from` command in the first commit of a new branch
+will cause fast-import to create that commit with no ancestor. This
+tends to be desired only for the initial commit of a project.
+Omitting the `from` command on existing branches is usually desired,
+as the current commit on that branch is automatically assumed to
+be the first ancestor of the new commit.
 
 As `LF` is not valid in a Git refname or SHA-1 expression, no
 quoting or escaping syntax is supported within `<committish>`.
