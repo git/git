@@ -45,8 +45,12 @@ install: all
 	$(INSTALL) git-gui '$(DESTDIR_SQ)$(gitexecdir_SQ)'
 	$(foreach p,$(GITGUI_BUILT_INS), rm -f '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' && ln '$(DESTDIR_SQ)$(gitexecdir_SQ)/git-gui' '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' ;)
 
+dist-version:
+	@mkdir -p $(TARDIR)
+	@echo $(GITGUI_VERSION) > $(TARDIR)/version
+
 clean::
 	rm -f $(ALL_PROGRAMS) GIT-VERSION-FILE
 
-.PHONY: all install clean
+.PHONY: all install dist-version clean
 .PHONY: .FORCE-GIT-VERSION-FILE
