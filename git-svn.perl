@@ -736,7 +736,7 @@ sub fetch_all {
 	my $url = $remote->{url};
 	my (@gs, @globs);
 	my $ra = Git::SVN::Ra->new($url);
-	my $uuid = $ra->uuid;
+	my $uuid = $ra->get_uuid;
 	my $head = $ra->get_latest_revnum;
 	my $base = $head;
 
@@ -937,7 +937,8 @@ sub new {
 	$self->{url} = command_oneline('config', '--get',
 	                               "svn-remote.$repo_id.url") or
                   die "Failed to read \"svn-remote.$repo_id.url\" in config\n";
-	if (-z $self->{db_path} && ::verify_ref($self->refname.'^0')) {
+	if ((-z $self->db_path || ! -e $self->db_path) &&
+	    ::verify_ref($self->refname.'^0')) {
 		$self->rebuild;
 	}
 	$self;
@@ -945,18 +946,36 @@ sub new {
 
 sub refname { "refs/remotes/$_[0]->{ref_id}" }
 
-sub set_svm_vars {
-	my ($self, $ra) = @_;
-	my $section = "svn-remote.$self->{repo_id}";
+sub svm_uuid {
+	my ($self) = @_;
+	return $self->{svm}->{uuid} if $self->svm;
+	$self->ra;
+	unless ($self->{svm}) {
+		die "SVM UUID not cached, and reading remotely failed\n";
+	}
+	$self->{svm}->{uuid};
+}
 
+sub svm {
+	my ($self) = @_;
+	return $self->{svm} if $self->{svm};
+	my $svm;
 	# see if we have it in our config, first:
 	eval {
-		$self->{svm} = {
+		my $section = "svn-remote.$self->{repo_id}";
+		$svm = {
 		  source => tmp_config('--get', "$section.svm-source"),
 		  uuid => tmp_config('--get', "$section.svm-uuid"),
 		}
 	};
-	return $ra if ($self->{svm}->{source} && $self->{svm}->{uuid});
+	$self->{svm} = $svm if ($svm && $svm->{source} && $svm->{uuid});
+	$self->{svm};
+}
+
+sub _set_svm_vars {
+	my ($self, $ra) = @_;
+
+	return $ra if ($self->svm);
 
 	# nope, make sure we're connected to the repository root:
 	if ($ra->{repos_root} ne $self->{url}) {
@@ -965,6 +984,8 @@ sub set_svm_vars {
 	my $r = $ra->get_latest_revnum;
 	my ($props) = ($ra->get_dir('', $r))[2];
 	if (my $src = $props->{'svm:source'}) {
+		my $section = "svn-remote.$self->{repo_id}";
+
 		# don't know what a '!' is there for, also the
 		# username is of no interest
 		$src =~ s{!$}{};
@@ -984,6 +1005,24 @@ sub set_svm_vars {
 	$ra;
 }
 
+# this allows us to memoize our SVN::Ra UUID locally and avoid a
+# remote lookup (useful for 'git svn log').
+sub ra_uuid {
+	my ($self) = @_;
+	unless ($self->{ra_uuid}) {
+		my $key = "svn-remote.$self->{repo_id}.uuid";
+		my $uuid = eval { tmp_config('--get', $key) };
+		if (!$@ && $uuid && $uuid =~ /^([a-f\d\-]{30,})$/) {
+			$self->{ra_uuid} = $uuid;
+		} else {
+			die "ra_uuid called without URL\n" unless $self->{url};
+			$self->{ra_uuid} = $self->ra->get_uuid;
+			tmp_config('--add', $key, $self->{ra_uuid});
+		}
+	}
+	$self->{ra_uuid};
+}
+
 sub ra {
 	my ($self) = shift;
 	my $ra = Git::SVN::Ra->new($self->{url});
@@ -992,7 +1031,7 @@ sub ra {
 			die "Can't have both 'noMetadata' and ",
 			    "'useSvmProps' options set!\n";
 		}
-		$ra = $self->set_svm_vars($ra);
+		$ra = $self->_set_svm_vars($ra);
 		$self->{-want_revprops} = 1;
 	}
 	$ra;
@@ -1048,10 +1087,14 @@ sub last_rev_commit {
 			return ($rev, $c);
 		}
 	}
+	my $db_path = $self->db_path;
+	unless (-e $db_path) {
+		($self->{last_rev}, $self->{last_commit}) = (undef, undef);
+		return (undef, undef);
+	}
 	my $offset = -41; # from tail
 	my $rl;
-	open my $fh, '<', $self->{db_path} or
-	                         croak "$self->{db_path} not readable: $!\n";
+	open my $fh, '<', $db_path or croak "$db_path not readable: $!\n";
 	sysseek($fh, $offset, 2); # don't care for errors
 	sysread($fh, $rl, 41) == 41 or return (undef, undef);
 	chomp $rl;
@@ -1062,7 +1105,7 @@ sub last_rev_commit {
 		chomp $rl;
 	}
 	if ($c && $c ne $rl) {
-		die "$self->{db_path} and ", $self->refname,
+		die "$db_path and ", $self->refname,
 		    " inconsistent!:\n$c != $rl\n";
 	}
 	my $rev = sysseek($fh, 0, 1) or croak $!;
@@ -1187,7 +1230,7 @@ sub do_git_commit {
 	}
 	my $author = $log_entry->{author};
 	my ($name, $email) = (defined $::users{$author} ? @{$::users{$author}}
-	                   : ($author, "$author\@".$self->ra->uuid));
+	                   : ($author, "$author\@".$self->ra->get_uuid));
 	$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} = $name;
 	$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} = $email;
 	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_entry->{date};
@@ -1227,6 +1270,8 @@ sub do_git_commit {
 	print "r$log_entry->{revision}";
 	if (defined $log_entry->{svm_revision}) {
 		 print " (\@$log_entry->{svm_revision})";
+		 $self->rev_db_set($log_entry->{svm_revision}, $commit,
+		                   0, $self->svm_uuid);
 	}
 	print " = $commit ($self->{ref_id})\n";
 	if (defined $_repack && (--$_repack_nr == 0)) {
@@ -1492,7 +1537,7 @@ sub make_log_entry {
 		$log_entry{svm_revision} = $r;
 	} else {
 		$log_entry{metadata} = $self->full_url . "\@$rev " .
-		                       $self->ra->uuid;
+		                       $self->ra->get_uuid;
 	}
 	\%log_entry;
 }
@@ -1531,7 +1576,16 @@ sub set_tree {
 
 sub rebuild {
 	my ($self) = @_;
-	print "Rebuilding $self->{db_path} ...\n";
+	my $db_path = $self->db_path;
+	if (-f $self->{db_root}) {
+		rename $self->{db_root}, $db_path or die
+		     "rename $self->{db_root} => $db_path failed: $!\n";
+		my ($dir, $base) = ($db_path =~ m#^(.*?)/?([^/]+)$#);
+		symlink $base, $self->{db_root} or die
+		     "symlink $base => $self->{db_root} failed: $!\n";
+		return;
+	}
+	print "Rebuilding $db_path ...\n";
 	my ($rev_list, $ctx) = command_output_pipe("rev-list", $self->refname);
 	my $latest;
 	my $full_url = $self->full_url;
@@ -1558,7 +1612,7 @@ sub rebuild {
 		print "r$rev = $c\n";
 	}
 	command_close_pipe($rev_list, $ctx);
-	print "Done rebuilding $self->{db_path}\n";
+	print "Done rebuilding $db_path\n";
 }
 
 # rev_db:
@@ -1574,31 +1628,8 @@ sub rebuild {
 # And yes, it's still pretty fast (faster than Tie::File).
 # These files are disposable unless noMetadata or useSvmProps is set
 
-sub rev_db_set {
-	my ($self, $rev, $commit, $update_ref) = @_;
-	length $commit == 40 or croak "arg3 must be a full SHA1 hexsum\n";
-	my ($db, $db_lock) = ($self->{db_path}, "$self->{db_path}.lock");
-	my $sig;
-	if ($update_ref) {
-		$SIG{INT} = $SIG{HUP} = $SIG{TERM} = $SIG{ALRM} = $SIG{PIPE} =
-		            $SIG{USR1} = $SIG{USR2} = sub { $sig = $_[0] };
-	}
-	$LOCKFILES{$db_lock} = 1;
-	my $sync;
-
-	# both of these options make our .rev_db file very, very important
-	# and we can't afford to lose it because rebuild() won't work
-	if ($self->use_svm_props || $self->no_metadata) {
-		$sync = 1;
-		copy($db, $db_lock) or die "rev_db_set(@_): ",
-		                           "Failed to copy: ",
-					   "$db => $db_lock ($!)\n";
-	} else {
-		rename $db, $db_lock or die "rev_db_set(@_): ",
-		                            "Failed to rename: ",
-					    "$db => $db_lock ($!)\n";
-	}
-	open my $fh, '+<', $db_lock or croak $!;
+sub _rev_db_set {
+	my ($fh, $rev, $commit) = @_;
 	my $offset = $rev * 41;
 	# assume that append is the common case:
 	seek $fh, 0, 2 or croak $!;
@@ -1610,6 +1641,46 @@ sub rev_db_set {
 	}
 	seek $fh, $offset, 0 or croak $!;
 	print $fh $commit,"\n" or croak $!;
+}
+
+sub mkfile {
+	my ($path) = @_;
+	unless (-e $path) {
+		my ($dir, $base) = ($path =~ m#^(.*?)/?([^/]+)$#);
+		mkpath([$dir]) unless -d $dir;
+		open my $fh, '>>', $path or die "Couldn't create $path: $!\n";
+		close $fh or die "Couldn't close (create) $path: $!\n";
+	}
+}
+
+sub rev_db_set {
+	my ($self, $rev, $commit, $update_ref, $uuid) = @_;
+	length $commit == 40 or die "arg3 must be a full SHA1 hexsum\n";
+	my $db = $self->db_path($uuid);
+	my $db_lock = "$db.lock";
+	my $sig;
+	if ($update_ref) {
+		$SIG{INT} = $SIG{HUP} = $SIG{TERM} = $SIG{ALRM} = $SIG{PIPE} =
+		            $SIG{USR1} = $SIG{USR2} = sub { $sig = $_[0] };
+	}
+	mkfile($db);
+
+	$LOCKFILES{$db_lock} = 1;
+	my $sync;
+	# both of these options make our .rev_db file very, very important
+	# and we can't afford to lose it because rebuild() won't work
+	if ($self->use_svm_props || $self->no_metadata) {
+		$sync = 1;
+		copy($db, $db_lock) or die "rev_db_set(@_): ",
+					   "Failed to copy: ",
+					   "$db => $db_lock ($!)\n";
+	} else {
+		rename $db, $db_lock or die "rev_db_set(@_): ",
+					    "Failed to rename: ",
+					    "$db => $db_lock ($!)\n";
+	}
+	open my $fh, '+<', $db_lock or die "Couldn't open $db_lock: $!\n";
+	_rev_db_set($fh, $rev, $commit);
 	if ($sync) {
 		$fh->flush or die "Couldn't flush $db_lock: $!\n";
 		$fh->sync or die "Couldn't sync $db_lock: $!\n";
@@ -1631,19 +1702,20 @@ sub rev_db_set {
 
 sub rev_db_max {
 	my ($self) = @_;
-	my @stat = stat $self->{db_path} or
-	                die "Couldn't stat $self->{db_path}: $!\n";
-	($stat[7] % 41) == 0 or
-	                die "$self->{db_path} inconsistent size:$stat[7]\n";
+	my $db_path = $self->db_path;
+	my @stat = stat $db_path or return 0;
+	($stat[7] % 41) == 0 or die "$db_path inconsistent size: $stat[7]\n";
 	my $max = $stat[7] / 41;
 	(($max > 0) ? $max - 1 : 0);
 }
 
 sub rev_db_get {
-	my ($self, $rev) = @_;
+	my ($self, $rev, $uuid) = @_;
 	my $ret;
 	my $offset = $rev * 41;
-	open my $fh, '<', $self->{db_path} or croak $!;
+	my $db_path = $self->db_path($uuid);
+	return undef unless -e $db_path;
+	open my $fh, '<', $db_path or croak $!;
 	if (sysseek($fh, $offset, 0) == $offset) {
 		my $read = sysread($fh, $ret, 40);
 		$ret = undef if ($read != 40 || $ret eq ('0'x40));
@@ -1676,13 +1748,16 @@ sub _new {
 	my $dir = "$ENV{GIT_DIR}/svn/$ref_id";
 	$_[3] = $path = '' unless (defined $path);
 	mkpath([$dir]);
-	unless (-f "$dir/.rev_db") {
-		open my $fh, '>>', "$dir/.rev_db" or croak $!;
-		close $fh or croak $!;
-	}
-	bless { ref_id => $ref_id, dir => $dir, index => "$dir/index",
+	bless {
+		ref_id => $ref_id, dir => $dir, index => "$dir/index",
 	        path => $path, config => "$ENV{GIT_DIR}/svn/config",
-	        db_path => "$dir/.rev_db", repo_id => $repo_id }, $class;
+	        db_root => "$dir/.rev_db", repo_id => $repo_id }, $class;
+}
+
+sub db_path {
+	my ($self, $uuid) = @_;
+	$uuid ||= $self->ra_uuid;
+	"$self->{db_root}.$uuid";
 }
 
 sub uri_encode {
@@ -2519,11 +2594,6 @@ sub get_commit_editor {
 	$self->SUPER::get_commit_editor($log, $cb, @lock, $pool);
 }
 
-sub uuid {
-	my ($self) = @_;
-	$self->{uuid} ||= $self->get_uuid;
-}
-
 sub gs_do_update {
 	my ($self, $rev_a, $rev_b, $gs, $editor) = @_;
 	my $new = ($rev_a == $rev_b);
@@ -3140,6 +3210,9 @@ package Git::SVN::Migration;
 #            - info/url may remain for backwards compatibility
 #            - this is what we migrate up to this layout automatically,
 #            - this will be used by git svn init on single branches
+# v3.1 layout (auto migrated):
+#            - .rev_db => .rev_db.$UUID, .rev_db will remain as a symlink
+#              for backwards compatibility
 #
 # v4 layout: .git/svn/$repo_id/$id, refs/remotes/$repo_id/$id
 #            - this is only created for newly multi-init-ed
