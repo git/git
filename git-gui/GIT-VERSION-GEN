@@ -1,0 +1,46 @@
+#!/bin/sh
+
+GVF=GIT-VERSION-FILE
+DEF_VER=v0.5.GIT
+
+LF='
+'
+
+# First try git-describe, then see if there is a version file
+# (included in release tarballs), then default
+if VN=$(git describe --abbrev=4 HEAD 2>/dev/null) &&
+   case "$VN" in
+   *$LF*) (exit 1) ;;
+   v[0-9]*) : happy ;;
+   esac
+then
+	VN=$(echo "$VN" | sed -e 's/-/./g');
+elif test -f version
+then
+	VN=$(cat version) || VN="$DEF_VER"
+else
+	VN="$DEF_VER"
+fi
+
+VN=$(expr "$VN" : v*'\(.*\)')
+
+dirty=$(sh -c 'git diff-index --name-only HEAD' 2>/dev/null) || dirty=
+case "$dirty" in
+'')
+	;;
+*)
+	VN="$VN-dirty" ;;
+esac
+
+if test -r $GVF
+then
+	VC=$(sed -e 's/^GIT_VERSION = //' <$GVF)
+else
+	VC=unset
+fi
+test "$VN" = "$VC" || {
+	echo >&2 "GIT_VERSION = $VN"
+	echo "GIT_VERSION = $VN" >$GVF
+}
+
+
