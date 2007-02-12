@@ -83,10 +83,8 @@ EOF
 	foreach my $path (keys %files)
 	{
 		my ($mark, $mode) = @{$files{$path}};
-		my $git_mode = 0644;
-		$git_mode |= 0700 if $mode & 0111;
 		$path =~ s,^([^/]+)/,, if $have_top_dir;
-		printf FI "M %o :%i %s\n", $git_mode, $mark, $path;
+		printf FI "M %o :%i %s\n", $mode & 0111 ? 0755 : 0644, $mark, $path;
 	}
 	print FI "\n";
 
