@@ -261,6 +261,7 @@ static unsigned long object_count;
 static unsigned long branch_count;
 static unsigned long branch_load_count;
 static int failure;
+static FILE *pack_edges;
 
 /* Memory pools */
 static size_t mem_pool_alloc = 2*1024*1024 - sizeof(struct mem_pool);
@@ -811,18 +812,21 @@ static void end_packfile(void)
 		install_packed_git(new_p);
 
 		/* Print the boundary */
-		fprintf(stdout, "%s:", new_p->pack_name);
-		for (i = 0; i < branch_table_sz; i++) {
-			for (b = branch_table[i]; b; b = b->table_next_branch) {
-				if (b->pack_id == pack_id)
-					fprintf(stdout, " %s", sha1_to_hex(b->sha1));
+		if (pack_edges) {
+			fprintf(pack_edges, "%s:", new_p->pack_name);
+			for (i = 0; i < branch_table_sz; i++) {
+				for (b = branch_table[i]; b; b = b->table_next_branch) {
+					if (b->pack_id == pack_id)
+						fprintf(pack_edges, " %s", sha1_to_hex(b->sha1));
+				}
 			}
+			for (t = first_tag; t; t = t->next_tag) {
+				if (t->pack_id == pack_id)
+					fprintf(pack_edges, " %s", sha1_to_hex(t->sha1));
+			}
+			fputc('\n', pack_edges);
+			fflush(pack_edges);
 		}
-		for (t = first_tag; t; t = t->next_tag) {
-			if (t->pack_id == pack_id)
-				fprintf(stdout, " %s", sha1_to_hex(t->sha1));
-		}
-		fputc('\n', stdout);
 
 		pack_id++;
 	}
@@ -1988,7 +1992,13 @@ int main(int argc, const char **argv)
 			max_active_branches = strtoul(a + 18, NULL, 0);
 		else if (!strncmp(a, "--export-marks=", 15))
 			mark_file = a + 15;
-		else if (!strcmp(a, "--force"))
+		else if (!strncmp(a, "--export-pack-edges=", 20)) {
+			if (pack_edges)
+				fclose(pack_edges);
+			pack_edges = fopen(a + 20, "a");
+			if (!pack_edges)
+				die("Cannot open %s: %s", a + 20, strerror(errno));
+		} else if (!strcmp(a, "--force"))
 			force_update = 1;
 		else if (!strcmp(a, "--quiet"))
 			show_stats = 0;
@@ -2032,6 +2042,9 @@ int main(int argc, const char **argv)
 	dump_tags();
 	unkeep_all_packs();
 	dump_marks();
+
+	if (pack_edges)
+		fclose(pack_edges);
 
 	if (show_stats) {
 		uintmax_t total_count = 0, duplicate_count = 0;
