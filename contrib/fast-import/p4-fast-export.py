@@ -172,7 +172,8 @@ def commit(details, files, branch, branchPrefix):
         gitStream.write("from %s\n" % initialParent)
         initialParent = ""
 
-    mergedBranches = set()
+    #mergedBranches = set()
+    merge = 0
 
     for file in files:
         path = file["path"]
@@ -202,13 +203,28 @@ def commit(details, files, branch, branchPrefix):
         if source.startswith(branchPrefix):
             continue
 
-        relPath = source[len(globalPrefix):]
+        lastSourceRev = log["erev0,0"]
 
-        for branch in knownBranches:
-            if relPath.startswith(branch) and branch not in mergedBranches:
-                gitStream.write("merge refs/heads/%s\n" % branch)
-                mergedBranches.add(branch)
-                break
+        sourceLog = p4CmdList("filelog -m 1 \"%s%s\"" % (source, lastSourceRev))
+        if len(sourceLog) != 1:
+            print "eek! I got confused by the source filelog of %s%s" % (source, lastSourceRev)
+            sys.exit(1);
+        sourceLog = sourceLog[0]
+
+        change = int(sourceLog["change0"])
+        if change > merge:
+            merge = change
+
+#        relPath = source[len(globalPrefix):]
+#
+#        for branch in knownBranches:
+#            if relPath.startswith(branch) and branch not in mergedBranches:
+#                gitStream.write("merge refs/heads/%s\n" % branch)
+#                mergedBranches.add(branch)
+#                break
+
+    if merge != 0:
+        gitStream.write("merge :%s\n" % merge)
 
     for file in files:
         path = file["path"]
