@@ -12,12 +12,16 @@ ifndef SHELL_PATH
 	SHELL_PATH = /bin/sh
 endif
 
-gitexecdir := $(shell git --exec-path)
-INSTALL = install
+ifndef gitexecdir
+	gitexecdir := $(shell git --exec-path)
+endif
+
+ifndef INSTALL
+	INSTALL = install
+endif
 
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
-
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
