@@ -154,6 +154,7 @@ def commit(details, files, branch, branchPrefix):
     author = details["user"]
 
     gitStream.write("commit %s\n" % branch)
+    gitStream.write("mark :%s\n" % details["change"])
     committer = ""
     if author in users:
         committer = "%s %s %s" % (users[author], epoch, tz)
