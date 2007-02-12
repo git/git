@@ -2,7 +2,7 @@
 # Tcl ignores the next line -*- tcl -*- \
 exec wish "$0" -- "$@"
 
-set appvers {@@GIT_VERSION@@}
+set appvers {@@GITGUI_VERSION@@}
 set copyright {
 Copyright © 2006, 2007 Shawn Pearce, Paul Mackerras.
 

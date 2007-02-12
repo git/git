@@ -27,7 +27,7 @@ SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	rm -f $@ $@+
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
-		-e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
+		-e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
 		$@.sh >$@+
 	chmod +x $@+
 	mv $@+ $@
@@ -35,7 +35,7 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 $(GITGUI_BUILT_INS): git-gui
 	rm -f $@ && ln git-gui $@
 
-# These can record GIT_VERSION
+# These can record GITGUI_VERSION
 $(patsubst %.sh,%,$(SCRIPT_SH)): GIT-VERSION-FILE
 
 all:: $(ALL_PROGRAMS)
