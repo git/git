@@ -14,11 +14,12 @@ import marshal, popen2, getopt
 
 branch = "refs/heads/master"
 prefix = previousDepotPath = os.popen("git-repo-config --get p4.depotpath").read()
+detectBranches = False
 if len(prefix) != 0:
     prefix = prefix[:-1]
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", [ "branch=" ])
+    opts, args = getopt.getopt(sys.argv[1:], "", [ "branch=", "detect-branches" ])
 except getopt.GetoptError:
     print "fixme, syntax error"
     sys.exit(1)
@@ -26,6 +27,8 @@ except getopt.GetoptError:
 for o, a in opts:
     if o == "--branch":
         branch = "refs/heads/" + a
+    elif o == "--detect-branches":
+        detectBranches = True
 
 if len(args) == 0 and len(prefix) != 0:
     print "[using previously specified depot path %s]" % prefix
@@ -97,8 +100,13 @@ def extractFilesFromCommit(commit):
     files = []
     fnum = 0
     while commit.has_key("depotFile%s" % fnum):
+        path =  commit["depotFile%s" % fnum]
+        if not path.startswith(prefix):
+            print "\nchanged files: ignoring path %s outside of %s in change %s" % (path, prefix, change)
+            continue
+
         file = {}
-        file["path"] = commit["depotFile%s" % fnum]
+        file["path"] = path
         file["rev"] = commit["rev%s" % fnum]
         file["action"] = commit["action%s" % fnum]
         file["type"] = commit["type%s" % fnum]
@@ -106,7 +114,37 @@ def extractFilesFromCommit(commit):
         fnum = fnum + 1
     return files
 
-def commit(details, files, branch):
+def branchesForCommit(files):
+    branches = set()
+
+    for file in files:
+        relativePath = file["path"][len(prefix):]
+        # strip off the filename
+        relativePath = relativePath[0:relativePath.rfind("/")]
+
+        if len(branches) == 0:
+            branches.add(relativePath)
+            continue
+
+        ###### this needs more testing :)
+        knownBranch = False
+        for branch in branches:
+            if relativePath == branch:
+                knownBranch = True
+                break
+            if relativePath.startswith(branch):
+                knownBranch = True
+                break
+            if branch.startswith(relativePath):
+                branches.remove(branch)
+                break
+
+        if not knownBranch:
+            branches.add(relativePath)
+
+    return branches
+
+def commit(details, files, branch, prefix):
     global initialParent
     global users
     global lastChange
@@ -134,10 +172,6 @@ def commit(details, files, branch):
 
     for file in files:
         path = file["path"]
-        if not path.startswith(prefix):
-            print "\nchanged files: ignoring path %s outside of %s in change %s" % (path, prefix, change)
-            continue
-
         rev = file["rev"]
         depotPath = path + "#" + rev
         relPath = path[len(prefix):]
@@ -224,7 +258,7 @@ if len(revision) > 0:
     details["change"] = newestRevision
 
     try:
-        commit(details, extractFilesFromCommit(details), branch)
+        commit(details, extractFilesFromCommit(details), branch, prefix)
     except:
         print gitError.read()
 
@@ -251,7 +285,14 @@ else:
         cnt = cnt + 1
 
         try:
-            commit(description, extractFilesFromCommit(description), branch)
+            files = extractFilesFromCommit(description)
+            if detectBranches:
+                for branch in branchesForCommit(files):
+                    branchPrefix = prefix + branch + "/"
+                    branch = "refs/heads/" + branch
+                    commit(description, files, branch, branchPrefix)
+            else:
+                commit(description, files, branch, prefix)
         except:
             print gitError.read()
             sys.exit(1)
