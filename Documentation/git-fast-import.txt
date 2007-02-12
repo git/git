@@ -64,6 +64,15 @@ OPTIONS
 	Frontends can use this file to validate imports after they
 	have been completed.
 
+--export-pack-edges=<file>::
+	After creating a packfile, print a line of data to
+	<file> listing the filename of the packfile and the last
+	commit on each branch that was written to that packfile.
+	This information may be useful after importing projects
+	whose total object set exceeds the 4 GiB packfile limit,
+	as these commits can be used as edge points during calls
+	to gitlink:git-pack-objects[1].
+
 --quiet::
 	Disable all non-fatal output, making fast-import silent when it
 	is successful.	This option disables the output shown by

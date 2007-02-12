@@ -407,4 +407,30 @@ test_expect_success \
 	'git-cat-file blob H:h/e/l/lo >actual &&
 	 diff -u expect actual'
 
+###
+### series I
+###
+
+cat >input <<INPUT_END
+commit refs/heads/export-boundary
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+we have a border.  its only 40 characters wide.
+COMMIT
+
+from refs/heads/branch
+
+INPUT_END
+test_expect_success \
+    'I: export-pack-edges' \
+    'git-fast-import --export-pack-edges=edges.list <input'
+
+cat >expect <<EOF
+.git/objects/pack/pack-.pack: `git-rev-parse --verify export-boundary`
+EOF
+test_expect_success \
+	'I: verify edge list' \
+	'sed -e s/pack-.*pack/pack-.pack/ edges.list >actual &&
+	 diff -u expect actual'
+
 test_done
