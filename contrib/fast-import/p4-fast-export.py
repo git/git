@@ -93,7 +93,20 @@ def p4Cmd(cmd):
         result.update(entry)
     return result;
 
-def commit(details):
+def extractFilesFromCommit(commit):
+    files = []
+    fnum = 0
+    while commit.has_key("depotFile%s" % fnum):
+        file = {}
+        file["path"] = commit["depotFile%s" % fnum]
+        file["rev"] = commit["rev%s" % fnum]
+        file["action"] = commit["action%s" % fnum]
+        file["type"] = commit["type%s" % fnum]
+        files.append(file)
+        fnum = fnum + 1
+    return files
+
+def commit(details, files, branch):
     global initialParent
     global users
     global lastChange
@@ -119,24 +132,22 @@ def commit(details):
         gitStream.write("from %s\n" % initialParent)
         initialParent = ""
 
-    fnum = 0
-    while details.has_key("depotFile%s" % fnum):
-        path = details["depotFile%s" % fnum]
+    for file in files:
+        path = file["path"]
         if not path.startswith(prefix):
             print "\nchanged files: ignoring path %s outside of %s in change %s" % (path, prefix, change)
-            fnum = fnum + 1
             continue
 
-        rev = details["rev%s" % fnum]
+        rev = file["rev"]
         depotPath = path + "#" + rev
         relPath = path[len(prefix):]
-        action = details["action%s" % fnum]
+        action = file["action"]
 
         if action == "delete":
             gitStream.write("D %s\n" % relPath)
         else:
             mode = 644
-            if details["type%s" % fnum].startswith("x"):
+            if file["type"].startswith("x"):
                 mode = 755
 
             data = os.popen("p4 print -q \"%s\"" % depotPath, "rb").read()
@@ -145,8 +156,6 @@ def commit(details):
             gitStream.write("data %s\n" % len(data))
             gitStream.write(data)
             gitStream.write("\n")
-
-        fnum = fnum + 1
 
     gitStream.write("\n")
 
@@ -215,7 +224,7 @@ if len(revision) > 0:
     details["change"] = newestRevision
 
     try:
-        commit(details)
+        commit(details, extractFilesFromCommit(details), branch)
     except:
         print gitError.read()
 
@@ -242,7 +251,7 @@ else:
         cnt = cnt + 1
 
         try:
-            commit(description)
+            commit(description, extractFilesFromCommit(description), branch)
         except:
             print gitError.read()
             sys.exit(1)
