@@ -715,6 +715,13 @@ The branch LRU builtin to fast-import tends to behave very well, and the
 cost of activating an inactive branch is so low that bouncing around
 between branches has virtually no impact on import performance.
 
+Handling Renames
+~~~~~~~~~~~~~~~~
+When importing a renamed file or directory, simply delete the old
+name(s) and modify the new name(s) during the corresponding commit.
+Git performs rename detection after-the-fact, rather than explicitly
+during a commit.
+
 Use Tag Fixup Branches
 ~~~~~~~~~~~~~~~~~~~~~~
 Some other SCM systems let the user create a tag from multiple
