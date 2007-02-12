@@ -12,11 +12,12 @@
 import os, string, sys, time
 import marshal, popen2, getopt
 
+knownBranches = set()
 branch = "refs/heads/master"
-prefix = previousDepotPath = os.popen("git-repo-config --get p4.depotpath").read()
+globalPrefix = previousDepotPath = os.popen("git-repo-config --get p4.depotpath").read()
 detectBranches = False
-if len(prefix) != 0:
-    prefix = prefix[:-1]
+if len(globalPrefix) != 0:
+    globalPrefix = globalPrefix[:-1]
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", [ "branch=", "detect-branches" ])
@@ -30,8 +31,8 @@ for o, a in opts:
     elif o == "--detect-branches":
         detectBranches = True
 
-if len(args) == 0 and len(prefix) != 0:
-    print "[using previously specified depot path %s]" % prefix
+if len(args) == 0 and len(globalPrefix) != 0:
+    print "[using previously specified depot path %s]" % globalPrefix
 elif len(args) != 1:
     print "usage: %s //depot/path[@revRange]" % sys.argv[0]
     print "\n    example:"
@@ -43,10 +44,10 @@ elif len(args) != 1:
     print ""
     sys.exit(1)
 else:
-    if len(prefix) != 0 and prefix != args[0]:
-        print "previous import used depot path %s and now %s was specified. this doesn't work!" % (prefix, args[0])
+    if len(globalPrefix) != 0 and globalPrefix != args[0]:
+        print "previous import used depot path %s and now %s was specified. this doesn't work!" % (globalPrefix, args[0])
         sys.exit(1)
-    prefix = args[0]
+    globalPrefix = args[0]
 
 changeRange = ""
 revision = ""
@@ -55,27 +56,27 @@ initialParent = ""
 lastChange = ""
 initialTag = ""
 
-if prefix.find("@") != -1:
-    atIdx = prefix.index("@")
-    changeRange = prefix[atIdx:]
+if globalPrefix.find("@") != -1:
+    atIdx = globalPrefix.index("@")
+    changeRange = globalPrefix[atIdx:]
     if changeRange == "@all":
         changeRange = ""
     elif changeRange.find(",") == -1:
         revision = changeRange
         changeRange = ""
-    prefix = prefix[0:atIdx]
-elif prefix.find("#") != -1:
-    hashIdx = prefix.index("#")
-    revision = prefix[hashIdx:]
-    prefix = prefix[0:hashIdx]
+    globalPrefix = globalPrefix[0:atIdx]
+elif globalPrefix.find("#") != -1:
+    hashIdx = globalPrefix.index("#")
+    revision = globalPrefix[hashIdx:]
+    globalPrefix = globalPrefix[0:hashIdx]
 elif len(previousDepotPath) == 0:
     revision = "#head"
 
-if prefix.endswith("..."):
-    prefix = prefix[:-3]
+if globalPrefix.endswith("..."):
+    globalPrefix = globalPrefix[:-3]
 
-if not prefix.endswith("/"):
-    prefix += "/"
+if not globalPrefix.endswith("/"):
+    globalPrefix += "/"
 
 def p4CmdList(cmd):
     pipe = os.popen("p4 -G %s" % cmd, "rb")
@@ -101,8 +102,8 @@ def extractFilesFromCommit(commit):
     fnum = 0
     while commit.has_key("depotFile%s" % fnum):
         path =  commit["depotFile%s" % fnum]
-        if not path.startswith(prefix):
-            print "\nchanged files: ignoring path %s outside of %s in change %s" % (path, prefix, change)
+        if not path.startswith(globalPrefix):
+            print "\nchanged files: ignoring path %s outside of %s in change %s" % (path, globalPrefix, change)
             continue
 
         file = {}
@@ -118,7 +119,7 @@ def branchesForCommit(files):
     branches = set()
 
     for file in files:
-        relativePath = file["path"][len(prefix):]
+        relativePath = file["path"][len(globalPrefix):]
         # strip off the filename
         relativePath = relativePath[0:relativePath.rfind("/")]
 
@@ -144,7 +145,7 @@ def branchesForCommit(files):
 
     return branches
 
-def commit(details, files, branch, prefix):
+def commit(details, files, branch, branchPrefix):
     global initialParent
     global users
     global lastChange
@@ -163,7 +164,7 @@ def commit(details, files, branch, prefix):
 
     gitStream.write("data <<EOT\n")
     gitStream.write(details["desc"])
-    gitStream.write("\n[ imported from %s; change %s ]\n" % (prefix, details["change"]))
+    gitStream.write("\n[ imported from %s; change %s ]\n" % (branchPrefix, details["change"]))
     gitStream.write("EOT\n\n")
 
     if len(initialParent) > 0:
@@ -172,9 +173,47 @@ def commit(details, files, branch, prefix):
 
     for file in files:
         path = file["path"]
+        if not path.startswith(branchPrefix):
+            continue
+        action = file["action"]
+        if action != "integrate" and action != "branch":
+            continue
         rev = file["rev"]
         depotPath = path + "#" + rev
-        relPath = path[len(prefix):]
+
+        log = p4CmdList("filelog \"%s\"" % depotPath)
+        if len(log) != 1:
+            print "eek! I got confused by the filelog of %s" % depotPath
+            sys.exit(1);
+
+        log = log[0]
+        if log["action0"] != action:
+            print "eek! wrong action in filelog for %s : found %s, expected %s" % (depotPath, log["action0"], action)
+            sys.exit(1);
+
+        if not log["how0,0"].endswith(" from"):
+            print "eek! file %s was not branched but instead: %s" % (depotPath, log["how0,0"])
+            sys.exit(1);
+
+        source = log["file0,0"]
+        if source.startswith(branchPrefix):
+            continue
+
+        relPath = source[len(globalPrefix):]
+
+        for branch in knownBranches:
+            if relPath.startswith(branch):
+                gitStream.write("merge refs/heads/%s\n" % branch)
+                break
+
+    for file in files:
+        path = file["path"]
+        if not path.startswith(branchPrefix):
+            print "\nchanged files: ignoring path %s outside of branch prefix %s in change %s" % (path, branchPrefix, change)
+            continue
+        rev = file["rev"]
+        depotPath = path + "#" + rev
+        relPath = path[len(branchPrefix):]
         action = file["action"]
 
         if action == "delete":
@@ -234,15 +273,15 @@ if tzsign != '+' and tzsign != '-':
 gitOutput, gitStream, gitError = popen2.popen3("git-fast-import")
 
 if len(revision) > 0:
-    print "Doing initial import of %s from revision %s" % (prefix, revision)
+    print "Doing initial import of %s from revision %s" % (globalPrefix, revision)
 
     details = { "user" : "git perforce import user", "time" : int(time.time()) }
-    details["desc"] = "Initial import of %s from the state at revision %s" % (prefix, revision)
+    details["desc"] = "Initial import of %s from the state at revision %s" % (globalPrefix, revision)
     details["change"] = revision
     newestRevision = 0
 
     fileCnt = 0
-    for info in p4CmdList("files %s...%s" % (prefix, revision)):
+    for info in p4CmdList("files %s...%s" % (globalPrefix, revision)):
         change = int(info["change"])
         if change > newestRevision:
             newestRevision = change
@@ -258,12 +297,12 @@ if len(revision) > 0:
     details["change"] = newestRevision
 
     try:
-        commit(details, extractFilesFromCommit(details), branch, prefix)
+        commit(details, extractFilesFromCommit(details), branch, globalPrefix)
     except:
         print gitError.read()
 
 else:
-    output = os.popen("p4 changes %s...%s" % (prefix, changeRange)).readlines()
+    output = os.popen("p4 changes %s...%s" % (globalPrefix, changeRange)).readlines()
 
     changes = []
     for line in output:
@@ -288,11 +327,12 @@ else:
             files = extractFilesFromCommit(description)
             if detectBranches:
                 for branch in branchesForCommit(files):
-                    branchPrefix = prefix + branch + "/"
+                    knownBranches.add(branch)
+                    branchPrefix = globalPrefix + branch + "/"
                     branch = "refs/heads/" + branch
                     commit(description, files, branch, branchPrefix)
             else:
-                commit(description, files, branch, prefix)
+                commit(description, files, branch, globalPrefix)
         except:
             print gitError.read()
             sys.exit(1)
@@ -307,7 +347,7 @@ gitStream.close()
 gitOutput.close()
 gitError.close()
 
-os.popen("git-repo-config p4.depotpath %s" % prefix).read()
+os.popen("git-repo-config p4.depotpath %s" % globalPrefix).read()
 if len(initialTag) > 0:
     os.popen("git tag -d %s" % initialTag).read()
 
