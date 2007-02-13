@@ -276,11 +276,27 @@ sub cmd_set_tree {
 
 sub cmd_dcommit {
 	my $head = shift;
-	my $gs = Git::SVN->new;
 	$head ||= 'HEAD';
-	my @refs = command(qw/rev-list --no-merges/, $gs->refname."..$head");
+	my ($url, $rev, $uuid);
+	my ($fh, $ctx) = command_output_pipe(qw/rev-list --no-merges/, $head);
+	my @refs;
+	my $c;
+	while (<$fh>) {
+		$c = $_;
+		chomp $c;
+		($url, $rev, $uuid) = cmt_metadata($c);
+		last if (defined $url && defined $rev && defined $uuid);
+		unshift @refs, $c;
+	}
+	close $fh; # most likely breaking the pipe
+	unless (defined $url && defined $rev && defined $uuid) {
+		die "Unable to determine upstream SVN information from ",
+		    "$head history:\n  $ctx\n";
+	}
+	my $gs = Git::SVN->find_by_url($url) or
+	                   die "Can't determine fetch information for $url\n";
 	my $last_rev;
-	foreach my $d (reverse @refs) {
+	foreach my $d (@refs) {
 		if (!verify_ref("$d~1")) {
 			fatal "Commit $d\n",
 			      "has no parent commit, and therefore ",
@@ -300,13 +316,13 @@ sub cmd_dcommit {
 		} else {
 			my %ed_opts = ( r => $last_rev,
 			                log => get_commit_entry($d)->{log},
-			                ra => $gs->ra,
+			                ra => Git::SVN::Ra->new($url),
 			                tree_a => "$d~1",
 			                tree_b => $d,
 			                editor_cb => sub {
 			                       print "Committed r$_[0]\n";
 			                       $last_rev = $_[0]; },
-			                svn_path => $gs->{path} );
+			                svn_path => '');
 			if (!SVN::Git::Editor->new(\%ed_opts)->apply_diff) {
 				print "No changes\n$d~1 == $d\n";
 			}
@@ -904,6 +920,35 @@ sub init_remote_config {
 	$self->{url} = $url;
 }
 
+sub find_by_url { # repos_root and, path are optional
+	my ($class, $full_url, $repos_root, $path) = @_;
+	my $remotes = read_all_remotes();
+	if (defined $full_url && defined $repos_root && !defined $path) {
+		$path = $full_url;
+		$path =~ s#^\Q$repos_root\E(?:/|$)##;
+	}
+	foreach my $repo_id (keys %$remotes) {
+		my $u = $remotes->{$repo_id}->{url} or next;
+		next if defined $repos_root && $repos_root ne $u;
+
+		my $fetch = $remotes->{$repo_id}->{fetch} || {};
+		foreach (qw/branches tags/) {
+			resolve_local_globs($u, $fetch,
+			                    $remotes->{$repo_id}->{$_});
+		}
+		my $p = $path;
+		unless (defined $p) {
+			$p = $full_url;
+			$p =~ s#^\Q$u\E(?:/|$)## or next;
+		}
+		foreach my $f (keys %$fetch) {
+			next if $f ne $p;
+			return Git::SVN->new($fetch->{$f}, $repo_id, $f);
+		}
+	}
+	undef;
+}
+
 sub init {
 	my ($class, $url, $path, $repo_id, $ref_id, $no_write) = @_;
 	my $self = _new($class, $repo_id, $ref_id, $path);
@@ -1387,23 +1432,7 @@ sub find_parent_branch {
 	print STDERR  "Found possible branch point: ",
 	              "$new_url => ", $self->full_url, ", $r\n";
 	$branch_from =~ s#^/##;
-	my $remotes = read_all_remotes();
-	my $gs;
-	foreach my $repo_id (keys %$remotes) {
-		my $u = $remotes->{$repo_id}->{url} or next;
-		next if $url ne $u;
-		my $fetch = $remotes->{$repo_id}->{fetch};
-		foreach (qw/branches tags/) {
-			resolve_local_globs($url, $fetch,
-			                    $remotes->{$repo_id}->{$_});
-		}
-		foreach my $f (keys %$fetch) {
-			next if $f ne $branch_from;
-			$gs = Git::SVN->new($fetch->{$f}, $repo_id, $f);
-			last;
-		}
-		last if $gs;
-	}
+	my $gs = Git::SVN->find_by_url($new_url, $repos_root, $branch_from);
 	unless ($gs) {
 		my $ref_id = $self->{ref_id};
 		$ref_id =~ s/\@\d+$//;
