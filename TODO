@@ -9,23 +9,9 @@ The GIT To-Do File
 Recent issues
 -------------
 
-From: Karl Hasselström <kha@treskal.com>
-Message-ID: <20061026172603.GA21256@diana.vm.bytemark.co.uk>
-
-It might make sense to make --use-separate-remote the default.
-
-[jc: The only downside that I can think of is that it affects me
-or anybody who works on more than one machine on multiple
-branches slightly negatively.
-
-But that is just a minor inconvenience to a minority.  Most of
-the world follow others' repositories, and defaulting to use
-separate-remotes would help them a lot.]
-
-From: Junio C Hamano <junkio@cox.net>
-
-commit walkers still have issues with packed and then pruned
-refs.
+Maybe abandon this and have something similar on the main
+branch, starting full at the beginning of the cycle and ending
+empty (or full of "not in next release" entries) at the release?
 
 From: Franck Bui-Huu <vagabon.xyz@gmail.com>
 Message-ID: <450EABD0.1040102@innova-card.com>
@@ -40,13 +26,6 @@ Message-ID: <20060926215745.GC8177@spearce.org>
 git-mirror (reverse of git-push --all).
 
 [jc: may want the finished version for inclusion]
-
-From: Shawn Pearce <spearce@spearce.org>
-Message-ID: <20060930045037.GB18479@spearce.org>
-
-"git ref-log" command to interact with ref-log?
-
-[jc: not much interest from users?]
 
 From: Stefan Richter <stefanr@s5r6.in-berlin.de>
 Message-ID: <4523EC14.6070806@s5r6.in-berlin.de>
@@ -68,18 +47,6 @@ not just diff with the first parent for a merge.
 Technical (milder)
 ------------------
 
-* duplicated refspec given to "fetch-pack a a a" makes it emit
-  strange error message because it triggers the "match only
-  once" logic.  Maybe strip the dups on the input side
-  (Uwe Zeisberger
-  <20060608073857.GA5072@informatik.uni-freiburg.de>). 
-
-* map only parts of huge packfiles and LRU fragments of them.
-  People are starting to try git on projects with deep history
-  and/or many objects, e.g. Mozilla.
-
-  [jc: ping Shawn or give up and do this myself.]
-
 * upload-pack support for start fetching from any valid point on
   the history, not just published refs. (Erik W. Biederman
   <m164jc9ekx.fsf@ebiederm.dsl.xmission.com>)
@@ -93,13 +60,12 @@ Technical (trivial)
 
 * Mbx (not mbox) support for git-mailsplit.
 
-* log-tree.c: pad sequence numbers with leading 0 if a series is
-  larger than 9, around ll.133?
-
 * git-clone fail .git/refs/foo (Yann Dirson <ydirson@altern.org>)
   <20060610225040.GA7766@nowhere.earth>
 
 * git-proxy should be spawned with sh -c 'command' $1 $2.
+
+[jc: should it?]
 
 * Maybe a true git-proxy command that reads the first request
   pkt-line, and redirects the request to its real destination.
