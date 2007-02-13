@@ -407,4 +407,90 @@ test_expect_success \
 	'git-cat-file blob H:h/e/l/lo >actual &&
 	 diff -u expect actual'
 
+###
+### series I
+###
+
+cat >input <<INPUT_END
+commit refs/heads/export-boundary
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+we have a border.  its only 40 characters wide.
+COMMIT
+
+from refs/heads/branch
+
+INPUT_END
+test_expect_success \
+    'I: export-pack-edges' \
+    'git-fast-import --export-pack-edges=edges.list <input'
+
+cat >expect <<EOF
+.git/objects/pack/pack-.pack: `git-rev-parse --verify export-boundary`
+EOF
+test_expect_success \
+	'I: verify edge list' \
+	'sed -e s/pack-.*pack/pack-.pack/ edges.list >actual &&
+	 diff -u expect actual'
+
+###
+### series J
+###
+
+cat >input <<INPUT_END
+commit refs/heads/J
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+create J
+COMMIT
+
+from refs/heads/branch
+
+reset refs/heads/J
+
+commit refs/heads/J
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+initialize J
+COMMIT
+
+INPUT_END
+test_expect_success \
+    'J: reset existing branch creates empty commit' \
+    'git-fast-import <input'
+test_expect_success \
+	'J: branch has 1 commit, empty tree' \
+	'test 1 = `git-rev-list J | wc -l` &&
+	 test 0 = `git ls-tree J | wc -l`'
+
+###
+### series K
+###
+
+cat >input <<INPUT_END
+commit refs/heads/K
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+create K
+COMMIT
+
+from refs/heads/branch
+
+commit refs/heads/K
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+redo K
+COMMIT
+
+from refs/heads/branch^1
+
+INPUT_END
+test_expect_success \
+    'K: reinit branch with from' \
+    'git-fast-import <input'
+test_expect_success \
+    'K: verify K^1 = branch^1' \
+    'test `git-rev-parse --verify branch^1` \
+		= `git-rev-parse --verify K^1`'
+
 test_done

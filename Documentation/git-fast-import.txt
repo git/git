@@ -64,6 +64,15 @@ OPTIONS
 	Frontends can use this file to validate imports after they
 	have been completed.
 
+--export-pack-edges=<file>::
+	After creating a packfile, print a line of data to
+	<file> listing the filename of the packfile and the last
+	commit on each branch that was written to that packfile.
+	This information may be useful after importing projects
+	whose total object set exceeds the 4 GiB packfile limit,
+	as these commits can be used as edge points during calls
+	to gitlink:git-pack-objects[1].
+
 --quiet::
 	Disable all non-fatal output, making fast-import silent when it
 	is successful.	This option disables the output shown by
@@ -340,17 +349,16 @@ their syntax.
 
 `from`
 ^^^^^^
-Only valid for the first commit made on this branch by this
-fast-import process.  The `from` command is used to specify the commit
-to initialize this branch from.  This revision will be the first
-ancestor of the new commit.
+The `from` command is used to specify the commit to initialize
+this branch from.  This revision will be the first ancestor of the
+new commit.
 
-Omitting the `from` command in the first commit of a new branch will
-cause fast-import to create that commit with no ancestor. This tends to be
-desired only for the initial commit of a project.  Omitting the
-`from` command on existing branches is required, as the current
-commit on that branch is automatically assumed to be the first
-ancestor of the new commit.
+Omitting the `from` command in the first commit of a new branch
+will cause fast-import to create that commit with no ancestor. This
+tends to be desired only for the initial commit of a project.
+Omitting the `from` command on existing branches is usually desired,
+as the current commit on that branch is automatically assumed to
+be the first ancestor of the new commit.
 
 As `LF` is not valid in a Git refname or SHA-1 expression, no
 quoting or escaping syntax is supported within `<committish>`.
@@ -705,6 +713,13 @@ code considerably.
 The branch LRU builtin to fast-import tends to behave very well, and the
 cost of activating an inactive branch is so low that bouncing around
 between branches has virtually no impact on import performance.
+
+Handling Renames
+~~~~~~~~~~~~~~~~
+When importing a renamed file or directory, simply delete the old
+name(s) and modify the new name(s) during the corresponding commit.
+Git performs rename detection after-the-fact, rather than explicitly
+during a commit.
 
 Use Tag Fixup Branches
 ~~~~~~~~~~~~~~~~~~~~~~

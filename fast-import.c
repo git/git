@@ -261,6 +261,7 @@ static unsigned long object_count;
 static unsigned long branch_count;
 static unsigned long branch_load_count;
 static int failure;
+static FILE *pack_edges;
 
 /* Memory pools */
 static size_t mem_pool_alloc = 2*1024*1024 - sizeof(struct mem_pool);
@@ -811,18 +812,21 @@ static void end_packfile(void)
 		install_packed_git(new_p);
 
 		/* Print the boundary */
-		fprintf(stdout, "%s:", new_p->pack_name);
-		for (i = 0; i < branch_table_sz; i++) {
-			for (b = branch_table[i]; b; b = b->table_next_branch) {
-				if (b->pack_id == pack_id)
-					fprintf(stdout, " %s", sha1_to_hex(b->sha1));
+		if (pack_edges) {
+			fprintf(pack_edges, "%s:", new_p->pack_name);
+			for (i = 0; i < branch_table_sz; i++) {
+				for (b = branch_table[i]; b; b = b->table_next_branch) {
+					if (b->pack_id == pack_id)
+						fprintf(pack_edges, " %s", sha1_to_hex(b->sha1));
+				}
 			}
+			for (t = first_tag; t; t = t->next_tag) {
+				if (t->pack_id == pack_id)
+					fprintf(pack_edges, " %s", sha1_to_hex(t->sha1));
+			}
+			fputc('\n', pack_edges);
+			fflush(pack_edges);
 		}
-		for (t = first_tag; t; t = t->next_tag) {
-			if (t->pack_id == pack_id)
-				fprintf(stdout, " %s", sha1_to_hex(t->sha1));
-		}
-		fputc('\n', stdout);
 
 		pack_id++;
 	}
@@ -1663,8 +1667,10 @@ static void cmd_from(struct branch *b)
 	if (strncmp("from ", command_buf.buf, 5))
 		return;
 
-	if (b->last_commit)
-		die("Can't reinitailize branch %s", b->name);
+	if (b->branch_tree.tree) {
+		release_tree_content_recursive(b->branch_tree.tree);
+		b->branch_tree.tree = NULL;
+	}
 
 	from = strchr(command_buf.buf, ' ') + 1;
 	s = lookup_branch(from);
@@ -1932,7 +1938,9 @@ static void cmd_reset_branch(void)
 	sp = strchr(command_buf.buf, ' ') + 1;
 	b = lookup_branch(sp);
 	if (b) {
-		b->last_commit = 0;
+		hashclr(b->sha1);
+		hashclr(b->branch_tree.versions[0].sha1);
+		hashclr(b->branch_tree.versions[1].sha1);
 		if (b->branch_tree.tree) {
 			release_tree_content_recursive(b->branch_tree.tree);
 			b->branch_tree.tree = NULL;
@@ -1988,7 +1996,13 @@ int main(int argc, const char **argv)
 			max_active_branches = strtoul(a + 18, NULL, 0);
 		else if (!strncmp(a, "--export-marks=", 15))
 			mark_file = a + 15;
-		else if (!strcmp(a, "--force"))
+		else if (!strncmp(a, "--export-pack-edges=", 20)) {
+			if (pack_edges)
+				fclose(pack_edges);
+			pack_edges = fopen(a + 20, "a");
+			if (!pack_edges)
+				die("Cannot open %s: %s", a + 20, strerror(errno));
+		} else if (!strcmp(a, "--force"))
 			force_update = 1;
 		else if (!strcmp(a, "--quiet"))
 			show_stats = 0;
@@ -2032,6 +2046,9 @@ int main(int argc, const char **argv)
 	dump_tags();
 	unkeep_all_packs();
 	dump_marks();
+
+	if (pack_edges)
+		fclose(pack_edges);
 
 	if (show_stats) {
 		uintmax_t total_count = 0, duplicate_count = 0;

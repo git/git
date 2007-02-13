@@ -3,7 +3,7 @@
 # Copyright (c) 2005, 2006 Junio C Hamano
 
 USAGE='[--signoff] [--dotest=<dir>] [--utf8 | --no-utf8] [--binary] [--3way]
-  [--interactive] [--whitespace=<option>] [-CNUM] <mbox>...
+  [--interactive] [--whitespace=<option>] [-C<n>] [-p<n>] <mbox>...
   or, when resuming [--skip | --resolved]'
 . git-sh-setup
 set_reflog_action am
@@ -142,10 +142,7 @@ do
 	--sk|--ski|--skip)
 	skip=t; shift ;;
 
-	--whitespace=*)
-	git_apply_opt="$git_apply_opt $1"; shift ;;
-
-	-C*)
+	--whitespace=*|-C*|-p*)
 	git_apply_opt="$git_apply_opt $1"; shift ;;
 
 	--resolvemsg=*)

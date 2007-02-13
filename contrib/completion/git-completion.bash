@@ -270,6 +270,7 @@ __git_commands ()
 		cvsserver)        : daemon;;
 		daemon)           : daemon;;
 		diff-stages)      : nobody uses it;;
+		fast-import)      : import;;
 		fsck-objects)     : plumbing;;
 		fetch-pack)       : plumbing;;
 		fmt-merge-msg)    : plumbing;;

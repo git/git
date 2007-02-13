@@ -603,7 +603,7 @@ LIB_OBJS += $(COMPAT_OBJS)
 ALL_CFLAGS += $(BASIC_CFLAGS)
 ALL_LDFLAGS += $(BASIC_LDFLAGS)
 
-export prefix TAR INSTALL DESTDIR SHELL_PATH template_dir
+export prefix gitexecdir TAR INSTALL DESTDIR SHELL_PATH template_dir
 
 
 ### Build rules
@@ -614,6 +614,7 @@ ifneq (,$X)
 endif
 
 all::
+	$(MAKE) -C git-gui all
 	$(MAKE) -C perl PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' all
 	$(MAKE) -C templates
 
@@ -844,6 +845,7 @@ install: all
 	$(INSTALL) git$X gitk '$(DESTDIR_SQ)$(bindir_SQ)'
 	$(MAKE) -C templates DESTDIR='$(DESTDIR_SQ)' install
 	$(MAKE) -C perl prefix='$(prefix_SQ)' install
+	$(MAKE) -C git-gui install
 	if test 'z$(bindir_SQ)' != 'z$(gitexecdir_SQ)'; \
 	then \
 		ln -f '$(DESTDIR_SQ)$(bindir_SQ)/git$X' \
@@ -877,8 +879,11 @@ dist: git.spec git-archive
 	@mkdir -p $(GIT_TARNAME)
 	@cp git.spec $(GIT_TARNAME)
 	@echo $(GIT_VERSION) > $(GIT_TARNAME)/version
+	@$(MAKE) -C git-gui TARDIR=../$(GIT_TARNAME)/git-gui dist-version
 	$(TAR) rf $(GIT_TARNAME).tar \
-		$(GIT_TARNAME)/git.spec $(GIT_TARNAME)/version
+		$(GIT_TARNAME)/git.spec \
+		$(GIT_TARNAME)/version \
+		$(GIT_TARNAME)/git-gui/version
 	@rm -rf $(GIT_TARNAME)
 	gzip -f -9 $(GIT_TARNAME).tar
 
@@ -919,6 +924,7 @@ clean:
 	rm -f gitweb/gitweb.cgi
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C perl clean
+	$(MAKE) -C git-gui clean
 	$(MAKE) -C templates/ clean
 	$(MAKE) -C t/ clean
 	rm -f GIT-VERSION-FILE GIT-CFLAGS

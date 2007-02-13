@@ -25,11 +25,12 @@ EOS
 
 my $window = Gtk2::Window->new('toplevel');
 $window->signal_connect(destroy => sub { Gtk2->main_quit });
+my $vpan = Gtk2::VPaned->new();
+$window->add($vpan);
 my $scrolled_window = Gtk2::ScrolledWindow->new;
-$window->add($scrolled_window);
+$vpan->pack1($scrolled_window, 1, 1);
 my $fileview = Gtk2::SimpleList->new(
     'Commit' => 'text',
-    'CommitInfo' => 'text',
     'FileLine' => 'text',
     'Data' => 'text'
 );
@@ -40,8 +41,27 @@ $fileview->set_rules_hint(1);
 $fileview->signal_connect (row_activated => sub {
 		my ($sl, $path, $column) = @_;
 		my $row_ref = $sl->get_row_data_from_path ($path);
-		system("blameview @$row_ref[0] $fn");
-		# $row_ref is now an array ref to the double-clicked row's data.
+		system("blameview @$row_ref[0] $fn &");
+		});
+
+my $commitwindow = Gtk2::ScrolledWindow->new();
+$commitwindow->set_policy ('GTK_POLICY_AUTOMATIC','GTK_POLICY_AUTOMATIC');
+$vpan->pack2($commitwindow, 1, 1);
+my $commit_text = Gtk2::TextView->new();
+my $commit_buffer = Gtk2::TextBuffer->new();
+$commit_text->set_buffer($commit_buffer);
+$commitwindow->add($commit_text);
+
+$fileview->signal_connect (cursor_changed => sub {
+		my ($sl) = @_;
+		my ($path, $focus_column) = $sl->get_cursor();
+		my $row_ref = $sl->get_row_data_from_path ($path);
+		my $c_fh;
+		open($c_fh,  '-|', "git cat-file commit @$row_ref[0]")
+					or die "unable to find commit @$row_ref[0]";
+		my @buffer = <$c_fh>;
+		$commit_buffer->set_text("@buffer");
+		close($c_fh);
 		});
 
 my $fh;
@@ -50,7 +70,7 @@ open($fh, '-|', "git cat-file blob $hash:$fn")
 
 while(<$fh>) {
   chomp;
-  $fileview->{data}->[$.] = ['HEAD', '?', "$fn:$.", $_];
+  $fileview->{data}->[$.] = ['HEAD', "$fn:$.", $_];
 }
 
 my $blame;
@@ -79,8 +99,7 @@ sub flush_blame_line {
 
 	for(my $i = 0; $i < $cnt; $i++) {
 		@{$fileview->{data}->[$lno+$i-1]}[0,1,2] =
-		    (substr($commit, 0, 8), $info,
-		     $filename . ':' . ($s_lno+$i));
+		(substr($commit, 0, 8), $filename . ':' . ($s_lno+$i));
 	}
 }
 

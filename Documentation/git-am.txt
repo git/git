@@ -10,7 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git-am' [--signoff] [--dotest=<dir>] [--utf8 | --no-utf8] [--binary] [--3way]
-         [--interactive] [--whitespace=<option>] <mbox>...
+         [--interactive] [--whitespace=<option>] [-C<n>] [-p<n>]
+	 <mbox>...
 'git-am' [--skip | --resolved]
 
 DESCRIPTION
@@ -68,8 +69,8 @@ default.   You could use `--no-utf8` to override this.
 	This flag is passed to the `git-apply` program that applies
 	the patch.
 
--C<n>::
-	This flag is passed to the `git-apply` program that applies
+-C<n>, -p<n>::
+	These flag are passed to the `git-apply` program that applies
 	the patch.
 
 --interactive::
