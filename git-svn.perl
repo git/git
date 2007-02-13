@@ -278,7 +278,7 @@ sub cmd_dcommit {
 	my $head = shift;
 	$head ||= 'HEAD';
 	my ($url, $rev, $uuid);
-	my ($fh, $ctx) = command_output_pipe(qw/rev-list --no-merges/, $head);
+	my ($fh, $ctx) = command_output_pipe('rev-list', $head);
 	my @refs;
 	my $c;
 	while (<$fh>) {
