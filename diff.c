@@ -1364,6 +1364,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		s->data = xmmap(NULL, s->size, PROT_READ, MAP_PRIVATE, fd, 0);
 		close(fd);
 		s->should_munmap = 1;
+		/* FIXME! CRLF -> LF conversion goes here, based on "s->path" */
 	}
 	else {
 		char type[20];
