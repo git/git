@@ -2091,6 +2091,7 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 
 	if (!type)
 		type = blob_type;
+	/* FIXME: CRLF -> LF conversion here for blobs! We'll need the path! */
 	if (write_object)
 		ret = write_sha1_file(buf, size, type, sha1);
 	else

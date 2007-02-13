@@ -10,7 +10,7 @@ tree_search ()
 {
 	head=$1
 	tree=$2
-	for p in $(git rev-list --parents --max-count=1 $head 2>/devnull)
+	for p in $(git rev-list --parents --max-count=1 $head 2>/dev/null)
 	do
 		test $tree = $(git rev-parse $p^{tree} 2>/dev/null) &&
 		vn=$(git describe --abbrev=4 $p 2>/dev/null) &&

@@ -321,6 +321,17 @@ format.headers::
 	Additional email headers to include in a patch to be submitted
 	by mail.  See gitlink:git-format-patch[1].
 
+gc.packrefs::
+	`git gc` does not run `git pack-refs` in a bare repository by
+	default so that older dumb-transport clients can still fetch
+	from the repository.  Setting this to `true` lets `git
+	gc` to run `git pack-refs`.  Setting this to `false` tells
+	`git gc` never to run `git pack-refs`. The default setting is
+	`notbare`. Enable it only when you know you do not have to
+	support such clients.  The default setting will change to `true`
+	at some stage, and setting this to `false` will continue to
+	prevent `git pack-refs` from being run from `git gc`.
+
 gc.reflogexpire::
 	`git reflog expire` removes reflog entries older than
 	this time; defaults to 90 days.

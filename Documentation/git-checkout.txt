@@ -103,22 +103,12 @@ by any branch (which is natural --- you are not on any branch).
 What this means is that you can discard your temporary commits
 and merges by switching back to an existing branch (e.g. `git
 checkout master`), and a later `git prune` or `git gc` would
-garbage-collect them.
+garbage-collect them.  If you did this by mistake, you can ask
+the reflog for HEAD where you were, e.g.
 
-The command would refuse to switch back to make sure that you do
-not discard your temporary state by mistake when your detached
-HEAD is not pointed at by any existing ref.  If you did want to
-save your state (e.g. "I was interested in the fifth commit from
-the top of 'master' branch", or "I made two commits to fix minor
-bugs while on a detached HEAD" -- and if you do not want to lose
-these facts), you can create a new branch and switch to it with
-`git checkout -b newbranch` so that you can keep building on
-that state, or tag it first so that you can come back to it
-later and switch to the branch you wanted to switch to with `git
-tag that_state; git checkout master`.  On the other hand, if you
-did want to discard the temporary state, you can give `-f`
-option (e.g. `git checkout -f master`) to override this
-behaviour.
+------------
+$ git log -g -2 HEAD
+------------
 
 
 EXAMPLES

@@ -12,12 +12,9 @@ BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires:	git-core, git-svn, git-cvs, git-arch, git-email, gitk, git-gui, perl-Git
 
 %description
-This is a stupid (but extremely fast) directory content manager.  It
-doesn't do a whole lot, but what it _does_ do is track directory
-contents efficiently. It is intended to be the base of an efficient,
-distributed source code management system. This package includes
-rudimentary tools that can be used as a SCM, but you should look
-elsewhere for tools for ordinary humans layered on top of this.
+Git is a fast, scalable, distributed revision control system with an
+unusually rich command set that provides both high-level operations
+and full access to internals.
 
 This is a dummy package which brings in all subpackages.
 
@@ -26,12 +23,9 @@ Summary:	Core git tools
 Group:		Development/Tools
 Requires:	zlib >= 1.2, rsync, curl, less, openssh-clients, expat
 %description core
-This is a stupid (but extremely fast) directory content manager.  It
-doesn't do a whole lot, but what it _does_ do is track directory
-contents efficiently. It is intended to be the base of an efficient,
-distributed source code management system. This package includes
-rudimentary tools that can be used as a SCM, but you should look
-elsewhere for tools for ordinary humans layered on top of this.
+Git is a fast, scalable, distributed revision control system with an
+unusually rich command set that provides both high-level operations
+and full access to internals.
 
 These are the core tools with minimal dependencies.
 
@@ -173,6 +167,9 @@ rm -rf $RPM_BUILD_ROOT
 %{!?_without_docs: %doc Documentation/*.html }
 
 %changelog
+* Mon Feb 13 2007 Nicolas Pitre <nico@cam.org>
+- Update core package description (Git isn't as stupid as it used to be)
+
 * Mon Feb 12 2007 Junio C Hamano <junkio@cox.net>
 - Add git-gui and git-citool.
 

@@ -89,6 +89,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct checkout *stat
 			return error("git-checkout-index: unable to create file %s (%s)",
 				path, strerror(errno));
 		}
+		/* FIXME: LF -> CRLF conversion goes here, based on "ce->name" */
 		wrote = write_in_full(fd, new, size);
 		close(fd);
 		free(new);

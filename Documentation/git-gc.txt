@@ -62,6 +62,10 @@ The optional configuration variable 'gc.rerereunresolved' indicates
 how long records of conflicted merge you have not resolved are
 kept.  This defaults to 15 days.
 
+The optional configuration variable 'gc.packrefs' determines if
+`git gc` runs `git-pack-refs`.  Without the configuration, `git-pack-refs`
+is not run in bare repositories by default, to allow older dumb-transport
+clients fetch from the repository,  but this will change in the future.
 
 See Also
 --------
