@@ -367,8 +367,7 @@ sub cmd_multi_init {
 sub cmd_multi_fetch {
 	my $remotes = Git::SVN::read_all_remotes();
 	foreach my $repo_id (sort keys %$remotes) {
-		if ($remotes->{$repo_id}->{url} &&
-		    $remotes->{$repo_id}->{fetch}) {
+		if ($remotes->{$repo_id}->{url}) {
 			Git::SVN::fetch_all($repo_id, $remotes);
 		}
 	}
@@ -483,6 +482,17 @@ sub complete_url_ls_init {
 			$gs = Git::SVN->init($url, $path, undef, $ref, 1);
 		}
 		if ($gs) {
+			my $k = "svn-remote.$gs->{repo_id}.url";
+			my $orig_url = eval {
+				command_oneline(qw/config --get/, $k)
+			};
+			if ($orig_url && ($orig_url ne $gs->{url})) {
+				die "$k already set: $orig_url\n",
+				    "wanted to set to: $gs->{url}\n";
+			}
+			unless ($orig_url) {
+				command_oneline('config', $k, $gs->{url});
+			}
 			$remote_id = $gs->{repo_id};
 			last;
 		}
@@ -751,13 +761,15 @@ sub fetch_all {
 		}
 	}
 
-	foreach my $p (sort keys %$fetch) {
-		my $gs = Git::SVN->new($fetch->{$p}, $repo_id, $p);
-		my $lr = $gs->rev_db_max;
-		if (defined $lr) {
-			$base = $lr if ($lr < $base);
+	if ($fetch) {
+		foreach my $p (sort keys %$fetch) {
+			my $gs = Git::SVN->new($fetch->{$p}, $repo_id, $p);
+			my $lr = $gs->rev_db_max;
+			if (defined $lr) {
+				$base = $lr if ($lr < $base);
+			}
+			push @gs, $gs;
 		}
-		push @gs, $gs;
 	}
 	$ra->gs_fetch_loop_common($base, $head, \@gs, \@globs);
 }
@@ -974,35 +986,69 @@ sub svm {
 
 sub _set_svm_vars {
 	my ($self, $ra) = @_;
+	return $ra if $self->svm;
 
-	return $ra if ($self->svm);
-
-	# nope, make sure we're connected to the repository root:
-	if ($ra->{repos_root} ne $self->{url}) {
-		$ra = Git::SVN::Ra->new($ra->{repos_root});
-	}
-	my $r = $ra->get_latest_revnum;
-	my ($props) = ($ra->get_dir('', $r))[2];
-	if (my $src = $props->{'svm:source'}) {
-		my $section = "svn-remote.$self->{repo_id}";
-
-		# don't know what a '!' is there for, also the
-		# username is of no interest
-		$src =~ s{!$}{};
-		$src =~ s{(^[a-z\+]*://)[^/@]*@}{$1};
-		tmp_config('--add', "$section.svm-source", $src);
-
+	my @err = ( "useSvmProps set, but failed to read SVM properties\n",
+		    "(svm:source, svm:mirror, svm:mirror) ",
+		    "from the following URLs:\n" );
+	sub read_svm_props {
+		my ($self, $props) = @_;
+		my $src = $props->{'svm:source'};
+		my $mirror = $props->{'svm:mirror'};
 		my $uuid = $props->{'svm:uuid'};
+		return undef if (!$src || !$mirror || !$uuid);
+
+		chomp($src, $mirror, $uuid);
+
 		$uuid =~ m{^[0-9a-f\-]{30,}$}
 		    or die "doesn't look right - svm:uuid is '$uuid'\n";
-		tmp_config('--add', "$section.svm-uuid", $uuid);
+		# don't know what a '!' is there for, also the
+		# username is of no interest
+		$src =~ s{/?!$}{$mirror};
+		$src =~ s{/+$}{}; # no trailing slashes please
+		$src =~ s{(^[a-z\+]*://)[^/@]*@}{$1};
 
+		my $section = "svn-remote.$self->{repo_id}";
+		tmp_config('--add', "$section.svm-source", $src);
+		tmp_config('--add', "$section.svm-uuid", $uuid);
 		$self->{svm} = { source => $src , uuid => $uuid };
+		return 1;
 	}
-	if ($ra->{repos_root} ne $self->{url}) {
-		$ra = Git::SVN::Ra->new($self->{url});
+
+	my $r = $ra->get_latest_revnum;
+	my $path = $self->{path};
+	my @tried_a = ($path);
+	while (length $path) {
+		if ($self->read_svm_props(($ra->get_dir($path, $r))[2])) {
+			return $ra;
+		}
+		$path =~ s#/?[^/]+$## && push @tried_a, $path;
 	}
-	$ra;
+	if ($self->read_svm_props(($ra->get_dir('', $r))[2])) {
+		return $ra;
+	}
+
+	if ($ra->{repos_root} eq $self->{url}) {
+		die @err, map { "  $self->{url}/$_\n" } @tried_a, "\n";
+	}
+
+	# nope, make sure we're connected to the repository root:
+	my $ok;
+	my @tried_b;
+	$path = $ra->{svn_path};
+	$path =~ s#/?[^/]+$##; # we already tried this one above
+	$ra = Git::SVN::Ra->new($ra->{repos_root});
+	while (length $path) {
+		$ok = $self->read_svm_props(($ra->get_dir($path, $r))[2]);
+		last if $ok;
+		$path =~ s#/?[^/]+$## && push @tried_b, $path;
+	}
+	$ok = $self->read_svm_props(($ra->get_dir('', $r))[2]) unless $ok;
+	if (!$ok) {
+		die @err, map { "  $self->{url}/$_\n" } @tried_a, "\n",
+		          map { "  $ra->{url}/$_\n" } @tried_b, "\n"
+	}
+	Git::SVN::Ra->new($self->{url});
 }
 
 # this allows us to memoize our SVN::Ra UUID locally and avoid a
@@ -1228,11 +1274,9 @@ sub do_git_commit {
 		croak "$log_entry->{revision} = $c already exists! ",
 		      "Why are we refetching it?\n";
 	}
-	my $author = $log_entry->{author};
-	my ($name, $email) = (defined $::users{$author} ? @{$::users{$author}}
-	                   : ($author, "$author\@".$self->ra->get_uuid));
-	$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} = $name;
-	$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} = $email;
+	$ENV{GIT_AUTHOR_NAME} = $ENV{GIT_COMMITTER_NAME} = $log_entry->{name};
+	$ENV{GIT_AUTHOR_EMAIL} = $ENV{GIT_COMMITTER_EMAIL} =
+	                                                  $log_entry->{email};
 	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_entry->{date};
 
 	my $tree = $log_entry->{tree};
@@ -1522,8 +1566,10 @@ sub make_log_entry {
 	close $un or croak $!;
 
 	$log_entry{date} = parse_svn_date($log_entry{date});
-	$log_entry{author} = check_author($log_entry{author});
 	$log_entry{log} .= "\n";
+	my $author = $log_entry{author} = check_author($log_entry{author});
+	my ($name, $email) = defined $::users{$author} ? @{$::users{$author}}
+	                                               : ($author, undef);
 	if (defined $headrev && $self->use_svm_props) {
 		my ($uuid, $r) = $headrev =~ m{^([a-f\d\-]{30,}):(\d+)$};
 		if ($uuid ne $self->{svm}->{uuid}) {
@@ -1535,10 +1581,14 @@ sub make_log_entry {
 		$full_url .= "/$self->{path}" if length $self->{path};
 		$log_entry{metadata} = "$full_url\@$r $uuid";
 		$log_entry{svm_revision} = $r;
+		$email ||= "$author\@$uuid"
 	} else {
 		$log_entry{metadata} = $self->full_url . "\@$rev " .
 		                       $self->ra->get_uuid;
+		$email ||= "$author\@" . $self->ra->get_uuid;
 	}
+	$log_entry{name} = $name;
+	$log_entry{email} = $email;
 	\%log_entry;
 }
 
