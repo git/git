@@ -172,7 +172,7 @@ SCRIPT_SH = \
 	git-merge-one-file.sh git-parse-remote.sh \
 	git-pull.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
-	git-resolve.sh git-revert.sh git-sh-setup.sh \
+	git-revert.sh git-sh-setup.sh \
 	git-tag.sh git-verify-tag.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
@@ -280,7 +280,6 @@ BUILTIN_OBJS = \
 	builtin-diff.o \
 	builtin-diff-files.o \
 	builtin-diff-index.o \
-	builtin-diff-stages.o \
 	builtin-diff-tree.o \
 	builtin-fmt-merge-msg.o \
 	builtin-for-each-ref.o \

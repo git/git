@@ -587,4 +587,5 @@ stages to temporary files and calls a "merge" script on it:
 
 	git-merge-index git-merge-one-file hello.c
 
-and that is what higher level `git resolve` is implemented with.
+and that is what higher level `git merge -s resolve` is implemented
+with.

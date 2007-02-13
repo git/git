@@ -977,7 +977,7 @@ see more complex cases.
 Now, let's pretend you are the one who did all the work in
 `mybranch`, and the fruit of your hard work has finally been merged
 to the `master` branch. Let's go back to `mybranch`, and run
-resolve to get the "upstream changes" back to your branch.
+`git merge` to get the "upstream changes" back to your branch.
 
 ------------
 $ git checkout mybranch
@@ -996,7 +996,7 @@ Fast forward
 ----------------
 
 Because your branch did not contain anything more than what are
-already merged into the `master` branch, the resolve operation did
+already merged into the `master` branch, the merge operation did
 not actually do a merge. Instead, it just updated the top of
 the tree of your branch to that of the `master` branch. This is
 often called 'fast forward' merge.
@@ -1099,11 +1099,11 @@ programs, which are 'commit walkers'; they outlived their
 usefulness when git Native and SSH transports were introduced,
 and not used by `git pull` or `git push` scripts.
 
-Once you fetch from the remote repository, you `resolve` that
+Once you fetch from the remote repository, you `merge` that
 with your current branch.
 
 However -- it's such a common thing to `fetch` and then
-immediately `resolve`, that it's called `git pull`, and you can
+immediately `merge`, that it's called `git pull`, and you can
 simply do
 
 ----------------

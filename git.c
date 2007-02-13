@@ -240,7 +240,6 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "diff", cmd_diff, RUN_SETUP | USE_PAGER },
 		{ "diff-files", cmd_diff_files, RUN_SETUP },
 		{ "diff-index", cmd_diff_index, RUN_SETUP },
-		{ "diff-stages", cmd_diff_stages, RUN_SETUP },
 		{ "diff-tree", cmd_diff_tree, RUN_SETUP },
 		{ "fmt-merge-msg", cmd_fmt_merge_msg, RUN_SETUP },
 		{ "for-each-ref", cmd_for_each_ref, RUN_SETUP },
