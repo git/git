@@ -2765,6 +2765,10 @@ sub gs_fetch_loop_common {
 			next if defined $gs->rev_db_get($max);
 			$gs->rev_db_set($max, 0 x40);
 		}
+		foreach my $g (@$globs) {
+			my $k = "svn-remote.$g->{remote}.$g->{t}-maxRev";
+			Git::SVN::tmp_config($k, $max);
+		}
 		last if $max >= $head;
 		$min = $max + 1;
 		$max += $inc;
