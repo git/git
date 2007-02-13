@@ -81,7 +81,8 @@ get_remote_default_refs_for_push () {
 # is to help prevent randomly "globbed" ref from being chosen as
 # a merge candidate
 expand_refs_wildcard () {
-	git fetch--tool expand-refs-wildcard "$ls_remote_result" "$@"
+	echo "$ls_remote_result" |
+	git fetch--tool expand-refs-wildcard "-" "$@"
 }
 
 # Subroutine to canonicalize remote:local notation.
