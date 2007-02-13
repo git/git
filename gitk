@@ -439,14 +439,13 @@ proc makewindow {} {
     panedwindow .ctop -orient vertical
 
     # possibly use assumed geometry
-    if {![info exists geometry(topheight)]} {
+    if {![info exists geometry(pwsash0)]} {
         set geometry(topheight) [expr {15 * $linespc}]
         set geometry(topwidth) [expr {80 * $charspc}]
         set geometry(botheight) [expr {15 * $linespc}]
         set geometry(botwidth) [expr {50 * $charspc}]
-        set geometry(canv) [expr {40 * $charspc}]
-        set geometry(canv2) [expr {20 * $charspc}]
-        set geometry(canv3) [expr {20 * $charspc}]
+        set geometry(pwsash0) "[expr {40 * $charspc}] 2"
+        set geometry(pwsash1) "[expr {60 * $charspc}] 2"
     }
 
     # the upper half will have a paned window, a scroll bar to the right, and some stuff below
@@ -457,18 +456,20 @@ proc makewindow {} {
     # create three canvases
     set cscroll .tf.histframe.csb
     set canv .tf.histframe.pwclist.canv
-    canvas $canv -width $geometry(canv) \
+    canvas $canv \
 	-background $bgcolor -bd 0 \
 	-yscrollincr $linespc -yscrollcommand "scrollcanv $cscroll"
     .tf.histframe.pwclist add $canv
     set canv2 .tf.histframe.pwclist.canv2
-    canvas $canv2 -width $geometry(canv2) \
+    canvas $canv2 \
 	-background $bgcolor -bd 0 -yscrollincr $linespc
     .tf.histframe.pwclist add $canv2
     set canv3 .tf.histframe.pwclist.canv3
-    canvas $canv3 -width $geometry(canv3) \
+    canvas $canv3 \
 	-background $bgcolor -bd 0 -yscrollincr $linespc
     .tf.histframe.pwclist add $canv3
+    eval .tf.histframe.pwclist sash place 0 $geometry(pwsash0)
+    eval .tf.histframe.pwclist sash place 1 $geometry(pwsash1)
 
     # a scroll bar to rule them
     scrollbar $cscroll -command {allcanvs yview} -highlightthickness 0
@@ -577,6 +578,8 @@ proc makewindow {} {
     pack .tf.bar -in .tf -side bottom -fill x
     pack .tf.histframe -fill both -side top -expand 1
     .ctop add .tf
+    .ctop paneconfigure .tf -height $geometry(topheight)
+    .ctop paneconfigure .tf -width $geometry(topwidth)
 
     # now build up the bottom
     panedwindow .pwbottom -orient horizontal
@@ -638,6 +641,7 @@ proc makewindow {} {
     $ctext tag conf found -back yellow
 
     .pwbottom add .bleft
+    .pwbottom paneconfigure .bleft -width $geometry(botwidth)
 
     # lower right
     frame .bright
@@ -832,9 +836,8 @@ proc savestuff {w} {
 	puts $f "set geometry(main) [wm geometry .]"
 	puts $f "set geometry(topwidth) [winfo width .tf]"
 	puts $f "set geometry(topheight) [winfo height .tf]"
-	puts $f "set geometry(canv) [winfo width $canv]"
-	puts $f "set geometry(canv2) [winfo width $canv2]"
-	puts $f "set geometry(canv3) [winfo width $canv3]"
+        puts $f "set geometry(pwsash0) \"[.tf.histframe.pwclist sash coord 0]\""
+        puts $f "set geometry(pwsash1) \"[.tf.histframe.pwclist sash coord 1]\""
 	puts $f "set geometry(botwidth) [winfo width .bleft]"
 	puts $f "set geometry(botheight) [winfo height .bleft]"
 
