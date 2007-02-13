@@ -1,28 +1,59 @@
 #!/bin/sh
 
 GVF=GIT-VERSION-FILE
-DEF_VER=v0.5.GIT
+DEF_VER=0.6.GITGUI
 
 LF='
 '
 
-# First try git-describe, then see if there is a version file
-# (included in release tarballs), then default
-if VN=$(git describe --abbrev=4 HEAD 2>/dev/null) &&
+tree_search ()
+{
+	head=$1
+	tree=$2
+	for p in $(git rev-list --parents --max-count=1 $head 2>/devnull)
+	do
+		test $tree = $(git rev-parse $p^{tree} 2>/dev/null) &&
+		vn=$(git describe --abbrev=4 $p 2>/dev/null) &&
+		case "$vn" in
+		gitgui-[0-9]*) echo $vn; break;;
+		esac
+	done
+}
+
+# We may be a subproject, so try looking for the merge
+# commit that supplied this directory content if we are
+# not at the toplevel.  We probably will always be the
+# second parent in the commit, but we shouldn't rely on
+# that fact.
+#
+# If we are at the toplevel or the merge assumption fails
+# try looking for a gitgui-* tag, or fallback onto the
+# distributed version file.
+
+if prefix="$(git rev-parse --show-prefix 2>/dev/null)"
+   test -n "$prefix" &&
+   head=$(git rev-list --max-count=1 HEAD -- . 2>/dev/null) &&
+   tree=$(git rev-parse --verify "HEAD:$prefix" 2>/dev/null) &&
+   VN=$(tree_search $head $tree)
    case "$VN" in
-   *$LF*) (exit 1) ;;
-   v[0-9]*) : happy ;;
+   gitgui-[0-9]*) : happy ;;
+   *) (exit 1) ;;
    esac
 then
-	VN=$(echo "$VN" | sed -e 's/-/./g');
+	VN=$(echo "$VN" | sed -e 's/^gitgui-//;s/-/./g');
+elif VN=$(git describe --abbrev=4 HEAD 2>/dev/null) &&
+   case "$VN" in
+   gitgui-[0-9]*) : happy ;;
+   *) (exit 1) ;;
+   esac
+then
+	VN=$(echo "$VN" | sed -e 's/^gitgui-//;s/-/./g');
 elif test -f version
 then
 	VN=$(cat version) || VN="$DEF_VER"
 else
 	VN="$DEF_VER"
 fi
-
-VN=$(expr "$VN" : v*'\(.*\)')
 
 dirty=$(sh -c 'git diff-index --name-only HEAD' 2>/dev/null) || dirty=
 case "$dirty" in
@@ -34,13 +65,13 @@ esac
 
 if test -r $GVF
 then
-	VC=$(sed -e 's/^GIT_VERSION = //' <$GVF)
+	VC=$(sed -e 's/^GITGUI_VERSION = //' <$GVF)
 else
 	VC=unset
 fi
 test "$VN" = "$VC" || {
-	echo >&2 "GIT_VERSION = $VN"
-	echo "GIT_VERSION = $VN" >$GVF
+	echo >&2 "GITGUI_VERSION = $VN"
+	echo "GITGUI_VERSION = $VN" >$GVF
 }
 
 
