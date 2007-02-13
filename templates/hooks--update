@@ -190,7 +190,8 @@ case "$refname_type" in
 			fi
 			echo ""
 			echo $LOGBEGIN
-			git-rev-list --pretty $newrev ^$baserev
+			git-rev-parse --not --all |
+			git-rev-list --stdin --pretty $newrev ^$baserev
 			echo $LOGEND
 			echo ""
 			echo "Diffstat:"
