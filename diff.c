@@ -1332,6 +1332,9 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 	    reuse_worktree_file(s->path, s->sha1, 0)) {
 		struct stat st;
 		int fd;
+		char *buf;
+		unsigned long size;
+
 		if (lstat(s->path, &st) < 0) {
 			if (errno == ENOENT) {
 			err_empty:
@@ -1364,7 +1367,19 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		s->data = xmmap(NULL, s->size, PROT_READ, MAP_PRIVATE, fd, 0);
 		close(fd);
 		s->should_munmap = 1;
-		/* FIXME! CRLF -> LF conversion goes here, based on "s->path" */
+
+		/*
+		 * Convert from working tree format to canonical git format
+		 */
+		buf = s->data;
+		size = s->size;
+		if (convert_to_git(s->path, &buf, &size)) {
+			munmap(s->data, s->size);
+			s->should_munmap = 0;
+			s->data = buf;
+			s->size = size;
+			s->should_free = 1;
+		}
 	}
 	else {
 		char type[20];
