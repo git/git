@@ -429,6 +429,9 @@ Updates in v1.5.0 since v1.4.4 series
 
  - Better error messages for often used Porcelainish commands.
 
+ - Git GUI.  This is a simple Tk based graphical interface for
+   common Git operations.
+
 
 * Sliding mmap
 
