@@ -2,6 +2,21 @@
 #include "refs.h"
 #include "commit.h"
 
+#define CHUNK_SIZE (1048576)
+
+static char *get_stdin(void)
+{
+	char *data = xmalloc(CHUNK_SIZE);
+	int offset = 0, read = 0;
+	read = xread(0, data, CHUNK_SIZE);
+	while (read == CHUNK_SIZE) {
+		offset += CHUNK_SIZE;
+		data = xrealloc(data, offset + CHUNK_SIZE);
+		read = xread(0, data + offset, CHUNK_SIZE);
+	}
+	return data;
+}
+
 static void show_new(char *type, unsigned char *sha1_new)
 {
 	fprintf(stderr, "  %s: %s\n", type,
@@ -461,14 +476,22 @@ int cmd_fetch__tool(int argc, const char **argv, const char *prefix)
 		return result;
 	}
 	if (!strcmp("parse-reflist", argv[1])) {
+		const char *reflist;
 		if (argc != 3)
 			return error("parse-reflist takes 1 arg");
-		return parse_reflist(argv[2]);
+		reflist = argv[2];
+		if (!strcmp(reflist, "-"))
+			reflist = get_stdin();
+		return parse_reflist(reflist);
 	}
 	if (!strcmp("expand-refs-wildcard", argv[1])) {
+		const char *reflist;
 		if (argc < 4)
 			return error("expand-refs-wildcard takes at least 2 args");
-		return expand_refs_wildcard(argv[2], argc - 3, argv + 3);
+		reflist = argv[2];
+		if (!strcmp(reflist, "-"))
+			reflist = get_stdin();
+		return expand_refs_wildcard(reflist, argc - 3, argv + 3);
 	}
 
 	return error("Unknown subcommand: %s", argv[1]);
