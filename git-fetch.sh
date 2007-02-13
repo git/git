@@ -156,7 +156,7 @@ fi
 
 fetch_native () {
 
-  eval=$(git-fetch--tool parse-reflist "$1")
+  eval=$(echo "$1" | git-fetch--tool parse-reflist "-")
   eval "$eval"
 
     ( : subshell because we muck with IFS
