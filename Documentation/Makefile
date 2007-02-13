@@ -32,6 +32,7 @@ man7dir=$(mandir)/man7
 # DESTDIR=
 
 ASCIIDOC=asciidoc
+ASCIIDOC_EXTRA =
 INSTALL?=install
 DOC_REF = origin/man
 
@@ -92,7 +93,7 @@ clean:
 	rm -f $(cmds_txt)
 
 %.html : %.txt
-	$(ASCIIDOC) -b xhtml11 -d manpage -f asciidoc.conf $<
+	$(ASCIIDOC) -b xhtml11 -d manpage -f asciidoc.conf $(ASCIIDOC_EXTRA) $<
 
 %.1 %.7 : %.xml
 	xmlto -m callouts.xsl man $<

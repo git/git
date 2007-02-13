@@ -29,6 +29,24 @@ in a coherent way to git enlightenment ;-).
 The COMMAND is either a name of a Git command (see below) or an alias
 as defined in the configuration file (see gitlink:git-config[1]).
 
+ifdef::stalenotes[]
+[NOTE]
+============
+You are reading the documentation for the latest version of git.
+Documentation for older releases are available here:
+
+* link:v1.4.4.4/git.html[documentation for release 1.4.4.4]
+
+* link:v1.3.3/git.html[documentation for release 1.3.3]
+
+* link:v1.2.6/git.html[documentation for release 1.2.6]
+
+* link:v1.0.13/git.html[documentation for release 1.0.13]
+
+============
+
+endif::stalenotes[]
+
 OPTIONS
 -------
 --version::
