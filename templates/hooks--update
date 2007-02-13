@@ -148,7 +148,7 @@ case "$refname_type" in
 			# This shows all log entries that are not already covered by
 			# another ref - i.e. commits that are now accessible from this
 			# ref that were previously not accessible
-			git-rev-list --pretty $newref $(git-rev-parse --not --all)
+			git-rev-parse --not --all | git-rev-list --stdin --pretty $newref
 			echo $LOGEND
 		else
 			# oldrev is valid
