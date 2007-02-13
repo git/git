@@ -16,11 +16,13 @@ test_expect_success 'initialize repo' "
 	svn co $svnrepo wc &&
 	cd wc &&
 	echo world >> trunk/readme &&
+	poke trunk/readme &&
 	svn commit -m 'another commit' &&
 	svn up &&
 	svn mv -m 'rename to thunk' trunk thunk &&
 	svn up &&
 	echo goodbye >> thunk/readme &&
+	poke thunk/readme &&
 	svn commit -m 'bye now' &&
 	cd ..
 	"

@@ -253,23 +253,10 @@ if test "$tags"
 then
 	taglist=`IFS='	' &&
 		  echo "$ls_remote_result" |
+		  git-show-ref --exclude-existing=refs/tags/ |
 	          while read sha1 name
 		  do
-			case "$sha1" in
-			fail)
-				exit 1
-			esac
-			case "$name" in
-			*^*) continue ;;
-			refs/tags/*) ;;
-			*) continue ;;
-			esac
-		  	if git-check-ref-format "$name"
-			then
-			    echo ".${name}:${name}"
-			else
-			    echo >&2 "warning: tag ${name} ignored"
-			fi
+			echo ".${name}:${name}"
 		  done` || exit
 	if test "$#" -gt 1
 	then

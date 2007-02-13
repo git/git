@@ -18,6 +18,7 @@ test_expect_success 'commit change from svn side' "
 	svn co $svnrepo t.svn &&
 	cd t.svn &&
 	echo second line from svn >> file &&
+	poke file &&
 	svn commit -m 'second line from svn' &&
 	cd .. &&
 	rm -rf t.svn
@@ -45,6 +46,7 @@ test_expect_failure 'dcommit fails to commit because of conflict' "
 	svn co $svnrepo t.svn &&
 	cd t.svn &&
 	echo fourth line from svn >> file &&
+	poke file &&
 	svn commit -m 'fourth line from svn' &&
 	cd .. &&
 	rm -rf t.svn &&

@@ -16,6 +16,7 @@ test_expect_success 'initialize repo' "
 	svn co $svnrepo wc &&
 	cd wc &&
 	echo feedme >> branches/a/readme &&
+	poke branches/a/readme &&
 	svn commit -m hungry &&
 	cd trunk &&
 	svn merge -r3:4 $svnrepo/branches/a &&
