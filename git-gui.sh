@@ -46,7 +46,7 @@ proc gitdir {args} {
 proc gitexec {args} {
 	global _gitexec
 	if {$_gitexec eq {}} {
-		if {[catch {set _gitexec [exec git --exec-path]} err]} {
+		if {[catch {set _gitexec [git --exec-path]} err]} {
 			error "Git not installed?\n\n$err"
 		}
 	}
@@ -202,14 +202,14 @@ proc save_config {} {
 		set value $global_config_new($name)
 		if {$value ne $global_config($name)} {
 			if {$value eq $default_config($name)} {
-				catch {exec git config --global --unset $name}
+				catch {git config --global --unset $name}
 			} else {
 				regsub -all "\[{}\]" $value {"} value
-				exec git config --global $name $value
+				git config --global $name $value
 			}
 			set global_config($name) $value
 			if {$value eq $repo_config($name)} {
-				catch {exec git config --unset $name}
+				catch {git config --unset $name}
 				set repo_config($name) $value
 			}
 		}
@@ -219,14 +219,22 @@ proc save_config {} {
 		set value $repo_config_new($name)
 		if {$value ne $repo_config($name)} {
 			if {$value eq $global_config($name)} {
-				catch {exec git config --unset $name}
+				catch {git config --unset $name}
 			} else {
 				regsub -all "\[{}\]" $value {"} value
-				exec git config $name $value
+				git config $name $value
 			}
 			set repo_config($name) $value
 		}
 	}
+}
+
+######################################################################
+##
+## handy utils
+
+proc git {args} {
+	return [eval exec git $args]
 }
 
 proc error_popup {msg} {
@@ -292,7 +300,7 @@ proc ask_popup {msg} {
 ## repository setup
 
 if {   [catch {set _gitdir $env(GIT_DIR)}]
-	&& [catch {set _gitdir [exec git rev-parse --git-dir]} err]} {
+	&& [catch {set _gitdir [git rev-parse --git-dir]} err]} {
 	catch {wm withdraw .}
 	error_popup "Cannot find the git directory:\n\n$err"
 	exit 1
@@ -365,7 +373,7 @@ proc repository_state {ctvar hdvar mhvar} {
 
 	set mh [list]
 
-	if {[catch {set current_branch [exec git symbolic-ref HEAD]}]} {
+	if {[catch {set current_branch [git symbolic-ref HEAD]}]} {
 		set current_branch {}
 	} else {
 		regsub ^refs/((heads|tags|remotes)/)? \
@@ -374,7 +382,7 @@ proc repository_state {ctvar hdvar mhvar} {
 			current_branch
 	}
 
-	if {[catch {set hd [exec git rev-parse --verify HEAD]}]} {
+	if {[catch {set hd [git rev-parse --verify HEAD]}]} {
 		set hd {}
 		set ct initial
 		return
@@ -402,7 +410,7 @@ proc PARENT {} {
 		return $p
 	}
 	if {$empty_tree eq {}} {
-		set empty_tree [exec git mktree << {}]
+		set empty_tree [git mktree << {}]
 	}
 	return $empty_tree
 }
@@ -1042,7 +1050,7 @@ proc committer_ident {} {
 	global GIT_COMMITTER_IDENT
 
 	if {$GIT_COMMITTER_IDENT eq {}} {
-		if {[catch {set me [exec git var GIT_COMMITTER_IDENT]} err]} {
+		if {[catch {set me [git var GIT_COMMITTER_IDENT]} err]} {
 			error_popup "Unable to obtain your identity:\n\n$err"
 			return {}
 		}
@@ -1275,7 +1283,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 	# -- Let rerere do its thing.
 	#
 	if {[file isdirectory [gitdir rr-cache]]} {
-		catch {exec git rerere}
+		catch {git rerere}
 	}
 
 	# -- Run the post-commit hook.
@@ -1894,7 +1902,7 @@ proc do_create_branch_action {w} {
 		focus $w.desc.name_t
 		return
 	}
-	if {![catch {exec git show-ref --verify -- "refs/heads/$newbranch"}]} {
+	if {![catch {git show-ref --verify -- "refs/heads/$newbranch"}]} {
 		tk_messageBox \
 			-icon error \
 			-type ok \
@@ -1904,7 +1912,7 @@ proc do_create_branch_action {w} {
 		focus $w.desc.name_t
 		return
 	}
-	if {[catch {exec git check-ref-format "heads/$newbranch"}]} {
+	if {[catch {git check-ref-format "heads/$newbranch"}]} {
 		tk_messageBox \
 			-icon error \
 			-type ok \
@@ -1921,7 +1929,7 @@ proc do_create_branch_action {w} {
 	tracking {set rev $create_branch_trackinghead}
 	expression {set rev $create_branch_revexp}
 	}
-	if {[catch {set cmt [exec git rev-parse --verify "${rev}^0"]}]} {
+	if {[catch {set cmt [git rev-parse --verify "${rev}^0"]}]} {
 		tk_messageBox \
 			-icon error \
 			-type ok \
@@ -2100,7 +2108,7 @@ proc do_delete_branch_action {w} {
 	}
 	if {$check_rev eq {:none}} {
 		set check_cmt {}
-	} elseif {[catch {set check_cmt [exec git rev-parse --verify "${check_rev}^0"]}]} {
+	} elseif {[catch {set check_cmt [git rev-parse --verify "${check_rev}^0"]}]} {
 		tk_messageBox \
 			-icon error \
 			-type ok \
@@ -2114,10 +2122,10 @@ proc do_delete_branch_action {w} {
 	set not_merged [list]
 	foreach i [$w.list.l curselection] {
 		set b [$w.list.l get $i]
-		if {[catch {set o [exec git rev-parse --verify $b]}]} continue
+		if {[catch {set o [git rev-parse --verify $b]}]} continue
 		if {$check_cmt ne {}} {
 			if {$b eq $check_rev} continue
-			if {[catch {set m [exec git merge-base $o $check_cmt]}]} continue
+			if {[catch {set m [git merge-base $o $check_cmt]}]} continue
 			if {$o ne $m} {
 				lappend not_merged $b
 				continue
@@ -2155,7 +2163,7 @@ Delete the selected branches?}
 	foreach i $to_delete {
 		set b [lindex $i 0]
 		set o [lindex $i 1]
-		if {[catch {exec git update-ref -d "refs/heads/$b" $o} err]} {
+		if {[catch {git update-ref -d "refs/heads/$b" $o} err]} {
 			append failed " - $b: $err\n"
 		} else {
 			set x [lsearch -sorted -exact $all_heads $b]
@@ -2366,7 +2374,7 @@ Staying on branch '$current_branch'."
 	#    here, it Just Works(tm).  If it doesn't we are in some really ugly
 	#    state that is difficult to recover from within git-gui.
 	#
-	if {[catch {exec git symbolic-ref HEAD "refs/heads/$new_branch"} err]} {
+	if {[catch {git symbolic-ref HEAD "refs/heads/$new_branch"} err]} {
 		error_popup "Failed to set current branch.
 
 This working directory is only partially switched.
@@ -4161,7 +4169,7 @@ proc do_quit {} {
 			set rc_geometry {}
 		}
 		if {$cfg_geometry ne $rc_geometry} {
-			catch {exec git config gui.geometry $cfg_geometry}
+			catch {git config gui.geometry $cfg_geometry}
 		}
 	}
 
@@ -4412,7 +4420,7 @@ $copyright" \
 
 	set v {}
 	append v "[appname] version $appvers\n"
-	append v "[exec git version]\n"
+	append v "[git version]\n"
 	append v "\n"
 	if {$tcl_patchLevel eq $tk_patchLevel} {
 		append v "Tcl/Tk version $tcl_patchLevel"
@@ -5904,7 +5912,7 @@ if {[is_enabled transport]} {
 if {[is_enabled multicommit]} {
 	set object_limit 2000
 	if {[is_Windows]} {set object_limit 200}
-	regexp {^([0-9]+) objects,} [exec git count-objects] _junk objects_current
+	regexp {^([0-9]+) objects,} [git count-objects] _junk objects_current
 	if {$objects_current >= $object_limit} {
 		if {[ask_popup \
 			"This repository currently has $objects_current loose objects.
