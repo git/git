@@ -22,6 +22,14 @@ do
 	shift
 done
 
+case "$(git config --get gc.packrefs)" in
+notbare|"")
+	test $(is_bare_repository) = true || pack_refs=true;;
+*)
+	pack_refs=$(git config --bool --get gc.packrefs)
+esac
+
+test "true" != "$pack_refs" ||
 git-pack-refs --prune &&
 git-reflog expire --all &&
 git-repack -a -d -l &&
