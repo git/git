@@ -1251,7 +1251,7 @@ static int do_for_each_reflog(const char *base, each_ref_fn fn, void *cb_data)
 		free(log);
 		closedir(dir);
 	}
-	else
+	else if (*base)
 		return errno;
 	return retval;
 }
