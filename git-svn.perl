@@ -3033,8 +3033,25 @@ sub log_use_color {
 }
 
 sub git_svn_log_cmd {
-	my ($r_min, $r_max) = @_;
-	my $gs = Git::SVN->_new;
+	my ($r_min, $r_max, @args) = @_;
+	my $head = 'HEAD';
+	foreach my $x (@args) {
+		last if $x eq '--';
+		next unless ::verify_ref("$x^0");
+		$head = $x;
+		last;
+	}
+
+	my $url;
+	my ($fh, $ctx) = command_output_pipe('rev-list', $head);
+	while (<$fh>) {
+		chomp;
+		$url = (::cmt_metadata($_))[0];
+		last if defined $url;
+	}
+	close $fh; # break the pipe
+
+	my $gs = Git::SVN->find_by_url($url) || Git::SVN->_new;
 	my @cmd = (qw/log --abbrev-commit --pretty=raw --default/,
 	           $gs->refname);
 	push @cmd, '-r' unless $non_recursive;
@@ -3227,7 +3244,7 @@ sub cmd_show_log {
 	}
 
 	config_pager();
-	@args = (git_svn_log_cmd($r_min, $r_max), @args);
+	@args = (git_svn_log_cmd($r_min, $r_max, @args), @args);
 	my $log = command_output_pipe(@args);
 	run_pager();
 	my (@k, $c, $d);
