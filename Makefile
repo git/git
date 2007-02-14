@@ -939,11 +939,14 @@ check-docs::
 		case "$$v" in \
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
 		git-merge-resolve | git-merge-stupid | \
+		git-add--interactive | git-fsck-objects | git-init-db | \
+		git-repo-config | \
 		git-ssh-pull | git-ssh-push ) continue ;; \
 		esac ; \
 		test -f "Documentation/$$v.txt" || \
 		echo "no doc: $$v"; \
-		grep -q "^gitlink:$$v\[[0-9]\]::" Documentation/git.txt || \
+		sed -e '1,/^__DATA__/d' Documentation/cmd-list.perl | \
+		grep -q "^$$v[ 	]" || \
 		case "$$v" in \
 		git) ;; \
 		*) echo "no link: $$v";; \
