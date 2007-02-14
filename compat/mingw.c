@@ -79,7 +79,7 @@ int mkstemp (char *__template)
 	char *filename = mktemp(__template);
 	if (filename == NULL)
 		return -1;
-	return open(filename, O_RDWR | O_CREAT);
+	return open(filename, O_RDWR | O_CREAT, 0600);
 }
 
 int gettimeofday(struct timeval *tv, void *tz)
