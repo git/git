@@ -310,12 +310,14 @@ int git_default_config(const char *var, const char *value)
 	}
 
 	if (!strcmp(var, "core.packedgitwindowsize")) {
-		int pgsz = getpagesize();
+		int pgsz_x2 = getpagesize() * 2;
 		packed_git_window_size = git_config_int(var, value);
-		packed_git_window_size /= pgsz;
-		if (packed_git_window_size < 2)
-			packed_git_window_size = 2;
-		packed_git_window_size *= pgsz;
+
+		/* This value must be multiple of (pagesize * 2) */
+		packed_git_window_size /= pgsz_x2;
+		if (packed_git_window_size < 1)
+			packed_git_window_size = 1;
+		packed_git_window_size *= pgsz_x2;
 		return 0;
 	}
 

@@ -773,6 +773,7 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 	char pbuf[NI_MAXSERV];
 	struct addrinfo hints, *ai0, *ai;
 	int gai;
+	long flags;
 
 	sprintf(pbuf, "%d", listen_port);
 	memset(&hints, 0, sizeof(hints));
@@ -820,6 +821,10 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 			continue;	/* not fatal */
 		}
 
+		flags = fcntl(sockfd, F_GETFD, 0);
+		if (flags >= 0)
+			fcntl(sockfd, F_SETFD, flags | FD_CLOEXEC);
+
 		socklist = xrealloc(socklist, sizeof(int) * (socknum + 1));
 		socklist[socknum++] = sockfd;
 
@@ -839,6 +844,7 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 {
 	struct sockaddr_in sin;
 	int sockfd;
+	long flags;
 
 	memset(&sin, 0, sizeof sin);
 	sin.sin_family = AF_INET;
@@ -870,6 +876,10 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 		close(sockfd);
 		return 0;
 	}
+
+	flags = fcntl(sockfd, F_GETFD, 0);
+	if (flags >= 0)
+		fcntl(sockfd, F_SETFD, flags | FD_CLOEXEC);
 
 	*socklist_p = xmalloc(sizeof(int));
 	**socklist_p = sockfd;

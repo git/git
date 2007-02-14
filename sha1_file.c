@@ -407,7 +407,6 @@ static unsigned int peak_pack_open_windows;
 static unsigned int pack_open_windows;
 static size_t peak_pack_mapped;
 static size_t pack_mapped;
-static size_t page_size;
 struct packed_git *packed_git;
 
 void pack_report()
@@ -416,7 +415,7 @@ void pack_report()
 		"pack_report: getpagesize()            = %10" SZ_FMT "\n"
 		"pack_report: core.packedGitWindowSize = %10" SZ_FMT "\n"
 		"pack_report: core.packedGitLimit      = %10" SZ_FMT "\n",
-		page_size,
+		(size_t) getpagesize(),
 		packed_git_window_size,
 		packed_git_limit);
 	fprintf(stderr,
@@ -662,10 +661,9 @@ unsigned char* use_pack(struct packed_git *p,
 				break;
 		}
 		if (!win) {
-			if (!page_size)
-				page_size = getpagesize();
+			size_t window_align = packed_git_window_size / 2;
 			win = xcalloc(1, sizeof(*win));
-			win->offset = (offset / page_size) * page_size;
+			win->offset = (offset / window_align) * window_align;
 			win->len = p->pack_size - win->offset;
 			if (win->len > packed_git_window_size)
 				win->len = packed_git_window_size;
