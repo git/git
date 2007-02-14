@@ -146,6 +146,7 @@ git-reflog                              ancillarymanipulators
 git-relink                              ancillarymanipulators
 git-repack                              ancillarymanipulators
 git-config                              ancillarymanipulators
+git-remote                              ancillarymanipulators
 git-request-pull                        foreignscminterface
 git-rerere                              ancillaryinterrogators
 git-reset                               mainporcelain
