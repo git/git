@@ -94,8 +94,8 @@ Updates in v1.5.0 since v1.4.4 series
    entries for selected paths.
 
  - git-update-index is much less visible.  Many suggestions to
-  use the command in git output and documentation have now been
-  replaced by simpler commands such as "git add" or "git rm".
+   use the command in git output and documentation have now been
+   replaced by simpler commands such as "git add" or "git rm".
 
 
 * Repository layout and objects transfer
@@ -291,12 +291,10 @@ Updates in v1.5.0 since v1.4.4 series
    reset" to jump to arbitrary commit, while still keeping your
    HEAD detached.
 
-   Going back to attached state (i.e. on a particular branch) by
-   "git checkout $branch" can lose the current stat you arrived
-   in these ways, and "git checkout" refuses when the detached
-   HEAD is not pointed by any existing ref (an existing branch,
-   a remote tracking branch or a tag).  This safety can be
-   overridden with "git checkout -f $branch".
+   Remember that a detached state is volatile, i.e. it will be forgotten
+   as soon as you move away from it with the checkout or reset command,
+   unless a branch is created from it as mentioned above.  It is also
+   possible to rescue a lost detached state from the HEAD reflog.
 
 
 * Packed refs
@@ -411,14 +409,14 @@ Updates in v1.5.0 since v1.4.4 series
 
 * Foreign SCM interfaces
 
-  - git-svn now requires the Perl SVN:: libraries, the
-    command-line backend was too slow and limited.
+ - git-svn now requires the Perl SVN:: libraries, the
+   command-line backend was too slow and limited.
 
-  - the 'commit' subcommand of git-svn has been renamed to
-    'set-tree', and 'dcommit' is the recommended replacement for
-    day-to-day work.
+ - the 'commit' subcommand of git-svn has been renamed to
+   'set-tree', and 'dcommit' is the recommended replacement for
+   day-to-day work.
 
-  - git fast-import backend.
+ - git fast-import backend.
 
 
 * User support
