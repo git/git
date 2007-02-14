@@ -207,11 +207,18 @@ static void emit_rewrite_diff(const char *name_a,
 			      struct diff_filespec *two)
 {
 	int lc_a, lc_b;
+	const char *name_a_tab, *name_b_tab;
+
+	name_a_tab = strchr(name_a, ' ') ? "\t" : "";
+	name_b_tab = strchr(name_b, ' ') ? "\t" : "";
+
 	diff_populate_filespec(one, 0);
 	diff_populate_filespec(two, 0);
 	lc_a = count_lines(one->data, one->size);
 	lc_b = count_lines(two->data, two->size);
-	printf("--- a/%s\n+++ b/%s\n@@ -", name_a, name_b);
+	printf("--- a/%s%s\n+++ b/%s%s\n@@ -",
+	       name_a, name_a_tab,
+	       name_b, name_b_tab);
 	print_line_count(lc_a);
 	printf(" +");
 	print_line_count(lc_b);
@@ -477,8 +484,15 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 	const char *reset = diff_get_color(ecbdata->color_diff, DIFF_RESET);
 
 	if (ecbdata->label_path[0]) {
-		printf("%s--- %s%s\n", set, ecbdata->label_path[0], reset);
-		printf("%s+++ %s%s\n", set, ecbdata->label_path[1], reset);
+		const char *name_a_tab, *name_b_tab;
+
+		name_a_tab = strchr(ecbdata->label_path[0], ' ') ? "\t" : "";
+		name_b_tab = strchr(ecbdata->label_path[1], ' ') ? "\t" : "";
+
+		printf("%s--- %s%s%s\n",
+		       set, ecbdata->label_path[0], reset, name_a_tab);
+		printf("%s+++ %s%s%s\n",
+		       set, ecbdata->label_path[1], reset, name_b_tab);
 		ecbdata->label_path[0] = ecbdata->label_path[1] = NULL;
 	}
 
