@@ -1308,7 +1308,7 @@ static int update_branch(struct branch *b)
 			return error("Branch %s is missing commits.", b->name);
 		}
 
-		if (!in_merge_bases(old_cmit, new_cmit)) {
+		if (!in_merge_bases(old_cmit, &new_cmit, 1)) {
 			unlock_ref(lock);
 			warn("Not updating %s"
 				" (new tip %s does not contain %s)",

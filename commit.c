@@ -1187,14 +1187,17 @@ struct commit_list *get_merge_bases(struct commit *one,
 	return result;
 }
 
-int in_merge_bases(struct commit *rev1, struct commit *rev2)
+int in_merge_bases(struct commit *commit, struct commit **reference, int num)
 {
 	struct commit_list *bases, *b;
 	int ret = 0;
 
-	bases = get_merge_bases(rev1, rev2, 1);
+	if (num == 1)
+		bases = get_merge_bases(commit, *reference, 1);
+	else
+		die("not yet");
 	for (b = bases; b; b = b->next) {
-		if (!hashcmp(rev1->object.sha1, b->item->object.sha1)) {
+		if (!hashcmp(commit->object.sha1, b->item->object.sha1)) {
 			ret = 1;
 			break;
 		}

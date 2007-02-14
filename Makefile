@@ -291,6 +291,7 @@ BUILTIN_OBJS = \
 	builtin-ls-tree.o \
 	builtin-mailinfo.o \
 	builtin-mailsplit.o \
+	builtin-merge-base.o \
 	builtin-merge-file.o \
 	builtin-mv.o \
 	builtin-name-rev.o \

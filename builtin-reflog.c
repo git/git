@@ -215,8 +215,8 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 			old = lookup_commit_reference_gently(osha1, 1);
 		if (!new && !is_null_sha1(nsha1))
 			new = lookup_commit_reference_gently(nsha1, 1);
-		if ((old && !in_merge_bases(old, cb->ref_commit)) ||
-		    (new && !in_merge_bases(new, cb->ref_commit)))
+		if ((old && !in_merge_bases(old, &cb->ref_commit, 1)) ||
+		    (new && !in_merge_bases(new, &cb->ref_commit, 1)))
 			goto prune;
 	}
 
