@@ -13,7 +13,7 @@
  */
 
 static const char reflog_expire_usage[] =
-"git-reflog expire [--verbose] [--dry-run] [--stale-fix] [--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...";
+"git-reflog (show|expire) [--verbose] [--dry-run] [--stale-fix] [--expire=<time>] [--expire-unreachable=<time>] [--all] <refs>...";
 
 static unsigned long default_reflog_expire;
 static unsigned long default_reflog_expire_unreachable;
@@ -245,14 +245,11 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 	char *log_file, *newlog_path = NULL;
 	int status = 0;
 
-	if (strncmp(ref, "refs/", 5))
-		return error("not a ref '%s'", ref);
-
 	memset(&cb, 0, sizeof(cb));
 	/* we take the lock for the ref itself to prevent it from
 	 * getting updated.
 	 */
-	lock = lock_ref_sha1(ref + 5, sha1);
+	lock = lock_any_ref_for_update(ref, sha1);
 	if (!lock)
 		return error("cannot lock ref '%s'", ref);
 	log_file = xstrdup(git_path("logs/%s", ref));
@@ -359,7 +356,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	}
 
 	if (do_all)
-		status |= for_each_ref(expire_reflog, &cb);
+		status |= for_each_reflog(expire_reflog, &cb);
 	while (i < argc) {
 		const char *ref = argv[i++];
 		unsigned char sha1[20];
@@ -381,10 +378,16 @@ static const char reflog_usage[] =
 
 int cmd_reflog(int argc, const char **argv, const char *prefix)
 {
-	if (argc < 2)
-		usage(reflog_usage);
-	else if (!strcmp(argv[1], "expire"))
+	/* With no command, we default to showing it. */
+	if (argc < 2 || *argv[1] == '-')
+		return cmd_log_reflog(argc, argv, prefix);
+
+	if (!strcmp(argv[1], "show"))
+		return cmd_log_reflog(argc - 1, argv + 1, prefix);
+
+	if (!strcmp(argv[1], "expire"))
 		return cmd_reflog_expire(argc - 1, argv + 1, prefix);
-	else
-		usage(reflog_usage);
+
+	/* Not a recognized reflog command..*/
+	usage(reflog_usage);
 }

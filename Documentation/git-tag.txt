@@ -80,6 +80,137 @@ it in the repository configuration as follows:
 [user]
     signingkey = <gpg-key-id>
 
+
+DISCUSSION
+----------
+
+On Re-tagging
+~~~~~~~~~~~~~
+
+What should you do when you tag a wrong commit and you would
+want to re-tag?
+
+If you never pushed anything out, just re-tag it. Use "-f" to
+replace the old one. And you're done.
+
+But if you have pushed things out (or others could just read
+your repository directly), then others will have already seen
+the old tag. In that case you can do one of two things:
+
+. The sane thing.
+Just admit you screwed up, and use a different name. Others have
+already seen one tag-name, and if you keep the same name, you
+may be in the situation that two people both have "version X",
+but they actually have 'different' "X"'s.  So just call it "X.1"
+and be done with it.
+
+. The insane thing.
+You really want to call the new version "X" too, 'even though'
+others have already seen the old one. So just use "git tag -f"
+again, as if you hadn't already published the old one.
+
+However, Git does *not* (and it should not)change tags behind
+users back. So if somebody already got the old tag, doing a "git
+pull" on your tree shouldn't just make them overwrite the old
+one.
+
+If somebody got a release tag from you, you cannot just change
+the tag for them by updating your own one. This is a big
+security issue, in that people MUST be able to trust their
+tag-names.  If you really want to do the insane thing, you need
+to just fess up to it, and tell people that you messed up. You
+can do that by making a very public announcement saying:
+
+------------
+Ok, I messed up, and I pushed out an earlier version tagged as X. I
+then fixed something, and retagged the *fixed* tree as X again.
+
+If you got the wrong tag, and want the new one, please delete
+the old one and fetch the new one by doing:
+
+	git tag -d X
+	git fetch origin tag X
+
+to get my updated tag.
+
+You can test which tag you have by doing
+
+	git rev-parse X
+
+which should return 0123456789abcdef.. if you have the new version.
+
+Sorry for inconvenience.
+------------
+
+Does this seem a bit complicated?  It *should* be. There is no
+way that it would be correct to just "fix" it behind peoples
+backs. People need to know that their tags might have been
+changed.
+
+
+On Automatic following
+~~~~~~~~~~~~~~~~~~~~~~
+
+If you are following somebody else's tree, you are most likely
+using tracking branches (`refs/heads/origin` in traditional
+layout, or `refs/remotes/origin/master` in the separate-remote
+layout).  You usually want the tags from the other end.
+
+On the other hand, if you are fetching because you would want a
+one-shot merge from somebody else, you typically do not want to
+get tags from there.  This happens more often for people near
+the toplevel but not limited to them.  Mere mortals when pulling
+from each other do not necessarily want to automatically get
+private anchor point tags from the other person.
+
+You would notice "please pull" messages on the mailing list says
+repo URL and branch name alone.  This is designed to be easily
+cut&pasted to "git fetch" command line:
+
+------------
+Linus, please pull from
+
+	git://git..../proj.git master
+
+to get the following updates...
+------------
+
+becomes:
+
+------------
+$ git pull git://git..../proj.git master
+------------
+
+In such a case, you do not want to automatically follow other's
+tags.
+
+One important aspect of git is it is distributed, and being
+distributed largely means there is no inherent "upstream" or
+"downstream" in the system.  On the face of it, the above
+example might seem to indicate that the tag namespace is owned
+by upper echelon of people and tags only flow downwards, but
+that is not the case.  It only shows that the usage pattern
+determines who are interested in whose tags.
+
+A one-shot pull is a sign that a commit history is now crossing
+the boundary between one circle of people (e.g. "people who are
+primarily interested in networking part of the kernel") who may
+have their own set of tags (e.g. "this is the third release
+candidate from the networking group to be proposed for general
+consumption with 2.6.21 release") to another circle of people
+(e.g. "people who integrate various subsystem improvements").
+The latter are usually not interested in the detailed tags used
+internally in the former group (that is what "internal" means).
+That is why it is desirable not to follow tags automatically in
+this case.
+
+It may well be that among networking people, they may want to
+exchange the tags internal to their group, but in that workflow
+they are most likely tracking with each other's progress by
+having tracking branches.  Again, the heuristic to automatically
+follow such tags is a good thing.
+
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>,

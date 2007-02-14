@@ -135,7 +135,7 @@ static const char *find_next(const char *cp)
 	while (*cp) {
 		if (*cp == '%') {
 			/* %( is the start of an atom;
-			 * %% is a quoteed per-cent.
+			 * %% is a quoted per-cent.
 			 */
 			if (cp[1] == '(')
 				return cp;

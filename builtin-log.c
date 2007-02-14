@@ -11,6 +11,7 @@
 #include "log-tree.h"
 #include "builtin.h"
 #include "tag.h"
+#include "reflog-walk.h"
 
 static int default_show_root = 1;
 
@@ -179,6 +180,37 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	}
 	free(objects);
 	return ret;
+}
+
+/*
+ * This is equivalent to "git log -g --abbrev-commit --pretty=oneline"
+ */
+int cmd_log_reflog(int argc, const char **argv, const char *prefix)
+{
+	struct rev_info rev;
+
+	git_config(git_log_config);
+	init_revisions(&rev, prefix);
+	init_reflog_walk(&rev.reflog_info);
+	rev.abbrev_commit = 1;
+	rev.verbose_header = 1;
+	cmd_log_init(argc, argv, prefix, &rev);
+
+	/*
+	 * This means that we override whatever commit format the user gave
+	 * on the cmd line.  Sad, but cmd_log_init() currently doesn't
+	 * allow us to set a different default.
+	 */
+	rev.commit_format = CMIT_FMT_ONELINE;
+	rev.always_show_header = 1;
+
+	/*
+	 * We get called through "git reflog", so unlike the other log
+	 * routines, we need to set up our pager manually..
+	 */
+	setup_pager();
+
+	return cmd_log_walk(&rev);
 }
 
 int cmd_log(int argc, const char **argv, const char *prefix)

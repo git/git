@@ -560,6 +560,24 @@ static char *pprint_rename(const char *a, const char *b)
 	int pfx_length, sfx_length;
 	int len_a = strlen(a);
 	int len_b = strlen(b);
+	int qlen_a = quote_c_style(a, NULL, NULL, 0);
+	int qlen_b = quote_c_style(b, NULL, NULL, 0);
+
+	if (qlen_a || qlen_b) {
+		if (qlen_a) len_a = qlen_a;
+		if (qlen_b) len_b = qlen_b;
+		name = xmalloc( len_a + len_b + 5 );
+		if (qlen_a)
+			quote_c_style(a, name, NULL, 0);
+		else
+			memcpy(name, a, len_a);
+		memcpy(name + len_a, " => ", 4);
+		if (qlen_b)
+			quote_c_style(b, name + len_a + 4, NULL, 0);
+		else
+			memcpy(name + len_a + 4, b, len_b + 1);
+		return name;
+	}
 
 	/* Find common prefix */
 	pfx_length = 0;
@@ -716,12 +734,14 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 		struct diffstat_file *file = data->files[i];
 		int change = file->added + file->deleted;
 
-		len = quote_c_style(file->name, NULL, NULL, 0);
-		if (len) {
-			char *qname = xmalloc(len + 1);
-			quote_c_style(file->name, qname, NULL, 0);
-			free(file->name);
-			file->name = qname;
+		if (!file->is_renamed) {  /* renames are already quoted by pprint_rename */
+			len = quote_c_style(file->name, NULL, NULL, 0);
+			if (len) {
+				char *qname = xmalloc(len + 1);
+				quote_c_style(file->name, qname, NULL, 0);
+				free(file->name);
+				file->name = qname;
+			}
 		}
 
 		len = strlen(file->name);
@@ -853,7 +873,7 @@ static void show_numstat(struct diffstat_t* data, struct diff_options *options)
 			printf("-\t-\t");
 		else
 			printf("%d\t%d\t", file->added, file->deleted);
-		if (options->line_termination &&
+		if (options->line_termination && !file->is_renamed &&
 		    quote_c_style(file->name, NULL, NULL, 0))
 			quote_c_style(file->name, NULL, stdout, 0);
 		else
@@ -1359,6 +1379,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		s->data = xmmap(NULL, s->size, PROT_READ, MAP_PRIVATE, fd, 0);
 		close(fd);
 		s->should_munmap = 1;
+		/* FIXME! CRLF -> LF conversion goes here, based on "s->path" */
 	}
 	else {
 		char type[20];
@@ -2200,13 +2221,13 @@ static void diff_flush_raw(struct diff_filepair *p,
 		free((void*)path_two);
 }
 
-static void diff_flush_name(struct diff_filepair *p, int line_termination)
+static void diff_flush_name(struct diff_filepair *p, struct diff_options *opt)
 {
 	char *path = p->two->path;
 
-	if (line_termination)
+	if (opt->line_termination)
 		path = quote_one(p->two->path);
-	printf("%s%c", path, line_termination);
+	printf("%s%c", path, opt->line_termination);
 	if (p->two->path != path)
 		free(path);
 }
@@ -2413,24 +2434,29 @@ static void flush_one_pair(struct diff_filepair *p, struct diff_options *opt)
 	else if (fmt & (DIFF_FORMAT_RAW | DIFF_FORMAT_NAME_STATUS))
 		diff_flush_raw(p, opt);
 	else if (fmt & DIFF_FORMAT_NAME)
-		diff_flush_name(p, opt->line_termination);
+		diff_flush_name(p, opt);
 }
 
 static void show_file_mode_name(const char *newdelete, struct diff_filespec *fs)
 {
+	char *name = quote_one(fs->path);
 	if (fs->mode)
-		printf(" %s mode %06o %s\n", newdelete, fs->mode, fs->path);
+		printf(" %s mode %06o %s\n", newdelete, fs->mode, name);
 	else
-		printf(" %s %s\n", newdelete, fs->path);
+		printf(" %s %s\n", newdelete, name);
+	free(name);
 }
 
 
 static void show_mode_change(struct diff_filepair *p, int show_name)
 {
 	if (p->one->mode && p->two->mode && p->one->mode != p->two->mode) {
-		if (show_name)
+		if (show_name) {
+			char *name = quote_one(p->two->path);
 			printf(" mode change %06o => %06o %s\n",
-			       p->one->mode, p->two->mode, p->two->path);
+			       p->one->mode, p->two->mode, name);
+			free(name);
+		}
 		else
 			printf(" mode change %06o => %06o\n",
 			       p->one->mode, p->two->mode);
@@ -2439,34 +2465,11 @@ static void show_mode_change(struct diff_filepair *p, int show_name)
 
 static void show_rename_copy(const char *renamecopy, struct diff_filepair *p)
 {
-	const char *old, *new;
+	char *names = pprint_rename(p->one->path, p->two->path);
 
-	/* Find common prefix */
-	old = p->one->path;
-	new = p->two->path;
-	while (1) {
-		const char *slash_old, *slash_new;
-		slash_old = strchr(old, '/');
-		slash_new = strchr(new, '/');
-		if (!slash_old ||
-		    !slash_new ||
-		    slash_old - old != slash_new - new ||
-		    memcmp(old, new, slash_new - new))
-			break;
-		old = slash_old + 1;
-		new = slash_new + 1;
-	}
-	/* p->one->path thru old is the common prefix, and old and new
-	 * through the end of names are renames
-	 */
-	if (old != p->one->path)
-		printf(" %s %.*s{%s => %s} (%d%%)\n", renamecopy,
-		       (int)(old - p->one->path), p->one->path,
-		       old, new, (int)(0.5 + p->score * 100.0/MAX_SCORE));
-	else
-		printf(" %s %s => %s (%d%%)\n", renamecopy,
-		       p->one->path, p->two->path,
-		       (int)(0.5 + p->score * 100.0/MAX_SCORE));
+	printf(" %s %s (%d%%)\n", renamecopy, names,
+	       (int)(0.5 + p->score * 100.0/MAX_SCORE));
+	free(names);
 	show_mode_change(p, 0);
 }
 
@@ -2487,8 +2490,10 @@ static void diff_summary(struct diff_filepair *p)
 		break;
 	default:
 		if (p->score) {
-			printf(" rewrite %s (%d%%)\n", p->two->path,
+			char *name = quote_one(p->two->path);
+			printf(" rewrite %s (%d%%)\n", name,
 				(int)(0.5 + p->score * 100.0/MAX_SCORE));
+			free(name);
 			show_mode_change(p, 0);
 		} else	show_mode_change(p, 1);
 		break;

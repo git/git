@@ -10,7 +10,7 @@ commit id embedding:
 
   The contents of the repository is compared to the extracted tar
   archive.  The repository contains simple text files, symlinks and a
-  binary file (/bin/sh).  Only pathes shorter than 99 characters are
+  binary file (/bin/sh).  Only paths shorter than 99 characters are
   used.
 
   git-tar-tree applies the commit date to every file in the archive it

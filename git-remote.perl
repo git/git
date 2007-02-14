@@ -130,7 +130,7 @@ sub update_ls_remote {
 	$info->{'LS_REMOTE'} = \@ref;
 }
 
-sub show_wildcard_mapping {
+sub list_wildcard_mapping {
 	my ($forced, $ours, $ls) = @_;
 	my %refs;
 	for (@$ls) {
@@ -156,25 +156,14 @@ sub show_wildcard_mapping {
 			push @tracked, $_;
 		}
 	}
-	if (@new) {
-		print "  New remote branches (next fetch will store in remotes/$ours)\n";
-		print "    @new\n";
-	}
-	if (@stale) {
-		print "  Stale tracking branches in remotes/$ours (you'd better remove them)\n";
-		print "    @stale\n";
-	}
-	if (@tracked) {
-		print "  Tracked remote branches\n";
-		print "    @tracked\n";
-	}
+	return \@new, \@stale, \@tracked;
 }
 
-sub show_mapping {
+sub list_mapping {
 	my ($name, $info) = @_;
 	my $fetch = $info->{'FETCH'};
 	my $ls = $info->{'LS_REMOTE'};
-	my (@stale, @tracked);
+	my (@new, @stale, @tracked);
 
 	for (@$fetch) {
 		next unless (/(\+)?([^:]+):(.*)/);
@@ -182,7 +171,11 @@ sub show_mapping {
 		if ($theirs eq 'refs/heads/*' &&
 		    $ours =~ /^refs\/remotes\/(.*)\/\*$/) {
 			# wildcard mapping
-			show_wildcard_mapping($forced, $1, $ls);
+			my ($w_new, $w_stale, $w_tracked)
+				= list_wildcard_mapping($forced, $1, $ls);
+			push @new, @$w_new;
+			push @stale, @$w_stale;
+			push @tracked, @$w_tracked;
 		}
 		elsif ($theirs =~ /\*/ || $ours =~ /\*/) {
 			print STDERR "Warning: unrecognized mapping in remotes.$name.fetch: $_\n";
@@ -196,13 +189,40 @@ sub show_mapping {
 			}
 		}
 	}
-	if (@stale) {
-		print "  Stale tracking branches in remotes/$name (you'd better remove them)\n";
-		print "    @stale\n";
+	return \@new, \@stale, \@tracked;
+}
+
+sub show_mapping {
+	my ($name, $info) = @_;
+	my ($new, $stale, $tracked) = list_mapping($name, $info);
+	if (@$new) {
+		print "  New remote branches (next fetch will store in remotes/$name)\n";
+		print "    @$new\n";
 	}
-	if (@tracked) {
+	if (@$stale) {
+		print "  Stale tracking branches in remotes/$name (use 'git remote prune')\n";
+		print "    @$stale\n";
+	}
+	if (@$tracked) {
 		print "  Tracked remote branches\n";
-		print "    @tracked\n";
+		print "    @$tracked\n";
+	}
+}
+
+sub prune_remote {
+	my ($name, $ls_remote) = @_;
+	if (!exists $remote->{$name}) {
+		print STDERR "No such remote $name\n";
+		return;
+	}
+	my $info = $remote->{$name};
+	update_ls_remote($ls_remote, $info);
+
+	my ($new, $stale, $tracked) = list_mapping($name, $info);
+	my $prefix = "refs/remotes/$name";
+	foreach my $to_prune (@$stale) {
+		my @v = $git->command(qw(rev-parse --verify), "$prefix/$to_prune");
+		$git->command(qw(update-ref -d), "$prefix/$to_prune", $v[0]);
 	}
 }
 
@@ -233,14 +253,30 @@ sub show_remote {
 }
 
 sub add_remote {
-	my ($name, $url) = @_;
+	my ($name, $url, $opts) = @_;
 	if (exists $remote->{$name}) {
 		print STDERR "remote $name already exists.\n";
 		exit(1);
 	}
 	$git->command('config', "remote.$name.url", $url);
-	$git->command('config', "remote.$name.fetch",
-		      "+refs/heads/*:refs/remotes/$name/*");
+	my $track = $opts->{'track'} || ["*"];
+
+	for (@$track) {
+		$git->command('config', '--add', "remote.$name.fetch",
+			      "+refs/heads/$_:refs/remotes/$name/$_");
+	}
+	if ($opts->{'fetch'}) {
+		$git->command('fetch', $name);
+	}
+	if (exists $opts->{'master'}) {
+		$git->command('symbolic-ref', "refs/remotes/$name/HEAD",
+			      "refs/remotes/$name/$opts->{'master'}");
+	}
+}
+
+sub add_usage {
+	print STDERR "Usage: git remote add [-f] [-t track]* [-m master] <name> <url>\n";
+	exit(1);
 }
 
 if (!@ARGV) {
@@ -267,16 +303,62 @@ elsif ($ARGV[0] eq 'show') {
 		show_remote($ARGV[$i], $ls_remote);
 	}
 }
-elsif ($ARGV[0] eq 'add') {
-	if (@ARGV != 3) {
-		print STDERR "Usage: git remote add <name> <url>\n";
+elsif ($ARGV[0] eq 'prune') {
+	my $ls_remote = 1;
+	my $i;
+	for ($i = 1; $i < @ARGV; $i++) {
+		if ($ARGV[$i] eq '-n') {
+			$ls_remote = 0;
+		}
+		else {
+			last;
+		}
+	}
+	if ($i >= @ARGV) {
+		print STDERR "Usage: git remote prune <remote>\n";
 		exit(1);
 	}
-	add_remote($ARGV[1], $ARGV[2]);
+	for (; $i < @ARGV; $i++) {
+		prune_remote($ARGV[$i], $ls_remote);
+	}
+}
+elsif ($ARGV[0] eq 'add') {
+	my %opts = ();
+	while (1 < @ARGV && $ARGV[1] =~ /^-/) {
+		my $opt = $ARGV[1];
+		shift @ARGV;
+		if ($opt eq '-f' || $opt eq '--fetch') {
+			$opts{'fetch'} = 1;
+			next;
+		}
+		if ($opt eq '-t' || $opt eq '--track') {
+			if (@ARGV < 1) {
+				add_usage();
+			}
+			$opts{'track'} ||= [];
+			push @{$opts{'track'}}, $ARGV[1];
+			shift @ARGV;
+			next;
+		}
+		if ($opt eq '-m' || $opt eq '--master') {
+			if ((@ARGV < 1) || exists $opts{'master'}) {
+				add_usage();
+			}
+			$opts{'master'} = $ARGV[1];
+			shift @ARGV;
+			next;
+		}
+		add_usage();
+	}
+	if (@ARGV != 3) {
+		add_usage();
+	}
+	add_remote($ARGV[1], $ARGV[2], \%opts);
 }
 else {
 	print STDERR "Usage: git remote\n";
 	print STDERR "       git remote add <name> <url>\n";
 	print STDERR "       git remote show <name>\n";
+	print STDERR "       git remote prune <name>\n";
 	exit(1);
 }

@@ -408,7 +408,7 @@ static void make_service_overridable(const char *name, int ena) {
 
 /*
  * Separate the "extra args" information as supplied by the client connection.
- * Any resulting data is squirrelled away in the given interpolation table.
+ * Any resulting data is squirreled away in the given interpolation table.
  */
 static void parse_extra_args(struct interp *table, char *extra_args, int buflen)
 {

@@ -86,6 +86,14 @@ Foreign SCM interface
    series in git back and forth.
 
 
+   - *hg-to-git* (contrib/)
+
+   hg-to-git converts a Mercurial repository into a git one, and
+   preserves the full branch history in the process. hg-to-git can
+   also be used in an incremental way to keep the git repository
+   in sync with the master Mercurial repository.
+
+
 Others
 ------
 

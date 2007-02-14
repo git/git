@@ -316,6 +316,7 @@ static void create_branch(const char *name, const char *start_name,
 	struct commit *commit;
 	unsigned char sha1[20];
 	char ref[PATH_MAX], msg[PATH_MAX + 20];
+	int forcing = 0;
 
 	snprintf(ref, sizeof ref, "refs/heads/%s", name);
 	if (check_ref_format(ref))
@@ -326,6 +327,7 @@ static void create_branch(const char *name, const char *start_name,
 			die("A branch named '%s' already exists.", name);
 		else if (!is_bare_repository() && !strcmp(head, name))
 			die("Cannot force update the current branch.");
+		forcing = 1;
 	}
 
 	if (start_sha1)
@@ -342,11 +344,15 @@ static void create_branch(const char *name, const char *start_name,
 	if (!lock)
 		die("Failed to lock ref for update: %s.", strerror(errno));
 
-	if (reflog) {
+	if (reflog)
 		log_all_ref_updates = 1;
+
+	if (forcing)
+		snprintf(msg, sizeof msg, "branch: Reset from %s",
+			 start_name);
+	else
 		snprintf(msg, sizeof msg, "branch: Created from %s",
 			 start_name);
-	}
 
 	if (write_ref_sha1(lock, sha1, msg) < 0)
 		die("Failed to write ref: %s.", strerror(errno));
@@ -358,7 +364,7 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	unsigned char sha1[20];
 
 	if (!oldname)
-		die("cannot rename the curren branch while not on any.");
+		die("cannot rename the current branch while not on any.");
 
 	if (snprintf(oldref, sizeof(oldref), "refs/heads/%s", oldname) > sizeof(oldref))
 		die("Old branchname too long");

@@ -169,6 +169,16 @@ test_expect_success \
       test "$(echo $(sort "G g/CVS/Entries"|cut -d/ -f2,3,5))" = "with spaces.png/1.2/-kb with spaces.txt/1.2/"
       )'
 
+# Some filesystems mangle pathnames with UTF-8 characters --
+# check and skip
+if p="Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö" &&
+	mkdir -p "tst/$p" &&
+	date >"tst/$p/day" &&
+	found=$(find tst -type f -print) &&
+	test "z$found" = "ztst/$p/day" &&
+	rm -fr tst
+then
+
 # This test contains UTF-8 characters
 test_expect_success \
      'File with non-ascii file name' \
@@ -183,6 +193,10 @@ test_expect_success \
       git-cvsexportcommit -v -c $id &&
       test "$(echo $(sort Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö/CVS/Entries|cut -d/ -f2,3,5))" = "gårdetsågårdet.png/1.1/-kb gårdetsågårdet.txt/1.1/"
       )'
+
+fi
+
+rm -fr tst
 
 test_expect_success \
      'Mismatching patch should fail' \

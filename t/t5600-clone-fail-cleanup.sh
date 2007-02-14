@@ -36,7 +36,7 @@ test_expect_success \
     'git-clone foo bar'
 
 test_expect_success \
-    'successfull clone must leave the directory' \
+    'successful clone must leave the directory' \
     'cd bar'
 
 test_done

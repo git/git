@@ -10,7 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git-am' [--signoff] [--dotest=<dir>] [--utf8 | --no-utf8] [--binary] [--3way]
-         [--interactive] [--whitespace=<option>] <mbox>...
+         [--interactive] [--whitespace=<option>] [-C<n>] [-p<n>]
+	 <mbox>...
 'git-am' [--skip | --resolved]
 
 DESCRIPTION
@@ -21,6 +22,10 @@ current branch.
 
 OPTIONS
 -------
+<mbox>...::
+	The list of mailbox files to read patches from. If you do not
+	supply this argument, reads from the standard input.
+
 --signoff::
 	Add `Signed-off-by:` line to the commit message, using
 	the committer identity of yourself.
@@ -62,6 +67,10 @@ default.   You could use `--no-utf8` to override this.
 
 --whitespace=<option>::
 	This flag is passed to the `git-apply` program that applies
+	the patch.
+
+-C<n>, -p<n>::
+	These flag are passed to the `git-apply` program that applies
 	the patch.
 
 --interactive::

@@ -101,27 +101,27 @@ want to commit together. This can be done in a few different ways:
 
 1) By using 'git add <file_spec>...'
 
-   This can be performed multiple times before a commit.  Note that this
-   is not only for adding new files.  Even modified files must be
-   added to the set of changes about to be committed.  The "git status"
-   command gives you a summary of what is included so far for the
-   next commit.  When done you should use the 'git commit' command to
-   make it real.
+This can be performed multiple times before a commit.  Note that this
+is not only for adding new files.  Even modified files must be
+added to the set of changes about to be committed.  The "git status"
+command gives you a summary of what is included so far for the
+next commit.  When done you should use the 'git commit' command to
+make it real.
 
-   Note: don't forget to 'add' a file again if you modified it after the
-   first 'add' and before 'commit'. Otherwise only the previous added
-   state of that file will be committed. This is because git tracks
-   content, so what you're really 'add'ing to the commit is the *content*
-   of the file in the state it is in when you 'add' it.
+Note: don't forget to 'add' a file again if you modified it after the
+first 'add' and before 'commit'. Otherwise only the previous added
+state of that file will be committed. This is because git tracks
+content, so what you're really 'add'ing to the commit is the *content*
+of the file in the state it is in when you 'add' it.
 
 2) By using 'git commit -a' directly
 
-   This is a quick way to automatically 'add' the content from all files
-   that were modified since the previous commit, and perform the actual
-   commit without having to separately 'add' them beforehand.  This will
-   not add content from new files i.e. files that were never added before.
-   Those files still have to be added explicitly before performing a
-   commit.
+This is a quick way to automatically 'add' the content from all files
+that were modified since the previous commit, and perform the actual
+commit without having to separately 'add' them beforehand.  This will
+not add content from new files i.e. files that were never added before.
+Those files still have to be added explicitly before performing a
+commit.
 
 But here's a twist. If you do 'git commit <file1> <file2> ...' then only
 the  changes belonging to those explicitly specified files will be
@@ -458,9 +458,11 @@ $ git reset --hard HEAD^ # reset your current branch and working
 Be careful with that last command: in addition to losing any changes
 in the working directory, it will also remove all later commits from
 this branch.  If this branch is the only branch containing those
-commits, they will be lost.  (Also, don't use "git reset" on a
-publicly-visible branch that other developers pull from, as git will
-be confused by history that disappears in this way.)
+commits, they will be lost.  Also, don't use "git reset" on a
+publicly-visible branch that other developers pull from, as it will
+force needless merges on other developers to clean up the history.
+If you need to undo changes that you have pushed, use gitlink:git-revert[1]
+instead.
 
 The git grep command can search for strings in any version of your
 project, so

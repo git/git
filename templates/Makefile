@@ -8,7 +8,7 @@ template_dir ?= $(prefix)/share/git-core/templates/
 # set NOEXECTEMPL to non-empty to change the names of hook scripts
 # so that the tools will not find them
 
-# Shell quote (do not use $(call) to accomodate ancient setups);
+# Shell quote (do not use $(call) to accommodate ancient setups);
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 template_dir_SQ = $(subst ','\'',$(template_dir))
 

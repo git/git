@@ -59,7 +59,7 @@ if ! [ -d "$QUILT_PATCHES" ] ; then
 	exit 1
 fi
 
-# Temporay directories
+# Temporary directories
 tmp_dir=.dotest
 tmp_msg="$tmp_dir/msg"
 tmp_patch="$tmp_dir/patch"

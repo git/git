@@ -36,6 +36,7 @@ git-diff-index
 git-diff-stages
 git-diff-tree
 git-describe
+git-fast-import
 git-fetch
 git-fetch-pack
 git-findtags
@@ -71,7 +72,6 @@ git-merge-tree
 git-merge-octopus
 git-merge-one-file
 git-merge-ours
-git-merge-recur
 git-merge-recursive
 git-merge-resolve
 git-merge-stupid

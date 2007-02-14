@@ -160,6 +160,10 @@ blobs contained in a commit.
   immediately following a ref name and the ref must have an existing
   log ($GIT_DIR/logs/<ref>).
 
+* You can use the '@' construct with an empty ref part to get at a
+  reflog of the current branch. For example, if you are on the
+  branch 'blabla', then '@\{1\}' means the same as 'blabla@\{1\}'.
+
 * A suffix '{caret}' to a revision parameter means the first parent of
   that commit object.  '{caret}<n>' means the <n>th parent (i.e.
   'rev{caret}'

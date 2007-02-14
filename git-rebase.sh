@@ -45,6 +45,7 @@ do_merge=
 dotest=$GIT_DIR/.dotest-merge
 prec=4
 verbose=
+git_am_opt=
 
 continue_merge () {
 	test -n "$prev_head" || die "prev_head must be defined"
@@ -213,6 +214,10 @@ do
 	-v|--verbose)
 		verbose=t
 		;;
+	-C*)
+		git_am_opt=$1
+		shift
+		;;
 	-*)
 		usage
 		;;
@@ -322,7 +327,7 @@ fi
 if test -z "$do_merge"
 then
 	git-format-patch -k --stdout --full-index --ignore-if-in-upstream "$upstream"..ORIG_HEAD |
-	git am --binary -3 -k --resolvemsg="$RESOLVEMSG"
+	git am $git_am_opt --binary -3 -k --resolvemsg="$RESOLVEMSG"
 	exit $?
 fi
 

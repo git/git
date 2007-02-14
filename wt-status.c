@@ -47,17 +47,10 @@ void wt_status_prepare(struct wt_status *s)
 	unsigned char sha1[20];
 	const char *head;
 
+	memset(s, 0, sizeof(*s));
 	head = resolve_ref("HEAD", sha1, 0, NULL);
 	s->branch = head ? xstrdup(head) : NULL;
-
 	s->reference = "HEAD";
-	s->amend = 0;
-	s->verbose = 0;
-	s->untracked = 0;
-
-	s->commitable = 0;
-	s->workdir_dirty = 0;
-	s->workdir_untracked = 0;
 }
 
 static void wt_status_print_cached_header(const char *reference)

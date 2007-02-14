@@ -8,7 +8,7 @@ git-cvsexportcommit - Export a single commit to a CVS checkout
 
 SYNOPSIS
 --------
-'git-cvsexportcommit' [-h] [-v] [-c] [-p] [-a] [-f] [-m msgprefix] [PARENTCOMMIT] COMMITID
+'git-cvsexportcommit' [-h] [-v] [-c] [-P] [-p] [-a] [-f] [-m msgprefix] [PARENTCOMMIT] COMMITID
 
 
 DESCRIPTION
@@ -45,6 +45,9 @@ OPTIONS
 
 -f::
 	Force the merge even if the files are not up to date.
+
+-P::
+	Force the parent commit, even if it is not a direct parent.
 
 -m::
 	Prepend the commit message with the provided prefix. 

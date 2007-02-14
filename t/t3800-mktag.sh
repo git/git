@@ -172,7 +172,7 @@ EOF
 check_verify_failure 'verify tag-name check'
 
 ############################################################
-# 11. tagger line lable check #1
+# 11. tagger line label check #1
 
 cat >tag.sig <<EOF
 object $head
@@ -187,7 +187,7 @@ EOF
 check_verify_failure '"tagger" line label check #1'
 
 ############################################################
-# 12. tagger line lable check #2
+# 12. tagger line label check #2
 
 cat >tag.sig <<EOF
 object $head

@@ -56,11 +56,14 @@ test_expect_success 'checkout working copy from svn' "svn co $svnrepo test_wc"
 test_expect_success 'setup some commits to svn' \
 	'cd test_wc &&
 		echo Greetings >> kw.c &&
+		poke kw.c &&
 		svn commit -m "Not yet an Id" &&
 		echo Hello world >> kw.c &&
+		poke kw.c &&
 		svn commit -m "Modified file, but still not yet an Id" &&
 		svn propset svn:keywords Id kw.c &&
-		svn commit -m "Propset Id"
+		poke kw.c &&
+		svn commit -m "Propset Id" &&
 	cd ..'
 
 test_expect_success 'initialize git-svn' "git-svn init $svnrepo"
@@ -70,7 +73,7 @@ name='test svn:keywords ignoring'
 test_expect_success "$name" \
 	'git checkout -b mybranch remotes/git-svn &&
 	echo Hi again >> kw.c &&
-	git commit -a -m "test keywoards ignoring" &&
+	git commit -a -m "test keywords ignoring" &&
 	git-svn set-tree remotes/git-svn..mybranch &&
 	git pull . remotes/git-svn'
 
@@ -83,7 +86,7 @@ test_expect_success "propset CR on crlf files" \
 		svn propset svn:eol-style CR empty &&
 		svn propset svn:eol-style CR crlf &&
 		svn propset svn:eol-style CR ne_crlf &&
-		svn commit -m "propset CR on crlf files"
+		svn commit -m "propset CR on crlf files" &&
 	 cd ..'
 
 test_expect_success 'fetch and pull latest from svn and checkout a new wc' \

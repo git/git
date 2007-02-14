@@ -560,7 +560,11 @@ void unuse_pack(struct pack_window **w_cursor)
 	}
 }
 
-static void open_packed_git(struct packed_git *p)
+/*
+ * Do not call this directly as this leaks p->pack_fd on error return;
+ * call open_packed_git() instead.
+ */
+static int open_packed_git_1(struct packed_git *p)
 {
 	struct stat st;
 	struct pack_header hdr;
@@ -570,15 +574,15 @@ static void open_packed_git(struct packed_git *p)
 
 	p->pack_fd = open(p->pack_name, O_RDONLY);
 	if (p->pack_fd < 0 || fstat(p->pack_fd, &st))
-		die("packfile %s cannot be opened", p->pack_name);
+		return -1;
 
 	/* If we created the struct before we had the pack we lack size. */
 	if (!p->pack_size) {
 		if (!S_ISREG(st.st_mode))
-			die("packfile %s not a regular file", p->pack_name);
+			return error("packfile %s not a regular file", p->pack_name);
 		p->pack_size = st.st_size;
 	} else if (p->pack_size != st.st_size)
-		die("packfile %s size changed", p->pack_name);
+		return error("packfile %s size changed", p->pack_name);
 
 #ifndef __MINGW32__
 	/* We leave these file descriptors open with sliding mmap;
@@ -586,35 +590,47 @@ static void open_packed_git(struct packed_git *p)
 	 */
 	fd_flag = fcntl(p->pack_fd, F_GETFD, 0);
 	if (fd_flag < 0)
-		die("cannot determine file descriptor flags");
+		return error("cannot determine file descriptor flags");
 	fd_flag |= FD_CLOEXEC;
 	if (fcntl(p->pack_fd, F_SETFD, fd_flag) == -1)
-		die("cannot set FD_CLOEXEC");
+		return error("cannot set FD_CLOEXEC");
 #endif
 
 	/* Verify we recognize this pack file format. */
 	if (read_in_full(p->pack_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
-		die("file %s is far too short to be a packfile", p->pack_name);
+		return error("file %s is far too short to be a packfile", p->pack_name);
 	if (hdr.hdr_signature != htonl(PACK_SIGNATURE))
-		die("file %s is not a GIT packfile", p->pack_name);
+		return error("file %s is not a GIT packfile", p->pack_name);
 	if (!pack_version_ok(hdr.hdr_version))
-		die("packfile %s is version %u and not supported"
+		return error("packfile %s is version %u and not supported"
 			" (try upgrading GIT to a newer version)",
 			p->pack_name, ntohl(hdr.hdr_version));
 
 	/* Verify the pack matches its index. */
 	if (num_packed_objects(p) != ntohl(hdr.hdr_entries))
-		die("packfile %s claims to have %u objects"
+		return error("packfile %s claims to have %u objects"
 			" while index size indicates %u objects",
 			p->pack_name, ntohl(hdr.hdr_entries),
 			num_packed_objects(p));
 	if (lseek(p->pack_fd, p->pack_size - sizeof(sha1), SEEK_SET) == -1)
-		die("end of packfile %s is unavailable", p->pack_name);
+		return error("end of packfile %s is unavailable", p->pack_name);
 	if (read_in_full(p->pack_fd, sha1, sizeof(sha1)) != sizeof(sha1))
-		die("packfile %s signature is unavailable", p->pack_name);
+		return error("packfile %s signature is unavailable", p->pack_name);
 	idx_sha1 = ((unsigned char *)p->index_base) + p->index_size - 40;
 	if (hashcmp(sha1, idx_sha1))
-		die("packfile %s does not match index", p->pack_name);
+		return error("packfile %s does not match index", p->pack_name);
+	return 0;
+}
+
+static int open_packed_git(struct packed_git *p)
+{
+	if (!open_packed_git_1(p))
+		return 0;
+	if (p->pack_fd != -1) {
+		close(p->pack_fd);
+		p->pack_fd = -1;
+	}
+	return -1;
 }
 
 static int in_window(struct pack_window *win, unsigned long offset)
@@ -637,8 +653,8 @@ unsigned char* use_pack(struct packed_git *p,
 {
 	struct pack_window *win = *w_cursor;
 
-	if (p->pack_fd == -1)
-		open_packed_git(p);
+	if (p->pack_fd == -1 && open_packed_git(p))
+		die("packfile %s cannot be accessed", p->pack_name);
 
 	/* Since packfiles end in a hash of their content and its
 	 * pointless to ask for an offset into the middle of that
@@ -789,7 +805,7 @@ static void prepare_packed_git_one(char *objdir, int local)
 		if (!has_extension(de->d_name, ".idx"))
 			continue;
 
-		/* we have .idx.  Is it a file we can map? */
+		/* Don't reopen a pack we already have. */
 		strcpy(path + len, de->d_name);
 		for (p = packed_git; p; p = p->next) {
 			if (!memcmp(path, p->pack_name, len + namelen - 4))
@@ -797,11 +813,13 @@ static void prepare_packed_git_one(char *objdir, int local)
 		}
 		if (p)
 			continue;
+		/* See if it really is a valid .idx file with corresponding
+		 * .pack file that we can map.
+		 */
 		p = add_packed_git(path, len + namelen, local);
 		if (!p)
 			continue;
-		p->next = packed_git;
-		packed_git = p;
+		install_packed_git(p);
 	}
 	closedir(dir);
 }
@@ -1155,7 +1173,7 @@ static unsigned long unpack_object_header(struct packed_git *p,
 
 	/* use_pack() assures us we have [base, base + 20) available
 	 * as a range that we can look at at.  (Its actually the hash
-	 * size that is assurred.)  With our object header encoding
+	 * size that is assured.)  With our object header encoding
 	 * the maximum deflated object size is 2^137, which is just
 	 * insane, so we know won't exceed what we have been given.
 	 */
@@ -1415,6 +1433,18 @@ static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e, cons
 		}
 		offset = find_pack_entry_one(sha1, p);
 		if (offset) {
+			/*
+			 * We are about to tell the caller where they can
+			 * locate the requested object.  We better make
+			 * sure the packfile is still here and can be
+			 * accessed before supplying that answer, as
+			 * it may have been deleted since the index
+			 * was loaded!
+			 */
+			if (p->pack_fd == -1 && open_packed_git(p)) {
+				error("packfile %s cannot be accessed", p->pack_name);
+				continue;
+			}
 			e->offset = offset;
 			e->p = p;
 			hashcpy(e->sha1, sha1);
@@ -1485,10 +1515,67 @@ static void *read_packed_sha1(const unsigned char *sha1, char *type, unsigned lo
 		return unpack_entry(e.p, e.offset, type, size);
 }
 
+/*
+ * This is meant to hold a *small* number of objects that you would
+ * want read_sha1_file() to be able to return, but yet you do not want
+ * to write them into the object store (e.g. a browse-only
+ * application).
+ */
+static struct cached_object {
+	unsigned char sha1[20];
+	const char *type;
+	void *buf;
+	unsigned long size;
+} *cached_objects;
+static int cached_object_nr, cached_object_alloc;
+
+static struct cached_object *find_cached_object(const unsigned char *sha1)
+{
+	int i;
+	struct cached_object *co = cached_objects;
+
+	for (i = 0; i < cached_object_nr; i++, co++) {
+		if (!hashcmp(co->sha1, sha1))
+			return co;
+	}
+	return NULL;
+}
+
+int pretend_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *sha1)
+{
+	struct cached_object *co;
+
+	hash_sha1_file(buf, len, type, sha1);
+	if (has_sha1_file(sha1) || find_cached_object(sha1))
+		return 0;
+	if (cached_object_alloc <= cached_object_nr) {
+		cached_object_alloc = alloc_nr(cached_object_alloc);
+		cached_objects = xrealloc(cached_objects,
+					  sizeof(*cached_objects) *
+					  cached_object_alloc);
+	}
+	co = &cached_objects[cached_object_nr++];
+	co->size = len;
+	co->type = strdup(type);
+	hashcpy(co->sha1, sha1);
+	return 0;
+}
+
 void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
 {
 	unsigned long mapsize;
 	void *map, *buf;
+	struct cached_object *co;
+
+	co = find_cached_object(sha1);
+	if (co) {
+		buf = xmalloc(co->size + 1);
+		memcpy(buf, co->buf, co->size);
+		((char*)buf)[co->size] = 0;
+		strcpy(type, co->type);
+		*size = co->size;
+		return buf;
+	}
 
 	buf = read_packed_sha1(sha1, type, size);
 	if (buf)
@@ -2014,6 +2101,7 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 
 	if (!type)
 		type = blob_type;
+	/* FIXME: CRLF -> LF conversion here for blobs! We'll need the path! */
 	if (write_object)
 		ret = write_sha1_file(buf, size, type, sha1);
 	else

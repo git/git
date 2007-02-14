@@ -1,0 +1,44 @@
+Items outstanding:
+
+ * Add file to .gitignore or info/excludes.
+
+ * Populate the pull menu with local branches.
+
+ * Make use of the new default merge data stored in repo-config.
+
+ * Checkout a different local branch.
+
+ * Push any local branch to a remote branch.
+
+ * Merge any local branches through a real merge UI.
+
+ * Allow user to define keyboard shortcuts for frequently used fetch
+   or merge operations.  Or maybe just define a keyboard shortcut
+   for default fetch/default merge of current branch is enough;
+   but I do know a few users who merge a couple of common branches
+   also into the same branch so one default isn't quite enough.
+
+ * Better organize fetch/push/pull console windows.
+
+ * Clone UI (to download a new repository).
+
+ * Remotes editor (for .git/config format only).
+
+ * Show a shortlog of the last couple of commits in the main window,
+   to give the user warm fuzzy feelings that we have their data
+   saved.  Actually this may be the set of commits not yet in
+   the upstream (aka default merge branch remote repository).
+
+ * GUI configuration editor for options listed in
+   git.git/Documentation/config.txt.  Ideally this would
+   parse that file and generate the options dialog from
+   the documentation itself, and include the help text
+   from the documentation as part of the UI somehow.
+
+Known bugs:
+
+ * git-gui sometimes just closes on Windows with no error message.
+   I'm not sure what the problem is here.  I suspect the wish
+   process is just terminating due to a segfault or something,
+   as the do_quit proc in git-gui doesn't run.  It often seems to
+   occur while writing a commit message in the buffer.  Odd.

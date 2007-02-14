@@ -1,6 +1,6 @@
 #!/bin/sh
 
-USAGE='[start|bad|good|next|reset|visualize]'
+USAGE='[start|bad|good|next|reset|visualize|replay|log]'
 LONG_USAGE='git bisect start [<pathspec>]	reset bisect state and start bisection.
 git bisect bad [<rev>]		mark <rev> a known-bad revision.
 git bisect good [<rev>...]	mark <rev>... known-good revisions.
@@ -11,6 +11,7 @@ git bisect replay <logfile>	replay bisection log
 git bisect log			show bisect log.'
 
 . git-sh-setup
+require_work_tree
 
 sq() {
 	@@PERL@@ -e '
@@ -152,7 +153,7 @@ bisect_next() {
 	nr=$(eval "git-rev-list $rev $good -- $(cat $GIT_DIR/BISECT_NAMES)" | wc -l) || exit
 	echo "Bisecting: $nr revisions left to test after this"
 	echo "$rev" > "$GIT_DIR/refs/heads/new-bisect"
-	git checkout new-bisect || exit
+	git checkout -q new-bisect || exit
 	mv "$GIT_DIR/refs/heads/new-bisect" "$GIT_DIR/refs/heads/bisect" &&
 	GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD refs/heads/bisect
 	git-show-branch "$rev"

@@ -165,7 +165,28 @@ void add_reflog_for_walk(struct reflog_walk_info *info,
 	if (item)
 		reflogs = item->util;
 	else {
+		if (*branch == '\0') {
+			unsigned char sha1[20];
+			const char *head = resolve_ref("HEAD", sha1, 0, NULL);
+			if (!head)
+				die ("No current branch");
+			free(branch);
+			branch = xstrdup(head);
+		}
 		reflogs = read_complete_reflog(branch);
+		if (!reflogs || reflogs->nr == 0) {
+			unsigned char sha1[20];
+			char *b;
+			if (dwim_log(branch, strlen(branch), sha1, &b) == 1) {
+				if (reflogs) {
+					free(reflogs->ref);
+					free(reflogs);
+				}
+				free(branch);
+				branch = b;
+				reflogs = read_complete_reflog(branch);
+			}
+		}
 		if (!reflogs || reflogs->nr == 0)
 			die("No reflogs found for '%s'", branch);
 		path_list_insert(branch, &info->complete_reflogs)->util
@@ -219,7 +240,8 @@ void fake_reflog_parent(struct reflog_walk_info *info, struct commit *commit)
 	commit->object.flags &= ~(ADDED | SEEN | SHOWN);
 }
 
-void show_reflog_message(struct reflog_walk_info* info, int oneline)
+void show_reflog_message(struct reflog_walk_info* info, int oneline,
+	int relative_date)
 {
 	if (info && info->last_commit_reflog) {
 		struct commit_reflog *commit_reflog = info->last_commit_reflog;
@@ -228,7 +250,7 @@ void show_reflog_message(struct reflog_walk_info* info, int oneline)
 		info = &commit_reflog->reflogs->items[commit_reflog->recno+1];
 		if (oneline) {
 			printf("%s@{", commit_reflog->reflogs->ref);
-			if (commit_reflog->flag)
+			if (commit_reflog->flag || relative_date)
 				printf("%s", show_date(info->timestamp, 0, 1));
 			else
 				printf("%d", commit_reflog->reflogs->nr
@@ -237,9 +259,10 @@ void show_reflog_message(struct reflog_walk_info* info, int oneline)
 		}
 		else {
 			printf("Reflog: %s@{", commit_reflog->reflogs->ref);
-			if (commit_reflog->flag)
-				printf("%s", show_rfc2822_date(info->timestamp,
-							       info->tz));
+			if (commit_reflog->flag || relative_date)
+				printf("%s", show_date(info->timestamp,
+							info->tz,
+							relative_date));
 			else
 				printf("%d", commit_reflog->reflogs->nr
 				       - 2 - commit_reflog->recno);

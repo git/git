@@ -31,6 +31,8 @@ man1dir=$(mandir)/man1
 man7dir=$(mandir)/man7
 # DESTDIR=
 
+ASCIIDOC=asciidoc
+ASCIIDOC_EXTRA =
 INSTALL?=install
 DOC_REF = origin/man
 
@@ -91,16 +93,16 @@ clean:
 	rm -f $(cmds_txt)
 
 %.html : %.txt
-	asciidoc -b xhtml11 -d manpage -f asciidoc.conf $<
+	$(ASCIIDOC) -b xhtml11 -d manpage -f asciidoc.conf $(ASCIIDOC_EXTRA) $<
 
 %.1 %.7 : %.xml
 	xmlto -m callouts.xsl man $<
 
 %.xml : %.txt
-	asciidoc -b docbook -d manpage -f asciidoc.conf $<
+	$(ASCIIDOC) -b docbook -d manpage -f asciidoc.conf $<
 
 user-manual.xml: user-manual.txt user-manual.conf
-	asciidoc -b docbook -d book $<
+	$(ASCIIDOC) -b docbook -d book $<
 
 user-manual.html: user-manual.xml
 	xmlto html-nochunks $<
@@ -108,7 +110,7 @@ user-manual.html: user-manual.xml
 glossary.html : glossary.txt sort_glossary.pl
 	cat $< | \
 	perl sort_glossary.pl | \
-	asciidoc -b xhtml11 - > glossary.html
+	$(ASCIIDOC) -b xhtml11 - > glossary.html
 
 howto-index.txt: howto-index.sh $(wildcard howto/*.txt)
 	rm -f $@+ $@
@@ -116,13 +118,13 @@ howto-index.txt: howto-index.sh $(wildcard howto/*.txt)
 	mv $@+ $@
 
 $(patsubst %,%.html,$(ARTICLES)) : %.html : %.txt
-	asciidoc -b xhtml11 $*.txt
+	$(ASCIIDOC) -b xhtml11 $*.txt
 
 WEBDOC_DEST = /pub/software/scm/git/docs
 
 $(patsubst %.txt,%.html,$(wildcard howto/*.txt)): %.html : %.txt
 	rm -f $@+ $@
-	sed -e '1,/^$$/d' $< | asciidoc -b xhtml11 - >$@+
+	sed -e '1,/^$$/d' $< | $(ASCIIDOC) -b xhtml11 - >$@+
 	mv $@+ $@
 
 install-webdoc : html

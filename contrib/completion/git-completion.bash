@@ -1,7 +1,7 @@
 #
 # bash completion support for core Git.
 #
-# Copyright (C) 2006 Shawn Pearce
+# Copyright (C) 2006,2007 Shawn Pearce
 # Conceptually based on gitcompletion (http://gitweb.hawaga.org.uk/).
 #
 # The contained completion routines provide support for completing:
@@ -59,6 +59,25 @@ __git_ps1 ()
 			printf " (%s)" "${b##refs/heads/}"
 		fi
 	fi
+}
+
+__gitcomp ()
+{
+	local all c s=$'\n' IFS=' '$'\t'$'\n'
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	if [ $# -gt 2 ]; then
+		cur="$3"
+	fi
+	for c in $1; do
+		case "$c$4" in
+		--*=*) all="$all$c$4$s" ;;
+		*.)    all="$all$c$4$s" ;;
+		*)     all="$all$c$4 $s" ;;
+		esac
+	done
+	IFS=$s
+	COMPREPLY=($(compgen -P "$2" -W "$all" -- "$cur"))
+	return
 }
 
 __git_heads ()
@@ -200,7 +219,7 @@ __git_complete_file ()
 			-- "$cur"))
 		;;
 	*)
-		COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
+		__gitcomp "$(__git_refs)"
 		;;
 	esac
 }
@@ -212,15 +231,18 @@ __git_complete_revlist ()
 	*...*)
 		pfx="${cur%...*}..."
 		cur="${cur#*...}"
-		COMPREPLY=($(compgen -P "$pfx" -W "$(__git_refs)" -- "$cur"))
+		__gitcomp "$(__git_refs)" "$pfx" "$cur"
 		;;
 	*..*)
 		pfx="${cur%..*}.."
 		cur="${cur#*..}"
-		COMPREPLY=($(compgen -P "$pfx" -W "$(__git_refs)" -- "$cur"))
+		__gitcomp "$(__git_refs)" "$pfx" "$cur"
+		;;
+	*.)
+		__gitcomp "$cur."
 		;;
 	*)
-		COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
+		__gitcomp "$(__git_refs)"
 		;;
 	esac
 }
@@ -235,15 +257,27 @@ __git_commands ()
 	for i in $(git help -a|egrep '^ ')
 	do
 		case $i in
+		add--interactive) : plumbing;;
+		applymbox)        : ask gittus;;
+		applypatch)       : ask gittus;;
+		archimport)       : import;;
+		cat-file)         : plumbing;;
 		check-ref-format) : plumbing;;
 		commit-tree)      : plumbing;;
 		convert-objects)  : plumbing;;
+		cvsexportcommit)  : export;;
+		cvsimport)        : import;;
 		cvsserver)        : daemon;;
 		daemon)           : daemon;;
+		diff-stages)      : nobody uses it;;
+		fast-import)      : import;;
+		fsck-objects)     : plumbing;;
 		fetch-pack)       : plumbing;;
+		fmt-merge-msg)    : plumbing;;
 		hash-object)      : plumbing;;
 		http-*)           : transport;;
 		index-pack)       : plumbing;;
+		init-db)          : deprecated;;
 		local-fetch)      : plumbing;;
 		mailinfo)         : plumbing;;
 		mailsplit)        : plumbing;;
@@ -256,9 +290,15 @@ __git_commands ()
 		parse-remote)     : plumbing;;
 		patch-id)         : plumbing;;
 		peek-remote)      : plumbing;;
+		prune)            : plumbing;;
+		prune-packed)     : plumbing;;
+		quiltimport)      : import;;
 		read-tree)        : plumbing;;
 		receive-pack)     : plumbing;;
+		reflog)           : plumbing;;
+		repo-config)      : plumbing;;
 		rerere)           : plumbing;;
+		resolve)          : dead dont use;;
 		rev-list)         : plumbing;;
 		rev-parse)        : plumbing;;
 		runstatus)        : plumbing;;
@@ -268,14 +308,19 @@ __git_commands ()
 		show-index)       : plumbing;;
 		ssh-*)            : transport;;
 		stripspace)       : plumbing;;
+		svn)              : import export;;
+		svnimport)        : import;;
 		symbolic-ref)     : plumbing;;
+		tar-tree)         : deprecated;;
 		unpack-file)      : plumbing;;
 		unpack-objects)   : plumbing;;
+		update-index)     : plumbing;;
 		update-ref)       : plumbing;;
 		update-server-info) : daemon;;
 		upload-archive)   : plumbing;;
 		upload-pack)      : plumbing;;
 		write-tree)       : plumbing;;
+		verify-tag)       : plumbing;;
 		*) echo $i;;
 		esac
 	done
@@ -314,22 +359,19 @@ _git_am ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	if [ -d .dotest ]; then
-		COMPREPLY=($(compgen -W "
-			--skip --resolved
-			" -- "$cur"))
+		__gitcomp "--skip --resolved"
 		return
 	fi
 	case "$cur" in
 	--whitespace=*)
-		COMPREPLY=($(compgen -W "$__git_whitespacelist" \
-			-- "${cur##--whitespace=}"))
+		__gitcomp "$__git_whitespacelist" "" "${cur##--whitespace=}"
 		return
 		;;
 	--*)
-		COMPREPLY=($(compgen -W "
+		__gitcomp "
 			--signoff --utf8 --binary --3way --interactive
 			--whitespace=
-			" -- "$cur"))
+			"
 		return
 	esac
 	COMPREPLY=()
@@ -340,48 +382,74 @@ _git_apply ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--whitespace=*)
-		COMPREPLY=($(compgen -W "$__git_whitespacelist" \
-			-- "${cur##--whitespace=}"))
+		__gitcomp "$__git_whitespacelist" "" "${cur##--whitespace=}"
 		return
 		;;
 	--*)
-		COMPREPLY=($(compgen -W "
+		__gitcomp "
 			--stat --numstat --summary --check --index
 			--cached --index-info --reverse --reject --unidiff-zero
 			--apply --no-add --exclude=
 			--whitespace= --inaccurate-eof --verbose
-			" -- "$cur"))
+			"
 		return
 	esac
 	COMPREPLY=()
 }
 
-_git_branch ()
+_git_add ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	COMPREPLY=($(compgen -W "-l -f -d -D $(__git_refs)" -- "$cur"))
+	case "$cur" in
+	--*)
+		__gitcomp "--interactive"
+		return
+	esac
+	COMPREPLY=()
 }
 
-_git_cat_file ()
+_git_bisect ()
 {
-	local cur="${COMP_WORDS[COMP_CWORD]}"
-	case "${COMP_WORDS[0]},$COMP_CWORD" in
-	git-cat-file*,1)
-		COMPREPLY=($(compgen -W "-p -t blob tree commit tag" -- "$cur"))
-		;;
-	git,2)
-		COMPREPLY=($(compgen -W "-p -t blob tree commit tag" -- "$cur"))
+	local i c=1 command
+	while [ $c -lt $COMP_CWORD ]; do
+		i="${COMP_WORDS[c]}"
+		case "$i" in
+		start|bad|good|reset|visualize|replay|log)
+			command="$i"
+			break
+			;;
+		esac
+		c=$((++c))
+	done
+
+	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
+		__gitcomp "start bad good reset visualize replay log"
+		return
+	fi
+
+	case "$command" in
+	bad|good|reset)
+		__gitcomp "$(__git_refs)"
 		;;
 	*)
-		__git_complete_file
+		COMPREPLY=()
 		;;
 	esac
 }
 
+_git_branch ()
+{
+	__gitcomp "$(__git_refs)"
+}
+
 _git_checkout ()
 {
-	local cur="${COMP_WORDS[COMP_CWORD]}"
-	COMPREPLY=($(compgen -W "-l -b $(__git_refs)" -- "$cur"))
+	__gitcomp "$(__git_refs)"
+}
+
+_git_cherry ()
+{
+	__gitcomp "$(__git_refs)"
 }
 
 _git_cherry_pick ()
@@ -389,12 +457,10 @@ _git_cherry_pick ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
-		COMPREPLY=($(compgen -W "
-			--edit --no-commit
-			" -- "$cur"))
+		__gitcomp "--edit --no-commit"
 		;;
 	*)
-		COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
+		__gitcomp "$(__git_refs)"
 		;;
 	esac
 }
@@ -404,10 +470,10 @@ _git_commit ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
-		COMPREPLY=($(compgen -W "
+		__gitcomp "
 			--all --author= --signoff --verify --no-verify
 			--edit --amend --include --only
-			" -- "$cur"))
+			"
 		return
 	esac
 	COMPREPLY=()
@@ -420,8 +486,7 @@ _git_diff ()
 
 _git_diff_tree ()
 {
-	local cur="${COMP_WORDS[COMP_CWORD]}"
-	COMPREPLY=($(compgen -W "-r -p -M $(__git_refs)" -- "$cur"))
+	__gitcomp "$(__git_refs)"
 }
 
 _git_fetch ()
@@ -430,16 +495,15 @@ _git_fetch ()
 
 	case "${COMP_WORDS[0]},$COMP_CWORD" in
 	git-fetch*,1)
-		COMPREPLY=($(compgen -W "$(__git_remotes)" -- "$cur"))
+		__gitcomp "$(__git_remotes)"
 		;;
 	git,2)
-		COMPREPLY=($(compgen -W "$(__git_remotes)" -- "$cur"))
+		__gitcomp "$(__git_remotes)"
 		;;
 	*)
 		case "$cur" in
 		*:*)
-			cur="${cur#*:}"
-			COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
+			__gitcomp "$(__git_refs)" "" "${cur#*:}"
 			;;
 		*)
 			local remote
@@ -447,7 +511,7 @@ _git_fetch ()
 			git-fetch) remote="${COMP_WORDS[1]}" ;;
 			git)       remote="${COMP_WORDS[2]}" ;;
 			esac
-			COMPREPLY=($(compgen -W "$(__git_refs2 "$remote")" -- "$cur"))
+			__gitcomp "$(__git_refs2 "$remote")"
 			;;
 		esac
 		;;
@@ -459,7 +523,7 @@ _git_format_patch ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--*)
-		COMPREPLY=($(compgen -W "
+		__gitcomp "
 			--stdout --attach --thread
 			--output-directory
 			--numbered --start-number
@@ -467,17 +531,29 @@ _git_format_patch ()
 			--signoff
 			--in-reply-to=
 			--full-index --binary
-			" -- "$cur"))
+			--not --all
+			"
 		return
 		;;
 	esac
 	__git_complete_revlist
 }
 
-_git_ls_remote ()
+_git_gc ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	COMPREPLY=($(compgen -W "$(__git_remotes)" -- "$cur"))
+	case "$cur" in
+	--*)
+		__gitcomp "--prune"
+		return
+		;;
+	esac
+	COMPREPLY=()
+}
+
+_git_ls_remote ()
+{
+	__gitcomp "$(__git_remotes)"
 }
 
 _git_ls_tree ()
@@ -490,13 +566,13 @@ _git_log ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--pretty=*)
-		COMPREPLY=($(compgen -W "
+		__gitcomp "
 			oneline short medium full fuller email raw
-			" -- "${cur##--pretty=}"))
+			" "" "${cur##--pretty=}"
 		return
 		;;
 	--*)
-		COMPREPLY=($(compgen -W "
+		__gitcomp "
 			--max-count= --max-age= --since= --after=
 			--min-age= --before= --until=
 			--root --not --topo-order --date-order
@@ -506,7 +582,8 @@ _git_log ()
 			--author= --committer= --grep=
 			--all-match
 			--pretty= --name-status --name-only
-			" -- "$cur"))
+			--not --all
+			"
 		return
 		;;
 	esac
@@ -518,34 +595,31 @@ _git_merge ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "${COMP_WORDS[COMP_CWORD-1]}" in
 	-s|--strategy)
-		COMPREPLY=($(compgen -W "$(__git_merge_strategies)" -- "$cur"))
+		__gitcomp "$(__git_merge_strategies)"
 		return
 	esac
 	case "$cur" in
 	--strategy=*)
-		COMPREPLY=($(compgen -W "$(__git_merge_strategies)" \
-			-- "${cur##--strategy=}"))
+		__gitcomp "$(__git_merge_strategies)" "" "${cur##--strategy=}"
 		return
 		;;
 	--*)
-		COMPREPLY=($(compgen -W "
+		__gitcomp "
 			--no-commit --no-summary --squash --strategy
-			" -- "$cur"))
+			"
 		return
 	esac
-	COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
+	__gitcomp "$(__git_refs)"
 }
 
 _git_merge_base ()
 {
-	local cur="${COMP_WORDS[COMP_CWORD]}"
-	COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
+	__gitcomp "$(__git_refs)"
 }
 
 _git_name_rev ()
 {
-	local cur="${COMP_WORDS[COMP_CWORD]}"
-	COMPREPLY=($(compgen -W "--tags --all --stdin" -- "$cur"))
+	__gitcomp "--tags --all --stdin"
 }
 
 _git_pull ()
@@ -554,10 +628,10 @@ _git_pull ()
 
 	case "${COMP_WORDS[0]},$COMP_CWORD" in
 	git-pull*,1)
-		COMPREPLY=($(compgen -W "$(__git_remotes)" -- "$cur"))
+		__gitcomp "$(__git_remotes)"
 		;;
 	git,2)
-		COMPREPLY=($(compgen -W "$(__git_remotes)" -- "$cur"))
+		__gitcomp "$(__git_remotes)"
 		;;
 	*)
 		local remote
@@ -565,7 +639,7 @@ _git_pull ()
 		git-pull)  remote="${COMP_WORDS[1]}" ;;
 		git)       remote="${COMP_WORDS[2]}" ;;
 		esac
-		COMPREPLY=($(compgen -W "$(__git_refs "$remote")" -- "$cur"))
+		__gitcomp "$(__git_refs "$remote")"
 		;;
 	esac
 }
@@ -576,10 +650,10 @@ _git_push ()
 
 	case "${COMP_WORDS[0]},$COMP_CWORD" in
 	git-push*,1)
-		COMPREPLY=($(compgen -W "$(__git_remotes)" -- "$cur"))
+		__gitcomp "$(__git_remotes)"
 		;;
 	git,2)
-		COMPREPLY=($(compgen -W "$(__git_remotes)" -- "$cur"))
+		__gitcomp "$(__git_remotes)"
 		;;
 	*)
 		case "$cur" in
@@ -589,11 +663,10 @@ _git_push ()
 			git-push)  remote="${COMP_WORDS[1]}" ;;
 			git)       remote="${COMP_WORDS[2]}" ;;
 			esac
-			cur="${cur#*:}"
-			COMPREPLY=($(compgen -W "$(__git_refs "$remote")" -- "$cur"))
+			__gitcomp "$(__git_refs "$remote")" "" "${cur#*:}"
 			;;
 		*)
-			COMPREPLY=($(compgen -W "$(__git_refs2)" -- "$cur"))
+			__gitcomp "$(__git_refs2)"
 			;;
 		esac
 		;;
@@ -603,30 +676,25 @@ _git_push ()
 _git_rebase ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	if [ -d .dotest ]; then
-		COMPREPLY=($(compgen -W "
-			--continue --skip --abort
-			" -- "$cur"))
+	if [ -d .dotest ] || [ -d .git/.dotest-merge ]; then
+		__gitcomp "--continue --skip --abort"
 		return
 	fi
 	case "${COMP_WORDS[COMP_CWORD-1]}" in
 	-s|--strategy)
-		COMPREPLY=($(compgen -W "$(__git_merge_strategies)" -- "$cur"))
+		__gitcomp "$(__git_merge_strategies)"
 		return
 	esac
 	case "$cur" in
 	--strategy=*)
-		COMPREPLY=($(compgen -W "$(__git_merge_strategies)" \
-			-- "${cur##--strategy=}"))
+		__gitcomp "$(__git_merge_strategies)" "" "${cur##--strategy=}"
 		return
 		;;
 	--*)
-		COMPREPLY=($(compgen -W "
-			--onto --merge --strategy
-			" -- "$cur"))
+		__gitcomp "--onto --merge --strategy"
 		return
 	esac
-	COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
+	__gitcomp "$(__git_refs)"
 }
 
 _git_config ()
@@ -635,26 +703,40 @@ _git_config ()
 	local prv="${COMP_WORDS[COMP_CWORD-1]}"
 	case "$prv" in
 	branch.*.remote)
-		COMPREPLY=($(compgen -W "$(__git_remotes)" -- "$cur"))
+		__gitcomp "$(__git_remotes)"
 		return
 		;;
 	branch.*.merge)
-		COMPREPLY=($(compgen -W "$(__git_refs)" -- "$cur"))
+		__gitcomp "$(__git_refs)"
 		return
 		;;
 	remote.*.fetch)
 		local remote="${prv#remote.}"
 		remote="${remote%.fetch}"
-		COMPREPLY=($(compgen -W "$(__git_refs_remotes "$remote")" \
-			-- "$cur"))
+		__gitcomp "$(__git_refs_remotes "$remote")"
 		return
 		;;
 	remote.*.push)
 		local remote="${prv#remote.}"
 		remote="${remote%.push}"
-		COMPREPLY=($(compgen -W "$(git --git-dir="$(__gitdir)" \
+		__gitcomp "$(git --git-dir="$(__gitdir)" \
 			for-each-ref --format='%(refname):%(refname)' \
-			refs/heads)" -- "$cur"))
+			refs/heads)"
+		return
+		;;
+	pull.twohead|pull.octopus)
+		__gitcomp "$(__git_merge_strategies)"
+		return
+		;;
+	color.branch|color.diff|color.status)
+		__gitcomp "always never auto"
+		return
+		;;
+	color.*.*)
+		__gitcomp "
+			black red green yellow blue magenta cyan white
+			bold dim ul blink reverse
+			"
 		return
 		;;
 	*.*)
@@ -664,41 +746,39 @@ _git_config ()
 	esac
 	case "$cur" in
 	--*)
-		COMPREPLY=($(compgen -W "
+		__gitcomp "
 			--global --list --replace-all
 			--get --get-all --get-regexp
-			--unset --unset-all
-			" -- "$cur"))
+			--add --unset --unset-all
+			"
 		return
 		;;
 	branch.*.*)
 		local pfx="${cur%.*}."
 		cur="${cur##*.}"
-		COMPREPLY=($(compgen -P "$pfx" -W "remote merge" -- "$cur"))
+		__gitcomp "remote merge" "$pfx" "$cur"
 		return
 		;;
 	branch.*)
 		local pfx="${cur%.*}."
 		cur="${cur#*.}"
-		COMPREPLY=($(compgen -P "$pfx" -S . \
-			-W "$(__git_heads)" -- "$cur"))
+		__gitcomp "$(__git_heads)" "$pfx" "$cur" "."
 		return
 		;;
 	remote.*.*)
 		local pfx="${cur%.*}."
 		cur="${cur##*.}"
-		COMPREPLY=($(compgen -P "$pfx" -W "url fetch push" -- "$cur"))
+		__gitcomp "url fetch push" "$pfx" "$cur"
 		return
 		;;
 	remote.*)
 		local pfx="${cur%.*}."
 		cur="${cur#*.}"
-		COMPREPLY=($(compgen -P "$pfx" -S . \
-			-W "$(__git_remotes)" -- "$cur"))
+		__gitcomp "$(__git_remotes)" "$pfx" "$cur" "."
 		return
 		;;
 	esac
-	COMPREPLY=($(compgen -W "
+	__gitcomp "
 		apply.whitespace
 		core.fileMode
 		core.gitProxy
@@ -710,47 +790,105 @@ _git_config ()
 		core.warnAmbiguousRefs
 		core.compression
 		core.legacyHeaders
-		i18n.commitEncoding
-		i18n.logOutputEncoding
-		diff.color
+		core.packedGitWindowSize
+		core.packedGitLimit
+		color.branch
+		color.branch.current
+		color.branch.local
+		color.branch.remote
+		color.branch.plain
 		color.diff
+		color.diff.plain
+		color.diff.meta
+		color.diff.frag
+		color.diff.old
+		color.diff.new
+		color.diff.commit
+		color.diff.whitespace
+		color.pager
+		color.status
+		color.status.header
+		color.status.added
+		color.status.changed
+		color.status.untracked
 		diff.renameLimit
 		diff.renames
-		pager.color
-		color.pager
-		status.color
-		color.status
-		log.showroot
-		show.difftree
-		showbranch.default
-		whatchanged.difftree
+		fetch.unpackLimit
+		format.headers
+		gitcvs.enabled
+		gitcvs.logfile
+		gc.reflogexpire
+		gc.reflogexpireunreachable
+		gc.rerereresolved
+		gc.rerereunresolved
 		http.sslVerify
 		http.sslCert
 		http.sslKey
 		http.sslCAInfo
 		http.sslCAPath
 		http.maxRequests
-		http.lowSpeedLimit http.lowSpeedTime
+		http.lowSpeedLimit
+		http.lowSpeedTime
 		http.noEPSV
-		pack.window
-		repack.useDeltaBaseOffset
-		pull.octopus pull.twohead
+		i18n.commitEncoding
+		i18n.logOutputEncoding
+		log.showroot
 		merge.summary
+		merge.verbosity
+		pack.window
+		pull.octopus
+		pull.twohead
+		repack.useDeltaBaseOffset
+		show.difftree
+		showbranch.default
+		tar.umask
+		transfer.unpackLimit
 		receive.unpackLimit
 		receive.denyNonFastForwards
-		user.name user.email
-		tar.umask
-		gitcvs.enabled
-		gitcvs.logfile
+		user.name
+		user.email
+		user.signingkey
+		whatchanged.difftree
 		branch. remote.
-	" -- "$cur"))
+	"
+}
+
+_git_remote ()
+{
+	local i c=1 command
+	while [ $c -lt $COMP_CWORD ]; do
+		i="${COMP_WORDS[c]}"
+		case "$i" in
+		add|show|prune) command="$i"; break ;;
+		esac
+		c=$((++c))
+	done
+
+	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
+		__gitcomp "add show prune"
+		return
+	fi
+
+	case "$command" in
+	show|prune)
+		__gitcomp "$(__git_remotes)"
+		;;
+	*)
+		COMPREPLY=()
+		;;
+	esac
 }
 
 _git_reset ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	local opt="--mixed --hard --soft"
-	COMPREPLY=($(compgen -W "$opt $(__git_refs)" -- "$cur"))
+	case "$cur" in
+	--*)
+		__gitcomp "--mixed --hard --soft"
+		return
+		;;
+	esac
+	__gitcomp "$(__git_refs)"
 }
 
 _git_show ()
@@ -758,13 +896,13 @@ _git_show ()
 	local cur="${COMP_WORDS[COMP_CWORD]}"
 	case "$cur" in
 	--pretty=*)
-		COMPREPLY=($(compgen -W "
+		__gitcomp "
 			oneline short medium full fuller email raw
-			" -- "${cur##--pretty=}"))
+			" "" "${cur##--pretty=}"
 		return
 		;;
 	--*)
-		COMPREPLY=($(compgen -W "--pretty=" -- "$cur"))
+		__gitcomp "--pretty="
 		return
 		;;
 	esac
@@ -787,12 +925,12 @@ _git ()
 	done
 
 	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
-		COMPREPLY=($(compgen -W "
-			--git-dir= --version --exec-path
-			$(__git_commands)
-			$(__git_aliases)
-			" -- "${COMP_WORDS[COMP_CWORD]}"))
-		return;
+		case "${COMP_WORDS[COMP_CWORD]}" in
+		--*=*) COMPREPLY=() ;;
+		--*)   __gitcomp "--git-dir= --bare --version --exec-path" ;;
+		*)     __gitcomp "$(__git_commands) $(__git_aliases)" ;;
+		esac
+		return
 	fi
 
 	local expansion=$(__git_aliased_command "$command")
@@ -800,10 +938,12 @@ _git ()
 
 	case "$command" in
 	am)          _git_am ;;
+	add)         _git_add ;;
 	apply)       _git_apply ;;
+	bisect)      _git_bisect ;;
 	branch)      _git_branch ;;
-	cat-file)    _git_cat_file ;;
 	checkout)    _git_checkout ;;
+	cherry)      _git_cherry ;;
 	cherry-pick) _git_cherry_pick ;;
 	commit)      _git_commit ;;
 	config)      _git_config ;;
@@ -811,6 +951,7 @@ _git ()
 	diff-tree)   _git_diff_tree ;;
 	fetch)       _git_fetch ;;
 	format-patch) _git_format_patch ;;
+	gc)          _git_gc ;;
 	log)         _git_log ;;
 	ls-remote)   _git_ls_remote ;;
 	ls-tree)     _git_ls_tree ;;
@@ -820,7 +961,7 @@ _git ()
 	pull)        _git_pull ;;
 	push)        _git_push ;;
 	rebase)      _git_rebase ;;
-	repo-config) _git_config ;;
+	remote)      _git_remote ;;
 	reset)       _git_reset ;;
 	show)        _git_show ;;
 	show-branch) _git_log ;;
@@ -832,33 +973,42 @@ _git ()
 _gitk ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
-	COMPREPLY=($(compgen -W "--all $(__git_refs)" -- "$cur"))
+	case "$cur" in
+	--*)
+		__gitcomp "--not --all"
+		return
+		;;
+	esac
+	__git_complete_revlist
 }
 
 complete -o default -o nospace -F _git git
-complete -o default            -F _gitk gitk
-complete -o default            -F _git_am git-am
-complete -o default            -F _git_apply git-apply
-complete -o default            -F _git_branch git-branch
-complete -o default -o nospace -F _git_cat_file git-cat-file
-complete -o default            -F _git_checkout git-checkout
-complete -o default            -F _git_cherry_pick git-cherry-pick
-complete -o default            -F _git_commit git-commit
+complete -o default -o nospace -F _gitk gitk
+complete -o default -o nospace -F _git_am git-am
+complete -o default -o nospace -F _git_apply git-apply
+complete -o default -o nospace -F _git_bisect git-bisect
+complete -o default -o nospace -F _git_branch git-branch
+complete -o default -o nospace -F _git_checkout git-checkout
+complete -o default -o nospace -F _git_cherry git-cherry
+complete -o default -o nospace -F _git_cherry_pick git-cherry-pick
+complete -o default -o nospace -F _git_commit git-commit
 complete -o default -o nospace -F _git_diff git-diff
-complete -o default            -F _git_diff_tree git-diff-tree
+complete -o default -o nospace -F _git_diff_tree git-diff-tree
 complete -o default -o nospace -F _git_fetch git-fetch
 complete -o default -o nospace -F _git_format_patch git-format-patch
+complete -o default -o nospace -F _git_gc git-gc
 complete -o default -o nospace -F _git_log git-log
-complete -o default            -F _git_ls_remote git-ls-remote
+complete -o default -o nospace -F _git_ls_remote git-ls-remote
 complete -o default -o nospace -F _git_ls_tree git-ls-tree
-complete -o default            -F _git_merge git-merge
-complete -o default            -F _git_merge_base git-merge-base
-complete -o default            -F _git_name_rev git-name-rev
+complete -o default -o nospace -F _git_merge git-merge
+complete -o default -o nospace -F _git_merge_base git-merge-base
+complete -o default -o nospace -F _git_name_rev git-name-rev
 complete -o default -o nospace -F _git_pull git-pull
 complete -o default -o nospace -F _git_push git-push
-complete -o default            -F _git_rebase git-rebase
-complete -o default            -F _git_config git-config
-complete -o default            -F _git_reset git-reset
+complete -o default -o nospace -F _git_rebase git-rebase
+complete -o default -o nospace -F _git_config git-config
+complete -o default -o nospace -F _git_remote git-remote
+complete -o default -o nospace -F _git_reset git-reset
 complete -o default -o nospace -F _git_show git-show
 complete -o default -o nospace -F _git_log git-show-branch
 complete -o default -o nospace -F _git_log git-whatchanged
@@ -868,19 +1018,20 @@ complete -o default -o nospace -F _git_log git-whatchanged
 # included the '.exe' suffix.
 #
 if [ Cygwin = "$(uname -o 2>/dev/null)" ]; then
-complete -o default            -F _git_apply git-apply.exe
+complete -o default -o nospace -F _git_add git-add.exe
+complete -o default -o nospace -F _git_apply git-apply.exe
 complete -o default -o nospace -F _git git.exe
-complete -o default            -F _git_branch git-branch.exe
-complete -o default -o nospace -F _git_cat_file git-cat-file.exe
+complete -o default -o nospace -F _git_branch git-branch.exe
+complete -o default -o nospace -F _git_cherry git-cherry.exe
 complete -o default -o nospace -F _git_diff git-diff.exe
 complete -o default -o nospace -F _git_diff_tree git-diff-tree.exe
 complete -o default -o nospace -F _git_format_patch git-format-patch.exe
 complete -o default -o nospace -F _git_log git-log.exe
 complete -o default -o nospace -F _git_ls_tree git-ls-tree.exe
-complete -o default            -F _git_merge_base git-merge-base.exe
-complete -o default            -F _git_name_rev git-name-rev.exe
+complete -o default -o nospace -F _git_merge_base git-merge-base.exe
+complete -o default -o nospace -F _git_name_rev git-name-rev.exe
 complete -o default -o nospace -F _git_push git-push.exe
-complete -o default            -F _git_config git-config
+complete -o default -o nospace -F _git_config git-config
 complete -o default -o nospace -F _git_show git-show.exe
 complete -o default -o nospace -F _git_log git-show-branch.exe
 complete -o default -o nospace -F _git_log git-whatchanged.exe

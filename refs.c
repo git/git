@@ -1018,6 +1018,9 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 	if (logmsg && read_ref(ref_target, old_sha1))
 		hashclr(old_sha1);
 
+	if (safe_create_leading_directories(git_HEAD) < 0)
+		return error("unable to create directory for %s", git_HEAD);
+
 #ifndef NO_SYMLINK_HEAD
 	if (prefer_symlink_refs) {
 		unlink(git_HEAD);
@@ -1208,12 +1211,14 @@ int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 		    !message || message[0] != ' ' ||
 		    (message[1] != '+' && message[1] != '-') ||
 		    !isdigit(message[2]) || !isdigit(message[3]) ||
-		    !isdigit(message[4]) || !isdigit(message[5]) ||
-		    message[6] != '\t')
+		    !isdigit(message[4]) || !isdigit(message[5]))
 			continue; /* corrupt? */
 		email_end[1] = '\0';
 		tz = strtol(message + 1, NULL, 10);
-		message += 7;
+		if (message[6] != '\t')
+			message += 6;
+		else
+			message += 7;
 		ret = fn(osha1, nsha1, buf+82, timestamp, tz, message, cb_data);
 		if (ret)
 			break;
@@ -1222,3 +1227,55 @@ int for_each_reflog_ent(const char *ref, each_reflog_ent_fn fn, void *cb_data)
 	return ret;
 }
 
+static int do_for_each_reflog(const char *base, each_ref_fn fn, void *cb_data)
+{
+	DIR *dir = opendir(git_path("logs/%s", base));
+	int retval = 0;
+
+	if (dir) {
+		struct dirent *de;
+		int baselen = strlen(base);
+		char *log = xmalloc(baselen + 257);
+
+		memcpy(log, base, baselen);
+		if (baselen && base[baselen-1] != '/')
+			log[baselen++] = '/';
+
+		while ((de = readdir(dir)) != NULL) {
+			struct stat st;
+			int namelen;
+
+			if (de->d_name[0] == '.')
+				continue;
+			namelen = strlen(de->d_name);
+			if (namelen > 255)
+				continue;
+			if (has_extension(de->d_name, ".lock"))
+				continue;
+			memcpy(log + baselen, de->d_name, namelen+1);
+			if (stat(git_path("logs/%s", log), &st) < 0)
+				continue;
+			if (S_ISDIR(st.st_mode)) {
+				retval = do_for_each_reflog(log, fn, cb_data);
+			} else {
+				unsigned char sha1[20];
+				if (!resolve_ref(log, sha1, 0, NULL))
+					retval = error("bad ref for %s", log);
+				else
+					retval = fn(log, sha1, 0, cb_data);
+			}
+			if (retval)
+				break;
+		}
+		free(log);
+		closedir(dir);
+	}
+	else if (*base)
+		return errno;
+	return retval;
+}
+
+int for_each_reflog(each_ref_fn fn, void *cb_data)
+{
+	return do_for_each_reflog("", fn, cb_data);
+}

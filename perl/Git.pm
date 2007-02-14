@@ -354,7 +354,7 @@ sub command_input_pipe {
 =item command_close_pipe ( PIPE [, CTX ] )
 
 Close the C<PIPE> as returned from C<command_*_pipe()>, checking
-whether the command finished successfuly. The optional C<CTX> argument
+whether the command finished successfully. The optional C<CTX> argument
 is required if you want to see the command name in the error message,
 and it is the second value returned by C<command_*_pipe()> when
 called in array context. The call idiom is:

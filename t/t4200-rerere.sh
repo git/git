@@ -113,8 +113,11 @@ mkdir $rr2
 echo Hello > $rr2/preimage
 
 case "$(date -d @11111111 +%s 2>/dev/null)" in
-[1-9]*)
-	# it is a recent GNU date. good.
+11111111)
+	# 'date' must be able to take arbitrary input with @11111111 notation.
+	# for this test to succeed.  We should fix this part using more
+	# portable script someday.
+
 	now=$(date +%s)
 	almost_15_days_ago=$(($now+60-15*86400))
 	just_over_15_days_ago=$(($now-1-15*86400))
@@ -124,30 +127,24 @@ case "$(date -d @11111111 +%s 2>/dev/null)" in
 	predate2="$(date -d "@$almost_15_days_ago" +%Y%m%d%H%M.%S)"
 	postdate1="$(date -d "@$just_over_60_days_ago" +%Y%m%d%H%M.%S)"
 	postdate2="$(date -d "@$just_over_15_days_ago" +%Y%m%d%H%M.%S)"
+
+	touch -m -t "$predate1" $rr/preimage
+	touch -m -t "$predate2" $rr2/preimage
+
+	test_expect_success 'garbage collection (part1)' 'git rerere gc'
+
+	test_expect_success 'young records still live' \
+		"test -f $rr/preimage -a -f $rr2/preimage"
+
+	touch -m -t "$postdate1" $rr/preimage
+	touch -m -t "$postdate2" $rr2/preimage
+
+	test_expect_success 'garbage collection (part2)' 'git rerere gc'
+
+	test_expect_success 'old records rest in peace' \
+		"test ! -f $rr/preimage -a ! -f $rr2/preimage"
 	;;
-*)
-	# it is not GNU date. oh, well.
-	predate1="$(date +%Y%m%d%H%M.%S)"
-	predate2="$(date +%Y%m%d%H%M.%S)"
-	postdate1='200610010000.00'
-	postdate2='200612010000.00'
 esac
-
-touch -m -t "$predate1" $rr/preimage
-touch -m -t "$predate2" $rr2/preimage
-
-test_expect_success 'garbage collection (part1)' 'git rerere gc'
-
-test_expect_success 'young records still live' \
-	"test -f $rr/preimage -a -f $rr2/preimage"
-
-touch -m -t "$postdate1" $rr/preimage
-touch -m -t "$postdate2" $rr2/preimage
-
-test_expect_success 'garbage collection (part2)' 'git rerere gc'
-
-test_expect_success 'old records rest in peace' \
-	"test ! -f $rr/preimage -a ! -f $rr2/preimage"
 
 test_done
 

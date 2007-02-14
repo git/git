@@ -258,6 +258,7 @@ extern void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, uns
 extern void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size);
 extern int hash_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *sha1);
 extern int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *return_sha1);
+extern int pretend_sha1_file(void *, unsigned long, const char *, unsigned char *);
 
 extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
 
@@ -302,6 +303,7 @@ extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 extern int read_ref(const char *filename, unsigned char *sha1);
 extern const char *resolve_ref(const char *path, unsigned char *sha1, int, int *);
 extern int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
+extern int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
 
 extern int create_symref(const char *ref, const char *refs_heads_master, const char *logmsg);
 extern int validate_headref(const char *ref);
@@ -322,6 +324,7 @@ unsigned long approxidate(const char *);
 
 extern const char *git_author_info(int);
 extern const char *git_committer_info(int);
+extern const char *fmt_ident(const char *name, const char *email, const char *date_str, int);
 
 struct checkout {
 	const char *base_dir;

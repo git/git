@@ -191,8 +191,8 @@ static const char *env_hint =
 "Add --global to set your account\'s default\n"
 "\n";
 
-static const char *get_ident(const char *name, const char *email,
-			     const char *date_str, int error_on_no_name)
+const char *fmt_ident(const char *name, const char *email,
+		      const char *date_str, int error_on_no_name)
 {
 	static char buffer[1000];
 	char date[50];
@@ -246,7 +246,7 @@ static const char *get_ident(const char *name, const char *email,
 
 const char *git_author_info(int error_on_no_name)
 {
-	return get_ident(getenv("GIT_AUTHOR_NAME"),
+	return fmt_ident(getenv("GIT_AUTHOR_NAME"),
 			 getenv("GIT_AUTHOR_EMAIL"),
 			 getenv("GIT_AUTHOR_DATE"),
 			 error_on_no_name);
@@ -254,7 +254,7 @@ const char *git_author_info(int error_on_no_name)
 
 const char *git_committer_info(int error_on_no_name)
 {
-	return get_ident(getenv("GIT_COMMITTER_NAME"),
+	return fmt_ident(getenv("GIT_COMMITTER_NAME"),
 			 getenv("GIT_COMMITTER_EMAIL"),
 			 getenv("GIT_COMMITTER_DATE"),
 			 error_on_no_name);

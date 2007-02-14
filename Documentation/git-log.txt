@@ -16,7 +16,7 @@ Shows the commit logs.
 
 The command takes options applicable to the gitlink:git-rev-list[1]
 command to control what is shown and how, and options applicable to
-the gitlink:git-diff-tree[1] commands to control how the change
+the gitlink:git-diff-tree[1] commands to control how the changes
 each commit introduces are shown.
 
 This manual page describes only the most frequently used options.

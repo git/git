@@ -386,7 +386,7 @@ struct rename
 };
 
 /*
- * Get information of all renames which occured between 'o_tree' and
+ * Get information of all renames which occurred between 'o_tree' and
  * 'tree'. We need the three trees in the merge ('o_tree', 'a_tree' and
  * 'b_tree') to be able to associate the correct cache entries with
  * the rename information. 'tree' is always equal to either a_tree or b_tree.
@@ -891,7 +891,7 @@ static int process_renames(struct path_list *a_renames,
 			struct diff_filespec src_other, dst_other;
 			int try_merge, stage = a_renames == renames1 ? 3: 2;
 
-			remove_file(1, ren1_src, index_only);
+			remove_file(1, ren1_src, index_only || stage == 3);
 
 			hashcpy(src_other.sha1, ren1->src_entry->stages[stage].sha);
 			src_other.mode = ren1->src_entry->stages[stage].mode;
@@ -1175,7 +1175,7 @@ static struct commit_list *reverse_commit_list(struct commit_list *list)
 
 /*
  * Merge the commits h1 and h2, return the resulting virtual
- * commit object and a flag indicating the cleaness of the merge.
+ * commit object and a flag indicating the cleanness of the merge.
  */
 static int merge(struct commit *h1,
 		 struct commit *h2,
@@ -1213,7 +1213,7 @@ static int merge(struct commit *h1,
 
 		tree->object.parsed = 1;
 		tree->object.type = OBJ_TREE;
-		write_sha1_file(NULL, 0, tree_type, tree->object.sha1);
+		pretend_sha1_file(NULL, 0, tree_type, tree->object.sha1);
 		merged_common_ancestors = make_virtual_commit(tree, "ancestor");
 	}
 
@@ -1222,8 +1222,8 @@ static int merge(struct commit *h1,
 		/*
 		 * When the merge fails, the result contains files
 		 * with conflict markers. The cleanness flag is
-		 * ignored, it was never acutally used, as result of
-		 * merge_trees has always overwritten it: the commited
+		 * ignored, it was never actually used, as result of
+		 * merge_trees has always overwritten it: the committed
 		 * "conflicts" were already resolved.
 		 */
 		discard_cache();

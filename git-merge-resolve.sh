@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 # Copyright (c) 2005 Junio C Hamano
 #
-# Resolve two trees, using enhancd multi-base read-tree.
+# Resolve two trees, using enhanced multi-base read-tree.
 
 # The first parameters up to -- are merge bases; the rest are heads.
 bases= head= remotes= sep_seen=

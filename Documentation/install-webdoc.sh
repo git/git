@@ -2,7 +2,7 @@
 
 T="$1"
 
-for h in *.html *.txt howto/*.txt howto/*.html
+for h in *.html *.txt howto/*.txt howto/*.html RelNotes-*.txt
 do
 	if test -f "$T/$h" &&
 	   diff -u -I'Last updated [0-9][0-9]-[A-Z][a-z][a-z]-' "$T/$h" "$h"

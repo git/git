@@ -681,7 +681,7 @@ sub show_log {
 		process_commit($_, $r_min, $r_max) foreach reverse @k;
 	}
 out:
-	eval { command_close_pipe($log) };
+	close $log;
 	print '-' x72,"\n" unless $_incremental || $_oneline;
 }
 
@@ -1475,7 +1475,7 @@ sub map_tree_joins {
 				$seen{$commit} = 1;
 			}
 		}
-		eval { command_close_pipe($pipe) };
+		close $pipe;
 	}
 }
 
@@ -1610,7 +1610,7 @@ sub read_repo_config {
 			@$v = @tmp if @tmp;
 		} else {
 			chomp(my $tmp = `$arg --get svn.$key`);
-			if ($tmp && !($arg =~ / --bool / && $tmp eq 'false')) {
+			if ($tmp && !($arg =~ / --bool/ && $tmp eq 'false')) {
 				$$v = $tmp;
 			}
 		}
@@ -1669,7 +1669,7 @@ sub write_grafts {
 				last unless /^\S/;
 			}
 		}
-		eval { command_close_pipe($ch) }; # breaking the pipe
+		close $ch; # breaking the pipe
 
 		# if real parents are the only ones in the grafts, drop it
 		next if join(' ',sort keys %$p) eq join(' ',sort keys %x);
@@ -1766,7 +1766,7 @@ sub get_commit_time {
 		} elsif ($tz =~ s/^\-//) {
 			$s -= tz_to_s_offset($tz);
 		}
-		eval { command_close_pipe($fh) };
+		close $fh;
 		return $s;
 	}
 	die "Can't get commit time for commit: $cmt\n";
@@ -2846,7 +2846,7 @@ sub rmdirs {
 			delete $rm->{join '/', @dn};
 		}
 		unless (%$rm) {
-			eval { command_close_pipe($fh) };
+			close $fh;
 			return;
 		}
 	}
