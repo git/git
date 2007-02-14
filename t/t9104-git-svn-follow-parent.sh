@@ -39,10 +39,10 @@ test_expect_success 'init and fetch a moved directory' "
 	"
 
 test_expect_success 'init and fetch from one svn-remote' "
-        git-repo-config svn-remote.svn.url $svnrepo &&
-        git-repo-config --add svn-remote.svn.fetch \
+        git-config svn-remote.svn.url $svnrepo &&
+        git-config --add svn-remote.svn.fetch \
           trunk:refs/remotes/svn/trunk &&
-        git-repo-config --add svn-remote.svn.fetch \
+        git-config --add svn-remote.svn.fetch \
           thunk:refs/remotes/svn/thunk &&
         git-svn fetch -i svn/thunk &&
 	test \"\`git-rev-parse --verify refs/remotes/svn/trunk\`\" \
@@ -54,7 +54,7 @@ test_expect_success 'init and fetch from one svn-remote' "
 test_expect_success 'follow deleted parent' "
         svn cp -m 'resurrecting trunk as junk' \
                -r2 $svnrepo/trunk $svnrepo/junk &&
-        git-repo-config --add svn-remote.svn.fetch \
+        git-config --add svn-remote.svn.fetch \
           junk:refs/remotes/svn/junk &&
         git-svn fetch -i svn/thunk &&
         git-svn fetch -i svn/junk &&
@@ -124,6 +124,7 @@ test_expect_success 'follow-parent avoids deleting relevant info' "
 	  svn mv t native/t &&
 	  for i in a b c; do svn mv \$i.pm native/\$i.pm; done &&
 	  echo z >> native/t/c.t &&
+	  poke native/t/c.t &&
 	  svn commit -m 'reorg test' &&
 	cd .. &&
 	git-svn init -i r9270-t \

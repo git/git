@@ -55,11 +55,13 @@ test_expect_success 'initialize repo' "
 
 	svn up &&
 	echo random untested feature >> mirror/foobar/trunk/readme &&
+	poke mirror/foobar/trunk/readme &&
 	svn commit -m 'add a c00l feature to trunk' &&
 	svn ps -r 5 --revprop svm:headrev $uuid:3 $svnrepo &&
 
 	svn up &&
 	echo bug fix >> mirror/foobar/branches/silly/readme &&
+	poke mirror/foobar/branches/silly/readme &&
 	svn commit -m 'fix a bug' &&
 	svn ps -r 6 --revprop svm:headrev $uuid:4 $svnrepo &&
 

@@ -23,14 +23,19 @@ test_expect_success 'test refspec globbing' "
 		svn commit -m 'start a new branch' &&
 		svn up &&
 		echo 'hi' >> branches/start/src/b/readme &&
+		poke branches/start/src/b/readme &&
 		echo 'hey' >> branches/start/src/a/readme &&
+		poke branches/start/src/a/readme &&
 		svn commit -m 'hi' &&
 		svn up &&
 		svn cp branches/start tags/end &&
 		echo 'bye' >> tags/end/src/b/readme &&
+		poke tags/end/src/b/readme &&
 		echo 'aye' >> tags/end/src/a/readme &&
+		poke tags/end/src/a/readme &&
 		svn commit -m 'the end' &&
 		echo 'byebye' >> tags/end/src/b/readme &&
+		poke tags/end/src/b/readme &&
 		svn commit -m 'nothing to see here'
 		cd .. &&
 	git config --add svn-remote.svn.url $svnrepo &&
