@@ -4987,6 +4987,8 @@ enable_option branch
 enable_option transport
 
 switch -- $subcommand {
+--version -
+version -
 blame {
 	disable_option multicommit
 	disable_option branch
@@ -5322,6 +5324,11 @@ bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
 # -- Not a normal commit type invocation?  Do that instead!
 #
 switch -- $subcommand {
+--version -
+version {
+	puts "git-gui version $appvers"
+	exit
+}
 blame {
 	if {[llength $argv] != 2} {
 		puts stderr "usage: $argv0 blame commit path"
