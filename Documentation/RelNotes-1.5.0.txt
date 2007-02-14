@@ -25,12 +25,18 @@ Specifically, the available options are:
    older clients over dumb transports (e.g. http) using older
    versions of git will also be affected.
 
+   To let git use the new loose object format, you have to
+   set core.legacyheaders to false.
+
  - Since v1.4.3, configuration repack.usedeltabaseoffset allows
    packfile to be created in more space efficient format, which
    cannot be read by git older than that version.
 
-The above two are not enabled by default and you explicitly have
-to ask for them, because these two features make repositories
+   To let git use the new format for packfiles, you have to
+   set repack.usedeltabaseoffset to true.
+
+The above two new features are not enabled by default and you
+have explicitly to ask for them, because they make repositories
 unreadable by older versions of git, and in v1.5.0 we still do
 not enable them by default for the same reason.  We will change
 this default probably 1 year after 1.4.2's release, when it is
