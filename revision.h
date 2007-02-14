@@ -42,7 +42,8 @@ struct rev_info {
 			unpacked:1, /* see also ignore_packed below */
 			boundary:1,
 			left_right:1,
-			parents:1;
+			parents:1,
+			reverse:2;
 
 	/* Diff flags */
 	unsigned int	diff:1,
