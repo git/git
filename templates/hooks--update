@@ -57,7 +57,7 @@ announcerecipients=$(git-repo-config hooks.announcelist)
 allowunannotated=$(git-repo-config --bool hooks.allowunannotated)
 
 # --- Check types
-newrev_type=$(git-cat-file -t "$newrev")
+newrev_type=$(git-cat-file -t $newrev)
 
 case "$refname","$newrev_type" in
 	refs/tags/*,commit)
@@ -165,7 +165,7 @@ case "$refname_type" in
 			baserev=$(git-merge-base $oldrev $newrev)
 
 			# Commit with a parent
-			for rev in $(git-rev-list $newrev ^$baserev)
+			for rev in $(git-rev-parse --not --all | git-rev-list --stdin $newrev ^$baserev)
 			do
 				revtype=$(git-cat-file -t "$rev")
 				echo "       via  $rev ($revtype)"
