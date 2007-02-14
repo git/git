@@ -383,6 +383,8 @@ int git_config(config_fn_t fn)
 	 * config file otherwise. */
 	filename = getenv(CONFIG_ENVIRONMENT);
 	if (!filename) {
+		if (!access(ETC_GITCONFIG, R_OK))
+			ret += git_config_from_file(fn, ETC_GITCONFIG);
 		home = getenv("HOME");
 		filename = getenv(CONFIG_LOCAL_ENVIRONMENT);
 		if (!filename)
