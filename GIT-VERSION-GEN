@@ -6,18 +6,19 @@ DEF_VER=v1.5.0.GIT
 LF='
 '
 
-# First try git-describe, then see if there is a version file
-# (included in release tarballs), then default
-if VN=$(git describe --abbrev=4 HEAD 2>/dev/null) &&
-   case "$VN" in
-   *$LF*) (exit 1) ;;
-   v[0-9]*) : happy ;;
-   esac
-then
-	VN=$(echo "$VN" | sed -e 's/-/./g');
-elif test -f version
+# First see if there is a version file (included in release tarballs),
+# then try git-describe, then default.
+if test -f version
 then
 	VN=$(cat version) || VN="$DEF_VER"
+elif test -d .git &&
+	VN=$(git describe --abbrev=4 HEAD 2>/dev/null) &&
+	case "$VN" in
+	*$LF*) (exit 1) ;;
+	v[0-9]*) : happy ;;
+	esac
+then
+	VN=$(echo "$VN" | sed -e 's/-/./g');
 else
 	VN="$DEF_VER"
 fi
