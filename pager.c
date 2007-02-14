@@ -1,8 +1,6 @@
 #include "cache.h"
 #include "spawn-pipe.h"
 
-#include <sys/select.h>
-
 /*
  * This is split up from the rest of git so that we might do
  * something different on Windows, for example.
