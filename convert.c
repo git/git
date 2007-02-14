@@ -140,7 +140,7 @@ int convert_to_working_tree(const char *path, char **bufp, unsigned long *sizep)
 	 * based on filename patterns. Right now we just do the
 	 * stupid auto-CRLF one.
 	 */
-	if (!auto_crlf)
+	if (auto_crlf <= 0)
 		return 0;
 
 	size = *sizep;

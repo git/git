@@ -325,6 +325,10 @@ int git_default_config(const char *var, const char *value)
 	}
 
 	if (!strcmp(var, "core.autocrlf")) {
+		if (value && !strcasecmp(value, "input")) {
+			auto_crlf = -1;
+			return 0;
+		}
 		auto_crlf = git_config_bool(var, value);
 		return 0;
 	}
