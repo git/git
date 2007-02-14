@@ -30,7 +30,7 @@ In order to compile this code you need:
 		compile this into regex.o, ar it into libregex.a
 		and install it in /mingw/lib, include file into
 		/mingw/include
-	tcltk-8.4.1-1.exe (for gitk, but it's untested so far)
+	tcltk-8.4.1-1.exe (for gitk, git-gui)
 
 It is absolutely necessary that you install MSYS in a path that does not
 contain special characters, like spaces. I have it in
@@ -52,9 +52,7 @@ This works:
   branch, merge, rebase, log, show, bisect, grep...
 - pull, clone, fetch, push via native git protocal as well as ssh.
 - Local pull, clone, fetch, push.
-- gitk, if invoked as "wish84 <prefix>\bin\gitk", but there are
-  artefacts in its layout. A workaround by Mark Levedahl is in
-  branch 'devel'.
+- gitk, if invoked as "wish84 <prefix>\bin\gitk". Ditto for git-gui.
 
 This does not work:
 
