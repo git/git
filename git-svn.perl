@@ -53,7 +53,7 @@ $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_stdin, $_help, $_edit,
 	$_message, $_file,
 	$_template, $_shared,
-	$_version,
+	$_version, $_fetch_all,
 	$_merge, $_strategy, $_dry_run,
 	$_prefix);
 $Git::SVN::_follow_parent = 1;
@@ -84,7 +84,9 @@ my %cmt_opts = ( 'edit|e' => \$_edit,
 
 my %cmd = (
 	fetch => [ \&cmd_fetch, "Download new revisions from SVN",
-			{ 'revision|r=s' => \$_revision, %fc_opts } ],
+			{ 'revision|r=s' => \$_revision,
+			  'all|a' => \$_fetch_all,
+			   %fc_opts } ],
 	init => [ \&cmd_init, "Initialize a repo for tracking" .
 			  " (requires URL argument)",
 			  \%init_opts ],
@@ -106,8 +108,8 @@ my %cmd = (
 			 'prefix=s' => \$_prefix,
 			} ],
 	'multi-fetch' => [ \&cmd_multi_fetch,
-			'Fetch multiple trees (like git-svnimport)',
-			\%fc_opts ],
+	                   "Deprecated alias for $0 fetch --all",
+			   { 'revision|r=s' => \$_revision, %fc_opts } ],
 	'migrate' => [ sub { },
 	               # no-op, we automatically run this anyways,
 	               'Migrate configuration/metadata/layout from
@@ -226,16 +228,19 @@ sub cmd_init {
 }
 
 sub cmd_fetch {
-	if (@_) {
-		die "Additional fetch arguments are no longer supported.\n",
-		    "Use --follow-parent if you have moved/copied directories
-		    instead.\n";
+	if (grep /^\d+=./, @_) {
+		die "'<rev>=<commit>' fetch arguments are ",
+		    "no longer supported.\n";
 	}
-	my $gs = Git::SVN->new;
-	$gs->fetch(parse_revision_argument());
-	if ($gs->{last_commit} && !verify_ref('refs/heads/master^0')) {
-		command_noisy(qw(update-ref refs/heads/master),
-		              $gs->{last_commit});
+	my ($remote) = @_;
+	if (@_ > 1) {
+		die "Usage: $0 fetch [--all|-a] [svn-remote]\n";
+	}
+	$remote ||= $Git::SVN::default_repo_id;
+	if ($_fetch_all) {
+		cmd_multi_fetch();
+	} else {
+		Git::SVN::fetch_all($remote, Git::SVN::read_all_remotes());
 	}
 }
 
@@ -439,18 +444,6 @@ sub cmd_commit_diff {
 }
 
 ########################### utility functions #########################
-
-sub parse_revision_argument {
-	if (!defined $_revision || $_revision eq 'BASE:HEAD') {
-		return (undef, undef);
-	}
-	return ($1, $2) if ($_revision =~ /^(\d+):(\d+)$/);
-	return ($_revision, $_revision) if ($_revision =~ /^\d+$/);
-	return (undef, $1) if ($_revision =~ /^BASE:(\d+)$/);
-	return ($1, undef) if ($_revision =~ /^(\d+):HEAD$/);
-	die "revision argument: $_revision not understood by git-svn\n",
-	    "Try using the command-line svn client instead\n";
-}
 
 sub complete_svn_url {
 	my ($url, $path) = @_;
@@ -755,6 +748,19 @@ sub resolve_local_globs {
 	}
 }
 
+sub parse_revision_argument {
+	my ($base, $head) = @_;
+	if (!defined $::_revision || $::_revision eq 'BASE:HEAD') {
+		return ($base, $head);
+	}
+	return ($1, $2) if ($::_revision =~ /^(\d+):(\d+)$/);
+	return ($::_revision, $::_revision) if ($::_revision =~ /^\d+$/);
+	return ($head, $head) if ($::_revision eq 'HEAD');
+	return ($base, $1) if ($::_revision =~ /^BASE:(\d+)$/);
+	return ($1, $head) if ($::_revision =~ /^(\d+):HEAD$/);
+	die "revision argument: $::_revision not understood by git-svn\n";
+}
+
 sub fetch_all {
 	my ($repo_id, $remotes) = @_;
 	my $remote = $remotes->{$repo_id};
@@ -787,6 +793,8 @@ sub fetch_all {
 			push @gs, $gs;
 		}
 	}
+
+	($base, $head) = parse_revision_argument($base, $head);
 	$ra->gs_fetch_loop_common($base, $head, \@gs, \@globs);
 }
 
