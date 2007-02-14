@@ -73,8 +73,8 @@ test_expect_success 'initialize repo' "
 	cd ..
 	"
 
-test_expect_success 'multi-init an SVK mirror path' "
-	git-svn multi-init -T trunk -t tags -b branches $svnrepo/mirror/foobar
+test_expect_success 'init an SVK mirror path' "
+	git-svn init -T trunk -t tags -b branches $svnrepo/mirror/foobar
 	"
 
 test_expect_success 'multi-fetch an SVK mirror path' "git-svn multi-fetch"

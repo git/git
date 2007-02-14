@@ -71,10 +71,10 @@ my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		%remote_opts );
 
 my ($_trunk, $_tags, $_branches);
-my %multi_opts = ( 'trunk|T=s' => \$_trunk,
-		'tags|t=s' => \$_tags,
-		'branches|b=s' => \$_branches );
-my %init_opts = ( 'template=s' => \$_template, 'shared' => \$_shared );
+my %init_opts = ( 'template=s' => \$_template, 'shared:s' => \$_shared,
+                  'trunk|T=s' => \$_trunk, 'tags|t=s' => \$_tags,
+                  'branches|b=s' => \$_branches, 'prefix=s' => \$_prefix,
+                  %remote_opts );
 my %cmt_opts = ( 'edit|e' => \$_edit,
 		'rmdir' => \$SVN::Git::Editor::_rmdir,
 		'find-copies-harder' => \$SVN::Git::Editor::_find_copies_harder,
@@ -90,6 +90,10 @@ my %cmd = (
 	init => [ \&cmd_init, "Initialize a repo for tracking" .
 			  " (requires URL argument)",
 			  \%init_opts ],
+	'multi-init' => [ \&cmd_multi_init,
+	                  "Deprecated alias for ".
+			  "'$0 init -T<trunk> -b<branches> -t<tags>'",
+			  \%init_opts ],
 	dcommit => [ \&cmd_dcommit,
 	             'Commit several diffs to merge with upstream',
 			{ 'merge|m|M' => \$_merge,
@@ -101,12 +105,6 @@ my %cmd = (
 			{ 'stdin|' => \$_stdin, %cmt_opts, %fc_opts, } ],
 	'show-ignore' => [ \&cmd_show_ignore, "Show svn:ignore listings",
 			{ 'revision|r=i' => \$_revision } ],
-	'multi-init' => [ \&cmd_multi_init,
-			'Initialize multiple trees (like git-svnimport)',
-			{ %multi_opts, %init_opts, %remote_opts,
-			 'revision|r=i' => \$_revision,
-			 'prefix=s' => \$_prefix,
-			} ],
 	'multi-fetch' => [ \&cmd_multi_fetch,
 	                   "Deprecated alias for $0 fetch --all",
 			   { 'revision|r=s' => \$_revision, %fc_opts } ],
@@ -182,6 +180,7 @@ Usage: $0 <command> [options] [arguments]\n
 		next if $cmd && $cmd ne $_;
 		print $fd '  ',pack('A17',$_),$cmd{$_}->[1],"\n";
 		foreach (keys %{$cmd{$_}->[2]}) {
+			next if /^multi-/; # don't show deprecated commands
 			# prints out arguments as they should be passed:
 			my $x = s#[:=]s$## ? '<arg>' : s#[:=]i$## ? '<num>' : '';
 			print $fd ' ' x 21, join(', ', map { length $_ > 1 ?
@@ -207,21 +206,31 @@ sub do_git_init_db {
 	unless (-d $ENV{GIT_DIR}) {
 		my @init_db = ('init');
 		push @init_db, "--template=$_template" if defined $_template;
-		push @init_db, "--shared" if defined $_shared;
+		if (defined $_shared) {
+			if ($_shared =~ /[a-z]/) {
+				push @init_db, "--shared=$_shared";
+			} else {
+				push @init_db, "--shared";
+			}
+		}
 		command_noisy(@init_db);
 	}
 }
 
+sub init_subdir {
+	my $repo_path = shift or return;
+	mkpath([$repo_path]) unless -d $repo_path;
+	chdir $repo_path or die "Couldn't chdir to $repo_path: $!\n";
+	$ENV{GIT_DIR} = $repo_path . "/.git";
+}
+
 sub cmd_init {
-	my $url = shift or die "SVN repository location required " .
-				"as a command-line argument\n";
-	if (my $repo_path = shift) {
-		unless (-d $repo_path) {
-			mkpath([$repo_path]);
-		}
-		chdir $repo_path or croak $!;
-		$ENV{GIT_DIR} = $repo_path . "/.git";
+	if (defined $_trunk || defined $_branches || defined $_tags) {
+		return cmd_multi_init(@_);
 	}
+	my $url = shift or die "SVN repository location required ",
+	                       "as a command-line argument\n";
+	init_subdir(@_);
 	do_git_init_db();
 
 	Git::SVN->init($url);
@@ -367,7 +376,10 @@ sub cmd_multi_init {
 	}
 	do_git_init_db();
 	$_prefix = '' unless defined $_prefix;
-	$url =~ s#/+$## if defined $url;
+	if (defined $url) {
+		$url =~ s#/+$##;
+		init_subdir(@_);
+	}
 	if (defined $_trunk) {
 		my $trunk_ref = $_prefix . 'trunk';
 		# try both old-style and new-style lookups:

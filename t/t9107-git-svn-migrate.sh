@@ -40,7 +40,7 @@ test_expect_success 'initialize old-style (v0) git-svn layout' "
 	"
 
 test_expect_success 'initialize a multi-repository repo' "
-	git-svn multi-init $svnrepo -T trunk -t tags -b branches &&
+	git-svn init $svnrepo -T trunk -t tags -b branches &&
 	git-config --get-all svn-remote.svn.fetch > fetch.out &&
 	grep '^trunk:refs/remotes/trunk$' fetch.out &&
 	test -n \"\`git-config --get svn-remote.svn.branches \
@@ -72,7 +72,7 @@ test_expect_success 'multi-fetch works on partial urls + paths' "
 	                         refs/remotes/\$j\`\" ||exit 1; done; done
 	"
 
-test_expect_success 'migrate --minimize on old multi-inited layout' "
+test_expect_success 'migrate --minimize on old inited layout' "
 	git config --unset-all svn-remote.svn.fetch &&
 	git config --unset-all svn-remote.svn.url &&
 	rm -rf $GIT_DIR/svn &&
