@@ -1,0 +1,39 @@
+GIT v1.5.1 Release Notes
+========================
+
+Updates since v1.5.0
+--------------------
+
+* Deprecated commands and options.
+
+  - git-diff-stages and git-resolve have been removed.
+
+* New commands and options.
+
+  - "git log" and friends take --reverse.  This makes output
+    that typically goes reverse order in chronological order.
+    "git shortlog" usually lists commits in chronological order,
+    but with "--reverse", they are shown in reverse
+    chronological order.
+
+  - "git diff" learned --ignore-space-at-eol.  This is a weaker
+    form of --ignore-space-change.
+
+* Updated behaviour of existing commands.
+
+ - "git diff" outputs a trailing HT when pathnames have embedded
+   SP on +++/--- header lines, in order to help "GNU patch" to
+   parse its output.  "git apply" was already updated to accept
+   this modified output format since ce74618d (Sep 22, 2006).
+
+* Hooks
+
+ - The sample update hook to show how to send out notification
+   e-mail was updated to show only new commits that appeared in
+   the repository.  Earlier, it showed new commits that appeared
+   on the branch.
+
+--
+O=v1.5.0-20-ga44a0c9
+echo O=`git describe master`
+git shortlog --no-merges $O..
