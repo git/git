@@ -72,10 +72,11 @@ make WEBDOC_DEST="$DOCREPO/doc-htmlpages" install-webdoc >../:html.log 2>&1 &&
 
 if test -d $PUBLIC
 then
-	rm -f git.html &&
+	# This is iffy...
+	mv git.html saved-git-html &&
 	make WEBDOC_DEST="$PUBLIC" ASCIIDOC_EXTRA='-a stalenotes' \
 		install-webdoc >>../:html.log 2>&1 &&
-	rm -f git.html
+	mv saved-git-html git.html
 else
 	echo "* No public html at $PUBLIC"
 fi || exit $?
