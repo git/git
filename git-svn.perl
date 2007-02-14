@@ -487,48 +487,24 @@ sub complete_url_ls_init {
 			      "and a separate URL is not specified\n");
 		}
 	}
-	my $r = defined $_revision ? $_revision : $ra->get_latest_revnum;
-	my ($dirent, undef, undef) = $ra->get_dir($repo_path, $r);
 	my $url = $ra->{url};
-	my $remote_id;
-	my $remote_path;
-	foreach my $d (sort keys %$dirent) {
-		next if ($dirent->{$d}->kind != $SVN::Node::dir);
-		my $path =  "$repo_path/$d";
-		my $ref = "$pfx$d";
-		my $gs = eval { Git::SVN->new($ref) };
-		# don't try to init already existing refs
-		unless ($gs) {
-			print "init $url/$path => $ref\n";
-			$gs = Git::SVN->init($url, $path, undef, $ref, 1);
-		}
-		if ($gs) {
-			my $k = "svn-remote.$gs->{repo_id}.url";
-			my $orig_url = eval {
-				command_oneline(qw/config --get/, $k)
-			};
-			if ($orig_url && ($orig_url ne $gs->{url})) {
-				die "$k already set: $orig_url\n",
-				    "wanted to set to: $gs->{url}\n";
-			}
-			unless ($orig_url) {
-				command_oneline('config', $k, $gs->{url});
-			}
-			$remote_id = $gs->{repo_id};
-			last;
-		}
+	my $gs = Git::SVN->init($url, undef, undef, undef, 1);
+	my $k = "svn-remote.$gs->{repo_id}.url";
+	my $orig_url = eval { command_oneline(qw/config --get/, $k) };
+	if ($orig_url && ($orig_url ne $gs->{url})) {
+		die "$k already set: $orig_url\n",
+		    "wanted to set to: $gs->{url}\n";
 	}
-	if (defined $remote_id) {
-		$remote_path = "$ra->{svn_path}/$repo_path/*";
-		$remote_path =~ s#/+#/#g;
-		$remote_path =~ s#^/##g;
-		my ($n) = ($switch =~ /^--(\w+)/);
-		if (length $pfx && $pfx !~ m#/$#) {
-			die "--prefix='$pfx' must have a trailing slash '/'\n";
-		}
-		command_noisy('config', "svn-remote.$remote_id.$n",
-		                        "$remote_path:refs/remotes/$pfx*");
+	command_oneline('config', $k, $gs->{url}) unless $orig_url;
+	my $remote_path = "$ra->{svn_path}/$repo_path/*";
+	$remote_path =~ s#/+#/#g;
+	$remote_path =~ s#^/##g;
+	my ($n) = ($switch =~ /^--(\w+)/);
+	if (length $pfx && $pfx !~ m#/$#) {
+		die "--prefix='$pfx' must have a trailing slash '/'\n";
 	}
+	command_noisy('config', "svn-remote.$gs->{repo_id}.$n",
+				"$remote_path:refs/remotes/$pfx*");
 }
 
 sub verify_ref {
@@ -1236,19 +1212,23 @@ sub get_fetch_range {
 sub tmp_config {
 	my (@args) = @_;
 	my $config = "$ENV{GIT_DIR}/svn/config";
-	unless (-f $config) {
-		open my $fh, '>', $config or
-		    die "Can't open $config: $!\n";
-		print $fh "; This file is used internally by git-svn\n" or
-		      die "Couldn't write to $config: $!\n";
-		print $fh "; You should not have to edit it\n" or
-		      die "Couldn't write to $config: $!\n";
-		close $fh or die "Couldn't close $config: $!\n";
-	}
 	my $old_config = $ENV{GIT_CONFIG};
 	$ENV{GIT_CONFIG} = $config;
 	$@ = undef;
-	my @ret = eval { command('config', @args) };
+	my @ret = eval {
+		unless (-f $config) {
+			mkfile($config);
+			open my $fh, '>', $config or
+			    die "Can't open $config: $!\n";
+			print $fh "; This file is used internally by ",
+			          "git-svn\n" or die
+				  "Couldn't write to $config: $!\n";
+			print $fh "; You should not have to edit it\n" or
+			      die "Couldn't write to $config: $!\n";
+			close $fh or die "Couldn't close $config: $!\n";
+		}
+		command('config', @args);
+	};
 	my $err = $@;
 	if (defined $old_config) {
 		$ENV{GIT_CONFIG} = $old_config;
@@ -1264,7 +1244,11 @@ sub tmp_index_do {
 	my $old_index = $ENV{GIT_INDEX_FILE};
 	$ENV{GIT_INDEX_FILE} = $self->{index};
 	$@ = undef;
-	my @ret = eval { &$sub };
+	my @ret = eval {
+		my ($dir, $base) = ($self->{index} =~ m#^(.*?)/?([^/]+)$#);
+		mkpath([$dir]) unless -d $dir;
+		&$sub;
+	};
 	my $err = $@;
 	if (defined $old_index) {
 		$ENV{GIT_INDEX_FILE} = $old_index;
@@ -1846,7 +1830,7 @@ sub _new {
 	$_[1] = $repo_id = sanitize_remote_name($repo_id);
 	my $dir = "$ENV{GIT_DIR}/svn/$ref_id";
 	$_[3] = $path = '' unless (defined $path);
-	mkpath([$dir]);
+	mkpath(["$ENV{GIT_DIR}/svn"]);
 	bless {
 		ref_id => $ref_id, dir => $dir, index => "$dir/index",
 	        path => $path, config => "$ENV{GIT_DIR}/svn/config",
