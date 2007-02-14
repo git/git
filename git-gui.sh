@@ -4442,7 +4442,7 @@ proc do_about {} {
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
 	label $w.desc \
-		-text "[appname] - a commit creation tool for Git.
+		-text "git-gui - a commit creation tool for Git.
 $copyright" \
 		-padx 5 -pady 5 \
 		-justify left \
@@ -4453,7 +4453,7 @@ $copyright" \
 	pack $w.desc -side top -fill x -padx 5 -pady 5
 
 	set v {}
-	append v "[appname] version $appvers\n"
+	append v "git-gui version $appvers\n"
 	append v "[git version]\n"
 	append v "\n"
 	if {$tcl_patchLevel eq $tk_patchLevel} {
@@ -4513,7 +4513,7 @@ proc do_options {} {
 	toplevel $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
-	label $w.header -text "[appname] Options" \
+	label $w.header -text "Options" \
 		-font font_uibold
 	pack $w.header -side top -fill x
 
@@ -5219,7 +5219,7 @@ if {[is_MacOSX]} {
 	.mbar.apple add command -label "About [appname]" \
 		-command do_about \
 		-font font_ui
-	.mbar.apple add command -label "[appname] Options..." \
+	.mbar.apple add command -label "Options..." \
 		-command do_options \
 		-font font_ui
 } else {
