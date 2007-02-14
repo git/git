@@ -11,9 +11,10 @@
 #
 import os, string, sys, time
 import marshal, popen2, getopt
+from sets import Set;
 
-knownBranches = set()
-committedChanges = set()
+knownBranches = Set()
+committedChanges = Set()
 branch = "refs/heads/master"
 globalPrefix = previousDepotPath = os.popen("git-repo-config --get p4.depotpath").read()
 detectBranches = False
@@ -129,7 +130,7 @@ def isSubPathOf(first, second):
 
 def branchesForCommit(files):
     global knownBranches
-    branches = set()
+    branches = Set()
 
     for file in files:
         relativePath = file["path"][len(globalPrefix):]
@@ -205,8 +206,8 @@ def commit(details, files, branch, branchPrefix):
         gitStream.write("from %s\n" % initialParent)
         initialParent = ""
 
-    #mergedBranches = set()
-    merges = set()
+    #mergedBranches = Set()
+    merges = Set()
 
     for file in files:
         if lastChange == 0:
@@ -366,7 +367,7 @@ else:
 
     if len(changesFile) > 0:
         output = open(changesFile).readlines()
-        changeSet = set()
+        changeSet = Set()
         for line in output:
             changeSet.add(int(line))
 
