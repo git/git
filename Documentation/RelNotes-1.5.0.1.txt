@@ -1,0 +1,20 @@
+GIT v1.5.0.1 Release Notes
+==========================
+
+Fixes since v1.5.0
+------------------
+
+* Documentation updates
+
+  - Clarifications and corrections to 1.5.0 release notes.
+  - The main documentation did not link to git-remote documentation.
+
+* Bugfixes
+
+  - git-daemon marks the listening sockets with FD_CLOEXEC so
+    that it won't be leaked into the children.
+
+--
+O=v1.5.0-7-g37b73cf
+echo O=`git describe maint`
+git shortlog --no-merges $O..
