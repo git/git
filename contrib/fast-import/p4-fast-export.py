@@ -13,14 +13,16 @@ import os, string, sys, time
 import marshal, popen2, getopt
 
 knownBranches = set()
+committedChanges = set()
 branch = "refs/heads/master"
 globalPrefix = previousDepotPath = os.popen("git-repo-config --get p4.depotpath").read()
 detectBranches = False
+changesFile = ""
 if len(globalPrefix) != 0:
     globalPrefix = globalPrefix[:-1]
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", [ "branch=", "detect-branches" ])
+    opts, args = getopt.getopt(sys.argv[1:], "", [ "branch=", "detect-branches", "changesfile=" ])
 except getopt.GetoptError:
     print "fixme, syntax error"
     sys.exit(1)
@@ -30,6 +32,8 @@ for o, a in opts:
         branch = "refs/heads/" + a
     elif o == "--detect-branches":
         detectBranches = True
+    elif o == "--changesfile":
+        changesFile = a
 
 if len(args) == 0 and len(globalPrefix) != 0:
     print "[using previously specified depot path %s]" % globalPrefix
@@ -53,7 +57,7 @@ changeRange = ""
 revision = ""
 users = {}
 initialParent = ""
-lastChange = ""
+lastChange = 0
 initialTag = ""
 
 if globalPrefix.find("@") != -1:
@@ -104,6 +108,7 @@ def extractFilesFromCommit(commit):
         path =  commit["depotFile%s" % fnum]
         if not path.startswith(globalPrefix):
             print "\nchanged files: ignoring path %s outside of %s in change %s" % (path, globalPrefix, change)
+            fnum = fnum + 1
             continue
 
         file = {}
@@ -115,7 +120,15 @@ def extractFilesFromCommit(commit):
         fnum = fnum + 1
     return files
 
+def isSubPathOf(first, second):
+    if not first.startswith(second):
+        return False
+    if first == second:
+        return True
+    return first[len(second)] == "/"
+
 def branchesForCommit(files):
+    global knownBranches
     branches = set()
 
     for file in files:
@@ -123,9 +136,10 @@ def branchesForCommit(files):
         # strip off the filename
         relativePath = relativePath[0:relativePath.rfind("/")]
 
-        if len(branches) == 0:
-            branches.add(relativePath)
-            continue
+#        if len(branches) == 0:
+#            branches.add(relativePath)
+#            knownBranches.add(relativePath)
+#            continue
 
         ###### this needs more testing :)
         knownBranch = False
@@ -133,15 +147,32 @@ def branchesForCommit(files):
             if relativePath == branch:
                 knownBranch = True
                 break
-            if relativePath.startswith(branch):
+#            if relativePath.startswith(branch):
+            if isSubPathOf(relativePath, branch):
                 knownBranch = True
                 break
-            if branch.startswith(relativePath):
+#            if branch.startswith(relativePath):
+            if isSubPathOf(branch, relativePath):
                 branches.remove(branch)
                 break
 
-        if not knownBranch:
-            branches.add(relativePath)
+        if knownBranch:
+            continue
+
+        for branch in knownBranches:
+            #if relativePath.startswith(branch):
+            if isSubPathOf(relativePath, branch):
+                if len(branches) == 0:
+                    relativePath = branch
+                else:
+                    knownBranch = True
+                break
+
+        if knownBranch:
+            continue
+
+        branches.add(relativePath)
+        knownBranches.add(relativePath)
 
     return branches
 
@@ -149,12 +180,14 @@ def commit(details, files, branch, branchPrefix):
     global initialParent
     global users
     global lastChange
+    global committedChanges
 
     epoch = details["time"]
     author = details["user"]
 
     gitStream.write("commit %s\n" % branch)
     gitStream.write("mark :%s\n" % details["change"])
+    committedChanges.add(int(details["change"]))
     committer = ""
     if author in users:
         committer = "%s %s %s" % (users[author], epoch, tz)
@@ -173,9 +206,11 @@ def commit(details, files, branch, branchPrefix):
         initialParent = ""
 
     #mergedBranches = set()
-    merge = 0
+    merges = set()
 
     for file in files:
+        if lastChange == 0:
+            continue
         path = file["path"]
         if not path.startswith(branchPrefix):
             continue
@@ -195,9 +230,14 @@ def commit(details, files, branch, branchPrefix):
             print "eek! wrong action in filelog for %s : found %s, expected %s" % (depotPath, log["action0"], action)
             sys.exit(1);
 
-        if not log["how0,0"].endswith(" from"):
-            print "eek! file %s was not branched but instead: %s" % (depotPath, log["how0,0"])
-            sys.exit(1);
+        branchAction = log["how0,0"]
+#        if branchAction == "branch into" or branchAction == "ignored":
+#            continue # ignore for branching
+
+        if not branchAction.endswith(" from"):
+            continue # ignore for branching
+#            print "eek! file %s was not branched from but instead: %s" % (depotPath, branchAction)
+#            sys.exit(1);
 
         source = log["file0,0"]
         if source.startswith(branchPrefix):
@@ -212,8 +252,7 @@ def commit(details, files, branch, branchPrefix):
         sourceLog = sourceLog[0]
 
         change = int(sourceLog["change0"])
-        if change > merge:
-            merge = change
+        merges.add(change)
 
 #        relPath = source[len(globalPrefix):]
 #
@@ -223,13 +262,14 @@ def commit(details, files, branch, branchPrefix):
 #                mergedBranches.add(branch)
 #                break
 
-    if merge != 0:
-        gitStream.write("merge :%s\n" % merge)
+    for merge in merges:
+        if merge in committedChanges:
+            gitStream.write("merge :%s\n" % merge)
 
     for file in files:
         path = file["path"]
         if not path.startswith(branchPrefix):
-            print "\nchanged files: ignoring path %s outside of branch prefix %s in change %s" % (path, branchPrefix, change)
+            print "\nchanged files: ignoring path %s outside of branch prefix %s in change %s" % (path, branchPrefix, details["change"])
             continue
         rev = file["rev"]
         depotPath = path + "#" + rev
@@ -252,7 +292,7 @@ def commit(details, files, branch, branchPrefix):
 
     gitStream.write("\n")
 
-    lastChange = details["change"]
+    lastChange = int(details["change"])
 
 def getUserMap():
     users = {}
@@ -322,14 +362,26 @@ if len(revision) > 0:
         print gitError.read()
 
 else:
-    output = os.popen("p4 changes %s...%s" % (globalPrefix, changeRange)).readlines()
-
     changes = []
-    for line in output:
-        changeNum = line.split(" ")[1]
-        changes.append(changeNum)
 
-    changes.reverse()
+    if len(changesFile) > 0:
+        output = open(changesFile).readlines()
+        changeSet = set()
+        for line in output:
+            changeSet.add(int(line))
+
+        for change in changeSet:
+            changes.append(change)
+
+        changes.sort()
+    else:
+        output = os.popen("p4 changes %s...%s" % (globalPrefix, changeRange)).readlines()
+
+        for line in output:
+            changeNum = line.split(" ")[1]
+            changes.append(changeNum)
+
+        changes.reverse()
 
     if len(changes) == 0:
         print "no changes to import!"
@@ -343,19 +395,19 @@ else:
         sys.stdout.flush()
         cnt = cnt + 1
 
-        try:
-            files = extractFilesFromCommit(description)
-            if detectBranches:
-                for branch in branchesForCommit(files):
-                    knownBranches.add(branch)
-                    branchPrefix = globalPrefix + branch + "/"
-                    branch = "refs/heads/" + branch
-                    commit(description, files, branch, branchPrefix)
-            else:
-                commit(description, files, branch, globalPrefix)
-        except:
-            print gitError.read()
-            sys.exit(1)
+#        try:
+        files = extractFilesFromCommit(description)
+        if detectBranches:
+            for branch in branchesForCommit(files):
+                knownBranches.add(branch)
+                branchPrefix = globalPrefix + branch + "/"
+                branch = "refs/heads/" + branch
+                commit(description, files, branch, branchPrefix)
+        else:
+            commit(description, files, branch, globalPrefix)
+#        except:
+#            print gitError.read()
+#            sys.exit(1)
 
 print ""
 
