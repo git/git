@@ -215,6 +215,21 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 				return 0;
 		}
 		return (i1 >= s1 && i2 >= s2);
+	} else if (flags & XDF_IGNORE_WHITESPACE_AT_EOL) {
+		for (i1 = i2 = 0; i1 < s1 && i2 < s2; ) {
+			if (l1[i1] != l2[i2]) {
+				while (i1 < s1 && isspace(l1[i1]))
+					i1++;
+				while (i2 < s2 && isspace(l2[i2]))
+					i2++;
+				if (i1 < s1 || i2 < s2)
+					return 0;
+				return 1;
+			}
+			i1++;
+			i2++;
+		}
+		return i1 >= s1 && i2 >= s2;
 	} else
 		return s1 == s2 && !memcmp(l1, l2, s1);
 
@@ -227,6 +242,7 @@ unsigned long xdl_hash_record(char const **data, char const *top, long flags) {
 
 	for (; ptr < top && *ptr != '\n'; ptr++) {
 		if (isspace(*ptr) && (flags & XDF_WHITESPACE_FLAGS)) {
+			const char *ptr2 = ptr;
 			while (ptr + 1 < top && isspace(ptr[1])
 					&& ptr[1] != '\n')
 				ptr++;
@@ -234,6 +250,14 @@ unsigned long xdl_hash_record(char const **data, char const *top, long flags) {
 					&& ptr[1] != '\n') {
 				ha += (ha << 5);
 				ha ^= (unsigned long) ' ';
+			}
+			if (flags & XDF_IGNORE_WHITESPACE_AT_EOL
+					&& ptr[1] != '\n') {
+				while (ptr2 != ptr + 1) {
+					ha += (ha << 5);
+					ha ^= (unsigned long) *ptr2;
+					ptr2++;
+				}
 			}
 			continue;
 		}
