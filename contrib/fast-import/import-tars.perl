@@ -25,11 +25,14 @@ foreach my $tar_file (@ARGV)
 	my $tar_name = $1;
 
 	if ($tar_name =~ s/\.(tar\.gz|tgz)$//) {
-		open(I, '-|', 'gzcat', $tar_file) or die "Unable to gzcat $tar_file: $!\n";
+		open(I, '-|', 'gunzip', '-c', $tar_file)
+			or die "Unable to gunzip -c $tar_file: $!\n";
 	} elsif ($tar_name =~ s/\.(tar\.bz2|tbz2)$//) {
-		open(I, '-|', 'bzcat', $tar_file) or die "Unable to bzcat $tar_file: $!\n";
+		open(I, '-|', 'bunzip2', '-c', $tar_file)
+			or die "Unable to bunzip2 -c $tar_file: $!\n";
 	} elsif ($tar_name =~ s/\.tar\.Z$//) {
-		open(I, '-|', 'zcat', $tar_file) or die "Unable to zcat $tar_file: $!\n";
+		open(I, '-|', 'uncompress', '-c', $tar_file)
+			or die "Unable to uncompress -c $tar_file: $!\n";
 	} elsif ($tar_name =~ s/\.tar$//) {
 		open(I, $tar_file) or die "Unable to open $tar_file: $!\n";
 	} else {
