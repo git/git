@@ -782,7 +782,7 @@ sub fetch_all {
 	my $ra = Git::SVN::Ra->new($url);
 	my $uuid = $ra->get_uuid;
 	my $head = $ra->get_latest_revnum;
-	my $base = $head;
+	my $base = defined $fetch ? $head : 0;
 
 	# read the max revs for wildcard expansion (branches/*, tags/*)
 	foreach my $t (qw/branches tags/) {
@@ -2901,7 +2901,8 @@ sub match_globs {
 			}
 		}
 		foreach (keys %$paths) {
-			if (/$g->{path}->{left_regex}/) {
+			if (/$g->{path}->{left_regex}/ &&
+			    !/$g->{path}->{regex}/) {
 				next if $paths->{$_}->{action} !~ /^[AR]$/;
 				get_dir_check($self, $exists, $g, $r);
 			}
