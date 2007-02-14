@@ -36,7 +36,7 @@ Specifically, the available options are:
    set repack.usedeltabaseoffset to true.
 
 The above two new features are not enabled by default and you
-have explicitly to ask for them, because they make repositories
+have to explicitly ask for them, because they make repositories
 unreadable by older versions of git, and in v1.5.0 we still do
 not enable them by default for the same reason.  We will change
 this default probably 1 year after 1.4.2's release, when it is
@@ -223,7 +223,7 @@ Updates in v1.5.0 since v1.4.4 series
    "branch@{Nth}" notation.
 
  - "git show-branch" learned showing the reflog data with the
-   new -g option.  "git log" has -s option to view reflog
+   new -g option.  "git log" has -g option to view reflog
    entries in a more verbose manner.
 
  - git-branch knows how to rename branches and moves existing
@@ -258,9 +258,6 @@ Updates in v1.5.0 since v1.4.4 series
    git-prune".  We no longer have to say the latter half of the
    above sentence, as git-prune does not remove things reachable
    from reflog entries.
-
- - 'git-prune' by default does not remove _everything_
-   unreachable, as there is a one-day grace period built-in.
 
  - There is a toplevel garbage collector script, 'git-gc', that
    runs periodic cleanup functions, including 'git-repack -a -d',
