@@ -297,6 +297,38 @@ proc ask_popup {msg} {
 
 ######################################################################
 ##
+## version check
+
+set req_maj 1
+set req_min 5
+
+if {[catch {set v [git --version]} err]} {
+	catch {wm withdraw .}
+	error_popup "Cannot determine Git version:
+
+$err
+
+[appname] requires Git $req_maj.$req_min or later."
+	exit 1
+}
+if {[regexp {^git version (\d+)\.(\d+)} $v _junk act_maj act_min]} {
+	if {$act_maj < $req_maj
+		|| ($act_maj == $req_maj && $act_min < $req_min)} {
+		catch {wm withdraw .}
+		error_popup "[appname] requires Git $req_maj.$req_min or later.
+
+You are using $v."
+		exit 1
+	}
+} else {
+	catch {wm withdraw .}
+	error_popup "Cannot parse Git version string:\n\n$v"
+	exit 1
+}
+unset -nocomplain v _junk act_maj act_min req_maj req_min
+
+######################################################################
+##
 ## repository setup
 
 if {   [catch {set _gitdir $env(GIT_DIR)}]
