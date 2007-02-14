@@ -33,7 +33,6 @@ git-daemon
 git-diff
 git-diff-files
 git-diff-index
-git-diff-stages
 git-diff-tree
 git-describe
 git-fast-import
@@ -101,7 +100,6 @@ git-repo-config
 git-request-pull
 git-rerere
 git-reset
-git-resolve
 git-rev-list
 git-rev-parse
 git-revert

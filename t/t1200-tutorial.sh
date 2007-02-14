@@ -101,7 +101,9 @@ echo "Play, play, play" >>hello
 echo "Lots of fun" >>example
 git commit -m 'Some fun.' -i hello example
 
-test_expect_failure 'git resolve now fails' 'git resolve HEAD mybranch "Merge work in mybranch"'
+test_expect_failure 'git resolve now fails' '
+	git merge -m "Merge work in mybranch" mybranch
+'
 
 cat > hello << EOF
 Hello World
@@ -134,8 +136,8 @@ Updating from VARIABLE to VARIABLE
  2 files changed, 2 insertions(+), 0 deletions(-)
 EOF
 
-git resolve HEAD master "Merge upstream changes." | \
-	sed -e "1s/[0-9a-f]\{40\}/VARIABLE/g" > resolve.output
+git merge -s "Merge upstream changes." master | \
+	sed -e "1s/[0-9a-f]\{40\}/VARIABLE/g" >resolve.output
 test_expect_success 'git resolve' 'cmp resolve.expect resolve.output'
 
 cat > show-branch2.expect << EOF

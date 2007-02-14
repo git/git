@@ -6,8 +6,8 @@ June 2005
 Introduction
 ------------
 
-The diff commands git-diff-index, git-diff-files, git-diff-tree, and
-git-diff-stages can be told to manipulate differences they find in
+The diff commands git-diff-index, git-diff-files, and git-diff-tree
+can be told to manipulate differences they find in
 unconventional ways before showing diff(1) output.  The manipulation
 is collectively called "diffcore transformation".  This short note
 describes what they are and how to use them to produce diff outputs
@@ -29,9 +29,6 @@ files:
    working directory;
 
  - git-diff-tree compares contents of two "tree" objects;
-
- - git-diff-stages compares contents of blobs at two stages in an
-   unmerged index file.
 
 In all of these cases, the commands themselves compare
 corresponding paths in the two sets of files.  The result of
