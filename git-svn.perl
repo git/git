@@ -1269,10 +1269,11 @@ sub assert_index_clean {
 		my $x = command_oneline('write-tree');
 		my ($y) = (command(qw/cat-file commit/, $treeish) =~
 		           /^tree ($::sha1)/mo);
-		if ($y ne $x) {
-			unlink $self->{index} or croak $!;
-			command_noisy('read-tree', $treeish);
-		}
+		return if $y eq $x;
+
+		warn "Index mismatch: $y != $x\nrereading $treeish\n";
+		unlink $self->{index} or die "unlink $self->{index}: $!\n";
+		command_noisy('read-tree', $treeish);
 		$x = command_oneline('write-tree');
 		if ($y ne $x) {
 			::fatal "trees ($treeish) $y != $x\n",
@@ -2755,9 +2756,6 @@ sub gs_fetch_loop_common {
 	my $common_max = scalar @$gsv;
 
 	foreach my $gs (@$gsv) {
-		if (my $last_commit = $gs->last_commit) {
-			$gs->assert_index_clean($last_commit);
-		}
 		my @tmp = split m#/#, $gs->{path};
 		my $p = '';
 		foreach (@tmp) {
@@ -2833,6 +2831,9 @@ sub gs_fetch_loop_common {
 				}
 				next unless $gs->match_paths($paths, $r);
 				$gs->{logged_rev_props} = $logged;
+				if (my $last_commit = $gs->last_commit) {
+					$gs->assert_index_clean($last_commit);
+				}
 				my $log_entry = $gs->do_fetch($paths, $r);
 				if ($log_entry) {
 					$gs->do_git_commit($log_entry);
