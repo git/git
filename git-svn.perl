@@ -3234,7 +3234,7 @@ sub show_commit_normal {
 		print "\n";
 
 	}
-	foreach my $x (qw/raw diff/) {
+	foreach my $x (qw/raw stat diff/) {
 		if ($c->{$x}) {
 			print "\n";
 			print $_ foreach @{$c->{$x}}
@@ -3266,7 +3266,7 @@ sub cmd_show_log {
 	@args = (git_svn_log_cmd($r_min, $r_max, @args), @args);
 	my $log = command_output_pipe(@args);
 	run_pager();
-	my (@k, $c, $d);
+	my (@k, $c, $d, $stat);
 	my $esc_color = qr/(?:\033\[(?:(?:\d+;)*\d*)?m)*/;
 	while (<$log>) {
 		if (/^${esc_color}commit ($::sha1_short)/o) {
@@ -3294,6 +3294,13 @@ sub cmd_show_log {
 			push @{$c->{diff}}, $_;
 		} elsif ($d) {
 			push @{$c->{diff}}, $_;
+		} elsif (/^\ .+\ \|\s*\d+\ $esc_color[\+\-]*
+		          $esc_color*[\+\-]*$esc_color$/x) {
+			$stat = 1;
+			push @{$c->{stat}}, $_;
+		} elsif ($stat && /^ \d+ files changed, \d+ insertions/) {
+			push @{$c->{stat}}, $_;
+			$stat = undef;
 		} elsif (/^${esc_color}    (git-svn-id:.+)$/o) {
 			($c->{url}, $c->{r}, undef) = ::extract_metadata($1);
 		} elsif (s/^${esc_color}    //o) {
