@@ -753,9 +753,10 @@ sub parse_revision_argument {
 
 sub fetch_all {
 	my ($repo_id, $remotes) = @_;
-	my $remote = $remotes->{$repo_id};
+	my $remote = $remotes->{$repo_id} or
+	             die "[svn-remote \"$repo_id\"] unknown\n";
 	my $fetch = $remote->{fetch};
-	my $url = $remote->{url};
+	my $url = $remote->{url} or die "svn-remote.$repo_id.url not defined\n";
 	my (@gs, @globs);
 	my $ra = Git::SVN::Ra->new($url);
 	my $uuid = $ra->get_uuid;
