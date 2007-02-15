@@ -309,8 +309,7 @@ sub cmd_dcommit {
 		die "Unable to determine upstream SVN information from ",
 		    "$head history:\n  $ctx\n";
 	}
-	my $gs = Git::SVN->find_by_url($url) or
-	                   die "Can't determine fetch information for $url\n";
+	my $gs = Git::SVN->find_by_url($url);
 	my $last_rev;
 	foreach my $d (@refs) {
 		if (!verify_ref("$d~1")) {
@@ -345,6 +344,13 @@ sub cmd_dcommit {
 		}
 	}
 	return if $_dry_run;
+	unless ($gs) {
+		warn "Could not determine fetch information for $url\n",
+		     "Will not attempt to fetch and rebase commits.\n",
+		     "This probably means you have useSvmProps and should\n",
+		     "now resync your SVN::Mirror repository.\n";
+		return;
+	}
 	$gs->fetch;
 	# we always want to rebase against the current HEAD, not any
 	# head that was passed to us
