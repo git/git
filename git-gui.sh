@@ -1916,11 +1916,24 @@ proc all_tracking_branches {} {
 	return [lsort -unique $all_trackings]
 }
 
+proc load_all_tags {} {
+	set all_tags [list]
+	set fd [open "| git for-each-ref --format=%(refname) refs/tags" r]
+	while {[gets $fd line] > 0} {
+		if {![regsub ^refs/tags/ $line {} name]} continue
+		lappend all_tags $name
+	}
+	close $fd
+
+	return [lsort $all_tags]
+}
+
 proc do_create_branch_action {w} {
 	global all_heads null_sha1 repo_config
 	global create_branch_checkout create_branch_revtype
 	global create_branch_head create_branch_trackinghead
 	global create_branch_name create_branch_revexp
+	global create_branch_tag
 
 	set newbranch $create_branch_name
 	if {$newbranch eq {}
@@ -1959,6 +1972,7 @@ proc do_create_branch_action {w} {
 	switch -- $create_branch_revtype {
 	head {set rev $create_branch_head}
 	tracking {set rev $create_branch_trackinghead}
+	tag {set rev $create_branch_tag}
 	expression {set rev $create_branch_revexp}
 	}
 	if {[catch {set cmt [git rev-parse --verify "${rev}^0"]}]} {
@@ -2004,6 +2018,8 @@ trace add variable create_branch_head write \
 	[list radio_selector create_branch_revtype head]
 trace add variable create_branch_trackinghead write \
 	[list radio_selector create_branch_revtype tracking]
+trace add variable create_branch_tag write \
+	[list radio_selector create_branch_revtype tag]
 
 trace add variable delete_branch_head write \
 	[list radio_selector delete_branch_checktype head]
@@ -2015,6 +2031,7 @@ proc do_create_branch {} {
 	global create_branch_checkout create_branch_revtype
 	global create_branch_head create_branch_trackinghead
 	global create_branch_name create_branch_revexp
+	global create_branch_tag
 
 	set w .branch_editor
 	toplevel $w
@@ -2077,6 +2094,19 @@ proc do_create_branch {} {
 			create_branch_trackinghead \
 			$all_trackings
 		grid $w.from.tracking_r $w.from.tracking_m -sticky w
+	}
+	set all_tags [load_all_tags]
+	if {$all_tags ne {}} {
+		set create_branch_tag [lindex $all_tags 0]
+		radiobutton $w.from.tag_r \
+			-text {Tag:} \
+			-value tag \
+			-variable create_branch_revtype \
+			-font font_ui
+		eval tk_optionMenu $w.from.tag_m \
+			create_branch_tag \
+			$all_tags
+		grid $w.from.tag_r $w.from.tag_m -sticky w
 	}
 	radiobutton $w.from.exp_r \
 		-text {Revision Expression:} \
