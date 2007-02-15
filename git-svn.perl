@@ -114,7 +114,8 @@ my %cmd = (
 	               # no-op, we automatically run this anyways,
 	               'Migrate configuration/metadata/layout from
 		        previous versions of git-svn',
-			\%remote_opts ],
+                       { 'minimize' => \$Git::SVN::Migration::_minimize,
+			 %remote_opts } ],
 	'log' => [ \&Git::SVN::Log::cmd_show_log, 'Show commit logs',
 			{ 'limit=i' => \$Git::SVN::Log::limit,
 			  'revision|r=s' => \$_revision,
@@ -180,9 +181,9 @@ Usage: $0 <command> [options] [arguments]\n
 
 	foreach (sort keys %cmd) {
 		next if $cmd && $cmd ne $_;
+		next if /^multi-/; # don't show deprecated commands
 		print $fd '  ',pack('A17',$_),$cmd{$_}->[1],"\n";
 		foreach (keys %{$cmd{$_}->[2]}) {
-			next if /^multi-/; # don't show deprecated commands
 			# prints out arguments as they should be passed:
 			my $x = s#[:=]s$## ? '<arg>' : s#[:=]i$## ? '<num>' : '';
 			print $fd ' ' x 21, join(', ', map { length $_ > 1 ?
