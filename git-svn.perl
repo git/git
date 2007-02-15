@@ -12,6 +12,7 @@ $VERSION = '@@GIT_VERSION@@';
 $ENV{GIT_DIR} ||= '.git';
 $Git::SVN::default_repo_id = 'svn';
 $Git::SVN::default_ref_id = $ENV{GIT_SVN_ID} || 'git-svn';
+$Git::SVN::Ra::_log_window_size = 100;
 
 $Git::SVN::Log::TZ = $ENV{TZ};
 $ENV{TZ} = 'UTC';
@@ -65,6 +66,7 @@ my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'repack:i' => \$Git::SVN::_repack,
 		'noMetadata' => \$Git::SVN::_no_metadata,
 		'useSvmProps' => \$Git::SVN::_use_svm_props,
+		'log-window-size=i' => \$Git::SVN::Ra::_log_window_size,
 		'quiet|q' => \$_q,
 		'repack-flags|repack-args|repack-opts=s' =>
 		   \$Git::SVN::_repack_flags,
@@ -2583,7 +2585,7 @@ sub apply_diff {
 }
 
 package Git::SVN::Ra;
-use vars qw/@ISA $config_dir/;
+use vars qw/@ISA $config_dir $_log_window_size/;
 use strict;
 use warnings;
 my ($can_do_switch);
@@ -2747,7 +2749,7 @@ sub gs_do_switch {
 sub gs_fetch_loop_common {
 	my ($self, $base, $head, $gsv, $globs) = @_;
 	return if ($base > $head);
-	my $inc = 1000;
+	my $inc = $_log_window_size;
 	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
 	my %common;
 	my $common_max = scalar @$gsv;
@@ -2954,6 +2956,9 @@ sub skip_unknown_revs {
 	# 175007 - http(s):// (this repo required authorization, too...)
 	#   More codes may be discovered later...
 	if ($errno == 175007 || $errno == 175002 || $errno == 160013) {
+		warn "W: Ignoring error from SVN, path probably ",
+		     "does not exist: ($errno): ",
+		     $err->expanded_message,"\n";
 		return;
 	}
 	die "Error from SVN, ($errno): ", $err->expanded_message,"\n";
