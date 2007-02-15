@@ -255,8 +255,8 @@ test_done () {
 PATH=$(pwd)/..:$PATH
 GIT_EXEC_PATH=$(pwd)/..
 GIT_TEMPLATE_DIR=$(pwd)/../templates/blt
-HOME=$(pwd)/trash
-export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR HOME
+GIT_CONFIG=.git/config
+export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR GIT_CONFIG
 
 GITPERLLIB=$(pwd)/../perl/blib/lib:$(pwd)/../perl/blib/arch/auto/Git
 export GITPERLLIB
