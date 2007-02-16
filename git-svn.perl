@@ -844,6 +844,8 @@ sub fetch_all {
 		                         "svn-remote.$repo_id.${t}-maxRev") };
 		if (defined $max_rev && ($max_rev < $base)) {
 			$base = $max_rev;
+		} elsif (!defined $max_rev) {
+			$base = 0;
 		}
 	}
 
@@ -1066,10 +1068,7 @@ sub new {
 	$self->{url} = command_oneline('config', '--get',
 	                               "svn-remote.$repo_id.url") or
                   die "Failed to read \"svn-remote.$repo_id.url\" in config\n";
-	if ((-z $self->db_path || ! -e $self->db_path) &&
-	    ::verify_ref($self->refname.'^0')) {
-		$self->rebuild;
-	}
+	$self->rebuild;
 	$self;
 }
 
@@ -1737,6 +1736,8 @@ sub set_tree {
 sub rebuild {
 	my ($self) = @_;
 	my $db_path = $self->db_path;
+	return if (-e $db_path && ! -z $db_path);
+	return unless ::verify_ref($self->refname.'^0');
 	if (-f $self->{db_root}) {
 		rename $self->{db_root}, $db_path or die
 		     "rename $self->{db_root} => $db_path failed: $!\n";
@@ -1863,6 +1864,7 @@ sub rev_db_set {
 
 sub rev_db_max {
 	my ($self) = @_;
+	$self->rebuild;
 	my $db_path = $self->db_path;
 	my @stat = stat $db_path or return 0;
 	($stat[7] % 41) == 0 or die "$db_path inconsistent size: $stat[7]\n";
