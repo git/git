@@ -56,7 +56,7 @@ my ($_stdin, $_help, $_edit,
 	$_template, $_shared,
 	$_version, $_fetch_all,
 	$_merge, $_strategy, $_dry_run,
-	$_prefix, $_no_checkout);
+	$_prefix, $_no_checkout, $_verbose);
 $Git::SVN::_follow_parent = 1;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
@@ -88,7 +88,7 @@ my %cmt_opts = ( 'edit|e' => \$_edit,
 my %cmd = (
 	fetch => [ \&cmd_fetch, "Download new revisions from SVN",
 			{ 'revision|r=s' => \$_revision,
-			  'all|a' => \$_fetch_all,
+			  'fetch-all|all' => \$_fetch_all,
 			   %fc_opts } ],
 	init => [ \&cmd_init, "Initialize a repo for tracking" .
 			  " (requires URL argument)",
@@ -101,7 +101,9 @@ my %cmd = (
 	             'Commit several diffs to merge with upstream',
 			{ 'merge|m|M' => \$_merge,
 			  'strategy|s=s' => \$_strategy,
+			  'verbose|v' => \$_verbose,
 			  'dry-run|n' => \$_dry_run,
+			  'fetch-all|all' => \$_fetch_all,
 			%cmt_opts, %fc_opts } ],
 	'set-tree' => [ \&cmd_set_tree,
 	                "Set an SVN repository to a git tree-ish",
@@ -129,6 +131,12 @@ my %cmd = (
 			  'color' => \$Git::SVN::Log::color,
 			  'pager=s' => \$Git::SVN::Log::pager,
 			} ],
+	'rebase' => [ \&cmd_rebase, "Fetch and rebase your working directory",
+			{ 'merge|m|M' => \$_merge,
+			  'verbose|v' => \$_verbose,
+			  'strategy|s=s' => \$_strategy,
+			  'fetch-all|all' => \$_fetch_all,
+			  %fc_opts } ],
 	'commit-diff' => [ \&cmd_commit_diff,
 	                   'Commit a diff between two trees',
 			{ 'message|m=s' => \$_message,
@@ -248,7 +256,7 @@ sub cmd_fetch {
 	}
 	my ($remote) = @_;
 	if (@_ > 1) {
-		die "Usage: $0 fetch [--all|-a] [svn-remote]\n";
+		die "Usage: $0 fetch [--all] [svn-remote]\n";
 	}
 	$remote ||= $Git::SVN::default_repo_id;
 	if ($_fetch_all) {
@@ -296,21 +304,12 @@ sub cmd_set_tree {
 sub cmd_dcommit {
 	my $head = shift;
 	$head ||= 'HEAD';
-	my ($url, $rev, $uuid);
-	my ($fh, $ctx) = command_output_pipe('rev-list', $head);
 	my @refs;
-	my $c;
-	while (<$fh>) {
-		$c = $_;
-		chomp $c;
-		($url, $rev, $uuid) = cmt_metadata($c);
-		last if (defined $url && defined $rev && defined $uuid);
-		unshift @refs, $c;
-	}
-	close $fh; # most likely breaking the pipe
+	my ($url, $rev, $uuid) = working_head_info($head, \@refs);
+	my $c = $refs[-1];
 	unless (defined $url && defined $rev && defined $uuid) {
 		die "Unable to determine upstream SVN information from ",
-		    "$head history:\n  $ctx\n";
+		    "$head history\n";
 	}
 	my $gs = Git::SVN->find_by_url($url);
 	my $last_rev;
@@ -354,15 +353,13 @@ sub cmd_dcommit {
 		     "now resync your SVN::Mirror repository.\n";
 		return;
 	}
-	$gs->fetch;
+	$_fetch_all ? $gs->fetch_all : $gs->fetch;
 	# we always want to rebase against the current HEAD, not any
 	# head that was passed to us
 	my @diff = command('diff-tree', 'HEAD', $gs->refname, '--');
 	my @finish;
 	if (@diff) {
-		@finish = qw/rebase/;
-		push @finish, qw/--merge/ if $_merge;
-		push @finish, "--strategy=$_strategy" if $_strategy;
+		@finish = rebase_cmd();
 		print STDERR "W: HEAD and ", $gs->refname, " differ, ",
 		             "using @finish:\n", "@diff";
 	} else {
@@ -372,6 +369,24 @@ sub cmd_dcommit {
 		@finish = qw/reset --mixed/;
 	}
 	command_noisy(@finish, $gs->refname);
+}
+
+sub cmd_rebase {
+	command_noisy(qw/update-index --refresh/);
+	my $url = (working_head_info('HEAD'))[0];
+	if (!defined $url) {
+		die "Unable to determine upstream SVN information from ",
+		    "working tree history\n";
+	}
+
+	my $gs = Git::SVN->find_by_url($url);
+	if (command(qw/diff-index HEAD --/)) {
+		print STDERR "Cannot rebase with uncommited changes:\n";
+		command_noisy('status');
+		exit 1;
+	}
+	$_fetch_all ? $gs->fetch_all : $gs->fetch;
+	command_noisy(rebase_cmd(), $gs->refname);
 }
 
 sub cmd_show_ignore {
@@ -467,6 +482,14 @@ sub cmd_commit_diff {
 }
 
 ########################### utility functions #########################
+
+sub rebase_cmd {
+	my @cmd = qw/rebase/;
+	push @cmd, '-v' if $_verbose;
+	push @cmd, qw/--merge/ if $_merge;
+	push @cmd, "--strategy=$_strategy" if $_strategy;
+	@cmd;
+}
 
 sub post_fetch_checkout {
 	return if $_no_checkout;
@@ -687,6 +710,20 @@ sub cmt_metadata {
 		command(qw/cat-file commit/, shift)))[-1]);
 }
 
+sub working_head_info {
+	my ($head, $refs) = @_;
+	my ($url, $rev, $uuid);
+	my ($fh, $ctx) = command_output_pipe('rev-list', $head);
+	while (<$fh>) {
+		chomp;
+		($url, $rev, $uuid) = cmt_metadata($_);
+		last if (defined $url && defined $rev && defined $uuid);
+		unshift @$refs, $_ if $refs;
+	}
+	close $fh; # break the pipe
+	($url, $rev, $uuid);
+}
+
 package Git::SVN;
 use strict;
 use warnings;
@@ -783,6 +820,12 @@ sub parse_revision_argument {
 
 sub fetch_all {
 	my ($repo_id, $remotes) = @_;
+	if (ref $repo_id) {
+		my $gs = $repo_id;
+		$repo_id = undef;
+		$repo_id = $gs->{repo_id};
+	}
+	$remotes ||= read_all_remotes();
 	my $remote = $remotes->{$repo_id} or
 	             die "[svn-remote \"$repo_id\"] unknown\n";
 	my $fetch = $remote->{fetch};
@@ -3085,15 +3128,7 @@ sub git_svn_log_cmd {
 		last;
 	}
 
-	my $url;
-	my ($fh, $ctx) = command_output_pipe('rev-list', $head);
-	while (<$fh>) {
-		chomp;
-		$url = (::cmt_metadata($_))[0];
-		last if defined $url;
-	}
-	close $fh; # break the pipe
-
+	my $url = (::working_head_info($head))[0];
 	my $gs = Git::SVN->find_by_url($url) || Git::SVN->_new;
 	my @cmd = (qw/log --abbrev-commit --pretty=raw --default/,
 	           $gs->refname);
