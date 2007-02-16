@@ -496,4 +496,7 @@ extern void trace_argv_printf(const char **argv, int count, const char *format, 
 extern int convert_to_git(const char *path, char **bufp, unsigned long *sizep);
 extern int convert_to_working_tree(const char *path, char **bufp, unsigned long *sizep);
 
+/* match-trees.c */
+void shift_tree(const unsigned char *, const unsigned char *, unsigned char *, int);
+
 #endif /* CACHE_H */

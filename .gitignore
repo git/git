@@ -77,6 +77,7 @@ git-merge-ours
 git-merge-recursive
 git-merge-resolve
 git-merge-stupid
+git-merge-subtree
 git-mergetool
 git-mktag
 git-mktree
@@ -148,6 +149,7 @@ test-chmtime
 test-date
 test-delta
 test-dump-cache-tree
+test-match-trees
 common-cmds.h
 *.tar.gz
 *.dsc

@@ -16,10 +16,10 @@ test -z "$(git ls-files -u)" ||
 LF='
 '
 
-all_strategies='recur recursive octopus resolve stupid ours'
+all_strategies='recur recursive octopus resolve stupid ours subtree'
 default_twohead_strategies='recursive'
 default_octopus_strategies='octopus'
-no_trivial_merge_strategies='ours'
+no_trivial_merge_strategies='ours subtree'
 use_strategies=
 
 index_merge=t
