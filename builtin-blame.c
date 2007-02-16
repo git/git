@@ -2200,6 +2200,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			if (!strcmp(argv[j], "--"))
 				seen_dashdash = j;
 		if (seen_dashdash) {
+			/* (2) */
 			if (seen_dashdash + 1 != argc - 1)
 				usage(blame_usage);
 			path = add_prefix(prefix, argv[seen_dashdash + 1]);
@@ -2208,6 +2209,8 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		}
 		else {
 			/* (3) */
+			if (argc <= i)
+				usage(blame_usage);
 			path = add_prefix(prefix, argv[i]);
 			if (i + 1 == argc - 1) {
 				final_commit_name = argv[i + 1];
