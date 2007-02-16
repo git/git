@@ -17,6 +17,7 @@ test_expect_success 'setup old-looking metadata' "
 	git-svn init $svnrepo &&
 	git-svn fetch &&
 	mv $GIT_DIR/svn/* $GIT_DIR/ &&
+	mv $GIT_DIR/svn/.metadata $GIT_DIR/ &&
 	rmdir $GIT_DIR/svn &&
 	git-update-ref refs/heads/git-svn-HEAD refs/remotes/git-svn &&
 	git-update-ref refs/heads/svn-HEAD refs/remotes/git-svn &&

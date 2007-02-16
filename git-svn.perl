@@ -1286,7 +1286,12 @@ sub get_fetch_range {
 
 sub tmp_config {
 	my (@args) = @_;
-	my $config = "$ENV{GIT_DIR}/svn/config";
+	my $old_def_config = "$ENV{GIT_DIR}/svn/config";
+	my $config = "$ENV{GIT_DIR}/svn/.metadata";
+	if (-e $old_def_config && ! -e $config) {
+		rename $old_def_config, $config or
+		       die "Failed rename $old_def_config => $config: $!\n";
+	}
 	my $old_config = $ENV{GIT_CONFIG};
 	$ENV{GIT_CONFIG} = $config;
 	$@ = undef;
