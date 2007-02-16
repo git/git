@@ -3044,7 +3044,14 @@ proc new_browser {commit} {
 	global next_browser_id cursor_ptr M1B
 	global browser_commit browser_status browser_stack browser_path browser_busy
 
-	set w .browser[incr next_browser_id]
+	if {[winfo ismapped .]} {
+		set w .browser[incr next_browser_id]
+		set tl $w
+		toplevel $w
+	} else {
+		set w {}
+		set tl .
+	}
 	set w_list $w.list.l
 	set browser_commit($w_list) $commit
 	set browser_status($w_list) {Starting...}
@@ -3052,7 +3059,6 @@ proc new_browser {commit} {
 	set browser_path($w_list) $browser_commit($w_list):
 	set browser_busy($w_list) 1
 
-	toplevel $w
 	label $w.path -textvariable browser_path($w_list) \
 		-anchor w \
 		-justify left \
@@ -3102,8 +3108,8 @@ proc new_browser {commit} {
 	bind $w_list <Left>            break
 	bind $w_list <Right>           break
 
-	bind $w <Visibility> "focus $w"
-	bind $w <Destroy> "
+	bind $tl <Visibility> "focus $w"
+	bind $tl <Destroy> "
 		array unset browser_buffer $w_list
 		array unset browser_files $w_list
 		array unset browser_status $w_list
@@ -3112,7 +3118,7 @@ proc new_browser {commit} {
 		array unset browser_commit $w_list
 		array unset browser_busy $w_list
 	"
-	wm title $w "[appname] ([reponame]): File Browser"
+	wm title $tl "[appname] ([reponame]): File Browser"
 	ls_tree $w_list $browser_commit($w_list) {}
 }
 
@@ -5019,6 +5025,7 @@ enable_option transport
 switch -- $subcommand {
 --version -
 version -
+browser -
 blame {
 	disable_option multicommit
 	disable_option branch
@@ -5358,6 +5365,15 @@ switch -- $subcommand {
 version {
 	puts "git-gui version $appvers"
 	exit
+}
+browser {
+	if {[llength $argv] != 1} {
+		puts stderr "usage: $argv0 browser commit"
+		exit 1
+	}
+	set current_branch [lindex $argv 0]
+	new_browser $current_branch
+	return
 }
 blame {
 	if {[llength $argv] != 2} {
