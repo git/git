@@ -56,7 +56,7 @@ my ($_stdin, $_help, $_edit,
 	$_template, $_shared,
 	$_version, $_fetch_all,
 	$_merge, $_strategy, $_dry_run,
-	$_prefix);
+	$_prefix, $_no_checkout);
 $Git::SVN::_follow_parent = 1;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
                     'config-dir=s' => \$Git::SVN::Ra::config_dir,
@@ -67,6 +67,7 @@ my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'noMetadata' => \$Git::SVN::_no_metadata,
 		'useSvmProps' => \$Git::SVN::_use_svm_props,
 		'log-window-size=i' => \$Git::SVN::Ra::_log_window_size,
+		'no-checkout' => \$_no_checkout,
 		'quiet|q' => \$_q,
 		'repack-flags|repack-args|repack-opts=s' =>
 		   \$Git::SVN::_repack_flags,
@@ -167,6 +168,7 @@ eval {
 	$cmd{$cmd}->[0]->(@ARGV);
 };
 fatal $@ if $@;
+post_fetch_checkout();
 exit 0;
 
 ####################### primary functions ######################
@@ -466,6 +468,27 @@ sub cmd_commit_diff {
 
 ########################### utility functions #########################
 
+sub post_fetch_checkout {
+	return if $_no_checkout;
+	my $gs = $Git::SVN::_head or return;
+	return if verify_ref('refs/heads/master^0');
+
+	my $valid_head = verify_ref('HEAD^0');
+	command_noisy(qw(update-ref refs/heads/master), $gs->refname);
+	return if ($valid_head || !verify_ref('HEAD^0'));
+
+	return if $ENV{GIT_DIR} !~ m#^(?:.*/)?\.git$#;
+	my $index = $ENV{GIT_INDEX_FILE} || "$ENV{GIT_DIR}/index";
+	return if -f $index;
+
+	chomp(my $bare = `git config --bool --get core.bare`);
+	return if $bare eq 'true';
+	return if command_oneline(qw/rev-parse --is-inside-git-dir/) eq 'true';
+	command_noisy(qw/read-tree -m -u -v HEAD HEAD/);
+	print STDERR "Checked out HEAD:\n  ",
+	             $gs->full_url, " r", $gs->last_rev, "\n";
+}
+
 sub complete_svn_url {
 	my ($url, $path) = @_;
 	$path =~ s#/+$##;
@@ -668,7 +691,7 @@ package Git::SVN;
 use strict;
 use warnings;
 use vars qw/$default_repo_id $default_ref_id $_no_metadata $_follow_parent
-            $_repack $_repack_flags $_use_svm_props/;
+            $_repack $_repack_flags $_use_svm_props $_head/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use File::Copy qw/copy/;
@@ -1781,6 +1804,7 @@ sub rev_db_set {
 	}
 	close $fh or croak $!;
 	if ($update_ref) {
+		$_head = $self;
 		command_noisy('update-ref', '-m', "r$rev",
 		              $self->refname, $commit);
 	}
