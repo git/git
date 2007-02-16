@@ -1545,11 +1545,13 @@ int pretend_sha1_file(void *buf, unsigned long len, const char *type, unsigned c
 	co = &cached_objects[cached_object_nr++];
 	co->size = len;
 	co->type = strdup(type);
+	co->buf = xmalloc(len);
+	memcpy(co->buf, buf, len);
 	hashcpy(co->sha1, sha1);
 	return 0;
 }
 
-void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
+void *read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
 {
 	unsigned long mapsize;
 	void *map, *buf;
