@@ -106,6 +106,16 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 		return htonl(S_IFLNK);
 	return htonl(S_IFREG | ce_permissions(mode));
 }
+static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned int mode)
+{
+	extern int trust_executable_bit;
+	if (!trust_executable_bit && S_ISREG(mode)) {
+		if (ce && S_ISREG(ntohl(ce->ce_mode)))
+			return ce->ce_mode;
+		return create_ce_mode(0666);
+	}
+	return create_ce_mode(mode);
+}
 #define canon_mode(mode) \
 	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
 	S_ISLNK(mode) ? S_IFLNK : S_IFDIR)

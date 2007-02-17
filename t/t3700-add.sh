@@ -30,6 +30,16 @@ test_expect_success \
 	 *) echo fail; git-ls-files --stage xfoo1; (exit 1);;
 	 esac'
 
+test_expect_success 'git-add: filemode=0 should not get confused by symlink' '
+	rm -f xfoo1 &&
+	ln -s foo xfoo1 &&
+	git-add xfoo1 &&
+	case "`git-ls-files --stage xfoo1`" in
+	120000" "*xfoo1) echo ok;;
+	*) echo fail; git-ls-files --stage xfoo1; (exit 1);;
+	esac
+'
+
 test_expect_success \
 	'git-update-index --add: Test that executable bit is not used...' \
 	'git config core.filemode 0 &&
@@ -40,6 +50,16 @@ test_expect_success \
 	 100644" "*xfoo2) echo ok;;
 	 *) echo fail; git-ls-files --stage xfoo2; (exit 1);;
 	 esac'
+
+test_expect_success 'git-add: filemode=0 should not get confused by symlink' '
+	rm -f xfoo2 &&
+	ln -s foo xfoo2 &&
+	git update-index --add xfoo2 &&
+	case "`git-ls-files --stage xfoo2`" in
+	120000" "*xfoo2) echo ok;;
+	*) echo fail; git-ls-files --stage xfoo2; (exit 1);;
+	esac
+'
 
 test_expect_success \
 	'git-update-index --add: Test that executable bit is not used...' \
