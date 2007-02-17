@@ -1406,6 +1406,26 @@ sub get_commit_parents {
 	@ret;
 }
 
+sub rewrite_root {
+	my ($self) = @_;
+	return $self->{-rewrite_root} if exists $self->{-rewrite_root};
+	my $k = "svn-remote.$self->{repo_id}.rewriteRoot";
+	my $rwr = eval { command_oneline(qw/config --get/, $k) };
+	if ($rwr) {
+		$rwr =~ s#/+$##;
+		if ($rwr !~ m#^[a-z\+]+://#) {
+			die "$rwr is not a valid URL (key: $k)\n";
+		}
+	}
+	$self->{-rewrite_root} = $rwr;
+}
+
+sub metadata_url {
+	my ($self) = @_;
+	($self->rewrite_root || $self->{url}) .
+	   (length $self->{path} ? '/' . $self->{path} : '');
+}
+
 sub full_url {
 	my ($self) = @_;
 	$self->{url} . (length $self->{path} ? '/' . $self->{path} : '');
@@ -1704,6 +1724,10 @@ sub make_log_entry {
 	my ($name, $email) = defined $::users{$author} ? @{$::users{$author}}
 	                                               : ($author, undef);
 	if (defined $headrev && $self->use_svm_props) {
+		if ($self->rewrite_root) {
+			die "Can't have both 'useSvmProps' and 'rewriteRoot' ",
+			    "options set!\n";
+		}
 		my ($uuid, $r) = $headrev =~ m{^([a-f\d\-]{30,}):(\d+)$};
 		if ($uuid ne $self->{svm}->{uuid}) {
 			die "UUID mismatch on SVM path:\n",
@@ -1716,7 +1740,7 @@ sub make_log_entry {
 		$log_entry{svm_revision} = $r;
 		$email ||= "$author\@$uuid"
 	} else {
-		$log_entry{metadata} = $self->full_url . "\@$rev " .
+		$log_entry{metadata} = $self->metadata_url. "\@$rev " .
 		                       $self->ra->get_uuid;
 		$email ||= "$author\@" . $self->ra->get_uuid;
 	}
