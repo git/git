@@ -90,6 +90,9 @@ my %cmd = (
 			{ 'revision|r=s' => \$_revision,
 			  'fetch-all|all' => \$_fetch_all,
 			   %fc_opts } ],
+	clone => [ \&cmd_clone, "Initialize and fetch revisions",
+			{ 'revision|r=s' => \$_revision,
+			   %fc_opts, %init_opts } ],
 	init => [ \&cmd_init, "Initialize a repo for tracking" .
 			  " (requires URL argument)",
 			  \%init_opts ],
@@ -167,7 +170,7 @@ usage(0) if $_help;
 version() if $_version;
 usage(1) unless defined $cmd;
 load_authors() if $_authors;
-unless ($cmd =~ /^(?:init|multi-init|commit-diff)$/) {
+unless ($cmd =~ /^(?:clone|init|multi-init|commit-diff)$/) {
 	Git::SVN::Migration::migration_check();
 }
 Git::SVN::init_vars();
@@ -235,6 +238,22 @@ sub init_subdir {
 	mkpath([$repo_path]) unless -d $repo_path;
 	chdir $repo_path or die "Couldn't chdir to $repo_path: $!\n";
 	$ENV{GIT_DIR} = $repo_path . "/.git";
+}
+
+sub cmd_clone {
+	my ($url, $path) = @_;
+	if (!defined $path &&
+	    (defined $_trunk || defined $_branches || defined $_tags) &&
+	    $url !~ m#^[a-z\+]+://#) {
+		$path = $url;
+	}
+	warn "--path: $path\n" if defined $path;
+	$path = basename($url) if !defined $path || !length $path;
+	warn "++path: $path\n" if defined $path;
+	mkpath([$path]);
+	chdir $path or die "Couldn't chdir to $path\n";
+	cmd_init(@_);
+	Git::SVN::fetch_all($Git::SVN::default_repo_id);
 }
 
 sub cmd_init {
