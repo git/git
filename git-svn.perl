@@ -164,7 +164,9 @@ read_repo_config(\%opts);
 my $rv = GetOptions(%opts, 'help|H|h' => \$_help, 'version|V' => \$_version,
                     'minimize-connections' => \$Git::SVN::Migration::_minimize,
                     'id|i=s' => \$Git::SVN::default_ref_id,
-                    'svn-remote|remote|R=s' => \$Git::SVN::default_repo_id);
+                    'svn-remote|remote|R=s' => sub {
+                       $Git::SVN::no_reuse_existing = 1;
+                       $Git::SVN::default_repo_id = $_[1] });
 exit 1 if (!$rv && $cmd ne 'log');
 
 usage(0) if $_help;
@@ -749,7 +751,7 @@ use strict;
 use warnings;
 use vars qw/$default_repo_id $default_ref_id $_no_metadata $_follow_parent
             $_repack $_repack_flags $_use_svm_props $_head
-            $_use_svnsync_props/;
+            $_use_svnsync_props $no_reuse_existing/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use File::Copy qw/copy/;
@@ -944,6 +946,7 @@ sub sanitize_remote_name {
 
 sub find_existing_remote {
 	my ($url, $remotes) = @_;
+	return undef if $no_reuse_existing;
 	my $existing;
 	foreach my $repo_id (keys %$remotes) {
 		my $u = $remotes->{$repo_id}->{url} or next;
@@ -1116,9 +1119,12 @@ sub svm {
 		$svm = {
 		  source => tmp_config('--get', "$section.svm-source"),
 		  uuid => tmp_config('--get', "$section.svm-uuid"),
+		  replace => tmp_config('--get', "$section.svm-replace"),
 		}
 	};
-	$self->{svm} = $svm if ($svm && $svm->{source} && $svm->{uuid});
+	if ($svm && $svm->{source} && $svm->{uuid} && $svm->{replace}) {
+		$self->{svm} = $svm;
+	}
 	$self->{svm};
 }
 
@@ -1127,64 +1133,76 @@ sub _set_svm_vars {
 	return $ra if $self->svm;
 
 	my @err = ( "useSvmProps set, but failed to read SVM properties\n",
-		    "(svm:source, svm:mirror, svm:mirror) ",
+		    "(svm:source, svm:uuid) ",
 		    "from the following URLs:\n" );
 	sub read_svm_props {
-		my ($self, $props) = @_;
+		my ($self, $ra, $path, $r) = @_;
+		my $props = ($ra->get_dir($path, $r))[2];
 		my $src = $props->{'svm:source'};
-		my $mirror = $props->{'svm:mirror'};
 		my $uuid = $props->{'svm:uuid'};
-		return undef if (!$src || !$mirror || !$uuid);
+		return undef if (!$src || !$uuid);
 
-		chomp($src, $mirror, $uuid);
+		chomp($src, $uuid);
 
 		$uuid =~ m{^[0-9a-f\-]{30,}$}
 		    or die "doesn't look right - svm:uuid is '$uuid'\n";
-		# don't know what a '!' is there for, also the
-		# username is of no interest
-		$src =~ s{/?!$}{$mirror};
+
+		# the '!' is used to mark the repos_root!/relative/path
+		$src =~ s{/?!/?}{/};
 		$src =~ s{/+$}{}; # no trailing slashes please
+		# username is of no interest
 		$src =~ s{(^[a-z\+]*://)[^/@]*@}{$1};
 
+		my $replace = $ra->{url};
+		$replace .= "/$path" if length $path;
+
 		my $section = "svn-remote.$self->{repo_id}";
-		tmp_config('--add', "$section.svm-source", $src);
-		tmp_config('--add', "$section.svm-uuid", $uuid);
-		$self->{svm} = { source => $src , uuid => $uuid };
-		return 1;
+		tmp_config("$section.svm-source", $src);
+		tmp_config("$section.svm-replace", $replace);
+		tmp_config("$section.svm-uuid", $uuid);
+		$self->{svm} = {
+			source => $src,
+			uuid => $uuid,
+			replace => $replace
+		};
 	}
 
 	my $r = $ra->get_latest_revnum;
 	my $path = $self->{path};
-	my @tried_a = ($path);
+	my %tried;
 	while (length $path) {
-		if ($self->read_svm_props(($ra->get_dir($path, $r))[2])) {
-			return $ra;
+		unless ($tried{"$self->{url}/$path"}) {
+			return $ra if $self->read_svm_props($ra, $path, $r);
+			$tried{"$self->{url}/$path"} = 1;
 		}
-		$path =~ s#/?[^/]+$## && push @tried_a, $path;
+		$path =~ s#/?[^/]+$##;
 	}
-	if ($self->read_svm_props(($ra->get_dir('', $r))[2])) {
-		return $ra;
-	}
+	die "Path: '$path' should be ''\n" if $path ne '';
+	return $ra if $self->read_svm_props($ra, $path, $r);
+	$tried{"$self->{url}/$path"} = 1;
 
 	if ($ra->{repos_root} eq $self->{url}) {
-		die @err, map { "  $self->{url}/$_\n" } @tried_a, "\n";
+		die @err, (map { "  $_\n" } keys %tried), "\n";
 	}
 
 	# nope, make sure we're connected to the repository root:
 	my $ok;
 	my @tried_b;
 	$path = $ra->{svn_path};
-	$path =~ s#/?[^/]+$##; # we already tried this one above
 	$ra = Git::SVN::Ra->new($ra->{repos_root});
 	while (length $path) {
-		$ok = $self->read_svm_props(($ra->get_dir($path, $r))[2]);
-		last if $ok;
-		$path =~ s#/?[^/]+$## && push @tried_b, $path;
+		unless ($tried{"$ra->{url}/$path"}) {
+			$ok = $self->read_svm_props($ra, $path, $r);
+			last if $ok;
+			$tried{"$ra->{url}/$path"} = 1;
+		}
+		$path =~ s#/?[^/]+$##;
 	}
-	$ok = $self->read_svm_props(($ra->get_dir('', $r))[2]) unless $ok;
+	die "Path: '$path' should be ''\n" if $path ne '';
+	$ok ||= $self->read_svm_props($ra, $path, $r);
+	$tried{"$ra->{url}/$path"} = 1;
 	if (!$ok) {
-		die @err, map { "  $self->{url}/$_\n" } @tried_a, "\n",
-		          map { "  $ra->{url}/$_\n" } @tried_b, "\n"
+		die @err, (map { "  $_\n" } keys %tried), "\n";
 	}
 	Git::SVN::Ra->new($self->{url});
 }
@@ -1779,13 +1797,18 @@ sub make_log_entry {
 			    "options set!\n";
 		}
 		my ($uuid, $r) = $headrev =~ m{^([a-f\d\-]{30,}):(\d+)$};
-		if ($uuid ne $self->{svm}->{uuid}) {
+		# we don't want "SVM: initializing mirror for junk" ...
+		return undef if $r == 0;
+		my $svm = $self->svm;
+		if ($uuid ne $svm->{uuid}) {
 			die "UUID mismatch on SVM path:\n",
-			    "expected: $self->{svm}->{uuid}\n",
+			    "expected: $svm->{uuid}\n",
 			    "     got: $uuid\n";
 		}
-		my $full_url = $self->{svm}->{source};
-		$full_url .= "/$self->{path}" if length $self->{path};
+		my $full_url = $self->full_url;
+		$full_url =~ s#^\Q$svm->{replace}\E(/|$)#$svm->{source}$1# or
+		             die "Failed to replace '$svm->{replace}' with ",
+		                 "'$svm->{source}' in $full_url\n";
 		$log_entry{metadata} = "$full_url\@$r $uuid";
 		$log_entry{svm_revision} = $r;
 		$email ||= "$author\@$uuid"
