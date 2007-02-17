@@ -1,6 +1,8 @@
 #ifndef GIT_COMPAT_UTIL_H
 #define GIT_COMPAT_UTIL_H
 
+#define _FILE_OFFSET_BITS 64
+
 #ifndef FLEX_ARRAY
 #if defined(__GNUC__) && (__GNUC__ < 3)
 #define FLEX_ARRAY 0
