@@ -2595,8 +2595,17 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 	int read_stdin = 1;
 	int inaccurate_eof = 0;
 	int errs = 0;
+	int is_not_gitdir = 0;
 
 	const char *whitespace_option = NULL;
+
+	prefix = setup_git_directory_gently(&is_not_gitdir);
+	prefix_length = prefix ? strlen(prefix) : 0;
+	if (!is_not_gitdir) {
+		git_config(git_apply_config);
+		if (apply_default_whitespace)
+			parse_whitespace_option(apply_default_whitespace);
+	}
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -2648,10 +2657,14 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			continue;
 		}
 		if (!strcmp(arg, "--index")) {
+			if (is_not_gitdir)
+				die("--index outside a repository");
 			check_index = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--cached")) {
+			if (is_not_gitdir)
+				die("--cached outside a repository");
 			check_index = 1;
 			cached = 1;
 			continue;
@@ -2699,14 +2712,6 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 		if (!strcmp(arg, "--inaccurate-eof")) {
 			inaccurate_eof = 1;
 			continue;
-		}
-
-		if (check_index && prefix_length < 0) {
-			prefix = setup_git_directory();
-			prefix_length = prefix ? strlen(prefix) : 0;
-			git_config(git_apply_config);
-			if (!whitespace_option && apply_default_whitespace)
-				parse_whitespace_option(apply_default_whitespace);
 		}
 		if (0 < prefix_length)
 			arg = prefix_filename(prefix, prefix_length, arg);
