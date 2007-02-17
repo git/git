@@ -66,6 +66,7 @@ my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		'repack:i' => \$Git::SVN::_repack,
 		'noMetadata' => \$Git::SVN::_no_metadata,
 		'useSvmProps' => \$Git::SVN::_use_svm_props,
+		'useSvnsyncProps' => \$Git::SVN::_use_svnsync_props,
 		'log-window-size=i' => \$Git::SVN::Ra::_log_window_size,
 		'no-checkout' => \$_no_checkout,
 		'quiet|q' => \$_q,
@@ -747,7 +748,8 @@ package Git::SVN;
 use strict;
 use warnings;
 use vars qw/$default_repo_id $default_ref_id $_no_metadata $_follow_parent
-            $_repack $_repack_flags $_use_svm_props $_head/;
+            $_repack $_repack_flags $_use_svm_props $_head
+            $_use_svnsync_props/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use File::Copy qw/copy/;
@@ -768,7 +770,8 @@ BEGIN {
 	# per [svn-remote "..."] section.  Command-line options will *NOT*
 	# override options set in an [svn-remote "..."] section
 	my $e;
-	foreach (qw/follow_parent no_metadata use_svm_props/) {
+	foreach (qw/follow_parent no_metadata use_svm_props
+	            use_svnsync_props/) {
 		my $key = $_;
 		$key =~ tr/_//d;
 		$e .= "sub $_ {
@@ -1186,6 +1189,50 @@ sub _set_svm_vars {
 	Git::SVN::Ra->new($self->{url});
 }
 
+sub svnsync {
+	my ($self) = @_;
+	return $self->{svnsync} if $self->{svnsync};
+
+	if ($self->no_metadata) {
+		die "Can't have both 'noMetadata' and ",
+		    "'useSvnsyncProps' options set!\n";
+	}
+	if ($self->rewrite_root) {
+		die "Can't have both 'useSvnsyncProps' and 'rewriteRoot' ",
+		    "options set!\n";
+	}
+
+	my $svnsync;
+	# see if we have it in our config, first:
+	eval {
+		my $section = "svn-remote.$self->{repo_id}";
+		$svnsync = {
+		  url => tmp_config('--get', "$section.svnsync-url"),
+		  uuid => tmp_config('--get', "$section.svnsync-uuid"),
+		}
+	};
+	if ($svnsync && $svnsync->{url} && $svnsync->{uuid}) {
+		return $self->{svnsync} = $svnsync;
+	}
+
+	my $err = "useSvnsyncProps set, but failed to read " .
+	          "svnsync property: svn:sync-from-";
+	my $rp = $self->ra->rev_proplist(0);
+
+	my $url = $rp->{'svn:sync-from-url'} or die $err . "url\n";
+	$url =~ m{^[a-z\+]+://} or
+	           die "doesn't look right - svn:sync-from-url is '$url'\n";
+
+	my $uuid = $rp->{'svn:sync-from-uuid'} or die $err . "uuid\n";
+	$uuid =~ m{^[0-9a-f\-]{30,}$} or
+	           die "doesn't look right - svn:sync-from-uuid is '$uuid'\n";
+
+	my $section = "svn-remote.$self->{repo_id}";
+	tmp_config('--add', "$section.svnsync-uuid", $uuid);
+	tmp_config('--add', "$section.svnsync-url", $url);
+	return $self->{svnsync} = { url => $url, uuid => $uuid };
+}
+
 # this allows us to memoize our SVN::Ra UUID locally and avoid a
 # remote lookup (useful for 'git svn log').
 sub ra_uuid {
@@ -1210,6 +1257,9 @@ sub ra {
 	if ($self->use_svm_props && !$self->{svm}) {
 		if ($self->no_metadata) {
 			die "Can't have both 'noMetadata' and ",
+			    "'useSvmProps' options set!\n";
+		} elsif ($self->use_svnsync_props) {
+			die "Can't have both 'useSvnsyncProps' and ",
 			    "'useSvmProps' options set!\n";
 		}
 		$ra = $self->_set_svm_vars($ra);
@@ -1738,6 +1788,12 @@ sub make_log_entry {
 		$full_url .= "/$self->{path}" if length $self->{path};
 		$log_entry{metadata} = "$full_url\@$r $uuid";
 		$log_entry{svm_revision} = $r;
+		$email ||= "$author\@$uuid"
+	} elsif ($self->use_svnsync_props) {
+		my $full_url = $self->svnsync->{url};
+		$full_url .= "/$self->{path}" if length $self->{path};
+		my $uuid = $self->svnsync->{uuid};
+		$log_entry{metadata} = "$full_url\@$rev $uuid";
 		$email ||= "$author\@$uuid"
 	} else {
 		$log_entry{metadata} = $self->metadata_url. "\@$rev " .
