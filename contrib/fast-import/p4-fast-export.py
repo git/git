@@ -210,7 +210,7 @@ def commit(details, files, branch, branchPrefix):
     merges = Set()
 
     for file in files:
-        if lastChange == 0:
+        if lastChange == 0 or not detectBranches:
             continue
         path = file["path"]
         if not path.startswith(branchPrefix):
