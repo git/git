@@ -180,11 +180,8 @@ test_expect_success 'apply patch (autocrlf=true)' '
 	git repo-config core.autocrlf true &&
 	git read-tree --reset -u HEAD &&
 
-	# Sore thumb
-	remove_cr one >tmp && mv -f tmp one &&
-
 	git apply patch.file &&
-	test "$patched" = "`git hash-object --stdin <one`" || {
+	test "$patched" = "`remove_cr one | git hash-object --stdin`" || {
 		echo "Eh?  apply without index"
 		false
 	}
@@ -199,6 +196,20 @@ test_expect_success 'apply patch --cached (autocrlf=true)' '
 	git apply --cached patch.file &&
 	test "$patched" = `git rev-parse :one` || {
 		echo "Eh?  apply without index"
+		false
+	}
+'
+
+test_expect_success 'apply patch --index (autocrlf=true)' '
+
+	rm -f tmp one dir/two &&
+	git repo-config core.autocrlf true &&
+	git read-tree --reset -u HEAD &&
+
+	git apply --index patch.file &&
+	test "$patched" = `git rev-parse :one` &&
+	test "$patched" = "`remove_cr one | git hash-object --stdin`" || {
+		echo "Eh?  apply with --index"
 		false
 	}
 '

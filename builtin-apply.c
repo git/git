@@ -1393,28 +1393,39 @@ static void show_stats(struct patch *patch)
 	free(qname);
 }
 
-static int read_old_data(struct stat *st, const char *path, void *buf, unsigned long size)
+static int read_old_data(struct stat *st, const char *path, char **buf_p, unsigned long *alloc_p, unsigned long *size_p)
 {
 	int fd;
 	unsigned long got;
+	unsigned long nsize;
+	char *nbuf;
+	unsigned long size = *size_p;
+	char *buf = *buf_p;
 
 	switch (st->st_mode & S_IFMT) {
 	case S_IFLNK:
-		return readlink(path, buf, size);
+		return readlink(path, buf, size) != size;
 	case S_IFREG:
 		fd = open(path, O_RDONLY);
 		if (fd < 0)
 			return error("unable to open %s", path);
 		got = 0;
 		for (;;) {
-			int ret = xread(fd, (char *) buf + got, size - got);
+			int ret = xread(fd, buf + got, size - got);
 			if (ret <= 0)
 				break;
 			got += ret;
 		}
 		close(fd);
-		return got;
-
+		nsize = got;
+		nbuf = buf;
+		if (convert_to_git(path, &nbuf, &nsize)) {
+			free(buf);
+			*buf_p = nbuf;
+			*alloc_p = nsize;
+			*size_p = nsize;
+		}
+		return got != size;
 	default:
 		return -1;
 	}
@@ -1910,7 +1921,7 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 		size = st->st_size;
 		alloc = size + 8192;
 		buf = xmalloc(alloc);
-		if (read_old_data(st, patch->old_name, buf, alloc) != size)
+		if (read_old_data(st, patch->old_name, &buf, &alloc, &size))
 			return error("read of %s failed", patch->old_name);
 	}
 
@@ -2282,12 +2293,22 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 static int try_create_file(const char *path, unsigned int mode, const char *buf, unsigned long size)
 {
 	int fd;
+	char *nbuf;
+	unsigned long nsize;
 
 	if (S_ISLNK(mode))
 		/* Although buf:size is counted string, it also is NUL
 		 * terminated.
 		 */
 		return symlink(buf, path);
+	nsize = size;
+	nbuf = (char *) buf;
+	if (convert_to_working_tree(path, &nbuf, &nsize)) {
+		free((char *) buf);
+		buf = nbuf;
+		size = nsize;
+	}
+
 	fd = open(path, O_CREAT | O_EXCL | O_WRONLY, (mode & 0100) ? 0777 : 0666);
 	if (fd < 0)
 		return -1;
@@ -2597,6 +2618,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 	int errs = 0;
 
 	const char *whitespace_option = NULL;
+
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
