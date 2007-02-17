@@ -148,7 +148,7 @@ file you edit, you need to tell git that the conflict has been resolved,
 typically this would be done with
 
 
-    git update-index <filename>
+    git add <filename>
 
 
 After resolving the conflict manually and updating the index with the
