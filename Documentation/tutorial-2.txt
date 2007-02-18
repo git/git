@@ -227,7 +227,7 @@ $ git diff
 @@ -1 +1,2 @@
  hello world!
 +hello world, again
-$ git update-index file.txt
+$ git add file.txt
 $ git diff
 ------------------------------------------------
 
@@ -260,7 +260,7 @@ hello world!
 hello world, again
 ------------------------------------------------
 
-So what our "git update-index" did was store a new blob and then put
+So what our "git add" did was store a new blob and then put
 a reference to it in the index file.  If we modify the file again,
 we'll see that the new modifications are reflected in the "git-diff"
 output:

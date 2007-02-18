@@ -61,7 +61,8 @@ OPTIONS
 +
 When a merge conflict happens, the index entries for conflicting
 paths are left unmerged, and you need to resolve the conflicts
-and mark the resolved paths with `git update-index`.
+and mark the resolved paths with `git add` (or `git rm` if the merge
+should result in deletion of the path).
 
 <new_branch>::
 	Name for the new branch.
@@ -179,11 +180,11 @@ fatal: merge program failed
 At this point, `git diff` shows the changes cleanly merged as in
 the previous example, as well as the changes in the conflicted
 files.  Edit and resolve the conflict and mark it resolved with
-`git update-index` as usual:
+`git add` as usual:
 +
 ------------
 $ edit frotz
-$ git update-index frotz
+$ git add frotz
 ------------
 
 

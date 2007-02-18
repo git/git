@@ -163,8 +163,7 @@ If this three-way merge resolves cleanly, the result is written
 out to your working tree file, so you would not have to manually
 resolve it.  Note that `git-rerere` leaves the index file alone,
 so you still need to do the final sanity checks with `git diff`
-(or `git diff -c`) and `git update-index` when you are
-satisfied.
+(or `git diff -c`) and `git add` when you are satisfied.
 
 As a convenience measure, `git-merge` automatically invokes
 `git-rerere` when it exits with a failed automerge, which

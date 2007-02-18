@@ -1988,7 +1988,7 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 			return error("%s: %s", old_name, strerror(errno));
 
 		if (!cached)
-			st_mode = ntohl(create_ce_mode(st.st_mode));
+			st_mode = ntohl(ce_mode_from_stat(ce, st.st_mode));
 
 		if (patch->is_new < 0)
 			patch->is_new = 0;

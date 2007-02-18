@@ -170,9 +170,7 @@ static int get_stat_data(struct cache_entry *ce,
 		}
 		changed = ce_match_stat(ce, &st, 0);
 		if (changed) {
-			mode = create_ce_mode(st.st_mode);
-			if (!trust_executable_bit && S_ISREG(st.st_mode))
-				mode = ce->ce_mode;
+			mode = ce_mode_from_stat(ce, st.st_mode);
 			sha1 = no_sha1;
 		}
 	}
