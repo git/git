@@ -65,6 +65,32 @@ COMMANDS
 	.git/config file may be specified as an optional command-line
 	argument.
 
+'clone'::
+	Runs 'init' and 'fetch'.  It will automatically create a
+	directory based on the basename of the URL passed to it;
+	or if a second argument is passed; it will create a directory
+	and work within that.  It accepts all arguments that the
+	'init' and 'fetch' commands accept; with the exception of
+	'--fetch-all'.   After a repository is cloned, the 'fetch'
+	command will be able to update revisions without affecting
+	the working tree; and the 'rebase' command will be able
+	to update the working tree with the latest changes.
+
+'rebase'::
+	This fetches revisions from the SVN parent of the current HEAD
+	and rebases the current (uncommitted to SVN) work against it.
+
+	This works similarly to 'svn update' or 'git-pull' except that
+	it preserves linear history with 'git-rebase' instead of
+	'git-merge' for ease of dcommit-ing with git-svn.
+
+	This accepts all options that 'git-svn fetch' and 'git-rebase'
+	accepts.  However '--fetch-all' only fetches from the current
+	[svn-remote], and not all [svn-remote] definitions.
+
+	Like 'git-rebase'; this requires that the working tree be clean
+	and have no uncommitted changes.
+
 'dcommit'::
 	Commit each diff from a specified head directly to the SVN
 	repository, and then rebase or reset (depending on whether or
@@ -234,7 +260,7 @@ config key: svn.repackflags
 -s<strategy>::
 --strategy=<strategy>::
 
-These are only used with the 'dcommit' command.
+These are only used with the 'dcommit' and 'rebase' commands.
 
 Passed directly to git-rebase when using 'dcommit' if a
 'git-reset' cannot be used (see dcommit).
@@ -276,6 +302,11 @@ no longer require this switch as an argument.
 
 config key: svn.followparent
 
+--
+CONFIG FILE-ONLY OPTIONS
+------------------------
+--
+
 svn.noMetadata:
 svn-remote.<name>.noMetadata:
 	This gets rid of the git-svn-id: lines at the end of every commit.
@@ -301,8 +332,27 @@ svn-remote.<name>.useSvmProps:
 	URL and UUID, and use it when generating metadata in commit
 	messages.
 
-	Using this conflicts with the 'noMetadata' option for
-	(hopefully) obvious reasons.
+svn.useSvnsyncProps:
+svn-remote.<name>.useSvnsyncprops:
+	Similar to the useSvmProps option; this is for users
+	of the svnsync(1) command distributed with SVN 1.4.x and
+	later.
+
+svn-remote.<name>.rewriteRoot
+	This allows users to create repositories from alternate
+	URLs.  For example, an administrator could run git-svn on the
+	server locally (accessing via file://) but wish to distribute
+	the repository with a public http:// or svn:// URL in the
+	metadata so users of it will see the public URL.
+
+
+Since the noMetadata, rewriteRoot, useSvnsyncProps and useSvmProps
+options all affect the metadata generated and used by git-svn; they
+*must* be set in the configuration file before any history is imported
+and these settings should never be changed once they are set.
+
+Additionally, only one of these four options can be used per-svn-remote
+section because they affect the 'git-svn-id:' metadata line.
 
 --
 
@@ -312,17 +362,20 @@ Basic Examples
 Tracking and contributing to a the trunk of a Subversion-managed project:
 
 ------------------------------------------------------------------------
-# Initialize a repo (like git init):
-	git-svn init http://svn.foo.org/project/trunk
-# Fetch remote revisions:
-	git-svn fetch
-# Create your own branch to hack on:
-	git checkout -b my-branch remotes/git-svn
-# Do some work, and then commit your new changes to SVN, as well as
-# automatically updating your working HEAD:
+# Clone a repo (like git clone):
+	git-svn clone http://svn.foo.org/project/trunk
+# Enter the newly cloned directory:
+	cd trunk
+# You should be on master branch, double-check with git-branch
+	git branch
+# Do some work and commit locally to git:
+	git commit ...
+# Something is committed to SVN, rebase your local changes against the
+# latest changes in SVN:
+	git-svn rebase
+# Now commit your changes (that were committed previously using git) to SVN,
+# as well as automatically updating your working HEAD:
 	git-svn dcommit
-# Something is committed to SVN, rebase the latest into your branch:
-	git-svn fetch && git rebase remotes/git-svn
 # Append svn:ignore settings to the default git exclude file:
 	git-svn show-ignore >> .git/info/exclude
 ------------------------------------------------------------------------
@@ -331,19 +384,15 @@ Tracking and contributing to an entire Subversion-managed project
 (complete with a trunk, tags and branches):
 
 ------------------------------------------------------------------------
-# Initialize a repo (like git init):
-	git-svn init http://svn.foo.org/project -T trunk -b branches -t tags
-# Fetch remote revisions:
-	git-svn fetch
-# Create your own branch of trunk to hack on:
-	git checkout -b my-trunk remotes/trunk
-# Do some work, and then commit your new changes to SVN, as well as
-# automatically updating your working HEAD:
-	git-svn dcommit
-# Something has been committed to trunk, rebase the latest into your branch:
-	git-svn fetch && git rebase remotes/trunk
-# Append svn:ignore settings of trunk to the default git exclude file:
-	git-svn show-ignore -i trunk >> .git/info/exclude
+# Clone a repo (like git clone):
+	git-svn clone http://svn.foo.org/project -T trunk -b branches -t tags
+# View all branches and tags you have cloned:
+	git branch -r
+# Reset your master to trunk (or any other branch, replacing 'trunk'
+# with the appropriate name):
+	git reset --hard remotes/trunk
+# You may only dcommit to one branch/tag/trunk at a time.  The usage
+# of dcommit/rebase/show-ignore should be teh same as above.
 ------------------------------------------------------------------------
 
 REBASE VS. PULL/MERGE
@@ -356,7 +405,7 @@ pulled or merged from.  This is because the author favored
 
 If you use 'git-svn set-tree A..B' to commit several diffs and you do
 not have the latest remotes/git-svn merged into my-branch, you should
-use 'git rebase' to update your work branch instead of 'git pull' or
+use 'git-svn rebase' to update your work branch instead of 'git pull' or
 'git merge'.  'pull/merge' can cause non-linear history to be flattened
 when committing into SVN, which can lead to merge commits reversing
 previous commits in SVN.
@@ -373,17 +422,15 @@ how 'svn log' works).
 BUGS
 ----
 
-We ignore all SVN properties except svn:executable.  Too difficult to
-map them since we rely heavily on git write-tree being _exactly_ the
-same on both the SVN and git working trees and I prefer not to clutter
-working trees with metadata files.
+We ignore all SVN properties except svn:executable.  Any unhandled
+properties are logged to $GIT_DIR/svn/<refname>/unhandled.log
 
 Renamed and copied directories are not detected by git and hence not
 tracked when committing to SVN.  I do not plan on adding support for
 this as it's quite difficult and time-consuming to get working for all
-the possible corner cases (git doesn't do it, either).  Renamed and
-copied files are fully supported if they're similar enough for git to
-detect them.
+the possible corner cases (git doesn't do it, either).  Committing
+renamed and copied files are fully supported if they're similar enough
+for git to detect them.
 
 CONFIGURATION
 -------------
