@@ -75,9 +75,14 @@ my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		%remote_opts );
 
 my ($_trunk, $_tags, $_branches);
+my %icv;
 my %init_opts = ( 'template=s' => \$_template, 'shared:s' => \$_shared,
                   'trunk|T=s' => \$_trunk, 'tags|t=s' => \$_tags,
                   'branches|b=s' => \$_branches, 'prefix=s' => \$_prefix,
+		  'no-metadata' => sub { $icv{noMetadata} = 1 },
+		  'use-svm-props' => sub { $icv{useSvmProps} = 1 },
+		  'use-svnsync-props' => sub { $icv{useSvnsyncProps} = 1 },
+		  'rewrite-root=s' => sub { $icv{rewriteRoot} = $_[1] },
                   %remote_opts );
 my %cmt_opts = ( 'edit|e' => \$_edit,
 		'rmdir' => \$SVN::Git::Editor::_rmdir,
@@ -233,6 +238,14 @@ sub do_git_init_db {
 			}
 		}
 		command_noisy(@init_db);
+	}
+	my $set;
+	my $pfx = "svn-remote.$Git::SVN::default_repo_id";
+	foreach my $i (keys %icv) {
+		die "'$set' and '$i' cannot both be set\n" if $set;
+		next unless defined $icv{$i};
+		command_noisy('config', "$pfx.$i", $icv{$i});
+		$set = $i;
 	}
 }
 

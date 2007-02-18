@@ -49,6 +49,15 @@ COMMANDS
 	(--tags=project/tags') or a full url
 	(--tags=https://foo.org/project/tags)
 
+--no-metadata::
+	Set the 'noMetadata' option in the [svn-remote] config.
+--use-svm-props::
+	Set the 'useSvmProps' option in the [svn-remote] config.
+--use-svnsync-props::
+	Set the 'useSvnsyncProps' option in the [svn-remote] config.
+--rewrite-root=<URL>::
+	Set the 'rewriteRoot' option in the [svn-remote] config.
+
 --prefix=<prefix>
 	This allows one to specify a prefix which is prepended
 	to the names of remotes if trunk/branches/tags are
@@ -307,8 +316,8 @@ CONFIG FILE-ONLY OPTIONS
 ------------------------
 --
 
-svn.noMetadata:
-svn-remote.<name>.noMetadata:
+svn.noMetadata::
+svn-remote.<name>.noMetadata::
 	This gets rid of the git-svn-id: lines at the end of every commit.
 
 	If you lose your .git/svn/git-svn/.rev_db file, git-svn will not
@@ -319,8 +328,8 @@ svn-remote.<name>.noMetadata:
 	this, either.  Using this conflicts with the 'useSvmProps'
 	option for (hopefully) obvious reasons.
 
-svn.useSvmProps:
-svn-remote.<name>.useSvmProps:
+svn.useSvmProps::
+svn-remote.<name>.useSvmProps::
 	This allows git-svn to re-map repository URLs and UUIDs from
 	mirrors created using SVN::Mirror (or svk) for metadata.
 
@@ -332,19 +341,18 @@ svn-remote.<name>.useSvmProps:
 	URL and UUID, and use it when generating metadata in commit
 	messages.
 
-svn.useSvnsyncProps:
-svn-remote.<name>.useSvnsyncprops:
+svn.useSvnsyncProps::
+svn-remote.<name>.useSvnsyncprops::
 	Similar to the useSvmProps option; this is for users
 	of the svnsync(1) command distributed with SVN 1.4.x and
 	later.
 
-svn-remote.<name>.rewriteRoot
+svn-remote.<name>.rewriteRoot::
 	This allows users to create repositories from alternate
 	URLs.  For example, an administrator could run git-svn on the
 	server locally (accessing via file://) but wish to distribute
 	the repository with a public http:// or svn:// URL in the
 	metadata so users of it will see the public URL.
-
 
 Since the noMetadata, rewriteRoot, useSvnsyncProps and useSvmProps
 options all affect the metadata generated and used by git-svn; they
