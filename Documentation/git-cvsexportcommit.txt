@@ -8,7 +8,7 @@ git-cvsexportcommit - Export a single commit to a CVS checkout
 
 SYNOPSIS
 --------
-'git-cvsexportcommit' [-h] [-v] [-c] [-P] [-p] [-a] [-f] [-m msgprefix] [PARENTCOMMIT] COMMITID
+'git-cvsexportcommit' [-h] [-v] [-c] [-P] [-p] [-a] [-d cvsroot] [-f] [-m msgprefix] [PARENTCOMMIT] COMMITID
 
 
 DESCRIPTION
@@ -42,6 +42,11 @@ OPTIONS
 -a::
 	Add authorship information. Adds Author line, and Committer (if
 	different from Author) to the message.
+
+-d::
+	Set an alternative CVSROOT to use.  This corresponds to the CVS
+	-d parameter.  Usually users will not want to set this, except
+	if using CVS in an asymmetric fashion.
 
 -f::
 	Force the merge even if the files are not up to date.
