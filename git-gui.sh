@@ -361,6 +361,24 @@ set _reponame [lindex [file split \
 
 ######################################################################
 ##
+## global init
+
+set current_diff_path {}
+set current_diff_side {}
+set diff_actions [list]
+set ui_status_value {Initializing...}
+
+set HEAD {}
+set PARENT {}
+set MERGE_HEAD [list]
+set commit_type {}
+set empty_tree {}
+set current_branch {}
+set current_diff_path {}
+set selected_commit_type new
+
+######################################################################
+##
 ## task management
 
 set rescan_active 0
@@ -682,8 +700,9 @@ proc reshow_diff {} {
 	global current_diff_path current_diff_side
 
 	set p $current_diff_path
-	if {$p eq {}
-		|| $current_diff_side eq {}
+	if {$p eq {}} {
+		# No diff is being shown.
+	} elseif {$current_diff_side eq {}
 		|| [catch {set s $file_states($p)}]
 		|| [lsearch -sorted -exact $file_lists($current_diff_side) $p] == -1} {
 		clear_diff
@@ -5647,9 +5666,6 @@ bind_button3 $ui_comm "tk_popup $ctxm %X %Y"
 
 # -- Diff Header
 #
-set current_diff_path {}
-set current_diff_side {}
-set diff_actions [list]
 proc trace_current_diff_path {varname args} {
 	global current_diff_path diff_actions file_states
 	if {$current_diff_path eq {}} {
@@ -5842,7 +5858,6 @@ unset ui_diff_applyhunk
 
 # -- Status Bar
 #
-set ui_status_value {Initializing...}
 label .status -textvariable ui_status_value \
 	-anchor w \
 	-justify left \
@@ -5915,15 +5930,6 @@ unset i
 
 set file_lists($ui_index) [list]
 set file_lists($ui_workdir) [list]
-
-set HEAD {}
-set PARENT {}
-set MERGE_HEAD [list]
-set commit_type {}
-set empty_tree {}
-set current_branch {}
-set current_diff_path {}
-set selected_commit_type new
 
 wm title . "[appname] ([file normalize [file dirname [gitdir]]])"
 focus -force $ui_comm
