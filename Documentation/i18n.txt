@@ -25,15 +25,15 @@ mind.
   an warning if the commit log message given to it does not look
   like a valid UTF-8 string, unless you explicitly say your
   project uses a legacy encoding.  The way to say this is to
-  have core.commitencoding in `.git/config` file, like this:
+  have i18n.commitencoding in `.git/config` file, like this:
 +
 ------------
-[core]
+[i18n]
 	commitencoding = ISO-8859-1
 ------------
 +
 Commit objects created with the above setting record the value
-of `core.commitencoding` in its `encoding` header.  This is to
+of `i18n.commitencoding` in its `encoding` header.  This is to
 help other people who look at them later.  Lack of this header
 implies that the commit log message is encoded in UTF-8.
 
@@ -41,15 +41,15 @@ implies that the commit log message is encoded in UTF-8.
   header of a commit object, and tries to re-code the log
   message into UTF-8 unless otherwise specified.  You can
   specify the desired output encoding with
-  `core.logoutputencoding` in `.git/config` file, like this:
+  `i18n.logoutputencoding` in `.git/config` file, like this:
 +
 ------------
-[core]
+[i18n]
 	logoutputencoding = ISO-8859-1
 ------------
 +
 If you do not have this configuration variable, the value of
-`core.commitencoding` is used instead.
+`i18n.commitencoding` is used instead.
 
 Note that we deliberately chose not to re-code the commit log
 message when a commit is made to force UTF-8 at the commit
