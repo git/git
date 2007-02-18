@@ -2601,11 +2601,9 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 
 	prefix = setup_git_directory_gently(&is_not_gitdir);
 	prefix_length = prefix ? strlen(prefix) : 0;
-	if (!is_not_gitdir) {
-		git_config(git_apply_config);
-		if (apply_default_whitespace)
-			parse_whitespace_option(apply_default_whitespace);
-	}
+	git_config(git_apply_config);
+	if (apply_default_whitespace)
+		parse_whitespace_option(apply_default_whitespace);
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
