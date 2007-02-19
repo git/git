@@ -4559,7 +4559,7 @@ proc do_about {} {
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
 	label $w.desc \
-		-text "git-gui - a commit creation tool for Git.
+		-text "git-gui - a graphical user interface for Git.
 $copyright" \
 		-padx 5 -pady 5 \
 		-justify left \
