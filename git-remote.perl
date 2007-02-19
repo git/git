@@ -303,6 +303,18 @@ elsif ($ARGV[0] eq 'show') {
 		show_remote($ARGV[$i], $ls_remote);
 	}
 }
+elsif ($ARGV[0] eq 'update') {
+        my $conf = $git->config("remote.fetch");
+	if (defined($conf)) {
+		@remotes = split(' ', $conf);
+	} else {
+	        @remotes = sort keys %$remote;
+	}
+	for (@remotes) {
+		print "Fetching $_\n";
+		$git->command('fetch', "$_");
+	}
+}
 elsif ($ARGV[0] eq 'prune') {
 	my $ls_remote = 1;
 	my $i;
@@ -360,5 +372,6 @@ else {
 	print STDERR "       git remote add <name> <url>\n";
 	print STDERR "       git remote show <name>\n";
 	print STDERR "       git remote prune <name>\n";
+	print STDERR "       git remote update\n";
 	exit(1);
 }

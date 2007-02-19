@@ -439,6 +439,10 @@ pull.octopus::
 pull.twohead::
 	The default merge strategy to use when pulling a single branch.
 
+remote.fetch::
+	The list of remotes which are fetched by "git remote update".
+	See gitlink:git-remote[1].
+
 remote.<name>.url::
 	The URL of a remote repository.  See gitlink:git-fetch[1] or
 	gitlink:git-push[1].

@@ -13,6 +13,7 @@ SYNOPSIS
 'git-remote' add <name> <url>
 'git-remote' show <name>
 'git-remote' prune <name>
+'git-remote' update
 
 DESCRIPTION
 -----------
@@ -40,7 +41,14 @@ Gives some information about the remote <name>.
 
 Deletes all stale tracking branches under <name>.
 These stale branches have already been removed from the remote repository
-referenced by <name>, but are still locally available in "remotes/<name>".
+referenced by <name>, but are still locally available in
+"remotes/<name>".
+
+'update'::
+
+Fetch updates for the remotes in the repository.  By default all remotes
+are updated, but this can be configured via the configuration parameter
+'remote.fetch'.   (See gitlink:git-config[1]).
 
 
 DISCUSSION
