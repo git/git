@@ -5336,7 +5336,7 @@ set doc_path [file dirname [gitexec]]
 set doc_path [file join $doc_path Documentation index.html]
 
 if {[is_Cygwin]} {
-	set doc_path [exec cygpath --windows $doc_path]
+	set doc_path [exec cygpath --mixed $doc_path]
 }
 
 if {$browser eq {}} {
