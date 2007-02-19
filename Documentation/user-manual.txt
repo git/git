@@ -1255,7 +1255,7 @@ $ git reset --hard HEAD
 Or, if you've already commited the merge that you want to throw away,
 
 -------------------------------------------------
-$ git reset --hard HEAD^
+$ git reset --hard ORIG_HEAD
 -------------------------------------------------
 
 However, this last command can be dangerous in some cases--never
