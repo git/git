@@ -15,7 +15,15 @@ Fixes since v1.5.0
   - Converted remaining mentions of update-index on Porcelain
     documents to git-add/git-rm.
 
+  - Some i18n.* configuration variables were incorrectly
+    described as core.*; fixed.
+
 * Bugfixes
+
+  - git-add and git-update-index on a filesystem on which
+    executable bits are unreliable incorrectly reused st_mode
+    bits even when the path changed between symlink and regular
+    file.
 
   - git-daemon marks the listening sockets with FD_CLOEXEC so
     that it won't be leaked into the children.
@@ -24,14 +32,11 @@ Fixes since v1.5.0
     parameter was missing was fixed; usage() message is given
     instead.
 
+  - git-rev-list did not read $GIT_DIR/config file, which means
+    that did not honor i18n.logoutputencoding correctly.
+
 * Tweaks
 
   - sliding mmap() inefficiently mmaped the same region of a
     packfile with an access pattern that used objects in the
     reverse order.  This has been made more efficient.
-
---
-exec >/var/tmp/1
-O=v1.5.0-24-g460ca30
-echo O=`git describe maint`
-git shortlog --no-merges $O..maint
