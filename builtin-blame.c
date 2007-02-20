@@ -2097,17 +2097,17 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			output_option |= OUTPUT_LONG_OBJECT_NAME;
 		else if (!strcmp("-S", arg) && ++i < argc)
 			revs_file = argv[i];
-		else if (!(-prefixcmp(arg, "-M"))) {
+		else if (!prefixcmp(arg, "-M")) {
 			opt |= PICKAXE_BLAME_MOVE;
 			blame_move_score = parse_score(arg+2);
 		}
-		else if (!(-prefixcmp(arg, "-C"))) {
+		else if (!prefixcmp(arg, "-C")) {
 			if (opt & PICKAXE_BLAME_COPY)
 				opt |= PICKAXE_BLAME_COPY_HARDER;
 			opt |= PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE;
 			blame_copy_score = parse_score(arg+2);
 		}
-		else if (!(-prefixcmp(arg, "-L"))) {
+		else if (!prefixcmp(arg, "-L")) {
 			if (!arg[2]) {
 				if (++i >= argc)
 					usage(blame_usage);

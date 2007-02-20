@@ -502,7 +502,7 @@ static void receive_needs(void)
 		if (!len)
 			break;
 
-		if (!(-prefixcmp(line, "shallow "))) {
+		if (!prefixcmp(line, "shallow ")) {
 			unsigned char sha1[20];
 			struct object *object;
 			use_thin_pack = 0;
@@ -515,7 +515,7 @@ static void receive_needs(void)
 			add_object_array(object, NULL, &shallows);
 			continue;
 		}
-		if (!(-prefixcmp(line, "deepen "))) {
+		if (!prefixcmp(line, "deepen ")) {
 			char *end;
 			use_thin_pack = 0;
 			depth = strtol(line + 7, &end, 0);
@@ -523,7 +523,7 @@ static void receive_needs(void)
 				die("Invalid deepen: %s", line);
 			continue;
 		}
-		if ((-prefixcmp(line, "want ")) ||
+		if (prefixcmp(line, "want ") ||
 		    get_sha1_hex(line+5, sha1_buf))
 			die("git-upload-pack: protocol error, "
 			    "expected to get sha, not '%s'", line);

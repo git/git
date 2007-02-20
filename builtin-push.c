@@ -149,10 +149,10 @@ static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 		int is_refspec;
 		char *s, *p;
 
-		if (!(-prefixcmp(buffer, "URL:"))) {
+		if (!prefixcmp(buffer, "URL:")) {
 			is_refspec = 0;
 			s = buffer + 4;
-		} else if (!(-prefixcmp(buffer, "Push:"))) {
+		} else if (!prefixcmp(buffer, "Push:")) {
 			is_refspec = 1;
 			s = buffer + 5;
 		} else

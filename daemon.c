@@ -562,7 +562,7 @@ static int execute(struct sockaddr *addr)
 	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		struct daemon_service *s = &(daemon_service[i]);
 		int namelen = strlen(s->name);
-		if (!(-prefixcmp(line, "git-")) &&
+		if (!prefixcmp(line, "git-") &&
 		    !strncmp(s->name, line + 4, namelen) &&
 		    line[namelen + 4] == ' ') {
 			/*

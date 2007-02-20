@@ -105,11 +105,11 @@ static int handle_file(const char *path,
 		SHA1_Init(&ctx);
 
 	while (fgets(buf, sizeof(buf), f)) {
-		if (!(-prefixcmp(buf, "<<<<<<< ")))
+		if (!prefixcmp(buf, "<<<<<<< "))
 			hunk = 1;
-		else if (!(-prefixcmp(buf, "=======")))
+		else if (!prefixcmp(buf, "======="))
 			hunk = 2;
-		else if (!(-prefixcmp(buf, ">>>>>>> "))) {
+		else if (!prefixcmp(buf, ">>>>>>> ")) {
 			hunk_no++;
 			hunk = 0;
 			if (memcmp(one->ptr, two->ptr, one->nr < two->nr ?

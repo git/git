@@ -1392,7 +1392,7 @@ static void read_next_command(void)
 
 static void cmd_mark(void)
 {
-	if (!(-prefixcmp(command_buf.buf, "mark :"))) {
+	if (!prefixcmp(command_buf.buf, "mark :")) {
 		next_mark = strtoumax(command_buf.buf + 6, NULL, 10);
 		read_next_command();
 	}
@@ -1405,10 +1405,10 @@ static void *cmd_data (size_t *size)
 	size_t length;
 	char *buffer;
 
-	if ((-prefixcmp(command_buf.buf, "data ")))
+	if (prefixcmp(command_buf.buf, "data "))
 		die("Expected 'data n' command, found: %s", command_buf.buf);
 
-	if (!(-prefixcmp(command_buf.buf + 5, "<<"))) {
+	if (!prefixcmp(command_buf.buf + 5, "<<")) {
 		char *term = xstrdup(command_buf.buf + 5 + 2);
 		size_t sz = 8192, term_len = command_buf.len - 5 - 2;
 		length = 0;
@@ -1595,7 +1595,7 @@ static void file_change_m(struct branch *b)
 		oe = find_mark(strtoumax(p + 1, &x, 10));
 		hashcpy(sha1, oe->sha1);
 		p = x;
-	} else if (!(-prefixcmp(p, "inline"))) {
+	} else if (!prefixcmp(p, "inline")) {
 		inline_data = 1;
 		p += 6;
 	} else {
@@ -1668,7 +1668,7 @@ static void cmd_from(struct branch *b)
 	const char *from;
 	struct branch *s;
 
-	if ((-prefixcmp(command_buf.buf, "from ")))
+	if (prefixcmp(command_buf.buf, "from "))
 		return;
 
 	if (b->branch_tree.tree) {
@@ -1734,7 +1734,7 @@ static struct hash_list *cmd_merge(unsigned int *count)
 	struct branch *s;
 
 	*count = 0;
-	while (!(-prefixcmp(command_buf.buf, "merge "))) {
+	while (!prefixcmp(command_buf.buf, "merge ")) {
 		from = strchr(command_buf.buf, ' ') + 1;
 		n = xmalloc(sizeof(*n));
 		s = lookup_branch(from);
@@ -1780,11 +1780,11 @@ static void cmd_new_commit(void)
 
 	read_next_command();
 	cmd_mark();
-	if (!(-prefixcmp(command_buf.buf, "author "))) {
+	if (!prefixcmp(command_buf.buf, "author ")) {
 		author = parse_ident(command_buf.buf + 7);
 		read_next_command();
 	}
-	if (!(-prefixcmp(command_buf.buf, "committer "))) {
+	if (!prefixcmp(command_buf.buf, "committer ")) {
 		committer = parse_ident(command_buf.buf + 10);
 		read_next_command();
 	}
@@ -1805,9 +1805,9 @@ static void cmd_new_commit(void)
 	for (;;) {
 		if (1 == command_buf.len)
 			break;
-		else if (!(-prefixcmp(command_buf.buf, "M ")))
+		else if (!prefixcmp(command_buf.buf, "M "))
 			file_change_m(b);
-		else if (!(-prefixcmp(command_buf.buf, "D ")))
+		else if (!prefixcmp(command_buf.buf, "D "))
 			file_change_d(b);
 		else if (!strcmp("deleteall", command_buf.buf))
 			file_change_deleteall(b);
@@ -1877,7 +1877,7 @@ static void cmd_new_tag(void)
 	read_next_command();
 
 	/* from ... */
-	if ((-prefixcmp(command_buf.buf, "from ")))
+	if (prefixcmp(command_buf.buf, "from "))
 		die("Expected from command, got %s", command_buf.buf);
 	from = strchr(command_buf.buf, ' ') + 1;
 	s = lookup_branch(from);
@@ -1904,7 +1904,7 @@ static void cmd_new_tag(void)
 	read_next_command();
 
 	/* tagger ... */
-	if ((-prefixcmp(command_buf.buf, "tagger ")))
+	if (prefixcmp(command_buf.buf, "tagger "))
 		die("Expected tagger command, got %s", command_buf.buf);
 	tagger = parse_ident(command_buf.buf + 7);
 
@@ -2033,11 +2033,11 @@ int main(int argc, const char **argv)
 			break;
 		else if (!strcmp("blob", command_buf.buf))
 			cmd_new_blob();
-		else if (!(-prefixcmp(command_buf.buf, "commit ")))
+		else if (!prefixcmp(command_buf.buf, "commit "))
 			cmd_new_commit();
-		else if (!(-prefixcmp(command_buf.buf, "tag ")))
+		else if (!prefixcmp(command_buf.buf, "tag "))
 			cmd_new_tag();
-		else if (!(-prefixcmp(command_buf.buf, "reset ")))
+		else if (!prefixcmp(command_buf.buf, "reset "))
 			cmd_reset_branch();
 		else if (!strcmp("checkpoint", command_buf.buf))
 			cmd_checkpoint();

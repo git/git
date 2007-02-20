@@ -1579,14 +1579,14 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			incremental = 1;
 			continue;
 		}
-		if (!(-prefixcmp(arg, "--window="))) {
+		if (!prefixcmp(arg, "--window=")) {
 			char *end;
 			window = strtoul(arg+9, &end, 0);
 			if (!arg[9] || *end)
 				usage(pack_usage);
 			continue;
 		}
-		if (!(-prefixcmp(arg, "--depth="))) {
+		if (!prefixcmp(arg, "--depth=")) {
 			char *end;
 			depth = strtoul(arg+8, &end, 0);
 			if (!arg[8] || *end)
@@ -1622,7 +1622,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp("--unpacked", arg) ||
-		    !(-prefixcmp(arg, "--unpacked=")) ||
+		    !prefixcmp(arg, "--unpacked=") ||
 		    !strcmp("--reflog", arg) ||
 		    !strcmp("--all", arg)) {
 			use_internal_rev_list = 1;

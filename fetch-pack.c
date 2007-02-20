@@ -198,13 +198,13 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		int len;
 
 		while ((len = packet_read_line(fd[0], line, sizeof(line)))) {
-			if (!(-prefixcmp(line, "shallow "))) {
+			if (!prefixcmp(line, "shallow ")) {
 				if (get_sha1_hex(line + 8, sha1))
 					die("invalid shallow line: %s", line);
 				register_shallow(sha1);
 				continue;
 			}
-			if (!(-prefixcmp(line, "unshallow "))) {
+			if (!prefixcmp(line, "unshallow ")) {
 				if (get_sha1_hex(line + 10, sha1))
 					die("invalid unshallow line: %s", line);
 				if (!lookup_object(sha1))
@@ -683,11 +683,11 @@ int main(int argc, char **argv)
 		char *arg = argv[i];
 
 		if (*arg == '-') {
-			if (!(-prefixcmp(arg, "--upload-pack="))) {
+			if (!prefixcmp(arg, "--upload-pack=")) {
 				uploadpack = arg + 14;
 				continue;
 			}
-			if (!(-prefixcmp(arg, "--exec="))) {
+			if (!prefixcmp(arg, "--exec=")) {
 				uploadpack = arg + 7;
 				continue;
 			}
@@ -712,7 +712,7 @@ int main(int argc, char **argv)
 				verbose = 1;
 				continue;
 			}
-			if (!(-prefixcmp(arg, "--depth="))) {
+			if (!prefixcmp(arg, "--depth=")) {
 				depth = strtol(arg + 8, NULL, 0);
 				if (stat(git_path("shallow"), &st))
 					st.st_mtime = 0;

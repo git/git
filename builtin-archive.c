@@ -35,7 +35,7 @@ static int run_remote_archiver(const char *remote, int argc,
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
-		if (!(-prefixcmp(arg, "--exec="))) {
+		if (!prefixcmp(arg, "--exec=")) {
 			if (exec_at)
 				die("multiple --exec specified");
 			exec = arg + 7;
