@@ -9,6 +9,7 @@ use vars qw/	$AUTHOR $VERSION
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
+my $git_dir_user_set = 1 if defined $ENV{GIT_DIR};
 $ENV{GIT_DIR} ||= '.git';
 $Git::SVN::default_repo_id = 'svn';
 $Git::SVN::default_ref_id = $ENV{GIT_SVN_ID} || 'git-svn';
@@ -178,6 +179,28 @@ usage(0) if $_help;
 version() if $_version;
 usage(1) unless defined $cmd;
 load_authors() if $_authors;
+
+# make sure we're always running
+unless ($cmd =~ /(?:clone|init|multi-init)$/) {
+	unless (-d $ENV{GIT_DIR}) {
+		if ($git_dir_user_set) {
+			die "GIT_DIR=$ENV{GIT_DIR} explicitly set, ",
+			    "but it is not a directory\n";
+		}
+		my $git_dir = delete $ENV{GIT_DIR};
+		chomp(my $cdup = command_oneline(qw/rev-parse --show-cdup/));
+		unless (length $cdup) {
+			die "Already at toplevel, but $git_dir ",
+			    "not found '$cdup'\n";
+		}
+		chdir $cdup or die "Unable to chdir up to '$cdup'\n";
+		unless (-d $git_dir) {
+			die "$git_dir still not found after going to ",
+			    "'$cdup'\n";
+		}
+		$ENV{GIT_DIR} = $git_dir;
+	}
+}
 unless ($cmd =~ /^(?:clone|init|multi-init|commit-diff)$/) {
 	Git::SVN::Migration::migration_check();
 }
