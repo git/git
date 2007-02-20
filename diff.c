@@ -184,30 +184,40 @@ static void print_line_count(int count)
 	}
 }
 
-static void copy_file(int prefix, const char *data, int size)
+static void copy_file(int prefix, const char *data, int size,
+		const char *set, const char *reset)
 {
 	int ch, nl_just_seen = 1;
 	while (0 < size--) {
 		ch = *data++;
-		if (nl_just_seen)
+		if (nl_just_seen) {
+			fputs(set, stdout);
 			putchar(prefix);
-		putchar(ch);
-		if (ch == '\n')
+		}
+		if (ch == '\n') {
 			nl_just_seen = 1;
-		else
+			fputs(reset, stdout);
+		} else
 			nl_just_seen = 0;
+		putchar(ch);
 	}
 	if (!nl_just_seen)
-		printf("\n\\ No newline at end of file\n");
+		printf("%s\n\\ No newline at end of file\n", reset);
 }
 
 static void emit_rewrite_diff(const char *name_a,
 			      const char *name_b,
 			      struct diff_filespec *one,
-			      struct diff_filespec *two)
+			      struct diff_filespec *two,
+			      int color_diff)
 {
 	int lc_a, lc_b;
 	const char *name_a_tab, *name_b_tab;
+	const char *metainfo = diff_get_color(color_diff, DIFF_METAINFO);
+	const char *fraginfo = diff_get_color(color_diff, DIFF_FRAGINFO);
+	const char *old = diff_get_color(color_diff, DIFF_FILE_OLD);
+	const char *new = diff_get_color(color_diff, DIFF_FILE_NEW);
+	const char *reset = diff_get_color(color_diff, DIFF_RESET);
 
 	name_a_tab = strchr(name_a, ' ') ? "\t" : "";
 	name_b_tab = strchr(name_b, ' ') ? "\t" : "";
@@ -216,17 +226,17 @@ static void emit_rewrite_diff(const char *name_a,
 	diff_populate_filespec(two, 0);
 	lc_a = count_lines(one->data, one->size);
 	lc_b = count_lines(two->data, two->size);
-	printf("--- a/%s%s\n+++ b/%s%s\n@@ -",
-	       name_a, name_a_tab,
-	       name_b, name_b_tab);
+	printf("%s--- a/%s%s%s\n%s+++ b/%s%s%s\n%s@@ -",
+	       metainfo, name_a, name_a_tab, reset,
+	       metainfo, name_b, name_b_tab, reset, fraginfo);
 	print_line_count(lc_a);
 	printf(" +");
 	print_line_count(lc_b);
-	printf(" @@\n");
+	printf(" @@%s\n", reset);
 	if (lc_a)
-		copy_file('-', one->data, one->size);
+		copy_file('-', one->data, one->size, old, reset);
 	if (lc_b)
-		copy_file('+', two->data, two->size);
+		copy_file('+', two->data, two->size, new, reset);
 }
 
 static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
@@ -1084,7 +1094,8 @@ static void builtin_diff(const char *name_a,
 		if ((one->mode ^ two->mode) & S_IFMT)
 			goto free_ab_and_return;
 		if (complete_rewrite) {
-			emit_rewrite_diff(name_a, name_b, one, two);
+			emit_rewrite_diff(name_a, name_b, one, two,
+					o->color_diff);
 			goto free_ab_and_return;
 		}
 	}
