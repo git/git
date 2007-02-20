@@ -832,7 +832,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->max_count = atoi(argv[++i]);
 				continue;
 			}
-			if (!strncmp(arg,"-n",2)) {
+			if (!prefixcmp(arg, "-n")) {
 				revs->max_count = atoi(arg + 2);
 				continue;
 			}

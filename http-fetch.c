@@ -718,7 +718,7 @@ static int fetch_indices(struct alt_base *repo)
 			i++;
 			if (i + 52 <= buffer.posn &&
 			    !prefixcmp(data + i, " pack-") &&
-			    !strncmp(data + i + 46, ".pack\n", 6)) {
+			    !prefixcmp(data + i + 46, ".pack\n")) {
 				get_sha1_hex(data + i + 6, sha1);
 				setup_index(repo, sha1);
 				i += 51;

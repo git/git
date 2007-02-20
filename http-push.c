@@ -1061,7 +1061,7 @@ static int fetch_indices(void)
 			i++;
 			if (i + 52 < buffer.posn &&
 			    !prefixcmp(data + i, " pack-") &&
-			    !strncmp(data + i + 46, ".pack\n", 6)) {
+			    !prefixcmp(data + i + 46, ".pack\n")) {
 				get_sha1_hex(data + i + 6, sha1);
 				setup_index(sha1);
 				i += 51;

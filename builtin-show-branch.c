@@ -378,7 +378,7 @@ static int append_head_ref(const char *refname, const unsigned char *sha1, int f
 {
 	unsigned char tmp[20];
 	int ofs = 11;
-	if (strncmp(refname, "refs/heads/", ofs))
+	if (prefixcmp(refname, "refs/heads/"))
 		return 0;
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
@@ -392,7 +392,7 @@ static int append_remote_ref(const char *refname, const unsigned char *sha1, int
 {
 	unsigned char tmp[20];
 	int ofs = 13;
-	if (strncmp(refname, "refs/remotes/", ofs))
+	if (prefixcmp(refname, "refs/remotes/"))
 		return 0;
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.

@@ -233,7 +233,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			continue;
 		}
-		if (!strncmp(arg,"-n",2)) {
+		if (!prefixcmp(arg, "-n")) {
 			if ((filter & DO_FLAGS) && (filter & DO_REVS))
 				show(arg);
 			continue;
