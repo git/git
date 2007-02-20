@@ -13,7 +13,7 @@ SYNOPSIS
 'git-remote' add <name> <url>
 'git-remote' show <name>
 'git-remote' prune <name>
-'git-remote' update
+'git-remote' update [group]
 
 DESCRIPTION
 -----------
@@ -46,9 +46,12 @@ referenced by <name>, but are still locally available in
 
 'update'::
 
-Fetch updates for the remotes in the repository.  By default all remotes
-are updated, but this can be configured via the configuration parameter
-'remote.fetch'.   (See gitlink:git-config[1]).
+Fetch updates for a named set of remotes in the repository as defined by
+remotes.<group>.  If a named group is not specified on the command line,
+the configuration parameter remotes.default will get used; if
+remotes.default is not defined, all remotes which do not the
+configuration parameter remote.<name>.skipDefaultUpdate set to true will
+be updated.  (See gitlink:git-config[1]).
 
 
 DISCUSSION
