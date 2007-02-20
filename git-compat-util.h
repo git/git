@@ -139,6 +139,11 @@ extern char *gitstrcasestr(const char *haystack, const char *needle);
 extern size_t gitstrlcpy(char *, const char *, size_t);
 #endif
 
+#ifdef NO_STRTOUMAX
+#define strtoumax gitstrtoumax
+extern uintmax_t gitstrtoumax(const char *, char **, int);
+#endif
+
 extern void release_pack_memory(size_t);
 
 static inline char* xstrdup(const char *str)
