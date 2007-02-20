@@ -279,4 +279,9 @@ static inline int sane_case(int x, int high)
 	return x;
 }
 
+static inline int prefixcmp(const char *str, const char *prefix)
+{
+	return strncmp(str, prefix, strlen(prefix));
+}
+
 #endif
