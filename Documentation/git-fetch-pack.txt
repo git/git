@@ -8,7 +8,7 @@ git-fetch-pack - Receive missing objects from another repository
 
 SYNOPSIS
 --------
-'git-fetch-pack' [--all] [--quiet|-q] [--keep|-k] [--thin] [--upload-pack=<git-upload-pack>] [--depth=<n>] [-v] [<host>:]<directory> [<refs>...]
+'git-fetch-pack' [--all] [--quiet|-q] [--keep|-k] [--thin] [--upload-pack=<git-upload-pack>] [--depth=<n>] [--no-progress] [-v] [<host>:]<directory> [<refs>...]
 
 DESCRIPTION
 -----------
@@ -62,6 +62,9 @@ OPTIONS
 
 \--depth=<n>::
 	Limit fetching to ancestor-chains not longer than n.
+
+\--no-progress::
+	Do not show the progress.
 
 \-v::
 	Run verbosely.

@@ -10,7 +10,7 @@
 #include "revision.h"
 #include "list-objects.h"
 
-static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=nn] <dir>";
+static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=nn] [--no-progress] <dir>";
 
 /* bits #0..7 in revision.h, #8..10 in commit.c */
 #define THEY_HAVE	(1u << 11)
@@ -26,7 +26,7 @@ static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=n
 static unsigned long oldest_have;
 
 static int multi_ack, nr_our_refs;
-static int use_thin_pack, use_ofs_delta;
+static int use_thin_pack, use_ofs_delta, no_progress;
 static struct object_array have_obj;
 static struct object_array want_obj;
 static unsigned int timeout;
@@ -164,6 +164,9 @@ static void create_pack_file(void)
 		die("git-upload-pack: unable to fork git-pack-objects");
 	}
 	if (!pid_pack_objects) {
+		const char *argv[10];
+		int i = 0;
+
 		dup2(lp_pipe[0], 0);
 		dup2(pu_pipe[1], 1);
 		dup2(pe_pipe[1], 2);
@@ -174,9 +177,16 @@ static void create_pack_file(void)
 		close(pu_pipe[1]);
 		close(pe_pipe[0]);
 		close(pe_pipe[1]);
-		execl_git_cmd("pack-objects", "--stdout", "--progress",
-			      use_ofs_delta ? "--delta-base-offset" : NULL,
-			      NULL);
+
+		argv[i++] = "pack-objects";
+		argv[i++] = "--stdout";
+		if (!no_progress)
+			argv[i++] = "--progress";
+		if (use_ofs_delta)
+			argv[i++] = "--delta-base-offset";
+		argv[i++] = NULL;
+
+		execv_git_cmd(argv);
 		kill(pid_rev_list, SIGKILL);
 		die("git-upload-pack: unable to exec git-pack-objects");
 	}
@@ -658,6 +668,10 @@ int main(int argc, char **argv)
 		}
 		if (!strncmp(arg, "--timeout=", 10)) {
 			timeout = atoi(arg+10);
+			continue;
+		}
+		if (!strcmp(arg, "--no-progress")) {
+			no_progress = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--")) {

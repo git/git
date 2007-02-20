@@ -15,8 +15,9 @@ static int quiet;
 static int verbose;
 static int fetch_all;
 static int depth;
+static int no_progress;
 static const char fetch_pack_usage[] =
-"git-fetch-pack [--all] [--quiet|-q] [--keep|-k] [--thin] [--upload-pack=<git-upload-pack>] [--depth=<n>] [-v] [<host>:]<directory> [<refs>...]";
+"git-fetch-pack [--all] [--quiet|-q] [--keep|-k] [--thin] [--upload-pack=<git-upload-pack>] [--depth=<n>] [--no-progress] [-v] [<host>:]<directory> [<refs>...]";
 static const char *uploadpack = "git-upload-pack";
 
 #define COMPLETE	(1U << 0)
@@ -521,7 +522,7 @@ static int get_pack(int xd[2])
 	if (do_keep) {
 		*av++ = "index-pack";
 		*av++ = "--stdin";
-		if (!quiet)
+		if (!quiet && !no_progress)
 			*av++ = "-v";
 		if (use_thin_pack)
 			*av++ = "--fix-thin";
@@ -718,6 +719,10 @@ int main(int argc, char **argv)
 					st.st_mtime = 0;
 				continue;
 			}
+			if (!strcmp("--no-progress", arg)) {
+				no_progress = 1;
+				continue;
+			}
 			usage(fetch_pack_usage);
 		}
 		dest = arg;
@@ -727,7 +732,12 @@ int main(int argc, char **argv)
 	}
 	if (!dest)
 		usage(fetch_pack_usage);
-	pid = git_connect(fd, dest, uploadpack);
+	if (no_progress) {
+		char buf[256];
+		snprintf(buf, sizeof(buf), "%s --no-progress", uploadpack);
+		pid = git_connect(fd, dest, buf);
+	} else
+		pid = git_connect(fd, dest, uploadpack);
 	if (pid < 0)
 		return 1;
 	if (heads && nr_heads)

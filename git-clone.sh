@@ -79,6 +79,8 @@ origin=
 origin_override=
 use_separate_remote=t
 depth=
+no_progress=
+test -t 1 || no_progress=--no-progress
 while
 	case "$#,$1" in
 	0,*) break ;;
@@ -290,8 +292,8 @@ yes,yes)
 		;;
 	*)
 		case "$upload_pack" in
-		'') git-fetch-pack --all -k $quiet $depth "$repo" ;;
-		*) git-fetch-pack --all -k $quiet "$upload_pack" $depth "$repo" ;;
+		'') git-fetch-pack --all -k $quiet $depth $no_progress "$repo";;
+		*) git-fetch-pack --all -k $quiet "$upload_pack" $depth $no_progress "$repo" ;;
 		esac >"$GIT_DIR/CLONE_HEAD" ||
 			die "fetch-pack from '$repo' failed."
 		;;
