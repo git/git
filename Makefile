@@ -28,6 +28,10 @@ all::
 #
 # Define NO_STRLCPY if you don't have strlcpy.
 #
+# Define NO_STRTOUMAX if you don't have strtoumax in the C library.
+# If your compiler also does not support long long or does not have
+# strtoull, define NO_STRTOULL.
+#
 # Define NO_SETENV if you don't have setenv in the C library.
 #
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
@@ -353,11 +357,13 @@ ifeq ($(uname_S),SunOS)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
 		NO_C99_FORMAT = YesPlease
+		NO_STRTOUMAX = YesPlease
 	endif
 	ifeq ($(uname_R),5.9)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
 		NO_C99_FORMAT = YesPlease
+		NO_STRTOUMAX = YesPlease
 	endif
 	INSTALL = ginstall
 	TAR = gtar
@@ -516,6 +522,13 @@ endif
 ifdef NO_STRLCPY
 	COMPAT_CFLAGS += -DNO_STRLCPY
 	COMPAT_OBJS += compat/strlcpy.o
+endif
+ifdef NO_STRTOUMAX
+	COMPAT_CFLAGS += -DNO_STRTOUMAX
+	COMPAT_OBJS += compat/strtoumax.o
+endif
+ifdef NO_STRTOULL
+	COMPAT_CFLAGS += -DNO_STRTOULL
 endif
 ifdef NO_SETENV
 	COMPAT_CFLAGS += -DNO_SETENV
