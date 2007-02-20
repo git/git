@@ -35,11 +35,11 @@ int main(int argc, char **argv)
 		char *arg = argv[i];
 
 		if (*arg == '-') {
-			if (!strncmp("--upload-pack=", arg, 14)) {
+			if (!(-prefixcmp(arg, "--upload-pack="))) {
 				uploadpack = arg + 14;
 				continue;
 			}
-			if (!strncmp("--exec=", arg, 7)) {
+			if (!(-prefixcmp(arg, "--exec="))) {
 				uploadpack = arg + 7;
 				continue;
 			}

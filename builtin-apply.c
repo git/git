@@ -1129,11 +1129,11 @@ static struct fragment *parse_binary_hunk(char **buf_p,
 
 	*status_p = 0;
 
-	if (!strncmp(buffer, "delta ", 6)) {
+	if (!prefixcmp(buffer, "delta ")) {
 		patch_method = BINARY_DELTA_DEFLATED;
 		origlen = strtoul(buffer + 6, NULL, 10);
 	}
-	else if (!strncmp(buffer, "literal ", 8)) {
+	else if (!prefixcmp(buffer, "literal ")) {
 		patch_method = BINARY_LITERAL_DEFLATED;
 		origlen = strtoul(buffer + 8, NULL, 10);
 	}
@@ -2608,14 +2608,14 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			read_stdin = 0;
 			continue;
 		}
-		if (!strncmp(arg, "--exclude=", 10)) {
+		if (!prefixcmp(arg, "--exclude=")) {
 			struct excludes *x = xmalloc(sizeof(*x));
 			x->path = arg + 10;
 			x->next = excludes;
 			excludes = x;
 			continue;
 		}
-		if (!strncmp(arg, "-p", 2)) {
+		if (!prefixcmp(arg, "-p")) {
 			p_value = atoi(arg + 2);
 			continue;
 		}
@@ -2669,13 +2669,13 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			line_termination = 0;
 			continue;
 		}
-		if (!strncmp(arg, "-C", 2)) {
+		if (!prefixcmp(arg, "-C")) {
 			p_context = strtoul(arg + 2, &end, 0);
 			if (*end != '\0')
 				die("unrecognized context count '%s'", arg + 2);
 			continue;
 		}
-		if (!strncmp(arg, "--whitespace=", 13)) {
+		if (!prefixcmp(arg, "--whitespace=")) {
 			whitespace_option = arg + 13;
 			parse_whitespace_option(arg + 13);
 			continue;

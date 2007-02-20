@@ -274,7 +274,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--short") ||
-			    !strncmp(arg, "--short=", 8)) {
+			    !prefixcmp(arg, "--short=")) {
 				filter &= ~(DO_FLAGS|DO_NOREV);
 				verify = 1;
 				abbrev = DEFAULT_ABBREV;
@@ -352,19 +352,19 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 						: "false");
 				continue;
 			}
-			if (!strncmp(arg, "--since=", 8)) {
+			if (!prefixcmp(arg, "--since=")) {
 				show_datestring("--max-age=", arg+8);
 				continue;
 			}
-			if (!strncmp(arg, "--after=", 8)) {
+			if (!prefixcmp(arg, "--after=")) {
 				show_datestring("--max-age=", arg+8);
 				continue;
 			}
-			if (!strncmp(arg, "--before=", 9)) {
+			if (!prefixcmp(arg, "--before=")) {
 				show_datestring("--min-age=", arg+9);
 				continue;
 			}
-			if (!strncmp(arg, "--until=", 8)) {
+			if (!prefixcmp(arg, "--until=")) {
 				show_datestring("--min-age=", arg+8);
 				continue;
 			}

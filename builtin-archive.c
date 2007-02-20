@@ -35,7 +35,7 @@ static int run_remote_archiver(const char *remote, int argc,
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
-		if (!strncmp("--exec=", arg, 7)) {
+		if (!(-prefixcmp(arg, "--exec="))) {
 			if (exec_at)
 				die("multiple --exec specified");
 			exec = arg + 7;
@@ -62,7 +62,7 @@ static int run_remote_archiver(const char *remote, int argc,
 	if (buf[len-1] == '\n')
 		buf[--len] = 0;
 	if (strcmp(buf, "ACK")) {
-		if (len > 5 && !strncmp(buf, "NACK ", 5))
+		if (len > 5 && !prefixcmp(buf, "NACK "))
 			die("git-archive: NACK %s", buf + 5);
 		die("git-archive: protocol error");
 	}
@@ -166,11 +166,11 @@ int parse_archive_args(int argc, const char **argv, struct archiver *ar)
 			verbose = 1;
 			continue;
 		}
-		if (!strncmp(arg, "--format=", 9)) {
+		if (!prefixcmp(arg, "--format=")) {
 			format = arg + 9;
 			continue;
 		}
-		if (!strncmp(arg, "--prefix=", 9)) {
+		if (!prefixcmp(arg, "--prefix=")) {
 			base = arg + 9;
 			continue;
 		}
@@ -218,7 +218,7 @@ static const char *extract_remote_arg(int *ac, const char **av)
 		if (!strcmp(arg, "--"))
 			no_more_options = 1;
 		if (!no_more_options) {
-			if (!strncmp(arg, "--remote=", 9)) {
+			if (!prefixcmp(arg, "--remote=")) {
 				if (remote)
 					die("Multiple --remote specified");
 				remote = arg + 9;

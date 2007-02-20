@@ -48,7 +48,7 @@ static int handle_options(const char*** argv, int* argc)
 		/*
 		 * Check remaining flags.
 		 */
-		if (!strncmp(cmd, "--exec-path", 11)) {
+		if (!prefixcmp(cmd, "--exec-path")) {
 			cmd += 11;
 			if (*cmd == '=')
 				git_set_exec_path(cmd + 1);
@@ -66,7 +66,7 @@ static int handle_options(const char*** argv, int* argc)
 			setenv(GIT_DIR_ENVIRONMENT, (*argv)[1], 1);
 			(*argv)++;
 			(*argc)--;
-		} else if (!strncmp(cmd, "--git-dir=", 10)) {
+		} else if (!prefixcmp(cmd, "--git-dir=")) {
 			setenv(GIT_DIR_ENVIRONMENT, cmd + 10, 1);
 		} else if (!strcmp(cmd, "--bare")) {
 			static char git_dir[PATH_MAX+1];
@@ -88,7 +88,7 @@ static char *alias_string;
 
 static int git_alias_config(const char *var, const char *value)
 {
-	if (!strncmp(var, "alias.", 6) && !strcmp(var + 6, alias_command)) {
+	if (!prefixcmp(var, "alias.") && !strcmp(var + 6, alias_command)) {
 		alias_string = xstrdup(value);
 	}
 	return 0;
@@ -348,7 +348,7 @@ int main(int argc, const char **argv, char **envp)
 	 * So we just directly call the internal command handler, and
 	 * die if that one cannot handle it.
 	 */
-	if (!strncmp(cmd, "git-", 4)) {
+	if (!prefixcmp(cmd, "git-")) {
 		cmd += 4;
 		argv[0] = cmd;
 		handle_internal_command(argc, argv, envp);
@@ -360,7 +360,7 @@ int main(int argc, const char **argv, char **envp)
 	argc--;
 	handle_options(&argv, &argc);
 	if (argc > 0) {
-		if (!strncmp(argv[0], "--", 2))
+		if (!prefixcmp(argv[0], "--"))
 			argv[0] += 2;
 	} else {
 		/* Default command: "help" */

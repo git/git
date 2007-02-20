@@ -70,7 +70,7 @@ int cmd_write_tree(int argc, const char **argv, const char *unused_prefix)
 		const char *arg = argv[1];
 		if (!strcmp(arg, "--missing-ok"))
 			missing_ok = 1;
-		else if (!strncmp(arg, "--prefix=", 9))
+		else if (!prefixcmp(arg, "--prefix="))
 			prefix = arg + 9;
 		else
 			usage(write_tree_usage);

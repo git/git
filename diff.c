@@ -77,7 +77,7 @@ int git_diff_ui_config(const char *var, const char *value)
 			diff_detect_rename_default = DIFF_DETECT_RENAME;
 		return 0;
 	}
-	if (!strncmp(var, "diff.color.", 11) || !strncmp(var, "color.diff.", 11)) {
+	if (!prefixcmp(var, "diff.color.") || !strncmp(var, "color.diff.", 11)) {
 		int slot = parse_diff_color_slot(var, 11);
 		color_parse(value, var, diff_colors[slot]);
 		return 0;
@@ -1119,9 +1119,9 @@ static void builtin_diff(const char *name_a,
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
 		if (!diffopts)
 			;
-		else if (!strncmp(diffopts, "--unified=", 10))
+		else if (!prefixcmp(diffopts, "--unified="))
 			xecfg.ctxlen = strtoul(diffopts + 10, NULL, 10);
-		else if (!strncmp(diffopts, "-u", 2))
+		else if (!prefixcmp(diffopts, "-u"))
 			xecfg.ctxlen = strtoul(diffopts + 2, NULL, 10);
 		ecb.outf = xdiff_outf;
 		ecb.priv = &ecbdata;
@@ -1957,7 +1957,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "--shortstat")) {
 		options->output_format |= DIFF_FORMAT_SHORTSTAT;
 	}
-	else if (!strncmp(arg, "--stat", 6)) {
+	else if (!prefixcmp(arg, "--stat")) {
 		char *end;
 		int width = options->stat_width;
 		int name_width = options->stat_name_width;
@@ -1966,9 +1966,9 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 
 		switch (*arg) {
 		case '-':
-			if (!strncmp(arg, "-width=", 7))
+			if (!prefixcmp(arg, "-width="))
 				width = strtoul(arg + 7, &end, 10);
-			else if (!strncmp(arg, "-name-width=", 12))
+			else if (!prefixcmp(arg, "-name-width="))
 				name_width = strtoul(arg + 12, &end, 10);
 			break;
 		case '=':
@@ -1993,7 +1993,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "-z"))
 		options->line_termination = 0;
-	else if (!strncmp(arg, "-l", 2))
+	else if (!prefixcmp(arg, "-l"))
 		options->rename_limit = strtoul(arg+2, NULL, 10);
 	else if (!strcmp(arg, "--full-index"))
 		options->full_index = 1;
@@ -2010,31 +2010,31 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->output_format |= DIFF_FORMAT_NAME_STATUS;
 	else if (!strcmp(arg, "-R"))
 		options->reverse_diff = 1;
-	else if (!strncmp(arg, "-S", 2))
+	else if (!prefixcmp(arg, "-S"))
 		options->pickaxe = arg + 2;
 	else if (!strcmp(arg, "-s")) {
 		options->output_format |= DIFF_FORMAT_NO_OUTPUT;
 	}
-	else if (!strncmp(arg, "-O", 2))
+	else if (!prefixcmp(arg, "-O"))
 		options->orderfile = arg + 2;
-	else if (!strncmp(arg, "--diff-filter=", 14))
+	else if (!prefixcmp(arg, "--diff-filter="))
 		options->filter = arg + 14;
 	else if (!strcmp(arg, "--pickaxe-all"))
 		options->pickaxe_opts = DIFF_PICKAXE_ALL;
 	else if (!strcmp(arg, "--pickaxe-regex"))
 		options->pickaxe_opts = DIFF_PICKAXE_REGEX;
-	else if (!strncmp(arg, "-B", 2)) {
+	else if (!prefixcmp(arg, "-B")) {
 		if ((options->break_opt =
 		     diff_scoreopt_parse(arg)) == -1)
 			return -1;
 	}
-	else if (!strncmp(arg, "-M", 2)) {
+	else if (!prefixcmp(arg, "-M")) {
 		if ((options->rename_score =
 		     diff_scoreopt_parse(arg)) == -1)
 			return -1;
 		options->detect_rename = DIFF_DETECT_RENAME;
 	}
-	else if (!strncmp(arg, "-C", 2)) {
+	else if (!prefixcmp(arg, "-C")) {
 		if ((options->rename_score =
 		     diff_scoreopt_parse(arg)) == -1)
 			return -1;
@@ -2044,7 +2044,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->find_copies_harder = 1;
 	else if (!strcmp(arg, "--abbrev"))
 		options->abbrev = DEFAULT_ABBREV;
-	else if (!strncmp(arg, "--abbrev=", 9)) {
+	else if (!prefixcmp(arg, "--abbrev=")) {
 		options->abbrev = strtoul(arg + 9, NULL, 10);
 		if (options->abbrev < MINIMUM_ABBREV)
 			options->abbrev = MINIMUM_ABBREV;
@@ -2553,7 +2553,7 @@ static void patch_id_consume(void *priv, char *line, unsigned long len)
 	int new_len;
 
 	/* Ignore line numbers when computing the SHA1 of the patch */
-	if (!strncmp(line, "@@ -", 4))
+	if (!prefixcmp(line, "@@ -"))
 		return;
 
 	new_len = remove_space(line, len);

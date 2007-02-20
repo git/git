@@ -96,7 +96,7 @@ int get_ack(int fd, unsigned char *result_sha1)
 		line[--len] = 0;
 	if (!strcmp(line, "NAK"))
 		return 0;
-	if (!strncmp(line, "ACK ", 4)) {
+	if (!prefixcmp(line, "ACK ")) {
 		if (!get_sha1_hex(line+4, result_sha1)) {
 			if (strstr(line+45, "continue"))
 				return 2;
@@ -196,8 +196,8 @@ static int count_refspec_match(const char *pattern,
 		 */
 		if (namelen != patlen &&
 		    patlen != namelen - 5 &&
-		    strncmp(name, "refs/heads/", 11) &&
-		    strncmp(name, "refs/tags/", 10)) {
+		    prefixcmp(name, "refs/heads/") &&
+		    prefixcmp(name, "refs/tags/")) {
 			/* We want to catch the case where only weak
 			 * matches are found and there are multiple
 			 * matches, and where more than one strong

@@ -32,7 +32,7 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		rev->always_show_header = 0;
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
-		if (!strncmp(arg, "--encoding=", 11)) {
+		if (!prefixcmp(arg, "--encoding=")) {
 			arg += 11;
 			if (strcmp(arg, "none"))
 				git_log_output_encoding = strdup(arg);
@@ -287,7 +287,7 @@ static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 
 		sol += 2;
 		/* strip [PATCH] or [PATCH blabla] */
-		if (!keep_subject && !strncmp(sol, "[PATCH", 6)) {
+		if (!keep_subject && !prefixcmp(sol, "[PATCH")) {
 			char *eos = strchr(sol + 6, ']');
 			if (eos) {
 				while (isspace(*eos))
@@ -435,7 +435,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		else if (!strcmp(argv[i], "-n") ||
 				!strcmp(argv[i], "--numbered"))
 			numbered = 1;
-		else if (!strncmp(argv[i], "--start-number=", 15))
+		else if (!prefixcmp(argv[i], "--start-number="))
 			start_number = strtol(argv[i] + 15, NULL, 10);
 		else if (!strcmp(argv[i], "--start-number")) {
 			i++;
@@ -471,13 +471,13 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		}
 		else if (!strcmp(argv[i], "--attach"))
 			rev.mime_boundary = git_version_string;
-		else if (!strncmp(argv[i], "--attach=", 9))
+		else if (!prefixcmp(argv[i], "--attach="))
 			rev.mime_boundary = argv[i] + 9;
 		else if (!strcmp(argv[i], "--ignore-if-in-upstream"))
 			ignore_if_in_upstream = 1;
 		else if (!strcmp(argv[i], "--thread"))
 			thread = 1;
-		else if (!strncmp(argv[i], "--in-reply-to=", 14))
+		else if (!prefixcmp(argv[i], "--in-reply-to="))
 			in_reply_to = argv[i] + 14;
 		else if (!strcmp(argv[i], "--in-reply-to")) {
 			i++;
@@ -485,7 +485,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 				die("Need a Message-Id for --in-reply-to");
 			in_reply_to = argv[i];
 		}
-		else if (!strncmp(argv[i], "--suffix=", 9))
+		else if (!prefixcmp(argv[i], "--suffix="))
 			fmt_patch_suffix = argv[i] + 9;
 		else
 			argv[j++] = argv[i];

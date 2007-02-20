@@ -85,7 +85,7 @@ static int name_ref(const char *path, const unsigned char *sha1, int flags, void
 	struct name_ref_data *data = cb_data;
 	int deref = 0;
 
-	if (data->tags_only && strncmp(path, "refs/tags/", 10))
+	if (data->tags_only && prefixcmp(path, "refs/tags/"))
 		return 0;
 
 	if (data->ref_filter && fnmatch(data->ref_filter, path, 0))
@@ -101,9 +101,9 @@ static int name_ref(const char *path, const unsigned char *sha1, int flags, void
 	if (o && o->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *)o;
 
-		if (!strncmp(path, "refs/heads/", 11))
+		if (!prefixcmp(path, "refs/heads/"))
 			path = path + 11;
-		else if (!strncmp(path, "refs/", 5))
+		else if (!prefixcmp(path, "refs/"))
 			path = path + 5;
 
 		name_rev(commit, xstrdup(path), 0, 0, deref);
@@ -156,7 +156,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 			} else if (!strcmp(*argv, "--tags")) {
 				data.tags_only = 1;
 				continue;
-			} else  if (!strncmp(*argv, "--refs=", 7)) {
+			} else  if (!prefixcmp(*argv, "--refs=")) {
 				data.ref_filter = *argv + 7;
 				continue;
 			} else if (!strcmp(*argv, "--all")) {

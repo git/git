@@ -1392,7 +1392,7 @@ static void read_next_command(void)
 
 static void cmd_mark(void)
 {
-	if (!strncmp("mark :", command_buf.buf, 6)) {
+	if (!(-prefixcmp(command_buf.buf, "mark :"))) {
 		next_mark = strtoumax(command_buf.buf + 6, NULL, 10);
 		read_next_command();
 	}
@@ -1405,10 +1405,10 @@ static void *cmd_data (size_t *size)
 	size_t length;
 	char *buffer;
 
-	if (strncmp("data ", command_buf.buf, 5))
+	if ((-prefixcmp(command_buf.buf, "data ")))
 		die("Expected 'data n' command, found: %s", command_buf.buf);
 
-	if (!strncmp("<<", command_buf.buf + 5, 2)) {
+	if (!(-prefixcmp(command_buf.buf + 5, "<<"))) {
 		char *term = xstrdup(command_buf.buf + 5 + 2);
 		size_t sz = 8192, term_len = command_buf.len - 5 - 2;
 		length = 0;
@@ -1595,7 +1595,7 @@ static void file_change_m(struct branch *b)
 		oe = find_mark(strtoumax(p + 1, &x, 10));
 		hashcpy(sha1, oe->sha1);
 		p = x;
-	} else if (!strncmp("inline", p, 6)) {
+	} else if (!(-prefixcmp(p, "inline"))) {
 		inline_data = 1;
 		p += 6;
 	} else {
@@ -1668,7 +1668,7 @@ static void cmd_from(struct branch *b)
 	const char *from;
 	struct branch *s;
 
-	if (strncmp("from ", command_buf.buf, 5))
+	if ((-prefixcmp(command_buf.buf, "from ")))
 		return;
 
 	if (b->branch_tree.tree) {
@@ -1734,7 +1734,7 @@ static struct hash_list *cmd_merge(unsigned int *count)
 	struct branch *s;
 
 	*count = 0;
-	while (!strncmp("merge ", command_buf.buf, 6)) {
+	while (!(-prefixcmp(command_buf.buf, "merge "))) {
 		from = strchr(command_buf.buf, ' ') + 1;
 		n = xmalloc(sizeof(*n));
 		s = lookup_branch(from);
@@ -1780,11 +1780,11 @@ static void cmd_new_commit(void)
 
 	read_next_command();
 	cmd_mark();
-	if (!strncmp("author ", command_buf.buf, 7)) {
+	if (!(-prefixcmp(command_buf.buf, "author "))) {
 		author = parse_ident(command_buf.buf + 7);
 		read_next_command();
 	}
-	if (!strncmp("committer ", command_buf.buf, 10)) {
+	if (!(-prefixcmp(command_buf.buf, "committer "))) {
 		committer = parse_ident(command_buf.buf + 10);
 		read_next_command();
 	}
@@ -1805,9 +1805,9 @@ static void cmd_new_commit(void)
 	for (;;) {
 		if (1 == command_buf.len)
 			break;
-		else if (!strncmp("M ", command_buf.buf, 2))
+		else if (!(-prefixcmp(command_buf.buf, "M ")))
 			file_change_m(b);
-		else if (!strncmp("D ", command_buf.buf, 2))
+		else if (!(-prefixcmp(command_buf.buf, "D ")))
 			file_change_d(b);
 		else if (!strcmp("deleteall", command_buf.buf))
 			file_change_deleteall(b);
@@ -1877,7 +1877,7 @@ static void cmd_new_tag(void)
 	read_next_command();
 
 	/* from ... */
-	if (strncmp("from ", command_buf.buf, 5))
+	if ((-prefixcmp(command_buf.buf, "from ")))
 		die("Expected from command, got %s", command_buf.buf);
 	from = strchr(command_buf.buf, ' ') + 1;
 	s = lookup_branch(from);
@@ -1904,7 +1904,7 @@ static void cmd_new_tag(void)
 	read_next_command();
 
 	/* tagger ... */
-	if (strncmp("tagger ", command_buf.buf, 7))
+	if ((-prefixcmp(command_buf.buf, "tagger ")))
 		die("Expected tagger command, got %s", command_buf.buf);
 	tagger = parse_ident(command_buf.buf + 7);
 
@@ -1981,7 +1981,7 @@ int main(int argc, const char **argv)
 
 		if (*a != '-' || !strcmp(a, "--"))
 			break;
-		else if (!strncmp(a, "--date-format=", 14)) {
+		else if (!prefixcmp(a, "--date-format=")) {
 			const char *fmt = a + 14;
 			if (!strcmp(fmt, "raw"))
 				whenspec = WHENSPEC_RAW;
@@ -1992,15 +1992,15 @@ int main(int argc, const char **argv)
 			else
 				die("unknown --date-format argument %s", fmt);
 		}
-		else if (!strncmp(a, "--max-pack-size=", 16))
+		else if (!prefixcmp(a, "--max-pack-size="))
 			max_packsize = strtoumax(a + 16, NULL, 0) * 1024 * 1024;
-		else if (!strncmp(a, "--depth=", 8))
+		else if (!prefixcmp(a, "--depth="))
 			max_depth = strtoul(a + 8, NULL, 0);
-		else if (!strncmp(a, "--active-branches=", 18))
+		else if (!prefixcmp(a, "--active-branches="))
 			max_active_branches = strtoul(a + 18, NULL, 0);
-		else if (!strncmp(a, "--export-marks=", 15))
+		else if (!prefixcmp(a, "--export-marks="))
 			mark_file = a + 15;
-		else if (!strncmp(a, "--export-pack-edges=", 20)) {
+		else if (!prefixcmp(a, "--export-pack-edges=")) {
 			if (pack_edges)
 				fclose(pack_edges);
 			pack_edges = fopen(a + 20, "a");
@@ -2033,11 +2033,11 @@ int main(int argc, const char **argv)
 			break;
 		else if (!strcmp("blob", command_buf.buf))
 			cmd_new_blob();
-		else if (!strncmp("commit ", command_buf.buf, 7))
+		else if (!(-prefixcmp(command_buf.buf, "commit ")))
 			cmd_new_commit();
-		else if (!strncmp("tag ", command_buf.buf, 4))
+		else if (!(-prefixcmp(command_buf.buf, "tag ")))
 			cmd_new_tag();
-		else if (!strncmp("reset ", command_buf.buf, 6))
+		else if (!(-prefixcmp(command_buf.buf, "reset ")))
 			cmd_reset_branch();
 		else if (!strcmp("checkpoint", command_buf.buf))
 			cmd_checkpoint();
