@@ -238,7 +238,7 @@ static int name_terminate(const char *name, int namelen, int c, int terminate)
 	return 1;
 }
 
-static char * find_name(const char *line, char *def, int p_value, int terminate)
+static char *find_name(const char *line, char *def, int p_value, int terminate)
 {
 	int len;
 	const char *start = line;
@@ -362,7 +362,7 @@ static int gitdiff_hdrend(const char *line, struct patch *patch)
 static char *gitdiff_verify_name(const char *line, int isnull, char *orig_name, const char *oldnew)
 {
 	if (!orig_name && !isnull)
-		return find_name(line, NULL, 1, TERM_TAB);
+		return find_name(line, NULL, p_value, TERM_TAB);
 
 	if (orig_name) {
 		int len;
@@ -372,7 +372,7 @@ static char *gitdiff_verify_name(const char *line, int isnull, char *orig_name, 
 		len = strlen(name);
 		if (isnull)
 			die("git-apply: bad git-diff - expected /dev/null, got %s on line %d", name, linenr);
-		another = find_name(line, NULL, 1, TERM_TAB);
+		another = find_name(line, NULL, p_value, TERM_TAB);
 		if (!another || memcmp(another, name, len))
 			die("git-apply: bad git-diff - inconsistent %s filename on line %d", oldnew, linenr);
 		free(another);
@@ -427,28 +427,28 @@ static int gitdiff_newfile(const char *line, struct patch *patch)
 static int gitdiff_copysrc(const char *line, struct patch *patch)
 {
 	patch->is_copy = 1;
-	patch->old_name = find_name(line, NULL, 0, 0);
+	patch->old_name = find_name(line, NULL, p_value-1, 0);
 	return 0;
 }
 
 static int gitdiff_copydst(const char *line, struct patch *patch)
 {
 	patch->is_copy = 1;
-	patch->new_name = find_name(line, NULL, 0, 0);
+	patch->new_name = find_name(line, NULL, p_value-1, 0);
 	return 0;
 }
 
 static int gitdiff_renamesrc(const char *line, struct patch *patch)
 {
 	patch->is_rename = 1;
-	patch->old_name = find_name(line, NULL, 0, 0);
+	patch->old_name = find_name(line, NULL, p_value-1, 0);
 	return 0;
 }
 
 static int gitdiff_renamedst(const char *line, struct patch *patch)
 {
 	patch->is_rename = 1;
-	patch->new_name = find_name(line, NULL, 0, 0);
+	patch->new_name = find_name(line, NULL, p_value-1, 0);
 	return 0;
 }
 
@@ -2499,13 +2499,24 @@ static int use_patch(struct patch *p)
 			return 0;
 		x = x->next;
 	}
-	if (0 < prefix_length) {
-		int pathlen = strlen(pathname);
-		if (pathlen <= prefix_length ||
-		    memcmp(prefix, pathname, prefix_length))
-			return 0;
-	}
 	return 1;
+}
+
+static char *prefix_one(char *name)
+{
+	if (!name)
+		return name;
+	return xstrdup(prefix_filename(prefix, prefix_length, name));
+}
+
+static void prefix_patches(struct patch *p)
+{
+	if (!prefix)
+		return;
+	for ( ; p; p = p->next) {
+		p->new_name = prefix_one(p->new_name);
+		p->old_name = prefix_one(p->old_name);
+	}
 }
 
 static int apply_patch(int fd, const char *filename, int inaccurate_eof)
@@ -2530,11 +2541,14 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 			break;
 		if (apply_in_reverse)
 			reverse_patches(patch);
+		if (prefix)
+			prefix_patches(patch);
 		if (use_patch(patch)) {
 			patch_stats(patch);
 			*listp = patch;
 			listp = &patch->next;
-		} else {
+		}
+		else {
 			/* perhaps free it a bit better? */
 			free(patch);
 			skipped_patch++;
