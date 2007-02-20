@@ -2232,7 +2232,7 @@ static void patch_stats(struct patch *patch)
 	}
 }
 
-static void remove_file(struct patch *patch)
+static void remove_file(struct patch *patch, int rmdir_empty)
 {
 	if (write_index) {
 		if (remove_file_from_cache(patch->old_name) < 0)
@@ -2240,7 +2240,7 @@ static void remove_file(struct patch *patch)
 		cache_tree_invalidate_path(active_cache_tree, patch->old_name);
 	}
 	if (!cached) {
-		if (!unlink(patch->old_name)) {
+		if (!unlink(patch->old_name) && rmdir_empty) {
 			char *name = xstrdup(patch->old_name);
 			char *end = strrchr(name, '/');
 			while (end) {
@@ -2373,7 +2373,7 @@ static void write_out_one_result(struct patch *patch, int phase)
 {
 	if (patch->is_delete > 0) {
 		if (phase == 0)
-			remove_file(patch);
+			remove_file(patch, 1);
 		return;
 	}
 	if (patch->is_new > 0 || patch->is_copy) {
@@ -2386,7 +2386,7 @@ static void write_out_one_result(struct patch *patch, int phase)
 	 * thing: remove the old, write the new
 	 */
 	if (phase == 0)
-		remove_file(patch);
+		remove_file(patch, 0);
 	if (phase == 1)
 		create_file(patch);
 }
