@@ -2502,11 +2502,13 @@ static int use_patch(struct patch *p)
 	return 1;
 }
 
-static char *prefix_one(char *name)
+static void prefix_one(char **name)
 {
-	if (!name)
-		return name;
-	return xstrdup(prefix_filename(prefix, prefix_length, name));
+	char *old_name = *name;
+	if (!old_name)
+		return;
+	*name = xstrdup(prefix_filename(prefix, prefix_length, *name));
+	free(old_name);
 }
 
 static void prefix_patches(struct patch *p)
@@ -2514,8 +2516,9 @@ static void prefix_patches(struct patch *p)
 	if (!prefix)
 		return;
 	for ( ; p; p = p->next) {
-		p->new_name = prefix_one(p->new_name);
-		p->old_name = prefix_one(p->old_name);
+		if (p->new_name != p->old_name)
+			prefix_one(&p->new_name);
+		prefix_one(&p->old_name);
 	}
 }
 
