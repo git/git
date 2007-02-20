@@ -425,7 +425,8 @@ sub cmd_rebase {
 }
 
 sub cmd_show_ignore {
-	my $gs = Git::SVN->new;
+	my $url = (::working_head_info('HEAD'))[0];
+	my $gs = Git::SVN->find_by_url($url) || Git::SVN->new;
 	my $r = (defined $_revision ? $_revision : $gs->ra->get_latest_revnum);
 	$gs->traverse_ignore(\*STDOUT, '', $r);
 }
@@ -1034,6 +1035,7 @@ sub init_remote_config {
 
 sub find_by_url { # repos_root and, path are optional
 	my ($class, $full_url, $repos_root, $path) = @_;
+	return undef unless defined $full_url;
 	my $remotes = read_all_remotes();
 	if (defined $full_url && defined $repos_root && !defined $path) {
 		$path = $full_url;
