@@ -18,6 +18,15 @@ test_expect_success setup '
 	git diff >patch.file
 '
 
+# Also handcraft GNU diff output; note this has trailing whitespace.
+cat >gpatch.file <<\EOF
+--- file1	2007-02-21 01:04:24.000000000 -0800
++++ file1+	2007-02-21 01:07:44.000000000 -0800
+@@ -1 +1 @@
+-A
++B 
+EOF
+
 test_expect_success 'apply --whitespace=strip' '
 
 	rm -f sub/file1 &&
@@ -29,8 +38,12 @@ test_expect_success 'apply --whitespace=strip' '
 	then
 		echo "Eh?"
 		false
-	else
+	elif grep B sub/file1
+	then
 		echo Happy
+	else
+		echo "Huh?"
+		false
 	fi
 '
 
@@ -46,6 +59,9 @@ test_expect_success 'apply --whitespace=strip from config' '
 	then
 		echo "Eh?"
 		false
+	elif grep B sub/file1
+	then
+		echo Happy
 	else
 		echo Happy
 	fi
@@ -67,8 +83,12 @@ test_expect_success 'apply --whitespace=strip in subdir' '
 	then
 		echo "Eh?"
 		false
-	else
+	elif grep B file1
+	then
 		echo Happy
+	else
+		echo "Huh?"
+		false
 	fi
 '
 
@@ -86,8 +106,35 @@ test_expect_success 'apply --whitespace=strip from config in subdir' '
 	then
 		echo "Eh?"
 		false
-	else
+	elif grep B file1
+	then
 		echo Happy
+	else
+		echo "Huh?"
+		false
+	fi
+'
+
+test_expect_success 'same in subdir but with traditional patch input' '
+
+	cd "$D" &&
+	git config apply.whitespace strip &&
+	rm -f sub/file1 &&
+	cp saved sub/file1 &&
+	git update-index --refresh &&
+
+	cd sub &&
+	git apply -p0 ../gpatch.file &&
+	if grep " " file1
+	then
+		echo "Eh?"
+		false
+	elif grep B file1
+	then
+		echo Happy
+	else
+		echo "Huh?"
+		false
 	fi
 '
 
