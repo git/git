@@ -8,6 +8,8 @@
 # TODO:
 #       - support integrations (at least p4i)
 #       - support p4 submit (hah!)
+#       - emulate p4's delete behavior: if a directory becomes empty delete it. continue
+#         with parent dir until non-empty dir is found.
 #
 import os, string, sys, time
 import marshal, popen2, getopt
