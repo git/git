@@ -67,7 +67,7 @@ sub list_remote {
 		$git->command(qw(config --get-regexp), '^remote\.');
 	};
 	for (@remotes) {
-		if (/^remote\.([^.]*)\.(\S*)\s+(.*)$/) {
+		if (/^remote\.(\S+?)\.([^.\s]+)\s+(.*)$/) {
 			add_remote_config(\%seen, $1, $2, $3);
 		}
 	}
