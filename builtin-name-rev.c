@@ -57,13 +57,17 @@ copy_data:
 			parents;
 			parents = parents->next, parent_number++) {
 		if (parent_number > 1) {
-			char *new_name = xmalloc(strlen(tip_name)+8);
+			int len = strlen(tip_name);
+			char *new_name = xmalloc(len + 8);
 
+			if (len > 2 && !strcmp(tip_name + len - 2, "^0"))
+				len -= 2;
 			if (generation > 0)
-				sprintf(new_name, "%s~%d^%d", tip_name,
+				sprintf(new_name, "%.*s~%d^%d", len, tip_name,
 						generation, parent_number);
 			else
-				sprintf(new_name, "%s^%d", tip_name, parent_number);
+				sprintf(new_name, "%.*s^%d", len, tip_name,
+						parent_number);
 
 			name_rev(parents->item, new_name,
 				merge_traversals + 1 , 0, 0);
@@ -127,10 +131,15 @@ static const char* get_rev_name(struct object *o)
 
 	if (!n->generation)
 		return n->tip_name;
+	else {
+		int len = strlen(n->tip_name);
+		if (len > 2 && !strcmp(n->tip_name + len - 2, "^0"))
+			len -= 2;
+		snprintf(buffer, sizeof(buffer), "%.*s~%d", len, n->tip_name,
+				n->generation);
 
-	snprintf(buffer, sizeof(buffer), "%s~%d", n->tip_name, n->generation);
-
-	return buffer;
+		return buffer;
+	}
 }
 
 int cmd_name_rev(int argc, const char **argv, const char *prefix)
