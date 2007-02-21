@@ -78,7 +78,7 @@ test_expect_success 'apply --whitespace=strip in subdir' '
 	git update-index --refresh &&
 
 	cd sub &&
-	git apply --whitespace=strip -p2 ../patch.file &&
+	git apply --whitespace=strip ../patch.file &&
 	if grep " " file1
 	then
 		echo "Eh?"
@@ -101,7 +101,7 @@ test_expect_success 'apply --whitespace=strip from config in subdir' '
 	git update-index --refresh &&
 
 	cd sub &&
-	git apply -p2 ../patch.file &&
+	git apply ../patch.file &&
 	if grep " " file1
 	then
 		echo "Eh?"
