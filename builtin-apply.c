@@ -2516,9 +2516,15 @@ static void prefix_patches(struct patch *p)
 	if (!prefix)
 		return;
 	for ( ; p; p = p->next) {
-		if (p->new_name != p->old_name)
+		if (p->new_name == p->old_name) {
+			char *prefixed = p->new_name;
+			prefix_one(&prefixed);
+			p->new_name = p->old_name = prefixed;
+		}
+		else {
 			prefix_one(&p->new_name);
-		prefix_one(&p->old_name);
+			prefix_one(&p->old_name);
+		}
 	}
 }
 
