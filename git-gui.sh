@@ -1318,14 +1318,6 @@ proc commit_committree {fd_wt curHEAD msg} {
 		return
 	}
 
-	# -- Make sure our current branch exists.
-	#
-	if {$commit_type eq {initial}} {
-		lappend all_heads $current_branch
-		set all_heads [lsort -unique $all_heads]
-		populate_branch_menu
-	}
-
 	# -- Cleanup after ourselves.
 	#
 	catch {file delete $msg_p}
@@ -1360,6 +1352,14 @@ proc commit_committree {fd_wt curHEAD msg} {
 	$ui_comm edit modified false
 
 	if {[is_enabled singlecommit]} do_quit
+
+	# -- Make sure our current branch exists.
+	#
+	if {$commit_type eq {initial}} {
+		lappend all_heads $current_branch
+		set all_heads [lsort -unique $all_heads]
+		populate_branch_menu
+	}
 
 	# -- Update in memory status
 	#
