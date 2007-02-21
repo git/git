@@ -5478,7 +5478,7 @@ gui {
 	# fall through to setup UI for commits
 }
 default {
-	puts stderr "usage: $argv0 \[{blame|citool}\]"
+	puts stderr "usage: $argv0 \[{blame|browser|citool}\]"
 	exit 1
 }
 }
