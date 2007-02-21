@@ -133,13 +133,8 @@ Format of STDIN stream:
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
 
-#if !defined(NO_C99_FORMAT)
-#define UM_FMT "%ju"
-#define UM10_FMT "%10ju"
-#else
-/* Assumes unsigned long long exists. */
-#define UM_FMT "%llu"
-#define UM10_FMT "%10llu"
+#ifndef PRIuMAX
+#define PRIuMAX "llu"
 #endif
 
 struct object_entry
@@ -484,7 +479,7 @@ static struct object_entry *find_mark(uintmax_t idnum)
 			oe = s->data.marked[idnum];
 	}
 	if (!oe)
-		die("mark :" UM_FMT " not declared", orig_idnum);
+		die("mark :%" PRIuMAX " not declared", orig_idnum);
 	return oe;
 }
 
@@ -1370,7 +1365,7 @@ static void dump_marks_helper(FILE *f,
 	} else {
 		for (k = 0; k < 1024; k++) {
 			if (m->data.marked[k])
-				fprintf(f, ":" UM_FMT " %s\n", base + k,
+				fprintf(f, ":%" PRIuMAX " %s\n", base + k,
 					sha1_to_hex(m->data.marked[k]->sha1));
 		}
 	}
@@ -1696,7 +1691,7 @@ static void cmd_from(struct branch *b)
 		unsigned long size;
 		char *buf;
 		if (oe->type != OBJ_COMMIT)
-			die("Mark :" UM_FMT " not a commit", idnum);
+			die("Mark :%" PRIuMAX " not a commit", idnum);
 		hashcpy(b->sha1, oe->sha1);
 		buf = gfi_unpack_entry(oe, &size);
 		if (!buf || size < 46)
@@ -1749,7 +1744,7 @@ static struct hash_list *cmd_merge(unsigned int *count)
 			uintmax_t idnum = strtoumax(from + 1, NULL, 10);
 			struct object_entry *oe = find_mark(idnum);
 			if (oe->type != OBJ_COMMIT)
-				die("Mark :" UM_FMT " not a commit", idnum);
+				die("Mark :%" PRIuMAX " not a commit", idnum);
 			hashcpy(n->sha1, oe->sha1);
 		} else if (get_sha1(from, n->sha1))
 			die("Invalid ref name or SHA1 expression: %s", from);
@@ -1893,7 +1888,7 @@ static void cmd_new_tag(void)
 		from_mark = strtoumax(from + 1, NULL, 10);
 		oe = find_mark(from_mark);
 		if (oe->type != OBJ_COMMIT)
-			die("Mark :" UM_FMT " not a commit", from_mark);
+			die("Mark :%" PRIuMAX " not a commit", from_mark);
 		hashcpy(sha1, oe->sha1);
 	} else if (!get_sha1(from, sha1)) {
 		unsigned long size;
@@ -2068,18 +2063,18 @@ int main(int argc, const char **argv)
 
 		fprintf(stderr, "%s statistics:\n", argv[0]);
 		fprintf(stderr, "---------------------------------------------------------------------\n");
-		fprintf(stderr, "Alloc'd objects: " UM10_FMT "\n", alloc_count);
-		fprintf(stderr, "Total objects:   " UM10_FMT " (" UM10_FMT " duplicates                  )\n", total_count, duplicate_count);
-		fprintf(stderr, "      blobs  :   " UM10_FMT " (" UM10_FMT " duplicates " UM10_FMT " deltas)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB], delta_count_by_type[OBJ_BLOB]);
-		fprintf(stderr, "      trees  :   " UM10_FMT " (" UM10_FMT " duplicates " UM10_FMT " deltas)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE], delta_count_by_type[OBJ_TREE]);
-		fprintf(stderr, "      commits:   " UM10_FMT " (" UM10_FMT " duplicates " UM10_FMT " deltas)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT], delta_count_by_type[OBJ_COMMIT]);
-		fprintf(stderr, "      tags   :   " UM10_FMT " (" UM10_FMT " duplicates " UM10_FMT " deltas)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG], delta_count_by_type[OBJ_TAG]);
+		fprintf(stderr, "Alloc'd objects: %10" PRIuMAX "\n", alloc_count);
+		fprintf(stderr, "Total objects:   %10" PRIuMAX " (%10" PRIuMAX " duplicates                  )\n", total_count, duplicate_count);
+		fprintf(stderr, "      blobs  :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB], delta_count_by_type[OBJ_BLOB]);
+		fprintf(stderr, "      trees  :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE], delta_count_by_type[OBJ_TREE]);
+		fprintf(stderr, "      commits:   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT], delta_count_by_type[OBJ_COMMIT]);
+		fprintf(stderr, "      tags   :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG], delta_count_by_type[OBJ_TAG]);
 		fprintf(stderr, "Total branches:  %10lu (%10lu loads     )\n", branch_count, branch_load_count);
-		fprintf(stderr, "      marks:     " UM10_FMT " (" UM10_FMT " unique    )\n", (((uintmax_t)1) << marks->shift) * 1024, marks_set_count);
+		fprintf(stderr, "      marks:     %10" PRIuMAX " (%10" PRIuMAX " unique    )\n", (((uintmax_t)1) << marks->shift) * 1024, marks_set_count);
 		fprintf(stderr, "      atoms:     %10u\n", atom_cnt);
-		fprintf(stderr, "Memory total:    " UM10_FMT " KiB\n", (total_allocd + alloc_count*sizeof(struct object_entry))/1024);
+		fprintf(stderr, "Memory total:    %10" PRIuMAX " KiB\n", (total_allocd + alloc_count*sizeof(struct object_entry))/1024);
 		fprintf(stderr, "       pools:    %10lu KiB\n", (unsigned long)(total_allocd/1024));
-		fprintf(stderr, "     objects:    " UM10_FMT " KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
+		fprintf(stderr, "     objects:    %10" PRIuMAX " KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
 		fprintf(stderr, "---------------------------------------------------------------------\n");
 		pack_report();
 		fprintf(stderr, "---------------------------------------------------------------------\n");
