@@ -1031,35 +1031,34 @@ sub req_ci
         exit;
     }
 
-    my $lockfile = "$state->{CVSROOT}/refs/heads/$state->{module}.lock";
-    unless ( sysopen(LOCKFILE,$lockfile,O_EXCL|O_CREAT|O_WRONLY) )
-    {
-        $log->warn("lockfile '$lockfile' already exists, please try again");
-        print "error 1 Lock file '$lockfile' already exists, please try again\n";
-        exit;
-    }
-
     # Grab a handle to the SQLite db and do any necessary updates
     my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
     my $tmpdir = tempdir ( DIR => $TEMP_DIR );
     my ( undef, $file_index ) = tempfile ( DIR => $TEMP_DIR, OPEN => 0 );
-    $log->info("Lock successful, basing commit on '$tmpdir', index file is '$file_index'");
+    $log->info("Lockless commit start, basing commit on '$tmpdir', index file is '$file_index'");
 
     $ENV{GIT_DIR} = $state->{CVSROOT} . "/";
     $ENV{GIT_INDEX_FILE} = $file_index;
 
+    # Remember where the head was at the beginning.
+    my $parenthash = `git show-ref -s refs/heads/$state->{module}`;
+    chomp $parenthash;
+    if ($parenthash !~ /^[0-9a-f]{40}$/) {
+	    print "error 1 pserver cannot find the current HEAD of module";
+	    exit;
+    }
+
     chdir $tmpdir;
 
     # populate the temporary index based
-    system("git-read-tree", $state->{module});
+    system("git-read-tree", $parenthash);
     unless ($? == 0)
     {
 	die "Error running git-read-tree $state->{module} $file_index $!";
     }
     $log->info("Created index '$file_index' with for head $state->{module} - exit status $?");
-
 
     my @committedfiles = ();
 
@@ -1095,8 +1094,6 @@ sub req_ci
         {
             # fail everything if an up to date check fails
             print "error 1 Up to date check failed for $filename\n";
-            close LOCKFILE;
-            unlink($lockfile);
             chdir "/";
             exit;
         }
@@ -1139,16 +1136,12 @@ sub req_ci
     {
         print "E No files to commit\n";
         print "ok\n";
-        close LOCKFILE;
-        unlink($lockfile);
         chdir "/";
         return;
     }
 
     my $treehash = `git-write-tree`;
-    my $parenthash = `cat $ENV{GIT_DIR}refs/heads/$state->{module}`;
     chomp $treehash;
-    chomp $parenthash;
 
     $log->debug("Treehash : $treehash, Parenthash : $parenthash");
 
@@ -1165,8 +1158,6 @@ sub req_ci
     {
         $log->warn("Commit failed (Invalid commit hash)");
         print "error 1 Commit failed (unknown reason)\n";
-        close LOCKFILE;
-        unlink($lockfile);
         chdir "/";
         exit;
     }
@@ -1179,14 +1170,17 @@ sub req_ci
 		{
 			$log->warn("Commit failed (update hook declined to update ref)");
 			print "error 1 Commit failed (update hook declined)\n";
-			close LOCKFILE;
-			unlink($lockfile);
 			chdir "/";
 			exit;
 		}
 	}
 
-    print LOCKFILE $commithash;
+	if (system(qw(git update-ref -m), "cvsserver ci",
+			"refs/heads/$state->{module}", $commithash, $parenthash)) {
+		$log->warn("update-ref for $state->{module} failed.");
+		print "error 1 Cannot commit -- update first\n";
+		exit;
+	}
 
     $updater->update();
 
@@ -1215,12 +1209,7 @@ sub req_ci
         }
     }
 
-    close LOCKFILE;
-    my $reffile = "$ENV{GIT_DIR}refs/heads/$state->{module}";
-    unlink($reffile);
-    rename($lockfile, $reffile);
     chdir "/";
-
     print "ok\n";
 }
 
