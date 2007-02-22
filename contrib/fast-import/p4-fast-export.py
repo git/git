@@ -15,6 +15,7 @@ import os, string, sys, time
 import marshal, popen2, getopt
 from sets import Set;
 
+silent = False
 knownBranches = Set()
 committedChanges = Set()
 branch = "refs/heads/master"
@@ -25,7 +26,7 @@ if len(globalPrefix) != 0:
     globalPrefix = globalPrefix[:-1]
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", [ "branch=", "detect-branches", "changesfile=" ])
+    opts, args = getopt.getopt(sys.argv[1:], "", [ "branch=", "detect-branches", "changesfile=", "silent" ])
 except getopt.GetoptError:
     print "fixme, syntax error"
     sys.exit(1)
@@ -37,6 +38,8 @@ for o, a in opts:
         detectBranches = True
     elif o == "--changesfile":
         changesFile = a
+    elif o == "--silent":
+        silent= True
 
 if len(args) == 0 and len(globalPrefix) != 0:
     print "[using previously specified depot path %s]" % globalPrefix
@@ -110,7 +113,8 @@ def extractFilesFromCommit(commit):
     while commit.has_key("depotFile%s" % fnum):
         path =  commit["depotFile%s" % fnum]
         if not path.startswith(globalPrefix):
-            print "\nchanged files: ignoring path %s outside of %s in change %s" % (path, globalPrefix, change)
+            if not silent:
+                print "\nchanged files: ignoring path %s outside of %s in change %s" % (path, globalPrefix, change)
             fnum = fnum + 1
             continue
 
@@ -272,7 +276,8 @@ def commit(details, files, branch, branchPrefix):
     for file in files:
         path = file["path"]
         if not path.startswith(branchPrefix):
-            print "\nchanged files: ignoring path %s outside of branch prefix %s in change %s" % (path, branchPrefix, details["change"])
+            if not silent:
+                print "\nchanged files: ignoring path %s outside of branch prefix %s in change %s" % (path, branchPrefix, details["change"])
             continue
         rev = file["rev"]
         depotPath = path + "#" + rev
@@ -387,15 +392,17 @@ else:
         changes.reverse()
 
     if len(changes) == 0:
-        print "no changes to import!"
+        if not silent:
+            print "no changes to import!"
         sys.exit(1)
 
     cnt = 1
     for change in changes:
         description = p4Cmd("describe %s" % change)
 
-        sys.stdout.write("\rimporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
-        sys.stdout.flush()
+        if not silent:
+            sys.stdout.write("\rimporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
+            sys.stdout.flush()
         cnt = cnt + 1
 
 #        try:
@@ -412,7 +419,8 @@ else:
 #            print gitError.read()
 #            sys.exit(1)
 
-print ""
+if not silent:
+    print ""
 
 gitStream.write("reset refs/tags/p4/%s\n" % lastChange)
 gitStream.write("from %s\n\n" % branch);
