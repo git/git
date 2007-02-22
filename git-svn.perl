@@ -1847,6 +1847,8 @@ sub make_log_entry {
 		$full_url =~ s#^\Q$svm->{replace}\E(/|$)#$svm->{source}$1# or
 		             die "Failed to replace '$svm->{replace}' with ",
 		                 "'$svm->{source}' in $full_url\n";
+		# throw away username for storing in records
+		remove_username($full_url);
 		$log_entry{metadata} = "$full_url\@$r $uuid";
 		$log_entry{svm_revision} = $r;
 		$email ||= "$author\@$uuid"
@@ -1915,12 +1917,14 @@ sub rebuild {
 	my ($rev_list, $ctx) = command_output_pipe("rev-list", $self->refname);
 	my $latest;
 	my $full_url = $self->full_url;
+	remove_username($full_url);
 	my $svn_uuid;
 	while (<$rev_list>) {
 		chomp;
 		my $c = $_;
 		die "Non-SHA1: $c\n" unless $c =~ /^$::sha1$/o;
 		my ($url, $rev, $uuid) = ::cmt_metadata($c);
+		remove_username($url);
 
 		# ignore merges (from set-tree)
 		next if (!defined $rev || !$uuid);
@@ -2092,6 +2096,10 @@ sub uri_encode {
 	my ($f) = @_;
 	$f =~ s#([^a-zA-Z0-9\*!\:_\./\-])#uc sprintf("%%%02x",ord($1))#eg;
 	$f
+}
+
+sub remove_username {
+	$_[0] =~ s{^([^:]*://)[^@]+@}{$1};
 }
 
 package Git::SVN::Prompt;
