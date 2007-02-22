@@ -332,8 +332,6 @@ if len(changeRange) == 0:
     except:
         pass
 
-sys.stderr.write("\n")
-
 tz = - time.timezone / 36
 tzsign = ("%s" % tz)[0]
 if tzsign != '+' and tzsign != '-':
