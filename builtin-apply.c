@@ -28,6 +28,7 @@ static int newfd = -1;
 
 static int unidiff_zero;
 static int p_value = 1;
+static int p_value_known;
 static int check_index;
 static int write_index;
 static int cached;
@@ -312,10 +313,53 @@ static char *find_name(const char *line, char *def, int p_value, int terminate)
 	return name;
 }
 
+static int count_slashes(const char *cp)
+{
+	int cnt = 0;
+	char ch;
+
+	while ((ch = *cp++))
+		if (ch == '/')
+			cnt++;
+	return cnt;
+}
+
+/*
+ * Given the string after "--- " or "+++ ", guess the appropriate
+ * p_value for the given patch.
+ */
+static int guess_p_value(const char *nameline)
+{
+	char *name, *cp;
+	int val = -1;
+
+	if (is_dev_null(nameline))
+		return -1;
+	name = find_name(nameline, NULL, 0, TERM_SPACE | TERM_TAB);
+	if (!name)
+		return -1;
+	cp = strchr(name, '/');
+	if (!cp)
+		val = 0;
+	else if (prefix) {
+		/*
+		 * Does it begin with "a/$our-prefix" and such?  Then this is
+		 * very likely to apply to our directory.
+		 */
+		if (!strncmp(name, prefix, prefix_length))
+			val = count_slashes(prefix);
+		else {
+			cp++;
+			if (!strncmp(cp, prefix, prefix_length))
+				val = count_slashes(prefix) + 1;
+		}
+	}
+	free(name);
+	return val;
+}
+
 /*
  * Get the name etc info from the --/+++ lines of a traditional patch header
- *
- * NOTE! This hardcodes "-p1" behaviour in filename detection.
  *
  * FIXME! The end-of-filename heuristics are kind of screwy. For existing
  * files, we can happily check the index for a match, but for creating a
@@ -327,6 +371,16 @@ static void parse_traditional_patch(const char *first, const char *second, struc
 
 	first += 4;	/* skip "--- " */
 	second += 4;	/* skip "+++ " */
+	if (!p_value_known) {
+		int p, q;
+		p = guess_p_value(first);
+		q = guess_p_value(second);
+		if (p < 0) p = q;
+		if (0 <= p && p == q) {
+			p_value = p;
+			p_value_known = 1;
+		}
+	}
 	if (is_dev_null(first)) {
 		patch->is_new = 1;
 		patch->is_delete = 0;
@@ -2656,6 +2710,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 		}
 		if (!strncmp(arg, "-p", 2)) {
 			p_value = atoi(arg + 2);
+			p_value_known = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--no-add")) {
