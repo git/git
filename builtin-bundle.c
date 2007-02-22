@@ -13,7 +13,7 @@
  * bundle supporting git-fetch, git-pull, and git-ls-remote
  */
 
-static const char *bundle_usage="git-bundle (--create <bundle> <git-rev-list args> | --verify <bundle> | --list-heads <bundle> [refname]... | --unbundle <bundle> [refname]... )";
+static const char *bundle_usage="git-bundle (create <bundle> <git-rev-list args> | verify <bundle> | list-heads <bundle> [refname]... | unbundle <bundle> [refname]... )";
 
 static const char bundle_signature[] = "# v2 git bundle\n";
 
@@ -39,7 +39,8 @@ static void add_to_ref_list(const unsigned char *sha1, const char *name,
 }
 
 struct bundle_header {
-	struct ref_list prerequisites, references;
+	struct ref_list prerequisites;
+	struct ref_list references;
 };
 
 /* this function returns the length of the string */
@@ -47,7 +48,7 @@ static int read_string(int fd, char *buffer, int size)
 {
 	int i;
 	for (i = 0; i < size - 1; i++) {
-		int count = read(fd, buffer + i, 1);
+		int count = xread(fd, buffer + i, 1);
 		if (count < 0)
 			return error("Read error: %s", strerror(errno));
 		if (count == 0) {
@@ -75,18 +76,25 @@ static int read_header(const char *path, struct bundle_header *header) {
 	}
 	while (read_string(fd, buffer, sizeof(buffer)) > 0
 			&& buffer[0] != '\n') {
-		int offset = buffer[0] == '-' ? 1 : 0;
+		int is_prereq = buffer[0] == '-';
+		int offset = is_prereq ? 1 : 0;
 		int len = strlen(buffer);
 		unsigned char sha1[20];
-		struct ref_list *list = offset ? &header->prerequisites
+		struct ref_list *list = is_prereq ? &header->prerequisites
 			: &header->references;
-		if (get_sha1_hex(buffer + offset, sha1)) {
-			close(fd);
-			return error("invalid SHA1: %s", buffer);
-		}
+		char delim;
+
 		if (buffer[len - 1] == '\n')
 			buffer[len - 1] = '\0';
-		add_to_ref_list(sha1, buffer + 41 + offset, list);
+		if (get_sha1_hex(buffer + offset, sha1)) {
+			warn("unrecognized header: %s", buffer);
+			continue;
+		}
+		delim = buffer[40 + offset];
+		if (!isspace(delim) && (delim != '\0' || !is_prereq))
+			die ("invalid header: %s", buffer);
+		add_to_ref_list(sha1, isspace(delim) ?
+				buffer + 41 + offset : "", list);
 	}
 	return fd;
 }
@@ -127,20 +135,28 @@ static int fork_with_pipe(const char **argv, int *in, int *out)
 			dup2(fdin[0], 0);
 			close(fdin[0]);
 			close(fdin[1]);
-		} else if (in)
+		} else if (in) {
 			dup2(*in, 0);
+			close(*in);
+		}
 		if (needs_out) {
 			dup2(fdout[1], 1);
 			close(fdout[0]);
 			close(fdout[1]);
-		} else if (out)
+		} else if (out) {
 			dup2(*out, 1);
+			close(*out);
+		}
 		exit(execv_git_cmd(argv));
 	}
 	if (needs_in)
 		close(fdin[0]);
+	else if (in)
+		close(*in);
 	if (needs_out)
 		close(fdout[1]);
+	else if (out)
+		close(*out);
 	return pid;
 }
 
@@ -151,29 +167,28 @@ static int verify_bundle(struct bundle_header *header)
 	 * to be verbose about the errors
 	 */
 	struct ref_list *p = &header->prerequisites;
-	const char *argv[5] = {"rev-list", "--stdin", "--not", "--all", NULL};
-	int pid, in, out, i, ret = 0;
+	char **argv;
+	int pid, out, i, ret = 0;
 	char buffer[1024];
 
-	in = out = -1;
-	pid = fork_with_pipe(argv, &in, &out);
+	argv = xmalloc((p->nr + 4) * sizeof(const char *));
+	argv[0] = "rev-list";
+	argv[1] = "--not";
+	argv[2] = "--all";
+	for (i = 0; i < p->nr; i++)
+		argv[i + 3] = xstrdup(sha1_to_hex(p->list[i].sha1));
+	argv[p->nr + 3] = NULL;
+	out = -1;
+	pid = fork_with_pipe((const char **)argv, NULL, &out);
 	if (pid < 0)
 		return error("Could not fork rev-list");
-	if (!fork()) {
-		for (i = 0; i < p->nr; i++) {
-			write(in, sha1_to_hex(p->list[i].sha1), 40);
-			write(in, "\n", 1);
-		}
-		close(in);
-		exit(0);
-	}
-	close(in);
-	while (read_string(out, buffer, sizeof(buffer)) > 0) {
-		if (ret++ == 0)
-			error ("The bundle requires the following commits you lack:");
-		fprintf(stderr, "%s", buffer);
-	}
+	while (read_string(out, buffer, sizeof(buffer)) > 0)
+		; /* do nothing */
 	close(out);
+	for (i = 0; i < p->nr; i++)
+		free(argv[i + 3]);
+	free(argv);
+
 	while (waitpid(pid, &i, 0) < 0)
 		if (errno != EINTR)
 			return -1;
@@ -205,8 +220,8 @@ static int list_heads(struct bundle_header *header, int argc, const char **argv)
 
 static void show_commit(struct commit *commit)
 {
-	write(1, sha1_to_hex(commit->object.sha1), 40);
-	write(1, "\n", 1);
+	write_or_die(1, sha1_to_hex(commit->object.sha1), 40);
+	write_or_die(1, "\n", 1);
 	if (commit->parents) {
 		free_commit_list(commit->parents);
 		commit->parents = NULL;
@@ -216,15 +231,15 @@ static void show_commit(struct commit *commit)
 static void show_object(struct object_array_entry *p)
 {
 	/* An object with name "foo\n0000000..." can be used to
-	 *          * confuse downstream git-pack-objects very badly.
-	 *                   */
+	 * confuse downstream git-pack-objects very badly.
+	 */
 	const char *ep = strchr(p->name, '\n');
 	int len = ep ? ep - p->name : strlen(p->name);
-	write(1, sha1_to_hex(p->item->sha1), 40);
-	write(1, " ", 1);
+	write_or_die(1, sha1_to_hex(p->item->sha1), 40);
+	write_or_die(1, " ", 1);
 	if (len)
-		write(1, p->name, len);
-	write(1, "\n", 1);
+		write_or_die(1, p->name, len);
+	write_or_die(1, "\n", 1);
 }
 
 static int create_bundle(struct bundle_header *header, const char *path,
@@ -243,7 +258,7 @@ static int create_bundle(struct bundle_header *header, const char *path,
 		return error("Could not write to '%s'", path);
 
 	/* write signature */
-	write(bundle_fd, bundle_signature, strlen(bundle_signature));
+	write_or_die(bundle_fd, bundle_signature, strlen(bundle_signature));
 
 	/* write prerequisites */
 	memcpy(argv_boundary + 2, argv + 1, argc * sizeof(const char *));
@@ -256,7 +271,7 @@ static int create_bundle(struct bundle_header *header, const char *path,
 		return -1;
 	while ((i = read_string(out, buffer, sizeof(buffer))) > 0)
 		if (buffer[0] == '-')
-			write(bundle_fd, buffer, i);
+			write_or_die(bundle_fd, buffer, i);
 	while ((i = waitpid(pid, &status, 0)) < 0)
 		if (errno != EINTR)
 			return error("rev-list died");
@@ -279,16 +294,16 @@ static int create_bundle(struct bundle_header *header, const char *path,
 			char *ref;
 			if (dwim_ref(e->name, strlen(e->name), sha1, &ref) != 1)
 				continue;
-			write(bundle_fd, sha1_to_hex(e->item->sha1), 40);
-			write(bundle_fd, " ", 1);
-			write(bundle_fd, ref, strlen(ref));
-			write(bundle_fd, "\n", 1);
+			write_or_die(bundle_fd, sha1_to_hex(e->item->sha1), 40);
+			write_or_die(bundle_fd, " ", 1);
+			write_or_die(bundle_fd, ref, strlen(ref));
+			write_or_die(bundle_fd, "\n", 1);
 			free(ref);
 		}
 	}
 
 	/* end header */
-	write(bundle_fd, "\n", 1);
+	write_or_die(bundle_fd, "\n", 1);
 
 	/* write pack */
 	argv_pack[0] = "pack-objects";
@@ -301,7 +316,6 @@ static int create_bundle(struct bundle_header *header, const char *path,
 	if (pid < 0)
 		return error("Could not spawn pack-objects");
 	close(1);
-	close(bundle_fd);
 	dup2(in, 1);
 	close(in);
 	prepare_revision_walk(&revs);
@@ -327,7 +341,6 @@ static int unbundle(struct bundle_header *header, int bundle_fd,
 	pid = fork_with_pipe(argv_index_pack, &bundle_fd, &dev_null);
 	if (pid < 0)
 		return error("Could not spawn index-pack");
-	close(bundle_fd);
 	while (waitpid(pid, &status, 0) < 0)
 		if (errno != EINTR)
 			return error("index-pack died");
