@@ -1,0 +1,139 @@
+git-bundle(1)
+=============
+
+NAME
+----
+git-bundle - Move objects and refs by archive
+
+
+SYNOPSIS
+--------
+'git-bundle' create <file> [git-rev-list args]
+'git-bundle' verify <file>
+'git-bundle' list-heads <file> [refname...]
+'git-bundle' unbundle <file> [refname...]
+
+DESCRIPTION
+-----------
+
+Some workflows require that one or more branches of development on one
+machine be replicated on another machine, but the two machines cannot
+be directly connected so the interactive git protocols (git, ssh,
+rsync, http) cannot be used.  This command provides suport for
+git-fetch and git-pull to operate by packaging objects and references
+in an archive at the originating machine, then importing those into
+another repository using gitlink:git-fetch[1] and gitlink:git-pull[1]
+after moving the archive by some means (i.e., by sneakernet).  As no
+direct connection between repositories exists, the user must specify a
+basis for the bundle that is held by the destination repository: the
+bundle assumes that all objects in the basis are already in the
+destination repository.
+
+OPTIONS
+-------
+
+create <file>::
+       Used to create a bundle named 'file'.  This requires the
+       git-rev-list arguments to define the bundle contents.
+
+verify <file>::
+       Used to check that a bundle file is valid and will apply
+       cleanly to the current repository.  This includes checks on the
+       bundle format itself as well as checking that the prerequisite
+       commits exist and are fully linked in the current repository.
+       git-bundle prints a list of missing commits, if any, and exits
+       with non-zero status.
+
+list-heads <file>::
+       Lists the references defined in the bundle.  If followed by a
+       list of references, only references matching those given are
+       printed out.
+
+unbundle <file>::
+       Passes the objects in the bundle to gitlink:git-index-pack[1]
+       for storage in the repository, then prints the names of all
+       defined references. If a reflist is given, only references
+       matching those in the given list are printed. This command is
+       really plumbing, intended to be called only by
+       gitlink:git-fetch[1].
+
+[git-rev-list-args...]::
+       A list of arguments, accepatble to git-rev-parse and
+       git-rev-list, that specify the specific objects and references
+       to transport.  For example, "master~10..master" causes the
+       current master reference to be packaged along with all objects
+       added since its 10th ancestor commit.  There is no explicit
+       limit to the number of references and objects that may be
+       packaged.
+
+
+[refname...]::
+       A list of references used to limit the references reported as
+       available. This is principally of use to git-fetch, which
+       expects to recieve only those references asked for and not
+       necessarily everything in the pack (in this case, git-bundle is
+       acting like gitlink:git-fetch-pack[1]).
+
+SPECIFYING REFERENCES
+---------------------
+
+git-bundle will only package references that are shown by
+git-show-ref: this includes heads, tags, and remote heads.  References
+such as master~1 cannot be packaged, but are perfectly suitable for
+defining the basis.  More than one reference may be packaged, and more
+than one basis can be specified.  The objects packaged are those not
+contained in the union of the given bases.  Each basis can be
+specified explicitly (e.g., ^master~10), or implicitly (e.g.,
+master~10..master, master --since=10.days.ago).
+
+It is very important that the basis used be held by the destination.
+It is ok to err on the side of conservatism, causing the bundle file
+to contain objects already in the destination as these are ignored
+when unpacking at the destination.
+
+EXAMPLE
+-------
+
+Assume two repositories exist as R1 on machine A, and R2 on machine B.
+For whatever reason, direct connection between A and B is not allowed,
+but we can move data from A to B via some mechanism (CD, email, etc).
+We want to update R2 with developments made on branch master in R1.
+We set a tag in R1 (lastR2bundle) after the previous such transport,
+and move it afterwards to help build the bundle.
+
+in R1 on A:
+$ git-bundle create mybundle master ^lastR2bundle
+$ git tag -f lastR2bundle master
+
+(move mybundle from A to B by some mechanism)
+
+in R2 on B:
+$ git-bundle verify mybundle
+$ git-fetch mybundle  refspec
+
+where refspec is refInBundle:localRef
+
+
+Also, with something like this in your config:
+
+[remote "bundle"]
+    url = /home/me/tmp/file.bdl
+    fetch = refs/heads/*:refs/remotes/origin/*
+
+You can first sneakernet the bundle file to ~/tmp/file.bdl and
+then these commands:
+
+$ git ls-remote bundle
+$ git fetch bundle
+$ git pull bundle
+
+would treat it as if it is talking with a remote side over the
+network.
+
+Author
+------
+Written by Mark Levedahl <mdl123@verizon.net>
+
+GIT
+---
+Part of the gitlink:git[7] suite

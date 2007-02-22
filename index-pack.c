@@ -457,8 +457,8 @@ static void parse_pack_objects(unsigned char *sha1)
 	/* If input_fd is a file, we should have reached its end now. */
 	if (fstat(input_fd, &st))
 		die("cannot fstat packfile: %s", strerror(errno));
-	if (S_ISREG(st.st_mode) && st.st_size != consumed_bytes)
-		die("pack has junk at the end");
+	if (input_fd && S_ISREG(st.st_mode) && st.st_size != consumed_bytes)
+		die("pack has junk at the end: 0%o, %d, %d %d", st.st_mode, (int)st.st_size, (int)consumed_bytes, input_fd);
 
 	if (!nr_deltas)
 		return;
