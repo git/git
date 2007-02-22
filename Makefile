@@ -895,7 +895,8 @@ dist: git.spec git-archive
 	$(TAR) rf $(GIT_TARNAME).tar \
 		$(GIT_TARNAME)/git.spec \
 		$(GIT_TARNAME)/version \
-		$(GIT_TARNAME)/git-gui/version
+		$(GIT_TARNAME)/git-gui/version \
+		$(GIT_TARNAME)/git-gui/credits
 	@rm -rf $(GIT_TARNAME)
 	gzip -f -9 $(GIT_TARNAME).tar
 
