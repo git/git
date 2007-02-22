@@ -23,6 +23,10 @@ tree and the index file, or the index file and the working tree.
 	further add to the index but you still haven't.  You can
 	stage these changes by using gitlink:git-add[1].
 
+	If exactly two paths are given, and at least one is untracked,
+	compare the two files / directories. This behavior can be
+	forced by --no-index.
+
 'git-diff' [--options] --cached [<commit>] [--] [<path>...]::
 
 	This form is to view the changes you staged for the next

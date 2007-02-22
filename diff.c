@@ -2406,7 +2406,8 @@ static void diff_resolve_rename_copy(void)
 				p->status = DIFF_STATUS_RENAMED;
 		}
 		else if (hashcmp(p->one->sha1, p->two->sha1) ||
-			 p->one->mode != p->two->mode)
+			 p->one->mode != p->two->mode ||
+			 is_null_sha1(p->one->sha1))
 			p->status = DIFF_STATUS_MODIFIED;
 		else {
 			/* This is a "no-change" entry and should not

@@ -219,6 +219,7 @@ extern void diff_flush(struct diff_options*);
 extern const char *diff_unique_abbrev(const unsigned char *, int);
 
 extern int run_diff_files(struct rev_info *revs, int silent_on_removed);
+extern int run_diff_files_cmd(struct rev_info *revs, int argc, const char **argv);
 
 extern int run_diff_index(struct rev_info *revs, int cached);
 

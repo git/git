@@ -8,7 +8,7 @@ git-diff-files - Compares files in the working tree and the index
 
 SYNOPSIS
 --------
-'git-diff-files' [-q] [-0|-1|-2|-3|-c|--cc] [<common diff options>] [<path>...]
+'git-diff-files' [-q] [-0|-1|-2|-3|-c|--cc|-n|--no-index] [<common diff options>] [<path>...]
 
 DESCRIPTION
 -----------
@@ -35,6 +35,9 @@ omit diff output for unmerged entries and just show "Unmerged".
 	branch) and the working tree file and outputs a combined
 	diff, similar to the way 'diff-tree' shows a merge
 	commit with these flags.
+
+\-n,\--no-index::
+	Compare the two given files / directories.
 
 -q::
 	Remain silent even on nonexistent files
