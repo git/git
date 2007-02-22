@@ -42,7 +42,8 @@ for o, a in opts:
         silent= True
 
 if len(args) == 0 and len(globalPrefix) != 0:
-    print "[using previously specified depot path %s]" % globalPrefix
+    if not silent:
+        print "[using previously specified depot path %s]" % globalPrefix
 elif len(args) != 1:
     print "usage: %s //depot/path[@revRange]" % sys.argv[0]
     print "\n    example:"
