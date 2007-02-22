@@ -19,7 +19,7 @@ static const char bundle_signature[] = "# v2 git bundle\n";
 
 struct ref_list {
 	unsigned int nr, alloc;
-	struct {
+	struct ref_list_entry {
 		unsigned char sha1[20];
 		char *name;
 	} *list;
@@ -167,33 +167,54 @@ static int verify_bundle(struct bundle_header *header)
 	 * to be verbose about the errors
 	 */
 	struct ref_list *p = &header->prerequisites;
-	char **argv;
-	int pid, out, i, ret = 0;
-	char buffer[1024];
+	struct rev_info revs;
+	const char *argv[] = {NULL, "--all"};
+	struct object_array refs;
+	struct commit *commit;
+	int i, ret = 0, req_nr;
+	const char *message = "The bundle requires these lacking revs:";
 
-	argv = xmalloc((p->nr + 4) * sizeof(const char *));
-	argv[0] = "rev-list";
-	argv[1] = "--not";
-	argv[2] = "--all";
-	for (i = 0; i < p->nr; i++)
-		argv[i + 3] = xstrdup(sha1_to_hex(p->list[i].sha1));
-	argv[p->nr + 3] = NULL;
-	out = -1;
-	pid = fork_with_pipe((const char **)argv, NULL, &out);
-	if (pid < 0)
-		return error("Could not fork rev-list");
-	while (read_string(out, buffer, sizeof(buffer)) > 0)
-		; /* do nothing */
-	close(out);
-	for (i = 0; i < p->nr; i++)
-		free(argv[i + 3]);
-	free(argv);
+	init_revisions(&revs, NULL);
+	for (i = 0; i < p->nr; i++) {
+		struct ref_list_entry *e = p->list + i;
+		struct object *o = parse_object(e->sha1);
+		if (o) {
+			o->flags |= BOUNDARY_SHOW;
+			add_pending_object(&revs, o, e->name);
+			continue;
+		}
+		if (++ret == 1)
+			error(message);
+		error("%s %s", sha1_to_hex(e->sha1), e->name);
+	}
+	if (revs.pending.nr == 0)
+		return ret;
+	req_nr = revs.pending.nr;
+	setup_revisions(2, argv, &revs, NULL);
 
-	while (waitpid(pid, &i, 0) < 0)
-		if (errno != EINTR)
-			return -1;
-	if (!ret && (!WIFEXITED(i) || WEXITSTATUS(i)))
-		return error("At least one prerequisite is lacking.");
+	memset(&refs, 0, sizeof(struct object_array));
+	for (i = 0; i < revs.pending.nr; i++) {
+		struct object_array_entry *e = revs.pending.objects + i;
+		add_object_array(e->item, e->name, &refs);
+	}
+
+	prepare_revision_walk(&revs);
+
+	i = req_nr;
+	while (i && (commit = get_revision(&revs)))
+		if (commit->object.flags & BOUNDARY_SHOW)
+			i--;
+
+	for (i = 0; i < req_nr; i++)
+		if (!(refs.objects[i].item->flags & SHOWN)) {
+			if (++ret == 1)
+				error(message);
+			error("%s %s", sha1_to_hex(refs.objects[i].item->sha1),
+				refs.objects[i].name);
+		}
+
+	for (i = 0; i < refs.nr; i++)
+		clear_commit_marks((struct commit *)refs.objects[i].item, -1);
 
 	return ret;
 }
