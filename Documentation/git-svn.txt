@@ -57,6 +57,11 @@ COMMANDS
 	Set the 'useSvnsyncProps' option in the [svn-remote] config.
 --rewrite-root=<URL>::
 	Set the 'rewriteRoot' option in the [svn-remote] config.
+--username=<USER>::
+	For transports that SVN handles authentication for (http,
+	https, and plain svn), specify the username.  For other
+	transports (eg svn+ssh://), you must include the username in
+	the URL, eg svn+ssh://foo@svn.bar.com/project
 
 --prefix=<prefix>
 	This allows one to specify a prefix which is prepended
