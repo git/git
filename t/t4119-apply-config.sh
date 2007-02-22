@@ -33,6 +33,20 @@ sed -e '
 	/^+++ /s|file1|b/sub/&|
 ' gpatch.file >gpatch-ab-sub.file &&
 
+check_result () {
+	if grep " " "$1"
+	then
+		echo "Eh?"
+		false
+	elif grep B "$1"
+	then
+		echo Happy
+	else
+		echo "Huh?"
+		false
+	fi
+}
+
 test_expect_success 'apply --whitespace=strip' '
 
 	rm -f sub/file1 &&
@@ -40,17 +54,7 @@ test_expect_success 'apply --whitespace=strip' '
 	git update-index --refresh &&
 
 	git apply --whitespace=strip patch.file &&
-	if grep " " sub/file1
-	then
-		echo "Eh?"
-		false
-	elif grep B sub/file1
-	then
-		echo Happy
-	else
-		echo "Huh?"
-		false
-	fi
+	check_result sub/file1
 '
 
 test_expect_success 'apply --whitespace=strip from config' '
@@ -61,16 +65,7 @@ test_expect_success 'apply --whitespace=strip from config' '
 
 	git config apply.whitespace strip &&
 	git apply patch.file &&
-	if grep " " sub/file1
-	then
-		echo "Eh?"
-		false
-	elif grep B sub/file1
-	then
-		echo Happy
-	else
-		echo Happy
-	fi
+	check_result sub/file1
 '
 
 D=`pwd`
@@ -85,17 +80,7 @@ test_expect_success 'apply --whitespace=strip in subdir' '
 
 	cd sub &&
 	git apply --whitespace=strip ../patch.file &&
-	if grep " " file1
-	then
-		echo "Eh?"
-		false
-	elif grep B file1
-	then
-		echo Happy
-	else
-		echo "Huh?"
-		false
-	fi
+	check_result file1
 '
 
 test_expect_success 'apply --whitespace=strip from config in subdir' '
@@ -108,17 +93,7 @@ test_expect_success 'apply --whitespace=strip from config in subdir' '
 
 	cd sub &&
 	git apply ../patch.file &&
-	if grep " " file1
-	then
-		echo "Eh?"
-		false
-	elif grep B file1
-	then
-		echo Happy
-	else
-		echo "Huh?"
-		false
-	fi
+	check_result file1
 '
 
 test_expect_success 'same in subdir but with traditional patch input' '
@@ -131,17 +106,7 @@ test_expect_success 'same in subdir but with traditional patch input' '
 
 	cd sub &&
 	git apply ../gpatch.file &&
-	if grep " " file1
-	then
-		echo "Eh?"
-		false
-	elif grep B file1
-	then
-		echo Happy
-	else
-		echo "Huh?"
-		false
-	fi
+	check_result file1
 '
 
 test_expect_success 'same but with traditional patch input of depth 1' '
@@ -154,17 +119,7 @@ test_expect_success 'same but with traditional patch input of depth 1' '
 
 	cd sub &&
 	git apply ../gpatch-sub.file &&
-	if grep " " file1
-	then
-		echo "Eh?"
-		false
-	elif grep B file1
-	then
-		echo Happy
-	else
-		echo "Huh?"
-		false
-	fi
+	check_result file1
 '
 
 test_expect_success 'same but with traditional patch input of depth 2' '
@@ -177,17 +132,31 @@ test_expect_success 'same but with traditional patch input of depth 2' '
 
 	cd sub &&
 	git apply ../gpatch-ab-sub.file &&
-	if grep " " file1
-	then
-		echo "Eh?"
-		false
-	elif grep B file1
-	then
-		echo Happy
-	else
-		echo "Huh?"
-		false
-	fi
+	check_result file1
+'
+
+test_expect_success 'same but with traditional patch input of depth 1' '
+
+	cd "$D" &&
+	git config apply.whitespace strip &&
+	rm -f sub/file1 &&
+	cp saved sub/file1 &&
+	git update-index --refresh &&
+
+	git apply -p0 gpatch-sub.file &&
+	check_result sub/file1
+'
+
+test_expect_success 'same but with traditional patch input of depth 2' '
+
+	cd "$D" &&
+	git config apply.whitespace strip &&
+	rm -f sub/file1 &&
+	cp saved sub/file1 &&
+	git update-index --refresh &&
+
+	git apply gpatch-ab-sub.file &&
+	check_result sub/file1
 '
 
 test_done
