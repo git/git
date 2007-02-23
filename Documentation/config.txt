@@ -142,6 +142,18 @@ core.preferSymlinkRefs::
 	This is sometimes needed to work with old scripts that
 	expect HEAD to be a symbolic link.
 
+core.bare::
+	If true this repository is assumed to be 'bare' and has no
+	working directory associated with it.  If this is the case a
+	number of commands that require a working directory will be
+	disabled, such as gitlink:git-add[1] or gitlink:git-merge[1].
++
+This setting is automatically guessed by gitlink:git-clone[1] or
+gitlink:git-init[1] when the repository was created.  By default a
+repository that ends in "/.git" is assumed to be not bare (bare =
+false), while all other repositories are assumed to be bare (bare
+= true).
+
 core.logAllRefUpdates::
 	Updates to a ref <ref> is logged to the file
 	"$GIT_DIR/logs/<ref>", by appending the new and old
