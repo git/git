@@ -224,6 +224,9 @@ int cmd_log(int argc, const char **argv, const char *prefix)
 	return cmd_log_walk(&rev);
 }
 
+/* format-patch */
+#define FORMAT_PATCH_NAME_MAX 64
+
 static int istitlechar(char c)
 {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
@@ -264,15 +267,18 @@ static int git_format_config(const char *var, const char *value)
 static FILE *realstdout = NULL;
 static const char *output_directory = NULL;
 
-static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
+static int reopen_stdout(struct commit *commit, int nr, int keep_subject)
 {
-	char filename[1024];
+	char filename[PATH_MAX];
 	char *sol;
 	int len = 0;
-	int suffix_len = strlen(fmt_patch_suffix) + 10; /* ., NUL and slop */
+	int suffix_len = strlen(fmt_patch_suffix) + 1;
 
 	if (output_directory) {
-		strlcpy(filename, output_directory, 1000);
+		if (strlen(output_directory) >=
+		    sizeof(filename) - FORMAT_PATCH_NAME_MAX - suffix_len)
+			return error("name of output directory is too long");
+		strlcpy(filename, output_directory, sizeof(filename) - suffix_len);
 		len = strlen(filename);
 		if (filename[len - 1] != '/')
 			filename[len++] = '/';
@@ -297,7 +303,8 @@ static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 		}
 
 		for (j = 0;
-		     len < sizeof(filename) - suffix_len &&
+		     j < FORMAT_PATCH_NAME_MAX - suffix_len - 5 &&
+			     len < sizeof(filename) - suffix_len &&
 			     sol[j] && sol[j] != '\n';
 		     j++) {
 			if (istitlechar(sol[j])) {
@@ -314,10 +321,16 @@ static void reopen_stdout(struct commit *commit, int nr, int keep_subject)
 		}
 		while (filename[len - 1] == '.' || filename[len - 1] == '-')
 			len--;
+		filename[len] = 0;
 	}
+	if (len + suffix_len >= sizeof(filename))
+		return error("Patch pathname too long");
 	strcpy(filename + len, fmt_patch_suffix);
 	fprintf(realstdout, "%s\n", filename);
-	freopen(filename, "w", stdout);
+	if (freopen(filename, "w", stdout) == NULL)
+		return error("Cannot open patch file %s",filename);
+	return 0;
+
 }
 
 static int get_patch_id(struct commit *commit, struct diff_options *options,
@@ -573,7 +586,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			rev.message_id = message_id;
 		}
 		if (!use_stdout)
-			reopen_stdout(commit, rev.nr, keep_subject);
+			if (reopen_stdout(commit, rev.nr, keep_subject))
+				die("Failed to create output files");
 		shown = log_tree_commit(&rev, commit);
 		free(commit->buffer);
 		commit->buffer = NULL;
