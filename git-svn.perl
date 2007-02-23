@@ -1675,9 +1675,9 @@ sub find_parent_branch {
 	}
 	if (defined $r0 && defined $parent) {
 		print STDERR "Found branch parent: ($self->{ref_id}) $parent\n";
-		$self->assert_index_clean($parent);
 		my $ed;
 		if ($self->ra->can_do_switch) {
+			$self->assert_index_clean($parent);
 			print STDERR "Following parent with do_switch\n";
 			# do_switch works with svn/trunk >= r22312, but that
 			# is not included with SVN 1.4.3 (the latest version
@@ -2932,6 +2932,10 @@ sub gs_do_update {
 	my $new = ($rev_a == $rev_b);
 	my $path = $gs->{path};
 
+	if ($new && -e $gs->{index}) {
+		unlink $gs->{index} or die
+		  "Couldn't unlink index: $gs->{index}: $!\n";
+	}
 	my $pool = SVN::Pool->new;
 	$editor->set_path_strip($path);
 	my (@pc) = split m#/#, $path;
