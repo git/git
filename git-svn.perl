@@ -2879,6 +2879,7 @@ sub new {
 	my ($class, $url) = @_;
 	$url =~ s!/+$!!;
 	return $RA if ($RA && $RA->{url} eq $url);
+	$RA->{pool}->clear if $RA;
 
 	SVN::_Core::svn_config_ensure($config_dir, undef);
 	my ($baton, $callbacks) = SVN::Core::auth_open_helper([
