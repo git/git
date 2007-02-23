@@ -8,7 +8,7 @@ git-upload-pack - Send objects packed back to git-fetch-pack
 
 SYNOPSIS
 --------
-'git-upload-pack' [--strict] [--timeout=<n>] [--no-progress] <directory>
+'git-upload-pack' [--strict] [--timeout=<n>] <directory>
 
 DESCRIPTION
 -----------
@@ -29,9 +29,6 @@ OPTIONS
 
 \--timeout=<n>::
 	Interrupt transfer after <n> seconds of inactivity.
-
-\--no-progress::
-	Do not show the progress.
 
 <directory>::
 	The repository to sync from.

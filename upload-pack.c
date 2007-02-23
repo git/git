@@ -10,7 +10,7 @@
 #include "revision.h"
 #include "list-objects.h"
 
-static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=nn] [--no-progress] <dir>";
+static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=nn] <dir>";
 
 /* bits #0..7 in revision.h, #8..10 in commit.c */
 #define THEY_HAVE	(1u << 11)
@@ -547,6 +547,8 @@ static void receive_needs(void)
 			use_sideband = LARGE_PACKET_MAX;
 		else if (strstr(line+45, "side-band"))
 			use_sideband = DEFAULT_PACKET_MAX;
+		if (strstr(line+45, "no-progress"))
+			no_progress = 1;
 
 		/* We have sent all our refs already, and the other end
 		 * should have chosen out of them; otherwise they are
@@ -615,7 +617,7 @@ static void receive_needs(void)
 static int send_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	static const char *capabilities = "multi_ack thin-pack side-band"
-		" side-band-64k ofs-delta shallow";
+		" side-band-64k ofs-delta shallow no-progress";
 	struct object *o = parse_object(sha1);
 
 	if (!o)
@@ -668,10 +670,6 @@ int main(int argc, char **argv)
 		}
 		if (!strncmp(arg, "--timeout=", 10)) {
 			timeout = atoi(arg+10);
-			continue;
-		}
-		if (!strcmp(arg, "--no-progress")) {
-			no_progress = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--")) {

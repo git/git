@@ -395,7 +395,7 @@ then
 
 	case "$no_checkout" in
 	'')
-		test "z$quiet" = z && v=-v || v=
+		test "z$quiet" = z -a "z$no_progress" = z && v=-v || v=
 		git-read-tree -m -u $v HEAD HEAD
 	esac
 fi

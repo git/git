@@ -174,12 +174,13 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		}
 
 		if (!fetching)
-			packet_write(fd[1], "want %s%s%s%s%s%s\n",
+			packet_write(fd[1], "want %s%s%s%s%s%s%s\n",
 				     sha1_to_hex(remote),
 				     (multi_ack ? " multi_ack" : ""),
 				     (use_sideband == 2 ? " side-band-64k" : ""),
 				     (use_sideband == 1 ? " side-band" : ""),
 				     (use_thin_pack ? " thin-pack" : ""),
+				     (no_progress ? " no-progress" : ""),
 				     " ofs-delta");
 		else
 			packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
@@ -732,12 +733,7 @@ int main(int argc, char **argv)
 	}
 	if (!dest)
 		usage(fetch_pack_usage);
-	if (no_progress) {
-		char buf[256];
-		snprintf(buf, sizeof(buf), "%s --no-progress", uploadpack);
-		pid = git_connect(fd, dest, buf);
-	} else
-		pid = git_connect(fd, dest, uploadpack);
+	pid = git_connect(fd, dest, uploadpack);
 	if (pid < 0)
 		return 1;
 	if (heads && nr_heads)
