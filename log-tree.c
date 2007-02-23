@@ -211,7 +211,7 @@ void show_log(struct rev_info *opt, const char *sep)
 				 sha1, sha1);
 			opt->diffopt.stat_sep = buffer;
 		}
-	} else {
+	} else if (opt->commit_format != CMIT_FMT_USERFORMAT) {
 		fputs(diff_get_color(opt->diffopt.color_diff, DIFF_COMMIT),
 		      stdout);
 		if (opt->commit_format != CMIT_FMT_ONELINE)
