@@ -267,7 +267,7 @@ static int create_bundle(struct bundle_header *header, const char *path,
 		int argc, const char **argv)
 {
 	int bundle_fd = -1;
-	const char **argv_boundary = xmalloc((argc + 3) * sizeof(const char *));
+	const char **argv_boundary = xmalloc((argc + 4) * sizeof(const char *));
 	const char **argv_pack = xmalloc(4 * sizeof(const char *));
 	int pid, in, out, i, status;
 	char buffer[1024];
@@ -282,10 +282,11 @@ static int create_bundle(struct bundle_header *header, const char *path,
 	write_or_die(bundle_fd, bundle_signature, strlen(bundle_signature));
 
 	/* write prerequisites */
-	memcpy(argv_boundary + 2, argv + 1, argc * sizeof(const char *));
+	memcpy(argv_boundary + 3, argv + 1, argc * sizeof(const char *));
 	argv_boundary[0] = "rev-list";
 	argv_boundary[1] = "--boundary";
-	argv_boundary[argc + 1] = NULL;
+	argv_boundary[2] = "--pretty=oneline";
+	argv_boundary[argc + 2] = NULL;
 	out = -1;
 	pid = fork_with_pipe(argv_boundary, NULL, &out);
 	if (pid < 0)
