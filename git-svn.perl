@@ -276,7 +276,7 @@ sub init_subdir {
 	my $repo_path = shift or return;
 	mkpath([$repo_path]) unless -d $repo_path;
 	chdir $repo_path or die "Couldn't chdir to $repo_path: $!\n";
-	$ENV{GIT_DIR} = $repo_path . "/.git";
+	$ENV{GIT_DIR} = '.git';
 }
 
 sub cmd_clone {
@@ -286,12 +286,8 @@ sub cmd_clone {
 	    $url !~ m#^[a-z\+]+://#) {
 		$path = $url;
 	}
-	warn "--path: $path\n" if defined $path;
 	$path = basename($url) if !defined $path || !length $path;
-	warn "++path: $path\n" if defined $path;
-	mkpath([$path]);
-	chdir $path or die "Couldn't chdir to $path\n";
-	cmd_init(@_);
+	cmd_init($url, $path);
 	Git::SVN::fetch_all($Git::SVN::default_repo_id);
 }
 
@@ -459,12 +455,12 @@ sub cmd_multi_init {
 	unless (defined $_trunk || defined $_branches || defined $_tags) {
 		usage(1);
 	}
-	do_git_init_db();
 	$_prefix = '' unless defined $_prefix;
 	if (defined $url) {
 		$url =~ s#/+$##;
 		init_subdir(@_);
 	}
+	do_git_init_db();
 	if (defined $_trunk) {
 		my $trunk_ref = $_prefix . 'trunk';
 		# try both old-style and new-style lookups:
