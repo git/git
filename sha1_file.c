@@ -2082,7 +2082,7 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 {
 	unsigned long size = st->st_size;
 	void *buf;
-	int ret;
+	int ret, re_allocated = 0;
 
 	buf = "";
 	if (size)
@@ -2091,11 +2091,30 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 
 	if (!type)
 		type = blob_type;
-	/* FIXME: CRLF -> LF conversion here for blobs! We'll need the path! */
+
+	/*
+	 * Convert blobs to git internal format
+	 */
+	if (!strcmp(type, blob_type)) {
+		unsigned long nsize = size;
+		char *nbuf = buf;
+		if (convert_to_git(NULL, &nbuf, &nsize)) {
+			if (size)
+				munmap(buf, size);
+			size = nsize;
+			buf = nbuf;
+			re_allocated = 1;
+		}
+	}
+
 	if (write_object)
 		ret = write_sha1_file(buf, size, type, sha1);
 	else
 		ret = hash_sha1_file(buf, size, type, sha1);
+	if (re_allocated) {
+		free(buf);
+		return ret;
+	}
 	if (size)
 		munmap(buf, size);
 	return ret;

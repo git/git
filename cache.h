@@ -211,6 +211,7 @@ extern const char *apply_default_whitespace;
 extern int zlib_compression_level;
 extern size_t packed_git_window_size;
 extern size_t packed_git_limit;
+extern int auto_crlf;
 
 #define GIT_REPO_VERSION 0
 extern int repository_format_version;
@@ -477,5 +478,9 @@ extern void alloc_report(void);
 extern int nfvasprintf(char **str, const char *fmt, va_list va);
 extern void trace_printf(const char *format, ...);
 extern void trace_argv_printf(const char **argv, int count, const char *format, ...);
+
+/* convert.c */
+extern int convert_to_git(const char *path, char **bufp, unsigned long *sizep);
+extern int convert_to_working_tree(const char *path, char **bufp, unsigned long *sizep);
 
 #endif /* CACHE_H */
