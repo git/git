@@ -128,6 +128,7 @@ prefix = $(HOME)
 bindir = $(prefix)/bin
 gitexecdir = $(bindir)
 template_dir = $(prefix)/share/git-core/templates/
+ETC_GITCONFIG = $(prefix)/etc/gitconfig
 # DESTDIR=
 
 # default configuration for gitweb
@@ -598,6 +599,7 @@ endif
 # Shell quote (do not use $(call) to accommodate ancient setups);
 
 SHA1_HEADER_SQ = $(subst ','\'',$(SHA1_HEADER))
+ETC_GITCONFIG_SQ = $(subst ','\'',$(ETC_GITCONFIG))
 
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 bindir_SQ = $(subst ','\'',$(bindir))
@@ -610,7 +612,8 @@ PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
 
 LIBS = $(GITLIBS) $(EXTLIBS)
 
-BASIC_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' $(COMPAT_CFLAGS)
+BASIC_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' \
+	-DETC_GITCONFIG='"$(ETC_GITCONFIG_SQ)"' $(COMPAT_CFLAGS)
 LIB_OBJS += $(COMPAT_OBJS)
 
 ALL_CFLAGS += $(BASIC_CFLAGS)

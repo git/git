@@ -5,7 +5,8 @@ The git configuration file contains a number of variables that affect
 the git command's behavior. `.git/config` file for each repository
 is used to store the information for that repository, and
 `$HOME/.gitconfig` is used to store per user information to give
-fallback values for `.git/config` file.
+fallback values for `.git/config` file. The file `/etc/gitconfig`
+can be used to store system-wide defaults.
 
 They can be used by both the git plumbing
 and the porcelains. The variables are divided into sections, where
