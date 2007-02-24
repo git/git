@@ -172,7 +172,7 @@ static int verify_bundle(struct bundle_header *header)
 	struct object_array refs;
 	struct commit *commit;
 	int i, ret = 0, req_nr;
-	const char *message = "The bundle requires these lacking revs:";
+	const char *message = "Repository lacks these prerequisite commits:";
 
 	init_revisions(&revs, NULL);
 	for (i = 0; i < p->nr; i++) {
