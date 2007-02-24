@@ -1723,6 +1723,8 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 			/* Ignore it, we already handled it */
 			break;
 		default:
+			if (apply_verbosely)
+				error("invalid start of line: '%c'", first);
 			return -1;
 		}
 		patch += len;
@@ -1819,6 +1821,9 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 			trailing--;
 		}
 	}
+
+	if (offset && apply_verbosely)
+		error("while searching for:\n%.*s", oldsize, oldlines);
 
 	free(old);
 	free(new);
@@ -2811,7 +2816,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			apply = apply_with_reject = apply_verbosely = 1;
 			continue;
 		}
-		if (!strcmp(arg, "--verbose")) {
+		if (!strcmp(arg, "-v") || !strcmp(arg, "--verbose")) {
 			apply_verbosely = 1;
 			continue;
 		}
