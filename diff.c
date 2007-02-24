@@ -219,6 +219,8 @@ static void emit_rewrite_diff(const char *name_a,
 	const char *new = diff_get_color(color_diff, DIFF_FILE_NEW);
 	const char *reset = diff_get_color(color_diff, DIFF_RESET);
 
+	name_a += (*name_a == '/');
+	name_b += (*name_b == '/');
 	name_a_tab = strchr(name_a, ' ') ? "\t" : "";
 	name_b_tab = strchr(name_b, ' ') ? "\t" : "";
 
@@ -1064,8 +1066,8 @@ static void builtin_diff(const char *name_a,
 	const char *set = diff_get_color(o->color_diff, DIFF_METAINFO);
 	const char *reset = diff_get_color(o->color_diff, DIFF_RESET);
 
-	a_one = quote_two("a/", name_a);
-	b_two = quote_two("b/", name_b);
+	a_one = quote_two("a/", name_a + (*name_a == '/'));
+	b_two = quote_two("b/", name_b + (*name_b == '/'));
 	lbl[0] = DIFF_FILE_VALID(one) ? a_one : "/dev/null";
 	lbl[1] = DIFF_FILE_VALID(two) ? b_two : "/dev/null";
 	printf("%sdiff --git %s %s%s\n", set, a_one, b_two, reset);

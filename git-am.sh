@@ -66,7 +66,7 @@ fall_back_3way () {
     git-update-index -z --index-info <"$dotest/patch-merge-index-info" &&
     GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
     git-write-tree >"$dotest/patch-merge-base+" ||
-    cannot_fallback "Patch does not record usable index information."
+    cannot_fallback "Repository lacks necessary blobs to fall back on 3-way merge."
 
     echo Using index info to reconstruct a base tree...
     if GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \

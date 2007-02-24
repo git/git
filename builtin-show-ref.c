@@ -221,9 +221,11 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 	}
 
 	if (verify) {
-		unsigned char sha1[20];
-
+		if (!pattern)
+			die("--verify requires a reference");
 		while (*pattern) {
+			unsigned char sha1[20];
+
 			if (!prefixcmp(*pattern, "refs/") &&
 			    resolve_ref(*pattern, sha1, 1, NULL)) {
 				if (!quiet)
