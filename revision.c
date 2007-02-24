@@ -1233,9 +1233,15 @@ static struct commit *get_revision_1(struct rev_info *revs)
 		 */
 		if (!revs->limited) {
 			if (revs->max_age != -1 &&
-			    (commit->date < revs->max_age))
-				continue;
-			add_parents_to_list(revs, commit, &revs->commits);
+			    (commit->date < revs->max_age)) {
+				if (revs->boundary)
+					commit->object.flags |=
+						BOUNDARY_SHOW | BOUNDARY;
+				else
+					continue;
+			} else
+				add_parents_to_list(revs, commit,
+						&revs->commits);
 		}
 		if (commit->object.flags & SHOWN)
 			continue;
@@ -1336,7 +1342,18 @@ struct commit *get_revision(struct rev_info *revs)
 	case -1:
 		break;
 	case 0:
-		return NULL;
+		if (revs->boundary) {
+			struct commit_list *list = revs->commits;
+			while (list) {
+				list->item->object.flags |=
+					BOUNDARY_SHOW | BOUNDARY;
+				list = list->next;
+			}
+			/* all remaining commits are boundary commits */
+			revs->max_count = -1;
+			revs->limited = 1;
+		} else
+			return NULL;
 	default:
 		revs->max_count--;
 	}
