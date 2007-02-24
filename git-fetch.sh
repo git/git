@@ -111,7 +111,7 @@ append_fetch_head () {
 	test -n "$verbose" && flags="$flags -v"
 	test -n "$force" && flags="$flags -f"
 	GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION" \
-		git-fetch--tool append-fetch-head $flags "$@"
+		git-fetch--tool $flags append-fetch-head "$@"
 }
 
 update_local_ref () {
@@ -119,7 +119,7 @@ update_local_ref () {
 	test -n "$verbose" && flags="$flags -v"
 	test -n "$force" && flags="$flags -f"
 	GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION" \
-		git-fetch--tool update-local-ref $flags "$@"
+		git-fetch--tool $flags update-local-ref "$@"
 }
 
 # updating the current HEAD with git-fetch in a bare
@@ -170,8 +170,8 @@ fetch_native () {
 	test -n "$verbose" && flags="$flags -v"
 	test -n "$force" && flags="$flags -f"
 	GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION" \
-		git-fetch--tool native-store \
-			$flags "$remote" "$remote_nick" "$refs"
+		git-fetch--tool $flags native-store \
+			"$remote" "$remote_nick" "$refs"
       )
     ) || exit
 
