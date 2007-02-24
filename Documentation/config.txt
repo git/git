@@ -483,6 +483,10 @@ remote.<name>.uploadpack::
 	The default program to execute on the remote side when fetching.  See
 	option \--exec of gitlink:git-fetch-pack[1].
 
+remote.<name>.tagopt::
+	Setting this value to --no-tags disables automatic tag following when fetching
+	from remote <name>
+
 remotes.<group>::
 	The list of remotes which are fetched by "git remote update
 	<group>".  See gitlink:git-remote[1].
