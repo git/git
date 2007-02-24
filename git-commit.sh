@@ -13,10 +13,10 @@ git-rev-parse --verify HEAD >/dev/null 2>&1 || initial_commit=t
 case "$0" in
 *status)
 	status_only=t
-	unmerged_ok_if_status=--unmerged ;;
+	;;
 *commit)
 	status_only=
-	unmerged_ok_if_status= ;;
+	;;
 esac
 
 refuse_partial () {
@@ -389,16 +389,17 @@ else
 	USE_INDEX="$THIS_INDEX"
 fi
 
-GIT_INDEX_FILE="$USE_INDEX" \
-	git-update-index -q $unmerged_ok_if_status --refresh || exit
-
-################################################################
-# If the request is status, just show it and exit.
-
-case "$0" in
-*status)
+case "$status_only" in
+t)
+	# This will silently fail in a read-only repository, which is
+	# what we want.
+	GIT_INDEX_FILE="$USE_INDEX" git-update-index -q --unmerged --refresh
 	run_status
 	exit $?
+	;;
+'')
+	GIT_INDEX_FILE="$USE_INDEX" git-update-index -q --refresh || exit
+	;;
 esac
 
 ################################################################

@@ -117,6 +117,10 @@ static int builtin_diff_index(struct rev_info *revs,
 	    revs->max_count != -1 || revs->min_age != -1 ||
 	    revs->max_age != -1)
 		usage(builtin_diff_usage);
+	if (read_cache() < 0) {
+		perror("read_cache");
+		return -1;
+	}
 	return run_diff_index(revs, cached);
 }
 
