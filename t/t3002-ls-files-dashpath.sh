@@ -23,7 +23,7 @@ test_expect_success \
 test_expect_success \
     'git-ls-files without path restriction.' \
     'git-ls-files --others >output &&
-     diff -u output - <<EOF
+     git diff output - <<EOF
 --
 -foo
 output
@@ -34,7 +34,7 @@ EOF
 test_expect_success \
     'git-ls-files with path restriction.' \
     'git-ls-files --others path0 >output &&
-	diff -u output - <<EOF
+	git diff output - <<EOF
 path0
 EOF
 '
@@ -42,7 +42,7 @@ EOF
 test_expect_success \
     'git-ls-files with path restriction with --.' \
     'git-ls-files --others -- path0 >output &&
-	diff -u output - <<EOF
+	git diff output - <<EOF
 path0
 EOF
 '
@@ -50,7 +50,7 @@ EOF
 test_expect_success \
     'git-ls-files with path restriction with -- --.' \
     'git-ls-files --others -- -- >output &&
-	diff -u output - <<EOF
+	git diff output - <<EOF
 --
 EOF
 '
@@ -58,7 +58,7 @@ EOF
 test_expect_success \
     'git-ls-files with no path restriction.' \
     'git-ls-files --others -- >output &&
-	diff -u output - <<EOF
+	git diff output - <<EOF
 --
 -foo
 output

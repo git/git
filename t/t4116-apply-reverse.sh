@@ -42,7 +42,7 @@ test_expect_success 'apply in reverse' '
 	git reset --hard second &&
 	git apply --reverse --binary --index patch &&
 	git diff >diff &&
-	diff -u /dev/null diff
+	git diff /dev/null diff
 
 '
 

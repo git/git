@@ -70,7 +70,7 @@ EOF
 
 git rerere diff > out
 
-test_expect_success 'rerere diff' 'diff -u expect out'
+test_expect_success 'rerere diff' 'git diff expect out'
 
 cat > expect << EOF
 a1
@@ -78,7 +78,7 @@ EOF
 
 git rerere status > out
 
-test_expect_success 'rerere status' 'diff -u expect out'
+test_expect_success 'rerere status' 'git diff expect out'
 
 test_expect_success 'commit succeeds' \
 	"git commit -q -a -m 'prefer first over second'"
@@ -94,7 +94,7 @@ test_expect_failure 'another conflicting merge' 'git pull . first'
 git show first:a1 | sed 's/To die: t/To die! T/' > expect
 test_expect_success 'rerere kicked in' "! grep ======= a1"
 
-test_expect_success 'rerere prefers first change' 'diff -u a1 expect'
+test_expect_success 'rerere prefers first change' 'git diff a1 expect'
 
 rm $rr/postimage
 echo "$sha1	a1" | tr '\012' '\0' > .git/rr-cache/MERGE_RR

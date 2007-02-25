@@ -74,7 +74,7 @@ EOF
 test_expect_success \
 	'A: verify commit' \
 	'git-cat-file commit master | sed 1d >actual &&
-	diff -u expect actual'
+	git diff expect actual'
 
 cat >expect <<EOF
 100644 blob file2
@@ -84,22 +84,22 @@ EOF
 test_expect_success \
 	'A: verify tree' \
 	'git-cat-file -p master^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
-	 diff -u expect actual'
+	 git diff expect actual'
 
 echo "$file2_data" >expect
 test_expect_success \
 	'A: verify file2' \
-	'git-cat-file blob master:file2 >actual && diff -u expect actual'
+	'git-cat-file blob master:file2 >actual && git diff expect actual'
 
 echo "$file3_data" >expect
 test_expect_success \
 	'A: verify file3' \
-	'git-cat-file blob master:file3 >actual && diff -u expect actual'
+	'git-cat-file blob master:file3 >actual && git diff expect actual'
 
 printf "$file4_data" >expect
 test_expect_success \
 	'A: verify file4' \
-	'git-cat-file blob master:file4 >actual && diff -u expect actual'
+	'git-cat-file blob master:file4 >actual && git diff expect actual'
 
 cat >expect <<EOF
 :2 `git-rev-parse --verify master:file2`
@@ -109,7 +109,7 @@ cat >expect <<EOF
 EOF
 test_expect_success \
 	'A: verify marks output' \
-	'diff -u expect marks.out'
+	'git diff expect marks.out'
 
 ###
 ### series B
@@ -175,7 +175,7 @@ EOF
 test_expect_success \
 	'C: verify commit' \
 	'git-cat-file commit branch | sed 1d >actual &&
-	 diff -u expect actual'
+	 git diff expect actual'
 
 cat >expect <<EOF
 :000000 100755 0000000000000000000000000000000000000000 f1fb5da718392694d0076d677d6d0e364c79b0bc A	file2/newf
@@ -232,13 +232,13 @@ echo "$file5_data" >expect
 test_expect_success \
 	'D: verify file5' \
 	'git-cat-file blob branch:newdir/interesting >actual &&
-	 diff -u expect actual'
+	 git diff expect actual'
 
 echo "$file6_data" >expect
 test_expect_success \
 	'D: verify file6' \
 	'git-cat-file blob branch:newdir/exec.sh >actual &&
-	 diff -u expect actual'
+	 git diff expect actual'
 
 ###
 ### series E
@@ -274,7 +274,7 @@ EOF
 test_expect_success \
 	'E: verify commit' \
 	'git-cat-file commit branch | sed 1,2d >actual &&
-	diff -u expect actual'
+	git diff expect actual'
 
 ###
 ### series F
@@ -327,7 +327,7 @@ EOF
 test_expect_success \
 	'F: verify other commit' \
 	'git-cat-file commit other >actual &&
-	diff -u expect actual'
+	git diff expect actual'
 
 ###
 ### series G
@@ -405,7 +405,7 @@ echo "$file5_data" >expect
 test_expect_success \
 	'H: verify file' \
 	'git-cat-file blob H:h/e/l/lo >actual &&
-	 diff -u expect actual'
+	 git diff expect actual'
 
 ###
 ### series I
@@ -431,7 +431,7 @@ EOF
 test_expect_success \
 	'I: verify edge list' \
 	'sed -e s/pack-.*pack/pack-.pack/ edges.list >actual &&
-	 diff -u expect actual'
+	 git diff expect actual'
 
 ###
 ### series J

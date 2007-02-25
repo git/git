@@ -110,7 +110,7 @@ test_expect_success \
 	cd .. &&
 	git-update-ref refs/heads/master master^ &&
 	git-send-pack --force ./victim/.git/ master &&
-	! diff -u .git/refs/heads/master victim/.git/refs/heads/master
+	! git diff .git/refs/heads/master victim/.git/refs/heads/master
 '
 
 test_done

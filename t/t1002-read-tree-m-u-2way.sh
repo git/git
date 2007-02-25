@@ -16,7 +16,7 @@ compare_change () {
 	sed >current \
 	    -e '/^--- /d; /^+++ /d; /^@@ /d;' \
 	    -e 's/^\(.[0-7][0-7][0-7][0-7][0-7][0-7]\) '"$_x40"' /\1 X /' "$1"
-	diff -u expected current
+	git diff expected current
 }
 
 check_cache_at () {

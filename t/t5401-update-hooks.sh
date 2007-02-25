@@ -51,12 +51,12 @@ test_expect_success 'hooks ran' '
 
 test_expect_success 'update hook arguments' '
 	echo refs/heads/master $commit0 $commit1 |
-	diff -u - victim/.git/update.args
+	git diff - victim/.git/update.args
 '
 
 test_expect_success 'post-update hook arguments' '
 	echo refs/heads/master |
-	diff -u - victim/.git/post-update.args
+	git diff - victim/.git/post-update.args
 '
 
 test_expect_failure 'update hook stdin is /dev/null' '
