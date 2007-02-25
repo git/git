@@ -43,7 +43,7 @@ static int queue_diff(struct diff_options *o,
 	}
 	if (name2) {
 		if (stat(name2, &st))
-			return error("Could not access '%s'", name1);
+			return error("Could not access '%s'", name2);
 		mode2 = st.st_mode;
 	}
 
