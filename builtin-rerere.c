@@ -160,7 +160,7 @@ static int find_conflict(struct path_list *conflict)
 				ce_stage(e3) == 3 && ce_same_name(e1, e2) &&
 				ce_same_name(e1, e3)) {
 			path_list_insert((const char *)e1->name, conflict);
-			i += 3;
+			i += 2;
 		}
 	}
 	return 0;
