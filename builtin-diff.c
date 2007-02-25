@@ -261,6 +261,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 				break;
 			else if (!strcmp(arg, "--cached")) {
 				add_head(&rev);
+				if (!rev.pending.nr)
+					die("No HEAD commit to compare with (yet)");
 				break;
 			}
 		}
