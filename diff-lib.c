@@ -30,28 +30,28 @@ static int read_directory(const char *path, struct path_list *list)
 	return 0;
 }
 
+static int get_mode(const char *path, int *mode)
+{
+	struct stat st;
+
+	if (!path || !strcmp(path, "/dev/null"))
+		*mode = 0;
+	else if (!strcmp(path, "-"))
+		*mode = ntohl(create_ce_mode(0666));
+	else if (stat(path, &st))
+		return error("Could not access '%s'", path);
+	else
+		*mode = st.st_mode;
+	return 0;
+}
+
 static int queue_diff(struct diff_options *o,
 		const char *name1, const char *name2)
 {
-	struct stat st;
 	int mode1 = 0, mode2 = 0;
 
-	if (name1) {
-		if (!strcmp(name1, "-"))
-			mode1 = ntohl(create_ce_mode(0666));
-		else if (stat(name1, &st))
-			return error("Could not access '%s'", name1);
-		else
-			mode1 = st.st_mode;
-	}
-	if (name2) {
-		if (!strcmp(name2, "-"))
-			mode2 = ntohl(create_ce_mode(0666));
-		else if (stat(name2, &st))
-			return error("Could not access '%s'", name2);
-		else
-			mode2 = st.st_mode;
-	}
+	if (get_mode(name1, &mode1) || get_mode(name2, &mode2))
+		return -1;
 
 	if (mode1 && mode2 && S_ISDIR(mode1) != S_ISDIR(mode2))
 		return error("file/directory conflict: %s, %s", name1, name2);
