@@ -20,8 +20,8 @@ tree_search ()
 generate_credits ()
 {
 	tip=$1 &&
-	rm -f $CF &&
-	git shortlog -n -s $tip | sed 's/: .*$//' >$CF || exit
+	rm -f "$2" &&
+	git shortlog -n -s $tip | sed 's/: .*$//' >"$2" || exit
 }
 
 # Always use the tarball credits file if found, just
@@ -36,10 +36,14 @@ generate_credits ()
 # that fact.
 #
 
+credits_tmp=/var/tmp/gitgui-credits-$$
+trap 'rm -f "$credits_tmp"' 0
+
+orig="$credits_tmp"
+
 if test -f credits
 then
-	rm -f $CF &&
-	cp credits $CF || exit
+	orig=credits
 elif prefix="$(git rev-parse --show-prefix 2>/dev/null)" &&
    test -n "$prefix" &&
    head=$(git rev-list --max-count=1 HEAD -- . 2>/dev/null) &&
@@ -47,12 +51,21 @@ elif prefix="$(git rev-parse --show-prefix 2>/dev/null)" &&
    tip=$(tree_search $head $tree) &&
    test -n "$tip"
 then
-	generate_credits $tip || exit
+	generate_credits $tip "$orig" || exit
 elif tip="$(git rev-parse --verify HEAD 2>/dev/null)" &&
    test -n "$tip"
 then
-	generate_credits $tip || exit
+	generate_credits $tip "$orig" || exit
 else
 	echo "error: Cannot locate authorship information." >&2
 	exit 1
 fi
+
+if test -f "$orig" && cmp -s "$orig" "$CF"
+then
+	: noop
+else
+	rm -f "$CF" &&
+	cat "$orig" >"$CF"
+fi
+
