@@ -264,6 +264,12 @@ test -d ../templates/blt || {
 	error "You haven't built things yet, have you?"
 }
 
+if ! test -x ../test-chmtime; then
+	echo >&2 'You need to build test-chmtime:'
+	echo >&2 'Run "make test-chmtime" in the source (toplevel) directory'
+	exit 1
+fi
+
 # Test repository
 test=trash
 rm -fr "$test"
