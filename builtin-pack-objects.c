@@ -1551,8 +1551,11 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	int use_internal_rev_list = 0;
 	int thin = 0;
 	int i;
-	const char *rp_av[64];
+	const char **rp_av;
+	int rp_ac_alloc = 64;
 	int rp_ac;
+
+	rp_av = xcalloc(rp_ac_alloc, sizeof(*rp_av));
 
 	rp_av[0] = "pack-objects";
 	rp_av[1] = "--objects"; /* --thin will make it --objects-edge */
@@ -1626,8 +1629,11 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		    !strcmp("--reflog", arg) ||
 		    !strcmp("--all", arg)) {
 			use_internal_rev_list = 1;
-			if (ARRAY_SIZE(rp_av) - 1 <= rp_ac)
-				die("too many internal rev-list options");
+			if (rp_ac >= rp_ac_alloc - 1) {
+				rp_ac_alloc = alloc_nr(rp_ac_alloc);
+				rp_av = xrealloc(rp_av,
+						 rp_ac_alloc * sizeof(*rp_av));
+			}
 			rp_av[rp_ac++] = arg;
 			continue;
 		}
