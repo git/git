@@ -1,0 +1,59 @@
+GIT v1.5.0.2 Release Notes
+==========================
+
+Fixes since v1.5.0.1
+--------------------
+
+* Bugfixes
+
+  - 'git diff maint master next' did not correctly give combined
+    diff across three trees.
+
+  - 'git fast-import' portability fix for Solaris.
+
+  - 'git show-ref --verify' without arguments did not error out
+    but segfaulted.
+
+  - 'git diff :tracked-file `pwd`/an-untracked-file' gave an extra
+    slashes after a/ and b/.
+
+  - 'git format-patch' produced too long filenames if the commit
+    message had too long line at the beginning.
+
+  - Running 'make all' and then without changing anything
+    running 'make install' still rebuilt some files.  This
+    was inconvenient when building as yourself and then
+    installing as root (especially problematic when the source
+    directory is on NFS and root is mapped to nobody).
+
+  - 'git-rerere' failed to deal with two unconflicted paths that
+    sorted next to each other.
+
+  - 'git-rerere' attempted to open(2) a symlink and failed if
+    there was a conflict.  Since a conflicting change to a
+    symlink would not benefit from rerere anyway, the command
+    now ignores conflicting changes to symlinks.
+
+  - 'git-repack' did not like to pass more than 64 arguments
+    internally to underlying 'rev-list' logic, which made it
+    impossible to repack after accumulating many (small) packs
+    in the repository.
+
+* Documentation updates
+
+  - added and clarified core.bare, core.legacyheaders configurations.
+
+  - updated "git-clone --depth" documentation.
+
+* Assorted git-gui fixes.
+
+
+--
+exec >/var/tmp/1
+O=v1.5.0.1-35-gffa84ff
+echo O=`git describe maint`
+git shortlog --no-merges $O..maint
+
+#Local Variables:
+#mode: text
+#End:
