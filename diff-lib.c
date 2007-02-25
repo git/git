@@ -37,14 +37,20 @@ static int queue_diff(struct diff_options *o,
 	int mode1 = 0, mode2 = 0;
 
 	if (name1) {
-		if (stat(name1, &st))
+		if (!strcmp(name1, "-"))
+			mode1 = 0644;
+		else if (stat(name1, &st))
 			return error("Could not access '%s'", name1);
-		mode1 = st.st_mode;
+		else
+			mode1 = st.st_mode;
 	}
 	if (name2) {
-		if (stat(name2, &st))
+		if (!strcmp(name2, "-"))
+			mode2 = 0644;
+		else if (stat(name2, &st))
 			return error("Could not access '%s'", name2);
-		mode2 = st.st_mode;
+		else
+			mode2 = st.st_mode;
 	}
 
 	if (mode1 && mode2 && S_ISDIR(mode1) != S_ISDIR(mode2))
@@ -224,7 +230,7 @@ int setup_diff_no_index(struct rev_info *revs,
 {
 	int i;
 	for (i = 1; i < argc; i++)
-		if (argv[i][0] != '-')
+		if (argv[i][0] != '-' || argv[i][1] == '\0')
 			break;
 		else if (!strcmp(argv[i], "--")) {
 			i++;

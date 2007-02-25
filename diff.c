@@ -1389,6 +1389,22 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		char *buf;
 		unsigned long size;
 
+		if (!strcmp(s->path, "-")) {
+#define INCREMENT 1024
+			int i = INCREMENT;
+			size = 0;
+			buf = NULL;
+			while (i == INCREMENT) {
+				buf = xrealloc(buf, size + INCREMENT);
+				i = xread(0, buf + size, INCREMENT);
+				size += i;
+			}
+			s->should_munmap = 0;
+			s->data = buf;
+			s->size = size;
+			s->should_free = 1;
+			return 0;
+		}
 		if (lstat(s->path, &st) < 0) {
 			if (errno == ENOENT) {
 			err_empty:
@@ -1689,6 +1705,10 @@ static void diff_fill_sha1_info(struct diff_filespec *one)
 	if (DIFF_FILE_VALID(one)) {
 		if (!one->sha1_valid) {
 			struct stat st;
+			if (!strcmp(one->path, "-")) {
+				hashcpy(one->sha1, null_sha1);
+				return;
+			}
 			if (lstat(one->path, &st) < 0)
 				die("stat %s", one->path);
 			if (index_path(one->sha1, one->path, &st, 0))
