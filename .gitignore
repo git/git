@@ -139,6 +139,7 @@ git-whatchanged
 git-write-tree
 git-core-*/?*
 gitweb/gitweb.cgi
+test-chmtime
 test-date
 test-delta
 test-dump-cache-tree

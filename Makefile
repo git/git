@@ -829,7 +829,7 @@ GIT-CFLAGS: .FORCE-GIT-CFLAGS
 
 export NO_SVN_TESTS
 
-test: all
+test: all test-chmtime$X
 	$(MAKE) -C t/ all
 
 test-date$X: test-date.c date.o ctype.o
@@ -843,6 +843,9 @@ test-dump-cache-tree$X: dump-cache-tree.o $(GITLIBS)
 
 test-sha1$X: test-sha1.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
+
+test-chmtime$X: test-chmtime.c
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $<
 
 check-sha1:: test-sha1$X
 	./test-sha1.sh
