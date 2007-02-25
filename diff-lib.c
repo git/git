@@ -210,11 +210,16 @@ int run_diff_files_cmd(struct rev_info *revs, int argc, const char **argv)
 	if (revs->max_count == -2) {
 		if (revs->diffopt.nr_paths != 2)
 			return error("need two files/directories with --no-index");
-		queue_diff(&revs->diffopt, revs->diffopt.paths[0],
-				revs->diffopt.paths[1]);
+		if (queue_diff(&revs->diffopt, revs->diffopt.paths[0],
+				revs->diffopt.paths[1]))
+			return -1;
 		diffcore_std(&revs->diffopt);
 		diff_flush(&revs->diffopt);
-		return 0;
+		/*
+		 * The return code for --no-index imitates diff(1):
+		 * 0 = no changes, 1 = changes, else error
+		 */
+		return revs->diffopt.found_changes;
 	}
 
 	if (read_cache() < 0) {

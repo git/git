@@ -75,6 +75,9 @@ struct diff_options {
 	int stat_width;
 	int stat_name_width;
 
+	/* this is set by diffcore for DIFF_FORMAT_PATCH */
+	int found_changes;
+
 	int nr_paths;
 	const char **paths;
 	int *pathlens;
