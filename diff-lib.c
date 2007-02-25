@@ -200,6 +200,60 @@ static int handle_diff_files_args(struct rev_info *revs,
 	return 0;
 }
 
+static int is_outside_repo(const char *path, int nongit, const char *prefix)
+{
+	int i;
+	if (nongit || !strcmp(path, "-") || path[0] == '/')
+		return 1;
+	if (prefixcmp(path, "../"))
+		return 0;
+	if (!prefix)
+		return 1;
+	for (i = strlen(prefix); !prefixcmp(path, "../"); ) {
+		while (i > 0 && prefix[i - 1] != '/')
+			i--;
+		if (--i < 0)
+			return 1;
+		path += 3;
+	}
+	return 0;
+}
+
+int setup_diff_no_index(struct rev_info *revs,
+		int argc, const char ** argv, int nongit, const char *prefix)
+{
+	int i;
+	for (i = 1; i < argc; i++)
+		if (argv[i][0] != '-')
+			break;
+		else if (!strcmp(argv[i], "--")) {
+			i++;
+			break;
+		} else if (i < argc - 3 && !strcmp(argv[i], "--no-index")) {
+			i = argc - 3;
+			break;
+		}
+	if (argc != i + 2 || (!is_outside_repo(argv[i + 1], nongit, prefix) &&
+				!is_outside_repo(argv[i], nongit, prefix)))
+		return -1;
+
+	diff_setup(&revs->diffopt);
+	for (i = 1; i < argc - 2; )
+		if (!strcmp(argv[i], "--no-index"))
+			i++;
+		else {
+			int j = diff_opt_parse(&revs->diffopt,
+					argv + i, argc - i);
+			if (!j)
+				die("invalid diff option/value: %s", argv[i]);
+			i += j;
+		}
+	revs->diffopt.paths = argv + argc - 2;
+	revs->diffopt.nr_paths = 2;
+	revs->max_count = -2;
+	return 0;
+}
+
 int run_diff_files_cmd(struct rev_info *revs, int argc, const char **argv)
 {
 	int silent_on_removed;
