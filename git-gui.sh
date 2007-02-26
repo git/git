@@ -1267,6 +1267,24 @@ proc commit_committree {fd_wt curHEAD msg} {
 		return
 	}
 
+	# -- Verify this wasn't an empty change.
+	#
+	if {$commit_type eq {normal}} {
+		set old_tree [git rev-parse "$PARENT^{tree}"]
+		if {$tree_id eq $old_tree} {
+			info_popup {No changes to commit.
+
+No files were modified by this commit and it
+was not a merge commit.
+
+A rescan will be automatically started now.
+}
+			unlock_index
+			rescan {set ui_status_value {No changes to commit.}}
+			return
+		}
+	}
+
 	# -- Build the message.
 	#
 	set msg_p [gitdir COMMIT_EDITMSG]
