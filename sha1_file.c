@@ -1461,7 +1461,7 @@ static int sha1_loose_object_info(const unsigned char *sha1, char *type, unsigne
 	if (unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr)) < 0)
 		status = error("unable to unpack %s header",
 			       sha1_to_hex(sha1));
-	if (parse_sha1_header(hdr, type, &size) < 0)
+	else if (parse_sha1_header(hdr, type, &size) < 0)
 		status = error("unable to parse %s header", sha1_to_hex(sha1));
 	else {
 		status = 0;
