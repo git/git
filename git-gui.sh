@@ -5256,6 +5256,12 @@ if {[is_enabled branch]} {
 		-font font_ui
 	lappend disable_on_lock [list .mbar.branch entryconf \
 		[.mbar.branch index last] -state]
+
+	.mbar.branch add command -label {Reset...} \
+		-command do_reset_hard \
+		-font font_ui
+	lappend disable_on_lock [list .mbar.branch entryconf \
+		[.mbar.branch index last] -state]
 }
 
 # -- Commit Menu
