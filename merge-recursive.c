@@ -589,7 +589,7 @@ static void update_file_flags(const unsigned char *sha,
 			memcpy(lnk, buf, size);
 			lnk[size] = '\0';
 			mkdir_p(path, 0777);
-			unlink(lnk);
+			unlink(path);
 			symlink(lnk, path);
 		} else
 			die("do not know what to do with %06o %s '%s'",
