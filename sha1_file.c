@@ -1461,7 +1461,7 @@ static int sha1_loose_object_info(const unsigned char *sha1, char *type, unsigne
 	unsigned long mapsize, size;
 	void *map;
 	z_stream stream;
-	char hdr[128];
+	char hdr[32];
 
 	map = map_sha1_file(sha1, &mapsize);
 	if (!map)
@@ -1628,12 +1628,12 @@ void *read_object_with_reference(const unsigned char *sha1,
 
 static void write_sha1_file_prepare(void *buf, unsigned long len,
                                     const char *type, unsigned char *sha1,
-                                    unsigned char *hdr, int *hdrlen)
+                                    char *hdr, int *hdrlen)
 {
 	SHA_CTX c;
 
 	/* Generate the header */
-	*hdrlen = sprintf((char *)hdr, "%s %lu", type, len)+1;
+	*hdrlen = sprintf(hdr, "%s %lu", type, len)+1;
 
 	/* Sha1.. */
 	SHA1_Init(&c);
@@ -1740,7 +1740,7 @@ static int write_binary_header(unsigned char *hdr, enum object_type type, unsign
 
 static void setup_object_header(z_stream *stream, const char *type, unsigned long len)
 {
-	int obj_type, hdr;
+	int obj_type, hdrlen;
 
 	if (use_legacy_headers) {
 		while (deflate(stream, 0) == Z_OK)
@@ -1757,16 +1757,16 @@ static void setup_object_header(z_stream *stream, const char *type, unsigned lon
 		obj_type = OBJ_TAG;
 	else
 		die("trying to generate bogus object of type '%s'", type);
-	hdr = write_binary_header(stream->next_out, obj_type, len);
-	stream->total_out = hdr;
-	stream->next_out += hdr;
-	stream->avail_out -= hdr;
+	hdrlen = write_binary_header(stream->next_out, obj_type, len);
+	stream->total_out = hdrlen;
+	stream->next_out += hdrlen;
+	stream->avail_out -= hdrlen;
 }
 
 int hash_sha1_file(void *buf, unsigned long len, const char *type,
                    unsigned char *sha1)
 {
-	unsigned char hdr[50];
+	char hdr[32];
 	int hdrlen;
 	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
 	return 0;
@@ -1780,7 +1780,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	unsigned char sha1[20];
 	char *filename;
 	static char tmpfile[PATH_MAX];
-	unsigned char hdr[50];
+	char hdr[32];
 	int fd, hdrlen;
 
 	/* Normally if we have it in the pack then we do not bother writing
@@ -1827,7 +1827,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	stream.avail_out = size;
 
 	/* First header.. */
-	stream.next_in = hdr;
+	stream.next_in = (unsigned char *)hdr;
 	stream.avail_in = hdrlen;
 	setup_object_header(&stream, type, len);
 
@@ -1859,7 +1859,7 @@ static void *repack_object(const unsigned char *sha1, unsigned long *objsize)
 	unsigned char *unpacked;
 	unsigned long len;
 	char type[20];
-	char hdr[50];
+	char hdr[32];
 	int hdrlen;
 	void *buf;
 
