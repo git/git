@@ -1,5 +1,8 @@
 #include "cache.h"
 #include "tag.h"
+#include "commit.h"
+#include "tree.h"
+#include "blob.h"
 
 const char *tag_type = "tag";
 
@@ -37,7 +40,7 @@ struct tag *lookup_tag(const unsigned char *sha1)
 int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
 {
 	int typelen, taglen;
-	unsigned char object[20];
+	unsigned char sha1[20];
 	const char *type_line, *tag_line, *sig_line;
 	char type[20];
 
@@ -47,7 +50,7 @@ int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
 
 	if (size < 64)
 		return -1;
-	if (memcmp("object ", data, 7) || get_sha1_hex((char *) data + 7, object))
+	if (memcmp("object ", data, 7) || get_sha1_hex((char *) data + 7, sha1))
 		return -1;
 
 	type_line = (char *) data + 48;
@@ -73,7 +76,19 @@ int parse_tag_buffer(struct tag *item, void *data, unsigned long size)
 	memcpy(item->tag, tag_line + 4, taglen);
 	item->tag[taglen] = '\0';
 
-	item->tagged = lookup_object_type(object, type);
+	if (!strcmp(type, blob_type)) {
+		item->tagged = &lookup_blob(sha1)->object;
+	} else if (!strcmp(type, tree_type)) {
+		item->tagged = &lookup_tree(sha1)->object;
+	} else if (!strcmp(type, commit_type)) {
+		item->tagged = &lookup_commit(sha1)->object;
+	} else if (!strcmp(type, tag_type)) {
+		item->tagged = &lookup_tag(sha1)->object;
+	} else {
+		error("Unknown type %s", type);
+		item->tagged = NULL;
+	}
+
 	if (item->tagged && track_object_refs) {
 		struct object_refs *refs = alloc_object_refs(1);
 		refs->ref[0] = item->tagged;
