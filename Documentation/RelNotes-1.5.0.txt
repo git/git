@@ -448,7 +448,7 @@ Updates in v1.5.0 since v1.4.4 series
  - There is a partial support for 'shallow' repositories that
    keeps only recent history.  A 'shallow clone' is created by
    specifying how deep that truncated history should be
-   (e.g. "git clone --depth=5 git://some.where/repo.git").
+   (e.g. "git clone --depth 5 git://some.where/repo.git").
 
    Currently a shallow repository has number of limitations:
 

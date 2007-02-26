@@ -369,7 +369,7 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 				recover = 1;
 				continue;
 			}
-			if (!strncmp(arg, "--pack_header=", 14)) {
+			if (!prefixcmp(arg, "--pack_header=")) {
 				struct pack_header *hdr;
 				char *c;
 

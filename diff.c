@@ -77,7 +77,7 @@ int git_diff_ui_config(const char *var, const char *value)
 			diff_detect_rename_default = DIFF_DETECT_RENAME;
 		return 0;
 	}
-	if (!strncmp(var, "diff.color.", 11) || !strncmp(var, "color.diff.", 11)) {
+	if (!prefixcmp(var, "diff.color.") || !prefixcmp(var, "color.diff.")) {
 		int slot = parse_diff_color_slot(var, 11);
 		color_parse(value, var, diff_colors[slot]);
 		return 0;
@@ -184,31 +184,43 @@ static void print_line_count(int count)
 	}
 }
 
-static void copy_file(int prefix, const char *data, int size)
+static void copy_file(int prefix, const char *data, int size,
+		const char *set, const char *reset)
 {
 	int ch, nl_just_seen = 1;
 	while (0 < size--) {
 		ch = *data++;
-		if (nl_just_seen)
+		if (nl_just_seen) {
+			fputs(set, stdout);
 			putchar(prefix);
-		putchar(ch);
-		if (ch == '\n')
+		}
+		if (ch == '\n') {
 			nl_just_seen = 1;
-		else
+			fputs(reset, stdout);
+		} else
 			nl_just_seen = 0;
+		putchar(ch);
 	}
 	if (!nl_just_seen)
-		printf("\n\\ No newline at end of file\n");
+		printf("%s\n\\ No newline at end of file\n", reset);
 }
 
 static void emit_rewrite_diff(const char *name_a,
 			      const char *name_b,
 			      struct diff_filespec *one,
-			      struct diff_filespec *two)
+			      struct diff_filespec *two,
+			      int color_diff)
 {
 	int lc_a, lc_b;
 	const char *name_a_tab, *name_b_tab;
+	const char *metainfo = diff_get_color(color_diff, DIFF_METAINFO);
+	const char *fraginfo = diff_get_color(color_diff, DIFF_FRAGINFO);
+	const char *old = diff_get_color(color_diff, DIFF_FILE_OLD);
+	const char *new = diff_get_color(color_diff, DIFF_FILE_NEW);
+	const char *reset = diff_get_color(color_diff, DIFF_RESET);
 
+	name_a += (*name_a == '/');
+	name_b += (*name_b == '/');
 	name_a_tab = strchr(name_a, ' ') ? "\t" : "";
 	name_b_tab = strchr(name_b, ' ') ? "\t" : "";
 
@@ -216,17 +228,17 @@ static void emit_rewrite_diff(const char *name_a,
 	diff_populate_filespec(two, 0);
 	lc_a = count_lines(one->data, one->size);
 	lc_b = count_lines(two->data, two->size);
-	printf("--- a/%s%s\n+++ b/%s%s\n@@ -",
-	       name_a, name_a_tab,
-	       name_b, name_b_tab);
+	printf("%s--- a/%s%s%s\n%s+++ b/%s%s%s\n%s@@ -",
+	       metainfo, name_a, name_a_tab, reset,
+	       metainfo, name_b, name_b_tab, reset, fraginfo);
 	print_line_count(lc_a);
 	printf(" +");
 	print_line_count(lc_b);
-	printf(" @@\n");
+	printf(" @@%s\n", reset);
 	if (lc_a)
-		copy_file('-', one->data, one->size);
+		copy_file('-', one->data, one->size, old, reset);
 	if (lc_b)
-		copy_file('+', two->data, two->size);
+		copy_file('+', two->data, two->size, new, reset);
 }
 
 static int fill_mmfile(mmfile_t *mf, struct diff_filespec *one)
@@ -405,22 +417,16 @@ static void emit_line(const char *set, const char *reset, const char *line, int 
 	puts(reset);
 }
 
-static void emit_add_line(const char *reset, struct emit_callback *ecbdata, const char *line, int len)
+static void emit_line_with_ws(int nparents,
+		const char *set, const char *reset, const char *ws,
+		const char *line, int len)
 {
-	int col0 = ecbdata->nparents;
+	int col0 = nparents;
 	int last_tab_in_indent = -1;
 	int last_space_in_indent = -1;
 	int i;
 	int tail = len;
 	int need_highlight_leading_space = 0;
-	const char *ws = diff_get_color(ecbdata->color_diff, DIFF_WHITESPACE);
-	const char *set = diff_get_color(ecbdata->color_diff, DIFF_FILE_NEW);
-
-	if (!*ws) {
-		emit_line(set, reset, line, len);
-		return;
-	}
-
 	/* The line is a newly added line.  Does it have funny leading
 	 * whitespaces?  In indent, SP should never precede a TAB.
 	 */
@@ -473,6 +479,18 @@ static void emit_add_line(const char *reset, struct emit_callback *ecbdata, cons
 	}
 	else
 		emit_line(set, reset, line + i, len - i);
+}
+
+static void emit_add_line(const char *reset, struct emit_callback *ecbdata, const char *line, int len)
+{
+	const char *ws = diff_get_color(ecbdata->color_diff, DIFF_WHITESPACE);
+	const char *set = diff_get_color(ecbdata->color_diff, DIFF_FILE_NEW);
+
+	if (!*ws)
+		emit_line(set, reset, line, len);
+	else
+		emit_line_with_ws(ecbdata->nparents, set, reset, ws,
+				line, len);
 }
 
 static void fn_out_consume(void *priv, char *line, unsigned long len)
@@ -884,30 +902,44 @@ static void show_numstat(struct diffstat_t* data, struct diff_options *options)
 struct checkdiff_t {
 	struct xdiff_emit_state xm;
 	const char *filename;
-	int lineno;
+	int lineno, color_diff;
 };
 
 static void checkdiff_consume(void *priv, char *line, unsigned long len)
 {
 	struct checkdiff_t *data = priv;
+	const char *ws = diff_get_color(data->color_diff, DIFF_WHITESPACE);
+	const char *reset = diff_get_color(data->color_diff, DIFF_RESET);
+	const char *set = diff_get_color(data->color_diff, DIFF_FILE_NEW);
 
 	if (line[0] == '+') {
-		int i, spaces = 0;
+		int i, spaces = 0, space_before_tab = 0, white_space_at_end = 0;
 
 		/* check space before tab */
 		for (i = 1; i < len && (line[i] == ' ' || line[i] == '\t'); i++)
 			if (line[i] == ' ')
 				spaces++;
 		if (line[i - 1] == '\t' && spaces)
-			printf("%s:%d: space before tab:%.*s\n",
-				data->filename, data->lineno, (int)len, line);
+			space_before_tab = 1;
 
 		/* check white space at line end */
 		if (line[len - 1] == '\n')
 			len--;
 		if (isspace(line[len - 1]))
-			printf("%s:%d: white space at end: %.*s\n",
-				data->filename, data->lineno, (int)len, line);
+			white_space_at_end = 1;
+
+		if (space_before_tab || white_space_at_end) {
+			printf("%s:%d: %s", data->filename, data->lineno, ws);
+			if (space_before_tab) {
+				printf("space before tab");
+				if (white_space_at_end)
+					putchar(',');
+			}
+			if (white_space_at_end)
+				printf("white space at end");
+			printf(":%s ", reset);
+			emit_line_with_ws(1, set, reset, ws, line, len);
+		}
 
 		data->lineno++;
 	} else if (line[0] == ' ')
@@ -1034,8 +1066,8 @@ static void builtin_diff(const char *name_a,
 	const char *set = diff_get_color(o->color_diff, DIFF_METAINFO);
 	const char *reset = diff_get_color(o->color_diff, DIFF_RESET);
 
-	a_one = quote_two("a/", name_a);
-	b_two = quote_two("b/", name_b);
+	a_one = quote_two("a/", name_a + (*name_a == '/'));
+	b_two = quote_two("b/", name_b + (*name_b == '/'));
 	lbl[0] = DIFF_FILE_VALID(one) ? a_one : "/dev/null";
 	lbl[1] = DIFF_FILE_VALID(two) ? b_two : "/dev/null";
 	printf("%sdiff --git %s %s%s\n", set, a_one, b_two, reset);
@@ -1064,7 +1096,8 @@ static void builtin_diff(const char *name_a,
 		if ((one->mode ^ two->mode) & S_IFMT)
 			goto free_ab_and_return;
 		if (complete_rewrite) {
-			emit_rewrite_diff(name_a, name_b, one, two);
+			emit_rewrite_diff(name_a, name_b, one, two,
+					o->color_diff);
 			goto free_ab_and_return;
 		}
 	}
@@ -1099,9 +1132,9 @@ static void builtin_diff(const char *name_a,
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
 		if (!diffopts)
 			;
-		else if (!strncmp(diffopts, "--unified=", 10))
+		else if (!prefixcmp(diffopts, "--unified="))
 			xecfg.ctxlen = strtoul(diffopts + 10, NULL, 10);
-		else if (!strncmp(diffopts, "-u", 2))
+		else if (!prefixcmp(diffopts, "-u"))
 			xecfg.ctxlen = strtoul(diffopts + 2, NULL, 10);
 		ecb.outf = xdiff_outf;
 		ecb.priv = &ecbdata;
@@ -1165,7 +1198,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 
 static void builtin_checkdiff(const char *name_a, const char *name_b,
 			     struct diff_filespec *one,
-			     struct diff_filespec *two)
+			     struct diff_filespec *two, struct diff_options *o)
 {
 	mmfile_t mf1, mf2;
 	struct checkdiff_t data;
@@ -1177,6 +1210,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	data.xm.consume = checkdiff_consume;
 	data.filename = name_b ? name_b : name_a;
 	data.lineno = 0;
+	data.color_diff = o->color_diff;
 
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
@@ -1346,6 +1380,9 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 	    reuse_worktree_file(s->path, s->sha1, 0)) {
 		struct stat st;
 		int fd;
+		char *buf;
+		unsigned long size;
+
 		if (lstat(s->path, &st) < 0) {
 			if (errno == ENOENT) {
 			err_empty:
@@ -1378,7 +1415,19 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		s->data = xmmap(NULL, s->size, PROT_READ, MAP_PRIVATE, fd, 0);
 		close(fd);
 		s->should_munmap = 1;
-		/* FIXME! CRLF -> LF conversion goes here, based on "s->path" */
+
+		/*
+		 * Convert from working tree format to canonical git format
+		 */
+		buf = s->data;
+		size = s->size;
+		if (convert_to_git(s->path, &buf, &size)) {
+			munmap(s->data, s->size);
+			s->should_munmap = 0;
+			s->data = buf;
+			s->size = size;
+			s->should_free = 1;
+		}
 	}
 	else {
 		char type[20];
@@ -1787,7 +1836,7 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 	diff_fill_sha1_info(p->one);
 	diff_fill_sha1_info(p->two);
 
-	builtin_checkdiff(name, other, p->one, p->two);
+	builtin_checkdiff(name, other, p->one, p->two, o);
 }
 
 void diff_setup(struct diff_options *options)
@@ -1936,7 +1985,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "--shortstat")) {
 		options->output_format |= DIFF_FORMAT_SHORTSTAT;
 	}
-	else if (!strncmp(arg, "--stat", 6)) {
+	else if (!prefixcmp(arg, "--stat")) {
 		char *end;
 		int width = options->stat_width;
 		int name_width = options->stat_name_width;
@@ -1945,9 +1994,9 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 
 		switch (*arg) {
 		case '-':
-			if (!strncmp(arg, "-width=", 7))
+			if (!prefixcmp(arg, "-width="))
 				width = strtoul(arg + 7, &end, 10);
-			else if (!strncmp(arg, "-name-width=", 12))
+			else if (!prefixcmp(arg, "-name-width="))
 				name_width = strtoul(arg + 12, &end, 10);
 			break;
 		case '=':
@@ -1972,7 +2021,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "-z"))
 		options->line_termination = 0;
-	else if (!strncmp(arg, "-l", 2))
+	else if (!prefixcmp(arg, "-l"))
 		options->rename_limit = strtoul(arg+2, NULL, 10);
 	else if (!strcmp(arg, "--full-index"))
 		options->full_index = 1;
@@ -1989,31 +2038,31 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->output_format |= DIFF_FORMAT_NAME_STATUS;
 	else if (!strcmp(arg, "-R"))
 		options->reverse_diff = 1;
-	else if (!strncmp(arg, "-S", 2))
+	else if (!prefixcmp(arg, "-S"))
 		options->pickaxe = arg + 2;
 	else if (!strcmp(arg, "-s")) {
 		options->output_format |= DIFF_FORMAT_NO_OUTPUT;
 	}
-	else if (!strncmp(arg, "-O", 2))
+	else if (!prefixcmp(arg, "-O"))
 		options->orderfile = arg + 2;
-	else if (!strncmp(arg, "--diff-filter=", 14))
+	else if (!prefixcmp(arg, "--diff-filter="))
 		options->filter = arg + 14;
 	else if (!strcmp(arg, "--pickaxe-all"))
 		options->pickaxe_opts = DIFF_PICKAXE_ALL;
 	else if (!strcmp(arg, "--pickaxe-regex"))
 		options->pickaxe_opts = DIFF_PICKAXE_REGEX;
-	else if (!strncmp(arg, "-B", 2)) {
+	else if (!prefixcmp(arg, "-B")) {
 		if ((options->break_opt =
 		     diff_scoreopt_parse(arg)) == -1)
 			return -1;
 	}
-	else if (!strncmp(arg, "-M", 2)) {
+	else if (!prefixcmp(arg, "-M")) {
 		if ((options->rename_score =
 		     diff_scoreopt_parse(arg)) == -1)
 			return -1;
 		options->detect_rename = DIFF_DETECT_RENAME;
 	}
-	else if (!strncmp(arg, "-C", 2)) {
+	else if (!prefixcmp(arg, "-C")) {
 		if ((options->rename_score =
 		     diff_scoreopt_parse(arg)) == -1)
 			return -1;
@@ -2023,7 +2072,7 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->find_copies_harder = 1;
 	else if (!strcmp(arg, "--abbrev"))
 		options->abbrev = DEFAULT_ABBREV;
-	else if (!strncmp(arg, "--abbrev=", 9)) {
+	else if (!prefixcmp(arg, "--abbrev=")) {
 		options->abbrev = strtoul(arg + 9, NULL, 10);
 		if (options->abbrev < MINIMUM_ABBREV)
 			options->abbrev = MINIMUM_ABBREV;
@@ -2533,7 +2582,7 @@ static void patch_id_consume(void *priv, char *line, unsigned long len)
 	int new_len;
 
 	/* Ignore line numbers when computing the SHA1 of the patch */
-	if (!strncmp(line, "@@ -", 4))
+	if (!prefixcmp(line, "@@ -"))
 		return;
 
 	new_len = remove_space(line, len);

@@ -516,6 +516,36 @@ sub config {
 }
 
 
+=item config_boolean ( VARIABLE )
+
+Retrieve the boolean configuration C<VARIABLE>.
+
+Must be called on a repository instance.
+
+This currently wraps command('config') so it is not so fast.
+
+=cut
+
+sub config_boolean {
+	my ($self, $var) = @_;
+	$self->repo_path()
+		or throw Error::Simple("not a repository");
+
+	try {
+		return $self->command_oneline('config', '--bool', '--get',
+					      $var);
+	} catch Git::Error::Command with {
+		my $E = shift;
+		if ($E->value() == 1) {
+			# Key not found.
+			return undef;
+		} else {
+			throw $E;
+		}
+	};
+}
+
+
 =item ident ( TYPE | IDENTSTR )
 
 =item ident_person ( TYPE | IDENTSTR | IDENTARRAY )

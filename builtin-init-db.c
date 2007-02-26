@@ -283,11 +283,11 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 
 	for (i = 1; i < argc; i++, argv++) {
 		const char *arg = argv[1];
-		if (!strncmp(arg, "--template=", 11))
+		if (!prefixcmp(arg, "--template="))
 			template_dir = arg+11;
 		else if (!strcmp(arg, "--shared"))
 			shared_repository = PERM_GROUP;
-		else if (!strncmp(arg, "--shared=", 9))
+		else if (!prefixcmp(arg, "--shared="))
 			shared_repository = git_config_perm("arg", arg+9);
 		else
 			usage(init_db_usage);

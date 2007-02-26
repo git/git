@@ -31,4 +31,13 @@ test_expect_success 'test the commit-diff command' "
 	cmp readme wc/readme
 	"
 
+test_expect_success 'commit-diff to a sub-directory (with git-svn config)' "
+	svn import -m 'sub-directory' import $svnrepo/subdir &&
+	git-svn init $svnrepo/subdir &&
+	git-svn fetch &&
+	git-svn commit-diff -r3 '$prev' '$head' &&
+	svn cat $svnrepo/subdir/readme > readme.2 &&
+	cmp readme readme.2
+	"
+
 test_done

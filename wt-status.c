@@ -307,7 +307,7 @@ void wt_status_print(struct wt_status *s)
 	if (s->branch) {
 		const char *on_what = "On branch ";
 		const char *branch_name = s->branch;
-		if (!strncmp(branch_name, "refs/heads/", 11))
+		if (!prefixcmp(branch_name, "refs/heads/"))
 			branch_name += 11;
 		else if (!strcmp(branch_name, "HEAD")) {
 			branch_name = "";
@@ -352,7 +352,7 @@ int git_status_config(const char *k, const char *v)
 		wt_status_use_color = git_config_colorbool(k, v);
 		return 0;
 	}
-	if (!strncmp(k, "status.color.", 13) || !strncmp(k, "color.status.", 13)) {
+	if (!prefixcmp(k, "status.color.") || !prefixcmp(k, "color.status.")) {
 		int slot = parse_status_slot(k, 13);
 		color_parse(v, k, wt_status_colors[slot]);
 	}

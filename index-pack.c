@@ -849,9 +849,9 @@ int main(int argc, char **argv)
 				fix_thin_pack = 1;
 			} else if (!strcmp(arg, "--keep")) {
 				keep_msg = "";
-			} else if (!strncmp(arg, "--keep=", 7)) {
+			} else if (!prefixcmp(arg, "--keep=")) {
 				keep_msg = arg + 7;
-			} else if (!strncmp(arg, "--pack_header=", 14)) {
+			} else if (!prefixcmp(arg, "--pack_header=")) {
 				struct pack_header *hdr;
 				char *c;
 

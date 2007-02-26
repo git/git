@@ -248,17 +248,27 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 
 			path_len = ce_namelen(ce);
 
-			dpath = xmalloc (combine_diff_path_size (5, path_len));
+			dpath = xmalloc(combine_diff_path_size(5, path_len));
 			dpath->path = (char *) &(dpath->parent[5]);
 
 			dpath->next = NULL;
 			dpath->len = path_len;
 			memcpy(dpath->path, ce->name, path_len);
 			dpath->path[path_len] = '\0';
-			dpath->mode = 0;
 			hashclr(dpath->sha1);
 			memset(&(dpath->parent[0]), 0,
-					sizeof(struct combine_diff_parent)*5);
+			       sizeof(struct combine_diff_parent)*5);
+
+			if (lstat(ce->name, &st) < 0) {
+				if (errno != ENOENT && errno != ENOTDIR) {
+					perror(ce->name);
+					continue;
+				}
+				if (silent_on_removed)
+					continue;
+			}
+			else
+				dpath->mode = canon_mode(st.st_mode);
 
 			while (i < entries) {
 				struct cache_entry *nce = active_cache[i];

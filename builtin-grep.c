@@ -527,9 +527,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			opt.word_regexp = 1;
 			continue;
 		}
-		if (!strncmp("-A", arg, 2) ||
-		    !strncmp("-B", arg, 2) ||
-		    !strncmp("-C", arg, 2) ||
+		if (!prefixcmp(arg, "-A") ||
+		    !prefixcmp(arg, "-B") ||
+		    !prefixcmp(arg, "-C") ||
 		    (arg[0] == '-' && '1' <= arg[1] && arg[1] <= '9')) {
 			unsigned num;
 			const char *scan;

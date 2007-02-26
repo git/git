@@ -8,7 +8,7 @@ static int do_generic_cmd(const char *me, char *arg)
 
 	if (!arg || !(arg = sq_dequote(arg)))
 		die("bad argument");
-	if (strncmp(me, "git-", 4))
+	if (prefixcmp(me, "git-"))
 		die("bad command");
 
 	my_argv[0] = me + 4;

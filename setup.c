@@ -251,7 +251,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	offset++;
 	cwd[len++] = '/';
 	cwd[len] = 0;
-	inside_git_dir = !strncmp(cwd + offset, ".git/", 5);
+	inside_git_dir = !prefixcmp(cwd + offset, ".git/");
 	return cwd + offset;
 }
 

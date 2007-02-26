@@ -13,6 +13,10 @@ P1='pathname	with HT'
 P2='pathname with SP'
 P3='pathname
 with LF'
+: >"$P1" 2>&1 && test -f "$P1" && rm -f "$P1" || {
+	echo >&2 'Filesystem does not support tabs in names'
+	test_done
+}
 
 test_expect_success setup '
 	echo P0.0 >"$P0.0" &&

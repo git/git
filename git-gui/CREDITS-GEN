@@ -1,0 +1,71 @@
+#!/bin/sh
+
+CF=CREDITS-FILE
+tip=
+
+tree_search ()
+{
+	head=$1
+	tree=$2
+	for p in $(git rev-list --parents --max-count=1 $head 2>/dev/null)
+	do
+		test $tree = $(git rev-parse $p^{tree} 2>/dev/null) &&
+		vn=$(git describe --abbrev=4 $p 2>/dev/null) &&
+		case "$vn" in
+		gitgui-[0-9]*) echo $p; break;;
+		esac
+	done
+}
+
+generate_credits ()
+{
+	tip=$1 &&
+	rm -f "$2" &&
+	git shortlog -n -s $tip | sed 's/: .*$//' >"$2" || exit
+}
+
+# Always use the tarball credits file if found, just
+# in case we are somehow contained in a larger git
+# repository that doesn't actually track our state.
+# (At least one package manager is doing this.)
+#
+# We may be a subproject, so try looking for the merge
+# commit that supplied this directory content if we are
+# not at the toplevel.  We probably will always be the
+# second parent in the commit, but we shouldn't rely on
+# that fact.
+#
+
+credits_tmp=/var/tmp/gitgui-credits-$$
+trap 'rm -f "$credits_tmp"' 0
+
+orig="$credits_tmp"
+
+if test -f credits
+then
+	orig=credits
+elif prefix="$(git rev-parse --show-prefix 2>/dev/null)" &&
+   test -n "$prefix" &&
+   head=$(git rev-list --max-count=1 HEAD -- . 2>/dev/null) &&
+   tree=$(git rev-parse --verify "HEAD:$prefix" 2>/dev/null) &&
+   tip=$(tree_search $head $tree) &&
+   test -n "$tip"
+then
+	generate_credits $tip "$orig" || exit
+elif tip="$(git rev-parse --verify HEAD 2>/dev/null)" &&
+   test -n "$tip"
+then
+	generate_credits $tip "$orig" || exit
+else
+	echo "error: Cannot locate authorship information." >&2
+	exit 1
+fi
+
+if test -f "$orig" && cmp -s "$orig" "$CF"
+then
+	: noop
+else
+	rm -f "$CF" &&
+	cat "$orig" >"$CF"
+fi
+

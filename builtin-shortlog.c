@@ -124,7 +124,7 @@ static void insert_author_oneline(struct path_list *list,
 	else
 		free(buffer);
 
-	if (!strncmp(oneline, "[PATCH", 6)) {
+	if (!prefixcmp(oneline, "[PATCH")) {
 		char *eob = strchr(oneline, ']');
 
 		if (eob) {
@@ -179,7 +179,7 @@ static void read_from_stdin(struct path_list *list)
 	while (fgets(buffer, sizeof(buffer), stdin) != NULL) {
 		char *bob;
 		if ((buffer[0] == 'A' || buffer[0] == 'a') &&
-				!strncmp(buffer + 1, "uthor: ", 7) &&
+				!prefixcmp(buffer + 1, "uthor: ") &&
 				(bob = strchr(buffer + 7, '<')) != NULL) {
 			char buffer2[1024], offset = 0;
 
@@ -230,7 +230,7 @@ static void get_from_rev(struct rev_info *rev, struct path_list *list)
 			else
 				eol++;
 
-			if (!strncmp(buffer, "author ", 7)) {
+			if (!prefixcmp(buffer, "author ")) {
 				char *bracket = strchr(buffer, '<');
 
 				if (bracket == NULL || bracket > eol)

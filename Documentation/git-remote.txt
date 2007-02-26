@@ -13,6 +13,7 @@ SYNOPSIS
 'git-remote' add <name> <url>
 'git-remote' show <name>
 'git-remote' prune <name>
+'git-remote' update [group]
 
 DESCRIPTION
 -----------
@@ -31,6 +32,19 @@ subcommands are available to perform operations on the remotes.
 Adds a remote named <name> for the repository at
 <url>.  The command `git fetch <name>` can then be used to create and
 update remote-tracking branches <name>/<branch>.
++
+With `-f` option, `git fetch <name>` is run immediately after
+the remote information is set up.
++
+With `-t <branch>` option, instead of the default glob
+refspec for the remote to track all branches under
+`$GIT_DIR/remotes/<name>/`, a refspec to track only `<branch>`
+is created.  You can give more than one `-t <branch>` to track
+multiple branche without grabbing all branches.
++
+With `-m <master>` option, `$GIT_DIR/remotes/<name>/HEAD` is set
+up to point at remote's `<master>` branch instead of whatever
+branch the `HEAD` at the remote repository actually points at.
 
 'show'::
 
@@ -40,7 +54,17 @@ Gives some information about the remote <name>.
 
 Deletes all stale tracking branches under <name>.
 These stale branches have already been removed from the remote repository
-referenced by <name>, but are still locally available in "remotes/<name>".
+referenced by <name>, but are still locally available in
+"remotes/<name>".
+
+'update'::
+
+Fetch updates for a named set of remotes in the repository as defined by
+remotes.<group>.  If a named group is not specified on the command line,
+the configuration parameter remotes.default will get used; if
+remotes.default is not defined, all remotes which do not the
+configuration parameter remote.<name>.skipDefaultUpdate set to true will
+be updated.  (See gitlink:git-config[1]).
 
 
 DISCUSSION

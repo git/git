@@ -105,11 +105,11 @@ static int handle_file(const char *path,
 		SHA1_Init(&ctx);
 
 	while (fgets(buf, sizeof(buf), f)) {
-		if (!strncmp("<<<<<<< ", buf, 8))
+		if (!prefixcmp(buf, "<<<<<<< "))
 			hunk = 1;
-		else if (!strncmp("=======", buf, 7))
+		else if (!prefixcmp(buf, "======="))
 			hunk = 2;
-		else if (!strncmp(">>>>>>> ", buf, 8)) {
+		else if (!prefixcmp(buf, ">>>>>>> ")) {
 			hunk_no++;
 			hunk = 0;
 			if (memcmp(one->ptr, two->ptr, one->nr < two->nr ?
@@ -154,13 +154,17 @@ static int find_conflict(struct path_list *conflict)
 		return error("Could not read index");
 	for (i = 0; i + 2 < active_nr; i++) {
 		struct cache_entry *e1 = active_cache[i];
-		struct cache_entry *e2 = active_cache[i + 1];
-		struct cache_entry *e3 = active_cache[i + 2];
-		if (ce_stage(e1) == 1 && ce_stage(e2) == 2 &&
-				ce_stage(e3) == 3 && ce_same_name(e1, e2) &&
-				ce_same_name(e1, e3)) {
+		struct cache_entry *e2 = active_cache[i+1];
+		struct cache_entry *e3 = active_cache[i+2];
+		if (ce_stage(e1) == 1 &&
+		    ce_stage(e2) == 2 &&
+		    ce_stage(e3) == 3 &&
+		    ce_same_name(e1, e2) && ce_same_name(e1, e3) &&
+		    S_ISREG(ntohl(e1->ce_mode)) &&
+		    S_ISREG(ntohl(e2->ce_mode)) &&
+		    S_ISREG(ntohl(e3->ce_mode))) {
 			path_list_insert((const char *)e1->name, conflict);
-			i += 3;
+			i += 2;
 		}
 	}
 	return 0;

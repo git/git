@@ -828,8 +828,8 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 		goto rollback;
 	}
 
-	if (!strncmp(oldref, "refs/heads/", 11) &&
-			!strncmp(newref, "refs/heads/", 11)) {
+	if (!prefixcmp(oldref, "refs/heads/") &&
+			!prefixcmp(newref, "refs/heads/")) {
 		char oldsection[1024], newsection[1024];
 
 		snprintf(oldsection, 1024, "branch.%s", oldref + 11);
@@ -894,8 +894,8 @@ static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 	log_file = git_path("logs/%s", ref_name);
 
 	if (log_all_ref_updates &&
-	    (!strncmp(ref_name, "refs/heads/", 11) ||
-	     !strncmp(ref_name, "refs/remotes/", 13) ||
+	    (!prefixcmp(ref_name, "refs/heads/") ||
+	     !prefixcmp(ref_name, "refs/remotes/") ||
 	     !strcmp(ref_name, "HEAD"))) {
 		if (safe_create_leading_directories(log_file) < 0)
 			return error("unable to create directory for %s",
