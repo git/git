@@ -678,9 +678,25 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	else {
 		/* Used by diff-tree to read from the working tree */
 		struct stat st;
-		int fd;
-		if (0 <= (fd = open(elem->path, O_RDONLY)) &&
-		    !fstat(fd, &st)) {
+		int fd = -1;
+
+		if (lstat(elem->path, &st) < 0)
+			goto deleted_file;
+
+		if (S_ISLNK(st.st_mode)) {
+			int len = st.st_size;
+			result_size = len;
+			result = xmalloc(len + 1);
+			if (result_size != readlink(elem->path, result, len)) {
+				error("readlink(%s): %s", elem->path,
+				      strerror(errno));
+				return;
+			}
+			result[len] = 0;
+			elem->mode = canon_mode(st.st_mode);
+		}
+		else if (0 <= (fd = open(elem->path, O_RDONLY)) &&
+			 !fstat(fd, &st)) {
 			int len = st.st_size;
 			int sz = 0;
 
@@ -698,11 +714,12 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			result[len] = 0;
 		}
 		else {
-			/* deleted file */
+		deleted_file:
 			result_size = 0;
 			elem->mode = 0;
 			result = xcalloc(1, 1);
 		}
+
 		if (0 <= fd)
 			close(fd);
 	}
