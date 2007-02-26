@@ -2,17 +2,24 @@
 #include "refs.h"
 #include "commit.h"
 
-#define CHUNK_SIZE (1048576)
+#define CHUNK_SIZE 1024
 
 static char *get_stdin(void)
 {
+	int offset = 0;
 	char *data = xmalloc(CHUNK_SIZE);
-	int offset = 0, read = 0;
-	read = xread(0, data, CHUNK_SIZE);
-	while (read == CHUNK_SIZE) {
-		offset += CHUNK_SIZE;
+
+	while (1) {
+		int cnt = xread(0, data + offset, CHUNK_SIZE);
+		if (cnt < 0)
+			die("error reading standard input: %s",
+			    strerror(errno));
+		if (cnt == 0) {
+			data[offset] = 0;
+			break;
+		}
+		offset += cnt;
 		data = xrealloc(data, offset + CHUNK_SIZE);
-		read = xread(0, data + offset, CHUNK_SIZE);
 	}
 	return data;
 }
