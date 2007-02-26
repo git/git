@@ -6,6 +6,14 @@ Fixes since v1.5.0.1
 
 * Bugfixes
 
+  - Automated merge conflict handling when changes to symbolic
+    links conflicted were completely broken.  The merge-resolve
+    strategy created a regular file with conflict markers in it
+    in place of the symbolic link.  The default strategy,
+    merge-recursive was even more broken.  It removed the path
+    that was pointed at by the symbolic link.  Both of these
+    problems have been fixed.
+
   - 'git diff maint master next' did not correctly give combined
     diff across three trees.
 
@@ -39,21 +47,19 @@ Fixes since v1.5.0.1
     impossible to repack after accumulating many (small) packs
     in the repository.
 
+  - 'git-diff' to review the combined diff during a conflicted
+    merge were not reading the working tree version correctly
+    when changes to a symbolic link conflicted.  It should have
+    read the data using readlink(2) but read from the regular
+    file the symbolic link pointed at.
+
+  - 'git-remote' did not like period in a remote's name.
+
 * Documentation updates
 
   - added and clarified core.bare, core.legacyheaders configurations.
 
   - updated "git-clone --depth" documentation.
 
+
 * Assorted git-gui fixes.
-
-
---
-exec >/var/tmp/1
-O=v1.5.0.1-35-gffa84ff
-echo O=`git describe maint`
-git shortlog --no-merges $O..maint
-
-#Local Variables:
-#mode: text
-#End:
