@@ -5330,6 +5330,34 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 }
 
+# -- Merge Menu
+#
+if {[is_enabled branch]} {
+	menu .mbar.merge
+	.mbar.merge add command -label {Local Merge...} \
+		-command do_local_merge \
+		-font font_ui
+	lappend disable_on_lock \
+		[list .mbar.merge entryconf [.mbar.merge index last] -state]
+	.mbar.merge add command -label {Abort Merge...} \
+		-command do_reset_hard \
+		-font font_ui
+	lappend disable_on_lock \
+		[list .mbar.merge entryconf [.mbar.merge index last] -state]
+
+}
+
+# -- Transport Menu
+#
+if {[is_enabled transport]} {
+	menu .mbar.fetch
+
+	menu .mbar.push
+	.mbar.push add command -label {Push...} \
+		-command do_push_anywhere \
+		-font font_ui
+}
+
 if {[is_MacOSX]} {
 	# -- Apple Menu (Mac OS X only)
 	#
@@ -5501,28 +5529,6 @@ label .branch.cb \
 pack .branch.l1 -side left
 pack .branch.cb -side left -fill x
 pack .branch -side top -fill x
-
-if {[is_enabled branch]} {
-	menu .mbar.merge
-	.mbar.merge add command -label {Local Merge...} \
-		-command do_local_merge \
-		-font font_ui
-	lappend disable_on_lock \
-		[list .mbar.merge entryconf [.mbar.merge index last] -state]
-	.mbar.merge add command -label {Abort Merge...} \
-		-command do_reset_hard \
-		-font font_ui
-	lappend disable_on_lock \
-		[list .mbar.merge entryconf [.mbar.merge index last] -state]
-
-
-	menu .mbar.fetch
-
-	menu .mbar.push
-	.mbar.push add command -label {Push...} \
-		-command do_push_anywhere \
-		-font font_ui
-}
 
 # -- Main Window Layout
 #
