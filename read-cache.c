@@ -72,7 +72,7 @@ static int ce_compare_link(struct cache_entry *ce, unsigned long expected_size)
 	char *target;
 	void *buffer;
 	unsigned long size;
-	char type[10];
+	enum object_type type;
 	int len;
 
 	target = xmalloc(expected_size);
@@ -81,7 +81,7 @@ static int ce_compare_link(struct cache_entry *ce, unsigned long expected_size)
 		free(target);
 		return -1;
 	}
-	buffer = read_sha1_file(ce->sha1, type, &size);
+	buffer = read_sha1_file(ce->sha1, &type, &size);
 	if (!buffer) {
 		free(target);
 		return -1;

@@ -167,7 +167,7 @@ static int write_zip_entry(const unsigned char *sha1,
 	int pathlen;
 	unsigned char *out;
 	char *path;
-	char type[20];
+	enum object_type type;
 	void *buffer = NULL;
 	void *deflated = NULL;
 
@@ -195,7 +195,7 @@ static int write_zip_entry(const unsigned char *sha1,
 		if (S_ISREG(mode) && zlib_compression_level != 0)
 			method = 8;
 		result = 0;
-		buffer = read_sha1_file(sha1, type, &size);
+		buffer = read_sha1_file(sha1, &type, &size);
 		if (!buffer)
 			die("cannot read %s", sha1_to_hex(sha1));
 		crc = crc32(crc, buffer, size);

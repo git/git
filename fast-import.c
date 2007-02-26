@@ -1008,11 +1008,11 @@ static void *gfi_unpack_entry(
 	struct object_entry *oe,
 	unsigned long *sizep)
 {
-	static char type[20];
+	enum object_type type;
 	struct packed_git *p = all_packs[oe->pack_id];
 	if (p == pack_data)
 		p->pack_size = pack_size + 20;
-	return unpack_entry(p, oe->offset, type, sizep);
+	return unpack_entry(p, oe->offset, &type, sizep);
 }
 
 static const char *get_mode(const char *str, uint16_t *modep)
@@ -1049,9 +1049,9 @@ static void load_tree(struct tree_entry *root)
 		t->delta_depth = 0;
 		buf = gfi_unpack_entry(myoe, &size);
 	} else {
-		char type[20];
-		buf = read_sha1_file(sha1, type, &size);
-		if (!buf || strcmp(type, tree_type))
+		enum object_type type;
+		buf = read_sha1_file(sha1, &type, &size);
+		if (!buf || type != OBJ_TREE)
 			die("Can't load tree %s", sha1_to_hex(sha1));
 	}
 
@@ -1573,7 +1573,6 @@ static void file_change_m(struct branch *b)
 	struct object_entry *oe = oe;
 	unsigned char sha1[20];
 	uint16_t mode, inline_data = 0;
-	char type[20];
 
 	p = get_mode(p, &mode);
 	if (!p)
@@ -1628,11 +1627,12 @@ static void file_change_m(struct branch *b)
 			die("Not a blob (actually a %s): %s",
 				command_buf.buf, typename(oe->type));
 	} else {
-		if (sha1_object_info(sha1, type, NULL))
+		enum object_type type = sha1_object_info(sha1, NULL);
+		if (type < 0)
 			die("Blob not found: %s", command_buf.buf);
-		if (strcmp(blob_type, type))
+		if (type != OBJ_BLOB)
 			die("Not a blob (actually a %s): %s",
-				command_buf.buf, type);
+			    typename(type), command_buf.buf);
 	}
 
 	tree_content_set(&b->branch_tree, p, sha1, S_IFREG | mode);

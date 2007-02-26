@@ -57,11 +57,11 @@ extern void *merge_file(struct blob *, struct blob *, struct blob *, unsigned lo
 
 static void *result(struct merge_list *entry, unsigned long *size)
 {
-	char type[20];
+	enum object_type type;
 	struct blob *base, *our, *their;
 
 	if (!entry->stage)
-		return read_sha1_file(entry->blob->object.sha1, type, size);
+		return read_sha1_file(entry->blob->object.sha1, &type, size);
 	base = NULL;
 	if (entry->stage == 1) {
 		base = entry->blob;
@@ -80,10 +80,10 @@ static void *result(struct merge_list *entry, unsigned long *size)
 
 static void *origin(struct merge_list *entry, unsigned long *size)
 {
-	char type[20];
+	enum object_type type;
 	while (entry) {
 		if (entry->stage == 2)
-			return read_sha1_file(entry->blob->object.sha1, type, size);
+			return read_sha1_file(entry->blob->object.sha1, &type, size);
 		entry = entry->link;
 	}
 	return NULL;

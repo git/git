@@ -1430,7 +1430,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		}
 	}
 	else {
-		char type[20];
+		enum object_type type;
 		struct sha1_size_cache *e;
 
 		if (size_only) {
@@ -1439,11 +1439,12 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 				s->size = e->size;
 				return 0;
 			}
-			if (!sha1_object_info(s->sha1, type, &s->size))
+			type = sha1_object_info(s->sha1, &s->size);
+			if (type < 0)
 				locate_size_cache(s->sha1, 0, s->size);
 		}
 		else {
-			s->data = read_sha1_file(s->sha1, type, &s->size);
+			s->data = read_sha1_file(s->sha1, &type, &s->size);
 			s->should_free = 1;
 		}
 	}

@@ -119,18 +119,18 @@ struct obj_info {
 
 static struct obj_info *obj_list;
 
-static void added_object(unsigned nr, const char *type, void *data,
-			 unsigned long size);
+static void added_object(unsigned nr, enum object_type type,
+			 void *data, unsigned long size);
 
-static void write_object(unsigned nr, void *buf, unsigned long size,
-			 const char *type)
+static void write_object(unsigned nr, enum object_type type,
+			 void *buf, unsigned long size)
 {
-	if (write_sha1_file(buf, size, type, obj_list[nr].sha1) < 0)
+	if (write_sha1_file(buf, size, typename(type), obj_list[nr].sha1) < 0)
 		die("failed to write object");
 	added_object(nr, type, buf, size);
 }
 
-static void resolve_delta(unsigned nr, const char *type,
+static void resolve_delta(unsigned nr, enum object_type type,
 			  void *base, unsigned long base_size,
 			  void *delta, unsigned long delta_size)
 {
@@ -143,12 +143,12 @@ static void resolve_delta(unsigned nr, const char *type,
 	if (!result)
 		die("failed to apply delta");
 	free(delta);
-	write_object(nr, result, result_size, type);
+	write_object(nr, type, result, result_size);
 	free(result);
 }
 
-static void added_object(unsigned nr, const char *type, void *data,
-			 unsigned long size)
+static void added_object(unsigned nr, enum object_type type,
+			 void *data, unsigned long size)
 {
 	struct delta_info **p = &delta_list;
 	struct delta_info *info;
@@ -167,33 +167,24 @@ static void added_object(unsigned nr, const char *type, void *data,
 	}
 }
 
-static void unpack_non_delta_entry(enum object_type kind, unsigned long size,
+static void unpack_non_delta_entry(enum object_type type, unsigned long size,
 				   unsigned nr)
 {
 	void *buf = get_data(size);
-	const char *type;
 
-	switch (kind) {
-	case OBJ_COMMIT: type = commit_type; break;
-	case OBJ_TREE:   type = tree_type; break;
-	case OBJ_BLOB:   type = blob_type; break;
-	case OBJ_TAG:    type = tag_type; break;
-	default: die("bad type %d", kind);
-	}
 	if (!dry_run && buf)
-		write_object(nr, buf, size, type);
+		write_object(nr, type, buf, size);
 	free(buf);
 }
 
-static void unpack_delta_entry(enum object_type kind, unsigned long delta_size,
+static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			       unsigned nr)
 {
 	void *delta_data, *base;
 	unsigned long base_size;
-	char type[20];
 	unsigned char base_sha1[20];
 
-	if (kind == OBJ_REF_DELTA) {
+	if (type == OBJ_REF_DELTA) {
 		hashcpy(base_sha1, fill(20));
 		use(20);
 		delta_data = get_data(delta_size);
@@ -255,7 +246,7 @@ static void unpack_delta_entry(enum object_type kind, unsigned long delta_size,
 		}
 	}
 
-	base = read_sha1_file(base_sha1, type, &base_size);
+	base = read_sha1_file(base_sha1, &type, &base_size);
 	if (!base) {
 		error("failed to read delta-pack base object %s",
 		      sha1_to_hex(base_sha1));
