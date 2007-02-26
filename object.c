@@ -18,10 +18,30 @@ struct object *get_indexed_object(unsigned int idx)
 	return obj_hash[idx];
 }
 
-const char *type_names[] = {
-	"none", "commit", "tree", "blob", "tag",
-	"bad type 5", "bad type 6", "delta", "bad",
+static const char *object_type_strings[] = {
+	NULL,		/* OBJ_NONE = 0 */
+	"commit",	/* OBJ_COMMIT = 1 */
+	"tree",		/* OBJ_TREE = 2 */
+	"blob",		/* OBJ_BLOB = 3 */
+	"tag",		/* OBJ_TAG = 4 */
 };
+
+const char *typename(unsigned int type)
+{
+	if (type >= ARRAY_SIZE(object_type_strings))
+		return NULL;
+	return object_type_strings[type];
+}
+
+int type_from_string(const char *str)
+{
+	int i;
+
+	for (i = 1; i < ARRAY_SIZE(object_type_strings); i++)
+		if (!strcmp(str, object_type_strings[i]))
+			return i;
+	die("invalid object type \"%s\"", str);
+}
 
 static unsigned int hash_obj(struct object *obj, unsigned int n)
 {

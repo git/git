@@ -891,7 +891,7 @@ static int store_object(
 	SHA_CTX c;
 	z_stream s;
 
-	hdrlen = sprintf((char*)hdr,"%s %lu", type_names[type],
+	hdrlen = sprintf((char*)hdr,"%s %lu", typename(type),
 		(unsigned long)datlen) + 1;
 	SHA1_Init(&c);
 	SHA1_Update(&c, hdr, hdrlen);
@@ -1626,7 +1626,7 @@ static void file_change_m(struct branch *b)
 	} else if (oe) {
 		if (oe->type != OBJ_BLOB)
 			die("Not a blob (actually a %s): %s",
-				command_buf.buf, type_names[oe->type]);
+				command_buf.buf, typename(oe->type));
 	} else {
 		if (sha1_object_info(sha1, type, NULL))
 			die("Blob not found: %s", command_buf.buf);
@@ -1711,7 +1711,7 @@ static void cmd_from(struct branch *b)
 			char *buf;
 
 			buf = read_object_with_reference(b->sha1,
-				type_names[OBJ_COMMIT], &size, b->sha1);
+				commit_type, &size, b->sha1);
 			if (!buf || size < 46)
 				die("Not a valid commit: %s", from);
 			if (memcmp("tree ", buf, 5)
@@ -1895,7 +1895,7 @@ static void cmd_new_tag(void)
 		char *buf;
 
 		buf = read_object_with_reference(sha1,
-			type_names[OBJ_COMMIT], &size, sha1);
+			commit_type, &size, sha1);
 		if (!buf || size < 46)
 			die("Not a valid commit: %s", from);
 		free(buf);
@@ -1916,7 +1916,7 @@ static void cmd_new_tag(void)
 	size_dbuf(&new_data, 67+strlen(t->name)+strlen(tagger)+msglen);
 	sp = new_data.buffer;
 	sp += sprintf(sp, "object %s\n", sha1_to_hex(sha1));
-	sp += sprintf(sp, "type %s\n", type_names[OBJ_COMMIT]);
+	sp += sprintf(sp, "type %s\n", commit_type);
 	sp += sprintf(sp, "tag %s\n", t->name);
 	sp += sprintf(sp, "tagger %s\n", tagger);
 	*sp++ = '\n';

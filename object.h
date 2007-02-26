@@ -36,16 +36,12 @@ struct object {
 };
 
 extern int track_object_refs;
-extern const char *type_names[9];
+
+extern const char *typename(unsigned int type);
+extern int type_from_string(const char *str);
 
 extern unsigned int get_max_object_index(void);
 extern struct object *get_indexed_object(unsigned int);
-
-static inline const char *typename(unsigned int type)
-{
-	return type_names[type > OBJ_BAD ? OBJ_BAD : type];
-}
-
 extern struct object_refs *lookup_object_refs(struct object *);
 
 /** Internal only **/

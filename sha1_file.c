@@ -952,7 +952,7 @@ static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned lon
 
 	/* And generate the fake traditional header */
 	stream->total_out = 1 + snprintf(buffer, bufsiz, "%s %lu",
-					 type_names[type], size);
+					 typename(type), size);
 	return 0;
 }
 
@@ -1195,7 +1195,7 @@ void packed_object_info_detail(struct packed_git *p,
 		case OBJ_TREE:
 		case OBJ_BLOB:
 		case OBJ_TAG:
-			strcpy(type, type_names[kind]);
+			strcpy(type, typename(kind));
 			*store_size = 0; /* notyet */
 			unuse_pack(&w_curs);
 			return;
@@ -1237,7 +1237,7 @@ static int packed_object_info(struct packed_git *p, unsigned long obj_offset,
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
-		strcpy(type, type_names[kind]);
+		strcpy(type, typename(kind));
 		if (sizep)
 			*sizep = size;
 		break;
@@ -1329,7 +1329,7 @@ void *unpack_entry(struct packed_git *p, unsigned long obj_offset,
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
-		strcpy(type, type_names[kind]);
+		strcpy(type, typename(kind));
 		*sizep = size;
 		retval = unpack_compressed_entry(p, &w_curs, curpos, size);
 		break;
@@ -1739,16 +1739,7 @@ static void setup_object_header(z_stream *stream, const char *type, unsigned lon
 			/* nothing */;
 		return;
 	}
-	if (!strcmp(type, blob_type))
-		obj_type = OBJ_BLOB;
-	else if (!strcmp(type, tree_type))
-		obj_type = OBJ_TREE;
-	else if (!strcmp(type, commit_type))
-		obj_type = OBJ_COMMIT;
-	else if (!strcmp(type, tag_type))
-		obj_type = OBJ_TAG;
-	else
-		die("trying to generate bogus object of type '%s'", type);
+	obj_type = type_from_string(type);
 	hdrlen = write_binary_header(stream->next_out, obj_type, len);
 	stream->total_out = hdrlen;
 	stream->next_out += hdrlen;

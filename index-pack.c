@@ -604,13 +604,8 @@ static void fix_unresolved_deltas(int nr_unresolved)
 		data = read_sha1_file(d->base.sha1, type, &size);
 		if (!data)
 			continue;
-		if      (!strcmp(type, blob_type))   obj_type = OBJ_BLOB;
-		else if (!strcmp(type, tree_type))   obj_type = OBJ_TREE;
-		else if (!strcmp(type, commit_type)) obj_type = OBJ_COMMIT;
-		else if (!strcmp(type, tag_type))    obj_type = OBJ_TAG;
-		else die("base object %s is of type '%s'",
-			 sha1_to_hex(d->base.sha1), type);
 
+		obj_type = type_from_string(type);
 		find_delta_children(&d->base, &first, &last);
 		for (j = first; j <= last; j++) {
 			struct object_entry *child = objects + deltas[j].obj_no;

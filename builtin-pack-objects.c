@@ -1065,18 +1065,7 @@ static void check_object(struct object_entry *entry)
 	if (sha1_object_info(entry->sha1, type, &entry->size))
 		die("unable to get type of object %s",
 		    sha1_to_hex(entry->sha1));
-
-	if (!strcmp(type, commit_type)) {
-		entry->type = OBJ_COMMIT;
-	} else if (!strcmp(type, tree_type)) {
-		entry->type = OBJ_TREE;
-	} else if (!strcmp(type, blob_type)) {
-		entry->type = OBJ_BLOB;
-	} else if (!strcmp(type, tag_type)) {
-		entry->type = OBJ_TAG;
-	} else
-		die("unable to pack object %s of type %s",
-		    sha1_to_hex(entry->sha1), type);
+	entry->type = type_from_string(type);
 }
 
 static unsigned int check_delta_limit(struct object_entry *me, unsigned int n)
