@@ -327,9 +327,9 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--dry-run") || !strcmp(arg, "-n"))
 			cb.dry_run = 1;
-		else if (!strncmp(arg, "--expire=", 9))
+		else if (!prefixcmp(arg, "--expire="))
 			cb.expire_total = approxidate(arg + 9);
-		else if (!strncmp(arg, "--expire-unreachable=", 21))
+		else if (!prefixcmp(arg, "--expire-unreachable="))
 			cb.expire_unreachable = approxidate(arg + 21);
 		else if (!strcmp(arg, "--stale-fix"))
 			cb.stalefix = 1;

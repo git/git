@@ -3,7 +3,7 @@ git-fast-import(1)
 
 NAME
 ----
-git-fast-import - Backend for fast Git data importers.
+git-fast-import - Backend for fast Git data importers
 
 
 SYNOPSIS

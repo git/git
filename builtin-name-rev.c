@@ -5,7 +5,7 @@
 #include "refs.h"
 
 static const char name_rev_usage[] =
-	"git-name-rev [--tags] ( --all | --stdin | committish [committish...] )\n";
+	"git-name-rev [--tags | --refs=<pattern>] ( --all | --stdin | committish [committish...] )\n";
 
 typedef struct rev_name {
 	const char *tip_name;
@@ -57,13 +57,17 @@ copy_data:
 			parents;
 			parents = parents->next, parent_number++) {
 		if (parent_number > 1) {
-			char *new_name = xmalloc(strlen(tip_name)+8);
+			int len = strlen(tip_name);
+			char *new_name = xmalloc(len + 8);
 
+			if (len > 2 && !strcmp(tip_name + len - 2, "^0"))
+				len -= 2;
 			if (generation > 0)
-				sprintf(new_name, "%s~%d^%d", tip_name,
+				sprintf(new_name, "%.*s~%d^%d", len, tip_name,
 						generation, parent_number);
 			else
-				sprintf(new_name, "%s^%d", tip_name, parent_number);
+				sprintf(new_name, "%.*s^%d", len, tip_name,
+						parent_number);
 
 			name_rev(parents->item, new_name,
 				merge_traversals + 1 , 0, 0);
@@ -74,13 +78,21 @@ copy_data:
 	}
 }
 
+struct name_ref_data {
+	int tags_only;
+	const char *ref_filter;
+};
+
 static int name_ref(const char *path, const unsigned char *sha1, int flags, void *cb_data)
 {
 	struct object *o = parse_object(sha1);
-	int tags_only = *(int*)cb_data;
+	struct name_ref_data *data = cb_data;
 	int deref = 0;
 
-	if (tags_only && strncmp(path, "refs/tags/", 10))
+	if (data->tags_only && prefixcmp(path, "refs/tags/"))
+		return 0;
+
+	if (data->ref_filter && fnmatch(data->ref_filter, path, 0))
 		return 0;
 
 	while (o && o->type == OBJ_TAG) {
@@ -93,9 +105,9 @@ static int name_ref(const char *path, const unsigned char *sha1, int flags, void
 	if (o && o->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *)o;
 
-		if (!strncmp(path, "refs/heads/", 11))
+		if (!prefixcmp(path, "refs/heads/"))
 			path = path + 11;
-		else if (!strncmp(path, "refs/", 5))
+		else if (!prefixcmp(path, "refs/"))
 			path = path + 5;
 
 		name_rev(commit, xstrdup(path), 0, 0, deref);
@@ -119,17 +131,22 @@ static const char* get_rev_name(struct object *o)
 
 	if (!n->generation)
 		return n->tip_name;
+	else {
+		int len = strlen(n->tip_name);
+		if (len > 2 && !strcmp(n->tip_name + len - 2, "^0"))
+			len -= 2;
+		snprintf(buffer, sizeof(buffer), "%.*s~%d", len, n->tip_name,
+				n->generation);
 
-	snprintf(buffer, sizeof(buffer), "%s~%d", n->tip_name, n->generation);
-
-	return buffer;
+		return buffer;
+	}
 }
 
 int cmd_name_rev(int argc, const char **argv, const char *prefix)
 {
 	struct object_array revs = { 0, 0, NULL };
 	int as_is = 0, all = 0, transform_stdin = 0;
-	int tags_only = 0;
+	struct name_ref_data data = { 0, NULL };
 
 	git_config(git_default_config);
 
@@ -146,7 +163,10 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 				as_is = 1;
 				continue;
 			} else if (!strcmp(*argv, "--tags")) {
-				tags_only = 1;
+				data.tags_only = 1;
+				continue;
+			} else  if (!prefixcmp(*argv, "--refs=")) {
+				data.ref_filter = *argv + 7;
 				continue;
 			} else if (!strcmp(*argv, "--all")) {
 				if (argc > 1)
@@ -185,7 +205,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		add_object_array((struct object *)commit, *argv, &revs);
 	}
 
-	for_each_ref(name_ref, &tags_only);
+	for_each_ref(name_ref, &data);
 
 	if (transform_stdin) {
 		char buffer[2048];

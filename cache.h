@@ -106,6 +106,16 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 		return htonl(S_IFLNK);
 	return htonl(S_IFREG | ce_permissions(mode));
 }
+static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned int mode)
+{
+	extern int trust_executable_bit;
+	if (!trust_executable_bit && S_ISREG(mode)) {
+		if (ce && S_ISREG(ntohl(ce->ce_mode)))
+			return ce->ce_mode;
+		return create_ce_mode(0666);
+	}
+	return create_ce_mode(mode);
+}
 #define canon_mode(mode) \
 	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
 	S_ISLNK(mode) ? S_IFLNK : S_IFDIR)
@@ -202,6 +212,7 @@ extern const char *apply_default_whitespace;
 extern int zlib_compression_level;
 extern size_t packed_git_window_size;
 extern size_t packed_git_limit;
+extern int auto_crlf;
 
 #define GIT_REPO_VERSION 0
 extern int repository_format_version;
@@ -468,5 +479,9 @@ extern void alloc_report(void);
 extern int nfvasprintf(char **str, const char *fmt, va_list va);
 extern void trace_printf(const char *format, ...);
 extern void trace_argv_printf(const char **argv, int count, const char *format, ...);
+
+/* convert.c */
+extern int convert_to_git(const char *path, char **bufp, unsigned long *sizep);
+extern int convert_to_working_tree(const char *path, char **bufp, unsigned long *sizep);
 
 #endif /* CACHE_H */

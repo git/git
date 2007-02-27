@@ -64,7 +64,7 @@ static int get_value(const char* key_, const char* regex_)
 	int ret = -1;
 	char *tl;
 	char *global = NULL, *repo_config = NULL;
-	const char *local;
+	const char *system_wide = NULL, *local;
 
 	local = getenv(CONFIG_ENVIRONMENT);
 	if (!local) {
@@ -74,6 +74,7 @@ static int get_value(const char* key_, const char* regex_)
 			local = repo_config = xstrdup(git_path("config"));
 		if (home)
 			global = xstrdup(mkpath("%s/.gitconfig", home));
+		system_wide = ETC_GITCONFIG;
 	}
 
 	key = xstrdup(key_);
@@ -103,11 +104,15 @@ static int get_value(const char* key_, const char* regex_)
 		}
 	}
 
+	if (do_all && system_wide)
+		git_config_from_file(show_config, system_wide);
 	if (do_all && global)
 		git_config_from_file(show_config, global);
 	git_config_from_file(show_config, local);
 	if (!do_all && !seen && global)
 		git_config_from_file(show_config, global);
+	if (!do_all && !seen && system_wide)
+		git_config_from_file(show_config, system_wide);
 
 	free(key);
 	if (regexp) {
@@ -147,7 +152,10 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			} else {
 				die("$HOME not set");
 			}
-		} else if (!strcmp(argv[1], "--rename-section")) {
+		}
+		else if (!strcmp(argv[1], "--system"))
+			setenv("GIT_CONFIG", ETC_GITCONFIG, 1);
+		else if (!strcmp(argv[1], "--rename-section")) {
 			int ret;
 			if (argc != 4)
 				usage(git_config_set_usage);
@@ -159,7 +167,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 				return 1;
 			}
 			return 0;
-		} else
+		}
+		else
 			break;
 		argc--;
 		argv++;

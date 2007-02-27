@@ -130,7 +130,7 @@ static void list_commands(const char *exec_path, const char *pattern)
 		struct stat st;
 		int entlen;
 
-		if (strncmp(de->d_name, "git-", 4))
+		if (prefixcmp(de->d_name, "git-"))
 			continue;
 		strcpy(path+dirlen, de->d_name);
 		if (stat(path, &st) || /* stat, not lstat */
@@ -179,7 +179,7 @@ static void show_man_page(const char *git_cmd)
 {
 	const char *page;
 
-	if (!strncmp(git_cmd, "git", 3))
+	if (!prefixcmp(git_cmd, "git"))
 		page = git_cmd;
 	else {
 		int page_len = strlen(git_cmd) + 4;

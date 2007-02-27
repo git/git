@@ -61,7 +61,7 @@ int execv_git_cmd(const char **argv)
 			len = strlen(git_command);
 
 			/* Trivial cleanup */
-			while (!strncmp(exec_dir, "./", 2)) {
+			while (!prefixcmp(exec_dir, "./")) {
 				exec_dir += 2;
 				while (*exec_dir == '/')
 					exec_dir++;

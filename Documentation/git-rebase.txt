@@ -13,11 +13,20 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-git-rebase replaces <branch> with a new branch of the same name.  When
-the --onto option is provided the new branch starts out with a HEAD equal
-to <newbase>, otherwise it is equal to <upstream>.  It then attempts to
-create a new commit for each commit from the original <branch> that does
-not exist in the <upstream> branch.
+If <branch> is specified, git-rebase will perform an automatic
+`git checkout <branch>` before doing anything else.  Otherwise
+it remains on the current branch.
+
+All changes made by commits in the current branch but that are not
+in <upstream> are saved to a temporary area.  This is the same set
+of commits that would be shown by `git log <upstream>..HEAD`.
+
+The current branch is reset to <upstream>, or <newbase> if the
+--onto option was supplied.  This has the exact same effect as
+`git reset --hard <upstream>` (or <newbase>).
+
+The commits that were previously saved into the temporary area are
+then reapplied to the current branch, one by one, in order.
 
 It is possible that a merge failure will prevent this process from being
 completely automatic.  You will have to resolve any such merge failure
@@ -25,9 +34,6 @@ and run `git rebase --continue`.  Another option is to bypass the commit
 that caused the merge failure with `git rebase --skip`.  To restore the
 original <branch> and remove the .dotest working files, use the command
 `git rebase --abort` instead.
-
-Note that if <branch> is not specified on the command line, the currently
-checked out branch is used.
 
 Assume the following history exists and the current branch is "topic":
 
@@ -142,7 +148,7 @@ file you edit, you need to tell git that the conflict has been resolved,
 typically this would be done with
 
 
-    git update-index <filename>
+    git add <filename>
 
 
 After resolving the conflict manually and updating the index with the

@@ -415,7 +415,6 @@ static unsigned int peak_pack_open_windows;
 static unsigned int pack_open_windows;
 static size_t peak_pack_mapped;
 static size_t pack_mapped;
-static size_t page_size;
 struct packed_git *packed_git;
 
 void pack_report()
@@ -424,7 +423,7 @@ void pack_report()
 		"pack_report: getpagesize()            = %10" SZ_FMT "\n"
 		"pack_report: core.packedGitWindowSize = %10" SZ_FMT "\n"
 		"pack_report: core.packedGitLimit      = %10" SZ_FMT "\n",
-		page_size,
+		(size_t) getpagesize(),
 		packed_git_window_size,
 		packed_git_limit);
 	fprintf(stderr,
@@ -672,10 +671,9 @@ unsigned char* use_pack(struct packed_git *p,
 				break;
 		}
 		if (!win) {
-			if (!page_size)
-				page_size = getpagesize();
+			size_t window_align = packed_git_window_size / 2;
 			win = xcalloc(1, sizeof(*win));
-			win->offset = (offset / page_size) * page_size;
+			win->offset = (offset / window_align) * window_align;
 			win->len = p->pack_size - win->offset;
 			if (win->len > packed_git_window_size)
 				win->len = packed_git_window_size;
@@ -1557,11 +1555,13 @@ int pretend_sha1_file(void *buf, unsigned long len, const char *type, unsigned c
 	co = &cached_objects[cached_object_nr++];
 	co->size = len;
 	co->type = strdup(type);
+	co->buf = xmalloc(len);
+	memcpy(co->buf, buf, len);
 	hashcpy(co->sha1, sha1);
 	return 0;
 }
 
-void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
+void *read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
 {
 	unsigned long mapsize;
 	void *map, *buf;
@@ -2092,7 +2092,7 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 {
 	unsigned long size = st->st_size;
 	void *buf;
-	int ret;
+	int ret, re_allocated = 0;
 
 	buf = "";
 	if (size)
@@ -2101,11 +2101,30 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 
 	if (!type)
 		type = blob_type;
-	/* FIXME: CRLF -> LF conversion here for blobs! We'll need the path! */
+
+	/*
+	 * Convert blobs to git internal format
+	 */
+	if (!strcmp(type, blob_type)) {
+		unsigned long nsize = size;
+		char *nbuf = buf;
+		if (convert_to_git(NULL, &nbuf, &nsize)) {
+			if (size)
+				munmap(buf, size);
+			size = nsize;
+			buf = nbuf;
+			re_allocated = 1;
+		}
+	}
+
 	if (write_object)
 		ret = write_sha1_file(buf, size, type, sha1);
 	else
 		ret = hash_sha1_file(buf, size, type, sha1);
+	if (re_allocated) {
+		free(buf);
+		return ret;
+	}
 	if (size)
 		munmap(buf, size);
 	return ret;

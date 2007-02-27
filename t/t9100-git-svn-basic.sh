@@ -211,8 +211,58 @@ tree d667270a1f7b109f5eb3aaea21ede14b56bfdd6e
 tree 8f51f74cf0163afc9ad68a4b1537288c4558b5a4
 EOF
 
-echo tree 4b825dc642cb6eb9a060e54bf8d69288fbee4904 >> expected
-
 test_expect_success "$name" "diff -u a expected"
+
+test_expect_failure 'exit if remote refs are ambigious' "
+        git-config --add svn-remote.svn.fetch \
+                              bar:refs/remotes/git-svn &&
+        git-svn migrate
+        "
+
+test_expect_failure 'exit if init-ing a would clobber a URL' "
+        svnadmin create ${PWD}/svnrepo2 &&
+        svn mkdir -m 'mkdir bar' ${svnrepo}2/bar &&
+        git-config --unset svn-remote.svn.fetch \
+                                '^bar:refs/remotes/git-svn$' &&
+        git-svn init ${svnrepo}2/bar
+        "
+
+test_expect_success \
+  'init allows us to connect to another directory in the same repo' "
+        git-svn init -i bar $svnrepo/bar &&
+        git config --get svn-remote.svn.fetch \
+                              '^bar:refs/remotes/bar$' &&
+        git config --get svn-remote.svn.fetch \
+                              '^:refs/remotes/git-svn$'
+        "
+
+test_expect_success 'able to dcommit to a subdirectory' "
+	git-svn fetch -i bar &&
+	git checkout -b my-bar refs/remotes/bar &&
+	echo abc > d &&
+	git update-index --add d &&
+	git commit -m '/bar/d should be in the log' &&
+	git-svn dcommit -i bar &&
+	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\" &&
+	mkdir newdir &&
+	echo new > newdir/dir &&
+	git update-index --add newdir/dir &&
+	git commit -m 'add a new directory' &&
+	git-svn dcommit -i bar &&
+	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\" &&
+	echo foo >> newdir/dir &&
+	git update-index newdir/dir &&
+	git commit -m 'modify a file in new directory' &&
+	git-svn dcommit -i bar &&
+	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\"
+	"
+
+test_expect_success 'able to set-tree to a subdirectory' "
+	echo cba > d &&
+	git update-index d &&
+	git commit -m 'update /bar/d' &&
+	git-svn set-tree -i bar HEAD &&
+	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\"
+	"
 
 test_done

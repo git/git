@@ -310,17 +310,28 @@ int git_default_config(const char *var, const char *value)
 	}
 
 	if (!strcmp(var, "core.packedgitwindowsize")) {
-		int pgsz = getpagesize();
+		int pgsz_x2 = getpagesize() * 2;
 		packed_git_window_size = git_config_int(var, value);
-		packed_git_window_size /= pgsz;
-		if (packed_git_window_size < 2)
-			packed_git_window_size = 2;
-		packed_git_window_size *= pgsz;
+
+		/* This value must be multiple of (pagesize * 2) */
+		packed_git_window_size /= pgsz_x2;
+		if (packed_git_window_size < 1)
+			packed_git_window_size = 1;
+		packed_git_window_size *= pgsz_x2;
 		return 0;
 	}
 
 	if (!strcmp(var, "core.packedgitlimit")) {
 		packed_git_limit = git_config_int(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.autocrlf")) {
+		if (value && !strcasecmp(value, "input")) {
+			auto_crlf = -1;
+			return 0;
+		}
+		auto_crlf = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -383,6 +394,8 @@ int git_config(config_fn_t fn)
 	 * config file otherwise. */
 	filename = getenv(CONFIG_ENVIRONMENT);
 	if (!filename) {
+		if (!access(ETC_GITCONFIG, R_OK))
+			ret += git_config_from_file(fn, ETC_GITCONFIG);
 		home = getenv("HOME");
 		filename = getenv(CONFIG_LOCAL_ENVIRONMENT);
 		if (!filename)

@@ -811,7 +811,7 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 			metainfo_charset = def_charset;
 		else if (!strcmp(argv[1], "-n"))
 			metainfo_charset = NULL;
-		else if (!strncmp(argv[1], "--encoding=", 11))
+		else if (!prefixcmp(argv[1], "--encoding="))
 			metainfo_charset = argv[1] + 11;
 		else
 			usage(mailinfo_usage);

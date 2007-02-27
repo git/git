@@ -94,11 +94,11 @@ current HEAD.
 <2> Rewind the master branch to get rid of those three commits.
 <3> Switch to "topic/wip" branch and keep working.
 
-Undo update-index::
+Undo add::
 +
 ------------
 $ edit                                     <1>
-$ git-update-index frotz.c filfre.c
+$ git add frotz.c filfre.c
 $ mailx                                    <2>
 $ git reset                                <3>
 $ git pull git://info.example.com/ nitfol  <4>

@@ -28,8 +28,8 @@ static int show_ref(const char *refname, const unsigned char *sha1, int flag, vo
 	if (tags_only || heads_only) {
 		int match;
 
-		match = heads_only && !strncmp(refname, "refs/heads/", 11);
-		match |= tags_only && !strncmp(refname, "refs/tags/", 10);
+		match = heads_only && !prefixcmp(refname, "refs/heads/");
+		match |= tags_only && !prefixcmp(refname, "refs/tags/");
 		if (!match)
 			return 0;
 	}
@@ -178,8 +178,8 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 			hash_only = 1;
 			continue;
 		}
-		if (!strncmp(arg, "--hash=", 7) ||
-		    (!strncmp(arg, "--abbrev", 8) &&
+		if (!prefixcmp(arg, "--hash=") ||
+		    (!prefixcmp(arg, "--abbrev") &&
 		     (arg[8] == '=' || arg[8] == '\0'))) {
 			if (arg[2] != 'h' && !arg[8])
 				/* --abbrev only */
@@ -215,16 +215,18 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "--exclude-existing"))
 			return exclude_existing(NULL);
-		if (!strncmp(arg, "--exclude-existing=", 19))
+		if (!prefixcmp(arg, "--exclude-existing="))
 			return exclude_existing(arg + 19);
 		usage(show_ref_usage);
 	}
 
 	if (verify) {
-		unsigned char sha1[20];
-
+		if (!pattern)
+			die("--verify requires a reference");
 		while (*pattern) {
-			if (!strncmp(*pattern, "refs/", 5) &&
+			unsigned char sha1[20];
+
+			if (!prefixcmp(*pattern, "refs/") &&
 			    resolve_ref(*pattern, sha1, 1, NULL)) {
 				if (!quiet)
 					show_one(*pattern, sha1);

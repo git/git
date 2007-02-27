@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git-clone' [--template=<template_directory>] [-l [-s]] [-q] [-n] [--bare]
 	  [-o <name>] [-u <upload-pack>] [--reference <repository>]
-	  [--depth=<depth>] <repository> [<directory>]
+	  [--depth <depth>] <repository> [<directory>]
 
 DESCRIPTION
 -----------
@@ -96,7 +96,7 @@ OPTIONS
 	if unset the templates are taken from the installation
 	defined default, typically `/usr/share/git-core/templates`.
 
---depth=<depth>::
+--depth <depth>::
 	Create a 'shallow' clone with a history truncated to the
 	specified number of revs.  A shallow repository has
 	number of limitations (you cannot clone or fetch from

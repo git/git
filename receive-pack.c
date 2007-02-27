@@ -109,7 +109,7 @@ static int update(struct command *cmd)
 	struct ref_lock *lock;
 
 	cmd->error_string = NULL;
-	if (!strncmp(name, "refs/", 5) && check_ref_format(name + 5)) {
+	if (!prefixcmp(name, "refs/") && check_ref_format(name + 5)) {
 		cmd->error_string = "funny refname";
 		return error("refusing to create funny ref '%s' locally",
 			     name);
@@ -125,7 +125,7 @@ static int update(struct command *cmd)
 	}
 	if (deny_non_fast_forwards && !is_null_sha1(new_sha1) &&
 	    !is_null_sha1(old_sha1) &&
-	    !strncmp(name, "refs/heads/", 11)) {
+	    !prefixcmp(name, "refs/heads/")) {
 		struct commit *old_commit, *new_commit;
 		struct commit_list *bases, *ent;
 

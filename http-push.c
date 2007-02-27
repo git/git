@@ -1060,8 +1060,8 @@ static int fetch_indices(void)
 		case 'P':
 			i++;
 			if (i + 52 < buffer.posn &&
-			    !strncmp(data + i, " pack-", 6) &&
-			    !strncmp(data + i + 46, ".pack\n", 6)) {
+			    !prefixcmp(data + i, " pack-") &&
+			    !prefixcmp(data + i + 46, ".pack\n")) {
 				get_sha1_hex(data + i + 6, sha1);
 				setup_index(sha1);
 				i += 51;
@@ -1206,11 +1206,11 @@ static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
 			lock->owner = xmalloc(strlen(ctx->cdata) + 1);
 			strcpy(lock->owner, ctx->cdata);
 		} else if (!strcmp(ctx->name, DAV_ACTIVELOCK_TIMEOUT)) {
-			if (!strncmp(ctx->cdata, "Second-", 7))
+			if (!prefixcmp(ctx->cdata, "Second-"))
 				lock->timeout =
 					strtol(ctx->cdata + 7, NULL, 10);
 		} else if (!strcmp(ctx->name, DAV_ACTIVELOCK_TOKEN)) {
-			if (!strncmp(ctx->cdata, "opaquelocktoken:", 16)) {
+			if (!prefixcmp(ctx->cdata, "opaquelocktoken:")) {
 				lock->token = xmalloc(strlen(ctx->cdata) - 15);
 				strcpy(lock->token, ctx->cdata + 16);
 			}
@@ -2168,7 +2168,7 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 		return;
 
 	/* If it's a symref, set the refname; otherwise try for a sha1 */
-	if (!strncmp((char *)buffer.buffer, "ref: ", 5)) {
+	if (!prefixcmp((char *)buffer.buffer, "ref: ")) {
 		*symref = xmalloc(buffer.posn - 5);
 		strlcpy(*symref, (char *)buffer.buffer + 5, buffer.posn - 5);
 	} else {

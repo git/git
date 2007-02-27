@@ -1,6 +1,8 @@
 #ifndef GIT_COMPAT_UTIL_H
 #define GIT_COMPAT_UTIL_H
 
+#define _FILE_OFFSET_BITS 64
+
 #ifndef FLEX_ARRAY
 #if defined(__GNUC__) && (__GNUC__ < 3)
 #define FLEX_ARRAY 0
@@ -99,11 +101,14 @@ extern void set_warn_routine(void (*routine)(const char *warn, va_list params));
 extern void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
 extern int git_munmap(void *start, size_t length);
 
+/* This value must be multiple of (pagesize * 2) */
 #define DEFAULT_PACKED_GIT_WINDOW_SIZE (1 * 1024 * 1024)
 
 #else /* NO_MMAP */
 
 #include <sys/mman.h>
+
+/* This value must be multiple of (pagesize * 2) */
 #define DEFAULT_PACKED_GIT_WINDOW_SIZE \
 	(sizeof(void*) >= 8 \
 		?  1 * 1024 * 1024 * 1024 \
@@ -137,6 +142,11 @@ extern char *gitstrcasestr(const char *haystack, const char *needle);
 #ifdef NO_STRLCPY
 #define strlcpy gitstrlcpy
 extern size_t gitstrlcpy(char *, const char *, size_t);
+#endif
+
+#ifdef NO_STRTOUMAX
+#define strtoumax gitstrtoumax
+extern uintmax_t gitstrtoumax(const char *, char **, int);
 #endif
 
 extern void release_pack_memory(size_t);
@@ -272,6 +282,11 @@ static inline int sane_case(int x, int high)
 	if (sane_istest(x, GIT_ALPHA))
 		x = (x & ~0x20) | high;
 	return x;
+}
+
+static inline int prefixcmp(const char *str, const char *prefix)
+{
+	return strncmp(str, prefix, strlen(prefix));
 }
 
 // MinGW

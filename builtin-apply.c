@@ -28,6 +28,7 @@ static int newfd = -1;
 
 static int unidiff_zero;
 static int p_value = 1;
+static int p_value_known;
 static int check_index;
 static int write_index;
 static int cached;
@@ -144,6 +145,7 @@ struct patch {
 	unsigned long deflate_origlen;
 	int lines_added, lines_deleted;
 	int score;
+	unsigned int is_toplevel_relative:1;
 	unsigned int inaccurate_eof:1;
 	unsigned int is_binary:1;
 	unsigned int is_copy:1;
@@ -238,7 +240,7 @@ static int name_terminate(const char *name, int namelen, int c, int terminate)
 	return 1;
 }
 
-static char * find_name(const char *line, char *def, int p_value, int terminate)
+static char *find_name(const char *line, char *def, int p_value, int terminate)
 {
 	int len;
 	const char *start = line;
@@ -311,10 +313,53 @@ static char * find_name(const char *line, char *def, int p_value, int terminate)
 	return name;
 }
 
+static int count_slashes(const char *cp)
+{
+	int cnt = 0;
+	char ch;
+
+	while ((ch = *cp++))
+		if (ch == '/')
+			cnt++;
+	return cnt;
+}
+
+/*
+ * Given the string after "--- " or "+++ ", guess the appropriate
+ * p_value for the given patch.
+ */
+static int guess_p_value(const char *nameline)
+{
+	char *name, *cp;
+	int val = -1;
+
+	if (is_dev_null(nameline))
+		return -1;
+	name = find_name(nameline, NULL, 0, TERM_SPACE | TERM_TAB);
+	if (!name)
+		return -1;
+	cp = strchr(name, '/');
+	if (!cp)
+		val = 0;
+	else if (prefix) {
+		/*
+		 * Does it begin with "a/$our-prefix" and such?  Then this is
+		 * very likely to apply to our directory.
+		 */
+		if (!strncmp(name, prefix, prefix_length))
+			val = count_slashes(prefix);
+		else {
+			cp++;
+			if (!strncmp(cp, prefix, prefix_length))
+				val = count_slashes(prefix) + 1;
+		}
+	}
+	free(name);
+	return val;
+}
+
 /*
  * Get the name etc info from the --/+++ lines of a traditional patch header
- *
- * NOTE! This hardcodes "-p1" behaviour in filename detection.
  *
  * FIXME! The end-of-filename heuristics are kind of screwy. For existing
  * files, we can happily check the index for a match, but for creating a
@@ -326,6 +371,16 @@ static void parse_traditional_patch(const char *first, const char *second, struc
 
 	first += 4;	/* skip "--- " */
 	second += 4;	/* skip "+++ " */
+	if (!p_value_known) {
+		int p, q;
+		p = guess_p_value(first);
+		q = guess_p_value(second);
+		if (p < 0) p = q;
+		if (0 <= p && p == q) {
+			p_value = p;
+			p_value_known = 1;
+		}
+	}
 	if (is_dev_null(first)) {
 		patch->is_new = 1;
 		patch->is_delete = 0;
@@ -787,6 +842,7 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 {
 	unsigned long offset, len;
 
+	patch->is_toplevel_relative = 0;
 	patch->is_rename = patch->is_copy = 0;
 	patch->is_new = patch->is_delete = -1;
 	patch->old_mode = patch->new_mode = 0;
@@ -831,6 +887,7 @@ static int find_header(char *line, unsigned long size, int *hdrsize, struct patc
 					die("git diff header lacks filename information (line %d)", linenr);
 				patch->old_name = patch->new_name = patch->def_name;
 			}
+			patch->is_toplevel_relative = 1;
 			*hdrsize = git_hdr_len;
 			return offset;
 		}
@@ -1129,11 +1186,11 @@ static struct fragment *parse_binary_hunk(char **buf_p,
 
 	*status_p = 0;
 
-	if (!strncmp(buffer, "delta ", 6)) {
+	if (!prefixcmp(buffer, "delta ")) {
 		patch_method = BINARY_DELTA_DEFLATED;
 		origlen = strtoul(buffer + 6, NULL, 10);
 	}
-	else if (!strncmp(buffer, "literal ", 8)) {
+	else if (!prefixcmp(buffer, "literal ")) {
 		patch_method = BINARY_LITERAL_DEFLATED;
 		origlen = strtoul(buffer + 8, NULL, 10);
 	}
@@ -1393,28 +1450,39 @@ static void show_stats(struct patch *patch)
 	free(qname);
 }
 
-static int read_old_data(struct stat *st, const char *path, void *buf, unsigned long size)
+static int read_old_data(struct stat *st, const char *path, char **buf_p, unsigned long *alloc_p, unsigned long *size_p)
 {
 	int fd;
 	unsigned long got;
+	unsigned long nsize;
+	char *nbuf;
+	unsigned long size = *size_p;
+	char *buf = *buf_p;
 
 	switch (st->st_mode & S_IFMT) {
 	case S_IFLNK:
-		return readlink(path, buf, size);
+		return readlink(path, buf, size) != size;
 	case S_IFREG:
 		fd = open(path, O_RDONLY);
 		if (fd < 0)
 			return error("unable to open %s", path);
 		got = 0;
 		for (;;) {
-			int ret = xread(fd, (char *) buf + got, size - got);
+			int ret = xread(fd, buf + got, size - got);
 			if (ret <= 0)
 				break;
 			got += ret;
 		}
 		close(fd);
-		return got;
-
+		nsize = got;
+		nbuf = buf;
+		if (convert_to_git(path, &nbuf, &nsize)) {
+			free(buf);
+			*buf_p = nbuf;
+			*alloc_p = nsize;
+			*size_p = nsize;
+		}
+		return got != size;
 	default:
 		return -1;
 	}
@@ -1655,6 +1723,8 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 			/* Ignore it, we already handled it */
 			break;
 		default:
+			if (apply_verbosely)
+				error("invalid start of line: '%c'", first);
 			return -1;
 		}
 		patch += len;
@@ -1751,6 +1821,9 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 			trailing--;
 		}
 	}
+
+	if (offset && apply_verbosely)
+		error("while searching for:\n%.*s", oldsize, oldlines);
 
 	free(old);
 	free(new);
@@ -1910,7 +1983,7 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 		size = st->st_size;
 		alloc = size + 8192;
 		buf = xmalloc(alloc);
-		if (read_old_data(st, patch->old_name, buf, alloc) != size)
+		if (read_old_data(st, patch->old_name, &buf, &alloc, &size))
 			return error("read of %s failed", patch->old_name);
 	}
 
@@ -1988,7 +2061,7 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 			return error("%s: %s", old_name, strerror(errno));
 
 		if (!cached)
-			st_mode = ntohl(create_ce_mode(st.st_mode));
+			st_mode = ntohl(ce_mode_from_stat(ce, st.st_mode));
 
 		if (patch->is_new < 0)
 			patch->is_new = 0;
@@ -2232,7 +2305,7 @@ static void patch_stats(struct patch *patch)
 	}
 }
 
-static void remove_file(struct patch *patch)
+static void remove_file(struct patch *patch, int rmdir_empty)
 {
 	if (write_index) {
 		if (remove_file_from_cache(patch->old_name) < 0)
@@ -2240,7 +2313,7 @@ static void remove_file(struct patch *patch)
 		cache_tree_invalidate_path(active_cache_tree, patch->old_name);
 	}
 	if (!cached) {
-		if (!unlink(patch->old_name)) {
+		if (!unlink(patch->old_name) && rmdir_empty) {
 			char *name = xstrdup(patch->old_name);
 			char *end = strrchr(name, '/');
 			while (end) {
@@ -2282,12 +2355,22 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 static int try_create_file(const char *path, unsigned int mode, const char *buf, unsigned long size)
 {
 	int fd;
+	char *nbuf;
+	unsigned long nsize;
 
 	if (S_ISLNK(mode))
 		/* Although buf:size is counted string, it also is NUL
 		 * terminated.
 		 */
 		return symlink(buf, path);
+	nsize = size;
+	nbuf = (char *) buf;
+	if (convert_to_working_tree(path, &nbuf, &nsize)) {
+		free((char *) buf);
+		buf = nbuf;
+		size = nsize;
+	}
+
 	fd = open(path, O_CREAT | O_EXCL | O_WRONLY, (mode & 0100) ? 0777 : 0666);
 	if (fd < 0)
 		return -1;
@@ -2373,7 +2456,7 @@ static void write_out_one_result(struct patch *patch, int phase)
 {
 	if (patch->is_delete > 0) {
 		if (phase == 0)
-			remove_file(patch);
+			remove_file(patch, 1);
 		return;
 	}
 	if (patch->is_new > 0 || patch->is_copy) {
@@ -2386,7 +2469,7 @@ static void write_out_one_result(struct patch *patch, int phase)
 	 * thing: remove the old, write the new
 	 */
 	if (phase == 0)
-		remove_file(patch);
+		remove_file(patch, 0);
 	if (phase == 1)
 		create_file(patch);
 }
@@ -2508,6 +2591,32 @@ static int use_patch(struct patch *p)
 	return 1;
 }
 
+static void prefix_one(char **name)
+{
+	char *old_name = *name;
+	if (!old_name)
+		return;
+	*name = xstrdup(prefix_filename(prefix, prefix_length, *name));
+	free(old_name);
+}
+
+static void prefix_patches(struct patch *p)
+{
+	if (!prefix || p->is_toplevel_relative)
+		return;
+	for ( ; p; p = p->next) {
+		if (p->new_name == p->old_name) {
+			char *prefixed = p->new_name;
+			prefix_one(&prefixed);
+			p->new_name = p->old_name = prefixed;
+		}
+		else {
+			prefix_one(&p->new_name);
+			prefix_one(&p->old_name);
+		}
+	}
+}
+
 static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 {
 	unsigned long offset, size;
@@ -2530,11 +2639,14 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 			break;
 		if (apply_in_reverse)
 			reverse_patches(patch);
+		if (prefix)
+			prefix_patches(patch);
 		if (use_patch(patch)) {
 			patch_stats(patch);
 			*listp = patch;
 			listp = &patch->next;
-		} else {
+		}
+		else {
 			/* perhaps free it a bit better? */
 			free(patch);
 			skipped_patch++;
@@ -2595,8 +2707,15 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 	int read_stdin = 1;
 	int inaccurate_eof = 0;
 	int errs = 0;
+	int is_not_gitdir = 0;
 
 	const char *whitespace_option = NULL;
+
+	prefix = setup_git_directory_gently(&is_not_gitdir);
+	prefix_length = prefix ? strlen(prefix) : 0;
+	git_config(git_apply_config);
+	if (apply_default_whitespace)
+		parse_whitespace_option(apply_default_whitespace);
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -2608,15 +2727,16 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			read_stdin = 0;
 			continue;
 		}
-		if (!strncmp(arg, "--exclude=", 10)) {
+		if (!prefixcmp(arg, "--exclude=")) {
 			struct excludes *x = xmalloc(sizeof(*x));
 			x->path = arg + 10;
 			x->next = excludes;
 			excludes = x;
 			continue;
 		}
-		if (!strncmp(arg, "-p", 2)) {
+		if (!prefixcmp(arg, "-p")) {
 			p_value = atoi(arg + 2);
+			p_value_known = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--no-add")) {
@@ -2648,10 +2768,14 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			continue;
 		}
 		if (!strcmp(arg, "--index")) {
+			if (is_not_gitdir)
+				die("--index outside a repository");
 			check_index = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--cached")) {
+			if (is_not_gitdir)
+				die("--cached outside a repository");
 			check_index = 1;
 			cached = 1;
 			continue;
@@ -2669,13 +2793,13 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			line_termination = 0;
 			continue;
 		}
-		if (!strncmp(arg, "-C", 2)) {
+		if (!prefixcmp(arg, "-C")) {
 			p_context = strtoul(arg + 2, &end, 0);
 			if (*end != '\0')
 				die("unrecognized context count '%s'", arg + 2);
 			continue;
 		}
-		if (!strncmp(arg, "--whitespace=", 13)) {
+		if (!prefixcmp(arg, "--whitespace=")) {
 			whitespace_option = arg + 13;
 			parse_whitespace_option(arg + 13);
 			continue;
@@ -2692,21 +2816,13 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 			apply = apply_with_reject = apply_verbosely = 1;
 			continue;
 		}
-		if (!strcmp(arg, "--verbose")) {
+		if (!strcmp(arg, "-v") || !strcmp(arg, "--verbose")) {
 			apply_verbosely = 1;
 			continue;
 		}
 		if (!strcmp(arg, "--inaccurate-eof")) {
 			inaccurate_eof = 1;
 			continue;
-		}
-
-		if (check_index && prefix_length < 0) {
-			prefix = setup_git_directory();
-			prefix_length = prefix ? strlen(prefix) : 0;
-			git_config(git_apply_config);
-			if (!whitespace_option && apply_default_whitespace)
-				parse_whitespace_option(apply_default_whitespace);
 		}
 		if (0 < prefix_length)
 			arg = prefix_filename(prefix, prefix_length, arg);

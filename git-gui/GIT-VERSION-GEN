@@ -20,6 +20,11 @@ tree_search ()
 	done
 }
 
+# Always use the tarball version file if found, just
+# in case we are somehow contained in a larger git
+# repository that doesn't actually track our state.
+# (At least one package manager is doing this.)
+#
 # We may be a subproject, so try looking for the merge
 # commit that supplied this directory content if we are
 # not at the toplevel.  We probably will always be the
@@ -27,10 +32,13 @@ tree_search ()
 # that fact.
 #
 # If we are at the toplevel or the merge assumption fails
-# try looking for a gitgui-* tag, or fallback onto the
-# distributed version file.
+# try looking for a gitgui-* tag.
 
-if prefix="$(git rev-parse --show-prefix 2>/dev/null)"
+if test -f version &&
+   VN=$(cat version)
+then
+	: happy
+elif prefix="$(git rev-parse --show-prefix 2>/dev/null)"
    test -n "$prefix" &&
    head=$(git rev-list --max-count=1 HEAD -- . 2>/dev/null) &&
    tree=$(git rev-parse --verify "HEAD:$prefix" 2>/dev/null) &&
@@ -48,9 +56,6 @@ elif VN=$(git describe --abbrev=4 HEAD 2>/dev/null) &&
    esac
 then
 	VN=$(echo "$VN" | sed -e 's/^gitgui-//;s/-/./g');
-elif test -f version
-then
-	VN=$(cat version) || VN="$DEF_VER"
 else
 	VN="$DEF_VER"
 fi

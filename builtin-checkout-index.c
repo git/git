@@ -223,12 +223,12 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 			to_tempfile = 1;
 			continue;
 		}
-		if (!strncmp(arg, "--prefix=", 9)) {
+		if (!prefixcmp(arg, "--prefix=")) {
 			state.base_dir = arg+9;
 			state.base_dir_len = strlen(state.base_dir);
 			continue;
 		}
-		if (!strncmp(arg, "--stage=", 8)) {
+		if (!prefixcmp(arg, "--stage=")) {
 			if (!strcmp(arg + 8, "all")) {
 				to_tempfile = 1;
 				checkout_stage = CHECKOUT_ALL;

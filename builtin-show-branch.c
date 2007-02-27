@@ -266,7 +266,7 @@ static void show_one_commit(struct commit *commit, int no_name)
 				    pretty, sizeof(pretty), 0, NULL, NULL, 0);
 	else
 		strcpy(pretty, "(unavailable)");
-	if (!strncmp(pretty, "[PATCH] ", 8))
+	if (!prefixcmp(pretty, "[PATCH] "))
 		cp = pretty + 8;
 	else
 		cp = pretty;
@@ -378,7 +378,7 @@ static int append_head_ref(const char *refname, const unsigned char *sha1, int f
 {
 	unsigned char tmp[20];
 	int ofs = 11;
-	if (strncmp(refname, "refs/heads/", ofs))
+	if (prefixcmp(refname, "refs/heads/"))
 		return 0;
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
@@ -392,7 +392,7 @@ static int append_remote_ref(const char *refname, const unsigned char *sha1, int
 {
 	unsigned char tmp[20];
 	int ofs = 13;
-	if (strncmp(refname, "refs/remotes/", ofs))
+	if (prefixcmp(refname, "refs/remotes/"))
 		return 0;
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
@@ -404,7 +404,7 @@ static int append_remote_ref(const char *refname, const unsigned char *sha1, int
 
 static int append_tag_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
-	if (strncmp(refname, "refs/tags/", 10))
+	if (prefixcmp(refname, "refs/tags/"))
 		return 0;
 	return append_ref(refname + 5, sha1, 0);
 }
@@ -435,9 +435,9 @@ static int append_matching_ref(const char *refname, const unsigned char *sha1, i
 		return 0;
 	if (fnmatch(match_ref_pattern, tail, 0))
 		return 0;
-	if (!strncmp("refs/heads/", refname, 11))
+	if (!prefixcmp(refname, "refs/heads/"))
 		return append_head_ref(refname, sha1, flag, cb_data);
-	if (!strncmp("refs/tags/", refname, 10))
+	if (!prefixcmp(refname, "refs/tags/"))
 		return append_tag_ref(refname, sha1, flag, cb_data);
 	return append_ref(refname, sha1, 0);
 }
@@ -462,11 +462,11 @@ static int rev_is_head(char *head, int headlen, char *name,
 	if ((!head[0]) ||
 	    (head_sha1 && sha1 && hashcmp(head_sha1, sha1)))
 		return 0;
-	if (!strncmp(head, "refs/heads/", 11))
+	if (!prefixcmp(head, "refs/heads/"))
 		head += 11;
-	if (!strncmp(name, "refs/heads/", 11))
+	if (!prefixcmp(name, "refs/heads/"))
 		name += 11;
-	else if (!strncmp(name, "heads/", 6))
+	else if (!prefixcmp(name, "heads/"))
 		name += 6;
 	return !strcmp(head, name);
 }
@@ -635,7 +635,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			with_current_branch = 1;
 		else if (!strcmp(arg, "--sha1-name"))
 			sha1_name = 1;
-		else if (!strncmp(arg, "--more=", 7))
+		else if (!prefixcmp(arg, "--more="))
 			extra = atoi(arg + 7);
 		else if (!strcmp(arg, "--merge-base"))
 			merge_base = 1;
@@ -652,9 +652,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		else if (!strcmp(arg, "--reflog") || !strcmp(arg, "-g")) {
 			reflog = DEFAULT_REFLOG;
 		}
-		else if (!strncmp(arg, "--reflog=", 9))
+		else if (!prefixcmp(arg, "--reflog="))
 			parse_reflog_param(arg + 9, &reflog, &reflog_base);
-		else if (!strncmp(arg, "-g=", 3))
+		else if (!prefixcmp(arg, "-g="))
 			parse_reflog_param(arg + 3, &reflog, &reflog_base);
 		else
 			usage(show_branch_usage);

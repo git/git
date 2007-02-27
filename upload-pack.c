@@ -542,7 +542,7 @@ static int get_common_commits(void)
 			continue;
 		}
 		len = strip(line, len);
-		if (!strncmp(line, "have ", 5)) {
+		if (!prefixcmp(line, "have ")) {
 			switch (got_sha1(line+5, sha1)) {
 			case -1: /* they have what we do not */
 				if (multi_ack && ok_to_give_up())
@@ -589,7 +589,7 @@ static void receive_needs(void)
 		if (!len)
 			break;
 
-		if (!strncmp("shallow ", line, 8)) {
+		if (!prefixcmp(line, "shallow ")) {
 			unsigned char sha1[20];
 			struct object *object;
 			use_thin_pack = 0;
@@ -602,7 +602,7 @@ static void receive_needs(void)
 			add_object_array(object, NULL, &shallows);
 			continue;
 		}
-		if (!strncmp("deepen ", line, 7)) {
+		if (!prefixcmp(line, "deepen ")) {
 			char *end;
 			use_thin_pack = 0;
 			depth = strtol(line + 7, &end, 0);
@@ -610,7 +610,7 @@ static void receive_needs(void)
 				die("Invalid deepen: %s", line);
 			continue;
 		}
-		if (strncmp("want ", line, 5) ||
+		if (prefixcmp(line, "want ") ||
 		    get_sha1_hex(line+5, sha1_buf))
 			die("git-upload-pack: protocol error, "
 			    "expected to get sha, not '%s'", line);
@@ -745,7 +745,7 @@ int main(int argc, char **argv)
 			strict = 1;
 			continue;
 		}
-		if (!strncmp(arg, "--timeout=", 10)) {
+		if (!prefixcmp(arg, "--timeout=")) {
 			timeout = atoi(arg+10);
 			continue;
 		}

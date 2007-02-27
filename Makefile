@@ -28,6 +28,10 @@ all::
 #
 # Define NO_STRLCPY if you don't have strlcpy.
 #
+# Define NO_STRTOUMAX if you don't have strtoumax in the C library.
+# If your compiler also does not support long long or does not have
+# strtoull, define NO_STRTOULL.
+#
 # Define NO_SETENV if you don't have setenv in the C library.
 #
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.
@@ -124,6 +128,7 @@ prefix = $(HOME)
 bindir = $(prefix)/bin
 gitexecdir = $(bindir)
 template_dir = $(prefix)/share/git-core/templates/
+ETC_GITCONFIG = $(prefix)/etc/gitconfig
 # DESTDIR=
 
 # default configuration for gitweb
@@ -172,7 +177,7 @@ SCRIPT_SH = \
 	git-merge-one-file.sh git-parse-remote.sh \
 	git-pull.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
-	git-resolve.sh git-revert.sh git-sh-setup.sh \
+	git-revert.sh git-sh-setup.sh \
 	git-tag.sh git-verify-tag.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
@@ -262,7 +267,8 @@ LIB_OBJS = \
 	revision.o pager.o tree-walk.o xdiff-interface.o \
 	write_or_die.o trace.o list-objects.o grep.o \
 	alloc.o merge-file.o path-list.o help.o unpack-trees.o $(DIFF_OBJS) \
-	color.o wt-status.o archive-zip.o archive-tar.o shallow.o utf8.o
+	color.o wt-status.o archive-zip.o archive-tar.o shallow.o utf8.o \
+	convert.o
 
 BUILTIN_OBJS = \
 	builtin-add.o \
@@ -280,7 +286,6 @@ BUILTIN_OBJS = \
 	builtin-diff.o \
 	builtin-diff-files.o \
 	builtin-diff-index.o \
-	builtin-diff-stages.o \
 	builtin-diff-tree.o \
 	builtin-fmt-merge-msg.o \
 	builtin-for-each-ref.o \
@@ -354,11 +359,13 @@ ifeq ($(uname_S),SunOS)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
 		NO_C99_FORMAT = YesPlease
+		NO_STRTOUMAX = YesPlease
 	endif
 	ifeq ($(uname_R),5.9)
 		NO_UNSETENV = YesPlease
 		NO_SETENV = YesPlease
 		NO_C99_FORMAT = YesPlease
+		NO_STRTOUMAX = YesPlease
 	endif
 	INSTALL = ginstall
 	TAR = gtar
@@ -541,6 +548,13 @@ ifdef NO_STRLCPY
 	COMPAT_CFLAGS += -DNO_STRLCPY
 	COMPAT_OBJS += compat/strlcpy.o
 endif
+ifdef NO_STRTOUMAX
+	COMPAT_CFLAGS += -DNO_STRTOUMAX
+	COMPAT_OBJS += compat/strtoumax.o
+endif
+ifdef NO_STRTOULL
+	COMPAT_CFLAGS += -DNO_STRTOULL
+endif
 ifdef NO_SETENV
 	COMPAT_CFLAGS += -DNO_SETENV
 	COMPAT_OBJS += compat/setenv.o
@@ -608,6 +622,7 @@ endif
 # Shell quote (do not use $(call) to accommodate ancient setups);
 
 SHA1_HEADER_SQ = $(subst ','\'',$(SHA1_HEADER))
+ETC_GITCONFIG_SQ = $(subst ','\'',$(ETC_GITCONFIG))
 
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 bindir_SQ = $(subst ','\'',$(bindir))
@@ -620,7 +635,8 @@ PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
 
 LIBS = $(GITLIBS) $(EXTLIBS)
 
-BASIC_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' $(COMPAT_CFLAGS)
+BASIC_CFLAGS += -DSHA1_HEADER='$(SHA1_HEADER_SQ)' \
+	-DETC_GITCONFIG='"$(ETC_GITCONFIG_SQ)"' $(COMPAT_CFLAGS)
 LIB_OBJS += $(COMPAT_OBJS)
 
 ALL_CFLAGS += $(BASIC_CFLAGS)
@@ -837,7 +853,7 @@ GIT-CFLAGS: .FORCE-GIT-CFLAGS
 export NO_SYMLINKS
 export NO_SVN_TESTS
 
-test: all
+test: all test-chmtime$X
 	$(MAKE) -C t/ all
 
 test-date$X: test-date.c date.o ctype.o
@@ -851,6 +867,9 @@ test-dump-cache-tree$X: dump-cache-tree.o $(GITLIBS)
 
 test-sha1$X: test-sha1.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
+
+test-chmtime$X: test-chmtime.c
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $<
 
 check-sha1:: test-sha1$X
 	./test-sha1.sh
@@ -907,7 +926,8 @@ dist: git.spec git-archive
 	$(TAR) rf $(GIT_TARNAME).tar \
 		$(GIT_TARNAME)/git.spec \
 		$(GIT_TARNAME)/version \
-		$(GIT_TARNAME)/git-gui/version
+		$(GIT_TARNAME)/git-gui/version \
+		$(GIT_TARNAME)/git-gui/credits
 	@rm -rf $(GIT_TARNAME)
 	gzip -f -9 $(GIT_TARNAME).tar
 
@@ -964,11 +984,14 @@ check-docs::
 		case "$$v" in \
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
 		git-merge-resolve | git-merge-stupid | \
+		git-add--interactive | git-fsck-objects | git-init-db | \
+		git-repo-config | \
 		git-ssh-pull | git-ssh-push ) continue ;; \
 		esac ; \
 		test -f "Documentation/$$v.txt" || \
 		echo "no doc: $$v"; \
-		grep -q "^gitlink:$$v\[[0-9]\]::" Documentation/git.txt || \
+		sed -e '1,/^__DATA__/d' Documentation/cmd-list.perl | \
+		grep -q "^$$v[ 	]" || \
 		case "$$v" in \
 		git) ;; \
 		*) echo "no link: $$v";; \

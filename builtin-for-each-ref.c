@@ -814,7 +814,7 @@ int cmd_for_each_ref(int ac, const char **av, char *prefix)
 			i++;
 			break;
 		}
-		if (!strncmp(arg, "--format=", 9)) {
+		if (!prefixcmp(arg, "--format=")) {
 			if (format)
 				die("more than one --format?");
 			format = arg + 9;
@@ -844,7 +844,7 @@ int cmd_for_each_ref(int ac, const char **av, char *prefix)
 			quote_style = QUOTE_TCL;
 			continue;
 		}
-		if (!strncmp(arg, "--count=", 8)) {
+		if (!prefixcmp(arg, "--count=")) {
 			if (maxcount)
 				die("more than one --count?");
 			maxcount = atoi(arg + 8);
@@ -852,7 +852,7 @@ int cmd_for_each_ref(int ac, const char **av, char *prefix)
 				die("The number %s did not parse", arg);
 			continue;
 		}
-		if (!strncmp(arg, "--sort=", 7)) {
+		if (!prefixcmp(arg, "--sort=")) {
 			struct ref_sort *s = xcalloc(1, sizeof(*s));
 			int len;
 

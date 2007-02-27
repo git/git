@@ -5,7 +5,8 @@ The git configuration file contains a number of variables that affect
 the git command's behavior. `.git/config` file for each repository
 is used to store the information for that repository, and
 `$HOME/.gitconfig` is used to store per user information to give
-fallback values for `.git/config` file.
+fallback values for `.git/config` file. The file `/etc/gitconfig`
+can be used to store system-wide defaults.
 
 They can be used by both the git plumbing
 and the porcelains. The variables are divided into sections, where
@@ -142,6 +143,18 @@ core.preferSymlinkRefs::
 	This is sometimes needed to work with old scripts that
 	expect HEAD to be a symbolic link.
 
+core.bare::
+	If true this repository is assumed to be 'bare' and has no
+	working directory associated with it.  If this is the case a
+	number of commands that require a working directory will be
+	disabled, such as gitlink:git-add[1] or gitlink:git-merge[1].
++
+This setting is automatically guessed by gitlink:git-clone[1] or
+gitlink:git-init[1] when the repository was created.  By default a
+repository that ends in "/.git" is assumed to be not bare (bare =
+false), while all other repositories are assumed to be bare (bare
+= true).
+
 core.logAllRefUpdates::
 	Updates to a ref <ref> is logged to the file
 	"$GIT_DIR/logs/<ref>", by appending the new and old
@@ -180,10 +193,17 @@ core.compression::
 	slowest.
 
 core.legacyheaders::
-	A boolean which enables the legacy object header format in case
-	you want to interoperate with old clients accessing the object
-	database directly (where the "http://" and "rsync://" protocols
-	count as direct access).
+	A boolean which
+	changes the format of loose objects so that they are more
+	efficient to pack and to send out of the repository over git
+	native protocol, since v1.4.2.  However, loose objects
+	written in the new format cannot be read by git older than
+	that version; people fetching from your repository using
+	older versions of git over dumb transports (e.g. http)
+	will also be affected.
++
+To let git use the new loose object format, you have to
+set core.legacyheaders to false.
 
 core.packedGitWindowSize::
 	Number of bytes of a pack file to map into memory in a
@@ -451,6 +471,10 @@ remote.<name>.push::
 	The default set of "refspec" for gitlink:git-push[1]. See
 	gitlink:git-push[1].
 
+remote.<name>.skipDefaultUpdate::
+	If true, this remote will be skipped by default when updating
+	using the remote subcommand of gitlink:git-remote[1].
+
 remote.<name>.receivepack::
 	The default program to execute on the remote side when pushing.  See
 	option \--exec of gitlink:git-push[1].
@@ -458,6 +482,14 @@ remote.<name>.receivepack::
 remote.<name>.uploadpack::
 	The default program to execute on the remote side when fetching.  See
 	option \--exec of gitlink:git-fetch-pack[1].
+
+remote.<name>.tagopt::
+	Setting this value to --no-tags disables automatic tag following when fetching
+	from remote <name>
+
+remotes.<group>::
+	The list of remotes which are fetched by "git remote update
+	<group>".  See gitlink:git-remote[1].
 
 repack.usedeltabaseoffset::
 	Allow gitlink:git-repack[1] to create packs that uses

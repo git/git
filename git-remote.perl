@@ -67,7 +67,7 @@ sub list_remote {
 		$git->command(qw(config --get-regexp), '^remote\.');
 	};
 	for (@remotes) {
-		if (/^remote\.([^.]*)\.(\S*)\s+(.*)$/) {
+		if (/^remote\.(\S+?)\.([^.\s]+)\s+(.*)$/) {
 			add_remote_config(\%seen, $1, $2, $3);
 		}
 	}
@@ -274,6 +274,31 @@ sub add_remote {
 	}
 }
 
+sub update_remote {
+	my ($name) = @_;
+
+        my $conf = $git->config("remotes." . $name);
+	if (defined($conf)) {
+		@remotes = split(' ', $conf);
+	} elsif ($name eq 'default') {
+		undef @remotes;
+		for (sort keys %$remote) {
+			my $do_fetch = $git->config_boolean("remote." . $_ .
+						    ".skipDefaultUpdate");
+			if (!defined($do_fetch) || $do_fetch ne "true") {
+				push @remotes, $_;
+			}
+		}
+	} else {
+		print STDERR "Remote group $name does not exists.\n";
+		exit(1);
+	}
+	for (@remotes) {
+		print "Updating $_\n";
+		$git->command('fetch', "$_");
+	}
+}
+
 sub add_usage {
 	print STDERR "Usage: git remote add [-f] [-t track]* [-m master] <name> <url>\n";
 	exit(1);
@@ -301,6 +326,15 @@ elsif ($ARGV[0] eq 'show') {
 	}
 	for (; $i < @ARGV; $i++) {
 		show_remote($ARGV[$i], $ls_remote);
+	}
+}
+elsif ($ARGV[0] eq 'update') {
+	if (@ARGV <= 1) {
+		update_remote("default");
+		exit(1);
+	}
+	for ($i = 1; $i < @ARGV; $i++) {
+		update_remote($ARGV[$i]);
 	}
 }
 elsif ($ARGV[0] eq 'prune') {
@@ -360,5 +394,6 @@ else {
 	print STDERR "       git remote add <name> <url>\n";
 	print STDERR "       git remote show <name>\n";
 	print STDERR "       git remote prune <name>\n";
+	print STDERR "       git remote update [group]\n";
 	exit(1);
 }

@@ -36,7 +36,7 @@ static int handle_one_ref(const char *path, const unsigned char *sha1,
 	/* Do not pack the symbolic refs */
 	if ((flags & REF_ISSYMREF))
 		return 0;
-	is_tag_ref = !strncmp(path, "refs/tags/", 10);
+	is_tag_ref = !prefixcmp(path, "refs/tags/");
 
 	/* ALWAYS pack refs that were already packed or are tags */
 	if (!cb->all && !is_tag_ref && !(flags & REF_ISPACKED))

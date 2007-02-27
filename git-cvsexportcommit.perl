@@ -15,13 +15,20 @@ unless ($ENV{GIT_DIR} && -r $ENV{GIT_DIR}){
     die "GIT_DIR is not defined or is unreadable";
 }
 
-our ($opt_h, $opt_P, $opt_p, $opt_v, $opt_c, $opt_f, $opt_a, $opt_m );
+our ($opt_h, $opt_P, $opt_p, $opt_v, $opt_c, $opt_f, $opt_a, $opt_m, $opt_d);
 
-getopts('hPpvcfam:');
+getopts('hPpvcfam:d:');
 
 $opt_h && usage();
 
 die "Need at least one commit identifier!" unless @ARGV;
+
+my @cvs;
+if ($opt_d) {
+	@cvs = ('cvs', '-d', $opt_d);
+} else {
+	@cvs = ('cvs');
+}
 
 # setup a tempdir
 our ($tmpdir, $tmpdirname) = tempdir('git-cvsapplycommit-XXXXXX',
@@ -160,7 +167,7 @@ foreach my $f (@afiles) {
 	my $p = $1;
 	next if (grep { $_ eq $p } @dirs);
     }
-    my @status = grep(m/^File/,  safe_pipe_capture('cvs', '-q', 'status' ,$f));
+    my @status = grep(m/^File/,  safe_pipe_capture(@cvs, '-q', 'status' ,$f));
     if (@status > 1) { warn 'Strange! cvs status returned more than one line?'};
     if (-d dirname $f and $status[0] !~ m/Status: Unknown$/
 	and $status[0] !~ m/^File: no file /) {
@@ -173,7 +180,7 @@ foreach my $f (@afiles) {
 foreach my $f (@files) {
     next if grep { $_ eq $f } @afiles;
     # TODO:we need to handle removed in cvs
-    my @status = grep(m/^File/,  safe_pipe_capture('cvs', '-q', 'status' ,$f));
+    my @status = grep(m/^File/,  safe_pipe_capture(@cvs, '-q', 'status' ,$f));
     if (@status > 1) { warn 'Strange! cvs status returned more than one line?'};
     unless ($status[0] =~ m/Status: Up-to-date$/) {
 	$dirty = 1;
@@ -194,7 +201,7 @@ print "Applying\n";
 print "Patch applied successfully. Adding new files and directories to CVS\n";
 my $dirtypatch = 0;
 foreach my $d (@dirs) {
-    if (system('cvs','add',$d)) {
+    if (system(@cvs,'add',$d)) {
 	$dirtypatch = 1;
 	warn "Failed to cvs add directory $d -- you may need to do it manually";
     }
@@ -202,9 +209,9 @@ foreach my $d (@dirs) {
 
 foreach my $f (@afiles) {
     if (grep { $_ eq $f } @bfiles) {
-      system('cvs', 'add','-kb',$f);
+      system(@cvs, 'add','-kb',$f);
     } else {
-      system('cvs', 'add', $f);
+      system(@cvs, 'add', $f);
     }
     if ($?) {
 	$dirtypatch = 1;
@@ -213,7 +220,7 @@ foreach my $f (@afiles) {
 }
 
 foreach my $f (@dfiles) {
-    system('cvs', 'rm', '-f', $f);
+    system(@cvs, 'rm', '-f', $f);
     if ($?) {
 	$dirtypatch = 1;
 	warn "Failed to cvs rm -f $f -- you may need to do it manually";
@@ -223,7 +230,7 @@ foreach my $f (@dfiles) {
 print "Commit to CVS\n";
 print "Patch title (first comment line): $title\n";
 my @commitfiles = map { unless (m/\s/) { '\''.$_.'\''; } else { $_; }; } (@files);
-my $cmd = "cvs commit -F .msg @commitfiles";
+my $cmd = join(' ', @cvs)." commit -F .msg @commitfiles";
 
 if ($dirtypatch) {
     print "NOTE: One or more hunks failed to apply cleanly.\n";
@@ -236,7 +243,7 @@ if ($dirtypatch) {
 
 if ($opt_c) {
     print "Autocommit\n  $cmd\n";
-    print safe_pipe_capture('cvs', 'commit', '-F', '.msg', @files);
+    print safe_pipe_capture(@cvs, 'commit', '-F', '.msg', @files);
     if ($?) {
 	die "Exiting: The commit did not succeed";
     }
