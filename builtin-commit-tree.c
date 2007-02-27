@@ -45,14 +45,14 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
 	memcpy(buf + size, one_line, len);
 }
 
-static void check_valid(unsigned char *sha1, const char *expect)
+static void check_valid(unsigned char *sha1, enum object_type expect)
 {
 	enum object_type type = sha1_object_info(sha1, NULL);
 	if (type < 0)
 		die("%s is not a valid object", sha1_to_hex(sha1));
-	if (expect && type != type_from_string(expect))
+	if (type != expect)
 		die("%s is not a valid '%s' object", sha1_to_hex(sha1),
-		    expect);
+		    typename(expect));
 }
 
 /*
@@ -100,7 +100,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 	if (get_sha1(argv[1], tree_sha1))
 		die("Not a valid object name %s", argv[1]);
 
-	check_valid(tree_sha1, tree_type);
+	check_valid(tree_sha1, OBJ_TREE);
 	for (i = 2; i < argc; i += 2) {
 		const char *a, *b;
 		a = argv[i]; b = argv[i+1];
@@ -111,7 +111,7 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 			die("Too many parents (%d max)", MAXPARENT);
 		if (get_sha1(b, parent_sha1[parents]))
 			die("Not a valid object name %s", b);
-		check_valid(parent_sha1[parents], commit_type);
+		check_valid(parent_sha1[parents], OBJ_COMMIT);
 		if (new_parent(parents))
 			parents++;
 	}
