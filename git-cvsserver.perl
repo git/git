@@ -374,7 +374,8 @@ sub req_add
 
         print "Checked-in $dirpart\n";
         print "$filename\n";
-        print "/$filepart/0///\n";
+        my $kopts = kopts_from_path($filepart);
+        print "/$filepart/0//$kopts/\n";
 
         $addcount++;
     }
@@ -455,7 +456,8 @@ sub req_remove
 
         print "Checked-in $dirpart\n";
         print "$filename\n";
-        print "/$filepart/-1.$wrev///\n";
+        my $kopts = kopts_from_path($filepart);
+        print "/$filepart/-1.$wrev//$kopts/\n";
 
         $rmcount++;
     }
@@ -726,7 +728,8 @@ sub req_co
        print $state->{CVSROOT} . "/$module/" . ( defined ( $git->{dir} ) and $git->{dir} ne "./" ? $git->{dir} . "/" : "" ) . "$git->{name}\n";
 
         # this is an "entries" line
-        print "/$git->{name}/1.$git->{revision}///\n";
+        my $kopts = kopts_from_path($git->{name});
+        print "/$git->{name}/1.$git->{revision}//$kopts/\n";
         # permissions
         print "u=$git->{mode},g=$git->{mode},o=$git->{mode}\n";
 
@@ -917,8 +920,9 @@ sub req_update
 		print $state->{CVSROOT} . "/$state->{module}/$filename\n";
 
 		# this is an "entries" line
-		$log->debug("/$filepart/1.$meta->{revision}///");
-		print "/$filepart/1.$meta->{revision}///\n";
+		my $kopts = kopts_from_path($filepart);
+		$log->debug("/$filepart/1.$meta->{revision}//$kopts/");
+		print "/$filepart/1.$meta->{revision}//$kopts/\n";
 
 		# permissions
 		$log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
@@ -961,8 +965,9 @@ sub req_update
                     print "Update-existing $dirpart\n";
                     $log->debug($state->{CVSROOT} . "/$state->{module}/$filename");
                     print $state->{CVSROOT} . "/$state->{module}/$filename\n";
-                    $log->debug("/$filepart/1.$meta->{revision}///");
-                    print "/$filepart/1.$meta->{revision}///\n";
+                    my $kopts = kopts_from_path($filepart);
+                    $log->debug("/$filepart/1.$meta->{revision}//$kopts/");
+                    print "/$filepart/1.$meta->{revision}//$kopts/\n";
                 }
             }
             elsif ( $return == 1 )
@@ -975,7 +980,8 @@ sub req_update
                 {
                     print "Update-existing $dirpart\n";
                     print $state->{CVSROOT} . "/$state->{module}/$filename\n";
-                    print "/$filepart/1.$meta->{revision}/+//\n";
+                    my $kopts = kopts_from_path($filepart);
+                    print "/$filepart/1.$meta->{revision}/+/$kopts/\n";
                 }
             }
             else
@@ -1206,7 +1212,8 @@ sub req_ci
         } else {
             print "Checked-in $dirpart\n";
             print "$filename\n";
-            print "/$filepart/1.$meta->{revision}///\n";
+            my $kopts = kopts_from_path($filepart);
+            print "/$filepart/1.$meta->{revision}//$kopts/\n";
         }
     }
 
@@ -1885,6 +1892,28 @@ sub filecleanup
     $filename =~ s/^\.\///g;
     $filename = $state->{prependdir} . $filename;
     return $filename;
+}
+
+# Given a path, this function returns a string containing the kopts
+# that should go into that path's Entries line.  For example, a binary
+# file should get -kb.
+sub kopts_from_path
+{
+	my ($path) = @_;
+
+	# Once it exists, the git attributes system should be used to look up
+	# what attributes apply to this path.
+
+	# Until then, take the setting from the config file
+    unless ( defined ( $cfg->{gitcvs}{allbinary} ) and $cfg->{gitcvs}{allbinary} =~ /^\s*(1|true|yes)\s*$/i )
+    {
+		# Return "" to give no special treatment to any path
+		return "";
+    } else {
+		# Alternatively, to have all files treated as if they are binary (which
+		# is more like git itself), always return the "-kb" option
+		return "-kb";
+    }
 }
 
 package GITCVS::log;
