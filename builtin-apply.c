@@ -1539,7 +1539,8 @@ static int apply_line(char *output, const char *patch, int plen)
 	int need_fix_leading_space = 0;
 	char *buf;
 
-	if ((new_whitespace != strip_whitespace) || !whitespace_error) {
+	if ((new_whitespace != strip_whitespace) || !whitespace_error ||
+	    *patch != '+') {
 		memcpy(output, patch + 1, plen);
 		return plen;
 	}
