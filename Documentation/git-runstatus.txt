@@ -16,7 +16,7 @@ DESCRIPTION
 Examines paths in the working tree that has changes unrecorded
 to the index file, and changes between the index file and the
 current HEAD commit.  The former paths are what you _could_
-commit by running 'git-update-index' before running 'git
+commit by running 'git add' (or 'git rm' if you are deleting) before running 'git
 commit', and the latter paths are what you _would_ commit by
 running 'git commit'.
 

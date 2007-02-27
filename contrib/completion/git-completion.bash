@@ -269,7 +269,6 @@ __git_commands ()
 		cvsimport)        : import;;
 		cvsserver)        : daemon;;
 		daemon)           : daemon;;
-		diff-stages)      : nobody uses it;;
 		fast-import)      : import;;
 		fsck-objects)     : plumbing;;
 		fetch-pack)       : plumbing;;
@@ -298,7 +297,6 @@ __git_commands ()
 		reflog)           : plumbing;;
 		repo-config)      : plumbing;;
 		rerere)           : plumbing;;
-		resolve)          : dead dont use;;
 		rev-list)         : plumbing;;
 		rev-parse)        : plumbing;;
 		runstatus)        : plumbing;;

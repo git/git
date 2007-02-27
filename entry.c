@@ -68,16 +68,19 @@ static int write_entry(struct cache_entry *ce, char *path, struct checkout *stat
 	void *new;
 	unsigned long size;
 	long wrote;
-	char type[20];
+	enum object_type type;
 
-	new = read_sha1_file(ce->sha1, type, &size);
-	if (!new || strcmp(type, blob_type)) {
+	new = read_sha1_file(ce->sha1, &type, &size);
+	if (!new || type != OBJ_BLOB) {
 		if (new)
 			free(new);
 		return error("git-checkout-index: unable to read sha1 file of %s (%s)",
 			path, sha1_to_hex(ce->sha1));
 	}
 	switch (ntohl(ce->ce_mode) & S_IFMT) {
+		char *buf;
+		unsigned long nsize;
+
 	case S_IFREG:
 		if (to_tempfile) {
 			strcpy(path, ".merge_file_XXXXXX");
@@ -89,7 +92,18 @@ static int write_entry(struct cache_entry *ce, char *path, struct checkout *stat
 			return error("git-checkout-index: unable to create file %s (%s)",
 				path, strerror(errno));
 		}
-		/* FIXME: LF -> CRLF conversion goes here, based on "ce->name" */
+
+		/*
+		 * Convert from git internal format to working tree format
+		 */
+		buf = new;
+		nsize = size;
+		if (convert_to_working_tree(ce->name, &buf, &nsize)) {
+			free(new);
+			new = buf;
+			size = nsize;
+		}
+
 		wrote = write_in_full(fd, new, size);
 		close(fd);
 		free(new);

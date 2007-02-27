@@ -106,6 +106,16 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 		return htonl(S_IFLNK);
 	return htonl(S_IFREG | ce_permissions(mode));
 }
+static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned int mode)
+{
+	extern int trust_executable_bit;
+	if (!trust_executable_bit && S_ISREG(mode)) {
+		if (ce && S_ISREG(ntohl(ce->ce_mode)))
+			return ce->ce_mode;
+		return create_ce_mode(0666);
+	}
+	return create_ce_mode(mode);
+}
 #define canon_mode(mode) \
 	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
 	S_ISLNK(mode) ? S_IFLNK : S_IFDIR)
@@ -201,6 +211,7 @@ extern const char *apply_default_whitespace;
 extern int zlib_compression_level;
 extern size_t packed_git_window_size;
 extern size_t packed_git_limit;
+extern int auto_crlf;
 
 #define GIT_REPO_VERSION 0
 extern int repository_format_version;
@@ -251,13 +262,25 @@ int adjust_shared_perm(const char *path);
 int safe_create_leading_directories(char *path);
 char *enter_repo(char *path, int strict);
 
+enum object_type {
+	OBJ_NONE = 0,
+	OBJ_COMMIT = 1,
+	OBJ_TREE = 2,
+	OBJ_BLOB = 3,
+	OBJ_TAG = 4,
+	/* 5 for future expansion */
+	OBJ_OFS_DELTA = 6,
+	OBJ_REF_DELTA = 7,
+	OBJ_BAD,
+};
+
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
-extern int sha1_object_info(const unsigned char *, char *, unsigned long *);
-extern void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned long *size);
-extern void * read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size);
+extern int sha1_object_info(const unsigned char *, unsigned long *);
+extern void * unpack_sha1_file(void *map, unsigned long mapsize, enum object_type *type, unsigned long *size);
+extern void * read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size);
 extern int hash_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *sha1);
 extern int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *return_sha1);
-extern int pretend_sha1_file(void *, unsigned long, const char *, unsigned char *);
+extern int pretend_sha1_file(void *, unsigned long, enum object_type, unsigned char *);
 
 extern int check_sha1_signature(const unsigned char *sha1, void *buf, unsigned long size, const char *type);
 
@@ -273,18 +296,6 @@ extern int legacy_loose_object(unsigned char *);
 
 extern int has_pack_file(const unsigned char *sha1);
 extern int has_pack_index(const unsigned char *sha1);
-
-enum object_type {
-	OBJ_NONE = 0,
-	OBJ_COMMIT = 1,
-	OBJ_TREE = 2,
-	OBJ_BLOB = 3,
-	OBJ_TAG = 4,
-	/* 5 for future expansion */
-	OBJ_OFS_DELTA = 6,
-	OBJ_REF_DELTA = 7,
-	OBJ_BAD,
-};
 
 extern signed char hexval_table[256];
 static inline unsigned int hexval(unsigned int c)
@@ -411,9 +422,9 @@ extern struct packed_git *add_packed_git(char *, int, int);
 extern int num_packed_objects(const struct packed_git *p);
 extern int nth_packed_object_sha1(const struct packed_git *, int, unsigned char*);
 extern unsigned long find_pack_entry_one(const unsigned char *, struct packed_git *);
-extern void *unpack_entry(struct packed_git *, unsigned long, char *, unsigned long *);
+extern void *unpack_entry(struct packed_git *, unsigned long, enum object_type *, unsigned long *);
 extern unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
-extern void packed_object_info_detail(struct packed_git *, unsigned long, char *, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
+extern const char *packed_object_info_detail(struct packed_git *, unsigned long, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
 
 /* Dumb servers support */
 extern int update_server_info(int);
@@ -467,5 +478,9 @@ extern void alloc_report(void);
 extern int nfvasprintf(char **str, const char *fmt, va_list va);
 extern void trace_printf(const char *format, ...);
 extern void trace_argv_printf(const char **argv, int count, const char *format, ...);
+
+/* convert.c */
+extern int convert_to_git(const char *path, char **bufp, unsigned long *sizep);
+extern int convert_to_working_tree(const char *path, char **bufp, unsigned long *sizep);
 
 #endif /* CACHE_H */

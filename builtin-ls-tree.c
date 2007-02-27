@@ -118,7 +118,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 				chomp_prefix = 0;
 				break;
 			}
-			if (!strncmp(argv[1]+2, "abbrev=",7)) {
+			if (!prefixcmp(argv[1]+2, "abbrev=")) {
 				abbrev = strtoul(argv[1]+9, NULL, 10);
 				if (abbrev && abbrev < MINIMUM_ABBREV)
 					abbrev = MINIMUM_ABBREV;

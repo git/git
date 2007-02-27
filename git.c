@@ -48,7 +48,7 @@ static int handle_options(const char*** argv, int* argc)
 		/*
 		 * Check remaining flags.
 		 */
-		if (!strncmp(cmd, "--exec-path", 11)) {
+		if (!prefixcmp(cmd, "--exec-path")) {
 			cmd += 11;
 			if (*cmd == '=')
 				git_set_exec_path(cmd + 1);
@@ -66,7 +66,7 @@ static int handle_options(const char*** argv, int* argc)
 			setenv(GIT_DIR_ENVIRONMENT, (*argv)[1], 1);
 			(*argv)++;
 			(*argc)--;
-		} else if (!strncmp(cmd, "--git-dir=", 10)) {
+		} else if (!prefixcmp(cmd, "--git-dir=")) {
 			setenv(GIT_DIR_ENVIRONMENT, cmd + 10, 1);
 		} else if (!strcmp(cmd, "--bare")) {
 			static char git_dir[PATH_MAX+1];
@@ -88,7 +88,7 @@ static char *alias_string;
 
 static int git_alias_config(const char *var, const char *value)
 {
-	if (!strncmp(var, "alias.", 6) && !strcmp(var + 6, alias_command)) {
+	if (!prefixcmp(var, "alias.") && !strcmp(var + 6, alias_command)) {
 		alias_string = xstrdup(value);
 	}
 	return 0;
@@ -240,7 +240,6 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "diff", cmd_diff, RUN_SETUP | USE_PAGER },
 		{ "diff-files", cmd_diff_files, RUN_SETUP },
 		{ "diff-index", cmd_diff_index, RUN_SETUP },
-		{ "diff-stages", cmd_diff_stages, RUN_SETUP },
 		{ "diff-tree", cmd_diff_tree, RUN_SETUP },
 		{ "fetch--tool", cmd_fetch__tool, RUN_SETUP },
 		{ "fmt-merge-msg", cmd_fmt_merge_msg, RUN_SETUP },
@@ -249,7 +248,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "fsck", cmd_fsck, RUN_SETUP },
 		{ "fsck-objects", cmd_fsck, RUN_SETUP },
 		{ "get-tar-commit-id", cmd_get_tar_commit_id },
-		{ "grep", cmd_grep, RUN_SETUP },
+		{ "grep", cmd_grep, RUN_SETUP | USE_PAGER },
 		{ "help", cmd_help },
 		{ "init", cmd_init_db },
 		{ "init-db", cmd_init_db },
@@ -258,6 +257,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "ls-tree", cmd_ls_tree, RUN_SETUP },
 		{ "mailinfo", cmd_mailinfo },
 		{ "mailsplit", cmd_mailsplit },
+		{ "merge-base", cmd_merge_base, RUN_SETUP },
 		{ "merge-file", cmd_merge_file },
 		{ "mv", cmd_mv, RUN_SETUP | NOT_BARE },
 		{ "name-rev", cmd_name_rev, RUN_SETUP },
@@ -349,7 +349,7 @@ int main(int argc, const char **argv, char **envp)
 	 * So we just directly call the internal command handler, and
 	 * die if that one cannot handle it.
 	 */
-	if (!strncmp(cmd, "git-", 4)) {
+	if (!prefixcmp(cmd, "git-")) {
 		cmd += 4;
 		argv[0] = cmd;
 		handle_internal_command(argc, argv, envp);
@@ -361,7 +361,7 @@ int main(int argc, const char **argv, char **envp)
 	argc--;
 	handle_options(&argv, &argc);
 	if (argc > 0) {
-		if (!strncmp(argv[0], "--", 2))
+		if (!prefixcmp(argv[0], "--"))
 			argv[0] += 2;
 	} else {
 		/* Default command: "help" */

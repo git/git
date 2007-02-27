@@ -27,6 +27,7 @@ SYNOPSIS
 	     [ \--pretty | \--header ]
 	     [ \--bisect ]
 	     [ \--merge ]
+	     [ \--reverse ]
 	     [ \--walk-reflogs ]
 	     <commit>... [ \-- <paths>... ]
 
@@ -265,6 +266,10 @@ By default, the commits are shown in reverse chronological order.
 	This option is similar to '--topo-order' in the sense that no
 	parent comes before all of its children, but otherwise things
 	are still ordered in the commit timestamp order.
+
+--reverse::
+
+	Output the commits in reverse order.
 
 Object Traversal
 ~~~~~~~~~~~~~~~~

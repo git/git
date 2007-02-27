@@ -1192,7 +1192,7 @@ count_messages( msg_data_t *msg )
 	char *p = msg->data;
 
 	while (1) {
-		if (!strncmp( "From ", p, 5 )) {
+		if (!prefixcmp(p, "From ")) {
 			count++;
 			p += 5;
 		}
@@ -1216,7 +1216,7 @@ split_msg( msg_data_t *all_msgs, msg_data_t *msg, int *ofs )
 	data = &all_msgs->data[ *ofs ];
 	msg->len = all_msgs->len - *ofs;
 
-	if (msg->len < 5 || strncmp( data, "From ", 5 ))
+	if (msg->len < 5 || prefixcmp(data, "From "))
 		return 0;
 
 	p = strchr( data, '\n' );
@@ -1267,12 +1267,12 @@ git_imap_config(const char *key, const char *val)
 		imap_folder = xstrdup( val );
 	} else if (!strcmp( "host", key )) {
 		{
-			if (!strncmp( "imap:", val, 5 ))
+			if (!prefixcmp(val, "imap:"))
 				val += 5;
 			if (!server.port)
 				server.port = 143;
 		}
-		if (!strncmp( "//", val, 2 ))
+		if (!prefixcmp(val, "//"))
 			val += 2;
 		server.host = xstrdup( val );
 	}

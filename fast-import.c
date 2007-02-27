@@ -133,6 +133,10 @@ Format of STDIN stream:
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
 
+#ifndef PRIuMAX
+#define PRIuMAX "llu"
+#endif
+
 struct object_entry
 {
 	struct object_entry *next;
@@ -475,7 +479,7 @@ static struct object_entry *find_mark(uintmax_t idnum)
 			oe = s->data.marked[idnum];
 	}
 	if (!oe)
-		die("mark :%ju not declared", orig_idnum);
+		die("mark :%" PRIuMAX " not declared", orig_idnum);
 	return oe;
 }
 
@@ -887,7 +891,7 @@ static int store_object(
 	SHA_CTX c;
 	z_stream s;
 
-	hdrlen = sprintf((char*)hdr,"%s %lu", type_names[type],
+	hdrlen = sprintf((char*)hdr,"%s %lu", typename(type),
 		(unsigned long)datlen) + 1;
 	SHA1_Init(&c);
 	SHA1_Update(&c, hdr, hdrlen);
@@ -1004,11 +1008,11 @@ static void *gfi_unpack_entry(
 	struct object_entry *oe,
 	unsigned long *sizep)
 {
-	static char type[20];
+	enum object_type type;
 	struct packed_git *p = all_packs[oe->pack_id];
 	if (p == pack_data)
 		p->pack_size = pack_size + 20;
-	return unpack_entry(p, oe->offset, type, sizep);
+	return unpack_entry(p, oe->offset, &type, sizep);
 }
 
 static const char *get_mode(const char *str, uint16_t *modep)
@@ -1045,9 +1049,9 @@ static void load_tree(struct tree_entry *root)
 		t->delta_depth = 0;
 		buf = gfi_unpack_entry(myoe, &size);
 	} else {
-		char type[20];
-		buf = read_sha1_file(sha1, type, &size);
-		if (!buf || strcmp(type, tree_type))
+		enum object_type type;
+		buf = read_sha1_file(sha1, &type, &size);
+		if (!buf || type != OBJ_TREE)
 			die("Can't load tree %s", sha1_to_hex(sha1));
 	}
 
@@ -1308,7 +1312,7 @@ static int update_branch(struct branch *b)
 			return error("Branch %s is missing commits.", b->name);
 		}
 
-		if (!in_merge_bases(old_cmit, new_cmit)) {
+		if (!in_merge_bases(old_cmit, &new_cmit, 1)) {
 			unlock_ref(lock);
 			warn("Not updating %s"
 				" (new tip %s does not contain %s)",
@@ -1361,7 +1365,7 @@ static void dump_marks_helper(FILE *f,
 	} else {
 		for (k = 0; k < 1024; k++) {
 			if (m->data.marked[k])
-				fprintf(f, ":%ju %s\n", base + k,
+				fprintf(f, ":%" PRIuMAX " %s\n", base + k,
 					sha1_to_hex(m->data.marked[k]->sha1));
 		}
 	}
@@ -1388,7 +1392,7 @@ static void read_next_command(void)
 
 static void cmd_mark(void)
 {
-	if (!strncmp("mark :", command_buf.buf, 6)) {
+	if (!prefixcmp(command_buf.buf, "mark :")) {
 		next_mark = strtoumax(command_buf.buf + 6, NULL, 10);
 		read_next_command();
 	}
@@ -1401,10 +1405,10 @@ static void *cmd_data (size_t *size)
 	size_t length;
 	char *buffer;
 
-	if (strncmp("data ", command_buf.buf, 5))
+	if (prefixcmp(command_buf.buf, "data "))
 		die("Expected 'data n' command, found: %s", command_buf.buf);
 
-	if (!strncmp("<<", command_buf.buf + 5, 2)) {
+	if (!prefixcmp(command_buf.buf + 5, "<<")) {
 		char *term = xstrdup(command_buf.buf + 5 + 2);
 		size_t sz = 8192, term_len = command_buf.len - 5 - 2;
 		length = 0;
@@ -1569,7 +1573,6 @@ static void file_change_m(struct branch *b)
 	struct object_entry *oe = oe;
 	unsigned char sha1[20];
 	uint16_t mode, inline_data = 0;
-	char type[20];
 
 	p = get_mode(p, &mode);
 	if (!p)
@@ -1591,7 +1594,7 @@ static void file_change_m(struct branch *b)
 		oe = find_mark(strtoumax(p + 1, &x, 10));
 		hashcpy(sha1, oe->sha1);
 		p = x;
-	} else if (!strncmp("inline", p, 6)) {
+	} else if (!prefixcmp(p, "inline")) {
 		inline_data = 1;
 		p += 6;
 	} else {
@@ -1622,13 +1625,14 @@ static void file_change_m(struct branch *b)
 	} else if (oe) {
 		if (oe->type != OBJ_BLOB)
 			die("Not a blob (actually a %s): %s",
-				command_buf.buf, type_names[oe->type]);
+				command_buf.buf, typename(oe->type));
 	} else {
-		if (sha1_object_info(sha1, type, NULL))
+		enum object_type type = sha1_object_info(sha1, NULL);
+		if (type < 0)
 			die("Blob not found: %s", command_buf.buf);
-		if (strcmp(blob_type, type))
+		if (type != OBJ_BLOB)
 			die("Not a blob (actually a %s): %s",
-				command_buf.buf, type);
+			    typename(type), command_buf.buf);
 	}
 
 	tree_content_set(&b->branch_tree, p, sha1, S_IFREG | mode);
@@ -1664,7 +1668,7 @@ static void cmd_from(struct branch *b)
 	const char *from;
 	struct branch *s;
 
-	if (strncmp("from ", command_buf.buf, 5))
+	if (prefixcmp(command_buf.buf, "from "))
 		return;
 
 	if (b->branch_tree.tree) {
@@ -1687,7 +1691,7 @@ static void cmd_from(struct branch *b)
 		unsigned long size;
 		char *buf;
 		if (oe->type != OBJ_COMMIT)
-			die("Mark :%ju not a commit", idnum);
+			die("Mark :%" PRIuMAX " not a commit", idnum);
 		hashcpy(b->sha1, oe->sha1);
 		buf = gfi_unpack_entry(oe, &size);
 		if (!buf || size < 46)
@@ -1707,7 +1711,7 @@ static void cmd_from(struct branch *b)
 			char *buf;
 
 			buf = read_object_with_reference(b->sha1,
-				type_names[OBJ_COMMIT], &size, b->sha1);
+				commit_type, &size, b->sha1);
 			if (!buf || size < 46)
 				die("Not a valid commit: %s", from);
 			if (memcmp("tree ", buf, 5)
@@ -1730,7 +1734,7 @@ static struct hash_list *cmd_merge(unsigned int *count)
 	struct branch *s;
 
 	*count = 0;
-	while (!strncmp("merge ", command_buf.buf, 6)) {
+	while (!prefixcmp(command_buf.buf, "merge ")) {
 		from = strchr(command_buf.buf, ' ') + 1;
 		n = xmalloc(sizeof(*n));
 		s = lookup_branch(from);
@@ -1740,7 +1744,7 @@ static struct hash_list *cmd_merge(unsigned int *count)
 			uintmax_t idnum = strtoumax(from + 1, NULL, 10);
 			struct object_entry *oe = find_mark(idnum);
 			if (oe->type != OBJ_COMMIT)
-				die("Mark :%ju not a commit", idnum);
+				die("Mark :%" PRIuMAX " not a commit", idnum);
 			hashcpy(n->sha1, oe->sha1);
 		} else if (get_sha1(from, n->sha1))
 			die("Invalid ref name or SHA1 expression: %s", from);
@@ -1776,11 +1780,11 @@ static void cmd_new_commit(void)
 
 	read_next_command();
 	cmd_mark();
-	if (!strncmp("author ", command_buf.buf, 7)) {
+	if (!prefixcmp(command_buf.buf, "author ")) {
 		author = parse_ident(command_buf.buf + 7);
 		read_next_command();
 	}
-	if (!strncmp("committer ", command_buf.buf, 10)) {
+	if (!prefixcmp(command_buf.buf, "committer ")) {
 		committer = parse_ident(command_buf.buf + 10);
 		read_next_command();
 	}
@@ -1801,9 +1805,9 @@ static void cmd_new_commit(void)
 	for (;;) {
 		if (1 == command_buf.len)
 			break;
-		else if (!strncmp("M ", command_buf.buf, 2))
+		else if (!prefixcmp(command_buf.buf, "M "))
 			file_change_m(b);
-		else if (!strncmp("D ", command_buf.buf, 2))
+		else if (!prefixcmp(command_buf.buf, "D "))
 			file_change_d(b);
 		else if (!strcmp("deleteall", command_buf.buf))
 			file_change_deleteall(b);
@@ -1873,7 +1877,7 @@ static void cmd_new_tag(void)
 	read_next_command();
 
 	/* from ... */
-	if (strncmp("from ", command_buf.buf, 5))
+	if (prefixcmp(command_buf.buf, "from "))
 		die("Expected from command, got %s", command_buf.buf);
 	from = strchr(command_buf.buf, ' ') + 1;
 	s = lookup_branch(from);
@@ -1884,14 +1888,14 @@ static void cmd_new_tag(void)
 		from_mark = strtoumax(from + 1, NULL, 10);
 		oe = find_mark(from_mark);
 		if (oe->type != OBJ_COMMIT)
-			die("Mark :%ju not a commit", from_mark);
+			die("Mark :%" PRIuMAX " not a commit", from_mark);
 		hashcpy(sha1, oe->sha1);
 	} else if (!get_sha1(from, sha1)) {
 		unsigned long size;
 		char *buf;
 
 		buf = read_object_with_reference(sha1,
-			type_names[OBJ_COMMIT], &size, sha1);
+			commit_type, &size, sha1);
 		if (!buf || size < 46)
 			die("Not a valid commit: %s", from);
 		free(buf);
@@ -1900,7 +1904,7 @@ static void cmd_new_tag(void)
 	read_next_command();
 
 	/* tagger ... */
-	if (strncmp("tagger ", command_buf.buf, 7))
+	if (prefixcmp(command_buf.buf, "tagger "))
 		die("Expected tagger command, got %s", command_buf.buf);
 	tagger = parse_ident(command_buf.buf + 7);
 
@@ -1912,7 +1916,7 @@ static void cmd_new_tag(void)
 	size_dbuf(&new_data, 67+strlen(t->name)+strlen(tagger)+msglen);
 	sp = new_data.buffer;
 	sp += sprintf(sp, "object %s\n", sha1_to_hex(sha1));
-	sp += sprintf(sp, "type %s\n", type_names[OBJ_COMMIT]);
+	sp += sprintf(sp, "type %s\n", commit_type);
 	sp += sprintf(sp, "tag %s\n", t->name);
 	sp += sprintf(sp, "tagger %s\n", tagger);
 	*sp++ = '\n';
@@ -1977,7 +1981,7 @@ int main(int argc, const char **argv)
 
 		if (*a != '-' || !strcmp(a, "--"))
 			break;
-		else if (!strncmp(a, "--date-format=", 14)) {
+		else if (!prefixcmp(a, "--date-format=")) {
 			const char *fmt = a + 14;
 			if (!strcmp(fmt, "raw"))
 				whenspec = WHENSPEC_RAW;
@@ -1988,15 +1992,15 @@ int main(int argc, const char **argv)
 			else
 				die("unknown --date-format argument %s", fmt);
 		}
-		else if (!strncmp(a, "--max-pack-size=", 16))
+		else if (!prefixcmp(a, "--max-pack-size="))
 			max_packsize = strtoumax(a + 16, NULL, 0) * 1024 * 1024;
-		else if (!strncmp(a, "--depth=", 8))
+		else if (!prefixcmp(a, "--depth="))
 			max_depth = strtoul(a + 8, NULL, 0);
-		else if (!strncmp(a, "--active-branches=", 18))
+		else if (!prefixcmp(a, "--active-branches="))
 			max_active_branches = strtoul(a + 18, NULL, 0);
-		else if (!strncmp(a, "--export-marks=", 15))
+		else if (!prefixcmp(a, "--export-marks="))
 			mark_file = a + 15;
-		else if (!strncmp(a, "--export-pack-edges=", 20)) {
+		else if (!prefixcmp(a, "--export-pack-edges=")) {
 			if (pack_edges)
 				fclose(pack_edges);
 			pack_edges = fopen(a + 20, "a");
@@ -2029,11 +2033,11 @@ int main(int argc, const char **argv)
 			break;
 		else if (!strcmp("blob", command_buf.buf))
 			cmd_new_blob();
-		else if (!strncmp("commit ", command_buf.buf, 7))
+		else if (!prefixcmp(command_buf.buf, "commit "))
 			cmd_new_commit();
-		else if (!strncmp("tag ", command_buf.buf, 4))
+		else if (!prefixcmp(command_buf.buf, "tag "))
 			cmd_new_tag();
-		else if (!strncmp("reset ", command_buf.buf, 6))
+		else if (!prefixcmp(command_buf.buf, "reset "))
 			cmd_reset_branch();
 		else if (!strcmp("checkpoint", command_buf.buf))
 			cmd_checkpoint();
@@ -2059,18 +2063,18 @@ int main(int argc, const char **argv)
 
 		fprintf(stderr, "%s statistics:\n", argv[0]);
 		fprintf(stderr, "---------------------------------------------------------------------\n");
-		fprintf(stderr, "Alloc'd objects: %10ju\n", alloc_count);
-		fprintf(stderr, "Total objects:   %10ju (%10ju duplicates                  )\n", total_count, duplicate_count);
-		fprintf(stderr, "      blobs  :   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB], delta_count_by_type[OBJ_BLOB]);
-		fprintf(stderr, "      trees  :   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE], delta_count_by_type[OBJ_TREE]);
-		fprintf(stderr, "      commits:   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT], delta_count_by_type[OBJ_COMMIT]);
-		fprintf(stderr, "      tags   :   %10ju (%10ju duplicates %10ju deltas)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG], delta_count_by_type[OBJ_TAG]);
+		fprintf(stderr, "Alloc'd objects: %10" PRIuMAX "\n", alloc_count);
+		fprintf(stderr, "Total objects:   %10" PRIuMAX " (%10" PRIuMAX " duplicates                  )\n", total_count, duplicate_count);
+		fprintf(stderr, "      blobs  :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB], delta_count_by_type[OBJ_BLOB]);
+		fprintf(stderr, "      trees  :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE], delta_count_by_type[OBJ_TREE]);
+		fprintf(stderr, "      commits:   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT], delta_count_by_type[OBJ_COMMIT]);
+		fprintf(stderr, "      tags   :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG], delta_count_by_type[OBJ_TAG]);
 		fprintf(stderr, "Total branches:  %10lu (%10lu loads     )\n", branch_count, branch_load_count);
-		fprintf(stderr, "      marks:     %10ju (%10ju unique    )\n", (((uintmax_t)1) << marks->shift) * 1024, marks_set_count);
+		fprintf(stderr, "      marks:     %10" PRIuMAX " (%10" PRIuMAX " unique    )\n", (((uintmax_t)1) << marks->shift) * 1024, marks_set_count);
 		fprintf(stderr, "      atoms:     %10u\n", atom_cnt);
-		fprintf(stderr, "Memory total:    %10ju KiB\n", (total_allocd + alloc_count*sizeof(struct object_entry))/1024);
+		fprintf(stderr, "Memory total:    %10" PRIuMAX " KiB\n", (total_allocd + alloc_count*sizeof(struct object_entry))/1024);
 		fprintf(stderr, "       pools:    %10lu KiB\n", (unsigned long)(total_allocd/1024));
-		fprintf(stderr, "     objects:    %10ju KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
+		fprintf(stderr, "     objects:    %10" PRIuMAX " KiB\n", (alloc_count*sizeof(struct object_entry))/1024);
 		fprintf(stderr, "---------------------------------------------------------------------\n");
 		pack_report();
 		fprintf(stderr, "---------------------------------------------------------------------\n");

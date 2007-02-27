@@ -92,14 +92,14 @@ struct sline {
 static char *grab_blob(const unsigned char *sha1, unsigned long *size)
 {
 	char *blob;
-	char type[20];
+	enum object_type type;
 	if (is_null_sha1(sha1)) {
 		/* deleted blob */
 		*size = 0;
 		return xcalloc(1, 1);
 	}
-	blob = read_sha1_file(sha1, type, size);
-	if (strcmp(type, blob_type))
+	blob = read_sha1_file(sha1, &type, size);
+	if (type != OBJ_BLOB)
 		die("object '%s' is not a blob!", sha1_to_hex(sha1));
 	return blob;
 }
@@ -678,11 +678,27 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	else {
 		/* Used by diff-tree to read from the working tree */
 		struct stat st;
-		int fd;
-		if (0 <= (fd = open(elem->path, O_RDONLY)) &&
-		    !fstat(fd, &st)) {
-			int len = st.st_size;
-			int sz = 0;
+		int fd = -1;
+
+		if (lstat(elem->path, &st) < 0)
+			goto deleted_file;
+
+		if (S_ISLNK(st.st_mode)) {
+			size_t len = st.st_size;
+			result_size = len;
+			result = xmalloc(len + 1);
+			if (result_size != readlink(elem->path, result, len)) {
+				error("readlink(%s): %s", elem->path,
+				      strerror(errno));
+				return;
+			}
+			result[len] = 0;
+			elem->mode = canon_mode(st.st_mode);
+		}
+		else if (0 <= (fd = open(elem->path, O_RDONLY)) &&
+			 !fstat(fd, &st)) {
+			size_t len = st.st_size;
+			size_t sz = 0;
 
 			elem->mode = canon_mode(st.st_mode);
 			result_size = len;
@@ -698,11 +714,12 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			result[len] = 0;
 		}
 		else {
-			/* deleted file */
+		deleted_file:
 			result_size = 0;
 			elem->mode = 0;
 			result = xcalloc(1, 1);
 		}
+
 		if (0 <= fd)
 			close(fd);
 	}

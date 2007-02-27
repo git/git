@@ -121,4 +121,30 @@ b_ne_cr="`git-hash-object ne_cr`"
 test_expect_success 'CRLF + $Id$' "test '$a_cr' = '$b_cr'"
 test_expect_success 'CRLF + $Id$ (no newline)' "test '$a_ne_cr' = '$b_ne_cr'"
 
+cat > show-ignore.expect <<\EOF
+
+# /
+/no-such-file*
+
+# deeply
+/deeply/no-such-file*
+
+# deeply/nested
+/deeply/nested/no-such-file*
+
+# deeply/nested/directory
+/deeply/nested/directory/no-such-file*
+EOF
+
+test_expect_success 'test show-ignore' "
+	cd test_wc &&
+	mkdir -p deeply/nested/directory &&
+	svn add deeply &&
+	svn propset -R svn:ignore 'no-such-file*' .
+	svn commit -m 'propset svn:ignore'
+	cd .. &&
+	git-svn show-ignore > show-ignore.got &&
+	cmp show-ignore.expect show-ignore.got
+	"
+
 test_done

@@ -318,6 +318,10 @@ esac
 
 case "$all,$also" in
 t,)
+	if test ! -f "$THIS_INDEX"
+	then
+		die 'nothing to commit (use "git add file1 file2" to include for commit)'
+	fi
 	save_index &&
 	(
 		cd_to_toplevel &&

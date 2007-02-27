@@ -379,11 +379,11 @@ int main(int argc, char **argv)
 		char *arg = *argv;
 
 		if (*arg == '-') {
-			if (!strncmp(arg, "--receive-pack=", 15)) {
+			if (!prefixcmp(arg, "--receive-pack=")) {
 				receivepack = arg + 15;
 				continue;
 			}
-			if (!strncmp(arg, "--exec=", 7)) {
+			if (!prefixcmp(arg, "--exec=")) {
 				receivepack = arg + 7;
 				continue;
 			}

@@ -546,7 +546,7 @@ static int fsck_head_link(void)
 
 	if (!head_points_at || !(flag & REF_ISSYMREF))
 		return error("HEAD is not a symbolic ref");
-	if (strncmp(head_points_at, "refs/heads/", 11))
+	if (prefixcmp(head_points_at, "refs/heads/"))
 		return error("HEAD points to something strange (%s)",
 			     head_points_at);
 	if (is_null_sha1(sha1))

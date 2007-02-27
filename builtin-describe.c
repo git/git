@@ -52,7 +52,7 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 	 * If --tags, then any tags are used.
 	 * Otherwise only annotated tags are used.
 	 */
-	if (!strncmp(path, "refs/tags/", 10)) {
+	if (!prefixcmp(path, "refs/tags/")) {
 		if (object->type == OBJ_TAG)
 			prio = 2;
 		else
@@ -254,12 +254,12 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 			all = 1;
 		else if (!strcmp(arg, "--tags"))
 			tags = 1;
-		else if (!strncmp(arg, "--abbrev=", 9)) {
+		else if (!prefixcmp(arg, "--abbrev=")) {
 			abbrev = strtoul(arg + 9, NULL, 10);
 			if (abbrev != 0 && (abbrev < MINIMUM_ABBREV || 40 < abbrev))
 				abbrev = DEFAULT_ABBREV;
 		}
-		else if (!strncmp(arg, "--candidates=", 13)) {
+		else if (!prefixcmp(arg, "--candidates=")) {
 			max_candidates = strtoul(arg + 13, NULL, 10);
 			if (max_candidates < 1)
 				max_candidates = 1;

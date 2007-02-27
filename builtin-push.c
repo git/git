@@ -32,7 +32,7 @@ static int expand_one_ref(const char *ref, const unsigned char *sha1, int flag, 
 	/* Ignore the "refs/" at the beginning of the refname */
 	ref += 5;
 
-	if (!strncmp(ref, "tags/", 5))
+	if (!prefixcmp(ref, "tags/"))
 		add_refspec(xstrdup(ref));
 	return 0;
 }
@@ -149,10 +149,10 @@ static int get_remotes_uri(const char *repo, const char *uri[MAX_URI])
 		int is_refspec;
 		char *s, *p;
 
-		if (!strncmp("URL:", buffer, 4)) {
+		if (!prefixcmp(buffer, "URL:")) {
 			is_refspec = 0;
 			s = buffer + 4;
-		} else if (!strncmp("Push:", buffer, 5)) {
+		} else if (!prefixcmp(buffer, "Push:")) {
 			is_refspec = 1;
 			s = buffer + 5;
 		} else
@@ -195,7 +195,7 @@ static int config_get_receivepack;
 
 static int get_remote_config(const char* key, const char* value)
 {
-	if (!strncmp(key, "remote.", 7) &&
+	if (!prefixcmp(key, "remote.") &&
 	    !strncmp(key + 7, config_repo, config_repo_len)) {
 		if (!strcmp(key + 7 + config_repo_len, ".url")) {
 			if (config_current_uri < MAX_URI)
@@ -324,8 +324,8 @@ static int do_push(const char *repo)
 		const char **dest_refspec = refspec;
 		const char *dest = uri[i];
 		const char *sender = "git-send-pack";
-		if (!strncmp(dest, "http://", 7) ||
-		    !strncmp(dest, "https://", 8))
+		if (!prefixcmp(dest, "http://") ||
+		    !prefixcmp(dest, "https://"))
 			sender = "git-http-push";
 		else if (thin)
 			argv[dest_argc++] = "--thin";
@@ -373,7 +373,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 			verbose=1;
 			continue;
 		}
-		if (!strncmp(arg, "--repo=", 7)) {
+		if (!prefixcmp(arg, "--repo=")) {
 			repo = arg+7;
 			continue;
 		}
@@ -397,11 +397,11 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 			thin = 0;
 			continue;
 		}
-		if (!strncmp(arg, "--receive-pack=", 15)) {
+		if (!prefixcmp(arg, "--receive-pack=")) {
 			receivepack = arg;
 			continue;
 		}
-		if (!strncmp(arg, "--exec=", 7)) {
+		if (!prefixcmp(arg, "--exec=")) {
 			receivepack = arg;
 			continue;
 		}

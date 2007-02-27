@@ -114,13 +114,32 @@ AC_CHECK_LIB([expat], [XML_ParserCreate],
 [NO_EXPAT=YesPlease])
 AC_SUBST(NO_EXPAT)
 #
-# Define NEEDS_LIBICONV if linking with libc is not enough (Darwin).
+# Define NEEDS_LIBICONV if linking with libc is not enough (Darwin and
+# some Solaris installations).
 # Define NO_ICONV if neither libc nor libiconv support iconv.
-AC_CHECK_LIB([c], [iconv],
-	[NEEDS_LIBICONV=],
-	AC_CHECK_LIB([iconv], [iconv],
-		[NEEDS_LIBICONV=YesPlease],
-		[NO_ICONV=YesPlease]))
+AC_DEFUN([ICONVTEST_SRC], [
+#include <iconv.h>
+
+int main(void)
+{
+	iconv_open("", "");
+	return 0;
+}
+])
+AC_MSG_CHECKING([for iconv in -lc])
+AC_LINK_IFELSE(ICONVTEST_SRC,
+	[AC_MSG_RESULT([yes])
+	NEEDS_LIBICONV=],
+	[AC_MSG_RESULT([no])
+	old_LIBS="$LIBS"
+	LIBS="$LIBS -liconv"
+	AC_MSG_CHECKING([for iconv in -liconv])
+	AC_LINK_IFELSE(ICONVTEST_SRC,
+		[AC_MSG_RESULT([yes])
+		NEEDS_LIBICONV=YesPlease],
+		[AC_MSG_RESULT([no])
+		NO_ICONV=YesPlease])
+	LIBS="$old_LIBS"])
 AC_SUBST(NEEDS_LIBICONV)
 AC_SUBST(NO_ICONV)
 test -n "$NEEDS_LIBICONV" && LIBS="$LIBS -liconv"

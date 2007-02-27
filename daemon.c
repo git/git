@@ -286,7 +286,7 @@ static int service_enabled;
 
 static int git_daemon_config(const char *var, const char *value)
 {
-	if (!strncmp(var, "daemon.", 7) &&
+	if (!prefixcmp(var, "daemon.") &&
 	    !strcmp(var + 7, service_looking_at->config_name)) {
 		service_enabled = git_config_bool(var, value);
 		return 0;
@@ -562,7 +562,7 @@ static int execute(struct sockaddr *addr)
 	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		struct daemon_service *s = &(daemon_service[i]);
 		int namelen = strlen(s->name);
-		if (!strncmp("git-", line, 4) &&
+		if (!prefixcmp(line, "git-") &&
 		    !strncmp(s->name, line + 4, namelen) &&
 		    line[namelen + 4] == ' ') {
 			/*
@@ -773,6 +773,7 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 	char pbuf[NI_MAXSERV];
 	struct addrinfo hints, *ai0, *ai;
 	int gai;
+	long flags;
 
 	sprintf(pbuf, "%d", listen_port);
 	memset(&hints, 0, sizeof(hints));
@@ -820,6 +821,10 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 			continue;	/* not fatal */
 		}
 
+		flags = fcntl(sockfd, F_GETFD, 0);
+		if (flags >= 0)
+			fcntl(sockfd, F_SETFD, flags | FD_CLOEXEC);
+
 		socklist = xrealloc(socklist, sizeof(int) * (socknum + 1));
 		socklist[socknum++] = sockfd;
 
@@ -839,6 +844,7 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 {
 	struct sockaddr_in sin;
 	int sockfd;
+	long flags;
 
 	memset(&sin, 0, sizeof sin);
 	sin.sin_family = AF_INET;
@@ -870,6 +876,10 @@ static int socksetup(char *listen_addr, int listen_port, int **socklist_p)
 		close(sockfd);
 		return 0;
 	}
+
+	flags = fcntl(sockfd, F_GETFD, 0);
+	if (flags >= 0)
+		fcntl(sockfd, F_SETFD, flags | FD_CLOEXEC);
 
 	*socklist_p = xmalloc(sizeof(int));
 	**socklist_p = sockfd;
@@ -1001,7 +1011,7 @@ int main(int argc, char **argv)
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
 
-		if (!strncmp(arg, "--listen=", 9)) {
+		if (!prefixcmp(arg, "--listen=")) {
 		    char *p = arg + 9;
 		    char *ph = listen_addr = xmalloc(strlen(arg + 9) + 1);
 		    while (*p)
@@ -1009,7 +1019,7 @@ int main(int argc, char **argv)
 		    *ph = 0;
 		    continue;
 		}
-		if (!strncmp(arg, "--port=", 7)) {
+		if (!prefixcmp(arg, "--port=")) {
 			char *end;
 			unsigned long n;
 			n = strtoul(arg+7, &end, 0);
@@ -1035,11 +1045,11 @@ int main(int argc, char **argv)
 			export_all_trees = 1;
 			continue;
 		}
-		if (!strncmp(arg, "--timeout=", 10)) {
+		if (!prefixcmp(arg, "--timeout=")) {
 			timeout = atoi(arg+10);
 			continue;
 		}
-		if (!strncmp(arg, "--init-timeout=", 15)) {
+		if (!prefixcmp(arg, "--init-timeout=")) {
 			init_timeout = atoi(arg+15);
 			continue;
 		}
@@ -1047,11 +1057,11 @@ int main(int argc, char **argv)
 			strict_paths = 1;
 			continue;
 		}
-		if (!strncmp(arg, "--base-path=", 12)) {
+		if (!prefixcmp(arg, "--base-path=")) {
 			base_path = arg+12;
 			continue;
 		}
-		if (!strncmp(arg, "--interpolated-path=", 20)) {
+		if (!prefixcmp(arg, "--interpolated-path=")) {
 			interpolated_path = arg+20;
 			continue;
 		}
@@ -1063,11 +1073,11 @@ int main(int argc, char **argv)
 			user_path = "";
 			continue;
 		}
-		if (!strncmp(arg, "--user-path=", 12)) {
+		if (!prefixcmp(arg, "--user-path=")) {
 			user_path = arg + 12;
 			continue;
 		}
-		if (!strncmp(arg, "--pid-file=", 11)) {
+		if (!prefixcmp(arg, "--pid-file=")) {
 			pid_file = arg + 11;
 			continue;
 		}
@@ -1076,27 +1086,27 @@ int main(int argc, char **argv)
 			log_syslog = 1;
 			continue;
 		}
-		if (!strncmp(arg, "--user=", 7)) {
+		if (!prefixcmp(arg, "--user=")) {
 			user_name = arg + 7;
 			continue;
 		}
-		if (!strncmp(arg, "--group=", 8)) {
+		if (!prefixcmp(arg, "--group=")) {
 			group_name = arg + 8;
 			continue;
 		}
-		if (!strncmp(arg, "--enable=", 9)) {
+		if (!prefixcmp(arg, "--enable=")) {
 			enable_service(arg + 9, 1);
 			continue;
 		}
-		if (!strncmp(arg, "--disable=", 10)) {
+		if (!prefixcmp(arg, "--disable=")) {
 			enable_service(arg + 10, 0);
 			continue;
 		}
-		if (!strncmp(arg, "--allow-override=", 17)) {
+		if (!prefixcmp(arg, "--allow-override=")) {
 			make_service_overridable(arg + 17, 1);
 			continue;
 		}
-		if (!strncmp(arg, "--forbid-override=", 18)) {
+		if (!prefixcmp(arg, "--forbid-override=")) {
 			make_service_overridable(arg + 18, 0);
 			continue;
 		}

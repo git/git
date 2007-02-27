@@ -129,6 +129,15 @@ then
 	orig_head=$(git-rev-parse --verify HEAD 2>/dev/null)
 fi
 
+# Allow --notags from remote.$1.tagopt
+case "$tags$no_tags" in
+'')
+	case "$(git-config --get "remote.$1.tagopt")" in
+	--no-tags)
+		no_tags=t ;;
+	esac
+esac
+
 # If --tags (and later --heads or --all) is specified, then we are
 # not talking about defaults stored in Pull: line of remotes or
 # branches file, and just fetch those and refspecs explicitly given.

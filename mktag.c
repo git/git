@@ -27,13 +27,13 @@
 static int verify_object(unsigned char *sha1, const char *expected_type)
 {
 	int ret = -1;
-	char type[100];
+	enum object_type type;
 	unsigned long size;
-	void *buffer = read_sha1_file(sha1, type, &size);
+	void *buffer = read_sha1_file(sha1, &type, &size);
 
 	if (buffer) {
-		if (!strcmp(type, expected_type))
-			ret = check_sha1_signature(sha1, buffer, size, type);
+		if (type == type_from_string(expected_type))
+			ret = check_sha1_signature(sha1, buffer, size, expected_type);
 		free(buffer);
 	}
 	return ret;

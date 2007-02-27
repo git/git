@@ -262,7 +262,7 @@ static int write_tar_entry(const unsigned char *sha1,
 	static struct strbuf path;
 	int filenamelen = strlen(filename);
 	void *buffer;
-	char type[20];
+	enum object_type type;
 	unsigned long size;
 
 	if (!path.alloc) {
@@ -283,7 +283,7 @@ static int write_tar_entry(const unsigned char *sha1,
 		buffer = NULL;
 		size = 0;
 	} else {
-		buffer = read_sha1_file(sha1, type, &size);
+		buffer = read_sha1_file(sha1, &type, &size);
 		if (!buffer)
 			die("cannot read %s", sha1_to_hex(sha1));
 	}

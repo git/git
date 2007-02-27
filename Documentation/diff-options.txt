@@ -140,6 +140,9 @@
 -a::
 	Shorthand for "--text".
 
+--ignore-space-at-eol::
+	Ignore changes in white spaces at EOL.
+
 --ignore-space-change::
 	Ignore changes in amount of white space.  This ignores white
 	space at line end, and consider all other sequences of one or

@@ -72,7 +72,7 @@ static int ce_compare_link(struct cache_entry *ce, unsigned long expected_size)
 	char *target;
 	void *buffer;
 	unsigned long size;
-	char type[10];
+	enum object_type type;
 	int len;
 
 	target = xmalloc(expected_size);
@@ -81,7 +81,7 @@ static int ce_compare_link(struct cache_entry *ce, unsigned long expected_size)
 		free(target);
 		return -1;
 	}
-	buffer = read_sha1_file(ce->sha1, type, &size);
+	buffer = read_sha1_file(ce->sha1, &type, &size);
 	if (!buffer) {
 		free(target);
 		return -1;
@@ -344,16 +344,17 @@ int add_file_to_index(const char *path, int verbose)
 	ce->ce_flags = htons(namelen);
 	fill_stat_cache_info(ce, &st);
 
-	ce->ce_mode = create_ce_mode(st.st_mode);
-	if (!trust_executable_bit) {
+	if (trust_executable_bit)
+		ce->ce_mode = create_ce_mode(st.st_mode);
+	else {
 		/* If there is an existing entry, pick the mode bits
 		 * from it, otherwise assume unexecutable.
 		 */
+		struct cache_entry *ent;
 		int pos = cache_name_pos(path, namelen);
-		if (pos >= 0)
-			ce->ce_mode = active_cache[pos]->ce_mode;
-		else if (S_ISREG(st.st_mode))
-			ce->ce_mode = create_ce_mode(S_IFREG | 0666);
+
+		ent = (0 <= pos) ? active_cache[pos] : NULL;
+		ce->ce_mode = ce_mode_from_stat(ent, st.st_mode);
 	}
 
 	if (index_path(ce->sha1, path, &st, 1))

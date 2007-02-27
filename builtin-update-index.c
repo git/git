@@ -109,16 +109,17 @@ static int add_file_to_cache(const char *path)
 	ce->ce_flags = htons(namelen);
 	fill_stat_cache_info(ce, &st);
 
-	ce->ce_mode = create_ce_mode(st.st_mode);
-	if (!trust_executable_bit) {
+	if (trust_executable_bit)
+		ce->ce_mode = create_ce_mode(st.st_mode);
+	else {
 		/* If there is an existing entry, pick the mode bits
 		 * from it, otherwise assume unexecutable.
 		 */
+		struct cache_entry *ent;
 		int pos = cache_name_pos(path, namelen);
-		if (0 <= pos)
-			ce->ce_mode = active_cache[pos]->ce_mode;
-		else if (S_ISREG(st.st_mode))
-			ce->ce_mode = create_ce_mode(S_IFREG | 0666);
+
+		ent = (0 <= pos) ? active_cache[pos] : NULL;
+		ce->ce_mode = ce_mode_from_stat(ent, st.st_mode);
 	}
 
 	if (index_path(ce->sha1, path, &st, !info_only))

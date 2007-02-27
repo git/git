@@ -4,7 +4,7 @@ exec wish "$0" -- "$@"
 
 set appvers {@@GITGUI_VERSION@@}
 set copyright {
-Copyright © 2006, 2007 Shawn Pearce, Paul Mackerras.
+Copyright © 2006, 2007 Shawn Pearce, et. al.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,6 +19,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA}
+set gitgui_credits {
+Paul Mackerras
+}
 
 ######################################################################
 ##
@@ -46,7 +49,7 @@ proc gitdir {args} {
 proc gitexec {args} {
 	global _gitexec
 	if {$_gitexec eq {}} {
-		if {[catch {set _gitexec [exec git --exec-path]} err]} {
+		if {[catch {set _gitexec [git --exec-path]} err]} {
 			error "Git not installed?\n\n$err"
 		}
 	}
@@ -202,14 +205,14 @@ proc save_config {} {
 		set value $global_config_new($name)
 		if {$value ne $global_config($name)} {
 			if {$value eq $default_config($name)} {
-				catch {exec git config --global --unset $name}
+				catch {git config --global --unset $name}
 			} else {
 				regsub -all "\[{}\]" $value {"} value
-				exec git config --global $name $value
+				git config --global $name $value
 			}
 			set global_config($name) $value
 			if {$value eq $repo_config($name)} {
-				catch {exec git config --unset $name}
+				catch {git config --unset $name}
 				set repo_config($name) $value
 			}
 		}
@@ -219,14 +222,22 @@ proc save_config {} {
 		set value $repo_config_new($name)
 		if {$value ne $repo_config($name)} {
 			if {$value eq $global_config($name)} {
-				catch {exec git config --unset $name}
+				catch {git config --unset $name}
 			} else {
 				regsub -all "\[{}\]" $value {"} value
-				exec git config $name $value
+				git config $name $value
 			}
 			set repo_config($name) $value
 		}
 	}
+}
+
+######################################################################
+##
+## handy utils
+
+proc git {args} {
+	return [eval exec git $args]
 }
 
 proc error_popup {msg} {
@@ -289,10 +300,42 @@ proc ask_popup {msg} {
 
 ######################################################################
 ##
+## version check
+
+set req_maj 1
+set req_min 5
+
+if {[catch {set v [git --version]} err]} {
+	catch {wm withdraw .}
+	error_popup "Cannot determine Git version:
+
+$err
+
+[appname] requires Git $req_maj.$req_min or later."
+	exit 1
+}
+if {[regexp {^git version (\d+)\.(\d+)} $v _junk act_maj act_min]} {
+	if {$act_maj < $req_maj
+		|| ($act_maj == $req_maj && $act_min < $req_min)} {
+		catch {wm withdraw .}
+		error_popup "[appname] requires Git $req_maj.$req_min or later.
+
+You are using $v."
+		exit 1
+	}
+} else {
+	catch {wm withdraw .}
+	error_popup "Cannot parse Git version string:\n\n$v"
+	exit 1
+}
+unset -nocomplain v _junk act_maj act_min req_maj req_min
+
+######################################################################
+##
 ## repository setup
 
 if {   [catch {set _gitdir $env(GIT_DIR)}]
-	&& [catch {set _gitdir [exec git rev-parse --git-dir]} err]} {
+	&& [catch {set _gitdir [git rev-parse --git-dir]} err]} {
 	catch {wm withdraw .}
 	error_popup "Cannot find the git directory:\n\n$err"
 	exit 1
@@ -318,6 +361,24 @@ if {[catch {cd [file dirname $_gitdir]} err]} {
 set _reponame [lindex [file split \
 	[file normalize [file dirname $_gitdir]]] \
 	end]
+
+######################################################################
+##
+## global init
+
+set current_diff_path {}
+set current_diff_side {}
+set diff_actions [list]
+set ui_status_value {Initializing...}
+
+set HEAD {}
+set PARENT {}
+set MERGE_HEAD [list]
+set commit_type {}
+set empty_tree {}
+set current_branch {}
+set current_diff_path {}
+set selected_commit_type new
 
 ######################################################################
 ##
@@ -365,7 +426,7 @@ proc repository_state {ctvar hdvar mhvar} {
 
 	set mh [list]
 
-	if {[catch {set current_branch [exec git symbolic-ref HEAD]}]} {
+	if {[catch {set current_branch [git symbolic-ref HEAD]}]} {
 		set current_branch {}
 	} else {
 		regsub ^refs/((heads|tags|remotes)/)? \
@@ -374,7 +435,7 @@ proc repository_state {ctvar hdvar mhvar} {
 			current_branch
 	}
 
-	if {[catch {set hd [exec git rev-parse --verify HEAD]}]} {
+	if {[catch {set hd [git rev-parse --verify HEAD]}]} {
 		set hd {}
 		set ct initial
 		return
@@ -402,7 +463,7 @@ proc PARENT {} {
 		return $p
 	}
 	if {$empty_tree eq {}} {
-		set empty_tree [exec git mktree << {}]
+		set empty_tree [git mktree << {}]
 	}
 	return $empty_tree
 }
@@ -642,8 +703,9 @@ proc reshow_diff {} {
 	global current_diff_path current_diff_side
 
 	set p $current_diff_path
-	if {$p eq {}
-		|| $current_diff_side eq {}
+	if {$p eq {}} {
+		# No diff is being shown.
+	} elseif {$current_diff_side eq {}
 		|| [catch {set s $file_states($p)}]
 		|| [lsearch -sorted -exact $file_lists($current_diff_side) $p] == -1} {
 		clear_diff
@@ -1042,7 +1104,7 @@ proc committer_ident {} {
 	global GIT_COMMITTER_IDENT
 
 	if {$GIT_COMMITTER_IDENT eq {}} {
-		if {[catch {set me [exec git var GIT_COMMITTER_IDENT]} err]} {
+		if {[catch {set me [git var GIT_COMMITTER_IDENT]} err]} {
 			error_popup "Unable to obtain your identity:\n\n$err"
 			return {}
 		}
@@ -1256,14 +1318,6 @@ proc commit_committree {fd_wt curHEAD msg} {
 		return
 	}
 
-	# -- Make sure our current branch exists.
-	#
-	if {$commit_type eq {initial}} {
-		lappend all_heads $current_branch
-		set all_heads [lsort -unique $all_heads]
-		populate_branch_menu
-	}
-
 	# -- Cleanup after ourselves.
 	#
 	catch {file delete $msg_p}
@@ -1275,7 +1329,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 	# -- Let rerere do its thing.
 	#
 	if {[file isdirectory [gitdir rr-cache]]} {
-		catch {exec git rerere}
+		catch {git rerere}
 	}
 
 	# -- Run the post-commit hook.
@@ -1298,6 +1352,14 @@ proc commit_committree {fd_wt curHEAD msg} {
 	$ui_comm edit modified false
 
 	if {[is_enabled singlecommit]} do_quit
+
+	# -- Make sure our current branch exists.
+	#
+	if {$commit_type eq {initial}} {
+		lappend all_heads $current_branch
+		set all_heads [lsort -unique $all_heads]
+		populate_branch_menu
+	}
 
 	# -- Update in memory status
 	#
@@ -1876,11 +1938,24 @@ proc all_tracking_branches {} {
 	return [lsort -unique $all_trackings]
 }
 
+proc load_all_tags {} {
+	set all_tags [list]
+	set fd [open "| git for-each-ref --format=%(refname) refs/tags" r]
+	while {[gets $fd line] > 0} {
+		if {![regsub ^refs/tags/ $line {} name]} continue
+		lappend all_tags $name
+	}
+	close $fd
+
+	return [lsort $all_tags]
+}
+
 proc do_create_branch_action {w} {
 	global all_heads null_sha1 repo_config
 	global create_branch_checkout create_branch_revtype
 	global create_branch_head create_branch_trackinghead
 	global create_branch_name create_branch_revexp
+	global create_branch_tag
 
 	set newbranch $create_branch_name
 	if {$newbranch eq {}
@@ -1894,7 +1969,7 @@ proc do_create_branch_action {w} {
 		focus $w.desc.name_t
 		return
 	}
-	if {![catch {exec git show-ref --verify -- "refs/heads/$newbranch"}]} {
+	if {![catch {git show-ref --verify -- "refs/heads/$newbranch"}]} {
 		tk_messageBox \
 			-icon error \
 			-type ok \
@@ -1904,7 +1979,7 @@ proc do_create_branch_action {w} {
 		focus $w.desc.name_t
 		return
 	}
-	if {[catch {exec git check-ref-format "heads/$newbranch"}]} {
+	if {[catch {git check-ref-format "heads/$newbranch"}]} {
 		tk_messageBox \
 			-icon error \
 			-type ok \
@@ -1919,9 +1994,10 @@ proc do_create_branch_action {w} {
 	switch -- $create_branch_revtype {
 	head {set rev $create_branch_head}
 	tracking {set rev $create_branch_trackinghead}
+	tag {set rev $create_branch_tag}
 	expression {set rev $create_branch_revexp}
 	}
-	if {[catch {set cmt [exec git rev-parse --verify "${rev}^0"]}]} {
+	if {[catch {set cmt [git rev-parse --verify "${rev}^0"]}]} {
 		tk_messageBox \
 			-icon error \
 			-type ok \
@@ -1964,6 +2040,8 @@ trace add variable create_branch_head write \
 	[list radio_selector create_branch_revtype head]
 trace add variable create_branch_trackinghead write \
 	[list radio_selector create_branch_revtype tracking]
+trace add variable create_branch_tag write \
+	[list radio_selector create_branch_revtype tag]
 
 trace add variable delete_branch_head write \
 	[list radio_selector delete_branch_checktype head]
@@ -1975,6 +2053,7 @@ proc do_create_branch {} {
 	global create_branch_checkout create_branch_revtype
 	global create_branch_head create_branch_trackinghead
 	global create_branch_name create_branch_revexp
+	global create_branch_tag
 
 	set w .branch_editor
 	toplevel $w
@@ -2038,6 +2117,19 @@ proc do_create_branch {} {
 			$all_trackings
 		grid $w.from.tracking_r $w.from.tracking_m -sticky w
 	}
+	set all_tags [load_all_tags]
+	if {$all_tags ne {}} {
+		set create_branch_tag [lindex $all_tags 0]
+		radiobutton $w.from.tag_r \
+			-text {Tag:} \
+			-value tag \
+			-variable create_branch_revtype \
+			-font font_ui
+		eval tk_optionMenu $w.from.tag_m \
+			create_branch_tag \
+			$all_tags
+		grid $w.from.tag_r $w.from.tag_m -sticky w
+	}
 	radiobutton $w.from.exp_r \
 		-text {Revision Expression:} \
 		-value expression \
@@ -2100,7 +2192,7 @@ proc do_delete_branch_action {w} {
 	}
 	if {$check_rev eq {:none}} {
 		set check_cmt {}
-	} elseif {[catch {set check_cmt [exec git rev-parse --verify "${check_rev}^0"]}]} {
+	} elseif {[catch {set check_cmt [git rev-parse --verify "${check_rev}^0"]}]} {
 		tk_messageBox \
 			-icon error \
 			-type ok \
@@ -2114,10 +2206,10 @@ proc do_delete_branch_action {w} {
 	set not_merged [list]
 	foreach i [$w.list.l curselection] {
 		set b [$w.list.l get $i]
-		if {[catch {set o [exec git rev-parse --verify $b]}]} continue
+		if {[catch {set o [git rev-parse --verify $b]}]} continue
 		if {$check_cmt ne {}} {
 			if {$b eq $check_rev} continue
-			if {[catch {set m [exec git merge-base $o $check_cmt]}]} continue
+			if {[catch {set m [git merge-base $o $check_cmt]}]} continue
 			if {$o ne $m} {
 				lappend not_merged $b
 				continue
@@ -2155,7 +2247,7 @@ Delete the selected branches?}
 	foreach i $to_delete {
 		set b [lindex $i 0]
 		set o [lindex $i 1]
-		if {[catch {exec git update-ref -d "refs/heads/$b" $o} err]} {
+		if {[catch {git update-ref -d "refs/heads/$b" $o} err]} {
 			append failed " - $b: $err\n"
 		} else {
 			set x [lsearch -sorted -exact $all_heads $b]
@@ -2366,7 +2458,7 @@ Staying on branch '$current_branch'."
 	#    here, it Just Works(tm).  If it doesn't we are in some really ugly
 	#    state that is difficult to recover from within git-gui.
 	#
-	if {[catch {exec git symbolic-ref HEAD "refs/heads/$new_branch"} err]} {
+	if {[catch {git symbolic-ref HEAD "refs/heads/$new_branch"} err]} {
 		error_popup "Failed to set current branch.
 
 This working directory is only partially switched.
@@ -2876,14 +2968,16 @@ proc do_local_merge {} {
 	pack $w.source -fill both -expand 1 -pady 5 -padx 5
 
 	set cmd [list git for-each-ref]
-	lappend cmd {--format=%(objectname) %(refname)}
+	lappend cmd {--format=%(objectname) %(*objectname) %(refname)}
 	lappend cmd refs/heads
 	lappend cmd refs/remotes
+	lappend cmd refs/tags
 	set fr_fd [open "| $cmd" r]
 	fconfigure $fr_fd -translation binary
 	while {[gets $fr_fd line] > 0} {
 		set line [split $line { }]
-		set sha1([lindex $line 0]) [lindex $line 1]
+		set sha1([lindex $line 0]) [lindex $line 2]
+		set sha1([lindex $line 1]) [lindex $line 2]
 	}
 	close $fr_fd
 
@@ -2891,7 +2985,7 @@ proc do_local_merge {} {
 	set fr_fd [open "| git rev-list --all --not HEAD"]
 	while {[gets $fr_fd line] > 0} {
 		if {[catch {set ref $sha1($line)}]} continue
-		regsub ^refs/(heads|remotes)/ $ref {} ref
+		regsub ^refs/(heads|remotes|tags)/ $ref {} ref
 		lappend to_show $ref
 	}
 	close $fr_fd
@@ -2972,7 +3066,14 @@ proc new_browser {commit} {
 	global next_browser_id cursor_ptr M1B
 	global browser_commit browser_status browser_stack browser_path browser_busy
 
-	set w .browser[incr next_browser_id]
+	if {[winfo ismapped .]} {
+		set w .browser[incr next_browser_id]
+		set tl $w
+		toplevel $w
+	} else {
+		set w {}
+		set tl .
+	}
 	set w_list $w.list.l
 	set browser_commit($w_list) $commit
 	set browser_status($w_list) {Starting...}
@@ -2980,7 +3081,6 @@ proc new_browser {commit} {
 	set browser_path($w_list) $browser_commit($w_list):
 	set browser_busy($w_list) 1
 
-	toplevel $w
 	label $w.path -textvariable browser_path($w_list) \
 		-anchor w \
 		-justify left \
@@ -3030,8 +3130,8 @@ proc new_browser {commit} {
 	bind $w_list <Left>            break
 	bind $w_list <Right>           break
 
-	bind $w <Visibility> "focus $w"
-	bind $w <Destroy> "
+	bind $tl <Visibility> "focus $w"
+	bind $tl <Destroy> "
 		array unset browser_buffer $w_list
 		array unset browser_files $w_list
 		array unset browser_status $w_list
@@ -3040,7 +3140,7 @@ proc new_browser {commit} {
 		array unset browser_commit $w_list
 		array unset browser_busy $w_list
 	"
-	wm title $w "[appname] ([reponame]): File Browser"
+	wm title $tl "[appname] ([reponame]): File Browser"
 	ls_tree $w_list $browser_commit($w_list) {}
 }
 
@@ -4161,7 +4261,7 @@ proc do_quit {} {
 			set rc_geometry {}
 		}
 		if {$cfg_geometry ne $rc_geometry} {
-			catch {exec git config gui.geometry $cfg_geometry}
+			catch {git config gui.geometry $cfg_geometry}
 		}
 	}
 
@@ -4380,6 +4480,61 @@ proc do_commit {} {
 	commit_tree
 }
 
+proc do_credits {} {
+	global gitgui_credits
+
+	set w .credits_dialog
+
+	toplevel $w
+	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
+
+	label $w.header -text {git-gui Contributors} -font font_uibold
+	pack $w.header -side top -fill x
+
+	frame $w.buttons
+	button $w.buttons.close -text {Close} \
+		-font font_ui \
+		-command [list destroy $w]
+	pack $w.buttons.close -side right
+	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
+
+	frame $w.credits
+	text $w.credits.t \
+		-background [$w.header cget -background] \
+		-yscrollcommand [list $w.credits.sby set] \
+		-width 20 \
+		-height 10 \
+		-wrap none \
+		-borderwidth 1 \
+		-relief solid \
+		-padx 5 -pady 5 \
+		-font font_ui
+	scrollbar $w.credits.sby -command [list $w.credits.t yview]
+	pack $w.credits.sby -side right -fill y
+	pack $w.credits.t -fill both -expand 1
+	pack $w.credits -side top -fill both -expand 1 -padx 5 -pady 5
+
+	label $w.desc \
+		-text "All portions are copyrighted by their respective authors
+and are distributed under the GNU General Public License." \
+		-padx 5 -pady 5 \
+		-justify left \
+		-anchor w \
+		-borderwidth 1 \
+		-relief solid \
+		-font font_ui
+	pack $w.desc -side top -fill x -padx 5 -pady 5
+
+	$w.credits.t insert end "[string trim $gitgui_credits]\n"
+	$w.credits.t conf -state disabled
+	$w.credits.t see 1.0
+
+	bind $w <Visibility> "grab $w; focus $w"
+	bind $w <Key-Escape> [list destroy $w]
+	wm title $w [$w.header cget -text]
+	tkwait window $w
+}
+
 proc do_about {} {
 	global appvers copyright
 	global tcl_patchLevel tk_patchLevel
@@ -4396,11 +4551,15 @@ proc do_about {} {
 	button $w.buttons.close -text {Close} \
 		-font font_ui \
 		-command [list destroy $w]
+	button $w.buttons.credits -text {Contributors} \
+		-font font_ui \
+		-command do_credits
+	pack $w.buttons.credits -side left
 	pack $w.buttons.close -side right
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
 	label $w.desc \
-		-text "[appname] - a commit creation tool for Git.
+		-text "git-gui - a graphical user interface for Git.
 $copyright" \
 		-padx 5 -pady 5 \
 		-justify left \
@@ -4411,8 +4570,8 @@ $copyright" \
 	pack $w.desc -side top -fill x -padx 5 -pady 5
 
 	set v {}
-	append v "[appname] version $appvers\n"
-	append v "[exec git version]\n"
+	append v "git-gui version $appvers\n"
+	append v "[git version]\n"
 	append v "\n"
 	if {$tcl_patchLevel eq $tk_patchLevel} {
 		append v "Tcl/Tk version $tcl_patchLevel"
@@ -4471,7 +4630,7 @@ proc do_options {} {
 	toplevel $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
-	label $w.header -text "[appname] Options" \
+	label $w.header -text "Options" \
 		-font font_uibold
 	pack $w.header -side top -fill x
 
@@ -4945,6 +5104,9 @@ enable_option branch
 enable_option transport
 
 switch -- $subcommand {
+--version -
+version -
+browser -
 blame {
 	disable_option multicommit
 	disable_option branch
@@ -5177,7 +5339,7 @@ if {[is_MacOSX]} {
 	.mbar.apple add command -label "About [appname]" \
 		-command do_about \
 		-font font_ui
-	.mbar.apple add command -label "[appname] Options..." \
+	.mbar.apple add command -label "Options..." \
 		-command do_options \
 		-font font_ui
 } else {
@@ -5236,7 +5398,7 @@ set doc_path [file dirname [gitexec]]
 set doc_path [file join $doc_path Documentation index.html]
 
 if {[is_Cygwin]} {
-	set doc_path [exec cygpath --windows $doc_path]
+	set doc_path [exec cygpath --mixed $doc_path]
 }
 
 if {$browser eq {}} {
@@ -5280,6 +5442,20 @@ bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
 # -- Not a normal commit type invocation?  Do that instead!
 #
 switch -- $subcommand {
+--version -
+version {
+	puts "git-gui version $appvers"
+	exit
+}
+browser {
+	if {[llength $argv] != 1} {
+		puts stderr "usage: $argv0 browser commit"
+		exit 1
+	}
+	set current_branch [lindex $argv 0]
+	new_browser $current_branch
+	return
+}
 blame {
 	if {[llength $argv] != 2} {
 		puts stderr "usage: $argv0 blame commit path"
@@ -5302,7 +5478,7 @@ gui {
 	# fall through to setup UI for commits
 }
 default {
-	puts stderr "usage: $argv0 \[{blame|citool}\]"
+	puts stderr "usage: $argv0 \[{blame|browser|citool}\]"
 	exit 1
 }
 }
@@ -5552,9 +5728,6 @@ bind_button3 $ui_comm "tk_popup $ctxm %X %Y"
 
 # -- Diff Header
 #
-set current_diff_path {}
-set current_diff_side {}
-set diff_actions [list]
 proc trace_current_diff_path {varname args} {
 	global current_diff_path diff_actions file_states
 	if {$current_diff_path eq {}} {
@@ -5747,7 +5920,6 @@ unset ui_diff_applyhunk
 
 # -- Status Bar
 #
-set ui_status_value {Initializing...}
 label .status -textvariable ui_status_value \
 	-anchor w \
 	-justify left \
@@ -5820,15 +5992,6 @@ unset i
 
 set file_lists($ui_index) [list]
 set file_lists($ui_workdir) [list]
-
-set HEAD {}
-set PARENT {}
-set MERGE_HEAD [list]
-set commit_type {}
-set empty_tree {}
-set current_branch {}
-set current_diff_path {}
-set selected_commit_type new
 
 wm title . "[appname] ([file normalize [file dirname [gitdir]]])"
 focus -force $ui_comm
@@ -5904,7 +6067,7 @@ if {[is_enabled transport]} {
 if {[is_enabled multicommit]} {
 	set object_limit 2000
 	if {[is_Windows]} {set object_limit 200}
-	regexp {^([0-9]+) objects,} [exec git count-objects] _junk objects_current
+	regexp {^([0-9]+) objects,} [git count-objects] _junk objects_current
 	if {$objects_current >= $object_limit} {
 		if {[ask_popup \
 			"This repository currently has $objects_current loose objects.

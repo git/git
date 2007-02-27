@@ -406,6 +406,11 @@ static int is_rfc2822_header(char *line)
 	 */
 	int ch;
 	char *cp = line;
+
+	/* Count mbox From headers as headers */
+	if (!memcmp(line, "From ", 5) || !memcmp(line, ">From ", 6))
+		return 1;
+
 	while ((ch = *cp++)) {
 		if (ch == ':')
 			return cp != line;
@@ -417,30 +422,61 @@ static int is_rfc2822_header(char *line)
 	return 0;
 }
 
+/*
+ * sz is size of 'line' buffer in bytes.  Must be reasonably
+ * long enough to hold one physical real-world e-mail line.
+ */
 static int read_one_header_line(char *line, int sz, FILE *in)
 {
-	int ofs = 0;
-	while (ofs < sz) {
-		int peek, len;
-		if (fgets(line + ofs, sz - ofs, in) == NULL)
-			break;
-		len = eatspace(line + ofs);
-		if ((len == 0) || !is_rfc2822_header(line)) {
-			/* Re-add the newline */
-			line[ofs + len] = '\n';
-			line[ofs + len + 1] = '\0';
-			break;
-		}
-		ofs += len;
-		/* Yuck, 2822 header "folding" */
+	int len;
+
+	/*
+	 * We will read at most (sz-1) bytes and then potentially
+	 * re-add NUL after it.  Accessing line[sz] after this is safe
+	 * and we can allow len to grow up to and including sz.
+	 */
+	sz--;
+
+	/* Get the first part of the line. */
+	if (!fgets(line, sz, in))
+		return 0;
+
+	/*
+	 * Is it an empty line or not a valid rfc2822 header?
+	 * If so, stop here, and return false ("not a header")
+	 */
+	len = eatspace(line);
+	if (!len || !is_rfc2822_header(line)) {
+		/* Re-add the newline */
+		line[len] = '\n';
+		line[len + 1] = '\0';
+		return 0;
+	}
+
+	/*
+	 * Now we need to eat all the continuation lines..
+	 * Yuck, 2822 header "folding"
+	 */
+	for (;;) {
+		int peek, addlen;
+		static char continuation[1000];
+
 		peek = fgetc(in); ungetc(peek, in);
 		if (peek != ' ' && peek != '\t')
 			break;
+		if (!fgets(continuation, sizeof(continuation), in))
+			break;
+		addlen = eatspace(continuation);
+		if (len < sz - 1) {
+			if (addlen >= sz - len)
+				addlen = sz - len - 1;
+			memcpy(line + len, continuation, addlen);
+			len += addlen;
+		}
 	}
-	/* Count mbox From headers as headers */
-	if (!ofs && (!memcmp(line, "From ", 5) || !memcmp(line, ">From ", 6)))
-		ofs = 1;
-	return ofs;
+	line[len] = 0;
+
+	return 1;
 }
 
 static int decode_q_segment(char *in, char *ot, char *ep, int rfc2047)
@@ -811,7 +847,7 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 			metainfo_charset = def_charset;
 		else if (!strcmp(argv[1], "-n"))
 			metainfo_charset = NULL;
-		else if (!strncmp(argv[1], "--encoding=", 11))
+		else if (!prefixcmp(argv[1], "--encoding="))
 			metainfo_charset = argv[1] + 11;
 		else
 			usage(mailinfo_usage);

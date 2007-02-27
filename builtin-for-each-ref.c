@@ -173,8 +173,8 @@ static void verify_format(const char *format)
  */
 static void *get_obj(const unsigned char *sha1, struct object **obj, unsigned long *sz, int *eaten)
 {
-	char type[20];
-	void *buf = read_sha1_file(sha1, type, sz);
+	enum object_type type;
+	void *buf = read_sha1_file(sha1, &type, sz);
 
 	if (buf)
 		*obj = parse_object_buffer(sha1, type, *sz, buf, eaten);
@@ -196,7 +196,7 @@ static void grab_common_values(struct atom_value *val, int deref, struct object 
 		if (deref)
 			name++;
 		if (!strcmp(name, "objecttype"))
-			v->s = type_names[obj->type];
+			v->s = typename(obj->type);
 		else if (!strcmp(name, "objectsize")) {
 			char *s = xmalloc(40);
 			sprintf(s, "%lu", sz);
@@ -814,7 +814,7 @@ int cmd_for_each_ref(int ac, const char **av, char *prefix)
 			i++;
 			break;
 		}
-		if (!strncmp(arg, "--format=", 9)) {
+		if (!prefixcmp(arg, "--format=")) {
 			if (format)
 				die("more than one --format?");
 			format = arg + 9;
@@ -844,7 +844,7 @@ int cmd_for_each_ref(int ac, const char **av, char *prefix)
 			quote_style = QUOTE_TCL;
 			continue;
 		}
-		if (!strncmp(arg, "--count=", 8)) {
+		if (!prefixcmp(arg, "--count=")) {
 			if (maxcount)
 				die("more than one --count?");
 			maxcount = atoi(arg + 8);
@@ -852,7 +852,7 @@ int cmd_for_each_ref(int ac, const char **av, char *prefix)
 				die("The number %s did not parse", arg);
 			continue;
 		}
-		if (!strncmp(arg, "--sort=", 7)) {
+		if (!prefixcmp(arg, "--sort=")) {
 			struct ref_sort *s = xcalloc(1, sizeof(*s));
 			int len;
 

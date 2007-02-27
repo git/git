@@ -136,7 +136,7 @@ After seeing a conflict, you can do two things:
 
  * Resolve the conflicts.  `git-diff` would report only the
    conflicting paths because of the above 2. and 3..  Edit the
-   working tree files into a desirable shape, `git-update-index`
+   working tree files into a desirable shape, `git-add` or `git-rm`
    them, to make the index file contain what the merge result
    should be, and run `git-commit` to commit the result.
 

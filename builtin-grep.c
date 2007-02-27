@@ -84,11 +84,11 @@ static int grep_sha1(struct grep_opt *opt, const unsigned char *sha1, const char
 {
 	unsigned long size;
 	char *data;
-	char type[20];
+	enum object_type type;
 	char *to_free = NULL;
 	int hit;
 
-	data = read_sha1_file(sha1, type, &size);
+	data = read_sha1_file(sha1, &type, &size);
 	if (!data) {
 		error("'%s': unable to read %s", name, sha1_to_hex(sha1));
 		return 0;
@@ -380,10 +380,10 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 		else if (S_ISREG(entry.mode))
 			hit |= grep_sha1(opt, entry.sha1, path_buf, tn_len);
 		else if (S_ISDIR(entry.mode)) {
-			char type[20];
+			enum object_type type;
 			struct tree_desc sub;
 			void *data;
-			data = read_sha1_file(entry.sha1, type, &sub.size);
+			data = read_sha1_file(entry.sha1, &type, &sub.size);
 			if (!data)
 				die("unable to read tree (%s)",
 				    sha1_to_hex(entry.sha1));
@@ -527,9 +527,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			opt.word_regexp = 1;
 			continue;
 		}
-		if (!strncmp("-A", arg, 2) ||
-		    !strncmp("-B", arg, 2) ||
-		    !strncmp("-C", arg, 2) ||
+		if (!prefixcmp(arg, "-A") ||
+		    !prefixcmp(arg, "-B") ||
+		    !prefixcmp(arg, "-C") ||
 		    (arg[0] == '-' && '1' <= arg[1] && arg[1] <= '9')) {
 			unsigned num;
 			const char *scan;

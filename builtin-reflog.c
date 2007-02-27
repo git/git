@@ -55,8 +55,8 @@ static int tree_is_complete(const unsigned char *sha1)
 	desc.buf = tree->buffer;
 	desc.size = tree->size;
 	if (!desc.buf) {
-		char type[20];
-		void *data = read_sha1_file(sha1, type, &desc.size);
+		enum object_type type;
+		void *data = read_sha1_file(sha1, &type, &desc.size);
 		if (!data) {
 			tree->object.flags |= INCOMPLETE;
 			return 0;
@@ -215,8 +215,8 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 			old = lookup_commit_reference_gently(osha1, 1);
 		if (!new && !is_null_sha1(nsha1))
 			new = lookup_commit_reference_gently(nsha1, 1);
-		if ((old && !in_merge_bases(old, cb->ref_commit)) ||
-		    (new && !in_merge_bases(new, cb->ref_commit)))
+		if ((old && !in_merge_bases(old, &cb->ref_commit, 1)) ||
+		    (new && !in_merge_bases(new, &cb->ref_commit, 1)))
 			goto prune;
 	}
 
@@ -321,9 +321,9 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--dry-run") || !strcmp(arg, "-n"))
 			cb.dry_run = 1;
-		else if (!strncmp(arg, "--expire=", 9))
+		else if (!prefixcmp(arg, "--expire="))
 			cb.expire_total = approxidate(arg + 9);
-		else if (!strncmp(arg, "--expire-unreachable=", 21))
+		else if (!prefixcmp(arg, "--expire-unreachable="))
 			cb.expire_unreachable = approxidate(arg + 21);
 		else if (!strcmp(arg, "--stale-fix"))
 			cb.stalefix = 1;

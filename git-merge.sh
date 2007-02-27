@@ -254,12 +254,15 @@ esac
 
 for s in $use_strategies
 do
-	case " $s " in
-	*" $no_trivial_merge_strategies "*)
-		index_merge=f
-		break
-		;;
-	esac
+	for nt in $no_trivial_merge_strategies
+	do
+		case " $s " in
+		*" $nt "*)
+			index_merge=f
+			break
+			;;
+		esac
+	done
 done
 
 case "$#" in

@@ -342,18 +342,18 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 
 int parse_commit(struct commit *item)
 {
-	char type[20];
+	enum object_type type;
 	void *buffer;
 	unsigned long size;
 	int ret;
 
 	if (item->object.parsed)
 		return 0;
-	buffer = read_sha1_file(item->object.sha1, type, &size);
+	buffer = read_sha1_file(item->object.sha1, &type, &size);
 	if (!buffer)
 		return error("Could not read %s",
 			     sha1_to_hex(item->object.sha1));
-	if (strcmp(type, commit_type)) {
+	if (type != OBJ_COMMIT) {
 		free(buffer);
 		return error("Object %s not a commit",
 			     sha1_to_hex(item->object.sha1));
@@ -1187,14 +1187,17 @@ struct commit_list *get_merge_bases(struct commit *one,
 	return result;
 }
 
-int in_merge_bases(struct commit *rev1, struct commit *rev2)
+int in_merge_bases(struct commit *commit, struct commit **reference, int num)
 {
 	struct commit_list *bases, *b;
 	int ret = 0;
 
-	bases = get_merge_bases(rev1, rev2, 1);
+	if (num == 1)
+		bases = get_merge_bases(commit, *reference, 1);
+	else
+		die("not yet");
 	for (b = bases; b; b = b->next) {
-		if (!hashcmp(rev1->object.sha1, b->item->object.sha1)) {
+		if (!hashcmp(commit->object.sha1, b->item->object.sha1)) {
 			ret = 1;
 			break;
 		}

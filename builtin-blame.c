@@ -87,9 +87,9 @@ struct origin {
 static char *fill_origin_blob(struct origin *o, mmfile_t *file)
 {
 	if (!o->file.ptr) {
-		char type[10];
+		enum object_type type;
 		num_read_blob++;
-		file->ptr = read_sha1_file(o->blob_sha1, type,
+		file->ptr = read_sha1_file(o->blob_sha1, &type,
 					   (unsigned long *)(&(file->size)));
 		o->file = *file;
 	}
@@ -263,7 +263,6 @@ static struct origin *get_origin(struct scoreboard *sb,
 static int fill_blob_sha1(struct origin *origin)
 {
 	unsigned mode;
-	char type[10];
 
 	if (!is_null_sha1(origin->blob_sha1))
 		return 0;
@@ -271,8 +270,7 @@ static int fill_blob_sha1(struct origin *origin)
 			   origin->path,
 			   origin->blob_sha1, &mode))
 		goto error_out;
-	if (sha1_object_info(origin->blob_sha1, type, NULL) ||
-	    strcmp(type, blob_type))
+	if (sha1_object_info(origin->blob_sha1, NULL) != OBJ_BLOB)
 		goto error_out;
 	return 0;
  error_out:
@@ -1322,10 +1320,10 @@ static void get_commit_info(struct commit *commit,
 	 * we now need to populate them for output.
 	 */
 	if (!commit->buffer) {
-		char type[20];
+		enum object_type type;
 		unsigned long size;
 		commit->buffer =
-			read_sha1_file(commit->object.sha1, type, &size);
+			read_sha1_file(commit->object.sha1, &type, &size);
 	}
 	ret->author = author_buf;
 	get_ac_line(commit->buffer, "\nauthor ",
@@ -2006,7 +2004,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 	buf[fin_size] = 0;
 	origin->file.ptr = buf;
 	origin->file.size = fin_size;
-	pretend_sha1_file(buf, fin_size, blob_type, origin->blob_sha1);
+	pretend_sha1_file(buf, fin_size, OBJ_BLOB, origin->blob_sha1);
 	commit->util = origin;
 
 	/*
@@ -2065,9 +2063,10 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	int i, seen_dashdash, unk, opt;
 	long bottom, top, lno;
 	int output_option = 0;
+	int show_stats = 0;
 	const char *revs_file = NULL;
 	const char *final_commit_name = NULL;
-	char type[10];
+	enum object_type type;
 	const char *bottomtop = NULL;
 	const char *contents_from = NULL;
 
@@ -2086,6 +2085,8 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			blank_boundary = 1;
 		else if (!strcmp("--root", arg))
 			show_root = 1;
+		else if (!strcmp(arg, "--show-stats"))
+			show_stats = 1;
 		else if (!strcmp("-c", arg))
 			output_option |= OUTPUT_ANNOTATE_COMPAT;
 		else if (!strcmp("-t", arg))
@@ -2094,17 +2095,17 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			output_option |= OUTPUT_LONG_OBJECT_NAME;
 		else if (!strcmp("-S", arg) && ++i < argc)
 			revs_file = argv[i];
-		else if (!strncmp("-M", arg, 2)) {
+		else if (!prefixcmp(arg, "-M")) {
 			opt |= PICKAXE_BLAME_MOVE;
 			blame_move_score = parse_score(arg+2);
 		}
-		else if (!strncmp("-C", arg, 2)) {
+		else if (!prefixcmp(arg, "-C")) {
 			if (opt & PICKAXE_BLAME_COPY)
 				opt |= PICKAXE_BLAME_COPY_HARDER;
 			opt |= PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE;
 			blame_copy_score = parse_score(arg+2);
 		}
-		else if (!strncmp("-L", arg, 2)) {
+		else if (!prefixcmp(arg, "-L")) {
 			if (!arg[2]) {
 				if (++i >= argc)
 					usage(blame_usage);
@@ -2200,6 +2201,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			if (!strcmp(argv[j], "--"))
 				seen_dashdash = j;
 		if (seen_dashdash) {
+			/* (2) */
 			if (seen_dashdash + 1 != argc - 1)
 				usage(blame_usage);
 			path = add_prefix(prefix, argv[seen_dashdash + 1]);
@@ -2208,6 +2210,8 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		}
 		else {
 			/* (3) */
+			if (argc <= i)
+				usage(blame_usage);
 			path = add_prefix(prefix, argv[i]);
 			if (i + 1 == argc - 1) {
 				final_commit_name = argv[i + 1];
@@ -2296,7 +2300,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		if (fill_blob_sha1(o))
 			die("no such path %s in %s", path, final_commit_name);
 
-		sb.final_buf = read_sha1_file(o->blob_sha1, type,
+		sb.final_buf = read_sha1_file(o->blob_sha1, &type,
 					      &sb.final_buf_size);
 	}
 	num_read_blob++;
@@ -2348,7 +2352,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		ent = e;
 	}
 
-	if (DEBUG) {
+	if (show_stats) {
 		printf("num read blob: %d\n", num_read_blob);
 		printf("num get patch: %d\n", num_get_patch);
 		printf("num commits: %d\n", num_commits);

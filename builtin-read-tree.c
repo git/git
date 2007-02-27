@@ -133,7 +133,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 		 *  entries and put the entries from the tree under the
 		 * given subdirectory.
 		 */
-		if (!strncmp(arg, "--prefix=", 9)) {
+		if (!prefixcmp(arg, "--prefix=")) {
 			if (stage || opts.merge || opts.prefix)
 				usage(read_tree_usage);
 			opts.prefix = arg + 9;
@@ -179,7 +179,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 			continue;
 		}
 
-		if (!strncmp(arg, "--exclude-per-directory=", 24)) {
+		if (!prefixcmp(arg, "--exclude-per-directory=")) {
 			struct dir_struct *dir;
 
 			if (opts.dir)

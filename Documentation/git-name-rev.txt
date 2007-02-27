@@ -8,7 +8,8 @@ git-name-rev - Find symbolic names for given revs
 
 SYNOPSIS
 --------
-'git-name-rev' [--tags] ( --all | --stdin | <committish>... )
+'git-name-rev' [--tags] [--refs=<pattern>]
+	       ( --all | --stdin | <committish>... )
 
 DESCRIPTION
 -----------
@@ -21,6 +22,9 @@ OPTIONS
 
 --tags::
 	Do not use branch names, but only tags to name the commits
+
+--refs=<pattern>::
+	Only use refs whose names match a given shell pattern.
 
 --all::
 	List all commits reachable from all refs

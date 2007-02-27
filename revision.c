@@ -813,11 +813,11 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 		const char *arg = argv[i];
 		if (*arg == '-') {
 			int opts;
-			if (!strncmp(arg, "--max-count=", 12)) {
+			if (!prefixcmp(arg, "--max-count=")) {
 				revs->max_count = atoi(arg + 12);
 				continue;
 			}
-			if (!strncmp(arg, "--skip=", 7)) {
+			if (!prefixcmp(arg, "--skip=")) {
 				revs->skip_count = atoi(arg + 7);
 				continue;
 			}
@@ -832,31 +832,31 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->max_count = atoi(argv[++i]);
 				continue;
 			}
-			if (!strncmp(arg,"-n",2)) {
+			if (!prefixcmp(arg, "-n")) {
 				revs->max_count = atoi(arg + 2);
 				continue;
 			}
-			if (!strncmp(arg, "--max-age=", 10)) {
+			if (!prefixcmp(arg, "--max-age=")) {
 				revs->max_age = atoi(arg + 10);
 				continue;
 			}
-			if (!strncmp(arg, "--since=", 8)) {
+			if (!prefixcmp(arg, "--since=")) {
 				revs->max_age = approxidate(arg + 8);
 				continue;
 			}
-			if (!strncmp(arg, "--after=", 8)) {
+			if (!prefixcmp(arg, "--after=")) {
 				revs->max_age = approxidate(arg + 8);
 				continue;
 			}
-			if (!strncmp(arg, "--min-age=", 10)) {
+			if (!prefixcmp(arg, "--min-age=")) {
 				revs->min_age = atoi(arg + 10);
 				continue;
 			}
-			if (!strncmp(arg, "--before=", 9)) {
+			if (!prefixcmp(arg, "--before=")) {
 				revs->min_age = approxidate(arg + 9);
 				continue;
 			}
-			if (!strncmp(arg, "--until=", 8)) {
+			if (!prefixcmp(arg, "--until=")) {
 				revs->min_age = approxidate(arg + 8);
 				continue;
 			}
@@ -944,7 +944,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->num_ignore_packed = 0;
 				continue;
 			}
-			if (!strncmp(arg, "--unpacked=", 11)) {
+			if (!prefixcmp(arg, "--unpacked=")) {
 				revs->unpacked = 1;
 				add_ignore_packed(revs, arg+11);
 				continue;
@@ -980,7 +980,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->verbose_header = 1;
 				continue;
 			}
-			if (!strncmp(arg, "--pretty", 8)) {
+			if (!prefixcmp(arg, "--pretty")) {
 				revs->verbose_header = 1;
 				revs->commit_format = get_commit_format(arg+8);
 				continue;
@@ -1005,7 +1005,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				revs->abbrev = DEFAULT_ABBREV;
 				continue;
 			}
-			if (!strncmp(arg, "--abbrev=", 9)) {
+			if (!prefixcmp(arg, "--abbrev=")) {
 				revs->abbrev = strtoul(arg + 9, NULL, 10);
 				if (revs->abbrev < MINIMUM_ABBREV)
 					revs->abbrev = MINIMUM_ABBREV;
@@ -1034,15 +1034,15 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			/*
 			 * Grepping the commit log
 			 */
-			if (!strncmp(arg, "--author=", 9)) {
+			if (!prefixcmp(arg, "--author=")) {
 				add_header_grep(revs, "author", arg+9);
 				continue;
 			}
-			if (!strncmp(arg, "--committer=", 12)) {
+			if (!prefixcmp(arg, "--committer=")) {
 				add_header_grep(revs, "committer", arg+12);
 				continue;
 			}
-			if (!strncmp(arg, "--grep=", 7)) {
+			if (!prefixcmp(arg, "--grep=")) {
 				add_message_grep(revs, arg+7);
 				continue;
 			}
@@ -1050,12 +1050,16 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				all_match = 1;
 				continue;
 			}
-			if (!strncmp(arg, "--encoding=", 11)) {
+			if (!prefixcmp(arg, "--encoding=")) {
 				arg += 11;
 				if (strcmp(arg, "none"))
 					git_log_output_encoding = strdup(arg);
 				else
 					git_log_output_encoding = "";
+				continue;
+			}
+			if (!strcmp(arg, "--reverse")) {
+				revs->reverse ^= 1;
 				continue;
 			}
 
@@ -1229,9 +1233,15 @@ static struct commit *get_revision_1(struct rev_info *revs)
 		 */
 		if (!revs->limited) {
 			if (revs->max_age != -1 &&
-			    (commit->date < revs->max_age))
-				continue;
-			add_parents_to_list(revs, commit, &revs->commits);
+			    (commit->date < revs->max_age)) {
+				if (revs->boundary)
+					commit->object.flags |=
+						BOUNDARY_SHOW | BOUNDARY;
+				else
+					continue;
+			} else
+				add_parents_to_list(revs, commit,
+						&revs->commits);
 		}
 		if (commit->object.flags & SHOWN)
 			continue;
@@ -1286,6 +1296,40 @@ struct commit *get_revision(struct rev_info *revs)
 {
 	struct commit *c = NULL;
 
+	if (revs->reverse) {
+		struct commit_list *list;
+
+		/*
+		 * rev_info.reverse is used to note the fact that we
+		 * want to output the list of revisions in reverse
+		 * order.  To accomplish this goal, reverse can have
+		 * different values:
+		 *
+		 *  0  do nothing
+		 *  1  reverse the list
+		 *  2  internal use:  we have already obtained and
+		 *     reversed the list, now we only need to yield
+		 *     its items.
+		 */
+
+		if (revs->reverse == 1) {
+			revs->reverse = 0;
+			list = NULL;
+			while ((c = get_revision(revs)))
+				commit_list_insert(c, &list);
+			revs->commits = list;
+			revs->reverse = 2;
+		}
+
+		if (!revs->commits)
+			return NULL;
+		c = revs->commits->item;
+		list = revs->commits->next;
+		free(revs->commits);
+		revs->commits = list;
+		return c;
+	}
+
 	if (0 < revs->skip_count) {
 		while ((c = get_revision_1(revs)) != NULL) {
 			if (revs->skip_count-- <= 0)
@@ -1298,7 +1342,18 @@ struct commit *get_revision(struct rev_info *revs)
 	case -1:
 		break;
 	case 0:
-		return NULL;
+		if (revs->boundary) {
+			struct commit_list *list = revs->commits;
+			while (list) {
+				list->item->object.flags |=
+					BOUNDARY_SHOW | BOUNDARY;
+				list = list->next;
+			}
+			/* all remaining commits are boundary commits */
+			revs->max_count = -1;
+			revs->limited = 1;
+		} else
+			return NULL;
 	default:
 		revs->max_count--;
 	}

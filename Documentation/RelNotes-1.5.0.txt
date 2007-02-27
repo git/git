@@ -25,12 +25,18 @@ Specifically, the available options are:
    older clients over dumb transports (e.g. http) using older
    versions of git will also be affected.
 
+   To let git use the new loose object format, you have to
+   set core.legacyheaders to false.
+
  - Since v1.4.3, configuration repack.usedeltabaseoffset allows
    packfile to be created in more space efficient format, which
    cannot be read by git older than that version.
 
-The above two are not enabled by default and you explicitly have
-to ask for them, because these two features make repositories
+   To let git use the new format for packfiles, you have to
+   set repack.usedeltabaseoffset to true.
+
+The above two new features are not enabled by default and you
+have to explicitly ask for them, because they make repositories
 unreadable by older versions of git, and in v1.5.0 we still do
 not enable them by default for the same reason.  We will change
 this default probably 1 year after 1.4.2's release, when it is
@@ -94,8 +100,8 @@ Updates in v1.5.0 since v1.4.4 series
    entries for selected paths.
 
  - git-update-index is much less visible.  Many suggestions to
-  use the command in git output and documentation have now been
-  replaced by simpler commands such as "git add" or "git rm".
+   use the command in git output and documentation have now been
+   replaced by simpler commands such as "git add" or "git rm".
 
 
 * Repository layout and objects transfer
@@ -217,7 +223,7 @@ Updates in v1.5.0 since v1.4.4 series
    "branch@{Nth}" notation.
 
  - "git show-branch" learned showing the reflog data with the
-   new -g option.  "git log" has -s option to view reflog
+   new -g option.  "git log" has -g option to view reflog
    entries in a more verbose manner.
 
  - git-branch knows how to rename branches and moves existing
@@ -252,9 +258,6 @@ Updates in v1.5.0 since v1.4.4 series
    git-prune".  We no longer have to say the latter half of the
    above sentence, as git-prune does not remove things reachable
    from reflog entries.
-
- - 'git-prune' by default does not remove _everything_
-   unreachable, as there is a one-day grace period built-in.
 
  - There is a toplevel garbage collector script, 'git-gc', that
    runs periodic cleanup functions, including 'git-repack -a -d',
@@ -291,12 +294,10 @@ Updates in v1.5.0 since v1.4.4 series
    reset" to jump to arbitrary commit, while still keeping your
    HEAD detached.
 
-   Going back to attached state (i.e. on a particular branch) by
-   "git checkout $branch" can lose the current stat you arrived
-   in these ways, and "git checkout" refuses when the detached
-   HEAD is not pointed by any existing ref (an existing branch,
-   a remote tracking branch or a tag).  This safety can be
-   overridden with "git checkout -f $branch".
+   Remember that a detached state is volatile, i.e. it will be forgotten
+   as soon as you move away from it with the checkout or reset command,
+   unless a branch is created from it as mentioned above.  It is also
+   possible to rescue a lost detached state from the HEAD reflog.
 
 
 * Packed refs
@@ -411,14 +412,14 @@ Updates in v1.5.0 since v1.4.4 series
 
 * Foreign SCM interfaces
 
-  - git-svn now requires the Perl SVN:: libraries, the
-    command-line backend was too slow and limited.
+ - git-svn now requires the Perl SVN:: libraries, the
+   command-line backend was too slow and limited.
 
-  - the 'commit' subcommand of git-svn has been renamed to
-    'set-tree', and 'dcommit' is the recommended replacement for
-    day-to-day work.
+ - the 'commit' subcommand of git-svn has been renamed to
+   'set-tree', and 'dcommit' is the recommended replacement for
+   day-to-day work.
 
-  - git fast-import backend.
+ - git fast-import backend.
 
 
 * User support
@@ -447,7 +448,7 @@ Updates in v1.5.0 since v1.4.4 series
  - There is a partial support for 'shallow' repositories that
    keeps only recent history.  A 'shallow clone' is created by
    specifying how deep that truncated history should be
-   (e.g. "git clone --depth=5 git://some.where/repo.git").
+   (e.g. "git clone --depth 5 git://some.where/repo.git").
 
    Currently a shallow repository has number of limitations:
 

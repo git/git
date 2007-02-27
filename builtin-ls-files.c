@@ -406,7 +406,7 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 			add_exclude(argv[++i], "", 0, &dir.exclude_list[EXC_CMDL]);
 			continue;
 		}
-		if (!strncmp(arg, "--exclude=", 10)) {
+		if (!prefixcmp(arg, "--exclude=")) {
 			exc_given = 1;
 			add_exclude(arg+10, "", 0, &dir.exclude_list[EXC_CMDL]);
 			continue;
@@ -416,12 +416,12 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 			add_excludes_from_file(&dir, argv[++i]);
 			continue;
 		}
-		if (!strncmp(arg, "--exclude-from=", 15)) {
+		if (!prefixcmp(arg, "--exclude-from=")) {
 			exc_given = 1;
 			add_excludes_from_file(&dir, arg+15);
 			continue;
 		}
-		if (!strncmp(arg, "--exclude-per-directory=", 24)) {
+		if (!prefixcmp(arg, "--exclude-per-directory=")) {
 			exc_given = 1;
 			dir.exclude_per_dir = arg + 24;
 			continue;
@@ -434,7 +434,7 @@ int cmd_ls_files(int argc, const char **argv, const char *prefix)
 			error_unmatch = 1;
 			continue;
 		}
-		if (!strncmp(arg, "--abbrev=", 9)) {
+		if (!prefixcmp(arg, "--abbrev=")) {
 			abbrev = strtoul(arg+9, NULL, 10);
 			if (abbrev && abbrev < MINIMUM_ABBREV)
 				abbrev = MINIMUM_ABBREV;

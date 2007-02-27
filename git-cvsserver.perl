@@ -1171,6 +1171,21 @@ sub req_ci
         exit;
     }
 
+	# Check that this is allowed, just as we would with a receive-pack
+	my @cmd = ( $ENV{GIT_DIR}.'hooks/update', "refs/heads/$state->{module}",
+			$parenthash, $commithash );
+	if( -x $cmd[0] ) {
+		unless( system( @cmd ) == 0 )
+		{
+			$log->warn("Commit failed (update hook declined to update ref)");
+			print "error 1 Commit failed (update hook declined)\n";
+			close LOCKFILE;
+			unlink($lockfile);
+			chdir "/";
+			exit;
+		}
+	}
+
     print LOCKFILE $commithash;
 
     $updater->update();

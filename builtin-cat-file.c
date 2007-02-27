@@ -79,7 +79,7 @@ static void pprint_tag(const unsigned char *sha1, const char *buf, unsigned long
 int cmd_cat_file(int argc, const char **argv, const char *prefix)
 {
 	unsigned char sha1[20];
-	char type[20];
+	enum object_type type;
 	void *buf;
 	unsigned long size;
 	int opt;
@@ -100,14 +100,16 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 	buf = NULL;
 	switch (opt) {
 	case 't':
-		if (!sha1_object_info(sha1, type, NULL)) {
-			printf("%s\n", type);
+		type = sha1_object_info(sha1, NULL);
+		if (type > 0) {
+			printf("%s\n", typename(type));
 			return 0;
 		}
 		break;
 
 	case 's':
-		if (!sha1_object_info(sha1, type, &size)) {
+		type = sha1_object_info(sha1, &size);
+		if (type > 0) {
 			printf("%lu\n", size);
 			return 0;
 		}
@@ -117,17 +119,18 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		return !has_sha1_file(sha1);
 
 	case 'p':
-		if (sha1_object_info(sha1, type, NULL))
+		type = sha1_object_info(sha1, NULL);
+		if (type < 0)
 			die("Not a valid object name %s", argv[2]);
 
 		/* custom pretty-print here */
-		if (!strcmp(type, tree_type))
+		if (type == OBJ_TREE)
 			return cmd_ls_tree(2, argv + 1, NULL);
 
-		buf = read_sha1_file(sha1, type, &size);
+		buf = read_sha1_file(sha1, &type, &size);
 		if (!buf)
 			die("Cannot read object %s", argv[2]);
-		if (!strcmp(type, tag_type)) {
+		if (type == OBJ_TAG) {
 			pprint_tag(sha1, buf, size);
 			return 0;
 		}

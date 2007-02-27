@@ -47,11 +47,10 @@ static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)
 
 static void check_valid(unsigned char *sha1, const char *expect)
 {
-	char type[20];
-
-	if (sha1_object_info(sha1, type, NULL))
+	enum object_type type = sha1_object_info(sha1, NULL);
+	if (type < 0)
 		die("%s is not a valid object", sha1_to_hex(sha1));
-	if (expect && strcmp(type, expect))
+	if (expect && type != type_from_string(expect))
 		die("%s is not a valid '%s' object", sha1_to_hex(sha1),
 		    expect);
 }
