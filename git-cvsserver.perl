@@ -1152,6 +1152,7 @@ sub req_ci
     close $msg_fh;
 
     my $commithash = `git-commit-tree $treehash -p $parenthash < $msg_filename`;
+    chomp($commithash);
     $log->info("Commit hash : $commithash");
 
     unless ( $commithash =~ /[a-zA-Z0-9]{40}/ )
