@@ -17,9 +17,9 @@ static char *get_stdin(void)
 	return data;
 }
 
-static void show_new(char *type, unsigned char *sha1_new)
+static void show_new(enum object_type type, unsigned char *sha1_new)
 {
-	fprintf(stderr, "  %s: %s\n", type,
+	fprintf(stderr, "  %s: %s\n", typename(type),
 		find_unique_abbrev(sha1_new, DEFAULT_ABBREV));
 }
 
@@ -51,14 +51,16 @@ static int update_local_ref(const char *name,
 			    const char *note,
 			    int verbose, int force)
 {
-	char type[20];
 	unsigned char sha1_old[20], sha1_new[20];
 	char oldh[41], newh[41];
 	struct commit *current, *updated;
+	enum object_type type;
 
 	if (get_sha1_hex(new_head, sha1_new))
 		die("malformed object name %s", new_head);
-	if (sha1_object_info(sha1_new, type, NULL))
+
+	type = sha1_object_info(sha1_new, NULL);
+	if (type < 0)
 		die("object %s not found", new_head);
 
 	if (!*name) {
