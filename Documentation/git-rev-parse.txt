@@ -190,6 +190,13 @@ blobs contained in a commit.
   and dereference the tag recursively until a non-tag object is
   found.
 
+* A colon, followed by a slash, followed by a text: this names
+  a commit whose commit message starts with the specified text.
+  This name returns the youngest matching commit which is
+  reachable from any ref.  If the commit message starts with a
+  '!', you have to repeat that;  the special sequence ':/!',
+  followed by something else than '!' is reserved for now.
+
 * A suffix ':' followed by a path; this names the blob or tree
   at the given path in the tree-ish object named by the part
   before the colon.

@@ -577,6 +577,62 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1)
 	return get_short_sha1(name, len, sha1, 0);
 }
 
+static int handle_one_ref(const char *path,
+		const unsigned char *sha1, int flag, void *cb_data)
+{
+	struct commit_list **list = cb_data;
+	struct object *object = parse_object(sha1);
+	if (!object)
+		return 0;
+	if (object->type == OBJ_TAG)
+		object = deref_tag(object, path, strlen(path));
+	if (object->type != OBJ_COMMIT)
+		return 0;
+	insert_by_date((struct commit *)object, list);
+	return 0;
+}
+
+/*
+ * This interprets names like ':/Initial revision of "git"' by searching
+ * through history and returning the first commit whose message starts
+ * with the given string.
+ *
+ * For future extension, ':/!' is reserved. If you want to match a message
+ * beginning with a '!', you have to repeat the exclamation mark.
+ */
+
+#define ONELINE_SEEN (1u<<20)
+int get_sha1_oneline(const char *prefix, unsigned char *sha1)
+{
+	struct commit_list *list = NULL, *backup = NULL, *l;
+	struct commit *commit;
+
+	if (prefix[0] == '!') {
+		if (prefix[1] != '!')
+			die ("Invalid search pattern: %s", prefix);
+		prefix++;
+	}
+	if (!save_commit_buffer)
+		return error("Could not expand oneline-name.");
+	for_each_ref(handle_one_ref, &list);
+	for (l = list; l; l = l->next)
+		commit_list_insert(l->item, &backup);
+	while ((commit = pop_most_recent_commit(&list, ONELINE_SEEN))) {
+		char *p;
+		parse_object(commit->object.sha1);
+		if (!commit->buffer || !(p = strstr(commit->buffer, "\n\n")))
+			continue;
+		if (!prefixcmp(p + 2, prefix)) {
+			hashcpy(sha1, commit->object.sha1);
+			break;
+		}
+	}
+	free_commit_list(list);
+	for (l = backup; l; l = l->next)
+		clear_commit_marks(l->item, ONELINE_SEEN);
+	return commit == NULL;
+}
+
 /*
  * This is like "get_sha1_basic()", except it allows "sha1 expressions",
  * notably "xyz^" for "parent of xyz"
@@ -600,6 +656,8 @@ int get_sha1(const char *name, unsigned char *sha1)
 		int stage = 0;
 		struct cache_entry *ce;
 		int pos;
+		if (namelen > 2 && name[1] == '/')
+			return get_sha1_oneline(name + 2, sha1);
 		if (namelen < 3 ||
 		    name[2] != ':' ||
 		    name[1] < '0' || '3' < name[1])
