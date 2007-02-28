@@ -191,12 +191,18 @@ static void wt_status_print_changed_cb(struct diff_queue_struct *q,
 		wt_status_print_trailer();
 }
 
+static void wt_read_cache(struct wt_status *s)
+{
+	discard_cache();
+	read_cache();
+}
+
 void wt_status_print_initial(struct wt_status *s)
 {
 	int i;
 	char buf[PATH_MAX];
 
-	read_cache();
+	wt_read_cache(s);
 	if (active_nr) {
 		s->commitable = 1;
 		wt_status_print_cached_header(NULL);
@@ -220,6 +226,7 @@ static void wt_status_print_updated(struct wt_status *s)
 	rev.diffopt.format_callback = wt_status_print_updated_cb;
 	rev.diffopt.format_callback_data = s;
 	rev.diffopt.detect_rename = 1;
+	wt_read_cache(s);
 	run_diff_index(&rev, 1);
 }
 
@@ -231,6 +238,7 @@ static void wt_status_print_changed(struct wt_status *s)
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = wt_status_print_changed_cb;
 	rev.diffopt.format_callback_data = s;
+	wt_read_cache(s);
 	run_diff_files(&rev, 0);
 }
 
@@ -287,6 +295,7 @@ static void wt_status_print_verbose(struct wt_status *s)
 	setup_revisions(0, NULL, &rev, s->reference);
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
 	rev.diffopt.detect_rename = 1;
+	wt_read_cache(s);
 	run_diff_index(&rev, 1);
 }
 
@@ -316,7 +325,6 @@ void wt_status_print(struct wt_status *s)
 	}
 	else {
 		wt_status_print_updated(s);
-		discard_cache();
 	}
 
 	wt_status_print_changed(s);

@@ -25,40 +25,6 @@ struct blobinfo {
 static const char builtin_diff_usage[] =
 "git-diff <options> <rev>{0,2} -- <path>*";
 
-static int builtin_diff_files(struct rev_info *revs,
-			      int argc, const char **argv)
-{
-	int silent = 0;
-	while (1 < argc) {
-		const char *arg = argv[1];
-		if (!strcmp(arg, "--base"))
-			revs->max_count = 1;
-		else if (!strcmp(arg, "--ours"))
-			revs->max_count = 2;
-		else if (!strcmp(arg, "--theirs"))
-			revs->max_count = 3;
-		else if (!strcmp(arg, "-q"))
-			silent = 1;
-		else
-			usage(builtin_diff_usage);
-		argv++; argc--;
-	}
-	/*
-	 * Make sure there are NO revision (i.e. pending object) parameter,
-	 * specified rev.max_count is reasonable (0 <= n <= 3), and
-	 * there is no other revision filtering parameter.
-	 */
-	if (revs->pending.nr ||
-	    revs->min_age != -1 ||
-	    revs->max_age != -1 ||
-	    3 < revs->max_count)
-		usage(builtin_diff_usage);
-	if (revs->max_count < 0 &&
-	    (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
-		revs->combine_merges = revs->dense_combined_merges = 1;
-	return run_diff_files(revs, silent);
-}
-
 static void stuff_change(struct diff_options *opt,
 			 unsigned old_mode, unsigned new_mode,
 			 const unsigned char *old_sha1,
@@ -151,6 +117,10 @@ static int builtin_diff_index(struct rev_info *revs,
 	    revs->max_count != -1 || revs->min_age != -1 ||
 	    revs->max_age != -1)
 		usage(builtin_diff_usage);
+	if (read_cache() < 0) {
+		perror("read_cache");
+		return -1;
+	}
 	return run_diff_index(revs, cached);
 }
 
@@ -219,6 +189,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	int ents = 0, blobs = 0, paths = 0;
 	const char *path = NULL;
 	struct blobinfo blob[2];
+	int nongit = 0;
 
 	/*
 	 * We could get N tree-ish in the rev.pending_objects list.
@@ -240,6 +211,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	 * Other cases are errors.
 	 */
 
+	prefix = setup_git_directory_gently(&nongit);
 	git_config(git_diff_ui_config);
 	init_revisions(&rev, prefix);
 
@@ -317,7 +289,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	if (!ents) {
 		switch (blobs) {
 		case 0:
-			return builtin_diff_files(&rev, argc, argv);
+			return run_diff_files_cmd(&rev, argc, argv);
 			break;
 		case 1:
 			if (paths != 1)

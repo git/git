@@ -382,6 +382,7 @@ struct emit_callback {
 	int nparents, color_diff;
 	const char **label_path;
 	struct diff_words_data *diff_words;
+	int *found_changesp;
 };
 
 static void free_diff_words_data(struct emit_callback *ecbdata)
@@ -500,6 +501,8 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 	struct emit_callback *ecbdata = priv;
 	const char *set = diff_get_color(ecbdata->color_diff, DIFF_METAINFO);
 	const char *reset = diff_get_color(ecbdata->color_diff, DIFF_RESET);
+
+	*(ecbdata->found_changesp) = 1;
 
 	if (ecbdata->label_path[0]) {
 		const char *name_a_tab, *name_b_tab;
@@ -1098,6 +1101,7 @@ static void builtin_diff(const char *name_a,
 		if (complete_rewrite) {
 			emit_rewrite_diff(name_a, name_b, one, two,
 					o->color_diff);
+			o->found_changes = 1;
 			goto free_ab_and_return;
 		}
 	}
@@ -1115,6 +1119,7 @@ static void builtin_diff(const char *name_a,
 		else
 			printf("Binary files %s and %s differ\n",
 			       lbl[0], lbl[1]);
+		o->found_changes = 1;
 	}
 	else {
 		/* Crazy xdl interfaces.. */
@@ -1127,6 +1132,7 @@ static void builtin_diff(const char *name_a,
 		memset(&ecbdata, 0, sizeof(ecbdata));
 		ecbdata.label_path = lbl;
 		ecbdata.color_diff = o->color_diff;
+		ecbdata.found_changesp = &o->found_changes;
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		xecfg.ctxlen = o->context;
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
@@ -2455,7 +2461,8 @@ static void diff_resolve_rename_copy(void)
 				p->status = DIFF_STATUS_RENAMED;
 		}
 		else if (hashcmp(p->one->sha1, p->two->sha1) ||
-			 p->one->mode != p->two->mode)
+			 p->one->mode != p->two->mode ||
+			 is_null_sha1(p->one->sha1))
 			p->status = DIFF_STATUS_MODIFIED;
 		else {
 			/* This is a "no-change" entry and should not
