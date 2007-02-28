@@ -2071,7 +2071,7 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
 	/*
 	 * Convert blobs to git internal format
 	 */
-	if (type == OBJ_BLOB) {
+	if ((type == OBJ_BLOB) && S_ISREG(st->st_mode)) {
 		unsigned long nsize = size;
 		char *nbuf = buf;
 		if (convert_to_git(path, &nbuf, &nsize)) {
