@@ -263,6 +263,7 @@ int safe_create_leading_directories(char *path);
 char *enter_repo(char *path, int strict);
 
 enum object_type {
+	OBJ_BAD = -1,
 	OBJ_NONE = 0,
 	OBJ_COMMIT = 1,
 	OBJ_TREE = 2,
@@ -271,7 +272,7 @@ enum object_type {
 	/* 5 for future expansion */
 	OBJ_OFS_DELTA = 6,
 	OBJ_REF_DELTA = 7,
-	OBJ_BAD,
+	OBJ_MAX,
 };
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
