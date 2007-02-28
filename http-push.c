@@ -1295,7 +1295,7 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 	sprintf(url, "%s%s", remote->url, path);
 
 	/* Make sure leading directories exist for the remote ref */
-	ep = strchr(url + strlen(remote->url) + 11, '/');
+	ep = strchr(url + strlen(remote->url) + 1, '/');
 	while (ep) {
 		*ep = 0;
 		slot = get_active_slot();
