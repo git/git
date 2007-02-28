@@ -424,6 +424,7 @@ ifeq ($(uname_S),IRIX64)
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 	SHELL_PATH = $(shell cd /bin && pwd -W)/sh
+	PERL_PATH = $(shell cd /bin && pwd -W)/perl
 	NO_MMAP=YesPlease
 	NO_PREAD=YesPlease
 	NO_OPENSSL=YesPlease
@@ -440,6 +441,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_STRTOUMAX = YesPlease
 	NO_SYMLINKS=YesPlease
 	NO_SVN_TESTS=YesPlease
+	NO_PERL_MAKEMAKER=YesPlease
 	COMPAT_CFLAGS += -DNO_ETC_PASSWD -DNO_ST_BLOCKS -DSTRIP_EXTENSION=\".exe\" -I compat
 	COMPAT_OBJS += compat/mingw.o compat/fnmatch.o
 	EXTLIBS += -lws2_32 -lregex
