@@ -116,6 +116,8 @@ void mark_parents_uninteresting(struct commit *commit)
 
 void add_pending_object(struct rev_info *revs, struct object *obj, const char *name)
 {
+	if (revs->no_walk && (obj->flags & UNINTERESTING))
+		die("object ranges do not make sense when not walking revisions");
 	add_object_array(obj, name, &revs->pending);
 	if (revs->reflog_info && obj->type == OBJ_COMMIT)
 		add_reflog_for_walk(revs->reflog_info,
