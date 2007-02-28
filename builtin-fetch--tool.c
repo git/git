@@ -407,6 +407,8 @@ static int expand_refs_wildcard(const char *ls_remote_result, int numrefs,
 			eol = !next ? (ls + strlen(ls)) : next;
 			if (!memcmp("^{}", eol-3, 3))
 				continue;
+			if (eol - ls < 40)
+				continue;
 			if (get_sha1_hex(ls, sha1))
 				continue;
 			ls += 40;
