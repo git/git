@@ -26,6 +26,7 @@ static void run_pager(const char *pager)
 static pid_t pager_pid;
 static void collect_pager(void)
 {
+	fflush(stdout);
 	close(1);	/* signals EOF to pager */
 	cwait(NULL, pager_pid, 0);
 }

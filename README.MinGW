@@ -61,12 +61,6 @@ This does not work:
 
 Caveats (aka bugs):
 
-- The automatic pager of commands like log or diff does not work
-  correctly: It does not display some portion of text at the end.
-  That is, if what you should see is less than 4K, you see nothing at
-  all; otherwise something up to 4K at the end is missing.  Use
-  `git log | less' in these cases. Or `set PAGER=cat' (which is
-  optimized to skip the pager entirely).
 - Internally, the ported tools must do their own command line quoting
   when other plumbings are executed. This sort of quoting is currently
   implemented *very* simplistic: It just watches out for whitespace
