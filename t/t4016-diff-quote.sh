@@ -8,13 +8,6 @@ test_description='Quoting paths in diff output.
 
 . ./test-lib.sh
 
-if test "$no_symlinks"
-then
-    say 'Filenames with tabs and new-lines not supported, skipping tests.'
-    test_done
-    exit
-fi
-
 P0='pathname'
 P1='pathname	with HT'
 P2='pathname with SP'
