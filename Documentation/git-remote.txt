@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git-remote'
-'git-remote' add <name> <url>
+'git-remote' add [-t <branch>] [-m <branch>] [-f] <name> <url>
 'git-remote' show <name>
 'git-remote' prune <name>
 
@@ -66,8 +66,8 @@ gitlink:git-config[1]).
 Examples
 --------
 
-Add a new remote, fetch, and check out a branch from it:
-
+* Add a new remote, fetch, and check out a branch from it
++
 ------------
 $ git remote
 origin
@@ -86,6 +86,17 @@ linux-nfs/master
 $ git checkout -b nfs linux-nfs/master
 ...
 ------------
+
+* Imitate 'git clone' but track only selected branches
++
+------------
+$ mkdir project.git
+$ cd project.git
+$ git init
+$ git remote add -f -t master -m master origin git://example.com/git.git/
+$ git merge origin
+------------
+
 
 See Also
 --------
