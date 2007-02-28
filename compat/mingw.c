@@ -230,7 +230,7 @@ void quote_argv(const char **dst, const char **src)
 const char *parse_interpreter(const char *cmd)
 {
 	static char buf[100];
-	char *p;
+	char *p, *opt;
 	int n, fd;
 
 	/* don't even try a .exe */
@@ -256,6 +256,9 @@ const char *parse_interpreter(const char *cmd)
 	*p = '\0';
 	if (!(p = strrchr(buf+2, '/')) && !(p = strrchr(buf+2, '\\')))
 		return NULL;
+	/* strip options */
+	if ((opt = strchr(p+1, ' ')))
+		*opt = '\0';
 	return p+1;
 }
 
@@ -278,7 +281,7 @@ static int try_shell_exec(const char *cmd, const char **argv, const char **env)
 	sh_argv[0] = interpr;
 	sh_argv[1] = cmd;
 	quote_argv(&sh_argv[2], &argv[1]);
-	n = spawnvpe(_P_WAIT, "sh", sh_argv, env);
+	n = spawnvpe(_P_WAIT, interpr, sh_argv, env);
 	if (n == -1)
 		return 1;	/* indicate that we tried but failed */
 	exit(n);
