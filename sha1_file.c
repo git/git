@@ -2053,7 +2053,8 @@ int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
 	return ret;
 }
 
-int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, const char *type)
+int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
+	     enum object_type type)
 {
 	unsigned long size = st->st_size;
 	void *buf;
@@ -2065,12 +2066,12 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 	close(fd);
 
 	if (!type)
-		type = blob_type;
+		type = OBJ_BLOB;
 
 	/*
 	 * Convert blobs to git internal format
 	 */
-	if (!strcmp(type, blob_type)) {
+	if (type == OBJ_BLOB) {
 		unsigned long nsize = size;
 		char *nbuf = buf;
 		if (convert_to_git(NULL, &nbuf, &nsize)) {
@@ -2083,9 +2084,9 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, con
 	}
 
 	if (write_object)
-		ret = write_sha1_file(buf, size, type, sha1);
+		ret = write_sha1_file(buf, size, typename(type), sha1);
 	else
-		ret = hash_sha1_file(buf, size, type, sha1);
+		ret = hash_sha1_file(buf, size, typename(type), sha1);
 	if (re_allocated) {
 		free(buf);
 		return ret;
@@ -2106,7 +2107,7 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, int write
 		if (fd < 0)
 			return error("open(\"%s\"): %s", path,
 				     strerror(errno));
-		if (index_fd(sha1, fd, st, write_object, NULL) < 0)
+		if (index_fd(sha1, fd, st, write_object, OBJ_BLOB) < 0)
 			return error("%s: failed to insert into database",
 				     path);
 		break;

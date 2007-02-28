@@ -7,7 +7,7 @@
 #include "cache.h"
 #include "blob.h"
 
-static void hash_object(const char *path, const char *type, int write_object)
+static void hash_object(const char *path, enum object_type type, int write_object)
 {
 	int fd;
 	struct stat st;
@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 			if (0 <= prefix_length)
 				arg = prefix_filename(prefix, prefix_length,
 						      arg);
-			hash_object(arg, type, write_object);
+			hash_object(arg, type_from_string(type), write_object);
 			no_more_flags = 1;
 		}
 	}

@@ -127,6 +127,19 @@ extern unsigned int active_nr, active_alloc, active_cache_changed;
 extern struct cache_tree *active_cache_tree;
 extern int cache_errno;
 
+enum object_type {
+	OBJ_BAD = -1,
+	OBJ_NONE = 0,
+	OBJ_COMMIT = 1,
+	OBJ_TREE = 2,
+	OBJ_BLOB = 3,
+	OBJ_TAG = 4,
+	/* 5 for future expansion */
+	OBJ_OFS_DELTA = 6,
+	OBJ_REF_DELTA = 7,
+	OBJ_MAX,
+};
+
 #define GIT_DIR_ENVIRONMENT "GIT_DIR"
 #define DEFAULT_GIT_DIR_ENVIRONMENT ".git"
 #define DB_ENVIRONMENT "GIT_OBJECT_DIRECTORY"
@@ -177,7 +190,7 @@ extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
 extern int ce_match_stat(struct cache_entry *ce, struct stat *st, int);
 extern int ce_modified(struct cache_entry *ce, struct stat *st, int);
 extern int ce_path_match(const struct cache_entry *ce, const char **pathspec);
-extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, const char *type);
+extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, enum object_type type);
 extern int read_pipe(int fd, char** return_buf, unsigned long* return_size);
 extern int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object);
 extern int index_path(unsigned char *sha1, const char *path, struct stat *st, int write_object);
@@ -261,19 +274,6 @@ int git_config_perm(const char *var, const char *value);
 int adjust_shared_perm(const char *path);
 int safe_create_leading_directories(char *path);
 char *enter_repo(char *path, int strict);
-
-enum object_type {
-	OBJ_BAD = -1,
-	OBJ_NONE = 0,
-	OBJ_COMMIT = 1,
-	OBJ_TREE = 2,
-	OBJ_BLOB = 3,
-	OBJ_TAG = 4,
-	/* 5 for future expansion */
-	OBJ_OFS_DELTA = 6,
-	OBJ_REF_DELTA = 7,
-	OBJ_MAX,
-};
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
 extern int sha1_object_info(const unsigned char *, unsigned long *);
