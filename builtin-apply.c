@@ -1912,11 +1912,11 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 
 	if (has_sha1_file(sha1)) {
 		/* We already have the postimage */
-		char type[10];
+		enum object_type type;
 		unsigned long size;
 
 		free(desc->buffer);
-		desc->buffer = read_sha1_file(sha1, type, &size);
+		desc->buffer = read_sha1_file(sha1, &type, &size);
 		if (!desc->buffer)
 			return error("the necessary postimage %s for "
 				     "'%s' cannot be read",
@@ -1972,8 +1972,8 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 	buf = NULL;
 	if (cached) {
 		if (ce) {
-			char type[20];
-			buf = read_sha1_file(ce->sha1, type, &size);
+			enum object_type type;
+			buf = read_sha1_file(ce->sha1, &type, &size);
 			if (!buf)
 				return error("read of %s failed",
 					     patch->old_name);

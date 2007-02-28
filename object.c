@@ -18,10 +18,30 @@ struct object *get_indexed_object(unsigned int idx)
 	return obj_hash[idx];
 }
 
-const char *type_names[] = {
-	"none", "commit", "tree", "blob", "tag",
-	"bad type 5", "bad type 6", "delta", "bad",
+static const char *object_type_strings[] = {
+	NULL,		/* OBJ_NONE = 0 */
+	"commit",	/* OBJ_COMMIT = 1 */
+	"tree",		/* OBJ_TREE = 2 */
+	"blob",		/* OBJ_BLOB = 3 */
+	"tag",		/* OBJ_TAG = 4 */
 };
+
+const char *typename(unsigned int type)
+{
+	if (type >= ARRAY_SIZE(object_type_strings))
+		return NULL;
+	return object_type_strings[type];
+}
+
+int type_from_string(const char *str)
+{
+	int i;
+
+	for (i = 1; i < ARRAY_SIZE(object_type_strings); i++)
+		if (!strcmp(str, object_type_strings[i]))
+			return i;
+	die("invalid object type \"%s\"", str);
+}
 
 static unsigned int hash_obj(struct object *obj, unsigned int n)
 {
@@ -100,24 +120,6 @@ void created_object(const unsigned char *sha1, struct object *obj)
 	nr_objs++;
 }
 
-struct object *lookup_object_type(const unsigned char *sha1, const char *type)
-{
-	if (!type) {
-		return lookup_unknown_object(sha1);
-	} else if (!strcmp(type, blob_type)) {
-		return &lookup_blob(sha1)->object;
-	} else if (!strcmp(type, tree_type)) {
-		return &lookup_tree(sha1)->object;
-	} else if (!strcmp(type, commit_type)) {
-		return &lookup_commit(sha1)->object;
-	} else if (!strcmp(type, tag_type)) {
-		return &lookup_tag(sha1)->object;
-	} else {
-		error("Unknown type %s", type);
-		return NULL;
-	}
-}
-
 union any_object {
 	struct object object;
 	struct commit commit;
@@ -138,23 +140,23 @@ struct object *lookup_unknown_object(const unsigned char *sha1)
 	return obj;
 }
 
-struct object *parse_object_buffer(const unsigned char *sha1, const char *type, unsigned long size, void *buffer, int *eaten_p)
+struct object *parse_object_buffer(const unsigned char *sha1, enum object_type type, unsigned long size, void *buffer, int *eaten_p)
 {
 	struct object *obj;
 	int eaten = 0;
 
-	if (!strcmp(type, blob_type)) {
+	if (type == OBJ_BLOB) {
 		struct blob *blob = lookup_blob(sha1);
 		parse_blob_buffer(blob, buffer, size);
 		obj = &blob->object;
-	} else if (!strcmp(type, tree_type)) {
+	} else if (type == OBJ_TREE) {
 		struct tree *tree = lookup_tree(sha1);
 		obj = &tree->object;
 		if (!tree->object.parsed) {
 			parse_tree_buffer(tree, buffer, size);
 			eaten = 1;
 		}
-	} else if (!strcmp(type, commit_type)) {
+	} else if (type == OBJ_COMMIT) {
 		struct commit *commit = lookup_commit(sha1);
 		parse_commit_buffer(commit, buffer, size);
 		if (!commit->buffer) {
@@ -162,7 +164,7 @@ struct object *parse_object_buffer(const unsigned char *sha1, const char *type, 
 			eaten = 1;
 		}
 		obj = &commit->object;
-	} else if (!strcmp(type, tag_type)) {
+	} else if (type == OBJ_TAG) {
 		struct tag *tag = lookup_tag(sha1);
 		parse_tag_buffer(tag, buffer, size);
 		obj = &tag->object;
@@ -176,13 +178,13 @@ struct object *parse_object_buffer(const unsigned char *sha1, const char *type, 
 struct object *parse_object(const unsigned char *sha1)
 {
 	unsigned long size;
-	char type[20];
+	enum object_type type;
 	int eaten;
-	void *buffer = read_sha1_file(sha1, type, &size);
+	void *buffer = read_sha1_file(sha1, &type, &size);
 
 	if (buffer) {
 		struct object *obj;
-		if (check_sha1_signature(sha1, buffer, size, type) < 0)
+		if (check_sha1_signature(sha1, buffer, size, typename(type)) < 0)
 			printf("sha1 mismatch %s\n", sha1_to_hex(sha1));
 
 		obj = parse_object_buffer(sha1, type, size, buffer, &eaten);

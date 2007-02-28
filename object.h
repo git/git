@@ -36,23 +36,16 @@ struct object {
 };
 
 extern int track_object_refs;
-extern const char *type_names[9];
+
+extern const char *typename(unsigned int type);
+extern int type_from_string(const char *str);
 
 extern unsigned int get_max_object_index(void);
 extern struct object *get_indexed_object(unsigned int);
-
-static inline const char *typename(unsigned int type)
-{
-	return type_names[type > OBJ_BAD ? OBJ_BAD : type];
-}
-
 extern struct object_refs *lookup_object_refs(struct object *);
 
 /** Internal only **/
 struct object *lookup_object(const unsigned char *sha1);
-
-/** Returns the object, having looked it up as being the given type. **/
-struct object *lookup_object_type(const unsigned char *sha1, const char *type);
 
 void created_object(const unsigned char *sha1, struct object *obj);
 
@@ -63,7 +56,7 @@ struct object *parse_object(const unsigned char *sha1);
  * parsing it.  eaten_p indicates if the object has a borrowed copy
  * of buffer and the caller should not free() it.
  */
-struct object *parse_object_buffer(const unsigned char *sha1, const char *type, unsigned long size, void *buffer, int *eaten_p);
+struct object *parse_object_buffer(const unsigned char *sha1, enum object_type type, unsigned long size, void *buffer, int *eaten_p);
 
 /** Returns the object, with potentially excess memory allocated. **/
 struct object *lookup_unknown_object(const unsigned  char *sha1);

@@ -10,15 +10,10 @@ static int show_only;
 
 static int prune_object(char *path, const char *filename, const unsigned char *sha1)
 {
-	char buf[20];
-	const char *type;
-
 	if (show_only) {
-		if (sha1_object_info(sha1, buf, NULL))
-			type = "unknown";
-		else
-			type = buf;
-		printf("%s %s\n", sha1_to_hex(sha1), type);
+		enum object_type type = sha1_object_info(sha1, NULL);
+		printf("%s %s\n", sha1_to_hex(sha1),
+		       (type > 0) ? typename(type) : "unknown");
 		return 0;
 	}
 	unlink(mkpath("%s/%s", path, filename));

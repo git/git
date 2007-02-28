@@ -952,7 +952,7 @@ static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned lon
 
 	/* And generate the fake traditional header */
 	stream->total_out = 1 + snprintf(buffer, bufsiz, "%s %lu",
-					 type_names[type], size);
+					 typename(type), size);
 	return 0;
 }
 
@@ -983,26 +983,27 @@ static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size
  * too permissive for what we want to check. So do an anal
  * object header parse by hand.
  */
-static int parse_sha1_header(char *hdr, char *type, unsigned long *sizep)
+static int parse_sha1_header(const char *hdr, unsigned long *sizep)
 {
+	char type[10];
 	int i;
 	unsigned long size;
 
 	/*
 	 * The type can be at most ten bytes (including the 
 	 * terminating '\0' that we add), and is followed by
-	 * a space. 
+	 * a space.
 	 */
-	i = 10;
+	i = 0;
 	for (;;) {
 		char c = *hdr++;
 		if (c == ' ')
 			break;
-		if (!--i)
+		type[i++] = c;
+		if (i >= sizeof(type))
 			return -1;
-		*type++ = c;
 	}
-	*type = 0;
+	type[i] = 0;
 
 	/*
 	 * The length must follow immediately, and be in canonical
@@ -1025,17 +1026,17 @@ static int parse_sha1_header(char *hdr, char *type, unsigned long *sizep)
 	/*
 	 * The length must be followed by a zero byte
 	 */
-	return *hdr ? -1 : 0;
+	return *hdr ? -1 : type_from_string(type);
 }
 
-void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned long *size)
+void * unpack_sha1_file(void *map, unsigned long mapsize, enum object_type *type, unsigned long *size)
 {
 	int ret;
 	z_stream stream;
 	char hdr[8192];
 
 	ret = unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr));
-	if (ret < Z_OK || parse_sha1_header(hdr, type, size) < 0)
+	if (ret < Z_OK || (*type = parse_sha1_header(hdr, size)) < 0)
 		return NULL;
 
 	return unpack_sha1_rest(&stream, hdr, *size);
@@ -1043,12 +1044,11 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, char *type, unsigned l
 
 static unsigned long get_delta_base(struct packed_git *p,
 				    struct pack_window **w_curs,
-				    unsigned long offset,
-				    enum object_type kind,
-				    unsigned long delta_obj_offset,
-				    unsigned long *base_obj_offset)
+				    unsigned long *curpos,
+				    enum object_type type,
+				    unsigned long delta_obj_offset)
 {
-	unsigned char *base_info = use_pack(p, w_curs, offset, NULL);
+	unsigned char *base_info = use_pack(p, w_curs, *curpos, NULL);
 	unsigned long base_offset;
 
 	/* use_pack() assured us we have [base_info, base_info + 20)
@@ -1057,7 +1057,7 @@ static unsigned long get_delta_base(struct packed_git *p,
 	 * that is assured.  An OFS_DELTA longer than the hash size
 	 * is stupid, as then a REF_DELTA would be smaller to store.
 	 */
-	if (kind == OBJ_OFS_DELTA) {
+	if (type == OBJ_OFS_DELTA) {
 		unsigned used = 0;
 		unsigned char c = base_info[used++];
 		base_offset = c & 127;
@@ -1071,49 +1071,43 @@ static unsigned long get_delta_base(struct packed_git *p,
 		base_offset = delta_obj_offset - base_offset;
 		if (base_offset >= delta_obj_offset)
 			die("delta base offset out of bound");
-		offset += used;
-	} else if (kind == OBJ_REF_DELTA) {
+		*curpos += used;
+	} else if (type == OBJ_REF_DELTA) {
 		/* The base entry _must_ be in the same pack */
 		base_offset = find_pack_entry_one(base_info, p);
 		if (!base_offset)
 			die("failed to find delta-pack base object %s",
 				sha1_to_hex(base_info));
-		offset += 20;
+		*curpos += 20;
 	} else
 		die("I am totally screwed");
-	*base_obj_offset = base_offset;
-	return offset;
+	return base_offset;
 }
 
 /* forward declaration for a mutually recursive function */
 static int packed_object_info(struct packed_git *p, unsigned long offset,
-			      char *type, unsigned long *sizep);
+			      unsigned long *sizep);
 
 static int packed_delta_info(struct packed_git *p,
 			     struct pack_window **w_curs,
-			     unsigned long offset,
-			     enum object_type kind,
+			     unsigned long curpos,
+			     enum object_type type,
 			     unsigned long obj_offset,
-			     char *type,
 			     unsigned long *sizep)
 {
 	unsigned long base_offset;
 
-	offset = get_delta_base(p, w_curs, offset, kind,
-		obj_offset, &base_offset);
+	base_offset = get_delta_base(p, w_curs, &curpos, type, obj_offset);
+	type = packed_object_info(p, base_offset, NULL);
 
 	/* We choose to only get the type of the base object and
 	 * ignore potentially corrupt pack file that expects the delta
 	 * based on a base with a wrong size.  This saves tons of
 	 * inflate() calls.
 	 */
-	if (packed_object_info(p, base_offset, type, NULL))
-		die("cannot get info for delta-pack base");
-
 	if (sizep) {
 		const unsigned char *data;
 		unsigned char delta_head[20], *in;
-		unsigned long result_size;
 		z_stream stream;
 		int st;
 
@@ -1123,10 +1117,10 @@ static int packed_delta_info(struct packed_git *p,
 
 		inflateInit(&stream);
 		do {
-			in = use_pack(p, w_curs, offset, &stream.avail_in);
+			in = use_pack(p, w_curs, curpos, &stream.avail_in);
 			stream.next_in = in;
 			st = inflate(&stream, Z_FINISH);
-			offset += stream.next_in - in;
+			curpos += stream.next_in - in;
 		} while ((st == Z_OK || st == Z_BUF_ERROR)
 			&& stream.total_out < sizeof(delta_head));
 		inflateEnd(&stream);
@@ -1143,21 +1137,21 @@ static int packed_delta_info(struct packed_git *p,
 		get_delta_hdr_size(&data, delta_head+sizeof(delta_head));
 
 		/* Read the result size */
-		result_size = get_delta_hdr_size(&data, delta_head+sizeof(delta_head));
-		*sizep = result_size;
+		*sizep = get_delta_hdr_size(&data, delta_head+sizeof(delta_head));
 	}
-	return 0;
+
+	return type;
 }
 
-static unsigned long unpack_object_header(struct packed_git *p,
-		struct pack_window **w_curs,
-		unsigned long offset,
-		enum object_type *type,
-		unsigned long *sizep)
+static int unpack_object_header(struct packed_git *p,
+				struct pack_window **w_curs,
+				unsigned long *curpos,
+				unsigned long *sizep)
 {
 	unsigned char *base;
 	unsigned int left;
 	unsigned long used;
+	enum object_type type;
 
 	/* use_pack() assures us we have [base, base + 20) available
 	 * as a range that we can look at at.  (Its actually the hash
@@ -1165,100 +1159,95 @@ static unsigned long unpack_object_header(struct packed_git *p,
 	 * the maximum deflated object size is 2^137, which is just
 	 * insane, so we know won't exceed what we have been given.
 	 */
-	base = use_pack(p, w_curs, offset, &left);
-	used = unpack_object_header_gently(base, left, type, sizep);
+	base = use_pack(p, w_curs, *curpos, &left);
+	used = unpack_object_header_gently(base, left, &type, sizep);
 	if (!used)
 		die("object offset outside of pack file");
+	*curpos += used;
 
-	return offset + used;
+	return type;
 }
 
-void packed_object_info_detail(struct packed_git *p,
-			       unsigned long offset,
-			       char *type,
-			       unsigned long *size,
-			       unsigned long *store_size,
-			       unsigned int *delta_chain_length,
-			       unsigned char *base_sha1)
+const char *packed_object_info_detail(struct packed_git *p,
+				      unsigned long obj_offset,
+				      unsigned long *size,
+				      unsigned long *store_size,
+				      unsigned int *delta_chain_length,
+				      unsigned char *base_sha1)
 {
 	struct pack_window *w_curs = NULL;
-	unsigned long obj_offset, val;
+	unsigned long curpos, dummy;
 	unsigned char *next_sha1;
-	enum object_type kind;
+	enum object_type type;
 
 	*delta_chain_length = 0;
-	obj_offset = offset;
-	offset = unpack_object_header(p, &w_curs, offset, &kind, size);
+	curpos = obj_offset;
+	type = unpack_object_header(p, &w_curs, &curpos, size);
 
 	for (;;) {
-		switch (kind) {
+		switch (type) {
 		default:
 			die("pack %s contains unknown object type %d",
-			    p->pack_name, kind);
+			    p->pack_name, type);
 		case OBJ_COMMIT:
 		case OBJ_TREE:
 		case OBJ_BLOB:
 		case OBJ_TAG:
-			strcpy(type, type_names[kind]);
 			*store_size = 0; /* notyet */
 			unuse_pack(&w_curs);
-			return;
+			return typename(type);
 		case OBJ_OFS_DELTA:
-			get_delta_base(p, &w_curs, offset, kind,
-				obj_offset, &offset);
+			obj_offset = get_delta_base(p, &w_curs, &curpos, type, obj_offset);
 			if (*delta_chain_length == 0) {
-				/* TODO: find base_sha1 as pointed by offset */
+				/* TODO: find base_sha1 as pointed by curpos */
 			}
 			break;
 		case OBJ_REF_DELTA:
-			next_sha1 = use_pack(p, &w_curs, offset, NULL);
+			next_sha1 = use_pack(p, &w_curs, curpos, NULL);
 			if (*delta_chain_length == 0)
 				hashcpy(base_sha1, next_sha1);
-			offset = find_pack_entry_one(next_sha1, p);
+			obj_offset = find_pack_entry_one(next_sha1, p);
 			break;
 		}
-		obj_offset = offset;
-		offset = unpack_object_header(p, &w_curs, offset, &kind, &val);
 		(*delta_chain_length)++;
+		curpos = obj_offset;
+		type = unpack_object_header(p, &w_curs, &curpos, &dummy);
 	}
 }
 
-static int packed_object_info(struct packed_git *p, unsigned long offset,
-			      char *type, unsigned long *sizep)
+static int packed_object_info(struct packed_git *p, unsigned long obj_offset,
+			      unsigned long *sizep)
 {
 	struct pack_window *w_curs = NULL;
-	unsigned long size, obj_offset = offset;
-	enum object_type kind;
-	int r;
+	unsigned long size, curpos = obj_offset;
+	enum object_type type;
 
-	offset = unpack_object_header(p, &w_curs, offset, &kind, &size);
+	type = unpack_object_header(p, &w_curs, &curpos, &size);
 
-	switch (kind) {
+	switch (type) {
 	case OBJ_OFS_DELTA:
 	case OBJ_REF_DELTA:
-		r = packed_delta_info(p, &w_curs, offset, kind,
-			obj_offset, type, sizep);
-		unuse_pack(&w_curs);
-		return r;
+		type = packed_delta_info(p, &w_curs, curpos,
+					 type, obj_offset, sizep);
+		break;
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
-		strcpy(type, type_names[kind]);
-		unuse_pack(&w_curs);
+		if (sizep)
+			*sizep = size;
 		break;
 	default:
 		die("pack %s contains unknown object type %d",
-		    p->pack_name, kind);
+		    p->pack_name, type);
 	}
-	if (sizep)
-		*sizep = size;
-	return 0;
+	unuse_pack(&w_curs);
+	return type;
 }
 
 static void *unpack_compressed_entry(struct packed_git *p,
 				    struct pack_window **w_curs,
-				    unsigned long offset,
+				    unsigned long curpos,
 				    unsigned long size)
 {
 	int st;
@@ -1273,10 +1262,10 @@ static void *unpack_compressed_entry(struct packed_git *p,
 
 	inflateInit(&stream);
 	do {
-		in = use_pack(p, w_curs, offset, &stream.avail_in);
+		in = use_pack(p, w_curs, curpos, &stream.avail_in);
 		stream.next_in = in;
 		st = inflate(&stream, Z_FINISH);
-		offset += stream.next_in - in;
+		curpos += stream.next_in - in;
 	} while (st == Z_OK || st == Z_BUF_ERROR);
 	inflateEnd(&stream);
 	if ((st != Z_STREAM_END) || stream.total_out != size) {
@@ -1289,63 +1278,57 @@ static void *unpack_compressed_entry(struct packed_git *p,
 
 static void *unpack_delta_entry(struct packed_git *p,
 				struct pack_window **w_curs,
-				unsigned long offset,
+				unsigned long curpos,
 				unsigned long delta_size,
-				enum object_type kind,
 				unsigned long obj_offset,
-				char *type,
+				enum object_type *type,
 				unsigned long *sizep)
 {
 	void *delta_data, *result, *base;
-	unsigned long result_size, base_size, base_offset;
+	unsigned long base_size, base_offset;
 
-	offset = get_delta_base(p, w_curs, offset, kind,
-		obj_offset, &base_offset);
+	base_offset = get_delta_base(p, w_curs, &curpos, *type, obj_offset);
 	base = unpack_entry(p, base_offset, type, &base_size);
 	if (!base)
 		die("failed to read delta base object at %lu from %s",
 		    base_offset, p->pack_name);
 
-	delta_data = unpack_compressed_entry(p, w_curs, offset, delta_size);
+	delta_data = unpack_compressed_entry(p, w_curs, curpos, delta_size);
 	result = patch_delta(base, base_size,
 			     delta_data, delta_size,
-			     &result_size);
+			     sizep);
 	if (!result)
 		die("failed to apply delta");
 	free(delta_data);
 	free(base);
-	*sizep = result_size;
 	return result;
 }
 
-void *unpack_entry(struct packed_git *p, unsigned long offset,
-			  char *type, unsigned long *sizep)
+void *unpack_entry(struct packed_git *p, unsigned long obj_offset,
+		   enum object_type *type, unsigned long *sizep)
 {
 	struct pack_window *w_curs = NULL;
-	unsigned long size, obj_offset = offset;
-	enum object_type kind;
-	void *retval;
+	unsigned long curpos = obj_offset;
+	void *data;
 
-	offset = unpack_object_header(p, &w_curs, offset, &kind, &size);
-	switch (kind) {
+	*type = unpack_object_header(p, &w_curs, &curpos, sizep);
+	switch (*type) {
 	case OBJ_OFS_DELTA:
 	case OBJ_REF_DELTA:
-		retval = unpack_delta_entry(p, &w_curs, offset, size,
-			kind, obj_offset, type, sizep);
+		data = unpack_delta_entry(p, &w_curs, curpos, *sizep,
+					  obj_offset, type, sizep);
 		break;
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
-		strcpy(type, type_names[kind]);
-		*sizep = size;
-		retval = unpack_compressed_entry(p, &w_curs, offset, size);
+		data = unpack_compressed_entry(p, &w_curs, curpos, *sizep);
 		break;
 	default:
-		die("unknown object type %i in %s", kind, p->pack_name);
+		die("unknown object type %i in %s", *type, p->pack_name);
 	}
 	unuse_pack(&w_curs);
-	return retval;
+	return data;
 }
 
 int num_packed_objects(const struct packed_git *p)
@@ -1452,16 +1435,16 @@ struct packed_git *find_sha1_pack(const unsigned char *sha1,
 			return p;
 	}
 	return NULL;
-	
+
 }
 
-static int sha1_loose_object_info(const unsigned char *sha1, char *type, unsigned long *sizep)
+static int sha1_loose_object_info(const unsigned char *sha1, unsigned long *sizep)
 {
 	int status;
 	unsigned long mapsize, size;
 	void *map;
 	z_stream stream;
-	char hdr[128];
+	char hdr[32];
 
 	map = map_sha1_file(sha1, &mapsize);
 	if (!map)
@@ -1469,31 +1452,29 @@ static int sha1_loose_object_info(const unsigned char *sha1, char *type, unsigne
 	if (unpack_sha1_header(&stream, map, mapsize, hdr, sizeof(hdr)) < 0)
 		status = error("unable to unpack %s header",
 			       sha1_to_hex(sha1));
-	if (parse_sha1_header(hdr, type, &size) < 0)
+	else if ((status = parse_sha1_header(hdr, &size)) < 0)
 		status = error("unable to parse %s header", sha1_to_hex(sha1));
-	else {
-		status = 0;
-		if (sizep)
-			*sizep = size;
-	}
+	else if (sizep)
+		*sizep = size;
 	inflateEnd(&stream);
 	munmap(map, mapsize);
 	return status;
 }
 
-int sha1_object_info(const unsigned char *sha1, char *type, unsigned long *sizep)
+int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
 {
 	struct pack_entry e;
 
 	if (!find_pack_entry(sha1, &e, NULL)) {
 		reprepare_packed_git();
 		if (!find_pack_entry(sha1, &e, NULL))
-			return sha1_loose_object_info(sha1, type, sizep);
+			return sha1_loose_object_info(sha1, sizep);
 	}
-	return packed_object_info(e.p, e.offset, type, sizep);
+	return packed_object_info(e.p, e.offset, sizep);
 }
 
-static void *read_packed_sha1(const unsigned char *sha1, char *type, unsigned long *size)
+static void *read_packed_sha1(const unsigned char *sha1,
+			      enum object_type *type, unsigned long *size)
 {
 	struct pack_entry e;
 
@@ -1511,7 +1492,7 @@ static void *read_packed_sha1(const unsigned char *sha1, char *type, unsigned lo
  */
 static struct cached_object {
 	unsigned char sha1[20];
-	const char *type;
+	enum object_type type;
 	void *buf;
 	unsigned long size;
 } *cached_objects;
@@ -1529,11 +1510,12 @@ static struct cached_object *find_cached_object(const unsigned char *sha1)
 	return NULL;
 }
 
-int pretend_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *sha1)
+int pretend_sha1_file(void *buf, unsigned long len, enum object_type type,
+		      unsigned char *sha1)
 {
 	struct cached_object *co;
 
-	hash_sha1_file(buf, len, type, sha1);
+	hash_sha1_file(buf, len, typename(type), sha1);
 	if (has_sha1_file(sha1) || find_cached_object(sha1))
 		return 0;
 	if (cached_object_alloc <= cached_object_nr) {
@@ -1544,14 +1526,15 @@ int pretend_sha1_file(void *buf, unsigned long len, const char *type, unsigned c
 	}
 	co = &cached_objects[cached_object_nr++];
 	co->size = len;
-	co->type = strdup(type);
+	co->type = type;
 	co->buf = xmalloc(len);
 	memcpy(co->buf, buf, len);
 	hashcpy(co->sha1, sha1);
 	return 0;
 }
 
-void *read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
+void *read_sha1_file(const unsigned char *sha1, enum object_type *type,
+		     unsigned long *size)
 {
 	unsigned long mapsize;
 	void *map, *buf;
@@ -1562,7 +1545,7 @@ void *read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
 		buf = xmalloc(co->size + 1);
 		memcpy(buf, co->buf, co->size);
 		((char*)buf)[co->size] = 0;
-		strcpy(type, co->type);
+		*type = co->type;
 		*size = co->size;
 		return buf;
 	}
@@ -1581,33 +1564,34 @@ void *read_sha1_file(const unsigned char *sha1, char *type, unsigned long *size)
 }
 
 void *read_object_with_reference(const unsigned char *sha1,
-				 const char *required_type,
+				 const char *required_type_name,
 				 unsigned long *size,
 				 unsigned char *actual_sha1_return)
 {
-	char type[20];
+	enum object_type type, required_type;
 	void *buffer;
 	unsigned long isize;
 	unsigned char actual_sha1[20];
 
+	required_type = type_from_string(required_type_name);
 	hashcpy(actual_sha1, sha1);
 	while (1) {
 		int ref_length = -1;
 		const char *ref_type = NULL;
 
-		buffer = read_sha1_file(actual_sha1, type, &isize);
+		buffer = read_sha1_file(actual_sha1, &type, &isize);
 		if (!buffer)
 			return NULL;
-		if (!strcmp(type, required_type)) {
+		if (type == required_type) {
 			*size = isize;
 			if (actual_sha1_return)
 				hashcpy(actual_sha1_return, actual_sha1);
 			return buffer;
 		}
 		/* Handle references */
-		else if (!strcmp(type, commit_type))
+		else if (type == OBJ_COMMIT)
 			ref_type = "tree ";
-		else if (!strcmp(type, tag_type))
+		else if (type == OBJ_TAG)
 			ref_type = "object ";
 		else {
 			free(buffer);
@@ -1628,12 +1612,12 @@ void *read_object_with_reference(const unsigned char *sha1,
 
 static void write_sha1_file_prepare(void *buf, unsigned long len,
                                     const char *type, unsigned char *sha1,
-                                    unsigned char *hdr, int *hdrlen)
+                                    char *hdr, int *hdrlen)
 {
 	SHA_CTX c;
 
 	/* Generate the header */
-	*hdrlen = sprintf((char *)hdr, "%s %lu", type, len)+1;
+	*hdrlen = sprintf(hdr, "%s %lu", type, len)+1;
 
 	/* Sha1.. */
 	SHA1_Init(&c);
@@ -1740,33 +1724,24 @@ static int write_binary_header(unsigned char *hdr, enum object_type type, unsign
 
 static void setup_object_header(z_stream *stream, const char *type, unsigned long len)
 {
-	int obj_type, hdr;
+	int obj_type, hdrlen;
 
 	if (use_legacy_headers) {
 		while (deflate(stream, 0) == Z_OK)
 			/* nothing */;
 		return;
 	}
-	if (!strcmp(type, blob_type))
-		obj_type = OBJ_BLOB;
-	else if (!strcmp(type, tree_type))
-		obj_type = OBJ_TREE;
-	else if (!strcmp(type, commit_type))
-		obj_type = OBJ_COMMIT;
-	else if (!strcmp(type, tag_type))
-		obj_type = OBJ_TAG;
-	else
-		die("trying to generate bogus object of type '%s'", type);
-	hdr = write_binary_header(stream->next_out, obj_type, len);
-	stream->total_out = hdr;
-	stream->next_out += hdr;
-	stream->avail_out -= hdr;
+	obj_type = type_from_string(type);
+	hdrlen = write_binary_header(stream->next_out, obj_type, len);
+	stream->total_out = hdrlen;
+	stream->next_out += hdrlen;
+	stream->avail_out -= hdrlen;
 }
 
 int hash_sha1_file(void *buf, unsigned long len, const char *type,
                    unsigned char *sha1)
 {
-	unsigned char hdr[50];
+	char hdr[32];
 	int hdrlen;
 	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
 	return 0;
@@ -1780,7 +1755,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	unsigned char sha1[20];
 	char *filename;
 	static char tmpfile[PATH_MAX];
-	unsigned char hdr[50];
+	char hdr[32];
 	int fd, hdrlen;
 
 	/* Normally if we have it in the pack then we do not bother writing
@@ -1827,7 +1802,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	stream.avail_out = size;
 
 	/* First header.. */
-	stream.next_in = hdr;
+	stream.next_in = (unsigned char *)hdr;
 	stream.avail_in = hdrlen;
 	setup_object_header(&stream, type, len);
 
@@ -1858,17 +1833,17 @@ static void *repack_object(const unsigned char *sha1, unsigned long *objsize)
 	z_stream stream;
 	unsigned char *unpacked;
 	unsigned long len;
-	char type[20];
-	char hdr[50];
+	enum object_type type;
+	char hdr[32];
 	int hdrlen;
 	void *buf;
 
 	/* need to unpack and recompress it by itself */
-	unpacked = read_packed_sha1(sha1, type, &len);
+	unpacked = read_packed_sha1(sha1, &type, &len);
 	if (!unpacked)
 		error("cannot read sha1_file for %s", sha1_to_hex(sha1));
 
-	hdrlen = sprintf(hdr, "%s %lu", type, len) + 1;
+	hdrlen = sprintf(hdr, "%s %lu", typename(type), len) + 1;
 
 	/* Set it up */
 	memset(&stream, 0, sizeof(stream));

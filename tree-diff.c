@@ -139,13 +139,13 @@ static void show_entry(struct diff_options *opt, const char *prefix, struct tree
 	const unsigned char *sha1 = tree_entry_extract(desc, &path, &mode);
 
 	if (opt->recursive && S_ISDIR(mode)) {
-		char type[20];
+		enum object_type type;
 		char *newbase = malloc_base(base, path, strlen(path));
 		struct tree_desc inner;
 		void *tree;
 
-		tree = read_sha1_file(sha1, type, &inner.size);
-		if (!tree || strcmp(type, tree_type))
+		tree = read_sha1_file(sha1, &type, &inner.size);
+		if (!tree || type != OBJ_TREE)
 			die("corrupt tree sha %s", sha1_to_hex(sha1));
 
 		inner.buf = tree;

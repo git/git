@@ -601,30 +601,23 @@ static void fix_unresolved_deltas(int nr_unresolved)
 		struct delta_entry *d = sorted_by_pos[i];
 		void *data;
 		unsigned long size;
-		char type[10];
-		enum object_type obj_type;
+		enum object_type type;
 		int j, first, last;
 
 		if (objects[d->obj_no].real_type != OBJ_REF_DELTA)
 			continue;
-		data = read_sha1_file(d->base.sha1, type, &size);
+		data = read_sha1_file(d->base.sha1, &type, &size);
 		if (!data)
 			continue;
-		if      (!strcmp(type, blob_type))   obj_type = OBJ_BLOB;
-		else if (!strcmp(type, tree_type))   obj_type = OBJ_TREE;
-		else if (!strcmp(type, commit_type)) obj_type = OBJ_COMMIT;
-		else if (!strcmp(type, tag_type))    obj_type = OBJ_TAG;
-		else die("base object %s is of type '%s'",
-			 sha1_to_hex(d->base.sha1), type);
 
 		find_delta_children(&d->base, &first, &last);
 		for (j = first; j <= last; j++) {
 			struct object_entry *child = objects + deltas[j].obj_no;
 			if (child->real_type == OBJ_REF_DELTA)
-				resolve_delta(child, data, size, obj_type);
+				resolve_delta(child, data, size, type);
 		}
 
-		append_obj_to_pack(data, size, obj_type);
+		append_obj_to_pack(data, size, type);
 		free(data);
 		if (verbose)
 			percent = display_progress(nr_resolved_deltas,

@@ -479,7 +479,7 @@ static void start_put(struct transfer_request *request)
 	char *hex = sha1_to_hex(request->obj->sha1);
 	struct active_request_slot *slot;
 	char *posn;
-	char type[20];
+	enum object_type type;
 	char hdr[50];
 	void *unpacked;
 	unsigned long len;
@@ -487,8 +487,8 @@ static void start_put(struct transfer_request *request)
 	ssize_t size;
 	z_stream stream;
 
-	unpacked = read_sha1_file(request->obj->sha1, type, &len);
-	hdrlen = sprintf(hdr, "%s %lu", type, len) + 1;
+	unpacked = read_sha1_file(request->obj->sha1, &type, &len);
+	hdrlen = sprintf(hdr, "%s %lu", typename(type), len) + 1;
 
 	/* Set it up */
 	memset(&stream, 0, sizeof(stream));
