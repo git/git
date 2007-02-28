@@ -37,6 +37,7 @@ INSTALL?=install
 DOC_REF = origin/man
 
 -include ../config.mak.autogen
+-include ../config.mak
 
 #
 # Please note that there is a minor bug in asciidoc.
