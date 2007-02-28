@@ -1,0 +1,55 @@
+GIT v1.5.0.2 Release Notes
+==========================
+
+Fixes since v1.5.0.2
+--------------------
+
+* Bugfixes
+
+  - 'git.el' honors the commit coding system from the configuration.
+
+  - 'blameview' in contrib/ correctly digs deeper when a line is
+    clicked.
+
+  - 'http-push' correctly makes sure the remote side has leading
+    path.  Earlier it started in the middle of the path, and
+    incorrectly.
+
+  - 'cvsexportcommit' does not lose yet-to-be-used message file.
+
+  - int-vs-size_t typefix when running combined diff on files
+    over 2GB long.
+
+  - 'git apply --whitespace=strip' should not touch unmodified
+    lines.
+
+  - 'git-mailinfo' choke when a logical header line was too long.
+
+  - 'git show A..B' did not error out.  Negative ref ("not A" in
+    this example) does not make sense for the purpose of the
+    command, so now it errors out.
+
+  - 'git fmt-merge-msg --file' without file parameter did not
+    correctly error out.
+
+  - 'git archimport' barfed upon encountering a commit without
+    summary.
+
+  - 'git index-pack' did not protect itself from getting a short
+    read out of pread(2).
+
+* Documentation updates
+
+  - options to 'git remote add' were described insufficiently.
+
+
+---
+exec >/var/tmp/1
+O=v1.5.0.2
+O=v1.5.0.2-16-gdb554bf
+echo O=`git describe maint`
+git shortlog --no-merges $O..maint
+
+# Local Variables:
+# mode: text
+# End:
