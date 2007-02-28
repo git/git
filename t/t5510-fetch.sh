@@ -35,7 +35,9 @@ test_expect_success "clone and setup child repos" '
 		echo "URL: ../two/.git/"
 		echo "Pull: refs/heads/master:refs/heads/two"
 		echo "Pull: refs/heads/one:refs/heads/one"
-	} >.git/remotes/two
+	} >.git/remotes/two &&
+	cd .. &&
+	git clone . bundle
 '
 
 test_expect_success "fetch test" '
@@ -79,6 +81,30 @@ test_expect_success 'fetch following tags' '
 	git show-ref --verify refs/tags/anno &&
 	git show-ref --verify refs/tags/light
 
+'
+
+test_expect_success 'create bundle 1' '
+	cd "$D" &&
+	echo >file updated again by origin &&
+	git commit -a -m "tip" &&
+	git bundle create bundle1 master^..master
+'
+
+test_expect_success 'create bundle 2' '
+	cd "$D" &&
+	git bundle create bundle2 master~2..master
+'
+
+test_expect_failure 'unbundle 1' '
+	cd "$D/bundle" &&
+	git checkout -b some-branch &&
+	git fetch "$D/bundle1" master:master
+'
+
+test_expect_success 'unbundle 2' '
+	cd "$D/bundle" &&
+	git fetch ../bundle2 master:master &&
+	test "tip" = "$(git log -1 --pretty=oneline master | cut -b42-)"
 '
 
 test_done

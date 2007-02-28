@@ -277,6 +277,7 @@ BUILTIN_OBJS = \
 	builtin-archive.o \
 	builtin-blame.o \
 	builtin-branch.o \
+	builtin-bundle.o \
 	builtin-cat-file.o \
 	builtin-checkout-index.o \
 	builtin-check-ref-format.o \

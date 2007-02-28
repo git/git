@@ -386,8 +386,15 @@ fetch_main () {
     ( : subshell because we muck with IFS
       IFS=" 	$LF"
       (
+	if test -f "$remote" ; then
+	    test -n "$shallow_depth" &&
+		die "shallow clone with bundle is not supported"
+	    git-bundle unbundle "$remote" $rref ||
+	    echo failed "$remote"
+	else
 	  git-fetch-pack --thin $exec $keep $shallow_depth "$remote" $rref ||
 	  echo failed "$remote"
+	fi
       ) |
       (
 	trap '

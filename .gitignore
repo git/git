@@ -13,6 +13,7 @@ git-archive
 git-bisect
 git-blame
 git-branch
+git-bundle
 git-cat-file
 git-check-ref-format
 git-checkout
