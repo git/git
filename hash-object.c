@@ -15,7 +15,7 @@ static void hash_object(const char *path, enum object_type type, int write_objec
 	fd = open(path, O_RDONLY);
 	if (fd < 0 ||
 	    fstat(fd, &st) < 0 ||
-	    index_fd(sha1, fd, &st, write_object, type))
+	    index_fd(sha1, fd, &st, write_object, type, path))
 		die(write_object
 		    ? "Unable to add %s to database"
 		    : "Unable to hash %s", path);

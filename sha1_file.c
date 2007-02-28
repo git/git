@@ -2054,7 +2054,7 @@ int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
 }
 
 int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
-	     enum object_type type)
+	     enum object_type type, const char *path)
 {
 	unsigned long size = st->st_size;
 	void *buf;
@@ -2074,7 +2074,7 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
 	if (type == OBJ_BLOB) {
 		unsigned long nsize = size;
 		char *nbuf = buf;
-		if (convert_to_git(NULL, &nbuf, &nsize)) {
+		if (convert_to_git(path, &nbuf, &nsize)) {
 			if (size)
 				munmap(buf, size);
 			size = nsize;
@@ -2107,7 +2107,7 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, int write
 		if (fd < 0)
 			return error("open(\"%s\"): %s", path,
 				     strerror(errno));
-		if (index_fd(sha1, fd, st, write_object, OBJ_BLOB) < 0)
+		if (index_fd(sha1, fd, st, write_object, OBJ_BLOB, path) < 0)
 			return error("%s: failed to insert into database",
 				     path);
 		break;
