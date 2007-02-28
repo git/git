@@ -241,13 +241,14 @@ if ($opt_c) {
 	die "Exiting: The commit did not succeed";
     }
     print "Committed successfully to CVS\n";
+    # clean up
+    unlink(".msg");
 } else {
     print "Ready for you to commit, just run:\n\n   $cmd\n";
 }
 
 # clean up
 unlink(".cvsexportcommit.diff");
-unlink(".msg");
 
 sub usage {
 	print STDERR <<END;
