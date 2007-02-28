@@ -395,7 +395,6 @@ int mingw_socket(int domain, int type, int protocol);
 
 #define setlinebuf(x)
 #define fsync(x)
-#define strtoumax strtoul
 
 extern void quote_argv(const char **dst, const char **src);
 extern const char *parse_interpreter(const char *cmd);

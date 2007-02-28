@@ -437,6 +437,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_STRLCPY=YesPlease
 	NO_ICONV=YesPlease
 	NO_C99_FORMAT = YesPlease
+	NO_STRTOUMAX = YesPlease
 	NO_SYMLINKS=YesPlease
 	NO_SVN_TESTS=YesPlease
 	COMPAT_CFLAGS += -DNO_ETC_PASSWD -DNO_ST_BLOCKS -DSTRIP_EXTENSION=\".exe\" -I compat
