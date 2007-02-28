@@ -19,16 +19,75 @@ Updates since v1.5.0
   - "git diff" learned --ignore-space-at-eol.  This is a weaker
     form of --ignore-space-change.
 
+  - "git diff --no-index pathA pathB" can be used as diff
+    replacement with git specific enhancements.
+
   - "git name-rev" learned --refs=<pattern>, to limit the tags
     used for naming the given revisions only to the ones
     matching the given pattern.
 
+  - "git remote update" is to run "git fetch" for defined remotes
+    to update tracking branches.
+
+  - "git cvsimport" can now take '-d' to talk with a CVS
+    repository different from what are recorded in CVS/Root
+    (overriding it with environment CVSROOT does not work).
+
+  - "git bundle" can help sneaker-netting your changes between
+    repositories.
+
+
 * Updated behaviour of existing commands.
+
+  - git-svn got almost a rewrite.
+
+  - core.autocrlf configuration, when set to 'true', makes git
+    to convert CRLF at the end of lines in text files to LF when
+    reading from the filesystem, and convert in reverse when
+    writing to the filesystem.  The variable can be set to
+    'input', in which case the conversion happens only while
+    reading from the filesystem but files are written out with
+    LF at the end of lines.  Currently, which paths to consider
+    'text' (i.e. be subjected to the autocrlf mechanism) is
+    decided purely based on the contents, but the plan is to
+    allow users to explicitly override this heuristics based on
+    paths.
+
+  - The behaviour of 'git-apply', when run in a subdirectory,
+    without --index nor --cached were inconsistent with that of
+    the command with these options.  This was fixed to match the
+    behaviour with --index.  A patch that is meant to be applied
+    with -p1 from the toplevel of the project tree can be
+    applied with any custom -p<n> option.  A patch that is not
+    relative to the toplevel needs to be applied with -p<n>
+    option with or without --index (or --cached).
 
   - "git diff" outputs a trailing HT when pathnames have embedded
     SP on +++/--- header lines, in order to help "GNU patch" to
     parse its output.  "git apply" was already updated to accept
     this modified output format since ce74618d (Sep 22, 2006).
+
+  - "git cvsserver" runs hooks/update and honors its exit status.
+
+  - "git cvsserver" can be told to send everything with -kb.
+
+  - "git diff --check" also honors the --color output option.
+
+  - "git name-rev" used to stress the fact that a ref is a tag too
+    much, by saying something like "v1.2.3^0~22".  It now says
+    "v1.2.3~22" in such a case (it still says "v1.2.3^0" if it does
+    not talk about an ancestor of the commit that is tagged, which
+    makes sense).
+
+  - "git rev-list --boundary" now shows boundary markers for the
+    commits omitted by --max-age and --max-count condition.
+
+  - The configuration mechanism now reads $(prefix)/etc/gitconfig.
+
+  - "git apply --verbose" shows what preimage lines were wanted
+    when it couldn't find them.
+
+  - "git status" in a read-only repository got a bit saner.
 
 * Hooks
 
@@ -39,6 +98,10 @@ Updates since v1.5.0
 
 --
 exec >/var/tmp/1
-O=v1.5.0-49-g69bc0e2
+O=v1.5.0.2-259-g16d5315
 echo O=`git describe master`
 git shortlog --no-merges $O..master ^maint
+
+# Local Variables:
+# mode: text
+# End:
