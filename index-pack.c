@@ -277,13 +277,19 @@ static void *get_data_from_pack(struct object_entry *obj)
 {
 	unsigned long from = obj[0].offset + obj[0].hdr_size;
 	unsigned long len = obj[1].offset - from;
+	unsigned long rdy = 0;
 	unsigned char *src, *data;
 	z_stream stream;
 	int st;
 
 	src = xmalloc(len);
-	if (pread(pack_fd, src, len, from) != len)
-		die("cannot pread pack file: %s", strerror(errno));
+	data = src;
+	do {
+		ssize_t n = pread(pack_fd, data + rdy, len - rdy, from + rdy);
+		if (n <= 0)
+			die("cannot pread pack file: %s", strerror(errno));
+		rdy += n;
+	} while (rdy < len);
 	data = xmalloc(obj->size);
 	memset(&stream, 0, sizeof(stream));
 	stream.next_out = data;
