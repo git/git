@@ -553,7 +553,7 @@ foreach my $ps (@psets) {
 
     my $pid = open2(*READER, *WRITER,'git-commit-tree',$tree,@par) 
         or die $!;
-    print WRITER $ps->{summary},"\n";
+    print WRITER $ps->{summary},"\n\n";
     print WRITER $ps->{message},"\n";
     
     # make it easy to backtrack and figure out which Arch revision this was:
@@ -755,7 +755,8 @@ sub parselog {
             $ps->{tag} = $1;
             $key = undef;
         } elsif (/^Summary:\s*(.*)$/ ) {
-            # summary can be multiline as long as it has a leading space
+            # summary can be multiline as long as it has a leading space.
+	    # we squeeze it onto a single line, though.
             $ps->{summary} = [ $1 ];
             $key = 'summary';
         } elsif (/^Creator: (.*)\s*<([^\>]+)>/) {
@@ -787,8 +788,18 @@ sub parselog {
         }
     }
    
-    # post-processing:
-    $ps->{summary} = join("\n",@{$ps->{summary}})."\n";
+    # drop leading empty lines from the log message
+    while (@$log && $log->[0] eq '') {
+	shift @$log;
+    }
+    if (exists $ps->{summary} && @{$ps->{summary}}) {
+	$ps->{summary} = join(' ', @{$ps->{summary}});
+    }
+    elsif (@$log == 0) {
+	$ps->{summary} = 'empty commit message';
+    } else {
+	$ps->{summary} = $log->[0] . '...';
+    }
     $ps->{message} = join("\n",@$log);
     
     # skip Arch control files, unescape pika-escaped files
