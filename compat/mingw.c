@@ -106,7 +106,7 @@ int pipe(int filedes[2])
 	int fd;
 	HANDLE h[2], parent;
 
-	if (_pipe(filedes, 4096, 0) < 0)
+	if (_pipe(filedes, 8192, 0) < 0)
 		return -1;
 
 	parent = GetCurrentProcess();
