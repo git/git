@@ -114,14 +114,6 @@ append_fetch_head () {
 		git-fetch--tool $flags append-fetch-head "$@"
 }
 
-update_local_ref () {
-	flags=
-	test -n "$verbose" && flags="$flags -v"
-	test -n "$force" && flags="$flags -f"
-	GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION" \
-		git-fetch--tool $flags update-local-ref "$@"
-}
-
 # updating the current HEAD with git-fetch in a bare
 # repository is always fine.
 if test -z "$update_head_ok" && test $(is_bare_repository) = false

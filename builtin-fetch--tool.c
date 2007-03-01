@@ -468,12 +468,6 @@ int cmd_fetch__tool(int argc, const char **argv, const char *prefix)
 		fclose(fp);
 		return result;
 	}
-	if (!strcmp("update-local-ref", argv[1])) {
-		if (argc != 5)
-			return error("update-local-ref takes 3 args");
-		return update_local_ref(argv[2], argv[3], argv[4],
-					verbose, force);
-	}
 	if (!strcmp("native-store", argv[1])) {
 		int result;
 		FILE *fp;
