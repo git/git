@@ -1299,14 +1299,8 @@ A rescan will be automatically started now.
 	# -- Create the commit.
 	#
 	set cmd [list git commit-tree $tree_id]
-	set parents [concat $PARENT $MERGE_HEAD]
-	if {[llength $parents] > 0} {
-		foreach p $parents {
-			lappend cmd -p $p
-		}
-	} else {
-		# git commit-tree writes to stderr during initial commit.
-		lappend cmd 2>/dev/null
+	foreach p [concat $PARENT $MERGE_HEAD] {
+		lappend cmd -p $p
 	}
 	lappend cmd <$msg_p
 	if {[catch {set cmt_id [eval exec $cmd]} err]} {
