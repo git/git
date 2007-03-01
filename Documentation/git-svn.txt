@@ -63,7 +63,7 @@ COMMANDS
 	transports (eg svn+ssh://), you must include the username in
 	the URL, eg svn+ssh://foo@svn.bar.com/project
 
---prefix=<prefix>
+--prefix=<prefix>::
 	This allows one to specify a prefix which is prepended
 	to the names of remotes if trunk/branches/tags are
 	specified.  The prefix does not automatically include a
@@ -94,16 +94,16 @@ COMMANDS
 	This fetches revisions from the SVN parent of the current HEAD
 	and rebases the current (uncommitted to SVN) work against it.
 
-	This works similarly to 'svn update' or 'git-pull' except that
-	it preserves linear history with 'git-rebase' instead of
-	'git-merge' for ease of dcommit-ing with git-svn.
+This works similarly to 'svn update' or 'git-pull' except that
+it preserves linear history with 'git-rebase' instead of
+'git-merge' for ease of dcommit-ing with git-svn.
 
-	This accepts all options that 'git-svn fetch' and 'git-rebase'
-	accepts.  However '--fetch-all' only fetches from the current
-	[svn-remote], and not all [svn-remote] definitions.
+This accepts all options that 'git-svn fetch' and 'git-rebase'
+accepts.  However '--fetch-all' only fetches from the current
+[svn-remote], and not all [svn-remote] definitions.
 
-	Like 'git-rebase'; this requires that the working tree be clean
-	and have no uncommitted changes.
+Like 'git-rebase'; this requires that the working tree be clean
+and have no uncommitted changes.
 
 'dcommit'::
 	Commit each diff from a specified head directly to the SVN
@@ -117,29 +117,40 @@ COMMANDS
 	alternative to HEAD.
 	This is advantageous over 'set-tree' (below) because it produces
 	cleaner, more linear history.
+--
 
 'log'::
 	This should make it easy to look up svn log messages when svn
 	users refer to -r/--revision numbers.
++
+The following features from `svn log' are supported:
++
+--
+--revision=<n>[:<n>];;
+	is supported, non-numeric args are not:
+	HEAD, NEXT, BASE, PREV, etc ...
+-v/--verbose;;
+	it's not completely compatible with the --verbose
+	output in svn log, but reasonably close.
+--limit=<n>;;
+	is NOT the same as --max-count, doesn't count
+	merged/excluded commits
+--incremental;;
+	supported
+--
++
+New features:
++
+--
+--show-commit;;
+	shows the git commit sha1, as well
+--oneline;;
+	our version of --pretty=oneline
+--
++
+Any other arguments are passed directly to `git log'
 
-	The following features from `svn log' are supported:
-
-	--revision=<n>[:<n>] - is supported, non-numeric args are not:
-	                       HEAD, NEXT, BASE, PREV, etc ...
-	-v/--verbose         - it's not completely compatible with
-	                       the --verbose output in svn log, but
-			       reasonably close.
-	--limit=<n>          - is NOT the same as --max-count,
-	                       doesn't count merged/excluded commits
-	--incremental        - supported
-
-	New features:
-
-	--show-commit        - shows the git commit sha1, as well
-	--oneline            - our version of --pretty=oneline
-
-	Any other arguments are passed directly to `git log'
-
+--
 'set-tree'::
 	You should consider using 'dcommit' instead of this command.
 	Commit specified commit or tree objects to SVN.  This relies on
@@ -256,16 +267,18 @@ config key: svn.authorsfile
 	Make git-svn less verbose.
 
 --repack[=<n>]::
---repack-flags=<flags>
-	These should help keep disk usage sane for large fetches
-	with many revisions.
+--repack-flags=<flags>::
 
-	--repack takes an optional argument for the number of revisions
-	to fetch before repacking.  This defaults to repacking every
-	1000 commits fetched if no argument is specified.
+These should help keep disk usage sane for large fetches
+with many revisions.
 
-	--repack-flags are passed directly to gitlink:git-repack[1].
+--repack takes an optional argument for the number of revisions
+to fetch before repacking.  This defaults to repacking every
+1000 commits fetched if no argument is specified.
 
+--repack-flags are passed directly to gitlink:git-repack[1].
+
+[verse]
 config key: svn.repack
 config key: svn.repackflags
 
@@ -323,28 +336,30 @@ CONFIG FILE-ONLY OPTIONS
 
 svn.noMetadata::
 svn-remote.<name>.noMetadata::
-	This gets rid of the git-svn-id: lines at the end of every commit.
 
-	If you lose your .git/svn/git-svn/.rev_db file, git-svn will not
-	be able to rebuild it and you won't be able to fetch again,
-	either.  This is fine for one-shot imports.
+This gets rid of the git-svn-id: lines at the end of every commit.
 
-	The 'git-svn log' command will not work on repositories using
-	this, either.  Using this conflicts with the 'useSvmProps'
-	option for (hopefully) obvious reasons.
+If you lose your .git/svn/git-svn/.rev_db file, git-svn will not
+be able to rebuild it and you won't be able to fetch again,
+either.  This is fine for one-shot imports.
+
+The 'git-svn log' command will not work on repositories using
+this, either.  Using this conflicts with the 'useSvmProps'
+option for (hopefully) obvious reasons.
 
 svn.useSvmProps::
 svn-remote.<name>.useSvmProps::
-	This allows git-svn to re-map repository URLs and UUIDs from
-	mirrors created using SVN::Mirror (or svk) for metadata.
 
-	If an SVN revision has a property, "svm:headrev", it is likely
-	that the revision was created by SVN::Mirror (also used by SVK).
-	The property contains a repository UUID and a revision.  We want
-	to make it look like we are mirroring the original URL, so
-	introduce a helper function that returns the original identity
-	URL and UUID, and use it when generating metadata in commit
-	messages.
+This allows git-svn to re-map repository URLs and UUIDs from
+mirrors created using SVN::Mirror (or svk) for metadata.
+
+If an SVN revision has a property, "svm:headrev", it is likely
+that the revision was created by SVN::Mirror (also used by SVK).
+The property contains a repository UUID and a revision.  We want
+to make it look like we are mirroring the original URL, so
+introduce a helper function that returns the original identity
+URL and UUID, and use it when generating metadata in commit
+messages.
 
 svn.useSvnsyncProps::
 svn-remote.<name>.useSvnsyncprops::
@@ -369,8 +384,8 @@ section because they affect the 'git-svn-id:' metadata line.
 
 --
 
-Basic Examples
-~~~~~~~~~~~~~~
+BASIC EXAMPLES
+--------------
 
 Tracking and contributing to a the trunk of a Subversion-managed project:
 
