@@ -36,7 +36,7 @@ generate_credits ()
 # that fact.
 #
 
-credits_tmp=/var/tmp/gitgui-credits-$$
+credits_tmp=/tmp/gitgui-credits-$$
 trap 'rm -f "$credits_tmp"' 0
 
 orig="$credits_tmp"
