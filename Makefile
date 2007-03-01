@@ -180,7 +180,7 @@ SCRIPT_SH = \
 	git-merge-one-file.sh git-parse-remote.sh \
 	git-pull.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
-	git-revert.sh git-sh-setup.sh \
+	git-sh-setup.sh \
 	git-tag.sh git-verify-tag.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
@@ -196,7 +196,7 @@ SCRIPT_PERL = \
 
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
-	  git-cherry-pick git-status git-instaweb
+	  git-status git-instaweb
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
@@ -223,7 +223,7 @@ EXTRA_PROGRAMS =
 BUILT_INS = \
 	git-format-patch$X git-show$X git-whatchanged$X git-cherry$X \
 	git-get-tar-commit-id$X git-init$X git-repo-config$X \
-	git-fsck-objects$X \
+	git-fsck-objects$X git-cherry-pick$X \
 	$(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
 
 # what 'all' will build and 'install' will install, in gitexecdir
@@ -315,6 +315,7 @@ BUILTIN_OBJS = \
 	builtin-rerere.o \
 	builtin-rev-list.o \
 	builtin-rev-parse.o \
+	builtin-revert.o \
 	builtin-rm.o \
 	builtin-runstatus.o \
 	builtin-shortlog.o \
@@ -687,10 +688,6 @@ $(patsubst %.perl,%,$(SCRIPT_PERL)): % : %.perl
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    $@.perl >$@+
 	chmod +x $@+
-	mv $@+ $@
-
-git-cherry-pick: git-revert
-	cp $< $@+
 	mv $@+ $@
 
 git-status: git-commit
