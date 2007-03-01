@@ -41,10 +41,6 @@ while ($changed) {
 while (my ($text, $included) = each %include) {
     if (! exists $included{$text} &&
 	(my $base = $text) =~ s/\.txt$//) {
-	my ($suffix) = '1';
-	if ($base eq 'git') {
-	    $suffix = '7'; # yuck...
-	}
-	print "$base.html $base.$suffix : ", join(" ", keys %$included), "\n";
+	print "$base.html $base.xml : ", join(" ", keys %$included), "\n";
     }
 }
