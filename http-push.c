@@ -1271,7 +1271,9 @@ xml_cdata(void *userData, const XML_Char *s, int len)
 	struct xml_ctx *ctx = (struct xml_ctx *)userData;
 	free(ctx->cdata);
 	ctx->cdata = xmalloc(len + 1);
-	strlcpy(ctx->cdata, s, len + 1);
+	/* NB: 's' is not null-terminated, can not use strlcpy here */
+	memcpy(ctx->cdata, s, len);
+	ctx->cdata[len] = '\0';
 }
 
 static struct remote_lock *lock_remote(const char *path, long timeout)
@@ -1473,7 +1475,8 @@ static void process_ls_object(struct remote_ls_ctx *ls)
 		return;
 	path += 8;
 	obj_hex = xmalloc(strlen(path));
-	strlcpy(obj_hex, path, 3);
+	/* NB: path is not null-terminated, can not use strlcpy here */
+	memcpy(obj_hex, path, 2);
 	strcpy(obj_hex + 2, path + 3);
 	one_remote_object(obj_hex);
 	free(obj_hex);
@@ -2170,7 +2173,8 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 	/* If it's a symref, set the refname; otherwise try for a sha1 */
 	if (!strncmp((char *)buffer.buffer, "ref: ", 5)) {
 		*symref = xmalloc(buffer.posn - 5);
-		strlcpy(*symref, (char *)buffer.buffer + 5, buffer.posn - 5);
+		memcpy(*symref, (char *)buffer.buffer + 5, buffer.posn - 6);
+		(*symref)[buffer.posn - 6] = '\0';
 	} else {
 		get_sha1_hex(buffer.buffer, sha1);
 	}
