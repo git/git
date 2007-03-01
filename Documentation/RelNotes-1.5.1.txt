@@ -50,7 +50,7 @@ Updates since v1.5.0
     LF at the end of lines.  Currently, which paths to consider
     'text' (i.e. be subjected to the autocrlf mechanism) is
     decided purely based on the contents, but the plan is to
-    allow users to explicitly override this heuristics based on
+    allow users to explicitly override this heuristic based on
     paths.
 
   - The behaviour of 'git-apply', when run in a subdirectory,

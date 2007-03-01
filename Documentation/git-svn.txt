@@ -405,7 +405,7 @@ Tracking and contributing to an entire Subversion-managed project
 # with the appropriate name):
 	git reset --hard remotes/trunk
 # You may only dcommit to one branch/tag/trunk at a time.  The usage
-# of dcommit/rebase/show-ignore should be teh same as above.
+# of dcommit/rebase/show-ignore should be the same as above.
 ------------------------------------------------------------------------
 
 REBASE VS. PULL/MERGE

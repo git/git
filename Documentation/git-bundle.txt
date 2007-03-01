@@ -19,7 +19,7 @@ DESCRIPTION
 Some workflows require that one or more branches of development on one
 machine be replicated on another machine, but the two machines cannot
 be directly connected so the interactive git protocols (git, ssh,
-rsync, http) cannot be used.  This command provides suport for
+rsync, http) cannot be used.  This command provides support for
 git-fetch and git-pull to operate by packaging objects and references
 in an archive at the originating machine, then importing those into
 another repository using gitlink:git-fetch[1] and gitlink:git-pull[1]
@@ -58,7 +58,7 @@ unbundle <file>::
        gitlink:git-fetch[1].
 
 [git-rev-list-args...]::
-       A list of arguments, accepatble to git-rev-parse and
+       A list of arguments, acceptable to git-rev-parse and
        git-rev-list, that specify the specific objects and references
        to transport.  For example, "master~10..master" causes the
        current master reference to be packaged along with all objects
@@ -70,7 +70,7 @@ unbundle <file>::
 [refname...]::
        A list of references used to limit the references reported as
        available. This is principally of use to git-fetch, which
-       expects to recieve only those references asked for and not
+       expects to receive only those references asked for and not
        necessarily everything in the pack (in this case, git-bundle is
        acting like gitlink:git-fetch-pack[1]).
 
@@ -87,7 +87,7 @@ specified explicitly (e.g., ^master~10), or implicitly (e.g.,
 master~10..master, master --since=10.days.ago).
 
 It is very important that the basis used be held by the destination.
-It is ok to err on the side of conservatism, causing the bundle file
+It is okay to err on the side of conservatism, causing the bundle file
 to contain objects already in the destination as these are ignored
 when unpacking at the destination.
 
