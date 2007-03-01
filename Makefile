@@ -443,8 +443,8 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_SVN_TESTS=YesPlease
 	NO_PERL_MAKEMAKER=YesPlease
 	COMPAT_CFLAGS += -DNO_ETC_PASSWD -DNO_ST_BLOCKS -DSTRIP_EXTENSION=\".exe\" -I compat
-	COMPAT_OBJS += compat/mingw.o compat/fnmatch.o
-	EXTLIBS += -lws2_32 -lregex
+	COMPAT_OBJS += compat/mingw.o compat/fnmatch.o compat/regex.o
+	EXTLIBS += -lws2_32
 	X = .exe
 	NOEXECTEMPL = .noexec
 endif
