@@ -346,6 +346,9 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 		    S_ISREG(newmode) && S_ISREG(oldmode) &&
 		    ((newmode ^ oldmode) == 0111))
 			newmode = oldmode;
+		else if (!has_symlinks &&
+		    S_ISREG(newmode) && S_ISLNK(oldmode))
+			newmode = oldmode;
 		diff_change(&revs->diffopt, oldmode, newmode,
 			    ce->sha1, (changed ? null_sha1 : ce->sha1),
 			    ce->name, NULL);

@@ -109,11 +109,11 @@ static int add_file_to_cache(const char *path)
 	ce->ce_flags = htons(namelen);
 	fill_stat_cache_info(ce, &st);
 
-	if (trust_executable_bit)
+	if (trust_executable_bit && has_symlinks)
 		ce->ce_mode = create_ce_mode(st.st_mode);
 	else {
-		/* If there is an existing entry, pick the mode bits
-		 * from it, otherwise assume unexecutable.
+		/* If there is an existing entry, pick the mode bits and type
+		 * from it, otherwise assume unexecutable regular file.
 		 */
 		struct cache_entry *ent;
 		int pos = cache_name_pos(path, namelen);

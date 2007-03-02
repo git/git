@@ -108,7 +108,10 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 }
 static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned int mode)
 {
-	extern int trust_executable_bit;
+	extern int trust_executable_bit, has_symlinks;
+	if (!has_symlinks && S_ISREG(mode) &&
+	    ce && S_ISLNK(ntohl(ce->ce_mode)))
+		return ce->ce_mode;
 	if (!trust_executable_bit && S_ISREG(mode)) {
 		if (ce && S_ISREG(ntohl(ce->ce_mode)))
 			return ce->ce_mode;
@@ -215,6 +218,7 @@ extern int delete_ref(const char *, unsigned char *sha1);
 /* Environment bits from configuration mechanism */
 extern int use_legacy_headers;
 extern int trust_executable_bit;
+extern int has_symlinks;
 extern int assume_unchanged;
 extern int prefer_symlink_refs;
 extern int log_all_ref_updates;

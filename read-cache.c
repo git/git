@@ -125,7 +125,9 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 			changed |= MODE_CHANGED;
 		break;
 	case S_IFLNK:
-		changed |= !S_ISLNK(st->st_mode) ? TYPE_CHANGED : 0;
+		if (!S_ISLNK(st->st_mode) &&
+		    (has_symlinks || !S_ISREG(st->st_mode)))
+			changed |= TYPE_CHANGED;
 		break;
 	default:
 		die("internal error: ce_mode is %o", ntohl(ce->ce_mode));
@@ -344,11 +346,11 @@ int add_file_to_index(const char *path, int verbose)
 	ce->ce_flags = htons(namelen);
 	fill_stat_cache_info(ce, &st);
 
-	if (trust_executable_bit)
+	if (trust_executable_bit && has_symlinks)
 		ce->ce_mode = create_ce_mode(st.st_mode);
 	else {
-		/* If there is an existing entry, pick the mode bits
-		 * from it, otherwise assume unexecutable.
+		/* If there is an existing entry, pick the mode bits and type
+		 * from it, otherwise assume unexecutable regular file.
 		 */
 		struct cache_entry *ent;
 		int pos = cache_name_pos(path, namelen);

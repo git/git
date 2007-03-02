@@ -2359,7 +2359,7 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	char *nbuf;
 	unsigned long nsize;
 
-	if (S_ISLNK(mode))
+	if (has_symlinks && S_ISLNK(mode))
 		/* Although buf:size is counted string, it also is NUL
 		 * terminated.
 		 */

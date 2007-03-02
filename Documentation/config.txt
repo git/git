@@ -117,6 +117,13 @@ core.fileMode::
 	the working copy are ignored; useful on broken filesystems like FAT.
 	See gitlink:git-update-index[1]. True by default.
 
+core.symlinks::
+	If false, symbolic links are checked out as small plain files that
+	contain the link text. gitlink:git-update-index[1] and
+	gitlink:git-add[1] will not change the recorded type to regular
+	file. Useful on filesystems like FAT that do not support
+	symbolic links. True by default.
+
 core.gitProxy::
 	A "proxy command" to execute (as 'command host port') instead
 	of establishing direct connection to the remote server when
