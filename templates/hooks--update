@@ -148,7 +148,7 @@ case "$refname_type" in
 			# This shows all log entries that are not already covered by
 			# another ref - i.e. commits that are now accessible from this
 			# ref that were previously not accessible
-			git-rev-parse --not --all | git-rev-list --stdin --pretty $newref
+			git log $newrev --not --all
 			echo $LOGEND
 		else
 			# oldrev is valid
@@ -165,7 +165,7 @@ case "$refname_type" in
 			baserev=$(git-merge-base $oldrev $newrev)
 
 			# Commit with a parent
-			for rev in $(git-rev-parse --not --all | git-rev-list --stdin $newrev ^$baserev)
+			for rev in $(git-rev-list $newrev --not $baserev --all)
 			do
 				revtype=$(git-cat-file -t "$rev")
 				echo "       via  $rev ($revtype)"
@@ -190,12 +190,11 @@ case "$refname_type" in
 			fi
 			echo ""
 			echo $LOGBEGIN
-			git-rev-parse --not --all |
-			git-rev-list --stdin --pretty $newrev ^$baserev
+			git log $newrev --not $baserev --all
 			echo $LOGEND
 			echo ""
 			echo "Diffstat:"
-			git-diff-tree --no-color --stat -M -C --find-copies-harder $newrev ^$baserev
+			git-diff-tree --no-color --stat -M -C --find-copies-harder $baserev..$newrev
 		fi
 		;;
 	"annotated tag")
