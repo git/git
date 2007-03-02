@@ -26,13 +26,13 @@ The options available are:
 
 --bcc::
 	Specify a "Bcc:" value for each email.
-
-	The --bcc option must be repeated for each user you want on the bcc list.
++
+The --bcc option must be repeated for each user you want on the bcc list.
 
 --cc::
 	Specify a starting "Cc:" value for each email.
-
-	The --cc option must be repeated for each user you want on the cc list.
++
+The --cc option must be repeated for each user you want on the cc list.
 
 --chain-reply-to, --no-chain-reply-to::
 	If this is set, each email will be sent as a reply to the previous
@@ -87,8 +87,8 @@ The options available are:
 	Specify the primary recipient of the emails generated.
 	Generally, this will be the upstream maintainer of the
 	project involved.
-
-	The --to option must be repeated for each user you want on the to list.
++
+The --to option must be repeated for each user you want on the to list.
 
 
 Author
