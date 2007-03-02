@@ -77,9 +77,53 @@ displayed in full, regardless of whether --abbrev or
 true parent commits, without taking grafts nor history
 simplification into account.
 
+	* 'format:'
++
+The 'format:' format allows you to specify which information
+you want to show. It works a little bit like printf format,
+with the notable exception that you get a newline with '%n'
+instead of '\n'.
+
+E.g, 'format:"The author of %h was %an, %ar%nThe title was >>%s<<"'
+would show something like this:
+
+The author of fe6e0ee was Junio C Hamano, 23 hours ago
+The title was >>t4119: test autocomputing -p<n> for traditional diff input.<<
+
+The placeholders are:
+
+- '%H': commit hash
+- '%h': abbreviated commit hash
+- '%T': tree hash
+- '%t': abbreviated tree hash
+- '%P': parent hashes
+- '%p': abbreviated parent hashes
+- '%an': author name
+- '%ae': author email
+- '%ad': author date
+- '%aD': author date, RFC2822 style
+- '%ar': author date, relative
+- '%at': author date, UNIX timestamp
+- '%cn': committer name
+- '%ce': committer email
+- '%cd': committer date
+- '%cD': committer date, RFC2822 style
+- '%cr': committer date, relative
+- '%ct': committer date, UNIX timestamp
+- '%e': encoding
+- '%s': subject
+- '%b': body
+- '%Cred': switch color to red
+- '%Cgreen': switch color to green
+- '%Cblue': switch color to blue
+- '%Creset': reset color
+- '%n': newline
+
+
 --encoding[=<encoding>]::
 	The commit objects record the encoding used for the log message
 	in their encoding header; this option can be used to tell the
 	command to re-code the commit log message in the encoding
 	preferred by the user.  For non plumbing commands this
 	defaults to UTF-8.
+

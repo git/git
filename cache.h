@@ -327,7 +327,8 @@ extern void *read_object_with_reference(const unsigned char *sha1,
 					unsigned long *size,
 					unsigned char *sha1_ret);
 
-const char *show_date(unsigned long time, int timezone, int relative);
+enum date_mode { DATE_NORMAL = 0, DATE_RELATIVE, DATE_SHORT };
+const char *show_date(unsigned long time, int timezone, enum date_mode mode);
 const char *show_rfc2822_date(unsigned long time, int timezone);
 int parse_date(const char *date, char *buf, int bufsize);
 void datestamp(char *buf, int bufsize);

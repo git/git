@@ -235,11 +235,18 @@ static void print_spaces(int count)
 /*
  * Wrap the text, if necessary. The variable indent is the indent for the
  * first line, indent2 is the indent for all other lines.
+ * If indent is negative, assume that already -indent columns have been
+ * consumed (and no extra indent is necessary for the first line).
  */
-void print_wrapped_text(const char *text, int indent, int indent2, int width)
+int print_wrapped_text(const char *text, int indent, int indent2, int width)
 {
 	int w = indent, assume_utf8 = is_utf8(text);
 	const char *bol = text, *space = NULL;
+
+	if (indent < 0) {
+		w = -indent;
+		space = text;
+	}
 
 	for (;;) {
 		char c = *text;
@@ -251,10 +258,9 @@ void print_wrapped_text(const char *text, int indent, int indent2, int width)
 				else
 					print_spaces(indent);
 				fwrite(start, text - start, 1, stdout);
-				if (!c) {
-					putchar('\n');
-					return;
-				} else if (c == '\t')
+				if (!c)
+					return w;
+				else if (c == '\t')
 					w |= 0x07;
 				space = text;
 				w++;
@@ -275,6 +281,7 @@ void print_wrapped_text(const char *text, int indent, int indent2, int width)
 			text++;
 		}
 	}
+	return w;
 }
 
 int is_encoding_utf8(const char *name)
