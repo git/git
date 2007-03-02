@@ -64,7 +64,7 @@ case "$refname","$newrev_type" in
 		# un-annotated tag
 		refname_type="tag"
 		short_refname=${refname##refs/tags/}
-		if [ $allowunannotated != "true" ]; then
+		if [ "$allowunannotated" != "true" ]; then
 			echo "*** The un-annotated tag, $short_refname is not allowed in this repository" >&2
 			echo "*** Use 'git tag [ -a | -s ]' for tags you want to propagate." >&2
 			exit 1
