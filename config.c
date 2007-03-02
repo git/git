@@ -854,9 +854,37 @@ write_err_out:
 
 }
 
+static int section_name_match (const char *buf, const char *name)
+{
+	int i = 0, j = 0, dot = 0;
+	for (; buf[i] && buf[i] != ']'; i++) {
+		if (!dot && isspace(buf[i])) {
+			dot = 1;
+			if (name[j++] != '.')
+				break;
+			for (i++; isspace(buf[i]); i++)
+				; /* do nothing */
+			if (buf[i] != '"')
+				break;
+			continue;
+		}
+		if (buf[i] == '\\' && dot)
+			i++;
+		else if (buf[i] == '"' && dot) {
+			for (i++; isspace(buf[i]); i++)
+				; /* do_nothing */
+			break;
+		}
+		if (buf[i] != name[j++])
+			break;
+	}
+	return (buf[i] == ']' && name[j] == 0);
+}
+
+/* if new_name == NULL, the section is removed instead */
 int git_config_rename_section(const char *old_name, const char *new_name)
 {
-	int ret = 0;
+	int ret = 0, remove = 0;
 	char *config_filename;
 	struct lock_file *lock = xcalloc(sizeof(struct lock_file), 1);
 	int out_fd;
@@ -887,31 +915,12 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 			; /* do nothing */
 		if (buf[i] == '[') {
 			/* it's a section */
-			int j = 0, dot = 0;
-			for (i++; buf[i] && buf[i] != ']'; i++) {
-				if (!dot && isspace(buf[i])) {
-					dot = 1;
-					if (old_name[j++] != '.')
-						break;
-					for (i++; isspace(buf[i]); i++)
-						; /* do nothing */
-					if (buf[i] != '"')
-						break;
+			if (section_name_match (&buf[i+1], old_name)) {
+				ret++;
+				if (new_name == NULL) {
+					remove = 1;
 					continue;
 				}
-				if (buf[i] == '\\' && dot)
-					i++;
-				else if (buf[i] == '"' && dot) {
-					for (i++; isspace(buf[i]); i++)
-						; /* do_nothing */
-					break;
-				}
-				if (buf[i] != old_name[j++])
-					break;
-			}
-			if (buf[i] == ']' && old_name[j] == 0) {
-				/* old_name matches */
-				ret++;
 				store.baselen = strlen(new_name);
 				if (!store_write_section(out_fd, new_name)) {
 					ret = write_error();
@@ -919,7 +928,10 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 				}
 				continue;
 			}
+			remove = 0;
 		}
+		if (remove)
+			continue;
 		length = strlen(buf);
 		if (write_in_full(out_fd, buf, length) != length) {
 			ret = write_error();
