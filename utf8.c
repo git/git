@@ -268,7 +268,7 @@ int print_wrapped_text(const char *text, int indent, int indent2, int width)
 			}
 			else {
 				putchar('\n');
-				text = bol = space + 1;
+				text = bol = space + isspace(*space);
 				space = NULL;
 				w = indent = indent2;
 			}
