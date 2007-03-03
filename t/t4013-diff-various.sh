@@ -238,6 +238,9 @@ format-patch --stdout initial..master
 format-patch --attach --stdout initial..side
 format-patch --attach --stdout initial..master^
 format-patch --attach --stdout initial..master
+format-patch --inline --stdout initial..side
+format-patch --inline --stdout initial..master^
+format-patch --inline --stdout initial..master
 
 diff --abbrev initial..side
 diff -r initial..side

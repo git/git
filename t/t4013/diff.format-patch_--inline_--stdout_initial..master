@@ -1,4 +1,4 @@
-$ git format-patch --attach --stdout initial..master
+$ git format-patch --inline --stdout initial..master
 From 1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44 Mon Sep 17 00:00:00 2001
 From: A U Thor <author@example.com>
 Date: Mon, 26 Jun 2006 00:01:00 +0000
@@ -24,7 +24,7 @@ This is the second commit.
 Content-Type: text/x-patch;
  name="1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44.diff"
 Content-Transfer-Encoding: 8bit
-Content-Disposition: attachment;
+Content-Disposition: inline;
  filename="1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44.diff"
 
 diff --git a/dir/sub b/dir/sub
@@ -83,7 +83,7 @@ Content-Transfer-Encoding: 8bit
 Content-Type: text/x-patch;
  name="9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0.diff"
 Content-Transfer-Encoding: 8bit
-Content-Disposition: attachment;
+Content-Disposition: inline;
  filename="9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0.diff"
 
 diff --git a/dir/sub b/dir/sub
@@ -133,7 +133,7 @@ Content-Transfer-Encoding: 8bit
 Content-Type: text/x-patch;
  name="c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a.diff"
 Content-Transfer-Encoding: 8bit
-Content-Disposition: attachment;
+Content-Disposition: inline;
  filename="c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a.diff"
 
 diff --git a/dir/sub b/dir/sub

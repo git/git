@@ -482,10 +482,22 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			memcpy(add_signoff, committer, endpos - committer + 1);
 			add_signoff[endpos - committer + 1] = 0;
 		}
-		else if (!strcmp(argv[i], "--attach"))
+		else if (!strcmp(argv[i], "--attach")) {
 			rev.mime_boundary = git_version_string;
-		else if (!prefixcmp(argv[i], "--attach="))
+			rev.no_inline = 1;
+		}
+		else if (!prefixcmp(argv[i], "--attach=")) {
 			rev.mime_boundary = argv[i] + 9;
+			rev.no_inline = 1;
+		}
+		else if (!strcmp(argv[i], "--inline")) {
+			rev.mime_boundary = git_version_string;
+			rev.no_inline = 0;
+		}
+		else if (!prefixcmp(argv[i], "--inline=")) {
+			rev.mime_boundary = argv[i] + 9;
+			rev.no_inline = 0;
+		}
 		else if (!strcmp(argv[i], "--ignore-if-in-upstream"))
 			ignore_if_in_upstream = 1;
 		else if (!strcmp(argv[i], "--thread"))

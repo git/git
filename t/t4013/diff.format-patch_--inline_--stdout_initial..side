@@ -1,4 +1,4 @@
-$ git format-patch --attach --stdout initial..side
+$ git format-patch --inline --stdout initial..side
 From c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a Mon Sep 17 00:00:00 2001
 From: A U Thor <author@example.com>
 Date: Mon, 26 Jun 2006 00:03:00 +0000
@@ -22,7 +22,7 @@ Content-Transfer-Encoding: 8bit
 Content-Type: text/x-patch;
  name="c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a.diff"
 Content-Transfer-Encoding: 8bit
-Content-Disposition: attachment;
+Content-Disposition: inline;
  filename="c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a.diff"
 
 diff --git a/dir/sub b/dir/sub
