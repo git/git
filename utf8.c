@@ -293,11 +293,17 @@ int is_encoding_utf8(const char *name)
  * with iconv.  If the conversion fails, returns NULL.
  */
 #ifndef NO_ICONV
+#ifdef OLD_ICONV
+	typedef const char * iconv_ibp;
+#else
+	typedef char * iconv_ibp;
+#endif
 char *reencode_string(const char *in, const char *out_encoding, const char *in_encoding)
 {
 	iconv_t conv;
 	size_t insz, outsz, outalloc;
-	char *out, *outpos, *cp;
+	char *out, *outpos;
+	iconv_ibp cp;
 
 	if (!in_encoding)
 		return NULL;
@@ -309,7 +315,7 @@ char *reencode_string(const char *in, const char *out_encoding, const char *in_e
 	outalloc = outsz + 1; /* for terminating NUL */
 	out = xmalloc(outalloc);
 	outpos = out;
-	cp = (char *)in;
+	cp = (iconv_ibp)in;
 
 	while (1) {
 		size_t cnt = iconv(conv, &cp, &insz, &outpos, &outsz);
