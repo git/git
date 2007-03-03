@@ -8,7 +8,8 @@ git-branch - List, create, or delete branches
 SYNOPSIS
 --------
 [verse]
-'git-branch' [--color | --no-color] [-r | -a] [-v [--abbrev=<length>]]
+'git-branch' [--color | --no-color] [-r | -a]
+	   [-v [--abbrev=<length> | --no-abbrev]]
 'git-branch' [-l] [-f] <branchname> [<start-point>]
 'git-branch' (-m | -M) [<oldbranch>] <newbranch>
 'git-branch' (-d | -D) [-r] <branchname>...
@@ -79,6 +80,9 @@ OPTIONS
 --abbrev=<length>::
 	Alter minimum display length for sha1 in output listing,
 	default value is 7.
+
+--no-abbrev::
+	Display the full sha1s in output listing rather than abbreviating them.
 
 <branchname>::
 	The name of the branch to create or delete.
