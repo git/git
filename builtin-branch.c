@@ -12,7 +12,7 @@
 #include "builtin.h"
 
 static const char builtin_branch_usage[] =
-  "git-branch [-r] (-d | -D) <branchname> | [-l] [-f] <branchname> [<start-point>] | (-m | -M) [<oldbranch>] <newbranch> | [--color | --no-color] [-r | -a] [-v [--abbrev=<length>]]";
+  "git-branch [-r] (-d | -D) <branchname> | [-l] [-f] <branchname> [<start-point>] | (-m | -M) [<oldbranch>] <newbranch> | [--color | --no-color] [-r | -a] [-v [--abbrev=<length> | --no-abbrev]]";
 
 #define REF_UNKNOWN_TYPE    0x00
 #define REF_LOCAL_BRANCH    0x01
@@ -446,8 +446,16 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			reflog = 1;
 			continue;
 		}
+		if (!prefixcmp(arg, "--no-abbrev")) {
+			abbrev = 0;
+			continue;
+		}
 		if (!prefixcmp(arg, "--abbrev=")) {
-			abbrev = atoi(arg+9);
+			abbrev = strtoul(arg + 9, NULL, 10);
+			if (abbrev < MINIMUM_ABBREV)
+				abbrev = MINIMUM_ABBREV;
+			else if (abbrev > 40)
+				abbrev = 40;
 			continue;
 		}
 		if (!strcmp(arg, "-v")) {
