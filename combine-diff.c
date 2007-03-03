@@ -699,8 +699,18 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			 !fstat(fd, &st)) {
 			size_t len = st.st_size;
 			size_t sz = 0;
+			int is_file, i;
 
 			elem->mode = canon_mode(st.st_mode);
+			/* if symlinks don't work, assume symlink if all parents
+			 * are symlinks
+			 */
+			is_file = has_symlinks;
+			for (i = 0; !is_file && i < num_parent; i++)
+				is_file = !S_ISLNK(elem->parent[i].mode);
+			if (!is_file)
+				elem->mode = canon_mode(S_IFLNK);
+
 			result_size = len;
 			result = xmalloc(len + 1);
 			while (sz < len) {
