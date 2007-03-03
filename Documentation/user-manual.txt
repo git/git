@@ -391,15 +391,20 @@ index 8be626f..d7aac9d 100644
 As you can see, a commit shows who made the latest change, what they
 did, and why.
 
-Every commit has a 40-hexdigit id, sometimes called the "object name"
-or the "SHA1 id", shown on the first line of the "git show" output.
-You can usually refer to a commit by a shorter name, such as a tag or a
-branch name, but this longer name can also be useful.  Most
-importantly, it is a globally unique name for this commit: so if you
-tell somebody else the object name (for example in email), then you are
-guaranteed that name will refer to the same commit in their repository
-that it does in yours (assuming their repository has that commit at
-all).
+Every commit has a 40-hexdigit id, sometimes called the "object name" or the
+"SHA1 id", shown on the first line of the "git show" output.  You can usually
+refer to a commit by a shorter name, such as a tag or a branch name, but this
+longer name can also be useful.  Most importantly, it is a globally unique
+name for this commit: so if you tell somebody else the object name (for
+example in email), then you are guaranteed that name will refer to the same
+commit in their repository that it does in yours (assuming their repository
+has that commit at all).  Since the object name is computed as a hash over the
+contents of the commit, you are guaranteed that the commit can never change
+without its name also changing.
+
+In fact, in <<git-internals>> we shall see that everything stored in git
+history, including file data and directory contents, is stored in an object
+with a name that is a hash of its contents.
 
 Understanding history: commits, parents, and reachability
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -2155,6 +2160,7 @@ See gitlink:git-config[1] for more details on the configuration
 options mentioned above.
 
 
+[[git-internals]]
 Git internals
 =============
 
