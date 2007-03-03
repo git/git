@@ -1333,6 +1333,7 @@ with the changes to be reverted, then you will be asked to fix
 conflicts manually, just as in the case of <<resolving-a-merge,
 resolving a merge>>.
 
+[[fixing-a-mistake-by-editing-history]]
 Fixing a mistake by editing history
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1934,6 +1935,51 @@ return mywork to the state it had before you started the rebase:
 -------------------------------------------------
 $ git rebase --abort
 -------------------------------------------------
+
+Modifying a single commit
+-------------------------
+
+We saw in <<fixing-a-mistake-by-editing-history>> that you can replace the
+most recent commit using
+
+-------------------------------------------------
+$ git commit --amend
+-------------------------------------------------
+
+which will replace the old commit by a new commit incorporating your
+changes, giving you a chance to edit the old commit message first.
+
+You can also use a combination of this and gitlink:git-rebase[1] to edit
+commits further back in your history.  First, tag the problematic commit with
+
+-------------------------------------------------
+$ git tag bad mywork~5
+-------------------------------------------------
+
+(Either gitk or git-log may be useful for finding the commit.)
+
+Then check out a new branch at that commit, edit it, and rebase the rest of
+the series on top of it:
+
+-------------------------------------------------
+$ git checkout -b TMP bad
+$ # make changes here and update the index
+$ git commit --amend
+$ git rebase --onto TMP bad mywork
+-------------------------------------------------
+
+When you're done, you'll be left with mywork checked out, with the top patches
+on mywork reapplied on top of the modified commit you created in TMP.  You can
+then clean up with
+
+-------------------------------------------------
+$ git branch -d TMP
+$ git tag -d bad
+-------------------------------------------------
+
+Note that the immutable nature of git history means that you haven't really
+"modified" existing commits; instead, you have replaced the old commits with
+new commits having new object names.
 
 Reordering or selecting from a patch series
 -------------------------------------------
