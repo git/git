@@ -323,9 +323,8 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 
 	if (merge_recursive(sha1_to_hex(base->object.sha1),
 				sha1_to_hex(head), "HEAD",
-				sha1_to_hex(next->object.sha1), oneline))
-		exit(1);
-	if (write_tree(head, 0, NULL)) {
+				sha1_to_hex(next->object.sha1), oneline) ||
+			write_tree(head, 0, NULL)) {
 		const char *target = git_path("MERGE_MSG");
 		add_to_msg("\nConflicts:\n\n");
 		read_cache();
@@ -350,16 +349,10 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 			"mark the corrected paths with 'git-add <paths>'\n"
 			"and commit the result.\n", me);
 		if (action == CHERRY_PICK) {
-			fprintf(stderr, "You may choose to use the following "
-				"when making the commit:\n"
-				"GIT_AUTHOR_NAME=\"%s\"\n",
-				getenv("GIT_AUTHOR_NAME"));
-			fprintf(stderr, "GIT_AUTHOR_EMAIL=\"%s\"\n",
-				getenv("GIT_AUTHOR_EMAIL"));
-			fprintf(stderr, "GIT_AUTHOR_DATE=\"%s\"\n"
-				"export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL "
-				"GIT_AUTHOR_DATE\n",
-				getenv("GIT_AUTHOR_DATE"));
+			fprintf(stderr, "When commiting, use the option "
+				"'-c %s' to retain authorship and message.\n",
+				find_unique_abbrev(commit->object.sha1,
+					DEFAULT_ABBREV));
 		}
 		exit(1);
 	}
