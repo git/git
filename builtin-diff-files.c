@@ -23,7 +23,10 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 	git_config(git_default_config); /* no "diff" UI options */
 	rev.abbrev = 0;
 
-	argc = setup_revisions(argc, argv, &rev, NULL);
+	if (!setup_diff_no_index(&rev, argc, argv, nongit, prefix))
+		argc = 0;
+	else
+		argc = setup_revisions(argc, argv, &rev, NULL);
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_RAW;
 	return run_diff_files_cmd(&rev, argc, argv);
