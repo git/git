@@ -73,6 +73,11 @@ DAG::
 	objects is acyclic (there is no chain which begins and ends with the
 	same object).
 
+dangling object::
+	An unreachable object which is not reachable even from other
+	unreachable objects; a dangling object has no references to it
+	from any reference or object in the repository.
+
 dircache::
 	You are *waaaaay* behind.
 
@@ -349,6 +354,10 @@ tag::
 
 unmerged index::
 	An index which contains unmerged index entries.
+
+unreachable object::
+	An object which is not reachable from a branch, tag, or any
+	other reference.
 
 working tree::
 	The set of files and directories currently being worked on,
