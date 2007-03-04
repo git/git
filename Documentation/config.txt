@@ -341,6 +341,11 @@ format.headers::
 	Additional email headers to include in a patch to be submitted
 	by mail.  See gitlink:git-format-patch[1].
 
+format.suffix::
+	The default for format-patch is to output files with the suffix
+	`.patch`. Use this variable to change that suffix (make sure to
+	include the dot if you want it).
+
 gc.packrefs::
 	`git gc` does not run `git pack-refs` in a bare repository by
 	default so that older dumb-transport clients can still fetch

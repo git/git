@@ -252,8 +252,6 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 
 	memset(&ar, 0, sizeof(ar));
 	tree_idx = parse_archive_args(argc, argv, &ar);
-	if (prefix == NULL)
-		prefix = setup_git_directory();
 
 	argv += tree_idx;
 	parse_treeish_arg(argv, &ar.args, prefix);

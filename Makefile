@@ -89,6 +89,9 @@ all::
 #
 # Define NO_ICONV if your libc does not properly support iconv.
 #
+# Define OLD_ICONV if your library has an old iconv(), where the second
+# (input buffer pointer) parameter is declared with type (const char **).
+#
 # Define NO_R_TO_GCC if your gcc does not like "-R/path/lib" that
 # tells runtime paths to dynamic libraries; "-Wl,-rpath=/path/lib"
 # is used instead.
@@ -378,7 +381,6 @@ ifeq ($(uname_O),Cygwin)
 	NO_STRCASESTR = YesPlease
 	NO_SYMLINK_HEAD = YesPlease
 	NEEDS_LIBICONV = YesPlease
-	NO_C99_FORMAT = YesPlease
 	NO_FAST_WORKING_DIRECTORY = UnfortunatelyYes
 	NO_TRUSTABLE_FILEMODE = UnfortunatelyYes
 	# There are conflicting reports about this.
@@ -574,6 +576,10 @@ endif
 
 ifdef NO_ICONV
 	BASIC_CFLAGS += -DNO_ICONV
+endif
+
+ifdef OLD_ICONV
+	BASIC_CFLAGS += -DOLD_ICONV
 endif
 
 ifdef PPC_SHA1

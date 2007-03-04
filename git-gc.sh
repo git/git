@@ -4,7 +4,7 @@
 #
 # Cleanup unreachable files and optimize the repository.
 
-USAGE='git-gc [--prune]'
+USAGE='[--prune]'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 
