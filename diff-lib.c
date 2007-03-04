@@ -38,7 +38,7 @@ static int queue_diff(struct diff_options *o,
 
 	if (name1) {
 		if (!strcmp(name1, "-"))
-			mode1 = 0644;
+			mode1 = ntohl(create_ce_mode(0666));
 		else if (stat(name1, &st))
 			return error("Could not access '%s'", name1);
 		else
@@ -46,7 +46,7 @@ static int queue_diff(struct diff_options *o,
 	}
 	if (name2) {
 		if (!strcmp(name2, "-"))
-			mode2 = 0644;
+			mode2 = ntohl(create_ce_mode(0666));
 		else if (stat(name2, &st))
 			return error("Could not access '%s'", name2);
 		else
@@ -260,9 +260,15 @@ int setup_diff_no_index(struct rev_info *revs,
 
 		revs->diffopt.paths = xcalloc(2, sizeof(char*));
 		for (i = 0; i < 2; i++) {
-			const char *p;
-			p = prefix_filename(prefix, len, argv[argc - 2 + i]);
-			revs->diffopt.paths[i] = xstrdup(p);
+			const char *p = argv[argc - 2 + i];
+			/*
+			 * stdin should be spelled as '-'; if you have
+			 * path that is '-', spell it as ./-.
+			 */
+			p = (strcmp(p, "-")
+			     ? xstrdup(prefix_filename(prefix, len, p))
+			     : p);
+			revs->diffopt.paths[i] = p;
 		}
 	}
 	else

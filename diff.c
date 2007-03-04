@@ -1364,6 +1364,32 @@ static struct sha1_size_cache *locate_size_cache(unsigned char *sha1,
 	return e;
 }
 
+static int populate_from_stdin(struct diff_filespec *s)
+{
+#define INCREMENT 1024
+	char *buf;
+	unsigned long size;
+	int got;
+
+	size = 0;
+	buf = NULL;
+	while (1) {
+		buf = xrealloc(buf, size + INCREMENT);
+		got = xread(0, buf + size, INCREMENT);
+		if (!got)
+			break; /* EOF */
+		if (got < 0)
+			return error("error while reading from stdin %s",
+				     strerror(errno));
+		size += got;
+	}
+	s->should_munmap = 0;
+	s->data = buf;
+	s->size = size;
+	s->should_free = 1;
+	return 0;
+}
+
 /*
  * While doing rename detection and pickaxe operation, we may need to
  * grab the data for the blob (or file) for our own in-core comparison.
@@ -1389,22 +1415,9 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		char *buf;
 		unsigned long size;
 
-		if (!strcmp(s->path, "-")) {
-#define INCREMENT 1024
-			int i = INCREMENT;
-			size = 0;
-			buf = NULL;
-			while (i == INCREMENT) {
-				buf = xrealloc(buf, size + INCREMENT);
-				i = xread(0, buf + size, INCREMENT);
-				size += i;
-			}
-			s->should_munmap = 0;
-			s->data = buf;
-			s->size = size;
-			s->should_free = 1;
-			return 0;
-		}
+		if (!strcmp(s->path, "-"))
+			return populate_from_stdin(s);
+
 		if (lstat(s->path, &st) < 0) {
 			if (errno == ENOENT) {
 			err_empty:
