@@ -248,7 +248,19 @@ int setup_diff_no_index(struct rev_info *revs,
 				die("invalid diff option/value: %s", argv[i]);
 			i += j;
 		}
-	revs->diffopt.paths = argv + argc - 2;
+
+	if (prefix) {
+		int len = strlen(prefix);
+
+		revs->diffopt.paths = xcalloc(2, sizeof(char*));
+		for (i = 0; i < 2; i++) {
+			const char *p;
+			p = prefix_filename(prefix, len, argv[argc - 2 + i]);
+			revs->diffopt.paths[i] = xstrdup(p);
+		}
+	}
+	else
+		revs->diffopt.paths = argv + argc - 2;
 	revs->diffopt.nr_paths = 2;
 	revs->max_count = -2;
 	return 0;
