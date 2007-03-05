@@ -109,7 +109,7 @@ sure it is in your path.  Then cd to a checked out CVS working directory
 of the project you are interested in and run gitlink:git-cvsimport[1]:
 
 -------------------------------------------
-$ git cvsimport -C <destination>
+$ git cvsimport -C <destination> <module>
 -------------------------------------------
 
 This puts a git archive of the named CVS module in the directory
