@@ -1,0 +1,36 @@
+#!/bin/sh
+
+tmp=.git/summary-$$
+trap 'rm -f $tmp-*' 0
+
+since="$1"
+until="$2"
+
+git-rev-list --no-merges --since="$1" --until="$2" master >"$tmp-0.txt"
+top=$(head -n 1 "$tmp-0.txt")
+bottom=$(tail -n 1 "$tmp-0.txt")
+
+num_patches=$(git rev-list --no-merges $bottom..$top | wc -l)
+git shortlog -s -n --no-merges $bottom..$top >"$tmp-0.txt"
+num_contrib=$(wc -l <"$tmp-0.txt")
+
+summary=$(git diff --stat -M $bottom..$top | tail -n 1)
+num_files=$(expr "$summary" : ' *\([1-9][0-9]*\) files changed')
+num_added=$(expr "$summary" : '.*changed, \([1-9][0-9]*\) insertions')
+num_deleted=$(expr "$summary" : '.*, \([1-9][0-9]*\) deletions')
+
+cat <<EOF
+During the period of $since .. $until:
+
+	Number of contributors  : $num_contrib
+	Number of change sets   : $num_patches
+	Number of changed files : $num_files
+	Number of added lines   : $num_added
+	Number of deleted lines : $num_deleted
+
+Changes during this period are as follows:
+
+EOF
+
+git shortlog --no-merges $bottom..$top
+
