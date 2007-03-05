@@ -22,6 +22,9 @@ Updates since v1.5.0
   - "git diff --no-index pathA pathB" can be used as diff
     replacement with git specific enhancements.
 
+  - "git diff --pretty=format:<string>" to allow more flexible
+    custom log output.
+
   - "git name-rev" learned --refs=<pattern>, to limit the tags
     used for naming the given revisions only to the ones
     matching the given pattern.
@@ -35,6 +38,10 @@ Updates since v1.5.0
 
   - "git bundle" can help sneaker-netting your changes between
     repositories.
+
+  - A new configuration "core.symlinks" can be used to disable
+    symlinks on filesystems that do not support them; they are
+    checked out as regular files instead.
 
 
 * Updated behaviour of existing commands.
@@ -89,6 +96,9 @@ Updates since v1.5.0
 
   - "git status" in a read-only repository got a bit saner.
 
+  - "git fetch" (hence "git clone" and "git pull") are less
+    noisy when the output does not go to tty.
+
 * Hooks
 
   - The sample update hook to show how to send out notification
@@ -98,7 +108,7 @@ Updates since v1.5.0
 
 --
 exec >/var/tmp/1
-O=v1.5.0.2-259-g16d5315
+O=v1.5.0.3-268-g3ddad98
 echo O=`git describe master`
 git shortlog --no-merges $O..master ^maint
 
