@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Linus Torvalds
 # Copyright (c) 2006 Junio C Hamano
 
-USAGE='[-a] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit> | --amend] [-u] [-e] [--author <author>] [[-i | -o] <path>...]'
+USAGE='[-a | --interactive] [-s] [-v] [--no-verify] [-m <message> | -F <logfile> | (-C|-c) <commit> | --amend] [-u] [-e] [--author <author>] [[-i | -o] <path>...]'
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
 require_work_tree
@@ -71,6 +71,7 @@ trap '
 
 all=
 also=
+interactive=
 only=
 logfile=
 use_commit=
@@ -129,6 +130,11 @@ do
 		;;
 	-i|--i|--in|--inc|--incl|--inclu|--includ|--include)
 		also=t
+		shift
+		;;
+	--int|--inte|--inter|--intera|--interac|--interact|--interacti|\
+	--interactiv|--interactive)
+		interactive=t
 		shift
 		;;
 	-o|--o|--on|--onl|--only)
@@ -304,12 +310,14 @@ case "$#,$also,$only,$amend" in
 	;;
 esac
 unset only
-case "$all,$also,$#" in
-t,t,*)
-	die "Cannot use -a and -i at the same time." ;;
+case "$all,$interactive,$also,$#" in
+*t,*t,*)
+	die "Cannot use -a, --interactive or -i at the same time." ;;
 t,,[1-9]*)
 	die "Paths with -a does not make sense." ;;
-,t,0)
+,t,[1-9]*)
+	die "Paths with --interactive does not make sense." ;;
+,,t,0)
 	die "No paths with -i does not make sense." ;;
 esac
 
@@ -344,6 +352,9 @@ t,)
 	) || exit
 	;;
 ,)
+	if test "$interactive" = t; then
+		git add --interactive || exit
+	fi
 	case "$#" in
 	0)
 		;; # commit as-is

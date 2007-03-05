@@ -8,8 +8,9 @@ git-commit - Record changes to the repository
 SYNOPSIS
 --------
 [verse]
-'git-commit' [-a] [-s] [-v] [(-c | -C) <commit> | -F <file> | -m <msg> |
-	    --amend] [--no-verify] [-e] [--author <author>]
+'git-commit' [-a | --interactive] [-s] [-v]
+	   [(-c | -C) <commit> | -F <file> | -m <msg> | --amend]
+	   [--no-verify] [-e] [--author <author>]
 	   [--] [[-i | -o ]<file>...]
 
 DESCRIPTION
@@ -34,6 +35,10 @@ methods:
    changes from all known files i.e. files that have already been committed
    before, and to automatically "rm" files that have been
    removed from the working tree, and perform the actual commit.
+
+5. by using the --interactive switch with the 'commit' command to decide one
+   by one which files should be part of the commit, before finalizing the
+   operation.  Currently, this is done by invoking `git-add --interactive`.
 
 The gitlink:git-status[1] command can be used to obtain a
 summary of what is included by any of the above for the next
