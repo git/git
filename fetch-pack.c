@@ -15,8 +15,9 @@ static int quiet;
 static int verbose;
 static int fetch_all;
 static int depth;
+static int no_progress;
 static const char fetch_pack_usage[] =
-"git-fetch-pack [--all] [--quiet|-q] [--keep|-k] [--thin] [--upload-pack=<git-upload-pack>] [--depth=<n>] [-v] [<host>:]<directory> [<refs>...]";
+"git-fetch-pack [--all] [--quiet|-q] [--keep|-k] [--thin] [--upload-pack=<git-upload-pack>] [--depth=<n>] [--no-progress] [-v] [<host>:]<directory> [<refs>...]";
 static const char *uploadpack = "git-upload-pack";
 
 #define COMPLETE	(1U << 0)
@@ -173,12 +174,13 @@ static int find_common(int fd[2], unsigned char *result_sha1,
 		}
 
 		if (!fetching)
-			packet_write(fd[1], "want %s%s%s%s%s%s\n",
+			packet_write(fd[1], "want %s%s%s%s%s%s%s\n",
 				     sha1_to_hex(remote),
 				     (multi_ack ? " multi_ack" : ""),
 				     (use_sideband == 2 ? " side-band-64k" : ""),
 				     (use_sideband == 1 ? " side-band" : ""),
 				     (use_thin_pack ? " thin-pack" : ""),
+				     (no_progress ? " no-progress" : ""),
 				     " ofs-delta");
 		else
 			packet_write(fd[1], "want %s\n", sha1_to_hex(remote));
@@ -521,7 +523,7 @@ static int get_pack(int xd[2])
 	if (do_keep) {
 		*av++ = "index-pack";
 		*av++ = "--stdin";
-		if (!quiet)
+		if (!quiet && !no_progress)
 			*av++ = "-v";
 		if (use_thin_pack)
 			*av++ = "--fix-thin";
@@ -716,6 +718,10 @@ int main(int argc, char **argv)
 				depth = strtol(arg + 8, NULL, 0);
 				if (stat(git_path("shallow"), &st))
 					st.st_mtime = 0;
+				continue;
+			}
+			if (!strcmp("--no-progress", arg)) {
+				no_progress = 1;
 				continue;
 			}
 			usage(fetch_pack_usage);

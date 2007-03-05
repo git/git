@@ -26,7 +26,7 @@ static const char upload_pack_usage[] = "git-upload-pack [--strict] [--timeout=n
 static unsigned long oldest_have;
 
 static int multi_ack, nr_our_refs;
-static int use_thin_pack, use_ofs_delta;
+static int use_thin_pack, use_ofs_delta, no_progress;
 static struct object_array have_obj;
 static struct object_array want_obj;
 static unsigned int timeout;
@@ -164,6 +164,9 @@ static void create_pack_file(void)
 		die("git-upload-pack: unable to fork git-pack-objects");
 	}
 	if (!pid_pack_objects) {
+		const char *argv[10];
+		int i = 0;
+
 		dup2(lp_pipe[0], 0);
 		dup2(pu_pipe[1], 1);
 		dup2(pe_pipe[1], 2);
@@ -174,9 +177,16 @@ static void create_pack_file(void)
 		close(pu_pipe[1]);
 		close(pe_pipe[0]);
 		close(pe_pipe[1]);
-		execl_git_cmd("pack-objects", "--stdout", "--progress",
-			      use_ofs_delta ? "--delta-base-offset" : NULL,
-			      NULL);
+
+		argv[i++] = "pack-objects";
+		argv[i++] = "--stdout";
+		if (!no_progress)
+			argv[i++] = "--progress";
+		if (use_ofs_delta)
+			argv[i++] = "--delta-base-offset";
+		argv[i++] = NULL;
+
+		execv_git_cmd(argv);
 		kill(pid_rev_list, SIGKILL);
 		die("git-upload-pack: unable to exec git-pack-objects");
 	}
@@ -537,6 +547,8 @@ static void receive_needs(void)
 			use_sideband = LARGE_PACKET_MAX;
 		else if (strstr(line+45, "side-band"))
 			use_sideband = DEFAULT_PACKET_MAX;
+		if (strstr(line+45, "no-progress"))
+			no_progress = 1;
 
 		/* We have sent all our refs already, and the other end
 		 * should have chosen out of them; otherwise they are
@@ -605,7 +617,7 @@ static void receive_needs(void)
 static int send_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
 	static const char *capabilities = "multi_ack thin-pack side-band"
-		" side-band-64k ofs-delta shallow";
+		" side-band-64k ofs-delta shallow no-progress";
 	struct object *o = parse_object(sha1);
 
 	if (!o)
