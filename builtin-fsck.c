@@ -18,6 +18,9 @@ static int check_full;
 static int check_strict;
 static int keep_cache_objects;
 static unsigned char head_sha1[20];
+static int errors_found;
+#define ERROR_OBJECT 01
+#define ERROR_REACHABLE 02
 
 #ifdef NO_D_INO_IN_DIRENT
 #define SORT_DIRENT 0
@@ -40,6 +43,7 @@ static int objerror(struct object *obj, const char *err, ...)
 {
 	va_list params;
 	va_start(params, err);
+	errors_found |= ERROR_OBJECT;
 	objreport(obj, "error", err, params);
 	va_end(params);
 	return -1;
@@ -70,6 +74,7 @@ static void check_reachable_object(struct object *obj)
 		if (has_sha1_pack(obj->sha1, NULL))
 			return; /* it is in pack - forget about it */
 		printf("missing %s %s\n", typename(obj->type), sha1_to_hex(obj->sha1));
+		errors_found |= ERROR_REACHABLE;
 		return;
 	}
 
@@ -88,6 +93,7 @@ static void check_reachable_object(struct object *obj)
 			       typename(obj->type), sha1_to_hex(obj->sha1));
 			printf("              to %7s %s\n",
 			       typename(ref->type), sha1_to_hex(ref->sha1));
+			errors_found |= ERROR_REACHABLE;
 		}
 	}
 }
@@ -346,8 +352,11 @@ static int fsck_tag(struct tag *tag)
 static int fsck_sha1(unsigned char *sha1)
 {
 	struct object *obj = parse_object(sha1);
-	if (!obj)
-		return error("%s: object corrupt or missing", sha1_to_hex(sha1));
+	if (!obj) {
+		errors_found |= ERROR_OBJECT;
+		return error("%s: object corrupt or missing",
+			     sha1_to_hex(sha1));
+	}
 	if (obj->flags & SEEN)
 		return 0;
 	obj->flags |= SEEN;
@@ -359,8 +368,10 @@ static int fsck_sha1(unsigned char *sha1)
 		return fsck_commit((struct commit *) obj);
 	if (obj->type == OBJ_TAG)
 		return fsck_tag((struct tag *) obj);
+
 	/* By now, parse_object() would've returned NULL instead. */
-	return objerror(obj, "unknown type '%d' (internal fsck error)", obj->type);
+	return objerror(obj, "unknown type '%d' (internal fsck error)",
+			obj->type);
 }
 
 /*
@@ -576,11 +587,16 @@ static int fsck_cache_tree(struct cache_tree *it)
 	return err;
 }
 
+static const char fsck_usage[] =
+"git-fsck [--tags] [--root] [[--unreachable] [--cache] [--full] "
+"[--strict] <head-sha1>*]";
+
 int cmd_fsck(int argc, char **argv, const char *prefix)
 {
 	int i, heads;
 
 	track_object_refs = 1;
+	errors_found = 0;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -610,7 +626,7 @@ int cmd_fsck(int argc, char **argv, const char *prefix)
 			continue;
 		}
 		if (*arg == '-')
-			usage("git-fsck [--tags] [--root] [[--unreachable] [--cache] [--full] [--strict] <head-sha1>*]");
+			usage(fsck_usage);
 	}
 
 	fsck_head_link();
@@ -690,5 +706,5 @@ int cmd_fsck(int argc, char **argv, const char *prefix)
 	}
 
 	check_connectivity();
-	return 0;
+	return errors_found;
 }
