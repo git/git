@@ -1,0 +1,11 @@
+# br-config-glob-merge config-glob
+754b754407bf032e9a2f9d5a9ad05ca79a6b228f	not-for-merge	branch 'master' of ../
+8e32a6d901327a23ef831511badce7bf3bf46689	not-for-merge	branch 'one' of ../
+0567da4d5edd2ff4bb292a465ba9e64dcad9536b		branch 'three' of ../
+6134ee8f857693b96ff1cc98d3e2fd62b199e5a8	not-for-merge	branch 'two' of ../
+754b754407bf032e9a2f9d5a9ad05ca79a6b228f	not-for-merge	tag 'tag-master' of ../
+8e32a6d901327a23ef831511badce7bf3bf46689	not-for-merge	tag 'tag-one' of ../
+22feea448b023a2d864ef94b013735af34d238ba	not-for-merge	tag 'tag-one-tree' of ../
+0567da4d5edd2ff4bb292a465ba9e64dcad9536b	not-for-merge	tag 'tag-three' of ../
+0e3b14047d3ee365f4f2a1b673db059c3972589c	not-for-merge	tag 'tag-three-file' of ../
+6134ee8f857693b96ff1cc98d3e2fd62b199e5a8	not-for-merge	tag 'tag-two' of ../
