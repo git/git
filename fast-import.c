@@ -1752,7 +1752,14 @@ static struct hash_list *cmd_merge(unsigned int *count)
 			if (oe->type != OBJ_COMMIT)
 				die("Mark :%" PRIuMAX " not a commit", idnum);
 			hashcpy(n->sha1, oe->sha1);
-		} else if (get_sha1(from, n->sha1))
+		} else if (!get_sha1(from, n->sha1)) {
+			unsigned long size;
+			char *buf = read_object_with_reference(n->sha1,
+				type_names[OBJ_COMMIT], &size, n->sha1);
+			if (!buf || size < 46)
+				die("Not a valid commit: %s", from);
+			free(buf);
+		} else
 			die("Invalid ref name or SHA1 expression: %s", from);
 
 		n->next = NULL;
