@@ -111,9 +111,12 @@ static int write_entry(struct cache_entry *ce, char *path, struct checkout *stat
 			return error("git-checkout-index: unable to write file %s", path);
 		break;
 	case S_IFLNK:
-		if (to_tempfile) {
-			strcpy(path, ".merge_link_XXXXXX");
-			fd = mkstemp(path);
+		if (to_tempfile || !has_symlinks) {
+			if (to_tempfile) {
+				strcpy(path, ".merge_link_XXXXXX");
+				fd = mkstemp(path);
+			} else
+				fd = create_file(path, 0666);
 			if (fd < 0) {
 				free(new);
 				return error("git-checkout-index: unable to create "

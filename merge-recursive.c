@@ -570,7 +570,7 @@ static void update_file_flags(const unsigned char *sha,
 		if (type != OBJ_BLOB)
 			die("blob expected for %s '%s'", sha1_to_hex(sha), path);
 
-		if (S_ISREG(mode)) {
+		if (S_ISREG(mode) || (!has_symlinks && S_ISLNK(mode))) {
 			int fd;
 			if (mkdir_p(path, 0777))
 				die("failed to create path %s: %s", path, strerror(errno));
@@ -591,6 +591,7 @@ static void update_file_flags(const unsigned char *sha,
 			mkdir_p(path, 0777);
 			unlink(path);
 			symlink(lnk, path);
+			free(lnk);
 		} else
 			die("do not know what to do with %06o %s '%s'",
 			    mode, sha1_to_hex(sha), path);
