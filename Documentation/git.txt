@@ -231,6 +231,12 @@ Identifier Terminology
 	operate on a <tree> object but automatically dereferences
 	<commit> and <tag> objects that point at a <tree>.
 
+<commit-ish>::
+	Indicates a commit or tag object name.  A
+	command that takes a <commit-ish> argument ultimately wants to
+	operate on a <commit> object but automatically dereferences
+	<tag> objects that point at a <commit>.
+
 <type>::
 	Indicates that an object type is required.
 	Currently one of: `blob`, `tree`, `commit`, or `tag`.
