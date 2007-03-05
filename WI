@@ -32,7 +32,8 @@ list=`git-rev-list $tagged refs/heads/master 2>/dev/null`
 if test -n "$list"
 then
 	echo
-	echo "* The 'master' branch has these since the last announcement."
+	echo "* The 'master' branch has these since the last announcement"
+	echo "  in addition to the above."
 	echo
-	log $tagged heads/master
+	log $tagged heads/master ^heads/maint
 fi
