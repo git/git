@@ -67,7 +67,7 @@ static void check_reachable_object(struct object *obj)
 	 * do a full fsck
 	 */
 	if (!obj->parsed) {
-		if (has_sha1_file(obj->sha1))
+		if (has_sha1_pack(obj->sha1, NULL))
 			return; /* it is in pack - forget about it */
 		printf("missing %s %s\n", typename(obj->type), sha1_to_hex(obj->sha1));
 		return;
