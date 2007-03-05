@@ -220,7 +220,8 @@ struct branch
 	const char *name;
 	struct tree_entry branch_tree;
 	uintmax_t last_commit;
-	unsigned int pack_id;
+	unsigned active : 1;
+	unsigned pack_id : PACK_ID_BITS;
 	unsigned char sha1[20];
 };
 
@@ -528,6 +529,7 @@ static struct branch *new_branch(const char *name)
 	b->table_next_branch = branch_table[hc];
 	b->branch_tree.versions[0].mode = S_IFDIR;
 	b->branch_tree.versions[1].mode = S_IFDIR;
+	b->active = 0;
 	b->pack_id = MAX_PACK_ID;
 	branch_table[hc] = b;
 	branch_count++;
@@ -1547,6 +1549,7 @@ static void unload_one_branch(void)
 			e = active_branches;
 			active_branches = e->active_next_branch;
 		}
+		e->active = 0;
 		e->active_next_branch = NULL;
 		if (e->branch_tree.tree) {
 			release_tree_content_recursive(e->branch_tree.tree);
@@ -1559,10 +1562,13 @@ static void unload_one_branch(void)
 static void load_branch(struct branch *b)
 {
 	load_tree(&b->branch_tree);
-	b->active_next_branch = active_branches;
-	active_branches = b;
-	cur_active_branches++;
-	branch_load_count++;
+	if (!b->active) {
+		b->active = 1;
+		b->active_next_branch = active_branches;
+		active_branches = b;
+		cur_active_branches++;
+		branch_load_count++;
+	}
 }
 
 static void file_change_m(struct branch *b)
