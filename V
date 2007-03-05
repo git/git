@@ -1,0 +1,5 @@
+#!/bin/sh
+for v in maint master next pu
+do
+	echo $v $(git-describe $v) $($HOME/git-$v/bin/git version)
+done
