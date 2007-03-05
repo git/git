@@ -4,8 +4,7 @@ From: A U Thor <author@example.com>
 Date: Mon, 26 Jun 2006 00:01:00 +0000
 Subject: [PATCH] Second
 MIME-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------g-i-t--v-e-r-s-i-o-n"
+Content-Type: multipart/mixed; boundary="------------g-i-t--v-e-r-s-i-o-n"
 
 This is a multi-part message in MIME format.
 --------------g-i-t--v-e-r-s-i-o-n
@@ -21,11 +20,9 @@ This is the second commit.
  3 files changed, 5 insertions(+), 3 deletions(-)
  delete mode 100644 file2
 --------------g-i-t--v-e-r-s-i-o-n
-Content-Type: text/x-patch;
- name="1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44.diff"
+Content-Type: text/x-patch; name="1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44.diff"
 Content-Transfer-Encoding: 8bit
-Content-Disposition: inline;
- filename="1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44.diff"
+Content-Disposition: inline; filename="1bde4ae5f36c8d9abe3a0fce0c6aab3c4a12fe44.diff"
 
 diff --git a/dir/sub b/dir/sub
 index 35d242b..8422d40 100644
@@ -66,8 +63,7 @@ From: A U Thor <author@example.com>
 Date: Mon, 26 Jun 2006 00:02:00 +0000
 Subject: [PATCH] Third
 MIME-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------g-i-t--v-e-r-s-i-o-n"
+Content-Type: multipart/mixed; boundary="------------g-i-t--v-e-r-s-i-o-n"
 
 This is a multi-part message in MIME format.
 --------------g-i-t--v-e-r-s-i-o-n
@@ -80,11 +76,9 @@ Content-Transfer-Encoding: 8bit
  2 files changed, 5 insertions(+), 0 deletions(-)
  create mode 100644 file1
 --------------g-i-t--v-e-r-s-i-o-n
-Content-Type: text/x-patch;
- name="9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0.diff"
+Content-Type: text/x-patch; name="9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0.diff"
 Content-Transfer-Encoding: 8bit
-Content-Disposition: inline;
- filename="9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0.diff"
+Content-Disposition: inline; filename="9a6d4949b6b76956d9d5e26f2791ec2ceff5fdc0.diff"
 
 diff --git a/dir/sub b/dir/sub
 index 8422d40..cead32e 100644
@@ -115,8 +109,7 @@ From: A U Thor <author@example.com>
 Date: Mon, 26 Jun 2006 00:03:00 +0000
 Subject: [PATCH] Side
 MIME-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------g-i-t--v-e-r-s-i-o-n"
+Content-Type: multipart/mixed; boundary="------------g-i-t--v-e-r-s-i-o-n"
 
 This is a multi-part message in MIME format.
 --------------g-i-t--v-e-r-s-i-o-n
@@ -130,11 +123,9 @@ Content-Transfer-Encoding: 8bit
  3 files changed, 9 insertions(+), 0 deletions(-)
  create mode 100644 file3
 --------------g-i-t--v-e-r-s-i-o-n
-Content-Type: text/x-patch;
- name="c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a.diff"
+Content-Type: text/x-patch; name="c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a.diff"
 Content-Transfer-Encoding: 8bit
-Content-Disposition: inline;
- filename="c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a.diff"
+Content-Disposition: inline; filename="c7a2ab9e8eac7b117442a607d5a9b3950ae34d5a.diff"
 
 diff --git a/dir/sub b/dir/sub
 index 35d242b..7289e35 100644
