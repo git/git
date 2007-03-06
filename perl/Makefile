@@ -33,7 +33,7 @@ $(makfile): ../GIT-CFLAGS Makefile
 	echo '	echo $(instdir_SQ)' >> $@
 else
 $(makfile): Makefile.PL ../GIT-CFLAGS
-	'$(PERL_PATH_SQ)' $< PREFIX='$(prefix_SQ)'
+	$(QUIET_GEN)'$(PERL_PATH_SQ)' $< PREFIX='$(prefix_SQ)'
 endif
 
 # this is just added comfort for calling make directly in perl dir

@@ -605,14 +605,16 @@ ifdef NO_PERL_MAKEMAKER
 	export NO_PERL_MAKEMAKER
 endif
 ifndef V
-	QUIET_CC       = @echo '   ' CC $<;
+	QUIET_CC       = @echo '   ' CC $@;
 	QUIET_AR       = @echo '   ' AR $@;
 	QUIET_LINK     = @echo '   ' LINK $@;
 	QUIET_BUILT_IN = @echo '   ' BUILTIN $@;
 	QUIET_GEN      = @echo '   ' GEN $@;
 	QUIET_SUBDIR0  = @subdir=
-	QUIET_SUBDIR1  = ;echo '   ' SUBDIR $$subdir; $(MAKE) -C$$subdir
+	QUIET_SUBDIR1  = ;echo '   ' SUBDIR $$subdir; \
+			 $(MAKE) --no-print-directory -C $$subdir
 	export V
+	export QUIET_GEN
 else
 	QUIET_SUBDIR0  = $(MAKE) -C
 	QUIET_SUBDIR1  =
@@ -685,7 +687,7 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 $(patsubst %.perl,%,$(SCRIPT_PERL)): perl/perl.mak
 
 perl/perl.mak: GIT-CFLAGS
-	$(MAKE) -C perl PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' $(@F)
+	$(QUIET_SUBDIR0)perl $(QUIET_SUBDIR1) PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' $(@F)
 
 $(patsubst %.perl,%,$(SCRIPT_PERL)): % : %.perl
 	$(QUIET_GEN)rm -f $@ $@+ && \
