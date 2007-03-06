@@ -1247,7 +1247,7 @@ static void gc_boundary(struct object_array *array)
 				objects[j] = objects[i];
 			j++;
 		}
-		for (i = j; j < nr; j++)
+		for (i = j; i < nr; i++)
 			objects[i].item = NULL;
 		array->nr = j;
 	}
