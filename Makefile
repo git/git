@@ -604,6 +604,11 @@ endif
 ifdef NO_PERL_MAKEMAKER
 	export NO_PERL_MAKEMAKER
 endif
+
+QUIET_SUBDIR0  = $(MAKE) -C # space to separate -C and subdir
+QUIET_SUBDIR1  =
+
+ifneq ($(findstring $(MAKEFLAGS),s),s)
 ifndef V
 	QUIET_CC       = @echo '   ' CC $@;
 	QUIET_AR       = @echo '   ' AR $@;
@@ -615,9 +620,8 @@ ifndef V
 			 $(MAKE) --no-print-directory -C $$subdir
 	export V
 	export QUIET_GEN
-else
-	QUIET_SUBDIR0  = $(MAKE) -C
-	QUIET_SUBDIR1  =
+	export QUIET_BUILT_IN
+endif
 endif
 
 # Shell quote (do not use $(call) to accommodate ancient setups);
