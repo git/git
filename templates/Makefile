@@ -1,5 +1,9 @@
 # make and install sample templates
 
+ifdef QUIET_MAKE
+	QUIET = @
+endif
+
 INSTALL ?= install
 TAR ?= tar
 prefix ?= $(HOME)
@@ -18,7 +22,7 @@ all: boilerplates.made custom
 
 bpsrc = $(filter-out %~,$(wildcard *--*))
 boilerplates.made : $(bpsrc)
-	ls *--* 2>/dev/null | \
+	$(QUIET)ls *--* 2>/dev/null | \
 	while read boilerplate; \
 	do \
 		case "$$boilerplate" in *~) continue ;; esac && \
@@ -29,13 +33,13 @@ boilerplates.made : $(bpsrc)
 		*--) ;; \
 		*) cp $$boilerplate blt/$$dst ;; \
 		esac || exit; \
-	done || exit
+	done && \
 	date >$@
 
 # If you need build-tailored templates, build them into blt/
 # directory yourself here.
 custom:
-	: no custom templates yet
+	$(QUIET): no custom templates yet
 
 clean:
 	rm -rf blt boilerplates.made

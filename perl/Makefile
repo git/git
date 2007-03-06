@@ -6,11 +6,15 @@ makfile:=perl.mak
 PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
 prefix_SQ = $(subst ','\'',$(prefix))
 
+ifdef QUIET_MAKE
+	QUIET = @
+endif
+
 all install instlibdir: $(makfile)
-	$(MAKE) -f $(makfile) $@
+	$(QUIET)$(MAKE) -f $(makfile) $@
 
 clean:
-	test -f $(makfile) && $(MAKE) -f $(makfile) $@ || exit 0
+	$(QUIET)test -f $(makfile) && $(MAKE) -f $(makfile) $@ || exit 0
 	$(RM) ppport.h
 	$(RM) $(makfile)
 	$(RM) $(makfile).old
