@@ -1301,13 +1301,14 @@ struct commit *get_revision(struct rev_info *revs)
 	/*
 	 * Now pick up what they want to give us
 	 */
-	if (!(c = get_revision_1(revs)))
-		return NULL;
-	while (0 < revs->skip_count) {
-		revs->skip_count--;
-		c = get_revision_1(revs);
-		if (!c)
-			break;
+	c = get_revision_1(revs);
+	if (c) {
+		while (0 < revs->skip_count) {
+			revs->skip_count--;
+			c = get_revision_1(revs);
+			if (!c)
+				break;
+		}
 	}
 
 	/*
@@ -1317,7 +1318,6 @@ struct commit *get_revision(struct rev_info *revs)
 	case -1:
 		break;
 	case 0:
-		/* Although we grabbed it, it is not shown. */
 		c = NULL;
 		break;
 	default:
