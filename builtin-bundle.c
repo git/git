@@ -404,6 +404,8 @@ static int unbundle(struct bundle_header *header, int bundle_fd,
 	if (verify_bundle(header, 0))
 		return -1;
 	dev_null = open("/dev/null", O_WRONLY);
+	if (dev_null < 0)
+		return error("Could not open /dev/null");
 	pid = fork_with_pipe(argv_index_pack, &bundle_fd, &dev_null);
 	if (pid < 0)
 		return error("Could not spawn index-pack");
@@ -440,7 +442,7 @@ int cmd_bundle(int argc, const char **argv, const char *prefix)
 
 	memset(&header, 0, sizeof(header));
 	if (strcmp(cmd, "create") &&
-			!(bundle_fd = read_header(bundle_file, &header)))
+			(bundle_fd = read_header(bundle_file, &header)) < 0)
 		return 1;
 
 	if (!strcmp(cmd, "verify")) {

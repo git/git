@@ -90,6 +90,13 @@ test_expect_success 'create bundle 1' '
 	git bundle create bundle1 master^..master
 '
 
+test_expect_success 'header of bundle looks right' '
+	head -n 1 "$D"/bundle1 | grep "^#" &&
+	head -n 2 "$D"/bundle1 | grep "^-[0-9a-f]\{40\} " &&
+	head -n 3 "$D"/bundle1 | grep "^[0-9a-f]\{40\} " &&
+	head -n 4 "$D"/bundle1 | grep "^$"
+'
+
 test_expect_success 'create bundle 2' '
 	cd "$D" &&
 	git bundle create bundle2 master~2..master
@@ -99,6 +106,20 @@ test_expect_failure 'unbundle 1' '
 	cd "$D/bundle" &&
 	git checkout -b some-branch &&
 	git fetch "$D/bundle1" master:master
+'
+
+test_expect_success 'bundle 1 has only 3 files ' '
+	cd "$D" &&
+	(
+		while read x && test -n "$x"
+		do
+			:;
+		done
+		cat
+	) <bundle1 >bundle.pack &&
+	git index-pack bundle.pack &&
+	verify=$(git verify-pack -v bundle.pack) &&
+	test 4 = $(echo "$verify" | wc -l)
 '
 
 test_expect_success 'unbundle 2' '
