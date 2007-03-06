@@ -303,8 +303,8 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		next = commit;
 		set_author_ident_env(message);
 		add_message_to_msg(message);
-		if (replay) {
-			add_to_msg("\n(cherry picked from commit ");
+		if (!replay) {
+			add_to_msg("(cherry picked from commit ");
 			add_to_msg(sha1_to_hex(commit->object.sha1));
 			add_to_msg(")\n");
 		}
