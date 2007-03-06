@@ -8,10 +8,292 @@
 #include "diffcore.h"
 #include "revision.h"
 #include "cache-tree.h"
+#include "path-list.h"
 
 /*
  * diff-files
  */
+
+static int read_directory(const char *path, struct path_list *list)
+{
+	DIR *dir;
+	struct dirent *e;
+
+	if (!(dir = opendir(path)))
+		return error("Could not open directory %s", path);
+
+	while ((e = readdir(dir)))
+		if (strcmp(".", e->d_name) && strcmp("..", e->d_name))
+			path_list_insert(xstrdup(e->d_name), list);
+
+	closedir(dir);
+	return 0;
+}
+
+static int queue_diff(struct diff_options *o,
+		const char *name1, const char *name2)
+{
+	struct stat st;
+	int mode1 = 0, mode2 = 0;
+
+	if (name1) {
+		if (stat(name1, &st))
+			return error("Could not access '%s'", name1);
+		mode1 = st.st_mode;
+	}
+	if (name2) {
+		if (stat(name2, &st))
+			return error("Could not access '%s'", name2);
+		mode2 = st.st_mode;
+	}
+
+	if (mode1 && mode2 && S_ISDIR(mode1) != S_ISDIR(mode2))
+		return error("file/directory conflict: %s, %s", name1, name2);
+
+	if (S_ISDIR(mode1) || S_ISDIR(mode2)) {
+		char buffer1[PATH_MAX], buffer2[PATH_MAX];
+		struct path_list p1 = {NULL, 0, 0, 1}, p2 = {NULL, 0, 0, 1};
+		int len1 = 0, len2 = 0, i1, i2, ret = 0;
+
+		if (name1 && read_directory(name1, &p1))
+			return -1;
+		if (name2 && read_directory(name2, &p2)) {
+			path_list_clear(&p1, 0);
+			return -1;
+		}
+
+		if (name1) {
+			len1 = strlen(name1);
+			if (len1 > 0 && name1[len1 - 1] == '/')
+				len1--;
+			memcpy(buffer1, name1, len1);
+			buffer1[len1++] = '/';
+		}
+
+		if (name2) {
+			len2 = strlen(name2);
+			if (len2 > 0 && name2[len2 - 1] == '/')
+				len2--;
+			memcpy(buffer2, name2, len2);
+			buffer2[len2++] = '/';
+		}
+
+		for (i1 = i2 = 0; !ret && (i1 < p1.nr || i2 < p2.nr); ) {
+			const char *n1, *n2;
+			int comp;
+
+			if (i1 == p1.nr)
+				comp = 1;
+			else if (i2 == p2.nr)
+				comp = -1;
+			else
+				comp = strcmp(p1.items[i1].path,
+					p2.items[i2].path);
+
+			if (comp > 0)
+				n1 = NULL;
+			else {
+				n1 = buffer1;
+				strncpy(buffer1 + len1, p1.items[i1++].path,
+						PATH_MAX - len1);
+			}
+
+			if (comp < 0)
+				n2 = NULL;
+			else {
+				n2 = buffer2;
+				strncpy(buffer2 + len2, p2.items[i2++].path,
+						PATH_MAX - len2);
+			}
+
+			ret = queue_diff(o, n1, n2);
+		}
+		path_list_clear(&p1, 0);
+		path_list_clear(&p2, 0);
+
+		return ret;
+	} else {
+		struct diff_filespec *d1, *d2;
+
+		if (o->reverse_diff) {
+			unsigned tmp;
+			const char *tmp_c;
+			tmp = mode1; mode1 = mode2; mode2 = tmp;
+			tmp_c = name1; name1 = name2; name2 = tmp_c;
+		}
+
+		if (!name1)
+			name1 = "/dev/null";
+		if (!name2)
+			name2 = "/dev/null";
+		d1 = alloc_filespec(name1);
+		d2 = alloc_filespec(name2);
+		fill_filespec(d1, null_sha1, mode1);
+		fill_filespec(d2, null_sha1, mode2);
+
+		diff_queue(&diff_queued_diff, d1, d2);
+		return 0;
+	}
+}
+
+static int is_in_index(const char *path)
+{
+	int len = strlen(path);
+	int pos = cache_name_pos(path, len);
+	char c;
+
+	if (pos < 0)
+		return 0;
+	if (strncmp(active_cache[pos]->name, path, len))
+		return 0;
+	c = active_cache[pos]->name[len];
+	return c == '\0' || c == '/';
+}
+
+static int handle_diff_files_args(struct rev_info *revs,
+		int argc, const char **argv, int *silent)
+{
+	*silent = 0;
+
+	/* revs->max_count == -2 means --no-index */
+	while (1 < argc && argv[1][0] == '-') {
+		if (!strcmp(argv[1], "--base"))
+			revs->max_count = 1;
+		else if (!strcmp(argv[1], "--ours"))
+			revs->max_count = 2;
+		else if (!strcmp(argv[1], "--theirs"))
+			revs->max_count = 3;
+		else if (!strcmp(argv[1], "-n") ||
+				!strcmp(argv[1], "--no-index"))
+			revs->max_count = -2;
+		else if (!strcmp(argv[1], "-q"))
+			*silent = 1;
+		else
+			return error("invalid option: %s", argv[1]);
+		argv++; argc--;
+	}
+
+	if (revs->max_count == -1 && revs->diffopt.nr_paths == 2) {
+		/*
+		 * If two files are specified, and at least one is untracked,
+		 * default to no-index.
+		 */
+		read_cache();
+		if (!is_in_index(revs->diffopt.paths[0]) ||
+					!is_in_index(revs->diffopt.paths[1]))
+			revs->max_count = -2;
+	}
+
+	/*
+	 * Make sure there are NO revision (i.e. pending object) parameter,
+	 * rev.max_count is reasonable (0 <= n <= 3),
+	 * there is no other revision filtering parameters.
+	 */
+	if (revs->pending.nr || revs->max_count > 3 ||
+	    revs->min_age != -1 || revs->max_age != -1)
+		return error("no revision allowed with diff-files");
+
+	if (revs->max_count == -1 &&
+	    (revs->diffopt.output_format & DIFF_FORMAT_PATCH))
+		revs->combine_merges = revs->dense_combined_merges = 1;
+
+	return 0;
+}
+
+static int is_outside_repo(const char *path, int nongit, const char *prefix)
+{
+	int i;
+	if (nongit || !strcmp(path, "-") || path[0] == '/')
+		return 1;
+	if (prefixcmp(path, "../"))
+		return 0;
+	if (!prefix)
+		return 1;
+	for (i = strlen(prefix); !prefixcmp(path, "../"); ) {
+		while (i > 0 && prefix[i - 1] != '/')
+			i--;
+		if (--i < 0)
+			return 1;
+		path += 3;
+	}
+	return 0;
+}
+
+int setup_diff_no_index(struct rev_info *revs,
+		int argc, const char ** argv, int nongit, const char *prefix)
+{
+	int i;
+	for (i = 1; i < argc; i++)
+		if (argv[i][0] != '-')
+			break;
+		else if (!strcmp(argv[i], "--")) {
+			i++;
+			break;
+		} else if (i < argc - 3 && !strcmp(argv[i], "--no-index")) {
+			i = argc - 3;
+			break;
+		}
+	if (argc != i + 2 || (!is_outside_repo(argv[i + 1], nongit, prefix) &&
+				!is_outside_repo(argv[i], nongit, prefix)))
+		return -1;
+
+	diff_setup(&revs->diffopt);
+	for (i = 1; i < argc - 2; )
+		if (!strcmp(argv[i], "--no-index"))
+			i++;
+		else {
+			int j = diff_opt_parse(&revs->diffopt,
+					argv + i, argc - i);
+			if (!j)
+				die("invalid diff option/value: %s", argv[i]);
+			i += j;
+		}
+
+	if (prefix) {
+		int len = strlen(prefix);
+
+		revs->diffopt.paths = xcalloc(2, sizeof(char*));
+		for (i = 0; i < 2; i++) {
+			const char *p;
+			p = prefix_filename(prefix, len, argv[argc - 2 + i]);
+			revs->diffopt.paths[i] = xstrdup(p);
+		}
+	}
+	else
+		revs->diffopt.paths = argv + argc - 2;
+	revs->diffopt.nr_paths = 2;
+	revs->max_count = -2;
+	return 0;
+}
+
+int run_diff_files_cmd(struct rev_info *revs, int argc, const char **argv)
+{
+	int silent_on_removed;
+
+	if (handle_diff_files_args(revs, argc, argv, &silent_on_removed))
+		return -1;
+
+	if (revs->max_count == -2) {
+		if (revs->diffopt.nr_paths != 2)
+			return error("need two files/directories with --no-index");
+		if (queue_diff(&revs->diffopt, revs->diffopt.paths[0],
+				revs->diffopt.paths[1]))
+			return -1;
+		diffcore_std(&revs->diffopt);
+		diff_flush(&revs->diffopt);
+		/*
+		 * The return code for --no-index imitates diff(1):
+		 * 0 = no changes, 1 = changes, else error
+		 */
+		return revs->diffopt.found_changes;
+	}
+
+	if (read_cache() < 0) {
+		perror("read_cache");
+		return -1;
+	}
+	return run_diff_files(revs, silent_on_removed);
+}
 
 int run_diff_files(struct rev_info *revs, int silent_on_removed)
 {
@@ -20,11 +302,7 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 
 	if (diff_unmerged_stage < 0)
 		diff_unmerged_stage = 2;
-	entries = read_cache();
-	if (entries < 0) {
-		perror("read_cache");
-		return -1;
-	}
+	entries = active_nr;
 	for (i = 0; i < entries; i++) {
 		struct stat st;
 		unsigned int oldmode, newmode;
@@ -133,6 +411,9 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 		if (!trust_executable_bit &&
 		    S_ISREG(newmode) && S_ISREG(oldmode) &&
 		    ((newmode ^ oldmode) == 0111))
+			newmode = oldmode;
+		else if (!has_symlinks &&
+		    S_ISREG(newmode) && S_ISLNK(oldmode))
 			newmode = oldmode;
 		diff_change(&revs->diffopt, oldmode, newmode,
 			    ce->sha1, (changed ? null_sha1 : ce->sha1),
@@ -362,10 +643,6 @@ int run_diff_index(struct rev_info *revs, int cached)
 	if (!revs->ignore_merges)
 		match_missing = 1;
 
-	if (read_cache() < 0) {
-		perror("read_cache");
-		return -1;
-	}
 	mark_merge_entries();
 
 	ent = revs->pending.objects[0].item;

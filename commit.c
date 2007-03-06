@@ -3,6 +3,7 @@
 #include "commit.h"
 #include "pkt-line.h"
 #include "utf8.h"
+#include "interpolate.h"
 
 int save_commit_buffer = 1;
 
@@ -36,7 +37,10 @@ struct cmt_fmt_map {
 	{ "full",	5,	CMIT_FMT_FULL },
 	{ "fuller",	5,	CMIT_FMT_FULLER },
 	{ "oneline",	1,	CMIT_FMT_ONELINE },
+	{ "format:",	7,	CMIT_FMT_USERFORMAT},
 };
+
+static char *user_format;
 
 enum cmit_fmt get_commit_format(const char *arg)
 {
@@ -46,6 +50,12 @@ enum cmit_fmt get_commit_format(const char *arg)
 		return CMIT_FMT_DEFAULT;
 	if (*arg == '=')
 		arg++;
+	if (!prefixcmp(arg, "format:")) {
+		if (user_format)
+			free(user_format);
+		user_format = xstrdup(arg + 7);
+		return CMIT_FMT_USERFORMAT;
+	}
 	for (i = 0; i < ARRAY_SIZE(cmt_fmts); i++) {
 		if (!strncmp(arg, cmt_fmts[i].n, cmt_fmts[i].cmp_len) &&
 		    !strncmp(arg, cmt_fmts[i].n, strlen(arg)))
@@ -342,18 +352,18 @@ int parse_commit_buffer(struct commit *item, void *buffer, unsigned long size)
 
 int parse_commit(struct commit *item)
 {
-	char type[20];
+	enum object_type type;
 	void *buffer;
 	unsigned long size;
 	int ret;
 
 	if (item->object.parsed)
 		return 0;
-	buffer = read_sha1_file(item->object.sha1, type, &size);
+	buffer = read_sha1_file(item->object.sha1, &type, &size);
 	if (!buffer)
 		return error("Could not read %s",
 			     sha1_to_hex(item->object.sha1));
-	if (strcmp(type, commit_type)) {
+	if (type != OBJ_COMMIT) {
 		free(buffer);
 		return error("Object %s not a commit",
 			     sha1_to_hex(item->object.sha1));
@@ -710,6 +720,188 @@ static char *logmsg_reencode(const struct commit *commit,
 	return out;
 }
 
+static char *xstrndup(const char *text, int len)
+{
+	char *result = xmalloc(len + 1);
+	memcpy(result, text, len);
+	result[len] = '\0';
+	return result;
+}
+
+static void fill_person(struct interp *table, const char *msg, int len)
+{
+	int start, end, tz = 0;
+	unsigned long date;
+	char *ep;
+
+	/* parse name */
+	for (end = 0; end < len && msg[end] != '<'; end++)
+		; /* do nothing */
+	start = end + 1;
+	while (end > 0 && isspace(msg[end - 1]))
+		end--;
+	table[0].value = xstrndup(msg, end);
+
+	if (start >= len)
+		return;
+
+	/* parse email */
+	for (end = start + 1; end < len && msg[end] != '>'; end++)
+		; /* do nothing */
+
+	if (end >= len)
+		return;
+
+	table[1].value = xstrndup(msg + start, end - start);
+
+	/* parse date */
+	for (start = end + 1; start < len && isspace(msg[start]); start++)
+		; /* do nothing */
+	if (start >= len)
+		return;
+	date = strtoul(msg + start, &ep, 10);
+	if (msg + start == ep)
+		return;
+
+	table[5].value = xstrndup(msg + start, ep - msg + start);
+
+	/* parse tz */
+	for (start = ep - msg + 1; start < len && isspace(msg[start]); start++)
+		; /* do nothing */
+	if (start + 1 < len) {
+		tz = strtoul(msg + start + 1, NULL, 10);
+		if (msg[start] == '-')
+			tz = -tz;
+	}
+
+	interp_set_entry(table, 2, show_date(date, tz, 0));
+	interp_set_entry(table, 3, show_rfc2822_date(date, tz));
+	interp_set_entry(table, 4, show_date(date, tz, 1));
+}
+
+static long format_commit_message(const struct commit *commit,
+		const char *msg, char *buf, unsigned long space)
+{
+	struct interp table[] = {
+		{ "%H" },	/* commit hash */
+		{ "%h" },	/* abbreviated commit hash */
+		{ "%T" },	/* tree hash */
+		{ "%t" },	/* abbreviated tree hash */
+		{ "%P" },	/* parent hashes */
+		{ "%p" },	/* abbreviated parent hashes */
+		{ "%an" },	/* author name */
+		{ "%ae" },	/* author email */
+		{ "%ad" },	/* author date */
+		{ "%aD" },	/* author date, RFC2822 style */
+		{ "%ar" },	/* author date, relative */
+		{ "%at" },	/* author date, UNIX timestamp */
+		{ "%cn" },	/* committer name */
+		{ "%ce" },	/* committer email */
+		{ "%cd" },	/* committer date */
+		{ "%cD" },	/* committer date, RFC2822 style */
+		{ "%cr" },	/* committer date, relative */
+		{ "%ct" },	/* committer date, UNIX timestamp */
+		{ "%e" },	/* encoding */
+		{ "%s" },	/* subject */
+		{ "%b" },	/* body */
+		{ "%Cred" },	/* red */
+		{ "%Cgreen" },	/* green */
+		{ "%Cblue" },	/* blue */
+		{ "%Creset" },	/* reset color */
+		{ "%n" }	/* newline */
+	};
+	enum interp_index {
+		IHASH = 0, IHASH_ABBREV,
+		ITREE, ITREE_ABBREV,
+		IPARENTS, IPARENTS_ABBREV,
+		IAUTHOR_NAME, IAUTHOR_EMAIL,
+		IAUTHOR_DATE, IAUTHOR_DATE_RFC2822, IAUTHOR_DATE_RELATIVE,
+		IAUTHOR_TIMESTAMP,
+		ICOMMITTER_NAME, ICOMMITTER_EMAIL,
+		ICOMMITTER_DATE, ICOMMITTER_DATE_RFC2822,
+		ICOMMITTER_DATE_RELATIVE, ICOMMITTER_TIMESTAMP,
+		IENCODING,
+		ISUBJECT,
+		IBODY,
+		IRED, IGREEN, IBLUE, IRESET_COLOR,
+		INEWLINE
+	};
+	struct commit_list *p;
+	char parents[1024];
+	int i;
+	enum { HEADER, SUBJECT, BODY } state;
+
+	if (INEWLINE + 1 != ARRAY_SIZE(table))
+		die("invalid interp table!");
+
+	/* these are independent of the commit */
+	interp_set_entry(table, IRED, "\033[31m");
+	interp_set_entry(table, IGREEN, "\033[32m");
+	interp_set_entry(table, IBLUE, "\033[34m");
+	interp_set_entry(table, IRESET_COLOR, "\033[m");
+	interp_set_entry(table, INEWLINE, "\n");
+
+	/* these depend on the commit */
+	if (!commit->object.parsed)
+		parse_object(commit->object.sha1);
+	interp_set_entry(table, IHASH, sha1_to_hex(commit->object.sha1));
+	interp_set_entry(table, IHASH_ABBREV,
+			find_unique_abbrev(commit->object.sha1,
+				DEFAULT_ABBREV));
+	interp_set_entry(table, ITREE, sha1_to_hex(commit->tree->object.sha1));
+	interp_set_entry(table, ITREE_ABBREV,
+			find_unique_abbrev(commit->tree->object.sha1,
+				DEFAULT_ABBREV));
+	for (i = 0, p = commit->parents;
+			p && i < sizeof(parents) - 1;
+			p = p->next)
+		i += snprintf(parents + i, sizeof(parents) - i - 1, "%s ",
+			sha1_to_hex(p->item->object.sha1));
+	interp_set_entry(table, IPARENTS, parents);
+	for (i = 0, p = commit->parents;
+			p && i < sizeof(parents) - 1;
+			p = p->next)
+		i += snprintf(parents + i, sizeof(parents) - i - 1, "%s ",
+			find_unique_abbrev(p->item->object.sha1,
+				DEFAULT_ABBREV));
+	interp_set_entry(table, IPARENTS_ABBREV, parents);
+
+	for (i = 0, state = HEADER; msg[i] && state < BODY; i++) {
+		int eol;
+		for (eol = i; msg[eol] && msg[eol] != '\n'; eol++)
+			; /* do nothing */
+
+		if (state == SUBJECT) {
+			table[ISUBJECT].value = xstrndup(msg + i, eol - i);
+			i = eol;
+		}
+		if (i == eol) {
+			state++;
+			/* strip empty lines */
+			while (msg[eol + 1] == '\n')
+				eol++;
+		} else if (!prefixcmp(msg + i, "author "))
+			fill_person(table + IAUTHOR_NAME,
+					msg + i + 7, eol - i - 7);
+		else if (!prefixcmp(msg + i, "committer "))
+			fill_person(table + ICOMMITTER_NAME,
+					msg + i + 10, eol - i - 10);
+		else if (!prefixcmp(msg + i, "encoding "))
+			table[IENCODING].value = xstrndup(msg + i, eol - i);
+		i = eol;
+	}
+	if (msg[i])
+		table[IBODY].value = xstrdup(msg + i);
+	for (i = 0; i < ARRAY_SIZE(table); i++)
+		if (!table[i].value)
+			interp_set_entry(table, i, "<unknown>");
+
+	interpolate(buf, space, user_format, table, ARRAY_SIZE(table));
+	interp_clear_table(table, ARRAY_SIZE(table));
+
+	return strlen(buf);
+}
+
 unsigned long pretty_print_commit(enum cmit_fmt fmt,
 				  const struct commit *commit,
 				  unsigned long len,
@@ -726,6 +918,9 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 	int plain_non_ascii = 0;
 	char *reencoded;
 	char *encoding;
+
+	if (fmt == CMIT_FMT_USERFORMAT)
+		return format_commit_message(commit, msg, buf, space);
 
 	encoding = (git_log_output_encoding
 		    ? git_log_output_encoding

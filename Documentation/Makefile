@@ -37,6 +37,7 @@ INSTALL?=install
 DOC_REF = origin/man
 
 -include ../config.mak.autogen
+-include ../config.mak
 
 #
 # Please note that there is a minor bug in asciidoc.
@@ -104,8 +105,11 @@ clean:
 user-manual.xml: user-manual.txt user-manual.conf
 	$(ASCIIDOC) -b docbook -d book $<
 
+XSLT = http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl
+XSLTOPTS = --nonet --xinclude --stringparam html.stylesheet docbook-xsl.css
+
 user-manual.html: user-manual.xml
-	xmlto html-nochunks $<
+	xsltproc $(XSLTOPTS) -o $@ $(XSLT) $<
 
 glossary.html : glossary.txt sort_glossary.pl
 	cat $< | \

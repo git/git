@@ -89,6 +89,9 @@ all::
 #
 # Define NO_ICONV if your libc does not properly support iconv.
 #
+# Define OLD_ICONV if your library has an old iconv(), where the second
+# (input buffer pointer) parameter is declared with type (const char **).
+#
 # Define NO_R_TO_GCC if your gcc does not like "-R/path/lib" that
 # tells runtime paths to dynamic libraries; "-Wl,-rpath=/path/lib"
 # is used instead.
@@ -277,6 +280,7 @@ BUILTIN_OBJS = \
 	builtin-archive.o \
 	builtin-blame.o \
 	builtin-branch.o \
+	builtin-bundle.o \
 	builtin-cat-file.o \
 	builtin-checkout-index.o \
 	builtin-check-ref-format.o \
@@ -377,7 +381,6 @@ ifeq ($(uname_O),Cygwin)
 	NO_STRCASESTR = YesPlease
 	NO_SYMLINK_HEAD = YesPlease
 	NEEDS_LIBICONV = YesPlease
-	NO_C99_FORMAT = YesPlease
 	NO_FAST_WORKING_DIRECTORY = UnfortunatelyYes
 	NO_TRUSTABLE_FILEMODE = UnfortunatelyYes
 	# There are conflicting reports about this.
@@ -601,6 +604,10 @@ ifdef NO_ICONV
 	BASIC_CFLAGS += -DNO_ICONV
 endif
 
+ifdef OLD_ICONV
+	BASIC_CFLAGS += -DOLD_ICONV
+endif
+
 ifdef PPC_SHA1
 	SHA1_HEADER = "ppc/sha1.h"
 	LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
@@ -805,7 +812,7 @@ git-http-push$X: revision.o http.o http-push.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
-$(LIB_OBJS) $(BUILTIN_OBJS): $(LIB_H)
+$(LIB_OBJS) $(BUILTIN_OBJS) fetch.o: $(LIB_H)
 $(patsubst git-%$X,%.o,$(PROGRAMS)): $(LIB_H) $(wildcard */*.h)
 $(DIFF_OBJS): diffcore.h
 

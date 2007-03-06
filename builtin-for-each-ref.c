@@ -173,8 +173,8 @@ static void verify_format(const char *format)
  */
 static void *get_obj(const unsigned char *sha1, struct object **obj, unsigned long *sz, int *eaten)
 {
-	char type[20];
-	void *buf = read_sha1_file(sha1, type, sz);
+	enum object_type type;
+	void *buf = read_sha1_file(sha1, &type, sz);
 
 	if (buf)
 		*obj = parse_object_buffer(sha1, type, *sz, buf, eaten);
@@ -196,7 +196,7 @@ static void grab_common_values(struct atom_value *val, int deref, struct object 
 		if (deref)
 			name++;
 		if (!strcmp(name, "objecttype"))
-			v->s = type_names[obj->type];
+			v->s = typename(obj->type);
 		else if (!strcmp(name, "objectsize")) {
 			char *s = xmalloc(40);
 			sprintf(s, "%lu", sz);

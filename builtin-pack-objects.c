@@ -230,8 +230,8 @@ static unsigned char *find_packed_object_name(struct packed_git *p,
 static void *delta_against(void *buf, unsigned long size, struct object_entry *entry)
 {
 	unsigned long othersize, delta_size;
-	char type[10];
-	void *otherbuf = read_sha1_file(entry->delta->sha1, type, &othersize);
+	enum object_type type;
+	void *otherbuf = read_sha1_file(entry->delta->sha1, &type, &othersize);
 	void *delta_buf;
 
 	if (!otherbuf)
@@ -375,7 +375,7 @@ static unsigned long write_object(struct sha1file *f,
 				  struct object_entry *entry)
 {
 	unsigned long size;
-	char type[10];
+	enum object_type type;
 	void *buf;
 	unsigned char header[10];
 	unsigned hdrlen, datalen;
@@ -416,7 +416,7 @@ static unsigned long write_object(struct sha1file *f,
 	}
 
 	if (!to_reuse) {
-		buf = read_sha1_file(entry->sha1, type, &size);
+		buf = read_sha1_file(entry->sha1, &type, &size);
 		if (!buf)
 			die("unable to read %s", sha1_to_hex(entry->sha1));
 		if (size != entry->size)
@@ -765,7 +765,7 @@ static struct pbase_tree_cache *pbase_tree_get(const unsigned char *sha1)
 	struct pbase_tree_cache *ent, *nent;
 	void *data;
 	unsigned long size;
-	char type[20];
+	enum object_type type;
 	int neigh;
 	int my_ix = pbase_tree_cache_ix(sha1);
 	int available_ix = -1;
@@ -792,10 +792,10 @@ static struct pbase_tree_cache *pbase_tree_get(const unsigned char *sha1)
 	/* Did not find one.  Either we got a bogus request or
 	 * we need to read and perhaps cache.
 	 */
-	data = read_sha1_file(sha1, type, &size);
+	data = read_sha1_file(sha1, &type, &size);
 	if (!data)
 		return NULL;
-	if (strcmp(type, tree_type)) {
+	if (type != OBJ_TREE) {
 		free(data);
 		return NULL;
 	}
@@ -854,19 +854,19 @@ static void add_pbase_object(struct tree_desc *tree,
 
 	while (tree_entry(tree,&entry)) {
 		unsigned long size;
-		char type[20];
+		enum object_type type;
 
 		if (entry.pathlen != cmplen ||
 		    memcmp(entry.path, name, cmplen) ||
 		    !has_sha1_file(entry.sha1) ||
-		    sha1_object_info(entry.sha1, type, &size))
+		    (type = sha1_object_info(entry.sha1, &size)) < 0)
 			continue;
 		if (name[cmplen] != '/') {
 			unsigned hash = name_hash(fullname);
 			add_object_entry(entry.sha1, hash, 1);
 			return;
 		}
-		if (!strcmp(type, tree_type)) {
+		if (type == OBJ_TREE) {
 			struct tree_desc sub;
 			struct pbase_tree_cache *tree;
 			const char *down = name+cmplen+1;
@@ -978,8 +978,6 @@ static void add_preferred_base(unsigned char *sha1)
 
 static void check_object(struct object_entry *entry)
 {
-	char type[20];
-
 	if (entry->in_pack && !entry->preferred_base) {
 		struct packed_git *p = entry->in_pack;
 		struct pack_window *w_curs = NULL;
@@ -1062,21 +1060,10 @@ static void check_object(struct object_entry *entry)
 		/* Otherwise we would do the usual */
 	}
 
-	if (sha1_object_info(entry->sha1, type, &entry->size))
+	entry->type = sha1_object_info(entry->sha1, &entry->size);
+	if (entry->type < 0)
 		die("unable to get type of object %s",
 		    sha1_to_hex(entry->sha1));
-
-	if (!strcmp(type, commit_type)) {
-		entry->type = OBJ_COMMIT;
-	} else if (!strcmp(type, tree_type)) {
-		entry->type = OBJ_TREE;
-	} else if (!strcmp(type, blob_type)) {
-		entry->type = OBJ_BLOB;
-	} else if (!strcmp(type, tag_type)) {
-		entry->type = OBJ_TAG;
-	} else
-		die("unable to pack object %s of type %s",
-		    sha1_to_hex(entry->sha1), type);
 }
 
 static unsigned int check_delta_limit(struct object_entry *me, unsigned int n)
@@ -1206,7 +1193,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	struct object_entry *trg_entry = trg->entry;
 	struct object_entry *src_entry = src->entry;
 	unsigned long trg_size, src_size, delta_size, sizediff, max_size, sz;
-	char type[10];
+	enum object_type type;
 	void *delta_buf;
 
 	/* Don't bother doing diffs between different types */
@@ -1257,13 +1244,13 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 
 	/* Load data if not already done */
 	if (!trg->data) {
-		trg->data = read_sha1_file(trg_entry->sha1, type, &sz);
+		trg->data = read_sha1_file(trg_entry->sha1, &type, &sz);
 		if (sz != trg_size)
 			die("object %s inconsistent object length (%lu vs %lu)",
 			    sha1_to_hex(trg_entry->sha1), sz, trg_size);
 	}
 	if (!src->data) {
-		src->data = read_sha1_file(src_entry->sha1, type, &sz);
+		src->data = read_sha1_file(src_entry->sha1, &type, &sz);
 		if (sz != src_size)
 			die("object %s inconsistent object length (%lu vs %lu)",
 			    sha1_to_hex(src_entry->sha1), sz, src_size);

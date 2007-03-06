@@ -59,7 +59,7 @@ static int ce_compare_data(struct cache_entry *ce, struct stat *st)
 
 	if (fd >= 0) {
 		unsigned char sha1[20];
-		if (!index_fd(sha1, fd, st, 0, NULL))
+		if (!index_fd(sha1, fd, st, 0, OBJ_BLOB, ce->name))
 			match = hashcmp(sha1, ce->sha1);
 		/* index_fd() closed the file descriptor already */
 	}
@@ -72,7 +72,7 @@ static int ce_compare_link(struct cache_entry *ce, unsigned long expected_size)
 	char *target;
 	void *buffer;
 	unsigned long size;
-	char type[10];
+	enum object_type type;
 	int len;
 
 	target = xmalloc(expected_size);
@@ -81,7 +81,7 @@ static int ce_compare_link(struct cache_entry *ce, unsigned long expected_size)
 		free(target);
 		return -1;
 	}
-	buffer = read_sha1_file(ce->sha1, type, &size);
+	buffer = read_sha1_file(ce->sha1, &type, &size);
 	if (!buffer) {
 		free(target);
 		return -1;
@@ -125,7 +125,9 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 			changed |= MODE_CHANGED;
 		break;
 	case S_IFLNK:
-		changed |= !S_ISLNK(st->st_mode) ? TYPE_CHANGED : 0;
+		if (!S_ISLNK(st->st_mode) &&
+		    (has_symlinks || !S_ISREG(st->st_mode)))
+			changed |= TYPE_CHANGED;
 		break;
 	default:
 		die("internal error: ce_mode is %o", ntohl(ce->ce_mode));
@@ -344,11 +346,11 @@ int add_file_to_index(const char *path, int verbose)
 	ce->ce_flags = htons(namelen);
 	fill_stat_cache_info(ce, &st);
 
-	if (trust_executable_bit)
+	if (trust_executable_bit && has_symlinks)
 		ce->ce_mode = create_ce_mode(st.st_mode);
 	else {
-		/* If there is an existing entry, pick the mode bits
-		 * from it, otherwise assume unexecutable.
+		/* If there is an existing entry, pick the mode bits and type
+		 * from it, otherwise assume unexecutable regular file.
 		 */
 		struct cache_entry *ent;
 		int pos = cache_name_pos(path, namelen);

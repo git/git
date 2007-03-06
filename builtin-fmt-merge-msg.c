@@ -261,13 +261,15 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 		else if (!strcmp(argv[1], "--no-summary"))
 			merge_summary = 0;
 		else if (!strcmp(argv[1], "-F") || !strcmp(argv[1], "--file")) {
-			if (argc < 2)
+			if (argc < 3)
 				die ("Which file?");
 			if (!strcmp(argv[2], "-"))
 				in = stdin;
 			else {
 				fclose(in);
 				in = fopen(argv[2], "r");
+				if (!in)
+					die("cannot open %s", argv[2]);
 			}
 			argc--; argv++;
 		} else

@@ -55,12 +55,12 @@ static struct tm *time_to_tm(unsigned long time, int tz)
 	return gmtime(&t);
 }
 
-const char *show_date(unsigned long time, int tz, int relative)
+const char *show_date(unsigned long time, int tz, enum date_mode mode)
 {
 	struct tm *tm;
 	static char timebuf[200];
 
-	if (relative) {
+	if (mode == DATE_RELATIVE) {
 		unsigned long diff;
 		struct timeval now;
 		gettimeofday(&now, NULL);
@@ -105,12 +105,16 @@ const char *show_date(unsigned long time, int tz, int relative)
 	tm = time_to_tm(time, tz);
 	if (!tm)
 		return NULL;
-	sprintf(timebuf, "%.3s %.3s %d %02d:%02d:%02d %d %+05d",
-		weekday_names[tm->tm_wday],
-		month_names[tm->tm_mon],
-		tm->tm_mday,
-		tm->tm_hour, tm->tm_min, tm->tm_sec,
-		tm->tm_year + 1900, tz);
+	if (mode == DATE_SHORT)
+		sprintf(timebuf, "%04d-%02d-%02d", tm->tm_year + 1900,
+				tm->tm_mon + 1, tm->tm_mday);
+	else
+		sprintf(timebuf, "%.3s %.3s %d %02d:%02d:%02d %d %+05d",
+				weekday_names[tm->tm_wday],
+				month_names[tm->tm_mon],
+				tm->tm_mday,
+				tm->tm_hour, tm->tm_min, tm->tm_sec,
+				tm->tm_year + 1900, tz);
 	return timebuf;
 }
 

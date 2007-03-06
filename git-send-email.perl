@@ -34,6 +34,53 @@ sub readline {
 }
 package main;
 
+
+sub usage {
+	print <<EOT;
+git-send-email [options] <file | directory>...
+Options:
+   --from         Specify the "From:" line of the email to be sent.
+
+   --to           Specify the primary "To:" line of the email.
+
+   --cc           Specify an initial "Cc:" list for the entire series
+                  of emails.
+
+   --bcc          Specify a list of email addresses that should be Bcc:
+		  on all the emails.
+
+   --compose      Use \$EDITOR to edit an introductory message for the
+                  patch series.
+
+   --subject      Specify the initial "Subject:" line.
+                  Only necessary if --compose is also set.  If --compose
+		  is not set, this will be prompted for.
+
+   --in-reply-to  Specify the first "In-Reply-To:" header line.
+                  Only used if --compose is also set.  If --compose is not
+		  set, this will be prompted for.
+
+   --chain-reply-to If set, the replies will all be to the previous
+                  email sent, rather than to the first email sent.
+                  Defaults to on.
+
+   --no-signed-off-cc Suppress the automatic addition of email addresses
+                 that appear in a Signed-off-by: line, to the cc: list.
+		 Note: Using this option is not recommended.
+
+   --smtp-server  If set, specifies the outgoing SMTP server to use.
+                  Defaults to localhost.
+
+   --suppress-from Suppress sending emails to yourself if your address
+                  appears in a From: line.
+
+   --quiet	  Make git-send-email less verbose.  One line per email
+                  should be all that is output.
+
+EOT
+	exit(1);
+}
+
 # most mail servers generate the Date: header, but not all...
 sub format_2822_time {
 	my ($time) = @_;
@@ -119,6 +166,10 @@ my $rc = GetOptions("from=s" => \$from,
 		    "no-signed-off-cc|no-signed-off-by-cc" => \$no_signed_off_cc,
 		    "dry-run" => \$dry_run,
 	 );
+
+unless ($rc) {
+    usage();
+}
 
 # Verify the user input
 
@@ -311,50 +362,8 @@ if (@files) {
 		print $_,"\n" for (@files);
 	}
 } else {
-	print <<EOT;
-git-send-email [options] <file | directory> [... file | directory ]
-Options:
-   --from         Specify the "From:" line of the email to be sent.
-
-   --to           Specify the primary "To:" line of the email.
-
-   --cc           Specify an initial "Cc:" list for the entire series
-                  of emails.
-
-   --bcc          Specify a list of email addresses that should be Bcc:
-		  on all the emails.
-
-   --compose      Use \$EDITOR to edit an introductory message for the
-                  patch series.
-
-   --subject      Specify the initial "Subject:" line.
-                  Only necessary if --compose is also set.  If --compose
-		  is not set, this will be prompted for.
-
-   --in-reply-to  Specify the first "In-Reply-To:" header line.
-                  Only used if --compose is also set.  If --compose is not
-		  set, this will be prompted for.
-
-   --chain-reply-to If set, the replies will all be to the previous
-                  email sent, rather than to the first email sent.
-                  Defaults to on.
-
-   --no-signed-off-cc Suppress the automatic addition of email addresses
-                 that appear in a Signed-off-by: line, to the cc: list.
-		 Note: Using this option is not recommended.
-
-   --smtp-server  If set, specifies the outgoing SMTP server to use.
-                  Defaults to localhost.
-
-  --suppress-from Suppress sending emails to yourself if your address
-                  appears in a From: line.
-
-   --quiet	Make git-send-email less verbose.  One line per email should be
-		all that is output.
-
-Error: Please specify a file or a directory on the command line.
-EOT
-	exit(1);
+	print STDERR "\nNo patch files specified!\n\n";
+	usage();
 }
 
 # Variables we set as part of the loop over files

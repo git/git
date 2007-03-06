@@ -1061,7 +1061,9 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 		return -1;
 	}
 
+#ifndef NO_SYMLINK_HEAD
 	done:
+#endif
 	if (logmsg && !read_ref(refs_heads_master, new_sha1))
 		log_ref_write(ref_target, old_sha1, new_sha1, logmsg);
 

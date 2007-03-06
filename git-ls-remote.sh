@@ -89,8 +89,13 @@ rsync://* )
 	;;
 
 * )
-	git-peek-remote $exec "$peek_repo" ||
+	if test -f "$peek_repo" ; then
+		git bundle list-heads "$peek_repo" ||
 		echo "failed	slurping"
+	else
+		git-peek-remote $exec "$peek_repo" ||
+		echo "failed	slurping"
+	fi
 	;;
 esac |
 sort -t '	' -k 2 |

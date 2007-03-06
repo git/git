@@ -10,42 +10,24 @@
 #include "builtin.h"
 
 static const char diff_files_usage[] =
-"git-diff-files [-q] [-0/-1/2/3 |-c|--cc] [<common diff options>] [<path>...]"
+"git-diff-files [-q] [-0/-1/2/3 |-c|--cc|-n|--no-index] [<common diff options>] [<path>...]"
 COMMON_DIFF_OPTIONS_HELP;
 
 int cmd_diff_files(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
-	int silent = 0;
+	int nongit = 0;
 
+	prefix = setup_git_directory_gently(&nongit);
 	init_revisions(&rev, prefix);
 	git_config(git_default_config); /* no "diff" UI options */
 	rev.abbrev = 0;
 
-	argc = setup_revisions(argc, argv, &rev, NULL);
-	while (1 < argc && argv[1][0] == '-') {
-		if (!strcmp(argv[1], "--base"))
-			rev.max_count = 1;
-		else if (!strcmp(argv[1], "--ours"))
-			rev.max_count = 2;
-		else if (!strcmp(argv[1], "--theirs"))
-			rev.max_count = 3;
-		else if (!strcmp(argv[1], "-q"))
-			silent = 1;
-		else
-			usage(diff_files_usage);
-		argv++; argc--;
-	}
+	if (!setup_diff_no_index(&rev, argc, argv, nongit, prefix))
+		argc = 0;
+	else
+		argc = setup_revisions(argc, argv, &rev, NULL);
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_RAW;
-
-	/*
-	 * Make sure there are NO revision (i.e. pending object) parameter,
-	 * rev.max_count is reasonable (0 <= n <= 3),
-	 * there is no other revision filtering parameters.
-	 */
-	if (rev.pending.nr ||
-	    rev.min_age != -1 || rev.max_age != -1)
-		usage(diff_files_usage);
-	return run_diff_files(&rev, silent);
+	return run_diff_files_cmd(&rev, argc, argv);
 }

@@ -24,6 +24,8 @@ update_head_ok=
 exec=
 keep=
 shallow_depth=
+no_progress=
+test -t 1 || no_progress=--no-progress
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -386,8 +388,16 @@ fetch_main () {
     ( : subshell because we muck with IFS
       IFS=" 	$LF"
       (
-	  git-fetch-pack --thin $exec $keep $shallow_depth "$remote" $rref ||
+	if test -f "$remote" ; then
+	    test -n "$shallow_depth" &&
+		die "shallow clone with bundle is not supported"
+	    git-bundle unbundle "$remote" $rref ||
+	    echo failed "$remote"
+	else
+	  git-fetch-pack --thin $exec $keep $shallow_depth $no_progress \
+		"$remote" $rref ||
 	  echo failed "$remote"
+	fi
       ) |
       (
 	trap '

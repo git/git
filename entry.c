@@ -68,10 +68,10 @@ static int write_entry(struct cache_entry *ce, char *path, struct checkout *stat
 	void *new;
 	unsigned long size;
 	long wrote;
-	char type[20];
+	enum object_type type;
 
-	new = read_sha1_file(ce->sha1, type, &size);
-	if (!new || strcmp(type, blob_type)) {
+	new = read_sha1_file(ce->sha1, &type, &size);
+	if (!new || type != OBJ_BLOB) {
 		if (new)
 			free(new);
 		return error("git-checkout-index: unable to read sha1 file of %s (%s)",
@@ -111,9 +111,12 @@ static int write_entry(struct cache_entry *ce, char *path, struct checkout *stat
 			return error("git-checkout-index: unable to write file %s", path);
 		break;
 	case S_IFLNK:
-		if (to_tempfile) {
-			strcpy(path, ".merge_link_XXXXXX");
-			fd = mkstemp(path);
+		if (to_tempfile || !has_symlinks) {
+			if (to_tempfile) {
+				strcpy(path, ".merge_link_XXXXXX");
+				fd = mkstemp(path);
+			} else
+				fd = create_file(path, 0666);
 			if (fd < 0) {
 				free(new);
 				return error("git-checkout-index: unable to create "

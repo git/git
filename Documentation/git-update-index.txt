@@ -295,6 +295,11 @@ in the index and the file mode on the filesystem if they differ only on
 executable bit.   On such an unfortunate filesystem, you may
 need to use `git-update-index --chmod=`.
 
+Quite similarly, if `core.symlinks` configuration variable is set
+to 'false' (see gitlink:git-config[1]), symbolic links are checked out
+as plain files, and this command does not modify a recorded file mode
+from symbolic link to regular file.
+
 The command looks at `core.ignorestat` configuration variable.  See
 'Using "assume unchanged" bit' section above.
 

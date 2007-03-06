@@ -1607,7 +1607,8 @@ static int apply_line(char *output, const char *patch, int plen)
 	int need_fix_leading_space = 0;
 	char *buf;
 
-	if ((new_whitespace != strip_whitespace) || !whitespace_error) {
+	if ((new_whitespace != strip_whitespace) || !whitespace_error ||
+	    *patch != '+') {
 		memcpy(output, patch + 1, plen);
 		return plen;
 	}
@@ -1911,11 +1912,11 @@ static int apply_binary(struct buffer_desc *desc, struct patch *patch)
 
 	if (has_sha1_file(sha1)) {
 		/* We already have the postimage */
-		char type[10];
+		enum object_type type;
 		unsigned long size;
 
 		free(desc->buffer);
-		desc->buffer = read_sha1_file(sha1, type, &size);
+		desc->buffer = read_sha1_file(sha1, &type, &size);
 		if (!desc->buffer)
 			return error("the necessary postimage %s for "
 				     "'%s' cannot be read",
@@ -1971,8 +1972,8 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 	buf = NULL;
 	if (cached) {
 		if (ce) {
-			char type[20];
-			buf = read_sha1_file(ce->sha1, type, &size);
+			enum object_type type;
+			buf = read_sha1_file(ce->sha1, &type, &size);
 			if (!buf)
 				return error("read of %s failed",
 					     patch->old_name);
@@ -2358,7 +2359,7 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	char *nbuf;
 	unsigned long nsize;
 
-	if (S_ISLNK(mode))
+	if (has_symlinks && S_ISLNK(mode))
 		/* Although buf:size is counted string, it also is NUL
 		 * terminated.
 		 */

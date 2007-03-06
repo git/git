@@ -2,7 +2,7 @@
 
 EMACS = emacs
 
-ELC = git.elc vc-git.elc
+ELC = git.elc vc-git.elc git-blame.elc
 INSTALL ?= install
 INSTALL_ELC = $(INSTALL) -m 644
 prefix ?= $(HOME)
@@ -15,6 +15,6 @@ install: all
 	$(INSTALL_ELC) $(ELC) $(emacsdir)
 
 %.elc: %.el
-	$(EMACS) --batch --eval '(byte-compile-file "$<")'
+	$(EMACS) -batch -f batch-byte-compile $<
 
 clean:; rm -f $(ELC)

@@ -96,11 +96,6 @@ If you need to pass multiple options, separate them with a comma.
 -s <subst>::
 	Substitute the character "/" in branch names with <subst>
 
--A <author-conv-file>::
-	CVS by default uses the Unix username when writing its
-	commit logs. Using this option and an author-conv-file
-	in this format
-
 -a::
 	Import all commits, including recent ones. cvsimport by default
 	skips commits that have a timestamp less than 10 minutes ago.
@@ -112,6 +107,10 @@ If you need to pass multiple options, separate them with a comma.
 	Limit the number of commits imported. Workaround for cases where
 	cvsimport leaks memory.
 
+-A <author-conv-file>::
+	CVS by default uses the Unix username when writing its
+	commit logs. Using this option and an author-conv-file
+	in this format
 +
 ---------
 	exon=Andreas Ericsson <ae@op5.se>

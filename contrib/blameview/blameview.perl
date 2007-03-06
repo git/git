@@ -41,7 +41,7 @@ $fileview->set_rules_hint(1);
 $fileview->signal_connect (row_activated => sub {
 		my ($sl, $path, $column) = @_;
 		my $row_ref = $sl->get_row_data_from_path ($path);
-		system("blameview @$row_ref[0] $fn &");
+		system("blameview @$row_ref[0]~1 $fn &");
 		});
 
 my $commitwindow = Gtk2::ScrolledWindow->new();

@@ -109,11 +109,11 @@ static int add_file_to_cache(const char *path)
 	ce->ce_flags = htons(namelen);
 	fill_stat_cache_info(ce, &st);
 
-	if (trust_executable_bit)
+	if (trust_executable_bit && has_symlinks)
 		ce->ce_mode = create_ce_mode(st.st_mode);
 	else {
-		/* If there is an existing entry, pick the mode bits
-		 * from it, otherwise assume unexecutable.
+		/* If there is an existing entry, pick the mode bits and type
+		 * from it, otherwise assume unexecutable regular file.
 		 */
 		struct cache_entry *ent;
 		int pos = cache_name_pos(path, namelen);
@@ -487,6 +487,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	int prefix_length = prefix ? strlen(prefix) : 0;
 	char set_executable_bit = 0;
 	unsigned int refresh_flags = 0;
+	int lock_error = 0;
 	struct lock_file *lock_file;
 
 	git_config(git_default_config);
@@ -494,7 +495,9 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	/* We can't free this memory, it becomes part of a linked list parsed atexit() */
 	lock_file = xcalloc(1, sizeof(struct lock_file));
 
-	newfd = hold_lock_file_for_update(lock_file, get_index_file(), 1);
+	newfd = hold_lock_file_for_update(lock_file, get_index_file(), 0);
+	if (newfd < 0)
+		lock_error = errno;
 
 	entries = read_cache();
 	if (entries < 0)
@@ -651,6 +654,12 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 
  finish:
 	if (active_cache_changed) {
+		if (newfd < 0) {
+			if (refresh_flags & REFRESH_QUIET)
+				exit(128);
+			die("unable to create '%s.lock': %s",
+			    get_index_file(), strerror(lock_error));
+		}
 		if (write_cache(newfd, active_cache, active_nr) ||
 		    close(newfd) || commit_lock_file(lock_file))
 			die("Unable to write new index file");

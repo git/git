@@ -89,8 +89,8 @@ int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 static int show_object(const unsigned char *sha1, int suppress_header)
 {
 	unsigned long size;
-	char type[20];
-	char *buf = read_sha1_file(sha1, type, &size);
+	enum object_type type;
+	char *buf = read_sha1_file(sha1, &type, &size);
 	int offset = 0;
 
 	if (!buf)

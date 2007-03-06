@@ -30,18 +30,18 @@ int parse_blob_buffer(struct blob *item, void *buffer, unsigned long size)
 
 int parse_blob(struct blob *item)
 {
-        char type[20];
+        enum object_type type;
         void *buffer;
         unsigned long size;
 	int ret;
 
         if (item->object.parsed)
                 return 0;
-        buffer = read_sha1_file(item->object.sha1, type, &size);
+        buffer = read_sha1_file(item->object.sha1, &type, &size);
         if (!buffer)
                 return error("Could not read %s",
                              sha1_to_hex(item->object.sha1));
-        if (strcmp(type, blob_type))
+        if (type != OBJ_BLOB)
                 return error("Object %s not a blob",
                              sha1_to_hex(item->object.sha1));
 	ret = parse_blob_buffer(item, buffer, size);

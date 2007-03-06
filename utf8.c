@@ -3,13 +3,15 @@
 
 /* This code is originally from http://www.cl.cam.ac.uk/~mgk25/ucs/ */
 
+typedef unsigned int ucs_char_t;  /* assuming 32bit int */
+
 struct interval {
   int first;
   int last;
 };
 
 /* auxiliary function for binary search in interval table */
-static int bisearch(wchar_t ucs, const struct interval *table, int max) {
+static int bisearch(ucs_char_t ucs, const struct interval *table, int max) {
 	int min = 0;
 	int mid;
 
@@ -56,11 +58,11 @@ static int bisearch(wchar_t ucs, const struct interval *table, int max) {
  *      ISO 8859-1 and WGL4 characters, Unicode control characters,
  *      etc.) have a column width of 1.
  *
- * This implementation assumes that wchar_t characters are encoded
+ * This implementation assumes that ucs_char_t characters are encoded
  * in ISO 10646.
  */
 
-static int wcwidth(wchar_t ch)
+static int wcwidth(ucs_char_t ch)
 {
 	/*
 	 * Sorted list of non-overlapping intervals of non-spacing characters,
@@ -157,7 +159,7 @@ static int wcwidth(wchar_t ch)
 int utf8_width(const char **start)
 {
 	unsigned char *s = (unsigned char *)*start;
-	wchar_t ch;
+	ucs_char_t ch;
 
 	if (*s < 0x80) {
 		/* 0xxxxxxx */
@@ -235,11 +237,18 @@ static void print_spaces(int count)
 /*
  * Wrap the text, if necessary. The variable indent is the indent for the
  * first line, indent2 is the indent for all other lines.
+ * If indent is negative, assume that already -indent columns have been
+ * consumed (and no extra indent is necessary for the first line).
  */
-void print_wrapped_text(const char *text, int indent, int indent2, int width)
+int print_wrapped_text(const char *text, int indent, int indent2, int width)
 {
 	int w = indent, assume_utf8 = is_utf8(text);
 	const char *bol = text, *space = NULL;
+
+	if (indent < 0) {
+		w = -indent;
+		space = text;
+	}
 
 	for (;;) {
 		char c = *text;
@@ -251,10 +260,9 @@ void print_wrapped_text(const char *text, int indent, int indent2, int width)
 				else
 					print_spaces(indent);
 				fwrite(start, text - start, 1, stdout);
-				if (!c) {
-					putchar('\n');
-					return;
-				} else if (c == '\t')
+				if (!c)
+					return w;
+				else if (c == '\t')
 					w |= 0x07;
 				space = text;
 				w++;
@@ -262,7 +270,7 @@ void print_wrapped_text(const char *text, int indent, int indent2, int width)
 			}
 			else {
 				putchar('\n');
-				text = bol = space + 1;
+				text = bol = space + isspace(*space);
 				space = NULL;
 				w = indent = indent2;
 			}
@@ -275,6 +283,7 @@ void print_wrapped_text(const char *text, int indent, int indent2, int width)
 			text++;
 		}
 	}
+	return w;
 }
 
 int is_encoding_utf8(const char *name)
@@ -291,11 +300,17 @@ int is_encoding_utf8(const char *name)
  * with iconv.  If the conversion fails, returns NULL.
  */
 #ifndef NO_ICONV
+#ifdef OLD_ICONV
+	typedef const char * iconv_ibp;
+#else
+	typedef char * iconv_ibp;
+#endif
 char *reencode_string(const char *in, const char *out_encoding, const char *in_encoding)
 {
 	iconv_t conv;
 	size_t insz, outsz, outalloc;
-	char *out, *outpos, *cp;
+	char *out, *outpos;
+	iconv_ibp cp;
 
 	if (!in_encoding)
 		return NULL;
@@ -307,7 +322,7 @@ char *reencode_string(const char *in, const char *out_encoding, const char *in_e
 	outalloc = outsz + 1; /* for terminating NUL */
 	out = xmalloc(outalloc);
 	outpos = out;
-	cp = (char *)in;
+	cp = (iconv_ibp)in;
 
 	while (1) {
 		size_t cnt = iconv(conv, &cp, &insz, &outpos, &outsz);

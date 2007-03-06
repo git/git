@@ -43,7 +43,7 @@ static int verify_packfile(struct packed_git *p,
 	for (i = err = 0; i < nr_objects; i++) {
 		unsigned char sha1[20];
 		void *data;
-		char type[20];
+		enum object_type type;
 		unsigned long size, offset;
 
 		if (nth_packed_object_sha1(p, i, sha1))
@@ -51,13 +51,13 @@ static int verify_packfile(struct packed_git *p,
 		offset = find_pack_entry_one(sha1, p);
 		if (!offset)
 			die("internal error pack-check find-pack-entry-one");
-		data = unpack_entry(p, offset, type, &size);
+		data = unpack_entry(p, offset, &type, &size);
 		if (!data) {
 			err = error("cannot unpack %s from %s",
 				    sha1_to_hex(sha1), p->pack_name);
 			continue;
 		}
-		if (check_sha1_signature(sha1, data, size, type)) {
+		if (check_sha1_signature(sha1, data, size, typename(type))) {
 			err = error("packed %s from %s is corrupt",
 				    sha1_to_hex(sha1), p->pack_name);
 			free(data);
@@ -82,7 +82,7 @@ static void show_pack_info(struct packed_git *p)
 
 	for (i = 0; i < nr_objects; i++) {
 		unsigned char sha1[20], base_sha1[20];
-		char type[20];
+		const char *type;
 		unsigned long size;
 		unsigned long store_size;
 		unsigned long offset;
@@ -94,9 +94,9 @@ static void show_pack_info(struct packed_git *p)
 		if (!offset)
 			die("internal error pack-check find-pack-entry-one");
 
-		packed_object_info_detail(p, offset, type, &size, &store_size,
-					  &delta_chain_length,
-					  base_sha1);
+		type = packed_object_info_detail(p, offset, &size, &store_size,
+						 &delta_chain_length,
+						 base_sha1);
 		printf("%s ", sha1_to_hex(sha1));
 		if (!delta_chain_length)
 			printf("%-6s %lu %lu\n", type, size, offset);

@@ -560,17 +560,17 @@ static void update_file_flags(const unsigned char *sha,
 		update_wd = 0;
 
 	if (update_wd) {
-		char type[20];
+		enum object_type type;
 		void *buf;
 		unsigned long size;
 
-		buf = read_sha1_file(sha, type, &size);
+		buf = read_sha1_file(sha, &type, &size);
 		if (!buf)
 			die("cannot read object %s '%s'", sha1_to_hex(sha), path);
-		if (strcmp(type, blob_type) != 0)
+		if (type != OBJ_BLOB)
 			die("blob expected for %s '%s'", sha1_to_hex(sha), path);
 
-		if (S_ISREG(mode)) {
+		if (S_ISREG(mode) || (!has_symlinks && S_ISLNK(mode))) {
 			int fd;
 			if (mkdir_p(path, 0777))
 				die("failed to create path %s: %s", path, strerror(errno));
@@ -591,6 +591,7 @@ static void update_file_flags(const unsigned char *sha,
 			mkdir_p(path, 0777);
 			unlink(path);
 			symlink(lnk, path);
+			free(lnk);
 		} else
 			die("do not know what to do with %06o %s '%s'",
 			    mode, sha1_to_hex(sha), path);
@@ -620,7 +621,7 @@ struct merge_file_info
 static void fill_mm(const unsigned char *sha1, mmfile_t *mm)
 {
 	unsigned long size;
-	char type[20];
+	enum object_type type;
 
 	if (!hashcmp(sha1, null_sha1)) {
 		mm->ptr = xstrdup("");
@@ -628,8 +629,8 @@ static void fill_mm(const unsigned char *sha1, mmfile_t *mm)
 		return;
 	}
 
-	mm->ptr = read_sha1_file(sha1, type, &size);
-	if (!mm->ptr || strcmp(type, blob_type))
+	mm->ptr = read_sha1_file(sha1, &type, &size);
+	if (!mm->ptr || type != OBJ_BLOB)
 		die("unable to read blob object %s", sha1_to_hex(sha1));
 	mm->size = size;
 }
@@ -1213,7 +1214,7 @@ static int merge(struct commit *h1,
 
 		tree->object.parsed = 1;
 		tree->object.type = OBJ_TREE;
-		pretend_sha1_file(NULL, 0, tree_type, tree->object.sha1);
+		pretend_sha1_file(NULL, 0, OBJ_TREE, tree->object.sha1);
 		merged_common_ancestors = make_virtual_commit(tree, "ancestor");
 	}
 

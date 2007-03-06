@@ -55,8 +55,8 @@ static int tree_is_complete(const unsigned char *sha1)
 	desc.buf = tree->buffer;
 	desc.size = tree->size;
 	if (!desc.buf) {
-		char type[20];
-		void *data = read_sha1_file(sha1, type, &desc.size);
+		enum object_type type;
+		void *data = read_sha1_file(sha1, &type, &desc.size);
 		if (!data) {
 			tree->object.flags |= INCOMPLETE;
 			return 0;

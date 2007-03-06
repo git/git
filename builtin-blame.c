@@ -87,9 +87,9 @@ struct origin {
 static char *fill_origin_blob(struct origin *o, mmfile_t *file)
 {
 	if (!o->file.ptr) {
-		char type[10];
+		enum object_type type;
 		num_read_blob++;
-		file->ptr = read_sha1_file(o->blob_sha1, type,
+		file->ptr = read_sha1_file(o->blob_sha1, &type,
 					   (unsigned long *)(&(file->size)));
 		o->file = *file;
 	}
@@ -263,7 +263,6 @@ static struct origin *get_origin(struct scoreboard *sb,
 static int fill_blob_sha1(struct origin *origin)
 {
 	unsigned mode;
-	char type[10];
 
 	if (!is_null_sha1(origin->blob_sha1))
 		return 0;
@@ -271,8 +270,7 @@ static int fill_blob_sha1(struct origin *origin)
 			   origin->path,
 			   origin->blob_sha1, &mode))
 		goto error_out;
-	if (sha1_object_info(origin->blob_sha1, type, NULL) ||
-	    strcmp(type, blob_type))
+	if (sha1_object_info(origin->blob_sha1, NULL) != OBJ_BLOB)
 		goto error_out;
 	return 0;
  error_out:
@@ -1322,10 +1320,10 @@ static void get_commit_info(struct commit *commit,
 	 * we now need to populate them for output.
 	 */
 	if (!commit->buffer) {
-		char type[20];
+		enum object_type type;
 		unsigned long size;
 		commit->buffer =
-			read_sha1_file(commit->object.sha1, type, &size);
+			read_sha1_file(commit->object.sha1, &type, &size);
 	}
 	ret->author = author_buf;
 	get_ac_line(commit->buffer, "\nauthor ",
@@ -2006,7 +2004,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 	buf[fin_size] = 0;
 	origin->file.ptr = buf;
 	origin->file.size = fin_size;
-	pretend_sha1_file(buf, fin_size, blob_type, origin->blob_sha1);
+	pretend_sha1_file(buf, fin_size, OBJ_BLOB, origin->blob_sha1);
 	commit->util = origin;
 
 	/*
@@ -2068,7 +2066,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	int show_stats = 0;
 	const char *revs_file = NULL;
 	const char *final_commit_name = NULL;
-	char type[10];
+	enum object_type type;
 	const char *bottomtop = NULL;
 	const char *contents_from = NULL;
 
@@ -2302,7 +2300,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		if (fill_blob_sha1(o))
 			die("no such path %s in %s", path, final_commit_name);
 
-		sb.final_buf = read_sha1_file(o->blob_sha1, type,
+		sb.final_buf = read_sha1_file(o->blob_sha1, &type,
 					      &sb.final_buf_size);
 	}
 	num_read_blob++;

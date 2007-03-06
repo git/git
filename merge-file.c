@@ -7,12 +7,12 @@ static int fill_mmfile_blob(mmfile_t *f, struct blob *obj)
 {
 	void *buf;
 	unsigned long size;
-	char type[20];
+	enum object_type type;
 
-	buf = read_sha1_file(obj->object.sha1, type, &size);
+	buf = read_sha1_file(obj->object.sha1, &type, &size);
 	if (!buf)
 		return -1;
-	if (strcmp(type, blob_type))
+	if (type != OBJ_BLOB)
 		return -1;
 	f->ptr = buf;
 	f->size = size;
@@ -86,12 +86,12 @@ void *merge_file(struct blob *base, struct blob *our, struct blob *their, unsign
 	 * modified in the other branch!
 	 */
 	if (!our || !their) {
-		char type[20];
+		enum object_type type;
 		if (base)
 			return NULL;
 		if (!our)
 			our = their;
-		return read_sha1_file(our->object.sha1, type, size);
+		return read_sha1_file(our->object.sha1, &type, size);
 	}
 
 	if (fill_mmfile_blob(&f1, our) < 0)

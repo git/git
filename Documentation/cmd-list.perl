@@ -70,6 +70,7 @@ git-archive                             mainporcelain
 git-bisect                              mainporcelain
 git-blame                               ancillaryinterrogators
 git-branch                              mainporcelain
+git-bundle                              mainporcelain
 git-cat-file                            plumbinginterrogators
 git-checkout-index                      plumbingmanipulators
 git-checkout                            mainporcelain

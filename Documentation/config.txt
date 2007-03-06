@@ -117,6 +117,13 @@ core.fileMode::
 	the working copy are ignored; useful on broken filesystems like FAT.
 	See gitlink:git-update-index[1]. True by default.
 
+core.symlinks::
+	If false, symbolic links are checked out as small plain files that
+	contain the link text. gitlink:git-update-index[1] and
+	gitlink:git-add[1] will not change the recorded type to regular
+	file. Useful on filesystems like FAT that do not support
+	symbolic links. True by default.
+
 core.gitProxy::
 	A "proxy command" to execute (as 'command host port') instead
 	of establishing direct connection to the remote server when
@@ -340,6 +347,11 @@ fetch.unpackLimit::
 format.headers::
 	Additional email headers to include in a patch to be submitted
 	by mail.  See gitlink:git-format-patch[1].
+
+format.suffix::
+	The default for format-patch is to output files with the suffix
+	`.patch`. Use this variable to change that suffix (make sure to
+	include the dot if you want it).
 
 gc.packrefs::
 	`git gc` does not run `git pack-refs` in a bare repository by

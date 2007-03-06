@@ -374,7 +374,8 @@ sub req_add
 
         print "Checked-in $dirpart\n";
         print "$filename\n";
-        print "/$filepart/0///\n";
+        my $kopts = kopts_from_path($filepart);
+        print "/$filepart/0//$kopts/\n";
 
         $addcount++;
     }
@@ -455,7 +456,8 @@ sub req_remove
 
         print "Checked-in $dirpart\n";
         print "$filename\n";
-        print "/$filepart/-1.$wrev///\n";
+        my $kopts = kopts_from_path($filepart);
+        print "/$filepart/-1.$wrev//$kopts/\n";
 
         $rmcount++;
     }
@@ -726,7 +728,8 @@ sub req_co
        print $state->{CVSROOT} . "/$module/" . ( defined ( $git->{dir} ) and $git->{dir} ne "./" ? $git->{dir} . "/" : "" ) . "$git->{name}\n";
 
         # this is an "entries" line
-        print "/$git->{name}/1.$git->{revision}///\n";
+        my $kopts = kopts_from_path($git->{name});
+        print "/$git->{name}/1.$git->{revision}//$kopts/\n";
         # permissions
         print "u=$git->{mode},g=$git->{mode},o=$git->{mode}\n";
 
@@ -917,8 +920,9 @@ sub req_update
 		print $state->{CVSROOT} . "/$state->{module}/$filename\n";
 
 		# this is an "entries" line
-		$log->debug("/$filepart/1.$meta->{revision}///");
-		print "/$filepart/1.$meta->{revision}///\n";
+		my $kopts = kopts_from_path($filepart);
+		$log->debug("/$filepart/1.$meta->{revision}//$kopts/");
+		print "/$filepart/1.$meta->{revision}//$kopts/\n";
 
 		# permissions
 		$log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
@@ -961,8 +965,9 @@ sub req_update
                     print "Update-existing $dirpart\n";
                     $log->debug($state->{CVSROOT} . "/$state->{module}/$filename");
                     print $state->{CVSROOT} . "/$state->{module}/$filename\n";
-                    $log->debug("/$filepart/1.$meta->{revision}///");
-                    print "/$filepart/1.$meta->{revision}///\n";
+                    my $kopts = kopts_from_path($filepart);
+                    $log->debug("/$filepart/1.$meta->{revision}//$kopts/");
+                    print "/$filepart/1.$meta->{revision}//$kopts/\n";
                 }
             }
             elsif ( $return == 1 )
@@ -975,7 +980,8 @@ sub req_update
                 {
                     print "Update-existing $dirpart\n";
                     print $state->{CVSROOT} . "/$state->{module}/$filename\n";
-                    print "/$filepart/1.$meta->{revision}/+//\n";
+                    my $kopts = kopts_from_path($filepart);
+                    print "/$filepart/1.$meta->{revision}/+/$kopts/\n";
                 }
             }
             else
@@ -1031,35 +1037,34 @@ sub req_ci
         exit;
     }
 
-    my $lockfile = "$state->{CVSROOT}/refs/heads/$state->{module}.lock";
-    unless ( sysopen(LOCKFILE,$lockfile,O_EXCL|O_CREAT|O_WRONLY) )
-    {
-        $log->warn("lockfile '$lockfile' already exists, please try again");
-        print "error 1 Lock file '$lockfile' already exists, please try again\n";
-        exit;
-    }
-
     # Grab a handle to the SQLite db and do any necessary updates
     my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
     my $tmpdir = tempdir ( DIR => $TEMP_DIR );
     my ( undef, $file_index ) = tempfile ( DIR => $TEMP_DIR, OPEN => 0 );
-    $log->info("Lock successful, basing commit on '$tmpdir', index file is '$file_index'");
+    $log->info("Lockless commit start, basing commit on '$tmpdir', index file is '$file_index'");
 
     $ENV{GIT_DIR} = $state->{CVSROOT} . "/";
     $ENV{GIT_INDEX_FILE} = $file_index;
 
+    # Remember where the head was at the beginning.
+    my $parenthash = `git show-ref -s refs/heads/$state->{module}`;
+    chomp $parenthash;
+    if ($parenthash !~ /^[0-9a-f]{40}$/) {
+	    print "error 1 pserver cannot find the current HEAD of module";
+	    exit;
+    }
+
     chdir $tmpdir;
 
     # populate the temporary index based
-    system("git-read-tree", $state->{module});
+    system("git-read-tree", $parenthash);
     unless ($? == 0)
     {
 	die "Error running git-read-tree $state->{module} $file_index $!";
     }
     $log->info("Created index '$file_index' with for head $state->{module} - exit status $?");
-
 
     my @committedfiles = ();
 
@@ -1095,8 +1100,6 @@ sub req_ci
         {
             # fail everything if an up to date check fails
             print "error 1 Up to date check failed for $filename\n";
-            close LOCKFILE;
-            unlink($lockfile);
             chdir "/";
             exit;
         }
@@ -1139,16 +1142,12 @@ sub req_ci
     {
         print "E No files to commit\n";
         print "ok\n";
-        close LOCKFILE;
-        unlink($lockfile);
         chdir "/";
         return;
     }
 
     my $treehash = `git-write-tree`;
-    my $parenthash = `cat $ENV{GIT_DIR}refs/heads/$state->{module}`;
     chomp $treehash;
-    chomp $parenthash;
 
     $log->debug("Treehash : $treehash, Parenthash : $parenthash");
 
@@ -1159,14 +1158,13 @@ sub req_ci
     close $msg_fh;
 
     my $commithash = `git-commit-tree $treehash -p $parenthash < $msg_filename`;
+    chomp($commithash);
     $log->info("Commit hash : $commithash");
 
     unless ( $commithash =~ /[a-zA-Z0-9]{40}/ )
     {
         $log->warn("Commit failed (Invalid commit hash)");
         print "error 1 Commit failed (unknown reason)\n";
-        close LOCKFILE;
-        unlink($lockfile);
         chdir "/";
         exit;
     }
@@ -1179,14 +1177,17 @@ sub req_ci
 		{
 			$log->warn("Commit failed (update hook declined to update ref)");
 			print "error 1 Commit failed (update hook declined)\n";
-			close LOCKFILE;
-			unlink($lockfile);
 			chdir "/";
 			exit;
 		}
 	}
 
-    print LOCKFILE $commithash;
+	if (system(qw(git update-ref -m), "cvsserver ci",
+			"refs/heads/$state->{module}", $commithash, $parenthash)) {
+		$log->warn("update-ref for $state->{module} failed.");
+		print "error 1 Cannot commit -- update first\n";
+		exit;
+	}
 
     $updater->update();
 
@@ -1211,16 +1212,12 @@ sub req_ci
         } else {
             print "Checked-in $dirpart\n";
             print "$filename\n";
-            print "/$filepart/1.$meta->{revision}///\n";
+            my $kopts = kopts_from_path($filepart);
+            print "/$filepart/1.$meta->{revision}//$kopts/\n";
         }
     }
 
-    close LOCKFILE;
-    my $reffile = "$ENV{GIT_DIR}refs/heads/$state->{module}";
-    unlink($reffile);
-    rename($lockfile, $reffile);
     chdir "/";
-
     print "ok\n";
 }
 
@@ -1895,6 +1892,28 @@ sub filecleanup
     $filename =~ s/^\.\///g;
     $filename = $state->{prependdir} . $filename;
     return $filename;
+}
+
+# Given a path, this function returns a string containing the kopts
+# that should go into that path's Entries line.  For example, a binary
+# file should get -kb.
+sub kopts_from_path
+{
+	my ($path) = @_;
+
+	# Once it exists, the git attributes system should be used to look up
+	# what attributes apply to this path.
+
+	# Until then, take the setting from the config file
+    unless ( defined ( $cfg->{gitcvs}{allbinary} ) and $cfg->{gitcvs}{allbinary} =~ /^\s*(1|true|yes)\s*$/i )
+    {
+		# Return "" to give no special treatment to any path
+		return "";
+    } else {
+		# Alternatively, to have all files treated as if they are binary (which
+		# is more like git itself), always return the "-kb" option
+		return "-kb";
+    }
 }
 
 package GITCVS::log;

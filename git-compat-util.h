@@ -51,9 +51,15 @@
 #include <netdb.h>
 #include <pwd.h>
 #include <inttypes.h>
+#if defined(__CYGWIN__)
+#undef _XOPEN_SOURCE
+#include <grp.h>
+#define _XOPEN_SOURCE 600
+#else
 #undef _ALL_SOURCE /* AIX 5.3L defines a struct list with _ALL_SOURCE. */
 #include <grp.h>
 #define _ALL_SOURCE 1
+#endif
 #endif
 
 #ifndef NO_ICONV

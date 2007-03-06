@@ -52,7 +52,7 @@ OPTIONS
 -f::
 	Allow adding otherwise ignored files.
 
-\i, \--interactive::
+-i, \--interactive::
 	Add modified contents in the working tree interactively to
 	the index.
 

@@ -447,7 +447,7 @@ sub cmd_show_ignore {
 	my $url = (::working_head_info('HEAD'))[0];
 	my $gs = Git::SVN->find_by_url($url) || Git::SVN->new;
 	my $r = (defined $_revision ? $_revision : $gs->ra->get_latest_revnum);
-	$gs->traverse_ignore(\*STDOUT, '', $r);
+	$gs->traverse_ignore(\*STDOUT, $gs->{path}, $r);
 }
 
 sub cmd_multi_init {
@@ -1334,7 +1334,7 @@ sub traverse_ignore {
 	my $ra = $self->ra;
 	my ($dirent, undef, $props) = $ra->get_dir($path, $r);
 	my $p = $path;
-	$p =~ s#^\Q$ra->{svn_path}\E/##;
+	$p =~ s#^\Q$self->{path}\E(/|$)##;
 	print $fh length $p ? "\n# $p\n" : "\n# /\n";
 	if (my $s = $props->{'svn:ignore'}) {
 		$s =~ s/[\r\n]+/\n/g;
