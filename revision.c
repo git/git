@@ -1227,7 +1227,6 @@ static struct commit *get_revision_1(struct rev_info *revs)
 			if (revs->parents)
 				rewrite_parents(revs, commit);
 		}
-		commit->object.flags |= SHOWN;
 		return commit;
 	} while (revs->commits);
 	return NULL;
@@ -1280,11 +1279,22 @@ struct commit *get_revision(struct rev_info *revs)
 	}
 
 	if (revs->reverse) {
+		int limit = -1;
+
+		if (0 <= revs->max_count) {
+			limit = revs->max_count;
+			if (0 < revs->skip_count)
+				limit += revs->skip_count;
+		}
 		l = NULL;
-		while ((c = get_revision_1(revs)))
+		while ((c = get_revision_1(revs))) {
 			commit_list_insert(c, &l);
+			if ((0 < limit) && !--limit)
+				break;
+		}
 		revs->commits = l;
 		revs->reverse = 0;
+		revs->max_count = -1;
 		c = NULL;
 	}
 
@@ -1298,8 +1308,6 @@ struct commit *get_revision(struct rev_info *revs)
 		c = get_revision_1(revs);
 		if (!c)
 			break;
-		/* Although we grabbed it, it is not shown. */
-		c->object.flags &= ~SHOWN;
 	}
 
 	/*
@@ -1310,16 +1318,18 @@ struct commit *get_revision(struct rev_info *revs)
 		break;
 	case 0:
 		/* Although we grabbed it, it is not shown. */
-		if (c)
-			c->object.flags &= ~SHOWN;
 		c = NULL;
 		break;
 	default:
 		revs->max_count--;
 	}
 
-	if (!revs->boundary)
+	if (c)
+		c->object.flags |= SHOWN;
+
+	if (!revs->boundary) {
 		return c;
+	}
 
 	if (!c) {
 		/*
@@ -1341,7 +1351,7 @@ struct commit *get_revision(struct rev_info *revs)
 	for (l = c->parents; l; l = l->next) {
 		struct object *p;
 		p = &(l->item->object);
-		if (p->flags & CHILD_SHOWN)
+		if (p->flags & (CHILD_SHOWN | SHOWN))
 			continue;
 		p->flags |= CHILD_SHOWN;
 		gc_boundary(&revs->boundary_commits);
