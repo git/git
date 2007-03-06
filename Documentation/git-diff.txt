@@ -8,7 +8,7 @@ git-diff - Show changes between commits, commit and working tree, etc
 
 SYNOPSIS
 --------
-'git-diff' [ --diff-options ] <commit>{0,2} [--] [<path>...]
+'git-diff' [<common diff options>] <commit>{0,2} [--] [<path>...]
 
 DESCRIPTION
 -----------

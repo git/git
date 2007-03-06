@@ -9,8 +9,8 @@ git-format-patch - Prepare patches for e-mail submission
 SYNOPSIS
 --------
 [verse]
-'git-format-patch' [-n | -k] [-o <dir> | --stdout] [--attach] [--thread]
-	           [-s | --signoff] [--diff-options] [--start-number <n>]
+'git-format-patch' [<common diff options>] [-n | -k] [-o <dir> | --stdout]
+		   [--attach] [--thread] [-s | --signoff] [--start-number <n>]
 		   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
 		   [--ignore-if-in-upstream]
 		   <since>[..<until>]
@@ -46,6 +46,8 @@ reference.
 
 OPTIONS
 -------
+include::diff-options.txt[]
+
 -o|--output-directory <dir>::
 	Use <dir> to store the resulting files, instead of the
 	current working directory.
