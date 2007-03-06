@@ -189,7 +189,7 @@ static int verify_bundle(struct bundle_header *header)
 			error(message);
 		error("%s %s", sha1_to_hex(e->sha1), e->name);
 	}
-	if (revs.pending.nr == 0)
+	if (revs.pending.nr != p->nr)
 		return ret;
 	req_nr = revs.pending.nr;
 	setup_revisions(2, argv, &revs, NULL);
@@ -279,6 +279,7 @@ static int create_bundle(struct bundle_header *header, const char *path,
 	int pid, in, out, i, status;
 	char buffer[1024];
 	struct rev_info revs;
+	struct object_array tips;
 
 	bundle_fd = (!strcmp(path, "-") ? 1 :
 			open(path, O_CREAT | O_WRONLY, 0666));
@@ -316,19 +317,23 @@ static int create_bundle(struct bundle_header *header, const char *path,
 	argc = setup_revisions(argc, argv, &revs, NULL);
 	if (argc > 1)
 		return error("unrecognized argument: %s'", argv[1]);
+
+	memset(&tips, 0, sizeof(tips));
 	for (i = 0; i < revs.pending.nr; i++) {
 		struct object_array_entry *e = revs.pending.objects + i;
-		if (!(e->item->flags & UNINTERESTING)) {
-			unsigned char sha1[20];
-			char *ref;
-			if (dwim_ref(e->name, strlen(e->name), sha1, &ref) != 1)
-				continue;
-			write_or_die(bundle_fd, sha1_to_hex(e->item->sha1), 40);
-			write_or_die(bundle_fd, " ", 1);
-			write_or_die(bundle_fd, ref, strlen(ref));
-			write_or_die(bundle_fd, "\n", 1);
-			free(ref);
-		}
+		unsigned char sha1[20];
+		char *ref;
+
+		if (e->item->flags & UNINTERESTING)
+			continue;
+		if (dwim_ref(e->name, strlen(e->name), sha1, &ref) != 1)
+			continue;
+		write_or_die(bundle_fd, sha1_to_hex(e->item->sha1), 40);
+		write_or_die(bundle_fd, " ", 1);
+		write_or_die(bundle_fd, ref, strlen(ref));
+		write_or_die(bundle_fd, "\n", 1);
+		add_object_array(e->item, e->name, &tips);
+		free(ref);
 	}
 
 	/* end header */
@@ -356,7 +361,22 @@ static int create_bundle(struct bundle_header *header, const char *path,
 			return -1;
 	if (!WIFEXITED(status) || WEXITSTATUS(status))
 		return error ("pack-objects died");
-	return 0;
+
+	/*
+	 * Make sure the refs we wrote out is correct; --max-count and
+	 * other limiting options could have prevented all the tips
+	 * from getting output.
+	 */
+	status = 0;
+	for (i = 0; i < tips.nr; i++) {
+		if (!(tips.objects[i].item->flags & SHOWN)) {
+			status = 1;
+			error("%s: not included in the resulting pack",
+			      tips.objects[i].name);
+		}
+	}
+
+	return status;
 }
 
 static int unbundle(struct bundle_header *header, int bundle_fd,
