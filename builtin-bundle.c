@@ -160,9 +160,28 @@ static int fork_with_pipe(const char **argv, int *in, int *out)
 	return pid;
 }
 
+static int list_refs(struct ref_list *r, int argc, const char **argv)
+{
+	int i;
+
+	for (i = 0; i < r->nr; i++) {
+		if (argc > 1) {
+			int j;
+			for (j = 1; j < argc; j++)
+				if (!strcmp(r->list[i].name, argv[j]))
+					break;
+			if (j == argc)
+				continue;
+		}
+		printf("%s %s\n", sha1_to_hex(r->list[i].sha1),
+				r->list[i].name);
+	}
+	return 0;
+}
+
 #define PREREQ_MARK (1u<<16)
 
-static int verify_bundle(struct bundle_header *header)
+static int verify_bundle(struct bundle_header *header, int verbose)
 {
 	/*
 	 * Do fast check, then if any prereqs are missing then go line by line
@@ -218,27 +237,24 @@ static int verify_bundle(struct bundle_header *header)
 	for (i = 0; i < refs.nr; i++)
 		clear_commit_marks((struct commit *)refs.objects[i].item, -1);
 
+	if (verbose) {
+		struct ref_list *r;
+
+		r = &header->references;
+		printf("The bundle contains %d ref%s\n",
+		       r->nr, (1 < r->nr) ? "s" : "");
+		list_refs(r, 0, NULL);
+		r = &header->prerequisites;
+		printf("The bundle requires these %d ref%s\n",
+		       r->nr, (1 < r->nr) ? "s" : "");
+		list_refs(r, 0, NULL);
+	}
 	return ret;
 }
 
 static int list_heads(struct bundle_header *header, int argc, const char **argv)
 {
-	int i;
-	struct ref_list *r = &header->references;
-
-	for (i = 0; i < r->nr; i++) {
-		if (argc > 1) {
-			int j;
-			for (j = 1; j < argc; j++)
-				if (!strcmp(r->list[i].name, argv[j]))
-					break;
-			if (j == argc)
-				continue;
-		}
-		printf("%s %s\n", sha1_to_hex(r->list[i].sha1),
-				r->list[i].name);
-	}
-	return 0;
+	return list_refs(&header->references, argc, argv);
 }
 
 static void show_commit(struct commit *commit)
@@ -385,7 +401,7 @@ static int unbundle(struct bundle_header *header, int bundle_fd,
 	const char *argv_index_pack[] = {"index-pack", "--stdin", NULL};
 	int pid, status, dev_null;
 
-	if (verify_bundle(header))
+	if (verify_bundle(header, 0))
 		return -1;
 	dev_null = open("/dev/null", O_WRONLY);
 	pid = fork_with_pipe(argv_index_pack, &bundle_fd, &dev_null);
@@ -429,7 +445,7 @@ int cmd_bundle(int argc, const char **argv, const char *prefix)
 
 	if (!strcmp(cmd, "verify")) {
 		close(bundle_fd);
-		if (verify_bundle(&header))
+		if (verify_bundle(&header, 1))
 			return 1;
 		fprintf(stderr, "%s is okay\n", bundle_file);
 		return 0;
@@ -449,4 +465,3 @@ int cmd_bundle(int argc, const char **argv, const char *prefix)
 	} else
 		usage(bundle_usage);
 }
-
