@@ -1267,6 +1267,24 @@ proc commit_committree {fd_wt curHEAD msg} {
 		return
 	}
 
+	# -- Verify this wasn't an empty change.
+	#
+	if {$commit_type eq {normal}} {
+		set old_tree [git rev-parse "$PARENT^{tree}"]
+		if {$tree_id eq $old_tree} {
+			info_popup {No changes to commit.
+
+No files were modified by this commit and it
+was not a merge commit.
+
+A rescan will be automatically started now.
+}
+			unlock_index
+			rescan {set ui_status_value {No changes to commit.}}
+			return
+		}
+	}
+
 	# -- Build the message.
 	#
 	set msg_p [gitdir COMMIT_EDITMSG]
@@ -1281,14 +1299,8 @@ proc commit_committree {fd_wt curHEAD msg} {
 	# -- Create the commit.
 	#
 	set cmd [list git commit-tree $tree_id]
-	set parents [concat $PARENT $MERGE_HEAD]
-	if {[llength $parents] > 0} {
-		foreach p $parents {
-			lappend cmd -p $p
-		}
-	} else {
-		# git commit-tree writes to stderr during initial commit.
-		lappend cmd 2>/dev/null
+	foreach p [concat $PARENT $MERGE_HEAD] {
+		lappend cmd -p $p
 	}
 	lappend cmd <$msg_p
 	if {[catch {set cmt_id [eval exec $cmd]} err]} {
@@ -5256,6 +5268,12 @@ if {[is_enabled branch]} {
 		-font font_ui
 	lappend disable_on_lock [list .mbar.branch entryconf \
 		[.mbar.branch index last] -state]
+
+	.mbar.branch add command -label {Reset...} \
+		-command do_reset_hard \
+		-font font_ui
+	lappend disable_on_lock [list .mbar.branch entryconf \
+		[.mbar.branch index last] -state]
 }
 
 # -- Commit Menu
@@ -5328,6 +5346,34 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 		-font font_ui
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
+}
+
+# -- Merge Menu
+#
+if {[is_enabled branch]} {
+	menu .mbar.merge
+	.mbar.merge add command -label {Local Merge...} \
+		-command do_local_merge \
+		-font font_ui
+	lappend disable_on_lock \
+		[list .mbar.merge entryconf [.mbar.merge index last] -state]
+	.mbar.merge add command -label {Abort Merge...} \
+		-command do_reset_hard \
+		-font font_ui
+	lappend disable_on_lock \
+		[list .mbar.merge entryconf [.mbar.merge index last] -state]
+
+}
+
+# -- Transport Menu
+#
+if {[is_enabled transport]} {
+	menu .mbar.fetch
+
+	menu .mbar.push
+	.mbar.push add command -label {Push...} \
+		-command do_push_anywhere \
+		-font font_ui
 }
 
 if {[is_MacOSX]} {
@@ -5501,28 +5547,6 @@ label .branch.cb \
 pack .branch.l1 -side left
 pack .branch.cb -side left -fill x
 pack .branch -side top -fill x
-
-if {[is_enabled branch]} {
-	menu .mbar.merge
-	.mbar.merge add command -label {Local Merge...} \
-		-command do_local_merge \
-		-font font_ui
-	lappend disable_on_lock \
-		[list .mbar.merge entryconf [.mbar.merge index last] -state]
-	.mbar.merge add command -label {Abort Merge...} \
-		-command do_reset_hard \
-		-font font_ui
-	lappend disable_on_lock \
-		[list .mbar.merge entryconf [.mbar.merge index last] -state]
-
-
-	menu .mbar.fetch
-
-	menu .mbar.push
-	.mbar.push add command -label {Push...} \
-		-command do_push_anywhere \
-		-font font_ui
-}
 
 # -- Main Window Layout
 #
