@@ -591,7 +591,7 @@ sub esc_html ($;%) {
 	my %opts = @_;
 
 	$str = to_utf8($str);
-	$str = escapeHTML($str);
+	$str = $cgi->escapeHTML($str);
 	if ($opts{'-nbsp'}) {
 		$str =~ s/ /&nbsp;/g;
 	}
@@ -605,7 +605,7 @@ sub esc_path {
 	my %opts = @_;
 
 	$str = to_utf8($str);
-	$str = escapeHTML($str);
+	$str = $cgi->escapeHTML($str);
 	if ($opts{'-nbsp'}) {
 		$str =~ s/ /&nbsp;/g;
 	}
