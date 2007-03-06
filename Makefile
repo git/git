@@ -608,6 +608,12 @@ endif
 QUIET_SUBDIR0  = $(MAKE) -C # space to separate -C and subdir
 QUIET_SUBDIR1  =
 
+ifneq ($(findstring $(MAKEFLAGS),w),w)
+PRINT_DIR = --no-print-directory
+else # "make -w"
+NO_SUBDIR = :
+endif
+
 ifneq ($(findstring $(MAKEFLAGS),s),s)
 ifndef V
 	QUIET_CC       = @echo '   ' CC $@;
@@ -616,8 +622,8 @@ ifndef V
 	QUIET_BUILT_IN = @echo '   ' BUILTIN $@;
 	QUIET_GEN      = @echo '   ' GEN $@;
 	QUIET_SUBDIR0  = @subdir=
-	QUIET_SUBDIR1  = ;echo '   ' SUBDIR $$subdir; \
-			 $(MAKE) --no-print-directory -C $$subdir
+	QUIET_SUBDIR1  = ;$(NO_SUBDIR) echo '   ' SUBDIR $$subdir; \
+			 $(MAKE) $(PRINT_DIR) -C $$subdir
 	export V
 	export QUIET_GEN
 	export QUIET_BUILT_IN
