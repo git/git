@@ -1285,17 +1285,21 @@ struct commit *get_revision(struct rev_info *revs)
 			commit_list_insert(c, &l);
 		revs->commits = l;
 		revs->reverse = 0;
+		c = NULL;
 	}
 
 	/*
 	 * Now pick up what they want to give us
 	 */
-	c = get_revision_1(revs);
+	if (!(c = get_revision_1(revs)))
+		return NULL;
 	while (0 < revs->skip_count) {
 		revs->skip_count--;
 		c = get_revision_1(revs);
 		if (!c)
 			break;
+		/* Although we grabbed it, it is not shown. */
+		c->object.flags &= ~SHOWN;
 	}
 
 	/*
@@ -1305,6 +1309,9 @@ struct commit *get_revision(struct rev_info *revs)
 	case -1:
 		break;
 	case 0:
+		/* Although we grabbed it, it is not shown. */
+		if (c)
+			c->object.flags &= ~SHOWN;
 		c = NULL;
 		break;
 	default:

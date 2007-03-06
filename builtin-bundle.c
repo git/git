@@ -160,6 +160,8 @@ static int fork_with_pipe(const char **argv, int *in, int *out)
 	return pid;
 }
 
+#define PREREQ_MARK (1u<<16)
+
 static int verify_bundle(struct bundle_header *header)
 {
 	/*
@@ -179,7 +181,7 @@ static int verify_bundle(struct bundle_header *header)
 		struct ref_list_entry *e = p->list + i;
 		struct object *o = parse_object(e->sha1);
 		if (o) {
-			o->flags |= BOUNDARY_SHOW;
+			o->flags |= PREREQ_MARK;
 			add_pending_object(&revs, o, e->name);
 			continue;
 		}
@@ -202,7 +204,7 @@ static int verify_bundle(struct bundle_header *header)
 
 	i = req_nr;
 	while (i && (commit = get_revision(&revs)))
-		if (commit->object.flags & BOUNDARY_SHOW)
+		if (commit->object.flags & PREREQ_MARK)
 			i--;
 
 	for (i = 0; i < req_nr; i++)

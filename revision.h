@@ -7,10 +7,9 @@
 #define SHOWN		(1u<<3)
 #define TMP_MARK	(1u<<4) /* for isolated cases; clean after use */
 #define BOUNDARY	(1u<<5)
-#define BOUNDARY_SHOW	(1u<<6)
+#define CHILD_SHOWN	(1u<<6)
 #define ADDED		(1u<<7)	/* Parents already parsed and added? */
 #define SYMMETRIC_LEFT	(1u<<8)
-#define CHILD_SHOWN	(1u<<9)
 
 struct rev_info;
 struct log_info;
