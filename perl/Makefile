@@ -6,7 +6,7 @@ makfile:=perl.mak
 PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
 prefix_SQ = $(subst ','\'',$(prefix))
 
-ifdef QUIET_MAKE
+ifndef V
 	QUIET = @
 endif
 

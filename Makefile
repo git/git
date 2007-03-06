@@ -1,7 +1,7 @@
 # The default target of this Makefile is...
 all::
 
-# Define QUIET_MAKE to have a less verbose compile.
+# Define V=1 to have a more verbose compile.
 #
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
 # This also implies MOZILLA_SHA1.
@@ -604,7 +604,7 @@ endif
 ifdef NO_PERL_MAKEMAKER
 	export NO_PERL_MAKEMAKER
 endif
-ifdef QUIET_MAKE
+ifndef V
 	QUIET_CC       = @echo '   ' CC $<;
 	QUIET_AR       = @echo '   ' AR $@;
 	QUIET_LINK     = @echo '   ' LINK $@;
@@ -612,7 +612,7 @@ ifdef QUIET_MAKE
 	QUIET_GEN      = @echo '   ' GEN $@;
 	QUIET_SUBDIR0  = @subdir=
 	QUIET_SUBDIR1  = ;echo '   ' SUBDIR $$subdir; $(MAKE) -C$$subdir
-	export QUIET_MAKE
+	export V
 else
 	QUIET_SUBDIR0  = $(MAKE) -C
 	QUIET_SUBDIR1  =

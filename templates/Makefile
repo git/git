@@ -1,6 +1,6 @@
 # make and install sample templates
 
-ifdef QUIET_MAKE
+ifndef V
 	QUIET = @
 endif
 
