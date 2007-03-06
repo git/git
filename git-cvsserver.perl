@@ -957,12 +957,12 @@ sub req_update
             {
                 $log->info("Merged successfully");
                 print "M M $filename\n";
-                $log->debug("Update-existing $dirpart");
+                $log->debug("Merged $dirpart");
 
                 # Don't want to actually _DO_ the update if -n specified
                 unless ( $state->{globaloptions}{-n} )
                 {
-                    print "Update-existing $dirpart\n";
+                    print "Merged $dirpart\n";
                     $log->debug($state->{CVSROOT} . "/$state->{module}/$filename");
                     print $state->{CVSROOT} . "/$state->{module}/$filename\n";
                     my $kopts = kopts_from_path($filepart);
@@ -978,7 +978,7 @@ sub req_update
                 # Don't want to actually _DO_ the update if -n specified
                 unless ( $state->{globaloptions}{-n} )
                 {
-                    print "Update-existing $dirpart\n";
+                    print "Merged $dirpart\n";
                     print $state->{CVSROOT} . "/$state->{module}/$filename\n";
                     my $kopts = kopts_from_path($filepart);
                     print "/$filepart/1.$meta->{revision}/+/$kopts/\n";
