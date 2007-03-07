@@ -1997,6 +1997,40 @@ static void cmd_checkpoint(void)
 	read_next_command();
 }
 
+static void import_marks(const char *input_file)
+{
+	char line[512];
+	FILE *f = fopen(input_file, "r");
+	if (!f)
+		die("cannot read %s: %s", input_file, strerror(errno));
+	while (fgets(line, sizeof(line), f)) {
+		uintmax_t mark;
+		char *end;
+		unsigned char sha1[20];
+		struct object_entry *e;
+
+		end = strchr(line, '\n');
+		if (line[0] != ':' || !end)
+			die("corrupt mark line: %s", line);
+		*end = 0;
+		mark = strtoumax(line + 1, &end, 10);
+		if (!mark || end == line + 1
+			|| *end != ' ' || get_sha1(end + 1, sha1))
+			die("corrupt mark line: %s", line);
+		e = find_object(sha1);
+		if (!e) {
+			enum object_type type = sha1_object_info(sha1, NULL);
+			if (type < 0)
+				die("object not found: %s", sha1_to_hex(sha1));
+			e = insert_object(sha1);
+			e->type = type;
+			e->pack_id = MAX_PACK_ID;
+		}
+		insert_mark(mark, e);
+	}
+	fclose(f);
+}
+
 static const char fast_import_usage[] =
 "git-fast-import [--date-format=f] [--max-pack-size=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file]";
 
@@ -2034,6 +2068,8 @@ int main(int argc, const char **argv)
 			max_depth = strtoul(a + 8, NULL, 0);
 		else if (!prefixcmp(a, "--active-branches="))
 			max_active_branches = strtoul(a + 18, NULL, 0);
+		else if (!prefixcmp(a, "--import-marks="))
+			import_marks(a + 15);
 		else if (!prefixcmp(a, "--export-marks="))
 			mark_file = a + 15;
 		else if (!prefixcmp(a, "--export-pack-edges=")) {

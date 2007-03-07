@@ -62,7 +62,18 @@ OPTIONS
 	Dumps the internal marks table to <file> when complete.
 	Marks are written one per line as `:markid SHA-1`.
 	Frontends can use this file to validate imports after they
-	have been completed.
+	have been completed, or to save the marks table across
+	incremental runs.  As <file> is only opened and truncated
+	at checkpoint (or completion) the same path can also be
+	safely given to \--import-marks.
+
+--import-marks=<file>::
+	Before processing any input, load the marks specified in
+	<file>.  The input file must exist, must be readable, and
+	must use the same format as produced by \--export-marks.
+	Multiple options may be supplied to import more than one
+	set of marks.  If a mark is defined to different values,
+	the last file wins.
 
 --export-pack-edges=<file>::
 	After creating a packfile, print a line of data to
