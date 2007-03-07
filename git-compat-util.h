@@ -70,6 +70,10 @@
 #define PATH_MAX 4096
 #endif
 
+#ifndef PRIuMAX
+#define PRIuMAX "llu"
+#endif
+
 #ifdef __GNUC__
 #define NORETURN __attribute__((__noreturn__))
 #else

@@ -4,11 +4,11 @@
 static int verify_packfile(struct packed_git *p,
 		struct pack_window **w_curs)
 {
-	unsigned long index_size = p->index_size;
+	off_t index_size = p->index_size;
 	void *index_base = p->index_base;
 	SHA_CTX ctx;
 	unsigned char sha1[20];
-	unsigned long offset = 0, pack_sig = p->pack_size - 20;
+	off_t offset = 0, pack_sig = p->pack_size - 20;
 	uint32_t nr_objects, i;
 	int err;
 
@@ -24,7 +24,7 @@ static int verify_packfile(struct packed_git *p,
 		unsigned char *in = use_pack(p, w_curs, offset, &remaining);
 		offset += remaining;
 		if (offset > pack_sig)
-			remaining -= offset - pack_sig;
+			remaining -= (unsigned int)(offset - pack_sig);
 		SHA1_Update(&ctx, in, remaining);
 	}
 	SHA1_Final(sha1, &ctx);
@@ -45,7 +45,8 @@ static int verify_packfile(struct packed_git *p,
 		unsigned char sha1[20];
 		void *data;
 		enum object_type type;
-		unsigned long size, offset;
+		unsigned long size;
+		off_t offset;
 
 		if (nth_packed_object_sha1(p, i, sha1))
 			die("internal error pack-check nth-packed-object");
@@ -85,7 +86,7 @@ static void show_pack_info(struct packed_git *p)
 		const char *type;
 		unsigned long size;
 		unsigned long store_size;
-		unsigned long offset;
+		off_t offset;
 		unsigned int delta_chain_length;
 
 		if (nth_packed_object_sha1(p, i, sha1))
@@ -99,9 +100,11 @@ static void show_pack_info(struct packed_git *p)
 						 base_sha1);
 		printf("%s ", sha1_to_hex(sha1));
 		if (!delta_chain_length)
-			printf("%-6s %lu %lu\n", type, size, offset);
+			printf("%-6s %lu %"PRIuMAX"\n",
+			       type, size, (uintmax_t)offset);
 		else {
-			printf("%-6s %lu %lu %u %s\n", type, size, offset,
+			printf("%-6s %lu %"PRIuMAX" %u %s\n",
+			       type, size, (uintmax_t)offset,
 			       delta_chain_length, sha1_to_hex(base_sha1));
 			if (delta_chain_length < MAX_CHAIN)
 				chain_histogram[delta_chain_length]++;
@@ -123,7 +126,7 @@ static void show_pack_info(struct packed_git *p)
 
 int verify_pack(struct packed_git *p, int verbose)
 {
-	unsigned long index_size = p->index_size;
+	off_t index_size = p->index_size;
 	void *index_base = p->index_base;
 	SHA_CTX ctx;
 	unsigned char sha1[20];
@@ -132,7 +135,7 @@ int verify_pack(struct packed_git *p, int verbose)
 	ret = 0;
 	/* Verify SHA1 sum of the index file */
 	SHA1_Init(&ctx);
-	SHA1_Update(&ctx, index_base, index_size - 20);
+	SHA1_Update(&ctx, index_base, (unsigned int)(index_size - 20));
 	SHA1_Final(sha1, &ctx);
 	if (hashcmp(sha1, (unsigned char *)index_base + index_size - 20))
 		ret = error("Packfile index for %s SHA1 mismatch",

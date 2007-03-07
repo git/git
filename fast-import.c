@@ -133,10 +133,6 @@ Format of STDIN stream:
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
 
-#ifndef PRIuMAX
-#define PRIuMAX "llu"
-#endif
-
 struct object_entry
 {
 	struct object_entry *next;

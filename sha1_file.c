@@ -629,7 +629,7 @@ static int open_packed_git(struct packed_git *p)
 	return -1;
 }
 
-static int in_window(struct pack_window *win, unsigned long offset)
+static int in_window(struct pack_window *win, off_t offset)
 {
 	/* We must promise at least 20 bytes (one hash) after the
 	 * offset is available from this window, otherwise the offset
@@ -644,7 +644,7 @@ static int in_window(struct pack_window *win, unsigned long offset)
 
 unsigned char* use_pack(struct packed_git *p,
 		struct pack_window **w_cursor,
-		unsigned long offset,
+		off_t offset,
 		unsigned int *left)
 {
 	struct pack_window *win = *w_cursor;
@@ -1049,14 +1049,14 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, enum object_type *type
 	return unpack_sha1_rest(&stream, hdr, *size);
 }
 
-static unsigned long get_delta_base(struct packed_git *p,
+static off_t get_delta_base(struct packed_git *p,
 				    struct pack_window **w_curs,
-				    unsigned long *curpos,
+				    off_t *curpos,
 				    enum object_type type,
-				    unsigned long delta_obj_offset)
+				    off_t delta_obj_offset)
 {
 	unsigned char *base_info = use_pack(p, w_curs, *curpos, NULL);
-	unsigned long base_offset;
+	off_t base_offset;
 
 	/* use_pack() assured us we have [base_info, base_info + 20)
 	 * as a range that we can look at without walking off the
@@ -1092,17 +1092,17 @@ static unsigned long get_delta_base(struct packed_git *p,
 }
 
 /* forward declaration for a mutually recursive function */
-static int packed_object_info(struct packed_git *p, unsigned long offset,
+static int packed_object_info(struct packed_git *p, off_t offset,
 			      unsigned long *sizep);
 
 static int packed_delta_info(struct packed_git *p,
 			     struct pack_window **w_curs,
-			     unsigned long curpos,
+			     off_t curpos,
 			     enum object_type type,
-			     unsigned long obj_offset,
+			     off_t obj_offset,
 			     unsigned long *sizep)
 {
-	unsigned long base_offset;
+	off_t base_offset;
 
 	base_offset = get_delta_base(p, w_curs, &curpos, type, obj_offset);
 	type = packed_object_info(p, base_offset, NULL);
@@ -1152,7 +1152,7 @@ static int packed_delta_info(struct packed_git *p,
 
 static int unpack_object_header(struct packed_git *p,
 				struct pack_window **w_curs,
-				unsigned long *curpos,
+				off_t *curpos,
 				unsigned long *sizep)
 {
 	unsigned char *base;
@@ -1176,14 +1176,15 @@ static int unpack_object_header(struct packed_git *p,
 }
 
 const char *packed_object_info_detail(struct packed_git *p,
-				      unsigned long obj_offset,
+				      off_t obj_offset,
 				      unsigned long *size,
 				      unsigned long *store_size,
 				      unsigned int *delta_chain_length,
 				      unsigned char *base_sha1)
 {
 	struct pack_window *w_curs = NULL;
-	unsigned long curpos, dummy;
+	off_t curpos;
+	unsigned long dummy;
 	unsigned char *next_sha1;
 	enum object_type type;
 
@@ -1223,11 +1224,12 @@ const char *packed_object_info_detail(struct packed_git *p,
 	}
 }
 
-static int packed_object_info(struct packed_git *p, unsigned long obj_offset,
+static int packed_object_info(struct packed_git *p, off_t obj_offset,
 			      unsigned long *sizep)
 {
 	struct pack_window *w_curs = NULL;
-	unsigned long size, curpos = obj_offset;
+	unsigned long size;
+	off_t curpos = obj_offset;
 	enum object_type type;
 
 	type = unpack_object_header(p, &w_curs, &curpos, &size);
@@ -1255,7 +1257,7 @@ static int packed_object_info(struct packed_git *p, unsigned long obj_offset,
 
 static void *unpack_compressed_entry(struct packed_git *p,
 				    struct pack_window **w_curs,
-				    unsigned long curpos,
+				    off_t curpos,
 				    unsigned long size)
 {
 	int st;
@@ -1286,20 +1288,22 @@ static void *unpack_compressed_entry(struct packed_git *p,
 
 static void *unpack_delta_entry(struct packed_git *p,
 				struct pack_window **w_curs,
-				unsigned long curpos,
+				off_t curpos,
 				unsigned long delta_size,
-				unsigned long obj_offset,
+				off_t obj_offset,
 				enum object_type *type,
 				unsigned long *sizep)
 {
 	void *delta_data, *result, *base;
-	unsigned long base_size, base_offset;
+	unsigned long base_size;
+	off_t base_offset;
 
 	base_offset = get_delta_base(p, w_curs, &curpos, *type, obj_offset);
 	base = unpack_entry(p, base_offset, type, &base_size);
 	if (!base)
-		die("failed to read delta base object at %lu from %s",
-		    base_offset, p->pack_name);
+		die("failed to read delta base object"
+		    " at %"PRIuMAX" from %s",
+		    (uintmax_t)base_offset, p->pack_name);
 
 	delta_data = unpack_compressed_entry(p, w_curs, curpos, delta_size);
 	result = patch_delta(base, base_size,
@@ -1312,11 +1316,11 @@ static void *unpack_delta_entry(struct packed_git *p,
 	return result;
 }
 
-void *unpack_entry(struct packed_git *p, unsigned long obj_offset,
+void *unpack_entry(struct packed_git *p, off_t obj_offset,
 		   enum object_type *type, unsigned long *sizep)
 {
 	struct pack_window *w_curs = NULL;
-	unsigned long curpos = obj_offset;
+	off_t curpos = obj_offset;
 	void *data;
 
 	*type = unpack_object_header(p, &w_curs, &curpos, sizep);
@@ -1355,7 +1359,7 @@ int nth_packed_object_sha1(const struct packed_git *p, uint32_t n,
 	return 0;
 }
 
-unsigned long find_pack_entry_one(const unsigned char *sha1,
+off_t find_pack_entry_one(const unsigned char *sha1,
 				  struct packed_git *p)
 {
 	uint32_t *level1_ofs = p->index_base;
@@ -1397,7 +1401,7 @@ static int matches_pack_name(struct packed_git *p, const char *ig)
 static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e, const char **ignore_packed)
 {
 	struct packed_git *p;
-	unsigned long offset;
+	off_t offset;
 
 	prepare_packed_git();
 
