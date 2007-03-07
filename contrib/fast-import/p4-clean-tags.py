@@ -25,7 +25,10 @@ for o, a in opts:
 sout, sin, serr = popen2.popen3("git-name-rev --tags `git-rev-parse %s`" % branch)
 output = sout.read()
 tagIdx = output.index(" tags/p4/")
-caretIdx = output.index("^")
+try:
+    caretIdx = output.index("^")
+except:
+    caretIdx = len(output) - 1
 rev = int(output[tagIdx + 9 : caretIdx])
 
 allTags = os.popen("git tag -l p4/").readlines()
