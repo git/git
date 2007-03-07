@@ -158,7 +158,10 @@ static int update(struct command *cmd)
 			cmd->error_string = "failed to lock";
 			return error("failed to lock %s", name);
 		}
-		write_ref_sha1(lock, new_sha1, "push");
+		if (write_ref_sha1(lock, new_sha1, "push")) {
+			cmd->error_string = "failed to write";
+			return -1; /* error() already called */
+		}
 		fprintf(stderr, "%s: %s -> %s\n", name, old_hex, new_hex);
 	}
 	return 0;
