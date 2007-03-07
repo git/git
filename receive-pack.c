@@ -175,14 +175,14 @@ static void run_update_post_hook(struct command *cmd)
 	int argc;
 	const char **argv;
 
-	if (access(update_post_hook, X_OK) < 0)
-		return;
-	for (argc = 1, cmd_p = cmd; cmd_p; cmd_p = cmd_p->next) {
+	for (argc = 0, cmd_p = cmd; cmd_p; cmd_p = cmd_p->next) {
 		if (cmd_p->error_string)
 			continue;
 		argc++;
 	}
-	argv = xmalloc(sizeof(*argv) * (1 + argc));
+	if (!argc || access(update_post_hook, X_OK) < 0)
+		return;
+	argv = xmalloc(sizeof(*argv) * (2 + argc));
 	argv[0] = update_post_hook;
 
 	for (argc = 1, cmd_p = cmd; cmd_p; cmd_p = cmd_p->next) {
