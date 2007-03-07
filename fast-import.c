@@ -1375,16 +1375,33 @@ static void dump_marks_helper(FILE *f,
 
 static void dump_marks(void)
 {
-	if (mark_file)
-	{
-		FILE *f = fopen(mark_file, "w");
-		if (f) {
-			dump_marks_helper(f, 0, marks);
-			fclose(f);
-		} else
-			failure |= error("Unable to write marks file %s: %s",
-				mark_file, strerror(errno));
+	static struct lock_file mark_lock;
+	int mark_fd;
+	FILE *f;
+
+	if (!mark_file)
+		return;
+
+	mark_fd = hold_lock_file_for_update(&mark_lock, mark_file, 0);
+	if (mark_fd < 0) {
+		failure |= error("Unable to write marks file %s: %s",
+			mark_file, strerror(errno));
+		return;
 	}
+
+	f = fdopen(mark_fd, "w");
+	if (!f) {
+		rollback_lock_file(&mark_lock);
+		failure |= error("Unable to write marks file %s: %s",
+			mark_file, strerror(errno));
+		return;
+	}
+
+	dump_marks_helper(f, 0, marks);
+	fclose(f);
+	if (commit_lock_file(&mark_lock))
+		failure |= error("Unable to write marks file %s: %s",
+			mark_file, strerror(errno));
 }
 
 static void read_next_command(void)
