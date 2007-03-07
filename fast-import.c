@@ -757,7 +757,7 @@ static char *create_index(void)
 static char *keep_pack(char *curr_index_name)
 {
 	static char name[PATH_MAX];
-	static char *keep_msg = "fast-import";
+	static const char *keep_msg = "fast-import";
 	int keep_fd;
 
 	chmod(pack_data->pack_name, 0444);

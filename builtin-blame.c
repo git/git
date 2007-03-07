@@ -1244,26 +1244,26 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
  */
 struct commit_info
 {
-	char *author;
-	char *author_mail;
+	const char *author;
+	const char *author_mail;
 	unsigned long author_time;
-	char *author_tz;
+	const char *author_tz;
 
 	/* filled only when asked for details */
-	char *committer;
-	char *committer_mail;
+	const char *committer;
+	const char *committer_mail;
 	unsigned long committer_time;
-	char *committer_tz;
+	const char *committer_tz;
 
-	char *summary;
+	const char *summary;
 };
 
 /*
  * Parse author/committer line in the commit object buffer
  */
 static void get_ac_line(const char *inbuf, const char *what,
-			int bufsz, char *person, char **mail,
-			unsigned long *time, char **tz)
+			int bufsz, char *person, const char **mail,
+			unsigned long *time, const char **tz)
 {
 	int len;
 	char *tmp, *endp;
@@ -1280,7 +1280,7 @@ static void get_ac_line(const char *inbuf, const char *what,
 	if (bufsz <= len) {
 	error_out:
 		/* Ugh */
-		person = *mail = *tz = "(unknown)";
+		*mail = *tz = "(unknown)";
 		*time = 0;
 		return;
 	}

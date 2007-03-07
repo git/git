@@ -2065,10 +2065,9 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
 	     enum object_type type, const char *path)
 {
 	unsigned long size = st->st_size;
-	void *buf;
+	void *buf = NULL;
 	int ret, re_allocated = 0;
 
-	buf = "";
 	if (size)
 		buf = xmmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);

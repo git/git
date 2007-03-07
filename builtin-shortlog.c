@@ -217,13 +217,13 @@ static void get_from_rev(struct rev_info *rev, struct path_list *list)
 
 	prepare_revision_walk(rev);
 	while ((commit = get_revision(rev)) != NULL) {
-		char *author = NULL, *oneline, *buffer;
+		const char *author = NULL, *oneline, *buffer;
 		int authorlen = authorlen, onelinelen;
 
 		/* get author and oneline */
 		for (buffer = commit->buffer; buffer && *buffer != '\0' &&
 				*buffer != '\n'; ) {
-			char *eol = strchr(buffer, '\n');
+			const char *eol = strchr(buffer, '\n');
 
 			if (eol == NULL)
 				eol = buffer + strlen(buffer);

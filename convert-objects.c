@@ -132,7 +132,7 @@ static void convert_tree(void *buffer, unsigned long size, unsigned char *result
 	unsigned long orig_size = size;
 
 	while (size) {
-		int len = 1+strlen(buffer);
+		size_t len = 1+strlen(buffer);
 
 		convert_binary_sha1((char *) buffer + len);
 

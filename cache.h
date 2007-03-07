@@ -451,7 +451,7 @@ extern char git_default_email[MAX_GITNAME];
 extern char git_default_name[MAX_GITNAME];
 
 extern char *git_commit_encoding;
-extern char *git_log_output_encoding;
+extern const char *git_log_output_encoding;
 
 extern int copy_fd(int ifd, int ofd);
 extern int read_in_full(int fd, void *buf, size_t count);

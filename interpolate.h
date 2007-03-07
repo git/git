@@ -12,7 +12,7 @@
  */
 
 struct interp {
-	char *name;
+	const char *name;
 	char *value;
 };
 
