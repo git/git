@@ -1075,6 +1075,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	unsigned long date;
 	unsigned char logged_sha1[20];
 	void *log_mapped;
+	size_t mapsz;
 
 	logfile = git_path("logs/%s", ref);
 	logfd = open(logfile, O_RDONLY, 0);
@@ -1083,7 +1084,8 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 	fstat(logfd, &st);
 	if (!st.st_size)
 		die("Log %s is empty.", logfile);
-	log_mapped = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, logfd, 0);
+	mapsz = xsize_t(st.st_size);
+	log_mapped = xmmap(NULL, mapsz, PROT_READ, MAP_PRIVATE, logfd, 0);
 	logdata = log_mapped;
 	close(logfd);
 
@@ -1136,7 +1138,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 						logfile, show_rfc2822_date(date, tz));
 				}
 			}
-			munmap(log_mapped, st.st_size);
+			munmap(log_mapped, mapsz);
 			return 0;
 		}
 		lastrec = rec;
@@ -1155,7 +1157,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 		die("Log %s is corrupt.", logfile);
 	if (msg)
 		*msg = ref_msg(logdata, logend);
-	munmap(log_mapped, st.st_size);
+	munmap(log_mapped, mapsz);
 
 	if (cutoff_time)
 		*cutoff_time = date;

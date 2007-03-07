@@ -258,6 +258,11 @@ static inline ssize_t xwrite(int fd, const void *buf, size_t len)
 	}
 }
 
+static inline size_t xsize_t(off_t len)
+{
+	return (size_t)len;
+}
+
 static inline int has_extension(const char *filename, const char *ext)
 {
 	size_t len = strlen(filename);

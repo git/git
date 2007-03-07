@@ -66,7 +66,7 @@ static int ce_compare_data(struct cache_entry *ce, struct stat *st)
 	return match;
 }
 
-static int ce_compare_link(struct cache_entry *ce, unsigned long expected_size)
+static int ce_compare_link(struct cache_entry *ce, size_t expected_size)
 {
 	int match = -1;
 	char *target;
@@ -101,7 +101,7 @@ static int ce_modified_check_fs(struct cache_entry *ce, struct stat *st)
 			return DATA_CHANGED;
 		break;
 	case S_IFLNK:
-		if (ce_compare_link(ce, st->st_size))
+		if (ce_compare_link(ce, xsize_t(st->st_size)))
 			return DATA_CHANGED;
 		break;
 	default:
@@ -797,7 +797,7 @@ int read_cache_from(const char *path)
 	}
 
 	if (!fstat(fd, &st)) {
-		cache_mmap_size = st.st_size;
+		cache_mmap_size = xsize_t(st.st_size);
 		errno = EINVAL;
 		if (cache_mmap_size >= sizeof(struct cache_header) + 20)
 			cache_mmap = xmmap(NULL, cache_mmap_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);

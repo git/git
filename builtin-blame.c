@@ -1963,7 +1963,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 				die("Cannot lstat %s", path);
 			read_from = path;
 		}
-		fin_size = st.st_size;
+		fin_size = xsize_t(st.st_size);
 		buf = xmalloc(fin_size+1);
 		mode = canon_mode(st.st_mode);
 		switch (st.st_mode & S_IFMT) {

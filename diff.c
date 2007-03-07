@@ -1399,7 +1399,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 				return err;
 			}
 		}
-		s->size = st.st_size;
+		s->size = xsize_t(st.st_size);
 		if (!s->size)
 			goto empty;
 		if (size_only)
@@ -1515,12 +1515,13 @@ static void prepare_temp_file(const char *name,
 		if (S_ISLNK(st.st_mode)) {
 			int ret;
 			char buf[PATH_MAX + 1]; /* ought to be SYMLINK_MAX */
+			size_t sz = xsize_t(st.st_size);
 			if (sizeof(buf) <= st.st_size)
 				die("symlink too long: %s", name);
-			ret = readlink(name, buf, st.st_size);
+			ret = readlink(name, buf, sz);
 			if (ret < 0)
 				die("readlink(%s)", name);
-			prep_temp_blob(temp, buf, st.st_size,
+			prep_temp_blob(temp, buf, sz,
 				       (one->sha1_valid ?
 					one->sha1 : null_sha1),
 				       (one->sha1_valid ?
@@ -2138,7 +2139,7 @@ static int parse_num(const char **cp_p)
 	/* user says num divided by scale and we say internally that
 	 * is MAX_SCORE * num / scale.
 	 */
-	return (num >= scale) ? MAX_SCORE : (MAX_SCORE * num / scale);
+	return (int)((num >= scale) ? MAX_SCORE : (MAX_SCORE * num / scale));
 }
 
 int diff_scoreopt_parse(const char *opt)

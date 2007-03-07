@@ -349,6 +349,7 @@ static void link_alt_odb_entries(const char *alt, const char *ep, int sep,
 static void read_info_alternates(const char * relative_base, int depth)
 {
 	char *map;
+	size_t mapsz;
 	struct stat st;
 	char path[PATH_MAX];
 	int fd;
@@ -361,12 +362,13 @@ static void read_info_alternates(const char * relative_base, int depth)
 		close(fd);
 		return;
 	}
-	map = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	mapsz = xsize_t(st.st_size);
+	map = xmmap(NULL, mapsz, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
 
-	link_alt_odb_entries(map, map + st.st_size, '\n', relative_base, depth);
+	link_alt_odb_entries(map, map + mapsz, '\n', relative_base, depth);
 
-	munmap(map, st.st_size);
+	munmap(map, mapsz);
 }
 
 void prepare_alt_odb(void)
@@ -436,7 +438,7 @@ static int check_packed_git_idx(const char *path,
 {
 	void *idx_map;
 	uint32_t *index;
-	unsigned long idx_size;
+	size_t idx_size;
 	uint32_t nr, i;
 	int fd = open(path, O_RDONLY);
 	struct stat st;
@@ -446,7 +448,7 @@ static int check_packed_git_idx(const char *path,
 		close(fd);
 		return -1;
 	}
-	idx_size = st.st_size;
+	idx_size = xsize_t(st.st_size);
 	if (idx_size < 4 * 256 + 20 + 20) {
 		close(fd);
 		return error("index file %s is too small", path);
@@ -669,11 +671,13 @@ unsigned char* use_pack(struct packed_git *p,
 		}
 		if (!win) {
 			size_t window_align = packed_git_window_size / 2;
+			off_t len;
 			win = xcalloc(1, sizeof(*win));
 			win->offset = (offset / window_align) * window_align;
-			win->len = p->pack_size - win->offset;
-			if (win->len > packed_git_window_size)
-				win->len = packed_git_window_size;
+			len = p->pack_size - win->offset;
+			if (len > packed_git_window_size)
+				len = packed_git_window_size;
+			win->len = (size_t)len;
 			pack_mapped += win->len;
 			while (packed_git_limit < pack_mapped
 				&& unuse_one_window(p))
@@ -702,7 +706,7 @@ unsigned char* use_pack(struct packed_git *p,
 	}
 	offset -= win->offset;
 	if (left)
-		*left = win->len - offset;
+		*left = win->len - xsize_t(offset);
 	return win->base + offset;
 }
 
@@ -878,9 +882,9 @@ void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 		 */
 		sha1_file_open_flag = 0;
 	}
-	map = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	*size = xsize_t(st.st_size);
+	map = xmmap(NULL, *size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
-	*size = st.st_size;
 	return map;
 }
 
@@ -1346,7 +1350,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 uint32_t num_packed_objects(const struct packed_git *p)
 {
 	/* See check_packed_git_idx() */
-	return (p->index_size - 20 - 20 - 4*256) / 24;
+	return (uint32_t)((p->index_size - 20 - 20 - 4*256) / 24);
 }
 
 int nth_packed_object_sha1(const struct packed_git *p, uint32_t n,
@@ -2068,7 +2072,7 @@ int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
 int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
 	     enum object_type type, const char *path)
 {
-	unsigned long size = st->st_size;
+	size_t size = xsize_t(st->st_size);
 	void *buf = NULL;
 	int ret, re_allocated = 0;
 
@@ -2111,6 +2115,7 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, int write
 {
 	int fd;
 	char *target;
+	size_t len;
 
 	switch (st->st_mode & S_IFMT) {
 	case S_IFREG:
@@ -2123,16 +2128,17 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, int write
 				     path);
 		break;
 	case S_IFLNK:
-		target = xmalloc(st->st_size+1);
-		if (readlink(path, target, st->st_size+1) != st->st_size) {
+		len = xsize_t(st->st_size);
+		target = xmalloc(len + 1);
+		if (readlink(path, target, len + 1) != st->st_size) {
 			char *errstr = strerror(errno);
 			free(target);
 			return error("readlink(\"%s\"): %s", path,
 			             errstr);
 		}
 		if (!write_object)
-			hash_sha1_file(target, st->st_size, blob_type, sha1);
-		else if (write_sha1_file(target, st->st_size, blob_type, sha1))
+			hash_sha1_file(target, len, blob_type, sha1);
+		else if (write_sha1_file(target, len, blob_type, sha1))
 			return error("%s: failed to insert into database",
 				     path);
 		free(target);

@@ -14,6 +14,7 @@ static void prepare_order(const char *orderfile)
 	void *map;
 	char *cp, *endp;
 	struct stat st;
+	size_t sz;
 
 	if (order)
 		return;
@@ -25,11 +26,12 @@ static void prepare_order(const char *orderfile)
 		close(fd);
 		return;
 	}
-	map = mmap(NULL, st.st_size, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
+	sz = xsize_t(st.st_size);
+	map = mmap(NULL, sz, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
 	close(fd);
 	if (map == MAP_FAILED)
 		return;
-	endp = (char *) map + st.st_size;
+	endp = (char *) map + sz;
 	for (pass = 0; pass < 2; pass++) {
 		cnt = 0;
 		cp = map;

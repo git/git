@@ -431,7 +431,7 @@ static struct {
 	int do_not_match;
 	regex_t* value_regex;
 	int multi_replace;
-	off_t offset[MAX_MATCHES];
+	size_t offset[MAX_MATCHES];
 	enum { START, SECTION_SEEN, SECTION_END_SEEN, KEY_SEEN } state;
 	int seen;
 } store;
@@ -579,11 +579,11 @@ static int store_write_pair(int fd, const char* key, const char* value)
 	return 1;
 }
 
-static int find_beginning_of_line(const char* contents, int size,
-	int offset_, int* found_bracket)
+static ssize_t find_beginning_of_line(const char* contents, size_t size,
+	size_t offset_, int* found_bracket)
 {
-	int equal_offset = size, bracket_offset = size;
-	int offset;
+	size_t equal_offset = size, bracket_offset = size;
+	ssize_t offset;
 
 	for (offset = offset_-2; offset > 0 
 			&& contents[offset] != '\n'; offset--)
@@ -727,7 +727,8 @@ int git_config_set_multivar(const char* key, const char* value,
 	} else {
 		struct stat st;
 		char* contents;
-		int i, copy_begin, copy_end, new_line = 0;
+		size_t contents_sz, copy_begin, copy_end;
+		int i, new_line = 0;
 
 		if (value_regex == NULL)
 			store.value_regex = NULL;
@@ -784,7 +785,8 @@ int git_config_set_multivar(const char* key, const char* value,
 		}
 
 		fstat(in_fd, &st);
-		contents = xmmap(NULL, st.st_size, PROT_READ,
+		contents_sz = xsize_t(st.st_size);
+		contents = xmmap(NULL, contents_sz, PROT_READ,
 			MAP_PRIVATE, in_fd, 0);
 		close(in_fd);
 
@@ -793,12 +795,12 @@ int git_config_set_multivar(const char* key, const char* value,
 
 		for (i = 0, copy_begin = 0; i < store.seen; i++) {
 			if (store.offset[i] == 0) {
-				store.offset[i] = copy_end = st.st_size;
+				store.offset[i] = copy_end = contents_sz;
 			} else if (store.state != KEY_SEEN) {
 				copy_end = store.offset[i];
 			} else
 				copy_end = find_beginning_of_line(
-					contents, st.st_size,
+					contents, contents_sz,
 					store.offset[i]-2, &new_line);
 
 			/* write the first part of the config */
@@ -825,13 +827,13 @@ int git_config_set_multivar(const char* key, const char* value,
 		}
 
 		/* write the rest of the config */
-		if (copy_begin < st.st_size)
+		if (copy_begin < contents_sz)
 			if (write_in_full(fd, contents + copy_begin,
-					  st.st_size - copy_begin) <
-			    st.st_size - copy_begin)
+					  contents_sz - copy_begin) <
+			    contents_sz - copy_begin)
 				goto write_err_out;
 
-		munmap(contents, st.st_size);
+		munmap(contents, contents_sz);
 		unlink(config_filename);
 	}
 

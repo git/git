@@ -172,7 +172,8 @@ static int estimate_similarity(struct diff_filespec *src,
 		return 0; /* error but caught downstream */
 
 
-	delta_limit = base_size * (MAX_SCORE-minimum_score) / MAX_SCORE;
+	delta_limit = (unsigned long)
+		(base_size * (MAX_SCORE-minimum_score) / MAX_SCORE);
 	if (diffcore_count_changes(src->data, src->size,
 				   dst->data, dst->size,
 				   &src->cnt_data, &dst->cnt_data,
@@ -186,7 +187,7 @@ static int estimate_similarity(struct diff_filespec *src,
 	if (!dst->size)
 		score = 0; /* should not happen */
 	else
-		score = src_copied * MAX_SCORE / max_size;
+		score = (int)(src_copied * MAX_SCORE / max_size);
 	return score;
 }
 
@@ -297,7 +298,7 @@ void diffcore_rename(struct diff_options *options)
 				struct diff_filespec *one = rename_src[j].one;
 				if (!is_exact_match(one, two, contents_too))
 					continue;
-				record_rename_pair(i, j, MAX_SCORE);
+				record_rename_pair(i, j, (int)MAX_SCORE);
 				rename_count++;
 				break; /* we are done with this entry */
 			}

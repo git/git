@@ -89,7 +89,7 @@ static int should_break(struct diff_filespec *src,
 	 * merge the surviving pair together if the score is
 	 * less than the minimum, after rename/copy runs.
 	 */
-	*merge_score_p = src_removed * MAX_SCORE / src->size;
+	*merge_score_p = (int)(src_removed * MAX_SCORE / src->size);
 
 	/* Extent of damage, which counts both inserts and
 	 * deletes.
