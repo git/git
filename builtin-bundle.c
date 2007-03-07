@@ -305,6 +305,10 @@ static int create_bundle(struct bundle_header *header, const char *path,
 	/* write signature */
 	write_or_die(bundle_fd, bundle_signature, strlen(bundle_signature));
 
+	/* init revs to list objects for pack-objects later */
+	save_commit_buffer = 0;
+	init_revisions(&revs, NULL);
+
 	/* write prerequisites */
 	memcpy(argv_boundary + 3, argv + 1, argc * sizeof(const char *));
 	argv_boundary[0] = "rev-list";
@@ -316,8 +320,15 @@ static int create_bundle(struct bundle_header *header, const char *path,
 	if (pid < 0)
 		return -1;
 	while ((i = read_string(out, buffer, sizeof(buffer))) > 0)
-		if (buffer[0] == '-')
+		if (buffer[0] == '-') {
+			unsigned char sha1[20];
 			write_or_die(bundle_fd, buffer, i);
+			if (!get_sha1_hex(buffer + 1, sha1)) {
+				struct object *object = parse_object(sha1);
+				object->flags |= UNINTERESTING;
+				add_pending_object(&revs, object, buffer);
+			}
+		}
 	while ((i = waitpid(pid, &status, 0)) < 0)
 		if (errno != EINTR)
 			return error("rev-list died");
@@ -325,8 +336,6 @@ static int create_bundle(struct bundle_header *header, const char *path,
 		return error("rev-list died %d", WEXITSTATUS(status));
 
 	/* write references */
-	save_commit_buffer = 0;
-	init_revisions(&revs, NULL);
 	revs.tag_objects = 1;
 	revs.tree_objects = 1;
 	revs.blob_objects = 1;
