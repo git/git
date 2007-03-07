@@ -206,12 +206,10 @@ static void run_update_post_hook(struct command *cmd)
 static void execute_commands(void)
 {
 	struct command *cmd = commands;
-
 	while (cmd) {
 		update(cmd);
 		cmd = cmd->next;
 	}
-	run_update_post_hook(commands);
 }
 
 static void read_head_info(void)
@@ -456,6 +454,7 @@ int main(int argc, char **argv)
 			unlink(pack_lockfile);
 		if (report_status)
 			report(unpack_status);
+		run_update_post_hook(commands);
 	}
 	return 0;
 }
