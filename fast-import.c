@@ -1988,6 +1988,12 @@ int main(int argc, const char **argv)
 	int i, show_stats = 1;
 
 	git_config(git_default_config);
+	alloc_objects(object_entry_alloc);
+	strbuf_init(&command_buf);
+	atom_table = xcalloc(atom_table_sz, sizeof(struct atom_str*));
+	branch_table = xcalloc(branch_table_sz, sizeof(struct branch*));
+	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
+	marks = pool_calloc(1, sizeof(struct mark_set));
 
 	for (i = 1; i < argc; i++) {
 		const char *a = argv[i];
@@ -2030,14 +2036,6 @@ int main(int argc, const char **argv)
 	}
 	if (i != argc)
 		usage(fast_import_usage);
-
-	alloc_objects(object_entry_alloc);
-	strbuf_init(&command_buf);
-
-	atom_table = xcalloc(atom_table_sz, sizeof(struct atom_str*));
-	branch_table = xcalloc(branch_table_sz, sizeof(struct branch*));
-	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
-	marks = pool_calloc(1, sizeof(struct mark_set));
 
 	start_packfile();
 	for (;;) {
