@@ -68,6 +68,8 @@ struct command {
 static struct command *commands;
 
 static const char update_hook[] = "hooks/update";
+static const char pre_receive_hook[] = "hooks/pre-receive";
+static const char post_receive_hook[] = "hooks/post-receive";
 
 static int run_hook(const char *hook_name,
 	struct command *first_cmd,
@@ -231,6 +233,14 @@ static void execute_commands(const char *unpacker_error)
 	if (unpacker_error) {
 		while (cmd) {
 			cmd->error_string = "n/a (unpacker error)";
+			cmd = cmd->next;
+		}
+		return;
+	}
+
+	if (run_hook(pre_receive_hook, commands, 0)) {
+		while (cmd) {
+			cmd->error_string = "pre-receive hook declined";
 			cmd = cmd->next;
 		}
 		return;
@@ -483,6 +493,7 @@ int main(int argc, char **argv)
 			unlink(pack_lockfile);
 		if (report_status)
 			report(unpack_status);
+		run_hook(post_receive_hook, commands, 0);
 		run_update_post_hook(commands);
 	}
 	return 0;
