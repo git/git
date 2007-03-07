@@ -249,7 +249,7 @@ typedef enum {
 
 /* Configured limits on output */
 static unsigned long max_depth = 10;
-static unsigned long max_packsize = (1LL << 32) - 1;
+static off_t max_packsize = (1LL << 32) - 1;
 static int force_update;
 
 /* Stats and misc. counters */
@@ -1527,7 +1527,7 @@ static void unload_one_branch(void)
 {
 	while (cur_active_branches
 		&& cur_active_branches >= max_active_branches) {
-		unsigned long min_commit = ULONG_MAX;
+		uintmax_t min_commit = ULONG_MAX;
 		struct branch *e, *l = NULL, *p = NULL;
 
 		for (e = active_branches; e; e = e->active_next_branch) {
