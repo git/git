@@ -1200,6 +1200,7 @@ const char *packed_object_info_detail(struct packed_git *p,
 			obj_offset = get_delta_base(p, &w_curs, &curpos, type, obj_offset);
 			if (*delta_chain_length == 0) {
 				/* TODO: find base_sha1 as pointed by curpos */
+				hashclr(base_sha1);
 			}
 			break;
 		case OBJ_REF_DELTA:
