@@ -114,6 +114,7 @@ done >> tests
 # neither in the Pull: or .fetch config
 for branch in master br-unconfig ; do
     cat <<EOF
+$branch ../.git
 $branch ../.git one
 $branch ../.git one two
 $branch --tags ../.git
