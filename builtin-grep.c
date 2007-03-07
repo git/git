@@ -150,6 +150,7 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	return i;
 }
 
+#ifdef __unix__
 static int exec_grep(int argc, const char **argv)
 {
 	pid_t pid;
@@ -298,6 +299,7 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 	}
 	return hit;
 }
+#endif
 
 static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 {
