@@ -632,7 +632,7 @@ int cmd_fsck(int argc, char **argv, const char *prefix)
 			verify_pack(p, 0);
 
 		for (p = packed_git; p; p = p->next) {
-			int num = num_packed_objects(p);
+			uint32_t i, num = num_packed_objects(p);
 			for (i = 0; i < num; i++) {
 				unsigned char sha1[20];
 				nth_packed_object_sha1(p, i, sha1);

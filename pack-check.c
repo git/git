@@ -9,7 +9,8 @@ static int verify_packfile(struct packed_git *p,
 	SHA_CTX ctx;
 	unsigned char sha1[20];
 	unsigned long offset = 0, pack_sig = p->pack_size - 20;
-	int nr_objects, err, i;
+	uint32_t nr_objects, i;
+	int err;
 
 	/* Note that the pack header checks are actually performed by
 	 * use_pack when it first opens the pack file.  If anything
@@ -40,7 +41,7 @@ static int verify_packfile(struct packed_git *p,
 	 * we do not do scan-streaming check on the pack file.
 	 */
 	nr_objects = num_packed_objects(p);
-	for (i = err = 0; i < nr_objects; i++) {
+	for (i = 0, err = 0; i < nr_objects; i++) {
 		unsigned char sha1[20];
 		void *data;
 		enum object_type type;
@@ -74,8 +75,7 @@ static int verify_packfile(struct packed_git *p,
 
 static void show_pack_info(struct packed_git *p)
 {
-	int nr_objects, i;
-	unsigned int chain_histogram[MAX_CHAIN];
+	uint32_t nr_objects, i, chain_histogram[MAX_CHAIN];
 
 	nr_objects = num_packed_objects(p);
 	memset(chain_histogram, 0, sizeof(chain_histogram));

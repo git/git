@@ -437,7 +437,7 @@ static int check_packed_git_idx(const char *path,
 	void *idx_map;
 	uint32_t *index;
 	unsigned long idx_size;
-	int nr, i;
+	uint32_t nr, i;
 	int fd = open(path, O_RDONLY);
 	struct stat st;
 	if (fd < 0)
@@ -472,7 +472,7 @@ static int check_packed_git_idx(const char *path,
 
 	nr = 0;
 	for (i = 0; i < 256; i++) {
-		unsigned int n = ntohl(index[i]);
+		uint32_t n = ntohl(index[i]);
 		if (n < nr) {
 			munmap(idx_map, idx_size);
 			return error("non-monotonic index %s", path);
@@ -1339,17 +1339,17 @@ void *unpack_entry(struct packed_git *p, unsigned long obj_offset,
 	return data;
 }
 
-int num_packed_objects(const struct packed_git *p)
+uint32_t num_packed_objects(const struct packed_git *p)
 {
 	/* See check_packed_git_idx() */
 	return (p->index_size - 20 - 20 - 4*256) / 24;
 }
 
-int nth_packed_object_sha1(const struct packed_git *p, int n,
+int nth_packed_object_sha1(const struct packed_git *p, uint32_t n,
 			   unsigned char* sha1)
 {
 	void *index = p->index_base + 256;
-	if (n < 0 || num_packed_objects(p) <= n)
+	if (num_packed_objects(p) <= n)
 		return -1;
 	hashcpy(sha1, (unsigned char *) index + (24 * n) + 4);
 	return 0;
