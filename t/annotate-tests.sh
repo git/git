@@ -114,7 +114,8 @@ test_expect_success \
 test_expect_success \
     'some edit' \
     'mv file file.orig &&
-    sed -e "s/^3A/99/" -e "/^1A/d" < file.orig > file &&
+    sed -e "s/^3A/99/" -e "/^1A/d" -e "/^incomplete/d" < file.orig > file &&
+    echo "incomplete" | tr -d "\\012" >>file &&
     GIT_AUTHOR_NAME="D" git commit -a -m "edit"'
 
 test_expect_success \
