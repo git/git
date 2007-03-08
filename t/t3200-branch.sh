@@ -47,17 +47,6 @@ test_expect_success \
 	 test ! -f .git/refs/heads/d/e/f &&
 	 test ! -f .git/logs/refs/heads/d/e/f'
 
-cat >expect <<EOF
-0000000000000000000000000000000000000000 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	checkout: Created from master
-EOF
-test_expect_success \
-    'git checkout -b g/h/i -l should create a branch and a log' \
-	'GIT_COMMITTER_DATE="2005-05-26 23:30" \
-     git-checkout -b g/h/i -l master &&
-	 test -f .git/refs/heads/g/h/i &&
-	 test -f .git/logs/refs/heads/g/h/i &&
-	 diff expect .git/logs/refs/heads/g/h/i'
-
 test_expect_success \
     'git branch j/k should work after branch j has been deleted' \
        'git-branch j &&
@@ -116,5 +105,59 @@ test_expect_failure \
      mv .git/logs/refs/heads/u real-u &&
      ln -s real-u .git/logs/refs/heads/u &&
      git-branch -m u v'
+
+test_expect_success 'test tracking setup via --track' \
+    'git-config remote.local.url . &&
+     git-config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
+     (git-show-ref -q refs/remotes/local/master || git-fetch local) &&
+     git-branch --track my1 local/master &&
+     test $(git-config branch.my1.remote) = local &&
+     test $(git-config branch.my1.merge) = refs/heads/master'
+
+test_expect_success 'test tracking setup (non-wildcard, matching)' \
+    'git-config remote.local.url . &&
+     git-config remote.local.fetch refs/heads/master:refs/remotes/local/master &&
+     (git-show-ref -q refs/remotes/local/master || git-fetch local) &&
+     git-branch --track my4 local/master &&
+     test $(git-config branch.my4.remote) = local &&
+     test $(git-config branch.my4.merge) = refs/heads/master'
+
+test_expect_success 'test tracking setup (non-wildcard, not matching)' \
+    'git-config remote.local.url . &&
+     git-config remote.local.fetch refs/heads/s:refs/remotes/local/s &&
+     (git-show-ref -q refs/remotes/local/master || git-fetch local) &&
+     git-branch --track my5 local/master &&
+     ! test $(git-config branch.my5.remote) = local &&
+     ! test $(git-config branch.my5.merge) = refs/heads/master'
+
+test_expect_success 'test tracking setup via config' \
+    'git-config branch.autosetupmerge true &&
+     git-config remote.local.url . &&
+     git-config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
+     (git-show-ref -q refs/remotes/local/master || git-fetch local) &&
+     git-branch my3 local/master &&
+     test $(git-config branch.my3.remote) = local &&
+     test $(git-config branch.my3.merge) = refs/heads/master'
+
+test_expect_success 'test overriding tracking setup via --no-track' \
+    'git-config branch.autosetupmerge true &&
+     git-config remote.local.url . &&
+     git-config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
+     (git-show-ref -q refs/remotes/local/master || git-fetch local) &&
+     git-branch --no-track my2 local/master &&
+     ! test $(git-config branch.my2.remote) = local &&
+     ! test $(git-config branch.my2.merge) = refs/heads/master'
+
+# Keep this test last, as it changes the current branch
+cat >expect <<EOF
+0000000000000000000000000000000000000000 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
+EOF
+test_expect_success \
+    'git checkout -b g/h/i -l should create a branch and a log' \
+	'GIT_COMMITTER_DATE="2005-05-26 23:30" \
+     git-checkout -b g/h/i -l master &&
+	 test -f .git/refs/heads/g/h/i &&
+	 test -f .git/logs/refs/heads/g/h/i &&
+	 diff expect .git/logs/refs/heads/g/h/i'
 
 test_done
