@@ -391,6 +391,22 @@ EOF
 
 test_expect_success "rename succeeded" "diff -u expect .git/config"
 
+cat >> .git/config << EOF
+  [branch "zwei"] a = 1 [branch "vier"]
+EOF
+
+test_expect_success "remove section" "git config --remove-section branch.zwei"
+
+cat > expect << EOF
+# Hallo
+	#Bello
+[branch "drei"]
+weird
+EOF
+
+test_expect_success "section was removed properly" \
+	"diff -u expect .git/config"
+
 test_expect_success numbers '
 
 	git-config kilo.gram 1k &&
