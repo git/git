@@ -44,8 +44,8 @@ for o, a in opts:
     elif o == "--silent":
         silent= True
     elif o == "--known-branches":
-        for branch in o.split(","):
-            knownBranches.add(branch)
+        for branch in open(a).readlines():
+            knownBranches.add(branch[:-1])
 
 if len(args) == 0 and len(globalPrefix) != 0:
     if not silent:
