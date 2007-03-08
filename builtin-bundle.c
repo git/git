@@ -257,45 +257,15 @@ static int list_heads(struct bundle_header *header, int argc, const char **argv)
 	return list_refs(&header->references, argc, argv);
 }
 
-static void show_commit(struct commit *commit)
-{
-	write_or_die(1, sha1_to_hex(commit->object.sha1), 40);
-	write_or_die(1, "\n", 1);
-	if (commit->parents) {
-		free_commit_list(commit->parents);
-		commit->parents = NULL;
-	}
-}
-
-static void show_object(struct object_array_entry *p)
-{
-	/* An object with name "foo\n0000000..." can be used to
-	 * confuse downstream git-pack-objects very badly.
-	 */
-	const char *ep = strchr(p->name, '\n');
-	int len = ep ? ep - p->name : strlen(p->name);
-	write_or_die(1, sha1_to_hex(p->item->sha1), 40);
-	write_or_die(1, " ", 1);
-	if (len)
-		write_or_die(1, p->name, len);
-	write_or_die(1, "\n", 1);
-}
-
-static void show_edge(struct commit *commit)
-{
-	; /* nothing to do */
-}
-
 static int create_bundle(struct bundle_header *header, const char *path,
 		int argc, const char **argv)
 {
 	int bundle_fd = -1;
 	const char **argv_boundary = xmalloc((argc + 4) * sizeof(const char *));
-	const char **argv_pack = xmalloc(4 * sizeof(const char *));
+	const char **argv_pack = xmalloc(5 * sizeof(const char *));
 	int pid, in, out, i, status;
 	char buffer[1024];
 	struct rev_info revs;
-	struct object_array tips;
 
 	bundle_fd = (!strcmp(path, "-") ? 1 :
 			open(path, O_CREAT | O_WRONLY, 0666));
@@ -319,16 +289,20 @@ static int create_bundle(struct bundle_header *header, const char *path,
 	pid = fork_with_pipe(argv_boundary, NULL, &out);
 	if (pid < 0)
 		return -1;
-	while ((i = read_string(out, buffer, sizeof(buffer))) > 0)
+	while ((i = read_string(out, buffer, sizeof(buffer))) > 0) {
+		unsigned char sha1[20];
 		if (buffer[0] == '-') {
-			unsigned char sha1[20];
 			write_or_die(bundle_fd, buffer, i);
 			if (!get_sha1_hex(buffer + 1, sha1)) {
 				struct object *object = parse_object(sha1);
 				object->flags |= UNINTERESTING;
 				add_pending_object(&revs, object, buffer);
 			}
+		} else if (!get_sha1_hex(buffer, sha1)) {
+			struct object *object = parse_object(sha1);
+			object->flags |= SHOWN;
 		}
+	}
 	while ((i = waitpid(pid, &status, 0)) < 0)
 		if (errno != EINTR)
 			return error("rev-list died");
@@ -336,14 +310,10 @@ static int create_bundle(struct bundle_header *header, const char *path,
 		return error("rev-list died %d", WEXITSTATUS(status));
 
 	/* write references */
-	revs.tag_objects = 1;
-	revs.tree_objects = 1;
-	revs.blob_objects = 1;
 	argc = setup_revisions(argc, argv, &revs, NULL);
 	if (argc > 1)
 		return error("unrecognized argument: %s'", argv[1]);
 
-	memset(&tips, 0, sizeof(tips));
 	for (i = 0; i < revs.pending.nr; i++) {
 		struct object_array_entry *e = revs.pending.objects + i;
 		unsigned char sha1[20];
@@ -353,11 +323,20 @@ static int create_bundle(struct bundle_header *header, const char *path,
 			continue;
 		if (dwim_ref(e->name, strlen(e->name), sha1, &ref) != 1)
 			continue;
+		/*
+		 * Make sure the refs we wrote out is correct; --max-count and
+		 * other limiting options could have prevented all the tips
+		 * from getting output.
+		 */
+		if (!(e->item->flags & SHOWN)) {
+			warn("ref '%s' is excluded by the rev-list options",
+				e->name);
+			continue;
+		}
 		write_or_die(bundle_fd, sha1_to_hex(e->item->sha1), 40);
 		write_or_die(bundle_fd, " ", 1);
 		write_or_die(bundle_fd, ref, strlen(ref));
 		write_or_die(bundle_fd, "\n", 1);
-		add_object_array(e->item, e->name, &tips);
 		free(ref);
 	}
 
@@ -368,38 +347,26 @@ static int create_bundle(struct bundle_header *header, const char *path,
 	argv_pack[0] = "pack-objects";
 	argv_pack[1] = "--all-progress";
 	argv_pack[2] = "--stdout";
-	argv_pack[3] = NULL;
+	argv_pack[3] = "--thin";
+	argv_pack[4] = NULL;
 	in = -1;
 	out = bundle_fd;
 	pid = fork_with_pipe(argv_pack, &in, &out);
 	if (pid < 0)
 		return error("Could not spawn pack-objects");
-	close(1);
-	dup2(in, 1);
+	for (i = 0; i < revs.pending.nr; i++) {
+		struct object *object = revs.pending.objects[i].item;
+		if (object->flags & UNINTERESTING)
+			write(in, "^", 1);
+		write(in, sha1_to_hex(object->sha1), 40);
+		write(in, "\n", 1);
+	}
 	close(in);
-	prepare_revision_walk(&revs);
-	mark_edges_uninteresting(revs.commits, &revs, show_edge);
-	traverse_commit_list(&revs, show_commit, show_object);
-	close(1);
 	while (waitpid(pid, &status, 0) < 0)
 		if (errno != EINTR)
 			return -1;
 	if (!WIFEXITED(status) || WEXITSTATUS(status))
 		return error ("pack-objects died");
-
-	/*
-	 * Make sure the refs we wrote out is correct; --max-count and
-	 * other limiting options could have prevented all the tips
-	 * from getting output.
-	 */
-	status = 0;
-	for (i = 0; i < tips.nr; i++) {
-		if (!(tips.objects[i].item->flags & SHOWN)) {
-			status = 1;
-			error("%s: not included in the resulting pack",
-			      tips.objects[i].name);
-		}
-	}
 
 	return status;
 }
