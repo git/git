@@ -11,12 +11,15 @@
 #       - emulate p4's delete behavior: if a directory becomes empty delete it. continue
 #         with parent dir until non-empty dir is found.
 #
-import os, string, sys, time
-import marshal, popen2, getopt
+import os, string, sys, time, os.path
+import marshal, popen2, getopt, sha
 from sets import Set;
+
+cacheDebug = False
 
 silent = False
 knownBranches = Set()
+createdBranches = Set()
 committedChanges = Set()
 branch = "refs/heads/master"
 globalPrefix = previousDepotPath = os.popen("git-repo-config --get p4.depotpath").read()
@@ -26,7 +29,7 @@ if len(globalPrefix) != 0:
     globalPrefix = globalPrefix[:-1]
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", [ "branch=", "detect-branches", "changesfile=", "silent" ])
+    opts, args = getopt.getopt(sys.argv[1:], "", [ "branch=", "detect-branches", "changesfile=", "silent", "known-branches=" ])
 except getopt.GetoptError:
     print "fixme, syntax error"
     sys.exit(1)
@@ -40,6 +43,9 @@ for o, a in opts:
         changesFile = a
     elif o == "--silent":
         silent= True
+    elif o == "--known-branches":
+        for branch in o.split(","):
+            knownBranches.add(branch)
 
 if len(args) == 0 and len(globalPrefix) != 0:
     if not silent:
@@ -89,8 +95,37 @@ if globalPrefix.endswith("..."):
 if not globalPrefix.endswith("/"):
     globalPrefix += "/"
 
+def p4File(depotPath):
+    cacheKey = "/tmp/p4cache/data-" + sha.new(depotPath).hexdigest()
+
+    data = 0
+    try:
+        if not cacheDebug:
+            raise
+        data = open(cacheKey, "rb").read()
+    except:
+        data = os.popen("p4 print -q \"%s\"" % depotPath, "rb").read()
+        if cacheDebug:
+            open(cacheKey, "wb").write(data)
+
+    return data
+
 def p4CmdList(cmd):
-    pipe = os.popen("p4 -G %s" % cmd, "rb")
+    fullCmd = "p4 -G %s" % cmd;
+
+    cacheKey = sha.new(fullCmd).hexdigest()
+    cacheKey = "/tmp/p4cache/cmd-" + cacheKey
+
+    cached = True
+    pipe = 0
+    try:
+        if not cacheDebug:
+            raise
+        pipe = open(cacheKey, "rb")
+    except:
+        cached = False
+        pipe = os.popen(fullCmd, "rb")
+
     result = []
     try:
         while True:
@@ -99,6 +134,13 @@ def p4CmdList(cmd):
     except EOFError:
         pass
     pipe.close()
+
+    if not cached and cacheDebug:
+        pipe = open(cacheKey, "wb")
+        for r in result:
+            marshal.dump(r, pipe)
+        pipe.close()
+
     return result
 
 def p4Cmd(cmd):
@@ -114,8 +156,8 @@ def extractFilesFromCommit(commit):
     while commit.has_key("depotFile%s" % fnum):
         path =  commit["depotFile%s" % fnum]
         if not path.startswith(globalPrefix):
-            if not silent:
-                print "\nchanged files: ignoring path %s outside of %s in change %s" % (path, globalPrefix, change)
+#            if not silent:
+#                print "\nchanged files: ignoring path %s outside of %s in change %s" % (path, globalPrefix, change)
             fnum = fnum + 1
             continue
 
@@ -184,41 +226,8 @@ def branchesForCommit(files):
 
     return branches
 
-def commit(details, files, branch, branchPrefix):
-    global initialParent
-    global users
-    global lastChange
-    global committedChanges
-
-    epoch = details["time"]
-    author = details["user"]
-
-    gitStream.write("commit %s\n" % branch)
-    gitStream.write("mark :%s\n" % details["change"])
-    committedChanges.add(int(details["change"]))
-    committer = ""
-    if author in users:
-        committer = "%s %s %s" % (users[author], epoch, tz)
-    else:
-        committer = "%s <a@b> %s %s" % (author, epoch, tz)
-
-    gitStream.write("committer %s\n" % committer)
-
-    gitStream.write("data <<EOT\n")
-    gitStream.write(details["desc"])
-    gitStream.write("\n[ imported from %s; change %s ]\n" % (branchPrefix, details["change"]))
-    gitStream.write("EOT\n\n")
-
-    if len(initialParent) > 0:
-        gitStream.write("from %s\n" % initialParent)
-        initialParent = ""
-
-    #mergedBranches = Set()
-    merges = Set()
-
+def findBranchParent(branchPrefix, files):
     for file in files:
-        if lastChange == 0 or not detectBranches:
-            continue
         path = file["path"]
         if not path.startswith(branchPrefix):
             continue
@@ -259,26 +268,51 @@ def commit(details, files, branch, branchPrefix):
             sys.exit(1);
         sourceLog = sourceLog[0]
 
-        change = int(sourceLog["change0"])
-        merges.add(change)
+        relPath = source[len(globalPrefix):]
+        # strip off the filename
+        relPath = relPath[0:relPath.rfind("/")]
 
-#        relPath = source[len(globalPrefix):]
-#
-#        for branch in knownBranches:
-#            if relPath.startswith(branch) and branch not in mergedBranches:
-#                gitStream.write("merge refs/heads/%s\n" % branch)
-#                mergedBranches.add(branch)
-#                break
+        for branch in knownBranches:
+            if isSubPathOf(relPath, branch):
+#                print "determined parent branch branch %s due to change in file %s" % (branch, source)
+                return "refs/heads/%s" % branch
+#            else:
+#                print "%s is not a subpath of branch %s" % (relPath, branch)
 
-    for merge in merges:
-        if merge in committedChanges:
-            gitStream.write("merge :%s\n" % merge)
+    return ""
+
+def commit(details, files, branch, branchPrefix, parent):
+    global users
+    global lastChange
+    global committedChanges
+
+    epoch = details["time"]
+    author = details["user"]
+
+    gitStream.write("commit %s\n" % branch)
+    gitStream.write("mark :%s\n" % details["change"])
+    committedChanges.add(int(details["change"]))
+    committer = ""
+    if author in users:
+        committer = "%s %s %s" % (users[author], epoch, tz)
+    else:
+        committer = "%s <a@b> %s %s" % (author, epoch, tz)
+
+    gitStream.write("committer %s\n" % committer)
+
+    gitStream.write("data <<EOT\n")
+    gitStream.write(details["desc"])
+    gitStream.write("\n[ imported from %s; change %s ]\n" % (branchPrefix, details["change"]))
+    gitStream.write("EOT\n\n")
+
+    if len(parent) > 0:
+        gitStream.write("from %s\n" % parent)
 
     for file in files:
         path = file["path"]
         if not path.startswith(branchPrefix):
-            if not silent:
-                print "\nchanged files: ignoring path %s outside of branch prefix %s in change %s" % (path, branchPrefix, details["change"])
+#            if not silent:
+#                print "\nchanged files: ignoring path %s outside of branch prefix %s in change %s" % (path, branchPrefix, details["change"])
             continue
         rev = file["rev"]
         depotPath = path + "#" + rev
@@ -292,7 +326,7 @@ def commit(details, files, branch, branchPrefix):
             if file["type"].startswith("x"):
                 mode = 755
 
-            data = os.popen("p4 print -q \"%s\"" % depotPath, "rb").read()
+            data = p4File(depotPath)
 
             gitStream.write("M %s inline %s\n" % (mode, relPath))
             gitStream.write("data %s\n" % len(data))
@@ -410,10 +444,22 @@ else:
             for branch in branchesForCommit(files):
                 knownBranches.add(branch)
                 branchPrefix = globalPrefix + branch + "/"
+
+                parent = ""
+                ########### remove cnt!!!
+                if branch not in createdBranches and cnt > 2:
+                    createdBranches.add(branch)
+                    parent = findBranchParent(branchPrefix, files)
+                    if parent == branch:
+                        parent = ""
+#                    elif len(parent) > 0:
+#                        print "%s branched off of %s" % (branch, parent)
+
                 branch = "refs/heads/" + branch
-                commit(description, files, branch, branchPrefix)
+                commit(description, files, branch, branchPrefix, parent)
         else:
-            commit(description, files, branch, globalPrefix)
+            commit(description, files, branch, globalPrefix, initialParent)
+            initialParent = ""
 #        except:
 #            print gitError.read()
 #            sys.exit(1)
