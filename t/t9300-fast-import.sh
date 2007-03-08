@@ -111,6 +111,14 @@ test_expect_success \
 	'A: verify marks output' \
 	'diff -u expect marks.out'
 
+test_expect_success \
+	'A: verify marks import' \
+	'git-fast-import \
+		--import-marks=marks.out \
+		--export-marks=marks.new \
+		</dev/null &&
+	diff -u expect marks.new'
+
 ###
 ### series B
 ###
