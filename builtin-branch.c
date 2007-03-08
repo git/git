@@ -410,7 +410,6 @@ static void set_branch_defaults(const char *name, const char *real_ref)
 }
 
 static void create_branch(const char *name, const char *start_name,
-			  unsigned char *start_sha1,
 			  int force, int reflog, int track)
 {
 	struct ref_lock *lock;
@@ -431,15 +430,22 @@ static void create_branch(const char *name, const char *start_name,
 		forcing = 1;
 	}
 
-	if (start_sha1) {
-		/* detached HEAD */
-		hashcpy(sha1, start_sha1);
-		real_ref = NULL;
-	}
-	else if (dwim_ref(start_name, strlen(start_name), sha1, &real_ref) > 1)
-		die("Ambiguous object name: '%s'.", start_name);
-	else if (real_ref == NULL)
+	real_ref = NULL;
+	if (get_sha1(start_name, sha1))
 		die("Not a valid object name: '%s'.", start_name);
+
+	switch (dwim_ref(start_name, strlen(start_name), sha1, &real_ref)) {
+	case 0:
+		/* Not branching from any existing branch */
+		real_ref = NULL;
+		break;
+	case 1:
+		/* Unique completion -- good */
+		break;
+	default:
+		die("Ambiguous object name: '%s'.", start_name);
+		break;
+	}
 
 	if ((commit = lookup_commit_reference(sha1)) == NULL)
 		die("Not a valid branch point: '%s'.", start_name);
@@ -620,12 +626,9 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		rename_branch(head, argv[i], force_rename);
 	else if (rename && (i == argc - 2))
 		rename_branch(argv[i], argv[i + 1], force_rename);
-	else if (i == argc - 1)
-		create_branch(argv[i], head, head_sha1, force_create, reflog,
-			      track);
-	else if (i == argc - 2)
-		create_branch(argv[i], argv[i+1], NULL, force_create, reflog,
-			      track);
+	else if (i == argc - 1 || i == argc - 2)
+		create_branch(argv[i], (i == argc - 2) ? argv[i+1] : head,
+			      force_create, reflog, track);
 	else
 		usage(builtin_branch_usage);
 
