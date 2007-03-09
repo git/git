@@ -374,7 +374,8 @@ static int create_bundle(struct bundle_header *header, const char *path,
 static int unbundle(struct bundle_header *header, int bundle_fd,
 		int argc, const char **argv)
 {
-	const char *argv_index_pack[] = {"index-pack", "--stdin", NULL};
+	const char *argv_index_pack[] = {"index-pack",
+		"--fix-thin", "--stdin", NULL};
 	int pid, status, dev_null;
 
 	if (verify_bundle(header, 0))
