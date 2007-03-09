@@ -372,6 +372,7 @@ extern struct packed_git {
 	struct packed_git *next;
 	struct pack_window *windows;
 	uint32_t *index_base;
+	time_t mtime;
 	off_t index_size;
 	off_t pack_size;
 	int pack_fd;
