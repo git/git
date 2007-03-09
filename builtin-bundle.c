@@ -263,7 +263,7 @@ static int create_bundle(struct bundle_header *header, const char *path,
 	int bundle_fd = -1;
 	const char **argv_boundary = xmalloc((argc + 4) * sizeof(const char *));
 	const char **argv_pack = xmalloc(5 * sizeof(const char *));
-	int pid, in, out, i, status;
+	int pid, in, out, i, status, ref_count = 0;
 	char buffer[1024];
 	struct rev_info revs;
 
@@ -328,15 +328,20 @@ static int create_bundle(struct bundle_header *header, const char *path,
 		 * other limiting options could have prevented all the tips
 		 * from getting output.
 		 */
-		if (!(e->item->flags & SHOWN))
-			die("ref '%s' is excluded by the rev-list options",
+		if (!(e->item->flags & SHOWN)) {
+			warn("ref '%s' is excluded by the rev-list options",
 				e->name);
+			continue;
+		}
+		ref_count++;
 		write_or_die(bundle_fd, sha1_to_hex(e->item->sha1), 40);
 		write_or_die(bundle_fd, " ", 1);
 		write_or_die(bundle_fd, ref, strlen(ref));
 		write_or_die(bundle_fd, "\n", 1);
 		free(ref);
 	}
+	if (!ref_count)
+		die ("Refusing to create empty bundle.");
 
 	/* end header */
 	write_or_die(bundle_fd, "\n", 1);
