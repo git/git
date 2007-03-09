@@ -328,11 +328,9 @@ static int create_bundle(struct bundle_header *header, const char *path,
 		 * other limiting options could have prevented all the tips
 		 * from getting output.
 		 */
-		if (!(e->item->flags & SHOWN)) {
-			warn("ref '%s' is excluded by the rev-list options",
+		if (!(e->item->flags & SHOWN))
+			die("ref '%s' is excluded by the rev-list options",
 				e->name);
-			continue;
-		}
 		write_or_die(bundle_fd, sha1_to_hex(e->item->sha1), 40);
 		write_or_die(bundle_fd, " ", 1);
 		write_or_die(bundle_fd, ref, strlen(ref));
