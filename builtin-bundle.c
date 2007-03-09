@@ -268,9 +268,9 @@ static int create_bundle(struct bundle_header *header, const char *path,
 	struct rev_info revs;
 
 	bundle_fd = (!strcmp(path, "-") ? 1 :
-			open(path, O_CREAT | O_WRONLY, 0666));
+			open(path, O_CREAT | O_EXCL | O_WRONLY, 0666));
 	if (bundle_fd < 0)
-		return error("Could not write to '%s'", path);
+		return error("Could not create '%s': %s", path, strerror(errno));
 
 	/* write signature */
 	write_or_die(bundle_fd, bundle_signature, strlen(bundle_signature));
