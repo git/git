@@ -921,6 +921,8 @@ static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 				     log_file, strerror(errno));
 	}
 
+	adjust_shared_perm(log_file);
+
 	msglen = 0;
 	if (msg) {
 		/* clean up the message and make sure it is a single line */
