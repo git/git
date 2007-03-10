@@ -891,6 +891,18 @@ and returns the process output as a string."
   (with-current-buffer log-edit-parent-buffer
     (git-get-filenames (git-marked-files-state 'added 'deleted 'modified))))
 
+(defun git-append-sign-off (name email)
+  "Append a Signed-off-by entry to the current buffer, avoiding duplicates."
+  (let ((sign-off (format "Signed-off-by: %s <%s>" name email))
+        (case-fold-search t))
+    (goto-char (point-min))
+    (unless (re-search-forward (concat "^" (regexp-quote sign-off)) nil t)
+      (goto-char (point-min))
+      (unless (re-search-forward "^Signed-off-by: " nil t)
+        (setq sign-off (concat "\n" sign-off)))
+      (goto-char (point-max))
+      (insert sign-off "\n"))))
+
 (defun git-commit-file ()
   "Commit the marked file(s), asking for a commit message."
   (interactive)
@@ -899,6 +911,8 @@ and returns the process output as a string."
         (merge-heads (git-get-merge-heads))
         (dir default-directory)
         (coding-system (git-get-commits-coding-system))
+        (committer-name (git-get-committer-name))
+        (committer-email (git-get-committer-email))
         (sign-off git-append-signed-off-by))
     (with-current-buffer buffer
       (when (eq 0 (buffer-size))
@@ -907,7 +921,7 @@ and returns the process output as a string."
         (insert
          (propertize
           (format "Author: %s <%s>\n%s"
-                  (git-get-committer-name) (git-get-committer-email)
+                  committer-name committer-email
                   (if merge-heads
                       (format "Parent: %s\n%s\n"
                               (git-rev-parse "HEAD")
@@ -916,11 +930,9 @@ and returns the process output as a string."
           'face 'git-header-face)
          (propertize git-log-msg-separator 'face 'git-separator-face)
          "\n")
-        (cond ((file-readable-p ".git/MERGE_MSG")
-               (insert-file-contents ".git/MERGE_MSG"))
-              (sign-off
-               (insert (format "\n\nSigned-off-by: %s <%s>\n"
-                               (git-get-committer-name) (git-get-committer-email)))))))
+        (when (file-readable-p ".git/MERGE_MSG")
+          (insert-file-contents ".git/MERGE_MSG"))
+        (when sign-off (git-append-sign-off committer-name committer-email))))
     (log-edit #'git-do-commit nil #'git-log-edit-files buffer)
     (setq font-lock-keywords (font-lock-compile-keywords git-log-edit-font-lock-keywords))
     (setq buffer-file-coding-system coding-system)
