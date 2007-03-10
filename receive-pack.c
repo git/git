@@ -79,6 +79,8 @@ static int hook_status(int code, const char *hook_name)
 		return error("hook fork failed");
 	case -ERR_RUN_COMMAND_EXEC:
 		return error("hook execute failed");
+	case -ERR_RUN_COMMAND_PIPE:
+		return error("hook pipe failed");
 	case -ERR_RUN_COMMAND_WAITPID:
 		return error("waitpid failed");
 	case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
@@ -93,44 +95,44 @@ static int hook_status(int code, const char *hook_name)
 	}
 }
 
-static int run_hook(const char *hook_name,
-	struct command *first_cmd,
-	int single)
+static int run_hook(const char *hook_name)
 {
+	static char buf[sizeof(commands->old_sha1) * 2 + PATH_MAX + 4];
 	struct command *cmd;
-	int argc, code;
-	const char **argv;
+	struct child_process proc;
+	const char *argv[2];
+	int have_input = 0, code;
 
-	for (argc = 0, cmd = first_cmd; cmd; cmd = cmd->next) {
+	for (cmd = commands; !have_input && cmd; cmd = cmd->next) {
 		if (!cmd->error_string)
-			argc += 3;
-		if (single)
-			break;
+			have_input = 1;
 	}
 
-	if (!argc || access(hook_name, X_OK) < 0)
+	if (!have_input || access(hook_name, X_OK) < 0)
 		return 0;
 
-	argv = xmalloc(sizeof(*argv) * (2 + argc));
 	argv[0] = hook_name;
-	for (argc = 1, cmd = first_cmd; cmd; cmd = cmd->next) {
+	argv[1] = NULL;
+
+	memset(&proc, 0, sizeof(proc));
+	proc.argv = argv;
+	proc.in = -1;
+	proc.stdout_to_stderr = 1;
+
+	code = start_command(&proc);
+	if (code)
+		return hook_status(code, hook_name);
+	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (!cmd->error_string) {
-			argv[argc++] = xstrdup(cmd->ref_name);
-			argv[argc++] = xstrdup(sha1_to_hex(cmd->old_sha1));
-			argv[argc++] = xstrdup(sha1_to_hex(cmd->new_sha1));
+			size_t n = snprintf(buf, sizeof(buf), "%s %s %s\n",
+				sha1_to_hex(cmd->old_sha1),
+				sha1_to_hex(cmd->new_sha1),
+				cmd->ref_name);
+			if (write_in_full(proc.in, buf, n) != n)
+				break;
 		}
-		if (single)
-			break;
 	}
-	argv[argc] = NULL;
-
-	code = run_command_v_opt(argv,
-		RUN_COMMAND_NO_STDIN | RUN_COMMAND_STDOUT_TO_STDERR);
-	while (--argc > 0)
-		free((char*)argv[argc]);
-	free(argv);
-
-	return hook_status(code, hook_name);
+	return hook_status(finish_command(&proc), hook_name);
 }
 
 static int run_update_hook(struct command *cmd)
@@ -265,7 +267,7 @@ static void execute_commands(const char *unpacker_error)
 		return;
 	}
 
-	if (run_hook(pre_receive_hook, commands, 0)) {
+	if (run_hook(pre_receive_hook)) {
 		while (cmd) {
 			cmd->error_string = "pre-receive hook declined";
 			cmd = cmd->next;
@@ -520,7 +522,7 @@ int main(int argc, char **argv)
 			unlink(pack_lockfile);
 		if (report_status)
 			report(unpack_status);
-		run_hook(post_receive_hook, commands, 0);
+		run_hook(post_receive_hook);
 		run_update_post_hook(commands);
 	}
 	return 0;
