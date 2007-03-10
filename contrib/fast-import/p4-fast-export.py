@@ -278,7 +278,7 @@ def findBranchParent(branchPrefix, files):
         for branch in knownBranches:
             if isSubPathOf(relPath, branch):
 #                print "determined parent branch branch %s due to change in file %s" % (branch, source)
-                return "refs/heads/%s" % branch
+                return branch
 #            else:
 #                print "%s is not a subpath of branch %s" % (relPath, branch)
 
@@ -349,6 +349,57 @@ def extractFilesInCommitToBranch(files, branchPrefix):
             newFiles.append(file)
 
     return newFiles
+
+def findBranchSourceHeuristic(files, branch, branchPrefix):
+    for file in files:
+        action = file["action"]
+        if action != "integrate" and action != "branch":
+            continue
+        path = file["path"]
+        rev = file["rev"]
+        depotPath = path + "#" + rev
+
+        log = p4CmdList("filelog \"%s\"" % depotPath)
+        if len(log) != 1:
+            print "eek! I got confused by the filelog of %s" % depotPath
+            sys.exit(1);
+
+        log = log[0]
+        if log["action0"] != action:
+            print "eek! wrong action in filelog for %s : found %s, expected %s" % (depotPath, log["action0"], action)
+            sys.exit(1);
+
+        branchAction = log["how0,0"]
+
+        if not branchAction.endswith(" from"):
+            continue # ignore for branching
+#            print "eek! file %s was not branched from but instead: %s" % (depotPath, branchAction)
+#            sys.exit(1);
+
+        source = log["file0,0"]
+        if source.startswith(branchPrefix):
+            continue
+
+        lastSourceRev = log["erev0,0"]
+
+        sourceLog = p4CmdList("filelog -m 1 \"%s%s\"" % (source, lastSourceRev))
+        if len(sourceLog) != 1:
+            print "eek! I got confused by the source filelog of %s%s" % (source, lastSourceRev)
+            sys.exit(1);
+        sourceLog = sourceLog[0]
+
+        relPath = source[len(globalPrefix):]
+        # strip off the filename
+        relPath = relPath[0:relPath.rfind("/")]
+
+        for candidate in knownBranches:
+            if isSubPathOf(relPath, candidate) and candidate != branch:
+                return candidate
+
+    return ""
+
+def changeIsBranchMerge(sourceBranch, destinationBranch, change):
+    return False
 
 def getUserMap():
     users = {}
@@ -470,8 +521,16 @@ else:
 #                    elif len(parent) > 0:
 #                        print "%s branched off of %s" % (branch, parent)
 
+                if len(parent) == 0:
+                    parent = findBranchSourceHeuristic(filesForCommit, branch, branchPrefix)
+                    if len(parent) > 0:
+                        print "change %s could be a merge from %s into %s" % (description["change"], parent, branch)
+                        if not changeIsBranchMerge(parent, branch, description["change"]):
+                            parent = ""
 
                 branch = "refs/heads/" + branch
+                if len(parent) > 0:
+                    parent = "refs/heads/" + parent
                 commit(description, files, branch, branchPrefix, parent)
         else:
             commit(description, filesForCommit, branch, globalPrefix, initialParent)
