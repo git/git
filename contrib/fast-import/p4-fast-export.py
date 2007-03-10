@@ -15,7 +15,8 @@ import os, string, sys, time, os.path
 import marshal, popen2, getopt, sha
 from sets import Set;
 
-cacheDebug = False
+dataCache = False
+commandCache = False
 
 silent = False
 knownBranches = Set()
@@ -30,7 +31,7 @@ if len(globalPrefix) != 0:
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", [ "branch=", "detect-branches", "changesfile=", "silent", "known-branches=",
-                                                   "cache-debug" ])
+                                                   "cache", "command-cache" ])
 except getopt.GetoptError:
     print "fixme, syntax error"
     sys.exit(1)
@@ -47,8 +48,11 @@ for o, a in opts:
     elif o == "--known-branches":
         for branch in open(a).readlines():
             knownBranches.add(branch[:-1])
-    elif o == "--cache-debug":
-        cacheDebug = True
+    elif o == "--cache":
+        dataCache = True
+        commandCache = True
+    elif o == "--command-cache":
+        commandCache = True
 
 if len(args) == 0 and len(globalPrefix) != 0:
     if not silent:
@@ -103,12 +107,12 @@ def p4File(depotPath):
 
     data = 0
     try:
-        if not cacheDebug:
+        if not dataCache:
             raise
         data = open(cacheKey, "rb").read()
     except:
         data = os.popen("p4 print -q \"%s\"" % depotPath, "rb").read()
-        if cacheDebug:
+        if dataCache:
             open(cacheKey, "wb").write(data)
 
     return data
@@ -122,7 +126,7 @@ def p4CmdList(cmd):
     cached = True
     pipe = 0
     try:
-        if not cacheDebug:
+        if not commandCache:
             raise
         pipe = open(cacheKey, "rb")
     except:
@@ -138,7 +142,7 @@ def p4CmdList(cmd):
         pass
     pipe.close()
 
-    if not cached and cacheDebug:
+    if not cached and commandCache:
         pipe = open(cacheKey, "wb")
         for r in result:
             marshal.dump(r, pipe)
