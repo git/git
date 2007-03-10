@@ -340,6 +340,16 @@ def commit(details, files, branch, branchPrefix, parent):
 
     lastChange = int(details["change"])
 
+def extractFilesInCommitToBranch(files, branchPrefix):
+    newFiles = []
+
+    for file in files:
+        path = file["path"]
+        if path.startswith(branchPrefix):
+            newFiles.append(file)
+
+    return newFiles
+
 def getUserMap():
     users = {}
 
@@ -448,6 +458,8 @@ else:
                 knownBranches.add(branch)
                 branchPrefix = globalPrefix + branch + "/"
 
+                filesForCommit = extractFilesInCommitToBranch(files, branchPrefix)
+
                 parent = ""
                 ########### remove cnt!!!
                 if branch not in createdBranches and cnt > 2:
@@ -458,10 +470,11 @@ else:
 #                    elif len(parent) > 0:
 #                        print "%s branched off of %s" % (branch, parent)
 
+
                 branch = "refs/heads/" + branch
                 commit(description, files, branch, branchPrefix, parent)
         else:
-            commit(description, files, branch, globalPrefix, initialParent)
+            commit(description, filesForCommit, branch, globalPrefix, initialParent)
             initialParent = ""
 #        except:
 #            print gitError.read()
