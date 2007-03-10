@@ -4,6 +4,7 @@
 enum {
 	ERR_RUN_COMMAND_FORK = 10000,
 	ERR_RUN_COMMAND_EXEC,
+	ERR_RUN_COMMAND_PIPE,
 	ERR_RUN_COMMAND_WAITPID,
 	ERR_RUN_COMMAND_WAITPID_WRONG_PID,
 	ERR_RUN_COMMAND_WAITPID_SIGNAL,
@@ -13,6 +14,8 @@ enum {
 struct child_process {
 	const char **argv;
 	pid_t pid;
+	int in;
+	unsigned close_in:1;
 	unsigned no_stdin:1;
 	unsigned git_cmd:1; /* if this is to be git sub-command */
 	unsigned stdout_to_stderr:1;

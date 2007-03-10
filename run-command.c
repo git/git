@@ -4,15 +4,39 @@
 
 int start_command(struct child_process *cmd)
 {
+	int need_in = !cmd->no_stdin && cmd->in < 0;
+	int fdin[2];
+
+	if (need_in) {
+		if (pipe(fdin) < 0)
+			return -ERR_RUN_COMMAND_PIPE;
+		cmd->in = fdin[1];
+		cmd->close_in = 1;
+	}
+
 	cmd->pid = fork();
-	if (cmd->pid < 0)
+	if (cmd->pid < 0) {
+		if (need_in) {
+			close(fdin[0]);
+			close(fdin[1]);
+		}
 		return -ERR_RUN_COMMAND_FORK;
+	}
+
 	if (!cmd->pid) {
 		if (cmd->no_stdin) {
 			int fd = open("/dev/null", O_RDWR);
 			dup2(fd, 0);
 			close(fd);
+		} else if (need_in) {
+			dup2(fdin[0], 0);
+			close(fdin[0]);
+			close(fdin[1]);
+		} else if (cmd->in) {
+			dup2(cmd->in, 0);
+			close(cmd->in);
 		}
+
 		if (cmd->stdout_to_stderr)
 			dup2(2, 1);
 		if (cmd->git_cmd) {
@@ -22,11 +46,20 @@ int start_command(struct child_process *cmd)
 		}
 		die("exec %s failed.", cmd->argv[0]);
 	}
+
+	if (need_in)
+		close(fdin[0]);
+	else if (cmd->in)
+		close(cmd->in);
+
 	return 0;
 }
 
 int finish_command(struct child_process *cmd)
 {
+	if (cmd->close_in)
+		close(cmd->in);
+
 	for (;;) {
 		int status, code;
 		pid_t waiting = waitpid(cmd->pid, &status, 0);
