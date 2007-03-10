@@ -12,11 +12,14 @@ enum {
 
 struct child_process {
 	const char **argv;
+	pid_t pid;
 	unsigned no_stdin:1;
 	unsigned git_cmd:1; /* if this is to be git sub-command */
 	unsigned stdout_to_stderr:1;
 };
 
+int start_command(struct child_process *);
+int finish_command(struct child_process *);
 int run_command(struct child_process *);
 
 #define RUN_COMMAND_NO_STDIN 1

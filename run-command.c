@@ -2,13 +2,12 @@
 #include "run-command.h"
 #include "exec_cmd.h"
 
-int run_command(struct child_process *cmd)
+int start_command(struct child_process *cmd)
 {
-	pid_t pid = fork();
-
-	if (pid < 0)
+	cmd->pid = fork();
+	if (cmd->pid < 0)
 		return -ERR_RUN_COMMAND_FORK;
-	if (!pid) {
+	if (!cmd->pid) {
 		if (cmd->no_stdin) {
 			int fd = open("/dev/null", O_RDWR);
 			dup2(fd, 0);
@@ -23,9 +22,14 @@ int run_command(struct child_process *cmd)
 		}
 		die("exec %s failed.", cmd->argv[0]);
 	}
+	return 0;
+}
+
+int finish_command(struct child_process *cmd)
+{
 	for (;;) {
 		int status, code;
-		pid_t waiting = waitpid(pid, &status, 0);
+		pid_t waiting = waitpid(cmd->pid, &status, 0);
 
 		if (waiting < 0) {
 			if (errno == EINTR)
@@ -33,7 +37,7 @@ int run_command(struct child_process *cmd)
 			error("waitpid failed (%s)", strerror(errno));
 			return -ERR_RUN_COMMAND_WAITPID;
 		}
-		if (waiting != pid)
+		if (waiting != cmd->pid)
 			return -ERR_RUN_COMMAND_WAITPID_WRONG_PID;
 		if (WIFSIGNALED(status))
 			return -ERR_RUN_COMMAND_WAITPID_SIGNAL;
@@ -45,6 +49,14 @@ int run_command(struct child_process *cmd)
 			return -code;
 		return 0;
 	}
+}
+
+int run_command(struct child_process *cmd)
+{
+	int code = start_command(cmd);
+	if (code)
+		return code;
+	return finish_command(cmd);
 }
 
 int run_command_v_opt(const char **argv, int opt)
