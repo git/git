@@ -415,6 +415,7 @@ def changeIsBranchMerge(sourceBranch, destinationBranch, change):
     for fileName in sourceFiles.keys():
         integrations = []
         deleted = False
+        integrationCount = 0
         for integration in p4CmdList("integrated \"%s\"" % fileName):
             toFile = integration["fromFile"] # yes, it's true, it's fromFile
             if not toFile in destinationFiles:
@@ -424,9 +425,14 @@ def changeIsBranchMerge(sourceBranch, destinationBranch, change):
 #                print "file %s has been deleted in %s" % (fileName, toFile)
                 deleted = True
                 break
+            integrationCount += 1
+            if integration["how"] == "branch from":
+                continue
 
             if int(integration["change"]) == change:
                 integrations.append(integration)
+                continue
+            if int(integration["change"]) > change:
                 continue
 
             destRev = int(destFile["rev"])
@@ -453,7 +459,7 @@ def changeIsBranchMerge(sourceBranch, destinationBranch, change):
         if deleted:
             continue
 
-        if len(integrations) == 0:
+        if len(integrations) == 0 and integrationCount > 1:
             print "file %s was not integrated from %s into %s" % (fileName, sourceBranch, destinationBranch)
             return False
 
