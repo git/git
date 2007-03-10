@@ -207,6 +207,7 @@ static int merge_recursive(const char *base_sha1,
 		const char *next_sha1, const char *next_name)
 {
 	char buffer[256];
+	const char *argv[6];
 
 	sprintf(buffer, "GITHEAD_%s", head_sha1);
 	setenv(buffer, head_name, 1);
@@ -219,10 +220,14 @@ static int merge_recursive(const char *base_sha1,
 	 * and $prev on top of us (when reverting), or the change between
 	 * $prev and $commit on top of us (when cherry-picking or replaying).
 	 */
+	argv[0] = "merge-recursive";
+	argv[1] = base_sha1;
+	argv[2] = "--";
+	argv[3] = head_sha1;
+	argv[4] = next_sha1;
+	argv[5] = NULL;
 
-	return run_command_opt(RUN_COMMAND_NO_STDIN | RUN_GIT_CMD,
-			"merge-recursive", base_sha1, "--",
-			head_sha1, next_sha1, NULL);
+	return run_command_v_opt(argv, RUN_COMMAND_NO_STDIN | RUN_GIT_CMD);
 }
 
 static int revert_or_cherry_pick(int argc, const char **argv)
