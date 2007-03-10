@@ -29,7 +29,8 @@ if len(globalPrefix) != 0:
     globalPrefix = globalPrefix[:-1]
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", [ "branch=", "detect-branches", "changesfile=", "silent", "known-branches=" ])
+    opts, args = getopt.getopt(sys.argv[1:], "", [ "branch=", "detect-branches", "changesfile=", "silent", "known-branches=",
+                                                   "cache-debug" ])
 except getopt.GetoptError:
     print "fixme, syntax error"
     sys.exit(1)
@@ -46,6 +47,8 @@ for o, a in opts:
     elif o == "--known-branches":
         for branch in open(a).readlines():
             knownBranches.add(branch[:-1])
+    elif o == "--cache-debug":
+        cacheDebug = True
 
 if len(args) == 0 and len(globalPrefix) != 0:
     if not silent:
