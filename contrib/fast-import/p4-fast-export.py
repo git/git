@@ -284,7 +284,7 @@ def findBranchParent(branchPrefix, files):
 
     return ""
 
-def commit(details, files, branch, branchPrefix, parent):
+def commit(details, files, branch, branchPrefix, parent, merged = ""):
     global users
     global lastChange
     global committedChanges
@@ -293,7 +293,7 @@ def commit(details, files, branch, branchPrefix, parent):
     author = details["user"]
 
     gitStream.write("commit %s\n" % branch)
-    gitStream.write("mark :%s\n" % details["change"])
+#    gitStream.write("mark :%s\n" % details["change"])
     committedChanges.add(int(details["change"]))
     committer = ""
     if author in users:
@@ -310,6 +310,9 @@ def commit(details, files, branch, branchPrefix, parent):
 
     if len(parent) > 0:
         gitStream.write("from %s\n" % parent)
+
+    if len(merged) > 0:
+        gitStream.write("merge %s\n" % merged)
 
     for file in files:
         path = file["path"]
@@ -399,7 +402,62 @@ def findBranchSourceHeuristic(files, branch, branchPrefix):
     return ""
 
 def changeIsBranchMerge(sourceBranch, destinationBranch, change):
-    return False
+    sourceFiles = {}
+    for file in p4CmdList("files %s...@%s" % (globalPrefix + sourceBranch + "/", change)):
+        if file["action"] == "delete":
+            continue
+        sourceFiles[file["depotFile"]] = file
+
+    destinationFiles = {}
+    for file in p4CmdList("files %s...@%s" % (globalPrefix + destinationBranch + "/", change)):
+        destinationFiles[file["depotFile"]] = file
+
+    for fileName in sourceFiles.keys():
+        integrations = []
+        deleted = False
+        for integration in p4CmdList("integrated \"%s\"" % fileName):
+            toFile = integration["fromFile"] # yes, it's true, it's fromFile
+            if not toFile in destinationFiles:
+                continue
+            destFile = destinationFiles[toFile]
+            if destFile["action"] == "delete":
+#                print "file %s has been deleted in %s" % (fileName, toFile)
+                deleted = True
+                break
+
+            if int(integration["change"]) == change:
+                integrations.append(integration)
+                continue
+
+            destRev = int(destFile["rev"])
+
+            startRev = integration["startFromRev"][1:]
+            if startRev == "none":
+                startRev = 0
+            else:
+                startRev = int(startRev)
+
+            endRev = integration["endFromRev"][1:]
+            if endRev == "none":
+                endRev = 0
+            else:
+                endRev = int(endRev)
+
+            initialBranch = (destRev == 1 and integration["how"] != "branch into")
+            inRange = (destRev >= startRev and destRev <= endRev)
+            newer = (destRev > startRev and destRev > endRev)
+
+            if initialBranch or inRange or newer:
+                integrations.append(integration)
+
+        if deleted:
+            continue
+
+        if len(integrations) == 0:
+            print "file %s was not integrated from %s into %s" % (fileName, sourceBranch, destinationBranch)
+            return False
+
+    return True
 
 def getUserMap():
     users = {}
@@ -502,42 +560,45 @@ else:
             sys.stdout.flush()
         cnt = cnt + 1
 
-#        try:
-        files = extractFilesFromCommit(description)
-        if detectBranches:
-            for branch in branchesForCommit(files):
-                knownBranches.add(branch)
-                branchPrefix = globalPrefix + branch + "/"
+        try:
+            files = extractFilesFromCommit(description)
+            if detectBranches:
+                for branch in branchesForCommit(files):
+                    knownBranches.add(branch)
+                    branchPrefix = globalPrefix + branch + "/"
 
-                filesForCommit = extractFilesInCommitToBranch(files, branchPrefix)
+                    filesForCommit = extractFilesInCommitToBranch(files, branchPrefix)
 
-                parent = ""
-                ########### remove cnt!!!
-                if branch not in createdBranches and cnt > 2:
-                    createdBranches.add(branch)
-                    parent = findBranchParent(branchPrefix, files)
-                    if parent == branch:
-                        parent = ""
-#                    elif len(parent) > 0:
-#                        print "%s branched off of %s" % (branch, parent)
-
-                if len(parent) == 0:
-                    parent = findBranchSourceHeuristic(filesForCommit, branch, branchPrefix)
-                    if len(parent) > 0:
-                        print "change %s could be a merge from %s into %s" % (description["change"], parent, branch)
-                        if not changeIsBranchMerge(parent, branch, description["change"]):
+                    merged = ""
+                    parent = ""
+                    ########### remove cnt!!!
+                    if branch not in createdBranches and cnt > 2:
+                        createdBranches.add(branch)
+                        parent = findBranchParent(branchPrefix, files)
+                        if parent == branch:
                             parent = ""
+    #                    elif len(parent) > 0:
+    #                        print "%s branched off of %s" % (branch, parent)
 
-                branch = "refs/heads/" + branch
-                if len(parent) > 0:
-                    parent = "refs/heads/" + parent
-                commit(description, files, branch, branchPrefix, parent)
-        else:
-            commit(description, filesForCommit, branch, globalPrefix, initialParent)
-            initialParent = ""
-#        except:
-#            print gitError.read()
-#            sys.exit(1)
+                    if len(parent) == 0:
+                        merged = findBranchSourceHeuristic(filesForCommit, branch, branchPrefix)
+                        if len(merged) > 0:
+                            print "change %s could be a merge from %s into %s" % (description["change"], merged, branch)
+                            if not changeIsBranchMerge(merged, branch, int(description["change"])):
+                                merged = ""
+
+                    branch = "refs/heads/" + branch
+                    if len(parent) > 0:
+                        parent = "refs/heads/" + parent
+                    if len(merged) > 0:
+                        merged = "refs/heads/" + merged
+                    commit(description, files, branch, branchPrefix, parent, merged)
+            else:
+                commit(description, filesForCommit, branch, globalPrefix, initialParent)
+                initialParent = ""
+        except IOError:
+            print gitError.read()
+            sys.exit(1)
 
 if not silent:
     print ""
