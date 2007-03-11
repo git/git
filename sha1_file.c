@@ -967,11 +967,12 @@ static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned lon
 	return 0;
 }
 
-static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size)
+static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size, const unsigned char *sha1)
 {
 	int bytes = strlen(buffer) + 1;
 	unsigned char *buf = xmalloc(1+size);
 	unsigned long n;
+	int status = Z_OK;
 
 	n = stream->total_out - bytes;
 	if (n > size)
@@ -981,12 +982,22 @@ static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size
 	if (bytes < size) {
 		stream->next_out = buf + bytes;
 		stream->avail_out = size - bytes;
-		while (inflate(stream, Z_FINISH) == Z_OK)
-			/* nothing */;
+		while (status == Z_OK)
+			status = inflate(stream, Z_FINISH);
 	}
 	buf[size] = 0;
-	inflateEnd(stream);
-	return buf;
+	if ((status == Z_OK || status == Z_STREAM_END) && !stream->avail_in) {
+		inflateEnd(stream);
+		return buf;
+	}
+
+	if (status < 0)
+		error("corrupt loose object '%s'", sha1_to_hex(sha1));
+	else if (stream->avail_in)
+		error("garbage at end of loose object '%s'",
+		      sha1_to_hex(sha1));
+	free(buf);
+	return NULL;
 }
 
 /*
@@ -1040,7 +1051,7 @@ static int parse_sha1_header(const char *hdr, unsigned long *sizep)
 	return *hdr ? -1 : type_from_string(type);
 }
 
-void * unpack_sha1_file(void *map, unsigned long mapsize, enum object_type *type, unsigned long *size)
+static void *unpack_sha1_file(void *map, unsigned long mapsize, enum object_type *type, unsigned long *size, const unsigned char *sha1)
 {
 	int ret;
 	z_stream stream;
@@ -1050,7 +1061,7 @@ void * unpack_sha1_file(void *map, unsigned long mapsize, enum object_type *type
 	if (ret < Z_OK || (*type = parse_sha1_header(hdr, size)) < 0)
 		return NULL;
 
-	return unpack_sha1_rest(&stream, hdr, *size);
+	return unpack_sha1_rest(&stream, hdr, *size, sha1);
 }
 
 static off_t get_delta_base(struct packed_git *p,
@@ -1571,7 +1582,7 @@ void *read_sha1_file(const unsigned char *sha1, enum object_type *type,
 		return buf;
 	map = map_sha1_file(sha1, &mapsize);
 	if (map) {
-		buf = unpack_sha1_file(map, mapsize, type, size);
+		buf = unpack_sha1_file(map, mapsize, type, size, sha1);
 		munmap(map, mapsize);
 		return buf;
 	}
