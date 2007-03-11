@@ -601,8 +601,8 @@ a new stanza:
 $ cat .git/config
 ...
 [remote "linux-nfs"]
-        url = git://linux-nfs.org/~bfields/git.git
-	fetch = +refs/heads/*:refs/remotes/linux-nfs-read/*
+	url = git://linux-nfs.org/pub/nfs-2.6.git
+	fetch = +refs/heads/*:refs/remotes/linux-nfs/*
 ...
 -------------------------------------------------
 
