@@ -605,7 +605,7 @@ static int handle_one_ref(const char *path,
 int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 {
 	struct commit_list *list = NULL, *backup = NULL, *l;
-	struct commit *commit;
+	struct commit *commit = NULL;
 
 	if (prefix[0] == '!') {
 		if (prefix[1] != '!')
@@ -617,8 +617,12 @@ int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 	for_each_ref(handle_one_ref, &list);
 	for (l = list; l; l = l->next)
 		commit_list_insert(l->item, &backup);
-	while ((commit = pop_most_recent_commit(&list, ONELINE_SEEN))) {
+	while (list) {
 		char *p;
+
+		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
+		if (!commit)
+			break;
 		parse_object(commit->object.sha1);
 		if (!commit->buffer || !(p = strstr(commit->buffer, "\n\n")))
 			continue;
