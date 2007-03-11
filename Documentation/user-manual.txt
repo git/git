@@ -437,11 +437,14 @@ We will sometimes represent git history using diagrams like the one
 below.  Commits are shown as "o", and the links between them with
 lines drawn with - / and \.  Time goes left to right:
 
+
+................................................
          o--o--o <-- Branch A
         /
  o--o--o <-- master
         \
          o--o--o <-- Branch B
+................................................
 
 If we need to talk about a particular commit, the character "o" may
 be replaced with another letter or number.
@@ -601,8 +604,8 @@ a new stanza:
 $ cat .git/config
 ...
 [remote "linux-nfs"]
-        url = git://linux-nfs.org/~bfields/git.git
-	fetch = +refs/heads/*:refs/remotes/linux-nfs-read/*
+	url = git://linux-nfs.org/pub/nfs-2.6.git
+	fetch = +refs/heads/*:refs/remotes/linux-nfs/*
 ...
 -------------------------------------------------
 
@@ -1133,17 +1136,9 @@ modified in two different ways in the remote branch and the local
 branch--then you are warned; the output may look something like this:
 
 -------------------------------------------------
-$ git pull . next
-Trying really trivial in-index merge...
-fatal: Merge requires file-level merging
-Nope.
-Merging HEAD with 77976da35a11db4580b80ae27e8d65caf5208086
-Merging:
-15e2162 world
-77976da goodbye
-found 1 common ancestor(s):
-d122ed4 initial
-Auto-merging file.txt
+$ git merge next
+ 100% (4/4) done
+Auto-merged file.txt
 CONFLICT (content): Merge conflict in file.txt
 Automatic merge failed; fix conflicts and then commit the result.
 -------------------------------------------------
@@ -1439,7 +1434,7 @@ modifying the working directory, you can do that with
 gitlink:git-show[1]:
 
 -------------------------------------------------
-$ git show HEAD^ path/to/file
+$ git show HEAD^:path/to/file
 -------------------------------------------------
 
 which will display the given version of the file.
@@ -1936,25 +1931,29 @@ $ git commit
 You have performed no merges into mywork, so it is just a simple linear
 sequence of patches on top of "origin":
 
-
+................................................
  o--o--o <-- origin
         \
          o--o--o <-- mywork
+................................................
 
 Some more interesting work has been done in the upstream project, and
 "origin" has advanced:
 
+................................................
  o--o--O--o--o--o <-- origin
         \
          a--b--c <-- mywork
+................................................
 
 At this point, you could use "pull" to merge your changes back in;
 the result would create a new merge commit, like this:
 
-
+................................................
  o--o--O--o--o--o <-- origin
         \        \
          a--b--c--m <-- mywork
+................................................
  
 However, if you prefer to keep the history in mywork a simple series of
 commits without any merges, you may instead choose to use
@@ -1971,9 +1970,11 @@ point at the latest version of origin, then apply each of the saved
 patches to the new mywork.  The result will look like:
 
 
+................................................
  o--o--O--o--o--o <-- origin
 		 \
 		  a'--b'--c' <-- mywork
+................................................
 
 In the process, it may discover conflicts.  In that case it will stop
 and allow you to fix the conflicts; after fixing conflicts, use "git
@@ -2081,24 +2082,30 @@ The primary problem with rewriting the history of a branch has to do
 with merging.  Suppose somebody fetches your branch and merges it into
 their branch, with a result something like this:
 
+................................................
  o--o--O--o--o--o <-- origin
         \        \
          t--t--t--m <-- their branch:
+................................................
 
 Then suppose you modify the last three commits:
 
+................................................
 	 o--o--o <-- new head of origin
 	/
  o--o--O--o--o--o <-- old head of origin
+................................................
 
 If we examined all this history together in one repository, it will
 look like:
 
+................................................
 	 o--o--o <-- new head of origin
 	/
  o--o--O--o--o--o <-- old head of origin
         \        \
          t--t--t--m <-- their branch:
+................................................
 
 Git has no way of knowing that the new head is an updated version of
 the old head; it treats this situation exactly the same as it would if
@@ -2159,9 +2166,11 @@ commit.  Git calls this process a "fast forward".
 
 A fast forward looks something like this:
 
+................................................
  o--o--o--o <-- old head of the branch
            \
             o--o--o <-- new head of the branch
+................................................
 
 
 In some cases it is possible that the new head will *not* actually be
@@ -2169,11 +2178,11 @@ a descendant of the old head.  For example, the developer may have
 realized she made a serious mistake, and decided to backtrack,
 resulting in a situation like:
 
+................................................
  o--o--o--o--a--b <-- old head of the branch
            \
             o--o--o <-- new head of the branch
-
-
+................................................
 
 In this case, "git fetch" will fail, and print out a warning.
 
