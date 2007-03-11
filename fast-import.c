@@ -1062,7 +1062,7 @@ static void load_tree(struct tree_entry *root)
 		struct tree_entry *e = new_tree_entry();
 
 		if (t->entry_count == t->entry_capacity)
-			root->tree = t = grow_tree_content(t, 8);
+			root->tree = t = grow_tree_content(t, t->entry_count);
 		t->entries[t->entry_count++] = e;
 
 		e->tree = NULL;
@@ -1229,7 +1229,7 @@ static int tree_content_set(
 	}
 
 	if (t->entry_count == t->entry_capacity)
-		root->tree = t = grow_tree_content(t, 8);
+		root->tree = t = grow_tree_content(t, t->entry_count);
 	e = new_tree_entry();
 	e->name = to_atom(p, (unsigned short)n);
 	e->versions[0].mode = 0;
