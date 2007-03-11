@@ -48,7 +48,7 @@ This list is sorted alphabetically:
 ';
 
 @keys=sort {uc($a) cmp uc($b)} keys %terms;
-$pattern='(\b(?<!link:git-)'.join('\b|\b(?<!link:git-)',reverse @keys).'\b)';
+$pattern='(\b(?<!link:git-)'.join('\b|\b(?<!-)',reverse @keys).'\b)';
 foreach $key (@keys) {
 	$terms{$key}=~s/$pattern/sprintf "<<ref_".no_spaces($1).",$1>>";/eg;
 	print '[[ref_'.no_spaces($key).']]'.$key."::\n"

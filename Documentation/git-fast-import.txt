@@ -462,7 +462,7 @@ in octal.  Git only supports the following modes:
 In both formats `<path>` is the complete path of the file to be added
 (if not already existing) or modified (if already existing).
 
-A `<path>` string must use UNIX-style directory seperators (forward
+A `<path>` string must use UNIX-style directory separators (forward
 slash `/`), may contain any byte other than `LF`, and must not
 start with double quote (`"`).
 
@@ -472,8 +472,8 @@ quoting should be used, e.g. `"path/with\n and \" in it"`.
 The value of `<path>` must be in canoncial form. That is it must not:
 
 * contain an empty directory component (e.g. `foo//bar` is invalid),
-* end with a directory seperator (e.g. `foo/` is invalid),
-* start with a directory seperator (e.g. `/foo` is invalid),
+* end with a directory separator (e.g. `foo/` is invalid),
+* start with a directory separator (e.g. `/foo` is invalid),
 * contain the special component `.` or `..` (e.g. `foo/./bar` and
   `foo/../bar` are invalid).
 

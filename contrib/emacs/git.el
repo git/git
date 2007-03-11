@@ -891,36 +891,77 @@ and returns the process output as a string."
   (with-current-buffer log-edit-parent-buffer
     (git-get-filenames (git-marked-files-state 'added 'deleted 'modified))))
 
+(defun git-append-sign-off (name email)
+  "Append a Signed-off-by entry to the current buffer, avoiding duplicates."
+  (let ((sign-off (format "Signed-off-by: %s <%s>" name email))
+        (case-fold-search t))
+    (goto-char (point-min))
+    (unless (re-search-forward (concat "^" (regexp-quote sign-off)) nil t)
+      (goto-char (point-min))
+      (unless (re-search-forward "^Signed-off-by: " nil t)
+        (setq sign-off (concat "\n" sign-off)))
+      (goto-char (point-max))
+      (insert sign-off "\n"))))
+
+(defun git-setup-log-buffer (buffer &optional author-name author-email subject date msg)
+  "Setup the log buffer for a commit."
+  (unless git-status (error "Not in git-status buffer."))
+  (let ((merge-heads (git-get-merge-heads))
+        (dir default-directory)
+        (committer-name (git-get-committer-name))
+        (committer-email (git-get-committer-email))
+        (sign-off git-append-signed-off-by))
+    (with-current-buffer buffer
+      (cd dir)
+      (erase-buffer)
+      (insert
+       (propertize
+        (format "Author: %s <%s>\n%s%s"
+                (or author-name committer-name)
+                (or author-email committer-email)
+                (if date (format "Date: %s\n" date) "")
+                (if merge-heads
+                    (format "Parent: %s\n%s\n"
+                            (git-rev-parse "HEAD")
+                            (mapconcat (lambda (str) (concat "Parent: " str)) merge-heads "\n"))
+                  ""))
+        'face 'git-header-face)
+       (propertize git-log-msg-separator 'face 'git-separator-face)
+       "\n")
+      (when subject (insert subject "\n\n"))
+      (cond (msg (insert msg "\n"))
+            ((file-readable-p ".dotest/msg")
+             (insert-file-contents ".dotest/msg"))
+            ((file-readable-p ".git/MERGE_MSG")
+             (insert-file-contents ".git/MERGE_MSG")))
+      ; delete empty lines at end
+      (goto-char (point-min))
+      (when (re-search-forward "\n+\\'" nil t)
+        (replace-match "\n" t t))
+      (when sign-off (git-append-sign-off committer-name committer-email)))))
+
 (defun git-commit-file ()
   "Commit the marked file(s), asking for a commit message."
   (interactive)
   (unless git-status (error "Not in git-status buffer."))
   (let ((buffer (get-buffer-create "*git-commit*"))
-        (merge-heads (git-get-merge-heads))
-        (dir default-directory)
         (coding-system (git-get-commits-coding-system))
-        (sign-off git-append-signed-off-by))
-    (with-current-buffer buffer
-      (when (eq 0 (buffer-size))
-        (cd dir)
-        (erase-buffer)
-        (insert
-         (propertize
-          (format "Author: %s <%s>\n%s"
-                  (git-get-committer-name) (git-get-committer-email)
-                  (if merge-heads
-                      (format "Parent: %s\n%s\n"
-                              (git-rev-parse "HEAD")
-                              (mapconcat (lambda (str) (concat "Parent: " str)) merge-heads "\n"))
-                    ""))
-          'face 'git-header-face)
-         (propertize git-log-msg-separator 'face 'git-separator-face)
-         "\n")
-        (cond ((file-readable-p ".git/MERGE_MSG")
-               (insert-file-contents ".git/MERGE_MSG"))
-              (sign-off
-               (insert (format "\n\nSigned-off-by: %s <%s>\n"
-                               (git-get-committer-name) (git-get-committer-email)))))))
+        author-name author-email subject date)
+    (when (eq 0 (buffer-size buffer))
+      (when (file-readable-p ".dotest/info")
+        (with-temp-buffer
+          (insert-file-contents ".dotest/info")
+          (goto-char (point-min))
+          (when (re-search-forward "^Author: \\(.*\\)\nEmail: \\(.*\\)$" nil t)
+            (setq author-name (match-string 1))
+            (setq author-email (match-string 2)))
+          (goto-char (point-min))
+          (when (re-search-forward "^Subject: \\(.*\\)$" nil t)
+            (setq subject (match-string 1)))
+          (goto-char (point-min))
+          (when (re-search-forward "^Date: \\(.*\\)$" nil t)
+            (setq date (match-string 1)))))
+      (git-setup-log-buffer buffer author-name author-email subject date))
     (log-edit #'git-do-commit nil #'git-log-edit-files buffer)
     (setq font-lock-keywords (font-lock-compile-keywords git-log-edit-font-lock-keywords))
     (setq buffer-file-coding-system coding-system)

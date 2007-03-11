@@ -216,7 +216,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		die("Not a git repository: '%s'", gitdirenv);
 	}
 
-	if (!getcwd(cwd, sizeof(cwd)) || cwd[0] != '/')
+	if (!getcwd(cwd, sizeof(cwd)-1) || cwd[0] != '/')
 		die("Unable to read current working directory");
 
 	offset = len = strlen(cwd);
