@@ -1133,17 +1133,9 @@ modified in two different ways in the remote branch and the local
 branch--then you are warned; the output may look something like this:
 
 -------------------------------------------------
-$ git pull . next
-Trying really trivial in-index merge...
-fatal: Merge requires file-level merging
-Nope.
-Merging HEAD with 77976da35a11db4580b80ae27e8d65caf5208086
-Merging:
-15e2162 world
-77976da goodbye
-found 1 common ancestor(s):
-d122ed4 initial
-Auto-merging file.txt
+$ git merge next
+ 100% (4/4) done
+Auto-merged file.txt
 CONFLICT (content): Merge conflict in file.txt
 Automatic merge failed; fix conflicts and then commit the result.
 -------------------------------------------------
