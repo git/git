@@ -40,7 +40,8 @@ The --cc option must be repeated for each user you want on the cc list.
 	the first will be sent as replies to the first email sent.  When using
 	this, it is recommended that the first file given be an overview of the
 	entire patch series.
-	Default is --chain-reply-to
+	Default is the value of the 'sendemail.chainreplyto' configuration
+	value; if that is unspecified, default to --chain-reply-to.
 
 --compose::
 	Use $EDITOR to edit an introductory message for the
@@ -100,6 +101,13 @@ sendemail.aliasesfile::
 sendemail.aliasfiletype::
 	Format of the file(s) specified in sendemail.aliasesfile. Must be
 	one of 'mutt', 'mailrc', 'pine', or 'gnus'.
+
+sendemail.bcc::
+	Email address (or alias) to always bcc.
+
+sendemail.chainreplyto::
+	Boolean value specifying the default to the '--chain_reply_to'
+	parameter.
 
 sendemail.smtpserver::
 	Default smtp server to use.
