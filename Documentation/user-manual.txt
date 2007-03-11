@@ -1431,7 +1431,7 @@ modifying the working directory, you can do that with
 gitlink:git-show[1]:
 
 -------------------------------------------------
-$ git show HEAD^ path/to/file
+$ git show HEAD^:path/to/file
 -------------------------------------------------
 
 which will display the given version of the file.
