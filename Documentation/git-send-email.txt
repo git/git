@@ -91,6 +91,19 @@ The --cc option must be repeated for each user you want on the cc list.
 The --to option must be repeated for each user you want on the to list.
 
 
+CONFIGURATION
+-------------
+sendemail.aliasesfile::
+	To avoid typing long email addresses, point this to one or more
+	email aliases files.  You must also supply 'sendemail.aliasfiletype'.
+
+sendemail.aliasfiletype::
+	Format of the file(s) specified in sendemail.aliasesfile. Must be
+	one of 'mutt', 'mailrc', 'pine', or 'gnus'.
+
+sendemail.smtpserver::
+	Default smtp server to use.
+
 Author
 ------
 Written by Ryan Anderson <ryan@michonline.com>
