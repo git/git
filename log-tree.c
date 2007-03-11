@@ -186,7 +186,7 @@ void show_log(struct rev_info *opt, const char *sep)
 			snprintf(subject_buffer, sizeof(subject_buffer) - 1,
 				 "%s"
 				 "MIME-Version: 1.0\n"
-				 "Content-Type: multipart/mixed;\n"
+				 "Content-Type: multipart/mixed;"
 				 " boundary=\"%s%s\"\n"
 				 "\n"
 				 "This is a multi-part message in MIME "
@@ -202,13 +202,15 @@ void show_log(struct rev_info *opt, const char *sep)
 
 			snprintf(buffer, sizeof(buffer) - 1,
 				 "--%s%s\n"
-				 "Content-Type: text/x-patch;\n"
+				 "Content-Type: text/x-patch;"
 				 " name=\"%s.diff\"\n"
 				 "Content-Transfer-Encoding: 8bit\n"
-				 "Content-Disposition: inline;\n"
+				 "Content-Disposition: %s;"
 				 " filename=\"%s.diff\"\n\n",
 				 mime_boundary_leader, opt->mime_boundary,
-				 sha1, sha1);
+				 sha1,
+				 opt->no_inline ? "attachment" : "inline",
+				 sha1);
 			opt->diffopt.stat_sep = buffer;
 		}
 	} else if (opt->commit_format != CMIT_FMT_USERFORMAT) {

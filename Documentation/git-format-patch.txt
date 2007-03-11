@@ -9,8 +9,9 @@ git-format-patch - Prepare patches for e-mail submission
 SYNOPSIS
 --------
 [verse]
-'git-format-patch' [<common diff options>] [-n | -k] [-o <dir> | --stdout]
-		   [--attach] [--thread] [-s | --signoff] [--start-number <n>]
+'git-format-patch' [-n | -k] [-o <dir> | --stdout] [--thread]
+	           [--attach[=<boundary>] | --inline[=<boundary>]]
+	           [-s | --signoff] [<common diff options>] [--start-number <n>]
 		   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
 		   [--ignore-if-in-upstream]
 		   <since>[..<until>]
@@ -70,8 +71,15 @@ include::diff-options.txt[]
 	Print all commits to the standard output in mbox format,
 	instead of creating a file for each one.
 
---attach::
-	Create attachments instead of inlining patches.
+--attach[=<boundary>]::
+	Create multipart/mixed attachment, the first part of
+	which is the commit message and the patch itself in the
+	second part, with "Content-Disposition: attachment".
+
+--inline[=<boundary>]::
+	Create multipart/mixed attachment, the first part of
+	which is the commit message and the patch itself in the
+	second part, with "Content-Disposition: inline".
 
 --thread::
 	Add In-Reply-To and References headers to make the second and

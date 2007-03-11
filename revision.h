@@ -74,6 +74,7 @@ struct rev_info {
 	const char	*add_signoff;
 	const char	*extra_headers;
 	const char	*log_reencode;
+	int		no_inline;
 
 	/* Filter by commit log message */
 	struct grep_opt	*grep_filter;
