@@ -9,7 +9,7 @@ test_description='commit and log output encodings'
 
 compare_with () {
 	git-show -s $1 | sed -e '1,/^$/d' -e 's/^    //' -e '$d' >current &&
-	diff -u current "$2"
+	git diff current "$2"
 }
 
 test_expect_success setup '

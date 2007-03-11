@@ -131,7 +131,7 @@ _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 
 check_result () {
     git-ls-files --stage | sed -e 's/ '"$_x40"' / X /' >current &&
-    diff -u expected current
+    git diff expected current
 }
 
 # This is done on an empty work directory, which is the normal

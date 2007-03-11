@@ -149,7 +149,7 @@ do
 		} >"$actual" &&
 		if test -f "$expect"
 		then
-			diff -u "$expect" "$actual" &&
+			git diff -u "$expect" "$actual" &&
 			rm -f "$actual"
 		else
 			# this is to help developing new tests.

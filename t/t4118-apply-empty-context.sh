@@ -37,7 +37,7 @@ test_expect_success 'apply --numstat' '
 		echo "0	1	file1" &&
 		echo "0	1	file2"
 	} >expect &&
-	diff -u expect actual
+	git diff expect actual
 
 '
 
@@ -47,8 +47,8 @@ test_expect_success 'apply --apply' '
 	cat file2.orig >file2 &&
 	git update-index file1 file2 &&
 	git apply --index diff.output &&
-	diff -u file1.mods file1 &&
-	diff -u file2.mods file2
+	git diff file1.mods file1 &&
+	git diff file2.mods file2
 '
 
 test_done

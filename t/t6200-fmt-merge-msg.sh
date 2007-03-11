@@ -79,7 +79,7 @@ test_expect_success 'merge-msg test #1' '
 	git fetch . left &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
-	diff -u actual expected
+	git diff actual expected
 '
 
 cat >expected <<\EOF
@@ -92,7 +92,7 @@ test_expect_success 'merge-msg test #2' '
 	git fetch ../trash left &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
-	diff -u actual expected
+	git diff actual expected
 '
 
 cat >expected <<\EOF
@@ -115,7 +115,7 @@ test_expect_success 'merge-msg test #3' '
 	git fetch . left &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
-	diff -u actual expected
+	git diff actual expected
 '
 
 cat >expected <<\EOF
@@ -145,7 +145,7 @@ test_expect_success 'merge-msg test #4' '
 	git fetch . left right &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
-	diff -u actual expected
+	git diff actual expected
 '
 
 test_expect_success 'merge-msg test #5' '
@@ -157,7 +157,7 @@ test_expect_success 'merge-msg test #5' '
 	git fetch . left right &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
-	diff -u actual expected
+	git diff actual expected
 '
 
 test_done

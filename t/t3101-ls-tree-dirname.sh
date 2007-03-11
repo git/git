@@ -43,7 +43,7 @@ _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
 test_output () {
     sed -e "s/ $_x40	/ X	/" <current >check
-    diff -u expected check
+    git diff expected check
 }
 
 test_expect_success \
