@@ -6,11 +6,15 @@ makfile:=perl.mak
 PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
 prefix_SQ = $(subst ','\'',$(prefix))
 
+ifndef V
+	QUIET = @
+endif
+
 all install instlibdir: $(makfile)
-	$(MAKE) -f $(makfile) $@
+	$(QUIET)$(MAKE) -f $(makfile) $@
 
 clean:
-	test -f $(makfile) && $(MAKE) -f $(makfile) $@ || exit 0
+	$(QUIET)test -f $(makfile) && $(MAKE) -f $(makfile) $@ || exit 0
 	$(RM) ppport.h
 	$(RM) $(makfile)
 	$(RM) $(makfile).old
@@ -29,7 +33,7 @@ $(makfile): ../GIT-CFLAGS Makefile
 	echo '	echo $(instdir_SQ)' >> $@
 else
 $(makfile): Makefile.PL ../GIT-CFLAGS
-	'$(PERL_PATH_SQ)' $< PREFIX='$(prefix_SQ)'
+	$(QUIET_GEN)'$(PERL_PATH_SQ)' $< PREFIX='$(prefix_SQ)'
 endif
 
 # this is just added comfort for calling make directly in perl dir
