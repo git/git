@@ -299,6 +299,11 @@ proc ask_popup {msg} {
 ##
 ## version check
 
+if {{--version} eq $argv || {version} eq $argv} {
+	puts "git-gui version $appvers"
+	exit
+}
+
 set req_maj 1
 set req_min 5
 
@@ -5054,8 +5059,6 @@ enable_option branch
 enable_option transport
 
 switch -- $subcommand {
---version -
-version -
 browser -
 blame {
 	disable_option multicommit
@@ -5426,11 +5429,6 @@ bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
 # -- Not a normal commit type invocation?  Do that instead!
 #
 switch -- $subcommand {
---version -
-version {
-	puts "git-gui version $appvers"
-	exit
-}
 browser {
 	if {[llength $argv] != 1} {
 		puts stderr "usage: $argv0 browser commit"
