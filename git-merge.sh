@@ -294,7 +294,12 @@ f,*)
 	git-update-index --refresh 2>/dev/null
 	new_head=$(git-rev-parse --verify "$1^0") &&
 	git-read-tree -v -m -u --exclude-per-directory=.gitignore $head "$new_head" &&
-	finish "$new_head" "Fast forward" || exit
+	msg="Fast forward"
+	if test -n "$have_message"
+	then
+		msg="$msg (no commit created; -m option ignored)"
+	fi
+	finish "$new_head" "$msg" || exit
 	dropsave
 	exit 0
 	;;
