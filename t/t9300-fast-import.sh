@@ -501,4 +501,54 @@ test_expect_success \
     'test `git-rev-parse --verify branch^1` \
 		= `git-rev-parse --verify K^1`'
 
+###
+### series L
+###
+
+cat >input <<INPUT_END
+blob
+mark :1
+data <<EOF
+some data
+EOF
+
+blob
+mark :2
+data <<EOF
+other data
+EOF
+
+commit refs/heads/L
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+create L
+COMMIT
+
+M 644 :1 b.
+M 644 :1 b/other
+M 644 :1 ba
+
+commit refs/heads/L
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+update L
+COMMIT
+
+M 644 :2 b.
+M 644 :2 b/other
+M 644 :2 ba
+INPUT_END
+
+cat >expect <<EXPECT_END
+:100644 100644 4268632... 55d3a52... M	b.
+:040000 040000 0ae5cac... 443c768... M	b
+:100644 100644 4268632... 55d3a52... M	ba
+EXPECT_END
+
+test_expect_success \
+    'L: verify internal tree sorting' \
+	'git-fast-import <input &&
+	 git-diff --raw L^ L >output &&
+	 git diff expect output'
+
 test_done
