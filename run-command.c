@@ -11,7 +11,8 @@ static inline void close_pair(int fd[2])
 int start_command(struct child_process *cmd)
 {
 	int need_in = !cmd->no_stdin && cmd->in < 0;
-	int fdin[2];
+	int need_out = !cmd->stdout_to_stderr && cmd->out < 0;
+	int fdin[2], fdout[2];
 
 	if (need_in) {
 		if (pipe(fdin) < 0)
@@ -20,10 +21,22 @@ int start_command(struct child_process *cmd)
 		cmd->close_in = 1;
 	}
 
+	if (need_out) {
+		if (pipe(fdout) < 0) {
+			if (need_in)
+				close_pair(fdin);
+			return -ERR_RUN_COMMAND_PIPE;
+		}
+		cmd->out = fdout[0];
+		cmd->close_out = 1;
+	}
+
 	cmd->pid = fork();
 	if (cmd->pid < 0) {
 		if (need_in)
 			close_pair(fdin);
+		if (need_out)
+			close_pair(fdout);
 		return -ERR_RUN_COMMAND_FORK;
 	}
 
@@ -42,6 +55,14 @@ int start_command(struct child_process *cmd)
 
 		if (cmd->stdout_to_stderr)
 			dup2(2, 1);
+		else if (need_out) {
+			dup2(fdout[1], 1);
+			close_pair(fdout);
+		} else if (cmd->out > 1) {
+			dup2(cmd->out, 1);
+			close(cmd->out);
+		}
+
 		if (cmd->git_cmd) {
 			execv_git_cmd(cmd->argv);
 		} else {
@@ -55,6 +76,11 @@ int start_command(struct child_process *cmd)
 	else if (cmd->in)
 		close(cmd->in);
 
+	if (need_out)
+		close(fdout[1]);
+	else if (cmd->out > 1)
+		close(cmd->out);
+
 	return 0;
 }
 
@@ -62,6 +88,8 @@ int finish_command(struct child_process *cmd)
 {
 	if (cmd->close_in)
 		close(cmd->in);
+	if (cmd->close_out)
+		close(cmd->out);
 
 	for (;;) {
 		int status, code;
