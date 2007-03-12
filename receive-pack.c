@@ -382,10 +382,10 @@ static const char *unpack(void)
 		}
 	} else {
 		const char *keeper[6];
-		int fd[2], s, len, status;
-		pid_t pid;
+		int s, len, status;
 		char keep_arg[256];
 		char packname[46];
+		struct child_process ip;
 
 		s = sprintf(keep_arg, "--keep=receive-pack %i on ", getpid());
 		if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
@@ -397,20 +397,12 @@ static const char *unpack(void)
 		keeper[3] = hdr_arg;
 		keeper[4] = keep_arg;
 		keeper[5] = NULL;
-
-		if (pipe(fd) < 0)
-			return "index-pack pipe failed";
-		pid = fork();
-		if (pid < 0)
+		memset(&ip, 0, sizeof(ip));
+		ip.argv = keeper;
+		ip.out = -1;
+		ip.git_cmd = 1;
+		if (start_command(&ip))
 			return "index-pack fork failed";
-		if (!pid) {
-			dup2(fd[1], 1);
-			close(fd[1]);
-			close(fd[0]);
-			execv_git_cmd(keeper);
-			die("execv of index-pack failed");
-		}
-		close(fd[1]);
 
 		/*
 		 * The first thing we expects from index-pack's output
@@ -420,9 +412,8 @@ static const char *unpack(void)
 		 * later on.  If we don't get that then tough luck with it.
 		 */
 		for (len = 0;
-		     len < 46 && (s = xread(fd[0], packname+len, 46-len)) > 0;
+		     len < 46 && (s = xread(ip.out, packname+len, 46-len)) > 0;
 		     len += s);
-		close(fd[0]);
 		if (len == 46 && packname[45] == '\n' &&
 		    memcmp(packname, "keep\t", 5) == 0) {
 			char path[PATH_MAX];
@@ -432,14 +423,8 @@ static const char *unpack(void)
 			pack_lockfile = xstrdup(path);
 		}
 
-		/* Then wrap our index-pack process. */
-		while (waitpid(pid, &status, 0) < 0)
-			if (errno != EINTR)
-				return "waitpid failed";
-		if (WIFEXITED(status)) {
-			int code = WEXITSTATUS(status);
-			if (code)
-				return "index-pack exited with error code";
+		status = finish_command(&ip);
+		if (!status) {
 			reprepare_packed_git();
 			return NULL;
 		}
