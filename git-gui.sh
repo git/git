@@ -1171,7 +1171,7 @@ File [short_path $path] cannot be committed by this program.
 		}
 		}
 	}
-	if {!$files_ready} {
+	if {!$files_ready && ![string match *merge $curType]} {
 		info_popup {No changes to commit.
 
 You must add at least 1 file before you can commit.
