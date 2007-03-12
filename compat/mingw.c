@@ -7,13 +7,13 @@ unsigned int _CRT_fmode = _O_BINARY;
 
 int readlink(const char *path, char *buf, size_t bufsiz)
 {
-	errno = EINVAL;
+	errno = ENOSYS;
 	return -1;
 }
 
 int symlink(const char *oldpath, const char *newpath)
 {
-	errno = EFAULT;
+	errno = ENOSYS;
 	return -1;
 }
 
