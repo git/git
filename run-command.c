@@ -2,6 +2,12 @@
 #include "run-command.h"
 #include "exec_cmd.h"
 
+static inline void close_pair(int fd[2])
+{
+	close(fd[0]);
+	close(fd[1]);
+}
+
 int start_command(struct child_process *cmd)
 {
 	int need_in = !cmd->no_stdin && cmd->in < 0;
@@ -16,10 +22,8 @@ int start_command(struct child_process *cmd)
 
 	cmd->pid = fork();
 	if (cmd->pid < 0) {
-		if (need_in) {
-			close(fdin[0]);
-			close(fdin[1]);
-		}
+		if (need_in)
+			close_pair(fdin);
 		return -ERR_RUN_COMMAND_FORK;
 	}
 
@@ -30,8 +34,7 @@ int start_command(struct child_process *cmd)
 			close(fd);
 		} else if (need_in) {
 			dup2(fdin[0], 0);
-			close(fdin[0]);
-			close(fdin[1]);
+			close_pair(fdin);
 		} else if (cmd->in) {
 			dup2(cmd->in, 0);
 			close(cmd->in);
