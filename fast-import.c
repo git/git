@@ -1066,7 +1066,7 @@ static void load_tree(struct tree_entry *root)
 		if (!c)
 			die("Corrupt mode in %s", sha1_to_hex(sha1));
 		e->versions[0].mode = e->versions[1].mode;
-		e->name = to_atom(c, (unsigned short)strlen(c));
+		e->name = to_atom(c, strlen(c));
 		c += e->name->str_len + 1;
 		hashcpy(e->versions[0].sha1, (unsigned char*)c);
 		hashcpy(e->versions[1].sha1, (unsigned char*)c);
@@ -1227,7 +1227,7 @@ static int tree_content_set(
 	if (t->entry_count == t->entry_capacity)
 		root->tree = t = grow_tree_content(t, t->entry_count);
 	e = new_tree_entry();
-	e->name = to_atom(p, (unsigned short)n);
+	e->name = to_atom(p, n);
 	e->versions[0].mode = 0;
 	hashclr(e->versions[0].sha1);
 	t->entries[t->entry_count++] = e;
