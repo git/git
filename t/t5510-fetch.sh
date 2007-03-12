@@ -134,7 +134,13 @@ test_expect_success 'bundle does not prerequisite objects' '
 	git add file2 &&
 	git commit -m add.file2 file2 &&
 	git bundle create bundle3 -1 HEAD &&
-	sed "1,4d" < bundle3 > bundle.pack &&
+	(
+		while read x && test -n "$x"
+		do
+			:;
+		done
+		cat
+	) <bundle3 >bundle.pack &&
 	git index-pack bundle.pack &&
 	test 4 = $(git verify-pack -v bundle.pack | wc -l)
 '
