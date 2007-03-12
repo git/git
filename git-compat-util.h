@@ -298,8 +298,8 @@ static inline int prefixcmp(const char *str, const char *prefix)
 // MinGW
 
 #ifndef S_ISLNK
-#define S_ISLNK(x) 0
-#define S_IFLNK 0
+#define S_IFLNK    0120000 /* Symbolic link */
+#define S_ISLNK(x) (((x) & S_IFMT) == S_IFLNK)
 #endif
 
 #ifndef S_ISGRP
