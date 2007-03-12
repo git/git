@@ -431,6 +431,19 @@ static const char emsg_missing_context_len[] =
 static const char emsg_missing_argument[] =
 "option requires an argument -%s";
 
+static int strtoul_ui(char const *s, unsigned int *result)
+{
+	unsigned long ul;
+	char *p;
+
+	errno = 0;
+	ul = strtoul(s, &p, 10);
+	if (errno || *p || p == s || (unsigned int) ul != ul)
+		return -1;
+	*result = ul;
+	return 0;
+}
+
 int cmd_grep(int argc, const char **argv, const char *prefix)
 {
 	int hit = 0;
@@ -553,7 +566,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 				scan = arg + 1;
 				break;
 			}
-			if (sscanf(scan, "%u", &num) != 1)
+			if (strtoul_ui(scan, &num))
 				die(emsg_invalid_context_len, scan);
 			switch (arg[1]) {
 			case 'A':
