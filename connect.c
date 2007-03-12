@@ -3,6 +3,7 @@
 #include "pkt-line.h"
 #include "quote.h"
 #include "refs.h"
+#include "run-command.h"
 
 static char *server_capabilities;
 
@@ -598,8 +599,8 @@ static void git_proxy_connect(int fd[2], char *host)
 {
 	const char *port = STR(DEFAULT_GIT_PORT);
 	char *colon, *end;
-	int pipefd[2][2];
-	pid_t pid;
+	const char *argv[4];
+	struct child_process proxy;
 
 	if (host[0] == '[') {
 		end = strchr(host + 1, ']');
@@ -618,25 +619,18 @@ static void git_proxy_connect(int fd[2], char *host)
 		port = colon + 1;
 	}
 
-	if (pipe(pipefd[0]) < 0 || pipe(pipefd[1]) < 0)
-		die("unable to create pipe pair for communication");
-	pid = fork();
-	if (!pid) {
-		dup2(pipefd[1][0], 0);
-		dup2(pipefd[0][1], 1);
-		close(pipefd[0][0]);
-		close(pipefd[0][1]);
-		close(pipefd[1][0]);
-		close(pipefd[1][1]);
-		execlp(git_proxy_command, git_proxy_command, host, port, NULL);
-		die("exec failed");
-	}
-	if (pid < 0)
-		die("fork failed");
-	fd[0] = pipefd[0][0];
-	fd[1] = pipefd[1][1];
-	close(pipefd[0][1]);
-	close(pipefd[1][0]);
+	argv[0] = git_proxy_command;
+	argv[1] = host;
+	argv[2] = port;
+	argv[3] = NULL;
+	memset(&proxy, 0, sizeof(proxy));
+	proxy.argv = argv;
+	proxy.in = -1;
+	proxy.out = -1;
+	if (start_command(&proxy))
+		die("cannot start proxy %s", argv[0]);
+	fd[0] = proxy.out; /* read from proxy stdout */
+	fd[1] = proxy.in;  /* write to proxy stdin */
 }
 
 #define MAX_CMD_LEN 1024
