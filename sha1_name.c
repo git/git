@@ -602,10 +602,10 @@ static int handle_one_ref(const char *path,
  */
 
 #define ONELINE_SEEN (1u<<20)
-int get_sha1_oneline(const char *prefix, unsigned char *sha1)
+static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 {
 	struct commit_list *list = NULL, *backup = NULL, *l;
-	struct commit *commit = NULL;
+	int retval = -1;
 
 	if (prefix[0] == '!') {
 		if (prefix[1] != '!')
@@ -619,22 +619,22 @@ int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 		commit_list_insert(l->item, &backup);
 	while (list) {
 		char *p;
+		struct commit *commit;
 
 		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
-		if (!commit)
-			break;
 		parse_object(commit->object.sha1);
 		if (!commit->buffer || !(p = strstr(commit->buffer, "\n\n")))
 			continue;
 		if (!prefixcmp(p + 2, prefix)) {
 			hashcpy(sha1, commit->object.sha1);
+			retval = 0;
 			break;
 		}
 	}
 	free_commit_list(list);
 	for (l = backup; l; l = l->next)
 		clear_commit_marks(l->item, ONELINE_SEEN);
-	return commit == NULL;
+	return retval;
 }
 
 /*
