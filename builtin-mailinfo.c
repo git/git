@@ -649,6 +649,39 @@ again:
 	return (fgets(line, sizeof(line), fin) != NULL);
 }
 
+static inline int patchbreak(const char *line)
+{
+	/* Beginning of a "diff -" header? */
+	if (!memcmp("diff -", line, 6))
+		return 1;
+
+	/* CVS "Index: " line? */
+	if (!memcmp("Index: ", line, 7))
+		return 1;
+
+	/*
+	 * "--- <filename>" starts patches without headers
+	 * "---<sp>*" is a manual separator
+	 */
+	if (!memcmp("---", line, 3)) {
+		line += 3;
+		/* space followed by a filename? */
+		if (line[0] == ' ' && !isspace(line[1]))
+			return 1;
+		/* Just whitespace? */
+		for (;;) {
+			unsigned char c = *line++;
+			if (c == '\n')
+				return 1;
+			if (!isspace(c))
+				break;
+		}
+		return 0;
+	}
+	return 0;
+}
+
+
 static int handle_commit_msg(char *line)
 {
 	static int still_looking = 1;
@@ -670,9 +703,7 @@ static int handle_commit_msg(char *line)
 			return 0;
 	}
 
-	if (!memcmp("diff -", line, 6) ||
-	    !memcmp("---", line, 3) ||
-	    !memcmp("Index: ", line, 7)) {
+	if (patchbreak(line)) {
 		fclose(cmitmsg);
 		cmitmsg = NULL;
 		return 1;
