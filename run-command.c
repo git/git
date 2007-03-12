@@ -8,12 +8,19 @@ static inline void close_pair(int fd[2])
 	close(fd[1]);
 }
 
+static inline void dup_devnull(int to)
+{
+	int fd = open("/dev/null", O_RDWR);
+	dup2(fd, to);
+	close(fd);
+}
+
 int start_command(struct child_process *cmd)
 {
-	int need_in = !cmd->no_stdin && cmd->in < 0;
-	int need_out = !cmd->stdout_to_stderr && cmd->out < 0;
+	int need_in, need_out;
 	int fdin[2], fdout[2];
 
+	need_in = !cmd->no_stdin && cmd->in < 0;
 	if (need_in) {
 		if (pipe(fdin) < 0)
 			return -ERR_RUN_COMMAND_PIPE;
@@ -21,6 +28,9 @@ int start_command(struct child_process *cmd)
 		cmd->close_in = 1;
 	}
 
+	need_out = !cmd->no_stdout
+		&& !cmd->stdout_to_stderr
+		&& cmd->out < 0;
 	if (need_out) {
 		if (pipe(fdout) < 0) {
 			if (need_in)
@@ -41,11 +51,9 @@ int start_command(struct child_process *cmd)
 	}
 
 	if (!cmd->pid) {
-		if (cmd->no_stdin) {
-			int fd = open("/dev/null", O_RDWR);
-			dup2(fd, 0);
-			close(fd);
-		} else if (need_in) {
+		if (cmd->no_stdin)
+			dup_devnull(0);
+		else if (need_in) {
 			dup2(fdin[0], 0);
 			close_pair(fdin);
 		} else if (cmd->in) {
@@ -53,7 +61,9 @@ int start_command(struct child_process *cmd)
 			close(cmd->in);
 		}
 
-		if (cmd->stdout_to_stderr)
+		if (cmd->no_stdout)
+			dup_devnull(1);
+		else if (cmd->stdout_to_stderr)
 			dup2(2, 1);
 		else if (need_out) {
 			dup2(fdout[1], 1);

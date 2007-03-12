@@ -19,6 +19,7 @@ struct child_process {
 	unsigned close_in:1;
 	unsigned close_out:1;
 	unsigned no_stdin:1;
+	unsigned no_stdout:1;
 	unsigned git_cmd:1; /* if this is to be git sub-command */
 	unsigned stdout_to_stderr:1;
 };
