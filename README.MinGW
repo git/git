@@ -26,17 +26,8 @@ In order to compile this code you need:
 - additional libraries:
 	zlib-1.2.3-mingwPORT-1.tar
 	w32api-3.6.tar.gz
-	regex-0.12.tar.gz (from the GNU site)
-		compile this into regex.o, ar it into libregex.a
-		and install it in /mingw/lib, include file into
-		/mingw/include
 	tcltk-8.4.1-1.exe (for gitk, git-gui)
 
-It is absolutely necessary that you install MSYS in a path that does not
-contain special characters, like spaces. I have it in
-
-	D:\MSYS\1.0
-	D:\MSYS\1.0\mingw
 
 STATUS
 ------
