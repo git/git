@@ -350,6 +350,7 @@ static void add_parents_to_list(struct rev_info *revs, struct commit *commit, st
 {
 	struct commit_list *parent = commit->parents;
 	unsigned left_flag;
+	int add, rest;
 
 	if (commit->object.flags & ADDED)
 		return;
@@ -395,18 +396,19 @@ static void add_parents_to_list(struct rev_info *revs, struct commit *commit, st
 		return;
 
 	left_flag = (commit->object.flags & SYMMETRIC_LEFT);
-	parent = commit->parents;
-	while (parent) {
+
+	rest = !revs->first_parent_only;
+	for (parent = commit->parents, add = 1; parent; add = rest) {
 		struct commit *p = parent->item;
 
 		parent = parent->next;
-
 		parse_commit(p);
 		p->object.flags |= left_flag;
 		if (p->object.flags & SEEN)
 			continue;
 		p->object.flags |= SEEN;
-		insert_by_date(p, list);
+		if (add)
+			insert_by_date(p, list);
 	}
 }
 
@@ -834,6 +836,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			}
 			if (!strcmp(arg, "--all")) {
 				handle_all(revs, flags);
+				continue;
+			}
+			if (!strcmp(arg, "--first-parent")) {
+				revs->first_parent_only = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--reflog")) {

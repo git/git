@@ -46,7 +46,8 @@ struct rev_info {
 			boundary:2,
 			left_right:1,
 			parents:1,
-			reverse:1;
+			reverse:1,
+			first_parent_only:1;
 
 	/* Diff flags */
 	unsigned int	diff:1,
