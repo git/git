@@ -56,7 +56,7 @@ my ($_stdin, $_help, $_edit,
 	$_message, $_file,
 	$_template, $_shared,
 	$_version, $_fetch_all,
-	$_merge, $_strategy, $_dry_run,
+	$_merge, $_strategy, $_dry_run, $_local,
 	$_prefix, $_no_checkout, $_verbose);
 $Git::SVN::_follow_parent = 1;
 my %remote_opts = ( 'username=s' => \$Git::SVN::Prompt::_username,
@@ -145,6 +145,7 @@ my %cmd = (
 			{ 'merge|m|M' => \$_merge,
 			  'verbose|v' => \$_verbose,
 			  'strategy|s=s' => \$_strategy,
+			  'local|l' => \$_local,
 			  'fetch-all|all' => \$_fetch_all,
 			  %fc_opts } ],
 	'commit-diff' => [ \&cmd_commit_diff,
@@ -439,7 +440,9 @@ sub cmd_rebase {
 		command_noisy('status');
 		exit 1;
 	}
-	$_fetch_all ? $gs->fetch_all : $gs->fetch;
+	unless ($_local) {
+		$_fetch_all ? $gs->fetch_all : $gs->fetch;
+	}
 	command_noisy(rebase_cmd(), $gs->refname);
 }
 
