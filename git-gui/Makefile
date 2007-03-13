@@ -28,6 +28,11 @@ ifndef V
 	QUIET_BUILT_IN = @echo '   ' BUILTIN $@;
 endif
 
+ifeq ($(findstring $(MAKEFLAGS),s),s)
+QUIET_GEN =
+QUIET_BUILT_IN =
+endif
+
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
