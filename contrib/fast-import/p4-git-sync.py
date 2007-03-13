@@ -32,8 +32,8 @@ def p4Cmd(cmd):
     return result;
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", [ "continue", "--git-dir=", "origin=", "reset", "master=",
-                                                   "submit-log-subst=" ])
+    opts, args = getopt.getopt(sys.argv[1:], "", [ "continue", "git-dir=", "origin=", "reset", "master=",
+                                                   "submit-log-subst=", "log-substitutions=" ])
 except getopt.GetoptError:
     print "fixme, syntax error"
     sys.exit(1)
@@ -63,6 +63,10 @@ for o, a in opts:
         key = a.split("%")[0]
         value = a.split("%")[1]
         logSubstitutions[key] = value
+    elif o == "--log-substitutions":
+        for line in open(a, "r").readlines():
+            tokens = line[:-1].split("=")
+            logSubstitutions[tokens[0]] = tokens[1]
 
 if len(gitdir) == 0:
     gitdir = ".git"
