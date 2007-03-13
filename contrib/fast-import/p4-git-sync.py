@@ -3,11 +3,13 @@
 # p4-git-sync.py
 #
 # Author: Simon Hausmann <hausmann@kde.org>
+# Copyright: 2007 Simon Hausmann <hausmann@kde.org>
+#            2007 Trolltech ASA
 # License: MIT <http://www.opensource.org/licenses/mit-license.php>
 #
 
 import os, string, shelve, stat
-import getopt, sys, marshal
+import getopt, sys, marshal, tempfile
 
 def p4CmdList(cmd):
     cmd = "p4 -G %s" % cmd
@@ -33,7 +35,8 @@ def p4Cmd(cmd):
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", [ "continue", "git-dir=", "origin=", "reset", "master=",
-                                                   "submit-log-subst=", "log-substitutions=" ])
+                                                   "submit-log-subst=", "log-substitutions=", "interactive",
+                                                   "dry-run" ])
 except getopt.GetoptError:
     print "fixme, syntax error"
     sys.exit(1)
@@ -46,6 +49,8 @@ origin = "origin"
 master = "master"
 firstTime = True
 reset = False
+interactive = False
+dryRun = False
 
 for o, a in opts:
     if o == "--git-dir":
@@ -67,6 +72,10 @@ for o, a in opts:
         for line in open(a, "r").readlines():
             tokens = line[:-1].split("=")
             logSubstitutions[tokens[0]] = tokens[1]
+    elif o == "--interactive":
+        interactive = True
+    elif o == "--dry-run":
+        dryRun = True
 
 if len(gitdir) == 0:
     gitdir = ".git"
@@ -112,19 +121,16 @@ def start(config):
 def prepareLogMessage(template, message):
     result = ""
 
-    substs = logSubstitutions
-    for k in substs.keys():
-        substs[k] = substs[k].replace("%log%", message)
-
     for line in template.split("\n"):
         if line.startswith("#"):
             result += line + "\n"
             continue
 
         substituted = False
-        for key in substs.keys():
+        for key in logSubstitutions.keys():
             if line.find(key) != -1:
-                value = substs[key]
+                value = logSubstitutions[key]
+                value = value.replace("%log%", message)
                 if value != "@remove@":
                     result += line.replace(key, value) + "\n"
                 substituted = True
@@ -136,6 +142,7 @@ def prepareLogMessage(template, message):
     return result
 
 def apply(id):
+    global interactive
     print "Applying %s" % (os.popen("git-log --max-count=1 --pretty=oneline %s" % id).read())
     diff = os.popen("git diff-tree -r --name-status \"%s^\" \"%s\"" % (id, id)).readlines()
     filesToAdd = set()
@@ -158,6 +165,9 @@ def apply(id):
 
     system("git-diff-files --name-only -z | git-update-index --remove -z --stdin")
     system("git cherry-pick --no-commit \"%s\"" % id)
+    #system("git format-patch --stdout -k \"%s^\"..\"%s\" | git-am -k" % (id, id))
+    #system("git branch -D tmp")
+    #system("git checkout -f -b tmp \"%s^\"" % id)
 
     for f in filesToAdd:
         system("p4 add %s" % f)
@@ -168,22 +178,66 @@ def apply(id):
     logMessage = ""
     foundTitle = False
     for log in os.popen("git-cat-file commit %s" % id).readlines():
-        log = log[:-1]
         if not foundTitle:
-            if len(log) == 0:
+            if len(log) == 1:
                 foundTitle = 1
             continue
 
         if len(logMessage) > 0:
             logMessage += "\t"
-        logMessage += log + "\n"
+        logMessage += log
 
     template = os.popen("p4 change -o").read()
-    fileName = "submit.txt"
-    file = open(fileName, "w+")
-    file.write(prepareLogMessage(template, logMessage))
-    file.close()
-    print "Perforce submit template written as %s. Please review/edit and then use p4 submit -i < %s to submit directly!" % (fileName, fileName)
+
+    if interactive:
+        submitTemplate = prepareLogMessage(template, logMessage)
+        diff = os.popen("p4 diff -du ...").read()
+
+        for newFile in filesToAdd:
+            diff += "==== new file ====\n"
+            diff += "--- /dev/null\n"
+            diff += "+++ %s\n" % newFile
+            f = open(newFile, "r")
+            for line in f.readlines():
+                diff += "+" + line
+            f.close()
+
+        pipe = os.popen("less", "w")
+        pipe.write(submitTemplate + diff)
+        pipe.close()
+
+        response = "e"
+        while response == "e":
+            response = raw_input("Do you want to submit this change (y/e/n)? ")
+            if response == "e":
+                [handle, fileName] = tempfile.mkstemp()
+                tmpFile = os.fdopen(handle, "w+")
+                tmpFile.write(submitTemplate)
+                tmpFile.close()
+                editor = os.environ.get("EDITOR", "vi")
+                system(editor + " " + fileName)
+                tmpFile = open(fileName, "r")
+                submitTemplate = tmpFile.read()
+                tmpFile.close()
+                os.remove(fileName)
+
+        if response == "y" or response == "yes":
+           if dryRun:
+               print submitTemplate
+               raw_input("Press return to continue...")
+           else:
+                pipe = os.popen("p4 submit -i", "w")
+                pipe.write(submitTemplate)
+                pipe.close()
+        else:
+            print "Not submitting!"
+            interactive = False
+    else:
+        fileName = "submit.txt"
+        file = open(fileName, "w+")
+        file.write(prepareLogMessage(template, logMessage))
+        file.close()
+        print "Perforce submit template written as %s. Please review/edit and then use p4 submit -i < %s to submit directly!" % (fileName, fileName)
 
 check()
 
@@ -194,12 +248,14 @@ if firstTime:
 
 commits = config.get("commits", [])
 
-if len(commits) > 0:
+while len(commits) > 0:
     firstTime = False
     commit = commits[0]
     commits = commits[1:]
     config["commits"] = commits
     apply(commit)
+    if not interactive:
+        break
 
 config.close()
 
