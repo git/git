@@ -121,10 +121,10 @@ so that calling 'cvs' effectively calls git-cvsserver.
 Clients known to work
 ---------------------
 
-CVS 1.12.9 on Debian
-CVS 1.11.17 on MacOSX (from Fink package)
-Eclipse 3.0, 3.1.2 on MacOSX (see Eclipse CVS Client Notes)
-TortoiseCVS
+- CVS 1.12.9 on Debian
+- CVS 1.11.17 on MacOSX (from Fink package)
+- Eclipse 3.0, 3.1.2 on MacOSX (see Eclipse CVS Client Notes)
+- TortoiseCVS
 
 Operations supported
 --------------------
@@ -148,13 +148,16 @@ Copyright and Authors
 
 This program is copyright The Open University UK - 2006.
 
-Authors: Martyn Smith    <martyn@catalyst.net.nz>
-         Martin Langhoff <martin@catalyst.net.nz>
-         with ideas and patches from participants of the git-list <git@vger.kernel.org>.
+Authors:
+
+- Martyn Smith    <martyn@catalyst.net.nz>
+- Martin Langhoff <martin@catalyst.net.nz>
+
+with ideas and patches from participants of the git-list <git@vger.kernel.org>.
 
 Documentation
 --------------
-Documentation by Martyn Smith <martyn@catalyst.net.nz> and Martin Langhoff <martin@catalyst.net.nz> Matthias Urlichs <smurf@smurf.noris.de>.
+Documentation by Martyn Smith <martyn@catalyst.net.nz>, Martin Langhoff <martin@catalyst.net.nz>, and Matthias Urlichs <smurf@smurf.noris.de>.
 
 GIT
 ---
