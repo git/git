@@ -213,6 +213,13 @@ static int everybody_uninteresting(struct commit_list *orig)
 	return 1;
 }
 
+/*
+ * The goal is to get REV_TREE_NEW as the result only if the
+ * diff consists of all '+' (and no other changes), and
+ * REV_TREE_DIFFERENT otherwise (of course if the trees are
+ * the same we want REV_TREE_SAME).  That means that once we
+ * get to REV_TREE_DIFFERENT, we do not have to look any further.
+ */
 static int tree_difference = REV_TREE_SAME;
 
 static void file_add_remove(struct diff_options *options,
@@ -277,11 +284,11 @@ int rev_same_tree_as_empty(struct rev_info *revs, struct tree *t1)
 	empty.buf = "";
 	empty.size = 0;
 
-	tree_difference = 0;
+	tree_difference = REV_TREE_SAME;
 	retval = diff_tree(&empty, &real, "", &revs->pruning);
 	free(tree);
 
-	return retval >= 0 && !tree_difference;
+	return retval >= 0 && (tree_difference == REV_TREE_SAME);
 }
 
 static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
