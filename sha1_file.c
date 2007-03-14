@@ -739,6 +739,7 @@ struct packed_git *add_packed_git(char *path, int path_len, int local)
 	p->windows = NULL;
 	p->pack_fd = -1;
 	p->pack_local = local;
+	p->mtime = st.st_mtime;
 	if ((path_len > 44) && !get_sha1_hex(path + path_len - 44, sha1))
 		hashcpy(p->sha1, sha1);
 	return p;
@@ -823,6 +824,60 @@ static void prepare_packed_git_one(char *objdir, int local)
 	closedir(dir);
 }
 
+static int sort_pack(const void *a_, const void *b_)
+{
+	struct packed_git *a = *((struct packed_git **)a_);
+	struct packed_git *b = *((struct packed_git **)b_);
+	int st;
+
+	/*
+	 * Local packs tend to contain objects specific to our
+	 * variant of the project than remote ones.  In addition,
+	 * remote ones could be on a network mounted filesystem.
+	 * Favor local ones for these reasons.
+	 */
+	st = a->pack_local - b->pack_local;
+	if (st)
+		return -st;
+
+	/*
+	 * Younger packs tend to contain more recent objects,
+	 * and more recent objects tend to get accessed more
+	 * often.
+	 */
+	if (a->mtime < b->mtime)
+		return 1;
+	else if (a->mtime == b->mtime)
+		return 0;
+	return -1;
+}
+
+static void rearrange_packed_git(void)
+{
+	struct packed_git **ary, *p;
+	int i, n;
+
+	for (n = 0, p = packed_git; p; p = p->next)
+		n++;
+	if (n < 2)
+		return;
+
+	/* prepare an array of packed_git for easier sorting */
+	ary = xcalloc(n, sizeof(struct packed_git *));
+	for (n = 0, p = packed_git; p; p = p->next)
+		ary[n++] = p;
+
+	qsort(ary, n, sizeof(struct packed_git *), sort_pack);
+
+	/* link them back again */
+	for (i = 0; i < n - 1; i++)
+		ary[i]->next = ary[i + 1];
+	ary[n - 1]->next = NULL;
+	packed_git = ary[0];
+
+	free(ary);
+}
+
 static int prepare_packed_git_run_once = 0;
 void prepare_packed_git(void)
 {
@@ -837,6 +892,7 @@ void prepare_packed_git(void)
 		prepare_packed_git_one(alt->base, 0);
 		alt->name[-1] = '/';
 	}
+	rearrange_packed_git();
 	prepare_packed_git_run_once = 1;
 }
 
