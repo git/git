@@ -179,7 +179,7 @@ SCRIPT_SH = \
 	git-clean.sh git-clone.sh git-commit.sh \
 	git-fetch.sh git-gc.sh \
 	git-ls-remote.sh \
-	git-merge-one-file.sh git-parse-remote.sh \
+	git-merge-one-file.sh git-mergetool.sh git-parse-remote.sh \
 	git-pull.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
 	git-sh-setup.sh \
