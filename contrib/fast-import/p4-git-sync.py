@@ -33,6 +33,10 @@ def p4Cmd(cmd):
         result.update(entry)
     return result;
 
+def die(msg):
+    sys.stderr.write(msg + "\n")
+    sys.exit(1)
+
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", [ "continue", "git-dir=", "origin=", "reset", "master=",
                                                    "submit-log-subst=", "log-substitutions=", "interactive",
@@ -46,7 +50,7 @@ logSubstitutions["<enter description here>"] = "%log%"
 logSubstitutions["\tDetails:"] = "\tDetails:  %log%"
 gitdir = os.environ.get("GIT_DIR", "")
 origin = "origin"
-master = "master"
+master = ""
 firstTime = True
 reset = False
 interactive = False
@@ -88,9 +92,12 @@ origin = "origin"
 if len(args) == 1:
     origin = args[0]
 
-def die(msg):
-    sys.stderr.write(msg + "\n")
-    sys.exit(1)
+if len(master) == 0:
+    sys.stdout.write("Auto-detecting current branch: ")
+    master = os.popen("git-name-rev HEAD").read().split(" ")[1][:-1]
+    if len(master) == 0 or not os.path.exists("%s/refs/heads/%s" % (gitdir, master)):
+        die("\nFailed to detect current branch! Aborting!");
+    sys.stdout.write("%s\n" % master)
 
 def system(cmd):
     if os.system(cmd) != 0:
