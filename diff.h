@@ -57,6 +57,8 @@ struct diff_options {
 		 find_copies_harder:1,
 		 color_diff:1,
 		 color_diff_words:1,
+		 has_changes:1,
+		 quiet:1,
 		 exit_with_status:1;
 	int context;
 	int break_opt;
@@ -72,8 +74,6 @@ struct diff_options {
 	const char *msg_sep;
 	const char *stat_sep;
 	long xdl_opts;
-	/* 0 - no differences; only meaningful if exit_with_status set */
-	int has_changes;
 
 	int stat_width;
 	int stat_name_width;
