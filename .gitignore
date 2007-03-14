@@ -38,6 +38,7 @@ git-diff-tree
 git-describe
 git-fast-import
 git-fetch
+git-fetch--tool
 git-fetch-pack
 git-findtags
 git-fmt-merge-msg
