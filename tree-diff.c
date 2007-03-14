@@ -161,6 +161,8 @@ static void show_entry(struct diff_options *opt, const char *prefix, struct tree
 int diff_tree(struct tree_desc *t1, struct tree_desc *t2, const char *base, struct diff_options *opt)
 {
 	while (t1->size | t2->size) {
+		if (opt->quiet && opt->has_changes)
+			break;
 		if (opt->nr_paths && t1->size && !interesting(t1, base, opt)) {
 			update_tree_entry(t1);
 			continue;

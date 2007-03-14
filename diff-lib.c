@@ -324,6 +324,9 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 		struct cache_entry *ce = active_cache[i];
 		int changed;
 
+		if (revs->diffopt.quiet && revs->diffopt.has_changes)
+			break;
+
 		if (!ce_path_match(ce, revs->prune_data))
 			continue;
 
@@ -564,6 +567,9 @@ static int diff_cache(struct rev_info *revs,
 	while (entries) {
 		struct cache_entry *ce = *ac;
 		int same = (entries > 1) && ce_same_name(ce, ac[1]);
+
+		if (revs->diffopt.quiet && revs->diffopt.has_changes)
+			break;
 
 		if (!ce_path_match(ce, pathspec))
 			goto skip_entry;
