@@ -210,7 +210,7 @@ case "$refname_type" in
 		fi
 
 		# If this tag succeeds another, then show which tag it replaces
-		prevtag=$(git describe $newrev^ 2>/dev/null | sed 's/-g.*//')
+		prevtag=$(git describe --abbrev=0 $newrev^ 2>/dev/null)
 		if [ -n "$prevtag" ]; then
 			echo "  replaces  $prevtag"
 		fi
