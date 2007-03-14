@@ -97,7 +97,6 @@ def system(cmd):
         die("command failed: %s" % cmd)
 
 def check():
-    return
     if len(p4CmdList("opened ...")) > 0:
         die("You have files opened with perforce! Close them before starting the sync.")
 
@@ -114,6 +113,9 @@ def start(config):
     commits.reverse()
 
     config["commits"] = commits
+
+    print "Creating temporary p4-sync branch from %s ..." % origin
+    system("git checkout -f -b p4-sync %s" % origin)
 
 #    print "Cleaning index..."
 #    system("git checkout -f")
@@ -264,5 +266,11 @@ if len(commits) == 0:
         print "No changes found to apply between %s and current HEAD" % origin
     else:
         print "All changes applied!"
+        print "Deleting temporary p4-sync branch and going back to %s" % master
+        system("git checkout %s" % master)
+        system("git branch -D p4-sync")
+        print "Cleaning out your perforce checkout by doing p4 edit ... ; p4 revert -a ..."
+        system("p4 edit ...")
+        system("p4 revert -a ...")
     os.remove(configFile)
 
