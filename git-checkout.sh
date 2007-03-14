@@ -196,7 +196,7 @@ else
 	work=`git write-tree` &&
 	git read-tree --reset -u $new || exit
 
-	eval GITHEAD_$new=${new_name:-${branch:-$new}} &&
+	eval GITHEAD_$new='${new_name:-${branch:-$new}}' &&
 	eval GITHEAD_$work=local &&
 	export GITHEAD_$new GITHEAD_$work &&
 	git merge-recursive $old -- $new $work
