@@ -78,7 +78,7 @@ OPTIONS
 	Remove the line matching the key from config file.
 
 --unset-all::
-	Remove all matching lines from config file.
+	Remove all lines matching the key from config file.
 
 -l, --list::
 	List all variables set in config file.
