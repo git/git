@@ -2917,17 +2917,6 @@ void diffcore_std(struct diff_options *options)
 }
 
 
-void diffcore_std_no_resolve(struct diff_options *options)
-{
-	if (options->pickaxe)
-		diffcore_pickaxe(options->pickaxe, options->pickaxe_opts);
-	if (options->orderfile)
-		diffcore_order(options->orderfile);
-	diffcore_apply_filter(options->filter);
-	if (options->exit_with_status)
-		options->has_changes = !!diff_queued_diff.nr;
-}
-
 void diff_addremove(struct diff_options *options,
 		    int addremove, unsigned mode,
 		    const unsigned char *sha1,

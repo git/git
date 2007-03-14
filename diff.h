@@ -173,8 +173,6 @@ extern int diff_setup_done(struct diff_options *);
 
 extern void diffcore_std(struct diff_options *);
 
-extern void diffcore_std_no_resolve(struct diff_options *);
-
 #define COMMON_DIFF_OPTIONS_HELP \
 "\ncommon diff options:\n" \
 "  -z            output diff-raw with lines terminated with NUL.\n" \
