@@ -243,6 +243,8 @@ static void file_add_remove(struct diff_options *options,
 		diff = REV_TREE_NEW;
 	}
 	tree_difference = diff;
+	if (tree_difference == REV_TREE_DIFFERENT)
+		options->has_changes = 1;
 }
 
 static void file_change(struct diff_options *options,
@@ -252,6 +254,7 @@ static void file_change(struct diff_options *options,
 		 const char *base, const char *path)
 {
 	tree_difference = REV_TREE_DIFFERENT;
+	options->has_changes = 1;
 }
 
 int rev_compare_tree(struct rev_info *revs, struct tree *t1, struct tree *t2)
@@ -261,6 +264,7 @@ int rev_compare_tree(struct rev_info *revs, struct tree *t1, struct tree *t2)
 	if (!t2)
 		return REV_TREE_DIFFERENT;
 	tree_difference = REV_TREE_SAME;
+	revs->pruning.has_changes = 0;
 	if (diff_tree_sha1(t1->object.sha1, t2->object.sha1, "",
 			   &revs->pruning) < 0)
 		return REV_TREE_DIFFERENT;
@@ -285,6 +289,7 @@ int rev_same_tree_as_empty(struct rev_info *revs, struct tree *t1)
 	empty.size = 0;
 
 	tree_difference = REV_TREE_SAME;
+	revs->pruning.has_changes = 0;
 	retval = diff_tree(&empty, &real, "", &revs->pruning);
 	free(tree);
 
@@ -552,6 +557,7 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	revs->ignore_merges = 1;
 	revs->simplify_history = 1;
 	revs->pruning.recursive = 1;
+	revs->pruning.quiet = 1;
 	revs->pruning.add_remove = file_add_remove;
 	revs->pruning.change = file_change;
 	revs->lifo = 1;
