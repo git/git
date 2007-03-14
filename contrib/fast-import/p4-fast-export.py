@@ -329,6 +329,10 @@ def commit(details, files, branch, branchPrefix, parent, merged = ""):
         relPath = path[len(branchPrefix):]
         action = file["action"]
 
+        if file["type"] == "apple":
+            print "\nfile %s is a strange apple file that forks. Ignoring!" %s path
+            continue
+
         if action == "delete":
             gitStream.write("D %s\n" % relPath)
         else:
