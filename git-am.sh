@@ -290,6 +290,10 @@ do
 		git-mailinfo $keep $utf8 "$dotest/msg" "$dotest/patch" \
 			<"$dotest/$msgnum" >"$dotest/info" ||
 			stop_here $this
+		test -s $dotest/patch || {
+			echo "Patch is empty.  Was is split wrong?"
+			stop_here $this
+		}
 		git-stripspace < "$dotest/msg" > "$dotest/msg-clean"
 		;;
 	esac

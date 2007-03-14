@@ -73,6 +73,10 @@ mkdir $tmp_dir || exit 2
 for patch_name in $(cat "$QUILT_PATCHES/series" | grep -v '^#'); do
 	echo $patch_name
 	(cat $QUILT_PATCHES/$patch_name | git-mailinfo "$tmp_msg" "$tmp_patch" > "$tmp_info") || exit 3
+	test -s $dotest/patch || {
+		echo "Patch is empty.  Was is split wrong?"
+		stop_here $this
+	}
 
 	# Parse the author information
 	export GIT_AUTHOR_NAME=$(sed -ne 's/Author: //p' "$tmp_info")
