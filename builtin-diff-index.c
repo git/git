@@ -14,6 +14,7 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 	struct rev_info rev;
 	int cached = 0;
 	int i;
+	int result;
 
 	init_revisions(&rev, prefix);
 	git_config(git_default_config); /* no "diff" UI options */
@@ -42,5 +43,6 @@ int cmd_diff_index(int argc, const char **argv, const char *prefix)
 		perror("read_cache");
 		return -1;
 	}
-	return run_diff_index(&rev, cached);
+	result = run_diff_index(&rev, cached);
+	return rev.diffopt.exit_with_status ? rev.diffopt.has_changes: result;
 }

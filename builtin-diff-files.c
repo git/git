@@ -17,6 +17,7 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 	int nongit = 0;
+	int result;
 
 	prefix = setup_git_directory_gently(&nongit);
 	init_revisions(&rev, prefix);
@@ -29,5 +30,6 @@ int cmd_diff_files(int argc, const char **argv, const char *prefix)
 		argc = setup_revisions(argc, argv, &rev, NULL);
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_RAW;
-	return run_diff_files_cmd(&rev, argc, argv);
+	result = run_diff_files_cmd(&rev, argc, argv);
+	return rev.diffopt.exit_with_status ? rev.diffopt.has_changes: result;
 }

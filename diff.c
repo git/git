@@ -2134,6 +2134,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->color_diff = options->color_diff_words = 1;
 	else if (!strcmp(arg, "--no-renames"))
 		options->detect_rename = 0;
+	else if (!strcmp(arg, "--exit-code"))
+		options->exit_with_status = 1;
 	else
 		return 0;
 	return 1;
@@ -2910,6 +2912,8 @@ void diffcore_std(struct diff_options *options)
 		diffcore_order(options->orderfile);
 	diff_resolve_rename_copy();
 	diffcore_apply_filter(options->filter);
+	if (options->exit_with_status)
+		options->has_changes = !!diff_queued_diff.nr;
 }
 
 
@@ -2920,6 +2924,8 @@ void diffcore_std_no_resolve(struct diff_options *options)
 	if (options->orderfile)
 		diffcore_order(options->orderfile);
 	diffcore_apply_filter(options->filter);
+	if (options->exit_with_status)
+		options->has_changes = !!diff_queued_diff.nr;
 }
 
 void diff_addremove(struct diff_options *options,
