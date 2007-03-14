@@ -480,6 +480,7 @@ extern struct tag *alloc_tag_node(void);
 extern void alloc_report(void);
 
 /* trace.c */
+extern int nfasprintf(char **str, const char *fmt, ...);
 extern int nfvasprintf(char **str, const char *fmt, va_list va);
 extern void trace_printf(const char *format, ...);
 extern void trace_argv_printf(const char **argv, int count, const char *format, ...);

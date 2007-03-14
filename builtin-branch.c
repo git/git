@@ -12,7 +12,7 @@
 #include "builtin.h"
 
 static const char builtin_branch_usage[] =
-  "git-branch [-r] (-d | -D) <branchname> | [-l] [-f] <branchname> [<start-point>] | (-m | -M) [<oldbranch>] <newbranch> | [--color | --no-color] [-r | -a] [-v [--abbrev=<length> | --no-abbrev]]";
+  "git-branch [-r] (-d | -D) <branchname> | [--track | --no-track] [-l] [-f] <branchname> [<start-point>] | (-m | -M) [<oldbranch>] <newbranch> | [--color | --no-color] [-r | -a] [-v [--abbrev=<length> | --no-abbrev]]";
 
 #define REF_UNKNOWN_TYPE    0x00
 #define REF_LOCAL_BRANCH    0x01
@@ -21,6 +21,8 @@ static const char builtin_branch_usage[] =
 
 static const char *head;
 static unsigned char head_sha1[20];
+
+static int branch_track_remotes;
 
 static int branch_use_color;
 static char branch_colors[][COLOR_MAXLEN] = {
@@ -64,6 +66,9 @@ int git_branch_config(const char *var, const char *value)
 		color_parse(value, var, branch_colors[slot]);
 		return 0;
 	}
+	if (!strcmp(var, "branch.autosetupmerge"))
+		branch_track_remotes = git_config_bool(var, value);
+
 	return git_default_config(var, value);
 }
 
@@ -309,14 +314,108 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev)
 	free_ref_list(&ref_list);
 }
 
+static char *config_repo;
+static char *config_remote;
+static const char *start_ref;
+static int start_len;
+static int base_len;
+
+static int get_remote_branch_name(const char *value)
+{
+	const char *colon;
+	const char *end;
+
+	if (*value == '+')
+		value++;
+
+	colon = strchr(value, ':');
+	if (!colon)
+		return 0;
+
+	end = value + strlen(value);
+
+	/* Try an exact match first.  */
+	if (!strcmp(colon + 1, start_ref)) {
+		/* Truncate the value before the colon.  */
+		nfasprintf(&config_repo, "%.*s", colon - value, value);
+		return 1;
+	}
+
+	/* Try with a wildcard match now.  */
+	if (end - value > 2 && end[-2] == '/' && end[-1] == '*' &&
+	    colon - value > 2 && colon[-2] == '/' && colon[-1] == '*' &&
+	    (end - 2) - (colon + 1) == base_len &&
+	    !strncmp(colon + 1, start_ref, base_len)) {
+		/* Replace the star with the remote branch name.  */
+		nfasprintf(&config_repo, "%.*s%s",
+			   (colon - 2) - value, value,
+			   start_ref + base_len);
+		return 1;
+	}
+
+	return 0;
+}
+
+static int get_remote_config(const char *key, const char *value)
+{
+	const char *var;
+	if (prefixcmp(key, "remote."))
+		return 0;
+
+	var = strrchr(key, '.');
+	if (var == key + 6)
+		return 0;
+
+	if (!strcmp(var, ".fetch") && get_remote_branch_name(value))
+		nfasprintf(&config_remote, "%.*s", var - (key + 7), key + 7);
+
+	return 0;
+}
+
+static void set_branch_defaults(const char *name, const char *real_ref)
+{
+	char key[1024];
+	const char *slash = strrchr(real_ref, '/');
+
+	if (!slash)
+		return;
+
+	start_ref = real_ref;
+	start_len = strlen(real_ref);
+	base_len = slash - real_ref;
+	git_config(get_remote_config);
+
+	if (config_repo && config_remote) {
+		if (sizeof(key) <=
+		    snprintf(key, sizeof(key), "branch.%s.remote", name))
+			die("what a long branch name you have!");
+		git_config_set(key, config_remote);
+
+		/*
+		 * We do not have to check if we have enough space for
+		 * the 'merge' key, since it's shorter than the
+		 * previous 'remote' key, which we already checked.
+		 */
+		snprintf(key, sizeof(key), "branch.%s.merge", name);
+		git_config_set(key, config_repo);
+
+		printf("Branch %s set up to track remote branch %s.\n",
+		       name, real_ref);
+	}
+
+	if (config_repo)
+		free(config_repo);
+	if (config_remote)
+		free(config_remote);
+}
+
 static void create_branch(const char *name, const char *start_name,
-			  unsigned char *start_sha1,
-			  int force, int reflog)
+			  int force, int reflog, int track)
 {
 	struct ref_lock *lock;
 	struct commit *commit;
 	unsigned char sha1[20];
-	char ref[PATH_MAX], msg[PATH_MAX + 20];
+	char *real_ref, ref[PATH_MAX], msg[PATH_MAX + 20];
 	int forcing = 0;
 
 	snprintf(ref, sizeof ref, "refs/heads/%s", name);
@@ -331,11 +430,22 @@ static void create_branch(const char *name, const char *start_name,
 		forcing = 1;
 	}
 
-	if (start_sha1)
-		/* detached HEAD */
-		hashcpy(sha1, start_sha1);
-	else if (get_sha1(start_name, sha1))
+	real_ref = NULL;
+	if (get_sha1(start_name, sha1))
 		die("Not a valid object name: '%s'.", start_name);
+
+	switch (dwim_ref(start_name, strlen(start_name), sha1, &real_ref)) {
+	case 0:
+		/* Not branching from any existing branch */
+		real_ref = NULL;
+		break;
+	case 1:
+		/* Unique completion -- good */
+		break;
+	default:
+		die("Ambiguous object name: '%s'.", start_name);
+		break;
+	}
 
 	if ((commit = lookup_commit_reference(sha1)) == NULL)
 		die("Not a valid branch point: '%s'.", start_name);
@@ -355,8 +465,17 @@ static void create_branch(const char *name, const char *start_name,
 		snprintf(msg, sizeof msg, "branch: Created from %s",
 			 start_name);
 
+	/* When branching off a remote branch, set up so that git-pull
+	   automatically merges from there.  So far, this is only done for
+	   remotes registered via .git/config.  */
+	if (real_ref && track)
+		set_branch_defaults(name, real_ref);
+
 	if (write_ref_sha1(lock, sha1, msg) < 0)
 		die("Failed to write ref: %s.", strerror(errno));
+
+	if (real_ref)
+		free(real_ref);
 }
 
 static void rename_branch(const char *oldname, const char *newname, int force)
@@ -398,11 +517,12 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	int delete = 0, force_delete = 0, force_create = 0;
 	int rename = 0, force_rename = 0;
 	int verbose = 0, abbrev = DEFAULT_ABBREV, detached = 0;
-	int reflog = 0;
+	int reflog = 0, track;
 	int kinds = REF_LOCAL_BRANCH;
 	int i;
 
 	git_config(git_branch_config);
+	track = branch_track_remotes;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -412,6 +532,14 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		if (!strcmp(arg, "--")) {
 			i++;
 			break;
+		}
+		if (!strcmp(arg, "--track")) {
+			track = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--no-track")) {
+			track = 0;
+			continue;
 		}
 		if (!strcmp(arg, "-d")) {
 			delete = 1;
@@ -498,10 +626,9 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		rename_branch(head, argv[i], force_rename);
 	else if (rename && (i == argc - 2))
 		rename_branch(argv[i], argv[i + 1], force_rename);
-	else if (i == argc - 1)
-		create_branch(argv[i], head, head_sha1, force_create, reflog);
-	else if (i == argc - 2)
-		create_branch(argv[i], argv[i+1], NULL, force_create, reflog);
+	else if (i == argc - 1 || i == argc - 2)
+		create_branch(argv[i], (i == argc - 2) ? argv[i+1] : head,
+			      force_create, reflog, track);
 	else
 		usage(builtin_branch_usage);
 

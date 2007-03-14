@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git-branch' [--color | --no-color] [-r | -a]
 	   [-v [--abbrev=<length> | --no-abbrev]]
-'git-branch' [-l] [-f] <branchname> [<start-point>]
+'git-branch' [--track | --no-track] [-l] [-f] <branchname> [<start-point>]
 'git-branch' (-m | -M) [<oldbranch>] <newbranch>
 'git-branch' (-d | -D) [-r] <branchname>...
 
@@ -25,6 +25,13 @@ In its second form, a new branch named <branchname> will be created.
 It will start out with a head equal to the one given as <start-point>.
 If no <start-point> is given, the branch will be created with a head
 equal to that of the currently checked out branch.
+
+When a local branch is started off a remote branch, git can setup the
+branch so that gitlink:git-pull[1] will appropriately merge from that
+remote branch.  If this behavior is desired, it is possible to make it
+the default using the global `branch.autosetupmerge` configuration
+flag.  Otherwise, it can be chosen per-branch using the `--track`
+and `--no-track` options.
 
 With a '-m' or '-M' option, <oldbranch> will be renamed to <newbranch>.
 If <oldbranch> had a corresponding reflog, it is renamed to match
