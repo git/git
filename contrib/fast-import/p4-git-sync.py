@@ -276,8 +276,8 @@ if len(commits) == 0:
         print "Deleting temporary p4-sync branch and going back to %s" % master
         system("git checkout %s" % master)
         system("git branch -D p4-sync")
-        print "Cleaning out your perforce checkout by doing p4 edit ... ; p4 revert -a ..."
-        system("p4 edit ...")
-        system("p4 revert -a ...")
+        print "Cleaning out your perforce checkout by doing p4 edit ... ; p4 revert ..."
+        system("p4 edit ... >/dev/null")
+        system("p4 revert ... >/dev/null")
     os.remove(configFile)
 
