@@ -157,7 +157,7 @@ then
 	fi
 fi
 
-fetch_native () {
+fetch_all_at_once () {
 
   eval=$(echo "$1" | git-fetch--tool parse-reflist "-")
   eval "$eval"
@@ -165,7 +165,9 @@ fetch_native () {
     ( : subshell because we muck with IFS
       IFS=" 	$LF"
       (
-	if test -f "$remote" ; then
+	if test "$remote" = . ; then
+	    git-show-ref $rref || echo failed "$remote"
+	elif test -f "$remote" ; then
 	    test -n "$shallow_depth" &&
 		die "shallow clone with bundle is not supported"
 	    git-bundle unbundle "$remote" $rref ||
@@ -188,7 +190,7 @@ fetch_native () {
 
 }
 
-fetch_dumb () {
+fetch_per_ref () {
   reflist="$1"
   refs=
   rref=
@@ -292,10 +294,10 @@ fetch_dumb () {
 fetch_main () {
 	case "$remote" in
 	http://* | https://* | ftp://* | rsync://* )
-		fetch_dumb "$@"
+		fetch_per_ref "$@"
 		;;
 	*)
-		fetch_native "$@"
+		fetch_all_at_once "$@"
 		;;
 	esac
 }

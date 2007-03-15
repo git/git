@@ -372,9 +372,26 @@ static int get_remote_config(const char *key, const char *value)
 	return 0;
 }
 
-static void set_branch_defaults(const char *name, const char *real_ref)
+static void set_branch_merge(const char *name, const char *config_remote,
+			     const char *config_repo)
 {
 	char key[1024];
+	if (sizeof(key) <=
+	    snprintf(key, sizeof(key), "branch.%s.remote", name))
+		die("what a long branch name you have!");
+	git_config_set(key, config_remote);
+
+	/*
+	 * We do not have to check if we have enough space for
+	 * the 'merge' key, since it's shorter than the
+	 * previous 'remote' key, which we already checked.
+	 */
+	snprintf(key, sizeof(key), "branch.%s.merge", name);
+	git_config_set(key, config_repo);
+}
+
+static void set_branch_defaults(const char *name, const char *real_ref)
+{
 	const char *slash = strrchr(real_ref, '/');
 
 	if (!slash)
@@ -384,21 +401,15 @@ static void set_branch_defaults(const char *name, const char *real_ref)
 	start_len = strlen(real_ref);
 	base_len = slash - real_ref;
 	git_config(get_remote_config);
+	if (!config_repo && !config_remote &&
+	    !prefixcmp(real_ref, "refs/heads/")) {
+		set_branch_merge(name, ".", real_ref);
+		printf("Branch %s set up to track local branch %s.\n",
+		       name, real_ref);
+	}
 
 	if (config_repo && config_remote) {
-		if (sizeof(key) <=
-		    snprintf(key, sizeof(key), "branch.%s.remote", name))
-			die("what a long branch name you have!");
-		git_config_set(key, config_remote);
-
-		/*
-		 * We do not have to check if we have enough space for
-		 * the 'merge' key, since it's shorter than the
-		 * previous 'remote' key, which we already checked.
-		 */
-		snprintf(key, sizeof(key), "branch.%s.merge", name);
-		git_config_set(key, config_repo);
-
+		set_branch_merge(name, config_remote, config_repo);
 		printf("Branch %s set up to track remote branch %s.\n",
 		       name, real_ref);
 	}

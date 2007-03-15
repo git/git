@@ -89,7 +89,7 @@ while [ "$#" != "0" ]; do
     esac
 done
 
-case "$new_branch,$track" in
+case "$newbranch,$track" in
 ,--*)
 	die "git checkout: --track and --no-track require -b"
 esac

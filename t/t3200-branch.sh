@@ -145,8 +145,14 @@ test_expect_success 'test overriding tracking setup via --no-track' \
      git-config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
      (git-show-ref -q refs/remotes/local/master || git-fetch local) &&
      git-branch --no-track my2 local/master &&
+     git-config branch.autosetupmerge false &&
      ! test $(git-config branch.my2.remote) = local &&
      ! test $(git-config branch.my2.merge) = refs/heads/master'
+
+test_expect_success 'test local tracking setup' \
+    'git branch --track my6 s &&
+     test $(git-config branch.my6.remote) = . &&
+     test $(git-config branch.my6.merge) = refs/heads/s'
 
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF
