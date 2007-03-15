@@ -57,6 +57,4 @@ make $d \
      GITWEB_CONFIG=$G \
      PYTHON_PATH=/usr/bin/python2.4 \
      CFLAGS="$O -Wall -Wdeclaration-after-statement -g" \
-     WITH_SEND_EMAIL=YesPlease \
-     WITH_SVNIMPORT=YesPlease \
      "$@"
