@@ -88,8 +88,12 @@ maint | master)
 		mkdir -p $G/RPMS/$arch $G/RPMS/SRPMS &&
 		for a in $narch
 		do
-			mkdir -p "$G/RPMS/$a"
-			ln $HOME/rpms/RPMS/$a/*-$V-*.$a.rpm $G/RPMS/$a/.
+			mkdir -p "$G/RPMS/$a" &&
+			for rr in $HOME/rpms/RPMS/$a/*-$V-*.$a.rpm
+			do
+				test -f "$rr" || continue
+				ln "$rr" $G/RPMS/$a/.
+			done
 		done &&
 		ln $HOME/rpms/SRPMS/git-$V-*.src.rpm $G/RPMS/SRPMS/. &&
 		{
