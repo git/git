@@ -39,7 +39,7 @@ def die(msg):
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", [ "continue", "git-dir=", "origin=", "reset", "master=",
-                                                   "submit-log-subst=", "log-substitutions=", "interactive",
+                                                   "submit-log-subst=", "log-substitutions=", "noninteractive",
                                                    "dry-run" ])
 except getopt.GetoptError:
     print "fixme, syntax error"
@@ -53,7 +53,7 @@ origin = "origin"
 master = ""
 firstTime = True
 reset = False
-interactive = False
+interactive = True
 dryRun = False
 
 for o, a in opts:
@@ -76,8 +76,8 @@ for o, a in opts:
         for line in open(a, "r").readlines():
             tokens = line[:-1].split("=")
             logSubstitutions[tokens[0]] = tokens[1]
-    elif o == "--interactive":
-        interactive = True
+    elif o == "--noninteractive":
+        interactive = False
     elif o == "--dry-run":
         dryRun = True
 
