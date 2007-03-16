@@ -64,9 +64,9 @@ static int copy_file(const char *source, char *dest, const char *hex,
 		}
 		/* If we got ENOENT there is no point continuing. */
 		if (errno == ENOENT) {
-			if (warn_if_not_exists)
-				fprintf(stderr, "does not exist %s\n", source);
-			return -1;
+			if (!warn_if_not_exists)
+				return -1;
+			return error("does not exist %s", source);
 		}
 	}
 	if (use_symlink) {
@@ -74,9 +74,8 @@ static int copy_file(const char *source, char *dest, const char *hex,
 		if (stat(source, &st)) {
 			if (!warn_if_not_exists && errno == ENOENT)
 				return -1;
-			fprintf(stderr, "cannot stat %s: %s\n", source,
-				strerror(errno));
-			return -1;
+			return error("cannot stat %s: %s", source,
+				     strerror(errno));
 		}
 		if (!symlink(source, dest)) {
 			pull_say("symlink %s\n", hex);
@@ -90,25 +89,21 @@ static int copy_file(const char *source, char *dest, const char *hex,
 		if (ifd < 0) {
 			if (!warn_if_not_exists && errno == ENOENT)
 				return -1;
-			fprintf(stderr, "cannot open %s\n", source);
-			return -1;
+			return error("cannot open %s", source);
 		}
 		ofd = open(dest, O_WRONLY | O_CREAT | O_EXCL, 0666);
 		if (ofd < 0) {
-			fprintf(stderr, "cannot open %s\n", dest);
 			close(ifd);
-			return -1;
+			return error("cannot open %s", dest);
 		}
 		status = copy_fd(ifd, ofd);
 		close(ofd);
 		if (status)
-			fprintf(stderr, "cannot write %s\n", dest);
-		else
-			pull_say("copy %s\n", hex);
-		return status;
+			return error("cannot write %s", dest);
+		pull_say("copy %s\n", hex);
+		return 0;
 	}
-	fprintf(stderr, "failed to copy %s with given copy methods.\n", hex);
-	return -1;
+	return error("failed to copy %s with given copy methods.", hex);
 }
 
 static int fetch_pack(const unsigned char *sha1)
@@ -181,13 +176,11 @@ int fetch_ref(char *ref, unsigned char *sha1)
 	ifd = open(filename, O_RDONLY);
 	if (ifd < 0) {
 		close(ifd);
-		fprintf(stderr, "cannot open %s\n", filename);
-		return -1;
+		return error("cannot open %s", filename);
 	}
 	if (read_in_full(ifd, hex, 40) != 40 || get_sha1_hex(hex, sha1)) {
 		close(ifd);
-		fprintf(stderr, "cannot read from %s\n", filename);
-		return -1;
+		return error("cannot read from %s", filename);
 	}
 	close(ifd);
 	pull_say("ref %s\n", sha1_to_hex(sha1));
