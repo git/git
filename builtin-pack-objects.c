@@ -166,11 +166,12 @@ static void prepare_pack_revindex(struct pack_revindex *rix)
 	struct packed_git *p = rix->p;
 	int num_ent = num_packed_objects(p);
 	int i;
-	void *index = p->index_base + 256;
+	const char *index = p->index_data;
 
+	index += 4 * 256;
 	rix->revindex = xmalloc(sizeof(*rix->revindex) * (num_ent + 1));
 	for (i = 0; i < num_ent; i++) {
-		unsigned int hl = *((unsigned int *)((char *) index + 24*i));
+		uint32_t hl = *((uint32_t *)(index + 24 * i));
 		rix->revindex[i].offset = ntohl(hl);
 		rix->revindex[i].nr = i;
 	}
@@ -217,11 +218,11 @@ static off_t find_packed_object_size(struct packed_git *p, off_t ofs)
 	return entry[1].offset - ofs;
 }
 
-static unsigned char *find_packed_object_name(struct packed_git *p,
-					      off_t ofs)
+static const unsigned char *find_packed_object_name(struct packed_git *p,
+						    off_t ofs)
 {
 	struct revindex_entry *entry = find_packed_object(p, ofs);
-	return (unsigned char *)(p->index_base + 256) + 24 * entry->nr + 4;
+	return ((unsigned char *)p->index_data) + 4 * 256 + 24 * entry->nr + 4;
 }
 
 static void *delta_against(void *buf, unsigned long size, struct object_entry *entry)
@@ -996,7 +997,8 @@ static void check_object(struct object_entry *entry)
 		 * delta.
 		 */
 		if (!no_reuse_delta) {
-			unsigned char c, *base_name;
+			unsigned char c;
+			const unsigned char *base_name;
 			off_t ofs;
 			unsigned long used_0;
 			/* there is at least 20 bytes left in the pack */
