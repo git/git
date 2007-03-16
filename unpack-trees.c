@@ -465,6 +465,64 @@ static void invalidate_ce_path(struct cache_entry *ce)
 		cache_tree_invalidate_path(active_cache_tree, ce->name);
 }
 
+static int verify_clean_subdirectory(const char *path, const char *action,
+				      struct unpack_trees_options *o)
+{
+	/*
+	 * we are about to extract "path"; we would not want to lose
+	 * anything in the existing directory there.
+	 */
+	int namelen;
+	int pos, i;
+	struct dir_struct d;
+	char *pathbuf;
+	int cnt = 0;
+
+	/*
+	 * First let's make sure we do not have a local modification
+	 * in that directory.
+	 */
+	namelen = strlen(path);
+	pos = cache_name_pos(path, namelen);
+	if (0 <= pos)
+		return cnt; /* we have it as nondirectory */
+	pos = -pos - 1;
+	for (i = pos; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+		int len = ce_namelen(ce);
+		if (len < namelen ||
+		    strncmp(path, ce->name, namelen) ||
+		    ce->name[namelen] != '/')
+			break;
+		/*
+		 * ce->name is an entry in the subdirectory.
+		 */
+		if (!ce_stage(ce)) {
+			verify_uptodate(ce, o);
+			ce->ce_mode = 0;
+		}
+		cnt++;
+	}
+
+	/*
+	 * Then we need to make sure that we do not lose a locally
+	 * present file that is not ignored.
+	 */
+	pathbuf = xmalloc(namelen + 2);
+	memcpy(pathbuf, path, namelen);
+	strcpy(pathbuf+namelen, "/");
+
+	memset(&d, 0, sizeof(d));
+	if (o->dir)
+		d.exclude_per_dir = o->dir->exclude_per_dir;
+	i = read_directory(&d, path, pathbuf, namelen+1, NULL);
+	if (i)
+		die("Updating '%s' would lose untracked files in it",
+		    path);
+	free(pathbuf);
+	return cnt;
+}
+
 /*
  * We do not want to remove or overwrite a working tree file that
  * is not tracked, unless it is ignored.
@@ -476,9 +534,62 @@ static void verify_absent(const char *path, const char *action,
 
 	if (o->index_only || o->reset || !o->update)
 		return;
-	if (!lstat(path, &st) && !(o->dir && excluded(o->dir, path)))
+
+	if (!lstat(path, &st)) {
+		int cnt;
+
+		if (o->dir && excluded(o->dir, path))
+			/*
+			 * path is explicitly excluded, so it is Ok to
+			 * overwrite it.
+			 */
+			return;
+		if (S_ISDIR(st.st_mode)) {
+			/*
+			 * We are checking out path "foo" and
+			 * found "foo/." in the working tree.
+			 * This is tricky -- if we have modified
+			 * files that are in "foo/" we would lose
+			 * it.
+			 */
+			cnt = verify_clean_subdirectory(path, action, o);
+
+			/*
+			 * If this removed entries from the index,
+			 * what that means is:
+			 *
+			 * (1) the caller unpack_trees_rec() saw path/foo
+			 * in the index, and it has not removed it because
+			 * it thinks it is handling 'path' as blob with
+			 * D/F conflict;
+			 * (2) we will return "ok, we placed a merged entry
+			 * in the index" which would cause o->pos to be
+			 * incremented by one;
+			 * (3) however, original o->pos now has 'path/foo'
+			 * marked with "to be removed".
+			 *
+			 * We need to increment it by the number of
+			 * deleted entries here.
+			 */
+			o->pos += cnt;
+			return;
+		}
+
+		/*
+		 * The previous round may already have decided to
+		 * delete this path, which is in a subdirectory that
+		 * is being replaced with a blob.
+		 */
+		cnt = cache_name_pos(path, strlen(path));
+		if (0 <= cnt) {
+			struct cache_entry *ce = active_cache[cnt];
+			if (!ce_stage(ce) && !ce->ce_mode)
+				return;
+		}
+
 		die("Untracked working tree file '%s' "
 		    "would be %s by merge.", path, action);
+	}
 }
 
 static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
