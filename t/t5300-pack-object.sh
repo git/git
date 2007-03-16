@@ -116,7 +116,7 @@ test_expect_success \
     'use packed deltified objects' \
     'GIT_OBJECT_DIRECTORY=.git2/objects &&
      export GIT_OBJECT_DIRECTORY &&
-     rm -f .git2/objects/pack/test-?.idx &&
+     rm .git2/objects/pack/test-* &&
      cp test-2-${packname_2}.pack test-2-${packname_2}.idx .git2/objects/pack && {
 	 git-diff-tree --root -p $commit &&
 	 while read object
