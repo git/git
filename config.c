@@ -351,12 +351,12 @@ int git_default_config(const char *var, const char *value)
 	}
 
 	if (!strcmp(var, "i18n.commitencoding")) {
-		git_commit_encoding = strdup(value);
+		git_commit_encoding = xstrdup(value);
 		return 0;
 	}
 
 	if (!strcmp(var, "i18n.logoutputencoding")) {
-		git_log_output_encoding = strdup(value);
+		git_log_output_encoding = xstrdup(value);
 		return 0;
 	}
 
