@@ -1352,6 +1352,18 @@ static void *unpack_compressed_entry(struct packed_git *p,
 	return buffer;
 }
 
+static void *cache_or_unpack_entry(struct packed_git *p, off_t base_offset,
+	unsigned long *base_size, enum object_type *type)
+{
+	return unpack_entry(p, base_offset, type, base_size);
+}
+
+static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
+	void *base, unsigned long base_size, enum object_type type)
+{
+	free(base);
+}
+
 static void *unpack_delta_entry(struct packed_git *p,
 				struct pack_window **w_curs,
 				off_t curpos,
@@ -1365,7 +1377,7 @@ static void *unpack_delta_entry(struct packed_git *p,
 	off_t base_offset;
 
 	base_offset = get_delta_base(p, w_curs, &curpos, *type, obj_offset);
-	base = unpack_entry(p, base_offset, type, &base_size);
+	base = cache_or_unpack_entry(p, base_offset, &base_size, type);
 	if (!base)
 		die("failed to read delta base object"
 		    " at %"PRIuMAX" from %s",
@@ -1378,7 +1390,7 @@ static void *unpack_delta_entry(struct packed_git *p,
 	if (!result)
 		die("failed to apply delta");
 	free(delta_data);
-	free(base);
+	add_delta_base_cache(p, base_offset, base, base_size, *type);
 	return result;
 }
 
