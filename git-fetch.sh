@@ -110,8 +110,8 @@ ls_remote_result=$(git ls-remote $exec "$remote") ||
 
 append_fetch_head () {
 	flags=
-	test -n "$verbose" && flags="$flags -v"
-	test -n "$force" && flags="$flags -f"
+	test -n "$verbose" && flags="$flags$LF-v"
+	test -n "$force$single_force" && flags="$flags$LF-f"
 	GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION" \
 		git-fetch--tool $flags append-fetch-head "$@"
 }
