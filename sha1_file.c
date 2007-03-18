@@ -1372,7 +1372,7 @@ static unsigned long pack_entry_hash(struct packed_git *p, off_t base_offset)
 }
 
 static void *cache_or_unpack_entry(struct packed_git *p, off_t base_offset,
-	unsigned long *base_size, enum object_type *type)
+	unsigned long *base_size, enum object_type *type, int keep_cache)
 {
 	void *ret;
 	unsigned long hash = pack_entry_hash(p, base_offset);
@@ -1384,7 +1384,13 @@ static void *cache_or_unpack_entry(struct packed_git *p, off_t base_offset,
 	return unpack_entry(p, base_offset, type, base_size);
 
 found_cache_entry:
-	ent->data = NULL;
+	if (!keep_cache)
+		ent->data = NULL;
+	else {
+		ret = xmalloc(ent->size + 1);
+		memcpy(ret, ent->data, ent->size);
+		((char *)ret)[ent->size] = 0;
+	}
 	*type = ent->type;
 	*base_size = ent->size;
 	return ret;
@@ -1418,7 +1424,7 @@ static void *unpack_delta_entry(struct packed_git *p,
 	off_t base_offset;
 
 	base_offset = get_delta_base(p, w_curs, &curpos, *type, obj_offset);
-	base = cache_or_unpack_entry(p, base_offset, &base_size, type);
+	base = cache_or_unpack_entry(p, base_offset, &base_size, type, 0);
 	if (!base)
 		die("failed to read delta base object"
 		    " at %"PRIuMAX" from %s",
@@ -1615,7 +1621,7 @@ static void *read_packed_sha1(const unsigned char *sha1,
 	if (!find_pack_entry(sha1, &e, NULL))
 		return NULL;
 	else
-		return unpack_entry(e.p, e.offset, type, size);
+		return cache_or_unpack_entry(e.p, e.offset, size, type, 1);
 }
 
 /*
