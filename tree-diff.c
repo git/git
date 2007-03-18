@@ -66,7 +66,15 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2, const 
 	return 0;
 }
 
-static int interesting(struct tree_desc *desc, const char *base, int baselen, struct diff_options *opt)
+/*
+ * Is a tree entry interesting given the pathspec we have?
+ *
+ * Return:
+ *  - positive for yes
+ *  - zero for no
+ *  - negative for "no, and no subsequent entries will be either"
+ */
+static int tree_entry_interesting(struct tree_desc *desc, const char *base, int baselen, struct diff_options *opt)
 {
 	const char *path;
 	const unsigned char *sha1;
@@ -123,7 +131,10 @@ static int interesting(struct tree_desc *desc, const char *base, int baselen, st
 static void show_tree(struct diff_options *opt, const char *prefix, struct tree_desc *desc, const char *base, int baselen)
 {
 	while (desc->size) {
-		if (interesting(desc, base, baselen, opt))
+		int show = tree_entry_interesting(desc, base, baselen, opt);
+		if (show < 0)
+			break;
+		if (show)
 			show_entry(opt, prefix, desc, base, baselen);
 		update_tree_entry(desc);
 	}
@@ -158,22 +169,35 @@ static void show_entry(struct diff_options *opt, const char *prefix, struct tree
 	}
 }
 
+static void skip_uninteresting(struct tree_desc *t, const char *base, int baselen, struct diff_options *opt)
+{
+	while (t->size) {
+		int show = tree_entry_interesting(t, base, baselen, opt);
+		if (!show) {
+			update_tree_entry(t);
+			continue;
+		}
+		/* Skip it all? */
+		if (show < 0)
+			t->size = 0;
+		return;
+	}
+}
+
 int diff_tree(struct tree_desc *t1, struct tree_desc *t2, const char *base, struct diff_options *opt)
 {
 	int baselen = strlen(base);
 
-	while (t1->size | t2->size) {
+	for (;;) {
 		if (opt->quiet && opt->has_changes)
 			break;
-		if (opt->nr_paths && t1->size && !interesting(t1, base, baselen, opt)) {
-			update_tree_entry(t1);
-			continue;
-		}
-		if (opt->nr_paths && t2->size && !interesting(t2, base, baselen, opt)) {
-			update_tree_entry(t2);
-			continue;
+		if (opt->nr_paths) {
+			skip_uninteresting(t1, base, baselen, opt);
+			skip_uninteresting(t2, base, baselen, opt);
 		}
 		if (!t1->size) {
+			if (!t2->size)
+				break;
 			show_entry(opt, "+", t2, base, baselen);
 			update_tree_entry(t2);
 			continue;
