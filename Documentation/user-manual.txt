@@ -3013,9 +3013,6 @@ confusing and scary messages, but it won't actually do anything bad. In
 contrast, running "git prune" while somebody is actively changing the 
 repository is a *BAD* idea).
 
-Glossary of git terms
-=====================
-
 include::glossary.txt[]
 
 Notes and todo list for this manual
