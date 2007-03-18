@@ -1,7 +1,7 @@
 #!/bin/sh
 
 GVF=GIT-VERSION-FILE
-DEF_VER=v1.5.0.4.GIT
+DEF_VER=v1.5.0.5.GIT
 
 LF='
 '
