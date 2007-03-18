@@ -13,6 +13,11 @@ struct name_entry {
 	int pathlen;
 };
 
+static inline int tree_entry_len(const char *name, const unsigned char *sha1)
+{
+	return (char *)sha1 - (char *)name - 1;
+}
+
 void update_tree_entry(struct tree_desc *);
 const unsigned char *tree_entry_extract(struct tree_desc *, const char **, unsigned int *);
 
