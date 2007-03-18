@@ -190,6 +190,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	const char *path = NULL;
 	struct blobinfo blob[2];
 	int nongit = 0;
+	int result = 0;
 
 	/*
 	 * We could get N tree-ish in the rev.pending_objects list.
@@ -292,17 +293,17 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	if (!ents) {
 		switch (blobs) {
 		case 0:
-			return run_diff_files_cmd(&rev, argc, argv);
+			result = run_diff_files_cmd(&rev, argc, argv);
 			break;
 		case 1:
 			if (paths != 1)
 				usage(builtin_diff_usage);
-			return builtin_diff_b_f(&rev, argc, argv, blob, path);
+			result = builtin_diff_b_f(&rev, argc, argv, blob, path);
 			break;
 		case 2:
 			if (paths)
 				usage(builtin_diff_usage);
-			return builtin_diff_blobs(&rev, argc, argv, blob);
+			result = builtin_diff_blobs(&rev, argc, argv, blob);
 			break;
 		default:
 			usage(builtin_diff_usage);
@@ -311,19 +312,21 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	else if (blobs)
 		usage(builtin_diff_usage);
 	else if (ents == 1)
-		return builtin_diff_index(&rev, argc, argv);
+		result = builtin_diff_index(&rev, argc, argv);
 	else if (ents == 2)
-		return builtin_diff_tree(&rev, argc, argv, ent);
+		result = builtin_diff_tree(&rev, argc, argv, ent);
 	else if ((ents == 3) && (ent[0].item->flags & UNINTERESTING)) {
 		/* diff A...B where there is one sane merge base between
 		 * A and B.  We have ent[0] == merge-base, ent[1] == A,
 		 * and ent[2] == B.  Show diff between the base and B.
 		 */
 		ent[1] = ent[2];
-		return builtin_diff_tree(&rev, argc, argv, ent);
+		result = builtin_diff_tree(&rev, argc, argv, ent);
 	}
 	else
-		return builtin_diff_combined(&rev, argc, argv,
+		result = builtin_diff_combined(&rev, argc, argv,
 					     ent, ents);
-	usage(builtin_diff_usage);
+	if (rev.diffopt.exit_with_status)
+		result = rev.diffopt.has_changes;
+	return result;
 }

@@ -170,8 +170,10 @@ static int handle_diff_files_args(struct rev_info *revs,
 		else if (!strcmp(argv[1], "--theirs"))
 			revs->max_count = 3;
 		else if (!strcmp(argv[1], "-n") ||
-				!strcmp(argv[1], "--no-index"))
+				!strcmp(argv[1], "--no-index")) {
 			revs->max_count = -2;
+			revs->diffopt.exit_with_status = 1;
+		}
 		else if (!strcmp(argv[1], "-q"))
 			*silent = 1;
 		else
@@ -237,6 +239,7 @@ int setup_diff_no_index(struct rev_info *revs,
 			break;
 		} else if (i < argc - 3 && !strcmp(argv[i], "--no-index")) {
 			i = argc - 3;
+			revs->diffopt.exit_with_status = 1;
 			break;
 		}
 	if (argc != i + 2 || (!is_outside_repo(argv[i + 1], nongit, prefix) &&
@@ -320,6 +323,9 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 		unsigned int oldmode, newmode;
 		struct cache_entry *ce = active_cache[i];
 		int changed;
+
+		if (revs->diffopt.quiet && revs->diffopt.has_changes)
+			break;
 
 		if (!ce_path_match(ce, revs->prune_data))
 			continue;
@@ -561,6 +567,9 @@ static int diff_cache(struct rev_info *revs,
 	while (entries) {
 		struct cache_entry *ce = *ac;
 		int same = (entries > 1) && ce_same_name(ce, ac[1]);
+
+		if (revs->diffopt.quiet && revs->diffopt.has_changes)
+			break;
 
 		if (!ce_path_match(ce, pathspec))
 			goto skip_entry;

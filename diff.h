@@ -56,7 +56,10 @@ struct diff_options {
 		 silent_on_remove:1,
 		 find_copies_harder:1,
 		 color_diff:1,
-		 color_diff_words:1;
+		 color_diff_words:1,
+		 has_changes:1,
+		 quiet:1,
+		 exit_with_status:1;
 	int context;
 	int break_opt;
 	int detect_rename;
@@ -169,8 +172,6 @@ extern int diff_setup_done(struct diff_options *);
 #define DIFF_PICKAXE_REGEX	2
 
 extern void diffcore_std(struct diff_options *);
-
-extern void diffcore_std_no_resolve(struct diff_options *);
 
 #define COMMON_DIFF_OPTIONS_HELP \
 "\ncommon diff options:\n" \
