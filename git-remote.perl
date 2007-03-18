@@ -15,6 +15,10 @@ sub add_remote_config {
 		$hash->{$name}{'FETCH'} ||= [];
 		push @{$hash->{$name}{'FETCH'}}, $value;
 	}
+	elsif ($what eq 'push') {
+		$hash->{$name}{'PUSH'} ||= [];
+		push @{$hash->{$name}{'PUSH'}}, $value;
+	}
 	if (!exists $hash->{$name}{'SOURCE'}) {
 		$hash->{$name}{'SOURCE'} = 'config';
 	}
@@ -44,7 +48,8 @@ sub add_remote_remotes {
 			}
 		}
 		elsif (/^Push:\s*(.*)$/) {
-			; # later
+			$it->{'PUSH'} ||= [];
+			push @{$it->{'PUSH'}}, $1;
 		}
 		elsif (/^Pull:\s*(.*)$/) {
 			$it->{'FETCH'} ||= [];
@@ -249,6 +254,15 @@ sub show_remote {
 	}
 	if ($info->{'LS_REMOTE'}) {
 		show_mapping($name, $info);
+	}
+	if ($info->{'PUSH'}) {
+		my @pushed = map {
+			s|^refs/heads/||;
+			s|:refs/heads/|:|;
+			$_;
+		} @{$info->{'PUSH'}};
+		print "  Local branch(es) pushed with 'git push'\n";
+		print "    @pushed\n";
 	}
 }
 
