@@ -50,8 +50,8 @@ This list is sorted alphabetically:
 @keys=sort {uc($a) cmp uc($b)} keys %terms;
 $pattern='(\b(?<!link:git-)'.join('\b|\b(?<!-)',reverse @keys).'\b)';
 foreach $key (@keys) {
-	$terms{$key}=~s/$pattern/sprintf "<<ref_".no_spaces($1).",$1>>";/eg;
-	print '[[ref_'.no_spaces($key).']]'.$key."::\n"
+	$terms{$key}=~s/$pattern/sprintf "<<def_".no_spaces($1).",$1>>";/eg;
+	print '[[def_'.no_spaces($key).']]'.$key."::\n"
 		.format_tab_80($terms{$key})."\n";
 }
 
