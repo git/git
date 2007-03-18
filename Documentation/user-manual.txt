@@ -1698,7 +1698,7 @@ If you and maintainer both have accounts on the same machine, then
 then you can just pull changes from each other's repositories
 directly; note that all of the commands (gitlink:git-clone[1],
 git-fetch[1], git-pull[1], etc.) that accept a URL as an argument
-will also accept a local file patch; so, for example, you can
+will also accept a local directory name; so, for example, you can
 use
 
 -------------------------------------------------
