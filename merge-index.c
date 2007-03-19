@@ -2,7 +2,7 @@
 #include "run-command.h"
 
 static const char *pgm;
-static const char *arguments[8];
+static const char *arguments[9];
 static int one_shot, quiet;
 static int err;
 
@@ -36,6 +36,7 @@ static int merge_entry(int pos, const char *path)
 	arguments[5] = "";
 	arguments[6] = "";
 	arguments[7] = "";
+	arguments[8] = NULL;
 	found = 0;
 	do {
 		static char hexbuf[4][60];
