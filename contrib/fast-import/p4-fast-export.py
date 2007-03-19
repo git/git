@@ -330,7 +330,7 @@ def commit(details, files, branch, branchPrefix, parent, merged = ""):
         action = file["action"]
 
         if file["type"] == "apple":
-            print "\nfile %s is a strange apple file that forks. Ignoring!" %s path
+            print "\nfile %s is a strange apple file that forks. Ignoring!" % path
             continue
 
         if action == "delete":
@@ -608,7 +608,7 @@ else:
                         merged = "refs/heads/" + merged
                     commit(description, files, branch, branchPrefix, parent, merged)
             else:
-                commit(description, filesForCommit, branch, globalPrefix, initialParent)
+                commit(description, files, branch, globalPrefix, initialParent)
                 initialParent = ""
         except IOError:
             print gitError.read()
