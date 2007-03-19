@@ -460,7 +460,7 @@ merge.summary::
 merge.tool::
 	Controls which merge resolution program is used by
 	gitlink:git-mergetool[l].  Valid values are: "kdiff3", "tkdiff",
-	"meld", "xxdiff", "emerge"
+	"meld", "xxdiff", "emerge", "vimdiff"
 
 merge.verbosity::
 	Controls the amount of output shown by the recursive merge

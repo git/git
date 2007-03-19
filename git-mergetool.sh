@@ -185,9 +185,9 @@ merge_file () {
 		mv -- "$BACKUP" "$path.orig"
 	    fi
 	    ;;
-	meld)
+	meld|vimdiff)
 	    touch "$BACKUP"
-	    meld -- "$LOCAL" "$path" "$REMOTE"
+	    $merge_tool -- "$LOCAL" "$path" "$REMOTE"
 	    if test "$path" -nt "$BACKUP" ; then
 		status=0;
 	    else
@@ -305,6 +305,8 @@ if test -z "$merge_tool" ; then
 	merge_tool=meld
     elif type emacs >/dev/null 2>&1; then
 	merge_tool=emerge
+    elif type vimdiff >/dev/null 2>&1; then
+	merge_tool=vimdiff
     else
 	echo "No available merge resolution programs available."
 	exit 1
@@ -312,7 +314,7 @@ if test -z "$merge_tool" ; then
 fi
 
 case "$merge_tool" in
-    kdiff3|tkdiff|meld|xxdiff)
+    kdiff3|tkdiff|meld|xxdiff|vimdiff)
 	if ! type "$merge_tool" > /dev/null 2>&1; then
 	    echo "The merge tool $merge_tool is not available"
 	    exit 1
