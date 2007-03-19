@@ -183,8 +183,12 @@ sub req_Root
     }
     foreach my $line ( @gitvars )
     {
-        next unless ( $line =~ /^(.*?)\.(.*?)=(.*)$/ );
-        $cfg->{$1}{$2} = $3;
+        next unless ( $line =~ /^(.*?)\.(.*?)(?:\.(.*?))?=(.*)$/ );
+        unless ($3) {
+            $cfg->{$1}{$2} = $4;
+        } else {
+            $cfg->{$1}{$2}{$3} = $4;
+        }
     }
 
     unless ( defined ( $cfg->{gitcvs}{enabled} ) and $cfg->{gitcvs}{enabled} =~ /^\s*(1|true|yes)\s*$/i )
