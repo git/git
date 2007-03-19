@@ -191,7 +191,10 @@ sub req_Root
         }
     }
 
-    unless ( defined ( $cfg->{gitcvs}{enabled} ) and $cfg->{gitcvs}{enabled} =~ /^\s*(1|true|yes)\s*$/i )
+    unless ( ($cfg->{gitcvs}{$state->{method}}{enabled}
+	      and $cfg->{gitcvs}{$state->{method}}{enabled} =~ /^\s*(1|true|yes)\s*$/i)
+	     or ($cfg->{gitcvs}{enabled}
+	      and $cfg->{gitcvs}{enabled} =~ /^\s*(1|true|yes)\s*$/i) )
     {
         print "E GITCVS emulation needs to be enabled on this repo\n";
         print "E the repo config file needs a [gitcvs] section added, and the parameter 'enabled' set to 1\n";
@@ -200,9 +203,10 @@ sub req_Root
         return 0;
     }
 
-    if ( defined ( $cfg->{gitcvs}{logfile} ) )
+    my $logfile = $cfg->{gitcvs}{$state->{method}}{logfile} || $cfg->{gitcvs}{logfile};
+    if ( $logfile )
     {
-        $log->setfile($cfg->{gitcvs}{logfile});
+        $log->setfile($logfile);
     } else {
         $log->nofile();
     }

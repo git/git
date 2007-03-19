@@ -68,6 +68,18 @@ Note: you need to ensure each user that is going to invoke git-cvsserver has
 write access to the log file and to the git repository. When offering anon
 access via pserver, this means that the nobody user should have write access
 to at least the sqlite database at the root of the repository.
+
+Both configuration variables can also be overriden for a specific method of
+access. Valid method names are "ext" (for SSH access) and "pserver". The
+following example configuration would disable pserver access while still
+allowing access over SSH.
+------
+   [gitcvs]
+        enabled=0
+
+   [gitcvs "ext"]
+        enabled=1
+------
 --
 3. On the client machine you need to set the following variables.
    CVSROOT should be set as per normal, but the directory should point at the
