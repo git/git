@@ -1369,7 +1369,7 @@ static unsigned long pack_entry_hash(struct packed_git *p, off_t base_offset)
 
 	hash = (unsigned long)p + (unsigned long)base_offset;
 	hash += (hash >> 8) + (hash >> 16);
-	return hash & 0xff;
+	return hash % MAX_DELTA_CACHE;
 }
 
 static void *cache_or_unpack_entry(struct packed_git *p, off_t base_offset,
@@ -1417,13 +1417,13 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 	release_delta_base_cache(ent);
 	delta_base_cached += base_size;
 	for (i = 0; delta_base_cached > delta_base_cache_limit
-		&& i < ARRAY_SIZE(delta_base_cache); i++) {
+		    && i < MAX_DELTA_CACHE ; i++) {
 		struct delta_base_cache_entry *f = delta_base_cache + i;
 		if (f->type == OBJ_BLOB)
 			release_delta_base_cache(f);
 	}
 	for (i = 0; delta_base_cached > delta_base_cache_limit
-		&& i < ARRAY_SIZE(delta_base_cache); i++)
+		    && i < MAX_DELTA_CACHE ; i++)
 		release_delta_base_cache(delta_base_cache + i);
 
 	ent->p = p;
