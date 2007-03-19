@@ -947,6 +947,7 @@ sub req_update
 
             # we need to merge with the local changes ( M=successful merge, C=conflict merge )
             $log->info("Merging $file_local, $file_old, $file_new");
+            print "M Merging differences between 1.$oldmeta->{revision} and 1.$meta->{revision} into $filename\n";
 
             $log->debug("Temporary directory for merge is $dir");
 
@@ -973,6 +974,7 @@ sub req_update
             elsif ( $return == 1 )
             {
                 $log->info("Merged with conflicts");
+                print "E cvs update: conflicts found in $filename\n";
                 print "M C $filename\n";
 
                 # Don't want to actually _DO_ the update if -n specified
@@ -1067,6 +1069,7 @@ sub req_ci
     $log->info("Created index '$file_index' with for head $state->{module} - exit status $?");
 
     my @committedfiles = ();
+    my %oldmeta;
 
     # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
@@ -1077,6 +1080,7 @@ sub req_ci
         next unless ( exists $state->{entries}{$filename}{modified_filename} or not $state->{entries}{$filename}{unchanged} );
 
         my $meta = $updater->getmeta($filename);
+	$oldmeta{$filename} = $meta;
 
         my $wrev = revparse($filename);
 
@@ -1205,11 +1209,18 @@ sub req_ci
 
         $log->debug("Checked-in $dirpart : $filename");
 
+	print "M $state->{CVSROOT}/$state->{module}/$filename,v  <--  $dirpart$filepart\n";
         if ( defined $meta->{filehash} && $meta->{filehash} eq "deleted" )
         {
+            print "M new revision: delete; previous revision: 1.$oldmeta{$filename}{revision}\n";
             print "Remove-entry $dirpart\n";
             print "$filename\n";
         } else {
+            if ($meta->{revision} == 1) {
+	        print "M initial revision: 1.1\n";
+            } else {
+	        print "M new revision: 1.$meta->{revision}; previous revision: 1.$oldmeta{$filename}{revision}\n";
+            }
             print "Checked-in $dirpart\n";
             print "$filename\n";
             my $kopts = kopts_from_path($filepart);
@@ -1295,7 +1306,7 @@ sub req_status
         }
         if ( defined($meta->{revision}) )
         {
-            print "M Repository revision:\t1." . $meta->{revision} . "\t$state->{repository}/$filename,v\n";
+            print "M Repository revision:\t1." . $meta->{revision} . "\t$state->{CVSROOT}/$state->{module}/$filename,v\n";
             print "M Sticky Tag:\t\t(none)\n";
             print "M Sticky Date:\t\t(none)\n";
             print "M Sticky Options:\t\t(none)\n";
