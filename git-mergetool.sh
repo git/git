@@ -288,10 +288,15 @@ done
 
 if test -z "$merge_tool"; then
     merge_tool=`git-config merge.tool`
-    if test $merge_tool = kdiff3 -o $merge_tool = tkdiff -o \
-	$merge_tool = xxdiff -o $merge_tool = meld ; then
-	unset merge_tool
-    fi
+    case "$merge_tool" in
+	kdiff3 | tkdiff | xxdiff | meld | emerge | vimdiff)
+	    ;; # happy
+	*)
+	    echo >&2 "git config option merge.tool set to unknown tool: $merge_tool"
+	    echo >&2 "Resetting to default..."
+	    unset merge_tool
+	    ;;
+    esac
 fi
 
 if test -z "$merge_tool" ; then
