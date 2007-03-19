@@ -2141,19 +2141,33 @@ sub new
 
     bless $self, $class;
 
-    $self->{dbdir} = $config . "/";
-    die "Database dir '$self->{dbdir}' isn't a directory" unless ( defined($self->{dbdir}) and -d $self->{dbdir} );
-
     $self->{module} = $module;
-    $self->{file} = $self->{dbdir} . "/gitcvs.$module.sqlite";
-
     $self->{git_path} = $config . "/";
 
     $self->{log} = $log;
 
     die "Git repo '$self->{git_path}' doesn't exist" unless ( -d $self->{git_path} );
 
-    $self->{dbh} = DBI->connect("dbi:SQLite:dbname=" . $self->{file},"","");
+    $self->{dbdriver} = $cfg->{gitcvs}{$state->{method}}{dbdriver} ||
+        $cfg->{gitcvs}{dbdriver} || "dbi:SQLite";
+    $self->{dbname} = $cfg->{gitcvs}{$state->{method}}{dbname} ||
+        $cfg->{gitcvs}{dbname} || "%Ggitcvs.%m.sqlite";
+    $self->{dbuser} = $cfg->{gitcvs}{$state->{method}}{dbuser} ||
+        $cfg->{gitcvs}{dbuser} || "";
+    $self->{dbpass} = $cfg->{gitcvs}{$state->{method}}{dbpass} ||
+        $cfg->{gitcvs}{dbpass} || "";
+    my %mapping = ( m => $module,
+                    a => $state->{method},
+                    u => getlogin || getpwuid($<) || $<,
+                    G => $self->{git_path},
+                    g => mangle_dirname($self->{git_path}),
+                    );
+    $self->{dbname} =~ s/%([mauGg])/$mapping{$1}/eg;
+    $self->{dbuser} =~ s/%([mauGg])/$mapping{$1}/eg;
+
+    $self->{dbh} = DBI->connect("$self->{dbdriver}:dbname=$self->{dbname}",
+                                $self->{dbuser},
+                                $self->{dbpass});
 
     $self->{tables} = {};
     foreach my $table ( $self->{dbh}->tables )
@@ -2857,5 +2871,19 @@ sub safe_pipe_capture {
     return wantarray ? @output : join('',@output);
 }
 
+=head2 mangle_dirname
+
+create a string from a directory name that is suitable to use as
+part of a filename, mainly by converting all chars except \w.- to _
+
+=cut
+sub mangle_dirname {
+    my $dirname = shift;
+    return unless defined $dirname;
+
+    $dirname =~ s/[^\w.-]/_/g;
+
+    return $dirname;
+}
 
 1;
