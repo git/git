@@ -65,8 +65,8 @@ Options:
                   Defaults to on.
 
    --no-signed-off-cc Suppress the automatic addition of email addresses
-                 that appear in a Signed-off-by: line, to the cc: list.
-		 Note: Using this option is not recommended.
+                 that appear in Signed-off-by: or Cc: lines to the cc:
+                 list.  Note: Using this option is not recommended.
 
    --smtp-server  If set, specifies the outgoing SMTP server to use.
                   Defaults to localhost.
@@ -572,8 +572,8 @@ foreach my $t (@files) {
 			}
 		} else {
 			$message .=  $_;
-			if (/^Signed-off-by: (.*)$/i && !$no_signed_off_cc) {
-				my $c = $1;
+			if (/^(Signed-off-by|Cc): (.*)$/i && !$no_signed_off_cc) {
+				my $c = $2;
 				chomp $c;
 				push @cc, $c;
 				printf("(sob) Adding cc: %s from line '%s'\n",
