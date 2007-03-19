@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "run-command.h"
 
 static const char *pgm;
 static const char *arguments[8];
@@ -7,24 +8,10 @@ static int err;
 
 static void run_program(void)
 {
-	pid_t pid = fork();
-	int status;
-
-	if (pid < 0)
-		die("unable to fork");
-	if (!pid) {
-		execlp(pgm, arguments[0],
-			    arguments[1],
-			    arguments[2],
-			    arguments[3],
-			    arguments[4],
-			    arguments[5],
-			    arguments[6],
-			    arguments[7],
-			    NULL);
-		die("unable to execute '%s'", pgm);
-	}
-	if (waitpid(pid, &status, 0) < 0 || !WIFEXITED(status) || WEXITSTATUS(status)) {
+	struct child_process child;
+	memset(&child, 0, sizeof(child));
+	child.argv = arguments;
+	if (run_command(&child)) {
 		if (one_shot) {
 			err++;
 		} else {

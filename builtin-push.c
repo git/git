@@ -323,10 +323,10 @@ static int do_push(const char *repo)
 		int dest_refspec_nr = refspec_nr;
 		const char **dest_refspec = refspec;
 		const char *dest = uri[i];
-		const char *sender = "git-send-pack";
+		const char *sender = "send-pack";
 		if (!prefixcmp(dest, "http://") ||
 		    !prefixcmp(dest, "https://"))
-			sender = "git-http-push";
+			sender = "http-push";
 		else if (thin)
 			argv[dest_argc++] = "--thin";
 		argv[0] = sender;
@@ -336,7 +336,7 @@ static int do_push(const char *repo)
 		argv[dest_argc] = NULL;
 		if (verbose)
 			fprintf(stderr, "Pushing to %s\n", dest);
-		err = run_command_v_opt(argv, 0);
+		err = run_command_v_opt(argv, RUN_GIT_CMD);
 		if (!err)
 			continue;
 		switch (err) {

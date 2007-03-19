@@ -451,7 +451,7 @@ extern int check_repository_format_version(const char *var, const char *value);
 extern char git_default_email[MAX_GITNAME];
 extern char git_default_name[MAX_GITNAME];
 
-extern char *git_commit_encoding;
+extern const char *git_commit_encoding;
 extern const char *git_log_output_encoding;
 
 extern int copy_fd(int ifd, int ofd);

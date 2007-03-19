@@ -8,11 +8,19 @@ static inline void close_pair(int fd[2])
 	close(fd[1]);
 }
 
+static inline void dup_devnull(int to)
+{
+	int fd = open("/dev/null", O_RDWR);
+	dup2(fd, to);
+	close(fd);
+}
+
 int start_command(struct child_process *cmd)
 {
-	int need_in = !cmd->no_stdin && cmd->in < 0;
-	int fdin[2];
+	int need_in, need_out;
+	int fdin[2], fdout[2];
 
+	need_in = !cmd->no_stdin && cmd->in < 0;
 	if (need_in) {
 		if (pipe(fdin) < 0)
 			return -ERR_RUN_COMMAND_PIPE;
@@ -20,19 +28,32 @@ int start_command(struct child_process *cmd)
 		cmd->close_in = 1;
 	}
 
+	need_out = !cmd->no_stdout
+		&& !cmd->stdout_to_stderr
+		&& cmd->out < 0;
+	if (need_out) {
+		if (pipe(fdout) < 0) {
+			if (need_in)
+				close_pair(fdin);
+			return -ERR_RUN_COMMAND_PIPE;
+		}
+		cmd->out = fdout[0];
+		cmd->close_out = 1;
+	}
+
 	cmd->pid = fork();
 	if (cmd->pid < 0) {
 		if (need_in)
 			close_pair(fdin);
+		if (need_out)
+			close_pair(fdout);
 		return -ERR_RUN_COMMAND_FORK;
 	}
 
 	if (!cmd->pid) {
-		if (cmd->no_stdin) {
-			int fd = open("/dev/null", O_RDWR);
-			dup2(fd, 0);
-			close(fd);
-		} else if (need_in) {
+		if (cmd->no_stdin)
+			dup_devnull(0);
+		else if (need_in) {
 			dup2(fdin[0], 0);
 			close_pair(fdin);
 		} else if (cmd->in) {
@@ -40,8 +61,18 @@ int start_command(struct child_process *cmd)
 			close(cmd->in);
 		}
 
-		if (cmd->stdout_to_stderr)
+		if (cmd->no_stdout)
+			dup_devnull(1);
+		else if (cmd->stdout_to_stderr)
 			dup2(2, 1);
+		else if (need_out) {
+			dup2(fdout[1], 1);
+			close_pair(fdout);
+		} else if (cmd->out > 1) {
+			dup2(cmd->out, 1);
+			close(cmd->out);
+		}
+
 		if (cmd->git_cmd) {
 			execv_git_cmd(cmd->argv);
 		} else {
@@ -55,6 +86,11 @@ int start_command(struct child_process *cmd)
 	else if (cmd->in)
 		close(cmd->in);
 
+	if (need_out)
+		close(fdout[1]);
+	else if (cmd->out > 1)
+		close(cmd->out);
+
 	return 0;
 }
 
@@ -62,6 +98,8 @@ int finish_command(struct child_process *cmd)
 {
 	if (cmd->close_in)
 		close(cmd->in);
+	if (cmd->close_out)
+		close(cmd->out);
 
 	for (;;) {
 		int status, code;
