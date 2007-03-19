@@ -228,6 +228,7 @@ extern const char *apply_default_whitespace;
 extern int zlib_compression_level;
 extern size_t packed_git_window_size;
 extern size_t packed_git_limit;
+extern size_t delta_base_cache_limit;
 extern int auto_crlf;
 
 #define GIT_REPO_VERSION 0

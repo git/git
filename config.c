@@ -331,6 +331,11 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.deltabasecachelimit")) {
+		delta_base_cache_limit = git_config_int(var, value);
+		return 0;
+	}
+
 	if (!strcmp(var, "core.autocrlf")) {
 		if (value && !strcasecmp(value, "input")) {
 			auto_crlf = -1;

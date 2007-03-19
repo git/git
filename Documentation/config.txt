@@ -240,6 +240,19 @@ the largest projects.  You probably do not need to adjust this value.
 +
 Common unit suffixes of 'k', 'm', or 'g' are supported.
 
+core.deltaBaseCacheLimit::
+	Maximum number of bytes to reserve for caching base objects
+	that multiple deltafied objects reference.  By storing the
+	entire decompressed base objects in a cache Git is able
+	to avoid unpacking and decompressing frequently used base
+	objects multiple times.
++
+Default is 16 MiB on all platforms.  This should be reasonable
+for all users/operating systems, except on the largest projects.
+You probably do not need to adjust this value.
++
+Common unit suffixes of 'k', 'm', or 'g' are supported.
+
 alias.*::
 	Command aliases for the gitlink:git[1] command wrapper - e.g.
 	after defining "alias.last = cat-file commit HEAD", the invocation
