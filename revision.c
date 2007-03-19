@@ -1038,7 +1038,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			if (!prefixcmp(arg, "--encoding=")) {
 				arg += 11;
 				if (strcmp(arg, "none"))
-					git_log_output_encoding = strdup(arg);
+					git_log_output_encoding = xstrdup(arg);
 				else
 					git_log_output_encoding = "";
 				continue;

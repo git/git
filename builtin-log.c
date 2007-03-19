@@ -35,7 +35,7 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		if (!prefixcmp(arg, "--encoding=")) {
 			arg += 11;
 			if (strcmp(arg, "none"))
-				git_log_output_encoding = strdup(arg);
+				git_log_output_encoding = xstrdup(arg);
 			else
 				git_log_output_encoding = "";
 		}
