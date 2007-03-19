@@ -91,7 +91,9 @@ $log->debug("Temporary directory is '$TEMP_DIR'");
 # if we are called with a pserver argument,
 # deal with the authentication cat before entering the
 # main loop
+$state->{method} = 'ext';
 if (@ARGV && $ARGV[0] eq 'pserver') {
+    $state->{method} = 'pserver';
     my $line = <STDIN>; chomp $line;
     unless( $line eq 'BEGIN AUTH REQUEST') {
        die "E Do not understand $line - expecting BEGIN AUTH REQUEST\n";
@@ -1026,7 +1028,7 @@ sub req_ci
 
     $log->info("req_ci : " . ( defined($data) ? $data : "[NULL]" ));
 
-    if ( @ARGV && $ARGV[0] eq 'pserver')
+    if ( $state->{method} eq 'pserver')
     {
         print "error 1 pserver access cannot commit\n";
         exit;
