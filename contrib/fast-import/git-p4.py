@@ -41,6 +41,7 @@ class P4Debug:
     def __init__(self):
         self.options = [
         ]
+        self.description = "A tool to debug the output of p4 -G."
 
     def run(self, args):
         for output in p4CmdList(" ".join(args)):
@@ -51,6 +52,7 @@ class P4CleanTags:
         self.options = [
 #                optparse.make_option("--branch", dest="branch", default="refs/heads/master")
         ]
+        self.description = "A tool to remove stale unused tags from incremental perforce imports."
     def run(self, args):
         branch = currentGitBranch()
         print "Cleaning out stale p4 import tags..."
@@ -108,7 +110,8 @@ except KeyError:
     printUsage(commands.keys())
     sys.exit(2)
 
-parser = optparse.OptionParser("usage: %prog " + cmdName + " [options]", cmd.options)
+parser = optparse.OptionParser("usage: %prog " + cmdName + " [options]", cmd.options,
+                               description = cmd.description)
 
 (cmd, args) = parser.parse_args(sys.argv[2:], cmd);
 
