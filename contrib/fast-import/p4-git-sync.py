@@ -37,6 +37,11 @@ def die(msg):
     sys.stderr.write(msg + "\n")
     sys.exit(1)
 
+def tryGitDir(path):
+    if os.path.exists(path + "/HEAD") and os.path.exists(path + "/refs") and os.path.exists(path + "/objects"):
+        return True;
+    return False
+
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", [ "continue", "git-dir=", "origin=", "reset", "master=",
                                                    "submit-log-subst=", "log-substitutions=", "noninteractive",
@@ -85,6 +90,14 @@ if len(gitdir) == 0:
     gitdir = ".git"
 else:
     os.environ["GIT_DIR"] = gitdir
+
+if not tryGitDir(gitdir):
+    if tryGitDir(gitdir + "/.git"):
+        gitdir += "/.git"
+        os.environ["GIT_DIR"] = gitdir
+    else:
+        die("fatal: %s seems not to be a git repository." % gitdir)
+
 
 configFile = gitdir + "/p4-git-sync.cfg"
 
