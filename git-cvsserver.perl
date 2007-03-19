@@ -2168,6 +2168,7 @@ sub new
     $self->{dbh} = DBI->connect("$self->{dbdriver}:dbname=$self->{dbname}",
                                 $self->{dbuser},
                                 $self->{dbpass});
+    die "Error connecting to database\n" unless defined $self->{dbh};
 
     $self->{tables} = {};
     foreach my $table ( $self->{dbh}->tables )
