@@ -1906,7 +1906,7 @@ proc do_file_hl {serial} {
     } else {
 	set gdtargs [list "-S$highlight_files"]
     }
-    set cmd [concat | git-diff-tree -r -s --stdin $gdtargs]
+    set cmd [concat | git diff-tree -r -s --stdin $gdtargs]
     set filehighlight [open $cmd r+]
     fconfigure $filehighlight -blocking 0
     fileevent $filehighlight readable readfhighlight
@@ -1958,7 +1958,7 @@ proc readfhighlight {} {
     }
     if {[eof $filehighlight]} {
 	# strange...
-	puts "oops, git-diff-tree died"
+	puts "oops, git diff-tree died"
 	catch {close $filehighlight}
 	unset filehighlight
     }
