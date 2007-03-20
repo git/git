@@ -489,9 +489,9 @@ class GitSync(Command):
         self.committedChanges.add(int(details["change"]))
         committer = ""
         if author in self.users:
-            committer = "%s %s %s" % (self.users[author], epoch, tz)
+            committer = "%s %s %s" % (self.users[author], epoch, self.tz)
         else:
-            committer = "%s <a@b> %s %s" % (author, epoch, tz)
+            committer = "%s <a@b> %s %s" % (author, epoch, self.tz)
 
         self.gitStream.write("committer %s\n" % committer)
 
@@ -735,10 +735,10 @@ class GitSync(Command):
             except:
                 pass
 
-        tz = - time.timezone / 36
-        tzsign = ("%s" % tz)[0]
+        self.tz = - time.timezone / 36
+        tzsign = ("%s" % self.tz)[0]
         if tzsign != '+' and tzsign != '-':
-            tz = "+" + ("%s" % tz)
+            self.tz = "+" + ("%s" % self.tz)
 
         self.gitOutput, self.gitStream, self.gitError = popen2.popen3("git-fast-import")
 
@@ -774,7 +774,7 @@ class GitSync(Command):
         else:
             changes = []
 
-            if len(changesFile) > 0:
+            if len(self.changesFile) > 0:
                 output = open(self.changesFile).readlines()
                 changeSet = Set()
                 for line in output:
@@ -794,7 +794,7 @@ class GitSync(Command):
                 changes.reverse()
 
             if len(changes) == 0:
-                if not silent:
+                if not self.silent:
                     print "no changes to import!"
                 sys.exit(1)
 
@@ -802,7 +802,7 @@ class GitSync(Command):
             for change in changes:
                 description = p4Cmd("describe %s" % change)
 
-                if not silent:
+                if not self.silent:
                     sys.stdout.write("\rimporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
                     sys.stdout.flush()
                 cnt = cnt + 1
@@ -841,7 +841,7 @@ class GitSync(Command):
                                 merged = "refs/heads/" + merged
                             self.commit(description, files, branch, branchPrefix, parent, merged)
                     else:
-                        self.commit(description, files, branch, globalPrefix, initialParent)
+                        self.commit(description, files, self.branch, self.globalPrefix, self.initialParent)
                         self.initialParent = ""
                 except IOError:
                     print self.gitError.read()
