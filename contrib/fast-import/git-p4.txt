@@ -1,0 +1,74 @@
+git-p4.py - Perforce <-> Git converter using git-fast-import
+
+Usage
+=====
+
+git-p4 supports two main modes: Importing from Perforce to a Git repository is
+done using "git-p4.py sync". Submitting changes from Git back to Perforce is
+done using "git-p4.py submit".
+
+Importing
+=========
+
+The procedure is simple:
+
+  mkdir repo-git
+  cd repo-git
+  git init
+  git-p4.py sync //path/in/your/perforce/depot
+
+This will import the current head revision of the specified depot path into the
+master branch of your git repository. You can use the --branch=mybranch option
+to let git-p4 import from Perforce into a git branch of your choice.
+
+If you want to import the entire history of a given depot path just use
+
+  git-p4.py sync //path/in/depot@all
+
+
+Support for Perforce integrations is still work in progress. Don't bother
+trying it unless you want to hack on it :)
+
+
+Incremental Imports
+===================
+
+After an initial import you can easily synchronize your git repository with
+newer changes from the Perforce depot by just calling
+
+  git-p4.p4 sync
+
+in your git repository. git-p4 stores the depot path of the original import in
+the .git/config file and remembers the last imported p4 revision as a git tag
+called p4/<changenum> .
+
+Submitting
+==========
+
+git-p4 has EXPERIMENTAL support for submitting changes from a git repository
+back to a Perforce depot. This requires a Perforce checkout separate to your
+git repository. This is the basic procedure:
+
+    cd path/to/your/perforce/checkout
+    git-p4.py submit --git-dir=/path/to/your/git/repository
+
+This will create a temporary git branch, use git-rev-list to find out which git
+commits are in your current branch but not in the "origin" branch. You can
+override the name of the "origin" branch by using the --origin=mybranch option.
+The "origin" branch has to be the branch populated with git-p4's sync
+operation.
+
+After some preparations (which might take a while) git-p4 enters a loop where
+it will first show a Perforce submit template and a diff of the change to
+apply.  After quitting the pager with 'q' git-p4 asks for confirmation for
+issuing the "p4 submit" command and also gives you the option of editing the
+submit template using "e".
+
+If a submit fails you may have to "p4 resolve" and submit manually. You can
+continue importing the remaining changes with
+
+  git-p4.py submit --git-dir=/path/to/your/git/repository --continue
+
+After submitting you should sync your origin branch from Perforce using
+git-p4's sync command.
+
