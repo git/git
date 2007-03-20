@@ -720,6 +720,7 @@ proc makewindow {} {
     bindkey <Key-Return> {findnext 0}
     bindkey ? findprev
     bindkey f nextfile
+    bindkey <F5> updatecommits
     bind . <Control-q> doquit
     bind . <Control-f> dofind
     bind . <Control-g> {findnext 0}
@@ -985,6 +986,7 @@ f		Scroll diff view to next file
 <Ctrl-plus>	Increase font size
 <Ctrl-KP->	Decrease font size
 <Ctrl-minus>	Decrease font size
+<F5>		Update
 } \
 	    -justify left -bg white -border 2 -relief sunken
     pack $w.m -side top -fill both
