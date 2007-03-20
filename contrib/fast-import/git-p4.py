@@ -480,7 +480,7 @@ class GitSync(Command):
 
         return ""
 
-    def commit(self, details, files, branch, branchPrefix, parent, merged = ""):
+    def commit(self, details, files, branch, branchPrefix, parent = "", merged = ""):
         epoch = details["time"]
         author = details["user"]
 
@@ -757,6 +757,7 @@ class GitSync(Command):
                     newestRevision = change
 
                 if info["action"] == "delete":
+                    fileCnt = fileCnt + 1
                     continue
 
                 for prop in [ "depotFile", "rev", "action", "type" ]:
@@ -768,7 +769,7 @@ class GitSync(Command):
 
             try:
                 self.commit(details, self.extractFilesFromCommit(details), self.branch, self.globalPrefix)
-            except:
+            except IOError:
                 print self.gitError.read()
 
         else:
