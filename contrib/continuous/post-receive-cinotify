@@ -1,0 +1,104 @@
+#!/usr/bin/perl
+#
+# A hook that notifies its companion cidaemon through a simple
+# queue file that a ref has been updated via a push (actually
+# by a receive-pack running on the server).
+#
+# See cidaemon for per-repository configuration details.
+#
+# To use this hook, add it as the post-receive hook, make it
+# executable, and set its configuration options.
+#
+
+local $ENV{PATH} = '/opt/git/bin';
+
+use strict;
+use warnings;
+use File::Spec;
+use Storable qw(retrieve nstore);
+use Fcntl ':flock';
+
+my $git_dir = File::Spec->rel2abs($ENV{GIT_DIR});
+my $queue_name = `git config --get builder.queue`;chop $queue_name;
+$queue_name =~ m,^([^\s]+)$,; $queue_name = $1; # untaint
+unless ($queue_name) {
+	1 while <STDIN>;
+	print STDERR "\nerror: builder.queue not set.  Not enqueing.\n\n";
+	exit;
+}
+my $queue_lock = "$queue_name.lock";
+
+my @skip;
+open S, "git config --get-all builder.skip|";
+while (<S>) {
+	chop;
+	push @skip, $_;
+}
+close S;
+
+my @new_branch_base;
+open S, "git config --get-all builder.newBranchBase|";
+while (<S>) {
+	chop;
+	push @new_branch_base, $_;
+}
+close S;
+
+sub skip ($)
+{
+	local $_ = shift;
+	foreach my $p (@skip) {
+		return 1 if /^$p/;
+	}
+	0;
+}
+
+open LOCK, ">$queue_lock" or die "Can't open $queue_lock: $!";
+flock LOCK, LOCK_EX;
+
+my $queue = -f $queue_name ? retrieve $queue_name : [];
+my %existing;
+foreach my $r (@$queue) {
+	my ($gd, $ref) = @$r;
+	$existing{$gd}{$ref} = $r;
+}
+
+my @new_branch_commits;
+my $loaded_new_branch_commits = 0;
+
+while (<STDIN>) {
+	chop;
+	my ($old, $new, $ref) = split / /, $_, 3;
+
+	next if $old eq $new;
+	next if $new =~ /^0{40}$/;
+	next if skip $ref;
+
+	my $r = $existing{$git_dir}{$ref};
+	if ($r) {
+		$r->[3] = $new;
+	} else {
+		if ($old =~ /^0{40}$/) {
+			if (!$loaded_new_branch_commits && @new_branch_base) {
+				open M,'-|','git','show-ref',@new_branch_base;
+				while (<M>) {
+					($_) = split / /, $_;
+					push @new_branch_commits, $_;
+				}
+				close M;
+				$loaded_new_branch_commits = 1;
+			}
+			$old = [@new_branch_commits];
+		} else {
+			$old = [$old];
+		}
+
+		$r = [$git_dir, $ref, $old, $new];
+		$existing{$git_dir}{$ref} = $r;
+		push @$queue, $r;
+	}
+}
+nstore $queue, $queue_name;
+
+flock LOCK, LOCK_UN;
+close LOCK;
