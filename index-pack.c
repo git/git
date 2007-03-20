@@ -345,12 +345,10 @@ static int find_delta_children(const union delta_base *base,
 }
 
 static void sha1_object(const void *data, unsigned long size,
-			enum object_type type, unsigned char *sha1,
-			int test_for_collision)
+			enum object_type type, unsigned char *sha1)
 {
 	hash_sha1_file(data, size, typename(type), sha1);
-
-	if (test_for_collision && has_sha1_file(sha1)) {
+	if (has_sha1_file(sha1)) {
 		void *has_data;
 		enum object_type has_type;
 		unsigned long has_size;
@@ -381,7 +379,7 @@ static void resolve_delta(struct object_entry *delta_obj, void *base_data,
 	free(delta_data);
 	if (!result)
 		bad_object(delta_obj->offset, "failed to apply delta");
-	sha1_object(result, result_size, type, delta_obj->sha1, 1);
+	sha1_object(result, result_size, type, delta_obj->sha1);
 	nr_resolved_deltas++;
 
 	hashcpy(delta_base.sha1, delta_obj->sha1);
@@ -438,7 +436,7 @@ static void parse_pack_objects(unsigned char *sha1)
 			delta->obj_no = i;
 			delta++;
 		} else
-			sha1_object(data, obj->size, obj->type, obj->sha1, 1);
+			sha1_object(data, obj->size, obj->type, obj->sha1);
 		free(data);
 		if (verbose)
 			percent = display_progress(i+1, nr_objects, percent);
@@ -541,7 +539,7 @@ static int write_compressed(int fd, void *in, unsigned int size)
 	return size;
 }
 
-static void append_obj_to_pack(void *buf,
+static void append_obj_to_pack(const unsigned char *sha1, void *buf,
 			       unsigned long size, enum object_type type)
 {
 	struct object_entry *obj = &objects[nr_objects++];
@@ -559,7 +557,7 @@ static void append_obj_to_pack(void *buf,
 	write_or_die(output_fd, header, n);
 	obj[1].offset = obj[0].offset + n;
 	obj[1].offset += write_compressed(output_fd, buf, size);
-	sha1_object(buf, size, type, obj->sha1, 0);
+	hashcpy(obj->sha1, sha1);
 }
 
 static int delta_pos_compare(const void *_a, const void *_b)
@@ -612,7 +610,9 @@ static void fix_unresolved_deltas(int nr_unresolved)
 				resolve_delta(child, data, size, type);
 		}
 
-		append_obj_to_pack(data, size, type);
+		if (check_sha1_signature(d->base.sha1, data, size, typename(type)))
+			die("local object %s is corrupt", sha1_to_hex(d->base.sha1));
+		append_obj_to_pack(d->base.sha1, data, size, type);
 		free(data);
 		if (verbose)
 			percent = display_progress(nr_resolved_deltas,
