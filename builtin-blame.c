@@ -182,9 +182,8 @@ struct scoreboard {
 
 static int cmp_suspect(struct origin *a, struct origin *b)
 {
-	int cmp = hashcmp(a->commit->object.sha1, b->commit->object.sha1);
-	if (cmp)
-		return cmp;
+	if (a->commit != b->commit)
+		return 1;
 	return strcmp(a->path, b->path);
 }
 
