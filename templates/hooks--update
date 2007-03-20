@@ -56,6 +56,12 @@ recipients=$(git-repo-config hooks.mailinglist)
 announcerecipients=$(git-repo-config hooks.announcelist)
 allowunannotated=$(git-repo-config --bool hooks.allowunannotated)
 
+# check for no description
+if [ -z "$projectdesc" -o "$projectdesc" = "Unnamed repository; edit this file to name it for gitweb" ]; then
+	echo "*** Project description file hasn't been set" >&2
+	exit 1
+fi
+
 # --- Check types
 newrev_type=$(git-cat-file -t $newrev)
 
