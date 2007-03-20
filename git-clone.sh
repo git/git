@@ -42,6 +42,7 @@ clone_dumb_http () {
 	http_fetch "$1/info/refs" "$clone_tmp/refs" ||
 		die "Cannot get remote repository information.
 Perhaps git-update-server-info needs to be run there?"
+	test "z$quiet" = z && v=-v || v=
 	while read sha1 refname
 	do
 		name=`expr "z$refname" : 'zrefs/\(.*\)'` &&
@@ -59,7 +60,7 @@ Perhaps git-update-server-info needs to be run there?"
 		else
 			tname=$name
 		fi
-		git-http-fetch -v -a -w "$tname" "$name" "$1/" || exit 1
+		git-http-fetch $v -a -w "$tname" "$name" "$1/" || exit 1
 	done <"$clone_tmp/refs"
 	rm -fr "$clone_tmp"
 	http_fetch "$1/HEAD" "$GIT_DIR/REMOTE_HEAD" ||
