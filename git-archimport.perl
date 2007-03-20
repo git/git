@@ -89,7 +89,11 @@ usage if $opt_h;
 # values associated with keys:
 #   =1 - Arch version / git 'branch' detected via abrowse on a limit
 #   >1 - Arch version / git 'branch' of an auxiliary branch we've merged
-my %arch_branches = map { $_ => 1 } @ARGV;
+my %arch_branches = map { my $branch = $_; $branch =~ s/:[^:]*$//; $branch => 1 } @ARGV;
+
+# $branch_name_map:
+# maps arch branches to git branch names
+my %branch_name_map = map { m/^(.*):([^:]*)$/; $1 => $2 } grep { m/:/ } @ARGV;
 
 $ENV{'TMPDIR'} = $opt_t if $opt_t; # $ENV{TMPDIR} will affect tempdir() calls:
 my $tmp = tempdir('git-archimport-XXXXXX', TMPDIR => 1, CLEANUP => 1);
@@ -104,6 +108,7 @@ unless (-d $git_dir) { # initial import needs empty directory
     closedir DIR
 }
 
+my $default_archive;		# default Arch archive
 my %reachable = ();             # Arch repositories we can access
 my %unreachable = ();           # Arch repositories we can't access :<
 my @psets  = ();                # the collection
@@ -303,7 +308,34 @@ sub old_style_branchname {
     return $ret;
 }
 
-*git_branchname = $opt_o ? *old_style_branchname : *tree_dirname;
+*git_default_branchname = $opt_o ? *old_style_branchname : *tree_dirname;
+
+# retrieve default archive, since $branch_name_map keys might not include it
+sub get_default_archive {
+    if (!defined $default_archive) {
+        $default_archive = safe_pipe_capture($TLA,'my-default-archive');
+        chomp $default_archive;
+    }
+    return $default_archive;
+}
+
+sub git_branchname {
+    my $revision = shift;
+    my $name = extract_versionname($revision);
+
+    if (exists $branch_name_map{$name}) {
+	return $branch_name_map{$name};
+
+    } elsif ($name =~ m#^([^/]*)/(.*)$#
+	     && $1 eq get_default_archive()
+	     && exists $branch_name_map{$2}) {
+	# the names given in the command-line lacked the archive.
+	return $branch_name_map{$2};
+
+    } else {
+	return git_default_branchname($revision);
+    }
+}
 
 sub process_patchset_accurate {
     my $ps = shift;
@@ -333,19 +365,23 @@ sub process_patchset_accurate {
         if ($ps->{tag} && (my $branchpoint = eval { ptag($ps->{tag}) })) {
             
             # find where we are supposed to branch from
-            system('git-checkout','-f','-b',$ps->{branch},
-                            $branchpoint) == 0 or die "$! $?\n";
-            
+	    if (! -e "$git_dir/refs/heads/$ps->{branch}") {
+		system('git-branch',$ps->{branch},$branchpoint) == 0 or die "$! $?\n";
+
+		# We trust Arch with the fact that this is just a tag,
+		# and it does not affect the state of the tree, so
+		# we just tag and move on.  If the user really wants us
+		# to consolidate more branches into one, don't tag because
+		# the tag name would be already taken.
+		tag($ps->{id}, $branchpoint);
+		ptag($ps->{id}, $branchpoint);
+		print " * Tagged $ps->{id} at $branchpoint\n";
+	    }
+	    system('git-checkout','-f',$ps->{branch}) == 0 or die "$! $?\n";
+
             # remove any old stuff that got leftover:
             my $rm = safe_pipe_capture('git-ls-files','--others','-z');
             rmtree(split(/\0/,$rm)) if $rm;
-
-            # If we trust Arch with the fact that this is just 
-            # a tag, and it does not affect the state of the tree
-            # then we just tag and move on
-            tag($ps->{id}, $branchpoint);
-            ptag($ps->{id}, $branchpoint);
-            print " * Tagged $ps->{id} at $branchpoint\n";
             return 0;
         } else {
             warn "Tagging from unknown id unsupported\n" if $ps->{tag};
@@ -385,14 +421,19 @@ sub process_patchset_fast {
                 unless $branchpoint;
             
             # find where we are supposed to branch from
-            system('git-checkout','-b',$ps->{branch},$branchpoint);
+	    if (! -e "$git_dir/refs/heads/$ps->{branch}") {
+		system('git-branch',$ps->{branch},$branchpoint) == 0 or die "$! $?\n";
 
-            # If we trust Arch with the fact that this is just 
-            # a tag, and it does not affect the state of the tree
-            # then we just tag and move on
-            tag($ps->{id}, $branchpoint);
-            ptag($ps->{id}, $branchpoint);
-            print " * Tagged $ps->{id} at $branchpoint\n";
+		# We trust Arch with the fact that this is just a tag,
+		# and it does not affect the state of the tree, so
+		# we just tag and move on.  If the user really wants us
+		# to consolidate more branches into one, don't tag because
+		# the tag name would be already taken.
+		tag($ps->{id}, $branchpoint);
+		ptag($ps->{id}, $branchpoint);
+		print " * Tagged $ps->{id} at $branchpoint\n";
+            }
+            system('git-checkout',$ps->{branch}) == 0 or die "$! $?\n";
             return 0;
         } 
         die $! if $?;
@@ -830,8 +871,9 @@ sub tag {
     if ($opt_o) {
         $tag =~ s|/|--|g;
     } else {
-        # don't use subdirs for tags yet, it could screw up other porcelains
-        $tag =~ s|/|,|g;
+	my $patchname = $tag;
+	$patchname =~ s/.*--//;
+        $tag = git_branchname ($tag) . '--' . $patchname;
     }
     
     if ($commit) {

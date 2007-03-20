@@ -301,7 +301,7 @@ static const char *find_wholine(const char *who, int wholen, const char *buf, un
 	return "";
 }
 
-static char *copy_line(const char *buf)
+static const char *copy_line(const char *buf)
 {
 	const char *eol = strchr(buf, '\n');
 	char *line;
@@ -315,7 +315,7 @@ static char *copy_line(const char *buf)
 	return line;
 }
 
-static char *copy_name(const char *buf)
+static const char *copy_name(const char *buf)
 {
 	const char *eol = strchr(buf, '\n');
 	const char *eoname = strstr(buf, " <");
@@ -330,7 +330,7 @@ static char *copy_name(const char *buf)
 	return line;
 }
 
-static char *copy_email(const char *buf)
+static const char *copy_email(const char *buf)
 {
 	const char *email = strchr(buf, '<');
 	const char *eoemail = strchr(email, '>');

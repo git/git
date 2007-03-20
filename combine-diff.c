@@ -684,7 +684,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			goto deleted_file;
 
 		if (S_ISLNK(st.st_mode)) {
-			size_t len = st.st_size;
+			size_t len = xsize_t(st.st_size);
 			result_size = len;
 			result = xmalloc(len + 1);
 			if (result_size != readlink(elem->path, result, len)) {
@@ -697,7 +697,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 		}
 		else if (0 <= (fd = open(elem->path, O_RDONLY)) &&
 			 !fstat(fd, &st)) {
-			size_t len = st.st_size;
+			size_t len = xsize_t(st.st_size);
 			size_t sz = 0;
 			int is_file, i;
 

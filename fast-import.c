@@ -133,10 +133,6 @@ Format of STDIN stream:
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
 
-#ifndef PRIuMAX
-#define PRIuMAX "llu"
-#endif
-
 struct object_entry
 {
 	struct object_entry *next;
@@ -220,7 +216,8 @@ struct branch
 	const char *name;
 	struct tree_entry branch_tree;
 	uintmax_t last_commit;
-	unsigned int pack_id;
+	unsigned active : 1;
+	unsigned pack_id : PACK_ID_BITS;
 	unsigned char sha1[20];
 };
 
@@ -252,7 +249,7 @@ typedef enum {
 
 /* Configured limits on output */
 static unsigned long max_depth = 10;
-static unsigned long max_packsize = (1LL << 32) - 1;
+static off_t max_packsize = (1LL << 32) - 1;
 static int force_update;
 
 /* Stats and misc. counters */
@@ -528,6 +525,7 @@ static struct branch *new_branch(const char *name)
 	b->table_next_branch = branch_table[hc];
 	b->branch_tree.versions[0].mode = S_IFDIR;
 	b->branch_tree.versions[1].mode = S_IFDIR;
+	b->active = 0;
 	b->pack_id = MAX_PACK_ID;
 	branch_table[hc] = b;
 	branch_count++;
@@ -755,7 +753,7 @@ static char *create_index(void)
 static char *keep_pack(char *curr_index_name)
 {
 	static char name[PATH_MAX];
-	static char *keep_msg = "fast-import";
+	static const char *keep_msg = "fast-import";
 	int keep_fd;
 
 	chmod(pack_data->pack_name, 0444);
@@ -1373,16 +1371,33 @@ static void dump_marks_helper(FILE *f,
 
 static void dump_marks(void)
 {
-	if (mark_file)
-	{
-		FILE *f = fopen(mark_file, "w");
-		if (f) {
-			dump_marks_helper(f, 0, marks);
-			fclose(f);
-		} else
-			failure |= error("Unable to write marks file %s: %s",
-				mark_file, strerror(errno));
+	static struct lock_file mark_lock;
+	int mark_fd;
+	FILE *f;
+
+	if (!mark_file)
+		return;
+
+	mark_fd = hold_lock_file_for_update(&mark_lock, mark_file, 0);
+	if (mark_fd < 0) {
+		failure |= error("Unable to write marks file %s: %s",
+			mark_file, strerror(errno));
+		return;
 	}
+
+	f = fdopen(mark_fd, "w");
+	if (!f) {
+		rollback_lock_file(&mark_lock);
+		failure |= error("Unable to write marks file %s: %s",
+			mark_file, strerror(errno));
+		return;
+	}
+
+	dump_marks_helper(f, 0, marks);
+	fclose(f);
+	if (commit_lock_file(&mark_lock))
+		failure |= error("Unable to write marks file %s: %s",
+			mark_file, strerror(errno));
 }
 
 static void read_next_command(void)
@@ -1529,7 +1544,7 @@ static void unload_one_branch(void)
 {
 	while (cur_active_branches
 		&& cur_active_branches >= max_active_branches) {
-		unsigned long min_commit = ULONG_MAX;
+		uintmax_t min_commit = ULONG_MAX;
 		struct branch *e, *l = NULL, *p = NULL;
 
 		for (e = active_branches; e; e = e->active_next_branch) {
@@ -1547,6 +1562,7 @@ static void unload_one_branch(void)
 			e = active_branches;
 			active_branches = e->active_next_branch;
 		}
+		e->active = 0;
 		e->active_next_branch = NULL;
 		if (e->branch_tree.tree) {
 			release_tree_content_recursive(e->branch_tree.tree);
@@ -1559,10 +1575,13 @@ static void unload_one_branch(void)
 static void load_branch(struct branch *b)
 {
 	load_tree(&b->branch_tree);
-	b->active_next_branch = active_branches;
-	active_branches = b;
-	cur_active_branches++;
-	branch_load_count++;
+	if (!b->active) {
+		b->active = 1;
+		b->active_next_branch = active_branches;
+		active_branches = b;
+		cur_active_branches++;
+		branch_load_count++;
+	}
 }
 
 static void file_change_m(struct branch *b)
@@ -1746,7 +1765,14 @@ static struct hash_list *cmd_merge(unsigned int *count)
 			if (oe->type != OBJ_COMMIT)
 				die("Mark :%" PRIuMAX " not a commit", idnum);
 			hashcpy(n->sha1, oe->sha1);
-		} else if (get_sha1(from, n->sha1))
+		} else if (!get_sha1(from, n->sha1)) {
+			unsigned long size;
+			char *buf = read_object_with_reference(n->sha1,
+				commit_type, &size, n->sha1);
+			if (!buf || size < 46)
+				die("Not a valid commit: %s", from);
+			free(buf);
+		} else
 			die("Invalid ref name or SHA1 expression: %s", from);
 
 		n->next = NULL;
@@ -1967,6 +1993,40 @@ static void cmd_checkpoint(void)
 	read_next_command();
 }
 
+static void import_marks(const char *input_file)
+{
+	char line[512];
+	FILE *f = fopen(input_file, "r");
+	if (!f)
+		die("cannot read %s: %s", input_file, strerror(errno));
+	while (fgets(line, sizeof(line), f)) {
+		uintmax_t mark;
+		char *end;
+		unsigned char sha1[20];
+		struct object_entry *e;
+
+		end = strchr(line, '\n');
+		if (line[0] != ':' || !end)
+			die("corrupt mark line: %s", line);
+		*end = 0;
+		mark = strtoumax(line + 1, &end, 10);
+		if (!mark || end == line + 1
+			|| *end != ' ' || get_sha1(end + 1, sha1))
+			die("corrupt mark line: %s", line);
+		e = find_object(sha1);
+		if (!e) {
+			enum object_type type = sha1_object_info(sha1, NULL);
+			if (type < 0)
+				die("object not found: %s", sha1_to_hex(sha1));
+			e = insert_object(sha1);
+			e->type = type;
+			e->pack_id = MAX_PACK_ID;
+		}
+		insert_mark(mark, e);
+	}
+	fclose(f);
+}
+
 static const char fast_import_usage[] =
 "git-fast-import [--date-format=f] [--max-pack-size=n] [--depth=n] [--active-branches=n] [--export-marks=marks.file]";
 
@@ -1975,6 +2035,12 @@ int main(int argc, const char **argv)
 	int i, show_stats = 1;
 
 	git_config(git_default_config);
+	alloc_objects(object_entry_alloc);
+	strbuf_init(&command_buf);
+	atom_table = xcalloc(atom_table_sz, sizeof(struct atom_str*));
+	branch_table = xcalloc(branch_table_sz, sizeof(struct branch*));
+	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
+	marks = pool_calloc(1, sizeof(struct mark_set));
 
 	for (i = 1; i < argc; i++) {
 		const char *a = argv[i];
@@ -1998,6 +2064,8 @@ int main(int argc, const char **argv)
 			max_depth = strtoul(a + 8, NULL, 0);
 		else if (!prefixcmp(a, "--active-branches="))
 			max_active_branches = strtoul(a + 18, NULL, 0);
+		else if (!prefixcmp(a, "--import-marks="))
+			import_marks(a + 15);
 		else if (!prefixcmp(a, "--export-marks="))
 			mark_file = a + 15;
 		else if (!prefixcmp(a, "--export-pack-edges=")) {
@@ -2017,14 +2085,6 @@ int main(int argc, const char **argv)
 	}
 	if (i != argc)
 		usage(fast_import_usage);
-
-	alloc_objects(object_entry_alloc);
-	strbuf_init(&command_buf);
-
-	atom_table = xcalloc(atom_table_sz, sizeof(struct atom_str*));
-	branch_table = xcalloc(branch_table_sz, sizeof(struct branch*));
-	avail_tree_table = xcalloc(avail_tree_table_sz, sizeof(struct avail_tree_content*));
-	marks = pool_calloc(1, sizeof(struct mark_set));
 
 	start_packfile();
 	for (;;) {

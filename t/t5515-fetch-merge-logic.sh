@@ -114,6 +114,7 @@ done >> tests
 # neither in the Pull: or .fetch config
 for branch in master br-unconfig ; do
     cat <<EOF
+$branch ../.git
 $branch ../.git one
 $branch ../.git one two
 $branch --tags ../.git
@@ -148,7 +149,7 @@ do
 		} >"$actual" &&
 		if test -f "$expect"
 		then
-			diff -u "$expect" "$actual" &&
+			git diff -u "$expect" "$actual" &&
 			rm -f "$actual"
 		else
 			# this is to help developing new tests.

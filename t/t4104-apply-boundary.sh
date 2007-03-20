@@ -90,7 +90,7 @@ do
 				cat '"$kind-patch.$with"'
 				(exit 1)
 			} &&
-			diff -u '"$kind"'-expect victim
+			git diff '"$kind"'-expect victim
 		'
 	done
 done
@@ -108,7 +108,7 @@ do
 			cat '"$kind-ng.without"'
 			(exit 1)
 		} &&
-		diff -u '"$kind"'-expect victim
+		git diff '"$kind"'-expect victim
 	'
 done
 

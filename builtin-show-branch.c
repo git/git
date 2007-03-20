@@ -721,7 +721,8 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		}
 
 		for (i = 0; i < reflog; i++) {
-			char *logmsg, *msg, *m;
+			char *logmsg, *m;
+			const char *msg;
 			unsigned long timestamp;
 			int tz;
 

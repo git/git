@@ -76,10 +76,10 @@ static int find_short_packed_object(int len, const unsigned char *match, unsigne
 
 	prepare_packed_git();
 	for (p = packed_git; p && found < 2; p = p->next) {
-		unsigned num = num_packed_objects(p);
-		unsigned first = 0, last = num;
+		uint32_t num = num_packed_objects(p);
+		uint32_t first = 0, last = num;
 		while (first < last) {
-			unsigned mid = (first + last) / 2;
+			uint32_t mid = (first + last) / 2;
 			unsigned char now[20];
 			int cmp;
 
@@ -605,7 +605,7 @@ static int handle_one_ref(const char *path,
 int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 {
 	struct commit_list *list = NULL, *backup = NULL, *l;
-	struct commit *commit;
+	struct commit *commit = NULL;
 
 	if (prefix[0] == '!') {
 		if (prefix[1] != '!')
@@ -617,8 +617,12 @@ int get_sha1_oneline(const char *prefix, unsigned char *sha1)
 	for_each_ref(handle_one_ref, &list);
 	for (l = list; l; l = l->next)
 		commit_list_insert(l->item, &backup);
-	while ((commit = pop_most_recent_commit(&list, ONELINE_SEEN))) {
+	while (list) {
 		char *p;
+
+		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
+		if (!commit)
+			break;
 		parse_object(commit->object.sha1);
 		if (!commit->buffer || !(p = strstr(commit->buffer, "\n\n")))
 			continue;

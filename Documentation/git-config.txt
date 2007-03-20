@@ -16,6 +16,8 @@ SYNOPSIS
 'git-config' [--global] [type] --get-all name [value_regex]
 'git-config' [--global] [type] --unset name [value_regex]
 'git-config' [--global] [type] --unset-all name [value_regex]
+'git-config' [--global] [type] --rename-section old_name new_name
+'git-config' [--global] [type] --remove-section name
 'git-config' [--global] -l | --list
 
 DESCRIPTION
@@ -73,6 +75,12 @@ OPTIONS
 
 --global::
 	Use global ~/.gitconfig file rather than the repository .git/config.
+
+--remove-section::
+	Remove the given section from the configuration file.
+
+--rename-section::
+	Rename the given section to a new name.
 
 --unset::
 	Remove the line matching the key from config file.

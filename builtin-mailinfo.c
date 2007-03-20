@@ -545,10 +545,10 @@ static int decode_b_segment(char *in, char *ot, char *ep)
 	return 0;
 }
 
-static void convert_to_utf8(char *line, char *charset)
+static void convert_to_utf8(char *line, const char *charset)
 {
-	static char latin_one[] = "latin1";
-	char *input_charset = *charset ? charset : latin_one;
+	static const char latin_one[] = "latin1";
+	const char *input_charset = *charset ? charset : latin_one;
 	char *out = reencode_string(line, metainfo_charset, input_charset);
 
 	if (!out)

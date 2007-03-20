@@ -169,7 +169,7 @@ test_expect_success "$name" "
 	svn up '$SVN_TREE' &&
 	test -f '$SVN_TREE'/exec-2.sh &&
 	test ! -L '$SVN_TREE'/exec-2.sh &&
-	diff -u help $SVN_TREE/exec-2.sh"
+	git diff help $SVN_TREE/exec-2.sh"
 
 if test "$have_utf8" = t
 then
@@ -193,7 +193,7 @@ test_expect_success "$name" \
     "git-svn init $svnrepo && git-svn fetch &&
      git-rev-list --pretty=raw remotes/git-svn | grep ^tree | uniq > a &&
      git-rev-list --pretty=raw remotes/alt | grep ^tree | uniq > b &&
-     diff -u a b"
+     git diff a b"
 
 name='check imported tree checksums expected tree checksums'
 rm -f expected
@@ -211,7 +211,7 @@ tree d667270a1f7b109f5eb3aaea21ede14b56bfdd6e
 tree 8f51f74cf0163afc9ad68a4b1537288c4558b5a4
 EOF
 
-test_expect_success "$name" "diff -u a expected"
+test_expect_success "$name" "git diff a expected"
 
 test_expect_failure 'exit if remote refs are ambigious' "
         git-config --add svn-remote.svn.fetch \

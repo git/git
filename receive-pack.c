@@ -67,18 +67,47 @@ struct command {
 
 static struct command *commands;
 
-static char update_hook[] = "hooks/update";
+static const char update_hook[] = "hooks/update";
+static const char pre_receive_hook[] = "hooks/pre-receive";
+static const char post_receive_hook[] = "hooks/post-receive";
 
-static int run_update_hook(const char *refname,
-			   char *old_hex, char *new_hex)
+static int run_hook(const char *hook_name,
+	struct command *first_cmd,
+	int single)
 {
-	int code;
+	struct command *cmd;
+	int argc, code;
+	const char **argv;
 
-	if (access(update_hook, X_OK) < 0)
+	for (argc = 0, cmd = first_cmd; cmd; cmd = cmd->next) {
+		if (!cmd->error_string)
+			argc += 3;
+		if (single)
+			break;
+	}
+
+	if (!argc || access(hook_name, X_OK) < 0)
 		return 0;
-	code = run_command_opt(RUN_COMMAND_NO_STDIN
-		| RUN_COMMAND_STDOUT_TO_STDERR,
-		update_hook, refname, old_hex, new_hex, NULL);
+
+	argv = xmalloc(sizeof(*argv) * (2 + argc));
+	argv[0] = hook_name;
+	for (argc = 1, cmd = first_cmd; cmd; cmd = cmd->next) {
+		if (!cmd->error_string) {
+			argv[argc++] = xstrdup(cmd->ref_name);
+			argv[argc++] = xstrdup(sha1_to_hex(cmd->old_sha1));
+			argv[argc++] = xstrdup(sha1_to_hex(cmd->new_sha1));
+		}
+		if (single)
+			break;
+	}
+	argv[argc] = NULL;
+
+	code = run_command_v_opt(argv,
+		RUN_COMMAND_NO_STDIN | RUN_COMMAND_STDOUT_TO_STDERR);
+	while (--argc > 0)
+		free((char*)argv[argc]);
+	free(argv);
+
 	switch (code) {
 	case 0:
 		return 0;
@@ -91,37 +120,31 @@ static int run_update_hook(const char *refname,
 	case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
 		return error("waitpid is confused");
 	case -ERR_RUN_COMMAND_WAITPID_SIGNAL:
-		return error("%s died of signal", update_hook);
+		return error("%s died of signal", hook_name);
 	case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
-		return error("%s died strangely", update_hook);
+		return error("%s died strangely", hook_name);
 	default:
-		error("%s exited with error code %d", update_hook, -code);
+		error("%s exited with error code %d", hook_name, -code);
 		return -code;
 	}
 }
 
-static int update(struct command *cmd)
+static const char *update(struct command *cmd)
 {
 	const char *name = cmd->ref_name;
 	unsigned char *old_sha1 = cmd->old_sha1;
 	unsigned char *new_sha1 = cmd->new_sha1;
-	char new_hex[41], old_hex[41];
 	struct ref_lock *lock;
 
-	cmd->error_string = NULL;
 	if (!prefixcmp(name, "refs/") && check_ref_format(name + 5)) {
-		cmd->error_string = "funny refname";
-		return error("refusing to create funny ref '%s' locally",
-			     name);
+		error("refusing to create funny ref '%s' locally", name);
+		return "funny refname";
 	}
 
-	strcpy(new_hex, sha1_to_hex(new_sha1));
-	strcpy(old_hex, sha1_to_hex(old_sha1));
-
 	if (!is_null_sha1(new_sha1) && !has_sha1_file(new_sha1)) {
-		cmd->error_string = "bad pack";
-		return error("unpack should have generated %s, "
-			     "but I can't find it!", new_hex);
+		error("unpack should have generated %s, "
+		      "but I can't find it!", sha1_to_hex(new_sha1));
+		return "bad pack";
 	}
 	if (deny_non_fast_forwards && !is_null_sha1(new_sha1) &&
 	    !is_null_sha1(old_sha1) &&
@@ -136,32 +159,39 @@ static int update(struct command *cmd)
 			if (!hashcmp(old_sha1, ent->item->object.sha1))
 				break;
 		free_commit_list(bases);
-		if (!ent)
-			return error("denying non-fast forward;"
-				     " you should pull first");
+		if (!ent) {
+			error("denying non-fast forward %s"
+			      " (you should pull first)", name);
+			return "non-fast forward";
+		}
 	}
-	if (run_update_hook(name, old_hex, new_hex)) {
-		cmd->error_string = "hook declined";
-		return error("hook declined to update %s", name);
+	if (run_hook(update_hook, cmd, 1)) {
+		error("hook declined to update %s", name);
+		return "hook declined";
 	}
 
 	if (is_null_sha1(new_sha1)) {
 		if (delete_ref(name, old_sha1)) {
-			cmd->error_string = "failed to delete";
-			return error("failed to delete %s", name);
+			error("failed to delete %s", name);
+			return "failed to delete";
 		}
-		fprintf(stderr, "%s: %s -> deleted\n", name, old_hex);
+		fprintf(stderr, "%s: %s -> deleted\n", name,
+			sha1_to_hex(old_sha1));
+		return NULL; /* good */
 	}
 	else {
 		lock = lock_any_ref_for_update(name, old_sha1);
 		if (!lock) {
-			cmd->error_string = "failed to lock";
-			return error("failed to lock %s", name);
+			error("failed to lock %s", name);
+			return "failed to lock";
 		}
-		write_ref_sha1(lock, new_sha1, "push");
-		fprintf(stderr, "%s: %s -> %s\n", name, old_hex, new_hex);
+		if (write_ref_sha1(lock, new_sha1, "push")) {
+			return "failed to write"; /* error() already called */
+		}
+		fprintf(stderr, "%s: %s -> %s\n", name,
+			sha1_to_hex(old_sha1), sha1_to_hex(new_sha1));
+		return NULL; /* good */
 	}
-	return 0;
 }
 
 static char update_post_hook[] = "hooks/post-update";
@@ -172,14 +202,14 @@ static void run_update_post_hook(struct command *cmd)
 	int argc;
 	const char **argv;
 
-	if (access(update_post_hook, X_OK) < 0)
-		return;
-	for (argc = 1, cmd_p = cmd; cmd_p; cmd_p = cmd_p->next) {
+	for (argc = 0, cmd_p = cmd; cmd_p; cmd_p = cmd_p->next) {
 		if (cmd_p->error_string)
 			continue;
 		argc++;
 	}
-	argv = xmalloc(sizeof(*argv) * (1 + argc));
+	if (!argc || access(update_post_hook, X_OK) < 0)
+		return;
+	argv = xmalloc(sizeof(*argv) * (2 + argc));
 	argv[0] = update_post_hook;
 
 	for (argc = 1, cmd_p = cmd; cmd_p; cmd_p = cmd_p->next) {
@@ -196,19 +226,30 @@ static void run_update_post_hook(struct command *cmd)
 		| RUN_COMMAND_STDOUT_TO_STDERR);
 }
 
-/*
- * This gets called after(if) we've successfully
- * unpacked the data payload.
- */
-static void execute_commands(void)
+static void execute_commands(const char *unpacker_error)
 {
 	struct command *cmd = commands;
 
+	if (unpacker_error) {
+		while (cmd) {
+			cmd->error_string = "n/a (unpacker error)";
+			cmd = cmd->next;
+		}
+		return;
+	}
+
+	if (run_hook(pre_receive_hook, commands, 0)) {
+		while (cmd) {
+			cmd->error_string = "pre-receive hook declined";
+			cmd = cmd->next;
+		}
+		return;
+	}
+
 	while (cmd) {
-		update(cmd);
+		cmd->error_string = update(cmd);
 		cmd = cmd->next;
 	}
-	run_update_post_hook(commands);
 }
 
 static void read_head_info(void)
@@ -244,7 +285,7 @@ static void read_head_info(void)
 		hashcpy(cmd->old_sha1, old_sha1);
 		hashcpy(cmd->new_sha1, new_sha1);
 		memcpy(cmd->ref_name, line + 82, len - 81);
-		cmd->error_string = "n/a (unpacker error)";
+		cmd->error_string = NULL;
 		cmd->next = NULL;
 		*p = cmd;
 		p = &cmd->next;
@@ -439,12 +480,13 @@ int main(int argc, char **argv)
 
 		if (!delete_only(commands))
 			unpack_status = unpack();
-		if (!unpack_status)
-			execute_commands();
+		execute_commands(unpack_status);
 		if (pack_lockfile)
 			unlink(pack_lockfile);
 		if (report_status)
 			report(unpack_status);
+		run_hook(post_receive_hook, commands, 0);
+		run_update_post_hook(commands);
 	}
 	return 0;
 }

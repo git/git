@@ -55,7 +55,7 @@ int interpolate(char *result, int reslen,
 	const char *src = orig;
 	char *dest = result;
 	int newlen = 0;
-	char *name, *value;
+	const char *name, *value;
 	int namelen, valuelen;
 	int i;
 	char c;

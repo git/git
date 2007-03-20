@@ -1,6 +1,8 @@
 # The default target of this Makefile is...
 all:
 
+# Define V=1 to have a more verbose compile.
+#
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
 # This also implies MOZILLA_SHA1.
 #
@@ -180,7 +182,7 @@ SCRIPT_SH = \
 	git-merge-one-file.sh git-parse-remote.sh \
 	git-pull.sh git-rebase.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
-	git-revert.sh git-sh-setup.sh \
+	git-sh-setup.sh \
 	git-tag.sh git-verify-tag.sh \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
@@ -197,7 +199,7 @@ SCRIPT_PERL = \
 
 SCRIPTS = $(patsubst %.sh,%,$(SCRIPT_SH)) \
 	  $(patsubst %.perl,%,$(SCRIPT_PERL)) \
-	  git-cherry-pick git-status git-instaweb
+	  git-status git-instaweb
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
@@ -222,7 +224,7 @@ EXTRA_PROGRAMS =
 BUILT_INS = \
 	git-format-patch$X git-show$X git-whatchanged$X git-cherry$X \
 	git-get-tar-commit-id$X git-init$X git-repo-config$X \
-	git-fsck-objects$X \
+	git-fsck-objects$X git-cherry-pick$X \
 	$(patsubst builtin-%.o,git-%$X,$(BUILTIN_OBJS))
 
 # what 'all' will build and 'install' will install, in gitexecdir
@@ -315,6 +317,7 @@ BUILTIN_OBJS = \
 	builtin-rerere.o \
 	builtin-rev-list.o \
 	builtin-rev-parse.o \
+	builtin-revert.o \
 	builtin-rm.o \
 	builtin-runstatus.o \
 	builtin-shortlog.o \
@@ -629,6 +632,31 @@ ifdef NO_PERL_MAKEMAKER
 	export NO_PERL_MAKEMAKER
 endif
 
+QUIET_SUBDIR0  = $(MAKE) -C # space to separate -C and subdir
+QUIET_SUBDIR1  =
+
+ifneq ($(findstring $(MAKEFLAGS),w),w)
+PRINT_DIR = --no-print-directory
+else # "make -w"
+NO_SUBDIR = :
+endif
+
+ifneq ($(findstring $(MAKEFLAGS),s),s)
+ifndef V
+	QUIET_CC       = @echo '   ' CC $@;
+	QUIET_AR       = @echo '   ' AR $@;
+	QUIET_LINK     = @echo '   ' LINK $@;
+	QUIET_BUILT_IN = @echo '   ' BUILTIN $@;
+	QUIET_GEN      = @echo '   ' GEN $@;
+	QUIET_SUBDIR0  = @subdir=
+	QUIET_SUBDIR1  = ;$(NO_SUBDIR) echo '   ' SUBDIR $$subdir; \
+			 $(MAKE) $(PRINT_DIR) -C $$subdir
+	export V
+	export QUIET_GEN
+	export QUIET_BUILT_IN
+endif
+endif
+
 # Shell quote (do not use $(call) to accommodate ancient setups);
 
 SHA1_HEADER_SQ = $(subst ','\'',$(SHA1_HEADER))
@@ -660,44 +688,43 @@ export prefix gitexecdir TAR INSTALL DESTDIR SHELL_PATH template_dir
 all: $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk gitweb/gitweb.cgi
 
 all:
-	$(MAKE) -C git-gui all
-	$(MAKE) -C perl PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' all
-	$(MAKE) -C templates NOEXECTEMPL='$(NOEXECTEMPL)'
+	$(QUIET_SUBDIR0)git-gui $(QUIET_SUBDIR1) all
+	$(QUIET_SUBDIR0)perl $(QUIET_SUBDIR1) PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' all
+	$(QUIET_SUBDIR0)templates $(QUIET_SUBDIR1) NOEXECTEMPL='$(NOEXECTEMPL)'
 
 strip: $(PROGRAMS) git$X
 	$(STRIP) $(STRIP_OPTS) $(PROGRAMS) git$X
 
 git$X: git.c common-cmds.h $(BUILTIN_OBJS) $(GITLIBS) GIT-CFLAGS
-	$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
+	$(QUIET_LINK)$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
 		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) \
 		$(BUILTIN_OBJS) $(ALL_LDFLAGS) $(LIBS)
 
 help.o: common-cmds.h
 
 $(BUILT_INS): git$X
-	rm -f $@ && ln git$X $@
+	$(QUIET_BUILT_IN)rm -f $@ && ln git$X $@
 
 common-cmds.h: Documentation/git-*.txt
-	./generate-cmdlist.sh > $@+
-	mv $@+ $@
+	$(QUIET_GEN)./generate-cmdlist.sh > $@+ && mv $@+ $@
 
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
-	rm -f $@ $@+
+	$(QUIET_GEN)rm -f $@ $@+ && \
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 	    -e 's|@@PERL@@|$(PERL_PATH_SQ)|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
-	    $@.sh >$@+
-	chmod +x $@+
+	    $@.sh >$@+ && \
+	chmod +x $@+ && \
 	mv $@+ $@
 
 $(patsubst %.perl,%,$(SCRIPT_PERL)): perl/perl.mak
 
 perl/perl.mak: GIT-CFLAGS
-	$(MAKE) -C perl PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' $(@F)
+	$(QUIET_SUBDIR0)perl $(QUIET_SUBDIR1) PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' $(@F)
 
 $(patsubst %.perl,%,$(SCRIPT_PERL)): % : %.perl
-	rm -f $@ $@+
+	$(QUIET_GEN)rm -f $@ $@+ && \
 	INSTLIBDIR=`$(MAKE) -C perl -s --no-print-directory instlibdir` && \
 	sed -e '1{' \
 	    -e '	s|#!.*perl|#!$(PERL_PATH_SQ)|' \
@@ -708,20 +735,15 @@ $(patsubst %.perl,%,$(SCRIPT_PERL)): % : %.perl
 	    -e '}' \
 	    -e 's|@@INSTLIBDIR@@|'"$$INSTLIBDIR"'|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
-	    $@.perl >$@+
-	chmod +x $@+
-	mv $@+ $@
-
-git-cherry-pick: git-revert
-	cp $< $@+
+	    $@.perl >$@+ && \
+	chmod +x $@+ && \
 	mv $@+ $@
 
 git-status: git-commit
-	cp $< $@+
-	mv $@+ $@
+	$(QUIET_GEN)cp $< $@+ && mv $@+ $@
 
 gitweb/gitweb.cgi: gitweb/gitweb.perl
-	rm -f $@ $@+
+	$(QUIET_GEN)rm -f $@ $@+ && \
 	sed -e '1s|#!.*perl|#!$(PERL_PATH_SQ)|' \
 	    -e 's|++GIT_VERSION++|$(GIT_VERSION)|g' \
 	    -e 's|++GIT_BINDIR++|$(bindir)|g' \
@@ -739,12 +761,12 @@ gitweb/gitweb.cgi: gitweb/gitweb.perl
 	    -e 's|++GITWEB_FAVICON++|$(GITWEB_FAVICON)|g' \
 	    -e 's|++GITWEB_SITE_HEADER++|$(GITWEB_SITE_HEADER)|g' \
 	    -e 's|++GITWEB_SITE_FOOTER++|$(GITWEB_SITE_FOOTER)|g' \
-	    $< >$@+
-	chmod +x $@+
+	    $< >$@+ && \
+	chmod +x $@+ && \
 	mv $@+ $@
 
 git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css
-	rm -f $@ $@+
+	$(QUIET_GEN)rm -f $@ $@+ && \
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
@@ -752,15 +774,15 @@ git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css
 	    -e '/@@GITWEB_CGI@@/d' \
 	    -e '/@@GITWEB_CSS@@/r gitweb/gitweb.css' \
 	    -e '/@@GITWEB_CSS@@/d' \
-	    $@.sh > $@+
-	chmod +x $@+
+	    $@.sh > $@+ && \
+	chmod +x $@+ && \
 	mv $@+ $@
 
 configure: configure.ac
-	rm -f $@ $<+
+	$(QUIET_GEN)rm -f $@ $<+ && \
 	sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
-	    $< > $<+
-	autoconf -o $@ $<+
+	    $< > $<+ && \
+	autoconf -o $@ $<+ && \
 	rm -f $<+
 
 # These can record GIT_VERSION
@@ -770,25 +792,25 @@ git$X git.spec \
 	: GIT-VERSION-FILE
 
 %.o: %.c GIT-CFLAGS
-	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
+	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 %.o: %.S
-	$(CC) -o $*.o -c $(ALL_CFLAGS) $<
+	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) $<
 
 exec_cmd.o: exec_cmd.c GIT-CFLAGS
-	$(CC) -o $*.o -c $(ALL_CFLAGS) '-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' $<
+	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) '-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' $<
 builtin-init-db.o: builtin-init-db.c GIT-CFLAGS
-	$(CC) -o $*.o -c $(ALL_CFLAGS) -DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"' $<
+	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) -DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"' $<
 
 http.o: http.c GIT-CFLAGS
-	$(CC) -o $*.o -c $(ALL_CFLAGS) -DGIT_USER_AGENT='"git/$(GIT_VERSION)"' $<
+	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) -DGIT_USER_AGENT='"git/$(GIT_VERSION)"' $<
 
 ifdef NO_EXPAT
 http-fetch.o: http-fetch.c http.h GIT-CFLAGS
-	$(CC) -o $*.o -c $(ALL_CFLAGS) -DNO_EXPAT $<
+	$(QUIET_CC)$(CC) -o $*.o -c $(ALL_CFLAGS) -DNO_EXPAT $<
 endif
 
 git-%$X: %.o $(GITLIBS)
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
+	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
 ssh-pull.o: ssh-fetch.c
 ssh-push.o: ssh-upload.c
@@ -802,11 +824,11 @@ git-imap-send$X: imap-send.o $(LIB_FILE)
 
 http.o http-fetch.o http-push.o: http.h
 git-http-fetch$X: fetch.o http.o http-fetch.o $(GITLIBS)
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
+	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
 git-http-push$X: revision.o http.o http-push.o $(GITLIBS)
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
+	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
 $(LIB_OBJS) $(BUILTIN_OBJS) fetch.o: $(LIB_H)
@@ -814,7 +836,7 @@ $(patsubst git-%$X,%.o,$(PROGRAMS)): $(LIB_H) $(wildcard */*.h)
 $(DIFF_OBJS): diffcore.h
 
 $(LIB_FILE): $(LIB_OBJS)
-	rm -f $@ && $(AR) rcs $@ $(LIB_OBJS)
+	$(QUIET_AR)rm -f $@ && $(AR) rcs $@ $(LIB_OBJS)
 
 XDIFF_OBJS=xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
 	xdiff/xmerge.o
@@ -822,7 +844,7 @@ $(XDIFF_OBJS): xdiff/xinclude.h xdiff/xmacros.h xdiff/xdiff.h xdiff/xtypes.h \
 	xdiff/xutils.h xdiff/xprepare.h xdiff/xdiffi.h xdiff/xemit.h
 
 $(XDIFF_LIB): $(XDIFF_OBJS)
-	rm -f $@ && $(AR) rcs $@ $(XDIFF_OBJS)
+	$(QUIET_AR)rm -f $@ && $(AR) rcs $@ $(XDIFF_OBJS)
 
 
 perl/Makefile: perl/Git.pm perl/Makefile.PL GIT-CFLAGS

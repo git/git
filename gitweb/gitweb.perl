@@ -591,7 +591,7 @@ sub esc_html ($;%) {
 	my %opts = @_;
 
 	$str = to_utf8($str);
-	$str = escapeHTML($str);
+	$str = $cgi->escapeHTML($str);
 	if ($opts{'-nbsp'}) {
 		$str =~ s/ /&nbsp;/g;
 	}
@@ -605,7 +605,7 @@ sub esc_path {
 	my %opts = @_;
 
 	$str = to_utf8($str);
-	$str = escapeHTML($str);
+	$str = $cgi->escapeHTML($str);
 	if ($opts{'-nbsp'}) {
 		$str =~ s/ /&nbsp;/g;
 	}
@@ -1974,17 +1974,17 @@ sub git_print_page_path {
 			$fullname .= ($fullname ? '/' : '') . $dir;
 			print $cgi->a({-href => href(action=>"tree", file_name=>$fullname,
 			                             hash_base=>$hb),
-			              -title => esc_html($fullname)}, esc_path($dir));
+			              -title => $fullname}, esc_path($dir));
 			print " / ";
 		}
 		if (defined $type && $type eq 'blob') {
 			print $cgi->a({-href => href(action=>"blob_plain", file_name=>$file_name,
 			                             hash_base=>$hb),
-			              -title => esc_html($name)}, esc_path($basename));
+			              -title => $name}, esc_path($basename));
 		} elsif (defined $type && $type eq 'tree') {
 			print $cgi->a({-href => href(action=>"tree", file_name=>$file_name,
 			                             hash_base=>$hb),
-			              -title => esc_html($name)}, esc_path($basename));
+			              -title => $name}, esc_path($basename));
 			print " / ";
 		} else {
 			print esc_path($basename);

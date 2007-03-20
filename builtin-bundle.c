@@ -263,6 +263,11 @@ static void show_object(struct object_array_entry *p)
 	write_or_die(1, "\n", 1);
 }
 
+static void show_edge(struct commit *commit)
+{
+	; /* nothing to do */
+}
+
 static int create_bundle(struct bundle_header *header, const char *path,
 		int argc, const char **argv)
 {
@@ -341,6 +346,7 @@ static int create_bundle(struct bundle_header *header, const char *path,
 	dup2(in, 1);
 	close(in);
 	prepare_revision_walk(&revs);
+	mark_edges_uninteresting(revs.commits, &revs, show_edge);
 	traverse_commit_list(&revs, show_commit, show_object);
 	close(1);
 	while (waitpid(pid, &status, 0) < 0)

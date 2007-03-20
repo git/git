@@ -107,16 +107,18 @@ int read_mmfile(mmfile_t *ptr, const char *filename)
 {
 	struct stat st;
 	FILE *f;
+	size_t sz;
 
 	if (stat(filename, &st))
 		return error("Could not stat %s", filename);
 	if ((f = fopen(filename, "rb")) == NULL)
 		return error("Could not open %s", filename);
-	ptr->ptr = xmalloc(st.st_size);
-	if (fread(ptr->ptr, st.st_size, 1, f) != 1)
+	sz = xsize_t(st.st_size);
+	ptr->ptr = xmalloc(sz);
+	if (fread(ptr->ptr, sz, 1, f) != 1)
 		return error("Could not read %s", filename);
 	fclose(f);
-	ptr->size = st.st_size;
+	ptr->size = sz;
 	return 0;
 }
 

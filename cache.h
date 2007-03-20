@@ -282,7 +282,6 @@ char *enter_repo(char *path, int strict);
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
 extern int sha1_object_info(const unsigned char *, unsigned long *);
-extern void * unpack_sha1_file(void *map, unsigned long mapsize, enum object_type *type, unsigned long *size);
 extern void * read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size);
 extern int hash_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *sha1);
 extern int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *return_sha1);
@@ -384,7 +383,7 @@ extern struct packed_git {
 } *packed_git;
 
 struct pack_entry {
-	unsigned int offset;
+	off_t offset;
 	unsigned char sha1[20];
 	struct packed_git *p;
 };
@@ -423,15 +422,15 @@ extern struct packed_git *find_sha1_pack(const unsigned char *sha1,
 					 struct packed_git *packs);
 
 extern void pack_report(void);
-extern unsigned char* use_pack(struct packed_git *, struct pack_window **, unsigned long, unsigned int *);
+extern unsigned char* use_pack(struct packed_git *, struct pack_window **, off_t, unsigned int *);
 extern void unuse_pack(struct pack_window **);
 extern struct packed_git *add_packed_git(char *, int, int);
-extern int num_packed_objects(const struct packed_git *p);
-extern int nth_packed_object_sha1(const struct packed_git *, int, unsigned char*);
-extern unsigned long find_pack_entry_one(const unsigned char *, struct packed_git *);
-extern void *unpack_entry(struct packed_git *, unsigned long, enum object_type *, unsigned long *);
+extern uint32_t num_packed_objects(const struct packed_git *p);
+extern int nth_packed_object_sha1(const struct packed_git *, uint32_t, unsigned char*);
+extern off_t find_pack_entry_one(const unsigned char *, struct packed_git *);
+extern void *unpack_entry(struct packed_git *, off_t, enum object_type *, unsigned long *);
 extern unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
-extern const char *packed_object_info_detail(struct packed_git *, unsigned long, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
+extern const char *packed_object_info_detail(struct packed_git *, off_t, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
 
 /* Dumb servers support */
 extern int update_server_info(int);
@@ -452,7 +451,7 @@ extern char git_default_email[MAX_GITNAME];
 extern char git_default_name[MAX_GITNAME];
 
 extern char *git_commit_encoding;
-extern char *git_log_output_encoding;
+extern const char *git_log_output_encoding;
 
 extern int copy_fd(int ifd, int ofd);
 extern int read_in_full(int fd, void *buf, size_t count);

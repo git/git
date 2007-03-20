@@ -396,9 +396,9 @@ static size_t get_pack_redundancy(struct pack_list *pl)
 	return ret;
 }
 
-static inline size_t pack_set_bytecount(struct pack_list *pl)
+static inline off_t pack_set_bytecount(struct pack_list *pl)
 {
-	size_t ret = 0;
+	off_t ret = 0;
 	while (pl) {
 		ret += pl->pack->pack_size;
 		ret += pl->pack->index_size;
@@ -413,7 +413,7 @@ static void minimize(struct pack_list **min)
 		*non_unique = NULL, *min_perm = NULL;
 	struct pll *perm, *perm_all, *perm_ok = NULL, *new_perm;
 	struct llist *missing;
-	size_t min_perm_size = (size_t)-1, perm_size;
+	off_t min_perm_size = 0, perm_size;
 	int n;
 
 	pl = local_packs;
@@ -461,7 +461,7 @@ static void minimize(struct pack_list **min)
 	perm = perm_ok;
 	while (perm) {
 		perm_size = pack_set_bytecount(perm->pl);
-		if (min_perm_size > perm_size) {
+		if (!min_perm_size || min_perm_size > perm_size) {
 			min_perm_size = perm_size;
 			min_perm = perm->pl;
 		}

@@ -289,12 +289,13 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev)
 	detached = (detached && (kinds & REF_LOCAL_BRANCH));
 	if (detached) {
 		struct ref_item item;
-		item.name = "(no branch)";
+		item.name = xstrdup("(no branch)");
 		item.kind = REF_LOCAL_BRANCH;
 		hashcpy(item.sha1, head_sha1);
 		if (strlen(item.name) > ref_list.maxwidth)
 			      ref_list.maxwidth = strlen(item.name);
 		print_ref_item(&item, ref_list.maxwidth, verbose, abbrev, 1);
+		free(item.name);
 	}
 
 	for (i = 0; i < ref_list.index; i++) {

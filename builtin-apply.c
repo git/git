@@ -1981,7 +1981,7 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 		}
 	}
 	else if (patch->old_name) {
-		size = st->st_size;
+		size = xsize_t(st->st_size);
 		alloc = size + 8192;
 		buf = xmalloc(alloc);
 		if (read_old_data(st, patch->old_name, &buf, &alloc, &size))

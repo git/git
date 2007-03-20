@@ -753,7 +753,7 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 		  const char *keep_name, const char *keep_msg,
 		  unsigned char *sha1)
 {
-	char *report = "pack";
+	const char *report = "pack";
 	char name[PATH_MAX];
 	int err;
 

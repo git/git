@@ -122,6 +122,8 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	struct stat st;
 	int i;
 	char *data;
+	size_t sz;
+
 	if (lstat(filename, &st) < 0) {
 	err_ret:
 		if (errno != ENOENT)
@@ -132,11 +134,12 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 		return 0; /* empty file -- no grep hit */
 	if (!S_ISREG(st.st_mode))
 		return 0;
+	sz = xsize_t(st.st_size);
 	i = open(filename, O_RDONLY);
 	if (i < 0)
 		goto err_ret;
-	data = xmalloc(st.st_size + 1);
-	if (st.st_size != read_in_full(i, data, st.st_size)) {
+	data = xmalloc(sz + 1);
+	if (st.st_size != read_in_full(i, data, sz)) {
 		error("'%s': short read %s", filename, strerror(errno));
 		close(i);
 		free(data);
@@ -145,11 +148,12 @@ static int grep_file(struct grep_opt *opt, const char *filename)
 	close(i);
 	if (opt->relative && opt->prefix_length)
 		filename += opt->prefix_length;
-	i = grep_buffer(opt, filename, data, st.st_size);
+	i = grep_buffer(opt, filename, data, sz);
 	free(data);
 	return i;
 }
 
+#ifdef __unix__
 static int exec_grep(int argc, const char **argv)
 {
 	pid_t pid;
@@ -298,6 +302,7 @@ static int external_grep(struct grep_opt *opt, const char **paths, int cached)
 	}
 	return hit;
 }
+#endif
 
 static int grep_cache(struct grep_opt *opt, const char **paths, int cached)
 {

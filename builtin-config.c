@@ -2,7 +2,7 @@
 #include "cache.h"
 
 static const char git_config_set_usage[] =
-"git-config [ --global ] [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --list";
+"git-config [ --global ] [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --remove-section name | --list";
 
 static char *key;
 static regex_t *key_regexp;
@@ -160,6 +160,19 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			if (argc != 4)
 				usage(git_config_set_usage);
 			ret = git_config_rename_section(argv[2], argv[3]);
+			if (ret < 0)
+				return ret;
+			if (ret == 0) {
+				fprintf(stderr, "No such section!\n");
+				return 1;
+			}
+			return 0;
+		}
+		else if (!strcmp(argv[1], "--remove-section")) {
+			int ret;
+			if (argc != 3)
+				usage(git_config_set_usage);
+			ret = git_config_rename_section(argv[2], NULL);
 			if (ret < 0)
 				return ret;
 			if (ret == 0) {

@@ -49,7 +49,7 @@ cat >expect <<\EOF
 EOF
 test_expect_success 'git diff --summary -M HEAD' '
 	git diff --summary -M HEAD >actual &&
-	diff -u expect actual
+	git diff expect actual
 '
 
 cat >expect <<\EOF
@@ -64,7 +64,7 @@ cat >expect <<\EOF
 EOF
 test_expect_success 'git diff --stat -M HEAD' '
 	git diff --stat -M HEAD >actual &&
-	diff -u expect actual
+	git diff expect actual
 '
 
 test_done

@@ -651,7 +651,7 @@ static char *get_header(const struct commit *commit, const char *key)
 	}
 }
 
-static char *replace_encoding_header(char *buf, char *encoding)
+static char *replace_encoding_header(char *buf, const char *encoding)
 {
 	char *encoding_header = strstr(buf, "\nencoding ");
 	char *end_of_encoding_header;
@@ -694,29 +694,26 @@ static char *replace_encoding_header(char *buf, char *encoding)
 }
 
 static char *logmsg_reencode(const struct commit *commit,
-			     char *output_encoding)
+			     const char *output_encoding)
 {
+	static const char *utf8 = "utf-8";
+	const char *use_encoding;
 	char *encoding;
 	char *out;
-	char *utf8 = "utf-8";
 
 	if (!*output_encoding)
 		return NULL;
 	encoding = get_header(commit, "encoding");
-	if (!encoding)
-		encoding = utf8;
-	if (!strcmp(encoding, output_encoding))
+	use_encoding = encoding ? encoding : utf8;
+	if (!strcmp(use_encoding, output_encoding))
 		out = strdup(commit->buffer);
 	else
 		out = reencode_string(commit->buffer,
-				      output_encoding, encoding);
+				      output_encoding, use_encoding);
 	if (out)
 		out = replace_encoding_header(out, output_encoding);
 
-	if (encoding != utf8)
-		free(encoding);
-	if (!out)
-		return NULL;
+	free(encoding);
 	return out;
 }
 
@@ -917,7 +914,7 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 	const char *msg = commit->buffer;
 	int plain_non_ascii = 0;
 	char *reencoded;
-	char *encoding;
+	const char *encoding;
 
 	if (fmt == CMIT_FMT_USERFORMAT)
 		return format_commit_message(commit, msg, buf, space);

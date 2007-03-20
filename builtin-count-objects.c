@@ -45,9 +45,9 @@ static void count_objects(DIR *d, char *path, int len, int verbose,
 				bad = 1;
 			else
 #ifndef NO_ST_BLOCKS
-				(*loose_size) += st.st_blocks;
+				(*loose_size) += xsize_t(st.st_blocks);
 #else
-				(*loose_size) += (st.st_size+511)/512;
+				(*loose_size) += xsize_t((st.st_size+511)/512);
 #endif
 		}
 		if (bad) {

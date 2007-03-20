@@ -62,7 +62,18 @@ OPTIONS
 	Dumps the internal marks table to <file> when complete.
 	Marks are written one per line as `:markid SHA-1`.
 	Frontends can use this file to validate imports after they
-	have been completed.
+	have been completed, or to save the marks table across
+	incremental runs.  As <file> is only opened and truncated
+	at checkpoint (or completion) the same path can also be
+	safely given to \--import-marks.
+
+--import-marks=<file>::
+	Before processing any input, load the marks specified in
+	<file>.  The input file must exist, must be readable, and
+	must use the same format as produced by \--export-marks.
+	Multiple options may be supplied to import more than one
+	set of marks.  If a mark is defined to different values,
+	the last file wins.
 
 --export-pack-edges=<file>::
 	After creating a packfile, print a line of data to
@@ -451,7 +462,7 @@ in octal.  Git only supports the following modes:
 In both formats `<path>` is the complete path of the file to be added
 (if not already existing) or modified (if already existing).
 
-A `<path>` string must use UNIX-style directory seperators (forward
+A `<path>` string must use UNIX-style directory separators (forward
 slash `/`), may contain any byte other than `LF`, and must not
 start with double quote (`"`).
 
@@ -461,8 +472,8 @@ quoting should be used, e.g. `"path/with\n and \" in it"`.
 The value of `<path>` must be in canoncial form. That is it must not:
 
 * contain an empty directory component (e.g. `foo//bar` is invalid),
-* end with a directory seperator (e.g. `foo/` is invalid),
-* start with a directory seperator (e.g. `/foo` is invalid),
+* end with a directory separator (e.g. `foo/` is invalid),
+* start with a directory separator (e.g. `/foo` is invalid),
 * contain the special component `.` or `..` (e.g. `foo/./bar` and
   `foo/../bar` are invalid).
 

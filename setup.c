@@ -218,12 +218,12 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	}
 
 #ifdef __MINGW32__
-	if (!getcwd(cwd, sizeof(cwd)) || !(cwd[0] == '/' || cwd[1] == ':'))
+	if (!getcwd(cwd, sizeof(cwd)-1) || !(cwd[0] == '/' || cwd[1] == ':'))
 		die("Unable to read current working directory");
 	if (cwd[1] == ':')
 		minoffset = 2;
 #else
-	if (!getcwd(cwd, sizeof(cwd)) || cwd[0] != '/')
+	if (!getcwd(cwd, sizeof(cwd)-1) || cwd[0] != '/')
 		die("Unable to read current working directory");
 #endif
 

@@ -1365,6 +1365,32 @@ static struct sha1_size_cache *locate_size_cache(unsigned char *sha1,
 	return e;
 }
 
+static int populate_from_stdin(struct diff_filespec *s)
+{
+#define INCREMENT 1024
+	char *buf;
+	unsigned long size;
+	int got;
+
+	size = 0;
+	buf = NULL;
+	while (1) {
+		buf = xrealloc(buf, size + INCREMENT);
+		got = xread(0, buf + size, INCREMENT);
+		if (!got)
+			break; /* EOF */
+		if (got < 0)
+			return error("error while reading from stdin %s",
+				     strerror(errno));
+		size += got;
+	}
+	s->should_munmap = 0;
+	s->data = buf;
+	s->size = size;
+	s->should_free = 1;
+	return 0;
+}
+
 /*
  * While doing rename detection and pickaxe operation, we may need to
  * grab the data for the blob (or file) for our own in-core comparison.
@@ -1390,6 +1416,9 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		char *buf;
 		unsigned long size;
 
+		if (!strcmp(s->path, "-"))
+			return populate_from_stdin(s);
+
 		if (lstat(s->path, &st) < 0) {
 			if (errno == ENOENT) {
 			err_empty:
@@ -1400,7 +1429,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 				return err;
 			}
 		}
-		s->size = st.st_size;
+		s->size = xsize_t(st.st_size);
 		if (!s->size)
 			goto empty;
 		if (size_only)
@@ -1516,12 +1545,13 @@ static void prepare_temp_file(const char *name,
 		if (S_ISLNK(st.st_mode)) {
 			int ret;
 			char buf[PATH_MAX + 1]; /* ought to be SYMLINK_MAX */
+			size_t sz = xsize_t(st.st_size);
 			if (sizeof(buf) <= st.st_size)
 				die("symlink too long: %s", name);
-			ret = readlink(name, buf, st.st_size);
+			ret = readlink(name, buf, sz);
 			if (ret < 0)
 				die("readlink(%s)", name);
-			prep_temp_blob(temp, buf, st.st_size,
+			prep_temp_blob(temp, buf, sz,
 				       (one->sha1_valid ?
 					one->sha1 : null_sha1),
 				       (one->sha1_valid ?
@@ -1684,6 +1714,10 @@ static void diff_fill_sha1_info(struct diff_filespec *one)
 	if (DIFF_FILE_VALID(one)) {
 		if (!one->sha1_valid) {
 			struct stat st;
+			if (!strcmp(one->path, "-")) {
+				hashcpy(one->sha1, null_sha1);
+				return;
+			}
 			if (lstat(one->path, &st) < 0)
 				die("stat %s", one->path);
 			if (index_path(one->sha1, one->path, &st, 0))
@@ -2133,7 +2167,7 @@ static int parse_num(const char **cp_p)
 	/* user says num divided by scale and we say internally that
 	 * is MAX_SCORE * num / scale.
 	 */
-	return (num >= scale) ? MAX_SCORE : (MAX_SCORE * num / scale);
+	return (int)((num >= scale) ? MAX_SCORE : (MAX_SCORE * num / scale));
 }
 
 int diff_scoreopt_parse(const char *opt)

@@ -130,13 +130,13 @@ static int add_excludes_from_file_1(const char *fname,
 {
 	struct stat st;
 	int fd, i;
-	long size;
+	size_t size;
 	char *buf, *entry;
 
 	fd = open(fname, O_RDONLY);
 	if (fd < 0 || fstat(fd, &st) < 0)
 		goto err;
-	size = st.st_size;
+	size = xsize_t(st.st_size);
 	if (size == 0) {
 		close(fd);
 		return 0;
