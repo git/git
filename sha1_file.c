@@ -1030,14 +1030,27 @@ static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size
 		n = size;
 	memcpy(buf, (char *) buffer + bytes, n);
 	bytes = n;
-	if (bytes < size) {
+	if (bytes <= size) {
+		/*
+		 * The above condition must be (bytes <= size), not
+		 * (bytes < size).  In other words, even though we
+		 * expect no more output and set avail_out to zer0,
+		 * the input zlib stream may have bytes that express
+		 * "this concludes the stream", and we *do* want to
+		 * eat that input.
+		 *
+		 * Otherwise we would not be able to test that we
+		 * consumed all the input to reach the expected size;
+		 * we also want to check that zlib tells us that all
+		 * went well with status == Z_STREAM_END at the end.
+		 */
 		stream->next_out = buf + bytes;
 		stream->avail_out = size - bytes;
 		while (status == Z_OK)
 			status = inflate(stream, Z_FINISH);
 	}
 	buf[size] = 0;
-	if ((status == Z_OK || status == Z_STREAM_END) && !stream->avail_in) {
+	if (status == Z_STREAM_END && !stream->avail_in) {
 		inflateEnd(stream);
 		return buf;
 	}
