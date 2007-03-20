@@ -345,7 +345,8 @@ static int find_delta_children(const union delta_base *base,
 }
 
 static void sha1_object(const void *data, unsigned long size,
-			enum object_type type, unsigned char *sha1)
+			enum object_type type, unsigned char *sha1,
+			int test_for_collision)
 {
 	SHA_CTX ctx;
 	char header[50];
@@ -367,6 +368,18 @@ static void sha1_object(const void *data, unsigned long size,
 	SHA1_Update(&ctx, header, header_size);
 	SHA1_Update(&ctx, data, size);
 	SHA1_Final(sha1, &ctx);
+
+	if (test_for_collision && has_sha1_file(sha1)) {
+		void *has_data;
+		enum object_type has_type;
+		unsigned long has_size;
+		has_data = read_sha1_file(sha1, &has_type, &has_size);
+		if (!has_data)
+			die("cannot read existing object %s", sha1_to_hex(sha1));
+		if (size != has_size || type != has_type ||
+		    memcmp(data, has_data, size) != 0)
+			die("SHA1 COLLISION FOUND WITH %s !", sha1_to_hex(sha1));
+	}
 }
 
 static void resolve_delta(struct object_entry *delta_obj, void *base_data,
@@ -387,7 +400,7 @@ static void resolve_delta(struct object_entry *delta_obj, void *base_data,
 	free(delta_data);
 	if (!result)
 		bad_object(delta_obj->offset, "failed to apply delta");
-	sha1_object(result, result_size, type, delta_obj->sha1);
+	sha1_object(result, result_size, type, delta_obj->sha1, 1);
 	nr_resolved_deltas++;
 
 	hashcpy(delta_base.sha1, delta_obj->sha1);
@@ -444,7 +457,7 @@ static void parse_pack_objects(unsigned char *sha1)
 			delta->obj_no = i;
 			delta++;
 		} else
-			sha1_object(data, obj->size, obj->type, obj->sha1);
+			sha1_object(data, obj->size, obj->type, obj->sha1, 1);
 		free(data);
 		if (verbose)
 			percent = display_progress(i+1, nr_objects, percent);
@@ -565,7 +578,7 @@ static void append_obj_to_pack(void *buf,
 	write_or_die(output_fd, header, n);
 	obj[1].offset = obj[0].offset + n;
 	obj[1].offset += write_compressed(output_fd, buf, size);
-	sha1_object(buf, size, type, obj->sha1);
+	sha1_object(buf, size, type, obj->sha1, 0);
 }
 
 static int delta_pos_compare(const void *_a, const void *_b)
