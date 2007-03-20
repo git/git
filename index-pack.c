@@ -348,26 +348,7 @@ static void sha1_object(const void *data, unsigned long size,
 			enum object_type type, unsigned char *sha1,
 			int test_for_collision)
 {
-	SHA_CTX ctx;
-	char header[50];
-	int header_size;
-	const char *type_str;
-
-	switch (type) {
-	case OBJ_COMMIT: type_str = commit_type; break;
-	case OBJ_TREE:   type_str = tree_type; break;
-	case OBJ_BLOB:   type_str = blob_type; break;
-	case OBJ_TAG:    type_str = tag_type; break;
-	default:
-		die("bad type %d", type);
-	}
-
-	header_size = sprintf(header, "%s %lu", type_str, size) + 1;
-
-	SHA1_Init(&ctx);
-	SHA1_Update(&ctx, header, header_size);
-	SHA1_Update(&ctx, data, size);
-	SHA1_Final(sha1, &ctx);
+	hash_sha1_file(data, size, typename(type), sha1);
 
 	if (test_for_collision && has_sha1_file(sha1)) {
 		void *has_data;
