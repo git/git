@@ -316,7 +316,7 @@ def printUsage(commands):
 commands = {
     "debug" : P4Debug(),
     "clean-tags" : P4CleanTags(),
-    "sync-to-perforce" : P4Sync()
+    "submit" : P4Sync()
 }
 
 if len(sys.argv[1:]) == 0:
@@ -350,7 +350,7 @@ if not isValidGitDir(gitdir):
     if isValidGitDir(gitdir + "/.git"):
         gitdir += "/.git"
     else:
-        dir("fatal: cannot locate git repository at %s" % gitdir)
+        die("fatal: cannot locate git repository at %s" % gitdir)
 
 os.environ["GIT_DIR"] = gitdir
 
