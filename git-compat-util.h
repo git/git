@@ -397,6 +397,10 @@ static inline int git_unlink(const char *pathname) {
 }
 #define unlink git_unlink
 
+#define open(P, F, M...) \
+	(__builtin_constant_p(*(P)) && !strcmp(P, "/dev/null") ? \
+		open("nul", F, ## M) : open(P, F, ## M))
+
 #include <time.h>
 struct tm *gmtime_r(const time_t *timep, struct tm *result);
 struct tm *localtime_r(const time_t *timep, struct tm *result);

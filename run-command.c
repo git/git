@@ -10,11 +10,7 @@ int run_command_v_opt(const char **argv, int flags)
 	int fd_o[2] = { -1, -1 };
 
 	if (flags & RUN_COMMAND_NO_STDIN) {
-#ifndef __MINGW32__
 		fd_i[0] = open("/dev/null", O_RDWR);
-#else
-		fd_i[0] = open("nul", O_RDWR);
-#endif
 	}
 	if (flags & RUN_COMMAND_STDOUT_TO_STDERR)
 		fd_o[1] = dup(2);
