@@ -25,6 +25,8 @@ If you want to import the entire history of a given depot path just use
 
   git-p4.py sync //path/in/depot@all
 
+To achieve optimal compression you may want to run 'git repack -a -d -f' after
+a big import. This may take a while.
 
 Support for Perforce integrations is still work in progress. Don't bother
 trying it unless you want to hack on it :)
@@ -41,6 +43,10 @@ newer changes from the Perforce depot by just calling
 in your git repository. git-p4 stores the depot path of the original import in
 the .git/config file and remembers the last imported p4 revision as a git tag
 called p4/<changenum> .
+
+It is recommended to run 'git repack -a -d -f' from time to time when using
+incremental imports to optimally combine the individual git packs that each
+incremental import creates through the use of git-fast-import.
 
 Submitting
 ==========
