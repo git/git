@@ -154,12 +154,13 @@ static void show_entry(struct diff_options *opt, const char *prefix, struct tree
 		char *newbase = malloc_base(base, baselen, path, pathlen);
 		struct tree_desc inner;
 		void *tree;
+		unsigned long size;
 
-		tree = read_sha1_file(sha1, &type, &inner.size);
+		tree = read_sha1_file(sha1, &type, &size);
 		if (!tree || type != OBJ_TREE)
 			die("corrupt tree sha %s", sha1_to_hex(sha1));
 
-		inner.buf = tree;
+		init_tree_desc(&inner, tree, size);
 		show_tree(opt, prefix, &inner, newbase, baselen + 1 + pathlen);
 
 		free(tree);
@@ -227,16 +228,17 @@ int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const cha
 {
 	void *tree1, *tree2;
 	struct tree_desc t1, t2;
+	unsigned long size1, size2;
 	int retval;
 
-	tree1 = read_object_with_reference(old, tree_type, &t1.size, NULL);
+	tree1 = read_object_with_reference(old, tree_type, &size1, NULL);
 	if (!tree1)
 		die("unable to read source tree (%s)", sha1_to_hex(old));
-	tree2 = read_object_with_reference(new, tree_type, &t2.size, NULL);
+	tree2 = read_object_with_reference(new, tree_type, &size2, NULL);
 	if (!tree2)
 		die("unable to read destination tree (%s)", sha1_to_hex(new));
-	t1.buf = tree1;
-	t2.buf = tree2;
+	init_tree_desc(&t1, tree1, size1);
+	init_tree_desc(&t2, tree2, size2);
 	retval = diff_tree(&t1, &t2, base, opt);
 	free(tree1);
 	free(tree2);
@@ -247,15 +249,15 @@ int diff_root_tree_sha1(const unsigned char *new, const char *base, struct diff_
 {
 	int retval;
 	void *tree;
+	unsigned long size;
 	struct tree_desc empty, real;
 
-	tree = read_object_with_reference(new, tree_type, &real.size, NULL);
+	tree = read_object_with_reference(new, tree_type, &size, NULL);
 	if (!tree)
 		die("unable to read root tree (%s)", sha1_to_hex(new));
-	real.buf = tree;
+	init_tree_desc(&real, tree, size);
 
-	empty.size = 0;
-	empty.buf = "";
+	init_tree_desc(&empty, "", 0);
 	retval = diff_tree(&empty, &real, base, opt);
 	free(tree);
 	return retval;

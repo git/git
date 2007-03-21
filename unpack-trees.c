@@ -27,8 +27,7 @@ static struct tree_entry_list *create_tree_entry_list(struct tree *tree)
 	if (!tree->object.parsed)
 		parse_tree(tree);
 
-	desc.buf = tree->buffer;
-	desc.size = tree->size;
+	init_tree_desc(&desc, tree->buffer, tree->size);
 
 	while (tree_entry(&desc, &one)) {
 		struct tree_entry_list *entry;

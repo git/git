@@ -62,8 +62,7 @@ void mark_tree_uninteresting(struct tree *tree)
 	if (parse_tree(tree) < 0)
 		die("bad tree %s", sha1_to_hex(obj->sha1));
 
-	desc.buf = tree->buffer;
-	desc.size = tree->size;
+	init_tree_desc(&desc, tree->buffer, tree->size);
 	while (tree_entry(&desc, &entry)) {
 		if (S_ISDIR(entry.mode))
 			mark_tree_uninteresting(lookup_tree(entry.sha1));
@@ -275,18 +274,17 @@ int rev_same_tree_as_empty(struct rev_info *revs, struct tree *t1)
 {
 	int retval;
 	void *tree;
+	unsigned long size;
 	struct tree_desc empty, real;
 
 	if (!t1)
 		return 0;
 
-	tree = read_object_with_reference(t1->object.sha1, tree_type, &real.size, NULL);
+	tree = read_object_with_reference(t1->object.sha1, tree_type, &size, NULL);
 	if (!tree)
 		return 0;
-	real.buf = tree;
-
-	empty.buf = "";
-	empty.size = 0;
+	init_tree_desc(&real, tree, size);
+	init_tree_desc(&empty, "", 0);
 
 	tree_difference = REV_TREE_SAME;
 	revs->pruning.has_changes = 0;

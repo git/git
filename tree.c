@@ -83,8 +83,7 @@ int read_tree_recursive(struct tree *tree,
 	if (parse_tree(tree))
 		return -1;
 
-	desc.buf = tree->buffer;
-	desc.size = tree->size;
+	init_tree_desc(&desc, tree->buffer, tree->size);
 
 	while (tree_entry(&desc, &entry)) {
 		if (!match_tree_entry(base, baselen, entry.path, entry.mode, match))
@@ -152,16 +151,14 @@ static void track_tree_refs(struct tree *item)
 	struct name_entry entry;
 
 	/* Count how many entries there are.. */
-	desc.buf = item->buffer;
-	desc.size = item->size;
+	init_tree_desc(&desc, item->buffer, item->size);
 	while (tree_entry(&desc, &entry))
 		n_refs++;
 
 	/* Allocate object refs and walk it again.. */
 	i = 0;
 	refs = alloc_object_refs(n_refs);
-	desc.buf = item->buffer;
-	desc.size = item->size;
+	init_tree_desc(&desc, item->buffer, item->size);
 	while (tree_entry(&desc, &entry)) {
 		struct object *obj;
 

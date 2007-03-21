@@ -388,11 +388,13 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 			enum object_type type;
 			struct tree_desc sub;
 			void *data;
-			data = read_sha1_file(entry.sha1, &type, &sub.size);
+			unsigned long size;
+
+			data = read_sha1_file(entry.sha1, &type, &size);
 			if (!data)
 				die("unable to read tree (%s)",
 				    sha1_to_hex(entry.sha1));
-			sub.buf = data;
+			init_tree_desc(&sub, data, size);
 			hit |= grep_tree(opt, paths, &sub, tree_name, down);
 			free(data);
 		}
@@ -408,12 +410,13 @@ static int grep_object(struct grep_opt *opt, const char **paths,
 	if (obj->type == OBJ_COMMIT || obj->type == OBJ_TREE) {
 		struct tree_desc tree;
 		void *data;
+		unsigned long size;
 		int hit;
 		data = read_object_with_reference(obj->sha1, tree_type,
-						  &tree.size, NULL);
+						  &size, NULL);
 		if (!data)
 			die("unable to read tree (%s)", sha1_to_hex(obj->sha1));
-		tree.buf = data;
+		init_tree_desc(&tree, data, size);
 		hit = grep_tree(opt, paths, &tree, name, "");
 		free(data);
 		return hit;

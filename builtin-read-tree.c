@@ -55,8 +55,7 @@ static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 	int cnt;
 
 	hashcpy(it->sha1, tree->object.sha1);
-	desc.buf = tree->buffer;
-	desc.size = tree->size;
+	init_tree_desc(&desc, tree->buffer, tree->size);
 	cnt = 0;
 	while (tree_entry(&desc, &entry)) {
 		if (!S_ISDIR(entry.mode))

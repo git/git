@@ -2,6 +2,12 @@
 #include "tree-walk.h"
 #include "tree.h"
 
+void init_tree_desc(struct tree_desc *desc, const void *buffer, unsigned long size)
+{
+	desc->buffer = buffer;
+	desc->size = size;
+}
+
 void *fill_tree_descriptor(struct tree_desc *desc, const unsigned char *sha1)
 {
 	unsigned long size = 0;
@@ -12,8 +18,7 @@ void *fill_tree_descriptor(struct tree_desc *desc, const unsigned char *sha1)
 		if (!buf)
 			die("unable to read tree %s", sha1_to_hex(sha1));
 	}
-	desc->size = size;
-	desc->buf = buf;
+	init_tree_desc(desc, buf, size);
 	return buf;
 }
 
@@ -36,13 +41,13 @@ static void entry_extract(struct tree_desc *t, struct name_entry *a)
 
 void update_tree_entry(struct tree_desc *desc)
 {
-	const void *buf = desc->buf;
+	const void *buf = desc->buffer;
 	unsigned long size = desc->size;
 	int len = strlen(buf) + 1 + 20;
 
 	if (size < len)
 		die("corrupt tree file");
-	desc->buf = (char *) buf + len;
+	desc->buffer = (char *) buf + len;
 	desc->size = size - len;
 }
 
@@ -62,7 +67,7 @@ static const char *get_mode(const char *str, unsigned int *modep)
 
 const unsigned char *tree_entry_extract(struct tree_desc *desc, const char **pathp, unsigned int *modep)
 {
-	const void *tree = desc->buf;
+	const void *tree = desc->buffer;
 	unsigned long size = desc->size;
 	int len = strlen(tree)+1;
 	const unsigned char *sha1 = (unsigned char *) tree + len;
@@ -79,7 +84,7 @@ const unsigned char *tree_entry_extract(struct tree_desc *desc, const char **pat
 
 int tree_entry(struct tree_desc *desc, struct name_entry *entry)
 {
-	const void *tree = desc->buf;
+	const void *tree = desc->buffer;
 	const char *path;
 	unsigned long len, size = desc->size;
 
@@ -101,7 +106,7 @@ int tree_entry(struct tree_desc *desc, struct name_entry *entry)
 	if (len > size)
 		die("corrupt tree file");
 
-	desc->buf = path;
+	desc->buffer = path;
 	desc->size = size - len;
 	return 1;
 }
@@ -196,10 +201,11 @@ int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned ch
 {
 	int retval;
 	void *tree;
+	unsigned long size;
 	struct tree_desc t;
 	unsigned char root[20];
 
-	tree = read_object_with_reference(tree_sha1, tree_type, &t.size, root);
+	tree = read_object_with_reference(tree_sha1, tree_type, &size, root);
 	if (!tree)
 		return -1;
 
@@ -208,7 +214,7 @@ int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned ch
 		return 0;
 	}
 
-	t.buf = tree;
+	init_tree_desc(&t, tree, size);
 	retval = find_tree_entry(&t, name, sha1, mode);
 	free(tree);
 	return retval;
