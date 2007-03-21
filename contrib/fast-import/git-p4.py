@@ -197,7 +197,7 @@ class P4Sync(Command):
                 die("unknown modifier %s for %s" % (modifier, path))
 
         if self.applyAsPatch:
-            system("git-diff-tree -p \"%s^\" \"%s\" | patch -p1" % (id, id))
+            system("git-diff-tree -p --diff-filter=ACMRTUXB \"%s^\" \"%s\" | patch -p1" % (id, id))
         else:
             system("git-diff-files --name-only -z | git-update-index --remove -z --stdin")
             system("git cherry-pick --no-commit \"%s\"" % id)
