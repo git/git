@@ -235,24 +235,26 @@ class P4Sync(Command):
                     diff += "+" + line
                 f.close()
 
-            pipe = os.popen("less", "w")
-            pipe.write(submitTemplate + diff)
-            pipe.close()
+            separatorLine = "######## everything below this line is just the diff #######\n"
 
             response = "e"
+            firstIteration = True
             while response == "e":
-                response = raw_input("Do you want to submit this change (y/e/n)? ")
+                if not firstIteration:
+                    response = raw_input("Do you want to submit this change (y/e/n)? ")
+                firstIteration = False
                 if response == "e":
                     [handle, fileName] = tempfile.mkstemp()
                     tmpFile = os.fdopen(handle, "w+")
-                    tmpFile.write(submitTemplate)
+                    tmpFile.write(submitTemplate + separatorLine + diff)
                     tmpFile.close()
                     editor = os.environ.get("EDITOR", "vi")
                     system(editor + " " + fileName)
                     tmpFile = open(fileName, "r")
-                    submitTemplate = tmpFile.read()
+                    message = tmpFile.read()
                     tmpFile.close()
                     os.remove(fileName)
+                    submitTemplate = message[:message.index(separatorLine)]
 
             if response == "y" or response == "yes":
                if self.dryRun:
