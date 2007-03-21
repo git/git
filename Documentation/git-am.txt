@@ -70,7 +70,7 @@ default.   You could use `--no-utf8` to override this.
 	the patch.
 
 -C<n>, -p<n>::
-	These flag are passed to the `git-apply` program that applies
+	These flags are passed to the `git-apply` program that applies
 	the patch.
 
 --interactive::
