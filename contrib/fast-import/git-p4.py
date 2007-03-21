@@ -925,6 +925,10 @@ parser = optparse.OptionParser(cmd.usage.replace("%prog", "%prog " + cmdName),
 gitdir = cmd.gitdir
 if len(gitdir) == 0:
     gitdir = ".git"
+    if not isValidGitDir(gitdir):
+        cdup = os.popen("git-rev-parse --show-cdup").read()[:-1]
+        if isValidGitDir(cdup + "/" + gitdir):
+            os.chdir(cdup)
 
 if not isValidGitDir(gitdir):
     if isValidGitDir(gitdir + "/.git"):
