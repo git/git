@@ -9,16 +9,17 @@ int run_command_v_opt(const char **argv, int flags)
 	int fd_i[2] = { -1, -1 };
 	int fd_o[2] = { -1, -1 };
 
-	if (flags & RUN_COMMAND_NO_STDIN) {
-		fd_i[0] = open("/dev/null", O_RDWR);
-	}
-	if (flags & RUN_COMMAND_STDOUT_TO_STDERR)
-		fd_o[1] = dup(2);
-
-	if (flags & RUN_GIT_CMD) {
-		pid = spawnv_git_cmd(argv, fd_i, fd_o);
-	} else {
-		pid = spawnvpe_pipe(argv[0], argv, environ, fd_i, fd_o);
+	{
+		if (flags & RUN_COMMAND_NO_STDIN) {
+			fd_i[0] = open("/dev/null", O_RDWR);
+		}
+		if (flags & RUN_COMMAND_STDOUT_TO_STDERR)
+			fd_o[1] = dup(2);
+		if (flags & RUN_GIT_CMD) {
+			pid = spawnv_git_cmd(argv, fd_i, fd_o);
+		} else {
+			pid = spawnvpe_pipe(argv[0], argv, environ, fd_i, fd_o);
+		}
 	}
 	if (pid < 0)
 		return -ERR_RUN_COMMAND_FORK;
