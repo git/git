@@ -115,7 +115,8 @@ class P4Sync(Command):
                 optparse.make_option("--master", dest="master"),
                 optparse.make_option("--log-substitutions", dest="substFile"),
                 optparse.make_option("--noninteractive", action="store_false"),
-                optparse.make_option("--dry-run", action="store_true")
+                optparse.make_option("--dry-run", action="store_true"),
+                optparse.make_option("--apply-as-patch", action="store_true", dest="applyAsPatch")
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.firstTime = True
@@ -126,6 +127,7 @@ class P4Sync(Command):
         self.firstTime = True
         self.origin = "origin"
         self.master = ""
+        self.applyAsPatch = False
 
         self.logSubstitutions = {}
         self.logSubstitutions["<enter description here>"] = "%log%"
@@ -146,8 +148,9 @@ class P4Sync(Command):
 
         self.config["commits"] = commits
 
-        print "Creating temporary p4-sync branch from %s ..." % self.origin
-        system("git checkout -f -b p4-sync %s" % self.origin)
+        if not self.applyAsPatch:
+            print "Creating temporary p4-sync branch from %s ..." % self.origin
+            system("git checkout -f -b p4-sync %s" % self.origin)
 
     def prepareLogMessage(self, template, message):
         result = ""
@@ -193,8 +196,11 @@ class P4Sync(Command):
             else:
                 die("unknown modifier %s for %s" % (modifier, path))
 
-        system("git-diff-files --name-only -z | git-update-index --remove -z --stdin")
-        system("git cherry-pick --no-commit \"%s\"" % id)
+        if self.applyAsPatch:
+            system("git-diff-tree -p \"%s^\" \"%s\" | patch -p1" % (id, id))
+        else:
+            system("git-diff-files --name-only -z | git-update-index --remove -z --stdin")
+            system("git cherry-pick --no-commit \"%s\"" % id)
 
         for f in filesToAdd:
             system("p4 add %s" % f)
@@ -305,12 +311,13 @@ class P4Sync(Command):
                 print "No changes found to apply between %s and current HEAD" % self.origin
             else:
                 print "All changes applied!"
-                print "Deleting temporary p4-sync branch and going back to %s" % self.master
-                system("git checkout %s" % self.master)
-                system("git branch -D p4-sync")
-                print "Cleaning out your perforce checkout by doing p4 edit ... ; p4 revert ..."
-                system("p4 edit ... >/dev/null")
-                system("p4 revert ... >/dev/null")
+                if not self.applyAsPatch:
+                    print "Deleting temporary p4-sync branch and going back to %s" % self.master
+                    system("git checkout %s" % self.master)
+                    system("git branch -D p4-sync")
+                    print "Cleaning out your perforce checkout by doing p4 edit ... ; p4 revert ..."
+                    system("p4 edit ... >/dev/null")
+                    system("p4 revert ... >/dev/null")
             os.remove(self.configFile)
 
         return True
