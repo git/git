@@ -250,8 +250,13 @@ if [ "$?" -eq 0 ]; then
 	if test -n "$branch"
 	then
 		GIT_DIR="$GIT_DIR" git-symbolic-ref -m "checkout: moving to $branch" HEAD "refs/heads/$branch"
-		if test -z "$quiet"
+		if test -n "$quiet"
 		then
+			true	# nothing
+		elif test "refs/heads/$branch" = "$oldbranch"
+		then
+			echo >&2 "Already on branch \"$branch\""
+		else
 			echo >&2 "Switched to${newbranch:+ a new} branch \"$branch\""
 		fi
 	elif test -n "$detached"
