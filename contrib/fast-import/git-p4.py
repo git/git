@@ -127,7 +127,7 @@ class P4Sync(Command):
         self.firstTime = True
         self.origin = "origin"
         self.master = ""
-        self.applyAsPatch = False
+        self.applyAsPatch = True
 
         self.logSubstitutions = {}
         self.logSubstitutions["<enter description here>"] = "%log%"
