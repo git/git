@@ -188,7 +188,7 @@ static void resolve(const char *base, struct name_entry *branch1, struct name_en
 
 static int unresolved_directory(const char *base, struct name_entry n[3])
 {
-	int baselen;
+	int baselen, pathlen;
 	char *newbase;
 	struct name_entry *p;
 	struct tree_desc t[3];
@@ -205,10 +205,11 @@ static int unresolved_directory(const char *base, struct name_entry n[3])
 	if (!S_ISDIR(p->mode))
 		return 0;
 	baselen = strlen(base);
-	newbase = xmalloc(baselen + p->pathlen + 2);
+	pathlen = tree_entry_len(p->path, p->sha1);
+	newbase = xmalloc(baselen + pathlen + 2);
 	memcpy(newbase, base, baselen);
-	memcpy(newbase + baselen, p->path, p->pathlen);
-	memcpy(newbase + baselen + p->pathlen, "/", 2);
+	memcpy(newbase + baselen, p->path, pathlen);
+	memcpy(newbase + baselen + pathlen, "/", 2);
 
 	buf0 = fill_tree_descriptor(t+0, n[0].sha1);
 	buf1 = fill_tree_descriptor(t+1, n[1].sha1);

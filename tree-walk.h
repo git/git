@@ -10,7 +10,6 @@ struct name_entry {
 	const unsigned char *sha1;
 	const char *path;
 	unsigned int mode;
-	int pathlen;
 };
 
 static inline int tree_entry_len(const char *name, const unsigned char *sha1)

@@ -854,7 +854,7 @@ static void add_pbase_object(struct tree_desc *tree,
 		unsigned long size;
 		enum object_type type;
 
-		if (entry.pathlen != cmplen ||
+		if (tree_entry_len(entry.path, entry.sha1) != cmplen ||
 		    memcmp(entry.path, name, cmplen) ||
 		    !has_sha1_file(entry.sha1) ||
 		    (type = sha1_object_info(entry.sha1, &size)) < 0)

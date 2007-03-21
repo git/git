@@ -378,7 +378,7 @@ static int grep_tree(struct grep_opt *opt, const char **paths,
 			 * decide if we want to descend into "abc"
 			 * directory.
 			 */
-			strcpy(path_buf + len + entry.pathlen, "/");
+			strcpy(path_buf + len + tree_entry_len(entry.path, entry.sha1), "/");
 
 		if (!pathspec_matches(paths, down))
 			;

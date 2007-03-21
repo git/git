@@ -101,14 +101,15 @@ int read_tree_recursive(struct tree *tree,
 		if (S_ISDIR(entry.mode)) {
 			int retval;
 			char *newbase;
+			unsigned int pathlen = tree_entry_len(entry.path, entry.sha1);
 
-			newbase = xmalloc(baselen + 1 + entry.pathlen);
+			newbase = xmalloc(baselen + 1 + pathlen);
 			memcpy(newbase, base, baselen);
-			memcpy(newbase + baselen, entry.path, entry.pathlen);
-			newbase[baselen + entry.pathlen] = '/';
+			memcpy(newbase + baselen, entry.path, pathlen);
+			newbase[baselen + pathlen] = '/';
 			retval = read_tree_recursive(lookup_tree(entry.sha1),
 						     newbase,
-						     baselen + entry.pathlen + 1,
+						     baselen + pathlen + 1,
 						     stage, match, fn);
 			free(newbase);
 			if (retval)

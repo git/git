@@ -20,8 +20,8 @@ void *fill_tree_descriptor(struct tree_desc *desc, const unsigned char *sha1)
 static int entry_compare(struct name_entry *a, struct name_entry *b)
 {
 	return base_name_compare(
-			a->path, a->pathlen, a->mode,
-			b->path, b->pathlen, b->mode);
+			a->path, tree_entry_len(a->path, a->sha1), a->mode,
+			b->path, tree_entry_len(b->path, b->sha1), b->mode);
 }
 
 static void entry_clear(struct name_entry *a)
@@ -32,7 +32,6 @@ static void entry_clear(struct name_entry *a)
 static void entry_extract(struct tree_desc *t, struct name_entry *a)
 {
 	a->sha1 = tree_entry_extract(t, &a->path, &a->mode);
-	a->pathlen = tree_entry_len(a->path, a->sha1);
 }
 
 void update_tree_entry(struct tree_desc *desc)
@@ -93,7 +92,6 @@ int tree_entry(struct tree_desc *desc, struct name_entry *entry)
 
 	entry->path = path;
 	len = strlen(path);
-	entry->pathlen = len;
 
 	path += len + 1;
 	entry->sha1 = (const unsigned char *) path;
