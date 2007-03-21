@@ -81,6 +81,7 @@ static int tree_entry_interesting(struct tree_desc *desc, const char *base, int 
 	unsigned mode;
 	int i;
 	int pathlen;
+	int never_interesting = -1;
 
 	if (!opt->nr_paths)
 		return 1;
@@ -89,9 +90,10 @@ static int tree_entry_interesting(struct tree_desc *desc, const char *base, int 
 
 	pathlen = tree_entry_len(path, sha1);
 
-	for (i=0; i < opt->nr_paths; i++) {
+	for (i = 0; i < opt->nr_paths; i++) {
 		const char *match = opt->paths[i];
 		int matchlen = opt->pathlens[i];
+		int m;
 
 		if (baselen >= matchlen) {
 			/* If it doesn't match, move along... */
@@ -109,6 +111,30 @@ static int tree_entry_interesting(struct tree_desc *desc, const char *base, int 
 		match += baselen;
 		matchlen -= baselen;
 
+		/*
+		 * Does match sort strictly earlier than path with their
+		 * common parts?
+		 */
+		m = strncmp(match, path,
+			    (matchlen < pathlen) ? matchlen : pathlen);
+		if (m < 0)
+			continue;
+
+		/*
+		 * If we come here even once, that means there is at
+		 * least one pathspec that would sort equal to or
+		 * later than the path we are currently looking at.
+		 * In other words, if we have never reached this point
+		 * after iterating all pathspecs, it means all
+		 * pathspecs are either outside of base, or inside the
+		 * base but sorts strictly earlier than the current
+		 * one.  In either case, they will never match the
+		 * subsequent entries.  In such a case, we initialized
+		 * the variable to -1 and that is what will be
+		 * returned, allowing the caller to terminate early.
+		 */
+		never_interesting = 0;
+
 		if (pathlen > matchlen)
 			continue;
 
@@ -119,12 +145,15 @@ static int tree_entry_interesting(struct tree_desc *desc, const char *base, int 
 				continue;
 		}
 
-		if (strncmp(path, match, pathlen))
-			continue;
-
-		return 1;
+		/*
+		 * If common part matched earlier then it is a hit,
+		 * because we rejected the case where path is not a
+		 * leading directory and is shorter than match.
+		 */
+		if (!m)
+			return 1;
 	}
-	return 0; /* No matches */
+	return never_interesting; /* No matches */
 }
 
 /* A whole sub-tree went away or appeared */
