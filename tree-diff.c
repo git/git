@@ -93,7 +93,7 @@ static int tree_entry_interesting(struct tree_desc *desc, const char *base, int 
 	for (i = 0; i < opt->nr_paths; i++) {
 		const char *match = opt->paths[i];
 		int matchlen = opt->pathlens[i];
-		int m;
+		int m = -1; /* signals that we haven't called strncmp() */
 
 		if (baselen >= matchlen) {
 			/* If it doesn't match, move along... */
@@ -111,29 +111,36 @@ static int tree_entry_interesting(struct tree_desc *desc, const char *base, int 
 		match += baselen;
 		matchlen -= baselen;
 
-		/*
-		 * Does match sort strictly earlier than path with their
-		 * common parts?
-		 */
-		m = strncmp(match, path,
-			    (matchlen < pathlen) ? matchlen : pathlen);
-		if (m < 0)
-			continue;
+		if (never_interesting) {
+			/*
+			 * We have not seen any match that sorts later
+			 * than the current path.
+			 */
 
-		/*
-		 * If we come here even once, that means there is at
-		 * least one pathspec that would sort equal to or
-		 * later than the path we are currently looking at.
-		 * In other words, if we have never reached this point
-		 * after iterating all pathspecs, it means all
-		 * pathspecs are either outside of base, or inside the
-		 * base but sorts strictly earlier than the current
-		 * one.  In either case, they will never match the
-		 * subsequent entries.  In such a case, we initialized
-		 * the variable to -1 and that is what will be
-		 * returned, allowing the caller to terminate early.
-		 */
-		never_interesting = 0;
+			/*
+			 * Does match sort strictly earlier than path
+			 * with their common parts?
+			 */
+			m = strncmp(match, path,
+				    (matchlen < pathlen) ? matchlen : pathlen);
+			if (m < 0)
+				continue;
+
+			/*
+			 * If we come here even once, that means there is at
+			 * least one pathspec that would sort equal to or
+			 * later than the path we are currently looking at.
+			 * In other words, if we have never reached this point
+			 * after iterating all pathspecs, it means all
+			 * pathspecs are either outside of base, or inside the
+			 * base but sorts strictly earlier than the current
+			 * one.  In either case, they will never match the
+			 * subsequent entries.  In such a case, we initialized
+			 * the variable to -1 and that is what will be
+			 * returned, allowing the caller to terminate early.
+			 */
+			never_interesting = 0;
+		}
 
 		if (pathlen > matchlen)
 			continue;
@@ -144,6 +151,13 @@ static int tree_entry_interesting(struct tree_desc *desc, const char *base, int 
 			if (!S_ISDIR(mode))
 				continue;
 		}
+
+		if (m == -1)
+			/*
+			 * we cheated and did not do strncmp(), so we do
+			 * that here.
+			 */
+			m = strncmp(match, path, pathlen);
 
 		/*
 		 * If common part matched earlier then it is a hit,
