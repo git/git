@@ -1,16 +1,24 @@
 #ifndef TREE_WALK_H
 #define TREE_WALK_H
 
-struct tree_desc {
-	const void *buffer;
-	unsigned int size;
-};
-
 struct name_entry {
 	const unsigned char *sha1;
 	const char *path;
 	unsigned int mode;
 };
+
+struct tree_desc {
+	const void *buffer;
+	struct name_entry entry;
+	unsigned int size;
+};
+
+static inline const unsigned char *tree_entry_extract(struct tree_desc *desc, const char **pathp, unsigned int *modep)
+{
+	*pathp = desc->entry.path;
+	*modep = canon_mode(desc->entry.mode);
+	return desc->entry.sha1;
+}
 
 static inline int tree_entry_len(const char *name, const unsigned char *sha1)
 {
