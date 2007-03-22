@@ -379,7 +379,7 @@ class GitSync(Command):
         self.knownBranches = Set()
         self.createdBranches = Set()
         self.committedChanges = Set()
-        self.branch = "p4"
+        self.branch = ""
         self.detectBranches = False
         self.changesFile = ""
 
@@ -706,6 +706,9 @@ class GitSync(Command):
             self.users[output["User"]] = output["FullName"] + " <" + output["Email"] + ">"
 
     def run(self, args):
+        if len(self.branch) == 0:
+            self.branch = "p4"
+
         self.branch = "refs/heads/" + self.branch
         self.globalPrefix = self.previousDepotPath = os.popen("git-repo-config --get p4.depotpath").read()
         if len(self.globalPrefix) != 0:
