@@ -17,9 +17,9 @@ The procedure is simple:
   git init
   git-p4 sync //path/in/your/perforce/depot
 
-This will import the current head revision of the specified depot path into the
-master branch of your git repository. You can use the --branch=mybranch option
-to let git-p4 import from Perforce into a git branch of your choice.
+This will import the current head revision of the specified depot path into a
+"p4" branch of your git repository. You can use the --branch=mybranch option
+to use a different branch.
 
 If you want to import the entire history of a given depot path just use
 

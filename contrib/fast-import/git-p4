@@ -352,7 +352,7 @@ class GitSync(Command):
         self.knownBranches = Set()
         self.createdBranches = Set()
         self.committedChanges = Set()
-        self.branch = "master"
+        self.branch = "p4"
         self.detectBranches = False
         self.changesFile = ""
 
