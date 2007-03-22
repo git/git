@@ -52,12 +52,44 @@ def system(cmd):
     if os.system(cmd) != 0:
         die("command failed: %s" % cmd)
 
+def extractLogMessageFromGitCommit(commit):
+    logMessage = ""
+    foundTitle = False
+    for log in os.popen("git-cat-file commit %s" % commit).readlines():
+       if not foundTitle:
+           if len(log) == 1:
+               foundTitle = 1
+           continue
+
+       logMessage += log
+    return logMessage
+
+def extractDepotPathAndChangeFromGitLog(log):
+    values = {}
+    for line in log.split("\n"):
+        line = line.strip()
+        if line.startswith("[git-p4:") and line.endswith("]"):
+            line = line[8:-1].strip()
+            for assignment in line.split(":"):
+                variable = assignment.strip()
+                value = ""
+                equalPos = assignment.find("=")
+                if equalPos != -1:
+                    variable = assignment[:equalPos].strip()
+                    value = assignment[equalPos + 1:].strip()
+                    if value.startswith("\"") and value.endswith("\""):
+                        value = value[1:-1]
+                values[variable] = value
+
+    return values.get("depot-path"), values.get("change")
+
 class Command:
     def __init__(self):
         self.usage = "usage: %prog [options]"
 
 class P4Debug(Command):
     def __init__(self):
+        Command.__init__(self)
         self.options = [
         ]
         self.description = "A tool to debug the output of p4 -G."
@@ -208,17 +240,9 @@ class P4Sync(Command):
             system("p4 revert %s" % f)
             system("p4 delete %s" % f)
 
-        logMessage = ""
-        foundTitle = False
-        for log in os.popen("git-cat-file commit %s" % id).readlines():
-            if not foundTitle:
-                if len(log) == 1:
-                    foundTitle = 1
-                continue
-
-            if len(logMessage) > 0:
-                logMessage += "\t"
-            logMessage += log
+        logMessage = extractLogMessageFromGitCommit(id)
+        logMessage = logMessage.replace("\n", "\n\t")
+        logMessage = logMessage[:-1]
 
         template = os.popen("p4 change -o").read()
 
@@ -506,7 +530,7 @@ class GitSync(Command):
 
         self.gitStream.write("data <<EOT\n")
         self.gitStream.write(details["desc"])
-        self.gitStream.write("\n[git-p4: depot-path: \"%s\"; change: %s]\n" % (branchPrefix, details["change"]))
+        self.gitStream.write("\n[git-p4: depot-path = \"%s\": change = %s]\n" % (branchPrefix, details["change"]))
         self.gitStream.write("EOT\n\n")
 
         if len(parent) > 0:
