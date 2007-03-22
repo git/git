@@ -83,6 +83,9 @@ def extractDepotPathAndChangeFromGitLog(log):
 
     return values.get("depot-path"), values.get("change")
 
+def gitBranchExists(branch):
+    return os.system("git-rev-parse %s 2>/dev/null >/dev/null") == 0
+
 class Command:
     def __init__(self):
         self.usage = "usage: %prog [options]"
