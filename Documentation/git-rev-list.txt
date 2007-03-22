@@ -26,6 +26,7 @@ SYNOPSIS
 	     [ [\--objects | \--objects-edge] [ \--unpacked ] ]
 	     [ \--pretty | \--header ]
 	     [ \--bisect ]
+	     [ \--bisect-vars ]
 	     [ \--merge ]
 	     [ \--reverse ]
 	     [ \--walk-reflogs ]
@@ -248,6 +249,18 @@ would be of roughly the same length.  Finding the change which
 introduces a regression is thus reduced to a binary search: repeatedly
 generate and test new 'midpoint's until the commit chain is of length
 one.
+
+--bisect-vars::
+
+This calculates the same as `--bisect`, but outputs text ready
+to be eval'ed by the shell. These lines will assign the name of
+the midpoint revision to the variable `bisect_rev`, and the
+expected number of commits to be tested after `bisect_rev` is
+tested to `bisect_nr`, the expected number of commits to be
+tested if `bisect_rev` turns out to be good to `bisect_good`,
+the expected number of commits to be tested if `bisect_rev`
+turns out to be bad to `bisect_bad`, and the number of commits
+we are bisecting right now to `bisect_all`.
 
 --
 
