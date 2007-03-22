@@ -70,7 +70,8 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2, const 
  * Is a tree entry interesting given the pathspec we have?
  *
  * Return:
- *  - positive for yes
+ *  - 2 for "yes, and all subsequent entries will be"
+ *  - 1 for yes
  *  - zero for no
  *  - negative for "no, and no subsequent entries will be either"
  */
@@ -100,8 +101,11 @@ static int tree_entry_interesting(struct tree_desc *desc, const char *base, int 
 			if (strncmp(base, match, matchlen))
 				continue;
 
-			/* The base is a subdirectory of a path which was specified. */
-			return 1;
+			/*
+			 * The base is a subdirectory of a path which
+			 * was specified, so all of them are interesting.
+			 */
+			return 2;
 		}
 
 		/* Does the base match? */
@@ -173,8 +177,18 @@ static int tree_entry_interesting(struct tree_desc *desc, const char *base, int 
 /* A whole sub-tree went away or appeared */
 static void show_tree(struct diff_options *opt, const char *prefix, struct tree_desc *desc, const char *base, int baselen)
 {
+	int all_interesting = 0;
 	while (desc->size) {
-		int show = tree_entry_interesting(desc, base, baselen, opt);
+		int show;
+
+		if (all_interesting)
+			show = 1;
+		else {
+			show = tree_entry_interesting(desc, base, baselen,
+						      opt);
+			if (show == 2)
+				all_interesting = 1;
+		}
 		if (show < 0)
 			break;
 		if (show)
@@ -215,8 +229,17 @@ static void show_entry(struct diff_options *opt, const char *prefix, struct tree
 
 static void skip_uninteresting(struct tree_desc *t, const char *base, int baselen, struct diff_options *opt)
 {
+	int all_interesting = 0;
 	while (t->size) {
-		int show = tree_entry_interesting(t, base, baselen, opt);
+		int show;
+
+		if (all_interesting)
+			show = 1;
+		else {
+			show = tree_entry_interesting(t, base, baselen, opt);
+			if (show == 2)
+				all_interesting = 1;
+		}
 		if (!show) {
 			update_tree_entry(t);
 			continue;
