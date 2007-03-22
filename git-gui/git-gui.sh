@@ -19,9 +19,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA}
-set gitgui_credits {
-Paul Mackerras
-}
 
 ######################################################################
 ##
@@ -301,6 +298,11 @@ proc ask_popup {msg} {
 ######################################################################
 ##
 ## version check
+
+if {{--version} eq $argv || {version} eq $argv} {
+	puts "git-gui version $appvers"
+	exit
+}
 
 set req_maj 1
 set req_min 5
@@ -1171,7 +1173,7 @@ File [short_path $path] cannot be committed by this program.
 		}
 		}
 	}
-	if {!$files_ready} {
+	if {!$files_ready && ![string match *merge $curType]} {
 		info_popup {No changes to commit.
 
 You must add at least 1 file before you can commit.
@@ -4492,61 +4494,6 @@ proc do_commit {} {
 	commit_tree
 }
 
-proc do_credits {} {
-	global gitgui_credits
-
-	set w .credits_dialog
-
-	toplevel $w
-	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
-
-	label $w.header -text {git-gui Contributors} -font font_uibold
-	pack $w.header -side top -fill x
-
-	frame $w.buttons
-	button $w.buttons.close -text {Close} \
-		-font font_ui \
-		-command [list destroy $w]
-	pack $w.buttons.close -side right
-	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
-
-	frame $w.credits
-	text $w.credits.t \
-		-background [$w.header cget -background] \
-		-yscrollcommand [list $w.credits.sby set] \
-		-width 20 \
-		-height 10 \
-		-wrap none \
-		-borderwidth 1 \
-		-relief solid \
-		-padx 5 -pady 5 \
-		-font font_ui
-	scrollbar $w.credits.sby -command [list $w.credits.t yview]
-	pack $w.credits.sby -side right -fill y
-	pack $w.credits.t -fill both -expand 1
-	pack $w.credits -side top -fill both -expand 1 -padx 5 -pady 5
-
-	label $w.desc \
-		-text "All portions are copyrighted by their respective authors
-and are distributed under the GNU General Public License." \
-		-padx 5 -pady 5 \
-		-justify left \
-		-anchor w \
-		-borderwidth 1 \
-		-relief solid \
-		-font font_ui
-	pack $w.desc -side top -fill x -padx 5 -pady 5
-
-	$w.credits.t insert end "[string trim $gitgui_credits]\n"
-	$w.credits.t conf -state disabled
-	$w.credits.t see 1.0
-
-	bind $w <Visibility> "grab $w; focus $w"
-	bind $w <Key-Escape> [list destroy $w]
-	wm title $w [$w.header cget -text]
-	tkwait window $w
-}
-
 proc do_about {} {
 	global appvers copyright
 	global tcl_patchLevel tk_patchLevel
@@ -4563,10 +4510,6 @@ proc do_about {} {
 	button $w.buttons.close -text {Close} \
 		-font font_ui \
 		-command [list destroy $w]
-	button $w.buttons.credits -text {Contributors} \
-		-font font_ui \
-		-command do_credits
-	pack $w.buttons.credits -side left
 	pack $w.buttons.close -side right
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
@@ -5116,8 +5059,6 @@ enable_option branch
 enable_option transport
 
 switch -- $subcommand {
---version -
-version -
 browser -
 blame {
 	disable_option multicommit
@@ -5488,11 +5429,6 @@ bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
 # -- Not a normal commit type invocation?  Do that instead!
 #
 switch -- $subcommand {
---version -
-version {
-	puts "git-gui version $appvers"
-	exit
-}
 browser {
 	if {[llength $argv] != 1} {
 		puts stderr "usage: $argv0 browser commit"

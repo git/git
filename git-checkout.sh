@@ -12,6 +12,7 @@ new=
 new_name=
 force=
 branch=
+track=
 newbranch=
 newbranch_log=
 merge=
@@ -33,7 +34,10 @@ while [ "$#" != "0" ]; do
 			die "git checkout: we do not like '$newbranch' as a branch name."
 		;;
 	"-l")
-		newbranch_log=1
+		newbranch_log=-l
+		;;
+	"--track"|"--no-track")
+		track="$arg"
 		;;
 	"-f")
 		force=1
@@ -84,6 +88,11 @@ while [ "$#" != "0" ]; do
 		;;
     esac
 done
+
+case "$new_branch,$track" in
+,--*)
+	die "git checkout: --track and --no-track require -b"
+esac
 
 case "$force$merge" in
 11)
@@ -199,7 +208,7 @@ else
 	work=`git write-tree` &&
 	git read-tree --reset -u $new || exit
 
-	eval GITHEAD_$new=${new_name:-${branch:-$new}} &&
+	eval GITHEAD_$new='${new_name:-${branch:-$new}}' &&
 	eval GITHEAD_$work=local &&
 	export GITHEAD_$new GITHEAD_$work &&
 	git merge-recursive $old -- $new $work
@@ -242,11 +251,7 @@ fi
 #
 if [ "$?" -eq 0 ]; then
 	if [ "$newbranch" ]; then
-		if [ "$newbranch_log" ]; then
-			mkdir -p $(dirname "$GIT_DIR/logs/refs/heads/$newbranch")
-			touch "$GIT_DIR/logs/refs/heads/$newbranch"
-		fi
-		git-update-ref -m "checkout: Created from $new_name" "refs/heads/$newbranch" $new || exit
+		git-branch $track $newbranch_log "$newbranch" "$new_name" || exit
 		branch="$newbranch"
 	fi
 	if test -n "$branch"

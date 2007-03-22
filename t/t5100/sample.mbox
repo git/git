@@ -386,3 +386,21 @@ index 9123cdc..918dcf8 100644
 -- 
 1.4.0.g6f2b
 
+From nobody Mon Sep 17 00:00:00 2001
+From: A U Thor <a.u.thor@example.com>
+Date: Fri, 9 Jun 2006 00:44:16 -0700
+Subject: [PATCH] another patch
+
+Here is an empty patch from A U Thor.
+
+From nobody Mon Sep 17 00:00:00 2001
+From: Junio C Hamano <junio@kernel.org>
+Date: Fri, 9 Jun 2006 00:44:16 -0700
+Subject: re: [PATCH] another patch
+
+From: A U Thor <a.u.thor@example.com>
+Subject: [PATCH] another patch
+>Here is an empty patch from A U Thor.
+
+Hey you forgot the patch!
+

@@ -149,6 +149,16 @@ if ($@) {
 	$term = new FakeTerm "$@: going non-interactive";
 }
 
+my $def_chain = $repo->config_boolean('sendemail.chainreplyto');
+if ($def_chain and $def_chain eq 'false') {
+    $chain_reply_to = 0;
+}
+
+@bcclist = $repo->config('sendemail.bcc');
+if (!@bcclist or !$bcclist[0]) {
+    @bcclist = ();
+}
+
 # Begin by accumulating all the variables (defined above), that we will end up
 # needing, first, from the command line:
 

@@ -8,7 +8,7 @@ git-checkout - Checkout and switch to a branch
 SYNOPSIS
 --------
 [verse]
-'git-checkout' [-q] [-f] [-b <new_branch> [-l]] [-m] [<branch>]
+'git-checkout' [-q] [-f] [-b [--track | --no-track] <new_branch> [-l]] [-m] [<branch>]
 'git-checkout' [<tree-ish>] <paths>...
 
 DESCRIPTION
@@ -18,7 +18,8 @@ When <paths> are not given, this command switches branches by
 updating the index and working tree to reflect the specified
 branch, <branch>, and updating HEAD to be <branch> or, if
 specified, <new_branch>.  Using -b will cause <new_branch> to
-be created.
+be created; in this case you can use the --track or --no-track
+options, which will be passed to `git branch`.
 
 When <paths> are given, this command does *not* switch
 branches.  It updates the named paths in the working tree from
@@ -44,6 +45,16 @@ OPTIONS
 	<branch>.  The new branch name must pass all checks defined
 	by gitlink:git-check-ref-format[1].  Some of these checks
 	may restrict the characters allowed in a branch name.
+
+--track::
+	When -b is given and a branch is created off a remote branch,
+	setup so that git-pull will automatically retrieve data from
+	the remote branch.
+
+--no-track::
+	When -b is given and a branch is created off a remote branch,
+	force that git-pull will automatically retrieve data from
+	the remote branch independent of the configuration settings.
 
 -l::
 	Create the new branch's ref log.  This activates recording of

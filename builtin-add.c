@@ -12,6 +12,8 @@
 static const char builtin_add_usage[] =
 "git-add [-n] [-v] [-f] [--interactive | -i] [--] <filepattern>...";
 
+static const char *excludes_file;
+
 static void prune_directory(struct dir_struct *dir, const char **pathspec, int prefix)
 {
 	char *seen;
@@ -67,6 +69,8 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec)
 	path = git_path("info/exclude");
 	if (!access(path, R_OK))
 		add_excludes_from_file(dir, path);
+	if (!access(excludes_file, R_OK))
+		add_excludes_from_file(dir, excludes_file);
 
 	/*
 	 * Calculate common prefix for the pathspec, and
@@ -86,6 +90,18 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec)
 	read_directory(dir, path, base, baselen);
 	if (pathspec)
 		prune_directory(dir, pathspec, baselen);
+}
+
+static int git_add_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "core.excludesfile")) {
+		if (!value)
+			die("core.excludesfile without value");
+		excludes_file = xstrdup(value);
+		return 0;
+	}
+
+	return git_default_config(var, value);
 }
 
 static struct lock_file lock_file;
@@ -115,7 +131,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		exit(1);
 	}
 
-	git_config(git_default_config);
+	git_config(git_add_config);
 
 	newfd = hold_lock_file_for_update(&lock_file, get_index_file(), 1);
 

@@ -7,7 +7,7 @@
 #define SHOWN		(1u<<3)
 #define TMP_MARK	(1u<<4) /* for isolated cases; clean after use */
 #define BOUNDARY	(1u<<5)
-#define BOUNDARY_SHOW	(1u<<6)
+#define CHILD_SHOWN	(1u<<6)
 #define ADDED		(1u<<7)	/* Parents already parsed and added? */
 #define SYMMETRIC_LEFT	(1u<<8)
 
@@ -20,6 +20,9 @@ struct rev_info {
 	/* Starting list */
 	struct commit_list *commits;
 	struct object_array pending;
+
+	/* Parents of shown commits */
+	struct object_array boundary_commits;
 
 	/* Basic information */
 	const char *prefix;
@@ -40,10 +43,10 @@ struct rev_info {
 			edge_hint:1,
 			limited:1,
 			unpacked:1, /* see also ignore_packed below */
-			boundary:1,
+			boundary:2,
 			left_right:1,
 			parents:1,
-			reverse:2;
+			reverse:1;
 
 	/* Diff flags */
 	unsigned int	diff:1,

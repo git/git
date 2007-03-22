@@ -373,6 +373,7 @@ extern struct packed_git {
 	struct packed_git *next;
 	struct pack_window *windows;
 	uint32_t *index_base;
+	time_t mtime;
 	off_t index_size;
 	off_t pack_size;
 	int pack_fd;
@@ -481,6 +482,7 @@ extern struct tag *alloc_tag_node(void);
 extern void alloc_report(void);
 
 /* trace.c */
+extern int nfasprintf(char **str, const char *fmt, ...);
 extern int nfvasprintf(char **str, const char *fmt, va_list va);
 extern void trace_printf(const char *format, ...);
 extern void trace_argv_printf(const char **argv, int count, const char *format, ...);

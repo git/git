@@ -61,7 +61,7 @@ diff --git a/git-cvsimport-script b/git-cvsimport-script
  		push(@old,$fn);
 
 -- 
-David Kågedal
+David KÃ¥gedal
 -
 To unsubscribe from this list: send the line "unsubscribe git" in
 the body of a message to majordomo@vger.kernel.org

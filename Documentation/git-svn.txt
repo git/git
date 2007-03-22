@@ -104,6 +104,14 @@ accepts.  However '--fetch-all' only fetches from the current
 
 Like 'git-rebase'; this requires that the working tree be clean
 and have no uncommitted changes.
++
+--
+-l;;
+--local;;
+	Do not fetch remotely; only run 'git-rebase' against the
+	last fetched commit from the upstream SVN.
+--
++
 
 'dcommit'::
 	Commit each diff from a specified head directly to the SVN

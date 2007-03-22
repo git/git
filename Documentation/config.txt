@@ -453,6 +453,11 @@ merge.summary::
 	Whether to include summaries of merged commits in newly created
 	merge commit messages. False by default.
 
+merge.tool::
+	Controls which merge resolution program is used by
+	gitlink:git-mergetool[l].  Valid values are: "kdiff3", "tkdiff",
+	"meld", "xxdiff", "emerge"
+
 merge.verbosity::
 	Controls the amount of output shown by the recursive merge
 	strategy.  Level 0 outputs nothing except a final error

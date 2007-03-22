@@ -40,13 +40,13 @@ OPTIONS
 pre-receive Hook
 ----------------
 Before any ref is updated, if $GIT_DIR/hooks/pre-receive file exists
-and is executable, it will be invoked once, with three parameters
-per ref to be updated:
+and is executable, it will be invoked once with no parameters.  The
+standard input of the hook will be one line per ref to be updated:
 
-       $GIT_DIR/hooks/pre-receive (refname sha1-old sha1-new)+
+       sha1-old SP sha1-new SP refname LF
 
-The refname parameter is relative to $GIT_DIR; e.g. for the master
-head this is "refs/heads/master".  The two sha1 arguments after
+The refname value is relative to $GIT_DIR; e.g. for the master
+head this is "refs/heads/master".  The two sha1 values before
 each refname are the object names for the refname before and after
 the update.  Refs to be created will have sha1-old equal to 0{40},
 while refs to be deleted will have sha1-new equal to 0{40}, otherwise
@@ -86,13 +86,14 @@ post-receive Hook
 -----------------
 After all refs were updated (or attempted to be updated), if any
 ref update was successful, and if $GIT_DIR/hooks/post-receive
-file exists and is executable, it will be invoke once with three
-parameters for each successfully updated ref:
+file exists and is executable, it will be invoke once with no
+parameters.  The standard input of the hook will be one line
+for each successfully updated ref:
 
-       $GIT_DIR/hooks/post-receive (refname sha1-old sha1-new)+
+       sha1-old SP sha1-new SP refname LF
 
-The refname parameter is relative to $GIT_DIR; e.g. for the master
-head this is "refs/heads/master".  The two sha1 arguments after
+The refname value is relative to $GIT_DIR; e.g. for the master
+head this is "refs/heads/master".  The two sha1 values before
 each refname are the object names for the refname before and after
 the update.  Refs that were created will have sha1-old equal to
 0{40}, while refs that were deleted will have sha1-new equal to
@@ -105,18 +106,17 @@ ref listing the commits pushed to the repository:
 
 	#!/bin/sh
 	# mail out commit update information.
-	while test $# -gt 0
+	while read oval nval ref
 	do
-		if expr "$2" : '0*$' >/dev/null
+		if expr "$oval" : '0*$' >/dev/null
 		then
 			echo "Created a new ref, with the following commits:"
-			git-rev-list --pretty "$2"
+			git-rev-list --pretty "$nval"
 		else
 			echo "New commits:"
-			git-rev-list --pretty "$3" "^$2"
+			git-rev-list --pretty "$nval" "^$oval"
 		fi |
-		mail -s "Changes to ref $1" commit-list@mydomain
-		shift; shift; shift; # discard this ref's args
+		mail -s "Changes to ref $ref" commit-list@mydomain
 	done
 	exit 0
 

@@ -339,7 +339,12 @@ f,*)
 	git-update-index --refresh 2>/dev/null
 	new_head=$(git-rev-parse --verify "$1^0") &&
 	merge_local_changes $head $new_head &&
-	finish "$new_head" "Fast forward" || exit
+	msg="Fast forward"
+	if test -n "$have_message"
+	then
+		msg="$msg (no commit created; -m option ignored)"
+	fi
+	finish "$new_head" "$msg" || exit
 	dropsave
 	exit 0
 	;;

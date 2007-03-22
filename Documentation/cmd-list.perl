@@ -124,6 +124,7 @@ git-merge-index                         plumbingmanipulators
 git-merge                               mainporcelain
 git-merge-one-file                      purehelpers
 git-merge-tree                          ancillaryinterrogators
+git-mergetool                           ancillarymanipulators
 git-mktag                               plumbingmanipulators
 git-mktree                              plumbingmanipulators
 git-mv                                  mainporcelain

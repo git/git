@@ -304,8 +304,11 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 	if (!access(".mailmap", R_OK))
 		read_mailmap(".mailmap");
 
-	if (rev.pending.nr == 0)
+	if (rev.pending.nr == 0) {
+		if (isatty(0))
+			fprintf(stderr, "(reading log to summarize from standard input)\n");
 		read_from_stdin(&list);
+	}
 	else
 		get_from_rev(&rev, &list);
 
