@@ -185,9 +185,9 @@ merge_file () {
 		mv -- "$BACKUP" "$path.orig"
 	    fi
 	    ;;
-	meld)
+	meld|vimdiff)
 	    touch "$BACKUP"
-	    meld -- "$LOCAL" "$path" "$REMOTE"
+	    $merge_tool -- "$LOCAL" "$path" "$REMOTE"
 	    if test "$path" -nt "$BACKUP" ; then
 		status=0;
 	    else
@@ -288,10 +288,15 @@ done
 
 if test -z "$merge_tool"; then
     merge_tool=`git-config merge.tool`
-    if test $merge_tool = kdiff3 -o $merge_tool = tkdiff -o \
-	$merge_tool = xxdiff -o $merge_tool = meld ; then
-	unset merge_tool
-    fi
+    case "$merge_tool" in
+	kdiff3 | tkdiff | xxdiff | meld | emerge | vimdiff)
+	    ;; # happy
+	*)
+	    echo >&2 "git config option merge.tool set to unknown tool: $merge_tool"
+	    echo >&2 "Resetting to default..."
+	    unset merge_tool
+	    ;;
+    esac
 fi
 
 if test -z "$merge_tool" ; then
@@ -305,6 +310,8 @@ if test -z "$merge_tool" ; then
 	merge_tool=meld
     elif type emacs >/dev/null 2>&1; then
 	merge_tool=emerge
+    elif type vimdiff >/dev/null 2>&1; then
+	merge_tool=vimdiff
     else
 	echo "No available merge resolution programs available."
 	exit 1
@@ -312,7 +319,7 @@ if test -z "$merge_tool" ; then
 fi
 
 case "$merge_tool" in
-    kdiff3|tkdiff|meld|xxdiff)
+    kdiff3|tkdiff|meld|xxdiff|vimdiff)
 	if ! type "$merge_tool" > /dev/null 2>&1; then
 	    echo "The merge tool $merge_tool is not available"
 	    exit 1

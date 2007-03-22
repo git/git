@@ -235,8 +235,8 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	unsigned char head[20];
 	struct commit *base, *next;
 	int i;
-	char *oneline, *encoding, *reencoded_message = NULL;
-	const char *message;
+	char *oneline, *reencoded_message = NULL;
+	const char *message, *encoding;
 
 	git_config(git_default_config);
 	me = action == REVERT ? "revert" : "cherry-pick";

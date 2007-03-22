@@ -159,5 +159,10 @@
 -w::
 	Shorthand for "--ignore-all-space".
 
+--exit-code::
+	Make the program exit with codes similar to diff(1).
+	That is, it exits with 1 if there were differences and
+	0 means no differences.
+
 For more detailed explanation on these common options, see also
 link:diffcore.html[diffcore documentation].

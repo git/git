@@ -177,7 +177,7 @@ BASIC_LDFLAGS =
 SCRIPT_SH = \
 	git-bisect.sh git-checkout.sh \
 	git-clean.sh git-clone.sh git-commit.sh \
-	git-fetch.sh git-gc.sh \
+	git-fetch.sh \
 	git-ls-remote.sh \
 	git-merge-one-file.sh git-mergetool.sh git-parse-remote.sh \
 	git-pull.sh git-rebase.sh \
@@ -297,6 +297,7 @@ BUILTIN_OBJS = \
 	builtin-fmt-merge-msg.o \
 	builtin-for-each-ref.o \
 	builtin-fsck.o \
+	builtin-gc.o \
 	builtin-grep.o \
 	builtin-init-db.o \
 	builtin-log.o \

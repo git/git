@@ -60,7 +60,8 @@ The --cc option must be repeated for each user you want on the cc list.
 	is not set, this will be prompted for.
 
 --no-signed-off-by-cc::
-	Do not add emails found in Signed-off-by: lines to the cc list.
+	Do not add emails found in Signed-off-by: or Cc: lines to the
+	cc list.
 
 --quiet::
 	Make git-send-email less verbose.  One line per email should be

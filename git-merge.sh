@@ -337,13 +337,13 @@ f,*)
 	# Again the most common case of merging one remote.
 	echo "Updating $(git-rev-parse --short $head)..$(git-rev-parse --short $1)"
 	git-update-index --refresh 2>/dev/null
-	new_head=$(git-rev-parse --verify "$1^0") &&
-	merge_local_changes $head $new_head &&
 	msg="Fast forward"
 	if test -n "$have_message"
 	then
 		msg="$msg (no commit created; -m option ignored)"
 	fi
+	new_head=$(git-rev-parse --verify "$1^0") &&
+	merge_local_changes $head $new_head &&
 	finish "$new_head" "$msg" || exit
 	dropsave
 	exit 0

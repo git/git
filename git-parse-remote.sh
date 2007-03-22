@@ -9,6 +9,9 @@ get_data_source () {
 	*/*)
 		echo ''
 		;;
+	.)
+		echo self
+		;;
 	*)
 		if test "$(git-config --get "remote.$1.url")"
 		then
@@ -29,6 +32,9 @@ get_remote_url () {
 	data_source=$(get_data_source "$1")
 	case "$data_source" in
 	'')
+		echo "$1"
+		;;
+	self)
 		echo "$1"
 		;;
 	config)
@@ -57,7 +63,7 @@ get_default_remote () {
 get_remote_default_refs_for_push () {
 	data_source=$(get_data_source "$1")
 	case "$data_source" in
-	'' | branches)
+	'' | branches | self)
 		;; # no default push mapping, just send matching refs.
 	config)
 		git-config --get-all "remote.$1.push" ;;
@@ -163,6 +169,10 @@ get_remote_default_refs_for_fetch () {
 	case "$data_source" in
 	'')
 		echo "HEAD:" ;;
+	self)
+	        canon_refs_list_for_fetch -d "$1" \
+			$(git-for-each-ref --format='%(refname):')
+		;;
 	config)
 		canon_refs_list_for_fetch -d "$1" \
 			$(git-config --get-all "remote.$1.fetch") ;;
@@ -177,7 +187,7 @@ get_remote_default_refs_for_fetch () {
 					}' "$GIT_DIR/remotes/$1")
 		;;
 	*)
-		die "internal error: get-remote-default-ref-for-push $1" ;;
+		die "internal error: get-remote-default-ref-for-fetch $1" ;;
 	esac
 }
 

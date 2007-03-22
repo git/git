@@ -1,20 +1,17 @@
 #include "cache.h"
-#include "spawn-pipe.h"
+#include "run-command.h"
 
 static const char *pgm;
-static const char *arguments[9];	/* last one is always NULL */
+static const char *arguments[9];
 static int one_shot, quiet;
 static int err;
 
 static void run_program(void)
 {
-	pid_t pid = spawnvpe_pipe(pgm, arguments, environ, NULL, NULL);
-	int status;
-
-	if (pid < 0)
-		die("unable to fork");
-
-	if (waitpid(pid, &status, 0) < 0 || !WIFEXITED(status) || WEXITSTATUS(status)) {
+	struct child_process child;
+	memset(&child, 0, sizeof(child));
+	child.argv = arguments;
+	if (run_command(&child)) {
 		if (one_shot) {
 			err++;
 		} else {
@@ -31,6 +28,7 @@ static int merge_entry(int pos, const char *path)
 	
 	if (pos >= active_nr)
 		die("git-merge-index: %s not in the cache", path);
+	arguments[0] = pgm;
 	arguments[1] = "";
 	arguments[2] = "";
 	arguments[3] = "";
@@ -38,6 +36,7 @@ static int merge_entry(int pos, const char *path)
 	arguments[5] = "";
 	arguments[6] = "";
 	arguments[7] = "";
+	arguments[8] = NULL;
 	found = 0;
 	do {
 		static char hexbuf[4][60];

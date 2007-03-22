@@ -29,5 +29,29 @@ test_expect_success 'checking the results' '
 	diff file cloned/file
 '
 
+test_expect_success 'test . as a remote' '
+
+	git branch copy master &&
+	git config branch.copy.remote . &&
+	git config branch.copy.merge refs/heads/master &&
+	echo updated >file &&
+	git commit -a -m updated &&
+	git checkout copy &&
+	test `cat file` = file &&
+	git pull &&
+	test `cat file` = updated
+'
+
+test_expect_success 'the default remote . should not break explicit pull' '
+	git checkout -b second master^ &&
+	echo modified >file &&
+	git commit -a -m modified &&
+	git checkout copy &&
+	git reset --hard HEAD^ &&
+	test `cat file` = file &&
+	git pull . second &&
+	test `cat file` = modified
+'
+
 test_done
 

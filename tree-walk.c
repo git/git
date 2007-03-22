@@ -32,7 +32,7 @@ static void entry_clear(struct name_entry *a)
 static void entry_extract(struct tree_desc *t, struct name_entry *a)
 {
 	a->sha1 = tree_entry_extract(t, &a->path, &a->mode);
-	a->pathlen = strlen(a->path);
+	a->pathlen = tree_entry_len(a->path, a->sha1);
 }
 
 void update_tree_entry(struct tree_desc *desc)
@@ -169,7 +169,7 @@ static int find_tree_entry(struct tree_desc *t, const char *name, unsigned char 
 
 		sha1 = tree_entry_extract(t, &entry, mode);
 		update_tree_entry(t);
-		entrylen = strlen(entry);
+		entrylen = tree_entry_len(entry, sha1);
 		if (entrylen > namelen)
 			continue;
 		cmp = memcmp(name, entry, entrylen);

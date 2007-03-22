@@ -5,7 +5,7 @@ static int verify_packfile(struct packed_git *p,
 		struct pack_window **w_curs)
 {
 	off_t index_size = p->index_size;
-	void *index_base = p->index_base;
+	const unsigned char *index_base = p->index_data;
 	SHA_CTX ctx;
 	unsigned char sha1[20];
 	off_t offset = 0, pack_sig = p->pack_size - 20;
@@ -31,7 +31,7 @@ static int verify_packfile(struct packed_git *p,
 	if (hashcmp(sha1, use_pack(p, w_curs, pack_sig, NULL)))
 		return error("Packfile %s SHA1 mismatch with itself",
 			     p->pack_name);
-	if (hashcmp(sha1, (unsigned char *)index_base + index_size - 40))
+	if (hashcmp(sha1, index_base + index_size - 40))
 		return error("Packfile %s SHA1 mismatch with idx",
 			     p->pack_name);
 	unuse_pack(w_curs);
@@ -127,7 +127,7 @@ static void show_pack_info(struct packed_git *p)
 int verify_pack(struct packed_git *p, int verbose)
 {
 	off_t index_size = p->index_size;
-	void *index_base = p->index_base;
+	const unsigned char *index_base = p->index_data;
 	SHA_CTX ctx;
 	unsigned char sha1[20];
 	int ret;
@@ -137,7 +137,7 @@ int verify_pack(struct packed_git *p, int verbose)
 	SHA1_Init(&ctx);
 	SHA1_Update(&ctx, index_base, (unsigned int)(index_size - 20));
 	SHA1_Final(sha1, &ctx);
-	if (hashcmp(sha1, (unsigned char *)index_base + index_size - 20))
+	if (hashcmp(sha1, index_base + index_size - 20))
 		ret = error("Packfile index for %s SHA1 mismatch",
 			    p->pack_name);
 

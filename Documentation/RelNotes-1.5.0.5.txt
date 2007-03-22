@@ -1,0 +1,28 @@
+GIT v1.5.0.5 Release Notes
+==========================
+
+Fixes since v1.5.0.3
+--------------------
+
+* Bugfixes
+
+  - git-merge (hence git-pull) did not refuse fast-forwarding
+    when the working tree had local changes that would have
+    conflicted with it.
+
+  - git.el does not add duplicate sign-off lines.
+
+  - git-commit shows the full stat of the resulting commit, not
+    just about the files in the current directory, when run from
+    a subdirectory.
+
+  - "git-checkout -m '@{8 hours ago}'" had a funny failure from
+    eval; fixed.
+
+  - git-gui updates.
+
+* Documentation updates
+
+* User manual updates
+
+

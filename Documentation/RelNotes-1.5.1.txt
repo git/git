@@ -25,6 +25,21 @@ Updates since v1.5.0
   - "git diff --pretty=format:<string>" to allow more flexible
     custom log output.
 
+  - "git diff --no-index" can read from '-' (standard input).
+
+  - "git diff" also learned --exit-code to exit with non-zero
+    status when it found differences.  In the future we might
+    want to make this the default but that would be a rather big
+    backward incompatible change; it will stay as an option for
+    now.
+
+  - "git branch --track" can be used to set up configuration
+    variables to help it easier to base your work on branches
+    you track from a remote site.
+
+  - "git format-patch --attach" now emits attachments.  Use
+    --inline to get an inlined multipart/mixed.
+
   - "git name-rev" learned --refs=<pattern>, to limit the tags
     used for naming the given revisions only to the ones
     matching the given pattern.
@@ -39,12 +54,20 @@ Updates since v1.5.0
   - "git bundle" can help sneaker-netting your changes between
     repositories.
 
+  - "git mergetool" can help 3-way file-level conflict
+    resolution with your favorite graphical merge tools.
+
   - A new configuration "core.symlinks" can be used to disable
     symlinks on filesystems that do not support them; they are
     checked out as regular files instead.
 
 
 * Updated behaviour of existing commands.
+
+  - "git fsck" does not barf on corrupt loose objects.
+
+  - "git archimport" allows remapping when coming up with git
+    branch names from arch names.
 
   - git-svn got almost a rewrite.
 
@@ -99,6 +122,25 @@ Updates since v1.5.0
   - "git fetch" (hence "git clone" and "git pull") are less
     noisy when the output does not go to tty.
 
+  - "git fetch" between repositories with many refs were slow
+    even when there are not many changes that needed
+    transferring.  This has been sped up by partially rewriting
+    the heaviest parts in C.
+
+  - "git mailinfo" which splits an e-mail into a patch and the
+    metainformation was rewritten, thanks to Don Zickus.  It
+    handles nested multipart better.
+
+  - send-email learned configurable bcc and chain-reply-to.
+
+  - Using objects from packs is now seriouly optimized by clever
+    use of a cache.  This should be most noticeable in git-log
+    family of commands that involve reading many tree objects.
+    In addition, traversing revisions while filtering changes
+    with pathspecs is made faster by terminating the comparison
+    between the trees as early as possible.
+
+
 * Hooks
 
   - The sample update hook to show how to send out notification
@@ -106,9 +148,15 @@ Updates since v1.5.0
     the repository.  Earlier, it showed new commits that appeared
     on the branch.
 
+
+* Others
+
+  - git-revert, git-gc and git-cherry-pick are now built-ins.
+
+
 --
 exec >/var/tmp/1
-O=v1.5.0.3-268-g3ddad98
+O=v1.5.0.5-446-g5d86501
 echo O=`git describe master`
 git shortlog --no-merges $O..master ^maint
 

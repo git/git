@@ -153,10 +153,8 @@ static void track_tree_refs(struct tree *item)
 	/* Count how many entries there are.. */
 	desc.buf = item->buffer;
 	desc.size = item->size;
-	while (desc.size) {
+	while (tree_entry(&desc, &entry))
 		n_refs++;
-		update_tree_entry(&desc);
-	}
 
 	/* Allocate object refs and walk it again.. */
 	i = 0;

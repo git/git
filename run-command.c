@@ -11,10 +11,11 @@ static inline void close_pair(int fd[2])
 
 int start_command(struct child_process *cmd)
 {
-	int need_in = !cmd->no_stdin && cmd->in < 0;
+	int need_in, need_out;
 	int fdin[2] = { -1, -1 };
-	int fd_o[2] = { -1, -1 };
+	int fdout[2] = { -1, -1 };
 
+	need_in = !cmd->no_stdin && cmd->in < 0;
 	if (need_in) {
 		if (pipe(fdin) < 0)
 			return -ERR_RUN_COMMAND_PIPE;
@@ -22,27 +23,49 @@ int start_command(struct child_process *cmd)
 		cmd->close_in = 1;
 	}
 
+	need_out = !cmd->no_stdout
+		&& !cmd->stdout_to_stderr
+		&& cmd->out < 0;
+	if (need_out) {
+		if (pipe(fdout) < 0) {
+			if (need_in)
+				close_pair(fdin);
+			return -ERR_RUN_COMMAND_PIPE;
+		}
+		cmd->out = fdout[0];
+		cmd->close_out = 1;
+	}
+
 	{
-		if (cmd->no_stdin) {
+		if (cmd->no_stdin)
 			fdin[0] = open("/dev/null", O_RDWR);
-		} else if (need_in) {
+		else if (need_in) {
 			/* nothing */
 		} else if (cmd->in) {
 			fdin[0] = cmd->in;
 		}
 
-		if (cmd->stdout_to_stderr)
-			fd_o[1] = dup(2);
+		if (cmd->no_stdout)
+			fdout[1] = open("/dev/null", O_RDWR);
+		else if (cmd->stdout_to_stderr)
+			fdout[1] = dup(2);
+		else if (need_out) {
+			/* nothing */
+		} else if (cmd->out > 1) {
+			fdout[1] = cmd->out;
+		}
+
 		if (cmd->git_cmd) {
-			cmd->pid = spawnv_git_cmd(cmd->argv, fdin, fd_o);
+			cmd->pid = spawnv_git_cmd(cmd->argv, fdin, fdout);
 		} else {
-			cmd->pid = spawnvpe_pipe(cmd->argv[0], cmd->argv, environ, fdin, fd_o);
+			cmd->pid = spawnvpe_pipe(cmd->argv[0], cmd->argv, environ, fdin, fdout);
 		}
 	}
 	if (cmd->pid < 0) {
-		if (need_in) {
+		if (need_in)
 			close_pair(fdin);
-		}
+		if (need_out)
+			close_pair(fdout);
 		return -ERR_RUN_COMMAND_FORK;
 	}
 
@@ -53,6 +76,8 @@ int finish_command(struct child_process *cmd)
 {
 	if (cmd->close_in)
 		close(cmd->in);
+	if (cmd->close_out)
+		close(cmd->out);
 
 	for (;;) {
 		int status, code;

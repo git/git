@@ -3,7 +3,7 @@
 #include "tag.h"
 #include "refs.h"
 #include "pkt-line.h"
-#include "exec_cmd.h"
+#include "run-command.h"
 
 static const char send_pack_usage[] =
 "git-send-pack [--all] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
@@ -19,16 +19,12 @@ static int use_thin_pack;
  */
 static int pack_objects(int fd, struct ref *refs)
 {
-	int pipe_fd[2];
-	int pack_fd[2] = { -1, fd };
-	pid_t pid;
-
 	/*
 	 * The child becomes pack-objects --revs; we feed
 	 * the revision parameters to it via its stdin and
 	 * let its stdout go back to the other end.
 	 */
-	static const char *args[] = {
+	const char *args[] = {
 		"pack-objects",
 		"--all-progress",
 		"--revs",
@@ -36,20 +32,22 @@ static int pack_objects(int fd, struct ref *refs)
 		NULL,
 		NULL,
 	};
+	struct child_process po;
+
 	if (use_thin_pack)
 		args[4] = "--thin";
-
-	if (pipe(pipe_fd) < 0)
-		return error("send-pack: pipe failed");
-	pid = spawnv_git_cmd(args, pipe_fd, pack_fd);
-	if (pid < 0)
-		return error("send-pack: unable to fork git-pack-objects");
+	memset(&po, 0, sizeof(po));
+	po.argv = args;
+	po.in = -1;
+	po.out = fd;
+	po.git_cmd = 1;
+	if (start_command(&po))
+		die("git-pack-objects failed (%s)", strerror(errno));
 
 	/*
 	 * We feed the pack-objects we just spawned with revision
 	 * parameters by writing to the pipe.
 	 */
-
 	while (refs) {
 		char buf[42];
 
@@ -58,38 +56,23 @@ static int pack_objects(int fd, struct ref *refs)
 			memcpy(buf + 1, sha1_to_hex(refs->old_sha1), 40);
 			buf[0] = '^';
 			buf[41] = '\n';
-			if (!write_or_whine(pipe_fd[1], buf, 42,
+			if (!write_or_whine(po.in, buf, 42,
 						"send-pack: send refs"))
 				break;
 		}
 		if (!is_null_sha1(refs->new_sha1)) {
 			memcpy(buf, sha1_to_hex(refs->new_sha1), 40);
 			buf[40] = '\n';
-			if (!write_or_whine(pipe_fd[1], buf, 41,
+			if (!write_or_whine(po.in, buf, 41,
 						"send-pack: send refs"))
 				break;
 		}
 		refs = refs->next;
 	}
-	close(pipe_fd[1]);
 
-	for (;;) {
-		int status, code;
-		pid_t waiting = waitpid(pid, &status, 0);
-
-		if (waiting < 0) {
-			if (errno == EINTR)
-				continue;
-			return error("waitpid failed (%s)", strerror(errno));
-		}
-		if ((waiting != pid) || WIFSIGNALED(status) ||
-		    !WIFEXITED(status))
-			return error("pack-objects died with strange error");
-		code = WEXITSTATUS(status);
-		if (code)
-			return -code;
-		return 0;
-	}
+	if (finish_command(&po))
+		return error("pack-objects died with strange error");
+	return 0;
 }
 
 static void unmark_and_free(struct commit_list *list, unsigned int mark)
