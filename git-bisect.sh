@@ -85,7 +85,7 @@ bisect_bad() {
 	0)
 		rev=$(git-rev-parse --verify HEAD) ;;
 	1)
-		rev=$(git-rev-parse --verify "$1") ;;
+		rev=$(git-rev-parse --verify "$1^{commit}") ;;
 	*)
 		usage ;;
 	esac || exit
@@ -104,7 +104,7 @@ bisect_good() {
 	esac
 	for rev in $revs
 	do
-		rev=$(git-rev-parse --verify "$rev") || exit
+		rev=$(git-rev-parse --verify "$rev^{commit}") || exit
 		echo "$rev" >"$GIT_DIR/refs/bisect/good-$rev"
 		echo "# good: "$(git-show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
 		echo "git-bisect good $rev" >>"$GIT_DIR/BISECT_LOG"
