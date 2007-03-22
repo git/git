@@ -38,11 +38,9 @@ Incremental Imports
 After an initial import you can easily synchronize your git repository with
 newer changes from the Perforce depot by just calling
 
-  git-p4.p4 sync
+  git-p4 sync
 
-in your git repository. git-p4 stores the depot path of the original import in
-the .git/config file and remembers the last imported p4 revision as a git tag
-called p4/<changenum> .
+in your git repository.
 
 It is recommended to run 'git repack -a -d -f' from time to time when using
 incremental imports to optimally combine the individual git packs that each

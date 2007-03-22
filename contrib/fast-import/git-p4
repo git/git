@@ -84,7 +84,9 @@ def extractDepotPathAndChangeFromGitLog(log):
     return values.get("depot-path"), values.get("change")
 
 def gitBranchExists(branch):
-    return os.system("git-rev-parse %s 2>/dev/null >/dev/null") == 0
+    if os.system("git-rev-parse %s 2>/dev/null >/dev/null" % branch) == 0:
+        return True
+    return False
 
 class Command:
     def __init__(self):
@@ -706,17 +708,40 @@ class GitSync(Command):
             self.users[output["User"]] = output["FullName"] + " <" + output["Email"] + ">"
 
     def run(self, args):
+        self.globalPrefix = ""
+        self.changeRange = ""
+        self.initialParent = ""
+        self.tagLastChange = True
+
         if len(self.branch) == 0:
             self.branch = "p4"
+            if len(args) == 0:
+                if not gitBranchExists(self.branch) and gitBranchExists("origin"):
+                    if not self.silent:
+                        print "Creating %s branch in git repository based on origin" % self.branch
+                    system("git branch %s origin" % self.branch)
+
+                [self.previousDepotPath, p4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit(self.branch))
+                if len(self.previousDepotPath) > 0 and len(p4Change) > 0:
+                    p4Change = int(p4Change) + 1
+                    self.globalPrefix = self.previousDepotPath
+                    self.changeRange = "@%s,#head" % p4Change
+                    self.initialParent = self.branch
+                    self.tagLastChange = False
+                    if not self.silent:
+                        print "Performing incremental import into %s git branch" % self.branch
 
         self.branch = "refs/heads/" + self.branch
-        self.globalPrefix = self.previousDepotPath = os.popen("git-repo-config --get p4.depotpath").read()
+
+        if len(self.globalPrefix) == 0:
+            self.globalPrefix = self.previousDepotPath = os.popen("git-repo-config --get p4.depotpath").read()
+
         if len(self.globalPrefix) != 0:
             self.globalPrefix = self.globalPrefix[:-1]
 
         if len(args) == 0 and len(self.globalPrefix) != 0:
             if not self.silent:
-                print "[using previously specified depot path %s]" % self.globalPrefix
+                print "Depot path: %s" % self.globalPrefix
         elif len(args) != 1:
             return False
         else:
@@ -725,10 +750,8 @@ class GitSync(Command):
                 sys.exit(1)
             self.globalPrefix = args[0]
 
-        self.changeRange = ""
         self.revision = ""
         self.users = {}
-        self.initialParent = ""
         self.lastChange = 0
         self.initialTag = ""
 
@@ -890,8 +913,9 @@ class GitSync(Command):
         if not self.silent:
             print ""
 
-        self.gitStream.write("reset refs/tags/p4/%s\n" % self.lastChange)
-        self.gitStream.write("from %s\n\n" % self.branch);
+        if self.tagLastChange:
+            self.gitStream.write("reset refs/tags/p4/%s\n" % self.lastChange)
+            self.gitStream.write("from %s\n\n" % self.branch);
 
 
         self.gitStream.close()
