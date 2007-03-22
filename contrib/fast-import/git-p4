@@ -506,7 +506,7 @@ class GitSync(Command):
 
         self.gitStream.write("data <<EOT\n")
         self.gitStream.write(details["desc"])
-        self.gitStream.write("\n[ imported from %s; change %s ]\n" % (branchPrefix, details["change"]))
+        self.gitStream.write("\n[git-p4: depot-path: \"%s\"; change: %s]\n" % (branchPrefix, details["change"]))
         self.gitStream.write("EOT\n\n")
 
         if len(parent) > 0:
