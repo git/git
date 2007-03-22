@@ -108,6 +108,10 @@ merge_name () {
 		git-show-ref -q --verify "refs/heads/$truname" 2>/dev/null
 	then
 		echo "$rh		branch '$truname' (early part) of ."
+	elif test "$remote" = "FETCH_HEAD" -a -r "$GIT_DIR/FETCH_HEAD"
+	then
+		sed -e 's/	not-for-merge	/		/' -e 1q \
+			"$GIT_DIR/FETCH_HEAD"
 	else
 		echo "$rh		commit '$remote'"
 	fi
