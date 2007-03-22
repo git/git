@@ -1,11 +1,11 @@
-git-p4.py - Perforce <-> Git converter using git-fast-import
+git-p4 - Perforce <-> Git converter using git-fast-import
 
 Usage
 =====
 
 git-p4 supports two main modes: Importing from Perforce to a Git repository is
-done using "git-p4.py sync". Submitting changes from Git back to Perforce is
-done using "git-p4.py submit".
+done using "git-p4 sync". Submitting changes from Git back to Perforce is
+done using "git-p4 submit".
 
 Importing
 =========
@@ -15,7 +15,7 @@ The procedure is simple:
   mkdir repo-git
   cd repo-git
   git init
-  git-p4.py sync //path/in/your/perforce/depot
+  git-p4 sync //path/in/your/perforce/depot
 
 This will import the current head revision of the specified depot path into the
 master branch of your git repository. You can use the --branch=mybranch option
@@ -23,7 +23,7 @@ to let git-p4 import from Perforce into a git branch of your choice.
 
 If you want to import the entire history of a given depot path just use
 
-  git-p4.py sync //path/in/depot@all
+  git-p4 sync //path/in/depot@all
 
 To achieve optimal compression you may want to run 'git repack -a -d -f' after
 a big import. This may take a while.
@@ -56,7 +56,7 @@ back to a Perforce depot. This requires a Perforce checkout separate to your
 git repository. This is the basic procedure:
 
     cd path/to/your/perforce/checkout
-    git-p4.py submit --git-dir=/path/to/your/git/repository
+    git-p4 submit --git-dir=/path/to/your/git/repository
 
 This will create a temporary git branch, use git-rev-list to find out which git
 commits are in your current branch but not in the "origin" branch. You can
@@ -73,7 +73,7 @@ submit template using "e".
 If a submit fails you may have to "p4 resolve" and submit manually. You can
 continue importing the remaining changes with
 
-  git-p4.py submit --git-dir=/path/to/your/git/repository --continue
+  git-p4 submit --git-dir=/path/to/your/git/repository --continue
 
 After submitting you should sync your origin branch from Perforce using
 git-p4's sync command.
