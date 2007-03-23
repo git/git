@@ -237,6 +237,27 @@ static int count_interesting_parents(struct commit_list *elem)
 	return cnt;
 }
 
+static inline int halfway(struct commit_list *p, int distance, int nr)
+{
+	/*
+	 * Don't short-cut something we are not going to return!
+	 */
+	if (revs.prune_fn && !(p->item->object.flags & TREECHANGE))
+		return 0;
+
+	/*
+	 * 2 and 3 are halfway of 5.
+	 * 3 is halfway of 6 but 2 and 4 are not.
+	 */
+	distance *= 2;
+	switch (distance - nr) {
+	case -1: case 0: case 1:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
 static struct commit_list *find_bisection_2(struct commit_list *list,
 					    int *reaches, int *all)
 {
@@ -305,10 +326,9 @@ static struct commit_list *find_bisection_2(struct commit_list *list,
 		weight_set(p, distance);
 
 		/* Does it happen to be at exactly half-way? */
-		distance *= 2;
-		if (nr == distance || (nr+1) == distance) {
+		if (halfway(p, distance, nr)) {
 			p->next = NULL;
-			*reaches = weight(p);
+			*reaches = distance;
 			free(weights);
 			return p;
 		}
@@ -330,10 +350,10 @@ static struct commit_list *find_bisection_2(struct commit_list *list,
 			counted++;
 
 			/* Does it happen to be at exactly half-way? */
-			distance = weight(p) * 2;
-			if (nr == distance || (nr+1) == distance) {
+			distance = weight(p);
+			if (halfway(p, distance, nr)) {
 				p->next = NULL;
-				*reaches = weight(p);
+				*reaches = distance;
 				free(weights);
 				return p;
 			}
