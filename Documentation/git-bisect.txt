@@ -22,6 +22,7 @@ depending on the subcommand:
  git bisect visualize
  git bisect replay <logfile>
  git bisect log
+ git bisect run <cmd>...
 
 This command uses 'git-rev-list --bisect' option to help drive
 the binary search process to find which change introduced a bug,
@@ -121,6 +122,35 @@ like this:
 $ git bisect start arch/i386 include/asm-i386
 ------------
 
+If you have a script that can tell if the current
+source code is good or bad, you can automatically bisect using:
+
+------------
+$ git bisect run my_script
+------------
+
+Note that the "run" script (`my_script` in the above example)
+should exit with code 0 in
+case the current source code is good and with a code between 1 and 127
+(included) in case the current source code is bad.
+
+Any other exit code (a program that does "exit(-1)" leaves $? = 255,
+see exit(3) manual page, the value is chopped with "& 0377") will
+abort the automatic bisect process.
+
+You may often find that during bisect you want to have near-constant
+tweaks (e.g., s/#define DEBUG 0/#define DEBUG 1/ in a header file, or
+"revision that does not have this commit needs this patch applied to
+work around other problem this bisection is not interested in")
+applied to the revision being tested.
+
+To cope with such a situation, after the inner git-bisect finds the
+next revision to test, with the "run" script, you can apply that tweak
+before compiling, run the real test, and after the test decides if the
+revision (possibly with the needed tweaks) passed the test, rewind the
+tree to the pristine state.  Finally the "run" script can exit with
+the status of the real test to let "git bisect run" command loop to
+know the outcome.
 
 Author
 ------
