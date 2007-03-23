@@ -161,3 +161,4 @@ int mingw_rename(const char*, const char*);
 #define has_dos_drive_prefix(path) (isalpha(*(path)) && (path)[1] == ':')
 #define is_dir_sep(c) ((c) == '/' || (c) == '\\')
 #define PATH_SEP ';'
+#define PRIuMAX "I64u"
