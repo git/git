@@ -294,13 +294,13 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	oneline = get_oneline(message);
 
 	if (action == REVERT) {
+		char *oneline_body = strchr(oneline, ' ');
+
 		base = commit;
 		next = commit->parents->item;
-		add_to_msg("Revert ");
-		add_to_msg(find_unique_abbrev(commit->object.sha1,
-					DEFAULT_ABBREV));
-		add_to_msg(oneline);
-		add_to_msg("\nThis reverts commit ");
+		add_to_msg("Revert \"");
+		add_to_msg(oneline_body + 1);
+		add_to_msg("\"\n\nThis reverts commit ");
 		add_to_msg(sha1_to_hex(commit->object.sha1));
 		add_to_msg(".\n");
 	} else {
