@@ -162,7 +162,7 @@ class P4Sync(Command):
         self.dryRun = False
         self.substFile = ""
         self.firstTime = True
-        self.origin = "origin"
+        self.origin = ""
         self.master = ""
         self.applyAsPatch = True
 
@@ -304,6 +304,42 @@ class P4Sync(Command):
             print "Perforce submit template written as %s. Please review/edit and then use p4 submit -i < %s to submit directly!" % (fileName, fileName)
 
     def run(self, args):
+        global gitdir
+        # make gitdir absolute so we can cd out into the perforce checkout
+        gitdir = os.path.abspath(gitdir)
+        os.environ["GIT_DIR"] = gitdir
+        depotPath = ""
+        if gitBranchExists("p4"):
+            [depotPath, dummy] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit("p4"))
+        if len(depotPath) == 0 and gitBranchExists("origin"):
+            [depotPath, dummy] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit("origin"))
+
+        if len(depotPath) == 0:
+            print "Internal error: cannot locate perforce depot path from existing branches"
+            sys.exit(128)
+
+        if not depotPath.endswith("/"):
+            depotPath += "/"
+        clientPath = p4Cmd("where %s..." % depotPath).get("path")
+        if clientPath.endswith("..."):
+            clientPath = clientPath[:-3]
+
+        if len(clientPath) == 0:
+            print "Error: Cannot locate perforce checkout of %s in client view" % depotPath
+            sys.exit(128)
+
+        print "Perforce checkout for depot path %s located at %s" % (depotPath, clientPath)
+        os.chdir(clientPath)
+        response = raw_input("Do you want to sync %s with p4 sync? (y/n)" % clientPath)
+        if response == "y" or response == "yes":
+            system("p4 sync ...")
+
+        if len(self.origin) == 0:
+            if gitBranchExists("p4"):
+                self.origin = "p4"
+            else:
+                self.origin = "origin"
+
         if self.reset:
             self.firstTime = True
 
