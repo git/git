@@ -50,7 +50,7 @@ bisect_start() {
 	head=$(GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD) ||
 	die "Bad HEAD - I need a symbolic ref"
 	case "$head" in
-	refs/heads/bisect*)
+	refs/heads/bisect)
 		if [ -s "$GIT_DIR/head-name" ]; then
 		    branch=`cat "$GIT_DIR/head-name"`
 		else
