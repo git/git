@@ -3719,7 +3719,7 @@ sub git_commit {
 		$formats_nav .=
 			'(merge: ' .
 			join(' ', map {
-				$cgi->a({-href => href(action=>"commitdiff",
+				$cgi->a({-href => href(action=>"commit",
 				                       hash=>$_)},
 				        esc_html(substr($_, 0, 7)));
 			} @$parents ) .
