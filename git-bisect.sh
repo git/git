@@ -141,7 +141,7 @@ bisect_next() {
 	bad=$(git-rev-parse --verify refs/bisect/bad) &&
 	good=$(git-rev-parse --sq --revs-only --not \
 		$(cd "$GIT_DIR" && ls refs/bisect/good-*)) &&
-	rev=$(eval "git-rev-list --bisect $good $bad -- $(cat $GIT_DIR/BISECT_NAMES)") || exit
+	rev=$(eval "git-rev-list --bisect $good $bad -- $(cat "$GIT_DIR/BISECT_NAMES")") || exit
 	if [ -z "$rev" ]; then
 	    echo "$bad was both good and bad"
 	    exit 1
