@@ -74,7 +74,11 @@
 #endif
 
 #ifndef PRIuMAX
+#ifndef __MINGW32__
 #define PRIuMAX "llu"
+#else
+#define PRIuMAX "I64u"
+#endif
 #endif
 
 #ifdef __GNUC__
