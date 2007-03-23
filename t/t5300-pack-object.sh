@@ -26,6 +26,12 @@ corrupt()
 	) < $1 > $2
 }
 
+test "$no_symlinks" && {
+	stat() {
+		ls -l "$3" | tr -s ' ' ' ' | cut -d' ' -f5
+	}
+}
+
 test_expect_success \
     'setup' \
     'rm -f .git/index*
