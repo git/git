@@ -2355,7 +2355,7 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 
 static int try_create_file(const char *path, unsigned int mode, const char *buf, unsigned long size)
 {
-	int fd;
+	int fd, converted;
 	char *nbuf;
 	unsigned long nsize;
 
@@ -2364,17 +2364,18 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 		 * terminated.
 		 */
 		return symlink(buf, path);
-	nsize = size;
-	nbuf = (char *) buf;
-	if (convert_to_working_tree(path, &nbuf, &nsize)) {
-		free((char *) buf);
-		buf = nbuf;
-		size = nsize;
-	}
 
 	fd = open(path, O_CREAT | O_EXCL | O_WRONLY, (mode & 0100) ? 0777 : 0666);
 	if (fd < 0)
 		return -1;
+
+	nsize = size;
+	nbuf = (char *) buf;
+	converted = convert_to_working_tree(path, &nbuf, &nsize);
+	if (converted) {
+		buf = nbuf;
+		size = nsize;
+	}
 	while (size) {
 		int written = xwrite(fd, buf, size);
 		if (written < 0)
@@ -2386,6 +2387,8 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	}
 	if (close(fd) < 0)
 		die("closing file %s: %s", path, strerror(errno));
+	if (converted)
+		free(nbuf);
 	return 0;
 }
 
