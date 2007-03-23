@@ -180,7 +180,7 @@ static struct commit_list *find_bisection(struct commit_list *list)
 			nr++;
 		p = p->next;
 	}
-	closest = 0;
+	closest = -1;
 	best = list;
 
 	for (p = list; p; p = p->next) {
