@@ -751,21 +751,22 @@ class GitSync(Command):
 
         if len(self.branch) == 0:
             self.branch = "p4"
-            if len(args) == 0:
-                if not gitBranchExists(self.branch) and gitBranchExists("origin"):
-                    if not self.silent:
-                        print "Creating %s branch in git repository based on origin" % self.branch
-                    system("git branch %s origin" % self.branch)
 
-                [self.previousDepotPath, p4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit(self.branch))
-                if len(self.previousDepotPath) > 0 and len(p4Change) > 0:
-                    p4Change = int(p4Change) + 1
-                    self.globalPrefix = self.previousDepotPath
-                    self.changeRange = "@%s,#head" % p4Change
-                    self.initialParent = self.branch
-                    self.tagLastChange = False
-                    if not self.silent:
-                        print "Performing incremental import into %s git branch" % self.branch
+        if len(args) == 0:
+            if not gitBranchExists(self.branch) and gitBranchExists("origin"):
+                if not self.silent:
+                    print "Creating %s branch in git repository based on origin" % self.branch
+                system("git branch %s origin" % self.branch)
+
+            [self.previousDepotPath, p4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit(self.branch))
+            if len(self.previousDepotPath) > 0 and len(p4Change) > 0:
+                p4Change = int(p4Change) + 1
+                self.globalPrefix = self.previousDepotPath
+                self.changeRange = "@%s,#head" % p4Change
+                self.initialParent = self.branch
+                self.tagLastChange = False
+                if not self.silent:
+                    print "Performing incremental import into %s git branch" % self.branch
 
         self.branch = "refs/heads/" + self.branch
 
