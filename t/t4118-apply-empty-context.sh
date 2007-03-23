@@ -23,7 +23,8 @@ test_expect_success setup '
 	cat file2 >file2.orig
 	git add file1 file2 &&
 	sed -e "/^B/d" <file1.orig >file1 &&
-	sed -e "/^B/d" <file2.orig >file2 &&
+	sed -e "/^[BQ]/d" <file2.orig >file2 &&
+	echo Q | tr -d "\\012" >>file2 &&
 	cat file1 >file1.mods &&
 	cat file2 >file2.mods &&
 	git diff |
