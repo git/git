@@ -342,7 +342,7 @@ class P4Sync(Command):
 
         print "Perforce checkout for depot path %s located at %s" % (depotPath, clientPath)
         os.chdir(clientPath)
-        response = raw_input("Do you want to sync %s with p4 sync? (y/n)" % clientPath)
+        response = raw_input("Do you want to sync %s with p4 sync? (y/n) " % clientPath)
         if response == "y" or response == "yes":
             system("p4 sync ...")
 
