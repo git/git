@@ -134,9 +134,9 @@ exit with code 0 in case the current source code is good and with a
 code between 1 and 127 (included) in case the current source code is
 bad.
 
-Any other exit code (a program that does "exit(-1)" leaves $? = 255,
-see exit(3) manual page, the value is chopped with "& 0377") will
-abort the automatic bisect process.
+Any other exit code will abort the automatic bisect process. (A
+program that does "exit(-1)" leaves $? = 255, see exit(3) manual page,
+the value is chopped with "& 0377".)
 
 You may often find that during bisect you want to have near-constant
 tweaks (e.g., s/#define DEBUG 0/#define DEBUG 1/ in a header file, or
