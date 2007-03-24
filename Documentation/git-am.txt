@@ -87,6 +87,33 @@ default.   You could use `--no-utf8` to override this.
 DISCUSSION
 ----------
 
+The commit author name is taken from the "From: " line of the
+message, and commit author time is taken from the "Date: " line
+of the message.  The "Subject: " line is used as the title of
+the commit, after stripping common prefix "[PATCH <anything>]".
+It is supposed to describe what the commit is about concisely as
+a one line text.
+
+The body of the message (iow, after a blank line that terminates
+RFC2822 headers) can begin with "Subject: " and "From: " lines
+that are different from those of the mail header, to override
+the values of these fields.
+
+The commit message is formed by the title taken from the
+"Subject: ", a blank line and the body of the message up to
+where the patch begins.  Excess whitespaces at the end of the
+lines are automatically stripped.
+
+The patch is expected to be inline, directly following the
+message.  Any line that is of form:
+
+* three-dashes and end-of-line, or
+* a line that begins with "diff -", or
+* a line that begins with "Index: "
+
+is taken as the beginning of a patch, and the commit log message
+is terminated before the first occurrence of such a line.
+
 When initially invoking it, you give it names of the mailboxes
 to crunch.  Upon seeing the first patch that does not apply, it
 aborts in the middle, just like 'git-applymbox' does.  You can
