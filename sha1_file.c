@@ -2154,6 +2154,7 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 	} while (1);
 	inflateEnd(&stream);
 
+	fchmod(local, 0444);
 	close(local);
 	SHA1_Final(real_sha1, &c);
 	if (ret != Z_STREAM_END) {
