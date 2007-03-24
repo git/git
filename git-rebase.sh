@@ -265,6 +265,10 @@ upstream_name="$1"
 upstream=`git rev-parse --verify "${upstream_name}^0"` ||
     die "invalid upstream $upstream_name"
 
+# Make sure the branch to rebase onto is valid.
+onto_name=${newbase-"$upstream_name"}
+onto=$(git-rev-parse --verify "${onto_name}^0") || exit
+
 # If a hook exists, give it a chance to interrupt
 if test -x "$GIT_DIR/hooks/pre-rebase"
 then
@@ -290,10 +294,6 @@ case "$#" in
 	;;
 esac
 branch=$(git-rev-parse --verify "${branch_name}^0") || exit
-
-# Make sure the branch to rebase onto is valid.
-onto_name=${newbase-"$upstream_name"}
-onto=$(git-rev-parse --verify "${onto_name}^0") || exit
 
 # Now we are rebasing commits $upstream..$branch on top of $onto
 

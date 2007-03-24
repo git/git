@@ -163,6 +163,13 @@ cd_to_toplevel
 detached=
 detach_warn=
 
+describe_detached_head () {
+	test -n "$quiet" || {
+		printf >&2 "$1 "
+		GIT_PAGER= git log >&2 -1 --pretty=oneline --abbrev-commit "$2"
+	}
+}
+
 if test -z "$branch$newbranch" && test "$new" != "$old"
 then
 	detached="$new"
@@ -173,9 +180,9 @@ If you want to create a new branch from this checkout, you may do so
 (now or later) by using -b with the checkout command again. Example:
   git checkout -b <new_branch_name>"
 	fi
-elif test -z "$oldbranch" && test -z "$quiet"
+elif test -z "$oldbranch"
 then
-	echo >&2 "Previous HEAD position was $old"
+	describe_detached_head 'Previous HEAD position was' "$old"
 fi
 
 if [ "X$old" = X ]
@@ -275,6 +282,7 @@ if [ "$?" -eq 0 ]; then
 		then
 			echo >&2 "$detach_warn"
 		fi
+		describe_detached_head 'HEAD is now at' HEAD
 	fi
 	rm -f "$GIT_DIR/MERGE_HEAD"
 else

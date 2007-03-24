@@ -21,11 +21,11 @@ GIT pack format
      which looks like this:
 
      (undeltified representation)
-     n-byte type and length (4-bit type, (n-1)*7+4-bit length)
+     n-byte type and length (3-bit type, (n-1)*7+4-bit length)
      compressed data
 
      (deltified representation)
-     n-byte type and length (4-bit type, (n-1)*7+4-bit length)
+     n-byte type and length (3-bit type, (n-1)*7+4-bit length)
      20-byte base object name
      compressed delta data
 
@@ -102,11 +102,13 @@ trailer	  | | packfile checksum              |
 Pack file entry: <+
 
      packed object header:
-	1-byte type (upper 4-bit)
+	1-byte size extension bit (MSB)
+	       type (next 3 bit)
 	       size0 (lower 4-bit) 
         n-byte sizeN (as long as MSB is set, each 7-bit)
 		size0..sizeN form 4+7+7+..+7 bit integer, size0
-		is the most significant part.
+		is the least significant part, and sizeN is the
+		most significant part.
      packed object data:
         If it is not DELTA, then deflated bytes (the size above
 		is the size before compression).

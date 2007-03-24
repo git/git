@@ -1,14 +1,15 @@
 #!/bin/sh
 
-USAGE='[start|bad|good|next|reset|visualize|replay|log]'
+USAGE='[start|bad|good|next|reset|visualize|replay|log|run]'
 LONG_USAGE='git bisect start [<pathspec>]	reset bisect state and start bisection.
 git bisect bad [<rev>]		mark <rev> a known-bad revision.
 git bisect good [<rev>...]	mark <rev>... known-good revisions.
 git bisect next			find next bisection to test and check it out.
 git bisect reset [<branch>]	finish bisection search and go back to branch.
 git bisect visualize            show bisect status in gitk.
-git bisect replay <logfile>	replay bisection log
-git bisect log			show bisect log.'
+git bisect replay <logfile>	replay bisection log.
+git bisect log			show bisect log.
+git bisect run <cmd>... 	use <cmd>... to automatically bisect.'
 
 . git-sh-setup
 require_work_tree
@@ -49,7 +50,7 @@ bisect_start() {
 	head=$(GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD) ||
 	die "Bad HEAD - I need a symbolic ref"
 	case "$head" in
-	refs/heads/bisect*)
+	refs/heads/bisect)
 		if [ -s "$GIT_DIR/head-name" ]; then
 		    branch=`cat "$GIT_DIR/head-name"`
 		else
@@ -85,7 +86,7 @@ bisect_bad() {
 	0)
 		rev=$(git-rev-parse --verify HEAD) ;;
 	1)
-		rev=$(git-rev-parse --verify "$1") ;;
+		rev=$(git-rev-parse --verify "$1^{commit}") ;;
 	*)
 		usage ;;
 	esac || exit
@@ -104,7 +105,7 @@ bisect_good() {
 	esac
 	for rev in $revs
 	do
-		rev=$(git-rev-parse --verify "$rev") || exit
+		rev=$(git-rev-parse --verify "$rev^{commit}") || exit
 		echo "$rev" >"$GIT_DIR/refs/bisect/good-$rev"
 		echo "# good: "$(git-show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
 		echo "git-bisect good $rev" >>"$GIT_DIR/BISECT_LOG"
@@ -140,7 +141,7 @@ bisect_next() {
 	bad=$(git-rev-parse --verify refs/bisect/bad) &&
 	good=$(git-rev-parse --sq --revs-only --not \
 		$(cd "$GIT_DIR" && ls refs/bisect/good-*)) &&
-	rev=$(eval "git-rev-list --bisect $good $bad -- $(cat $GIT_DIR/BISECT_NAMES)") || exit
+	rev=$(eval "git-rev-list --bisect $good $bad -- $(cat "$GIT_DIR/BISECT_NAMES")") || exit
 	if [ -z "$rev" ]; then
 	    echo "$bad was both good and bad"
 	    exit 1
@@ -185,6 +186,7 @@ bisect_reset() {
 		rm -f "$GIT_DIR/refs/heads/bisect" "$GIT_DIR/head-name"
 		rm -f "$GIT_DIR/BISECT_LOG"
 		rm -f "$GIT_DIR/BISECT_NAMES"
+		rm -f "$GIT_DIR/BISECT_RUN"
 	fi
 }
 
@@ -220,6 +222,50 @@ bisect_replay () {
 	bisect_auto_next
 }
 
+bisect_run () {
+    while true
+    do
+      echo "running $@"
+      "$@"
+      res=$?
+
+      # Check for really bad run error.
+      if [ $res -lt 0 -o $res -ge 128 ]; then
+	  echo >&2 "bisect run failed:"
+	  echo >&2 "exit code $res from '$@' is < 0 or >= 128"
+	  exit $res
+      fi
+
+      # Use "bisect_good" or "bisect_bad"
+      # depending on run success or failure.
+      if [ $res -gt 0 ]; then
+	  next_bisect='bisect_bad'
+      else
+	  next_bisect='bisect_good'
+      fi
+
+      # We have to use a subshell because bisect_good or
+      # bisect_bad functions can exit.
+      ( $next_bisect > "$GIT_DIR/BISECT_RUN" )
+      res=$?
+
+      cat "$GIT_DIR/BISECT_RUN"
+
+      if [ $res -ne 0 ]; then
+	  echo >&2 "bisect run failed:"
+	  echo >&2 "$next_bisect exited with error code $res"
+	  exit $res
+      fi
+
+      if grep "is first bad commit" "$GIT_DIR/BISECT_RUN" > /dev/null; then
+	  echo "bisect run success"
+	  exit 0;
+      fi
+
+    done
+}
+
+
 case "$#" in
 0)
     usage ;;
@@ -244,6 +290,8 @@ case "$#" in
 	bisect_replay "$@" ;;
     log)
 	cat "$GIT_DIR/BISECT_LOG" ;;
+    run)
+        bisect_run "$@" ;;
     *)
         usage ;;
     esac
