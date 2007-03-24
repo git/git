@@ -35,9 +35,9 @@ The way you use it is:
 
 ------------------------------------------------
 $ git bisect start
-$ git bisect bad			# Current version is bad
-$ git bisect good v2.6.13-rc2		# v2.6.13-rc2 was the last version
-					# tested that was good
+$ git bisect bad                 # Current version is bad
+$ git bisect good v2.6.13-rc2    # v2.6.13-rc2 was the last version
+                                 # tested that was good
 ------------------------------------------------
 
 When you give at least one bad and one good versions, it will bisect
