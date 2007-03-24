@@ -169,51 +169,7 @@ static void clear_distance(struct commit_list *list)
 	}
 }
 
-static struct commit_list *find_bisection(struct commit_list *list,
-					  int *reaches, int *all)
-{
-	int nr, closest;
-	struct commit_list *p, *best;
-
-	nr = 0;
-	p = list;
-	while (p) {
-		if (!revs.prune_fn || (p->item->object.flags & TREECHANGE))
-			nr++;
-		p = p->next;
-	}
-	closest = -1;
-	best = list;
-	*all = nr;
-
-	for (p = list; p; p = p->next) {
-		int distance, reach;
-
-		if (revs.prune_fn && !(p->item->object.flags & TREECHANGE))
-			continue;
-
-		distance = reach = count_distance(p);
-		clear_distance(list);
-		if (nr - distance < distance)
-			distance = nr - distance;
-		if (distance > closest) {
-			best = p;
-			*reaches = reach;
-			closest = distance;
-		}
-	}
-	if (best)
-		best->next = NULL;
-	return best;
-}
-
-static inline int commit_interesting(struct commit_list *elem)
-{
-	unsigned flags = elem->item->object.flags;
-	if (flags & UNINTERESTING)
-		return 0;
-	return (!revs.prune_fn || (flags & TREECHANGE));
-}
+#define DEBUG_BISECT 0
 
 static inline int weight(struct commit_list *elem)
 {
@@ -225,16 +181,17 @@ static inline void weight_set(struct commit_list *elem, int weight)
 	*((int*)(elem->item->util)) = weight;
 }
 
-static int count_interesting_parents(struct commit_list *elem)
+static int count_interesting_parents(struct commit *commit)
 {
-	int cnt = 0;
-	if (!elem->item->parents)
-		return cnt;
-	for (elem = elem->item->parents; elem; elem = elem->next) {
-		if (commit_interesting(elem))
-			cnt++;
+	struct commit_list *p;
+	int count;
+
+	for (count = 0, p = commit->parents; p; p = p->next) {
+		if (p->item->object.flags & UNINTERESTING)
+			continue;
+		count++;
 	}
-	return cnt;
+	return count;
 }
 
 static inline int halfway(struct commit_list *p, int distance, int nr)
@@ -244,7 +201,8 @@ static inline int halfway(struct commit_list *p, int distance, int nr)
 	 */
 	if (revs.prune_fn && !(p->item->object.flags & TREECHANGE))
 		return 0;
-
+	if (DEBUG_BISECT)
+		return 0;
 	/*
 	 * 2 and 3 are halfway of 5.
 	 * 3 is halfway of 6 but 2 and 4 are not.
@@ -258,48 +216,126 @@ static inline int halfway(struct commit_list *p, int distance, int nr)
 	}
 }
 
-static struct commit_list *find_bisection_2(struct commit_list *list,
-					    int *reaches, int *all)
+#if !DEBUG_BISECT
+#define show_list(a,b,c,d) do { ; } while (0)
+#else
+static void show_list(const char *debug, int counted, int nr,
+		      struct commit_list *list)
 {
-	int n, nr, counted, distance;
-	struct commit_list *p, *best;
+	struct commit_list *p;
+
+	fprintf(stderr, "%s (%d/%d)\n", debug, counted, nr);
+
+	for (p = list; p; p = p->next) {
+		struct commit_list *pp;
+		struct commit *commit = p->item;
+		unsigned flags = commit->object.flags;
+		enum object_type type;
+		unsigned long size;
+		char *buf = read_sha1_file(commit->object.sha1, &type, &size);
+		char *ep, *sp;
+
+		fprintf(stderr, "%c%c%c ",
+			(flags & TREECHANGE) ? 'T' : ' ',
+			(flags & UNINTERESTING) ? 'U' : ' ',
+			(flags & COUNTED) ? 'C' : ' ');
+		if (commit->util)
+			fprintf(stderr, "%3d", weight(p));
+		else
+			fprintf(stderr, "---");
+		fprintf(stderr, " %.*s", 8, sha1_to_hex(commit->object.sha1));
+		for (pp = commit->parents; pp; pp = pp->next)
+			fprintf(stderr, " %.*s", 8,
+				sha1_to_hex(pp->item->object.sha1));
+
+		sp = strstr(buf, "\n\n");
+		if (sp) {
+			sp += 2;
+			for (ep = sp; *ep && *ep != '\n'; ep++)
+				;
+			fprintf(stderr, " %.*s", (int)(ep - sp), sp);
+		}
+		fprintf(stderr, "\n");
+	}
+}
+#endif /* DEBUG_BISECT */
+
+/*
+ * zero or positive weight is the number of interesting commits it can
+ * reach, including itself.  Especially, weight = 0 means it does not
+ * reach any tree-changing commits (e.g. just above uninteresting one
+ * but traversal is with pathspec).
+ *
+ * weight = -1 means it has one parent and its distance is yet to
+ * be computed.
+ *
+ * weight = -2 means it has more than one parent and its distance is
+ * unknown.  After running count_distance() first, they will get zero
+ * or positive distance.
+ */
+
+static struct commit_list *find_bisection(struct commit_list *list,
+					  int *reaches, int *all)
+{
+	int n, nr, on_list, counted, distance;
+	struct commit_list *p, *best, *next, *last;
 	int *weights;
 
-	for (nr = 0, p = list; p; p = p->next) {
-		if (commit_interesting(p))
+	show_list("bisection 2 entry", 0, 0, list);
+
+	/*
+	 * Count the number of total and tree-changing items on the
+	 * list, while reversing the list.
+	 */
+	for (nr = on_list = 0, last = NULL, p = list;
+	     p;
+	     p = next) {
+		unsigned flags = p->item->object.flags;
+
+		next = p->next;
+		if (flags & UNINTERESTING)
+			continue;
+		p->next = last;
+		last = p;
+		if (!revs.prune_fn || (flags & TREECHANGE))
 			nr++;
+		on_list++;
 	}
+	list = last;
+	show_list("bisection 2 sorted", 0, nr, list);
+
 	*all = nr;
-	weights = xcalloc(nr, sizeof(int*));
+	weights = xcalloc(on_list, sizeof(int*));
 	counted = 0;
 
 	for (n = 0, p = list; p; p = p->next) {
-		if (!commit_interesting(p))
-			continue;
-		if (commit_interesting(p)) {
-			/*
-			 * positive weight is the number of interesting
-			 * commits it can reach, including itself.
-			 * weight = 0 means it has one parent and
-			 * its distance is unknown.
-			 * weight < 0 means it has more than one
-			 * parent and its distance is unknown.
-			 */
-			p->item->util = &weights[n++];
-			switch (count_interesting_parents(p)) {
-			case 0:
+		struct commit *commit = p->item;
+		unsigned flags = commit->object.flags;
+
+		p->item->util = &weights[n++];
+		switch (count_interesting_parents(commit)) {
+		case 0:
+			if (!revs.prune_fn || (flags & TREECHANGE)) {
 				weight_set(p, 1);
 				counted++;
-				break;
-			case 1:
-				weight_set(p, 0);
-				break;
-			default:
-				weight_set(p, -1);
-				break;
+				show_list("bisection 2 count one",
+					  counted, nr, list);
 			}
+			/*
+			 * otherwise, it is known not to reach any
+			 * tree-changing commit and gets weight 0.
+			 */
+			break;
+		case 1:
+			weight_set(p, -1);
+			break;
+		default:
+			weight_set(p, -2);
+			break;
 		}
 	}
+
+	show_list("bisection 2 initialize", counted, nr, list);
 
 	/*
 	 * If you have only one parent in the resulting set
@@ -316,13 +352,13 @@ static struct commit_list *find_bisection_2(struct commit_list *list,
 	 * way, and then fill the blanks using cheaper algorithm.
 	 */
 	for (p = list; p; p = p->next) {
-		if (!commit_interesting(p))
+		if (p->item->object.flags & UNINTERESTING)
 			continue;
 		n = weight(p);
-		if (0 <= n)
+		if (n != -2)
 			continue;
 		distance = count_distance(p);
-		clear_distance(p);
+		clear_distance(list);
 		weight_set(p, distance);
 
 		/* Does it happen to be at exactly half-way? */
@@ -335,19 +371,37 @@ static struct commit_list *find_bisection_2(struct commit_list *list,
 		counted++;
 	}
 
+	show_list("bisection 2 count_distance", counted, nr, list);
+
 	while (counted < nr) {
 		for (p = list; p; p = p->next) {
 			struct commit_list *q;
+			unsigned flags = p->item->object.flags;
 
-			if (!commit_interesting(p) || 0 < weight(p))
+			if (0 <= weight(p))
 				continue;
-			for (q = p->item->parents; q; q = q->next)
-				if (commit_interesting(q) && 0 < weight(q))
+			for (q = p->item->parents; q; q = q->next) {
+				if (q->item->object.flags & UNINTERESTING)
+					continue;
+				if (0 <= weight(q))
 					break;
+			}
 			if (!q)
 				continue;
-			weight_set(p, weight(q)+1);
-			counted++;
+
+			/*
+			 * weight for p is unknown but q is known.
+			 * add one for p itself if p is to be counted,
+			 * otherwise inherit it from q directly.
+			 */
+			if (!revs.prune_fn || (flags & TREECHANGE)) {
+				weight_set(p, weight(q)+1);
+				counted++;
+				show_list("bisection 2 count one",
+					  counted, nr, list);
+			}
+			else
+				weight_set(p, weight(q));
 
 			/* Does it happen to be at exactly half-way? */
 			distance = weight(p);
@@ -360,11 +414,15 @@ static struct commit_list *find_bisection_2(struct commit_list *list,
 		}
 	}
 
+	show_list("bisection 2 counted all", counted, nr, list);
+
 	/* Then find the best one */
-	counted = 0;
+	counted = -1;
 	best = list;
 	for (p = list; p; p = p->next) {
-		if (!commit_interesting(p))
+		unsigned flags = p->item->object.flags;
+
+		if (revs.prune_fn && !(flags & TREECHANGE))
 			continue;
 		distance = weight(p);
 		if (nr - distance < distance)
@@ -472,12 +530,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if (bisect_list) {
 		int reaches = reaches, all = all;
 
-		if (!revs.prune_fn)
-			revs.commits = find_bisection_2(revs.commits,
-							&reaches, &all);
-		else
-			revs.commits = find_bisection(revs.commits,
-						      &reaches, &all);
+		revs.commits = find_bisection(revs.commits, &reaches, &all);
 		if (bisect_show_vars) {
 			int cnt;
 			if (!revs.commits)
