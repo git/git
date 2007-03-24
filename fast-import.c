@@ -630,7 +630,7 @@ static void start_packfile(void)
 	int pack_fd;
 
 	snprintf(tmpfile, sizeof(tmpfile),
-		"%s/pack_XXXXXX", get_object_directory());
+		"%s/tmp_pack_XXXXXX", get_object_directory());
 	pack_fd = mkstemp(tmpfile);
 	if (pack_fd < 0)
 		die("Can't create %s: %s", tmpfile, strerror(errno));
@@ -730,7 +730,7 @@ static char *create_index(void)
 	}
 
 	snprintf(tmpfile, sizeof(tmpfile),
-		"%s/index_XXXXXX", get_object_directory());
+		"%s/tmp_idx_XXXXXX", get_object_directory());
 	idx_fd = mkstemp(tmpfile);
 	if (idx_fd < 0)
 		die("Can't create %s: %s", tmpfile, strerror(errno));

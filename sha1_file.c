@@ -1979,7 +1979,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 		return error("sha1 file %s: %s\n", filename, strerror(errno));
 	}
 
-	snprintf(tmpfile, sizeof(tmpfile), "%s/obj_XXXXXX", get_object_directory());
+	snprintf(tmpfile, sizeof(tmpfile), "%s/tmp_obj_XXXXXX", get_object_directory());
 
 	fd = mkstemp(tmpfile);
 	if (fd < 0) {
@@ -2105,7 +2105,7 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 	int ret;
 	SHA_CTX c;
 
-	snprintf(tmpfile, sizeof(tmpfile), "%s/obj_XXXXXX", get_object_directory());
+	snprintf(tmpfile, sizeof(tmpfile), "%s/tmp_obj_XXXXXX", get_object_directory());
 
 	local = mkstemp(tmpfile);
 	if (local < 0) {

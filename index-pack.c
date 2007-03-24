@@ -139,7 +139,7 @@ static const char *open_pack_file(const char *pack_name)
 		if (!pack_name) {
 			static char tmpfile[PATH_MAX];
 			snprintf(tmpfile, sizeof(tmpfile),
-				 "%s/pack_XXXXXX", get_object_directory());
+				 "%s/tmp_pack_XXXXXX", get_object_directory());
 			output_fd = mkstemp(tmpfile);
 			pack_name = xstrdup(tmpfile);
 		} else
@@ -690,7 +690,7 @@ static const char *write_index_file(const char *index_name, unsigned char *sha1)
 	if (!index_name) {
 		static char tmpfile[PATH_MAX];
 		snprintf(tmpfile, sizeof(tmpfile),
-			 "%s/index_XXXXXX", get_object_directory());
+			 "%s/tmp_idx_XXXXXX", get_object_directory());
 		fd = mkstemp(tmpfile);
 		index_name = xstrdup(tmpfile);
 	} else {
