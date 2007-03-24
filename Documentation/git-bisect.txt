@@ -122,17 +122,17 @@ like this:
 $ git bisect start arch/i386 include/asm-i386
 ------------
 
-If you have a script that can tell if the current
-source code is good or bad, you can automatically bisect using:
+If you have a script that can tell if the current source code is good
+or bad, you can automatically bisect using:
 
 ------------
 $ git bisect run my_script
 ------------
 
-Note that the "run" script (`my_script` in the above example)
-should exit with code 0 in
-case the current source code is good and with a code between 1 and 127
-(included) in case the current source code is bad.
+Note that the "run" script (`my_script` in the above example) should
+exit with code 0 in case the current source code is good and with a
+code between 1 and 127 (included) in case the current source code is
+bad.
 
 Any other exit code (a program that does "exit(-1)" leaves $? = 255,
 see exit(3) manual page, the value is chopped with "& 0377") will
