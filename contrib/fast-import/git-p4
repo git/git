@@ -57,7 +57,7 @@ def die(msg):
     sys.exit(1)
 
 def currentGitBranch():
-    return os.popen("git-name-rev HEAD").read().split(" ")[1][:-1]
+    return os.popen("git name-rev HEAD").read().split(" ")[1][:-1]
 
 def isValidGitDir(path):
     if os.path.exists(path + "/HEAD") and os.path.exists(path + "/refs") and os.path.exists(path + "/objects"):
@@ -71,7 +71,7 @@ def system(cmd):
 def extractLogMessageFromGitCommit(commit):
     logMessage = ""
     foundTitle = False
-    for log in os.popen("git-cat-file commit %s" % commit).readlines():
+    for log in os.popen("git cat-file commit %s" % commit).readlines():
        if not foundTitle:
            if len(log) == 1:
                foundTitle = 1
@@ -100,7 +100,7 @@ def extractDepotPathAndChangeFromGitLog(log):
     return values.get("depot-path"), values.get("change")
 
 def gitBranchExists(branch):
-    if os.system("git-rev-parse %s 2>/dev/null >/dev/null" % branch) == 0:
+    if os.system("git rev-parse %s 2>/dev/null >/dev/null" % branch) == 0:
         return True
     return False
 
@@ -130,7 +130,7 @@ class P4CleanTags(Command):
     def run(self, args):
         branch = currentGitBranch()
         print "Cleaning out stale p4 import tags..."
-        sout, sin, serr = popen2.popen3("git-name-rev --tags `git-rev-parse %s`" % branch)
+        sout, sin, serr = popen2.popen3("git name-rev --tags `git rev-parse %s`" % branch)
         output = sout.read()
         try:
             tagIdx = output.index(" tags/p4/")
@@ -195,7 +195,7 @@ class P4Sync(Command):
             die("Cannot start sync. Previous sync config found at %s" % self.configFile)
 
         commits = []
-        for line in os.popen("git-rev-list --no-merges %s..%s" % (self.origin, self.master)).readlines():
+        for line in os.popen("git rev-list --no-merges %s..%s" % (self.origin, self.master)).readlines():
             commits.append(line[:-1])
         commits.reverse()
 
@@ -229,7 +229,7 @@ class P4Sync(Command):
         return result
 
     def apply(self, id):
-        print "Applying %s" % (os.popen("git-log --max-count=1 --pretty=oneline %s" % id).read())
+        print "Applying %s" % (os.popen("git log --max-count=1 --pretty=oneline %s" % id).read())
         diff = os.popen("git diff-tree -r --name-status \"%s^\" \"%s\"" % (id, id)).readlines()
         filesToAdd = set()
         filesToDelete = set()
@@ -250,9 +250,9 @@ class P4Sync(Command):
                 die("unknown modifier %s for %s" % (modifier, path))
 
         if self.applyAsPatch:
-            system("git-diff-tree -p --diff-filter=ACMRTUXB \"%s^\" \"%s\" | patch -p1" % (id, id))
+            system("git diff-tree -p --diff-filter=ACMRTUXB \"%s^\" \"%s\" | patch -p1" % (id, id))
         else:
-            system("git-diff-files --name-only -z | git-update-index --remove -z --stdin")
+            system("git diff-files --name-only -z | git update-index --remove -z --stdin")
             system("git cherry-pick --no-commit \"%s\"" % id)
 
         for f in filesToAdd:
@@ -783,7 +783,7 @@ class GitSync(Command):
         self.branch = "refs/heads/" + self.branch
 
         if len(self.globalPrefix) == 0:
-            self.globalPrefix = self.previousDepotPath = os.popen("git-repo-config --get p4.depotpath").read()
+            self.globalPrefix = self.previousDepotPath = os.popen("git repo-config --get p4.depotpath").read()
 
         if len(self.globalPrefix) != 0:
             self.globalPrefix = self.globalPrefix[:-1]
@@ -830,7 +830,7 @@ class GitSync(Command):
 
         if len(self.changeRange) == 0:
             try:
-                sout, sin, serr = popen2.popen3("git-name-rev --tags `git-rev-parse %s`" % self.branch)
+                sout, sin, serr = popen2.popen3("git name-rev --tags `git rev-parse %s`" % self.branch)
                 output = sout.read()
                 if output.endswith("\n"):
                     output = output[:-1]
@@ -841,7 +841,7 @@ class GitSync(Command):
                     endPos = caretIdx
                 self.rev = int(output[tagIdx + 9 : endPos]) + 1
                 self.changeRange = "@%s,#head" % self.rev
-                self.initialParent = os.popen("git-rev-parse %s" % self.branch).read()[:-1]
+                self.initialParent = os.popen("git rev-parse %s" % self.branch).read()[:-1]
                 self.initialTag = "p4/%s" % (int(self.rev) - 1)
             except:
                 pass
@@ -851,7 +851,7 @@ class GitSync(Command):
         if tzsign != '+' and tzsign != '-':
             self.tz = "+" + ("%s" % self.tz)
 
-        self.gitOutput, self.gitStream, self.gitError = popen2.popen3("git-fast-import")
+        self.gitOutput, self.gitStream, self.gitError = popen2.popen3("git fast-import")
 
         if len(self.revision) > 0:
             print "Doing initial import of %s from revision %s" % (self.globalPrefix, self.revision)
@@ -971,7 +971,7 @@ class GitSync(Command):
         self.gitOutput.close()
         self.gitError.close()
 
-        os.popen("git-repo-config p4.depotpath %s" % self.globalPrefix).read()
+        os.popen("git repo-config p4.depotpath %s" % self.globalPrefix).read()
         if len(self.initialTag) > 0:
             os.popen("git tag -d %s" % self.initialTag).read()
 
@@ -1031,7 +1031,7 @@ gitdir = cmd.gitdir
 if len(gitdir) == 0:
     gitdir = ".git"
     if not isValidGitDir(gitdir):
-        cdup = os.popen("git-rev-parse --show-cdup").read()[:-1]
+        cdup = os.popen("git rev-parse --show-cdup").read()[:-1]
         if isValidGitDir(cdup + "/" + gitdir):
             os.chdir(cdup)
 
