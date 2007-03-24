@@ -36,6 +36,22 @@ def p4Cmd(cmd):
         result.update(entry)
     return result;
 
+def p4Where(depotPath):
+    if not depotPath.endswith("/"):
+        depotPath += "/"
+    output = p4Cmd("where %s..." % depotPath)
+    clientPath = ""
+    if "path" in output:
+        clientPath = output.get("path")
+    elif "data" in output:
+        data = output.get("data")
+        lastSpace = data.rfind(" ")
+        clientPath = data[lastSpace + 1:]
+
+    if clientPath.endswith("..."):
+        clientPath = clientPath[:-3]
+    return clientPath
+
 def die(msg):
     sys.stderr.write(msg + "\n")
     sys.exit(1)
@@ -318,11 +334,7 @@ class P4Sync(Command):
             print "Internal error: cannot locate perforce depot path from existing branches"
             sys.exit(128)
 
-        if not depotPath.endswith("/"):
-            depotPath += "/"
-        clientPath = p4Cmd("where %s..." % depotPath).get("path")
-        if clientPath.endswith("..."):
-            clientPath = clientPath[:-3]
+        clientPath = p4Where(depotPath)
 
         if len(clientPath) == 0:
             print "Error: Cannot locate perforce checkout of %s in client view" % depotPath
