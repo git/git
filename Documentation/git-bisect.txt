@@ -28,6 +28,9 @@ This command uses 'git-rev-list --bisect' option to help drive the
 binary search process to find which change introduced a bug, given an
 old "good" commit object name and a later "bad" commit object name.
 
+Basic bisect commands: start, bad, good
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The way you use it is:
 
 ------------------------------------------------
@@ -65,6 +68,9 @@ bad", and ask for the next bisection.
 Until you have no more left, and you'll have been left with the first
 bad kernel rev in "refs/bisect/bad".
 
+Bisect reset
+~~~~~~~~~~~~
+
 Oh, and then after you want to reset to the original head, do a
 
 ------------------------------------------------
@@ -76,6 +82,9 @@ bisection branches ("git bisect start" will do that for you too,
 actually: it will reset the bisection state, and before it does that
 it checks that you're not using some old bisection branch).
 
+Bisect visualize
+~~~~~~~~~~~~~~~~
+
 During the bisection process, you can say
 
 ------------
@@ -83,6 +92,9 @@ $ git bisect visualize
 ------------
 
 to see the currently remaining suspects in `gitk`.
+
+Bisect log and bisect replay
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The good/bad input is logged, and
 
@@ -99,6 +111,9 @@ $ git bisect replay that-file
 
 if you find later you made a mistake telling good/bad about a
 revision.
+
+Avoiding to test a commit
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If in a middle of bisect session, you know what the bisect suggested
 to try next is not a good one to test (e.g. the change the commit
@@ -119,6 +134,9 @@ $ git reset --hard HEAD~3		# try 3 revs before what
 Then compile and test the one you chose to try. After that, tell
 bisect what the result was as usual.
 
+Cutting down bisection by giving path parameter to bisect start
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 You can further cut down the number of trials if you know what part of
 the tree is involved in the problem you are tracking down, by giving
 paths parameters when you say `bisect start`, like this:
@@ -126,6 +144,9 @@ paths parameters when you say `bisect start`, like this:
 ------------
 $ git bisect start arch/i386 include/asm-i386
 ------------
+
+Bisect run
+~~~~~~~~~~
 
 If you have a script that can tell if the current source code is good
 or bad, you can automatically bisect using:
