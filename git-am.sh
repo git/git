@@ -408,12 +408,10 @@ do
 		# trust what the user has in the index file and the
 		# working tree.
 		resolved=
-		changed="$(git-diff-index --cached --name-only HEAD)"
-		if test '' = "$changed"
-		then
+		git-diff-index --quiet --cached HEAD && {
 			echo "No changes - did you forget to use 'git add'?"
 			stop_here_user_resolve $this
-		fi
+		}
 		unmerged=$(git-ls-files -u)
 		if test -n "$unmerged"
 		then
@@ -435,13 +433,11 @@ do
 		then
 		    # Applying the patch to an earlier tree and merging the
 		    # result may have produced the same tree as ours.
-		    changed="$(git-diff-index --cached --name-only HEAD)"
-		    if test '' = "$changed"
-		    then
-			    echo No changes -- Patch already applied.
-			    go_next
-			    continue
-		    fi
+		    git-diff-index --quiet --cached HEAD && {
+			echo No changes -- Patch already applied.
+			go_next
+			continue
+		    }
 		    # clear apply_status -- we have successfully merged.
 		    apply_status=0
 		fi

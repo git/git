@@ -59,7 +59,7 @@ continue_merge () {
 		die "$RESOLVEMSG"
 	fi
 
-	if test -n "`git-diff-index HEAD`"
+	if ! git-diff-index --quiet HEAD
 	then
 		if ! git-commit -C "`cat $dotest/current`"
 		then
@@ -124,13 +124,11 @@ while case "$#" in 0) break ;; esac
 do
 	case "$1" in
 	--continue)
-		diff=$(git-diff-files)
-		case "$diff" in
-		?*)	echo "You must edit all merge conflicts and then"
+		git-diff-files --quiet || {
+			echo "You must edit all merge conflicts and then"
 			echo "mark them as resolved using git update-index"
 			exit 1
-			;;
-		esac
+		}
 		if test -d "$dotest"
 		then
 			prev_head="`cat $dotest/prev_head`"
