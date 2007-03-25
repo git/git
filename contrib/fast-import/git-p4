@@ -1018,14 +1018,18 @@ except KeyError:
 
 options = cmd.options
 cmd.gitdir = gitdir
-options.append(optparse.make_option("--git-dir", dest="gitdir"))
 
-parser = optparse.OptionParser(cmd.usage.replace("%prog", "%prog " + cmdName),
-                               options,
-                               description = cmd.description,
-                               formatter = HelpFormatter())
+args = sys.argv[2:]
 
-(cmd, args) = parser.parse_args(sys.argv[2:], cmd);
+if len(options) > 0:
+    options.append(optparse.make_option("--git-dir", dest="gitdir"))
+
+    parser = optparse.OptionParser(cmd.usage.replace("%prog", "%prog " + cmdName),
+                                   options,
+                                   description = cmd.description,
+                                   formatter = HelpFormatter())
+
+    (cmd, args) = parser.parse_args(sys.argv[2:], cmd);
 
 gitdir = cmd.gitdir
 if len(gitdir) == 0:
