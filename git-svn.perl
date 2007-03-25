@@ -1327,8 +1327,10 @@ sub rel_path {
 	my ($self) = @_;
 	my $repos_root = $self->ra->{repos_root};
 	return $self->{path} if ($self->{url} eq $repos_root);
-	die "BUG: rel_path failed! repos_root: $repos_root, Ra URL: ",
-	    $self->ra->{url}, " path: $self->{path},  URL: $self->{url}\n";
+	my $url = $self->{url} .
+	          (length $self->{path} ? "/$self->{path}" : $self->{path});
+	$url =~ s!^\Q$repos_root\E(?:/+|$)!!g;
+	$url;
 }
 
 sub traverse_ignore {
