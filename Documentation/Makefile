@@ -65,6 +65,11 @@ install: man
 	$(INSTALL) -m644 $(DOC_MAN7) $(DESTDIR)$(man7dir)
 
 
+../GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
+	$(MAKE) -C ../ GIT-VERSION-FILE
+
+-include ../GIT-VERSION-FILE
+
 #
 # Determine "include::" file references in asciidoc files.
 #
@@ -91,17 +96,25 @@ $(cmds_txt): cmd-list.perl $(MAN1_TXT)
 git.7 git.html: git.txt core-intro.txt
 
 clean:
-	rm -f *.xml *.html *.1 *.7 howto-index.txt howto/*.html doc.dep
+	rm -f *.xml *.xml+ *.html *.html+ *.1 *.7 howto-index.txt howto/*.html doc.dep
 	rm -f $(cmds_txt)
 
 %.html : %.txt
-	$(ASCIIDOC) -b xhtml11 -d manpage -f asciidoc.conf $(ASCIIDOC_EXTRA) $<
+	rm -f $@+ $@
+	$(ASCIIDOC) -b xhtml11 -d manpage -f asciidoc.conf \
+		$(ASCIIDOC_EXTRA) -o - $< | \
+		sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' >$@+
+	mv $@+ $@
 
 %.1 %.7 : %.xml
 	xmlto -m callouts.xsl man $<
 
 %.xml : %.txt
-	$(ASCIIDOC) -b docbook -d manpage -f asciidoc.conf $<
+	rm -f $@+ $@
+	$(ASCIIDOC) -b docbook -d manpage -f asciidoc.conf \
+		$(ASCIIDOC_EXTRA) -o - $< | \
+		sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' >$@+
+	mv $@+ $@
 
 user-manual.xml: user-manual.txt user-manual.conf
 	$(ASCIIDOC) -b docbook -d book $<
@@ -132,3 +145,5 @@ install-webdoc : html
 
 quick-install:
 	sh ./install-doc-quick.sh $(DOC_REF) $(mandir)
+
+.PHONY: .FORCE-GIT-VERSION-FILE
