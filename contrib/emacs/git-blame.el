@@ -127,39 +127,58 @@
 
 (defvar git-blame-mode nil)
 (make-variable-buffer-local 'git-blame-mode)
-(unless (assq 'git-blame-mode minor-mode-alist)
-  (setq minor-mode-alist
-	(cons (list 'git-blame-mode " blame")
-	      minor-mode-alist)))
+
+(defvar git-blame-mode-line-string " blame"
+  "String to display on the mode line when git-blame is active.")
+
+(or (assq 'git-blame-mode minor-mode-alist)
+    (setq minor-mode-alist
+	  (cons '(git-blame-mode git-blame-mode-line-string) minor-mode-alist)))
 
 ;;;###autoload
 (defun git-blame-mode (&optional arg)
-  "Minor mode for displaying Git blame"
+  "Toggle minor mode for displaying Git blame
+
+With prefix ARG, turn the mode on if ARG is positive."
   (interactive "P")
-  (if arg
-      (setq git-blame-mode (eq arg 1))
-    (setq git-blame-mode (not git-blame-mode)))
+  (cond
+   ((null arg)
+    (if git-blame-mode (git-blame-mode-off) (git-blame-mode-on)))
+   ((> (prefix-numeric-value arg) 0) (git-blame-mode-on))
+   (t (git-blame-mode-off))))
+
+(defun git-blame-mode-on ()
+  "Turn on git-blame mode.
+
+See also function `git-blame-mode'."
   (make-local-variable 'git-blame-colors)
   (if git-blame-autoupdate
       (add-hook 'after-change-functions 'git-blame-after-change nil t)
     (remove-hook 'after-change-functions 'git-blame-after-change t))
   (git-blame-cleanup)
-  (if git-blame-mode
-      (progn
-        (let ((bgmode (cdr (assoc 'background-mode (frame-parameters)))))
-          (if (eq bgmode 'dark)
-              (setq git-blame-colors git-blame-dark-colors)
-            (setq git-blame-colors git-blame-light-colors)))
-        (setq git-blame-cache (make-hash-table :test 'equal))
-        (git-blame-run))
-    (cancel-timer git-blame-idle-timer)))
+  (let ((bgmode (cdr (assoc 'background-mode (frame-parameters)))))
+    (if (eq bgmode 'dark)
+	(setq git-blame-colors git-blame-dark-colors)
+      (setq git-blame-colors git-blame-light-colors)))
+  (setq git-blame-cache (make-hash-table :test 'equal))
+  (setq git-blame-mode t)
+  (git-blame-run))
+
+(defun git-blame-mode-off ()
+  "Turn off git-blame mode.
+
+See also function `git-blame-mode'."
+  (git-blame-cleanup)
+  (if git-blame-idle-timer (cancel-timer git-blame-idle-timer))
+  (setq git-blame-mode nil))
 
 ;;;###autoload
 (defun git-reblame ()
   "Recalculate all blame information in the current buffer"
+  (interactive)
   (unless git-blame-mode
     (error "git-blame is not active"))
-  (interactive)
+
   (git-blame-cleanup)
   (git-blame-run))
 
