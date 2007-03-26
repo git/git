@@ -107,6 +107,7 @@ def gitBranchExists(branch):
 class Command:
     def __init__(self):
         self.usage = "usage: %prog [options]"
+        self.needsGit = True
 
 class P4Debug(Command):
     def __init__(self):
@@ -114,6 +115,7 @@ class P4Debug(Command):
         self.options = [
         ]
         self.description = "A tool to debug the output of p4 -G."
+        self.needsGit = False
 
     def run(self, args):
         for output in p4CmdList(" ".join(args)):
@@ -1031,21 +1033,22 @@ if len(options) > 0:
 
     (cmd, args) = parser.parse_args(sys.argv[2:], cmd);
 
-gitdir = cmd.gitdir
-if len(gitdir) == 0:
-    gitdir = ".git"
+if cmd.needsGit:
+    gitdir = cmd.gitdir
+    if len(gitdir) == 0:
+        gitdir = ".git"
+        if not isValidGitDir(gitdir):
+            cdup = os.popen("git rev-parse --show-cdup").read()[:-1]
+            if isValidGitDir(cdup + "/" + gitdir):
+                os.chdir(cdup)
+
     if not isValidGitDir(gitdir):
-        cdup = os.popen("git rev-parse --show-cdup").read()[:-1]
-        if isValidGitDir(cdup + "/" + gitdir):
-            os.chdir(cdup)
+        if isValidGitDir(gitdir + "/.git"):
+            gitdir += "/.git"
+        else:
+            die("fatal: cannot locate git repository at %s" % gitdir)
 
-if not isValidGitDir(gitdir):
-    if isValidGitDir(gitdir + "/.git"):
-        gitdir += "/.git"
-    else:
-        die("fatal: cannot locate git repository at %s" % gitdir)
-
-os.environ["GIT_DIR"] = gitdir
+    os.environ["GIT_DIR"] = gitdir
 
 if not cmd.run(args):
     parser.print_help()
