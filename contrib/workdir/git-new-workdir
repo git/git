@@ -1,0 +1,57 @@
+#!/bin/sh
+
+usage () {
+	echo "usage:" $@
+	exit 127
+}
+
+die () {
+	echo $@
+	exit 128
+}
+
+if test $# -lt 2 || test $# -gt 3
+then
+	usage "$0 <repository> <new_workdir> [<branch>]"
+fi
+
+orig_git=$1
+new_workdir=$2
+branch=$3
+
+# want to make sure that what is pointed to has a .git directory ...
+test -d "$orig_git/.git" || die "\"$orig_git\" is not a git repository!"
+
+# don't link to a workdir
+if test -L "$orig_git/.git/config"
+then
+	die "\"$orig_git\" is a working directory only, please specify" \
+		"a complete repository."
+fi
+
+# make sure the the links use full paths
+orig_git=$(cd "$orig_git"; pwd)
+
+# create the workdir
+mkdir -p "$new_workdir/.git" || die "unable to create \"$new_workdir\"!"
+
+# create the links to the original repo.  explictly exclude index, HEAD and
+# logs/HEAD from the list since they are purely related to the current working
+# directory, and should not be shared.
+for x in config refs logs/refs objects info hooks packed-refs remotes rr-cache
+do
+	case $x in
+	*/*)
+		mkdir -p "$(dirname "$new_workdir/.git/$x")"
+		;;
+	esac
+	ln -s "$orig_git/.git/$x" "$new_workdir/.git/$x"
+done
+
+# now setup the workdir
+cd "$new_workdir"
+# copy the HEAD from the original repository as a default branch
+cp "$orig_git/.git/HEAD" .git/HEAD
+# checkout the branch (either the same as HEAD from the original repository, or
+# the one that was asked for)
+git checkout -f $branch
