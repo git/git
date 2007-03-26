@@ -35,6 +35,8 @@ unset GIT_DIR
 test "$DOCREPO" != "" &&
 cd "$DOCREPO" || exit $?
 
+DOCREPO=`pwd`
+
 tmp=`pwd`/.doctmp-$$
 trap 'rm -f "$tmp".*' 0
 
