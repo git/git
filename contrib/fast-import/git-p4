@@ -625,7 +625,47 @@ class GitSync(Command):
 
         self.gitStream.write("\n")
 
-        self.lastChange = int(details["change"])
+        change = int(details["change"])
+
+        self.lastChange = change
+
+        if change in self.labels:
+            label = self.labels[change]
+            labelDetails = label[0]
+            labelRevisions = label[1]
+
+            files = p4CmdList("files %s...@%s" % (branchPrefix, change))
+
+            if len(files) == len(labelRevisions):
+
+                cleanedFiles = {}
+                for info in files:
+                    if info["action"] == "delete":
+                        continue
+                    cleanedFiles[info["depotFile"]] = info["rev"]
+
+                if cleanedFiles == labelRevisions:
+                    self.gitStream.write("tag tag_%s\n" % labelDetails["label"])
+                    self.gitStream.write("from %s\n" % branch)
+
+                    owner = labelDetails["Owner"]
+                    tagger = ""
+                    if author in self.users:
+                        tagger = "%s %s %s" % (self.users[owner], epoch, self.tz)
+                    else:
+                        tagger = "%s <a@b> %s %s" % (owner, epoch, self.tz)
+                    self.gitStream.write("tagger %s\n" % tagger)
+                    self.gitStream.write("data <<EOT\n")
+                    self.gitStream.write(labelDetails["Description"])
+                    self.gitStream.write("EOT\n\n")
+
+                else:
+                    if not silent:
+                        print "Tag %s does not match with change %s: files do not match." % (labelDetails["label"], change)
+
+            else:
+                if not silent:
+                    print "Tag %s does not match with change %s: file count is different." % (labelDetails["label"], change)
 
     def extractFilesInCommitToBranch(self, files, branchPrefix):
         newFiles = []
@@ -757,6 +797,21 @@ class GitSync(Command):
                 continue
             self.users[output["User"]] = output["FullName"] + " <" + output["Email"] + ">"
 
+    def getLabels(self):
+        self.labels = {}
+
+        for output in p4CmdList("labels %s..." % self.globalPrefix):
+            label = output["label"]
+            revisions = {}
+            newestChange = 0
+            for file in p4CmdList("files //...@%s" % label):
+                revisions[file["depotFile"]] = file["rev"]
+                change = int(file["change"])
+                if change > newestChange:
+                    newestChange = change
+
+            self.labels[newestChange] = [output, revisions]
+
     def run(self, args):
         self.globalPrefix = ""
         self.changeRange = ""
@@ -829,6 +884,7 @@ class GitSync(Command):
             self.globalPrefix += "/"
 
         self.getUserMap()
+        self.getLabels();
 
         if len(self.changeRange) == 0:
             try:
