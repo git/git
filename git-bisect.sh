@@ -173,7 +173,7 @@ bisect_reset() {
 	   else
 	       branch=master
 	   fi ;;
-	1) test -f "$GIT_DIR/refs/heads/$1" || {
+	1) git-show-ref --verify --quiet -- "refs/heads/$1" || {
 	       echo >&2 "$1 does not seem to be a valid branch"
 	       exit 1
 	   }
