@@ -58,7 +58,7 @@ static void add_cmdname(const char *name, int len)
 		if (!cmdname)
 			oom();
 	}
-	ent = malloc(sizeof(*ent) + len);
+	ent = xmalloc(sizeof(*ent) + len);
 	if (!ent)
 		oom();
 	ent->len = len;
