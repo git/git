@@ -10,20 +10,21 @@ Updates since v1.5.0
 
 * New commands and options.
 
-  - "git log" and friends take --reverse.  This makes output
-    that typically goes reverse order in chronological order.
-    "git shortlog" usually lists commits in chronological order,
-    but with "--reverse", they are shown in reverse
-    chronological order.
+  - "git log" and friends take --reverse, which instructs them
+    to give their output in the order opposite from their usual.
+    They typically output from new to old, but with this option
+    their output would read from old to new.  "git shortlog"
+    usually lists older commits first, but with this option,
+    they are shown from new to old.
+
+  - "git log --pretty=format:<string>" to allow more flexible
+    custom log output.
 
   - "git diff" learned --ignore-space-at-eol.  This is a weaker
     form of --ignore-space-change.
 
   - "git diff --no-index pathA pathB" can be used as diff
     replacement with git specific enhancements.
-
-  - "git diff --pretty=format:<string>" to allow more flexible
-    custom log output.
 
   - "git diff --no-index" can read from '-' (standard input).
 
@@ -32,6 +33,17 @@ Updates since v1.5.0
     want to make this the default but that would be a rather big
     backward incompatible change; it will stay as an option for
     now.
+
+  - "git diff --quiet" is --exit-code with output turned off,
+    meant for scripted use to quickly determine if there is any
+    tree-level difference.
+
+  - Textual patch generation with "git diff" without -w/-b
+    option has been significantly optimized.  "git blame" got
+    faster because of the same change.
+
+  - "git log" and "git rev-list" has been optimized
+    significantly when they are used with pathspecs.
 
   - "git branch --track" can be used to set up configuration
     variables to help it easier to base your work on branches
@@ -60,6 +72,19 @@ Updates since v1.5.0
   - A new configuration "core.symlinks" can be used to disable
     symlinks on filesystems that do not support them; they are
     checked out as regular files instead.
+
+  - You can name a commit object with its first line of the
+    message.  The syntax to use is ':/message text'.  E.g.
+
+    $ git show ":/object name: introduce ':/<oneline prefix>' notation"
+
+    means the same thing as:
+
+    $ git show 28a4d940443806412effa246ecc7768a21553ec7
+
+  - "git bisect" learned a new command "run" that takes a script
+    to run after each revision is checked out to determine if it
+    is good or bad, to automate the bisection process.
 
 
 * Updated behaviour of existing commands.
@@ -133,6 +158,9 @@ Updates since v1.5.0
 
   - send-email learned configurable bcc and chain-reply-to.
 
+  - "git remote show $remote" also talks about branches that
+    would be pushed if you run "git push remote".
+
   - Using objects from packs is now seriouly optimized by clever
     use of a cache.  This should be most noticeable in git-log
     family of commands that involve reading many tree objects.
@@ -143,10 +171,9 @@ Updates since v1.5.0
 
 * Hooks
 
-  - The sample update hook to show how to send out notification
-    e-mail was updated to show only new commits that appeared in
-    the repository.  Earlier, it showed new commits that appeared
-    on the branch.
+  - The part to send out notification e-mails was removed from
+    the sample update hook, as it was not an appropriate place
+    to do so.
 
 
 * Others
@@ -156,7 +183,7 @@ Updates since v1.5.0
 
 --
 exec >/var/tmp/1
-O=v1.5.0.5-446-g5d86501
+O=v1.5.1-rc1-63-g12d6697
 echo O=`git describe master`
 git shortlog --no-merges $O..master ^maint
 
