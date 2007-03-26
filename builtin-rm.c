@@ -89,20 +89,10 @@ static int check_local_mod(unsigned char *head)
 		if (ce_match_stat(ce, &st, 0))
 			errs = error("'%s' has local modifications "
 				     "(hint: try -f)", ce->name);
-		if (no_head)
-			continue;
-		/*
-		 * It is Ok to remove a newly added path, as long as
-		 * it is cache-clean.
-		 */
-		if (get_tree_entry(head, name, sha1, &mode))
-			continue;
-		/*
-		 * Otherwise make sure the version from the HEAD
-		 * matches the index.
-		 */
-		if (ce->ce_mode != create_ce_mode(mode) ||
-		    hashcmp(ce->sha1, sha1))
+		if (no_head
+		     || get_tree_entry(head, name, sha1, &mode)
+		     || ce->ce_mode != create_ce_mode(mode)
+		     || hashcmp(ce->sha1, sha1))
 			errs = error("'%s' has changes staged in the index "
 				     "(hint: try -f)", name);
 	}
