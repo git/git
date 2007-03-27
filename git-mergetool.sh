@@ -44,18 +44,16 @@ function describe_file () {
     branch="$2"
     file="$3"
 
-    echo -n "    "
+    printf "    "
     if test -z "$mode"; then
-	echo -n "'$path' was deleted"
+	printf "'%s' was deleted" "$path"
     elif is_symlink "$mode" ; then
-	echo -n "'$path' is a symlink containing '"
-	cat "$file"
-	echo -n "'"
+	printf "'%s' is a symlink containing '%s'" "$path" "$file"
     else
 	if base_present; then
-	    echo -n "'$path' was created"
+	    printf "'%s' was created" "$path"
 	else
-	    echo -n "'$path' was modified"
+	    printf "'%s' was modified" "$path"
 	fi
     fi
     echo " in the $branch branch"
@@ -64,7 +62,7 @@ function describe_file () {
 
 resolve_symlink_merge () {
     while /bin/true; do
-	echo -n "Use (r)emote or (l)ocal, or (a)bort? "
+	printf "Use (r)emote or (l)ocal, or (a)bort? "
 	read ans
 	case "$ans" in
 	    [lL]*)
@@ -88,7 +86,7 @@ resolve_symlink_merge () {
 
 resolve_deleted_merge () {
     while /bin/true; do
-	echo -n "Use (m)odified or (d)eleted file, or (a)bort? "
+	printf "Use (m)odified or (d)eleted file, or (a)bort? "
 	read ans
 	case "$ans" in
 	    [mM]*)
@@ -157,7 +155,7 @@ merge_file () {
     echo "Normal merge conflict for $path:"
     describe_file "$local_mode" "local" "$LOCAL"
     describe_file "$remote_mode" "remote" "$REMOTE"
-    echo -n "Hit return to start merge resolution tool ($merge_tool): "
+    printf "Hit return to start merge resolution tool (%s): " "$merge_tool"
     read ans
 
     case "$merge_tool" in
@@ -193,7 +191,7 @@ merge_file () {
 	    else
 		while true; do
 		    echo "$path seems unchanged."
-		    echo -n "Was the merge successful? [y/n] "
+		    printf "Was the merge successful? [y/n] "
 		    read answer < /dev/tty
 		    case "$answer" in
 			y*|Y*) status=0; break ;;
@@ -225,7 +223,7 @@ merge_file () {
 	    else
 		while true; do
 		    echo "$path seems unchanged."
-		    echo -n "Was the merge successful? [y/n] "
+		    printf "Was the merge successful? [y/n] "
 		    read answer < /dev/tty
 		    case "$answer" in
 			y*|Y*) status=0; break ;;
@@ -346,12 +344,12 @@ if test $# -eq 0 ; then
 	echo Merging the files: $files
 	git ls-files -u | sed -e 's/^[^	]*	//' | sort -u | while read i
 	do
-		echo ""
+		printf "\n"
 		merge_file "$i" < /dev/tty > /dev/tty
 	done
 else
 	while test $# -gt 0; do
-		echo ""
+		printf "\n"
 		merge_file "$1"
 		shift
 	done
