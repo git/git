@@ -38,6 +38,11 @@ include::pretty-formats.txt[]
 	and <until>, see "SPECIFYING REVISIONS" section in
 	gitlink:git-rev-parse[1].
 
+--first-parent::
+	Follow only the first parent commit upon seeing a merge
+	commit.  This  option gives a better overview of the
+	evolution of a particular branch.
+
 -p::
 	Show the change the commit introduces in a patch form.
 
