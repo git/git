@@ -6,7 +6,7 @@
 use strict;
 use Getopt::Long;
 
-my $topic_pattern = '??/*';
+my $topic_pattern = '??*/*';
 my $base = 'next';
 my @stage = qw(next pu);
 my @mark = ('.', '?', '-', '+');
