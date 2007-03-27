@@ -2705,10 +2705,12 @@ proc do_push_anywhere {} {
 	frame $w.buttons
 	button $w.buttons.create -text Push \
 		-font font_ui \
+		-default active \
 		-command [list start_push_anywhere_action $w]
 	pack $w.buttons.create -side right
 	button $w.buttons.cancel -text {Cancel} \
 		-font font_ui \
+		-default normal \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
@@ -2799,7 +2801,7 @@ proc do_push_anywhere {} {
 	set push_thin 0
 	set push_tags 0
 
-	bind $w <Visibility> "grab $w"
+	bind $w <Visibility> "grab $w; focus $w.buttons.create"
 	bind $w <Key-Escape> "destroy $w"
 	wm title $w "[appname] ([reponame]): Push"
 	tkwait window $w
@@ -4131,6 +4133,7 @@ proc console_done {args} {
 		if {[winfo exists $w]} {
 			$w.m.s conf -background green -text {Success}
 			$w.ok conf -state normal
+			focus $w.ok
 		}
 	} else {
 		if {![winfo exists $w]} {
@@ -4138,6 +4141,7 @@ proc console_done {args} {
 		}
 		$w.m.s conf -background red -text {Error: Command Failed}
 		$w.ok conf -state normal
+		focus $w.ok
 	}
 
 	array unset console_cr $w
@@ -4205,9 +4209,11 @@ proc do_stats {} {
 	frame $w.buttons -border 1
 	button $w.buttons.close -text Close \
 		-font font_ui \
+		-default active \
 		-command [list destroy $w]
 	button $w.buttons.gc -text {Compress Database} \
 		-font font_ui \
+		-default normal \
 		-command "destroy $w;do_gc"
 	pack $w.buttons.close -side right
 	pack $w.buttons.gc -side left
@@ -4236,7 +4242,7 @@ proc do_stats {} {
 	}
 	pack $w.stat -pady 10 -padx 10
 
-	bind $w <Visibility> "grab $w; focus $w"
+	bind $w <Visibility> "grab $w; focus $w.buttons.close"
 	bind $w <Key-Escape> [list destroy $w]
 	bind $w <Key-Return> [list destroy $w]
 	wm title $w "[appname] ([reponame]): Database Statistics"
@@ -4533,6 +4539,7 @@ proc do_about {} {
 	frame $w.buttons
 	button $w.buttons.close -text {Close} \
 		-font font_ui \
+		-default active \
 		-command [list destroy $w]
 	pack $w.buttons.close -side right
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
@@ -4578,8 +4585,9 @@ $copyright" \
 		clipboard append -format STRING -type STRING -- \[$w.vers cget -text\]
 	"
 
-	bind $w <Visibility> "grab $w; focus $w"
+	bind $w <Visibility> "grab $w; focus $w.buttons.close"
 	bind $w <Key-Escape> "destroy $w"
+	bind $w <Key-Return> "destroy $w"
 	bind_button3 $w.vers "tk_popup $w.ctxm %X %Y; grab $w; focus $w"
 	wm title $w "About [appname]"
 	tkwait window $w
@@ -4616,14 +4624,17 @@ proc do_options {} {
 	frame $w.buttons
 	button $w.buttons.restore -text {Restore Defaults} \
 		-font font_ui \
+		-default normal \
 		-command do_restore_defaults
 	pack $w.buttons.restore -side left
 	button $w.buttons.save -text Save \
 		-font font_ui \
+		-default active \
 		-command [list do_save_config $w]
 	pack $w.buttons.save -side right
 	button $w.buttons.cancel -text {Cancel} \
 		-font font_ui \
+		-default normal \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
@@ -4726,7 +4737,7 @@ proc do_options {} {
 		pack $w.global.$name -side top -anchor w -fill x
 	}
 
-	bind $w <Visibility> "grab $w; focus $w"
+	bind $w <Visibility> "grab $w; focus $w.buttons.save"
 	bind $w <Key-Escape> "destroy $w"
 	wm title $w "[appname] ([reponame]): Options"
 	tkwait window $w
