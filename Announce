@@ -3,8 +3,9 @@
 #
 branch=${1?branch}
 previous=${2?previous}
+commit=${3-"$1"}
 
-relname=$(git describe "$branch") &&
+relname=$(git describe "$commit") &&
 vername=$(expr "$relname" : 'v\(.*\)') || exit $?
 
 git rev-parse --verify "$previous" >/dev/null || exit $?
