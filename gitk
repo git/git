@@ -938,12 +938,15 @@ Gitk - a commit viewer for git
 Copyright © 2005-2006 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License} \
-	    -justify center -aspect 400
-    pack $w.m -side top -fill x -padx 20 -pady 20
+	    -justify center -aspect 400 -border 2 -bg white -relief groove
+    pack $w.m -side top -fill x -padx 2 -pady 2
     $w.m configure -font $uifont
-    button $w.ok -text Close -command "destroy $w"
+    button $w.ok -text Close -command "destroy $w" -default active
     pack $w.ok -side bottom
     $w.ok configure -font $uifont
+    bind $w <Visibility> "focus $w.ok"
+    bind $w <Key-Escape> "destroy $w"
+    bind $w <Key-Return> "destroy $w"
 }
 
 proc keys {} {
@@ -994,12 +997,15 @@ f		Scroll diff view to next file
 <Ctrl-minus>	Decrease font size
 <F5>		Update
 } \
-	    -justify left -bg white -border 2 -relief sunken
-    pack $w.m -side top -fill both
+	    -justify left -bg white -border 2 -relief groove
+    pack $w.m -side top -fill both -padx 2 -pady 2
     $w.m configure -font $uifont
-    button $w.ok -text Close -command "destroy $w"
+    button $w.ok -text Close -command "destroy $w" -default active
     pack $w.ok -side bottom
     $w.ok configure -font $uifont
+    bind $w <Visibility> "focus $w.ok"
+    bind $w <Key-Escape> "destroy $w"
+    bind $w <Key-Return> "destroy $w"
 }
 
 # Procedures for manipulating the file list window at the
@@ -5892,14 +5898,15 @@ proc doprefs {} {
     grid x $top.hunksepbut $top.hunksep -sticky w
 
     frame $top.buts
-    button $top.buts.ok -text "OK" -command prefsok
+    button $top.buts.ok -text "OK" -command prefsok -default active
     $top.buts.ok configure -font $uifont
-    button $top.buts.can -text "Cancel" -command prefscan
+    button $top.buts.can -text "Cancel" -command prefscan -default normal
     $top.buts.can configure -font $uifont
     grid $top.buts.ok $top.buts.can
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
     grid columnconfigure $top.buts 1 -weight 1 -uniform a
     grid $top.buts - - -pady 10 -sticky ew
+    bind $top <Visibility> "focus $top.buts.ok"
 }
 
 proc choosecolor {v vi w x cmd} {
