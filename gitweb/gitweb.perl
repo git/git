@@ -3154,7 +3154,7 @@ sub git_blame2 {
 	}
 	$ftype = git_get_type($hash);
 	if ($ftype !~ "blob") {
-		die_error("400 Bad Request", "Object is not a blob");
+		die_error('400 Bad Request', "Object is not a blob");
 	}
 	open ($fd, "-|", git_cmd(), "blame", '-p', '--',
 	      $file_name, $hash_base)
@@ -3220,7 +3220,7 @@ HTML
 			print "</td>\n";
 		}
 		open (my $dd, "-|", git_cmd(), "rev-parse", "$full_rev^")
-			or die_error("could not open git-rev-parse");
+			or die_error(undef, "Open git-rev-parse failed");
 		my $parent_commit = <$dd>;
 		close $dd;
 		chomp($parent_commit);
@@ -3622,7 +3622,7 @@ sub git_snapshot {
 	$name =~ s/\047/\047\\\047\047/g;
 	open my $fd, "-|",
 	"$git archive --format=tar --prefix=\'$name\'/ $hash | $command"
-		or die_error(undef, "Execute git-tar-tree failed.");
+		or die_error(undef, "Execute git-tar-tree failed");
 	binmode STDOUT, ':raw';
 	print <$fd>;
 	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi
