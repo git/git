@@ -417,6 +417,8 @@ static int git_tcp_connect_sock(char *host)
 	if (colon) {
 		*colon = 0;
 		port = colon + 1;
+		if (!*port)
+			port = "<none>";
 	}
 
 	memset(&hints, 0, sizeof(hints));
@@ -425,7 +427,7 @@ static int git_tcp_connect_sock(char *host)
 
 	gai = getaddrinfo(host, port, &hints, &ai);
 	if (gai)
-		die("Unable to look up %s (%s)", host, gai_strerror(gai));
+		die("Unable to look up %s (port %s) (%s)", host, port, gai_strerror(gai));
 
 	for (ai0 = ai; ai; ai = ai->ai_next) {
 		sockfd = socket(ai->ai_family,
