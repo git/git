@@ -109,14 +109,13 @@ resolve_deleted_merge () {
 merge_file () {
     path="$1"
 
-    if test ! -f "$path" ; then
-	echo "$path: file not found"
-	exit 1
-    fi
-
     f=`git-ls-files -u -- "$path"`
     if test -z "$f" ; then
-	echo "$path: file does not need merging"
+        if test ! -f "$path" ; then
+	    echo "$path: file not found"
+	else
+	    echo "$path: file does not need merging"
+	fi
 	exit 1
     fi
 
