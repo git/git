@@ -184,7 +184,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 			if (opts.dir)
 				die("more than one --exclude-per-directory are given.");
 
-			dir = calloc(1, sizeof(*opts.dir));
+			dir = xcalloc(1, sizeof(*opts.dir));
 			dir->show_ignored = 1;
 			dir->exclude_per_dir = arg + 24;
 			opts.dir = dir;
