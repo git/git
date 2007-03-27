@@ -119,6 +119,7 @@ static void create_pack_file(void)
 		int i;
 		struct rev_info revs;
 
+		close(lp_pipe[0]);
 		pack_pipe = fdopen(lp_pipe[1], "w");
 
 		if (create_full_pack)
