@@ -31,12 +31,6 @@ static int term_columns(void)
 	return 80;
 }
 
-static void oom(void)
-{
-	fprintf(stderr, "git: out of memory\n");
-	exit(1);
-}
-
 static inline void mput_char(char c, unsigned int num)
 {
 	while(num--)
@@ -54,13 +48,9 @@ static void add_cmdname(const char *name, int len)
 	struct cmdname *ent;
 	if (cmdname_alloc <= cmdname_cnt) {
 		cmdname_alloc = cmdname_alloc + 200;
-		cmdname = realloc(cmdname, cmdname_alloc * sizeof(*cmdname));
-		if (!cmdname)
-			oom();
+		cmdname = xrealloc(cmdname, cmdname_alloc * sizeof(*cmdname));
 	}
 	ent = xmalloc(sizeof(*ent) + len);
-	if (!ent)
-		oom();
 	ent->len = len;
 	memcpy(ent->name, name, len);
 	ent->name[len] = 0;
