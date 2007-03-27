@@ -223,6 +223,14 @@ bisect_replay () {
 }
 
 bisect_run () {
+    # Check that we have everything to run correctly.
+    test -d "$GIT_DIR/refs/bisect" || {
+	echo >&2 'You need to start by "git bisect start".'
+	echo >&2 'And then by "git bisect bad" and "git bisect good".'
+	exit 1
+    }
+    bisect_next_check fail
+
     while true
     do
       echo "running $@"
