@@ -888,7 +888,8 @@ static long format_commit_message(const struct commit *commit,
 			fill_person(table + ICOMMITTER_NAME,
 					msg + i + 10, eol - i - 10);
 		else if (!prefixcmp(msg + i, "encoding "))
-			table[IENCODING].value = xstrndup(msg + i, eol - i);
+			table[IENCODING].value =
+				xstrndup(msg + i + 9, eol - i - 9);
 		i = eol;
 	}
 	if (msg[i])
