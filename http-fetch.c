@@ -17,7 +17,6 @@ static struct curl_slist *no_pragma_header;
 struct alt_base
 {
 	char *base;
-	int path_len;
 	int got_indices;
 	struct packed_git *packs;
 	struct alt_base *next;
@@ -515,7 +514,6 @@ static void process_alternates_response(void *callback_data)
 			int serverlen = 0;
 			struct alt_base *newalt;
 			char *target = NULL;
-			char *path;
 			if (data[i] == '/') {
 				/* This counts
 				 * http://git.host/pub/scm/linux.git/
@@ -583,12 +581,6 @@ static void process_alternates_response(void *callback_data)
 				newalt->base = target;
 				newalt->got_indices = 0;
 				newalt->packs = NULL;
-				path = strstr(target, "//");
-				if (path) {
-					path = strchr(path+2, '/');
-					if (path)
-						newalt->path_len = strlen(path);
-				}
 
 				while (tail->next != NULL)
 					tail = tail->next;
@@ -999,7 +991,7 @@ int main(int argc, const char **argv)
 	const char **write_ref = NULL;
 	char **commit_id;
 	const char *url;
-	char *path;
+	char *s;
 	int arg = 1;
 	int rc = 0;
 
@@ -1046,17 +1038,11 @@ int main(int argc, const char **argv)
 	alt = xmalloc(sizeof(*alt));
 	alt->base = xmalloc(strlen(url) + 1);
 	strcpy(alt->base, url);
-	for (path = alt->base + strlen(alt->base) - 1; *path == '/'; --path)
-		*path = 0;
+	for (s = alt->base + strlen(alt->base) - 1; *s == '/'; --s)
+		*s = 0;
 	alt->got_indices = 0;
 	alt->packs = NULL;
 	alt->next = NULL;
-	path = strstr(url, "//");
-	if (path) {
-		path = strchr(path+2, '/');
-		if (path)
-			alt->path_len = strlen(path);
-	}
 
 	if (pull(commits, commit_id, write_ref, url))
 		rc = 1;
