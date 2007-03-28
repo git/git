@@ -248,7 +248,7 @@ fetch_per_ref () {
 	  expr "z$head" : "z$_x40\$" >/dev/null ||
 		die "No such ref $remote_name at $remote"
 	  echo >&2 "Fetching $remote_name from $remote using $proto"
-	  git-http-fetch -v -a "$head" "$remote/" || exit
+	  git-http-fetch -v -a "$head" "$remote" || exit
 	  ;;
       rsync://*)
 	  test -n "$shallow_depth" &&

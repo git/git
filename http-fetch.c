@@ -16,7 +16,7 @@ static struct curl_slist *no_pragma_header;
 
 struct alt_base
 {
-	const char *base;
+	char *base;
 	int path_len;
 	int got_indices;
 	struct packed_git *packs;
@@ -158,12 +158,12 @@ static void start_object_request(struct object_request *obj_req)
 
 	SHA1_Init(&obj_req->c);
 
-	url = xmalloc(strlen(obj_req->repo->base) + 50);
-	obj_req->url = xmalloc(strlen(obj_req->repo->base) + 50);
+	url = xmalloc(strlen(obj_req->repo->base) + 51);
+	obj_req->url = xmalloc(strlen(obj_req->repo->base) + 51);
 	strcpy(url, obj_req->repo->base);
 	posn = url + strlen(obj_req->repo->base);
-	strcpy(posn, "objects/");
-	posn += 8;
+	strcpy(posn, "/objects/");
+	posn += 9;
 	memcpy(posn, hex, 2);
 	posn += 2;
 	*(posn++) = '/';
@@ -938,14 +938,14 @@ static char *quote_ref_url(const char *base, const char *ref)
 	int len, baselen, ch;
 
 	baselen = strlen(base);
-	len = baselen + 6; /* "refs/" + NUL */
+	len = baselen + 7; /* "/refs/" + NUL */
 	for (cp = ref; (ch = *cp) != 0; cp++, len++)
 		if (needs_quote(ch))
 			len += 2; /* extra two hex plus replacement % */
 	qref = xmalloc(len);
 	memcpy(qref, base, baselen);
-	memcpy(qref + baselen, "refs/", 5);
-	for (cp = ref, dp = qref + baselen + 5; (ch = *cp) != 0; cp++) {
+	memcpy(qref + baselen, "/refs/", 6);
+	for (cp = ref, dp = qref + baselen + 6; (ch = *cp) != 0; cp++) {
 		if (needs_quote(ch)) {
 			*dp++ = '%';
 			*dp++ = hex((ch >> 4) & 0xF);
@@ -1044,7 +1044,10 @@ int main(int argc, const char **argv)
 	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
 
 	alt = xmalloc(sizeof(*alt));
-	alt->base = url;
+	alt->base = xmalloc(strlen(url) + 1);
+	strcpy(alt->base, url);
+	for (path = alt->base + strlen(alt->base) - 1; *path == '/'; --path)
+		*path = 0;
 	alt->got_indices = 0;
 	alt->packs = NULL;
 	alt->next = NULL;

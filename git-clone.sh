@@ -60,7 +60,7 @@ Perhaps git-update-server-info needs to be run there?"
 		else
 			tname=$name
 		fi
-		git-http-fetch $v -a -w "$tname" "$name" "$1/" || exit 1
+		git-http-fetch $v -a -w "$tname" "$name" "$1" || exit 1
 	done <"$clone_tmp/refs"
 	rm -fr "$clone_tmp"
 	http_fetch "$1/HEAD" "$GIT_DIR/REMOTE_HEAD" ||
