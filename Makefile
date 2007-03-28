@@ -112,6 +112,10 @@ all::
 #
 # Define NO_TCLTK if you do not want Tcl/Tk GUI.
 #
+# The TCLTK_PATH variable governs the location of the Tck/Tk interpreter.
+# If not set it defaults to the bare 'wish'. If it is set to the empty
+# string then NO_TCLTK will be forced (this is used by configure script).
+#
 
 GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -161,6 +165,7 @@ AR = ar
 TAR = tar
 INSTALL = install
 RPMBUILD = rpmbuild
+TCLTK_PATH = wish
 
 # sparse is architecture-neutral, which means that we need to tell it
 # explicitly what architecture to check for. Fix this up for yours..
@@ -616,6 +621,10 @@ ifdef NO_PERL_MAKEMAKER
 	export NO_PERL_MAKEMAKER
 endif
 
+ifeq ($(TCLTK_PATH),)
+NO_TCLTK=NoThanks
+endif
+
 QUIET_SUBDIR0  = $(MAKE) -C # space to separate -C and subdir
 QUIET_SUBDIR1  =
 
@@ -654,6 +663,7 @@ prefix_SQ = $(subst ','\'',$(prefix))
 
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
+TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
 
 LIBS = $(GITLIBS) $(EXTLIBS)
 
@@ -676,7 +686,7 @@ endif
 
 all::
 ifndef NO_TCLTK
-	$(QUIET_SUBDIR0)git-gui $(QUIET_SUBDIR1) all
+	$(QUIET_SUBDIR0)git-gui TCLTK_PATH='$(TCLTK_PATH_SQ)' $(QUIET_SUBDIR1) all
 endif
 	$(QUIET_SUBDIR0)perl $(QUIET_SUBDIR1) PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' all
 	$(QUIET_SUBDIR0)templates $(QUIET_SUBDIR1)

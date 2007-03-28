@@ -6,6 +6,7 @@ CFLAGS = @CFLAGS@
 AR = @AR@
 TAR = @TAR@
 #INSTALL = @INSTALL@		# needs install-sh or install.sh in sources
+TCLTK_PATH = @TCLTK_PATH@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
