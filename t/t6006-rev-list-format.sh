@@ -39,11 +39,11 @@ EOF
 
 test_format parents %P%n%p <<'EOF'
 commit 131a310eb913d107dd3c09a65d1651175898735d
-86c75cfd708a0e5868dc876ed5b8bb66c80b4873 
-86c75cf 
+86c75cfd708a0e5868dc876ed5b8bb66c80b4873
+86c75cf
 commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
-86c75cf 
-86c75cf 
+
+
 EOF
 
 # we don't test relative here

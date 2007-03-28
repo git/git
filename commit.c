@@ -849,19 +849,23 @@ static long format_commit_message(const struct commit *commit,
 	interp_set_entry(table, ITREE_ABBREV,
 			find_unique_abbrev(commit->tree->object.sha1,
 				DEFAULT_ABBREV));
+
+	parents[1] = 0;
 	for (i = 0, p = commit->parents;
 			p && i < sizeof(parents) - 1;
 			p = p->next)
-		i += snprintf(parents + i, sizeof(parents) - i - 1, "%s ",
+		i += snprintf(parents + i, sizeof(parents) - i - 1, " %s",
 			sha1_to_hex(p->item->object.sha1));
-	interp_set_entry(table, IPARENTS, parents);
+	interp_set_entry(table, IPARENTS, parents + 1);
+
+	parents[1] = 0;
 	for (i = 0, p = commit->parents;
 			p && i < sizeof(parents) - 1;
 			p = p->next)
-		i += snprintf(parents + i, sizeof(parents) - i - 1, "%s ",
+		i += snprintf(parents + i, sizeof(parents) - i - 1, " %s",
 			find_unique_abbrev(p->item->object.sha1,
 				DEFAULT_ABBREV));
-	interp_set_entry(table, IPARENTS_ABBREV, parents);
+	interp_set_entry(table, IPARENTS_ABBREV, parents + 1);
 
 	for (i = 0, state = HEADER; msg[i] && state < BODY; i++) {
 		int eol;
