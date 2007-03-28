@@ -35,7 +35,9 @@ ifdef::stalenotes[]
 You are reading the documentation for the latest version of git.
 Documentation for older releases are available here:
 
-* link:v1.5.0.5/git.html[documentation for release 1.5.0.5]
+* link:v1.5.0.6/git.html[documentation for release 1.5.0.6]
+
+* link:v1.5.0.6/RelNotes-1.5.0.6.txt[release notes for 1.5.0.6]
 
 * link:v1.5.0.5/RelNotes-1.5.0.5.txt[release notes for 1.5.0.5]
 
