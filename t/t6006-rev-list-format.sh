@@ -105,4 +105,46 @@ commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
 [31mfoo[32mbar[34mbaz[mxyzzy
 EOF
 
+cat >commit-msg <<'EOF'
+Test printing of complex bodies
+
+This commit message is much longer than the others,
+and it will be encoded in iso8859-1. We should therefore
+include an iso8859 character: ¡bueno!
+EOF
+test_expect_success 'setup complex body' '
+git-config i18n.commitencoding iso8859-1 &&
+  echo change2 >foo && git-commit -a -F commit-msg
+'
+
+test_format complex-encoding %e <<'EOF'
+commit f58db70b055c5718631e5c61528b28b12090cdea
+iso8859-1
+commit 131a310eb913d107dd3c09a65d1651175898735d
+<unknown>
+commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
+<unknown>
+EOF
+
+test_format complex-subject %s <<'EOF'
+commit f58db70b055c5718631e5c61528b28b12090cdea
+Test printing of complex bodies
+commit 131a310eb913d107dd3c09a65d1651175898735d
+changed foo
+commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
+added foo
+EOF
+
+test_format complex-body %b <<'EOF'
+commit f58db70b055c5718631e5c61528b28b12090cdea
+This commit message is much longer than the others,
+and it will be encoded in iso8859-1. We should therefore
+include an iso8859 character: ¡bueno!
+
+commit 131a310eb913d107dd3c09a65d1651175898735d
+<unknown>
+commit 86c75cfd708a0e5868dc876ed5b8bb66c80b4873
+<unknown>
+EOF
+
 test_done
