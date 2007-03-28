@@ -241,7 +241,7 @@ ALL_PROGRAMS = $(PROGRAMS) $(SCRIPTS)
 # what 'all' will build but not install in gitexecdir
 OTHER_PROGRAMS = git$X gitweb/gitweb.cgi
 ifndef NO_TCLTK
-OTHER_PROGRAMS += gitk
+OTHER_PROGRAMS += gitk-wish
 endif
 
 # Backward compatibility -- to be removed after 1.0
@@ -694,6 +694,12 @@ endif
 strip: $(PROGRAMS) git$X
 	$(STRIP) $(STRIP_OPTS) $(PROGRAMS) git$X
 
+gitk-wish: gitk GIT-GUI-VARS
+	$(QUIET_GEN)rm -f $@ $@+ && \
+	sed -e '1,3s|^exec .* "$$0"|exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' <gitk >$@+ && \
+	chmod +x $@+ && \
+	mv -f $@+ $@
+
 git$X: git.c common-cmds.h $(BUILTIN_OBJS) $(GITLIBS) GIT-CFLAGS
 	$(QUIET_LINK)$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
 		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) \
@@ -872,6 +878,20 @@ GIT-CFLAGS: .FORCE-GIT-CFLAGS
 		echo "$$FLAGS" >GIT-CFLAGS; \
             fi
 
+### Detect Tck/Tk interpreter path changes
+ifndef NO_TCLTK
+TRACK_VARS = $(subst ','\'',-DTCLTK_PATH='$(TCLTK_PATH_SQ)')
+
+GIT-GUI-VARS: .FORCE-GIT-GUI-VARS
+	@VARS='$(TRACK_VARS)'; \
+	    if test x"$$VARS" != x"`cat $@ 2>/dev/null`" ; then \
+		echo 1>&2 "    * new Tcl/Tk interpreter location"; \
+		echo "$$VARS" >$@; \
+            fi
+
+.PHONY: .FORCE-GIT-GUI-VARS
+endif
+
 ### Testing rules
 
 # GNU make supports exporting all variables by "export" without parameters.
@@ -916,7 +936,7 @@ install: all
 	$(MAKE) -C templates DESTDIR='$(DESTDIR_SQ)' install
 	$(MAKE) -C perl prefix='$(prefix_SQ)' install
 ifndef NO_TCLTK
-	$(INSTALL) gitk '$(DESTDIR_SQ)$(bindir_SQ)'
+	$(INSTALL) gitk-wish '$(DESTDIR_SQ)$(bindir_SQ)'/gitk
 	$(MAKE) -C git-gui install
 endif
 	if test 'z$(bindir_SQ)' != 'z$(gitexecdir_SQ)'; \
@@ -1000,9 +1020,10 @@ clean:
 	$(MAKE) -C templates/ clean
 	$(MAKE) -C t/ clean
 ifndef NO_TCLTK
+	rm -f gitk-wish
 	$(MAKE) -C git-gui clean
 endif
-	rm -f GIT-VERSION-FILE GIT-CFLAGS
+	rm -f GIT-VERSION-FILE GIT-CFLAGS GIT-GUI-VARS
 
 .PHONY: all install clean strip
 .PHONY: .FORCE-GIT-VERSION-FILE TAGS tags .FORCE-GIT-CFLAGS
