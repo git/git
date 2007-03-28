@@ -660,11 +660,11 @@ class GitSync(Command):
                     self.gitStream.write("EOT\n\n")
 
                 else:
-                    if not silent:
+                    if not self.silent:
                         print "Tag %s does not match with change %s: files do not match." % (labelDetails["label"], change)
 
             else:
-                if not silent:
+                if not self.silent:
                     print "Tag %s does not match with change %s: file count is different." % (labelDetails["label"], change)
 
     def extractFilesInCommitToBranch(self, files, branchPrefix):
