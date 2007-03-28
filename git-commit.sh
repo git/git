@@ -360,7 +360,7 @@ t,)
 		if test -z "$initial_commit"
 		then
 			cp "$THIS_INDEX" "$TMP_INDEX"
-			GIT_INDEX_FILE="$TMP_INDEX" git-read-tree -m HEAD
+			GIT_INDEX_FILE="$TMP_INDEX" git-read-tree -i -m HEAD
 		else
 			rm -f "$TMP_INDEX"
 		fi || exit
