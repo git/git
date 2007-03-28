@@ -654,6 +654,7 @@ static char *get_header(const struct commit *commit, const char *key)
 static char *replace_encoding_header(char *buf, const char *encoding)
 {
 	char *encoding_header = strstr(buf, "\nencoding ");
+	char *header_end = strstr(buf, "\n\n");
 	char *end_of_encoding_header;
 	int encoding_header_pos;
 	int encoding_header_len;
@@ -661,8 +662,10 @@ static char *replace_encoding_header(char *buf, const char *encoding)
 	int need_len;
 	int buflen = strlen(buf) + 1;
 
-	if (!encoding_header)
-		return buf; /* should not happen but be defensive */
+	if (!header_end)
+		header_end = buf + buflen;
+	if (!encoding_header || encoding_header >= header_end)
+		return buf;
 	encoding_header++;
 	end_of_encoding_header = strchr(encoding_header, '\n');
 	if (!end_of_encoding_header)

@@ -1,0 +1,22 @@
+GIT v1.5.0.6 Release Notes
+==========================
+
+Fixes since v1.5.0.5
+--------------------
+
+* Bugfixes
+
+  - a handful small fixes to gitweb.
+
+  - build procedure for user-manual is fixed not to require locally
+    installed stylesheets.
+
+  - "git commit $paths" on paths whose earlier contents were
+    already updated in the index were failing out.
+
+* Documentation
+
+  - user-manual has better cross references.
+
+  - gitweb installation/deployment procedure is now documented.
+
