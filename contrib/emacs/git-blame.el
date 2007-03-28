@@ -8,8 +8,8 @@
 ;; License:    GPL
 ;; Keywords:   git, version control, release management
 ;;
-;; Compatibility: Emacs21
-
+;; Compatibility: Emacs21, Emacs22 and EmacsCVS
+;;                Git 1.5 and up
 
 ;; This file is *NOT* part of GNU Emacs.
 ;; This file is distributed under the same terms as GNU Emacs.
@@ -61,8 +61,9 @@
 
 ;;; Compatibility:
 ;;
-;; It requires GNU Emacs 21.  If you'are using Emacs 20, try
-;; changing this:
+;; It requires GNU Emacs 21 or later and Git 1.5.0 and up
+;;
+;; If you'are using Emacs 20, try changing this:
 ;;
 ;;            (overlay-put ovl 'face (list :background
 ;;                                         (cdr (assq 'color (cddddr info)))))
@@ -77,30 +78,51 @@
 ;;
 ;;; Code:
 
-(require 'cl)			      ; to use `push', `pop'
+(eval-when-compile (require 'cl))			      ; to use `push', `pop'
 
-(defun color-scale (l)
-  (let* ((colors ())
-         r g b)
-    (setq r l)
-    (while r
-      (setq g l)
-      (while g
-        (setq b l)
-        (while b
-          (push (concat "#" (car r) (car g) (car b)) colors)
-          (pop b))
-        (pop g))
-      (pop r))
-    colors))
+
+(defun git-blame-color-scale (&rest elements)
+  "Given a list, returns a list of triples formed with each
+elements of the list.
+
+a b => bbb bba bab baa abb aba aaa aab"
+  (let (result)
+    (dolist (a elements)
+      (dolist (b elements)
+        (dolist (c elements)
+          (setq result (cons (format "#%s%s%s" a b c) result)))))
+    result))
+
+;; (git-blame-color-scale "0c" "04" "24" "1c" "2c" "34" "14" "3c") =>
+;; ("#3c3c3c" "#3c3c14" "#3c3c34" "#3c3c2c" "#3c3c1c" "#3c3c24"
+;; "#3c3c04" "#3c3c0c" "#3c143c" "#3c1414" "#3c1434" "#3c142c" ...)
+
+(defmacro git-blame-random-pop (l)
+  "Select a random element from L and returns it. Also remove
+selected element from l."
+  ;; only works on lists with unique elements
+  `(let ((e (elt ,l (random (length ,l)))))
+     (setq ,l (remove e ,l))
+     e))
 
 (defvar git-blame-dark-colors
-  (color-scale '("0c" "04" "24" "1c" "2c" "34" "14" "3c")))
+  (git-blame-color-scale "0c" "04" "24" "1c" "2c" "34" "14" "3c")
+  "*List of colors (format #RGB) to use in a dark environment.
+
+To check out the list, evaluate (list-colors-display git-blame-dark-colors).")
 
 (defvar git-blame-light-colors
-  (color-scale '("c4" "d4" "cc" "dc" "f4" "e4" "fc" "ec")))
+  (git-blame-color-scale "c4" "d4" "cc" "dc" "f4" "e4" "fc" "ec")
+  "*List of colors (format #RGB) to use in a light environment.
 
-(defvar git-blame-ancient-color "dark green")
+To check out the list, evaluate (list-colors-display git-blame-light-colors).")
+
+(defvar git-blame-colors '()
+  "Colors used by git-blame. The list is built once when activating git-blame
+minor mode.")
+
+(defvar git-blame-ancient-color "dark green"
+  "*Color to be used for ancient commit.")
 
 (defvar git-blame-autoupdate t
   "*Automatically update the blame display while editing")
@@ -124,6 +146,10 @@
 (defvar git-blame-update-queue nil
   "A queue of update requests")
 (make-variable-buffer-local 'git-blame-update-queue)
+
+;; FIXME: docstrings
+(defvar git-blame-file nil)
+(defvar git-blame-current nil)
 
 (defvar git-blame-mode nil)
 (make-variable-buffer-local 'git-blame-mode)
@@ -177,7 +203,7 @@ See also function `git-blame-mode'."
   "Recalculate all blame information in the current buffer"
   (interactive)
   (unless git-blame-mode
-    (error "git-blame is not active"))
+    (error "Git-blame is not active"))
 
   (git-blame-cleanup)
   (git-blame-run))
@@ -294,7 +320,6 @@ See also function `git-blame-mode'."
         (t
          nil)))
 
-
 (defun git-blame-new-commit (hash src-line res-line num-lines)
   (save-excursion
     (set-buffer git-blame-file)
@@ -302,9 +327,11 @@ See also function `git-blame-mode'."
           (inhibit-point-motion-hooks t)
           (inhibit-modification-hooks t))
       (when (not info)
-        (let ((color (pop git-blame-colors)))
-          (unless color
-            (setq color git-blame-ancient-color))
+	;; Assign a random color to each new commit info
+	;; Take care not to select the same color multiple times
+	(let ((color (if git-blame-colors
+			 (git-blame-random-pop git-blame-colors)
+		       git-blame-ancient-color)))
           (setq info (list hash src-line res-line num-lines
                            (git-describe-commit hash)
                            (cons 'color color))))
