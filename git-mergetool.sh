@@ -44,25 +44,24 @@ describe_file () {
     branch="$2"
     file="$3"
 
-    printf "    "
+    printf "  {%s}: " "$branch"
     if test -z "$mode"; then
-	printf "'%s' was deleted" "$path"
+	echo "deleted"
     elif is_symlink "$mode" ; then
-	printf "'%s' is a symlink containing '%s'" "$path" "$file"
+	echo "a symbolic link -> '$(cat "$file")'"
     else
 	if base_present; then
-	    printf "'%s' was created" "$path"
+	    echo "modified"
 	else
-	    printf "'%s' was modified" "$path"
+	    echo "created"
 	fi
     fi
-    echo " in the $branch branch"
 }
 
 
 resolve_symlink_merge () {
     while true; do
-	printf "Use (r)emote or (l)ocal, or (a)bort? "
+	printf "Use (l)ocal or (r)emote, or (a)bort? "
 	read ans
 	case "$ans" in
 	    [lL]*)
@@ -86,10 +85,14 @@ resolve_symlink_merge () {
 
 resolve_deleted_merge () {
     while true; do
-	printf "Use (m)odified or (d)eleted file, or (a)bort? "
+	if base_present; then
+	    printf "Use (m)odified or (d)eleted file, or (a)bort? "
+	else
+	    printf "Use (c)reated or (d)eleted file, or (a)bort? "
+	fi
 	read ans
 	case "$ans" in
-	    [mM]*)
+	    [mMcC]*)
 		git-add -- "$path"
 		cleanup_temp_files --save-backup
 		return
@@ -164,7 +167,7 @@ merge_file () {
     remote_present && git cat-file blob ":3:$path" > "$REMOTE" 2>/dev/null
 
     if test -z "$local_mode" -o -z "$remote_mode"; then
-	echo "Deleted merge conflict for $path:"
+	echo "Deleted merge conflict for '$path':"
 	describe_file "$local_mode" "local" "$LOCAL"
 	describe_file "$remote_mode" "remote" "$REMOTE"
 	resolve_deleted_merge
@@ -172,14 +175,14 @@ merge_file () {
     fi
 
     if is_symlink "$local_mode" || is_symlink "$remote_mode"; then
-	echo "Symlink merge conflict for $path:"
+	echo "Symbolic link merge conflict for '$path':"
 	describe_file "$local_mode" "local" "$LOCAL"
 	describe_file "$remote_mode" "remote" "$REMOTE"
 	resolve_symlink_merge
 	return
     fi
 
-    echo "Normal merge conflict for $path:"
+    echo "Normal merge conflict for '$path':"
     describe_file "$local_mode" "local" "$LOCAL"
     describe_file "$remote_mode" "remote" "$REMOTE"
     printf "Hit return to start merge resolution tool (%s): " "$merge_tool"
