@@ -106,12 +106,40 @@ resolve_deleted_merge () {
 	done
 }
 
+check_unchanged () {
+    if test "$path" -nt "$BACKUP" ; then
+	status=0;
+    else
+	while true; do
+	    echo "$path seems unchanged."
+	    printf "Was the merge successful? [y/n] "
+	    read answer < /dev/tty
+	    case "$answer" in
+		y*|Y*) status=0; break ;;
+		n*|N*) status=1; break ;;
+	    esac
+	done
+    fi
+}
+
+save_backup () {
+    if test "$status" -eq 0; then
+	mv -- "$BACKUP" "$path.orig"
+    fi
+}
+
+remove_backup () {
+    if test "$status" -eq 0; then
+	rm "$BACKUP"
+    fi
+}
+
 merge_file () {
     path="$1"
 
     f=`git-ls-files -u -- "$path"`
     if test -z "$f" ; then
-        if test ! -f "$path" ; then
+	if test ! -f "$path" ; then
 	    echo "$path: file not found"
 	else
 	    echo "$path: file does not need merging"
@@ -167,9 +195,7 @@ merge_file () {
 		    -o "$path" -- "$LOCAL" "$REMOTE" > /dev/null 2>&1)
 	    fi
 	    status=$?
-	    if test "$status" -eq 0; then
-		rm "$BACKUP"
-	    fi
+	    remove_backup
 	    ;;
 	tkdiff)
 	    if base_present ; then
@@ -178,29 +204,13 @@ merge_file () {
 		tkdiff -o "$path" -- "$LOCAL" "$REMOTE"
 	    fi
 	    status=$?
-	    if test "$status" -eq 0; then
-		mv -- "$BACKUP" "$path.orig"
-	    fi
+	    save_backup
 	    ;;
 	meld|vimdiff)
 	    touch "$BACKUP"
 	    $merge_tool -- "$LOCAL" "$path" "$REMOTE"
-	    if test "$path" -nt "$BACKUP" ; then
-		status=0;
-	    else
-		while true; do
-		    echo "$path seems unchanged."
-		    printf "Was the merge successful? [y/n] "
-		    read answer < /dev/tty
-		    case "$answer" in
-			y*|Y*) status=0; break ;;
-			n*|N*) status=1; break ;;
-		    esac
-		done
-	    fi
-	    if test "$status" -eq 0; then
-		mv -- "$BACKUP" "$path.orig"
-	    fi
+	    check_unchanged
+	    save_backup
 	    ;;
 	xxdiff)
 	    touch "$BACKUP"
@@ -217,22 +227,8 @@ merge_file () {
 		    -R 'Accel.SearchForward: "Ctrl-G"' \
 		    --merged-file "$path" -- "$LOCAL" "$REMOTE"
 	    fi
-	    if test "$path" -nt "$BACKUP" ; then
-		status=0;
-	    else
-		while true; do
-		    echo "$path seems unchanged."
-		    printf "Was the merge successful? [y/n] "
-		    read answer < /dev/tty
-		    case "$answer" in
-			y*|Y*) status=0; break ;;
-			n*|N*) status=1; break ;;
-		    esac
-		done
-	    fi
-	    if test "$status" -eq 0; then
-		mv -- "$BACKUP" "$path.orig"
-	    fi
+	    check_unchanged
+	    save_backup
 	    ;;
 	emerge)
 	    if base_present ; then
@@ -241,9 +237,7 @@ merge_file () {
 		emacs -f emerge-files-command "$LOCAL" "$REMOTE" "$path"
 	    fi
 	    status=$?
-	    if test "$status" -eq 0; then
-		mv -- "$BACKUP" "$path.orig"
-	    fi
+	    save_backup
 	    ;;
     esac
     if test "$status" -ne 0; then
