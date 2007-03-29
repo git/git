@@ -95,7 +95,7 @@ resolve_deleted_merge () {
 		return
 		;;
 	    [dD]*)
-		git-rm -- "$path"
+		git-rm -- "$path" > /dev/null
 		cleanup_temp_files
 		return
 		;;
