@@ -71,13 +71,13 @@ resolve_symlink_merge () {
 		cleanup_temp_files --save-backup
 		return
 		;;
-	   [rR]*)
+	    [rR]*)
 		git-checkout-index -f --stage=3 -- "$path"
 		git-add -- "$path"
 		cleanup_temp_files --save-backup
 		return
 		;;
-	    [qQ]*)
+	    [aA]*)
 		exit 1
 		;;
 	    esac
@@ -94,12 +94,12 @@ resolve_deleted_merge () {
 		cleanup_temp_files --save-backup
 		return
 		;;
-	   [dD]*)
+	    [dD]*)
 		git-rm -- "$path"
 		cleanup_temp_files
 		return
 		;;
-	    [qQ]*)
+	    [aA]*)
 		exit 1
 		;;
 	    esac
