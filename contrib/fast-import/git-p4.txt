@@ -49,23 +49,19 @@ incremental import creates through the use of git-fast-import.
 Submitting
 ==========
 
-git-p4 has EXPERIMENTAL support for submitting changes from a git repository
-back to a Perforce depot. This requires a Perforce checkout separate to your
-git repository. All it should take is calling
+git-p4 has support for submitting changes from a git repository back to the
+Perforce depot. This requires a Perforce checkout separate to your git
+repository. To submit all changes that are in the current git branch but not in
+the "p4" branch (or "origin" if "p4" doesn't exist) simply call
 
     git-p4 submit
 
-in your git repository. This will attempt to locate the perforce checkout
-corresponding to your imported depot path. By default the changes between your
-current branch and the "p4" branch will be submitted. If there is no "p4"
-branch the "origin" branch will be used as reference instead. You can override
-this with the --origin=mysourcebranch option. The "origin" branch has to be the
-branch populated with git-p4's sync operation.
+in your git repository. If you want to submit changes in a specific branch that
+is not your current git branch you can also pass that as an argument:
 
-After some preparations (which might take a while) git-p4 enters a loop where
-it will first show a Perforce submit template and a diff of the change to
-apply in the editor. After saving and exiting the editor you will be asked whether
-you really want to submit the change or not.
+    git-p4 submit mytopicbranch
+
+You can override the reference branch with the --origin=mysourcebranch option.
 
 If a submit fails you may have to "p4 resolve" and submit manually. You can
 continue importing the remaining changes with
@@ -74,4 +70,3 @@ continue importing the remaining changes with
 
 After submitting you should sync your perforce import branch ("p4" or "origin")
 from Perforce using git-p4's sync command.
-

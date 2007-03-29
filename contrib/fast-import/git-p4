@@ -167,13 +167,13 @@ class P4Sync(Command):
                 optparse.make_option("--continue", action="store_false", dest="firstTime"),
                 optparse.make_option("--origin", dest="origin"),
                 optparse.make_option("--reset", action="store_true", dest="reset"),
-                optparse.make_option("--master", dest="master"),
                 optparse.make_option("--log-substitutions", dest="substFile"),
                 optparse.make_option("--noninteractive", action="store_false"),
                 optparse.make_option("--dry-run", action="store_true"),
                 optparse.make_option("--apply-as-patch", action="store_true", dest="applyAsPatch")
         ]
         self.description = "Submit changes from git to the perforce depot."
+        self.usage += " [name of git branch to submit into perforce depot]"
         self.firstTime = True
         self.reset = False
         self.interactive = True
@@ -181,7 +181,6 @@ class P4Sync(Command):
         self.substFile = ""
         self.firstTime = True
         self.origin = ""
-        self.master = ""
         self.applyAsPatch = True
 
         self.logSubstitutions = {}
@@ -326,6 +325,16 @@ class P4Sync(Command):
         # make gitdir absolute so we can cd out into the perforce checkout
         gitdir = os.path.abspath(gitdir)
         os.environ["GIT_DIR"] = gitdir
+
+        if len(args) == 0:
+            self.master = currentGitBranch()
+            if len(self.master) == 0 or not os.path.exists("%s/refs/heads/%s" % (gitdir, self.master)):
+                die("Detecting current git branch failed!")
+        elif len(args) == 1:
+            self.master = args[0]
+        else:
+            return False
+
         depotPath = ""
         if gitBranchExists("p4"):
             [depotPath, dummy] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit("p4"))
@@ -361,11 +370,6 @@ class P4Sync(Command):
             for line in open(self.substFile, "r").readlines():
                 tokens = line[:-1].split("=")
                 self.logSubstitutions[tokens[0]] = tokens[1]
-
-        if len(self.master) == 0:
-            self.master = currentGitBranch()
-            if len(self.master) == 0 or not os.path.exists("%s/refs/heads/%s" % (gitdir, self.master)):
-                die("Detecting current git branch failed!")
 
         self.check()
         self.configFile = gitdir + "/p4-git-sync.cfg"
