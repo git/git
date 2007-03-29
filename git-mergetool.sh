@@ -14,19 +14,19 @@ SUBDIRECTORY_OK=Yes
 require_work_tree
 
 # Returns true if the mode reflects a symlink
-function is_symlink () {
+is_symlink () {
     test "$1" = 120000
 }
 
-function local_present () {
+local_present () {
     test -n "$local_mode"
 }
 
-function remote_present () {
+remote_present () {
     test -n "$remote_mode"
 }
 
-function base_present () {
+base_present () {
     test -n "$base_mode"
 }
 
@@ -39,7 +39,7 @@ cleanup_temp_files () {
     fi
 }
 
-function describe_file () {
+describe_file () {
     mode="$1"
     branch="$2"
     file="$3"
