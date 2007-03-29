@@ -102,12 +102,10 @@ if test -z "$NO_TCLTK"; then
   elif test "$with_tcltk" = "yes"; then
   # Tcl/Tk check requested.
     AC_CHECK_PROGS(TCLTK_PATH, [wish], )
-  elif test -x "$with_tcltk"; then
+  else
     AC_MSG_RESULT([Using Tcl/Tk interpreter $with_tcltk])
     TCLTK_PATH="$with_tcltk"
     AC_SUBST(TCLTK_PATH)
-  else
-    AC_MSG_ERROR([Tcl/Tk interpreter was not found in $with_tcltk])
   fi
 fi
 
