@@ -123,7 +123,15 @@ bisect_next_check() {
 	case "$next_ok,$1" in
 	no,) false ;;
 	no,fail)
-	    echo >&2 'You need to give me at least one good and one bad revisions.'
+	    THEN=''
+	    test -d "$GIT_DIR/refs/bisect" || {
+		echo >&2 'You need to start by "git bisect start".'
+		THEN='then '
+	    }
+	    echo >&2 'You '$THEN'need to give me at least one good' \
+		'and one bad revisions.'
+	    echo >&2 '(You can use "git bisect bad" and' \
+		'"git bisect good" for that.)'
 	    exit 1 ;;
 	*)
 	    true ;;
@@ -223,12 +231,6 @@ bisect_replay () {
 }
 
 bisect_run () {
-    # Check that we have everything to run correctly.
-    test -d "$GIT_DIR/refs/bisect" || {
-	echo >&2 'You need to start by "git bisect start".'
-	echo >&2 'And then by "git bisect bad" and "git bisect good".'
-	exit 1
-    }
     bisect_next_check fail
 
     while true
