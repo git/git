@@ -61,7 +61,7 @@ function describe_file () {
 
 
 resolve_symlink_merge () {
-    while /bin/true; do
+    while true; do
 	printf "Use (r)emote or (l)ocal, or (a)bort? "
 	read ans
 	case "$ans" in
@@ -85,7 +85,7 @@ resolve_symlink_merge () {
 }
 
 resolve_deleted_merge () {
-    while /bin/true; do
+    while true; do
 	printf "Use (m)odified or (d)eleted file, or (a)bort? "
 	read ans
 	case "$ans" in
