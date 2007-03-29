@@ -230,6 +230,16 @@ merge_file () {
 	    check_unchanged
 	    save_backup
 	    ;;
+	opendiff)
+	    touch "$BACKUP"
+	    if base_present; then
+		opendiff "$LOCAL" "$REMOTE" -ancestor "$BASE" -merge "$path" | cat
+	    else
+		opendiff "$LOCAL" "$REMOTE" -merge "$path" | cat
+	    fi
+	    check_unchanged
+	    save_backup
+	    ;;
 	emerge)
 	    if base_present ; then
 		emacs -f emerge-files-with-ancestor-command "$LOCAL" "$REMOTE" "$BASE" "$path"
@@ -280,7 +290,7 @@ done
 if test -z "$merge_tool"; then
     merge_tool=`git-config merge.tool`
     case "$merge_tool" in
-	kdiff3 | tkdiff | xxdiff | meld | emerge | vimdiff | "")
+	kdiff3 | tkdiff | xxdiff | meld | opendiff | emerge | vimdiff | "")
 	    ;; # happy
 	*)
 	    echo >&2 "git config option merge.tool set to unknown tool: $merge_tool"
@@ -299,6 +309,8 @@ if test -z "$merge_tool" ; then
 	merge_tool=xxdiff
     elif type meld >/dev/null 2>&1 && test -n "$DISPLAY"; then
 	merge_tool=meld
+    elif type opendiff >/dev/null 2>&1; then
+	merge_tool=opendiff
     elif type emacs >/dev/null 2>&1; then
 	merge_tool=emerge
     elif type vimdiff >/dev/null 2>&1; then
@@ -310,7 +322,7 @@ if test -z "$merge_tool" ; then
 fi
 
 case "$merge_tool" in
-    kdiff3|tkdiff|meld|xxdiff|vimdiff)
+    kdiff3|tkdiff|meld|xxdiff|vimdiff|opendiff)
 	if ! type "$merge_tool" > /dev/null 2>&1; then
 	    echo "The merge tool $merge_tool is not available"
 	    exit 1
