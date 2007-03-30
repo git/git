@@ -86,10 +86,15 @@ Updates since v1.5.0
     to run after each revision is checked out to determine if it
     is good or bad, to automate the bisection process.
 
+  - "git log" family learned a new traversal option --first-parent,
+    which does what the name suggests.
+
 
 * Updated behaviour of existing commands.
 
   - "git fsck" does not barf on corrupt loose objects.
+
+  - "git rm" does not remove newly added files without -f.
 
   - "git archimport" allows remapping when coming up with git
     branch names from arch names.
@@ -183,7 +188,7 @@ Updates since v1.5.0
 
 --
 exec >/var/tmp/1
-O=v1.5.1-rc1-63-g12d6697
+O=v1.5.1-rc3-18-ge881192
 echo O=`git describe master`
 git shortlog --no-merges $O..master ^maint
 
