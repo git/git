@@ -1,4 +1,5 @@
 GIT-CFLAGS
+GIT-GUI-VARS
 GIT-VERSION-FILE
 git
 git-add
@@ -141,6 +142,7 @@ git-verify-tag
 git-whatchanged
 git-write-tree
 git-core-*/?*
+gitk-wish
 gitweb/gitweb.cgi
 test-chmtime
 test-date
