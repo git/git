@@ -991,7 +991,7 @@ check-docs::
 		git-merge-octopus | git-merge-ours | git-merge-recursive | \
 		git-merge-resolve | git-merge-stupid | \
 		git-add--interactive | git-fsck-objects | git-init-db | \
-		git-repo-config | \
+		git-repo-config | git-fetch--tool | \
 		git-ssh-pull | git-ssh-push ) continue ;; \
 		esac ; \
 		test -f "Documentation/$$v.txt" || \
