@@ -87,7 +87,7 @@
 extern void usage(const char *err) NORETURN;
 extern void die(const char *err, ...) NORETURN __attribute__((format (printf, 1, 2)));
 extern int error(const char *err, ...) __attribute__((format (printf, 1, 2)));
-extern void warn(const char *err, ...) __attribute__((format (printf, 1, 2)));
+extern void warning(const char *err, ...) __attribute__((format (printf, 1, 2)));
 
 extern void set_usage_routine(void (*routine)(const char *err) NORETURN);
 extern void set_die_routine(void (*routine)(const char *err, va_list params) NORETURN);

@@ -486,7 +486,7 @@ static void handle_one_reflog_commit(unsigned char *sha1, void *cb_data)
 			add_pending_object(cb->all_revs, o, "");
 		}
 		else if (!cb->warned_bad_reflog) {
-			warn("reflog of '%s' references pruned commits",
+			warning("reflog of '%s' references pruned commits",
 				cb->name_for_errormsg);
 			cb->warned_bad_reflog = 1;
 		}

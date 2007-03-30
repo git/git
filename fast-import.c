@@ -1312,7 +1312,7 @@ static int update_branch(struct branch *b)
 
 		if (!in_merge_bases(old_cmit, &new_cmit, 1)) {
 			unlock_ref(lock);
-			warn("Not updating %s"
+			warning("Not updating %s"
 				" (new tip %s does not contain %s)",
 				b->name, sha1_to_hex(b->sha1), sha1_to_hex(old_sha1));
 			return -1;

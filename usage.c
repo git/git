@@ -86,7 +86,7 @@ int error(const char *err, ...)
 	return -1;
 }
 
-void warn(const char *warn, ...)
+void warning(const char *warn, ...)
 {
 	va_list params;
 
