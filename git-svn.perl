@@ -2840,8 +2840,7 @@ package Git::SVN::Ra;
 use vars qw/@ISA $config_dir $_log_window_size/;
 use strict;
 use warnings;
-my ($can_do_switch);
-my $RA;
+my ($can_do_switch, %ignored_err, $RA);
 
 BEGIN {
 	# enforce temporary pool usage for some simple functions
@@ -3213,9 +3212,16 @@ sub skip_unknown_revs {
 	# 175007 - http(s):// (this repo required authorization, too...)
 	#   More codes may be discovered later...
 	if ($errno == 175007 || $errno == 175002 || $errno == 160013) {
-		warn "W: Ignoring error from SVN, path probably ",
-		     "does not exist: ($errno): ",
-		     $err->expanded_message,"\n";
+		my $err_key = $err->expanded_message;
+		# revision numbers change every time, filter them out
+		$err_key =~ s/\d+/\0/g;
+		$err_key = "$errno\0$err_key";
+		unless ($ignored_err{$err_key}) {
+			warn "W: Ignoring error from SVN, path probably ",
+			     "does not exist: ($errno): ",
+			     $err->expanded_message,"\n";
+			$ignored_err{$err_key} = 1;
+		}
 		return;
 	}
 	die "Error from SVN, ($errno): ", $err->expanded_message,"\n";
