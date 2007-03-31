@@ -435,6 +435,9 @@ sub cmd_rebase {
 	}
 
 	my $gs = Git::SVN->find_by_url($url);
+	unless ($gs) {
+		die "Unable to determine remote information from URL: $url\n";
+	}
 	if (command(qw/diff-index HEAD --/)) {
 		print STDERR "Cannot rebase with uncommited changes:\n";
 		command_noisy('status');
