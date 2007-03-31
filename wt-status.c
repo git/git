@@ -260,7 +260,7 @@ static void wt_status_print_untracked(struct wt_status *s)
 	if (file_exists(x))
 		add_excludes_from_file(&dir, x);
 
-	read_directory(&dir, ".", "", 0);
+	read_directory(&dir, ".", "", 0, NULL);
 	for(i = 0; i < dir.nr; i++) {
 		/* check for matching entry, which is unmerged; lifted from
 		 * builtin-ls-files:show_other_files */
