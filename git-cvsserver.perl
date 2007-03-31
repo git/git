@@ -2171,10 +2171,8 @@ sub new
     die "Error connecting to database\n" unless defined $self->{dbh};
 
     $self->{tables} = {};
-    foreach my $table ( $self->{dbh}->tables )
+    foreach my $table ( keys %{$self->{dbh}->table_info(undef,undef,undef,'TABLE')->fetchall_hashref('TABLE_NAME')} )
     {
-        $table =~ s/^"//;
-        $table =~ s/"$//;
         $self->{tables}{$table} = 1;
     }
 
