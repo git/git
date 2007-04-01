@@ -160,7 +160,7 @@ class P4CleanTags(Command):
         print "%s tags removed." % len(allTags)
         return True
 
-class P4Sync(Command):
+class P4Submit(Command):
     def __init__(self):
         Command.__init__(self)
         self.options = [
@@ -407,7 +407,7 @@ class P4Sync(Command):
 
         return True
 
-class GitSync(Command):
+class P4Sync(Command):
     def __init__(self):
         Command.__init__(self)
         self.options = [
@@ -1060,8 +1060,8 @@ def printUsage(commands):
 commands = {
     "debug" : P4Debug(),
     "clean-tags" : P4CleanTags(),
-    "submit" : P4Sync(),
-    "sync" : GitSync()
+    "submit" : P4Submit(),
+    "sync" : P4Sync()
 }
 
 if len(sys.argv[1:]) == 0:
