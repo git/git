@@ -19,7 +19,7 @@ use File::Basename qw(basename);
 binmode STDOUT, ':utf8';
 
 BEGIN {
-	CGI->compile() if $ENV{MOD_PERL};
+	CGI->compile() if $ENV{'MOD_PERL'};
 }
 
 our $cgi = new CGI;
@@ -1870,16 +1870,16 @@ sub git_print_page_nav {
 	my %arg = map { $_ => {action=>$_} } @navs;
 	if (defined $head) {
 		for (qw(commit commitdiff)) {
-			$arg{$_}{hash} = $head;
+			$arg{$_}{'hash'} = $head;
 		}
 		if ($current =~ m/^(tree | log | shortlog | commit | commitdiff | search)$/x) {
 			for (qw(shortlog log)) {
-				$arg{$_}{hash} = $head;
+				$arg{$_}{'hash'} = $head;
 			}
 		}
 	}
-	$arg{tree}{hash} = $treehead if defined $treehead;
-	$arg{tree}{hash_base} = $treebase if defined $treebase;
+	$arg{'tree'}{'hash'} = $treehead if defined $treehead;
+	$arg{'tree'}{'hash_base'} = $treebase if defined $treebase;
 
 	print "<div class=\"page_nav\">\n" .
 		(join " | ",
@@ -1927,9 +1927,9 @@ sub git_print_header_div {
 	my ($action, $title, $hash, $hash_base) = @_;
 	my %args = ();
 
-	$args{action} = $action;
-	$args{hash} = $hash if $hash;
-	$args{hash_base} = $hash_base if $hash_base;
+	$args{'action'} = $action;
+	$args{'hash'} = $hash if $hash;
+	$args{'hash_base'} = $hash_base if $hash_base;
 
 	print "<div class=\"header\">\n" .
 	      $cgi->a({-href => href(%args), -class => "title"},
