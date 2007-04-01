@@ -416,7 +416,7 @@ class GitSync(Command):
                 optparse.make_option("--changesfile", dest="changesFile"),
                 optparse.make_option("--silent", dest="silent", action="store_true"),
                 optparse.make_option("--known-branches", dest="knownBranches"),
-                optparse.make_option("--cache", dest="doCache", action="store_true"),
+                optparse.make_option("--data-cache", dest="dataCache", action="store_true"),
                 optparse.make_option("--command-cache", dest="commandCache", action="store_true")
         ]
         self.description = """Imports from Perforce into a git repository.\n
@@ -500,7 +500,7 @@ class GitSync(Command):
             if knownBranch:
                 continue
 
-            for branch in knownBranches:
+            for branch in self.knownBranches:
                 #if relativePath.startswith(branch):
                 if self.isSubPathOf(relativePath, branch):
                     if len(branches) == 0:
