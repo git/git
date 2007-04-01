@@ -84,7 +84,7 @@ static void prime_cache_tree(void)
 
 }
 
-static const char read_tree_usage[] = "git-read-tree (<sha> | [[-m [--aggressive] | --reset | --prefix=<prefix>] [-u | -i]] [--exclude-per-directory=<gitignore>] <sha1> [<sha2> [<sha3>]])";
+static const char read_tree_usage[] = "git-read-tree (<sha> | [[-m [--aggressive] | --reset | --prefix=<prefix>] [-u | -i]] [--exclude-per-directory=<gitignore>] [--index-output=<file>] <sha1> [<sha2> [<sha3>]])";
 
 static struct lock_file lock_file;
 
@@ -125,6 +125,11 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 		 */
 		if (!strcmp(arg, "-i")) {
 			opts.index_only = 1;
+			continue;
+		}
+
+		if (!prefixcmp(arg, "--index-output=")) {
+			set_alternate_index_output(arg + 15);
 			continue;
 		}
 

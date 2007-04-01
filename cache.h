@@ -147,7 +147,6 @@ enum object_type {
 #define DEFAULT_GIT_DIR_ENVIRONMENT ".git"
 #define DB_ENVIRONMENT "GIT_OBJECT_DIRECTORY"
 #define INDEX_ENVIRONMENT "GIT_INDEX_FILE"
-#define INDEX_OUTPUT_ENVIRONMENT "_GIT_INDEX_OUTPUT"
 #define GRAFT_ENVIRONMENT "GIT_GRAFT_FILE"
 #define TEMPLATE_DIR_ENVIRONMENT "GIT_TEMPLATE_DIR"
 #define CONFIG_ENVIRONMENT "GIT_CONFIG"
@@ -216,6 +215,7 @@ extern int commit_lock_file(struct lock_file *);
 
 extern int hold_locked_index(struct lock_file *, int);
 extern int commit_locked_index(struct lock_file *);
+extern void set_alternate_index_output(const char *);
 
 extern void rollback_lock_file(struct lock_file *);
 extern int delete_ref(const char *, unsigned char *sha1);
