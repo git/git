@@ -315,6 +315,14 @@ git so take care if using Cogito etc.
 	index file. If not specified, the default of `$GIT_DIR/index`
 	is used.
 
+'_GIT_INDEX_OUTPUT'::
+	When this environment is defined, plumbing level
+	commands that update the index writes the resulting
+	index to this file, instead of `$GIT_INDEX_FILE` (or its
+	default `$GIT_DIR/index`).  This is solely meant to be
+	used by Porcelain to drive low-level plumbing.  Defining
+	this in user's environment is always an error.
+
 'GIT_OBJECT_DIRECTORY'::
 	If the object storage directory is specified via this
 	environment variable then the sha1 directories are created

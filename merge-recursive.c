@@ -1378,7 +1378,7 @@ int main(int argc, char *argv[])
 	if (show(3))
 		printf("Merging %s with %s\n", branch1, branch2);
 
-	index_fd = hold_lock_file_for_update(lock, get_index_file(), 1);
+	index_fd = hold_locked_index(lock, 1);
 
 	for (i = 0; i < bases_count; i++) {
 		struct commit *ancestor = get_ref(bases[i]);
@@ -1388,7 +1388,7 @@ int main(int argc, char *argv[])
 
 	if (active_cache_changed &&
 	    (write_cache(index_fd, active_cache, active_nr) ||
-	     close(index_fd) || commit_lock_file(lock)))
+	     close(index_fd) || commit_locked_index(lock)))
 			die ("unable to write %s", get_index_file());
 
 	return clean ? 0: 1;

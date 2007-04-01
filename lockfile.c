@@ -65,6 +65,23 @@ int commit_lock_file(struct lock_file *lk)
 	return i;
 }
 
+int hold_locked_index(struct lock_file *lk, int die_on_error)
+{
+	return hold_lock_file_for_update(lk, get_index_file(), die_on_error);
+}
+
+int commit_locked_index(struct lock_file *lk)
+{
+	char *output = getenv(INDEX_OUTPUT_ENVIRONMENT);
+	if (output && *output) {
+		int result = rename(lk->filename, output);
+		lk->filename[0] = 0;
+		return result;
+	}
+	else
+		return commit_lock_file(lk);
+}
+
 void rollback_lock_file(struct lock_file *lk)
 {
 	if (lk->filename[0])
