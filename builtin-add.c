@@ -205,7 +205,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	}
 
 	for (i = 0; i < dir.nr; i++)
-		add_file_to_index(dir.entries[i]->name, verbose);
+		add_file_to_cache(dir.entries[i]->name, verbose);
 
 	if (active_cache_changed) {
 		if (write_cache(newfd, active_cache, active_nr) ||

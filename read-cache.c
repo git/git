@@ -325,7 +325,7 @@ int remove_file_from_cache(const char *path)
 	return 0;
 }
 
-int add_file_to_index(const char *path, int verbose)
+int add_file_to_cache(const char *path, int verbose)
 {
 	int size, namelen;
 	struct stat st;
