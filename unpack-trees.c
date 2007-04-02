@@ -525,7 +525,7 @@ static int deleted_entry(struct cache_entry *ce, struct cache_entry *old,
 	return 1;
 }
 
-static int keep_entry(struct cache_entry *ce)
+static int keep_entry(struct cache_entry *ce, struct unpack_trees_options *o)
 {
 	add_cache_entry(ce, ADD_CACHE_OK_TO_ADD);
 	return 1;
@@ -682,7 +682,7 @@ int threeway_merge(struct cache_entry **stages,
 	if (!head_match || !remote_match) {
 		for (i = 1; i < o->head_idx; i++) {
 			if (stages[i]) {
-				keep_entry(stages[i]);
+				keep_entry(stages[i], o);
 				count++;
 				break;
 			}
@@ -695,8 +695,8 @@ int threeway_merge(struct cache_entry **stages,
 		show_stage_entry(stderr, "remote ", stages[remote_match]);
 	}
 #endif
-	if (head) { count += keep_entry(head); }
-	if (remote) { count += keep_entry(remote); }
+	if (head) { count += keep_entry(head, o); }
+	if (remote) { count += keep_entry(remote, o); }
 	return count;
 }
 
@@ -728,7 +728,7 @@ int twoway_merge(struct cache_entry **src,
 		    (oldtree && newtree &&
 		     !same(oldtree, newtree) && /* 18 and 19*/
 		     same(current, newtree))) {
-			return keep_entry(current);
+			return keep_entry(current, o);
 		}
 		else if (oldtree && !newtree && same(current, oldtree)) {
 			/* 10 or 11 */
@@ -774,7 +774,7 @@ int bind_merge(struct cache_entry **src,
 	if (a && old)
 		die("Entry '%s' overlaps.  Cannot bind.", a->name);
 	if (!a)
-		return keep_entry(old);
+		return keep_entry(old, o);
 	else
 		return merged_entry(a, NULL, o);
 }
@@ -804,7 +804,7 @@ int oneway_merge(struct cache_entry **src,
 			    ce_match_stat(old, &st, 1))
 				old->ce_flags |= htons(CE_UPDATE);
 		}
-		return keep_entry(old);
+		return keep_entry(old, o);
 	}
 	return merged_entry(a, old, o);
 }
