@@ -30,7 +30,7 @@ static int unidiff_zero;
 static int p_value = 1;
 static int p_value_known;
 static int check_index;
-static int write_index;
+static int update_index;
 static int cached;
 static int diffstat;
 static int numstat;
@@ -2308,7 +2308,7 @@ static void patch_stats(struct patch *patch)
 
 static void remove_file(struct patch *patch, int rmdir_empty)
 {
-	if (write_index) {
+	if (update_index) {
 		if (remove_file_from_cache(patch->old_name) < 0)
 			die("unable to remove %s from index", patch->old_name);
 		cache_tree_invalidate_path(active_cache_tree, patch->old_name);
@@ -2335,7 +2335,7 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 	int namelen = strlen(path);
 	unsigned ce_size = cache_entry_size(namelen);
 
-	if (!write_index)
+	if (!update_index)
 		return;
 
 	ce = xcalloc(1, ce_size);
@@ -2662,8 +2662,8 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 	if (whitespace_error && (new_whitespace == error_on_whitespace))
 		apply = 0;
 
-	write_index = check_index && apply;
-	if (write_index && newfd < 0)
+	update_index = check_index && apply;
+	if (update_index && newfd < 0)
 		newfd = hold_lock_file_for_update(&lock_file,
 						  get_index_file(), 1);
 	if (check_index) {
@@ -2870,7 +2870,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 				whitespace_error == 1 ? "s" : "");
 	}
 
-	if (write_index) {
+	if (update_index) {
 		if (write_cache(newfd, active_cache, active_nr) ||
 		    close(newfd) || commit_lock_file(&lock_file))
 			die("Unable to write new index file");
