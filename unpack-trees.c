@@ -70,7 +70,6 @@ static int entcmp(const char *name1, int dir1, const char *name2, int dir2)
 
 static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			    const char *base, struct unpack_trees_options *o,
-			    int *indpos,
 			    struct tree_entry_list *df_conflict_list)
 {
 	int baselen = strlen(base);
@@ -100,7 +99,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 		cache_name = NULL;
 
 		/* Check the cache */
-		if (o->merge && *indpos < active_nr) {
+		if (o->merge && o->pos < active_nr) {
 			/* This is a bit tricky: */
 			/* If the index has a subdirectory (with
 			 * contents) as the first name, it'll get a
@@ -118,7 +117,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			 * file case.
 			 */
 
-			cache_name = active_cache[*indpos]->name;
+			cache_name = active_cache[o->pos]->name;
 			if (strlen(cache_name) > baselen &&
 			    !memcmp(cache_name, base, baselen)) {
 				cache_name += baselen;
@@ -158,8 +157,8 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 
 		if (cache_name && !strcmp(cache_name, first)) {
 			any_files = 1;
-			src[0] = active_cache[*indpos];
-			remove_cache_entry_at(*indpos);
+			src[0] = active_cache[o->pos];
+			remove_cache_entry_at(o->pos);
 		}
 
 		for (i = 0; i < len; i++) {
@@ -228,7 +227,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 #if DBRT_DEBUG > 1
 				printf("Added %d entries\n", ret);
 #endif
-				*indpos += ret;
+				o->pos += ret;
 			} else {
 				for (i = 0; i < src_size; i++) {
 					if (src[i]) {
@@ -244,7 +243,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			newbase[baselen + pathlen] = '/';
 			newbase[baselen + pathlen + 1] = '\0';
 			if (unpack_trees_rec(subposns, len, newbase, o,
-					     indpos, df_conflict_list)) {
+					     df_conflict_list)) {
 				retval = -1;
 				goto leave_directory;
 			}
@@ -375,7 +374,6 @@ static void check_updates(struct cache_entry **src, int nr,
 
 int unpack_trees(struct object_list *trees, struct unpack_trees_options *o)
 {
-	int indpos = 0;
 	unsigned len = object_list_length(trees);
 	struct tree_entry_list **posns;
 	int i;
@@ -404,7 +402,7 @@ int unpack_trees(struct object_list *trees, struct unpack_trees_options *o)
 			posn = posn->next;
 		}
 		if (unpack_trees_rec(posns, len, o->prefix ? o->prefix : "",
-				     o, &indpos, &df_conflict_list))
+				     o, &df_conflict_list))
 			return -1;
 	}
 
