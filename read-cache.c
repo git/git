@@ -24,7 +24,7 @@ unsigned int active_nr, active_alloc, active_cache_changed;
 
 struct cache_tree *active_cache_tree;
 
-int cache_errno;
+static int cache_errno;
 
 static void *cache_mmap;
 static size_t cache_mmap_size;

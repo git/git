@@ -221,7 +221,7 @@ static int add_cacheinfo(unsigned int mode, const unsigned char *sha1,
 	struct cache_entry *ce;
 	ce = make_cache_entry(mode, sha1 ? sha1 : null_sha1, path, stage, refresh);
 	if (!ce)
-		return error("cache_addinfo failed: %s", strerror(cache_errno));
+		return error("addinfo_cache failed for path '%s'", path);
 	return add_cache_entry(ce, options);
 }
 
