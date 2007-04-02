@@ -711,11 +711,17 @@ int twoway_merge(struct cache_entry **src,
 		struct unpack_trees_options *o)
 {
 	struct cache_entry *current = src[0];
-	struct cache_entry *oldtree = src[1], *newtree = src[2];
+	struct cache_entry *oldtree = src[1];
+	struct cache_entry *newtree = src[2];
 
 	if (o->merge_size != 2)
 		return error("Cannot do a twoway merge of %d trees",
 			     o->merge_size);
+
+	if (oldtree == o->df_conflict_entry)
+		oldtree = NULL;
+	if (newtree == o->df_conflict_entry)
+		newtree = NULL;
 
 	if (current) {
 		if ((!oldtree && !newtree) || /* 4 and 5 */
@@ -724,7 +730,7 @@ int twoway_merge(struct cache_entry **src,
 		    (oldtree && newtree &&
 		     same(oldtree, newtree)) || /* 14 and 15 */
 		    (oldtree && newtree &&
-		     !same(oldtree, newtree) && /* 18 and 19*/
+		     !same(oldtree, newtree) && /* 18 and 19 */
 		     same(current, newtree))) {
 			return keep_entry(current, o);
 		}
