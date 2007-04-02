@@ -19,14 +19,10 @@
 #define CACHE_EXT(s) ( (s[0]<<24)|(s[1]<<16)|(s[2]<<8)|(s[3]) )
 #define CACHE_EXT_TREE 0x54524545	/* "TREE" */
 
-struct cache_entry **active_cache;
-static time_t index_file_timestamp;
-unsigned int active_nr, active_alloc, active_cache_changed;
-
-struct cache_tree *active_cache_tree;
-
-static void *cache_mmap;
-static size_t cache_mmap_size;
+struct index_state the_index;
+#define index_file_timestamp (the_index.timestamp)
+#define cache_mmap (the_index.mmap)
+#define cache_mmap_size (the_index.mmap_size)
 
 /*
  * This only updates the "non-critical" parts of the directory

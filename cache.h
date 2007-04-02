@@ -143,9 +143,22 @@ static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned in
 
 #define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
 
-extern struct cache_entry **active_cache;
-extern unsigned int active_nr, active_alloc, active_cache_changed;
-extern struct cache_tree *active_cache_tree;
+struct index_state {
+	struct cache_entry **cache;
+	unsigned int cache_nr, cache_alloc, cache_changed;
+	struct cache_tree *cache_tree;
+	time_t timestamp;
+	void *mmap;
+	size_t mmap_size;
+};
+
+extern struct index_state the_index;
+
+#define active_cache (the_index.cache)
+#define active_nr (the_index.cache_nr)
+#define active_alloc (the_index.cache_alloc)
+#define active_cache_changed (the_index.cache_changed)
+#define active_cache_tree (the_index.cache_tree)
 
 enum object_type {
 	OBJ_BAD = -1,
