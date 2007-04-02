@@ -90,7 +90,11 @@ Updates since v1.5.0
     which does what the name suggests.
 
 
-* Updated behaviour of existing commands.
+* Updated behavior of existing commands.
+
+  - "git-merge-recursive" used to barf when there are more than
+    one common ancestors for the merge, and merging them had a
+    rename/rename conflict.  This has been fixed.
 
   - "git fsck" does not barf on corrupt loose objects.
 
@@ -113,10 +117,10 @@ Updates since v1.5.0
     allow users to explicitly override this heuristic based on
     paths.
 
-  - The behaviour of 'git-apply', when run in a subdirectory,
+  - The behavior of 'git-apply', when run in a subdirectory,
     without --index nor --cached were inconsistent with that of
     the command with these options.  This was fixed to match the
-    behaviour with --index.  A patch that is meant to be applied
+    behavior with --index.  A patch that is meant to be applied
     with -p1 from the toplevel of the project tree can be
     applied with any custom -p<n> option.  A patch that is not
     relative to the toplevel needs to be applied with -p<n>
@@ -158,15 +162,17 @@ Updates since v1.5.0
     the heaviest parts in C.
 
   - "git mailinfo" which splits an e-mail into a patch and the
-    metainformation was rewritten, thanks to Don Zickus.  It
-    handles nested multipart better.
+    meta-information was rewritten, thanks to Don Zickus.  It
+    handles nested multipart better.  The command was broken for
+    a brief period on 'master' branch since 1.5.0 but the
+    breakage is fixed now.
 
   - send-email learned configurable bcc and chain-reply-to.
 
   - "git remote show $remote" also talks about branches that
     would be pushed if you run "git push remote".
 
-  - Using objects from packs is now seriouly optimized by clever
+  - Using objects from packs is now seriously optimized by clever
     use of a cache.  This should be most noticeable in git-log
     family of commands that involve reading many tree objects.
     In addition, traversing revisions while filtering changes
@@ -178,7 +184,8 @@ Updates since v1.5.0
 
   - The part to send out notification e-mails was removed from
     the sample update hook, as it was not an appropriate place
-    to do so.
+    to do so.  The proper place to do this is the new post-receive
+    hook.  An example hook has been added to contrib/hooks/.
 
 
 * Others
@@ -188,7 +195,7 @@ Updates since v1.5.0
 
 --
 exec >/var/tmp/1
-O=v1.5.1-rc3-18-ge881192
+O=v1.5.1-rc3-29-gd8b6a1a
 echo O=`git describe master`
 git shortlog --no-merges $O..master ^maint
 
