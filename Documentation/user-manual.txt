@@ -84,7 +84,7 @@ $ git branch -r		# list
   origin/master
   origin/next
   ...
-$ git branch checkout -b masterwork origin/master
+$ git checkout -b masterwork origin/master
 -----------------------------------------------
 
 Fetch a branch from a different repository, and give it a new
@@ -155,8 +155,8 @@ Make sure git knows who to blame:
 ------------------------------------------------
 $ cat >~/.gitconfig <<\EOF
 [user]
-name = Your Name Comes Here
-email = you@yourdomain.example.com
+	name = Your Name Comes Here
+	email = you@yourdomain.example.com
 EOF
 ------------------------------------------------
 
@@ -195,7 +195,7 @@ Importing or exporting patches:
 -----------------------------------------------
 $ git format-patch origin..HEAD # format a patch for each commit
 				# in HEAD but not in origin
-$ git-am mbox # import patches from the mailbox "mbox"
+$ git am mbox # import patches from the mailbox "mbox"
 -----------------------------------------------
 
 Fetch a branch in a different git repository, then merge into the
@@ -579,7 +579,7 @@ cloned from, using gitlink:git-remote[1]:
 
 -------------------------------------------------
 $ git remote add linux-nfs git://linux-nfs.org/pub/nfs-2.6.git
-$ git fetch
+$ git fetch linux-nfs
 * refs/remotes/linux-nfs/master: storing branch 'master' ...
   commit: bf81b46
 -------------------------------------------------
@@ -680,7 +680,7 @@ occasionally you may land on a commit that broke something unrelated;
 run
 
 -------------------------------------------------
-$ git bisect-visualize
+$ git bisect visualize
 -------------------------------------------------
 
 which will run gitk and label the commit it chose with a marker that
@@ -765,7 +765,7 @@ We can also create a tag to refer to a particular commit; after
 running
 
 -------------------------------------------------
-$ git-tag stable-1 1b2e1d63ff
+$ git tag stable-1 1b2e1d63ff
 -------------------------------------------------
 
 You can use stable-1 to refer to the commit 1b2e1d63ff.
@@ -909,7 +909,7 @@ name based on any tag it finds pointing to one of the commit's
 descendants:
 
 -------------------------------------------------
-$ git name-rev e05db0fd
+$ git name-rev --tags e05db0fd
 e05db0fd tags/v1.5.0-rc1^0~23
 -------------------------------------------------
 
@@ -918,7 +918,7 @@ revision using a tag on which the given commit is based:
 
 -------------------------------------------------
 $ git describe e05db0fd
-v1.5.0-rc0-ge05db0f
+v1.5.0-rc0-260-ge05db0f
 -------------------------------------------------
 
 but that may sometimes help you guess which tags might come after the
@@ -1861,7 +1861,7 @@ Allow web browsing of a repository
 
 The gitweb cgi script provides users an easy way to browse your
 project's files and history without having to install git; see the file
-gitweb/README in the git source tree for instructions on setting it up.
+gitweb/INSTALL in the git source tree for instructions on setting it up.
 
 Examples
 --------
