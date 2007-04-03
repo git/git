@@ -34,7 +34,8 @@ EOF
 git commit -q -a -m first
 
 git checkout -b second master
-git show first:a1 | sed 's/To die, t/To die! T/' > a1
+git show first:a1 |
+sed -e 's/To die, t/To die! T/' -e 's/life;$/life./' > a1
 git commit -q -a -m second
 
 # activate rerere
@@ -42,19 +43,26 @@ mkdir .git/rr-cache
 
 test_expect_failure 'conflicting merge' 'git pull . first'
 
-sha1=4f58849a60b4f969a2848966b6d02893b783e8fb
+sha1=$(sed -e 's/\t.*//' .git/rr-cache/MERGE_RR)
 rr=.git/rr-cache/$sha1
 test_expect_success 'recorded preimage' "grep ======= $rr/preimage"
 
 test_expect_success 'no postimage or thisimage yet' \
 	"test ! -f $rr/postimage -a ! -f $rr/thisimage"
 
+test_expect_success 'preimage have right number of lines' '
+
+	cnt=$(sed -ne "/^<<<<<<</,/^>>>>>>>/p" $rr/preimage | wc -l) &&
+	test "$cnt" = 10
+
+'
+
 git show first:a1 > a1
 
 cat > expect << EOF
 --- a/a1
 +++ b/a1
-@@ -6,11 +6,7 @@
+@@ -6,17 +6,9 @@
  The heart-ache and the thousand natural shocks
  That flesh is heir to, 'tis a consummation
  Devoutly to be wish'd.
@@ -66,8 +74,13 @@ cat > expect << EOF
  To sleep: perchance to dream: ay, there's the rub;
  For in that sleep of death what dreams may come
  When we have shuffled off this mortal coil,
+ Must give us pause: there's the respect
+-<<<<<<<
+-That makes calamity of so long life.
+-=======
+ That makes calamity of so long life;
+->>>>>>>
 EOF
-
 git rerere diff > out
 
 test_expect_success 'rerere diff' 'diff -u expect out'
