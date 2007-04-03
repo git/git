@@ -13,8 +13,9 @@ export PATH LANG LC_CTYPE
 #GIT_SVN_NO_LIB=1
 #export GIT_SVN_NO_LIB
 
-head=`git symbolic-ref HEAD` &&
-branch=`expr "$head" : 'refs/heads/\(.*\)'` &&
+head=`git symbolic-ref HEAD 2>/dev/null` &&
+branch=`expr "$head" : 'refs/heads/\(.*\)'` || branch=detached
+
 case "$branch" in
 next | maint | master | pu)
 	d="prefix=$HOME/git-$branch" ;;
