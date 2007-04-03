@@ -358,6 +358,7 @@ static void sha1_object(const void *data, unsigned long size,
 		if (size != has_size || type != has_type ||
 		    memcmp(data, has_data, size) != 0)
 			die("SHA1 COLLISION FOUND WITH %s !", sha1_to_hex(sha1));
+		free(has_data);
 	}
 }
 
