@@ -33,7 +33,7 @@ use Carp qw/croak/;
 use IO::File qw//;
 use File::Basename qw/dirname basename/;
 use File::Path qw/mkpath/;
-use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev pass_through/;
+use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev/;
 use IPC::Open3;
 use Git;
 
@@ -168,6 +168,7 @@ for (my $i = 0; $i < @ARGV; $i++) {
 my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 
 read_repo_config(\%opts);
+Getopt::Long::Configure('pass_through') if $cmd eq 'log';
 my $rv = GetOptions(%opts, 'help|H|h' => \$_help, 'version|V' => \$_version,
                     'minimize-connections' => \$Git::SVN::Migration::_minimize,
                     'id|i=s' => \$Git::SVN::default_ref_id,
@@ -229,6 +230,8 @@ Usage: $0 <command> [options] [arguments]\n
 		next if /^multi-/; # don't show deprecated commands
 		print $fd '  ',pack('A17',$_),$cmd{$_}->[1],"\n";
 		foreach (keys %{$cmd{$_}->[2]}) {
+			# mixed-case options are for .git/config only
+			next if /[A-Z]/ && /^[a-z]+$/i;
 			# prints out arguments as they should be passed:
 			my $x = s#[:=]s$## ? '<arg>' : s#[:=]i$## ? '<num>' : '';
 			print $fd ' ' x 21, join(', ', map { length $_ > 1 ?
