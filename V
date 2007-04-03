@@ -1,5 +1,16 @@
 #!/bin/sh
+
 for v in maint master next pu
 do
-	echo "$v	$(git-describe $v) $($HOME/git-$v/bin/git version)"
+	installed=$($HOME/git-$v/bin/git version)
+	version=$(expr "$installed" : '.*\.g\([0-9a-f]*\)$')
+	version=$(git rev-parse --verify "$version")
+	revision=$(git show-ref -s --verify "refs/heads/$v")
+	if test "z$version" = "z$revision"
+	then
+		in= out= installed=
+	else
+		in="[41;37m" out="[m" installed="	$installed"
+	fi
+	echo "$in$v$out	$(git-describe $v)$installed"
 done
