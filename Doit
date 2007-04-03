@@ -17,17 +17,27 @@ Meta/Make clean >/dev/null 2>&1
 nstall=install
 for branch in $branches
 do
-	if git rev-parse --verify refs/heads/$branch 2>/dev/null
-	then
-		echo "** $branch" &&
-		git checkout $branch &&
-		Meta/Make $M -- $J all &&
-		Meta/Make $M -- $J $nstall &&
-		Meta/Make $M -- test &&
-		Meta/Make clean || exit $?
-	else
+	revision=$(git show-ref -s --verify "refs/heads/$branch") || {
 		echo "** No $branch"
+		continue
+	}
+
+	if	installed=$($HOME/git-$branch/bin/git version) &&
+		version=$(expr "$installed" : '.*\.g\([0-9a-f]*\)$') &&
+		version=$(git rev-parse --verify "$version") &&
+		test "z$version" = "z$revision"
+	then
+		echo "* up-to-date version \"$installed\" is already installed from $branch"
+		continue
 	fi
+
+	echo "** $branch" &&
+	git checkout $branch &&
+	Meta/Make $M -- $J all &&
+	Meta/Make $M -- $J $nstall &&
+	Meta/Make $M -- test &&
+	Meta/Make clean || exit $?
+
 done >./:all.log 2>&1
 
 git checkout master
