@@ -28,6 +28,8 @@ ifndef V
 	QUIET_BUILT_IN = @echo '   ' BUILTIN $@;
 endif
 
+TCLTK_PATH ?= wish
+
 ifeq ($(findstring $(MAKEFLAGS),s),s)
 QUIET_GEN =
 QUIET_BUILT_IN =
@@ -55,6 +57,7 @@ all:: $(ALL_PROGRAMS)
 
 install: all
 	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(gitexecdir_SQ)'
+	sed -i .bak -e'1,3s|^exec .* "$$0"|exec '"$(TCLTK_PATH)"' "$$0"|' git-gui && rm git-gui.bak
 	$(INSTALL) git-gui '$(DESTDIR_SQ)$(gitexecdir_SQ)'
 	$(foreach p,$(GITGUI_BUILT_INS), rm -f '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' && ln '$(DESTDIR_SQ)$(gitexecdir_SQ)/git-gui' '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' ;)
 
