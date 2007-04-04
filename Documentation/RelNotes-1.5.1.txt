@@ -192,13 +192,180 @@ Updates since v1.5.0
 
   - git-revert, git-gc and git-cherry-pick are now built-ins.
 
+Fixes since v1.5.0
+------------------
 
---
-exec >/var/tmp/1
-O=v1.5.1-rc3-29-gd8b6a1a
-echo O=`git describe master`
-git shortlog --no-merges $O..master ^maint
+These are all in v1.5.0.x series.
 
-# Local Variables:
-# mode: text
-# End:
+* Documentation updates
+
+  - Clarifications and corrections to 1.5.0 release notes.
+
+  - The main documentation did not link to git-remote documentation.
+
+  - Clarified introductory text of git-rebase documentation.
+
+  - Converted remaining mentions of update-index on Porcelain
+    documents to git-add/git-rm.
+
+  - Some i18n.* configuration variables were incorrectly
+    described as core.*; fixed.
+
+  - added and clarified core.bare, core.legacyheaders configurations.
+
+  - updated "git-clone --depth" documentation.
+
+  - user-manual updates.
+
+  - Options to 'git remote add' were described insufficiently.
+
+  - Configuration format.suffix was not documented.
+
+  - Other formatting and spelling fixes.
+
+  - user-manual has better cross references.
+
+  - gitweb installation/deployment procedure is now documented.
+
+
+* Bugfixes
+
+  - git-upload-pack closes unused pipe ends; earlier this caused
+    many zombies to hang around.
+
+  - git-rerere was recording the contents of earlier hunks
+    duplicated in later hunks.  This prevented resolving the same
+    conflict when performing the same merge the other way around.
+
+  - git-add and git-update-index on a filesystem on which
+    executable bits are unreliable incorrectly reused st_mode
+    bits even when the path changed between symlink and regular
+    file.
+
+  - git-daemon marks the listening sockets with FD_CLOEXEC so
+    that it won't be leaked into the children.
+
+  - segfault from git-blame when the mandatory pathname
+    parameter was missing was fixed; usage() message is given
+    instead.
+
+  - git-rev-list did not read $GIT_DIR/config file, which means
+    that did not honor i18n.logoutputencoding correctly.
+
+  - Automated merge conflict handling when changes to symbolic
+    links conflicted were completely broken.  The merge-resolve
+    strategy created a regular file with conflict markers in it
+    in place of the symbolic link.  The default strategy,
+    merge-recursive was even more broken.  It removed the path
+    that was pointed at by the symbolic link.  Both of these
+    problems have been fixed.
+
+  - 'git diff maint master next' did not correctly give combined
+    diff across three trees.
+
+  - 'git fast-import' portability fix for Solaris.
+
+  - 'git show-ref --verify' without arguments did not error out
+    but segfaulted.
+
+  - 'git diff :tracked-file `pwd`/an-untracked-file' gave an extra
+    slashes after a/ and b/.
+
+  - 'git format-patch' produced too long filenames if the commit
+    message had too long line at the beginning.
+
+  - Running 'make all' and then without changing anything
+    running 'make install' still rebuilt some files.  This
+    was inconvenient when building as yourself and then
+    installing as root (especially problematic when the source
+    directory is on NFS and root is mapped to nobody).
+
+  - 'git-rerere' failed to deal with two unconflicted paths that
+    sorted next to each other.
+
+  - 'git-rerere' attempted to open(2) a symlink and failed if
+    there was a conflict.  Since a conflicting change to a
+    symlink would not benefit from rerere anyway, the command
+    now ignores conflicting changes to symlinks.
+
+  - 'git-repack' did not like to pass more than 64 arguments
+    internally to underlying 'rev-list' logic, which made it
+    impossible to repack after accumulating many (small) packs
+    in the repository.
+
+  - 'git-diff' to review the combined diff during a conflicted
+    merge were not reading the working tree version correctly
+    when changes to a symbolic link conflicted.  It should have
+    read the data using readlink(2) but read from the regular
+    file the symbolic link pointed at.
+
+  - 'git-remote' did not like period in a remote's name.
+
+  - 'git.el' honors the commit coding system from the configuration.
+
+  - 'blameview' in contrib/ correctly digs deeper when a line is
+    clicked.
+
+  - 'http-push' correctly makes sure the remote side has leading
+    path.  Earlier it started in the middle of the path, and
+    incorrectly.
+
+  - 'git-merge' did not exit with non-zero status when the
+    working tree was dirty and cannot fast forward.  It does
+    now.
+
+  - 'cvsexportcommit' does not lose yet-to-be-used message file.
+
+  - int-vs-size_t typefix when running combined diff on files
+    over 2GB long.
+
+  - 'git apply --whitespace=strip' should not touch unmodified
+    lines.
+
+  - 'git-mailinfo' choke when a logical header line was too long.
+
+  - 'git show A..B' did not error out.  Negative ref ("not A" in
+    this example) does not make sense for the purpose of the
+    command, so now it errors out.
+
+  - 'git fmt-merge-msg --file' without file parameter did not
+    correctly error out.
+
+  - 'git archimport' barfed upon encountering a commit without
+    summary.
+
+  - 'git index-pack' did not protect itself from getting a short
+    read out of pread(2).
+
+  - 'git http-push' had a few buffer overruns.
+
+  - Build dependency fixes to rebuild fetch.o when other headers
+    change.
+
+  - git.el does not add duplicate sign-off lines.
+
+  - git-commit shows the full stat of the resulting commit, not
+    just about the files in the current directory, when run from
+    a subdirectory.
+
+  - "git-checkout -m '@{8 hours ago}'" had a funny failure from
+    eval; fixed.
+
+  - git-merge (hence git-pull) did not refuse fast-forwarding
+    when the working tree had local changes that would have
+    conflicted with it.
+
+  - a handful small fixes to gitweb.
+
+  - build procedure for user-manual is fixed not to require locally
+    installed stylesheets.
+
+  - "git commit $paths" on paths whose earlier contents were
+    already updated in the index were failing out.
+
+
+* Tweaks
+
+  - sliding mmap() inefficiently mmaped the same region of a
+    packfile with an access pattern that used objects in the
+    reverse order.  This has been made more efficient.
