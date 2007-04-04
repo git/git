@@ -29,7 +29,7 @@ do
 		continue
 	}
 
-	if	installed=$($HOME/git-$v/bin/git version) &&
+	if	installed=$($HOME/git-$branch/bin/git version) &&
 		{
 			version=$(expr "$installed" : '.*\.g\([0-9a-f]*\)$') ||
 			version=v$(expr "$installed" : 'git version \(.*\)')

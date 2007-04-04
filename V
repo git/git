@@ -14,5 +14,5 @@ do
 	else
 		in="[41;37m" out="[m" installed="	$installed"
 	fi
-	echo "$in$v$out	$(git-describe $v)$installed"
+	echo "$in$v$out	$(git-describe refs/heads/$v)$installed"
 done
