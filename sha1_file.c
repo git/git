@@ -1532,15 +1532,14 @@ uint32_t num_packed_objects(const struct packed_git *p)
 	return (uint32_t)((p->index_size - 20 - 20 - 4*256) / 24);
 }
 
-int nth_packed_object_sha1(const struct packed_git *p, uint32_t n,
-			   unsigned char* sha1)
+const unsigned char *nth_packed_object_sha1(const struct packed_git *p,
+					    uint32_t n)
 {
 	const unsigned char *index = p->index_data;
 	index += 4 * 256;
 	if (num_packed_objects(p) <= n)
-		return -1;
-	hashcpy(sha1, index + 24 * n + 4);
-	return 0;
+		return NULL;
+	return index + 24 * n + 4;
 }
 
 off_t find_pack_entry_one(const unsigned char *sha1,

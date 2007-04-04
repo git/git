@@ -42,13 +42,14 @@ static int verify_packfile(struct packed_git *p,
 	 */
 	nr_objects = num_packed_objects(p);
 	for (i = 0, err = 0; i < nr_objects; i++) {
-		unsigned char sha1[20];
+		const unsigned char *sha1;
 		void *data;
 		enum object_type type;
 		unsigned long size;
 		off_t offset;
 
-		if (nth_packed_object_sha1(p, i, sha1))
+		sha1 = nth_packed_object_sha1(p, i);
+		if (!sha1)
 			die("internal error pack-check nth-packed-object");
 		offset = find_pack_entry_one(sha1, p);
 		if (!offset)
@@ -82,14 +83,16 @@ static void show_pack_info(struct packed_git *p)
 	memset(chain_histogram, 0, sizeof(chain_histogram));
 
 	for (i = 0; i < nr_objects; i++) {
-		unsigned char sha1[20], base_sha1[20];
+		const unsigned char *sha1;
+		unsigned char base_sha1[20];
 		const char *type;
 		unsigned long size;
 		unsigned long store_size;
 		off_t offset;
 		unsigned int delta_chain_length;
 
-		if (nth_packed_object_sha1(p, i, sha1))
+		sha1 = nth_packed_object_sha1(p, i);
+		if (!sha1)
 			die("internal error pack-check nth-packed-object");
 		offset = find_pack_entry_one(sha1, p);
 		if (!offset)
