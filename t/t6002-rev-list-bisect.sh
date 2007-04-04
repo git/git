@@ -163,7 +163,7 @@ test_sequence()
 # the bisection point is the head - this is the bad point.
 #
 
-test_output_expect_success "--bisect l5 ^root" 'git-rev-list $_bisect_option l5 ^root' <<EOF
+test_output_expect_success "$_bisect_option l5 ^root" 'git-rev-list $_bisect_option l5 ^root' <<EOF
 c3
 EOF
 
