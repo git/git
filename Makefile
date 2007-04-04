@@ -112,6 +112,12 @@ all::
 #
 # Define WITH_P4IMPORT to build and install Python git-p4import script.
 #
+# Define NO_TCLTK if you do not want Tcl/Tk GUI.
+#
+# The TCLTK_PATH variable governs the location of the Tck/Tk interpreter.
+# If not set it defaults to the bare 'wish'. If it is set to the empty
+# string then NO_TCLTK will be forced (this is used by configure script).
+#
 
 GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -161,6 +167,7 @@ AR = ar
 TAR = tar
 INSTALL = install
 RPMBUILD = rpmbuild
+TCLTK_PATH = wish
 
 # sparse is architecture-neutral, which means that we need to tell it
 # explicitly what architecture to check for. Fix this up for yours..
@@ -243,6 +250,12 @@ BUILT_INS = \
 
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SCRIPTS)
+
+# what 'all' will build but not install in gitexecdir
+OTHER_PROGRAMS = git$X gitweb/gitweb.cgi
+ifndef NO_TCLTK
+OTHER_PROGRAMS += gitk-wish
+endif
 
 # Backward compatibility -- to be removed after 1.0
 PROGRAMS += git-ssh-pull$X git-ssh-push$X
@@ -624,6 +637,10 @@ ifdef NO_PERL_MAKEMAKER
 	export NO_PERL_MAKEMAKER
 endif
 
+ifeq ($(TCLTK_PATH),)
+NO_TCLTK=NoThanks
+endif
+
 QUIET_SUBDIR0  = $(MAKE) -C # space to separate -C and subdir
 QUIET_SUBDIR1  =
 
@@ -663,6 +680,7 @@ prefix_SQ = $(subst ','\'',$(prefix))
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
 PYTHON_PATH_SQ = $(subst ','\'',$(PYTHON_PATH))
+TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
 
 LIBS = $(GITLIBS) $(EXTLIBS)
 
@@ -678,18 +696,26 @@ export prefix gitexecdir TAR INSTALL DESTDIR SHELL_PATH template_dir
 
 ### Build rules
 
-all:: $(ALL_PROGRAMS) $(BUILT_INS) git$X gitk gitweb/gitweb.cgi
+all:: $(ALL_PROGRAMS) $(BUILT_INS) $(OTHER_PROGRAMS)
 ifneq (,$X)
 	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_PROGRAMS) $(BUILT_INS) git$X)), rm -f '$p';)
 endif
 
 all::
-	$(QUIET_SUBDIR0)git-gui $(QUIET_SUBDIR1) all
+ifndef NO_TCLTK
+	$(QUIET_SUBDIR0)git-gui TCLTK_PATH='$(TCLTK_PATH_SQ)' $(QUIET_SUBDIR1) all
+endif
 	$(QUIET_SUBDIR0)perl $(QUIET_SUBDIR1) PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' all
 	$(QUIET_SUBDIR0)templates $(QUIET_SUBDIR1)
 
 strip: $(PROGRAMS) git$X
 	$(STRIP) $(STRIP_OPTS) $(PROGRAMS) git$X
+
+gitk-wish: gitk GIT-GUI-VARS
+	$(QUIET_GEN)rm -f $@ $@+ && \
+	sed -e '1,3s|^exec .* "$$0"|exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' <gitk >$@+ && \
+	chmod +x $@+ && \
+	mv -f $@+ $@
 
 git$X: git.c common-cmds.h $(BUILTIN_OBJS) $(GITLIBS) GIT-CFLAGS
 	$(QUIET_LINK)$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
@@ -878,6 +904,20 @@ GIT-CFLAGS: .FORCE-GIT-CFLAGS
 		echo "$$FLAGS" >GIT-CFLAGS; \
             fi
 
+### Detect Tck/Tk interpreter path changes
+ifndef NO_TCLTK
+TRACK_VARS = $(subst ','\'',-DTCLTK_PATH='$(TCLTK_PATH_SQ)')
+
+GIT-GUI-VARS: .FORCE-GIT-GUI-VARS
+	@VARS='$(TRACK_VARS)'; \
+	    if test x"$$VARS" != x"`cat $@ 2>/dev/null`" ; then \
+		echo 1>&2 "    * new Tcl/Tk interpreter location"; \
+		echo "$$VARS" >$@; \
+            fi
+
+.PHONY: .FORCE-GIT-GUI-VARS
+endif
+
 ### Testing rules
 
 # GNU make supports exporting all variables by "export" without parameters.
@@ -918,10 +958,13 @@ install: all
 	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(bindir_SQ)'
 	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(gitexecdir_SQ)'
 	$(INSTALL) $(ALL_PROGRAMS) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
-	$(INSTALL) git$X gitk '$(DESTDIR_SQ)$(bindir_SQ)'
+	$(INSTALL) git$X '$(DESTDIR_SQ)$(bindir_SQ)'
 	$(MAKE) -C templates DESTDIR='$(DESTDIR_SQ)' install
 	$(MAKE) -C perl prefix='$(prefix_SQ)' install
+ifndef NO_TCLTK
+	$(INSTALL) gitk-wish '$(DESTDIR_SQ)$(bindir_SQ)'/gitk
 	$(MAKE) -C git-gui install
+endif
 	if test 'z$(bindir_SQ)' != 'z$(gitexecdir_SQ)'; \
 	then \
 		ln -f '$(DESTDIR_SQ)$(bindir_SQ)/git$X' \
@@ -1000,10 +1043,13 @@ clean:
 	rm -f gitweb/gitweb.cgi
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C perl clean
-	$(MAKE) -C git-gui clean
 	$(MAKE) -C templates/ clean
 	$(MAKE) -C t/ clean
-	rm -f GIT-VERSION-FILE GIT-CFLAGS
+ifndef NO_TCLTK
+	rm -f gitk-wish
+	$(MAKE) -C git-gui clean
+endif
+	rm -f GIT-VERSION-FILE GIT-CFLAGS GIT-GUI-VARS
 
 .PHONY: all install clean strip
 .PHONY: .FORCE-GIT-VERSION-FILE TAGS tags .FORCE-GIT-CFLAGS
