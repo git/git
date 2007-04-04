@@ -177,7 +177,7 @@ have their own authoritative repository and maintainers:
 
              git://repo.or.cz/git-gui.git
 
- gitk     -- this file is maintained by Paul Packerras, at:
+ gitk     -- this file is maintained by Paul Mackerras, at:
 
              git://git.kernel.org/pub/scm/gitk/gitk.git
 
@@ -195,7 +195,7 @@ relying on heavily:
 
  - Martin Langhoff on cvsserver and cvsimport.
 
- - Paul Packerras on gitk.
+ - Paul Mackerras on gitk.
 
  - Eric Wong on git-svn.
 
