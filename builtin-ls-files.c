@@ -216,7 +216,7 @@ static void show_files(struct dir_struct *dir, const char *prefix)
 
 		if (baselen)
 			path = base = prefix;
-		read_directory(dir, path, base, baselen);
+		read_directory(dir, path, base, baselen, pathspec);
 		if (show_others)
 			show_other_files(dir);
 		if (show_killed)

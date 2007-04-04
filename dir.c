@@ -8,6 +8,11 @@
 #include "cache.h"
 #include "dir.h"
 
+struct path_simplify {
+	int len;
+	const char *path;
+};
+
 int common_prefix(const char **pathspec)
 {
 	const char *path, *slash, *next;
@@ -293,6 +298,31 @@ static int dir_exists(const char *dirname, int len)
 }
 
 /*
+ * This is an inexact early pruning of any recursive directory
+ * reading - if the path cannot possibly be in the pathspec,
+ * return true, and we'll skip it early.
+ */
+static int simplify_away(const char *path, int pathlen, const struct path_simplify *simplify)
+{
+	if (simplify) {
+		for (;;) {
+			const char *match = simplify->path;
+			int len = simplify->len;
+
+			if (!match)
+				break;
+			if (len > pathlen)
+				len = pathlen;
+			if (!memcmp(path, match, len))
+				return 0;
+			simplify++;
+		}
+		return 1;
+	}
+	return 0;
+}
+
+/*
  * Read a directory tree. We currently ignore anything but
  * directories, regular files and symlinks. That's because git
  * doesn't handle them at all yet. Maybe that will change some
@@ -301,7 +331,7 @@ static int dir_exists(const char *dirname, int len)
  * Also, we ignore the name ".git" (even if it is not a directory).
  * That likely will not change.
  */
-static int read_directory_recursive(struct dir_struct *dir, const char *path, const char *base, int baselen, int check_only)
+static int read_directory_recursive(struct dir_struct *dir, const char *path, const char *base, int baselen, int check_only, const struct path_simplify *simplify)
 {
 	DIR *fdir = opendir(path);
 	int contents = 0;
@@ -324,6 +354,8 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 				continue;
 			len = strlen(de->d_name);
 			memcpy(fullname + baselen, de->d_name, len+1);
+			if (simplify_away(fullname, baselen + len, simplify))
+				continue;
 			if (excluded(dir, fullname) != dir->show_ignored) {
 				if (!dir->show_ignored || DTYPE(de) != DT_DIR) {
 					continue;
@@ -350,13 +382,13 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 					if (dir->hide_empty_directories &&
 					    !read_directory_recursive(dir,
 						    fullname, fullname,
-						    baselen + len, 1))
+						    baselen + len, 1, simplify))
 						continue;
 					break;
 				}
 
 				contents += read_directory_recursive(dir,
-					fullname, fullname, baselen + len, 0);
+					fullname, fullname, baselen + len, 0, simplify);
 				continue;
 			case DT_REG:
 			case DT_LNK:
@@ -386,8 +418,61 @@ static int cmp_name(const void *p1, const void *p2)
 				  e2->name, e2->len);
 }
 
-int read_directory(struct dir_struct *dir, const char *path, const char *base, int baselen)
+/*
+ * Return the length of the "simple" part of a path match limiter.
+ */
+static int simple_length(const char *match)
 {
+	const char special[256] = {
+		[0] = 1, ['?'] = 1,
+		['\\'] = 1, ['*'] = 1,
+		['['] = 1
+	};
+	int len = -1;
+
+	for (;;) {
+		unsigned char c = *match++;
+		len++;
+		if (special[c])
+			return len;
+	}
+}
+
+static struct path_simplify *create_simplify(const char **pathspec)
+{
+	int nr, alloc = 0;
+	struct path_simplify *simplify = NULL;
+
+	if (!pathspec)
+		return NULL;
+
+	for (nr = 0 ; ; nr++) {
+		const char *match;
+		if (nr >= alloc) {
+			alloc = alloc_nr(alloc);
+			simplify = xrealloc(simplify, alloc * sizeof(*simplify));
+		}
+		match = *pathspec++;
+		if (!match)
+			break;
+		simplify[nr].path = match;
+		simplify[nr].len = simple_length(match);
+	}
+	simplify[nr].path = NULL;
+	simplify[nr].len = 0;
+	return simplify;
+}
+
+static void free_simplify(struct path_simplify *simplify)
+{
+	if (simplify)
+		free(simplify);
+}
+
+int read_directory(struct dir_struct *dir, const char *path, const char *base, int baselen, const char **pathspec)
+{
+	struct path_simplify *simplify = create_simplify(pathspec);
+
 	/*
 	 * Make sure to do the per-directory exclude for all the
 	 * directories leading up to our base.
@@ -414,7 +499,8 @@ int read_directory(struct dir_struct *dir, const char *path, const char *base, i
 		}
 	}
 
-	read_directory_recursive(dir, path, base, baselen, 0);
+	read_directory_recursive(dir, path, base, baselen, 0, simplify);
+	free_simplify(simplify);
 	qsort(dir->entries, dir->nr, sizeof(struct dir_entry *), cmp_name);
 	return dir->nr;
 }

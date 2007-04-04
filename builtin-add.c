@@ -87,7 +87,7 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec)
 	}
 
 	/* Read the directory and prune it */
-	read_directory(dir, path, base, baselen);
+	read_directory(dir, path, base, baselen, pathspec);
 	if (pathspec)
 		prune_directory(dir, pathspec, baselen);
 }
