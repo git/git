@@ -2787,6 +2787,7 @@ proc do_push_anywhere {} {
 
 	bind $w <Visibility> "grab $w; focus $w.buttons.create"
 	bind $w <Key-Escape> "destroy $w"
+	bind $w <Key-Return> [list start_push_anywhere_action $w]
 	wm title $w "[appname] ([reponame]): Push"
 	tkwait window $w
 }
@@ -4713,6 +4714,7 @@ proc do_options {} {
 
 	bind $w <Visibility> "grab $w; focus $w.buttons.save"
 	bind $w <Key-Escape> "destroy $w"
+	bind $w <Key-Return> [list do_save_config $w]
 	wm title $w "[appname] ([reponame]): Options"
 	tkwait window $w
 }
