@@ -811,7 +811,12 @@ static void show_stats(struct diffstat_t* data, struct diff_options *options)
 
 		if (data->files[i]->is_binary) {
 			show_name(prefix, name, len, reset, set);
-			printf("  Bin\n");
+			printf("  Bin ");
+			printf("%s%d%s", del_c, deleted, reset);
+			printf(" -> ");
+			printf("%s%d%s", add_c, added, reset);
+			printf(" bytes");
+			printf("\n");
 			goto free_diffstat_file;
 		}
 		else if (data->files[i]->is_unmerged) {
@@ -1185,9 +1190,11 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2))
+	if (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2)) {
 		data->is_binary = 1;
-	else {
+		data->added = mf2.size;
+		data->deleted = mf1.size;
+	} else {
 		/* Crazy xdl interfaces.. */
 		xpparam_t xpp;
 		xdemitconf_t xecfg;
