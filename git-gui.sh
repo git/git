@@ -3604,12 +3604,14 @@ proc read_blame_incremental {fd w w_load w_cmit w_line w_file} {
 proc blame_incremental_status {w} {
 	global blame_status blame_data
 
+	set have  $blame_data($w,blame_lines)
+	set total $blame_data($w,total_lines)
+	set pdone 0
+	if {$total} {set pdone [expr {100 * $have / $total}]}
+
 	set blame_status($w) [format \
 		"Loading annotations... %i of %i lines annotated (%2i%%)" \
-		$blame_data($w,blame_lines) \
-		$blame_data($w,total_lines) \
-		[expr {100 * $blame_data($w,blame_lines)
-			/ $blame_data($w,total_lines)}]]
+		$have $total $pdone]
 }
 
 proc blame_click {w w_cmit w_line w_file cur_w pos} {
