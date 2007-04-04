@@ -35,7 +35,8 @@ git commit -q -a -m first
 
 git checkout -b second master
 git show first:a1 |
-sed -e 's/To die, t/To die! T/' -e 's/life;$/life./' > a1
+sed -e 's/To die, t/To die! T/' > a1
+echo "* END *" >>a1
 git commit -q -a -m second
 
 # activate rerere
@@ -53,7 +54,7 @@ test_expect_success 'no postimage or thisimage yet' \
 test_expect_success 'preimage has right number of lines' '
 
 	cnt=$(sed -ne "/^<<<<<<</,/^>>>>>>>/p" $rr/preimage | wc -l) &&
-	test $cnt = 10
+	test $cnt = 9
 
 '
 
@@ -75,10 +76,10 @@ cat > expect << EOF
  For in that sleep of death what dreams may come
  When we have shuffled off this mortal coil,
  Must give us pause: there's the respect
--<<<<<<<
--That makes calamity of so long life.
--=======
  That makes calamity of so long life;
+-<<<<<<<
+-=======
+-* END *
 ->>>>>>>
 EOF
 git rerere diff > out
