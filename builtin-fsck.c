@@ -14,6 +14,7 @@
 static int show_root;
 static int show_tags;
 static int show_unreachable;
+static int include_reflogs = 1;
 static int check_full;
 static int check_strict;
 static int keep_cache_objects;
@@ -517,7 +518,8 @@ static int fsck_handle_ref(const char *refname, const unsigned char *sha1, int f
 static void get_default_heads(void)
 {
 	for_each_ref(fsck_handle_ref, NULL);
-	for_each_reflog(fsck_handle_reflog, NULL);
+	if (include_reflogs)
+		for_each_reflog(fsck_handle_reflog, NULL);
 
 	/*
 	 * Not having any default heads isn't really fatal, but
@@ -614,6 +616,10 @@ int cmd_fsck(int argc, char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "--cache")) {
 			keep_cache_objects = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--no-reflogs")) {
+			include_reflogs = 0;
 			continue;
 		}
 		if (!strcmp(arg, "--full")) {

@@ -9,7 +9,7 @@ git-fsck - Verifies the connectivity and validity of the objects in the database
 SYNOPSIS
 --------
 [verse]
-'git-fsck' [--tags] [--root] [--unreachable] [--cache]
+'git-fsck' [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]
 		 [--full] [--strict] [<object>*]
 
 DESCRIPTION
@@ -37,6 +37,12 @@ index file and all SHA1 references in .git/refs/* as heads.
 --cache::
 	Consider any object recorded in the index also as a head node for
 	an unreachability trace.
+
+--no-reflogs::
+	Do not consider commits that are referenced only by an
+	entry in a reflog to be reachable.  This option is meant
+	only to search for commits that used to be in a ref, but
+	now aren't, but are still in that corresponding reflog.
 
 --full::
 	Check not just objects in GIT_OBJECT_DIRECTORY
