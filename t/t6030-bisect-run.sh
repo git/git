@@ -40,8 +40,8 @@ test_expect_success \
 # We want to automatically find the commit that
 # introduced "Another" into hello.
 test_expect_success \
-    'git bisect run simple case' \
-    'echo "#!/bin/sh" > test_script.sh &&
+    '"git bisect run" simple case' \
+    'echo "#"\!"/bin/sh" > test_script.sh &&
      echo "grep Another hello > /dev/null" >> test_script.sh &&
      echo "test \$? -ne 0" >> test_script.sh &&
      chmod +x test_script.sh &&
@@ -49,7 +49,21 @@ test_expect_success \
      git bisect good $HASH1 &&
      git bisect bad $HASH4 &&
      git bisect run ./test_script.sh > my_bisect_log.txt &&
-     grep "$HASH3 is first bad commit" my_bisect_log.txt'
+     grep "$HASH3 is first bad commit" my_bisect_log.txt &&
+     git bisect reset'
+
+# We want to automatically find the commit that
+# introduced "Ciao" into hello.
+test_expect_success \
+    '"git bisect run" with more complex "git bisect start"' \
+    'echo "#"\!"/bin/sh" > test_script.sh &&
+     echo "grep Ciao hello > /dev/null" >> test_script.sh &&
+     echo "test \$? -ne 0" >> test_script.sh &&
+     chmod +x test_script.sh &&
+     git bisect start $HASH4 $HASH1 &&
+     git bisect run ./test_script.sh > my_bisect_log.txt &&
+     grep "$HASH4 is first bad commit" my_bisect_log.txt &&
+     git bisect reset'
 
 #
 #

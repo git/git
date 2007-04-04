@@ -1,15 +1,24 @@
 #!/bin/sh
 
 USAGE='[start|bad|good|next|reset|visualize|replay|log|run]'
-LONG_USAGE='git bisect start [<pathspec>]	reset bisect state and start bisection.
-git bisect bad [<rev>]		mark <rev> a known-bad revision.
-git bisect good [<rev>...]	mark <rev>... known-good revisions.
-git bisect next			find next bisection to test and check it out.
-git bisect reset [<branch>]	finish bisection search and go back to branch.
-git bisect visualize            show bisect status in gitk.
-git bisect replay <logfile>	replay bisection log.
-git bisect log			show bisect log.
-git bisect run <cmd>... 	use <cmd>... to automatically bisect.'
+LONG_USAGE='git bisect start [<bad> [<good>...]] [--] [<pathspec>...]
+        reset bisect state and start bisection.
+git bisect bad [<rev>]
+        mark <rev> a known-bad revision.
+git bisect good [<rev>...]
+        mark <rev>... known-good revisions.
+git bisect next
+        find next bisection to test and check it out.
+git bisect reset [<branch>]
+        finish bisection search and go back to branch.
+git bisect visualize
+        show bisect status in gitk.
+git bisect replay <logfile>
+        replay bisection log.
+git bisect log
+        show bisect log.
+git bisect run <cmd>...
+        use <cmd>... to automatically bisect.'
 
 . git-sh-setup
 require_work_tree
@@ -70,14 +79,48 @@ bisect_start() {
 	#
 	# Get rid of any old bisect state
 	#
-	rm -f "$GIT_DIR/refs/heads/bisect"
-	rm -rf "$GIT_DIR/refs/bisect/"
+	bisect_clean_state
 	mkdir "$GIT_DIR/refs/bisect"
+
+	#
+	# Check for one bad and then some good revisions.
+	#
+	has_double_dash=0
+	for arg; do
+	    case "$arg" in --) has_double_dash=1; break ;; esac
+	done
+	orig_args=$(sq "$@")
+	bad_seen=0
+	while [ $# -gt 0 ]; do
+	    arg="$1"
+	    case "$arg" in
+	    --)
+	        shift
+		break
+		;;
+	    *)
+	        rev=$(git-rev-parse --verify "$arg^{commit}" 2>/dev/null) || {
+		    test $has_double_dash -eq 1 &&
+		        die "'$arg' does not appear to be a valid revision"
+		    break
+		}
+		if [ $bad_seen -eq 0 ]; then
+		    bad_seen=1
+		    bisect_write_bad "$rev"
+		else
+		    bisect_write_good "$rev"
+		fi
+	        shift
+		;;
+	    esac
+        done
+
+	sq "$@" >"$GIT_DIR/BISECT_NAMES"
 	{
 	    printf "git-bisect start"
-	    sq "$@"
-	} >"$GIT_DIR/BISECT_LOG"
-	sq "$@" >"$GIT_DIR/BISECT_NAMES"
+	    echo "$orig_args"
+	} >>"$GIT_DIR/BISECT_LOG"
+	bisect_auto_next
 }
 
 bisect_bad() {
@@ -90,10 +133,15 @@ bisect_bad() {
 	*)
 		usage ;;
 	esac || exit
-	echo "$rev" >"$GIT_DIR/refs/bisect/bad"
-	echo "# bad: "$(git-show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
+	bisect_write_bad "$rev"
 	echo "git-bisect bad $rev" >>"$GIT_DIR/BISECT_LOG"
 	bisect_auto_next
+}
+
+bisect_write_bad() {
+	rev="$1"
+	echo "$rev" >"$GIT_DIR/refs/bisect/bad"
+	echo "# bad: "$(git-show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
 }
 
 bisect_good() {
@@ -106,11 +154,17 @@ bisect_good() {
 	for rev in $revs
 	do
 		rev=$(git-rev-parse --verify "$rev^{commit}") || exit
-		echo "$rev" >"$GIT_DIR/refs/bisect/good-$rev"
-		echo "# good: "$(git-show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
+		bisect_write_good "$rev"
 		echo "git-bisect good $rev" >>"$GIT_DIR/BISECT_LOG"
+
 	done
 	bisect_auto_next
+}
+
+bisect_write_good() {
+	rev="$1"
+	echo "$rev" >"$GIT_DIR/refs/bisect/good-$rev"
+	echo "# good: "$(git-show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
 }
 
 bisect_next_check() {
@@ -190,12 +244,17 @@ bisect_reset() {
 	    usage ;;
 	esac
 	if git checkout "$branch"; then
-		rm -fr "$GIT_DIR/refs/bisect"
-		rm -f "$GIT_DIR/refs/heads/bisect" "$GIT_DIR/head-name"
-		rm -f "$GIT_DIR/BISECT_LOG"
-		rm -f "$GIT_DIR/BISECT_NAMES"
-		rm -f "$GIT_DIR/BISECT_RUN"
+		rm -f "$GIT_DIR/head-name"
+		bisect_clean_state
 	fi
+}
+
+bisect_clean_state() {
+	rm -fr "$GIT_DIR/refs/bisect"
+	rm -f "$GIT_DIR/refs/heads/bisect"
+	rm -f "$GIT_DIR/BISECT_LOG"
+	rm -f "$GIT_DIR/BISECT_NAMES"
+	rm -f "$GIT_DIR/BISECT_RUN"
 }
 
 bisect_replay () {
