@@ -130,4 +130,8 @@ test_expect_success \
     'validate file contents with prefix' \
     'diff -r a e/prefix/a'
 
+test_expect_success \
+    'git-archive --list outside of a git repo' \
+    'GIT_DIR=some/non-existing/directory git-archive --list'
+
 test_done
