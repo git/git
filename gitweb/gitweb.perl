@@ -3934,7 +3934,8 @@ sub git_blobdiff {
 
 		# open patch output
 		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
-			'-p', $hash_parent_base, $hash_base,
+			'-p', ($format eq 'html' ? "--full-index" : ()),
+			$hash_parent_base, $hash_base,
 			"--", (defined $file_parent ? $file_parent : ()), $file_name
 			or die_error(undef, "Open git-diff-tree failed");
 	}
@@ -3969,7 +3970,8 @@ sub git_blobdiff {
 		}
 
 		# open patch output
-		open $fd, "-|", git_cmd(), "diff", '-p', @diff_opts,
+		open $fd, "-|", git_cmd(), "diff", @diff_opts,
+			'-p', ($format eq 'html' ? "--full-index" : ()),
 			$hash_parent, $hash, "--"
 			or die_error(undef, "Open git-diff failed");
 	} else  {
