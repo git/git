@@ -198,7 +198,7 @@ static void start_object_request(struct object_request *obj_req)
 		SHA1_Init(&obj_req->c);
 		if (prev_posn>0) {
 			prev_posn = 0;
-			lseek(obj_req->local, SEEK_SET, 0);
+			lseek(obj_req->local, 0, SEEK_SET);
 			ftruncate(obj_req->local, 0);
 		}
 	}
