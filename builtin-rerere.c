@@ -117,10 +117,13 @@ static int handle_file(const char *path,
 		else if (!prefixcmp(buf, "======="))
 			hunk = 2;
 		else if (!prefixcmp(buf, ">>>>>>> ")) {
+			int one_is_longer = (one->nr > two->nr);
+			int common_len = one_is_longer ? two->nr : one->nr;
+			int cmp = memcmp(one->ptr, two->ptr, common_len);
+
 			hunk_no++;
 			hunk = 0;
-			if (memcmp(one->ptr, two->ptr, one->nr < two->nr ?
-						one->nr : two->nr) > 0) {
+			if ((cmp > 0) || ((cmp == 0) && one_is_longer)) {
 				struct buffer *swap = one;
 				one = two;
 				two = swap;

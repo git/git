@@ -312,7 +312,7 @@ static void start_fetch_loose(struct transfer_request *request)
 		SHA1_Init(&request->c);
 		if (prev_posn>0) {
 			prev_posn = 0;
-			lseek(request->local_fileno, SEEK_SET, 0);
+			lseek(request->local_fileno, 0, SEEK_SET);
 			ftruncate(request->local_fileno, 0);
 		}
 	}

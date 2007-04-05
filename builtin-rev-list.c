@@ -35,6 +35,7 @@ static const char rev_list_usage[] =
 "    --header | --pretty\n"
 "    --abbrev=nr | --no-abbrev\n"
 "    --abbrev-commit\n"
+"    --left-right\n"
 "  special purpose:\n"
 "    --bisect\n"
 "    --bisect-vars"

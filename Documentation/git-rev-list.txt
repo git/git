@@ -21,6 +21,7 @@ SYNOPSIS
 	     [ \--stdin ]
 	     [ \--topo-order ]
 	     [ \--parents ]
+	     [ \--left-right ]
 	     [ \--encoding[=<encoding>] ]
 	     [ \--(author|committer|grep)=<pattern> ]
 	     [ [\--objects | \--objects-edge] [ \--unpacked ] ]
@@ -100,6 +101,36 @@ include::pretty-formats.txt[]
 --parents::
 
 	Print the parents of the commit.
+
+--left-right::
+
+	Mark which side of a symmetric diff a commit is reachable from.
+	Commits from the left side are prefixed with `<` and those from
+	the right with `>`.  If combined with `--boundary`, those
+	commits are prefixed with `-`.
++
+For example, if you have this topology:
++
+-----------------------------------------------------------------------
+             y---b---b  branch B
+            / \ /
+           /   .
+          /   / \
+         o---x---a---a  branch A
+-----------------------------------------------------------------------
++
+you would get an output line this:
++
+-----------------------------------------------------------------------
+	$ git rev-list --left-right --boundary --pretty=oneline A...B
+
+	>bbbbbbb... 3rd on b
+	>bbbbbbb... 2nd on b
+	<aaaaaaa... 3rd on a
+	<aaaaaaa... 2nd on a
+	-yyyyyyy... 1st on b
+	-xxxxxxx... 1st on a
+-----------------------------------------------------------------------
 
 Diff Formatting
 ~~~~~~~~~~~~~~~
