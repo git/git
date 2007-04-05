@@ -436,10 +436,87 @@ static int expand_refs_wildcard(const char *ls_remote_result, int numrefs,
 	return 0;
 }
 
+static int pick_rref(int sha1_only, const char *rref, const char *ls_remote_result)
+{
+	int err = 0;
+	int lrr_count = lrr_count, i, pass;
+	const char *cp;
+	struct lrr {
+		const char *line;
+		const char *name;
+		int namelen;
+		int shown;
+	} *lrr_list = lrr_list;
+
+	for (pass = 0; pass < 2; pass++) {
+		/* pass 0 counts and allocates, pass 1 fills... */
+		cp = ls_remote_result;
+		i = 0;
+		while (1) {
+			const char *np;
+			while (*cp && isspace(*cp))
+				cp++;
+			if (!*cp)
+				break;
+			np = strchr(cp, '\n');
+			if (!np)
+				np = cp + strlen(cp);
+			if (pass) {
+				lrr_list[i].line = cp;
+				lrr_list[i].name = cp + 41;
+				lrr_list[i].namelen = np - (cp + 41);
+			}
+			i++;
+			cp = np;
+		}
+		if (!pass) {
+			lrr_count = i;
+			lrr_list = xcalloc(lrr_count, sizeof(*lrr_list));
+		}
+	}
+
+	while (1) {
+		const char *next;
+		int rreflen;
+		int i;
+
+		while (*rref && isspace(*rref))
+			rref++;
+		if (!*rref)
+			break;
+		next = strchr(rref, '\n');
+		if (!next)
+			next = rref + strlen(rref);
+		rreflen = next - rref;
+
+		for (i = 0; i < lrr_count; i++) {
+			struct lrr *lrr = &(lrr_list[i]);
+
+			if (rreflen == lrr->namelen &&
+			    !memcmp(lrr->name, rref, rreflen)) {
+				if (!lrr->shown)
+					printf("%.*s\n",
+					       sha1_only ? 40 : lrr->namelen + 41,
+					       lrr->line);
+				lrr->shown = 1;
+				break;
+			}
+		}
+		if (lrr_count <= i) {
+			error("pick-rref: %.*s not found", rreflen, rref);
+			err = 1;
+		}
+		rref = next;
+	}
+	free(lrr_list);
+	return err;
+}
+
 int cmd_fetch__tool(int argc, const char **argv, const char *prefix)
 {
 	int verbose = 0;
 	int force = 0;
+	int sopt = 0;
 
 	while (1 < argc) {
 		const char *arg = argv[1];
@@ -447,6 +524,8 @@ int cmd_fetch__tool(int argc, const char **argv, const char *prefix)
 			verbose = 1;
 		else if (!strcmp("-f", arg))
 			force = 1;
+		else if (!strcmp("-s", arg))
+			sopt = 1;
 		else
 			break;
 		argc--;
@@ -490,6 +569,11 @@ int cmd_fetch__tool(int argc, const char **argv, const char *prefix)
 		if (!strcmp(reflist, "-"))
 			reflist = get_stdin();
 		return parse_reflist(reflist);
+	}
+	if (!strcmp("pick-rref", argv[1])) {
+		if (argc != 4)
+			return error("pick-rref takes 2 args");
+		return pick_rref(sopt, argv[2], argv[3]);
 	}
 	if (!strcmp("expand-refs-wildcard", argv[1])) {
 		const char *reflist;
