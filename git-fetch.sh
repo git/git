@@ -177,9 +177,33 @@ fetch_all_at_once () {
 	    git-bundle unbundle "$remote" $rref ||
 	    echo failed "$remote"
 	else
-	  git-fetch-pack --thin $exec $keep $shallow_depth \
-	      $quiet $no_progress "$remote" $rref ||
-	  echo failed "$remote"
+		if	test -d "$remote" &&
+
+			# The remote might be our alternate.  With
+			# this optimization we will bypass fetch-pack
+			# altogether, which means we cannot be doing
+			# the shallow stuff at all.
+			test ! -f "$GIT_DIR/shallow" &&
+			test -z "$shallow_depth" &&
+
+			# See if all of what we are going to fetch are
+			# connected to our repository's tips, in which
+			# case we do not have to do any fetch.
+			theirs=$(git-fetch--tool -s pick-rref \
+					"$rref" "$ls_remote_result") &&
+
+			# This will barf when $theirs reach an object that
+			# we do not have in our repository.  Otherwise,
+			# we already have everything the fetch would bring in.
+			git-rev-list --objects $theirs --not --all \
+				>/dev/null 2>/dev/null
+		then
+			git-fetch--tool pick-rref "$rref" "$ls_remote_result"
+		else
+			git-fetch-pack --thin $exec $keep $shallow_depth \
+				$quiet $no_progress "$remote" $rref ||
+			echo failed "$remote"
+		fi
 	fi
       ) |
       (
@@ -239,16 +263,8 @@ fetch_per_ref () {
 	  fi
 
 	  # Find $remote_name from ls-remote output.
-	  head=$(
-		IFS='	'
-		echo "$ls_remote_result" |
-		while read sha1 name
-		do
-			test "z$name" = "z$remote_name" || continue
-			echo "$sha1"
-			break
-		done
-	  )
+	  head=$(git-fetch--tool -s pick-rref \
+			"$remote_name" "$ls_remote_result")
 	  expr "z$head" : "z$_x40\$" >/dev/null ||
 		die "No such ref $remote_name at $remote"
 	  echo >&2 "Fetching $remote_name from $remote using $proto"
