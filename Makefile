@@ -684,7 +684,7 @@ help.o: common-cmds.h
 $(BUILT_INS): git$X
 	$(QUIET_BUILT_IN)rm -f $@ && ln git$X $@
 
-common-cmds.h: Documentation/git-*.txt
+common-cmds.h: $(wildcard Documentation/git-*.txt)
 	$(QUIET_GEN)./generate-cmdlist.sh > $@+ && mv $@+ $@
 
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
