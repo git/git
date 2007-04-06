@@ -1015,7 +1015,7 @@ $ git commit
 -------------------------------------------------
 
 [[how-to-make-a-commit]]
-how to make a commit
+How to make a commit
 --------------------
 
 Creating a new commit takes three steps:
@@ -1109,7 +1109,7 @@ $ git diff	    # difference between the index file and your
 $ git status	    # a brief per-file summary of the above.
 -------------------------------------------------
 
-creating good commit messages
+Creating good commit messages
 -----------------------------
 
 Though not required, it's a good idea to begin the commit message
@@ -1119,7 +1119,7 @@ description.  Tools that turn commits into email, for example, use
 the first line on the Subject line and the rest of the commit in the
 body.
 
-how to merge
+How to merge
 ------------
 
 You can rejoin two diverging branches of development using
@@ -1298,7 +1298,7 @@ the different stages of that file will be "collapsed", after which
 git-diff will (by default) no longer show diffs for that file.
 
 [[undoing-a-merge]]
-undoing a merge
+Undoing a merge
 ---------------
 
 If you get stuck and decide to just give up and throw the whole mess
