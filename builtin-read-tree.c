@@ -55,8 +55,7 @@ static void prime_cache_tree_rec(struct cache_tree *it, struct tree *tree)
 	int cnt;
 
 	hashcpy(it->sha1, tree->object.sha1);
-	desc.buf = tree->buffer;
-	desc.size = tree->size;
+	init_tree_desc(&desc, tree->buffer, tree->size);
 	cnt = 0;
 	while (tree_entry(&desc, &entry)) {
 		if (!S_ISDIR(entry.mode))
@@ -185,7 +184,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 			if (opts.dir)
 				die("more than one --exclude-per-directory are given.");
 
-			dir = calloc(1, sizeof(*opts.dir));
+			dir = xcalloc(1, sizeof(*opts.dir));
 			dir->show_ignored = 1;
 			dir->exclude_per_dir = arg + 24;
 			opts.dir = dir;

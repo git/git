@@ -236,12 +236,13 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 	return 0;
 }
 
-unsigned long xdl_hash_record(char const **data, char const *top, long flags) {
+static unsigned long xdl_hash_record_with_whitespace(char const **data,
+		char const *top, long flags) {
 	unsigned long ha = 5381;
 	char const *ptr = *data;
 
 	for (; ptr < top && *ptr != '\n'; ptr++) {
-		if (isspace(*ptr) && (flags & XDF_WHITESPACE_FLAGS)) {
+		if (isspace(*ptr)) {
 			const char *ptr2 = ptr;
 			while (ptr + 1 < top && isspace(ptr[1])
 					&& ptr[1] != '\n')
@@ -261,6 +262,23 @@ unsigned long xdl_hash_record(char const **data, char const *top, long flags) {
 			}
 			continue;
 		}
+		ha += (ha << 5);
+		ha ^= (unsigned long) *ptr;
+	}
+	*data = ptr < top ? ptr + 1: ptr;
+
+	return ha;
+}
+
+
+unsigned long xdl_hash_record(char const **data, char const *top, long flags) {
+	unsigned long ha = 5381;
+	char const *ptr = *data;
+
+	if (flags & XDF_WHITESPACE_FLAGS)
+		return xdl_hash_record_with_whitespace(data, top, flags);
+
+	for (; ptr < top && *ptr != '\n'; ptr++) {
 		ha += (ha << 5);
 		ha ^= (unsigned long) *ptr;
 	}

@@ -42,8 +42,7 @@ static int process_tree(struct tree *tree)
 	if (parse_tree(tree))
 		return -1;
 
-	desc.buf = tree->buffer;
-	desc.size = tree->size;
+	init_tree_desc(&desc, tree->buffer, tree->size);
 	while (tree_entry(&desc, &entry)) {
 		struct object *obj = NULL;
 

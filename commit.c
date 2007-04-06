@@ -654,6 +654,7 @@ static char *get_header(const struct commit *commit, const char *key)
 static char *replace_encoding_header(char *buf, const char *encoding)
 {
 	char *encoding_header = strstr(buf, "\nencoding ");
+	char *header_end = strstr(buf, "\n\n");
 	char *end_of_encoding_header;
 	int encoding_header_pos;
 	int encoding_header_len;
@@ -661,8 +662,10 @@ static char *replace_encoding_header(char *buf, const char *encoding)
 	int need_len;
 	int buflen = strlen(buf) + 1;
 
-	if (!encoding_header)
-		return buf; /* should not happen but be defensive */
+	if (!header_end)
+		header_end = buf + buflen;
+	if (!encoding_header || encoding_header >= header_end)
+		return buf;
 	encoding_header++;
 	end_of_encoding_header = strchr(encoding_header, '\n');
 	if (!end_of_encoding_header)
@@ -706,7 +709,7 @@ static char *logmsg_reencode(const struct commit *commit,
 	encoding = get_header(commit, "encoding");
 	use_encoding = encoding ? encoding : utf8;
 	if (!strcmp(use_encoding, output_encoding))
-		out = strdup(commit->buffer);
+		out = xstrdup(commit->buffer);
 	else
 		out = reencode_string(commit->buffer,
 				      output_encoding, use_encoding);
@@ -760,7 +763,7 @@ static void fill_person(struct interp *table, const char *msg, int len)
 	if (msg + start == ep)
 		return;
 
-	table[5].value = xstrndup(msg + start, ep - msg + start);
+	table[5].value = xstrndup(msg + start, ep - (msg + start));
 
 	/* parse tz */
 	for (start = ep - msg + 1; start < len && isspace(msg[start]); start++)
@@ -849,19 +852,23 @@ static long format_commit_message(const struct commit *commit,
 	interp_set_entry(table, ITREE_ABBREV,
 			find_unique_abbrev(commit->tree->object.sha1,
 				DEFAULT_ABBREV));
+
+	parents[1] = 0;
 	for (i = 0, p = commit->parents;
 			p && i < sizeof(parents) - 1;
 			p = p->next)
-		i += snprintf(parents + i, sizeof(parents) - i - 1, "%s ",
+		i += snprintf(parents + i, sizeof(parents) - i - 1, " %s",
 			sha1_to_hex(p->item->object.sha1));
-	interp_set_entry(table, IPARENTS, parents);
+	interp_set_entry(table, IPARENTS, parents + 1);
+
+	parents[1] = 0;
 	for (i = 0, p = commit->parents;
 			p && i < sizeof(parents) - 1;
 			p = p->next)
-		i += snprintf(parents + i, sizeof(parents) - i - 1, "%s ",
+		i += snprintf(parents + i, sizeof(parents) - i - 1, " %s",
 			find_unique_abbrev(p->item->object.sha1,
 				DEFAULT_ABBREV));
-	interp_set_entry(table, IPARENTS_ABBREV, parents);
+	interp_set_entry(table, IPARENTS_ABBREV, parents + 1);
 
 	for (i = 0, state = HEADER; msg[i] && state < BODY; i++) {
 		int eol;
@@ -884,7 +891,8 @@ static long format_commit_message(const struct commit *commit,
 			fill_person(table + ICOMMITTER_NAME,
 					msg + i + 10, eol - i - 10);
 		else if (!prefixcmp(msg + i, "encoding "))
-			table[IENCODING].value = xstrndup(msg + i, eol - i);
+			table[IENCODING].value =
+				xstrndup(msg + i + 9, eol - i - 9);
 		i = eol;
 	}
 	if (msg[i])

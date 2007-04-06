@@ -265,14 +265,14 @@ its all parents.
 
 Here are a handful examples:
 
-   D                A B D
-   D F              A B C D F
-   ^A G             B D
-   ^A F             B C F
-   G...I            C D F G I
-   ^B G I           C D F G I
-   F^@              A B C
-   F^! H            D F H
+   D                G H D
+   D F              G H I J D F
+   ^G D             H D
+   ^D B             E I J F B
+   B...C            G H D E B C
+   ^D B C           E I J F B C
+   C^@              I J F
+   F^! D            G H D F
 
 Author
 ------

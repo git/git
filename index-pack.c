@@ -139,7 +139,7 @@ static const char *open_pack_file(const char *pack_name)
 		if (!pack_name) {
 			static char tmpfile[PATH_MAX];
 			snprintf(tmpfile, sizeof(tmpfile),
-				 "%s/pack_XXXXXX", get_object_directory());
+				 "%s/tmp_pack_XXXXXX", get_object_directory());
 			output_fd = mkstemp(tmpfile);
 			pack_name = xstrdup(tmpfile);
 		} else
@@ -347,26 +347,19 @@ static int find_delta_children(const union delta_base *base,
 static void sha1_object(const void *data, unsigned long size,
 			enum object_type type, unsigned char *sha1)
 {
-	SHA_CTX ctx;
-	char header[50];
-	int header_size;
-	const char *type_str;
-
-	switch (type) {
-	case OBJ_COMMIT: type_str = commit_type; break;
-	case OBJ_TREE:   type_str = tree_type; break;
-	case OBJ_BLOB:   type_str = blob_type; break;
-	case OBJ_TAG:    type_str = tag_type; break;
-	default:
-		die("bad type %d", type);
+	hash_sha1_file(data, size, typename(type), sha1);
+	if (has_sha1_file(sha1)) {
+		void *has_data;
+		enum object_type has_type;
+		unsigned long has_size;
+		has_data = read_sha1_file(sha1, &has_type, &has_size);
+		if (!has_data)
+			die("cannot read existing object %s", sha1_to_hex(sha1));
+		if (size != has_size || type != has_type ||
+		    memcmp(data, has_data, size) != 0)
+			die("SHA1 COLLISION FOUND WITH %s !", sha1_to_hex(sha1));
+		free(has_data);
 	}
-
-	header_size = sprintf(header, "%s %lu", type_str, size) + 1;
-
-	SHA1_Init(&ctx);
-	SHA1_Update(&ctx, header, header_size);
-	SHA1_Update(&ctx, data, size);
-	SHA1_Final(sha1, &ctx);
 }
 
 static void resolve_delta(struct object_entry *delta_obj, void *base_data,
@@ -547,7 +540,7 @@ static int write_compressed(int fd, void *in, unsigned int size)
 	return size;
 }
 
-static void append_obj_to_pack(void *buf,
+static void append_obj_to_pack(const unsigned char *sha1, void *buf,
 			       unsigned long size, enum object_type type)
 {
 	struct object_entry *obj = &objects[nr_objects++];
@@ -565,7 +558,7 @@ static void append_obj_to_pack(void *buf,
 	write_or_die(output_fd, header, n);
 	obj[1].offset = obj[0].offset + n;
 	obj[1].offset += write_compressed(output_fd, buf, size);
-	sha1_object(buf, size, type, obj->sha1);
+	hashcpy(obj->sha1, sha1);
 }
 
 static int delta_pos_compare(const void *_a, const void *_b)
@@ -618,7 +611,9 @@ static void fix_unresolved_deltas(int nr_unresolved)
 				resolve_delta(child, data, size, type);
 		}
 
-		append_obj_to_pack(data, size, type);
+		if (check_sha1_signature(d->base.sha1, data, size, typename(type)))
+			die("local object %s is corrupt", sha1_to_hex(d->base.sha1));
+		append_obj_to_pack(d->base.sha1, data, size, type);
 		free(data);
 		if (verbose)
 			percent = display_progress(nr_resolved_deltas,
@@ -696,7 +691,7 @@ static const char *write_index_file(const char *index_name, unsigned char *sha1)
 	if (!index_name) {
 		static char tmpfile[PATH_MAX];
 		snprintf(tmpfile, sizeof(tmpfile),
-			 "%s/index_XXXXXX", get_object_directory());
+			 "%s/tmp_idx_XXXXXX", get_object_directory());
 		fd = mkstemp(tmpfile);
 		index_name = xstrdup(tmpfile);
 	} else {

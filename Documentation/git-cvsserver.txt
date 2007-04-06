@@ -134,9 +134,11 @@ checkout, diff, status, update, log, add, remove, commit.
 Legacy monitoring operations are not supported (edit, watch and related).
 Exports and tagging (tags and branches) are not supported at this stage.
 
-The server will set the -k mode to binary when relevant. In proper GIT
-tradition, the contents of the files are always respected.
-No keyword expansion or newline munging is supported.
+The server should set the -k mode to binary when relevant, however,
+this is not really implemented yet. For now, you can force the server
+to set `-kb` for all files by setting the `gitcvs.allbinary` config
+variable. In proper GIT tradition, the contents of the files are
+always respected. No keyword expansion or newline munging is supported.
 
 Dependencies
 ------------

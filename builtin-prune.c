@@ -14,10 +14,8 @@ static int prune_object(char *path, const char *filename, const unsigned char *s
 		enum object_type type = sha1_object_info(sha1, NULL);
 		printf("%s %s\n", sha1_to_hex(sha1),
 		       (type > 0) ? typename(type) : "unknown");
-		return 0;
-	}
-	unlink(mkpath("%s/%s", path, filename));
-	rmdir(path);
+	} else
+		unlink(mkpath("%s/%s", path, filename));
 	return 0;
 }
 
@@ -60,6 +58,8 @@ static int prune_dir(int i, char *path)
 		}
 		fprintf(stderr, "bad sha1 file: %s/%s\n", path, de->d_name);
 	}
+	if (!show_only)
+		rmdir(path);
 	closedir(dir);
 	return 0;
 }

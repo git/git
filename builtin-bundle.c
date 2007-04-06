@@ -87,7 +87,7 @@ static int read_header(const char *path, struct bundle_header *header) {
 		if (buffer[len - 1] == '\n')
 			buffer[len - 1] = '\0';
 		if (get_sha1_hex(buffer + offset, sha1)) {
-			warn("unrecognized header: %s", buffer);
+			warning("unrecognized header: %s", buffer);
 			continue;
 		}
 		delim = buffer[40 + offset];
@@ -268,7 +268,7 @@ static int create_bundle(struct bundle_header *header, const char *path,
 		 * from getting output.
 		 */
 		if (!(e->item->flags & SHOWN)) {
-			warn("ref '%s' is excluded by the rev-list options",
+			warning("ref '%s' is excluded by the rev-list options",
 				e->name);
 			continue;
 		}

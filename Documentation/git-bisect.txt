@@ -12,8 +12,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-The command takes various subcommands, and different options
-depending on the subcommand:
+The command takes various subcommands, and different options depending
+on the subcommand:
 
  git bisect start [<paths>...]
  git bisect bad <rev>
@@ -22,30 +22,34 @@ depending on the subcommand:
  git bisect visualize
  git bisect replay <logfile>
  git bisect log
+ git bisect run <cmd>...
 
-This command uses 'git-rev-list --bisect' option to help drive
-the binary search process to find which change introduced a bug,
-given an old "good" commit object name and a later "bad" commit
-object name.
+This command uses 'git-rev-list --bisect' option to help drive the
+binary search process to find which change introduced a bug, given an
+old "good" commit object name and a later "bad" commit object name.
+
+Basic bisect commands: start, bad, good
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The way you use it is:
 
 ------------------------------------------------
 $ git bisect start
-$ git bisect bad			# Current version is bad
-$ git bisect good v2.6.13-rc2		# v2.6.13-rc2 was the last version
-					# tested that was good
+$ git bisect bad                 # Current version is bad
+$ git bisect good v2.6.13-rc2    # v2.6.13-rc2 was the last version
+                                 # tested that was good
 ------------------------------------------------
 
-When you give at least one bad and one good versions, it will
-bisect the revision tree and say something like:
+When you give at least one bad and one good versions, it will bisect
+the revision tree and say something like:
 
 ------------------------------------------------
 Bisecting: 675 revisions left to test after this
 ------------------------------------------------
 
-and check out the state in the middle. Now, compile that kernel, and boot
-it. Now, let's say that this booted kernel works fine, then just do
+and check out the state in the middle. Now, compile that kernel, and
+boot it. Now, let's say that this booted kernel works fine, then just
+do
 
 ------------------------------------------------
 $ git bisect good			# this one is good
@@ -57,12 +61,15 @@ which will now say
 Bisecting: 337 revisions left to test after this
 ------------------------------------------------
 
-and you continue along, compiling that one, testing it, and depending on
-whether it is good or bad, you say "git bisect good" or "git bisect bad",
-and ask for the next bisection.
+and you continue along, compiling that one, testing it, and depending
+on whether it is good or bad, you say "git bisect good" or "git bisect
+bad", and ask for the next bisection.
 
-Until you have no more left, and you'll have been left with the first bad
-kernel rev in "refs/bisect/bad".
+Until you have no more left, and you'll have been left with the first
+bad kernel rev in "refs/bisect/bad".
+
+Bisect reset
+~~~~~~~~~~~~
 
 Oh, and then after you want to reset to the original head, do a
 
@@ -70,10 +77,13 @@ Oh, and then after you want to reset to the original head, do a
 $ git bisect reset
 ------------------------------------------------
 
-to get back to the master branch, instead of being in one of the bisection
-branches ("git bisect start" will do that for you too, actually: it will
-reset the bisection state, and before it does that it checks that you're
-not using some old bisection branch).
+to get back to the master branch, instead of being in one of the
+bisection branches ("git bisect start" will do that for you too,
+actually: it will reset the bisection state, and before it does that
+it checks that you're not using some old bisection branch).
+
+Bisect visualize
+~~~~~~~~~~~~~~~~
 
 During the bisection process, you can say
 
@@ -83,9 +93,17 @@ $ git bisect visualize
 
 to see the currently remaining suspects in `gitk`.
 
-The good/bad input is logged, and `git bisect
-log` shows what you have done so far.  You can truncate its
-output somewhere and save it in a file, and run
+Bisect log and bisect replay
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The good/bad input is logged, and
+
+------------
+$ git bisect log
+------------
+
+shows what you have done so far. You can truncate its output somewhere
+and save it in a file, and run
 
 ------------
 $ git bisect replay that-file
@@ -94,12 +112,16 @@ $ git bisect replay that-file
 if you find later you made a mistake telling good/bad about a
 revision.
 
-If in a middle of bisect session, you know what the bisect
-suggested to try next is not a good one to test (e.g. the change
-the commit introduces is known not to work in your environment
-and you know it does not have anything to do with the bug you
-are chasing), you may want to find a near-by commit and try that
-instead.  It goes something like this:
+Avoiding to test a commit
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If in a middle of bisect session, you know what the bisect suggested
+to try next is not a good one to test (e.g. the change the commit
+introduces is known not to work in your environment and you know it
+does not have anything to do with the bug you are chasing), you may
+want to find a near-by commit and try that instead.
+
+It goes something like this:
 
 ------------
 $ git bisect good/bad			# previous round was good/bad.
@@ -109,18 +131,52 @@ $ git reset --hard HEAD~3		# try 3 revs before what
 					# was suggested
 ------------
 
-Then compile and test the one you chose to try.  After that,
-tell bisect what the result was as usual.
+Then compile and test the one you chose to try. After that, tell
+bisect what the result was as usual.
 
-You can further cut down the number of trials if you know what
-part of the tree is involved in the problem you are tracking
-down, by giving paths parameters when you say `bisect start`,
-like this:
+Cutting down bisection by giving path parameter to bisect start
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can further cut down the number of trials if you know what part of
+the tree is involved in the problem you are tracking down, by giving
+paths parameters when you say `bisect start`, like this:
 
 ------------
 $ git bisect start arch/i386 include/asm-i386
 ------------
 
+Bisect run
+~~~~~~~~~~
+
+If you have a script that can tell if the current source code is good
+or bad, you can automatically bisect using:
+
+------------
+$ git bisect run my_script
+------------
+
+Note that the "run" script (`my_script` in the above example) should
+exit with code 0 in case the current source code is good and with a
+code between 1 and 127 (included) in case the current source code is
+bad.
+
+Any other exit code will abort the automatic bisect process. (A
+program that does "exit(-1)" leaves $? = 255, see exit(3) manual page,
+the value is chopped with "& 0377".)
+
+You may often find that during bisect you want to have near-constant
+tweaks (e.g., s/#define DEBUG 0/#define DEBUG 1/ in a header file, or
+"revision that does not have this commit needs this patch applied to
+work around other problem this bisection is not interested in")
+applied to the revision being tested.
+
+To cope with such a situation, after the inner git-bisect finds the
+next revision to test, with the "run" script, you can apply that tweak
+before compiling, run the real test, and after the test decides if the
+revision (possibly with the needed tweaks) passed the test, rewind the
+tree to the pristine state.  Finally the "run" script can exit with
+the status of the real test to let "git bisect run" command loop to
+know the outcome.
 
 Author
 ------

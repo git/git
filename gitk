@@ -720,6 +720,7 @@ proc makewindow {} {
     bindkey <Key-Return> {findnext 0}
     bindkey ? findprev
     bindkey f nextfile
+    bindkey <F5> updatecommits
     bind . <Control-q> doquit
     bind . <Control-f> dofind
     bind . <Control-g> {findnext 0}
@@ -986,6 +987,7 @@ f		Scroll diff view to next file
 <Ctrl-plus>	Increase font size
 <Ctrl-KP->	Decrease font size
 <Ctrl-minus>	Decrease font size
+<F5>		Update
 } \
 	    -justify left -bg white -border 2 -relief sunken
     pack $w.m -side top -fill both
@@ -1905,7 +1907,7 @@ proc do_file_hl {serial} {
     } else {
 	set gdtargs [list "-S$highlight_files"]
     }
-    set cmd [concat | git-diff-tree -r -s --stdin $gdtargs]
+    set cmd [concat | git diff-tree -r -s --stdin $gdtargs]
     set filehighlight [open $cmd r+]
     fconfigure $filehighlight -blocking 0
     fileevent $filehighlight readable readfhighlight
@@ -1957,7 +1959,7 @@ proc readfhighlight {} {
     }
     if {[eof $filehighlight]} {
 	# strange...
-	puts "oops, git-diff-tree died"
+	puts "oops, git diff-tree died"
 	catch {close $filehighlight}
 	unset filehighlight
     }

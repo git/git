@@ -110,8 +110,8 @@ ls_remote_result=$(git ls-remote $exec "$remote") ||
 
 append_fetch_head () {
 	flags=
-	test -n "$verbose" && flags="$flags -v"
-	test -n "$force" && flags="$flags -f"
+	test -n "$verbose" && flags="$flags$LF-v"
+	test -n "$force$single_force" && flags="$flags$LF-f"
 	GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION" \
 		git-fetch--tool $flags append-fetch-head "$@"
 }
@@ -248,7 +248,7 @@ fetch_per_ref () {
 	  expr "z$head" : "z$_x40\$" >/dev/null ||
 		die "No such ref $remote_name at $remote"
 	  echo >&2 "Fetching $remote_name from $remote using $proto"
-	  git-http-fetch -v -a "$head" "$remote/" || exit
+	  git-http-fetch -v -a "$head" "$remote" || exit
 	  ;;
       rsync://*)
 	  test -n "$shallow_depth" &&

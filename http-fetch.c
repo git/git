@@ -16,8 +16,7 @@ static struct curl_slist *no_pragma_header;
 
 struct alt_base
 {
-	const char *base;
-	int path_len;
+	char *base;
 	int got_indices;
 	struct packed_git *packs;
 	struct alt_base *next;
@@ -158,12 +157,12 @@ static void start_object_request(struct object_request *obj_req)
 
 	SHA1_Init(&obj_req->c);
 
-	url = xmalloc(strlen(obj_req->repo->base) + 50);
-	obj_req->url = xmalloc(strlen(obj_req->repo->base) + 50);
+	url = xmalloc(strlen(obj_req->repo->base) + 51);
+	obj_req->url = xmalloc(strlen(obj_req->repo->base) + 51);
 	strcpy(url, obj_req->repo->base);
 	posn = url + strlen(obj_req->repo->base);
-	strcpy(posn, "objects/");
-	posn += 8;
+	strcpy(posn, "/objects/");
+	posn += 9;
 	memcpy(posn, hex, 2);
 	posn += 2;
 	*(posn++) = '/';
@@ -515,7 +514,6 @@ static void process_alternates_response(void *callback_data)
 			int serverlen = 0;
 			struct alt_base *newalt;
 			char *target = NULL;
-			char *path;
 			if (data[i] == '/') {
 				/* This counts
 				 * http://git.host/pub/scm/linux.git/
@@ -583,12 +581,6 @@ static void process_alternates_response(void *callback_data)
 				newalt->base = target;
 				newalt->got_indices = 0;
 				newalt->packs = NULL;
-				path = strstr(target, "//");
-				if (path) {
-					path = strchr(path+2, '/');
-					if (path)
-						newalt->path_len = strlen(path);
-				}
 
 				while (tail->next != NULL)
 					tail = tail->next;
@@ -938,14 +930,14 @@ static char *quote_ref_url(const char *base, const char *ref)
 	int len, baselen, ch;
 
 	baselen = strlen(base);
-	len = baselen + 6; /* "refs/" + NUL */
+	len = baselen + 7; /* "/refs/" + NUL */
 	for (cp = ref; (ch = *cp) != 0; cp++, len++)
 		if (needs_quote(ch))
 			len += 2; /* extra two hex plus replacement % */
 	qref = xmalloc(len);
 	memcpy(qref, base, baselen);
-	memcpy(qref + baselen, "refs/", 5);
-	for (cp = ref, dp = qref + baselen + 5; (ch = *cp) != 0; cp++) {
+	memcpy(qref + baselen, "/refs/", 6);
+	for (cp = ref, dp = qref + baselen + 6; (ch = *cp) != 0; cp++) {
 		if (needs_quote(ch)) {
 			*dp++ = '%';
 			*dp++ = hex((ch >> 4) & 0xF);
@@ -999,7 +991,7 @@ int main(int argc, const char **argv)
 	const char **write_ref = NULL;
 	char **commit_id;
 	const char *url;
-	char *path;
+	char *s;
 	int arg = 1;
 	int rc = 0;
 
@@ -1044,16 +1036,13 @@ int main(int argc, const char **argv)
 	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
 
 	alt = xmalloc(sizeof(*alt));
-	alt->base = url;
+	alt->base = xmalloc(strlen(url) + 1);
+	strcpy(alt->base, url);
+	for (s = alt->base + strlen(alt->base) - 1; *s == '/'; --s)
+		*s = 0;
 	alt->got_indices = 0;
 	alt->packs = NULL;
 	alt->next = NULL;
-	path = strstr(url, "//");
-	if (path) {
-		path = strchr(path+2, '/');
-		if (path)
-			alt->path_len = strlen(path);
-	}
 
 	if (pull(commits, commit_id, write_ref, url))
 		rc = 1;

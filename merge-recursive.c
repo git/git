@@ -278,8 +278,16 @@ static struct tree *git_write_tree(void)
 {
 	struct tree *result = NULL;
 
-	if (unmerged_index())
+	if (unmerged_index()) {
+		int i;
+		output(0, "There are unmerged index entries:");
+		for (i = 0; i < active_nr; i++) {
+			struct cache_entry *ce = active_cache[i];
+			if (ce_stage(ce))
+				output(0, "%d %.*s", ce_stage(ce), ce_namelen(ce), ce->name);
+		}
 		return NULL;
+	}
 
 	if (!active_cache_tree)
 		active_cache_tree = cache_tree();
@@ -735,8 +743,19 @@ static void conflict_rename_rename(struct rename *ren1,
 		       ren2_dst, branch1, dst_name2);
 		remove_file(0, ren2_dst, 0);
 	}
-	update_stages(dst_name1, NULL, ren1->pair->two, NULL, 1);
-	update_stages(dst_name2, NULL, NULL, ren2->pair->two, 1);
+	if (index_only) {
+		remove_file_from_cache(dst_name1);
+		remove_file_from_cache(dst_name2);
+		/*
+		 * Uncomment to leave the conflicting names in the resulting tree
+		 *
+		 * update_file(0, ren1->pair->two->sha1, ren1->pair->two->mode, dst_name1);
+		 * update_file(0, ren2->pair->two->sha1, ren2->pair->two->mode, dst_name2);
+		 */
+	} else {
+		update_stages(dst_name1, NULL, ren1->pair->two, NULL, 1);
+		update_stages(dst_name2, NULL, NULL, ren2->pair->two, 1);
+	}
 	while (delp--)
 		free(del[delp]);
 }
@@ -852,10 +871,16 @@ static int process_renames(struct path_list *a_renames,
 			if (strcmp(ren1_dst, ren2_dst) != 0) {
 				clean_merge = 0;
 				output(1, "CONFLICT (rename/rename): "
-				       "Rename %s->%s in branch %s "
-				       "rename %s->%s in %s",
+				       "Rename \"%s\"->\"%s\" in branch \"%s\" "
+				       "rename \"%s\"->\"%s\" in \"%s\"%s",
 				       src, ren1_dst, branch1,
-				       src, ren2_dst, branch2);
+				       src, ren2_dst, branch2,
+				       index_only ? " (left unresolved)": "");
+				if (index_only) {
+					remove_file_from_cache(src);
+					update_file(0, ren1->pair->one->sha1,
+						    ren1->pair->one->mode, src);
+				}
 				conflict_rename_rename(ren1, branch1, ren2, branch2);
 			} else {
 				struct merge_file_info mfi;

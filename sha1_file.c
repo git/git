@@ -1040,14 +1040,27 @@ static void *unpack_sha1_rest(z_stream *stream, void *buffer, unsigned long size
 		n = size;
 	memcpy(buf, (char *) buffer + bytes, n);
 	bytes = n;
-	if (bytes < size) {
+	if (bytes <= size) {
+		/*
+		 * The above condition must be (bytes <= size), not
+		 * (bytes < size).  In other words, even though we
+		 * expect no more output and set avail_out to zer0,
+		 * the input zlib stream may have bytes that express
+		 * "this concludes the stream", and we *do* want to
+		 * eat that input.
+		 *
+		 * Otherwise we would not be able to test that we
+		 * consumed all the input to reach the expected size;
+		 * we also want to check that zlib tells us that all
+		 * went well with status == Z_STREAM_END at the end.
+		 */
 		stream->next_out = buf + bytes;
 		stream->avail_out = size - bytes;
 		while (status == Z_OK)
 			status = inflate(stream, Z_FINISH);
 	}
 	buf[size] = 0;
-	if ((status == Z_OK || status == Z_STREAM_END) && !stream->avail_in) {
+	if (status == Z_STREAM_END && !stream->avail_in) {
 		inflateEnd(stream);
 		return buf;
 	}
@@ -1365,11 +1378,18 @@ static void *unpack_compressed_entry(struct packed_git *p,
 #define MAX_DELTA_CACHE (256)
 
 static size_t delta_base_cached;
+
+static struct delta_base_cache_lru_list {
+	struct delta_base_cache_lru_list *prev;
+	struct delta_base_cache_lru_list *next;
+} delta_base_cache_lru = { &delta_base_cache_lru, &delta_base_cache_lru };
+
 static struct delta_base_cache_entry {
+	struct delta_base_cache_lru_list lru;
+	void *data;
 	struct packed_git *p;
 	off_t base_offset;
 	unsigned long size;
-	void *data;
 	enum object_type type;
 } delta_base_cache[MAX_DELTA_CACHE];
 
@@ -1379,7 +1399,7 @@ static unsigned long pack_entry_hash(struct packed_git *p, off_t base_offset)
 
 	hash = (unsigned long)p + (unsigned long)base_offset;
 	hash += (hash >> 8) + (hash >> 16);
-	return hash & 0xff;
+	return hash % MAX_DELTA_CACHE;
 }
 
 static void *cache_or_unpack_entry(struct packed_git *p, off_t base_offset,
@@ -1397,6 +1417,8 @@ static void *cache_or_unpack_entry(struct packed_git *p, off_t base_offset,
 found_cache_entry:
 	if (!keep_cache) {
 		ent->data = NULL;
+		ent->lru.next->prev = ent->lru.prev;
+		ent->lru.prev->next = ent->lru.next;
 		delta_base_cached -= ent->size;
 	}
 	else {
@@ -1414,6 +1436,8 @@ static inline void release_delta_base_cache(struct delta_base_cache_entry *ent)
 	if (ent->data) {
 		free(ent->data);
 		ent->data = NULL;
+		ent->lru.next->prev = ent->lru.prev;
+		ent->lru.prev->next = ent->lru.next;
 		delta_base_cached -= ent->size;
 	}
 }
@@ -1421,26 +1445,38 @@ static inline void release_delta_base_cache(struct delta_base_cache_entry *ent)
 static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 	void *base, unsigned long base_size, enum object_type type)
 {
-	unsigned long i, hash = pack_entry_hash(p, base_offset);
+	unsigned long hash = pack_entry_hash(p, base_offset);
 	struct delta_base_cache_entry *ent = delta_base_cache + hash;
+	struct delta_base_cache_lru_list *lru;
 
 	release_delta_base_cache(ent);
 	delta_base_cached += base_size;
-	for (i = 0; delta_base_cached > delta_base_cache_limit
-		&& i < ARRAY_SIZE(delta_base_cache); i++) {
-		struct delta_base_cache_entry *f = delta_base_cache + i;
+
+	for (lru = delta_base_cache_lru.next;
+	     delta_base_cached > delta_base_cache_limit
+	     && lru != &delta_base_cache_lru;
+	     lru = lru->next) {
+		struct delta_base_cache_entry *f = (void *)lru;
 		if (f->type == OBJ_BLOB)
 			release_delta_base_cache(f);
 	}
-	for (i = 0; delta_base_cached > delta_base_cache_limit
-		&& i < ARRAY_SIZE(delta_base_cache); i++)
-		release_delta_base_cache(delta_base_cache + i);
+	for (lru = delta_base_cache_lru.next;
+	     delta_base_cached > delta_base_cache_limit
+	     && lru != &delta_base_cache_lru;
+	     lru = lru->next) {
+		struct delta_base_cache_entry *f = (void *)lru;
+		release_delta_base_cache(f);
+	}
 
 	ent->p = p;
 	ent->base_offset = base_offset;
 	ent->type = type;
 	ent->data = base;
 	ent->size = base_size;
+	ent->lru.next = &delta_base_cache_lru;
+	ent->lru.prev = delta_base_cache_lru.prev;
+	delta_base_cache_lru.prev->next = &ent->lru;
+	delta_base_cache_lru.prev = &ent->lru;
 }
 
 static void *unpack_delta_entry(struct packed_git *p,
@@ -1782,7 +1818,7 @@ void *read_object_with_reference(const unsigned char *sha1,
 	}
 }
 
-static void write_sha1_file_prepare(void *buf, unsigned long len,
+static void write_sha1_file_prepare(const void *buf, unsigned long len,
                                     const char *type, unsigned char *sha1,
                                     char *hdr, int *hdrlen)
 {
@@ -1910,7 +1946,7 @@ static void setup_object_header(z_stream *stream, const char *type, unsigned lon
 	stream->avail_out -= hdrlen;
 }
 
-int hash_sha1_file(void *buf, unsigned long len, const char *type,
+int hash_sha1_file(const void *buf, unsigned long len, const char *type,
                    unsigned char *sha1)
 {
 	char hdr[32];
@@ -1921,7 +1957,7 @@ int hash_sha1_file(void *buf, unsigned long len, const char *type,
 
 int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
 {
-	int size;
+	int size, ret;
 	unsigned char *compressed;
 	z_stream stream;
 	unsigned char sha1[20];
@@ -1953,7 +1989,7 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 		return error("sha1 file %s: %s\n", filename, strerror(errno));
 	}
 
-	snprintf(tmpfile, sizeof(tmpfile), "%s/obj_XXXXXX", get_object_directory());
+	snprintf(tmpfile, sizeof(tmpfile), "%s/tmp_obj_XXXXXX", get_object_directory());
 
 	fd = mkstemp(tmpfile);
 	if (fd < 0) {
@@ -1981,15 +2017,21 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	/* Then the data itself.. */
 	stream.next_in = buf;
 	stream.avail_in = len;
-	while (deflate(&stream, Z_FINISH) == Z_OK)
-		/* nothing */;
-	deflateEnd(&stream);
+	ret = deflate(&stream, Z_FINISH);
+	if (ret != Z_STREAM_END)
+		die("unable to deflate new object %s (%d)", sha1_to_hex(sha1), ret);
+
+	ret = deflateEnd(&stream);
+	if (ret != Z_OK)
+		die("deflateEnd on object %s failed (%d)", sha1_to_hex(sha1), ret);
+
 	size = stream.total_out;
 
 	if (write_buffer(fd, compressed, size) < 0)
 		die("unable to write sha1 file");
 	fchmod(fd, 0444);
-	close(fd);
+	if (close(fd))
+		die("unable to write sha1 file");
 	free(compressed);
 
 	return move_temp_to_file(tmpfile, filename);
@@ -2074,7 +2116,7 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 	int ret;
 	SHA_CTX c;
 
-	snprintf(tmpfile, sizeof(tmpfile), "%s/obj_XXXXXX", get_object_directory());
+	snprintf(tmpfile, sizeof(tmpfile), "%s/tmp_obj_XXXXXX", get_object_directory());
 
 	local = mkstemp(tmpfile);
 	if (local < 0) {
@@ -2123,7 +2165,9 @@ int write_sha1_from_fd(const unsigned char *sha1, int fd, char *buffer,
 	} while (1);
 	inflateEnd(&stream);
 
-	close(local);
+	fchmod(local, 0444);
+	if (close(local) != 0)
+		die("unable to write sha1 file");
 	SHA1_Final(real_sha1, &c);
 	if (ret != Z_STREAM_END) {
 		unlink(tmpfile);

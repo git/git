@@ -263,6 +263,16 @@ and returns the process output as a string."
              (locale-charset-to-coding-system repo-config))
       'utf-8)))
 
+(defun git-get-logoutput-coding-system ()
+  "Return the coding system used for git-log output."
+  (let ((repo-config (or (git-config "i18n.logoutputencoding")
+                         (git-config "i18n.commitencoding"))))
+    (or git-commits-coding-system
+        (and repo-config
+             (fboundp 'locale-charset-to-coding-system)
+             (locale-charset-to-coding-system repo-config))
+      'utf-8)))
+
 (defun git-escape-file-name (name)
   "Escape a file name if necessary."
   (if (string-match "[\n\t\"\\]" name)
@@ -405,6 +415,14 @@ and returns the process output as a string."
         (while (re-search-forward "[0-9a-f]\\{40\\}" nil t)
           (push (match-string 0) heads))))
     (nreverse heads)))
+
+(defun git-get-commit-description (commit)
+  "Get a one-line description of COMMIT."
+  (let ((coding-system-for-read (git-get-logoutput-coding-system)))
+    (let ((descr (git-call-process-env-string nil "log" "--max-count=1" "--pretty=oneline" commit)))
+      (if (and descr (string-match "\\`\\([0-9a-f]\\{40\\}\\) *\\(.*\\)$" descr))
+          (concat (substring (match-string 1 descr) 0 10) " - " (match-string 2 descr))
+        descr))))
 
 ;;;; File info structure
 ;;;; ------------------------------------------------------------
@@ -573,7 +591,7 @@ and returns the process output as a string."
   "Refresh the ewoc header and footer."
   (let ((branch (git-symbolic-ref "HEAD"))
         (head (if (git-empty-db-p) "Nothing committed yet"
-                (substring (git-rev-parse "HEAD") 0 10)))
+                (git-get-commit-description "HEAD")))
         (merge-heads (git-get-merge-heads)))
     (ewoc-set-hf status
                  (format "Directory:  %s\nBranch:     %s\nHead:       %s%s\n"
@@ -584,7 +602,7 @@ and returns the process output as a string."
                          head
                          (if merge-heads
                              (concat "\nMerging:    "
-                                     (mapconcat (lambda (str) (substring str 0 10)) merge-heads " "))
+                                     (mapconcat (lambda (str) (git-get-commit-description str)) merge-heads "\n            "))
                            ""))
                  (if (ewoc-nth status 0) "" "    No changes."))))
 

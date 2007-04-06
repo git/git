@@ -9,6 +9,6 @@
 # because the current index is what we will be committing as the
 # merge result.
 
-test "$(git-diff-index --cached --name-status HEAD)" = "" || exit 2
+git-diff-index --quiet --cached HEAD || exit 2
 
 exit 0

@@ -184,8 +184,10 @@ struct object *parse_object(const unsigned char *sha1)
 
 	if (buffer) {
 		struct object *obj;
-		if (check_sha1_signature(sha1, buffer, size, typename(type)) < 0)
-			printf("sha1 mismatch %s\n", sha1_to_hex(sha1));
+		if (check_sha1_signature(sha1, buffer, size, typename(type)) < 0) {
+			error("sha1 mismatch %s\n", sha1_to_hex(sha1));
+			return NULL;
+		}
 
 		obj = parse_object_buffer(sha1, type, size, buffer, &eaten);
 		if (!eaten)

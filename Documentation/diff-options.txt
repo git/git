@@ -164,5 +164,8 @@
 	That is, it exits with 1 if there were differences and
 	0 means no differences.
 
+--quiet::
+	Disable all output of the program. Implies --exit-code.
+
 For more detailed explanation on these common options, see also
 link:diffcore.html[diffcore documentation].

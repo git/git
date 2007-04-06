@@ -115,7 +115,7 @@ for patch_name in $(cat "$QUILT_PATCHES/series" | grep -v '^#'); do
 	if [ -z "$dry_run" ] ; then
 		git-apply --index -C1 "$tmp_patch" &&
 		tree=$(git-write-tree) &&
-		commit=$((echo "$SUBJECT"; echo; cat "$tmp_msg") | git-commit-tree $tree -p $commit) &&
+		commit=$( (echo "$SUBJECT"; echo; cat "$tmp_msg") | git-commit-tree $tree -p $commit) &&
 		git-update-ref -m "quiltimport: $patch_name" HEAD $commit || exit 4
 	fi
 done

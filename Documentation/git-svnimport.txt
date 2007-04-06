@@ -27,7 +27,7 @@ repository, or incrementally import into an existing one.
 SVN access is done by the SVN::Perl module.
 
 git-svnimport assumes that SVN repositories are organized into one
-"trunk" directory where the main development happens, "branch/FOO"
+"trunk" directory where the main development happens, "branches/FOO"
 directories for branches, and "/tags/FOO" directories for tags.
 Other subdirectories are ignored.
 

@@ -227,8 +227,7 @@ static int fsck_tree(struct tree *item)
 	const char *o_name;
 	const unsigned char *o_sha1;
 
-	desc.buf = item->buffer;
-	desc.size = item->size;
+	init_tree_desc(&desc, item->buffer, item->size);
 
 	o_mode = 0;
 	o_name = NULL;
@@ -242,7 +241,7 @@ static int fsck_tree(struct tree *item)
 
 		if (strchr(name, '/'))
 			has_full_path = 1;
-		has_zero_pad |= *(char *)desc.buf == '0';
+		has_zero_pad |= *(char *)desc.buffer == '0';
 		update_tree_entry(&desc);
 
 		switch (mode) {

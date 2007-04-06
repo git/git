@@ -62,8 +62,7 @@ void mark_tree_uninteresting(struct tree *tree)
 	if (parse_tree(tree) < 0)
 		die("bad tree %s", sha1_to_hex(obj->sha1));
 
-	desc.buf = tree->buffer;
-	desc.size = tree->size;
+	init_tree_desc(&desc, tree->buffer, tree->size);
 	while (tree_entry(&desc, &entry)) {
 		if (S_ISDIR(entry.mode))
 			mark_tree_uninteresting(lookup_tree(entry.sha1));
@@ -275,18 +274,17 @@ int rev_same_tree_as_empty(struct rev_info *revs, struct tree *t1)
 {
 	int retval;
 	void *tree;
+	unsigned long size;
 	struct tree_desc empty, real;
 
 	if (!t1)
 		return 0;
 
-	tree = read_object_with_reference(t1->object.sha1, tree_type, &real.size, NULL);
+	tree = read_object_with_reference(t1->object.sha1, tree_type, &size, NULL);
 	if (!tree)
 		return 0;
-	real.buf = tree;
-
-	empty.buf = "";
-	empty.size = 0;
+	init_tree_desc(&real, tree, size);
+	init_tree_desc(&empty, "", 0);
 
 	tree_difference = REV_TREE_SAME;
 	revs->pruning.has_changes = 0;
@@ -362,6 +360,7 @@ static void add_parents_to_list(struct rev_info *revs, struct commit *commit, st
 {
 	struct commit_list *parent = commit->parents;
 	unsigned left_flag;
+	int add, rest;
 
 	if (commit->object.flags & ADDED)
 		return;
@@ -407,18 +406,19 @@ static void add_parents_to_list(struct rev_info *revs, struct commit *commit, st
 		return;
 
 	left_flag = (commit->object.flags & SYMMETRIC_LEFT);
-	parent = commit->parents;
-	while (parent) {
+
+	rest = !revs->first_parent_only;
+	for (parent = commit->parents, add = 1; parent; add = rest) {
 		struct commit *p = parent->item;
 
 		parent = parent->next;
-
 		parse_commit(p);
 		p->object.flags |= left_flag;
 		if (p->object.flags & SEEN)
 			continue;
 		p->object.flags |= SEEN;
-		insert_by_date(p, list);
+		if (add)
+			insert_by_date(p, list);
 	}
 }
 
@@ -486,7 +486,7 @@ static void handle_one_reflog_commit(unsigned char *sha1, void *cb_data)
 			add_pending_object(cb->all_revs, o, "");
 		}
 		else if (!cb->warned_bad_reflog) {
-			warn("reflog of '%s' references pruned commits",
+			warning("reflog of '%s' references pruned commits",
 				cb->name_for_errormsg);
 			cb->warned_bad_reflog = 1;
 		}
@@ -849,6 +849,10 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				handle_all(revs, flags);
 				continue;
 			}
+			if (!strcmp(arg, "--first-parent")) {
+				revs->first_parent_only = 1;
+				continue;
+			}
 			if (!strcmp(arg, "--reflog")) {
 				handle_reflog(revs, flags);
 				continue;
@@ -1038,7 +1042,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			if (!prefixcmp(arg, "--encoding=")) {
 				arg += 11;
 				if (strcmp(arg, "none"))
-					git_log_output_encoding = strdup(arg);
+					git_log_output_encoding = xstrdup(arg);
 				else
 					git_log_output_encoding = "";
 				continue;

@@ -52,18 +52,18 @@ static int tree_is_complete(const unsigned char *sha1)
 	if (tree->object.flags & INCOMPLETE)
 		return 0;
 
-	desc.buf = tree->buffer;
-	desc.size = tree->size;
-	if (!desc.buf) {
+	if (!tree->buffer) {
 		enum object_type type;
-		void *data = read_sha1_file(sha1, &type, &desc.size);
+		unsigned long size;
+		void *data = read_sha1_file(sha1, &type, &size);
 		if (!data) {
 			tree->object.flags |= INCOMPLETE;
 			return 0;
 		}
-		desc.buf = data;
 		tree->buffer = data;
+		tree->size = size;
 	}
+	init_tree_desc(&desc, tree->buffer, tree->size);
 	complete = 1;
 	while (tree_entry(&desc, &entry)) {
 		if (!has_sha1_file(entry.sha1) ||

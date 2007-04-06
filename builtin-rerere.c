@@ -78,6 +78,13 @@ static void append_line(struct buffer *buffer, const char *line)
 	buffer->nr += len;
 }
 
+static void clear_buffer(struct buffer *buffer)
+{
+	free(buffer->ptr);
+	buffer->ptr = NULL;
+	buffer->nr = buffer->alloc = 0;
+}
+
 static int handle_file(const char *path,
 	 unsigned char *sha1, const char *output)
 {
@@ -131,6 +138,8 @@ static int handle_file(const char *path,
 				SHA1_Update(&ctx, two->ptr, two->nr);
 				SHA1_Update(&ctx, "\0", 1);
 			}
+			clear_buffer(one);
+			clear_buffer(two);
 		} else if (hunk == 1)
 			append_line(one, buf);
 		else if (hunk == 2)

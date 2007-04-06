@@ -42,8 +42,7 @@ static void process_tree(struct tree *tree,
 	me.elem = name;
 	me.elem_len = strlen(name);
 
-	desc.buf = tree->buffer;
-	desc.size = tree->size;
+	init_tree_desc(&desc, tree->buffer, tree->size);
 
 	while (tree_entry(&desc, &entry)) {
 		if (S_ISDIR(entry.mode))

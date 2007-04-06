@@ -155,6 +155,7 @@ static void create_pack_file(void)
 		die("git-upload-pack: unable to fork git-rev-list");
 
 	if (!pid_rev_list) {
+		close(lp_pipe[0]);
 		pack_pipe = fdopen(lp_pipe[1], "w");
 		do_rev_list(create_full_pack);
 		exit(0);

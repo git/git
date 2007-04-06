@@ -16,8 +16,9 @@ ARTICLES += repository-layout
 ARTICLES += hooks
 ARTICLES += everyday
 ARTICLES += git-tools
+ARTICLES += glossary
 # with their own formatting rules.
-SP_ARTICLES = glossary howto/revert-branch-rebase user-manual
+SP_ARTICLES = howto/revert-branch-rebase user-manual
 
 DOC_HTML += $(patsubst %,%.html,$(ARTICLES) $(SP_ARTICLES))
 
@@ -106,15 +107,10 @@ user-manual.xml: user-manual.txt user-manual.conf
 	$(ASCIIDOC) -b docbook -d book $<
 
 XSLT = http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl
-XSLTOPTS = --nonet --xinclude --stringparam html.stylesheet docbook-xsl.css
+XSLTOPTS = --xinclude --stringparam html.stylesheet docbook-xsl.css
 
 user-manual.html: user-manual.xml
 	xsltproc $(XSLTOPTS) -o $@ $(XSLT) $<
-
-glossary.html : glossary.txt sort_glossary.pl
-	cat $< | \
-	perl sort_glossary.pl | \
-	$(ASCIIDOC) -b xhtml11 - > glossary.html
 
 howto-index.txt: howto-index.sh $(wildcard howto/*.txt)
 	rm -f $@+ $@

@@ -70,7 +70,8 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2, const 
  * Is a tree entry interesting given the pathspec we have?
  *
  * Return:
- *  - positive for yes
+ *  - 2 for "yes, and all subsequent entries will be"
+ *  - 1 for yes
  *  - zero for no
  *  - negative for "no, and no subsequent entries will be either"
  */
@@ -81,6 +82,7 @@ static int tree_entry_interesting(struct tree_desc *desc, const char *base, int 
 	unsigned mode;
 	int i;
 	int pathlen;
+	int never_interesting = -1;
 
 	if (!opt->nr_paths)
 		return 1;
@@ -89,17 +91,21 @@ static int tree_entry_interesting(struct tree_desc *desc, const char *base, int 
 
 	pathlen = tree_entry_len(path, sha1);
 
-	for (i=0; i < opt->nr_paths; i++) {
+	for (i = 0; i < opt->nr_paths; i++) {
 		const char *match = opt->paths[i];
 		int matchlen = opt->pathlens[i];
+		int m = -1; /* signals that we haven't called strncmp() */
 
 		if (baselen >= matchlen) {
 			/* If it doesn't match, move along... */
 			if (strncmp(base, match, matchlen))
 				continue;
 
-			/* The base is a subdirectory of a path which was specified. */
-			return 1;
+			/*
+			 * The base is a subdirectory of a path which
+			 * was specified, so all of them are interesting.
+			 */
+			return 2;
 		}
 
 		/* Does the base match? */
@@ -108,6 +114,37 @@ static int tree_entry_interesting(struct tree_desc *desc, const char *base, int 
 
 		match += baselen;
 		matchlen -= baselen;
+
+		if (never_interesting) {
+			/*
+			 * We have not seen any match that sorts later
+			 * than the current path.
+			 */
+
+			/*
+			 * Does match sort strictly earlier than path
+			 * with their common parts?
+			 */
+			m = strncmp(match, path,
+				    (matchlen < pathlen) ? matchlen : pathlen);
+			if (m < 0)
+				continue;
+
+			/*
+			 * If we come here even once, that means there is at
+			 * least one pathspec that would sort equal to or
+			 * later than the path we are currently looking at.
+			 * In other words, if we have never reached this point
+			 * after iterating all pathspecs, it means all
+			 * pathspecs are either outside of base, or inside the
+			 * base but sorts strictly earlier than the current
+			 * one.  In either case, they will never match the
+			 * subsequent entries.  In such a case, we initialized
+			 * the variable to -1 and that is what will be
+			 * returned, allowing the caller to terminate early.
+			 */
+			never_interesting = 0;
+		}
 
 		if (pathlen > matchlen)
 			continue;
@@ -119,19 +156,39 @@ static int tree_entry_interesting(struct tree_desc *desc, const char *base, int 
 				continue;
 		}
 
-		if (strncmp(path, match, pathlen))
-			continue;
+		if (m == -1)
+			/*
+			 * we cheated and did not do strncmp(), so we do
+			 * that here.
+			 */
+			m = strncmp(match, path, pathlen);
 
-		return 1;
+		/*
+		 * If common part matched earlier then it is a hit,
+		 * because we rejected the case where path is not a
+		 * leading directory and is shorter than match.
+		 */
+		if (!m)
+			return 1;
 	}
-	return 0; /* No matches */
+	return never_interesting; /* No matches */
 }
 
 /* A whole sub-tree went away or appeared */
 static void show_tree(struct diff_options *opt, const char *prefix, struct tree_desc *desc, const char *base, int baselen)
 {
+	int all_interesting = 0;
 	while (desc->size) {
-		int show = tree_entry_interesting(desc, base, baselen, opt);
+		int show;
+
+		if (all_interesting)
+			show = 1;
+		else {
+			show = tree_entry_interesting(desc, base, baselen,
+						      opt);
+			if (show == 2)
+				all_interesting = 1;
+		}
 		if (show < 0)
 			break;
 		if (show)
@@ -154,12 +211,13 @@ static void show_entry(struct diff_options *opt, const char *prefix, struct tree
 		char *newbase = malloc_base(base, baselen, path, pathlen);
 		struct tree_desc inner;
 		void *tree;
+		unsigned long size;
 
-		tree = read_sha1_file(sha1, &type, &inner.size);
+		tree = read_sha1_file(sha1, &type, &size);
 		if (!tree || type != OBJ_TREE)
 			die("corrupt tree sha %s", sha1_to_hex(sha1));
 
-		inner.buf = tree;
+		init_tree_desc(&inner, tree, size);
 		show_tree(opt, prefix, &inner, newbase, baselen + 1 + pathlen);
 
 		free(tree);
@@ -171,8 +229,17 @@ static void show_entry(struct diff_options *opt, const char *prefix, struct tree
 
 static void skip_uninteresting(struct tree_desc *t, const char *base, int baselen, struct diff_options *opt)
 {
+	int all_interesting = 0;
 	while (t->size) {
-		int show = tree_entry_interesting(t, base, baselen, opt);
+		int show;
+
+		if (all_interesting)
+			show = 1;
+		else {
+			show = tree_entry_interesting(t, base, baselen, opt);
+			if (show == 2)
+				all_interesting = 1;
+		}
 		if (!show) {
 			update_tree_entry(t);
 			continue;
@@ -227,16 +294,17 @@ int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const cha
 {
 	void *tree1, *tree2;
 	struct tree_desc t1, t2;
+	unsigned long size1, size2;
 	int retval;
 
-	tree1 = read_object_with_reference(old, tree_type, &t1.size, NULL);
+	tree1 = read_object_with_reference(old, tree_type, &size1, NULL);
 	if (!tree1)
 		die("unable to read source tree (%s)", sha1_to_hex(old));
-	tree2 = read_object_with_reference(new, tree_type, &t2.size, NULL);
+	tree2 = read_object_with_reference(new, tree_type, &size2, NULL);
 	if (!tree2)
 		die("unable to read destination tree (%s)", sha1_to_hex(new));
-	t1.buf = tree1;
-	t2.buf = tree2;
+	init_tree_desc(&t1, tree1, size1);
+	init_tree_desc(&t2, tree2, size2);
 	retval = diff_tree(&t1, &t2, base, opt);
 	free(tree1);
 	free(tree2);
@@ -247,15 +315,15 @@ int diff_root_tree_sha1(const unsigned char *new, const char *base, struct diff_
 {
 	int retval;
 	void *tree;
+	unsigned long size;
 	struct tree_desc empty, real;
 
-	tree = read_object_with_reference(new, tree_type, &real.size, NULL);
+	tree = read_object_with_reference(new, tree_type, &size, NULL);
 	if (!tree)
 		die("unable to read root tree (%s)", sha1_to_hex(new));
-	real.buf = tree;
+	init_tree_desc(&real, tree, size);
 
-	empty.size = 0;
-	empty.buf = "";
+	init_tree_desc(&empty, "", 0);
 	retval = diff_tree(&empty, &real, base, opt);
 	free(tree);
 	return retval;

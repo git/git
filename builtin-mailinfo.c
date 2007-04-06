@@ -294,14 +294,14 @@ static char *header[MAX_HDR_PARSED] = {
 	"From","Subject","Date",
 };
 
-static int check_header(char *line, char **hdr_data)
+static int check_header(char *line, char **hdr_data, int overwrite)
 {
 	int i;
 
 	/* search for the interesting parts */
 	for (i = 0; header[i]; i++) {
 		int len = strlen(header[i]);
-		if (!hdr_data[i] &&
+		if ((!hdr_data[i] || overwrite) &&
 		    !strncasecmp(line, header[i], len) &&
 		    line[len] == ':' && isspace(line[len + 1])) {
 			/* Unwrap inline B and Q encoding, and optionally
@@ -614,6 +614,7 @@ static int find_boundary(void)
 
 static int handle_boundary(void)
 {
+	char newline[]="\n";
 again:
 	if (!memcmp(line+content_top->boundary_len, "--", 2)) {
 		/* we hit an end boundary */
@@ -628,7 +629,7 @@ again:
 					"can't recover\n");
 			exit(1);
 		}
-		handle_filter("\n");
+		handle_filter(newline);
 
 		/* skip to the next boundary */
 		if (!find_boundary())
@@ -643,7 +644,7 @@ again:
 
 	/* slurp in this section's info */
 	while (read_one_header_line(line, sizeof(line), fin))
-		check_header(line, p_hdr_data);
+		check_header(line, p_hdr_data, 0);
 
 	/* eat the blank line after section info */
 	return (fgets(line, sizeof(line), fin) != NULL);
@@ -699,9 +700,13 @@ static int handle_commit_msg(char *line)
 			if (!*cp)
 				return 0;
 		}
-		if ((still_looking = check_header(cp, s_hdr_data)) != 0)
+		if ((still_looking = check_header(cp, s_hdr_data, 0)) != 0)
 			return 0;
 	}
+
+	/* normalize the log message to UTF-8. */
+	if (metainfo_charset)
+		convert_to_utf8(line, charset);
 
 	if (patchbreak(line)) {
 		fclose(cmitmsg);
@@ -767,12 +772,8 @@ static void handle_body(void)
 				return;
 		}
 
-		/* Unwrap transfer encoding and optionally
-		 * normalize the log message to UTF-8.
-		 */
+		/* Unwrap transfer encoding */
 		decode_transfer_encoding(line);
-		if (metainfo_charset)
-			convert_to_utf8(line, charset);
 
 		switch (transfer_encoding) {
 		case TE_BASE64:
@@ -875,7 +876,7 @@ int mailinfo(FILE *in, FILE *out, int ks, const char *encoding,
 
 	/* process the email header */
 	while (read_one_header_line(line, sizeof(line), fin))
-		check_header(line, p_hdr_data);
+		check_header(line, p_hdr_data, 1);
 
 	handle_body();
 	handle_info();
