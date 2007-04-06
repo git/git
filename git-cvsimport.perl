@@ -36,8 +36,9 @@ sub usage() {
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from CVS
        [-o branch-for-HEAD] [-h] [-v] [-d CVSROOT] [-A author-conv-file]
-       [-p opts-for-cvsps] [-C GIT_repository] [-z fuzz] [-i] [-k] [-u]
-       [-s subst] [-a] [-m] [-M regex] [-S regex] [CVS_module]
+       [-p opts-for-cvsps] [-P file] [-C GIT_repository] [-z fuzz] [-i] [-k]
+       [-u] [-s subst] [-a] [-m] [-M regex] [-S regex] [-L commitlimit]
+       [CVS_module]
 END
 	exit(1);
 }

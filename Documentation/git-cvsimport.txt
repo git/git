@@ -9,9 +9,11 @@ git-cvsimport - Salvage your data out of another SCM people love to hate
 SYNOPSIS
 --------
 [verse]
-'git-cvsimport' [-o <branch-for-HEAD>] [-h] [-v] [-d <CVSROOT>] [-s <subst>]
-	      [-p <options-for-cvsps>] [-C <git_repository>] [-i] [-P <file>]
-	      [-m] [-M regex] [<CVS_module>]
+'git-cvsimport' [-o <branch-for-HEAD>] [-h] [-v] [-d <CVSROOT>]
+	      [-A <author-conv-file>] [-p <options-for-cvsps>] [-P <file>]
+	      [-C <git_repository>] [-z <fuzz>] [-i] [-k] [-u] [-s <subst>]
+	      [-a] [-m] [-M <regex>] [-S <regex>] [-L <commitlimit>]
+	      [<CVS_module>]
 
 
 DESCRIPTION
