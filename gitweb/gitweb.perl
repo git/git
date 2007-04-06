@@ -71,6 +71,10 @@ our $logo_label = "git homepage";
 # source of projects list
 our $projects_list = "++GITWEB_LIST++";
 
+# default order of projects list
+# valid values are none, project, descr, owner, and age
+our $default_projects_order = "project";
+
 # show repository only if this file exists
 # (only effective if this variable evaluates to true)
 our $export_ok = "++GITWEB_EXPORT_OK++";
@@ -1131,7 +1135,6 @@ sub git_get_projects_list {
 		}
 		close $fd;
 	}
-	@list = sort {$a->{'path'} cmp $b->{'path'}} @list;
 	return @list;
 }
 
@@ -2618,7 +2621,7 @@ sub git_project_list_body {
 		push @projects, $pr;
 	}
 
-	$order ||= "project";
+	$order ||= $default_projects_order;
 	$from = 0 unless defined $from;
 	$to = $#projects if (!defined $to || $#projects < $to);
 
@@ -2977,7 +2980,7 @@ sub git_search_grep_body {
 
 sub git_project_list {
 	my $order = $cgi->param('o');
-	if (defined $order && $order !~ m/project|descr|owner|age/) {
+	if (defined $order && $order !~ m/none|project|descr|owner|age/) {
 		die_error(undef, "Unknown order parameter");
 	}
 
@@ -3000,7 +3003,7 @@ sub git_project_list {
 
 sub git_forks {
 	my $order = $cgi->param('o');
-	if (defined $order && $order !~ m/project|descr|owner|age/) {
+	if (defined $order && $order !~ m/none|project|descr|owner|age/) {
 		die_error(undef, "Unknown order parameter");
 	}
 
