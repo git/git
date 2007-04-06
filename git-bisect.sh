@@ -169,11 +169,10 @@ bisect_write_good() {
 
 bisect_next_check() {
 	next_ok=no
-        test -f "$GIT_DIR/refs/bisect/bad" &&
-	case "$(cd "$GIT_DIR" && echo refs/bisect/good-*)" in
-	refs/bisect/good-\*) ;;
-	*) next_ok=yes ;;
-	esac
+	git show-ref -q --verify refs/bisect/bad &&
+	test -n "$(git for-each-ref "refs/bisect/good-*")" &&
+	next_ok=yes
+
 	case "$next_ok,$1" in
 	no,) false ;;
 	no,fail)
