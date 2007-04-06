@@ -11,7 +11,7 @@ handled.  Specifically, that a bogus branch is not created.
 . ./test-lib.sh
 
 test_expect_success \
-    'prepare an trivial repository' \
+    'prepare a trivial repository' \
     'echo Hello > A &&
      git-update-index --add A &&
      git-commit -m "Initial commit." &&
