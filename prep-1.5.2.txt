@@ -1,0 +1,65 @@
+diff --git a/Documentation/RelNotes-1.5.2.txt b/Documentation/RelNotes-1.5.2.txt
+new file mode 100644
+index 0000000..cdac811
+--- /dev/null
++++ b/Documentation/RelNotes-1.5.2.txt
+@@ -0,0 +1,50 @@
++GIT v1.5.2 Release Notes
++========================
++
++Updates since v1.5.1
++--------------------
++
++* New commands and options.
++
++* Updated behavior of existing commands.
++
++  - "git diff --stat" shows size of preimage and postimage blobs
++    for binary contents.  Earlier it only said "Bin".
++
++  - "git lost-found" shows stuff that are unreachable except
++    from reflogs.
++
++* Builds
++
++  - git-p4import has never been installed; now there is an
++    installation option to do so.
++
++  - gitk and git-gui can be configured out.
++
++  - Generated documentation pages automatically get version
++    information from GIT_VERSION
++
++* Performance Tweaks
++
++  - optimized "git-rev-list --bisect" (hence "git-bisect").
++
++  - optimized "git-add $path" in a large directory, most of
++    whose contents are ignored.
++
++
++Fixes since v1.5.1
++------------------
++
++These are all in v1.5.1.x series.
++
++* Documentation updates
++
++* Bugfixes
++
++* Performance Tweaks
++
++--
++exec >/var/tmp/1
++O=v1.5.1-53-g77e6f5b
++echo O=`git describe refs/heads/master`
++git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
+diff --git a/RelNotes b/RelNotes
+index d5e055d..c543b1d 120000
+--- a/RelNotes
++++ b/RelNotes
+@@ -1 +1 @@
+-Documentation/RelNotes-1.5.1.txt
+\ No newline at end of file
++Documentation/RelNotes-1.5.2.txt
+\ No newline at end of file
