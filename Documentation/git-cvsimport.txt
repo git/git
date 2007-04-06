@@ -35,7 +35,9 @@ OPTIONS
 -d <CVSROOT>::
 	The root of the CVS archive. May be local (a simple path) or remote;
 	currently, only the :local:, :ext: and :pserver: access methods 
-	are supported.
+	are supported. If not given, git-cvsimport will try to read it
+	from `CVS/Root`. If no such file exists, it checks for the
+	`CVSROOT` environment variable.
 
 -C <target-dir>::
         The git repository to import to.  If the directory doesn't
@@ -87,6 +89,8 @@ If you need to pass multiple options, separate them with a comma.
 
 <CVS_module>::
 	The CVS module you want to import. Relative to <CVSROOT>.
+	If not given, git-cvsimport tries to read it from
+	`CVS/Repository`.
 
 -h::
 	Print a short usage message and exit.
@@ -124,7 +128,7 @@ git-cvsimport will make it appear as those authors had
 their GIT_AUTHOR_NAME and GIT_AUTHOR_EMAIL set properly
 all along.
 +
-For convenience, this data is saved to $GIT_DIR/cvs-authors
+For convenience, this data is saved to `$GIT_DIR/cvs-authors`
 each time the -A option is provided and read from that same
 file each time git-cvsimport is run.
 +
