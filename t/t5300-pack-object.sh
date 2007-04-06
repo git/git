@@ -123,11 +123,12 @@ test_expect_success \
      done'
 cd "$TRASH"
 
-test_expect_success \
-    'compare delta flavors' \
-    'size_2=`stat -c "%s" test-2-${packname_2}.pack` &&
-     size_3=`stat -c "%s" test-3-${packname_3}.pack` &&
-     test $size_2 -gt $size_3'
+test_expect_success 'compare delta flavors' '
+	perl -e '\''
+		defined($_ = -s $_) or die for @ARGV;
+		exit 1 if $ARGV[0] <= $ARGV[1];
+	'\'' test-2-$packname_2.pack test-3-$packname_3.pack
+'
 
 rm -fr .git2
 mkdir .git2
