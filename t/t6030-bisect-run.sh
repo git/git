@@ -4,6 +4,8 @@
 #
 test_description='Tests git-bisect functionality'
 
+exec </dev/null
+
 . ./test-lib.sh
 
 add_line_into_file()
@@ -37,21 +39,14 @@ test_expect_success \
      HASH3=$(git rev-list HEAD | head -2 | tail -1) &&
      HASH4=$(git rev-list HEAD | head -1)'
 
-test_expect_success 'bisect does not start with only one bad' '
+test_expect_success 'bisect starts with only one bad' '
 	git bisect reset &&
 	git bisect start &&
-	git bisect bad $HASH4 || return 1
-
-	if git bisect next
-	then
-		echo Oops, should have failed.
-		false
-	else
-		:
-	fi
+	git bisect bad $HASH4 &&
+	git bisect next
 '
 
-test_expect_success 'bisect does not start with only one good' '
+test_expect_success 'bisect starts with only one good' '
 	git bisect reset &&
 	git bisect start &&
 	git bisect good $HASH1 || return 1
