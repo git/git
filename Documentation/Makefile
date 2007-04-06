@@ -85,14 +85,17 @@ cmds_txt = cmds-ancillaryinterrogators.txt \
 	cmds-purehelpers.txt \
 	cmds-foreignscminterface.txt
 
-$(cmds_txt): cmd-list.perl $(MAN1_TXT)
+$(cmds_txt): cmd-list.made
+
+cmd-list.made: cmd-list.perl $(MAN1_TXT)
 	perl ./cmd-list.perl
+	date >$@
 
 git.7 git.html: git.txt core-intro.txt
 
 clean:
 	rm -f *.xml *.html *.1 *.7 howto-index.txt howto/*.html doc.dep
-	rm -f $(cmds_txt)
+	rm -f $(cmds_txt) *.made
 
 %.html : %.txt
 	$(ASCIIDOC) -b xhtml11 -d manpage -f asciidoc.conf $(ASCIIDOC_EXTRA) $<
