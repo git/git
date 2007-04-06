@@ -32,7 +32,9 @@ $ENV{'TZ'}="UTC";
 our ($opt_h,$opt_o,$opt_v,$opt_k,$opt_u,$opt_d,$opt_p,$opt_C,$opt_z,$opt_i,$opt_P, $opt_s,$opt_m,$opt_M,$opt_A,$opt_S,$opt_L, $opt_a);
 my (%conv_author_name, %conv_author_email);
 
-sub usage() {
+sub usage(;$) {
+	my $msg = shift;
+	print(STDERR "Error: $msg\n") if $msg;
 	print STDERR <<END;
 Usage: ${\basename $0}     # fetch/update GIT from CVS
        [-o branch-for-HEAD] [-h] [-v] [-d CVSROOT] [-A author-conv-file]
@@ -117,7 +119,7 @@ read_repo_config($opts);
 getopts($opts) or usage();
 usage if $opt_h;
 
-@ARGV <= 1 or usage();
+@ARGV <= 1 or usage("You can't specify more than one CVS module");
 
 if ($opt_d) {
 	$ENV{"CVSROOT"} = $opt_d;
@@ -130,7 +132,7 @@ if ($opt_d) {
 } elsif ($ENV{"CVSROOT"}) {
 	$opt_d = $ENV{"CVSROOT"};
 } else {
-	die "CVSROOT needs to be set";
+	usage("CVSROOT needs to be set");
 }
 $opt_o ||= "origin";
 $opt_s ||= "-";
@@ -149,7 +151,7 @@ if ($#ARGV == 0) {
 	chomp $cvs_tree;
 	close $f;
 } else {
-	usage();
+	usage("CVS module has to be specified");
 }
 
 our @mergerx = ();
