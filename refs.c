@@ -835,7 +835,7 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 		snprintf(oldsection, 1024, "branch.%s", oldref + 11);
 		snprintf(newsection, 1024, "branch.%s", newref + 11);
 		if (git_config_rename_section(oldsection, newsection) < 0)
-			return 1;
+			error("unable to update config-file");
 	}
 
 	return 0;
