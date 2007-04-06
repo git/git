@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2007 Christian Couder
 #
-test_description='Tests git-bisect run functionality'
+test_description='Tests git-bisect functionality'
 
 . ./test-lib.sh
 
@@ -36,6 +36,42 @@ test_expect_success \
      HASH1=$(git rev-list HEAD | tail -1) &&
      HASH3=$(git rev-list HEAD | head -2 | tail -1) &&
      HASH4=$(git rev-list HEAD | head -1)'
+
+test_expect_success 'bisect does not start with only one bad' '
+	git bisect reset &&
+	git bisect start &&
+	git bisect bad $HASH4 || return 1
+
+	if git bisect next
+	then
+		echo Oops, should have failed.
+		false
+	else
+		:
+	fi
+'
+
+test_expect_success 'bisect does not start with only one good' '
+	git bisect reset &&
+	git bisect start &&
+	git bisect good $HASH1 || return 1
+
+	if git bisect next
+	then
+		echo Oops, should have failed.
+		false
+	else
+		:
+	fi
+'
+
+test_expect_success 'bisect start with one bad and good' '
+	git bisect reset &&
+	git bisect start &&
+	git bisect good $HASH1 &&
+	git bisect bad $HASH4 &&
+	git bisect next
+'
 
 # We want to automatically find the commit that
 # introduced "Another" into hello.
