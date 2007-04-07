@@ -2149,7 +2149,7 @@ sub new
     die "Git repo '$self->{git_path}' doesn't exist" unless ( -d $self->{git_path} );
 
     $self->{dbdriver} = $cfg->{gitcvs}{$state->{method}}{dbdriver} ||
-        $cfg->{gitcvs}{dbdriver} || "dbi:SQLite";
+        $cfg->{gitcvs}{dbdriver} || "SQLite";
     $self->{dbname} = $cfg->{gitcvs}{$state->{method}}{dbname} ||
         $cfg->{gitcvs}{dbname} || "%Ggitcvs.%m.sqlite";
     $self->{dbuser} = $cfg->{gitcvs}{$state->{method}}{dbuser} ||
@@ -2165,7 +2165,9 @@ sub new
     $self->{dbname} =~ s/%([mauGg])/$mapping{$1}/eg;
     $self->{dbuser} =~ s/%([mauGg])/$mapping{$1}/eg;
 
-    $self->{dbh} = DBI->connect("$self->{dbdriver}:dbname=$self->{dbname}",
+    die "Invalid char ':' in dbdriver" if $self->{dbdriver} =~ /:/;
+    die "Invalid char ';' in dbname" if $self->{dbname} =~ /;/;
+    $self->{dbh} = DBI->connect("dbi:$self->{dbdriver}:dbname=$self->{dbname}",
                                 $self->{dbuser},
                                 $self->{dbpass});
     die "Error connecting to database\n" unless defined $self->{dbh};
