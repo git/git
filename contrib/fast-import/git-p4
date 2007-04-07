@@ -974,7 +974,7 @@ class P4Sync(Command):
             if len(changes) == 0:
                 if not self.silent:
                     print "no changes to import!"
-                sys.exit(1)
+                return True
 
             cnt = 1
             for change in changes:
@@ -1053,7 +1053,9 @@ class P4Rebase(Command):
         sync = P4Sync()
         sync.run([])
         print "Rebasing the current branch"
+        oldHead = os.popen("git rev-parse HEAD").read()[:-1]
         system("git rebase p4")
+        system("git diff-tree --stat --summary -M %s HEAD" % oldHead)
         return True
 
 class HelpFormatter(optparse.IndentedHelpFormatter):
