@@ -184,7 +184,7 @@ checked.
   9  exists  O!=A    missing   no merge    must match A and be
                                            up-to-date, if exists.
  ------------------------------------------------------------------
- 10  exists  O==A    missing   remove      ditto
+ 10  exists  O==A    missing   no merge    must match A
  ------------------------------------------------------------------
  11  exists  O!=A    O!=B      no merge    must match A and be
                      A!=B                  up-to-date, if exists.

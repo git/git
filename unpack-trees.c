@@ -786,7 +786,7 @@ int threeway_merge(struct cache_entry **stages,
 
 	o->nontrivial_merge = 1;
 
-	/* #2, #3, #4, #6, #7, #9, #11. */
+	/* #2, #3, #4, #6, #7, #9, #10, #11. */
 	count = 0;
 	if (!head_match || !remote_match) {
 		for (i = 1; i < o->head_idx; i++) {
