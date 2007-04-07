@@ -339,6 +339,8 @@ static int do_push(const char *repo)
 		err = run_command_v_opt(argv, RUN_GIT_CMD);
 		if (!err)
 			continue;
+
+		error("failed to push to '%s'", uri[i]);
 		switch (err) {
 		case -ERR_RUN_COMMAND_FORK:
 			die("unable to fork for %s", sender);
