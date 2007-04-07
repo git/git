@@ -417,7 +417,8 @@ class P4Sync(Command):
                 optparse.make_option("--silent", dest="silent", action="store_true"),
                 optparse.make_option("--known-branches", dest="knownBranches"),
                 optparse.make_option("--data-cache", dest="dataCache", action="store_true"),
-                optparse.make_option("--command-cache", dest="commandCache", action="store_true")
+                optparse.make_option("--command-cache", dest="commandCache", action="store_true"),
+                optparse.make_option("--detect-labels", dest="detectLabels", action="store_true")
         ]
         self.description = """Imports from Perforce into a git repository.\n
     example:
@@ -437,6 +438,7 @@ class P4Sync(Command):
         self.committedChanges = Set()
         self.branch = ""
         self.detectBranches = False
+        self.detectLabels = False
         self.changesFile = ""
 
     def p4File(self, depotPath):
@@ -892,7 +894,9 @@ class P4Sync(Command):
             self.globalPrefix += "/"
 
         self.getUserMap()
-        self.getLabels();
+        self.labels = {}
+        if self.detectLabels:
+            self.getLabels();
 
         if len(self.changeRange) == 0:
             try:
