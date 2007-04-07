@@ -170,7 +170,7 @@ describe_detached_head () {
 	}
 }
 
-if test -z "$branch$newbranch" && test "$new" != "$old"
+if test -z "$branch$newbranch" && test "$new_name" != "$old_name"
 then
 	detached="$new"
 	if test -n "$oldbranch" && test -z "$quiet"
@@ -180,7 +180,7 @@ If you want to create a new branch from this checkout, you may do so
 (now or later) by using -b with the checkout command again. Example:
   git checkout -b <new_branch_name>"
 	fi
-elif test -z "$oldbranch"
+elif test -z "$oldbranch" && test "$new" != "$old"
 then
 	describe_detached_head 'Previous HEAD position was' "$old"
 fi

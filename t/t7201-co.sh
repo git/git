@@ -3,7 +3,20 @@
 # Copyright (c) 2006 Junio C Hamano
 #
 
-test_description='git-checkout tests.'
+test_description='git-checkout tests.
+
+Creates master, forks renamer and side branches from it.
+Test switching across them.
+
+  ! [master] Initial A one, A two
+   * [renamer] Renamer R one->uno, M two
+    ! [side] Side M one, D two, A three
+  ---
+    + [side] Side M one, D two, A three
+   *  [renamer] Renamer R one->uno, M two
+  +*+ [master] Initial A one, A two
+
+'
 
 . ./test-lib.sh
 
@@ -127,6 +140,54 @@ test_expect_success 'checkout -m with merge conflict' '
 	diff current expect &&
 	git diff --cached two >current &&
 	! test -s current
+'
+
+test_expect_success 'checkout to detach HEAD' '
+
+	git checkout -f renamer && git clean &&
+	git checkout renamer^ &&
+	H=$(git rev-parse --verify HEAD) &&
+	M=$(git show-ref -s --verify refs/heads/master) &&
+	test "z$H" = "z$M" &&
+	if git symbolic-ref HEAD >/dev/null 2>&1
+	then
+		echo "OOPS, HEAD is still symbolic???"
+		false
+	else
+		: happy
+	fi
+'
+
+test_expect_success 'checkout to detach HEAD with branchname^' '
+
+	git checkout -f master && git clean &&
+	git checkout renamer^ &&
+	H=$(git rev-parse --verify HEAD) &&
+	M=$(git show-ref -s --verify refs/heads/master) &&
+	test "z$H" = "z$M" &&
+	if git symbolic-ref HEAD >/dev/null 2>&1
+	then
+		echo "OOPS, HEAD is still symbolic???"
+		false
+	else
+		: happy
+	fi
+'
+
+test_expect_success 'checkout to detach HEAD with HEAD^0' '
+
+	git checkout -f master && git clean &&
+	git checkout HEAD^0 &&
+	H=$(git rev-parse --verify HEAD) &&
+	M=$(git show-ref -s --verify refs/heads/master) &&
+	test "z$H" = "z$M" &&
+	if git symbolic-ref HEAD >/dev/null 2>&1
+	then
+		echo "OOPS, HEAD is still symbolic???"
+		false
+	else
+		: happy
+	fi
 '
 
 test_done
