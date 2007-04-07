@@ -19,7 +19,6 @@ Meta/Make clean >/dev/null 2>&1
 
 : ${branches='next master maint pu'}
 
-nstall=install
 for branch in $branches
 do
 	echo >&3 "** $branch **"
@@ -44,8 +43,8 @@ do
 	echo "** $branch" &&
 	git checkout $branch &&
 	Meta/Make $M -- $J all &&
-	Meta/Make $M -- $J $nstall &&
 	Meta/Make $M -- test &&
+	Meta/Make $M -- install &&
 	Meta/Make clean || exit $?
 
 done >./:all.log 3>&2 2>&1
