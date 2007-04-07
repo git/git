@@ -385,6 +385,7 @@ endif
 ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
+	OLD_ICONV = UnfortunatelyYes
 	NO_STRLCPY = YesPlease
 endif
 ifeq ($(uname_S),SunOS)

@@ -828,16 +828,6 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 		goto rollback;
 	}
 
-	if (!prefixcmp(oldref, "refs/heads/") &&
-			!prefixcmp(newref, "refs/heads/")) {
-		char oldsection[1024], newsection[1024];
-
-		snprintf(oldsection, 1024, "branch.%s", oldref + 11);
-		snprintf(newsection, 1024, "branch.%s", newref + 11);
-		if (git_config_rename_section(oldsection, newsection) < 0)
-			return 1;
-	}
-
 	return 0;
 
  rollback:

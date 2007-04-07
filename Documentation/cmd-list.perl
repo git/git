@@ -1,8 +1,11 @@
-#
+#!/usr/bin/perl -w
+
+use File::Compare qw(compare);
 
 sub format_one {
 	my ($out, $name) = @_;
 	my ($state, $description);
+	$state = 0;
 	open I, '<', "$name.txt" or die "No such file $name.txt";
 	while (<I>) {
 		if (/^NAME$/) {
@@ -55,7 +58,14 @@ for my $cat (qw(ancillaryinterrogators
 		format_one(\*O, $_);
 	}
 	close O;
-	rename "$out+", "$out";
+
+	if (-f "$out" && compare("$out", "$out+") == 0) {
+		unlink "$out+";
+	}
+	else {
+		print STDERR "$out\n";
+		rename "$out+", "$out";
+	}
 }
 
 __DATA__

@@ -595,7 +595,7 @@ foreach my $t (@files) {
 	if ($chain_reply_to || !defined $reply_to || length($reply_to) == 0) {
 		$reply_to = $message_id;
 		if (length $references > 0) {
-			$references .= " $message_id";
+			$references .= "\n $message_id";
 		} else {
 			$references = "$message_id";
 		}
