@@ -202,10 +202,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		if (!strcmp(arg, "-u") || !strcmp(arg, "--index")) {
 			state.refresh_cache = 1;
 			if (newfd < 0)
-				newfd = hold_lock_file_for_update
-					(&lock_file, get_index_file(), 1);
-			if (newfd < 0)
-				die("cannot open index.lock file.");
+				newfd = hold_locked_index(&lock_file, 1);
 			continue;
 		}
 		if (!strcmp(arg, "-z")) {
@@ -302,7 +299,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 
 	if (0 <= newfd &&
 	    (write_cache(newfd, active_cache, active_nr) ||
-	     close(newfd) || commit_lock_file(&lock_file)))
+	     close(newfd) || commit_locked_index(&lock_file)))
 		die("Unable to write new index file");
 	return 0;
 }

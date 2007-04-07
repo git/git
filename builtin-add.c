@@ -133,7 +133,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	git_config(git_add_config);
 
-	newfd = hold_lock_file_for_update(&lock_file, get_index_file(), 1);
+	newfd = hold_locked_index(&lock_file, 1);
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -209,7 +209,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	if (active_cache_changed) {
 		if (write_cache(newfd, active_cache, active_nr) ||
-		    close(newfd) || commit_lock_file(&lock_file))
+		    close(newfd) || commit_locked_index(&lock_file))
 			die("Unable to write new index file");
 	}
 

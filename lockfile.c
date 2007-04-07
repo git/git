@@ -4,6 +4,7 @@
 #include "cache.h"
 
 static struct lock_file *lock_file_list;
+static const char *alternate_index_output;
 
 static void remove_lock_file(void)
 {
@@ -63,6 +64,27 @@ int commit_lock_file(struct lock_file *lk)
 	i = rename(lk->filename, result_file);
 	lk->filename[0] = 0;
 	return i;
+}
+
+int hold_locked_index(struct lock_file *lk, int die_on_error)
+{
+	return hold_lock_file_for_update(lk, get_index_file(), die_on_error);
+}
+
+void set_alternate_index_output(const char *name)
+{
+	alternate_index_output = name;
+}
+
+int commit_locked_index(struct lock_file *lk)
+{
+	if (alternate_index_output) {
+		int result = rename(lk->filename, alternate_index_output);
+		lk->filename[0] = 0;
+		return result;
+	}
+	else
+		return commit_lock_file(lk);
 }
 
 void rollback_lock_file(struct lock_file *lk)

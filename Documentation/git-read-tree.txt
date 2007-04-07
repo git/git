@@ -8,7 +8,7 @@ git-read-tree - Reads tree information into the index
 
 SYNOPSIS
 --------
-'git-read-tree' (<tree-ish> | [[-m [--aggressive] | --reset | --prefix=<prefix>] [-u | -i]] [--exclude-per-directory=<gitignore>] <tree-ish1> [<tree-ish2> [<tree-ish3>]])
+'git-read-tree' (<tree-ish> | [[-m [--aggressive] | --reset | --prefix=<prefix>] [-u | -i]] [--exclude-per-directory=<gitignore>] [--index-output=<file>] <tree-ish1> [<tree-ish2> [<tree-ish3>]])
 
 
 DESCRIPTION
@@ -85,6 +85,18 @@ OPTIONS
 	option tells the command to read per-directory exclude
 	file (usually '.gitignore') and allows such an untracked
 	but explicitly ignored file to be overwritten.
+
+--index-output=<file>::
+	Instead of writing the results out to `$GIT_INDEX_FILE`,
+	write the resulting index in the named file.  While the
+	command is operating, the original index file is locked
+	with the same mechanism as usual.  The file must allow
+	to be rename(2)ed into from a temporary file that is
+	created next to the usual index file; typically this
+	means it needs to be on the same filesystem as the index
+	file itself, and you need write permission to the
+	directories the index file and index output file are
+	located in.
 
 <tree-ish#>::
 	The id of the tree object(s) to be read/merged.

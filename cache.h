@@ -211,6 +211,11 @@ struct lock_file {
 };
 extern int hold_lock_file_for_update(struct lock_file *, const char *path, int);
 extern int commit_lock_file(struct lock_file *);
+
+extern int hold_locked_index(struct lock_file *, int);
+extern int commit_locked_index(struct lock_file *);
+extern void set_alternate_index_output(const char *);
+
 extern void rollback_lock_file(struct lock_file *);
 extern int delete_ref(const char *, unsigned char *sha1);
 
