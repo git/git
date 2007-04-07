@@ -40,11 +40,23 @@ newer changes from the Perforce depot by just calling
 
   git-p4 sync
 
-in your git repository.
+in your git repository. By default the "p4" branch is updated.
 
 It is recommended to run 'git repack -a -d -f' from time to time when using
 incremental imports to optimally combine the individual git packs that each
 incremental import creates through the use of git-fast-import.
+
+Updating
+========
+
+A common working pattern is to fetch the latest changes from the Perforce depot
+and merge them with local uncommitted changes. The recommended way is to use
+git's rebase mechanism to preserve linear history. git-p4 provides a convenient
+
+  git-p4 rebase
+
+command that calls git-p4 sync followed by git rebase to rebase the current
+working branch.
 
 Submitting
 ==========

@@ -804,7 +804,11 @@ class P4Sync(Command):
     def getLabels(self):
         self.labels = {}
 
-        for output in p4CmdList("labels %s..." % self.globalPrefix):
+        l = p4CmdList("labels %s..." % self.globalPrefix)
+        if len(l) > 0:
+            print "Finding files belonging to labels in %s" % self.globalPrefix
+
+        for output in l:
             label = output["label"]
             revisions = {}
             newestChange = 0
@@ -1039,6 +1043,19 @@ class P4Sync(Command):
 
         return True
 
+class P4Rebase(Command):
+    def __init__(self):
+        Command.__init__(self)
+        self.options = [ ]
+        self.description = "Fetches the latest revision from perforce and rebases the current work (branch) against it"
+
+    def run(self, args):
+        sync = P4Sync()
+        sync.run([])
+        print "Rebasing the current branch"
+        system("git rebase p4")
+        return True
+
 class HelpFormatter(optparse.IndentedHelpFormatter):
     def __init__(self):
         optparse.IndentedHelpFormatter.__init__(self)
@@ -1061,7 +1078,8 @@ commands = {
     "debug" : P4Debug(),
     "clean-tags" : P4CleanTags(),
     "submit" : P4Submit(),
-    "sync" : P4Sync()
+    "sync" : P4Sync(),
+    "rebase" : P4Rebase()
 }
 
 if len(sys.argv[1:]) == 0:
