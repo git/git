@@ -596,9 +596,31 @@ static void update_file_flags(const unsigned char *sha,
 
 		if (S_ISREG(mode) || (!has_symlinks && S_ISLNK(mode))) {
 			int fd;
-			if (mkdir_p(path, 0777))
-				die("failed to create path %s: %s", path, strerror(errno));
-			unlink(path);
+			int status;
+			const char *msg = "failed to create path '%s'%s";
+
+			status = mkdir_p(path, 0777);
+			if (status) {
+				if (status == -3) {
+					/* something else exists */
+					error(msg, path, ": perhaps a D/F conflict?");
+					update_wd = 0;
+					goto update_index;
+				}
+				die(msg, path, "");
+			}
+			if (unlink(path)) {
+				if (errno == EISDIR) {
+					/* something else exists */
+					error(msg, path, ": perhaps a D/F conflict?");
+					update_wd = 0;
+					goto update_index;
+				}
+				if (errno != ENOENT)
+					die("failed to unlink %s "
+					    "in preparation to update: %s",
+					    path, strerror(errno));
+			}
 			if (mode & 0100)
 				mode = 0777;
 			else
@@ -620,6 +642,7 @@ static void update_file_flags(const unsigned char *sha,
 			die("do not know what to do with %06o %s '%s'",
 			    mode, sha1_to_hex(sha), path);
 	}
+ update_index:
 	if (update_cache)
 		add_cacheinfo(mode, sha, path, 0, update_wd, ADD_CACHE_OK_TO_ADD);
 }
