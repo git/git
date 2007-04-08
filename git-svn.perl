@@ -363,13 +363,12 @@ sub cmd_dcommit {
 	my $head = shift;
 	$head ||= 'HEAD';
 	my @refs;
-	my ($url, $rev, $uuid) = working_head_info($head, \@refs);
-	my $c = $refs[-1];
-	unless (defined $url && defined $rev && defined $uuid) {
+	my ($url, $rev, $uuid, $gs) = working_head_info($head, \@refs);
+	unless ($gs) {
 		die "Unable to determine upstream SVN information from ",
 		    "$head history\n";
 	}
-	my $gs = Git::SVN->find_by_url($url);
+	my $c = $refs[-1];
 	my $last_rev;
 	foreach my $d (@refs) {
 		if (!verify_ref("$d~1")) {
@@ -431,15 +430,10 @@ sub cmd_dcommit {
 
 sub cmd_rebase {
 	command_noisy(qw/update-index --refresh/);
-	my $url = (working_head_info('HEAD'))[0];
-	if (!defined $url) {
+	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
+	unless ($gs) {
 		die "Unable to determine upstream SVN information from ",
 		    "working tree history\n";
-	}
-
-	my $gs = Git::SVN->find_by_url($url);
-	unless ($gs) {
-		die "Unable to determine remote information from URL: $url\n";
 	}
 	if (command(qw/diff-index HEAD --/)) {
 		print STDERR "Cannot rebase with uncommited changes:\n";
@@ -453,8 +447,8 @@ sub cmd_rebase {
 }
 
 sub cmd_show_ignore {
-	my $url = (::working_head_info('HEAD'))[0];
-	my $gs = Git::SVN->find_by_url($url) || Git::SVN->new;
+	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
+	$gs ||= Git::SVN->new;
 	my $r = (defined $_revision ? $_revision : $gs->ra->get_latest_revnum);
 	$gs->traverse_ignore(\*STDOUT, $gs->{path}, $r);
 }
@@ -776,16 +770,23 @@ sub cmt_metadata {
 
 sub working_head_info {
 	my ($head, $refs) = @_;
-	my ($url, $rev, $uuid);
 	my ($fh, $ctx) = command_output_pipe('rev-list', $head);
 	while (<$fh>) {
 		chomp;
-		($url, $rev, $uuid) = cmt_metadata($_);
-		last if (defined $url && defined $rev && defined $uuid);
+		my ($url, $rev, $uuid) = cmt_metadata($_);
+		if (defined $url && defined $rev) {
+			if (my $gs = Git::SVN->find_by_url($url)) {
+				my $c = $gs->rev_db_get($rev);
+				if ($c && $c eq $_) {
+					close $fh; # break the pipe
+					return ($url, $rev, $uuid, $gs);
+				}
+			}
+		}
 		unshift @$refs, $_ if $refs;
 	}
-	close $fh; # break the pipe
-	($url, $rev, $uuid);
+	command_close_pipe($fh, $ctx);
+	(undef, undef, undef, undef);
 }
 
 package Git::SVN;
@@ -3321,8 +3322,8 @@ sub git_svn_log_cmd {
 		last;
 	}
 
-	my $url = (::working_head_info($head))[0];
-	my $gs = Git::SVN->find_by_url($url) || Git::SVN->_new;
+	my ($url, $rev, $uuid, $gs) = ::working_head_info($head);
+	$gs ||= Git::SVN->_new;
 	my @cmd = (qw/log --abbrev-commit --pretty=raw --default/,
 	           $gs->refname);
 	push @cmd, '-r' unless $non_recursive;
