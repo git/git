@@ -3263,12 +3263,19 @@ my $l_fmt;
 sub cmt_showable {
 	my ($c) = @_;
 	return 1 if defined $c->{r};
+
+	# big commit message got truncated by the 16k pretty buffer in rev-list
 	if ($c->{l} && $c->{l}->[-1] eq "...\n" &&
 				$c->{a_raw} =~ /\@([a-f\d\-]+)>$/) {
+		@{$c->{l}} = ();
 		my @log = command(qw/cat-file commit/, $c->{c});
-		shift @log while ($log[0] ne "\n");
+
+		# shift off the headers
+		shift @log while ($log[0] ne '');
 		shift @log;
-		@{$c->{l}} = grep !/^git-svn-id: /, @log;
+
+		# TODO: make $c->{l} not have a trailing newline in the future
+		@{$c->{l}} = map { "$_\n" } grep !/^git-svn-id: /, @log;
 
 		(undef, $c->{r}, undef) = ::extract_metadata(
 				(grep(/^git-svn-id: /, @log))[-1]);
