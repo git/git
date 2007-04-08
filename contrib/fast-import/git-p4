@@ -808,7 +808,7 @@ class P4Sync(Command):
         self.labels = {}
 
         l = p4CmdList("labels %s..." % self.globalPrefix)
-        if len(l) > 0 and not silent:
+        if len(l) > 0 and not self.silent:
             print "Finding files belonging to labels in %s" % self.globalPrefix
 
         for output in l:
