@@ -10,7 +10,25 @@ done using "git-p4 submit".
 Importing
 =========
 
-The procedure is simple:
+You can simply start with
+
+  git-p4 clone //depot/path/project
+
+or
+
+  git-p4 clone //depot/path/project myproject
+
+This will create an empty git repository in a subdirectory called "project" (or
+"myproject" with the second command), import the head revision from the
+specified perforce path into a git "p4" branch, create a master branch off it
+and check it out. If you want the entire history (not just the head revision) then
+you can simply append a "@all" to the depot path:
+
+  git-p4 clone //depot/project/main@all myproject
+
+
+
+If you want more control you can also use the git-p4 sync command directly:
 
   mkdir repo-git
   cd repo-git
@@ -31,6 +49,9 @@ a big import. This may take a while.
 Support for Perforce integrations is still work in progress. Don't bother
 trying it unless you want to hack on it :)
 
+For convenience there's also the git-p4 clone command that works similar to
+git-clone and combines the creation of the git repository with the the initial
+import and the branch setup
 
 Incremental Imports
 ===================

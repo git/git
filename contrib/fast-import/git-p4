@@ -440,6 +440,7 @@ class P4Sync(Command):
         self.detectBranches = False
         self.detectLabels = False
         self.changesFile = ""
+        self.tagLastChange = True
 
     def p4File(self, depotPath):
         return os.popen("p4 print -q \"%s\"" % depotPath, "rb").read()
@@ -826,7 +827,6 @@ class P4Sync(Command):
         self.globalPrefix = ""
         self.changeRange = ""
         self.initialParent = ""
-        self.tagLastChange = True
 
         if len(self.branch) == 0:
             self.branch = "p4"
@@ -1062,6 +1062,58 @@ class P4Rebase(Command):
         system("git diff-tree --stat --summary -M %s HEAD" % oldHead)
         return True
 
+class P4Clone(P4Sync):
+    def __init__(self):
+        P4Sync.__init__(self)
+        self.description = "Creates a new git repository and imports from Perforce into it"
+        self.usage = "usage: %prog [options] //depot/path[@revRange] [directory]"
+        self.needsGit = False
+        self.tagLastChange = False
+
+    def run(self, args):
+        if len(args) < 1:
+            return False
+        depotPath = args[0]
+        dir = ""
+        if len(args) == 2:
+            dir = args[1]
+        elif len(args) > 2:
+            return False
+
+        if not depotPath.startswith("//"):
+            return False
+
+        if len(dir) == 0:
+            dir = depotPath
+            atPos = dir.rfind("@")
+            if atPos != -1:
+                dir = dir[0:atPos]
+            hashPos = dir.rfind("#")
+            if hashPos != -1:
+                dir = dir[0:hashPos]
+
+            if dir.endswith("..."):
+                dir = dir[:-3]
+
+            if dir.endswith("/"):
+               dir = dir[:-1]
+
+            slashPos = dir.rfind("/")
+            if slashPos != -1:
+                dir = dir[slashPos + 1:]
+
+        print "Importing from %s into %s" % (depotPath, dir)
+        os.makedirs(dir)
+        os.chdir(dir)
+        system("git init")
+        if not P4Sync.run(self, [depotPath]):
+            return False
+        os.wait()
+        if self.branch != "master":
+            system("git branch master p4")
+            system("git checkout -f")
+        return True
+
 class HelpFormatter(optparse.IndentedHelpFormatter):
     def __init__(self):
         optparse.IndentedHelpFormatter.__init__(self)
@@ -1085,7 +1137,8 @@ commands = {
     "clean-tags" : P4CleanTags(),
     "submit" : P4Submit(),
     "sync" : P4Sync(),
-    "rebase" : P4Rebase()
+    "rebase" : P4Rebase(),
+    "clone" : P4Clone()
 }
 
 if len(sys.argv[1:]) == 0:
