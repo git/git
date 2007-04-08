@@ -29,7 +29,7 @@ git commit -m "$(echo "This is a very, very long first line for the commit messa
 echo 5 > a1
 git commit -m "a								12	34	56	78" a1
 
-git shortlog HEAD > out
+git shortlog -w HEAD > out
 
 cat > expect << EOF
 A U Thor (5):
