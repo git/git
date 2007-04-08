@@ -233,6 +233,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 		if (0 <= pos)
 			die("file '%.*s' already exists.",
 					pfxlen-1, opts.prefix);
+		opts.pos = -1 - pos;
 	}
 
 	if (opts.merge) {

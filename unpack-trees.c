@@ -70,7 +70,6 @@ static int entcmp(const char *name1, int dir1, const char *name2, int dir2)
 
 static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			    const char *base, struct unpack_trees_options *o,
-			    int *indpos,
 			    struct tree_entry_list *df_conflict_list)
 {
 	int baselen = strlen(base);
@@ -100,7 +99,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 		cache_name = NULL;
 
 		/* Check the cache */
-		if (o->merge && *indpos < active_nr) {
+		if (o->merge && o->pos < active_nr) {
 			/* This is a bit tricky: */
 			/* If the index has a subdirectory (with
 			 * contents) as the first name, it'll get a
@@ -118,7 +117,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			 * file case.
 			 */
 
-			cache_name = active_cache[*indpos]->name;
+			cache_name = active_cache[o->pos]->name;
 			if (strlen(cache_name) > baselen &&
 			    !memcmp(cache_name, base, baselen)) {
 				cache_name += baselen;
@@ -158,8 +157,8 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 
 		if (cache_name && !strcmp(cache_name, first)) {
 			any_files = 1;
-			src[0] = active_cache[*indpos];
-			remove_cache_entry_at(*indpos);
+			src[0] = active_cache[o->pos];
+			remove_cache_entry_at(o->pos);
 		}
 
 		for (i = 0; i < len; i++) {
@@ -228,7 +227,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 #if DBRT_DEBUG > 1
 				printf("Added %d entries\n", ret);
 #endif
-				*indpos += ret;
+				o->pos += ret;
 			} else {
 				for (i = 0; i < src_size; i++) {
 					if (src[i]) {
@@ -244,7 +243,7 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
 			newbase[baselen + pathlen] = '/';
 			newbase[baselen + pathlen + 1] = '\0';
 			if (unpack_trees_rec(subposns, len, newbase, o,
-					     indpos, df_conflict_list)) {
+					     df_conflict_list)) {
 				retval = -1;
 				goto leave_directory;
 			}
@@ -375,7 +374,6 @@ static void check_updates(struct cache_entry **src, int nr,
 
 int unpack_trees(struct object_list *trees, struct unpack_trees_options *o)
 {
-	int indpos = 0;
 	unsigned len = object_list_length(trees);
 	struct tree_entry_list **posns;
 	int i;
@@ -404,7 +402,7 @@ int unpack_trees(struct object_list *trees, struct unpack_trees_options *o)
 			posn = posn->next;
 		}
 		if (unpack_trees_rec(posns, len, o->prefix ? o->prefix : "",
-				     o, &indpos, &df_conflict_list))
+				     o, &df_conflict_list))
 			return -1;
 	}
 
@@ -467,6 +465,64 @@ static void invalidate_ce_path(struct cache_entry *ce)
 		cache_tree_invalidate_path(active_cache_tree, ce->name);
 }
 
+static int verify_clean_subdirectory(const char *path, const char *action,
+				      struct unpack_trees_options *o)
+{
+	/*
+	 * we are about to extract "path"; we would not want to lose
+	 * anything in the existing directory there.
+	 */
+	int namelen;
+	int pos, i;
+	struct dir_struct d;
+	char *pathbuf;
+	int cnt = 0;
+
+	/*
+	 * First let's make sure we do not have a local modification
+	 * in that directory.
+	 */
+	namelen = strlen(path);
+	pos = cache_name_pos(path, namelen);
+	if (0 <= pos)
+		return cnt; /* we have it as nondirectory */
+	pos = -pos - 1;
+	for (i = pos; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+		int len = ce_namelen(ce);
+		if (len < namelen ||
+		    strncmp(path, ce->name, namelen) ||
+		    ce->name[namelen] != '/')
+			break;
+		/*
+		 * ce->name is an entry in the subdirectory.
+		 */
+		if (!ce_stage(ce)) {
+			verify_uptodate(ce, o);
+			ce->ce_mode = 0;
+		}
+		cnt++;
+	}
+
+	/*
+	 * Then we need to make sure that we do not lose a locally
+	 * present file that is not ignored.
+	 */
+	pathbuf = xmalloc(namelen + 2);
+	memcpy(pathbuf, path, namelen);
+	strcpy(pathbuf+namelen, "/");
+
+	memset(&d, 0, sizeof(d));
+	if (o->dir)
+		d.exclude_per_dir = o->dir->exclude_per_dir;
+	i = read_directory(&d, path, pathbuf, namelen+1, NULL);
+	if (i)
+		die("Updating '%s' would lose untracked files in it",
+		    path);
+	free(pathbuf);
+	return cnt;
+}
+
 /*
  * We do not want to remove or overwrite a working tree file that
  * is not tracked, unless it is ignored.
@@ -478,9 +534,62 @@ static void verify_absent(const char *path, const char *action,
 
 	if (o->index_only || o->reset || !o->update)
 		return;
-	if (!lstat(path, &st) && !(o->dir && excluded(o->dir, path)))
+
+	if (!lstat(path, &st)) {
+		int cnt;
+
+		if (o->dir && excluded(o->dir, path))
+			/*
+			 * path is explicitly excluded, so it is Ok to
+			 * overwrite it.
+			 */
+			return;
+		if (S_ISDIR(st.st_mode)) {
+			/*
+			 * We are checking out path "foo" and
+			 * found "foo/." in the working tree.
+			 * This is tricky -- if we have modified
+			 * files that are in "foo/" we would lose
+			 * it.
+			 */
+			cnt = verify_clean_subdirectory(path, action, o);
+
+			/*
+			 * If this removed entries from the index,
+			 * what that means is:
+			 *
+			 * (1) the caller unpack_trees_rec() saw path/foo
+			 * in the index, and it has not removed it because
+			 * it thinks it is handling 'path' as blob with
+			 * D/F conflict;
+			 * (2) we will return "ok, we placed a merged entry
+			 * in the index" which would cause o->pos to be
+			 * incremented by one;
+			 * (3) however, original o->pos now has 'path/foo'
+			 * marked with "to be removed".
+			 *
+			 * We need to increment it by the number of
+			 * deleted entries here.
+			 */
+			o->pos += cnt;
+			return;
+		}
+
+		/*
+		 * The previous round may already have decided to
+		 * delete this path, which is in a subdirectory that
+		 * is being replaced with a blob.
+		 */
+		cnt = cache_name_pos(path, strlen(path));
+		if (0 <= cnt) {
+			struct cache_entry *ce = active_cache[cnt];
+			if (!ce_stage(ce) && !ce->ce_mode)
+				return;
+		}
+
 		die("Untracked working tree file '%s' "
 		    "would be %s by merge.", path, action);
+	}
 }
 
 static int merged_entry(struct cache_entry *merge, struct cache_entry *old,
@@ -525,7 +634,7 @@ static int deleted_entry(struct cache_entry *ce, struct cache_entry *old,
 	return 1;
 }
 
-static int keep_entry(struct cache_entry *ce)
+static int keep_entry(struct cache_entry *ce, struct unpack_trees_options *o)
 {
 	add_cache_entry(ce, ADD_CACHE_OK_TO_ADD);
 	return 1;
@@ -682,7 +791,7 @@ int threeway_merge(struct cache_entry **stages,
 	if (!head_match || !remote_match) {
 		for (i = 1; i < o->head_idx; i++) {
 			if (stages[i]) {
-				keep_entry(stages[i]);
+				keep_entry(stages[i], o);
 				count++;
 				break;
 			}
@@ -695,8 +804,8 @@ int threeway_merge(struct cache_entry **stages,
 		show_stage_entry(stderr, "remote ", stages[remote_match]);
 	}
 #endif
-	if (head) { count += keep_entry(head); }
-	if (remote) { count += keep_entry(remote); }
+	if (head) { count += keep_entry(head, o); }
+	if (remote) { count += keep_entry(remote, o); }
 	return count;
 }
 
@@ -713,11 +822,17 @@ int twoway_merge(struct cache_entry **src,
 		struct unpack_trees_options *o)
 {
 	struct cache_entry *current = src[0];
-	struct cache_entry *oldtree = src[1], *newtree = src[2];
+	struct cache_entry *oldtree = src[1];
+	struct cache_entry *newtree = src[2];
 
 	if (o->merge_size != 2)
 		return error("Cannot do a twoway merge of %d trees",
 			     o->merge_size);
+
+	if (oldtree == o->df_conflict_entry)
+		oldtree = NULL;
+	if (newtree == o->df_conflict_entry)
+		newtree = NULL;
 
 	if (current) {
 		if ((!oldtree && !newtree) || /* 4 and 5 */
@@ -726,9 +841,9 @@ int twoway_merge(struct cache_entry **src,
 		    (oldtree && newtree &&
 		     same(oldtree, newtree)) || /* 14 and 15 */
 		    (oldtree && newtree &&
-		     !same(oldtree, newtree) && /* 18 and 19*/
+		     !same(oldtree, newtree) && /* 18 and 19 */
 		     same(current, newtree))) {
-			return keep_entry(current);
+			return keep_entry(current, o);
 		}
 		else if (oldtree && !newtree && same(current, oldtree)) {
 			/* 10 or 11 */
@@ -774,7 +889,7 @@ int bind_merge(struct cache_entry **src,
 	if (a && old)
 		die("Entry '%s' overlaps.  Cannot bind.", a->name);
 	if (!a)
-		return keep_entry(old);
+		return keep_entry(old, o);
 	else
 		return merged_entry(a, NULL, o);
 }
@@ -804,7 +919,7 @@ int oneway_merge(struct cache_entry **src,
 			    ce_match_stat(old, &st, 1))
 				old->ce_flags |= htons(CE_UPDATE);
 		}
-		return keep_entry(old);
+		return keep_entry(old, o);
 	}
 	return merged_entry(a, old, o);
 }
