@@ -938,7 +938,8 @@ class P4Sync(Command):
                     newestRevision = change
 
                 if info["action"] == "delete":
-                    fileCnt = fileCnt + 1
+                    # don't increase the file cnt, otherwise details["depotFile123"] will have gaps!
+                    #fileCnt = fileCnt + 1
                     continue
 
                 for prop in [ "depotFile", "rev", "action", "type" ]:
