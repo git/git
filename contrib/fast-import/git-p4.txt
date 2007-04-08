@@ -103,3 +103,25 @@ continue importing the remaining changes with
 
 After submitting you should sync your perforce import branch ("p4" or "origin")
 from Perforce using git-p4's sync command.
+
+
+Example
+=======
+
+# Clone a repository
+  git-p4 clone //depot/path/project
+# Enter the newly cloned directory
+  cd project
+# Do some work...
+  vi foo.h
+# ... and commit locally to gi
+  git commit foo.h
+# In the meantime somebody submitted changes to the Perforce depot. Rebase your latest
+# changes against the latest changes in Perforce:
+  git-p4 rebase
+# Submit your locally committed changes back to Perforce
+  git-p4 submit
+# ... and synchronize with Perforce
+  git-p4 rebase
+
+
