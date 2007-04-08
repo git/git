@@ -1,0 +1,46 @@
+GIT v1.5.1.1 Release Notes (draft)
+==========================
+
+Fixes since v1.5.1
+------------------
+
+* Documentation updates
+
+  - The --left-right option of rev-list and friends is documented.
+
+  - The documentation for cvsimport has been majorly improved.
+
+* Bugfixes
+
+  - "git send-email" produced of References header of unbounded length;
+    fixed this with line-folding.
+
+  - "git archive" to download from remote site should not
+    require you to be in a git repository, but it incorrectly
+    did.
+
+  - "git apply" ignored -p<n> for "diff --git" formatted
+    patches.
+
+  - "git rerere" recorded a conflict that had one side empty
+    (the other side adds) incorrectly; this made merging in the
+    other direction fail to use previously recorded resolution.
+
+  - t4200 test was broken where "wc -l" pads its output with
+    spaces.
+
+  - "git branch -m old new" to rename branch did not work
+    without a configuration file in ".git/config".
+
+  - The sample hook for notification e-mail was misnamed.
+
+  - gitweb did not show type-changing patch correctly in the
+    blobdiff view.
+
+* Performance Tweaks
+
+--
+exec >/var/tmp/1
+O=v1.5.1-26-ge94a4f6
+echo O=`git describe refs/heads/maint`
+git shortlog --no-merges $O..refs/heads/maint
