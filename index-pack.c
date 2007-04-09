@@ -12,7 +12,7 @@ static const char index_pack_usage[] =
 
 struct object_entry
 {
-	unsigned long offset;
+	off_t offset;
 	unsigned long size;
 	unsigned int hdr_size;
 	enum object_type type;
@@ -22,7 +22,7 @@ struct object_entry
 
 union delta_base {
 	unsigned char sha1[20];
-	unsigned long offset;
+	off_t offset;
 };
 
 /*
@@ -83,7 +83,8 @@ static unsigned display_progress(unsigned n, unsigned total, unsigned last_pc)
 
 /* We always read in 4kB chunks. */
 static unsigned char input_buffer[4096];
-static unsigned long input_offset, input_len, consumed_bytes;
+static unsigned int input_offset, input_len;
+static off_t consumed_bytes;
 static SHA_CTX input_ctx;
 static int input_fd, output_fd, pack_fd;
 
@@ -129,6 +130,10 @@ static void use(int bytes)
 		die("used more bytes than were available");
 	input_len -= bytes;
 	input_offset += bytes;
+
+	/* make sure off_t is sufficiently large not to wrap */
+	if (consumed_bytes > consumed_bytes + bytes)
+		die("pack too large for current definition of off_t");
 	consumed_bytes += bytes;
 }
 
@@ -216,7 +221,8 @@ static void *unpack_entry_data(unsigned long offset, unsigned long size)
 static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_base)
 {
 	unsigned char *p, c;
-	unsigned long size, base_offset;
+	unsigned long size;
+	off_t base_offset;
 	unsigned shift;
 
 	obj->offset = consumed_bytes;

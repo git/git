@@ -369,7 +369,7 @@ static int revalidate_loose_object(struct object_entry *entry,
 	return check_loose_inflate(map, mapsize, size);
 }
 
-static off_t write_object(struct sha1file *f,
+static unsigned long write_object(struct sha1file *f,
 				  struct object_entry *entry)
 {
 	unsigned long size;
@@ -503,16 +503,23 @@ static off_t write_one(struct sha1file *f,
 			       struct object_entry *e,
 			       off_t offset)
 {
+	unsigned long size;
+
+	/* offset is non zero if object is written already. */
 	if (e->offset || e->preferred_base)
-		/* offset starts from header size and cannot be zero
-		 * if it is written already.
-		 */
 		return offset;
-	/* if we are deltified, write out its base object first. */
+
+	/* if we are deltified, write out base object first. */
 	if (e->delta)
 		offset = write_one(f, e->delta, offset);
+
 	e->offset = offset;
-	return offset + write_object(f, e);
+	size = write_object(f, e);
+
+	/* make sure off_t is sufficiently large not to wrap */
+	if (offset > offset + size)
+		die("pack too large for current definition of off_t");
+	return offset + size;
 }
 
 static void write_pack_file(void)
