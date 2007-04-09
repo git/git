@@ -297,7 +297,7 @@ static int read_config(const char *repo, const char *uri[MAX_URI])
 static int do_push(const char *repo)
 {
 	const char *uri[MAX_URI];
-	int i, n;
+	int i, n, errs;
 	int common_argc;
 	const char **argv;
 	int argc;
@@ -317,6 +317,7 @@ static int do_push(const char *repo)
 		argv[argc++] = receivepack;
 	common_argc = argc;
 
+	errs = 0;
 	for (i = 0; i < n; i++) {
 		int err;
 		int dest_argc = common_argc;
@@ -339,21 +340,23 @@ static int do_push(const char *repo)
 		err = run_command_v_opt(argv, RUN_GIT_CMD);
 		if (!err)
 			continue;
+
+		error("failed to push to '%s'", uri[i]);
 		switch (err) {
 		case -ERR_RUN_COMMAND_FORK:
-			die("unable to fork for %s", sender);
+			error("unable to fork for %s", sender);
 		case -ERR_RUN_COMMAND_EXEC:
-			die("unable to exec %s", sender);
+			error("unable to exec %s", sender);
+			break;
 		case -ERR_RUN_COMMAND_WAITPID:
 		case -ERR_RUN_COMMAND_WAITPID_WRONG_PID:
 		case -ERR_RUN_COMMAND_WAITPID_SIGNAL:
 		case -ERR_RUN_COMMAND_WAITPID_NOEXIT:
-			die("%s died with strange error", sender);
-		default:
-			return -err;
+			error("%s died with strange error", sender);
 		}
+		errs++;
 	}
-	return 0;
+	return !!errs;
 }
 
 int cmd_push(int argc, const char **argv, const char *prefix)
