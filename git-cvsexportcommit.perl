@@ -124,12 +124,17 @@ close MSG;
 `git-diff-tree --binary -p $parent $commit >.cvsexportcommit.diff`;# || die "Cannot diff";
 
 ## apply non-binary changes
-my $fuzz = $opt_p ? 0 : 2;
+
+# In pedantic mode require all lines of context to match.  In normal
+# mode, be compatible with diff/patch: assume 3 lines of context and
+# require at least one line match, i.e. ignore at most 2 lines of
+# context, like diff/patch do by default.
+my $context = $opt_p ? '' : '-C1';
 
 print "Checking if patch will apply\n";
 
 my @stat;
-open APPLY, "GIT_DIR= git-apply -C$fuzz --binary --summary --numstat<.cvsexportcommit.diff|" || die "cannot patch";
+open APPLY, "GIT_DIR= git-apply $context --binary --summary --numstat<.cvsexportcommit.diff|" || die "cannot patch";
 @stat=<APPLY>;
 close APPLY || die "Cannot patch";
 my (@bfiles,@files,@afiles,@dfiles);
@@ -196,7 +201,7 @@ if ($dirty) {
 }
 
 print "Applying\n";
-`GIT_DIR= git-apply -C$fuzz --binary --summary --numstat --apply <.cvsexportcommit.diff` || die "cannot patch";
+`GIT_DIR= git-apply $context --binary --summary --numstat --apply <.cvsexportcommit.diff` || die "cannot patch";
 
 print "Patch applied successfully. Adding new files and directories to CVS\n";
 my $dirtypatch = 0;
