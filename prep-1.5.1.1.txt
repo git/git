@@ -1,56 +1,24 @@
 diff --git a/Documentation/RelNotes-1.5.1.1.txt b/Documentation/RelNotes-1.5.1.1.txt
-new file mode 100644
-index 0000000..cc22e8d
---- /dev/null
+index b48b4bc..f8c29d5 100644
+--- a/Documentation/RelNotes-1.5.1.1.txt
 +++ b/Documentation/RelNotes-1.5.1.1.txt
-@@ -0,0 +1,41 @@
-+GIT v1.5.1.1 Release Notes (draft)
-+==========================
+@@ -37,10 +37,18 @@ Fixes since v1.5.1
+   - gitweb did not show type-changing patch correctly in the
+     blobdiff view.
+ 
++  - git-svn did not error out with incorrect command line options.
 +
-+Fixes since v1.5.1
-+------------------
++  - git-svn fell into an infinite loop when insanely long commit
++    message was found.
 +
-+* Documentation updates
++  - git-svn dcommit and rebase was confused by patches that were
++    merged from another branch that is managed by git-svn.
 +
-+  - The --left-right option of rev-list and friends is documented.
-+
-+* Bugfixes
-+
-+  - "git archive" to download from remote site should not
-+    require you to be in a git repository, but it incorrectly
-+    did.
-+
-+  - "git apply" ignored -p<n> for "diff --git" formatted
-+    patches.
-+
-+  - "git rerere" recorded a conflict that had one side empty
-+    (the other side adds) incorrectly; this made merging in the
-+    other direction fail to use previously recorded resolution.
-+
-+  - t4200 test was broken where "wc -l" pads its output with
-+    spaces.
-+
-+  - "git branch -m old new" to rename branch did not work
-+    without a configuration file in ".git/config".
-+
-+  - The sample hook for notification e-mail was misnamed.
-+
-+  - gitweb did not show type-changing patch correctly in the
-+    blobdiff view.
-+
-+* Performance Tweaks
-+
-+--
-+exec >/var/tmp/1
-+O=v1.5.1-11-gb5da246
-+echo O=`git describe refs/heads/maint`
-+git shortlog --no-merges $O..refs/heads/maint
-diff --git a/RelNotes b/RelNotes
-index d5e055d..59e7391 120000
---- a/RelNotes
-+++ b/RelNotes
-@@ -1 +1 @@
--Documentation/RelNotes-1.5.1.txt
-\ No newline at end of file
-+Documentation/RelNotes-1.5.1.1.txt
-\ No newline at end of file
+ * Performance Tweaks
+ 
+ --
+ exec >/var/tmp/1
+-O=v1.5.1-26-ge94a4f6
++O=v1.5.1-31-g24c64d6
+ echo O=`git describe refs/heads/maint`
+ git shortlog --no-merges $O..refs/heads/maint
