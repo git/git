@@ -597,6 +597,9 @@ static off_t write_pack_file(void)
 	return last_obj_offset;
 }
 
+static uint32_t index_default_version = 1;
+static uint32_t index_off32_limit = 0x7fffffff;
+
 static void write_index_file(off_t last_obj_offset)
 {
 	uint32_t i;
@@ -608,7 +611,7 @@ static void write_index_file(off_t last_obj_offset)
 	uint32_t index_version;
 
 	/* if last object's offset is >= 2^31 we should use index V2 */
-	index_version = (last_obj_offset >> 31) ? 2 : 1;
+	index_version = (last_obj_offset >> 31) ? 2 : index_default_version;
 
 	/* index versions 2 and above need a header */
 	if (index_version >= 2) {
@@ -664,7 +667,7 @@ static void write_index_file(off_t last_obj_offset)
 		list = sorted_by_sha;
 		for (i = 0; i < nr_objects; i++) {
 			struct object_entry *entry = *list++;
-			uint32_t offset = (entry->offset <= 0x7fffffff) ?
+			uint32_t offset = (entry->offset <= index_off32_limit) ?
 				entry->offset : (0x80000000 | nr_large_offset++);
 			offset = htonl(offset);
 			sha1write(f, &offset, 4);
@@ -675,7 +678,7 @@ static void write_index_file(off_t last_obj_offset)
 		while (nr_large_offset) {
 			struct object_entry *entry = *list++;
 			uint64_t offset = entry->offset;
-			if (offset > 0x7fffffff) {
+			if (offset > index_off32_limit) {
 				uint32_t split[2];
 				split[0]        = htonl(offset >> 32);
 				split[1] = htonl(offset & 0xffffffff);
@@ -1712,6 +1715,17 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			use_internal_rev_list = 1;
 			thin = 1;
 			rp_av[1] = "--objects-edge";
+			continue;
+		}
+		if (!prefixcmp(arg, "--index-version=")) {
+			char *c;
+			index_default_version = strtoul(arg + 16, &c, 10);
+			if (index_default_version > 2)
+				die("bad %s", arg);
+			if (*c == ',')
+				index_off32_limit = strtoul(c+1, &c, 0);
+			if (*c || index_off32_limit & 0x80000000)
+				die("bad %s", arg);
 			continue;
 		}
 		usage(pack_usage);

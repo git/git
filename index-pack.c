@@ -671,6 +671,9 @@ static void readjust_pack_header_and_sha1(unsigned char *sha1)
 	write_or_die(output_fd, sha1, 20);
 }
 
+static uint32_t index_default_version = 1;
+static uint32_t index_off32_limit = 0x7fffffff;
+
 static int sha1_compare(const void *_a, const void *_b)
 {
 	struct object_entry *a = *(struct object_entry **)_a;
@@ -719,7 +722,7 @@ static const char *write_index_file(const char *index_name, unsigned char *sha1)
 	f = sha1fd(fd, index_name);
 
 	/* if last object's offset is >= 2^31 we should use index V2 */
-	index_version = (objects[nr_objects-1].offset >> 31) ? 2 : 1;
+	index_version = (objects[nr_objects-1].offset >> 31) ? 2 : index_default_version;
 
 	/* index versions 2 and above need a header */
 	if (index_version >= 2) {
@@ -779,7 +782,7 @@ static const char *write_index_file(const char *index_name, unsigned char *sha1)
 		list = sorted_by_sha;
 		for (i = 0; i < nr_objects; i++) {
 			struct object_entry *obj = *list++;
-			uint32_t offset = (obj->offset <= 0x7fffffff) ?
+			uint32_t offset = (obj->offset <= index_off32_limit) ?
 				obj->offset : (0x80000000 | nr_large_offset++);
 			offset = htonl(offset);
 			sha1write(f, &offset, 4);
@@ -790,7 +793,7 @@ static const char *write_index_file(const char *index_name, unsigned char *sha1)
 		while (nr_large_offset) {
 			struct object_entry *obj = *list++;
 			uint64_t offset = obj->offset;
-			if (offset > 0x7fffffff) {
+			if (offset > index_off32_limit) {
 				uint32_t split[2];
 				split[0]	= htonl(offset >> 32);
 				split[1] = htonl(offset & 0xffffffff);
@@ -929,6 +932,15 @@ int main(int argc, char **argv)
 				if (index_name || (i+1) >= argc)
 					usage(index_pack_usage);
 				index_name = argv[++i];
+			} else if (!prefixcmp(arg, "--index-version=")) {
+				char *c;
+				index_default_version = strtoul(arg + 16, &c, 10);
+				if (index_default_version > 2)
+					die("bad %s", arg);
+				if (*c == ',')
+					index_off32_limit = strtoul(c+1, &c, 0);
+				if (*c || index_off32_limit & 0x80000000)
+					die("bad %s", arg);
 			} else
 				usage(index_pack_usage);
 			continue;
