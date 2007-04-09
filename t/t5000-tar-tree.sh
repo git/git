@@ -50,8 +50,16 @@ test_expect_success \
      git-commit-tree $treeid </dev/null)'
 
 test_expect_success \
+    'git-archive' \
+    'git-archive HEAD >b.tar'
+
+test_expect_success \
     'git-tar-tree' \
-    'git-tar-tree HEAD >b.tar'
+    'git-tar-tree HEAD >b2.tar'
+
+test_expect_success \
+    'git-archive vs. git-tar-tree' \
+    'diff b.tar b2.tar'
 
 test_expect_success \
     'validate file modification time' \
