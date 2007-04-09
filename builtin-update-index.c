@@ -227,6 +227,7 @@ static void read_index_info(int line_termination)
 		char *path_name;
 		unsigned char sha1[20];
 		unsigned int mode;
+		unsigned long ul;
 		int stage;
 
 		/* This reads lines formatted in one of three formats:
@@ -249,9 +250,12 @@ static void read_index_info(int line_termination)
 		if (buf.eof)
 			break;
 
-		mode = strtoul(buf.buf, &ptr, 8);
-		if (ptr == buf.buf || *ptr != ' ')
+		errno = 0;
+		ul = strtoul(buf.buf, &ptr, 8);
+		if (ptr == buf.buf || *ptr != ' '
+		    || errno || (unsigned int) ul != ul)
 			goto bad_line;
+		mode = ul;
 
 		tab = strchr(ptr, '\t');
 		if (!tab || tab - ptr < 41)
@@ -547,7 +551,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				if (i+3 >= argc)
 					die("git-update-index: --cacheinfo <mode> <sha1> <path>");
 
-				if ((sscanf(argv[i+1], "%o", &mode) != 1) ||
+				if ((strtoul_ui(argv[i+1], 8, &mode) != 1) ||
 				    get_sha1_hex(argv[i+2], sha1) ||
 				    add_cacheinfo(mode, sha1, argv[i+3], 0))
 					die("git-update-index: --cacheinfo"
