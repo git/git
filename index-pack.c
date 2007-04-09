@@ -15,6 +15,7 @@ struct object_entry
 	off_t offset;
 	unsigned long size;
 	unsigned int hdr_size;
+	uint32_t crc32;
 	enum object_type type;
 	enum object_type real_type;
 	unsigned char sha1[20];
@@ -86,6 +87,7 @@ static unsigned char input_buffer[4096];
 static unsigned int input_offset, input_len;
 static off_t consumed_bytes;
 static SHA_CTX input_ctx;
+static uint32_t input_crc32;
 static int input_fd, output_fd, pack_fd;
 
 /* Discard current buffer used content. */
@@ -128,6 +130,7 @@ static void use(int bytes)
 {
 	if (bytes > input_len)
 		die("used more bytes than were available");
+	input_crc32 = crc32(input_crc32, input_buffer + input_offset, bytes);
 	input_len -= bytes;
 	input_offset += bytes;
 
@@ -224,8 +227,10 @@ static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_
 	unsigned long size;
 	off_t base_offset;
 	unsigned shift;
+	void *data;
 
 	obj->offset = consumed_bytes;
+	input_crc32 = crc32(0, Z_NULL, 0);
 
 	p = fill(1);
 	c = *p;
@@ -276,7 +281,9 @@ static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_
 	}
 	obj->hdr_size = consumed_bytes - obj->offset;
 
-	return unpack_entry_data(obj->offset, obj->size);
+	data = unpack_entry_data(obj->offset, obj->size);
+	obj->crc32 = input_crc32;
+	return data;
 }
 
 static void *get_data_from_pack(struct object_entry *obj)
@@ -521,7 +528,7 @@ static void parse_pack_objects(unsigned char *sha1)
 		fputc('\n', stderr);
 }
 
-static int write_compressed(int fd, void *in, unsigned int size)
+static int write_compressed(int fd, void *in, unsigned int size, uint32_t *obj_crc)
 {
 	z_stream stream;
 	unsigned long maxsize;
@@ -542,6 +549,7 @@ static int write_compressed(int fd, void *in, unsigned int size)
 
 	size = stream.total_out;
 	write_or_die(fd, out, size);
+	*obj_crc = crc32(*obj_crc, out, size);
 	free(out);
 	return size;
 }
@@ -562,8 +570,10 @@ static void append_obj_to_pack(const unsigned char *sha1, void *buf,
 	}
 	header[n++] = c;
 	write_or_die(output_fd, header, n);
+	obj[0].crc32 = crc32(0, Z_NULL, 0);
+	obj[0].crc32 = crc32(obj[0].crc32, header, n);
 	obj[1].offset = obj[0].offset + n;
-	obj[1].offset += write_compressed(output_fd, buf, size);
+	obj[1].offset += write_compressed(output_fd, buf, size, &obj[0].crc32);
 	hashcpy(obj->sha1, sha1);
 }
 
