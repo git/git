@@ -44,6 +44,7 @@ struct object_entry {
 				 * be used as the base objectto delta huge
 				 * objects against.
 				 */
+	uint32_t crc32;		/* crc of raw pack data for this object */
 };
 
 /*
@@ -381,6 +382,9 @@ static unsigned long write_object(struct sha1file *f,
 	enum object_type obj_type;
 	int to_reuse = 0;
 
+	if (!pack_to_stdout)
+		crc32_begin(f);
+
 	obj_type = entry->type;
 	if (! entry->in_pack)
 		to_reuse = 0;	/* can't reuse what we don't have */
@@ -496,6 +500,8 @@ static unsigned long write_object(struct sha1file *f,
 	if (entry->delta)
 		written_delta++;
 	written++;
+	if (!pack_to_stdout)
+		entry->crc32 = crc32_end(f);
 	return hdrlen + datalen;
 }
 
