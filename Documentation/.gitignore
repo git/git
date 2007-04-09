@@ -2,6 +2,7 @@
 *.html
 *.1
 *.7
+*.made
 howto-index.txt
 doc.dep
 cmds-*.txt
