@@ -1150,7 +1150,7 @@ static off_t get_delta_base(struct packed_git *p,
 		base_offset = c & 127;
 		while (c & 128) {
 			base_offset += 1;
-			if (!base_offset || base_offset & ~(~0UL >> 7))
+			if (!base_offset || MSB(base_offset, 7))
 				die("offset value overflow for delta base object");
 			c = base_info[used++];
 			base_offset = (base_offset << 7) + (c & 127);

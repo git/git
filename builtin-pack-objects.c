@@ -1014,7 +1014,7 @@ static void check_object(struct object_entry *entry)
 				ofs = c & 127;
 				while (c & 128) {
 					ofs += 1;
-					if (!ofs || ofs & ~(~0UL >> 7))
+					if (!ofs || MSB(ofs, 7))
 						die("delta base offset overflow in pack for %s",
 						    sha1_to_hex(entry->sha1));
 					c = buf[used_0++];

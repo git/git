@@ -249,7 +249,7 @@ static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_
 		base_offset = c & 127;
 		while (c & 128) {
 			base_offset += 1;
-			if (!base_offset || base_offset & ~(~0UL >> 7))
+			if (!base_offset || MSB(base_offset, 7))
 				bad_object(obj->offset, "offset value overflow for delta base object");
 			p = fill(1);
 			c = *p;
