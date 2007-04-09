@@ -352,6 +352,7 @@ class P4Submit(Command):
             sys.exit(128)
 
         print "Perforce checkout for depot path %s located at %s" % (depotPath, clientPath)
+        oldWorkingDirectory = os.getcwd()
         os.chdir(clientPath)
         response = raw_input("Do you want to sync %s with p4 sync? (y/n) " % clientPath)
         if response == "y" or response == "yes":
@@ -403,6 +404,11 @@ class P4Submit(Command):
                     print "Cleaning out your perforce checkout by doing p4 edit ... ; p4 revert ..."
                     system("p4 edit ... >/dev/null")
                     system("p4 revert ... >/dev/null")
+                response = raw_input("Do you want to sync from Perforce now using git-p4 rebase (y/n)? ")
+                if response == "y" or response == "yes":
+                    os.chdir(oldWorkingDirectory)
+                    rebase = P4Rebase()
+                    rebase.run([])
             os.remove(self.configFile)
 
         return True
