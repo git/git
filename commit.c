@@ -4,6 +4,8 @@
 #include "pkt-line.h"
 #include "utf8.h"
 #include "interpolate.h"
+#include "diff.h"
+#include "revision.h"
 
 int save_commit_buffer = 1;
 
@@ -808,7 +810,8 @@ static long format_commit_message(const struct commit *commit,
 		{ "%Cgreen" },	/* green */
 		{ "%Cblue" },	/* blue */
 		{ "%Creset" },	/* reset color */
-		{ "%n" }	/* newline */
+		{ "%n" },	/* newline */
+		{ "%m" },	/* left/right/bottom */
 	};
 	enum interp_index {
 		IHASH = 0, IHASH_ABBREV,
@@ -824,14 +827,15 @@ static long format_commit_message(const struct commit *commit,
 		ISUBJECT,
 		IBODY,
 		IRED, IGREEN, IBLUE, IRESET_COLOR,
-		INEWLINE
+		INEWLINE,
+		ILEFT_RIGHT,
 	};
 	struct commit_list *p;
 	char parents[1024];
 	int i;
 	enum { HEADER, SUBJECT, BODY } state;
 
-	if (INEWLINE + 1 != ARRAY_SIZE(table))
+	if (ILEFT_RIGHT + 1 != ARRAY_SIZE(table))
 		die("invalid interp table!");
 
 	/* these are independent of the commit */
@@ -852,6 +856,12 @@ static long format_commit_message(const struct commit *commit,
 	interp_set_entry(table, ITREE_ABBREV,
 			find_unique_abbrev(commit->tree->object.sha1,
 				DEFAULT_ABBREV));
+	interp_set_entry(table, ILEFT_RIGHT,
+			 (commit->object.flags & BOUNDARY)
+			 ? "-"
+			 : (commit->object.flags & SYMMETRIC_LEFT)
+			 ? "<"
+			 : ">");
 
 	parents[1] = 0;
 	for (i = 0, p = commit->parents;
