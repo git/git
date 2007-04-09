@@ -169,13 +169,33 @@ static void prepare_pack_revindex(struct pack_revindex *rix)
 	int i;
 	const char *index = p->index_data;
 
-	index += 4 * 256;
 	rix->revindex = xmalloc(sizeof(*rix->revindex) * (num_ent + 1));
-	for (i = 0; i < num_ent; i++) {
-		uint32_t hl = *((uint32_t *)(index + 24 * i));
-		rix->revindex[i].offset = ntohl(hl);
-		rix->revindex[i].nr = i;
+	index += 4 * 256;
+
+	if (p->index_version > 1) {
+		const uint32_t *off_32 =
+			(uint32_t *)(index + 8 + p->num_objects * (20 + 4));
+		const uint32_t *off_64 = off_32 + p->num_objects;
+		for (i = 0; i < num_ent; i++) {
+			uint32_t off = ntohl(*off_32++);
+			if (!(off & 0x80000000)) {
+				rix->revindex[i].offset = off;
+			} else {
+				rix->revindex[i].offset =
+					((uint64_t)ntohl(*off_64++)) << 32;
+				rix->revindex[i].offset |=
+					ntohl(*off_64++);
+			}
+			rix->revindex[i].nr = i;
+		}
+	} else {
+		for (i = 0; i < num_ent; i++) {
+			uint32_t hl = *((uint32_t *)(index + 24 * i));
+			rix->revindex[i].offset = ntohl(hl);
+			rix->revindex[i].nr = i;
+		}
 	}
+
 	/* This knows the pack format -- the 20-byte trailer
 	 * follows immediately after the last object data.
 	 */
@@ -528,11 +548,11 @@ static off_t write_one(struct sha1file *f,
 	return offset + size;
 }
 
-static void write_pack_file(void)
+static off_t write_pack_file(void)
 {
 	uint32_t i;
 	struct sha1file *f;
-	off_t offset;
+	off_t offset, last_obj_offset = 0;
 	struct pack_header hdr;
 	unsigned last_percent = 999;
 	int do_progress = progress;
@@ -555,6 +575,7 @@ static void write_pack_file(void)
 	if (!nr_result)
 		goto done;
 	for (i = 0; i < nr_objects; i++) {
+		last_obj_offset = offset;
 		offset = write_one(f, objects + i, offset);
 		if (do_progress) {
 			unsigned percent = written * 100 / nr_result;
@@ -572,9 +593,11 @@ static void write_pack_file(void)
 	if (written != nr_result)
 		die("wrote %u objects while expecting %u", written, nr_result);
 	sha1close(f, pack_file_sha1, 1);
+
+	return last_obj_offset;
 }
 
-static void write_index_file(void)
+static void write_index_file(off_t last_obj_offset)
 {
 	uint32_t i;
 	struct sha1file *f = sha1create("%s-%s.%s", base_name,
@@ -582,6 +605,18 @@ static void write_index_file(void)
 	struct object_entry **list = sorted_by_sha;
 	struct object_entry **last = list + nr_result;
 	uint32_t array[256];
+	uint32_t index_version;
+
+	/* if last object's offset is >= 2^31 we should use index V2 */
+	index_version = (last_obj_offset >> 31) ? 2 : 1;
+
+	/* index versions 2 and above need a header */
+	if (index_version >= 2) {
+		struct pack_idx_header hdr;
+		hdr.idx_signature = htonl(PACK_IDX_SIGNATURE);
+		hdr.idx_version = htonl(index_version);
+		sha1write(f, &hdr, sizeof(hdr));
+	}
 
 	/*
 	 * Write the first-level table (the list is sorted,
@@ -607,10 +642,49 @@ static void write_index_file(void)
 	list = sorted_by_sha;
 	for (i = 0; i < nr_result; i++) {
 		struct object_entry *entry = *list++;
-		uint32_t offset = htonl(entry->offset);
-		sha1write(f, &offset, 4);
+		if (index_version < 2) {
+			uint32_t offset = htonl(entry->offset);
+			sha1write(f, &offset, 4);
+		}
 		sha1write(f, entry->sha1, 20);
 	}
+
+	if (index_version >= 2) {
+		unsigned int nr_large_offset = 0;
+
+		/* write the crc32 table */
+		list = sorted_by_sha;
+		for (i = 0; i < nr_objects; i++) {
+			struct object_entry *entry = *list++;
+			uint32_t crc32_val = htonl(entry->crc32);
+			sha1write(f, &crc32_val, 4);
+		}
+
+		/* write the 32-bit offset table */
+		list = sorted_by_sha;
+		for (i = 0; i < nr_objects; i++) {
+			struct object_entry *entry = *list++;
+			uint32_t offset = (entry->offset <= 0x7fffffff) ?
+				entry->offset : (0x80000000 | nr_large_offset++);
+			offset = htonl(offset);
+			sha1write(f, &offset, 4);
+		}
+
+		/* write the large offset table */
+		list = sorted_by_sha;
+		while (nr_large_offset) {
+			struct object_entry *entry = *list++;
+			uint64_t offset = entry->offset;
+			if (offset > 0x7fffffff) {
+				uint32_t split[2];
+				split[0]        = htonl(offset >> 32);
+				split[1] = htonl(offset & 0xffffffff);
+				sha1write(f, split, 8);
+				nr_large_offset--;
+			}
+		}
+	}
+
 	sha1write(f, pack_file_sha1, 20);
 	sha1close(f, NULL, 1);
 }
@@ -1698,6 +1772,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (reuse_cached_pack(object_list_sha1))
 		;
 	else {
+		off_t last_obj_offset;
 		if (nr_result)
 			prepare_pack(window, depth);
 		if (progress == 1 && pack_to_stdout) {
@@ -1707,9 +1782,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			signal(SIGALRM, SIG_IGN );
 			progress_update = 0;
 		}
-		write_pack_file();
+		last_obj_offset = write_pack_file();
 		if (!pack_to_stdout) {
-			write_index_file();
+			write_index_file(last_obj_offset);
 			puts(sha1_to_hex(object_list_sha1));
 		}
 	}
