@@ -494,6 +494,7 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 	p->index_version = 1;
 	p->index_data = idx_map;
 	p->index_size = idx_size;
+	p->num_objects = nr;
 	return 0;
 }
 
@@ -605,11 +606,11 @@ static int open_packed_git_1(struct packed_git *p)
 			p->pack_name, ntohl(hdr.hdr_version));
 
 	/* Verify the pack matches its index. */
-	if (num_packed_objects(p) != ntohl(hdr.hdr_entries))
+	if (p->num_objects != ntohl(hdr.hdr_entries))
 		return error("packfile %s claims to have %u objects"
-			" while index size indicates %u objects",
-			p->pack_name, ntohl(hdr.hdr_entries),
-			num_packed_objects(p));
+			     " while index indicates %u objects",
+			     p->pack_name, ntohl(hdr.hdr_entries),
+			     p->num_objects);
 	if (lseek(p->pack_fd, p->pack_size - sizeof(sha1), SEEK_SET) == -1)
 		return error("end of packfile %s is unavailable", p->pack_name);
 	if (read_in_full(p->pack_fd, sha1, sizeof(sha1)) != sizeof(sha1))
@@ -1526,18 +1527,12 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 	return data;
 }
 
-uint32_t num_packed_objects(const struct packed_git *p)
-{
-	/* See check_packed_git_idx() */
-	return (uint32_t)((p->index_size - 20 - 20 - 4*256) / 24);
-}
-
 const unsigned char *nth_packed_object_sha1(const struct packed_git *p,
 					    uint32_t n)
 {
 	const unsigned char *index = p->index_data;
 	index += 4 * 256;
-	if (num_packed_objects(p) <= n)
+	if (n >= p->num_objects)
 		return NULL;
 	return index + 24 * n + 4;
 }

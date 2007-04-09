@@ -164,7 +164,7 @@ static int cmp_offset(const void *a_, const void *b_)
 static void prepare_pack_revindex(struct pack_revindex *rix)
 {
 	struct packed_git *p = rix->p;
-	int num_ent = num_packed_objects(p);
+	int num_ent = p->num_objects;
 	int i;
 	const char *index = p->index_data;
 
@@ -198,7 +198,7 @@ static struct revindex_entry * find_packed_object(struct packed_git *p,
 		prepare_pack_revindex(rix);
 	revindex = rix->revindex;
 	lo = 0;
-	hi = num_packed_objects(p) + 1;
+	hi = p->num_objects + 1;
 	do {
 		int mi = (lo + hi) / 2;
 		if (revindex[mi].offset == ofs) {
