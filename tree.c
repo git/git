@@ -143,6 +143,14 @@ struct tree *lookup_tree(const unsigned char *sha1)
 	return (struct tree *) obj;
 }
 
+/*
+ * NOTE! Tree refs to external git repositories
+ * (ie gitlinks) do not count as real references.
+ *
+ * You don't have to have those repositories
+ * available at all, much less have the objects
+ * accessible from the current repository.
+ */
 static void track_tree_refs(struct tree *item)
 {
 	int n_refs = 0, i;
@@ -152,8 +160,11 @@ static void track_tree_refs(struct tree *item)
 
 	/* Count how many entries there are.. */
 	init_tree_desc(&desc, item->buffer, item->size);
-	while (tree_entry(&desc, &entry))
+	while (tree_entry(&desc, &entry)) {
+		if (S_ISDIRLNK(entry.mode))
+			continue;
 		n_refs++;
+	}
 
 	/* Allocate object refs and walk it again.. */
 	i = 0;
@@ -162,6 +173,8 @@ static void track_tree_refs(struct tree *item)
 	while (tree_entry(&desc, &entry)) {
 		struct object *obj;
 
+		if (S_ISDIRLNK(entry.mode))
+			continue;
 		if (S_ISDIR(entry.mode))
 			obj = &lookup_tree(entry.sha1)->object;
 		else
