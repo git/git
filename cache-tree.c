@@ -326,7 +326,7 @@ static int update_one(struct cache_tree *it,
 			mode = ntohl(ce->ce_mode);
 			entlen = pathlen - baselen;
 		}
-		if (!missing_ok && !has_sha1_file(sha1))
+		if (mode != S_IFDIRLNK && !missing_ok && !has_sha1_file(sha1))
 			return error("invalid object %s", sha1_to_hex(sha1));
 
 		if (!ce->ce_mode)

@@ -6,6 +6,7 @@
 #include "cache.h"
 #include "blob.h"
 #include "tree.h"
+#include "commit.h"
 #include "quote.h"
 #include "builtin.h"
 
@@ -59,7 +60,24 @@ static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 	int retval = 0;
 	const char *type = blob_type;
 
-	if (S_ISDIR(mode)) {
+	if (S_ISDIRLNK(mode)) {
+		/*
+		 * Maybe we want to have some recursive version here?
+		 *
+		 * Something like:
+		 *
+		if (show_subprojects(base, baselen, pathname)) {
+			if (fork()) {
+				chdir(base);
+				exec ls-tree;
+			}
+			waitpid();
+		}
+		 *
+		 * ..or similar..
+		 */
+		type = commit_type;
+	} else if (S_ISDIR(mode)) {
 		if (show_recursive(base, baselen, pathname)) {
 			retval = READ_TREE_RECURSIVE;
 			if (!(ls_options & LS_SHOW_TREES))
