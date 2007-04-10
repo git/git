@@ -353,6 +353,9 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 			     !strcmp(de->d_name + 1, "git")))
 				continue;
 			len = strlen(de->d_name);
+			/* Ignore overly long pathnames! */
+			if (len + baselen + 8 > sizeof(fullname))
+				continue;
 			memcpy(fullname + baselen, de->d_name, len+1);
 			if (simplify_away(fullname, baselen + len, simplify))
 				continue;
