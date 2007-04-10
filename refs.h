@@ -60,4 +60,7 @@ extern int check_ref_format(const char *target);
 /** rename ref, return 0 on success **/
 extern int rename_ref(const char *oldref, const char *newref, const char *logmsg);
 
+/** resolve ref in nested "gitlink" repository */
+extern int resolve_gitlink_ref(const char *name, const char *refname, unsigned char *result);
+
 #endif /* REFS_H */
