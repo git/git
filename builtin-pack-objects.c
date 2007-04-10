@@ -233,12 +233,6 @@ static struct revindex_entry * find_packed_object(struct packed_git *p,
 	die("internal error: pack revindex corrupt");
 }
 
-static off_t find_packed_object_size(struct packed_git *p, off_t ofs)
-{
-	struct revindex_entry *entry = find_packed_object(p, ofs);
-	return entry[1].offset - ofs;
-}
-
 static const unsigned char *find_packed_object_name(struct packed_git *p,
 						    off_t ofs)
 {
@@ -319,6 +313,28 @@ static int check_pack_inflate(struct packed_git *p,
 	return (st == Z_STREAM_END &&
 		stream.total_out == expect &&
 		stream.total_in == len) ? 0 : -1;
+}
+
+static int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
+			  off_t offset, off_t len, unsigned int nr)
+{
+	const uint32_t *index_crc;
+	uint32_t data_crc = crc32(0, Z_NULL, 0);
+
+	do {
+		unsigned int avail;
+		void *data = use_pack(p, w_curs, offset, &avail);
+		if (avail > len)
+			avail = len;
+		data_crc = crc32(data_crc, data, avail);
+		offset += avail;
+		len -= avail;
+	} while (len);
+
+	index_crc = p->index_data;
+	index_crc += 2 + 256 + p->num_objects * (20/4) + nr;
+
+	return data_crc != ntohl(*index_crc);
 }
 
 static void copy_pack_data(struct sha1file *f,
@@ -485,6 +501,7 @@ static unsigned long write_object(struct sha1file *f,
 	else {
 		struct packed_git *p = entry->in_pack;
 		struct pack_window *w_curs = NULL;
+		struct revindex_entry *revidx;
 		off_t offset;
 
 		if (entry->delta) {
@@ -507,12 +524,17 @@ static unsigned long write_object(struct sha1file *f,
 			hdrlen += 20;
 		}
 
-		offset = entry->in_pack_offset + entry->in_pack_header_size;
-		datalen = find_packed_object_size(p, entry->in_pack_offset)
-				- entry->in_pack_header_size;
-		if (!pack_to_stdout && check_pack_inflate(p, &w_curs,
-				offset, datalen, entry->size))
-			die("corrupt delta in pack %s", sha1_to_hex(entry->sha1));
+		offset = entry->in_pack_offset;
+		revidx = find_packed_object(p, offset);
+		datalen = revidx[1].offset - offset;
+		if (!pack_to_stdout && p->index_version > 1 &&
+		    check_pack_crc(p, &w_curs, offset, datalen, revidx->nr))
+			die("bad packed object CRC for %s", sha1_to_hex(entry->sha1));
+		offset += entry->in_pack_header_size;
+		datalen -= entry->in_pack_header_size;
+		if (!pack_to_stdout && p->index_version == 1 &&
+		    check_pack_inflate(p, &w_curs, offset, datalen, entry->size))
+			die("corrupt packed object for %s", sha1_to_hex(entry->sha1));
 		copy_pack_data(f, p, &w_curs, offset, datalen);
 		unuse_pack(&w_curs);
 		reused++;
