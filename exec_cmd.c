@@ -5,8 +5,12 @@
 #define MAX_ARGS	32
 
 extern char **environ;
-static const char *builtin_exec_path = GIT_EXEC_PATH;
 static const char *current_exec_path;
+
+static const char *builtin_exec_path(void)
+{
+	return GIT_EXEC_PATH;
+}
 
 void git_set_exec_path(const char *exec_path)
 {
@@ -27,7 +31,7 @@ const char *git_exec_path(void)
 		return env;
 	}
 
-	return builtin_exec_path;
+	return builtin_exec_path();
 }
 
 
@@ -37,7 +41,7 @@ int execv_git_cmd(const char **argv)
 	int i;
 	const char *paths[] = { current_exec_path,
 				getenv(EXEC_PATH_ENVIRONMENT),
-				builtin_exec_path };
+				builtin_exec_path() };
 
 	for (i = 0; i < ARRAY_SIZE(paths); ++i) {
 		size_t len;
@@ -146,7 +150,7 @@ int spawnv_git_cmd(const char **argv, int pin[2], int pout[2])
 	pid_t pid;
 	const char *paths[] = { current_exec_path,
 				getenv(EXEC_PATH_ENVIRONMENT),
-				builtin_exec_path };
+				builtin_exec_path() };
 	char p[3][PATH_MAX + 1];
 	char *usedpaths[4], **up = usedpaths;
 	const char *tmp;
