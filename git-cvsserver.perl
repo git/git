@@ -360,11 +360,51 @@ sub req_add
 
     argsplit("add");
 
+    my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
+    $updater->update();
+
+    argsfromdir($updater);
+
     my $addcount = 0;
 
     foreach my $filename ( @{$state->{args}} )
     {
         $filename = filecleanup($filename);
+
+        my $meta = $updater->getmeta($filename);
+        my $wrev = revparse($filename);
+
+        if ($wrev && $meta && ($wrev < 0))
+        {
+            # previously removed file, add back
+            $log->info("added file $filename was previously removed, send 1.$meta->{revision}");
+
+            print "MT +updated\n";
+            print "MT text U \n";
+            print "MT fname $filename\n";
+            print "MT newline\n";
+            print "MT -updated\n";
+
+            unless ( $state->{globaloptions}{-n} )
+            {
+                my ( $filepart, $dirpart ) = filenamesplit($filename,1);
+
+                print "Created $dirpart\n";
+                print $state->{CVSROOT} . "/$state->{module}/$filename\n";
+
+                # this is an "entries" line
+                my $kopts = kopts_from_path($filepart);
+                $log->debug("/$filepart/1.$meta->{revision}//$kopts/");
+                print "/$filepart/1.$meta->{revision}//$kopts/\n";
+                # permissions
+                $log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
+                print "u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}\n";
+                # transmit file
+                transmitfile($meta->{filehash});
+            }
+
+            next;
+        }
 
         unless ( defined ( $state->{entries}{$filename}{modified_filename} ) )
         {
