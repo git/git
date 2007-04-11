@@ -417,6 +417,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int numbered = 0;
 	int start_number = -1;
 	int keep_subject = 0;
+	int subject_prefix = 0;
 	int ignore_if_in_upstream = 0;
 	int thread = 0;
 	const char *in_reply_to = NULL;
@@ -434,6 +435,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.ignore_merges = 1;
 	rev.diffopt.msg_sep = "";
 	rev.diffopt.recursive = 1;
+	rev.subject_prefix = "PATCH";
 
 	rev.extra_headers = extra_headers;
 
@@ -509,8 +511,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			if (i == argc)
 				die("Need a Message-Id for --in-reply-to");
 			in_reply_to = argv[i];
-		}
-		else if (!prefixcmp(argv[i], "--suffix="))
+		} else if (!prefixcmp(argv[i], "--subject-prefix=")) {
+			subject_prefix = 1;
+			rev.subject_prefix = argv[i] + 17;
+		} else if (!prefixcmp(argv[i], "--suffix="))
 			fmt_patch_suffix = argv[i] + 9;
 		else
 			argv[j++] = argv[i];
@@ -521,6 +525,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		start_number = 1;
 	if (numbered && keep_subject)
 		die ("-n and -k are mutually exclusive.");
+	if (keep_subject && subject_prefix)
+		die ("--subject-prefix and -k are mutually exclusive.");
 
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
 	if (argc > 1)
