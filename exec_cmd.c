@@ -8,7 +8,36 @@ static const char *argv_exec_path;
 
 static const char *builtin_exec_path(void)
 {
+#ifndef __MINGW32__
 	return GIT_EXEC_PATH;
+#else
+	int len;
+	char *p, *q, *sl;
+	static char *ep;
+	if (ep)
+		return ep;
+
+	len = strlen(_pgmptr);
+	if (len < 2)
+		return ep = ".";
+
+	p = ep = xmalloc(len+1);
+	q = _pgmptr;
+	sl = NULL;
+	/* copy program name, turn '\\' into '/', skip last part */
+	while ((*p = *q)) {
+		if (*q == '\\' || *q == '/') {
+			*p = '/';
+			sl = p;
+		}
+		p++, q++;
+	}
+	if (sl)
+		*sl = '\0';
+	else
+		ep[0] = '.', ep[1] = '\0';
+	return ep;
+#endif
 }
 
 void git_set_argv_exec_path(const char *exec_path)
