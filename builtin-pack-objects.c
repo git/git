@@ -781,12 +781,19 @@ static unsigned name_hash(const char *name)
 
 static int add_object_entry(const unsigned char *sha1, unsigned hash, int exclude)
 {
-	uint32_t idx = nr_objects;
 	struct object_entry *entry;
-	struct packed_git *p;
+	struct packed_git *p, *found_pack = NULL;
 	off_t found_offset = 0;
-	struct packed_git *found_pack = NULL;
-	int ix, status = 0;
+	int ix;
+
+	ix = nr_objects ? locate_object_entry_hash(sha1) : -1;
+	if (ix >= 0) {
+		if (exclude) {
+			entry = objects + object_ix[ix] - 1;
+			entry->preferred_base = 1;
+		}
+		return 0;
+	}
 
 	if (!exclude) {
 		for (p = packed_git; p; p = p->next) {
@@ -803,43 +810,34 @@ static int add_object_entry(const unsigned char *sha1, unsigned hash, int exclud
 			}
 		}
 	}
-	if ((entry = locate_object_entry(sha1)) != NULL)
-		goto already_added;
 
-	if (idx >= nr_alloc) {
-		nr_alloc = (idx + 1024) * 3 / 2;
+	if (nr_objects >= nr_alloc) {
+		nr_alloc = (nr_alloc  + 1024) * 3 / 2;
 		objects = xrealloc(objects, nr_alloc * sizeof(*entry));
 	}
-	entry = objects + idx;
-	nr_objects = idx + 1;
+
+	entry = objects + nr_objects++;
 	memset(entry, 0, sizeof(*entry));
 	hashcpy(entry->sha1, sha1);
 	entry->hash = hash;
+	if (exclude)
+		entry->preferred_base = 1;
+	if (found_pack) {
+		entry->in_pack = found_pack;
+		entry->in_pack_offset = found_offset;
+	}
 
 	if (object_ix_hashsz * 3 <= nr_objects * 4)
 		rehash_objects();
-	else {
-		ix = locate_object_entry_hash(entry->sha1);
-		if (0 <= ix)
-			die("internal error in object hashing.");
-		object_ix[-1 - ix] = idx + 1;
-	}
-	status = 1;
+	else
+		object_ix[-1 - ix] = nr_objects;
 
- already_added:
 	if (progress_update) {
 		fprintf(stderr, "Counting objects...%u\r", nr_objects);
 		progress_update = 0;
 	}
-	if (exclude)
-		entry->preferred_base = 1;
-	else {
-		if (found_pack) {
-			entry->in_pack = found_pack;
-			entry->in_pack_offset = found_offset;
-		}
-	}
-	return status;
+
+	return 1;
 }
 
 struct pbase_tree_cache {
