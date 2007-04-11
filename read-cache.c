@@ -365,6 +365,10 @@ int add_file_to_cache(const char *path, int verbose)
 		die("%s: can only add regular files, symbolic links or git-directories", path);
 
 	namelen = strlen(path);
+	if (S_ISDIR(st.st_mode)) {
+		while (namelen && path[namelen-1] == '/')
+			namelen--;
+	}
 	size = cache_entry_size(namelen);
 	ce = xcalloc(1, size);
 	memcpy(ce->name, path, namelen);

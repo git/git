@@ -33,7 +33,8 @@ struct dir_struct {
 	int nr, alloc;
 	unsigned int show_ignored:1,
 		     show_other_directories:1,
-		     hide_empty_directories:1;
+		     hide_empty_directories:1,
+		     no_dirlinks:1;
 	struct dir_entry **entries;
 
 	/* Exclude info */
