@@ -277,9 +277,9 @@ int base_name_compare(const char *name1, int len1, int mode1,
 		return cmp;
 	c1 = name1[len];
 	c2 = name2[len];
-	if (!c1 && (S_ISDIR(mode1) || S_ISDIRLNK(mode1)))
+	if (!c1 && S_ISDIR(mode1))
 		c1 = '/';
-	if (!c2 && (S_ISDIR(mode2) || S_ISDIRLNK(mode2)))
+	if (!c2 && S_ISDIR(mode2))
 		c2 = '/';
 	return (c1 < c2) ? -1 : (c1 > c2) ? 1 : 0;
 }
