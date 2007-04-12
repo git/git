@@ -18,7 +18,7 @@
 #include "cache-tree.h"
 
 static char blame_usage[] =
-"git-blame [-c] [-l] [-t] [-f] [-n] [-p] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [--contents <filename>] [--incremental] [commit] [--] file\n"
+"git-blame [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-p] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [--contents <filename>] [--incremental] [commit] [--] file\n"
 "  -c                  Use the same output mode as git-annotate (Default: off)\n"
 "  -b                  Show blank SHA-1 for boundary commits (Default: off)\n"
 "  -l                  Show long commit SHA1 (Default: off)\n"
@@ -26,6 +26,7 @@ static char blame_usage[] =
 "  -t                  Show raw timestamp (Default: off)\n"
 "  -f, --show-name     Show original filename (Default: auto)\n"
 "  -n, --show-number   Show original linenumber (Default: off)\n"
+"  -s                  Suppress author name and timestamp (Default: off)\n"
 "  -p, --porcelain     Show in a format designed for machine consumption\n"
 "  -L n,m              Process only line range n,m, counting from 1\n"
 "  -M, -C              Find line movements within and across files\n"
@@ -1483,6 +1484,7 @@ static const char *format_time(unsigned long time, const char *tz_str,
 #define OUTPUT_SHOW_NAME	020
 #define OUTPUT_SHOW_NUMBER	040
 #define OUTPUT_SHOW_SCORE      0100
+#define OUTPUT_NO_AUTHOR       0200
 
 static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent)
 {
@@ -1577,10 +1579,15 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 			if (opt & OUTPUT_SHOW_NUMBER)
 				printf(" %*d", max_orig_digits,
 				       ent->s_lno + 1 + cnt);
-			printf(" (%-*.*s %10s %*d) ",
-			       longest_author, longest_author, ci.author,
-			       format_time(ci.author_time, ci.author_tz,
-					   show_raw_time),
+
+			if (!(opt & OUTPUT_NO_AUTHOR))
+				printf(" (%-*.*s %10s",
+				       longest_author, longest_author,
+				       ci.author,
+				       format_time(ci.author_time,
+						   ci.author_tz,
+						   show_raw_time));
+			printf(" %*d) ",
 			       max_digits, ent->lno + 1 + cnt);
 		}
 		do {
@@ -2092,6 +2099,8 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			output_option |= OUTPUT_RAW_TIMESTAMP;
 		else if (!strcmp("-l", arg))
 			output_option |= OUTPUT_LONG_OBJECT_NAME;
+		else if (!strcmp("-s", arg))
+			output_option |= OUTPUT_NO_AUTHOR;
 		else if (!strcmp("-S", arg) && ++i < argc)
 			revs_file = argv[i];
 		else if (!prefixcmp(arg, "-M")) {

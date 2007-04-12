@@ -8,7 +8,7 @@ git-blame - Show what revision and author last modified each line of a file
 SYNOPSIS
 --------
 [verse]
-'git-blame' [-c] [-l] [-t] [-f] [-n] [-p] [--incremental] [-L n,m]
+'git-blame' [-c] [-b] [--root] [-s] [-l] [-t] [-f] [-n] [-p] [--incremental] [-L n,m]
             [-S <revs-file>] [-M] [-C] [-C] [--since=<date>]
             [<rev> | --contents <file>] [--] <file>
 
@@ -59,6 +59,9 @@ include::blame-options.txt[]
 
 -n, --show-number::
 	Show line number in the original commit (Default: off).
+
+-s::
+	Suppress author name and timestamp from the output.
 
 THE PORCELAIN FORMAT
 --------------------
