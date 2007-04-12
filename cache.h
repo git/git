@@ -472,8 +472,8 @@ extern int pager_in_use;
 extern int pager_use_color;
 
 /* base85 */
-int decode_85(char *dst, char *line, int linelen);
-void encode_85(char *buf, unsigned char *data, int bytes);
+int decode_85(char *dst, const char *line, int linelen);
+void encode_85(char *buf, const unsigned char *data, int bytes);
 
 /* alloc.c */
 struct blob;

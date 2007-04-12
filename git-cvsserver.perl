@@ -843,6 +843,7 @@ sub req_update
         if ( defined ( $wrev )
              and defined($meta->{revision})
              and $wrev == $meta->{revision}
+             and defined($state->{entries}{$filename}{modified_hash})
              and not exists ( $state->{opt}{C} ) )
         {
             $log->info("Tell the client the file is modified");

@@ -534,7 +534,7 @@ static void get_default_heads(void)
 	 * "show_unreachable" flag.
 	 */
 	if (!default_refs) {
-		error("No default references");
+		fprintf(stderr, "notice: No default references\n");
 		show_unreachable = 0;
 	}
 }
@@ -554,15 +554,23 @@ static int fsck_head_link(void)
 {
 	unsigned char sha1[20];
 	int flag;
-	const char *head_points_at = resolve_ref("HEAD", sha1, 1, &flag);
+	int null_is_error = 0;
+	const char *head_points_at = resolve_ref("HEAD", sha1, 0, &flag);
 
-	if (!head_points_at || !(flag & REF_ISSYMREF))
-		return error("HEAD is not a symbolic ref");
-	if (prefixcmp(head_points_at, "refs/heads/"))
+	if (!head_points_at)
+		return error("Invalid HEAD");
+	if (!strcmp(head_points_at, "HEAD"))
+		/* detached HEAD */
+		null_is_error = 1;
+	else if (prefixcmp(head_points_at, "refs/heads/"))
 		return error("HEAD points to something strange (%s)",
 			     head_points_at);
-	if (is_null_sha1(sha1))
-		return error("HEAD: not a valid git pointer");
+	if (is_null_sha1(sha1)) {
+		if (null_is_error)
+			return error("HEAD: detached HEAD points at nothing");
+		fprintf(stderr, "notice: HEAD points to an unborn branch (%s)\n",
+			head_points_at + 11);
+	}
 	return 0;
 }
 

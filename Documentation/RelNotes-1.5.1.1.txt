@@ -1,4 +1,4 @@
-GIT v1.5.1.1 Release Notes (draft)
+GIT v1.5.1.1 Release Notes
 ==========================
 
 Fixes since v1.5.1
@@ -10,7 +10,22 @@ Fixes since v1.5.1
 
   - The documentation for cvsimport has been majorly improved.
 
+  - "git-show-ref --exclude-existing" was documented.
+
 * Bugfixes
+
+  - The implementation of -p option in "git cvsexportcommit" had
+    the meaning of -C (context reduction) option wrong, and
+    loosened the context requirements when it was told to be
+    strict.
+
+  - "git cvsserver" did not behave like the real cvsserver when
+    client side removed a file from the working tree without
+    doing anything else on the path.  In such a case, it should
+    restore it from the checked out revision.
+
+  - "git fsck" issued an alarming error message on detached
+    HEAD.  It is not an error since at least 1.5.0.
 
   - "git send-email" produced of References header of unbounded length;
     fixed this with line-folding.
@@ -37,10 +52,10 @@ Fixes since v1.5.1
   - gitweb did not show type-changing patch correctly in the
     blobdiff view.
 
-* Performance Tweaks
+  - git-svn did not error out with incorrect command line options.
 
---
-exec >/var/tmp/1
-O=v1.5.1-26-ge94a4f6
-echo O=`git describe refs/heads/maint`
-git shortlog --no-merges $O..refs/heads/maint
+  - git-svn fell into an infinite loop when insanely long commit
+    message was found.
+
+  - git-svn dcommit and rebase was confused by patches that were
+    merged from another branch that is managed by git-svn.
