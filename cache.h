@@ -151,6 +151,8 @@ enum object_type {
 #define CONFIG_ENVIRONMENT "GIT_CONFIG"
 #define CONFIG_LOCAL_ENVIRONMENT "GIT_CONFIG_LOCAL"
 #define EXEC_PATH_ENVIRONMENT "GIT_EXEC_PATH"
+#define GITATTRIBUTES_FILE ".gitattributes"
+#define INFOATTRIBUTES_FILE "info/attributes"
 
 extern int is_bare_repository_cfg;
 extern int is_bare_repository(void);

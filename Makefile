@@ -283,7 +283,7 @@ LIB_H = \
 	diff.h object.h pack.h pkt-line.h quote.h refs.h list-objects.h sideband.h \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
 	tree-walk.h log-tree.h dir.h path-list.h unpack-trees.h builtin.h \
-	utf8.h reflog-walk.h patch-ids.h
+	utf8.h reflog-walk.h attr.h
 
 DIFF_OBJS = \
 	diff.o diff-lib.o diffcore-break.o diffcore-order.o \
@@ -305,7 +305,7 @@ LIB_OBJS = \
 	write_or_die.o trace.o list-objects.o grep.o match-trees.o \
 	alloc.o merge-file.o path-list.o help.o unpack-trees.o $(DIFF_OBJS) \
 	color.o wt-status.o archive-zip.o archive-tar.o shallow.o utf8.o \
-	convert.o
+	convert.o attr.o
 
 BUILTIN_OBJS = \
 	builtin-add.o \
@@ -316,6 +316,7 @@ BUILTIN_OBJS = \
 	builtin-branch.o \
 	builtin-bundle.o \
 	builtin-cat-file.o \
+	builtin-check-attr.o \
 	builtin-checkout-index.o \
 	builtin-check-ref-format.o \
 	builtin-commit-tree.o \

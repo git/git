@@ -234,6 +234,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "cat-file", cmd_cat_file, RUN_SETUP },
 		{ "checkout-index", cmd_checkout_index, RUN_SETUP },
 		{ "check-ref-format", cmd_check_ref_format },
+		{ "check-attr", cmd_check_attr, RUN_SETUP | NOT_BARE },
 		{ "cherry", cmd_cherry, RUN_SETUP },
 		{ "cherry-pick", cmd_cherry_pick, RUN_SETUP | NOT_BARE },
 		{ "commit-tree", cmd_commit_tree, RUN_SETUP },
