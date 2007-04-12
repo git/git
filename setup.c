@@ -1,8 +1,15 @@
 #include "cache.h"
 
+#ifdef __MINGW32__
+static inline int is_dir_sep(char c) { return c == '/' || c == '\\'; }
+#else
+static inline int is_dir_sep(char c) { return c == '/'; }
+#endif
+
 const char *prefix_path(const char *prefix, int len, const char *path)
 {
 	const char *orig = path;
+	int do_pfx;
 	for (;;) {
 		char c;
 		if (*path != '.')
@@ -14,7 +21,7 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 			break;
 		}
 		/* "./" */
-		if (c == '/') {
+		if (is_dir_sep(c)) {
 			path += 2;
 			continue;
 		}
@@ -23,7 +30,7 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 		c = path[2];
 		if (!c)
 			path += 2;
-		else if (c == '/')
+		else if (is_dir_sep(c))
 			path += 3;
 		else
 			break;
@@ -33,15 +40,31 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 			if (!len)
 				die("'%s' is outside repository", orig);
 			len--;
-		} while (len && prefix[len-1] != '/');
+		} while (len && !is_dir_sep(prefix[len-1]));
 		continue;
 	}
-	if (len) {
+	do_pfx = len;
+#ifdef __MINGW32__
+	/* we want to convert '\' in path to '/' (prefix already has '/') */
+	{
+		const char *p = path;
+		while (!do_pfx && *p) {
+			do_pfx = *p++ == '\\';
+		}
+	}
+#endif
+	if (do_pfx) {
 		int speclen = strlen(path);
 		char *n = xmalloc(speclen + len + 1);
+		char *p;
 	
 		memcpy(n, prefix, len);
 		memcpy(n + len, path, speclen+1);
+#ifdef __MINGW32__
+		for (p = n + len; *p; p++)
+			if (*p == '\\')
+				*p = '/';
+#endif
 		path = n;
 	}
 	return path;
@@ -55,10 +78,24 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
 {
 	static char path[PATH_MAX];
+#ifndef __MINGW32__
 	if (!pfx || !*pfx || arg[0] == '/')
 		return arg;
+#else
+	char *p;
+	/* don't add prefix to absolute paths */
+	const int is_absolute =
+		is_dir_sep(arg[0]) ||
+		(arg[0] && arg[1] == ':' && is_dir_sep(arg[2]));
+	if (is_absolute)
+		pfx_len = 0;
+	else
+#endif
 	memcpy(path, pfx, pfx_len);
 	strcpy(path + pfx_len, arg);
+	for (p = path + pfx_len; *p; p++)
+		if (*p == '\\')
+			*p = '/';
 	return path;
 }
 
