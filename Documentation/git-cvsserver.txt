@@ -31,6 +31,10 @@ over pserver for anonymous CVS access.
 
 CVS clients cannot tag, branch or perform GIT merges.
 
+git-cvsserver maps GIT branches to CVS modules. This is very different
+from what most CVS users would expect since in CVS modules usually represent
+one or more directories.
+
 INSTALLATION
 ------------
 
