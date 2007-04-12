@@ -435,7 +435,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.ignore_merges = 1;
 	rev.diffopt.msg_sep = "";
 	rev.diffopt.recursive = 1;
-	rev.subject_prefix = "PATCH";
 
 	rev.extra_headers = extra_headers;
 
