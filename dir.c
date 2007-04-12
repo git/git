@@ -375,6 +375,8 @@ static enum directory_treatment treat_directory(struct dir_struct *dir,
 		return recurse_into_directory;
 
 	case index_gitdir:
+		if (dir->show_other_directories)
+			return ignore_directory;
 		return show_directory;
 
 	case index_nonexistent:
