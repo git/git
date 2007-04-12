@@ -114,8 +114,14 @@ git-cvsserver uses one database per git head (i.e. CVS module) to
 store information about the repository for faster access. The
 database doesn't contain any persitent data and can be completly
 regenerated from the git repository at any time. The database
-needs to be updated (i.e. written to) after every commit. That
-means that even if you offer only read access (e.g. by using
+needs to be updated (i.e. written to) after every commit.
+
+If the commit is done directly by using git (as opposed to
+using git-cvsserver) the update will need to happen on the
+next repository access by git-cvsserver, independent of
+access method and requested operation.
+
+That means that even if you offer only read access (e.g. by using
 the pserver method), git-cvsserver should have write access to
 the database to work reliably (otherwise you need to make sure
 that the database if up-to-date all the time git-cvsserver is run).
@@ -125,7 +131,7 @@ By default it uses SQLite databases in the git directory, named
 temporary files in the same directory as the database file on
 write so it might not be enough to grant the users using
 git-cvsserver write access to the database file without granting
-them also write access to the directory.
+them write access to the directory, too.
 
 You can configure the database backend with the following
 configuration variables:
