@@ -728,7 +728,7 @@ git$X: git.c common-cmds.h $(BUILTIN_OBJS) $(GITLIBS) GIT-CFLAGS
 help.o: common-cmds.h
 
 git-merge-subtree$X: git-merge-recursive$X
-	rm -f $@ && ln git-merge-recursive$X $@
+	$(QUIET_BUILT_IN)rm -f $@ && ln git-merge-recursive$X $@
 
 $(BUILT_INS): git$X
 	$(QUIET_BUILT_IN)rm -f $@ && ln git$X $@
