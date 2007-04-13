@@ -408,6 +408,13 @@ gitcvs.logfile::
 	Path to a log file where the cvs pserver interface well... logs
 	various stuff. See gitlink:git-cvsserver[1].
 
+gitcvs.allbinary::
+	If true, all files are sent to the client in mode '-kb'. This
+	causes the client to treat all files as binary files which suppresses
+	any newline munging it otherwise might do. A work-around for the
+	fact that there is no way yet to set single files to mode '-kb'.
+	See gitlink:git-cvsserver[1].
+
 http.sslVerify::
 	Whether to verify the SSL certificate when fetching or pushing
 	over HTTPS. Can be overridden by the 'GIT_SSL_NO_VERIFY' environment
