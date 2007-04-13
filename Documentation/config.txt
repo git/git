@@ -462,7 +462,7 @@ http.lowSpeedLimit, http.lowSpeedTime::
 
 http.noEPSV::
 	A boolean which disables using of EPSV ftp command by curl.
-	This can helpful with some "poor" ftp servers which doesn't
+	This can helpful with some "poor" ftp servers which don't
 	support EPSV mode. Can be overridden by the 'GIT_CURL_FTP_NO_EPSV'
 	environment variable. Default is false (curl will use EPSV).
 
