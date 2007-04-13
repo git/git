@@ -12,6 +12,7 @@
 #include "builtin.h"
 #include "tag.h"
 #include "reflog-walk.h"
+#include "patch-ids.h"
 
 static int default_show_root = 1;
 
@@ -333,25 +334,12 @@ static int reopen_stdout(struct commit *commit, int nr, int keep_subject)
 
 }
 
-static int get_patch_id(struct commit *commit, struct diff_options *options,
-		unsigned char *sha1)
-{
-	if (commit->parents)
-		diff_tree_sha1(commit->parents->item->object.sha1,
-		               commit->object.sha1, "", options);
-	else
-		diff_root_tree_sha1(commit->object.sha1, "", options);
-	diffcore_std(options);
-	return diff_flush_patch_id(options, sha1);
-}
-
-static void get_patch_ids(struct rev_info *rev, struct diff_options *options, const char *prefix)
+static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids, const char *prefix)
 {
 	struct rev_info check_rev;
 	struct commit *commit;
 	struct object *o1, *o2;
 	unsigned flags1, flags2;
-	unsigned char sha1[20];
 
 	if (rev->pending.nr != 2)
 		die("Need exactly one range.");
@@ -364,10 +352,7 @@ static void get_patch_ids(struct rev_info *rev, struct diff_options *options, co
 	if ((flags1 & UNINTERESTING) == (flags2 & UNINTERESTING))
 		die("Not a range.");
 
-	diff_setup(options);
-	options->recursive = 1;
-	if (diff_setup_done(options) < 0)
-		die("diff_setup_done failed");
+	init_patch_ids(ids);
 
 	/* given a range a..b get all patch ids for b..a */
 	init_revisions(&check_rev, prefix);
@@ -382,8 +367,7 @@ static void get_patch_ids(struct rev_info *rev, struct diff_options *options, co
 		if (commit->parents && commit->parents->next)
 			continue;
 
-		if (!get_patch_id(commit, options, sha1))
-			created_object(sha1, xcalloc(1, sizeof(struct object)));
+		add_commit_patch_id(commit, ids);
 	}
 
 	/* reset for next revision walk */
@@ -421,7 +405,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int ignore_if_in_upstream = 0;
 	int thread = 0;
 	const char *in_reply_to = NULL;
-	struct diff_options patch_id_opts;
+	struct patch_ids ids;
 	char *add_signoff = NULL;
 	char message_id[1024];
 	char ref_message_id[1024];
@@ -559,22 +543,19 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	}
 
 	if (ignore_if_in_upstream)
-		get_patch_ids(&rev, &patch_id_opts, prefix);
+		get_patch_ids(&rev, &ids, prefix);
 
 	if (!use_stdout)
 		realstdout = fdopen(dup(1), "w");
 
 	prepare_revision_walk(&rev);
 	while ((commit = get_revision(&rev)) != NULL) {
-		unsigned char sha1[20];
-
 		/* ignore merges */
 		if (commit->parents && commit->parents->next)
 			continue;
 
 		if (ignore_if_in_upstream &&
-				!get_patch_id(commit, &patch_id_opts, sha1) &&
-				lookup_object(sha1))
+				has_commit_patch_id(commit, &ids))
 			continue;
 
 		nr++;
@@ -629,6 +610,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			fclose(stdout);
 	}
 	free(list);
+	if (ignore_if_in_upstream)
+		free_patch_ids(&ids);
 	return 0;
 }
 
@@ -651,7 +634,7 @@ static const char cherry_usage[] =
 int cmd_cherry(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
-	struct diff_options patch_id_opts;
+	struct patch_ids ids;
 	struct commit *commit;
 	struct commit_list *list = NULL;
 	const char *upstream;
@@ -697,7 +680,7 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 			return 0;
 	}
 
-	get_patch_ids(&revs, &patch_id_opts, prefix);
+	get_patch_ids(&revs, &ids, prefix);
 
 	if (limit && add_pending_commit(limit, &revs, UNINTERESTING))
 		die("Unknown commit %s", limit);
@@ -713,12 +696,10 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 	}
 
 	while (list) {
-		unsigned char sha1[20];
 		char sign = '+';
 
 		commit = list->item;
-		if (!get_patch_id(commit, &patch_id_opts, sha1) &&
-		    lookup_object(sha1))
+		if (has_commit_patch_id(commit, &ids))
 			sign = '-';
 
 		if (verbose) {
@@ -736,5 +717,6 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 		list = list->next;
 	}
 
+	free_patch_ids(&ids);
 	return 0;
 }

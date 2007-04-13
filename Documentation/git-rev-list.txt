@@ -22,6 +22,7 @@ SYNOPSIS
 	     [ \--topo-order ]
 	     [ \--parents ]
 	     [ \--left-right ]
+	     [ \--cherry-pick ]
 	     [ \--encoding[=<encoding>] ]
 	     [ \--(author|committer|grep)=<pattern> ]
 	     [ [\--objects | \--objects-edge] [ \--unpacked ] ]
@@ -223,6 +224,20 @@ limiting may be applied.
 
 	In addition to the '<commit>' listed on the command
 	line, read them from the standard input.
+
+--cherry-pick::
+
+	Omit any commit that introduces the same change as
+	another commit on the "other side" when the set of
+	commits are limited with symmetric difference.
++
+For example, if you have two branches, `A` and `B`, a usual way
+to list all commits on only one side of them is with
+`--left-right`, like the example above in the description of
+that option.  It however shows the commits that were cherry-picked
+from the other branch (for example, "3rd on b" may be cherry-picked
+from branch A).  With this option, such pairs of commits are
+excluded from the output.
 
 -g, --walk-reflogs::
 
