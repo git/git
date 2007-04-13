@@ -117,6 +117,16 @@ core.fileMode::
 	the working copy are ignored; useful on broken filesystems like FAT.
 	See gitlink:git-update-index[1]. True by default.
 
+core.autocrlf::
+	If true, makes git convert `CRLF` at the end of lines in text files to
+	`LF` when reading from the filesystem, and convert in reverse when
+	writing to the filesystem.  The variable can be set to
+	'input', in which case the conversion happens only while
+	reading from the filesystem but files are written out with
+	`LF` at the end of lines.  Currently, which paths to consider
+	"text" (i.e. be subjected to the autocrlf mechanism) is
+	decided purely based on the contents.
+
 core.symlinks::
 	If false, symbolic links are checked out as small plain files that
 	contain the link text. gitlink:git-update-index[1] and
