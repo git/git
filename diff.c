@@ -8,6 +8,7 @@
 #include "delta.h"
 #include "xdiff-interface.h"
 #include "color.h"
+#include "attr.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -1051,13 +1052,34 @@ static void emit_binary_diff(mmfile_t *one, mmfile_t *two)
 	emit_binary_diff_body(two, one);
 }
 
-#define FIRST_FEW_BYTES 8000
-static int mmfile_is_binary(mmfile_t *mf)
+static void setup_diff_attr_check(struct git_attr_check *check)
 {
-	long sz = mf->size;
+	static struct git_attr *attr_diff;
+
+	if (!attr_diff)
+		attr_diff = git_attr("diff", 4);
+	check->attr = attr_diff;
+}
+
+#define FIRST_FEW_BYTES 8000
+static int file_is_binary(struct diff_filespec *one)
+{
+	unsigned long sz;
+	struct git_attr_check attr_diff_check;
+
+	setup_diff_attr_check(&attr_diff_check);
+	if (!git_checkattr(one->path, 1, &attr_diff_check) &&
+	    (0 == attr_diff_check.isset))
+		return 1;
+	if (!one->data) {
+		if (!DIFF_FILE_VALID(one))
+			return 0;
+		diff_populate_filespec(one, 0);
+	}
+	sz = one->size;
 	if (FIRST_FEW_BYTES < sz)
 		sz = FIRST_FEW_BYTES;
-	return !!memchr(mf->ptr, 0, sz);
+	return !!memchr(one->data, 0, sz);
 }
 
 static void builtin_diff(const char *name_a,
@@ -1114,7 +1136,7 @@ static void builtin_diff(const char *name_a,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (!o->text && (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2))) {
+	if (!o->text && (file_is_binary(one) || file_is_binary(two))) {
 		/* Quite common confusing case */
 		if (mf1.size == mf2.size &&
 		    !memcmp(mf1.ptr, mf2.ptr, mf1.size))
@@ -1190,7 +1212,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2)) {
+	if (file_is_binary(one) || file_is_binary(two)) {
 		data->is_binary = 1;
 		data->added = mf2.size;
 		data->deleted = mf1.size;
@@ -1228,7 +1250,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (mmfile_is_binary(&mf2))
+	if (file_is_binary(two))
 		return;
 	else {
 		/* Crazy xdl interfaces.. */
@@ -1805,8 +1827,8 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 
 		if (o->binary) {
 			mmfile_t mf;
-			if ((!fill_mmfile(&mf, one) && mmfile_is_binary(&mf)) ||
-			    (!fill_mmfile(&mf, two) && mmfile_is_binary(&mf)))
+			if ((!fill_mmfile(&mf, one) && file_is_binary(one)) ||
+			    (!fill_mmfile(&mf, two) && file_is_binary(two)))
 				abbrev = 40;
 		}
 		len += snprintf(msg + len, sizeof(msg) - len,
@@ -2701,7 +2723,7 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 			return error("unable to read files to diff");
 
 		/* Maybe hash p->two? into the patch id? */
-		if (mmfile_is_binary(&mf2))
+		if (file_is_binary(p->two))
 			continue;
 
 		len1 = remove_space(p->one->path, strlen(p->one->path));
