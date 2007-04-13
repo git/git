@@ -1,4 +1,6 @@
 #include "cache.h"
+#include "attr.h"
+
 /*
  * convert.c - convert a file when checking it out and checking it in.
  *
@@ -72,17 +74,12 @@ static int is_binary(unsigned long size, struct text_stat *stats)
 	return 0;
 }
 
-int convert_to_git(const char *path, char **bufp, unsigned long *sizep)
+static int autocrlf_to_git(const char *path, char **bufp, unsigned long *sizep)
 {
 	char *buffer, *nbuf;
 	unsigned long size, nsize;
 	struct text_stat stats;
 
-	/*
-	 * FIXME! Other pluggable conversions should go here,
-	 * based on filename patterns. Right now we just do the
-	 * stupid auto-CRLF one.
-	 */
 	if (!auto_crlf)
 		return 0;
 
@@ -128,7 +125,7 @@ int convert_to_git(const char *path, char **bufp, unsigned long *sizep)
 	return 1;
 }
 
-int convert_to_working_tree(const char *path, char **bufp, unsigned long *sizep)
+static int autocrlf_to_working_tree(const char *path, char **bufp, unsigned long *sizep)
 {
 	char *buffer, *nbuf;
 	unsigned long size, nsize;
@@ -183,4 +180,42 @@ int convert_to_working_tree(const char *path, char **bufp, unsigned long *sizep)
 	} while (--size);
 
 	return 1;
+}
+
+static void setup_crlf_check(struct git_attr_check *check)
+{
+	static struct git_attr *attr_crlf;
+
+	if (!attr_crlf)
+		attr_crlf = git_attr("crlf", 4);
+	check->attr = attr_crlf;
+}
+
+static int git_path_is_binary(const char *path)
+{
+	struct git_attr_check attr_crlf_check;
+
+	setup_crlf_check(&attr_crlf_check);
+
+	/*
+	 * If crlf is not mentioned, default to autocrlf;
+	 * disable autocrlf only when crlf attribute is explicitly
+	 * unset.
+	 */
+	return (!git_checkattr(path, 1, &attr_crlf_check) &&
+		(0 == attr_crlf_check.isset));
+}
+
+int convert_to_git(const char *path, char **bufp, unsigned long *sizep)
+{
+	if (git_path_is_binary(path))
+		return 0;
+	return autocrlf_to_git(path, bufp, sizep);
+}
+
+int convert_to_working_tree(const char *path, char **bufp, unsigned long *sizep)
+{
+	if (git_path_is_binary(path))
+		return 0;
+	return autocrlf_to_working_tree(path, bufp, sizep);
 }

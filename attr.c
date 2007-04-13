@@ -378,3 +378,21 @@ int git_checkattr(const char *path, int num, struct git_attr_check *check)
 		rem = fill(path, pathlen, stk, check, num, rem);
 	return 0;
 }
+
+static void setup_binary_check(struct git_attr_check *check)
+{
+	static struct git_attr *attr_binary;
+
+	if (!attr_binary)
+		attr_binary = git_attr("binary", 6);
+	check->attr = attr_binary;
+}
+
+int git_path_is_binary(const char *path)
+{
+	struct git_attr_check attr_binary_check;
+
+	setup_binary_check(&attr_binary_check);
+	return (!git_checkattr(path, 1, &attr_binary_check) &&
+		(0 < attr_binary_check.isset));
+}

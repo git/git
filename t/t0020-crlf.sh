@@ -214,4 +214,28 @@ test_expect_success 'apply patch --index (autocrlf=true)' '
 	}
 '
 
+test_expect_success '.gitattributes says two is binary' '
+
+	echo "two !crlf" >.gitattributes &&
+	rm -f tmp one dir/two &&
+	git repo-config core.autocrlf true &&
+	git read-tree --reset -u HEAD &&
+
+	if remove_cr dir/two >/dev/null
+	then
+		echo "Huh?"
+		false
+	else
+		: happy
+	fi &&
+
+	if remove_cr one >/dev/null
+	then
+		: happy
+	else
+		echo "Huh?"
+		false
+	fi
+'
+
 test_done
