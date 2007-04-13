@@ -11,7 +11,7 @@ test_description='git-shortlog
 echo 1 > a1
 git add a1
 tree=$(git write-tree)
-commit=$((echo "Test"; echo) | git commit-tree $tree)
+commit=$( (echo "Test"; echo) | git commit-tree $tree )
 git update-ref HEAD $commit
 
 echo 2 > a1
