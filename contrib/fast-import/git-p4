@@ -958,6 +958,7 @@ class P4Sync(Command):
             try:
                 self.commit(details, self.extractFilesFromCommit(details), self.branch, self.globalPrefix)
             except IOError:
+                print "IO error with git fast-import. Is your git version recent enough?"
                 print self.gitError.read()
 
         else:
