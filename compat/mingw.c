@@ -279,7 +279,7 @@ static int try_shell_exec(const char *cmd, const char **argv, const char **env)
 	for (n = 0; argv[n];) n++;
 	sh_argv = xmalloc((n+2)*sizeof(char*));
 	sh_argv[0] = interpr;
-	sh_argv[1] = cmd;
+	sh_argv[1] = quote_arg(cmd);
 	quote_argv(&sh_argv[2], &argv[1]);
 	n = spawnvpe(_P_WAIT, interpr, sh_argv, env);
 	if (n == -1)
