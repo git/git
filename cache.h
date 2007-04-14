@@ -153,6 +153,7 @@ enum object_type {
 #define EXEC_PATH_ENVIRONMENT "GIT_EXEC_PATH"
 #define GITATTRIBUTES_FILE ".gitattributes"
 #define INFOATTRIBUTES_FILE "info/attributes"
+#define ATTRIBUTE_MACRO_PREFIX "[attr]"
 
 extern int is_bare_repository_cfg;
 extern int is_bare_repository(void);
