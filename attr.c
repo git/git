@@ -194,6 +194,7 @@ static void free_attr_elem(struct attr_stack *e)
 }
 
 static const char *builtin_attr[] = {
+	"[attr]binary !diff !crlf",
 	NULL,
 };
 
