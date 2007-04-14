@@ -5968,7 +5968,7 @@ unset i
 set file_lists($ui_index) [list]
 set file_lists($ui_workdir) [list]
 
-wm title . "[appname] ([file normalize [file dirname [gitdir]]])"
+wm title . "[appname] ([reponame]) [file normalize [file dirname [gitdir]]]"
 focus -force $ui_comm
 
 # -- Warn the user about environmental problems.  Cygwin's Tcl
