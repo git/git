@@ -89,20 +89,38 @@ static void show_dir_entry(const char *tag, struct dir_entry *ent)
 static void show_other_files(struct dir_struct *dir)
 {
 	int i;
+
+
+	/*
+	 * Skip matching and unmerged entries for the paths,
+	 * since we want just "others".
+	 *
+	 * (Matching entries are normally pruned during
+	 * the directory tree walk, but will show up for
+	 * gitlinks because we don't necessarily have
+	 * dir->show_other_directories set to suppress
+	 * them).
+	 */
 	for (i = 0; i < dir->nr; i++) {
-		/* We should not have a matching entry, but we
-		 * may have an unmerged entry for this path.
-		 */
 		struct dir_entry *ent = dir->entries[i];
-		int pos = cache_name_pos(ent->name, ent->len);
+		int len, pos;
 		struct cache_entry *ce;
+
+		/*
+		 * Remove the '/' at the end that directory
+		 * walking adds for directory entries.
+		 */
+		len = ent->len;
+		if (len && ent->name[len-1] == '/')
+			len--;
+		pos = cache_name_pos(ent->name, len);
 		if (0 <= pos)
-			die("bug in show-other-files");
+			continue;	/* exact match */
 		pos = -pos - 1;
 		if (pos < active_nr) { 
 			ce = active_cache[pos];
-			if (ce_namelen(ce) == ent->len &&
-			    !memcmp(ce->name, ent->name, ent->len))
+			if (ce_namelen(ce) == len &&
+			    !memcmp(ce->name, ent->name, len))
 				continue; /* Yup, this one exists unmerged */
 		}
 		show_dir_entry(tag_other, ent);
