@@ -922,10 +922,7 @@ class P4Sync(Command):
             except:
                 pass
 
-        self.tz = - time.timezone / 36
-        tzsign = ("%s" % self.tz)[0]
-        if tzsign != '+' and tzsign != '-':
-            self.tz = "+" + ("%s" % self.tz)
+        self.tz = "%+03d%02d" % (- time.timezone / 3600, ((- time.timezone % 3600) / 60))
 
         self.gitOutput, self.gitStream, self.gitError = popen2.popen3("git fast-import")
 
