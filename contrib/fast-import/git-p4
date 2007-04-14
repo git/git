@@ -277,7 +277,7 @@ class P4Submit(Command):
             firstIteration = True
             while response == "e":
                 if not firstIteration:
-                    response = raw_input("Do you want to submit this change (y/e/n)? ")
+                    response = raw_input("Do you want to submit this change? [y]es/[e]dit/[n]o  ")
                 firstIteration = False
                 if response == "e":
                     [handle, fileName] = tempfile.mkstemp()
@@ -344,7 +344,7 @@ class P4Submit(Command):
         print "Perforce checkout for depot path %s located at %s" % (depotPath, clientPath)
         oldWorkingDirectory = os.getcwd()
         os.chdir(clientPath)
-        response = raw_input("Do you want to sync %s with p4 sync? (y/n) " % clientPath)
+        response = raw_input("Do you want to sync %s with p4 sync? [y]es/[n]o " % clientPath)
         if response == "y" or response == "yes":
             system("p4 sync ...")
 
@@ -387,7 +387,7 @@ class P4Submit(Command):
                 print "No changes found to apply between %s and current HEAD" % self.origin
             else:
                 print "All changes applied!"
-                response = raw_input("Do you want to sync from Perforce now using git-p4 rebase (y/n)? ")
+                response = raw_input("Do you want to sync from Perforce now using git-p4 rebase? [y]es/[n]o ")
                 if response == "y" or response == "yes":
                     os.chdir(oldWorkingDirectory)
                     rebase = P4Rebase()
