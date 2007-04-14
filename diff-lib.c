@@ -142,18 +142,34 @@ static int queue_diff(struct diff_options *o,
 	}
 }
 
+/*
+ * Does the path name a blob in the working tree, or a directory
+ * in the working tree?
+ */
 static int is_in_index(const char *path)
 {
-	int len = strlen(path);
-	int pos = cache_name_pos(path, len);
-	char c;
+	int len, pos;
+	struct cache_entry *ce;
 
-	if (pos < 0)
-		return 0;
-	if (strncmp(active_cache[pos]->name, path, len))
-		return 0;
-	c = active_cache[pos]->name[len];
-	return c == '\0' || c == '/';
+	len = strlen(path);
+	while (path[len-1] == '/')
+		len--;
+	if (!len)
+		return 1; /* "." */
+	pos = cache_name_pos(path, len);
+	if (0 <= pos)
+		return 1;
+	pos = -1 - pos;
+	while (pos < active_nr) {
+		ce = active_cache[pos++];
+		if (ce_namelen(ce) <= len ||
+		    strncmp(ce->name, path, len) ||
+		    (ce->name[len] > '/'))
+			break; /* path cannot be a prefix */
+		if (ce->name[len] == '/')
+			return 1;
+	}
+	return 0;
 }
 
 static int handle_diff_files_args(struct rev_info *revs,
