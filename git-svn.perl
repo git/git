@@ -1682,7 +1682,10 @@ sub find_parent_branch {
 	}
 	my ($r0, $parent) = $gs->find_rev_before($r, 1);
 	if (!defined $r0 || !defined $parent) {
-		$gs->fetch(0, $r);
+		my ($base, $head) = parse_revision_argument(0, $r);
+		if ($base <= $r) {
+			$gs->fetch($base, $r);
+		}
 		($r0, $parent) = $gs->last_rev_commit;
 	}
 	if (defined $r0 && defined $parent) {
