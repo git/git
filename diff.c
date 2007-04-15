@@ -1069,8 +1069,9 @@ static int file_is_binary(struct diff_filespec *one)
 
 	setup_diff_attr_check(&attr_diff_check);
 	if (!git_checkattr(one->path, 1, &attr_diff_check) &&
-	    (0 == attr_diff_check.isset))
-		return 1;
+	    (0 <= attr_diff_check.isset))
+		return !attr_diff_check.isset;
+
 	if (!one->data) {
 		if (!DIFF_FILE_VALID(one))
 			return 0;
