@@ -9,10 +9,10 @@
 
 static char git_default_date[50];
 
-static void copy_gecos(const struct passwd *w, char *name, int sz)
+static void copy_gecos(const struct passwd *w, char *name, size_t sz)
 {
 	char *src, *dst;
-	int len, nlen;
+	size_t len, nlen;
 
 	nlen = strlen(w->pw_name);
 
@@ -49,7 +49,7 @@ static void copy_email(const struct passwd *pw)
 	 * Make up a fake email address
 	 * (name + '@' + hostname [+ '.' + domainname])
 	 */
-	int len = strlen(pw->pw_name);
+	size_t len = strlen(pw->pw_name);
 	if (len > sizeof(git_default_email)/2)
 		die("Your sysadmin must hate you!");
 	memcpy(git_default_email, pw->pw_name, len);
@@ -95,9 +95,9 @@ static void setup_ident(void)
 		datestamp(git_default_date, sizeof(git_default_date));
 }
 
-static int add_raw(char *buf, int size, int offset, const char *str)
+static int add_raw(char *buf, size_t size, int offset, const char *str)
 {
-	int len = strlen(str);
+	size_t len = strlen(str);
 	if (offset + len > size)
 		return size;
 	memcpy(buf + offset, str, len);
@@ -131,9 +131,9 @@ static int crud(unsigned char c)
  * Copy over a string to the destination, but avoid special
  * characters ('\n', '<' and '>') and remove crud at the end
  */
-static int copy(char *buf, int size, int offset, const char *src)
+static int copy(char *buf, size_t size, int offset, const char *src)
 {
-	int i, len;
+	size_t i, len;
 	unsigned char c;
 
 	/* Remove crud from the beginning.. */
