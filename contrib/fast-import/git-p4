@@ -907,7 +907,10 @@ class P4Sync(Command):
 
         self.tz = "%+03d%02d" % (- time.timezone / 3600, ((- time.timezone % 3600) / 60))
 
-        self.gitOutput, self.gitStream, self.gitError = popen2.popen3("git fast-import")
+        importProcess = popen2.Popen3("git fast-import", capturestderr = True)
+        self.gitOutput = importProcess.fromchild
+        self.gitStream = importProcess.tochild
+        self.gitError = importProcess.childerr
 
         if len(self.revision) > 0:
             print "Doing initial import of %s from revision %s" % (self.globalPrefix, self.revision)
@@ -1028,6 +1031,7 @@ class P4Sync(Command):
         self.gitStream.close()
         self.gitOutput.close()
         self.gitError.close()
+        importProcess.wait()
 
         os.popen("git repo-config p4.depotpath %s" % self.globalPrefix).read()
         if len(self.initialTag) > 0:
@@ -1096,7 +1100,6 @@ class P4Clone(P4Sync):
         system("git init")
         if not P4Sync.run(self, [depotPath]):
             return False
-        os.wait()
         if self.branch != "master":
             system("git branch master p4")
             system("git checkout -f")
