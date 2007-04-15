@@ -9,7 +9,7 @@
 
 static char git_default_date[50];
 
-static void copy_gecos(struct passwd *w, char *name, int sz)
+static void copy_gecos(const struct passwd *w, char *name, int sz)
 {
 	char *src, *dst;
 	int len, nlen;
@@ -43,7 +43,7 @@ static void copy_gecos(struct passwd *w, char *name, int sz)
 
 }
 
-static void copy_email(struct passwd *pw)
+static void copy_email(const struct passwd *pw)
 {
 	/*
 	 * Make up a fake email address
