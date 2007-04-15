@@ -244,7 +244,33 @@ class P4Submit(Command):
             else:
                 die("unknown modifier %s for %s" % (modifier, path))
 
-        system("git diff-tree -p --diff-filter=ACMRTUXB \"%s^\" \"%s\" | patch -p1" % (id, id))
+        diffcmd = "git diff-tree -p --diff-filter=ACMRTUXB \"%s^\" \"%s\"" % (id, id)
+        patchcmd = diffcmd + " | patch -p1"
+
+        if os.system(patchcmd + " --dry-run --silent") != 0:
+            print "Unfortunately applying the change failed!"
+            print "What do you want to do?"
+            response = "x"
+            while response != "s" and response != "a" and response != "w":
+                response = raw_input("[s]kip this patch / [a]pply the patch forcibly and with .rej files / [w]rite the patch to a file (patch.txt) ")
+            if response == "s":
+                print "Skipping! Good luck with the next patches..."
+                return
+            elif response == "a":
+                os.system(patchcmd)
+                if len(filesToAdd) > 0:
+                    print "You may also want to call p4 add on the following files:"
+                    print " ".join(filesToAdd)
+                if len(filesToDelete):
+                    print "The following files should be scheduled for deletion with p4 delete:"
+                    print " ".join(filesToDelete)
+                die("Please resolve and submit the conflict manually and continue afterwards with git-p4 submit --continue")
+            elif response == "w":
+                system(diffcmd + " > patch.txt")
+                print "Patch saved to patch.txt in %s !" % self.clientPath
+                die("Please resolve and submit the conflict manually and continue afterwards with git-p4 submit --continue")
+
+        system(patchcmd)
 
         for f in filesToAdd:
             system("p4 add %s" % f)
@@ -335,16 +361,16 @@ class P4Submit(Command):
             print "Internal error: cannot locate perforce depot path from existing branches"
             sys.exit(128)
 
-        clientPath = p4Where(depotPath)
+        self.clientPath = p4Where(depotPath)
 
-        if len(clientPath) == 0:
+        if len(self.clientPath) == 0:
             print "Error: Cannot locate perforce checkout of %s in client view" % depotPath
             sys.exit(128)
 
-        print "Perforce checkout for depot path %s located at %s" % (depotPath, clientPath)
+        print "Perforce checkout for depot path %s located at %s" % (depotPath, self.clientPath)
         oldWorkingDirectory = os.getcwd()
-        os.chdir(clientPath)
-        response = raw_input("Do you want to sync %s with p4 sync? [y]es/[n]o " % clientPath)
+        os.chdir(self.clientPath)
+        response = raw_input("Do you want to sync %s with p4 sync? [y]es/[n]o " % self.clientPath)
         if response == "y" or response == "yes":
             system("p4 sync ...")
 
