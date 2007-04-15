@@ -648,8 +648,10 @@ proc makewindow {} {
     frame .bright.mode
     radiobutton .bright.mode.patch -text "Patch" \
 	-command reselectline -variable cmitmode -value "patch"
+    .bright.mode.patch configure -font $uifont
     radiobutton .bright.mode.tree -text "Tree" \
 	-command reselectline -variable cmitmode -value "tree"
+    .bright.mode.tree configure -font $uifont
     grid .bright.mode.patch .bright.mode.tree -sticky ew
     pack .bright.mode -side top -fill x
     set cflist .bright.cfiles
@@ -922,6 +924,7 @@ proc bindall {event action} {
 }
 
 proc about {} {
+    global uifont
     set w .about
     if {[winfo exists $w]} {
 	raise $w
@@ -935,13 +938,19 @@ Gitk - a commit viewer for git
 Copyright © 2005-2006 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License} \
-	    -justify center -aspect 400
-    pack $w.m -side top -fill x -padx 20 -pady 20
-    button $w.ok -text Close -command "destroy $w"
+	    -justify center -aspect 400 -border 2 -bg white -relief groove
+    pack $w.m -side top -fill x -padx 2 -pady 2
+    $w.m configure -font $uifont
+    button $w.ok -text Close -command "destroy $w" -default active
     pack $w.ok -side bottom
+    $w.ok configure -font $uifont
+    bind $w <Visibility> "focus $w.ok"
+    bind $w <Key-Escape> "destroy $w"
+    bind $w <Key-Return> "destroy $w"
 }
 
 proc keys {} {
+    global uifont
     set w .keys
     if {[winfo exists $w]} {
 	raise $w
@@ -988,10 +997,15 @@ f		Scroll diff view to next file
 <Ctrl-minus>	Decrease font size
 <F5>		Update
 } \
-	    -justify left -bg white -border 2 -relief sunken
-    pack $w.m -side top -fill both
-    button $w.ok -text Close -command "destroy $w"
+	    -justify left -bg white -border 2 -relief groove
+    pack $w.m -side top -fill both -padx 2 -pady 2
+    $w.m configure -font $uifont
+    button $w.ok -text Close -command "destroy $w" -default active
     pack $w.ok -side bottom
+    $w.ok configure -font $uifont
+    bind $w <Visibility> "focus $w.ok"
+    bind $w <Key-Escape> "destroy $w"
+    bind $w <Key-Return> "destroy $w"
 }
 
 # Procedures for manipulating the file list window at the
@@ -1457,20 +1471,21 @@ proc vieweditor {top n title} {
     toplevel $top
     wm title $top $title
     label $top.nl -text "Name" -font $uifont
-    entry $top.name -width 20 -textvariable newviewname($n)
+    entry $top.name -width 20 -textvariable newviewname($n) -font $uifont
     grid $top.nl $top.name -sticky w -pady 5
-    checkbutton $top.perm -text "Remember this view" -variable newviewperm($n)
+    checkbutton $top.perm -text "Remember this view" -variable newviewperm($n) \
+	-font $uifont
     grid $top.perm - -pady 5 -sticky w
     message $top.al -aspect 1000 -font $uifont \
 	-text "Commits to include (arguments to git rev-list):"
     grid $top.al - -sticky w -pady 5
     entry $top.args -width 50 -textvariable newviewargs($n) \
-	-background white
+	-background white -font $uifont
     grid $top.args - -sticky ew -padx 5
     message $top.l -aspect 1000 -font $uifont \
 	-text "Enter files and directories to include, one per line:"
     grid $top.l - -sticky w
-    text $top.t -width 40 -height 10 -background white
+    text $top.t -width 40 -height 10 -background white -font $uifont
     if {[info exists viewfiles($n)]} {
 	foreach f $viewfiles($n) {
 	    $top.t insert end $f
@@ -1481,8 +1496,10 @@ proc vieweditor {top n title} {
     }
     grid $top.t - -sticky ew -padx 5
     frame $top.buts
-    button $top.buts.ok -text "OK" -command [list newviewok $top $n]
-    button $top.buts.can -text "Cancel" -command [list destroy $top]
+    button $top.buts.ok -text "OK" -command [list newviewok $top $n] \
+	-font $uifont
+    button $top.buts.can -text "Cancel" -command [list destroy $top] \
+	-font $uifont
     grid $top.buts.ok $top.buts.can
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
     grid columnconfigure $top.buts 1 -weight 1 -uniform a
@@ -5813,6 +5830,7 @@ proc doprefs {} {
     global maxwidth maxgraphpct diffopts
     global oldprefs prefstop showneartags
     global bgcolor fgcolor ctext diffcolors
+    global uifont
 
     set top .gitkprefs
     set prefstop $top
@@ -5826,6 +5844,7 @@ proc doprefs {} {
     toplevel $top
     wm title $top "Gitk preferences"
     label $top.ldisp -text "Commit list display options"
+    $top.ldisp configure -font $uifont
     grid $top.ldisp - -sticky w -pady 10
     label $top.spacer -text " "
     label $top.maxwidthl -text "Maximum graph width (lines)" \
@@ -5838,6 +5857,7 @@ proc doprefs {} {
     grid x $top.maxpctl $top.maxpct -sticky w
 
     label $top.ddisp -text "Diff display options"
+    $top.ddisp configure -font $uifont
     grid $top.ddisp - -sticky w -pady 10
     label $top.diffoptl -text "Options for diff program" \
 	-font optionfont
@@ -5850,6 +5870,7 @@ proc doprefs {} {
     grid x $top.ntag -sticky w
 
     label $top.cdisp -text "Colors: press to choose"
+    $top.cdisp configure -font $uifont
     grid $top.cdisp - -sticky w -pady 10
     label $top.bg -padx 40 -relief sunk -background $bgcolor
     button $top.bgbut -text "Background" -font optionfont \
@@ -5877,12 +5898,15 @@ proc doprefs {} {
     grid x $top.hunksepbut $top.hunksep -sticky w
 
     frame $top.buts
-    button $top.buts.ok -text "OK" -command prefsok
-    button $top.buts.can -text "Cancel" -command prefscan
+    button $top.buts.ok -text "OK" -command prefsok -default active
+    $top.buts.ok configure -font $uifont
+    button $top.buts.can -text "Cancel" -command prefscan -default normal
+    $top.buts.can configure -font $uifont
     grid $top.buts.ok $top.buts.can
     grid columnconfigure $top.buts 0 -weight 1 -uniform a
     grid columnconfigure $top.buts 1 -weight 1 -uniform a
     grid $top.buts - - -pady 10 -sticky ew
+    bind $top <Visibility> "focus $top.buts.ok"
 }
 
 proc choosecolor {v vi w x cmd} {
