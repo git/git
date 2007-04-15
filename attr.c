@@ -36,6 +36,27 @@ static unsigned hash_name(const char *name, int namelen)
 	return val;
 }
 
+static int invalid_attr_name(const char *name, int namelen)
+{
+	/*
+	 * Attribute name cannot begin with '-' and from
+	 * [-A-Za-z0-9_.].  We'd specifically exclude '=' for now,
+	 * as we might later want to allow non-binary value for
+	 * attributes, e.g. "*.svg	merge=special-merge-program-for-svg"
+	 */
+	if (*name == '-')
+		return -1;
+	while (namelen--) {
+		char ch = *name++;
+		if (! (ch == '-' || ch == '.' || ch == '_' ||
+		       ('0' <= ch && ch <= '9') ||
+		       ('a' <= ch && ch <= 'z') ||
+		       ('A' <= ch && ch <= 'Z')) )
+			return -1;
+	}
+	return 0;
+}
+
 struct git_attr *git_attr(const char *name, int len)
 {
 	unsigned hval = hash_name(name, len);
@@ -47,6 +68,9 @@ struct git_attr *git_attr(const char *name, int len)
 		    !memcmp(a->name, name, len) && !a->name[len])
 			return a;
 	}
+
+	if (invalid_attr_name(name, len))
+		return NULL;
 
 	a = xmalloc(sizeof(*a) + len + 1);
 	memcpy(a->name, name, len);
@@ -68,7 +92,7 @@ struct git_attr *git_attr(const char *name, int len)
  * (1) glob pattern.
  * (2) whitespace
  * (3) whitespace separated list of attribute names, each of which
- *     could be prefixed with '!' to mean "not set".
+ *     could be prefixed with '-' to mean "not set".
  */
 
 struct attr_state {
@@ -114,6 +138,12 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 		name += strlen(ATTRIBUTE_MACRO_PREFIX);
 		name += strspn(name, blank);
 		namelen = strcspn(name, blank);
+		if (invalid_attr_name(name, namelen)) {
+			fprintf(stderr,
+				"%.*s is not a valid attribute name: %s:%d\n",
+				namelen, name, src, lineno);
+			return NULL;
+		}
 	}
 	else
 		is_macro = 0;
@@ -126,11 +156,21 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 		while (*cp) {
 			const char *ep;
 			ep = cp + strcspn(cp, blank);
-			if (pass) {
+			if (!pass) {
+				if (*cp == '-')
+					cp++;
+				if (invalid_attr_name(cp, ep - cp)) {
+					fprintf(stderr,
+						"%.*s is not a valid attribute name: %s:%d\n",
+						(int)(ep - cp), cp,
+						src, lineno);
+					return NULL;
+				}
+			} else {
 				struct attr_state *e;
 
 				e = &(res->state[num_attr]);
-				if (*cp == '!') {
+				if (*cp == '-') {
 					e->unset = 1;
 					cp++;
 				}
@@ -146,8 +186,9 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 			      sizeof(*res) +
 			      sizeof(struct attr_state) * num_attr +
 			      (is_macro ? 0 : namelen + 1));
-		if (is_macro)
+		if (is_macro) {
 			res->u.attr = git_attr(name, namelen);
+		}
 		else {
 			res->u.pattern = (char*)&(res->state[num_attr]);
 			memcpy(res->u.pattern, name, namelen);
@@ -194,7 +235,7 @@ static void free_attr_elem(struct attr_stack *e)
 }
 
 static const char *builtin_attr[] = {
-	"[attr]binary !diff !crlf",
+	"[attr]binary -diff -crlf",
 	NULL,
 };
 

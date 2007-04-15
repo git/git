@@ -29,8 +29,12 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 	check = xcalloc(cnt, sizeof(*check));
 	for (i = 0; i < cnt; i++) {
 		const char *name;
+		struct git_attr *a;
 		name = argv[i + 1];
-		check[i].attr = git_attr(name, strlen(name));
+		a = git_attr(name, strlen(name));
+		if (!a)
+			return error("%s: not a valid attribute name", name);
+		check[i].attr = a;
 	}
 
 	for (i = doubledash; i < argc; i++) {
