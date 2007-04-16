@@ -4,6 +4,7 @@
 #include "diff.h"
 #include "path-list.h"
 #include "revision.h"
+#include "utf8.h"
 
 static const char shortlog_usage[] =
 "git-shortlog [-n] [-s] [<commit-id>... ]";
@@ -276,11 +277,64 @@ static void get_from_rev(struct rev_info *rev, struct path_list *list)
 
 }
 
+static int parse_uint(char const **arg, int comma)
+{
+	unsigned long ul;
+	int ret;
+	char *endp;
+
+	ul = strtoul(*arg, &endp, 10);
+	if (endp != *arg && *endp && *endp != comma)
+		return -1;
+	ret = (int) ul;
+	if (ret != ul)
+		return -1;
+	*arg = endp;
+	if (**arg)
+		(*arg)++;
+	return ret;
+}
+
+static const char wrap_arg_usage[] = "-w[<width>[,<indent1>[,<indent2>]]]";
+#define DEFAULT_WRAPLEN 76
+#define DEFAULT_INDENT1 6
+#define DEFAULT_INDENT2 9
+
+static void parse_wrap_args(const char *arg, int *in1, int *in2, int *wrap)
+{
+	arg += 2; /* skip -w */
+
+	*wrap = parse_uint(&arg, ',');
+	if (*wrap < 0)
+		die(wrap_arg_usage);
+	*in1 = parse_uint(&arg, ',');
+	if (*in1 < 0)
+		die(wrap_arg_usage);
+	*in2 = parse_uint(&arg, '\0');
+	if (*in2 < 0)
+		die(wrap_arg_usage);
+
+	if (!*wrap)
+		*wrap = DEFAULT_WRAPLEN;
+	if (!*in1)
+		*in1 = DEFAULT_INDENT1;
+	if (!*in2)
+		*in2 = DEFAULT_INDENT2;
+	if (*wrap &&
+	    ((*in1 && *wrap <= *in1) ||
+	     (*in2 && *wrap <= *in2)))
+		die(wrap_arg_usage);
+}
+
 int cmd_shortlog(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 	struct path_list list = { NULL, 0, 0, 1 };
 	int i, j, sort_by_number = 0, summary = 0;
+	int wrap_lines = 0;
+	int wrap = DEFAULT_WRAPLEN;
+	int in1 = DEFAULT_INDENT1;
+	int in2 = DEFAULT_INDENT2;
 
 	/* since -n is a shadowed rev argument, parse our args first */
 	while (argc > 1) {
@@ -289,6 +343,10 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 		else if (!strcmp(argv[1], "-s") ||
 				!strcmp(argv[1], "--summary"))
 			summary = 1;
+		else if (!prefixcmp(argv[1], "-w")) {
+			wrap_lines = 1;
+			parse_wrap_args(argv[1], &in1, &in2, &wrap);
+		}
 		else if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help"))
 			usage(shortlog_usage);
 		else
@@ -323,9 +381,18 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 			printf("%s: %d\n", list.items[i].path, onelines->nr);
 		} else {
 			printf("%s (%d):\n", list.items[i].path, onelines->nr);
-			for (j = onelines->nr - 1; j >= 0; j--)
-				printf("      %s\n", onelines->items[j].path);
-			printf("\n");
+			for (j = onelines->nr - 1; j >= 0; j--) {
+				const char *msg = onelines->items[j].path;
+
+				if (wrap_lines) {
+					int col = print_wrapped_text(msg, in1, in2, wrap);
+					if (col != wrap)
+						putchar('\n');
+				}
+				else
+					printf("      %s\n", msg);
+			}
+			putchar('\n');
 		}
 
 		onelines->strdup_paths = 1;
