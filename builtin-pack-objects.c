@@ -959,22 +959,21 @@ static void add_pbase_object(struct tree_desc *tree,
 			     const char *fullname)
 {
 	struct name_entry entry;
+	int cmp;
 
 	while (tree_entry(tree,&entry)) {
-		unsigned long size;
-		enum object_type type;
-
-		if (tree_entry_len(entry.path, entry.sha1) != cmplen ||
-		    memcmp(entry.path, name, cmplen) ||
-		    !has_sha1_file(entry.sha1) ||
-		    (type = sha1_object_info(entry.sha1, &size)) < 0)
+		cmp = tree_entry_len(entry.path, entry.sha1) != cmplen ? 1 :
+		      memcmp(name, entry.path, cmplen);
+		if (cmp > 0)
 			continue;
+		if (cmp < 0)
+			return;
 		if (name[cmplen] != '/') {
 			unsigned hash = name_hash(fullname);
 			add_object_entry(entry.sha1, hash, 1);
 			return;
 		}
-		if (type == OBJ_TREE) {
+		if (S_ISDIR(entry.mode)) {
 			struct tree_desc sub;
 			struct pbase_tree_cache *tree;
 			const char *down = name+cmplen+1;
@@ -1034,15 +1033,15 @@ static int check_pbase_path(unsigned hash)
 static void add_preferred_base_object(const char *name, unsigned hash)
 {
 	struct pbase_tree *it;
-	int cmplen = name_cmp_len(name);
+	int cmplen;
 
-	if (check_pbase_path(hash))
+	if (!num_preferred_base || check_pbase_path(hash))
 		return;
 
+	cmplen = name_cmp_len(name);
 	for (it = pbase_tree; it; it = it->next) {
 		if (cmplen == 0) {
-			hash = name_hash("");
-			add_object_entry(it->pcache.sha1, hash, 1);
+			add_object_entry(it->pcache.sha1, 0, 1);
 		}
 		else {
 			struct tree_desc tree;
@@ -1587,9 +1586,7 @@ static void read_object_list_from_stdin(void)
 
 static void show_commit(struct commit *commit)
 {
-	unsigned hash = name_hash("");
-	add_preferred_base_object("", hash);
-	add_object_entry(commit->object.sha1, hash, 0);
+	add_object_entry(commit->object.sha1, 0, 0);
 }
 
 static void show_object(struct object_array_entry *p)
