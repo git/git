@@ -495,8 +495,48 @@ git checkout -b <new> <start-point>::
 	create a new branch <new> referencing <start-point>, and
 	check it out.
 
-It is also useful to know that the special symbol "HEAD" can always
-be used to refer to the current branch.
+The special symbol "HEAD" can always be used to refer to the current
+branch.  In fact, git uses a file named "HEAD" in the .git directory to
+remember which branch is current:
+
+------------------------------------------------
+$ cat .git/HEAD
+ref: refs/heads/master
+------------------------------------------------
+
+Examining an old version without creating a new branch
+------------------------------------------------------
+
+The git-checkout command normally expects a branch head, but will also
+accept an arbitrary commit; for example, you can check out the commit
+referenced by a tag:
+
+------------------------------------------------
+$ git checkout v2.6.17
+Note: moving to "v2.6.17" which isn't a local branch
+If you want to create a new branch from this checkout, you may do so
+(now or later) by using -b with the checkout command again. Example:
+  git checkout -b <new_branch_name>
+HEAD is now at 427abfa... Linux v2.6.17
+------------------------------------------------
+
+The HEAD then refers to the SHA1 of the commit instead of to a branch,
+and git branch shows that you are no longer on a branch:
+
+------------------------------------------------
+$ cat .git/HEAD
+427abfa28afedffadfca9dd8b067eb6d36bac53f
+git branch
+* (no branch)
+  master
+------------------------------------------------
+
+In this case we say that the HEAD is "detached".
+
+This can be an easy way to check out a particular version without having
+to make up a name for a new branch.  However, keep in mind that when you
+switch away from the (for example, by checking out something else), you
+can lose track of what the HEAD used to point to.
 
 Examining branches from a remote repository
 -------------------------------------------
