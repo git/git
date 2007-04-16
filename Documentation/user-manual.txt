@@ -2315,8 +2315,8 @@ options mentioned above.
 Git internals
 =============
 
-There are two object abstractions: the "object database", and the
-"current directory cache" aka "index".
+Git depends on two fundamental abstractions: the "object database", and
+the "current directory cache" aka "index".
 
 The Object Database
 -------------------
@@ -2331,22 +2331,23 @@ All objects have a statically determined "type" aka "tag", which is
 determined at object creation time, and which identifies the format of
 the object (i.e. how it is used, and how it can refer to other
 objects).  There are currently four different object types: "blob",
-"tree", "commit" and "tag".
+"tree", "commit", and "tag".
 
-A "blob" object cannot refer to any other object, and is, like the type
-implies, a pure storage object containing some user data.  It is used to
-actually store the file data, i.e. a blob object is associated with some
-particular version of some file. 
+A <<def_blob_object,"blob" object>> cannot refer to any other object,
+and is, as the name implies, a pure storage object containing some
+user data.  It is used to actually store the file data, i.e. a blob
+object is associated with some particular version of some file.
 
-A "tree" object is an object that ties one or more "blob" objects into a
-directory structure. In addition, a tree object can refer to other tree
-objects, thus creating a directory hierarchy. 
+A <<def_tree_object,"tree" object>> is an object that ties one or more
+"blob" objects into a directory structure. In addition, a tree object
+can refer to other tree objects, thus creating a directory hierarchy.
 
-A "commit" object ties such directory hierarchies together into
-a DAG of revisions - each "commit" is associated with exactly one tree
-(the directory hierarchy at the time of the commit). In addition, a
-"commit" refers to one or more "parent" commit objects that describe the
-history of how we arrived at that directory hierarchy.
+A <<def_commit_object,"commit" object>> ties such directory hierarchies
+together into a <<def_DAG,directed acyclic graph>> of revisions - each
+"commit" is associated with exactly one tree (the directory hierarchy at
+the time of the commit). In addition, a "commit" refers to one or more
+"parent" commit objects that describe the history of how we arrived at
+that directory hierarchy.
 
 As a special case, a commit object with no parents is called the "root"
 object, and is the point of an initial project commit.  Each project
@@ -2356,9 +2357,10 @@ has two or more separate roots as its ultimate parents, that's probably
 just going to confuse people.  So aim for the notion of "one root object
 per project", even if git itself does not enforce that. 
 
-A "tag" object symbolically identifies and can be used to sign other
-objects. It contains the identifier and type of another object, a
-symbolic name (of course!) and, optionally, a signature.
+A <<def_tag_object,"tag" object>> symbolically identifies and can be
+used to sign other objects. It contains the identifier and type of
+another object, a symbolic name (of course!) and, optionally, a
+signature.
 
 Regardless of object type, all objects share the following
 characteristics: they are all deflated with zlib, and have a header
