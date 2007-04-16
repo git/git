@@ -2041,7 +2041,7 @@ static struct commit *fake_working_tree_commit(const char *path, const char *con
 
 	commit->buffer = xmalloc(400);
 	ident = fmt_ident("Not Committed Yet", "not.committed.yet", NULL, 0);
-	sprintf(commit->buffer,
+	snprintf(commit->buffer, 400,
 		"tree 0000000000000000000000000000000000000000\n"
 		"parent %s\n"
 		"author %s\n"
