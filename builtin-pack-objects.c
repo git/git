@@ -22,28 +22,26 @@ git-pack-objects [{ -q | --progress | --all-progress }] \n\
 
 struct object_entry {
 	unsigned char sha1[20];
+	uint32_t crc32;		/* crc of raw pack data for this object */
+	off_t offset;		/* offset into the final pack file */
 	unsigned long size;	/* uncompressed size */
-	off_t offset;	/* offset into the final pack file;
-				 * nonzero if already written.
-				 */
-	unsigned int depth;	/* delta depth */
 	unsigned int hash;	/* name hint hash */
-	enum object_type type;
-	enum object_type in_pack_type;	/* could be delta */
-	unsigned long delta_size;	/* delta data size (uncompressed) */
-#define in_pack_header_size delta_size	/* only when reusing pack data */
-	struct object_entry *delta;	/* delta base object */
+	unsigned int depth;	/* delta depth */
 	struct packed_git *in_pack; 	/* already in pack */
 	off_t in_pack_offset;
+	struct object_entry *delta;	/* delta base object */
 	struct object_entry *delta_child; /* deltified objects who bases me */
 	struct object_entry *delta_sibling; /* other deltified objects who
 					     * uses the same base as me
 					     */
-	int preferred_base;	/* we do not pack this, but is encouraged to
-				 * be used as the base objectto delta huge
-				 * objects against.
-				 */
-	uint32_t crc32;		/* crc of raw pack data for this object */
+	unsigned long delta_size;	/* delta data size (uncompressed) */
+	enum object_type type;
+	enum object_type in_pack_type;	/* could be delta */
+	unsigned char in_pack_header_size;
+	unsigned char preferred_base; /* we do not pack this, but is available
+				       * to be used as the base objectto delta
+				       * objects against.
+				       */
 };
 
 /*
