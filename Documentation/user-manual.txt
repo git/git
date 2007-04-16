@@ -298,9 +298,9 @@ $ git branch
 * master
 ------------------------------------------------
 
-A freshly cloned repository contains a single branch head, named
-"master", and working directory is initialized to the state of
-the project referred to by "master".
+A freshly cloned repository contains a single branch head, by default
+named "master", with the working directory initialized to the state of
+the project referred to by that branch head.
 
 Most projects also use <<def_tag,tags>>.  Tags, like heads, are
 references into the project's history, and can be listed using the
