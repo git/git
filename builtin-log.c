@@ -13,16 +13,43 @@
 #include "tag.h"
 #include "reflog-walk.h"
 #include "patch-ids.h"
+#include "refs.h"
 
 static int default_show_root = 1;
 
 /* this is in builtin-diff.c */
 void add_head(struct rev_info *revs);
 
+static void add_name_decoration(const char *prefix, const char *name, struct object *obj)
+{
+	int plen = strlen(prefix);
+	int nlen = strlen(name);
+	struct name_decoration *res = xmalloc(sizeof(struct name_decoration) + plen + nlen);
+	memcpy(res->name, prefix, plen);
+	memcpy(res->name + plen, name, nlen + 1);
+	res->next = add_decoration(&name_decoration, obj, res);
+}
+
+static int add_ref_decoration(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
+{
+	struct object *obj = parse_object(sha1);
+	if (!obj)
+		return 0;
+	add_name_decoration("", refname, obj);
+	while (obj->type == OBJ_TAG) {
+		obj = ((struct tag *)obj)->tagged;
+		if (!obj)
+			break;
+		add_name_decoration("tag: ", refname, obj);
+	}
+	return 0;
+}
+
 static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		      struct rev_info *rev)
 {
 	int i;
+	int decorate = 0;
 
 	rev->abbrev = DEFAULT_ABBREV;
 	rev->commit_format = CMIT_FMT_DEFAULT;
@@ -39,8 +66,11 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 				git_log_output_encoding = xstrdup(arg);
 			else
 				git_log_output_encoding = "";
-		}
-		else
+		} else if (!strcmp(arg, "--decorate")) {
+			if (!decorate)
+				for_each_ref(add_ref_decoration, NULL);
+			decorate = 1;
+		} else
 			die("unrecognized argument: %s", arg);
 	}
 }

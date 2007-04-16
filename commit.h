@@ -3,6 +3,7 @@
 
 #include "object.h"
 #include "tree.h"
+#include "decorate.h"
 
 struct commit_list {
 	struct commit *item;
@@ -20,6 +21,13 @@ struct commit {
 
 extern int save_commit_buffer;
 extern const char *commit_type;
+
+/* While we can decorate any object with a name, it's only used for commits.. */
+extern struct decoration name_decoration;
+struct name_decoration {
+	struct name_decoration *next;
+	char name[1];
+};
 
 struct commit *lookup_commit(const unsigned char *sha1);
 struct commit *lookup_commit_reference(const unsigned char *sha1);
