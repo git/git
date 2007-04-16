@@ -10,7 +10,7 @@
 #include "tree-walk.h"
 
 static const char builtin_rm_usage[] =
-"git-rm [-f] [-n] [-r] [--cached] [--] <file>...";
+"git-rm [-f] [-n] [-r] [--cached] [--quiet] [--] <file>...";
 
 static struct {
 	int nr, alloc;
@@ -104,7 +104,7 @@ static struct lock_file lock_file;
 int cmd_rm(int argc, const char **argv, const char *prefix)
 {
 	int i, newfd;
-	int show_only = 0, force = 0, index_only = 0, recursive = 0;
+	int show_only = 0, force = 0, index_only = 0, recursive = 0, quiet = 0;
 	const char **pathspec;
 	char *seen;
 
@@ -132,6 +132,8 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 			force = 1;
 		else if (!strcmp(arg, "-r"))
 			recursive = 1;
+		else if (!strcmp(arg, "--quiet"))
+			quiet = 1;
 		else
 			usage(builtin_rm_usage);
 	}
@@ -187,7 +189,8 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	 */
 	for (i = 0; i < list.nr; i++) {
 		const char *path = list.name[i];
-		printf("rm '%s'\n", path);
+		if (!quiet)
+			printf("rm '%s'\n", path);
 
 		if (remove_file_from_cache(path))
 			die("git-rm: unable to remove %s", path);
