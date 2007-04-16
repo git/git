@@ -1445,60 +1445,6 @@ static void prepare_pack(int window, int depth)
 	free(delta_list);
 }
 
-static int reuse_cached_pack(unsigned char *sha1)
-{
-	static const char cache[] = "pack-cache/pack-%s.%s";
-	char *cached_pack, *cached_idx;
-	int ifd, ofd, ifd_ix = -1;
-
-	cached_pack = git_path(cache, sha1_to_hex(sha1), "pack");
-	ifd = open(cached_pack, O_RDONLY);
-	if (ifd < 0)
-		return 0;
-
-	if (!pack_to_stdout) {
-		cached_idx = git_path(cache, sha1_to_hex(sha1), "idx");
-		ifd_ix = open(cached_idx, O_RDONLY);
-		if (ifd_ix < 0) {
-			close(ifd);
-			return 0;
-		}
-	}
-
-	if (progress)
-		fprintf(stderr, "Reusing %u objects pack %s\n", nr_objects,
-			sha1_to_hex(sha1));
-
-	if (pack_to_stdout) {
-		if (copy_fd(ifd, 1))
-			exit(1);
-		close(ifd);
-	}
-	else {
-		char name[PATH_MAX];
-		snprintf(name, sizeof(name),
-			 "%s-%s.%s", base_name, sha1_to_hex(sha1), "pack");
-		ofd = open(name, O_CREAT | O_EXCL | O_WRONLY, 0666);
-		if (ofd < 0)
-			die("unable to open %s (%s)", name, strerror(errno));
-		if (copy_fd(ifd, ofd))
-			exit(1);
-		close(ifd);
-
-		snprintf(name, sizeof(name),
-			 "%s-%s.%s", base_name, sha1_to_hex(sha1), "idx");
-		ofd = open(name, O_CREAT | O_EXCL | O_WRONLY, 0666);
-		if (ofd < 0)
-			die("unable to open %s (%s)", name, strerror(errno));
-		if (copy_fd(ifd_ix, ofd))
-			exit(1);
-		close(ifd_ix);
-		puts(sha1_to_hex(sha1));
-	}
-
-	return 1;
-}
-
 static void progress_interval(int signum)
 {
 	progress_update = 1;
@@ -1618,6 +1564,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	SHA_CTX ctx;
 	int depth = 10;
 	struct object_entry **list;
+	off_t last_obj_offset;
 	int use_internal_rev_list = 0;
 	int thin = 0;
 	uint32_t i;
@@ -1779,24 +1726,19 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (progress && (nr_objects != nr_result))
 		fprintf(stderr, "Result has %u objects.\n", nr_result);
 
-	if (reuse_cached_pack(object_list_sha1))
-		;
-	else {
-		off_t last_obj_offset;
-		if (nr_result)
-			prepare_pack(window, depth);
-		if (progress == 1 && pack_to_stdout) {
-			/* the other end usually displays progress itself */
-			struct itimerval v = {{0,},};
-			setitimer(ITIMER_REAL, &v, NULL);
-			signal(SIGALRM, SIG_IGN );
-			progress_update = 0;
-		}
-		last_obj_offset = write_pack_file();
-		if (!pack_to_stdout) {
-			write_index_file(last_obj_offset);
-			puts(sha1_to_hex(object_list_sha1));
-		}
+	if (nr_result)
+		prepare_pack(window, depth);
+	if (progress == 1 && pack_to_stdout) {
+		/* the other end usually displays progress itself */
+		struct itimerval v = {{0,},};
+		setitimer(ITIMER_REAL, &v, NULL);
+		signal(SIGALRM, SIG_IGN );
+		progress_update = 0;
+	}
+	last_obj_offset = write_pack_file();
+	if (!pack_to_stdout) {
+		write_index_file(last_obj_offset);
+		puts(sha1_to_hex(object_list_sha1));
 	}
 	if (progress)
 		fprintf(stderr, "Total %u (delta %u), reused %u (delta %u)\n",
