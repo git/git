@@ -12,23 +12,22 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Finds dangling commits and tags from the object database, and
-creates refs to them in .git/lost-found/ directory.  Commits and
-tags that dereference to commits go to .git/lost-found/commit
-and others are stored in .git/lost-found/other directory.
+creates refs to them in the .git/lost-found/ directory.  Commits and
+tags that dereference to commits are stored in .git/lost-found/commit,
+and other objects are stored in .git/lost-found/other.
 
 
 OUTPUT
 ------
-One line description from the commit and tag found along with
-their object name are printed on the standard output.
-
+Prints to standard output the object names and one-line descriptions
+of any commits or tags found.
 
 EXAMPLE
 -------
 
-Suppose you run 'git tag -f' and mistyped the tag to overwrite.
+Suppose you run 'git tag -f' and mistype the tag to overwrite.
 The ref to your tag is overwritten, but until you run 'git
-prune', it is still there.
+prune', the tag itself is still there.
 
 ------------
 $ git lost-found
@@ -36,15 +35,15 @@ $ git lost-found
 ...
 ------------
 
-Also you can use gitk to browse how they relate to each other
-and existing (probably old) tags.
+Also you can use gitk to browse how any tags found relate to each
+other.
 
 ------------
 $ gitk $(cd .git/lost-found/commit && echo ??*)
 ------------
 
-After making sure that it is the object you are looking for, you
-can reconnect it to your regular .git/refs hierarchy.
+After making sure you know which the object is the tag you are looking
+for, you can reconnect it to your regular .git/refs hierarchy.
 
 ------------
 $ git cat-file -t 1ef2b196
