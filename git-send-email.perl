@@ -446,9 +446,12 @@ sub send_message
 		my ($name, $addr) = ($from =~ /^(.*?)(\s+<.*)/);
 		$from = "\"$name\"$addr";
 	}
+	my $ccline = "";
+	if ($cc ne '') {
+		$ccline = "\nCc: $cc";
+	}
 	my $header = "From: $from
-To: $to
-Cc: $cc
+To: $to${ccline}
 Subject: $subject
 Date: $date
 Message-Id: $message_id
