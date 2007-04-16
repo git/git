@@ -84,6 +84,10 @@ test_expect_success \
     'When the rm in "git-rm -f" fails, it should not remove the file from the index' \
     'git-ls-files --error-unmatch baz'
 
+test_expect_success 'Remove nonexistent file with --ignore-unmatch' '
+	git rm --ignore-unmatch nonexistent
+'
+
 test_expect_success '"rm" command printed' '
 	echo frotz > test-file &&
 	git add test-file &&
