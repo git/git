@@ -170,7 +170,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	 * must match; but the file can already been removed, since
 	 * this sequence is a natural "novice" way:
 	 *
-	 *	rm F; git fm F
+	 *	rm F; git rm F
 	 *
 	 * Further, if HEAD commit exists, "diff-index --cached" must
 	 * report no changes unless forced.
