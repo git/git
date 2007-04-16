@@ -1160,6 +1160,43 @@ static void *unpack_sha1_file(void *map, unsigned long mapsize, enum object_type
 	return unpack_sha1_rest(&stream, hdr, *size, sha1);
 }
 
+unsigned long get_size_from_delta(struct packed_git *p,
+				  struct pack_window **w_curs,
+			          off_t curpos)
+{
+	const unsigned char *data;
+	unsigned char delta_head[20], *in;
+	z_stream stream;
+	int st;
+
+	memset(&stream, 0, sizeof(stream));
+	stream.next_out = delta_head;
+	stream.avail_out = sizeof(delta_head);
+
+	inflateInit(&stream);
+	do {
+		in = use_pack(p, w_curs, curpos, &stream.avail_in);
+		stream.next_in = in;
+		st = inflate(&stream, Z_FINISH);
+		curpos += stream.next_in - in;
+	} while ((st == Z_OK || st == Z_BUF_ERROR) &&
+		 stream.total_out < sizeof(delta_head));
+	inflateEnd(&stream);
+	if ((st != Z_STREAM_END) && stream.total_out != sizeof(delta_head))
+		die("delta data unpack-initial failed");
+
+	/* Examine the initial part of the delta to figure out
+	 * the result size.
+	 */
+	data = delta_head;
+
+	/* ignore base size */
+	get_delta_hdr_size(&data, delta_head+sizeof(delta_head));
+
+	/* Read the result size */
+	return get_delta_hdr_size(&data, delta_head+sizeof(delta_head));
+}
+
 static off_t get_delta_base(struct packed_git *p,
 				    struct pack_window **w_curs,
 				    off_t *curpos,
@@ -1223,40 +1260,8 @@ static int packed_delta_info(struct packed_git *p,
 	 * based on a base with a wrong size.  This saves tons of
 	 * inflate() calls.
 	 */
-	if (sizep) {
-		const unsigned char *data;
-		unsigned char delta_head[20], *in;
-		z_stream stream;
-		int st;
-
-		memset(&stream, 0, sizeof(stream));
-		stream.next_out = delta_head;
-		stream.avail_out = sizeof(delta_head);
-
-		inflateInit(&stream);
-		do {
-			in = use_pack(p, w_curs, curpos, &stream.avail_in);
-			stream.next_in = in;
-			st = inflate(&stream, Z_FINISH);
-			curpos += stream.next_in - in;
-		} while ((st == Z_OK || st == Z_BUF_ERROR)
-			&& stream.total_out < sizeof(delta_head));
-		inflateEnd(&stream);
-		if ((st != Z_STREAM_END) &&
-		    stream.total_out != sizeof(delta_head))
-			die("delta data unpack-initial failed");
-
-		/* Examine the initial part of the delta to figure out
-		 * the result size.
-		 */
-		data = delta_head;
-
-		/* ignore base size */
-		get_delta_hdr_size(&data, delta_head+sizeof(delta_head));
-
-		/* Read the result size */
-		*sizep = get_delta_hdr_size(&data, delta_head+sizeof(delta_head));
-	}
+	if (sizep)
+		*sizep = get_size_from_delta(p, w_curs, curpos);
 
 	return type;
 }
