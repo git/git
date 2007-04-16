@@ -1276,7 +1276,7 @@ static int type_size_sort(const struct object_entry *a, const struct object_entr
 		return -1;
 	if (a->size > b->size)
 		return 1;
-	return a < b ? -1 : (a > b);
+	return a > b ? -1 : (a < b);  /* newest last */
 }
 
 struct unpacked {
