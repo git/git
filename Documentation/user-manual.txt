@@ -504,6 +504,7 @@ $ cat .git/HEAD
 ref: refs/heads/master
 ------------------------------------------------
 
+[[detached-head]]
 Examining an old version without creating a new branch
 ------------------------------------------------------
 
@@ -2055,22 +2056,22 @@ $ git tag bad mywork~5
 
 (Either gitk or git-log may be useful for finding the commit.)
 
-Then check out a new branch at that commit, edit it, and rebase the rest of
-the series on top of it:
+Then check out that commit, edit it, and rebase the rest of the series
+on top of it (note that we could check out the commit on a temporary
+branch, but instead we're using a <<detached-head,detached head>>):
 
 -------------------------------------------------
-$ git checkout -b TMP bad
+$ git checkout bad
 $ # make changes here and update the index
 $ git commit --amend
-$ git rebase --onto TMP bad mywork
+$ git rebase --onto HEAD bad mywork
 -------------------------------------------------
 
-When you're done, you'll be left with mywork checked out, with the top patches
-on mywork reapplied on top of the modified commit you created in TMP.  You can
+When you're done, you'll be left with mywork checked out, with the top
+patches on mywork reapplied on top of your modified commit.  You can
 then clean up with
 
 -------------------------------------------------
-$ git branch -d TMP
 $ git tag -d bad
 -------------------------------------------------
 
