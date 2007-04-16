@@ -22,6 +22,9 @@ Checklist (and a short version for the impatient):
 	- provide additional information (which is unsuitable for
 	  the commit message) between the "---" and the diffstat
 	- send the patch to the list _and_ the maintainer
+	- if you change, add, or remove a command line option or
+	  make some other user interface change, the associated
+	  documentation should be updated as well.
 
 Long version:
 
