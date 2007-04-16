@@ -66,7 +66,7 @@ static int local;
 static int incremental;
 static int allow_ofs_delta;
 
-static struct object_entry **sorted_by_sha, **sorted_by_type;
+static struct object_entry **sorted_by_sha;
 static struct object_entry *objects;
 static uint32_t nr_objects, nr_alloc, nr_result;
 static const char *base_name;
@@ -1181,31 +1181,10 @@ static void get_object_details(void)
 		check_object(entry);
 }
 
-typedef int (*entry_sort_t)(const struct object_entry *, const struct object_entry *);
-
-static entry_sort_t current_sort;
-
-static int sort_comparator(const void *_a, const void *_b)
+static int sha1_sort(const void *_a, const void *_b)
 {
-	struct object_entry *a = *(struct object_entry **)_a;
-	struct object_entry *b = *(struct object_entry **)_b;
-	return current_sort(a,b);
-}
-
-static struct object_entry **create_sorted_list(entry_sort_t sort)
-{
-	struct object_entry **list = xmalloc(nr_objects * sizeof(struct object_entry *));
-	uint32_t i;
-
-	for (i = 0; i < nr_objects; i++)
-		list[i] = objects + i;
-	current_sort = sort;
-	qsort(list, nr_objects, sizeof(struct object_entry *), sort_comparator);
-	return list;
-}
-
-static int sha1_sort(const struct object_entry *a, const struct object_entry *b)
-{
+	const struct object_entry *a = *(struct object_entry **)_a;
+	const struct object_entry *b = *(struct object_entry **)_b;
 	return hashcmp(a->sha1, b->sha1);
 }
 
@@ -1222,13 +1201,15 @@ static struct object_entry **create_final_object_list(void)
 		if (!objects[i].preferred_base)
 			list[j++] = objects + i;
 	}
-	current_sort = sha1_sort;
-	qsort(list, nr_result, sizeof(struct object_entry *), sort_comparator);
+	qsort(list, nr_result, sizeof(struct object_entry *), sha1_sort);
 	return list;
 }
 
-static int type_size_sort(const struct object_entry *a, const struct object_entry *b)
+static int type_size_sort(const void *_a, const void *_b)
 {
+	const struct object_entry *a = *(struct object_entry **)_a;
+	const struct object_entry *b = *(struct object_entry **)_b;
+
 	if (a->type < b->type)
 		return -1;
 	if (a->type > b->type)
@@ -1448,10 +1429,20 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 
 static void prepare_pack(int window, int depth)
 {
+	struct object_entry **delta_list;
+	uint32_t i;
+
 	get_object_details();
-	sorted_by_type = create_sorted_list(type_size_sort);
-	if (window && depth)
-		find_deltas(sorted_by_type, window+1, depth);
+
+	if (!window || !depth)
+		return;
+
+	delta_list = xmalloc(nr_objects * sizeof(*delta_list));
+	for (i = 0; i < nr_objects; i++)
+		delta_list[i] = objects + i;
+	qsort(delta_list, nr_objects, sizeof(*delta_list), type_size_sort);
+	find_deltas(delta_list, window+1, depth);
+	free(delta_list);
 }
 
 static int reuse_cached_pack(unsigned char *sha1)
