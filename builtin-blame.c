@@ -19,11 +19,11 @@
 
 static char blame_usage[] =
 "git-blame [-c] [-l] [-t] [-f] [-n] [-p] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [--contents <filename>] [--incremental] [commit] [--] file\n"
-"  -c, --compatibility Use the same output mode as git-annotate (Default: off)\n"
+"  -c                  Use the same output mode as git-annotate (Default: off)\n"
 "  -b                  Show blank SHA-1 for boundary commits (Default: off)\n"
-"  -l, --long          Show long commit SHA1 (Default: off)\n"
+"  -l                  Show long commit SHA1 (Default: off)\n"
 "  --root              Do not treat root commits as boundaries (Default: off)\n"
-"  -t, --time          Show raw timestamp (Default: off)\n"
+"  -t                  Show raw timestamp (Default: off)\n"
 "  -f, --show-name     Show original filename (Default: auto)\n"
 "  -n, --show-number   Show original linenumber (Default: off)\n"
 "  -p, --porcelain     Show in a format designed for machine consumption\n"

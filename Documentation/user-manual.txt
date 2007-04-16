@@ -298,9 +298,9 @@ $ git branch
 * master
 ------------------------------------------------
 
-A freshly cloned repository contains a single branch head, named
-"master", and working directory is initialized to the state of
-the project referred to by "master".
+A freshly cloned repository contains a single branch head, by default
+named "master", with the working directory initialized to the state of
+the project referred to by that branch head.
 
 Most projects also use <<def_tag,tags>>.  Tags, like heads, are
 references into the project's history, and can be listed using the
@@ -495,8 +495,49 @@ git checkout -b <new> <start-point>::
 	create a new branch <new> referencing <start-point>, and
 	check it out.
 
-It is also useful to know that the special symbol "HEAD" can always
-be used to refer to the current branch.
+The special symbol "HEAD" can always be used to refer to the current
+branch.  In fact, git uses a file named "HEAD" in the .git directory to
+remember which branch is current:
+
+------------------------------------------------
+$ cat .git/HEAD
+ref: refs/heads/master
+------------------------------------------------
+
+[[detached-head]]
+Examining an old version without creating a new branch
+------------------------------------------------------
+
+The git-checkout command normally expects a branch head, but will also
+accept an arbitrary commit; for example, you can check out the commit
+referenced by a tag:
+
+------------------------------------------------
+$ git checkout v2.6.17
+Note: moving to "v2.6.17" which isn't a local branch
+If you want to create a new branch from this checkout, you may do so
+(now or later) by using -b with the checkout command again. Example:
+  git checkout -b <new_branch_name>
+HEAD is now at 427abfa... Linux v2.6.17
+------------------------------------------------
+
+The HEAD then refers to the SHA1 of the commit instead of to a branch,
+and git branch shows that you are no longer on a branch:
+
+------------------------------------------------
+$ cat .git/HEAD
+427abfa28afedffadfca9dd8b067eb6d36bac53f
+git branch
+* (no branch)
+  master
+------------------------------------------------
+
+In this case we say that the HEAD is "detached".
+
+This can be an easy way to check out a particular version without having
+to make up a name for a new branch.  However, keep in mind that when you
+switch away from the (for example, by checking out something else), you
+can lose track of what the HEAD used to point to.
 
 Examining branches from a remote repository
 -------------------------------------------
@@ -2015,22 +2056,22 @@ $ git tag bad mywork~5
 
 (Either gitk or git-log may be useful for finding the commit.)
 
-Then check out a new branch at that commit, edit it, and rebase the rest of
-the series on top of it:
+Then check out that commit, edit it, and rebase the rest of the series
+on top of it (note that we could check out the commit on a temporary
+branch, but instead we're using a <<detached-head,detached head>>):
 
 -------------------------------------------------
-$ git checkout -b TMP bad
+$ git checkout bad
 $ # make changes here and update the index
 $ git commit --amend
-$ git rebase --onto TMP bad mywork
+$ git rebase --onto HEAD bad mywork
 -------------------------------------------------
 
-When you're done, you'll be left with mywork checked out, with the top patches
-on mywork reapplied on top of the modified commit you created in TMP.  You can
+When you're done, you'll be left with mywork checked out, with the top
+patches on mywork reapplied on top of your modified commit.  You can
 then clean up with
 
 -------------------------------------------------
-$ git branch -d TMP
 $ git tag -d bad
 -------------------------------------------------
 
@@ -2275,8 +2316,8 @@ options mentioned above.
 Git internals
 =============
 
-There are two object abstractions: the "object database", and the
-"current directory cache" aka "index".
+Git depends on two fundamental abstractions: the "object database", and
+the "current directory cache" aka "index".
 
 The Object Database
 -------------------
@@ -2291,22 +2332,23 @@ All objects have a statically determined "type" aka "tag", which is
 determined at object creation time, and which identifies the format of
 the object (i.e. how it is used, and how it can refer to other
 objects).  There are currently four different object types: "blob",
-"tree", "commit" and "tag".
+"tree", "commit", and "tag".
 
-A "blob" object cannot refer to any other object, and is, like the type
-implies, a pure storage object containing some user data.  It is used to
-actually store the file data, i.e. a blob object is associated with some
-particular version of some file. 
+A <<def_blob_object,"blob" object>> cannot refer to any other object,
+and is, as the name implies, a pure storage object containing some
+user data.  It is used to actually store the file data, i.e. a blob
+object is associated with some particular version of some file.
 
-A "tree" object is an object that ties one or more "blob" objects into a
-directory structure. In addition, a tree object can refer to other tree
-objects, thus creating a directory hierarchy. 
+A <<def_tree_object,"tree" object>> is an object that ties one or more
+"blob" objects into a directory structure. In addition, a tree object
+can refer to other tree objects, thus creating a directory hierarchy.
 
-A "commit" object ties such directory hierarchies together into
-a DAG of revisions - each "commit" is associated with exactly one tree
-(the directory hierarchy at the time of the commit). In addition, a
-"commit" refers to one or more "parent" commit objects that describe the
-history of how we arrived at that directory hierarchy.
+A <<def_commit_object,"commit" object>> ties such directory hierarchies
+together into a <<def_DAG,directed acyclic graph>> of revisions - each
+"commit" is associated with exactly one tree (the directory hierarchy at
+the time of the commit). In addition, a "commit" refers to one or more
+"parent" commit objects that describe the history of how we arrived at
+that directory hierarchy.
 
 As a special case, a commit object with no parents is called the "root"
 object, and is the point of an initial project commit.  Each project
@@ -2316,9 +2358,10 @@ has two or more separate roots as its ultimate parents, that's probably
 just going to confuse people.  So aim for the notion of "one root object
 per project", even if git itself does not enforce that. 
 
-A "tag" object symbolically identifies and can be used to sign other
-objects. It contains the identifier and type of another object, a
-symbolic name (of course!) and, optionally, a signature.
+A <<def_tag_object,"tag" object>> symbolically identifies and can be
+used to sign other objects. It contains the identifier and type of
+another object, a symbolic name (of course!) and, optionally, a
+signature.
 
 Regardless of object type, all objects share the following
 characteristics: they are all deflated with zlib, and have a header

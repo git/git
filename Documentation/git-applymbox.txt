@@ -42,13 +42,19 @@ OPTIONS
 	and the current tree.
 
 -u::
-	The commit log message, author name and author email are
-	taken from the e-mail, and after minimally decoding MIME
-	transfer encoding, re-coded in UTF-8 by transliterating
-	them.  This used to be optional but now it is the default.
+	Pass `-u` flag to `git-mailinfo` (see gitlink:git-mailinfo[1]).
+	The proposed commit log message taken from the e-mail
+	are re-coded into UTF-8 encoding (configuration variable
+	`i18n.commitencoding` can be used to specify project's
+	preferred encoding if it is not UTF-8).  This used to be
+	optional but now it is the default.
 +
 Note that the patch is always used as-is without charset
 conversion, even with this flag.
+
+-n::
+	Pass `-n` flag to `git-mailinfo` (see
+	gitlink:git-mailinfo[1]).
 
 -c .dotest/<num>::
 	When the patch contained in an e-mail does not cleanly
