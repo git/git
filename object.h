@@ -46,7 +46,7 @@ extern struct object_refs *lookup_object_refs(struct object *);
 /** Internal only **/
 struct object *lookup_object(const unsigned char *sha1);
 
-void created_object(const unsigned char *sha1, struct object *obj);
+extern void *create_object(const unsigned char *sha1, int type, void *obj);
 
 /** Returns the object, having parsed it to find out what it is. **/
 struct object *parse_object(const unsigned char *sha1);

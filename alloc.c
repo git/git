@@ -20,7 +20,7 @@
 
 #define DEFINE_ALLOCATOR(name, type)				\
 static unsigned int name##_allocs;				\
-struct name *alloc_##name##_node(void)				\
+void *alloc_##name##_node(void)					\
 {								\
 	static int nr;						\
 	static type *block;					\

@@ -105,11 +105,13 @@ static void grow_object_hash(void)
 	obj_hash_size = new_hash_size;
 }
 
-void created_object(const unsigned char *sha1, struct object *obj)
+void *create_object(const unsigned char *sha1, int type, void *o)
 {
+	struct object *obj = o;
+
 	obj->parsed = 0;
 	obj->used = 0;
-	obj->type = OBJ_NONE;
+	obj->type = type;
 	obj->flags = 0;
 	hashcpy(obj->sha1, sha1);
 
@@ -118,16 +120,14 @@ void created_object(const unsigned char *sha1, struct object *obj)
 
 	insert_obj_hash(obj, obj_hash, obj_hash_size);
 	nr_objs++;
+	return obj;
 }
 
 struct object *lookup_unknown_object(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
-	if (!obj) {
-		obj = alloc_object_node();
-		created_object(sha1, obj);
-		obj->type = OBJ_NONE;
-	}
+	if (!obj)
+		obj = create_object(sha1, OBJ_NONE, alloc_object_node());
 	return obj;
 }
 
