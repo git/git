@@ -47,22 +47,7 @@ static struct ref_list *add_ref(const char *name, const unsigned char *sha1,
 				struct ref_list **new_entry)
 {
 	int len;
-	struct ref_list **p = &list, *entry;
-
-	/* Find the place to insert the ref into.. */
-	while ((entry = *p) != NULL) {
-		int cmp = strcmp(entry->name, name);
-		if (cmp > 0)
-			break;
-
-		/* Same as existing entry? */
-		if (!cmp) {
-			if (new_entry)
-				*new_entry = entry;
-			return list;
-		}
-		p = &entry->next;
-	}
+	struct ref_list *entry;
 
 	/* Allocate it and add it in.. */
 	len = strlen(name) + 1;
@@ -71,11 +56,94 @@ static struct ref_list *add_ref(const char *name, const unsigned char *sha1,
 	hashclr(entry->peeled);
 	memcpy(entry->name, name, len);
 	entry->flag = flag;
-	entry->next = *p;
-	*p = entry;
+	entry->next = list;
 	if (new_entry)
 		*new_entry = entry;
-	return list;
+	return entry;
+}
+
+/* merge sort the ref list */
+static struct ref_list *sort_ref_list(struct ref_list *list)
+{
+	int psize, qsize, last_merge_count, cmp;
+	struct ref_list *p, *q, *l, *e;
+	struct ref_list *new_list = list;
+	int k = 1;
+	int merge_count = 0;
+
+	if (!list)
+		return list;
+
+	do {
+		last_merge_count = merge_count;
+		merge_count = 0;
+
+		psize = 0;
+
+		p = new_list;
+		q = new_list;
+		new_list = NULL;
+		l = NULL;
+
+		while (p) {
+			merge_count++;
+
+			while (psize < k && q->next) {
+				q = q->next;
+				psize++;
+			}
+			qsize = k;
+
+			while ((psize > 0) || (qsize > 0 && q)) {
+				if (qsize == 0 || !q) {
+					e = p;
+					p = p->next;
+					psize--;
+				} else if (psize == 0) {
+					e = q;
+					q = q->next;
+					qsize--;
+				} else {
+					cmp = strcmp(q->name, p->name);
+					if (cmp < 0) {
+						e = q;
+						q = q->next;
+						qsize--;
+					} else if (cmp > 0) {
+						e = p;
+						p = p->next;
+						psize--;
+					} else {
+						if (hashcmp(q->sha1, p->sha1))
+							die("Duplicated ref, and SHA1s don't match: %s",
+							    q->name);
+						warning("Duplicated ref: %s", q->name);
+						e = q;
+						q = q->next;
+						qsize--;
+						free(e);
+						e = p;
+						p = p->next;
+						psize--;
+					}
+				}
+
+				e->next = NULL;
+
+				if (l)
+					l->next = e;
+				if (!new_list)
+					new_list = e;
+				l = e;
+			}
+
+			p = q;
+		};
+
+		k = k * 2;
+	} while ((last_merge_count != merge_count) || (last_merge_count != 1));
+
+	return new_list;
 }
 
 /*
@@ -142,7 +210,7 @@ static void read_packed_refs(FILE *f, struct cached_refs *cached_refs)
 		    !get_sha1_hex(refline + 1, sha1))
 			hashcpy(last->peeled, sha1);
 	}
-	cached_refs->packed = list;
+	cached_refs->packed = sort_ref_list(list);
 }
 
 static struct ref_list *get_packed_refs(void)
@@ -201,7 +269,7 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 		free(ref);
 		closedir(dir);
 	}
-	return list;
+	return sort_ref_list(list);
 }
 
 static struct ref_list *get_loose_refs(void)
