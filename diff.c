@@ -1068,9 +1068,18 @@ static int file_is_binary(struct diff_filespec *one)
 	struct git_attr_check attr_diff_check;
 
 	setup_diff_attr_check(&attr_diff_check);
-	if (!git_checkattr(one->path, 1, &attr_diff_check) &&
-	    (0 <= attr_diff_check.isset))
-		return !attr_diff_check.isset;
+	if (!git_checkattr(one->path, 1, &attr_diff_check)) {
+		void *value = attr_diff_check.value;
+		if (ATTR_TRUE(value))
+			return 0;
+		else if (ATTR_FALSE(value))
+			return 1;
+		else if (ATTR_UNSET(value))
+			;
+		else
+			die("unknown value %s given to 'diff' attribute",
+			    (char *)value);
+	}
 
 	if (!one->data) {
 		if (!DIFF_FILE_VALID(one))

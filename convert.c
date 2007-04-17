@@ -225,9 +225,19 @@ static int git_path_check_crlf(const char *path)
 
 	setup_crlf_check(&attr_crlf_check);
 
-	if (git_checkattr(path, 1, &attr_crlf_check))
-		return -1;
-	return attr_crlf_check.isset;
+	if (!git_checkattr(path, 1, &attr_crlf_check)) {
+		void *value = attr_crlf_check.value;
+		if (ATTR_TRUE(value))
+			return 1;
+		else if (ATTR_FALSE(value))
+			return 0;
+		else if (ATTR_UNSET(value))
+			;
+		else
+			die("unknown value %s given to 'crlf' attribute",
+			    (char *)value);
+	}
+	return -1;
 }
 
 int convert_to_git(const char *path, char **bufp, unsigned long *sizep)

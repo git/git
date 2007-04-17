@@ -1,6 +1,8 @@
 #include "cache.h"
 #include "attr.h"
 
+#define ATTR__UNKNOWN	((void *) -2)
+
 /*
  * The basic design decision here is that we are not going to have
  * insanely large number of attributes.
@@ -83,6 +85,7 @@ struct git_attr *git_attr(const char *name, int len)
 	check_all_attr = xrealloc(check_all_attr,
 				  sizeof(*check_all_attr) * attr_nr);
 	check_all_attr[a->attr_nr].attr = a;
+	check_all_attr[a->attr_nr].value = ATTR__UNKNOWN;
 	return a;
 }
 
@@ -92,12 +95,14 @@ struct git_attr *git_attr(const char *name, int len)
  * (1) glob pattern.
  * (2) whitespace
  * (3) whitespace separated list of attribute names, each of which
- *     could be prefixed with '-' to mean "not set".
+ *     could be prefixed with '-' to mean "set to false", '!' to mean
+ *     "unset".
  */
 
+/* What does a matched pattern decide? */
 struct attr_state {
-	int unset;
 	struct git_attr *attr;
+	void *setto;
 };
 
 struct match_attr {
@@ -112,13 +117,63 @@ struct match_attr {
 
 static const char blank[] = " \t\r\n";
 
+static const char *parse_attr(const char *src, int lineno, const char *cp,
+			      int *num_attr, struct match_attr *res)
+{
+	const char *ep, *equals;
+	int len;
+
+	ep = cp + strcspn(cp, blank);
+	equals = strchr(cp, '=');
+	if (equals && ep < equals)
+		equals = NULL;
+	if (equals)
+		len = equals - cp;
+	else
+		len = ep - cp;
+	if (!res) {
+		if (*cp == '-' || *cp == '!') {
+			cp++;
+			len--;
+		}
+		if (invalid_attr_name(cp, len)) {
+			fprintf(stderr,
+				"%.*s is not a valid attribute name: %s:%d\n",
+				len, cp, src, lineno);
+			return NULL;
+		}
+	} else {
+		struct attr_state *e;
+
+		e = &(res->state[*num_attr]);
+		if (*cp == '-' || *cp == '!') {
+			e->setto = (*cp == '-') ? ATTR__FALSE : ATTR__UNSET;
+			cp++;
+			len--;
+		}
+		else if (!equals)
+			e->setto = ATTR__TRUE;
+		else {
+			char *value;
+			int vallen = ep - equals;
+			value = xmalloc(vallen);
+			memcpy(value, equals+1, vallen-1);
+			value[vallen-1] = 0;
+			e->setto = value;
+		}
+		e->attr = git_attr(cp, len);
+	}
+	(*num_attr)++;
+	return ep + strspn(ep, blank);
+}
+
 static struct match_attr *parse_attr_line(const char *line, const char *src,
 					  int lineno, int macro_ok)
 {
 	int namelen;
 	int num_attr;
 	const char *cp, *name;
-	struct match_attr *res = res;
+	struct match_attr *res = NULL;
 	int pass;
 	int is_macro;
 
@@ -153,42 +208,16 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 		num_attr = 0;
 		cp = name + namelen;
 		cp = cp + strspn(cp, blank);
-		while (*cp) {
-			const char *ep;
-			ep = cp + strcspn(cp, blank);
-			if (!pass) {
-				if (*cp == '-')
-					cp++;
-				if (invalid_attr_name(cp, ep - cp)) {
-					fprintf(stderr,
-						"%.*s is not a valid attribute name: %s:%d\n",
-						(int)(ep - cp), cp,
-						src, lineno);
-					return NULL;
-				}
-			} else {
-				struct attr_state *e;
-
-				e = &(res->state[num_attr]);
-				if (*cp == '-') {
-					e->unset = 1;
-					cp++;
-				}
-				e->attr = git_attr(cp, ep - cp);
-			}
-			num_attr++;
-			cp = ep + strspn(ep, blank);
-		}
+		while (*cp)
+			cp = parse_attr(src, lineno, cp, &num_attr, res);
 		if (pass)
 			break;
-
 		res = xcalloc(1,
 			      sizeof(*res) +
 			      sizeof(struct attr_state) * num_attr +
 			      (is_macro ? 0 : namelen + 1));
-		if (is_macro) {
+		if (is_macro)
 			res->u.attr = git_attr(name, namelen);
-		}
 		else {
 			res->u.pattern = (char*)&(res->state[num_attr]);
 			memcpy(res->u.pattern, name, namelen);
@@ -205,9 +234,9 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
  * come from many places.
  *
  * (1) .gitattribute file of the same directory;
- * (2) .gitattribute file of the parent directory if (1) does not have any match;
- *     this goes recursively upwards, just like .gitignore
- * (3) perhaps $GIT_DIR/info/attributes, as the final fallback.
+ * (2) .gitattribute file of the parent directory if (1) does not have
+ *      any match; this goes recursively upwards, just like .gitignore.
+ * (3) $GIT_DIR/info/attributes, which overrides both of the above.
  *
  * In the same file, later entries override the earlier match, so in the
  * global list, we would have entries from info/attributes the earliest
@@ -229,8 +258,21 @@ static void free_attr_elem(struct attr_stack *e)
 {
 	int i;
 	free(e->origin);
-	for (i = 0; i < e->num_matches; i++)
-		free(e->attrs[i]);
+	for (i = 0; i < e->num_matches; i++) {
+		struct match_attr *a = e->attrs[i];
+		int j;
+		for (j = 0; j < a->num_attr; j++) {
+			void *setto = a->state[j].setto;
+			if (setto == ATTR__TRUE ||
+			    setto == ATTR__FALSE ||
+			    setto == ATTR__UNSET ||
+			    setto == ATTR__UNKNOWN)
+				;
+			else
+				free(setto);
+		}
+		free(a);
+	}
 	free(e);
 }
 
@@ -288,10 +330,19 @@ static void debug_info(const char *what, struct attr_stack *elem)
 {
 	fprintf(stderr, "%s: %s\n", what, elem->origin ? elem->origin : "()");
 }
-static void debug_set(const char *what, const char *match, struct git_attr *attr, int set)
+static void debug_set(const char *what, const char *match, struct git_attr *attr, void *v)
 {
-	fprintf(stderr, "%s: %s => %d (%s)\n",
-		what, attr->name, set, match);
+	const char *value = v;
+
+	if (ATTR_TRUE(value))
+		value = "set";
+	else if (ATTR_FALSE(value))
+		value = "unset";
+	else if (ATTR_UNSET(value))
+		value = "unspecified";
+
+	fprintf(stderr, "%s: %s => %s (%s)\n",
+		what, attr->name, (char *) value, match);
 }
 #define debug_push(a) debug_info("push", (a))
 #define debug_pop(a) debug_info("pop", (a))
@@ -420,56 +471,53 @@ static int path_matches(const char *pathname, int pathlen,
 	return fnmatch(pattern, pathname + baselen, FNM_PATHNAME) == 0;
 }
 
+static int fill_one(const char *what, struct match_attr *a, int rem)
+{
+	struct git_attr_check *check = check_all_attr;
+	int i;
+
+	for (i = 0; 0 < rem && i < a->num_attr; i++) {
+		struct git_attr *attr = a->state[i].attr;
+		void **n = &(check[attr->attr_nr].value);
+		void *v = a->state[i].setto;
+
+		if (*n == ATTR__UNKNOWN) {
+			debug_set(what, a->u.pattern, attr, v);
+			*n = v;
+			rem--;
+		}
+	}
+	return rem;
+}
+
 static int fill(const char *path, int pathlen, struct attr_stack *stk, int rem)
 {
+	int i;
 	const char *base = stk->origin ? stk->origin : "";
-	int i, j;
-	struct git_attr_check *check = check_all_attr;
 
 	for (i = stk->num_matches - 1; 0 < rem && 0 <= i; i--) {
 		struct match_attr *a = stk->attrs[i];
 		if (a->is_macro)
 			continue;
 		if (path_matches(path, pathlen,
-				 a->u.pattern, base, strlen(base))) {
-			for (j = 0; 0 < rem && j < a->num_attr; j++) {
-				struct git_attr *attr = a->state[j].attr;
-				int set = !a->state[j].unset;
-				int *n = &(check[attr->attr_nr].isset);
-
-				if (*n < 0) {
-					debug_set("fill", a->u.pattern, attr, set);
-					*n = set;
-					rem--;
-				}
-			}
-		}
+				 a->u.pattern, base, strlen(base)))
+			rem = fill_one("fill", a, rem);
 	}
 	return rem;
 }
 
 static int macroexpand(struct attr_stack *stk, int rem)
 {
-	int i, j;
+	int i;
 	struct git_attr_check *check = check_all_attr;
 
 	for (i = stk->num_matches - 1; 0 < rem && 0 <= i; i--) {
 		struct match_attr *a = stk->attrs[i];
 		if (!a->is_macro)
 			continue;
-		if (check[a->u.attr->attr_nr].isset < 0)
+		if (check[a->u.attr->attr_nr].value != ATTR__TRUE)
 			continue;
-		for (j = 0; 0 < rem && j < a->num_attr; j++) {
-			struct git_attr *attr = a->state[j].attr;
-			int set = !a->state[j].unset;
-			int *n = &(check[attr->attr_nr].isset);
-
-			if (*n < 0) {
-				debug_set("expand", a->u.attr->name, attr, set);
-				*n = set;
-				rem--;
-			}
-		}
+		rem = fill_one("expand", a, rem);
 	}
 	return rem;
 }
@@ -482,7 +530,7 @@ int git_checkattr(const char *path, int num, struct git_attr_check *check)
 
 	bootstrap_attr_stack();
 	for (i = 0; i < attr_nr; i++)
-		check_all_attr[i].isset = -1;
+		check_all_attr[i].value = ATTR__UNKNOWN;
 
 	pathlen = strlen(path);
 	cp = strrchr(path, '/');
@@ -498,8 +546,12 @@ int git_checkattr(const char *path, int num, struct git_attr_check *check)
 	for (stk = attr_stack; 0 < rem && stk; stk = stk->prev)
 		rem = macroexpand(stk, rem);
 
-	for (i = 0; i < num; i++)
-		check[i].isset = check_all_attr[check[i].attr->attr_nr].isset;
+	for (i = 0; i < num; i++) {
+		void *value = check_all_attr[check[i].attr->attr_nr].value;
+		if (value == ATTR__UNKNOWN)
+			value = ATTR__UNSET;
+		check[i].value = value;
+	}
 
 	return 0;
 }
