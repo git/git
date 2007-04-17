@@ -596,9 +596,31 @@ static void update_file_flags(const unsigned char *sha,
 
 		if (S_ISREG(mode) || (!has_symlinks && S_ISLNK(mode))) {
 			int fd;
-			if (mkdir_p(path, 0777))
-				die("failed to create path %s: %s", path, strerror(errno));
-			unlink(path);
+			int status;
+			const char *msg = "failed to create path '%s'%s";
+
+			status = mkdir_p(path, 0777);
+			if (status) {
+				if (status == -3) {
+					/* something else exists */
+					error(msg, path, ": perhaps a D/F conflict?");
+					update_wd = 0;
+					goto update_index;
+				}
+				die(msg, path, "");
+			}
+			if (unlink(path)) {
+				if (errno == EISDIR) {
+					/* something else exists */
+					error(msg, path, ": perhaps a D/F conflict?");
+					update_wd = 0;
+					goto update_index;
+				}
+				if (errno != ENOENT)
+					die("failed to unlink %s "
+					    "in preparation to update: %s",
+					    path, strerror(errno));
+			}
 			if (mode & 0100)
 				mode = 0777;
 			else
@@ -620,6 +642,7 @@ static void update_file_flags(const unsigned char *sha,
 			die("do not know what to do with %06o %s '%s'",
 			    mode, sha1_to_hex(sha), path);
 	}
+ update_index:
 	if (update_cache)
 		add_cacheinfo(mode, sha, path, 0, update_wd, ADD_CACHE_OK_TO_ADD);
 }
@@ -1018,9 +1041,9 @@ static int process_renames(struct path_list *a_renames,
 	return clean_merge;
 }
 
-static unsigned char *has_sha(const unsigned char *sha)
+static unsigned char *stage_sha(const unsigned char *sha, unsigned mode)
 {
-	return is_null_sha1(sha) ? NULL: (unsigned char *)sha;
+	return (is_null_sha1(sha) || mode == 0) ? NULL: (unsigned char *)sha;
 }
 
 /* Per entry merge function */
@@ -1033,12 +1056,12 @@ static int process_entry(const char *path, struct stage_data *entry,
 	print_index_entry("\tpath: ", entry);
 	*/
 	int clean_merge = 1;
-	unsigned char *o_sha = has_sha(entry->stages[1].sha);
-	unsigned char *a_sha = has_sha(entry->stages[2].sha);
-	unsigned char *b_sha = has_sha(entry->stages[3].sha);
 	unsigned o_mode = entry->stages[1].mode;
 	unsigned a_mode = entry->stages[2].mode;
 	unsigned b_mode = entry->stages[3].mode;
+	unsigned char *o_sha = stage_sha(entry->stages[1].sha, o_mode);
+	unsigned char *a_sha = stage_sha(entry->stages[2].sha, a_mode);
+	unsigned char *b_sha = stage_sha(entry->stages[3].sha, b_mode);
 
 	if (o_sha && (!a_sha || !b_sha)) {
 		/* Case A: Deleted in one */
@@ -1139,6 +1162,12 @@ static int process_entry(const char *path, struct stage_data *entry,
 				update_file_flags(mfi.sha, mfi.mode, path,
 					      0 /* update_cache */, 1 /* update_working_directory */);
 		}
+	} else if (!o_sha && !a_sha && !b_sha) {
+		/*
+		 * this entry was deleted altogether. a_mode == 0 means
+		 * we had that path and want to actively remove it.
+		 */
+		remove_file(1, path, !a_mode);
 	} else
 		die("Fatal merge failure, shouldn't happen.");
 
