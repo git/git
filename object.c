@@ -120,22 +120,13 @@ void created_object(const unsigned char *sha1, struct object *obj)
 	nr_objs++;
 }
 
-union any_object {
-	struct object object;
-	struct commit commit;
-	struct tree tree;
-	struct blob blob;
-	struct tag tag;
-};
-
 struct object *lookup_unknown_object(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
 	if (!obj) {
-		union any_object *ret = xcalloc(1, sizeof(*ret));
-		created_object(sha1, &ret->object);
-		ret->object.type = OBJ_NONE;
-		return &ret->object;
+		obj = alloc_object_node();
+		created_object(sha1, obj);
+		obj->type = OBJ_NONE;
 	}
 	return obj;
 }

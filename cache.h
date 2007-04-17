@@ -484,6 +484,7 @@ extern struct blob *alloc_blob_node(void);
 extern struct tree *alloc_tree_node(void);
 extern struct commit *alloc_commit_node(void);
 extern struct tag *alloc_tag_node(void);
+extern struct object *alloc_object_node(void);
 extern void alloc_report(void);
 
 /* trace.c */
