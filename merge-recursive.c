@@ -659,6 +659,39 @@ static void fill_mm(const unsigned char *sha1, mmfile_t *mm)
 	mm->size = size;
 }
 
+static int ll_merge(mmbuffer_t *result_buf,
+		    struct diff_filespec *o,
+		    struct diff_filespec *a,
+		    struct diff_filespec *b,
+		    const char *branch1,
+		    const char *branch2)
+{
+	mmfile_t orig, src1, src2;
+	xpparam_t xpp;
+	char *name1, *name2;
+	int merge_status;
+
+	name1 = xstrdup(mkpath("%s:%s", branch1, a->path));
+	name2 = xstrdup(mkpath("%s:%s", branch2, b->path));
+
+	fill_mm(o->sha1, &orig);
+	fill_mm(a->sha1, &src1);
+	fill_mm(b->sha1, &src2);
+
+	memset(&xpp, 0, sizeof(xpp));
+	merge_status = xdl_merge(&orig,
+				 &src1, name1,
+				 &src2, name2,
+				 &xpp, XDL_MERGE_ZEALOUS,
+				 result_buf);
+	free(name1);
+	free(name2);
+	free(orig.ptr);
+	free(src1.ptr);
+	free(src2.ptr);
+	return merge_status;
+}
+
 static struct merge_file_info merge_file(struct diff_filespec *o,
 		struct diff_filespec *a, struct diff_filespec *b,
 		const char *branch1, const char *branch2)
@@ -687,30 +720,11 @@ static struct merge_file_info merge_file(struct diff_filespec *o,
 		else if (sha_eq(b->sha1, o->sha1))
 			hashcpy(result.sha, a->sha1);
 		else if (S_ISREG(a->mode)) {
-			mmfile_t orig, src1, src2;
 			mmbuffer_t result_buf;
-			xpparam_t xpp;
-			char *name1, *name2;
 			int merge_status;
 
-			name1 = xstrdup(mkpath("%s:%s", branch1, a->path));
-			name2 = xstrdup(mkpath("%s:%s", branch2, b->path));
-
-			fill_mm(o->sha1, &orig);
-			fill_mm(a->sha1, &src1);
-			fill_mm(b->sha1, &src2);
-
-			memset(&xpp, 0, sizeof(xpp));
-			merge_status = xdl_merge(&orig,
-						 &src1, name1,
-						 &src2, name2,
-						 &xpp, XDL_MERGE_ZEALOUS,
-						 &result_buf);
-			free(name1);
-			free(name2);
-			free(orig.ptr);
-			free(src1.ptr);
-			free(src2.ptr);
+			merge_status = ll_merge(&result_buf, o, a, b,
+						branch1, branch2);
 
 			if ((merge_status < 0) || !result_buf.ptr)
 				die("Failed to execute internal merge");
