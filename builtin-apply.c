@@ -2416,8 +2416,7 @@ static void create_one_file(char *path, unsigned mode, const char *buf, unsigned
 		 * used to be.
 		 */
 		struct stat st;
-		errno = 0;
-		if (!lstat(path, &st) && S_ISDIR(st.st_mode) && !rmdir(path))
+		if (!lstat(path, &st) && (!S_ISDIR(st.st_mode) || !rmdir(path)))
 			errno = EEXIST;
 	}
 
