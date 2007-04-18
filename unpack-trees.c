@@ -4,6 +4,7 @@
 #include "tree-walk.h"
 #include "cache-tree.h"
 #include "unpack-trees.h"
+#include "progress.h"
 
 #define DBRT_DEBUG 1
 
@@ -288,36 +289,13 @@ static void unlink_entry(char *name)
 	}
 }
 
-static volatile sig_atomic_t progress_update;
-
-static void progress_interval(int signum)
-{
-	progress_update = 1;
-}
-
-static void setup_progress_signal(void)
-{
-	struct sigaction sa;
-	struct itimerval v;
-
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = progress_interval;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	sigaction(SIGALRM, &sa, NULL);
-
-	v.it_interval.tv_sec = 1;
-	v.it_interval.tv_usec = 0;
-	v.it_value = v.it_interval;
-	setitimer(ITIMER_REAL, &v, NULL);
-}
-
 static struct checkout state;
 static void check_updates(struct cache_entry **src, int nr,
 		struct unpack_trees_options *o)
 {
 	unsigned short mask = htons(CE_UPDATE);
-	unsigned last_percent = 200, cnt = 0, total = 0;
+	unsigned cnt = 0, total = 0;
+	struct progress progress;
 
 	if (o->update && o->verbose_update) {
 		for (total = cnt = 0; cnt < nr; cnt++) {
@@ -332,8 +310,7 @@ static void check_updates(struct cache_entry **src, int nr,
 
 		if (total) {
 			fprintf(stderr, "Checking files out...\n");
-			setup_progress_signal();
-			progress_update = 1;
+			start_progress(&progress, "", total);
 		}
 		cnt = 0;
 	}
@@ -341,20 +318,9 @@ static void check_updates(struct cache_entry **src, int nr,
 	while (nr--) {
 		struct cache_entry *ce = *src++;
 
-		if (total) {
-			if (!ce->ce_mode || ce->ce_flags & mask) {
-				unsigned percent;
-				cnt++;
-				percent = (cnt * 100) / total;
-				if (percent != last_percent ||
-				    progress_update) {
-					fprintf(stderr, "%4u%% (%u/%u) done\r",
-						percent, cnt, total);
-					last_percent = percent;
-					progress_update = 0;
-				}
-			}
-		}
+		if (total)
+			if (!ce->ce_mode || ce->ce_flags & mask)
+				display_progress(&progress, ++cnt);
 		if (!ce->ce_mode) {
 			if (o->update)
 				unlink_entry(ce->name);
@@ -366,10 +332,8 @@ static void check_updates(struct cache_entry **src, int nr,
 				checkout_entry(ce, &state, NULL);
 		}
 	}
-	if (total) {
-		signal(SIGALRM, SIG_IGN);
-		fputc('\n', stderr);
-	}
+	if (total)
+		stop_progress(&progress);;
 }
 
 int unpack_trees(struct object_list *trees, struct unpack_trees_options *o)

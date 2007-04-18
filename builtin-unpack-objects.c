@@ -7,6 +7,7 @@
 #include "commit.h"
 #include "tag.h"
 #include "tree.h"
+#include "progress.h"
 
 static int dry_run, quiet, recover, has_errors;
 static const char unpack_usage[] = "git-unpack-objects [-n] [-q] [-r] < pack-file";
@@ -264,7 +265,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	free(base);
 }
 
-static void unpack_one(unsigned nr, unsigned total)
+static void unpack_one(unsigned nr)
 {
 	unsigned shift;
 	unsigned char *pack, c;
@@ -286,20 +287,7 @@ static void unpack_one(unsigned nr, unsigned total)
 		size += (c & 0x7f) << shift;
 		shift += 7;
 	}
-	if (!quiet) {
-		static unsigned long last_sec;
-		static unsigned last_percent;
-		struct timeval now;
-		unsigned percentage = ((nr+1) * 100) / total;
 
-		gettimeofday(&now, NULL);
-		if (percentage != last_percent || now.tv_sec != last_sec) {
-			last_sec = now.tv_sec;
-			last_percent = percentage;
-			fprintf(stderr, "%4u%% (%u/%u) done\r",
-					percentage, (nr+1), total);
-		}
-	}
 	switch (type) {
 	case OBJ_COMMIT:
 	case OBJ_TREE:
@@ -323,6 +311,7 @@ static void unpack_one(unsigned nr, unsigned total)
 static void unpack_all(void)
 {
 	int i;
+	struct progress progress;
 	struct pack_header *hdr = fill(sizeof(struct pack_header));
 	unsigned nr_objects = ntohl(hdr->hdr_entries);
 
@@ -330,12 +319,21 @@ static void unpack_all(void)
 		die("bad pack file");
 	if (!pack_version_ok(hdr->hdr_version))
 		die("unknown pack file version %d", ntohl(hdr->hdr_version));
-	fprintf(stderr, "Unpacking %d objects\n", nr_objects);
-
-	obj_list = xmalloc(nr_objects * sizeof(*obj_list));
 	use(sizeof(struct pack_header));
-	for (i = 0; i < nr_objects; i++)
-		unpack_one(i, nr_objects);
+
+	if (!quiet) {
+		fprintf(stderr, "Unpacking %d objects\n", nr_objects);
+		start_progress(&progress, "", nr_objects);
+	}
+	obj_list = xmalloc(nr_objects * sizeof(*obj_list));
+	for (i = 0; i < nr_objects; i++) {
+		unpack_one(i);
+		if (!quiet)
+			display_progress(&progress, i + 1);
+	}
+	if (!quiet)
+		stop_progress(&progress);
+
 	if (delta_list)
 		die("unresolved deltas left after unpacking");
 }
@@ -404,7 +402,5 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 	}
 
 	/* All done */
-	if (!quiet)
-		fprintf(stderr, "\n");
 	return has_errors;
 }

@@ -6,6 +6,7 @@
 #include "commit.h"
 #include "tag.h"
 #include "tree.h"
+#include "progress.h"
 
 static const char index_pack_usage[] =
 "git-index-pack [-v] [-o <index-file>] [{ ---keep | --keep=<msg> }] { <pack-file> | --stdin [--fix-thin] [<pack-file>] }";
@@ -47,40 +48,7 @@ static int nr_resolved_deltas;
 static int from_stdin;
 static int verbose;
 
-static volatile sig_atomic_t progress_update;
-
-static void progress_interval(int signum)
-{
-	progress_update = 1;
-}
-
-static void setup_progress_signal(void)
-{
-	struct sigaction sa;
-	struct itimerval v;
-
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = progress_interval;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	sigaction(SIGALRM, &sa, NULL);
-
-	v.it_interval.tv_sec = 1;
-	v.it_interval.tv_usec = 0;
-	v.it_value = v.it_interval;
-	setitimer(ITIMER_REAL, &v, NULL);
-
-}
-
-static unsigned display_progress(unsigned n, unsigned total, unsigned last_pc)
-{
-	unsigned percent = n * 100 / total;
-	if (percent != last_pc || progress_update) {
-		fprintf(stderr, "%4u%% (%u/%u) done\r", percent, n, total);
-		progress_update = 0;
-	}
-	return percent;
-}
+static struct progress progress;
 
 /* We always read in 4kB chunks. */
 static unsigned char input_buffer[4096];
@@ -428,7 +396,7 @@ static int compare_delta_entry(const void *a, const void *b)
 /* Parse all objects and return the pack content SHA1 hash */
 static void parse_pack_objects(unsigned char *sha1)
 {
-	int i, percent = -1;
+	int i;
 	struct delta_entry *delta = deltas;
 	void *data;
 	struct stat st;
@@ -439,8 +407,10 @@ static void parse_pack_objects(unsigned char *sha1)
 	 * - calculate SHA1 of all non-delta objects;
 	 * - remember base (SHA1 or offset) for all deltas.
 	 */
-	if (verbose)
+	if (verbose) {
 		fprintf(stderr, "Indexing %d objects.\n", nr_objects);
+		start_progress(&progress, "", nr_objects);
+	}
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
 		data = unpack_raw_entry(obj, &delta->base);
@@ -453,11 +423,11 @@ static void parse_pack_objects(unsigned char *sha1)
 			sha1_object(data, obj->size, obj->type, obj->sha1);
 		free(data);
 		if (verbose)
-			percent = display_progress(i+1, nr_objects, percent);
+			display_progress(&progress, i+1);
 	}
 	objects[i].offset = consumed_bytes;
 	if (verbose)
-		fputc('\n', stderr);
+		stop_progress(&progress);
 
 	/* Check pack integrity */
 	flush();
@@ -488,8 +458,10 @@ static void parse_pack_objects(unsigned char *sha1)
 	 *   recursively checking if the resulting object is used as a base
 	 *   for some more deltas.
 	 */
-	if (verbose)
+	if (verbose) {
 		fprintf(stderr, "Resolving %d deltas.\n", nr_deltas);
+		start_progress(&progress, "", nr_deltas);
+	}
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
 		union delta_base base;
@@ -521,11 +493,8 @@ static void parse_pack_objects(unsigned char *sha1)
 			}
 		free(data);
 		if (verbose)
-			percent = display_progress(nr_resolved_deltas,
-						   nr_deltas, percent);
+			display_progress(&progress, nr_resolved_deltas);
 	}
-	if (verbose && nr_resolved_deltas == nr_deltas)
-		fputc('\n', stderr);
 }
 
 static int write_compressed(int fd, void *in, unsigned int size, uint32_t *obj_crc)
@@ -587,7 +556,7 @@ static int delta_pos_compare(const void *_a, const void *_b)
 static void fix_unresolved_deltas(int nr_unresolved)
 {
 	struct delta_entry **sorted_by_pos;
-	int i, n = 0, percent = -1;
+	int i, n = 0;
 
 	/*
 	 * Since many unresolved deltas may well be themselves base objects
@@ -632,12 +601,9 @@ static void fix_unresolved_deltas(int nr_unresolved)
 		append_obj_to_pack(d->base.sha1, data, size, type);
 		free(data);
 		if (verbose)
-			percent = display_progress(nr_resolved_deltas,
-						   nr_deltas, percent);
+			display_progress(&progress, nr_resolved_deltas);
 	}
 	free(sorted_by_pos);
-	if (verbose)
-		fputc('\n', stderr);
 }
 
 static void readjust_pack_header_and_sha1(unsigned char *sha1)
@@ -980,10 +946,13 @@ int main(int argc, char **argv)
 	parse_pack_header();
 	objects = xmalloc((nr_objects + 1) * sizeof(struct object_entry));
 	deltas = xmalloc(nr_objects * sizeof(struct delta_entry));
-	if (verbose)
-		setup_progress_signal();
 	parse_pack_objects(sha1);
-	if (nr_deltas != nr_resolved_deltas) {
+	if (nr_deltas == nr_resolved_deltas) {
+		if (verbose)
+			stop_progress(&progress);
+		/* Flush remaining pack final 20-byte SHA1. */
+		flush();
+	} else {
 		if (fix_thin_pack) {
 			int nr_unresolved = nr_deltas - nr_resolved_deltas;
 			int nr_objects_initial = nr_objects;
@@ -993,17 +962,16 @@ int main(int argc, char **argv)
 					   (nr_objects + nr_unresolved + 1)
 					   * sizeof(*objects));
 			fix_unresolved_deltas(nr_unresolved);
-			if (verbose)
+			if (verbose) {
+				stop_progress(&progress);
 				fprintf(stderr, "%d objects were added to complete this thin pack.\n",
 					nr_objects - nr_objects_initial);
+			}
 			readjust_pack_header_and_sha1(sha1);
 		}
 		if (nr_deltas != nr_resolved_deltas)
 			die("pack has %d unresolved deltas",
 			    nr_deltas - nr_resolved_deltas);
-	} else {
-		/* Flush remaining pack final 20-byte SHA1. */
-		flush();
 	}
 	free(deltas);
 	curr_index = write_index_file(index_name, sha1);

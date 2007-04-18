@@ -12,6 +12,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "list-objects.h"
+#include "progress.h"
 
 static const char pack_usage[] = "\
 git-pack-objects [{ -q | --progress | --all-progress }] \n\
@@ -62,10 +63,10 @@ static const char *pack_tmp_name, *idx_tmp_name;
 static char tmpname[PATH_MAX];
 static unsigned char pack_file_sha1[20];
 static int progress = 1;
-static volatile sig_atomic_t progress_update;
 static int window = 10;
 static int pack_to_stdout;
 static int num_preferred_base;
+static struct progress progress_state;
 
 /*
  * The object names in objects array are hashed with this hashtable,
@@ -564,7 +565,6 @@ static off_t write_pack_file(void)
 	struct sha1file *f;
 	off_t offset, last_obj_offset = 0;
 	struct pack_header hdr;
-	unsigned last_percent = 999;
 	int do_progress = progress;
 
 	if (pack_to_stdout) {
@@ -580,8 +580,10 @@ static off_t write_pack_file(void)
 		f = sha1fd(fd, pack_tmp_name);
 	}
 
-	if (do_progress)
+	if (do_progress) {
 		fprintf(stderr, "Writing %u objects.\n", nr_result);
+		start_progress(&progress_state, "", nr_result);
+	}
 
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
 	hdr.hdr_version = htonl(PACK_VERSION);
@@ -593,18 +595,11 @@ static off_t write_pack_file(void)
 	for (i = 0; i < nr_objects; i++) {
 		last_obj_offset = offset;
 		offset = write_one(f, objects + i, offset);
-		if (do_progress) {
-			unsigned percent = written * 100 / nr_result;
-			if (progress_update || percent != last_percent) {
-				fprintf(stderr, "%4u%% (%u/%u) done\r",
-					percent, written, nr_result);
-				progress_update = 0;
-				last_percent = percent;
-			}
-		}
+		if (do_progress)
+			display_progress(&progress_state, written);
 	}
 	if (do_progress)
-		fputc('\n', stderr);
+		stop_progress(&progress_state);
  done:
 	if (written != nr_result)
 		die("wrote %u objects while expecting %u", written, nr_result);
@@ -865,10 +860,8 @@ static int add_object_entry(const unsigned char *sha1, enum object_type type,
 	else
 		object_ix[-1 - ix] = nr_objects;
 
-	if (progress_update) {
-		fprintf(stderr, "Counting objects...%u\r", nr_objects);
-		progress_update = 0;
-	}
+	if (progress)
+		display_progress(&progress_state, nr_objects);
 
 	return 1;
 }
@@ -1390,15 +1383,16 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 	uint32_t i = nr_objects, idx = 0, processed = 0;
 	unsigned int array_size = window * sizeof(struct unpacked);
 	struct unpacked *array;
-	unsigned last_percent = 999;
 	int max_depth;
 
 	if (!nr_objects)
 		return;
 	array = xmalloc(array_size);
 	memset(array, 0, array_size);
-	if (progress)
+	if (progress) {
 		fprintf(stderr, "Deltifying %u objects.\n", nr_result);
+		start_progress(&progress_state, "", nr_result);
+	}
 
 	do {
 		struct object_entry *entry = list[--i];
@@ -1408,15 +1402,8 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		if (!entry->preferred_base)
 			processed++;
 
-		if (progress) {
-			unsigned percent = processed * 100 / nr_result;
-			if (percent != last_percent || progress_update) {
-				fprintf(stderr, "%4u%% (%u/%u) done\r",
-					percent, processed, nr_result);
-				progress_update = 0;
-				last_percent = percent;
-			}
-		}
+		if (progress)
+			display_progress(&progress_state, processed);
 
 		if (entry->delta)
 			/* This happens if we decided to reuse existing
@@ -1471,7 +1458,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 	} while (i > 0);
 
 	if (progress)
-		fputc('\n', stderr);
+		stop_progress(&progress_state);
 
 	for (i = 0; i < window; ++i) {
 		free_delta_index(array[i].index);
@@ -1496,28 +1483,6 @@ static void prepare_pack(int window, int depth)
 	qsort(delta_list, nr_objects, sizeof(*delta_list), type_size_sort);
 	find_deltas(delta_list, window+1, depth);
 	free(delta_list);
-}
-
-static void progress_interval(int signum)
-{
-	progress_update = 1;
-}
-
-static void setup_progress_signal(void)
-{
-	struct sigaction sa;
-	struct itimerval v;
-
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = progress_interval;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	sigaction(SIGALRM, &sa, NULL);
-
-	v.it_interval.tv_sec = 1;
-	v.it_interval.tv_usec = 0;
-	v.it_value = v.it_interval;
-	setitimer(ITIMER_REAL, &v, NULL);
 }
 
 static int git_pack_config(const char *k, const char *v)
@@ -1759,31 +1724,25 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	if (progress) {
 		fprintf(stderr, "Generating pack...\n");
-		setup_progress_signal();
+		start_progress(&progress_state, "Counting objects: ", 0);
 	}
-
 	if (!use_internal_rev_list)
 		read_object_list_from_stdin();
 	else {
 		rp_av[rp_ac] = NULL;
 		get_object_list(rp_ac, rp_av);
 	}
-
-	if (progress)
+	if (progress) {
+		stop_progress(&progress_state);
 		fprintf(stderr, "Done counting %u objects.\n", nr_objects);
+	}
+
 	if (non_empty && !nr_result)
 		return 0;
 	if (progress && (nr_objects != nr_result))
 		fprintf(stderr, "Result has %u objects.\n", nr_result);
 	if (nr_result)
 		prepare_pack(window, depth);
-	if (progress == 1 && pack_to_stdout) {
-		/* the other end usually displays progress itself */
-		struct itimerval v = {{0,},};
-		setitimer(ITIMER_REAL, &v, NULL);
-		signal(SIGALRM, SIG_IGN );
-		progress_update = 0;
-	}
 	last_obj_offset = write_pack_file();
 	if (!pack_to_stdout) {
 		unsigned char object_list_sha1[20];
