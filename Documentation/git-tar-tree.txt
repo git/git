@@ -13,7 +13,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 THIS COMMAND IS DEPRECATED.  Use `git-archive` with `--format=tar`
-option instead.
+option instead (and move the <base> argument to `--prefix=base/`).
 
 Creates a tar archive containing the tree structure for the named tree.
 When <base> is specified it is added as a leading path to the files in the
