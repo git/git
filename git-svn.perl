@@ -168,14 +168,14 @@ for (my $i = 0; $i < @ARGV; $i++) {
 my %opts = %{$cmd{$cmd}->[2]} if (defined $cmd);
 
 read_repo_config(\%opts);
-Getopt::Long::Configure('pass_through') if $cmd eq 'log';
+Getopt::Long::Configure('pass_through') if ($cmd && $cmd eq 'log');
 my $rv = GetOptions(%opts, 'help|H|h' => \$_help, 'version|V' => \$_version,
                     'minimize-connections' => \$Git::SVN::Migration::_minimize,
                     'id|i=s' => \$Git::SVN::default_ref_id,
                     'svn-remote|remote|R=s' => sub {
                        $Git::SVN::no_reuse_existing = 1;
                        $Git::SVN::default_repo_id = $_[1] });
-exit 1 if (!$rv && $cmd ne 'log');
+exit 1 if (!$rv && $cmd && $cmd ne 'log');
 
 usage(0) if $_help;
 version() if $_version;
@@ -1682,7 +1682,10 @@ sub find_parent_branch {
 	}
 	my ($r0, $parent) = $gs->find_rev_before($r, 1);
 	if (!defined $r0 || !defined $parent) {
-		$gs->fetch(0, $r);
+		my ($base, $head) = parse_revision_argument(0, $r);
+		if ($base <= $r) {
+			$gs->fetch($base, $r);
+		}
 		($r0, $parent) = $gs->last_rev_commit;
 	}
 	if (defined $r0 && defined $parent) {

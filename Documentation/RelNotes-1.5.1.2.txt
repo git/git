@@ -1,0 +1,37 @@
+GIT v1.5.1.2 Release Notes (draft)
+==========================
+
+Fixes since v1.5.1.1
+--------------------
+
+* Bugfixes
+
+  - "git diff a/ b/" incorrectly fell in "diff between two
+    filesystem objects" codepath, when the user most likely
+    wanted to limit the extent of output to two tracked
+    directories.
+
+  - git-quiltimport had the same bug as we fixed for
+    git-applymbox in v1.5.1.1 -- it gave an alarming "did not
+    have any patch" message (but did not actually fail and was
+    harmless).
+
+  - various git-svn fixes.
+
+  - Sample update hook incorrectly always refused requests to
+    delete branches through push.
+
+  - git-blame on a very long working tree path had buffer
+    overrun problem.
+
+* Documentation updates
+
+  - Various documentation updates from J. Bruce Fields, Frank
+    Lichtenheld, Alex Riesen and others.  Andrew Ruder started a
+    war on undocumented options.
+
+---
+exec >/var/tmp/1
+O=v1.5.1.1-31-g0220f1e
+echo O=`git describe refs/heads/maint`
+git shortlog --no-merges $O..refs/heads/maint
