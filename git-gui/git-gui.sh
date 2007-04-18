@@ -242,6 +242,8 @@ proc error_popup {msg} {
 	if {[reponame] ne {}} {
 		append title " ([reponame])"
 	}
+	option add *Dialog.msg.font font_ui
+	option add *Button.font font_ui
 	set cmd [list tk_messageBox \
 		-icon error \
 		-type ok \
@@ -258,6 +260,8 @@ proc warn_popup {msg} {
 	if {[reponame] ne {}} {
 		append title " ([reponame])"
 	}
+	option add *Dialog.msg.font font_ui
+	option add *Button.font font_ui
 	set cmd [list tk_messageBox \
 		-icon warning \
 		-type ok \
@@ -274,6 +278,8 @@ proc info_popup {msg {parent .}} {
 	if {[reponame] ne {}} {
 		append title " ([reponame])"
 	}
+	option add *Dialog.msg.font font_ui
+	option add *Button.font font_ui
 	tk_messageBox \
 		-parent $parent \
 		-icon info \
@@ -287,6 +293,8 @@ proc ask_popup {msg} {
 	if {[reponame] ne {}} {
 		append title " ([reponame])"
 	}
+	option add *Dialog.msg.font font_ui
+	option add *Button.font font_ui
 	return [tk_messageBox \
 		-parent . \
 		-icon question \
@@ -727,12 +735,9 @@ proc handle_empty_diff {} {
 
 [short_path $path] has no changes.
 
-The modification date of this file was updated
-by another application, but the content within
-the file was not changed.
+The modification date of this file was updated by another application, but the content within the file was not changed.
 
-A rescan will be automatically started to find
-other files which may have the same state."
+A rescan will be automatically started to find other files which may have the same state."
 
 	clear_diff
 	display_file $path __
@@ -1033,8 +1038,7 @@ proc load_last_commit {} {
 	if {[llength $PARENT] == 0} {
 		error_popup {There is nothing to amend.
 
-You are about to create the initial commit.
-There is no commit before this to amend.
+You are about to create the initial commit.  There is no commit before this to amend.
 }
 		return
 	}
@@ -1043,10 +1047,7 @@ There is no commit before this to amend.
 	if {$curType eq {merge}} {
 		error_popup {Cannot amend while merging.
 
-You are currently in the middle of a merge that
-has not been fully completed.  You cannot amend
-the prior commit unless you first abort the
-current merge activity.
+You are currently in the middle of a merge that has not been fully completed.  You cannot amend the prior commit unless you first abort the current merge activity.
 }
 		return
 	}
@@ -1136,9 +1137,7 @@ proc commit_tree {} {
 	} elseif {$commit_type ne $curType || $HEAD ne $curHEAD} {
 		info_popup {Last scanned state does not match repository state.
 
-Another Git program has modified this repository
-since the last scan.  A rescan must be performed
-before another commit can be created.
+Another Git program has modified this repository since the last scan.  A rescan must be performed before another commit can be created.
 
 The rescan will be automatically started now.
 }
@@ -1159,8 +1158,7 @@ The rescan will be automatically started now.
 		U? {
 			error_popup "Unmerged files cannot be committed.
 
-File [short_path $path] has merge conflicts.
-You must resolve them and add the file before committing.
+File [short_path $path] has merge conflicts.  You must resolve them and add the file before committing.
 "
 			unlock_index
 			return
@@ -1276,8 +1274,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 		if {$tree_id eq $old_tree} {
 			info_popup {No changes to commit.
 
-No files were modified by this commit and it
-was not a merge commit.
+No files were modified by this commit and it was not a merge commit.
 
 A rescan will be automatically started now.
 }
@@ -2116,7 +2113,10 @@ proc do_create_branch {} {
 		-value head \
 		-variable create_branch_revtype \
 		-font font_ui
-	eval tk_optionMenu $w.from.head_m create_branch_head $all_heads
+	set lbranchm [eval tk_optionMenu $w.from.head_m create_branch_head \
+		$all_heads]
+	$lbranchm configure -font font_ui
+	$w.from.head_m configure -font font_ui
 	grid $w.from.head_r $w.from.head_m -sticky w
 	set all_trackings [all_tracking_branches]
 	if {$all_trackings ne {}} {
@@ -2126,9 +2126,11 @@ proc do_create_branch {} {
 			-value tracking \
 			-variable create_branch_revtype \
 			-font font_ui
-		eval tk_optionMenu $w.from.tracking_m \
+		set tbranchm [eval tk_optionMenu $w.from.tracking_m \
 			create_branch_trackinghead \
-			$all_trackings
+			$all_trackings]
+		$tbranchm configure -font font_ui
+		$w.from.tracking_m configure -font font_ui
 		grid $w.from.tracking_r $w.from.tracking_m -sticky w
 	}
 	set all_tags [load_all_tags]
@@ -2139,9 +2141,11 @@ proc do_create_branch {} {
 			-value tag \
 			-variable create_branch_revtype \
 			-font font_ui
-		eval tk_optionMenu $w.from.tag_m \
+		set tagsm [eval tk_optionMenu $w.from.tag_m \
 			create_branch_tag \
-			$all_tags
+			$all_tags]
+		$tagsm configure -font font_ui
+		$w.from.tag_m configure -font font_ui
 		grid $w.from.tag_r $w.from.tag_m -sticky w
 	}
 	radiobutton $w.from.exp_r \
@@ -2335,7 +2339,11 @@ proc do_delete_branch {} {
 		-value head \
 		-variable delete_branch_checktype \
 		-font font_ui
-	eval tk_optionMenu $w.validate.head_m delete_branch_head $all_heads
+	set mergedlocalm [eval tk_optionMenu $w.validate.head_m \
+		delete_branch_head \
+		$all_heads]
+	$mergedlocalm configure -font font_ui
+	$w.validate.head_m configure -font font_ui
 	grid $w.validate.head_r $w.validate.head_m -sticky w
 	set all_trackings [all_tracking_branches]
 	if {$all_trackings ne {}} {
@@ -2345,9 +2353,11 @@ proc do_delete_branch {} {
 			-value tracking \
 			-variable delete_branch_checktype \
 			-font font_ui
-		eval tk_optionMenu $w.validate.tracking_m \
+		set mergedtrackm [eval tk_optionMenu $w.validate.tracking_m \
 			delete_branch_trackinghead \
-			$all_trackings
+			$all_trackings]
+		$mergedtrackm configure -font font_ui
+		$w.validate.tracking_m configure -font font_ui
 		grid $w.validate.tracking_r $w.validate.tracking_m -sticky w
 	}
 	radiobutton $w.validate.always_r \
@@ -2382,9 +2392,7 @@ proc switch_branch {new_branch} {
 	} elseif {$commit_type ne $curType || $HEAD ne $curHEAD} {
 		info_popup {Last scanned state does not match repository state.
 
-Another Git program has modified this repository
-since the last scan.  A rescan must be performed
-before the current branch can be changed.
+Another Git program has modified this repository since the last scan.  A rescan must be performed before the current branch can be changed.
 
 The rescan will be automatically started now.
 }
@@ -2475,12 +2483,9 @@ Staying on branch '$current_branch'."
 	if {[catch {git symbolic-ref HEAD "refs/heads/$new_branch"} err]} {
 		error_popup "Failed to set current branch.
 
-This working directory is only partially switched.
-We successfully updated your files, but failed to
-update an internal Git file.
+This working directory is only partially switched.  We successfully updated your files, but failed to update an internal Git file.
 
-This should not have occurred.  [appname] will now
-close and give up.
+This should not have occurred.  [appname] will now close and give up.
 
 $err"
 		do_quit
@@ -2684,10 +2689,12 @@ proc do_push_anywhere {} {
 	frame $w.buttons
 	button $w.buttons.create -text Push \
 		-font font_ui \
+		-default active \
 		-command [list start_push_anywhere_action $w]
 	pack $w.buttons.create -side right
 	button $w.buttons.cancel -text {Cancel} \
 		-font font_ui \
+		-default normal \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
@@ -2721,7 +2728,10 @@ proc do_push_anywhere {} {
 			-value remote \
 			-variable push_urltype \
 			-font font_ui
-		eval tk_optionMenu $w.dest.remote_m push_remote $all_remotes
+		set remmenu [eval tk_optionMenu $w.dest.remote_m push_remote \
+			$all_remotes]
+		$remmenu configure -font font_ui
+		$w.dest.remote_m configure -font font_ui
 		grid $w.dest.remote_r $w.dest.remote_m -sticky w
 		if {[lsearch -sorted -exact $all_remotes origin] != -1} {
 			set push_remote origin
@@ -2775,8 +2785,9 @@ proc do_push_anywhere {} {
 	set push_thin 0
 	set push_tags 0
 
-	bind $w <Visibility> "grab $w"
+	bind $w <Visibility> "grab $w; focus $w.buttons.create"
 	bind $w <Key-Escape> "destroy $w"
+	bind $w <Key-Return> [list start_push_anywhere_action $w]
 	wm title $w "[appname] ([reponame]): Push"
 	tkwait window $w
 }
@@ -2791,8 +2802,7 @@ proc can_merge {} {
 	if {[string match amend* $commit_type]} {
 		info_popup {Cannot merge while amending.
 
-You must finish amending this commit before
-starting any type of merge.
+You must finish amending this commit before starting any type of merge.
 }
 		return 0
 	}
@@ -2806,9 +2816,7 @@ starting any type of merge.
 	if {$commit_type ne $curType || $HEAD ne $curHEAD} {
 		info_popup {Last scanned state does not match repository state.
 
-Another Git program has modified this repository
-since the last scan.  A rescan must be performed
-before a merge can be performed.
+Another Git program has modified this repository since the last scan.  A rescan must be performed before a merge can be performed.
 
 The rescan will be automatically started now.
 }
@@ -2827,9 +2835,7 @@ The rescan will be automatically started now.
 
 File [short_path $path] has merge conflicts.
 
-You must resolve them, add the file, and commit to
-complete the current merge.  Only then can you
-begin another merge.
+You must resolve them, add the file, and commit to complete the current merge.  Only then can you begin another merge.
 "
 			unlock_index
 			return 0
@@ -2839,9 +2845,7 @@ begin another merge.
 
 File [short_path $path] is modified.
 
-You should complete the current commit before
-starting a merge.  Doing so will help you abort
-a failed merge, should the need arise.
+You should complete the current commit before starting a merge.  Doing so will help you abort a failed merge, should the need arise.
 "
 			unlock_index
 			return 0
@@ -2917,13 +2921,11 @@ proc finish_merge {revcnt w ok} {
 
 Your merge of $revcnt branches has failed.
 
-There are file-level conflicts between the
-branches which must be resolved manually.
+There are file-level conflicts between the branches which must be resolved manually.
 
 The working directory will now be reset.
 
-You can attempt this merge again
-by merging only one branch at a time." $w
+You can attempt this merge again by merging only one branch at a time." $w
 
 			set fd [open "| git read-tree --reset -u HEAD" r]
 			fconfigure $fd -blocking 0 -translation binary
@@ -3036,8 +3038,7 @@ You must finish amending this commit.
 
 	if {[ask_popup "Abort $op?
 
-Aborting the current $op will cause
-*ALL* uncommitted changes to be lost.
+Aborting the current $op will cause *ALL* uncommitted changes to be lost.
 
 Continue with aborting the current $op?"] eq {yes}} {
 		set fd [open "| git read-tree --reset -u HEAD" r]
@@ -3604,12 +3605,14 @@ proc read_blame_incremental {fd w w_load w_cmit w_line w_file} {
 proc blame_incremental_status {w} {
 	global blame_status blame_data
 
+	set have  $blame_data($w,blame_lines)
+	set total $blame_data($w,total_lines)
+	set pdone 0
+	if {$total} {set pdone [expr {100 * $have / $total}]}
+
 	set blame_status($w) [format \
 		"Loading annotations... %i of %i lines annotated (%2i%%)" \
-		$blame_data($w,blame_lines) \
-		$blame_data($w,total_lines) \
-		[expr {100 * $blame_data($w,blame_lines)
-			/ $blame_data($w,total_lines)}]]
+		$have $total $pdone]
 }
 
 proc blame_click {w w_cmit w_line w_file cur_w pos} {
@@ -4107,6 +4110,7 @@ proc console_done {args} {
 		if {[winfo exists $w]} {
 			$w.m.s conf -background green -text {Success}
 			$w.ok conf -state normal
+			focus $w.ok
 		}
 	} else {
 		if {![winfo exists $w]} {
@@ -4114,6 +4118,7 @@ proc console_done {args} {
 		}
 		$w.m.s conf -background red -text {Error: Command Failed}
 		$w.ok conf -state normal
+		focus $w.ok
 	}
 
 	array unset console_cr $w
@@ -4181,9 +4186,11 @@ proc do_stats {} {
 	frame $w.buttons -border 1
 	button $w.buttons.close -text Close \
 		-font font_ui \
+		-default active \
 		-command [list destroy $w]
 	button $w.buttons.gc -text {Compress Database} \
 		-font font_ui \
+		-default normal \
 		-command "destroy $w;do_gc"
 	pack $w.buttons.close -side right
 	pack $w.buttons.gc -side left
@@ -4212,7 +4219,7 @@ proc do_stats {} {
 	}
 	pack $w.stat -pady 10 -padx 10
 
-	bind $w <Visibility> "grab $w; focus $w"
+	bind $w <Visibility> "grab $w; focus $w.buttons.close"
 	bind $w <Key-Escape> [list destroy $w]
 	bind $w <Key-Return> [list destroy $w]
 	wm title $w "[appname] ([reponame]): Database Statistics"
@@ -4509,6 +4516,7 @@ proc do_about {} {
 	frame $w.buttons
 	button $w.buttons.close -text {Close} \
 		-font font_ui \
+		-default active \
 		-command [list destroy $w]
 	pack $w.buttons.close -side right
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
@@ -4554,8 +4562,9 @@ $copyright" \
 		clipboard append -format STRING -type STRING -- \[$w.vers cget -text\]
 	"
 
-	bind $w <Visibility> "grab $w; focus $w"
+	bind $w <Visibility> "grab $w; focus $w.buttons.close"
 	bind $w <Key-Escape> "destroy $w"
+	bind $w <Key-Return> "destroy $w"
 	bind_button3 $w.vers "tk_popup $w.ctxm %X %Y; grab $w; focus $w"
 	wm title $w "About [appname]"
 	tkwait window $w
@@ -4592,14 +4601,17 @@ proc do_options {} {
 	frame $w.buttons
 	button $w.buttons.restore -text {Restore Defaults} \
 		-font font_ui \
+		-default normal \
 		-command do_restore_defaults
 	pack $w.buttons.restore -side left
 	button $w.buttons.save -text Save \
 		-font font_ui \
+		-default active \
 		-command [list do_save_config $w]
 	pack $w.buttons.save -side right
 	button $w.buttons.cancel -text {Cancel} \
 		-font font_ui \
+		-default normal \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
@@ -4686,9 +4698,11 @@ proc do_options {} {
 		frame $w.global.$name
 		label $w.global.$name.l -text "$text:" -font font_ui
 		pack $w.global.$name.l -side left -anchor w -fill x
-		eval tk_optionMenu $w.global.$name.family \
+		set fontmenu [eval tk_optionMenu $w.global.$name.family \
 			global_config_new(gui.$font^^family) \
-			$all_fonts
+			$all_fonts]
+		$w.global.$name.family configure -font font_ui
+		$fontmenu configure -font font_ui
 		spinbox $w.global.$name.size \
 			-textvariable global_config_new(gui.$font^^size) \
 			-from 2 -to 80 -increment 1 \
@@ -4700,8 +4714,9 @@ proc do_options {} {
 		pack $w.global.$name -side top -anchor w -fill x
 	}
 
-	bind $w <Visibility> "grab $w; focus $w"
+	bind $w <Visibility> "grab $w; focus $w.buttons.save"
 	bind $w <Key-Escape> "destroy $w"
+	bind $w <Key-Return> [list do_save_config $w]
 	wm title $w "[appname] ([reponame]): Options"
 	tkwait window $w
 }
@@ -5083,18 +5098,18 @@ set ui_comm {}
 # -- Menu Bar
 #
 menu .mbar -tearoff 0
-.mbar add cascade -label Repository -menu .mbar.repository
-.mbar add cascade -label Edit -menu .mbar.edit
+.mbar add cascade -label Repository -menu .mbar.repository -font font_ui
+.mbar add cascade -label Edit -menu .mbar.edit -font font_ui
 if {[is_enabled branch]} {
-	.mbar add cascade -label Branch -menu .mbar.branch
+	.mbar add cascade -label Branch -menu .mbar.branch -font font_ui
 }
 if {[is_enabled multicommit] || [is_enabled singlecommit]} {
-	.mbar add cascade -label Commit -menu .mbar.commit
+	.mbar add cascade -label Commit -menu .mbar.commit -font font_ui
 }
 if {[is_enabled transport]} {
-	.mbar add cascade -label Merge -menu .mbar.merge
-	.mbar add cascade -label Fetch -menu .mbar.fetch
-	.mbar add cascade -label Push -menu .mbar.push
+	.mbar add cascade -label Merge -menu .mbar.merge -font font_ui
+	.mbar add cascade -label Fetch -menu .mbar.fetch -font font_ui
+	.mbar add cascade -label Push -menu .mbar.push -font font_ui
 }
 . configure -menu .mbar
 
@@ -5370,7 +5385,7 @@ if {[is_MacOSX]} {
 
 # -- Help Menu
 #
-.mbar add cascade -label Help -menu .mbar.help
+.mbar add cascade -label Help -menu .mbar.help -font font_ui
 menu .mbar.help
 
 if {![is_MacOSX]} {
@@ -5953,7 +5968,7 @@ unset i
 set file_lists($ui_index) [list]
 set file_lists($ui_workdir) [list]
 
-wm title . "[appname] ([file normalize [file dirname [gitdir]]])"
+wm title . "[appname] ([reponame]) [file normalize [file dirname [gitdir]]]"
 focus -force $ui_comm
 
 # -- Warn the user about environmental problems.  Cygwin's Tcl
@@ -6032,9 +6047,7 @@ if {[is_enabled multicommit]} {
 		if {[ask_popup \
 			"This repository currently has $objects_current loose objects.
 
-To maintain optimal performance it is strongly
-recommended that you compress the database
-when more than $object_limit loose objects exist.
+To maintain optimal performance it is strongly recommended that you compress the database when more than $object_limit loose objects exist.
 
 Compress the database now?"] eq yes} {
 			do_gc
