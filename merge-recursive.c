@@ -839,11 +839,17 @@ static struct user_merge_fn {
 	char *cmdline;
 	char b_[1];
 } *ll_user_merge_fns, **ll_user_merge_fns_tail;
+static const char *default_ll_merge;
 
 static int read_merge_config(const char *var, const char *value)
 {
 	struct user_merge_fn *fn;
 	int blen, nlen;
+
+	if (!strcmp(var, "merge.default")) {
+		default_ll_merge = strdup(value);
+		return 0;
+	}
 
 	if (strcmp(var, "merge.driver"))
 		return 0;
@@ -900,8 +906,12 @@ static ll_merge_fn find_ll_merge_fn(void *merge_attr, const char **cmdline)
 		return ll_xdl_merge;
 	else if (ATTR_FALSE(merge_attr))
 		return ll_binary_merge;
-	else if (ATTR_UNSET(merge_attr))
-		return ll_xdl_merge;
+	else if (ATTR_UNSET(merge_attr)) {
+		if (!default_ll_merge)
+			return ll_xdl_merge;
+		else
+			name = default_ll_merge;
+	}
 	else
 		name = merge_attr;
 
