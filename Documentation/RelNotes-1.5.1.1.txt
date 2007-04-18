@@ -59,3 +59,7 @@ Fixes since v1.5.1
 
   - git-svn dcommit and rebase was confused by patches that were
     merged from another branch that is managed by git-svn.
+
+  - git-svn used to get confused when globbing remote branch/tag
+    spec (e.g. "branches = proj/branches/*:refs/remotes/origin/*")
+    is used and there was a plain file that matched the glob.
