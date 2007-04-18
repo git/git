@@ -91,7 +91,9 @@ $log->debug("Temporary directory is '$TEMP_DIR'");
 # if we are called with a pserver argument,
 # deal with the authentication cat before entering the
 # main loop
+$state->{method} = 'ext';
 if (@ARGV && $ARGV[0] eq 'pserver') {
+    $state->{method} = 'pserver';
     my $line = <STDIN>; chomp $line;
     unless( $line eq 'BEGIN AUTH REQUEST') {
        die "E Do not understand $line - expecting BEGIN AUTH REQUEST\n";
@@ -181,11 +183,18 @@ sub req_Root
     }
     foreach my $line ( @gitvars )
     {
-        next unless ( $line =~ /^(.*?)\.(.*?)=(.*)$/ );
-        $cfg->{$1}{$2} = $3;
+        next unless ( $line =~ /^(.*?)\.(.*?)(?:\.(.*?))?=(.*)$/ );
+        unless ($3) {
+            $cfg->{$1}{$2} = $4;
+        } else {
+            $cfg->{$1}{$2}{$3} = $4;
+        }
     }
 
-    unless ( defined ( $cfg->{gitcvs}{enabled} ) and $cfg->{gitcvs}{enabled} =~ /^\s*(1|true|yes)\s*$/i )
+    unless ( ($cfg->{gitcvs}{$state->{method}}{enabled}
+	      and $cfg->{gitcvs}{$state->{method}}{enabled} =~ /^\s*(1|true|yes)\s*$/i)
+	     or ($cfg->{gitcvs}{enabled}
+	      and $cfg->{gitcvs}{enabled} =~ /^\s*(1|true|yes)\s*$/i) )
     {
         print "E GITCVS emulation needs to be enabled on this repo\n";
         print "E the repo config file needs a [gitcvs] section added, and the parameter 'enabled' set to 1\n";
@@ -194,9 +203,10 @@ sub req_Root
         return 0;
     }
 
-    if ( defined ( $cfg->{gitcvs}{logfile} ) )
+    my $logfile = $cfg->{gitcvs}{$state->{method}}{logfile} || $cfg->{gitcvs}{logfile};
+    if ( $logfile )
     {
-        $log->setfile($cfg->{gitcvs}{logfile});
+        $log->setfile($logfile);
     } else {
         $log->nofile();
     }
@@ -350,11 +360,51 @@ sub req_add
 
     argsplit("add");
 
+    my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
+    $updater->update();
+
+    argsfromdir($updater);
+
     my $addcount = 0;
 
     foreach my $filename ( @{$state->{args}} )
     {
         $filename = filecleanup($filename);
+
+        my $meta = $updater->getmeta($filename);
+        my $wrev = revparse($filename);
+
+        if ($wrev && $meta && ($wrev < 0))
+        {
+            # previously removed file, add back
+            $log->info("added file $filename was previously removed, send 1.$meta->{revision}");
+
+            print "MT +updated\n";
+            print "MT text U \n";
+            print "MT fname $filename\n";
+            print "MT newline\n";
+            print "MT -updated\n";
+
+            unless ( $state->{globaloptions}{-n} )
+            {
+                my ( $filepart, $dirpart ) = filenamesplit($filename,1);
+
+                print "Created $dirpart\n";
+                print $state->{CVSROOT} . "/$state->{module}/$filename\n";
+
+                # this is an "entries" line
+                my $kopts = kopts_from_path($filepart);
+                $log->debug("/$filepart/1.$meta->{revision}//$kopts/");
+                print "/$filepart/1.$meta->{revision}//$kopts/\n";
+                # permissions
+                $log->debug("SEND : u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}");
+                print "u=$meta->{mode},g=$meta->{mode},o=$meta->{mode}\n";
+                # transmit file
+                transmitfile($meta->{filehash});
+            }
+
+            next;
+        }
 
         unless ( defined ( $state->{entries}{$filename}{modified_filename} ) )
         {
@@ -1027,7 +1077,7 @@ sub req_ci
 
     $log->info("req_ci : " . ( defined($data) ? $data : "[NULL]" ));
 
-    if ( @ARGV && $ARGV[0] eq 'pserver')
+    if ( $state->{method} eq 'pserver')
     {
         print "error 1 pserver access cannot commit\n";
         exit;
@@ -2132,25 +2182,40 @@ sub new
 
     bless $self, $class;
 
-    $self->{dbdir} = $config . "/";
-    die "Database dir '$self->{dbdir}' isn't a directory" unless ( defined($self->{dbdir}) and -d $self->{dbdir} );
-
     $self->{module} = $module;
-    $self->{file} = $self->{dbdir} . "/gitcvs.$module.sqlite";
-
     $self->{git_path} = $config . "/";
 
     $self->{log} = $log;
 
     die "Git repo '$self->{git_path}' doesn't exist" unless ( -d $self->{git_path} );
 
-    $self->{dbh} = DBI->connect("dbi:SQLite:dbname=" . $self->{file},"","");
+    $self->{dbdriver} = $cfg->{gitcvs}{$state->{method}}{dbdriver} ||
+        $cfg->{gitcvs}{dbdriver} || "SQLite";
+    $self->{dbname} = $cfg->{gitcvs}{$state->{method}}{dbname} ||
+        $cfg->{gitcvs}{dbname} || "%Ggitcvs.%m.sqlite";
+    $self->{dbuser} = $cfg->{gitcvs}{$state->{method}}{dbuser} ||
+        $cfg->{gitcvs}{dbuser} || "";
+    $self->{dbpass} = $cfg->{gitcvs}{$state->{method}}{dbpass} ||
+        $cfg->{gitcvs}{dbpass} || "";
+    my %mapping = ( m => $module,
+                    a => $state->{method},
+                    u => getlogin || getpwuid($<) || $<,
+                    G => $self->{git_path},
+                    g => mangle_dirname($self->{git_path}),
+                    );
+    $self->{dbname} =~ s/%([mauGg])/$mapping{$1}/eg;
+    $self->{dbuser} =~ s/%([mauGg])/$mapping{$1}/eg;
+
+    die "Invalid char ':' in dbdriver" if $self->{dbdriver} =~ /:/;
+    die "Invalid char ';' in dbname" if $self->{dbname} =~ /;/;
+    $self->{dbh} = DBI->connect("dbi:$self->{dbdriver}:dbname=$self->{dbname}",
+                                $self->{dbuser},
+                                $self->{dbpass});
+    die "Error connecting to database\n" unless defined $self->{dbh};
 
     $self->{tables} = {};
-    foreach my $table ( $self->{dbh}->tables )
+    foreach my $table ( keys %{$self->{dbh}->table_info(undef,undef,undef,'TABLE')->fetchall_hashref('TABLE_NAME')} )
     {
-        $table =~ s/^"//;
-        $table =~ s/"$//;
         $self->{tables}{$table} = 1;
     }
 
@@ -2848,5 +2913,19 @@ sub safe_pipe_capture {
     return wantarray ? @output : join('',@output);
 }
 
+=head2 mangle_dirname
+
+create a string from a directory name that is suitable to use as
+part of a filename, mainly by converting all chars except \w.- to _
+
+=cut
+sub mangle_dirname {
+    my $dirname = shift;
+    return unless defined $dirname;
+
+    $dirname =~ s/[^\w.-]/_/g;
+
+    return $dirname;
+}
 
 1;

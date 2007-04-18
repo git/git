@@ -423,7 +423,33 @@ gitcvs.allbinary::
 	causes the client to treat all files as binary files which suppresses
 	any newline munging it otherwise might do. A work-around for the
 	fact that there is no way yet to set single files to mode '-kb'.
+
+gitcvs.dbname::
+	Database used by git-cvsserver to cache revision information
+	derived from the git repository. The exact meaning depends on the
+	used database driver, for SQLite (which is the default driver) this
+	is a filename. Supports variable substitution (see
+	gitlink:git-cvsserver[1] for details). May not contain semicolons (`;`).
+	Default: '%Ggitcvs.%m.sqlite'
+
+gitcvs.dbdriver::
+	Used Perl DBI driver. You can specify any available driver
+        for this here, but it might not work. git-cvsserver is tested
+	with 'DBD::SQLite', reported to work with 'DBD::Pg', and
+	reported *not* to work with 'DBD::mysql'. Experimental feature.
+	May not contain double colons (`:`). Default: 'SQLite'.
 	See gitlink:git-cvsserver[1].
+
+gitcvs.dbuser, gitcvs.dbpass::
+	Database user and password. Only useful if setting 'gitcvs.dbdriver',
+	since SQLite has no concept of database users and/or passwords.
+	'gitcvs.dbuser' supports variable substitution (see
+	gitlink:git-cvsserver[1] for details).
+
+All gitcvs variables except for 'gitcvs.allbinary' can also specifed
+as 'gitcvs.<access_method>.<varname>' (where 'access_method' is one
+of "ext" and "pserver") to make them apply only for the given access
+method.
 
 http.sslVerify::
 	Whether to verify the SSL certificate when fetching or pushing
