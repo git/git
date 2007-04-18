@@ -1069,7 +1069,7 @@ static int file_is_binary(struct diff_filespec *one)
 
 	setup_diff_attr_check(&attr_diff_check);
 	if (!git_checkattr(one->path, 1, &attr_diff_check)) {
-		void *value = attr_diff_check.value;
+		const char *value = attr_diff_check.value;
 		if (ATTR_TRUE(value))
 			return 0;
 		else if (ATTR_FALSE(value))
@@ -1078,7 +1078,7 @@ static int file_is_binary(struct diff_filespec *one)
 			;
 		else
 			die("unknown value %s given to 'diff' attribute",
-			    (char *)value);
+			    value);
 	}
 
 	if (!one->data) {

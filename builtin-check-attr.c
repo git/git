@@ -42,7 +42,7 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 		if (git_checkattr(argv[i], cnt, check))
 			die("git_checkattr died");
 		for (j = 0; j < cnt; j++) {
-			void *value = check[j].value;
+			const char *value = check[j].value;
 
 			if (ATTR_TRUE(value))
 				value = "set";
@@ -52,7 +52,7 @@ int cmd_check_attr(int argc, const char **argv, const char *prefix)
 				value = "unspecified";
 
 			write_name_quoted("", 0, argv[i], 1, stdout);
-			printf(": %s: %s\n", argv[j+1], (char *) value);
+			printf(": %s: %s\n", argv[j+1], value);
 		}
 	}
 	return 0;

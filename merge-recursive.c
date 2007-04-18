@@ -953,7 +953,7 @@ static void initialize_ll_merge(void)
 	git_config(read_merge_config);
 }
 
-static const struct ll_merge_driver *find_ll_merge_driver(void *merge_attr)
+static const struct ll_merge_driver *find_ll_merge_driver(const char *merge_attr)
 {
 	struct ll_merge_driver *fn;
 	const char *name;
@@ -986,7 +986,7 @@ static const struct ll_merge_driver *find_ll_merge_driver(void *merge_attr)
 	return &ll_merge_drv[LL_TEXT_MERGE];
 }
 
-static void *git_path_check_merge(const char *path)
+static const char *git_path_check_merge(const char *path)
 {
 	static struct git_attr_check attr_merge_check;
 
@@ -994,7 +994,7 @@ static void *git_path_check_merge(const char *path)
 		attr_merge_check.attr = git_attr("merge", 5);
 
 	if (git_checkattr(path, 1, &attr_merge_check))
-		return ATTR__UNSET;
+		return NULL;
 	return attr_merge_check.value;
 }
 
@@ -1008,7 +1008,7 @@ static int ll_merge(mmbuffer_t *result_buf,
 	mmfile_t orig, src1, src2;
 	char *name1, *name2;
 	int merge_status;
-	void *merge_attr;
+	const char *ll_driver_name;
 	const struct ll_merge_driver *driver;
 
 	name1 = xstrdup(mkpath("%s:%s", branch1, a->path));
@@ -1018,11 +1018,14 @@ static int ll_merge(mmbuffer_t *result_buf,
 	fill_mm(a->sha1, &src1);
 	fill_mm(b->sha1, &src2);
 
-	merge_attr = git_path_check_merge(a->path);
-	driver = find_ll_merge_driver(merge_attr);
+	ll_driver_name = git_path_check_merge(a->path);
+	driver = find_ll_merge_driver(ll_driver_name);
 
 	if (index_only && driver->recursive) {
-		merge_attr = git_attr(driver->recursive, strlen(driver->recursive));
+		void *merge_attr;
+
+		ll_driver_name = driver->recursive;
+		merge_attr = git_attr(ll_driver_name, strlen(ll_driver_name));
 		driver = find_ll_merge_driver(merge_attr);
 	}
 	merge_status = driver->fn(driver, a->path,

@@ -226,7 +226,7 @@ static int git_path_check_crlf(const char *path)
 	setup_crlf_check(&attr_crlf_check);
 
 	if (!git_checkattr(path, 1, &attr_crlf_check)) {
-		void *value = attr_crlf_check.value;
+		const char *value = attr_crlf_check.value;
 		if (ATTR_TRUE(value))
 			return 1;
 		else if (ATTR_FALSE(value))

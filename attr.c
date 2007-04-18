@@ -1,7 +1,13 @@
 #include "cache.h"
 #include "attr.h"
 
-#define ATTR__UNKNOWN	((void *) -2)
+const char git_attr__true[] = "(builtin)true";
+const char git_attr__false[] = "\0(builtin)false";
+static const char git_attr__unknown[] = "(builtin)unknown";
+#define ATTR__TRUE git_attr__true
+#define ATTR__FALSE git_attr__false
+#define ATTR__UNSET NULL
+#define ATTR__UNKNOWN git_attr__unknown
 
 /*
  * The basic design decision here is that we are not going to have
@@ -102,7 +108,7 @@ struct git_attr *git_attr(const char *name, int len)
 /* What does a matched pattern decide? */
 struct attr_state {
 	struct git_attr *attr;
-	void *setto;
+	const char *setto;
 };
 
 struct match_attr {
@@ -262,14 +268,14 @@ static void free_attr_elem(struct attr_stack *e)
 		struct match_attr *a = e->attrs[i];
 		int j;
 		for (j = 0; j < a->num_attr; j++) {
-			void *setto = a->state[j].setto;
+			const char *setto = a->state[j].setto;
 			if (setto == ATTR__TRUE ||
 			    setto == ATTR__FALSE ||
 			    setto == ATTR__UNSET ||
 			    setto == ATTR__UNKNOWN)
 				;
 			else
-				free(setto);
+				free((char*) setto);
 		}
 		free(a);
 	}
@@ -478,8 +484,8 @@ static int fill_one(const char *what, struct match_attr *a, int rem)
 
 	for (i = 0; 0 < rem && i < a->num_attr; i++) {
 		struct git_attr *attr = a->state[i].attr;
-		void **n = &(check[attr->attr_nr].value);
-		void *v = a->state[i].setto;
+		const char **n = &(check[attr->attr_nr].value);
+		const char *v = a->state[i].setto;
 
 		if (*n == ATTR__UNKNOWN) {
 			debug_set(what, a->u.pattern, attr, v);
@@ -547,7 +553,7 @@ int git_checkattr(const char *path, int num, struct git_attr_check *check)
 		rem = macroexpand(stk, rem);
 
 	for (i = 0; i < num; i++) {
-		void *value = check_all_attr[check[i].attr->attr_nr].value;
+		const char *value = check_all_attr[check[i].attr->attr_nr].value;
 		if (value == ATTR__UNKNOWN)
 			value = ATTR__UNSET;
 		check[i].value = value;
