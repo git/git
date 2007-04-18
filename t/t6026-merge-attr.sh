@@ -98,7 +98,9 @@ test_expect_success 'custom merge backend' '
 
 	git reset --hard anchor &&
 	git config --replace-all \
-	merge.driver "custom ./custom-merge %O %A %B 0" &&
+	merge.custom.driver "./custom-merge %O %A %B 0" &&
+	git config --replace-all \
+	merge.custom.name "custom merge driver for testing" &&
 
 	git merge master &&
 
@@ -117,7 +119,9 @@ test_expect_success 'custom merge backend' '
 
 	git reset --hard anchor &&
 	git config --replace-all \
-	merge.driver "custom ./custom-merge %O %A %B 1" &&
+	merge.custom.driver "./custom-merge %O %A %B 1" &&
+	git config --replace-all \
+	merge.custom.name "custom merge driver for testing" &&
 
 	if git merge master
 	then
