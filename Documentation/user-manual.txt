@@ -527,17 +527,16 @@ and git branch shows that you are no longer on a branch:
 ------------------------------------------------
 $ cat .git/HEAD
 427abfa28afedffadfca9dd8b067eb6d36bac53f
-git branch
+$ git branch
 * (no branch)
   master
 ------------------------------------------------
 
 In this case we say that the HEAD is "detached".
 
-This can be an easy way to check out a particular version without having
-to make up a name for a new branch.  However, keep in mind that when you
-switch away from the (for example, by checking out something else), you
-can lose track of what the HEAD used to point to.
+This is an easy way to check out a particular version without having to
+make up a name for the new branch.   You can still create a new branch
+(or tag) for this version later if you decide to.
 
 Examining branches from a remote repository
 -------------------------------------------
@@ -1560,7 +1559,18 @@ $ git show master@{2}		# See where the branch pointed 2,
 $ git show master@{3}		# 3, ... changes ago.
 $ gitk master@{yesterday}	# See where it pointed yesterday,
 $ gitk master@{"1 week ago"}	# ... or last week
+$ git log --walk-reflogs master	# show reflog entries for master
 -------------------------------------------------
+
+A separate reflog is kept for the HEAD, so
+
+-------------------------------------------------
+$ git show HEAD@{"1 week ago"}
+-------------------------------------------------
+
+will show what HEAD pointed to one week ago, not what the current branch
+pointed to one week ago.  This allows you to see the history of what
+you've checked out.
 
 The reflogs are kept by default for 30 days, after which they may be
 pruned.  See gitlink:git-reflog[1] and gitlink:git-gc[1] to learn
