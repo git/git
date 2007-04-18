@@ -677,6 +677,7 @@ struct ll_merge_driver {
 	const char *name;
 	const char *description;
 	ll_merge_fn fn;
+	const char *recursive;
 	struct ll_merge_driver *next;
 	char *cmdline;
 };
@@ -934,6 +935,13 @@ static int read_merge_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp("recursive", ep)) {
+		if (!value)
+			return error("%s: lacks value", var);
+		fn->recursive = strdup(value);
+		return 0;
+	}
+
 	return 0;
 }
 
@@ -1013,6 +1021,10 @@ static int ll_merge(mmbuffer_t *result_buf,
 	merge_attr = git_path_check_merge(a->path);
 	driver = find_ll_merge_driver(merge_attr);
 
+	if (index_only && driver->recursive) {
+		merge_attr = git_attr(driver->recursive, strlen(driver->recursive));
+		driver = find_ll_merge_driver(merge_attr);
+	}
 	merge_status = driver->fn(driver, a->path,
 				  &orig, &src1, name1, &src2, name2,
 				  result_buf);
