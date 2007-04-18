@@ -213,7 +213,7 @@ struct lock_file {
 extern int hold_lock_file_for_update(struct lock_file *, const char *path, int);
 extern int commit_lock_file(struct lock_file *);
 extern void rollback_lock_file(struct lock_file *);
-extern int delete_ref(const char *, unsigned char *sha1);
+extern int delete_ref(const char *, const unsigned char *sha1);
 
 /* Environment bits from configuration mechanism */
 extern int use_legacy_headers;
