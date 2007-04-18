@@ -12,6 +12,7 @@ do
 	then
 		in= out= installed=
 	else
+		installed=$(git describe $version)
 		in="[41;37m" out="[m" installed="	$installed"
 	fi
 	echo "$in$v$out	$(git-describe refs/heads/$v)$installed"
