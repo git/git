@@ -3162,6 +3162,8 @@ sub match_globs {
 			my $p = $1;
 			my $pathname = $g->{path}->full_path($p);
 			next if $exists->{$pathname};
+			next if ($self->check_path($pathname, $r) !=
+			         $SVN::Node::dir);
 			$exists->{$pathname} = Git::SVN->init(
 			                      $self->{url}, $pathname, undef,
 			                      $g->{ref}->full_path($p), 1);
