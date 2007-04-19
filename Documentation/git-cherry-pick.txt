@@ -38,7 +38,7 @@ OPTIONS
 	development branch), adding this information can be
 	useful.
 
--r|--replay::
+-r::
 	It used to be that the command defaulted to do `-x`
 	described above, and `-r` was to disable it.  Now the
 	default is not to do `-x` so this option is a no-op.
