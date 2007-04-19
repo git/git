@@ -1024,13 +1024,8 @@ static int ll_merge(mmbuffer_t *result_buf,
 	ll_driver_name = git_path_check_merge(a->path);
 	driver = find_ll_merge_driver(ll_driver_name);
 
-	if (index_only && driver->recursive) {
-		void *merge_attr;
-
-		ll_driver_name = driver->recursive;
-		merge_attr = git_attr(ll_driver_name, strlen(ll_driver_name));
-		driver = find_ll_merge_driver(merge_attr);
-	}
+	if (index_only && driver->recursive)
+		driver = find_ll_merge_driver(driver->recursive);
 	merge_status = driver->fn(driver, a->path,
 				  &orig, &src1, name1, &src2, name2,
 				  result_buf);
