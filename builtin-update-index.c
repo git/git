@@ -551,7 +551,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				if (i+3 >= argc)
 					die("git-update-index: --cacheinfo <mode> <sha1> <path>");
 
-				if ((strtoul_ui(argv[i+1], 8, &mode) != 1) ||
+				if (strtoul_ui(argv[i+1], 8, &mode) ||
 				    get_sha1_hex(argv[i+2], sha1) ||
 				    add_cacheinfo(mode, sha1, argv[i+3], 0))
 					die("git-update-index: --cacheinfo"
