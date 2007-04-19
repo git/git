@@ -455,6 +455,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	EXTLIBS += -lws2_32
 	X = .exe
 	NOEXECTEMPL = .noexec
+	template_dir = ../share/git-core/templates/
 endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease
