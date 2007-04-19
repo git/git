@@ -23,6 +23,7 @@ In order to compile this code you need:
 	mingw32-make-3.80.0-3.tar.gz
 	unzip-5.51-1-bin.zip (this is not from MinGW, iirc)
 	msysDTK-1.0.1.exe (contains ssh, perl)
+	bash-3.1-MSYS-1.0.11-snapshot.tar.bz2
 - additional libraries:
 	zlib-1.2.3-mingwPORT-1.tar
 	w32api-3.6.tar.gz
@@ -57,3 +58,11 @@ Caveats (aka bugs):
   implemented *very* simplistic: It just watches out for whitespace
   and double quote `"' characters. This may become a problem if you have
   exotic characters in your file names.
+
+- It seems that MSYS's default bash, 2.05b, has a bug that breaks git-am
+  (and, hence, git-rebase).  If you see this error:
+
+	Patch is empty.  Was is split wrong?
+
+  you need bash 3.1: Just unpack bash-3.1*.tar.bz2 and copy its bash.exe
+  over $MSYS/bin/sh.exe.
