@@ -809,6 +809,9 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 	int status, fd, i;
 	struct stat st;
 
+	if (fn->cmdline == NULL)
+		die("custom merge driver %s lacks command line.", fn->name);
+
 	result->ptr = NULL;
 	result->size = 0;
 	create_temp(orig, temp[0]);
@@ -879,7 +882,7 @@ static int read_merge_config(const char *var, const char *value)
 	 * especially, we do not want to look at variables such as
 	 * "merge.summary", "merge.tool", and "merge.verbosity".
 	 */
-	if (prefixcmp(var, "merge.") || (ep = strrchr(var, '.')) == var + 6)
+	if (prefixcmp(var, "merge.") || (ep = strrchr(var, '.')) == var + 5)
 		return 0;
 
 	/*
