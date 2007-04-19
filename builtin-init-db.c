@@ -130,10 +130,19 @@ static void copy_templates(const char *git_dir, int len, const char *template_di
 	int template_len;
 	DIR *dir;
 
-	if (!template_dir) {
+	if (!template_dir)
 		template_dir = getenv(TEMPLATE_DIR_ENVIRONMENT);
-		if (!template_dir)
-			template_dir = DEFAULT_GIT_TEMPLATE_DIR;
+	if (!template_dir) {
+		/*
+		 * if the hard-coded template is relative, it is
+		 * interpreted relative to the exec_dir
+		 */
+		template_dir = DEFAULT_GIT_TEMPLATE_DIR;
+		if (template_dir[0] != '/' && template_dir[1] != ':') {
+			const char *exec_path = git_exec_path();
+			template_dir = prefix_path(exec_path, strlen(exec_path),
+						   template_dir);
+		}
 	}
 	strcpy(template_path, template_dir);
 	template_len = strlen(template_path);
