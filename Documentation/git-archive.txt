@@ -32,8 +32,11 @@ OPTIONS
 --format=<fmt>::
 	Format of the resulting archive: 'tar', 'zip'...
 
---list::
+--list, -l::
 	Show all available formats.
+
+--verbose, -v::
+	Report progress to stderr.
 
 --prefix=<prefix>/::
 	Prepend <prefix>/ to each filename in the archive.
