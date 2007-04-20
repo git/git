@@ -8,10 +8,15 @@
 #include "dir.h"
 #include "exec_cmd.h"
 #include "cache-tree.h"
+#include "diff.h"
+#include "diffcore.h"
+#include "commit.h"
+#include "revision.h"
 
 static const char builtin_add_usage[] =
-"git-add [-n] [-v] [-f] [--interactive | -i] [--] <filepattern>...";
+"git-add [-n] [-v] [-f] [--interactive | -i] [-u] [--] <filepattern>...";
 
+static int take_all_worktree_changes;
 static const char *excludes_file;
 
 static void prune_directory(struct dir_struct *dir, const char **pathspec, int prefix)
@@ -92,6 +97,44 @@ static void fill_directory(struct dir_struct *dir, const char **pathspec)
 		prune_directory(dir, pathspec, baselen);
 }
 
+static void update_callback(struct diff_queue_struct *q,
+			    struct diff_options *opt, void *cbdata)
+{
+	int i, verbose;
+
+	verbose = *((int *)cbdata);
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filepair *p = q->queue[i];
+		const char *path = p->one->path;
+		switch (p->status) {
+		default:
+			die("unexpacted diff status %c", p->status);
+		case DIFF_STATUS_UNMERGED:
+		case DIFF_STATUS_MODIFIED:
+			add_file_to_cache(path, verbose);
+			break;
+		case DIFF_STATUS_DELETED:
+			remove_file_from_cache(path);
+			if (verbose)
+				printf("remove '%s'\n", path);
+			break;
+		}
+	}
+}
+
+static void update_all(int verbose)
+{
+	struct rev_info rev;
+	init_revisions(&rev, "");
+	setup_revisions(0, NULL, &rev, NULL);
+	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
+	rev.diffopt.format_callback = update_callback;
+	rev.diffopt.format_callback_data = &verbose;
+	if (read_cache() < 0)
+		die("index file corrupt");
+	run_diff_files(&rev, 0);
+}
+
 static int git_add_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "core.excludesfile")) {
@@ -156,8 +199,20 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			verbose = 1;
 			continue;
 		}
+		if (!strcmp(arg, "-u")) {
+			take_all_worktree_changes = 1;
+			continue;
+		}
 		usage(builtin_add_usage);
 	}
+
+	if (take_all_worktree_changes) {
+		if (i < argc)
+			die("-u and explicit paths are incompatible");
+		update_all(verbose);
+		goto finish;
+	}
+
 	if (argc <= i) {
 		fprintf(stderr, "Nothing specified, nothing added.\n");
 		fprintf(stderr, "Maybe you wanted to say 'git add .'?\n");
@@ -207,6 +262,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	for (i = 0; i < dir.nr; i++)
 		add_file_to_cache(dir.entries[i]->name, verbose);
 
+ finish:
 	if (active_cache_changed) {
 		if (write_cache(newfd, active_cache, active_nr) ||
 		    close(newfd) || commit_locked_index(&lock_file))
