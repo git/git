@@ -580,10 +580,8 @@ static off_t write_pack_file(void)
 		f = sha1fd(fd, pack_tmp_name);
 	}
 
-	if (do_progress) {
-		fprintf(stderr, "Writing %u objects.\n", nr_result);
-		start_progress(&progress_state, "", nr_result);
-	}
+	if (do_progress)
+		start_progress(&progress_state, "Writing %u objects...", "", nr_result);
 
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
 	hdr.hdr_version = htonl(PACK_VERSION);
@@ -1389,10 +1387,8 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		return;
 	array = xmalloc(array_size);
 	memset(array, 0, array_size);
-	if (progress) {
-		fprintf(stderr, "Deltifying %u objects.\n", nr_result);
-		start_progress(&progress_state, "", nr_result);
-	}
+	if (progress)
+		start_progress(&progress_state, "Deltifying %u objects...", "", nr_result);
 
 	do {
 		struct object_entry *entry = list[--i];
@@ -1722,10 +1718,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	prepare_packed_git();
 
-	if (progress) {
-		fprintf(stderr, "Generating pack...\n");
-		start_progress(&progress_state, "Counting objects: ", 0);
-	}
+	if (progress)
+		start_progress(&progress_state, "Generating pack...",
+			       "Counting objects: ", 0);
 	if (!use_internal_rev_list)
 		read_object_list_from_stdin();
 	else {

@@ -40,23 +40,27 @@ int display_progress(struct progress *progress, unsigned n)
 		if (percent != progress->last_percent || progress_update) {
 			progress->last_percent = percent;
 			fprintf(stderr, "%s%4u%% (%u/%u) done\r",
-				progress->msg, percent, n, progress->total);
+				progress->prefix, percent, n, progress->total);
 			progress_update = 0;
 			return 1;
 		}
 	} else if (progress_update) {
-		fprintf(stderr, "%s%u\r", progress->msg, n);
+		fprintf(stderr, "%s%u\r", progress->prefix, n);
 		progress_update = 0;
 		return 1;
 	}
 	return 0;
 }
 
-void start_progress(struct progress *progress, const char *msg, unsigned total)
+void start_progress(struct progress *progress, const char *title,
+		    const char *prefix, unsigned total)
 {
-	progress->msg = msg;
+	char buf[80];
+	progress->prefix = prefix;
 	progress->total = total;
 	progress->last_percent = -1;
+	if (snprintf(buf, sizeof(buf), title, total))
+		fprintf(stderr, "%s\n", buf);
 	set_progress_signal();
 }
 

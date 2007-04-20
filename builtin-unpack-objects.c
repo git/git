@@ -321,10 +321,8 @@ static void unpack_all(void)
 		die("unknown pack file version %d", ntohl(hdr->hdr_version));
 	use(sizeof(struct pack_header));
 
-	if (!quiet) {
-		fprintf(stderr, "Unpacking %d objects\n", nr_objects);
-		start_progress(&progress, "", nr_objects);
-	}
+	if (!quiet)
+		start_progress(&progress, "Unpacking %u objects...", "", nr_objects);
 	obj_list = xmalloc(nr_objects * sizeof(*obj_list));
 	for (i = 0; i < nr_objects; i++) {
 		unpack_one(i);

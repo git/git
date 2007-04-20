@@ -308,10 +308,9 @@ static void check_updates(struct cache_entry **src, int nr,
 		if (total < 250)
 			total = 0;
 
-		if (total) {
-			fprintf(stderr, "Checking files out...\n");
-			start_progress(&progress, "", total);
-		}
+		if (total)
+			start_progress(&progress, "Checking %u files out...",
+				       "", total);
 		cnt = 0;
 	}
 
