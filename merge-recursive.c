@@ -95,11 +95,6 @@ static struct path_list current_directory_set = {NULL, 0, 0, 1};
 static int call_depth = 0;
 static int verbosity = 2;
 static int buffer_output = 1;
-static int do_progress = 1;
-static unsigned last_percent;
-static unsigned merged_cnt;
-static unsigned total_cnt;
-static volatile sig_atomic_t progress_update;
 static struct output_buffer *output_list, *output_end;
 
 static int show (int v)
@@ -171,39 +166,6 @@ static void output_commit_title(struct commit *commit)
 				; /* do nothing */
 			printf("%.*s\n", len, s);
 		}
-	}
-}
-
-static void progress_interval(int signum)
-{
-	progress_update = 1;
-}
-
-static void setup_progress_signal(void)
-{
-	struct sigaction sa;
-	struct itimerval v;
-
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = progress_interval;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	sigaction(SIGALRM, &sa, NULL);
-
-	v.it_interval.tv_sec = 1;
-	v.it_interval.tv_usec = 0;
-	v.it_value = v.it_interval;
-	setitimer(ITIMER_REAL, &v, NULL);
-}
-
-static void display_progress()
-{
-	unsigned percent = total_cnt ? merged_cnt * 100 / total_cnt : 0;
-	if (progress_update || percent != last_percent) {
-		fprintf(stderr, "%4u%% (%u/%u) done\r",
-			percent, merged_cnt, total_cnt);
-		progress_update = 0;
-		last_percent = percent;
 	}
 }
 
@@ -377,14 +339,11 @@ static struct path_list *get_unmerged(void)
 	int i;
 
 	unmerged->strdup_paths = 1;
-	total_cnt += active_nr;
 
-	for (i = 0; i < active_nr; i++, merged_cnt++) {
+	for (i = 0; i < active_nr; i++) {
 		struct path_list_item *item;
 		struct stage_data *e;
 		struct cache_entry *ce = active_cache[i];
-		if (do_progress)
-			display_progress();
 		if (!ce_stage(ce))
 			continue;
 
@@ -1218,15 +1177,12 @@ static int merge_trees(struct tree *head,
 		re_merge = get_renames(merge, common, head, merge, entries);
 		clean = process_renames(re_head, re_merge,
 				branch1, branch2);
-		total_cnt += entries->nr;
-		for (i = 0; i < entries->nr; i++, merged_cnt++) {
+		for (i = 0; i < entries->nr; i++) {
 			const char *path = entries->items[i].path;
 			struct stage_data *e = entries->items[i].util;
 			if (!e->processed
 				&& !process_entry(path, e, branch1, branch2))
 				clean = 0;
-			if (do_progress)
-				display_progress();
 		}
 
 		path_list_clear(re_merge, 0);
@@ -1334,15 +1290,6 @@ static int merge(struct commit *h1,
 		commit_list_insert(h1, &(*result)->parents);
 		commit_list_insert(h2, &(*result)->parents->next);
 	}
-	if (!call_depth && do_progress) {
-		/* Make sure we end at 100% */
-		if (!total_cnt)
-			total_cnt = 1;
-		merged_cnt = total_cnt;
-		progress_update = 1;
-		display_progress();
-		fputc('\n', stderr);
-	}
 	flush_output();
 	return clean;
 }
@@ -1419,12 +1366,8 @@ int main(int argc, char *argv[])
 	}
 	if (argc - i != 3) /* "--" "<head>" "<remote>" */
 		die("Not handling anything other than two heads merge.");
-	if (verbosity >= 5) {
+	if (verbosity >= 5)
 		buffer_output = 0;
-		do_progress = 0;
-	}
-	else
-		do_progress = isatty(1);
 
 	branch1 = argv[++i];
 	branch2 = argv[++i];
@@ -1435,8 +1378,6 @@ int main(int argc, char *argv[])
 	branch1 = better_branch_name(branch1);
 	branch2 = better_branch_name(branch2);
 
-	if (do_progress)
-		setup_progress_signal();
 	if (show(3))
 		printf("Merging %s with %s\n", branch1, branch2);
 
