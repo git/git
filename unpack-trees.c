@@ -304,13 +304,8 @@ static void check_updates(struct cache_entry **src, int nr,
 				total++;
 		}
 
-		/* Don't bother doing this for very small updates */
-		if (total < 250)
-			total = 0;
-
-		if (total)
-			start_progress(&progress, "Checking %u files out...",
-				       "", total);
+		start_progress_delay(&progress, "Checking %u files out...",
+				     "", total, 50, 2);
 		cnt = 0;
 	}
 
