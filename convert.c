@@ -10,6 +10,11 @@
  * translation when the "auto_crlf" option is set.
  */
 
+#define CRLF_GUESS	(-1)
+#define CRLF_BINARY	0
+#define CRLF_TEXT	1
+#define CRLF_INPUT	2
+
 struct text_stat {
 	/* CR, LF and CRLF counts */
 	unsigned cr, lf, crlf;
@@ -74,13 +79,13 @@ static int is_binary(unsigned long size, struct text_stat *stats)
 	return 0;
 }
 
-static int crlf_to_git(const char *path, char **bufp, unsigned long *sizep, int guess)
+static int crlf_to_git(const char *path, char **bufp, unsigned long *sizep, int action)
 {
 	char *buffer, *nbuf;
 	unsigned long size, nsize;
 	struct text_stat stats;
 
-	if (guess && !auto_crlf)
+	if ((action == CRLF_BINARY) || (action == CRLF_GUESS && !auto_crlf))
 		return 0;
 
 	size = *sizep;
@@ -94,7 +99,7 @@ static int crlf_to_git(const char *path, char **bufp, unsigned long *sizep, int 
 	if (!stats.cr)
 		return 0;
 
-	if (guess) {
+	if (action == CRLF_GUESS) {
 		/*
 		 * We're currently not going to even try to convert stuff
 		 * that has bare CR characters. Does anybody do that crazy
@@ -119,7 +124,12 @@ static int crlf_to_git(const char *path, char **bufp, unsigned long *sizep, int 
 	*bufp = nbuf;
 	*sizep = nsize;
 
-	if (guess) {
+	if (action == CRLF_GUESS) {
+		/*
+		 * If we guessed, we already know we rejected a file with
+		 * lone CR, and we can strip a CR without looking at what
+		 * follow it.
+		 */
 		do {
 			unsigned char c = *buffer++;
 			if (c != '\r')
@@ -136,24 +146,15 @@ static int crlf_to_git(const char *path, char **bufp, unsigned long *sizep, int 
 	return 1;
 }
 
-static int autocrlf_to_git(const char *path, char **bufp, unsigned long *sizep)
-{
-	return crlf_to_git(path, bufp, sizep, 1);
-}
-
-static int forcecrlf_to_git(const char *path, char **bufp, unsigned long *sizep)
-{
-	return crlf_to_git(path, bufp, sizep, 0);
-}
-
-static int crlf_to_working_tree(const char *path, char **bufp, unsigned long *sizep, int guess)
+static int crlf_to_worktree(const char *path, char **bufp, unsigned long *sizep, int action)
 {
 	char *buffer, *nbuf;
 	unsigned long size, nsize;
 	struct text_stat stats;
 	unsigned char last;
 
-	if (guess && auto_crlf <= 0)
+	if ((action == CRLF_BINARY) || (action == CRLF_INPUT) ||
+	    (action == CRLF_GUESS && auto_crlf <= 0))
 		return 0;
 
 	size = *sizep;
@@ -171,7 +172,7 @@ static int crlf_to_working_tree(const char *path, char **bufp, unsigned long *si
 	if (stats.lf == stats.crlf)
 		return 0;
 
-	if (guess) {
+	if (action == CRLF_GUESS) {
 		/* If we have any bare CR characters, we're not going to touch it */
 		if (stats.cr != stats.crlf)
 			return 0;
@@ -200,16 +201,6 @@ static int crlf_to_working_tree(const char *path, char **bufp, unsigned long *si
 	return 1;
 }
 
-static int autocrlf_to_working_tree(const char *path, char **bufp, unsigned long *sizep)
-{
-	return crlf_to_working_tree(path, bufp, sizep, 1);
-}
-
-static int forcecrlf_to_working_tree(const char *path, char **bufp, unsigned long *sizep)
-{
-	return crlf_to_working_tree(path, bufp, sizep, 0);
-}
-
 static void setup_crlf_check(struct git_attr_check *check)
 {
 	static struct git_attr *attr_crlf;
@@ -228,38 +219,24 @@ static int git_path_check_crlf(const char *path)
 	if (!git_checkattr(path, 1, &attr_crlf_check)) {
 		const char *value = attr_crlf_check.value;
 		if (ATTR_TRUE(value))
-			return 1;
+			return CRLF_TEXT;
 		else if (ATTR_FALSE(value))
-			return 0;
+			return CRLF_BINARY;
 		else if (ATTR_UNSET(value))
 			;
-		else
-			die("unknown value %s given to 'crlf' attribute",
-			    (char *)value);
+		else if (!strcmp(value, "input"))
+			return CRLF_INPUT;
+		/* fallthru */
 	}
-	return -1;
+	return CRLF_GUESS;
 }
 
 int convert_to_git(const char *path, char **bufp, unsigned long *sizep)
 {
-	switch (git_path_check_crlf(path)) {
-	case 0:
-		return 0;
-	case 1:
-		return forcecrlf_to_git(path, bufp, sizep);
-	default:
-		return autocrlf_to_git(path, bufp, sizep);
-	}
+	return crlf_to_git(path, bufp, sizep, git_path_check_crlf(path));
 }
 
 int convert_to_working_tree(const char *path, char **bufp, unsigned long *sizep)
 {
-	switch (git_path_check_crlf(path)) {
-	case 0:
-		return 0;
-	case 1:
-		return forcecrlf_to_working_tree(path, bufp, sizep);
-	default:
-		return autocrlf_to_working_tree(path, bufp, sizep);
-	}
+	return crlf_to_worktree(path, bufp, sizep, git_path_check_crlf(path));
 }
