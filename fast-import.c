@@ -904,6 +904,12 @@ static int store_object(
 	if (e->offset) {
 		duplicate_count_by_type[type]++;
 		return 1;
+	} else if (find_sha1_pack(sha1, packed_git)) {
+		e->type = type;
+		e->pack_id = MAX_PACK_ID;
+		e->offset = 1; /* just not zero! */
+		duplicate_count_by_type[type]++;
+		return 1;
 	}
 
 	if (last && last->data && last->depth < max_depth) {
@@ -2021,6 +2027,7 @@ static void import_marks(const char *input_file)
 			e = insert_object(sha1);
 			e->type = type;
 			e->pack_id = MAX_PACK_ID;
+			e->offset = 1; /* just not zero! */
 		}
 		insert_mark(mark, e);
 	}
@@ -2086,6 +2093,7 @@ int main(int argc, const char **argv)
 	if (i != argc)
 		usage(fast_import_usage);
 
+	prepare_packed_git();
 	start_packfile();
 	for (;;) {
 		read_next_command();
