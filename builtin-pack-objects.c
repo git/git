@@ -49,22 +49,15 @@ struct object_entry {
  * expanded).  nr_objects & nr_alloc controls this array.  They are stored
  * in the order we see -- typically rev-list --objects order that gives us
  * nice "minimum seek" order.
- *
- * sorted-by-sha ans sorted-by-type are arrays of pointers that point at
- * elements in the objects array.  The former is used to build the pack
- * index (lists object names in the ascending order to help offset lookup),
- * and the latter is used to group similar things together by try_delta()
- * heuristics.
  */
+static struct object_entry *objects;
+static uint32_t nr_objects, nr_alloc, nr_result;
 
 static int non_empty;
 static int no_reuse_delta;
 static int local;
 static int incremental;
 static int allow_ofs_delta;
-
-static struct object_entry *objects;
-static uint32_t nr_objects, nr_alloc, nr_result;
 static const char *pack_tmp_name, *idx_tmp_name;
 static char tmpname[PATH_MAX];
 static unsigned char pack_file_sha1[20];
@@ -76,8 +69,7 @@ static int num_preferred_base;
 
 /*
  * The object names in objects array are hashed with this hashtable,
- * to help looking up the entry by object name.  Binary search from
- * sorted_by_sha is also possible but this was easier to code and faster.
+ * to help looking up the entry by object name.
  * This hashtable is built after all the objects are seen.
  */
 static int *object_ix;
