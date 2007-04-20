@@ -1,0 +1,285 @@
+gitattributes(5)
+================
+
+NAME
+----
+gitattributes - defining attributes per path
+
+SYNOPSIS
+--------
+.gitattributes
+
+
+DESCRIPTION
+-----------
+
+A `gitattributes` file is a simple text file that gives
+`attributes` to pathnames.
+
+Each line in `gitattributes` file is of form:
+
+	glob	attr1 attr2 ...
+
+That is, a glob pattern followed by an attributes list,
+separated by whitespaces.  When the glob pattern matches the
+path in question, the attributes listed on the line are given to
+the path.
+
+Each attribute can be in one of these states for a given path:
+
+Set::
+
+	The path has the attribute with special value "true";
+	this is specified by listing only the name of the
+	attribute in the attribute list.
+
+Unset::
+
+	The path has the attribute with special value "false";
+	this is specified by listing the name of the attribute
+	prefixed with a dash `-` in the attribute list.
+
+Set to a value::
+
+	The path has the attribute with specified string value;
+	this is specified by listing the name of the attribute
+	followed by an equal sign `=` and its value in the
+	attribute list.
+
+Unspecified::
+
+	No glob pattern matches the path, and nothing says if
+	the path has or does not have the attribute.
+
+When more than one glob pattern matches the path, a later line
+overrides an earlier line.
+
+When deciding what attributes are assigned to a path, git
+consults `$GIT_DIR/info/attributes` file (which has the highest
+precedence), `.gitattributes` file in the same directory as the
+path in question, and its parent directories (the further the
+directory that contains `.gitattributes` is from the path in
+question, the lower its precedence).
+
+Sometimes you would need to override an setting of an attribute
+for a path to `unspecified` state.  This can be done by listing
+the name of the attribute prefixed with an exclamation point `!`.
+
+
+EFFECTS
+-------
+
+Certain operations by git can be influenced by assigning
+particular attributes to a path.  Currently, three operations
+are attributes-aware.
+
+Checking-out and checking-in
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The attribute `crlf` affects how the contents stored in the
+repository are copied to the working tree files when commands
+such as `git checkout` and `git merge` run.  It also affects how
+git stores the contents you prepare in the working tree in the
+repository upon `git add` and `git commit`.
+
+Set::
+
+	Setting the `crlf` attribute on a path is meant to mark
+	the path as a "text" file.  'core.autocrlf' conversion
+	takes place without guessing the content type by
+	inspection.
+
+Unset::
+
+	Unsetting the `crlf` attribute on a path is meant to
+	mark the path as a "binary" file.  The path never goes
+	through line endings conversion upon checkin/checkout.
+
+Unspecified::
+
+	Unspecified `crlf` attribute tells git to apply the
+	`core.autocrlf` conversion when the file content looks
+	like text.
+
+Set to string value "input"::
+
+	This is similar to setting the attribute to `true`, but
+	also forces git to act as if `core.autocrlf` is set to
+	`input` for the path.
+
+Any other value set to `crlf` attribute is ignored and git acts
+as if the attribute is left unspecified.
+
+
+The `core.autocrlf` conversion
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If the configuration variable `core.autocrlf` is false, no
+conversion is done.
+
+When `core.autocrlf` is true, it means that the platform wants
+CRLF line endings for files in the working tree, and you want to
+convert them back to the normal LF line endings when checking
+in to the repository.
+
+When `core.autocrlf` is set to "input", line endings are
+converted to LF upon checkin, but there is no conversion done
+upon checkout.
+
+
+Generating diff text
+~~~~~~~~~~~~~~~~~~~~
+
+The attribute `diff` affects if `git diff` generates textual
+patch for the path or just says `Binary files differ`.
+
+Set::
+
+	A path to which the `diff` attribute is set is treated
+	as text, even when they contain byte values that
+	normally never appear in text files, such as NUL.
+
+Unset::
+
+	A path to which the `diff` attribute is unset will
+	generate `Binary files differ`.
+
+Unspecified::
+
+	A path to which the `diff` attribute is unspecified
+	first gets its contents inspected, and if it looks like
+	text, it is treated as text.  Otherwise it would
+	generate `Binary files differ`.
+
+Any other value set to `diff` attribute is ignored and git acts
+as if the attribute is left unspecified.
+
+
+Performing a three-way merge
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The attribute `merge` affects how three versions of a file is
+merged when a file-level merge is necessary during `git merge`,
+and other programs such as `git revert` and `git cherry-pick`.
+
+Set::
+
+	Built-in 3-way merge driver is used to merge the
+	contents in a way similar to `merge` command of `RCS`
+	suite.  This is suitable for ordinary text files.
+
+Unset::
+
+	Take the version from the current branch as the
+	tentative merge result, and declare that the merge has
+	conflicts.  This is suitable for binary files that does
+	not have a well-defined merge semantics.
+
+Unspecified::
+
+	By default, this uses the same built-in 3-way merge
+	driver as is the case the `merge` attribute is set.
+	However, `merge.default` configuration variable can name
+	different merge driver to be used for paths to which the
+	`merge` attribute is unspecified.
+
+Any other string value::
+
+	3-way merge is performed using the specified custom
+	merge driver.  The built-in 3-way merge driver can be
+	explicitly specified by asking for "text" driver; the
+	built-in "take the current branch" driver can be
+	requested by "binary".
+
+
+Defining a custom merge driver
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The definition of a merge driver is done in `gitconfig` not
+`gitattributes` file, so strictly speaking this manual page is a
+wrong place to talk about it.  However...
+
+To define a custom merge driver `filfre`, add a section to your
+`$GIT_DIR/config` file (or `$HOME/.gitconfig` file) like this:
+
+----------------------------------------------------------------
+[merge "filfre"]
+	name = feel-free merge driver
+	driver = filfre %O %A %B
+	recursive = binary
+----------------------------------------------------------------
+
+The `merge.*.name` variable gives the driver a human-readable
+name.
+
+The `merge.*.driver` variable's value is used to construct a
+command to run to merge ancestor's version (`%O`), current
+version (`%A`) and the other branches' version (`%B`).  These
+three tokens are replaced with the names of temporary files that
+hold the contents of these versions when the command line is
+built.
+
+The merge driver is expected to leave the result of the merge in
+the file named with `%A` by overwriting it, and exit with zero
+status if it managed to merge them cleanly, or non-zero if there
+were conflicts.
+
+The `merge.*.recursive` variable specifies what other merge
+driver to use when the merge driver is called for an internal
+merge between common ancestors, when there are more than one.
+When left unspecified, the driver itself is used for both
+internal merge and the final merge.
+
+
+EXAMPLE
+-------
+
+If you have these three `gitattributes` file:
+
+----------------------------------------------------------------
+(in $GIT_DIR/info/attributes)
+
+a*	foo !bar -baz
+
+(in .gitattributes)
+abc	foo bar baz
+
+(in t/.gitattributes)
+ab*	merge=filfre
+abc	-foo -bar
+*.c	frotz
+----------------------------------------------------------------
+
+the attributes given to path `t/abc` are computed as follows:
+
+1. By examining `t/.gitattributes` (which is in the same
+   diretory as the path in question), git finds that the first
+   line matches.  `merge` attribute is set.  It also finds that
+   the second line matches, and attributes `foo` and `bar`
+   are unset.
+
+2. Then it examines `.gitattributes` (which is in the parent
+   directory), and finds that the first line matches, but
+   `t/.gitattributes` file already decided how `merge`, `foo`
+   and `bar` attributes should be given to this path, so it
+   leaves `foo` and `bar` unset.  Attribute `baz` is set.
+
+3. Finally it examines `$GIT_DIR/info/gitattributes`.  This file
+   is used to override the in-tree settings.  The first line is
+   a match, and `foo` is set, `bar` is reverted to unspecified
+   state, and `baz` is unset.
+
+As the result, the attributes assignement to `t/abc` becomes:
+
+----------------------------------------------------------------
+foo	set to true
+bar	unspecified
+baz	set to false
+merge	set to string value "filfre"
+frotz	unspecified
+----------------------------------------------------------------
+
+
+GIT
+---
+Part of the gitlink:git[7] suite

@@ -2,7 +2,7 @@ MAN1_TXT= \
 	$(filter-out $(addsuffix .txt, $(ARTICLES) $(SP_ARTICLES)), \
 		$(wildcard git-*.txt)) \
 	gitk.txt
-MAN5_TXT=
+MAN5_TXT=gitattributes.txt
 MAN7_TXT=git.txt
 
 DOC_HTML=$(patsubst %.txt,%.html,$(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT))
@@ -68,7 +68,7 @@ install: man
 	$(INSTALL) -d -m755 $(DESTDIR)$(man5dir)
 	$(INSTALL) -d -m755 $(DESTDIR)$(man7dir)
 	$(INSTALL) -m644 $(DOC_MAN1) $(DESTDIR)$(man1dir)
-	: $(INSTALL) -m644 $(DOC_MAN5) $(DESTDIR)$(man5dir)
+	$(INSTALL) -m644 $(DOC_MAN5) $(DESTDIR)$(man5dir)
 	$(INSTALL) -m644 $(DOC_MAN7) $(DESTDIR)$(man7dir)
 
 
