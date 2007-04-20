@@ -76,8 +76,10 @@ make >./:html.log 2>&1 \
 make >./:man.log 2>&1 \
 	-C Documentation -j 2 \
 	man1="$DOCREPO/doc-man-inst/man1" \
+	man5="$DOCREPO/doc-man-inst/man5" \
 	man7="$DOCREPO/doc-man-inst/man7" \
 	man1dir="$DOCREPO/doc-man-inst/man1" \
+	man5dir="$DOCREPO/doc-man-inst/man5" \
 	man7dir="$DOCREPO/doc-man-inst/man7" install || exit
 
 for type in html man
