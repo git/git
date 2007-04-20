@@ -9,16 +9,16 @@ git-config - Get and set repository or global options
 SYNOPSIS
 --------
 [verse]
-'git-config' [--global] [type] name [value [value_regex]]
-'git-config' [--global] [type] --add name value
-'git-config' [--global] [type] --replace-all name [value [value_regex]]
-'git-config' [--global] [type] --get name [value_regex]
-'git-config' [--global] [type] --get-all name [value_regex]
-'git-config' [--global] [type] --unset name [value_regex]
-'git-config' [--global] [type] --unset-all name [value_regex]
-'git-config' [--global] [type] --rename-section old_name new_name
-'git-config' [--global] [type] --remove-section name
-'git-config' [--global] -l | --list
+'git-config' [--system | --global] [type] name [value [value_regex]]
+'git-config' [--system | --global] [type] --add name value
+'git-config' [--system | --global] [type] --replace-all name [value [value_regex]]
+'git-config' [--system | --global] [type] --get name [value_regex]
+'git-config' [--system | --global] [type] --get-all name [value_regex]
+'git-config' [--system | --global] [type] --unset name [value_regex]
+'git-config' [--system | --global] [type] --unset-all name [value_regex]
+'git-config' [--system | --global] [type] --rename-section old_name new_name
+'git-config' [--system | --global] [type] --remove-section name
+'git-config' [--system | --global] -l | --list
 
 DESCRIPTION
 -----------
@@ -75,6 +75,10 @@ OPTIONS
 
 --global::
 	Use global ~/.gitconfig file rather than the repository .git/config.
+
+--system::
+	Use system-wide $(prefix)/etc/gitconfig rather than the repository
+	.git/config.
 
 --remove-section::
 	Remove the given section from the configuration file.
