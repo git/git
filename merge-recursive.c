@@ -574,6 +574,31 @@ static void flush_buffer(int fd, const char *buf, unsigned long size)
 	}
 }
 
+static int make_room_for_path(const char *path)
+{
+	int status;
+	const char *msg = "failed to create path '%s'%s";
+
+	status = mkdir_p(path, 0777);
+	if (status) {
+		if (status == -3) {
+			/* something else exists */
+			error(msg, path, ": perhaps a D/F conflict?");
+			return -1;
+		}
+		die(msg, path, "");
+	}
+
+	/* Successful unlink is good.. */
+	if (!unlink(path))
+		return 0;
+	/* .. and so is no existing file */
+	if (errno == ENOENT)
+		return 0;
+	/* .. but not some other error (who really cares what?) */
+	return error(msg, path, ": perhaps a D/F conflict?");
+}
+
 static void update_file_flags(const unsigned char *sha,
 			      unsigned mode,
 			      const char *path,
@@ -594,33 +619,12 @@ static void update_file_flags(const unsigned char *sha,
 		if (type != OBJ_BLOB)
 			die("blob expected for %s '%s'", sha1_to_hex(sha), path);
 
+		if (make_room_for_path(path) < 0) {
+			update_wd = 0;
+			goto update_index;
+		}
 		if (S_ISREG(mode) || (!has_symlinks && S_ISLNK(mode))) {
 			int fd;
-			int status;
-			const char *msg = "failed to create path '%s'%s";
-
-			status = mkdir_p(path, 0777);
-			if (status) {
-				if (status == -3) {
-					/* something else exists */
-					error(msg, path, ": perhaps a D/F conflict?");
-					update_wd = 0;
-					goto update_index;
-				}
-				die(msg, path, "");
-			}
-			if (unlink(path)) {
-				if (errno == EISDIR) {
-					/* something else exists */
-					error(msg, path, ": perhaps a D/F conflict?");
-					update_wd = 0;
-					goto update_index;
-				}
-				if (errno != ENOENT)
-					die("failed to unlink %s "
-					    "in preparation to update: %s",
-					    path, strerror(errno));
-			}
 			if (mode & 0100)
 				mode = 0777;
 			else
