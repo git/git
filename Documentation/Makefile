@@ -2,9 +2,10 @@ MAN1_TXT= \
 	$(filter-out $(addsuffix .txt, $(ARTICLES) $(SP_ARTICLES)), \
 		$(wildcard git-*.txt)) \
 	gitk.txt
+MAN5_TXT=
 MAN7_TXT=git.txt
 
-DOC_HTML=$(patsubst %.txt,%.html,$(MAN1_TXT) $(MAN7_TXT))
+DOC_HTML=$(patsubst %.txt,%.html,$(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT))
 
 ARTICLES = tutorial
 ARTICLES += tutorial-2
@@ -23,12 +24,14 @@ SP_ARTICLES = howto/revert-branch-rebase user-manual
 DOC_HTML += $(patsubst %,%.html,$(ARTICLES) $(SP_ARTICLES))
 
 DOC_MAN1=$(patsubst %.txt,%.1,$(MAN1_TXT))
+DOC_MAN5=$(patsubst %.txt,%.5,$(MAN1_TXT))
 DOC_MAN7=$(patsubst %.txt,%.7,$(MAN7_TXT))
 
 prefix?=$(HOME)
 bindir?=$(prefix)/bin
 mandir?=$(prefix)/man
 man1dir=$(mandir)/man1
+man5dir=$(mandir)/man5
 man7dir=$(mandir)/man7
 # DESTDIR=
 
@@ -53,15 +56,19 @@ all: html man
 
 html: $(DOC_HTML)
 
-$(DOC_HTML) $(DOC_MAN1) $(DOC_MAN7): asciidoc.conf
+$(DOC_HTML) $(DOC_MAN1) $(DOC_MAN5) $(DOC_MAN7): asciidoc.conf
 
-man: man1 man7
+man: man1 man5 man7
 man1: $(DOC_MAN1)
+man5: $(DOC_MAN5)
 man7: $(DOC_MAN7)
 
 install: man
-	$(INSTALL) -d -m755 $(DESTDIR)$(man1dir) $(DESTDIR)$(man7dir)
+	$(INSTALL) -d -m755 $(DESTDIR)$(man1dir)
+	$(INSTALL) -d -m755 $(DESTDIR)$(man5dir)
+	$(INSTALL) -d -m755 $(DESTDIR)$(man7dir)
 	$(INSTALL) -m644 $(DOC_MAN1) $(DESTDIR)$(man1dir)
+	: $(INSTALL) -m644 $(DOC_MAN5) $(DESTDIR)$(man5dir)
 	$(INSTALL) -m644 $(DOC_MAN7) $(DESTDIR)$(man7dir)
 
 
@@ -99,7 +106,7 @@ cmd-list.made: cmd-list.perl $(MAN1_TXT)
 git.7 git.html: git.txt core-intro.txt
 
 clean:
-	rm -f *.xml *.xml+ *.html *.html+ *.1 *.7 howto-index.txt howto/*.html doc.dep
+	rm -f *.xml *.xml+ *.html *.html+ *.1 *.5 *.7 howto-index.txt howto/*.html doc.dep
 	rm -f $(cmds_txt) *.made
 
 %.html : %.txt
@@ -109,7 +116,7 @@ clean:
 		sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' >$@+
 	mv $@+ $@
 
-%.1 %.7 : %.xml
+%.1 %.5 %.7 : %.xml
 	xmlto -m callouts.xsl man $<
 
 %.xml : %.txt

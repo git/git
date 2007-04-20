@@ -1030,9 +1030,10 @@ dist-doc:
 	gzip -n -9 -f $(htmldocs).tar
 	:
 	rm -fr .doc-tmp-dir
-	mkdir .doc-tmp-dir .doc-tmp-dir/man1 .doc-tmp-dir/man7
+	mkdir -p .doc-tmp-dir/man1 .doc-tmp-dir/man5 .doc-tmp-dir/man7
 	$(MAKE) -C Documentation DESTDIR=./ \
 		man1dir=../.doc-tmp-dir/man1 \
+		man5dir=../.doc-tmp-dir/man5 \
 		man7dir=../.doc-tmp-dir/man7 \
 		install
 	cd .doc-tmp-dir && $(TAR) cf ../$(manpages).tar .
