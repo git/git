@@ -902,8 +902,9 @@ static int read_merge_config(const char *var, const char *value)
 		namebuf[namelen] = 0;
 		fn->name = namebuf;
 		fn->fn = ll_ext_merge;
-		fn->next = *ll_user_merge_tail;
+		fn->next = NULL;
 		*ll_user_merge_tail = fn;
+		ll_user_merge_tail = &(fn->next);
 	}
 
 	ep++;
