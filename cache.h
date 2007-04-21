@@ -209,6 +209,7 @@ extern int refresh_cache(unsigned int flags);
 
 struct lock_file {
 	struct lock_file *next;
+	pid_t owner;
 	char on_list;
 	char filename[PATH_MAX];
 };
