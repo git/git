@@ -24,7 +24,6 @@ static void *insert_decoration(struct decoration *n, struct object *base, void *
 			hash[j].decoration = decoration;
 			return old;
 		}
-		j++;
 		if (++j >= size)
 			j = 0;
 	}
