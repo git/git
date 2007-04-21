@@ -200,7 +200,7 @@ static char *crlf_to_worktree(const char *path, const char *src, unsigned long *
 	return buffer;
 }
 
-static void setup_crlf_check(struct git_attr_check *check)
+static void setup_convert_check(struct git_attr_check *check)
 {
 	static struct git_attr *attr_crlf;
 
@@ -209,33 +209,41 @@ static void setup_crlf_check(struct git_attr_check *check)
 	check->attr = attr_crlf;
 }
 
-static int git_path_check_crlf(const char *path)
+static int git_path_check_crlf(const char *path, struct git_attr_check *check)
 {
-	struct git_attr_check attr_crlf_check;
+	const char *value = check->value;
 
-	setup_crlf_check(&attr_crlf_check);
-
-	if (!git_checkattr(path, 1, &attr_crlf_check)) {
-		const char *value = attr_crlf_check.value;
-		if (ATTR_TRUE(value))
-			return CRLF_TEXT;
-		else if (ATTR_FALSE(value))
-			return CRLF_BINARY;
-		else if (ATTR_UNSET(value))
-			;
-		else if (!strcmp(value, "input"))
-			return CRLF_INPUT;
-		/* fallthru */
-	}
+	if (ATTR_TRUE(value))
+		return CRLF_TEXT;
+	else if (ATTR_FALSE(value))
+		return CRLF_BINARY;
+	else if (ATTR_UNSET(value))
+		;
+	else if (!strcmp(value, "input"))
+		return CRLF_INPUT;
 	return CRLF_GUESS;
 }
 
 char *convert_to_git(const char *path, const char *src, unsigned long *sizep)
 {
-	return crlf_to_git(path, src, sizep, git_path_check_crlf(path));
+	struct git_attr_check check[1];
+	int crlf = CRLF_GUESS;
+
+	setup_convert_check(check);
+	if (!git_checkattr(path, 1, check)) {
+		crlf = git_path_check_crlf(path, check);
+	}
+	return crlf_to_git(path, src, sizep, crlf);
 }
 
 char *convert_to_working_tree(const char *path, const char *src, unsigned long *sizep)
 {
-	return crlf_to_worktree(path, src, sizep, git_path_check_crlf(path));
+	struct git_attr_check check[1];
+	int crlf = CRLF_GUESS;
+
+	setup_convert_check(check);
+	if (!git_checkattr(path, 1, check)) {
+		crlf = git_path_check_crlf(path, check);
+	}
+	return crlf_to_worktree(path, src, sizep, crlf);
 }
