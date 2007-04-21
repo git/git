@@ -156,6 +156,45 @@ In the check-out codepath, the blob content is first converted
 with `crlf`, and then `ident`.
 
 
+`filter`
+^^^^^^^^
+
+A `filter` attribute can be set to a string value.  This names
+filter driver specified in the configuration.
+
+A filter driver consists of `clean` command and `smudge`
+command, either of which can be left unspecified.  Upon
+checkout, when `smudge` command is specified, the command is fed
+the blob object from its standard input, and its standard output
+is used to update the worktree file.  Similarly, `clean` command
+is used to convert the contents of worktree file upon checkin.
+
+Missing filter driver definition in the config is not an error
+but makes the filter a no-op passthru.
+
+The content filtering is done to massage the content into a
+shape that is more convenient for the platform, filesystem, and
+the user to use.  The keyword here is "more convenient" and not
+"turning something unusable into usable".  In other words, it is
+"hanging yourself because we gave you a long rope" if your
+project uses filtering mechanism in such a way that it makes
+your project unusable unless the checkout is done with a
+specific filter in effect.
+
+
+Interaction between checkin/checkout attributes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In the check-in codepath, the worktree file is first converted
+with `filter` driver (if specified and corresponding driver
+defined), then the result is processed with `ident` (if
+specified), and then finally with `crlf` (again, if specified
+and applicable).
+
+In the check-out codepath, the blob content is first converted
+with `crlf`, and then `ident` and fed to `filter`.
+
+
 Generating diff text
 ~~~~~~~~~~~~~~~~~~~~
 

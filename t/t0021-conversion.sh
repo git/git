@@ -4,8 +4,17 @@ test_description='blob conversion via gitattributes'
 
 . ./test-lib.sh
 
+cat <<\EOF >rot13.sh
+tr '[a-zA-Z]' '[n-za-mN-ZA-M]'
+EOF
+chmod +x rot13.sh
+
 test_expect_success setup '
+	git config filter.rot13.smudge ./rot13.sh &&
+	git config filter.rot13.clean ./rot13.sh &&
+
 	{
+	    echo "*.t filter=rot13"
 	    echo "*.i ident"
 	} >.gitattributes &&
 
