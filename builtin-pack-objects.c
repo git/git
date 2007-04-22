@@ -1783,11 +1783,17 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		write_index_file(last_obj_offset, object_list_sha1);
 		snprintf(tmpname, sizeof(tmpname), "%s-%s.pack",
 			 base_name, sha1_to_hex(object_list_sha1));
+		if (chmod(pack_tmp_name, 0644))
+			die("unable to make temporary pack file readable: %s",
+			    strerror(errno));
 		if (rename(pack_tmp_name, tmpname))
 			die("unable to rename temporary pack file: %s",
 			    strerror(errno));
 		snprintf(tmpname, sizeof(tmpname), "%s-%s.idx",
 			 base_name, sha1_to_hex(object_list_sha1));
+		if (chmod(idx_tmp_name, 0644))
+			die("unable to make temporary index file readable: %s",
+			    strerror(errno));
 		if (rename(idx_tmp_name, tmpname))
 			die("unable to rename temporary index file: %s",
 			    strerror(errno));
