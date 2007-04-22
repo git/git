@@ -4,6 +4,10 @@ test_description='CRLF conversion'
 
 . ./test-lib.sh
 
+q_to_nul () {
+	tr Q '\0'
+}
+
 append_cr () {
 	sed -e 's/$/Q/' | tr Q '\015'
 }
@@ -20,6 +24,7 @@ test_expect_success setup '
 	for w in Hello world how are you; do echo $w; done >one &&
 	mkdir dir &&
 	for w in I am very very fine thank you; do echo $w; done >dir/two &&
+	for w in Oh here is NULQin text here; do echo $w; done | q_to_nul >three &&
 	git add . &&
 
 	git commit -m initial &&
@@ -27,6 +32,7 @@ test_expect_success setup '
 	one=`git rev-parse HEAD:one` &&
 	dir=`git rev-parse HEAD:dir` &&
 	two=`git rev-parse HEAD:dir/two` &&
+	three=`git rev-parse HEAD:three` &&
 
 	for w in Some extra lines here; do echo $w; done >>one &&
 	git diff >patch.file &&
@@ -38,7 +44,7 @@ test_expect_success setup '
 
 test_expect_success 'update with autocrlf=input' '
 
-	rm -f tmp one dir/two &&
+	rm -f tmp one dir/two three &&
 	git read-tree --reset -u HEAD &&
 	git repo-config core.autocrlf input &&
 
@@ -62,7 +68,7 @@ test_expect_success 'update with autocrlf=input' '
 
 test_expect_success 'update with autocrlf=true' '
 
-	rm -f tmp one dir/two &&
+	rm -f tmp one dir/two three &&
 	git read-tree --reset -u HEAD &&
 	git repo-config core.autocrlf true &&
 
@@ -86,7 +92,7 @@ test_expect_success 'update with autocrlf=true' '
 
 test_expect_success 'checkout with autocrlf=true' '
 
-	rm -f tmp one dir/two &&
+	rm -f tmp one dir/two three &&
 	git repo-config core.autocrlf true &&
 	git read-tree --reset -u HEAD &&
 
@@ -110,7 +116,7 @@ test_expect_success 'checkout with autocrlf=true' '
 
 test_expect_success 'checkout with autocrlf=input' '
 
-	rm -f tmp one dir/two &&
+	rm -f tmp one dir/two three &&
 	git repo-config core.autocrlf input &&
 	git read-tree --reset -u HEAD &&
 
@@ -136,7 +142,7 @@ test_expect_success 'checkout with autocrlf=input' '
 
 test_expect_success 'apply patch (autocrlf=input)' '
 
-	rm -f tmp one dir/two &&
+	rm -f tmp one dir/two three &&
 	git repo-config core.autocrlf input &&
 	git read-tree --reset -u HEAD &&
 
@@ -149,7 +155,7 @@ test_expect_success 'apply patch (autocrlf=input)' '
 
 test_expect_success 'apply patch --cached (autocrlf=input)' '
 
-	rm -f tmp one dir/two &&
+	rm -f tmp one dir/two three &&
 	git repo-config core.autocrlf input &&
 	git read-tree --reset -u HEAD &&
 
@@ -162,7 +168,7 @@ test_expect_success 'apply patch --cached (autocrlf=input)' '
 
 test_expect_success 'apply patch --index (autocrlf=input)' '
 
-	rm -f tmp one dir/two &&
+	rm -f tmp one dir/two three &&
 	git repo-config core.autocrlf input &&
 	git read-tree --reset -u HEAD &&
 
@@ -176,7 +182,7 @@ test_expect_success 'apply patch --index (autocrlf=input)' '
 
 test_expect_success 'apply patch (autocrlf=true)' '
 
-	rm -f tmp one dir/two &&
+	rm -f tmp one dir/two three &&
 	git repo-config core.autocrlf true &&
 	git read-tree --reset -u HEAD &&
 
@@ -189,7 +195,7 @@ test_expect_success 'apply patch (autocrlf=true)' '
 
 test_expect_success 'apply patch --cached (autocrlf=true)' '
 
-	rm -f tmp one dir/two &&
+	rm -f tmp one dir/two three &&
 	git repo-config core.autocrlf true &&
 	git read-tree --reset -u HEAD &&
 
@@ -202,7 +208,7 @@ test_expect_success 'apply patch --cached (autocrlf=true)' '
 
 test_expect_success 'apply patch --index (autocrlf=true)' '
 
-	rm -f tmp one dir/two &&
+	rm -f tmp one dir/two three &&
 	git repo-config core.autocrlf true &&
 	git read-tree --reset -u HEAD &&
 
@@ -212,6 +218,76 @@ test_expect_success 'apply patch --index (autocrlf=true)' '
 		echo "Eh?  apply with --index"
 		false
 	}
+'
+
+test_expect_success '.gitattributes says two is binary' '
+
+	rm -f tmp one dir/two three &&
+	echo "two -crlf" >.gitattributes &&
+	git repo-config core.autocrlf true &&
+	git read-tree --reset -u HEAD &&
+
+	if remove_cr dir/two >/dev/null
+	then
+		echo "Huh?"
+		false
+	else
+		: happy
+	fi &&
+
+	if remove_cr one >/dev/null
+	then
+		: happy
+	else
+		echo "Huh?"
+		false
+	fi &&
+
+	if remove_cr three >/dev/null
+	then
+		echo "Huh?"
+		false
+	else
+		: happy
+	fi
+'
+
+test_expect_success '.gitattributes says two is input' '
+
+	rm -f tmp one dir/two three &&
+	echo "two crlf=input" >.gitattributes &&
+	git read-tree --reset -u HEAD &&
+
+	if remove_cr dir/two >/dev/null
+	then
+		echo "Huh?"
+		false
+	else
+		: happy
+	fi
+'
+
+test_expect_success '.gitattributes says two and three are text' '
+
+	rm -f tmp one dir/two three &&
+	echo "t* crlf" >.gitattributes &&
+	git read-tree --reset -u HEAD &&
+
+	if remove_cr dir/two >/dev/null
+	then
+		: happy
+	else
+		echo "Huh?"
+		false
+	fi &&
+
+	if remove_cr three >/dev/null
+	then
+		: happy
+	else
+		echo "Huh?"
+		false
+	fi
 '
 
 test_done

@@ -2338,10 +2338,9 @@ int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object,
 	 */
 	if ((type == OBJ_BLOB) && S_ISREG(st->st_mode)) {
 		unsigned long nsize = size;
-		char *nbuf = buf;
-		if (convert_to_git(path, &nbuf, &nsize)) {
-			if (size)
-				munmap(buf, size);
+		char *nbuf = convert_to_git(path, buf, &nsize);
+		if (nbuf) {
+			munmap(buf, size);
 			size = nsize;
 			buf = nbuf;
 			re_allocated = 1;

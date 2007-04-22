@@ -16,6 +16,7 @@ git-blame
 git-branch
 git-bundle
 git-cat-file
+git-check-attr
 git-check-ref-format
 git-checkout
 git-checkout-index

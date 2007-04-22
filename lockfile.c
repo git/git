@@ -8,8 +8,11 @@ static const char *alternate_index_output;
 
 static void remove_lock_file(void)
 {
+	pid_t me = getpid();
+
 	while (lock_file_list) {
-		if (lock_file_list->filename[0])
+		if (lock_file_list->owner == me &&
+		    lock_file_list->filename[0])
 			unlink(lock_file_list->filename);
 		lock_file_list = lock_file_list->next;
 	}
@@ -28,6 +31,7 @@ static int lock_file(struct lock_file *lk, const char *path)
 	sprintf(lk->filename, "%s.lock", path);
 	fd = open(lk->filename, O_RDWR | O_CREAT | O_EXCL, 0666);
 	if (0 <= fd) {
+		lk->owner = getpid();
 		if (!lk->on_list) {
 			lk->next = lock_file_list;
 			lock_file_list = lk;

@@ -525,6 +525,19 @@ merge.verbosity::
 	conflicts, 2 outputs conflicts and file changes.  Level 5 and
 	above outputs debugging information.  The default is level 2.
 
+merge.<driver>.name::
+	Defines a human readable name for a custom low-level
+	merge driver.  See gitlink:gitattributes[5] for details.
+
+merge.<driver>.driver::
+	Defines the command that implements a custom low-level
+	merge driver.  See gitlink:gitattributes[5] for details.
+
+merge.<driver>.recursive::
+	Names a low-level merge driver to be used when
+	performing an internal merge between common ancestors.
+	See gitlink:gitattributes[5] for details.
+
 pack.window::
 	The size of the window used by gitlink:git-pack-objects[1] when no
 	window size is given on the command line. Defaults to 10.

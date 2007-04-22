@@ -82,7 +82,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct checkout *stat
 
 	switch (ntohl(ce->ce_mode) & S_IFMT) {
 		char *buf, *new;
-		unsigned long size, nsize;
+		unsigned long size;
 
 	case S_IFREG:
 		new = read_blob_entry(ce, path, &size);
@@ -103,12 +103,10 @@ static int write_entry(struct cache_entry *ce, char *path, struct checkout *stat
 		/*
 		 * Convert from git internal format to working tree format
 		 */
-		buf = new;
-		nsize = size;
-		if (convert_to_working_tree(ce->name, &buf, &nsize)) {
+		buf = convert_to_working_tree(ce->name, new, &size);
+		if (buf) {
 			free(new);
 			new = buf;
-			size = nsize;
 		}
 
 		wrote = write_in_full(fd, new, size);
