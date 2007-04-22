@@ -1612,6 +1612,13 @@ static void get_object_list(int ac, const char **av)
 	traverse_commit_list(&revs, show_commit, show_object);
 }
 
+static int adjust_perm(const char *path, mode_t mode)
+{
+	if (chmod(path, mode))
+		return -1;
+	return adjust_shared_perm(path);
+}
+
 int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 {
 	int depth = 10;
@@ -1780,10 +1787,15 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	last_obj_offset = write_pack_file();
 	if (!pack_to_stdout) {
 		unsigned char object_list_sha1[20];
+		mode_t mode = umask(0);
+
+		umask(mode);
+		mode = 0666 & ~mode;
+
 		write_index_file(last_obj_offset, object_list_sha1);
 		snprintf(tmpname, sizeof(tmpname), "%s-%s.pack",
 			 base_name, sha1_to_hex(object_list_sha1));
-		if (chmod(pack_tmp_name, 0644))
+		if (adjust_perm(pack_tmp_name, mode))
 			die("unable to make temporary pack file readable: %s",
 			    strerror(errno));
 		if (rename(pack_tmp_name, tmpname))
@@ -1791,7 +1803,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			    strerror(errno));
 		snprintf(tmpname, sizeof(tmpname), "%s-%s.idx",
 			 base_name, sha1_to_hex(object_list_sha1));
-		if (chmod(idx_tmp_name, 0644))
+		if (adjust_perm(idx_tmp_name, mode))
 			die("unable to make temporary index file readable: %s",
 			    strerror(errno));
 		if (rename(idx_tmp_name, tmpname))
