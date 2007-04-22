@@ -4,6 +4,38 @@ GIT v1.5.2 Release Notes (draft)
 Updates since v1.5.1
 --------------------
 
+* Plumbing level subproject support.
+
+  You can include a subdirectory that has an independent git
+  repository in your index and tree objects as a
+  "subproject".  This plumbing (i.e. "core") level subproject
+  support explicitly excludes recursive behaviour.
+
+  The "subproject" entries in the index and trees are
+  incompatible with older versions of git.  Experimenting with
+  the plumbing level support is encouraged, but be warned that
+  unless everybody in your project updates to this release or
+  later, using this feature would make your project
+  inaccessible by people with older versions of git.
+
+* Plumbing level gitattributes support.
+
+  The gitattributes mechanism allows you to add 'attributes' to
+  paths in your project, and affect the way certain git
+  operations work.  Currently you can influence if a path is
+  considered a binary or text (the former would be treated by
+  'git diff' not to produce textual output; the latter can go
+  through the line endings conversion process in repositories
+  with core.autocrlf set), and specify a custom 3-way merge
+  driver.
+
+* The packfile format now optionally suports 64-bit index.
+
+  This release supports the "version 2" format of the .idx
+  file.  This is automatically enabled when a huge packfile
+  needs more than 32-bit to express offsets of objects in the
+  pack
+
 * New commands and options.
 
   - "git bisect start" can optionally take a single bad commit and
@@ -16,6 +48,10 @@ Updates since v1.5.1
 
   - "git format-patch" learned a new --subject-prefix=<string>
     option, to override the built-in "[PATCH]".
+
+  - "git add -u" is a quick way to do the first stage of "git
+    commit -a" (i.e. update the index to match the working
+    tree); it obviously does not make a commit.
 
 * Updated behavior of existing commands.
 
@@ -41,6 +77,16 @@ Updates since v1.5.1
   - "git archive" does not insist you to give --format parameter
     anymore; it defaults to "tar".
 
+  - "git cvsserver" can use backends other than sqlite.
+
+  - "gitview" (in contrib/ section) learned to better support
+    "git-annotate".
+
+  - Local "git fetch" from a repository whose object store is
+    one of the alternates (e.g. fetching from the origin in a
+    repository created with "git clone -l -s") avoids
+    downloading objects unnecessary.
+
 * Builds
 
   - git-p4import has never been installed; now there is an
@@ -65,33 +111,10 @@ Updates since v1.5.1
 Fixes since v1.5.1
 ------------------
 
-The following are all in v1.5.1.x series, unless otherwise noted.
-
-* Documentation updates
-
-  - Various documentation updates from J. Bruce Fields, Frank
-    Lichtenheld, Alex Riesen and others.  Andrew Ruder started a
-    war on undocumented options.
+All of the fixes in v1.5.1 maintenance series are included in
+this release, unless otherwise noted.
 
 * Bugfixes
-
-  - "git diff a/ b/" incorrectly fell in "diff between two
-    filesystem objects" codepath, when the user most likely
-    wanted to limit the extent of output to two tracked
-    directories.
-
-  - git-quiltimport had the same bug as we fixed for
-    git-applymbox in v1.5.1.1 -- it gave an alarming "did not
-    have any patch" message (but did not actually fail and was
-    harmless).
-
-  - various git-svn fixes.
-
-  - Sample update hook incorrectly always refused requests to
-    delete branches through push.
-
-  - git-blame on a very long working tree path had buffer
-    overrun problem.
 
   - Switching branches with "git checkout" refused to work when
     a path changes from a file to a directory between the
@@ -110,10 +133,12 @@ The following are all in v1.5.1.x series, unless otherwise noted.
     will not be backported to 1.5.1.x series, as it is rather an
     intrusive change.
 
+* Documentation updates
+
 * Performance Tweaks
 
 --
 exec >/var/tmp/1
-O=v1.5.1.1-158-g86da9de
+O=v1.5.1.2-242-g2d76548
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
