@@ -62,26 +62,33 @@ static int create_file(const char *path, unsigned int mode)
 	return open(path, O_WRONLY | O_CREAT | O_EXCL, mode);
 }
 
+static void *read_blob_entry(struct cache_entry *ce, const char *path, unsigned long *size)
+{
+	enum object_type type;
+	void *new = read_sha1_file(ce->sha1, &type, size);
+
+	if (new) {
+		if (type == OBJ_BLOB)
+			return new;
+		free(new);
+	}
+	return NULL;
+}
+
 static int write_entry(struct cache_entry *ce, char *path, struct checkout *state, int to_tempfile)
 {
 	int fd;
-	void *new;
-	unsigned long size;
 	long wrote;
-	enum object_type type;
 
-	new = read_sha1_file(ce->sha1, &type, &size);
-	if (!new || type != OBJ_BLOB) {
-		if (new)
-			free(new);
-		return error("git-checkout-index: unable to read sha1 file of %s (%s)",
-			path, sha1_to_hex(ce->sha1));
-	}
 	switch (ntohl(ce->ce_mode) & S_IFMT) {
-		char *buf;
-		unsigned long nsize;
+		char *buf, *new;
+		unsigned long size, nsize;
 
 	case S_IFREG:
+		new = read_blob_entry(ce, path, &size);
+		if (!new)
+			return error("git-checkout-index: unable to read sha1 file of %s (%s)",
+				path, sha1_to_hex(ce->sha1));
 		if (to_tempfile) {
 			strcpy(path, ".merge_file_XXXXXX");
 			fd = mkstemp(path);
@@ -111,6 +118,10 @@ static int write_entry(struct cache_entry *ce, char *path, struct checkout *stat
 			return error("git-checkout-index: unable to write file %s", path);
 		break;
 	case S_IFLNK:
+		new = read_blob_entry(ce, path, &size);
+		if (!new)
+			return error("git-checkout-index: unable to read sha1 file of %s (%s)",
+				path, sha1_to_hex(ce->sha1));
 		if (to_tempfile || !has_symlinks) {
 			if (to_tempfile) {
 				strcpy(path, ".merge_link_XXXXXX");
@@ -136,8 +147,13 @@ static int write_entry(struct cache_entry *ce, char *path, struct checkout *stat
 						 "symlink %s (%s)", path, strerror(errno));
 		}
 		break;
+	case S_IFDIRLNK:
+		if (to_tempfile)
+			return error("git-checkout-index: cannot create temporary subproject %s", path);
+		if (mkdir(path, 0777) < 0)
+			return error("git-checkout-index: cannot create subproject directory %s", path);
+		break;
 	default:
-		free(new);
 		return error("git-checkout-index: unknown file mode for %s", path);
 	}
 
@@ -179,6 +195,9 @@ int checkout_entry(struct cache_entry *ce, struct checkout *state, char *topath)
 		 */
 		unlink(path);
 		if (S_ISDIR(st.st_mode)) {
+			/* If it is a gitlink, leave it alone! */
+			if (S_ISDIRLNK(ntohl(ce->ce_mode)))
+				return 0;
 			if (!state->force)
 				return error("%s is a directory", path);
 			remove_subtree(path);

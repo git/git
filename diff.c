@@ -1397,6 +1397,22 @@ static int populate_from_stdin(struct diff_filespec *s)
 	return 0;
 }
 
+static int diff_populate_gitlink(struct diff_filespec *s, int size_only)
+{
+	int len;
+	char *data = xmalloc(100);
+	len = snprintf(data, 100,
+		"Subproject commit %s\n", sha1_to_hex(s->sha1));
+	s->data = data;
+	s->size = len;
+	s->should_free = 1;
+	if (size_only) {
+		s->data = NULL;
+		free(data);
+	}
+	return 0;
+}
+
 /*
  * While doing rename detection and pickaxe operation, we may need to
  * grab the data for the blob (or file) for our own in-core comparison.
@@ -1415,6 +1431,10 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 
 	if (s->data)
 		return err;
+
+	if (S_ISDIRLNK(s->mode))
+		return diff_populate_gitlink(s, size_only);
+
 	if (!s->sha1_valid ||
 	    reuse_worktree_file(s->path, s->sha1, 0)) {
 		struct stat st;

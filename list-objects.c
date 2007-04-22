@@ -25,6 +25,37 @@ static void process_blob(struct rev_info *revs,
 	add_object(obj, p, path, name);
 }
 
+/*
+ * Processing a gitlink entry currently does nothing, since
+ * we do not recurse into the subproject.
+ *
+ * We *could* eventually add a flag that actually does that,
+ * which would involve:
+ *  - is the subproject actually checked out?
+ *  - if so, see if the subproject has already been added
+ *    to the alternates list, and add it if not.
+ *  - process the commit (or tag) the gitlink points to
+ *    recursively.
+ *
+ * However, it's unclear whether there is really ever any
+ * reason to see superprojects and subprojects as such a
+ * "unified" object pool (potentially resulting in a totally
+ * humongous pack - avoiding which was the whole point of
+ * having gitlinks in the first place!).
+ *
+ * So for now, there is just a note that we *could* follow
+ * the link, and how to do it. Whether it necessarily makes
+ * any sense what-so-ever to ever do that is another issue.
+ */
+static void process_gitlink(struct rev_info *revs,
+			    const unsigned char *sha1,
+			    struct object_array *p,
+			    struct name_path *path,
+			    const char *name)
+{
+	/* Nothing to do */
+}
+
 static void process_tree(struct rev_info *revs,
 			 struct tree *tree,
 			 struct object_array *p,
@@ -56,6 +87,9 @@ static void process_tree(struct rev_info *revs,
 			process_tree(revs,
 				     lookup_tree(entry.sha1),
 				     p, &me, entry.path);
+		else if (S_ISDIRLNK(entry.mode))
+			process_gitlink(revs, entry.sha1,
+					p, &me, entry.path);
 		else
 			process_blob(revs,
 				     lookup_blob(entry.sha1),

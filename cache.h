@@ -25,6 +25,22 @@
 #endif
 
 /*
+ * A "directory link" is a link to another git directory.
+ *
+ * The value 0160000 is not normally a valid mode, and
+ * also just happens to be S_IFDIR + S_IFLNK
+ *
+ * NOTE! We *really* shouldn't depend on the S_IFxxx macros
+ * always having the same values everywhere. We should use
+ * our internal git values for these things, and then we can
+ * translate that to the OS-specific value. It just so
+ * happens that everybody shares the same bit representation
+ * in the UNIX world (and apparently wider too..)
+ */
+#define S_IFDIRLNK	0160000
+#define S_ISDIRLNK(m)	(((m) & S_IFMT) == S_IFDIRLNK)
+
+/*
  * Intensive research over the course of many years has shown that
  * port 9418 is totally unused by anything else. Or
  *
@@ -104,6 +120,8 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 {
 	if (S_ISLNK(mode))
 		return htonl(S_IFLNK);
+	if (S_ISDIR(mode) || S_ISDIRLNK(mode))
+		return htonl(S_IFDIRLNK);
 	return htonl(S_IFREG | ce_permissions(mode));
 }
 static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned int mode)
@@ -121,7 +139,7 @@ static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned in
 }
 #define canon_mode(mode) \
 	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
-	S_ISLNK(mode) ? S_IFLNK : S_IFDIR)
+	S_ISLNK(mode) ? S_IFLNK : S_ISDIR(mode) ? S_IFDIR : S_IFDIRLNK)
 
 #define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
 

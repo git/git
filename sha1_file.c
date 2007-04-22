@@ -13,6 +13,7 @@
 #include "commit.h"
 #include "tag.h"
 #include "tree.h"
+#include "refs.h"
 
 #ifndef O_NOATIME
 #if defined(__linux__) && (defined(__i386__) || defined(__PPC__))
@@ -2392,6 +2393,8 @@ int index_path(unsigned char *sha1, const char *path, struct stat *st, int write
 				     path);
 		free(target);
 		break;
+	case S_IFDIR:
+		return resolve_gitlink_ref(path, "HEAD", sha1);
 	default:
 		return error("%s: unsupported file type", path);
 	}

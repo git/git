@@ -283,6 +283,86 @@ static struct ref_list *get_loose_refs(void)
 
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define MAXDEPTH 5
+#define MAXREFLEN (1024)
+
+static int resolve_gitlink_packed_ref(char *name, int pathlen, const char *refname, unsigned char *result)
+{
+	FILE *f;
+	struct cached_refs refs;
+	struct ref_list *ref;
+	int retval;
+
+	strcpy(name + pathlen, "packed-refs");
+	f = fopen(name, "r");
+	if (!f)
+		return -1;
+	read_packed_refs(f, &refs);
+	fclose(f);
+	ref = refs.packed;
+	retval = -1;
+	while (ref) {
+		if (!strcmp(ref->name, refname)) {
+			retval = 0;
+			memcpy(result, ref->sha1, 20);
+			break;
+		}
+		ref = ref->next;
+	}
+	free_ref_list(refs.packed);
+	return retval;
+}
+
+static int resolve_gitlink_ref_recursive(char *name, int pathlen, const char *refname, unsigned char *result, int recursion)
+{
+	int fd, len = strlen(refname);
+	char buffer[128], *p;
+
+	if (recursion > MAXDEPTH || len > MAXREFLEN)
+		return -1;
+	memcpy(name + pathlen, refname, len+1);
+	fd = open(name, O_RDONLY);
+	if (fd < 0)
+		return resolve_gitlink_packed_ref(name, pathlen, refname, result);
+
+	len = read(fd, buffer, sizeof(buffer)-1);
+	close(fd);
+	if (len < 0)
+		return -1;
+	while (len && isspace(buffer[len-1]))
+		len--;
+	buffer[len] = 0;
+
+	/* Was it a detached head or an old-fashioned symlink? */
+	if (!get_sha1_hex(buffer, result))
+		return 0;
+
+	/* Symref? */
+	if (strncmp(buffer, "ref:", 4))
+		return -1;
+	p = buffer + 4;
+	while (isspace(*p))
+		p++;
+
+	return resolve_gitlink_ref_recursive(name, pathlen, p, result, recursion+1);
+}
+
+int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *result)
+{
+	int len = strlen(path), retval;
+	char *gitdir;
+
+	while (len && path[len-1] == '/')
+		len--;
+	if (!len)
+		return -1;
+	gitdir = xmalloc(len + MAXREFLEN + 8);
+	memcpy(gitdir, path, len);
+	memcpy(gitdir + len, "/.git/", 7);
+
+	retval = resolve_gitlink_ref_recursive(gitdir, len+6, refname, result, 0);
+	free(gitdir);
+	return retval;
+}
 
 const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *flag)
 {

@@ -7,11 +7,16 @@
  */
 #include "cache.h"
 #include "dir.h"
+#include "refs.h"
 
 struct path_simplify {
 	int len;
 	const char *path;
 };
+
+static int read_directory_recursive(struct dir_struct *dir,
+	const char *path, const char *base, int baselen,
+	int check_only, const struct path_simplify *simplify);
 
 int common_prefix(const char **pathspec)
 {
@@ -286,15 +291,111 @@ struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int
 	return ent;
 }
 
-static int dir_exists(const char *dirname, int len)
+enum exist_status {
+	index_nonexistent = 0,
+	index_directory,
+	index_gitdir,
+};
+
+/*
+ * The index sorts alphabetically by entry name, which
+ * means that a gitlink sorts as '\0' at the end, while
+ * a directory (which is defined not as an entry, but as
+ * the files it contains) will sort with the '/' at the
+ * end.
+ */
+static enum exist_status directory_exists_in_index(const char *dirname, int len)
 {
 	int pos = cache_name_pos(dirname, len);
-	if (pos >= 0)
-		return 1;
-	pos = -pos-1;
-	if (pos >= active_nr) /* can't */
-		return 0;
-	return !strncmp(active_cache[pos]->name, dirname, len);
+	if (pos < 0)
+		pos = -pos-1;
+	while (pos < active_nr) {
+		struct cache_entry *ce = active_cache[pos++];
+		unsigned char endchar;
+
+		if (strncmp(ce->name, dirname, len))
+			break;
+		endchar = ce->name[len];
+		if (endchar > '/')
+			break;
+		if (endchar == '/')
+			return index_directory;
+		if (!endchar && S_ISDIRLNK(ntohl(ce->ce_mode)))
+			return index_gitdir;
+	}
+	return index_nonexistent;
+}
+
+/*
+ * When we find a directory when traversing the filesystem, we
+ * have three distinct cases:
+ *
+ *  - ignore it
+ *  - see it as a directory
+ *  - recurse into it
+ *
+ * and which one we choose depends on a combination of existing
+ * git index contents and the flags passed into the directory
+ * traversal routine.
+ *
+ * Case 1: If we *already* have entries in the index under that
+ * directory name, we always recurse into the directory to see
+ * all the files.
+ *
+ * Case 2: If we *already* have that directory name as a gitlink,
+ * we always continue to see it as a gitlink, regardless of whether
+ * there is an actual git directory there or not (it might not
+ * be checked out as a subproject!)
+ *
+ * Case 3: if we didn't have it in the index previously, we
+ * have a few sub-cases:
+ *
+ *  (a) if "show_other_directories" is true, we show it as
+ *      just a directory, unless "hide_empty_directories" is
+ *      also true and the directory is empty, in which case
+ *      we just ignore it entirely.
+ *  (b) if it looks like a git directory, and we don't have
+ *      'no_dirlinks' set we treat it as a gitlink, and show it
+ *      as a directory.
+ *  (c) otherwise, we recurse into it.
+ */
+enum directory_treatment {
+	show_directory,
+	ignore_directory,
+	recurse_into_directory,
+};
+
+static enum directory_treatment treat_directory(struct dir_struct *dir,
+	const char *dirname, int len,
+	const struct path_simplify *simplify)
+{
+	/* The "len-1" is to strip the final '/' */
+	switch (directory_exists_in_index(dirname, len-1)) {
+	case index_directory:
+		return recurse_into_directory;
+
+	case index_gitdir:
+		if (dir->show_other_directories)
+			return ignore_directory;
+		return show_directory;
+
+	case index_nonexistent:
+		if (dir->show_other_directories)
+			break;
+		if (!dir->no_dirlinks) {
+			unsigned char sha1[20];
+			if (resolve_gitlink_ref(dirname, "HEAD", sha1) == 0)
+				return show_directory;
+		}
+		return recurse_into_directory;
+	}
+
+	/* This is the "show_other_directories" case */
+	if (!dir->hide_empty_directories)
+		return show_directory;
+	if (!read_directory_recursive(dir, dirname, dirname, len, 1, simplify))
+		return ignore_directory;
+	return show_directory;
 }
 
 /*
@@ -353,6 +454,9 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 			     !strcmp(de->d_name + 1, "git")))
 				continue;
 			len = strlen(de->d_name);
+			/* Ignore overly long pathnames! */
+			if (len + baselen + 8 > sizeof(fullname))
+				continue;
 			memcpy(fullname + baselen, de->d_name, len+1);
 			if (simplify_away(fullname, baselen + len, simplify))
 				continue;
@@ -377,19 +481,17 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 			case DT_DIR:
 				memcpy(fullname + baselen + len, "/", 2);
 				len++;
-				if (dir->show_other_directories &&
-				    !dir_exists(fullname, baselen + len)) {
-					if (dir->hide_empty_directories &&
-					    !read_directory_recursive(dir,
-						    fullname, fullname,
-						    baselen + len, 1, simplify))
-						continue;
+				switch (treat_directory(dir, fullname, baselen + len, simplify)) {
+				case show_directory:
 					break;
+				case recurse_into_directory:
+					contents += read_directory_recursive(dir,
+						fullname, fullname, baselen + len, 0, simplify);
+					continue;
+				case ignore_directory:
+					continue;
 				}
-
-				contents += read_directory_recursive(dir,
-					fullname, fullname, baselen + len, 0, simplify);
-				continue;
+				break;
 			case DT_REG:
 			case DT_LNK:
 				break;
