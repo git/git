@@ -300,7 +300,8 @@ static struct attr_stack *read_attr_from_array(const char **list)
 		a = parse_attr_line(line, "[builtin]", ++lineno, 1);
 		if (!a)
 			continue;
-		res->attrs = xrealloc(res->attrs, res->num_matches + 1);
+		res->attrs = xrealloc(res->attrs,
+			sizeof(struct match_attr *) * (res->num_matches + 1));
 		res->attrs[res->num_matches++] = a;
 	}
 	return res;
@@ -324,7 +325,8 @@ static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
 		a = parse_attr_line(buf, path, ++lineno, macro_ok);
 		if (!a)
 			continue;
-		res->attrs = xrealloc(res->attrs, res->num_matches + 1);
+		res->attrs = xrealloc(res->attrs,
+			sizeof(struct match_attr *) * (res->num_matches + 1));
 		res->attrs[res->num_matches++] = a;
 	}
 	fclose(fp);
