@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "attr.h"
+#include "run-command.h"
 
 /*
  * convert.c - convert a file when checking it out and checking it in.
@@ -203,10 +204,152 @@ static char *crlf_to_worktree(const char *path, const char *src, unsigned long *
 static void setup_convert_check(struct git_attr_check *check)
 {
 	static struct git_attr *attr_crlf;
+	static struct git_attr *attr_ident;
 
-	if (!attr_crlf)
+	if (!attr_crlf) {
 		attr_crlf = git_attr("crlf", 4);
-	check->attr = attr_crlf;
+		attr_ident = git_attr("ident", 5);
+	}
+	check[0].attr = attr_crlf;
+	check[1].attr = attr_ident;
+}
+
+static int count_ident(const char *cp, unsigned long size)
+{
+	/*
+	 * "$ident: 0000000000000000000000000000000000000000 $" <=> "$ident$"
+	 */
+	int cnt = 0;
+	char ch;
+
+	while (size) {
+		ch = *cp++;
+		size--;
+		if (ch != '$')
+			continue;
+		if (size < 6)
+			break;
+		if (memcmp("ident", cp, 5))
+			continue;
+		ch = cp[5];
+		cp += 6;
+		size -= 6;
+		if (ch == '$')
+			cnt++; /* $ident$ */
+		if (ch != ':')
+			continue;
+
+		/*
+		 * "$ident: ... "; scan up to the closing dollar sign and discard.
+		 */
+		while (size) {
+			ch = *cp++;
+			size--;
+			if (ch == '$') {
+				cnt++;
+				break;
+			}
+		}
+	}
+	return cnt;
+}
+
+static char *ident_to_git(const char *path, const char *src, unsigned long *sizep, int ident)
+{
+	int cnt;
+	unsigned long size;
+	char *dst, *buf;
+
+	if (!ident)
+		return NULL;
+	size = *sizep;
+	cnt = count_ident(src, size);
+	if (!cnt)
+		return NULL;
+	buf = xmalloc(size);
+
+	for (dst = buf; size; size--) {
+		char ch = *src++;
+		*dst++ = ch;
+		if ((ch == '$') && (6 <= size) &&
+		    !memcmp("ident:", src, 6)) {
+			unsigned long rem = size - 6;
+			const char *cp = src + 6;
+			do {
+				ch = *cp++;
+				if (ch == '$')
+					break;
+				rem--;
+			} while (rem);
+			if (!rem)
+				continue;
+			memcpy(dst, "ident$", 6);
+			dst += 6;
+			size -= (cp - src);
+			src = cp;
+		}
+	}
+
+	*sizep = dst - buf;
+	return buf;
+}
+
+static char *ident_to_worktree(const char *path, const char *src, unsigned long *sizep, int ident)
+{
+	int cnt;
+	unsigned long size;
+	char *dst, *buf;
+	unsigned char sha1[20];
+
+	if (!ident)
+		return NULL;
+
+	size = *sizep;
+	cnt = count_ident(src, size);
+	if (!cnt)
+		return NULL;
+
+	hash_sha1_file(src, size, "blob", sha1);
+	buf = xmalloc(size + cnt * 43);
+
+	for (dst = buf; size; size--) {
+		const char *cp;
+		char ch = *src++;
+		*dst++ = ch;
+		if ((ch != '$') || (size < 6) || memcmp("ident", src, 5))
+			continue;
+
+		if (src[5] == ':') {
+			/* discard up to but not including the closing $ */
+			unsigned long rem = size - 6;
+			cp = src + 6;
+			do {
+				ch = *cp++;
+				if (ch == '$')
+					break;
+				rem--;
+			} while (rem);
+			if (!rem)
+				continue;
+			size -= (cp - src);
+		} else if (src[5] == '$')
+			cp = src + 5;
+		else
+			continue;
+
+		memcpy(dst, "ident: ", 7);
+		dst += 7;
+		memcpy(dst, sha1_to_hex(sha1), 40);
+		dst += 40;
+		*dst++ = ' ';
+		size -= (cp - src);
+		src = cp;
+		*dst++ = *src++;
+		size--;
+	}
+
+	*sizep = dst - buf;
+	return buf;
 }
 
 static int git_path_check_crlf(const char *path, struct git_attr_check *check)
@@ -224,26 +367,57 @@ static int git_path_check_crlf(const char *path, struct git_attr_check *check)
 	return CRLF_GUESS;
 }
 
+static int git_path_check_ident(const char *path, struct git_attr_check *check)
+{
+	const char *value = check->value;
+
+	return !!ATTR_TRUE(value);
+}
+
 char *convert_to_git(const char *path, const char *src, unsigned long *sizep)
 {
-	struct git_attr_check check[1];
+	struct git_attr_check check[2];
 	int crlf = CRLF_GUESS;
+	int ident = 0;
+	char *buf, *buf2;
 
 	setup_convert_check(check);
-	if (!git_checkattr(path, 1, check)) {
-		crlf = git_path_check_crlf(path, check);
+	if (!git_checkattr(path, ARRAY_SIZE(check), check)) {
+		crlf = git_path_check_crlf(path, check + 0);
+		ident = git_path_check_ident(path, check + 1);
 	}
-	return crlf_to_git(path, src, sizep, crlf);
+
+	buf = crlf_to_git(path, src, sizep, crlf);
+
+	buf2 = ident_to_git(path, buf ? buf : src, sizep, ident);
+	if (buf2) {
+		free(buf);
+		buf = buf2;
+	}
+
+	return buf;
 }
 
 char *convert_to_working_tree(const char *path, const char *src, unsigned long *sizep)
 {
-	struct git_attr_check check[1];
+	struct git_attr_check check[2];
 	int crlf = CRLF_GUESS;
+	int ident = 0;
+	char *buf, *buf2;
 
 	setup_convert_check(check);
-	if (!git_checkattr(path, 1, check)) {
-		crlf = git_path_check_crlf(path, check);
+	if (!git_checkattr(path, ARRAY_SIZE(check), check)) {
+		crlf = git_path_check_crlf(path, check + 0);
+		ident = git_path_check_ident(path, check + 1);
 	}
-	return crlf_to_worktree(path, src, sizep, crlf);
+
+	buf = ident_to_worktree(path, src, sizep, ident);
+
+	buf2 = crlf_to_worktree(path, buf ? buf : src, sizep, crlf);
+	if (buf2) {
+		free(buf);
+		buf = buf2;
+	}
+
+	return buf;
 }
