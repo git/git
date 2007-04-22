@@ -115,8 +115,8 @@ static char *crlf_to_git(const char *path, const char *src, unsigned long *sizep
 	}
 
 	/*
-	 * Ok, allocate a new buffer, fill it in, and return true
-	 * to let the caller know that we switched buffers on it.
+	 * Ok, allocate a new buffer, fill it in, and return it
+	 * to let the caller know that we switched buffers.
 	 */
 	nsize = size - stats.crlf;
 	buffer = xmalloc(nsize);
@@ -137,7 +137,7 @@ static char *crlf_to_git(const char *path, const char *src, unsigned long *sizep
 	} else {
 		do {
 			unsigned char c = *src++;
-			if (! (c == '\r' && (1 < size && *buffer == '\n')))
+			if (! (c == '\r' && (1 < size && *src == '\n')))
 				*dst++ = c;
 		} while (--size);
 	}
@@ -180,8 +180,8 @@ static char *crlf_to_worktree(const char *path, const char *src, unsigned long *
 	}
 
 	/*
-	 * Ok, allocate a new buffer, fill it in, and return true
-	 * to let the caller know that we switched buffers on it.
+	 * Ok, allocate a new buffer, fill it in, and return it
+	 * to let the caller know that we switched buffers.
 	 */
 	nsize = size + stats.lf - stats.crlf;
 	buffer = xmalloc(nsize);
