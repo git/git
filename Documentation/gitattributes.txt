@@ -7,7 +7,7 @@ gitattributes - defining attributes per path
 
 SYNOPSIS
 --------
-.gitattributes
+$GIT_DIR/info/attributes, gitattributes
 
 
 DESCRIPTION
