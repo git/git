@@ -98,12 +98,8 @@ struct commit *lookup_commit_reference(const unsigned char *sha1)
 struct commit *lookup_commit(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
-	if (!obj) {
-		struct commit *ret = alloc_commit_node();
-		created_object(sha1, &ret->object);
-		ret->object.type = OBJ_COMMIT;
-		return ret;
-	}
+	if (!obj)
+		return create_object(sha1, OBJ_COMMIT, alloc_commit_node());
 	if (!obj->type)
 		obj->type = OBJ_COMMIT;
 	return check_commit(obj, sha1, 0);

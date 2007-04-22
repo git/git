@@ -18,26 +18,38 @@
 
 #define BLOCKING 1024
 
-#define DEFINE_ALLOCATOR(name)					\
+#define DEFINE_ALLOCATOR(name, type)				\
 static unsigned int name##_allocs;				\
-struct name *alloc_##name##_node(void)				\
+void *alloc_##name##_node(void)					\
 {								\
 	static int nr;						\
-	static struct name *block;				\
+	static type *block;					\
+	void *ret;						\
 								\
 	if (!nr) {						\
 		nr = BLOCKING;					\
-		block = xcalloc(BLOCKING, sizeof(struct name));	\
+		block = xmalloc(BLOCKING * sizeof(type));	\
 	}							\
 	nr--;							\
 	name##_allocs++;					\
-	return block++;						\
+	ret = block++;						\
+	memset(ret, 0, sizeof(type));				\
+	return ret;						\
 }
 
-DEFINE_ALLOCATOR(blob)
-DEFINE_ALLOCATOR(tree)
-DEFINE_ALLOCATOR(commit)
-DEFINE_ALLOCATOR(tag)
+union any_object {
+	struct object object;
+	struct blob blob;
+	struct tree tree;
+	struct commit commit;
+	struct tag tag;
+};
+
+DEFINE_ALLOCATOR(blob, struct blob)
+DEFINE_ALLOCATOR(tree, struct tree)
+DEFINE_ALLOCATOR(commit, struct commit)
+DEFINE_ALLOCATOR(tag, struct tag)
+DEFINE_ALLOCATOR(object, union any_object)
 
 #ifdef NO_C99_FORMAT
 #define SZ_FMT "%u"

@@ -127,12 +127,8 @@ int read_tree(struct tree *tree, int stage, const char **match)
 struct tree *lookup_tree(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
-	if (!obj) {
-		struct tree *ret = alloc_tree_node();
-		created_object(sha1, &ret->object);
-		ret->object.type = OBJ_TREE;
-		return ret;
-	}
+	if (!obj)
+		return create_object(sha1, OBJ_TREE, alloc_tree_node());
 	if (!obj->type)
 		obj->type = OBJ_TREE;
 	if (obj->type != OBJ_TREE) {

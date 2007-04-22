@@ -499,14 +499,11 @@ int decode_85(char *dst, const char *line, int linelen);
 void encode_85(char *buf, const unsigned char *data, int bytes);
 
 /* alloc.c */
-struct blob;
-struct tree;
-struct commit;
-struct tag;
-extern struct blob *alloc_blob_node(void);
-extern struct tree *alloc_tree_node(void);
-extern struct commit *alloc_commit_node(void);
-extern struct tag *alloc_tag_node(void);
+extern void *alloc_blob_node(void);
+extern void *alloc_tree_node(void);
+extern void *alloc_commit_node(void);
+extern void *alloc_tag_node(void);
+extern void *alloc_object_node(void);
 extern void alloc_report(void);
 
 /* trace.c */
