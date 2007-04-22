@@ -12,7 +12,7 @@ test_expect_success \
      for i in a b c
      do
          echo $i >$i &&
-         dd if=/dev/urandom bs=32k count=1 >>$i &&
+         test-genrandom "$i" 32768 >>$i &&
          git-update-index --add $i || return 1
      done &&
      echo d >d && cat c >>d && git-update-index --add d &&

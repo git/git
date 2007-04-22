@@ -13,7 +13,8 @@ static const char unpack_usage[] = "git-unpack-objects [-n] [-q] [-r] < pack-fil
 
 /* We always read in 4kB chunks. */
 static unsigned char buffer[4096];
-static unsigned long offset, len, consumed_bytes;
+static unsigned int offset, len;
+static off_t consumed_bytes;
 static SHA_CTX ctx;
 
 /*
@@ -49,6 +50,10 @@ static void use(int bytes)
 		die("used more bytes than were available");
 	len -= bytes;
 	offset += bytes;
+
+	/* make sure off_t is sufficiently large not to wrap */
+	if (consumed_bytes > consumed_bytes + bytes)
+		die("pack too large for current definition of off_t");
 	consumed_bytes += bytes;
 }
 
@@ -88,17 +93,17 @@ static void *get_data(unsigned long size)
 
 struct delta_info {
 	unsigned char base_sha1[20];
-	unsigned long base_offset;
+	unsigned nr;
+	off_t base_offset;
 	unsigned long size;
 	void *delta;
-	unsigned nr;
 	struct delta_info *next;
 };
 
 static struct delta_info *delta_list;
 
 static void add_delta_to_list(unsigned nr, unsigned const char *base_sha1,
-			      unsigned long base_offset,
+			      off_t base_offset,
 			      void *delta, unsigned long size)
 {
 	struct delta_info *info = xmalloc(sizeof(*info));
@@ -113,7 +118,7 @@ static void add_delta_to_list(unsigned nr, unsigned const char *base_sha1,
 }
 
 struct obj_info {
-	unsigned long offset;
+	off_t offset;
 	unsigned char sha1[20];
 };
 
@@ -200,7 +205,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	} else {
 		unsigned base_found = 0;
 		unsigned char *pack, c;
-		unsigned long base_offset;
+		off_t base_offset;
 		unsigned lo, mid, hi;
 
 		pack = fill(1);
@@ -209,7 +214,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 		base_offset = c & 127;
 		while (c & 128) {
 			base_offset += 1;
-			if (!base_offset || base_offset & ~(~0UL >> 7))
+			if (!base_offset || MSB(base_offset, 7))
 				die("offset value overflow for delta base object");
 			pack = fill(1);
 			c = *pack;

@@ -376,11 +376,12 @@ struct pack_window {
 extern struct packed_git {
 	struct packed_git *next;
 	struct pack_window *windows;
-	const void *index_data;
-	off_t index_size;
 	off_t pack_size;
-	time_t mtime;
+	const void *index_data;
+	size_t index_size;
+	uint32_t num_objects;
 	int index_version;
+	time_t mtime;
 	int pack_fd;
 	int pack_local;
 	unsigned char sha1[20];
@@ -431,11 +432,11 @@ extern void pack_report(void);
 extern unsigned char* use_pack(struct packed_git *, struct pack_window **, off_t, unsigned int *);
 extern void unuse_pack(struct pack_window **);
 extern struct packed_git *add_packed_git(const char *, int, int);
-extern uint32_t num_packed_objects(const struct packed_git *p);
 extern const unsigned char *nth_packed_object_sha1(const struct packed_git *, uint32_t);
 extern off_t find_pack_entry_one(const unsigned char *, struct packed_git *);
 extern void *unpack_entry(struct packed_git *, off_t, enum object_type *, unsigned long *);
 extern unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
+extern unsigned long get_size_from_delta(struct packed_git *, struct pack_window **, off_t);
 extern const char *packed_object_info_detail(struct packed_git *, off_t, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
 
 /* Dumb servers support */

@@ -12,9 +12,10 @@ static const char index_pack_usage[] =
 
 struct object_entry
 {
-	unsigned long offset;
+	off_t offset;
 	unsigned long size;
 	unsigned int hdr_size;
+	uint32_t crc32;
 	enum object_type type;
 	enum object_type real_type;
 	unsigned char sha1[20];
@@ -22,7 +23,7 @@ struct object_entry
 
 union delta_base {
 	unsigned char sha1[20];
-	unsigned long offset;
+	off_t offset;
 };
 
 /*
@@ -83,8 +84,10 @@ static unsigned display_progress(unsigned n, unsigned total, unsigned last_pc)
 
 /* We always read in 4kB chunks. */
 static unsigned char input_buffer[4096];
-static unsigned long input_offset, input_len, consumed_bytes;
+static unsigned int input_offset, input_len;
+static off_t consumed_bytes;
 static SHA_CTX input_ctx;
+static uint32_t input_crc32;
 static int input_fd, output_fd, pack_fd;
 
 /* Discard current buffer used content. */
@@ -127,8 +130,13 @@ static void use(int bytes)
 {
 	if (bytes > input_len)
 		die("used more bytes than were available");
+	input_crc32 = crc32(input_crc32, input_buffer + input_offset, bytes);
 	input_len -= bytes;
 	input_offset += bytes;
+
+	/* make sure off_t is sufficiently large not to wrap */
+	if (consumed_bytes > consumed_bytes + bytes)
+		die("pack too large for current definition of off_t");
 	consumed_bytes += bytes;
 }
 
@@ -216,10 +224,13 @@ static void *unpack_entry_data(unsigned long offset, unsigned long size)
 static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_base)
 {
 	unsigned char *p, c;
-	unsigned long size, base_offset;
+	unsigned long size;
+	off_t base_offset;
 	unsigned shift;
+	void *data;
 
 	obj->offset = consumed_bytes;
+	input_crc32 = crc32(0, Z_NULL, 0);
 
 	p = fill(1);
 	c = *p;
@@ -249,7 +260,7 @@ static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_
 		base_offset = c & 127;
 		while (c & 128) {
 			base_offset += 1;
-			if (!base_offset || base_offset & ~(~0UL >> 7))
+			if (!base_offset || MSB(base_offset, 7))
 				bad_object(obj->offset, "offset value overflow for delta base object");
 			p = fill(1);
 			c = *p;
@@ -270,7 +281,9 @@ static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_
 	}
 	obj->hdr_size = consumed_bytes - obj->offset;
 
-	return unpack_entry_data(obj->offset, obj->size);
+	data = unpack_entry_data(obj->offset, obj->size);
+	obj->crc32 = input_crc32;
+	return data;
 }
 
 static void *get_data_from_pack(struct object_entry *obj)
@@ -515,7 +528,7 @@ static void parse_pack_objects(unsigned char *sha1)
 		fputc('\n', stderr);
 }
 
-static int write_compressed(int fd, void *in, unsigned int size)
+static int write_compressed(int fd, void *in, unsigned int size, uint32_t *obj_crc)
 {
 	z_stream stream;
 	unsigned long maxsize;
@@ -536,6 +549,7 @@ static int write_compressed(int fd, void *in, unsigned int size)
 
 	size = stream.total_out;
 	write_or_die(fd, out, size);
+	*obj_crc = crc32(*obj_crc, out, size);
 	free(out);
 	return size;
 }
@@ -556,8 +570,10 @@ static void append_obj_to_pack(const unsigned char *sha1, void *buf,
 	}
 	header[n++] = c;
 	write_or_die(output_fd, header, n);
+	obj[0].crc32 = crc32(0, Z_NULL, 0);
+	obj[0].crc32 = crc32(obj[0].crc32, header, n);
 	obj[1].offset = obj[0].offset + n;
-	obj[1].offset += write_compressed(output_fd, buf, size);
+	obj[1].offset += write_compressed(output_fd, buf, size, &obj[0].crc32);
 	hashcpy(obj->sha1, sha1);
 }
 
@@ -655,6 +671,9 @@ static void readjust_pack_header_and_sha1(unsigned char *sha1)
 	write_or_die(output_fd, sha1, 20);
 }
 
+static uint32_t index_default_version = 1;
+static uint32_t index_off32_limit = 0x7fffffff;
+
 static int sha1_compare(const void *_a, const void *_b)
 {
 	struct object_entry *a = *(struct object_entry **)_a;
@@ -670,9 +689,10 @@ static const char *write_index_file(const char *index_name, unsigned char *sha1)
 {
 	struct sha1file *f;
 	struct object_entry **sorted_by_sha, **list, **last;
-	unsigned int array[256];
+	uint32_t array[256];
 	int i, fd;
 	SHA_CTX ctx;
+	uint32_t index_version;
 
 	if (nr_objects) {
 		sorted_by_sha =
@@ -683,7 +703,6 @@ static const char *write_index_file(const char *index_name, unsigned char *sha1)
 			sorted_by_sha[i] = &objects[i];
 		qsort(sorted_by_sha, nr_objects, sizeof(sorted_by_sha[0]),
 		      sha1_compare);
-
 	}
 	else
 		sorted_by_sha = list = last = NULL;
@@ -702,6 +721,17 @@ static const char *write_index_file(const char *index_name, unsigned char *sha1)
 		die("unable to create %s: %s", index_name, strerror(errno));
 	f = sha1fd(fd, index_name);
 
+	/* if last object's offset is >= 2^31 we should use index V2 */
+	index_version = (objects[nr_objects-1].offset >> 31) ? 2 : index_default_version;
+
+	/* index versions 2 and above need a header */
+	if (index_version >= 2) {
+		struct pack_idx_header hdr;
+		hdr.idx_signature = htonl(PACK_IDX_SIGNATURE);
+		hdr.idx_version = htonl(index_version);
+		sha1write(f, &hdr, sizeof(hdr));
+	}
+
 	/*
 	 * Write the first-level table (the list is sorted,
 	 * but we use a 256-entry lookup to be able to avoid
@@ -718,24 +748,61 @@ static const char *write_index_file(const char *index_name, unsigned char *sha1)
 		array[i] = htonl(next - sorted_by_sha);
 		list = next;
 	}
-	sha1write(f, array, 256 * sizeof(int));
+	sha1write(f, array, 256 * 4);
 
-	/* recompute the SHA1 hash of sorted object names.
-	 * currently pack-objects does not do this, but that
-	 * can be fixed.
-	 */
+	/* compute the SHA1 hash of sorted object names. */
 	SHA1_Init(&ctx);
+
 	/*
 	 * Write the actual SHA1 entries..
 	 */
 	list = sorted_by_sha;
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = *list++;
-		unsigned int offset = htonl(obj->offset);
-		sha1write(f, &offset, 4);
+		if (index_version < 2) {
+			uint32_t offset = htonl(obj->offset);
+			sha1write(f, &offset, 4);
+		}
 		sha1write(f, obj->sha1, 20);
 		SHA1_Update(&ctx, obj->sha1, 20);
 	}
+
+	if (index_version >= 2) {
+		unsigned int nr_large_offset = 0;
+
+		/* write the crc32 table */
+		list = sorted_by_sha;
+		for (i = 0; i < nr_objects; i++) {
+			struct object_entry *obj = *list++;
+			uint32_t crc32_val = htonl(obj->crc32);
+			sha1write(f, &crc32_val, 4);
+		}
+
+		/* write the 32-bit offset table */
+		list = sorted_by_sha;
+		for (i = 0; i < nr_objects; i++) {
+			struct object_entry *obj = *list++;
+			uint32_t offset = (obj->offset <= index_off32_limit) ?
+				obj->offset : (0x80000000 | nr_large_offset++);
+			offset = htonl(offset);
+			sha1write(f, &offset, 4);
+		}
+
+		/* write the large offset table */
+		list = sorted_by_sha;
+		while (nr_large_offset) {
+			struct object_entry *obj = *list++;
+			uint64_t offset = obj->offset;
+			if (offset > index_off32_limit) {
+				uint32_t split[2];
+				split[0]	= htonl(offset >> 32);
+				split[1] = htonl(offset & 0xffffffff);
+				sha1write(f, split, 8);
+				nr_large_offset--;
+			}
+		}
+	}
+
 	sha1write(f, sha1, 20);
 	sha1close(f, NULL, 1);
 	free(sorted_by_sha);
@@ -865,6 +932,15 @@ int main(int argc, char **argv)
 				if (index_name || (i+1) >= argc)
 					usage(index_pack_usage);
 				index_name = argv[++i];
+			} else if (!prefixcmp(arg, "--index-version=")) {
+				char *c;
+				index_default_version = strtoul(arg + 16, &c, 10);
+				if (index_default_version > 2)
+					die("bad %s", arg);
+				if (*c == ',')
+					index_off32_limit = strtoul(c+1, &c, 0);
+				if (*c || index_off32_limit & 0x80000000)
+					die("bad %s", arg);
 			} else
 				usage(index_pack_usage);
 			continue;

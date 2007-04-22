@@ -149,6 +149,7 @@ test-chmtime
 test-date
 test-delta
 test-dump-cache-tree
+test-genrandom
 test-match-trees
 common-cmds.h
 *.tar.gz
