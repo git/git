@@ -24,6 +24,9 @@
 #define DTYPE(de)	DT_UNKNOWN
 #endif
 
+/* unknown mode (impossible combination S_IFIFO|S_IFCHR) */
+#define S_IFINVALID     0030000
+
 /*
  * A "directory link" is a link to another git directory.
  *
