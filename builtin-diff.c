@@ -32,7 +32,7 @@ static void stuff_change(struct diff_options *opt,
 	struct diff_filespec *one, *two;
 
 	if (!is_null_sha1(old_sha1) && !is_null_sha1(new_sha1) &&
-	    !hashcmp(old_sha1, new_sha1))
+	    !hashcmp(old_sha1, new_sha1) && (old_mode == new_mode))
 		return;
 
 	if (opt->reverse_diff) {
