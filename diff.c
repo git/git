@@ -52,6 +52,49 @@ static int parse_diff_color_slot(const char *var, int ofs)
 	die("bad config variable '%s'", var);
 }
 
+static struct ll_diff_driver {
+	const char *name;
+	struct ll_diff_driver *next;
+	char *cmd;
+} *user_diff, **user_diff_tail;
+
+/*
+ * Currently there is only "diff.<drivername>.command" variable;
+ * because there are "diff.color.<slot>" variables, we are parsing
+ * this in a bit convoluted way to allow low level diff driver
+ * called "color".
+ */
+static int parse_lldiff_command(const char *var, const char *ep, const char *value)
+{
+	const char *name;
+	int namelen;
+	struct ll_diff_driver *drv;
+
+	name = var + 5;
+	namelen = ep - name;
+	for (drv = user_diff; drv; drv = drv->next)
+		if (!strncmp(drv->name, name, namelen) && !drv->name[namelen])
+			break;
+	if (!drv) {
+		char *namebuf;
+		drv = xcalloc(1, sizeof(struct ll_diff_driver));
+		namebuf = xmalloc(namelen + 1);
+		memcpy(namebuf, name, namelen);
+		namebuf[namelen] = 0;
+		drv->name = namebuf;
+		drv->next = NULL;
+		if (!user_diff_tail)
+			user_diff_tail = &user_diff;
+		*user_diff_tail = drv;
+		user_diff_tail = &(drv->next);
+	}
+
+	if (!value)
+		return error("%s: lacks value", var);
+	drv->cmd = strdup(value);
+	return 0;
+}
+
 /*
  * These are to give UI layer defaults.
  * The core-level commands such as git-diff-files should
@@ -78,11 +121,18 @@ int git_diff_ui_config(const char *var, const char *value)
 			diff_detect_rename_default = DIFF_DETECT_RENAME;
 		return 0;
 	}
+	if (!prefixcmp(var, "diff.")) {
+		const char *ep = strrchr(var, '.');
+
+		if (ep != var + 4 && !strcmp(ep, ".command"))
+			return parse_lldiff_command(var, ep, value);
+	}
 	if (!prefixcmp(var, "diff.color.") || !prefixcmp(var, "color.diff.")) {
 		int slot = parse_diff_color_slot(var, 11);
 		color_parse(value, var, diff_colors[slot]);
 		return 0;
 	}
+
 	return git_default_config(var, value);
 }
 
@@ -1074,11 +1124,6 @@ static int file_is_binary(struct diff_filespec *one)
 			return 0;
 		else if (ATTR_FALSE(value))
 			return 1;
-		else if (ATTR_UNSET(value))
-			;
-		else
-			die("unknown value %s given to 'diff' attribute",
-			    value);
 	}
 
 	if (!one->data) {
@@ -1752,6 +1797,30 @@ static void run_external_diff(const char *pgm,
 	}
 }
 
+static const char *external_diff_attr(const char *name)
+{
+	struct git_attr_check attr_diff_check;
+
+	setup_diff_attr_check(&attr_diff_check);
+	if (!git_checkattr(name, 1, &attr_diff_check)) {
+		const char *value = attr_diff_check.value;
+		if (!ATTR_TRUE(value) &&
+		    !ATTR_FALSE(value) &&
+		    !ATTR_UNSET(value)) {
+			struct ll_diff_driver *drv;
+
+			if (!user_diff_tail) {
+				user_diff_tail = &user_diff;
+				git_config(git_diff_ui_config);
+			}
+			for (drv = user_diff; drv; drv = drv->next)
+				if (!strcmp(drv->name, value))
+					return drv->cmd;
+		}
+	}
+	return NULL;
+}
+
 static void run_diff_cmd(const char *pgm,
 			 const char *name,
 			 const char *other,
@@ -1761,6 +1830,14 @@ static void run_diff_cmd(const char *pgm,
 			 struct diff_options *o,
 			 int complete_rewrite)
 {
+	if (!o->allow_external)
+		pgm = NULL;
+	else {
+		const char *cmd = external_diff_attr(name);
+		if (cmd)
+			pgm = cmd;
+	}
+
 	if (pgm) {
 		run_external_diff(pgm, name, other, one, two, xfrm_msg,
 				  complete_rewrite);

@@ -943,6 +943,7 @@ void diff_tree_combined(const unsigned char *sha1,
 	diffopts = *opt;
 	diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diffopts.recursive = 1;
+	diffopts.allow_external = 0;
 
 	show_log_first = !!rev->loginfo && !rev->no_commit_id;
 	needsep = 0;
