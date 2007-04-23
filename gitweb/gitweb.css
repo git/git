@@ -387,6 +387,10 @@ div.diff.incomplete {
 	color: #cccccc;
 }
 
+div.diff.nodifferences {
+	font-weight: bold;
+	color: #600000;
+}
 
 div.index_include {
 	border: solid #d9d8d1;
