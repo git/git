@@ -151,8 +151,34 @@ Unspecified::
 	text, it is treated as text.  Otherwise it would
 	generate `Binary files differ`.
 
-Any other value set to `diff` attribute is ignored and git acts
-as if the attribute is left unspecified.
+String::
+
+	Diff is shown using the specified custom diff driver.
+	The driver program is given its input using the same
+	calling convention as used for GIT_EXTERNAL_DIFF
+	program.
+
+
+Defining a custom diff driver
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The definition of a diff driver is done in `gitconfig`, not
+`gitattributes` file, so strictly speaking this manual page is a
+wrong place to talk about it.  However...
+
+To define a custom diff driver `jcdiff`, add a section to your
+`$GIT_DIR/config` file (or `$HOME/.gitconfig` file) like this:
+
+----------------------------------------------------------------
+[diff "jcdiff"]
+	command = j-c-diff
+----------------------------------------------------------------
+
+When git needs to show you a diff for the path with `diff`
+attribute set to `jcdiff`, it calls the command you specified
+with the above configuration, i.e. `j-c-diff`, with 7
+parameters, just like `GIT_EXTERNAL_DIFF` program is called.
+See gitlink:git[7] for details.
 
 
 Performing a three-way merge
@@ -183,7 +209,7 @@ Unspecified::
 	different merge driver to be used for paths to which the
 	`merge` attribute is unspecified.
 
-Any other string value::
+String::
 
 	3-way merge is performed using the specified custom
 	merge driver.  The built-in 3-way merge driver can be
