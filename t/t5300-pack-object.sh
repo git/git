@@ -152,7 +152,7 @@ test_expect_success \
     'use packed deltified (REF_DELTA) objects' \
     'GIT_OBJECT_DIRECTORY=.git2/objects &&
      export GIT_OBJECT_DIRECTORY &&
-     rm .git2/objects/pack/test-* &&
+     rm -f .git2/objects/pack/test-* &&
      cp test-2-${packname_2}.pack test-2-${packname_2}.idx .git2/objects/pack && {
 	 git-diff-tree --root -p $commit &&
 	 while read object
@@ -167,7 +167,7 @@ test_expect_success \
     'use packed deltified (OFS_DELTA) objects' \
     'GIT_OBJECT_DIRECTORY=.git2/objects &&
      export GIT_OBJECT_DIRECTORY &&
-     rm .git2/objects/pack/test-* &&
+     rm -f .git2/objects/pack/test-* &&
      cp test-3-${packname_3}.pack test-3-${packname_3}.idx .git2/objects/pack && {
 	 git-diff-tree --root -p $commit &&
 	 while read object
@@ -188,15 +188,15 @@ test_expect_success \
 
 test_expect_success \
     'corrupt a pack and see if verify catches' \
-    'cp test-1-${packname_1}.idx test-3.idx &&
-     cp test-2-${packname_2}.pack test-3.pack &&
+    'cat test-1-${packname_1}.idx >test-3.idx &&
+     cat test-2-${packname_2}.pack >test-3.pack &&
      if git-verify-pack test-3.idx
      then false
      else :;
      fi &&
 
      : PACK_SIGNATURE &&
-     cp test-1-${packname_1}.pack test-3.pack &&
+     cat test-1-${packname_1}.pack >test-3.pack &&
      dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=2 &&
      if git-verify-pack test-3.idx
      then false
@@ -204,7 +204,7 @@ test_expect_success \
      fi &&
 
      : PACK_VERSION &&
-     cp test-1-${packname_1}.pack test-3.pack &&
+     cat test-1-${packname_1}.pack >test-3.pack &&
      dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=7 &&
      if git-verify-pack test-3.idx
      then false
@@ -212,7 +212,7 @@ test_expect_success \
      fi &&
 
      : TYPE/SIZE byte of the first packed object data &&
-     cp test-1-${packname_1}.pack test-3.pack &&
+     cat test-1-${packname_1}.pack >test-3.pack &&
      dd if=/dev/zero of=test-3.pack count=1 bs=1 conv=notrunc seek=12 &&
      if git-verify-pack test-3.idx
      then false
@@ -222,7 +222,7 @@ test_expect_success \
      : sum of the index file itself &&
      l=`wc -c <test-3.idx` &&
      l=`expr $l - 20` &&
-     cp test-1-${packname_1}.pack test-3.pack &&
+     cat test-1-${packname_1}.pack >test-3.pack &&
      dd if=/dev/zero of=test-3.idx count=20 bs=1 conv=notrunc seek=$l &&
      if git-verify-pack test-3.pack
      then false
@@ -233,21 +233,21 @@ test_expect_success \
 
 test_expect_success \
     'build pack index for an existing pack' \
-    'cp test-1-${packname_1}.pack test-3.pack &&
+    'cat test-1-${packname_1}.pack >test-3.pack &&
      git-index-pack -o tmp.idx test-3.pack &&
      cmp tmp.idx test-1-${packname_1}.idx &&
 
      git-index-pack test-3.pack &&
      cmp test-3.idx test-1-${packname_1}.idx &&
 
-     cp test-2-${packname_2}.pack test-3.pack &&
+     cat test-2-${packname_2}.pack >test-3.pack &&
      git-index-pack -o tmp.idx test-2-${packname_2}.pack &&
      cmp tmp.idx test-2-${packname_2}.idx &&
 
      git-index-pack test-3.pack &&
      cmp test-3.idx test-2-${packname_2}.idx &&
 
-     cp test-3-${packname_3}.pack test-3.pack &&
+     cat test-3-${packname_3}.pack >test-3.pack &&
      git-index-pack -o tmp.idx test-3-${packname_3}.pack &&
      cmp tmp.idx test-3-${packname_3}.idx &&
 
