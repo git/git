@@ -643,11 +643,17 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1)
  */
 int get_sha1(const char *name, unsigned char *sha1)
 {
-	int ret, bracket_depth;
 	unsigned unused;
+	return get_sha1_with_mode(name, sha1, &unused);
+}
+
+int get_sha1_with_mode(const char *name, unsigned char *sha1, unsigned *mode)
+{
+	int ret, bracket_depth;
 	int namelen = strlen(name);
 	const char *cp;
 
+	*mode = S_IFINVALID;
 	prepare_alt_odb();
 	ret = get_sha1_1(name, namelen, sha1);
 	if (!ret)
@@ -685,6 +691,7 @@ int get_sha1(const char *name, unsigned char *sha1)
 				break;
 			if (ce_stage(ce) == stage) {
 				hashcpy(sha1, ce->sha1);
+				*mode = ntohl(ce->ce_mode);
 				return 0;
 			}
 			pos++;
@@ -703,7 +710,7 @@ int get_sha1(const char *name, unsigned char *sha1)
 		unsigned char tree_sha1[20];
 		if (!get_sha1_1(name, cp-name, tree_sha1))
 			return get_tree_entry(tree_sha1, cp+1, sha1,
-					      &unused);
+					      mode);
 	}
 	return ret;
 }
