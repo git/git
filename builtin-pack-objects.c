@@ -1790,7 +1790,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		mode_t mode = umask(0);
 
 		umask(mode);
-		mode = 0666 & ~mode;
+		mode = 0444 & ~mode;
 
 		write_index_file(last_obj_offset, object_list_sha1);
 		snprintf(tmpname, sizeof(tmpname), "%s-%s.pack",
