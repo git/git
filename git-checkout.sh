@@ -17,6 +17,7 @@ newbranch=
 newbranch_log=
 merge=
 quiet=
+v=-v
 LF='
 '
 while [ "$#" != "0" ]; do
@@ -47,6 +48,7 @@ while [ "$#" != "0" ]; do
 		;;
 	"-q")
 		quiet=1
+		v=
 		;;
 	--)
 		break
@@ -197,7 +199,7 @@ fi
 
 if [ "$force" ]
 then
-    git-read-tree --reset -u $new
+    git-read-tree $v --reset -u $new
 else
     git-update-index --refresh >/dev/null
     merge_error=$(git-read-tree -m -u --exclude-per-directory=.gitignore $old $new 2>&1) || (
@@ -210,7 +212,7 @@ else
 	# Match the index to the working tree, and do a three-way.
     	git diff-files --name-only | git update-index --remove --stdin &&
 	work=`git write-tree` &&
-	git read-tree --reset -u $new || exit
+	git read-tree $v --reset -u $new || exit
 
 	eval GITHEAD_$new='${new_name:-${branch:-$new}}' &&
 	eval GITHEAD_$work=local &&
@@ -221,7 +223,7 @@ else
 	# this is not a real merge before committing, but just carrying
 	# the working tree changes along.
 	unmerged=`git ls-files -u`
-	git read-tree --reset $new
+	git read-tree $v --reset $new
 	case "$unmerged" in
 	'')	;;
 	*)
