@@ -571,9 +571,13 @@ int cmd_fetch__tool(int argc, const char **argv, const char *prefix)
 		return parse_reflist(reflist);
 	}
 	if (!strcmp("pick-rref", argv[1])) {
+		const char *ls_remote_result;
 		if (argc != 4)
 			return error("pick-rref takes 2 args");
-		return pick_rref(sopt, argv[2], argv[3]);
+		ls_remote_result = argv[3];
+		if (!strcmp(ls_remote_result, "-"))
+			ls_remote_result = get_stdin();
+		return pick_rref(sopt, argv[2], ls_remote_result);
 	}
 	if (!strcmp("expand-refs-wildcard", argv[1])) {
 		const char *reflist;

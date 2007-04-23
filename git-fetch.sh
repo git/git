@@ -189,8 +189,8 @@ fetch_all_at_once () {
 			# See if all of what we are going to fetch are
 			# connected to our repository's tips, in which
 			# case we do not have to do any fetch.
-			theirs=$(git-fetch--tool -s pick-rref \
-					"$rref" "$ls_remote_result") &&
+			theirs=$(echo "$ls_remote_result" | \
+				git-fetch--tool -s pick-rref "$rref" "-") &&
 
 			# This will barf when $theirs reach an object that
 			# we do not have in our repository.  Otherwise,
@@ -198,7 +198,8 @@ fetch_all_at_once () {
 			git-rev-list --objects $theirs --not --all \
 				>/dev/null 2>/dev/null
 		then
-			git-fetch--tool pick-rref "$rref" "$ls_remote_result"
+			echo "$ls_remote_result" | \
+				git-fetch--tool pick-rref "$rref" "-"
 		else
 			git-fetch-pack --thin $exec $keep $shallow_depth \
 				$quiet $no_progress "$remote" $rref ||
@@ -263,8 +264,8 @@ fetch_per_ref () {
 	  fi
 
 	  # Find $remote_name from ls-remote output.
-	  head=$(git-fetch--tool -s pick-rref \
-			"$remote_name" "$ls_remote_result")
+	  head=$(echo "$ls_remote_result" | \
+		git-fetch--tool -s pick-rref "$remote_name" "-")
 	  expr "z$head" : "z$_x40\$" >/dev/null ||
 		die "No such ref $remote_name at $remote"
 	  echo >&2 "Fetching $remote_name from $remote using $proto"
