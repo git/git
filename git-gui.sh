@@ -1067,8 +1067,8 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 					set enc [string tolower [string range $line 9 end]]
 				}
 			}
-			fconfigure $fd -encoding $enc
-			set msg [string trim [read $fd]]
+			set msg [encoding convertfrom $enc [read $fd]]
+			set msg [string trim $msg]
 			close $fd
 		} err]} {
 		error_popup "Error loading commit data for amend:\n\n$err"
@@ -1291,8 +1291,8 @@ A rescan will be automatically started now.
 	if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
 		set enc utf-8
 	}
-	fconfigure $msg_wt -encoding $enc -translation binary
-	puts -nonewline $msg_wt $msg
+	fconfigure $msg_wt -encoding binary -translation binary
+	puts -nonewline $msg_wt [encoding convertto $enc $msg]
 	close $msg_wt
 
 	# -- Create the commit.
@@ -3663,26 +3663,6 @@ proc blame_showcommit {w w_cmit w_line w_file lno} {
 			incr i
 		}
 
-		if {[catch {set msg $blame_data($w,$cmit,message)}]} {
-			set msg {}
-			catch {
-				set fd [open "| git cat-file commit $cmit" r]
-				fconfigure $fd -encoding binary -translation lf
-				if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
-					set enc utf-8
-				}
-				while {[gets $fd line] > 0} {
-					if {[string match {encoding *} $line]} {
-						set enc [string tolower [string range $line 9 end]]
-					}
-				}
-				fconfigure $fd -encoding $enc
-				set msg [string trim [read $fd]]
-				close $fd
-			}
-			set blame_data($w,$cmit,message) $msg
-		}
-
 		set author_name {}
 		set author_email {}
 		set author_time {}
@@ -3696,6 +3676,32 @@ proc blame_showcommit {w w_cmit w_line w_file lno} {
 		catch {set committer_name $blame_data($w,$cmit,committer)}
 		catch {set committer_email $blame_data($w,$cmit,committer-mail)}
 		catch {set committer_time [clock format $blame_data($w,$cmit,committer-time)]}
+
+		if {[catch {set msg $blame_data($w,$cmit,message)}]} {
+			set msg {}
+			catch {
+				set fd [open "| git cat-file commit $cmit" r]
+				fconfigure $fd -encoding binary -translation lf
+				if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
+					set enc utf-8
+				}
+				while {[gets $fd line] > 0} {
+					if {[string match {encoding *} $line]} {
+						set enc [string tolower [string range $line 9 end]]
+					}
+				}
+				set msg [encoding convertfrom $enc [read $fd]]
+				set msg [string trim $msg]
+				close $fd
+
+				set author_name [encoding convertfrom $enc $author_name]
+				set committer_name [encoding convertfrom $enc $committer_name]
+
+				set blame_data($w,$cmit,author) $author_name
+				set blame_data($w,$cmit,committer) $committer_name
+			}
+			set blame_data($w,$cmit,message) $msg
+		}
 
 		$w_cmit insert end "commit $cmit\n"
 		$w_cmit insert end "Author: $author_name $author_email $author_time\n"
