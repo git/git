@@ -49,10 +49,12 @@ Set to a value::
 Unspecified::
 
 	No glob pattern matches the path, and nothing says if
-	the path has or does not have the attribute.
+	the path has or does not have the attribute, the
+	attribute for the path is said to be Unspecified.
 
 When more than one glob pattern matches the path, a later line
-overrides an earlier line.
+overrides an earlier line.  This overriding is done per
+attribute.
 
 When deciding what attributes are assigned to a path, git
 consults `$GIT_DIR/info/attributes` file (which has the highest
@@ -215,7 +217,7 @@ String::
 	merge driver.  The built-in 3-way merge driver can be
 	explicitly specified by asking for "text" driver; the
 	built-in "take the current branch" driver can be
-	requested by "binary".
+	requested with "binary".
 
 
 Defining a custom merge driver
