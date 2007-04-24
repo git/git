@@ -90,7 +90,7 @@ after a feature release are applied to this branch and
 maintenance releases are cut from it.  The maintenance releases
 are named with four dotted decimal, named after the feature
 release they are updates to; the last such release was v1.5.0.7.
-New features never goes to this branch.  This branch is also
+New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward.
 
 A trivial and safe enhancement goes directly on top of "master".
