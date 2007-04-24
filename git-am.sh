@@ -291,7 +291,7 @@ do
 			<"$dotest/$msgnum" >"$dotest/info" ||
 			stop_here $this
 		test -s $dotest/patch || {
-			echo "Patch is empty.  Was is split wrong?"
+			echo "Patch is empty.  Was it split wrong?"
 			stop_here $this
 		}
 		git-stripspace < "$dotest/msg" > "$dotest/msg-clean"
