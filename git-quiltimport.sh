@@ -74,7 +74,7 @@ for patch_name in $(cat "$QUILT_PATCHES/series" | grep -v '^#'); do
 	echo $patch_name
 	(cat $QUILT_PATCHES/$patch_name | git-mailinfo "$tmp_msg" "$tmp_patch" > "$tmp_info") || exit 3
 	test -s .dotest/patch || {
-		echo "Patch is empty.  Was is split wrong?"
+		echo "Patch is empty.  Was it split wrong?"
 		exit 1
 	}
 

@@ -78,7 +78,7 @@ do
 	    git-mailinfo $keep_subject $utf8 \
 		.dotest/msg .dotest/patch <$i >.dotest/info || exit 1
 	    test -s .dotest/patch || {
-		echo "Patch is empty.  Was is split wrong?"
+		echo "Patch is empty.  Was it split wrong?"
 		exit 1
 	    }
 	    git-stripspace < .dotest/msg > .dotest/msg-clean
