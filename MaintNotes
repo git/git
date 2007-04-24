@@ -37,20 +37,13 @@ My public git.git repository is at:
 
         git://git.kernel.org/pub/scm/git/git.git/
 
-This is mirrored at Pasky's site at
-
-        git://repo.or.cz/git.git/
-
-but the first has a few hours mirroring delay after I publish
-updates, and the latter, being a mirror of former, lags behind
-it further.  Immediately after I publish to the primary
-repository at kernel.org, I also push into an alternate here:
+Immediately after I publish to the primary repository at kernel.org, I
+also push into an alternate here:
 
         git://repo.or.cz/alt-git.git/
 
-Impatient people would have better luck with the last one (but
-the last repository does not have "html", "man" and "todo"
-branches, described next).
+Impatient people would have better luck with the latter one, but it
+does not have "html" and "man" branches (described below).
 
 There are three branches in git.git repository that are not
 about the source tree of git: "todo", "html" and "man".  The
