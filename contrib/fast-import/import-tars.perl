@@ -64,7 +64,12 @@ foreach my $tar_file (@ARGV)
 		}
 		print FI "\n";
 
-		my $path = "$prefix$name";
+		my $path;
+		if ($prefix) {
+			$path = "$prefix/$name";
+		} else {
+			$path = "$name";
+		}
 		$files{$path} = [$next_mark++, $mode];
 
 		$commit_time = $mtime if $mtime > $commit_time;
