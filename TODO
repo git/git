@@ -6,6 +6,9 @@ The latest copy of this document is found at
     http://kernel.org/git/?p=git/git.git;a=blob;hb=todo;f=TODO
     http://repo.or.cz/w/alt-git.git?a=blob;hb=todo;f=TODO
 
+This is primarily meant for my personal reminder, but feel free
+to pick an item from the list and work on it.
+
 ----------------------------------------------------------------
 
 Recent issues
@@ -100,6 +103,10 @@ Technical (milder)
 * daemon --strict-symlink.
 
 * Maybe grok PGP signed text/plain in applymbox as well.
+
+* "git fetch" should be able to use foreign SCM import backends
+  such as svnimport and cvsimport.
+
 
 Technical (trivial)
 -------------------
