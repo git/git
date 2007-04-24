@@ -16,7 +16,7 @@ test_expect_success \
          test-genrandom "$i" 8192 >>file_$i &&
          git-update-index --add file_$i || return 1
      done &&
-     echo 101 >file_101 && tail -c 8192 file_100 >>file_101 &&
+     { echo 101 && test-genrandom 100 8192; } >file_101 &&
      git-update-index --add file_101 &&
      tree=`git-write-tree` &&
      commit=`git-commit-tree $tree </dev/null` && {
