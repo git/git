@@ -3,9 +3,10 @@
 # Copyright (c) 2005-2006 Pavel Roskin
 #
 
-USAGE="[-d] [-n] [-q] [-x | -X] [--] <paths>..."
+USAGE="[-d] [-f] [-n] [-q] [-x | -X] [--] <paths>..."
 LONG_USAGE='Clean untracked files from the working directory
 	-d	remove directories as well
+	-f	override clean.requireForce and clean anyway
 	-n 	don'\''t remove anything, just show what would be done
 	-q	be quiet, only report errors
 	-x	remove ignored files as well
@@ -19,6 +20,7 @@ require_work_tree
 ignored=
 ignoredonly=
 cleandir=
+disabled="`git-config --bool clean.requireForce`"
 rmf="rm -f --"
 rmrf="rm -rf --"
 rm_refuse="echo Not removing"
@@ -30,7 +32,11 @@ do
 	-d)
 		cleandir=1
 		;;
+	-f)
+		disabled=
+		;;
 	-n)
+		disabled=
 		rmf="echo Would remove"
 		rmrf="echo Would remove"
 		rm_refuse="echo Would not remove"
@@ -57,6 +63,11 @@ do
 	esac
 	shift
 done
+
+if [ "$disabled" = true ]; then
+	echo "clean.requireForce set and -n or -f not given; refusing to clean"
+	exit 1
+fi
 
 case "$ignored,$ignoredonly" in
 	1,1) usage;;

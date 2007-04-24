@@ -300,6 +300,10 @@ branch.<name>.merge::
 	branch.<name>.merge to the desired branch, and use the special setting
 	`.` (a period) for branch.<name>.remote.
 
+clean.requireForce::
+	A boolean to make git-clean do nothing unless given -f or -n.  Defaults
+	to false.
+
 color.branch::
 	A boolean to enable/disable color in the output of
 	gitlink:git-branch[1]. May be set to `true` (or `always`),
