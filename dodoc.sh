@@ -90,7 +90,7 @@ do
 		it=$(expr "$path" : doc-$type-inst/'\(.*\)') || continue
 		t="doc-${type}pages/$it"
 		test -f "$t" && diff -q "$path" "$t" && continue
-
+		mkdir -p "$(dirname "$t")" &&
 		echo ": $t" && rm -f "$t" && ln "$path" "$t" || exit
 		( cd doc-${type}pages && git add "$it" )
 	done || exit
