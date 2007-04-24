@@ -673,7 +673,7 @@ static void fixup_header_footer(void)
 
 	buf = xmalloc(buf_sz);
 	for (;;) {
-		size_t n = xread(pack_fd, buf, buf_sz);
+		ssize_t n = xread(pack_fd, buf, buf_sz);
 		if (!n)
 			break;
 		if (n < 0)
