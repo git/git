@@ -1,7 +1,6 @@
 *.xml
 *.html
-*.1
-*.7
+*.[1-8]
 *.made
 howto-index.txt
 doc.dep

@@ -34,8 +34,9 @@ int common_prefix(const char **pathspec)
 	prefix = slash - path + 1;
 	while ((next = *++pathspec) != NULL) {
 		int len = strlen(next);
-		if (len >= prefix && !memcmp(path, next, len))
+		if (len >= prefix && !memcmp(path, next, prefix))
 			continue;
+		len = prefix - 1;
 		for (;;) {
 			if (!len)
 				return 0;
