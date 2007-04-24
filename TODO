@@ -1,17 +1,58 @@
 The GIT To-Do File
 ==================
 
-  The latest copy of this document is found at 
+The latest copy of this document is found at 
 
     http://kernel.org/git/?p=git/git.git;a=blob;hb=todo;f=TODO
 
+----------------------------------------------------------------
 
 Recent issues
 -------------
 
+* Use blame machinery to track a single file (not path) in finer
+  grained way.
+
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Message-ID: <alpine.LFD.0.98.0704201554550.9964@woody.linux-foundation.org>
+
+[jc: I have a fixed-up one parked in 'pu' and also outlined what
+other things I think are needed in my response:
+
+    Message-ID: <7vwt06wqv8.fsf@assigned-by-dhcp.cox.net>
+]
+
+* Use git.git as the first public guinea pig of subproject
+
+From: Junio C Hamano <junkio@cox.net>
+Message-ID: <7vmz13z4au.fsf@assigned-by-dhcp.cox.net>
+
+Use git.git as the first public guinea pig of subproject stuff,
+by dropping git-gui/ directory first and then binding git-gui.git 
+as a subproject there.  This needs to wait at least until v1.5.2
+ships and gets installed at kernel.org and repo.or.cz
+
+* Decide what to do with 'filter' and 'ident' attribute patches.
+
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Message-ID: <alpine.LFD.0.98.0704212243080.9964@woody.linux-foundation.org>
+
+If we were to include it, we would need to make it clear that
+this is a long piece of rope and you can strangle yourself with
+it unless you are careful, and clarify what is and isn't
+considered to be "careful".  I have parked updates in 'pu', but
+I do not know they are clear enough.
+
+* TODO list management
+
+From: Daniel Barkalow <barkalow@iabervon.org>
+Message-ID: <Pine.LNX.4.64.0704241312210.28708@iabervon.org>
+
 Maybe abandon this and have something similar on the main
 branch, starting full at the beginning of the cycle and ending
 empty (or full of "not in next release" entries) at the release?
+
+* git-daemon bug?
 
 From: Franck Bui-Huu <vagabon.xyz@gmail.com>
 Message-ID: <450EABD0.1040102@innova-card.com>
@@ -20,12 +61,14 @@ Repeated requests against git-daemon makes it stuck under --syslog
 
 [jc: does not reproduce easily for me; has anybody seen it?]
 
+* git-mirror (reverse of git-push --all).
+
 From: Shawn Pearce <spearce@spearce.org>
 Message-ID: <20060926215745.GC8177@spearce.org>
 
-git-mirror (reverse of git-push --all).
-
 [jc: may want the finished version for inclusion]
+
+* AsciiDoc 8 would break our documentation.
 
 From: Stefan Richter <stefanr@s5r6.in-berlin.de>
 Message-ID: <4523EC14.6070806@s5r6.in-berlin.de>
@@ -34,6 +77,8 @@ AsciiDoc 8 does not grok documents written for AsciiDoc 7 out of
 the box.
 
 [jc: limbo?]
+
+* Gitweb diff on merge commits
 
 From: Linus Torvalds <torvalds@osdl.org>
 Subject: Re: git show and gitweb gives different result for kernel
