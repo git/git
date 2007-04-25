@@ -1866,11 +1866,14 @@ sub make_log_entry {
 	} elsif ($self->use_svnsync_props) {
 		my $full_url = $self->svnsync->{url};
 		$full_url .= "/$self->{path}" if length $self->{path};
+		remove_username($full_url);
 		my $uuid = $self->svnsync->{uuid};
 		$log_entry{metadata} = "$full_url\@$rev $uuid";
 		$email ||= "$author\@$uuid"
 	} else {
-		$log_entry{metadata} = $self->metadata_url. "\@$rev " .
+		my $url = $self->metadata_url;
+		remove_username($url);
+		$log_entry{metadata} = "$url\@$rev " .
 		                       $self->ra->get_uuid;
 		$email ||= "$author\@" . $self->ra->get_uuid;
 	}
