@@ -673,7 +673,7 @@ static void fixup_header_footer(void)
 
 	buf = xmalloc(buf_sz);
 	for (;;) {
-		size_t n = xread(pack_fd, buf, buf_sz);
+		ssize_t n = xread(pack_fd, buf, buf_sz);
 		if (!n)
 			break;
 		if (n < 0)
@@ -902,6 +902,12 @@ static int store_object(
 	if (mark)
 		insert_mark(mark, e);
 	if (e->offset) {
+		duplicate_count_by_type[type]++;
+		return 1;
+	} else if (find_sha1_pack(sha1, packed_git)) {
+		e->type = type;
+		e->pack_id = MAX_PACK_ID;
+		e->offset = 1; /* just not zero! */
 		duplicate_count_by_type[type]++;
 		return 1;
 	}
@@ -2021,6 +2027,7 @@ static void import_marks(const char *input_file)
 			e = insert_object(sha1);
 			e->type = type;
 			e->pack_id = MAX_PACK_ID;
+			e->offset = 1; /* just not zero! */
 		}
 		insert_mark(mark, e);
 	}
@@ -2086,6 +2093,7 @@ int main(int argc, const char **argv)
 	if (i != argc)
 		usage(fast_import_usage);
 
+	prepare_packed_git();
 	start_packfile();
 	for (;;) {
 		read_next_command();
