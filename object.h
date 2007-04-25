@@ -17,6 +17,7 @@ struct object_array {
 	struct object_array_entry {
 		struct object *item;
 		const char *name;
+		unsigned mode;
 	} *objects;
 };
 
@@ -77,5 +78,6 @@ int object_list_contains(struct object_list *list, struct object *obj);
 
 /* Object array handling .. */
 void add_object_array(struct object *obj, const char *name, struct object_array *array);
+void add_object_array_with_mode(struct object *obj, const char *name, struct object_array *array, unsigned mode);
 
 #endif /* OBJECT_H */

@@ -231,6 +231,11 @@ int object_list_contains(struct object_list *list, struct object *obj)
 
 void add_object_array(struct object *obj, const char *name, struct object_array *array)
 {
+	add_object_array_with_mode(obj, name, array, S_IFINVALID);
+}
+
+void add_object_array_with_mode(struct object *obj, const char *name, struct object_array *array, unsigned mode)
+{
 	unsigned nr = array->nr;
 	unsigned alloc = array->alloc;
 	struct object_array_entry *objects = array->objects;
@@ -243,5 +248,6 @@ void add_object_array(struct object *obj, const char *name, struct object_array 
 	}
 	objects[nr].item = obj;
 	objects[nr].name = name;
+	objects[nr].mode = mode;
 	array->nr = ++nr;
 }
