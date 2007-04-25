@@ -1342,20 +1342,26 @@ static int process_renames(struct path_list *a_renames,
 				mfi = merge_file(o, a, b,
 						a_branch, b_branch);
 
-				if (mfi.merge || !mfi.clean)
-					output(1, "Renamed %s => %s", ren1_src, ren1_dst);
-				if (mfi.merge)
-					output(2, "Auto-merged %s", ren1_dst);
-				if (!mfi.clean) {
-					output(1, "CONFLICT (rename/modify): Merge conflict in %s",
-					       ren1_dst);
-					clean_merge = 0;
+				if (mfi.merge && mfi.clean &&
+				    sha_eq(mfi.sha, ren1->pair->two->sha1) &&
+				    mfi.mode == ren1->pair->two->mode)
+					output(3, "Skipped %s (merged same as existing)", ren1_dst);
+				else {
+					if (mfi.merge || !mfi.clean)
+						output(1, "Renamed %s => %s", ren1_src, ren1_dst);
+					if (mfi.merge)
+						output(2, "Auto-merged %s", ren1_dst);
+					if (!mfi.clean) {
+						output(1, "CONFLICT (rename/modify): Merge conflict in %s",
+						       ren1_dst);
+						clean_merge = 0;
 
-					if (!index_only)
-						update_stages(ren1_dst,
-								o, a, b, 1);
+						if (!index_only)
+							update_stages(ren1_dst,
+								      o, a, b, 1);
+					}
+					update_file(mfi.clean, mfi.sha, mfi.mode, ren1_dst);
 				}
-				update_file(mfi.clean, mfi.sha, mfi.mode, ren1_dst);
 			}
 		}
 	}
