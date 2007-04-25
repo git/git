@@ -1111,7 +1111,18 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				continue;
 			}
 			if (!strcmp(arg, "--relative-date")) {
-				revs->relative_date = 1;
+				revs->date_mode = DATE_RELATIVE;
+				continue;
+			}
+			if (!strncmp(arg, "--date=", 7)) {
+				if (!strcmp(arg + 7, "relative"))
+					revs->date_mode = DATE_RELATIVE;
+				else if (!strcmp(arg + 7, "local"))
+					revs->date_mode = DATE_LOCAL;
+				else if (!strcmp(arg + 7, "default"))
+					revs->date_mode = DATE_NORMAL;
+				else
+					die("unknown date format %s", arg);
 				continue;
 			}
 

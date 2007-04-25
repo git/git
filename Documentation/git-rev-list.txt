@@ -25,6 +25,7 @@ SYNOPSIS
 	     [ \--cherry-pick ]
 	     [ \--encoding[=<encoding>] ]
 	     [ \--(author|committer|grep)=<pattern> ]
+	     [ \--date={local|relative|default} ]
 	     [ [\--objects | \--objects-edge] [ \--unpacked ] ]
 	     [ \--pretty | \--header ]
 	     [ \--bisect ]
@@ -90,9 +91,20 @@ include::pretty-formats.txt[]
 
 --relative-date::
 
-	Show dates relative to the current time, e.g. "2 hours ago".
+	Synonym for `--date=relative`.
+
+--date={relative,local,default}::
+
 	Only takes effect for dates shown in human-readable format, such
 	as when using "--pretty".
++
+`--date=relative` shows dates relative to the current time,
+e.g. "2 hours ago".
++
+`--date=local` shows timestamps in user's local timezone.
++
+`--date=default` shows timestamps in the original timezone
+(either committer's or author's).
 
 --header::
 
