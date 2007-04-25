@@ -1064,7 +1064,10 @@ sub init_remote_config {
 
 sub find_by_url { # repos_root and, path are optional
 	my ($class, $full_url, $repos_root, $path) = @_;
+
 	return undef unless defined $full_url;
+	remove_username($full_url);
+	remove_username($repos_root) if defined $repos_root;
 	my $remotes = read_all_remotes();
 	if (defined $full_url && defined $repos_root && !defined $path) {
 		$path = $full_url;
@@ -1072,6 +1075,7 @@ sub find_by_url { # repos_root and, path are optional
 	}
 	foreach my $repo_id (keys %$remotes) {
 		my $u = $remotes->{$repo_id}->{url} or next;
+		remove_username($u);
 		next if defined $repos_root && $repos_root ne $u;
 
 		my $fetch = $remotes->{$repo_id}->{fetch} || {};
