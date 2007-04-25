@@ -864,16 +864,15 @@ int read_index_from(struct index_state *istate, const char *path)
 		die("index file open failed (%s)", strerror(errno));
 	}
 
-	if (!fstat(fd, &st)) {
-		istate->mmap_size = xsize_t(st.st_size);
-		errno = EINVAL;
-		if (istate->mmap_size >= sizeof(struct cache_header) + 20)
-			istate->mmap = xmmap(NULL, istate->mmap_size,
-					    PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-		else
-			die("index file smaller than expected");
-	} else
+	if (fstat(fd, &st))
 		die("cannot stat the open index (%s)", strerror(errno));
+
+	errno = EINVAL;
+	istate->mmap_size = xsize_t(st.st_size);
+	if (istate->mmap_size < sizeof(struct cache_header) + 20)
+		die("index file smaller than expected");
+
+	istate->mmap = xmmap(NULL, istate->mmap_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
 	close(fd);
 
 	hdr = istate->mmap;
