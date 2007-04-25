@@ -1,7 +1,7 @@
 #include "cache.h"
 #include "blob.h"
 
-static void create_directories(const char *path, struct checkout *state)
+static void create_directories(const char *path, const struct checkout *state)
 {
 	int len = strlen(path);
 	char *buf = xmalloc(len + 1);
@@ -75,7 +75,7 @@ static void *read_blob_entry(struct cache_entry *ce, const char *path, unsigned 
 	return NULL;
 }
 
-static int write_entry(struct cache_entry *ce, char *path, struct checkout *state, int to_tempfile)
+static int write_entry(struct cache_entry *ce, char *path, const struct checkout *state, int to_tempfile)
 {
 	int fd;
 	long wrote;
@@ -163,7 +163,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct checkout *stat
 	return 0;
 }
 
-int checkout_entry(struct cache_entry *ce, struct checkout *state, char *topath)
+int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *topath)
 {
 	static char path[PATH_MAX + 1];
 	struct stat st;

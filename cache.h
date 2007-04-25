@@ -409,7 +409,7 @@ struct checkout {
 		 refresh_cache:1;
 };
 
-extern int checkout_entry(struct cache_entry *ce, struct checkout *state, char *topath);
+extern int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *topath);
 
 extern struct alternate_object_database {
 	struct alternate_object_database *next;
