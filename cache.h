@@ -146,9 +146,37 @@ static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned in
 
 #define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
 
-extern struct cache_entry **active_cache;
-extern unsigned int active_nr, active_alloc, active_cache_changed;
-extern struct cache_tree *active_cache_tree;
+struct index_state {
+	struct cache_entry **cache;
+	unsigned int cache_nr, cache_alloc, cache_changed;
+	struct cache_tree *cache_tree;
+	time_t timestamp;
+	void *mmap;
+	size_t mmap_size;
+};
+
+extern struct index_state the_index;
+
+#ifndef NO_THE_INDEX_COMPATIBILITY_MACROS
+#define active_cache (the_index.cache)
+#define active_nr (the_index.cache_nr)
+#define active_alloc (the_index.cache_alloc)
+#define active_cache_changed (the_index.cache_changed)
+#define active_cache_tree (the_index.cache_tree)
+
+#define read_cache() read_index(&the_index)
+#define read_cache_from(path) read_index_from(&the_index, (path))
+#define write_cache(newfd, cache, entries) write_index(&the_index, (newfd))
+#define discard_cache() discard_index(&the_index)
+#define cache_name_pos(name, namelen) index_name_pos(&the_index,(name),(namelen))
+#define add_cache_entry(ce, option) add_index_entry(&the_index, (ce), (option))
+#define remove_cache_entry_at(pos) remove_index_entry_at(&the_index, (pos))
+#define remove_file_from_cache(path) remove_file_from_index(&the_index, (path))
+#define add_file_to_cache(path, verbose) add_file_to_index(&the_index, (path), (verbose))
+#define refresh_cache(flags) refresh_index(&the_index, flags)
+#define ce_match_stat(ce, st, really) ie_match_stat(&the_index, (ce), (st), (really))
+#define ce_modified(ce, st, really) ie_modified(&the_index, (ce), (st), (really))
+#endif
 
 enum object_type {
 	OBJ_BAD = -1,
@@ -198,23 +226,23 @@ extern void verify_non_filename(const char *prefix, const char *name);
 #define alloc_nr(x) (((x)+16)*3/2)
 
 /* Initialize and use the cache information */
-extern int read_cache(void);
-extern int read_cache_from(const char *path);
-extern int write_cache(int newfd, struct cache_entry **cache, int entries);
-extern int discard_cache(void);
+extern int read_index(struct index_state *);
+extern int read_index_from(struct index_state *, const char *path);
+extern int write_index(struct index_state *, int newfd);
+extern int discard_index(struct index_state *);
 extern int verify_path(const char *path);
-extern int cache_name_pos(const char *name, int namelen);
+extern int index_name_pos(struct index_state *, const char *name, int namelen);
 #define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
 #define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
 #define ADD_CACHE_SKIP_DFCHECK 4	/* Ok to skip DF conflict checks */
-extern int add_cache_entry(struct cache_entry *ce, int option);
+extern int add_index_entry(struct index_state *, struct cache_entry *ce, int option);
 extern struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
-extern int remove_cache_entry_at(int pos);
-extern int remove_file_from_cache(const char *path);
-extern int add_file_to_cache(const char *path, int verbose);
+extern int remove_index_entry_at(struct index_state *, int pos);
+extern int remove_file_from_index(struct index_state *, const char *path);
+extern int add_file_to_index(struct index_state *, const char *path, int verbose);
 extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
-extern int ce_match_stat(struct cache_entry *ce, struct stat *st, int);
-extern int ce_modified(struct cache_entry *ce, struct stat *st, int);
+extern int ie_match_stat(struct index_state *, struct cache_entry *, struct stat *, int);
+extern int ie_modified(struct index_state *, struct cache_entry *, struct stat *, int);
 extern int ce_path_match(const struct cache_entry *ce, const char **pathspec);
 extern int index_fd(unsigned char *sha1, int fd, struct stat *st, int write_object, enum object_type type, const char *path);
 extern int read_pipe(int fd, char** return_buf, unsigned long* return_size);
@@ -226,7 +254,7 @@ extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
 #define REFRESH_UNMERGED	0x0002	/* allow unmerged */
 #define REFRESH_QUIET		0x0004	/* be quiet about it */
 #define REFRESH_IGNORE_MISSING	0x0008	/* ignore non-existent */
-extern int refresh_cache(unsigned int flags);
+extern int refresh_index(struct index_state *, unsigned int flags);
 
 struct lock_file {
 	struct lock_file *next;

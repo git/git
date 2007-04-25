@@ -3,6 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "cache-tree.h"
 #include "refs.h"
@@ -19,14 +20,7 @@
 #define CACHE_EXT(s) ( (s[0]<<24)|(s[1]<<16)|(s[2]<<8)|(s[3]) )
 #define CACHE_EXT_TREE 0x54524545	/* "TREE" */
 
-struct cache_entry **active_cache;
-static time_t index_file_timestamp;
-unsigned int active_nr, active_alloc, active_cache_changed;
-
-struct cache_tree *active_cache_tree;
-
-static void *cache_mmap;
-static size_t cache_mmap_size;
+struct index_state the_index;
 
 /*
  * This only updates the "non-critical" parts of the directory
@@ -196,7 +190,8 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 	return changed;
 }
 
-int ce_match_stat(struct cache_entry *ce, struct stat *st, int options)
+int ie_match_stat(struct index_state *istate,
+		  struct cache_entry *ce, struct stat *st, int options)
 {
 	unsigned int changed;
 	int ignore_valid = options & 01;
@@ -228,8 +223,8 @@ int ce_match_stat(struct cache_entry *ce, struct stat *st, int options)
 	 * carefully than others.
 	 */
 	if (!changed &&
-	    index_file_timestamp &&
-	    index_file_timestamp <= ntohl(ce->ce_mtime.sec)) {
+	    istate->timestamp &&
+	    istate->timestamp <= ntohl(ce->ce_mtime.sec)) {
 		if (assume_racy_is_modified)
 			changed |= DATA_CHANGED;
 		else
@@ -239,10 +234,11 @@ int ce_match_stat(struct cache_entry *ce, struct stat *st, int options)
 	return changed;
 }
 
-int ce_modified(struct cache_entry *ce, struct stat *st, int really)
+int ie_modified(struct index_state *istate,
+		struct cache_entry *ce, struct stat *st, int really)
 {
 	int changed, changed_fs;
-	changed = ce_match_stat(ce, st, really);
+	changed = ie_match_stat(istate, ce, st, really);
 	if (!changed)
 		return 0;
 	/*
@@ -310,15 +306,15 @@ int cache_name_compare(const char *name1, int flags1, const char *name2, int fla
 	return 0;
 }
 
-int cache_name_pos(const char *name, int namelen)
+int index_name_pos(struct index_state *istate, const char *name, int namelen)
 {
 	int first, last;
 
 	first = 0;
-	last = active_nr;
+	last = istate->cache_nr;
 	while (last > first) {
 		int next = (last + first) >> 1;
-		struct cache_entry *ce = active_cache[next];
+		struct cache_entry *ce = istate->cache[next];
 		int cmp = cache_name_compare(name, namelen, ce->name, ntohs(ce->ce_flags));
 		if (!cmp)
 			return next;
@@ -332,27 +328,29 @@ int cache_name_pos(const char *name, int namelen)
 }
 
 /* Remove entry, return true if there are more entries to go.. */
-int remove_cache_entry_at(int pos)
+int remove_index_entry_at(struct index_state *istate, int pos)
 {
-	active_cache_changed = 1;
-	active_nr--;
-	if (pos >= active_nr)
+	istate->cache_changed = 1;
+	istate->cache_nr--;
+	if (pos >= istate->cache_nr)
 		return 0;
-	memmove(active_cache + pos, active_cache + pos + 1, (active_nr - pos) * sizeof(struct cache_entry *));
+	memmove(istate->cache + pos,
+		istate->cache + pos + 1,
+		(istate->cache_nr - pos) * sizeof(struct cache_entry *));
 	return 1;
 }
 
-int remove_file_from_cache(const char *path)
+int remove_file_from_index(struct index_state *istate, const char *path)
 {
-	int pos = cache_name_pos(path, strlen(path));
+	int pos = index_name_pos(istate, path, strlen(path));
 	if (pos < 0)
 		pos = -pos-1;
-	while (pos < active_nr && !strcmp(active_cache[pos]->name, path))
-		remove_cache_entry_at(pos);
+	while (pos < istate->cache_nr && !strcmp(istate->cache[pos]->name, path))
+		remove_index_entry_at(istate, pos);
 	return 0;
 }
 
-int add_file_to_cache(const char *path, int verbose)
+int add_file_to_index(struct index_state *istate, const char *path, int verbose)
 {
 	int size, namelen;
 	struct stat st;
@@ -382,19 +380,19 @@ int add_file_to_cache(const char *path, int verbose)
 		 * from it, otherwise assume unexecutable regular file.
 		 */
 		struct cache_entry *ent;
-		int pos = cache_name_pos(path, namelen);
+		int pos = index_name_pos(istate, path, namelen);
 
-		ent = (0 <= pos) ? active_cache[pos] : NULL;
+		ent = (0 <= pos) ? istate->cache[pos] : NULL;
 		ce->ce_mode = ce_mode_from_stat(ent, st.st_mode);
 	}
 
 	if (index_path(ce->sha1, path, &st, 1))
 		die("unable to index file %s", path);
-	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE))
+	if (add_index_entry(istate, ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE))
 		die("unable to add %s to index",path);
 	if (verbose)
 		printf("add '%s'\n", path);
-	cache_tree_invalidate_path(active_cache_tree, path);
+	cache_tree_invalidate_path(istate->cache_tree, path);
 	return 0;
 }
 
@@ -498,15 +496,16 @@ inside:
  * Do we have another file that has the beginning components being a
  * proper superset of the name we're trying to add?
  */
-static int has_file_name(const struct cache_entry *ce, int pos, int ok_to_replace)
+static int has_file_name(struct index_state *istate,
+			 const struct cache_entry *ce, int pos, int ok_to_replace)
 {
 	int retval = 0;
 	int len = ce_namelen(ce);
 	int stage = ce_stage(ce);
 	const char *name = ce->name;
 
-	while (pos < active_nr) {
-		struct cache_entry *p = active_cache[pos++];
+	while (pos < istate->cache_nr) {
+		struct cache_entry *p = istate->cache[pos++];
 
 		if (len >= ce_namelen(p))
 			break;
@@ -521,7 +520,7 @@ static int has_file_name(const struct cache_entry *ce, int pos, int ok_to_replac
 		retval = -1;
 		if (!ok_to_replace)
 			break;
-		remove_cache_entry_at(--pos);
+		remove_index_entry_at(istate, --pos);
 	}
 	return retval;
 }
@@ -530,7 +529,8 @@ static int has_file_name(const struct cache_entry *ce, int pos, int ok_to_replac
  * Do we have another file with a pathname that is a proper
  * subset of the name we're trying to add?
  */
-static int has_dir_name(const struct cache_entry *ce, int pos, int ok_to_replace)
+static int has_dir_name(struct index_state *istate,
+			const struct cache_entry *ce, int pos, int ok_to_replace)
 {
 	int retval = 0;
 	int stage = ce_stage(ce);
@@ -548,7 +548,7 @@ static int has_dir_name(const struct cache_entry *ce, int pos, int ok_to_replace
 		}
 		len = slash - name;
 
-		pos = cache_name_pos(name, ntohs(create_ce_flags(len, stage)));
+		pos = index_name_pos(istate, name, ntohs(create_ce_flags(len, stage)));
 		if (pos >= 0) {
 			/*
 			 * Found one, but not so fast.  This could
@@ -558,11 +558,11 @@ static int has_dir_name(const struct cache_entry *ce, int pos, int ok_to_replace
 			 * it is Ok to have a directory at the same
 			 * path.
 			 */
-			if (stage || active_cache[pos]->ce_mode) {
+			if (stage || istate->cache[pos]->ce_mode) {
 				retval = -1;
 				if (!ok_to_replace)
 					break;
-				remove_cache_entry_at(pos);
+				remove_index_entry_at(istate, pos);
 				continue;
 			}
 		}
@@ -574,8 +574,8 @@ static int has_dir_name(const struct cache_entry *ce, int pos, int ok_to_replace
 		 * already matches the sub-directory, then we know
 		 * we're ok, and we can exit.
 		 */
-		while (pos < active_nr) {
-			struct cache_entry *p = active_cache[pos];
+		while (pos < istate->cache_nr) {
+			struct cache_entry *p = istate->cache[pos];
 			if ((ce_namelen(p) <= len) ||
 			    (p->name[len] != '/') ||
 			    memcmp(p->name, name, len))
@@ -602,7 +602,9 @@ static int has_dir_name(const struct cache_entry *ce, int pos, int ok_to_replace
  * from the cache so the caller should recompute the insert position.
  * When this happens, we return non-zero.
  */
-static int check_file_directory_conflict(const struct cache_entry *ce, int pos, int ok_to_replace)
+static int check_file_directory_conflict(struct index_state *istate,
+					 const struct cache_entry *ce,
+					 int pos, int ok_to_replace)
 {
 	int retval;
 
@@ -617,28 +619,28 @@ static int check_file_directory_conflict(const struct cache_entry *ce, int pos, 
 	 * first, since removing those will not change the position
 	 * in the array.
 	 */
-	retval = has_file_name(ce, pos, ok_to_replace);
+	retval = has_file_name(istate, ce, pos, ok_to_replace);
 
 	/*
 	 * Then check if the path might have a clashing sub-directory
 	 * before it.
 	 */
-	return retval + has_dir_name(ce, pos, ok_to_replace);
+	return retval + has_dir_name(istate, ce, pos, ok_to_replace);
 }
 
-int add_cache_entry(struct cache_entry *ce, int option)
+int add_index_entry(struct index_state *istate, struct cache_entry *ce, int option)
 {
 	int pos;
 	int ok_to_add = option & ADD_CACHE_OK_TO_ADD;
 	int ok_to_replace = option & ADD_CACHE_OK_TO_REPLACE;
 	int skip_df_check = option & ADD_CACHE_SKIP_DFCHECK;
 
-	pos = cache_name_pos(ce->name, ntohs(ce->ce_flags));
+	pos = index_name_pos(istate, ce->name, ntohs(ce->ce_flags));
 
 	/* existing match? Just replace it. */
 	if (pos >= 0) {
-		active_cache_changed = 1;
-		active_cache[pos] = ce;
+		istate->cache_changed = 1;
+		istate->cache[pos] = ce;
 		return 0;
 	}
 	pos = -pos-1;
@@ -647,10 +649,10 @@ int add_cache_entry(struct cache_entry *ce, int option)
 	 * Inserting a merged entry ("stage 0") into the index
 	 * will always replace all non-merged entries..
 	 */
-	if (pos < active_nr && ce_stage(ce) == 0) {
-		while (ce_same_name(active_cache[pos], ce)) {
+	if (pos < istate->cache_nr && ce_stage(ce) == 0) {
+		while (ce_same_name(istate->cache[pos], ce)) {
 			ok_to_add = 1;
-			if (!remove_cache_entry_at(pos))
+			if (!remove_index_entry_at(istate, pos))
 				break;
 		}
 	}
@@ -661,25 +663,29 @@ int add_cache_entry(struct cache_entry *ce, int option)
 		return -1;
 
 	if (!skip_df_check &&
-	    check_file_directory_conflict(ce, pos, ok_to_replace)) {
+	    check_file_directory_conflict(istate, ce, pos, ok_to_replace)) {
 		if (!ok_to_replace)
-			return error("'%s' appears as both a file and as a directory", ce->name);
-		pos = cache_name_pos(ce->name, ntohs(ce->ce_flags));
+			return error("'%s' appears as both a file and as a directory",
+				     ce->name);
+		pos = index_name_pos(istate, ce->name, ntohs(ce->ce_flags));
 		pos = -pos-1;
 	}
 
 	/* Make sure the array is big enough .. */
-	if (active_nr == active_alloc) {
-		active_alloc = alloc_nr(active_alloc);
-		active_cache = xrealloc(active_cache, active_alloc * sizeof(struct cache_entry *));
+	if (istate->cache_nr == istate->cache_alloc) {
+		istate->cache_alloc = alloc_nr(istate->cache_alloc);
+		istate->cache = xrealloc(istate->cache,
+					istate->cache_alloc * sizeof(struct cache_entry *));
 	}
 
 	/* Add it in.. */
-	active_nr++;
-	if (active_nr > pos)
-		memmove(active_cache + pos + 1, active_cache + pos, (active_nr - pos - 1) * sizeof(ce));
-	active_cache[pos] = ce;
-	active_cache_changed = 1;
+	istate->cache_nr++;
+	if (istate->cache_nr > pos)
+		memmove(istate->cache + pos + 1,
+			istate->cache + pos,
+			(istate->cache_nr - pos - 1) * sizeof(ce));
+	istate->cache[pos] = ce;
+	istate->cache_changed = 1;
 	return 0;
 }
 
@@ -694,7 +700,8 @@ int add_cache_entry(struct cache_entry *ce, int option)
  * For example, you'd want to do this after doing a "git-read-tree",
  * to link up the stat cache details with the proper files.
  */
-static struct cache_entry *refresh_cache_ent(struct cache_entry *ce, int really, int *err)
+static struct cache_entry *refresh_cache_ent(struct index_state *istate,
+					     struct cache_entry *ce, int really, int *err)
 {
 	struct stat st;
 	struct cache_entry *updated;
@@ -706,7 +713,7 @@ static struct cache_entry *refresh_cache_ent(struct cache_entry *ce, int really,
 		return NULL;
 	}
 
-	changed = ce_match_stat(ce, &st, really);
+	changed = ie_match_stat(istate, ce, &st, really);
 	if (!changed) {
 		if (really && assume_unchanged &&
 		    !(ce->ce_flags & htons(CE_VALID)))
@@ -715,7 +722,7 @@ static struct cache_entry *refresh_cache_ent(struct cache_entry *ce, int really,
 			return ce;
 	}
 
-	if (ce_modified(ce, &st, really)) {
+	if (ie_modified(istate, ce, &st, really)) {
 		if (err)
 			*err = EINVAL;
 		return NULL;
@@ -738,7 +745,7 @@ static struct cache_entry *refresh_cache_ent(struct cache_entry *ce, int really,
 	return updated;
 }
 
-int refresh_cache(unsigned int flags)
+int refresh_index(struct index_state *istate, unsigned int flags)
 {
 	int i;
 	int has_errors = 0;
@@ -747,14 +754,14 @@ int refresh_cache(unsigned int flags)
 	int quiet = (flags & REFRESH_QUIET) != 0;
 	int not_new = (flags & REFRESH_IGNORE_MISSING) != 0;
 
-	for (i = 0; i < active_nr; i++) {
+	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce, *new;
 		int cache_errno = 0;
 
-		ce = active_cache[i];
+		ce = istate->cache[i];
 		if (ce_stage(ce)) {
-			while ((i < active_nr) &&
-			       ! strcmp(active_cache[i]->name, ce->name))
+			while ((i < istate->cache_nr) &&
+			       ! strcmp(istate->cache[i]->name, ce->name))
 				i++;
 			i--;
 			if (allow_unmerged)
@@ -764,7 +771,7 @@ int refresh_cache(unsigned int flags)
 			continue;
 		}
 
-		new = refresh_cache_ent(ce, really, &cache_errno);
+		new = refresh_cache_ent(istate, ce, really, &cache_errno);
 		if (new == ce)
 			continue;
 		if (!new) {
@@ -775,7 +782,7 @@ int refresh_cache(unsigned int flags)
 				 * means the index is not valid anymore.
 				 */
 				ce->ce_flags &= ~htons(CE_VALID);
-				active_cache_changed = 1;
+				istate->cache_changed = 1;
 			}
 			if (quiet)
 				continue;
@@ -783,18 +790,18 @@ int refresh_cache(unsigned int flags)
 			has_errors = 1;
 			continue;
 		}
-		active_cache_changed = 1;
-		/* You can NOT just free active_cache[i] here, since it
+		istate->cache_changed = 1;
+		/* You can NOT just free istate->cache[i] here, since it
 		 * might not be necessarily malloc()ed but can also come
 		 * from mmap(). */
-		active_cache[i] = new;
+		istate->cache[i] = new;
 	}
 	return has_errors;
 }
 
 struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really)
 {
-	return refresh_cache_ent(ce, really, NULL);
+	return refresh_cache_ent(&the_index, ce, really, NULL);
 }
 
 static int verify_hdr(struct cache_header *hdr, unsigned long size)
@@ -814,11 +821,12 @@ static int verify_hdr(struct cache_header *hdr, unsigned long size)
 	return 0;
 }
 
-static int read_index_extension(const char *ext, void *data, unsigned long sz)
+static int read_index_extension(struct index_state *istate,
+				const char *ext, void *data, unsigned long sz)
 {
 	switch (CACHE_EXT(ext)) {
 	case CACHE_EXT_TREE:
-		active_cache_tree = cache_tree_read(data, sz);
+		istate->cache_tree = cache_tree_read(data, sz);
 		break;
 	default:
 		if (*ext < 'A' || 'Z' < *ext)
@@ -830,13 +838,13 @@ static int read_index_extension(const char *ext, void *data, unsigned long sz)
 	return 0;
 }
 
-int read_cache(void)
+int read_index(struct index_state *istate)
 {
-	return read_cache_from(get_index_file());
+	return read_index_from(istate, get_index_file());
 }
 
 /* remember to discard_cache() before reading a different cache! */
-int read_cache_from(const char *path)
+int read_index_from(struct index_state *istate, const char *path)
 {
 	int fd, i;
 	struct stat st;
@@ -844,11 +852,11 @@ int read_cache_from(const char *path)
 	struct cache_header *hdr;
 
 	errno = EBUSY;
-	if (cache_mmap)
-		return active_nr;
+	if (istate->mmap)
+		return istate->cache_nr;
 
 	errno = ENOENT;
-	index_file_timestamp = 0;
+	istate->timestamp = 0;
 	fd = open(path, O_RDONLY);
 	if (fd < 0) {
 		if (errno == ENOENT)
@@ -857,32 +865,35 @@ int read_cache_from(const char *path)
 	}
 
 	if (!fstat(fd, &st)) {
-		cache_mmap_size = xsize_t(st.st_size);
+		istate->mmap_size = xsize_t(st.st_size);
 		errno = EINVAL;
-		if (cache_mmap_size >= sizeof(struct cache_header) + 20)
-			cache_mmap = xmmap(NULL, cache_mmap_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+		if (istate->mmap_size >= sizeof(struct cache_header) + 20)
+			istate->mmap = xmmap(NULL, istate->mmap_size,
+					    PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
 		else
 			die("index file smaller than expected");
 	} else
 		die("cannot stat the open index (%s)", strerror(errno));
 	close(fd);
 
-	hdr = cache_mmap;
-	if (verify_hdr(hdr, cache_mmap_size) < 0)
+	hdr = istate->mmap;
+	if (verify_hdr(hdr, istate->mmap_size) < 0)
 		goto unmap;
 
-	active_nr = ntohl(hdr->hdr_entries);
-	active_alloc = alloc_nr(active_nr);
-	active_cache = xcalloc(active_alloc, sizeof(struct cache_entry *));
+	istate->cache_nr = ntohl(hdr->hdr_entries);
+	istate->cache_alloc = alloc_nr(istate->cache_nr);
+	istate->cache = xcalloc(istate->cache_alloc, sizeof(struct cache_entry *));
 
 	offset = sizeof(*hdr);
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = (struct cache_entry *) ((char *) cache_mmap + offset);
+	for (i = 0; i < istate->cache_nr; i++) {
+		struct cache_entry *ce;
+
+		ce = (struct cache_entry *)((char *)(istate->mmap) + offset);
 		offset = offset + ce_size(ce);
-		active_cache[i] = ce;
+		istate->cache[i] = ce;
 	}
-	index_file_timestamp = st.st_mtime;
-	while (offset <= cache_mmap_size - 20 - 8) {
+	istate->timestamp = st.st_mtime;
+	while (offset <= istate->mmap_size - 20 - 8) {
 		/* After an array of active_nr index entries,
 		 * there can be arbitrary number of extended
 		 * sections, each of which is prefixed with
@@ -890,35 +901,37 @@ int read_cache_from(const char *path)
 		 * in 4-byte network byte order.
 		 */
 		unsigned long extsize;
-		memcpy(&extsize, (char *) cache_mmap + offset + 4, 4);
+		memcpy(&extsize, (char *)(istate->mmap) + offset + 4, 4);
 		extsize = ntohl(extsize);
-		if (read_index_extension(((const char *) cache_mmap) + offset,
-					 (char *) cache_mmap + offset + 8,
+		if (read_index_extension(istate,
+					 ((const char *) (istate->mmap)) + offset,
+					 (char *) (istate->mmap) + offset + 8,
 					 extsize) < 0)
 			goto unmap;
 		offset += 8;
 		offset += extsize;
 	}
-	return active_nr;
+	return istate->cache_nr;
 
 unmap:
-	munmap(cache_mmap, cache_mmap_size);
+	munmap(istate->mmap, istate->mmap_size);
 	errno = EINVAL;
 	die("index file corrupt");
 }
 
-int discard_cache(void)
+int discard_index(struct index_state *istate)
 {
 	int ret;
 
-	active_nr = active_cache_changed = 0;
-	index_file_timestamp = 0;
-	cache_tree_free(&active_cache_tree);
-	if (cache_mmap == NULL)
+	istate->cache_nr = 0;
+	istate->cache_changed = 0;
+	istate->timestamp = 0;
+	cache_tree_free(&(istate->cache_tree));
+	if (istate->mmap == NULL)
 		return 0;
-	ret = munmap(cache_mmap, cache_mmap_size);
-	cache_mmap = NULL;
-	cache_mmap_size = 0;
+	ret = munmap(istate->mmap, istate->mmap_size);
+	istate->mmap = NULL;
+	istate->mmap_size = 0;
 
 	/* no need to throw away allocated active_cache */
 	return ret;
@@ -1037,11 +1050,13 @@ static void ce_smudge_racily_clean_entry(struct cache_entry *ce)
 	}
 }
 
-int write_cache(int newfd, struct cache_entry **cache, int entries)
+int write_index(struct index_state *istate, int newfd)
 {
 	SHA_CTX c;
 	struct cache_header hdr;
 	int i, removed;
+	struct cache_entry **cache = istate->cache;
+	int entries = istate->cache_nr;
 
 	for (i = removed = 0; i < entries; i++)
 		if (!cache[i]->ce_mode)
@@ -1059,17 +1074,17 @@ int write_cache(int newfd, struct cache_entry **cache, int entries)
 		struct cache_entry *ce = cache[i];
 		if (!ce->ce_mode)
 			continue;
-		if (index_file_timestamp &&
-		    index_file_timestamp <= ntohl(ce->ce_mtime.sec))
+		if (istate->timestamp &&
+		    istate->timestamp <= ntohl(ce->ce_mtime.sec))
 			ce_smudge_racily_clean_entry(ce);
 		if (ce_write(&c, newfd, ce, ce_size(ce)) < 0)
 			return -1;
 	}
 
 	/* Write extension data here */
-	if (active_cache_tree) {
+	if (istate->cache_tree) {
 		unsigned long sz;
-		void *data = cache_tree_write(active_cache_tree, &sz);
+		void *data = cache_tree_write(istate->cache_tree, &sz);
 		if (data &&
 		    !write_index_ext_header(&c, newfd, CACHE_EXT_TREE, sz) &&
 		    !ce_write(&c, newfd, data, sz))
