@@ -141,7 +141,12 @@ prefix = $(HOME)
 bindir = $(prefix)/bin
 gitexecdir = $(bindir)
 template_dir = $(prefix)/share/git-core/templates/
-ETC_GITCONFIG = $(prefix)/etc/gitconfig
+ifeq ($(prefix),/usr)
+sysconfdir = /etc
+else
+sysconfdir = $(prefix)/etc
+endif
+ETC_GITCONFIG = $(sysconfdir)/gitconfig
 # DESTDIR=
 
 # default configuration for gitweb
@@ -160,7 +165,7 @@ GITWEB_FAVICON = git-favicon.png
 GITWEB_SITE_HEADER =
 GITWEB_SITE_FOOTER =
 
-export prefix bindir gitexecdir template_dir
+export prefix bindir gitexecdir template_dir sysconfdir
 
 CC = gcc
 AR = ar
