@@ -36,8 +36,10 @@ int write_tree(unsigned char *sha1, int missing_ok, const char *prefix)
 			die("git-write-tree: error building trees");
 		if (0 <= newfd) {
 			if (!write_cache(newfd, active_cache, active_nr)
-					&& !close(newfd))
+					&& !close(newfd)) {
 				commit_lock_file(lock_file);
+				newfd = -1;
+			}
 		}
 		/* Not being able to write is fine -- we are only interested
 		 * in updating the cache-tree part, and if the next caller
@@ -55,6 +57,8 @@ int write_tree(unsigned char *sha1, int missing_ok, const char *prefix)
 	else
 		hashcpy(sha1, active_cache_tree->sha1);
 
+	if (0 <= newfd)
+		close(newfd);
 	rollback_lock_file(lock_file);
 
 	return 0;
