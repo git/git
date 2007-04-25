@@ -47,6 +47,8 @@ git branch white &&
 git branch red &&
 git branch blue &&
 git branch yellow &&
+git branch change &&
+git branch change+rename &&
 
 sed -e "/^g /s/.*/g : master changes a line/" <A >A+ &&
 mv A+ A &&
@@ -76,6 +78,17 @@ sed -e "/^G /s/.*/G : colored branch changes a line/" <M >N &&
 rm -f A M &&
 git update-index --add --remove A C M N &&
 git commit -m "blue renames A->C, M->N" &&
+
+git checkout change &&
+sed -e "/^g /s/.*/g : changed line/" <A >A+ &&
+mv A+ A &&
+git commit -q -a -m "changed" &&
+
+git checkout change+rename &&
+sed -e "/^g /s/.*/g : changed line/" <A >B &&
+rm A &&
+git update-index --add B &&
+git commit -q -a -m "changed and renamed" &&
 
 git checkout master'
 
@@ -316,6 +329,16 @@ test_expect_success 'interference with untracked working tree file' '
 		return 1
 	}
 	git reset --hard anchor
+'
+
+test_expect_success 'merge of identical changes in a renamed file' '
+	rm -f A M N
+	git reset --hard &&
+	git checkout change+rename &&
+	GIT_MERGE_VERBOSITY=3 git merge change | grep "^Skipped B" &&
+	git reset --hard HEAD^ &&
+	git checkout change &&
+	GIT_MERGE_VERBOSITY=3 git merge change+rename | grep "^Skipped B"
 '
 
 test_done

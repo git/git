@@ -1345,6 +1345,11 @@ static int process_renames(struct path_list *a_renames,
 				if (mfi.merge && mfi.clean &&
 				    sha_eq(mfi.sha, ren1->pair->two->sha1) &&
 				    mfi.mode == ren1->pair->two->mode)
+					/*
+					 * This messaged is part of
+					 * t6022 test. If you change
+					 * it update the test too.
+					 */
 					output(3, "Skipped %s (merged same as existing)", ren1_dst);
 				else {
 					if (mfi.merge || !mfi.clean)
