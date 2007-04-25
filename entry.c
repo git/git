@@ -33,7 +33,7 @@ static void remove_subtree(const char *path)
 	char *name;
 	
 	if (!dir)
-		die("cannot opendir %s", path);
+		die("cannot opendir %s (%s)", path, strerror(errno));
 	strcpy(pathbuf, path);
 	name = pathbuf + strlen(path);
 	*name++ = '/';
@@ -45,15 +45,15 @@ static void remove_subtree(const char *path)
 			continue;
 		strcpy(name, de->d_name);
 		if (lstat(pathbuf, &st))
-			die("cannot lstat %s", pathbuf);
+			die("cannot lstat %s (%s)", pathbuf, strerror(errno));
 		if (S_ISDIR(st.st_mode))
 			remove_subtree(pathbuf);
 		else if (unlink(pathbuf))
-			die("cannot unlink %s", pathbuf);
+			die("cannot unlink %s (%s)", pathbuf, strerror(errno));
 	}
 	closedir(dir);
 	if (rmdir(path))
-		die("cannot rmdir %s", path);
+		die("cannot rmdir %s (%s)", path, strerror(errno));
 }
 
 static int create_file(const char *path, unsigned int mode)
