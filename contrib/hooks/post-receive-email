@@ -587,7 +587,7 @@ if [ -z "$GIT_DIR" ]; then
 	exit 1
 fi
 
-projectdesc=$(sed -e '1p' "$GIT_DIR/description")
+projectdesc=$(sed -ne '1p' "$GIT_DIR/description")
 # Check if the description is unchanged from it's default, and shorten it to a
 # more manageable length if it is
 if expr "$projectdesc" : "Unnamed repository.*$" >/dev/null
