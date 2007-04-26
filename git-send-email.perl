@@ -379,7 +379,7 @@ if (@files) {
 }
 
 # Variables we set as part of the loop over files
-our ($message_id, $cc, %mail, $subject, $reply_to, $references, $message);
+our ($message_id, %mail, $subject, $reply_to, $references, $message);
 
 sub extract_valid_address {
 	my $address = shift;
@@ -420,7 +420,6 @@ sub make_message_id
 
 
 
-$cc = "";
 $time = time - scalar $#files;
 
 sub unquote_rfc2047 {
@@ -443,7 +442,8 @@ sub send_message
 	    $gitversion = Git::version();
 	}
 
-	my ($author_name) = ($from =~ /^(.*?)\s+</);
+	my $cc = join(", ", unique_email_list(@cc));
+my ($author_name) = ($from =~ /^(.*?)\s+</);
 	if ($author_name && $author_name =~ /\./ && $author_name !~ /^".*"$/) {
 		my ($name, $addr) = ($from =~ /^(.*?)(\s+<.*)/);
 		$from = "\"$name\"$addr";
@@ -591,7 +591,6 @@ foreach my $t (@files) {
 		$message = "From: $author_not_sender\n\n$message";
 	}
 
-	$cc = join(", ", unique_email_list(@cc));
 
 	send_message();
 
