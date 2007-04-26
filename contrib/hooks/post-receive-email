@@ -327,36 +327,67 @@ generate_update_branch_email()
 	if [ -z "$fastforward" ]; then
 		echo "      from  $oldrev ($oldrev_type)"
 	else
+		#  1. Existing revisions were removed.  In this case newrev is a
+		#     subset of oldrev - this is the reverse of a fast-forward,
+		#     a rewind
+		#  2. New revisions were added on top of an old revision, this is
+		#     a rewind and addition.
+
+		# (1) certainly happened, (2) possibly.  When (2) hasn't happened,
+		# we set a flag to indicate that no log printout is required.
+
 		echo ""
-		echo "This update added new revisions after undoing old revisions.  That is to"
-		echo "say, the old revision is not a strict subset of the new revision.  This"
-		echo "situation occurs when you --force push a change and generate a"
-		echo "repository containing something like this:"
-		echo ""
-		echo " * -- * -- B -- O -- O -- O ($oldrev)"
-		echo "            \\"
-		echo "             N -- N -- N ($newrev)"
-		echo ""
-		echo "When this happens we assume that you've already had alert emails for all"
-		echo "of the O revisions, and so we here report only the revisions in the N"
-		echo "branch from the common base, B."
+
+		# Find the common ancestor of the old and new revisions and compare
+		# it with newrev
+		baserev=$(git merge-base $oldrev $newrev)
+		rewind_only=""
+		if [ "$baserev" = "$newrev" ]; then
+			echo "This update discarded existing revisions and left the branch pointing at"
+			echo "a previous point in the repository history."
+			echo ""
+			echo " * -- * -- N ($newrev)"
+			echo "            \\"
+			echo "             O -- O -- O ($oldrev)"
+			echo ""
+			echo "The removed revisions are not necessarilly gone - if another reference"
+			echo "still refers to them they will stay in the repository."
+			rewind_only=1
+		else
+			echo "This update added new revisions after undoing existing revisions.  That is"
+			echo "to say, the old revision is not a strict subset of the new revision.  This"
+			echo "situation occurs when you --force push a change and generate a repository"
+			echo "containing something like this:"
+			echo ""
+			echo " * -- * -- B -- O -- O -- O ($oldrev)"
+			echo "            \\"
+			echo "             N -- N -- N ($newrev)"
+			echo ""
+			echo "When this happens we assume that you've already had alert emails for all"
+			echo "of the O revisions, and so we here report only the revisions in the N"
+			echo "branch from the common base, B."
+		fi
 	fi
 
 	echo ""
-	echo "Those revisions listed above that are new to this repository have"
-	echo "not appeared on any other notification email; so we list those"
-	echo "revisions in full, below."
+	if [ -z "$rewind_only" ]; then
+		echo "Those revisions listed above that are new to this repository have"
+		echo "not appeared on any other notification email; so we list those"
+		echo "revisions in full, below."
 
-	echo ""
-	echo $LOGBEGIN
-	git rev-parse --not --branches | grep -v $(git rev-parse $refname) |
-	git rev-list --pretty --stdin $oldrev..$newrev
+		echo ""
+		echo $LOGBEGIN
+		git rev-parse --not --branches | grep -v $(git rev-parse $refname) |
+		git rev-list --pretty --stdin $oldrev..$newrev
 
-	# XXX: Need a way of detecting whether git rev-list actually outputted
-	# anything, so that we can issue a "no new revisions added by this
-	# update" message
+		# XXX: Need a way of detecting whether git rev-list actually outputted
+		# anything, so that we can issue a "no new revisions added by this
+		# update" message
 
-	echo $LOGEND
+		echo $LOGEND
+	else
+		echo "No new revisions were added by this update."
+	fi
 
 	# The diffstat is shown from the old revision to the new revision.  This
 	# is to show the truth of what happened in this change.  There's no point
