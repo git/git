@@ -1,0 +1,38 @@
+GIT v1.5.1.3 Release Notes (draft)
+==========================
+
+Fixes since v1.5.1.2
+--------------------
+
+* Bugfixes
+
+  - git-add tried to optimize by finding common leading
+    directories across its arguments but botched, causing very
+    confused behaviour.
+
+  - unofficial rpm.spec file shipped with git was letting
+    ETC_GITCONFIG set to /usr/etc/gitconfig.  Tweak the official
+    Makefile to make it harder for distro people to make the
+    same mistake, by setting the variable to /etc/gitconfig if
+    prefix is set to /usr.
+
+  - git-svn inconsistently stripped away username from the URL
+    only when svnsync_props was in use.
+
+  - git-send-email was not quoting recipient names that have
+    period '.' in them.  Also it did not allow overriding
+    envelope sender, which made it impossible to send patches to
+    certain subscriber-only lists.
+
+  - built-in write_tree() routine had a sequence that renamed a
+    file that is still open, which some systems did not like.
+
+  - when memory is very tight, sliding mmap code to read
+    packfiles incorrectly closed the fd that was still being
+    used to read the pack.
+
+---
+exec >/var/tmp/1
+O=v1.5.1.2-23-gbf7af11
+echo O=`git describe refs/heads/maint`
+git shortlog --no-merges $O..refs/heads/maint
