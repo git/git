@@ -476,6 +476,7 @@ X-Mailer: git-send-email $gitversion
 	}
 
 	my @sendmail_parameters = ('-i', @recipients);
+	my $raw_from = extract_valid_address($from);
 
 	if ($dry_run) {
 		# We don't want to send the email.
@@ -490,7 +491,7 @@ X-Mailer: git-send-email $gitversion
 	} else {
 		require Net::SMTP;
 		$smtp ||= Net::SMTP->new( $smtp_server );
-		$smtp->mail( $from ) or die $smtp->message;
+		$smtp->mail( $raw_from ) or die $smtp->message;
 		$smtp->to( @recipients ) or die $smtp->message;
 		$smtp->data or die $smtp->message;
 		$smtp->datasend("$header\n$message") or die $smtp->message;
@@ -501,10 +502,10 @@ X-Mailer: git-send-email $gitversion
 		printf (($dry_run ? "Dry-" : "")."Sent %s\n", $subject);
 	} else {
 		print (($dry_run ? "Dry-" : "")."OK. Log says:\nDate: $date\n");
-		if ($smtp) {
+		if ($smtp_server !~ m#^/#) {
 			print "Server: $smtp_server\n";
-			print "MAIL FROM: $from\n";
-			print "RCPT TO: ".join(',',@recipients)."\n";
+			print "MAIL FROM:<$raw_from>\n";
+			print "RCPT TO:".join(',',(map { "<$_>" } @recipients))."\n";
 		} else {
 			print "Sendmail: $smtp_server ".join(' ',@sendmail_parameters)."\n";
 		}
