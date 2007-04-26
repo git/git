@@ -274,6 +274,7 @@ sub expand_aliases {
 }
 
 @to = expand_aliases(@to);
+@to = (map { sanitize_address_rfc822($_) } @to);
 @initial_cc = expand_aliases(@initial_cc);
 @bcclist = expand_aliases(@bcclist);
 
