@@ -488,9 +488,9 @@ X-Mailer: git-send-email $gitversion
 		$smtp->ok or die "Failed to send $subject\n".$smtp->message;
 	}
 	if ($quiet) {
-		printf "Sent %s\n", $subject;
+		printf (($dry_run ? "Dry-" : "")."Sent %s\n", $subject);
 	} else {
-		print "OK. Log says:\nDate: $date\n";
+		print (($dry_run ? "Dry-" : "")."OK. Log says:\nDate: $date\n");
 		if ($smtp) {
 			print "Server: $smtp_server\n";
 		} else {
