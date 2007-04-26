@@ -77,6 +77,8 @@ Options:
    --quiet	  Make git-send-email less verbose.  One line per email
                   should be all that is output.
 
+   --dry-run	  Do everything except actually send the emails.
+
 EOT
 	exit(1);
 }
