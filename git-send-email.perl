@@ -449,6 +449,7 @@ sub send_message
 	@cc = (map { sanitize_address_rfc822($_) } @cc);
 	my $to = join (",\n\t", @recipients);
 	@recipients = unique_email_list(@recipients,@cc,@bcclist);
+	@recipients = (map { extract_valid_address($_) } @recipients);
 	my $date = format_2822_time($time++);
 	my $gitversion = '@@GIT_VERSION@@';
 	if ($gitversion =~ m/..GIT_VERSION../) {
@@ -474,7 +475,7 @@ X-Mailer: git-send-email $gitversion
 		$header .= join("\n", @xh) . "\n";
 	}
 
-	my @sendmail_parameters = ('-i', map { extract_valid_address($_) } @recipients);
+	my @sendmail_parameters = ('-i', @recipients);
 
 	if ($dry_run) {
 		# We don't want to send the email.
