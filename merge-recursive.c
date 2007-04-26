@@ -1342,7 +1342,7 @@ static int process_renames(struct path_list *a_renames,
 				mfi = merge_file(o, a, b,
 						a_branch, b_branch);
 
-				if (mfi.merge && mfi.clean &&
+				if (mfi.clean &&
 				    sha_eq(mfi.sha, ren1->pair->two->sha1) &&
 				    mfi.mode == ren1->pair->two->mode)
 					/*
