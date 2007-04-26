@@ -465,15 +465,15 @@ X-Mailer: git-send-email $gitversion
 		$header .= join("\n", @xh) . "\n";
 	}
 
+	my @sendmail_parameters = ('-i', map { extract_valid_address($_) } @recipients);
+
 	if ($dry_run) {
 		# We don't want to send the email.
 	} elsif ($smtp_server =~ m#^/#) {
 		my $pid = open my $sm, '|-';
 		defined $pid or die $!;
 		if (!$pid) {
-			exec($smtp_server,'-i',
-			     map { extract_valid_address($_) }
-			     @recipients) or die $!;
+			exec($smtp_server, @sendmail_parameters) or die $!;
 		}
 		print $sm "$header\n$message";
 		close $sm or die $?;
@@ -493,8 +493,10 @@ X-Mailer: git-send-email $gitversion
 		print (($dry_run ? "Dry-" : "")."OK. Log says:\nDate: $date\n");
 		if ($smtp) {
 			print "Server: $smtp_server\n";
+			print "MAIL FROM: $from\n";
+			print "RCPT TO: ".join(',',@recipients)."\n";
 		} else {
-			print "Sendmail: $smtp_server\n";
+			print "Sendmail: $smtp_server ".join(' ',@sendmail_parameters)."\n";
 		}
 		print "From: $from\nSubject: $subject\nCc: $cc\nTo: $to\n\n";
 		if ($smtp) {
