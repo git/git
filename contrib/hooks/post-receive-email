@@ -302,7 +302,7 @@ generate_update_branch_email()
 	# List all of the revisions that were removed by this update, in a fast forward
 	# update, this list will be empty, because rev-list O ^N is empty.  For a non
 	# fast forward, O ^N is the list of removed revisions
-	fastforward=""
+	fast_forward=""
 	rev=""
 	for rev in $(git rev-list $newrev..$oldrev)
 	do
