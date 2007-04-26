@@ -431,9 +431,22 @@ sub unquote_rfc2047 {
 	return "$_";
 }
 
+# If an address contains a . in the name portion, the name must be quoted.
+sub sanitize_address_rfc822
+{
+	my ($recipient) = @_;
+	my ($recipient_name) = ($recipient =~ /^(.*?)\s+</);
+	if ($recipient_name && $recipient_name =~ /\./ && $recipient_name !~ /^".*"$/) {
+		my ($name, $addr) = ($recipient =~ /^(.*?)(\s+<.*)/);
+		$recipient = "\"$name\"$addr";
+	}
+	return $recipient;
+}
+
 sub send_message
 {
 	my @recipients = unique_email_list(@to);
+	@cc = (map { sanitize_address_rfc822($_) } @cc);
 	my $to = join (",\n\t", @recipients);
 	@recipients = unique_email_list(@recipients,@cc,@bcclist);
 	my $date = format_2822_time($time++);
@@ -443,11 +456,7 @@ sub send_message
 	}
 
 	my $cc = join(", ", unique_email_list(@cc));
-my ($author_name) = ($from =~ /^(.*?)\s+</);
-	if ($author_name && $author_name =~ /\./ && $author_name !~ /^".*"$/) {
-		my ($name, $addr) = ($from =~ /^(.*?)(\s+<.*)/);
-		$from = "\"$name\"$addr";
-	}
+	$from = sanitize_address_rfc822($from);
 	my $header = "From: $from
 To: $to
 Cc: $cc
