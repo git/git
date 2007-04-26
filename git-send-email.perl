@@ -79,6 +79,8 @@ Options:
 
    --dry-run	  Do everything except actually send the emails.
 
+   --envelope-sender	Specify the envelope sender used to send the emails.
+
 EOT
 	exit(1);
 }
@@ -139,6 +141,7 @@ my (@to,@cc,@initial_cc,@bcclist,@xh,
 my ($chain_reply_to, $quiet, $suppress_from, $no_signed_off_cc,
 	$dry_run) = (1, 0, 0, 0, 0);
 my $smtp_server;
+my $envelope_sender;
 
 # Example reply to:
 #$initial_reply_to = ''; #<20050203173208.GA23964@foobar.com>';
@@ -177,6 +180,7 @@ my $rc = GetOptions("from=s" => \$from,
 		    "suppress-from" => \$suppress_from,
 		    "no-signed-off-cc|no-signed-off-by-cc" => \$no_signed_off_cc,
 		    "dry-run" => \$dry_run,
+		    "envelope-sender=s" => \$envelope_sender,
 	 );
 
 unless ($rc) {
@@ -476,7 +480,11 @@ X-Mailer: git-send-email $gitversion
 	}
 
 	my @sendmail_parameters = ('-i', @recipients);
-	my $raw_from = extract_valid_address($from);
+	my $raw_from = $from;
+	$raw_from = $envelope_sender if (defined $envelope_sender);
+	$raw_from = extract_valid_address($raw_from);
+	unshift (@sendmail_parameters,
+			'-f', $raw_from) if(defined $envelope_sender);
 
 	if ($dry_run) {
 		# We don't want to send the email.
