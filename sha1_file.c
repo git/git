@@ -549,7 +549,7 @@ static void scan_windows(struct packed_git *p,
 	}
 }
 
-static int unuse_one_window(struct packed_git *current)
+static int unuse_one_window(struct packed_git *current, int keep_fd)
 {
 	struct packed_git *p, *lru_p = NULL;
 	struct pack_window *lru_w = NULL, *lru_l = NULL;
@@ -565,7 +565,7 @@ static int unuse_one_window(struct packed_git *current)
 			lru_l->next = lru_w->next;
 		else {
 			lru_p->windows = lru_w->next;
-			if (!lru_p->windows && lru_p != current) {
+			if (!lru_p->windows && lru_p->pack_fd != keep_fd) {
 				close(lru_p->pack_fd);
 				lru_p->pack_fd = -1;
 			}
@@ -577,10 +577,10 @@ static int unuse_one_window(struct packed_git *current)
 	return 0;
 }
 
-void release_pack_memory(size_t need)
+void release_pack_memory(size_t need, int fd)
 {
 	size_t cur = pack_mapped;
-	while (need >= (cur - pack_mapped) && unuse_one_window(NULL))
+	while (need >= (cur - pack_mapped) && unuse_one_window(NULL, fd))
 		; /* nothing */
 }
 
@@ -713,7 +713,7 @@ unsigned char* use_pack(struct packed_git *p,
 			win->len = (size_t)len;
 			pack_mapped += win->len;
 			while (packed_git_limit < pack_mapped
-				&& unuse_one_window(p))
+				&& unuse_one_window(p, p->pack_fd))
 				; /* nothing */
 			win->base = xmmap(NULL, win->len,
 				PROT_READ, MAP_PRIVATE,

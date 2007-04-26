@@ -771,19 +771,19 @@ sub cmt_metadata {
 sub working_head_info {
 	my ($head, $refs) = @_;
 	my ($fh, $ctx) = command_output_pipe('rev-list', $head);
-	while (<$fh>) {
-		chomp;
-		my ($url, $rev, $uuid) = cmt_metadata($_);
+	while (my $hash = <$fh>) {
+		chomp($hash);
+		my ($url, $rev, $uuid) = cmt_metadata($hash);
 		if (defined $url && defined $rev) {
 			if (my $gs = Git::SVN->find_by_url($url)) {
 				my $c = $gs->rev_db_get($rev);
-				if ($c && $c eq $_) {
+				if ($c && $c eq $hash) {
 					close $fh; # break the pipe
 					return ($url, $rev, $uuid, $gs);
 				}
 			}
 		}
-		unshift @$refs, $_ if $refs;
+		unshift @$refs, $hash if $refs;
 	}
 	command_close_pipe($fh, $ctx);
 	(undef, undef, undef, undef);
@@ -1064,7 +1064,10 @@ sub init_remote_config {
 
 sub find_by_url { # repos_root and, path are optional
 	my ($class, $full_url, $repos_root, $path) = @_;
+
 	return undef unless defined $full_url;
+	remove_username($full_url);
+	remove_username($repos_root) if defined $repos_root;
 	my $remotes = read_all_remotes();
 	if (defined $full_url && defined $repos_root && !defined $path) {
 		$path = $full_url;
@@ -1072,6 +1075,7 @@ sub find_by_url { # repos_root and, path are optional
 	}
 	foreach my $repo_id (keys %$remotes) {
 		my $u = $remotes->{$repo_id}->{url} or next;
+		remove_username($u);
 		next if defined $repos_root && $repos_root ne $u;
 
 		my $fetch = $remotes->{$repo_id}->{fetch} || {};
