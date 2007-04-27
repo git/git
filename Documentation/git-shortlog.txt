@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 git-log --pretty=short | 'git-shortlog' [-h] [-n] [-s]
-git-shortlog [-n|--number] [-s|--summary] [<committish>...]
+git-shortlog [-n|--numbered] [-s|--summary] [<committish>...]
 
 DESCRIPTION
 -----------
@@ -22,14 +22,14 @@ Additionally, "[PATCH]" will be stripped from the commit description.
 OPTIONS
 -------
 
--h::
+-h, \--help::
 	Print a short usage message and exit.
 
--n::
+-n, \--numbered::
 	Sort output according to the number of commits per author instead
 	of author alphabetic order.
 
--s::
+-s, \--summary::
 	Suppress commit description and provide a commit count summary only.
 
 FILES
