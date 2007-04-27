@@ -5,6 +5,7 @@
 #include "path-list.h"
 #include "revision.h"
 #include "utf8.h"
+#include "mailmap.h"
 
 static const char shortlog_usage[] =
 "git-shortlog [-n] [-s] [<commit-id>... ]";
@@ -25,83 +26,6 @@ static int compare_by_number(const void *a1, const void *a2)
 }
 
 static struct path_list mailmap = {NULL, 0, 0, 0};
-
-static int read_mailmap(const char *filename)
-{
-	char buffer[1024];
-	FILE *f = fopen(filename, "r");
-
-	if (f == NULL)
-		return 1;
-	while (fgets(buffer, sizeof(buffer), f) != NULL) {
-		char *end_of_name, *left_bracket, *right_bracket;
-		char *name, *email;
-		int i;
-		if (buffer[0] == '#') {
-			static const char abbrev[] = "# repo-abbrev:";
-			int abblen = sizeof(abbrev) - 1;
-			int len = strlen(buffer);
-
-			if (len && buffer[len - 1] == '\n')
-				buffer[--len] = 0;
-			if (!strncmp(buffer, abbrev, abblen)) {
-				char *cp;
-
-				if (common_repo_prefix)
-					free(common_repo_prefix);
-				common_repo_prefix = xmalloc(len);
-
-				for (cp = buffer + abblen; isspace(*cp); cp++)
-					; /* nothing */
-				strcpy(common_repo_prefix, cp);
-			}
-			continue;
-		}
-		if ((left_bracket = strchr(buffer, '<')) == NULL)
-			continue;
-		if ((right_bracket = strchr(left_bracket + 1, '>')) == NULL)
-			continue;
-		if (right_bracket == left_bracket + 1)
-			continue;
-		for (end_of_name = left_bracket; end_of_name != buffer
-				&& isspace(end_of_name[-1]); end_of_name--)
-			/* keep on looking */
-		if (end_of_name == buffer)
-			continue;
-		name = xmalloc(end_of_name - buffer + 1);
-		strlcpy(name, buffer, end_of_name - buffer + 1);
-		email = xmalloc(right_bracket - left_bracket);
-		for (i = 0; i < right_bracket - left_bracket - 1; i++)
-			email[i] = tolower(left_bracket[i + 1]);
-		email[right_bracket - left_bracket - 1] = '\0';
-		path_list_insert(email, &mailmap)->util = name;
-	}
-	fclose(f);
-	return 0;
-}
-
-static int map_email(char *email, char *name, int maxlen)
-{
-	char *p;
-	struct path_list_item *item;
-
-	/* autocomplete common developers */
-	p = strchr(email, '>');
-	if (!p)
-		return 0;
-
-	*p = '\0';
-	/* downcase the email address */
-	for (p = email; *p; p++)
-		*p = tolower(*p);
-	item = path_list_lookup(email, &mailmap);
-	if (item != NULL) {
-		const char *realname = (const char *)item->util;
-		strncpy(name, realname, maxlen);
-		return 1;
-	}
-	return 0;
-}
 
 static void insert_author_oneline(struct path_list *list,
 		const char *author, int authorlen,
@@ -184,7 +108,7 @@ static void read_from_stdin(struct path_list *list)
 				(bob = strchr(buffer + 7, '<')) != NULL) {
 			char buffer2[1024], offset = 0;
 
-			if (map_email(bob + 1, buffer, sizeof(buffer)))
+			if (map_email(&mailmap, bob + 1, buffer, sizeof(buffer)))
 				bob = buffer + strlen(buffer);
 			else {
 				offset = 8;
@@ -238,7 +162,7 @@ static void get_from_rev(struct rev_info *rev, struct path_list *list)
 					die("Invalid commit buffer: %s",
 					    sha1_to_hex(commit->object.sha1));
 
-				if (map_email(bracket + 1, scratch,
+				if (map_email(&mailmap, bracket + 1, scratch,
 							sizeof(scratch))) {
 					author = scratch;
 					authorlen = strlen(scratch);
@@ -360,7 +284,7 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 		die ("unrecognized argument: %s", argv[1]);
 
 	if (!access(".mailmap", R_OK))
-		read_mailmap(".mailmap");
+		read_mailmap(&mailmap, ".mailmap", &common_repo_prefix);
 
 	if (rev.pending.nr == 0) {
 		if (isatty(0))
