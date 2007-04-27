@@ -141,6 +141,8 @@ my %cmd = (
 			  'color' => \$Git::SVN::Log::color,
 			  'pager=s' => \$Git::SVN::Log::pager,
 			} ],
+	'find-rev' => [ \&cmd_find_rev, "Translate between SVN revision numbers and tree-ish",
+			{ } ],
 	'rebase' => [ \&cmd_rebase, "Fetch and rebase your working directory",
 			{ 'merge|m|M' => \$_merge,
 			  'verbose|v' => \$_verbose,
@@ -426,6 +428,28 @@ sub cmd_dcommit {
 		@finish = qw/reset --mixed/;
 	}
 	command_noisy(@finish, $gs->refname);
+}
+
+sub cmd_find_rev {
+	my $revision_or_hash = shift;
+	my $result;
+	if ($revision_or_hash =~ /^r\d+$/) {
+		my $desired_revision = substr($revision_or_hash, 1);
+		my ($fh, $ctx) = command_output_pipe('rev-list', 'HEAD');
+		while (my $hash = <$fh>) {
+			chomp($hash);
+			my (undef, $rev, undef) = cmt_metadata($hash);
+			if ($rev && $rev eq $desired_revision) {
+				$result = $hash;
+				last;
+			}
+		}
+		command_close_pipe($fh, $ctx);
+	} else {
+		my (undef, $rev, undef) = cmt_metadata($revision_or_hash);
+		$result = $rev;
+	}
+	print "$result\n" if $result;
 }
 
 sub cmd_rebase {

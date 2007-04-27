@@ -159,6 +159,11 @@ New features:
 Any other arguments are passed directly to `git log'
 
 --
+'find-rev'::
+	When given an SVN revision number of the form 'rN', returns the
+	corresponding git commit hash.  When given a tree-ish, returns the
+	corresponding SVN revision number.
+
 'set-tree'::
 	You should consider using 'dcommit' instead of this command.
 	Commit specified commit or tree objects to SVN.  This relies on
