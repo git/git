@@ -16,14 +16,17 @@
 #include "quote.h"
 #include "xdiff-interface.h"
 #include "cache-tree.h"
+#include "path-list.h"
+#include "mailmap.h"
 
 static char blame_usage[] =
-"git-blame [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-p] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [--contents <filename>] [--incremental] [commit] [--] file\n"
+"git-blame [-c] [-b] [-l] [--root] [-x] [-t] [-f] [-n] [-s] [-p] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [--contents <filename>] [--incremental] [commit] [--] file\n"
 "  -c                  Use the same output mode as git-annotate (Default: off)\n"
 "  -b                  Show blank SHA-1 for boundary commits (Default: off)\n"
 "  -l                  Show long commit SHA1 (Default: off)\n"
 "  --root              Do not treat root commits as boundaries (Default: off)\n"
 "  -t                  Show raw timestamp (Default: off)\n"
+"  -x                  Do not use .mailmap file\n"
 "  -f, --show-name     Show original filename (Default: auto)\n"
 "  -n, --show-number   Show original linenumber (Default: off)\n"
 "  -s                  Suppress author name and timestamp (Default: off)\n"
@@ -43,6 +46,8 @@ static int show_root;
 static int blank_boundary;
 static int incremental;
 static int cmd_is_annotate;
+static int no_mailmap;
+static struct path_list mailmap;
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -1265,8 +1270,8 @@ static void get_ac_line(const char *inbuf, const char *what,
 			int bufsz, char *person, const char **mail,
 			unsigned long *time, const char **tz)
 {
-	int len;
-	char *tmp, *endp;
+	int len, tzlen, maillen;
+	char *tmp, *endp, *timepos;
 
 	tmp = strstr(inbuf, what);
 	if (!tmp)
@@ -1292,17 +1297,42 @@ static void get_ac_line(const char *inbuf, const char *what,
 	while (*tmp != ' ')
 		tmp--;
 	*tz = tmp+1;
+	tzlen = (person+len)-(tmp+1);
 
 	*tmp = 0;
 	while (*tmp != ' ')
 		tmp--;
 	*time = strtoul(tmp, NULL, 10);
+	timepos = tmp;
 
 	*tmp = 0;
 	while (*tmp != ' ')
 		tmp--;
 	*mail = tmp + 1;
 	*tmp = 0;
+	maillen = timepos - tmp;
+
+	if (!mailmap.nr)
+		return;
+
+	/*
+	 * mailmap expansion may make the name longer.
+	 * make room by pushing stuff down.
+	 */
+	tmp = person + bufsz - (tzlen + 1);
+	memmove(tmp, *tz, tzlen);
+	tmp[tzlen] = 0;
+	*tz = tmp;
+
+	tmp = tmp - (maillen + 1);
+	memmove(tmp, *mail, maillen);
+	tmp[maillen] = 0;
+	*mail = tmp;
+
+	/*
+	 * Now, convert e-mail using mailmap
+	 */
+	map_email(&mailmap, tmp + 1, person, tmp-person-1);
 }
 
 static void get_commit_info(struct commit *commit,
@@ -2143,6 +2173,9 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		else if (!strcmp("-p", arg) ||
 			 !strcmp("--porcelain", arg))
 			output_option |= OUTPUT_PORCELAIN;
+		else if (!strcmp("-x", arg) ||
+			 !strcmp("--no-mailmap", arg))
+			no_mailmap = 1;
 		else if (!strcmp("--", arg)) {
 			seen_dashdash = 1;
 			i++;
@@ -2341,6 +2374,9 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	if (revs_file && read_ancestry(revs_file))
 		die("reading graft file %s failed: %s",
 		    revs_file, strerror(errno));
+
+	if (!no_mailmap && !access(".mailmap", R_OK))
+		read_mailmap(&mailmap, ".mailmap", NULL);
 
 	assign_blame(&sb, &revs, opt);
 
