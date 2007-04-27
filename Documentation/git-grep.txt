@@ -12,12 +12,13 @@ SYNOPSIS
 'git-grep' [--cached]
 	   [-a | --text] [-I] [-i | --ignore-case] [-w | --word-regexp]
 	   [-v | --invert-match] [-h|-H] [--full-name]
-	   [-E | --extended-regexp] [-G | --basic-regexp] [-F | --fixed-strings]
-	   [-n] [-l | --files-with-matches] [-L | --files-without-match]
+	   [-E | --extended-regexp] [-G | --basic-regexp]
+	   [-F | --fixed-strings] [-n]
+	   [-l | --files-with-matches] [-L | --files-without-match]
 	   [-c | --count] [--all-match]
 	   [-A <post-context>] [-B <pre-context>] [-C <context>]
-	   [-f <file>] [-e] <pattern> [--and|--or|--not|(|)|-e <pattern>...]
-	   [<tree>...]
+	   [-f <file>] [-e] <pattern>
+	   [--and|--or|--not|(|)|-e <pattern>...] [<tree>...]
 	   [--] [<path>...]
 
 DESCRIPTION
@@ -38,6 +39,9 @@ OPTIONS
 -i | --ignore-case::
 	Ignore case differences between the patterns and the
 	files.
+
+-I::
+	Don't match the pattern in binary files.
 
 -w | --word-regexp::
 	Match the pattern only at word boundary (either begin at the
@@ -64,6 +68,10 @@ OPTIONS
 	Use POSIX extended/basic regexp for patterns.  Default
 	is to use basic regexp.
 
+-F | --fixed-strings::
+	Use fixed strings for patterns (don't interpret pattern
+	as a regex).
+
 -n::
 	Prefix the line number to matching lines.
 
@@ -80,6 +88,9 @@ OPTIONS
 	-- before), or both (`C` -- context) lines, and place a
 	line containing `--` between contiguous groups of
 	matches.
+
+-<num>::
+	A shortcut for specifying -C<num>.
 
 -f <file>::
 	Read patterns from <file>, one per line.
