@@ -8,7 +8,8 @@ git-fmt-merge-msg - Produce a merge commit message
 
 SYNOPSIS
 --------
-'git-fmt-merge-msg' <$GIT_DIR/FETCH_HEAD
+git-fmt-merge-msg [--summary | --no-summary] <$GIT_DIR/FETCH_HEAD
+git-fmt-merge-msg [--summary | --no-summray] -F <file>
 
 DESCRIPTION
 -----------
@@ -19,6 +20,28 @@ passed as the '<merge-message>' argument of `git-merge`.
 This script is intended mostly for internal use by scripts
 automatically invoking `git-merge`.
 
+OPTIONS
+-------
+
+--summary::
+	In addition to branch names, populate the log message with
+	one-line descriptions from the actual commits that are being
+	merged.
+
+--no-summary::
+	Do not list one-line descriptions from the actual commits being
+	merged.
+
+--file <file>, -F <file>::
+	Take the list of merged objects from <file> instead of
+	stdin.
+
+CONFIGURATION
+-------------
+
+merge.summary::
+	Whether to include summaries of merged commits in newly
+	merge commit messages. False by default.
 
 SEE ALSO
 --------
