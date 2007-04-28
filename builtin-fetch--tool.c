@@ -35,16 +35,13 @@ static int update_ref(const char *action,
 		      unsigned char *sha1,
 		      unsigned char *oldval)
 {
-	int len;
 	char msg[1024];
 	char *rla = getenv("GIT_REFLOG_ACTION");
 	static struct ref_lock *lock;
 
 	if (!rla)
 		rla = "(reflog update)";
-	len = snprintf(msg, sizeof(msg), "%s: %s", rla, action);
-	if (sizeof(msg) <= len)
-		die("insanely long action");
+	snprintf(msg, sizeof(msg), "%s: %s", rla, action);
 	lock = lock_any_ref_for_update(refname, oldval);
 	if (!lock)
 		return 1;
