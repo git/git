@@ -933,13 +933,17 @@ endif
 
 ### Testing rules
 
+TEST_PROGRAMS = test-chmtime$X test-genrandom$X
+
+all:: $(TEST_PROGRAMS)
+
 # GNU make supports exporting all variables by "export" without parameters.
 # However, the environment gets quite big, and some programs have problems
 # with that.
 
 export NO_SVN_TESTS
 
-test: all test-chmtime$X test-genrandom$X
+test: all
 	$(MAKE) -C t/ all
 
 test-date$X: test-date.c date.o ctype.o
