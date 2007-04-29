@@ -2886,6 +2886,19 @@ proc start_local_merge_action {w} {
 		set unit branch
 	} elseif {$revcnt <= 15} {
 		set unit branches
+
+		if {[tk_dialog \
+		$w.confirm_octopus \
+		[wm title $w] \
+		"Use octopus merge strategy?
+
+You are merging $revcnt branches at once.  This requires using the octopus merge driver, which may not succeed if there are file-level conflicts.
+" \
+		question \
+		0 \
+		{Cancel} \
+		{Use octopus} \
+		] != 1} return
 	} else {
 		tk_messageBox \
 			-icon error \
