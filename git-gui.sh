@@ -1317,10 +1317,11 @@ A rescan will be automatically started now.
 	}
 	set i [string first "\n" $msg]
 	if {$i >= 0} {
-		append reflogm {: } [string range $msg 0 [expr {$i - 1}]]
+		set subject [string range $msg 0 [expr {$i - 1}]]
 	} else {
-		append reflogm {: } $msg
+		set subject $msg
 	}
+	append reflogm {: } $subject
 	set cmd [list git update-ref -m $reflogm HEAD $cmt_id $curHEAD]
 	if {[catch {eval exec $cmd} err]} {
 		error_popup "update-ref failed:\n\n$err"
@@ -1414,7 +1415,7 @@ A rescan will be automatically started now.
 	unlock_index
 	reshow_diff
 	set ui_status_value \
-		"Changes committed as [string range $cmt_id 0 7]."
+		"Created commit [string range $cmt_id 0 7]: $subject"
 }
 
 ######################################################################
