@@ -52,6 +52,7 @@ foreach my $tar_file (@ARGV)
 			Z8 Z1 Z100 Z6
 			Z2 Z32 Z32 Z8 Z8 Z*', $_;
 		last unless $name;
+		next if $name =~ '/$';
 		$mode = oct $mode;
 		$size = oct $size;
 		$mtime = oct $mtime;
