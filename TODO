@@ -14,6 +14,16 @@ to pick an item from the list and work on it.
 Recent issues
 -------------
 
+* Handling pushing into non-bare repository more gracefully.
+
+When git-push is done to a non-bare repository and updates the
+branch that is currently checked out, we currently do not do
+anything special.
+
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Message-ID: <Pine.LNX.4.64.0704160931550.5473@woody.linux-foundation.org>
+
+
 * Use blame machinery to track a single file (not path) in finer
   grained way.
 
@@ -92,6 +102,8 @@ Maybe allow gitweb to show diff with any parent and diff --cc,
 not just diff with the first parent for a merge.
 
 [jc: Jakub is interested in it]
+
+
 
 Technical (milder)
 ------------------
