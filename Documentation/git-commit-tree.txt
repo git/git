@@ -61,6 +61,7 @@ either `.git/config` file, or using the following environment variables.
 	GIT_COMMITTER_NAME
 	GIT_COMMITTER_EMAIL
 	GIT_COMMITTER_DATE
+	EMAIL
 
 (nb "<", ">" and "\n"s are stripped)
 
