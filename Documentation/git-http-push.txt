@@ -8,7 +8,7 @@ git-http-push - Push objects over HTTP/DAV to another repository
 
 SYNOPSIS
 --------
-'git-http-push' [--complete] [--force] [--verbose] <url> <ref> [<ref>...]
+'git-http-push' [--all] [--force] [--verbose] <url> <ref> [<ref>...]
 
 DESCRIPTION
 -----------
@@ -18,7 +18,7 @@ remote branch.
 
 OPTIONS
 -------
---complete::
+--all::
 	Do not assume that the remote repository is complete in its
 	current state, and verify all objects in the entire local
 	ref's history exist in the remote repository.
@@ -33,6 +33,15 @@ OPTIONS
 --verbose::
 	Report the list of objects being walked locally and the
 	list of objects successfully sent to the remote repository.
+
+-d, -D::
+	Remove <ref> from remote repository.  The specified branch
+	cannot be the remote HEAD.  If -d is specified the following
+	other conditions must also be met:
+
+	- Remote HEAD must resolve to an object that exists locally
+	- Specified branch resolves to an object that exists locally
+	- Specified branch is an ancestor of the remote HEAD
 
 <ref>...::
 	The remote refs to update.

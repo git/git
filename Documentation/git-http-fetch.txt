@@ -39,6 +39,10 @@ commit-id::
 
 		<commit-id>['\t'<filename-as-in--w>]
 
+--recover::
+	Verify that everything reachable from target is fetched.  Used after
+	an earlier fetch is interrupted.
+
 Author
 ------
 Written by Linus Torvalds <torvalds@osdl.org>

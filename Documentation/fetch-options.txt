@@ -1,13 +1,20 @@
+-q, \--quiet::
+	Pass --quiet to git-fetch-pack and silence any other internally
+	used programs.
+
+-v, \--verbose::
+	Be verbose.
+
 -a, \--append::
 	Append ref names and object names of fetched refs to the
 	existing contents of `.git/FETCH_HEAD`.  Without this
 	option old data in `.git/FETCH_HEAD` will be overwritten.
 
 \--upload-pack <upload-pack>::
-        When given, and the repository to fetch from is handled
-        by 'git-fetch-pack', '--exec=<upload-pack>' is passed to
-        the command to specify non-default path for the command
-        run on the other end.
+	When given, and the repository to fetch from is handled
+	by 'git-fetch-pack', '--exec=<upload-pack>' is passed to
+	the command to specify non-default path for the command
+	run on the other end.
 
 -f, \--force::
 	When `git-fetch` is used with `<rbranch>:<lbranch>`
@@ -16,7 +23,7 @@
 	fetches is a descendant of `<lbranch>`.  This option
 	overrides that check.
 
-\--no-tags::
+-n, \--no-tags::
 	By default, `git-fetch` fetches tags that point at
 	objects that are downloaded from the remote repository
 	and stores them locally.  This option disables this

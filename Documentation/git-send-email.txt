@@ -85,6 +85,15 @@ The --cc option must be repeated for each user you want on the cc list.
 	Do not add the From: address to the cc: list, if it shows up in a From:
 	line.
 
+--dry-run::
+	Do everything except actually send the emails.
+
+--envelope-sender::
+	Specify the envelope sender used to send the emails.
+	This is useful if your default address is not the address that is
+	subscribed to a list. If you use the sendmail binary, you must have
+	suitable privileges for the -f parameter.
+
 --to::
 	Specify the primary recipient of the emails generated.
 	Generally, this will be the upstream maintainer of the
