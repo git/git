@@ -78,11 +78,16 @@ are attributes-aware.
 Checking-out and checking-in
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The attribute `crlf` affects how the contents stored in the
+These attributes affect how the contents stored in the
 repository are copied to the working tree files when commands
-such as `git checkout` and `git merge` run.  It also affects how
+such as `git checkout` and `git merge` run.  They also affect how
 git stores the contents you prepare in the working tree in the
 repository upon `git add` and `git commit`.
+
+`crlf`
+^^^^^^
+
+This attribute controls the line-ending convention.
 
 Set::
 
@@ -127,6 +132,67 @@ in to the repository.
 When `core.autocrlf` is set to "input", line endings are
 converted to LF upon checkin, but there is no conversion done
 upon checkout.
+
+
+`ident`
+^^^^^^^
+
+When the attribute `ident` is set to a path, git replaces
+`$ident$` in the blob object with `$ident:`, followed by
+40-character hexadecimal blob object name, followed by a dollar
+sign `$` upon checkout.  Any byte sequence that begins with
+`$ident:` and ends with `$` in the worktree file is replaced
+with `$ident$` upon check-in.
+
+
+Interaction between checkin/checkout attributes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In the check-in codepath, the worktree file is first converted
+with `ident` (if specified), and then with `crlf` (again, if
+specified and applicable).
+
+In the check-out codepath, the blob content is first converted
+with `crlf`, and then `ident`.
+
+
+`filter`
+^^^^^^^^
+
+A `filter` attribute can be set to a string value.  This names
+filter driver specified in the configuration.
+
+A filter driver consists of `clean` command and `smudge`
+command, either of which can be left unspecified.  Upon
+checkout, when `smudge` command is specified, the command is fed
+the blob object from its standard input, and its standard output
+is used to update the worktree file.  Similarly, `clean` command
+is used to convert the contents of worktree file upon checkin.
+
+Missing filter driver definition in the config is not an error
+but makes the filter a no-op passthru.
+
+The content filtering is done to massage the content into a
+shape that is more convenient for the platform, filesystem, and
+the user to use.  The keyword here is "more convenient" and not
+"turning something unusable into usable".  In other words, it is
+"hanging yourself because we gave you a long rope" if your
+project uses filtering mechanism in such a way that it makes
+your project unusable unless the checkout is done with a
+specific filter in effect.
+
+
+Interaction between checkin/checkout attributes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In the check-in codepath, the worktree file is first converted
+with `filter` driver (if specified and corresponding driver
+defined), then the result is processed with `ident` (if
+specified), and then finally with `crlf` (again, if specified
+and applicable).
+
+In the check-out codepath, the blob content is first converted
+with `crlf`, and then `ident` and fed to `filter`.
 
 
 Generating diff text
