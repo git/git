@@ -1918,8 +1918,7 @@ proc populate_branch_menu {} {
 			-label $b \
 			-command [list switch_branch $b] \
 			-variable current_branch \
-			-value $b \
-			-font font_ui
+			-value $b
 		lappend disable_on_lock \
 			[list $m entryconf [$m index last] -state]
 	}
@@ -2078,26 +2077,21 @@ proc do_create_branch {} {
 
 	frame $w.buttons
 	button $w.buttons.create -text Create \
-		-font font_ui \
 		-default active \
 		-command [list do_create_branch_action $w]
 	pack $w.buttons.create -side right
 	button $w.buttons.cancel -text {Cancel} \
-		-font font_ui \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.desc \
-		-text {Branch Description} \
-		-font font_ui
-	label $w.desc.name_l -text {Name:} -font font_ui
+	labelframe $w.desc -text {Branch Description}
+	label $w.desc.name_l -text {Name:}
 	entry $w.desc.name_t \
 		-borderwidth 1 \
 		-relief sunken \
 		-width 40 \
 		-textvariable create_branch_name \
-		-font font_ui \
 		-validate key \
 		-validatecommand {
 			if {%d == 1 && [regexp {[~^:?*\[\0- ]} %S]} {return 0}
@@ -2107,14 +2101,11 @@ proc do_create_branch {} {
 	grid columnconfigure $w.desc 1 -weight 1
 	pack $w.desc -anchor nw -fill x -pady 5 -padx 5
 
-	labelframe $w.from \
-		-text {Starting Revision} \
-		-font font_ui
+	labelframe $w.from -text {Starting Revision}
 	radiobutton $w.from.head_r \
 		-text {Local Branch:} \
 		-value head \
-		-variable create_branch_revtype \
-		-font font_ui
+		-variable create_branch_revtype
 	eval tk_optionMenu $w.from.head_m create_branch_head $all_heads
 	grid $w.from.head_r $w.from.head_m -sticky w
 	set all_trackings [all_tracking_branches]
@@ -2123,8 +2114,7 @@ proc do_create_branch {} {
 		radiobutton $w.from.tracking_r \
 			-text {Tracking Branch:} \
 			-value tracking \
-			-variable create_branch_revtype \
-			-font font_ui
+			-variable create_branch_revtype
 		eval tk_optionMenu $w.from.tracking_m \
 			create_branch_trackinghead \
 			$all_trackings
@@ -2136,22 +2126,19 @@ proc do_create_branch {} {
 		radiobutton $w.from.tag_r \
 			-text {Tag:} \
 			-value tag \
-			-variable create_branch_revtype \
-			-font font_ui
+			-variable create_branch_revtype
 		eval tk_optionMenu $w.from.tag_m create_branch_tag $all_tags
 		grid $w.from.tag_r $w.from.tag_m -sticky w
 	}
 	radiobutton $w.from.exp_r \
 		-text {Revision Expression:} \
 		-value expression \
-		-variable create_branch_revtype \
-		-font font_ui
+		-variable create_branch_revtype
 	entry $w.from.exp_t \
 		-borderwidth 1 \
 		-relief sunken \
 		-width 50 \
 		-textvariable create_branch_revexp \
-		-font font_ui \
 		-validate key \
 		-validatecommand {
 			if {%d == 1 && [regexp {\s} %S]} {return 0}
@@ -2164,13 +2151,10 @@ proc do_create_branch {} {
 	grid columnconfigure $w.from 1 -weight 1
 	pack $w.from -anchor nw -fill x -pady 5 -padx 5
 
-	labelframe $w.postActions \
-		-text {Post Creation Actions} \
-		-font font_ui
+	labelframe $w.postActions -text {Post Creation Actions}
 	checkbutton $w.postActions.checkout \
 		-text {Checkout after creation} \
-		-variable create_branch_checkout \
-		-font font_ui
+		-variable create_branch_checkout
 	pack $w.postActions.checkout -anchor nw
 	pack $w.postActions -anchor nw -fill x -pady 5 -padx 5
 
@@ -2296,24 +2280,19 @@ proc do_delete_branch {} {
 
 	frame $w.buttons
 	button $w.buttons.create -text Delete \
-		-font font_ui \
 		-command [list do_delete_branch_action $w]
 	pack $w.buttons.create -side right
 	button $w.buttons.cancel -text {Cancel} \
-		-font font_ui \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.list \
-		-text {Local Branches} \
-		-font font_ui
+	labelframe $w.list -text {Local Branches}
 	listbox $w.list.l \
 		-height 10 \
 		-width 70 \
 		-selectmode extended \
-		-yscrollcommand [list $w.list.sby set] \
-		-font font_ui
+		-yscrollcommand [list $w.list.sby set]
 	foreach h $all_heads {
 		if {$h ne $current_branch} {
 			$w.list.l insert end $h
@@ -2324,14 +2303,11 @@ proc do_delete_branch {} {
 	pack $w.list.l -side left -fill both -expand 1
 	pack $w.list -fill both -expand 1 -pady 5 -padx 5
 
-	labelframe $w.validate \
-		-text {Delete Only If} \
-		-font font_ui
+	labelframe $w.validate -text {Delete Only If}
 	radiobutton $w.validate.head_r \
 		-text {Merged Into Local Branch:} \
 		-value head \
-		-variable delete_branch_checktype \
-		-font font_ui
+		-variable delete_branch_checktype
 	eval tk_optionMenu $w.validate.head_m delete_branch_head $all_heads
 	grid $w.validate.head_r $w.validate.head_m -sticky w
 	set all_trackings [all_tracking_branches]
@@ -2340,8 +2316,7 @@ proc do_delete_branch {} {
 		radiobutton $w.validate.tracking_r \
 			-text {Merged Into Tracking Branch:} \
 			-value tracking \
-			-variable delete_branch_checktype \
-			-font font_ui
+			-variable delete_branch_checktype
 		eval tk_optionMenu $w.validate.tracking_m \
 			delete_branch_trackinghead \
 			$all_trackings
@@ -2350,8 +2325,7 @@ proc do_delete_branch {} {
 	radiobutton $w.validate.always_r \
 		-text {Always (Do not perform merge checks)} \
 		-value always \
-		-variable delete_branch_checktype \
-		-font font_ui
+		-variable delete_branch_checktype
 	grid $w.validate.always_r -columnspan 2 -sticky w
 	grid columnconfigure $w.validate 1 -weight 1
 	pack $w.validate -anchor nw -fill x -pady 5 -padx 5
@@ -2578,8 +2552,7 @@ proc populate_fetch_menu {} {
 		if {$enable} {
 			$m add command \
 				-label "Fetch from $r..." \
-				-command [list fetch_from $r] \
-				-font font_ui
+				-command [list fetch_from $r]
 		}
 	}
 }
@@ -2614,8 +2587,7 @@ proc populate_push_menu {} {
 			}
 			$m add command \
 				-label "Push to $r..." \
-				-command [list push_to $r] \
-				-font font_ui
+				-command [list push_to $r]
 			incr fast_count
 		}
 	}
@@ -2675,26 +2647,21 @@ proc do_push_anywhere {} {
 
 	frame $w.buttons
 	button $w.buttons.create -text Push \
-		-font font_ui \
 		-default active \
 		-command [list start_push_anywhere_action $w]
 	pack $w.buttons.create -side right
 	button $w.buttons.cancel -text {Cancel} \
-		-font font_ui \
 		-default normal \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.source \
-		-text {Source Branches} \
-		-font font_ui
+	labelframe $w.source -text {Source Branches}
 	listbox $w.source.l \
 		-height 10 \
 		-width 70 \
 		-selectmode extended \
-		-yscrollcommand [list $w.source.sby set] \
-		-font font_ui
+		-yscrollcommand [list $w.source.sby set]
 	foreach h $all_heads {
 		$w.source.l insert end $h
 		if {$h eq $current_branch} {
@@ -2706,15 +2673,12 @@ proc do_push_anywhere {} {
 	pack $w.source.l -side left -fill both -expand 1
 	pack $w.source -fill both -expand 1 -pady 5 -padx 5
 
-	labelframe $w.dest \
-		-text {Destination Repository} \
-		-font font_ui
+	labelframe $w.dest -text {Destination Repository}
 	if {$all_remotes ne {}} {
 		radiobutton $w.dest.remote_r \
 			-text {Remote:} \
 			-value remote \
-			-variable push_urltype \
-			-font font_ui
+			-variable push_urltype
 		eval tk_optionMenu $w.dest.remote_m push_remote $all_remotes
 		grid $w.dest.remote_r $w.dest.remote_m -sticky w
 		if {[lsearch -sorted -exact $all_remotes origin] != -1} {
@@ -2729,14 +2693,12 @@ proc do_push_anywhere {} {
 	radiobutton $w.dest.url_r \
 		-text {Arbitrary URL:} \
 		-value url \
-		-variable push_urltype \
-		-font font_ui
+		-variable push_urltype
 	entry $w.dest.url_t \
 		-borderwidth 1 \
 		-relief sunken \
 		-width 50 \
 		-textvariable push_url \
-		-font font_ui \
 		-validate key \
 		-validatecommand {
 			if {%d == 1 && [regexp {\s} %S]} {return 0}
@@ -2749,18 +2711,14 @@ proc do_push_anywhere {} {
 	grid columnconfigure $w.dest 1 -weight 1
 	pack $w.dest -anchor nw -fill x -pady 5 -padx 5
 
-	labelframe $w.options \
-		-text {Transfer Options} \
-		-font font_ui
+	labelframe $w.options -text {Transfer Options}
 	checkbutton $w.options.thin \
 		-text {Use thin pack (for slow network connections)} \
-		-variable push_thin \
-		-font font_ui
+		-variable push_thin
 	grid $w.options.thin -columnspan 2 -sticky w
 	checkbutton $w.options.tags \
 		-text {Include tags} \
-		-variable push_tags \
-		-font font_ui
+		-variable push_tags
 	grid $w.options.tags -columnspan 2 -sticky w
 	grid columnconfigure $w.options 1 -weight 1
 	pack $w.options -anchor nw -fill x -pady 5 -padx 5
@@ -2950,28 +2908,22 @@ proc do_local_merge {} {
 
 	frame $w.buttons
 	button $w.buttons.visualize -text Visualize \
-		-font font_ui \
 		-command [list visualize_local_merge $w]
 	pack $w.buttons.visualize -side left
 	button $w.buttons.create -text Merge \
-		-font font_ui \
 		-command [list start_local_merge_action $w]
 	pack $w.buttons.create -side right
 	button $w.buttons.cancel -text {Cancel} \
-		-font font_ui \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.source \
-		-text {Source Branches} \
-		-font font_ui
+	labelframe $w.source -text {Source Branches}
 	listbox $w.source.l \
 		-height 10 \
 		-width 70 \
 		-selectmode extended \
-		-yscrollcommand [list $w.source.sby set] \
-		-font font_ui
+		-yscrollcommand [list $w.source.sby set]
 	scrollbar $w.source.sby -command [list $w.source.l yview]
 	pack $w.source.sby -side right -fill y
 	pack $w.source.l -side left -fill both -expand 1
@@ -3106,8 +3058,7 @@ proc new_browser {commit} {
 		-height 20 \
 		-width 70 \
 		-xscrollcommand [list $w.list.sbx set] \
-		-yscrollcommand [list $w.list.sby set] \
-		-font font_ui
+		-yscrollcommand [list $w.list.sby set]
 	$w_list tag conf in_sel \
 		-background [$w_list cget -foreground] \
 		-foreground [$w_list cget -background]
@@ -3122,8 +3073,7 @@ proc new_browser {commit} {
 		-anchor w \
 		-justify left \
 		-borderwidth 1 \
-		-relief sunken \
-		-font font_ui
+		-relief sunken
 	pack $w.status -anchor w -side bottom -fill x
 
 	bind $w_list <Button-1>        "browser_click 0 $w_list @%x,%y;break"
@@ -3403,8 +3353,7 @@ proc show_blame {commit path} {
 		-anchor w \
 		-justify left \
 		-borderwidth 1 \
-		-relief sunken \
-		-font font_ui
+		-relief sunken
 	pack $w.status -side bottom -fill x
 
 	frame $w.cm
@@ -3426,7 +3375,6 @@ proc show_blame {commit path} {
 
 	menu $w.ctxm -tearoff 0
 	$w.ctxm add command -label "Copy Commit" \
-		-font font_ui \
 		-command "blame_copycommit $w \$cursorW @\$cursorX,\$cursorY"
 
 	foreach i [list \
@@ -3928,7 +3876,6 @@ proc hook_failed_popup {hook msg} {
 
 	button $w.ok -text OK \
 		-width 15 \
-		-font font_ui \
 		-command "destroy $w"
 	pack $w.ok -side bottom -anchor e -pady 10 -padx 10
 
@@ -3977,13 +3924,10 @@ proc console_init {w} {
 
 	menu $w.ctxm -tearoff 0
 	$w.ctxm add command -label "Copy" \
-		-font font_ui \
 		-command "tk_textCopy $w.m.t"
 	$w.ctxm add command -label "Select All" \
-		-font font_ui \
 		-command "focus $w.m.t;$w.m.t tag add sel 0.0 end"
 	$w.ctxm add command -label "Copy All" \
-		-font font_ui \
 		-command "
 			$w.m.t tag add sel 0.0 end
 			tk_textCopy $w.m.t
@@ -3991,7 +3935,6 @@ proc console_init {w} {
 		"
 
 	button $w.ok -text {Close} \
-		-font font_ui \
 		-state disabled \
 		-command "destroy $w"
 	pack $w.ok -side bottom -anchor e -pady 10 -padx 10
@@ -4179,17 +4122,14 @@ proc do_stats {} {
 	toplevel $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
-	label $w.header -text {Database Statistics} \
-		-font font_uibold
+	label $w.header -text {Database Statistics}
 	pack $w.header -side top -fill x
 
 	frame $w.buttons -border 1
 	button $w.buttons.close -text Close \
-		-font font_ui \
 		-default active \
 		-command [list destroy $w]
 	button $w.buttons.gc -text {Compress Database} \
-		-font font_ui \
 		-default normal \
 		-command "destroy $w;do_gc"
 	pack $w.buttons.close -side right
@@ -4213,8 +4153,8 @@ proc do_stats {} {
 			set value "$value[lindex $s 2]"
 		}
 
-		label $w.stat.l_$name -text "$label:" -anchor w -font font_ui
-		label $w.stat.v_$name -text $value -anchor w -font font_ui
+		label $w.stat.l_$name -text "$label:" -anchor w
+		label $w.stat.v_$name -text $value -anchor w
 		grid $w.stat.l_$name $w.stat.v_$name -sticky we -padx {0 5}
 	}
 	pack $w.stat -pady 10 -padx 10
@@ -4515,7 +4455,6 @@ proc do_about {} {
 
 	frame $w.buttons
 	button $w.buttons.close -text {Close} \
-		-font font_ui \
 		-default active \
 		-command [list destroy $w]
 	pack $w.buttons.close -side right
@@ -4528,8 +4467,7 @@ $copyright" \
 		-justify left \
 		-anchor w \
 		-borderwidth 1 \
-		-relief solid \
-		-font font_ui
+		-relief solid
 	pack $w.desc -side top -fill x -padx 5 -pady 5
 
 	set v {}
@@ -4549,14 +4487,12 @@ $copyright" \
 		-justify left \
 		-anchor w \
 		-borderwidth 1 \
-		-relief solid \
-		-font font_ui
+		-relief solid
 	pack $w.vers -side top -fill x -padx 5 -pady 5
 
 	menu $w.ctxm -tearoff 0
 	$w.ctxm add command \
 		-label {Copy} \
-		-font font_ui \
 		-command "
 		clipboard clear
 		clipboard append -format STRING -type STRING -- \[$w.vers cget -text\]
@@ -4600,26 +4536,21 @@ proc do_options {} {
 
 	frame $w.buttons
 	button $w.buttons.restore -text {Restore Defaults} \
-		-font font_ui \
 		-default normal \
 		-command do_restore_defaults
 	pack $w.buttons.restore -side left
 	button $w.buttons.save -text Save \
-		-font font_ui \
 		-default active \
 		-command [list do_save_config $w]
 	pack $w.buttons.save -side right
 	button $w.buttons.cancel -text {Cancel} \
-		-font font_ui \
 		-default normal \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.repo -text "[reponame] Repository" \
-		-font font_ui
-	labelframe $w.global -text {Global (All Repositories)} \
-		-font font_ui
+	labelframe $w.repo -text "[reponame] Repository"
+	labelframe $w.global -text {Global (All Repositories)}
 	pack $w.repo -side left -fill both -expand 1 -pady 5 -padx 5
 	pack $w.global -side right -fill both -expand 1 -pady 5 -padx 5
 
@@ -4645,35 +4576,32 @@ proc do_options {} {
 				checkbutton $w.$f.$optid -text $text \
 					-variable ${f}_config_new($name) \
 					-onvalue true \
-					-offvalue false \
-					-font font_ui
+					-offvalue false
 				pack $w.$f.$optid -side top -anchor w
 			}
 			i-* {
 				regexp -- {-(\d+)\.\.(\d+)$} $type _junk min max
 				frame $w.$f.$optid
-				label $w.$f.$optid.l -text "$text:" -font font_ui
+				label $w.$f.$optid.l -text "$text:"
 				pack $w.$f.$optid.l -side left -anchor w -fill x
 				spinbox $w.$f.$optid.v \
 					-textvariable ${f}_config_new($name) \
 					-from $min \
 					-to $max \
 					-increment 1 \
-					-width [expr {1 + [string length $max]}] \
-					-font font_ui
+					-width [expr {1 + [string length $max]}]
 				bind $w.$f.$optid.v <FocusIn> {%W selection range 0 end}
 				pack $w.$f.$optid.v -side right -anchor e -padx 5
 				pack $w.$f.$optid -side top -anchor w -fill x
 			}
 			t {
 				frame $w.$f.$optid
-				label $w.$f.$optid.l -text "$text:" -font font_ui
+				label $w.$f.$optid.l -text "$text:"
 				entry $w.$f.$optid.v \
 					-borderwidth 1 \
 					-relief sunken \
 					-width 20 \
-					-textvariable ${f}_config_new($name) \
-					-font font_ui
+					-textvariable ${f}_config_new($name)
 				pack $w.$f.$optid.l -side left -anchor w
 				pack $w.$f.$optid.v -side left -anchor w \
 					-fill x -expand 1 \
@@ -4696,7 +4624,7 @@ proc do_options {} {
 			[font configure $font -size]
 
 		frame $w.global.$name
-		label $w.global.$name.l -text "$text:" -font font_ui
+		label $w.global.$name.l -text "$text:"
 		pack $w.global.$name.l -side left -anchor w -fill x
 		eval tk_optionMenu $w.global.$name.family \
 			global_config_new(gui.$font^^family) \
@@ -4704,8 +4632,7 @@ proc do_options {} {
 		spinbox $w.global.$name.size \
 			-textvariable global_config_new(gui.$font^^size) \
 			-from 2 -to 80 -increment 1 \
-			-width 3 \
-			-font font_ui
+			-width 3
 		bind $w.global.$name.size <FocusIn> {%W selection range 0 end}
 		pack $w.global.$name.size -side right -anchor e
 		pack $w.global.$name.family -side right -anchor e
@@ -5002,6 +4929,13 @@ catch {
 font create font_uibold
 font create font_diffbold
 
+foreach class {Button Checkbutton Entry Label
+		Labelframe Listbox Menu Message
+		Radiobutton Text} {
+	option add *$class.font font_ui
+}
+unset class
+
 if {[is_Windows]} {
 	set M1B Control
 	set M1T Ctrl
@@ -5049,8 +4983,6 @@ set font_descs {
 }
 load_config 0
 apply_config
-option add *Dialog.msg.font font_ui
-option add *Button.font     font_ui
 
 ######################################################################
 ##
@@ -5098,18 +5030,18 @@ set ui_comm {}
 # -- Menu Bar
 #
 menu .mbar -tearoff 0
-.mbar add cascade -label Repository -menu .mbar.repository -font font_ui
-.mbar add cascade -label Edit -menu .mbar.edit -font font_ui
+.mbar add cascade -label Repository -menu .mbar.repository
+.mbar add cascade -label Edit -menu .mbar.edit
 if {[is_enabled branch]} {
-	.mbar add cascade -label Branch -menu .mbar.branch -font font_ui
+	.mbar add cascade -label Branch -menu .mbar.branch
 }
 if {[is_enabled multicommit] || [is_enabled singlecommit]} {
-	.mbar add cascade -label Commit -menu .mbar.commit -font font_ui
+	.mbar add cascade -label Commit -menu .mbar.commit
 }
 if {[is_enabled transport]} {
-	.mbar add cascade -label Merge -menu .mbar.merge -font font_ui
-	.mbar add cascade -label Fetch -menu .mbar.fetch -font font_ui
-	.mbar add cascade -label Push -menu .mbar.push -font font_ui
+	.mbar add cascade -label Merge -menu .mbar.merge
+	.mbar add cascade -label Fetch -menu .mbar.fetch
+	.mbar add cascade -label Push -menu .mbar.push
 }
 . configure -menu .mbar
 
@@ -5119,93 +5051,76 @@ menu .mbar.repository
 
 .mbar.repository add command \
 	-label {Browse Current Branch} \
-	-command {new_browser $current_branch} \
-	-font font_ui
+	-command {new_browser $current_branch}
 trace add variable current_branch write ".mbar.repository entryconf [.mbar.repository index last] -label \"Browse \$current_branch\" ;#"
 .mbar.repository add separator
 
 .mbar.repository add command \
 	-label {Visualize Current Branch} \
-	-command {do_gitk $current_branch} \
-	-font font_ui
+	-command {do_gitk $current_branch}
 trace add variable current_branch write ".mbar.repository entryconf [.mbar.repository index last] -label \"Visualize \$current_branch\" ;#"
 .mbar.repository add command \
 	-label {Visualize All Branches} \
-	-command {do_gitk --all} \
-	-font font_ui
+	-command {do_gitk --all}
 .mbar.repository add separator
 
 if {[is_enabled multicommit]} {
 	.mbar.repository add command -label {Database Statistics} \
-		-command do_stats \
-		-font font_ui
+		-command do_stats
 
 	.mbar.repository add command -label {Compress Database} \
-		-command do_gc \
-		-font font_ui
+		-command do_gc
 
 	.mbar.repository add command -label {Verify Database} \
-		-command do_fsck_objects \
-		-font font_ui
+		-command do_fsck_objects
 
 	.mbar.repository add separator
 
 	if {[is_Cygwin]} {
 		.mbar.repository add command \
 			-label {Create Desktop Icon} \
-			-command do_cygwin_shortcut \
-			-font font_ui
+			-command do_cygwin_shortcut
 	} elseif {[is_Windows]} {
 		.mbar.repository add command \
 			-label {Create Desktop Icon} \
-			-command do_windows_shortcut \
-			-font font_ui
+			-command do_windows_shortcut
 	} elseif {[is_MacOSX]} {
 		.mbar.repository add command \
 			-label {Create Desktop Icon} \
-			-command do_macosx_app \
-			-font font_ui
+			-command do_macosx_app
 	}
 }
 
 .mbar.repository add command -label Quit \
 	-command do_quit \
-	-accelerator $M1T-Q \
-	-font font_ui
+	-accelerator $M1T-Q
 
 # -- Edit Menu
 #
 menu .mbar.edit
 .mbar.edit add command -label Undo \
 	-command {catch {[focus] edit undo}} \
-	-accelerator $M1T-Z \
-	-font font_ui
+	-accelerator $M1T-Z
 .mbar.edit add command -label Redo \
 	-command {catch {[focus] edit redo}} \
-	-accelerator $M1T-Y \
-	-font font_ui
+	-accelerator $M1T-Y
 .mbar.edit add separator
 .mbar.edit add command -label Cut \
 	-command {catch {tk_textCut [focus]}} \
-	-accelerator $M1T-X \
-	-font font_ui
+	-accelerator $M1T-X
 .mbar.edit add command -label Copy \
 	-command {catch {tk_textCopy [focus]}} \
-	-accelerator $M1T-C \
-	-font font_ui
+	-accelerator $M1T-C
 .mbar.edit add command -label Paste \
 	-command {catch {tk_textPaste [focus]; [focus] see insert}} \
-	-accelerator $M1T-V \
-	-font font_ui
+	-accelerator $M1T-V
 .mbar.edit add command -label Delete \
 	-command {catch {[focus] delete sel.first sel.last}} \
-	-accelerator Del \
-	-font font_ui
+	-accelerator Del
 .mbar.edit add separator
 .mbar.edit add command -label {Select All} \
 	-command {catch {[focus] tag add sel 0.0 end}} \
-	-accelerator $M1T-A \
-	-font font_ui
+	-accelerator $M1T-A
 
 # -- Branch Menu
 #
@@ -5214,20 +5129,17 @@ if {[is_enabled branch]} {
 
 	.mbar.branch add command -label {Create...} \
 		-command do_create_branch \
-		-accelerator $M1T-N \
-		-font font_ui
+		-accelerator $M1T-N
 	lappend disable_on_lock [list .mbar.branch entryconf \
 		[.mbar.branch index last] -state]
 
 	.mbar.branch add command -label {Delete...} \
-		-command do_delete_branch \
-		-font font_ui
+		-command do_delete_branch
 	lappend disable_on_lock [list .mbar.branch entryconf \
 		[.mbar.branch index last] -state]
 
 	.mbar.branch add command -label {Reset...} \
-		-command do_reset_hard \
-		-font font_ui
+		-command do_reset_hard
 	lappend disable_on_lock [list .mbar.branch entryconf \
 		[.mbar.branch index last] -state]
 }
@@ -5241,8 +5153,7 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 		-label {New Commit} \
 		-command do_select_commit_type \
 		-variable selected_commit_type \
-		-value new \
-		-font font_ui
+		-value new
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
@@ -5250,8 +5161,7 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 		-label {Amend Last Commit} \
 		-command do_select_commit_type \
 		-variable selected_commit_type \
-		-value amend \
-		-font font_ui
+		-value amend
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
@@ -5259,33 +5169,28 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 
 	.mbar.commit add command -label Rescan \
 		-command do_rescan \
-		-accelerator F5 \
-		-font font_ui
+		-accelerator F5
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
 	.mbar.commit add command -label {Add To Commit} \
-		-command do_add_selection \
-		-font font_ui
+		-command do_add_selection
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
 	.mbar.commit add command -label {Add Existing To Commit} \
 		-command do_add_all \
-		-accelerator $M1T-I \
-		-font font_ui
+		-accelerator $M1T-I
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
 	.mbar.commit add command -label {Unstage From Commit} \
-		-command do_unstage_selection \
-		-font font_ui
+		-command do_unstage_selection
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
 	.mbar.commit add command -label {Revert Changes} \
-		-command do_revert_selection \
-		-font font_ui
+		-command do_revert_selection
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 
@@ -5293,13 +5198,11 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 
 	.mbar.commit add command -label {Sign Off} \
 		-command do_signoff \
-		-accelerator $M1T-S \
-		-font font_ui
+		-accelerator $M1T-S
 
 	.mbar.commit add command -label Commit \
 		-command do_commit \
-		-accelerator $M1T-Return \
-		-font font_ui
+		-accelerator $M1T-Return
 	lappend disable_on_lock \
 		[list .mbar.commit entryconf [.mbar.commit index last] -state]
 }
@@ -5309,13 +5212,11 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 if {[is_enabled branch]} {
 	menu .mbar.merge
 	.mbar.merge add command -label {Local Merge...} \
-		-command do_local_merge \
-		-font font_ui
+		-command do_local_merge
 	lappend disable_on_lock \
 		[list .mbar.merge entryconf [.mbar.merge index last] -state]
 	.mbar.merge add command -label {Abort Merge...} \
-		-command do_reset_hard \
-		-font font_ui
+		-command do_reset_hard
 	lappend disable_on_lock \
 		[list .mbar.merge entryconf [.mbar.merge index last] -state]
 
@@ -5328,8 +5229,7 @@ if {[is_enabled transport]} {
 
 	menu .mbar.push
 	.mbar.push add command -label {Push...} \
-		-command do_push_anywhere \
-		-font font_ui
+		-command do_push_anywhere
 }
 
 if {[is_MacOSX]} {
@@ -5339,18 +5239,15 @@ if {[is_MacOSX]} {
 	menu .mbar.apple
 
 	.mbar.apple add command -label "About [appname]" \
-		-command do_about \
-		-font font_ui
+		-command do_about
 	.mbar.apple add command -label "Options..." \
-		-command do_options \
-		-font font_ui
+		-command do_options
 } else {
 	# -- Edit Menu
 	#
 	.mbar.edit add separator
 	.mbar.edit add command -label {Options...} \
-		-command do_options \
-		-font font_ui
+		-command do_options
 
 	# -- Tools Menu
 	#
@@ -5376,8 +5273,7 @@ if {[is_MacOSX]} {
 	.mbar add cascade -label Tools -menu .mbar.tools
 	menu .mbar.tools
 	.mbar.tools add command -label "Migrate" \
-		-command do_miga \
-		-font font_ui
+		-command do_miga
 	lappend disable_on_lock \
 		[list .mbar.tools entryconf [.mbar.tools index last] -state]
 	}
@@ -5385,13 +5281,12 @@ if {[is_MacOSX]} {
 
 # -- Help Menu
 #
-.mbar add cascade -label Help -menu .mbar.help -font font_ui
+.mbar add cascade -label Help -menu .mbar.help
 menu .mbar.help
 
 if {![is_MacOSX]} {
 	.mbar.help add command -label "About [appname]" \
-		-command do_about \
-		-font font_ui
+		-command do_about
 }
 
 set browser {}
@@ -5428,8 +5323,7 @@ if {[file isfile $doc_path]} {
 
 if {$browser ne {}} {
 	.mbar.help add command -label {Online Documentation} \
-		-command [list exec $browser $doc_url &] \
-		-font font_ui
+		-command [list exec $browser $doc_url &]
 }
 unset browser doc_path doc_url
 
@@ -5488,13 +5382,11 @@ frame .branch \
 label .branch.l1 \
 	-text {Current Branch:} \
 	-anchor w \
-	-justify left \
-	-font font_ui
+	-justify left
 label .branch.cb \
 	-textvariable current_branch \
 	-anchor w \
-	-justify left \
-	-font font_ui
+	-justify left
 pack .branch.l1 -side left
 pack .branch.cb -side left -fill x
 pack .branch -side top -fill x
@@ -5510,12 +5402,10 @@ pack .vpane -anchor n -side top -fill both -expand 1
 #
 frame .vpane.files.index -height 100 -width 200
 label .vpane.files.index.title -text {Changes To Be Committed} \
-	-background green \
-	-font font_ui
+	-background green
 text $ui_index -background white -borderwidth 0 \
 	-width 20 -height 10 \
 	-wrap none \
-	-font font_ui \
 	-cursor $cursor_ptr \
 	-xscrollcommand {.vpane.files.index.sx set} \
 	-yscrollcommand {.vpane.files.index.sy set} \
@@ -5532,12 +5422,10 @@ pack $ui_index -side left -fill both -expand 1
 #
 frame .vpane.files.workdir -height 100 -width 200
 label .vpane.files.workdir.title -text {Changed But Not Updated} \
-	-background red \
-	-font font_ui
+	-background red
 text $ui_workdir -background white -borderwidth 0 \
 	-width 20 -height 10 \
 	-wrap none \
-	-font font_ui \
 	-cursor $cursor_ptr \
 	-xscrollcommand {.vpane.files.workdir.sx set} \
 	-yscrollcommand {.vpane.files.workdir.sy set} \
@@ -5572,33 +5460,28 @@ pack .vpane.lower.diff -side bottom -fill both -expand 1
 frame .vpane.lower.commarea.buttons
 label .vpane.lower.commarea.buttons.l -text {} \
 	-anchor w \
-	-justify left \
-	-font font_ui
+	-justify left
 pack .vpane.lower.commarea.buttons.l -side top -fill x
 pack .vpane.lower.commarea.buttons -side left -fill y
 
 button .vpane.lower.commarea.buttons.rescan -text {Rescan} \
-	-command do_rescan \
-	-font font_ui
+	-command do_rescan
 pack .vpane.lower.commarea.buttons.rescan -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.rescan conf -state}
 
 button .vpane.lower.commarea.buttons.incall -text {Add Existing} \
-	-command do_add_all \
-	-font font_ui
+	-command do_add_all
 pack .vpane.lower.commarea.buttons.incall -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.incall conf -state}
 
 button .vpane.lower.commarea.buttons.signoff -text {Sign Off} \
-	-command do_signoff \
-	-font font_ui
+	-command do_signoff
 pack .vpane.lower.commarea.buttons.signoff -side top -fill x
 
 button .vpane.lower.commarea.buttons.commit -text {Commit} \
-	-command do_commit \
-	-font font_ui
+	-command do_commit
 pack .vpane.lower.commarea.buttons.commit -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.commit conf -state}
@@ -5613,22 +5496,19 @@ radiobutton .vpane.lower.commarea.buffer.header.new \
 	-text {New Commit} \
 	-command do_select_commit_type \
 	-variable selected_commit_type \
-	-value new \
-	-font font_ui
+	-value new
 lappend disable_on_lock \
 	[list .vpane.lower.commarea.buffer.header.new conf -state]
 radiobutton .vpane.lower.commarea.buffer.header.amend \
 	-text {Amend Last Commit} \
 	-command do_select_commit_type \
 	-variable selected_commit_type \
-	-value amend \
-	-font font_ui
+	-value amend
 lappend disable_on_lock \
 	[list .vpane.lower.commarea.buffer.header.amend conf -state]
 label $ui_coml \
 	-anchor w \
-	-justify left \
-	-font font_ui
+	-justify left
 proc trace_commit_type {varname args} {
 	global ui_coml commit_type
 	switch -glob -- $commit_type {
@@ -5667,28 +5547,22 @@ set ctxm .vpane.lower.commarea.buffer.ctxm
 menu $ctxm -tearoff 0
 $ctxm add command \
 	-label {Cut} \
-	-font font_ui \
 	-command {tk_textCut $ui_comm}
 $ctxm add command \
 	-label {Copy} \
-	-font font_ui \
 	-command {tk_textCopy $ui_comm}
 $ctxm add command \
 	-label {Paste} \
-	-font font_ui \
 	-command {tk_textPaste $ui_comm}
 $ctxm add command \
 	-label {Delete} \
-	-font font_ui \
 	-command {$ui_comm delete sel.first sel.last}
 $ctxm add separator
 $ctxm add command \
 	-label {Select All} \
-	-font font_ui \
 	-command {focus $ui_comm;$ui_comm tag add sel 0.0 end}
 $ctxm add command \
 	-label {Copy All} \
-	-font font_ui \
 	-command {
 		$ui_comm tag add sel 0.0 end
 		tk_textCopy $ui_comm
@@ -5697,7 +5571,6 @@ $ctxm add command \
 $ctxm add separator
 $ctxm add command \
 	-label {Sign Off} \
-	-font font_ui \
 	-command do_signoff
 bind_button3 $ui_comm "tk_popup $ctxm %X %Y"
 
@@ -5732,18 +5605,15 @@ label .vpane.lower.diff.header.status \
 	-background orange \
 	-width $max_status_desc \
 	-anchor w \
-	-justify left \
-	-font font_ui
+	-justify left
 label .vpane.lower.diff.header.file \
 	-background orange \
 	-anchor w \
-	-justify left \
-	-font font_ui
+	-justify left
 label .vpane.lower.diff.header.path \
 	-background orange \
 	-anchor w \
-	-justify left \
-	-font font_ui
+	-justify left
 pack .vpane.lower.diff.header.status -side left
 pack .vpane.lower.diff.header.file -side left
 pack .vpane.lower.diff.header.path -fill x
@@ -5751,7 +5621,6 @@ set ctxm .vpane.lower.diff.header.ctxm
 menu $ctxm -tearoff 0
 $ctxm add command \
 	-label {Copy} \
-	-font font_ui \
 	-command {
 		clipboard clear
 		clipboard append \
@@ -5820,22 +5689,18 @@ set ctxm .vpane.lower.diff.body.ctxm
 menu $ctxm -tearoff 0
 $ctxm add command \
 	-label {Refresh} \
-	-font font_ui \
 	-command reshow_diff
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add command \
 	-label {Copy} \
-	-font font_ui \
 	-command {tk_textCopy $ui_diff}
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add command \
 	-label {Select All} \
-	-font font_ui \
 	-command {focus $ui_diff;$ui_diff tag add sel 0.0 end}
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add command \
 	-label {Copy All} \
-	-font font_ui \
 	-command {
 		$ui_diff tag add sel 0.0 end
 		tk_textCopy $ui_diff
@@ -5845,25 +5710,21 @@ lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add separator
 $ctxm add command \
 	-label {Apply/Reverse Hunk} \
-	-font font_ui \
 	-command {apply_hunk $cursorX $cursorY}
 set ui_diff_applyhunk [$ctxm index last]
 lappend diff_actions [list $ctxm entryconf $ui_diff_applyhunk -state]
 $ctxm add separator
 $ctxm add command \
 	-label {Decrease Font Size} \
-	-font font_ui \
 	-command {incr_font_size font_diff -1}
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add command \
 	-label {Increase Font Size} \
-	-font font_ui \
 	-command {incr_font_size font_diff 1}
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add separator
 $ctxm add command \
 	-label {Show Less Context} \
-	-font font_ui \
 	-command {if {$repo_config(gui.diffcontext) >= 2} {
 		incr repo_config(gui.diffcontext) -1
 		reshow_diff
@@ -5871,7 +5732,6 @@ $ctxm add command \
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add command \
 	-label {Show More Context} \
-	-font font_ui \
 	-command {
 		incr repo_config(gui.diffcontext)
 		reshow_diff
@@ -5879,7 +5739,6 @@ $ctxm add command \
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add separator
 $ctxm add command -label {Options...} \
-	-font font_ui \
 	-command do_options
 bind_button3 $ui_diff "
 	set cursorX %x
@@ -5899,8 +5758,7 @@ label .status -textvariable ui_status_value \
 	-anchor w \
 	-justify left \
 	-borderwidth 1 \
-	-relief sunken \
-	-font font_ui
+	-relief sunken
 pack .status -anchor w -side bottom -fill x
 
 # -- Load geometry
