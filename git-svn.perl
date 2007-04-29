@@ -434,17 +434,16 @@ sub cmd_find_rev {
 	my $revision_or_hash = shift;
 	my $result;
 	if ($revision_or_hash =~ /^r\d+$/) {
-		my $desired_revision = substr($revision_or_hash, 1);
-		my ($fh, $ctx) = command_output_pipe('rev-list', 'HEAD');
-		while (my $hash = <$fh>) {
-			chomp($hash);
-			my (undef, $rev, undef) = cmt_metadata($hash);
-			if ($rev && $rev eq $desired_revision) {
-				$result = $hash;
-				last;
-			}
+		my $head = shift;
+		$head ||= 'HEAD';
+		my @refs;
+		my (undef, undef, undef, $gs) = working_head_info($head, \@refs);
+		unless ($gs) {
+			die "Unable to determine upstream SVN information from ",
+			    "$head history\n";
 		}
-		command_close_pipe($fh, $ctx);
+		my $desired_revision = substr($revision_or_hash, 1);
+		$result = $gs->rev_db_get($desired_revision);
 	} else {
 		my (undef, $rev, undef) = cmt_metadata($revision_or_hash);
 		$result = $rev;
