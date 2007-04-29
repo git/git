@@ -1298,12 +1298,12 @@ A rescan will be automatically started now.
 
 	# -- Create the commit.
 	#
-	set cmd [list git commit-tree $tree_id]
+	set cmd [list commit-tree $tree_id]
 	foreach p [concat $PARENT $MERGE_HEAD] {
 		lappend cmd -p $p
 	}
 	lappend cmd <$msg_p
-	if {[catch {set cmt_id [eval exec $cmd]} err]} {
+	if {[catch {set cmt_id [eval git $cmd]} err]} {
 		error_popup "commit-tree failed:\n\n$err"
 		set ui_status_value {Commit failed.}
 		unlock_index
@@ -1323,8 +1323,9 @@ A rescan will be automatically started now.
 		set subject $msg
 	}
 	append reflogm {: } $subject
-	set cmd [list git update-ref -m $reflogm HEAD $cmt_id $curHEAD]
-	if {[catch {eval exec $cmd} err]} {
+	if {[catch {
+			git update-ref -m $reflogm HEAD $cmt_id $curHEAD
+		} err]} {
 		error_popup "update-ref failed:\n\n$err"
 		set ui_status_value {Commit failed.}
 		unlock_index
@@ -2018,13 +2019,13 @@ proc do_create_branch_action {w} {
 			-message "Invalid starting revision: $rev"
 		return
 	}
-	set cmd [list git update-ref]
-	lappend cmd -m
-	lappend cmd "branch: Created from $rev"
-	lappend cmd "refs/heads/$newbranch"
-	lappend cmd $cmt
-	lappend cmd $null_sha1
-	if {[catch {eval exec $cmd} err]} {
+	if {[catch {
+			git update-ref \
+				-m "branch: Created from $rev" \
+				"refs/heads/$newbranch" \
+				$cmt \
+				$null_sha1
+		} err]} {
 		tk_messageBox \
 			-icon error \
 			-type ok \
