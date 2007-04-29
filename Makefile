@@ -53,7 +53,19 @@ $(GITGUI_BUILT_INS): git-gui
 	$(QUIET_BUILT_IN)rm -f $@ && ln git-gui $@
 
 # These can record GITGUI_VERSION
-$(patsubst %.sh,%,$(SCRIPT_SH)): GIT-VERSION-FILE
+$(patsubst %.sh,%,$(SCRIPT_SH)): GIT-VERSION-FILE GIT-GUI-VARS
+
+TRACK_VARS = \
+	$(subst ','\'',SHELL_PATH='$(SHELL_PATH_SQ)') \
+	$(subst ','\'',TCLTK_PATH='$(TCLTK_PATH_SQ)') \
+#end TRACK_VARS
+
+GIT-GUI-VARS: .FORCE-GIT-GUI-VARS
+	@VARS='$(TRACK_VARS)'; \
+	if test x"$$VARS" != x"`cat $@ 2>/dev/null`" ; then \
+		echo 1>&2 "    * new locations or Tcl/Tk interpreter"; \
+		echo 1>$@ "$$VARS"; \
+	fi
 
 all:: $(ALL_PROGRAMS)
 
@@ -67,7 +79,8 @@ dist-version:
 	@echo $(GITGUI_VERSION) > $(TARDIR)/version
 
 clean::
-	rm -f $(ALL_PROGRAMS) GIT-VERSION-FILE
+	rm -f $(ALL_PROGRAMS) GIT-VERSION-FILE GIT-GUI-VARS
 
 .PHONY: all install dist-version clean
 .PHONY: .FORCE-GIT-VERSION-FILE
+.PHONY: .FORCE-GIT-GUI-VARS
