@@ -2470,9 +2470,9 @@ sub close_file {
 		my $got = $md5->hexdigest;
 		die "Checksum mismatch: $path\n",
 		    "expected: $exp\n    got: $got\n" if ($got ne $exp);
-		seek($fh, 0, 0) or croak $!;
+		sysseek($fh, 0, 0) or croak $!;
 		if ($fb->{mode_b} == 120000) {
-			read($fh, my $buf, 5) == 5 or croak $!;
+			sysread($fh, my $buf, 5) == 5 or croak $!;
 			$buf eq 'link ' or die "$path has mode 120000",
 			                       "but is not a link\n";
 		}
