@@ -1,8 +1,8 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
-#ifndef _DIFFCORE_H_
-#define _DIFFCORE_H_
+#ifndef DIFFCORE_H
+#define DIFFCORE_H
 
 /* This header file is internal between diff.c and its diff transformers
  * (e.g. diffcore-rename, diffcore-pickaxe).  Never include this header
