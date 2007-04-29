@@ -1199,6 +1199,8 @@ static int tree_content_set(
 		n = slash1 - p;
 	else
 		n = strlen(p);
+	if (!n)
+		die("Empty path component found in input");
 
 	for (i = 0; i < t->entry_count; i++) {
 		e = t->entries[i];

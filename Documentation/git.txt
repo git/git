@@ -344,6 +344,7 @@ git Commits
 'GIT_AUTHOR_DATE'::
 'GIT_COMMITTER_NAME'::
 'GIT_COMMITTER_EMAIL'::
+'GIT_COMMITTER_DATE'::
 	see gitlink:git-commit-tree[1]
 
 git Diffs
