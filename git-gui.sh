@@ -2907,12 +2907,9 @@ You are merging $revcnt branches at once.  This requires using the octopus merge
 			-parent $w \
 			-message "Too many branches selected.
 
-You have requested to merge $revcnt branches
-in an octopus merge.  This exceeds Git's
-internal limit of 15 branches per merge.
+You have requested to merge $revcnt branches in an octopus merge.  This exceeds Git's internal limit of 15 branches per merge.
 
-Please select fewer branches.  To merge more
-than 15 branches, merge the branches in batches.
+Please select fewer branches.  To merge more than 15 branches, merge the branches in batches.
 "
 		return
 	}
