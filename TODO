@@ -24,7 +24,7 @@ From: Linus Torvalds <torvalds@linux-foundation.org>
 Message-ID: <Pine.LNX.4.64.0704160931550.5473@woody.linux-foundation.org>
 
 
-* Use blame machinery to track a single file (not path) in finer
+* Use blame machinery to track a single file (not path) in a finer
   grained way.
 
 From: Linus Torvalds <torvalds@linux-foundation.org>
@@ -46,17 +46,6 @@ by dropping git-gui/ directory first and then binding git-gui.git
 as a subproject there.  This needs to wait at least until v1.5.2
 ships and gets installed at kernel.org and repo.or.cz
 
-* Decide what to do with 'filter' and 'ident' attribute patches.
-
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Message-ID: <alpine.LFD.0.98.0704212243080.9964@woody.linux-foundation.org>
-
-If we were to include it, we would need to make it clear that
-this is a long piece of rope and you can strangle yourself with
-it unless you are careful, and clarify what is and isn't
-considered to be "careful".  I have parked updates in 'pu', but
-I do not know they are clear enough.
-
 * TODO list management
 
 From: Daniel Barkalow <barkalow@iabervon.org>
@@ -75,12 +64,16 @@ Repeated requests against git-daemon makes it stuck under --syslog
 
 [jc: does not reproduce easily for me; has anybody seen it?]
 
+
 * git-mirror (reverse of git-push --all).
 
 From: Shawn Pearce <spearce@spearce.org>
 Message-ID: <20060926215745.GC8177@spearce.org>
 
-[jc: may want the finished version for inclusion]
+Pasky sent an updated version to the list recently, but the
+general sentiment on the list seems that existing git-fetch
+has enough features to perform most of what 'mirror' does.
+
 
 * AsciiDoc 8 would break our documentation.
 
@@ -103,6 +96,31 @@ not just diff with the first parent for a merge.
 
 [jc: Jakub is interested in it]
 
+* Delegate gitweb part to somebody else.
+
+* Use gitattributes for more things.
+
+ - 'precious' files that are not tracked but not
+   build-products.  Currently people seem to put them in
+   .gitignore, but that is not quite right, as .gitignore is
+   meant for ignoring things that can be lost (build products,
+   editor backup files).  "git clean -x" and "git checkout" to
+   another branch that has a file where the current branch has a
+   directory could lose such 'precious' files.
+
+ - Customized "diff -p" markers per path (Johannes, on #git
+   2007-04-30).
+
+   I think it makes sense to give an extra parameter to xdiff
+   machinery to affect how "diff -p" markers are constructed (as
+   opposed to teach xdiff machinery to read gitattributes -- the
+   code does not have path information at that level).  The
+   simplest interface would be to pass a regexp and have the
+   existing code always look for that regexp backwards.  A more
+   complex one would involve a callback function, but I do not
+   know if that kind of complexity is worth it.
+
+ - Others???
 
 
 Technical (milder)
@@ -130,7 +148,9 @@ Technical (trivial)
 
 * git-proxy should be spawned with sh -c 'command' $1 $2.
 
-[jc: should it?]
+[jc: should it? -- deciding if it should may not be "trivial",
+but if it turns out to be the right thing to do, the change
+itself is trivial.]
 
 * Maybe a true git-proxy command that reads the first request
   pkt-line, and redirects the request to its real destination.
