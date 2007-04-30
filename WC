@@ -6,10 +6,12 @@ next_at=$(git rev-parse --verify refs/heads/next)
 
 
 cat <<EOF
-To: git@vger.kernel.org
+From: Junio C Hamano <junkio@cox.net>
 Subject: What's cooking in git.git (topics)
 X-master-at: $master_at
 X-next-at: $next_at
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 
 Here are the topics that have been cooking.  Commits prefixed
 with '-' are only in 'pu' while commits prefixed with '+' are
@@ -19,5 +21,3 @@ order.
 EOF
 
 Meta/git-topic.perl --base=master | sed -e 's/^\*./*/'
-
-

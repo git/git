@@ -12,10 +12,12 @@ log () {
 	'
 }
 
-echo "To: git@vger.kernel.org"
+echo "From: Junio C Hamano <junkio@cox.net>"
 echo "Subject: What's in git.git (stable)"
 echo "X-maint-at: $maint_at"
 echo "X-master-at: $master_at"
+echo "Content-Type: text/plain; charset=utf-8"
+echo "Content-Transfer-Encoding: 8bit"
 
 tagged=`git rev-parse --not --verify tags/sa/maint`
 list=`git-rev-list $tagged refs/heads/maint 2>/dev/null`
