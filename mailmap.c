@@ -17,6 +17,9 @@ int read_mailmap(struct path_list *map, const char *filename, char **repo_abbrev
 			int abblen = sizeof(abbrev) - 1;
 			int len = strlen(buffer);
 
+			if (!repo_abbrev)
+				continue;
+
 			if (len && buffer[len - 1] == '\n')
 				buffer[--len] = 0;
 			if (!strncmp(buffer, abbrev, abblen)) {
