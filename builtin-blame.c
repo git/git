@@ -2375,7 +2375,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		die("reading graft file %s failed: %s",
 		    revs_file, strerror(errno));
 
-	if (!no_mailmap && !access(".mailmap", R_OK))
+	if (!no_mailmap)
 		read_mailmap(&mailmap, ".mailmap", NULL);
 
 	assign_blame(&sb, &revs, opt);

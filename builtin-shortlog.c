@@ -283,8 +283,7 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 	if (argc > 1)
 		die ("unrecognized argument: %s", argv[1]);
 
-	if (!access(".mailmap", R_OK))
-		read_mailmap(&mailmap, ".mailmap", &common_repo_prefix);
+	read_mailmap(&mailmap, ".mailmap", &common_repo_prefix);
 
 	if (rev.pending.nr == 0) {
 		if (isatty(0))
