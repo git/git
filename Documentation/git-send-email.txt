@@ -54,7 +54,7 @@ The --cc option must be repeated for each user you want on the cc list.
 
 --in-reply-to::
 	Specify the contents of the first In-Reply-To header.
-	Subsequent emails will refer to the previous email 
+	Subsequent emails will refer to the previous email
 	instead of this if --chain-reply-to is set (the default)
 	Only necessary if --compose is also set.  If --compose
 	is not set, this will be prompted for.
@@ -68,8 +68,9 @@ The --cc option must be repeated for each user you want on the cc list.
 	all that is output.
 
 --smtp-server::
-	If set, specifies the outgoing SMTP server to use.  A full
-	pathname of a sendmail-like program can be specified instead;
+	If set, specifies the outgoing SMTP server to use (e.g.
+	`smtp.example.com` or a raw IP address).  Alternatively it can
+	specify a full pathname of a sendmail-like program instead;
 	the program must support the `-i` option.  Default value can
 	be specified by the 'sendemail.smtpserver' configuration
 	option; the built-in default is `/usr/sbin/sendmail` or
