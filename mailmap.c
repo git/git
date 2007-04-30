@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "path-list.h"
+#include "mailmap.h"
 
 int read_mailmap(struct path_list *map, const char *filename, char **repo_abbrev)
 {
