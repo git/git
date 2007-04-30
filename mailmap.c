@@ -80,7 +80,7 @@ int map_email(struct path_list *map, const char *email, char *name, int maxlen)
 		free(mailbuf);
 	if (item != NULL) {
 		const char *realname = (const char *)item->util;
-		strncpy(name, realname, maxlen);
+		strlcpy(name, realname, maxlen);
 		return 1;
 	}
 	return 0;
