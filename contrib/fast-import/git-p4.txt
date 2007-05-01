@@ -4,8 +4,8 @@ Usage
 =====
 
 git-p4 supports two main modes: Importing from Perforce to a Git repository is
-done using "git-p4 sync". Submitting changes from Git back to Perforce is
-done using "git-p4 submit".
+done using "git-p4 sync" or "git-p4 rebase". Submitting changes from Git back
+to Perforce is done using "git-p4 submit".
 
 Importing
 =========
@@ -48,10 +48,6 @@ a big import. This may take a while.
 
 Support for Perforce integrations is still work in progress. Don't bother
 trying it unless you want to hack on it :)
-
-For convenience there's also the git-p4 clone command that works similar to
-git-clone and combines the creation of the git repository with the the initial
-import and the branch setup
 
 Incremental Imports
 ===================
