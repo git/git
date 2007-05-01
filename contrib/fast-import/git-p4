@@ -455,7 +455,6 @@ class P4Sync(Command):
         self.detectBranches = False
         self.detectLabels = False
         self.changesFile = ""
-        self.tagLastChange = True
 
     def p4File(self, depotPath):
         return os.popen("p4 print -q \"%s\"" % depotPath, "rb").read()
@@ -858,14 +857,10 @@ class P4Sync(Command):
                 self.depotPath = self.previousDepotPath
                 self.changeRange = "@%s,#head" % p4Change
                 self.initialParent = self.branch
-                self.tagLastChange = False
                 if not self.silent:
                     print "Performing incremental import into %s git branch" % self.branch
 
         self.branch = "refs/heads/" + self.branch
-
-        if len(self.depotPath) == 0:
-            self.depotPath = self.previousDepotPath = os.popen("git repo-config --get p4.depotpath").read()
 
         if len(self.depotPath) != 0:
             self.depotPath = self.depotPath[:-1]
@@ -884,7 +879,6 @@ class P4Sync(Command):
         self.revision = ""
         self.users = {}
         self.lastChange = 0
-        self.initialTag = ""
 
         if self.depotPath.find("@") != -1:
             atIdx = self.depotPath.index("@")
@@ -927,7 +921,6 @@ class P4Sync(Command):
                 self.rev = int(output[tagIdx + 9 : endPos]) + 1
                 self.changeRange = "@%s,#head" % self.rev
                 self.initialParent = os.popen("git rev-parse %s" % self.branch).read()[:-1]
-                self.initialTag = "p4/%s" % (int(self.rev) - 1)
             except:
                 pass
 
@@ -1049,19 +1042,11 @@ class P4Sync(Command):
         if not self.silent:
             print ""
 
-        if self.tagLastChange:
-            self.gitStream.write("reset refs/tags/p4/%s\n" % self.lastChange)
-            self.gitStream.write("from %s\n\n" % self.branch);
-
 
         self.gitStream.close()
         self.gitOutput.close()
         self.gitError.close()
         importProcess.wait()
-
-        os.popen("git repo-config p4.depotpath %s" % self.depotPath).read()
-        if len(self.initialTag) > 0:
-            os.popen("git tag -d %s" % self.initialTag).read()
 
         return True
 
@@ -1086,7 +1071,6 @@ class P4Clone(P4Sync):
         self.description = "Creates a new git repository and imports from Perforce into it"
         self.usage = "usage: %prog [options] //depot/path[@revRange] [directory]"
         self.needsGit = False
-        self.tagLastChange = False
 
     def run(self, args):
         if len(args) < 1:
