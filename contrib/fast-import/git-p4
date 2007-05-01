@@ -465,9 +465,9 @@ class P4Sync(Command):
         fnum = 0
         while commit.has_key("depotFile%s" % fnum):
             path =  commit["depotFile%s" % fnum]
-            if not path.startswith(self.globalPrefix):
+            if not path.startswith(self.depotPath):
     #            if not self.silent:
-    #                print "\nchanged files: ignoring path %s outside of %s in change %s" % (path, self.globalPrefix, change)
+    #                print "\nchanged files: ignoring path %s outside of %s in change %s" % (path, self.depotPath, change)
                 fnum = fnum + 1
                 continue
 
@@ -491,7 +491,7 @@ class P4Sync(Command):
         branches = Set()
 
         for file in files:
-            relativePath = file["path"][len(self.globalPrefix):]
+            relativePath = file["path"][len(self.depotPath):]
             # strip off the filename
             relativePath = relativePath[0:relativePath.rfind("/")]
 
@@ -577,7 +577,7 @@ class P4Sync(Command):
                 sys.exit(1);
             sourceLog = sourceLog[0]
 
-            relPath = source[len(self.globalPrefix):]
+            relPath = source[len(self.depotPath):]
             # strip off the filename
             relPath = relPath[0:relPath.rfind("/")]
 
@@ -737,7 +737,7 @@ class P4Sync(Command):
                 sys.exit(1);
             sourceLog = sourceLog[0]
 
-            relPath = source[len(self.globalPrefix):]
+            relPath = source[len(self.depotPath):]
             # strip off the filename
             relPath = relPath[0:relPath.rfind("/")]
 
@@ -749,13 +749,13 @@ class P4Sync(Command):
 
     def changeIsBranchMerge(self, sourceBranch, destinationBranch, change):
         sourceFiles = {}
-        for file in p4CmdList("files %s...@%s" % (self.globalPrefix + sourceBranch + "/", change)):
+        for file in p4CmdList("files %s...@%s" % (self.depotPath + sourceBranch + "/", change)):
             if file["action"] == "delete":
                 continue
             sourceFiles[file["depotFile"]] = file
 
         destinationFiles = {}
-        for file in p4CmdList("files %s...@%s" % (self.globalPrefix + destinationBranch + "/", change)):
+        for file in p4CmdList("files %s...@%s" % (self.depotPath + destinationBranch + "/", change)):
             destinationFiles[file["depotFile"]] = file
 
         for fileName in sourceFiles.keys():
@@ -822,9 +822,9 @@ class P4Sync(Command):
     def getLabels(self):
         self.labels = {}
 
-        l = p4CmdList("labels %s..." % self.globalPrefix)
+        l = p4CmdList("labels %s..." % self.depotPath)
         if len(l) > 0 and not self.silent:
-            print "Finding files belonging to labels in %s" % self.globalPrefix
+            print "Finding files belonging to labels in %s" % self.depotPath
 
         for output in l:
             label = output["label"]
@@ -839,7 +839,7 @@ class P4Sync(Command):
             self.labels[newestChange] = [output, revisions]
 
     def run(self, args):
-        self.globalPrefix = ""
+        self.depotPath = ""
         self.changeRange = ""
         self.initialParent = ""
 
@@ -855,7 +855,7 @@ class P4Sync(Command):
             [self.previousDepotPath, p4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit(self.branch))
             if len(self.previousDepotPath) > 0 and len(p4Change) > 0:
                 p4Change = int(p4Change) + 1
-                self.globalPrefix = self.previousDepotPath
+                self.depotPath = self.previousDepotPath
                 self.changeRange = "@%s,#head" % p4Change
                 self.initialParent = self.branch
                 self.tagLastChange = False
@@ -864,49 +864,49 @@ class P4Sync(Command):
 
         self.branch = "refs/heads/" + self.branch
 
-        if len(self.globalPrefix) == 0:
-            self.globalPrefix = self.previousDepotPath = os.popen("git repo-config --get p4.depotpath").read()
+        if len(self.depotPath) == 0:
+            self.depotPath = self.previousDepotPath = os.popen("git repo-config --get p4.depotpath").read()
 
-        if len(self.globalPrefix) != 0:
-            self.globalPrefix = self.globalPrefix[:-1]
+        if len(self.depotPath) != 0:
+            self.depotPath = self.depotPath[:-1]
 
-        if len(args) == 0 and len(self.globalPrefix) != 0:
+        if len(args) == 0 and len(self.depotPath) != 0:
             if not self.silent:
-                print "Depot path: %s" % self.globalPrefix
+                print "Depot path: %s" % self.depotPath
         elif len(args) != 1:
             return False
         else:
-            if len(self.globalPrefix) != 0 and self.globalPrefix != args[0]:
-                print "previous import used depot path %s and now %s was specified. this doesn't work!" % (self.globalPrefix, args[0])
+            if len(self.depotPath) != 0 and self.depotPath != args[0]:
+                print "previous import used depot path %s and now %s was specified. this doesn't work!" % (self.depotPath, args[0])
                 sys.exit(1)
-            self.globalPrefix = args[0]
+            self.depotPath = args[0]
 
         self.revision = ""
         self.users = {}
         self.lastChange = 0
         self.initialTag = ""
 
-        if self.globalPrefix.find("@") != -1:
-            atIdx = self.globalPrefix.index("@")
-            self.changeRange = self.globalPrefix[atIdx:]
+        if self.depotPath.find("@") != -1:
+            atIdx = self.depotPath.index("@")
+            self.changeRange = self.depotPath[atIdx:]
             if self.changeRange == "@all":
                 self.changeRange = ""
             elif self.changeRange.find(",") == -1:
                 self.revision = self.changeRange
                 self.changeRange = ""
-            self.globalPrefix = self.globalPrefix[0:atIdx]
-        elif self.globalPrefix.find("#") != -1:
-            hashIdx = self.globalPrefix.index("#")
-            self.revision = self.globalPrefix[hashIdx:]
-            self.globalPrefix = self.globalPrefix[0:hashIdx]
+            self.depotPath = self.depotPath[0:atIdx]
+        elif self.depotPath.find("#") != -1:
+            hashIdx = self.depotPath.index("#")
+            self.revision = self.depotPath[hashIdx:]
+            self.depotPath = self.depotPath[0:hashIdx]
         elif len(self.previousDepotPath) == 0:
             self.revision = "#head"
 
-        if self.globalPrefix.endswith("..."):
-            self.globalPrefix = self.globalPrefix[:-3]
+        if self.depotPath.endswith("..."):
+            self.depotPath = self.depotPath[:-3]
 
-        if not self.globalPrefix.endswith("/"):
-            self.globalPrefix += "/"
+        if not self.depotPath.endswith("/"):
+            self.depotPath += "/"
 
         self.getUserMap()
         self.labels = {}
@@ -939,15 +939,15 @@ class P4Sync(Command):
         self.gitError = importProcess.childerr
 
         if len(self.revision) > 0:
-            print "Doing initial import of %s from revision %s" % (self.globalPrefix, self.revision)
+            print "Doing initial import of %s from revision %s" % (self.depotPath, self.revision)
 
             details = { "user" : "git perforce import user", "time" : int(time.time()) }
-            details["desc"] = "Initial import of %s from the state at revision %s" % (self.globalPrefix, self.revision)
+            details["desc"] = "Initial import of %s from the state at revision %s" % (self.depotPath, self.revision)
             details["change"] = self.revision
             newestRevision = 0
 
             fileCnt = 0
-            for info in p4CmdList("files %s...%s" % (self.globalPrefix, self.revision)):
+            for info in p4CmdList("files %s...%s" % (self.depotPath, self.revision)):
                 change = int(info["change"])
                 if change > newestRevision:
                     newestRevision = change
@@ -965,7 +965,7 @@ class P4Sync(Command):
             details["change"] = newestRevision
 
             try:
-                self.commit(details, self.extractFilesFromCommit(details), self.branch, self.globalPrefix)
+                self.commit(details, self.extractFilesFromCommit(details), self.branch, self.depotPath)
             except IOError:
                 print "IO error with git fast-import. Is your git version recent enough?"
                 print self.gitError.read()
@@ -984,7 +984,7 @@ class P4Sync(Command):
 
                 changes.sort()
             else:
-                output = os.popen("p4 changes %s...%s" % (self.globalPrefix, self.changeRange)).readlines()
+                output = os.popen("p4 changes %s...%s" % (self.depotPath, self.changeRange)).readlines()
 
                 for line in output:
                     changeNum = line.split(" ")[1]
@@ -1011,7 +1011,7 @@ class P4Sync(Command):
                     if self.detectBranches:
                         for branch in self.branchesForCommit(files):
                             self.knownBranches.add(branch)
-                            branchPrefix = self.globalPrefix + branch + "/"
+                            branchPrefix = self.depotPath + branch + "/"
 
                             filesForCommit = self.extractFilesInCommitToBranch(files, branchPrefix)
 
@@ -1040,7 +1040,7 @@ class P4Sync(Command):
                                 merged = "refs/heads/" + merged
                             self.commit(description, files, branch, branchPrefix, parent, merged)
                     else:
-                        self.commit(description, files, self.branch, self.globalPrefix, self.initialParent)
+                        self.commit(description, files, self.branch, self.depotPath, self.initialParent)
                         self.initialParent = ""
                 except IOError:
                     print self.gitError.read()
@@ -1059,7 +1059,7 @@ class P4Sync(Command):
         self.gitError.close()
         importProcess.wait()
 
-        os.popen("git repo-config p4.depotpath %s" % self.globalPrefix).read()
+        os.popen("git repo-config p4.depotpath %s" % self.depotPath).read()
         if len(self.initialTag) > 0:
             os.popen("git tag -d %s" % self.initialTag).read()
 
