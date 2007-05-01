@@ -560,12 +560,6 @@ sub validate_refname {
 	return $input;
 }
 
-# very thin wrapper for decode("utf8", $str, Encode::FB_DEFAULT);
-sub to_utf8 {
-	my $str = shift;
-	return decode("utf8", $str, Encode::FB_DEFAULT);
-}
-
 # quote unsafe chars, but keep the slash, even when it's not
 # correct, but quoted slashes look too horrible in bookmarks
 sub esc_param {
@@ -590,7 +584,7 @@ sub esc_html ($;%) {
 	my $str = shift;
 	my %opts = @_;
 
-	$str = to_utf8($str);
+	$str = decode_utf8($str);
 	$str = $cgi->escapeHTML($str);
 	if ($opts{'-nbsp'}) {
 		$str =~ s/ /&nbsp;/g;
@@ -604,7 +598,7 @@ sub esc_path {
 	my $str = shift;
 	my %opts = @_;
 
-	$str = to_utf8($str);
+	$str = decode_utf8($str);
 	$str = $cgi->escapeHTML($str);
 	if ($opts{'-nbsp'}) {
 		$str =~ s/ /&nbsp;/g;
@@ -887,7 +881,7 @@ sub format_subject_html {
 
 	if (length($short) < length($long)) {
 		return $cgi->a({-href => $href, -class => "list subject",
-		                -title => to_utf8($long)},
+		                -title => decode_utf8($long)},
 		       esc_html($short) . $extra);
 	} else {
 		return $cgi->a({-href => $href, -class => "list subject"},
@@ -1104,7 +1098,7 @@ sub git_get_projects_list {
 			if (check_export_ok("$projectroot/$path")) {
 				my $pr = {
 					path => $path,
-					owner => to_utf8($owner),
+					owner => decode_utf8($owner),
 				};
 				push @list, $pr
 			}
@@ -1133,7 +1127,7 @@ sub git_get_project_owner {
 			$pr = unescape($pr);
 			$ow = unescape($ow);
 			if ($pr eq $project) {
-				$owner = to_utf8($ow);
+				$owner = decode_utf8($ow);
 				last;
 			}
 		}
@@ -1607,7 +1601,7 @@ sub get_file_owner {
 	}
 	my $owner = $gcos;
 	$owner =~ s/[,;].*$//;
-	return to_utf8($owner);
+	return decode_utf8($owner);
 }
 
 ## ......................................................................
@@ -1690,7 +1684,7 @@ sub git_header_html {
 
 	my $title = "$site_name";
 	if (defined $project) {
-		$title .= " - " . to_utf8($project);
+		$title .= " - " . decode_utf8($project);
 		if (defined $action) {
 			$title .= "/$action";
 			if (defined $file_name) {
@@ -1963,7 +1957,7 @@ sub git_print_page_path {
 
 	print "<div class=\"page_path\">";
 	print $cgi->a({-href => href(action=>"tree", hash_base=>$hb),
-	              -title => 'tree root'}, to_utf8("[$project]"));
+	              -title => 'tree root'}, decode_utf8("[$project]"));
 	print " / ";
 	if (defined $name) {
 		my @dirname = split '/', $name;
@@ -2578,7 +2572,7 @@ sub git_project_list_body {
 		($pr->{'age'}, $pr->{'age_string'}) = @aa;
 		if (!defined $pr->{'descr'}) {
 			my $descr = git_get_project_description($pr->{'path'}) || "";
-			$pr->{'descr_long'} = to_utf8($descr);
+			$pr->{'descr_long'} = decode_utf8($descr);
 			$pr->{'descr'} = chop_str($descr, 25, 5);
 		}
 		if (!defined $pr->{'owner'}) {
@@ -3610,7 +3604,7 @@ sub git_snapshot {
 		$hash = git_get_head_hash($project);
 	}
 
-	my $filename = to_utf8(basename($project)) . "-$hash.tar.$suffix";
+	my $filename = decode_utf8(basename($project)) . "-$hash.tar.$suffix";
 
 	print $cgi->header(
 		-type => "application/$ctype",
