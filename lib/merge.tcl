@@ -120,14 +120,14 @@ Please select fewer branches.  To merge more than 15 branches, merge the branche
 
 	set msg "Merging $current_branch, [join $names {, }]"
 	set ui_status_value "$msg..."
-	set cons [new_console "Merge" $msg]
-	console_exec $cons $cmd [list finish_merge $revcnt]
+	set cons [console::new "Merge" $msg]
+	console::exec $cons $cmd [list finish_merge $revcnt]
 	bind $w <Destroy> {}
 	destroy $w
 }
 
 proc finish_merge {revcnt w ok} {
-	console_done $w $ok
+	console::done $w $ok
 	if {$ok} {
 		set msg {Merge completed successfully.}
 	} else {

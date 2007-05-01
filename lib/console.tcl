@@ -1,17 +1,25 @@
 # git-gui console support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
-set next_console_id 0
+namespace eval console {
 
-proc new_console {short_title long_title} {
-	global next_console_id console_data
+variable next_console_id 0
+variable console_data
+variable console_cr
+
+proc new {short_title long_title} {
+	variable next_console_id
+	variable console_data
+
 	set w .console[incr next_console_id]
 	set console_data($w) [list $short_title $long_title]
-	return [console_init $w]
+	return [_init $w]
 }
 
-proc console_init {w} {
-	global console_cr console_data M1B
+proc _init {w} {
+	global M1B
+	variable console_cr
+	variable console_data
 
 	set console_cr($w) 1.0
 	toplevel $w
@@ -63,7 +71,7 @@ proc console_init {w} {
 	return $w
 }
 
-proc console_exec {w cmd after} {
+proc exec {w cmd {after {}}} {
 	# -- Cygwin's Tcl tosses the enviroment when we exec our child.
 	#    But most users need that so we have to relogin. :-(
 	#
@@ -78,15 +86,16 @@ proc console_exec {w cmd after} {
 
 	set fd_f [open $cmd r]
 	fconfigure $fd_f -blocking 0 -translation binary
-	fileevent $fd_f readable [list console_read $w $fd_f $after]
+	fileevent $fd_f readable \
+		[namespace code [list _read $w $fd_f $after]]
 }
 
-proc console_read {w fd after} {
-	global console_cr
+proc _read {w fd after} {
+	variable console_cr
 
 	set buf [read $fd]
 	if {$buf ne {}} {
-		if {![winfo exists $w]} {console_init $w}
+		if {![winfo exists $w]} {_init $w}
 		$w.m.t conf -state normal
 		set c 0
 		set n [string length $buf]
@@ -120,36 +129,41 @@ proc console_read {w fd after} {
 		} else {
 			set ok 1
 		}
-		uplevel #0 $after $w $ok
+		if {$after ne {}} {
+			uplevel #0 $after $w $ok
+		} else {
+			done $w $ok
+		}
 		return
 	}
 	fconfigure $fd -blocking 0
 }
 
-proc console_chain {cmdlist w {ok 1}} {
+proc chain {cmdlist w {ok 1}} {
 	if {$ok} {
 		if {[llength $cmdlist] == 0} {
-			console_done $w $ok
+			done $w $ok
 			return
 		}
 
 		set cmd [lindex $cmdlist 0]
 		set cmdlist [lrange $cmdlist 1 end]
 
-		if {[lindex $cmd 0] eq {console_exec}} {
-			console_exec $w \
+		if {[lindex $cmd 0] eq {exec}} {
+			exec $w \
 				[lindex $cmd 1] \
-				[list console_chain $cmdlist]
+				[namespace code [list chain $cmdlist]]
 		} else {
 			uplevel #0 $cmd $cmdlist $w $ok
 		}
 	} else {
-		console_done $w $ok
+		done $w $ok
 	}
 }
 
-proc console_done {args} {
-	global console_cr console_data
+proc done {args} {
+	variable console_cr
+	variable console_data
 
 	switch -- [llength $args] {
 	2 {
@@ -161,7 +175,7 @@ proc console_done {args} {
 		set ok [lindex $args 2]
 	}
 	default {
-		error "wrong number of args: console_done ?ignored? w ok"
+		error "wrong number of args: done ?ignored? w ok"
 	}
 	}
 
@@ -173,7 +187,7 @@ proc console_done {args} {
 		}
 	} else {
 		if {![winfo exists $w]} {
-			console_init $w
+			_init $w
 		}
 		$w.m.s conf -background red -text {Error: Command Failed}
 		$w.ok conf -state normal
@@ -182,4 +196,6 @@ proc console_done {args} {
 
 	array unset console_cr $w
 	array unset console_data $w
+}
+
 }

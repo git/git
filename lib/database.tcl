@@ -69,21 +69,21 @@ proc do_stats {} {
 }
 
 proc do_gc {} {
-	set w [new_console {gc} {Compressing the object database}]
-	console_chain {
-		{console_exec {git pack-refs --prune}}
-		{console_exec {git reflog expire --all}}
-		{console_exec {git repack -a -d -l}}
-		{console_exec {git rerere gc}}
+	set w [console::new {gc} {Compressing the object database}]
+	console::chain {
+		{exec {git pack-refs --prune}}
+		{exec {git reflog expire --all}}
+		{exec {git repack -a -d -l}}
+		{exec {git rerere gc}}
 	} $w
 }
 
 proc do_fsck_objects {} {
-	set w [new_console {fsck-objects} \
+	set w [console::new {fsck-objects} \
 		{Verifying the object database with fsck-objects}]
 	set cmd [list git fsck-objects]
 	lappend cmd --full
 	lappend cmd --cache
 	lappend cmd --strict
-	console_exec $w $cmd console_done
+	console::exec $w $cmd
 }

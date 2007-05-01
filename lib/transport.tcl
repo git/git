@@ -2,22 +2,22 @@
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc fetch_from {remote} {
-	set w [new_console \
+	set w [console::new \
 		"fetch $remote" \
 		"Fetching new changes from $remote"]
 	set cmd [list git fetch]
 	lappend cmd $remote
-	console_exec $w $cmd console_done
+	console::exec $w $cmd
 }
 
 proc push_to {remote} {
-	set w [new_console \
+	set w [console::new \
 		"push $remote" \
 		"Pushing changes to $remote"]
 	set cmd [list git push]
 	lappend cmd -v
 	lappend cmd $remote
-	console_exec $w $cmd console_done
+	console::exec $w $cmd
 }
 
 proc start_push_anywhere_action {w} {
@@ -53,8 +53,10 @@ proc start_push_anywhere_action {w} {
 		set unit branches
 	}
 
-	set cons [new_console "push $r_url" "Pushing $cnt $unit to $r_url"]
-	console_exec $cons $cmd console_done
+	set cons [console::new \
+		"push $r_url" \
+		"Pushing $cnt $unit to $r_url"]
+	console::exec $cons $cmd
 	destroy $w
 }
 
