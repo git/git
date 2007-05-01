@@ -2038,6 +2038,12 @@ bind $ui_diff <Key-Up>     {catch {%W yview scroll -1 units};break}
 bind $ui_diff <Key-Down>   {catch {%W yview scroll  1 units};break}
 bind $ui_diff <Key-Left>   {catch {%W xview scroll -1 units};break}
 bind $ui_diff <Key-Right>  {catch {%W xview scroll  1 units};break}
+bind $ui_diff <Key-k>         {catch {%W yview scroll -1 units};break}
+bind $ui_diff <Key-j>         {catch {%W yview scroll  1 units};break}
+bind $ui_diff <Key-h>         {catch {%W xview scroll -1 units};break}
+bind $ui_diff <Key-l>         {catch {%W xview scroll  1 units};break}
+bind $ui_diff <Control-Key-b> {catch {%W yview scroll -1 pages};break}
+bind $ui_diff <Control-Key-f> {catch {%W yview scroll  1 pages};break}
 bind $ui_diff <Button-1>   {focus %W}
 
 if {[is_enabled branch]} {

@@ -125,6 +125,23 @@ proc show_blame {commit path} {
 		"
 	}
 
+	foreach i [list \
+		$w.out.loaded_t \
+		$w.out.linenumber_t \
+		$w.out.file_t \
+		$w.cm.t] {
+		bind $i <Key-Up>        {catch {%W yview scroll -1 units};break}
+		bind $i <Key-Down>      {catch {%W yview scroll  1 units};break}
+		bind $i <Key-Left>      {catch {%W xview scroll -1 units};break}
+		bind $i <Key-Right>     {catch {%W xview scroll  1 units};break}
+		bind $i <Key-k>         {catch {%W yview scroll -1 units};break}
+		bind $i <Key-j>         {catch {%W yview scroll  1 units};break}
+		bind $i <Key-h>         {catch {%W xview scroll -1 units};break}
+		bind $i <Key-l>         {catch {%W xview scroll  1 units};break}
+		bind $i <Control-Key-b> {catch {%W yview scroll -1 pages};break}
+		bind $i <Control-Key-f> {catch {%W yview scroll  1 pages};break}
+	}
+
 	bind $w.cm.t <Button-1> "focus $w.cm.t"
 	bind $tl <Visibility> "focus $tl"
 	bind $tl <Destroy> "
