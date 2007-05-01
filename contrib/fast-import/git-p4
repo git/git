@@ -74,7 +74,7 @@ def extractLogMessageFromGitCommit(commit):
     for log in os.popen("git cat-file commit %s" % commit).readlines():
        if not foundTitle:
            if len(log) == 1:
-               foundTitle = 1
+               foundTitle = True
            continue
 
        logMessage += log
