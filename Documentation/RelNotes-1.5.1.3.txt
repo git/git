@@ -1,4 +1,4 @@
-GIT v1.5.1.3 Release Notes (draft)
+GIT v1.5.1.3 Release Notes
 ==========================
 
 Fixes since v1.5.1.2
@@ -19,6 +19,8 @@ Fixes since v1.5.1.2
   - git-svn inconsistently stripped away username from the URL
     only when svnsync_props was in use.
 
+  - git-svn got confused when handling symlinks on Mac OS.
+
   - git-send-email was not quoting recipient names that have
     period '.' in them.  Also it did not allow overriding
     envelope sender, which made it impossible to send patches to
@@ -31,8 +33,14 @@ Fixes since v1.5.1.2
     packfiles incorrectly closed the fd that was still being
     used to read the pack.
 
----
-exec >/var/tmp/1
-O=v1.5.1.2-23-gbf7af11
-echo O=`git describe refs/heads/maint`
-git shortlog --no-merges $O..refs/heads/maint
+  - import-tars contributed front-end for fastimport was passing
+    wrong directory modes without checking.
+
+  - git-fastimport trusted its input too much and allowed to
+    create corrupt tree objects with entries without a name.
+
+  - git-fetch needlessly barfed when too long reflog action
+    description was given by the caller.
+
+Also contains various documentation updates.
+
