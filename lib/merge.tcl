@@ -195,17 +195,22 @@ proc dialog {} {
 	pack $w.source.l -side left -fill both -expand 1
 	pack $w.source -fill both -expand 1 -pady 5 -padx 5
 
-	set cmd [list git for-each-ref]
-	lappend cmd {--format=%(objectname) %(*objectname) %(refname)}
+	set fmt {list %(objectname) %(*objectname) %(refname) %(subject)}
+	set cmd [list git for-each-ref --tcl --format=$fmt]
 	lappend cmd refs/heads
 	lappend cmd refs/remotes
 	lappend cmd refs/tags
 	set fr_fd [open "| $cmd" r]
 	fconfigure $fr_fd -translation binary
 	while {[gets $fr_fd line] > 0} {
-		set line [split $line { }]
-		set sha1([lindex $line 0]) [lindex $line 2]
-		set sha1([lindex $line 1]) [lindex $line 2]
+		set line [eval $line]
+		set ref [lindex $line 2]
+		regsub ^refs/(heads|remotes|tags)/ $ref {} ref
+		set subj($ref) [lindex $line 3]
+		lappend sha1([lindex $line 0]) $ref
+		if {[lindex $line 1] ne {}} {
+			lappend sha1([lindex $line 1]) $ref
+		}
 	}
 	close $fr_fd
 
@@ -213,8 +218,9 @@ proc dialog {} {
 	set fr_fd [open "| git rev-list --all --not HEAD"]
 	while {[gets $fr_fd line] > 0} {
 		if {[catch {set ref $sha1($line)}]} continue
-		regsub ^refs/(heads|remotes|tags)/ $ref {} ref
-		lappend to_show $ref
+		foreach n $ref {
+			lappend to_show $n
+		}
 	}
 	close $fr_fd
 
