@@ -44,7 +44,7 @@ mkdir .git/rr-cache
 
 test_expect_failure 'conflicting merge' 'git pull . first'
 
-sha1=$(sed -e 's/\t.*//' .git/rr-cache/MERGE_RR)
+sha1=$(sed -e 's/	.*//' .git/rr-cache/MERGE_RR)
 rr=.git/rr-cache/$sha1
 test_expect_success 'recorded preimage' "grep ======= $rr/preimage"
 
