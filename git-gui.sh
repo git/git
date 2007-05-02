@@ -1376,7 +1376,7 @@ if {[is_enabled branch]} {
 		[.mbar.branch index last] -state]
 
 	.mbar.branch add command -label {Reset...} \
-		-command do_reset_hard
+		-command merge::reset_hard
 	lappend disable_on_lock [list .mbar.branch entryconf \
 		[.mbar.branch index last] -state]
 }
@@ -1449,11 +1449,11 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 if {[is_enabled branch]} {
 	menu .mbar.merge
 	.mbar.merge add command -label {Local Merge...} \
-		-command do_local_merge
+		-command merge::dialog
 	lappend disable_on_lock \
 		[list .mbar.merge entryconf [.mbar.merge index last] -state]
 	.mbar.merge add command -label {Abort Merge...} \
-		-command do_reset_hard
+		-command merge::reset_hard
 	lappend disable_on_lock \
 		[list .mbar.merge entryconf [.mbar.merge index last] -state]
 

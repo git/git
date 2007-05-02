@@ -1,7 +1,9 @@
 # git-gui branch merge support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
-proc can_merge {} {
+namespace eval merge {
+
+proc _can_merge {} {
 	global HEAD commit_type file_states
 
 	if {[string match amend* $commit_type]} {
@@ -61,7 +63,7 @@ You should complete the current commit before starting a merge.  Doing so will h
 	return 1
 }
 
-proc visualize_local_merge {w} {
+proc _visualize {w} {
 	set revs {}
 	foreach i [$w.source.l curselection] {
 		lappend revs [$w.source.l get $i]
@@ -71,7 +73,7 @@ proc visualize_local_merge {w} {
 	do_gitk $revs
 }
 
-proc start_local_merge_action {w} {
+proc _start {w} {
 	global HEAD ui_status_value current_branch
 
 	set cmd [list git merge]
@@ -121,12 +123,12 @@ Please select fewer branches.  To merge more than 15 branches, merge the branche
 	set msg "Merging $current_branch, [join $names {, }]"
 	set ui_status_value "$msg..."
 	set cons [console::new "Merge" $msg]
-	console::exec $cons $cmd [list finish_merge $revcnt]
+	console::exec $cons $cmd [namespace code [list _finish $revcnt]]
 	bind $w <Destroy> {}
 	destroy $w
 }
 
-proc finish_merge {revcnt w ok} {
+proc _finish {revcnt w ok} {
 	console::done $w $ok
 	if {$ok} {
 		set msg {Merge completed successfully.}
@@ -144,7 +146,8 @@ You can attempt this merge again by merging only one branch at a time." $w
 
 			set fd [open "| git read-tree --reset -u HEAD" r]
 			fconfigure $fd -blocking 0 -translation binary
-			fileevent $fd readable [list reset_hard_wait $fd]
+			fileevent $fd readable \
+				[namespace code [list _reset_wait $fd]]
 			set ui_status_value {Aborting... please wait...}
 			return
 		}
@@ -155,10 +158,10 @@ You can attempt this merge again by merging only one branch at a time." $w
 	rescan [list set ui_status_value $msg]
 }
 
-proc do_local_merge {} {
+proc dialog {} {
 	global current_branch
 
-	if {![can_merge]} return
+	if {![_can_merge]} return
 
 	set w .merge_setup
 	toplevel $w
@@ -171,10 +174,10 @@ proc do_local_merge {} {
 
 	frame $w.buttons
 	button $w.buttons.visualize -text Visualize \
-		-command [list visualize_local_merge $w]
+		-command [namespace code [list _visualize $w]]
 	pack $w.buttons.visualize -side left
 	button $w.buttons.create -text Merge \
-		-command [list start_local_merge_action $w]
+		-command [namespace code [list _start $w]]
 	pack $w.buttons.create -side right
 	button $w.buttons.cancel -text {Cancel} \
 		-command [list destroy $w]
@@ -226,7 +229,7 @@ proc do_local_merge {} {
 	tkwait window $w
 }
 
-proc do_reset_hard {} {
+proc reset_hard {} {
 	global HEAD commit_type file_states
 
 	if {[string match amend* $commit_type]} {
@@ -252,14 +255,14 @@ Aborting the current $op will cause *ALL* uncommitted changes to be lost.
 Continue with aborting the current $op?"] eq {yes}} {
 		set fd [open "| git read-tree --reset -u HEAD" r]
 		fconfigure $fd -blocking 0 -translation binary
-		fileevent $fd readable [list reset_hard_wait $fd]
+		fileevent $fd readable [namespace code [list _reset_wait $fd]]
 		set ui_status_value {Aborting... please wait...}
 	} else {
 		unlock_index
 	}
 }
 
-proc reset_hard_wait {fd} {
+proc _reset_wait {fd} {
 	global ui_comm
 
 	read $fd
@@ -278,4 +281,6 @@ proc reset_hard_wait {fd} {
 
 		rescan {set ui_status_value {Abort completed.  Ready.}}
 	}
+}
+
 }
