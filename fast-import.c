@@ -651,42 +651,6 @@ static void start_packfile(void)
 	all_packs[pack_id] = p;
 }
 
-static void fixup_header_footer(void)
-{
-	static const int buf_sz = 128 * 1024;
-	int pack_fd = pack_data->pack_fd;
-	SHA_CTX c;
-	struct pack_header hdr;
-	char *buf;
-
-	if (lseek(pack_fd, 0, SEEK_SET) != 0)
-		die("Failed seeking to start: %s", strerror(errno));
-	if (read_in_full(pack_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
-		die("Unable to reread header of %s", pack_data->pack_name);
-	if (lseek(pack_fd, 0, SEEK_SET) != 0)
-		die("Failed seeking to start: %s", strerror(errno));
-	hdr.hdr_entries = htonl(object_count);
-	write_or_die(pack_fd, &hdr, sizeof(hdr));
-
-	SHA1_Init(&c);
-	SHA1_Update(&c, &hdr, sizeof(hdr));
-
-	buf = xmalloc(buf_sz);
-	for (;;) {
-		ssize_t n = xread(pack_fd, buf, buf_sz);
-		if (!n)
-			break;
-		if (n < 0)
-			die("Failed to checksum %s", pack_data->pack_name);
-		SHA1_Update(&c, buf, n);
-	}
-	free(buf);
-
-	SHA1_Final(pack_data->sha1, &c);
-	write_or_die(pack_fd, pack_data->sha1, sizeof(pack_data->sha1));
-	close(pack_fd);
-}
-
 static int oecmp (const void *a_, const void *b_)
 {
 	struct object_entry *a = *((struct object_entry**)a_);
@@ -802,7 +766,9 @@ static void end_packfile(void)
 		struct branch *b;
 		struct tag *t;
 
-		fixup_header_footer();
+		fixup_pack_header_footer(pack_data->pack_fd, pack_data->sha1,
+				    pack_data->pack_name, object_count);
+		close(pack_data->pack_fd);
 		idx_name = keep_pack(create_index());
 
 		/* Register the packfile with core git's machinary. */

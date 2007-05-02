@@ -301,8 +301,8 @@ LIB_OBJS = \
 	interpolate.o \
 	lockfile.o \
 	patch-ids.o \
-	object.o pack-check.o patch-delta.o path.o pkt-line.o sideband.o \
-	reachable.o reflog-walk.o \
+	object.o pack-check.o pack-write.o patch-delta.o path.o pkt-line.o \
+	sideband.o reachable.o reflog-walk.o \
 	quote.o read-cache.o refs.o run-command.o dir.o object-refs.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \

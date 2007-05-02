@@ -44,6 +44,7 @@ struct pack_idx_header {
 
 
 extern int verify_pack(struct packed_git *, int);
+extern void fixup_pack_header_footer(int, unsigned char *, const char *, uint32_t);
 
 #define PH_ERROR_EOF		(-1)
 #define PH_ERROR_PACK_SIGNATURE	(-2)
