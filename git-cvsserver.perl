@@ -2454,7 +2454,7 @@ sub update
                     #$log->debug("ADDED    $name");
                     $head->{$name} = {
                         name => $name,
-                        revision => 1,
+                        revision => $head->{$name}{revision} ? $head->{$name}{revision}+1 : 1,
                         filehash => $hash,
                         commithash => $commit->{hash},
                         modified => $commit->{date},
