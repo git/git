@@ -10,8 +10,9 @@
 
 #include "git-compat-util.h"
 #include "delta.h"
+#include "cache.h"
 
-static const char usage[] =
+static const char usage_str[] =
 	"test-delta (-d|-p) <from_file> <data_file> <out_file>";
 
 int main(int argc, char *argv[])
@@ -22,7 +23,7 @@ int main(int argc, char *argv[])
 	unsigned long from_size, data_size, out_size;
 
 	if (argc != 5 || (strcmp(argv[1], "-d") && strcmp(argv[1], "-p"))) {
-		fprintf(stderr, "Usage: %s\n", usage);
+		fprintf(stderr, "Usage: %s\n", usage_str);
 		return 1;
 	}
 
