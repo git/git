@@ -63,28 +63,28 @@ You should complete the current commit before starting a merge.  Doing so will h
 	return 1
 }
 
-proc _visualize {w} {
-	set revs {}
+proc _refs {w list} {
+	set r {}
 	foreach i [$w.source.l curselection] {
-		lappend revs [$w.source.l get $i]
+		lappend r [lindex [lindex $list $i] 0]
 	}
+	return $r
+}
+
+proc _visualize {w list} {
+	set revs [_refs $w $list]
 	if {$revs eq {}} return
 	lappend revs --not HEAD
 	do_gitk $revs
 }
 
-proc _start {w} {
+proc _start {w list} {
 	global HEAD ui_status_value current_branch
 
 	set cmd [list git merge]
-	set names {}
-	set revcnt 0
-	foreach i [$w.source.l curselection] {
-		set b [$w.source.l get $i]
-		lappend cmd $b
-		lappend names $b
-		incr revcnt
-	}
+	set names [_refs $w $list]
+	set revcnt [llength $names]
+	append cmd { } $names
 
 	if {$revcnt == 0} {
 		return
@@ -163,38 +163,6 @@ proc dialog {} {
 
 	if {![_can_merge]} return
 
-	set w .merge_setup
-	toplevel $w
-	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
-
-	label $w.header \
-		-text "Merge Into $current_branch" \
-		-font font_uibold
-	pack $w.header -side top -fill x
-
-	frame $w.buttons
-	button $w.buttons.visualize -text Visualize \
-		-command [namespace code [list _visualize $w]]
-	pack $w.buttons.visualize -side left
-	button $w.buttons.create -text Merge \
-		-command [namespace code [list _start $w]]
-	pack $w.buttons.create -side right
-	button $w.buttons.cancel -text {Cancel} \
-		-command [list destroy $w]
-	pack $w.buttons.cancel -side right -padx 5
-	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
-
-	labelframe $w.source -text {Source Branches}
-	listbox $w.source.l \
-		-height 10 \
-		-width 70 \
-		-selectmode extended \
-		-yscrollcommand [list $w.source.sby set]
-	scrollbar $w.source.sby -command [list $w.source.l yview]
-	pack $w.source.sby -side right -fill y
-	pack $w.source.l -side left -fill both -expand 1
-	pack $w.source -fill both -expand 1 -pady 5 -padx 5
-
 	set fmt {list %(objectname) %(*objectname) %(refname) %(subject)}
 	set cmd [list git for-each-ref --tcl --format=$fmt]
 	lappend cmd refs/heads
@@ -219,16 +187,57 @@ proc dialog {} {
 	while {[gets $fr_fd line] > 0} {
 		if {[catch {set ref $sha1($line)}]} continue
 		foreach n $ref {
-			lappend to_show $n
+			lappend to_show [list $n $line]
 		}
 	}
 	close $fr_fd
+	set to_show [lsort -unique $to_show]
 
-	foreach ref [lsort -unique $to_show] {
-		$w.source.l insert end $ref
+	set w .merge_setup
+	toplevel $w
+	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
+
+	label $w.header \
+		-text "Merge Into $current_branch" \
+		-font font_uibold
+	pack $w.header -side top -fill x
+
+	frame $w.buttons
+	button $w.buttons.visualize -text Visualize \
+		-command [namespace code [list _visualize $w $to_show]]
+	pack $w.buttons.visualize -side left
+	button $w.buttons.create -text Merge \
+		-command [namespace code [list _start $w $to_show]]
+	pack $w.buttons.create -side right
+	button $w.buttons.cancel -text {Cancel} \
+		-command [list destroy $w]
+	pack $w.buttons.cancel -side right -padx 5
+	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
+
+	labelframe $w.source -text {Source Branches}
+	listbox $w.source.l \
+		-height 10 \
+		-width 70 \
+		-font font_diff \
+		-selectmode extended \
+		-yscrollcommand [list $w.source.sby set]
+	scrollbar $w.source.sby -command [list $w.source.l yview]
+	pack $w.source.sby -side right -fill y
+	pack $w.source.l -side left -fill both -expand 1
+	pack $w.source -fill both -expand 1 -pady 5 -padx 5
+
+	foreach ref $to_show {
+		set n [lindex $ref 0]
+		if {[string length $n] > 20} {
+			set n "[string range $n 0 16]..."
+		}
+		$w.source.l insert end [format {%s %-20s %s} \
+			[string range [lindex $ref 1] 0 5] \
+			$n \
+			$subj([lindex $ref 0])]
 	}
 
-	bind $w <Visibility> "grab $w"
+	bind $w <Visibility> "grab $w; focus $w.source.l"
 	bind $w <Key-Escape> "unlock_index;destroy $w"
 	bind $w <Destroy> unlock_index
 	wm title $w "[appname] ([reponame]): Merge"
