@@ -119,6 +119,9 @@ and have no uncommitted changes.
 	alternative to HEAD.
 	This is advantageous over 'set-tree' (below) because it produces
 	cleaner, more linear history.
++
+--no-rebase;;
+	After committing, do not rebase or reset.
 --
 
 'log'::
