@@ -1236,6 +1236,8 @@ static void builtin_diff(const char *name_a,
 	}
 
  free_ab_and_return:
+	diff_free_filespec_data(one);
+	diff_free_filespec_data(two);
 	free(a_one);
 	free(b_two);
 	return;
@@ -1262,7 +1264,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		diff_populate_filespec(two, 0);
 		data->deleted = count_lines(one->data, one->size);
 		data->added = count_lines(two->data, two->size);
-		return;
+		goto free_and_return;
 	}
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
@@ -1284,6 +1286,10 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		ecb.priv = diffstat;
 		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 	}
+
+ free_and_return:
+	diff_free_filespec_data(one);
+	diff_free_filespec_data(two);
 }
 
 static void builtin_checkdiff(const char *name_a, const char *name_b,
@@ -1306,7 +1312,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		die("unable to read files to diff");
 
 	if (file_is_binary(two))
-		return;
+		goto free_and_return;
 	else {
 		/* Crazy xdl interfaces.. */
 		xpparam_t xpp;
@@ -1320,6 +1326,9 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		ecb.priv = &data;
 		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 	}
+ free_and_return:
+	diff_free_filespec_data(one);
+	diff_free_filespec_data(two);
 }
 
 struct diff_filespec *alloc_filespec(const char *path)
@@ -1507,7 +1516,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		size_only = 0;
 
 	if (s->data)
-		return err;
+		return 0;
 
 	if (S_ISDIRLNK(s->mode))
 		return diff_populate_gitlink(s, size_only);
@@ -1597,8 +1606,11 @@ void diff_free_filespec_data(struct diff_filespec *s)
 		free(s->data);
 	else if (s->should_munmap)
 		munmap(s->data, s->size);
-	s->should_free = s->should_munmap = 0;
-	s->data = NULL;
+
+	if (s->should_free || s->should_munmap) {
+		s->should_free = s->should_munmap = 0;
+		s->data = NULL;
+	}
 	free(s->cnt_data);
 	s->cnt_data = NULL;
 }
