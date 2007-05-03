@@ -20,13 +20,12 @@
 #include "mailmap.h"
 
 static char blame_usage[] =
-"git-blame [-c] [-b] [-l] [--root] [-x] [-t] [-f] [-n] [-s] [-p] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [--contents <filename>] [--incremental] [commit] [--] file\n"
+"git-blame [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-p] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [--contents <filename>] [--incremental] [commit] [--] file\n"
 "  -c                  Use the same output mode as git-annotate (Default: off)\n"
 "  -b                  Show blank SHA-1 for boundary commits (Default: off)\n"
 "  -l                  Show long commit SHA1 (Default: off)\n"
 "  --root              Do not treat root commits as boundaries (Default: off)\n"
 "  -t                  Show raw timestamp (Default: off)\n"
-"  -x                  Do not use .mailmap file\n"
 "  -f, --show-name     Show original filename (Default: auto)\n"
 "  -n, --show-number   Show original linenumber (Default: off)\n"
 "  -s                  Suppress author name and timestamp (Default: off)\n"
@@ -46,7 +45,6 @@ static int show_root;
 static int blank_boundary;
 static int incremental;
 static int cmd_is_annotate;
-static int no_mailmap;
 static struct path_list mailmap;
 
 #ifndef DEBUG
@@ -2173,9 +2171,6 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		else if (!strcmp("-p", arg) ||
 			 !strcmp("--porcelain", arg))
 			output_option |= OUTPUT_PORCELAIN;
-		else if (!strcmp("-x", arg) ||
-			 !strcmp("--no-mailmap", arg))
-			no_mailmap = 1;
 		else if (!strcmp("--", arg)) {
 			seen_dashdash = 1;
 			i++;
@@ -2375,8 +2370,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 		die("reading graft file %s failed: %s",
 		    revs_file, strerror(errno));
 
-	if (!no_mailmap)
-		read_mailmap(&mailmap, ".mailmap", NULL);
+	read_mailmap(&mailmap, ".mailmap", NULL);
 
 	assign_blame(&sb, &revs, opt);
 
