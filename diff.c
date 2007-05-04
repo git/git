@@ -1572,14 +1572,15 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		enum object_type type;
 		struct sha1_size_cache *e;
 
+		if (size_only && use_size_cache &&
+		    (e = locate_size_cache(s->sha1, 1, 0)) != NULL) {
+			s->size = e->size;
+			return 0;
+		}
+
 		if (size_only) {
-			e = locate_size_cache(s->sha1, 1, 0);
-			if (e) {
-				s->size = e->size;
-				return 0;
-			}
 			type = sha1_object_info(s->sha1, &s->size);
-			if (type < 0)
+			if (use_size_cache && 0 < type)
 				locate_size_cache(s->sha1, 0, s->size);
 		}
 		else {

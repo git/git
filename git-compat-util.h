@@ -197,6 +197,19 @@ static inline void *xmalloc(size_t size)
 	return ret;
 }
 
+static inline char *xstrndup(const char *str, size_t len)
+{
+	char *p;
+
+	p = memchr(str, '\0', len);
+	if (p)
+		len = p - str;
+	p = xmalloc(len + 1);
+	memcpy(p, str, len);
+	p[len] = '\0';
+	return p;
+}
+
 static inline void *xrealloc(void *ptr, size_t size)
 {
 	void *ret = realloc(ptr, size);

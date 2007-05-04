@@ -718,14 +718,6 @@ static char *logmsg_reencode(const struct commit *commit,
 	return out;
 }
 
-static char *xstrndup(const char *text, int len)
-{
-	char *result = xmalloc(len + 1);
-	memcpy(result, text, len);
-	result[len] = '\0';
-	return result;
-}
-
 static void fill_person(struct interp *table, const char *msg, int len)
 {
 	int start, end, tz = 0;
