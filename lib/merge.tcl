@@ -160,6 +160,7 @@ You can attempt this merge again by merging only one branch at a time." $w
 
 proc dialog {} {
 	global current_branch
+	global M1B
 
 	if {![_can_merge]} return
 
@@ -197,20 +198,20 @@ proc dialog {} {
 	toplevel $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
+	set _visualize [namespace code [list _visualize $w $to_show]]
+	set _start [namespace code [list _start $w $to_show]]
+
 	label $w.header \
 		-text "Merge Into $current_branch" \
 		-font font_uibold
 	pack $w.header -side top -fill x
 
 	frame $w.buttons
-	button $w.buttons.visualize -text Visualize \
-		-command [namespace code [list _visualize $w $to_show]]
+	button $w.buttons.visualize -text Visualize -command $_visualize
 	pack $w.buttons.visualize -side left
-	button $w.buttons.create -text Merge \
-		-command [namespace code [list _start $w $to_show]]
+	button $w.buttons.create -text Merge -command $_start
 	pack $w.buttons.create -side right
-	button $w.buttons.cancel -text {Cancel} \
-		-command [list destroy $w]
+	button $w.buttons.cancel -text {Cancel} -command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
@@ -237,6 +238,13 @@ proc dialog {} {
 			$subj([lindex $ref 0])]
 	}
 
+	bind $w.source.l <Key-k> [list event generate %W <Key-Up>]
+	bind $w.source.l <Key-j> [list event generate %W <Key-Down>]
+	bind $w.source.l <Key-h> [list event generate %W <Key-Left>]
+	bind $w.source.l <Key-l> [list event generate %W <Key-Right>]
+	bind $w.source.l <Key-v> $_visualize
+
+	bind $w <$M1B-Key-Return> $_start
 	bind $w <Visibility> "grab $w; focus $w.source.l"
 	bind $w <Key-Escape> "unlock_index;destroy $w"
 	bind $w <Destroy> unlock_index
