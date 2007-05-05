@@ -90,7 +90,8 @@ finish () {
 	?*)
 		case "$no_summary" in
 		'')
-			git-diff-tree --stat --summary -M "$head" "$1"
+			# We want color (if set), but no pager
+			GIT_PAGER='' git-diff --stat --summary -M "$head" "$1"
 			;;
 		esac
 		;;
