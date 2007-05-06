@@ -1015,6 +1015,30 @@ sub git_get_hash_by_path {
 	return $3;
 }
 
+# get path of entry with given hash at given tree-ish (ref)
+# used to get 'from' filename for combined diff (merge commit) for renames
+sub git_get_path_by_hash {
+	my $base = shift || return;
+	my $hash = shift || return;
+
+	local $/ = "\0";
+
+	open my $fd, "-|", git_cmd(), "ls-tree", '-r', '-t', '-z', $base
+		or return undef;
+	while (my $line = <$fd>) {
+		chomp $line;
+
+		#'040000 tree 595596a6a9117ddba9fe379b6b012b558bac8423	gitweb'
+		#'100644 blob e02e90f0429be0d2a69b76571101f20b8f75530f	gitweb/README'
+		if ($line =~ m/(?:[0-9]+) (?:.+) $hash\t(.+)$/) {
+			close $fd;
+			return $1;
+		}
+	}
+	close $fd;
+	return undef;
+}
+
 ## ......................................................................
 ## git utility functions, directly accessing git repository
 
@@ -2210,7 +2234,8 @@ sub git_print_tree_entry {
 ## functions printing large fragments of HTML
 
 sub git_difftree_body {
-	my ($difftree, $hash, $parent) = @_;
+	my ($difftree, $hash, @parents) = @_;
+	my ($parent) = $parents[0];
 	my ($have_blame) = gitweb_check_feature('blame');
 	print "<div class=\"list_head\">\n";
 	if ($#{$difftree} > 10) {
@@ -2218,7 +2243,9 @@ sub git_difftree_body {
 	}
 	print "</div>\n";
 
-	print "<table class=\"diff_tree\">\n";
+	print "<table class=\"" .
+	      (@parents > 1 ? "combined " : "") .
+	      "diff_tree\">\n";
 	my $alternate = 1;
 	my $patchno = 0;
 	foreach my $line (@{$difftree}) {
@@ -2230,6 +2257,96 @@ sub git_difftree_body {
 			print "<tr class=\"light\">\n";
 		}
 		$alternate ^= 1;
+
+		if (exists $diff{'nparents'}) { # combined diff
+
+			if ($diff{'to_id'} ne ('0' x 40)) {
+				# file exists in the result (child) commit
+				print "<td>" .
+				      $cgi->a({-href => href(action=>"blob", hash=>$diff{'to_id'},
+				                             file_name=>$diff{'to_file'},
+				                             hash_base=>$hash),
+				              -class => "list"}, esc_path($diff{'to_file'})) .
+				      "</td>\n";
+			} else {
+				print "<td>" .
+				      esc_path($diff{'to_file'}) .
+				      "</td>\n";
+			}
+
+			if ($action eq 'commitdiff') {
+				# link to patch
+				$patchno++;
+				print "<td class=\"link\">" .
+				      $cgi->a({-href => "#patch$patchno"}, "patch") .
+				      " | " .
+				      "</td>\n";
+			}
+
+			my $has_history = 0;
+			my $not_deleted = 0;
+			for (my $i = 0; $i < $diff{'nparents'}; $i++) {
+				my $hash_parent = $parents[$i];
+				my $from_hash = $diff{'from_id'}[$i];
+				my $from_path = undef;
+				my $status = $diff{'status'}[$i];
+
+				$has_history ||= ($status ne 'A');
+				$not_deleted ||= ($status ne 'D');
+
+				if ($status eq 'R' || $status eq 'C') {
+					$from_path = git_get_path_by_hash($hash_parent, $from_hash);
+				}
+
+				if ($status eq 'A') {
+					print "<td  class=\"link\" align=\"right\"> | </td>\n";
+				} elsif ($status eq 'D') {
+					print "<td class=\"link\">" .
+					      $cgi->a({-href => href(action=>"blob",
+					                             hash_base=>$hash,
+					                             hash=>$from_hash,
+					                             file_name=>$from_path)},
+					              "blob" . ($i+1)) .
+					      " | </td>\n";
+				} else {
+					if ($diff{'to_id'} eq $from_hash) {
+						print "<td class=\"link nochange\">";
+					} else {
+						print "<td class=\"link\">";
+					}
+					print $cgi->a({-href => href(action=>"blobdiff",
+					                             hash=>$diff{'to_id'},
+					                             hash_parent=>$from_hash,
+					                             hash_base=>$hash,
+					                             hash_parent_base=>$hash_parent,
+					                             file_name=>$diff{'to_file'},
+					                             file_parent=>$from_path)},
+					              "diff" . ($i+1)) .
+					      " | </td>\n";
+				}
+			}
+
+			print "<td class=\"link\">";
+			if ($not_deleted) {
+				print $cgi->a({-href => href(action=>"blob",
+				                             hash=>$diff{'to_id'},
+				                             file_name=>$diff{'to_file'},
+				                             hash_base=>$hash)},
+				              "blob");
+				print " | " if ($has_history);
+			}
+			if ($has_history) {
+				print $cgi->a({-href => href(action=>"history",
+				                             file_name=>$diff{'to_file'},
+				                             hash_base=>$hash)},
+				              "history");
+			}
+			print "</td>\n";
+
+			print "</tr>\n";
+			next; # instead of 'else' clause, to avoid extra indent
+		}
+		# else ordinary diff
 
 		my ($to_mode_oct, $to_mode_str, $to_file_type);
 		my ($from_mode_oct, $from_mode_str, $from_file_type);
