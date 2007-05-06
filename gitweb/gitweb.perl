@@ -4391,8 +4391,10 @@ sub git_commitdiff {
 		}
 	}
 
+	my $hash_parent_param = $hash_parent;
 	if (!defined $hash_parent) {
-		$hash_parent = $co{'parent'} || '--root';
+		$hash_parent_param =
+			@{$co{'parents'}} > 1 ? '-c' : $co{'parent'} || '--root';
 	}
 
 	# read commitdiff
@@ -4401,7 +4403,7 @@ sub git_commitdiff {
 	if ($format eq 'html') {
 		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
 			"--no-commit-id", "--patch-with-raw", "--full-index",
-			$hash_parent, $hash, "--"
+			$hash_parent_param, $hash, "--"
 			or die_error(undef, "Open git-diff-tree failed");
 
 		while (my $line = <$fd>) {
@@ -4413,7 +4415,7 @@ sub git_commitdiff {
 
 	} elsif ($format eq 'plain') {
 		open $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
-			'-p', $hash_parent, $hash, "--"
+			'-p', $hash_parent_param, $hash, "--"
 			or die_error(undef, "Open git-diff-tree failed");
 
 	} else {
@@ -4469,10 +4471,10 @@ TEXT
 
 	# write patch
 	if ($format eq 'html') {
-		git_difftree_body(\@difftree, $hash, $hash_parent);
+		git_difftree_body(\@difftree, $hash, $hash_parent || @{$co{'parents'}});
 		print "<br/>\n";
 
-		git_patchset_body($fd, \@difftree, $hash, $hash_parent);
+		git_patchset_body($fd, \@difftree, $hash, $hash_parent || @{$co{'parents'}});
 		close $fd;
 		print "</div>\n"; # class="page_body"
 		git_footer_html();
