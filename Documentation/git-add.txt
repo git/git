@@ -7,7 +7,7 @@ git-add - Add file contents to the changeset to be committed next
 
 SYNOPSIS
 --------
-'git-add' [-n] [-v] [-f] [--interactive | -i] [--] <file>...
+'git-add' [-n] [-v] [-f] [--interactive | -i] [-u] [--] <file>...
 
 DESCRIPTION
 -----------
@@ -55,6 +55,10 @@ OPTIONS
 -i, \--interactive::
 	Add modified contents in the working tree interactively to
 	the index.
+
+-u::
+	Update all files that git already knows about. This is what
+	"git commit -a" does in preparation for making a commit.
 
 \--::
 	This option can be used to separate command-line options from
