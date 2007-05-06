@@ -27,6 +27,9 @@ Modifies the index or directory cache. Each file mentioned is updated
 into the index and any 'unmerged' or 'needs updating' state is
 cleared.
 
+See also gitlink:git-add[1] for a more user-friendly way to do some of
+the most common operations on the index.
+
 The way "git-update-index" handles files it is told about can be modified
 using the various options:
 
@@ -306,7 +309,8 @@ The command looks at `core.ignorestat` configuration variable.  See
 
 See Also
 --------
-gitlink:git-config[1]
+gitlink:git-config[1],
+gitlink:git-add[1]
 
 
 Author
