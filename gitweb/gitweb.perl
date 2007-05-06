@@ -4026,14 +4026,13 @@ sub git_commit {
 		$parent = "--root";
 	}
 	my @difftree;
-	if (@$parents <= 1) {
-		# difftree output is not printed for merges
-		open my $fd, "-|", git_cmd(), "diff-tree", '-r', "--no-commit-id",
-			@diff_opts, $parent, $hash, "--"
-			or die_error(undef, "Open git-diff-tree failed");
-		@difftree = map { chomp; $_ } <$fd>;
-		close $fd or die_error(undef, "Reading git-diff-tree failed");
-	}
+	open my $fd, "-|", git_cmd(), "diff-tree", '-r', "--no-commit-id",
+		@diff_opts,
+		(@$parents <= 1 ? $parent : '-c'),
+		$hash, "--"
+		or die_error(undef, "Open git-diff-tree failed");
+	@difftree = map { chomp; $_ } <$fd>;
+	close $fd or die_error(undef, "Reading git-diff-tree failed");
 
 	# non-textual hash id's can be cached
 	my $expires;
@@ -4111,10 +4110,7 @@ sub git_commit {
 	git_print_log($co{'comment'});
 	print "</div>\n";
 
-	if (@$parents <= 1) {
-		# do not output difftree/whatchanged for merges
-		git_difftree_body(\@difftree, $hash, $parent);
-	}
+	git_difftree_body(\@difftree, $hash, @$parents);
 
 	git_footer_html();
 }
