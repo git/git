@@ -26,7 +26,7 @@ OPTIONS
 	Remove untracked directories in addition to untracked files.
 
 -f::
-	If the git configuration specifies clean.forceRequire as true,
+	If the git configuration specifies clean.requireForce as true,
 	git-clean will refuse to run unless given -f or -n.
 
 -n::
