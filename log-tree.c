@@ -244,10 +244,10 @@ void show_log(struct rev_info *opt, const char *sep)
 		      stdout);
 		if (opt->commit_format != CMIT_FMT_ONELINE)
 			fputs("commit ", stdout);
-		if (opt->left_right) {
-			if (commit->object.flags & BOUNDARY)
-				putchar('-');
-			else if (commit->object.flags & SYMMETRIC_LEFT)
+		if (commit->object.flags & BOUNDARY)
+			putchar('-');
+		else if (opt->left_right) {
+			if (commit->object.flags & SYMMETRIC_LEFT)
 				putchar('<');
 			else
 				putchar('>');

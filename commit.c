@@ -638,7 +638,9 @@ static char *get_header(const struct commit *commit, const char *key)
 			next = NULL;
 		} else
 			next = eol + 1;
-		if (!strncmp(line, key, key_len) && line[key_len] == ' ') {
+		if (eol - line > key_len &&
+		    !strncmp(line, key, key_len) &&
+		    line[key_len] == ' ') {
 			int len = eol - line - key_len;
 			char *ret = xmalloc(len);
 			memcpy(ret, line + key_len + 1, len - 1);

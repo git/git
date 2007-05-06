@@ -55,7 +55,7 @@ $sha1_short = qr/[a-f\d]{4,40}/;
 my ($_stdin, $_help, $_edit,
 	$_message, $_file,
 	$_template, $_shared,
-	$_version, $_fetch_all,
+	$_version, $_fetch_all, $_no_rebase,
 	$_merge, $_strategy, $_dry_run, $_local,
 	$_prefix, $_no_checkout, $_verbose);
 $Git::SVN::_follow_parent = 1;
@@ -114,6 +114,7 @@ my %cmd = (
 			  'verbose|v' => \$_verbose,
 			  'dry-run|n' => \$_dry_run,
 			  'fetch-all|all' => \$_fetch_all,
+			  'no-rebase' => \$_no_rebase,
 			%cmt_opts, %fc_opts } ],
 	'set-tree' => [ \&cmd_set_tree,
 	                "Set an SVN repository to a git tree-ish",
@@ -413,21 +414,23 @@ sub cmd_dcommit {
 		return;
 	}
 	$_fetch_all ? $gs->fetch_all : $gs->fetch;
-	# we always want to rebase against the current HEAD, not any
-	# head that was passed to us
-	my @diff = command('diff-tree', 'HEAD', $gs->refname, '--');
-	my @finish;
-	if (@diff) {
-		@finish = rebase_cmd();
-		print STDERR "W: HEAD and ", $gs->refname, " differ, ",
-		             "using @finish:\n", "@diff";
-	} else {
-		print "No changes between current HEAD and ",
-		      $gs->refname, "\nResetting to the latest ",
-		      $gs->refname, "\n";
-		@finish = qw/reset --mixed/;
+	unless ($_no_rebase) {
+		# we always want to rebase against the current HEAD, not any
+		# head that was passed to us
+		my @diff = command('diff-tree', 'HEAD', $gs->refname, '--');
+		my @finish;
+		if (@diff) {
+			@finish = rebase_cmd();
+			print STDERR "W: HEAD and ", $gs->refname, " differ, ",
+				     "using @finish:\n", "@diff";
+		} else {
+			print "No changes between current HEAD and ",
+			      $gs->refname, "\nResetting to the latest ",
+			      $gs->refname, "\n";
+			@finish = qw/reset --mixed/;
+		}
+		command_noisy(@finish, $gs->refname);
 	}
-	command_noisy(@finish, $gs->refname);
 }
 
 sub cmd_find_rev {

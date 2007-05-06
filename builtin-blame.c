@@ -59,6 +59,7 @@ static int num_commits;
 #define PICKAXE_BLAME_MOVE		01
 #define PICKAXE_BLAME_COPY		02
 #define PICKAXE_BLAME_COPY_HARDER	04
+#define PICKAXE_BLAME_COPY_HARDEST	010
 
 /*
  * blame for a blame_entry with score lower than these thresholds
@@ -895,6 +896,39 @@ static void copy_split_if_better(struct scoreboard *sb,
 }
 
 /*
+ * We are looking at a part of the final image represented by
+ * ent (tlno and same are offset by ent->s_lno).
+ * tlno is where we are looking at in the final image.
+ * up to (but not including) same match preimage.
+ * plno is where we are looking at in the preimage.
+ *
+ * <-------------- final image ---------------------->
+ *       <------ent------>
+ *         ^tlno ^same
+ *    <---------preimage----->
+ *         ^plno
+ *
+ * All line numbers are 0-based.
+ */
+static void handle_split(struct scoreboard *sb,
+			 struct blame_entry *ent,
+			 int tlno, int plno, int same,
+			 struct origin *parent,
+			 struct blame_entry *split)
+{
+	if (ent->num_lines <= tlno)
+		return;
+	if (tlno < same) {
+		struct blame_entry this[3];
+		tlno += ent->s_lno;
+		same += ent->s_lno;
+		split_overlap(this, ent, tlno, plno, same, parent);
+		copy_split_if_better(sb, split, this);
+		decref_split(this);
+	}
+}
+
+/*
  * Find the lines from parent that are the same as ent so that
  * we can pass blames to it.  file_p has the blob contents for
  * the parent.
@@ -926,26 +960,21 @@ static void find_copy_in_blob(struct scoreboard *sb,
 
 	patch = compare_buffer(file_p, &file_o, 1);
 
+	/*
+	 * file_o is a part of final image we are annotating.
+	 * file_p partially may match that image.
+	 */
 	memset(split, 0, sizeof(struct blame_entry [3]));
 	plno = tlno = 0;
 	for (i = 0; i < patch->num; i++) {
 		struct chunk *chunk = &patch->chunks[i];
 
-		/* tlno to chunk->same are the same as ent */
-		if (ent->num_lines <= tlno)
-			break;
-		if (tlno < chunk->same) {
-			struct blame_entry this[3];
-			split_overlap(this, ent,
-				      tlno + ent->s_lno, plno,
-				      chunk->same + ent->s_lno,
-				      parent);
-			copy_split_if_better(sb, split, this);
-			decref_split(this);
-		}
+		handle_split(sb, ent, tlno, plno, chunk->same, parent, split);
 		plno = chunk->p_next;
 		tlno = chunk->t_next;
 	}
+	/* remainder, if any, all match the preimage */
+	handle_split(sb, ent, tlno, plno, ent->num_lines, parent, split);
 	free_patch(patch);
 }
 
@@ -1055,8 +1084,9 @@ static int find_copy_in_parent(struct scoreboard *sb,
 	 * and this code needs to be after diff_setup_done(), which
 	 * usually makes find-copies-harder imply copy detection.
 	 */
-	if ((opt & PICKAXE_BLAME_COPY_HARDER) &&
-	    (!porigin || strcmp(target->path, porigin->path)))
+	if ((opt & PICKAXE_BLAME_COPY_HARDEST)
+	    || ((opt & PICKAXE_BLAME_COPY_HARDER)
+		&& (!porigin || strcmp(target->path, porigin->path))))
 		diff_opts.find_copies_harder = 1;
 
 	if (is_null_sha1(target->commit->object.sha1))
@@ -2136,6 +2166,15 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			blame_move_score = parse_score(arg+2);
 		}
 		else if (!prefixcmp(arg, "-C")) {
+			/*
+			 * -C enables copy from removed files;
+			 * -C -C enables copy from existing files, but only
+			 *       when blaming a new file;
+			 * -C -C -C enables copy from existing files for
+			 *          everybody
+			 */
+			if (opt & PICKAXE_BLAME_COPY_HARDER)
+				opt |= PICKAXE_BLAME_COPY_HARDEST;
 			if (opt & PICKAXE_BLAME_COPY)
 				opt |= PICKAXE_BLAME_COPY_HARDER;
 			opt |= PICKAXE_BLAME_COPY | PICKAXE_BLAME_MOVE;

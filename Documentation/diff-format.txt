@@ -59,6 +59,28 @@ When `-z` option is not used, TAB, LF, and backslash characters
 in pathnames are represented as `\t`, `\n`, and `\\`,
 respectively.
 
+diff format for merges
+----------------------
+
+"git-diff-tree" and "git-diff-files" can take '-c' or '--cc' option
+to generate diff output also for merge commits.  The output differs
+from the format described above in the following way:
+
+. there is a colon for each parent
+. there are more "src" modes and "src" sha1
+. status is concatenated status characters for each parent
+. no optional "score" number
+. single path, only for "dst"
+
+Example:
+
+------------------------------------------------
+::100644 100644 100644 fabadb8... cc95eb0... 4866510... MM	describe.c
+------------------------------------------------
+
+Note that 'combined diff' lists only files which were modified from
+all parents.
+
 
 Generating patches with -p
 --------------------------
