@@ -121,3 +121,20 @@ Example
   git-p4 rebase
 
 
+Implementation Details...
+=========================
+
+* Changesets from Perforce are imported using git fast-import.
+* The import does not require anything from the Perforce client view as it just uses
+  "p4 print //depot/path/file#revision" to get the actual file contents.
+* Every imported changeset has a special [git-p4...] line at the
+  end of the log message that gives information about the corresponding
+  Perforce change number and is also used by git-p4 itself to find out
+  where to continue importing when doing incremental imports.
+  Basically when syncing it extracts the perforce change number of the
+  latest commit in the "p4" branch and uses "p4 changes //depot/path/...@changenum,#head"
+  to find out which changes need to be imported.
+* git-p4 submit uses "git rev-list" to pick the commits between the "p4" branch
+  and the current branch.
+  The commits themselves are applied using git diff-tree ... | patch -p1
+
