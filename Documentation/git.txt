@@ -21,10 +21,9 @@ and full access to internals.
 See this link:tutorial.html[tutorial] to get started, then see
 link:everyday.html[Everyday Git] for a useful minimum set of commands, and
 "man git-commandname" for documentation of each command.  CVS users may
-also want to read link:cvs-migration.html[CVS migration].
-link:user-manual.html[Git User's Manual] is still work in
-progress, but when finished hopefully it will guide a new user
-in a coherent way to git enlightenment ;-).
+also want to read link:cvs-migration.html[CVS migration].  See
+link:user-manual.html[Git User's Manual] for a more in-depth
+introduction.
 
 The COMMAND is either a name of a Git command (see below) or an alias
 as defined in the configuration file (see gitlink:git-config[1]).
