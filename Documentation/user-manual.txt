@@ -158,7 +158,7 @@ Making changes
 Make sure git knows who to blame:
 
 ------------------------------------------------
-$ cat >~/.gitconfig <<\EOF
+$ cat >>~/.gitconfig <<\EOF
 [user]
 	name = Your Name Comes Here
 	email = you@yourdomain.example.com
@@ -1049,14 +1049,13 @@ Telling git your name
 ---------------------
 
 Before creating any commits, you should introduce yourself to git.  The
-easiest way to do so is:
+easiest way to do so is to make sure the following lines appear in a
+file named .gitconfig in your home directory:
 
 ------------------------------------------------
-$ cat >~/.gitconfig <<\EOF
 [user]
 	name = Your Name Comes Here
 	email = you@yourdomain.example.com
-EOF
 ------------------------------------------------
 
 (See the "CONFIGURATION FILE" section of gitlink:git-config[1] for
