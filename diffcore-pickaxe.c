@@ -44,6 +44,7 @@ static unsigned int contains(struct diff_filespec *one,
 			}
 		}
 	}
+	diff_free_filespec_data(one);
 	return cnt;
 }
 
