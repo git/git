@@ -4137,7 +4137,7 @@ proc do_gitk {revs} {
 	# -- Always start gitk through whatever we were loaded with.  This
 	#    lets us bypass using shell process on Windows systems.
 	#
-	set cmd [info nameofexecutable]
+	set cmd [list [info nameofexecutable]]
 	lappend cmd [gitexec gitk]
 	if {$revs ne {}} {
 		append cmd { }

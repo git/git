@@ -593,6 +593,7 @@ proc makewindow {} {
         frame .bleft -width $geometry(botwidth) -height $geometry(botheight)
     }
     frame .bleft.top
+    frame .bleft.mid
 
     button .bleft.top.search -text "Search" -command dosearch \
 	-font $uifont
@@ -602,12 +603,20 @@ proc makewindow {} {
     lappend entries $sstring
     trace add variable searchstring write incrsearch
     pack $sstring -side left -expand 1 -fill x
+    radiobutton .bleft.mid.diff -text "Diff" \
+	-command changediffdisp -variable diffelide -value {0 0}
+    radiobutton .bleft.mid.old -text "Old version" \
+	-command changediffdisp -variable diffelide -value {0 1}
+    radiobutton .bleft.mid.new -text "New version" \
+	-command changediffdisp -variable diffelide -value {1 0}
+    pack .bleft.mid.diff .bleft.mid.old .bleft.mid.new -side left
     set ctext .bleft.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
 	-state disabled -font $textfont \
 	-yscrollcommand scrolltext -wrap none
     scrollbar .bleft.sb -command "$ctext yview"
     pack .bleft.top -side top -fill x
+    pack .bleft.mid -side top -fill x
     pack .bleft.sb -side right -fill y
     pack $ctext -side left -fill both -expand 1
     lappend bglist $ctext
@@ -4486,6 +4495,13 @@ proc getblobdiffline {bdf ids} {
     }
 }
 
+proc changediffdisp {} {
+    global ctext diffelide
+
+    $ctext tag conf d0 -elide [lindex $diffelide 0]
+    $ctext tag conf d1 -elide [lindex $diffelide 1]
+}
+
 proc prevfile {} {
     global difffilestart ctext
     set prev [lindex $difffilestart 0]
@@ -6330,6 +6346,7 @@ set highlight_paths {}
 set searchdirn -forwards
 set boldrows {}
 set boldnamerows {}
+set diffelide {0 0}
 
 set optim_delay 16
 

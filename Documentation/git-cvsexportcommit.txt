@@ -25,7 +25,7 @@ by default.
 
 Supports file additions, removals, and commits that affect binary files.
 
-If the commit is a merge commit, you must tell git-cvsapplycommit what parent
+If the commit is a merge commit, you must tell git-cvsexportcommit what parent
 should the changeset be done against. 
 
 OPTIONS
