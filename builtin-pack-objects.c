@@ -559,6 +559,12 @@ static off_t write_one(struct sha1file *f,
 	return offset + size;
 }
 
+static int open_object_dir_tmp(const char *path)
+{
+    snprintf(tmpname, sizeof(tmpname), "%s/%s", get_object_directory(), path);
+    return mkstemp(tmpname);
+}
+
 static off_t write_pack_file(void)
 {
 	uint32_t i;
@@ -571,9 +577,7 @@ static off_t write_pack_file(void)
 		f = sha1fd(1, "<stdout>");
 		do_progress >>= 1;
 	} else {
-		int fd;
-		snprintf(tmpname, sizeof(tmpname), "tmp_pack_XXXXXX");
-		fd = mkstemp(tmpname);
+		int fd = open_object_dir_tmp("tmp_pack_XXXXXX");
 		if (fd < 0)
 			die("unable to create %s: %s\n", tmpname, strerror(errno));
 		pack_tmp_name = xstrdup(tmpname);
@@ -623,10 +627,8 @@ static void write_index_file(off_t last_obj_offset, unsigned char *sha1)
 	uint32_t array[256];
 	uint32_t i, index_version;
 	SHA_CTX ctx;
-	int fd;
 
-	snprintf(tmpname, sizeof(tmpname), "tmp_idx_XXXXXX");
-	fd = mkstemp(tmpname);
+	int fd = open_object_dir_tmp("tmp_idx_XXXXXX");
 	if (fd < 0)
 		die("unable to create %s: %s\n", tmpname, strerror(errno));
 	idx_tmp_name = xstrdup(tmpname);
