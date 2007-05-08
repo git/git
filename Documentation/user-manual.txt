@@ -1836,12 +1836,12 @@ Now, assume your personal repository is in the directory ~/proj.  We
 first create a new clone of the repository:
 
 -------------------------------------------------
-$ git clone --bare proj.git
+$ git clone --bare ~/proj proj.git
 -------------------------------------------------
 
-The resulting directory proj.git will contains a "bare" git
-repository--it is just the contents of the ".git" directory, without
-a checked-out copy of a working directory.
+The resulting directory proj.git contains a "bare" git repository--it is
+just the contents of the ".git" directory, without a checked-out copy of
+a working directory.
 
 Next, copy proj.git to the server where you plan to host the
 public repository.  You can use scp, rsync, or whatever is most
@@ -2372,9 +2372,8 @@ $ git config remote.example.fetch master:refs/remotes/example/master
 then the following commands will all do the same thing:
 
 -------------------------------------------------
-$ git fetch git://example.com/proj.git master:ref/remotes/example/master
-$ git fetch example master:ref/remotes/example/master
-$ git fetch example example/master
+$ git fetch git://example.com/proj.git master:refs/remotes/example/master
+$ git fetch example master:refs/remotes/example/master
 $ git fetch example
 -------------------------------------------------
 
