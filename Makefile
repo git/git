@@ -114,7 +114,11 @@ all::
 #
 # Define NO_TCLTK if you do not want Tcl/Tk GUI.
 #
-# The TCLTK_PATH variable governs the location of the Tck/Tk interpreter.
+# The TCL_PATH variable governs the location of the Tcl interpreter
+# used to optimize git-gui for your system.  Only used if NO_TCLTK
+# is not set.  Defaults to the bare 'tclsh'.
+#
+# The TCLTK_PATH variable governs the location of the Tcl/Tk interpreter.
 # If not set it defaults to the bare 'wish'. If it is set to the empty
 # string then NO_TCLTK will be forced (this is used by configure script).
 #
@@ -140,7 +144,8 @@ STRIP ?= strip
 prefix = $(HOME)
 bindir = $(prefix)/bin
 gitexecdir = $(bindir)
-template_dir = $(prefix)/share/git-core/templates/
+sharedir = $(prefix)/share/
+template_dir = $(sharedir)/git-core/templates/
 ifeq ($(prefix),/usr)
 sysconfdir = /etc
 else
@@ -165,14 +170,17 @@ GITWEB_FAVICON = git-favicon.png
 GITWEB_SITE_HEADER =
 GITWEB_SITE_FOOTER =
 
-export prefix bindir gitexecdir template_dir sysconfdir
+export prefix bindir gitexecdir sharedir template_dir sysconfdir
 
 CC = gcc
 AR = ar
 TAR = tar
 INSTALL = install
 RPMBUILD = rpmbuild
+TCL_PATH = tclsh
 TCLTK_PATH = wish
+
+export TCL_PATH TCLTK_PATH
 
 # sparse is architecture-neutral, which means that we need to tell it
 # explicitly what architecture to check for. Fix this up for yours..
@@ -713,7 +721,7 @@ endif
 
 all::
 ifndef NO_TCLTK
-	$(QUIET_SUBDIR0)git-gui $(QUIET_SUBDIR1) TCLTK_PATH='$(TCLTK_PATH_SQ)' all
+	$(QUIET_SUBDIR0)git-gui $(QUIET_SUBDIR1) all
 endif
 	$(QUIET_SUBDIR0)perl $(QUIET_SUBDIR1) PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' all
 	$(QUIET_SUBDIR0)templates $(QUIET_SUBDIR1)
