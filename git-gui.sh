@@ -5496,7 +5496,7 @@ pack .vpane -anchor n -side top -fill both -expand 1
 # -- Index File List
 #
 frame .vpane.files.index -height 100 -width 200
-label .vpane.files.index.title -text {Changes To Be Committed} \
+label .vpane.files.index.title -text {Staged Changes (Will Be Committed)} \
 	-background green \
 	-font font_ui
 text $ui_index -background white -borderwidth 0 \
@@ -5518,7 +5518,7 @@ pack $ui_index -side left -fill both -expand 1
 # -- Working Directory File List
 #
 frame .vpane.files.workdir -height 100 -width 200
-label .vpane.files.workdir.title -text {Changed But Not Updated} \
+label .vpane.files.workdir.title -text {Unstaged Changes (Will Not Be Committed)} \
 	-background red \
 	-font font_ui
 text $ui_workdir -background white -borderwidth 0 \
