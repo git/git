@@ -548,7 +548,7 @@ pack.window::
 
 pack.depth::
 	The maximum delta depth used by gitlink:git-pack-objects[1] when no
-	maximum depth is given on the command line. Defaults to 10.
+	maximum depth is given on the command line. Defaults to 50.
 
 pull.octopus::
 	The default merge strategy to use when pulling multiple branches

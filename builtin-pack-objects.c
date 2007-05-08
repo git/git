@@ -64,7 +64,7 @@ static char tmpname[PATH_MAX];
 static unsigned char pack_file_sha1[20];
 static int progress = 1;
 static int window = 10;
-static int depth = 10;
+static int depth = 50;
 static int pack_to_stdout;
 static int num_preferred_base;
 static struct progress progress_state;

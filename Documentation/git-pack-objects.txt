@@ -83,7 +83,7 @@ base-name::
 	it too deep affects the performance on the unpacker
 	side, because delta data needs to be applied that many
 	times to get to the necessary object.
-	The default value for --window is 10 and --depth is 10.
+	The default value for --window is 10 and --depth is 50.
 
 --incremental::
 	This flag causes an object already in a pack ignored
