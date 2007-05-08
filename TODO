@@ -85,17 +85,6 @@ the box.
 
 [jc: limbo?]
 
-* Gitweb diff on merge commits
-
-From: Linus Torvalds <torvalds@osdl.org>
-Subject: Re: git show and gitweb gives different result for kernel
-Message-ID: <Pine.LNX.4.64.0610061202060.3952@g5.osdl.org>
-
-Maybe allow gitweb to show diff with any parent and diff --cc,
-not just diff with the first parent for a merge.
-
-[jc: Jakub is interested in it]
-
 * Delegate gitweb part to somebody else.
 
 * Use gitattributes for more things.
@@ -123,6 +112,15 @@ not just diff with the first parent for a merge.
  - Others???
 
 
+Technical (heavier)
+-------------------
+
+* Subproject Porcelain.
+
+ - recursive checkout
+ - recursive diff
+
+
 Technical (milder)
 ------------------
 
@@ -140,6 +138,11 @@ Technical (milder)
 
 Technical (trivial)
 -------------------
+
+* Update the lockfile protocol so that closing and renaming are
+  done inside lockfile commit time.  Some filesystems do not
+  like an open file renamed and then closed.  Come up with a
+  patch and pass Alex for an Ack.
 
 * Mbx (not mbox) support for git-mailsplit.
 
