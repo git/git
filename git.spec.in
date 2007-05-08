@@ -166,9 +166,12 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %{_datadir}/git-core/
 %doc README COPYING Documentation/*.txt
-%{!?_without_docs: %doc Documentation/*.html }
+%{!?_without_docs: %doc Documentation/*.html Documentation/howto}
 
 %changelog
+* Tue May 8 2007 Quy Tonthat <qtonthat@gmail.com>
+- Added howto files
+
 * Mon Feb 13 2007 Nicolas Pitre <nico@cam.org>
 - Update core package description (Git isn't as stupid as it used to be)
 
