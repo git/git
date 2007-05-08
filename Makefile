@@ -709,7 +709,7 @@ LIB_OBJS += $(COMPAT_OBJS)
 ALL_CFLAGS += $(BASIC_CFLAGS)
 ALL_LDFLAGS += $(BASIC_LDFLAGS)
 
-export prefix gitexecdir TAR INSTALL DESTDIR SHELL_PATH template_dir
+export TAR INSTALL DESTDIR SHELL_PATH
 
 
 ### Build rules
