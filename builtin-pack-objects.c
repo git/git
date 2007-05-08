@@ -64,6 +64,7 @@ static char tmpname[PATH_MAX];
 static unsigned char pack_file_sha1[20];
 static int progress = 1;
 static int window = 10;
+static int depth = 10;
 static int pack_to_stdout;
 static int num_preferred_base;
 static struct progress progress_state;
@@ -1489,6 +1490,10 @@ static int git_pack_config(const char *k, const char *v)
 		window = git_config_int(k, v);
 		return 0;
 	}
+	if(!strcmp(k, "pack.depth")) {
+		depth = git_config_int(k, v);
+		return 0;
+	}
 	return git_default_config(k, v);
 }
 
@@ -1584,7 +1589,6 @@ static int adjust_perm(const char *path, mode_t mode)
 
 int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 {
-	int depth = 10;
 	int use_internal_rev_list = 0;
 	int thin = 0;
 	uint32_t i;
