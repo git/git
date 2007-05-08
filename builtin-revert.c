@@ -237,6 +237,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	int i;
 	char *oneline, *reencoded_message = NULL;
 	const char *message, *encoding;
+	const char *defmsg = xstrdup(git_path("MERGE_MSG"));
 
 	git_config(git_default_config);
 	me = action == REVERT ? "revert" : "cherry-pick";
@@ -280,7 +281,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 	 * reverse of it if we are revert.
 	 */
 
-	msg_fd = hold_lock_file_for_update(&msg_file, ".msg", 1);
+	msg_fd = hold_lock_file_for_update(&msg_file, defmsg, 1);
 
 	encoding = get_encoding(message);
 	if (!encoding)
@@ -330,7 +331,6 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 				sha1_to_hex(head), "HEAD",
 				sha1_to_hex(next->object.sha1), oneline) ||
 			write_tree(head, 0, NULL)) {
-		const char *target = git_path("MERGE_MSG");
 		add_to_msg("\nConflicts:\n\n");
 		read_cache();
 		for (i = 0; i < active_nr;) {
@@ -345,10 +345,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 			}
 		}
 		if (close(msg_fd) || commit_lock_file(&msg_file) < 0)
-			die ("Error wrapping up .msg");
-		unlink(target);
-		if (rename(".msg", target))
-			die ("Could not move .msg to %s", target);
+			die ("Error wrapping up %s", defmsg);
 		fprintf(stderr, "Automatic %s failed.  "
 			"After resolving the conflicts,\n"
 			"mark the corrected paths with 'git-add <paths>'\n"
@@ -362,7 +359,7 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 		exit(1);
 	}
 	if (close(msg_fd) || commit_lock_file(&msg_file) < 0)
-		die ("Error wrapping up .msg");
+		die ("Error wrapping up %s", defmsg);
 	fprintf(stderr, "Finished one %s.\n", me);
 
 	/*
@@ -376,11 +373,9 @@ static int revert_or_cherry_pick(int argc, const char **argv)
 
 	if (!no_commit) {
 		if (edit)
-			return execl_git_cmd("commit", "-n", "-F", ".msg",
-				"-e", NULL);
+			return execl_git_cmd("commit", "-n", NULL);
 		else
-			return execl_git_cmd("commit", "-n", "-F", ".msg",
-				NULL);
+			return execl_git_cmd("commit", "-n", "-F", defmsg, NULL);
 	}
 	if (reencoded_message)
 		free(reencoded_message);
