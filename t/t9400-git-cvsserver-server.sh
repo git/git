@@ -17,6 +17,11 @@ then
     test_done
     exit
 fi
+perl -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
+    test_expect_success 'skipping git-cvsserver tests, Perl SQLite interface unavailable' :
+    test_done
+    exit
+}
 
 unset GIT_DIR GIT_CONFIG
 WORKDIR=$(pwd)
