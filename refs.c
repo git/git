@@ -736,19 +736,20 @@ static int is_refname_available(const char *ref, const char *oldref,
 	return 1;
 }
 
-static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char *old_sha1, int *flag)
+static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char *old_sha1, int flags, int *type_p)
 {
 	char *ref_file;
 	const char *orig_ref = ref;
 	struct ref_lock *lock;
 	struct stat st;
 	int last_errno = 0;
+	int type;
 	int mustexist = (old_sha1 && !is_null_sha1(old_sha1));
 
 	lock = xcalloc(1, sizeof(struct ref_lock));
 	lock->lock_fd = -1;
 
-	ref = resolve_ref(ref, lock->old_sha1, mustexist, flag);
+	ref = resolve_ref(ref, lock->old_sha1, mustexist, &type);
 	if (!ref && errno == EISDIR) {
 		/* we are trying to lock foo but we used to
 		 * have foo/bar which now does not exist;
@@ -761,8 +762,10 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 			error("there are still refs under '%s'", orig_ref);
 			goto error_return;
 		}
-		ref = resolve_ref(orig_ref, lock->old_sha1, mustexist, flag);
+		ref = resolve_ref(orig_ref, lock->old_sha1, mustexist, &type);
 	}
+	if (type_p)
+	    *type_p = type;
 	if (!ref) {
 		last_errno = errno;
 		error("unable to resolve reference %s: %s",
@@ -780,10 +783,15 @@ static struct ref_lock *lock_ref_sha1_basic(const char *ref, const unsigned char
 
 	lock->lk = xcalloc(1, sizeof(struct lock_file));
 
+	if (flags & REF_NODEREF)
+		ref = orig_ref;
 	lock->ref_name = xstrdup(ref);
 	lock->orig_ref_name = xstrdup(orig_ref);
 	ref_file = git_path("%s", ref);
-	lock->force_write = lstat(ref_file, &st) && errno == ENOENT;
+	if (lstat(ref_file, &st) && errno == ENOENT)
+		lock->force_write = 1;
+	if ((flags & REF_NODEREF) && (type & REF_ISSYMREF))
+		lock->force_write = 1;
 
 	if (safe_create_leading_directories(ref_file)) {
 		last_errno = errno;
@@ -806,14 +814,14 @@ struct ref_lock *lock_ref_sha1(const char *ref, const unsigned char *old_sha1)
 	if (check_ref_format(ref))
 		return NULL;
 	strcpy(refpath, mkpath("refs/%s", ref));
-	return lock_ref_sha1_basic(refpath, old_sha1, NULL);
+	return lock_ref_sha1_basic(refpath, old_sha1, 0, NULL);
 }
 
-struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1)
+struct ref_lock *lock_any_ref_for_update(const char *ref, const unsigned char *old_sha1, int flags)
 {
 	if (check_ref_format(ref) == -1)
 		return NULL;
-	return lock_ref_sha1_basic(ref, old_sha1, NULL);
+	return lock_ref_sha1_basic(ref, old_sha1, flags, NULL);
 }
 
 static struct lock_file packlock;
@@ -858,7 +866,7 @@ int delete_ref(const char *refname, const unsigned char *sha1)
 	struct ref_lock *lock;
 	int err, i, ret = 0, flag = 0;
 
-	lock = lock_ref_sha1_basic(refname, sha1, &flag);
+	lock = lock_ref_sha1_basic(refname, sha1, 0, &flag);
 	if (!lock)
 		return 1;
 	if (!(flag & REF_ISPACKED)) {
@@ -909,7 +917,7 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	if (!is_refname_available(newref, oldref, get_loose_refs(), 0))
 		return 1;
 
-	lock = lock_ref_sha1_basic(renamed_ref, NULL, NULL);
+	lock = lock_ref_sha1_basic(renamed_ref, NULL, 0, NULL);
 	if (!lock)
 		return error("unable to lock %s", renamed_ref);
 	lock->force_write = 1;
@@ -963,7 +971,7 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	}
 	logmoved = log;
 
-	lock = lock_ref_sha1_basic(newref, NULL, NULL);
+	lock = lock_ref_sha1_basic(newref, NULL, 0, NULL);
 	if (!lock) {
 		error("unable to lock %s for update", newref);
 		goto rollback;
@@ -979,7 +987,7 @@ int rename_ref(const char *oldref, const char *newref, const char *logmsg)
 	return 0;
 
  rollback:
-	lock = lock_ref_sha1_basic(oldref, NULL, NULL);
+	lock = lock_ref_sha1_basic(oldref, NULL, 0, NULL);
 	if (!lock) {
 		error("unable to lock %s for rollback", oldref);
 		goto rollbacklog;

@@ -462,7 +462,7 @@ static void create_branch(const char *name, const char *start_name,
 		die("Not a valid branch point: '%s'.", start_name);
 	hashcpy(sha1, commit->object.sha1);
 
-	lock = lock_any_ref_for_update(ref, NULL);
+	lock = lock_any_ref_for_update(ref, NULL, 0);
 	if (!lock)
 		die("Failed to lock ref for update: %s.", strerror(errno));
 
