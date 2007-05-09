@@ -96,7 +96,8 @@ proc method {name params body {deleted {}} {del_body {}}} {
 		set n [lindex $n 0]
 		if {[regexp -- $n\\M $body]} {
 			if {   [regexp -all -- $n\\M $body] == 1
-				&& [regexp -all -- \\\$$n\\M $body] == 1} {
+				&& [regexp -all -- \\\$$n\\M $body] == 1
+				&& [regexp -all -- \\\$$n\\( $body] == 0} {
 				regsub -all \\\$$n\\M $body "\[set \${this}::$n\]" body
 			} else {
 				append decl { ${this}::} $n { } $n
