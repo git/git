@@ -1,6 +1,5 @@
 body {
 	font-family: sans-serif;
-	font-size: 12px;
 	border: solid #d9d8d1;
 	border-width: 1px;
 	margin: 10px;
@@ -31,7 +30,7 @@ img.logo {
 div.page_header {
 	height: 25px;
 	padding: 8px;
-	font-size: 18px;
+	font-size: 150%;
 	font-weight: bold;
 	background-color: #d9d8d1;
 }
@@ -113,7 +112,7 @@ span.signoff {
 
 div.log_link {
 	padding: 0px 8px;
-	font-size: 10px;
+	font-size: 70%;
 	font-family: sans-serif;
 	font-style: normal;
 	position: relative;
@@ -204,13 +203,13 @@ table.blame {
 
 table.blame td {
 	padding: 0px 5px;
-	font-size: 12px;
+	font-size: 100%;
 	vertical-align: top;
 }
 
 th {
 	padding: 2px 5px;
-	font-size: 12px;
+	font-size: 100%;
 	text-align: left;
 }
 
@@ -232,14 +231,14 @@ tr.dark:hover {
 
 td {
 	padding: 2px 5px;
-	font-size: 12px;
+	font-size: 100%;
 	vertical-align: top;
 }
 
 td.link, td.selflink {
 	padding: 2px 5px;
 	font-family: sans-serif;
-	font-size: 10px;
+	font-size: 70%;
 }
 
 td.selflink {
@@ -416,7 +415,7 @@ div.index_include {
 }
 
 div.search {
-	font-size: 12px;
+	font-size: 100%;
 	font-weight: normal;
 	margin: 4px 8px;
 	position: absolute;
@@ -444,7 +443,7 @@ a.rss_logo {
 	background-color: #ff6600;
 	font-weight: bold;
 	font-family: sans-serif;
-	font-size: 10px;
+	font-size: 70%;
 	text-align: center;
 	text-decoration: none;
 }
@@ -455,7 +454,7 @@ a.rss_logo:hover {
 
 span.refs span {
 	padding: 0px 4px;
-	font-size: 10px;
+	font-size: 70%;
 	font-weight: normal;
 	border: 1px solid;
 	background-color: #ffaaff;
