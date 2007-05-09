@@ -181,6 +181,23 @@ table.diff_tree {
 	font-family: monospace;
 }
 
+table.combined.diff_tree td {
+	padding-right: 24px;
+}
+
+table.combined.diff_tree td.link {
+	padding: 0px 2px;
+}
+
+table.combined.diff_tree td.nochange a {
+	color: #6666ff;
+}
+
+table.combined.diff_tree td.nochange a:hover,
+table.combined.diff_tree td.nochange a:visited {
+	color: #d06666;
+}
+
 table.blame {
 	border-collapse: collapse;
 }
