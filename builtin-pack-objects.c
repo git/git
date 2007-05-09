@@ -346,56 +346,6 @@ static void copy_pack_data(struct sha1file *f,
 	}
 }
 
-static int check_loose_inflate(unsigned char *data, unsigned long len, unsigned long expect)
-{
-	z_stream stream;
-	unsigned char fakebuf[4096];
-	int st;
-
-	memset(&stream, 0, sizeof(stream));
-	stream.next_in = data;
-	stream.avail_in = len;
-	stream.next_out = fakebuf;
-	stream.avail_out = sizeof(fakebuf);
-	inflateInit(&stream);
-
-	while (1) {
-		st = inflate(&stream, Z_FINISH);
-		if (st == Z_STREAM_END || st == Z_OK) {
-			st = (stream.total_out == expect &&
-			      stream.total_in == len) ? 0 : -1;
-			break;
-		}
-		if (st != Z_BUF_ERROR) {
-			st = -1;
-			break;
-		}
-		stream.next_out = fakebuf;
-		stream.avail_out = sizeof(fakebuf);
-	}
-	inflateEnd(&stream);
-	return st;
-}
-
-static int revalidate_loose_object(struct object_entry *entry,
-				   unsigned char *map,
-				   unsigned long mapsize)
-{
-	/* we already know this is a loose object with new type header. */
-	enum object_type type;
-	unsigned long size, used;
-
-	if (pack_to_stdout)
-		return 0;
-
-	used = unpack_object_header_gently(map, mapsize, &type, &size);
-	if (!used)
-		return -1;
-	map += used;
-	mapsize -= used;
-	return check_loose_inflate(map, mapsize, size);
-}
-
 static unsigned long write_object(struct sha1file *f,
 				  struct object_entry *entry)
 {
@@ -426,25 +376,6 @@ static unsigned long write_object(struct sha1file *f,
 		to_reuse = 1;	/* we have it in-pack undeltified,
 				 * and we do not need to deltify it.
 				 */
-
-	if (!no_reuse_object && !entry->in_pack && !entry->delta) {
-		unsigned char *map;
-		unsigned long mapsize;
-		map = map_sha1_file(entry->sha1, &mapsize);
-		if (map && !legacy_loose_object(map)) {
-			/* We can copy straight into the pack file */
-			if (revalidate_loose_object(entry, map, mapsize))
-				die("corrupt loose object %s",
-				    sha1_to_hex(entry->sha1));
-			sha1write(f, map, mapsize);
-			munmap(map, mapsize);
-			written++;
-			reused++;
-			return mapsize;
-		}
-		if (map)
-			munmap(map, mapsize);
-	}
 
 	if (!to_reuse) {
 		buf = read_sha1_file(entry->sha1, &type, &size);

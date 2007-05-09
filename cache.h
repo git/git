@@ -273,7 +273,6 @@ extern void rollback_lock_file(struct lock_file *);
 extern int delete_ref(const char *, const unsigned char *sha1);
 
 /* Environment bits from configuration mechanism */
-extern int use_legacy_headers;
 extern int trust_executable_bit;
 extern int has_symlinks;
 extern int assume_unchanged;
@@ -354,7 +353,6 @@ extern int move_temp_to_file(const char *tmpfile, const char *filename);
 extern int has_sha1_pack(const unsigned char *sha1, const char **ignore);
 extern int has_sha1_file(const unsigned char *sha1);
 extern void *map_sha1_file(const unsigned char *sha1, unsigned long *);
-extern int legacy_loose_object(unsigned char *);
 
 extern int has_pack_file(const unsigned char *sha1);
 extern int has_pack_index(const unsigned char *sha1);

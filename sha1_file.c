@@ -972,7 +972,7 @@ void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 	return map;
 }
 
-int legacy_loose_object(unsigned char *map)
+static int legacy_loose_object(unsigned char *map)
 {
 	unsigned int word;
 
@@ -1034,6 +1034,14 @@ static int unpack_sha1_header(z_stream *stream, unsigned char *map, unsigned lon
 		return inflate(stream, 0);
 	}
 
+
+	/*
+	 * There used to be a second loose object header format which
+	 * was meant to mimic the in-pack format, allowing for direct
+	 * copy of the object data.  This format turned up not to be
+	 * really worth it and we don't write it any longer.  But we
+	 * can still read it.
+	 */
 	used = unpack_object_header_gently(map, mapsize, &type, &size);
 	if (!used || !valid_loose_object_type[type])
 		return -1;
@@ -1962,40 +1970,6 @@ static int write_buffer(int fd, const void *buf, size_t len)
 	return 0;
 }
 
-static int write_binary_header(unsigned char *hdr, enum object_type type, unsigned long len)
-{
-	int hdr_len;
-	unsigned char c;
-
-	c = (type << 4) | (len & 15);
-	len >>= 4;
-	hdr_len = 1;
-	while (len) {
-		*hdr++ = c | 0x80;
-		hdr_len++;
-		c = (len & 0x7f);
-		len >>= 7;
-	}
-	*hdr = c;
-	return hdr_len;
-}
-
-static void setup_object_header(z_stream *stream, const char *type, unsigned long len)
-{
-	int obj_type, hdrlen;
-
-	if (use_legacy_headers) {
-		while (deflate(stream, 0) == Z_OK)
-			/* nothing */;
-		return;
-	}
-	obj_type = type_from_string(type);
-	hdrlen = write_binary_header(stream->next_out, obj_type, len);
-	stream->total_out = hdrlen;
-	stream->next_out += hdrlen;
-	stream->avail_out -= hdrlen;
-}
-
 int hash_sha1_file(const void *buf, unsigned long len, const char *type,
                    unsigned char *sha1)
 {
@@ -2062,7 +2036,8 @@ int write_sha1_file(void *buf, unsigned long len, const char *type, unsigned cha
 	/* First header.. */
 	stream.next_in = (unsigned char *)hdr;
 	stream.avail_in = hdrlen;
-	setup_object_header(&stream, type, len);
+	while (deflate(&stream, 0) == Z_OK)
+		/* nothing */;
 
 	/* Then the data itself.. */
 	stream.next_in = buf;
