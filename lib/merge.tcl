@@ -123,7 +123,8 @@ Please select fewer branches.  To merge more than 15 branches, merge the branche
 	set msg "Merging $current_branch, [join $names {, }]"
 	set ui_status_value "$msg..."
 	set cons [console::new "Merge" $msg]
-	console::exec $cons $cmd [namespace code [list _finish $revcnt]]
+	console::exec $cons $cmd \
+		[namespace code [list _finish $revcnt $cons]]
 	bind $w <Destroy> {}
 	destroy $w
 }

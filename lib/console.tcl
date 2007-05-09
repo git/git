@@ -1,30 +1,29 @@
 # git-gui console support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
-namespace eval console {
+class console {
 
-variable next_console_id 0
-variable console_data
-variable console_cr
+field t_short
+field t_long
+field w
+field console_cr
 
-proc new {short_title long_title} {
-	variable next_console_id
-	variable console_data
-
-	set w .console[incr next_console_id]
-	set console_data($w) [list $short_title $long_title]
-	return [_init $w]
+constructor new {short_title long_title} {
+	set t_short $short_title
+	set t_long $long_title
+	_init $this
+	return $this
 }
 
-proc _init {w} {
+method _init {} {
 	global M1B
-	variable console_cr
-	variable console_data
+	make_toplevel top w
+	wm title $top "[appname] ([reponame]): $t_short"
+	set console_cr 1.0
 
-	set console_cr($w) 1.0
-	toplevel $w
 	frame $w.m
-	label $w.m.l1 -text "[lindex $console_data($w) 1]:" \
+	label $w.m.l1 \
+		-textvariable @t_long  \
 		-anchor w \
 		-justify left \
 		-font font_uibold
@@ -67,11 +66,9 @@ proc _init {w} {
 	bind $w.m.t <$M1B-Key-a> "$w.m.t tag add sel 0.0 end;break"
 	bind $w.m.t <$M1B-Key-A> "$w.m.t tag add sel 0.0 end;break"
 	bind $w <Visibility> "focus $w"
-	wm title $w "[appname] ([reponame]): [lindex $console_data($w) 0]"
-	return $w
 }
 
-proc exec {w cmd {after {}}} {
+method exec {cmd {after {}}} {
 	# -- Cygwin's Tcl tosses the enviroment when we exec our child.
 	#    But most users need that so we have to relogin. :-(
 	#
@@ -86,16 +83,13 @@ proc exec {w cmd {after {}}} {
 
 	set fd_f [open $cmd r]
 	fconfigure $fd_f -blocking 0 -translation binary
-	fileevent $fd_f readable \
-		[namespace code [list _read $w $fd_f $after]]
+	fileevent $fd_f readable [cb _read $fd_f $after]
 }
 
-proc _read {w fd after} {
-	variable console_cr
-
+method _read {fd after} {
 	set buf [read $fd]
 	if {$buf ne {}} {
-		if {![winfo exists $w]} {_init $w}
+		if {![winfo exists $w.m.t]} {_init $this}
 		$w.m.t conf -state normal
 		set c 0
 		set n [string length $buf]
@@ -107,11 +101,11 @@ proc _read {w fd after} {
 
 			if {$lf < $cr} {
 				$w.m.t insert end [string range $buf $c $lf]
-				set console_cr($w) [$w.m.t index {end -1c}]
+				set console_cr [$w.m.t index {end -1c}]
 				set c $lf
 				incr c
 			} else {
-				$w.m.t delete $console_cr($w) end
+				$w.m.t delete $console_cr end
 				$w.m.t insert end "\n"
 				$w.m.t insert end [string range $buf $c $cr]
 				set c $cr
@@ -130,19 +124,19 @@ proc _read {w fd after} {
 			set ok 1
 		}
 		if {$after ne {}} {
-			uplevel #0 $after $w $ok
+			uplevel #0 $after $ok
 		} else {
-			done $w $ok
+			done $this $ok
 		}
 		return
 	}
 	fconfigure $fd -blocking 0
 }
 
-proc chain {cmdlist w {ok 1}} {
+method chain {cmdlist {ok 1}} {
 	if {$ok} {
 		if {[llength $cmdlist] == 0} {
-			done $w $ok
+			done $this $ok
 			return
 		}
 
@@ -150,52 +144,33 @@ proc chain {cmdlist w {ok 1}} {
 		set cmdlist [lrange $cmdlist 1 end]
 
 		if {[lindex $cmd 0] eq {exec}} {
-			exec $w \
-				[lindex $cmd 1] \
-				[namespace code [list chain $cmdlist]]
+			exec $this \
+				[lrange $cmd 1 end] \
+				[cb chain $cmdlist]
 		} else {
-			uplevel #0 $cmd $cmdlist $w $ok
+			uplevel #0 $cmd [cb chain $cmdlist]
 		}
 	} else {
-		done $w $ok
+		done $this $ok
 	}
 }
 
-proc done {args} {
-	variable console_cr
-	variable console_data
-
-	switch -- [llength $args] {
-	2 {
-		set w [lindex $args 0]
-		set ok [lindex $args 1]
-	}
-	3 {
-		set w [lindex $args 1]
-		set ok [lindex $args 2]
-	}
-	default {
-		error "wrong number of args: done ?ignored? w ok"
-	}
-	}
-
+method done {ok} {
 	if {$ok} {
-		if {[winfo exists $w]} {
+		if {[winfo exists $w.m.s]} {
 			$w.m.s conf -background green -text {Success}
 			$w.ok conf -state normal
 			focus $w.ok
 		}
 	} else {
-		if {![winfo exists $w]} {
-			_init $w
+		if {![winfo exists $w.m.s]} {
+			_init $this
 		}
 		$w.m.s conf -background red -text {Error: Command Failed}
 		$w.ok conf -state normal
 		focus $w.ok
 	}
-
-	array unset console_cr $w
-	array unset console_data $w
+	delete_this
 }
 
 }

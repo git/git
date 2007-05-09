@@ -1288,7 +1288,7 @@ menu .mbar.repository
 
 .mbar.repository add command \
 	-label {Browse Current Branch} \
-	-command {new_browser $current_branch}
+	-command {browser::new $current_branch}
 trace add variable current_branch write ".mbar.repository entryconf [.mbar.repository index last] -label \"Browse \$current_branch\" ;#"
 .mbar.repository add separator
 
@@ -1581,7 +1581,7 @@ browser {
 		exit 1
 	}
 	set current_branch [lindex $argv 0]
-	new_browser $current_branch
+	browser::new $current_branch
 	return
 }
 blame {

@@ -1,6 +1,8 @@
 # git-gui blame viewer
 # Copyright (C) 2006, 2007 Shawn Pearce
 
+set next_browser_id 0
+
 proc show_blame {commit path} {
 	global next_browser_id blame_status blame_data
 
