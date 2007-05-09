@@ -1590,7 +1590,7 @@ blame {
 		exit 1
 	}
 	set current_branch [lindex $argv 0]
-	show_blame $current_branch [lindex $argv 1]
+	blame::new $current_branch [lindex $argv 1]
 	return
 }
 citool -
