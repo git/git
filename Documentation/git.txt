@@ -40,7 +40,11 @@ Documentation for older releases are available here:
 
 * link:RelNotes-1.5.1.txt[release notes for 1.5.1]
 
-* link:v1.5.1.2/git.html[documentation for release 1.5.1.2]
+* link:v1.5.1.4/git.html[documentation for release 1.5.1.4]
+
+* link:RelNotes-1.5.1.4.txt[release notes for 1.5.1.4]
+
+* link:RelNotes-1.5.1.3.txt[release notes for 1.5.1.3]
 
 * link:RelNotes-1.5.1.2.txt[release notes for 1.5.1.2]
 

@@ -32,7 +32,7 @@ Updates since v1.5.1
   arbitrary filter to contents on check-in/check-out codepath
   but this feature is an extremely sharp-edged razor and needs
   to be handled with caution (do not use it unless you
-  understand the earlier mailing list discussion on keyward
+  understand the earlier mailing list discussion on keyword
   expansion).
 
 * The packfile format now optionally suports 64-bit index.
@@ -41,6 +41,8 @@ Updates since v1.5.1
   file.  This is automatically enabled when a huge packfile
   needs more than 32-bit to express offsets of objects in the
   pack
+
+* Comes with an updated git-gui 0.7.0
 
 * New commands and options.
 
@@ -112,6 +114,13 @@ Updates since v1.5.1
   - "git blame" uses .mailmap to canonicalize the author name
     just like "git shortlog" does.
 
+  - "git pack-objects" pays attention to pack.depth
+    configuration variable.
+
+  - "git cherry-pick" and "git revert" does not use .msg file in
+    the working tree to prepare commit message; instead it uses
+    $GIT_DIR/MERGE_MSG as other commands.
+
 * Builds
 
   - git-p4import has never been installed; now there is an
@@ -136,6 +145,11 @@ Updates since v1.5.1
     was changed identically in two branches, when one of them
     renamed it.  We do not do that when there is no rename, so
     match that behaviour.
+
+  - The default pack depth has been increased to 50, as the
+    recent addition of delta_base_cache makes deeper delta chains
+    much less expensive to access.
+
 
 Fixes since v1.5.1
 ------------------
@@ -165,12 +179,14 @@ this release, unless otherwise noted.
   - git-fetch had trouble with a remote with insanely large number
     of refs.
 
+  - "git clean -d -X" now does not remove non-excluded directories.
+
 * Documentation updates
 
 * Performance Tweaks
 
 --
 exec >/var/tmp/1
-O=v1.5.2-rc1-32-g125a5f1
+O=v1.5.2-rc2-45-g618e613
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
