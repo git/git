@@ -1605,6 +1605,7 @@ browser {
 }
 blame {
 	set subcommand_args {rev? path?}
+	set head {}
 	set path {}
 	set is_path 0
 	foreach a $argv {
@@ -1614,27 +1615,30 @@ blame {
 			break
 		} elseif {$a eq {--}} {
 			if {$path ne {}} {
-				if {$current_branch ne {}} usage
-				set current_branch $path
+				if {$head ne {}} usage
+				set head $path
 				set path {}
 			}
 			set is_path 1
-		} elseif {$current_branch eq {}} {
-			if {$current_branch ne {}} usage
-			set current_branch $a
+		} elseif {$head eq {}} {
+			if {$head ne {}} usage
+			set head $a
 		} else {
 			usage
 		}
 	}
 	unset is_path
 
-	if {$current_branch eq {} && $path ne {}} {
+	if {$head eq {}} {
 		set current_branch [git symbolic-ref HEAD]
 		regsub ^refs/((heads|tags|remotes)/)? \
 			$current_branch {} current_branch
+	} else {
+		set current_branch $head
 	}
-	if {$current_branch eq {} || $path eq {}} usage
-	blame::new $current_branch $path
+
+	if {$path eq {}} usage
+	blame::new $head $path
 	return
 }
 citool -

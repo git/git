@@ -170,8 +170,12 @@ constructor new {i_commit i_path} {
 	bind $top <Visibility> "focus $top"
 	bind $top <Destroy> [list delete_this $this]
 
-	set cmd [list git cat-file blob "$commit:$path"]
-	set fd [open "| $cmd" r]
+	if {$commit eq {}} {
+		set fd [open $path r]
+	} else {
+		set cmd [list git cat-file blob "$commit:$path"]
+		set fd [open "| $cmd" r]
+	}
 	fconfigure $fd -blocking 0 -translation lf -encoding binary
 	fileevent $fd readable [cb _read_file $fd]
 }
@@ -194,7 +198,13 @@ method _read_file {fd} {
 	if {[eof $fd]} {
 		close $fd
 		_status $this
-		set cmd [list git blame -M -C --incremental $commit -- $path]
+		set cmd [list git blame -M -C --incremental]
+		if {$commit eq {}} {
+			lappend cmd --contents $path
+		} else {
+			lappend cmd $commit
+		}
+		lappend cmd -- $path
 		set fd [open "| $cmd" r]
 		fconfigure $fd -blocking 0 -translation lf -encoding binary
 		fileevent $fd readable [cb _read_blame $fd]
