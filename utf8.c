@@ -62,7 +62,7 @@ static int bisearch(ucs_char_t ucs, const struct interval *table, int max) {
  * in ISO 10646.
  */
 
-static int wcwidth(ucs_char_t ch)
+static int git_wcwidth(ucs_char_t ch)
 {
 	/*
 	 * Sorted list of non-overlapping intervals of non-spacing characters,
@@ -207,7 +207,7 @@ invalid:
 		return 0;
 	}
 
-	return wcwidth(ch);
+	return git_wcwidth(ch);
 }
 
 int is_utf8(const char *text)
