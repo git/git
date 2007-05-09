@@ -14,6 +14,35 @@ to pick an item from the list and work on it.
 Recent issues
 -------------
 
+* Look at Daniel's parse-remote in C
+
+Message-ID: <Pine.LNX.4.64.0705050108280.28708@iabervon.org>
+
+* parse-remote.sh has POSIXLY incorrect shell construct.
+
+Message-ID: <20070505080313.GA12170@gondor.apana.org.au>
+
+* Look into HPA's D-F conflict during rebase.
+
+Message-ID: <463FCD7C.4020009@zytor.com>
+
+* Use 'git diff' not 'git diff-tree' in merge and rebase
+
+From: James Bowes <jbowes@dangerouslyinc.com>
+Message-ID: <1178398134288-git-send-email-jbowes@dangerouslyinc.com>
+
+* gitk --left-right
+
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Message-ID: <alpine.LFD.0.98.0705051524300.17381@woody.linux-foundation.org>
+From: Junio C Hamano <junkio@cox.net>
+Message-ID: <7vabwifl23.fsf@assigned-by-dhcp.cox.net>
+
+* Git Hacker's Manual
+
+From: Johannes Schindelin <Johannes.Schindelin@gmx.de>
+Message-ID: <Pine.LNX.4.64.0705081709230.4167@racer.site>
+
 * Handling pushing into non-bare repository more gracefully.
 
 When git-push is done to a non-bare repository and updates the
@@ -23,6 +52,13 @@ anything special.
 From: Linus Torvalds <torvalds@linux-foundation.org>
 Message-ID: <Pine.LNX.4.64.0704160931550.5473@woody.linux-foundation.org>
 
+* More verbose connect to help diag & prevent boredom
+
+From: "Michael S. Tsirkin" <mst@dev.mellanox.co.il>
+Message-ID: <20070506195230.GA30339@mellanox.co.il>
+
+[jc: I think this should be done only under explicit user request to
+go verbose.]
 
 * Use blame machinery to track a single file (not path) in a finer
   grained way.
