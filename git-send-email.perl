@@ -154,8 +154,8 @@ if ($@) {
 	$term = new FakeTerm "$@: going non-interactive";
 }
 
-my $def_chain = $repo->config_boolean('sendemail.chainreplyto');
-if ($def_chain and $def_chain eq 'false') {
+my $def_chain = $repo->config_bool('sendemail.chainreplyto');
+if (defined $def_chain and not $def_chain) {
     $chain_reply_to = 0;
 }
 
