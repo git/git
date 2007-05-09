@@ -329,6 +329,7 @@ void diffcore_rename(struct diff_options *options)
 			m->dst = i;
 			m->score = estimate_similarity(one, two,
 						       minimum_score);
+			diff_free_filespec_data(one);
 		}
 		/* We do not need the text anymore */
 		diff_free_filespec_data(two);

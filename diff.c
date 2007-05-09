@@ -16,8 +16,6 @@
 #define FAST_WORKING_DIRECTORY 1
 #endif
 
-static int use_size_cache;
-
 static int diff_detect_rename_default;
 static int diff_rename_limit_default = -1;
 static int diff_use_color_default;
@@ -1236,6 +1234,8 @@ static void builtin_diff(const char *name_a,
 	}
 
  free_ab_and_return:
+	diff_free_filespec_data(one);
+	diff_free_filespec_data(two);
 	free(a_one);
 	free(b_two);
 	return;
@@ -1262,7 +1262,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		diff_populate_filespec(two, 0);
 		data->deleted = count_lines(one->data, one->size);
 		data->added = count_lines(two->data, two->size);
-		return;
+		goto free_and_return;
 	}
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
@@ -1284,6 +1284,10 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		ecb.priv = diffstat;
 		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 	}
+
+ free_and_return:
+	diff_free_filespec_data(one);
+	diff_free_filespec_data(two);
 }
 
 static void builtin_checkdiff(const char *name_a, const char *name_b,
@@ -1306,7 +1310,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		die("unable to read files to diff");
 
 	if (file_is_binary(two))
-		return;
+		goto free_and_return;
 	else {
 		/* Crazy xdl interfaces.. */
 		xpparam_t xpp;
@@ -1320,6 +1324,9 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		ecb.priv = &data;
 		xdl_diff(&mf1, &mf2, &xpp, &xecfg, &ecb);
 	}
+ free_and_return:
+	diff_free_filespec_data(one);
+	diff_free_filespec_data(two);
 }
 
 struct diff_filespec *alloc_filespec(const char *path)
@@ -1399,55 +1406,6 @@ static int reuse_worktree_file(const char *name, const unsigned char *sha1, int 
 	return 1;
 }
 
-static struct sha1_size_cache {
-	unsigned char sha1[20];
-	unsigned long size;
-} **sha1_size_cache;
-static int sha1_size_cache_nr, sha1_size_cache_alloc;
-
-static struct sha1_size_cache *locate_size_cache(unsigned char *sha1,
-						 int find_only,
-						 unsigned long size)
-{
-	int first, last;
-	struct sha1_size_cache *e;
-
-	first = 0;
-	last = sha1_size_cache_nr;
-	while (last > first) {
-		int cmp, next = (last + first) >> 1;
-		e = sha1_size_cache[next];
-		cmp = hashcmp(e->sha1, sha1);
-		if (!cmp)
-			return e;
-		if (cmp < 0) {
-			last = next;
-			continue;
-		}
-		first = next+1;
-	}
-	/* not found */
-	if (find_only)
-		return NULL;
-	/* insert to make it at "first" */
-	if (sha1_size_cache_alloc <= sha1_size_cache_nr) {
-		sha1_size_cache_alloc = alloc_nr(sha1_size_cache_alloc);
-		sha1_size_cache = xrealloc(sha1_size_cache,
-					   sha1_size_cache_alloc *
-					   sizeof(*sha1_size_cache));
-	}
-	sha1_size_cache_nr++;
-	if (first < sha1_size_cache_nr)
-		memmove(sha1_size_cache + first + 1, sha1_size_cache + first,
-			(sha1_size_cache_nr - first - 1) *
-			sizeof(*sha1_size_cache));
-	e = xmalloc(sizeof(struct sha1_size_cache));
-	sha1_size_cache[first] = e;
-	hashcpy(e->sha1, sha1);
-	e->size = size;
-	return e;
-}
-
 static int populate_from_stdin(struct diff_filespec *s)
 {
 #define INCREMENT 1024
@@ -1503,11 +1461,11 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 	if (S_ISDIR(s->mode))
 		return -1;
 
-	if (!use_size_cache)
-		size_only = 0;
-
 	if (s->data)
-		return err;
+		return 0;
+
+	if (size_only && 0 < s->size)
+		return 0;
 
 	if (S_ISDIRLNK(s->mode))
 		return diff_populate_gitlink(s, size_only);
@@ -1570,19 +1528,8 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 	}
 	else {
 		enum object_type type;
-		struct sha1_size_cache *e;
-
-		if (size_only && use_size_cache &&
-		    (e = locate_size_cache(s->sha1, 1, 0)) != NULL) {
-			s->size = e->size;
-			return 0;
-		}
-
-		if (size_only) {
+		if (size_only)
 			type = sha1_object_info(s->sha1, &s->size);
-			if (use_size_cache && 0 < type)
-				locate_size_cache(s->sha1, 0, s->size);
-		}
 		else {
 			s->data = read_sha1_file(s->sha1, &type, &s->size);
 			s->should_free = 1;
@@ -1597,8 +1544,11 @@ void diff_free_filespec_data(struct diff_filespec *s)
 		free(s->data);
 	else if (s->should_munmap)
 		munmap(s->data, s->size);
-	s->should_free = s->should_munmap = 0;
-	s->data = NULL;
+
+	if (s->should_free || s->should_munmap) {
+		s->should_free = s->should_munmap = 0;
+		s->data = NULL;
+	}
 	free(s->cnt_data);
 	s->cnt_data = NULL;
 }
@@ -2090,8 +2040,6 @@ int diff_setup_done(struct diff_options *options)
 			 */
 			read_cache();
 	}
-	if (options->setup & DIFF_SETUP_USE_SIZE_CACHE)
-		use_size_cache = 1;
 	if (options->abbrev <= 0 || 40 < options->abbrev)
 		options->abbrev = 40; /* full */
 
