@@ -238,6 +238,8 @@ proc dialog {} {
 			$subj([lindex $ref 0])]
 	}
 
+	bind $w.source.l <Key-K> [list event generate %W <Shift-Key-Up>]
+	bind $w.source.l <Key-J> [list event generate %W <Shift-Key-Down>]
 	bind $w.source.l <Key-k> [list event generate %W <Key-Up>]
 	bind $w.source.l <Key-j> [list event generate %W <Key-Down>]
 	bind $w.source.l <Key-h> [list event generate %W <Key-Left>]
