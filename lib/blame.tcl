@@ -166,8 +166,8 @@ constructor new {i_commit i_path} {
 		bind $i <Control-Key-f> {catch {%W yview scroll  1 pages};break}
 	}
 
-	bind $w.cm.t <Button-1> "focus $w.cm.t"
-	bind $top <Visibility> "focus $top"
+	bind $w.cm.t <Button-1> [list focus $w.cm.t]
+	bind $top <Visibility> [list focus $top]
 	bind $top <Destroy> [list delete_this $this]
 
 	if {$commit eq {}} {
@@ -237,17 +237,18 @@ method _read_blame {fd} {
 			set cmit $r_commit
 
 			while {$n > 0} {
+				set lno_e "$lno.0 lineend + 1c"
 				if {[catch {set g g$line_commit($lno)}]} {
-					$w_load tag add annotated $lno.0 "$lno.0 lineend + 1c"
+					$w_load tag add annotated $lno.0 $lno_e
 				} else {
-					$w_line tag remove g$g $lno.0 "$lno.0 lineend + 1c"
-					$w_file tag remove g$g $lno.0 "$lno.0 lineend + 1c"
+					$w_line tag remove g$g $lno.0 $lno_e
+					$w_file tag remove g$g $lno.0 $lno_e
 				}
 
 				set line_commit($lno) $cmit
 				set line_file($lno)   $file
-				$w_line tag add g$cmit $lno.0 "$lno.0 lineend + 1c"
-				$w_file tag add g$cmit $lno.0 "$lno.0 lineend + 1c"
+				$w_line tag add g$cmit $lno.0 $lno_e
+				$w_file tag add g$cmit $lno.0 $lno_e
 
 				if {$highlight_line == -1} {
 					if {[lindex [$w_file yview] 0] == 0} {
@@ -296,10 +297,11 @@ method _click {cur_w pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
 	if {$lno eq {}} return
 
+	set lno_e "$lno.0 + 1 line"
 	$w_line tag remove in_sel 0.0 end
 	$w_file tag remove in_sel 0.0 end
-	$w_line tag add in_sel $lno.0 "$lno.0 + 1 line"
-	$w_file tag add in_sel $lno.0 "$lno.0 + 1 line"
+	$w_line tag add in_sel $lno.0 $lno_e
+	$w_file tag add in_sel $lno.0 $lno_e
 
 	_showcommit $this $lno
 }
@@ -327,8 +329,7 @@ method _showcommit {lno} {
 
 	$w_cmit conf -state normal
 	$w_cmit delete 0.0 end
-	if {[catch {set cmit $line_commit($lno)} myerr]} {
-		puts "myerr = $myerr"
+	if {[catch {set cmit $line_commit($lno)}]} {
 		set cmit {}
 		$w_cmit insert end "Loading annotation..."
 	} else {
@@ -381,12 +382,12 @@ method _showcommit {lno} {
 			set header($cmit,message) $msg
 		}
 
-		$w_cmit insert end "commit $cmit\n"
-		$w_cmit insert end "Author: $author_name $author_email $author_time\n"
-		$w_cmit insert end "Committer: $committer_name $committer_email $committer_time\n"
-		$w_cmit insert end "Original File: [escape_path $line_file($lno)]\n"
-		$w_cmit insert end "\n"
-		$w_cmit insert end $msg
+		$w_cmit insert end "commit $cmit
+Author: $author_name $author_email $author_time
+Committer: $committer_name $committer_email $committer_time
+Original File: [escape_path $line_file($lno)]
+
+$msg"
 	}
 	$w_cmit conf -state disabled
 
