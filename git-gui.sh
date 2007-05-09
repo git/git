@@ -1611,7 +1611,7 @@ blame {
 	foreach a $argv {
 		if {$is_path || [file exists $_prefix$a]} {
 			if {$path ne {}} usage
-			set path $a
+			set path $_prefix$a
 			break
 		} elseif {$a eq {--}} {
 			if {$path ne {}} {
