@@ -261,8 +261,14 @@ unset -nocomplain v _junk act_maj act_min req_maj req_min
 ##
 ## repository setup
 
-if {   [catch {set _gitdir $env(GIT_DIR)}]
-	&& [catch {set _gitdir [git rev-parse --git-dir]} err]} {
+if {[catch {
+		set _gitdir $env(GIT_DIR)
+		set _prefix {}
+		}]
+	&& [catch {
+		set _gitdir [git rev-parse --git-dir]
+		set _prefix [git rev-parse --show-prefix]
+	} err]} {
 	catch {wm withdraw .}
 	error_popup "Cannot find the git directory:\n\n$err"
 	exit 1
@@ -1590,7 +1596,7 @@ blame {
 		exit 1
 	}
 	set current_branch [lindex $argv 0]
-	blame::new $current_branch [lindex $argv 1]
+	blame::new $current_branch $_prefix[lindex $argv 1]
 	return
 }
 citool -
