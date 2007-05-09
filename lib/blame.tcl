@@ -347,14 +347,20 @@ method _showcommit {lno} {
 		set author_time {}
 		catch {set author_name $header($cmit,author)}
 		catch {set author_email $header($cmit,author-mail)}
-		catch {set author_time [clock format $header($cmit,author-time)]}
+		catch {set author_time [clock format \
+			$header($cmit,author-time) \
+			-format {%Y-%m-%d %H:%M:%S}
+		]}
 
 		set committer_name {}
 		set committer_email {}
 		set committer_time {}
 		catch {set committer_name $header($cmit,committer)}
 		catch {set committer_email $header($cmit,committer-mail)}
-		catch {set committer_time [clock format $header($cmit,committer-time)]}
+		catch {set committer_time [clock format \
+			$header($cmit,committer-time) \
+			-format {%Y-%m-%d %H:%M:%S}
+		]}
 
 		if {[catch {set msg $header($cmit,message)}]} {
 			set msg {}
@@ -383,8 +389,8 @@ method _showcommit {lno} {
 		}
 
 		$w_cmit insert end "commit $cmit
-Author: $author_name $author_email $author_time
-Committer: $committer_name $committer_email $committer_time
+Author: $author_name $author_email  $author_time
+Committer: $committer_name $committer_email  $committer_time
 Original File: [escape_path $line_file($lno)]
 
 $msg"
