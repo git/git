@@ -1578,25 +1578,63 @@ bind all <$M1B-Key-Q> do_quit
 bind all <$M1B-Key-w> {destroy [winfo toplevel %W]}
 bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
 
+set subcommand_args {}
+proc usage {} {
+	puts stderr "usage: $::argv0 $::subcommand $::subcommand_args"
+	exit 1
+}
+
 # -- Not a normal commit type invocation?  Do that instead!
 #
 switch -- $subcommand {
 browser {
-	if {[llength $argv] != 1} {
-		puts stderr "usage: $argv0 browser commit"
-		exit 1
+	set subcommand_args {rev?}
+	switch [llength $argv] {
+	0 {
+		set current_branch [git symbolic-ref HEAD]
+		regsub ^refs/((heads|tags|remotes)/)? \
+			$current_branch {} current_branch
 	}
-	set current_branch [lindex $argv 0]
+	1 {
+		set current_branch [lindex $argv 0]
+	}
+	default usage
+	}
 	browser::new $current_branch
 	return
 }
 blame {
-	if {[llength $argv] != 2} {
-		puts stderr "usage: $argv0 blame commit path"
-		exit 1
+	set subcommand_args {rev? path?}
+	set path {}
+	set is_path 0
+	foreach a $argv {
+		if {$is_path || [file exists $_prefix$a]} {
+			if {$path ne {}} usage
+			set path $a
+			break
+		} elseif {$a eq {--}} {
+			if {$path ne {}} {
+				if {$current_branch ne {}} usage
+				set current_branch $path
+				set path {}
+			}
+			set is_path 1
+		} elseif {$current_branch eq {}} {
+			if {$current_branch ne {}} usage
+			set current_branch $a
+		} else {
+			usage
+		}
 	}
-	set current_branch [lindex $argv 0]
-	blame::new $current_branch $_prefix[lindex $argv 1]
+	unset is_path
+
+	if {$current_branch eq {} && $path ne {}} {
+		set current_branch [git symbolic-ref HEAD]
+		regsub ^refs/((heads|tags|remotes)/)? \
+			$current_branch {} current_branch
+	}
+	if {$current_branch eq {} || $path eq {}} usage
+	blame::new $current_branch $path
 	return
 }
 citool -
