@@ -261,8 +261,14 @@ unset -nocomplain v _junk act_maj act_min req_maj req_min
 ##
 ## repository setup
 
-if {   [catch {set _gitdir $env(GIT_DIR)}]
-	&& [catch {set _gitdir [git rev-parse --git-dir]} err]} {
+if {[catch {
+		set _gitdir $env(GIT_DIR)
+		set _prefix {}
+		}]
+	&& [catch {
+		set _gitdir [git rev-parse --git-dir]
+		set _prefix [git rev-parse --show-prefix]
+	} err]} {
 	catch {wm withdraw .}
 	error_popup "Cannot find the git directory:\n\n$err"
 	exit 1
@@ -1288,7 +1294,7 @@ menu .mbar.repository
 
 .mbar.repository add command \
 	-label {Browse Current Branch} \
-	-command {new_browser $current_branch}
+	-command {browser::new $current_branch}
 trace add variable current_branch write ".mbar.repository entryconf [.mbar.repository index last] -label \"Browse \$current_branch\" ;#"
 .mbar.repository add separator
 
@@ -1572,25 +1578,67 @@ bind all <$M1B-Key-Q> do_quit
 bind all <$M1B-Key-w> {destroy [winfo toplevel %W]}
 bind all <$M1B-Key-W> {destroy [winfo toplevel %W]}
 
+set subcommand_args {}
+proc usage {} {
+	puts stderr "usage: $::argv0 $::subcommand $::subcommand_args"
+	exit 1
+}
+
 # -- Not a normal commit type invocation?  Do that instead!
 #
 switch -- $subcommand {
 browser {
-	if {[llength $argv] != 1} {
-		puts stderr "usage: $argv0 browser commit"
-		exit 1
+	set subcommand_args {rev?}
+	switch [llength $argv] {
+	0 {
+		set current_branch [git symbolic-ref HEAD]
+		regsub ^refs/((heads|tags|remotes)/)? \
+			$current_branch {} current_branch
 	}
-	set current_branch [lindex $argv 0]
-	new_browser $current_branch
+	1 {
+		set current_branch [lindex $argv 0]
+	}
+	default usage
+	}
+	browser::new $current_branch
 	return
 }
 blame {
-	if {[llength $argv] != 2} {
-		puts stderr "usage: $argv0 blame commit path"
-		exit 1
+	set subcommand_args {rev? path?}
+	set head {}
+	set path {}
+	set is_path 0
+	foreach a $argv {
+		if {$is_path || [file exists $_prefix$a]} {
+			if {$path ne {}} usage
+			set path $_prefix$a
+			break
+		} elseif {$a eq {--}} {
+			if {$path ne {}} {
+				if {$head ne {}} usage
+				set head $path
+				set path {}
+			}
+			set is_path 1
+		} elseif {$head eq {}} {
+			if {$head ne {}} usage
+			set head $a
+		} else {
+			usage
+		}
 	}
-	set current_branch [lindex $argv 0]
-	show_blame $current_branch [lindex $argv 1]
+	unset is_path
+
+	if {$head eq {}} {
+		set current_branch [git symbolic-ref HEAD]
+		regsub ^refs/((heads|tags|remotes)/)? \
+			$current_branch {} current_branch
+	} else {
+		set current_branch $head
+	}
+
+	if {$path eq {}} usage
+	blame::new $head $path
 	return
 }
 citool -
@@ -1638,7 +1686,7 @@ pack .vpane -anchor n -side top -fill both -expand 1
 # -- Index File List
 #
 frame .vpane.files.index -height 100 -width 200
-label .vpane.files.index.title -text {Changes To Be Committed} \
+label .vpane.files.index.title -text {Staged Changes (Will Be Committed)} \
 	-background green
 text $ui_index -background white -borderwidth 0 \
 	-width 20 -height 10 \
@@ -1658,7 +1706,7 @@ pack $ui_index -side left -fill both -expand 1
 # -- Working Directory File List
 #
 frame .vpane.files.workdir -height 100 -width 200
-label .vpane.files.workdir.title -text {Changed But Not Updated} \
+label .vpane.files.workdir.title -text {Unstaged Changes (Will Not Be Committed)} \
 	-background red
 text $ui_workdir -background white -borderwidth 0 \
 	-width 20 -height 10 \

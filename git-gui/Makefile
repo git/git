@@ -64,7 +64,10 @@ $(GITGUI_BUILT_INS): git-gui
 	$(QUIET_BUILT_IN)rm -f $@ && ln git-gui $@
 
 lib/tclIndex: $(ALL_LIBFILES)
-	$(QUIET_INDEX)echo auto_mkindex lib '*.tcl' | $(TCL_PATH)
+	$(QUIET_INDEX)echo \
+	  source lib/class.tcl \; \
+	  auto_mkindex lib '*.tcl' \
+	| $(TCL_PATH)
 
 # These can record GITGUI_VERSION
 $(patsubst %.sh,%,$(SCRIPT_SH)): GIT-VERSION-FILE GIT-GUI-VARS

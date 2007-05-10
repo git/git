@@ -70,12 +70,12 @@ proc do_stats {} {
 
 proc do_gc {} {
 	set w [console::new {gc} {Compressing the object database}]
-	console::chain {
-		{exec {git pack-refs --prune}}
-		{exec {git reflog expire --all}}
-		{exec {git repack -a -d -l}}
-		{exec {git rerere gc}}
-	} $w
+	console::chain $w {
+		{exec git pack-refs --prune}
+		{exec git reflog expire --all}
+		{exec git repack -a -d -l}
+		{exec git rerere gc}
+	}
 }
 
 proc do_fsck_objects {} {
