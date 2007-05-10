@@ -548,7 +548,6 @@ lightweight (non-annotated) tags see the `reset` command below.
 	'from' SP <committish> LF
 	'tagger' SP <name> SP LT <email> GT SP <when> LF
 	data
-	LF
 ....
 
 where `<name>` is the name of the tag to create.

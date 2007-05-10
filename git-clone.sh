@@ -18,7 +18,14 @@ usage() {
 }
 
 get_repo_base() {
-	(cd "$1" && (cd .git ; pwd)) 2> /dev/null
+	(
+		cd "`/bin/pwd`" &&
+		cd "$1" &&
+		{
+			cd .git 2>/dev/null
+			pwd
+		}
+	)
 }
 
 if [ -n "$GIT_SSL_NO_VERIFY" ]; then

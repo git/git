@@ -255,7 +255,7 @@ reachable from `r1` from the set of commits reachable from
 A similar notation "`r1\...r2`" is called symmetric difference
 of `r1` and `r2` and is defined as
 "`r1 r2 --not $(git-merge-base --all r1 r2)`".
-It it the set of commits that are reachable from either one of
+It is the set of commits that are reachable from either one of
 `r1` or `r2` but not from both.
 
 Two other shorthands for naming a set that is formed by a commit
