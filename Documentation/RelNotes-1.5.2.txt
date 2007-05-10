@@ -44,6 +44,11 @@ Updates since v1.5.1
 
 * Comes with an updated git-gui 0.7.0
 
+* Updated gitweb:
+
+  - can show combined diff for merges;
+  - uses font size of user's preference, not hardcoded in pixels;
+
 * New commands and options.
 
   - "git bisect start" can optionally take a single bad commit and
@@ -141,6 +146,8 @@ Updates since v1.5.1
   - Optimized "git-add $path" in a large directory, most of
     whose contents are ignored.
 
+  - Optimized "git-diff-tree" for reduced memory footprint.
+
   - The recursive merge strategy updated a worktree file that
     was changed identically in two branches, when one of them
     renamed it.  We do not do that when there is no rename, so
@@ -187,6 +194,6 @@ this release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.5.2-rc2-45-g618e613
+O=v1.5.2-rc2-91-g616e40b
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
