@@ -163,6 +163,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %{_bindir}/git-gui
 %{_bindir}/git-citool
+%{_datadir}/git-gui/
 # Not Yet...
 # %{!?_without_docs: %{_mandir}/man1/git-gui.1}
 # %{!?_without_docs: %doc Documentation/git-gui.html}
