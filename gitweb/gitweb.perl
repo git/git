@@ -458,10 +458,16 @@ my %actions = (
 	"project_index" => \&git_project_index,
 );
 
-if (defined $project) {
-	$action ||= 'summary';
-} else {
-	$action ||= 'project_list';
+if (!defined $action) {
+	if (defined $hash) {
+		$action = git_get_type($hash);
+	} elsif (defined $hash_base && defined $file_name) {
+		$action = git_get_type("$hash_base:$file_name");
+	} elsif (defined $project) {
+		$action = 'summary';
+	} else {
+		$action = 'project_list';
+	}
 }
 if (!defined($actions{$action})) {
 	die_error(undef, "Unknown action");
