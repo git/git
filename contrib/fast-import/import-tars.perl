@@ -51,7 +51,7 @@ foreach my $tar_file (@ARGV)
 			$prefix) = unpack 'Z100 Z8 Z8 Z8 Z12 Z12
 			Z8 Z1 Z100 Z6
 			Z2 Z32 Z32 Z8 Z8 Z*', $_;
-		last unless $name;
+		last unless length($name);
 		if ($name eq '././@LongLink') {
 			# GNU tar extension
 			if (read(I, $_, 512) != 512) {
