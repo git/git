@@ -29,10 +29,17 @@ do
 	}
 
 	if	installed=$($HOME/git-$branch/bin/git version) &&
-		{
-			version=$(expr "$installed" : '.*\.g\([0-9a-f]*\)$') ||
+		if version=$(expr "$installed" : '.*\.g\([0-9a-f]*\)$')
+		then
+			:
+		elif version=v$(expr "$installed" : \
+				'git version \(.*\)\.rc[0-9]*$')
+		then
+			version="$version"-$(expr "$installed" : \
+				'git version .*\.\(rc[0-9]*\)$')
+		else
 			version=v$(expr "$installed" : 'git version \(.*\)')
-		} &&
+		fi &&
 		version=$(git rev-parse --verify "$version^0" 2>/dev/null) &&
 		test "z$version" = "z$revision"
 	then
