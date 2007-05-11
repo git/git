@@ -40,7 +40,7 @@ Updates since v1.5.1
   This release supports the "version 2" format of the .idx
   file.  This is automatically enabled when a huge packfile
   needs more than 32-bit to express offsets of objects in the
-  pack
+  pack.
 
 * Comes with an updated git-gui 0.7.0
 
@@ -114,7 +114,7 @@ Updates since v1.5.1
   - Local "git fetch" from a repository whose object store is
     one of the alternates (e.g. fetching from the origin in a
     repository created with "git clone -l -s") avoids
-    downloading objects unnecessary.
+    downloading objects unnecessarily.
 
   - "git blame" uses .mailmap to canonicalize the author name
     just like "git shortlog" does.
@@ -124,7 +124,7 @@ Updates since v1.5.1
 
   - "git cherry-pick" and "git revert" does not use .msg file in
     the working tree to prepare commit message; instead it uses
-    $GIT_DIR/MERGE_MSG as other commands.
+    $GIT_DIR/MERGE_MSG as other commands do.
 
 * Builds
 
@@ -134,7 +134,7 @@ Updates since v1.5.1
   - gitk and git-gui can be configured out.
 
   - Generated documentation pages automatically get version
-    information from GIT_VERSION
+    information from GIT_VERSION.
 
   - Parallel build with "make -j" descending into subdirectory
     was fixed.
@@ -151,11 +151,13 @@ Updates since v1.5.1
   - The recursive merge strategy updated a worktree file that
     was changed identically in two branches, when one of them
     renamed it.  We do not do that when there is no rename, so
-    match that behaviour.
+    match that behaviour.  This avoids excessive rebuilds.
 
   - The default pack depth has been increased to 50, as the
     recent addition of delta_base_cache makes deeper delta chains
-    much less expensive to access.
+    much less expensive to access.  Depending on the project, it was
+    reported that this reduces the resulting pack file by 10%
+    or so.
 
 
 Fixes since v1.5.1
@@ -194,6 +196,6 @@ this release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.5.2-rc2-91-g616e40b
+O=v1.5.2-rc3
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
