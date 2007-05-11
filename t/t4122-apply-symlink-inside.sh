@@ -34,7 +34,6 @@ test_expect_success setup '
 test_expect_success apply '
 
 	git checkout test &&
-	git reset --hard && #### checkout seems to be buggy
 	git diff --exit-code test &&
 	git diff --exit-code --cached test &&
 	git apply --index test.patch
