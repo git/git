@@ -182,10 +182,10 @@ static int write_zip_entry(const unsigned char *sha1,
 		goto out;
 	}
 
-	if (S_ISDIR(mode)) {
+	if (S_ISDIR(mode) || S_ISDIRLNK(mode)) {
 		method = 0;
 		attr2 = 16;
-		result = READ_TREE_RECURSIVE;
+		result = (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
 		out = NULL;
 		uncompressed_size = 0;
 		compressed_size = 0;
