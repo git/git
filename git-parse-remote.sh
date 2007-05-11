@@ -143,13 +143,13 @@ canon_refs_list_for_fetch () {
 		fi
 		case "$remote" in
 		'' | HEAD ) remote=HEAD ;;
-		refs/heads/* | refs/tags/* | refs/remotes/*) ;;
+		refs/*) ;;
 		heads/* | tags/* | remotes/* ) remote="refs/$remote" ;;
 		*) remote="refs/heads/$remote" ;;
 		esac
 		case "$local" in
 		'') local= ;;
-		refs/heads/* | refs/tags/* | refs/remotes/*) ;;
+		refs/*) ;;
 		heads/* | tags/* | remotes/* ) local="refs/$local" ;;
 		*) local="refs/heads/$local" ;;
 		esac
