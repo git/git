@@ -115,8 +115,9 @@ If the hook exits with non-zero status, none of the refs will be
 updated. If the hook exits with zero, updating of individual refs can
 still be prevented by the <<update,'update'>> hook.
 
-If you want to report something to the `git-send-pack` on the other end,
-you can simply `echo` your messages.
+Both standard output and standard error output are forwarded to
+`git-send-pack` on the other end, so you can simply `echo` messages
+for the user.
 
 [[update]]
 update
@@ -153,9 +154,9 @@ Another use suggested on the mailing list is to use this hook to
 implement access control which is finer grained than the one
 based on filesystem group.
 
-The standard output of this hook is sent to `stderr`, so if you
-want to report something to the `git-send-pack` on the other end,
-you can simply `echo` your messages.
+Both standard output and standard error output are forwarded to
+`git-send-pack` on the other end, so you can simply `echo` messages
+for the user.
 
 The default 'update' hook, when enabled--and with
 `hooks.allowunannotated` config option turned on--prevents
@@ -171,17 +172,20 @@ It executes on the remote repository once after all the refs have
 been updated.
 
 This hook executes once for the receive operation.  It takes no
-arguments, but gets the same information as the `pre-receive`
+arguments, but gets the same information as the
+<<pre-receive,'pre-receive'>>
 hook does on its standard input.
 
 This hook does not affect the outcome of `git-receive-pack`, as it
 is called after the real work is done.
 
-This supersedes the [[post-update]] hook in that it actually get's
-both old and new values of all the refs.
+This supersedes the <<post-update,'post-update'>> hook in that it get's
+both old and new values of all the refs in addition to their
+names.
 
-If you want to report something to the `git-send-pack` on the
-other end, you can simply `echo` your messages.
+Both standard output and standard error output are forwarded to
+`git-send-pack` on the other end, so you can simply `echo` messages
+for the user.
 
 The default 'post-receive' hook is empty, but there is
 a sample script `post-receive-email` provided in the `contrib/hooks`
@@ -205,12 +209,10 @@ the outcome of `git-receive-pack`.
 
 The 'post-update' hook can tell what are the heads that were pushed,
 but it does not know what their original and updated values are,
-so it is a poor place to do log old..new.
-
-In general, `post-receive` hook is preferred when the hook needs
-to decide its acion on the status of the entire set of refs
-being updated, as this hook is called once per ref, with
-information only on a single ref at a time.
+so it is a poor place to do log old..new. The
+<<post-receive,'post-receive'>> hook does get both original and
+updated values of the refs. You might consider it instead if you need
+them.
 
 When enabled, the default 'post-update' hook runs
 `git-update-server-info` to keep the information used by dumb
@@ -219,4 +221,5 @@ a git repository that is accessible via HTTP, you should
 probably enable this hook.
 
 Both standard output and standard error output are forwarded to
-`git-send-pack` on the other end.
+`git-send-pack` on the other end, so you can simply `echo` messages
+for the user.
