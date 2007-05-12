@@ -318,7 +318,7 @@ LIB_OBJS = \
 	write_or_die.o trace.o list-objects.o grep.o match-trees.o \
 	alloc.o merge-file.o path-list.o help.o unpack-trees.o $(DIFF_OBJS) \
 	color.o wt-status.o archive-zip.o archive-tar.o shallow.o utf8.o \
-	convert.o attr.o decorate.o progress.o mailmap.o
+	convert.o attr.o decorate.o progress.o mailmap.o symlinks.o
 
 BUILTIN_OBJS = \
 	builtin-add.o \

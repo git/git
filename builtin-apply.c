@@ -2009,6 +2009,29 @@ static int apply_data(struct patch *patch, struct stat *st, struct cache_entry *
 	return 0;
 }
 
+static int check_to_create_blob(const char *new_name, int ok_if_exists)
+{
+	struct stat nst;
+	if (!lstat(new_name, &nst)) {
+		if (S_ISDIR(nst.st_mode) || ok_if_exists)
+			return 0;
+		/*
+		 * A leading component of new_name might be a symlink
+		 * that is going to be removed with this patch, but
+		 * still pointing at somewhere that has the path.
+		 * In such a case, path "new_name" does not exist as
+		 * far as git is concerned.
+		 */
+		if (has_symlink_leading_path(new_name, NULL))
+			return 0;
+
+		return error("%s: already exists in working directory", new_name);
+	}
+	else if ((errno != ENOENT) && (errno != ENOTDIR))
+		return error("%s: %s", new_name, strerror(errno));
+	return 0;
+}
+
 static int check_patch(struct patch *patch, struct patch *prev_patch)
 {
 	struct stat st;
@@ -2095,15 +2118,9 @@ static int check_patch(struct patch *patch, struct patch *prev_patch)
 		    !ok_if_exists)
 			return error("%s: already exists in index", new_name);
 		if (!cached) {
-			struct stat nst;
-			if (!lstat(new_name, &nst)) {
-				if (S_ISDIR(nst.st_mode) || ok_if_exists)
-					; /* ok */
-				else
-					return error("%s: already exists in working directory", new_name);
-			}
-			else if ((errno != ENOENT) && (errno != ENOTDIR))
-				return error("%s: %s", new_name, strerror(errno));
+			int err = check_to_create_blob(new_name, ok_if_exists);
+			if (err)
+				return err;
 		}
 		if (!patch->new_mode) {
 			if (0 < patch->is_new)
