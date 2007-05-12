@@ -2660,9 +2660,10 @@ sub git_patchset_body {
 		# check if current patch belong to current raw line
 		# and parse raw git-diff line if needed
 		if (defined $diffinfo &&
+		    defined $from_id && defined $to_id &&
 		    from_ids_eq($diffinfo->{'from_id'}, $from_id) &&
 		    $diffinfo->{'to_id'} eq $to_id) {
-			# this is split patch
+			# this is continuation of a split patch
 			print "<div class=\"patch cont\">\n";
 		} else {
 			# advance raw git-diff output if needed
