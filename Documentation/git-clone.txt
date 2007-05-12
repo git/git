@@ -132,7 +132,7 @@ Make a local clone that borrows from the current directory, without checking thi
 +
 ------------
 $ git clone -l -s -n . ../copy
-$ cd copy
+$ cd ../copy
 $ git show-branch
 ------------
 
