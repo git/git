@@ -23,7 +23,7 @@ sha_transform:
 	stmfd	sp!, {r4 - r8, lr}
 
 	@ for (i = 0; i < 16; i++)
-	@         W[i] = ntohl(((uint32_t *)data)[i]); */
+	@         W[i] = ntohl(((uint32_t *)data)[i]);
 
 #ifdef __ARMEB__
 	mov	r4, r0
