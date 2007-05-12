@@ -16,7 +16,7 @@
 static const char builtin_add_usage[] =
 "git-add [-n] [-v] [-f] [--interactive | -i] [-u] [--] <filepattern>...";
 
-static int take_all_worktree_changes;
+static int take_worktree_changes;
 static const char *excludes_file;
 
 static void prune_directory(struct dir_struct *dir, const char **pathspec, int prefix)
@@ -122,11 +122,12 @@ static void update_callback(struct diff_queue_struct *q,
 	}
 }
 
-static void update_all(int verbose)
+static void update(int verbose, const char **files)
 {
 	struct rev_info rev;
 	init_revisions(&rev, "");
 	setup_revisions(0, NULL, &rev, NULL);
+	rev.prune_data = get_pathspec(rev.prefix, files);
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = update_callback;
 	rev.diffopt.format_callback_data = &verbose;
@@ -200,16 +201,14 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		if (!strcmp(arg, "-u")) {
-			take_all_worktree_changes = 1;
+			take_worktree_changes = 1;
 			continue;
 		}
 		usage(builtin_add_usage);
 	}
 
-	if (take_all_worktree_changes) {
-		if (i < argc)
-			die("-u and explicit paths are incompatible");
-		update_all(verbose);
+	if (take_worktree_changes) {
+		update(verbose, argv + i);
 		goto finish;
 	}
 
