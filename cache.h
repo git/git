@@ -410,6 +410,7 @@ struct checkout {
 };
 
 extern int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *topath);
+extern int has_symlink_leading_path(const char *name, char *last_symlink);
 
 extern struct alternate_object_database {
 	struct alternate_object_database *next;
