@@ -1875,7 +1875,7 @@ $ chmod a+x hooks/post-update
 
 (For an explanation of the last two lines, see
 gitlink:git-update-server-info[1], and the documentation
-link:hooks.txt[Hooks used by git].)
+link:hooks.html[Hooks used by git].)
 
 Advertise the url of proj.git.  Anybody else should then be able to
 clone or pull from that url, for example with a commandline like:
@@ -1959,7 +1959,7 @@ Setting up a shared repository
 Another way to collaborate is by using a model similar to that
 commonly used in CVS, where several developers with special rights
 all push to and pull from a single shared repository.  See
-link:cvs-migration.txt[git for CVS users] for instructions on how to
+link:cvs-migration.html[git for CVS users] for instructions on how to
 set this up.
 
 [[setting-up-gitweb]]
