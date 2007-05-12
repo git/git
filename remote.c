@@ -17,6 +17,15 @@ static void add_push_refspec(struct remote *remote, const char *ref)
 	remote->push_refspec_nr = nr;
 }
 
+static void add_fetch_refspec(struct remote *remote, const char *ref)
+{
+	int nr = remote->fetch_refspec_nr + 1;
+	remote->fetch_refspec =
+		xrealloc(remote->fetch_refspec, nr * sizeof(char *));
+	remote->fetch_refspec[nr-1] = ref;
+	remote->fetch_refspec_nr = nr;
+}
+
 static void add_uri(struct remote *remote, const char *uri)
 {
 	int nr = remote->uri_nr + 1;
@@ -74,6 +83,9 @@ static void read_remotes_file(struct remote *remote)
 		} else if (!prefixcmp(buffer, "Push:")) {
 			value_list = 1;
 			s = buffer + 5;
+		} else if (!prefixcmp(buffer, "Pull:")) {
+			value_list = 2;
+			s = buffer + 5;
 		} else
 			continue;
 
@@ -92,6 +104,9 @@ static void read_remotes_file(struct remote *remote)
 			break;
 		case 1:
 			add_push_refspec(remote, xstrdup(s));
+			break;
+		case 2:
+			add_fetch_refspec(remote, xstrdup(s));
 			break;
 		}
 	}
@@ -174,6 +189,8 @@ static int handle_config(const char *key, const char *value)
 		add_uri(remote, xstrdup(value));
 	} else if (!strcmp(subkey, ".push")) {
 		add_push_refspec(remote, xstrdup(value));
+	} else if (!strcmp(subkey, ".fetch")) {
+		add_fetch_refspec(remote, xstrdup(value));
 	} else if (!strcmp(subkey, ".receivepack")) {
 		if (!remote->receivepack)
 			remote->receivepack = xstrdup(value);
@@ -257,8 +274,50 @@ struct remote *remote_get(const char *name)
 		add_uri(ret, name);
 	if (!ret->uri)
 		return NULL;
+	ret->fetch = parse_ref_spec(ret->fetch_refspec_nr, ret->fetch_refspec);
 	ret->push = parse_ref_spec(ret->push_refspec_nr, ret->push_refspec);
 	return ret;
+}
+
+int remote_has_uri(struct remote *remote, const char *uri)
+{
+	int i;
+	for (i = 0; i < remote->uri_nr; i++) {
+		if (!strcmp(remote->uri[i], uri))
+			return 1;
+	}
+	return 0;
+}
+
+int remote_find_tracking(struct remote *remote, struct refspec *refspec)
+{
+	int i;
+	for (i = 0; i < remote->fetch_refspec_nr; i++) {
+		struct refspec *fetch = &remote->fetch[i];
+		if (!fetch->dst)
+			continue;
+		if (fetch->pattern) {
+			if (!prefixcmp(refspec->src, fetch->src)) {
+				refspec->dst =
+					xmalloc(strlen(fetch->dst) +
+						strlen(refspec->src) -
+						strlen(fetch->src) + 1);
+				strcpy(refspec->dst, fetch->dst);
+				strcpy(refspec->dst + strlen(fetch->dst),
+				       refspec->src + strlen(fetch->src));
+				refspec->force = fetch->force;
+				return 0;
+			}
+		} else {
+			if (!strcmp(refspec->src, fetch->src)) {
+				refspec->dst = xstrdup(fetch->dst);
+				refspec->force = fetch->force;
+				return 0;
+			}
+		}
+	}
+	refspec->dst = NULL;
+	return -1;
 }
 
 static int count_refspec_match(const char *pattern,
