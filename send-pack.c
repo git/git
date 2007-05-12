@@ -4,6 +4,7 @@
 #include "refs.h"
 #include "pkt-line.h"
 #include "run-command.h"
+#include "remote.h"
 
 static const char send_pack_usage[] =
 "git-send-pack [--all] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
