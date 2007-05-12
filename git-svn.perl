@@ -393,7 +393,7 @@ sub cmd_dcommit {
 		} else {
 			my %ed_opts = ( r => $last_rev,
 			                log => get_commit_entry($d)->{log},
-			                ra => Git::SVN::Ra->new($url),
+			                ra => Git::SVN::Ra->new($gs->full_url),
 			                tree_a => "$d~1",
 			                tree_b => $d,
 			                editor_cb => sub {
