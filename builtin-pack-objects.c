@@ -568,6 +568,7 @@ static off_t write_one(struct sha1file *f,
 		e->offset = 0;
 		return 0;
 	}
+	written_list[nr_written++] = e;
 
 	/* make sure off_t is sufficiently large not to wrap */
 	if (offset > offset + size)
@@ -587,47 +588,57 @@ static int adjust_perm(const char *path, mode_t mode);
 
 static void write_pack_file(void)
 {
-	uint32_t i;
+	uint32_t i = 0, j;
 	struct sha1file *f;
-	off_t offset, last_obj_offset = 0;
+	off_t offset, offset_one, last_obj_offset = 0;
 	struct pack_header hdr;
-	int do_progress = progress;
-
-	if (pack_to_stdout) {
-		f = sha1fd(1, "<stdout>");
-		do_progress >>= 1;
-	} else {
-		int fd = open_object_dir_tmp("tmp_pack_XXXXXX");
-		if (fd < 0)
-			die("unable to create %s: %s\n", tmpname, strerror(errno));
-		pack_tmp_name = xstrdup(tmpname);
-		f = sha1fd(fd, pack_tmp_name);
-	}
+	int do_progress = progress >> pack_to_stdout;
+	uint32_t nr_remaining = nr_result;
 
 	if (do_progress)
 		start_progress(&progress_state, "Writing %u objects...", "", nr_result);
+	written_list = xmalloc(nr_objects * sizeof(struct object_entry *));
 
-	hdr.hdr_signature = htonl(PACK_SIGNATURE);
-	hdr.hdr_version = htonl(PACK_VERSION);
-	hdr.hdr_entries = htonl(nr_result);
-	sha1write(f, &hdr, sizeof(hdr));
-	offset = sizeof(hdr);
-	if (!nr_result)
-		goto done;
-	for (i = 0; i < nr_objects; i++) {
-		last_obj_offset = offset;
-		offset = write_one(f, objects + i, offset);
-		if (do_progress)
-			display_progress(&progress_state, written);
-	}
-	if (do_progress)
-		stop_progress(&progress_state);
- done:
-	if (written != nr_result)
-		die("wrote %u objects while expecting %u", written, nr_result);
-	sha1close(f, pack_file_sha1, 1);
+	do {
+		if (pack_to_stdout) {
+			f = sha1fd(1, "<stdout>");
+		} else {
+			int fd = open_object_dir_tmp("tmp_pack_XXXXXX");
+			if (fd < 0)
+				die("unable to create %s: %s\n", tmpname, strerror(errno));
+			pack_tmp_name = xstrdup(tmpname);
+			f = sha1fd(fd, pack_tmp_name);
+		}
 
-	if (!pack_to_stdout) {
+		hdr.hdr_signature = htonl(PACK_SIGNATURE);
+		hdr.hdr_version = htonl(PACK_VERSION);
+		hdr.hdr_entries = htonl(nr_remaining);
+		sha1write(f, &hdr, sizeof(hdr));
+		offset = sizeof(hdr);
+		nr_written = 0;
+		for (; i < nr_objects; i++) {
+			last_obj_offset = offset;
+			offset_one = write_one(f, objects + i, offset);
+			if (!offset_one)
+				break;
+			offset = offset_one;
+			if (do_progress)
+				display_progress(&progress_state, written);
+		}
+
+		/*
+		 * Did we write the wrong # entries in the header?
+		 * If so, rewrite it like in fast-import
+		 */
+		if (pack_to_stdout || nr_written == nr_remaining) {
+			sha1close(f, pack_file_sha1, 1);
+		} else {
+			sha1close(f, pack_file_sha1, 0);
+			fixup_pack_header_footer(f->fd, pack_file_sha1, pack_tmp_name, nr_written);
+			close(f->fd);
+		}
+
+		if (!pack_to_stdout) {
 			unsigned char object_list_sha1[20];
 			mode_t mode = umask(0);
 
@@ -652,7 +663,26 @@ static void write_pack_file(void)
 				die("unable to rename temporary index file: %s",
 				    strerror(errno));
 			puts(sha1_to_hex(object_list_sha1));
+		}
+
+		/* mark written objects as written to previous pack */
+		for (j = 0; j < nr_written; j++) {
+			written_list[j]->offset = (off_t)-1;
+		}
+		nr_remaining -= nr_written;
+	} while (nr_remaining && i < nr_objects);
+
+	free(written_list);
+	if (do_progress)
+		stop_progress(&progress_state);
+	if (written != nr_result)
+		die("wrote %u objects while expecting %u", written, nr_result);
+	for (j = 0; i < nr_objects; i++) {
+		struct object_entry *e = objects + i;
+		j += !e->offset && !e->preferred_base;
 	}
+	if (j)
+		die("wrote %u objects as expected but %u unwritten", written, j);
 }
 
 static int sha1_sort(const void *_a, const void *_b)
@@ -679,18 +709,11 @@ static void write_index_file(off_t last_obj_offset, unsigned char *sha1)
 	idx_tmp_name = xstrdup(tmpname);
 	f = sha1fd(fd, idx_tmp_name);
 
-	if (nr_result) {
-		uint32_t j = 0;
-		sorted_by_sha =
-			xcalloc(nr_result, sizeof(struct object_entry *));
-		for (i = 0; i < nr_objects; i++)
-			if (!objects[i].preferred_base)
-				sorted_by_sha[j++] = objects + i;
-		if (j != nr_result)
-			die("listed %u objects while expecting %u", j, nr_result);
-		qsort(sorted_by_sha, nr_result, sizeof(*sorted_by_sha), sha1_sort);
+	if (nr_written) {
+		sorted_by_sha = written_list;
+		qsort(sorted_by_sha, nr_written, sizeof(*sorted_by_sha), sha1_sort);
 		list = sorted_by_sha;
-		last = sorted_by_sha + nr_result;
+		last = sorted_by_sha + nr_written;
 	} else
 		sorted_by_sha = list = last = NULL;
 
@@ -728,7 +751,7 @@ static void write_index_file(off_t last_obj_offset, unsigned char *sha1)
 
 	/* Write the actual SHA1 entries. */
 	list = sorted_by_sha;
-	for (i = 0; i < nr_result; i++) {
+	for (i = 0; i < nr_written; i++) {
 		struct object_entry *entry = *list++;
 		if (index_version < 2) {
 			uint32_t offset = htonl(entry->offset);
@@ -743,7 +766,7 @@ static void write_index_file(off_t last_obj_offset, unsigned char *sha1)
 
 		/* write the crc32 table */
 		list = sorted_by_sha;
-		for (i = 0; i < nr_objects; i++) {
+		for (i = 0; i < nr_written; i++) {
 			struct object_entry *entry = *list++;
 			uint32_t crc32_val = htonl(entry->crc32);
 			sha1write(f, &crc32_val, 4);
@@ -751,7 +774,7 @@ static void write_index_file(off_t last_obj_offset, unsigned char *sha1)
 
 		/* write the 32-bit offset table */
 		list = sorted_by_sha;
-		for (i = 0; i < nr_objects; i++) {
+		for (i = 0; i < nr_written; i++) {
 			struct object_entry *entry = *list++;
 			uint32_t offset = (entry->offset <= index_off32_limit) ?
 				entry->offset : (0x80000000 | nr_large_offset++);
@@ -776,7 +799,6 @@ static void write_index_file(off_t last_obj_offset, unsigned char *sha1)
 
 	sha1write(f, pack_file_sha1, 20);
 	sha1close(f, NULL, 1);
-	free(sorted_by_sha);
 	SHA1_Final(sha1, &ctx);
 }
 
