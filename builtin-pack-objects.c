@@ -15,7 +15,7 @@
 #include "progress.h"
 
 static const char pack_usage[] = "\
-git-pack-objects [{ -q | --progress | --all-progress }] \n\
+git-pack-objects [{ -q | --progress | --all-progress }] [--max-pack-size=N] \n\
 	[--local] [--incremental] [--window=N] [--depth=N] \n\
 	[--no-reuse-delta] [--no-reuse-object] [--delta-base-offset] \n\
 	[--non-empty] [--revs [--unpacked | --all]*] [--reflog] \n\
@@ -1711,6 +1711,13 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			else if (level < 0 || level > Z_BEST_COMPRESSION)
 				die("bad pack compression level %d", level);
 			pack_compression_level = level;
+			continue;
+		}
+		if (!prefixcmp(arg, "--max-pack-size=")) {
+			char *end;
+			pack_size_limit = strtoul(arg+16, &end, 0) * 1024 * 1024;
+			if (!arg[16] || *end)
+				usage(pack_usage);
 			continue;
 		}
 		if (!prefixcmp(arg, "--window=")) {
