@@ -690,6 +690,25 @@ may be any path to a file tracked by git.
 Examples
 --------
 
+[[counting-commits-on-a-branch]]
+Counting the number of commits on a branch
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Suppose you want to know how many commits you've made on "mybranch"
+since it diverged from "origin":
+
+-------------------------------------------------
+$ git log --pretty=oneline origin..mybranch | wc -l
+-------------------------------------------------
+
+Alternatively, you may often see this sort of thing done with the
+lower-level command gitlink:git-rev-list[1], which just lists the SHA1's
+of all the given commits:
+
+-------------------------------------------------
+$ git rev-list origin..mybranch | wc -l
+-------------------------------------------------
+
 [[checking-for-equal-branches]]
 Check whether two branches point at the same history
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
