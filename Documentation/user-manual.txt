@@ -808,6 +808,48 @@ available
 Which shows that e05db0fd is reachable from itself, from v1.5.0-rc1, and
 from v1.5.0-rc2, but not from v1.5.0-rc0.
 
+[[making-a-release]]
+Creating a changelog and tarball for a software release
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The gitlink:git-archive[1] command can create a tar or zip archive from
+any version of a project; for example:
+
+-------------------------------------------------
+$ git archive --format=tar --prefix=project/ HEAD | gzip >latest.tar.gz
+-------------------------------------------------
+
+will use HEAD to produce a tar archive in which each filename is
+preceded by "prefix/".
+
+If you're releasing a new version of a software project, you may want
+to simultaneously make a changelog to include in the release
+announcement.
+
+Linus Torvalds, for example, makes new kernel releases by tagging them,
+then running:
+
+-------------------------------------------------
+$ release-script 2.6.12 2.6.13-rc6 2.6.13-rc7
+-------------------------------------------------
+
+where release-script is a shell script that looks like:
+
+-------------------------------------------------
+#!/bin/sh
+stable="$1"
+last="$2"
+new="$3"
+echo "# git tag v$new"
+echo "git archive --prefix=linux-$new/ v$new | gzip -9 > ../linux-$new.tar.gz"
+echo "git diff v$stable v$new | gzip -9 > ../patch-$new.gz"
+echo "git log --no-merges v$new ^v$last > ../ChangeLog-$new"
+echo "git shortlog --no-merges v$new ^v$last > ../ShortLog"
+echo "git diff --stat --summary -M v$last v$new > ../diffstat-$new"
+-------------------------------------------------
+
+and then he just cut-and-pastes the output commands after verifying that
+they look OK.
 
 [[Developing-with-git]]
 Developing with git
