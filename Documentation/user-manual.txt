@@ -1,6 +1,9 @@
 Git User's Manual (for version 1.5.1 or newer)
 ______________________________________________
 
+
+Git is a fast distributed revision control system.
+
 This manual is designed to be readable by someone with basic unix
 command-line skills, but no previous knowledge of git.
 
