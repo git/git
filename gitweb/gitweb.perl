@@ -728,7 +728,9 @@ sub chop_str {
 sub age_class {
 	my $age = shift;
 
-	if ($age < 60*60*2) {
+	if (!defined $age) {
+		return "noage";
+	} elsif ($age < 60*60*2) {
 		return "age0";
 	} elsif ($age < 60*60*24*2) {
 		return "age1";
@@ -1258,7 +1260,8 @@ sub git_get_last_activity {
 	     'refs/heads') or return;
 	my $most_recent = <$fd>;
 	close $fd or return;
-	if ($most_recent =~ / (\d+) [-+][01]\d\d\d$/) {
+	if (defined $most_recent &&
+	    $most_recent =~ / (\d+) [-+][01]\d\d\d$/) {
 		my $timestamp = $1;
 		my $age = time - $timestamp;
 		return ($age, age_string($age));
@@ -2983,7 +2986,7 @@ sub git_project_list_body {
 		                        esc_html($pr->{'descr'})) . "</td>\n" .
 		      "<td><i>" . chop_str($pr->{'owner'}, 15) . "</i></td>\n";
 		print "<td class=\"". age_class($pr->{'age'}) . "\">" .
-		      $pr->{'age_string'} . "</td>\n" .
+		      (defined $pr->{'age_string'} ? $pr->{'age_string'} : "No commits") . "</td>\n" .
 		      "<td class=\"link\">" .
 		      $cgi->a({-href => href(project=>$pr->{'path'}, action=>"summary")}, "summary")   . " | " .
 		      $cgi->a({-href => href(project=>$pr->{'path'}, action=>"shortlog")}, "shortlog") . " | " .
@@ -3335,7 +3338,7 @@ sub git_project_index {
 sub git_summary {
 	my $descr = git_get_project_description($project) || "none";
 	my %co = parse_commit("HEAD");
-	my %cd = parse_date($co{'committer_epoch'}, $co{'committer_tz'});
+	my %cd = %co ? parse_date($co{'committer_epoch'}, $co{'committer_tz'}) : ();
 	my $head = $co{'id'};
 
 	my $owner = git_get_project_owner($project);
@@ -3358,8 +3361,11 @@ sub git_summary {
 	print "<div class=\"title\">&nbsp;</div>\n";
 	print "<table cellspacing=\"0\">\n" .
 	      "<tr><td>description</td><td>" . esc_html($descr) . "</td></tr>\n" .
-	      "<tr><td>owner</td><td>$owner</td></tr>\n" .
-	      "<tr><td>last change</td><td>$cd{'rfc2822'}</td></tr>\n";
+	      "<tr><td>owner</td><td>$owner</td></tr>\n";
+	if (defined $cd{'rfc2822'}) {
+		print "<tr><td>last change</td><td>$cd{'rfc2822'}</td></tr>\n";
+	}
+
 	# use per project git URL list in $projectroot/$project/cloneurl
 	# or make project git URL from git base URL and project name
 	my $url_tag = "URL";
@@ -3382,11 +3388,13 @@ sub git_summary {
 
 	# we need to request one more than 16 (0..15) to check if
 	# those 16 are all
-	my @commitlist = parse_commits($head, 17);
-	git_print_header_div('shortlog');
-	git_shortlog_body(\@commitlist, 0, 15, $refs,
-	                  $#commitlist <=  15 ? undef :
-	                  $cgi->a({-href => href(action=>"shortlog")}, "..."));
+	my @commitlist = $head ? parse_commits($head, 17) : ();
+	if (@commitlist) {
+		git_print_header_div('shortlog');
+		git_shortlog_body(\@commitlist, 0, 15, $refs,
+		                  $#commitlist <=  15 ? undef :
+		                  $cgi->a({-href => href(action=>"shortlog")}, "..."));
+	}
 
 	if (@taglist) {
 		git_print_header_div('tags');
