@@ -80,6 +80,7 @@ my %icv;
 my %init_opts = ( 'template=s' => \$_template, 'shared:s' => \$_shared,
                   'trunk|T=s' => \$_trunk, 'tags|t=s' => \$_tags,
                   'branches|b=s' => \$_branches, 'prefix=s' => \$_prefix,
+                  'minimize-url|m' => \$Git::SVN::_minimize_url,
 		  'no-metadata' => sub { $icv{noMetadata} = 1 },
 		  'use-svm-props' => sub { $icv{useSvmProps} = 1 },
 		  'use-svnsync-props' => sub { $icv{useSvnsyncProps} = 1 },
@@ -820,7 +821,7 @@ use strict;
 use warnings;
 use vars qw/$default_repo_id $default_ref_id $_no_metadata $_follow_parent
             $_repack $_repack_flags $_use_svm_props $_head
-            $_use_svnsync_props $no_reuse_existing/;
+            $_use_svnsync_props $no_reuse_existing $_minimize_url/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
 use File::Copy qw/copy/;
@@ -1037,7 +1038,7 @@ sub init_remote_config {
 				     "[svn-remote \"$existing\"]\n";
 		}
 		$self->{repo_id} = $existing;
-	} else {
+	} elsif ($_minimize_url) {
 		my $min_url = Git::SVN::Ra->new($url)->minimize_url;
 		$existing = find_existing_remote($min_url, $r);
 		if ($existing) {

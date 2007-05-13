@@ -28,7 +28,7 @@ test_expect_success 'initialize repo' "
 	"
 
 test_expect_success 'init and fetch a moved directory' "
-	git-svn init -i thunk $svnrepo/thunk &&
+	git-svn init --minimize-url -i thunk $svnrepo/thunk &&
 	git-svn fetch -i thunk &&
 	test \"\`git-rev-parse --verify refs/remotes/thunk@2\`\" \
            = \"\`git-rev-parse --verify refs/remotes/thunk~1\`\" &&
@@ -68,7 +68,8 @@ test_expect_success 'follow larger parent' "
         echo hi > import/trunk/thunk/bump/thud/file &&
         svn import -m 'import a larger parent' import $svnrepo/larger-parent &&
         svn cp -m 'hi' $svnrepo/larger-parent $svnrepo/another-larger &&
-        git-svn init -i larger $svnrepo/another-larger/trunk/thunk/bump/thud &&
+        git-svn init --minimize-url -i larger \
+          $svnrepo/another-larger/trunk/thunk/bump/thud &&
         git-svn fetch -i larger &&
         git-rev-parse --verify refs/remotes/larger &&
         git-rev-parse --verify \
@@ -90,14 +91,14 @@ test_expect_success 'follow higher-level parent' "
                 cd ..
         svn mkdir -m 'new glob at top level' $svnrepo/glob &&
         svn mv -m 'move blob down a level' $svnrepo/blob $svnrepo/glob/blob &&
-        git-svn init -i blob $svnrepo/glob/blob &&
+        git-svn init --minimize-url -i blob $svnrepo/glob/blob &&
         git-svn fetch -i blob
         "
 
 test_expect_success 'follow deleted directory' "
 	svn mv -m 'bye!' $svnrepo/glob/blob/hi $svnrepo/glob/blob/bye &&
 	svn rm -m 'remove glob' $svnrepo/glob &&
-	git-svn init -i glob $svnrepo/glob &&
+	git-svn init --minimize-url -i glob $svnrepo/glob &&
 	git-svn fetch -i glob &&
 	test \"\`git cat-file blob refs/remotes/glob:blob/bye\`\" = hi &&
 	test \"\`git ls-tree refs/remotes/glob | wc -l \`\" -eq 1
@@ -127,7 +128,7 @@ test_expect_success 'follow-parent avoids deleting relevant info' "
 	  poke native/t/c.t &&
 	  svn commit -m 'reorg test' &&
 	cd .. &&
-	git-svn init -i r9270-t \
+	git-svn init --minimize-url -i r9270-t \
 	  $svnrepo/r9270/trunk/subversion/bindings/swig/perl/native/t &&
 	git-svn fetch -i r9270-t &&
 	test \`git rev-list r9270-t | wc -l\` -eq 2 &&
@@ -137,7 +138,7 @@ test_expect_success 'follow-parent avoids deleting relevant info' "
 
 test_expect_success "track initial change if it was only made to parent" "
 	svn cp -m 'wheee!' $svnrepo/r9270/trunk $svnrepo/r9270/drunk &&
-	git-svn init -i r9270-d \
+	git-svn init --minimize-url -i r9270-d \
 	  $svnrepo/r9270/drunk/subversion/bindings/swig/perl/native/t &&
 	git-svn fetch -i r9270-d &&
 	test \`git rev-list r9270-d | wc -l\` -eq 3 &&
