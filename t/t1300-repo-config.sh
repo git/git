@@ -407,6 +407,25 @@ EOF
 test_expect_success "section was removed properly" \
 	"git diff -u expect .git/config"
 
+rm .git/config
+
+cat > expect << EOF
+[gitcvs]
+	enabled = true
+	dbname = %Ggitcvs2.%a.%m.sqlite
+[gitcvs "ext"]
+	dbname = %Ggitcvs1.%a.%m.sqlite
+EOF
+
+test_expect_success 'section ending' '
+
+	git-config gitcvs.enabled true &&
+	git-config gitcvs.ext.dbname %Ggitcvs1.%a.%m.sqlite &&
+	git-config gitcvs.dbname %Ggitcvs2.%a.%m.sqlite &&
+	cmp .git/config expect
+
+'
+
 test_expect_success numbers '
 
 	git-config kilo.gram 1k &&
