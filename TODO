@@ -14,10 +14,6 @@ to pick an item from the list and work on it.
 Recent issues
 -------------
 
-* Look at Daniel's parse-remote in C
-
-Message-ID: <Pine.LNX.4.64.0705050108280.28708@iabervon.org>
-
 * parse-remote.sh has POSIXLY incorrect shell construct.
 
 Message-ID: <20070505080313.GA12170@gondor.apana.org.au>
@@ -25,6 +21,11 @@ Message-ID: <20070505080313.GA12170@gondor.apana.org.au>
 * Look into HPA's D-F conflict during rebase.
 
 Message-ID: <463FCD7C.4020009@zytor.com>
+
+This was resolved for git-apply codepath, but I suspect that
+there are breakages in merge-recursive this exposes.
+
+Message-ID: <7vps569904.fsf@assigned-by-dhcp.cox.net>
 
 * Use 'git diff' not 'git diff-tree' in merge and rebase
 
@@ -174,6 +175,11 @@ Technical (milder)
 
 Technical (trivial)
 -------------------
+
+* Give --stdin to git-log, similar to git-rev-list
+
+From: "Marco Costalba" <mcostalba@gmail.com>
+Message-ID: <e5bfff550705110413q28aef3d8k3aeb0d342eeb2016@mail.gmail.com>
 
 * Update the lockfile protocol so that closing and renaming are
   done inside lockfile commit time.  Some filesystems do not
