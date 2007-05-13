@@ -38,6 +38,9 @@ OPTIONS
 	For a more complete list of ways to spell object names, see
 	"SPECIFYING REVISIONS" section in gitlink:git-rev-parse[1].
 
+include::pretty-options.txt[]
+
+
 include::pretty-formats.txt[]
 
 

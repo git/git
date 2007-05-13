@@ -87,7 +87,7 @@ Using these options, gitlink:git-rev-list[1] will act similar to the
 more specialized family of commit log tools: gitlink:git-log[1],
 gitlink:git-show[1], and gitlink:git-whatchanged[1]
 
-include::pretty-formats.txt[]
+include::pretty-options.txt[]
 
 --relative-date::
 
@@ -366,6 +366,10 @@ These options are mostly targeted for packing of git repositories.
 
 	Only useful with '--objects'; print the object IDs that are not
 	in packs.
+
+
+include::pretty-formats.txt[]
+
 
 Author
 ------
