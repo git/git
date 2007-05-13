@@ -1390,7 +1390,7 @@ sub traverse_ignore {
 		}
 	}
 	foreach (sort keys %$dirent) {
-		next if $dirent->{$_}->kind != $SVN::Node::dir;
+		next if $dirent->{$_}->{kind} != $SVN::Node::dir;
 		$self->traverse_ignore($fh, "$path/$_", $r);
 	}
 }
@@ -2888,7 +2888,7 @@ my ($can_do_switch, %ignored_err, $RA);
 BEGIN {
 	# enforce temporary pool usage for some simple functions
 	my $e;
-	foreach (qw/get_latest_revnum get_uuid get_repos_root/) {
+	foreach (qw/rev_proplist get_latest_revnum get_uuid get_repos_root/) {
 		$e .= "sub $_ {
 			my \$self = shift;
 			my \$pool = SVN::Pool->new;
@@ -2897,29 +2897,7 @@ BEGIN {
 			wantarray ? \@ret : \$ret[0]; }\n";
 	}
 
-	# get_dir needs $pool held in cache for dirents to work,
-	# check_path is cacheable and rev_proplist is close enough
-	# for our purposes.
-	foreach (qw/check_path get_dir rev_proplist/) {
-		$e .= "my \%${_}_cache; my \$${_}_rev = 0; sub $_ {
-			my \$self = shift;
-			my \$r = pop;
-			my \$k = join(\"\\0\", \@_);
-			if (my \$x = \$${_}_cache{\$r}->{\$k}) {
-				return wantarray ? \@\$x : \$x->[0];
-			}
-			my \$pool = SVN::Pool->new;
-			my \@ret = \$self->SUPER::$_(\@_, \$r, \$pool);
-			if (\$r != \$${_}_rev) {
-				\%${_}_cache = ( pool => [] );
-				\$${_}_rev = \$r;
-			}
-			\$${_}_cache{\$r}->{\$k} = \\\@ret;
-			push \@{\$${_}_cache{pool}}, \$pool;
-			wantarray ? \@ret : \$ret[0]; }\n";
-	}
-	$e .= "\n1;";
-	eval $e or die $@;
+	eval "$e; 1;" or die $@;
 }
 
 sub new {
@@ -2952,7 +2930,45 @@ sub new {
 	$self->{svn_path} = $url;
 	$self->{repos_root} = $self->get_repos_root;
 	$self->{svn_path} =~ s#^\Q$self->{repos_root}\E(/|$)##;
+	$self->{cache} = { check_path => { r => 0, data => {} },
+	                   get_dir => { r => 0, data => {} } };
 	$RA = bless $self, $class;
+}
+
+sub check_path {
+	my ($self, $path, $r) = @_;
+	my $cache = $self->{cache}->{check_path};
+	if ($r == $cache->{r} && exists $cache->{data}->{$path}) {
+		return $cache->{data}->{$path};
+	}
+	my $pool = SVN::Pool->new;
+	my $t = $self->SUPER::check_path($path, $r, $pool);
+	$pool->clear;
+	if ($r != $cache->{r}) {
+		%{$cache->{data}} = ();
+		$cache->{r} = $r;
+	}
+	$cache->{data}->{$path} = $t;
+}
+
+sub get_dir {
+	my ($self, $dir, $r) = @_;
+	my $cache = $self->{cache}->{get_dir};
+	if ($r == $cache->{r}) {
+		if (my $x = $cache->{data}->{$dir}) {
+			return wantarray ? @$x : $x->[0];
+		}
+	}
+	my $pool = SVN::Pool->new;
+	my ($d, undef, $props) = $self->SUPER::get_dir($dir, $r, $pool);
+	my %dirents = map { $_ => { kind => $d->{$_}->kind } } keys %$d;
+	$pool->clear;
+	if ($r != $cache->{r}) {
+		%{$cache->{data}} = ();
+		$cache->{r} = $r;
+	}
+	$cache->{data}->{$dir} = [ \%dirents, $r, $props ];
+	wantarray ? (\%dirents, $r, $props) : \%dirents;
 }
 
 sub DESTROY {
@@ -3169,7 +3185,7 @@ sub match_globs {
 		return unless scalar @x == 3;
 		my $dirents = $x[0];
 		foreach my $de (keys %$dirents) {
-			next if $dirents->{$de}->kind != $SVN::Node::dir;
+			next if $dirents->{$de}->{kind} != $SVN::Node::dir;
 			my $p = $g->{path}->full_path($de);
 			next if $exists->{$p};
 			next if (length $g->{path}->{right} &&
