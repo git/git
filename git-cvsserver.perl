@@ -183,9 +183,9 @@ sub req_Root
     }
     foreach my $line ( @gitvars )
     {
-        next unless ( $line =~ /^(.*?)\.(.*?)(?:\.(.*?))?=(.*)$/ );
-        unless ($3) {
-            $cfg->{$1}{$2} = $4;
+        next unless ( $line =~ /^(gitcvs)\.(?:(ext|pserver)\.)?([\w-]+)=(.*)$/ );
+        unless ($2) {
+            $cfg->{$1}{$3} = $4;
         } else {
             $cfg->{$1}{$2}{$3} = $4;
         }
