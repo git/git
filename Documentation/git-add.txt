@@ -57,8 +57,11 @@ OPTIONS
 	the index.
 
 -u::
-	Update all files that git already knows about. This is what
-	"git commit -a" does in preparation for making a commit.
+	Update only files that git already knows about. This is similar
+	to what "git commit -a" does in preparation for making a commit,
+	except that the update is limited to paths specified on the
+	command line. If no paths are specified, all tracked files are
+	updated.
 
 \--::
 	This option can be used to separate command-line options from
