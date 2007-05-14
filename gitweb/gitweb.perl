@@ -98,9 +98,12 @@ our %feature = (
 	# 	'override' => allow-override (boolean),
 	# 	'default' => [ default options...] (array reference)}
 	#
-	# if feature is overridable (it means that allow-override has true value,
+	# if feature is overridable (it means that allow-override has true value),
 	# then feature-sub will be called with default options as parameters;
 	# return value of feature-sub indicates if to enable specified feature
+	#
+	# if there is no 'sub' key (no feature-sub), then feature cannot be
+	# overriden
 	#
 	# use gitweb_check_feature(<feature>) to check if <feature> is enabled
 
@@ -134,6 +137,7 @@ our %feature = (
 
 	# Enable text search, which will list the commits which match author,
 	# committer or commit text to a given string.  Enabled by default.
+	# Project specific override is not supported.
 	'search' => {
 		'override' => 0,
 		'default' => [1]},
