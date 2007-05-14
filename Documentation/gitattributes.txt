@@ -138,11 +138,11 @@ upon checkout.
 ^^^^^^^
 
 When the attribute `ident` is set to a path, git replaces
-`$ident$` in the blob object with `$ident:`, followed by
+`$Id$` in the blob object with `$Id:`, followed by
 40-character hexadecimal blob object name, followed by a dollar
 sign `$` upon checkout.  Any byte sequence that begins with
-`$ident:` and ends with `$` in the worktree file is replaced
-with `$ident$` upon check-in.
+`$Id:` and ends with `$` in the worktree file is replaced
+with `$Id$` upon check-in.
 
 
 Interaction between checkin/checkout attributes

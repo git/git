@@ -26,7 +26,7 @@ Updates since v1.5.1
   considered a binary or text (the former would be treated by
   'git diff' not to produce textual output; the latter can go
   through the line endings conversion process in repositories
-  with core.autocrlf set), expand and unexpand '$ident$' keyword
+  with core.autocrlf set), expand and unexpand '$Id$' keyword
   with blob object name, specify a custom 3-way merge driver,
   and specify a custom diff driver.  You can also apply
   arbitrary filter to contents on check-in/check-out codepath
