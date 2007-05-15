@@ -58,7 +58,10 @@ copy_data:
 			parents = parents->next, parent_number++) {
 		if (parent_number > 1) {
 			int len = strlen(tip_name);
-			char *new_name = xmalloc(len + 8);
+			char *new_name = xmalloc(len +
+				1 + decimal_length(generation) +  /* ~<n> */
+				1 + 2 +				  /* ^NN */
+				1);
 
 			if (len > 2 && !strcmp(tip_name + len - 2, "^0"))
 				len -= 2;
