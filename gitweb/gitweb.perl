@@ -365,6 +365,7 @@ if (defined $page) {
 }
 
 our $searchtext = $cgi->param('s');
+our $search_regexp;
 if (defined $searchtext) {
 	if ($searchtext =~ m/[^a-zA-Z0-9_\.\/\-\+\:\@ ]/) {
 		die_error(undef, "Invalid search parameter");
@@ -372,7 +373,7 @@ if (defined $searchtext) {
 	if (length($searchtext) < 2) {
 		die_error(undef, "At least two characters are required for search parameter");
 	}
-	$searchtext = quotemeta $searchtext;
+	$search_regexp = quotemeta $searchtext;
 }
 
 our $searchtype = $cgi->param('st');
@@ -3244,7 +3245,7 @@ sub git_search_grep_body {
 			       esc_html(chop_str($co{'title'}, 50)) . "<br/>");
 		my $comment = $co{'comment'};
 		foreach my $line (@$comment) {
-			if ($line =~ m/^(.*)($searchtext)(.*)$/i) {
+			if ($line =~ m/^(.*)($search_regexp)(.*)$/i) {
 				my $lead = esc_html($1) || "";
 				$lead = chop_str($lead, 30, 10);
 				my $match = esc_html($2) || "";
@@ -4626,7 +4627,7 @@ sub git_search {
 		} elsif ($searchtype eq 'committer') {
 			$greptype = "--committer=";
 		}
-		$greptype .= $searchtext;
+		$greptype .= $search_regexp;
 		my @commitlist = parse_commits($hash, 101, (100 * $page), $greptype);
 
 		my $paging_nav = '';
