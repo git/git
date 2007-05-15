@@ -9,7 +9,7 @@
 #
 
 import optparse, sys, os, marshal, popen2, subprocess, shelve
-import tempfile, getopt, sha, os.path, time
+import tempfile, getopt, sha, os.path, time, platform
 from sets import Set;
 
 gitdir = os.environ.get("GIT_DIR", "")
@@ -299,7 +299,10 @@ class P4Submit(Command):
                     diff += "+" + line
                 f.close()
 
-            separatorLine = "######## everything below this line is just the diff #######\n"
+            separatorLine = "######## everything below this line is just the diff #######"
+            if platform.system() == "Windows":
+                separatorLine += "\r"
+            separatorLine += "\n"
 
             response = "e"
             firstIteration = True
@@ -312,9 +315,12 @@ class P4Submit(Command):
                     tmpFile = os.fdopen(handle, "w+")
                     tmpFile.write(submitTemplate + separatorLine + diff)
                     tmpFile.close()
-                    editor = os.environ.get("EDITOR", "vi")
+                    defaultEditor = "vi"
+                    if platform.system() == "Windows":
+                        defaultEditor = "notepad"
+                    editor = os.environ.get("EDITOR", defaultEditor);
                     system(editor + " " + fileName)
-                    tmpFile = open(fileName, "r")
+                    tmpFile = open(fileName, "rb")
                     message = tmpFile.read()
                     tmpFile.close()
                     os.remove(fileName)
@@ -325,7 +331,7 @@ class P4Submit(Command):
                    print submitTemplate
                    raw_input("Press return to continue...")
                else:
-                    pipe = mypopen("p4 submit -i", "w")
+                    pipe = os.popen("p4 submit -i", "wb")
                     pipe.write(submitTemplate)
                     pipe.close()
             else:
