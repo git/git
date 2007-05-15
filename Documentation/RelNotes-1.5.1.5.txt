@@ -1,0 +1,37 @@
+GIT v1.5.1.5 Release Notes (draft)
+==========================
+
+Fixes since v1.5.1.4
+--------------------
+
+* Bugfixes
+
+  - git-svn was reported to segfault for many people on list and
+    #git; hopefully this has been fixed.
+
+  - "git-svn clone" does not try to minimize the URL
+    (i.e. connect to higher level hierarchy) by default, as this
+    can prevent clone to fail if only part of the repository
+    (e.g. 'trunk') is open to public.
+
+  - "git checkout branch^0" did not detach the head when you are
+    already on 'branch'; backported the fix from the 'master'.
+
+  - "git-config section.var" did not correctly work when
+    existing configuration file had both [section] and [section "name"]
+    next to each other.
+
+  - "git clone ../other-directory" was fooled if the current
+    directory $PWD points at is a symbolic link.
+
+  - (build) tree_entry_extract() function was both static inline
+    and extern, which caused trouble compiling with Forte12
+    compilers on Sun.
+
+  - Many documentation fixes.
+
+--
+exec >/var/tmp/1
+O=v1.5.1.4-26-gb4b20b2
+echo O=`git describe refs/heads/maint`
+git shortlog --no-merges $O..refs/heads/maint
