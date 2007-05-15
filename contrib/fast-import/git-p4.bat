@@ -1,1 +1,1 @@
-python "%~d0%~p0git-p4" %*
+@python "%~d0%~p0git-p4" %*
