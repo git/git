@@ -8,7 +8,7 @@
 # License: MIT <http://www.opensource.org/licenses/mit-license.php>
 #
 
-import optparse, sys, os, marshal, popen2, shelve
+import optparse, sys, os, marshal, popen2, subprocess, shelve
 import tempfile, getopt, sha, os.path, time
 from sets import Set;
 
@@ -926,10 +926,10 @@ class P4Sync(Command):
 
         self.tz = "%+03d%02d" % (- time.timezone / 3600, ((- time.timezone % 3600) / 60))
 
-        importProcess = popen2.Popen3("git fast-import", capturestderr = True)
-        self.gitOutput = importProcess.fromchild
-        self.gitStream = importProcess.tochild
-        self.gitError = importProcess.childerr
+        importProcess = subprocess.Popen(["git", "fast-import"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE);
+        self.gitOutput = importProcess.stdout
+        self.gitStream = importProcess.stdin
+        self.gitError = importProcess.stderr
 
         if len(self.revision) > 0:
             print "Doing initial import of %s from revision %s" % (self.depotPath, self.revision)
