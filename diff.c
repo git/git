@@ -1411,7 +1411,7 @@ static int populate_from_stdin(struct diff_filespec *s)
 #define INCREMENT 1024
 	char *buf;
 	unsigned long size;
-	int got;
+	ssize_t got;
 
 	size = 0;
 	buf = NULL;

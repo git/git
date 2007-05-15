@@ -65,10 +65,10 @@ void packet_write(int fd, const char *fmt, ...)
 
 static void safe_read(int fd, void *buffer, unsigned size)
 {
-	int n = 0;
+	size_t n = 0;
 
 	while (n < size) {
-		int ret = xread(fd, (char *) buffer + n, size - n);
+		ssize_t ret = xread(fd, (char *) buffer + n, size - n);
 		if (ret < 0)
 			die("read error (%s)", strerror(errno));
 		if (!ret)

@@ -3,10 +3,9 @@
 int copy_fd(int ifd, int ofd)
 {
 	while (1) {
-		int len;
 		char buffer[8192];
 		char *buf = buffer;
-		len = xread(ifd, buffer, sizeof(buffer));
+		ssize_t len = xread(ifd, buffer, sizeof(buffer));
 		if (!len)
 			break;
 		if (len < 0) {

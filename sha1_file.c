@@ -2276,7 +2276,7 @@ int read_pipe(int fd, char** return_buf, unsigned long* return_size)
 {
 	char* buf = *return_buf;
 	unsigned long size = *return_size;
-	int iret;
+	ssize_t iret;
 	unsigned long off = 0;
 
 	do {

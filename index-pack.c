@@ -82,7 +82,7 @@ static void *fill(int min)
 		die("cannot fill %d bytes", min);
 	flush();
 	do {
-		int ret = xread(input_fd, input_buffer + input_len,
+		ssize_t ret = xread(input_fd, input_buffer + input_len,
 				sizeof(input_buffer) - input_len);
 		if (ret <= 0) {
 			if (!ret)

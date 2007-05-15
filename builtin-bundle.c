@@ -48,7 +48,7 @@ static int read_string(int fd, char *buffer, int size)
 {
 	int i;
 	for (i = 0; i < size - 1; i++) {
-		int count = xread(fd, buffer + i, 1);
+		ssize_t count = xread(fd, buffer + i, 1);
 		if (count < 0)
 			return error("Read error: %s", strerror(errno));
 		if (count == 0) {

@@ -6,11 +6,11 @@
 
 static char *get_stdin(void)
 {
-	int offset = 0;
+	size_t offset = 0;
 	char *data = xmalloc(CHUNK_SIZE);
 
 	while (1) {
-		int cnt = xread(0, data + offset, CHUNK_SIZE);
+		ssize_t cnt = xread(0, data + offset, CHUNK_SIZE);
 		if (cnt < 0)
 			die("error reading standard input: %s",
 			    strerror(errno));

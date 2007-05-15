@@ -714,7 +714,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			result_size = len;
 			result = xmalloc(len + 1);
 			while (sz < len) {
-				int done = xread(fd, result+sz, len-sz);
+				ssize_t done = xread(fd, result+sz, len-sz);
 				if (done == 0)
 					break;
 				if (done < 0)
