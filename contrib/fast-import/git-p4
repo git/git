@@ -849,6 +849,7 @@ class P4Sync(Command):
         self.depotPath = ""
         self.changeRange = ""
         self.initialParent = ""
+        self.previousDepotPath = ""
 
         if len(self.branch) == 0:
             self.branch = "p4"
