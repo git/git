@@ -1857,6 +1857,27 @@ all push to and pull from a single shared repository.  See
 link:cvs-migration.txt[git for CVS users] for instructions on how to
 set this up.
 
+However, while there is nothing wrong with git's support for shared
+repositories, this mode of operation is not generally recommended,
+simply because the mode of collaboration that git supports--by
+exchanging patches and pulling from public repositories--has so many
+advantages over the central shared repository:
+
+	- Git's ability to quickly import and merge patches allows a
+	  single maintainer to process incoming changes even at very
+	  high rates.  And when that becomes too much, git-pull provides
+	  an easy way for that maintainer to delegate this job to other
+	  maintainers while still allowing optional review of incoming
+	  changes.
+	- Since every developer's repository has the same complete copy
+	  of the project history, no repository is special, and it is
+	  trivial for another developer to take over maintenance of a
+	  project, either by mutual agreement, or because a maintainer
+	  becomes unresponsive or difficult to work with.
+	- The lack of a central group of "committers" means there is
+	  less need for formal decisions about who is "in" and who is
+	  "out".
+
 [[setting-up-gitweb]]
 Allowing web browsing of a repository
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
