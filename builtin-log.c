@@ -454,7 +454,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	/*
 	 * Parse the arguments before setup_revisions(), or something
-	 * like "git fmt-patch -o a123 HEAD^.." may fail; a123 is
+	 * like "git format-patch -o a123 HEAD^.." may fail; a123 is
 	 * possibly a valid SHA1.
 	 */
 	for (i = 1, j = 1; i < argc; i++) {

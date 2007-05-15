@@ -9,9 +9,10 @@ git-am - Apply a series of patches from a mailbox
 SYNOPSIS
 --------
 [verse]
-'git-am' [--signoff] [--dotest=<dir>] [--utf8 | --no-utf8] [--binary] [--3way]
-         [--interactive] [--whitespace=<option>] [-C<n>] [-p<n>]
-	 <mbox>...
+'git-am' [--signoff] [--dotest=<dir>] [--keep] [--utf8 | --no-utf8]
+         [--3way] [--interactive] [--binary]
+         [--whitespace=<option>] [-C<n>] [-p<n>]
+         <mbox>...
 'git-am' [--skip | --resolved]
 
 DESCRIPTION
@@ -40,7 +41,7 @@ OPTIONS
 -u, --utf8::
 	Pass `-u` flag to `git-mailinfo` (see gitlink:git-mailinfo[1]).
 	The proposed commit log message taken from the e-mail
-	are re-coded into UTF-8 encoding (configuration variable
+	is re-coded into UTF-8 encoding (configuration variable
 	`i18n.commitencoding` can be used to specify project's
 	preferred encoding if it is not UTF-8).
 +
@@ -51,30 +52,32 @@ default.   You could use `--no-utf8` to override this.
 	Pass `-n` flag to `git-mailinfo` (see
 	gitlink:git-mailinfo[1]).
 
--b, --binary::
-	Pass `--allow-binary-replacement` flag to `git-apply`
-	(see gitlink:git-apply[1]).
-
 -3, --3way::
 	When the patch does not apply cleanly, fall back on
 	3-way merge, if the patch records the identity of blobs
 	it is supposed to apply to, and we have those blobs
-	locally.
+	available locally.
+
+-b, --binary::
+	Pass `--allow-binary-replacement` flag to `git-apply`
+	(see gitlink:git-apply[1]).
+
+--whitespace=<option>::
+	This flag is passed to the `git-apply` (see gitlink:git-apply[1])
+	program that applies
+	the patch.
+
+-C<n>, -p<n>::
+	These flags are passed to the `git-apply` (see gitlink:git-apply[1])
+	program that applies
+	the patch.
+
+-i, --interactive::
+	Run interactively.
 
 --skip::
 	Skip the current patch.  This is only meaningful when
 	restarting an aborted patch.
-
---whitespace=<option>::
-	This flag is passed to the `git-apply` program that applies
-	the patch.
-
--C<n>, -p<n>::
-	These flags are passed to the `git-apply` program that applies
-	the patch.
-
--i, --interactive::
-	Run interactively, just like git-applymbox.
 
 -r, --resolved::
 	After a patch failure (e.g. attempting to apply
@@ -126,7 +129,7 @@ to crunch.  Upon seeing the first patch that does not apply, it
 aborts in the middle, just like 'git-applymbox' does.  You can
 recover from this in one of two ways:
 
-. skip the current one by re-running the command with '--skip'
+. skip the current patch by re-running the command with '--skip'
   option.
 
 . hand resolve the conflict in the working directory, and update
