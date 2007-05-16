@@ -60,13 +60,7 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 		rev->always_show_header = 0;
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
-		if (!prefixcmp(arg, "--encoding=")) {
-			arg += 11;
-			if (strcmp(arg, "none"))
-				git_log_output_encoding = xstrdup(arg);
-			else
-				git_log_output_encoding = "";
-		} else if (!strcmp(arg, "--decorate")) {
+		if (!strcmp(arg, "--decorate")) {
 			if (!decorate)
 				for_each_ref(add_ref_decoration, NULL);
 			decorate = 1;
