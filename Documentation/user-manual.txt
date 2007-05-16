@@ -1357,7 +1357,7 @@ $ gitk --merge
 These will display all commits which exist only on HEAD or on
 MERGE_HEAD, and which touch an unmerged file.
 
-You may also use gitlink:git-mergetool, which lets you merge the
+You may also use gitlink:git-mergetool[1], which lets you merge the
 unmerged files using external tools such as emacs or kdiff3.
 
 Each time you resolve the conflicts in a file and update the index:
