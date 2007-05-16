@@ -178,8 +178,13 @@ static int do_push(const char *repo)
 		if (!prefixcmp(dest, "http://") ||
 		    !prefixcmp(dest, "https://"))
 			sender = "http-push";
-		else if (thin)
-			argv[dest_argc++] = "--thin";
+		else {
+			char *rem = xmalloc(strlen(remote->name) + 10);
+			sprintf(rem, "--remote=%s", remote->name);
+			argv[dest_argc++] = rem;
+			if (thin)
+				argv[dest_argc++] = "--thin";
+		}
 		argv[0] = sender;
 		argv[dest_argc++] = dest;
 		while (dest_refspec_nr--)
