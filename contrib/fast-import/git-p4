@@ -1197,6 +1197,8 @@ if cmd.needsGit:
         gitdir = ".git"
         if not isValidGitDir(gitdir):
             gitdir = mypopen("git rev-parse --git-dir").read()[:-1]
+            if os.path.exists(gitdir):
+                os.chdir(mypopen("git rev-parse --show-cdup").read()[:-1]);
 
     if not isValidGitDir(gitdir):
         if isValidGitDir(gitdir + "/.git"):
