@@ -230,11 +230,13 @@ class P4Submit(Command):
         diff = mypopen("git diff-tree -r --name-status \"%s^\" \"%s\"" % (id, id)).readlines()
         filesToAdd = set()
         filesToDelete = set()
+        editedFiles = set()
         for line in diff:
             modifier = line[0]
             path = line[1:].strip()
             if modifier == "M":
-                system("p4 edit %s" % path)
+                system("p4 edit \"%s\"" % path)
+                editedFiles.add(path)
             elif modifier == "A":
                 filesToAdd.add(path)
                 if path in filesToDelete:
@@ -308,7 +310,7 @@ class P4Submit(Command):
             firstIteration = True
             while response == "e":
                 if not firstIteration:
-                    response = raw_input("Do you want to submit this change? [y]es/[e]dit/[n]o  ")
+                    response = raw_input("Do you want to submit this change? [y]es/[e]dit/[n]o/[s]kip ")
                 firstIteration = False
                 if response == "e":
                     [handle, fileName] = tempfile.mkstemp()
@@ -334,6 +336,15 @@ class P4Submit(Command):
                     pipe = os.popen("p4 submit -i", "wb")
                     pipe.write(submitTemplate)
                     pipe.close()
+            elif response == "s":
+                for f in editedFiles:
+                    system("p4 revert \"%s\"" % f);
+                for f in filesToAdd:
+                    system("p4 revert \"%s\"" % f);
+                    system("rm %s" %f)
+                for f in filesToDelete:
+                    system("p4 delete \"%s\"" % f);
+                return
             else:
                 print "Not submitting!"
                 self.interactive = False
