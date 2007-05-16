@@ -75,7 +75,7 @@ foreach my $tar_file (@ARGV)
 		$mode = oct $mode;
 		$size = oct $size;
 		$mtime = oct $mtime;
-		next if $mode & 0040000;
+		next if $typeflag == 5; # directory
 
 		print FI "blob\n", "mark :$next_mark\n", "data $size\n";
 		while ($size > 0 && read(I, $_, 512) == 512) {

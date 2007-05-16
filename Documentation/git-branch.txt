@@ -136,7 +136,7 @@ $ git branch -D test               <2>
 +
 <1> delete remote-tracking branches "todo", "html", "man"
 <2> delete "test" branch even if the "master" branch does not have all
-commits from todo branch.
+commits from test branch.
 
 
 Notes
