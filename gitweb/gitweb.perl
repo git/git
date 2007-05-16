@@ -2877,7 +2877,14 @@ sub git_patchset_body {
 	} continue {
 		print "</div>\n"; # class="patch"
 	}
-	print "<div class=\"diff nodifferences\">No differences found</div>\n" if (!$patch_number);
+
+	if ($patch_number == 0) {
+		if (@hash_parents > 1) {
+			print "<div class=\"diff nodifferences\">Trivial merge</div>\n";
+		} else {
+			print "<div class=\"diff nodifferences\">No differences found</div>\n";
+		}
+	}
 
 	print "</div>\n"; # class="patchset"
 }
