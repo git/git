@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 	if (!dest || i != argc - 1)
 		usage(peek_remote_usage);
 
-	pid = git_connect(fd, dest, uploadpack);
+	pid = git_connect(fd, dest, uploadpack, 0);
 	if (pid < 0)
 		return 1;
 	ret = peek_remote(fd, flags);

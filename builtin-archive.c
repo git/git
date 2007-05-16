@@ -45,7 +45,7 @@ static int run_remote_archiver(const char *remote, int argc,
 	}
 
 	url = xstrdup(remote);
-	pid = git_connect(fd, url, exec);
+	pid = git_connect(fd, url, exec, 0);
 	if (pid < 0)
 		return pid;
 

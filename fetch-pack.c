@@ -733,7 +733,7 @@ int main(int argc, char **argv)
 	}
 	if (!dest)
 		usage(fetch_pack_usage);
-	pid = git_connect(fd, dest, uploadpack);
+	pid = git_connect(fd, dest, uploadpack, verbose ? CONNECT_VERBOSE : 0);
 	if (pid < 0)
 		return 1;
 	if (heads && nr_heads)
