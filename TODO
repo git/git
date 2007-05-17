@@ -18,15 +18,6 @@ Recent issues
 
 Message-ID: <20070505080313.GA12170@gondor.apana.org.au>
 
-* Look into HPA's D-F conflict during rebase.
-
-Message-ID: <463FCD7C.4020009@zytor.com>
-
-This was resolved for git-apply codepath, but I suspect that
-there are breakages in merge-recursive this exposes.
-
-Message-ID: <7vps569904.fsf@assigned-by-dhcp.cox.net>
-
 * Use 'git diff' not 'git diff-tree' in merge and rebase
 
 From: James Bowes <jbowes@dangerouslyinc.com>
@@ -39,12 +30,7 @@ Message-ID: <alpine.LFD.0.98.0705051524300.17381@woody.linux-foundation.org>
 From: Junio C Hamano <junkio@cox.net>
 Message-ID: <7vabwifl23.fsf@assigned-by-dhcp.cox.net>
 
-* Git Hacker's Manual
-
-From: Johannes Schindelin <Johannes.Schindelin@gmx.de>
-Message-ID: <Pine.LNX.4.64.0705081709230.4167@racer.site>
-
-* Handling pushing into non-bare repository more gracefully.
+* Pushing into a non-bare repository more gracefully.
 
 When git-push is done to a non-bare repository and updates the
 branch that is currently checked out, we currently do not do
@@ -52,45 +38,6 @@ anything special.
 
 From: Linus Torvalds <torvalds@linux-foundation.org>
 Message-ID: <Pine.LNX.4.64.0704160931550.5473@woody.linux-foundation.org>
-
-* More verbose connect to help diag & prevent boredom
-
-From: "Michael S. Tsirkin" <mst@dev.mellanox.co.il>
-Message-ID: <20070506195230.GA30339@mellanox.co.il>
-
-[jc: I think this should be done only under explicit user request to
-go verbose.]
-
-* Use blame machinery to track a single file (not path) in a finer
-  grained way.
-
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Message-ID: <alpine.LFD.0.98.0704201554550.9964@woody.linux-foundation.org>
-
-[jc: I have a fixed-up one parked in 'pu' and also outlined what
-other things I think are needed in my response:
-
-    Message-ID: <7vwt06wqv8.fsf@assigned-by-dhcp.cox.net>
-]
-
-* Use git.git as the first public guinea pig of subproject
-
-From: Junio C Hamano <junkio@cox.net>
-Message-ID: <7vmz13z4au.fsf@assigned-by-dhcp.cox.net>
-
-Use git.git as the first public guinea pig of subproject stuff,
-by dropping git-gui/ directory first and then binding git-gui.git 
-as a subproject there.  This needs to wait at least until v1.5.2
-ships and gets installed at kernel.org and repo.or.cz
-
-* TODO list management
-
-From: Daniel Barkalow <barkalow@iabervon.org>
-Message-ID: <Pine.LNX.4.64.0704241312210.28708@iabervon.org>
-
-Maybe abandon this and have something similar on the main
-branch, starting full at the beginning of the cycle and ending
-empty (or full of "not in next release" entries) at the release?
 
 * git-daemon bug?
 
@@ -100,16 +47,6 @@ Message-ID: <450EABD0.1040102@innova-card.com>
 Repeated requests against git-daemon makes it stuck under --syslog
 
 [jc: does not reproduce easily for me; has anybody seen it?]
-
-
-* git-mirror (reverse of git-push --all).
-
-From: Shawn Pearce <spearce@spearce.org>
-Message-ID: <20060926215745.GC8177@spearce.org>
-
-Pasky sent an updated version to the list recently, but the
-general sentiment on the list seems that existing git-fetch
-has enough features to perform most of what 'mirror' does.
 
 
 * AsciiDoc 8 would break our documentation.
@@ -157,11 +94,36 @@ Technical (heavier)
  - recursive checkout
  - recursive diff
 
+  From: Junio C Hamano <junkio@cox.net>
+  Message-ID: <11793556371774-git-send-email-junkio@cox.net>
+
+* make merge-recursive and read-tree -u more robust when D/F
+  conflict is involved.
+
+  From: Junio C Hamano <junkio@cox.net>
+  Message-ID: <11793556371774-git-send-email-junkio@cox.net>
+
+* Use blame machinery to track a single file (not path) in a finer
+  grained way.
+
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Message-ID: <alpine.LFD.0.98.0704201554550.9964@woody.linux-foundation.org>
+
+[jc: I have a fixed-up one parked in 'pu' and also outlined what
+other things I think are needed in my response:
+
+    Message-ID: <7vwt06wqv8.fsf@assigned-by-dhcp.cox.net>
+]
 
 Technical (milder)
 ------------------
 
-* upload-pack support for start fetching from any valid point on
+* add 'tree' entries to the index.
+
+  From: Junio C Hamano <junkio@cox.net>
+  Message-ID: <11793556371774-git-send-email-junkio@cox.net>
+
+* upload-pack support to start fetching from any valid point on
   the history, not just published refs. (Erik W. Biederman
   <m164jc9ekx.fsf@ebiederm.dsl.xmission.com>)
 
@@ -172,6 +134,10 @@ Technical (milder)
 * "git fetch" should be able to use foreign SCM import backends
   such as svnimport and cvsimport.
 
+* "git clone" should be a thin wrapper around init/remote/fetch/checkout
+
+  From: Junio C Hamano <junkio@cox.net>
+  Message-ID: <11793556371774-git-send-email-junkio@cox.net>
 
 Technical (trivial)
 -------------------
