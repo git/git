@@ -832,10 +832,12 @@ class P4Sync(Command):
         defaultImport = False
 
         if len(self.branch) == 0:
+            self.branch = "refs/remotes/p4/master"
             if gitBranchExists("refs/heads/p4"):
-                self.branch = "p4"
+                system("git update-ref %s refs/heads/p4" % self.branch)
+                system("git symbolic-ref refs/remotes/p4/HEAD refs/remotes/p4/master")
+                system("git branch -D p4");
             else:
-                self.branch = "refs/remotes/p4/master"
                 defaultImport = True
 
         if len(args) == 0:
