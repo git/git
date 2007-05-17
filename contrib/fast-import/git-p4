@@ -69,6 +69,9 @@ def isValidGitDir(path):
         return True;
     return False
 
+def parseRevision(ref):
+    return mypopen("git rev-parse %s" % ref).read()[:-1]
+
 def system(cmd):
     if os.system(cmd) != 0:
         die("command failed: %s" % cmd)
@@ -865,7 +868,7 @@ class P4Sync(Command):
         self.previousDepotPath = ""
 
         if len(self.branch) == 0:
-            self.branch = "refs/remotes/p4"
+            self.branch = "p4"
 
         if len(args) == 0:
             if not gitBranchExists(self.branch) and gitBranchExists("origin"):
@@ -878,7 +881,7 @@ class P4Sync(Command):
                 p4Change = int(p4Change) + 1
                 self.depotPath = self.previousDepotPath
                 self.changeRange = "@%s,#head" % p4Change
-                self.initialParent = mypopen("git rev-parse %s" % self.branch).read()[:-1]
+                self.initialParent = parseRevision(self.branch)
                 if not self.silent:
                     print "Performing incremental import into %s git branch" % self.branch
 
@@ -943,7 +946,7 @@ class P4Sync(Command):
                     endPos = caretIdx
                 self.rev = int(output[tagIdx + 9 : endPos]) + 1
                 self.changeRange = "@%s,#head" % self.rev
-                self.initialParent = mypopen("git rev-parse %s" % self.branch).read()[:-1]
+                self.initialParent = parseRevision(self.branch)
             except:
                 pass
 
