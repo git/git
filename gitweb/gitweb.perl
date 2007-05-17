@@ -2722,8 +2722,9 @@ sub git_patchset_body {
 					delete $from{'href'};
 				}
 			}
+
 			$to{'file'} = $diffinfo->{'to_file'} || $diffinfo->{'file'};
-			if ($diffinfo->{'status'} ne "D") { # not deleted file
+			if ($diffinfo->{'to_id'} ne ('0' x 40)) { # file exists in result
 				$to{'href'} = href(action=>"blob", hash_base=>$hash,
 				                   hash=>$diffinfo->{'to_id'},
 				                   file_name=>$to{'file'});
