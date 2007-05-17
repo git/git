@@ -129,44 +129,6 @@ class P4Debug(Command):
             print output
         return True
 
-class P4CleanTags(Command):
-    def __init__(self):
-        Command.__init__(self)
-        self.options = [
-#                optparse.make_option("--branch", dest="branch", default="refs/heads/master")
-        ]
-        self.description = "A tool to remove stale unused tags from incremental perforce imports."
-    def run(self, args):
-        branch = currentGitBranch()
-        print "Cleaning out stale p4 import tags..."
-        sout, sin, serr = popen2.popen3("git name-rev --tags `git rev-parse %s`" % branch)
-        output = sout.read()
-        try:
-            tagIdx = output.index(" tags/p4/")
-        except:
-            print "Cannot find any p4/* tag. Nothing to do."
-            sys.exit(0)
-
-        try:
-            caretIdx = output.index("^")
-        except:
-            caretIdx = len(output) - 1
-        rev = int(output[tagIdx + 9 : caretIdx])
-
-        allTags = mypopen("git tag -l p4/").readlines()
-        for i in range(len(allTags)):
-            allTags[i] = int(allTags[i][3:-1])
-
-        allTags.sort()
-
-        allTags.remove(rev)
-
-        for rev in allTags:
-            print mypopen("git tag -d p4/%s" % rev).read()
-
-        print "%s tags removed." % len(allTags)
-        return True
-
 class P4Submit(Command):
     def __init__(self):
         Command.__init__(self)
@@ -1161,7 +1123,6 @@ def printUsage(commands):
 
 commands = {
     "debug" : P4Debug(),
-    "clean-tags" : P4CleanTags(),
     "submit" : P4Submit(),
     "sync" : P4Sync(),
     "rebase" : P4Rebase(),
