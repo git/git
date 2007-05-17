@@ -7,8 +7,6 @@
 #            2007 Trolltech ASA
 # License: MIT <http://www.opensource.org/licenses/mit-license.php>
 #
-# TODO: Add an option to sync/rebase to fetch and rebase from origin first.
-#
 
 import optparse, sys, os, marshal, popen2, subprocess, shelve
 import tempfile, getopt, sha, os.path, time, platform
