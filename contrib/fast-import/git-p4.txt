@@ -20,9 +20,9 @@ or
 
 This will create an empty git repository in a subdirectory called "project" (or
 "myproject" with the second command), import the head revision from the
-specified perforce path into a git "p4" branch, create a master branch off it
-and check it out. If you want the entire history (not just the head revision) then
-you can simply append a "@all" to the depot path:
+specified perforce path into a git "p4" branch (remotes/p4 actually), create a
+master branch off it and check it out. If you want the entire history (not just
+the head revision) then you can simply append a "@all" to the depot path:
 
   git-p4 clone //depot/project/main@all myproject
 
