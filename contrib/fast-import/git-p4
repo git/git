@@ -865,7 +865,7 @@ class P4Sync(Command):
         self.previousDepotPath = ""
 
         if len(self.branch) == 0:
-            self.branch = "p4"
+            self.branch = "refs/remotes/p4"
 
         if len(args) == 0:
             if not gitBranchExists(self.branch) and gitBranchExists("origin"):
@@ -878,11 +878,12 @@ class P4Sync(Command):
                 p4Change = int(p4Change) + 1
                 self.depotPath = self.previousDepotPath
                 self.changeRange = "@%s,#head" % p4Change
-                self.initialParent = self.branch
+                self.initialParent = mypopen("git rev-parse %s" % self.branch).read()[:-1]
                 if not self.silent:
                     print "Performing incremental import into %s git branch" % self.branch
 
-        self.branch = "refs/heads/" + self.branch
+        if not self.branch.startswith("refs/"):
+            self.branch = "refs/heads/" + self.branch
 
         if len(self.depotPath) != 0:
             self.depotPath = self.depotPath[:-1]
