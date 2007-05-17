@@ -1114,7 +1114,9 @@ sub git_get_project_description {
 	open my $fd, "$projectroot/$path/description" or return undef;
 	my $descr = <$fd>;
 	close $fd;
-	chomp $descr;
+	if (defined $descr) {
+		chomp $descr;
+	}
 	return $descr;
 }
 
