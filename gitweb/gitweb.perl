@@ -399,7 +399,7 @@ if (defined $searchtype) {
 our $searchtext = $cgi->param('s');
 our $search_regexp;
 if (defined $searchtext) {
-	if ($searchtype ne 'grep' and $searchtext =~ m/[^a-zA-Z0-9_\.\/\-\+\:\@ ]/) {
+	if ($searchtype ne 'grep' and $searchtype ne 'pickaxe' and $searchtext =~ m/[^a-zA-Z0-9_\.\/\-\+\:\@ ]/) {
 		die_error(undef, "Invalid search parameter");
 	}
 	if (length($searchtext) < 2) {
@@ -4725,8 +4725,10 @@ sub git_search {
 		my $alternate = 1;
 		$/ = "\n";
 		my $git_command = git_cmd_str();
+		my $searchqtext = $searchtext;
+		$searchqtext =~ s/'/'\\''/;
 		open my $fd, "-|", "$git_command rev-list $hash | " .
-			"$git_command diff-tree -r --stdin -S\'$searchtext\'";
+			"$git_command diff-tree -r --stdin -S\'$searchqtext\'";
 		undef %co;
 		my @files;
 		while (my $line = <$fd>) {
