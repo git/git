@@ -1903,6 +1903,8 @@ EOF
 		}
 		print "\n";
 	}
+	print "</div>\n";
+
 	my ($have_search) = gitweb_check_feature('search');
 	if ((defined $project) && ($have_search)) {
 		if (!defined $searchtext) {
@@ -1932,7 +1934,6 @@ EOF
 		      "</div>" .
 		      $cgi->end_form() . "\n";
 	}
-	print "</div>\n";
 }
 
 sub git_footer_html {
