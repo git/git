@@ -419,7 +419,8 @@ class P4Sync(Command):
                 optparse.make_option("--known-branches", dest="knownBranches"),
                 optparse.make_option("--data-cache", dest="dataCache", action="store_true"),
                 optparse.make_option("--command-cache", dest="commandCache", action="store_true"),
-                optparse.make_option("--detect-labels", dest="detectLabels", action="store_true")
+                optparse.make_option("--detect-labels", dest="detectLabels", action="store_true"),
+                optparse.make_option("--with-origin", dest="syncWithOrigin", action="store_true")
         ]
         self.description = """Imports from Perforce into a git repository.\n
     example:
@@ -441,6 +442,7 @@ class P4Sync(Command):
         self.detectBranches = False
         self.detectLabels = False
         self.changesFile = ""
+        self.syncWithOrigin = False
 
     def p4File(self, depotPath):
         return os.popen("p4 print -q \"%s\"" % depotPath, "rb").read()
@@ -831,6 +833,21 @@ class P4Sync(Command):
         # importing into default remotes/p4/* layout?
         defaultImport = False
 
+        if self.syncWithOrigin and gitBranchExists("origin") and gitBranchExists("refs/remotes/p4/master"):
+            print "Syncing with origin first as requested by calling git fetch origin"
+            system("git fetch origin")
+            [originPreviousDepotPath, originP4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit("origin"))
+            [p4PreviousDepotPath, p4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit("p4"))
+            if len(originPreviousDepotPath) > 0 and len(originP4Change) > 0 and len(p4Change) > 0:
+                if originPreviousDepotPath == p4PreviousDepotPath:
+                    originP4Change = int(originP4Change)
+                    p4Change = int(p4Change)
+                    if originP4Change > p4Change:
+                        print "origin (%s) is newer than p4 (%s). Updating p4 branch from origin." % (originP4Change, p4Change)
+                        system("git update-ref refs/remotes/p4/master origin");
+                else:
+                    print "Cannot sync with origin. It was imported from %s while remotes/p4 was imported from %s" % (originPreviousDepotPath, p4PreviousDepotPath)
+
         if len(self.branch) == 0:
             self.branch = "refs/remotes/p4/master"
             if gitBranchExists("refs/heads/p4"):
@@ -1037,11 +1054,13 @@ class P4Sync(Command):
 class P4Rebase(Command):
     def __init__(self):
         Command.__init__(self)
-        self.options = [ ]
+        self.options = [ optparse.make_option("--with-origin", dest="syncWithOrigin", action="store_true") ]
         self.description = "Fetches the latest revision from perforce and rebases the current work (branch) against it"
+        self.syncWithOrigin = False
 
     def run(self, args):
         sync = P4Sync()
+        sync.syncWithOrigin = self.syncWithOrigin
         sync.run([])
         print "Rebasing the current branch"
         oldHead = mypopen("git rev-parse HEAD").read()[:-1]

@@ -63,6 +63,26 @@ It is recommended to run 'git repack -a -d -f' from time to time when using
 incremental imports to optimally combine the individual git packs that each
 incremental import creates through the use of git-fast-import.
 
+
+A useful setup may be that you have a periodically updated git repository
+somewhere that contains a complete import of a Perforce project. That git
+repository can be used to clone the working repository from and one would
+import from Perforce directly after cloning using git-p4. If the connection to
+the Perforce server is slow and the working repository hasn't been synced for a
+while it may be desirable to fetch changes from the origin git repository using
+the efficient git protocol. git-p4 supports this through
+
+  git-p4 sync --with-origin
+
+or
+
+  git-p4 rebase --with-origin
+
+In that case "git fetch origin" is called and if it turns out that the origin
+branch is newer than the git "p4" import branch then the latter is updated from
+the former and the direct import from Perforce is resumed, which will result in
+fewer changes to be imported using the slower perforce connection.
+
 Updating
 ========
 
