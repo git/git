@@ -836,7 +836,10 @@ class P4Sync(Command):
             if not gitBranchExists(self.branch) and gitBranchExists("origin"):
                 if not self.silent:
                     print "Creating %s branch in git repository based on origin" % self.branch
-                system("git branch %s origin" % self.branch)
+                branch = self.branch
+                if not branch.startswith("refs"):
+                    branch = "refs/heads/" + branch
+                system("git update-ref %s origin" % branch)
 
             [self.previousDepotPath, p4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit(self.branch))
             if len(self.previousDepotPath) > 0 and len(p4Change) > 0:
