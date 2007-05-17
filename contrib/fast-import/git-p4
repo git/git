@@ -895,23 +895,6 @@ class P4Sync(Command):
         if self.detectLabels:
             self.getLabels();
 
-        if len(self.changeRange) == 0:
-            try:
-                sout, sin, serr = popen2.popen3("git name-rev --tags `git rev-parse %s`" % self.branch)
-                output = sout.read()
-                if output.endswith("\n"):
-                    output = output[:-1]
-                tagIdx = output.index(" tags/p4/")
-                caretIdx = output.find("^")
-                endPos = len(output)
-                if caretIdx != -1:
-                    endPos = caretIdx
-                self.rev = int(output[tagIdx + 9 : endPos]) + 1
-                self.changeRange = "@%s,#head" % self.rev
-                self.initialParent = parseRevision(self.branch)
-            except:
-                pass
-
         self.tz = "%+03d%02d" % (- time.timezone / 3600, ((- time.timezone % 3600) / 60))
 
         importProcess = subprocess.Popen(["git", "fast-import"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE);
