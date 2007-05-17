@@ -484,3 +484,7 @@ span.atnight {
 span.match {
 	color: #e00000;
 }
+
+div.binary {
+	font-style: italic;
+}
