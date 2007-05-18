@@ -44,42 +44,67 @@ Initialized empty Git repository in .git/
 ------------------------------------------------
 
 You've now initialized the working directory--you may notice a new
-directory created, named ".git".  Tell git that you want it to track
-every file under the current directory (note the '.') with:
+directory created, named ".git".
+
+Next, tell git to take a snapshot of the contents of all files under the
+current directory (note the '.'), with gitlink:git-add[1]:
 
 ------------------------------------------------
 $ git add .
 ------------------------------------------------
 
-Finally,
+This snapshot is now stored in a temporary staging area which git calls
+the "index".  You can permanently store the contents of the index in the
+repository with gitlink:git-commit[1]:
 
 ------------------------------------------------
 $ git commit
 ------------------------------------------------
 
-will prompt you for a commit message, then record the current state
-of all the files to the repository.
+This will prompt you for a commit message.  You've now stored the first
+version of your project in git.
 
 Making changes
 --------------
 
-Try modifying some files, then run
-
-------------------------------------------------
-$ git diff
-------------------------------------------------
-
-to review your changes.  When you're done, tell git that you
-want the updated contents of these files in the commit and then
-make a commit, like this:
+Modify some files, then add their updated contents to the index:
 
 ------------------------------------------------
 $ git add file1 file2 file3
+------------------------------------------------
+
+You are now ready to commit.  You can see what is about to be committed
+using gitlink:git-diff[1] with the --cached option:
+
+------------------------------------------------
+$ git diff --cached
+------------------------------------------------
+
+(Without --cached, gitlink:git-diff[1] will show you any changes that
+you've made but not yet added to the index.)  You can also get a brief
+summary of the situation with gitlink:git-status[1]:
+
+------------------------------------------------
+$ git status
+# On branch master
+# Changes to be committed:
+#   (use "git reset HEAD <file>..." to unstage)
+#
+#	modified:   file1
+#	modified:   file2
+#	modified:   file3
+#
+------------------------------------------------
+
+If you need to make any further adjustments, do so now, and then add any
+newly modified content to the index.  Finally, commit your changes with:
+
+------------------------------------------------
 $ git commit
 ------------------------------------------------
 
 This will again prompt your for a message describing the change, and then
-record the new versions of the files you listed.
+record a new version of the project.
 
 Alternatively, instead of running `git add` beforehand, you can use
 
@@ -87,7 +112,8 @@ Alternatively, instead of running `git add` beforehand, you can use
 $ git commit -a
 ------------------------------------------------
 
-which will automatically notice modified (but not new) files.
+which will automatically notice any modified (but not new) files, add
+them to the index, and commit, all in one step.
 
 A note on commit messages: Though not required, it's a good idea to
 begin the commit message with a single short (less than 50 character)
@@ -96,45 +122,15 @@ thorough description.  Tools that turn commits into email, for
 example, use the first line on the Subject: line and the rest of the
 commit in the body.
 
-
 Git tracks content not files
 ----------------------------
 
-With git you have to explicitly "add" all the changed _content_ you
-want to commit together. This can be done in a few different ways:
-
-1) By using 'git add <file_spec>...'
-
-This can be performed multiple times before a commit.  Note that this
-is not only for adding new files.  Even modified files must be
-added to the set of changes about to be committed.  The "git status"
-command gives you a summary of what is included so far for the
-next commit.  When done you should use the 'git commit' command to
-make it real.
-
-Note: don't forget to 'add' a file again if you modified it after the
-first 'add' and before 'commit'. Otherwise only the previous added
-state of that file will be committed. This is because git tracks
-content, so what you're really 'adding' to the commit is the *content*
-of the file in the state it is in when you 'add' it.
-
-2) By using 'git commit -a' directly
-
-This is a quick way to automatically 'add' the content from all files
-that were modified since the previous commit, and perform the actual
-commit without having to separately 'add' them beforehand.  This will
-not add content from new files i.e. files that were never added before.
-Those files still have to be added explicitly before performing a
-commit.
-
-But here's a twist. If you do 'git commit <file1> <file2> ...' then only
-the  changes belonging to those explicitly specified files will be
-committed, entirely bypassing the current "added" changes. Those "added"
-changes will still remain available for a subsequent commit though.
-
-However, for normal usage you only have to remember 'git add' + 'git commit'
-and/or 'git commit -a'.
-
+Many revision control systems provide an "add" command that tells the
+system to start tracking changes to a new file.  Git's "add" command
+does something simpler and more powerful: `git add` is used both for new
+and newly modified files, and in both cases it takes a snapshot of the
+given files and stages that content in the index, ready for inclusion in
+the next commit.
 
 Viewing the changelog
 ---------------------
