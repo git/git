@@ -86,7 +86,7 @@ static char *crlf_to_git(const char *path, const char *src, unsigned long *sizep
 	unsigned long size, nsize;
 	struct text_stat stats;
 
-	if ((action == CRLF_BINARY) || (action == CRLF_GUESS && !auto_crlf))
+	if ((action == CRLF_BINARY) || !auto_crlf)
 		return NULL;
 
 	size = *sizep;
@@ -154,7 +154,7 @@ static char *crlf_to_worktree(const char *path, const char *src, unsigned long *
 	unsigned char last;
 
 	if ((action == CRLF_BINARY) || (action == CRLF_INPUT) ||
-	    (action == CRLF_GUESS && auto_crlf <= 0))
+	    auto_crlf <= 0)
 		return NULL;
 
 	size = *sizep;
