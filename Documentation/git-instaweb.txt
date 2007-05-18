@@ -7,8 +7,9 @@ git-instaweb - Instantly browse your working repository in gitweb
 
 SYNOPSIS
 --------
-'git-instaweb' [--local] [--httpd=<httpd>] [--port=<port>] [--browser=<browser>]
-
+[verse]
+'git-instaweb' [--local] [--httpd=<httpd>] [--port=<port>]
+               [--browser=<browser>]
 'git-instaweb' [--start] [--stop] [--restart]
 
 DESCRIPTION

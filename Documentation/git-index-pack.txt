@@ -8,8 +8,10 @@ git-index-pack - Build pack index file for an existing packed archive
 
 SYNOPSIS
 --------
+[verse]
 'git-index-pack' [-v] [-o <index-file>] <pack-file>
-'git-index-pack' --stdin [--fix-thin] [--keep] [-v] [-o <index-file>] [<pack-file>]
+'git-index-pack' --stdin [--fix-thin] [--keep] [-v] [-o <index-file>]
+                 [<pack-file>]
 
 
 DESCRIPTION

@@ -8,10 +8,10 @@ git-p4import - Import a Perforce repository into git
 
 SYNOPSIS
 --------
-`git-p4import` [-q|-v] [--notags] [--authors <file>] [-t <timezone>] <//p4repo/path> <branch>
-
+[verse]
+`git-p4import` [-q|-v] [--notags] [--authors <file>] [-t <timezone>]
+               <//p4repo/path> <branch>
 `git-p4import` --stitch <//p4repo/path>
-
 `git-p4import`
 
 
