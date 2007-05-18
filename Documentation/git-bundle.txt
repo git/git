@@ -8,6 +8,7 @@ git-bundle - Move objects and refs by archive
 
 SYNOPSIS
 --------
+[verse]
 'git-bundle' create <file> [git-rev-list args]
 'git-bundle' verify <file>
 'git-bundle' list-heads <file> [refname...]

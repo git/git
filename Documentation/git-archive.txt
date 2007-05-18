@@ -8,6 +8,7 @@ git-archive - Creates an archive of files from a named tree
 
 SYNOPSIS
 --------
+[verse]
 'git-archive' --format=<fmt> [--list] [--prefix=<prefix>/] [<extra>]
 	      [--remote=<repo>] <tree-ish> [path...]
 
