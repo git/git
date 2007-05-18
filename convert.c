@@ -652,3 +652,18 @@ char *convert_to_working_tree(const char *path, const char *src, unsigned long *
 
 	return buf;
 }
+
+void *convert_sha1_file(const char *path, const unsigned char *sha1,
+                        unsigned int mode, enum object_type *type,
+                        unsigned long *size)
+{
+	void *buffer = read_sha1_file(sha1, type, size);
+	if (S_ISREG(mode) && buffer) {
+		void *converted = convert_to_working_tree(path, buffer, size);
+		if (converted) {
+			free(buffer);
+			buffer = converted;
+		}
+	}
+	return buffer;
+}

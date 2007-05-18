@@ -82,12 +82,13 @@ static void strbuf_append_string(struct strbuf *sb, const char *s)
 {
 	int slen = strlen(s);
 	int total = sb->len + slen;
-	if (total > sb->alloc) {
-		sb->buf = xrealloc(sb->buf, total);
-		sb->alloc = total;
+	if (total + 1 > sb->alloc) {
+		sb->buf = xrealloc(sb->buf, total + 1);
+		sb->alloc = total + 1;
 	}
 	memcpy(sb->buf + sb->len, s, slen);
 	sb->len = total;
+	sb->buf[total] = '\0';
 }
 
 /*
@@ -270,20 +271,21 @@ static int write_tar_entry(const unsigned char *sha1,
 		path.alloc = PATH_MAX;
 		path.len = path.eof = 0;
 	}
-	if (path.alloc < baselen + filenamelen) {
+	if (path.alloc < baselen + filenamelen + 1) {
 		free(path.buf);
-		path.buf = xmalloc(baselen + filenamelen);
-		path.alloc = baselen + filenamelen;
+		path.buf = xmalloc(baselen + filenamelen + 1);
+		path.alloc = baselen + filenamelen + 1;
 	}
 	memcpy(path.buf, base, baselen);
 	memcpy(path.buf + baselen, filename, filenamelen);
 	path.len = baselen + filenamelen;
+	path.buf[path.len] = '\0';
 	if (S_ISDIR(mode) || S_ISDIRLNK(mode)) {
 		strbuf_append_string(&path, "/");
 		buffer = NULL;
 		size = 0;
 	} else {
-		buffer = read_sha1_file(sha1, &type, &size);
+		buffer = convert_sha1_file(path.buf, sha1, mode, &type, &size);
 		if (!buffer)
 			die("cannot read %s", sha1_to_hex(sha1));
 	}
