@@ -193,12 +193,12 @@ limiting may be applied.
 --author='pattern', --committer='pattern'::
 
 	Limit the commits output to ones with author/committer
-	header lines that match the specified pattern.
+	header lines that match the specified pattern (regular expression).
 
 --grep='pattern'::
 
 	Limit the commits output to ones with log message that
-	matches the specified pattern.
+	matches the specified pattern (regular expression).
 
 --remove-empty::
 
