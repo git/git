@@ -4,6 +4,10 @@ A tutorial introduction to git (for version 1.5.1 or newer)
 This tutorial explains how to import a new project into git, make
 changes to it, and share changes with other developers.
 
+If you are instead primarily interested in using git to fetch a project,
+for example, to test the latest version, you may prefer to start with
+the first two chapters of link:user-manual.html[The Git User's Manual].
+
 First, note that you can get documentation for a command such as "git
 diff" with:
 
@@ -564,7 +568,7 @@ link:tutorial-2.html[Part two of this tutorial] explains the object
 database, the index file, and a few other odds and ends that you'll
 need to make the most of git.
 
-If you don't want to consider with that right away, a few other
+If you don't want to continue with that right away, a few other
 digressions that may be interesting at this point are:
 
   * gitlink:git-format-patch[1], gitlink:git-am[1]: These convert
