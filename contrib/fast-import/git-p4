@@ -729,6 +729,7 @@ class P4Sync(Command):
 
         if self.detectBranches:
             self.getBranchMapping();
+            self.branchPrefix = self.depotPath[self.depotPath[:-1].rfind("/") + 1:]
 
         self.tz = "%+03d%02d" % (- time.timezone / 3600, ((- time.timezone % 3600) / 60))
 
@@ -815,11 +816,22 @@ class P4Sync(Command):
 
                             filesForCommit = self.extractFilesInCommitToBranch(files, branch)
 
-                            if branch not in self.createdBranches :
+                            if branch not in self.createdBranches:
                                 self.createdBranches.add(branch)
                                 parent = self.knownBranches[branch]
                                 if parent == branch:
                                     parent = ""
+
+                            # main branch? use master
+                            if branch == "main":
+                                branch = "master"
+                            else:
+                                branch = self.branchPrefix + branch
+
+                            if parent == "main":
+                                parent = "master"
+                            elif len(parent) > 0:
+                                parent = self.branchPrefix + parent
 
                             branch = "refs/remotes/p4/" + branch
                             if len(parent) > 0:
@@ -906,8 +918,11 @@ class P4Clone(P4Sync):
         if not P4Sync.run(self, [depotPath]):
             return False
         if self.branch != "master":
-            system("git branch master p4")
-            system("git checkout -f")
+            if gitBranchExists("refs/remotes/p4/master"):
+                system("git branch master refs/remotes/p4/master")
+                system("git checkout -f")
+            else:
+                print "Could not detect main branch. No checkout/master branch created."
         return True
 
 class HelpFormatter(optparse.IndentedHelpFormatter):
