@@ -828,8 +828,6 @@ class P4Sync(Command):
         self.changeRange = ""
         self.initialParent = ""
         self.previousDepotPath = ""
-        # importing into default remotes/p4/* layout?
-        defaultImport = False
 
         if self.syncWithOrigin and gitBranchExists("origin") and gitBranchExists("refs/remotes/p4/master"):
             print "Syncing with origin first as requested by calling git fetch origin"
@@ -850,10 +848,9 @@ class P4Sync(Command):
             self.branch = "refs/remotes/p4/master"
             if gitBranchExists("refs/heads/p4"):
                 system("git update-ref %s refs/heads/p4" % self.branch)
-                system("git symbolic-ref refs/remotes/p4/HEAD refs/remotes/p4/master")
                 system("git branch -D p4");
-            else:
-                defaultImport = True
+            if not gitBranchExists("refs/remotes/p4/HEAD"):
+                system("git symbolic-ref refs/remotes/p4/HEAD %s" % self.branch)
 
         if len(args) == 0:
             if not gitBranchExists(self.branch) and gitBranchExists("origin"):
@@ -863,8 +860,6 @@ class P4Sync(Command):
                 if not branch.startswith("refs"):
                     branch = "refs/heads/" + branch
                 system("git update-ref %s origin" % branch)
-                if defaultImport:
-                    system("git symbolic-ref refs/remotes/p4/HEAD %s" % branch)
 
             [self.previousDepotPath, p4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit(self.branch))
             if len(self.previousDepotPath) > 0 and len(p4Change) > 0:
