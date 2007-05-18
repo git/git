@@ -414,9 +414,9 @@ class P4Sync(Command):
                 optparse.make_option("--detect-branches", dest="detectBranches", action="store_true"),
                 optparse.make_option("--changesfile", dest="changesFile"),
                 optparse.make_option("--silent", dest="silent", action="store_true"),
-                optparse.make_option("--known-branches", dest="knownBranches"),
                 optparse.make_option("--detect-labels", dest="detectLabels", action="store_true"),
-                optparse.make_option("--with-origin", dest="syncWithOrigin", action="store_true")
+                optparse.make_option("--with-origin", dest="syncWithOrigin", action="store_true"),
+                optparse.make_option("--verbose", dest="verbose", action="store_true")
         ]
         self.description = """Imports from Perforce into a git repository.\n
     example:
@@ -429,7 +429,6 @@ class P4Sync(Command):
         self.usage += " //depot/path[@revRange]"
 
         self.silent = False
-        self.knownBranches = Set()
         self.createdBranches = Set()
         self.committedChanges = Set()
         self.branch = ""
@@ -437,6 +436,7 @@ class P4Sync(Command):
         self.detectLabels = False
         self.changesFile = ""
         self.syncWithOrigin = False
+        self.verbose = False
 
     def p4File(self, depotPath):
         return os.popen("p4 print -q \"%s\"" % depotPath, "rb").read()
@@ -461,119 +461,24 @@ class P4Sync(Command):
             fnum = fnum + 1
         return files
 
-    def isSubPathOf(self, first, second):
-        if not first.startswith(second):
-            return False
-        if first == second:
-            return True
-        return first[len(second)] == "/"
-
     def branchesForCommit(self, files):
         branches = Set()
 
         for file in files:
-            relativePath = file["path"][len(self.depotPath):]
-            # strip off the filename
-            relativePath = relativePath[0:relativePath.rfind("/")]
+            path = file["path"][len(self.depotPath):]
 
-    #        if len(branches) == 0:
-    #            branches.add(relativePath)
-    #            knownBranches.add(relativePath)
-    #            continue
-
-            ###### this needs more testing :)
-            knownBranch = False
-            for branch in branches:
-                if relativePath == branch:
-                    knownBranch = True
-                    break
-    #            if relativePath.startswith(branch):
-                if self.isSubPathOf(relativePath, branch):
-                    knownBranch = True
-                    break
-    #            if branch.startswith(relativePath):
-                if self.isSubPathOf(branch, relativePath):
-                    branches.remove(branch)
-                    break
-
-            if knownBranch:
-                continue
-
-            for branch in self.knownBranches:
-                #if relativePath.startswith(branch):
-                if self.isSubPathOf(relativePath, branch):
-                    if len(branches) == 0:
-                        relativePath = branch
-                    else:
-                        knownBranch = True
-                    break
-
-            if knownBranch:
-                continue
-
-            branches.add(relativePath)
-            self.knownBranches.add(relativePath)
+            for branch in self.knownBranches.keys():
+                if path.startswith(branch):
+                    branches.add(branch)
 
         return branches
 
-    def findBranchParent(self, branchPrefix, files):
-        for file in files:
-            path = file["path"]
-            if not path.startswith(branchPrefix):
-                continue
-            action = file["action"]
-            if action != "integrate" and action != "branch":
-                continue
-            rev = file["rev"]
-            depotPath = path + "#" + rev
-
-            log = p4CmdList("filelog \"%s\"" % depotPath)
-            if len(log) != 1:
-                print "eek! I got confused by the filelog of %s" % depotPath
-                sys.exit(1);
-
-            log = log[0]
-            if log["action0"] != action:
-                print "eek! wrong action in filelog for %s : found %s, expected %s" % (depotPath, log["action0"], action)
-                sys.exit(1);
-
-            branchAction = log["how0,0"]
-    #        if branchAction == "branch into" or branchAction == "ignored":
-    #            continue # ignore for branching
-
-            if not branchAction.endswith(" from"):
-                continue # ignore for branching
-    #            print "eek! file %s was not branched from but instead: %s" % (depotPath, branchAction)
-    #            sys.exit(1);
-
-            source = log["file0,0"]
-            if source.startswith(branchPrefix):
-                continue
-
-            lastSourceRev = log["erev0,0"]
-
-            sourceLog = p4CmdList("filelog -m 1 \"%s%s\"" % (source, lastSourceRev))
-            if len(sourceLog) != 1:
-                print "eek! I got confused by the source filelog of %s%s" % (source, lastSourceRev)
-                sys.exit(1);
-            sourceLog = sourceLog[0]
-
-            relPath = source[len(self.depotPath):]
-            # strip off the filename
-            relPath = relPath[0:relPath.rfind("/")]
-
-            for branch in self.knownBranches:
-                if self.isSubPathOf(relPath, branch):
-    #                print "determined parent branch branch %s due to change in file %s" % (branch, source)
-                    return branch
-    #            else:
-    #                print "%s is not a subpath of branch %s" % (relPath, branch)
-
-        return ""
-
-    def commit(self, details, files, branch, branchPrefix, parent = "", merged = ""):
+    def commit(self, details, files, branch, branchPrefix, parent = ""):
         epoch = details["time"]
         author = details["user"]
+
+        if self.verbose:
+            print "commit into %s" % branch
 
         self.gitStream.write("commit %s\n" % branch)
     #    gitStream.write("mark :%s\n" % details["change"])
@@ -592,10 +497,9 @@ class P4Sync(Command):
         self.gitStream.write("EOT\n\n")
 
         if len(parent) > 0:
+            if self.verbose:
+                print "parent %s" % parent
             self.gitStream.write("from %s\n" % parent)
-
-        if len(merged) > 0:
-            self.gitStream.write("merge %s\n" % merged)
 
         for file in files:
             path = file["path"]
@@ -680,118 +584,6 @@ class P4Sync(Command):
 
         return newFiles
 
-    def findBranchSourceHeuristic(self, files, branch, branchPrefix):
-        for file in files:
-            action = file["action"]
-            if action != "integrate" and action != "branch":
-                continue
-            path = file["path"]
-            rev = file["rev"]
-            depotPath = path + "#" + rev
-
-            log = p4CmdList("filelog \"%s\"" % depotPath)
-            if len(log) != 1:
-                print "eek! I got confused by the filelog of %s" % depotPath
-                sys.exit(1);
-
-            log = log[0]
-            if log["action0"] != action:
-                print "eek! wrong action in filelog for %s : found %s, expected %s" % (depotPath, log["action0"], action)
-                sys.exit(1);
-
-            branchAction = log["how0,0"]
-
-            if not branchAction.endswith(" from"):
-                continue # ignore for branching
-    #            print "eek! file %s was not branched from but instead: %s" % (depotPath, branchAction)
-    #            sys.exit(1);
-
-            source = log["file0,0"]
-            if source.startswith(branchPrefix):
-                continue
-
-            lastSourceRev = log["erev0,0"]
-
-            sourceLog = p4CmdList("filelog -m 1 \"%s%s\"" % (source, lastSourceRev))
-            if len(sourceLog) != 1:
-                print "eek! I got confused by the source filelog of %s%s" % (source, lastSourceRev)
-                sys.exit(1);
-            sourceLog = sourceLog[0]
-
-            relPath = source[len(self.depotPath):]
-            # strip off the filename
-            relPath = relPath[0:relPath.rfind("/")]
-
-            for candidate in self.knownBranches:
-                if self.isSubPathOf(relPath, candidate) and candidate != branch:
-                    return candidate
-
-        return ""
-
-    def changeIsBranchMerge(self, sourceBranch, destinationBranch, change):
-        sourceFiles = {}
-        for file in p4CmdList("files %s...@%s" % (self.depotPath + sourceBranch + "/", change)):
-            if file["action"] == "delete":
-                continue
-            sourceFiles[file["depotFile"]] = file
-
-        destinationFiles = {}
-        for file in p4CmdList("files %s...@%s" % (self.depotPath + destinationBranch + "/", change)):
-            destinationFiles[file["depotFile"]] = file
-
-        for fileName in sourceFiles.keys():
-            integrations = []
-            deleted = False
-            integrationCount = 0
-            for integration in p4CmdList("integrated \"%s\"" % fileName):
-                toFile = integration["fromFile"] # yes, it's true, it's fromFile
-                if not toFile in destinationFiles:
-                    continue
-                destFile = destinationFiles[toFile]
-                if destFile["action"] == "delete":
-    #                print "file %s has been deleted in %s" % (fileName, toFile)
-                    deleted = True
-                    break
-                integrationCount += 1
-                if integration["how"] == "branch from":
-                    continue
-
-                if int(integration["change"]) == change:
-                    integrations.append(integration)
-                    continue
-                if int(integration["change"]) > change:
-                    continue
-
-                destRev = int(destFile["rev"])
-
-                startRev = integration["startFromRev"][1:]
-                if startRev == "none":
-                    startRev = 0
-                else:
-                    startRev = int(startRev)
-
-                endRev = integration["endFromRev"][1:]
-                if endRev == "none":
-                    endRev = 0
-                else:
-                    endRev = int(endRev)
-
-                initialBranch = (destRev == 1 and integration["how"] != "branch into")
-                inRange = (destRev >= startRev and destRev <= endRev)
-                newer = (destRev > startRev and destRev > endRev)
-
-                if initialBranch or inRange or newer:
-                    integrations.append(integration)
-
-            if deleted:
-                continue
-
-            if len(integrations) == 0 and integrationCount > 1:
-                print "file %s was not integrated from %s into %s" % (fileName, sourceBranch, destinationBranch)
-                return False
-
-        return True
-
     def getUserMap(self):
         self.users = {}
 
@@ -818,6 +610,27 @@ class P4Sync(Command):
                     newestChange = change
 
             self.labels[newestChange] = [output, revisions]
+
+    def getBranchMapping(self):
+        # map from branch depot path to parent branch
+        self.knownBranches = {}
+
+        for info in p4CmdList("branches"):
+            details = p4Cmd("branch -o %s" % info["branch"])
+            viewIdx = 0
+            while details.has_key("View%s" % viewIdx):
+                paths = details["View%s" % viewIdx].split(" ")
+                viewIdx = viewIdx + 1
+                # require standard //depot/foo/... //depot/bar/... mapping
+                if len(paths) != 2 or not paths[0].endswith("/...") or not paths[1].endswith("/..."):
+                    continue
+                source = paths[0]
+                destination = paths[1]
+                if source.startswith(self.depotPath) and destination.startswith(self.depotPath):
+                    source = source[len(self.depotPath):-4]
+                    destination = destination[len(self.depotPath):-4]
+                    self.knownBranches[destination] = source
+                    self.knownBranches[source] = source
 
     def run(self, args):
         self.depotPath = ""
@@ -914,6 +727,9 @@ class P4Sync(Command):
         if self.detectLabels:
             self.getLabels();
 
+        if self.detectBranches:
+            self.getBranchMapping();
+
         self.tz = "%+03d%02d" % (- time.timezone / 3600, ((- time.timezone % 3600) / 60))
 
         importProcess = subprocess.Popen(["git", "fast-import"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE);
@@ -993,35 +809,22 @@ class P4Sync(Command):
                     files = self.extractFilesFromCommit(description)
                     if self.detectBranches:
                         for branch in self.branchesForCommit(files):
-                            self.knownBranches.add(branch)
                             branchPrefix = self.depotPath + branch + "/"
 
-                            filesForCommit = self.extractFilesInCommitToBranch(files, branchPrefix)
-
-                            merged = ""
                             parent = ""
-                            ########### remove cnt!!!
-                            if branch not in self.createdBranches and cnt > 2:
+
+                            filesForCommit = self.extractFilesInCommitToBranch(files, branch)
+
+                            if branch not in self.createdBranches :
                                 self.createdBranches.add(branch)
-                                parent = self.findBranchParent(branchPrefix, files)
+                                parent = self.knownBranches[branch]
                                 if parent == branch:
                                     parent = ""
-            #                    elif len(parent) > 0:
-            #                        print "%s branched off of %s" % (branch, parent)
 
-                            if len(parent) == 0:
-                                merged = self.findBranchSourceHeuristic(filesForCommit, branch, branchPrefix)
-                                if len(merged) > 0:
-                                    print "change %s could be a merge from %s into %s" % (description["change"], merged, branch)
-                                    if not self.changeIsBranchMerge(merged, branch, int(description["change"])):
-                                        merged = ""
-
-                            branch = "refs/heads/" + branch
+                            branch = "refs/remotes/p4/" + branch
                             if len(parent) > 0:
-                                parent = "refs/heads/" + parent
-                            if len(merged) > 0:
-                                merged = "refs/heads/" + merged
-                            self.commit(description, files, branch, branchPrefix, parent, merged)
+                                parent = "refs/remotes/p4/" + parent
+                            self.commit(description, files, branch, branchPrefix, parent)
                     else:
                         self.commit(description, files, self.branch, self.depotPath, self.initialParent)
                         self.initialParent = ""
