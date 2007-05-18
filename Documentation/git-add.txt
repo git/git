@@ -69,6 +69,15 @@ OPTIONS
 	for command-line options).
 
 
+Configuration
+-------------
+
+The optional configuration variable 'core.excludesfile' indicates a path to a
+file containing patterns of file names to exclude from git-add, similar to
+$GIT_DIR/info/exclude.  Patterns in the exclude file are used in addition to
+those in info/exclude.  See link:repository-layout.html[repository layout].
+
+
 EXAMPLES
 --------
 git-add Documentation/\\*.txt::
