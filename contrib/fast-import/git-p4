@@ -612,8 +612,7 @@ class P4Sync(Command):
             self.labels[newestChange] = [output, revisions]
 
     def getBranchMapping(self):
-        # map from branch depot path to parent branch
-        self.knownBranches = {}
+        self.projectName = self.depotPath[self.depotPath[:-1].rfind("/") + 1:]
 
         for info in p4CmdList("branches"):
             details = p4Cmd("branch -o %s" % info["branch"])
@@ -629,16 +628,34 @@ class P4Sync(Command):
                 if source.startswith(self.depotPath) and destination.startswith(self.depotPath):
                     source = source[len(self.depotPath):-4]
                     destination = destination[len(self.depotPath):-4]
-                    self.knownBranches[destination] = source
-                    self.knownBranches[source] = source
+                    if destination not in self.knownBranches:
+                        self.knownBranches[destination] = source
+                    if source not in self.knownBranches:
+                        self.knownBranches[source] = source
+
+    def listExistingP4GitBranches(self):
+        self.p4BranchesInGit = []
+
+        for line in mypopen("git rev-parse --symbolic --remotes").readlines():
+            if line.startswith("p4/") and line != "p4/HEAD\n":
+                branch = line[3:-1]
+                self.p4BranchesInGit.append(branch)
+                self.initialParents["refs/remotes/p4/" + branch] = parseRevision(line[:-1])
 
     def run(self, args):
         self.depotPath = ""
         self.changeRange = ""
         self.initialParent = ""
         self.previousDepotPath = ""
+        # map from branch depot path to parent branch
+        self.knownBranches = {}
+        self.initialParents = {}
 
-        if self.syncWithOrigin and gitBranchExists("origin") and gitBranchExists("refs/remotes/p4/master"):
+        self.listExistingP4GitBranches()
+
+        if self.syncWithOrigin and gitBranchExists("origin") and gitBranchExists("refs/remotes/p4/master") and not self.detectBranches:
+            ### needs to be ported to multi branch import
+
             print "Syncing with origin first as requested by calling git fetch origin"
             system("git fetch origin")
             [originPreviousDepotPath, originP4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit("origin"))
@@ -662,7 +679,8 @@ class P4Sync(Command):
                 system("git symbolic-ref refs/remotes/p4/HEAD %s" % self.branch)
 
         if len(args) == 0:
-            if not gitBranchExists(self.branch) and gitBranchExists("origin"):
+            if not gitBranchExists(self.branch) and gitBranchExists("origin") and not self.detectBranches:
+                ### needs to be ported to multi branch import
                 if not self.silent:
                     print "Creating %s branch in git repository based on origin" % self.branch
                 branch = self.branch
@@ -670,11 +688,33 @@ class P4Sync(Command):
                     branch = "refs/heads/" + branch
                 system("git update-ref %s origin" % branch)
 
-            [self.previousDepotPath, p4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit(self.branch))
-            if len(self.previousDepotPath) > 0 and len(p4Change) > 0:
-                p4Change = int(p4Change) + 1
+            if self.verbose:
+                print "branches: %s" % self.p4BranchesInGit
+
+            p4Change = 0
+            for branch in self.p4BranchesInGit:
+                depotPath, change = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit("refs/remotes/p4/" + branch))
+
+                if self.verbose:
+                    print "path %s change %s" % (depotPath, change)
+
+                if len(depotPath) > 0 and len(change) > 0:
+                    change = int(change) + 1
+                    p4Change = max(p4Change, change)
+
+                    if len(self.previousDepotPath) == 0:
+                        self.previousDepotPath = depotPath
+                    else:
+                        i = 0
+                        l = min(len(self.previousDepotPath), len(depotPath))
+                        while i < l and self.previousDepotPath[i] == depotPath[i]:
+                            i = i + 1
+                        self.previousDepotPath = self.previousDepotPath[:i]
+
+            if p4Change > 0:
                 self.depotPath = self.previousDepotPath
-                self.changeRange = "@%s,#head" % p4Change
+                #self.changeRange = "@%s,#head" % p4Change
+                self.changeRange = "@%s,%s" % (p4Change, p4Change + 10)
                 self.initialParent = parseRevision(self.branch)
                 if not self.silent:
                     print "Performing incremental import into %s git branch" % self.branch
@@ -729,7 +769,13 @@ class P4Sync(Command):
 
         if self.detectBranches:
             self.getBranchMapping();
-            self.branchPrefix = self.depotPath[self.depotPath[:-1].rfind("/") + 1:]
+            if self.verbose:
+                print "p4-git branches: %s" % self.p4BranchesInGit
+                print "initial parents: %s" % self.initialParents
+            for b in self.p4BranchesInGit:
+                if b != "master":
+                    b = b[len(self.projectName):]
+                self.createdBranches.add(b)
 
         self.tz = "%+03d%02d" % (- time.timezone / 3600, ((- time.timezone % 3600) / 60))
 
@@ -784,6 +830,8 @@ class P4Sync(Command):
 
                 changes.sort()
             else:
+                if self.verbose:
+                    print "Getting p4 changes for %s...%s" % (self.depotPath, self.changeRange)
                 output = mypopen("p4 changes %s...%s" % (self.depotPath, self.changeRange)).readlines()
 
                 for line in output:
@@ -816,26 +864,39 @@ class P4Sync(Command):
 
                             filesForCommit = self.extractFilesInCommitToBranch(files, branch)
 
+                            if self.verbose:
+                                print "branch is %s" % branch
+
                             if branch not in self.createdBranches:
                                 self.createdBranches.add(branch)
                                 parent = self.knownBranches[branch]
                                 if parent == branch:
                                     parent = ""
+                                elif self.verbose:
+                                    print "parent determined through known branches: %s" % parent
 
                             # main branch? use master
                             if branch == "main":
                                 branch = "master"
                             else:
-                                branch = self.branchPrefix + branch
+                                branch = self.projectName + branch
 
                             if parent == "main":
                                 parent = "master"
                             elif len(parent) > 0:
-                                parent = self.branchPrefix + parent
+                                parent = self.projectName + parent
 
                             branch = "refs/remotes/p4/" + branch
                             if len(parent) > 0:
                                 parent = "refs/remotes/p4/" + parent
+
+                            if self.verbose:
+                                print "looking for initial parent for %s; current parent is %s" % (branch, parent)
+
+                            if len(parent) == 0 and branch in self.initialParents:
+                                parent = self.initialParents[branch]
+                                del self.initialParents[branch]
+
                             self.commit(description, files, branch, branchPrefix, parent)
                     else:
                         self.commit(description, files, self.branch, self.depotPath, self.initialParent)
@@ -849,9 +910,10 @@ class P4Sync(Command):
 
 
         self.gitStream.close()
+        if importProcess.wait() != 0:
+            die("fast-import failed: %s" % self.gitError.read())
         self.gitOutput.close()
         self.gitError.close()
-        importProcess.wait()
 
         return True
 
