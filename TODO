@@ -142,6 +142,43 @@ Technical (milder)
 Technical (trivial)
 -------------------
 
+* Change the "first line of commit message is special" rule to
+  "first paragraph" and then wrap it.
+
+  From: Junio C Hamano <junkio@cox.net>
+  Message-ID: <7vsla5pkug.fsf@assigned-by-dhcp.cox.net>
+
+  This is slightly related, but I have been wondering about the
+  interaction with "single-liner summary, empty line and then the
+  rest" convention and various commands in the log family.
+
+  Currently, --pretty=oneline and --pretty=email (hence format-patch)
+  take and use only the first line.  I think we could change it to:
+
+   - take the first paragraph, where the definition of the first
+     paragraph is "skip all blank lines from the beginning, and
+     then grab everything up to the next empty line".
+
+   - replace all line breaks with a whitespace.
+
+  This change would not affect well-behaved commit messages that
+  adhere to the convention, as their first paragraph always
+  consist of a single line.  On the other hand, people from
+  different culture can get frustrated by their commit message
+  chomped at the first linebreak in the middle of sentence right
+  now, which would be helped by this change.
+
+  Their Subject: and --pretty=oneline output would become very
+  long and unsightly, but their commit messages are already
+  ugly anyway, and such a change at least avoid the loss of
+  information.
+
+  If we were to do this, Subject: line would most likely use
+  RFC2822 line folding at the places where line breaks were in the
+  original, but that goes without saying.
+
+  What do people think?
+
 * Give --stdin to git-log, similar to git-rev-list
 
 From: "Marco Costalba" <mcostalba@gmail.com>
