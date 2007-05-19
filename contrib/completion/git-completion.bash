@@ -262,6 +262,7 @@ __git_commands ()
 		applypatch)       : ask gittus;;
 		archimport)       : import;;
 		cat-file)         : plumbing;;
+		check-attr)       : plumbing;;
 		check-ref-format) : plumbing;;
 		commit-tree)      : plumbing;;
 		convert-objects)  : plumbing;;
@@ -271,8 +272,10 @@ __git_commands ()
 		daemon)           : daemon;;
 		fast-import)      : import;;
 		fsck-objects)     : plumbing;;
+		fetch--tool)      : plumbing;;
 		fetch-pack)       : plumbing;;
 		fmt-merge-msg)    : plumbing;;
+		for-each-ref)     : plumbing;;
 		hash-object)      : plumbing;;
 		http-*)           : transport;;
 		index-pack)       : plumbing;;
