@@ -2841,8 +2841,10 @@ sub close_edit {
 	my ($self) = @_;
 	my ($p,$bat) = ($self->{pool}, $self->{bat});
 	foreach (sort { $b =~ tr#/#/# <=> $a =~ tr#/#/# } keys %$bat) {
+		next if $_ eq '';
 		$self->close_directory($bat->{$_}, $p);
 	}
+	$self->close_directory($bat->{''}, $p);
 	$self->SUPER::close_edit($p);
 	$p->clear;
 }
