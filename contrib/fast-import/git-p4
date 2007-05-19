@@ -461,15 +461,17 @@ class P4Sync(Command):
             fnum = fnum + 1
         return files
 
-    def branchesForCommit(self, files):
-        branches = Set()
+    def splitFilesIntoBranches(self, files):
+        branches = {}
 
         for file in files:
             path = file["path"][len(self.depotPath):]
 
             for branch in self.knownBranches.keys():
                 if path.startswith(branch):
-                    branches.add(branch)
+                    if branch not in branches:
+                        branches[branch] = []
+                    branches[branch].append(file["path"])
 
         return branches
 
@@ -573,16 +575,6 @@ class P4Sync(Command):
             else:
                 if not self.silent:
                     print "Tag %s does not match with change %s: file count is different." % (labelDetails["label"], change)
-
-    def extractFilesInCommitToBranch(self, files, branchPrefix):
-        newFiles = []
-
-        for file in files:
-            path = file["path"]
-            if path.startswith(branchPrefix):
-                newFiles.append(file)
-
-        return newFiles
 
     def getUserMap(self):
         self.users = {}
@@ -713,8 +705,7 @@ class P4Sync(Command):
 
             if p4Change > 0:
                 self.depotPath = self.previousDepotPath
-                #self.changeRange = "@%s,#head" % p4Change
-                self.changeRange = "@%s,%s" % (p4Change, p4Change + 10)
+                self.changeRange = "@%s,#head" % p4Change
                 self.initialParent = parseRevision(self.branch)
                 if not self.silent:
                     print "Performing incremental import into %s git branch" % self.branch
@@ -857,12 +848,13 @@ class P4Sync(Command):
                 try:
                     files = self.extractFilesFromCommit(description)
                     if self.detectBranches:
-                        for branch in self.branchesForCommit(files):
+                        branches = self.splitFilesIntoBranches(files)
+                        for branch in branches.keys():
                             branchPrefix = self.depotPath + branch + "/"
 
                             parent = ""
 
-                            filesForCommit = self.extractFilesInCommitToBranch(files, branch)
+                            filesForCommit = branches[branch]
 
                             if self.verbose:
                                 print "branch is %s" % branch
