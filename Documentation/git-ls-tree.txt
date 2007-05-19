@@ -9,7 +9,7 @@ git-ls-tree - List the contents of a tree object
 SYNOPSIS
 --------
 [verse]
-'git-ls-tree' [-d] [-r] [-t] [-z]
+'git-ls-tree' [-d] [-r] [-t] [-l] [-z]
 	    [--name-only] [--name-status] [--full-name] [--abbrev=[<n>]]
 	    <tree-ish> [paths...]
 
@@ -35,6 +35,10 @@ OPTIONS
 -t::
 	Show tree entries even when going to recurse them. Has no effect
 	if '-r' was not passed. '-d' implies '-t'.
+
+-l::
+--long::
+	Show object size of blob (file) entries.
 
 -z::
 	\0 line termination on output.
@@ -64,6 +68,14 @@ Output Format
 
 When the `-z` option is not used, TAB, LF, and backslash characters
 in pathnames are represented as `\t`, `\n`, and `\\`, respectively.
+
+When the `-l` option is used, format changes to
+
+        <mode> SP <type> SP <object> SP <object size> TAB <file>
+
+Object size identified by <object> is given in bytes, and right-justified
+with minimum width of 7 characters.  Object size is given only for blobs
+(file) entries; for other entries `-` character is used in place of size.
 
 
 Author
