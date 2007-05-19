@@ -38,32 +38,30 @@ COMMANDS
 	argument.  Normally this command initializes the current
 	directory.
 
--T<trunk_subdir>::
---trunk=<trunk_subdir>::
--t<tags_subdir>::
---tags=<tags_subdir>::
--b<branches_subdir>::
---branches=<branches_subdir>::
+-T<trunk_subdir>;;
+--trunk=<trunk_subdir>;;
+-t<tags_subdir>;;
+--tags=<tags_subdir>;;
+-b<branches_subdir>;;
+--branches=<branches_subdir>;;
 	These are optional command-line options for init.  Each of
 	these flags can point to a relative repository path
 	(--tags=project/tags') or a full url
 	(--tags=https://foo.org/project/tags)
-
---no-metadata::
+--no-metadata;;
 	Set the 'noMetadata' option in the [svn-remote] config.
---use-svm-props::
+--use-svm-props;;
 	Set the 'useSvmProps' option in the [svn-remote] config.
---use-svnsync-props::
+--use-svnsync-props;;
 	Set the 'useSvnsyncProps' option in the [svn-remote] config.
---rewrite-root=<URL>::
+--rewrite-root=<URL>;;
 	Set the 'rewriteRoot' option in the [svn-remote] config.
---username=<USER>::
+--username=<USER>;;
 	For transports that SVN handles authentication for (http,
 	https, and plain svn), specify the username.  For other
 	transports (eg svn+ssh://), you must include the username in
 	the URL, eg svn+ssh://foo@svn.bar.com/project
-
---prefix=<prefix>::
+--prefix=<prefix>;;
 	This allows one to specify a prefix which is prepended
 	to the names of remotes if trunk/branches/tags are
 	specified.  The prefix does not automatically include a
@@ -73,7 +71,6 @@ COMMANDS
 	repository.
 
 'fetch'::
-
 	Fetch unfetched revisions from the Subversion remote we are
 	tracking.  The name of the [svn-remote "..."] section in the
 	.git/config file may be specified as an optional command-line
@@ -104,14 +101,11 @@ accepts.  However '--fetch-all' only fetches from the current
 
 Like 'git-rebase'; this requires that the working tree be clean
 and have no uncommitted changes.
-+
---
+
 -l;;
 --local;;
 	Do not fetch remotely; only run 'git-rebase' against the
 	last fetched commit from the upstream SVN.
---
-+
 
 'dcommit'::
 	Commit each diff from a specified head directly to the SVN
@@ -125,6 +119,9 @@ and have no uncommitted changes.
 	alternative to HEAD.
 	This is advantageous over 'set-tree' (below) because it produces
 	cleaner, more linear history.
++
+--no-rebase;;
+	After committing, do not rebase or reset.
 --
 
 'log'::

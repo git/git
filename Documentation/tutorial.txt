@@ -1,5 +1,5 @@
-A tutorial introduction to git
-==============================
+A tutorial introduction to git (for version 1.5.1 or newer)
+===========================================================
 
 This tutorial explains how to import a new project into git, make
 changes to it, and share changes with other developers.

@@ -9,25 +9,48 @@ LONG_USAGE='Summarizes the changes since <commit> to the standard output,
 and includes <url> in the message generated.'
 SUBDIRECTORY_OK='Yes'
 . git-sh-setup
+. git-parse-remote
 
-revision=$1
+base=$1
 url=$2
 head=${3-HEAD}
 
-[ "$revision" ] || usage
+[ "$base" ] || usage
 [ "$url" ] || usage
 
-baserev=`git-rev-parse --verify "$revision"^0` &&
+baserev=`git-rev-parse --verify "$base"^0` &&
 headrev=`git-rev-parse --verify "$head"^0` || exit
 
+merge_base=`git merge-base $baserev $headrev` ||
+die "fatal: No commits in common between $base and $head"
+
+url="`get_remote_url "$url"`"
+branch=`git peek-remote "$url" \
+	| sed -n -e "/^$headrev	refs.heads./{
+		s/^.*	refs.heads.//
+		p
+		q
+	}"`
+if [ -z "$branch" ]; then
+	echo "warn: No branch of $url is at:" >&2
+	git log --max-count=1 --pretty='format:warn:   %h: %s' $headrev >&2
+	echo "warn: Are you sure you pushed $head there?" >&2
+	echo >&2
+	echo >&2
+	branch=..BRANCH.NOT.VERIFIED..
+	status=1
+fi
+
+PAGER=
+export PAGER
 echo "The following changes since commit $baserev:"
-git log --max-count=1 --pretty=short "$baserev" |
-git-shortlog | sed -e 's/^\(.\)/  \1/'
+git shortlog --max-count=1 $baserev | sed -e 's/^\(.\)/  \1/'
 
-echo "are found in the git repository at:" 
+echo "are available in the git repository at:"
 echo
-echo "  $url"
+echo "  $url $branch"
 echo
 
-git log  $baserev..$headrev | git-shortlog ;
-git diff -M --stat --summary $baserev..$headrev
+git shortlog ^$baserev $headrev
+git diff -M --stat --summary $merge_base $headrev
+exit $status

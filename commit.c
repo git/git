@@ -638,7 +638,9 @@ static char *get_header(const struct commit *commit, const char *key)
 			next = NULL;
 		} else
 			next = eol + 1;
-		if (!strncmp(line, key, key_len) && line[key_len] == ' ') {
+		if (eol - line > key_len &&
+		    !strncmp(line, key, key_len) &&
+		    line[key_len] == ' ') {
 			int len = eol - line - key_len;
 			char *ret = xmalloc(len);
 			memcpy(ret, line + key_len + 1, len - 1);
@@ -716,14 +718,6 @@ static char *logmsg_reencode(const struct commit *commit,
 
 	free(encoding);
 	return out;
-}
-
-static char *xstrndup(const char *text, int len)
-{
-	char *result = xmalloc(len + 1);
-	memcpy(result, text, len);
-	result[len] = '\0';
-	return result;
 }
 
 static void fill_person(struct interp *table, const char *msg, int len)

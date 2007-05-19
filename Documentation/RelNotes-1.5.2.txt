@@ -171,6 +171,6 @@ this release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.5.2-rc0-106-g07c785d
+O=v1.5.2-rc1-32-g125a5f1
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint

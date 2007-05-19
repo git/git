@@ -602,37 +602,6 @@ static void fix_unresolved_deltas(int nr_unresolved)
 	free(sorted_by_pos);
 }
 
-static void readjust_pack_header_and_sha1(unsigned char *sha1)
-{
-	struct pack_header hdr;
-	SHA_CTX ctx;
-	int size;
-
-	/* Rewrite pack header with updated object number */
-	if (lseek(output_fd, 0, SEEK_SET) != 0)
-		die("cannot seek back: %s", strerror(errno));
-	if (read_in_full(output_fd, &hdr, sizeof(hdr)) != sizeof(hdr))
-		die("cannot read pack header back: %s", strerror(errno));
-	hdr.hdr_entries = htonl(nr_objects);
-	if (lseek(output_fd, 0, SEEK_SET) != 0)
-		die("cannot seek back: %s", strerror(errno));
-	write_or_die(output_fd, &hdr, sizeof(hdr));
-	if (lseek(output_fd, 0, SEEK_SET) != 0)
-		die("cannot seek back: %s", strerror(errno));
-
-	/* Recompute and store the new pack's SHA1 */
-	SHA1_Init(&ctx);
-	do {
-		unsigned char *buf[4096];
-		size = xread(output_fd, buf, sizeof(buf));
-		if (size < 0)
-			die("cannot read pack data back: %s", strerror(errno));
-		SHA1_Update(&ctx, buf, size);
-	} while (size > 0);
-	SHA1_Final(sha1, &ctx);
-	write_or_die(output_fd, sha1, 20);
-}
-
 static uint32_t index_default_version = 1;
 static uint32_t index_off32_limit = 0x7fffffff;
 
@@ -963,7 +932,8 @@ int main(int argc, char **argv)
 				fprintf(stderr, "%d objects were added to complete this thin pack.\n",
 					nr_objects - nr_objects_initial);
 			}
-			readjust_pack_header_and_sha1(sha1);
+			fixup_pack_header_footer(output_fd, sha1,
+				curr_pack, nr_objects);
 		}
 		if (nr_deltas != nr_resolved_deltas)
 			die("pack has %d unresolved deltas",

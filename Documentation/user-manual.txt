@@ -1,5 +1,5 @@
-Git User's Manual
-_________________
+Git User's Manual (for version 1.5.1 or newer)
+______________________________________________
 
 This manual is designed to be readable by someone with basic unix
 command-line skills, but no previous knowledge of git.

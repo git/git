@@ -10,11 +10,14 @@ test_expect_success \
     'setup' \
     'rm -rf .git
      git-init &&
-     for i in `seq -w 100`
+     i=1 &&
+	 while test $i -le 100
      do
+		 i=`printf '%03i' $i`
          echo $i >file_$i &&
          test-genrandom "$i" 8192 >>file_$i &&
-         git-update-index --add file_$i || return 1
+         git-update-index --add file_$i &&
+		 i=`expr $i + 1` || return 1
      done &&
      { echo 101 && test-genrandom 100 8192; } >file_101 &&
      git-update-index --add file_101 &&

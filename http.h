@@ -6,7 +6,7 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 
-#if LIBCURL_VERSION_NUM >= 0x070908
+#if LIBCURL_VERSION_NUM >= 0x071000
 #define USE_CURL_MULTI
 #define DEFAULT_MAX_REQUESTS 5
 #endif
