@@ -52,6 +52,7 @@ foreach my $tar_file (@ARGV)
 			Z8 Z1 Z100 Z6
 			Z2 Z32 Z32 Z8 Z8 Z*', $_;
 		last unless $name;
+		next if $name =~ m{/\z};
 		$mode = oct $mode;
 		$size = oct $size;
 		$mtime = oct $mtime;
@@ -64,7 +65,12 @@ foreach my $tar_file (@ARGV)
 		}
 		print FI "\n";
 
-		my $path = "$prefix$name";
+		my $path;
+		if ($prefix) {
+			$path = "$prefix/$name";
+		} else {
+			$path = "$name";
+		}
 		$files{$path} = [$next_mark++, $mode];
 
 		$commit_time = $mtime if $mtime > $commit_time;

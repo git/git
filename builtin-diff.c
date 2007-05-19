@@ -13,13 +13,10 @@
 #include "log-tree.h"
 #include "builtin.h"
 
-/* NEEDSWORK: struct object has place for name but we _do_
- * know mode when we extracted the blob out of a tree, which
- * we currently lose.
- */
 struct blobinfo {
 	unsigned char sha1[20];
 	const char *name;
+	unsigned mode;
 };
 
 static const char builtin_diff_usage[] =
@@ -35,7 +32,7 @@ static void stuff_change(struct diff_options *opt,
 	struct diff_filespec *one, *two;
 
 	if (!is_null_sha1(old_sha1) && !is_null_sha1(new_sha1) &&
-	    !hashcmp(old_sha1, new_sha1))
+	    !hashcmp(old_sha1, new_sha1) && (old_mode == new_mode))
 		return;
 
 	if (opt->reverse_diff) {
@@ -70,8 +67,12 @@ static int builtin_diff_b_f(struct rev_info *revs,
 		die("'%s': %s", path, strerror(errno));
 	if (!(S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)))
 		die("'%s': not a regular file or symlink", path);
+
+	if (blob[0].mode == S_IFINVALID)
+		blob[0].mode = canon_mode(st.st_mode);
+
 	stuff_change(&revs->diffopt,
-		     canon_mode(st.st_mode), canon_mode(st.st_mode),
+		     blob[0].mode, canon_mode(st.st_mode),
 		     blob[0].sha1, null_sha1,
 		     path, path);
 	diffcore_std(&revs->diffopt);
@@ -88,8 +89,14 @@ static int builtin_diff_blobs(struct rev_info *revs,
 	if (argc > 1)
 		usage(builtin_diff_usage);
 
+	if (blob[0].mode == S_IFINVALID)
+		blob[0].mode = mode;
+
+	if (blob[1].mode == S_IFINVALID)
+		blob[1].mode = mode;
+
 	stuff_change(&revs->diffopt,
-		     mode, mode,
+		     blob[0].mode, blob[1].mode,
 		     blob[0].sha1, blob[1].sha1,
 		     blob[0].name, blob[1].name);
 	diffcore_std(&revs->diffopt);
@@ -272,6 +279,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 				die("more than two blobs given: '%s'", name);
 			hashcpy(blob[blobs].sha1, obj->sha1);
 			blob[blobs].name = name;
+			blob[blobs].mode = list->mode;
 			blobs++;
 			continue;
 

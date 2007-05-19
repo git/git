@@ -319,10 +319,9 @@ argument to `git-commit-tree`.
 `git-commit-tree` normally takes several arguments -- it wants to know
 what the 'parent' of a commit was, but since this is the first commit
 ever in this new repository, and it has no parents, we only need to pass in
-the object name of the tree. However, `git-commit-tree`
-also wants to get a commit message
-on its standard input, and it will write out the resulting object name for the
-commit to its standard output.
+the object name of the tree. However, `git-commit-tree` also wants to get a
+commit message on its standard input, and it will write out the resulting
+object name for the commit to its standard output.
 
 And this is where we create the `.git/refs/heads/master` file
 which is pointed at by `HEAD`. This file is supposed to contain
@@ -1304,7 +1303,7 @@ So, we can use somebody else's work from a remote repository, but
 how can *you* prepare a repository to let other people pull from
 it?
 
-Your do your real work in your working tree that has your
+You do your real work in your working tree that has your
 primary repository hanging under it as its `.git` subdirectory.
 You *could* make that repository accessible remotely and ask
 people to pull from it, but in practice that is not the way

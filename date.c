@@ -55,6 +55,32 @@ static struct tm *time_to_tm(unsigned long time, int tz)
 	return gmtime(&t);
 }
 
+/*
+ * What value of "tz" was in effect back then at "time" in the
+ * local timezone?
+ */
+static int local_tzoffset(unsigned long time)
+{
+	time_t t, t_local;
+	struct tm tm;
+	int offset, eastwest;
+
+	t = time;
+	localtime_r(&t, &tm);
+	t_local = my_mktime(&tm);
+
+	if (t_local < t) {
+		eastwest = -1;
+		offset = t - t_local;
+	} else {
+		eastwest = 1;
+		offset = t_local - t;
+	}
+	offset /= 60; /* in minutes */
+	offset = (offset % 60) + ((offset / 60) * 100);
+	return offset * eastwest;
+}
+
 const char *show_date(unsigned long time, int tz, enum date_mode mode)
 {
 	struct tm *tm;
@@ -102,6 +128,9 @@ const char *show_date(unsigned long time, int tz, enum date_mode mode)
 		/* Else fall back on absolute format.. */
 	}
 
+	if (mode == DATE_LOCAL)
+		tz = local_tzoffset(time);
+
 	tm = time_to_tm(time, tz);
 	if (!tm)
 		return NULL;
@@ -109,12 +138,14 @@ const char *show_date(unsigned long time, int tz, enum date_mode mode)
 		sprintf(timebuf, "%04d-%02d-%02d", tm->tm_year + 1900,
 				tm->tm_mon + 1, tm->tm_mday);
 	else
-		sprintf(timebuf, "%.3s %.3s %d %02d:%02d:%02d %d %+05d",
+		sprintf(timebuf, "%.3s %.3s %d %02d:%02d:%02d %d%c%+05d",
 				weekday_names[tm->tm_wday],
 				month_names[tm->tm_mon],
 				tm->tm_mday,
 				tm->tm_hour, tm->tm_min, tm->tm_sec,
-				tm->tm_year + 1900, tz);
+				tm->tm_year + 1900,
+				(mode == DATE_LOCAL) ? 0 : ' ',
+				tz);
 	return timebuf;
 }
 

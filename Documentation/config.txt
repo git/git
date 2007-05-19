@@ -610,8 +610,8 @@ tar.umask::
 
 user.email::
 	Your email address to be recorded in any newly created commits.
-	Can be overridden by the 'GIT_AUTHOR_EMAIL' and 'GIT_COMMITTER_EMAIL'
-	environment variables.  See gitlink:git-commit-tree[1].
+	Can be overridden by the 'GIT_AUTHOR_EMAIL', 'GIT_COMMITTER_EMAIL', and
+	'EMAIL' environment variables.  See gitlink:git-commit-tree[1].
 
 user.name::
 	Your full name to be recorded in any newly created commits.

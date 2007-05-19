@@ -219,6 +219,7 @@ static int fsck_tree(struct tree *item)
 {
 	int retval;
 	int has_full_path = 0;
+	int has_empty_name = 0;
 	int has_zero_pad = 0;
 	int has_bad_modes = 0;
 	int has_dup_entries = 0;
@@ -242,6 +243,8 @@ static int fsck_tree(struct tree *item)
 
 		if (strchr(name, '/'))
 			has_full_path = 1;
+		if (!*name)
+			has_empty_name = 1;
 		has_zero_pad |= *(char *)desc.buffer == '0';
 		update_tree_entry(&desc);
 
@@ -290,6 +293,9 @@ static int fsck_tree(struct tree *item)
 	retval = 0;
 	if (has_full_path) {
 		objwarning(&item->object, "contains full pathnames");
+	}
+	if (has_empty_name) {
+		objwarning(&item->object, "contains empty pathname");
 	}
 	if (has_zero_pad) {
 		objwarning(&item->object, "contains zero-padded file modes");

@@ -1,5 +1,5 @@
-#ifndef _PATH_LIST_H_
-#define _PATH_LIST_H_
+#ifndef PATH_LIST_H
+#define PATH_LIST_H
 
 struct path_list_item {
 	char *path;
@@ -19,4 +19,4 @@ void path_list_clear(struct path_list *list, int free_items);
 struct path_list_item *path_list_insert(const char *path, struct path_list *list);
 struct path_list_item *path_list_lookup(const char *path, struct path_list *list);
 
-#endif /* _PATH_LIST_H_ */
+#endif /* PATH_LIST_H */

@@ -526,7 +526,7 @@ static int add_rfc2047(char *buf, const char *line, int len,
 }
 
 static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf,
-			 const char *line, int relative_date,
+			 const char *line, enum date_mode dmode,
 			 const char *encoding)
 {
 	char *date;
@@ -569,7 +569,7 @@ static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf,
 	switch (fmt) {
 	case CMIT_FMT_MEDIUM:
 		ret += sprintf(buf + ret, "Date:   %s\n",
-			       show_date(time, tz, relative_date));
+			       show_date(time, tz, dmode));
 		break;
 	case CMIT_FMT_EMAIL:
 		ret += sprintf(buf + ret, "Date: %s\n",
@@ -577,7 +577,7 @@ static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf,
 		break;
 	case CMIT_FMT_FULLER:
 		ret += sprintf(buf + ret, "%sDate: %s\n", what,
-			       show_date(time, tz, relative_date));
+			       show_date(time, tz, dmode));
 		break;
 	default:
 		/* notin' */
@@ -919,7 +919,7 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 				  char *buf, unsigned long space,
 				  int abbrev, const char *subject,
 				  const char *after_subject,
-				  int relative_date)
+				  enum date_mode dmode)
 {
 	int hdr = 1, body = 0, seen_title = 0;
 	unsigned long offset = 0;
@@ -1023,14 +1023,14 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 				offset += add_user_info("Author", fmt,
 							buf + offset,
 							line + 7,
-							relative_date,
+							dmode,
 							encoding);
 			if (!memcmp(line, "committer ", 10) &&
 			    (fmt == CMIT_FMT_FULL || fmt == CMIT_FMT_FULLER))
 				offset += add_user_info("Commit", fmt,
 							buf + offset,
 							line + 10,
-							relative_date,
+							dmode,
 							encoding);
 			continue;
 		}

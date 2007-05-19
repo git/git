@@ -141,6 +141,8 @@ my %cmd = (
 			  'color' => \$Git::SVN::Log::color,
 			  'pager=s' => \$Git::SVN::Log::pager,
 			} ],
+	'find-rev' => [ \&cmd_find_rev, "Translate between SVN revision numbers and tree-ish",
+			{ } ],
 	'rebase' => [ \&cmd_rebase, "Fetch and rebase your working directory",
 			{ 'merge|m|M' => \$_merge,
 			  'verbose|v' => \$_verbose,
@@ -426,6 +428,27 @@ sub cmd_dcommit {
 		@finish = qw/reset --mixed/;
 	}
 	command_noisy(@finish, $gs->refname);
+}
+
+sub cmd_find_rev {
+	my $revision_or_hash = shift;
+	my $result;
+	if ($revision_or_hash =~ /^r\d+$/) {
+		my $head = shift;
+		$head ||= 'HEAD';
+		my @refs;
+		my (undef, undef, undef, $gs) = working_head_info($head, \@refs);
+		unless ($gs) {
+			die "Unable to determine upstream SVN information from ",
+			    "$head history\n";
+		}
+		my $desired_revision = substr($revision_or_hash, 1);
+		$result = $gs->rev_db_get($desired_revision);
+	} else {
+		my (undef, $rev, undef) = cmt_metadata($revision_or_hash);
+		$result = $rev;
+	}
+	print "$result\n" if $result;
 }
 
 sub cmd_rebase {
@@ -771,19 +794,19 @@ sub cmt_metadata {
 sub working_head_info {
 	my ($head, $refs) = @_;
 	my ($fh, $ctx) = command_output_pipe('rev-list', $head);
-	while (<$fh>) {
-		chomp;
-		my ($url, $rev, $uuid) = cmt_metadata($_);
+	while (my $hash = <$fh>) {
+		chomp($hash);
+		my ($url, $rev, $uuid) = cmt_metadata($hash);
 		if (defined $url && defined $rev) {
 			if (my $gs = Git::SVN->find_by_url($url)) {
 				my $c = $gs->rev_db_get($rev);
-				if ($c && $c eq $_) {
+				if ($c && $c eq $hash) {
 					close $fh; # break the pipe
 					return ($url, $rev, $uuid, $gs);
 				}
 			}
 		}
-		unshift @$refs, $_ if $refs;
+		unshift @$refs, $hash if $refs;
 	}
 	command_close_pipe($fh, $ctx);
 	(undef, undef, undef, undef);
@@ -1064,7 +1087,10 @@ sub init_remote_config {
 
 sub find_by_url { # repos_root and, path are optional
 	my ($class, $full_url, $repos_root, $path) = @_;
+
 	return undef unless defined $full_url;
+	remove_username($full_url);
+	remove_username($repos_root) if defined $repos_root;
 	my $remotes = read_all_remotes();
 	if (defined $full_url && defined $repos_root && !defined $path) {
 		$path = $full_url;
@@ -1072,6 +1098,7 @@ sub find_by_url { # repos_root and, path are optional
 	}
 	foreach my $repo_id (keys %$remotes) {
 		my $u = $remotes->{$repo_id}->{url} or next;
+		remove_username($u);
 		next if defined $repos_root && $repos_root ne $u;
 
 		my $fetch = $remotes->{$repo_id}->{fetch} || {};
@@ -1866,11 +1893,14 @@ sub make_log_entry {
 	} elsif ($self->use_svnsync_props) {
 		my $full_url = $self->svnsync->{url};
 		$full_url .= "/$self->{path}" if length $self->{path};
+		remove_username($full_url);
 		my $uuid = $self->svnsync->{uuid};
 		$log_entry{metadata} = "$full_url\@$rev $uuid";
 		$email ||= "$author\@$uuid"
 	} else {
-		$log_entry{metadata} = $self->metadata_url. "\@$rev " .
+		my $url = $self->metadata_url;
+		remove_username($url);
+		$log_entry{metadata} = "$url\@$rev " .
 		                       $self->ra->get_uuid;
 		$email ||= "$author\@" . $self->ra->get_uuid;
 	}
@@ -2439,9 +2469,9 @@ sub close_file {
 		my $got = $md5->hexdigest;
 		die "Checksum mismatch: $path\n",
 		    "expected: $exp\n    got: $got\n" if ($got ne $exp);
-		seek($fh, 0, 0) or croak $!;
+		sysseek($fh, 0, 0) or croak $!;
 		if ($fb->{mode_b} == 120000) {
-			read($fh, my $buf, 5) == 5 or croak $!;
+			sysread($fh, my $buf, 5) == 5 or croak $!;
 			$buf eq 'link ' or die "$path has mode 120000",
 			                       "but is not a link\n";
 		}

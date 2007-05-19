@@ -26,8 +26,14 @@ Updates since v1.5.1
   considered a binary or text (the former would be treated by
   'git diff' not to produce textual output; the latter can go
   through the line endings conversion process in repositories
-  with core.autocrlf set), and specify a custom 3-way merge
-  driver.
+  with core.autocrlf set), expand and unexpand '$ident$' keyword
+  with blob object name, specify a custom 3-way merge driver,
+  and specify a custom diff driver.  You can also apply
+  arbitrary filter to contents on check-in/check-out codepath
+  but this feature is an extremely sharp-edged razor and needs
+  to be handled with caution (do not use it unless you
+  understand the earlier mailing list discussion on keyward
+  expansion).
 
 * The packfile format now optionally suports 64-bit index.
 
@@ -53,7 +59,20 @@ Updates since v1.5.1
     commit -a" (i.e. update the index to match the working
     tree); it obviously does not make a commit.
 
+  - "git clean" honors a new configuration, "clean.requireforce".  When
+    set to true, this makes "git clean" a no-op, preventing you
+    from losing files by typing "git clean" when you meant to
+    say "make clean".  You can still say "git clean -f" to
+    override this.
+
+  - "git log" family of commands learned --date={local,relative,default}
+    option.  --date=relative is synonym to the --relative-date.
+    --date=local gives the timestamp in local timezone.
+
 * Updated behavior of existing commands.
+
+  - When $GIT_COMMITTER_EMAIL or $GIT_AUTHOR_EMAIL is not set
+    but $EMAIL is set, the latter is used as a substitute.
 
   - "git diff --stat" shows size of preimage and postimage blobs
     for binary contents.  Earlier it only said "Bin".
@@ -82,10 +101,16 @@ Updates since v1.5.1
   - "gitview" (in contrib/ section) learned to better support
     "git-annotate".
 
+  - "git diff $commit1:$path2 $commit2:$path2" can now report
+    mode changes between the two blobs.
+
   - Local "git fetch" from a repository whose object store is
     one of the alternates (e.g. fetching from the origin in a
     repository created with "git clone -l -s") avoids
     downloading objects unnecessary.
+
+  - "git blame" uses .mailmap to canonicalize the author name
+    just like "git shortlog" does.
 
 * Builds
 
@@ -102,11 +127,15 @@ Updates since v1.5.1
 
 * Performance Tweaks
 
-  - optimized "git-rev-list --bisect" (hence "git-bisect").
+  - Optimized "git-rev-list --bisect" (hence "git-bisect").
 
-  - optimized "git-add $path" in a large directory, most of
+  - Optimized "git-add $path" in a large directory, most of
     whose contents are ignored.
 
+  - The recursive merge strategy updated a worktree file that
+    was changed identically in two branches, when one of them
+    renamed it.  We do not do that when there is no rename, so
+    match that behaviour.
 
 Fixes since v1.5.1
 ------------------
@@ -133,12 +162,15 @@ this release, unless otherwise noted.
     will not be backported to 1.5.1.x series, as it is rather an
     intrusive change.
 
+  - git-fetch had trouble with a remote with insanely large number
+    of refs.
+
 * Documentation updates
 
 * Performance Tweaks
 
 --
 exec >/var/tmp/1
-O=v1.5.1.2-242-g2d76548
+O=v1.5.2-rc0-106-g07c785d
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint

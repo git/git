@@ -141,7 +141,12 @@ prefix = $(HOME)
 bindir = $(prefix)/bin
 gitexecdir = $(bindir)
 template_dir = $(prefix)/share/git-core/templates/
-ETC_GITCONFIG = $(prefix)/etc/gitconfig
+ifeq ($(prefix),/usr)
+sysconfdir = /etc
+else
+sysconfdir = $(prefix)/etc
+endif
+ETC_GITCONFIG = $(sysconfdir)/gitconfig
 # DESTDIR=
 
 # default configuration for gitweb
@@ -160,7 +165,7 @@ GITWEB_FAVICON = git-favicon.png
 GITWEB_SITE_HEADER =
 GITWEB_SITE_FOOTER =
 
-export prefix bindir gitexecdir template_dir
+export prefix bindir gitexecdir template_dir sysconfdir
 
 CC = gcc
 AR = ar
@@ -283,7 +288,7 @@ LIB_H = \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
 	tree-walk.h log-tree.h dir.h path-list.h unpack-trees.h builtin.h \
 	spawn-pipe.h \
-	utf8.h reflog-walk.h patch-ids.h attr.h decorate.h progress.h
+	utf8.h reflog-walk.h patch-ids.h attr.h decorate.h progress.h mailmap.h
 
 DIFF_OBJS = \
 	diff.o diff-lib.o diffcore-break.o diffcore-order.o \
@@ -306,7 +311,7 @@ LIB_OBJS = \
 	write_or_die.o trace.o list-objects.o grep.o match-trees.o \
 	alloc.o merge-file.o path-list.o help.o unpack-trees.o $(DIFF_OBJS) \
 	color.o wt-status.o archive-zip.o archive-tar.o shallow.o utf8.o \
-	convert.o attr.o decorate.o progress.o
+	convert.o attr.o decorate.o progress.o mailmap.o
 
 BUILTIN_OBJS = \
 	builtin-add.o \
@@ -953,6 +958,10 @@ endif
 
 ### Testing rules
 
+TEST_PROGRAMS = test-chmtime$X test-genrandom$X
+
+all: $(TEST_PROGRAMS)
+
 # GNU make supports exporting all variables by "export" without parameters.
 # However, the environment gets quite big, and some programs have problems
 # with that.
@@ -960,7 +969,7 @@ endif
 export NO_SYMLINKS
 export NO_SVN_TESTS
 
-test: all test-chmtime$X test-genrandom$X
+test: all
 	$(MAKE) -C t/ all
 
 test-date$X: test-date.c date.o ctype.o

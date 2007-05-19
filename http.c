@@ -300,6 +300,7 @@ void http_cleanup(void)
 	curl_global_cleanup();
 
 	curl_slist_free_all(pragma_header);
+        pragma_header = NULL;
 }
 
 struct active_request_slot *get_active_slot(void)

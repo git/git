@@ -29,6 +29,10 @@ in a coherent way to git enlightenment ;-).
 The COMMAND is either a name of a Git command (see below) or an alias
 as defined in the configuration file (see gitlink:git-config[1]).
 
+Formatted and hyperlinked version of the latest git
+documentation can be viewed at
+`http://www.kernel.org/pub/software/scm/git/docs/`.
+
 ifdef::stalenotes[]
 [NOTE]
 ============
@@ -344,6 +348,8 @@ git Commits
 'GIT_AUTHOR_DATE'::
 'GIT_COMMITTER_NAME'::
 'GIT_COMMITTER_EMAIL'::
+'GIT_COMMITTER_DATE'::
+'EMAIL'::
 	see gitlink:git-commit-tree[1]
 
 git Diffs

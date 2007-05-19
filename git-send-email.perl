@@ -77,6 +77,10 @@ Options:
    --quiet	  Make git-send-email less verbose.  One line per email
                   should be all that is output.
 
+   --dry-run	  Do everything except actually send the emails.
+
+   --envelope-sender	Specify the envelope sender used to send the emails.
+
 EOT
 	exit(1);
 }
@@ -137,6 +141,7 @@ my (@to,@cc,@initial_cc,@bcclist,@xh,
 my ($chain_reply_to, $quiet, $suppress_from, $no_signed_off_cc,
 	$dry_run) = (1, 0, 0, 0, 0);
 my $smtp_server;
+my $envelope_sender;
 
 # Example reply to:
 #$initial_reply_to = ''; #<20050203173208.GA23964@foobar.com>';
@@ -175,6 +180,7 @@ my $rc = GetOptions("from=s" => \$from,
 		    "suppress-from" => \$suppress_from,
 		    "no-signed-off-cc|no-signed-off-by-cc" => \$no_signed_off_cc,
 		    "dry-run" => \$dry_run,
+		    "envelope-sender=s" => \$envelope_sender,
 	 );
 
 unless ($rc) {
@@ -268,6 +274,7 @@ sub expand_aliases {
 }
 
 @to = expand_aliases(@to);
+@to = (map { sanitize_address_rfc822($_) } @to);
 @initial_cc = expand_aliases(@initial_cc);
 @bcclist = expand_aliases(@bcclist);
 
@@ -377,7 +384,7 @@ if (@files) {
 }
 
 # Variables we set as part of the loop over files
-our ($message_id, $cc, %mail, $subject, $reply_to, $references, $message);
+our ($message_id, %mail, $subject, $reply_to, $references, $message);
 
 sub extract_valid_address {
 	my $address = shift;
@@ -418,7 +425,6 @@ sub make_message_id
 
 
 
-$cc = "";
 $time = time - scalar $#files;
 
 sub unquote_rfc2047 {
@@ -430,26 +436,37 @@ sub unquote_rfc2047 {
 	return "$_";
 }
 
+# If an address contains a . in the name portion, the name must be quoted.
+sub sanitize_address_rfc822
+{
+	my ($recipient) = @_;
+	my ($recipient_name) = ($recipient =~ /^(.*?)\s+</);
+	if ($recipient_name && $recipient_name =~ /\./ && $recipient_name !~ /^".*"$/) {
+		my ($name, $addr) = ($recipient =~ /^(.*?)(\s+<.*)/);
+		$recipient = "\"$name\"$addr";
+	}
+	return $recipient;
+}
+
 sub send_message
 {
 	my @recipients = unique_email_list(@to);
+	@cc = (map { sanitize_address_rfc822($_) } @cc);
 	my $to = join (",\n\t", @recipients);
 	@recipients = unique_email_list(@recipients,@cc,@bcclist);
+	@recipients = (map { extract_valid_address($_) } @recipients);
 	my $date = format_2822_time($time++);
 	my $gitversion = '@@GIT_VERSION@@';
 	if ($gitversion =~ m/..GIT_VERSION../) {
 	    $gitversion = Git::version();
 	}
 
-	my ($author_name) = ($from =~ /^(.*?)\s+</);
-	if ($author_name && $author_name =~ /\./ && $author_name !~ /^".*"$/) {
-		my ($name, $addr) = ($from =~ /^(.*?)(\s+<.*)/);
-		$from = "\"$name\"$addr";
-	}
+	my $cc = join(", ", unique_email_list(@cc));
 	my $ccline = "";
 	if ($cc ne '') {
 		$ccline = "\nCc: $cc";
 	}
+	$from = sanitize_address_rfc822($from);
 	my $header = "From: $from
 To: $to${ccline}
 Subject: $subject
@@ -466,22 +483,27 @@ X-Mailer: git-send-email $gitversion
 		$header .= join("\n", @xh) . "\n";
 	}
 
+	my @sendmail_parameters = ('-i', @recipients);
+	my $raw_from = $from;
+	$raw_from = $envelope_sender if (defined $envelope_sender);
+	$raw_from = extract_valid_address($raw_from);
+	unshift (@sendmail_parameters,
+			'-f', $raw_from) if(defined $envelope_sender);
+
 	if ($dry_run) {
 		# We don't want to send the email.
 	} elsif ($smtp_server =~ m#^/#) {
 		my $pid = open my $sm, '|-';
 		defined $pid or die $!;
 		if (!$pid) {
-			exec($smtp_server,'-i',
-			     map { extract_valid_address($_) }
-			     @recipients) or die $!;
+			exec($smtp_server, @sendmail_parameters) or die $!;
 		}
 		print $sm "$header\n$message";
 		close $sm or die $?;
 	} else {
 		require Net::SMTP;
 		$smtp ||= Net::SMTP->new( $smtp_server );
-		$smtp->mail( $from ) or die $smtp->message;
+		$smtp->mail( $raw_from ) or die $smtp->message;
 		$smtp->to( @recipients ) or die $smtp->message;
 		$smtp->data or die $smtp->message;
 		$smtp->datasend("$header\n$message") or die $smtp->message;
@@ -489,13 +511,15 @@ X-Mailer: git-send-email $gitversion
 		$smtp->ok or die "Failed to send $subject\n".$smtp->message;
 	}
 	if ($quiet) {
-		printf "Sent %s\n", $subject;
+		printf (($dry_run ? "Dry-" : "")."Sent %s\n", $subject);
 	} else {
-		print "OK. Log says:\nDate: $date\n";
-		if ($smtp) {
+		print (($dry_run ? "Dry-" : "")."OK. Log says:\nDate: $date\n");
+		if ($smtp_server !~ m#^/#) {
 			print "Server: $smtp_server\n";
+			print "MAIL FROM:<$raw_from>\n";
+			print "RCPT TO:".join(',',(map { "<$_>" } @recipients))."\n";
 		} else {
-			print "Sendmail: $smtp_server\n";
+			print "Sendmail: $smtp_server ".join(' ',@sendmail_parameters)."\n";
 		}
 		print "From: $from\nSubject: $subject\nCc: $cc\nTo: $to\n\n";
 		if ($smtp) {
@@ -590,7 +614,6 @@ foreach my $t (@files) {
 		$message = "From: $author_not_sender\n\n$message";
 	}
 
-	$cc = join(", ", unique_email_list(@cc));
 
 	send_message();
 

@@ -16,9 +16,8 @@
  */
 static void init_buffer(char **bufp, unsigned int *sizep)
 {
-	char *buf = xmalloc(BLOCKING);
+	*bufp = xmalloc(BLOCKING);
 	*sizep = 0;
-	*bufp = buf;
 }
 
 static void add_buffer(char **bufp, unsigned int *sizep, const char *fmt, ...)

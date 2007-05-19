@@ -171,13 +171,13 @@ extern size_t gitstrlcpy(char *, const char *, size_t);
 extern uintmax_t gitstrtoumax(const char *, char **, int);
 #endif
 
-extern void release_pack_memory(size_t);
+extern void release_pack_memory(size_t, int);
 
 static inline char* xstrdup(const char *str)
 {
 	char *ret = strdup(str);
 	if (!ret) {
-		release_pack_memory(strlen(str) + 1);
+		release_pack_memory(strlen(str) + 1, -1);
 		ret = strdup(str);
 		if (!ret)
 			die("Out of memory, strdup failed");
@@ -191,7 +191,7 @@ static inline void *xmalloc(size_t size)
 	if (!ret && !size)
 		ret = malloc(1);
 	if (!ret) {
-		release_pack_memory(size);
+		release_pack_memory(size, -1);
 		ret = malloc(size);
 		if (!ret && !size)
 			ret = malloc(1);
@@ -210,7 +210,7 @@ static inline void *xrealloc(void *ptr, size_t size)
 	if (!ret && !size)
 		ret = realloc(ptr, 1);
 	if (!ret) {
-		release_pack_memory(size);
+		release_pack_memory(size, -1);
 		ret = realloc(ptr, size);
 		if (!ret && !size)
 			ret = realloc(ptr, 1);
@@ -226,7 +226,7 @@ static inline void *xcalloc(size_t nmemb, size_t size)
 	if (!ret && (!nmemb || !size))
 		ret = calloc(1, 1);
 	if (!ret) {
-		release_pack_memory(nmemb * size);
+		release_pack_memory(nmemb * size, -1);
 		ret = calloc(nmemb, size);
 		if (!ret && (!nmemb || !size))
 			ret = calloc(1, 1);
@@ -243,7 +243,7 @@ static inline void *xmmap(void *start, size_t length,
 	if (ret == MAP_FAILED) {
 		if (!length)
 			return NULL;
-		release_pack_memory(length);
+		release_pack_memory(length, fd);
 		ret = mmap(start, length, prot, flags, fd, offset);
 		if (ret == MAP_FAILED)
 			die("Out of memory? mmap failed: %s", strerror(errno));

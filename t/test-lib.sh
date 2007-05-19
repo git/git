@@ -16,6 +16,7 @@ unset AUTHOR_EMAIL
 unset AUTHOR_NAME
 unset COMMIT_AUTHOR_EMAIL
 unset COMMIT_AUTHOR_NAME
+unset EMAIL
 unset GIT_ALTERNATE_OBJECT_DIRECTORIES
 unset GIT_AUTHOR_DATE
 GIT_AUTHOR_EMAIL=author@example.com
@@ -35,6 +36,10 @@ export GIT_MERGE_VERBOSITY
 export GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME
 export GIT_COMMITTER_EMAIL GIT_COMMITTER_NAME
 export EDITOR VISUAL
+
+# Protect ourselves from common misconfiguration to export
+# CDPATH into the environment
+unset CDPATH
 
 case $(echo $GIT_TRACE |tr "[A-Z]" "[a-z]") in
 	1|2|true)

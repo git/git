@@ -1,5 +1,5 @@
-#ifndef __progress_h__
-#define __progress_h__
+#ifndef PROGRESS_H
+#define PROGRESS_H
 
 struct progress {
 	const char *prefix;

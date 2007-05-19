@@ -63,8 +63,8 @@ struct rev_info {
 
 	/* Format info */
 	unsigned int	shown_one:1,
-			abbrev_commit:1,
-			relative_date:1;
+			abbrev_commit:1;
+	enum date_mode date_mode;
 
 	const char **ignore_packed; /* pretend objects in these are unpacked */
 	int num_ignore_packed;
@@ -131,5 +131,6 @@ extern void add_object(struct object *obj,
 		       const char *name);
 
 extern void add_pending_object(struct rev_info *revs, struct object *obj, const char *name);
+extern void add_pending_object_with_mode(struct rev_info *revs, struct object *obj, const char *name, unsigned mode);
 
 #endif

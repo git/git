@@ -267,7 +267,7 @@ void show_log(struct rev_info *opt, const char *sep)
 		if (opt->reflog_info) {
 			show_reflog_message(opt->reflog_info,
 				    opt->commit_format == CMIT_FMT_ONELINE,
-				    opt->relative_date);
+				    opt->date_mode);
 			if (opt->commit_format == CMIT_FMT_ONELINE) {
 				printf("%s", sep);
 				return;
@@ -280,7 +280,7 @@ void show_log(struct rev_info *opt, const char *sep)
 	 */
 	len = pretty_print_commit(opt->commit_format, commit, ~0u, this_header,
 				  sizeof(this_header), abbrev, subject,
-				  extra_headers, opt->relative_date);
+				  extra_headers, opt->date_mode);
 
 	if (opt->add_signoff)
 		len = append_signoff(this_header, sizeof(this_header), len,

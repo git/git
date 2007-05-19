@@ -1,5 +1,7 @@
 Checklist (and a short version for the impatient):
 
+	Commits:
+
 	- make commits of logical units
 	- check for unnecessary whitespace with "git diff --check"
 	  before committing
@@ -12,8 +14,14 @@ Checklist (and a short version for the impatient):
 	  commit message (or just use the option "-s" when
 	  committing) to confirm that you agree to the Developer's
 	  Certificate of Origin
-	- do not PGP sign your patch
+
+	Patch:
+
 	- use "git format-patch -M" to create the patch
+	- send your patch to <git@vger.kernel.org>. If you use
+	  git-send-email(1), please test it first by sending
+	  email to yourself.
+	- do not PGP sign your patch
 	- do not attach your patch, but read in the mail
 	  body, unless you cannot teach your mailer to
 	  leave the formatting of the patch alone.
