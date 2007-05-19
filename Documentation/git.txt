@@ -35,44 +35,35 @@ documentation can be viewed at
 ifdef::stalenotes[]
 [NOTE]
 ============
-You are reading the documentation for the latest version of git.
-Documentation for older releases are available here:
 
-* link:RelNotes-1.5.1.txt[release notes for 1.5.1]
+You are reading the documentation for the latest (possibly
+unreleased) version of git, that is available from 'master'
+branch of the `git.git` repository.
+Documentation for older releases are available here:
 
 * link:v1.5.1.5/git.html[documentation for release 1.5.1.5]
 
-* link:RelNotes-1.5.1.5.txt[release notes for 1.5.1.5]
+* release notes for link:RelNotes-1.5.1.5.txt[1.5.1.5],
+  link:RelNotes-1.5.1.4.txt[1.5.1.4],
+  link:RelNotes-1.5.1.3.txt[1.5.1.3],
+  link:RelNotes-1.5.1.2.txt[1.5.1.2],
+  link:RelNotes-1.5.1.1.txt[1.5.1.1],
+  link:RelNotes-1.5.1.txt[1.5.1].
 
-* link:RelNotes-1.5.1.4.txt[release notes for 1.5.1.4]
+* link:v1.5.0.7/git.html[documentation for release 1.5.0.7]
 
-* link:RelNotes-1.5.1.3.txt[release notes for 1.5.1.3]
+* release notes for link:RelNotes-1.5.0.7.txt[1.5.0.7],
+  link:RelNotes-1.5.0.6.txt[1.5.0.6],
+  link:RelNotes-1.5.0.5.txt[1.5.0.5],
+  link:RelNotes-1.5.0.3.txt[1.5.0.3],
+  link:RelNotes-1.5.0.2.txt[1.5.0.2],
+  link:RelNotes-1.5.0.1.txt[1.5.0.1],
+  link:RelNotes-1.5.0.txt[1.5.0].
 
-* link:RelNotes-1.5.1.2.txt[release notes for 1.5.1.2]
-
-* link:RelNotes-1.5.1.1.txt[release notes for 1.5.1.1]
-
-* link:RelNotes-1.5.0.7.txt[release notes for 1.5.0.7]
-
-* link:RelNotes-1.5.0.6.txt[release notes for 1.5.0.6]
-
-* link:RelNotes-1.5.0.5.txt[release notes for 1.5.0.5]
-
-* link:RelNotes-1.5.0.3.txt[release notes for 1.5.0.3]
-
-* link:RelNotes-1.5.0.2.txt[release notes for 1.5.0.2]
-
-* link:RelNotes-1.5.0.1.txt[release notes for 1.5.0.1]
-
-* link:RelNotes-1.5.0.txt[release notes for 1.5.0]
-
-* link:v1.4.4.4/git.html[documentation for release 1.4.4.4]
-
-* link:v1.3.3/git.html[documentation for release 1.3.3]
-
-* link:v1.2.6/git.html[documentation for release 1.2.6]
-
-* link:v1.0.13/git.html[documentation for release 1.0.13]
+* documentation for release link:v1.4.4.4/git.html[1.4.4.4],
+  link:v1.3.3/git.html[1.3.3],
+  link:v1.2.6/git.html[1.2.6],
+  link:v1.0.13/git.html[1.0.13].
 
 ============
 
