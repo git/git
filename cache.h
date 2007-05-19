@@ -128,7 +128,6 @@ static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned in
 extern struct cache_entry **active_cache;
 extern unsigned int active_nr, active_alloc, active_cache_changed;
 extern struct cache_tree *active_cache_tree;
-extern int cache_errno;
 
 enum object_type {
 	OBJ_BAD = -1,
@@ -188,7 +187,7 @@ extern int add_cache_entry(struct cache_entry *ce, int option);
 extern struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
 extern int remove_cache_entry_at(int pos);
 extern int remove_file_from_cache(const char *path);
-extern int add_file_to_index(const char *path, int verbose);
+extern int add_file_to_cache(const char *path, int verbose);
 extern int ce_same_name(struct cache_entry *a, struct cache_entry *b);
 extern int ce_match_stat(struct cache_entry *ce, struct stat *st, int);
 extern int ce_modified(struct cache_entry *ce, struct stat *st, int);
@@ -429,7 +428,7 @@ extern unsigned char* use_pack(struct packed_git *, struct pack_window **, off_t
 extern void unuse_pack(struct pack_window **);
 extern struct packed_git *add_packed_git(const char *, int, int);
 extern uint32_t num_packed_objects(const struct packed_git *p);
-extern int nth_packed_object_sha1(const struct packed_git *, uint32_t, unsigned char*);
+extern const unsigned char *nth_packed_object_sha1(const struct packed_git *, uint32_t);
 extern off_t find_pack_entry_one(const unsigned char *, struct packed_git *);
 extern void *unpack_entry(struct packed_git *, off_t, enum object_type *, unsigned long *);
 extern unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);

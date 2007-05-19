@@ -273,7 +273,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 
 		for (i = 0; i < added.nr; i++) {
 			const char *path = added.items[i].path;
-			add_file_to_index(path, verbose);
+			add_file_to_cache(path, verbose);
 		}
 
 		for (i = 0; i < deleted.nr; i++) {

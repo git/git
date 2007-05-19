@@ -222,7 +222,7 @@ static const unsigned char *find_packed_object_name(struct packed_git *p,
 						    off_t ofs)
 {
 	struct revindex_entry *entry = find_packed_object(p, ofs);
-	return ((unsigned char *)p->index_data) + 4 * 256 + 24 * entry->nr + 4;
+	return nth_packed_object_sha1(p, entry->nr);
 }
 
 static void *delta_against(void *buf, unsigned long size, struct object_entry *entry)

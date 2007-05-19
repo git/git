@@ -75,6 +75,14 @@ GIT_ARG_SET_PATH(shell)
 # Define PERL_PATH to provide path to Perl.
 GIT_ARG_SET_PATH(perl)
 #
+# Declare the with-tcltk/without-tcltk options.
+AC_ARG_WITH(tcltk,
+AS_HELP_STRING([--with-tcltk],[use Tcl/Tk GUI (default is YES)])
+AS_HELP_STRING([],[ARG is the full path to the Tcl/Tk interpreter.])
+AS_HELP_STRING([],[Bare --with-tcltk will make the GUI part only if])
+AS_HELP_STRING([],[Tcl/Tk interpreter will be found in a system.]),\
+GIT_PARSE_WITH(tcltk))
+#
 
 
 ## Checks for programs.
@@ -84,6 +92,22 @@ AC_PROG_CC([cc gcc])
 #AC_PROG_INSTALL		# needs install-sh or install.sh in sources
 AC_CHECK_TOOL(AR, ar, :)
 AC_CHECK_PROGS(TAR, [gtar tar])
+# TCLTK_PATH will be set to some value if we want Tcl/Tk
+# or will be empty otherwise.
+if test -z "$NO_TCLTK"; then
+  if test "$with_tcltk" = ""; then
+  # No Tcl/Tk switches given. Do not check for Tcl/Tk, use bare 'wish'.
+    TCLTK_PATH=wish
+    AC_SUBST(TCLTK_PATH)
+  elif test "$with_tcltk" = "yes"; then
+  # Tcl/Tk check requested.
+    AC_CHECK_PROGS(TCLTK_PATH, [wish], )
+  else
+    AC_MSG_RESULT([Using Tcl/Tk interpreter $with_tcltk])
+    TCLTK_PATH="$with_tcltk"
+    AC_SUBST(TCLTK_PATH)
+  fi
+fi
 
 ## Checks for libraries.
 AC_MSG_NOTICE([CHECKS for libraries])

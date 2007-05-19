@@ -918,8 +918,8 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 	}
 
 	if (!(config_file = fopen(config_filename, "rb"))) {
-		ret = error("Could not open config file!");
-		goto out;
+		/* no config file means nothing to rename, no error */
+		goto unlock_and_out;
 	}
 
 	while (fgets(buf, sizeof(buf), config_file)) {
@@ -953,6 +953,7 @@ int git_config_rename_section(const char *old_name, const char *new_name)
 		}
 	}
 	fclose(config_file);
+ unlock_and_out:
 	if (close(out_fd) || commit_lock_file(lock) < 0)
 			ret = error("Cannot commit config file!");
  out:

@@ -83,6 +83,15 @@ test_expect_failure \
          git-branch r &&
          git-branch -m q r/q'
 
+mv .git/config .git/config-saved
+
+test_expect_success 'git branch -m q Q without config should succeed' '
+	git-branch -m q Q &&
+	git-branch -m Q q
+'
+
+mv .git/config-saved .git/config
+
 git-config branch.s/s.dummy Hello
 
 test_expect_success \

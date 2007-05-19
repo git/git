@@ -11,8 +11,8 @@ emacsdir = $(prefix)/share/emacs/site-lisp
 all: $(ELC)
 
 install: all
-	$(INSTALL) -d $(emacsdir)
-	$(INSTALL_ELC) $(ELC) $(emacsdir)
+	$(INSTALL) -d $(DESTDIR)$(emacsdir)
+	$(INSTALL_ELC) $(ELC) $(DESTDIR)$(emacsdir)
 
 %.elc: %.el
 	$(EMACS) -batch -f batch-byte-compile $<

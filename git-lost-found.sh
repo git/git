@@ -12,7 +12,7 @@ fi
 laf="$GIT_DIR/lost-found"
 rm -fr "$laf" && mkdir -p "$laf/commit" "$laf/other" || exit
 
-git fsck --full |
+git fsck --full --no-reflogs |
 while read dangling type sha1
 do
 	case "$dangling" in

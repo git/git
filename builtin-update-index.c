@@ -60,7 +60,7 @@ static int mark_valid(const char *path)
 	return -1;
 }
 
-static int add_file_to_cache(const char *path)
+static int process_file(const char *path)
 {
 	int size, namelen, option, status;
 	struct cache_entry *ce;
@@ -210,7 +210,7 @@ static void update_one(const char *path, const char *prefix, int prefix_length)
 		report("remove '%s'", path);
 		goto free_return;
 	}
-	if (add_file_to_cache(p))
+	if (process_file(p))
 		die("Unable to process file %s", path);
 	report("add '%s'", path);
  free_return:

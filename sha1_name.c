@@ -71,7 +71,7 @@ static int match_sha(unsigned len, const unsigned char *a, const unsigned char *
 static int find_short_packed_object(int len, const unsigned char *match, unsigned char *sha1)
 {
 	struct packed_git *p;
-	unsigned char found_sha1[20];
+	const unsigned char *found_sha1 = NULL;
 	int found = 0;
 
 	prepare_packed_git();
@@ -80,10 +80,10 @@ static int find_short_packed_object(int len, const unsigned char *match, unsigne
 		uint32_t first = 0, last = num;
 		while (first < last) {
 			uint32_t mid = (first + last) / 2;
-			unsigned char now[20];
+			const unsigned char *now;
 			int cmp;
 
-			nth_packed_object_sha1(p, mid, now);
+			now = nth_packed_object_sha1(p, mid);
 			cmp = hashcmp(match, now);
 			if (!cmp) {
 				first = mid;
@@ -96,14 +96,14 @@ static int find_short_packed_object(int len, const unsigned char *match, unsigne
 			last = mid;
 		}
 		if (first < num) {
-			unsigned char now[20], next[20];
-			nth_packed_object_sha1(p, first, now);
+			const unsigned char *now, *next;
+		       now = nth_packed_object_sha1(p, first);
 			if (match_sha(len, match, now)) {
-				if (nth_packed_object_sha1(p, first+1, next) ||
-				    !match_sha(len, match, next)) {
+				next = nth_packed_object_sha1(p, first+1);
+			       if (!next|| !match_sha(len, match, next)) {
 					/* unique within this pack */
 					if (!found) {
-						hashcpy(found_sha1, now);
+						found_sha1 = now;
 						found++;
 					}
 					else if (hashcmp(found_sha1, now)) {
