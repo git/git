@@ -297,9 +297,9 @@ sub update_remote {
 	} elsif ($name eq 'default') {
 		undef @remotes;
 		for (sort keys %$remote) {
-			my $do_fetch = $git->config_boolean("remote." . $_ .
+			my $do_fetch = $git->config_bool("remote." . $_ .
 						    ".skipDefaultUpdate");
-			if (!defined($do_fetch) || $do_fetch ne "true") {
+			unless ($do_fetch) {
 				push @remotes, $_;
 			}
 		}

@@ -163,6 +163,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %{_bindir}/git-gui
 %{_bindir}/git-citool
+%{_datadir}/git-gui/
 # Not Yet...
 # %{!?_without_docs: %{_mandir}/man1/git-gui.1}
 # %{!?_without_docs: %doc Documentation/git-gui.html}
@@ -183,9 +184,12 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %{_datadir}/git-core/
 %doc README COPYING Documentation/*.txt
-%{!?_without_docs: %doc Documentation/*.html }
+%{!?_without_docs: %doc Documentation/*.html Documentation/howto}
 
 %changelog
+* Tue May 8 2007 Quy Tonthat <qtonthat@gmail.com>
+- Added howto files
+
 * Tue Mar 27 2007 Eygene Ryabinkin <rea-git@codelabs.ru>
 - Added the git-p4 package: Perforce import stuff.
 

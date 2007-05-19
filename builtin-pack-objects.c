@@ -64,6 +64,7 @@ static char tmpname[PATH_MAX];
 static unsigned char pack_file_sha1[20];
 static int progress = 1;
 static int window = 10;
+static int depth = 50;
 static int pack_to_stdout;
 static int num_preferred_base;
 static struct progress progress_state;
@@ -559,6 +560,12 @@ static off_t write_one(struct sha1file *f,
 	return offset + size;
 }
 
+static int open_object_dir_tmp(const char *path)
+{
+    snprintf(tmpname, sizeof(tmpname), "%s/%s", get_object_directory(), path);
+    return mkstemp(tmpname);
+}
+
 static off_t write_pack_file(void)
 {
 	uint32_t i;
@@ -571,9 +578,7 @@ static off_t write_pack_file(void)
 		f = sha1fd(1, "<stdout>");
 		do_progress >>= 1;
 	} else {
-		int fd;
-		snprintf(tmpname, sizeof(tmpname), "tmp_pack_XXXXXX");
-		fd = mkstemp(tmpname);
+		int fd = open_object_dir_tmp("tmp_pack_XXXXXX");
 		if (fd < 0)
 			die("unable to create %s: %s\n", tmpname, strerror(errno));
 		pack_tmp_name = xstrdup(tmpname);
@@ -623,10 +628,8 @@ static void write_index_file(off_t last_obj_offset, unsigned char *sha1)
 	uint32_t array[256];
 	uint32_t i, index_version;
 	SHA_CTX ctx;
-	int fd;
 
-	snprintf(tmpname, sizeof(tmpname), "tmp_idx_XXXXXX");
-	fd = mkstemp(tmpname);
+	int fd = open_object_dir_tmp("tmp_idx_XXXXXX");
 	if (fd < 0)
 		die("unable to create %s: %s\n", tmpname, strerror(errno));
 	idx_tmp_name = xstrdup(tmpname);
@@ -1487,6 +1490,10 @@ static int git_pack_config(const char *k, const char *v)
 		window = git_config_int(k, v);
 		return 0;
 	}
+	if(!strcmp(k, "pack.depth")) {
+		depth = git_config_int(k, v);
+		return 0;
+	}
 	return git_default_config(k, v);
 }
 
@@ -1582,7 +1589,6 @@ static int adjust_perm(const char *path, mode_t mode)
 
 int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 {
-	int depth = 10;
 	int use_internal_rev_list = 0;
 	int thin = 0;
 	uint32_t i;

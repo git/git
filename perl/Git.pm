@@ -516,9 +516,11 @@ sub config {
 }
 
 
-=item config_boolean ( VARIABLE )
+=item config_bool ( VARIABLE )
 
-Retrieve the boolean configuration C<VARIABLE>.
+Retrieve the bool configuration C<VARIABLE>. The return value
+is usable as a boolean in perl (and C<undef> if it's not defined,
+of course).
 
 Must be called on a repository instance.
 
@@ -526,14 +528,16 @@ This currently wraps command('config') so it is not so fast.
 
 =cut
 
-sub config_boolean {
+sub config_bool {
 	my ($self, $var) = @_;
 	$self->repo_path()
 		or throw Error::Simple("not a repository");
 
 	try {
-		return $self->command_oneline('config', '--bool', '--get',
+		my $val = $self->command_oneline('config', '--bool', '--get',
 					      $var);
+		return undef unless defined $val;
+		return $val eq 'true';
 	} catch Git::Error::Command with {
 		my $E = shift;
 		if ($E->value() == 1) {

@@ -448,6 +448,7 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 
 		while ((de = readdir(fdir)) != NULL) {
 			int len;
+			int exclude;
 
 			if ((de->d_name[0] == '.') &&
 			    (de->d_name[1] == 0 ||
@@ -461,7 +462,9 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 			memcpy(fullname + baselen, de->d_name, len+1);
 			if (simplify_away(fullname, baselen + len, simplify))
 				continue;
-			if (excluded(dir, fullname) != dir->show_ignored) {
+
+			exclude = excluded(dir, fullname);
+			if (exclude != dir->show_ignored) {
 				if (!dir->show_ignored || DTYPE(de) != DT_DIR) {
 					continue;
 				}
@@ -484,6 +487,8 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 				len++;
 				switch (treat_directory(dir, fullname, baselen + len, simplify)) {
 				case show_directory:
+					if (exclude != dir->show_ignored)
+						continue;
 					break;
 				case recurse_into_directory:
 					contents += read_directory_recursive(dir,

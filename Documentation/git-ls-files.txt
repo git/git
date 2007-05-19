@@ -42,8 +42,8 @@ OPTIONS
 	Show other files in the output
 
 -i|--ignored::
-	Show ignored files in the output
-	Note the this also reverses any exclude list present.
+	Show ignored files in the output.
+	Note that this also reverses any exclude list present.
 
 -s|--stage::
 	Show stage files in the output
