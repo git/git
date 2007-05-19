@@ -921,6 +921,22 @@ echo "git diff --stat --summary -M v$last v$new > ../diffstat-$new"
 and then he just cut-and-pastes the output commands after verifying that
 they look OK.
 
+Finding commits referencing a file with given content
+-----------------------------------------------------
+
+Somebody hands you a copy of a file, and asks which commits modified a
+file such that it contained the given content either before or after the
+commit.  You can find out with this:
+
+-------------------------------------------------
+$  git log --raw -r --abbrev=40 --pretty=oneline -- filename |
+	grep -B 1 `git hash-object filename`
+-------------------------------------------------
+
+Figuring out why this works is left as an exercise to the (advanced)
+student.  The gitlink:git-log[1], gitlink:git-diff-tree[1], and
+gitlink:git-hash-object[1] man pages may prove helpful.
+
 [[Developing-with-git]]
 Developing with git
 ===================
