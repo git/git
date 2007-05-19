@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "cache.h"
+#include "attr.h"
 #include "object.h"
 #include "blob.h"
 #include "commit.h"
@@ -40,9 +41,10 @@ struct object_entry {
 	enum object_type in_pack_type;	/* could be delta */
 	unsigned char in_pack_header_size;
 	unsigned char preferred_base; /* we do not pack this, but is available
-				       * to be used as the base objectto delta
+				       * to be used as the base object to delta
 				       * objects against.
 				       */
+	unsigned char no_try_delta;
 };
 
 /*
@@ -739,6 +741,28 @@ static unsigned name_hash(const char *name)
 	return hash;
 }
 
+static void setup_delta_attr_check(struct git_attr_check *check)
+{
+	static struct git_attr *attr_delta;
+
+	if (!attr_delta)
+		attr_delta = git_attr("delta", 5);
+
+	check[0].attr = attr_delta;
+}
+
+static int no_try_delta(const char *path)
+{
+	struct git_attr_check check[1];
+
+	setup_delta_attr_check(check);
+	if (git_checkattr(path, ARRAY_SIZE(check), check))
+		return 0;
+	if (ATTR_FALSE(check->value))
+		return 1;
+	return 0;
+}
+
 static int add_object_entry(const unsigned char *sha1, enum object_type type,
 			    const char *name, int exclude)
 {
@@ -802,6 +826,9 @@ static int add_object_entry(const unsigned char *sha1, enum object_type type,
 
 	if (progress)
 		display_progress(&progress_state, nr_objects);
+
+	if (name && no_try_delta(name))
+		entry->no_try_delta = 1;
 
 	return 1;
 }
@@ -1351,6 +1378,10 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 
 		if (entry->size < 50)
 			continue;
+
+		if (entry->no_try_delta)
+			continue;
+
 		free_delta_index(n->index);
 		n->index = NULL;
 		free(n->data);
@@ -1378,6 +1409,8 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 			m = array + other_idx;
 			if (!m->entry)
 				break;
+			if (m->entry->no_try_delta)
+				continue;
 			if (try_delta(n, m, max_depth) < 0)
 				break;
 		}
