@@ -84,6 +84,26 @@ test_expect_success \
     'When the rm in "git-rm -f" fails, it should not remove the file from the index' \
     'git-ls-files --error-unmatch baz'
 
+test_expect_success '"rm" command printed' '
+	echo frotz > test-file &&
+	git add test-file &&
+	git commit -m "add file for rm test" &&
+	git rm test-file > rm-output &&
+	test `egrep "^rm " rm-output | wc -l` = 1 &&
+	rm -f test-file rm-output &&
+	git commit -m "remove file from rm test"
+'
+
+test_expect_success '"rm" command suppressed with --quiet' '
+	echo frotz > test-file &&
+	git add test-file &&
+	git commit -m "add file for rm --quiet test" &&
+	git rm --quiet test-file > rm-output &&
+	test `wc -l < rm-output` = 0 &&
+	rm -f test-file rm-output &&
+	git commit -m "remove file from rm --quiet test"
+'
+
 # Now, failure cases.
 test_expect_success 'Re-add foo and baz' '
 	git add foo baz &&
@@ -152,6 +172,10 @@ test_expect_success 'Recursive with -r -f' '
 	git rm -f -r frotz &&
 	! test -f frotz/nitfol &&
 	! test -d frotz
+'
+
+test_expect_failure 'Remove nonexistent file returns nonzero exit status' '
+	git rm nonexistent
 '
 
 test_done

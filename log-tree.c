@@ -165,14 +165,20 @@ void show_log(struct rev_info *opt, const char *sep)
 		if (opt->total > 0) {
 			static char buffer[64];
 			snprintf(buffer, sizeof(buffer),
-					"Subject: [PATCH %0*d/%d] ",
+					"Subject: [%s %0*d/%d] ",
+					opt->subject_prefix,
 					digits_in_number(opt->total),
 					opt->nr, opt->total);
 			subject = buffer;
-		} else if (opt->total == 0)
-			subject = "Subject: [PATCH] ";
-		else
+		} else if (opt->total == 0) {
+			static char buffer[256];
+			snprintf(buffer, sizeof(buffer),
+					"Subject: [%s] ",
+					opt->subject_prefix);
+			subject = buffer;
+		} else {
 			subject = "Subject: ";
+		}
 
 		printf("From %s Mon Sep 17 00:00:00 2001\n", sha1);
 		if (opt->message_id)

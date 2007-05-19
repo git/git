@@ -2,7 +2,9 @@
 #
 # Copyright (c) 2007 Christian Couder
 #
-test_description='Tests git-bisect run functionality'
+test_description='Tests git-bisect functionality'
+
+exec </dev/null
 
 . ./test-lib.sh
 
@@ -37,11 +39,40 @@ test_expect_success \
      HASH3=$(git rev-list HEAD | head -2 | tail -1) &&
      HASH4=$(git rev-list HEAD | head -1)'
 
+test_expect_success 'bisect starts with only one bad' '
+	git bisect reset &&
+	git bisect start &&
+	git bisect bad $HASH4 &&
+	git bisect next
+'
+
+test_expect_success 'bisect starts with only one good' '
+	git bisect reset &&
+	git bisect start &&
+	git bisect good $HASH1 || return 1
+
+	if git bisect next
+	then
+		echo Oops, should have failed.
+		false
+	else
+		:
+	fi
+'
+
+test_expect_success 'bisect start with one bad and good' '
+	git bisect reset &&
+	git bisect start &&
+	git bisect good $HASH1 &&
+	git bisect bad $HASH4 &&
+	git bisect next
+'
+
 # We want to automatically find the commit that
 # introduced "Another" into hello.
 test_expect_success \
-    'git bisect run simple case' \
-    'echo "#!/bin/sh" > test_script.sh &&
+    '"git bisect run" simple case' \
+    'echo "#"\!"/bin/sh" > test_script.sh &&
      echo "grep Another hello > /dev/null" >> test_script.sh &&
      echo "test \$? -ne 0" >> test_script.sh &&
      chmod +x test_script.sh &&
@@ -49,7 +80,21 @@ test_expect_success \
      git bisect good $HASH1 &&
      git bisect bad $HASH4 &&
      git bisect run ./test_script.sh > my_bisect_log.txt &&
-     grep "$HASH3 is first bad commit" my_bisect_log.txt'
+     grep "$HASH3 is first bad commit" my_bisect_log.txt &&
+     git bisect reset'
+
+# We want to automatically find the commit that
+# introduced "Ciao" into hello.
+test_expect_success \
+    '"git bisect run" with more complex "git bisect start"' \
+    'echo "#"\!"/bin/sh" > test_script.sh &&
+     echo "grep Ciao hello > /dev/null" >> test_script.sh &&
+     echo "test \$? -ne 0" >> test_script.sh &&
+     chmod +x test_script.sh &&
+     git bisect start $HASH4 $HASH1 &&
+     git bisect run ./test_script.sh > my_bisect_log.txt &&
+     grep "$HASH4 is first bad commit" my_bisect_log.txt &&
+     git bisect reset'
 
 #
 #

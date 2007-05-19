@@ -1,0 +1,67 @@
+-b::
+	Show blank SHA-1 for boundary commits.  This can also
+	be controlled via the `blame.blankboundary` config option.
+
+--root::
+	Do not treat root commits as boundaries.  This can also be
+	controlled via the `blame.showroot` config option.
+
+--show-stats::
+	Include additional statistics at the end of blame output.
+
+-L n,m::
+	Annotate only the specified line range (lines count from 1).
+
+-l::
+	Show long rev (Default: off).
+
+-t::
+	Show raw timestamp (Default: off).
+
+-S <revs-file>::
+	Use revs from revs-file instead of calling gitlink:git-rev-list[1].
+
+-p, --porcelain::
+	Show in a format designed for machine consumption.
+
+--incremental::
+	Show the result incrementally in a format designed for
+	machine consumption.
+
+--contents <file>::
+	When <rev> is not specified, the command annotates the
+	changes starting backwards from the working tree copy.
+	This flag makes the command pretend as if the working
+	tree copy has the contents of he named file (specify
+	`-` to make the command read from the standard input).
+
+-M|<num>|::
+	Detect moving lines in the file as well.  When a commit
+	moves a block of lines in a file (e.g. the original file
+	has A and then B, and the commit changes it to B and
+	then A), traditional 'blame' algorithm typically blames
+	the lines that were moved up (i.e. B) to the parent and
+	assigns blame to the lines that were moved down (i.e. A)
+	to the child commit.  With this option, both groups of lines
+	are blamed on the parent.
+
+	<num> is optional but it is the lower bound on the number of
+	alphanumeric characters that git must detect as moving
+	within a file for it to associate those lines with the parent
+	commit.
+
+-C|<num>|::
+	In addition to `-M`, detect lines copied from other
+	files that were modified in the same commit.  This is
+	useful when you reorganize your program and move code
+	around across files.  When this option is given twice,
+	the command looks for copies from all other files in the
+	parent for the commit that creates the file in addition.
+
+	<num> is optional but it is the lower bound on the number of
+	alphanumeric characters that git must detect as moving
+	between files for it to associate those lines with the parent
+	commit.
+
+-h, --help::
+	Show help message.

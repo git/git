@@ -212,6 +212,11 @@ struct lock_file {
 };
 extern int hold_lock_file_for_update(struct lock_file *, const char *path, int);
 extern int commit_lock_file(struct lock_file *);
+
+extern int hold_locked_index(struct lock_file *, int);
+extern int commit_locked_index(struct lock_file *);
+extern void set_alternate_index_output(const char *);
+
 extern void rollback_lock_file(struct lock_file *);
 extern int delete_ref(const char *, unsigned char *sha1);
 
@@ -468,8 +473,8 @@ extern int pager_in_use;
 extern int pager_use_color;
 
 /* base85 */
-int decode_85(char *dst, char *line, int linelen);
-void encode_85(char *buf, unsigned char *data, int bytes);
+int decode_85(char *dst, const char *line, int linelen);
+void encode_85(char *buf, const unsigned char *data, int bytes);
 
 /* alloc.c */
 struct blob;
@@ -491,5 +496,8 @@ extern void trace_argv_printf(const char **argv, int count, const char *format, 
 /* convert.c */
 extern int convert_to_git(const char *path, char **bufp, unsigned long *sizep);
 extern int convert_to_working_tree(const char *path, char **bufp, unsigned long *sizep);
+
+/* match-trees.c */
+void shift_tree(const unsigned char *, const unsigned char *, unsigned char *, int);
 
 #endif /* CACHE_H */

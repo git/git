@@ -493,6 +493,7 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 {
 	char oldref[PATH_MAX], newref[PATH_MAX], logmsg[PATH_MAX*2 + 100];
 	unsigned char sha1[20];
+	char oldsection[PATH_MAX], newsection[PATH_MAX];
 
 	if (!oldname)
 		die("cannot rename the current branch while not on any.");
@@ -521,6 +522,11 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 	/* no need to pass logmsg here as HEAD didn't really move */
 	if (!strcmp(oldname, head) && create_symref("HEAD", newref, NULL))
 		die("Branch renamed to %s, but HEAD is not updated!", newname);
+
+	snprintf(oldsection, sizeof(oldsection), "branch.%s", oldref + 11);
+	snprintf(newsection, sizeof(newsection), "branch.%s", newref + 11);
+	if (git_config_rename_section(oldsection, newsection) < 0)
+		die("Branch is renamed, but update of config-file failed");
 }
 
 int cmd_branch(int argc, const char **argv, const char *prefix)

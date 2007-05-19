@@ -339,8 +339,7 @@ prev_head=`git-rev-parse HEAD^0`
 echo "$prev_head" > "$dotest/prev_head"
 
 msgnum=0
-for cmt in `git-rev-list --no-merges "$upstream"..ORIG_HEAD \
-			| sed -ne '1!G;$p;h'`
+for cmt in `git-rev-list --reverse --no-merges "$upstream"..ORIG_HEAD`
 do
 	msgnum=$(($msgnum + 1))
 	echo "$cmt" > "$dotest/cmt.$msgnum"

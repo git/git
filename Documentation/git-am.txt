@@ -26,18 +26,18 @@ OPTIONS
 	The list of mailbox files to read patches from. If you do not
 	supply this argument, reads from the standard input.
 
---signoff::
+-s, --signoff::
 	Add `Signed-off-by:` line to the commit message, using
 	the committer identity of yourself.
 
---dotest=<dir>::
+-d=<dir>, --dotest=<dir>::
 	Instead of `.dotest` directory, use <dir> as a working
 	area to store extracted patches.
 
---keep::
+-k, --keep::
 	Pass `-k` flag to `git-mailinfo` (see gitlink:git-mailinfo[1]).
 
---utf8::
+-u, --utf8::
 	Pass `-u` flag to `git-mailinfo` (see gitlink:git-mailinfo[1]).
 	The proposed commit log message taken from the e-mail
 	are re-coded into UTF-8 encoding (configuration variable
@@ -48,14 +48,14 @@ This was optional in prior versions of git, but now it is the
 default.   You could use `--no-utf8` to override this.
 
 --no-utf8::
-	Do not pass `-u` flag to `git-mailinfo` (see
+	Pass `-n` flag to `git-mailinfo` (see
 	gitlink:git-mailinfo[1]).
 
---binary::
+-b, --binary::
 	Pass `--allow-binary-replacement` flag to `git-apply`
 	(see gitlink:git-apply[1]).
 
---3way::
+-3, --3way::
 	When the patch does not apply cleanly, fall back on
 	3-way merge, if the patch records the identity of blobs
 	it is supposed to apply to, and we have those blobs
@@ -73,16 +73,23 @@ default.   You could use `--no-utf8` to override this.
 	These flags are passed to the `git-apply` program that applies
 	the patch.
 
---interactive::
+-i, --interactive::
 	Run interactively, just like git-applymbox.
 
---resolved::
+-r, --resolved::
 	After a patch failure (e.g. attempting to apply
 	conflicting patch), the user has applied it by hand and
 	the index file stores the result of the application.
 	Make a commit using the authorship and commit log
 	extracted from the e-mail message and the current index
 	file, and continue.
+
+--resolvemsg=<msg>::
+	When a patch failure occurs, <msg> will be printed
+	to the screen before exiting.  This overrides the
+	standard message informing you to use `--resolved`
+	or `--skip` to handle the failure.  This is solely
+	for internal use between `git-rebase` and `git-am`.
 
 DISCUSSION
 ----------

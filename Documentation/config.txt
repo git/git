@@ -117,6 +117,16 @@ core.fileMode::
 	the working copy are ignored; useful on broken filesystems like FAT.
 	See gitlink:git-update-index[1]. True by default.
 
+core.autocrlf::
+	If true, makes git convert `CRLF` at the end of lines in text files to
+	`LF` when reading from the filesystem, and convert in reverse when
+	writing to the filesystem.  The variable can be set to
+	'input', in which case the conversion happens only while
+	reading from the filesystem but files are written out with
+	`LF` at the end of lines.  Currently, which paths to consider
+	"text" (i.e. be subjected to the autocrlf mechanism) is
+	decided purely based on the contents.
+
 core.symlinks::
 	If false, symbolic links are checked out as small plain files that
 	contain the link text. gitlink:git-update-index[1] and
@@ -401,12 +411,19 @@ gc.rerereunresolved::
 	The default is 15 days.  See gitlink:git-rerere[1].
 
 gitcvs.enabled::
-	Whether the cvs pserver interface is enabled for this repository.
+	Whether the cvs server interface is enabled for this repository.
 	See gitlink:git-cvsserver[1].
 
 gitcvs.logfile::
-	Path to a log file where the cvs pserver interface well... logs
+	Path to a log file where the cvs server interface well... logs
 	various stuff. See gitlink:git-cvsserver[1].
+
+gitcvs.allbinary::
+	If true, all files are sent to the client in mode '-kb'. This
+	causes the client to treat all files as binary files which suppresses
+	any newline munging it otherwise might do. A work-around for the
+	fact that there is no way yet to set single files to mode '-kb'.
+	See gitlink:git-cvsserver[1].
 
 http.sslVerify::
 	Whether to verify the SSL certificate when fetching or pushing
@@ -445,7 +462,7 @@ http.lowSpeedLimit, http.lowSpeedTime::
 
 http.noEPSV::
 	A boolean which disables using of EPSV ftp command by curl.
-	This can helpful with some "poor" ftp servers which doesn't
+	This can helpful with some "poor" ftp servers which don't
 	support EPSV mode. Can be overridden by the 'GIT_CURL_FTP_NO_EPSV'
 	environment variable. Default is false (curl will use EPSV).
 

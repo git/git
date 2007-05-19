@@ -71,6 +71,10 @@ our $logo_label = "git homepage";
 # source of projects list
 our $projects_list = "++GITWEB_LIST++";
 
+# default order of projects list
+# valid values are none, project, descr, owner, and age
+our $default_projects_order = "project";
+
 # show repository only if this file exists
 # (only effective if this variable evaluates to true)
 our $export_ok = "++GITWEB_EXPORT_OK++";
@@ -176,8 +180,8 @@ our %feature = (
 	# projects matching $projname/*.git will not be shown in the main
 	# projects list, instead a '+' mark will be added to $projname
 	# there and a 'forks' view will be enabled for the project, listing
-	# all the forks. This feature is supported only if project list
-	# is taken from a directory, not file.
+	# all the forks. If project list is taken from a file, forks have
+	# to be listed after the main project.
 
 	# To enable system wide have in $GITWEB_CONFIG
 	# $feature{'forks'}{'default'} = [1];
@@ -1047,14 +1051,14 @@ sub git_get_projects_list {
 	$filter ||= '';
 	$filter =~ s/\.git$//;
 
+	my ($check_forks) = gitweb_check_feature('forks');
+
 	if (-d $projects_list) {
 		# search in directory
 		my $dir = $projects_list . ($filter ? "/$filter" : '');
 		# remove the trailing "/"
 		$dir =~ s!/+$!!;
 		my $pfxlen = length("$dir");
-
-		my ($check_forks) = gitweb_check_feature('forks');
 
 		File::Find::find({
 			follow_fast => 1, # follow symbolic links
@@ -1081,7 +1085,9 @@ sub git_get_projects_list {
 		# 'git%2Fgit.git Linus+Torvalds'
 		# 'libs%2Fklibc%2Fklibc.git H.+Peter+Anvin'
 		# 'linux%2Fhotplug%2Fudev.git Greg+Kroah-Hartman'
+		my %paths;
 		open my ($fd), $projects_list or return;
+	PROJECT:
 		while (my $line = <$fd>) {
 			chomp $line;
 			my ($path, $owner) = split ' ', $line;
@@ -1094,11 +1100,27 @@ sub git_get_projects_list {
 				# looking for forks;
 				my $pfx = substr($path, 0, length($filter));
 				if ($pfx ne $filter) {
-					next;
+					next PROJECT;
 				}
 				my $sfx = substr($path, length($filter));
 				if ($sfx !~ /^\/.*\.git$/) {
-					next;
+					next PROJECT;
+				}
+			} elsif ($check_forks) {
+			PATH:
+				foreach my $filter (keys %paths) {
+					# looking for forks;
+					my $pfx = substr($path, 0, length($filter));
+					if ($pfx ne $filter) {
+						next PATH;
+					}
+					my $sfx = substr($path, length($filter));
+					if ($sfx !~ /^\/.*\.git$/) {
+						next PATH;
+					}
+					# is a fork, don't include it in
+					# the list
+					next PROJECT;
 				}
 			}
 			if (check_export_ok("$projectroot/$path")) {
@@ -1106,12 +1128,13 @@ sub git_get_projects_list {
 					path => $path,
 					owner => to_utf8($owner),
 				};
-				push @list, $pr
+				push @list, $pr;
+				(my $forks_path = $path) =~ s/\.git$//;
+				$paths{$forks_path}++;
 			}
 		}
 		close $fd;
 	}
-	@list = sort {$a->{'path'} cmp $b->{'path'}} @list;
 	return @list;
 }
 
@@ -2598,7 +2621,7 @@ sub git_project_list_body {
 		push @projects, $pr;
 	}
 
-	$order ||= "project";
+	$order ||= $default_projects_order;
 	$from = 0 unless defined $from;
 	$to = $#projects if (!defined $to || $#projects < $to);
 
@@ -2957,7 +2980,7 @@ sub git_search_grep_body {
 
 sub git_project_list {
 	my $order = $cgi->param('o');
-	if (defined $order && $order !~ m/project|descr|owner|age/) {
+	if (defined $order && $order !~ m/none|project|descr|owner|age/) {
 		die_error(undef, "Unknown order parameter");
 	}
 
@@ -2980,7 +3003,7 @@ sub git_project_list {
 
 sub git_forks {
 	my $order = $cgi->param('o');
-	if (defined $order && $order !~ m/project|descr|owner|age/) {
+	if (defined $order && $order !~ m/none|project|descr|owner|age/) {
 		die_error(undef, "Unknown order parameter");
 	}
 

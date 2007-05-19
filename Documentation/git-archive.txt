@@ -30,7 +30,8 @@ OPTIONS
 -------
 
 --format=<fmt>::
-	Format of the resulting archive: 'tar', 'zip'...
+	Format of the resulting archive: 'tar', 'zip'...  The default
+	is 'tar'.
 
 --list::
 	Show all available formats.

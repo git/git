@@ -37,7 +37,7 @@ static void prep_base85(void)
 	}
 }
 
-int decode_85(char *dst, char *buffer, int len)
+int decode_85(char *dst, const char *buffer, int len)
 {
 	prep_base85();
 
@@ -82,7 +82,7 @@ int decode_85(char *dst, char *buffer, int len)
 	return 0;
 }
 
-void encode_85(char *buf, unsigned char *data, int bytes)
+void encode_85(char *buf, const unsigned char *data, int bytes)
 {
 	prep_base85();
 

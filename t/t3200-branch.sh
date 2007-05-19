@@ -11,7 +11,7 @@ handled.  Specifically, that a bogus branch is not created.
 . ./test-lib.sh
 
 test_expect_success \
-    'prepare an trivial repository' \
+    'prepare a trivial repository' \
     'echo Hello > A &&
      git-update-index --add A &&
      git-commit -m "Initial commit." &&
@@ -85,9 +85,9 @@ test_expect_failure \
 
 mv .git/config .git/config-saved
 
-test_expect_success 'git branch -m q Q without config should succeed' '
-	git-branch -m q Q &&
-	git-branch -m Q q
+test_expect_success 'git branch -m q q2 without config should succeed' '
+	git-branch -m q q2 &&
+	git-branch -m q2 q
 '
 
 mv .git/config-saved .git/config

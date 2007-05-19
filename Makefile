@@ -250,6 +250,8 @@ BUILT_INS = \
 # what 'all' will build and 'install' will install, in gitexecdir
 ALL_PROGRAMS = $(PROGRAMS) $(SCRIPTS)
 
+ALL_PROGRAMS += git-merge-subtree$X
+
 # what 'all' will build but not install in gitexecdir
 OTHER_PROGRAMS = git$X gitweb/gitweb.cgi
 ifndef NO_TCLTK
@@ -280,7 +282,8 @@ LIB_H = \
 	diff.h object.h pack.h pkt-line.h quote.h refs.h list-objects.h sideband.h \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
 	tree-walk.h log-tree.h dir.h path-list.h unpack-trees.h builtin.h \
-	spawn-pipe.h utf8.h reflog-walk.h
+	spawn-pipe.h \
+	utf8.h reflog-walk.h patch-ids.h
 
 DIFF_OBJS = \
 	diff.o diff-lib.o diffcore-break.o diffcore-order.o \
@@ -293,13 +296,14 @@ LIB_OBJS = \
 	interpolate.o \
 	lockfile.o \
 	spawn-pipe.o \
+	patch-ids.o \
 	object.o pack-check.o patch-delta.o path.o pkt-line.o sideband.o \
 	reachable.o reflog-walk.o \
 	quote.o read-cache.o refs.o run-command.o dir.o object-refs.o \
 	server-info.o setup.o sha1_file.o sha1_name.o strbuf.o \
 	tag.o tree.o usage.o config.o environment.o ctype.o copy.o \
 	revision.o pager.o tree-walk.o xdiff-interface.o \
-	write_or_die.o trace.o list-objects.o grep.o \
+	write_or_die.o trace.o list-objects.o grep.o match-trees.o \
 	alloc.o merge-file.o path-list.o help.o unpack-trees.o $(DIFF_OBJS) \
 	color.o wt-status.o archive-zip.o archive-tar.o shallow.o utf8.o \
 	convert.o
@@ -385,6 +389,7 @@ endif
 ifeq ($(uname_S),Darwin)
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
+	OLD_ICONV = UnfortunatelyYes
 	NO_STRLCPY = YesPlease
 endif
 ifeq ($(uname_S),SunOS)
@@ -668,7 +673,7 @@ ifeq ($(TCLTK_PATH),)
 NO_TCLTK=NoThanks
 endif
 
-QUIET_SUBDIR0  = $(MAKE) -C # space to separate -C and subdir
+QUIET_SUBDIR0  = +$(MAKE) -C # space to separate -C and subdir
 QUIET_SUBDIR1  =
 
 ifneq ($(findstring $(MAKEFLAGS),w),w)
@@ -684,7 +689,7 @@ ifndef V
 	QUIET_LINK     = @echo '   ' LINK $@;
 	QUIET_BUILT_IN = @echo '   ' BUILTIN $@;
 	QUIET_GEN      = @echo '   ' GEN $@;
-	QUIET_SUBDIR0  = @subdir=
+	QUIET_SUBDIR0  = +@subdir=
 	QUIET_SUBDIR1  = ;$(NO_SUBDIR) echo '   ' SUBDIR $$subdir; \
 			 $(MAKE) $(PRINT_DIR) -C $$subdir
 	export V
@@ -747,6 +752,9 @@ git$X: git.c common-cmds.h $(BUILTIN_OBJS) $(GITLIBS) GIT-CFLAGS
 		$(BUILTIN_OBJS) $(ALL_LDFLAGS) $(LIBS)
 
 help.o: common-cmds.h
+
+git-merge-subtree$X: git-merge-recursive$X
+	$(QUIET_BUILT_IN)rm -f $@ && ln git-merge-recursive$X $@
 
 $(BUILT_INS): git$X
 	$(QUIET_BUILT_IN)rm -f $@ && ln git$X $@
@@ -964,6 +972,9 @@ test-dump-cache-tree$X: dump-cache-tree.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
 test-sha1$X: test-sha1.o $(GITLIBS)
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
+
+test-match-trees$X: test-match-trees.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
 test-chmtime$X: test-chmtime.c

@@ -10,7 +10,7 @@
 #include "tree-walk.h"
 
 static const char builtin_rm_usage[] =
-"git-rm [-f] [-n] [-r] [--cached] [--] <file>...";
+"git-rm [-f] [-n] [-r] [--cached] [--quiet] [--] <file>...";
 
 static struct {
 	int nr, alloc;
@@ -104,13 +104,13 @@ static struct lock_file lock_file;
 int cmd_rm(int argc, const char **argv, const char *prefix)
 {
 	int i, newfd;
-	int show_only = 0, force = 0, index_only = 0, recursive = 0;
+	int show_only = 0, force = 0, index_only = 0, recursive = 0, quiet = 0;
 	const char **pathspec;
 	char *seen;
 
 	git_config(git_default_config);
 
-	newfd = hold_lock_file_for_update(&lock_file, get_index_file(), 1);
+	newfd = hold_locked_index(&lock_file, 1);
 
 	if (read_cache() < 0)
 		die("index file corrupt");
@@ -132,6 +132,8 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 			force = 1;
 		else if (!strcmp(arg, "-r"))
 			recursive = 1;
+		else if (!strcmp(arg, "--quiet"))
+			quiet = 1;
 		else
 			usage(builtin_rm_usage);
 	}
@@ -168,7 +170,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	 * must match; but the file can already been removed, since
 	 * this sequence is a natural "novice" way:
 	 *
-	 *	rm F; git fm F
+	 *	rm F; git rm F
 	 *
 	 * Further, if HEAD commit exists, "diff-index --cached" must
 	 * report no changes unless forced.
@@ -187,7 +189,8 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	 */
 	for (i = 0; i < list.nr; i++) {
 		const char *path = list.name[i];
-		printf("rm '%s'\n", path);
+		if (!quiet)
+			printf("rm '%s'\n", path);
 
 		if (remove_file_from_cache(path))
 			die("git-rm: unable to remove %s", path);
@@ -220,7 +223,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 
 	if (active_cache_changed) {
 		if (write_cache(newfd, active_cache, active_nr) ||
-		    close(newfd) || commit_lock_file(&lock_file))
+		    close(newfd) || commit_locked_index(&lock_file))
 			die("Unable to write new index file");
 	}
 

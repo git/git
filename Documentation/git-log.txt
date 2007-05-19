@@ -46,6 +46,11 @@ include::pretty-formats.txt[]
 -p::
 	Show the change the commit introduces in a patch form.
 
+-g, \--walk-reflogs::
+	Show commits as they were recorded in the reflog. The log contains
+	a record about how the tip of a reference was changed.
+	See also gitlink:git-reflog[1].
+
 <paths>...::
 	Show only commits that affect the specified paths.
 

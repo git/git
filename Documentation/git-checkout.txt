@@ -23,9 +23,9 @@ options, which will be passed to `git branch`.
 
 When <paths> are given, this command does *not* switch
 branches.  It updates the named paths in the working tree from
-the index file (i.e. it runs `git-checkout-index -f -u`), or a
-named commit.  In
-this case, `-f` and `-b` options are meaningless and giving
+the index file (i.e. it runs `git-checkout-index -f -u`), or
+from a named commit.  In
+this case, the `-f` and `-b` options are meaningless and giving
 either of them results in an error.  <tree-ish> argument can be
 used to specify a specific tree-ish (i.e. commit, tag or tree)
 to update the index for the given paths before updating the
@@ -38,7 +38,8 @@ OPTIONS
 	Quiet, supress feedback messages.
 
 -f::
-	Force a re-read of everything.
+	Proceed even if the index or the working tree differs
+	from HEAD.  This is used to throw away local changes.
 
 -b::
 	Create a new branch named <new_branch> and start it at
@@ -48,13 +49,17 @@ OPTIONS
 
 --track::
 	When -b is given and a branch is created off a remote branch,
-	setup so that git-pull will automatically retrieve data from
-	the remote branch.
+	set up configuration so that git-pull will automatically
+	retrieve data from the remote branch.  Set the
+	branch.autosetupmerge configuration variable to true if you
+	want git-checkout and git-branch to always behave as if
+	'--track' were given.
 
 --no-track::
 	When -b is given and a branch is created off a remote branch,
-	force that git-pull will automatically retrieve data from
-	the remote branch independent of the configuration settings.
+	set up configuration so that git-pull will not retrieve data
+	from the remote branch, ignoring the branch.autosetupmerge
+	configuration variable.
 
 -l::
 	Create the new branch's ref log.  This activates recording of

@@ -9,9 +9,11 @@ git-cvsimport - Salvage your data out of another SCM people love to hate
 SYNOPSIS
 --------
 [verse]
-'git-cvsimport' [-o <branch-for-HEAD>] [-h] [-v] [-d <CVSROOT>] [-s <subst>]
-	      [-p <options-for-cvsps>] [-C <git_repository>] [-i] [-P <file>]
-	      [-m] [-M regex] [<CVS_module>]
+'git-cvsimport' [-o <branch-for-HEAD>] [-h] [-v] [-d <CVSROOT>]
+	      [-A <author-conv-file>] [-p <options-for-cvsps>] [-P <file>]
+	      [-C <git_repository>] [-z <fuzz>] [-i] [-k] [-u] [-s <subst>]
+	      [-a] [-m] [-M <regex>] [-S <regex>] [-L <commitlimit>]
+	      [<CVS_module>]
 
 
 DESCRIPTION
@@ -30,27 +32,24 @@ any CVS branches, yourself.
 
 OPTIONS
 -------
+-v::
+	Verbosity: let 'cvsimport' report what it is doing.
+
 -d <CVSROOT>::
 	The root of the CVS archive. May be local (a simple path) or remote;
 	currently, only the :local:, :ext: and :pserver: access methods 
-	are supported.
+	are supported. If not given, git-cvsimport will try to read it
+	from `CVS/Root`. If no such file exists, it checks for the
+	`CVSROOT` environment variable.
+
+<CVS_module>::
+	The CVS module you want to import. Relative to <CVSROOT>.
+	If not given, git-cvsimport tries to read it from
+	`CVS/Repository`.
 
 -C <target-dir>::
         The git repository to import to.  If the directory doesn't
         exist, it will be created.  Default is the current directory.
-
--i::
-	Import-only: don't perform a checkout after importing.  This option
-	ensures the working directory and index remain untouched and will
-	not create them if they do not exist.
-
--k::
-	Kill keywords: will extract files with -kk from the CVS archive
-	to avoid noisy changesets. Highly recommended, but off by default
-	to preserve compatibility with early imported trees. 
-
--u::
-	Convert underscores in tag and branch names to dots.
 
 -o <branch-for-HEAD>::
 	The 'HEAD' branch from CVS is imported to the 'origin' branch within
@@ -60,11 +59,31 @@ OPTIONS
 Use '-o master' for continuing an import that was initially done by
 the old cvs2git tool.
 
+-i::
+	Import-only: don't perform a checkout after importing.  This option
+	ensures the working directory and index remain untouched and will
+	not create them if they do not exist.
+
+-k::
+	Kill keywords: will extract files with '-kk' from the CVS archive
+	to avoid noisy changesets. Highly recommended, but off by default
+	to preserve compatibility with early imported trees. 
+
+-u::
+	Convert underscores in tag and branch names to dots.
+
+-s <subst>::
+	Substitute the character "/" in branch names with <subst>
+
 -p <options-for-cvsps>::
 	Additional options for cvsps.
 	The options '-u' and '-A' are implicit and should not be used here.
 +
 If you need to pass multiple options, separate them with a comma.
+
+-z <fuzz>::
+	Pass the timestamp fuzz factor to cvsps, in seconds. If unset,
+	cvsps defaults to 300s.
 
 -P <cvsps-output-file>::
 	Instead of calling cvsps, read the provided cvsps output file. Useful
@@ -77,31 +96,15 @@ If you need to pass multiple options, separate them with a comma.
 
 -M <regex>::
 	Attempt to detect merges based on the commit message with a custom
-	regex. It can be used with -m to also see the default regexes. 
+	regex. It can be used with '-m' to also see the default regexes.
 	You must escape forward slashes. 
 
--v::
-	Verbosity: let 'cvsimport' report what it is doing.
-
-<CVS_module>::
-	The CVS module you want to import. Relative to <CVSROOT>.
-
--h::
-	Print a short usage message and exit.
-
--z <fuzz>::
-	Pass the timestamp fuzz factor to cvsps, in seconds. If unset,
-	cvsps defaults to 300s.
-
--s <subst>::
-	Substitute the character "/" in branch names with <subst>
+-S <regex>::
+	Skip paths matching the regex.
 
 -a::
 	Import all commits, including recent ones. cvsimport by default
 	skips commits that have a timestamp less than 10 minutes ago.
-
--S <regex>::
-	Skip paths matching the regex.
 
 -L <limit>::
 	Limit the number of commits imported. Workaround for cases where
@@ -122,13 +125,16 @@ git-cvsimport will make it appear as those authors had
 their GIT_AUTHOR_NAME and GIT_AUTHOR_EMAIL set properly
 all along.
 +
-For convenience, this data is saved to $GIT_DIR/cvs-authors
-each time the -A option is provided and read from that same
+For convenience, this data is saved to `$GIT_DIR/cvs-authors`
+each time the '-A' option is provided and read from that same
 file each time git-cvsimport is run.
 +
 It is not recommended to use this feature if you intend to
 export changes back to CVS again later with
 gitlink:git-cvsexportcommit[1].
+
+-h::
+	Print a short usage message and exit.
 
 OUTPUT
 ------

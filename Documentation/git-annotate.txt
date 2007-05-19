@@ -16,20 +16,7 @@ which introduced the line. Optionally annotate from a given revision.
 
 OPTIONS
 -------
--l, --long::
-	Show long rev (Defaults off).
-
--t, --time::
-	Show raw timestamp (Defaults off).
-
--r, --rename::
-	Follow renames (Defaults on).
-
--S, --rev-file <revs-file>::
-	Use revs from revs-file instead of calling git-rev-list.
-
--h, --help::
-	Show help message.
+include::blame-options.txt[]
 
 SEE ALSO
 --------

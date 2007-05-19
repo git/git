@@ -47,6 +47,10 @@ OPTIONS
 	the paths only from the index, leaving working tree
 	files.
 
+\--quiet::
+	git-rm normally outputs one line (in the form of an "rm" command)
+	for each file removed. This option suppresses that output.
+
 
 DISCUSSION
 ----------

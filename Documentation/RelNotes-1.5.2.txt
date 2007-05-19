@@ -1,0 +1,76 @@
+GIT v1.5.2 Release Notes (draft)
+========================
+
+Updates since v1.5.1
+--------------------
+
+* New commands and options.
+
+  - "git bisect start" can optionally take a single bad commit and
+    zero or more good commits on the command line.
+
+* Updated behavior of existing commands.
+
+  - "git diff --stat" shows size of preimage and postimage blobs
+    for binary contents.  Earlier it only said "Bin".
+
+  - "git lost-found" shows stuff that are unreachable except
+    from reflogs.
+
+  - "git checkout branch^0" now detaches HEAD at the tip commit
+    on the named branch, instead of just switching to the
+    branch (use "git checkout branch" to switch to the branch,
+    as before).
+
+  - "git bisect next" can be used after giving only a bad commit
+    without giving a good one (this starts bisection half-way to
+    the root commit).  We used to refuse to operate without a
+    good and a bad commit.
+
+* Builds
+
+  - git-p4import has never been installed; now there is an
+    installation option to do so.
+
+  - gitk and git-gui can be configured out.
+
+  - Generated documentation pages automatically get version
+    information from GIT_VERSION
+
+  - Parallel build with "make -j" descending into subdirectory
+    was fixed.
+
+* Performance Tweaks
+
+  - optimized "git-rev-list --bisect" (hence "git-bisect").
+
+  - optimized "git-add $path" in a large directory, most of
+    whose contents are ignored.
+
+
+Fixes since v1.5.1
+------------------
+
+The following are all in v1.5.1.x series, unless otherwise noted.
+
+* Documentation updates
+
+* Bugfixes
+
+  - Switching branches with "git checkout" refused to work when
+    a path changes from a file to a directory between the
+    current branch and the new branch, in order not to lose
+    possible local changes in the directory that is being turned
+    into a file with the switch.  We now allow such a branch
+    switch after making sure that there is no locally modified
+    file nor un-ignored file in the directory.  This has not
+    been backported to 1.5.1.x series, as it is rather an
+    intrusive change.
+
+* Performance Tweaks
+
+--
+exec >/var/tmp/1
+O=v1.5.1-91-g640ee0d
+echo O=`git describe refs/heads/master`
+git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint

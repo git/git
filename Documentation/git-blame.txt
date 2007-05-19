@@ -8,8 +8,9 @@ git-blame - Show what revision and author last modified each line of a file
 SYNOPSIS
 --------
 [verse]
-'git-blame' [-c] [-l] [-t] [-f] [-n] [-p] [--incremental] [-L n,m] [-S <revs-file>]
-            [-M] [-C] [-C] [--since=<date>] [<rev> | --contents <file>] [--] <file>
+'git-blame' [-c] [-l] [-t] [-f] [-n] [-p] [--incremental] [-L n,m]
+            [-S <revs-file>] [-M] [-C] [-C] [--since=<date>]
+            [<rev> | --contents <file>] [--] <file>
 
 DESCRIPTION
 -----------
@@ -37,20 +38,19 @@ ea4c7f9bf69e781dd0cd88d2bccb2bf5cc15c9a7 git-blame: Make the output
 
 OPTIONS
 -------
--c, --compatibility::
+include::blame-options.txt[]
+
+-c::
 	Use the same output mode as gitlink:git-annotate[1] (Default: off).
 
--L n,m::
-	Annotate only the specified line range (lines count from 1).
-
--l, --long::
-	Show long rev (Default: off).
-
--t, --time::
-	Show raw timestamp (Default: off).
-
--S, --rev-file <revs-file>::
-	Use revs from revs-file instead of calling gitlink:git-rev-list[1].
+--score-debug::
+	Include debugging information related to the movement of
+	lines between files (see `-C`) and lines moved within a
+	file (see `-M`).  The first number listed is the score.
+	This is the number of alphanumeric characters detected
+	to be moved between or within files.  This must be above
+	a certain threshold for git-blame to consider those lines
+	of code to have been moved.
 
 -f, --show-name::
 	Show filename in the original commit.  By default
@@ -59,42 +59,6 @@ OPTIONS
 
 -n, --show-number::
 	Show line number in the original commit (Default: off).
-
--p, --porcelain::
-	Show in a format designed for machine consumption.
-
---incremental::
-	Show the result incrementally in a format designed for
-	machine consumption.
-
---contents <file>::
-	When <rev> is not specified, the command annotates the
-	changes starting backwards from the working tree copy.
-	This flag makes the command pretend as if the working
-	tree copy has the contents of he named file (specify
-	`-` to make the command read from the standard input).
-
--M::
-	Detect moving lines in the file as well.  When a commit
-	moves a block of lines in a file (e.g. the original file
-	has A and then B, and the commit changes it to B and
-	then A), traditional 'blame' algorithm typically blames
-	the lines that were moved up (i.e. B) to the parent and
-	assigns blame to the lines that were moved down (i.e. A)
-	to the child commit.  With this option, both groups of
-	lines are blamed on the parent.
-
--C::
-	In addition to `-M`, detect lines copied from other
-	files that were modified in the same commit.  This is
-	useful when you reorganize your program and move code
-	around across files.  When this option is given twice,
-	the command looks for copies from all other files in the
-	parent for the commit that creates the file in addition.
-
--h, --help::
-	Show help message.
-
 
 THE PORCELAIN FORMAT
 --------------------

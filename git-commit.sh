@@ -370,8 +370,8 @@ t,)
 		# the same way.
 		if test -z "$initial_commit"
 		then
-			cp "$THIS_INDEX" "$TMP_INDEX"
-			GIT_INDEX_FILE="$TMP_INDEX" git-read-tree -i -m HEAD
+			GIT_INDEX_FILE="$THIS_INDEX" \
+			git-read-tree --index-output="$TMP_INDEX" -i -m HEAD
 		else
 			rm -f "$TMP_INDEX"
 		fi || exit
@@ -649,8 +649,9 @@ then
 	fi
 	if test -z "$quiet"
 	then
+		commit=`git-diff-tree --always --shortstat --pretty="format:%h: %s"\
+		       --summary --root HEAD --`
 		echo "Created${initial_commit:+ initial} commit $commit"
-		git-diff-tree --shortstat --summary --root --no-commit-id HEAD --
 	fi
 fi
 

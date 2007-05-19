@@ -16,6 +16,22 @@
 #include "path-list.h"
 #include "xdiff-interface.h"
 
+static int subtree_merge;
+
+static struct tree *shift_tree_object(struct tree *one, struct tree *two)
+{
+	unsigned char shifted[20];
+
+	/*
+	 * NEEDSWORK: this limits the recursion depth to hardcoded
+	 * value '2' to avoid excessive overhead.
+	 */
+	shift_tree(one->object.sha1, two->object.sha1, shifted, 2);
+	if (!hashcmp(two->object.sha1, shifted))
+		return two;
+	return lookup_tree(shifted);
+}
+
 /*
  * A virtual commit has
  * - (const char *)commit->util set to the name, and
@@ -1137,6 +1153,12 @@ static int merge_trees(struct tree *head,
 		       struct tree **result)
 {
 	int code, clean;
+
+	if (subtree_merge) {
+		merge = shift_tree_object(head, merge);
+		common = shift_tree_object(head, common);
+	}
+
 	if (sha_eq(common->object.sha1, merge->object.sha1)) {
 		output(0, "Already uptodate!");
 		*result = head;
@@ -1342,6 +1364,13 @@ int main(int argc, char *argv[])
 	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
 	int index_fd;
 
+	if (argv[0]) {
+		int namelen = strlen(argv[0]);
+		if (8 < namelen &&
+		    !strcmp(argv[0] + namelen - 8, "-subtree"))
+			subtree_merge = 1;
+	}
+
 	git_config(merge_config);
 	if (getenv("GIT_MERGE_VERBOSITY"))
 		verbosity = strtol(getenv("GIT_MERGE_VERBOSITY"), NULL, 10);
@@ -1378,7 +1407,7 @@ int main(int argc, char *argv[])
 	if (show(3))
 		printf("Merging %s with %s\n", branch1, branch2);
 
-	index_fd = hold_lock_file_for_update(lock, get_index_file(), 1);
+	index_fd = hold_locked_index(lock, 1);
 
 	for (i = 0; i < bases_count; i++) {
 		struct commit *ancestor = get_ref(bases[i]);
@@ -1388,7 +1417,7 @@ int main(int argc, char *argv[])
 
 	if (active_cache_changed &&
 	    (write_cache(index_fd, active_cache, active_nr) ||
-	     close(index_fd) || commit_lock_file(lock)))
+	     close(index_fd) || commit_locked_index(lock)))
 			die ("unable to write %s", get_index_file());
 
 	return clean ? 0: 1;

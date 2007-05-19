@@ -9,11 +9,12 @@ git-apply - Apply a patch on a git index file and a working tree
 SYNOPSIS
 --------
 [verse]
-'git-apply' [--stat] [--numstat] [--summary] [--check] [--index] [--apply]
-	  [--no-add] [--index-info] [--allow-binary-replacement | --binary]
-	  [-R | --reverse] [--reject] [-z] [-pNUM] [-CNUM] [--inaccurate-eof]
-	  [--whitespace=<nowarn|warn|error|error-all|strip>] [--exclude=PATH]
-	  [--cached] [--verbose] [<patch>...]
+'git-apply' [--stat] [--numstat] [--summary] [--check] [--index]
+	  [--apply] [--no-add] [--index-info] [-R | --reverse]
+	  [--allow-binary-replacement | --binary] [--reject] [-z]
+	  [-pNUM] [-CNUM] [--inaccurate-eof] [--cached]
+	  [--whitespace=<nowarn|warn|error|error-all|strip>]
+	  [--exclude=PATH] [--verbose] [<patch>...]
 
 DESCRIPTION
 -----------
@@ -158,7 +159,7 @@ discouraged.
 	correctly. This option adds support for applying such patches by
 	working around this bug.
 
---verbose::
+-v, --verbose::
 	Report progress to stderr. By default, only a message about the
 	current patch being applied will be printed. This option will cause
 	additional information to be reported.

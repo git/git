@@ -2664,8 +2664,8 @@ static int apply_patch(int fd, const char *filename, int inaccurate_eof)
 
 	update_index = check_index && apply;
 	if (update_index && newfd < 0)
-		newfd = hold_lock_file_for_update(&lock_file,
-						  get_index_file(), 1);
+		newfd = hold_locked_index(&lock_file, 1);
+
 	if (check_index) {
 		if (read_cache() < 0)
 			die("unable to read index file");
@@ -2872,7 +2872,7 @@ int cmd_apply(int argc, const char **argv, const char *unused_prefix)
 
 	if (update_index) {
 		if (write_cache(newfd, active_cache, active_nr) ||
-		    close(newfd) || commit_lock_file(&lock_file))
+		    close(newfd) || commit_locked_index(&lock_file))
 			die("Unable to write new index file");
 	}
 

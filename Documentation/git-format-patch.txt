@@ -10,11 +10,12 @@ SYNOPSIS
 --------
 [verse]
 'git-format-patch' [-n | -k] [-o <dir> | --stdout] [--thread]
-	           [--attach[=<boundary>] | --inline[=<boundary>]]
-	           [-s | --signoff] [<common diff options>] [--start-number <n>]
-		   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
-		   [--ignore-if-in-upstream]
-		   <since>[..<until>]
+                   [--attach[=<boundary>] | --inline[=<boundary>]]
+                   [-s | --signoff] [<common diff options>] [--start-number <n>]
+                   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
+                   [--ignore-if-in-upstream]
+                   [--subject-prefix=Subject-Prefix]
+                   <since>[..<until>]
 
 DESCRIPTION
 -----------
@@ -97,6 +98,12 @@ include::diff-options.txt[]
 	from <since> but not from <until> and compare them with the
 	patches being generated, and any patch that matches is
 	ignored.
+
+--subject-prefix=<Subject-Prefix>::
+	Instead of the standard '[PATCH]' prefix in the subject
+	line, instead use '[<Subject-Prefix>]'. This
+	allows for useful naming of a patch series, and can be
+	combined with the --numbered option.
 
 --suffix=.<sfx>::
 	Instead of using `.patch` as the suffix for generated

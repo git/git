@@ -10,6 +10,7 @@ SYNOPSIS
 [verse]
 'git-show-ref' [-q|--quiet] [--verify] [-h|--head] [-d|--dereference]
 	     [-s|--hash] [--abbrev] [--tags] [--heads] [--] <pattern>...
+'git-show-ref' --exclude-existing[=pattern]
 
 DESCRIPTION
 -----------
@@ -18,6 +19,9 @@ Displays references available in a local repository along with the associated
 commit IDs. Results can be filtered using a pattern and tags can be
 dereferenced into object IDs. Additionally, it can be used to test whether a
 particular ref exists.
+
+The --exclude-existing form is a filter that does the inverse, it shows the
+refs from stdin that don't exist in the local repository.
 
 Use of this utility is encouraged in favor of directly accessing files under
 in the `.git` directory.
@@ -60,6 +64,18 @@ OPTIONS
 
 	Do not print any results to stdout. When combined with '--verify' this
 	can be used to silently check if a reference exists.
+
+--exclude-existing, --exclude-existing=pattern::
+
+	Make git-show-ref act as a filter that reads refs from stdin of the
+	form "^(?:<anything>\s)?<refname>(?:\^\{\})?$" and performs the
+	following actions on each:
+	(1) strip "^{}" at the end of line if any;
+	(2) ignore if pattern is provided and does not head-match refname;
+	(3) warn if refname is not a well-formed refname and skip;
+	(4) ignore if refname is a ref that exists in the local repository;
+	(5) otherwise output the line.
+
 
 <pattern>::
 

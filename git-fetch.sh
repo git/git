@@ -26,6 +26,7 @@ keep=
 shallow_depth=
 no_progress=
 test -t 1 || no_progress=--no-progress
+quiet=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -55,6 +56,9 @@ do
 	--update-he|--update-hea|--update-head|--update-head-|\
 	--update-head-o|--update-head-ok)
 		update_head_ok=t
+		;;
+	-q|--q|--qu|--qui|--quie|--quiet)
+		quiet=--quiet
 		;;
 	-v|--verbose)
 		verbose=Yes
@@ -173,8 +177,8 @@ fetch_all_at_once () {
 	    git-bundle unbundle "$remote" $rref ||
 	    echo failed "$remote"
 	else
-	  git-fetch-pack --thin $exec $keep $shallow_depth $no_progress \
-		"$remote" $rref ||
+	  git-fetch-pack --thin $exec $keep $shallow_depth \
+	      $quiet $no_progress "$remote" $rref ||
 	  echo failed "$remote"
 	fi
       ) |
@@ -248,7 +252,8 @@ fetch_per_ref () {
 	  expr "z$head" : "z$_x40\$" >/dev/null ||
 		die "No such ref $remote_name at $remote"
 	  echo >&2 "Fetching $remote_name from $remote using $proto"
-	  git-http-fetch -v -a "$head" "$remote" || exit
+	  case "$quiet" in '') v=-v ;; *) v= ;; esac
+	  git-http-fetch $v -a "$head" "$remote" || exit
 	  ;;
       rsync://*)
 	  test -n "$shallow_depth" &&
@@ -257,8 +262,9 @@ fetch_per_ref () {
 	  rsync -L -q "$remote/$remote_name" "$TMP_HEAD" || exit 1
 	  head=$(git-rev-parse --verify TMP_HEAD)
 	  rm -f "$TMP_HEAD"
+	  case "$quiet" in '') v=-v ;; *) v= ;; esac
 	  test "$rsync_slurped_objects" || {
-	      rsync -av --ignore-existing --exclude info \
+	      rsync -a $v --ignore-existing --exclude info \
 		  "$remote/objects/" "$GIT_OBJECT_DIRECTORY/" || exit
 
 	      # Look at objects/info/alternates for rsync -- http will
