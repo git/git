@@ -705,7 +705,7 @@ static int repack_without_ref(const char *refname)
 	return commit_lock_file(&packlock);
 }
 
-int delete_ref(const char *refname, unsigned char *sha1)
+int delete_ref(const char *refname, const unsigned char *sha1)
 {
 	struct ref_lock *lock;
 	int err, i, ret = 0, flag = 0;

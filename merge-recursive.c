@@ -95,11 +95,6 @@ static struct path_list current_directory_set = {NULL, 0, 0, 1};
 static int call_depth = 0;
 static int verbosity = 2;
 static int buffer_output = 1;
-static int do_progress = 1;
-static unsigned last_percent;
-static unsigned merged_cnt;
-static unsigned total_cnt;
-static volatile sig_atomic_t progress_update;
 static struct output_buffer *output_list, *output_end;
 
 static int show (int v)
@@ -171,39 +166,6 @@ static void output_commit_title(struct commit *commit)
 				; /* do nothing */
 			printf("%.*s\n", len, s);
 		}
-	}
-}
-
-static void progress_interval(int signum)
-{
-	progress_update = 1;
-}
-
-static void setup_progress_signal(void)
-{
-	struct sigaction sa;
-	struct itimerval v;
-
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = progress_interval;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	sigaction(SIGALRM, &sa, NULL);
-
-	v.it_interval.tv_sec = 1;
-	v.it_interval.tv_usec = 0;
-	v.it_value = v.it_interval;
-	setitimer(ITIMER_REAL, &v, NULL);
-}
-
-static void display_progress()
-{
-	unsigned percent = total_cnt ? merged_cnt * 100 / total_cnt : 0;
-	if (progress_update || percent != last_percent) {
-		fprintf(stderr, "%4u%% (%u/%u) done\r",
-			percent, merged_cnt, total_cnt);
-		progress_update = 0;
-		last_percent = percent;
 	}
 }
 
@@ -377,14 +339,11 @@ static struct path_list *get_unmerged(void)
 	int i;
 
 	unmerged->strdup_paths = 1;
-	total_cnt += active_nr;
 
-	for (i = 0; i < active_nr; i++, merged_cnt++) {
+	for (i = 0; i < active_nr; i++) {
 		struct path_list_item *item;
 		struct stage_data *e;
 		struct cache_entry *ce = active_cache[i];
-		if (do_progress)
-			display_progress();
 		if (!ce_stage(ce))
 			continue;
 
@@ -574,6 +533,31 @@ static void flush_buffer(int fd, const char *buf, unsigned long size)
 	}
 }
 
+static int make_room_for_path(const char *path)
+{
+	int status;
+	const char *msg = "failed to create path '%s'%s";
+
+	status = mkdir_p(path, 0777);
+	if (status) {
+		if (status == -3) {
+			/* something else exists */
+			error(msg, path, ": perhaps a D/F conflict?");
+			return -1;
+		}
+		die(msg, path, "");
+	}
+
+	/* Successful unlink is good.. */
+	if (!unlink(path))
+		return 0;
+	/* .. and so is no existing file */
+	if (errno == ENOENT)
+		return 0;
+	/* .. but not some other error (who really cares what?) */
+	return error(msg, path, ": perhaps a D/F conflict?");
+}
+
 static void update_file_flags(const unsigned char *sha,
 			      unsigned mode,
 			      const char *path,
@@ -594,11 +578,12 @@ static void update_file_flags(const unsigned char *sha,
 		if (type != OBJ_BLOB)
 			die("blob expected for %s '%s'", sha1_to_hex(sha), path);
 
+		if (make_room_for_path(path) < 0) {
+			update_wd = 0;
+			goto update_index;
+		}
 		if (S_ISREG(mode) || (!has_symlinks && S_ISLNK(mode))) {
 			int fd;
-			if (mkdir_p(path, 0777))
-				die("failed to create path %s: %s", path, strerror(errno));
-			unlink(path);
 			if (mode & 0100)
 				mode = 0777;
 			else
@@ -620,6 +605,7 @@ static void update_file_flags(const unsigned char *sha,
 			die("do not know what to do with %06o %s '%s'",
 			    mode, sha1_to_hex(sha), path);
 	}
+ update_index:
 	if (update_cache)
 		add_cacheinfo(mode, sha, path, 0, update_wd, ADD_CACHE_OK_TO_ADD);
 }
@@ -1018,9 +1004,9 @@ static int process_renames(struct path_list *a_renames,
 	return clean_merge;
 }
 
-static unsigned char *has_sha(const unsigned char *sha)
+static unsigned char *stage_sha(const unsigned char *sha, unsigned mode)
 {
-	return is_null_sha1(sha) ? NULL: (unsigned char *)sha;
+	return (is_null_sha1(sha) || mode == 0) ? NULL: (unsigned char *)sha;
 }
 
 /* Per entry merge function */
@@ -1033,12 +1019,12 @@ static int process_entry(const char *path, struct stage_data *entry,
 	print_index_entry("\tpath: ", entry);
 	*/
 	int clean_merge = 1;
-	unsigned char *o_sha = has_sha(entry->stages[1].sha);
-	unsigned char *a_sha = has_sha(entry->stages[2].sha);
-	unsigned char *b_sha = has_sha(entry->stages[3].sha);
 	unsigned o_mode = entry->stages[1].mode;
 	unsigned a_mode = entry->stages[2].mode;
 	unsigned b_mode = entry->stages[3].mode;
+	unsigned char *o_sha = stage_sha(entry->stages[1].sha, o_mode);
+	unsigned char *a_sha = stage_sha(entry->stages[2].sha, a_mode);
+	unsigned char *b_sha = stage_sha(entry->stages[3].sha, b_mode);
 
 	if (o_sha && (!a_sha || !b_sha)) {
 		/* Case A: Deleted in one */
@@ -1139,6 +1125,12 @@ static int process_entry(const char *path, struct stage_data *entry,
 				update_file_flags(mfi.sha, mfi.mode, path,
 					      0 /* update_cache */, 1 /* update_working_directory */);
 		}
+	} else if (!o_sha && !a_sha && !b_sha) {
+		/*
+		 * this entry was deleted altogether. a_mode == 0 means
+		 * we had that path and want to actively remove it.
+		 */
+		remove_file(1, path, !a_mode);
 	} else
 		die("Fatal merge failure, shouldn't happen.");
 
@@ -1185,15 +1177,12 @@ static int merge_trees(struct tree *head,
 		re_merge = get_renames(merge, common, head, merge, entries);
 		clean = process_renames(re_head, re_merge,
 				branch1, branch2);
-		total_cnt += entries->nr;
-		for (i = 0; i < entries->nr; i++, merged_cnt++) {
+		for (i = 0; i < entries->nr; i++) {
 			const char *path = entries->items[i].path;
 			struct stage_data *e = entries->items[i].util;
 			if (!e->processed
 				&& !process_entry(path, e, branch1, branch2))
 				clean = 0;
-			if (do_progress)
-				display_progress();
 		}
 
 		path_list_clear(re_merge, 0);
@@ -1301,15 +1290,6 @@ static int merge(struct commit *h1,
 		commit_list_insert(h1, &(*result)->parents);
 		commit_list_insert(h2, &(*result)->parents->next);
 	}
-	if (!call_depth && do_progress) {
-		/* Make sure we end at 100% */
-		if (!total_cnt)
-			total_cnt = 1;
-		merged_cnt = total_cnt;
-		progress_update = 1;
-		display_progress();
-		fputc('\n', stderr);
-	}
 	flush_output();
 	return clean;
 }
@@ -1386,12 +1366,8 @@ int main(int argc, char *argv[])
 	}
 	if (argc - i != 3) /* "--" "<head>" "<remote>" */
 		die("Not handling anything other than two heads merge.");
-	if (verbosity >= 5) {
+	if (verbosity >= 5)
 		buffer_output = 0;
-		do_progress = 0;
-	}
-	else
-		do_progress = isatty(1);
 
 	branch1 = argv[++i];
 	branch2 = argv[++i];
@@ -1402,8 +1378,6 @@ int main(int argc, char *argv[])
 	branch1 = better_branch_name(branch1);
 	branch2 = better_branch_name(branch2);
 
-	if (do_progress)
-		setup_progress_signal();
 	if (show(3))
 		printf("Merging %s with %s\n", branch1, branch2);
 

@@ -28,6 +28,8 @@ ifndef V
 	QUIET_BUILT_IN = @echo '   ' BUILTIN $@;
 endif
 
+TCLTK_PATH ?= wish
+
 ifeq ($(findstring $(MAKEFLAGS),s),s)
 QUIET_GEN =
 QUIET_BUILT_IN =
@@ -36,10 +38,12 @@ endif
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
+TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
 
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	$(QUIET_GEN)rm -f $@ $@+ && \
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
+		-e 's|^exec wish "$$0"|exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' \
 		-e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
 		$@.sh >$@+ && \
 	chmod +x $@+ && \

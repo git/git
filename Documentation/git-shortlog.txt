@@ -7,6 +7,7 @@ git-shortlog - Summarize 'git log' output
 
 SYNOPSIS
 --------
+[verse]
 git-log --pretty=short | 'git-shortlog' [-h] [-n] [-s]
 git-shortlog [-n|--number] [-s|--summary] [<committish>...]
 
@@ -33,7 +34,8 @@ OPTIONS
 
 FILES
 -----
-'.mailmap'::
+
+.mailmap::
 	If this file exists, it will be used for mapping author email
 	addresses to a real author name. One mapping per line, first
 	the author name followed by the email address enclosed by

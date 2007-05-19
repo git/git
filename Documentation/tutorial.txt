@@ -111,7 +111,7 @@ make it real.
 Note: don't forget to 'add' a file again if you modified it after the
 first 'add' and before 'commit'. Otherwise only the previous added
 state of that file will be committed. This is because git tracks
-content, so what you're really 'add'ing to the commit is the *content*
+content, so what you're really 'adding' to the commit is the *content*
 of the file in the state it is in when you 'add' it.
 
 2) By using 'git commit -a' directly

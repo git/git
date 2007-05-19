@@ -116,10 +116,7 @@ bisect_start() {
         done
 
 	sq "$@" >"$GIT_DIR/BISECT_NAMES"
-	{
-	    printf "git-bisect start"
-	    echo "$orig_args"
-	} >>"$GIT_DIR/BISECT_LOG"
+	echo "git-bisect start$orig_args" >>"$GIT_DIR/BISECT_LOG"
 	bisect_auto_next
 }
 

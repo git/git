@@ -88,7 +88,7 @@ static int write_subdirectory(void *buffer, unsigned long size, const char *base
 		unsigned int mode;
 		char *slash, *origpath;
 
-		if (!path || strtoul_ui(buffer, 8, &mode) != 1)
+		if (!path || strtoul_ui(buffer, 8, &mode))
 			die("bad tree conversion");
 		mode = convert_mode(mode);
 		path++;

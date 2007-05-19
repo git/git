@@ -665,7 +665,6 @@ int threeway_merge(struct cache_entry **stages,
 	int count;
 	int head_match = 0;
 	int remote_match = 0;
-	const char *path = NULL;
 
 	int df_conflict_head = 0;
 	int df_conflict_remote = 0;
@@ -675,13 +674,10 @@ int threeway_merge(struct cache_entry **stages,
 	int i;
 
 	for (i = 1; i < o->head_idx; i++) {
-		if (!stages[i])
+		if (!stages[i] || stages[i] == o->df_conflict_entry)
 			any_anc_missing = 1;
-		else {
-			if (!path)
-				path = stages[i]->name;
+		else
 			no_anc_exists = 0;
-		}
 	}
 
 	index = stages[0];
@@ -696,13 +692,6 @@ int threeway_merge(struct cache_entry **stages,
 		df_conflict_remote = 1;
 		remote = NULL;
 	}
-
-	if (!path && index)
-		path = index->name;
-	if (!path && head)
-		path = head->name;
-	if (!path && remote)
-		path = remote->name;
 
 	/* First, if there's a #16 situation, note that to prevent #13
 	 * and #14.
@@ -755,6 +744,23 @@ int threeway_merge(struct cache_entry **stages,
 	if (o->aggressive) {
 		int head_deleted = !head && !df_conflict_head;
 		int remote_deleted = !remote && !df_conflict_remote;
+		const char *path = NULL;
+
+		if (index)
+			path = index->name;
+		else if (head)
+			path = head->name;
+		else if (remote)
+			path = remote->name;
+		else {
+			for (i = 1; i < o->head_idx; i++) {
+				if (stages[i] && stages[i] != o->df_conflict_entry) {
+					path = stages[i]->name;
+					break;
+				}
+			}
+		}
+
 		/*
 		 * Deleted in both.
 		 * Deleted in one and unchanged in the other.
@@ -786,11 +792,11 @@ int threeway_merge(struct cache_entry **stages,
 
 	o->nontrivial_merge = 1;
 
-	/* #2, #3, #4, #6, #7, #9, #11. */
+	/* #2, #3, #4, #6, #7, #9, #10, #11. */
 	count = 0;
 	if (!head_match || !remote_match) {
 		for (i = 1; i < o->head_idx; i++) {
-			if (stages[i]) {
+			if (stages[i] && stages[i] != o->df_conflict_entry) {
 				keep_entry(stages[i], o);
 				count++;
 				break;

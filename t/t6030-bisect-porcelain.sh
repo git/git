@@ -46,7 +46,7 @@ test_expect_success 'bisect starts with only one bad' '
 	git bisect next
 '
 
-test_expect_success 'bisect starts with only one good' '
+test_expect_success 'bisect does not start with only one good' '
 	git bisect reset &&
 	git bisect start &&
 	git bisect good $HASH1 || return 1

@@ -9,6 +9,14 @@ Updates since v1.5.1
   - "git bisect start" can optionally take a single bad commit and
     zero or more good commits on the command line.
 
+  - "git shortlog" can optionally be told to wrap its output.
+
+  - "subtree" merge strategy allows another project to be merged in as
+    your subdirectory.
+
+  - "git format-patch" learned a new --subject-prefix=<string>
+    option, to override the built-in "[PATCH]".
+
 * Updated behavior of existing commands.
 
   - "git diff --stat" shows size of preimage and postimage blobs
@@ -26,6 +34,12 @@ Updates since v1.5.1
     without giving a good one (this starts bisection half-way to
     the root commit).  We used to refuse to operate without a
     good and a bad commit.
+
+  - "git push", when pushing into more than one repository, does
+    not stop at the first error.
+
+  - "git archive" does not insist you to give --format parameter
+    anymore; it defaults to "tar".
 
 * Builds
 
@@ -55,7 +69,29 @@ The following are all in v1.5.1.x series, unless otherwise noted.
 
 * Documentation updates
 
+  - Various documentation updates from J. Bruce Fields, Frank
+    Lichtenheld, Alex Riesen and others.  Andrew Ruder started a
+    war on undocumented options.
+
 * Bugfixes
+
+  - "git diff a/ b/" incorrectly fell in "diff between two
+    filesystem objects" codepath, when the user most likely
+    wanted to limit the extent of output to two tracked
+    directories.
+
+  - git-quiltimport had the same bug as we fixed for
+    git-applymbox in v1.5.1.1 -- it gave an alarming "did not
+    have any patch" message (but did not actually fail and was
+    harmless).
+
+  - various git-svn fixes.
+
+  - Sample update hook incorrectly always refused requests to
+    delete branches through push.
+
+  - git-blame on a very long working tree path had buffer
+    overrun problem.
 
   - Switching branches with "git checkout" refused to work when
     a path changes from a file to a directory between the
@@ -67,10 +103,17 @@ The following are all in v1.5.1.x series, unless otherwise noted.
     been backported to 1.5.1.x series, as it is rather an
     intrusive change.
 
+  - Merging branches that have a file in one and a directory in
+    another at the same path used to get quite confused.  We
+    handle such a case a bit more carefully, even though that is
+    still left as a conflict for the user to sort out.  This
+    will not be backported to 1.5.1.x series, as it is rather an
+    intrusive change.
+
 * Performance Tweaks
 
 --
 exec >/var/tmp/1
-O=v1.5.1-91-g640ee0d
+O=v1.5.1.1-158-g86da9de
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint

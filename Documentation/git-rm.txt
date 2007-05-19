@@ -7,7 +7,7 @@ git-rm - Remove files from the working tree and from the index
 
 SYNOPSIS
 --------
-'git-rm' [-f] [-n] [-r] [--cached] [--] <file>...
+'git-rm' [-f] [-n] [-r] [--cached] [--ignore-unmatch] [--quiet] [--] <file>...
 
 DESCRIPTION
 -----------
@@ -46,6 +46,9 @@ OPTIONS
 	This option can be used to tell the command to remove
 	the paths only from the index, leaving working tree
 	files.
+
+\--ignore-unmatch::
+	Exit with a zero status even if no files matched.
 
 \--quiet::
 	git-rm normally outputs one line (in the form of an "rm" command)

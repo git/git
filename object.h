@@ -8,7 +8,6 @@ struct object_list {
 
 struct object_refs {
 	unsigned count;
-	struct object *base;
 	struct object *ref[FLEX_ARRAY]; /* more */
 };
 
