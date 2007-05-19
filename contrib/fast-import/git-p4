@@ -461,17 +461,32 @@ class P4Sync(Command):
             fnum = fnum + 1
         return files
 
-    def splitFilesIntoBranches(self, files):
+    def splitFilesIntoBranches(self, commit):
         branches = {}
 
-        for file in files:
-            path = file["path"][len(self.depotPath):]
+        fnum = 0
+        while commit.has_key("depotFile%s" % fnum):
+            path =  commit["depotFile%s" % fnum]
+            if not path.startswith(self.depotPath):
+    #            if not self.silent:
+    #                print "\nchanged files: ignoring path %s outside of %s in change %s" % (path, self.depotPath, change)
+                fnum = fnum + 1
+                continue
+
+            file = {}
+            file["path"] = path
+            file["rev"] = commit["rev%s" % fnum]
+            file["action"] = commit["action%s" % fnum]
+            file["type"] = commit["type%s" % fnum]
+            fnum = fnum + 1
+
+            relPath = path[len(self.depotPath):]
 
             for branch in self.knownBranches.keys():
-                if path.startswith(branch):
+                if relPath.startswith(branch):
                     if branch not in branches:
                         branches[branch] = []
-                    branches[branch].append(file["path"])
+                    branches[branch].append(file)
 
         return branches
 
@@ -542,6 +557,8 @@ class P4Sync(Command):
             label = self.labels[change]
             labelDetails = label[0]
             labelRevisions = label[1]
+            if self.verbose:
+                print "Change %s is labelled %s" % (change, labelDetails)
 
             files = p4CmdList("files %s...@%s" % (branchPrefix, change))
 
@@ -595,13 +612,15 @@ class P4Sync(Command):
             label = output["label"]
             revisions = {}
             newestChange = 0
-            for file in p4CmdList("files //...@%s" % label):
+            if self.verbose:
+                print "Querying files for label %s" % label
+            for file in p4CmdList("files %s...@%s" % (self.depotPath, label)):
                 revisions[file["depotFile"]] = file["rev"]
                 change = int(file["change"])
                 if change > newestChange:
                     newestChange = change
 
-            self.labels[newestChange] = [output, revisions]
+            self.labels[int(newestChange)] = [output, revisions]
 
     def getBranchMapping(self):
         self.projectName = self.depotPath[self.depotPath[:-1].rfind("/") + 1:]
@@ -846,9 +865,8 @@ class P4Sync(Command):
                 cnt = cnt + 1
 
                 try:
-                    files = self.extractFilesFromCommit(description)
                     if self.detectBranches:
-                        branches = self.splitFilesIntoBranches(files)
+                        branches = self.splitFilesIntoBranches(description)
                         for branch in branches.keys():
                             branchPrefix = self.depotPath + branch + "/"
 
@@ -889,8 +907,9 @@ class P4Sync(Command):
                                 parent = self.initialParents[branch]
                                 del self.initialParents[branch]
 
-                            self.commit(description, files, branch, branchPrefix, parent)
+                            self.commit(description, filesForCommit, branch, branchPrefix, parent)
                     else:
+                        files = self.extractFilesFromCommit(description)
                         self.commit(description, files, self.branch, self.depotPath, self.initialParent)
                         self.initialParent = ""
                 except IOError:
