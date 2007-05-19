@@ -5040,7 +5040,8 @@ XML
 
 		# get list of changed files
 		open my $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
-			$co{'parent'}, $co{'id'}, "--", (defined $file_name ? $file_name : ())
+			$co{'parent'} || "--root",
+			$co{'id'}, "--", (defined $file_name ? $file_name : ())
 			or next;
 		my @difftree = map { chomp; $_ } <$fd>;
 		close $fd
