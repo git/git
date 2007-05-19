@@ -283,7 +283,7 @@ LIB_H = \
 	run-command.h strbuf.h tag.h tree.h git-compat-util.h revision.h \
 	tree-walk.h log-tree.h dir.h path-list.h unpack-trees.h builtin.h \
 	spawn-pipe.h \
-	utf8.h reflog-walk.h patch-ids.h decorate.h
+	utf8.h reflog-walk.h patch-ids.h attr.h decorate.h progress.h
 
 DIFF_OBJS = \
 	diff.o diff-lib.o diffcore-break.o diffcore-order.o \
@@ -306,7 +306,7 @@ LIB_OBJS = \
 	write_or_die.o trace.o list-objects.o grep.o match-trees.o \
 	alloc.o merge-file.o path-list.o help.o unpack-trees.o $(DIFF_OBJS) \
 	color.o wt-status.o archive-zip.o archive-tar.o shallow.o utf8.o \
-	convert.o decorate.o
+	convert.o attr.o decorate.o progress.o
 
 BUILTIN_OBJS = \
 	builtin-add.o \
@@ -317,6 +317,7 @@ BUILTIN_OBJS = \
 	builtin-branch.o \
 	builtin-bundle.o \
 	builtin-cat-file.o \
+	builtin-check-attr.o \
 	builtin-checkout-index.o \
 	builtin-check-ref-format.o \
 	builtin-commit-tree.o \
@@ -959,7 +960,7 @@ endif
 export NO_SYMLINKS
 export NO_SVN_TESTS
 
-test: all test-chmtime$X
+test: all test-chmtime$X test-genrandom$X
 	$(MAKE) -C t/ all
 
 test-date$X: test-date.c date.o ctype.o
@@ -978,6 +979,9 @@ test-match-trees$X: test-match-trees.o $(GITLIBS)
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
 test-chmtime$X: test-chmtime.c
+	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $<
+
+test-genrandom$X: test-genrandom.c
 	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $<
 
 check-sha1:: test-sha1$X
@@ -1052,9 +1056,10 @@ dist-doc:
 	gzip -n -9 -f $(htmldocs).tar
 	:
 	rm -fr .doc-tmp-dir
-	mkdir .doc-tmp-dir .doc-tmp-dir/man1 .doc-tmp-dir/man7
+	mkdir -p .doc-tmp-dir/man1 .doc-tmp-dir/man5 .doc-tmp-dir/man7
 	$(MAKE) -C Documentation DESTDIR=./ \
 		man1dir=../.doc-tmp-dir/man1 \
+		man5dir=../.doc-tmp-dir/man5 \
 		man7dir=../.doc-tmp-dir/man7 \
 		install
 	cd .doc-tmp-dir && $(TAR) cf ../$(manpages).tar .
@@ -1065,7 +1070,7 @@ dist-doc:
 
 clean:
 	rm -f *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o xdiff/*.o \
-		test-chmtime$X $(LIB_FILE) $(XDIFF_LIB)
+		test-chmtime$X test-genrandom$X $(LIB_FILE) $(XDIFF_LIB)
 	rm -f $(ALL_PROGRAMS) $(BUILT_INS) git$X
 	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
 	rm -rf autom4te.cache

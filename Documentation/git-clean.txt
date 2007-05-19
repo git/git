@@ -8,7 +8,7 @@ git-clean - Remove untracked files from the working tree
 SYNOPSIS
 --------
 [verse]
-'git-clean' [-d] [-n] [-q] [-x | -X] [--] <paths>...
+'git-clean' [-d] [-f] [-n] [-q] [-x | -X] [--] <paths>...
 
 DESCRIPTION
 -----------
@@ -24,6 +24,10 @@ OPTIONS
 -------
 -d::
 	Remove untracked directories in addition to untracked files.
+
+-f::
+	If the git configuration specifies clean.forceRequire as true,
+	git-clean will refuse to run unless given -f or -n.
 
 -n::
 	Don't actually remove anything, just show what would be done.

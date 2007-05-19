@@ -174,7 +174,7 @@ test_expect_success \
     'use packed deltified (REF_DELTA) objects' \
     'GIT_OBJECT_DIRECTORY=.git2/objects &&
      export GIT_OBJECT_DIRECTORY &&
-     rm .git2/objects/pack/test-* &&
+     rm -f .git2/objects/pack/test-* &&
      cp test-2-${packname_2}.pack test-2-${packname_2}.idx .git2/objects/pack && {
 	 git-diff-tree --root -p $commit &&
 	 while read object
@@ -189,7 +189,7 @@ test_expect_success \
     'use packed deltified (OFS_DELTA) objects' \
     'GIT_OBJECT_DIRECTORY=.git2/objects &&
      export GIT_OBJECT_DIRECTORY &&
-     rm .git2/objects/pack/test-* &&
+     rm -f .git2/objects/pack/test-* &&
      cp test-3-${packname_3}.pack test-3-${packname_3}.idx .git2/objects/pack && {
 	 git-diff-tree --root -p $commit &&
 	 while read object
@@ -210,8 +210,8 @@ test_expect_success \
 
 test_expect_success \
     'verify-pack catches mismatched .idx and .pack files' \
-    'cp test-1-${packname_1}.idx test-3.idx &&
-     cp test-2-${packname_2}.pack test-3.pack &&
+    'cat test-1-${packname_1}.idx >test-3.idx &&
+     cat test-2-${packname_2}.pack >test-3.pack &&
      if git-verify-pack test-3.idx
      then false
      else :;
@@ -253,21 +253,21 @@ test_expect_success \
 
 test_expect_success \
     'build pack index for an existing pack' \
-    'cp test-1-${packname_1}.pack test-3.pack &&
+    'cat test-1-${packname_1}.pack >test-3.pack &&
      git-index-pack -o tmp.idx test-3.pack &&
      cmp tmp.idx test-1-${packname_1}.idx &&
 
      git-index-pack test-3.pack &&
      cmp test-3.idx test-1-${packname_1}.idx &&
 
-     cp test-2-${packname_2}.pack test-3.pack &&
+     cat test-2-${packname_2}.pack >test-3.pack &&
      git-index-pack -o tmp.idx test-2-${packname_2}.pack &&
      cmp tmp.idx test-2-${packname_2}.idx &&
 
      git-index-pack test-3.pack &&
      cmp test-3.idx test-2-${packname_2}.idx &&
 
-     cp test-3-${packname_3}.pack test-3.pack &&
+     cat test-3-${packname_3}.pack >test-3.pack &&
      git-index-pack -o tmp.idx test-3-${packname_3}.pack &&
      cmp tmp.idx test-3-${packname_3}.idx &&
 

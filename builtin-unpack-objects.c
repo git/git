@@ -7,13 +7,15 @@
 #include "commit.h"
 #include "tag.h"
 #include "tree.h"
+#include "progress.h"
 
 static int dry_run, quiet, recover, has_errors;
 static const char unpack_usage[] = "git-unpack-objects [-n] [-q] [-r] < pack-file";
 
 /* We always read in 4kB chunks. */
 static unsigned char buffer[4096];
-static unsigned long offset, len, consumed_bytes;
+static unsigned int offset, len;
+static off_t consumed_bytes;
 static SHA_CTX ctx;
 
 /*
@@ -49,6 +51,10 @@ static void use(int bytes)
 		die("used more bytes than were available");
 	len -= bytes;
 	offset += bytes;
+
+	/* make sure off_t is sufficiently large not to wrap */
+	if (consumed_bytes > consumed_bytes + bytes)
+		die("pack too large for current definition of off_t");
 	consumed_bytes += bytes;
 }
 
@@ -88,17 +94,17 @@ static void *get_data(unsigned long size)
 
 struct delta_info {
 	unsigned char base_sha1[20];
-	unsigned long base_offset;
+	unsigned nr;
+	off_t base_offset;
 	unsigned long size;
 	void *delta;
-	unsigned nr;
 	struct delta_info *next;
 };
 
 static struct delta_info *delta_list;
 
 static void add_delta_to_list(unsigned nr, unsigned const char *base_sha1,
-			      unsigned long base_offset,
+			      off_t base_offset,
 			      void *delta, unsigned long size)
 {
 	struct delta_info *info = xmalloc(sizeof(*info));
@@ -113,7 +119,7 @@ static void add_delta_to_list(unsigned nr, unsigned const char *base_sha1,
 }
 
 struct obj_info {
-	unsigned long offset;
+	off_t offset;
 	unsigned char sha1[20];
 };
 
@@ -200,7 +206,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	} else {
 		unsigned base_found = 0;
 		unsigned char *pack, c;
-		unsigned long base_offset;
+		off_t base_offset;
 		unsigned lo, mid, hi;
 
 		pack = fill(1);
@@ -209,7 +215,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 		base_offset = c & 127;
 		while (c & 128) {
 			base_offset += 1;
-			if (!base_offset || base_offset & ~(~0UL >> 7))
+			if (!base_offset || MSB(base_offset, 7))
 				die("offset value overflow for delta base object");
 			pack = fill(1);
 			c = *pack;
@@ -259,7 +265,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	free(base);
 }
 
-static void unpack_one(unsigned nr, unsigned total)
+static void unpack_one(unsigned nr)
 {
 	unsigned shift;
 	unsigned char *pack, c;
@@ -281,20 +287,7 @@ static void unpack_one(unsigned nr, unsigned total)
 		size += (c & 0x7f) << shift;
 		shift += 7;
 	}
-	if (!quiet) {
-		static unsigned long last_sec;
-		static unsigned last_percent;
-		struct timeval now;
-		unsigned percentage = ((nr+1) * 100) / total;
 
-		gettimeofday(&now, NULL);
-		if (percentage != last_percent || now.tv_sec != last_sec) {
-			last_sec = now.tv_sec;
-			last_percent = percentage;
-			fprintf(stderr, "%4u%% (%u/%u) done\r",
-					percentage, (nr+1), total);
-		}
-	}
 	switch (type) {
 	case OBJ_COMMIT:
 	case OBJ_TREE:
@@ -318,6 +311,7 @@ static void unpack_one(unsigned nr, unsigned total)
 static void unpack_all(void)
 {
 	int i;
+	struct progress progress;
 	struct pack_header *hdr = fill(sizeof(struct pack_header));
 	unsigned nr_objects = ntohl(hdr->hdr_entries);
 
@@ -325,12 +319,19 @@ static void unpack_all(void)
 		die("bad pack file");
 	if (!pack_version_ok(hdr->hdr_version))
 		die("unknown pack file version %d", ntohl(hdr->hdr_version));
-	fprintf(stderr, "Unpacking %d objects\n", nr_objects);
-
-	obj_list = xmalloc(nr_objects * sizeof(*obj_list));
 	use(sizeof(struct pack_header));
-	for (i = 0; i < nr_objects; i++)
-		unpack_one(i, nr_objects);
+
+	if (!quiet)
+		start_progress(&progress, "Unpacking %u objects...", "", nr_objects);
+	obj_list = xmalloc(nr_objects * sizeof(*obj_list));
+	for (i = 0; i < nr_objects; i++) {
+		unpack_one(i);
+		if (!quiet)
+			display_progress(&progress, i + 1);
+	}
+	if (!quiet)
+		stop_progress(&progress);
+
 	if (delta_list)
 		die("unresolved deltas left after unpacking");
 }
@@ -399,7 +400,5 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 	}
 
 	/* All done */
-	if (!quiet)
-		fprintf(stderr, "\n");
 	return has_errors;
 }

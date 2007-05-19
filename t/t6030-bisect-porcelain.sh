@@ -22,22 +22,25 @@ add_line_into_file()
         MSG="Create file <$_file> with <$_line> inside."
     fi
 
-    git-commit -m "$MSG" $_file
+    test_tick
+    git-commit --quiet -m "$MSG" $_file
 }
 
 HASH1=
+HASH2=
 HASH3=
 HASH4=
 
-test_expect_success \
-    'set up basic repo with 1 file (hello) and 4 commits' \
-    'add_line_into_file "1: Hello World" hello &&
+test_expect_success 'set up basic repo with 1 file (hello) and 4 commits' '
+     add_line_into_file "1: Hello World" hello &&
+     HASH1=$(git rev-parse --verify HEAD) &&
      add_line_into_file "2: A new day for git" hello &&
+     HASH2=$(git rev-parse --verify HEAD) &&
      add_line_into_file "3: Another new day for git" hello &&
+     HASH3=$(git rev-parse --verify HEAD) &&
      add_line_into_file "4: Ciao for now" hello &&
-     HASH1=$(git rev-list HEAD | tail -1) &&
-     HASH3=$(git rev-list HEAD | head -2 | tail -1) &&
-     HASH4=$(git rev-list HEAD | head -1)'
+     HASH4=$(git rev-parse --verify HEAD)
+'
 
 test_expect_success 'bisect starts with only one bad' '
 	git bisect reset &&

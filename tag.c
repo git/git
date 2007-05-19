@@ -20,13 +20,9 @@ struct object *deref_tag(struct object *o, const char *warn, int warnlen)
 
 struct tag *lookup_tag(const unsigned char *sha1)
 {
-        struct object *obj = lookup_object(sha1);
-        if (!obj) {
-                struct tag *ret = alloc_tag_node();
-                created_object(sha1, &ret->object);
-                ret->object.type = OBJ_TAG;
-                return ret;
-        }
+	struct object *obj = lookup_object(sha1);
+	if (!obj)
+		return create_object(sha1, OBJ_TAG, alloc_tag_node());
 	if (!obj->type)
 		obj->type = OBJ_TAG;
         if (obj->type != OBJ_TAG) {

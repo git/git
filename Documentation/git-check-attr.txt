@@ -1,0 +1,37 @@
+git-check-attr(1)
+=================
+
+NAME
+----
+git-check-attr - Display gitattributes information.
+
+
+SYNOPSIS
+--------
+'git-check-attr' attr... [--] pathname...
+
+DESCRIPTION
+-----------
+For every pathname, this command will list if each attr is 'unspecified',
+'set', or 'unset' as a gitattribute on that pathname.
+
+OPTIONS
+-------
+\--::
+	Interpret all preceding arguments as attributes, and all following
+	arguments as path names. If not supplied, only the first argument will
+	be treated as an attribute.
+
+
+Author
+------
+Written by Junio C Hamano <junkio@cox.net>
+
+Documentation
+--------------
+Documentation by James Bowes.
+
+GIT
+---
+Part of the gitlink:git[7] suite
+

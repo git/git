@@ -25,6 +25,22 @@
 #endif
 
 /*
+ * A "directory link" is a link to another git directory.
+ *
+ * The value 0160000 is not normally a valid mode, and
+ * also just happens to be S_IFDIR + S_IFLNK
+ *
+ * NOTE! We *really* shouldn't depend on the S_IFxxx macros
+ * always having the same values everywhere. We should use
+ * our internal git values for these things, and then we can
+ * translate that to the OS-specific value. It just so
+ * happens that everybody shares the same bit representation
+ * in the UNIX world (and apparently wider too..)
+ */
+#define S_IFDIRLNK	0160000
+#define S_ISDIRLNK(m)	(((m) & S_IFMT) == S_IFDIRLNK)
+
+/*
  * Intensive research over the course of many years has shown that
  * port 9418 is totally unused by anything else. Or
  *
@@ -104,6 +120,8 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 {
 	if (S_ISLNK(mode))
 		return htonl(S_IFLNK);
+	if (S_ISDIR(mode) || S_ISDIRLNK(mode))
+		return htonl(S_IFDIRLNK);
 	return htonl(S_IFREG | ce_permissions(mode));
 }
 static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned int mode)
@@ -121,7 +139,7 @@ static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned in
 }
 #define canon_mode(mode) \
 	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
-	S_ISLNK(mode) ? S_IFLNK : S_IFDIR)
+	S_ISLNK(mode) ? S_IFLNK : S_ISDIR(mode) ? S_IFDIR : S_IFDIRLNK)
 
 #define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
 
@@ -151,6 +169,9 @@ enum object_type {
 #define CONFIG_ENVIRONMENT "GIT_CONFIG"
 #define CONFIG_LOCAL_ENVIRONMENT "GIT_CONFIG_LOCAL"
 #define EXEC_PATH_ENVIRONMENT "GIT_EXEC_PATH"
+#define GITATTRIBUTES_FILE ".gitattributes"
+#define INFOATTRIBUTES_FILE "info/attributes"
+#define ATTRIBUTE_MACRO_PREFIX "[attr]"
 
 extern int is_bare_repository_cfg;
 extern int is_bare_repository(void);
@@ -207,6 +228,7 @@ extern int refresh_cache(unsigned int flags);
 struct lock_file {
 	struct lock_file *next;
 	int fd;
+	pid_t owner;
 	char on_list;
 	char filename[PATH_MAX];
 };
@@ -377,11 +399,12 @@ struct pack_window {
 extern struct packed_git {
 	struct packed_git *next;
 	struct pack_window *windows;
-	const void *index_data;
-	off_t index_size;
 	off_t pack_size;
-	time_t mtime;
+	const void *index_data;
+	size_t index_size;
+	uint32_t num_objects;
 	int index_version;
+	time_t mtime;
 	int pack_fd;
 	int pack_local;
 	unsigned char sha1[20];
@@ -432,11 +455,11 @@ extern void pack_report(void);
 extern unsigned char* use_pack(struct packed_git *, struct pack_window **, off_t, unsigned int *);
 extern void unuse_pack(struct pack_window **);
 extern struct packed_git *add_packed_git(const char *, int, int);
-extern uint32_t num_packed_objects(const struct packed_git *p);
 extern const unsigned char *nth_packed_object_sha1(const struct packed_git *, uint32_t);
 extern off_t find_pack_entry_one(const unsigned char *, struct packed_git *);
 extern void *unpack_entry(struct packed_git *, off_t, enum object_type *, unsigned long *);
 extern unsigned long unpack_object_header_gently(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
+extern unsigned long get_size_from_delta(struct packed_git *, struct pack_window **, off_t);
 extern const char *packed_object_info_detail(struct packed_git *, off_t, unsigned long *, unsigned long *, unsigned int *, unsigned char *);
 
 /* Dumb servers support */
@@ -477,14 +500,11 @@ int decode_85(char *dst, const char *line, int linelen);
 void encode_85(char *buf, const unsigned char *data, int bytes);
 
 /* alloc.c */
-struct blob;
-struct tree;
-struct commit;
-struct tag;
-extern struct blob *alloc_blob_node(void);
-extern struct tree *alloc_tree_node(void);
-extern struct commit *alloc_commit_node(void);
-extern struct tag *alloc_tag_node(void);
+extern void *alloc_blob_node(void);
+extern void *alloc_tree_node(void);
+extern void *alloc_commit_node(void);
+extern void *alloc_tag_node(void);
+extern void *alloc_object_node(void);
 extern void alloc_report(void);
 
 /* trace.c */
@@ -494,8 +514,8 @@ extern void trace_printf(const char *format, ...);
 extern void trace_argv_printf(const char **argv, int count, const char *format, ...);
 
 /* convert.c */
-extern int convert_to_git(const char *path, char **bufp, unsigned long *sizep);
-extern int convert_to_working_tree(const char *path, char **bufp, unsigned long *sizep);
+extern char *convert_to_git(const char *path, const char *src, unsigned long *sizep);
+extern char *convert_to_working_tree(const char *path, const char *src, unsigned long *sizep);
 
 /* match-trees.c */
 void shift_tree(const unsigned char *, const unsigned char *, unsigned char *, int);

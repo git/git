@@ -790,6 +790,7 @@ _git_config ()
 		core.legacyHeaders
 		core.packedGitWindowSize
 		core.packedGitLimit
+		clean.requireForce
 		color.branch
 		color.branch.current
 		color.branch.local

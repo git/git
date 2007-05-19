@@ -83,17 +83,21 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 	void *buf;
 	unsigned long size;
 	int opt;
+	const char *exp_type, *obj_name;
 
 	git_config(git_default_config);
 	if (argc != 3)
 		usage("git-cat-file [-t|-s|-e|-p|<type>] <sha1>");
-	if (get_sha1(argv[2], sha1))
-		die("Not a valid object name %s", argv[2]);
+	exp_type = argv[1];
+	obj_name = argv[2];
+
+	if (get_sha1(obj_name, sha1))
+		die("Not a valid object name %s", obj_name);
 
 	opt = 0;
-	if ( argv[1][0] == '-' ) {
-		opt = argv[1][1];
-		if ( !opt || argv[1][2] )
+	if ( exp_type[0] == '-' ) {
+		opt = exp_type[1];
+		if ( !opt || exp_type[2] )
 			opt = -1; /* Not a single character option */
 	}
 
@@ -121,15 +125,17 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 	case 'p':
 		type = sha1_object_info(sha1, NULL);
 		if (type < 0)
-			die("Not a valid object name %s", argv[2]);
+			die("Not a valid object name %s", obj_name);
 
 		/* custom pretty-print here */
-		if (type == OBJ_TREE)
-			return cmd_ls_tree(2, argv + 1, NULL);
+		if (type == OBJ_TREE) {
+			const char *ls_args[3] = {"ls-tree", obj_name, NULL};
+			return cmd_ls_tree(2, ls_args, NULL);
+		}
 
 		buf = read_sha1_file(sha1, &type, &size);
 		if (!buf)
-			die("Cannot read object %s", argv[2]);
+			die("Cannot read object %s", obj_name);
 		if (type == OBJ_TAG) {
 			pprint_tag(sha1, buf, size);
 			return 0;
@@ -138,15 +144,15 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		/* otherwise just spit out the data */
 		break;
 	case 0:
-		buf = read_object_with_reference(sha1, argv[1], &size, NULL);
+		buf = read_object_with_reference(sha1, exp_type, &size, NULL);
 		break;
 
 	default:
-		die("git-cat-file: unknown option: %s\n", argv[1]);
+		die("git-cat-file: unknown option: %s\n", exp_type);
 	}
 
 	if (!buf)
-		die("git-cat-file %s: bad file", argv[2]);
+		die("git-cat-file %s: bad file", obj_name);
 
 	write_or_die(1, buf, size);
 	return 0;

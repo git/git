@@ -8,6 +8,7 @@
 #include "delta.h"
 #include "xdiff-interface.h"
 #include "color.h"
+#include "attr.h"
 #include "spawn-pipe.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
@@ -52,6 +53,49 @@ static int parse_diff_color_slot(const char *var, int ofs)
 	die("bad config variable '%s'", var);
 }
 
+static struct ll_diff_driver {
+	const char *name;
+	struct ll_diff_driver *next;
+	char *cmd;
+} *user_diff, **user_diff_tail;
+
+/*
+ * Currently there is only "diff.<drivername>.command" variable;
+ * because there are "diff.color.<slot>" variables, we are parsing
+ * this in a bit convoluted way to allow low level diff driver
+ * called "color".
+ */
+static int parse_lldiff_command(const char *var, const char *ep, const char *value)
+{
+	const char *name;
+	int namelen;
+	struct ll_diff_driver *drv;
+
+	name = var + 5;
+	namelen = ep - name;
+	for (drv = user_diff; drv; drv = drv->next)
+		if (!strncmp(drv->name, name, namelen) && !drv->name[namelen])
+			break;
+	if (!drv) {
+		char *namebuf;
+		drv = xcalloc(1, sizeof(struct ll_diff_driver));
+		namebuf = xmalloc(namelen + 1);
+		memcpy(namebuf, name, namelen);
+		namebuf[namelen] = 0;
+		drv->name = namebuf;
+		drv->next = NULL;
+		if (!user_diff_tail)
+			user_diff_tail = &user_diff;
+		*user_diff_tail = drv;
+		user_diff_tail = &(drv->next);
+	}
+
+	if (!value)
+		return error("%s: lacks value", var);
+	drv->cmd = strdup(value);
+	return 0;
+}
+
 /*
  * These are to give UI layer defaults.
  * The core-level commands such as git-diff-files should
@@ -78,11 +122,18 @@ int git_diff_ui_config(const char *var, const char *value)
 			diff_detect_rename_default = DIFF_DETECT_RENAME;
 		return 0;
 	}
+	if (!prefixcmp(var, "diff.")) {
+		const char *ep = strrchr(var, '.');
+
+		if (ep != var + 4 && !strcmp(ep, ".command"))
+			return parse_lldiff_command(var, ep, value);
+	}
 	if (!prefixcmp(var, "diff.color.") || !prefixcmp(var, "color.diff.")) {
 		int slot = parse_diff_color_slot(var, 11);
 		color_parse(value, var, diff_colors[slot]);
 		return 0;
 	}
+
 	return git_default_config(var, value);
 }
 
@@ -1052,13 +1103,39 @@ static void emit_binary_diff(mmfile_t *one, mmfile_t *two)
 	emit_binary_diff_body(two, one);
 }
 
-#define FIRST_FEW_BYTES 8000
-static int mmfile_is_binary(mmfile_t *mf)
+static void setup_diff_attr_check(struct git_attr_check *check)
 {
-	long sz = mf->size;
+	static struct git_attr *attr_diff;
+
+	if (!attr_diff)
+		attr_diff = git_attr("diff", 4);
+	check->attr = attr_diff;
+}
+
+#define FIRST_FEW_BYTES 8000
+static int file_is_binary(struct diff_filespec *one)
+{
+	unsigned long sz;
+	struct git_attr_check attr_diff_check;
+
+	setup_diff_attr_check(&attr_diff_check);
+	if (!git_checkattr(one->path, 1, &attr_diff_check)) {
+		const char *value = attr_diff_check.value;
+		if (ATTR_TRUE(value))
+			return 0;
+		else if (ATTR_FALSE(value))
+			return 1;
+	}
+
+	if (!one->data) {
+		if (!DIFF_FILE_VALID(one))
+			return 0;
+		diff_populate_filespec(one, 0);
+	}
+	sz = one->size;
 	if (FIRST_FEW_BYTES < sz)
 		sz = FIRST_FEW_BYTES;
-	return !!memchr(mf->ptr, 0, sz);
+	return !!memchr(one->data, 0, sz);
 }
 
 static void builtin_diff(const char *name_a,
@@ -1115,7 +1192,7 @@ static void builtin_diff(const char *name_a,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (!o->text && (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2))) {
+	if (!o->text && (file_is_binary(one) || file_is_binary(two))) {
 		/* Quite common confusing case */
 		if (mf1.size == mf2.size &&
 		    !memcmp(mf1.ptr, mf2.ptr, mf1.size))
@@ -1191,7 +1268,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (mmfile_is_binary(&mf1) || mmfile_is_binary(&mf2)) {
+	if (file_is_binary(one) || file_is_binary(two)) {
 		data->is_binary = 1;
 		data->added = mf2.size;
 		data->deleted = mf1.size;
@@ -1229,7 +1306,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (mmfile_is_binary(&mf2))
+	if (file_is_binary(two))
 		return;
 	else {
 		/* Crazy xdl interfaces.. */
@@ -1398,6 +1475,22 @@ static int populate_from_stdin(struct diff_filespec *s)
 	return 0;
 }
 
+static int diff_populate_gitlink(struct diff_filespec *s, int size_only)
+{
+	int len;
+	char *data = xmalloc(100);
+	len = snprintf(data, 100,
+		"Subproject commit %s\n", sha1_to_hex(s->sha1));
+	s->data = data;
+	s->size = len;
+	s->should_free = 1;
+	if (size_only) {
+		s->data = NULL;
+		free(data);
+	}
+	return 0;
+}
+
 /*
  * While doing rename detection and pickaxe operation, we may need to
  * grab the data for the blob (or file) for our own in-core comparison.
@@ -1416,6 +1509,10 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 
 	if (s->data)
 		return err;
+
+	if (S_ISDIRLNK(s->mode))
+		return diff_populate_gitlink(s, size_only);
+
 	if (!s->sha1_valid ||
 	    reuse_worktree_file(s->path, s->sha1, 0)) {
 		struct stat st;
@@ -1462,9 +1559,9 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		/*
 		 * Convert from working tree format to canonical git format
 		 */
-		buf = s->data;
 		size = s->size;
-		if (convert_to_git(s->path, &buf, &size)) {
+		buf = convert_to_git(s->path, s->data, &size);
+		if (buf) {
 			munmap(s->data, s->size);
 			s->should_munmap = 0;
 			s->data = buf;
@@ -1695,6 +1792,30 @@ static void run_external_diff(const char *pgm,
 	}
 }
 
+static const char *external_diff_attr(const char *name)
+{
+	struct git_attr_check attr_diff_check;
+
+	setup_diff_attr_check(&attr_diff_check);
+	if (!git_checkattr(name, 1, &attr_diff_check)) {
+		const char *value = attr_diff_check.value;
+		if (!ATTR_TRUE(value) &&
+		    !ATTR_FALSE(value) &&
+		    !ATTR_UNSET(value)) {
+			struct ll_diff_driver *drv;
+
+			if (!user_diff_tail) {
+				user_diff_tail = &user_diff;
+				git_config(git_diff_ui_config);
+			}
+			for (drv = user_diff; drv; drv = drv->next)
+				if (!strcmp(drv->name, value))
+					return drv->cmd;
+		}
+	}
+	return NULL;
+}
+
 static void run_diff_cmd(const char *pgm,
 			 const char *name,
 			 const char *other,
@@ -1704,6 +1825,14 @@ static void run_diff_cmd(const char *pgm,
 			 struct diff_options *o,
 			 int complete_rewrite)
 {
+	if (!o->allow_external)
+		pgm = NULL;
+	else {
+		const char *cmd = external_diff_attr(name);
+		if (cmd)
+			pgm = cmd;
+	}
+
 	if (pgm) {
 		run_external_diff(pgm, name, other, one, two, xfrm_msg,
 				  complete_rewrite);
@@ -1800,8 +1929,8 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 
 		if (o->binary) {
 			mmfile_t mf;
-			if ((!fill_mmfile(&mf, one) && mmfile_is_binary(&mf)) ||
-			    (!fill_mmfile(&mf, two) && mmfile_is_binary(&mf)))
+			if ((!fill_mmfile(&mf, one) && file_is_binary(one)) ||
+			    (!fill_mmfile(&mf, two) && file_is_binary(two)))
 				abbrev = 40;
 		}
 		len += snprintf(msg + len, sizeof(msg) - len,
@@ -2696,7 +2825,7 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 			return error("unable to read files to diff");
 
 		/* Maybe hash p->two? into the patch id? */
-		if (mmfile_is_binary(&mf2))
+		if (file_is_binary(p->two))
 			continue;
 
 		len1 = remove_space(p->one->path, strlen(p->one->path));

@@ -2398,6 +2398,7 @@ sub git_patchset_body {
 	my ($fd, $difftree, $hash, $hash_parent) = @_;
 
 	my $patch_idx = 0;
+	my $patch_number = 0;
 	my $patch_line;
 	my $diffinfo;
 	my (%from, %to);
@@ -2419,6 +2420,7 @@ sub git_patchset_body {
 		# git diff header
 		#assert($patch_line =~ m/^diff /) if DEBUG;
 		#assert($patch_line !~ m!$/$!) if DEBUG; # is chomp-ed
+		$patch_number++;
 		push @diff_header, $patch_line;
 
 		# extended diff header
@@ -2581,6 +2583,7 @@ sub git_patchset_body {
 	} continue {
 		print "</div>\n"; # class="patch"
 	}
+	print "<div class=\"diff nodifferences\">No differences found</div>\n" if (!$patch_number);
 
 	print "</div>\n"; # class="patchset"
 }

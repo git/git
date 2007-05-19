@@ -104,4 +104,10 @@ test_expect_success 'add ignored ones with -f' '
 	git-ls-files --error-unmatch d.ig/d.if d.ig/d.ig
 '
 
+mkdir 1 1/2 1/3
+touch 1/2/a 1/3/b 1/2/c
+test_expect_success 'check correct prefix detection' '
+	git add 1/2/a 1/3/b 1/2/c
+'
+
 test_done

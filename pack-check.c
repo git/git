@@ -40,7 +40,7 @@ static int verify_packfile(struct packed_git *p,
 	 * have verified that nr_objects matches between idx and pack,
 	 * we do not do scan-streaming check on the pack file.
 	 */
-	nr_objects = num_packed_objects(p);
+	nr_objects = p->num_objects;
 	for (i = 0, err = 0; i < nr_objects; i++) {
 		const unsigned char *sha1;
 		void *data;
@@ -79,7 +79,7 @@ static void show_pack_info(struct packed_git *p)
 {
 	uint32_t nr_objects, i, chain_histogram[MAX_CHAIN];
 
-	nr_objects = num_packed_objects(p);
+	nr_objects = p->num_objects;
 	memset(chain_histogram, 0, sizeof(chain_histogram));
 
 	for (i = 0; i < nr_objects; i++) {

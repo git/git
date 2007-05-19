@@ -1475,8 +1475,8 @@ static int read_old_data(struct stat *st, const char *path, char **buf_p, unsign
 		}
 		close(fd);
 		nsize = got;
-		nbuf = buf;
-		if (convert_to_git(path, &nbuf, &nsize)) {
+		nbuf = convert_to_git(path, buf, &nsize);
+		if (nbuf) {
 			free(buf);
 			*buf_p = nbuf;
 			*alloc_p = nsize;
@@ -2355,9 +2355,8 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 
 static int try_create_file(const char *path, unsigned int mode, const char *buf, unsigned long size)
 {
-	int fd, converted;
+	int fd;
 	char *nbuf;
-	unsigned long nsize;
 
 	if (has_symlinks && S_ISLNK(mode))
 		/* Although buf:size is counted string, it also is NUL
@@ -2369,13 +2368,10 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	if (fd < 0)
 		return -1;
 
-	nsize = size;
-	nbuf = (char *) buf;
-	converted = convert_to_working_tree(path, &nbuf, &nsize);
-	if (converted) {
+	nbuf = convert_to_working_tree(path, buf, &size);
+	if (nbuf)
 		buf = nbuf;
-		size = nsize;
-	}
+
 	while (size) {
 		int written = xwrite(fd, buf, size);
 		if (written < 0)
@@ -2387,7 +2383,7 @@ static int try_create_file(const char *path, unsigned int mode, const char *buf,
 	}
 	if (close(fd) < 0)
 		die("closing file %s: %s", path, strerror(errno));
-	if (converted)
+	if (nbuf)
 		free(nbuf);
 	return 0;
 }

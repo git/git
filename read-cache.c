@@ -5,6 +5,7 @@
  */
 #include "cache.h"
 #include "cache-tree.h"
+#include "refs.h"
 
 /* Index extensions.
  *
@@ -91,6 +92,23 @@ static int ce_compare_link(struct cache_entry *ce, size_t expected_size)
 	return match;
 }
 
+static int ce_compare_gitlink(struct cache_entry *ce)
+{
+	unsigned char sha1[20];
+
+	/*
+	 * We don't actually require that the .git directory
+	 * under DIRLNK directory be a valid git directory. It
+	 * might even be missing (in case nobody populated that
+	 * sub-project).
+	 *
+	 * If so, we consider it always to match.
+	 */
+	if (resolve_gitlink_ref(ce->name, "HEAD", sha1) < 0)
+		return 0;
+	return hashcmp(sha1, ce->sha1);
+}
+
 static int ce_modified_check_fs(struct cache_entry *ce, struct stat *st)
 {
 	switch (st->st_mode & S_IFMT) {
@@ -102,6 +120,9 @@ static int ce_modified_check_fs(struct cache_entry *ce, struct stat *st)
 		if (ce_compare_link(ce, xsize_t(st->st_size)))
 			return DATA_CHANGED;
 		break;
+	case S_IFDIR:
+		if (S_ISDIRLNK(ntohl(ce->ce_mode)))
+			return 0;
 	default:
 		return TYPE_CHANGED;
 	}
@@ -127,6 +148,12 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 		    (has_symlinks || !S_ISREG(st->st_mode)))
 			changed |= TYPE_CHANGED;
 		break;
+	case S_IFDIRLNK:
+		if (!S_ISDIR(st->st_mode))
+			changed |= TYPE_CHANGED;
+		else if (ce_compare_gitlink(ce))
+			changed |= DATA_CHANGED;
+		return changed;
 	default:
 		die("internal error: ce_mode is %o", ntohl(ce->ce_mode));
 	}
@@ -334,10 +361,14 @@ int add_file_to_cache(const char *path, int verbose)
 	if (lstat(path, &st))
 		die("%s: unable to stat (%s)", path, strerror(errno));
 
-	if (!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode))
-		die("%s: can only add regular files or symbolic links", path);
+	if (!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode) && !S_ISDIR(st.st_mode))
+		die("%s: can only add regular files, symbolic links or git-directories", path);
 
 	namelen = strlen(path);
+	if (S_ISDIR(st.st_mode)) {
+		while (namelen && path[namelen-1] == '/')
+			namelen--;
+	}
 	size = cache_entry_size(namelen);
 	ce = xcalloc(1, size);
 	memcpy(ce->name, path, namelen);

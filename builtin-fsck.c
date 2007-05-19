@@ -253,6 +253,7 @@ static int fsck_tree(struct tree *item)
 		case S_IFREG | 0644:
 		case S_IFLNK:
 		case S_IFDIR:
+		case S_IFDIRLNK:
 			break;
 		/*
 		 * This is nonstandard, but we had a few of these
@@ -661,7 +662,7 @@ int cmd_fsck(int argc, char **argv, const char *prefix)
 			verify_pack(p, 0);
 
 		for (p = packed_git; p; p = p->next) {
-			uint32_t i, num = num_packed_objects(p);
+			uint32_t i, num = p->num_objects;
 			for (i = 0; i < num; i++)
 				fsck_sha1(nth_packed_object_sha1(p, i));
 		}
@@ -703,8 +704,14 @@ int cmd_fsck(int argc, char **argv, const char *prefix)
 		int i;
 		read_cache();
 		for (i = 0; i < active_nr; i++) {
-			struct blob *blob = lookup_blob(active_cache[i]->sha1);
+			unsigned int mode;
+			struct blob *blob;
 			struct object *obj;
+
+			mode = ntohl(active_cache[i]->ce_mode);
+			if (S_ISDIRLNK(mode))
+				continue;
+			blob = lookup_blob(active_cache[i]->sha1);
 			if (!blob)
 				continue;
 			obj = &blob->object;

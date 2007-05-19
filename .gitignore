@@ -16,6 +16,7 @@ git-blame
 git-branch
 git-bundle
 git-cat-file
+git-check-attr
 git-check-ref-format
 git-checkout
 git-checkout-index
@@ -149,6 +150,7 @@ test-chmtime
 test-date
 test-delta
 test-dump-cache-tree
+test-genrandom
 test-match-trees
 common-cmds.h
 *.tar.gz

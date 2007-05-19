@@ -6,15 +6,17 @@
 #include "commit.h"
 #include "tag.h"
 #include "tree.h"
+#include "progress.h"
 
 static const char index_pack_usage[] =
 "git-index-pack [-v] [-o <index-file>] [{ ---keep | --keep=<msg> }] { <pack-file> | --stdin [--fix-thin] [<pack-file>] }";
 
 struct object_entry
 {
-	unsigned long offset;
+	off_t offset;
 	unsigned long size;
 	unsigned int hdr_size;
+	uint32_t crc32;
 	enum object_type type;
 	enum object_type real_type;
 	unsigned char sha1[20];
@@ -22,7 +24,7 @@ struct object_entry
 
 union delta_base {
 	unsigned char sha1[20];
-	unsigned long offset;
+	off_t offset;
 };
 
 /*
@@ -46,45 +48,14 @@ static int nr_resolved_deltas;
 static int from_stdin;
 static int verbose;
 
-static volatile sig_atomic_t progress_update;
-
-static void progress_interval(int signum)
-{
-	progress_update = 1;
-}
-
-static void setup_progress_signal(void)
-{
-	struct sigaction sa;
-	struct itimerval v;
-
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = progress_interval;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	sigaction(SIGALRM, &sa, NULL);
-
-	v.it_interval.tv_sec = 1;
-	v.it_interval.tv_usec = 0;
-	v.it_value = v.it_interval;
-	setitimer(ITIMER_REAL, &v, NULL);
-
-}
-
-static unsigned display_progress(unsigned n, unsigned total, unsigned last_pc)
-{
-	unsigned percent = n * 100 / total;
-	if (percent != last_pc || progress_update) {
-		fprintf(stderr, "%4u%% (%u/%u) done\r", percent, n, total);
-		progress_update = 0;
-	}
-	return percent;
-}
+static struct progress progress;
 
 /* We always read in 4kB chunks. */
 static unsigned char input_buffer[4096];
-static unsigned long input_offset, input_len, consumed_bytes;
+static unsigned int input_offset, input_len;
+static off_t consumed_bytes;
 static SHA_CTX input_ctx;
+static uint32_t input_crc32;
 static int input_fd, output_fd, pack_fd;
 
 /* Discard current buffer used content. */
@@ -127,8 +98,13 @@ static void use(int bytes)
 {
 	if (bytes > input_len)
 		die("used more bytes than were available");
+	input_crc32 = crc32(input_crc32, input_buffer + input_offset, bytes);
 	input_len -= bytes;
 	input_offset += bytes;
+
+	/* make sure off_t is sufficiently large not to wrap */
+	if (consumed_bytes > consumed_bytes + bytes)
+		die("pack too large for current definition of off_t");
 	consumed_bytes += bytes;
 }
 
@@ -216,10 +192,13 @@ static void *unpack_entry_data(unsigned long offset, unsigned long size)
 static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_base)
 {
 	unsigned char *p, c;
-	unsigned long size, base_offset;
+	unsigned long size;
+	off_t base_offset;
 	unsigned shift;
+	void *data;
 
 	obj->offset = consumed_bytes;
+	input_crc32 = crc32(0, Z_NULL, 0);
 
 	p = fill(1);
 	c = *p;
@@ -249,7 +228,7 @@ static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_
 		base_offset = c & 127;
 		while (c & 128) {
 			base_offset += 1;
-			if (!base_offset || base_offset & ~(~0UL >> 7))
+			if (!base_offset || MSB(base_offset, 7))
 				bad_object(obj->offset, "offset value overflow for delta base object");
 			p = fill(1);
 			c = *p;
@@ -270,7 +249,9 @@ static void *unpack_raw_entry(struct object_entry *obj, union delta_base *delta_
 	}
 	obj->hdr_size = consumed_bytes - obj->offset;
 
-	return unpack_entry_data(obj->offset, obj->size);
+	data = unpack_entry_data(obj->offset, obj->size);
+	obj->crc32 = input_crc32;
+	return data;
 }
 
 static void *get_data_from_pack(struct object_entry *obj)
@@ -415,7 +396,7 @@ static int compare_delta_entry(const void *a, const void *b)
 /* Parse all objects and return the pack content SHA1 hash */
 static void parse_pack_objects(unsigned char *sha1)
 {
-	int i, percent = -1;
+	int i;
 	struct delta_entry *delta = deltas;
 	void *data;
 	struct stat st;
@@ -427,7 +408,7 @@ static void parse_pack_objects(unsigned char *sha1)
 	 * - remember base (SHA1 or offset) for all deltas.
 	 */
 	if (verbose)
-		fprintf(stderr, "Indexing %d objects.\n", nr_objects);
+		start_progress(&progress, "Indexing %u objects...", "", nr_objects);
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
 		data = unpack_raw_entry(obj, &delta->base);
@@ -440,11 +421,11 @@ static void parse_pack_objects(unsigned char *sha1)
 			sha1_object(data, obj->size, obj->type, obj->sha1);
 		free(data);
 		if (verbose)
-			percent = display_progress(i+1, nr_objects, percent);
+			display_progress(&progress, i+1);
 	}
 	objects[i].offset = consumed_bytes;
 	if (verbose)
-		fputc('\n', stderr);
+		stop_progress(&progress);
 
 	/* Check pack integrity */
 	flush();
@@ -476,7 +457,7 @@ static void parse_pack_objects(unsigned char *sha1)
 	 *   for some more deltas.
 	 */
 	if (verbose)
-		fprintf(stderr, "Resolving %d deltas.\n", nr_deltas);
+		start_progress(&progress, "Resolving %u deltas...", "", nr_deltas);
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
 		union delta_base base;
@@ -508,14 +489,11 @@ static void parse_pack_objects(unsigned char *sha1)
 			}
 		free(data);
 		if (verbose)
-			percent = display_progress(nr_resolved_deltas,
-						   nr_deltas, percent);
+			display_progress(&progress, nr_resolved_deltas);
 	}
-	if (verbose && nr_resolved_deltas == nr_deltas)
-		fputc('\n', stderr);
 }
 
-static int write_compressed(int fd, void *in, unsigned int size)
+static int write_compressed(int fd, void *in, unsigned int size, uint32_t *obj_crc)
 {
 	z_stream stream;
 	unsigned long maxsize;
@@ -536,6 +514,7 @@ static int write_compressed(int fd, void *in, unsigned int size)
 
 	size = stream.total_out;
 	write_or_die(fd, out, size);
+	*obj_crc = crc32(*obj_crc, out, size);
 	free(out);
 	return size;
 }
@@ -556,8 +535,10 @@ static void append_obj_to_pack(const unsigned char *sha1, void *buf,
 	}
 	header[n++] = c;
 	write_or_die(output_fd, header, n);
+	obj[0].crc32 = crc32(0, Z_NULL, 0);
+	obj[0].crc32 = crc32(obj[0].crc32, header, n);
 	obj[1].offset = obj[0].offset + n;
-	obj[1].offset += write_compressed(output_fd, buf, size);
+	obj[1].offset += write_compressed(output_fd, buf, size, &obj[0].crc32);
 	hashcpy(obj->sha1, sha1);
 }
 
@@ -571,7 +552,7 @@ static int delta_pos_compare(const void *_a, const void *_b)
 static void fix_unresolved_deltas(int nr_unresolved)
 {
 	struct delta_entry **sorted_by_pos;
-	int i, n = 0, percent = -1;
+	int i, n = 0;
 
 	/*
 	 * Since many unresolved deltas may well be themselves base objects
@@ -616,12 +597,9 @@ static void fix_unresolved_deltas(int nr_unresolved)
 		append_obj_to_pack(d->base.sha1, data, size, type);
 		free(data);
 		if (verbose)
-			percent = display_progress(nr_resolved_deltas,
-						   nr_deltas, percent);
+			display_progress(&progress, nr_resolved_deltas);
 	}
 	free(sorted_by_pos);
-	if (verbose)
-		fputc('\n', stderr);
 }
 
 static void readjust_pack_header_and_sha1(unsigned char *sha1)
@@ -655,6 +633,9 @@ static void readjust_pack_header_and_sha1(unsigned char *sha1)
 	write_or_die(output_fd, sha1, 20);
 }
 
+static uint32_t index_default_version = 1;
+static uint32_t index_off32_limit = 0x7fffffff;
+
 static int sha1_compare(const void *_a, const void *_b)
 {
 	struct object_entry *a = *(struct object_entry **)_a;
@@ -670,9 +651,10 @@ static const char *write_index_file(const char *index_name, unsigned char *sha1)
 {
 	struct sha1file *f;
 	struct object_entry **sorted_by_sha, **list, **last;
-	unsigned int array[256];
+	uint32_t array[256];
 	int i, fd;
 	SHA_CTX ctx;
+	uint32_t index_version;
 
 	if (nr_objects) {
 		sorted_by_sha =
@@ -683,7 +665,6 @@ static const char *write_index_file(const char *index_name, unsigned char *sha1)
 			sorted_by_sha[i] = &objects[i];
 		qsort(sorted_by_sha, nr_objects, sizeof(sorted_by_sha[0]),
 		      sha1_compare);
-
 	}
 	else
 		sorted_by_sha = list = last = NULL;
@@ -702,6 +683,17 @@ static const char *write_index_file(const char *index_name, unsigned char *sha1)
 		die("unable to create %s: %s", index_name, strerror(errno));
 	f = sha1fd(fd, index_name);
 
+	/* if last object's offset is >= 2^31 we should use index V2 */
+	index_version = (objects[nr_objects-1].offset >> 31) ? 2 : index_default_version;
+
+	/* index versions 2 and above need a header */
+	if (index_version >= 2) {
+		struct pack_idx_header hdr;
+		hdr.idx_signature = htonl(PACK_IDX_SIGNATURE);
+		hdr.idx_version = htonl(index_version);
+		sha1write(f, &hdr, sizeof(hdr));
+	}
+
 	/*
 	 * Write the first-level table (the list is sorted,
 	 * but we use a 256-entry lookup to be able to avoid
@@ -718,24 +710,61 @@ static const char *write_index_file(const char *index_name, unsigned char *sha1)
 		array[i] = htonl(next - sorted_by_sha);
 		list = next;
 	}
-	sha1write(f, array, 256 * sizeof(int));
+	sha1write(f, array, 256 * 4);
 
-	/* recompute the SHA1 hash of sorted object names.
-	 * currently pack-objects does not do this, but that
-	 * can be fixed.
-	 */
+	/* compute the SHA1 hash of sorted object names. */
 	SHA1_Init(&ctx);
+
 	/*
 	 * Write the actual SHA1 entries..
 	 */
 	list = sorted_by_sha;
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = *list++;
-		unsigned int offset = htonl(obj->offset);
-		sha1write(f, &offset, 4);
+		if (index_version < 2) {
+			uint32_t offset = htonl(obj->offset);
+			sha1write(f, &offset, 4);
+		}
 		sha1write(f, obj->sha1, 20);
 		SHA1_Update(&ctx, obj->sha1, 20);
 	}
+
+	if (index_version >= 2) {
+		unsigned int nr_large_offset = 0;
+
+		/* write the crc32 table */
+		list = sorted_by_sha;
+		for (i = 0; i < nr_objects; i++) {
+			struct object_entry *obj = *list++;
+			uint32_t crc32_val = htonl(obj->crc32);
+			sha1write(f, &crc32_val, 4);
+		}
+
+		/* write the 32-bit offset table */
+		list = sorted_by_sha;
+		for (i = 0; i < nr_objects; i++) {
+			struct object_entry *obj = *list++;
+			uint32_t offset = (obj->offset <= index_off32_limit) ?
+				obj->offset : (0x80000000 | nr_large_offset++);
+			offset = htonl(offset);
+			sha1write(f, &offset, 4);
+		}
+
+		/* write the large offset table */
+		list = sorted_by_sha;
+		while (nr_large_offset) {
+			struct object_entry *obj = *list++;
+			uint64_t offset = obj->offset;
+			if (offset > index_off32_limit) {
+				uint32_t split[2];
+				split[0]	= htonl(offset >> 32);
+				split[1] = htonl(offset & 0xffffffff);
+				sha1write(f, split, 8);
+				nr_large_offset--;
+			}
+		}
+	}
+
 	sha1write(f, sha1, 20);
 	sha1close(f, NULL, 1);
 	free(sorted_by_sha);
@@ -865,6 +894,15 @@ int main(int argc, char **argv)
 				if (index_name || (i+1) >= argc)
 					usage(index_pack_usage);
 				index_name = argv[++i];
+			} else if (!prefixcmp(arg, "--index-version=")) {
+				char *c;
+				index_default_version = strtoul(arg + 16, &c, 10);
+				if (index_default_version > 2)
+					die("bad %s", arg);
+				if (*c == ',')
+					index_off32_limit = strtoul(c+1, &c, 0);
+				if (*c || index_off32_limit & 0x80000000)
+					die("bad %s", arg);
 			} else
 				usage(index_pack_usage);
 			continue;
@@ -904,10 +942,13 @@ int main(int argc, char **argv)
 	parse_pack_header();
 	objects = xmalloc((nr_objects + 1) * sizeof(struct object_entry));
 	deltas = xmalloc(nr_objects * sizeof(struct delta_entry));
-	if (verbose)
-		setup_progress_signal();
 	parse_pack_objects(sha1);
-	if (nr_deltas != nr_resolved_deltas) {
+	if (nr_deltas == nr_resolved_deltas) {
+		if (verbose)
+			stop_progress(&progress);
+		/* Flush remaining pack final 20-byte SHA1. */
+		flush();
+	} else {
 		if (fix_thin_pack) {
 			int nr_unresolved = nr_deltas - nr_resolved_deltas;
 			int nr_objects_initial = nr_objects;
@@ -917,17 +958,16 @@ int main(int argc, char **argv)
 					   (nr_objects + nr_unresolved + 1)
 					   * sizeof(*objects));
 			fix_unresolved_deltas(nr_unresolved);
-			if (verbose)
+			if (verbose) {
+				stop_progress(&progress);
 				fprintf(stderr, "%d objects were added to complete this thin pack.\n",
 					nr_objects - nr_objects_initial);
+			}
 			readjust_pack_header_and_sha1(sha1);
 		}
 		if (nr_deltas != nr_resolved_deltas)
 			die("pack has %d unresolved deltas",
 			    nr_deltas - nr_resolved_deltas);
-	} else {
-		/* Flush remaining pack final 20-byte SHA1. */
-		flush();
 	}
 	free(deltas);
 	curr_index = write_index_file(index_name, sha1);

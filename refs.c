@@ -47,22 +47,7 @@ static struct ref_list *add_ref(const char *name, const unsigned char *sha1,
 				struct ref_list **new_entry)
 {
 	int len;
-	struct ref_list **p = &list, *entry;
-
-	/* Find the place to insert the ref into.. */
-	while ((entry = *p) != NULL) {
-		int cmp = strcmp(entry->name, name);
-		if (cmp > 0)
-			break;
-
-		/* Same as existing entry? */
-		if (!cmp) {
-			if (new_entry)
-				*new_entry = entry;
-			return list;
-		}
-		p = &entry->next;
-	}
+	struct ref_list *entry;
 
 	/* Allocate it and add it in.. */
 	len = strlen(name) + 1;
@@ -71,11 +56,94 @@ static struct ref_list *add_ref(const char *name, const unsigned char *sha1,
 	hashclr(entry->peeled);
 	memcpy(entry->name, name, len);
 	entry->flag = flag;
-	entry->next = *p;
-	*p = entry;
+	entry->next = list;
 	if (new_entry)
 		*new_entry = entry;
-	return list;
+	return entry;
+}
+
+/* merge sort the ref list */
+static struct ref_list *sort_ref_list(struct ref_list *list)
+{
+	int psize, qsize, last_merge_count, cmp;
+	struct ref_list *p, *q, *l, *e;
+	struct ref_list *new_list = list;
+	int k = 1;
+	int merge_count = 0;
+
+	if (!list)
+		return list;
+
+	do {
+		last_merge_count = merge_count;
+		merge_count = 0;
+
+		psize = 0;
+
+		p = new_list;
+		q = new_list;
+		new_list = NULL;
+		l = NULL;
+
+		while (p) {
+			merge_count++;
+
+			while (psize < k && q->next) {
+				q = q->next;
+				psize++;
+			}
+			qsize = k;
+
+			while ((psize > 0) || (qsize > 0 && q)) {
+				if (qsize == 0 || !q) {
+					e = p;
+					p = p->next;
+					psize--;
+				} else if (psize == 0) {
+					e = q;
+					q = q->next;
+					qsize--;
+				} else {
+					cmp = strcmp(q->name, p->name);
+					if (cmp < 0) {
+						e = q;
+						q = q->next;
+						qsize--;
+					} else if (cmp > 0) {
+						e = p;
+						p = p->next;
+						psize--;
+					} else {
+						if (hashcmp(q->sha1, p->sha1))
+							die("Duplicated ref, and SHA1s don't match: %s",
+							    q->name);
+						warning("Duplicated ref: %s", q->name);
+						e = q;
+						q = q->next;
+						qsize--;
+						free(e);
+						e = p;
+						p = p->next;
+						psize--;
+					}
+				}
+
+				e->next = NULL;
+
+				if (l)
+					l->next = e;
+				if (!new_list)
+					new_list = e;
+				l = e;
+			}
+
+			p = q;
+		};
+
+		k = k * 2;
+	} while ((last_merge_count != merge_count) || (last_merge_count != 1));
+
+	return new_list;
 }
 
 /*
@@ -142,7 +210,7 @@ static void read_packed_refs(FILE *f, struct cached_refs *cached_refs)
 		    !get_sha1_hex(refline + 1, sha1))
 			hashcpy(last->peeled, sha1);
 	}
-	cached_refs->packed = list;
+	cached_refs->packed = sort_ref_list(list);
 }
 
 static struct ref_list *get_packed_refs(void)
@@ -201,7 +269,7 @@ static struct ref_list *get_ref_dir(const char *base, struct ref_list *list)
 		free(ref);
 		closedir(dir);
 	}
-	return list;
+	return sort_ref_list(list);
 }
 
 static struct ref_list *get_loose_refs(void)
@@ -215,6 +283,86 @@ static struct ref_list *get_loose_refs(void)
 
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define MAXDEPTH 5
+#define MAXREFLEN (1024)
+
+static int resolve_gitlink_packed_ref(char *name, int pathlen, const char *refname, unsigned char *result)
+{
+	FILE *f;
+	struct cached_refs refs;
+	struct ref_list *ref;
+	int retval;
+
+	strcpy(name + pathlen, "packed-refs");
+	f = fopen(name, "r");
+	if (!f)
+		return -1;
+	read_packed_refs(f, &refs);
+	fclose(f);
+	ref = refs.packed;
+	retval = -1;
+	while (ref) {
+		if (!strcmp(ref->name, refname)) {
+			retval = 0;
+			memcpy(result, ref->sha1, 20);
+			break;
+		}
+		ref = ref->next;
+	}
+	free_ref_list(refs.packed);
+	return retval;
+}
+
+static int resolve_gitlink_ref_recursive(char *name, int pathlen, const char *refname, unsigned char *result, int recursion)
+{
+	int fd, len = strlen(refname);
+	char buffer[128], *p;
+
+	if (recursion > MAXDEPTH || len > MAXREFLEN)
+		return -1;
+	memcpy(name + pathlen, refname, len+1);
+	fd = open(name, O_RDONLY);
+	if (fd < 0)
+		return resolve_gitlink_packed_ref(name, pathlen, refname, result);
+
+	len = read(fd, buffer, sizeof(buffer)-1);
+	close(fd);
+	if (len < 0)
+		return -1;
+	while (len && isspace(buffer[len-1]))
+		len--;
+	buffer[len] = 0;
+
+	/* Was it a detached head or an old-fashioned symlink? */
+	if (!get_sha1_hex(buffer, result))
+		return 0;
+
+	/* Symref? */
+	if (strncmp(buffer, "ref:", 4))
+		return -1;
+	p = buffer + 4;
+	while (isspace(*p))
+		p++;
+
+	return resolve_gitlink_ref_recursive(name, pathlen, p, result, recursion+1);
+}
+
+int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *result)
+{
+	int len = strlen(path), retval;
+	char *gitdir;
+
+	while (len && path[len-1] == '/')
+		len--;
+	if (!len)
+		return -1;
+	gitdir = xmalloc(len + MAXREFLEN + 8);
+	memcpy(gitdir, path, len);
+	memcpy(gitdir + len, "/.git/", 7);
+
+	retval = resolve_gitlink_ref_recursive(gitdir, len+6, refname, result, 0);
+	free(gitdir);
+	return retval;
+}
 
 const char *resolve_ref(const char *ref, unsigned char *sha1, int reading, int *flag)
 {

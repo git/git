@@ -49,6 +49,8 @@ int sha1close(struct sha1file *f, unsigned char *result, int update)
 
 int sha1write(struct sha1file *f, void *buf, unsigned int count)
 {
+	if (f->do_crc)
+		f->crc32 = crc32(f->crc32, buf, count);
 	while (count) {
 		unsigned offset = f->offset;
 		unsigned left = sizeof(f->buffer) - offset;
@@ -91,6 +93,7 @@ struct sha1file *sha1create(const char *fmt, ...)
 	f->fd = fd;
 	f->error = 0;
 	f->offset = 0;
+	f->do_crc = 0;
 	SHA1_Init(&f->ctx);
 	return f;
 }
@@ -111,6 +114,7 @@ struct sha1file *sha1fd(int fd, const char *name)
 	f->fd = fd;
 	f->error = 0;
 	f->offset = 0;
+	f->do_crc = 0;
 	SHA1_Init(&f->ctx);
 	return f;
 }
@@ -143,4 +147,14 @@ int sha1write_compressed(struct sha1file *f, void *in, unsigned int size)
 	return size;
 }
 
+void crc32_begin(struct sha1file *f)
+{
+	f->crc32 = crc32(0, Z_NULL, 0);
+	f->do_crc = 1;
+}
 
+uint32_t crc32_end(struct sha1file *f)
+{
+	f->do_crc = 0;
+	return f->crc32;
+}

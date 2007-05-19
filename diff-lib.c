@@ -373,7 +373,7 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 					continue;
 			}
 			else
-				dpath->mode = canon_mode(st.st_mode);
+				dpath->mode = ntohl(ce_mode_from_stat(ce, st.st_mode));
 
 			while (i < entries) {
 				struct cache_entry *nce = active_cache[i];
@@ -390,8 +390,7 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 					int mode = ntohl(nce->ce_mode);
 					num_compare_stages++;
 					hashcpy(dpath->parent[stage-2].sha1, nce->sha1);
-					dpath->parent[stage-2].mode =
-						canon_mode(mode);
+					dpath->parent[stage-2].mode = ntohl(ce_mode_from_stat(nce, mode));
 					dpath->parent[stage-2].status =
 						DIFF_STATUS_MODIFIED;
 				}
@@ -440,15 +439,7 @@ int run_diff_files(struct rev_info *revs, int silent_on_removed)
 		if (!changed && !revs->diffopt.find_copies_harder)
 			continue;
 		oldmode = ntohl(ce->ce_mode);
-
-		newmode = canon_mode(st.st_mode);
-		if (!trust_executable_bit &&
-		    S_ISREG(newmode) && S_ISREG(oldmode) &&
-		    ((newmode ^ oldmode) == 0111))
-			newmode = oldmode;
-		else if (!has_symlinks &&
-		    S_ISREG(newmode) && S_ISLNK(oldmode))
-			newmode = oldmode;
+		newmode = ntohl(ce_mode_from_stat(ce, st.st_mode));
 		diff_change(&revs->diffopt, oldmode, newmode,
 			    ce->sha1, (changed ? null_sha1 : ce->sha1),
 			    ce->name, NULL);
