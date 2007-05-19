@@ -7,7 +7,10 @@ git-for-each-ref - Output information on each ref
 
 SYNOPSIS
 --------
-'git-for-each-ref' [--count=<count>]\* [--shell|--perl|--python|--tcl] [--sort=<key>]\* [--format=<format>] [<pattern>]
+[verse]
+'git-for-each-ref' [--count=<count>]\*
+                   [--shell|--perl|--python|--tcl]
+                   [--sort=<key>]\* [--format=<format>] [<pattern>]
 
 DESCRIPTION
 -----------

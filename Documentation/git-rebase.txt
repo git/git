@@ -7,8 +7,8 @@ git-rebase - Forward-port local commits to the updated upstream head
 
 SYNOPSIS
 --------
+[verse]
 'git-rebase' [-v] [--merge] [-C<n>] [--onto <newbase>] <upstream> [<branch>]
-
 'git-rebase' --continue | --skip | --abort
 
 DESCRIPTION

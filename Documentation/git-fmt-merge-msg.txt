@@ -8,6 +8,7 @@ git-fmt-merge-msg - Produce a merge commit message
 
 SYNOPSIS
 --------
+[verse]
 git-fmt-merge-msg [--summary | --no-summary] <$GIT_DIR/FETCH_HEAD
 git-fmt-merge-msg [--summary | --no-summray] -F <file>
 
