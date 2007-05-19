@@ -551,9 +551,7 @@ class P4Sync(Command):
 
         change = int(details["change"])
 
-        self.lastChange = change
-
-        if change in self.labels:
+        if self.labels.has_key(change):
             label = self.labels[change]
             labelDetails = label[0]
             labelRevisions = label[1]
@@ -620,7 +618,10 @@ class P4Sync(Command):
                 if change > newestChange:
                     newestChange = change
 
-            self.labels[int(newestChange)] = [output, revisions]
+            self.labels[newestChange] = [output, revisions]
+
+        if self.verbose:
+            print "Label changes: %s" % self.labels.keys()
 
     def getBranchMapping(self):
         self.projectName = self.depotPath[self.depotPath[:-1].rfind("/") + 1:]
@@ -748,7 +749,6 @@ class P4Sync(Command):
 
         self.revision = ""
         self.users = {}
-        self.lastChange = 0
 
         if self.depotPath.find("@") != -1:
             atIdx = self.depotPath.index("@")
