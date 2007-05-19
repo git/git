@@ -6,6 +6,17 @@ Fixes since v1.5.1.4
 
 * Bugfixes
 
+  - git-send-email did not understand aliases file for mutt, which
+    allows leading whitespaces.
+
+  - git-format-patch emitted Content-Type and Content-Transfer-Encoding
+    headers for non ASCII contents, but failed to add MIME-Version.
+
+  - git-name-rev had a buffer overrun with a deep history.
+
+  - contributed script import-tars did not get the directory in
+    tar archives interpreted correctly.
+
   - git-svn was reported to segfault for many people on list and
     #git; hopefully this has been fixed.
 
@@ -28,10 +39,10 @@ Fixes since v1.5.1.4
     and extern, which caused trouble compiling with Forte12
     compilers on Sun.
 
-  - Many documentation fixes.
+  - Many many documentation fixes and updates.
 
 --
 exec >/var/tmp/1
-O=v1.5.1.4-26-gb4b20b2
+O=v1.5.1.4-48-gcecb98a
 echo O=`git describe refs/heads/maint`
 git shortlog --no-merges $O..refs/heads/maint

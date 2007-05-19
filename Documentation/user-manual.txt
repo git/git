@@ -1,18 +1,19 @@
 Git User's Manual (for version 1.5.1 or newer)
 ______________________________________________
 
+
+Git is a fast distributed revision control system.
+
 This manual is designed to be readable by someone with basic unix
 command-line skills, but no previous knowledge of git.
 
-Chapter 1 gives a brief overview of git commands, without any
-explanation; you may prefer to skip to chapter 2 on a first reading.
+<<repositories-and-branches>> and <<exploring-git-history>> explain how
+to fetch and study a project using git--read these chapters to learn how
+to build and test a particular version of a software project, search for
+regressions, and so on.
 
-Chapters 2 and 3 explain how to fetch and study a project using
-git--the tools you'd need to build and test a particular version of a
-software project, to search for regressions, and so on.
-
-Chapter 4 explains how to do development with git, and chapter 5 how
-to share that development with others.
+People needing to do actual development will also want to read
+<<Developing-with-git>> and <<sharing-development>>.
 
 Further chapters cover more specialized topics.
 
@@ -23,237 +24,12 @@ pages.  For a command such as "git clone", just use
 $ man git-clone
 ------------------------------------------------
 
-[[git-quick-start]]
-Git Quick Start
-===============
+See also <<git-quick-start>> for a brief overview of git commands,
+without any explanation.
 
-This is a quick summary of the major commands; the following chapters
-will explain how these work in more detail.
+Also, see <<todo>> for ways that you can help make this manual more
+complete.
 
-[[quick-creating-a-new-repository]]
-Creating a new repository
--------------------------
-
-From a tarball:
-
------------------------------------------------
-$ tar xzf project.tar.gz
-$ cd project
-$ git init
-Initialized empty Git repository in .git/
-$ git add .
-$ git commit
------------------------------------------------
-
-From a remote repository:
-
------------------------------------------------
-$ git clone git://example.com/pub/project.git
-$ cd project
------------------------------------------------
-
-[[managing-branches]]
-Managing branches
------------------
-
------------------------------------------------
-$ git branch	     # list all local branches in this repo
-$ git checkout test  # switch working directory to branch "test"
-$ git branch new     # create branch "new" starting at current HEAD
-$ git branch -d new  # delete branch "new"
------------------------------------------------
-
-Instead of basing new branch on current HEAD (the default), use:
-
------------------------------------------------
-$ git branch new test    # branch named "test"
-$ git branch new v2.6.15 # tag named v2.6.15
-$ git branch new HEAD^   # commit before the most recent
-$ git branch new HEAD^^  # commit before that
-$ git branch new test~10 # ten commits before tip of branch "test"
------------------------------------------------
-
-Create and switch to a new branch at the same time:
-
------------------------------------------------
-$ git checkout -b new v2.6.15
------------------------------------------------
-
-Update and examine branches from the repository you cloned from:
-
------------------------------------------------
-$ git fetch		# update
-$ git branch -r		# list
-  origin/master
-  origin/next
-  ...
-$ git checkout -b masterwork origin/master
------------------------------------------------
-
-Fetch a branch from a different repository, and give it a new
-name in your repository:
-
------------------------------------------------
-$ git fetch git://example.com/project.git theirbranch:mybranch
-$ git fetch git://example.com/project.git v2.6.15:mybranch
------------------------------------------------
-
-Keep a list of repositories you work with regularly:
-
------------------------------------------------
-$ git remote add example git://example.com/project.git
-$ git remote			# list remote repositories
-example
-origin
-$ git remote show example	# get details
-* remote example
-  URL: git://example.com/project.git
-  Tracked remote branches
-    master next ...
-$ git fetch example		# update branches from example
-$ git branch -r			# list all remote branches
------------------------------------------------
-
-
-[[exploring-history]]
-Exploring history
------------------
-
------------------------------------------------
-$ gitk			    # visualize and browse history
-$ git log		    # list all commits
-$ git log src/		    # ...modifying src/
-$ git log v2.6.15..v2.6.16  # ...in v2.6.16, not in v2.6.15
-$ git log master..test	    # ...in branch test, not in branch master
-$ git log test..master	    # ...in branch master, but not in test
-$ git log test...master	    # ...in one branch, not in both
-$ git log -S'foo()'	    # ...where difference contain "foo()"
-$ git log --since="2 weeks ago"
-$ git log -p		    # show patches as well
-$ git show		    # most recent commit
-$ git diff v2.6.15..v2.6.16 # diff between two tagged versions
-$ git diff v2.6.15..HEAD    # diff with current head
-$ git grep "foo()"	    # search working directory for "foo()"
-$ git grep v2.6.15 "foo()"  # search old tree for "foo()"
-$ git show v2.6.15:a.txt    # look at old version of a.txt
------------------------------------------------
-
-Search for regressions:
-
------------------------------------------------
-$ git bisect start
-$ git bisect bad		# current version is bad
-$ git bisect good v2.6.13-rc2	# last known good revision
-Bisecting: 675 revisions left to test after this
-				# test here, then:
-$ git bisect good		# if this revision is good, or
-$ git bisect bad		# if this revision is bad.
-				# repeat until done.
------------------------------------------------
-
-[[making-changes]]
-Making changes
---------------
-
-Make sure git knows who to blame:
-
-------------------------------------------------
-$ cat >>~/.gitconfig <<\EOF
-[user]
-	name = Your Name Comes Here
-	email = you@yourdomain.example.com
-EOF
-------------------------------------------------
-
-Select file contents to include in the next commit, then make the
-commit:
-
------------------------------------------------
-$ git add a.txt    # updated file
-$ git add b.txt    # new file
-$ git rm c.txt     # old file
-$ git commit
------------------------------------------------
-
-Or, prepare and create the commit in one step:
-
------------------------------------------------
-$ git commit d.txt # use latest content only of d.txt
-$ git commit -a	   # use latest content of all tracked files
------------------------------------------------
-
-[[merging]]
-Merging
--------
-
------------------------------------------------
-$ git merge test   # merge branch "test" into the current branch
-$ git pull git://example.com/project.git master
-		   # fetch and merge in remote branch
-$ git pull . test  # equivalent to git merge test
------------------------------------------------
-
-[[sharing-your-changes]]
-Sharing your changes
---------------------
-
-Importing or exporting patches:
-
------------------------------------------------
-$ git format-patch origin..HEAD # format a patch for each commit
-				# in HEAD but not in origin
-$ git am mbox # import patches from the mailbox "mbox"
------------------------------------------------
-
-Fetch a branch in a different git repository, then merge into the
-current branch:
-
------------------------------------------------
-$ git pull git://example.com/project.git theirbranch
------------------------------------------------
-
-Store the fetched branch into a local branch before merging into the
-current branch:
-
------------------------------------------------
-$ git pull git://example.com/project.git theirbranch:mybranch
------------------------------------------------
-
-After creating commits on a local branch, update the remote
-branch with your commits:
-
------------------------------------------------
-$ git push ssh://example.com/project.git mybranch:theirbranch
------------------------------------------------
-
-When remote and local branch are both named "test":
-
------------------------------------------------
-$ git push ssh://example.com/project.git test
------------------------------------------------
-
-Shortcut version for a frequently used remote repository:
-
------------------------------------------------
-$ git remote add example ssh://example.com/project.git
-$ git push example test
------------------------------------------------
-
-[[repository-maintenance]]
-Repository maintenance
-----------------------
-
-Check for corruption:
-
------------------------------------------------
-$ git fsck
------------------------------------------------
-
-Recompress, remove unused cruft:
-
------------------------------------------------
-$ git gc
------------------------------------------------
 
 [[repositories-and-branches]]
 Repositories and Branches
@@ -917,6 +693,25 @@ may be any path to a file tracked by git.
 Examples
 --------
 
+[[counting-commits-on-a-branch]]
+Counting the number of commits on a branch
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Suppose you want to know how many commits you've made on "mybranch"
+since it diverged from "origin":
+
+-------------------------------------------------
+$ git log --pretty=oneline origin..mybranch | wc -l
+-------------------------------------------------
+
+Alternatively, you may often see this sort of thing done with the
+lower-level command gitlink:git-rev-list[1], which just lists the SHA1's
+of all the given commits:
+
+-------------------------------------------------
+$ git rev-list origin..mybranch | wc -l
+-------------------------------------------------
+
 [[checking-for-equal-branches]]
 Check whether two branches point at the same history
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1035,6 +830,96 @@ available
 Which shows that e05db0fd is reachable from itself, from v1.5.0-rc1, and
 from v1.5.0-rc2, but not from v1.5.0-rc0.
 
+[[showing-commits-unique-to-a-branch]]
+Showing commits unique to a given branch
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Suppose you would like to see all the commits reachable from the branch
+head named "master" but not from any other head in your repository.
+
+We can list all the heads in this repository with
+gitlink:git-show-ref[1]:
+
+-------------------------------------------------
+$ git show-ref --heads
+bf62196b5e363d73353a9dcf094c59595f3153b7 refs/heads/core-tutorial
+db768d5504c1bb46f63ee9d6e1772bd047e05bf9 refs/heads/maint
+a07157ac624b2524a059a3414e99f6f44bebc1e7 refs/heads/master
+24dbc180ea14dc1aebe09f14c8ecf32010690627 refs/heads/tutorial-2
+1e87486ae06626c2f31eaa63d26fc0fd646c8af2 refs/heads/tutorial-fixes
+-------------------------------------------------
+
+We can get just the branch-head names, and remove "master", with
+the help of the standard utilities cut and grep:
+
+-------------------------------------------------
+$ git show-ref --heads | cut -d' ' -f2 | grep -v '^refs/heads/master'
+refs/heads/core-tutorial
+refs/heads/maint
+refs/heads/tutorial-2
+refs/heads/tutorial-fixes
+-------------------------------------------------
+
+And then we can ask to see all the commits reachable from master
+but not from these other heads:
+
+-------------------------------------------------
+$ gitk master --not $( git show-ref --heads | cut -d' ' -f2 |
+				grep -v '^refs/heads/master' )
+-------------------------------------------------
+
+Obviously, endless variations are possible; for example, to see all
+commits reachable from some head but not from any tag in the repository:
+
+-------------------------------------------------
+$ gitk ($ git show-ref --heads ) --not  $( git show-ref --tags )
+-------------------------------------------------
+
+(See gitlink:git-rev-parse[1] for explanations of commit-selecting
+syntax such as `--not`.)
+
+[[making-a-release]]
+Creating a changelog and tarball for a software release
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The gitlink:git-archive[1] command can create a tar or zip archive from
+any version of a project; for example:
+
+-------------------------------------------------
+$ git archive --format=tar --prefix=project/ HEAD | gzip >latest.tar.gz
+-------------------------------------------------
+
+will use HEAD to produce a tar archive in which each filename is
+preceded by "prefix/".
+
+If you're releasing a new version of a software project, you may want
+to simultaneously make a changelog to include in the release
+announcement.
+
+Linus Torvalds, for example, makes new kernel releases by tagging them,
+then running:
+
+-------------------------------------------------
+$ release-script 2.6.12 2.6.13-rc6 2.6.13-rc7
+-------------------------------------------------
+
+where release-script is a shell script that looks like:
+
+-------------------------------------------------
+#!/bin/sh
+stable="$1"
+last="$2"
+new="$3"
+echo "# git tag v$new"
+echo "git archive --prefix=linux-$new/ v$new | gzip -9 > ../linux-$new.tar.gz"
+echo "git diff v$stable v$new | gzip -9 > ../patch-$new.gz"
+echo "git log --no-merges v$new ^v$last > ../ChangeLog-$new"
+echo "git shortlog --no-merges v$new ^v$last > ../ShortLog"
+echo "git diff --stat --summary -M v$last v$new > ../diffstat-$new"
+-------------------------------------------------
+
+and then he just cut-and-pastes the output commands after verifying that
+they look OK.
 
 [[Developing-with-git]]
 Developing with git
@@ -1789,31 +1674,30 @@ The final result will be a series of commits, one for each patch in
 the original mailbox, with authorship and commit log message each
 taken from the message containing each patch.
 
-[[setting-up-a-public-repository]]
-Setting up a public repository
-------------------------------
+[[public-repositories]]
+Public git repositories
+-----------------------
 
-Another way to submit changes to a project is to simply tell the
-maintainer of that project to pull from your repository, exactly as
-you did in the section "<<getting-updates-with-git-pull, Getting
-updates with git pull>>".
+Another way to submit changes to a project is to tell the maintainer of
+that project to pull the changes from your repository using git-pull[1].
+In the section "<<getting-updates-with-git-pull, Getting updates with
+git pull>>" we described this as a way to get updates from the "main"
+repository, but it works just as well in the other direction.
 
-If you and maintainer both have accounts on the same machine, then
-then you can just pull changes from each other's repositories
-directly; note that all of the commands (gitlink:git-clone[1],
-git-fetch[1], git-pull[1], etc.) that accept a URL as an argument
-will also accept a local directory name; so, for example, you can
-use
+If you and the maintainer both have accounts on the same machine, then
+you can just pull changes from each other's repositories directly;
+commands that accepts repository URLs as arguments will also accept a
+local directory name:
 
 -------------------------------------------------
 $ git clone /path/to/repository
 $ git pull /path/to/other/repository
 -------------------------------------------------
 
-If this sort of setup is inconvenient or impossible, another (more
-common) option is to set up a public repository on a public server.
-This also allows you to cleanly separate private work in progress
-from publicly visible work.
+However, the more common way to do this is to maintain a separate public
+repository (usually on a different host) for others to pull changes
+from.  This is usually more convenient, and allows you to cleanly
+separate private work in progress from publicly visible work.
 
 You will continue to do your day-to-day work in your personal
 repository, but periodically "push" changes from your personal
@@ -1832,32 +1716,52 @@ like this:
         |               they push             V
   their public repo <------------------- their repo
 
-Now, assume your personal repository is in the directory ~/proj.  We
-first create a new clone of the repository:
+[[setting-up-a-public-repository]]
+Setting up a public repository
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Assume your personal repository is in the directory ~/proj.  We
+first create a new clone of the repository and tell git-daemon that it
+is meant to be public:
 
 -------------------------------------------------
 $ git clone --bare ~/proj proj.git
+$ touch proj.git/git-daemon-export-ok
 -------------------------------------------------
 
 The resulting directory proj.git contains a "bare" git repository--it is
-just the contents of the ".git" directory, without a checked-out copy of
-a working directory.
+just the contents of the ".git" directory, without any files checked out
+around it.
 
 Next, copy proj.git to the server where you plan to host the
 public repository.  You can use scp, rsync, or whatever is most
 convenient.
 
-If somebody else maintains the public server, they may already have
-set up a git service for you, and you may skip to the section
+[[exporting-via-git]]
+Exporting a git repository via the git protocol
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This is the preferred method.
+
+If someone else administers the server, they should tell you what
+directory to put the repository in, and what git:// url it will appear
+at.  You can then skip to the section
 "<<pushing-changes-to-a-public-repository,Pushing changes to a public
 repository>>", below.
 
-Otherwise, the following sections explain how to export your newly
-created public repository:
+Otherwise, all you need to do is start gitlink:git-daemon[1]; it will
+listen on port 9418.  By default, it will allow access to any directory
+that looks like a git directory and contains the magic file
+git-daemon-export-ok.  Passing some directory paths as git-daemon
+arguments will further restrict the exports to those paths.
+
+You can also run git-daemon as an inetd service; see the
+gitlink:git-daemon[1] man page for details.  (See especially the
+examples section.)
 
 [[exporting-via-http]]
 Exporting a git repository via http
------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The git protocol gives better performance and reliability, but on a
 host with a web server set up, http exports may be simpler to set up.
@@ -1889,20 +1793,11 @@ link:howto/setup-git-server-over-http.txt[setup-git-server-over-http]
 for a slightly more sophisticated setup using WebDAV which also
 allows pushing over http.)
 
-[[exporting-via-git]]
-Exporting a git repository via the git protocol
------------------------------------------------
-
-This is the preferred method.
-
-For now, we refer you to the gitlink:git-daemon[1] man page for
-instructions.  (See especially the examples section.)
-
 [[pushing-changes-to-a-public-repository]]
 Pushing changes to a public repository
---------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Note that the two techniques outline above (exporting via
+Note that the two techniques outlined above (exporting via
 <<exporting-via-http,http>> or <<exporting-via-git,git>>) allow other
 maintainers to fetch your latest changes, but they do not allow write
 access, which you will need to update the public repository with the
@@ -1954,7 +1849,7 @@ details.
 
 [[setting-up-a-shared-repository]]
 Setting up a shared repository
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Another way to collaborate is by using a model similar to that
 commonly used in CVS, where several developers with special rights
@@ -1963,8 +1858,8 @@ link:cvs-migration.html[git for CVS users] for instructions on how to
 set this up.
 
 [[setting-up-gitweb]]
-Allow web browsing of a repository
-----------------------------------
+Allowing web browsing of a repository
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The gitweb cgi script provides users an easy way to browse your
 project's files and history without having to install git; see the file
@@ -1974,7 +1869,302 @@ gitweb/INSTALL in the git source tree for instructions on setting it up.
 Examples
 --------
 
-TODO: topic branches, typical roles as in everyday.txt, ?
+[[maintaining-topic-branches]]
+Maintaining topic branches for a Linux subsystem maintainer
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This describes how Tony Luck uses git in his role as maintainer of the
+IA64 architecture for the Linux kernel.
+
+He uses two public branches:
+
+ - A "test" tree into which patches are initially placed so that they
+   can get some exposure when integrated with other ongoing development.
+   This tree is available to Andrew for pulling into -mm whenever he
+   wants.
+
+ - A "release" tree into which tested patches are moved for final sanity
+   checking, and as a vehicle to send them upstream to Linus (by sending
+   him a "please pull" request.)
+
+He also uses a set of temporary branches ("topic branches"), each
+containing a logical grouping of patches.
+
+To set this up, first create your work tree by cloning Linus's public
+tree:
+
+-------------------------------------------------
+$ git clone git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux-2.6.git work
+$ cd work
+-------------------------------------------------
+
+Linus's tree will be stored in the remote branch named origin/master,
+and can be updated using gitlink:git-fetch[1]; you can track other
+public trees using gitlink:git-remote[1] to set up a "remote" and
+git-fetch[1] to keep them up-to-date; see <<repositories-and-branches>>.
+
+Now create the branches in which you are going to work; these start out
+at the current tip of origin/master branch, and should be set up (using
+the --track option to gitlink:git-branch[1]) to merge changes in from
+Linus by default.
+
+-------------------------------------------------
+$ git branch --track test origin/master
+$ git branch --track release origin/master
+-------------------------------------------------
+
+These can be easily kept up to date using gitlink:git-pull[1]
+
+-------------------------------------------------
+$ git checkout test && git pull
+$ git checkout release && git pull
+-------------------------------------------------
+
+Important note!  If you have any local changes in these branches, then
+this merge will create a commit object in the history (with no local
+changes git will simply do a "Fast forward" merge).  Many people dislike
+the "noise" that this creates in the Linux history, so you should avoid
+doing this capriciously in the "release" branch, as these noisy commits
+will become part of the permanent history when you ask Linus to pull
+from the release branch.
+
+A few configuration variables (see gitlink:git-config[1]) can
+make it easy to push both branches to your public tree.  (See
+<<setting-up-a-public-repository>>.)
+
+-------------------------------------------------
+$ cat >> .git/config <<EOF
+[remote "mytree"]
+	url =  master.kernel.org:/pub/scm/linux/kernel/git/aegl/linux-2.6.git
+	push = release
+	push = test
+EOF
+-------------------------------------------------
+
+Then you can push both the test and release trees using
+gitlink:git-push[1]:
+
+-------------------------------------------------
+$ git push mytree
+-------------------------------------------------
+
+or push just one of the test and release branches using:
+
+-------------------------------------------------
+$ git push mytree test
+-------------------------------------------------
+
+or
+
+-------------------------------------------------
+$ git push mytree release
+-------------------------------------------------
+
+Now to apply some patches from the community.  Think of a short
+snappy name for a branch to hold this patch (or related group of
+patches), and create a new branch from the current tip of Linus's
+branch:
+
+-------------------------------------------------
+$ git checkout -b speed-up-spinlocks origin
+-------------------------------------------------
+
+Now you apply the patch(es), run some tests, and commit the change(s).  If
+the patch is a multi-part series, then you should apply each as a separate
+commit to this branch.
+
+-------------------------------------------------
+$ ... patch ... test  ... commit [ ... patch ... test ... commit ]*
+-------------------------------------------------
+
+When you are happy with the state of this change, you can pull it into the
+"test" branch in preparation to make it public:
+
+-------------------------------------------------
+$ git checkout test && git pull . speed-up-spinlocks
+-------------------------------------------------
+
+It is unlikely that you would have any conflicts here ... but you might if you
+spent a while on this step and had also pulled new versions from upstream.
+
+Some time later when enough time has passed and testing done, you can pull the
+same branch into the "release" tree ready to go upstream.  This is where you
+see the value of keeping each patch (or patch series) in its own branch.  It
+means that the patches can be moved into the "release" tree in any order.
+
+-------------------------------------------------
+$ git checkout release && git pull . speed-up-spinlocks
+-------------------------------------------------
+
+After a while, you will have a number of branches, and despite the
+well chosen names you picked for each of them, you may forget what
+they are for, or what status they are in.  To get a reminder of what
+changes are in a specific branch, use:
+
+-------------------------------------------------
+$ git log linux..branchname | git-shortlog
+-------------------------------------------------
+
+To see whether it has already been merged into the test or release branches
+use:
+
+-------------------------------------------------
+$ git log test..branchname
+-------------------------------------------------
+
+or
+
+-------------------------------------------------
+$ git log release..branchname
+-------------------------------------------------
+
+(If this branch has not yet been merged you will see some log entries.
+If it has been merged, then there will be no output.)
+
+Once a patch completes the great cycle (moving from test to release,
+then pulled by Linus, and finally coming back into your local
+"origin/master" branch) the branch for this change is no longer needed.
+You detect this when the output from:
+
+-------------------------------------------------
+$ git log origin..branchname
+-------------------------------------------------
+
+is empty.  At this point the branch can be deleted:
+
+-------------------------------------------------
+$ git branch -d branchname
+-------------------------------------------------
+
+Some changes are so trivial that it is not necessary to create a separate
+branch and then merge into each of the test and release branches.  For
+these changes, just apply directly to the "release" branch, and then
+merge that into the "test" branch.
+
+To create diffstat and shortlog summaries of changes to include in a "please
+pull" request to Linus you can use:
+
+-------------------------------------------------
+$ git diff --stat origin..release
+-------------------------------------------------
+
+and
+
+-------------------------------------------------
+$ git log -p origin..release | git shortlog
+-------------------------------------------------
+
+Here are some of the scripts that simplify all this even further.
+
+-------------------------------------------------
+==== update script ====
+# Update a branch in my GIT tree.  If the branch to be updated
+# is origin, then pull from kernel.org.  Otherwise merge
+# origin/master branch into test|release branch
+
+case "$1" in
+test|release)
+	git checkout $1 && git pull . origin
+	;;
+origin)
+	before=$(cat .git/refs/remotes/origin/master)
+	git fetch origin
+	after=$(cat .git/refs/remotes/origin/master)
+	if [ $before != $after ]
+	then
+		git log $before..$after | git shortlog
+	fi
+	;;
+*)
+	echo "Usage: $0 origin|test|release" 1>&2
+	exit 1
+	;;
+esac
+-------------------------------------------------
+
+-------------------------------------------------
+==== merge script ====
+# Merge a branch into either the test or release branch
+
+pname=$0
+
+usage()
+{
+	echo "Usage: $pname branch test|release" 1>&2
+	exit 1
+}
+
+if [ ! -f .git/refs/heads/"$1" ]
+then
+	echo "Can't see branch <$1>" 1>&2
+	usage
+fi
+
+case "$2" in
+test|release)
+	if [ $(git log $2..$1 | wc -c) -eq 0 ]
+	then
+		echo $1 already merged into $2 1>&2
+		exit 1
+	fi
+	git checkout $2 && git pull . $1
+	;;
+*)
+	usage
+	;;
+esac
+-------------------------------------------------
+
+-------------------------------------------------
+==== status script ====
+# report on status of my ia64 GIT tree
+
+gb=$(tput setab 2)
+rb=$(tput setab 1)
+restore=$(tput setab 9)
+
+if [ `git rev-list test..release | wc -c` -gt 0 ]
+then
+	echo $rb Warning: commits in release that are not in test $restore
+	git log test..release
+fi
+
+for branch in `ls .git/refs/heads`
+do
+	if [ $branch = test -o $branch = release ]
+	then
+		continue
+	fi
+
+	echo -n $gb ======= $branch ====== $restore " "
+	status=
+	for ref in test release origin/master
+	do
+		if [ `git rev-list $ref..$branch | wc -c` -gt 0 ]
+		then
+			status=$status${ref:0:1}
+		fi
+	done
+	case $status in
+	trl)
+		echo $rb Need to pull into test $restore
+		;;
+	rl)
+		echo "In test"
+		;;
+	l)
+		echo "Waiting for linus"
+		;;
+	"")
+		echo $rb All done $restore
+		;;
+	*)
+		echo $rb "<$status>" $restore
+		;;
+	esac
+	git log origin/master..$branch | git shortlog
+done
+-------------------------------------------------
 
 
 [[cleaning-up-history]]
@@ -3160,12 +3350,454 @@ confusing and scary messages, but it won't actually do anything bad. In
 contrast, running "git prune" while somebody is actively changing the 
 repository is a *BAD* idea).
 
+[[birdview-on-the-source-code]]
+A birds-eye view of Git's source code
+-------------------------------------
+
+It is not always easy for new developers to find their way through Git's
+source code.  This section gives you a little guidance to show where to
+start.
+
+A good place to start is with the contents of the initial commit, with:
+
+----------------------------------------------------
+$ git checkout e83c5163
+----------------------------------------------------
+
+The initial revision lays the foundation for almost everything git has
+today, but is small enough to read in one sitting.
+
+Note that terminology has changed since that revision.  For example, the
+README in that revision uses the word "changeset" to describe what we
+now call a <<def_commit_object,commit>>.
+
+Also, we do not call it "cache" any more, but "index", however, the
+file is still called `cache.h`.  Remark: Not much reason to change it now,
+especially since there is no good single name for it anyway, because it is
+basically _the_ header file which is included by _all_ of Git's C sources.
+
+If you grasp the ideas in that initial commit, you should check out a
+more recent version and skim `cache.h`, `object.h` and `commit.h`.
+
+In the early days, Git (in the tradition of UNIX) was a bunch of programs
+which were extremely simple, and which you used in scripts, piping the
+output of one into another. This turned out to be good for initial
+development, since it was easier to test new things.  However, recently
+many of these parts have become builtins, and some of the core has been
+"libified", i.e. put into libgit.a for performance, portability reasons,
+and to avoid code duplication.
+
+By now, you know what the index is (and find the corresponding data
+structures in `cache.h`), and that there are just a couple of object types
+(blobs, trees, commits and tags) which inherit their common structure from
+`struct object`, which is their first member (and thus, you can cast e.g.
+`(struct object *)commit` to achieve the _same_ as `&commit->object`, i.e.
+get at the object name and flags).
+
+Now is a good point to take a break to let this information sink in.
+
+Next step: get familiar with the object naming.  Read <<naming-commits>>.
+There are quite a few ways to name an object (and not only revisions!).
+All of these are handled in `sha1_name.c`. Just have a quick look at
+the function `get_sha1()`. A lot of the special handling is done by
+functions like `get_sha1_basic()` or the likes.
+
+This is just to get you into the groove for the most libified part of Git:
+the revision walker.
+
+Basically, the initial version of `git log` was a shell script:
+
+----------------------------------------------------------------
+$ git-rev-list --pretty $(git-rev-parse --default HEAD "$@") | \
+	LESS=-S ${PAGER:-less}
+----------------------------------------------------------------
+
+What does this mean?
+
+`git-rev-list` is the original version of the revision walker, which
+_always_ printed a list of revisions to stdout.  It is still functional,
+and needs to, since most new Git programs start out as scripts using
+`git-rev-list`.
+
+`git-rev-parse` is not as important any more; it was only used to filter out
+options that were relevant for the different plumbing commands that were
+called by the script.
+
+Most of what `git-rev-list` did is contained in `revision.c` and
+`revision.h`.  It wraps the options in a struct named `rev_info`, which
+controls how and what revisions are walked, and more.
+
+The original job of `git-rev-parse` is now taken by the function
+`setup_revisions()`, which parses the revisions and the common command line
+options for the revision walker. This information is stored in the struct
+`rev_info` for later consumption. You can do your own command line option
+parsing after calling `setup_revisions()`. After that, you have to call
+`prepare_revision_walk()` for initialization, and then you can get the
+commits one by one with the function `get_revision()`.
+
+If you are interested in more details of the revision walking process,
+just have a look at the first implementation of `cmd_log()`; call
+`git-show v1.3.0~155^2~4` and scroll down to that function (note that you
+no longer need to call `setup_pager()` directly).
+
+Nowadays, `git log` is a builtin, which means that it is _contained_ in the
+command `git`.  The source side of a builtin is
+
+- a function called `cmd_<bla>`, typically defined in `builtin-<bla>.c`,
+  and declared in `builtin.h`,
+
+- an entry in the `commands[]` array in `git.c`, and
+
+- an entry in `BUILTIN_OBJECTS` in the `Makefile`.
+
+Sometimes, more than one builtin is contained in one source file.  For
+example, `cmd_whatchanged()` and `cmd_log()` both reside in `builtin-log.c`,
+since they share quite a bit of code.  In that case, the commands which are
+_not_ named like the `.c` file in which they live have to be listed in
+`BUILT_INS` in the `Makefile`.
+
+`git log` looks more complicated in C than it does in the original script,
+but that allows for a much greater flexibility and performance.
+
+Here again it is a good point to take a pause.
+
+Lesson three is: study the code.  Really, it is the best way to learn about
+the organization of Git (after you know the basic concepts).
+
+So, think about something which you are interested in, say, "how can I
+access a blob just knowing the object name of it?".  The first step is to
+find a Git command with which you can do it.  In this example, it is either
+`git show` or `git cat-file`.
+
+For the sake of clarity, let's stay with `git cat-file`, because it
+
+- is plumbing, and
+
+- was around even in the initial commit (it literally went only through
+  some 20 revisions as `cat-file.c`, was renamed to `builtin-cat-file.c`
+  when made a builtin, and then saw less than 10 versions).
+
+So, look into `builtin-cat-file.c`, search for `cmd_cat_file()` and look what
+it does.
+
+------------------------------------------------------------------
+        git_config(git_default_config);
+        if (argc != 3)
+                usage("git-cat-file [-t|-s|-e|-p|<type>] <sha1>");
+        if (get_sha1(argv[2], sha1))
+                die("Not a valid object name %s", argv[2]);
+------------------------------------------------------------------
+
+Let's skip over the obvious details; the only really interesting part
+here is the call to `get_sha1()`.  It tries to interpret `argv[2]` as an
+object name, and if it refers to an object which is present in the current
+repository, it writes the resulting SHA-1 into the variable `sha1`.
+
+Two things are interesting here:
+
+- `get_sha1()` returns 0 on _success_.  This might surprise some new
+  Git hackers, but there is a long tradition in UNIX to return different
+  negative numbers in case of different errors -- and 0 on success.
+
+- the variable `sha1` in the function signature of `get_sha1()` is `unsigned
+  char \*`, but is actually expected to be a pointer to `unsigned
+  char[20]`.  This variable will contain the 160-bit SHA-1 of the given
+  commit.  Note that whenever a SHA-1 is passed as `unsigned char \*`, it
+  is the binary representation, as opposed to the ASCII representation in
+  hex characters, which is passed as `char *`.
+
+You will see both of these things throughout the code.
+
+Now, for the meat:
+
+-----------------------------------------------------------------------------
+        case 0:
+                buf = read_object_with_reference(sha1, argv[1], &size, NULL);
+-----------------------------------------------------------------------------
+
+This is how you read a blob (actually, not only a blob, but any type of
+object).  To know how the function `read_object_with_reference()` actually
+works, find the source code for it (something like `git grep
+read_object_with | grep ":[a-z]"` in the git repository), and read
+the source.
+
+To find out how the result can be used, just read on in `cmd_cat_file()`:
+
+-----------------------------------
+        write_or_die(1, buf, size);
+-----------------------------------
+
+Sometimes, you do not know where to look for a feature.  In many such cases,
+it helps to search through the output of `git log`, and then `git show` the
+corresponding commit.
+
+Example: If you know that there was some test case for `git bundle`, but
+do not remember where it was (yes, you _could_ `git grep bundle t/`, but that
+does not illustrate the point!):
+
+------------------------
+$ git log --no-merges t/
+------------------------
+
+In the pager (`less`), just search for "bundle", go a few lines back,
+and see that it is in commit 18449ab0...  Now just copy this object name,
+and paste it into the command line
+
+-------------------
+$ git show 18449ab0
+-------------------
+
+Voila.
+
+Another example: Find out what to do in order to make some script a
+builtin:
+
+-------------------------------------------------
+$ git log --no-merges --diff-filter=A builtin-*.c
+-------------------------------------------------
+
+You see, Git is actually the best tool to find out about the source of Git
+itself!
+
 [[glossary]]
 include::glossary.txt[]
 
+[[git-quick-start]]
+Appendix A: Git Quick Start
+===========================
+
+This is a quick summary of the major commands; the following chapters
+will explain how these work in more detail.
+
+[[quick-creating-a-new-repository]]
+Creating a new repository
+-------------------------
+
+From a tarball:
+
+-----------------------------------------------
+$ tar xzf project.tar.gz
+$ cd project
+$ git init
+Initialized empty Git repository in .git/
+$ git add .
+$ git commit
+-----------------------------------------------
+
+From a remote repository:
+
+-----------------------------------------------
+$ git clone git://example.com/pub/project.git
+$ cd project
+-----------------------------------------------
+
+[[managing-branches]]
+Managing branches
+-----------------
+
+-----------------------------------------------
+$ git branch	     # list all local branches in this repo
+$ git checkout test  # switch working directory to branch "test"
+$ git branch new     # create branch "new" starting at current HEAD
+$ git branch -d new  # delete branch "new"
+-----------------------------------------------
+
+Instead of basing new branch on current HEAD (the default), use:
+
+-----------------------------------------------
+$ git branch new test    # branch named "test"
+$ git branch new v2.6.15 # tag named v2.6.15
+$ git branch new HEAD^   # commit before the most recent
+$ git branch new HEAD^^  # commit before that
+$ git branch new test~10 # ten commits before tip of branch "test"
+-----------------------------------------------
+
+Create and switch to a new branch at the same time:
+
+-----------------------------------------------
+$ git checkout -b new v2.6.15
+-----------------------------------------------
+
+Update and examine branches from the repository you cloned from:
+
+-----------------------------------------------
+$ git fetch		# update
+$ git branch -r		# list
+  origin/master
+  origin/next
+  ...
+$ git checkout -b masterwork origin/master
+-----------------------------------------------
+
+Fetch a branch from a different repository, and give it a new
+name in your repository:
+
+-----------------------------------------------
+$ git fetch git://example.com/project.git theirbranch:mybranch
+$ git fetch git://example.com/project.git v2.6.15:mybranch
+-----------------------------------------------
+
+Keep a list of repositories you work with regularly:
+
+-----------------------------------------------
+$ git remote add example git://example.com/project.git
+$ git remote			# list remote repositories
+example
+origin
+$ git remote show example	# get details
+* remote example
+  URL: git://example.com/project.git
+  Tracked remote branches
+    master next ...
+$ git fetch example		# update branches from example
+$ git branch -r			# list all remote branches
+-----------------------------------------------
+
+
+[[exploring-history]]
+Exploring history
+-----------------
+
+-----------------------------------------------
+$ gitk			    # visualize and browse history
+$ git log		    # list all commits
+$ git log src/		    # ...modifying src/
+$ git log v2.6.15..v2.6.16  # ...in v2.6.16, not in v2.6.15
+$ git log master..test	    # ...in branch test, not in branch master
+$ git log test..master	    # ...in branch master, but not in test
+$ git log test...master	    # ...in one branch, not in both
+$ git log -S'foo()'	    # ...where difference contain "foo()"
+$ git log --since="2 weeks ago"
+$ git log -p		    # show patches as well
+$ git show		    # most recent commit
+$ git diff v2.6.15..v2.6.16 # diff between two tagged versions
+$ git diff v2.6.15..HEAD    # diff with current head
+$ git grep "foo()"	    # search working directory for "foo()"
+$ git grep v2.6.15 "foo()"  # search old tree for "foo()"
+$ git show v2.6.15:a.txt    # look at old version of a.txt
+-----------------------------------------------
+
+Search for regressions:
+
+-----------------------------------------------
+$ git bisect start
+$ git bisect bad		# current version is bad
+$ git bisect good v2.6.13-rc2	# last known good revision
+Bisecting: 675 revisions left to test after this
+				# test here, then:
+$ git bisect good		# if this revision is good, or
+$ git bisect bad		# if this revision is bad.
+				# repeat until done.
+-----------------------------------------------
+
+[[making-changes]]
+Making changes
+--------------
+
+Make sure git knows who to blame:
+
+------------------------------------------------
+$ cat >>~/.gitconfig <<\EOF
+[user]
+	name = Your Name Comes Here
+	email = you@yourdomain.example.com
+EOF
+------------------------------------------------
+
+Select file contents to include in the next commit, then make the
+commit:
+
+-----------------------------------------------
+$ git add a.txt    # updated file
+$ git add b.txt    # new file
+$ git rm c.txt     # old file
+$ git commit
+-----------------------------------------------
+
+Or, prepare and create the commit in one step:
+
+-----------------------------------------------
+$ git commit d.txt # use latest content only of d.txt
+$ git commit -a	   # use latest content of all tracked files
+-----------------------------------------------
+
+[[merging]]
+Merging
+-------
+
+-----------------------------------------------
+$ git merge test   # merge branch "test" into the current branch
+$ git pull git://example.com/project.git master
+		   # fetch and merge in remote branch
+$ git pull . test  # equivalent to git merge test
+-----------------------------------------------
+
+[[sharing-your-changes]]
+Sharing your changes
+--------------------
+
+Importing or exporting patches:
+
+-----------------------------------------------
+$ git format-patch origin..HEAD # format a patch for each commit
+				# in HEAD but not in origin
+$ git am mbox # import patches from the mailbox "mbox"
+-----------------------------------------------
+
+Fetch a branch in a different git repository, then merge into the
+current branch:
+
+-----------------------------------------------
+$ git pull git://example.com/project.git theirbranch
+-----------------------------------------------
+
+Store the fetched branch into a local branch before merging into the
+current branch:
+
+-----------------------------------------------
+$ git pull git://example.com/project.git theirbranch:mybranch
+-----------------------------------------------
+
+After creating commits on a local branch, update the remote
+branch with your commits:
+
+-----------------------------------------------
+$ git push ssh://example.com/project.git mybranch:theirbranch
+-----------------------------------------------
+
+When remote and local branch are both named "test":
+
+-----------------------------------------------
+$ git push ssh://example.com/project.git test
+-----------------------------------------------
+
+Shortcut version for a frequently used remote repository:
+
+-----------------------------------------------
+$ git remote add example ssh://example.com/project.git
+$ git push example test
+-----------------------------------------------
+
+[[repository-maintenance]]
+Repository maintenance
+----------------------
+
+Check for corruption:
+
+-----------------------------------------------
+$ git fsck
+-----------------------------------------------
+
+Recompress, remove unused cruft:
+
+-----------------------------------------------
+$ git gc
+-----------------------------------------------
+
+
 [[todo]]
-Notes and todo list for this manual
-===================================
+Appendix B: Notes and todo list for this manual
+===============================================
 
 This is a work in progress.
 
