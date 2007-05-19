@@ -485,6 +485,11 @@ sub cmd_multi_init {
 	unless (defined $_trunk || defined $_branches || defined $_tags) {
 		usage(1);
 	}
+
+	# there are currently some bugs that prevent multi-init/multi-fetch
+	# setups from working well without this.
+	$Git::SVN::_minimize_url = 1;
+
 	$_prefix = '' unless defined $_prefix;
 	if (defined $url) {
 		$url =~ s#/+$##;
