@@ -881,6 +881,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 	const char **unrecognized = argv + 1;
 	int left = 1;
 	int all_match = 0;
+	int regflags = 0;
 
 	/* First, search for "--" */
 	seen_dashdash = 0;
@@ -1152,6 +1153,14 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 				add_message_grep(revs, arg+7);
 				continue;
 			}
+			if (!prefixcmp(arg, "--extended-regexp")) {
+				regflags |= REG_EXTENDED;
+				continue;
+			}
+			if (!prefixcmp(arg, "--regexp-ignore-case")) {
+				regflags |= REG_ICASE;
+				continue;
+			}
 			if (!strcmp(arg, "--all-match")) {
 				all_match = 1;
 				continue;
@@ -1199,6 +1208,9 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 			break;
 		}
 	}
+
+	if (revs->grep_filter)
+		revs->grep_filter->regflags |= regflags;
 
 	if (show_merge)
 		prepare_show_merge(revs);
