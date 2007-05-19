@@ -723,6 +723,9 @@ static unsigned name_hash(const char *name)
 	unsigned char c;
 	unsigned hash = 0;
 
+	if (!name)
+		return 0;
+
 	/*
 	 * This effectively just creates a sortable number from the
 	 * last sixteen non-whitespace characters. Last characters
@@ -737,12 +740,13 @@ static unsigned name_hash(const char *name)
 }
 
 static int add_object_entry(const unsigned char *sha1, enum object_type type,
-			    unsigned hash, int exclude)
+			    const char *name, int exclude)
 {
 	struct object_entry *entry;
 	struct packed_git *p, *found_pack = NULL;
 	off_t found_offset = 0;
 	int ix;
+	unsigned hash = name_hash(name);
 
 	ix = nr_objects ? locate_object_entry_hash(sha1) : -1;
 	if (ix >= 0) {
@@ -931,10 +935,9 @@ static void add_pbase_object(struct tree_desc *tree,
 		if (cmp < 0)
 			return;
 		if (name[cmplen] != '/') {
-			unsigned hash = name_hash(fullname);
 			add_object_entry(entry.sha1,
 					 S_ISDIR(entry.mode) ? OBJ_TREE : OBJ_BLOB,
-					 hash, 1);
+					 fullname, 1);
 			return;
 		}
 		if (S_ISDIR(entry.mode)) {
@@ -994,10 +997,11 @@ static int check_pbase_path(unsigned hash)
 	return 0;
 }
 
-static void add_preferred_base_object(const char *name, unsigned hash)
+static void add_preferred_base_object(const char *name)
 {
 	struct pbase_tree *it;
 	int cmplen;
+	unsigned hash = name_hash(name);
 
 	if (!num_preferred_base || check_pbase_path(hash))
 		return;
@@ -1005,7 +1009,7 @@ static void add_preferred_base_object(const char *name, unsigned hash)
 	cmplen = name_cmp_len(name);
 	for (it = pbase_tree; it; it = it->next) {
 		if (cmplen == 0) {
-			add_object_entry(it->pcache.sha1, OBJ_TREE, 0, 1);
+			add_object_entry(it->pcache.sha1, OBJ_TREE, NULL, 1);
 		}
 		else {
 			struct tree_desc tree;
@@ -1446,7 +1450,6 @@ static void read_object_list_from_stdin(void)
 {
 	char line[40 + 1 + PATH_MAX + 2];
 	unsigned char sha1[20];
-	unsigned hash;
 
 	for (;;) {
 		if (!fgets(line, sizeof(line), stdin)) {
@@ -1469,22 +1472,20 @@ static void read_object_list_from_stdin(void)
 		if (get_sha1_hex(line, sha1))
 			die("expected sha1, got garbage:\n %s", line);
 
-		hash = name_hash(line+41);
-		add_preferred_base_object(line+41, hash);
-		add_object_entry(sha1, 0, hash, 0);
+		add_preferred_base_object(line+41);
+		add_object_entry(sha1, 0, line+41, 0);
 	}
 }
 
 static void show_commit(struct commit *commit)
 {
-	add_object_entry(commit->object.sha1, OBJ_COMMIT, 0, 0);
+	add_object_entry(commit->object.sha1, OBJ_COMMIT, NULL, 0);
 }
 
 static void show_object(struct object_array_entry *p)
 {
-	unsigned hash = name_hash(p->name);
-	add_preferred_base_object(p->name, hash);
-	add_object_entry(p->item->sha1, p->item->type, hash, 0);
+	add_preferred_base_object(p->name);
+	add_object_entry(p->item->sha1, p->item->type, p->name, 0);
 }
 
 static void show_edge(struct commit *commit)
