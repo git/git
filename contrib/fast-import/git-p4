@@ -719,6 +719,9 @@ class P4Sync(Command):
         self.initialParents = {}
 
         self.listExistingP4GitBranches()
+        if len(self.p4BranchesInGit) > 1:
+            print "Importing from/into multiple branches"
+            self.detectBranches = True
 
         if self.syncWithOrigin and gitBranchExists("origin") and gitBranchExists("refs/remotes/p4/master") and not self.detectBranches:
             ### needs to be ported to multi branch import
