@@ -137,6 +137,7 @@ class P4Submit(Command):
                 optparse.make_option("--log-substitutions", dest="substFile"),
                 optparse.make_option("--noninteractive", action="store_false"),
                 optparse.make_option("--dry-run", action="store_true"),
+                optparse.make_option("--direct", dest="directSubmit", action="store_true"),
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
@@ -147,6 +148,7 @@ class P4Submit(Command):
         self.substFile = ""
         self.firstTime = True
         self.origin = ""
+        self.directSubmit = False
 
         self.logSubstitutions = {}
         self.logSubstitutions["<enter description here>"] = "%log%"
@@ -161,9 +163,12 @@ class P4Submit(Command):
             die("Cannot start sync. Previous sync config found at %s\nIf you want to start submitting again from scratch maybe you want to call git-p4 submit --reset" % self.configFile)
 
         commits = []
-        for line in mypopen("git rev-list --no-merges %s..%s" % (self.origin, self.master)).readlines():
-            commits.append(line[:-1])
-        commits.reverse()
+        if self.directSubmit:
+            commits.append("0")
+        else:
+            for line in mypopen("git rev-list --no-merges %s..%s" % (self.origin, self.master)).readlines():
+                commits.append(line[:-1])
+            commits.reverse()
 
         self.config["commits"] = commits
 
@@ -191,8 +196,12 @@ class P4Submit(Command):
         return result
 
     def apply(self, id):
-        print "Applying %s" % (mypopen("git log --max-count=1 --pretty=oneline %s" % id).read())
-        diff = mypopen("git diff-tree -r --name-status \"%s^\" \"%s\"" % (id, id)).readlines()
+        if self.directSubmit:
+            print "Applying local change in working directory/index"
+            diff = self.diffStatus
+        else:
+            print "Applying %s" % (mypopen("git log --max-count=1 --pretty=oneline %s" % id).read())
+            diff = mypopen("git diff-tree -r --name-status \"%s^\" \"%s\"" % (id, id)).readlines()
         filesToAdd = set()
         filesToDelete = set()
         editedFiles = set()
@@ -213,11 +222,13 @@ class P4Submit(Command):
             else:
                 die("unknown modifier %s for %s" % (modifier, path))
 
-        diffcmd = "git format-patch -k --stdout \"%s^\"..\"%s\"" % (id, id)
+        if self.directSubmit:
+            diffcmd = "cat \"%s\"" % self.diffFile
+        else:
+            diffcmd = "git format-patch -k --stdout \"%s^\"..\"%s\"" % (id, id)
         patchcmd = diffcmd + " | git apply "
-        tryPatchCmd = diffcmd + "--check -"
-        applyPatchCmd = diffcmd + "--check --apply -"
-        print mypopen(diffcmd).read()
+        tryPatchCmd = patchcmd + "--check -"
+        applyPatchCmd = patchcmd + "--check --apply -"
 
         if os.system(tryPatchCmd) != 0:
             print "Unfortunately applying the change failed!"
@@ -250,9 +261,11 @@ class P4Submit(Command):
             system("p4 revert %s" % f)
             system("p4 delete %s" % f)
 
-        logMessage = extractLogMessageFromGitCommit(id)
-        logMessage = logMessage.replace("\n", "\n\t")
-        logMessage = logMessage[:-1]
+        logMessage = ""
+        if not self.directSubmit:
+            logMessage = extractLogMessageFromGitCommit(id)
+            logMessage = logMessage.replace("\n", "\n\t")
+            logMessage = logMessage[:-1]
 
         template = mypopen("p4 change -o").read()
 
@@ -356,6 +369,15 @@ class P4Submit(Command):
 
         print "Perforce checkout for depot path %s located at %s" % (depotPath, self.clientPath)
         oldWorkingDirectory = os.getcwd()
+
+        if self.directSubmit:
+            self.diffStatus = mypopen("git diff -r --name-status HEAD").readlines()
+            patch = mypopen("git diff -p --binary --diff-filter=ACMRTUXB HEAD").read()
+            self.diffFile = gitdir + "/p4-git-diff"
+            f = open(self.diffFile, "wb")
+            f.write(patch)
+            f.close();
+
         os.chdir(self.clientPath)
         response = raw_input("Do you want to sync %s with p4 sync? [y]es/[n]o " % self.clientPath)
         if response == "y" or response == "yes":
@@ -395,14 +417,25 @@ class P4Submit(Command):
 
         self.config.close()
 
+        if self.directSubmit:
+            os.remove(self.diffFile)
+
         if len(commits) == 0:
             if self.firstTime:
                 print "No changes found to apply between %s and current HEAD" % self.origin
             else:
                 print "All changes applied!"
-                response = raw_input("Do you want to sync from Perforce now using git-p4 rebase? [y]es/[n]o ")
+                response = ""
+                os.chdir(oldWorkingDirectory)
+
+                if self.directSubmit:
+                    response = raw_input("Do you want to DISCARD your git WORKING DIRECTORY CHANGES and sync from Perforce now using git-p4 rebase? [y]es/[n]o ")
+                    if response == "y" or response == "yes":
+                        system("git reset --hard")
+
+                if len(response) == 0:
+                    response = raw_input("Do you want to sync from Perforce now using git-p4 rebase? [y]es/[n]o ")
                 if response == "y" or response == "yes":
-                    os.chdir(oldWorkingDirectory)
                     rebase = P4Rebase()
                     rebase.run([])
             os.remove(self.configFile)
