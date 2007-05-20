@@ -21,7 +21,7 @@ test_expect_success setup '
 	{
 	    echo a b c d e f g h i j k l m
 	    echo n o p q r s t u v w x y z
-	    echo '\''$ident$'\''
+	    echo '\''$Id$'\''
 	} >test &&
 	cat test >test.t &&
 	cat test >test.o &&
@@ -31,7 +31,7 @@ test_expect_success setup '
 	git checkout -- test test.t test.i
 '
 
-script='s/^\$ident: \([0-9a-f]*\) \$/\1/p'
+script='s/^\$Id: \([0-9a-f]*\) \$/\1/p'
 
 test_expect_success check '
 

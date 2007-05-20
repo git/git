@@ -34,7 +34,7 @@ static void *fill(int min)
 		offset = 0;
 	}
 	do {
-		int ret = xread(0, buffer + len, sizeof(buffer) - len);
+		ssize_t ret = xread(0, buffer + len, sizeof(buffer) - len);
 		if (ret <= 0) {
 			if (!ret)
 				die("early EOF");

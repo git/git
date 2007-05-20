@@ -86,7 +86,7 @@ static char *crlf_to_git(const char *path, const char *src, unsigned long *sizep
 	unsigned long size, nsize;
 	struct text_stat stats;
 
-	if ((action == CRLF_BINARY) || (action == CRLF_GUESS && !auto_crlf))
+	if ((action == CRLF_BINARY) || !auto_crlf)
 		return NULL;
 
 	size = *sizep;
@@ -154,7 +154,7 @@ static char *crlf_to_worktree(const char *path, const char *src, unsigned long *
 	unsigned char last;
 
 	if ((action == CRLF_BINARY) || (action == CRLF_INPUT) ||
-	    (action == CRLF_GUESS && auto_crlf <= 0))
+	    auto_crlf <= 0)
 		return NULL;
 
 	size = *sizep;
@@ -412,7 +412,7 @@ static void setup_convert_check(struct git_attr_check *check)
 static int count_ident(const char *cp, unsigned long size)
 {
 	/*
-	 * "$ident: 0000000000000000000000000000000000000000 $" <=> "$ident$"
+	 * "$Id: 0000000000000000000000000000000000000000 $" <=> "$Id$"
 	 */
 	int cnt = 0;
 	char ch;
@@ -422,20 +422,20 @@ static int count_ident(const char *cp, unsigned long size)
 		size--;
 		if (ch != '$')
 			continue;
-		if (size < 6)
+		if (size < 3)
 			break;
-		if (memcmp("ident", cp, 5))
+		if (memcmp("Id", cp, 2))
 			continue;
-		ch = cp[5];
-		cp += 6;
-		size -= 6;
+		ch = cp[2];
+		cp += 3;
+		size -= 3;
 		if (ch == '$')
-			cnt++; /* $ident$ */
+			cnt++; /* $Id$ */
 		if (ch != ':')
 			continue;
 
 		/*
-		 * "$ident: ... "; scan up to the closing dollar sign and discard.
+		 * "$Id: ... "; scan up to the closing dollar sign and discard.
 		 */
 		while (size) {
 			ch = *cp++;
@@ -466,10 +466,10 @@ static char *ident_to_git(const char *path, const char *src, unsigned long *size
 	for (dst = buf; size; size--) {
 		char ch = *src++;
 		*dst++ = ch;
-		if ((ch == '$') && (6 <= size) &&
-		    !memcmp("ident:", src, 6)) {
-			unsigned long rem = size - 6;
-			const char *cp = src + 6;
+		if ((ch == '$') && (3 <= size) &&
+		    !memcmp("Id:", src, 3)) {
+			unsigned long rem = size - 3;
+			const char *cp = src + 3;
 			do {
 				ch = *cp++;
 				if (ch == '$')
@@ -478,8 +478,8 @@ static char *ident_to_git(const char *path, const char *src, unsigned long *size
 			} while (rem);
 			if (!rem)
 				continue;
-			memcpy(dst, "ident$", 6);
-			dst += 6;
+			memcpy(dst, "Id$", 3);
+			dst += 3;
 			size -= (cp - src);
 			src = cp;
 		}
@@ -511,13 +511,13 @@ static char *ident_to_worktree(const char *path, const char *src, unsigned long 
 		const char *cp;
 		char ch = *src++;
 		*dst++ = ch;
-		if ((ch != '$') || (size < 6) || memcmp("ident", src, 5))
+		if ((ch != '$') || (size < 3) || memcmp("Id", src, 2))
 			continue;
 
-		if (src[5] == ':') {
+		if (src[2] == ':') {
 			/* discard up to but not including the closing $ */
-			unsigned long rem = size - 6;
-			cp = src + 6;
+			unsigned long rem = size - 3;
+			cp = src + 3;
 			do {
 				ch = *cp++;
 				if (ch == '$')
@@ -527,13 +527,13 @@ static char *ident_to_worktree(const char *path, const char *src, unsigned long 
 			if (!rem)
 				continue;
 			size -= (cp - src);
-		} else if (src[5] == '$')
-			cp = src + 5;
+		} else if (src[2] == '$')
+			cp = src + 2;
 		else
 			continue;
 
-		memcpy(dst, "ident: ", 7);
-		dst += 7;
+		memcpy(dst, "Id: ", 4);
+		dst += 4;
 		memcpy(dst, sha1_to_hex(sha1), 40);
 		dst += 40;
 		*dst++ = ' ';
@@ -651,4 +651,19 @@ char *convert_to_working_tree(const char *path, const char *src, unsigned long *
 	}
 
 	return buf;
+}
+
+void *convert_sha1_file(const char *path, const unsigned char *sha1,
+                        unsigned int mode, enum object_type *type,
+                        unsigned long *size)
+{
+	void *buffer = read_sha1_file(sha1, type, size);
+	if (S_ISREG(mode) && buffer) {
+		void *converted = convert_to_working_tree(path, buffer, size);
+		if (converted) {
+			free(buffer);
+			buffer = converted;
+		}
+	}
+	return buffer;
 }

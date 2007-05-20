@@ -1,0 +1,14 @@
+--pretty[='<format>']::
+
+	Pretty print the contents of the commit logs in a given format,
+	where '<format>' can be one of 'oneline', 'short', 'medium',
+	'full', 'fuller', 'email', 'raw' and 'format:<string>'.
+	When left out the format default to 'medium'.
+
+--encoding[=<encoding>]::
+	The commit objects record the encoding used for the log message
+	in their encoding header; this option can be used to tell the
+	command to re-code the commit log message in the encoding
+	preferred by the user.  For non plumbing commands this
+	defaults to UTF-8.
+

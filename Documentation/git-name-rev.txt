@@ -8,6 +8,7 @@ git-name-rev - Find symbolic names for given revs
 
 SYNOPSIS
 --------
+[verse]
 'git-name-rev' [--tags] [--refs=<pattern>]
 	       ( --all | --stdin | <committish>... )
 

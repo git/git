@@ -105,6 +105,7 @@ if (@ARGV && $ARGV[0] eq 'pserver') {
     unless ($line eq 'anonymous') {
        print "E Only anonymous user allowed via pserver\n";
        print "I HATE YOU\n";
+       exit 1;
     }
     $line = <STDIN>; chomp $line;    # validate the password?
     $line = <STDIN>; chomp $line;
@@ -183,9 +184,9 @@ sub req_Root
     }
     foreach my $line ( @gitvars )
     {
-        next unless ( $line =~ /^(.*?)\.(.*?)(?:\.(.*?))?=(.*)$/ );
-        unless ($3) {
-            $cfg->{$1}{$2} = $4;
+        next unless ( $line =~ /^(gitcvs)\.(?:(ext|pserver)\.)?([\w-]+)=(.*)$/ );
+        unless ($2) {
+            $cfg->{$1}{$3} = $4;
         } else {
             $cfg->{$1}{$2}{$3} = $4;
         }

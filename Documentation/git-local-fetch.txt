@@ -8,7 +8,9 @@ git-local-fetch - Duplicate another git repository on a local system
 
 SYNOPSIS
 --------
-'git-local-fetch' [-c] [-t] [-a] [-d] [-v] [-w filename] [--recover] [-l] [-s] [-n] commit-id path
+[verse]
+'git-local-fetch' [-c] [-t] [-a] [-d] [-v] [-w filename] [--recover] [-l] [-s] [-n]
+                  commit-id path
 
 DESCRIPTION
 -----------

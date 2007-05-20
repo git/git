@@ -411,6 +411,7 @@ struct checkout {
 };
 
 extern int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *topath);
+extern int has_symlink_leading_path(const char *name, char *last_symlink);
 
 extern struct alternate_object_database {
 	struct alternate_object_database *next;
@@ -548,6 +549,7 @@ extern void trace_argv_printf(const char **argv, int count, const char *format, 
 /* convert.c */
 extern char *convert_to_git(const char *path, const char *src, unsigned long *sizep);
 extern char *convert_to_working_tree(const char *path, const char *src, unsigned long *sizep);
+extern void *convert_sha1_file(const char *path, const unsigned char *sha1, unsigned int mode, enum object_type *type, unsigned long *size);
 
 /* match-trees.c */
 void shift_tree(const unsigned char *, const unsigned char *, unsigned char *, int);

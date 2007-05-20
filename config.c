@@ -451,6 +451,9 @@ static int matches(const char* key, const char* value)
 
 static int store_aux(const char* key, const char* value)
 {
+	const char *ep;
+	size_t section_len;
+
 	switch (store.state) {
 	case KEY_SEEN:
 		if (matches(key, value)) {
@@ -468,12 +471,29 @@ static int store_aux(const char* key, const char* value)
 		}
 		break;
 	case SECTION_SEEN:
-		if (strncmp(key, store.key, store.baselen+1)) {
+		/*
+		 * What we are looking for is in store.key (both
+		 * section and var), and its section part is baselen
+		 * long.  We found key (again, both section and var).
+		 * We would want to know if this key is in the same
+		 * section as what we are looking for.  We already
+		 * know we are in the same section as what should
+		 * hold store.key.
+		 */
+		ep = strrchr(key, '.');
+		section_len = ep - key;
+
+		if ((section_len != store.baselen) ||
+		    memcmp(key, store.key, section_len+1)) {
 			store.state = SECTION_END_SEEN;
 			break;
-		} else
-			/* do not increment matches: this is no match */
-			store.offset[store.seen] = ftell(config_file);
+		}
+
+		/*
+		 * Do not increment matches: this is no match, but we
+		 * just made sure we are in the desired section.
+		 */
+		store.offset[store.seen] = ftell(config_file);
 		/* fallthru */
 	case SECTION_END_SEEN:
 	case START:

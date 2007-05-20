@@ -229,7 +229,7 @@ test_expect_failure 'exit if init-ing a would clobber a URL' "
 
 test_expect_success \
   'init allows us to connect to another directory in the same repo' "
-        git-svn init -i bar $svnrepo/bar &&
+        git-svn init --minimize-url -i bar $svnrepo/bar &&
         git config --get svn-remote.svn.fetch \
                               '^bar:refs/remotes/bar$' &&
         git config --get svn-remote.svn.fetch \

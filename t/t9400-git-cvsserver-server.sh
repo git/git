@@ -26,8 +26,9 @@ perl -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
 unset GIT_DIR GIT_CONFIG
 WORKDIR=$(pwd)
 SERVERDIR=$(pwd)/gitcvs.git
+git_config="$SERVERDIR/config"
 CVSROOT=":fork:$SERVERDIR"
-CVSWORK=$(pwd)/cvswork
+CVSWORK="$(pwd)/cvswork"
 CVS_SERVER=git-cvsserver
 export CVSROOT CVS_SERVER
 
@@ -43,7 +44,7 @@ echo >empty &&
 # note that cvs doesn't accept absolute pathnames
 # as argument to co -d
 test_expect_success 'basic checkout' \
-  'cvs -Q co -d cvswork master &&
+  'GIT_CONFIG="$git_config" cvs -Q co -d cvswork master &&
    test "$(echo $(grep -v ^D cvswork/CVS/Entries|cut -d/ -f2,3,5))" = "empty/1.1/"'
 
 test_expect_success 'cvs update (create new file)' \
@@ -52,7 +53,7 @@ test_expect_success 'cvs update (create new file)' \
    git commit -q -m "Add testfile1" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
-   cvs -Q update &&
+   GIT_CONFIG="$git_config" cvs -Q update &&
    test "$(echo $(grep testfile1 CVS/Entries|cut -d/ -f2,3,5))" = "testfile1/1.1/" &&
    diff -q testfile1 ../testfile1'
 
@@ -63,7 +64,7 @@ test_expect_success 'cvs update (update existing file)' \
    git commit -q -m "Append to testfile1" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
-   cvs -Q update &&
+   GIT_CONFIG="$git_config" cvs -Q update &&
    test "$(echo $(grep testfile1 CVS/Entries|cut -d/ -f2,3,5))" = "testfile1/1.2/" &&
    diff -q testfile1 ../testfile1'
 
@@ -76,7 +77,7 @@ test_expect_failure "cvs update w/o -d doesn't create subdir (TODO)" \
    git commit -q -m "Single Subdirectory" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
-   cvs -Q update &&
+   GIT_CONFIG="$git_config" cvs -Q update &&
    test ! -d test'
 
 cd "$WORKDIR"
@@ -89,7 +90,7 @@ test_expect_success 'cvs update (subdirectories)' \
    git commit -q -m "deep sub directory structure" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
-   cvs -Q update -d &&
+   GIT_CONFIG="$git_config" cvs -Q update -d &&
    (for dir in A A/B A/B/C A/D E; do
       filename="file_in_$(echo $dir|sed -e "s#/# #g")" &&
       if test "$(echo $(grep -v ^D $dir/CVS/Entries|cut -d/ -f2,3,5))" = "$filename/1.1/" &&
@@ -107,7 +108,7 @@ test_expect_success 'cvs update (delete file)' \
    git commit -q -m "Remove testfile1" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
-   cvs -Q update &&
+   GIT_CONFIG="$git_config" cvs -Q update &&
    test -z "$(grep testfile1 CVS/Entries)" &&
    test ! -f testfile1'
 
@@ -118,7 +119,7 @@ test_expect_success 'cvs update (re-add deleted file)' \
    git commit -q -m "Re-Add testfile1" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
-   cvs -Q update &&
+   GIT_CONFIG="$git_config" cvs -Q update &&
    test "$(echo $(grep testfile1 CVS/Entries|cut -d/ -f2,3,5))" = "testfile1/1.4/" &&
    diff -q testfile1 ../testfile1'
 

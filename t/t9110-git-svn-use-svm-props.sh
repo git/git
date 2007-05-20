@@ -9,9 +9,10 @@ test_description='git-svn useSvmProps test'
 
 test_expect_success 'load svm repo' "
 	svnadmin load -q $rawsvnrepo < ../t9110/svm.dump &&
-	git-svn init -R arr -i bar $svnrepo/mirror/arr &&
-	git-svn init -R argh -i dir $svnrepo/mirror/argh &&
-	git-svn init -R argh -i e $svnrepo/mirror/argh/a/b/c/d/e &&
+	git-svn init --minimize-url -R arr -i bar $svnrepo/mirror/arr &&
+	git-svn init --minimize-url -R argh -i dir $svnrepo/mirror/argh &&
+	git-svn init --minimize-url -R argh -i e \
+	  $svnrepo/mirror/argh/a/b/c/d/e &&
 	git-config svn.useSvmProps true &&
 	git-svn fetch --all
 	"

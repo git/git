@@ -102,9 +102,12 @@ our %feature = (
 	# 	'override' => allow-override (boolean),
 	# 	'default' => [ default options...] (array reference)}
 	#
-	# if feature is overridable (it means that allow-override has true value,
+	# if feature is overridable (it means that allow-override has true value),
 	# then feature-sub will be called with default options as parameters;
 	# return value of feature-sub indicates if to enable specified feature
+	#
+	# if there is no 'sub' key (no feature-sub), then feature cannot be
+	# overriden
 	#
 	# use gitweb_check_feature(<feature>) to check if <feature> is enabled
 
@@ -138,7 +141,21 @@ our %feature = (
 
 	# Enable text search, which will list the commits which match author,
 	# committer or commit text to a given string.  Enabled by default.
+	# Project specific override is not supported.
 	'search' => {
+		'override' => 0,
+		'default' => [1]},
+
+	# Enable grep search, which will list the files in currently selected
+	# tree containing the given string. Enabled by default. This can be
+	# potentially CPU-intensive, of course.
+
+	# To enable system wide have in $GITWEB_CONFIG
+	# $feature{'grep'}{'default'} = [1];
+	# To have project specific config enable override in $GITWEB_CONFIG
+	# $feature{'grep'}{'override'} = 1;
+	# and in project config gitweb.grep = 0|1;
+	'grep' => {
 		'override' => 0,
 		'default' => [1]},
 
@@ -239,6 +256,18 @@ sub gitweb_have_snapshot {
 	my $have_snapshot = (defined $ctype && defined $suffix);
 
 	return $have_snapshot;
+}
+
+sub feature_grep {
+	my ($val) = git_get_project_config('grep', '--bool');
+
+	if ($val eq 'true') {
+		return (1);
+	} elsif ($val eq 'false') {
+		return (0);
+	}
+
+	return ($_[0]);
 }
 
 sub feature_pickaxe {
@@ -360,22 +389,23 @@ if (defined $page) {
 	}
 }
 
-our $searchtext = $cgi->param('s');
-if (defined $searchtext) {
-	if ($searchtext =~ m/[^a-zA-Z0-9_\.\/\-\+\:\@ ]/) {
-		die_error(undef, "Invalid search parameter");
-	}
-	if (length($searchtext) < 2) {
-		die_error(undef, "At least two characters are required for search parameter");
-	}
-	$searchtext = quotemeta $searchtext;
-}
-
 our $searchtype = $cgi->param('st');
 if (defined $searchtype) {
 	if ($searchtype =~ m/[^a-z]/) {
 		die_error(undef, "Invalid searchtype parameter");
 	}
+}
+
+our $searchtext = $cgi->param('s');
+our $search_regexp;
+if (defined $searchtext) {
+	if ($searchtype ne 'grep' and $searchtype ne 'pickaxe' and $searchtext =~ m/[^a-zA-Z0-9_\.\/\-\+\:\@ ]/) {
+		die_error(undef, "Invalid search parameter");
+	}
+	if (length($searchtext) < 2) {
+		die_error(undef, "At least two characters are required for search parameter");
+	}
+	$search_regexp = quotemeta $searchtext;
 }
 
 # now read PATH_INFO and use it as alternative to parameters
@@ -728,7 +758,9 @@ sub chop_str {
 sub age_class {
 	my $age = shift;
 
-	if ($age < 60*60*2) {
+	if (!defined $age) {
+		return "noage";
+	} elsif ($age < 60*60*2) {
 		return "age0";
 	} elsif ($age < 60*60*24*2) {
 		return "age1";
@@ -1060,6 +1092,11 @@ sub git_get_hash_by_path {
 	my $line = <$fd>;
 	close $fd or return undef;
 
+	if (!defined $line) {
+		# there is no tree or hash given by $path at $base
+		return undef;
+	}
+
 	#'100644 blob 0fa3f3a66fb6a137f6ec2c19351ed4d807070ffa	panic.c'
 	$line =~ m/^([0-9]+) (.+) ([0-9a-fA-F]{40})\t/;
 	if (defined $type && $type ne $2) {
@@ -1102,7 +1139,9 @@ sub git_get_project_description {
 	open my $fd, "$projectroot/$path/description" or return undef;
 	my $descr = <$fd>;
 	close $fd;
-	chomp $descr;
+	if (defined $descr) {
+		chomp $descr;
+	}
 	return $descr;
 }
 
@@ -1253,7 +1292,8 @@ sub git_get_last_activity {
 	     'refs/heads') or return;
 	my $most_recent = <$fd>;
 	close $fd or return;
-	if ($most_recent =~ / (\d+) [-+][01]\d\d\d$/) {
+	if (defined $most_recent &&
+	    $most_recent =~ / (\d+) [-+][01]\d\d\d$/) {
 		my $timestamp = $1;
 		my $age = time - $timestamp;
 		return ($age, age_string($age));
@@ -1376,8 +1416,12 @@ sub parse_commit_text {
 
 	pop @commit_lines; # Remove '\0'
 
+	if (! @commit_lines) {
+		return;
+	}
+
 	my $header = shift @commit_lines;
-	if (!($header =~ m/^[0-9a-fA-F]{40}/)) {
+	if ($header !~ m/^[0-9a-fA-F]{40}/) {
 		return;
 	}
 	($co{'id'}, my @parents) = split ' ', $header;
@@ -1884,6 +1928,8 @@ EOF
 		}
 		print "\n";
 	}
+	print "</div>\n";
+
 	my ($have_search) = gitweb_check_feature('search');
 	if ((defined $project) && ($have_search)) {
 		if (!defined $searchtext) {
@@ -1906,14 +1952,13 @@ EOF
 		      $cgi->hidden(-name => "a") . "\n" .
 		      $cgi->hidden(-name => "h") . "\n" .
 		      $cgi->popup_menu(-name => 'st', -default => 'commit',
-		                       -values => ['commit', 'author', 'committer', 'pickaxe']) .
+		                       -values => ['commit', 'grep', 'author', 'committer', 'pickaxe']) .
 		      $cgi->sup($cgi->a({-href => href(action=>"search_help")}, "?")) .
 		      " search:\n",
 		      $cgi->textfield(-name => "s", -value => $searchtext) . "\n" .
 		      "</div>" .
 		      $cgi->end_form() . "\n";
 	}
-	print "</div>\n";
 }
 
 sub git_footer_html {
@@ -2660,9 +2705,10 @@ sub git_patchset_body {
 		# check if current patch belong to current raw line
 		# and parse raw git-diff line if needed
 		if (defined $diffinfo &&
+		    defined $from_id && defined $to_id &&
 		    from_ids_eq($diffinfo->{'from_id'}, $from_id) &&
 		    $diffinfo->{'to_id'} eq $to_id) {
-			# this is split patch
+			# this is continuation of a split patch
 			print "<div class=\"patch cont\">\n";
 		} else {
 			# advance raw git-diff output if needed
@@ -2702,8 +2748,9 @@ sub git_patchset_body {
 					delete $from{'href'};
 				}
 			}
+
 			$to{'file'} = $diffinfo->{'to_file'} || $diffinfo->{'file'};
-			if ($diffinfo->{'status'} ne "D") { # not deleted file
+			if ($diffinfo->{'to_id'} ne ('0' x 40)) { # file exists in result
 				$to{'href'} = href(action=>"blob", hash_base=>$hash,
 				                   hash=>$diffinfo->{'to_id'},
 				                   file_name=>$to{'file'});
@@ -2859,7 +2906,14 @@ sub git_patchset_body {
 	} continue {
 		print "</div>\n"; # class="patch"
 	}
-	print "<div class=\"diff nodifferences\">No differences found</div>\n" if (!$patch_number);
+
+	if ($patch_number == 0) {
+		if (@hash_parents > 1) {
+			print "<div class=\"diff nodifferences\">Trivial merge</div>\n";
+		} else {
+			print "<div class=\"diff nodifferences\">No differences found</div>\n";
+		}
+	}
 
 	print "</div>\n"; # class="patchset"
 }
@@ -2973,7 +3027,7 @@ sub git_project_list_body {
 		                        esc_html($pr->{'descr'})) . "</td>\n" .
 		      "<td><i>" . chop_str($pr->{'owner'}, 15) . "</i></td>\n";
 		print "<td class=\"". age_class($pr->{'age'}) . "\">" .
-		      $pr->{'age_string'} . "</td>\n" .
+		      (defined $pr->{'age_string'} ? $pr->{'age_string'} : "No commits") . "</td>\n" .
 		      "<td class=\"link\">" .
 		      $cgi->a({-href => href(project=>$pr->{'path'}, action=>"summary")}, "summary")   . " | " .
 		      $cgi->a({-href => href(project=>$pr->{'path'}, action=>"shortlog")}, "shortlog") . " | " .
@@ -3227,7 +3281,7 @@ sub git_search_grep_body {
 			       esc_html(chop_str($co{'title'}, 50)) . "<br/>");
 		my $comment = $co{'comment'};
 		foreach my $line (@$comment) {
-			if ($line =~ m/^(.*)($searchtext)(.*)$/i) {
+			if ($line =~ m/^(.*)($search_regexp)(.*)$/i) {
 				my $lead = esc_html($1) || "";
 				$lead = chop_str($lead, 30, 10);
 				my $match = esc_html($2) || "";
@@ -3325,7 +3379,7 @@ sub git_project_index {
 sub git_summary {
 	my $descr = git_get_project_description($project) || "none";
 	my %co = parse_commit("HEAD");
-	my %cd = parse_date($co{'committer_epoch'}, $co{'committer_tz'});
+	my %cd = %co ? parse_date($co{'committer_epoch'}, $co{'committer_tz'}) : ();
 	my $head = $co{'id'};
 
 	my $owner = git_get_project_owner($project);
@@ -3348,8 +3402,11 @@ sub git_summary {
 	print "<div class=\"title\">&nbsp;</div>\n";
 	print "<table cellspacing=\"0\">\n" .
 	      "<tr><td>description</td><td>" . esc_html($descr) . "</td></tr>\n" .
-	      "<tr><td>owner</td><td>$owner</td></tr>\n" .
-	      "<tr><td>last change</td><td>$cd{'rfc2822'}</td></tr>\n";
+	      "<tr><td>owner</td><td>$owner</td></tr>\n";
+	if (defined $cd{'rfc2822'}) {
+		print "<tr><td>last change</td><td>$cd{'rfc2822'}</td></tr>\n";
+	}
+
 	# use per project git URL list in $projectroot/$project/cloneurl
 	# or make project git URL from git base URL and project name
 	my $url_tag = "URL";
@@ -3372,11 +3429,13 @@ sub git_summary {
 
 	# we need to request one more than 16 (0..15) to check if
 	# those 16 are all
-	my @commitlist = parse_commits($head, 17);
-	git_print_header_div('shortlog');
-	git_shortlog_body(\@commitlist, 0, 15, $refs,
-	                  $#commitlist <=  15 ? undef :
-	                  $cgi->a({-href => href(action=>"shortlog")}, "..."));
+	my @commitlist = $head ? parse_commits($head, 17) : ();
+	if (@commitlist) {
+		git_print_header_div('shortlog');
+		git_shortlog_body(\@commitlist, 0, 15, $refs,
+		                  $#commitlist <=  15 ? undef :
+		                  $cgi->a({-href => href(action=>"shortlog")}, "..."));
+	}
 
 	if (@taglist) {
 		git_print_header_div('tags');
@@ -3408,6 +3467,11 @@ sub git_tag {
 	git_header_html();
 	git_print_page_nav('','', $head,undef,$head);
 	my %tag = parse_tag($hash);
+
+	if (! %tag) {
+		die_error(undef, "Unknown tag object");
+	}
+
 	git_print_header_div('commit', esc_html($tag{'name'}), $hash);
 	print "<div class=\"title_text\">\n" .
 	      "<table cellspacing=\"0\">\n" .
@@ -4587,6 +4651,12 @@ sub git_search {
 			die_error('403 Permission denied', "Permission denied");
 		}
 	}
+	if ($searchtype eq 'grep') {
+		my ($have_grep) = gitweb_check_feature('grep');
+		if (!$have_grep) {
+			die_error('403 Permission denied', "Permission denied");
+		}
+	}
 
 	git_header_html();
 
@@ -4599,7 +4669,7 @@ sub git_search {
 		} elsif ($searchtype eq 'committer') {
 			$greptype = "--committer=";
 		}
-		$greptype .= $searchtext;
+		$greptype .= $search_regexp;
 		my @commitlist = parse_commits($hash, 101, (100 * $page), $greptype);
 
 		my $paging_nav = '';
@@ -4648,8 +4718,10 @@ sub git_search {
 		my $alternate = 1;
 		$/ = "\n";
 		my $git_command = git_cmd_str();
+		my $searchqtext = $searchtext;
+		$searchqtext =~ s/'/'\\''/;
 		open my $fd, "-|", "$git_command rev-list $hash | " .
-			"$git_command diff-tree -r --stdin -S\'$searchtext\'";
+			"$git_command diff-tree -r --stdin -S\'$searchqtext\'";
 		undef %co;
 		my @files;
 		while (my $line = <$fd>) {
@@ -4703,6 +4775,73 @@ sub git_search {
 
 		print "</table>\n";
 	}
+
+	if ($searchtype eq 'grep') {
+		git_print_page_nav('','', $hash,$co{'tree'},$hash);
+		git_print_header_div('commit', esc_html($co{'title'}), $hash);
+
+		print "<table cellspacing=\"0\">\n";
+		my $alternate = 1;
+		my $matches = 0;
+		$/ = "\n";
+		open my $fd, "-|", git_cmd(), 'grep', '-n', '-i', '-E', $searchtext, $co{'tree'};
+		my $lastfile = '';
+		while (my $line = <$fd>) {
+			chomp $line;
+			my ($file, $lno, $ltext, $binary);
+			last if ($matches++ > 1000);
+			if ($line =~ /^Binary file (.+) matches$/) {
+				$file = $1;
+				$binary = 1;
+			} else {
+				(undef, $file, $lno, $ltext) = split(/:/, $line, 4);
+			}
+			if ($file ne $lastfile) {
+				$lastfile and print "</td></tr>\n";
+				if ($alternate++) {
+					print "<tr class=\"dark\">\n";
+				} else {
+					print "<tr class=\"light\">\n";
+				}
+				print "<td class=\"list\">".
+					$cgi->a({-href => href(action=>"blob", hash=>$co{'hash'},
+							       file_name=>"$file"),
+						-class => "list"}, esc_path($file));
+				print "</td><td>\n";
+				$lastfile = $file;
+			}
+			if ($binary) {
+				print "<div class=\"binary\">Binary file</div>\n";
+			} else {
+				$ltext = untabify($ltext);
+				if ($ltext =~ m/^(.*)($searchtext)(.*)$/i) {
+					$ltext = esc_html($1, -nbsp=>1);
+					$ltext .= '<span class="match">';
+					$ltext .= esc_html($2, -nbsp=>1);
+					$ltext .= '</span>';
+					$ltext .= esc_html($3, -nbsp=>1);
+				} else {
+					$ltext = esc_html($ltext, -nbsp=>1);
+				}
+				print "<div class=\"pre\">" .
+					$cgi->a({-href => href(action=>"blob", hash=>$co{'hash'},
+							       file_name=>"$file").'#l'.$lno,
+						-class => "linenr"}, sprintf('%4i', $lno))
+					. ' ' .  $ltext . "</div>\n";
+			}
+		}
+		if ($lastfile) {
+			print "</td></tr>\n";
+			if ($matches > 1000) {
+				print "<div class=\"diff nodifferences\">Too many matches, listing trimmed</div>\n";
+			}
+		} else {
+			print "<div class=\"diff nodifferences\">No matches found</div>\n";
+		}
+		close $fd;
+
+		print "</table>\n";
+	}
 	git_footer_html();
 }
 
@@ -4713,6 +4852,20 @@ sub git_search_help {
 <dl>
 <dt><b>commit</b></dt>
 <dd>The commit messages and authorship information will be scanned for the given string.</dd>
+EOT
+	my ($have_grep) = gitweb_check_feature('grep');
+	if ($have_grep) {
+		print <<EOT;
+<dt><b>grep</b></dt>
+<dd>All files in the currently selected tree (HEAD unless you are explicitly browsing
+    a different one) are searched for the given
+<a href="http://en.wikipedia.org/wiki/Regular_expression">regular expression</a>
+(POSIX extended) and the matches are listed. On large
+trees, this search can take a while and put some strain on the server, so please use it with
+some consideration.</dd>
+EOT
+	}
+	print <<EOT;
 <dt><b>author</b></dt>
 <dd>Name and e-mail of the change author and date of birth of the patch will be scanned for the given string.</dd>
 <dt><b>committer</b></dt>
@@ -4887,7 +5040,8 @@ XML
 
 		# get list of changed files
 		open my $fd, "-|", git_cmd(), "diff-tree", '-r', @diff_opts,
-			$co{'parent'}, $co{'id'}, "--", (defined $file_name ? $file_name : ())
+			$co{'parent'} || "--root",
+			$co{'id'}, "--", (defined $file_name ? $file_name : ())
 			or next;
 		my @difftree = map { chomp; $_ } <$fd>;
 		close $fd

@@ -31,7 +31,7 @@ OPTIONS
 	whitespaces, (3) '[' up to ']', typically '[PATCH]', and
 	then prepends "[PATCH] ".  This flag forbids this
 	munging, and is most useful when used to read back 'git
-	format-patch --mbox' output.
+	format-patch -k' output.
 
 -m::
 	Patches are applied with `git-apply` command, and unless

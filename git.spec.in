@@ -185,8 +185,13 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/git-core/
 %doc README COPYING Documentation/*.txt
 %{!?_without_docs: %doc Documentation/*.html Documentation/howto}
+%{!?_without_docs: %doc Documentation/technical}
 
 %changelog
+* Tue May 13 2007 Quy Tonthat <qtonthat@gmail.com>
+- Added lib files for git-gui
+- Added Documentation/technical (As needed by Git Users Manual)
+
 * Tue May 8 2007 Quy Tonthat <qtonthat@gmail.com>
 - Added howto files
 

@@ -22,10 +22,10 @@ get_repo_base() {
 		cd "`/bin/pwd`" &&
 		cd "$1" &&
 		{
-			cd .git 2>/dev/null
+			cd .git
 			pwd
 		}
-	)
+	) 2>/dev/null
 }
 
 if [ -n "$GIT_SSL_NO_VERIFY" ]; then

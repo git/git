@@ -1063,6 +1063,7 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 			int sz;
 			char header[512];
 			const char *header_fmt =
+				"MIME-Version: 1.0\n"
 				"Content-Type: text/plain; charset=%s\n"
 				"Content-Transfer-Encoding: 8bit\n";
 			sz = snprintf(header, sizeof(header), header_fmt,

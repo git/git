@@ -86,7 +86,7 @@ static int serve_ref(int fd_in, int fd_out)
 
 static void service(int fd_in, int fd_out) {
 	char type;
-	int retval;
+	ssize_t retval;
 	do {
 		retval = xread(fd_in, &type, 1);
 		if (retval < 1) {

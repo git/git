@@ -182,10 +182,10 @@ static int write_zip_entry(const unsigned char *sha1,
 		goto out;
 	}
 
-	if (S_ISDIR(mode)) {
+	if (S_ISDIR(mode) || S_ISDIRLNK(mode)) {
 		method = 0;
 		attr2 = 16;
-		result = READ_TREE_RECURSIVE;
+		result = (S_ISDIR(mode) ? READ_TREE_RECURSIVE : 0);
 		out = NULL;
 		uncompressed_size = 0;
 		compressed_size = 0;
@@ -195,7 +195,7 @@ static int write_zip_entry(const unsigned char *sha1,
 		if (S_ISREG(mode) && zlib_compression_level != 0)
 			method = 8;
 		result = 0;
-		buffer = read_sha1_file(sha1, &type, &size);
+		buffer = convert_sha1_file(path, sha1, mode, &type, &size);
 		if (!buffer)
 			die("cannot read %s", sha1_to_hex(sha1));
 		crc = crc32(crc, buffer, size);

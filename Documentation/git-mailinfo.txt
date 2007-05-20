@@ -30,7 +30,7 @@ OPTIONS
 	whitespaces, (3) '[' up to ']', typically '[PATCH]', and
 	then prepends "[PATCH] ".  This flag forbids this
 	munging, and is most useful when used to read back 'git
-	format-patch --mbox' output.
+	format-patch -k' output.
 
 -u::
 	The commit log message, author name and author email are

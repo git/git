@@ -264,10 +264,12 @@ static int unpack_trees_rec(struct tree_entry_list **posns, int len,
  * directories, in case this unlink is the removal of the
  * last entry in the directory -- empty directories are removed.
  */
-static void unlink_entry(char *name)
+static void unlink_entry(char *name, char *last_symlink)
 {
 	char *cp, *prev;
 
+	if (has_symlink_leading_path(name, last_symlink))
+		return;
 	if (unlink(name))
 		return;
 	prev = NULL;
@@ -291,11 +293,12 @@ static void unlink_entry(char *name)
 
 static struct checkout state;
 static void check_updates(struct cache_entry **src, int nr,
-		struct unpack_trees_options *o)
+			struct unpack_trees_options *o)
 {
 	unsigned short mask = htons(CE_UPDATE);
 	unsigned cnt = 0, total = 0;
 	struct progress progress;
+	char last_symlink[PATH_MAX];
 
 	if (o->update && o->verbose_update) {
 		for (total = cnt = 0; cnt < nr; cnt++) {
@@ -309,6 +312,7 @@ static void check_updates(struct cache_entry **src, int nr,
 		cnt = 0;
 	}
 
+	*last_symlink = '\0';
 	while (nr--) {
 		struct cache_entry *ce = *src++;
 
@@ -317,13 +321,15 @@ static void check_updates(struct cache_entry **src, int nr,
 				display_progress(&progress, ++cnt);
 		if (!ce->ce_mode) {
 			if (o->update)
-				unlink_entry(ce->name);
+				unlink_entry(ce->name, last_symlink);
 			continue;
 		}
 		if (ce->ce_flags & mask) {
 			ce->ce_flags &= ~mask;
-			if (o->update)
+			if (o->update) {
 				checkout_entry(ce, &state, NULL);
+				*last_symlink = '\0';
+			}
 		}
 	}
 	if (total)

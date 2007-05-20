@@ -160,36 +160,51 @@ foreach my $p (@afiles) {
     }
 }
 
+# ... check dirs,
 foreach my $d (@dirs) {
     if (-e $d) {
 	$dirty = 1;
 	warn "$d exists and is not a directory!\n";
     }
 }
-foreach my $f (@afiles) {
-    # This should return only one value
-    if ($f =~ m,(.*)/[^/]*$,) {
-	my $p = $1;
-	next if (grep { $_ eq $p } @dirs);
-    }
-    my @status = grep(m/^File/,  safe_pipe_capture(@cvs, '-q', 'status' ,$f));
-    if (@status > 1) { warn 'Strange! cvs status returned more than one line?'};
-    if (-d dirname $f and $status[0] !~ m/Status: Unknown$/
-	and $status[0] !~ m/^File: no file /) {
- 	$dirty = 1;
-	warn "File $f is already known in your CVS checkout -- perhaps it has been added by another user. Or this may indicate that it exists on a different branch. If this is the case, use -f to force the merge.\n";
-	warn "Status was: $status[0]\n";
+
+# ... query status of all files that we have a directory for and parse output of 'cvs status' to %cvsstat.
+my @canstatusfiles;
+foreach my $f (@files) {
+    my $path = dirname $f;
+    next if (grep { $_ eq $path } @dirs);
+    push @canstatusfiles, $f;
+}
+
+my %cvsstat;
+if (@canstatusfiles) {
+    my @cvsoutput;
+    @cvsoutput= safe_pipe_capture(@cvs, 'status', @canstatusfiles);
+    my $matchcount = 0;
+    foreach my $l (@cvsoutput) {
+        chomp $l;
+        if ( $l =~ /^File:/ and  $l =~ /Status: (.*)$/ ) {
+            $cvsstat{$canstatusfiles[$matchcount]} = $1;
+            $matchcount++;
+        }
     }
 }
 
+# ... validate new files,
+foreach my $f (@afiles) {
+    if (defined ($cvsstat{$f}) and $cvsstat{$f} ne "Unknown") {
+ 	$dirty = 1;
+	warn "File $f is already known in your CVS checkout -- perhaps it has been added by another user. Or this may indicate that it exists on a different branch. If this is the case, use -f to force the merge.\n";
+	warn "Status was: $cvsstat{$f}\n";
+    }
+}
+# ... validate known files.
 foreach my $f (@files) {
     next if grep { $_ eq $f } @afiles;
     # TODO:we need to handle removed in cvs
-    my @status = grep(m/^File/,  safe_pipe_capture(@cvs, '-q', 'status' ,$f));
-    if (@status > 1) { warn 'Strange! cvs status returned more than one line?'};
-    unless ($status[0] =~ m/Status: Up-to-date$/) {
+    unless (defined ($cvsstat{$f}) and $cvsstat{$f} eq "Up-to-date") {
 	$dirty = 1;
-	warn "File $f not up to date in your CVS checkout!\n";
+	warn "File $f not up to date but has status '$cvsstat{$f}' in your CVS checkout!\n";
     }
 }
 if ($dirty) {

@@ -73,7 +73,7 @@ separated with a single space are given.
 	This flag causes "git-diff-tree --stdin" to also show
 	the commit message before the differences.
 
-include::pretty-formats.txt[]
+include::pretty-options.txt[]
 
 --no-commit-id::
 	git-diff-tree outputs a line with the commit ID when
@@ -102,6 +102,9 @@ include::pretty-formats.txt[]
 --always::
 	Show the commit itself and the commit log message even
 	if the diff itself is empty.
+
+
+include::pretty-formats.txt[]
 
 
 Limiting Output

@@ -1,31 +1,32 @@
---pretty[='<format>']::
+PRETTY FORMATS
+--------------
 
-        Pretty-prints the details of a commit.  `--pretty`
-	without an explicit `=<format>` defaults to 'medium'.
-	If the commit is a merge, and if the pretty-format
-        is not 'oneline', 'email' or 'raw', an additional line is
-        inserted before the 'Author:' line.  This line begins with
-        "Merge: " and the sha1s of ancestral commits are printed,
-        separated by spaces.  Note that the listed commits may not
-        necessarily be the list of the *direct* parent commits if you
-        have limited your view of history: for example, if you are
-        only interested in changes related to a certain directory or
-        file.  Here are some additional details for each format:
+If the commit is a merge, and if the pretty-format
+is not 'oneline', 'email' or 'raw', an additional line is
+inserted before the 'Author:' line.  This line begins with
+"Merge: " and the sha1s of ancestral commits are printed,
+separated by spaces.  Note that the listed commits may not
+necessarily be the list of the *direct* parent commits if you
+have limited your view of history: for example, if you are
+only interested in changes related to a certain directory or
+file.
 
-        * 'oneline'
+Here are some additional details for each format:
+
+* 'oneline'
 
 	  <sha1> <title line>
 +
 This is designed to be as compact as possible.
 
-        * 'short'
+* 'short'
 
 	  commit <sha1>
 	  Author: <author>
 
 	      <title line>
 
-        * 'medium'
+* 'medium'
 
 	  commit <sha1>
 	  Author: <author>
@@ -35,7 +36,7 @@ This is designed to be as compact as possible.
 
 	      <full commit message>
 
-        * 'full'
+* 'full'
 
 	  commit <sha1>
 	  Author: <author>
@@ -45,7 +46,7 @@ This is designed to be as compact as possible.
 
 	      <full commit message>
 
-        * 'fuller'
+* 'fuller'
 
 	  commit <sha1>
 	  Author: <author>
@@ -57,18 +58,16 @@ This is designed to be as compact as possible.
 
 	       <full commit message>
 
-
-        * 'email'
+* 'email'
 
 	  From <sha1> <date>
 	  From: <author>
 	  Date: <date & time>
 	  Subject: [PATCH] <title line>
 
-	  full commit message>
+	  <full commit message>
 
-
-	* 'raw'
+* 'raw'
 +
 The 'raw' format shows the entire commit exactly as
 stored in the commit object.  Notably, the SHA1s are
@@ -77,19 +76,22 @@ displayed in full, regardless of whether --abbrev or
 true parent commits, without taking grafts nor history
 simplification into account.
 
-	* 'format:'
+* 'format:'
 +
 The 'format:' format allows you to specify which information
 you want to show. It works a little bit like printf format,
 with the notable exception that you get a newline with '%n'
 instead of '\n'.
-
-E.g, 'format:"The author of %h was %an, %ar%nThe title was >>%s<<"'
++
+E.g, 'format:"The author of %h was %an, %ar%nThe title was >>%s<<%n"'
 would show something like this:
-
++
+-------
 The author of fe6e0ee was Junio C Hamano, 23 hours ago
 The title was >>t4119: test autocomputing -p<n> for traditional diff input.<<
 
+--------
++
 The placeholders are:
 
 - '%H': commit hash
@@ -119,12 +121,4 @@ The placeholders are:
 - '%Creset': reset color
 - '%m': left, right or boundary mark
 - '%n': newline
-
-
---encoding[=<encoding>]::
-	The commit objects record the encoding used for the log message
-	in their encoding header; this option can be used to tell the
-	command to re-code the commit log message in the encoding
-	preferred by the user.  For non plumbing commands this
-	defaults to UTF-8.
 
