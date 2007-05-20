@@ -501,6 +501,8 @@ class P4Sync(Command):
     #    gitStream.write("mark :%s\n" % details["change"])
         self.committedChanges.add(int(details["change"]))
         committer = ""
+        if author not in self.users:
+            self.getUserMapFromPerforceServer()
         if author in self.users:
             committer = "%s %s %s" % (self.users[author], epoch, self.tz)
         else:
@@ -591,13 +593,30 @@ class P4Sync(Command):
                 if not self.silent:
                     print "Tag %s does not match with change %s: file count is different." % (labelDetails["label"], change)
 
-    def getUserMap(self):
+    def getUserMapFromPerforceServer(self):
         self.users = {}
 
         for output in p4CmdList("users"):
             if not output.has_key("User"):
                 continue
             self.users[output["User"]] = output["FullName"] + " <" + output["Email"] + ">"
+
+        cache = open(gitdir + "/p4-usercache.txt", "wb")
+        for user in self.users.keys():
+            cache.write("%s\t%s\n" % (user, self.users[user]))
+        cache.close();
+
+    def loadUserMapFromCache(self):
+        self.users = {}
+        try:
+            cache = open(gitdir + "/p4-usercache.txt", "rb")
+            lines = cache.readlines()
+            cache.close()
+            for line in lines:
+                entry = line[:-1].split("\t")
+                self.users[entry[0]] = entry[1]
+        except IOError:
+            self.getUserMapFromPerforceServer()
 
     def getLabels(self):
         self.labels = {}
@@ -772,7 +791,7 @@ class P4Sync(Command):
         if not self.depotPath.endswith("/"):
             self.depotPath += "/"
 
-        self.getUserMap()
+        self.loadUserMapFromCache()
         self.labels = {}
         if self.detectLabels:
             self.getLabels();
