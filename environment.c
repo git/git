@@ -11,7 +11,6 @@
 
 char git_default_email[MAX_GITNAME];
 char git_default_name[MAX_GITNAME];
-int use_legacy_headers = 1;
 int trust_executable_bit = 1;
 int has_symlinks = 1;
 int assume_unchanged;

@@ -17,9 +17,9 @@
 static const char pack_usage[] = "\
 git-pack-objects [{ -q | --progress | --all-progress }] \n\
 	[--local] [--incremental] [--window=N] [--depth=N] \n\
-	[--no-reuse-delta] [--delta-base-offset] [--non-empty] \n\
-	[--revs [--unpacked | --all]*] [--reflog] [--stdout | base-name] \n\
-	[<ref-list | <object-list]";
+	[--no-reuse-delta] [--no-reuse-object] [--delta-base-offset] \n\
+	[--non-empty] [--revs [--unpacked | --all]*] [--reflog] \n\
+	[--stdout | base-name] [<ref-list | <object-list]";
 
 struct object_entry {
 	unsigned char sha1[20];
@@ -55,7 +55,7 @@ static struct object_entry *objects;
 static uint32_t nr_objects, nr_alloc, nr_result;
 
 static int non_empty;
-static int no_reuse_delta;
+static int no_reuse_delta, no_reuse_object;
 static int local;
 static int incremental;
 static int allow_ofs_delta;
@@ -346,56 +346,6 @@ static void copy_pack_data(struct sha1file *f,
 	}
 }
 
-static int check_loose_inflate(unsigned char *data, unsigned long len, unsigned long expect)
-{
-	z_stream stream;
-	unsigned char fakebuf[4096];
-	int st;
-
-	memset(&stream, 0, sizeof(stream));
-	stream.next_in = data;
-	stream.avail_in = len;
-	stream.next_out = fakebuf;
-	stream.avail_out = sizeof(fakebuf);
-	inflateInit(&stream);
-
-	while (1) {
-		st = inflate(&stream, Z_FINISH);
-		if (st == Z_STREAM_END || st == Z_OK) {
-			st = (stream.total_out == expect &&
-			      stream.total_in == len) ? 0 : -1;
-			break;
-		}
-		if (st != Z_BUF_ERROR) {
-			st = -1;
-			break;
-		}
-		stream.next_out = fakebuf;
-		stream.avail_out = sizeof(fakebuf);
-	}
-	inflateEnd(&stream);
-	return st;
-}
-
-static int revalidate_loose_object(struct object_entry *entry,
-				   unsigned char *map,
-				   unsigned long mapsize)
-{
-	/* we already know this is a loose object with new type header. */
-	enum object_type type;
-	unsigned long size, used;
-
-	if (pack_to_stdout)
-		return 0;
-
-	used = unpack_object_header_gently(map, mapsize, &type, &size);
-	if (!used)
-		return -1;
-	map += used;
-	mapsize -= used;
-	return check_loose_inflate(map, mapsize, size);
-}
-
 static unsigned long write_object(struct sha1file *f,
 				  struct object_entry *entry)
 {
@@ -412,7 +362,9 @@ static unsigned long write_object(struct sha1file *f,
 		crc32_begin(f);
 
 	obj_type = entry->type;
-	if (! entry->in_pack)
+	if (no_reuse_object)
+		to_reuse = 0;	/* explicit */
+	else if (!entry->in_pack)
 		to_reuse = 0;	/* can't reuse what we don't have */
 	else if (obj_type == OBJ_REF_DELTA || obj_type == OBJ_OFS_DELTA)
 		to_reuse = 1;	/* check_object() decided it for us */
@@ -424,25 +376,6 @@ static unsigned long write_object(struct sha1file *f,
 		to_reuse = 1;	/* we have it in-pack undeltified,
 				 * and we do not need to deltify it.
 				 */
-
-	if (!entry->in_pack && !entry->delta) {
-		unsigned char *map;
-		unsigned long mapsize;
-		map = map_sha1_file(entry->sha1, &mapsize);
-		if (map && !legacy_loose_object(map)) {
-			/* We can copy straight into the pack file */
-			if (revalidate_loose_object(entry, map, mapsize))
-				die("corrupt loose object %s",
-				    sha1_to_hex(entry->sha1));
-			sha1write(f, map, mapsize);
-			munmap(map, mapsize);
-			written++;
-			reused++;
-			return mapsize;
-		}
-		if (map)
-			munmap(map, mapsize);
-	}
 
 	if (!to_reuse) {
 		buf = read_sha1_file(entry->sha1, &type, &size);
@@ -1125,8 +1058,8 @@ static void check_object(struct object_entry *entry)
 		buf = use_pack(p, &w_curs, entry->in_pack_offset, &avail);
 
 		/*
-		 * We want in_pack_type even if we do not reuse delta.
-		 * There is no point not reusing non-delta representations.
+		 * We want in_pack_type even if we do not reuse delta
+		 * since non-delta representations could still be reused.
 		 */
 		used = unpack_object_header_gently(buf, avail,
 						   &entry->in_pack_type,
@@ -1653,6 +1586,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp("--no-reuse-delta", arg)) {
 			no_reuse_delta = 1;
+			continue;
+		}
+		if (!strcmp("--no-reuse-object", arg)) {
+			no_reuse_object = no_reuse_delta = 1;
 			continue;
 		}
 		if (!strcmp("--delta-base-offset", arg)) {

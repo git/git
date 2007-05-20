@@ -127,6 +127,13 @@ base-name::
 	This flag tells the command not to reuse existing deltas
 	but compute them from scratch.
 
+--no-reuse-object::
+	This flag tells the command not to reuse existing object data at all,
+	including non deltified object, forcing recompression of everything.
+	This implies --no-reuse-delta. Useful only in the obscur case where
+	wholesale enforcement of a different compression level on the
+	packed data is desired.
+
 --delta-base-offset::
 	A packed archive can express base object of a delta as
 	either 20-byte object name or as an offset in the
