@@ -209,7 +209,7 @@ static const char *update(struct command *cmd)
 		return NULL; /* good */
 	}
 	else {
-		lock = lock_any_ref_for_update(name, old_sha1);
+		lock = lock_any_ref_for_update(name, old_sha1, 0);
 		if (!lock) {
 			error("failed to lock %s", name);
 			return "failed to lock";

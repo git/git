@@ -249,7 +249,7 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 	/* we take the lock for the ref itself to prevent it from
 	 * getting updated.
 	 */
-	lock = lock_any_ref_for_update(ref, sha1);
+	lock = lock_any_ref_for_update(ref, sha1, 0);
 	if (!lock)
 		return error("cannot lock ref '%s'", ref);
 	log_file = xstrdup(git_path("logs/%s", ref));

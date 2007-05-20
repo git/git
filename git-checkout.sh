@@ -270,15 +270,7 @@ if [ "$?" -eq 0 ]; then
 		fi
 	elif test -n "$detached"
 	then
-		# NEEDSWORK: we would want a command to detach the HEAD
-		# atomically, instead of this handcrafted command sequence.
-		# Perhaps:
-		#	git update-ref --detach HEAD $new
-		# or something like that...
-		#
-		git-rev-parse HEAD >"$GIT_DIR/HEAD.new" &&
-		mv "$GIT_DIR/HEAD.new" "$GIT_DIR/HEAD" &&
-		git-update-ref -m "checkout: moving to $arg" HEAD "$detached" ||
+		git-update-ref --no-deref -m "checkout: moving to $arg" HEAD "$detached" ||
 			die "Cannot detach HEAD"
 		if test -n "$detach_warn"
 		then
