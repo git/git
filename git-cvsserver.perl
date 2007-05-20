@@ -105,7 +105,7 @@ if (@ARGV && $ARGV[0] eq 'pserver') {
     unless ($line eq 'anonymous') {
        print "E Only anonymous user allowed via pserver\n";
        print "I HATE YOU\n";
-       exit;
+       exit 1;
     }
     $line = <STDIN>; chomp $line;    # validate the password?
     $line = <STDIN>; chomp $line;
