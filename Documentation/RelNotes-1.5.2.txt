@@ -1,18 +1,18 @@
-GIT v1.5.2 Release Notes (draft)
+GIT v1.5.2 Release Notes
 ========================
 
 Updates since v1.5.1
 --------------------
 
-* Plumbing level subproject support.
+* Plumbing level superproject support.
 
   You can include a subdirectory that has an independent git
-  repository in your index and tree objects as a
-  "subproject".  This plumbing (i.e. "core") level subproject
-  support explicitly excludes recursive behaviour.
+  repository in your index and tree objects of your project
+  ("superproject").  This plumbing (i.e. "core") level
+  superproject support explicitly excludes recursive behaviour.
 
-  The "subproject" entries in the index and trees are
-  incompatible with older versions of git.  Experimenting with
+  The "subproject" entries in the index and trees of a superproject
+  are incompatible with older versions of git.  Experimenting with
   the plumbing level support is encouraged, but be warned that
   unless everybody in your project updates to this release or
   later, using this feature would make your project
@@ -33,7 +33,8 @@ Updates since v1.5.1
   but this feature is an extremely sharp-edged razor and needs
   to be handled with caution (do not use it unless you
   understand the earlier mailing list discussion on keyword
-  expansion).
+  expansion).  These conversions apply when checking files in
+  or out, and exporting via git-archive.
 
 * The packfile format now optionally suports 64-bit index.
 
@@ -42,12 +43,13 @@ Updates since v1.5.1
   needs more than 32-bit to express offsets of objects in the
   pack.
 
-* Comes with an updated git-gui 0.7.0
+* Comes with an updated git-gui 0.7.1
 
 * Updated gitweb:
 
   - can show combined diff for merges;
   - uses font size of user's preference, not hardcoded in pixels;
+  - can now 'grep';
 
 * New commands and options.
 
@@ -190,12 +192,6 @@ this release, unless otherwise noted.
 
   - "git clean -d -X" now does not remove non-excluded directories.
 
-* Documentation updates
-
-* Performance Tweaks
-
---
-exec >/var/tmp/1
-O=v1.5.2-rc3
-echo O=`git describe refs/heads/master`
-git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
+  - rebasing (without -m) a series that changes a symlink to a directory
+    in the middle of a path confused git-apply greatly and refused to
+    operate.

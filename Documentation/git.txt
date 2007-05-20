@@ -41,9 +41,16 @@ unreleased) version of git, that is available from 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
-* link:v1.5.1.5/git.html[documentation for release 1.5.1.5]
+* link:v1.5.2/git.html[documentation for release 1.5.2]
 
-* release notes for link:RelNotes-1.5.1.5.txt[1.5.1.5],
+* release notes for
+  link:RelNotes-1.5.2.txt[1.5.2].
+
+* link:v1.5.1.6/git.html[documentation for release 1.5.1.6]
+
+* release notes for
+  link:RelNotes-1.5.1.6.txt[1.5.1.6],
+  link:RelNotes-1.5.1.5.txt[1.5.1.5],
   link:RelNotes-1.5.1.4.txt[1.5.1.4],
   link:RelNotes-1.5.1.3.txt[1.5.1.3],
   link:RelNotes-1.5.1.2.txt[1.5.1.2],
@@ -52,7 +59,8 @@ Documentation for older releases are available here:
 
 * link:v1.5.0.7/git.html[documentation for release 1.5.0.7]
 
-* release notes for link:RelNotes-1.5.0.7.txt[1.5.0.7],
+* release notes for
+  link:RelNotes-1.5.0.7.txt[1.5.0.7],
   link:RelNotes-1.5.0.6.txt[1.5.0.6],
   link:RelNotes-1.5.0.5.txt[1.5.0.5],
   link:RelNotes-1.5.0.3.txt[1.5.0.3],
