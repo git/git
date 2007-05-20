@@ -47,6 +47,75 @@ test_expect_success 'basic checkout' \
   'GIT_CONFIG="$git_config" cvs -Q co -d cvswork master &&
    test "$(echo $(grep -v ^D cvswork/CVS/Entries|cut -d/ -f2,3,5))" = "empty/1.1/"'
 
+#--------------
+# CONFIG TESTS
+#--------------
+
+test_expect_success 'gitcvs.enabled = false' \
+  'GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled false &&
+   if GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 master >cvs.log 2>&1
+   then
+     echo unexpected cvs success
+     false
+   else
+     true
+   fi &&
+   cat cvs.log | grep -q "GITCVS emulation disabled" &&
+   test ! -d cvswork2'
+
+rm -fr cvswork2
+test_expect_success 'gitcvs.ext.enabled = true' \
+  'GIT_DIR="$SERVERDIR" git config --bool gitcvs.ext.enabled true &&
+   GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled false &&
+   GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 master >cvs.log 2>&1 &&
+   diff -q cvswork cvswork2'
+
+rm -fr cvswork2
+test_expect_success 'gitcvs.ext.enabled = false' \
+  'GIT_DIR="$SERVERDIR" git config --bool gitcvs.ext.enabled false &&
+   GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true &&
+   if GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 master >cvs.log 2>&1
+   then
+     echo unexpected cvs success
+     false
+   else
+     true
+   fi &&
+   cat cvs.log | grep -q "GITCVS emulation disabled" &&
+   test ! -d cvswork2'
+
+rm -fr cvswork2
+test_expect_success 'gitcvs.dbname' \
+  'GIT_DIR="$SERVERDIR" git config --bool gitcvs.ext.enabled true &&
+   GIT_DIR="$SERVERDIR" git config gitcvs.dbname %Ggitcvs.%a.%m.sqlite &&
+   GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 master >cvs.log 2>&1 &&
+   diff -q cvswork cvswork2 &&
+   test -f "$SERVERDIR/gitcvs.ext.master.sqlite" &&
+   cmp "$SERVERDIR/gitcvs.master.sqlite" "$SERVERDIR/gitcvs.ext.master.sqlite"'
+
+rm -fr cvswork2
+test_expect_success 'gitcvs.ext.dbname' \
+  'GIT_DIR="$SERVERDIR" git config --bool gitcvs.ext.enabled true &&
+   GIT_DIR="$SERVERDIR" git config gitcvs.ext.dbname %Ggitcvs1.%a.%m.sqlite &&
+   GIT_DIR="$SERVERDIR" git config gitcvs.dbname %Ggitcvs2.%a.%m.sqlite &&
+   GIT_CONFIG="$git_config" cvs -Q co -d cvswork2 master >cvs.log 2>&1 &&
+   diff -q cvswork cvswork2 &&
+   test -f "$SERVERDIR/gitcvs1.ext.master.sqlite" &&
+   test ! -f "$SERVERDIR/gitcvs2.ext.master.sqlite" &&
+   cmp "$SERVERDIR/gitcvs.master.sqlite" "$SERVERDIR/gitcvs1.ext.master.sqlite"'
+
+
+#------------
+# CVS UPDATE
+#------------
+
+rm -fr "$SERVERDIR"
+cd "$WORKDIR" &&
+git clone -q --local --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
+GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true &&
+GIT_DIR="$SERVERDIR" git config --bool gitcvs.logfile "$SERVERDIR/gitcvs.log" ||
+exit 1
+
 test_expect_success 'cvs update (create new file)' \
   'echo testfile1 >testfile1 &&
    git add testfile1 &&
