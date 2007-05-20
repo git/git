@@ -10,6 +10,12 @@
 # TODO: * implement git-p4 rollback <perforce change number> for debugging
 #         to roll back all p4 remote branches to a commit older or equal to
 #         the specified change.
+#       * for git-p4 submit --direct it would be nice to still create a
+#         git commit without updating HEAD before submitting to perforce.
+#         With the commit sha1 printed (or recoded in a .git/foo file?)
+#         it's possible to recover if anything goes wrong instead of potentially
+#         loosing a change entirely because it was never comitted to git and
+#         the p4 submit failed (or resulted in lots of conflicts, etc.)
 #
 
 import optparse, sys, os, marshal, popen2, subprocess, shelve
