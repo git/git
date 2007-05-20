@@ -199,3 +199,9 @@ relying on heavily:
  - Jakub Narebski, Peter Baudis, and Luben Tuikov on gitweb.
 
  - J. Bruce Fields on documentaton issues.
+
+
+* This document
+
+The latest copy of this document is found in git.git repository,
+on 'todo' branch, as MaintNotes.
