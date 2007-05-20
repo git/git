@@ -384,6 +384,11 @@ format.suffix::
 	`.patch`. Use this variable to change that suffix (make sure to
 	include the dot if you want it).
 
+gc.aggressiveWindow::
+	The window size parameter used in the delta compression
+	algorithm used by 'git gc --aggressive'.  This defaults
+	to 10.
+
 gc.packrefs::
 	`git gc` does not run `git pack-refs` in a bare repository by
 	default so that older dumb-transport clients can still fetch
