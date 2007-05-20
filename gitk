@@ -395,7 +395,7 @@ proc confirm_popup msg {
 
 proc makewindow {} {
     global canv canv2 canv3 linespc charspc ctext cflist
-    global textfont mainfont uifont
+    global textfont mainfont uifont tabstop
     global findtype findtypemenu findloc findstring fstring geometry
     global entries sha1entry sha1string sha1but
     global maincursor textcursor curtextcursor
@@ -615,6 +615,7 @@ proc makewindow {} {
     pack .bleft.mid.diff .bleft.mid.old .bleft.mid.new -side left
     set ctext .bleft.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
+	-tabs "[expr {$tabstop * $charspc}]" \
 	-state disabled -font $textfont \
 	-yscrollcommand scrolltext -wrap none
     scrollbar .bleft.sb -command "$ctext yview"
@@ -824,7 +825,7 @@ proc click {w} {
 }
 
 proc savestuff {w} {
-    global canv canv2 canv3 ctext cflist mainfont textfont uifont
+    global canv canv2 canv3 ctext cflist mainfont textfont uifont tabstop
     global stuffsaved findmergefiles maxgraphpct
     global maxwidth showneartags
     global viewname viewfiles viewargs viewperm nextviewnum
@@ -838,6 +839,7 @@ proc savestuff {w} {
 	puts $f [list set mainfont $mainfont]
 	puts $f [list set textfont $textfont]
 	puts $f [list set uifont $uifont]
+	puts $f [list set tabstop $tabstop]
 	puts $f [list set findmergefiles $findmergefiles]
 	puts $f [list set maxgraphpct $maxgraphpct]
 	puts $f [list set maxwidth $maxwidth]
@@ -4696,12 +4698,13 @@ proc redisplay {} {
 
 proc incrfont {inc} {
     global mainfont textfont ctext canv phase cflist
+    global charspc tabstop
     global stopped entries
     unmarkmatches
     set mainfont [lreplace $mainfont 1 1 [expr {[lindex $mainfont 1] + $inc}]]
     set textfont [lreplace $textfont 1 1 [expr {[lindex $textfont 1] + $inc}]]
     setcoords
-    $ctext conf -font $textfont
+    $ctext conf -font $textfont -tabs "[expr {$tabstop * $charspc}]"
     $cflist conf -font $textfont
     $ctext tag conf filesep -font [concat $textfont bold]
     foreach e $entries {
@@ -5852,7 +5855,7 @@ proc doprefs {} {
     global maxwidth maxgraphpct diffopts
     global oldprefs prefstop showneartags
     global bgcolor fgcolor ctext diffcolors selectbgcolor
-    global uifont
+    global uifont tabstop
 
     set top .gitkprefs
     set prefstop $top
@@ -5890,6 +5893,9 @@ proc doprefs {} {
     checkbutton $top.ntag.b -variable showneartags
     pack $top.ntag.b $top.ntag.l -side left
     grid x $top.ntag -sticky w
+    label $top.tabstopl -text "tabstop" -font optionfont
+    entry $top.tabstop -width 10 -textvariable tabstop
+    grid x $top.tabstopl $top.tabstop -sticky w
 
     label $top.cdisp -text "Colors: press to choose"
     $top.cdisp configure -font $uifont
@@ -5988,9 +5994,11 @@ proc prefscan {} {
 proc prefsok {} {
     global maxwidth maxgraphpct
     global oldprefs prefstop showneartags
+    global charspc ctext tabstop
 
     catch {destroy $prefstop}
     unset prefstop
+    $ctext configure -tabs "[expr {$tabstop * $charspc}]"
     if {$maxwidth != $oldprefs(maxwidth)
 	|| $maxgraphpct != $oldprefs(maxgraphpct)} {
 	redisplay
@@ -6296,6 +6304,7 @@ if {$tclencoding == {}} {
 set mainfont {Helvetica 9}
 set textfont {Courier 9}
 set uifont {Helvetica 9 bold}
+set tabstop 8
 set findmergefiles 0
 set maxgraphpct 50
 set maxwidth 16
