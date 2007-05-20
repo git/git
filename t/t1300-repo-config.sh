@@ -436,6 +436,40 @@ test_expect_success numbers '
 	test z1048576 = "z$m"
 '
 
+cat > expect << EOF
+true
+false
+true
+false
+true
+false
+true
+false
+EOF
+
+test_expect_success bool '
+
+	git-config bool.true1 01 &&
+	git-config bool.true2 -1 &&
+	git-config bool.true3 YeS &&
+	git-config bool.true4 true &&
+	git-config bool.false1 000 &&
+	git-config bool.false2 "" &&
+	git-config bool.false3 nO &&
+	git-config bool.false4 FALSE &&
+	rm -f result &&
+	for i in 1 2 3 4
+	do
+	    git-config --bool --get bool.true$i >>result
+	    git-config --bool --get bool.false$i >>result
+        done &&
+	cmp expect result'
+
+test_expect_failure 'invalid bool' '
+
+	git-config bool.nobool foobar &&
+	git-config --bool --get bool.nobool'
+
 rm .git/config
 
 git-config quote.leading " test"
