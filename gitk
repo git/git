@@ -402,7 +402,7 @@ proc makewindow {} {
     global rowctxmenu mergemax wrapcomment
     global highlight_files gdttype
     global searchstring sstring
-    global bgcolor fgcolor bglist fglist diffcolors
+    global bgcolor fgcolor bglist fglist diffcolors selectbgcolor
     global headctxmenu
 
     menu .bar
@@ -457,15 +457,18 @@ proc makewindow {} {
     set cscroll .tf.histframe.csb
     set canv .tf.histframe.pwclist.canv
     canvas $canv \
+	-selectbackground $selectbgcolor \
 	-background $bgcolor -bd 0 \
 	-yscrollincr $linespc -yscrollcommand "scrollcanv $cscroll"
     .tf.histframe.pwclist add $canv
     set canv2 .tf.histframe.pwclist.canv2
     canvas $canv2 \
+	-selectbackground $selectbgcolor \
 	-background $bgcolor -bd 0 -yscrollincr $linespc
     .tf.histframe.pwclist add $canv2
     set canv3 .tf.histframe.pwclist.canv3
     canvas $canv3 \
+	-selectbackground $selectbgcolor \
 	-background $bgcolor -bd 0 -yscrollincr $linespc
     .tf.histframe.pwclist add $canv3
     eval .tf.histframe.pwclist sash place 0 $geometry(pwsash0)
@@ -666,6 +669,7 @@ proc makewindow {} {
     set cflist .bright.cfiles
     set indent [font measure $mainfont "nn"]
     text $cflist \
+	-selectbackground $selectbgcolor \
 	-background $bgcolor -foreground $fgcolor \
 	-font $mainfont \
 	-tabs [list $indent [expr {2 * $indent}]] \
@@ -825,7 +829,7 @@ proc savestuff {w} {
     global maxwidth showneartags
     global viewname viewfiles viewargs viewperm nextviewnum
     global cmitmode wrapcomment
-    global colors bgcolor fgcolor diffcolors
+    global colors bgcolor fgcolor diffcolors selectbgcolor
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -844,6 +848,7 @@ proc savestuff {w} {
 	puts $f [list set fgcolor $fgcolor]
 	puts $f [list set colors $colors]
 	puts $f [list set diffcolors $diffcolors]
+	puts $f [list set selectbgcolor $selectbgcolor]
 
 	puts $f "set geometry(main) [wm geometry .]"
 	puts $f "set geometry(topwidth) [winfo width .tf]"
@@ -5845,7 +5850,7 @@ proc doquit {} {
 proc doprefs {} {
     global maxwidth maxgraphpct diffopts
     global oldprefs prefstop showneartags
-    global bgcolor fgcolor ctext diffcolors
+    global bgcolor fgcolor ctext diffcolors selectbgcolor
     global uifont
 
     set top .gitkprefs
@@ -5912,6 +5917,10 @@ proc doprefs {} {
 		      "diff hunk header" \
 		      [list $ctext tag conf hunksep -foreground]]
     grid x $top.hunksepbut $top.hunksep -sticky w
+    label $top.selbgsep -padx 40 -relief sunk -background $selectbgcolor
+    button $top.selbgbut -text "Select bg" -font optionfont \
+	-command [list choosecolor selectbgcolor 0 $top.bg background setselbg]
+    grid x $top.selbgbut $top.selbgsep -sticky w
 
     frame $top.buts
     button $top.buts.ok -text "OK" -command prefsok -default active
@@ -5934,6 +5943,16 @@ proc choosecolor {v vi w x cmd} {
     $w conf -background $c
     lset $v $vi $c
     eval $cmd $c
+}
+
+proc setselbg {c} {
+    global bglist cflist
+    foreach w $bglist {
+	$w configure -selectbackground $c
+    }
+    $cflist tag configure highlight \
+	-background [$cflist cget -selectbackground]
+    allcanvs itemconf secsel -fill $c
 }
 
 proc setbg {c} {
@@ -6292,6 +6311,7 @@ set colors {green red blue magenta darkgrey brown orange}
 set bgcolor white
 set fgcolor black
 set diffcolors {red "#00a000" blue}
+set selectbgcolor gray85
 
 catch {source ~/.gitk}
 
