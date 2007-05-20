@@ -213,10 +213,13 @@ class P4Submit(Command):
             else:
                 die("unknown modifier %s for %s" % (modifier, path))
 
-        diffcmd = "git diff-tree -p --diff-filter=ACMRTUXB \"%s^\" \"%s\"" % (id, id)
-        patchcmd = diffcmd + " | patch -p1"
+        diffcmd = "git format-patch -k --stdout \"%s^\"..\"%s\"" % (id, id)
+        patchcmd = diffcmd + " | git apply "
+        tryPatchCmd = diffcmd + "--check -"
+        applyPatchCmd = diffcmd + "--check --apply -"
+        print mypopen(diffcmd).read()
 
-        if os.system(patchcmd + " --dry-run --silent") != 0:
+        if os.system(tryPatchCmd) != 0:
             print "Unfortunately applying the change failed!"
             print "What do you want to do?"
             response = "x"
@@ -226,7 +229,7 @@ class P4Submit(Command):
                 print "Skipping! Good luck with the next patches..."
                 return
             elif response == "a":
-                os.system(patchcmd)
+                os.system(applyPatchCmd)
                 if len(filesToAdd) > 0:
                     print "You may also want to call p4 add on the following files:"
                     print " ".join(filesToAdd)
@@ -239,7 +242,7 @@ class P4Submit(Command):
                 print "Patch saved to patch.txt in %s !" % self.clientPath
                 die("Please resolve and submit the conflict manually and continue afterwards with git-p4 submit --continue")
 
-        system(patchcmd)
+        system(applyPatchCmd)
 
         for f in filesToAdd:
             system("p4 add %s" % f)
