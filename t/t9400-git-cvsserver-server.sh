@@ -47,6 +47,40 @@ test_expect_success 'basic checkout' \
   'GIT_CONFIG="$git_config" cvs -Q co -d cvswork master &&
    test "$(echo $(grep -v ^D cvswork/CVS/Entries|cut -d/ -f2,3,5))" = "empty/1.1/"'
 
+#------------------------
+# PSERVER AUTHENTICATION
+#------------------------
+
+cat >request-anonymous  <<EOF
+BEGIN AUTH REQUEST
+$SERVERDIR
+anonymous
+
+END AUTH REQUEST
+EOF
+
+cat >request-git  <<EOF
+BEGIN AUTH REQUEST
+$SERVERDIR
+git
+
+END AUTH REQUEST
+EOF
+
+test_expect_success 'pserver authentication' \
+  'cat request-anonymous | git-cvsserver pserver >log 2>&1 &&
+   tail -n1 log | grep -q "^I LOVE YOU$"'
+
+test_expect_success 'pserver authentication failure (non-anonymous user)' \
+  'if cat request-git | git-cvsserver pserver >log 2>&1
+   then
+       false
+   else
+       true
+   fi &&
+   tail -n1 log | grep -q "^I HATE YOU$"'
+
+
 #--------------
 # CONFIG TESTS
 #--------------
