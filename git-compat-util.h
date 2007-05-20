@@ -48,16 +48,20 @@
 #include <sys/time.h>
 #include <time.h>
 #include <signal.h>
-//#include <sys/wait.h>
 #include <fnmatch.h>
-//#include <sys/poll.h>
-//#include <sys/socket.h>
-//#include <sys/select.h>
+#ifndef __MINGW32__
+#include <sys/wait.h>
+#include <sys/poll.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#endif
 #include <assert.h>
 #include <regex.h>
-//#include <netinet/in.h>
-//#include <netinet/tcp.h>
-//#include <arpa/inet.h>
+#ifndef __MINGW32__
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+#endif
 #ifndef NO_ETC_PASSWD
 #include <netdb.h>
 #include <pwd.h>
@@ -345,7 +349,7 @@ static inline int strtoul_ui(char const *s, int base, unsigned int *result)
 	return 0;
 }
 
-// MinGW
+#ifdef __MINGW32__
 
 #ifndef S_ISLNK
 #define S_IFLNK    0120000 /* Symbolic link */
@@ -458,5 +462,7 @@ int mingw_socket(int domain, int type, int protocol);
 
 extern void quote_argv(const char **dst, const char **src);
 extern const char *parse_interpreter(const char *cmd);
+
+#endif /* __MINGW32__ */
 
 #endif

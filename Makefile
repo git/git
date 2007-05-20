@@ -209,8 +209,7 @@ SCRIPT_SH = \
 	git-applymbox.sh git-applypatch.sh git-am.sh \
 	git-merge.sh git-merge-stupid.sh git-merge-octopus.sh \
 	git-merge-resolve.sh git-merge-ours.sh \
-	git-lost-found.sh git-quiltimport.sh \
-	cpio.sh
+	git-lost-found.sh git-quiltimport.sh
 
 SCRIPT_PERL = \
 	git-add--interactive.perl \
@@ -504,6 +503,7 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	X = .exe
 	NOEXECTEMPL = .noexec
 	template_dir = ../share/git-core/templates/
+	SCRIPT_SH += cpio.sh
 endif
 ifneq (,$(findstring arm,$(uname_M)))
 	ARM_SHA1 = YesPlease

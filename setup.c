@@ -78,11 +78,11 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 const char *prefix_filename(const char *pfx, int pfx_len, const char *arg)
 {
 	static char path[PATH_MAX];
+	char *p;
 #ifndef __MINGW32__
 	if (!pfx || !*pfx || arg[0] == '/')
 		return arg;
 #else
-	char *p;
 	/* don't add prefix to absolute paths */
 	const int is_absolute =
 		is_dir_sep(arg[0]) ||

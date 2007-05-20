@@ -106,12 +106,15 @@ static char *path_lookup(const char *cmd, char **path)
 int spawnvpe_pipe(const char *cmd, const char **argv, const char **env,
 		  int pin[], int pout[])
 {
+#ifdef __MINGW32__
 	char **path = get_path_split();
 
 	pid_t pid = spawnvppe_pipe(cmd, argv, env, path, pin, pout);
 
 	free_path_split(path);
-
+#else
+	pid_t pid = spawnvppe_pipe(cmd, argv, env, NULL, pin, pout);
+#endif
 	return pid;
 }
 
