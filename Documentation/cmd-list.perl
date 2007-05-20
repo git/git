@@ -72,7 +72,6 @@ __DATA__
 git-add                                 mainporcelain
 git-am                                  mainporcelain
 git-annotate                            ancillaryinterrogators
-git-applymbox                           ancillaryinterrogators
 git-applypatch                          purehelpers
 git-apply                               plumbingmanipulators
 git-archimport                          foreignscminterface

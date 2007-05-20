@@ -13,7 +13,7 @@ applypatch-msg
 --------------
 
 This hook is invoked by `git-applypatch` script, which is
-typically invoked by `git-applymbox`.  It takes a single
+typically invoked by `git-am`.  It takes a single
 parameter, the name of the file that holds the proposed commit
 log message.  Exiting with non-zero status causes
 `git-applypatch` to abort before applying the patch.
@@ -30,7 +30,7 @@ pre-applypatch
 --------------
 
 This hook is invoked by `git-applypatch` script, which is
-typically invoked by `git-applymbox`.  It takes no parameter,
+typically invoked by `git-am`.  It takes no parameter,
 and is invoked after the patch is applied, but before a commit
 is made.  Exiting with non-zero status causes the working tree
 after application of the patch not committed.
@@ -45,7 +45,7 @@ post-applypatch
 ---------------
 
 This hook is invoked by `git-applypatch` script, which is
-typically invoked by `git-applymbox`.  It takes no parameter,
+typically invoked by `git-am`.  It takes no parameter,
 and is invoked after the patch is applied and a commit is made.
 
 This hook is meant primarily for notification, and cannot affect
