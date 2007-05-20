@@ -192,4 +192,73 @@ test_expect_success 'cvs update (re-add deleted file)' \
    test "$(echo $(grep testfile1 CVS/Entries|cut -d/ -f2,3,5))" = "testfile1/1.4/" &&
    diff -q testfile1 ../testfile1'
 
+cd "$WORKDIR"
+test_expect_success 'cvs update (merge)' \
+  'echo Line 0 >expected &&
+   for i in 1 2 3 4 5 6 7
+   do
+     echo Line $i >>merge
+     echo Line $i >>expected
+   done &&
+   echo Line 8 >>expected &&
+   git add merge &&
+   git commit -q -m "Merge test (pre-merge)" &&
+   git push gitcvs.git >/dev/null &&
+   cd cvswork &&
+   GIT_CONFIG="$git_config" cvs -Q update &&
+   test "$(echo $(grep merge CVS/Entries|cut -d/ -f2,3,5))" = "merge/1.1/" &&
+   diff -q merge ../merge &&
+   ( echo Line 0; cat merge ) >merge.tmp &&
+   mv merge.tmp merge &&
+   cd "$WORKDIR" &&
+   echo Line 8 >>merge &&
+   git add merge &&
+   git commit -q -m "Merge test (merge)" &&
+   git push gitcvs.git >/dev/null &&
+   cd cvswork &&
+   GIT_CONFIG="$git_config" cvs -Q update &&
+   diff -q merge ../expected'
+
+cd "$WORKDIR"
+
+cat >expected.C <<EOF
+<<<<<<< merge.mine
+Line 0
+=======
+LINE 0
+>>>>>>> merge.3
+EOF
+
+for i in 1 2 3 4 5 6 7 8
+do
+  echo Line $i >>expected.C
+done
+
+test_expect_success 'cvs update (conflict merge)' \
+  '( echo LINE 0; cat merge ) >merge.tmp &&
+   mv merge.tmp merge &&
+   git add merge &&
+   git commit -q -m "Merge test (conflict)" &&
+   git push gitcvs.git >/dev/null &&
+   cd cvswork &&
+   GIT_CONFIG="$git_config" cvs -Q update &&
+   diff -q merge ../expected.C'
+
+cd "$WORKDIR"
+test_expect_success 'cvs update (-C)' \
+  'cd cvswork &&
+   GIT_CONFIG="$git_config" cvs -Q update -C &&
+   diff -q merge ../merge'
+
+cd "$WORKDIR"
+test_expect_success 'cvs update (merge no-op)' \
+   'echo Line 9 >>merge &&
+    cp merge cvswork/merge &&
+    git add merge &&
+    git commit -q -m "Merge test (no-op)" &&
+    git push gitcvs.git >/dev/null &&
+    cd cvswork &&
+    GIT_CONFIG="$git_config" cvs -Q update &&
+    diff -q merge ../merge'
+
 test_done
