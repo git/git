@@ -4695,13 +4695,14 @@ proc redisplay {} {
 }
 
 proc incrfont {inc} {
-    global mainfont textfont ctext canv phase
+    global mainfont textfont ctext canv phase cflist
     global stopped entries
     unmarkmatches
     set mainfont [lreplace $mainfont 1 1 [expr {[lindex $mainfont 1] + $inc}]]
     set textfont [lreplace $textfont 1 1 [expr {[lindex $textfont 1] + $inc}]]
     setcoords
     $ctext conf -font $textfont
+    $cflist conf -font $textfont
     $ctext tag conf filesep -font [concat $textfont bold]
     foreach e $entries {
 	$e conf -font $mainfont
