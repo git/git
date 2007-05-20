@@ -391,6 +391,9 @@ with the commands mentioned in link:everyday.html[Everyday git].  You
 should be able to find any unknown jargon in the
 link:glossary.html[Glossary].
 
+The link:user-manual.html[Git User's Manual] provides a more
+comprehensive introduction to git.
+
 The link:cvs-migration.html[CVS migration] document explains how to
 import a CVS repository into git, and shows how to use git in a
 CVS-like way.

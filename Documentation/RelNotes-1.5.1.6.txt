@@ -1,4 +1,4 @@
-GIT v1.5.1.5 Release Notes
+GIT v1.5.1.6 Release Notes
 ==========================
 
 Fixes since v1.5.1.4
@@ -19,6 +19,9 @@ Fixes since v1.5.1.4
 
   - git-svn was reported to segfault for many people on list and
     #git; hopefully this has been fixed.
+
+  - git-svn also had a bug to crash svnserve by sending a bad
+    sequence of requests.
 
   - "git-svn clone" does not try to minimize the URL
     (i.e. connect to higher level hierarchy) by default, as this

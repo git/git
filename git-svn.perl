@@ -485,6 +485,11 @@ sub cmd_multi_init {
 	unless (defined $_trunk || defined $_branches || defined $_tags) {
 		usage(1);
 	}
+
+	# there are currently some bugs that prevent multi-init/multi-fetch
+	# setups from working well without this.
+	$Git::SVN::_minimize_url = 1;
+
 	$_prefix = '' unless defined $_prefix;
 	if (defined $url) {
 		$url =~ s#/+$##;
@@ -2841,8 +2846,10 @@ sub close_edit {
 	my ($self) = @_;
 	my ($p,$bat) = ($self->{pool}, $self->{bat});
 	foreach (sort { $b =~ tr#/#/# <=> $a =~ tr#/#/# } keys %$bat) {
+		next if $_ eq '';
 		$self->close_directory($bat->{$_}, $p);
 	}
+	$self->close_directory($bat->{''}, $p);
 	$self->SUPER::close_edit($p);
 	$p->clear;
 }
