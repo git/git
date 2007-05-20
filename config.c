@@ -12,6 +12,8 @@
 static FILE *config_file;
 static const char *config_file_name;
 static int config_linenr;
+static int zlib_compression_seen;
+
 static int get_next_char(void)
 {
 	int c;
@@ -299,13 +301,27 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
-	if (!strcmp(var, "core.compression")) {
+	if (!strcmp(var, "core.loosecompression")) {
 		int level = git_config_int(var, value);
 		if (level == -1)
 			level = Z_DEFAULT_COMPRESSION;
 		else if (level < 0 || level > Z_BEST_COMPRESSION)
 			die("bad zlib compression level %d", level);
 		zlib_compression_level = level;
+		zlib_compression_seen = 1;
+		return 0;
+	}
+
+	if (!strcmp(var, "core.compression")) {
+		int level = git_config_int(var, value);
+		if (level == -1)
+			level = Z_DEFAULT_COMPRESSION;
+		else if (level < 0 || level > Z_BEST_COMPRESSION)
+			die("bad zlib compression level %d", level);
+		core_compression_level = level;
+		core_compression_seen = 1;
+		if (!zlib_compression_seen)
+			zlib_compression_level = level;
 		return 0;
 	}
 

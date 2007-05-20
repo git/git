@@ -68,6 +68,8 @@ static int depth = 50;
 static int pack_to_stdout;
 static int num_preferred_base;
 static struct progress progress_state;
+static int pack_compression_level = Z_DEFAULT_COMPRESSION;
+static int pack_compression_seen;
 
 /*
  * The object names in objects array are hashed with this hashtable,
@@ -418,7 +420,7 @@ static unsigned long write_object(struct sha1file *f,
 			sha1write(f, entry->delta->sha1, 20);
 			hdrlen += 20;
 		}
-		datalen = sha1write_compressed(f, buf, size);
+		datalen = sha1write_compressed(f, buf, size, pack_compression_level);
 		free(buf);
 	}
 	else {
@@ -1427,6 +1429,16 @@ static int git_pack_config(const char *k, const char *v)
 		depth = git_config_int(k, v);
 		return 0;
 	}
+	if (!strcmp(k, "pack.compression")) {
+		int level = git_config_int(k, v);
+		if (level == -1)
+			level = Z_DEFAULT_COMPRESSION;
+		else if (level < 0 || level > Z_BEST_COMPRESSION)
+			die("bad pack compression level %d", level);
+		pack_compression_level = level;
+		pack_compression_seen = 1;
+		return 0;
+	}
 	return git_default_config(k, v);
 }
 
@@ -1538,6 +1550,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	rp_ac = 2;
 
 	git_config(git_pack_config);
+	if (!pack_compression_seen && core_compression_seen)
+		pack_compression_level = core_compression_level;
 
 	progress = isatty(2);
 	for (i = 1; i < argc; i++) {
@@ -1556,6 +1570,18 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp("--incremental", arg)) {
 			incremental = 1;
+			continue;
+		}
+		if (!prefixcmp(arg, "--compression=")) {
+			char *end;
+			int level = strtoul(arg+14, &end, 0);
+			if (!arg[14] || *end)
+				usage(pack_usage);
+			if (level == -1)
+				level = Z_DEFAULT_COMPRESSION;
+			else if (level < 0 || level > Z_BEST_COMPRESSION)
+				die("bad pack compression level %d", level);
+			pack_compression_level = level;
 			continue;
 		}
 		if (!prefixcmp(arg, "--window=")) {

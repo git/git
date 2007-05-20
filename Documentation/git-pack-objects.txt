@@ -130,9 +130,21 @@ base-name::
 --no-reuse-object::
 	This flag tells the command not to reuse existing object data at all,
 	including non deltified object, forcing recompression of everything.
-	This implies --no-reuse-delta. Useful only in the obscur case where
+	This implies --no-reuse-delta. Useful only in the obscure case where
 	wholesale enforcement of a different compression level on the
 	packed data is desired.
+
+--compression=[N]::
+	Specifies compression level for newly-compressed data in the
+	generated pack.  If not specified,  pack compression level is
+	determined first by pack.compression,  then by core.compression,
+	and defaults to -1,  the zlib default,  if neither is set.
+	Data copied from loose objects will be recompressed
+	if core.legacyheaders was true when they were created or if
+	the loose compression level (see core.loosecompression and
+	core.compression) is now a different value than the pack
+	compression level.  Add --no-reuse-object if you want to force
+	a uniform compression level on all data no matter the source.
 
 --delta-base-offset::
 	A packed archive can express base object of a delta as
