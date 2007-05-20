@@ -1009,7 +1009,7 @@ class P4Clone(P4Sync):
         os.makedirs(dir)
         os.chdir(dir)
         system("git init")
-        gitdir = os.getcwd()
+        gitdir = os.getcwd() + "/.git"
         if not P4Sync.run(self, [depotPath]):
             return False
         if self.branch != "master":
