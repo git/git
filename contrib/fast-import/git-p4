@@ -16,6 +16,8 @@
 #         it's possible to recover if anything goes wrong instead of potentially
 #         loosing a change entirely because it was never comitted to git and
 #         the p4 submit failed (or resulted in lots of conflicts, etc.)
+#       * Consider making --with-origin the default, assuming that the git
+#         protocol is always more efficient. (needs manual testing first :)
 #
 
 import optparse, sys, os, marshal, popen2, subprocess, shelve
@@ -729,7 +731,7 @@ class P4Sync(Command):
         self.initialParents = {}
 
         self.listExistingP4GitBranches()
-        if len(self.p4BranchesInGit) > 1:
+        if len(self.p4BranchesInGit) > 1 and not self.silent:
             print "Importing from/into multiple branches"
             self.detectBranches = True
 
@@ -795,7 +797,7 @@ class P4Sync(Command):
                 self.depotPath = self.previousDepotPath
                 self.changeRange = "@%s,#head" % p4Change
                 self.initialParent = parseRevision(self.branch)
-                if not self.silent:
+                if not self.silent and not self.detectBranches:
                     print "Performing incremental import into %s git branch" % self.branch
 
         if not self.branch.startswith("refs/"):
@@ -920,15 +922,17 @@ class P4Sync(Command):
 
             if len(changes) == 0:
                 if not self.silent:
-                    print "no changes to import!"
+                    print "No changes to import!"
                 return True
+
+            self.updatedBranches = set()
 
             cnt = 1
             for change in changes:
                 description = p4Cmd("describe %s" % change)
 
                 if not self.silent:
-                    sys.stdout.write("\rimporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
+                    sys.stdout.write("\rImporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
                     sys.stdout.flush()
                 cnt = cnt + 1
 
@@ -944,6 +948,8 @@ class P4Sync(Command):
 
                             if self.verbose:
                                 print "branch is %s" % branch
+
+                            self.updatedBranches.add(branch)
 
                             if branch not in self.createdBranches:
                                 self.createdBranches.add(branch)
@@ -984,8 +990,13 @@ class P4Sync(Command):
                     print self.gitError.read()
                     sys.exit(1)
 
-        if not self.silent:
-            print ""
+            if not self.silent:
+                print ""
+                if len(self.updatedBranches) > 0:
+                    sys.stdout.write("Updated branches: ")
+                    for b in self.updatedBranches:
+                        sys.stdout.write("%s " % b)
+                    sys.stdout.write("\n")
 
 
         self.gitStream.close()
