@@ -7,6 +7,10 @@
 #            2007 Trolltech ASA
 # License: MIT <http://www.opensource.org/licenses/mit-license.php>
 #
+# TODO: * implement git-p4 rollback <perforce change number> for debugging
+#         to roll back all p4 remote branches to a commit older or equal to
+#         the specified change.
+#
 
 import optparse, sys, os, marshal, popen2, subprocess, shelve
 import tempfile, getopt, sha, os.path, time, platform
