@@ -1,6 +1,6 @@
-Now a new feature release is out, it's time to welcome new
-people to the list.  This message talks about how git.git is
-managed, and how you can work with it.
+Now a new feature release is out, it's a good time to welcome new
+people to the list.  This message talks about how git.git is managed,
+and how you can work with it.
 
 * IRC and Mailing list
 
@@ -13,23 +13,22 @@ The development however is primarily done on this mailing list
 you are reading right now.  If you have patches, please send
 them to the list, following Documentation/SubmittingPatches.
 
-I usually read all patches posted to the list, and follow almost
-all the discussions on the list, unless the topic is about an
-obscure corner that I do not personally use.  But I am obviously
-not perfect.  If you sent a patch that you did not hear from
-anybody for three days, that is a very good indication that it
-was dropped on the floor --- please do not hesitate to remind
-me.
+I usually try to read all patches posted to the list, and follow
+almost all the discussions on the list, unless the topic is about an
+obscure corner that I do not personally use.  But I am obviously not
+perfect.  If you sent a patch that you did not hear from anybody for
+three days, that is a very good indication that it was dropped on the
+floor --- please do not hesitate to remind me.
 
 The list archive is available at a few public sites as well:
 
         http://marc.theaimsgroup.com/?l=git
         http://news.gmane.org/gmane.comp.version-control.git
+	http://www.spinics.net/lists/git/
 
 and some people seem to prefer to read it over NNTP:
 
         nntp://news.gmane.org/gmane.comp.version-control.git
-
 
 * Repositories, branches and documentation.
 
@@ -67,7 +66,11 @@ is a good demonstration of how to use an update hook to automate
 a task.
 
 There are four branches in git.git repository that track the
-source tree of git: "master", "maint", "next", and "pu".
+source tree of git: "master", "maint", "next", and "pu".  I may
+add more maintenance branches (e.g. "maint-1.5.1") if we have
+huge backward incompatible feature updates in the future to keep
+an older release alive; I may not, but the distributed nature of
+git means any volunteer can run a stable-tree like that himself.
 
 The "master" branch is meant to contain what are very well
 tested and ready to be used in a production setting.  There
@@ -75,14 +78,14 @@ could occasionally be minor breakages or brown paper bag bugs
 but they are not expected to be anything major.  Every now and
 then, a "feature release" is cut from the tip of this branch and
 they typically are named with three dotted decimal digits.  The
-last such release was v1.5.1 done on April 4th this year.
+last such release was v1.5.2 done on May 20th this year.
 
 Whenever a feature release is made, "maint" branch is forked off
 from "master" at that point.  Obvious, safe and urgent fixes
 after a feature release are applied to this branch and
 maintenance releases are cut from it.  The maintenance releases
 are named with four dotted decimal, named after the feature
-release they are updates to; the last such release was v1.5.0.7.
+release they are updates to; the last such release was v1.5.1.6.
 New features never go to this branch.  This branch is also
 merged into "master" to propagate the fixes forward.
 
@@ -118,7 +121,7 @@ The above three branches, "master", "maint" and "next" are never
 rewound, so you should be able to safely track them (this
 automatically means the topics that have been merged into "next"
 are not rebased, and you can find the tip of topic branches you
-are interested in out of "git log next" output).
+are interested in from the output of "git log next").
 
 The "pu" (proposed updates) branch bundles all the remainder of
 topic branches.  The "pu" branch, and topic branches that are
@@ -134,8 +137,9 @@ Sometimes, an idea that looked promising turns out to be not so
 hot and the topic can be dropped from "pu" in such a case.
 
 A topic that is in "next" is expected to be tweaked and fixed to
-perfection before it is merged to "master".  Similarly to the
-above I do it with this:
+perfection before it is merged to "master" (that's why "master"
+can be expected to stay very stable).  Similarly to the above I
+do it with this:
 
         git checkout master
         git merge that-topic-branch
@@ -144,10 +148,10 @@ above I do it with this:
 However, being in "next" is not a guarantee to appear in the
 next release (being in "master" is such a guarantee, unless it
 is later found seriously broken and reverted), or even in any
-future release.  There even were cases that topics needed a few
-reverting before graduating to "master", or a topic that already
-was in "next" were reverted from "next" because fatal flaws were
-found in them later.
+future release.  There even were cases that topics needed
+reverting a few commits in them before graduating to "master",
+or a topic that already was in "next" were entirely reverted
+from "next" because fatal flaws were found in them later.
 
 Starting from v1.5.0, "master" and "maint" have release notes
 for the next release in Documentation/RelNotes-* files, so that
@@ -186,12 +190,12 @@ relying on heavily:
 
  - Shawn and Nicolas Pitre on pack issues.
 
- - Martin Langhoff on cvsserver and cvsimport.
+ - Martin Langhoff and Frank Lichtenheld on cvsserver and cvsimport.
 
  - Paul Mackerras on gitk.
 
  - Eric Wong on git-svn.
 
- - Jakub Narebski and Luben Tuikov on gitweb.
+ - Jakub Narebski, Peter Baudis, and Luben Tuikov on gitweb.
 
  - J. Bruce Fields on documentaton issues.
