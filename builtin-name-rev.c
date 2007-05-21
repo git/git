@@ -83,6 +83,7 @@ copy_data:
 
 struct name_ref_data {
 	int tags_only;
+	int name_only;
 	const char *ref_filter;
 };
 
@@ -110,6 +111,10 @@ static int name_ref(const char *path, const unsigned char *sha1, int flags, void
 
 		if (!prefixcmp(path, "refs/heads/"))
 			path = path + 11;
+		else if (data->tags_only
+		    && data->name_only
+		    && !prefixcmp(path, "refs/tags/"))
+			path = path + 10;
 		else if (!prefixcmp(path, "refs/"))
 			path = path + 5;
 
@@ -149,7 +154,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 {
 	struct object_array revs = { 0, 0, NULL };
 	int as_is = 0, all = 0, transform_stdin = 0;
-	struct name_ref_data data = { 0, NULL };
+	struct name_ref_data data = { 0, 0, NULL };
 
 	git_config(git_default_config);
 
@@ -164,6 +169,9 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		if (!as_is && (*argv)[0] == '-') {
 			if (!strcmp(*argv, "--")) {
 				as_is = 1;
+				continue;
+			} else if (!strcmp(*argv, "--name-only")) {
+				data.name_only = 1;
 				continue;
 			} else if (!strcmp(*argv, "--tags")) {
 				data.tags_only = 1;
@@ -263,14 +271,17 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 			struct object * obj = get_indexed_object(i);
 			if (!obj)
 				continue;
-			printf("%s %s\n", sha1_to_hex(obj->sha1), get_rev_name(obj));
+			if (!data.name_only)
+				printf("%s ", sha1_to_hex(obj->sha1));
+			printf("%s\n", get_rev_name(obj));
 		}
 	} else {
 		int i;
-		for (i = 0; i < revs.nr; i++)
-			printf("%s %s\n",
-				revs.objects[i].name,
-				get_rev_name(revs.objects[i].item));
+		for (i = 0; i < revs.nr; i++) {
+			if (!data.name_only)
+				printf("%s ", revs.objects[i].name);
+			printf("%s\n", get_rev_name(revs.objects[i].item));
+		}
 	}
 
 	return 0;

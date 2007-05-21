@@ -3,6 +3,7 @@
 #include "tag.h"
 #include "refs.h"
 #include "builtin.h"
+#include "exec_cmd.h"
 
 #define SEEN		(1u<<0)
 #define MAX_TAGS	(FLAG_BITS - 1)
@@ -242,12 +243,15 @@ static void describe(const char *arg, int last_one)
 int cmd_describe(int argc, const char **argv, const char *prefix)
 {
 	int i;
+	int contains = 0;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
 		if (*arg != '-')
 			break;
+		else if (!strcmp(arg, "--contains"))
+			contains = 1;
 		else if (!strcmp(arg, "--debug"))
 			debug = 1;
 		else if (!strcmp(arg, "--all"))
@@ -271,6 +275,16 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 	}
 
 	save_commit_buffer = 0;
+
+	if (contains) {
+		const char **args = xmalloc((4 + argc - i) * sizeof(char*));
+		args[0] = "name-rev";
+		args[1] = "--name-only";
+		args[2] = "--tags";
+		memcpy(args + 3, argv + i, (argc - i) * sizeof(char*));
+		args[3 + argc - i] = NULL;
+		return cmd_name_rev(3 + argc - i, args, prefix);
+	}
 
 	if (argc <= i)
 		describe("HEAD", 1);
