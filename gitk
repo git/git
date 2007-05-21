@@ -5356,7 +5356,7 @@ proc cobranch {} {
     nowbusy checkout
     update
     if {[catch {
-	exec git checkout $headmenuhead
+	exec git checkout -q $headmenuhead
     } err]} {
 	notbusy checkout
 	error_popup $err
