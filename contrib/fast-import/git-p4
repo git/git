@@ -55,6 +55,8 @@ def p4Where(depotPath):
     if not depotPath.endswith("/"):
         depotPath += "/"
     output = p4Cmd("where %s..." % depotPath)
+    if output["code"] == "error":
+        return ""
     clientPath = ""
     if "path" in output:
         clientPath = output.get("path")
