@@ -1671,7 +1671,7 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 	char *new = xmalloc(size);
 	const char *oldlines, *newlines;
 	int oldsize = 0, newsize = 0;
-	int trailing_added_lines = 0;
+	int new_blank_lines_at_end = 0;
 	unsigned long leading, trailing;
 	int pos, lines;
 
@@ -1679,6 +1679,7 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 		char first;
 		int len = linelen(patch, size);
 		int plen;
+		int added_blank_line = 0;
 
 		if (!len)
 			break;
@@ -1700,16 +1701,6 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 			else if (first == '+')
 				first = '-';
 		}
-		/*
-		 * Count lines added at the end of the file.
-		 * This is not enough to get things right in case of
-		 * patches generated with --unified=0, but it's a
-		 * useful upper bound.
-		*/
-		if (first == '+')
-			trailing_added_lines++;
-		else
-			trailing_added_lines = 0;
 
 		switch (first) {
 		case '\n':
@@ -1728,9 +1719,14 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 				break;
 		/* Fall-through for ' ' */
 		case '+':
-			if (first != '+' || !no_add)
-				newsize += apply_line(new + newsize, patch,
-						      plen);
+			if (first != '+' || !no_add) {
+				int added = apply_line(new + newsize, patch,
+						       plen);
+				newsize += added;
+				if (first == '+' &&
+				    added == 1 && new[newsize-1] == '\n')
+					added_blank_line = 1;
+			}
 			break;
 		case '@': case '\\':
 			/* Ignore it, we already handled it */
@@ -1740,6 +1736,10 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 				error("invalid start of line: '%c'", first);
 			return -1;
 		}
+		if (added_blank_line)
+			new_blank_lines_at_end++;
+		else
+			new_blank_lines_at_end = 0;
 		patch += len;
 		size -= len;
 	}
@@ -1750,24 +1750,6 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 		newsize--;
 	}
 
-	if (new_whitespace == strip_whitespace) {
-		/* Any added empty lines is already cleaned-up here
-		 * becuase of 'strip_whitespace' flag, so just count '\n'
-		*/
-		int empty = 0;
-		while (   empty < trailing_added_lines
-		       && newsize - empty > 0
-		       && new[newsize - empty - 1] == '\n')
-			empty++;
-
-		if (empty < trailing_added_lines)
-			empty--;
-
-		/* these are the empty lines added at
-		 * the end of the file, modulo u0 patches.
-		 */
-		trailing_added_lines = empty;
-	}
 	oldlines = old;
 	newlines = new;
 	leading = frag->leading;
@@ -1805,7 +1787,7 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 
 			if (new_whitespace == strip_whitespace &&
 			    (desc->size - oldsize - offset == 0)) /* end of file? */
-				newsize -= trailing_added_lines;
+				newsize -= new_blank_lines_at_end;
 
 			diff = newsize - oldsize;
 			size = desc->size + diff;
