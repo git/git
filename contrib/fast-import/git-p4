@@ -556,7 +556,7 @@ class P4Sync(Command):
             relPath = path[len(self.depotPath):]
 
             for branch in self.knownBranches.keys():
-                if relPath.startswith(branch):
+                if relPath.startswith(branch + "/"): # add a trailing slash so that a commit into qt/4.2foo doesn't end up in qt/4.2
                     if branch not in branches:
                         branches[branch] = []
                     branches[branch].append(file)
