@@ -10,12 +10,6 @@
 # TODO: * implement git-p4 rollback <perforce change number> for debugging
 #         to roll back all p4 remote branches to a commit older or equal to
 #         the specified change.
-#       * for git-p4 submit --direct it would be nice to still create a
-#         git commit without updating HEAD before submitting to perforce.
-#         With the commit sha1 printed (or recoded in a .git/foo file?)
-#         it's possible to recover if anything goes wrong instead of potentially
-#         loosing a change entirely because it was never comitted to git and
-#         the p4 submit failed (or resulted in lots of conflicts, etc.)
 #       * Consider making --with-origin the default, assuming that the git
 #         protocol is always more efficient. (needs manual testing first :)
 #
@@ -328,9 +322,17 @@ class P4Submit(Command):
                    print submitTemplate
                    raw_input("Press return to continue...")
                else:
-                    pipe = os.popen("p4 submit -i", "wb")
-                    pipe.write(submitTemplate)
-                    pipe.close()
+                   if self.directSubmit:
+                       print "Submitting to git first"
+                       os.chdir(self.oldWorkingDirectory)
+                       pipe = os.popen("git commit -a -F -", "wb")
+                       pipe.write(submitTemplate)
+                       pipe.close()
+                       os.chdir(self.clientPath)
+
+                   pipe = os.popen("p4 submit -i", "wb")
+                   pipe.write(submitTemplate)
+                   pipe.close()
             elif response == "s":
                 for f in editedFiles:
                     system("p4 revert \"%s\"" % f);
@@ -382,7 +384,7 @@ class P4Submit(Command):
             sys.exit(128)
 
         print "Perforce checkout for depot path %s located at %s" % (depotPath, self.clientPath)
-        oldWorkingDirectory = os.getcwd()
+        self.oldWorkingDirectory = os.getcwd()
 
         if self.directSubmit:
             self.diffStatus = mypopen("git diff -r --name-status HEAD").readlines()
@@ -442,16 +444,8 @@ class P4Submit(Command):
                 print "No changes found to apply between %s and current HEAD" % self.origin
             else:
                 print "All changes applied!"
-                response = ""
-                os.chdir(oldWorkingDirectory)
-
-                if self.directSubmit:
-                    response = raw_input("Do you want to DISCARD your git WORKING DIRECTORY CHANGES and sync from Perforce now using git-p4 rebase? [y]es/[n]o ")
-                    if response == "y" or response == "yes":
-                        system("git reset --hard")
-
-                if len(response) == 0:
-                    response = raw_input("Do you want to sync from Perforce now using git-p4 rebase? [y]es/[n]o ")
+                os.chdir(self.oldWorkingDirectory)
+                response = raw_input("Do you want to sync from Perforce now using git-p4 rebase? [y]es/[n]o ")
                 if response == "y" or response == "yes":
                     rebase = P4Rebase()
                     rebase.run([])
