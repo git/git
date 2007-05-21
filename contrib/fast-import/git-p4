@@ -386,6 +386,9 @@ class P4Submit(Command):
 
         if self.directSubmit:
             self.diffStatus = mypopen("git diff -r --name-status HEAD").readlines()
+            if len(self.diffStatus) == 0:
+                print "No changes in working directory to submit."
+                return True
             patch = mypopen("git diff -p --binary --diff-filter=ACMRTUXB HEAD").read()
             self.diffFile = gitdir + "/p4-git-diff"
             f = open(self.diffFile, "wb")
