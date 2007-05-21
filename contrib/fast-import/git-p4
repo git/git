@@ -7,10 +7,7 @@
 #            2007 Trolltech ASA
 # License: MIT <http://www.opensource.org/licenses/mit-license.php>
 #
-# TODO: * implement git-p4 rollback <perforce change number> for debugging
-#         to roll back all p4 remote branches to a commit older or equal to
-#         the specified change.
-#       * Consider making --with-origin the default, assuming that the git
+# TODO: * Consider making --with-origin the default, assuming that the git
 #         protocol is always more efficient. (needs manual testing first :)
 #
 
@@ -133,6 +130,35 @@ class P4Debug(Command):
     def run(self, args):
         for output in p4CmdList(" ".join(args)):
             print output
+        return True
+
+class P4RollBack(Command):
+    def __init__(self):
+        Command.__init__(self)
+        self.options = [
+        ]
+        self.description = "A tool to debug the multi-branch import. Don't use :)"
+
+    def run(self, args):
+        if len(args) != 1:
+            return False
+        maxChange = int(args[0])
+        for line in mypopen("git rev-parse --symbolic --remotes").readlines():
+            if line.startswith("p4/") and line != "p4/HEAD\n":
+                ref = "refs/remotes/" + line[:-1]
+                log = extractLogMessageFromGitCommit(ref)
+                depotPath, change = extractDepotPathAndChangeFromGitLog(log)
+                changed = False
+                while len(change) > 0 and int(change) > maxChange:
+                    changed = True
+                    print "%s is at %s ; rewinding towards %s" % (ref, change, maxChange)
+                    system("git update-ref %s \"%s^\"" % (ref, ref))
+                    log = extractLogMessageFromGitCommit(ref)
+                    depotPath, change = extractDepotPathAndChangeFromGitLog(log)
+
+                if changed:
+                    print "%s is at %s" % (ref, change)
+
         return True
 
 class P4Submit(Command):
@@ -1109,7 +1135,8 @@ commands = {
     "submit" : P4Submit(),
     "sync" : P4Sync(),
     "rebase" : P4Rebase(),
-    "clone" : P4Clone()
+    "clone" : P4Clone(),
+    "rollback" : P4RollBack()
 }
 
 if len(sys.argv[1:]) == 0:
