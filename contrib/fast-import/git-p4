@@ -730,11 +730,6 @@ class P4Sync(Command):
         self.knownBranches = {}
         self.initialParents = {}
 
-        self.listExistingP4GitBranches()
-        if len(self.p4BranchesInGit) > 1 and not self.silent:
-            print "Importing from/into multiple branches"
-            self.detectBranches = True
-
         if self.syncWithOrigin and gitBranchExists("origin") and gitBranchExists("refs/remotes/p4/master") and not self.detectBranches:
             ### needs to be ported to multi branch import
 
@@ -759,6 +754,12 @@ class P4Sync(Command):
                 system("git branch -D p4");
             if not gitBranchExists("refs/remotes/p4/HEAD"):
                 system("git symbolic-ref refs/remotes/p4/HEAD %s" % self.branch)
+
+        # this needs to be called after the conversion from heads/p4 to remotes/p4/master
+        self.listExistingP4GitBranches()
+        if len(self.p4BranchesInGit) > 1 and not self.silent:
+            print "Importing from/into multiple branches"
+            self.detectBranches = True
 
         if len(args) == 0:
             if not gitBranchExists(self.branch) and gitBranchExists("origin") and not self.detectBranches:
