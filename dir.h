@@ -34,7 +34,7 @@ struct dir_struct {
 	unsigned int show_ignored:1,
 		     show_other_directories:1,
 		     hide_empty_directories:1,
-		     no_dirlinks:1;
+		     no_gitlinks:1;
 	struct dir_entry **entries;
 
 	/* Exclude info */

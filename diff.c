@@ -1465,7 +1465,7 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 	if (size_only && 0 < s->size)
 		return 0;
 
-	if (S_ISDIRLNK(s->mode))
+	if (S_ISGITLINK(s->mode))
 		return diff_populate_gitlink(s, size_only);
 
 	if (!s->sha1_valid ||

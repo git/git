@@ -256,7 +256,7 @@ static int fsck_tree(struct tree *item)
 		case S_IFREG | 0644:
 		case S_IFLNK:
 		case S_IFDIR:
-		case S_IFDIRLNK:
+		case S_IFGITLINK:
 			break;
 		/*
 		 * This is nonstandard, but we had a few of these
@@ -715,7 +715,7 @@ int cmd_fsck(int argc, char **argv, const char *prefix)
 			struct object *obj;
 
 			mode = ntohl(active_cache[i]->ce_mode);
-			if (S_ISDIRLNK(mode))
+			if (S_ISGITLINK(mode))
 				continue;
 			blob = lookup_blob(active_cache[i]->sha1);
 			if (!blob)

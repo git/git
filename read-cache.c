@@ -92,7 +92,7 @@ static int ce_compare_gitlink(struct cache_entry *ce)
 
 	/*
 	 * We don't actually require that the .git directory
-	 * under DIRLNK directory be a valid git directory. It
+	 * under GITLINK directory be a valid git directory. It
 	 * might even be missing (in case nobody populated that
 	 * sub-project).
 	 *
@@ -115,7 +115,7 @@ static int ce_modified_check_fs(struct cache_entry *ce, struct stat *st)
 			return DATA_CHANGED;
 		break;
 	case S_IFDIR:
-		if (S_ISDIRLNK(ntohl(ce->ce_mode)))
+		if (S_ISGITLINK(ntohl(ce->ce_mode)))
 			return 0;
 	default:
 		return TYPE_CHANGED;
@@ -142,7 +142,7 @@ static int ce_match_stat_basic(struct cache_entry *ce, struct stat *st)
 		    (has_symlinks || !S_ISREG(st->st_mode)))
 			changed |= TYPE_CHANGED;
 		break;
-	case S_IFDIRLNK:
+	case S_IFGITLINK:
 		if (!S_ISDIR(st->st_mode))
 			changed |= TYPE_CHANGED;
 		else if (ce_compare_gitlink(ce))

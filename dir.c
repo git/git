@@ -321,7 +321,7 @@ static enum exist_status directory_exists_in_index(const char *dirname, int len)
 			break;
 		if (endchar == '/')
 			return index_directory;
-		if (!endchar && S_ISDIRLNK(ntohl(ce->ce_mode)))
+		if (!endchar && S_ISGITLINK(ntohl(ce->ce_mode)))
 			return index_gitdir;
 	}
 	return index_nonexistent;
@@ -356,7 +356,7 @@ static enum exist_status directory_exists_in_index(const char *dirname, int len)
  *      also true and the directory is empty, in which case
  *      we just ignore it entirely.
  *  (b) if it looks like a git directory, and we don't have
- *      'no_dirlinks' set we treat it as a gitlink, and show it
+ *      'no_gitlinks' set we treat it as a gitlink, and show it
  *      as a directory.
  *  (c) otherwise, we recurse into it.
  */
@@ -383,7 +383,7 @@ static enum directory_treatment treat_directory(struct dir_struct *dir,
 	case index_nonexistent:
 		if (dir->show_other_directories)
 			break;
-		if (!dir->no_dirlinks) {
+		if (!dir->no_gitlinks) {
 			unsigned char sha1[20];
 			if (resolve_gitlink_ref(dirname, "HEAD", sha1) == 0)
 				return show_directory;

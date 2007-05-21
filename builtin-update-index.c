@@ -134,7 +134,7 @@ static int process_directory(const char *path, int len, struct stat *st)
 	/* Exact match: file or existing gitlink */
 	if (pos >= 0) {
 		struct cache_entry *ce = active_cache[pos];
-		if (S_ISDIRLNK(ntohl(ce->ce_mode))) {
+		if (S_ISGITLINK(ntohl(ce->ce_mode))) {
 
 			/* Do nothing to the index if there is no HEAD! */
 			if (resolve_gitlink_ref(path, "HEAD", sha1) < 0)
@@ -178,7 +178,7 @@ static int process_file(const char *path, int len, struct stat *st)
 	int pos = cache_name_pos(path, len);
 	struct cache_entry *ce = pos < 0 ? NULL : active_cache[pos];
 
-	if (ce && S_ISDIRLNK(ntohl(ce->ce_mode)))
+	if (ce && S_ISGITLINK(ntohl(ce->ce_mode)))
 		return error("%s is already a gitlink, not replacing", path);
 
 	return add_one_path(ce, path, len, st);

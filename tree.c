@@ -157,7 +157,7 @@ static void track_tree_refs(struct tree *item)
 	/* Count how many entries there are.. */
 	init_tree_desc(&desc, item->buffer, item->size);
 	while (tree_entry(&desc, &entry)) {
-		if (S_ISDIRLNK(entry.mode))
+		if (S_ISGITLINK(entry.mode))
 			continue;
 		n_refs++;
 	}
@@ -169,7 +169,7 @@ static void track_tree_refs(struct tree *item)
 	while (tree_entry(&desc, &entry)) {
 		struct object *obj;
 
-		if (S_ISDIRLNK(entry.mode))
+		if (S_ISGITLINK(entry.mode))
 			continue;
 		if (S_ISDIR(entry.mode))
 			obj = &lookup_tree(entry.sha1)->object;
