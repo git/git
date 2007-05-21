@@ -62,6 +62,19 @@ in templates/hooks--pre-commit.  To help ensure this does not happen,
 run git diff --check on your changes before you commit.
 
 
+(1a) Try to be nice to older C compilers
+
+We try to support wide range of C compilers to compile
+git with. That means that you should not use C99 initializers, even
+if a lot of compilers grok it.
+
+Also, variables have to be declared at the beginning of the block
+(you can check this with gcc, using the -Wdeclaration-after-statement
+option).
+
+Another thing: NULL pointers shall be written as NULL, not as 0.
+
+
 (2) Generate your patch using git tools out of your commits.
 
 git based diff tools (git, Cogito, and StGIT included) generate
