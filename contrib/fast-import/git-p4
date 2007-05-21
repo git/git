@@ -136,8 +136,10 @@ class P4RollBack(Command):
     def __init__(self):
         Command.__init__(self)
         self.options = [
+            optparse.make_option("--verbose", dest="verbose", action="store_true")
         ]
         self.description = "A tool to debug the multi-branch import. Don't use :)"
+        self.verbose = False
 
     def run(self, args):
         if len(args) != 1:
@@ -149,15 +151,22 @@ class P4RollBack(Command):
                 log = extractLogMessageFromGitCommit(ref)
                 depotPath, change = extractDepotPathAndChangeFromGitLog(log)
                 changed = False
+
+                if len(p4Cmd("changes -m 1 %s...@%s" % (depotPath, maxChange))) == 0:
+                    print "Branch %s did not exist at change %s, deleting." % (ref, maxChange)
+                    system("git update-ref -d %s `git rev-parse %s`" % (ref, ref))
+                    continue
+
                 while len(change) > 0 and int(change) > maxChange:
                     changed = True
-                    print "%s is at %s ; rewinding towards %s" % (ref, change, maxChange)
+                    if self.verbose:
+                        print "%s is at %s ; rewinding towards %s" % (ref, change, maxChange)
                     system("git update-ref %s \"%s^\"" % (ref, ref))
                     log = extractLogMessageFromGitCommit(ref)
                     depotPath, change = extractDepotPathAndChangeFromGitLog(log)
 
                 if changed:
-                    print "%s is at %s" % (ref, change)
+                    print "%s rewound to %s" % (ref, change)
 
         return True
 
