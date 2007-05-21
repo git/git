@@ -414,10 +414,6 @@ static void verify_uptodate(struct cache_entry *ce,
 			return;
 		errno = 0;
 	}
-	if (o->reset) {
-		ce->ce_flags |= htons(CE_UPDATE);
-		return;
-	}
 	if (errno == ENOENT)
 		return;
 	die("Entry '%s' not uptodate. Cannot merge.", ce->name);

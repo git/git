@@ -225,7 +225,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		int option;
 	} commands[] = {
 		{ "add", cmd_add, RUN_SETUP | NOT_BARE },
-		{ "annotate", cmd_annotate, USE_PAGER },
+		{ "annotate", cmd_annotate, RUN_SETUP | USE_PAGER },
 		{ "apply", cmd_apply },
 		{ "archive", cmd_archive },
 		{ "blame", cmd_blame, RUN_SETUP },
