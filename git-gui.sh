@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA}
 ## configure our library
 
 set oguilib {@@GITGUI_LIBDIR@@}
-if {[string match @@* $oguilib]} {
+if {[string match @@GITGUI_*@@ $oguilib]} {
 	set oguilib [file join [file dirname [file normalize $argv0]] lib]
 }
 set idx [file join $oguilib tclIndex]
