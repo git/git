@@ -760,10 +760,15 @@ class P4Sync(Command):
             cmdline += " --branches"
 
         for line in mypopen(cmdline).readlines():
-            if line.startswith("p4/") and line != "p4/HEAD\n":
+            if self.importIntoRemotes and ((not line.startswith("p4/")) or line == "p4/HEAD\n"):
+                continue
+            if self.importIntoRemotes:
+                # strip off p4
                 branch = line[3:-1]
-                self.p4BranchesInGit.append(branch)
-                self.initialParents[self.refPrefix + branch] = parseRevision(line[:-1])
+            else:
+                branch = line[:-1]
+            self.p4BranchesInGit.append(branch)
+            self.initialParents[self.refPrefix + branch] = parseRevision(line[:-1])
 
     def run(self, args):
         self.depotPath = ""
@@ -777,11 +782,11 @@ class P4Sync(Command):
         if self.importIntoRemotes:
             self.refPrefix = "refs/remotes/p4/"
         else:
-            self.refPrefix = "refs/heads/p4/"
+            self.refPrefix = "refs/heads/"
 
         createP4HeadRef = False;
 
-        if self.syncWithOrigin and gitBranchExists("origin") and gitBranchExists(self.refPrefix + "master") and not self.detectBranches:
+        if self.syncWithOrigin and gitBranchExists("origin") and gitBranchExists(self.refPrefix + "master") and not self.detectBranches and self.importIntoRemotes:
             ### needs to be ported to multi branch import
 
             print "Syncing with origin first as requested by calling git fetch origin"
