@@ -498,7 +498,8 @@ class P4Sync(Command):
                 optparse.make_option("--silent", dest="silent", action="store_true"),
                 optparse.make_option("--detect-labels", dest="detectLabels", action="store_true"),
                 optparse.make_option("--with-origin", dest="syncWithOrigin", action="store_true"),
-                optparse.make_option("--verbose", dest="verbose", action="store_true")
+                optparse.make_option("--verbose", dest="verbose", action="store_true"),
+                optparse.make_option("--import-local", dest="importIntoRemotes", action="store_false")
         ]
         self.description = """Imports from Perforce into a git repository.\n
     example:
@@ -519,6 +520,7 @@ class P4Sync(Command):
         self.changesFile = ""
         self.syncWithOrigin = False
         self.verbose = False
+        self.importIntoRemotes = True
 
     def p4File(self, depotPath):
         return os.popen("p4 print -q \"%s\"" % depotPath, "rb").read()
@@ -749,11 +751,17 @@ class P4Sync(Command):
     def listExistingP4GitBranches(self):
         self.p4BranchesInGit = []
 
-        for line in mypopen("git rev-parse --symbolic --remotes").readlines():
+        cmdline = "git rev-parse --symbolic "
+        if self.importIntoRemotes:
+            cmdline += " --remotes"
+        else:
+            cmdline += " --branches"
+
+        for line in mypopen(cmdline).readlines():
             if line.startswith("p4/") and line != "p4/HEAD\n":
                 branch = line[3:-1]
                 self.p4BranchesInGit.append(branch)
-                self.initialParents["refs/remotes/p4/" + branch] = parseRevision(line[:-1])
+                self.initialParents[self.refPrefix + branch] = parseRevision(line[:-1])
 
     def run(self, args):
         self.depotPath = ""
@@ -764,9 +772,14 @@ class P4Sync(Command):
         self.knownBranches = {}
         self.initialParents = {}
 
+        if self.importIntoRemotes:
+            self.refPrefix = "refs/remotes/p4/"
+        else:
+            self.refPrefix = "refs/heads/p4/"
+
         createP4HeadRef = False;
 
-        if self.syncWithOrigin and gitBranchExists("origin") and gitBranchExists("refs/remotes/p4/master") and not self.detectBranches:
+        if self.syncWithOrigin and gitBranchExists("origin") and gitBranchExists(self.refPrefix + "master") and not self.detectBranches:
             ### needs to be ported to multi branch import
 
             print "Syncing with origin first as requested by calling git fetch origin"
@@ -779,17 +792,17 @@ class P4Sync(Command):
                     p4Change = int(p4Change)
                     if originP4Change > p4Change:
                         print "origin (%s) is newer than p4 (%s). Updating p4 branch from origin." % (originP4Change, p4Change)
-                        system("git update-ref refs/remotes/p4/master origin");
+                        system("git update-ref " + self.refPrefix + "master origin");
                 else:
                     print "Cannot sync with origin. It was imported from %s while remotes/p4 was imported from %s" % (originPreviousDepotPath, p4PreviousDepotPath)
 
         if len(self.branch) == 0:
-            self.branch = "refs/remotes/p4/master"
-            if gitBranchExists("refs/heads/p4"):
+            self.branch = self.refPrefix + "master"
+            if gitBranchExists("refs/heads/p4") and self.importIntoRemotes:
                 system("git update-ref %s refs/heads/p4" % self.branch)
                 system("git branch -D p4");
             # create it /after/ importing, when master exists
-            if not gitBranchExists("refs/remotes/p4/HEAD"):
+            if not gitBranchExists(self.refPrefix + "HEAD") and self.importIntoRemotes:
                 createP4HeadRef = True
 
         # this needs to be called after the conversion from heads/p4 to remotes/p4/master
@@ -813,7 +826,7 @@ class P4Sync(Command):
 
             p4Change = 0
             for branch in self.p4BranchesInGit:
-                depotPath, change = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit("refs/remotes/p4/" + branch))
+                depotPath, change = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit(self.refPrefix + branch))
 
                 if self.verbose:
                     print "path %s change %s" % (depotPath, change)
@@ -1008,9 +1021,9 @@ class P4Sync(Command):
                             elif len(parent) > 0:
                                 parent = self.projectName + parent
 
-                            branch = "refs/remotes/p4/" + branch
+                            branch = self.refPrefix + branch
                             if len(parent) > 0:
-                                parent = "refs/remotes/p4/" + parent
+                                parent = self.refPrefix + parent
 
                             if self.verbose:
                                 print "looking for initial parent for %s; current parent is %s" % (branch, parent)
@@ -1044,7 +1057,7 @@ class P4Sync(Command):
         self.gitError.close()
 
         if createP4HeadRef:
-            system("git symbolic-ref refs/remotes/p4/HEAD %s" % self.branch)
+            system("git symbolic-ref %s/HEAD %s" % (self.refPrefix, self.branch))
 
         return True
 
