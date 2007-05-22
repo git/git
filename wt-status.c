@@ -22,6 +22,7 @@ static const char use_add_rm_msg[] =
 "use \"git add/rm <file>...\" to update what will be committed";
 static const char use_add_to_include_msg[] =
 "use \"git add <file>...\" to include in what will be committed";
+static const char *excludes_file;
 
 static int parse_status_slot(const char *var, int offset)
 {
@@ -259,6 +260,8 @@ static void wt_status_print_untracked(struct wt_status *s)
 	x = git_path("info/exclude");
 	if (file_exists(x))
 		add_excludes_from_file(&dir, x);
+	if (excludes_file && file_exists(excludes_file))
+		add_excludes_from_file(&dir, excludes_file);
 
 	read_directory(&dir, ".", "", 0, NULL);
 	for(i = 0; i < dir.nr; i++) {
@@ -355,6 +358,12 @@ int git_status_config(const char *k, const char *v)
 	if (!prefixcmp(k, "status.color.") || !prefixcmp(k, "color.status.")) {
 		int slot = parse_status_slot(k, 13);
 		color_parse(v, k, wt_status_colors[slot]);
+	}
+	if (!strcmp(k, "core.excludesfile")) {
+		if (!v)
+			die("core.excludesfile without value");
+		excludes_file = xstrdup(v);
+		return 0;
 	}
 	return git_default_config(k, v);
 }
