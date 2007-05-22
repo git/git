@@ -499,7 +499,8 @@ class P4Sync(Command):
                 optparse.make_option("--detect-labels", dest="detectLabels", action="store_true"),
                 optparse.make_option("--with-origin", dest="syncWithOrigin", action="store_true"),
                 optparse.make_option("--verbose", dest="verbose", action="store_true"),
-                optparse.make_option("--import-local", dest="importIntoRemotes", action="store_false")
+                optparse.make_option("--import-local", dest="importIntoRemotes", action="store_false"),
+                optparse.make_option("--max-changes", dest="maxChanges")
         ]
         self.description = """Imports from Perforce into a git repository.\n
     example:
@@ -521,6 +522,7 @@ class P4Sync(Command):
         self.syncWithOrigin = False
         self.verbose = False
         self.importIntoRemotes = True
+        self.maxChanges = ""
 
     def p4File(self, depotPath):
         return os.popen("p4 print -q \"%s\"" % depotPath, "rb").read()
@@ -970,6 +972,9 @@ class P4Sync(Command):
                     changes.append(changeNum)
 
                 changes.reverse()
+
+                if len(self.maxChanges) > 0:
+                    changes = changes[0:min(int(self.maxChanges), len(changes))]
 
             if len(changes) == 0:
                 if not self.silent:
