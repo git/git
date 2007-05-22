@@ -120,6 +120,13 @@ continue importing the remaining changes with
 After submitting you should sync your perforce import branch ("p4" or "origin")
 from Perforce using git-p4's sync command.
 
+If you have changes in your working directory that you haven't committed into
+git yet but that you want to commit to Perforce directly ("quick fixes") then
+you do not have to go through the intermediate step of creating a git commit
+first but you can just call
+
+  git-p4 submit --direct
+
 
 Example
 =======
@@ -156,5 +163,5 @@ Implementation Details...
   to find out which changes need to be imported.
 * git-p4 submit uses "git rev-list" to pick the commits between the "p4" branch
   and the current branch.
-  The commits themselves are applied using git diff-tree ... | patch -p1
+  The commits themselves are applied using git diff/format-patch ... | git apply
 
