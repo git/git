@@ -256,6 +256,11 @@ You probably do not need to adjust this value.
 +
 Common unit suffixes of 'k', 'm', or 'g' are supported.
 
+core.excludeFile::
+	In addition to '.gitignore' (per-directory) and
+	'.git/info/exclude', git looks into this file for patterns
+	of files which are not meant to be tracked.
+
 alias.*::
 	Command aliases for the gitlink:git[1] command wrapper - e.g.
 	after defining "alias.last = cat-file commit HEAD", the invocation
