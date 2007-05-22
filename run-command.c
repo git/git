@@ -76,6 +76,10 @@ int start_command(struct child_process *cmd)
 		if (cmd->dir && chdir(cmd->dir))
 			die("exec %s: cd to %s failed (%s)", cmd->argv[0],
 			    cmd->dir, strerror(errno));
+		if (cmd->env) {
+			for (; *cmd->env; cmd->env++)
+				putenv((char*)*cmd->env);
+		}
 		if (cmd->git_cmd) {
 			execv_git_cmd(cmd->argv);
 		} else {
@@ -137,7 +141,8 @@ int run_command(struct child_process *cmd)
 }
 
 static void prepare_run_command_v_opt(struct child_process *cmd,
-				      const char **argv, int opt)
+				      const char **argv,
+				      int opt)
 {
 	memset(cmd, 0, sizeof(*cmd));
 	cmd->argv = argv;
@@ -158,5 +163,14 @@ int run_command_v_opt_cd(const char **argv, int opt, const char *dir)
 	struct child_process cmd;
 	prepare_run_command_v_opt(&cmd, argv, opt);
 	cmd.dir = dir;
+	return run_command(&cmd);
+}
+
+int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const char *const *env)
+{
+	struct child_process cmd;
+	prepare_run_command_v_opt(&cmd, argv, opt);
+	cmd.dir = dir;
+	cmd.env = env;
 	return run_command(&cmd);
 }
