@@ -7,7 +7,7 @@ endif
 INSTALL ?= install
 TAR ?= tar
 prefix ?= $(HOME)
-template_dir ?= $(prefix)/share/git-core/templates/
+template_dir = $(prefix)/share/git-core/templates/
 # DESTDIR=
 # set NOEXECTEMPL to non-empty to change the names of hook scripts
 # so that the tools will not find them
