@@ -42,6 +42,11 @@ mean the same thing and the latter is kept for backward
 compatibility) and `color.status.<slot>` configuration variables
 to colorize its output.
 
+As for gitlink:git-add[1], the configuration variable
+'core.excludesfile' can indicate a path to a file containing patterns
+of file names to exclude, in addition to patterns given in
+'info/exclude' and '.gitignore'.
+
 
 Author
 ------
