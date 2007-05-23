@@ -1122,6 +1122,7 @@ static void store_tree(struct tree_entry *root)
 		|| le->pack_id != pack_id) {
 		lo.data = NULL;
 		lo.depth = 0;
+		lo.no_free = 0;
 	} else {
 		mktree(t, 0, &lo.len, &old_tree);
 		lo.data = old_tree.buffer;
