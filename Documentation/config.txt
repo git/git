@@ -280,6 +280,13 @@ apply.whitespace::
 	Tells `git-apply` how to handle whitespaces, in the same way
 	as the '--whitespace' option. See gitlink:git-apply[1].
 
+branch.autosetupmerge::
+	Tells `git-branch' and `git-checkout' to setup new branches
+	so that gitlink:git-pull[1] will appropriately merge from that
+	remote branch.  Note that even if this option is not set,
+	this behavior can be chosen per-branch using the `--track`
+	and `--no-track` options.  This option defaults to false.
+
 branch.<name>.remote::
 	When in branch <name>, it tells `git fetch` which remote to fetch.
 	If this option is not given, `git fetch` defaults to remote "origin".
