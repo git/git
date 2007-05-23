@@ -677,6 +677,9 @@ class P4Sync(Command):
         specs = [(f['path'] + "#" + f['rev'], f)  for f in files
                  if f['action'] != 'delete']
 
+        if not specs:
+            return
+
         data = read_pipe('p4 print %s' % ' '.join(['"%s"' % path
                                                    for (path, info) in specs]))
 
