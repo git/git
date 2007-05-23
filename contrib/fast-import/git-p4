@@ -699,11 +699,11 @@ class P4Sync(Command):
 
                 assert end >= 0
             else:
-                end = len(specs)
-
+                end = len(data)
 
             info['data'] = data[start:end]
             idx = end
+        assert idx == len(data)
 
     def commit(self, details, files, branch, branchPrefixes, parent = ""):
         epoch = details["time"]
