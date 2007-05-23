@@ -14,7 +14,6 @@ import re
 
 from sets import Set;
 
-gitdir = os.environ.get("GIT_DIR", "")
 verbose = False
 
 def write_pipe(c, str):
@@ -469,9 +468,7 @@ class P4Submit(Command):
                    % (fileName, fileName))
 
     def run(self, args):
-        global gitdir
         # make gitdir absolute so we can cd out into the perforce checkout
-        gitdir = os.path.abspath(gitdir)
         os.environ["GIT_DIR"] = gitdir
 
         if len(args) == 0:
@@ -510,7 +507,7 @@ class P4Submit(Command):
                 print "No changes in working directory to submit."
                 return True
             patch = read_pipe("git diff -p --binary --diff-filter=ACMRTUXB HEAD")
-            self.diffFile = gitdir + "/p4-git-diff"
+            self.diffFile = self.gitdir + "/p4-git-diff"
             f = open(self.diffFile, "wb")
             f.write(patch)
             f.close();
@@ -535,7 +532,7 @@ class P4Submit(Command):
                 self.logSubstitutions[tokens[0]] = tokens[1]
 
         self.check()
-        self.configFile = gitdir + "/p4-git-sync.cfg"
+        self.configFile = self.gitdir + "/p4-git-sync.cfg"
         self.config = shelve.open(self.configFile, writeback=True)
 
         if self.firstTime:
@@ -799,7 +796,7 @@ class P4Sync(Command):
                 continue
             self.users[output["User"]] = output["FullName"] + " <" + output["Email"] + ">"
 
-        cache = open(gitdir + "/p4-usercache.txt", "wb")
+        cache = open(self.gitdir + "/p4-usercache.txt", "wb")
         for user in self.users.keys():
             cache.write("%s\t%s\n" % (user, self.users[user]))
         cache.close();
@@ -809,7 +806,7 @@ class P4Sync(Command):
         self.users = {}
         self.userMapFromPerforceServer = False
         try:
-            cache = open(gitdir + "/p4-usercache.txt", "rb")
+            cache = open(self.gitdir + "/p4-usercache.txt", "rb")
             lines = cache.readlines()
             cache.close()
             for line in lines:
@@ -1283,8 +1280,6 @@ class P4Clone(P4Sync):
         self.needsGit = False
 
     def run(self, args):
-        global gitdir
-
         if len(args) < 1:
             return False
 
@@ -1310,7 +1305,7 @@ class P4Clone(P4Sync):
         os.makedirs(self.cloneDestination)
         os.chdir(self.cloneDestination)
         system("git init")
-        gitdir = os.getcwd() + "/.git"
+        self.gitdir = os.getcwd() + "/.git"
         if not P4Sync.run(self, depotPaths):
             return False
         if self.branch != "master":
@@ -1340,12 +1335,12 @@ def printUsage(commands):
     print ""
 
 commands = {
-    "debug" : P4Debug(),
-    "submit" : P4Submit(),
-    "sync" : P4Sync(),
-    "rebase" : P4Rebase(),
-    "clone" : P4Clone(),
-    "rollback" : P4RollBack()
+    "debug" : P4Debug,
+    "submit" : P4Submit,
+    "sync" : P4Sync,
+    "rebase" : P4Rebase,
+    "clone" : P4Clone,
+    "rollback" : P4RollBack
 }
 
 
@@ -1357,7 +1352,8 @@ def main():
     cmd = ""
     cmdName = sys.argv[1]
     try:
-        cmd = commands[cmdName]
+        klass = commands[cmdName]
+        cmd = klass()
     except KeyError:
         print "unknown command %s" % cmdName
         print ""
@@ -1365,7 +1361,7 @@ def main():
         sys.exit(2)
 
     options = cmd.options
-    cmd.gitdir = gitdir
+    cmd.gitdir = os.environ.get("GIT_DIR", None)
 
     args = sys.argv[2:]
 
@@ -1381,23 +1377,22 @@ def main():
     global verbose
     verbose = cmd.verbose
     if cmd.needsGit:
-        gitdir = cmd.gitdir
-        if len(gitdir) == 0:
-            gitdir = ".git"
-            if not isValidGitDir(gitdir):
-                gitdir = read_pipe("git rev-parse --git-dir").strip()
-                if os.path.exists(gitdir):
+        if cmd.gitdir == None:
+            cmd.gitdir = os.path.abspath(".git")
+            if not isValidGitDir(cmd.gitdir):
+                cmd.gitdir = read_pipe("git rev-parse --git-dir").strip()
+                if os.path.exists(cmd.gitdir):
                     cdup = read_pipe("git rev-parse --show-cdup").strip()
                     if len(cdup) > 0:
                         os.chdir(cdup);
 
-        if not isValidGitDir(gitdir):
-            if isValidGitDir(gitdir + "/.git"):
-                gitdir += "/.git"
+        if not isValidGitDir(cmd.gitdir):
+            if isValidGitDir(cmd.gitdir + "/.git"):
+                cmd.gitdir += "/.git"
             else:
-                die("fatal: cannot locate git repository at %s" % gitdir)
+                die("fatal: cannot locate git repository at %s" % cmd.gitdir)
 
-        os.environ["GIT_DIR"] = gitdir
+        os.environ["GIT_DIR"] = cmd.gitdir
 
     if not cmd.run(args):
         parser.print_help()
