@@ -819,6 +819,9 @@ class P4Sync(Command):
                     print ("Tag %s does not match with change %s: file count is different."
                            % (labelDetails["label"], change))
 
+    def getUserCacheFilename(self):
+        return os.environ["HOME"] + "/.gitp4-usercache.txt")
+
     def getUserMapFromPerforceServer(self):
         if self.userMapFromPerforceServer:
             return
@@ -829,17 +832,19 @@ class P4Sync(Command):
                 continue
             self.users[output["User"]] = output["FullName"] + " <" + output["Email"] + ">"
 
-        cache = open(self.gitdir + "/p4-usercache.txt", "wb")
-        for user in self.users.keys():
-            cache.write("%s\t%s\n" % (user, self.users[user]))
-        cache.close();
+
+        s = ''
+        for (key, val) in self.users.items():
+            s += "%s\t%s\n" % (key, val)
+
+        open(self.getUserCacheFilename(), "wb").write(s)
         self.userMapFromPerforceServer = True
 
     def loadUserMapFromCache(self):
         self.users = {}
         self.userMapFromPerforceServer = False
         try:
-            cache = open(self.gitdir + "/p4-usercache.txt", "rb")
+            cache = open(self.getUserCacheFilename(), "rb")
             lines = cache.readlines()
             cache.close()
             for line in lines:
