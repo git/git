@@ -14,9 +14,43 @@ import re
 from sets import Set;
 
 gitdir = os.environ.get("GIT_DIR", "")
+silent = False
 
-def mypopen(command):
-    return os.popen(command, "rb");
+def write_pipe (c, str):
+    if not silent:
+        sys.stderr.write ('writing pipe: %s\n' % c)
+
+    ## todo: check return status
+    pipe = os.popen (c, 'w')
+    val = pipe.write(str)
+    if pipe.close ():
+        sys.stderr.write ('Command failed')
+        sys.exit (1)
+
+    return val
+
+def read_pipe (c):
+    sys.stderr.write ('reading pipe: %s\n' % c)
+    ## todo: check return status
+    pipe = os.popen (c, 'rb')
+    val = pipe.read()
+    if pipe.close ():
+        sys.stderr.write ('Command failed')
+        sys.exit (1)
+
+    return val
+
+
+def read_pipe_lines (c):
+    sys.stderr.write ('reading pipe: %s\n' % c)
+    ## todo: check return status
+    pipe = os.popen (c, 'rb')
+    val = pipe.readlines()
+    if pipe.close ():
+        sys.stderr.write ('Command failed')
+        sys.exit (1)
+
+    return val
 
 def p4CmdList(cmd):
     cmd = "p4 -G %s" % cmd
@@ -67,7 +101,7 @@ def die(msg):
     sys.exit(1)
 
 def currentGitBranch():
-    return mypopen("git name-rev HEAD").read().split(" ")[1][:-1]
+    return read_pipe("git name-rev HEAD").split(" ")[1][:-1]
 
 def isValidGitDir(path):
     if os.path.exists(path + "/HEAD") and os.path.exists(path + "/refs") and os.path.exists(path + "/objects"):
@@ -75,7 +109,7 @@ def isValidGitDir(path):
     return False
 
 def parseRevision(ref):
-    return mypopen("git rev-parse %s" % ref).read()[:-1]
+    return read_pipe("git rev-parse %s" % ref)[:-1]
 
 def system(cmd):
     if os.system(cmd) != 0:
@@ -83,8 +117,10 @@ def system(cmd):
 
 def extractLogMessageFromGitCommit(commit):
     logMessage = ""
+
+    ## fixme: title is first line of commit, not 1st paragraph.
     foundTitle = False
-    for log in mypopen("git cat-file commit %s" % commit).readlines():
+    for log in read_pipe_lines("git cat-file commit %s" % commit):
        if not foundTitle:
            if len(log) == 1:
                foundTitle = True
@@ -158,10 +194,10 @@ class P4RollBack(Command):
 
         if self.rollbackLocalBranches:
             refPrefix = "refs/heads/"
-            lines = mypopen("git rev-parse --symbolic --branches").readlines()
+            lines = read_pipe_lines("git rev-parse --symbolic --branches")
         else:
             refPrefix = "refs/remotes/"
-            lines = mypopen("git rev-parse --symbolic --remotes").readlines()
+            lines = read_pipe_lines("git rev-parse --symbolic --remotes")
 
         for line in lines:
             if self.rollbackLocalBranches or (line.startswith("p4/") and line != "p4/HEAD\n"):
@@ -230,7 +266,7 @@ class P4Submit(Command):
         if self.directSubmit:
             commits.append("0")
         else:
-            for line in mypopen("git rev-list --no-merges %s..%s" % (self.origin, self.master)).readlines():
+            for line in read_pipe_lines("git rev-list --no-merges %s..%s" % (self.origin, self.master)):
                 commits.append(line[:-1])
             commits.reverse()
 
@@ -264,8 +300,8 @@ class P4Submit(Command):
             print "Applying local change in working directory/index"
             diff = self.diffStatus
         else:
-            print "Applying %s" % (mypopen("git log --max-count=1 --pretty=oneline %s" % id).read())
-            diff = mypopen("git diff-tree -r --name-status \"%s^\" \"%s\"" % (id, id)).readlines()
+            print "Applying %s" % (read_pipe("git log --max-count=1 --pretty=oneline %s" % id))
+            diff = read_pipe_lines("git diff-tree -r --name-status \"%s^\" \"%s\"" % (id, id))
         filesToAdd = set()
         filesToDelete = set()
         editedFiles = set()
@@ -334,11 +370,11 @@ class P4Submit(Command):
             logMessage = logMessage.replace("\n", "\n\t")
             logMessage = logMessage[:-1]
 
-        template = mypopen("p4 change -o").read()
+        template = read_pipe("p4 change -o")
 
         if self.interactive:
             submitTemplate = self.prepareLogMessage(template, logMessage)
-            diff = mypopen("p4 diff -du ...").read()
+            diff = read_pipe("p4 diff -du ...")
 
             for newFile in filesToAdd:
                 diff += "==== new file ====\n"
@@ -387,14 +423,10 @@ class P4Submit(Command):
                    if self.directSubmit:
                        print "Submitting to git first"
                        os.chdir(self.oldWorkingDirectory)
-                       pipe = os.popen("git commit -a -F -", "wb")
-                       pipe.write(submitTemplate)
-                       pipe.close()
+                       write_pipe("git commit -a -F -", submitTemplate)
                        os.chdir(self.clientPath)
 
-                   pipe = os.popen("p4 submit -i", "wb")
-                   pipe.write(submitTemplate)
-                   pipe.close()
+                   write_pipe("p4 submit -i", submitTemplate)
             elif response == "s":
                 for f in editedFiles:
                     system("p4 revert \"%s\"" % f);
@@ -451,11 +483,11 @@ class P4Submit(Command):
         self.oldWorkingDirectory = os.getcwd()
 
         if self.directSubmit:
-            self.diffStatus = mypopen("git diff -r --name-status HEAD").readlines()
+            self.diffStatus = read_pipe_lines("git diff -r --name-status HEAD")
             if len(self.diffStatus) == 0:
                 print "No changes in working directory to submit."
                 return True
-            patch = mypopen("git diff -p --binary --diff-filter=ACMRTUXB HEAD").read()
+            patch = read_pipe("git diff -p --binary --diff-filter=ACMRTUXB HEAD")
             self.diffFile = gitdir + "/p4-git-diff"
             f = open(self.diffFile, "wb")
             f.write(patch)
@@ -557,7 +589,7 @@ class P4Sync(Command):
             self.syncWithOrigin = False
 
     def p4File(self, depotPath):
-        return os.popen("p4 print -q \"%s\"" % depotPath, "rb").read()
+        return read_pipe("p4 print -q \"%s\"" % depotPath)
 
     def extractFilesFromCommit(self, commit):
         files = []
@@ -799,7 +831,7 @@ class P4Sync(Command):
         else:
             cmdline += " --branches"
 
-        for line in mypopen(cmdline).readlines():
+        for line in read_pipe_lines(cmdline):
             if self.importIntoRemotes and ((not line.startswith("p4/")) or line == "p4/HEAD\n"):
                 continue
             if self.importIntoRemotes:
@@ -1032,7 +1064,7 @@ class P4Sync(Command):
             else:
                 if self.verbose:
                     print "Getting p4 changes for %s...%s" % (self.depotPath, self.changeRange)
-                output = mypopen("p4 changes %s...%s" % (self.depotPath, self.changeRange)).readlines()
+                output = read_pipe_lines("p4 changes %s...%s" % (self.depotPath, self.changeRange))
 
                 for line in output:
                     changeNum = line.split(" ")[1]
@@ -1141,7 +1173,7 @@ class P4Rebase(Command):
         sync = P4Sync()
         sync.run([])
         print "Rebasing the current branch"
-        oldHead = mypopen("git rev-parse HEAD").read()[:-1]
+        oldHead = read_pipe("git rev-parse HEAD")[:-1]
         system("git rebase p4")
         system("git diff-tree --stat --summary -M %s HEAD" % oldHead)
         return True
@@ -1252,9 +1284,9 @@ if cmd.needsGit:
     if len(gitdir) == 0:
         gitdir = ".git"
         if not isValidGitDir(gitdir):
-            gitdir = mypopen("git rev-parse --git-dir").read()[:-1]
+            gitdir = read_pipe("git rev-parse --git-dir")[:-1]
             if os.path.exists(gitdir):
-                cdup = mypopen("git rev-parse --show-cdup").read()[:-1];
+                cdup = read_pipe("git rev-parse --show-cdup")[:-1];
                 if len(cdup) > 0:
                     os.chdir(cdup);
 
@@ -1268,4 +1300,3 @@ if cmd.needsGit:
 
 if not cmd.run(args):
     parser.print_help()
-
