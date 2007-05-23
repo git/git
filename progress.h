@@ -8,6 +8,7 @@ struct progress {
 	unsigned delay;
 	unsigned delayed_percent_treshold;
 	const char *delayed_title;
+	int need_lf;
 };
 
 int display_progress(struct progress *progress, unsigned n);
