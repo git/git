@@ -15,6 +15,7 @@ static int line_termination = '\n';
 #define LS_TREE_ONLY 2
 #define LS_SHOW_TREES 4
 #define LS_NAME_ONLY 8
+#define LS_SHOW_SIZE 16
 static int abbrev;
 static int ls_options;
 static const char **pathspec;
@@ -22,7 +23,7 @@ static int chomp_prefix;
 static const char *ls_tree_prefix;
 
 static const char ls_tree_usage[] =
-	"git-ls-tree [-d] [-r] [-t] [-z] [--name-only] [--name-status] [--full-name] [--abbrev[=<n>]] <tree-ish> [path...]";
+	"git-ls-tree [-d] [-r] [-t] [-l] [-z] [--name-only] [--name-status] [--full-name] [--abbrev[=<n>]] <tree-ish> [path...]";
 
 static int show_recursive(const char *base, int baselen, const char *pathname)
 {
@@ -59,6 +60,7 @@ static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 {
 	int retval = 0;
 	const char *type = blob_type;
+	unsigned long size;
 
 	if (S_ISGITLINK(mode)) {
 		/*
@@ -92,10 +94,24 @@ static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 	    (baselen < chomp_prefix || memcmp(ls_tree_prefix, base, chomp_prefix)))
 		return 0;
 
-	if (!(ls_options & LS_NAME_ONLY))
-		printf("%06o %s %s\t", mode, type,
-				abbrev ? find_unique_abbrev(sha1,abbrev)
-					: sha1_to_hex(sha1));
+	if (!(ls_options & LS_NAME_ONLY)) {
+		if (ls_options & LS_SHOW_SIZE) {
+			if (!strcmp(type, blob_type)) {
+				sha1_object_info(sha1, &size);
+				printf("%06o %s %s %7lu\t", mode, type,
+				       abbrev ? find_unique_abbrev(sha1, abbrev)
+				              : sha1_to_hex(sha1),
+				       size);
+			} else
+				printf("%06o %s %s %7c\t", mode, type,
+				       abbrev ? find_unique_abbrev(sha1, abbrev)
+				              : sha1_to_hex(sha1),
+				       '-');
+		} else
+			printf("%06o %s %s\t", mode, type,
+			       abbrev ? find_unique_abbrev(sha1, abbrev)
+			              : sha1_to_hex(sha1));
+	}
 	write_name_quoted(base + chomp_prefix, baselen - chomp_prefix,
 			  pathname,
 			  line_termination, stdout);
@@ -126,10 +142,17 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 		case 't':
 			ls_options |= LS_SHOW_TREES;
 			break;
+		case 'l':
+			ls_options |= LS_SHOW_SIZE;
+			break;
 		case '-':
 			if (!strcmp(argv[1]+2, "name-only") ||
 			    !strcmp(argv[1]+2, "name-status")) {
 				ls_options |= LS_NAME_ONLY;
+				break;
+			}
+			if (!strcmp(argv[1]+2, "long")) {
+				ls_options |= LS_SHOW_SIZE;
 				break;
 			}
 			if (!strcmp(argv[1]+2, "full-name")) {
