@@ -222,7 +222,9 @@ class P4Submit(Command):
 
     def start(self):
         if len(self.config) > 0 and not self.reset:
-            die("Cannot start sync. Previous sync config found at %s\nIf you want to start submitting again from scratch maybe you want to call git-p4 submit --reset" % self.configFile)
+            die("Cannot start sync. Previous sync config found at %s\n"
+                "If you want to start submitting again from scratch "
+                "maybe you want to call git-p4 submit --reset" % self.configFile)
 
         commits = []
         if self.directSubmit:
@@ -297,7 +299,8 @@ class P4Submit(Command):
             print "What do you want to do?"
             response = "x"
             while response != "s" and response != "a" and response != "w":
-                response = raw_input("[s]kip this patch / [a]pply the patch forcibly and with .rej files / [w]rite the patch to a file (patch.txt) ")
+                response = raw_input("[s]kip this patch / [a]pply the patch forcibly "
+                                     "and with .rej files / [w]rite the patch to a file (patch.txt) ")
             if response == "s":
                 print "Skipping! Good luck with the next patches..."
                 return
@@ -309,11 +312,13 @@ class P4Submit(Command):
                 if len(filesToDelete):
                     print "The following files should be scheduled for deletion with p4 delete:"
                     print " ".join(filesToDelete)
-                die("Please resolve and submit the conflict manually and continue afterwards with git-p4 submit --continue")
+                die("Please resolve and submit the conflict manually and "
+                    + "continue afterwards with git-p4 submit --continue")
             elif response == "w":
                 system(diffcmd + " > patch.txt")
                 print "Patch saved to patch.txt in %s !" % self.clientPath
-                die("Please resolve and submit the conflict manually and continue afterwards with git-p4 submit --continue")
+                die("Please resolve and submit the conflict manually and "
+                    "continue afterwards with git-p4 submit --continue")
 
         system(applyPatchCmd)
 
@@ -407,7 +412,9 @@ class P4Submit(Command):
             file = open(fileName, "w+")
             file.write(self.prepareLogMessage(template, logMessage))
             file.close()
-            print "Perforce submit template written as %s. Please review/edit and then use p4 submit -i < %s to submit directly!" % (fileName, fileName)
+            print ("Perforce submit template written as %s. "
+                   + "Please review/edit and then use p4 submit -i < %s to submit directly!"
+                   % (fileName, fileName))
 
     def run(self, args):
         global gitdir
@@ -634,7 +641,6 @@ class P4Sync(Command):
         for file in files:
             path = file["path"]
             if not path.startswith(branchPrefix):
-    #            if not silent:
     #                print "\nchanged files: ignoring path %s outside of branch prefix %s in change %s" % (path, branchPrefix, details["change"])
                 continue
             rev = file["rev"]
@@ -701,11 +707,13 @@ class P4Sync(Command):
 
                 else:
                     if not self.silent:
-                        print "Tag %s does not match with change %s: files do not match." % (labelDetails["label"], change)
+                        print ("Tag %s does not match with change %s: files do not match."
+                               % (labelDetails["label"], change))
 
             else:
                 if not self.silent:
-                    print "Tag %s does not match with change %s: file count is different." % (labelDetails["label"], change)
+                    print ("Tag %s does not match with change %s: file count is different."
+                           % (labelDetails["label"], change))
 
     def getUserMapFromPerforceServer(self):
         if self.userMapFromPerforceServer:
@@ -854,11 +862,10 @@ class P4Sync(Command):
         else:
             self.refPrefix = "refs/heads/"
 
-        if self.syncWithOrigin:
-            if self.hasOrigin:
-                if not self.silent:
-                    print "Syncing with origin first by calling git fetch origin"
-                system("git fetch origin")
+        if self.syncWithOrigin and self.hasOrigin:
+            if not self.silent:
+                print "Syncing with origin first by calling git fetch origin"
+            system("git fetch origin")
 
         if len(self.branch) == 0:
             self.branch = self.refPrefix + "master"
@@ -884,7 +891,8 @@ class P4Sync(Command):
 
             p4Change = 0
             for branch in self.p4BranchesInGit:
-                depotPath, change = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit(self.refPrefix + branch))
+                logMsg =  extractLogMessageFromGitCommit(self.refPrefix + branch)
+                (depotPath, change) = extractDepotPathAndChangeFromGitLog(logMsg)
 
                 if self.verbose:
                     print "path %s change %s" % (depotPath, change)
@@ -922,7 +930,8 @@ class P4Sync(Command):
             return False
         else:
             if len(self.depotPath) != 0 and self.depotPath != args[0]:
-                print "previous import used depot path %s and now %s was specified. this doesn't work!" % (self.depotPath, args[0])
+                print ("previous import used depot path %s and now %s was specified. "
+                       "This doesn't work!" % (self.depotPath, args[0]))
                 sys.exit(1)
             self.depotPath = args[0]
 
@@ -968,7 +977,8 @@ class P4Sync(Command):
 
         self.tz = "%+03d%02d" % (- time.timezone / 3600, ((- time.timezone % 3600) / 60))
 
-        importProcess = subprocess.Popen(["git", "fast-import"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE);
+        importProcess = subprocess.Popen(["git", "fast-import"],
+                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE);
         self.gitOutput = importProcess.stdout
         self.gitStream = importProcess.stdin
         self.gitError = importProcess.stderr
@@ -977,7 +987,8 @@ class P4Sync(Command):
             print "Doing initial import of %s from revision %s" % (self.depotPath, self.revision)
 
             details = { "user" : "git perforce import user", "time" : int(time.time()) }
-            details["desc"] = "Initial import of %s from the state at revision %s" % (self.depotPath, self.revision)
+            details["desc"] = ("Initial import of %s from the state at revision %s"
+                               % (self.depotPath, self.revision))
             details["change"] = self.revision
             newestRevision = 0
 
@@ -1123,7 +1134,8 @@ class P4Rebase(Command):
     def __init__(self):
         Command.__init__(self)
         self.options = [ ]
-        self.description = "Fetches the latest revision from perforce and rebases the current work (branch) against it"
+        self.description = ("Fetches the latest revision from perforce and "
+                            + "rebases the current work (branch) against it")
 
     def run(self, args):
         sync = P4Sync()
