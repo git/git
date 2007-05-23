@@ -948,9 +948,9 @@ class P4Sync(Command):
             if not line.startswith('p4/') or line == "p4/HEAD":
                 continue
             branch = line
-            if self.importIntoRemotes:
-                # strip off p4
-                branch = re.sub ("^p4/", "", line)
+
+            # strip off p4
+            branch = re.sub ("^p4/", "", line)
 
             self.p4BranchesInGit.append(branch)
             self.initialParents[self.refPrefix + branch] = parseRevision(line)
