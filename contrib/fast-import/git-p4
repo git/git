@@ -173,13 +173,18 @@ class P4Debug(Command):
     def __init__(self):
         Command.__init__(self)
         self.options = [
-            optparse.make_option("--verbose", dest="verbose", action="store_true"),
+            optparse.make_option("--verbose", dest="verbose", action="store_true",
+                                 default=False),
             ]
         self.description = "A tool to debug the output of p4 -G."
         self.needsGit = False
+        self.verbose = False
 
     def run(self, args):
+        j = 0
         for output in p4CmdList(" ".join(args)):
+            print 'Element: %d' % j
+            j += 1
             print output
         return True
 
@@ -676,24 +681,27 @@ class P4Sync(Command):
 
     ## Should move this out, doesn't use SELF.
     def readP4Files(self, files):
-        specs = [(f['path'] + "#" + f['rev'], f)  for f in files
+        files = [f for f in files
                  if f['action'] != 'delete']
 
-        if not specs:
+        if not files:
             return
 
-        filedata = p4CmdList('print %s' % ' '.join(['"%s"' % path
-                                                for (path, info) in specs]))
+        filedata = p4CmdList('print %s' % ' '.join(['"%s#%s"' % (f['path'],
+                                                                 f['rev'])
+                                                    for f in files]))
 
         j = 0;
         contents = {}
-        while filedata[j:]:
+        while j < len(filedata):
             stat = filedata[j]
-            text = filedata[j+1]
-            j += 2
+            j += 1
+            text = ''
+            while j < len(filedata) and filedata[j]['code'] == 'text':
+                text += filedata[j]['data']
+                j += 1
 
-            assert stat['code'] == 'stat' and text['code'] == 'text'
-            contents[stat['depotFile']] = text['data']
+            contents[stat['depotFile']] = text
 
         for f in files:
             assert not f.has_key('data')
