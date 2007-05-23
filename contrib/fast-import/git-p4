@@ -136,18 +136,28 @@ class P4RollBack(Command):
     def __init__(self):
         Command.__init__(self)
         self.options = [
-            optparse.make_option("--verbose", dest="verbose", action="store_true")
+            optparse.make_option("--verbose", dest="verbose", action="store_true"),
+            optparse.make_option("--local", dest="rollbackLocalBranches", action="store_true")
         ]
         self.description = "A tool to debug the multi-branch import. Don't use :)"
         self.verbose = False
+        self.rollbackLocalBranches = False
 
     def run(self, args):
         if len(args) != 1:
             return False
         maxChange = int(args[0])
-        for line in mypopen("git rev-parse --symbolic --remotes").readlines():
-            if line.startswith("p4/") and line != "p4/HEAD\n":
-                ref = "refs/remotes/" + line[:-1]
+
+        if self.rollbackLocalBranches:
+            refPrefix = "refs/heads/"
+            lines = mypopen("git rev-parse --symbolic --branches").readlines()
+        else:
+            refPrefix = "refs/remotes/"
+            lines = mypopen("git rev-parse --symbolic --remotes").readlines()
+
+        for line in lines:
+            if self.rollbackLocalBranches or (line.startswith("p4/") and line != "p4/HEAD\n"):
+                ref = refPrefix + line[:-1]
                 log = extractLogMessageFromGitCommit(ref)
                 depotPath, change = extractDepotPathAndChangeFromGitLog(log)
                 changed = False
