@@ -1067,7 +1067,7 @@ class P4Sync(Command):
         self.gitError.close()
 
         if createP4HeadRef:
-            system("git symbolic-ref %s/HEAD %s" % (self.refPrefix, self.branch))
+            system("git symbolic-ref %sHEAD %s" % (self.refPrefix, self.branch))
 
         return True
 
