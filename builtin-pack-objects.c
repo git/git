@@ -1409,8 +1409,6 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 			m = array + other_idx;
 			if (!m->entry)
 				break;
-			if (m->entry->no_try_delta)
-				continue;
 			if (try_delta(n, m, max_depth) < 0)
 				break;
 		}
