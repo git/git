@@ -702,6 +702,11 @@ class P4Sync(Command):
                 text += filedata[j]['data']
                 j += 1
 
+
+            if not stat.has_key('depotFile'):
+                sys.stderr.write("p4 print fails with: %s\n" % repr(stat))
+                continue
+
             contents[stat['depotFile']] = text
 
         for f in files:
