@@ -152,7 +152,7 @@ class P4RollBack(Command):
             return False
         maxChange = int(args[0])
 
-        if "p4ExitCode" in p4Cmd("p4 changes -m 1"):
+        if "p4ExitCode" in p4Cmd("changes -m 1"):
             die("Problems executing p4");
 
         if self.rollbackLocalBranches:
