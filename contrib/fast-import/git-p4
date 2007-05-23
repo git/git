@@ -56,7 +56,7 @@ def read_pipe_lines(c):
 
 def system(cmd):
     if verbose:
-        sys.stderr.write("executing %s" % cmd)
+        sys.stderr.write("executing %s\n" % cmd)
     if os.system(cmd) != 0:
         die("command failed: %s" % cmd)
 
@@ -112,7 +112,8 @@ def currentGitBranch():
     return read_pipe("git name-rev HEAD").split(" ")[1].strip()
 
 def isValidGitDir(path):
-    if os.path.exists(path + "/HEAD") and os.path.exists(path + "/refs") and os.path.exists(path + "/objects"):
+    if (os.path.exists(path + "/HEAD")
+        and os.path.exists(path + "/refs") and os.path.exists(path + "/objects")):
         return True;
     return False
 
@@ -133,7 +134,7 @@ def extractLogMessageFromGitCommit(commit):
        logMessage += log
     return logMessage
 
-def extractDepotPathsAndChangeFromGitLog(log):
+def extractSettingsGitLog(log):
     values = {}
     for line in log.split("\n"):
         line = line.strip()
@@ -151,11 +152,12 @@ def extractDepotPathsAndChangeFromGitLog(log):
 
             values[key] = val
 
-    paths =  values.get("depot-path").split(',')
-    return paths, values.get("change")
+    values['depot-paths'] = values.get("depot-paths").split(',')
+    return values
 
 def gitBranchExists(branch):
-    proc = subprocess.Popen(["git", "rev-parse", branch], stderr=subprocess.PIPE, stdout=subprocess.PIPE);
+    proc = subprocess.Popen(["git", "rev-parse", branch],
+                            stderr=subprocess.PIPE, stdout=subprocess.PIPE);
     return proc.wait() == 0;
 
 def gitConfig(key):
@@ -211,7 +213,11 @@ class P4RollBack(Command):
                 line = line.strip()
                 ref = refPrefix + line
                 log = extractLogMessageFromGitCommit(ref)
-                depotPaths, change = extractDepotPathsAndChangeFromGitLog(log)
+                settings = extractSettingsGitLog(log)
+
+                depotPaths = settings['depot-paths']
+                change = settings['change']
+
                 changed = False
 
                 if len(p4Cmd("changes -m 1 "  + ' '.join (['%s...@%s' % (p, maxChange)
@@ -220,13 +226,17 @@ class P4RollBack(Command):
                     system("git update-ref -d %s `git rev-parse %s`" % (ref, ref))
                     continue
 
-                while len(change) > 0 and int(change) > maxChange:
+                while change and int(change) > maxChange:
                     changed = True
                     if self.verbose:
                         print "%s is at %s ; rewinding towards %s" % (ref, change, maxChange)
                     system("git update-ref %s \"%s^\"" % (ref, ref))
                     log = extractLogMessageFromGitCommit(ref)
-                    depotPaths, change = extractDepotPathsAndChangeFromGitLog(log)
+                    settings =  extractSettingsGitLog(log)
+
+
+                    depotPaths = settings['depot-paths']
+                    change = settings['change']
 
                 if changed:
                     print "%s rewound to %s" % (ref, change)
@@ -474,10 +484,12 @@ class P4Submit(Command):
             return False
 
         depotPath = ""
+        settings = None
         if gitBranchExists("p4"):
-            [depotPaths, dummy] = extractDepotPathsAndChangeFromGitLog(extractLogMessageFromGitCommit("p4"))
+            settings = extractSettingsGitLog(extractLogMessageFromGitCommit("p4"))
         if len(depotPath) == 0 and gitBranchExists("origin"):
-            [depotPaths, dummy] = extractDepotPathsAndChangeFromGitLog(extractLogMessageFromGitCommit("origin"))
+            settings = extractSettingsGitLog(extractLogMessageFromGitCommit("origin"))
+        depotPaths = settings['depot-paths']
 
         if len(depotPath) == 0:
             print "Internal error: cannot locate perforce depot path from existing branches"
@@ -686,8 +698,11 @@ class P4Sync(Command):
 
         self.gitStream.write("data <<EOT\n")
         self.gitStream.write(details["desc"])
-        self.gitStream.write("\n[git-p4: depot-path = \"%s\": change = %s]\n"
-                             % (','.join (branchPrefixes), details["change"]))
+        self.gitStream.write("\n[git-p4: depot-paths = \"%s\": change = %s: "
+                             "options = %s]\n"
+                             % (','.join (branchPrefixes), details["change"],
+                                details['options']
+                                ))
         self.gitStream.write("EOT\n\n")
 
         if len(parent) > 0:
@@ -883,12 +898,13 @@ class P4Sync(Command):
             if (not line.startswith("origin/")) or line.endswith("HEAD\n"):
                 continue
 
-            headName = line[len("origin/")]
+            headName = line[len("origin/"):]
             remoteHead = self.refPrefix + headName
             originHead = "origin/" + headName
 
-            [originPreviousDepotPaths, originP4Change] = extractDepotPathsAndChangeFromGitLog(extractLogMessageFromGitCommit(originHead))
-            if len(originPreviousDepotPaths) == 0 or len(originP4Change) == 0:
+            original = extractSettingsGitLog(extractLogMessageFromGitCommit(originHead))
+            if (not original.has_key('depot-paths')
+                or not original.has_key('change')):
                 continue
 
             update = False
@@ -897,20 +913,36 @@ class P4Sync(Command):
                     print "creating %s" % remoteHead
                 update = True
             else:
-                [p4PreviousDepotPaths, p4Change] = extractDepotPathsAndChangeFromGitLog(extractLogMessageFromGitCommit(remoteHead))
-                if len(p4Change) > 0:
-                    if originPreviousDepotPaths == p4PreviousDepotPaths:
-                        originP4Change = int(originP4Change)
-                        p4Change = int(p4Change)
+                settings =  extractSettingsGitLog(extractLogMessageFromGitCommit(remoteHead))
+                if settings.has_key('change') > 0:
+                    if settings['depot-paths'] == original['depot-paths']:
+                        originP4Change = int(original['change'])
+                        p4Change = int(settings['change'])
                         if originP4Change > p4Change:
-                            print "%s (%s) is newer than %s (%s). Updating p4 branch from origin." % (originHead, originP4Change, remoteHead, p4Change)
+                            print ("%s (%s) is newer than %s (%s). "
+                                   "Updating p4 branch from origin."
+                                   % (originHead, originP4Change,
+                                      remoteHead, p4Change))
                             update = True
                     else:
-                        print "Ignoring: %s was imported from %s while %s was imported from %s" % (originHead, originPreviousDepotPaths, remoteHead, p4PreviousDepotPaths)
+                        print ("Ignoring: %s was imported from %s while "
+                               "%s was imported from %s"
+                               % (originHead, ','.join(original['depot-paths']),
+                                  remoteHead, ','.join(settings['depot-paths'])))
 
             if update:
                 system("git update-ref %s %s" % (remoteHead, originHead))
 
+    def updateOptionDict(self, d):
+        option_keys = {}
+        if self.keepRepoPath:
+            option_keys['keepRepoPath'] = 1
+
+        d["options"] = ' '.join(sorted(option_keys.keys()))
+
+    def readOptions(self, d):
+        self.keepRepoPath = (d.has_key('options')
+                             and ('keepRepoPath' in d['options']))
 
     def run(self, args):
         self.depotPaths = []
@@ -942,7 +974,8 @@ class P4Sync(Command):
             if not gitBranchExists(self.refPrefix + "HEAD") and self.importIntoRemotes:
                 system("git symbolic-ref %sHEAD %s" % (self.refPrefix, self.branch))
 
-        if args == []:
+        ### FIXME
+        if 1:
             if self.hasOrigin:
                 self.createOrUpdateBranchesFromOrigin()
             self.listExistingP4GitBranches()
@@ -958,19 +991,22 @@ class P4Sync(Command):
             p4Change = 0
             for branch in self.p4BranchesInGit:
                 logMsg =  extractLogMessageFromGitCommit(self.refPrefix + branch)
-                (depotPaths, change) = extractDepotPathsAndChangeFromGitLog(logMsg)
+
+                settings = extractSettingsGitLog(logMsg)
 
                 if self.verbose:
                     print "path %s change %s" % (','.join(depotPaths), change)
 
-                if len(depotPaths) > 0 and len(change) > 0:
-                    change = int(change) + 1
+                self.readOptions(settings)
+                if (settings.has_key('depot-paths')
+                    and settings.has_key ('change')):
+                    change = int(settings['change']) + 1
                     p4Change = max(p4Change, change)
 
-                    if len(self.previousDepotPaths) == 0:
+                    depotPaths = sorted(settings['depot-paths'])
+                    if self.previousDepotPaths == []:
                         self.previousDepotPaths = depotPaths
                     else:
-                        ## FIXME
                         paths = []
                         for (prev, cur) in zip(self.previousDepotPaths, depotPaths):
                             for i in range(0, max(len(cur), len(prev))):
@@ -982,7 +1018,7 @@ class P4Sync(Command):
                         self.previousDepotPaths = paths
 
             if p4Change > 0:
-                self.depotPaths = self.previousDepotPaths
+                self.depotPaths = sorted(self.previousDepotPaths)
                 self.changeRange = "@%s,#head" % p4Change
                 self.initialParent = parseRevision(self.branch)
                 if not self.silent and not self.detectBranches:
@@ -1001,7 +1037,7 @@ class P4Sync(Command):
                                                ' '.join (args)))
                 sys.exit(1)
 
-            self.depotPaths = args
+            self.depotPaths = sorted(args)
 
         self.revision = ""
         self.users = {}
@@ -1088,7 +1124,7 @@ class P4Sync(Command):
                 fileCnt = fileCnt + 1
 
             details["change"] = newestRevision
-
+            self.updateOptionDict(details)
             try:
                 self.commit(details, self.extractFilesFromCommit(details), self.branch, self.depotPaths)
             except IOError:
@@ -1135,6 +1171,7 @@ class P4Sync(Command):
             cnt = 1
             for change in changes:
                 description = p4Cmd("describe %s" % change)
+                self.updateOptionDict(description)
 
                 if not self.silent:
                     sys.stdout.write("\rImporting revision %s (%s%%)" % (change, cnt * 100 / len(changes)))
@@ -1237,7 +1274,12 @@ class P4Clone(P4Sync):
     def __init__(self):
         P4Sync.__init__(self)
         self.description = "Creates a new git repository and imports from Perforce into it"
-        self.usage = "usage: %prog [options] //depot/path[@revRange] [directory]"
+        self.usage = "usage: %prog [options] //depot/path[@revRange]"
+        self.options.append(
+            optparse.make_option("--destination", dest="cloneDestination",
+                                 action='store', default=None,
+                                 help="where to leave result of the clone"))
+        self.cloneDestination = None
         self.needsGit = False
 
     def run(self, args):
@@ -1245,32 +1287,28 @@ class P4Clone(P4Sync):
 
         if len(args) < 1:
             return False
-        destination = ""
-        if self.keepRepoPath:
-            destination = args[-1]
-            args = args[:-1]
-        elif len(args) == 2:
-            destination = args[1]
-        elif len(args) > 2:
-            return False
+
+        if self.keepRepoPath and not self.cloneDestination:
+            sys.stderr.write("Must specify destination for --keep-path\n")
+            sys.exit(1)
 
         depotPaths = args
         for p in depotPaths:
             if not p.startswith("//"):
                 return False
 
-        if not destination:
+        if not self.cloneDestination:
             depotPath = args[0]
             depotDir = re.sub("(@[^@]*)$", "", depotPath)
             depotDir = re.sub("(#[^#]*)$", "", depotDir)
             depotDir = re.sub(r"\.\.\.$,", "", depotDir)
             depotDir = re.sub(r"/$", "", depotDir)
 
-            destination = os.path.split(depotDir)[1]
+            self.cloneDestination = os.path.split(depotDir)[1]
 
-        print "Importing from %s into %s" % (`depotPaths`, destination)
-        os.makedirs(destination)
-        os.chdir(destination)
+        print "Importing from %s into %s" % (`depotPaths`, self.cloneDestination)
+        os.makedirs(self.cloneDestination)
+        os.chdir(self.cloneDestination)
         system("git init")
         gitdir = os.getcwd() + "/.git"
         if not P4Sync.run(self, depotPaths):
@@ -1310,54 +1348,60 @@ commands = {
     "rollback" : P4RollBack()
 }
 
-if len(sys.argv[1:]) == 0:
-    printUsage(commands.keys())
-    sys.exit(2)
 
-cmd = ""
-cmdName = sys.argv[1]
-try:
-    cmd = commands[cmdName]
-except KeyError:
-    print "unknown command %s" % cmdName
-    print ""
-    printUsage(commands.keys())
-    sys.exit(2)
+def main():
+    if len(sys.argv[1:]) == 0:
+        printUsage(commands.keys())
+        sys.exit(2)
 
-options = cmd.options
-cmd.gitdir = gitdir
+    cmd = ""
+    cmdName = sys.argv[1]
+    try:
+        cmd = commands[cmdName]
+    except KeyError:
+        print "unknown command %s" % cmdName
+        print ""
+        printUsage(commands.keys())
+        sys.exit(2)
 
-args = sys.argv[2:]
+    options = cmd.options
+    cmd.gitdir = gitdir
 
-if len(options) > 0:
-    options.append(optparse.make_option("--git-dir", dest="gitdir"))
+    args = sys.argv[2:]
 
-    parser = optparse.OptionParser(cmd.usage.replace("%prog", "%prog " + cmdName),
-                                   options,
-                                   description = cmd.description,
-                                   formatter = HelpFormatter())
+    if len(options) > 0:
+        options.append(optparse.make_option("--git-dir", dest="gitdir"))
 
-    (cmd, args) = parser.parse_args(sys.argv[2:], cmd);
+        parser = optparse.OptionParser(cmd.usage.replace("%prog", "%prog " + cmdName),
+                                       options,
+                                       description = cmd.description,
+                                       formatter = HelpFormatter())
 
-verbose = cmd.verbose
-if cmd.needsGit:
-    gitdir = cmd.gitdir
-    if len(gitdir) == 0:
-        gitdir = ".git"
+        (cmd, args) = parser.parse_args(sys.argv[2:], cmd);
+    global verbose
+    verbose = cmd.verbose
+    if cmd.needsGit:
+        gitdir = cmd.gitdir
+        if len(gitdir) == 0:
+            gitdir = ".git"
+            if not isValidGitDir(gitdir):
+                gitdir = read_pipe("git rev-parse --git-dir").strip()
+                if os.path.exists(gitdir):
+                    cdup = read_pipe("git rev-parse --show-cdup").strip()
+                    if len(cdup) > 0:
+                        os.chdir(cdup);
+
         if not isValidGitDir(gitdir):
-            gitdir = read_pipe("git rev-parse --git-dir").strip()
-            if os.path.exists(gitdir):
-                cdup = read_pipe("git rev-parse --show-cdup").strip()
-                if len(cdup) > 0:
-                    os.chdir(cdup);
+            if isValidGitDir(gitdir + "/.git"):
+                gitdir += "/.git"
+            else:
+                die("fatal: cannot locate git repository at %s" % gitdir)
 
-    if not isValidGitDir(gitdir):
-        if isValidGitDir(gitdir + "/.git"):
-            gitdir += "/.git"
-        else:
-            die("fatal: cannot locate git repository at %s" % gitdir)
+        os.environ["GIT_DIR"] = gitdir
 
-    os.environ["GIT_DIR"] = gitdir
+    if not cmd.run(args):
+        parser.print_help()
 
-if not cmd.run(args):
-    parser.print_help()
+
+if __name__ == '__main__':
+    main()
