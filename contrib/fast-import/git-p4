@@ -674,17 +674,18 @@ class P4Sync(Command):
 
     ## Should move this out, doesn't use SELF.
     def readP4Files(self, files):
-        specs = [(f['path'] + "#" + f['rev'], f)  for f in files]
+        specs = [(f['path'] + "#" + f['rev'], f)  for f in files
+                 if f['action'] != 'delete']
 
-        data = read_pipe('p4 print %s' % ' '.join(['"%s"' % spec
-                                                   for (spec, info) in specs]))
+        data = read_pipe('p4 print %s' % ' '.join(['"%s"' % path
+                                                   for (path, info) in specs]))
 
         idx = 0
         for j in range(0, len(specs)):
-            filespec, info = specs[j]
+            (pathrev, info) = specs[j]
 
             assert idx < len(data)
-            if data[idx:idx + len(filespec)] != filespec:
+            if data[idx:idx + len(pathrev)] != pathrev:
                 assert False
             idx = data.find ('\n', idx)
             assert idx > 0
@@ -694,11 +695,15 @@ class P4Sync(Command):
 
             end = -1
             if j < len(specs)-1:
-                next_spec, next_info = specs[j+1]
-                end = data.find(next_spec, start)
+                (next_pathrev, next_info) = specs[j+1]
+                end = data.find(next_pathrev, start)
 
                 if end < 0:
-                    print spec, next_spec
+                    print 'j'
+                    print 'PATHREV', pathrev, specs[j]
+                    print 'nextpathrev', next_pathrev, specs[j+1]
+                    print 'start', start, len(data)
+                    print 'end', end
 
                 assert end >= 0
             else:
