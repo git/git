@@ -1013,7 +1013,7 @@ static void load_tree(struct tree_entry *root)
 		return;
 
 	myoe = find_object(sha1);
-	if (myoe) {
+	if (myoe && myoe->pack_id != MAX_PACK_ID) {
 		if (myoe->type != OBJ_TREE)
 			die("Not a tree: %s", sha1_to_hex(sha1));
 		t->delta_depth = 0;
