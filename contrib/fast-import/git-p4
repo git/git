@@ -30,7 +30,8 @@ def write_pipe(c, str):
     return val
 
 def read_pipe(c):
-    sys.stderr.write('reading pipe: %s\n' % c)
+    if not silent:
+        sys.stderr.write('reading pipe: %s\n' % c)
     ## todo: check return status
     pipe = os.popen(c, 'rb')
     val = pipe.read()
@@ -42,7 +43,8 @@ def read_pipe(c):
 
 
 def read_pipe_lines(c):
-    sys.stderr.write('reading pipe: %s\n' % c)
+    if not silent:
+        sys.stderr.write('reading pipe: %s\n' % c)
     ## todo: check return status
     pipe = os.popen(c, 'rb')
     val = pipe.readlines()
@@ -51,6 +53,14 @@ def read_pipe_lines(c):
         sys.exit(1)
 
     return val
+
+def system(cmd):
+    if not silent:
+        sys.stderr.write("executing %s" % cmd)
+    if os.system(cmd) != 0:
+        die("command failed: %s" % cmd)
+
+
 
 def p4CmdList(cmd):
     cmd = "p4 -G %s" % cmd
@@ -110,10 +120,6 @@ def isValidGitDir(path):
 
 def parseRevision(ref):
     return read_pipe("git rev-parse %s" % ref)[:-1]
-
-def system(cmd):
-    if os.system(cmd) != 0:
-        die("command failed: %s" % cmd)
 
 def extractLogMessageFromGitCommit(commit):
     logMessage = ""
@@ -571,7 +577,6 @@ class P4Sync(Command):
     (a ... is not needed in the path p4 specification, it's added implicitly)"""
 
         self.usage += " //depot/path[@revRange]"
-
         self.silent = False
         self.createdBranches = Set()
         self.committedChanges = Set()
@@ -584,6 +589,7 @@ class P4Sync(Command):
         self.importIntoRemotes = True
         self.maxChanges = ""
         self.isWindows = (platform.system() == "Windows")
+        self.depotPath = None
 
         if gitConfig("git-p4.syncFromOrigin") == "false":
             self.syncWithOrigin = False
@@ -611,9 +617,11 @@ class P4Sync(Command):
             fnum = fnum + 1
         return files
 
+    def stripRepoPath(self, path):
+        return path[len(self.depotPath):]
+
     def splitFilesIntoBranches(self, commit):
         branches = {}
-
         fnum = 0
         while commit.has_key("depotFile%s" % fnum):
             path =  commit["depotFile%s" % fnum]
@@ -630,10 +638,12 @@ class P4Sync(Command):
             file["type"] = commit["type%s" % fnum]
             fnum = fnum + 1
 
-            relPath = path[len(self.depotPath):]
+            relPath = self.stripRepoPath(path)
 
             for branch in self.knownBranches.keys():
-                if relPath.startswith(branch + "/"): # add a trailing slash so that a commit into qt/4.2foo doesn't end up in qt/4.2
+
+                # add a trailing slash so that a commit into qt/4.2foo doesn't end up in qt/4.2
+                if relPath.startswith(branch + "/"):
                     if branch not in branches:
                         branches[branch] = []
                     branches[branch].append(file)
