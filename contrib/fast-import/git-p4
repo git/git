@@ -11,6 +11,7 @@
 import optparse, sys, os, marshal, popen2, subprocess, shelve
 import tempfile, getopt, sha, os.path, time, platform
 import re
+
 from sets import Set;
 
 gitdir = os.environ.get("GIT_DIR", "")
@@ -20,7 +21,6 @@ def write_pipe(c, str):
     if not silent:
         sys.stderr.write('writing pipe: %s\n' % c)
 
-    ## todo: check return status
     pipe = os.popen(c, 'w')
     val = pipe.write(str)
     if pipe.close():
@@ -32,7 +32,7 @@ def write_pipe(c, str):
 def read_pipe(c):
     if not silent:
         sys.stderr.write('reading pipe: %s\n' % c)
-    ## todo: check return status
+
     pipe = os.popen(c, 'rb')
     val = pipe.read()
     if pipe.close():
@@ -59,8 +59,6 @@ def system(cmd):
         sys.stderr.write("executing %s" % cmd)
     if os.system(cmd) != 0:
         die("command failed: %s" % cmd)
-
-
 
 def p4CmdList(cmd):
     cmd = "p4 -G %s" % cmd
@@ -566,7 +564,8 @@ class P4Sync(Command):
                 optparse.make_option("--detect-labels", dest="detectLabels", action="store_true"),
                 optparse.make_option("--verbose", dest="verbose", action="store_true"),
                 optparse.make_option("--import-local", dest="importIntoRemotes", action="store_false"),
-                optparse.make_option("--max-changes", dest="maxChanges")
+                optparse.make_option("--max-changes", dest="maxChanges"),
+                optparse.make_option("--keep-path", dest="keepRepoPath")
         ]
         self.description = """Imports from Perforce into a git repository.\n
     example:
@@ -590,6 +589,7 @@ class P4Sync(Command):
         self.maxChanges = ""
         self.isWindows = (platform.system() == "Windows")
         self.depotPath = None
+        self.keepRepoPath = False
 
         if gitConfig("git-p4.syncFromOrigin") == "false":
             self.syncWithOrigin = False
@@ -617,8 +617,11 @@ class P4Sync(Command):
             fnum = fnum + 1
         return files
 
-    def stripRepoPath(self, path):
-        return path[len(self.depotPath):]
+    def stripRepoPath(self, path, prefix):
+        if self.keepRepoPath:
+            prefix = re.sub("^(//[^/]+/).*", r'\1', prefix)
+
+        return path[len(prefix):]
 
     def splitFilesIntoBranches(self, commit):
         branches = {}
@@ -638,7 +641,7 @@ class P4Sync(Command):
             file["type"] = commit["type%s" % fnum]
             fnum = fnum + 1
 
-            relPath = self.stripRepoPath(path)
+            relPath = self.stripRepoPath(path, self.depotPath)
 
             for branch in self.knownBranches.keys():
 
@@ -687,7 +690,7 @@ class P4Sync(Command):
                 continue
             rev = file["rev"]
             depotPath = path + "#" + rev
-            relPath = path[len(branchPrefix):]
+            relPath = self.stripRepoPath(path, branchPrefix)
             action = file["action"]
 
             if file["type"] == "apple":
