@@ -1031,7 +1031,6 @@ class P4Sync(Command):
 
             p4Change = 0
             for branch in self.p4BranchesInGit:
-                print self.p4BranchesInGit
                 logMsg =  extractLogMessageFromGitCommit(self.refPrefix + branch)
 
                 settings = extractSettingsGitLog(logMsg)
