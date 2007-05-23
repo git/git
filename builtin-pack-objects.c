@@ -677,6 +677,12 @@ static void write_pack_file(void)
 		stop_progress(&progress_state);
 	if (written != nr_result)
 		die("wrote %u objects while expecting %u", written, nr_result);
+	/*
+	 * We have scanned through [0 ... i).  Since we have written
+	 * the correct number of objects,  the remaining [i ... nr_objects)
+	 * items must be either already written (due to out-of-order delta base)
+	 * or a preferred base.  Count those which are neither and complain if any.
+	 */
 	for (j = 0; i < nr_objects; i++) {
 		struct object_entry *e = objects + i;
 		j += !e->offset && !e->preferred_base;
@@ -1817,6 +1823,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	if (pack_to_stdout != !base_name)
 		usage(pack_usage);
+
+	if (pack_to_stdout && pack_size_limit)
+		die("--max-pack-size cannot be used to build a pack for transfer.");
 
 	if (!pack_to_stdout && thin)
 		die("--thin cannot be used to build an indexable pack.");
