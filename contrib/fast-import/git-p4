@@ -845,15 +845,15 @@ class P4Sync(Command):
             cmdline += " --branches"
 
         for line in read_pipe_lines(cmdline):
+            lie = line.strip()
             if self.importIntoRemotes and ((not line.startswith("p4/")) or line == "p4/HEAD\n"):
                 continue
             if self.importIntoRemotes:
                 # strip off p4
-                branch = line[3:-1]
-            else:
-                branch = line[:-1]
+                branch = re.sub ("^p4/", "", line)
+
             self.p4BranchesInGit.append(branch)
-            self.initialParents[self.refPrefix + branch] = parseRevision(line[:-1])
+            self.initialParents[self.refPrefix + branch] = parseRevision(line)
 
     def createOrUpdateBranchesFromOrigin(self):
         if not self.silent:
