@@ -35,6 +35,11 @@ int run_command(struct child_process *);
 #define RUN_COMMAND_STDOUT_TO_STDERR 4
 int run_command_v_opt(const char **argv, int opt);
 int run_command_v_opt_cd(const char **argv, int opt, const char *dir);
+
+/*
+ * env (the environment) is to be formatted like environ: "VAR=VALUE".
+ * To unset an environment variable use just "VAR".
+ */
 int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const char *const *env);
 
 #endif

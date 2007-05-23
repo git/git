@@ -77,8 +77,12 @@ int start_command(struct child_process *cmd)
 			die("exec %s: cd to %s failed (%s)", cmd->argv[0],
 			    cmd->dir, strerror(errno));
 		if (cmd->env) {
-			for (; *cmd->env; cmd->env++)
-				putenv((char*)*cmd->env);
+			for (; *cmd->env; cmd->env++) {
+				if (strchr(*cmd->env, '='))
+					putenv((char*)*cmd->env);
+				else
+					unsetenv(*cmd->env);
+			}
 		}
 		if (cmd->git_cmd) {
 			execv_git_cmd(cmd->argv);
