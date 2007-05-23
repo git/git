@@ -61,6 +61,8 @@ def system(cmd):
 
 def p4CmdList(cmd):
     cmd = "p4 -G %s" % cmd
+    if verbose:
+        sys.stderr.write("Opening pipe: %s\n" % cmd)
     pipe = os.popen(cmd, "rb")
 
     result = []
@@ -609,9 +611,6 @@ class P4Sync(Command):
         if gitConfig("git-p4.syncFromOrigin") == "false":
             self.syncWithOrigin = False
 
-    def p4File(self, depotPath):
-        return read_pipe("p4 print -q \"%s\"" % depotPath)
-
     def extractFilesFromCommit(self, commit):
         files = []
         fnum = 0
@@ -673,6 +672,39 @@ class P4Sync(Command):
 
         return branches
 
+    ## Should move this out, doesn't use SELF.
+    def readP4Files(self, files):
+        specs = [(f['path'] + "#" + f['rev'], f)  for f in files]
+
+        data = read_pipe('p4 print %s' % ' '.join(['"%s"' % spec
+                                                   for (spec, info) in specs]))
+
+        idx = 0
+        for j in range(0, len(specs)):
+            filespec, info = specs[j]
+
+            assert idx < len(data)
+            if data[idx:idx + len(filespec)] != filespec:
+                assert False
+            idx = data.find ('\n', idx)
+            assert idx > 0
+            idx += 1
+
+            start = idx
+
+            end = -1
+            if j < len(specs)-1:
+                next_spec, next_info = specs[j+1]
+                end = data.find(next_spec, start)
+
+                assert end >= 0
+            else:
+                end = len(specs)
+
+
+            info['data'] = data[start:end]
+            idx = end
+
     def commit(self, details, files, branch, branchPrefixes, parent = ""):
         epoch = details["time"]
         author = details["user"]
@@ -681,7 +713,7 @@ class P4Sync(Command):
             print "commit into %s" % branch
 
         self.gitStream.write("commit %s\n" % branch)
-    #    gitStream.write("mark :%s\n" % details["change"])
+#        gitStream.write("mark :%s\n" % details["change"])
         self.committedChanges.add(int(details["change"]))
         committer = ""
         if author not in self.users:
@@ -707,29 +739,30 @@ class P4Sync(Command):
                 print "parent %s" % parent
             self.gitStream.write("from %s\n" % parent)
 
+
+        new_files = []
+        for f in files:
+            if [p for p in branchPrefixes if f['path'].startswith(p)]:
+                new_files.append (f)
+            else:
+                sys.stderr.write("Ignoring file outside of prefix: %s\n" % path)
+        files = new_files
+
+        self.readP4Files(files)
         for file in files:
-            path = file["path"]
-
-
-            if not [p for p in branchPrefixes if path.startswith(p)]:
-                continue
-            rev = file["rev"]
-            depotPath = path + "#" + rev
-            relPath = self.stripRepoPath(path, branchPrefixes)
-            action = file["action"]
-
             if file["type"] == "apple":
-                print "\nfile %s is a strange apple file that forks. Ignoring!" % path
+                print "\nfile %s is a strange apple file that forks. Ignoring!" % file['path']
                 continue
 
-            if action == "delete":
+            relPath = self.stripRepoPath(file['path'], branchPrefixes)
+            if file["action"] == "delete":
                 self.gitStream.write("D %s\n" % relPath)
             else:
                 mode = 644
                 if file["type"].startswith("x"):
                     mode = 755
 
-                data = self.p4File(depotPath)
+                data = file['data']
 
                 if self.isWindows and file["type"].endswith("text"):
                     data = data.replace("\r\n", "\n")
@@ -971,8 +1004,9 @@ class P4Sync(Command):
             if not gitBranchExists(self.refPrefix + "HEAD") and self.importIntoRemotes:
                 system("git symbolic-ref %sHEAD %s" % (self.refPrefix, self.branch))
 
-        ### FIXME
-        if 1:
+        # TODO: should always look at previous commits,
+        # merge with previous imports, if possible.
+        if args == []:
             if self.hasOrigin:
                 self.createOrUpdateBranchesFromOrigin()
             self.listExistingP4GitBranches()
@@ -1046,7 +1080,7 @@ class P4Sync(Command):
                 self.changeRange = p[atIdx:]
                 if self.changeRange == "@all":
                     self.changeRange = ""
-                elif self.changeRange.find(",") == -1:
+                elif ',' not in self.changeRange:
                     self.revision = self.changeRange
                     self.changeRange = ""
                 p = p[0:atIdx]
@@ -1279,6 +1313,15 @@ class P4Clone(P4Sync):
         self.cloneDestination = None
         self.needsGit = False
 
+    def defaultDestination(self, args):
+        ## TODO: use common prefix of args?
+        depotPath = args[0]
+        depotDir = re.sub("(@[^@]*)$", "", depotPath)
+        depotDir = re.sub("(#[^#]*)$", "", depotDir)
+        depotDir = re.sub(r"\.\.\.$,", "", depotDir)
+        depotDir = re.sub(r"/$", "", depotDir)
+        return os.path.split(depotDir)[1]
+
     def run(self, args):
         if len(args) < 1:
             return False
@@ -1293,13 +1336,7 @@ class P4Clone(P4Sync):
                 return False
 
         if not self.cloneDestination:
-            depotPath = args[0]
-            depotDir = re.sub("(@[^@]*)$", "", depotPath)
-            depotDir = re.sub("(#[^#]*)$", "", depotDir)
-            depotDir = re.sub(r"\.\.\.$,", "", depotDir)
-            depotDir = re.sub(r"/$", "", depotDir)
-
-            self.cloneDestination = os.path.split(depotDir)[1]
+            self.cloneDestination = self.defaultDestination()
 
         print "Importing from %s into %s" % (`depotPaths`, self.cloneDestination)
         os.makedirs(self.cloneDestination)
