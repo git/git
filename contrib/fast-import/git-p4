@@ -831,8 +831,9 @@ class P4Sync(Command):
 
         # this needs to be called after the conversion from heads/p4 to remotes/p4/master
         self.listExistingP4GitBranches()
-        if len(self.p4BranchesInGit) > 1 and not self.silent:
-            print "Importing from/into multiple branches"
+        if len(self.p4BranchesInGit) > 1:
+            if not self.silent:
+	        print "Importing from/into multiple branches"
             self.detectBranches = True
 
         if len(args) == 0:
