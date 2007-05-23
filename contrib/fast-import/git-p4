@@ -15,7 +15,7 @@ import re
 from sets import Set;
 
 gitdir = os.environ.get("GIT_DIR", "")
-silent = False
+silent = True
 
 def write_pipe(c, str):
     if not silent:
@@ -109,7 +109,7 @@ def die(msg):
     sys.exit(1)
 
 def currentGitBranch():
-    return read_pipe("git name-rev HEAD").split(" ")[1][:-1]
+    return read_pipe("git name-rev HEAD").split(" ")[1].strip()
 
 def isValidGitDir(path):
     if os.path.exists(path + "/HEAD") and os.path.exists(path + "/refs") and os.path.exists(path + "/objects"):
@@ -117,7 +117,7 @@ def isValidGitDir(path):
     return False
 
 def parseRevision(ref):
-    return read_pipe("git rev-parse %s" % ref)[:-1]
+    return read_pipe("git rev-parse %s" % ref).strip()
 
 def extractLogMessageFromGitCommit(commit):
     logMessage = ""
@@ -205,7 +205,8 @@ class P4RollBack(Command):
 
         for line in lines:
             if self.rollbackLocalBranches or (line.startswith("p4/") and line != "p4/HEAD\n"):
-                ref = refPrefix + line[:-1]
+                line = line.strip()
+                ref = refPrefix + line
                 log = extractLogMessageFromGitCommit(ref)
                 depotPath, change = extractDepotPathAndChangeFromGitLog(log)
                 changed = False
@@ -271,7 +272,7 @@ class P4Submit(Command):
             commits.append("0")
         else:
             for line in read_pipe_lines("git rev-list --no-merges %s..%s" % (self.origin, self.master)):
-                commits.append(line[:-1])
+                commits.append(line.strip())
             commits.reverse()
 
         self.config["commits"] = commits
@@ -372,7 +373,7 @@ class P4Submit(Command):
         if not self.directSubmit:
             logMessage = extractLogMessageFromGitCommit(id)
             logMessage = logMessage.replace("\n", "\n\t")
-            logMessage = logMessage[:-1]
+            logMessage = logMessage.strip()
 
         template = read_pipe("p4 change -o")
 
@@ -513,7 +514,7 @@ class P4Submit(Command):
 
         if len(self.substFile) > 0:
             for line in open(self.substFile, "r").readlines():
-                tokens = line[:-1].split("=")
+                tokens = line.strip().split("=")
                 self.logSubstitutions[tokens[0]] = tokens[1]
 
         self.check()
@@ -784,7 +785,7 @@ class P4Sync(Command):
             lines = cache.readlines()
             cache.close()
             for line in lines:
-                entry = line[:-1].split("\t")
+                entry = line.strip().split("\t")
                 self.users[entry[0]] = entry[1]
         except IOError:
             self.getUserMapFromPerforceServer()
@@ -814,7 +815,7 @@ class P4Sync(Command):
             print "Label changes: %s" % self.labels.keys()
 
     def getBranchMapping(self):
-        self.projectName = self.depotPath[self.depotPath[:-1].rfind("/") + 1:]
+        self.projectName = self.depotPath[self.depotPath.strip().rfind("/") + 1:]
 
         for info in p4CmdList("branches"):
             details = p4Cmd("branch -o %s" % info["branch"])
@@ -848,6 +849,7 @@ class P4Sync(Command):
             lie = line.strip()
             if self.importIntoRemotes and ((not line.startswith("p4/")) or line == "p4/HEAD\n"):
                 continue
+
             if self.importIntoRemotes:
                 # strip off p4
                 branch = re.sub ("^p4/", "", line)
@@ -966,7 +968,7 @@ class P4Sync(Command):
             self.branch = "refs/heads/" + self.branch
 
         if len(self.depotPath) != 0:
-            self.depotPath = self.depotPath[:-1]
+            self.depotPath = self.depotPath.strip()
 
         if len(args) == 0 and len(self.depotPath) != 0:
             if not self.silent:
@@ -1184,7 +1186,7 @@ class P4Rebase(Command):
         sync = P4Sync()
         sync.run([])
         print "Rebasing the current branch"
-        oldHead = read_pipe("git rev-parse HEAD")[:-1]
+        oldHead = read_pipe("git rev-parse HEAD").strip()
         system("git rebase p4")
         system("git diff-tree --stat --summary -M %s HEAD" % oldHead)
         return True
@@ -1217,7 +1219,7 @@ class P4Clone(P4Sync):
         depotDir = re.sub(r"/$", "", depotDir)
 
         if not destination:
-            destination = os.path.split(depotDir)[-1]
+            destination = os.path.split(depotDir)[1]
 
         print "Importing from %s into %s" % (depotPath, destination)
         os.makedirs(destination)
@@ -1295,9 +1297,9 @@ if cmd.needsGit:
     if len(gitdir) == 0:
         gitdir = ".git"
         if not isValidGitDir(gitdir):
-            gitdir = read_pipe("git rev-parse --git-dir")[:-1]
+            gitdir = read_pipe("git rev-parse --git-dir").strip()
             if os.path.exists(gitdir):
-                cdup = read_pipe("git rev-parse --show-cdup")[:-1];
+                cdup = read_pipe("git rev-parse --show-cdup").strip()
                 if len(cdup) > 0:
                     os.chdir(cdup);
 
