@@ -33,7 +33,9 @@ def p4CmdList(cmd):
         pass
     exitCode = pipe.close()
     if exitCode != None:
-        result["p4ExitCode"] = exitCode
+        entry = {}
+        entry["p4ExitCode"] = exitCode
+        result.append(entry)
 
     return result
 
