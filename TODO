@@ -123,6 +123,13 @@ Technical (milder)
   From: Junio C Hamano <junkio@cox.net>
   Message-ID: <11793556371774-git-send-email-junkio@cox.net>
 
+* "pure" clones, that does not know about where it was cloned
+  from.  Specifically, no [remote "origin"] in .git/config, nor
+  refs/remotes/origin.
+
+  From: Junio C Hamano <junkio@cox.net>
+  Message-ID: <7vr6pac86g.fsf@assigned-by-dhcp.cox.net>
+
 * upload-pack support to start fetching from any valid point on
   the history, not just published refs. (Erik W. Biederman
   <m164jc9ekx.fsf@ebiederm.dsl.xmission.com>)

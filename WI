@@ -19,7 +19,7 @@ echo "X-master-at: $master_at"
 echo "Content-Type: text/plain; charset=utf-8"
 echo "Content-Transfer-Encoding: 8bit"
 
-tagged=`git rev-parse --not --verify tags/sa/maint`
+tagged=`git rev-parse --not --verify hold/sa/maint`
 list=`git-rev-list $tagged refs/heads/maint 2>/dev/null`
 if test -n "$list"
 then
@@ -29,7 +29,7 @@ then
 	log $tagged heads/maint
 fi
 
-tagged=`git rev-parse --not --verify tags/sa/master`
+tagged=`git rev-parse --not --verify hold/sa/master`
 list=`git-rev-list $tagged refs/heads/master 2>/dev/null`
 if test -n "$list"
 then
