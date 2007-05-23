@@ -10,6 +10,7 @@
 
 import optparse, sys, os, marshal, popen2, subprocess, shelve
 import tempfile, getopt, sha, os.path, time, platform
+import re
 from sets import Set;
 
 gitdir = os.environ.get("GIT_DIR", "")
@@ -842,6 +843,7 @@ class P4Sync(Command):
         self.changeRange = ""
         self.initialParent = ""
         self.previousDepotPath = ""
+
         # map from branch depot path to parent branch
         self.knownBranches = {}
         self.initialParents = {}
@@ -1145,37 +1147,26 @@ class P4Clone(P4Sync):
         if len(args) < 1:
             return False
         depotPath = args[0]
-        dir = ""
+        destination = ""
         if len(args) == 2:
-            dir = args[1]
+            destination = args[1]
         elif len(args) > 2:
             return False
 
         if not depotPath.startswith("//"):
             return False
 
-        if len(dir) == 0:
-            dir = depotPath
-            atPos = dir.rfind("@")
-            if atPos != -1:
-                dir = dir[0:atPos]
-            hashPos = dir.rfind("#")
-            if hashPos != -1:
-                dir = dir[0:hashPos]
+        depotDir = re.sub("(@[^@]*)$", "", depotPath)
+        depotDir = re.sub("(#[^#]*)$", "", depotDir)
+        depotDir = re.sub(r"\.\.\.$,", "", depotDir)
+        depotDir = re.sub(r"/$", "", depotDir)
 
-            if dir.endswith("..."):
-                dir = dir[:-3]
+        if not destination:
+            destination = os.path.split(depotDir)[-1]
 
-            if dir.endswith("/"):
-               dir = dir[:-1]
-
-            slashPos = dir.rfind("/")
-            if slashPos != -1:
-                dir = dir[slashPos + 1:]
-
-        print "Importing from %s into %s" % (depotPath, dir)
-        os.makedirs(dir)
-        os.chdir(dir)
+        print "Importing from %s into %s" % (depotPath, destination)
+        os.makedirs(destination)
+        os.chdir(destination)
         system("git init")
         gitdir = os.getcwd() + "/.git"
         if not P4Sync.run(self, [depotPath]):
