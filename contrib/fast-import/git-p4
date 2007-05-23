@@ -31,7 +31,9 @@ def p4CmdList(cmd):
             result.append(entry)
     except EOFError:
         pass
-    pipe.close()
+    exitCode = pipe.close()
+    if exitCode != None:
+        result["p4ExitCode"] = exitCode
 
     return result
 
