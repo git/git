@@ -559,11 +559,6 @@ unless (-d $git_dir) {
 	$last_branch = $opt_o;
 	$orig_branch = "";
 } else {
-	-f "$git_dir/refs/heads/$opt_o"
-		or die "Branch '$opt_o' does not exist.\n".
-		       "Either use the correct '-o branch' option,\n".
-		       "or import to a new repository.\n";
-
 	open(F, "git-symbolic-ref HEAD |") or
 		die "Cannot run git-symbolic-ref: $!\n";
 	chomp ($last_branch = <F>);
@@ -588,6 +583,11 @@ unless (-d $git_dir) {
 		$branch_date{$head} = $1;
 	}
 	close(H);
+        if (!exists $branch_date{$opt_o}) {
+		die "Branch '$opt_o' does not exist.\n".
+		       "Either use the correct '-o branch' option,\n".
+		       "or import to a new repository.\n";
+        }
 }
 
 -d $git_dir
