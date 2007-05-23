@@ -24,7 +24,7 @@ def write_pipe(c, str):
     pipe = os.popen(c, 'w')
     val = pipe.write(str)
     if pipe.close():
-        sys.stderr.write('Command %s failed\n' % c)
+        sys.stderr.write('Command failed: %s' % c)
         sys.exit(1)
 
     return val
@@ -36,7 +36,7 @@ def read_pipe(c, ignore_error=False):
     pipe = os.popen(c, 'rb')
     val = pipe.read()
     if pipe.close() and not ignore_error:
-        sys.stderr.write('Command %s failed\n' % c)
+        sys.stderr.write('Command failed: %s\n' % c)
         sys.exit(1)
 
     return val
@@ -49,7 +49,7 @@ def read_pipe_lines(c):
     pipe = os.popen(c, 'rb')
     val = pipe.readlines()
     if pipe.close():
-        sys.stderr.write('Command %s failed\n' % c)
+        sys.stderr.write('Command failed: %s\n' % c)
         sys.exit(1)
 
     return val
@@ -878,8 +878,8 @@ class P4Sync(Command):
             cmdline += " --branches"
 
         for line in read_pipe_lines(cmdline):
-            lie = line.strip()
-            if self.importIntoRemotes and ((not line.startswith("p4/")) or line == "p4/HEAD\n"):
+            line = line.strip()
+            if self.importIntoRemotes and ((not line.startswith("p4/")) or line == "p4/HEAD"):
                 continue
 
             if self.importIntoRemotes:
