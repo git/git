@@ -259,7 +259,7 @@ class P4Submit(Command):
 
         return result
 
-    def apply(self, id):
+    def applyCommit(self, id):
         if self.directSubmit:
             print "Applying local change in working directory/index"
             diff = self.diffStatus
@@ -494,7 +494,7 @@ class P4Submit(Command):
             commit = commits[0]
             commits = commits[1:]
             self.config["commits"] = commits
-            self.apply(commit)
+            self.applyCommit(commit)
             if not self.interactive:
                 break
 
