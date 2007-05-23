@@ -820,7 +820,7 @@ class P4Sync(Command):
                            % (labelDetails["label"], change))
 
     def getUserCacheFilename(self):
-        return os.environ["HOME"] + "/.gitp4-usercache.txt")
+        return os.environ["HOME"] + "/.gitp4-usercache.txt"
 
     def getUserMapFromPerforceServer(self):
         if self.userMapFromPerforceServer:
