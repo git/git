@@ -697,6 +697,9 @@ class P4Sync(Command):
                 next_spec, next_info = specs[j+1]
                 end = data.find(next_spec, start)
 
+                if end < 0:
+                    print spec, next_spec
+
                 assert end >= 0
             else:
                 end = len(data)
@@ -711,6 +714,20 @@ class P4Sync(Command):
 
         if self.verbose:
             print "commit into %s" % branch
+
+        # start with reading files; if that fails, we should not
+        # create a commit.
+        new_files = []
+        for f in files:
+            if [p for p in branchPrefixes if f['path'].startswith(p)]:
+                new_files.append (f)
+            else:
+                sys.stderr.write("Ignoring file outside of prefix: %s\n" % path)
+        files = new_files
+        self.readP4Files(files)
+
+
+
 
         self.gitStream.write("commit %s\n" % branch)
 #        gitStream.write("mark :%s\n" % details["change"])
@@ -739,16 +756,6 @@ class P4Sync(Command):
                 print "parent %s" % parent
             self.gitStream.write("from %s\n" % parent)
 
-
-        new_files = []
-        for f in files:
-            if [p for p in branchPrefixes if f['path'].startswith(p)]:
-                new_files.append (f)
-            else:
-                sys.stderr.write("Ignoring file outside of prefix: %s\n" % path)
-        files = new_files
-
-        self.readP4Files(files)
         for file in files:
             if file["type"] == "apple":
                 print "\nfile %s is a strange apple file that forks. Ignoring!" % file['path']
@@ -1030,9 +1037,6 @@ class P4Sync(Command):
 
                 settings = extractSettingsGitLog(logMsg)
 
-                if self.verbose:
-                    print "path %s change %s" % (','.join(depotPaths), change)
-
                 self.readOptions(settings)
                 if (settings.has_key('depot-paths')
                     and settings.has_key ('change')):
@@ -1145,6 +1149,9 @@ class P4Sync(Command):
                                   +  ' '.join(["%s...%s"
                                                % (p, self.revision)
                                                for p in self.depotPaths])):
+
+                if not info.has_key("change"):
+                    print info
                 change = int(info["change"])
                 if change > newestRevision:
                     newestRevision = change
@@ -1154,7 +1161,7 @@ class P4Sync(Command):
                     #fileCnt = fileCnt + 1
                     continue
 
-                for prop in [ "depotFile", "rev", "action", "type" ]:
+                for prop in ["depotFile", "rev", "action", "type" ]:
                     details["%s%s" % (prop, fileCnt)] = info[prop]
 
                 fileCnt = fileCnt + 1
