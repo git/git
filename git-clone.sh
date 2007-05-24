@@ -19,11 +19,11 @@ usage() {
 
 get_repo_base() {
 	(
-		cd "`/bin/pwd`" &&
+		cd "`/bin/pwd -W`" &&
 		cd "$1" &&
 		{
 			cd .git
-			pwd
+			pwd -W
 		}
 	) 2>/dev/null
 }
