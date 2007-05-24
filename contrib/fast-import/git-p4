@@ -795,19 +795,37 @@ class P4Sync(Command):
             self.p4BranchesInGit.append(branch)
             self.initialParents[self.refPrefix + branch] = parseRevision(line[:-1])
 
-    def createBranchesFromOrigin(self):
+    def createOrUpdateBranchesFromOrigin(self):
         if not self.silent:
-            print "Creating branch(es) in %s based on origin branch(es)" % self.refPrefix
+            print "Creating/updating branch(es) in %s based on origin branch(es)" % self.refPrefix
 
         for line in mypopen("git rev-parse --symbolic --remotes"):
             if (not line.startswith("origin/")) or line.endswith("HEAD\n"):
                 continue
             headName = line[len("origin/"):-1]
             remoteHead = self.refPrefix + headName
+            originHead = "origin/" + headName
+
+            update = False
             if not os.path.exists(gitdir + "/" + remoteHead):
                 if self.verbose:
                     print "creating %s" % remoteHead
-                system("git update-ref %s origin/%s" % (remoteHead, headName))
+                update = True
+            else:
+                [originPreviousDepotPath, originP4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit(originHead))
+                [p4PreviousDepotPath, p4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit(remoteHead))
+                if len(originPreviousDepotPath) > 0 and len(originP4Change) > 0 and len(p4Change) > 0:
+                    if originPreviousDepotPath == p4PreviousDepotPath:
+                        originP4Change = int(originP4Change)
+                        p4Change = int(p4Change)
+                        if originP4Change > p4Change:
+                            print "%s (%s) is newer than %s (%s). Updating p4 branch from origin." % (originHead, originP4Change, remoteHead, p4Change)
+                            update = True
+                    else:
+                        print "Ignoring: %s was imported from %s while %s was imported from %s" % (originHead, originPreviousDepotPath, remoteHead, p4PreviousDepotPath)
+
+            if update:
+                system("git update-ref %s %s" % (remoteHead, originHead))
 
     def run(self, args):
         self.depotPath = ""
@@ -825,23 +843,6 @@ class P4Sync(Command):
 
         createP4HeadRef = False;
 
-        if self.syncWithOrigin and gitBranchExists("origin") and gitBranchExists(self.refPrefix + "master") and not self.detectBranches and self.importIntoRemotes:
-            ### needs to be ported to multi branch import
-
-            print "Syncing with origin first as requested by calling git fetch origin"
-            system("git fetch origin")
-            [originPreviousDepotPath, originP4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit("origin"))
-            [p4PreviousDepotPath, p4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit("p4"))
-            if len(originPreviousDepotPath) > 0 and len(originP4Change) > 0 and len(p4Change) > 0:
-                if originPreviousDepotPath == p4PreviousDepotPath:
-                    originP4Change = int(originP4Change)
-                    p4Change = int(p4Change)
-                    if originP4Change > p4Change:
-                        print "origin (%s) is newer than p4 (%s). Updating p4 branch from origin." % (originP4Change, p4Change)
-                        system("git update-ref " + self.refPrefix + "master origin");
-                else:
-                    print "Cannot sync with origin. It was imported from %s while remotes/p4 was imported from %s" % (originPreviousDepotPath, p4PreviousDepotPath)
-
         if len(self.branch) == 0:
             self.branch = self.refPrefix + "master"
             if gitBranchExists("refs/heads/p4") and self.importIntoRemotes:
@@ -851,17 +852,14 @@ class P4Sync(Command):
             if not gitBranchExists(self.refPrefix + "HEAD") and self.importIntoRemotes:
                 createP4HeadRef = True
 
-        # this needs to be called after the conversion from heads/p4 to remotes/p4/master
-        self.listExistingP4GitBranches()
-        if len(self.p4BranchesInGit) > 1:
-            if not self.silent:
-                print "Importing from/into multiple branches"
-            self.detectBranches = True
-
         if len(args) == 0:
-            if len(self.p4BranchesInGit) == 0:
-                self.createBranchesFromOrigin()
-                self.listExistingP4GitBranches()
+            self.createOrUpdateBranchesFromOrigin()
+            self.listExistingP4GitBranches()
+
+            if len(self.p4BranchesInGit) > 1:
+                if not self.silent:
+                    print "Importing from/into multiple branches"
+                self.detectBranches = True
 
             if self.verbose:
                 print "branches: %s" % self.p4BranchesInGit
