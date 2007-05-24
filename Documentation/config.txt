@@ -288,7 +288,7 @@ apply.whitespace::
 	as the '--whitespace' option. See gitlink:git-apply[1].
 
 branch.autosetupmerge::
-	Tells `git-branch' and `git-checkout' to setup new branches
+	Tells `git-branch` and `git-checkout` to setup new branches
 	so that gitlink:git-pull[1] will appropriately merge from that
 	remote branch.  Note that even if this option is not set,
 	this behavior can be chosen per-branch using the `--track`
