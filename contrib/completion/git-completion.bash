@@ -579,7 +579,7 @@ _git_log ()
 		__gitcomp "
 			--max-count= --max-age= --since= --after=
 			--min-age= --before= --until=
-			--root --not --topo-order --date-order
+			--root --topo-order --date-order
 			--no-merges
 			--abbrev-commit --abbrev=
 			--relative-date
