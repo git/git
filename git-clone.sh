@@ -66,6 +66,19 @@ case $(uname -s) in
 		xargs --no-run-if-empty \
 			cp $cp_arg --target-directory="$2" --parents
 	}
+	# pwd must return a path with a drive letter
+	bin_pwd() {
+		# there are no symlinks to resolve: /bin/pwd is not needed
+		builtin pwd -W
+	}
+	pwd() {
+		builtin pwd -W
+	}
+	;;
+*)
+	bin_pwd() {
+		/bin/pwd
+	}
 	;;
 esac
 
@@ -77,11 +90,11 @@ eval "$(echo "$OPTIONS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)
 
 get_repo_base() {
 	(
-		cd "`/bin/pwd -W`" &&
+		cd "$(bin_pwd)" &&
 		cd "$1" || cd "$1.git" &&
 		{
 			cd .git
-			pwd -W
+			pwd
 		}
 	) 2>/dev/null
 }
