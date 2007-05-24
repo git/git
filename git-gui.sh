@@ -1206,15 +1206,12 @@ foreach class {Button Checkbutton Entry Label
 }
 unset class
 
-if {[is_Windows]} {
-	set M1B Control
-	set M1T Ctrl
-} elseif {[is_MacOSX]} {
+if {[is_MacOSX]} {
 	set M1B M1
 	set M1T Cmd
 } else {
-	set M1B M1
-	set M1T M1
+	set M1B Control
+	set M1T Ctrl
 }
 
 proc apply_config {} {
