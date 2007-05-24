@@ -896,6 +896,26 @@ _git_reset ()
 	__gitcomp "$(__git_refs)"
 }
 
+_git_shortlog ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "
+			--max-count= --max-age= --since= --after=
+			--min-age= --before= --until=
+			--no-merges
+			--author= --committer= --grep=
+			--all-match
+			--not --all
+			--numbered --summary
+			"
+		return
+		;;
+	esac
+	__git_complete_revlist
+}
+
 _git_show ()
 {
 	local cur="${COMP_WORDS[COMP_CWORD]}"
@@ -967,6 +987,7 @@ _git ()
 	rebase)      _git_rebase ;;
 	remote)      _git_remote ;;
 	reset)       _git_reset ;;
+	shortlog)    _git_shortlog ;;
 	show)        _git_show ;;
 	show-branch) _git_log ;;
 	whatchanged) _git_log ;;
@@ -1012,6 +1033,7 @@ complete -o default -o nospace -F _git_rebase git-rebase
 complete -o default -o nospace -F _git_config git-config
 complete -o default -o nospace -F _git_remote git-remote
 complete -o default -o nospace -F _git_reset git-reset
+complete -o default -o nospace -F _git_shortlog git-shortlog
 complete -o default -o nospace -F _git_show git-show
 complete -o default -o nospace -F _git_log git-show-branch
 complete -o default -o nospace -F _git_log git-whatchanged
@@ -1034,6 +1056,7 @@ complete -o default -o nospace -F _git_merge_base git-merge-base.exe
 complete -o default -o nospace -F _git_name_rev git-name-rev.exe
 complete -o default -o nospace -F _git_push git-push.exe
 complete -o default -o nospace -F _git_config git-config
+complete -o default -o nospace -F _git_shortlog git-shortlog.exe
 complete -o default -o nospace -F _git_show git-show.exe
 complete -o default -o nospace -F _git_log git-show-branch.exe
 complete -o default -o nospace -F _git_log git-whatchanged.exe
