@@ -795,6 +795,20 @@ class P4Sync(Command):
             self.p4BranchesInGit.append(branch)
             self.initialParents[self.refPrefix + branch] = parseRevision(line[:-1])
 
+    def createBranchesFromOrigin(self):
+        if not self.silent:
+            print "Creating branch(es) in %s based on origin branch(es)" % self.refPrefix
+
+        for line in mypopen("git rev-parse --symbolic --remotes"):
+            if (not line.startswith("origin/")) or line.endswith("HEAD\n"):
+                continue
+            headName = line[len("origin/"):-1]
+            remoteHead = self.refPrefix + headName
+            if not os.path.exists(gitdir + "/" + remoteHead):
+                if self.verbose:
+                    print "creating %s" % remoteHead
+                system("git update-ref %s origin/%s" % (remoteHead, headName))
+
     def run(self, args):
         self.depotPath = ""
         self.changeRange = ""
@@ -841,18 +855,14 @@ class P4Sync(Command):
         self.listExistingP4GitBranches()
         if len(self.p4BranchesInGit) > 1:
             if not self.silent:
-	        print "Importing from/into multiple branches"
+                print "Importing from/into multiple branches"
             self.detectBranches = True
 
         if len(args) == 0:
-            if not gitBranchExists(self.branch) and gitBranchExists("origin") and not self.detectBranches:
-                ### needs to be ported to multi branch import
-                if not self.silent:
-                    print "Creating %s branch in git repository based on origin" % self.branch
-                branch = self.branch
-                if not branch.startswith("refs"):
-                    branch = "refs/heads/" + branch
-                system("git update-ref %s origin" % branch)
+            if len(self.p4BranchesInGit) == 0:
+                self.createBranchesFromOrigin()
+                self.listExistingP4GitBranches()
+                return True
 
             if self.verbose:
                 print "branches: %s" % self.p4BranchesInGit
