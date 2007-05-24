@@ -592,13 +592,13 @@ _git_log ()
 		__gitcomp "
 			--max-count= --max-age= --since= --after=
 			--min-age= --before= --until=
-			--root --topo-order --date-order
+			--root --topo-order --date-order --reverse
 			--no-merges
 			--abbrev-commit --abbrev=
 			--relative-date
 			--author= --committer= --grep=
 			--all-match
-			--pretty= --name-status --name-only
+			--pretty= --name-status --name-only --raw
 			--not --all
 			"
 		return
