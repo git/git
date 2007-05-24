@@ -270,6 +270,9 @@ __git_commands ()
 		cvsimport)        : import;;
 		cvsserver)        : daemon;;
 		daemon)           : daemon;;
+		diff-files)       : plumbing;;
+		diff-index)       : plumbing;;
+		diff-tree)        : plumbing;;
 		fast-import)      : import;;
 		fsck-objects)     : plumbing;;
 		fetch--tool)      : plumbing;;
@@ -950,7 +953,6 @@ _git ()
 	commit)      _git_commit ;;
 	config)      _git_config ;;
 	diff)        _git_diff ;;
-	diff-tree)   _git_diff_tree ;;
 	fetch)       _git_fetch ;;
 	format-patch) _git_format_patch ;;
 	gc)          _git_gc ;;
@@ -995,7 +997,6 @@ complete -o default -o nospace -F _git_cherry git-cherry
 complete -o default -o nospace -F _git_cherry_pick git-cherry-pick
 complete -o default -o nospace -F _git_commit git-commit
 complete -o default -o nospace -F _git_diff git-diff
-complete -o default -o nospace -F _git_diff_tree git-diff-tree
 complete -o default -o nospace -F _git_fetch git-fetch
 complete -o default -o nospace -F _git_format_patch git-format-patch
 complete -o default -o nospace -F _git_gc git-gc
@@ -1026,7 +1027,6 @@ complete -o default -o nospace -F _git git.exe
 complete -o default -o nospace -F _git_branch git-branch.exe
 complete -o default -o nospace -F _git_cherry git-cherry.exe
 complete -o default -o nospace -F _git_diff git-diff.exe
-complete -o default -o nospace -F _git_diff_tree git-diff-tree.exe
 complete -o default -o nospace -F _git_format_patch git-format-patch.exe
 complete -o default -o nospace -F _git_log git-log.exe
 complete -o default -o nospace -F _git_ls_tree git-ls-tree.exe
