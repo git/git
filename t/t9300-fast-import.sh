@@ -119,6 +119,35 @@ test_expect_success \
 		</dev/null &&
 	git diff -u expect marks.new'
 
+test_tick
+cat >input <<INPUT_END
+commit refs/heads/verify--import-marks
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+recreate from :5
+COMMIT
+
+from :5
+M 755 :2 copy-of-file2
+
+INPUT_END
+test_expect_success \
+	'A: verify marks import does not crash' \
+	'git-fast-import --import-marks=marks.out <input &&
+	 git-whatchanged verify--import-marks'
+test_expect_success \
+	'A: verify pack' \
+	'for p in .git/objects/pack/*.pack;do git-verify-pack $p||exit;done'
+cat >expect <<EOF
+:000000 100755 0000000000000000000000000000000000000000 7123f7f44e39be127c5eb701e5968176ee9d78b1 A	copy-of-file2
+EOF
+git-diff-tree -M -r master verify--import-marks >actual
+test_expect_success \
+	'A: verify diff' \
+	'compare_diff_raw expect actual &&
+	 test `git-rev-parse --verify master:file2` \
+	    = `git-rev-parse --verify verify--import-marks:copy-of-file2`'
+
 ###
 ### series B
 ###
