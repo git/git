@@ -1709,14 +1709,16 @@ static void cmd_from(struct branch *b)
 	} else if (*from == ':') {
 		uintmax_t idnum = strtoumax(from + 1, NULL, 10);
 		struct object_entry *oe = find_mark(idnum);
-		unsigned long size;
-		char *buf;
 		if (oe->type != OBJ_COMMIT)
 			die("Mark :%" PRIuMAX " not a commit", idnum);
 		hashcpy(b->sha1, oe->sha1);
-		buf = gfi_unpack_entry(oe, &size);
-		cmd_from_commit(b, buf, size);
-		free(buf);
+		if (oe->pack_id != MAX_PACK_ID) {
+			unsigned long size;
+			char *buf = gfi_unpack_entry(oe, &size);
+			cmd_from_commit(b, buf, size);
+			free(buf);
+		} else
+			cmd_from_existing(b);
 	} else if (!get_sha1(from, b->sha1))
 		cmd_from_existing(b);
 	else
