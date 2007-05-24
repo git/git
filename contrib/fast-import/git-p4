@@ -862,7 +862,6 @@ class P4Sync(Command):
             if len(self.p4BranchesInGit) == 0:
                 self.createBranchesFromOrigin()
                 self.listExistingP4GitBranches()
-                return True
 
             if self.verbose:
                 print "branches: %s" % self.p4BranchesInGit
