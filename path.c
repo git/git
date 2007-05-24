@@ -73,7 +73,10 @@ int git_mkstemp(char *path, size_t len, const char *template)
 {
 	char *env, *pch = path;
 
-	if ((env = getenv("TMPDIR")) == NULL) {
+	if ((env = getenv("TMPDIR")) == NULL &&
+	    /* on Windows it is TMP and TEMP */
+	    (env = getenv("TMP")) == NULL &&
+	    (env = getenv("TEMP")) == NULL) {
 		strcpy(pch, "/tmp/");
 		len -= 5;
 		pch += 5;
