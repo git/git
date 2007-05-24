@@ -764,9 +764,11 @@ _git_config ()
 	case "$cur" in
 	--*)
 		__gitcomp "
-			--global --list --replace-all
+			--global --system
+			--list --replace-all
 			--get --get-all --get-regexp
 			--add --unset --unset-all
+			--remove-section --rename-section
 			"
 		return
 		;;
@@ -785,7 +787,10 @@ _git_config ()
 	remote.*.*)
 		local pfx="${cur%.*}."
 		cur="${cur##*.}"
-		__gitcomp "url fetch push" "$pfx" "$cur"
+		__gitcomp "
+			url fetch push skipDefaultUpdate
+			receivepack uploadpack tagopt
+			" "$pfx" "$cur"
 		return
 		;;
 	remote.*)
@@ -835,6 +840,9 @@ _git_config ()
 		format.headers
 		gitcvs.enabled
 		gitcvs.logfile
+		gitcvs.allbinary
+		gitcvs.dbname gitcvs.dbdriver gitcvs.dbuser gitcvs.dvpass
+		gc.packrefs
 		gc.reflogexpire
 		gc.reflogexpireunreachable
 		gc.rerereresolved
@@ -851,9 +859,11 @@ _git_config ()
 		i18n.commitEncoding
 		i18n.logOutputEncoding
 		log.showroot
+		merge.tool
 		merge.summary
 		merge.verbosity
 		pack.window
+		pack.depth
 		pull.octopus
 		pull.twohead
 		repack.useDeltaBaseOffset
