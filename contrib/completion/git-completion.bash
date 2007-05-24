@@ -1,8 +1,9 @@
 #
 # bash completion support for core Git.
 #
-# Copyright (C) 2006,2007 Shawn Pearce
+# Copyright (C) 2006,2007 Shawn O. Pearce <spearce@spearce.org>
 # Conceptually based on gitcompletion (http://gitweb.hawaga.org.uk/).
+# Distributed under the GNU General Public License, version 2.0.
 #
 # The contained completion routines provide support for completing:
 #
@@ -11,6 +12,7 @@
 #    *) .git/remotes file names
 #    *) git 'subcommands'
 #    *) tree paths within 'ref:path/to/file' expressions
+#    *) common --long-options
 #
 # To use these routines:
 #
@@ -30,6 +32,17 @@
 #       The argument to __git_ps1 will be displayed only if you
 #       are currently in a git repository.  The %s token will be
 #       the name of the current branch.
+#
+# To submit patches:
+#
+#    *) Read Documentation/SubmittingPatches
+#    *) Send all patches to the current maintainer:
+#
+#       "Shawn O. Pearce" <spearce@spearce.org>
+#
+#    *) Always CC the Git mailing list:
+#
+#       git@vger.kernel.org
 #
 
 __gitdir ()
