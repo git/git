@@ -540,6 +540,7 @@ class P4Sync(Command):
         self.verbose = False
         self.importIntoRemotes = True
         self.maxChanges = ""
+        self.isWindows = (platform.system() == "Windows")
 
     def p4File(self, depotPath):
         return os.popen("p4 print -q \"%s\"" % depotPath, "rb").read()
@@ -646,6 +647,9 @@ class P4Sync(Command):
                     mode = 755
 
                 data = self.p4File(depotPath)
+
+                if self.isWindows and file["type"].endswith("text"):
+                    data = data.replace("\r\n", "\n")
 
                 self.gitStream.write("M %s inline %s\n" % (mode, relPath))
                 self.gitStream.write("data %s\n" % len(data))
