@@ -841,6 +841,10 @@ class P4Sync(Command):
         else:
             self.refPrefix = "refs/heads/"
 
+        if self.syncWithOrigin:
+            print "Syncing with origin first as requested by calling git fetch origin"
+            system("git fetch origin")
+
         createP4HeadRef = False;
 
         if len(self.branch) == 0:
