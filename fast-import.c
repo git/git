@@ -1013,7 +1013,7 @@ static void load_tree(struct tree_entry *root)
 		return;
 
 	myoe = find_object(sha1);
-	if (myoe) {
+	if (myoe && myoe->pack_id != MAX_PACK_ID) {
 		if (myoe->type != OBJ_TREE)
 			die("Not a tree: %s", sha1_to_hex(sha1));
 		t->delta_depth = 0;
@@ -1122,6 +1122,7 @@ static void store_tree(struct tree_entry *root)
 		|| le->pack_id != pack_id) {
 		lo.data = NULL;
 		lo.depth = 0;
+		lo.no_free = 0;
 	} else {
 		mktree(t, 0, &lo.len, &old_tree);
 		lo.data = old_tree.buffer;
@@ -1656,6 +1657,33 @@ static void file_change_deleteall(struct branch *b)
 	load_tree(&b->branch_tree);
 }
 
+static void cmd_from_commit(struct branch *b, char *buf, unsigned long size)
+{
+	if (!buf || size < 46)
+		die("Not a valid commit: %s", sha1_to_hex(b->sha1));
+	if (memcmp("tree ", buf, 5)
+		|| get_sha1_hex(buf + 5, b->branch_tree.versions[1].sha1))
+		die("The commit %s is corrupt", sha1_to_hex(b->sha1));
+	hashcpy(b->branch_tree.versions[0].sha1,
+		b->branch_tree.versions[1].sha1);
+}
+
+static void cmd_from_existing(struct branch *b)
+{
+	if (is_null_sha1(b->sha1)) {
+		hashclr(b->branch_tree.versions[0].sha1);
+		hashclr(b->branch_tree.versions[1].sha1);
+	} else {
+		unsigned long size;
+		char *buf;
+
+		buf = read_object_with_reference(b->sha1,
+			commit_type, &size, b->sha1);
+		cmd_from_commit(b, buf, size);
+		free(buf);
+	}
+}
+
 static void cmd_from(struct branch *b)
 {
 	const char *from;
@@ -1681,40 +1709,19 @@ static void cmd_from(struct branch *b)
 	} else if (*from == ':') {
 		uintmax_t idnum = strtoumax(from + 1, NULL, 10);
 		struct object_entry *oe = find_mark(idnum);
-		unsigned long size;
-		char *buf;
 		if (oe->type != OBJ_COMMIT)
 			die("Mark :%" PRIuMAX " not a commit", idnum);
 		hashcpy(b->sha1, oe->sha1);
-		buf = gfi_unpack_entry(oe, &size);
-		if (!buf || size < 46)
-			die("Not a valid commit: %s", from);
-		if (memcmp("tree ", buf, 5)
-			|| get_sha1_hex(buf + 5, b->branch_tree.versions[1].sha1))
-			die("The commit %s is corrupt", sha1_to_hex(b->sha1));
-		free(buf);
-		hashcpy(b->branch_tree.versions[0].sha1,
-			b->branch_tree.versions[1].sha1);
-	} else if (!get_sha1(from, b->sha1)) {
-		if (is_null_sha1(b->sha1)) {
-			hashclr(b->branch_tree.versions[0].sha1);
-			hashclr(b->branch_tree.versions[1].sha1);
-		} else {
+		if (oe->pack_id != MAX_PACK_ID) {
 			unsigned long size;
-			char *buf;
-
-			buf = read_object_with_reference(b->sha1,
-				commit_type, &size, b->sha1);
-			if (!buf || size < 46)
-				die("Not a valid commit: %s", from);
-			if (memcmp("tree ", buf, 5)
-				|| get_sha1_hex(buf + 5, b->branch_tree.versions[1].sha1))
-				die("The commit %s is corrupt", sha1_to_hex(b->sha1));
+			char *buf = gfi_unpack_entry(oe, &size);
+			cmd_from_commit(b, buf, size);
 			free(buf);
-			hashcpy(b->branch_tree.versions[0].sha1,
-				b->branch_tree.versions[1].sha1);
-		}
-	} else
+		} else
+			cmd_from_existing(b);
+	} else if (!get_sha1(from, b->sha1))
+		cmd_from_existing(b);
+	else
 		die("Invalid ref name or SHA1 expression: %s", from);
 
 	read_next_command();
