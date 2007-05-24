@@ -416,19 +416,6 @@ int poll(struct pollfd *ufds, unsigned int nfds, int timeout);
 #define POLLIN 1
 #define POLLHUP 2
 
-typedef int siginfo_t;
-struct sigaction {
-	void (*sa_handler)(int);
-	void (*sa_sigaction)(int, siginfo_t *, void *);
-	sigset_t sa_mask;
-	int sa_flags;
-	void (*sa_restorer)(void);
-};
-#define SA_RESTART 0
-#define ITIMER_REAL 0
-
-struct itimerval { struct timeval it_interval, it_value; };
-
 static inline int git_mkdir(const char *path, int mode)
 {
 	return mkdir(path);

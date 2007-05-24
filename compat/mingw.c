@@ -51,19 +51,6 @@ int kill(pid_t pid, int sig)
 {
 	return -1;
 }
-int sigaction(int p1, const struct sigaction *p2, struct sigaction *p3)
-{
-	return -1;
-}
-int sigemptyset(sigset_t *p1)
-{
-	return -1;
-}
-int setitimer(int __which, const struct itimerval *__value,
-                                        struct itimerval *__ovalue)
-{
-	return -1;
-}
 unsigned int sleep (unsigned int __seconds)
 {
 	Sleep(__seconds*1000);
