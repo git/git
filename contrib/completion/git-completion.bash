@@ -877,19 +877,31 @@ _git_remote ()
 	while [ $c -lt $COMP_CWORD ]; do
 		i="${COMP_WORDS[c]}"
 		case "$i" in
-		add|show|prune) command="$i"; break ;;
+		add|show|prune|update) command="$i"; break ;;
 		esac
 		c=$((++c))
 	done
 
 	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
-		__gitcomp "add show prune"
+		__gitcomp "add show prune update"
 		return
 	fi
 
 	case "$command" in
 	show|prune)
 		__gitcomp "$(__git_remotes)"
+		;;
+	update)
+		local i c='' IFS=$'\n'
+		for i in $(git --git-dir="$(__gitdir)" config --list); do
+			case "$i" in
+			remotes.*)
+				i="${i#remotes.}"
+				c="$c ${i/=*/}"
+				;;
+			esac
+		done
+		__gitcomp "$c"
 		;;
 	*)
 		COMPREPLY=()
