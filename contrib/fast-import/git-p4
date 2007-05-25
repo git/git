@@ -844,6 +844,7 @@ class P4Sync(Command):
         # map from branch depot path to parent branch
         self.knownBranches = {}
         self.initialParents = {}
+        self.hasOrigin = gitBranchExists("origin")
 
         if self.importIntoRemotes:
             self.refPrefix = "refs/remotes/p4/"
@@ -851,7 +852,7 @@ class P4Sync(Command):
             self.refPrefix = "refs/heads/"
 
         if self.syncWithOrigin:
-            if gitBranchExists("origin"):
+            if self.hasOrigin:
                 if not self.silent:
                     print "Syncing with origin first by calling git fetch origin"
                 system("git fetch origin")
@@ -868,7 +869,8 @@ class P4Sync(Command):
                 createP4HeadRef = True
 
         if len(args) == 0:
-            self.createOrUpdateBranchesFromOrigin()
+            if self.hasOrigin:
+                self.createOrUpdateBranchesFromOrigin()
             self.listExistingP4GitBranches()
 
             if len(self.p4BranchesInGit) > 1:
