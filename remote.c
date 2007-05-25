@@ -415,6 +415,10 @@ static int match_explicit_refs(struct ref *src, struct ref *dst,
 		struct ref *matched_src, *matched_dst;
 
 		const char *dst_value = rs[i].dst;
+
+		if (rs[i].pattern)
+			continue;
+
 		if (dst_value == NULL)
 			dst_value = rs[i].src;
 
@@ -497,22 +501,43 @@ static struct ref *find_ref_by_name(struct ref *list, const char *name)
 	return NULL;
 }
 
+static int check_pattern_match(struct refspec *rs, int rs_nr, struct ref *src)
+{
+	int i;
+	if (!rs_nr)
+		return 1;
+	for (i = 0; i < rs_nr; i++) {
+		if (rs[i].pattern && !prefixcmp(src->name, rs[i].src))
+			return 1;
+	}
+	return 0;
+}
+
 int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 	       int nr_refspec, char **refspec, int all)
 {
 	struct refspec *rs =
 		parse_ref_spec(nr_refspec, (const char **) refspec);
 
-	if (nr_refspec)
-		return match_explicit_refs(src, dst, dst_tail, rs, nr_refspec);
+	if (match_explicit_refs(src, dst, dst_tail, rs, nr_refspec))
+		return -1;
 
 	/* pick the remainder */
 	for ( ; src; src = src->next) {
 		struct ref *dst_peer;
 		if (src->peer_ref)
 			continue;
+		if (!check_pattern_match(rs, nr_refspec, src))
+			continue;
+
 		dst_peer = find_ref_by_name(dst, src->name);
-		if ((dst_peer && dst_peer->peer_ref) || (!dst_peer && !all))
+		if (dst_peer && dst_peer->peer_ref)
+			/* We're already sending something to this ref. */
+			continue;
+		if (!dst_peer && !nr_refspec && !all)
+			/* Remote doesn't have it, and we have no
+			 * explicit pattern, and we don't have
+			 * --all. */
 			continue;
 		if (!dst_peer) {
 			/* Create a new one and link it */
