@@ -69,6 +69,7 @@ if [ -z "$names" ]; then
 	echo Nothing new to pack.
 fi
 for name in $names ; do
+	fullbases="$fullbases pack-$name"
 	chmod a-w "$PACKTMP-$name.pack"
 	chmod a-w "$PACKTMP-$name.idx"
 	if test "$quiet" != '-q'; then
@@ -105,8 +106,8 @@ then
 		( cd "$PACKDIR" &&
 		  for e in $existing
 		  do
-			case "$e" in
-			pack-$name) ;;
+			case " $fullbases " in
+			*" $e "*) ;;
 			*)	rm -f "$e.pack" "$e.idx" "$e.keep" ;;
 			esac
 		  done
