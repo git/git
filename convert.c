@@ -509,36 +509,71 @@ static char *ident_to_worktree(const char *path, const char *src, unsigned long 
 
 	for (dst = buf; size; size--) {
 		const char *cp;
+		/* Fetch next source character, move the pointer on */
 		char ch = *src++;
+		/* Copy the current character to the destination */
 		*dst++ = ch;
+		/* If the current character is "$" or there are less than three
+		 * remaining bytes or the two bytes following this one are not
+		 * "Id", then simply read the next character */
 		if ((ch != '$') || (size < 3) || memcmp("Id", src, 2))
 			continue;
+		/*
+		 * Here when
+		 *  - There are more than 2 bytes remaining
+		 *  - The current three bytes are "$Id"
+		 * with
+		 *  - ch == "$"
+		 *  - src[0] == "I"
+		 */
 
+		/*
+		 * It's possible that an expanded Id has crept its way into the
+		 * repository, we cope with that by stripping the expansion out
+		 */
 		if (src[2] == ':') {
+			/* Expanded keywords have "$Id:" at the front */
+
 			/* discard up to but not including the closing $ */
 			unsigned long rem = size - 3;
+			/* Point at first byte after the ":" */
 			cp = src + 3;
+			/*
+			 * Throw away characters until either
+			 *  - we reach a "$"
+			 *  - we run out of bytes (rem == 0)
+			 */
 			do {
-				ch = *cp++;
+				ch = *cp;
 				if (ch == '$')
 					break;
+				cp++;
 				rem--;
 			} while (rem);
+			/* If the above finished because it ran out of characters, then
+			 * this is an incomplete keyword, so don't run the expansion */
 			if (!rem)
 				continue;
-			size -= (cp - src);
 		} else if (src[2] == '$')
 			cp = src + 2;
 		else
+			/* Anything other than "$Id:XXX$" or $Id$ and we skip the
+			 * expansion */
 			continue;
+
+		/* cp is now pointing at the last $ of the keyword */
 
 		memcpy(dst, "Id: ", 4);
 		dst += 4;
 		memcpy(dst, sha1_to_hex(sha1), 40);
 		dst += 40;
 		*dst++ = ' ';
+
+		/* Adjust for the characters we've discarded */
 		size -= (cp - src);
 		src = cp;
+
+		/* Copy the final "$" */
 		*dst++ = *src++;
 		size--;
 	}
