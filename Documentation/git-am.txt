@@ -145,7 +145,7 @@ names.
 
 SEE ALSO
 --------
-gitlink:git-applypatch[1], gitlink:git-apply[1].
+gitlink:git-apply[1].
 
 
 Author

@@ -7,7 +7,6 @@ git-add--interactive
 git-am
 git-annotate
 git-apply
-git-applypatch
 git-archimport
 git-archive
 git-bisect

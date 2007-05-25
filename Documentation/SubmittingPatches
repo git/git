@@ -239,7 +239,7 @@ One test you could do yourself if your MUA is set up correctly is:
     $ git fetch http://kernel.org/pub/scm/git/git.git master:test-apply
     $ git checkout test-apply
     $ git reset --hard
-    $ git applymbox a.patch
+    $ git am a.patch
 
 If it does not apply correctly, there can be various reasons.
 
@@ -247,7 +247,7 @@ If it does not apply correctly, there can be various reasons.
   does not have much to do with your MUA.  Please rebase the
   patch appropriately.
 
-* Your MUA corrupted your patch; applymbox would complain that
+* Your MUA corrupted your patch; "am" would complain that
   the patch does not apply.  Look at .dotest/ subdirectory and
   see what 'patch' file contains and check for the common
   corruption patterns mentioned above.
