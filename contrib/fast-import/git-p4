@@ -412,7 +412,7 @@ class P4Submit(Command):
 
         if len(args) == 0:
             self.master = currentGitBranch()
-            if len(self.master) == 0 or not os.path.exists("%s/refs/heads/%s" % (gitdir, self.master)):
+            if len(self.master) == 0 or not gitBranchExists("refs/heads/%s" % self.master):
                 die("Detecting current git branch failed!")
         elif len(args) == 1:
             self.master = args[0]
@@ -812,7 +812,7 @@ class P4Sync(Command):
                 continue
 
             update = False
-            if not os.path.exists(gitdir + "/" + remoteHead):
+            if not gitBranchExists(remoteHead):
                 if self.verbose:
                     print "creating %s" % remoteHead
                 update = True
