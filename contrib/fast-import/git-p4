@@ -7,9 +7,6 @@
 #            2007 Trolltech ASA
 # License: MIT <http://www.opensource.org/licenses/mit-license.php>
 #
-# TODO: * Consider making --with-origin the default, assuming that the git
-#         protocol is always more efficient. (needs manual testing first :)
-#
 
 import optparse, sys, os, marshal, popen2, subprocess, shelve
 import tempfile, getopt, sha, os.path, time, platform
