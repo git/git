@@ -70,18 +70,10 @@ repository can be used to clone the working repository from and one would
 import from Perforce directly after cloning using git-p4. If the connection to
 the Perforce server is slow and the working repository hasn't been synced for a
 while it may be desirable to fetch changes from the origin git repository using
-the efficient git protocol. git-p4 supports this through
+the efficient git protocol. git-p4 supports this setup by calling "git fetch origin"
+by default if there is an origin branch. You can disable this using
 
-  git-p4 sync --with-origin
-
-or
-
-  git-p4 rebase --with-origin
-
-In that case "git fetch origin" is called and if it turns out that the origin
-branch is newer than the git "p4" import branch then the latter is updated from
-the former and the direct import from Perforce is resumed, which will result in
-fewer changes to be imported using the slower perforce connection.
+  git config git-p4.syncFromOrigin false
 
 Updating
 ========

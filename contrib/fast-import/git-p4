@@ -118,6 +118,9 @@ def gitBranchExists(branch):
     proc = subprocess.Popen(["git", "rev-parse", branch], stderr=subprocess.PIPE, stdout=subprocess.PIPE);
     return proc.wait() == 0;
 
+def gitConfig(key):
+    return mypopen("git config %s" % key).read()[:-1]
+
 class Command:
     def __init__(self):
         self.usage = "usage: %prog [options]"
@@ -514,7 +517,6 @@ class P4Sync(Command):
                 optparse.make_option("--changesfile", dest="changesFile"),
                 optparse.make_option("--silent", dest="silent", action="store_true"),
                 optparse.make_option("--detect-labels", dest="detectLabels", action="store_true"),
-                optparse.make_option("--with-origin", dest="syncWithOrigin", action="store_true"),
                 optparse.make_option("--verbose", dest="verbose", action="store_true"),
                 optparse.make_option("--import-local", dest="importIntoRemotes", action="store_false"),
                 optparse.make_option("--max-changes", dest="maxChanges")
@@ -536,11 +538,14 @@ class P4Sync(Command):
         self.detectBranches = False
         self.detectLabels = False
         self.changesFile = ""
-        self.syncWithOrigin = False
+        self.syncWithOrigin = True
         self.verbose = False
         self.importIntoRemotes = True
         self.maxChanges = ""
         self.isWindows = (platform.system() == "Windows")
+
+        if gitConfig("git-p4.syncFromOrigin") == "false":
+            self.syncWithOrigin = False
 
     def p4File(self, depotPath):
         return os.popen("p4 print -q \"%s\"" % depotPath, "rb").read()
@@ -847,7 +852,8 @@ class P4Sync(Command):
 
         if self.syncWithOrigin:
             if gitBranchExists("origin"):
-                print "Syncing with origin first as requested by calling git fetch origin"
+                if not self.silent:
+                    print "Syncing with origin first by calling git fetch origin"
                 system("git fetch origin")
 
         createP4HeadRef = False;
@@ -1116,13 +1122,11 @@ class P4Sync(Command):
 class P4Rebase(Command):
     def __init__(self):
         Command.__init__(self)
-        self.options = [ optparse.make_option("--with-origin", dest="syncWithOrigin", action="store_true") ]
+        self.options = [ ]
         self.description = "Fetches the latest revision from perforce and rebases the current work (branch) against it"
-        self.syncWithOrigin = False
 
     def run(self, args):
         sync = P4Sync()
-        sync.syncWithOrigin = self.syncWithOrigin
         sync.run([])
         print "Rebasing the current branch"
         oldHead = mypopen("git rev-parse HEAD").read()[:-1]
