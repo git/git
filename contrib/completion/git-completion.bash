@@ -1,8 +1,9 @@
 #
 # bash completion support for core Git.
 #
-# Copyright (C) 2006,2007 Shawn Pearce
+# Copyright (C) 2006,2007 Shawn O. Pearce <spearce@spearce.org>
 # Conceptually based on gitcompletion (http://gitweb.hawaga.org.uk/).
+# Distributed under the GNU General Public License, version 2.0.
 #
 # The contained completion routines provide support for completing:
 #
@@ -11,6 +12,7 @@
 #    *) .git/remotes file names
 #    *) git 'subcommands'
 #    *) tree paths within 'ref:path/to/file' expressions
+#    *) common --long-options
 #
 # To use these routines:
 #
@@ -30,6 +32,17 @@
 #       The argument to __git_ps1 will be displayed only if you
 #       are currently in a git repository.  The %s token will be
 #       the name of the current branch.
+#
+# To submit patches:
+#
+#    *) Read Documentation/SubmittingPatches
+#    *) Send all patches to the current maintainer:
+#
+#       "Shawn O. Pearce" <spearce@spearce.org>
+#
+#    *) Always CC the Git mailing list:
+#
+#       git@vger.kernel.org
 #
 
 __gitdir ()
@@ -262,6 +275,7 @@ __git_commands ()
 		applypatch)       : ask gittus;;
 		archimport)       : import;;
 		cat-file)         : plumbing;;
+		check-attr)       : plumbing;;
 		check-ref-format) : plumbing;;
 		commit-tree)      : plumbing;;
 		convert-objects)  : plumbing;;
@@ -269,10 +283,15 @@ __git_commands ()
 		cvsimport)        : import;;
 		cvsserver)        : daemon;;
 		daemon)           : daemon;;
+		diff-files)       : plumbing;;
+		diff-index)       : plumbing;;
+		diff-tree)        : plumbing;;
 		fast-import)      : import;;
 		fsck-objects)     : plumbing;;
+		fetch--tool)      : plumbing;;
 		fetch-pack)       : plumbing;;
 		fmt-merge-msg)    : plumbing;;
+		for-each-ref)     : plumbing;;
 		hash-object)      : plumbing;;
 		http-*)           : transport;;
 		index-pack)       : plumbing;;
@@ -573,13 +592,13 @@ _git_log ()
 		__gitcomp "
 			--max-count= --max-age= --since= --after=
 			--min-age= --before= --until=
-			--root --not --topo-order --date-order
+			--root --topo-order --date-order --reverse
 			--no-merges
 			--abbrev-commit --abbrev=
 			--relative-date
 			--author= --committer= --grep=
 			--all-match
-			--pretty= --name-status --name-only
+			--pretty= --name-status --name-only --raw
 			--not --all
 			"
 		return
@@ -745,9 +764,11 @@ _git_config ()
 	case "$cur" in
 	--*)
 		__gitcomp "
-			--global --list --replace-all
+			--global --system
+			--list --replace-all
 			--get --get-all --get-regexp
 			--add --unset --unset-all
+			--remove-section --rename-section
 			"
 		return
 		;;
@@ -766,7 +787,10 @@ _git_config ()
 	remote.*.*)
 		local pfx="${cur%.*}."
 		cur="${cur##*.}"
-		__gitcomp "url fetch push" "$pfx" "$cur"
+		__gitcomp "
+			url fetch push skipDefaultUpdate
+			receivepack uploadpack tagopt
+			" "$pfx" "$cur"
 		return
 		;;
 	remote.*)
@@ -816,6 +840,9 @@ _git_config ()
 		format.headers
 		gitcvs.enabled
 		gitcvs.logfile
+		gitcvs.allbinary
+		gitcvs.dbname gitcvs.dbdriver gitcvs.dbuser gitcvs.dvpass
+		gc.packrefs
 		gc.reflogexpire
 		gc.reflogexpireunreachable
 		gc.rerereresolved
@@ -832,9 +859,11 @@ _git_config ()
 		i18n.commitEncoding
 		i18n.logOutputEncoding
 		log.showroot
+		merge.tool
 		merge.summary
 		merge.verbosity
 		pack.window
+		pack.depth
 		pull.octopus
 		pull.twohead
 		repack.useDeltaBaseOffset
@@ -858,19 +887,31 @@ _git_remote ()
 	while [ $c -lt $COMP_CWORD ]; do
 		i="${COMP_WORDS[c]}"
 		case "$i" in
-		add|show|prune) command="$i"; break ;;
+		add|show|prune|update) command="$i"; break ;;
 		esac
 		c=$((++c))
 	done
 
 	if [ $c -eq $COMP_CWORD -a -z "$command" ]; then
-		__gitcomp "add show prune"
+		__gitcomp "add show prune update"
 		return
 	fi
 
 	case "$command" in
 	show|prune)
 		__gitcomp "$(__git_remotes)"
+		;;
+	update)
+		local i c='' IFS=$'\n'
+		for i in $(git --git-dir="$(__gitdir)" config --list); do
+			case "$i" in
+			remotes.*)
+				i="${i#remotes.}"
+				c="$c ${i/=*/}"
+				;;
+			esac
+		done
+		__gitcomp "$c"
 		;;
 	*)
 		COMPREPLY=()
@@ -888,6 +929,26 @@ _git_reset ()
 		;;
 	esac
 	__gitcomp "$(__git_refs)"
+}
+
+_git_shortlog ()
+{
+	local cur="${COMP_WORDS[COMP_CWORD]}"
+	case "$cur" in
+	--*)
+		__gitcomp "
+			--max-count= --max-age= --since= --after=
+			--min-age= --before= --until=
+			--no-merges
+			--author= --committer= --grep=
+			--all-match
+			--not --all
+			--numbered --summary
+			"
+		return
+		;;
+	esac
+	__git_complete_revlist
 }
 
 _git_show ()
@@ -947,7 +1008,6 @@ _git ()
 	commit)      _git_commit ;;
 	config)      _git_config ;;
 	diff)        _git_diff ;;
-	diff-tree)   _git_diff_tree ;;
 	fetch)       _git_fetch ;;
 	format-patch) _git_format_patch ;;
 	gc)          _git_gc ;;
@@ -962,6 +1022,7 @@ _git ()
 	rebase)      _git_rebase ;;
 	remote)      _git_remote ;;
 	reset)       _git_reset ;;
+	shortlog)    _git_shortlog ;;
 	show)        _git_show ;;
 	show-branch) _git_log ;;
 	whatchanged) _git_log ;;
@@ -992,7 +1053,6 @@ complete -o default -o nospace -F _git_cherry git-cherry
 complete -o default -o nospace -F _git_cherry_pick git-cherry-pick
 complete -o default -o nospace -F _git_commit git-commit
 complete -o default -o nospace -F _git_diff git-diff
-complete -o default -o nospace -F _git_diff_tree git-diff-tree
 complete -o default -o nospace -F _git_fetch git-fetch
 complete -o default -o nospace -F _git_format_patch git-format-patch
 complete -o default -o nospace -F _git_gc git-gc
@@ -1008,6 +1068,7 @@ complete -o default -o nospace -F _git_rebase git-rebase
 complete -o default -o nospace -F _git_config git-config
 complete -o default -o nospace -F _git_remote git-remote
 complete -o default -o nospace -F _git_reset git-reset
+complete -o default -o nospace -F _git_shortlog git-shortlog
 complete -o default -o nospace -F _git_show git-show
 complete -o default -o nospace -F _git_log git-show-branch
 complete -o default -o nospace -F _git_log git-whatchanged
@@ -1023,7 +1084,6 @@ complete -o default -o nospace -F _git git.exe
 complete -o default -o nospace -F _git_branch git-branch.exe
 complete -o default -o nospace -F _git_cherry git-cherry.exe
 complete -o default -o nospace -F _git_diff git-diff.exe
-complete -o default -o nospace -F _git_diff_tree git-diff-tree.exe
 complete -o default -o nospace -F _git_format_patch git-format-patch.exe
 complete -o default -o nospace -F _git_log git-log.exe
 complete -o default -o nospace -F _git_ls_tree git-ls-tree.exe
@@ -1031,6 +1091,7 @@ complete -o default -o nospace -F _git_merge_base git-merge-base.exe
 complete -o default -o nospace -F _git_name_rev git-name-rev.exe
 complete -o default -o nospace -F _git_push git-push.exe
 complete -o default -o nospace -F _git_config git-config
+complete -o default -o nospace -F _git_shortlog git-shortlog.exe
 complete -o default -o nospace -F _git_show git-show.exe
 complete -o default -o nospace -F _git_log git-show-branch.exe
 complete -o default -o nospace -F _git_log git-whatchanged.exe

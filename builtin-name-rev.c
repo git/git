@@ -4,6 +4,8 @@
 #include "tag.h"
 #include "refs.h"
 
+#define CUTOFF_DATE_SLOP 86400 /* one day */
+
 static const char name_rev_usage[] =
 	"git-name-rev [--tags | --refs=<pattern>] ( --all | --stdin | committish [committish...] )\n";
 
@@ -216,6 +218,8 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		add_object_array((struct object *)commit, *argv, &revs);
 	}
 
+	if (cutoff)
+		cutoff = cutoff - CUTOFF_DATE_SLOP;
 	for_each_ref(name_ref, &data);
 
 	if (transform_stdin) {
