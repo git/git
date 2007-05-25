@@ -802,9 +802,14 @@ class P4Sync(Command):
         for line in mypopen("git rev-parse --symbolic --remotes"):
             if (not line.startswith("origin/")) or line.endswith("HEAD\n"):
                 continue
+
             headName = line[len("origin/"):-1]
             remoteHead = self.refPrefix + headName
             originHead = "origin/" + headName
+
+            [originPreviousDepotPath, originP4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit(originHead))
+            if len(originPreviousDepotPath) == 0 or len(originP4Change) == 0:
+                continue
 
             update = False
             if not os.path.exists(gitdir + "/" + remoteHead):
@@ -812,9 +817,8 @@ class P4Sync(Command):
                     print "creating %s" % remoteHead
                 update = True
             else:
-                [originPreviousDepotPath, originP4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit(originHead))
                 [p4PreviousDepotPath, p4Change] = extractDepotPathAndChangeFromGitLog(extractLogMessageFromGitCommit(remoteHead))
-                if len(originPreviousDepotPath) > 0 and len(originP4Change) > 0 and len(p4Change) > 0:
+                if len(p4Change) > 0:
                     if originPreviousDepotPath == p4PreviousDepotPath:
                         originP4Change = int(originP4Change)
                         p4Change = int(p4Change)
