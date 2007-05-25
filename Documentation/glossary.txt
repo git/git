@@ -121,6 +121,10 @@ to point at the new commit.
 	`http://en.wikipedia.org/wiki/Ent_(Middle-earth)` for an in-depth
 	explanation. Avoid this term, not to confuse people.
 
+[[def_evil_merge]]evil merge::
+	An evil merge is a <<def_merge,merge>> that introduces changes that
+	do not appear in any <<def_parent,parent>>.
+
 [[def_fast_forward]]fast forward::
 	A fast-forward is a special type of <<def_merge,merge>> where you have a
 	<<def_revision,revision>> and you are "merging" another
