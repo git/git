@@ -195,9 +195,9 @@ class P4Submit(Command):
                 optparse.make_option("--origin", dest="origin"),
                 optparse.make_option("--reset", action="store_true", dest="reset"),
                 optparse.make_option("--log-substitutions", dest="substFile"),
-                optparse.make_option("--noninteractive", action="store_false"),
                 optparse.make_option("--dry-run", action="store_true"),
                 optparse.make_option("--direct", dest="directSubmit", action="store_true"),
+                optparse.make_option("--trust-me-like-a-fool", dest="trustMeLikeAFool", action="store_true"),
         ]
         self.description = "Submit changes from git to the perforce depot."
         self.usage += " [name of git branch to submit into perforce depot]"
@@ -209,6 +209,7 @@ class P4Submit(Command):
         self.firstTime = True
         self.origin = ""
         self.directSubmit = False
+        self.trustMeLikeAFool = False
 
         self.logSubstitutions = {}
         self.logSubstitutions["<enter description here>"] = "%log%"
@@ -348,6 +349,9 @@ class P4Submit(Command):
             separatorLine += "\n"
 
             response = "e"
+            if self.trustMeLikeAFool:
+                response = "y"
+
             firstIteration = True
             while response == "e":
                 if not firstIteration:
