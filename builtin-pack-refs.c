@@ -12,9 +12,11 @@ struct ref_to_prune {
 	char name[FLEX_ARRAY];
 };
 
+#define PACK_REFS_PRUNE	0x0001
+#define PACK_REFS_ALL	0x0002
+
 struct pack_refs_cb_data {
-	int prune;
-	int all;
+	unsigned int flags;
 	struct ref_to_prune *ref_to_prune;
 	FILE *refs_file;
 };
@@ -39,7 +41,7 @@ static int handle_one_ref(const char *path, const unsigned char *sha1,
 	is_tag_ref = !prefixcmp(path, "refs/tags/");
 
 	/* ALWAYS pack refs that were already packed or are tags */
-	if (!cb->all && !is_tag_ref && !(flags & REF_ISPACKED))
+	if (!(cb->flags & PACK_REFS_ALL) && !is_tag_ref && !(flags & REF_ISPACKED))
 		return 0;
 
 	fprintf(cb->refs_file, "%s %s\n", sha1_to_hex(sha1), path);
@@ -53,7 +55,7 @@ static int handle_one_ref(const char *path, const unsigned char *sha1,
 		}
 	}
 
-	if (cb->prune && !do_not_prune(flags)) {
+	if ((cb->flags & PACK_REFS_PRUNE) && !do_not_prune(flags)) {
 		int namelen = strlen(path) + 1;
 		struct ref_to_prune *n = xcalloc(1, sizeof(*n) + namelen);
 		hashcpy(n->sha1, sha1);
@@ -85,33 +87,13 @@ static void prune_refs(struct ref_to_prune *r)
 
 static struct lock_file packed;
 
-int cmd_pack_refs(int argc, const char **argv, const char *prefix)
+static int pack_refs(unsigned int flags)
 {
-	int fd, i;
+	int fd;
 	struct pack_refs_cb_data cbdata;
 
 	memset(&cbdata, 0, sizeof(cbdata));
-
-	cbdata.prune = 1;
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-		if (!strcmp(arg, "--prune")) {
-			cbdata.prune = 1; /* now the default */
-			continue;
-		}
-		if (!strcmp(arg, "--no-prune")) {
-			cbdata.prune = 0;
-			continue;
-		}
-		if (!strcmp(arg, "--all")) {
-			cbdata.all = 1;
-			continue;
-		}
-		/* perhaps other parameters later... */
-		break;
-	}
-	if (i != argc)
-		usage(builtin_pack_refs_usage);
+	cbdata.flags = flags;
 
 	fd = hold_lock_file_for_update(&packed, git_path("packed-refs"), 1);
 	cbdata.refs_file = fdopen(fd, "w");
@@ -123,12 +105,40 @@ int cmd_pack_refs(int argc, const char **argv, const char *prefix)
 	fprintf(cbdata.refs_file, "# pack-refs with: peeled \n");
 
 	for_each_ref(handle_one_ref, &cbdata);
-	fflush(cbdata.refs_file);
-	fsync(fd);
-	fclose(cbdata.refs_file);
+	if (fflush(cbdata.refs_file) || fsync(fd) || fclose(cbdata.refs_file))
+		die("failed to write ref-pack file (%s)", strerror(errno));
 	if (commit_lock_file(&packed) < 0)
 		die("unable to overwrite old ref-pack file (%s)", strerror(errno));
-	if (cbdata.prune)
+	if (cbdata.flags & PACK_REFS_PRUNE)
 		prune_refs(cbdata.ref_to_prune);
 	return 0;
+}
+
+int cmd_pack_refs(int argc, const char **argv, const char *prefix)
+{
+	int i;
+	unsigned int flags;
+
+	flags = PACK_REFS_PRUNE;
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+		if (!strcmp(arg, "--prune")) {
+			flags |= PACK_REFS_PRUNE; /* now the default */
+			continue;
+		}
+		if (!strcmp(arg, "--no-prune")) {
+			flags &= ~PACK_REFS_PRUNE;
+			continue;
+		}
+		if (!strcmp(arg, "--all")) {
+			flags |= PACK_REFS_ALL;
+			continue;
+		}
+		/* perhaps other parameters later... */
+		break;
+	}
+	if (i != argc)
+		usage(builtin_pack_refs_usage);
+
+	return pack_refs(flags);
 }
