@@ -73,12 +73,11 @@ static int verify_packfile(struct packed_git *p,
 }
 
 
-#define MAX_CHAIN 40
+#define MAX_CHAIN 50
 
 static void show_pack_info(struct packed_git *p)
 {
-	uint32_t nr_objects, i, chain_histogram[MAX_CHAIN];
-
+	uint32_t nr_objects, i, chain_histogram[MAX_CHAIN+1];
 	nr_objects = p->num_objects;
 	memset(chain_histogram, 0, sizeof(chain_histogram));
 
@@ -109,22 +108,22 @@ static void show_pack_info(struct packed_git *p)
 			printf("%-6s %lu %"PRIuMAX" %u %s\n",
 			       type, size, (uintmax_t)offset,
 			       delta_chain_length, sha1_to_hex(base_sha1));
-			if (delta_chain_length < MAX_CHAIN)
+			if (delta_chain_length <= MAX_CHAIN)
 				chain_histogram[delta_chain_length]++;
 			else
 				chain_histogram[0]++;
 		}
 	}
 
-	for (i = 0; i < MAX_CHAIN; i++) {
+	for (i = 0; i <= MAX_CHAIN; i++) {
 		if (!chain_histogram[i])
 			continue;
-		printf("chain length %s %d: %d object%s\n",
-		       i ? "=" : ">=",
-		       i ? i : MAX_CHAIN,
-		       chain_histogram[i],
-		       1 < chain_histogram[i] ? "s" : "");
+		printf("chain length = %d: %d object%s\n", i,
+		       chain_histogram[i], chain_histogram[i] > 1 ? "s" : "");
 	}
+	if (chain_histogram[0])
+		printf("chain length > %d: %d object%s\n", MAX_CHAIN,
+		       chain_histogram[0], chain_histogram[0] > 1 ? "s" : "");
 }
 
 int verify_pack(struct packed_git *p, int verbose)
