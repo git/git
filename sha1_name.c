@@ -133,6 +133,7 @@ static int find_unique_short_object(int len, char *canonical,
 	int has_unpacked, has_packed;
 	unsigned char unpacked_sha1[20], packed_sha1[20];
 
+	prepare_alt_odb();
 	has_unpacked = find_short_object_filename(len, canonical, unpacked_sha1);
 	has_packed = find_short_packed_object(len, res, packed_sha1);
 	if (!has_unpacked && !has_packed)
@@ -654,7 +655,6 @@ int get_sha1_with_mode(const char *name, unsigned char *sha1, unsigned *mode)
 	const char *cp;
 
 	*mode = S_IFINVALID;
-	prepare_alt_odb();
 	ret = get_sha1_1(name, namelen, sha1);
 	if (!ret)
 		return ret;
