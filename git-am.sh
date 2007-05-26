@@ -18,7 +18,7 @@ stop_here () {
 
 stop_here_user_resolve () {
     if [ -n "$resolvemsg" ]; then
-	    echo "$resolvemsg"
+	    printf '%s\n' "$resolvemsg"
 	    stop_here $1
     fi
     cmdline=$(basename $0)
@@ -146,7 +146,7 @@ do
 	git_apply_opt="$git_apply_opt $1"; shift ;;
 
 	--resolvemsg=*)
-	resolvemsg=$(echo "$1" | sed -e "s/^--resolvemsg=//"); shift ;;
+	resolvemsg=${1#--resolvemsg=}; shift ;;
 
 	--)
 	shift; break ;;
@@ -331,7 +331,7 @@ do
 		ADD_SIGNOFF=
 	    fi
 	    {
-		echo "$SUBJECT"
+		printf '%s\n' "$SUBJECT"
 		if test -s "$dotest/msg-clean"
 		then
 			echo
@@ -394,7 +394,7 @@ do
 	fi
 
 	echo
-	echo "Applying '$SUBJECT'"
+	printf 'Applying %s\n' "$SUBJECT"
 	echo
 
 	case "$resolved" in

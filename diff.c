@@ -1349,7 +1349,7 @@ void fill_filespec(struct diff_filespec *spec, const unsigned char *sha1,
 }
 
 /*
- * Given a name and sha1 pair, if the dircache tells us the file in
+ * Given a name and sha1 pair, if the index tells us the file in
  * the work tree has that object contents, return true, so that
  * prepare_temp_file() does not have to inflate and extract.
  */

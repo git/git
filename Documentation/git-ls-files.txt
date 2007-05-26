@@ -124,7 +124,7 @@ which case it outputs:
 detailed information on unmerged paths.
 
 For an unmerged path, instead of recording a single mode/SHA1 pair,
-the dircache records up to three such pairs; one from tree O in stage
+the index records up to three such pairs; one from tree O in stage
 1, A in stage 2, and B in stage 3.  This information can be used by
 the user (or the porcelain) to see what should eventually be recorded at the
 path. (see git-read-tree for more information on state)

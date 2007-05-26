@@ -376,12 +376,12 @@ t,)
 			rm -f "$TMP_INDEX"
 		fi || exit
 
-		echo "$commit_only" |
+		printf '%s\n' "$commit_only" |
 		GIT_INDEX_FILE="$TMP_INDEX" \
 		git-update-index --add --remove --stdin &&
 
 		save_index &&
-		echo "$commit_only" |
+		printf '%s\n' "$commit_only" |
 		(
 			GIT_INDEX_FILE="$NEXT_INDEX"
 			export GIT_INDEX_FILE
@@ -432,7 +432,7 @@ fi
 
 if test "$log_message" != ''
 then
-	echo "$log_message"
+	printf '%s\n' "$log_message"
 elif test "$logfile" != ""
 then
 	if test "$logfile" = -
@@ -475,7 +475,7 @@ if test -f "$GIT_DIR/MERGE_HEAD" && test -z "$no_edit"; then
 	echo "#"
 	echo "# It looks like you may be committing a MERGE."
 	echo "# If this is not correct, please remove the file"
-	echo "#	$GIT_DIR/MERGE_HEAD"
+	printf '%s\n' "#	$GIT_DIR/MERGE_HEAD"
 	echo "# and try again"
 	echo "#"
 fi >>"$GIT_DIR"/COMMIT_EDITMSG
