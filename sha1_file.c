@@ -376,11 +376,12 @@ void prepare_alt_odb(void)
 {
 	const char *alt;
 
+	if (alt_odb_tail)
+		return;
+
 	alt = getenv(ALTERNATE_DB_ENVIRONMENT);
 	if (!alt) alt = "";
 
-	if (alt_odb_tail)
-		return;
 	alt_odb_tail = &alt_odb_list;
 	link_alt_odb_entries(alt, alt + strlen(alt), ':', NULL, 0);
 
