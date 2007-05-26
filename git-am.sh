@@ -331,7 +331,7 @@ do
 		ADD_SIGNOFF=
 	    fi
 	    {
-		echo "$SUBJECT"
+		printf '%s\n' "$SUBJECT"
 		if test -s "$dotest/msg-clean"
 		then
 			echo
@@ -394,7 +394,7 @@ do
 	fi
 
 	echo
-	echo "Applying '$SUBJECT'"
+	printf 'Applying %s\n' "$SUBJECT"
 	echo
 
 	case "$resolved" in
