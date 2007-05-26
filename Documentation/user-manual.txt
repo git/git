@@ -872,7 +872,7 @@ Obviously, endless variations are possible; for example, to see all
 commits reachable from some head but not from any tag in the repository:
 
 -------------------------------------------------
-$ gitk ($ git show-ref --heads ) --not  $( git show-ref --tags )
+$ gitk $( git show-ref --heads ) --not  $( git show-ref --tags )
 -------------------------------------------------
 
 (See gitlink:git-rev-parse[1] for explanations of commit-selecting
