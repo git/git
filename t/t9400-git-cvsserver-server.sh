@@ -67,12 +67,41 @@ git
 END AUTH REQUEST
 EOF
 
+cat >login-anonymous <<EOF
+BEGIN VERIFICATION REQUEST
+$SERVERDIR
+anonymous
+
+END VERIFICATION REQUEST
+EOF
+
+cat >login-git <<EOF
+BEGIN VERIFICATION REQUEST
+$SERVERDIR
+git
+
+END VERIFICATION REQUEST
+EOF
+
 test_expect_success 'pserver authentication' \
   'cat request-anonymous | git-cvsserver pserver >log 2>&1 &&
    tail -n1 log | grep -q "^I LOVE YOU$"'
 
 test_expect_success 'pserver authentication failure (non-anonymous user)' \
   'if cat request-git | git-cvsserver pserver >log 2>&1
+   then
+       false
+   else
+       true
+   fi &&
+   tail -n1 log | grep -q "^I HATE YOU$"'
+
+test_expect_success 'pserver authentication (login)' \
+  'cat login-anonymous | git-cvsserver pserver >log 2>&1 &&
+   tail -n1 log | grep -q "^I LOVE YOU$"'
+
+test_expect_success 'pserver authentication failure (login/non-anonymous user)' \
+  'if cat login-git | git-cvsserver pserver >log 2>&1
    then
        false
    else
