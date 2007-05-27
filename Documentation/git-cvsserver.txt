@@ -57,7 +57,17 @@ looks like
 ------
 No special setup is needed for SSH access, other than having GIT tools
 in the PATH. If you have clients that do not accept the CVS_SERVER
-env variable, you can rename git-cvsserver to cvs.
+environment variable, you can rename git-cvsserver to cvs.
+
+Note: Newer cvs versions (>= 1.12.11) also support specifying
+CVS_SERVER directly in CVSROOT like
+
+------
+cvs -d ":ext;CVS_SERVER=git-cvsserver:user@server/path/repo.git" co <HEAD_name>
+------
+This has the advantage that it will be saved in your 'CVS/Root' files and
+you don't need to worry about always setting the correct environment
+variable.
 --
 2. For each repo that you want accessible from CVS you need to edit config in
    the repo and add the following section.
