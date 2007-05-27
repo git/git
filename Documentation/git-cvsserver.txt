@@ -46,11 +46,13 @@ INSTALLATION
    cvspserver stream tcp nowait nobody git-cvsserver pserver
 
 ------
-Note: In some cases, you need to pass the 'pserver' argument twice for
-git-cvsserver to see it. So the line would look like
+Note: Some inetd servers let you specify the name of the executable
+independently of the value of argv[0] (i.e. the name the program assumes
+it was executed with). In this case the correct line in /etc/inetd.conf
+looks like
 
 ------
-   cvspserver stream tcp nowait nobody git-cvsserver pserver pserver
+   cvspserver stream tcp nowait nobody /usr/bin/git-cvsserver git-cvsserver pserver
 
 ------
 No special setup is needed for SSH access, other than having GIT tools
