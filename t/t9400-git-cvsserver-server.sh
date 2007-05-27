@@ -250,6 +250,7 @@ test_expect_success 'cvs update (merge)' \
    git commit -q -m "Merge test (merge)" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
+   sleep 1 && touch merge &&
    GIT_CONFIG="$git_config" cvs -Q update &&
    diff -q merge ../expected'
 
@@ -292,6 +293,7 @@ test_expect_success 'cvs update (merge no-op)' \
     git commit -q -m "Merge test (no-op)" &&
     git push gitcvs.git >/dev/null &&
     cd cvswork &&
+    sleep 1 && touch merge &&
     GIT_CONFIG="$git_config" cvs -Q update &&
     diff -q merge ../merge'
 
