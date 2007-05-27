@@ -86,7 +86,7 @@ write access to the log file and to the database (see
 SSH, the users of course also need write access to the git repository itself.
 
 [[configaccessmethod]]
-All configuration variables can also be overriden for a specific method of
+All configuration variables can also be overridden for a specific method of
 access. Valid method names are "ext" (for SSH access) and "pserver". The
 following example configuration would disable pserver access while still
 allowing access over SSH.
@@ -128,7 +128,7 @@ Database Backend
 
 git-cvsserver uses one database per git head (i.e. CVS module) to
 store information about the repository for faster access. The
-database doesn't contain any persitent data and can be completly
+database doesn't contain any persistent data and can be completely
 regenerated from the git repository at any time. The database
 needs to be updated (i.e. written to) after every commit.
 
