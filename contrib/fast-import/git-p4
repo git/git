@@ -858,8 +858,6 @@ class P4Sync(Command):
                     print "Syncing with origin first by calling git fetch origin"
                 system("git fetch origin")
 
-        createP4HeadRef = False;
-
         if len(self.branch) == 0:
             self.branch = self.refPrefix + "master"
             if gitBranchExists("refs/heads/p4") and self.importIntoRemotes:
@@ -867,7 +865,7 @@ class P4Sync(Command):
                 system("git branch -D p4");
             # create it /after/ importing, when master exists
             if not gitBranchExists(self.refPrefix + "HEAD") and self.importIntoRemotes:
-                createP4HeadRef = True
+                system("git symbolic-ref %sHEAD %s" % (self.refPrefix, self.branch))
 
         if len(args) == 0:
             if self.hasOrigin:
@@ -1116,9 +1114,6 @@ class P4Sync(Command):
             die("fast-import failed: %s" % self.gitError.read())
         self.gitOutput.close()
         self.gitError.close()
-
-        if createP4HeadRef:
-            system("git symbolic-ref %sHEAD %s" % (self.refPrefix, self.branch))
 
         return True
 
