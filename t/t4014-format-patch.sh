@@ -16,16 +16,16 @@ test_expect_success setup '
 
 	for i in 1 2 5 6 A B C 7 8 9 10; do echo "$i"; done >file &&
 	git update-index file &&
-	git commit -m "Side change #1" &&
+	git commit -m "Side changes #1" &&
 
 	for i in D E F; do echo "$i"; done >>file &&
 	git update-index file &&
-	git commit -m "Side change #2" &&
+	git commit -m "Side changes #2" &&
 	git tag C2 &&
 
 	for i in 5 6 1 2 3 A 4 B C 7 8 9 10 D E F; do echo "$i"; done >file &&
 	git update-index file &&
-	git commit -m "Side change #3" &&
+	git commit -m "Side changes #3 with \\n backslash-n in it." &&
 
 	git checkout master &&
 	git diff-tree -p C2 | git apply --index &&
@@ -64,6 +64,25 @@ test_expect_success "format-patch --ignore-if-in-upstream result applies" '
 	git am -3 patch1 &&
 	cnt=`git rev-list master.. | wc -l` &&
 	test $cnt = 2
+'
+
+test_expect_success 'commit did not screw up the log message' '
+
+	git cat-file commit side | grep "^Side .* with .* backslash-n"
+
+'
+
+test_expect_success 'format-patch did not screw up the log message' '
+
+	grep "^Subject: .*Side changes #3 with .* backslash-n" patch0 &&
+	grep "^Subject: .*Side changes #3 with .* backslash-n" patch1
+
+'
+
+test_expect_success 'replay did not screw up the log message' '
+
+	git cat-file commit rebuild-1 | grep "^Side .* with .* backslash-n"
+
 '
 
 test_done

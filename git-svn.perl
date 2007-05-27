@@ -2477,7 +2477,7 @@ sub close_file {
 		$md5->addfile($fh);
 		my $got = $md5->hexdigest;
 		die "Checksum mismatch: $path\n",
-		    "expected: $exp\n    got: $got\n" if ($got ne $exp);
+		    "expected: $exp\n    got: $got\n" if (defined $exp && $got ne $exp);
 		sysseek($fh, 0, 0) or croak $!;
 		if ($fb->{mode_b} == 120000) {
 			sysread($fh, my $buf, 5) == 5 or croak $!;

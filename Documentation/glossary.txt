@@ -10,7 +10,7 @@ GIT Glossary
 	A bare repository is normally an appropriately
 	named <<def_directory,directory>> with a `.git` suffix that does not
 	have a locally checked-out copy of any of the files under
-	<<def_revision,revision>> control. That is, all of the `git`
+	revision control. That is, all of the `git`
 	administrative and control files that would normally be present in the
 	hidden `.git` sub-directory are directly present in the
 	`repository.git` directory instead,
@@ -37,7 +37,7 @@ GIT Glossary
 [[def_chain]]chain::
 	A list of objects, where each <<def_object,object>> in the list contains
 	a reference to its successor (for example, the successor of a
-	<<def_commit,commit>> could be one of its parents).
+	<<def_commit,commit>> could be one of its <<def_parent,parents>>).
 
 [[def_changeset]]changeset::
 	BitKeeper/cvsps speak for "<<def_commit,commit>>". Since git does not
@@ -77,10 +77,10 @@ to point at the new commit.
 
 [[def_commit_object]]commit object::
 	An <<def_object,object>> which contains the information about a
-	particular <<def_revision,revision>>, such as parents, committer,
+	particular <<def_revision,revision>>, such as <<def_parent,parents>>, committer,
 	author, date and the <<def_tree_object,tree object>> which corresponds
 	to the top <<def_directory,directory>> of the stored
-	<<def_revision,revision>>.
+	revision.
 
 [[def_core_git]]core git::
 	Fundamental data structures and utilities of git. Exposes only limited
@@ -101,25 +101,29 @@ to point at the new commit.
 
 [[def_detached_HEAD]]detached HEAD::
 	Normally the <<def_HEAD,HEAD>> stores the name of a
-	<<def_branch,branch>>.  However, git also allows you to check
-	out an arbitrary commit that isn't necessarily the tip of any
+	<<def_branch,branch>>.  However, git also allows you to <<def_checkout,check out>>
+	an arbitrary <<def_commit,commit>> that isn't necessarily the tip of any
 	particular branch.  In this case HEAD is said to be "detached".
 
 [[def_dircache]]dircache::
-	You are *waaaaay* behind.
+	You are *waaaaay* behind. See <<def_index,index>>.
 
 [[def_directory]]directory::
 	The list you get with "ls" :-)
 
 [[def_dirty]]dirty::
 	A <<def_working_tree,working tree>> is said to be "dirty" if
-	it contains modifications which have not been committed to the current
+	it contains modifications which have not been <<def_commit,committed>> to the current
 	<<def_branch,branch>>.
 
 [[def_ent]]ent::
 	Favorite synonym to "<<def_tree-ish,tree-ish>>" by some total geeks. See
 	`http://en.wikipedia.org/wiki/Ent_(Middle-earth)` for an in-depth
 	explanation. Avoid this term, not to confuse people.
+
+[[def_evil_merge]]evil merge::
+	An evil merge is a <<def_merge,merge>> that introduces changes that
+	do not appear in any <<def_parent,parent>>.
 
 [[def_fast_forward]]fast forward::
 	A fast-forward is a special type of <<def_merge,merge>> where you have a
@@ -149,7 +153,7 @@ to point at the new commit.
 [[def_grafts]]grafts::
 	Grafts enables two otherwise different lines of development to be joined
 	together by recording fake ancestry information for commits. This way
-	you can make git pretend the set of parents a <<def_commit,commit>> has
+	you can make git pretend the set of <<def_parent,parents>> a <<def_commit,commit>> has
 	is different from what was recorded when the commit was
 	created. Configured via the `.git/info/grafts` file.
 
@@ -157,13 +161,13 @@ to point at the new commit.
 	In git's context, synonym to <<def_object_name,object name>>.
 
 [[def_head]]head::
-	A named reference to the <<def_commit,commit>> at the tip of a
+	A <<def_ref,named reference>> to the <<def_commit,commit>> at the tip of a
 	<<def_branch,branch>>.  Heads are stored in
 	`$GIT_DIR/refs/heads/`, except when using packed refs. (See
 	gitlink:git-pack-refs[1].)
 
 [[def_HEAD]]HEAD::
-	The current branch.  In more detail: Your <<def_working_tree,
+	The current <<def_branch,branch>>.  In more detail: Your <<def_working_tree,
 	working tree>> is normally derived from the state of the tree
 	referred to by HEAD.  HEAD is a reference to one of the
 	<<def_head,heads>> in your repository, except when using a
@@ -179,15 +183,15 @@ to point at the new commit.
 	checking. Typically, the hooks allow for a command to be pre-verified
 	and potentially aborted, and allow for a post-notification after the
 	operation is done. The hook scripts are found in the
-	`$GIT_DIR/hooks/` <<def_directory,directory>>, and are enabled by simply
+	`$GIT_DIR/hooks/` directory, and are enabled by simply
 	making them executable.
 
 [[def_index]]index::
 	A collection of files with stat information, whose contents are stored
-	as objects. The index is a stored version of your working
-	<<def_tree,tree>>. Truth be told, it can also contain a second, and even
-	a third version of a <<def_working_tree,working tree>>, which are used
-	when merging.
+	as objects. The index is a stored version of your
+	<<def_working_tree,working tree>>. Truth be told, it can also contain a second, and even
+	a third version of a working tree, which are used
+	when <<def_merge,merging>>.
 
 [[def_index_entry]]index entry::
 	The information regarding a particular file, stored in the
@@ -249,16 +253,16 @@ This commit is referred to as a "merge commit", or sometimes just a
 	describing the type of an <<def_object,object>>.
 
 [[def_octopus]]octopus::
-	To <<def_merge,merge>> more than two branches. Also denotes an
+	To <<def_merge,merge>> more than two <<def_branch,branches>>. Also denotes an
 	intelligent predator.
 
 [[def_origin]]origin::
 	The default upstream <<def_repository,repository>>. Most projects have
 	at least one upstream project which they track. By default
 	'origin' is used for that purpose. New upstream updates
-	will be fetched into remote tracking branches named
+	will be fetched into remote <<def_tracking_branch,tracking branches>> named
 	origin/name-of-upstream-branch, which you can see using
-	"git <<def_branch,branch>> -r".
+	"`git branch -r`".
 
 [[def_pack]]pack::
 	A set of objects which have been compressed into one file (to save space
@@ -327,7 +331,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	`$GIT_DIR/refs/`.
 
 [[def_refspec]]refspec::
-	A <<def_refspec,refspec>> is used by <<def_fetch,fetch>> and
+	A "refspec" is used by <<def_fetch,fetch>> and
 	<<def_push,push>> to describe the mapping between remote
 	<<def_ref,ref>> and local ref. They are combined with a colon in
 	the format <src>:<dst>, preceded by an optional plus sign, +.
@@ -340,11 +344,12 @@ This commit is referred to as a "merge commit", or sometimes just a
 	gitlink:git-push[1]
 
 [[def_repository]]repository::
-	A collection of refs together with an
+	A collection of <<def_ref,refs>> together with an
 	<<def_object_database,object database>> containing all objects
 	which are <<def_reachable,reachable>> from the refs, possibly
-	accompanied by meta data from one or more porcelains. A
-	repository can share an object database with other repositories.
+	accompanied by meta data from one or more <<def_porcelain,porcelains>>. A
+	repository can share an object database with other repositories
+	via <<def_alternate_object_database,alternates mechanism>>.
 
 [[def_resolve]]resolve::
 	The action of fixing up manually what a failed automatic
@@ -366,8 +371,8 @@ This commit is referred to as a "merge commit", or sometimes just a
 	Synonym for <<def_object_name,object name>>.
 
 [[def_shallow_repository]]shallow repository::
-	A shallow repository has an incomplete
-	history some of whose commits have parents cauterized away (in other
+	A shallow <<def_repository,repository>> has an incomplete
+	history some of whose <<def_commit,commits>> have <<def_parent,parents>> cauterized away (in other
 	words, git is told to pretend that these commits do not have the
 	parents, even though they are recorded in the <<def_commit_object,commit
 	object>>). This is sometimes useful when you are interested only in the
@@ -385,7 +390,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	command.
 
 [[def_tag]]tag::
-	A <<def_ref,ref>> pointing to a tag or
+	A <<def_ref,ref>> pointing to a <<def_tag_object,tag>> or
 	<<def_commit_object,commit object>>. In contrast to a <<def_head,head>>,
 	a tag is not changed by a <<def_commit,commit>>. Tags (not
 	<<def_tag_object,tag objects>>) are stored in `$GIT_DIR/refs/tags/`. A
@@ -398,8 +403,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	An <<def_object,object>> containing a <<def_ref,ref>> pointing to
 	another object, which can contain a message just like a
 	<<def_commit_object,commit object>>. It can also contain a (PGP)
-	signature, in which case it is called a "signed <<def_tag_object,tag
-	object>>".
+	signature, in which case it is called a "signed tag object".
 
 [[def_topic_branch]]topic branch::
 	A regular git <<def_branch,branch>> that is used by a developer to
@@ -418,7 +422,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 
 [[def_tree]]tree::
 	Either a <<def_working_tree,working tree>>, or a <<def_tree_object,tree
-	object>> together with the dependent blob and tree objects
+	object>> together with the dependent <<def_blob_object,blob>> and tree objects
 	(i.e. a stored representation of a working tree).
 
 [[def_tree_object]]tree object::
