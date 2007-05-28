@@ -24,7 +24,7 @@ def write_pipe(c, str):
     pipe = os.popen(c, 'w')
     val = pipe.write(str)
     if pipe.close():
-        sys.stderr.write('Command failed')
+        sys.stderr.write('Command failed: %s' % c)
         sys.exit(1)
 
     return val
@@ -36,7 +36,7 @@ def read_pipe(c):
     pipe = os.popen(c, 'rb')
     val = pipe.read()
     if pipe.close():
-        sys.stderr.write('Command failed')
+        sys.stderr.write('Command failed: %s' % c)
         sys.exit(1)
 
     return val
@@ -49,7 +49,7 @@ def read_pipe_lines(c):
     pipe = os.popen(c, 'rb')
     val = pipe.readlines()
     if pipe.close():
-        sys.stderr.write('Command failed')
+        sys.stderr.write('Command failed: %s' % c)
         sys.exit(1)
 
     return val
@@ -157,7 +157,7 @@ def gitBranchExists(branch):
     return proc.wait() == 0;
 
 def gitConfig(key):
-    return mypopen("git config %s" % key).read()[:-1]
+    return os.popen("git config %s" % key, "rb").read()[:-1]
 
 class Command:
     def __init__(self):
@@ -861,7 +861,7 @@ class P4Sync(Command):
         if not self.silent:
             print "Creating/updating branch(es) in %s based on origin branch(es)" % self.refPrefix
 
-        for line in mypopen("git rev-parse --symbolic --remotes"):
+        for line in read_pipe_lines("git rev-parse --symbolic --remotes"):
             if (not line.startswith("origin/")) or line.endswith("HEAD\n"):
                 continue
 
