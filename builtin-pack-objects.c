@@ -79,6 +79,7 @@ static int pack_compression_seen;
 
 static unsigned long delta_cache_size = 0;
 static unsigned long max_delta_cache_size = 0;
+static unsigned long cache_max_small_delta_size = 1000;
 
 /*
  * The object names in objects array are hashed with this hashtable,
@@ -1403,6 +1404,9 @@ static int delta_cacheable(struct unpacked *trg, struct unpacked *src,
 	if (max_delta_cache_size && delta_cache_size + delta_size > max_delta_cache_size)
 		return 0;
 
+	if (delta_size < cache_max_small_delta_size)
+		return 1;
+
 	/* cache delta, if objects are large enough compared to delta size */
 	if ((src_size >> 20) + (trg_size >> 21) > (delta_size >> 10))
 		return 1;
@@ -1652,6 +1656,10 @@ static int git_pack_config(const char *k, const char *v)
 	}
 	if (!strcmp(k, "pack.deltacachesize")) {
 		max_delta_cache_size = git_config_int(k, v);
+		return 0;
+	}
+	if (!strcmp(k, "pack.deltacachelimit")) {
+		cache_max_small_delta_size = git_config_int(k, v);
 		return 0;
 	}
 	return git_default_config(k, v);
