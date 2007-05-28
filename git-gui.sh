@@ -1531,6 +1531,8 @@ if {[is_enabled transport]} {
 	menu .mbar.push
 	.mbar.push add command -label {Push...} \
 		-command do_push_anywhere
+	.mbar.push add command -label {Delete...} \
+		-command remote_branch_delete::dialog
 }
 
 if {[is_MacOSX]} {
