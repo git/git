@@ -52,7 +52,7 @@ proc save_config {} {
 }
 
 proc do_about {} {
-	global appvers copyright
+	global appvers copyright oguilib
 	global tcl_patchLevel tk_patchLevel
 
 	set w .about_dialog
@@ -91,6 +91,10 @@ $copyright" \
 		append v ", Tk version $tk_patchLevel"
 	}
 
+	set d {}
+	append d "git exec dir: [gitexec]\n"
+	append d "git-gui lib: $oguilib"
+
 	label $w.vers \
 		-text $v \
 		-padx 5 -pady 5 \
@@ -99,6 +103,15 @@ $copyright" \
 		-borderwidth 1 \
 		-relief solid
 	pack $w.vers -side top -fill x -padx 5 -pady 5
+
+	label $w.dirs \
+		-text $d \
+		-padx 5 -pady 5 \
+		-justify left \
+		-anchor w \
+		-borderwidth 1 \
+		-relief solid
+	pack $w.dirs -side top -fill x -padx 5 -pady 5
 
 	menu $w.ctxm -tearoff 0
 	$w.ctxm add command \

@@ -59,7 +59,7 @@ if {$idx ne {}} {
 } else {
 	set auto_path [concat [list $oguilib] $auto_path]
 }
-unset -nocomplain oguilib oguirel idx fd
+unset -nocomplain oguirel idx fd
 
 if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
 	unset _verbose
