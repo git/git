@@ -261,7 +261,8 @@ int cmd_mailsplit(int argc, const char **argv, const char *prefix)
 				error("cannot split patches from stdin");
 				return 1;
 			}
-			num += ret;
+			num += (ret - nr);
+			nr = ret;
 			continue;
 		}
 
@@ -279,7 +280,8 @@ int cmd_mailsplit(int argc, const char **argv, const char *prefix)
 			error("cannot split patches from %s", arg);
 			return 1;
 		}
-		num += ret;
+		num += (ret - nr);
+		nr = ret;
 	}
 
 	printf("%d\n", num);
