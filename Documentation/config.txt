@@ -567,6 +567,11 @@ pack.compression::
 	slowest.  If not set,  defaults to core.compression.  If that is
 	not set,  defaults to -1.
 
+pack.deltaCacheSize::
+	The maxium memory in bytes used for caching deltas in
+	gitlink:git-pack-objects[1].
+	A value of 0 means no limit. Defaults to 0.
+
 pull.octopus::
 	The default merge strategy to use when pulling multiple branches
 	at once.
