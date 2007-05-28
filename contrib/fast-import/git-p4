@@ -846,8 +846,8 @@ class P4Sync(Command):
             cmdline += " --branches"
 
         for line in read_pipe_lines(cmdline):
-            lie = line.strip()
-            if self.importIntoRemotes and ((not line.startswith("p4/")) or line == "p4/HEAD\n"):
+            line = line.strip()
+            if self.importIntoRemotes and ((not line.startswith("p4/")) or line == "p4/HEAD"):
                 continue
 
             if self.importIntoRemotes:
