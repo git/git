@@ -5,9 +5,19 @@ proc fetch_from {remote} {
 	set w [console::new \
 		"fetch $remote" \
 		"Fetching new changes from $remote"]
-	set cmd [list git fetch]
-	lappend cmd $remote
-	console::exec $w $cmd
+	set cmds [list]
+	lappend cmds [list exec git fetch $remote]
+	if {[is_config_true gui.pruneduringfetch]} {
+		lappend cmds [list exec git remote prune $remote]
+	}
+	console::chain $w $cmds
+}
+
+proc prune_from {remote} {
+	set w [console::new \
+		"remote prune $remote" \
+		"Pruning tracking branches deleted from $remote"]
+	console::exec $w [list git remote prune $remote]
 }
 
 proc push_to {remote} {

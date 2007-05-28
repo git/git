@@ -95,6 +95,7 @@ proc populate_fetch_menu {} {
 	global all_remotes repo_config
 
 	set m .mbar.fetch
+	set prune_list [list]
 	foreach r $all_remotes {
 		set enable 0
 		if {![catch {set a $repo_config(remote.$r.url)}]} {
@@ -115,10 +116,20 @@ proc populate_fetch_menu {} {
 		}
 
 		if {$enable} {
+			lappend prune_list $r
 			$m add command \
 				-label "Fetch from $r..." \
 				-command [list fetch_from $r]
 		}
+	}
+
+	if {$prune_list ne {}} {
+		$m add separator
+	}
+	foreach r $prune_list {
+		$m add command \
+			-label "Prune from $r..." \
+			-command [list prune_from $r]
 	}
 }
 
