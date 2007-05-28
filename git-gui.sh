@@ -1221,6 +1221,10 @@ foreach class {Button Checkbutton Entry Label
 }
 unset class
 
+if {[is_Windows] || [is_MacOSX]} {
+	option add *Menu.tearOff 0
+}
+
 if {[is_MacOSX]} {
 	set M1B M1
 	set M1T Cmd
