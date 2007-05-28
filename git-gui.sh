@@ -200,6 +200,15 @@ proc is_config_true {name} {
 	}
 }
 
+proc get_config {name} {
+	global repo_config
+	if {[catch {set v $repo_config($name)}]} {
+		return {}
+	} else {
+		return $v
+	}
+}
+
 proc load_config {include_global} {
 	global repo_config global_config default_config
 
@@ -1417,6 +1426,11 @@ if {[is_enabled branch]} {
 	.mbar.branch add command -label {Create...} \
 		-command do_create_branch \
 		-accelerator $M1T-N
+	lappend disable_on_lock [list .mbar.branch entryconf \
+		[.mbar.branch index last] -state]
+
+	.mbar.branch add command -label {Rename...} \
+		-command branch_rename::dialog
 	lappend disable_on_lock [list .mbar.branch entryconf \
 		[.mbar.branch index last] -state]
 
