@@ -184,6 +184,7 @@ proc do_options {} {
 
 		{b merge.summary {Summarize Merge Commits}}
 		{i-1..5 merge.verbosity {Merge Verbosity}}
+		{b merge.diffstat {Show Diffstat After Merge}}
 
 		{b gui.trustmtime  {Trust File Modification Timestamps}}
 		{b gui.pruneduringfetch {Prune Tracking Branches During Fetch}}

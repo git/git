@@ -1262,6 +1262,7 @@ proc apply_config {} {
 	}
 }
 
+set default_config(merge.diffstat) true
 set default_config(merge.summary) false
 set default_config(merge.verbosity) 2
 set default_config(user.name) {}
