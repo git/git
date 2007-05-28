@@ -22,6 +22,24 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA}
 
 ######################################################################
 ##
+## enable verbose loading?
+
+if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
+	unset _verbose
+	rename auto_load real__auto_load
+	proc auto_load {name args} {
+		puts stderr "auto_load $name"
+		return [uplevel 1 real__auto_load $name $args]
+	}
+	rename source real__source
+	proc source {name} {
+		puts stderr "source    $name"
+		uplevel 1 real__source $name
+	}
+}
+
+######################################################################
+##
 ## configure our library
 
 set oguilib {@@GITGUI_LIBDIR@@}
@@ -60,20 +78,6 @@ if {$idx ne {}} {
 	set auto_path [concat [list $oguilib] $auto_path]
 }
 unset -nocomplain oguirel idx fd
-
-if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
-	unset _verbose
-	rename auto_load real__auto_load
-	proc auto_load {name args} {
-		puts stderr "auto_load $name"
-		return [uplevel 1 real__auto_load $name $args]
-	}
-	rename source real__source
-	proc source {name} {
-		puts stderr "source    $name"
-		uplevel 1 real__source $name
-	}
-}
 
 ######################################################################
 ##
