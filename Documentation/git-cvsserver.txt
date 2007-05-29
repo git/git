@@ -46,16 +46,28 @@ INSTALLATION
    cvspserver stream tcp nowait nobody git-cvsserver pserver
 
 ------
-Note: In some cases, you need to pass the 'pserver' argument twice for
-git-cvsserver to see it. So the line would look like
+Note: Some inetd servers let you specify the name of the executable
+independently of the value of argv[0] (i.e. the name the program assumes
+it was executed with). In this case the correct line in /etc/inetd.conf
+looks like
 
 ------
-   cvspserver stream tcp nowait nobody git-cvsserver pserver pserver
+   cvspserver stream tcp nowait nobody /usr/bin/git-cvsserver git-cvsserver pserver
 
 ------
 No special setup is needed for SSH access, other than having GIT tools
 in the PATH. If you have clients that do not accept the CVS_SERVER
-env variable, you can rename git-cvsserver to cvs.
+environment variable, you can rename git-cvsserver to cvs.
+
+Note: Newer cvs versions (>= 1.12.11) also support specifying
+CVS_SERVER directly in CVSROOT like
+
+------
+cvs -d ":ext;CVS_SERVER=git-cvsserver:user@server/path/repo.git" co <HEAD_name>
+------
+This has the advantage that it will be saved in your 'CVS/Root' files and
+you don't need to worry about always setting the correct environment
+variable.
 --
 2. For each repo that you want accessible from CVS you need to edit config in
    the repo and add the following section.
@@ -74,7 +86,7 @@ write access to the log file and to the database (see
 SSH, the users of course also need write access to the git repository itself.
 
 [[configaccessmethod]]
-All configuration variables can also be overriden for a specific method of
+All configuration variables can also be overridden for a specific method of
 access. Valid method names are "ext" (for SSH access) and "pserver". The
 following example configuration would disable pserver access while still
 allowing access over SSH.
@@ -116,7 +128,7 @@ Database Backend
 
 git-cvsserver uses one database per git head (i.e. CVS module) to
 store information about the repository for faster access. The
-database doesn't contain any persitent data and can be completly
+database doesn't contain any persistent data and can be completely
 regenerated from the git repository at any time. The database
 needs to be updated (i.e. written to) after every commit.
 

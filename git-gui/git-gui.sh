@@ -25,7 +25,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA}
 ## configure our library
 
 set oguilib {@@GITGUI_LIBDIR@@}
-if {[string match @@* $oguilib]} {
+set oguirel {@@GITGUI_RELATIVE@@}
+if {$oguirel eq {1}} {
+	set oguilib [file dirname [file dirname [file normalize $argv0]]]
+	set oguilib [file join $oguilib share git-gui lib]
+} elseif {[string match @@* $oguirel]} {
 	set oguilib [file join [file dirname [file normalize $argv0]] lib]
 }
 set idx [file join $oguilib tclIndex]
@@ -55,7 +59,7 @@ if {$idx ne {}} {
 } else {
 	set auto_path [concat [list $oguilib] $auto_path]
 }
-unset -nocomplain fd idx
+unset -nocomplain oguilib oguirel idx fd
 
 if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
 	unset _verbose
@@ -1206,15 +1210,12 @@ foreach class {Button Checkbutton Entry Label
 }
 unset class
 
-if {[is_Windows]} {
-	set M1B Control
-	set M1T Ctrl
-} elseif {[is_MacOSX]} {
+if {[is_MacOSX]} {
 	set M1B M1
 	set M1T Cmd
 } else {
-	set M1B M1
-	set M1T M1
+	set M1B Control
+	set M1T Ctrl
 }
 
 proc apply_config {} {
