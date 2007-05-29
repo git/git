@@ -22,7 +22,7 @@ ifndef gitexecdir
 endif
 
 ifndef sharedir
-	sharedir := $(dir $(gitexecdir))/share
+	sharedir := $(dir $(gitexecdir))share
 endif
 
 ifndef INSTALL
@@ -53,12 +53,19 @@ TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
 libdir   ?= $(sharedir)/git-gui/lib
 libdir_SQ = $(subst ','\'',$(libdir))
 
+exedir    = $(dir $(gitexecdir))share/git-gui/lib
+exedir_SQ = $(subst ','\'',$(exedir))
+
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	$(QUIET_GEN)rm -f $@ $@+ && \
+	if test '$(exedir_SQ)' = '$(libdir_SQ)'; then \
+		GITGUI_RELATIVE=1; \
+	fi && \
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 		-e 's|^exec wish "$$0"|exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' \
 		-e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
-		-e 's|@@GITGUI_LIBDIR@@|$(libdir_SQ)|' \
+		-e 's|@@GITGUI_RELATIVE@@|'$$GITGUI_RELATIVE'|' \
+		-e $$GITGUI_RELATIVE's|@@GITGUI_LIBDIR@@|$(libdir_SQ)|' \
 		$@.sh >$@+ && \
 	chmod +x $@+ && \
 	mv $@+ $@
@@ -88,6 +95,7 @@ TRACK_VARS = \
 	$(subst ','\'',SHELL_PATH='$(SHELL_PATH_SQ)') \
 	$(subst ','\'',TCL_PATH='$(TCL_PATH_SQ)') \
 	$(subst ','\'',TCLTK_PATH='$(TCLTK_PATH_SQ)') \
+	$(subst ','\'',gitexecdir='$(gitexecdir_SQ)') \
 	$(subst ','\'',libdir='$(libdir_SQ)') \
 #end TRACK_VARS
 
