@@ -1,3 +1,7 @@
+--summary::
+	Show a diffstat at the end of the merge. The diffstat is also
+	controlled by the configuration option merge.diffstat.
+
 -n, \--no-summary::
 	Do not show diffstat at the end of the merge.
 
