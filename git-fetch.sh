@@ -61,7 +61,7 @@ do
 		quiet=--quiet
 		;;
 	-v|--verbose)
-		verbose=Yes
+		verbose="$verbose"Yes
 		;;
 	-k|--k|--ke|--kee|--keep)
 		keep='-k -k'
@@ -201,8 +201,14 @@ fetch_all_at_once () {
 			echo "$ls_remote_result" | \
 				git-fetch--tool pick-rref "$rref" "-"
 		else
+			flags=
+			case $verbose in
+			YesYes*)
+			    flags="-v"
+			    ;;
+			esac
 			git-fetch-pack --thin $exec $keep $shallow_depth \
-				$quiet $no_progress "$remote" $rref ||
+				$quiet $no_progress $flags "$remote" $rref ||
 			echo failed "$remote"
 		fi
 	fi
