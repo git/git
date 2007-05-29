@@ -2472,12 +2472,16 @@ sub close_file {
 	my $hash;
 	my $path = $self->git_path($fb->{path});
 	if (my $fh = $fb->{fh}) {
-		seek($fh, 0, 0) or croak $!;
-		my $md5 = Digest::MD5->new;
-		$md5->addfile($fh);
-		my $got = $md5->hexdigest;
-		die "Checksum mismatch: $path\n",
-		    "expected: $exp\n    got: $got\n" if (defined $exp && $got ne $exp);
+		if (defined $exp) {
+			seek($fh, 0, 0) or croak $!;
+			my $md5 = Digest::MD5->new;
+			$md5->addfile($fh);
+			my $got = $md5->hexdigest;
+			if ($got ne $exp) {
+				die "Checksum mismatch: $path\n",
+				    "expected: $exp\n    got: $got\n";
+			}
+		}
 		sysseek($fh, 0, 0) or croak $!;
 		if ($fb->{mode_b} == 120000) {
 			sysread($fh, my $buf, 5) == 5 or croak $!;
