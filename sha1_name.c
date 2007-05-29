@@ -76,8 +76,11 @@ static int find_short_packed_object(int len, const unsigned char *match, unsigne
 
 	prepare_packed_git();
 	for (p = packed_git; p && found < 2; p = p->next) {
-		uint32_t num = p->num_objects;
-		uint32_t first = 0, last = num;
+		uint32_t num, last;
+		uint32_t first = 0;
+		open_pack_index(p);
+		num = p->num_objects;
+		last = num;
 		while (first < last) {
 			uint32_t mid = (first + last) / 2;
 			const unsigned char *now;
