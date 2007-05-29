@@ -9,6 +9,7 @@
 #include "diff.h"
 #include "revision.h"
 #include "exec_cmd.h"
+#include "remote.h"
 
 #include <expat.h>
 

@@ -603,15 +603,20 @@ int get_ref_sha1(const char *ref, unsigned char *sha1)
 
 static inline int bad_ref_char(int ch)
 {
-	return (((unsigned) ch) <= ' ' ||
-		ch == '~' || ch == '^' || ch == ':' ||
-		/* 2.13 Pattern Matching Notation */
-		ch == '?' || ch == '*' || ch == '[');
+	if (((unsigned) ch) <= ' ' ||
+	    ch == '~' || ch == '^' || ch == ':')
+		return 1;
+	/* 2.13 Pattern Matching Notation */
+	if (ch == '?' || ch == '[') /* Unsupported */
+		return 1;
+	if (ch == '*') /* Supported at the end */
+		return 2;
+	return 0;
 }
 
 int check_ref_format(const char *ref)
 {
-	int ch, level;
+	int ch, level, bad_type;
 	const char *cp = ref;
 
 	level = 0;
@@ -622,13 +627,19 @@ int check_ref_format(const char *ref)
 			return -1; /* should not end with slashes */
 
 		/* we are at the beginning of the path component */
-		if (ch == '.' || bad_ref_char(ch))
+		if (ch == '.')
 			return -1;
+		bad_type = bad_ref_char(ch);
+		if (bad_type) {
+			return (bad_type == 2 && !*cp) ? -3 : -1;
+		}
 
 		/* scan the rest of the path component */
 		while ((ch = *cp++) != 0) {
-			if (bad_ref_char(ch))
-				return -1;
+			bad_type = bad_ref_char(ch);
+			if (bad_type) {
+				return (bad_type == 2 && !*cp) ? -3 : -1;
+			}
 			if (ch == '/')
 				break;
 			if (ch == '.' && *cp == '.')
