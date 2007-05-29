@@ -235,7 +235,7 @@ endif
 
 # ... and all the rest that could be moved out of bindir to gitexecdir
 PROGRAMS = \
-	git-convert-objects$X git-fetch-pack$X git-fsck$X \
+	git-convert-objects$X git-fetch-pack$X \
 	git-hash-object$X git-index-pack$X git-local-fetch$X \
 	git-fast-import$X \
 	git-merge-base$X \
@@ -246,7 +246,7 @@ PROGRAMS = \
 	git-show-index$X git-ssh-fetch$X \
 	git-ssh-upload$X git-unpack-file$X \
 	git-update-server-info$X \
-	git-upload-pack$X git-verify-pack$X \
+	git-upload-pack$X \
 	git-pack-redundant$X git-var$X \
 	git-merge-tree$X git-imap-send$X \
 	git-merge-recursive$X \
