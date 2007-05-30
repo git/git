@@ -201,12 +201,14 @@ proc do_create_branch {} {
 	pack $w.desc -anchor nw -fill x -pady 5 -padx 5
 
 	labelframe $w.from -text {Starting Revision}
-	radiobutton $w.from.head_r \
-		-text {Local Branch:} \
-		-value head \
-		-variable create_branch_revtype
-	eval tk_optionMenu $w.from.head_m create_branch_head $all_heads
-	grid $w.from.head_r $w.from.head_m -sticky w
+	if {$all_heads ne {}} {
+		radiobutton $w.from.head_r \
+			-text {Local Branch:} \
+			-value head \
+			-variable create_branch_revtype
+		eval tk_optionMenu $w.from.head_m create_branch_head $all_heads
+		grid $w.from.head_r $w.from.head_m -sticky w
+	}
 	set all_trackings [all_tracking_branches]
 	if {$all_trackings ne {}} {
 		set create_branch_trackinghead [lindex $all_trackings 0]
