@@ -942,7 +942,7 @@ endif
 
 ### Testing rules
 
-TEST_PROGRAMS = test-chmtime$X test-genrandom$X
+TEST_PROGRAMS = test-chmtime$X test-genrandom$X test-date$X test-delta$X test-sha1$X test-match-trees$X
 
 all:: $(TEST_PROGRAMS)
 
@@ -955,26 +955,12 @@ export NO_SVN_TESTS
 test: all
 	$(MAKE) -C t/ all
 
-test-date$X: test-date.c date.o ctype.o
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) test-date.c date.o ctype.o
+test-date$X: date.o ctype.o
 
-test-delta$X: test-delta.o diff-delta.o patch-delta.o $(GITLIBS)
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
+test-delta$X: diff-delta.o patch-delta.o
 
-test-dump-cache-tree$X: dump-cache-tree.o $(GITLIBS)
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
-
-test-sha1$X: test-sha1.o $(GITLIBS)
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
-
-test-match-trees$X: test-match-trees.o $(GITLIBS)
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
-
-test-chmtime$X: test-chmtime.c
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $<
-
-test-genrandom$X: test-genrandom.c
-	$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $<
+test-%$X: test-%.o $(GITLIBS)
+	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
 check-sha1:: test-sha1$X
 	./test-sha1.sh
