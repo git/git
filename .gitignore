@@ -159,7 +159,7 @@ common-cmds.h
 *.deb
 git-core.spec
 *.exe
-*.[ao]
+*.[aos]
 *.py[co]
 config.mak
 autom4te.cache
