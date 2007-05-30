@@ -531,7 +531,7 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 	return 0;
 }
 
-int open_pack_index (struct packed_git *p)
+int open_pack_index(struct packed_git *p)
 {
 	char *idx_name;
 	int ret;
