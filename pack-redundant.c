@@ -550,7 +550,7 @@ static struct pack_list * add_pack(struct packed_git *p)
 	l.pack = p;
 	llist_init(&l.all_objects);
 
-	if (!p->index_data && open_pack_index(p))
+	if (open_pack_index(p))
 		return NULL;
 
 	base = p->index_data;
