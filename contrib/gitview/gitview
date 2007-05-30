@@ -263,6 +263,9 @@ class Commit(object):
 	""" This represent a commit object obtained after parsing the git-rev-list
 	output """
 
+	__slots__ = ['children_sha1', 'message', 'author', 'date', 'committer',
+				 'commit_date', 'commit_sha1', 'parent_sha1']
+
 	children_sha1 = {}
 
 	def __init__(self, commit_lines):
