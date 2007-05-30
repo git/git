@@ -259,7 +259,7 @@ class CellRendererGraph(gtk.GenericCellRenderer):
 				self.set_colour(ctx, colour, 0.0, 0.5)
 			ctx.show_text(name)
 
-class Commit:
+class Commit(object):
 	""" This represent a commit object obtained after parsing the git-rev-list
 	output """
 
@@ -339,7 +339,7 @@ class Commit:
 		fp.close()
 		return diff
 
-class AnnotateWindow:
+class AnnotateWindow(object):
 	"""Annotate window.
 	This object represents and manages a single window containing the
 	annotate information of the file
@@ -519,7 +519,7 @@ class AnnotateWindow:
 		self.io_watch_tag = gobject.io_add_watch(fp, gobject.IO_IN, self.data_ready)
 
 
-class DiffWindow:
+class DiffWindow(object):
 	"""Diff window.
 	This object represents and manages a single window containing the
 	differences between two revisions on a branch.
@@ -674,7 +674,7 @@ class DiffWindow:
 			fp.close()
 		dialog.destroy()
 
-class GitView:
+class GitView(object):
 	""" This is the main class
 	"""
 	version = "0.9"
