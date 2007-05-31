@@ -33,7 +33,7 @@ const unsigned char null_sha1[20];
 
 static unsigned int sha1_file_open_flag = O_NOATIME;
 
-signed char hexval_table[256] = {
+const signed char hexval_table[256] = {
 	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 00-07 */
 	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 08-0f */
 	 -1, -1, -1, -1, -1, -1, -1, -1,		/* 10-17 */

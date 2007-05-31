@@ -359,8 +359,8 @@ extern int legacy_loose_object(unsigned char *);
 extern int has_pack_file(const unsigned char *sha1);
 extern int has_pack_index(const unsigned char *sha1);
 
-extern signed char hexval_table[256];
-static inline unsigned int hexval(unsigned int c)
+extern const signed char hexval_table[256];
+static inline unsigned int hexval(unsigned char c)
 {
 	return hexval_table[c];
 }
