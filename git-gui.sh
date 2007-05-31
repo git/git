@@ -262,6 +262,17 @@ proc git {args} {
 	return [eval exec git $args]
 }
 
+proc current-branch {} {
+	set ref {}
+	set fd [open [gitdir HEAD] r]
+	if {[gets $fd ref] <16
+	 || ![regsub {^ref: refs/heads/} $ref {} ref]} {
+		set ref {}
+	}
+	close $fd
+	return $ref
+}
+
 auto_load tk_optionMenu
 rename tk_optionMenu real__tkOptionMenu
 proc tk_optionMenu {w varName args} {
@@ -410,15 +421,7 @@ proc repository_state {ctvar hdvar mhvar} {
 
 	set mh [list]
 
-	if {[catch {set current_branch [git symbolic-ref HEAD]}]} {
-		set current_branch {}
-	} else {
-		regsub ^refs/((heads|tags|remotes)/)? \
-			$current_branch \
-			{} \
-			current_branch
-	}
-
+	set current_branch [current-branch]
 	if {[catch {set hd [git rev-parse --verify HEAD]}]} {
 		set hd {}
 		set ct initial
@@ -1651,14 +1654,8 @@ switch -- $subcommand {
 browser {
 	set subcommand_args {rev?}
 	switch [llength $argv] {
-	0 {
-		set current_branch [git symbolic-ref HEAD]
-		regsub ^refs/((heads|tags|remotes)/)? \
-			$current_branch {} current_branch
-	}
-	1 {
-		set current_branch [lindex $argv 0]
-	}
+	0 { set current_branch [current-branch] }
+	1 { set current_branch [lindex $argv 0] }
 	default usage
 	}
 	browser::new $current_branch
@@ -1691,9 +1688,7 @@ blame {
 	unset is_path
 
 	if {$head eq {}} {
-		set current_branch [git symbolic-ref HEAD]
-		regsub ^refs/((heads|tags|remotes)/)? \
-			$current_branch {} current_branch
+		set current_branch [current-branch]
 	} else {
 		set current_branch $head
 	}
