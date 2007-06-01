@@ -31,6 +31,11 @@ field r_orig_line   ; # original line number
 field r_final_line  ; # final line number
 field r_line_count  ; # lines in this region
 
+field tooltip_wm     {} ; # Current tooltip toplevel, if open
+field tooltip_timer  {} ; # Current timer event for our tooltip
+field tooltip_commit {} ; # Commit in tooltip
+field tooltip_text   {} ; # Text in current tooltip
+
 variable active_color #98e1a0
 variable group_colors {
 	#cbcbcb
@@ -159,8 +164,16 @@ constructor new {i_commit i_path} {
 			$w_line \
 			$w_file \
 			] yview $w.out.sby]
-		bind $i <Button-1> "[cb _click $i @%x,%y]; focus $i"
+		bind $i <Button-1>   "
+			[cb _hide_tooltip]
+			[cb _click $i @%x,%y]
+			focus $i
+		"
+		bind $i <Any-Motion>  [cb _show_tooltip $i @%x,%y]
+		bind $i <Any-Enter>   [cb _hide_tooltip]
+		bind $i <Any-Leave>   [cb _hide_tooltip]
 		bind_button3 $i "
+			[cb _hide_tooltip]
 			set cursorX %x
 			set cursorY %y
 			set cursorW %W
@@ -447,6 +460,10 @@ $msg"
 
 	set highlight_line $lno
 	set highlight_commit $cmit
+
+	if {$highlight_commit eq $tooltip_commit} {
+		_hide_tooltip $this
+	}
 }
 
 method _copycommit {} {
@@ -458,6 +475,113 @@ method _copycommit {} {
 			-format STRING \
 			-type STRING \
 			-- $commit
+	}
+}
+
+method _show_tooltip {cur_w pos} {
+	set lno [lindex [split [$cur_w index $pos] .] 0]
+	if {[catch {set cmit $line_commit($lno)}]} {
+		_hide_tooltip $this
+		return
+	}
+
+	if {$cmit eq $highlight_commit} {
+		_hide_tooltip $this
+		return
+	}
+
+	if {$cmit eq $tooltip_commit} {
+		_position_tooltip $this
+	} elseif {$tooltip_wm ne {}} {
+		_open_tooltip $this $cur_w
+	} elseif {$tooltip_timer eq {}} {
+		set tooltip_timer [after 1000 [cb _open_tooltip $cur_w]]
+	}
+}
+
+method _open_tooltip {cur_w} {
+	set tooltip_timer {}
+	set pos_x [winfo pointerx $cur_w]
+	set pos_y [winfo pointery $cur_w]
+	if {[winfo containing $pos_x $pos_y] ne $cur_w} {
+		_hide_tooltip $this
+		return
+	}
+
+	set pos @[join [list \
+		[expr {$pos_x - [winfo rootx $cur_w]}] \
+		[expr {$pos_y - [winfo rooty $cur_w]}]] ,]
+	set lno [lindex [split [$cur_w index $pos] .] 0]
+	set cmit $line_commit($lno)
+
+	set author_name {}
+	set author_email {}
+	set author_time {}
+	catch {set author_name $header($cmit,author)}
+	catch {set author_email $header($cmit,author-mail)}
+	catch {set author_time [clock format \
+		$header($cmit,author-time) \
+		-format {%Y-%m-%d %H:%M:%S}
+	]}
+
+	set committer_name {}
+	set committer_email {}
+	set committer_time {}
+	catch {set committer_name $header($cmit,committer)}
+	catch {set committer_email $header($cmit,committer-mail)}
+	catch {set committer_time [clock format \
+		$header($cmit,committer-time) \
+		-format {%Y-%m-%d %H:%M:%S}
+	]}
+
+	set summary {}
+	catch {set summary $header($cmit,summary)}
+
+	set tooltip_commit $cmit
+	set tooltip_text "commit $cmit
+$author_name $author_email  $author_time
+$summary"
+
+	if {$tooltip_wm ne "$cur_w.tooltip"} {
+		_hide_tooltip $this
+
+		set tooltip_wm [toplevel $cur_w.tooltip -borderwidth 1]
+		wm overrideredirect $tooltip_wm 1
+		wm transient $tooltip_wm [winfo toplevel $cur_w]
+		pack [label $tooltip_wm.label \
+			-background lightyellow \
+			-foreground black \
+			-textvariable @tooltip_text \
+			-justify left]
+	}
+	_position_tooltip $this
+}
+
+method _position_tooltip {} {
+	set req_w [winfo reqwidth  $tooltip_wm.label]
+	set req_h [winfo reqheight $tooltip_wm.label]
+	set pos_x [expr {[winfo pointerx .] +  5}]
+	set pos_y [expr {[winfo pointery .] + 10}]
+
+	set g "${req_w}x${req_h}"
+	if {$pos_x >= 0} {append g +}
+	append g $pos_x
+	if {$pos_y >= 0} {append g +}
+	append g $pos_y
+
+	wm geometry $tooltip_wm $g
+	raise $tooltip_wm
+}
+
+method _hide_tooltip {} {
+	if {$tooltip_wm ne {}} {
+		destroy $tooltip_wm
+		set tooltip_wm {}
+		set tooltip_commit {}
+	}
+	if {$tooltip_timer ne {}} {
+		after cancel $tooltip_timer
+		set tooltip_timer {}
 	}
 }
 
