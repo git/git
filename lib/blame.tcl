@@ -43,6 +43,7 @@ variable group_colors {
 }
 
 constructor new {i_commit i_path} {
+	variable active_color
 	global cursor_ptr
 
 	set commit $i_commit
@@ -139,6 +140,14 @@ constructor new {i_commit i_path} {
 		-xscrollcommand [list $w.cm.sbx set] \
 		-yscrollcommand [list $w.cm.sby set] \
 		-font font_diff
+	$w_cmit tag conf header_key \
+		-tabs {3c} \
+		-background $active_color \
+		-font font_uibold
+	$w_cmit tag conf header_val \
+		-background $active_color \
+		-font font_ui
+	$w_cmit tag raise sel
 	scrollbar $w.cm.sbx -orient h -command [list $w_cmit xview]
 	scrollbar $w.cm.sby -orient v -command [list $w_cmit yview]
 	pack $w.cm.sby -side right -fill y
@@ -449,12 +458,21 @@ method _showcommit {lno} {
 			set header($cmit,message) $msg
 		}
 
-		$w_cmit insert end "commit $cmit
-Author: $author_name $author_email  $author_time
-Committer: $committer_name $committer_email  $committer_time
-Original File: [escape_path $line_file($lno)]
+		$w_cmit insert end "commit $cmit\n" header_key
+		$w_cmit insert end "Author:\t" header_key
+		$w_cmit insert end "$author_name $author_email" header_val
+		$w_cmit insert end "$author_time\n" header_val
 
-$msg"
+		$w_cmit insert end "Committer:\t" header_key
+		$w_cmit insert end "$committer_name $committer_email" header_val
+		$w_cmit insert end "$committer_time\n" header_val
+
+		if {$line_file($lno) ne $path} {
+			$w_cmit insert end "Original File:\t" header_key
+			$w_cmit insert end "[escape_path $line_file($lno)]\n" header_val
+		}
+
+		$w_cmit insert end "\n$msg"
 	}
 	$w_cmit conf -state disabled
 
