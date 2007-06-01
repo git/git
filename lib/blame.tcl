@@ -354,12 +354,6 @@ method _read_blame {fd} {
 					$w_cgrp insert $lno.0 "|\n"
 				}
 			}
-
-			set hc $highlight_commit
-			if {$hc ne {}
-				&& [expr {$order($hc) + 1}] == $order($cmit)} {
-				_showcommit $this $highlight_line
-			}
 		} elseif {[regexp {^([a-z-]+) (.*)$} $line line key data]} {
 			set header($r_commit,$key) $data
 		}
