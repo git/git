@@ -301,7 +301,7 @@ method _read_blame {fd} {
 
 			if {![catch {set ncmit $line_commit([expr {$lno - 1}])}]} {
 				if {$ncmit eq $cmit} {
-					set abbr |
+					set abbr { |}
 				}
 			}
 
@@ -324,7 +324,7 @@ method _read_blame {fd} {
 
 				$w_cgrp delete $lno.0 "$lno.0 lineend"
 				$w_cgrp insert $lno.0 $abbr
-				set abbr |
+				set abbr { |}
 
 				$w_cgrp tag add g$cmit $lno.0 $lno_e
 				$w_line tag add g$cmit $lno.0 $lno_e
@@ -351,7 +351,7 @@ method _read_blame {fd} {
 			if {![catch {set ncmit $line_commit($lno)}]} {
 				if {$ncmit eq $cmit} {
 					$w_cgrp delete $lno.0 "$lno.0 lineend + 1c"
-					$w_cgrp insert $lno.0 "|\n"
+					$w_cgrp insert $lno.0 " |\n"
 				}
 			}
 		} elseif {[regexp {^([a-z-]+) (.*)$} $line line key data]} {
