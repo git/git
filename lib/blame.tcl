@@ -38,6 +38,8 @@ variable group_colors {
 }
 
 constructor new {i_commit i_path} {
+	global cursor_ptr
+
 	set commit $i_commit
 	set path   $i_path
 
@@ -149,6 +151,7 @@ constructor new {i_commit i_path} {
 		$w_load \
 		$w_line \
 		$w_file] {
+		$i conf -cursor $cursor_ptr
 		$i conf -yscrollcommand \
 			[list many2scrollbar [list \
 			$w_cgrp \
