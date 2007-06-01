@@ -511,12 +511,16 @@ static int add_rfc2047(char *buf, const char *line, int len,
 	bp += i;
 	for (i = 0; i < len; i++) {
 		unsigned ch = line[i] & 0xFF;
-		if (is_rfc2047_special(ch)) {
+		/*
+		 * We encode ' ' using '=20' even though rfc2047
+		 * allows using '_' for readability.  Unfortunately,
+		 * many programs do not understand this and just
+		 * leave the underscore in place.
+		 */
+		if (is_rfc2047_special(ch) || ch == ' ') {
 			sprintf(bp, "=%02X", ch);
 			bp += 3;
 		}
-		else if (ch == ' ')
-			*bp++ = '_';
 		else
 			*bp++ = ch;
 	}
