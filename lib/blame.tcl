@@ -48,25 +48,28 @@ constructor new {i_commit i_path} {
 	pack $w.path -side top -fill x
 
 	frame $w.out
-	text $w.out.loaded_t \
+	set w_load $w.out.loaded_t
+	text $w_load \
 		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
 		-width 1 \
 		-font font_diff
-	$w.out.loaded_t tag conf annotated -background grey
+	$w_load tag conf annotated -background grey
 
-	text $w.out.linenumber_t \
+	set w_line $w.out.linenumber_t
+	text $w_line \
 		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
 		-width 5 \
 		-font font_diff
-	$w.out.linenumber_t tag conf linenumber -justify right
+	$w_line tag conf linenumber -justify right
 
-	text $w.out.commit_t \
+	set w_cgrp $w.out.commit_t
+	text $w_cgrp \
 		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
@@ -74,7 +77,8 @@ constructor new {i_commit i_path} {
 		-width 4 \
 		-font font_diff
 
-	text $w.out.file_t \
+	set w_file $w.out.file_t
+	text $w_file \
 		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
@@ -83,19 +87,19 @@ constructor new {i_commit i_path} {
 		-xscrollcommand [list $w.out.sbx set] \
 		-font font_diff
 
-	scrollbar $w.out.sbx -orient h -command [list $w.out.file_t xview]
+	scrollbar $w.out.sbx -orient h -command [list $w_file xview]
 	scrollbar $w.out.sby -orient v \
 		-command [list scrollbar2many [list \
-		$w.out.loaded_t \
-		$w.out.linenumber_t \
-		$w.out.commit_t \
-		$w.out.file_t \
+		$w_load \
+		$w_line \
+		$w_cgrp \
+		$w_file \
 		] yview]
 	grid \
-		$w.out.commit_t \
-		$w.out.linenumber_t \
-		$w.out.loaded_t \
-		$w.out.file_t \
+		$w_cgrp \
+		$w_line \
+		$w_load \
+		$w_file \
 		$w.out.sby \
 		-sticky nsew
 	grid conf $w.out.sbx -column 3 -sticky we
@@ -112,7 +116,8 @@ constructor new {i_commit i_path} {
 	pack $w.status -side bottom -fill x
 
 	frame $w.cm
-	text $w.cm.t \
+	set w_cmit $w.cm.t
+	text $w_cmit \
 		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
@@ -121,11 +126,11 @@ constructor new {i_commit i_path} {
 		-xscrollcommand [list $w.cm.sbx set] \
 		-yscrollcommand [list $w.cm.sby set] \
 		-font font_diff
-	scrollbar $w.cm.sbx -orient h -command [list $w.cm.t xview]
-	scrollbar $w.cm.sby -orient v -command [list $w.cm.t yview]
+	scrollbar $w.cm.sbx -orient h -command [list $w_cmit xview]
+	scrollbar $w.cm.sby -orient v -command [list $w_cmit yview]
 	pack $w.cm.sby -side right -fill y
 	pack $w.cm.sbx -side bottom -fill x
-	pack $w.cm.t -expand 1 -fill both
+	pack $w_cmit -expand 1 -fill both
 	pack $w.cm -side bottom -fill x
 
 	menu $w.ctxm -tearoff 0
@@ -133,26 +138,20 @@ constructor new {i_commit i_path} {
 		-label "Copy Commit" \
 		-command [cb _copycommit]
 
-	set w_line $w.out.linenumber_t
-	set w_cgrp $w.out.commit_t
-	set w_load $w.out.loaded_t
-	set w_file $w.out.file_t
-	set w_cmit $w.cm.t
-
 	foreach i [list \
-		$w.out.commit_t \
-		$w.out.loaded_t \
-		$w.out.linenumber_t \
-		$w.out.file_t] {
+		$w_cgrp \
+		$w_load \
+		$w_line \
+		$w_file] {
 		$i tag conf in_sel \
 			-background [$i cget -foreground] \
 			-foreground [$i cget -background]
 		$i conf -yscrollcommand \
 			[list many2scrollbar [list \
-			$w.out.commit_t \
-			$w.out.loaded_t \
-			$w.out.linenumber_t \
-			$w.out.file_t \
+			$w_cgrp \
+			$w_load \
+			$w_line \
+			$w_file \
 			] yview $w.out.sby]
 		bind $i <Button-1> "[cb _click $i @%x,%y]; focus $i"
 		bind_button3 $i "
@@ -164,11 +163,11 @@ constructor new {i_commit i_path} {
 	}
 
 	foreach i [list \
-		$w.out.commit_t \
-		$w.out.loaded_t \
-		$w.out.linenumber_t \
-		$w.out.file_t \
-		$w.cm.t] {
+		$w_cgrp \
+		$w_load \
+		$w_line \
+		$w_file \
+		$w_cmit] {
 		bind $i <Key-Up>        {catch {%W yview scroll -1 units};break}
 		bind $i <Key-Down>      {catch {%W yview scroll  1 units};break}
 		bind $i <Key-Left>      {catch {%W xview scroll -1 units};break}
@@ -181,7 +180,7 @@ constructor new {i_commit i_path} {
 		bind $i <Control-Key-f> {catch {%W yview scroll  1 pages};break}
 	}
 
-	bind $w.cm.t <Button-1> [list focus $w.cm.t]
+	bind $w_cmit <Button-1> [list focus $w_cmit]
 	bind $top <Visibility> [list focus $top]
 	bind $top <Destroy> [list delete_this $this]
 
