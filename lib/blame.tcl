@@ -136,13 +136,6 @@ constructor new {i_commit i_path} {
 	grid columnconfigure $w.file_pane.out 3 -weight 1
 	grid rowconfigure $w.file_pane.out 0 -weight 1
 
-	label $w.status \
-		-textvariable @status \
-		-anchor w \
-		-justify left \
-		-borderwidth 1 \
-		-relief sunken
-
 	set w_cmit $w.file_pane.cm.t
 	text $w_cmit \
 		-background white -borderwidth 0 \
@@ -170,6 +163,23 @@ constructor new {i_commit i_path} {
 	pack $w.file_pane.cm.sby -side right -fill y
 	pack $w.file_pane.cm.sbx -side bottom -fill x
 	pack $w_cmit -expand 1 -fill both
+
+	frame $w.status \
+		-borderwidth 1 \
+		-relief sunken
+	label $w.status.l \
+		-textvariable @status \
+		-anchor w \
+		-justify left
+	canvas $w.status.c \
+		-width 100 \
+		-height [expr {int([winfo reqheight $w.status.l] * 0.6)}] \
+		-borderwidth 1 \
+		-relief groove \
+		-highlightt 0
+	$w.status.c create rectangle 0 0 0 20 -tags bar -fill navy
+	pack $w.status.l -side left
+	pack $w.status.c -side right
 
 	menu $w.ctxm -tearoff 0
 	$w.ctxm add command \
@@ -226,7 +236,7 @@ constructor new {i_commit i_path} {
 
 	bind $w_cmit <Button-1> [list focus $w_cmit]
 	bind $top <Visibility> [list focus $top]
-	bind $top <Destroy> [list delete_this $this]
+	bind $w_file <Destroy> [list delete_this $this]
 
 	grid configure $w.path -sticky ew
 	grid configure $w.file_pane -sticky nsew
@@ -438,6 +448,7 @@ method _read_blame {fd} {
 	if {[eof $fd]} {
 		close $fd
 		set status {Annotation complete.}
+		destroy $w.status.c
 	} else {
 		_status $this
 	}
@@ -452,6 +463,7 @@ method _status {} {
 	set status [format \
 		"Loading annotations... %i of %i lines annotated (%2i%%)" \
 		$have $total $pdone]
+	$w.status.c coords bar 0 0 $pdone 20
 }
 
 method _click {cur_w pos} {
