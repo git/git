@@ -294,15 +294,38 @@ method _read_blame {fd} {
 			set cmit $r_commit
 
 			if {[regexp {^0{40}$} $cmit]} {
-				set abbr work
+				set commit_abbr work
 			} else {
-				set abbr [string range $cmit 0 4]
+				set commit_abbr [string range $cmit 0 4]
 			}
 
-			if {![catch {set ncmit $line_commit([expr {$lno - 1}])}]} {
-				if {$ncmit eq $cmit} {
-					set abbr { |}
+			set author_abbr {}
+			set a_name {}
+			catch {set a_name $header($cmit,author)}
+			while {$a_name ne {}} {
+				if {![regexp {^([[:upper:]])} $a_name _a]} break
+				append author_abbr $_a
+				unset _a
+				if {![regsub \
+					{^[[:upper:]][^\s]*\s+} \
+					$a_name {} a_name ]} break
+			}
+			if {$author_abbr eq {}} {
+				set author_abbr { |}
+			} else {
+				set author_abbr [string range $author_abbr 0 3]
+				while {[string length $author_abbr] < 4} {
+					set author_abbr " $author_abbr"
 				}
+			}
+			unset a_name
+
+			set first_lno $lno
+			while {
+			![catch {set ncmit $line_commit([expr {$first_lno - 1}])}]
+			&& $ncmit eq $cmit
+			} {
+				incr first_lno -1
 			}
 
 			while {$n > 0} {
@@ -323,8 +346,13 @@ method _read_blame {fd} {
 				set line_file($lno)   $file
 
 				$w_cgrp delete $lno.0 "$lno.0 lineend"
-				$w_cgrp insert $lno.0 $abbr
-				set abbr { |}
+				if {$lno == $first_lno} {
+					$w_cgrp insert $lno.0 $commit_abbr
+				} elseif {$lno == [expr {$first_lno + 1}]} {
+					$w_cgrp insert $lno.0 $author_abbr
+				} else {
+					$w_cgrp insert $lno.0 { |}
+				}
 
 				$w_cgrp tag add g$cmit $lno.0 $lno_e
 				$w_line tag add g$cmit $lno.0 $lno_e
@@ -348,12 +376,20 @@ method _read_blame {fd} {
 				incr blame_lines
 			}
 
-			if {![catch {set ncmit $line_commit($lno)}]} {
-				if {$ncmit eq $cmit} {
-					$w_cgrp delete $lno.0 "$lno.0 lineend + 1c"
-					$w_cgrp insert $lno.0 " |\n"
+			while {![catch {set ncmit $line_commit($lno)}]
+				&& $ncmit eq $cmit} {
+				$w_cgrp delete $lno.0 "$lno.0 lineend"
+
+				if {$lno == $first_lno} {
+					$w_cgrp insert $lno.0 $commit_abbr
+				} elseif {$lno == [expr {$first_lno + 1}]} {
+					$w_cgrp insert $lno.0 $author_abbr
+				} else {
+					$w_cgrp insert $lno.0 { |}
 				}
+				incr lno
 			}
+
 		} elseif {[regexp {^([a-z-]+) (.*)$} $line line key data]} {
 			set header($r_commit,$key) $data
 		}
