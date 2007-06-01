@@ -13,6 +13,7 @@ field w_load
 field w_file
 field w_cmit
 field status
+field old_height
 
 field highlight_line   -1 ; # current line selected
 field highlight_commit {} ; # sha1 of commit selected
@@ -59,10 +60,22 @@ constructor new {i_commit i_path} {
 		-borderwidth 1 \
 		-relief sunken \
 		-font font_uibold
-	pack $w.path -side top -fill x
 
-	frame $w.out
-	set w_load $w.out.loaded_t
+	panedwindow $w.file_pane -orient vertical
+	frame $w.file_pane.out
+	frame $w.file_pane.cm
+	$w.file_pane add $w.file_pane.out \
+		-sticky nsew \
+		-minsize 100 \
+		-height 100 \
+		-width 100
+	$w.file_pane add $w.file_pane.cm \
+		-sticky nsew \
+		-minsize 25 \
+		-height 25 \
+		-width 100
+
+	set w_load $w.file_pane.out.loaded_t
 	text $w_load \
 		-background white -borderwidth 0 \
 		-state disabled \
@@ -72,7 +85,7 @@ constructor new {i_commit i_path} {
 		-font font_diff
 	$w_load tag conf annotated -background grey
 
-	set w_line $w.out.linenumber_t
+	set w_line $w.file_pane.out.linenumber_t
 	text $w_line \
 		-background white -borderwidth 0 \
 		-state disabled \
@@ -82,7 +95,7 @@ constructor new {i_commit i_path} {
 		-font font_diff
 	$w_line tag conf linenumber -justify right
 
-	set w_cgrp $w.out.commit_t
+	set w_cgrp $w.file_pane.out.commit_t
 	text $w_cgrp \
 		-background white -borderwidth 0 \
 		-state disabled \
@@ -91,18 +104,21 @@ constructor new {i_commit i_path} {
 		-width 4 \
 		-font font_diff
 
-	set w_file $w.out.file_t
+	set w_file $w.file_pane.out.file_t
 	text $w_file \
 		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
 		-width 80 \
-		-xscrollcommand [list $w.out.sbx set] \
+		-xscrollcommand [list $w.file_pane.out.sbx set] \
 		-font font_diff
 
-	scrollbar $w.out.sbx -orient h -command [list $w_file xview]
-	scrollbar $w.out.sby -orient v \
+	scrollbar $w.file_pane.out.sbx \
+		-orient h \
+		-command [list $w_file xview]
+	scrollbar $w.file_pane.out.sby \
+		-orient v \
 		-command [list scrollbar2many [list \
 		$w_load \
 		$w_line \
@@ -114,12 +130,11 @@ constructor new {i_commit i_path} {
 		$w_line \
 		$w_load \
 		$w_file \
-		$w.out.sby \
+		$w.file_pane.out.sby \
 		-sticky nsew
-	grid conf $w.out.sbx -column 3 -sticky we
-	grid columnconfigure $w.out 3 -weight 1
-	grid rowconfigure $w.out 0 -weight 1
-	pack $w.out -fill both -expand 1
+	grid conf $w.file_pane.out.sbx -column 3 -sticky we
+	grid columnconfigure $w.file_pane.out 3 -weight 1
+	grid rowconfigure $w.file_pane.out 0 -weight 1
 
 	label $w.status \
 		-textvariable @status \
@@ -127,18 +142,16 @@ constructor new {i_commit i_path} {
 		-justify left \
 		-borderwidth 1 \
 		-relief sunken
-	pack $w.status -side bottom -fill x
 
-	frame $w.cm
-	set w_cmit $w.cm.t
+	set w_cmit $w.file_pane.cm.t
 	text $w_cmit \
 		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 10 \
 		-width 80 \
-		-xscrollcommand [list $w.cm.sbx set] \
-		-yscrollcommand [list $w.cm.sby set] \
+		-xscrollcommand [list $w.file_pane.cm.sbx set] \
+		-yscrollcommand [list $w.file_pane.cm.sby set] \
 		-font font_diff
 	$w_cmit tag conf header_key \
 		-tabs {3c} \
@@ -148,12 +161,15 @@ constructor new {i_commit i_path} {
 		-background $active_color \
 		-font font_ui
 	$w_cmit tag raise sel
-	scrollbar $w.cm.sbx -orient h -command [list $w_cmit xview]
-	scrollbar $w.cm.sby -orient v -command [list $w_cmit yview]
-	pack $w.cm.sby -side right -fill y
-	pack $w.cm.sbx -side bottom -fill x
+	scrollbar $w.file_pane.cm.sbx \
+		-orient h \
+		-command [list $w_cmit xview]
+	scrollbar $w.file_pane.cm.sby \
+		-orient v \
+		-command [list $w_cmit yview]
+	pack $w.file_pane.cm.sby -side right -fill y
+	pack $w.file_pane.cm.sbx -side bottom -fill x
 	pack $w_cmit -expand 1 -fill both
-	pack $w.cm -side bottom -fill x
 
 	menu $w.ctxm -tearoff 0
 	$w.ctxm add command \
@@ -172,7 +188,7 @@ constructor new {i_commit i_path} {
 			$w_load \
 			$w_line \
 			$w_file \
-			] yview $w.out.sby]
+			] yview $w.file_pane.out.sby]
 		bind $i <Button-1> "
 			[cb _hide_tooltip]
 			[cb _click $i @%x,%y]
@@ -211,6 +227,29 @@ constructor new {i_commit i_path} {
 	bind $w_cmit <Button-1> [list focus $w_cmit]
 	bind $top <Visibility> [list focus $top]
 	bind $top <Destroy> [list delete_this $this]
+
+	grid configure $w.path -sticky ew
+	grid configure $w.file_pane -sticky nsew
+	grid configure $w.status -sticky ew
+	grid columnconfigure $top 0 -weight 1
+	grid rowconfigure $top 0 -weight 0
+	grid rowconfigure $top 1 -weight 1
+	grid rowconfigure $top 2 -weight 0
+
+	set req_w [winfo reqwidth  $top]
+	set req_h [winfo reqheight $top]
+	if {$req_w < 600} {set req_w 600}
+	if {$req_h < 400} {set req_h 400}
+	set g "${req_w}x${req_h}"
+	wm geometry $top $g
+	update
+
+	set old_height [winfo height $w.file_pane]
+	$w.file_pane sash place 0 \
+		[lindex [$w.file_pane sash coord 0] 0] \
+		[expr {int($old_height * 0.70)}]
+	bind $w.file_pane <Configure> \
+	"if {{$w.file_pane} eq {%W}} {[cb _resize %h]}"
 
 	if {$commit eq {}} {
 		set fd [open $path r]
@@ -631,6 +670,21 @@ method _hide_tooltip {} {
 		after cancel $tooltip_timer
 		set tooltip_timer {}
 	}
+}
+
+method _resize {new_height} {
+	set diff [expr {$new_height - $old_height}]
+	if {$diff == 0} return
+
+	set my [expr {[winfo height $w.file_pane] - 25}]
+	set o [$w.file_pane sash coord 0]
+	set ox [lindex $o 0]
+	set oy [expr {[lindex $o 1] + $diff}]
+	if {$oy < 0}   {set oy 0}
+	if {$oy > $my} {set oy $my}
+	$w.file_pane sash place 0 $ox $oy
+
+	set old_height $new_height
 }
 
 }
