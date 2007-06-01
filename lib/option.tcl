@@ -173,7 +173,7 @@ proc do_options {} {
 		{i-1..5 merge.verbosity {Merge Verbosity}}
 
 		{b gui.trustmtime  {Trust File Modification Timestamps}}
-		{i-1..99 gui.diffcontext {Number of Diff Context Lines}}
+		{i-0..99 gui.diffcontext {Number of Diff Context Lines}}
 		{t gui.newbranchtemplate {New Branch Name Template}}
 		} {
 		set type [lindex $option 0]

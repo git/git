@@ -2038,17 +2038,17 @@ lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add separator
 $ctxm add command \
 	-label {Show Less Context} \
-	-command {if {$repo_config(gui.diffcontext) >= 2} {
+	-command {if {$repo_config(gui.diffcontext) >= 1} {
 		incr repo_config(gui.diffcontext) -1
 		reshow_diff
 	}}
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add command \
 	-label {Show More Context} \
-	-command {
+	-command {if {$repo_config(gui.diffcontext) < 99} {
 		incr repo_config(gui.diffcontext)
 		reshow_diff
-	}
+	}}
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add separator
 $ctxm add command -label {Options...} \
