@@ -267,7 +267,18 @@ method _read_blame {fd} {
 			set n    $r_line_count
 			set lno  $r_final_line
 			set cmit $r_commit
-			set abbr [string range $cmit 0 4]
+
+			if {[regexp {^0{40}$} $cmit]} {
+				set abbr work
+			} else {
+				set abbr [string range $cmit 0 4]
+			}
+
+			if {![catch {set ncmit $line_commit([expr {$lno - 1}])}]} {
+				if {$ncmit eq $cmit} {
+					set abbr |
+				}
+			}
 
 			while {$n > 0} {
 				set lno_e "$lno.0 lineend + 1c"
@@ -286,8 +297,9 @@ method _read_blame {fd} {
 				set line_commit($lno) $cmit
 				set line_file($lno)   $file
 
-				$w_cgrp delete $lno.0 $lno_e
-				$w_cgrp insert $lno.0 "$abbr\n"
+				$w_cgrp delete $lno.0 "$lno.0 lineend"
+				$w_cgrp insert $lno.0 $abbr
+				set abbr |
 
 				$w_cgrp tag add g$cmit $lno.0 $lno_e
 				$w_line tag add g$cmit $lno.0 $lno_e
@@ -309,6 +321,13 @@ method _read_blame {fd} {
 				incr n -1
 				incr lno
 				incr blame_lines
+			}
+
+			if {![catch {set ncmit $line_commit($lno)}]} {
+				if {$ncmit eq $cmit} {
+					$w_cgrp delete $lno.0 "$lno.0 lineend + 1c"
+					$w_cgrp insert $lno.0 "|\n"
+				}
 			}
 
 			set hc $highlight_commit
