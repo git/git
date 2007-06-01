@@ -112,8 +112,7 @@ clean:
 %.html : %.txt
 	rm -f $@+ $@
 	$(ASCIIDOC) -b xhtml11 -d manpage -f asciidoc.conf \
-		$(ASCIIDOC_EXTRA) -o - $< | \
-		sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' >$@+
+		$(ASCIIDOC_EXTRA) -agit_version=$(GIT_VERSION) -o $@+ $<
 	mv $@+ $@
 
 %.1 %.5 %.7 : %.xml
@@ -122,8 +121,7 @@ clean:
 %.xml : %.txt
 	rm -f $@+ $@
 	$(ASCIIDOC) -b docbook -d manpage -f asciidoc.conf \
-		$(ASCIIDOC_EXTRA) -o - $< | \
-		sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' >$@+
+		$(ASCIIDOC_EXTRA) -agit_version=$(GIT_VERSION) -o $@+ $<
 	mv $@+ $@
 
 user-manual.xml: user-manual.txt user-manual.conf
