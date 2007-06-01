@@ -203,10 +203,15 @@ method _read_file {fd} {
 		regsub "\r\$" $line {} line
 		incr total_lines
 
-		$w_load insert end "\n"
-		$w_cgrp insert end "\n"
-		$w_line insert end "$total_lines\n" linenumber
-		$w_file insert end "$line\n"
+		if {$total_lines > 1} {
+			$w_load insert end "\n"
+			$w_cgrp insert end "\n"
+			$w_line insert end "\n"
+			$w_file insert end "\n"
+		}
+
+		$w_line insert end "$total_lines" linenumber
+		$w_file insert end "$line"
 	}
 	$w_load conf -state disabled
 	$w_cgrp conf -state disabled
