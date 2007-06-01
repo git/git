@@ -173,7 +173,7 @@ constructor new {i_commit i_path} {
 			$w_line \
 			$w_file \
 			] yview $w.out.sby]
-		bind $i <Button-1>   "
+		bind $i <Button-1> "
 			[cb _hide_tooltip]
 			[cb _click $i @%x,%y]
 			focus $i
