@@ -31,6 +31,12 @@ field r_orig_line   ; # original line number
 field r_final_line  ; # final line number
 field r_line_count  ; # lines in this region
 
+variable active_color #98e1a0
+variable group_colors {
+	#cbcbcb
+	#e1e1e1
+}
+
 constructor new {i_commit i_path} {
 	set commit $i_commit
 	set path   $i_path
@@ -143,9 +149,6 @@ constructor new {i_commit i_path} {
 		$w_load \
 		$w_line \
 		$w_file] {
-		$i tag conf in_sel \
-			-background [$i cget -foreground] \
-			-foreground [$i cget -background]
 		$i conf -yscrollcommand \
 			[list many2scrollbar [list \
 			$w_cgrp \
@@ -235,6 +238,8 @@ method _read_file {fd} {
 } ifdeleted { catch {close $fd} }
 
 method _read_blame {fd} {
+	variable group_colors
+
 	$w_cgrp conf -state normal
 	while {[gets $fd line] >= 0} {
 		if {[regexp {^([a-z0-9]{40}) (\d+) (\d+) (\d+)$} $line line \
@@ -245,15 +250,14 @@ method _read_blame {fd} {
 			set r_line_count $line_count
 
 			if {[catch {set g $order($cmit)}]} {
-				$w_cgrp tag conf g$cmit
-				$w_line tag conf g$cmit
-				$w_file tag conf g$cmit
+				set bg [lindex $group_colors 0]
+				set group_colors [lrange $group_colors 1 end]
+				lappend group_colors $bg
 
-				$w_cgrp tag raise in_sel
-				$w_line tag raise in_sel
-				$w_file tag raise in_sel
+				$w_cgrp tag conf g$cmit -background $bg
+				$w_line tag conf g$cmit -background $bg
+				$w_file tag conf g$cmit -background $bg
 
-				$w_file tag raise sel
 				set order($cmit) $commit_count
 				incr commit_count
 				lappend commit_list $cmit
@@ -273,6 +277,10 @@ method _read_blame {fd} {
 					$w_cgrp tag remove g$g $lno.0 $lno_e
 					$w_line tag remove g$g $lno.0 $lno_e
 					$w_file tag remove g$g $lno.0 $lno_e
+
+					$w_cgrp tag remove a$g $lno.0 $lno_e
+					$w_line tag remove a$g $lno.0 $lno_e
+					$w_file tag remove a$g $lno.0 $lno_e
 				}
 
 				set line_commit($lno) $cmit
@@ -284,6 +292,10 @@ method _read_blame {fd} {
 				$w_cgrp tag add g$cmit $lno.0 $lno_e
 				$w_line tag add g$cmit $lno.0 $lno_e
 				$w_file tag add g$cmit $lno.0 $lno_e
+
+				$w_cgrp tag add a$cmit $lno.0 $lno_e
+				$w_line tag add a$cmit $lno.0 $lno_e
+				$w_file tag add a$cmit $lno.0 $lno_e
 
 				if {$highlight_line == -1} {
 					if {[lindex [$w_file yview] 0] == 0} {
@@ -332,40 +344,18 @@ method _status {} {
 method _click {cur_w pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
 	if {$lno eq {}} return
-
-	set lno_e "$lno.0 + 1 line"
-
-	$w_cgrp tag remove in_sel 0.0 end
-	$w_line tag remove in_sel 0.0 end
-	$w_file tag remove in_sel 0.0 end
-
-	$w_cgrp tag add in_sel $lno.0 $lno_e
-	$w_line tag add in_sel $lno.0 $lno_e
-	$w_file tag add in_sel $lno.0 $lno_e
-
 	_showcommit $this $lno
-}
-
-variable blame_colors {
-	#ff4040
-	#ff40ff
-	#4040ff
 }
 
 method _showcommit {lno} {
 	global repo_config
-	variable blame_colors
+	variable active_color
 
 	if {$highlight_commit ne {}} {
-		set idx $order($highlight_commit)
-		set i 0
-		foreach c $blame_colors {
-			set h [lindex $commit_list [expr {$idx - 1 + $i}]]
-			$w_cgrp tag conf g$h -background white
-			$w_line tag conf g$h -background white
-			$w_file tag conf g$h -background white
-			incr i
-		}
+		set cmit $highlight_commit
+		$w_cgrp tag conf a$cmit -background {}
+		$w_line tag conf a$cmit -background {}
+		$w_file tag conf a$cmit -background {}
 	}
 
 	$w_cmit conf -state normal
@@ -374,15 +364,9 @@ method _showcommit {lno} {
 		set cmit {}
 		$w_cmit insert end "Loading annotation..."
 	} else {
-		set idx $order($cmit)
-		set i 0
-		foreach c $blame_colors {
-			set h [lindex $commit_list [expr {$idx - 1 + $i}]]
-			$w_cgrp tag conf g$h -background $c
-			$w_line tag conf g$h -background $c
-			$w_file tag conf g$h -background $c
-			incr i
-		}
+		$w_cgrp tag conf a$cmit -background $active_color
+		$w_line tag conf a$cmit -background $active_color
+		$w_file tag conf a$cmit -background $active_color
 
 		set author_name {}
 		set author_email {}
