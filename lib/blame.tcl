@@ -8,6 +8,7 @@ field path    ; # input filename to view in $commit
 
 field w
 field w_line
+field w_cgrp
 field w_load
 field w_file
 field w_cmit
@@ -65,6 +66,14 @@ constructor new {i_commit i_path} {
 		-font font_diff
 	$w.out.linenumber_t tag conf linenumber -justify right
 
+	text $w.out.commit_t \
+		-background white -borderwidth 0 \
+		-state disabled \
+		-wrap none \
+		-height 40 \
+		-width 4 \
+		-font font_diff
+
 	text $w.out.file_t \
 		-background white -borderwidth 0 \
 		-state disabled \
@@ -79,16 +88,18 @@ constructor new {i_commit i_path} {
 		-command [list scrollbar2many [list \
 		$w.out.loaded_t \
 		$w.out.linenumber_t \
+		$w.out.commit_t \
 		$w.out.file_t \
 		] yview]
 	grid \
+		$w.out.commit_t \
 		$w.out.linenumber_t \
 		$w.out.loaded_t \
 		$w.out.file_t \
 		$w.out.sby \
 		-sticky nsew
-	grid conf $w.out.sbx -column 2 -sticky we
-	grid columnconfigure $w.out 2 -weight 1
+	grid conf $w.out.sbx -column 3 -sticky we
+	grid columnconfigure $w.out 3 -weight 1
 	grid rowconfigure $w.out 0 -weight 1
 	pack $w.out -fill both -expand 1
 
@@ -123,11 +134,13 @@ constructor new {i_commit i_path} {
 		-command [cb _copycommit]
 
 	set w_line $w.out.linenumber_t
+	set w_cgrp $w.out.commit_t
 	set w_load $w.out.loaded_t
 	set w_file $w.out.file_t
 	set w_cmit $w.cm.t
 
 	foreach i [list \
+		$w.out.commit_t \
 		$w.out.loaded_t \
 		$w.out.linenumber_t \
 		$w.out.file_t] {
@@ -136,6 +149,7 @@ constructor new {i_commit i_path} {
 			-foreground [$i cget -background]
 		$i conf -yscrollcommand \
 			[list many2scrollbar [list \
+			$w.out.commit_t \
 			$w.out.loaded_t \
 			$w.out.linenumber_t \
 			$w.out.file_t \
@@ -150,6 +164,7 @@ constructor new {i_commit i_path} {
 	}
 
 	foreach i [list \
+		$w.out.commit_t \
 		$w.out.loaded_t \
 		$w.out.linenumber_t \
 		$w.out.file_t \
@@ -182,16 +197,20 @@ constructor new {i_commit i_path} {
 
 method _read_file {fd} {
 	$w_load conf -state normal
+	$w_cgrp conf -state normal
 	$w_line conf -state normal
 	$w_file conf -state normal
 	while {[gets $fd line] >= 0} {
 		regsub "\r\$" $line {} line
 		incr total_lines
+
 		$w_load insert end "\n"
+		$w_cgrp insert end "\n"
 		$w_line insert end "$total_lines\n" linenumber
 		$w_file insert end "$line\n"
 	}
 	$w_load conf -state disabled
+	$w_cgrp conf -state disabled
 	$w_line conf -state disabled
 	$w_file conf -state disabled
 
@@ -212,6 +231,7 @@ method _read_file {fd} {
 } ifdeleted { catch {close $fd} }
 
 method _read_blame {fd} {
+	$w_cgrp conf -state normal
 	while {[gets $fd line] >= 0} {
 		if {[regexp {^([a-z0-9]{40}) (\d+) (\d+) (\d+)$} $line line \
 			cmit original_line final_line line_count]} {
@@ -221,10 +241,14 @@ method _read_blame {fd} {
 			set r_line_count $line_count
 
 			if {[catch {set g $order($cmit)}]} {
+				$w_cgrp tag conf g$cmit
 				$w_line tag conf g$cmit
 				$w_file tag conf g$cmit
+
+				$w_cgrp tag raise in_sel
 				$w_line tag raise in_sel
 				$w_file tag raise in_sel
+
 				$w_file tag raise sel
 				set order($cmit) $commit_count
 				incr commit_count
@@ -235,18 +259,25 @@ method _read_blame {fd} {
 			set n    $r_line_count
 			set lno  $r_final_line
 			set cmit $r_commit
+			set abbr [string range $cmit 0 4]
 
 			while {$n > 0} {
 				set lno_e "$lno.0 lineend + 1c"
 				if {[catch {set g g$line_commit($lno)}]} {
 					$w_load tag add annotated $lno.0 $lno_e
 				} else {
+					$w_cgrp tag remove g$g $lno.0 $lno_e
 					$w_line tag remove g$g $lno.0 $lno_e
 					$w_file tag remove g$g $lno.0 $lno_e
 				}
 
 				set line_commit($lno) $cmit
 				set line_file($lno)   $file
+
+				$w_cgrp delete $lno.0 $lno_e
+				$w_cgrp insert $lno.0 "$abbr\n"
+
+				$w_cgrp tag add g$cmit $lno.0 $lno_e
 				$w_line tag add g$cmit $lno.0 $lno_e
 				$w_file tag add g$cmit $lno.0 $lno_e
 
@@ -273,6 +304,7 @@ method _read_blame {fd} {
 			set header($r_commit,$key) $data
 		}
 	}
+	$w_cgrp conf -state disabled
 
 	if {[eof $fd]} {
 		close $fd
@@ -298,8 +330,12 @@ method _click {cur_w pos} {
 	if {$lno eq {}} return
 
 	set lno_e "$lno.0 + 1 line"
+
+	$w_cgrp tag remove in_sel 0.0 end
 	$w_line tag remove in_sel 0.0 end
 	$w_file tag remove in_sel 0.0 end
+
+	$w_cgrp tag add in_sel $lno.0 $lno_e
 	$w_line tag add in_sel $lno.0 $lno_e
 	$w_file tag add in_sel $lno.0 $lno_e
 
@@ -321,6 +357,7 @@ method _showcommit {lno} {
 		set i 0
 		foreach c $blame_colors {
 			set h [lindex $commit_list [expr {$idx - 1 + $i}]]
+			$w_cgrp tag conf g$h -background white
 			$w_line tag conf g$h -background white
 			$w_file tag conf g$h -background white
 			incr i
@@ -337,6 +374,7 @@ method _showcommit {lno} {
 		set i 0
 		foreach c $blame_colors {
 			set h [lindex $commit_list [expr {$idx - 1 + $i}]]
+			$w_cgrp tag conf g$h -background $c
 			$w_line tag conf g$h -background $c
 			$w_file tag conf g$h -background $c
 			incr i
