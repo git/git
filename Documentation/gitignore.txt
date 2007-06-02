@@ -1,0 +1,116 @@
+gitignore(5)
+============
+
+NAME
+----
+gitignore - Specifies intentionally untracked files to ignore
+
+SYNOPSIS
+--------
+$GIT_DIR/info/exclude, .gitignore
+
+DESCRIPTION
+-----------
+
+A `gitignore` file specifies intentionally untracked files that
+git should ignore.  Each line in a `gitignore` file specifies a
+pattern.
+
+When deciding whether to ignore a path, git normally checks
+`gitignore` patterns from multiple sources, with the following
+order of precedence:
+
+ * Patterns read from the file specified by the configuration
+   variable 'core.excludesfile'.
+
+ * Patterns read from `$GIT_DIR/info/exclude`.
+
+ * Patterns read from a `.gitignore` file in the same directory
+   as the path, or in any parent directory, ordered from the
+   deepest such file to a file in the root of the repository.
+   These patterns match relative to the location of the
+   `.gitignore` file.  A project normally includes such
+   `.gitignore` files in its repository, containing patterns for
+   files generated as part of the project build.
+
+The underlying git plumbing tools, such as
+gitlink:git-ls-files[1] and gitlink:git-read-tree[1], read
+`gitignore` patterns specified by command-line options, or from
+files specified by command-line options.  Higher-level git
+tools, such as gitlink:git-status[1] and gitlink:git-add[1],
+use patterns from the sources specified above.
+
+Patterns have the following format:
+
+ - A blank line matches no files, so it can serve as a separator
+   for readability.
+
+ - A line starting with # serves as a comment.
+
+ - An optional prefix '!' which negates the pattern; any
+   matching file excluded by a previous pattern will become
+   included again.
+
+ - If the pattern does not contain a slash '/', git treats it as
+   a shell glob pattern and checks for a match against the
+   pathname without leading directories.
+
+ - Otherwise, git treats the pattern as a shell glob suitable
+   for consumption by fnmatch(3) with the FNM_PATHNAME flag:
+   wildcards in the pattern will not match a / in the pathname.
+   For example, "Documentation/\*.html" matches
+   "Documentation/git.html" but not
+   "Documentation/ppc/ppc.html".  A leading slash matches the
+   beginning of the pathname; for example, "/*.c" matches
+   "cat-file.c" but not "mozilla-sha1/sha1.c".
+
+An example:
+
+--------------------------------------------------------------
+    $ git-status
+    [...]
+    # Untracked files:
+    [...]
+    #       Documentation/foo.html
+    #       Documentation/gitignore.html
+    #       file.o
+    #       lib.a
+    #       src/internal.o
+    [...]
+    $ cat .git/info/exclude
+    # ignore objects and archives, anywhere in the tree.
+    *.[oa]
+    $ cat Documentation/.gitignore
+    # ignore generated html files,
+    *.html
+    # except foo.html which is maintained by hand
+    !foo.html
+    $ git-status
+    [...]
+    # Untracked files:
+    [...]
+    #       Documentation/foo.html
+    [...]
+--------------------------------------------------------------
+
+Another example:
+
+--------------------------------------------------------------
+    $ cat .gitignore
+    vmlinux*
+    $ ls arch/foo/kernel/vm*
+    arch/foo/kernel/vmlinux.lds.S
+    $ echo '!/vmlinux*' >arch/foo/kernel/.gitignore
+--------------------------------------------------------------
+
+The second .gitignore prevents git from ignoring
+`arch/foo/kernel/vmlinux.lds.S`.
+
+Documentation
+-------------
+Documentation by David Greaves, Junio C Hamano, Josh Triplett,
+Frank Lichtenheld, and the git-list <git@vger.kernel.org>.
+
+GIT
+---
+Part of the gitlink:git[7] suite

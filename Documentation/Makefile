@@ -2,7 +2,7 @@ MAN1_TXT= \
 	$(filter-out $(addsuffix .txt, $(ARTICLES) $(SP_ARTICLES)), \
 		$(wildcard git-*.txt)) \
 	gitk.txt
-MAN5_TXT=gitattributes.txt
+MAN5_TXT=gitattributes.txt gitignore.txt
 MAN7_TXT=git.txt
 
 DOC_HTML=$(patsubst %.txt,%.html,$(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT))
@@ -112,8 +112,7 @@ clean:
 %.html : %.txt
 	rm -f $@+ $@
 	$(ASCIIDOC) -b xhtml11 -d manpage -f asciidoc.conf \
-		$(ASCIIDOC_EXTRA) -o - $< | \
-		sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' >$@+
+		$(ASCIIDOC_EXTRA) -agit_version=$(GIT_VERSION) -o $@+ $<
 	mv $@+ $@
 
 %.1 %.5 %.7 : %.xml
@@ -122,8 +121,7 @@ clean:
 %.xml : %.txt
 	rm -f $@+ $@
 	$(ASCIIDOC) -b docbook -d manpage -f asciidoc.conf \
-		$(ASCIIDOC_EXTRA) -o - $< | \
-		sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' >$@+
+		$(ASCIIDOC_EXTRA) -agit_version=$(GIT_VERSION) -o $@+ $<
 	mv $@+ $@
 
 user-manual.xml: user-manual.txt user-manual.conf

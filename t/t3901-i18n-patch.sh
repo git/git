@@ -13,7 +13,7 @@ check_encoding () {
 	while test "$i" -le $cnt
 	do
 		git format-patch --encoding=UTF-8 --stdout HEAD~$i..HEAD~$j |
-		grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD_=C3=B3=C3=BA?=" &&
+		grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD=20=C3=B3=C3=BA?=" &&
 		git-cat-file commit HEAD~$j |
 		case "$header" in
 		8859)
@@ -73,9 +73,9 @@ test_expect_success 'format-patch output (ISO-8859-1)' '
 	git format-patch --stdout master..HEAD^ >out-l1 &&
 	git format-patch --stdout HEAD^ >out-l2 &&
 	grep "^Content-Type: text/plain; charset=ISO-8859-1" out-l1 &&
-	grep "^From: =?ISO-8859-1?q?=C1=E9=ED_=F3=FA?=" out-l1 &&
+	grep "^From: =?ISO-8859-1?q?=C1=E9=ED=20=F3=FA?=" out-l1 &&
 	grep "^Content-Type: text/plain; charset=ISO-8859-1" out-l2 &&
-	grep "^From: =?ISO-8859-1?q?=C1=E9=ED_=F3=FA?=" out-l2
+	grep "^From: =?ISO-8859-1?q?=C1=E9=ED=20=F3=FA?=" out-l2
 '
 
 test_expect_success 'format-patch output (UTF-8)' '
@@ -84,9 +84,9 @@ test_expect_success 'format-patch output (UTF-8)' '
 	git format-patch --stdout master..HEAD^ >out-u1 &&
 	git format-patch --stdout HEAD^ >out-u2 &&
 	grep "^Content-Type: text/plain; charset=UTF-8" out-u1 &&
-	grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD_=C3=B3=C3=BA?=" out-u1 &&
+	grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD=20=C3=B3=C3=BA?=" out-u1 &&
 	grep "^Content-Type: text/plain; charset=UTF-8" out-u2 &&
-	grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD_=C3=B3=C3=BA?=" out-u2
+	grep "^From: =?UTF-8?q?=C3=81=C3=A9=C3=AD=20=C3=B3=C3=BA?=" out-u2
 '
 
 test_expect_success 'rebase (U/U)' '

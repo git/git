@@ -139,46 +139,24 @@ Exclude Patterns
 
 'git-ls-files' can use a list of "exclude patterns" when
 traversing the directory tree and finding files to show when the
-flags --others or --ignored are specified.
+flags --others or --ignored are specified.  gitlink:gitignore[5]
+specifies the format of exclude patterns.
 
-These exclude patterns come from these places:
+These exclude patterns come from these places, in order:
 
-  1. command line flag --exclude=<pattern> specifies a single
-     pattern.
+  1. The command line flag --exclude=<pattern> specifies a
+     single pattern.  Patterns are ordered in the same order
+     they appear in the command line.
 
-  2. command line flag --exclude-from=<file> specifies a list of
-     patterns stored in a file.
+  2. The command line flag --exclude-from=<file> specifies a
+     file containing a list of patterns.  Patterns are ordered
+     in the same order they appear in the file.
 
   3. command line flag --exclude-per-directory=<name> specifies
      a name of the file in each directory 'git-ls-files'
-     examines, and if exists, its contents are used as an
-     additional list of patterns.
-
-An exclude pattern file used by (2) and (3) contains one pattern
-per line.  A line that starts with a '#' can be used as comment
-for readability.
-
-There are three lists of patterns that are in effect at a given
-time.  They are built and ordered in the following way:
-
- * --exclude=<pattern> from the command line; patterns are
-   ordered in the same order as they appear on the command line.
-
- * lines read from --exclude-from=<file>; patterns are ordered
-   in the same order as they appear in the file.
-
- * When --exclude-per-directory=<name> is specified, upon
-   entering a directory that has such a file, its contents are
-   appended at the end of the current "list of patterns".  They
-   are popped off when leaving the directory.
-
-Each pattern in the pattern list specifies "a match pattern" and
-optionally the fate; either a file that matches the pattern is
-considered excluded or included.  A filename is matched against
-the patterns in the three lists; the --exclude-from list is
-checked first, then the --exclude-per-directory list, and then
-finally the --exclude list. The last match determines its fate.
-If there is no match in the three lists, the fate is "included".
+     examines, normally `.gitignore`.  Files in deeper
+     directories take precedence.  Patterns are ordered in the
+     same order they appear in the files.
 
 A pattern specified on the command line with --exclude or read
 from the file specified with --exclude-from is relative to the
@@ -186,58 +164,9 @@ top of the directory tree.  A pattern read from a file specified
 by --exclude-per-directory is relative to the directory that the
 pattern file appears in.
 
-An exclude pattern is of the following format:
-
- - an optional prefix '!' which means that the fate this pattern
-   specifies is "include", not the usual "exclude"; the
-   remainder of the pattern string is interpreted according to
-   the following rules.
-
- - if it does not contain a slash '/', it is a shell glob
-   pattern and used to match against the filename without
-   leading directories.
-
- - otherwise, it is a shell glob pattern, suitable for
-   consumption by fnmatch(3) with FNM_PATHNAME flag.  I.e. a
-   slash in the pattern must match a slash in the pathname.
-   "Documentation/\*.html" matches "Documentation/git.html" but
-   not "ppc/ppc.html".  As a natural exception, "/*.c" matches
-   "cat-file.c" but not "mozilla-sha1/sha1.c".
-
-An example:
-
---------------------------------------------------------------
-    $ cat .git/info/exclude
-    # ignore objects and archives, anywhere in the tree.
-    *.[oa]
-    $ cat Documentation/.gitignore
-    # ignore generated html files,
-    *.html
-    # except foo.html which is maintained by hand
-    !foo.html
-    $ git-ls-files --ignored \
-        --exclude='Documentation/*.[0-9]' \
-        --exclude-from=.git/info/exclude \
-        --exclude-per-directory=.gitignore
---------------------------------------------------------------
-
-Another example:
-
---------------------------------------------------------------
-    $ cat .gitignore
-    vmlinux*
-    $ ls arch/foo/kernel/vm*
-    arch/foo/kernel/vmlinux.lds.S
-    $ echo '!/vmlinux*' >arch/foo/kernel/.gitignore
---------------------------------------------------------------
-
-The second .gitignore keeps `arch/foo/kernel/vmlinux.lds.S` file
-from getting ignored.
-
-
 See Also
 --------
-gitlink:git-read-tree[1]
+gitlink:git-read-tree[1], gitlink:gitignore[5]
 
 
 Author
@@ -246,7 +175,7 @@ Written by Linus Torvalds <torvalds@osdl.org>
 
 Documentation
 --------------
-Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel.org>.
+Documentation by David Greaves, Junio C Hamano, Josh Triplett, and the git-list <git@vger.kernel.org>.
 
 GIT
 ---

@@ -341,7 +341,8 @@ have finished your work-in-progress), attempt the merge again.
 
 See Also
 --------
-gitlink:git-write-tree[1]; gitlink:git-ls-files[1]
+gitlink:git-write-tree[1]; gitlink:git-ls-files[1];
+gitlink:gitignore[5]
 
 
 Author

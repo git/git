@@ -1103,12 +1103,12 @@ showing up in the output of "`git status`", etc.
 
 Git therefore provides "exclude patterns" for telling git which files to
 actively ignore. Exclude patterns are thoroughly explained in the
-"Exclude Patterns" section of the gitlink:git-ls-files[1] manual page,
-but the heart of the concept is simply a list of files which git should
-ignore. Entries in the list may contain globs to specify multiple files,
-or may be prefixed by "`!`" to explicitly include (un-ignore) a previously
-excluded (ignored) file (i.e. later exclude patterns override earlier ones).
-The following example should illustrate such patterns:
+gitlink:gitignore[5] manual page, but the heart of the concept is simply
+a list of files which git should ignore. Entries in the list may contain
+globs to specify multiple files, or may be prefixed by "`!`" to
+explicitly include (un-ignore) a previously excluded (ignored) file
+(i.e. later exclude patterns override earlier ones).  The following
+example should illustrate such patterns:
 
 -------------------------------------------------
 # Lines starting with '#' are considered comments.
