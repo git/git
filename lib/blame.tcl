@@ -518,8 +518,10 @@ method _read_blame {fd} {
 
 			set first_lno $lno
 			while {
-			![catch {set ncmit $line_commit([expr {$first_lno - 1}])}]
+			   ![catch {set ncmit $line_commit([expr {$first_lno - 1}])}]
+			&& ![catch {set nfile $line_file([expr {$first_lno - 1}])}]
 			&& $ncmit eq $cmit
+			&& $nfile eq $file
 			} {
 				incr first_lno -1
 			}
@@ -572,8 +574,12 @@ method _read_blame {fd} {
 				incr blame_lines
 			}
 
-			while {![catch {set ncmit $line_commit($lno)}]
-				&& $ncmit eq $cmit} {
+			while {
+			   ![catch {set ncmit $line_commit($lno)}]
+			&& ![catch {set nfile $line_file($lno)}]
+			&& $ncmit eq $cmit
+			&& $nfile eq $file
+			} {
 				$w_cgrp delete $lno.0 "$lno.0 lineend"
 
 				if {$lno == $first_lno} {
