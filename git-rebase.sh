@@ -55,7 +55,7 @@ continue_merge () {
 	if test -n "$unmerged"
 	then
 		echo "You still have unmerged paths in your index"
-		echo "did you forget update-index?"
+		echo "did you forget to use git add?"
 		die "$RESOLVEMSG"
 	fi
 
@@ -126,7 +126,7 @@ do
 	--continue)
 		git-diff-files --quiet || {
 			echo "You must edit all merge conflicts and then"
-			echo "mark them as resolved using git update-index"
+			echo "mark them as resolved using git add"
 			exit 1
 		}
 		if test -d "$dotest"
