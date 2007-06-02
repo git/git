@@ -114,16 +114,22 @@ constructor new {i_commit i_path} {
 
 	set w_line $w.file_pane.out.linenumber_t
 	text $w_line \
+		-takefocus 0 \
+		-highlightthickness 0 \
+		-padx 0 -pady 0 \
 		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
 		-height 40 \
 		-width 5 \
 		-font font_diff
-	$w_line tag conf linenumber -justify right
+	$w_line tag conf linenumber -justify right -rmargin 5
 
 	set w_cgrp $w.file_pane.out.commit_t
 	text $w_cgrp \
+		-takefocus 0 \
+		-highlightthickness 0 \
+		-padx 0 -pady 0 \
 		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
@@ -140,6 +146,9 @@ constructor new {i_commit i_path} {
 
 	set w_file $w.file_pane.out.file_t
 	text $w_file \
+		-takefocus 0 \
+		-highlightthickness 0 \
+		-padx 0 -pady 0 \
 		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
