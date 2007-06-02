@@ -15,6 +15,7 @@ field header    ; # array commit,key -> header field
 field w          ; # top window in this viewer
 field w_back     ; # our back button
 field w_path     ; # label showing the current file path
+field w_columns  ; # list of all column widgets in the viewer
 field w_line     ; # text column: all line numbers
 field w_cgrp     ; # text column: abbreviated commit SHA-1s
 field w_file     ; # text column: actual file data
@@ -39,6 +40,7 @@ field path                 ; # input filename to view in $commit
 field current_fd        {} ; # background process running
 field highlight_line    -1 ; # current line selected
 field highlight_commit  {} ; # sha1 of commit selected
+field old_bgcolor       {} ; # background of current selection
 
 field total_lines       0  ; # total length of file
 field blame_lines       0  ; # number of lines computed
@@ -164,24 +166,23 @@ constructor new {i_commit i_path} {
 		-xscrollcommand [list $w.file_pane.out.sbx set] \
 		-font font_diff
 
+	set w_columns [list $w_cgrp $w_line $w_file]
+
 	scrollbar $w.file_pane.out.sbx \
 		-orient h \
 		-command [list $w_file xview]
 	scrollbar $w.file_pane.out.sby \
 		-orient v \
-		-command [list scrollbar2many [list \
-		$w_line \
-		$w_cgrp \
-		$w_file \
-		] yview]
-	grid \
-		$w_cgrp \
-		$w_line \
-		$w_file \
-		$w.file_pane.out.sby \
-		-sticky nsew
-	grid conf $w.file_pane.out.sbx -column 2 -sticky we
-	grid columnconfigure $w.file_pane.out 2 -weight 1
+		-command [list scrollbar2many $w_columns yview]
+	eval grid $w_columns $w.file_pane.out.sby -sticky nsew
+	grid conf \
+		$w.file_pane.out.sbx \
+		-column [expr {[llength $w_columns] - 1}] \
+		-sticky we
+	grid columnconfigure \
+		$w.file_pane.out \
+		[expr {[llength $w_columns] - 1}] \
+		-weight 1
 	grid rowconfigure $w.file_pane.out 0 -weight 1
 
 	set w_cmit $w.file_pane.cm.t
@@ -226,17 +227,10 @@ constructor new {i_commit i_path} {
 		-label "Copy Commit" \
 		-command [cb _copycommit]
 
-	foreach i [list \
-		$w_cgrp \
-		$w_line \
-		$w_file] {
+	foreach i $w_columns {
 		$i conf -cursor $cursor_ptr
-		$i conf -yscrollcommand \
-			[list many2scrollbar [list \
-			$w_cgrp \
-			$w_line \
-			$w_file \
-			] yview $w.file_pane.out.sby]
+		$i conf -yscrollcommand [list many2scrollbar \
+			$w_columns yview $w.file_pane.out.sby]
 		bind $i <Button-1> "
 			[cb _hide_tooltip]
 			[cb _click $i @%x,%y]
@@ -254,11 +248,7 @@ constructor new {i_commit i_path} {
 		"
 	}
 
-	foreach i [list \
-		$w_cgrp \
-		$w_line \
-		$w_file \
-		$w_cmit] {
+	foreach i [concat $w_columns $w_cmit] {
 		bind $i <Key-Up>        {catch {%W yview scroll -1 units};break}
 		bind $i <Key-Down>      {catch {%W yview scroll  1 units};break}
 		bind $i <Key-Left>      {catch {%W xview scroll -1 units};break}
@@ -310,6 +300,15 @@ method _load {} {
 			set current_fd {}
 		}
 
+		foreach i $w_columns {
+			$i conf -state normal
+			$i delete 0.0 end
+			foreach cmit [array names have_commit] {
+				$i tag delete g$cmit
+			}
+			$i conf -state disabled
+		}
+
 		set highlight_line -1
 		set highlight_commit {}
 		set total_lines 0
@@ -317,18 +316,6 @@ method _load {} {
 		array unset have_commit
 		array unset line_commit
 		array unset line_file
-
-		$w_cgrp conf -state normal
-		$w_line conf -state normal
-		$w_file conf -state normal
-
-		$w_cgrp delete 0.0 end
-		$w_line delete 0.0 end
-		$w_file delete 0.0 end
-
-		$w_cgrp conf -state disabled
-		$w_line conf -state disabled
-		$w_file conf -state disabled
 	}
 
 	if {[winfo exists $w.status.c]} {
@@ -410,17 +397,13 @@ method _read_file {fd} {
 		return
 	}
 
-	$w_cgrp conf -state normal
-	$w_line conf -state normal
-	$w_file conf -state normal
+	foreach i $w_columns {$i conf -state normal}
 	while {[gets $fd line] >= 0} {
 		regsub "\r\$" $line {} line
 		incr total_lines
 
 		if {$total_lines > 1} {
-			$w_cgrp insert end "\n"
-			$w_line insert end "\n"
-			$w_file insert end "\n"
+			foreach i $w_columns {$i insert end "\n"}
 		}
 
 		$w_line insert end "$total_lines" linenumber
@@ -432,9 +415,7 @@ method _read_file {fd} {
 		$w_line conf -width $ln_wc
 	}
 
-	$w_cgrp conf -state disabled
-	$w_line conf -state disabled
-	$w_file conf -state disabled
+	foreach i $w_columns {$i conf -state disabled}
 
 	if {[eof $fd]} {
 		close $fd
@@ -473,11 +454,9 @@ method _read_blame {fd} {
 				set bg [lindex $group_colors 0]
 				set group_colors [lrange $group_colors 1 end]
 				lappend group_colors $bg
-
-				$w_cgrp tag conf g$cmit -background $bg
-				$w_line tag conf g$cmit -background $bg
-				$w_file tag conf g$cmit -background $bg
-
+				foreach i $w_columns {
+					$i tag conf g$cmit -background $bg
+				}
 				set have_commit($cmit) 1
 			}
 		} elseif {[string match {filename *} $line]} {
@@ -531,13 +510,9 @@ method _read_blame {fd} {
 			while {$n > 0} {
 				set lno_e "$lno.0 lineend + 1c"
 				if {![catch {set g g$line_commit($lno)}]} {
-					$w_cgrp tag remove g$g $lno.0 $lno_e
-					$w_line tag remove g$g $lno.0 $lno_e
-					$w_file tag remove g$g $lno.0 $lno_e
-
-					$w_cgrp tag remove a$g $lno.0 $lno_e
-					$w_line tag remove a$g $lno.0 $lno_e
-					$w_file tag remove a$g $lno.0 $lno_e
+					foreach i $w_columns {
+						$i tag remove g$g $lno.0 $lno_e
+					}
 				}
 
 				set line_commit($lno) $cmit
@@ -552,13 +527,9 @@ method _read_blame {fd} {
 					$w_cgrp insert $lno.0 { |}
 				}
 
-				$w_cgrp tag add g$cmit $lno.0 $lno_e
-				$w_line tag add g$cmit $lno.0 $lno_e
-				$w_file tag add g$cmit $lno.0 $lno_e
-
-				$w_cgrp tag add a$cmit $lno.0 $lno_e
-				$w_line tag add a$cmit $lno.0 $lno_e
-				$w_file tag add a$cmit $lno.0 $lno_e
+				foreach i $w_columns {
+					$i tag add g$cmit $lno.0 $lno_e
+				}
 
 				if {$highlight_line == -1} {
 					if {[lindex [$w_file yview] 0] == 0} {
@@ -640,10 +611,9 @@ method _showcommit {lno} {
 	global repo_config
 
 	if {$highlight_commit ne {}} {
-		set cmit $highlight_commit
-		$w_cgrp tag conf a$cmit -background {}
-		$w_line tag conf a$cmit -background {}
-		$w_file tag conf a$cmit -background {}
+		foreach i $w_columns {
+			$i tag conf g$highlight_commit -background $old_bgcolor
+		}
 	}
 
 	$w_cmit conf -state normal
@@ -652,9 +622,10 @@ method _showcommit {lno} {
 		set cmit {}
 		$w_cmit insert end "Loading annotation..."
 	} else {
-		$w_cgrp tag conf a$cmit -background $active_color
-		$w_line tag conf a$cmit -background $active_color
-		$w_file tag conf a$cmit -background $active_color
+		set old_bgcolor [$w_file tag cget g$cmit -background]
+		foreach i $w_columns {
+			$i tag conf g$cmit -background $active_color
+		}
 
 		set author_name {}
 		set author_email {}
