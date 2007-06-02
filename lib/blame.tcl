@@ -14,7 +14,6 @@ field w_back     ; # our back button
 field w_path     ; # label showing the current file path
 field w_line     ; # text column: all line numbers
 field w_cgrp     ; # text column: abbreviated commit SHA-1s
-field w_load     ; # text column: loaded indicator
 field w_file     ; # text column: actual file data
 field w_cmit     ; # pane showing commit message
 field status     ; # text variable bound to status bar
@@ -113,16 +112,6 @@ constructor new {i_commit i_path} {
 		-height 25 \
 		-width 100
 
-	set w_load $w.file_pane.out.loaded_t
-	text $w_load \
-		-background white -borderwidth 0 \
-		-state disabled \
-		-wrap none \
-		-height 40 \
-		-width 1 \
-		-font font_diff
-	$w_load tag conf annotated -background grey
-
 	set w_line $w.file_pane.out.linenumber_t
 	text $w_line \
 		-background white -borderwidth 0 \
@@ -165,7 +154,6 @@ constructor new {i_commit i_path} {
 	scrollbar $w.file_pane.out.sby \
 		-orient v \
 		-command [list scrollbar2many [list \
-		$w_load \
 		$w_line \
 		$w_cgrp \
 		$w_file \
@@ -173,12 +161,11 @@ constructor new {i_commit i_path} {
 	grid \
 		$w_cgrp \
 		$w_line \
-		$w_load \
 		$w_file \
 		$w.file_pane.out.sby \
 		-sticky nsew
-	grid conf $w.file_pane.out.sbx -column 3 -sticky we
-	grid columnconfigure $w.file_pane.out 3 -weight 1
+	grid conf $w.file_pane.out.sbx -column 2 -sticky we
+	grid columnconfigure $w.file_pane.out 2 -weight 1
 	grid rowconfigure $w.file_pane.out 0 -weight 1
 
 	set w_cmit $w.file_pane.cm.t
@@ -225,14 +212,12 @@ constructor new {i_commit i_path} {
 
 	foreach i [list \
 		$w_cgrp \
-		$w_load \
 		$w_line \
 		$w_file] {
 		$i conf -cursor $cursor_ptr
 		$i conf -yscrollcommand \
 			[list many2scrollbar [list \
 			$w_cgrp \
-			$w_load \
 			$w_line \
 			$w_file \
 			] yview $w.file_pane.out.sby]
@@ -255,7 +240,6 @@ constructor new {i_commit i_path} {
 
 	foreach i [list \
 		$w_cgrp \
-		$w_load \
 		$w_line \
 		$w_file \
 		$w_cmit] {
@@ -320,17 +304,14 @@ method _load {} {
 		array unset line_commit
 		array unset line_file
 
-		$w_load conf -state normal
 		$w_cgrp conf -state normal
 		$w_line conf -state normal
 		$w_file conf -state normal
 
-		$w_load delete 0.0 end
 		$w_cgrp delete 0.0 end
 		$w_line delete 0.0 end
 		$w_file delete 0.0 end
 
-		$w_load conf -state disabled
 		$w_cgrp conf -state disabled
 		$w_line conf -state disabled
 		$w_file conf -state disabled
@@ -415,7 +396,6 @@ method _read_file {fd} {
 		return
 	}
 
-	$w_load conf -state normal
 	$w_cgrp conf -state normal
 	$w_line conf -state normal
 	$w_file conf -state normal
@@ -424,7 +404,6 @@ method _read_file {fd} {
 		incr total_lines
 
 		if {$total_lines > 1} {
-			$w_load insert end "\n"
 			$w_cgrp insert end "\n"
 			$w_line insert end "\n"
 			$w_file insert end "\n"
@@ -433,7 +412,6 @@ method _read_file {fd} {
 		$w_line insert end "$total_lines" linenumber
 		$w_file insert end "$line"
 	}
-	$w_load conf -state disabled
 	$w_cgrp conf -state disabled
 	$w_line conf -state disabled
 	$w_file conf -state disabled
@@ -535,9 +513,7 @@ method _read_blame {fd} {
 
 			while {$n > 0} {
 				set lno_e "$lno.0 lineend + 1c"
-				if {[catch {set g g$line_commit($lno)}]} {
-					$w_load tag add annotated $lno.0 $lno_e
-				} else {
+				if {![catch {set g g$line_commit($lno)}]} {
 					$w_cgrp tag remove g$g $lno.0 $lno_e
 					$w_line tag remove g$g $lno.0 $lno_e
 					$w_file tag remove g$g $lno.0 $lno_e
