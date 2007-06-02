@@ -805,6 +805,13 @@ method _open_tooltip {cur_w} {
 $author_name $author_email  $author_time
 $summary"
 
+	set file $line_file($lno)
+	if {$file ne $path} {
+		append tooltip_text "
+
+Original File: $file"
+	}
+
 	if {$tooltip_wm ne "$cur_w.tooltip"} {
 		_hide_tooltip $this
 
