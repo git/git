@@ -422,12 +422,19 @@ method _read_file {fd} {
 		$w_line insert end "$total_lines" linenumber
 		$w_file insert end "$line"
 	}
+
+	set ln_wc [expr {[string length $total_lines] + 2}]
+	if {[$w_line cget -width] < $ln_wc} {
+		$w_line conf -width $ln_wc
+	}
+
 	$w_cgrp conf -state disabled
 	$w_line conf -state disabled
 	$w_file conf -state disabled
 
 	if {[eof $fd]} {
 		close $fd
+
 		_status $this
 		set cmd {nice git blame -M -C --incremental}
 		if {$commit eq {}} {
