@@ -122,7 +122,7 @@ constructor new {i_commit i_path} {
 		-state disabled \
 		-wrap none \
 		-height 40 \
-		-width 5 \
+		-width 6 \
 		-font font_diff
 	$w_line tag conf linenumber -justify right -rmargin 5
 
