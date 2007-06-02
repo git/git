@@ -42,10 +42,11 @@ field tooltip_timer  {} ; # Current timer event for our tooltip
 field tooltip_commit {} ; # Commit in tooltip
 field tooltip_text   {} ; # Text in current tooltip
 
-variable active_color #98e1a0
+variable active_color #c0edc5
 variable group_colors {
-	#cbcbcb
+	#d6d6d6
 	#e1e1e1
+	#ececec
 }
 
 constructor new {i_commit i_path} {
