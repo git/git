@@ -18,6 +18,7 @@ field w_path     ; # label showing the current file path
 field w_columns  ; # list of all column widgets in the viewer
 field w_line     ; # text column: all line numbers
 field w_amov     ; # text column: annotations + move tracking
+field w_asim     ; # text column: annotations (simple computation)
 field w_file     ; # text column: actual file data
 field w_cviewer  ; # pane showing commit message
 field status     ; # text variable bound to status bar
@@ -39,6 +40,7 @@ field path                 ; # input filename to view in $commit
 
 field current_fd        {} ; # background process running
 field highlight_line    -1 ; # current line selected
+field highlight_column  {} ; # current commit column selected
 field highlight_commit  {} ; # sha1 of commit selected
 field old_bgcolor       {} ; # background of current selection
 
@@ -46,6 +48,7 @@ field total_lines       0  ; # total length of file
 field blame_lines       0  ; # number of lines computed
 field have_commit          ; # array commit -> 1
 field amov_data            ; # list of {commit origfile origline}
+field asim_data            ; # list of {commit origfile origline}
 
 field r_commit             ; # commit currently being parsed
 field r_orig_line          ; # original line number
@@ -142,15 +145,32 @@ constructor new {i_commit i_path} {
 		-state disabled \
 		-wrap none \
 		-height 40 \
-		-width 4 \
+		-width 5 \
 		-font font_diff
+	$w_amov tag conf author_abbr -justify right -rmargin 5
 	$w_amov tag conf curr_commit
-	$w_amov tag conf prior_commit \
-		-foreground blue \
-		-underline 1
+	$w_amov tag conf prior_commit -foreground blue -underline 1
 	$w_amov tag bind prior_commit \
 		<Button-1> \
-		"[cb _load_commit @%x,%y];break"
+		"[cb _load_commit $w_amov @amov_data @%x,%y];break"
+
+	set w_asim $w.file_pane.out.asimple_t
+	text $w_asim \
+		-takefocus 0 \
+		-highlightthickness 0 \
+		-padx 0 -pady 0 \
+		-background white -borderwidth 0 \
+		-state disabled \
+		-wrap none \
+		-height 40 \
+		-width 4 \
+		-font font_diff
+	$w_asim tag conf author_abbr -justify right
+	$w_asim tag conf curr_commit
+	$w_asim tag conf prior_commit -foreground blue -underline 1
+	$w_asim tag bind prior_commit \
+		<Button-1> \
+		"[cb _load_commit $w_asim @asim_data @%x,%y];break"
 
 	set w_file $w.file_pane.out.file_t
 	text $w_file \
@@ -165,7 +185,7 @@ constructor new {i_commit i_path} {
 		-xscrollcommand [list $w.file_pane.out.sbx set] \
 		-font font_diff
 
-	set w_columns [list $w_amov $w_line $w_file]
+	set w_columns [list $w_amov $w_asim $w_line $w_file]
 
 	scrollbar $w.file_pane.out.sbx \
 		-orient h \
@@ -312,9 +332,9 @@ method _load {} {
 		}
 
 		set highlight_line -1
+		set highlight_column {}
 		set highlight_commit {}
 		set total_lines 0
-		set blame_lines 0
 		array unset have_commit
 	}
 
@@ -343,6 +363,7 @@ method _load {} {
 	# git-blame output and with Tk's text widget.
 	#
 	set amov_data [list [list]]
+	set asim_data [list [list]]
 
 	set status "Loading $commit:[escape_path $path]..."
 	$w_path conf -text [escape_path $path]
@@ -410,6 +431,7 @@ method _read_file {fd} {
 		regsub "\r\$" $line {} line
 		incr total_lines
 		lappend amov_data {}
+		lappend asim_data {}
 
 		if {$total_lines > 1} {
 			foreach i $w_columns {$i insert end "\n"}
@@ -428,29 +450,37 @@ method _read_file {fd} {
 
 	if {[eof $fd]} {
 		close $fd
-
-		_status $this
-		set cmd {nice git blame -M -C --incremental}
-		if {$commit eq {}} {
-			lappend cmd --contents $path
-		} else {
-			lappend cmd $commit
-		}
-		lappend cmd -- $path
-		set fd [open "| $cmd" r]
-		fconfigure $fd -blocking 0 -translation lf -encoding binary
-		fileevent $fd readable [cb _read_blame $fd]
-		set current_fd $fd
+		_exec_blame $this $w_asim @asim_data [list] {}
 	}
 } ifdeleted { catch {close $fd} }
 
-method _read_blame {fd} {
+method _exec_blame {cur_w cur_d options cur_s} {
+	set cmd [list nice git blame]
+	set cmd [concat $cmd $options]
+	lappend cmd --incremental
+	if {$commit eq {}} {
+		lappend cmd --contents $path
+	} else {
+		lappend cmd $commit
+	}
+	lappend cmd -- $path
+	set fd [open "| $cmd" r]
+	fconfigure $fd -blocking 0 -translation lf -encoding binary
+	fileevent $fd readable [cb _read_blame $fd $cur_w $cur_d $cur_s]
+	set current_fd $fd
+	set blame_lines 0
+	_status $this $cur_s
+}
+
+method _read_blame {fd cur_w cur_d cur_s} {
+	upvar #0 $cur_d line_data
+
 	if {$fd ne $current_fd} {
 		catch {close $fd}
 		return
 	}
 
-	$w_amov conf -state normal
+	$cur_w conf -state normal
 	while {[gets $fd line] >= 0} {
 		if {[regexp {^([a-z0-9]{40}) (\d+) (\d+) (\d+)$} $line line \
 			cmit original_line final_line line_count]} {
@@ -482,7 +512,7 @@ method _read_blame {fd} {
 				set commit_type curr_commit
 			} else {
 				set commit_type prior_commit
-				set commit_abbr [string range $cmit 0 4]
+				set commit_abbr [string range $cmit 0 3]
 			}
 
 			set author_abbr {}
@@ -500,51 +530,50 @@ method _read_blame {fd} {
 				set author_abbr { |}
 			} else {
 				set author_abbr [string range $author_abbr 0 3]
-				while {[string length $author_abbr] < 4} {
-					set author_abbr " $author_abbr"
-				}
 			}
 			unset a_name
 
 			set first_lno $lno
 			while {
 			   $first_lno > 1
-			&& $cmit eq [lindex $amov_data [expr {$first_lno - 1}] 0]
-			&& $file eq [lindex $amov_data [expr {$first_lno - 1}] 1]
+			&& $cmit eq [lindex $line_data [expr {$first_lno - 1}] 0]
+			&& $file eq [lindex $line_data [expr {$first_lno - 1}] 1]
 			} {
 				incr first_lno -1
 			}
 
 			while {$n > 0} {
 				set lno_e "$lno.0 lineend + 1c"
-				if {[lindex $amov_data $lno] ne {}} {
-					set g [lindex $amov_data $lno 0]
+				if {[lindex $line_data $lno] ne {}} {
+					set g [lindex $line_data $lno 0]
 					foreach i $w_columns {
 						$i tag remove g$g $lno.0 $lno_e
 					}
 				}
-				lset amov_data $lno [list $cmit $file]
+				lset line_data $lno [list $cmit $file]
 
-				$w_amov delete $lno.0 "$lno.0 lineend"
+				$cur_w delete $lno.0 "$lno.0 lineend"
 				if {$lno == $first_lno} {
-					$w_amov insert $lno.0 $commit_abbr $commit_type
+					$cur_w insert $lno.0 $commit_abbr $commit_type
 				} elseif {$lno == [expr {$first_lno + 1}]} {
-					$w_amov insert $lno.0 $author_abbr
+					$cur_w insert $lno.0 $author_abbr author_abbr
 				} else {
-					$w_amov insert $lno.0 { |}
+					$cur_w insert $lno.0 { |}
 				}
 
 				foreach i $w_columns {
 					$i tag add g$cmit $lno.0 $lno_e
 				}
 
-				if {$highlight_line == -1} {
-					if {[lindex [$w_file yview] 0] == 0} {
+				if {$highlight_column eq $cur_w} {
+					if {$highlight_line == -1
+					 && [lindex [$w_file yview] 0] == 0} {
 						$w_file see $lno.0
-						_showcommit $this $lno
+						set highlight_line $lno
 					}
-				} elseif {$highlight_line == $lno} {
-					_showcommit $this $lno
+					if {$highlight_line == $lno} {
+						_showcommit $this $cur_w $lno
+					}
 				}
 
 				incr n -1
@@ -553,17 +582,17 @@ method _read_blame {fd} {
 			}
 
 			while {
-			   $cmit eq [lindex $amov_data $lno 0]
-			&& $file eq [lindex $amov_data $lno 1]
+			   $cmit eq [lindex $line_data $lno 0]
+			&& $file eq [lindex $line_data $lno 1]
 			} {
-				$w_amov delete $lno.0 "$lno.0 lineend"
+				$cur_w delete $lno.0 "$lno.0 lineend"
 
 				if {$lno == $first_lno} {
-					$w_amov insert $lno.0 $commit_abbr $commit_type
+					$cur_w insert $lno.0 $commit_abbr $commit_type
 				} elseif {$lno == [expr {$first_lno + 1}]} {
-					$w_amov insert $lno.0 $author_abbr
+					$cur_w insert $lno.0 $author_abbr author_abbr
 				} else {
-					$w_amov insert $lno.0 { |}
+					$cur_w insert $lno.0 { |}
 				}
 				incr lno
 			}
@@ -572,39 +601,45 @@ method _read_blame {fd} {
 			set header($r_commit,$key) $data
 		}
 	}
-	$w_amov conf -state disabled
+	$cur_w conf -state disabled
 
 	if {[eof $fd]} {
 		close $fd
-		set current_fd {}
-		set status {Annotation complete.}
-		destroy $w.status.c
+		if {$cur_w eq $w_asim} {
+			_exec_blame $this $w_amov @amov_data \
+				[list -M -C -C] \
+				{ move/copy tracking}
+		} else {
+			set current_fd {}
+			set status {Annotation complete.}
+			destroy $w.status.c
+		}
 	} else {
-		_status $this
+		_status $this $cur_s
 	}
 } ifdeleted { catch {close $fd} }
 
-method _status {} {
+method _status {cur_s} {
 	set have  $blame_lines
 	set total $total_lines
 	set pdone 0
 	if {$total} {set pdone [expr {100 * $have / $total}]}
 
 	set status [format \
-		"Loading annotations... %i of %i lines annotated (%2i%%)" \
-		$have $total $pdone]
+		"Loading%s annotations... %i of %i lines annotated (%2i%%)" \
+		$cur_s $have $total $pdone]
 	$w.status.c coords bar 0 0 $pdone 20
 }
 
 method _click {cur_w pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
-	if {$lno eq {}} return
-	_showcommit $this $lno
+	_showcommit $this $cur_w $lno
 }
 
-method _load_commit {pos} {
-	set lno [lindex [split [$w_amov index $pos] .] 0]
-	set dat [lindex $amov_data $lno]
+method _load_commit {cur_w cur_d pos} {
+	upvar #0 $cur_d line_data
+	set lno [lindex [split [$cur_w index $pos] .] 0]
+	set dat [lindex $line_data $lno]
 	if {$dat ne {}} {
 		set commit [lindex $dat 0]
 		set path   [lindex $dat 1]
@@ -612,7 +647,7 @@ method _load_commit {pos} {
 	}
 }
 
-method _showcommit {lno} {
+method _showcommit {cur_w lno} {
 	global repo_config
 
 	if {$highlight_commit ne {}} {
@@ -621,10 +656,17 @@ method _showcommit {lno} {
 		}
 	}
 
+	if {$cur_w eq $w_amov} {
+		set dat [lindex $amov_data $lno]
+		set highlight_column $w_amov
+	} else {
+		set dat [lindex $asim_data $lno]
+		set highlight_column $w_asim
+	}
+
 	$w_cviewer conf -state normal
 	$w_cviewer delete 0.0 end
 
-	set dat [lindex $amov_data $lno]
 	if {$dat eq {}} {
 		set cmit {}
 		$w_cviewer insert end "Loading annotation..." still_loading
@@ -724,7 +766,11 @@ method _copycommit {} {
 
 method _show_tooltip {cur_w pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
-	set dat [lindex $amov_data $lno]
+	if {$cur_w eq $w_amov} {
+		set dat [lindex $amov_data $lno]
+	} else {
+		set dat [lindex $asim_data $lno]
+	}
 	if {$dat eq {}} {
 		_hide_tooltip $this
 		return
@@ -758,7 +804,11 @@ method _open_tooltip {cur_w} {
 		[expr {$pos_x - [winfo rootx $cur_w]}] \
 		[expr {$pos_y - [winfo rooty $cur_w]}]] ,]
 	set lno [lindex [split [$cur_w index $pos] .] 0]
-	set dat [lindex $amov_data $lno]
+	if {$cur_w eq $w_amov} {
+		set dat [lindex $amov_data $lno]
+	} else {
+		set dat [lindex $asim_data $lno]
+	}
 	set cmit [lindex $dat 0]
 	set file [lindex $dat 1]
 
