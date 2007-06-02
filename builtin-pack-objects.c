@@ -36,6 +36,7 @@ struct object_entry {
 	struct object_entry *delta_sibling; /* other deltified objects who
 					     * uses the same base as me
 					     */
+	void *delta_data;	/* cached delta (uncompressed) */
 	unsigned long delta_size;	/* delta data size (uncompressed) */
 	enum object_type type;
 	enum object_type in_pack_type;	/* could be delta */
@@ -75,6 +76,10 @@ static int num_preferred_base;
 static struct progress progress_state;
 static int pack_compression_level = Z_DEFAULT_COMPRESSION;
 static int pack_compression_seen;
+
+static unsigned long delta_cache_size = 0;
+static unsigned long max_delta_cache_size = 0;
+static unsigned long cache_max_small_delta_size = 1000;
 
 /*
  * The object names in objects array are hashed with this hashtable,
@@ -405,24 +410,24 @@ static unsigned long write_object(struct sha1file *f,
 		z_stream stream;
 		unsigned long maxsize;
 		void *out;
-		buf = read_sha1_file(entry->sha1, &type, &size);
-		if (!buf)
-			die("unable to read %s", sha1_to_hex(entry->sha1));
-		if (size != entry->size)
-			die("object %s size inconsistency (%lu vs %lu)",
-			    sha1_to_hex(entry->sha1), size, entry->size);
-		if (usable_delta) {
+		if (!usable_delta) {
+			buf = read_sha1_file(entry->sha1, &obj_type, &size);
+			if (!buf)
+				die("unable to read %s", sha1_to_hex(entry->sha1));
+		} else if (entry->delta_data) {
+			size = entry->delta_size;
+			buf = entry->delta_data;
+			entry->delta_data = NULL;
+			obj_type = (allow_ofs_delta && entry->delta->offset) ?
+				OBJ_OFS_DELTA : OBJ_REF_DELTA;
+		} else {
+			buf = read_sha1_file(entry->sha1, &type, &size);
+			if (!buf)
+				die("unable to read %s", sha1_to_hex(entry->sha1));
 			buf = delta_against(buf, size, entry);
 			size = entry->delta_size;
 			obj_type = (allow_ofs_delta && entry->delta->offset) ?
 				OBJ_OFS_DELTA : OBJ_REF_DELTA;
-		} else {
-			/*
-			 * recover real object type in case
-			 * check_object() wanted to re-use a delta,
-			 * but we couldn't since base was in previous split pack
-			 */
-			obj_type = type;
 		}
 		/* compress the data to store and put compressed length in datalen */
 		memset(&stream, 0, sizeof(stream));
@@ -1385,6 +1390,23 @@ struct unpacked {
 	struct delta_index *index;
 };
 
+static int delta_cacheable(struct unpacked *trg, struct unpacked *src,
+			    unsigned long src_size, unsigned long trg_size,
+			    unsigned long delta_size)
+{
+	if (max_delta_cache_size && delta_cache_size + delta_size > max_delta_cache_size)
+		return 0;
+
+	if (delta_size < cache_max_small_delta_size)
+		return 1;
+
+	/* cache delta, if objects are large enough compared to delta size */
+	if ((src_size >> 20) + (trg_size >> 21) > (delta_size >> 10))
+		return 1;
+
+	return 0;
+}
+
 /*
  * We search for deltas _backwards_ in a list sorted by type and
  * by size, so that we see progressively smaller and smaller files.
@@ -1454,18 +1476,32 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	}
 	if (!src->index) {
 		src->index = create_delta_index(src->data, src_size);
-		if (!src->index)
-			die("out of memory");
+		if (!src->index) {
+			static int warned = 0;
+			if (!warned++)
+				warning("suboptimal pack - out of memory");
+			return 0;
+		}
 	}
 
 	delta_buf = create_delta(src->index, trg->data, trg_size, &delta_size, max_size);
 	if (!delta_buf)
 		return 0;
 
+	if (trg_entry->delta_data) {
+		delta_cache_size -= trg_entry->delta_size;
+		free(trg_entry->delta_data);
+	}
+	trg_entry->delta_data = 0;
 	trg_entry->delta = src_entry;
 	trg_entry->delta_size = delta_size;
 	trg_entry->depth = src_entry->depth + 1;
-	free(delta_buf);
+
+	if (delta_cacheable(src, trg, src_size, trg_size, delta_size)) {
+		trg_entry->delta_data = xrealloc(delta_buf, delta_size);
+		delta_cache_size += trg_entry->delta_size;
+	} else
+		free(delta_buf);
 	return 1;
 }
 
@@ -1609,6 +1645,14 @@ static int git_pack_config(const char *k, const char *v)
 			die("bad pack compression level %d", level);
 		pack_compression_level = level;
 		pack_compression_seen = 1;
+		return 0;
+	}
+	if (!strcmp(k, "pack.deltacachesize")) {
+		max_delta_cache_size = git_config_int(k, v);
+		return 0;
+	}
+	if (!strcmp(k, "pack.deltacachelimit")) {
+		cache_max_small_delta_size = git_config_int(k, v);
 		return 0;
 	}
 	return git_default_config(k, v);
