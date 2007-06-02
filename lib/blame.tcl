@@ -5,10 +5,13 @@ class blame {
 
 image create photo ::blame::img_back_arrow -data {R0lGODlhGAAYAIUAAPwCBEzKXFTSZIz+nGzmhGzqfGTidIT+nEzGXHTqhGzmfGzifFzadETCVES+VARWDFzWbHzyjAReDGTadFTOZDSyRDyyTCymPARaFGTedFzSbDy2TCyqRCyqPARaDAyCHES6VDy6VCyiPAR6HCSeNByWLARyFARiDARqFGTifARiFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAAAALAAAAAAYABgAAAajQIBwSCwaj8ikcsk0BppJwRPqHEypQwHBis0WDAdEFyBIKBaMAKLBdjQeSkFBYTBAIvgEoS6JmhUTEwIUDQ4VFhcMGEhyCgoZExoUaxsWHB0THkgfAXUGAhoBDSAVFR0XBnCbDRmgog0hpSIiDJpJIyEQhBUcJCIlwA22SSYVogknEg8eD82qSigdDSknY0IqJQXPYxIl1dZCGNvWw+Dm510GQQAh/mhDcmVhdGVkIGJ5IEJNUFRvR0lGIFBybyB2ZXJzaW9uIDIuNQ0KqSBEZXZlbENvciAxOTk3LDE5OTguIEFsbCByaWdodHMgcmVzZXJ2ZWQuDQpodHRwOi8vd3d3LmRldmVsY29yLmNvbQA7}
 
-field commit    ; # input commit to blame
-field path      ; # input filename to view in $commit
+# Persistant data (survives loads)
+#
 field history {}; # viewer history: {commit path}
+field header    ; # array commit,key -> header field
 
+# Tk UI control paths
+#
 field w          ; # top window in this viewer
 field w_back     ; # our back button
 field w_path     ; # label showing the current file path
@@ -19,37 +22,41 @@ field w_cmit     ; # pane showing commit message
 field status     ; # text variable bound to status bar
 field old_height ; # last known height of $w.file_pane
 
-field current_fd       {} ; # background process running
-field highlight_line   -1 ; # current line selected
-field highlight_commit {} ; # sha1 of commit selected
-
-field total_lines       0  ; # total length of file
-field blame_lines       0  ; # number of lines computed
-field commit_count      0  ; # number of commits loaded
-field order                ; # array commit -> receipt order
-field header               ; # array commit,key -> header field
-field line_commit          ; # array line -> sha1 commit
-field line_file            ; # array line -> file name
-
-field r_commit      ; # commit currently being parsed
-field r_orig_line   ; # original line number
-field r_final_line  ; # final line number
-field r_line_count  ; # lines in this region
-
-field tooltip_wm     {} ; # Current tooltip toplevel, if open
-field tooltip_timer  {} ; # Current timer event for our tooltip
-field tooltip_commit {} ; # Commit in tooltip
-field tooltip_text   {} ; # Text in current tooltip
-
-variable active_color #c0edc5
-variable group_colors {
+# Tk UI colors
+#
+field active_color #c0edc5
+field group_colors {
 	#d6d6d6
 	#e1e1e1
 	#ececec
 }
 
+# Current blame data; cleared/reset on each load
+#
+field commit               ; # input commit to blame
+field path                 ; # input filename to view in $commit
+
+field current_fd        {} ; # background process running
+field highlight_line    -1 ; # current line selected
+field highlight_commit  {} ; # sha1 of commit selected
+
+field total_lines       0  ; # total length of file
+field blame_lines       0  ; # number of lines computed
+field have_commit          ; # array commit -> 1
+field line_commit          ; # array line -> sha1 commit
+field line_file            ; # array line -> file name
+
+field r_commit             ; # commit currently being parsed
+field r_orig_line          ; # original line number
+field r_final_line         ; # final line number
+field r_line_count         ; # lines in this region
+
+field tooltip_wm        {} ; # Current tooltip toplevel, if open
+field tooltip_timer     {} ; # Current timer event for our tooltip
+field tooltip_commit    {} ; # Commit in tooltip
+field tooltip_text      {} ; # Text in current tooltip
+
 constructor new {i_commit i_path} {
-	variable active_color
 	global cursor_ptr
 
 	set commit $i_commit
@@ -307,8 +314,7 @@ method _load {} {
 		set highlight_commit {}
 		set total_lines 0
 		set blame_lines 0
-		set commit_count 0
-		array unset order
+		array unset have_commit
 		array unset line_commit
 		array unset line_file
 
@@ -449,8 +455,6 @@ method _read_file {fd} {
 } ifdeleted { catch {close $fd} }
 
 method _read_blame {fd} {
-	variable group_colors
-
 	if {$fd ne $current_fd} {
 		catch {close $fd}
 		return
@@ -465,7 +469,7 @@ method _read_blame {fd} {
 			set r_final_line $final_line
 			set r_line_count $line_count
 
-			if {[catch {set g $order($cmit)}]} {
+			if {[catch {set g $have_commit($cmit)}]} {
 				set bg [lindex $group_colors 0]
 				set group_colors [lrange $group_colors 1 end]
 				lappend group_colors $bg
@@ -474,8 +478,7 @@ method _read_blame {fd} {
 				$w_line tag conf g$cmit -background $bg
 				$w_file tag conf g$cmit -background $bg
 
-				set order($cmit) $commit_count
-				incr commit_count
+				set have_commit($cmit) 1
 			}
 		} elseif {[string match {filename *} $line]} {
 			set file [string range $line 9 end]
@@ -635,7 +638,6 @@ method _load_commit {pos} {
 
 method _showcommit {lno} {
 	global repo_config
-	variable active_color
 
 	if {$highlight_commit ne {}} {
 		set cmit $highlight_commit
