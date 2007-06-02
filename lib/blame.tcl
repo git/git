@@ -66,14 +66,18 @@ constructor new {i_commit i_path} {
 		-anchor w \
 		-justify left
 	set w_back $w.header.commit_b
-	button $w_back \
-		-command [cb _history_menu] \
+	label $w_back \
 		-image ::blame::img_back_arrow \
 		-borderwidth 0 \
 		-relief flat \
 		-state disabled \
 		-background orange \
 		-activebackground orange
+	bind $w_back <Button-1> "
+		if {\[$w_back cget -state\] eq {normal}} {
+			[cb _history_menu]
+		}
+		"
 	label $w.header.commit \
 		-textvariable @commit \
 		-background orange \
