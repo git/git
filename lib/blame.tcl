@@ -3,18 +3,24 @@
 
 class blame {
 
-field commit  ; # input commit to blame
-field path    ; # input filename to view in $commit
+image create photo ::blame::img_back_arrow -data {R0lGODlhGAAYAIUAAPwCBEzKXFTSZIz+nGzmhGzqfGTidIT+nEzGXHTqhGzmfGzifFzadETCVES+VARWDFzWbHzyjAReDGTadFTOZDSyRDyyTCymPARaFGTedFzSbDy2TCyqRCyqPARaDAyCHES6VDy6VCyiPAR6HCSeNByWLARyFARiDARqFGTifARiFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAAAALAAAAAAYABgAAAajQIBwSCwaj8ikcsk0BppJwRPqHEypQwHBis0WDAdEFyBIKBaMAKLBdjQeSkFBYTBAIvgEoS6JmhUTEwIUDQ4VFhcMGEhyCgoZExoUaxsWHB0THkgfAXUGAhoBDSAVFR0XBnCbDRmgog0hpSIiDJpJIyEQhBUcJCIlwA22SSYVogknEg8eD82qSigdDSknY0IqJQXPYxIl1dZCGNvWw+Dm510GQQAh/mhDcmVhdGVkIGJ5IEJNUFRvR0lGIFBybyB2ZXJzaW9uIDIuNQ0KqSBEZXZlbENvciAxOTk3LDE5OTguIEFsbCByaWdodHMgcmVzZXJ2ZWQuDQpodHRwOi8vd3d3LmRldmVsY29yLmNvbQA7}
 
-field w
-field w_line
-field w_cgrp
-field w_load
-field w_file
-field w_cmit
-field status
-field old_height
+field commit    ; # input commit to blame
+field path      ; # input filename to view in $commit
+field history {}; # viewer history: {commit path}
 
+field w          ; # top window in this viewer
+field w_back     ; # our back button
+field w_path     ; # label showing the current file path
+field w_line     ; # text column: all line numbers
+field w_cgrp     ; # text column: abbreviated commit SHA-1s
+field w_load     ; # text column: loaded indicator
+field w_file     ; # text column: actual file data
+field w_cmit     ; # pane showing commit message
+field status     ; # text variable bound to status bar
+field old_height ; # last known height of $w.file_pane
+
+field current_fd       {} ; # background process running
 field highlight_line   -1 ; # current line selected
 field highlight_commit {} ; # sha1 of commit selected
 
@@ -52,14 +58,42 @@ constructor new {i_commit i_path} {
 
 	make_toplevel top w
 	wm title $top "[appname] ([reponame]): File Viewer"
-	set status "Loading $commit:$path..."
 
-	label $w.path -text "$commit:$path" \
+	frame $w.header -background orange
+	label $w.header.commit_l \
+		-text {Commit:} \
+		-background orange \
 		-anchor w \
-		-justify left \
-		-borderwidth 1 \
-		-relief sunken \
-		-font font_uibold
+		-justify left
+	set w_back $w.header.commit_b
+	button $w_back \
+		-command [cb _history_menu] \
+		-image ::blame::img_back_arrow \
+		-borderwidth 0 \
+		-relief flat \
+		-state disabled \
+		-background orange \
+		-activebackground orange
+	label $w.header.commit \
+		-textvariable @commit \
+		-background orange \
+		-anchor w \
+		-justify left
+	label $w.header.path_l \
+		-text {File:} \
+		-background orange \
+		-anchor w \
+		-justify left
+	set w_path $w.header.path
+	label $w_path \
+		-background orange \
+		-anchor w \
+		-justify left
+	pack $w.header.commit_l -side left
+	pack $w_back -side left
+	pack $w.header.commit -side left
+	pack $w_path -fill x -side right
+	pack $w.header.path_l -side right
 
 	panedwindow $w.file_pane -orient vertical
 	frame $w.file_pane.out
@@ -103,6 +137,13 @@ constructor new {i_commit i_path} {
 		-height 40 \
 		-width 4 \
 		-font font_diff
+	$w_cgrp tag conf curr_commit
+	$w_cgrp tag conf prior_commit \
+		-foreground blue \
+		-underline 1
+	$w_cgrp tag bind prior_commit \
+		<Button-1> \
+		"[cb _load_commit @%x,%y];break"
 
 	set w_file $w.file_pane.out.file_t
 	text $w_file \
@@ -171,15 +212,7 @@ constructor new {i_commit i_path} {
 		-textvariable @status \
 		-anchor w \
 		-justify left
-	canvas $w.status.c \
-		-width 100 \
-		-height [expr {int([winfo reqheight $w.status.l] * 0.6)}] \
-		-borderwidth 1 \
-		-relief groove \
-		-highlightt 0
-	$w.status.c create rectangle 0 0 0 20 -tags bar -fill navy
 	pack $w.status.l -side left
-	pack $w.status.c -side right
 
 	menu $w.ctxm -tearoff 0
 	$w.ctxm add command \
@@ -238,7 +271,7 @@ constructor new {i_commit i_path} {
 	bind $top <Visibility> [list focus $top]
 	bind $w_file <Destroy> [list delete_this $this]
 
-	grid configure $w.path -sticky ew
+	grid configure $w.header -sticky ew
 	grid configure $w.file_pane -sticky nsew
 	grid configure $w.status -sticky ew
 	grid columnconfigure $top 0 -weight 1
@@ -261,6 +294,66 @@ constructor new {i_commit i_path} {
 	bind $w.file_pane <Configure> \
 	"if {{$w.file_pane} eq {%W}} {[cb _resize %h]}"
 
+	_load $this
+}
+
+method _load {} {
+	_hide_tooltip $this
+
+	if {$total_lines != 0 || $current_fd ne {}} {
+		if {$current_fd ne {}} {
+			catch {close $current_fd}
+			set current_fd {}
+		}
+
+		set highlight_line -1
+		set highlight_commit {}
+		set total_lines 0
+		set blame_lines 0
+		set commit_count 0
+		set commit_list {}
+		array unset order
+		array unset line_commit
+		array unset line_file
+
+		$w_load conf -state normal
+		$w_cgrp conf -state normal
+		$w_line conf -state normal
+		$w_file conf -state normal
+
+		$w_load delete 0.0 end
+		$w_cgrp delete 0.0 end
+		$w_line delete 0.0 end
+		$w_file delete 0.0 end
+
+		$w_load conf -state disabled
+		$w_cgrp conf -state disabled
+		$w_line conf -state disabled
+		$w_file conf -state disabled
+	}
+
+	if {[winfo exists $w.status.c]} {
+		$w.status.c coords bar 0 0 0 20
+	} else {
+		canvas $w.status.c \
+			-width 100 \
+			-height [expr {int([winfo reqheight $w.status.l] * 0.6)}] \
+			-borderwidth 1 \
+			-relief groove \
+			-highlightt 0
+		$w.status.c create rectangle 0 0 0 20 -tags bar -fill navy
+		pack $w.status.c -side right
+	}
+
+	if {$history eq {}} {
+		$w_back conf -state disabled
+	} else {
+		$w_back conf -state normal
+	}
+	lappend history [list $commit $path]
+
+	set status "Loading $commit:[escape_path $path]..."
+	$w_path conf -text [escape_path $path]
 	if {$commit eq {}} {
 		set fd [open $path r]
 	} else {
@@ -269,9 +362,52 @@ constructor new {i_commit i_path} {
 	}
 	fconfigure $fd -blocking 0 -translation lf -encoding binary
 	fileevent $fd readable [cb _read_file $fd]
+	set current_fd $fd
+}
+
+method _history_menu {} {
+	set m $w.backmenu
+	if {[winfo exists $m]} {
+		$m delete 0 end
+	} else {
+		menu $m -tearoff 0
+	}
+
+	for {set i [expr {[llength $history] - 2}]
+		} {$i >= 0} {incr i -1} {
+		set e [lindex $history $i]
+		set c [lindex $e 0]
+		set f [lindex $e 1]
+
+		if {[regexp {^[0-9a-f]{40}$} $c]} {
+			set t [string range $c 0 8]...
+		} else {
+			set t $c
+		}
+		if {![catch {set summary $header($c,summary)}]} {
+			append t " $summary"
+		}
+
+		$m add command -label $t -command [cb _goback $i $c $f]
+	}
+	set X [winfo rootx $w_back]
+	set Y [expr {[winfo rooty $w_back] + [winfo height $w_back]}]
+	tk_popup $m $X $Y
+}
+
+method _goback {i c f} {
+	set history [lrange $history 0 [expr {$i - 1}]]
+	set commit $c
+	set path $f
+	_load $this
 }
 
 method _read_file {fd} {
+	if {$fd ne $current_fd} {
+		catch {close $fd}
+		return
+	}
+
 	$w_load conf -state normal
 	$w_cgrp conf -state normal
 	$w_line conf -state normal
@@ -298,7 +434,7 @@ method _read_file {fd} {
 	if {[eof $fd]} {
 		close $fd
 		_status $this
-		set cmd [list git blame -M -C --incremental]
+		set cmd {nice git blame -M -C --incremental}
 		if {$commit eq {}} {
 			lappend cmd --contents $path
 		} else {
@@ -308,11 +444,17 @@ method _read_file {fd} {
 		set fd [open "| $cmd" r]
 		fconfigure $fd -blocking 0 -translation lf -encoding binary
 		fileevent $fd readable [cb _read_blame $fd]
+		set current_fd $fd
 	}
 } ifdeleted { catch {close $fd} }
 
 method _read_blame {fd} {
 	variable group_colors
+
+	if {$fd ne $current_fd} {
+		catch {close $fd}
+		return
+	}
 
 	$w_cgrp conf -state normal
 	while {[gets $fd line] >= 0} {
@@ -344,7 +486,12 @@ method _read_blame {fd} {
 
 			if {[regexp {^0{40}$} $cmit]} {
 				set commit_abbr work
+				set commit_type curr_commit
+			} elseif {$cmit eq $commit} {
+				set commit_abbr this
+				set commit_type curr_commit
 			} else {
+				set commit_type prior_commit
 				set commit_abbr [string range $cmit 0 4]
 			}
 
@@ -396,7 +543,7 @@ method _read_blame {fd} {
 
 				$w_cgrp delete $lno.0 "$lno.0 lineend"
 				if {$lno == $first_lno} {
-					$w_cgrp insert $lno.0 $commit_abbr
+					$w_cgrp insert $lno.0 $commit_abbr $commit_type
 				} elseif {$lno == [expr {$first_lno + 1}]} {
 					$w_cgrp insert $lno.0 $author_abbr
 				} else {
@@ -430,7 +577,7 @@ method _read_blame {fd} {
 				$w_cgrp delete $lno.0 "$lno.0 lineend"
 
 				if {$lno == $first_lno} {
-					$w_cgrp insert $lno.0 $commit_abbr
+					$w_cgrp insert $lno.0 $commit_abbr $commit_type
 				} elseif {$lno == [expr {$first_lno + 1}]} {
 					$w_cgrp insert $lno.0 $author_abbr
 				} else {
@@ -447,6 +594,7 @@ method _read_blame {fd} {
 
 	if {[eof $fd]} {
 		close $fd
+		set current_fd {}
 		set status {Annotation complete.}
 		destroy $w.status.c
 	} else {
@@ -470,6 +618,16 @@ method _click {cur_w pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
 	if {$lno eq {}} return
 	_showcommit $this $lno
+}
+
+method _load_commit {pos} {
+	set lno [lindex [split [$w_cgrp index $pos] .] 0]
+	if {[catch {set cmit $line_commit($lno)}]} return
+	if {[catch {set file $line_file($lno)  }]} return
+
+	set commit $cmit
+	set path $file
+	_load $this
 }
 
 method _showcommit {lno} {
