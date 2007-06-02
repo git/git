@@ -194,6 +194,9 @@ constructor new {i_commit i_path} {
 		-xscrollcommand [list $w.file_pane.cm.sbx set] \
 		-yscrollcommand [list $w.file_pane.cm.sby set] \
 		-font font_diff
+	$w_cviewer tag conf still_loading \
+		-font font_uiitalic \
+		-justify center
 	$w_cviewer tag conf header_key \
 		-tabs {3c} \
 		-background $active_color \
@@ -624,7 +627,7 @@ method _showcommit {lno} {
 	set dat [lindex $amov_data $lno]
 	if {$dat eq {}} {
 		set cmit {}
-		$w_cviewer insert end "Loading annotation..."
+		$w_cviewer insert end "Loading annotation..." still_loading
 	} else {
 		set cmit [lindex $dat 0]
 		set file [lindex $dat 1]

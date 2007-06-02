@@ -1024,6 +1024,7 @@ proc incr_font_size {font {amt 1}} {
 	incr sz $amt
 	font configure $font -size $sz
 	font configure ${font}bold -size $sz
+	font configure ${font}italic -size $sz
 }
 
 ######################################################################
@@ -1216,8 +1217,10 @@ catch {
 	destroy .dummy
 }
 
+font create font_uiitalic
 font create font_uibold
 font create font_diffbold
+font create font_diffitalic
 
 foreach class {Button Checkbutton Entry Label
 		Labelframe Listbox Menu Message
@@ -1249,8 +1252,10 @@ proc apply_config {} {
 		}
 		foreach {cn cv} [font configure $font] {
 			font configure ${font}bold $cn $cv
+			font configure ${font}italic $cn $cv
 		}
 		font configure ${font}bold -weight bold
+		font configure ${font}italic -slant italic
 	}
 }
 

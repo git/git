@@ -15,6 +15,9 @@ proc save_config {} {
 		font configure ${font}bold \
 			-family $global_config_new(gui.$font^^family) \
 			-size $global_config_new(gui.$font^^size)
+		font configure ${font}italic \
+			-family $global_config_new(gui.$font^^family) \
+			-size $global_config_new(gui.$font^^size)
 		set global_config_new(gui.$name) [font configure $font]
 		unset global_config_new(gui.$font^^family)
 		unset global_config_new(gui.$font^^size)
