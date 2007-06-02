@@ -22,6 +22,22 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA}
 
 ######################################################################
 ##
+## Tcl/Tk sanity check
+
+if {[catch {package require Tcl 8.4} err]
+ || [catch {package require Tk  8.4} err]
+} {
+	catch {wm withdraw .}
+	tk_messageBox \
+		-icon error \
+		-type ok \
+		-title "git-gui: fatal error" \
+		-message $err
+	exit 1
+}
+
+######################################################################
+##
 ## configure our library
 
 set oguilib {@@GITGUI_LIBDIR@@}
