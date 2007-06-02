@@ -370,6 +370,8 @@ method _history_menu {} {
 
 		if {[regexp {^[0-9a-f]{40}$} $c]} {
 			set t [string range $c 0 8]...
+		} elseif {$c eq {}} {
+			set t {Working Directory}
 		} else {
 			set t $c
 		}
