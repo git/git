@@ -155,8 +155,7 @@ info/exclude::
 	exclude pattern list. `.gitignore` is the per-directory
 	ignore file.  `git status`, `git add`, `git rm` and `git
 	clean` look at it but the core git commands do not look
-	at it.  See also: gitlink:git-ls-files[1] `--exclude-from`
-	and `--exclude-per-directory`.
+	at it.  See also: gitlink:gitignore[5].
 
 remotes::
 	Stores shorthands to be used to give URL and default
