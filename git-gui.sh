@@ -1205,7 +1205,7 @@ font create font_diffbold
 
 foreach class {Button Checkbutton Entry Label
 		Labelframe Listbox Menu Message
-		Radiobutton Text} {
+		Radiobutton Spinbox Text} {
 	option add *$class.font font_ui
 }
 unset class
