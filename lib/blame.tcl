@@ -390,6 +390,9 @@ method _history_menu {} {
 		}
 		if {![catch {set summary $header($c,summary)}]} {
 			append t " $summary"
+			if {[string length $t] > 70} {
+				set t [string range $t 0 66]...
+			}
 		}
 
 		$m add command -label $t -command [cb _goback $i $c $f]
