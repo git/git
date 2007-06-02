@@ -13,7 +13,6 @@ SYNOPSIS
          [--3way] [--interactive] [--binary]
          [--whitespace=<option>] [-C<n>] [-p<n>]
          <mbox>|<Maildir>...
-
 'git-am' [--skip | --resolved]
 
 DESCRIPTION
