@@ -56,9 +56,9 @@ field r_final_line         ; # final line number
 field r_line_count         ; # lines in this region
 
 field tooltip_wm        {} ; # Current tooltip toplevel, if open
+field tooltip_t         {} ; # Text widget in $tooltip_wm
 field tooltip_timer     {} ; # Current timer event for our tooltip
-field tooltip_commit    {} ; # Commit in tooltip
-field tooltip_text      {} ; # Text in current tooltip
+field tooltip_commit    {} ; # Commit(s) in tooltip
 
 constructor new {i_commit i_path} {
 	global cursor_ptr
@@ -653,6 +653,7 @@ method _showcommit {cur_w lno} {
 	if {$highlight_commit ne {}} {
 		foreach i $w_columns {
 			$i tag conf g$highlight_commit -background $old_bgcolor
+			$i tag lower g$highlight_commit
 		}
 	}
 
@@ -677,6 +678,7 @@ method _showcommit {cur_w lno} {
 		set old_bgcolor [$w_file tag cget g$cmit -background]
 		foreach i $w_columns {
 			$i tag conf g$cmit -background $active_color
+			$i tag raise g$cmit
 		}
 
 		set author_name {}
@@ -746,7 +748,7 @@ method _showcommit {cur_w lno} {
 	set highlight_line $lno
 	set highlight_commit $cmit
 
-	if {$highlight_commit eq $tooltip_commit} {
+	if {[lsearch -exact $tooltip_commit $highlight_commit] != -1} {
 		_hide_tooltip $this
 	}
 }
@@ -765,26 +767,7 @@ method _copycommit {} {
 }
 
 method _show_tooltip {cur_w pos} {
-	set lno [lindex [split [$cur_w index $pos] .] 0]
-	if {$cur_w eq $w_amov} {
-		set dat [lindex $amov_data $lno]
-	} else {
-		set dat [lindex $asim_data $lno]
-	}
-	if {$dat eq {}} {
-		_hide_tooltip $this
-		return
-	}
-	set cmit [lindex $dat 0]
-
-	if {$cmit eq $highlight_commit} {
-		_hide_tooltip $this
-		return
-	}
-
-	if {$cmit eq $tooltip_commit} {
-		_position_tooltip $this
-	} elseif {$tooltip_wm ne {}} {
+	if {$tooltip_wm ne {}} {
 		_open_tooltip $this $cur_w
 	} elseif {$tooltip_timer eq {}} {
 		set tooltip_timer [after 1000 [cb _open_tooltip $cur_w]]
@@ -800,70 +783,101 @@ method _open_tooltip {cur_w} {
 		return
 	}
 
-	set pos @[join [list \
-		[expr {$pos_x - [winfo rootx $cur_w]}] \
-		[expr {$pos_y - [winfo rooty $cur_w]}]] ,]
-	set lno [lindex [split [$cur_w index $pos] .] 0]
-	if {$cur_w eq $w_amov} {
-		set dat [lindex $amov_data $lno]
-	} else {
-		set dat [lindex $asim_data $lno]
-	}
-	set cmit [lindex $dat 0]
-	set file [lindex $dat 1]
-
-	set author_name {}
-	set author_email {}
-	set author_time {}
-	catch {set author_name $header($cmit,author)}
-	catch {set author_email $header($cmit,author-mail)}
-	catch {set author_time [clock format \
-		$header($cmit,author-time) \
-		-format {%Y-%m-%d %H:%M:%S}
-	]}
-
-	set committer_name {}
-	set committer_email {}
-	set committer_time {}
-	catch {set committer_name $header($cmit,committer)}
-	catch {set committer_email $header($cmit,committer-mail)}
-	catch {set committer_time [clock format \
-		$header($cmit,committer-time) \
-		-format {%Y-%m-%d %H:%M:%S}
-	]}
-
-	set summary {}
-	catch {set summary $header($cmit,summary)}
-
-	set tooltip_commit $cmit
-	set tooltip_text "commit $cmit
-$author_name $author_email  $author_time
-$summary"
-
-	if {$file ne $path} {
-		append tooltip_text "
-
-Original File: $file"
-	}
-
 	if {$tooltip_wm ne "$cur_w.tooltip"} {
 		_hide_tooltip $this
 
 		set tooltip_wm [toplevel $cur_w.tooltip -borderwidth 1]
 		wm overrideredirect $tooltip_wm 1
 		wm transient $tooltip_wm [winfo toplevel $cur_w]
-		pack [label $tooltip_wm.label \
+		set tooltip_t $tooltip_wm.label
+		text $tooltip_t \
+			-takefocus 0 \
+			-highlightthickness 0 \
+			-relief flat \
+			-borderwidth 0 \
+			-wrap none \
 			-background lightyellow \
-			-foreground black \
-			-textvariable @tooltip_text \
-			-justify left]
+			-foreground black
+		$tooltip_t tag conf section_header -font font_uibold
+		pack $tooltip_t
+	} else {
+		$tooltip_t conf -state normal
+		$tooltip_t delete 0.0 end
 	}
+
+	set pos @[join [list \
+		[expr {$pos_x - [winfo rootx $cur_w]}] \
+		[expr {$pos_y - [winfo rooty $cur_w]}]] ,]
+	set lno [lindex [split [$cur_w index $pos] .] 0]
+	if {$cur_w eq $w_amov} {
+		set dat [lindex $amov_data $lno]
+		set org {}
+	} else {
+		set dat [lindex $asim_data $lno]
+		set org [lindex $amov_data $lno]
+	}
+
+	set cmit [lindex $dat 0]
+	set tooltip_commit [list $cmit]
+
+	set author_name {}
+	set summary     {}
+	set author_time {}
+	catch {set author_name $header($cmit,author)}
+	catch {set summary     $header($cmit,summary)}
+	catch {set author_time [clock format \
+		$header($cmit,author-time) \
+		-format {%Y-%m-%d %H:%M:%S}
+	]}
+
+	$tooltip_t insert end "commit $cmit\n"
+	$tooltip_t insert end "$author_name  $author_time\n"
+	$tooltip_t insert end "$summary"
+
+	if {$org ne {} && [lindex $org 0] ne $cmit} {
+		$tooltip_t insert 0.0 "Moved Here By:\n" section_header
+		set cmit [lindex $org 0]
+		set file [lindex $org 1]
+		lappend tooltip_commit $cmit
+
+		set author_name {}
+		set summary     {}
+		set author_time {}
+		catch {set author_name $header($cmit,author)}
+		catch {set summary     $header($cmit,summary)}
+		catch {set author_time [clock format \
+			$header($cmit,author-time) \
+			-format {%Y-%m-%d %H:%M:%S}
+		]}
+
+		$tooltip_t insert end "\n\n"
+		$tooltip_t insert end "Originally By:\n" section_header
+		$tooltip_t insert end "commit $cmit\n"
+		$tooltip_t insert end "$author_name  $author_time\n"
+		$tooltip_t insert end "$summary"
+
+		if {$file ne $path} {
+			$tooltip_t insert end "\n"
+			$tooltip_t insert end "File: " section_header
+			$tooltip_t insert end $file
+		}
+	}
+
+	$tooltip_t conf -state disabled
 	_position_tooltip $this
 }
 
 method _position_tooltip {} {
-	set req_w [winfo reqwidth  $tooltip_wm.label]
-	set req_h [winfo reqheight $tooltip_wm.label]
+	set max_h [lindex [split [$tooltip_t index end] .] 0]
+	set max_w 0
+	for {set i 1} {$i <= $max_h} {incr i} {
+		set c [lindex [split [$tooltip_t index "$i.0 lineend"] .] 1]
+		if {$c > $max_w} {set max_w $c}
+	}
+	$tooltip_t conf -width $max_w -height $max_h
+
+	set req_w [winfo reqwidth  $tooltip_t]
+	set req_h [winfo reqheight $tooltip_t]
 	set pos_x [expr {[winfo pointerx .] +  5}]
 	set pos_y [expr {[winfo pointery .] + 10}]
 
