@@ -45,8 +45,7 @@ field old_bgcolor       {} ; # background of current selection
 field total_lines       0  ; # total length of file
 field blame_lines       0  ; # number of lines computed
 field have_commit          ; # array commit -> 1
-field line_commit          ; # array line -> sha1 commit
-field line_file            ; # array line -> file name
+field line_data            ; # list of {commit origfile origline}
 
 field r_commit             ; # commit currently being parsed
 field r_orig_line          ; # original line number
@@ -314,8 +313,6 @@ method _load {} {
 		set total_lines 0
 		set blame_lines 0
 		array unset have_commit
-		array unset line_commit
-		array unset line_file
 	}
 
 	if {[winfo exists $w.status.c]} {
@@ -337,6 +334,12 @@ method _load {} {
 		$w_back conf -state normal
 	}
 	lappend history [list $commit $path]
+
+	# Index 0 is always empty.  There is never line 0 as
+	# we use only 1 based lines, as that matches both with
+	# git-blame output and with Tk's text widget.
+	#
+	set line_data [list [list]]
 
 	set status "Loading $commit:[escape_path $path]..."
 	$w_path conf -text [escape_path $path]
@@ -401,6 +404,7 @@ method _read_file {fd} {
 	while {[gets $fd line] >= 0} {
 		regsub "\r\$" $line {} line
 		incr total_lines
+		lappend line_data {}
 
 		if {$total_lines > 1} {
 			foreach i $w_columns {$i insert end "\n"}
@@ -499,24 +503,22 @@ method _read_blame {fd} {
 
 			set first_lno $lno
 			while {
-			   ![catch {set ncmit $line_commit([expr {$first_lno - 1}])}]
-			&& ![catch {set nfile $line_file([expr {$first_lno - 1}])}]
-			&& $ncmit eq $cmit
-			&& $nfile eq $file
+			   $first_lno > 1
+			&& $cmit eq [lindex $line_data [expr {$first_lno - 1}] 0]
+			&& $file eq [lindex $line_data [expr {$first_lno - 1}] 1]
 			} {
 				incr first_lno -1
 			}
 
 			while {$n > 0} {
 				set lno_e "$lno.0 lineend + 1c"
-				if {![catch {set g g$line_commit($lno)}]} {
+				if {[lindex $line_data $lno] ne {}} {
+					set g [lindex $line_data $lno 0]
 					foreach i $w_columns {
 						$i tag remove g$g $lno.0 $lno_e
 					}
 				}
-
-				set line_commit($lno) $cmit
-				set line_file($lno)   $file
+				lset line_data $lno [list $cmit $file]
 
 				$w_cgrp delete $lno.0 "$lno.0 lineend"
 				if {$lno == $first_lno} {
@@ -546,10 +548,8 @@ method _read_blame {fd} {
 			}
 
 			while {
-			   ![catch {set ncmit $line_commit($lno)}]
-			&& ![catch {set nfile $line_file($lno)}]
-			&& $ncmit eq $cmit
-			&& $nfile eq $file
+			   $cmit eq [lindex $line_data $lno 0]
+			&& $file eq [lindex $line_data $lno 1]
 			} {
 				$w_cgrp delete $lno.0 "$lno.0 lineend"
 
@@ -599,12 +599,12 @@ method _click {cur_w pos} {
 
 method _load_commit {pos} {
 	set lno [lindex [split [$w_cgrp index $pos] .] 0]
-	if {[catch {set cmit $line_commit($lno)}]} return
-	if {[catch {set file $line_file($lno)  }]} return
-
-	set commit $cmit
-	set path $file
-	_load $this
+	set dat [lindex $line_data $lno]
+	if {$dat ne {}} {
+		set commit [lindex $dat 0]
+		set path   [lindex $dat 1]
+		_load $this
+	}
 }
 
 method _showcommit {lno} {
@@ -618,10 +618,15 @@ method _showcommit {lno} {
 
 	$w_cmit conf -state normal
 	$w_cmit delete 0.0 end
-	if {[catch {set cmit $line_commit($lno)}]} {
+
+	set dat [lindex $line_data $lno]
+	if {$dat eq {}} {
 		set cmit {}
 		$w_cmit insert end "Loading annotation..."
 	} else {
+		set cmit [lindex $dat 0]
+		set file [lindex $dat 1]
+
 		set old_bgcolor [$w_file tag cget g$cmit -background]
 		foreach i $w_columns {
 			$i tag conf g$cmit -background $active_color
@@ -682,9 +687,9 @@ method _showcommit {lno} {
 		$w_cmit insert end "$committer_name $committer_email" header_val
 		$w_cmit insert end "$committer_time\n" header_val
 
-		if {$line_file($lno) ne $path} {
+		if {$file ne $path} {
 			$w_cmit insert end "Original File:\t" header_key
-			$w_cmit insert end "[escape_path $line_file($lno)]\n" header_val
+			$w_cmit insert end "[escape_path $file]\n" header_val
 		}
 
 		$w_cmit insert end "\n$msg"
@@ -702,21 +707,24 @@ method _showcommit {lno} {
 method _copycommit {} {
 	set pos @$::cursorX,$::cursorY
 	set lno [lindex [split [$::cursorW index $pos] .] 0]
-	if {![catch {set commit $line_commit($lno)}]} {
+	set dat [lindex $line_data $lno]
+	if {$dat ne {}} {
 		clipboard clear
 		clipboard append \
 			-format STRING \
 			-type STRING \
-			-- $commit
+			-- [lindex $dat 0]
 	}
 }
 
 method _show_tooltip {cur_w pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
-	if {[catch {set cmit $line_commit($lno)}]} {
+	set dat [lindex $line_data $lno]
+	if {$dat eq {}} {
 		_hide_tooltip $this
 		return
 	}
+	set cmit [lindex $dat 0]
 
 	if {$cmit eq $highlight_commit} {
 		_hide_tooltip $this
@@ -745,7 +753,9 @@ method _open_tooltip {cur_w} {
 		[expr {$pos_x - [winfo rootx $cur_w]}] \
 		[expr {$pos_y - [winfo rooty $cur_w]}]] ,]
 	set lno [lindex [split [$cur_w index $pos] .] 0]
-	set cmit $line_commit($lno)
+	set dat [lindex $line_data $lno]
+	set cmit [lindex $dat 0]
+	set file [lindex $dat 1]
 
 	set author_name {}
 	set author_email {}
@@ -775,7 +785,6 @@ method _open_tooltip {cur_w} {
 $author_name $author_email  $author_time
 $summary"
 
-	set file $line_file($lno)
 	if {$file ne $path} {
 		append tooltip_text "
 
