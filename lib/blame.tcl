@@ -25,8 +25,7 @@ field highlight_commit {} ; # sha1 of commit selected
 
 field total_lines       0  ; # total length of file
 field blame_lines       0  ; # number of lines computed
-field commit_count      0  ; # number of commits in $commit_list
-field commit_list      {}  ; # list of commit sha1 in receipt order
+field commit_count      0  ; # number of commits loaded
 field order                ; # array commit -> receipt order
 field header               ; # array commit,key -> header field
 field line_commit          ; # array line -> sha1 commit
@@ -309,7 +308,6 @@ method _load {} {
 		set total_lines 0
 		set blame_lines 0
 		set commit_count 0
-		set commit_list {}
 		array unset order
 		array unset line_commit
 		array unset line_file
@@ -478,7 +476,6 @@ method _read_blame {fd} {
 
 				set order($cmit) $commit_count
 				incr commit_count
-				lappend commit_list $cmit
 			}
 		} elseif {[string match {filename *} $line]} {
 			set file [string range $line 9 end]
