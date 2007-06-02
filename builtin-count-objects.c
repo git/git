@@ -111,6 +111,8 @@ int cmd_count_objects(int ac, const char **av, const char *prefix)
 		for (p = packed_git; p; p = p->next) {
 			if (!p->pack_local)
 				continue;
+			if (open_pack_index(p))
+				continue;
 			packed += p->num_objects;
 			num_pack++;
 		}

@@ -550,6 +550,9 @@ static struct pack_list * add_pack(struct packed_git *p)
 	l.pack = p;
 	llist_init(&l.all_objects);
 
+	if (open_pack_index(p))
+		return NULL;
+
 	base = p->index_data;
 	base += 256 * 4 + ((p->index_version < 2) ? 4 : 8);
 	step = (p->index_version < 2) ? 24 : 20;

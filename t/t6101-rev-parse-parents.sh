@@ -29,5 +29,15 @@ test_expect_success 'final^1^3 not valid' "if git-rev-parse --verify final^1^3; 
 test_expect_failure '--verify start2^1' 'git-rev-parse --verify start2^1'
 test_expect_success '--verify start2^0' 'git-rev-parse --verify start2^0'
 
+test_expect_success 'repack for next test' 'git repack -a -d'
+test_expect_success 'short SHA-1 works' '
+	start=`git rev-parse --verify start` &&
+	echo $start &&
+	abbrv=`echo $start | sed s/.\$//` &&
+	echo $abbrv &&
+	abbrv=`git rev-parse --verify $abbrv` &&
+	echo $abbrv &&
+	test $start = $abbrv'
+
 test_done
 
