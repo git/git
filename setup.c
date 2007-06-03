@@ -95,7 +95,7 @@ void verify_non_filename(const char *prefix, const char *arg)
 	const char *name;
 	struct stat st;
 
-	if (is_inside_git_dir())
+	if (!is_inside_work_tree() || is_inside_git_dir())
 		return;
 	if (*arg == '-')
 		return; /* flag */

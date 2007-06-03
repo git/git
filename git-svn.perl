@@ -594,7 +594,7 @@ sub post_fetch_checkout {
 	my $index = $ENV{GIT_INDEX_FILE} || "$ENV{GIT_DIR}/index";
 	return if -f $index;
 
-	return if command_oneline(qw/rev-parse --is-bare-repository/) eq 'true';
+	return if command_oneline(qw/rev-parse --is-inside-work-tree/) eq 'false';
 	return if command_oneline(qw/rev-parse --is-inside-git-dir/) eq 'true';
 	command_noisy(qw/read-tree -m -u -v HEAD HEAD/);
 	print STDERR "Checked out HEAD:\n  ",
