@@ -771,31 +771,9 @@ sub commit {
 		$xtag =~ s/\s+\*\*.*$//; # Remove stuff like ** INVALID ** and ** FUNKY **
 		$xtag =~ tr/_/\./ if ( $opt_u );
 		$xtag =~ s/[\/]/$opt_s/g;
-		
-		my $pid = open2($in, $out, 'git-mktag');
-		print $out "object $cid\n".
-		    "type commit\n".
-		    "tag $xtag\n".
-		    "tagger $author_name <$author_email>\n"
-		    or die "Cannot create tag object $xtag: $!\n";
-		close($out)
-		    or die "Cannot create tag object $xtag: $!\n";
 
-		my $tagobj = <$in>;
-		chomp $tagobj;
-
-		if ( !close($in) or waitpid($pid, 0) != $pid or
-		     $? != 0 or $tagobj !~ /^[0123456789abcdef]{40}$/ ) {
-		    die "Cannot create tag object $xtag: $!\n";
-	        }
-		
-
-		open(C,">$git_dir/refs/tags/$xtag")
+		system('git-tag', $xtag, $cid) == 0
 			or die "Cannot create tag $xtag: $!\n";
-		print C "$tagobj\n"
-			or die "Cannot write tag $xtag: $!\n";
-		close(C)
-			or die "Cannot write tag $xtag: $!\n";
 
 		print "Created tag '$xtag' on '$branch'\n" if $opt_v;
 	}
