@@ -22,6 +22,22 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA}
 
 ######################################################################
 ##
+## Tcl/Tk sanity check
+
+if {[catch {package require Tcl 8.4} err]
+ || [catch {package require Tk  8.4} err]
+} {
+	catch {wm withdraw .}
+	tk_messageBox \
+		-icon error \
+		-type ok \
+		-title "git-gui: fatal error" \
+		-message $err
+	exit 1
+}
+
+######################################################################
+##
 ## enable verbose loading?
 
 if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
@@ -1228,7 +1244,7 @@ font create font_diffbold
 
 foreach class {Button Checkbutton Entry Label
 		Labelframe Listbox Menu Message
-		Radiobutton Text} {
+		Radiobutton Spinbox Text} {
 	option add *$class.font font_ui
 }
 unset class
