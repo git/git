@@ -93,6 +93,9 @@ OPTIONS
 	When the current working directory is below the repository
 	directory print "true", otherwise "false".
 
+--is-bare-repository::
+	When the repository is bare print "true", otherwise "false".
+
 --short, --short=number::
 	Instead of outputting the full SHA1 values of object names try to
 	abbreviate them to a shorter unique name. When no length is specified
