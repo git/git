@@ -7,8 +7,6 @@ git-add--interactive
 git-am
 git-annotate
 git-apply
-git-applymbox
-git-applypatch
 git-archimport
 git-archive
 git-bisect
@@ -126,6 +124,7 @@ git-ssh-push
 git-ssh-upload
 git-status
 git-stripspace
+git-submodule
 git-svn
 git-svnimport
 git-symbolic-ref

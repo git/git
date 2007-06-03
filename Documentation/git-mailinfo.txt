@@ -16,7 +16,7 @@ DESCRIPTION
 Reading a single e-mail message from the standard input, and
 writes the commit log message in <msg> file, and the patches in
 <patch> file.  The author name, e-mail and e-mail subject are
-written out to the standard output to be used by git-applypatch
+written out to the standard output to be used by git-am
 to create a commit.  It is usually not necessary to use this
 command directly.  See gitlink:git-am[1] instead.
 

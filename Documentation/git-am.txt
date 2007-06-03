@@ -127,8 +127,7 @@ is terminated before the first occurrence of such a line.
 
 When initially invoking it, you give it names of the mailboxes
 to crunch.  Upon seeing the first patch that does not apply, it
-aborts in the middle, just like 'git-applymbox' does.  You can
-recover from this in one of two ways:
+aborts in the middle,.  You can recover from this in one of two ways:
 
 . skip the current patch by re-running the command with '--skip'
   option.
@@ -145,7 +144,7 @@ names.
 
 SEE ALSO
 --------
-gitlink:git-applymbox[1], gitlink:git-applypatch[1], gitlink:git-apply[1].
+gitlink:git-apply[1].
 
 
 Author
