@@ -151,6 +151,7 @@ test-delta
 test-dump-cache-tree
 test-genrandom
 test-match-trees
+test-sha1
 common-cmds.h
 *.tar.gz
 *.dsc
