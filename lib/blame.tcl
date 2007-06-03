@@ -17,9 +17,9 @@ field w_back     ; # our back button
 field w_path     ; # label showing the current file path
 field w_columns  ; # list of all column widgets in the viewer
 field w_line     ; # text column: all line numbers
-field w_cgrp     ; # text column: abbreviated commit SHA-1s
+field w_amov     ; # text column: annotations + move tracking
 field w_file     ; # text column: actual file data
-field w_cmit     ; # pane showing commit message
+field w_cviewer  ; # pane showing commit message
 field status     ; # text variable bound to status bar
 field old_height ; # last known height of $w.file_pane
 
@@ -45,7 +45,7 @@ field old_bgcolor       {} ; # background of current selection
 field total_lines       0  ; # total length of file
 field blame_lines       0  ; # number of lines computed
 field have_commit          ; # array commit -> 1
-field line_data            ; # list of {commit origfile origline}
+field amov_data            ; # list of {commit origfile origline}
 
 field r_commit             ; # commit currently being parsed
 field r_orig_line          ; # original line number
@@ -133,8 +133,8 @@ constructor new {i_commit i_path} {
 		-font font_diff
 	$w_line tag conf linenumber -justify right -rmargin 5
 
-	set w_cgrp $w.file_pane.out.commit_t
-	text $w_cgrp \
+	set w_amov $w.file_pane.out.amove_t
+	text $w_amov \
 		-takefocus 0 \
 		-highlightthickness 0 \
 		-padx 0 -pady 0 \
@@ -144,11 +144,11 @@ constructor new {i_commit i_path} {
 		-height 40 \
 		-width 4 \
 		-font font_diff
-	$w_cgrp tag conf curr_commit
-	$w_cgrp tag conf prior_commit \
+	$w_amov tag conf curr_commit
+	$w_amov tag conf prior_commit \
 		-foreground blue \
 		-underline 1
-	$w_cgrp tag bind prior_commit \
+	$w_amov tag bind prior_commit \
 		<Button-1> \
 		"[cb _load_commit @%x,%y];break"
 
@@ -165,7 +165,7 @@ constructor new {i_commit i_path} {
 		-xscrollcommand [list $w.file_pane.out.sbx set] \
 		-font font_diff
 
-	set w_columns [list $w_cgrp $w_line $w_file]
+	set w_columns [list $w_amov $w_line $w_file]
 
 	scrollbar $w.file_pane.out.sbx \
 		-orient h \
@@ -184,8 +184,8 @@ constructor new {i_commit i_path} {
 		-weight 1
 	grid rowconfigure $w.file_pane.out 0 -weight 1
 
-	set w_cmit $w.file_pane.cm.t
-	text $w_cmit \
+	set w_cviewer $w.file_pane.cm.t
+	text $w_cviewer \
 		-background white -borderwidth 0 \
 		-state disabled \
 		-wrap none \
@@ -194,23 +194,23 @@ constructor new {i_commit i_path} {
 		-xscrollcommand [list $w.file_pane.cm.sbx set] \
 		-yscrollcommand [list $w.file_pane.cm.sby set] \
 		-font font_diff
-	$w_cmit tag conf header_key \
+	$w_cviewer tag conf header_key \
 		-tabs {3c} \
 		-background $active_color \
 		-font font_uibold
-	$w_cmit tag conf header_val \
+	$w_cviewer tag conf header_val \
 		-background $active_color \
 		-font font_ui
-	$w_cmit tag raise sel
+	$w_cviewer tag raise sel
 	scrollbar $w.file_pane.cm.sbx \
 		-orient h \
-		-command [list $w_cmit xview]
+		-command [list $w_cviewer xview]
 	scrollbar $w.file_pane.cm.sby \
 		-orient v \
-		-command [list $w_cmit yview]
+		-command [list $w_cviewer yview]
 	pack $w.file_pane.cm.sby -side right -fill y
 	pack $w.file_pane.cm.sbx -side bottom -fill x
-	pack $w_cmit -expand 1 -fill both
+	pack $w_cviewer -expand 1 -fill both
 
 	frame $w.status \
 		-borderwidth 1 \
@@ -247,7 +247,7 @@ constructor new {i_commit i_path} {
 		"
 	}
 
-	foreach i [concat $w_columns $w_cmit] {
+	foreach i [concat $w_columns $w_cviewer] {
 		bind $i <Key-Up>        {catch {%W yview scroll -1 units};break}
 		bind $i <Key-Down>      {catch {%W yview scroll  1 units};break}
 		bind $i <Key-Left>      {catch {%W xview scroll -1 units};break}
@@ -260,7 +260,7 @@ constructor new {i_commit i_path} {
 		bind $i <Control-Key-f> {catch {%W yview scroll  1 pages};break}
 	}
 
-	bind $w_cmit <Button-1> [list focus $w_cmit]
+	bind $w_cviewer <Button-1> [list focus $w_cviewer]
 	bind $top <Visibility> [list focus $top]
 	bind $w_file <Destroy> [list delete_this $this]
 
@@ -339,7 +339,7 @@ method _load {} {
 	# we use only 1 based lines, as that matches both with
 	# git-blame output and with Tk's text widget.
 	#
-	set line_data [list [list]]
+	set amov_data [list [list]]
 
 	set status "Loading $commit:[escape_path $path]..."
 	$w_path conf -text [escape_path $path]
@@ -406,7 +406,7 @@ method _read_file {fd} {
 	while {[gets $fd line] >= 0} {
 		regsub "\r\$" $line {} line
 		incr total_lines
-		lappend line_data {}
+		lappend amov_data {}
 
 		if {$total_lines > 1} {
 			foreach i $w_columns {$i insert end "\n"}
@@ -447,7 +447,7 @@ method _read_blame {fd} {
 		return
 	}
 
-	$w_cgrp conf -state normal
+	$w_amov conf -state normal
 	while {[gets $fd line] >= 0} {
 		if {[regexp {^([a-z0-9]{40}) (\d+) (\d+) (\d+)$} $line line \
 			cmit original_line final_line line_count]} {
@@ -506,29 +506,29 @@ method _read_blame {fd} {
 			set first_lno $lno
 			while {
 			   $first_lno > 1
-			&& $cmit eq [lindex $line_data [expr {$first_lno - 1}] 0]
-			&& $file eq [lindex $line_data [expr {$first_lno - 1}] 1]
+			&& $cmit eq [lindex $amov_data [expr {$first_lno - 1}] 0]
+			&& $file eq [lindex $amov_data [expr {$first_lno - 1}] 1]
 			} {
 				incr first_lno -1
 			}
 
 			while {$n > 0} {
 				set lno_e "$lno.0 lineend + 1c"
-				if {[lindex $line_data $lno] ne {}} {
-					set g [lindex $line_data $lno 0]
+				if {[lindex $amov_data $lno] ne {}} {
+					set g [lindex $amov_data $lno 0]
 					foreach i $w_columns {
 						$i tag remove g$g $lno.0 $lno_e
 					}
 				}
-				lset line_data $lno [list $cmit $file]
+				lset amov_data $lno [list $cmit $file]
 
-				$w_cgrp delete $lno.0 "$lno.0 lineend"
+				$w_amov delete $lno.0 "$lno.0 lineend"
 				if {$lno == $first_lno} {
-					$w_cgrp insert $lno.0 $commit_abbr $commit_type
+					$w_amov insert $lno.0 $commit_abbr $commit_type
 				} elseif {$lno == [expr {$first_lno + 1}]} {
-					$w_cgrp insert $lno.0 $author_abbr
+					$w_amov insert $lno.0 $author_abbr
 				} else {
-					$w_cgrp insert $lno.0 { |}
+					$w_amov insert $lno.0 { |}
 				}
 
 				foreach i $w_columns {
@@ -550,17 +550,17 @@ method _read_blame {fd} {
 			}
 
 			while {
-			   $cmit eq [lindex $line_data $lno 0]
-			&& $file eq [lindex $line_data $lno 1]
+			   $cmit eq [lindex $amov_data $lno 0]
+			&& $file eq [lindex $amov_data $lno 1]
 			} {
-				$w_cgrp delete $lno.0 "$lno.0 lineend"
+				$w_amov delete $lno.0 "$lno.0 lineend"
 
 				if {$lno == $first_lno} {
-					$w_cgrp insert $lno.0 $commit_abbr $commit_type
+					$w_amov insert $lno.0 $commit_abbr $commit_type
 				} elseif {$lno == [expr {$first_lno + 1}]} {
-					$w_cgrp insert $lno.0 $author_abbr
+					$w_amov insert $lno.0 $author_abbr
 				} else {
-					$w_cgrp insert $lno.0 { |}
+					$w_amov insert $lno.0 { |}
 				}
 				incr lno
 			}
@@ -569,7 +569,7 @@ method _read_blame {fd} {
 			set header($r_commit,$key) $data
 		}
 	}
-	$w_cgrp conf -state disabled
+	$w_amov conf -state disabled
 
 	if {[eof $fd]} {
 		close $fd
@@ -600,8 +600,8 @@ method _click {cur_w pos} {
 }
 
 method _load_commit {pos} {
-	set lno [lindex [split [$w_cgrp index $pos] .] 0]
-	set dat [lindex $line_data $lno]
+	set lno [lindex [split [$w_amov index $pos] .] 0]
+	set dat [lindex $amov_data $lno]
 	if {$dat ne {}} {
 		set commit [lindex $dat 0]
 		set path   [lindex $dat 1]
@@ -618,13 +618,13 @@ method _showcommit {lno} {
 		}
 	}
 
-	$w_cmit conf -state normal
-	$w_cmit delete 0.0 end
+	$w_cviewer conf -state normal
+	$w_cviewer delete 0.0 end
 
-	set dat [lindex $line_data $lno]
+	set dat [lindex $amov_data $lno]
 	if {$dat eq {}} {
 		set cmit {}
-		$w_cmit insert end "Loading annotation..."
+		$w_cviewer insert end "Loading annotation..."
 	} else {
 		set cmit [lindex $dat 0]
 		set file [lindex $dat 1]
@@ -680,23 +680,23 @@ method _showcommit {lno} {
 			set header($cmit,message) $msg
 		}
 
-		$w_cmit insert end "commit $cmit\n" header_key
-		$w_cmit insert end "Author:\t" header_key
-		$w_cmit insert end "$author_name $author_email" header_val
-		$w_cmit insert end "$author_time\n" header_val
+		$w_cviewer insert end "commit $cmit\n" header_key
+		$w_cviewer insert end "Author:\t" header_key
+		$w_cviewer insert end "$author_name $author_email" header_val
+		$w_cviewer insert end "  $author_time\n" header_val
 
-		$w_cmit insert end "Committer:\t" header_key
-		$w_cmit insert end "$committer_name $committer_email" header_val
-		$w_cmit insert end "$committer_time\n" header_val
+		$w_cviewer insert end "Committer:\t" header_key
+		$w_cviewer insert end "$committer_name $committer_email" header_val
+		$w_cviewer insert end "  $committer_time\n" header_val
 
 		if {$file ne $path} {
-			$w_cmit insert end "Original File:\t" header_key
-			$w_cmit insert end "[escape_path $file]\n" header_val
+			$w_cviewer insert end "Original File:\t" header_key
+			$w_cviewer insert end "[escape_path $file]\n" header_val
 		}
 
-		$w_cmit insert end "\n$msg"
+		$w_cviewer insert end "\n$msg"
 	}
-	$w_cmit conf -state disabled
+	$w_cviewer conf -state disabled
 
 	set highlight_line $lno
 	set highlight_commit $cmit
@@ -709,7 +709,7 @@ method _showcommit {lno} {
 method _copycommit {} {
 	set pos @$::cursorX,$::cursorY
 	set lno [lindex [split [$::cursorW index $pos] .] 0]
-	set dat [lindex $line_data $lno]
+	set dat [lindex $amov_data $lno]
 	if {$dat ne {}} {
 		clipboard clear
 		clipboard append \
@@ -721,7 +721,7 @@ method _copycommit {} {
 
 method _show_tooltip {cur_w pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
-	set dat [lindex $line_data $lno]
+	set dat [lindex $amov_data $lno]
 	if {$dat eq {}} {
 		_hide_tooltip $this
 		return
@@ -755,7 +755,7 @@ method _open_tooltip {cur_w} {
 		[expr {$pos_x - [winfo rootx $cur_w]}] \
 		[expr {$pos_y - [winfo rooty $cur_w]}]] ,]
 	set lno [lindex [split [$cur_w index $pos] .] 0]
-	set dat [lindex $line_data $lno]
+	set dat [lindex $amov_data $lno]
 	set cmit [lindex $dat 0]
 	set file [lindex $dat 1]
 
