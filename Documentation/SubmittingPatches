@@ -14,6 +14,8 @@ Checklist (and a short version for the impatient):
 	  commit message (or just use the option "-s" when
 	  committing) to confirm that you agree to the Developer's
 	  Certificate of Origin
+	- make sure that you have tests for the bug you are fixing
+	- make sure that the test suite passes after your commit
 
 	Patch:
 
@@ -33,6 +35,8 @@ Checklist (and a short version for the impatient):
 	- if you change, add, or remove a command line option or
 	  make some other user interface change, the associated
 	  documentation should be updated as well.
+	- if your name is not writable in ASCII, make sure that
+	  you send off a message in the correct encoding.
 
 Long version:
 
