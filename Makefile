@@ -2,12 +2,6 @@ all::
 
 # Define V=1 to have a more verbose compile.
 #
-QUIET =
-QUIET_MSG = :
-ifndef V
-    QUIET = @
-    QUIET_MSG = echo '   '
-endif
 
 GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -115,14 +109,12 @@ GIT-GUI-VARS: .FORCE-GIT-GUI-VARS
 all:: $(ALL_PROGRAMS) lib/tclIndex
 
 install: all
-	$(QUIET)$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(gitexecdir_SQ)'
-	$(QUIET)$(QUIET_MSG)INSTALL git-gui; $(INSTALL) git-gui '$(DESTDIR_SQ)$(gitexecdir_SQ)'
-	$(QUIET)$(foreach p,$(GITGUI_BUILT_INS),$(QUIET_MSG)INSTALL $p;\
-	    rm -f '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' && \
-	    ln '$(DESTDIR_SQ)$(gitexecdir_SQ)/git-gui' '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' ;)
-	$(QUIET)$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(libdir_SQ)'
-	$(QUIET)$(foreach p,lib/tclIndex $(ALL_LIBFILES), $(QUIET_MSG)INSTALL $p;\
-	    $(INSTALL) -m644 $p '$(DESTDIR_SQ)$(libdir_SQ)' ;)
+	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(gitexecdir_SQ)'
+	$(INSTALL) git-gui '$(DESTDIR_SQ)$(gitexecdir_SQ)'
+	$(foreach p,$(GITGUI_BUILT_INS), rm -f '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' && ln '$(DESTDIR_SQ)$(gitexecdir_SQ)/git-gui' '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' ;)
+	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(libdir_SQ)'
+	$(INSTALL) -m644 lib/tclIndex '$(DESTDIR_SQ)$(libdir_SQ)'
+	$(foreach p,$(ALL_LIBFILES), $(INSTALL) -m644 $p '$(DESTDIR_SQ)$(libdir_SQ)' ;)
 
 dist-version:
 	@mkdir -p $(TARDIR)
