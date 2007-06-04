@@ -42,6 +42,9 @@ mean the same thing and the latter is kept for backward
 compatibility) and `color.status.<slot>` configuration variables
 to colorize its output.
 
+See Also
+--------
+gitlink:gitignore[5]
 
 Author
 ------

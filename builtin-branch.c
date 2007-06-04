@@ -623,9 +623,10 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	    (rename && force_create))
 		usage(builtin_branch_usage);
 
-	head = xstrdup(resolve_ref("HEAD", head_sha1, 0, NULL));
+	head = resolve_ref("HEAD", head_sha1, 0, NULL);
 	if (!head)
 		die("Failed to resolve HEAD as a valid ref.");
+	head = xstrdup(head);
 	if (!strcmp(head, "HEAD")) {
 		detached = 1;
 	}

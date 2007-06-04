@@ -126,7 +126,7 @@ if [ "$annotate" ]; then
           echo "#" ) > "$GIT_DIR"/TAG_EDITMSG
         ${VISUAL:-${EDITOR:-vi}} "$GIT_DIR"/TAG_EDITMSG || exit
     else
-        echo "$message" >"$GIT_DIR"/TAG_EDITMSG
+        printf '%s\n' "$message" >"$GIT_DIR"/TAG_EDITMSG
     fi
 
     grep -v '^#' <"$GIT_DIR"/TAG_EDITMSG |

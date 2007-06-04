@@ -328,7 +328,7 @@ f,*)
 		then
 			echo "Wonderful."
 			result_commit=$(
-				echo "$merge_msg" |
+				printf '%s\n' "$merge_msg" |
 				git-commit-tree $result_tree -p HEAD -p "$1"
 			) || exit
 			finish "$result_commit" "In-index merge"
@@ -433,7 +433,7 @@ done
 if test '' != "$result_tree"
 then
     parents=$(git-show-branch --independent "$head" "$@" | sed -e 's/^/-p /')
-    result_commit=$(echo "$merge_msg" | git-commit-tree $result_tree $parents) || exit
+    result_commit=$(printf '%s\n' "$merge_msg" | git-commit-tree $result_tree $parents) || exit
     finish "$result_commit" "Merge made by $wt_strategy."
     dropsave
     exit 0
@@ -472,7 +472,7 @@ else
 	do
 		echo $remote
 	done >"$GIT_DIR/MERGE_HEAD"
-	echo "$merge_msg" >"$GIT_DIR/MERGE_MSG"
+	printf '%s\n' "$merge_msg" >"$GIT_DIR/MERGE_MSG"
 fi
 
 if test "$merge_was_ok" = t
