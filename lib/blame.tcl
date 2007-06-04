@@ -310,10 +310,10 @@ constructor new {i_commit i_path} {
 	bind $w.file_pane <Configure> \
 	"if {{$w.file_pane} eq {%W}} {[cb _resize %h]}"
 
-	_load $this
+	_load $this {}
 }
 
-method _load {} {
+method _load {jump} {
 	_hide_tooltip $this
 
 	if {$total_lines != 0 || $current_fd ne {}} {
@@ -330,6 +330,10 @@ method _load {} {
 			}
 			$i conf -state disabled
 		}
+
+		$w_cviewer conf -state normal
+		$w_cviewer delete 0.0 end
+		$w_cviewer conf -state disabled
 
 		set highlight_line -1
 		set highlight_column {}
@@ -356,7 +360,6 @@ method _load {} {
 	} else {
 		$w_back conf -state normal
 	}
-	lappend history [list $commit $path]
 
 	# Index 0 is always empty.  There is never line 0 as
 	# we use only 1 based lines, as that matches both with
@@ -374,7 +377,7 @@ method _load {} {
 		set fd [open "| $cmd" r]
 	}
 	fconfigure $fd -blocking 0 -translation lf -encoding binary
-	fileevent $fd readable [cb _read_file $fd]
+	fileevent $fd readable [cb _read_file $fd $jump]
 	set current_fd $fd
 }
 
@@ -386,7 +389,7 @@ method _history_menu {} {
 		menu $m -tearoff 0
 	}
 
-	for {set i [expr {[llength $history] - 2}]
+	for {set i [expr {[llength $history] - 1}]
 		} {$i >= 0} {incr i -1} {
 		set e [lindex $history $i]
 		set c [lindex $e 0]
@@ -406,21 +409,22 @@ method _history_menu {} {
 			}
 		}
 
-		$m add command -label $t -command [cb _goback $i $c $f]
+		$m add command -label $t -command [cb _goback $i]
 	}
 	set X [winfo rootx $w_back]
 	set Y [expr {[winfo rooty $w_back] + [winfo height $w_back]}]
 	tk_popup $m $X $Y
 }
 
-method _goback {i c f} {
+method _goback {i} {
+	set dat [lindex $history $i]
 	set history [lrange $history 0 [expr {$i - 1}]]
-	set commit $c
-	set path $f
-	_load $this
+	set commit [lindex $dat 0]
+	set path [lindex $dat 1]
+	_load $this [lrange $dat 2 5]
 }
 
-method _read_file {fd} {
+method _read_file {fd jump} {
 	if {$fd ne $current_fd} {
 		catch {close $fd}
 		return
@@ -450,6 +454,22 @@ method _read_file {fd} {
 
 	if {[eof $fd]} {
 		close $fd
+
+		# If we don't force Tk to update the widgets *right now*
+		# none of our jump commands will cause a change in the UI.
+		#
+		update
+
+		if {[llength $jump] == 1} {
+			set highlight_line [lindex $jump 0]
+			$w_file see "$highlight_line.0"
+		} elseif {[llength $jump] == 4} {
+			set highlight_column [lindex $jump 0]
+			set highlight_line [lindex $jump 1]
+			$w_file xview moveto [lindex $jump 2]
+			$w_file yview moveto [lindex $jump 3]
+		}
+
 		_exec_blame $this $w_asim @asim_data [list] {}
 	}
 } ifdeleted { catch {close $fd} }
@@ -502,6 +522,7 @@ method _read_blame {fd cur_w cur_d cur_s} {
 			set file [string range $line 9 end]
 			set n    $r_line_count
 			set lno  $r_final_line
+			set oln  $r_orig_line
 			set cmit $r_commit
 
 			if {[regexp {^0{40}$} $cmit]} {
@@ -550,7 +571,7 @@ method _read_blame {fd cur_w cur_d cur_s} {
 						$i tag remove g$g $lno.0 $lno_e
 					}
 				}
-				lset line_data $lno [list $cmit $file]
+				lset line_data $lno [list $cmit $file $oln]
 
 				$cur_w delete $lno.0 "$lno.0 lineend"
 				if {$lno == $first_lno} {
@@ -578,6 +599,7 @@ method _read_blame {fd cur_w cur_d cur_s} {
 
 				incr n -1
 				incr lno
+				incr oln
 				incr blame_lines
 			}
 
@@ -641,9 +663,16 @@ method _load_commit {cur_w cur_d pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
 	set dat [lindex $line_data $lno]
 	if {$dat ne {}} {
+		lappend history [list \
+			$commit $path \
+			$highlight_column \
+			$highlight_line \
+			[lindex [$w_file xview] 0] \
+			[lindex [$w_file yview] 0] \
+			]
 		set commit [lindex $dat 0]
 		set path   [lindex $dat 1]
-		_load $this
+		_load $this [list [lindex $dat 2]]
 	}
 }
 
