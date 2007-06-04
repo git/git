@@ -13,7 +13,7 @@ SYNOPSIS
 	      [-A <author-conv-file>] [-p <options-for-cvsps>] [-P <file>]
 	      [-C <git_repository>] [-z <fuzz>] [-i] [-k] [-u] [-s <subst>]
 	      [-a] [-m] [-M <regex>] [-S <regex>] [-L <commitlimit>]
-	      [<CVS_module>]
+	      [-r <remote>] [<CVS_module>]
 
 
 DESCRIPTION
@@ -25,10 +25,12 @@ Splitting the CVS log into patch sets is done by 'cvsps'.
 At least version 2.1 is required.
 
 You should *never* do any work of your own on the branches that are
-created by git-cvsimport. The initial import will create and populate a
+created by git-cvsimport.  By default initial import will create and populate a
 "master" branch from the CVS repository's main branch which you're free
 to work with; after that, you need to 'git merge' incremental imports, or
-any CVS branches, yourself.
+any CVS branches, yourself.  It is advisable to specify a named remote via
+-r to separate and protect the incoming branches.
+
 
 OPTIONS
 -------
@@ -51,10 +53,19 @@ OPTIONS
         The git repository to import to.  If the directory doesn't
         exist, it will be created.  Default is the current directory.
 
+-r <remote>::
+	The git remote to import this CVS repository into.
+	Moves all CVS branches into remotes/<remote>/<branch>
+	akin to the git-clone --use-separate-remote option.
+
 -o <branch-for-HEAD>::
-	The 'HEAD' branch from CVS is imported to the 'origin' branch within
-	the git repository, as 'HEAD' already has a special meaning for git.
-	Use this option if you want to import into a different branch.
+	When no remote is specified (via -r) the 'HEAD' branch
+	from CVS is imported to the 'origin' branch within the git
+	repository, as 'HEAD' already has a special meaning for git.
+	When a remote is specified the 'HEAD' branch is named
+	remotes/<remote>/master mirroring git-clone behaviour.
+	Use this option if you want to import into a different
+	branch.
 +
 Use '-o master' for continuing an import that was initially done by
 the old cvs2git tool.
