@@ -1026,6 +1026,8 @@ if ($orig_branch) {
 	print "DONE; creating $orig_branch branch\n" if $opt_v;
 	system("git-update-ref", "refs/heads/master", "$remote/$opt_o")
 		unless -f "$git_dir/refs/heads/master";
+	system("git-symbolic-ref", "$remote/HEAD", "$remote/$opt_o")
+		if ($opt_r && $opt_o ne 'HEAD');
 	system('git-update-ref', 'HEAD', "$orig_branch");
 	unless ($opt_i) {
 		system('git checkout');
