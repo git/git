@@ -298,7 +298,8 @@ static int git_format_config(const char *var, const char *value)
 static FILE *realstdout = NULL;
 static const char *output_directory = NULL;
 
-static int reopen_stdout(struct commit *commit, int nr, int keep_subject)
+static int reopen_stdout(struct commit *commit, int nr, int keep_subject,
+			 int numbered_files)
 {
 	char filename[PATH_MAX];
 	char *sol;
@@ -315,53 +316,61 @@ static int reopen_stdout(struct commit *commit, int nr, int keep_subject)
 			filename[len++] = '/';
 	}
 
-	sprintf(filename + len, "%04d", nr);
-	len = strlen(filename);
+	if (numbered_files) {
+		sprintf(filename + len, "%d", nr);
+		len = strlen(filename);
 
-	sol = strstr(commit->buffer, "\n\n");
-	if (sol) {
-		int j, space = 1;
+	} else {
+		sprintf(filename + len, "%04d", nr);
+		len = strlen(filename);
 
-		sol += 2;
-		/* strip [PATCH] or [PATCH blabla] */
-		if (!keep_subject && !prefixcmp(sol, "[PATCH")) {
-			char *eos = strchr(sol + 6, ']');
-			if (eos) {
-				while (isspace(*eos))
-					eos++;
-				sol = eos;
-			}
-		}
+		sol = strstr(commit->buffer, "\n\n");
+		if (sol) {
+			int j, space = 1;
 
-		for (j = 0;
-		     j < FORMAT_PATCH_NAME_MAX - suffix_len - 5 &&
-			     len < sizeof(filename) - suffix_len &&
-			     sol[j] && sol[j] != '\n';
-		     j++) {
-			if (istitlechar(sol[j])) {
-				if (space) {
-					filename[len++] = '-';
-					space = 0;
+			sol += 2;
+			/* strip [PATCH] or [PATCH blabla] */
+			if (!keep_subject && !prefixcmp(sol, "[PATCH")) {
+				char *eos = strchr(sol + 6, ']');
+				if (eos) {
+					while (isspace(*eos))
+						eos++;
+					sol = eos;
 				}
-				filename[len++] = sol[j];
-				if (sol[j] == '.')
-					while (sol[j + 1] == '.')
-						j++;
-			} else
-				space = 1;
+			}
+
+			for (j = 0;
+			     j < FORMAT_PATCH_NAME_MAX - suffix_len - 5 &&
+				     len < sizeof(filename) - suffix_len &&
+				     sol[j] && sol[j] != '\n';
+			     j++) {
+				if (istitlechar(sol[j])) {
+					if (space) {
+						filename[len++] = '-';
+						space = 0;
+					}
+					filename[len++] = sol[j];
+					if (sol[j] == '.')
+						while (sol[j + 1] == '.')
+							j++;
+				} else
+					space = 1;
+			}
+			while (filename[len - 1] == '.'
+			       || filename[len - 1] == '-')
+				len--;
+			filename[len] = 0;
 		}
-		while (filename[len - 1] == '.' || filename[len - 1] == '-')
-			len--;
-		filename[len] = 0;
+		if (len + suffix_len >= sizeof(filename))
+			return error("Patch pathname too long");
+		strcpy(filename + len, fmt_patch_suffix);
 	}
-	if (len + suffix_len >= sizeof(filename))
-		return error("Patch pathname too long");
-	strcpy(filename + len, fmt_patch_suffix);
+
 	fprintf(realstdout, "%s\n", filename);
 	if (freopen(filename, "w", stdout) == NULL)
 		return error("Cannot open patch file %s",filename);
-	return 0;
 
+	return 0;
 }
 
 static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids, const char *prefix)
@@ -431,6 +440,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int numbered = 0;
 	int start_number = -1;
 	int keep_subject = 0;
+	int numbered_files = 0;		/* _just_ numbers */
 	int subject_prefix = 0;
 	int ignore_if_in_upstream = 0;
 	int thread = 0;
@@ -465,6 +475,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			numbered = 1;
 		else if (!prefixcmp(argv[i], "--start-number="))
 			start_number = strtol(argv[i] + 15, NULL, 10);
+		else if (!strcmp(argv[i], "--numbered-files"))
+			numbered_files = 1;
 		else if (!strcmp(argv[i], "--start-number")) {
 			i++;
 			if (i == argc)
@@ -540,6 +552,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		die ("-n and -k are mutually exclusive.");
 	if (keep_subject && subject_prefix)
 		die ("--subject-prefix and -k are mutually exclusive.");
+	if (numbered_files && use_stdout)
+		die ("--numbered-files and --stdout are mutually exclusive.");
 
 	argc = setup_revisions(argc, argv, &rev, "HEAD");
 	if (argc > 1)
@@ -614,7 +628,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			rev.message_id = message_id;
 		}
 		if (!use_stdout)
-			if (reopen_stdout(commit, rev.nr, keep_subject))
+			if (reopen_stdout(commit, rev.nr, keep_subject,
+					  numbered_files))
 				die("Failed to create output files");
 		shown = log_tree_commit(&rev, commit);
 		free(commit->buffer);

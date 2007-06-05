@@ -11,7 +11,8 @@ SYNOPSIS
 [verse]
 'git-format-patch' [-n | -k] [-o <dir> | --stdout] [--thread]
                    [--attach[=<boundary>] | --inline[=<boundary>]]
-                   [-s | --signoff] [<common diff options>] [--start-number <n>]
+                   [-s | --signoff] [<common diff options>]
+                   [--start-number <n>] [--numbered-files]
                    [--in-reply-to=Message-Id] [--suffix=.<sfx>]
                    [--ignore-if-in-upstream]
                    [--subject-prefix=Subject-Prefix]
@@ -30,9 +31,11 @@ gitlink:git-rev-parse[1].
 The output of this command is convenient for e-mail submission or
 for use with gitlink:git-am[1].
 
-Each output file is numbered sequentially from 1, and uses the
+By default, each output file is numbered sequentially from 1, and uses the
 first line of the commit message (massaged for pathname safety) as
-the filename. The names of the output files are printed to standard
+the filename. With the --numbered-files option, the output file names
+will only be numbers, without the first line of the commit appended.
+The names of the output files are printed to standard
 output, unless the --stdout option is specified.
 
 If -o is specified, output files are created in <dir>.  Otherwise
@@ -59,6 +62,11 @@ include::diff-options.txt[]
 
 --start-number <n>::
 	Start numbering the patches at <n> instead of 1.
+
+--numbered-files::
+	Output file names will be a simple number sequence
+	without the default first line of the commit appended.
+	Mutually exclusive with the --stdout option.
 
 -k|--keep-subject::
 	Do not strip/add '[PATCH]' from the first line of the
