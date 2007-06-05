@@ -1682,7 +1682,7 @@ automatically set the default remote branch to pull from at the time
 that a branch is created:
 
 -------------------------------------------------
-$ git checkout --track -b origin/maint maint
+$ git checkout --track -b maint origin/maint
 -------------------------------------------------
 
 In addition to saving you keystrokes, "git pull" also helps you by
