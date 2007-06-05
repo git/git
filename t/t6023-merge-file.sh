@@ -134,5 +134,10 @@ EOF
 
 test_expect_success "expected conflict markers" "git diff expect out"
 
+test_expect_success 'binary files cannot be merged' '
+	! git merge-file -p orig.txt ../test4012.png new1.txt 2> merge.err &&
+	grep "Cannot merge binary files" merge.err
+'
+
 test_done
 
