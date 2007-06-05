@@ -921,6 +921,7 @@ echo "git diff --stat --summary -M v$last v$new > ../diffstat-$new"
 and then he just cut-and-pastes the output commands after verifying that
 they look OK.
 
+[[Finding-comments-with-given-content]]
 Finding commits referencing a file with given content
 -----------------------------------------------------
 
