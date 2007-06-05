@@ -81,4 +81,18 @@ EOF
 
 test_expect_success "virtual trees were processed" "git diff expect out"
 
+git reset --hard
+test_expect_success 'refuse to merge binary files' '
+	printf "\0" > binary-file &&
+	git add binary-file &&
+	git commit -m binary &&
+	git checkout G &&
+	printf "\0\0" > binary-file &&
+	git add binary-file &&
+	git commit -m binary2 &&
+	! git merge F > merge.out 2> merge.err &&
+	grep "Cannot merge binary files: HEAD:binary-file vs. F:binary-file" \
+		merge.err
+'
+
 test_done
