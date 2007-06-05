@@ -45,4 +45,13 @@ test_expect_success 'test that the file was renamed' '
 	test d = $(git show H3:doh)
 '
 
+git tag oldD H3~4
+test_expect_success 'rewrite one branch, keeping a side branch' '
+	git-filter-branch --tree-filter "mv b boh || :" -k D -s oldD modD
+'
+
+test_expect_success 'common ancestor is still common (unchanged)' '
+	test "$(git-merge-base modD D)" = "$(git-rev-parse B)"
+'
+
 test_done

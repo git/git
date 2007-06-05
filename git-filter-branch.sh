@@ -327,11 +327,6 @@ ret=0
 
 mkdir ../map # map old->new commit ids for rewriting parents
 
-# seed with identity mappings for the parents where we start off
-for commit in $unchanged; do
-	echo $commit > ../map/$commit
-done
-
 git-rev-list --reverse --topo-order $srcbranch --not $unchanged >../revs
 commits=$(cat ../revs | wc -l | tr -d " ")
 
@@ -372,7 +367,8 @@ while read commit; do
 				parentstr="$parentstr -p $reparent"
 			done
 		else
-			die "assertion failed: parent $parent for commit $commit not found in rewritten ones"
+			# if it was not rewritten, take the original
+			parentstr="$parentstr -p $parent"
 		fi
 	done
 	if [ "$filter_parent" ]; then
@@ -385,12 +381,21 @@ while read commit; do
 		tee ../map/$commit
 done <../revs
 
-git-update-ref refs/heads/"$dstbranch" $(head -n 1 ../map/$(tail -n 1 ../revs))
-if [ "$(cat ../map/$(tail -n 1 ../revs) | wc -l)" -gt 1 ]; then
-	echo "WARNING: Your commit filter caused the head commit to expand to several rewritten commits. Only the first such commit was recorded as the current $dstbranch head but you will need to resolve the situation now (probably by manually merging the other commits). These are all the commits:" >&2
-	sed 's/^/	/' ../map/$(tail -n 1 ../revs) >&2
-	ret=1
-fi
+src_head=$(tail -n 1 ../revs)
+target_head=$(head -n 1 ../map/$src_head)
+case "$target_head" in
+'')
+	echo Nothing rewritten
+	;;
+*)
+	git-update-ref refs/heads/"$dstbranch" $target_head
+	if [ $(cat ../map/$src_head | wc -l) -gt 1 ]; then
+		echo "WARNING: Your commit filter caused the head commit to expand to several rewritten commits. Only the first such commit was recorded as the current $dstbranch head but you will need to resolve the situation now (probably by manually merging the other commits). These are all the commits:" >&2
+		sed 's/^/	/' ../map/$src_head >&2
+		ret=1
+	fi
+	;;
+esac
 
 if [ "$filter_tag_name" ]; then
 	git-for-each-ref --format='%(objectname) %(objecttype) %(refname)' refs/tags |
