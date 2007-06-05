@@ -40,6 +40,7 @@ git-fast-import
 git-fetch
 git-fetch--tool
 git-fetch-pack
+git-filter-branch
 git-findtags
 git-fmt-merge-msg
 git-for-each-ref
