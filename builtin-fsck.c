@@ -20,6 +20,7 @@ static int check_strict;
 static int keep_cache_objects;
 static unsigned char head_sha1[20];
 static int errors_found;
+static int verbose;
 #define ERROR_OBJECT 01
 #define ERROR_REACHABLE 02
 
@@ -149,6 +150,9 @@ static void check_unreachable_object(struct object *obj)
 
 static void check_object(struct object *obj)
 {
+	if (verbose)
+		fprintf(stderr, "Checking %s\n", sha1_to_hex(obj->sha1));
+
 	if (obj->flags & REACHABLE)
 		check_reachable_object(obj);
 	else
@@ -161,6 +165,9 @@ static void check_connectivity(void)
 
 	/* Look up all the requirements, warn about missing objects.. */
 	max = get_max_object_index();
+	if (verbose)
+		fprintf(stderr, "Checking connectivity (%d objects)\n", max);
+
 	for (i = 0; i < max; i++) {
 		struct object *obj = get_indexed_object(i);
 
@@ -228,6 +235,10 @@ static int fsck_tree(struct tree *item)
 	unsigned o_mode;
 	const char *o_name;
 	const unsigned char *o_sha1;
+
+	if (verbose)
+		fprintf(stderr, "Checking tree %s\n",
+				sha1_to_hex(item->object.sha1));
 
 	init_tree_desc(&desc, item->buffer, item->size);
 
@@ -317,6 +328,10 @@ static int fsck_commit(struct commit *commit)
 	char *buffer = commit->buffer;
 	unsigned char tree_sha1[20], sha1[20];
 
+	if (verbose)
+		fprintf(stderr, "Checking commit %s\n",
+			sha1_to_hex(commit->object.sha1));
+
 	if (memcmp(buffer, "tree ", 5))
 		return objerror(&commit->object, "invalid format - expected 'tree' line");
 	if (get_sha1_hex(buffer+5, tree_sha1) || buffer[45] != '\n')
@@ -344,6 +359,10 @@ static int fsck_commit(struct commit *commit)
 static int fsck_tag(struct tag *tag)
 {
 	struct object *tagged = tag->tagged;
+
+	if (verbose)
+		fprintf(stderr, "Checking tag %s\n",
+			sha1_to_hex(tag->object.sha1));
 
 	if (!tagged) {
 		return objerror(&tag->object, "could not load tagged object");
@@ -446,6 +465,9 @@ static void fsck_dir(int i, char *path)
 	if (!dir)
 		return;
 
+	if (verbose)
+		fprintf(stderr, "Checking directory %s\n", path);
+
 	while ((de = readdir(dir)) != NULL) {
 		char name[100];
 		unsigned char sha1[20];
@@ -479,6 +501,10 @@ static int fsck_handle_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 		const char *message, void *cb_data)
 {
 	struct object *obj;
+
+	if (verbose)
+		fprintf(stderr, "Checking reflog %s->%s\n",
+			sha1_to_hex(osha1), sha1_to_hex(nsha1));
 
 	if (!is_null_sha1(osha1)) {
 		obj = lookup_object(osha1);
@@ -549,6 +575,10 @@ static void get_default_heads(void)
 static void fsck_object_dir(const char *path)
 {
 	int i;
+
+	if (verbose)
+		fprintf(stderr, "Checking object directory\n");
+
 	for (i = 0; i < 256; i++) {
 		static char dir[4096];
 		sprintf(dir, "%s/%02x", path, i);
@@ -563,6 +593,9 @@ static int fsck_head_link(void)
 	int flag;
 	int null_is_error = 0;
 	const char *head_points_at = resolve_ref("HEAD", sha1, 0, &flag);
+
+	if (verbose)
+		fprintf(stderr, "Checking HEAD link\n");
 
 	if (!head_points_at)
 		return error("Invalid HEAD");
@@ -586,6 +619,9 @@ static int fsck_cache_tree(struct cache_tree *it)
 	int i;
 	int err = 0;
 
+	if (verbose)
+		fprintf(stderr, "Checking cache tree\n");
+
 	if (0 <= it->entry_count) {
 		struct object *obj = parse_object(it->sha1);
 		if (!obj) {
@@ -605,7 +641,7 @@ static int fsck_cache_tree(struct cache_tree *it)
 
 static const char fsck_usage[] =
 "git-fsck [--tags] [--root] [[--unreachable] [--cache] [--full] "
-"[--strict] <head-sha1>*]";
+"[--strict] [--verbose] <head-sha1>*]";
 
 int cmd_fsck(int argc, char **argv, const char *prefix)
 {
@@ -643,6 +679,10 @@ int cmd_fsck(int argc, char **argv, const char *prefix)
 		}
 		if (!strcmp(arg, "--strict")) {
 			check_strict = 1;
+			continue;
+		}
+		if (!strcmp(arg, "--verbose")) {
+			verbose = 1;
 			continue;
 		}
 		if (*arg == '-')
