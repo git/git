@@ -27,7 +27,7 @@ $ man git-clone
 See also <<git-quick-start>> for a brief overview of git commands,
 without any explanation.
 
-Also, see <<todo>> for ways that you can help make this manual more
+Finally, see <<todo>> for ways that you can help make this manual more
 complete.
 
 
@@ -3669,11 +3669,11 @@ itself!
 include::glossary.txt[]
 
 [[git-quick-start]]
-Appendix A: Git Quick Start
-===========================
+Appendix A: Git Quick Reference
+===============================
 
-This is a quick summary of the major commands; the following chapters
-will explain how these work in more detail.
+This is a quick summary of the major commands; the previous chapters
+explain how these work in more detail.
 
 [[quick-creating-a-new-repository]]
 Creating a new repository
