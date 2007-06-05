@@ -349,21 +349,21 @@ while read commit; do
 
 	eval "$(set_ident AUTHOR <../commit)"
 	eval "$(set_ident COMMITTER <../commit)"
-	eval "$filter_env"
+	eval "$filter_env" < /dev/null
 
 	if [ "$filter_tree" ]; then
 		git-checkout-index -f -u -a
 		# files that $commit removed are now still in the working tree;
 		# remove them, else they would be added again
 		git-ls-files -z --others | xargs -0 rm -f
-		eval "$filter_tree"
+		eval "$filter_tree" < /dev/null
 		git-diff-index -r $commit | cut -f 2- | tr '\n' '\0' | \
 			xargs -0 git-update-index --add --replace --remove
 		git-ls-files -z --others | \
 			xargs -0 git-update-index --add --replace --remove
 	fi
 
-	eval "$filter_index"
+	eval "$filter_index" < /dev/null
 
 	parentstr=
 	for parent in $(get_parents $commit); do
