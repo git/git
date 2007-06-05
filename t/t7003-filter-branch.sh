@@ -7,6 +7,7 @@ make_commit () {
 	lower=$(echo $1 | tr A-Z a-z)
 	echo $lower > $lower
 	git add $lower
+	test_tick
 	git commit -m $1
 	git tag $1
 }
