@@ -1759,7 +1759,7 @@ pack .vpane -anchor n -side top -fill both -expand 1
 #
 frame .vpane.files.index -height 100 -width 200
 label .vpane.files.index.title -text {Staged Changes (Will Be Committed)} \
-	-background green
+	-background lightgreen
 text $ui_index -background white -borderwidth 0 \
 	-width 20 -height 10 \
 	-wrap none \
@@ -1779,7 +1779,7 @@ pack $ui_index -side left -fill both -expand 1
 #
 frame .vpane.files.workdir -height 100 -width 200
 label .vpane.files.workdir.title -text {Unstaged Changes (Will Not Be Committed)} \
-	-background red
+	-background lightsalmon
 text $ui_workdir -background white -borderwidth 0 \
 	-width 20 -height 10 \
 	-wrap none \
@@ -1796,10 +1796,8 @@ pack $ui_workdir -side left -fill both -expand 1
 .vpane.files add .vpane.files.workdir -sticky nsew
 
 foreach i [list $ui_index $ui_workdir] {
-	$i tag conf in_diff -font font_uibold
-	$i tag conf in_sel \
-		-background [$i cget -foreground] \
-		-foreground [$i cget -background]
+	$i tag conf in_diff -background lightgray
+	$i tag conf in_sel  -background lightgray
 }
 unset i
 
@@ -1957,18 +1955,18 @@ proc trace_current_diff_path {varname args} {
 }
 trace add variable current_diff_path write trace_current_diff_path
 
-frame .vpane.lower.diff.header -background orange
+frame .vpane.lower.diff.header -background gold
 label .vpane.lower.diff.header.status \
-	-background orange \
+	-background gold \
 	-width $max_status_desc \
 	-anchor w \
 	-justify left
 label .vpane.lower.diff.header.file \
-	-background orange \
+	-background gold \
 	-anchor w \
 	-justify left
 label .vpane.lower.diff.header.path \
-	-background orange \
+	-background gold \
 	-anchor w \
 	-justify left
 pack .vpane.lower.diff.header.status -side left
