@@ -5,7 +5,7 @@
 # Copyright (c) 2006 Theodore Y. Ts'o
 #
 # This file is licensed under the GPL v2, or a later version
-# at the discretion of Junio C Hammano.
+# at the discretion of Junio C Hamano.
 #
 
 USAGE='[--tool=tool] [file to merge] ...'
