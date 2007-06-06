@@ -301,9 +301,10 @@ case "$GIT_DIR" in
 /*)
 	;;
 *)
-	export GIT_DIR="$(pwd)/../../$GIT_DIR"
+	GIT_DIR="$(pwd)/../../$GIT_DIR"
 	;;
 esac
+export GIT_DIR GIT_WORK_TREE=.
 
 export GIT_INDEX_FILE="$(pwd)/../index"
 git-read-tree # seed the index file
