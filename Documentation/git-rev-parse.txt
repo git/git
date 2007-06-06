@@ -93,6 +93,10 @@ OPTIONS
 	When the current working directory is below the repository
 	directory print "true", otherwise "false".
 
+--is-inside-work-tree::
+	When the current working directory is inside the work tree of the
+	repository print "true", otherwise "false".
+
 --is-bare-repository::
 	When the repository is bare print "true", otherwise "false".
 

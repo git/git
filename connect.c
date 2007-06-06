@@ -589,6 +589,7 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 			unsetenv(ALTERNATE_DB_ENVIRONMENT);
 			unsetenv(DB_ENVIRONMENT);
 			unsetenv(GIT_DIR_ENVIRONMENT);
+			unsetenv(GIT_WORK_TREE_ENVIRONMENT);
 			unsetenv(GRAFT_ENVIRONMENT);
 			unsetenv(INDEX_ENVIRONMENT);
 			execlp("sh", "sh", "-c", command, NULL);
