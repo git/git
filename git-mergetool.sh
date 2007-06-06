@@ -215,6 +215,12 @@ merge_file () {
 	    check_unchanged
 	    save_backup
 	    ;;
+	gvimdiff)
+		touch "$BACKUP"
+		gvimdiff -f -- "$LOCAL" "$path" "$REMOTE"
+		check_unchanged
+		save_backup
+		;;
 	xxdiff)
 	    touch "$BACKUP"
 	    if base_present ; then
@@ -293,7 +299,7 @@ done
 if test -z "$merge_tool"; then
     merge_tool=`git-config merge.tool`
     case "$merge_tool" in
-	kdiff3 | tkdiff | xxdiff | meld | opendiff | emerge | vimdiff | "")
+	kdiff3 | tkdiff | xxdiff | meld | opendiff | emerge | vimdiff | gvimdiff | "")
 	    ;; # happy
 	*)
 	    echo >&2 "git config option merge.tool set to unknown tool: $merge_tool"
@@ -312,6 +318,8 @@ if test -z "$merge_tool" ; then
 	merge_tool=xxdiff
     elif type meld >/dev/null 2>&1 && test -n "$DISPLAY"; then
 	merge_tool=meld
+    elif type gvimdiff >/dev/null 2>&1 && test -n "$DISPLAY"; then
+	merge_tool=gvimdiff
     elif type opendiff >/dev/null 2>&1; then
 	merge_tool=opendiff
     elif type emacs >/dev/null 2>&1; then
@@ -325,7 +333,7 @@ if test -z "$merge_tool" ; then
 fi
 
 case "$merge_tool" in
-    kdiff3|tkdiff|meld|xxdiff|vimdiff|opendiff)
+    kdiff3|tkdiff|meld|xxdiff|vimdiff|gvimdiff|opendiff)
 	if ! type "$merge_tool" > /dev/null 2>&1; then
 	    echo "The merge tool $merge_tool is not available"
 	    exit 1
