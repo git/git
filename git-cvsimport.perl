@@ -692,8 +692,8 @@ sub commit {
 	if ($branch eq $opt_o && !$index{branch} && !get_headref($branch, $git_dir)) {
 	    # looks like an initial commit
 	    # use the index primed by git-init
-	    $ENV{GIT_INDEX_FILE} = '.git/index';
-	    $index{$branch} = '.git/index';
+	    $ENV{GIT_INDEX_FILE} = "$git_dir/index";
+	    $index{$branch} = "$git_dir/index";
 	} else {
 	    # use an index per branch to speed up
 	    # imports of projects with many branches
@@ -984,7 +984,7 @@ if ($line =~ /^(\d+) objects, (\d+) kilobytes$/) {
 }
 
 foreach my $git_index (values %index) {
-    if ($git_index ne '.git/index') {
+    if ($git_index ne "$git_dir/index") {
 	unlink($git_index);
     }
 }
