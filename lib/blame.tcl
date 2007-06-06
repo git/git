@@ -26,8 +26,8 @@ field old_height ; # last known height of $w.file_pane
 
 # Tk UI colors
 #
-field active_color #c0edc5
-field group_colors {
+variable active_color #c0edc5
+variable group_colors {
 	#d6d6d6
 	#e1e1e1
 	#ececec
@@ -42,11 +42,9 @@ field current_fd        {} ; # background process running
 field highlight_line    -1 ; # current line selected
 field highlight_column  {} ; # current commit column selected
 field highlight_commit  {} ; # sha1 of commit selected
-field old_bgcolor       {} ; # background of current selection
 
 field total_lines       0  ; # total length of file
 field blame_lines       0  ; # number of lines computed
-field have_commit          ; # array commit -> 1
 field amov_data            ; # list of {commit origfile origline}
 field asim_data            ; # list of {commit origfile origline}
 
@@ -62,6 +60,8 @@ field tooltip_commit    {} ; # Commit(s) in tooltip
 
 constructor new {i_commit i_path} {
 	global cursor_ptr
+	variable active_color
+	variable group_colors
 
 	set commit $i_commit
 	set path   $i_path
@@ -250,6 +250,10 @@ constructor new {i_commit i_path} {
 		-command [cb _copycommit]
 
 	foreach i $w_columns {
+		for {set g 0} {$g < [llength $group_colors]} {incr g} {
+			$i tag conf color$g -background [lindex $group_colors $g]
+		}
+
 		$i conf -cursor $cursor_ptr
 		$i conf -yscrollcommand [list many2scrollbar \
 			$w_columns yview $w.file_pane.out.sby]
@@ -314,6 +318,8 @@ constructor new {i_commit i_path} {
 }
 
 method _load {jump} {
+	variable group_colors
+
 	_hide_tooltip $this
 
 	if {$total_lines != 0 || $current_fd ne {}} {
@@ -325,8 +331,10 @@ method _load {jump} {
 		foreach i $w_columns {
 			$i conf -state normal
 			$i delete 0.0 end
-			foreach cmit [array names have_commit] {
-				$i tag delete g$cmit
+			foreach g [$i tag names] {
+				if {[regexp {^g[0-9a-f]{40}$} $g]} {
+					$i tag delete $g
+				}
 			}
 			$i conf -state disabled
 		}
@@ -339,7 +347,6 @@ method _load {jump} {
 		set highlight_column {}
 		set highlight_commit {}
 		set total_lines 0
-		array unset have_commit
 	}
 
 	if {[winfo exists $w.status.c]} {
@@ -494,6 +501,7 @@ method _exec_blame {cur_w cur_d options cur_s} {
 
 method _read_blame {fd cur_w cur_d cur_s} {
 	upvar #0 $cur_d line_data
+	variable group_colors
 
 	if {$fd ne $current_fd} {
 		catch {close $fd}
@@ -508,16 +516,6 @@ method _read_blame {fd cur_w cur_d cur_s} {
 			set r_orig_line  $original_line
 			set r_final_line $final_line
 			set r_line_count $line_count
-
-			if {[catch {set g $have_commit($cmit)}]} {
-				set bg [lindex $group_colors 0]
-				set group_colors [lrange $group_colors 1 end]
-				lappend group_colors $bg
-				foreach i $w_columns {
-					$i tag conf g$cmit -background $bg
-				}
-				set have_commit($cmit) 1
-			}
 		} elseif {[string match {filename *} $line]} {
 			set file [string range $line 9 end]
 			set n    $r_line_count
@@ -563,6 +561,30 @@ method _read_blame {fd cur_w cur_d cur_s} {
 				incr first_lno -1
 			}
 
+			set color {}
+			if {$first_lno < $lno} {
+				foreach g [$w_file tag names $first_lno.0] {
+					if {[regexp {^color[0-9]+$} $g]} {
+						set color $g
+						break
+					}
+				}
+			} else {
+				set i [lsort [concat \
+					[$w_file tag names "[expr {$first_lno - 1}].0"] \
+					[$w_file tag names "[expr {$lno + $n}].0"] \
+					]]
+				for {set g 0} {$g < [llength $group_colors]} {incr g} {
+					if {[lsearch -sorted -exact $i color$g] == -1} {
+						set color color$g
+						break
+					}
+				}
+			}
+			if {$color eq {}} {
+				set color color0
+			}
+
 			while {$n > 0} {
 				set lno_e "$lno.0 lineend + 1c"
 				if {[lindex $line_data $lno] ne {}} {
@@ -583,6 +605,14 @@ method _read_blame {fd cur_w cur_d cur_s} {
 				}
 
 				foreach i $w_columns {
+					if {$cur_w eq $w_amov} {
+						for {set g 0} \
+							{$g < [llength $group_colors]} \
+							{incr g} {
+							$i tag remove color$g $lno.0 $lno_e
+						}
+						$i tag add $color $lno.0 $lno_e
+					}
 					$i tag add g$cmit $lno.0 $lno_e
 				}
 
@@ -616,6 +646,18 @@ method _read_blame {fd cur_w cur_d cur_s} {
 				} else {
 					$cur_w insert $lno.0 { |}
 				}
+
+				if {$cur_w eq $w_amov} {
+					foreach i $w_columns {
+						for {set g 0} \
+							{$g < [llength $group_colors]} \
+							{incr g} {
+							$i tag remove color$g $lno.0 $lno_e
+						}
+						$i tag add $color $lno.0 $lno_e
+					}
+				}
+
 				incr lno
 			}
 
@@ -678,10 +720,11 @@ method _load_commit {cur_w cur_d pos} {
 
 method _showcommit {cur_w lno} {
 	global repo_config
+	variable active_color
 
 	if {$highlight_commit ne {}} {
 		foreach i $w_columns {
-			$i tag conf g$highlight_commit -background $old_bgcolor
+			$i tag conf g$highlight_commit -background {}
 			$i tag lower g$highlight_commit
 		}
 	}
@@ -704,7 +747,6 @@ method _showcommit {cur_w lno} {
 		set cmit [lindex $dat 0]
 		set file [lindex $dat 1]
 
-		set old_bgcolor [$w_file tag cget g$cmit -background]
 		foreach i $w_columns {
 			$i tag conf g$cmit -background $active_color
 			$i tag raise g$cmit
