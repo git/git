@@ -184,7 +184,8 @@ USAGE="git-filter-branch [-d TEMPDIR] [FILTERS] DESTBRANCH [REV-RANGE]"
 
 map()
 {
-	[ -r "$workdir/../map/$1" ] || return 1
+	# if it was not rewritten, take the original
+	test -r "$workdir/../map/$1" || echo "$1"
 	cat "$workdir/../map/$1"
 }
 
@@ -347,14 +348,9 @@ while read commit; do
 
 	parentstr=
 	for parent in $(get_parents $commit); do
-		if [ -r "../map/$parent" ]; then
-			for reparent in $(cat "../map/$parent"); do
-				parentstr="$parentstr -p $reparent"
-			done
-		else
-			# if it was not rewritten, take the original
-			parentstr="$parentstr -p $parent"
-		fi
+		for reparent in $(map "$parent"); do
+			parentstr="$parentstr -p $reparent"
+		done
 	done
 	if [ "$filter_parent" ]; then
 		parentstr="$(echo "$parentstr" | eval "$filter_parent")"
