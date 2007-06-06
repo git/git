@@ -339,7 +339,7 @@ test $commits -eq 0 && die "Found nothing to rewrite"
 
 i=0
 while read commit; do
-	i=$((i+1))
+	i=$(($i+1))
 	printf "$commit ($i/$commits) "
 
 	git-read-tree -i -m $commit
