@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git-tag' [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]  <name> [<head>]
 'git-tag' -d <name>...
-'git-tag' -l [<pattern>]
+'git-tag' [-n [<num>]] -l [<pattern>]
 'git-tag' -v <name>
 
 DESCRIPTION
@@ -38,8 +38,8 @@ GnuPG key for signing.
 
 `-v <tag>` verifies the gpg signature of the tag.
 
-`-l <pattern>` lists tags that match the given pattern (or all
-if no pattern is given).
+`-l <pattern>` lists tags with names that match the given pattern
+(or all if no pattern is given).
 
 OPTIONS
 -------
@@ -61,8 +61,13 @@ OPTIONS
 -v::
 	Verify the gpg signature of given the tag
 
+-n <num>::
+	<num> specifies how many lines from the annotation, if any,
+	are printed when using -l.
+	The default is not to print any annotation lines.
+
 -l <pattern>::
-	List tags that match the given pattern (or all if no pattern is given).
+	List tags with names that match the given pattern (or all if no pattern is given).
 
 -m <msg>::
 	Use the given tag message (instead of prompting)

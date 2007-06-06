@@ -1,7 +1,7 @@
 #!/bin/sh
 # Copyright (c) 2005 Linus Torvalds
 
-USAGE='-l [<pattern>] | [-a | -s | -u <key-id>] [-f | -d | -v] [-m <msg>] <tagname> [<head>]'
+USAGE='[-n [<num>]] -l [<pattern>] | [-a | -s | -u <key-id>] [-f | -d | -v] [-m <msg>] <tagname> [<head>]'
 SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
@@ -13,6 +13,7 @@ message=
 username=
 list=
 verify=
+LINES=0
 while case "$#" in 0) break ;; esac
 do
     case "$1" in
@@ -26,14 +27,41 @@ do
     -f)
 	force=1
 	;;
-    -l)
-	case "$#" in
-	1)
-		set x . ;;
+    -n)
+        case $2 in
+	-*)	LINES=1 	# no argument
+		;;
+	*)	shift
+		LINES=$(expr "$1" : '\([0-9]*\)')
+		[ -z "$LINES" ] && LINES=1 # 1 line is default when -n is used
+		;;
 	esac
+	;;
+    -l)
+	list=1
 	shift
-	git rev-parse --symbolic --tags | sort | grep "$@"
-	exit $?
+	PATTERN="$1"	# select tags by shell pattern, not re
+	git rev-parse --symbolic --tags | sort |
+	    while read TAG
+	    do
+	        case "$TAG" in
+		*$PATTERN*) ;;
+		*)	    continue ;;
+		esac
+		[ "$LINES" -le 0 ] && { echo "$TAG"; continue ;}
+		OBJTYPE=$(git cat-file -t "$TAG")
+		case $OBJTYPE in
+		tag)	ANNOTATION=$(git cat-file tag "$TAG" |
+				       sed -e '1,/^$/d' \
+					   -e '/^-----BEGIN PGP SIGNATURE-----$/Q' )
+			printf "%-15s %s\n" "$TAG" "$ANNOTATION" |
+			  sed -e '2,$s/^/    /' \
+			      -e "${LINES}q"
+			;;
+		*)      echo "$TAG"
+			;;
+		esac
+	    done
 	;;
     -m)
     	annotate=1
@@ -96,6 +124,8 @@ do
     esac
     shift
 done
+
+[ -n "$list" ] && exit 0
 
 name="$1"
 [ "$name" ] || usage
