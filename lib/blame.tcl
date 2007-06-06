@@ -477,7 +477,9 @@ method _read_file {fd jump} {
 			$w_file yview moveto [lindex $jump 3]
 		}
 
-		_exec_blame $this $w_asim @asim_data [list] {}
+		_exec_blame $this $w_asim @asim_data \
+			[list] \
+			{ copy/move tracking}
 	}
 } ifdeleted { catch {close $fd} }
 
@@ -672,7 +674,7 @@ method _read_blame {fd cur_w cur_d cur_s} {
 		if {$cur_w eq $w_asim} {
 			_exec_blame $this $w_amov @amov_data \
 				[list -M -C -C] \
-				{ move/copy tracking}
+				{ original location}
 		} else {
 			set current_fd {}
 			set status {Annotation complete.}
@@ -906,7 +908,7 @@ method _open_tooltip {cur_w} {
 	$tooltip_t insert end "$summary"
 
 	if {$org ne {} && [lindex $org 0] ne $cmit} {
-		$tooltip_t insert 0.0 "Moved Here By:\n" section_header
+		$tooltip_t insert 0.0 "Copied/Moved Here By:\n" section_header
 		set cmit [lindex $org 0]
 		set file [lindex $org 1]
 		lappend tooltip_commit $cmit
@@ -929,7 +931,7 @@ method _open_tooltip {cur_w} {
 
 		if {$file ne $path} {
 			$tooltip_t insert end "\n"
-			$tooltip_t insert end "File: " section_header
+			$tooltip_t insert end "In File: " section_header
 			$tooltip_t insert end $file
 		}
 	}
