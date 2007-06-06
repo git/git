@@ -731,12 +731,12 @@ method _showcommit {cur_w lno} {
 		}
 	}
 
-	if {$cur_w eq $w_amov} {
-		set dat [lindex $amov_data $lno]
-		set highlight_column $w_amov
-	} else {
+	if {$cur_w eq $w_asim} {
 		set dat [lindex $asim_data $lno]
 		set highlight_column $w_asim
+	} else {
+		set dat [lindex $amov_data $lno]
+		set highlight_column $w_amov
 	}
 
 	$w_cviewer conf -state normal
@@ -908,7 +908,9 @@ method _open_tooltip {cur_w} {
 	$tooltip_t insert end "$summary"
 
 	if {$org ne {} && [lindex $org 0] ne $cmit} {
-		$tooltip_t insert 0.0 "Copied/Moved Here By:\n" section_header
+		set save [$tooltip_t get 0.0 end]
+		$tooltip_t delete 0.0 end
+
 		set cmit [lindex $org 0]
 		set file [lindex $org 1]
 		lappend tooltip_commit $cmit
@@ -923,17 +925,19 @@ method _open_tooltip {cur_w} {
 			-format {%Y-%m-%d %H:%M:%S}
 		]}
 
-		$tooltip_t insert end "\n\n"
 		$tooltip_t insert end "Originally By:\n" section_header
 		$tooltip_t insert end "commit $cmit\n"
 		$tooltip_t insert end "$author_name  $author_time\n"
-		$tooltip_t insert end "$summary"
+		$tooltip_t insert end "$summary\n"
 
 		if {$file ne $path} {
-			$tooltip_t insert end "\n"
 			$tooltip_t insert end "In File: " section_header
-			$tooltip_t insert end $file
+			$tooltip_t insert end "$file\n"
 		}
+
+		$tooltip_t insert end "\n"
+		$tooltip_t insert end "Copied Or Moved Here By:\n" section_header
+		$tooltip_t insert end $save
 	}
 
 	$tooltip_t conf -state disabled
