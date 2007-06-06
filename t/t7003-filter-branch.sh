@@ -47,7 +47,7 @@ test_expect_success 'test that the file was renamed' '
 
 git tag oldD H3~4
 test_expect_success 'rewrite one branch, keeping a side branch' '
-	git-filter-branch --tree-filter "mv b boh || :" -k D -s oldD modD
+	git-filter-branch --tree-filter "mv b boh || :" modD D..oldD
 '
 
 test_expect_success 'common ancestor is still common (unchanged)' '

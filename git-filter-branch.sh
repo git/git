@@ -42,15 +42,6 @@
 #	does this in the '.git-rewrite/' directory but you can override
 #	that choice by this parameter.
 #
-# -r STARTREV:: The commit id to start the rewrite at
-#	Normally, the command will rewrite the entire history. If you
-#	pass this argument, though, this will be the first commit it
-#	will rewrite and keep the previous commits intact.
-#
-# -k KEEPREV:: A commit id until which _not_ to rewrite history
-#	If you pass this argument, this commit and all of its
-#	predecessors are kept intact.
-#
 # Filters
 # ~~~~~~~
 # The filters are applied in the order as listed below. The COMMAND
@@ -164,27 +155,31 @@
 # and all children of the merge will become merge commits with P1,P2
 # as their parents instead of the merge commit.
 #
-# To restrict rewriting to only part of the history, use -r or -k or both.
+# To restrict rewriting to only part of the history, specify a revision
+# range in addition to the new branch name. The new branch name will
+# point to the top-most revision that a 'git rev-list' of this range
+# will print.
+#
 # Consider this history:
 #
 #	     D--E--F--G--H
 #	    /     /
 #	A--B-----C
 #
-# To rewrite only commits F,G,H, use:
+# To rewrite commits D,E,F,G,H, use:
 #
-#	git-filter-branch -r F ...
+#	git-filter-branch ... new-H C..H
 #
 # To rewrite commits E,F,G,H, use one of these:
 #
-#	git-filter-branch -r E -k C ...
-#	git-filter-branch -k D -k C ...
+#	git-filter-branch ... new-H C..H --not D
+#	git-filter-branch ... new-H D..H --not C
 
 # Testsuite: TODO
 
 set -e
 
-USAGE="git-filter-branch [-d TEMPDIR] [-r STARTREV]... [-k KEEPREV]... [-s SRCBRANCH] [FILTERS] DESTBRANCH"
+USAGE="git-filter-branch [-d TEMPDIR] [FILTERS] DESTBRANCH [REV-RANGE]"
 . git-sh-setup
 
 map()
@@ -232,7 +227,6 @@ get_parents () {
 }
 
 tempdir=.git-rewrite
-unchanged=" "
 filter_env=
 filter_tree=
 filter_index=
@@ -240,7 +234,6 @@ filter_parent=
 filter_msg=cat
 filter_commit='git-commit-tree "$@"'
 filter_tag_name=
-srcbranch=HEAD
 while case "$#" in 0) usage;; esac
 do
 	case "$1" in
@@ -265,12 +258,6 @@ do
 	-d)
 		tempdir="$OPTARG"
 		;;
-	-r)
-		unchanged="$(get_parents "$OPTARG") $unchanged"
-		;;
-	-k)
-		unchanged="$(git-rev-parse "$OPTARG"^{commit}) $unchanged"
-		;;
 	--env-filter)
 		filter_env="$OPTARG"
 		;;
@@ -292,9 +279,6 @@ do
 	--tag-name-filter)
 		filter_tag_name="$OPTARG"
 		;;
-	-s)
-		srcbranch="$OPTARG"
-		;;
 	*)
 		usage
 		;;
@@ -302,6 +286,7 @@ do
 done
 
 dstbranch="$1"
+shift
 test -n "$dstbranch" || die "missing branch name"
 git-show-ref "refs/heads/$dstbranch" 2> /dev/null &&
 	die "branch $dstbranch already exists"
@@ -327,7 +312,7 @@ ret=0
 
 mkdir ../map # map old->new commit ids for rewriting parents
 
-git-rev-list --reverse --topo-order $srcbranch --not $unchanged >../revs
+git-rev-list --reverse --topo-order --default HEAD "$@" >../revs
 commits=$(cat ../revs | wc -l | tr -d " ")
 
 test $commits -eq 0 && die "Found nothing to rewrite"
