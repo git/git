@@ -25,6 +25,33 @@ say()
 	fi
 }
 
+
+#
+# Clone a submodule
+#
+module_clone()
+{
+	path=$1
+	url=$2
+
+	# If there already is a directory at the submodule path,
+	# expect it to be empty (since that is the default checkout
+	# action) and try to remove it.
+	# Note: if $path is a symlink to a directory the test will
+	# succeed but the rmdir will fail. We might want to fix this.
+	if test -d "$path"
+	then
+		rmdir "$path" 2>/dev/null ||
+		die "Directory '$path' exist, but is neither empty nor a git repository"
+	fi
+
+	test -e "$path" &&
+	die "A file already exist at path '$path'"
+
+	git-clone -n "$url" "$path" ||
+	die "Clone of submodule '$path' failed"
+}
+
 #
 # Run clone + checkout on missing submodules
 #
@@ -39,20 +66,6 @@ modules_init()
 		# This will also trigger if $path is a symlink to a git
 		# repository
 		test -d "$path"/.git && continue
-
-		# If there already is a directory at the submodule path,
-		# expect it to be empty (since that is the default checkout
-		# action) and try to remove it.
-		# Note: if $path is a symlink to a directory the test will
-		# succeed but the rmdir will fail. We might want to fix this.
-		if test -d "$path"
-		then
-			rmdir "$path" 2>/dev/null ||
-			die "Directory '$path' exist, but is neither empty nor a git repository"
-		fi
-
-		test -e "$path" &&
-		die "A file already exist at path '$path'"
 
 		url=$(GIT_CONFIG=.gitmodules git-config module."$path".url)
 		test -z "$url" &&
@@ -69,8 +82,7 @@ modules_init()
 		# logical modulename (if present) as key. But this would need
 		# another fallback mechanism if the module wasn't named.
 
-		git-clone -n "$url" "$path" ||
-		die "Clone of submodule '$path' failed"
+		module_clone "$path" "$url" || exit
 
 		(unset GIT_DIR && cd "$path" && git-checkout -q "$sha1") ||
 		die "Checkout of submodule '$path' failed"
