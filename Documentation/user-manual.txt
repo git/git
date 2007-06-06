@@ -42,10 +42,9 @@ How to get a git repository
 It will be useful to have a git repository to experiment with as you
 read this manual.
 
-The best way to get one is by using the gitlink:git-clone[1] command
-to download a copy of an existing repository for a project that you
-are interested in.  If you don't already have a project in mind, here
-are some interesting examples:
+The best way to get one is by using the gitlink:git-clone[1] command to
+download a copy of an existing repository.  If you don't already have a
+project in mind, here are some interesting examples:
 
 ------------------------------------------------
 	# git itself (approx. 10MB download):
@@ -62,9 +61,6 @@ The clone command creates a new directory named after the project
 directory, you will see that it contains a copy of the project files,
 together with a special top-level directory named ".git", which
 contains all the information about the history of the project.
-
-In most of the following, examples will be taken from one of the two
-repositories above.
 
 [[how-to-check-out]]
 How to check out a different version of a project
