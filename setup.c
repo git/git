@@ -251,6 +251,9 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			die("Not a git repository");
 		}
 		setenv(GIT_DIR_ENVIRONMENT, cwd, 1);
+		gitdirenv = getenv(GIT_DIR_ENVIRONMENT);
+		if (!gitdirenv)
+			die("getenv after setenv failed");
 	}
 
 	if (PATH_MAX - 40 < strlen(gitdirenv)) {
@@ -290,6 +293,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	if (gitdirenv[0] != '/') {
 		setenv(GIT_DIR_ENVIRONMENT, gitdir, 1);
 		gitdirenv = getenv(GIT_DIR_ENVIRONMENT);
+		if (!gitdirenv)
+			die("getenv after setenv failed");
 		if (PATH_MAX - 40 < strlen(gitdirenv)) {
 			if (nongit_ok) {
 				*nongit_ok = 1;
