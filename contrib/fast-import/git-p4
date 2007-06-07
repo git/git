@@ -1014,7 +1014,7 @@ class P4Sync(Command):
         if self.importIntoRemotes:
             self.refPrefix = "refs/remotes/p4/"
         else:
-            self.refPrefix = "refs/heads/"
+            self.refPrefix = "refs/heads/p4/"
 
         if self.syncWithOrigin and self.hasOrigin:
             if not self.silent:
@@ -1022,7 +1022,7 @@ class P4Sync(Command):
             system("git fetch origin")
 
         if len(self.branch) == 0:
-            self.branch = self.refPrefix + "p4/master"
+            self.branch = self.refPrefix + "master"
             if gitBranchExists("refs/heads/p4") and self.importIntoRemotes:
                 system("git update-ref %s refs/heads/p4" % self.branch)
                 system("git branch -D p4");
