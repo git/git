@@ -934,7 +934,7 @@ class P4Sync(Command):
             line = line.strip()
 
             ## only import to p4/
-            if not line.startswith('p4/'):
+            if not line.startswith('p4/') or line == "p4/HEAD":
                 continue
             branch = line
             if self.importIntoRemotes:
