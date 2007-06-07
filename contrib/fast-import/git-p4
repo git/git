@@ -1364,6 +1364,11 @@ class P4Clone(P4Sync):
             sys.exit(1)
 
         depotPaths = args
+
+        if not self.cloneDestination and len(depotPaths) > 1:
+            self.cloneDestination = depotPaths[-1]
+            depotPaths = depotPaths[:-1]
+
         for p in depotPaths:
             if not p.startswith("//"):
                 return False
