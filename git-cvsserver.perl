@@ -22,6 +22,9 @@ use bytes;
 use Fcntl;
 use File::Temp qw/tempdir tempfile/;
 use File::Basename;
+use Getopt::Long qw(:config require_order no_ignore_case);
+
+my $VERSION = '@@GIT_VERSION@@';
 
 my $log = GITCVS::log->new();
 my $cfg;
@@ -85,15 +88,52 @@ my $methods = {
 my $state = { prependdir => '' };
 $log->info("--------------- STARTING -----------------");
 
+my $usage =
+    "Usage: git-cvsserver [options] [pserver|server] [<directory> ...]\n".
+    "    --base-path <path>  : Prepend to requested CVSROOT\n".
+    "    --strict-paths      : Don't allow recursing into subdirectories\n".
+    "    --export-all        : Don't check for gitcvs.enabled in config\n".
+    "    --version, -V       : Print version information and exit\n".
+    "    --help, -h, -H      : Print usage information and exit\n".
+    "\n".
+    "<directory> ... is a list of allowed directories. If no directories\n".
+    "are given, all are allowed. This is an additional restriction, gitcvs\n".
+    "access still needs to be enabled by the gitcvs.enabled config option.\n";
+
+my @opts = ( 'help|h|H', 'version|V',
+	     'base-path=s', 'strict-paths', 'export-all' );
+GetOptions( $state, @opts )
+    or die $usage;
+
+if ($state->{version}) {
+    print "git-cvsserver version $VERSION\n";
+    exit;
+}
+if ($state->{help}) {
+    print $usage;
+    exit;
+}
+
 my $TEMP_DIR = tempdir( CLEANUP => 1 );
 $log->debug("Temporary directory is '$TEMP_DIR'");
+
+$state->{method} = 'ext';
+if (@ARGV) {
+    if ($ARGV[0] eq 'pserver') {
+	$state->{method} = 'pserver';
+	shift @ARGV;
+    } elsif ($ARGV[0] eq 'server') {
+	shift @ARGV;
+    }
+}
+
+# everything else is a directory
+$state->{allowed_roots} = [ @ARGV ];
 
 # if we are called with a pserver argument,
 # deal with the authentication cat before entering the
 # main loop
-$state->{method} = 'ext';
-if (@ARGV && $ARGV[0] eq 'pserver') {
-    $state->{method} = 'pserver';
+if ($state->{method} eq 'pserver') {
     my $line = <STDIN>; chomp $line;
     unless( $line =~ /^BEGIN (AUTH|VERIFICATION) REQUEST$/) {
        die "E Do not understand $line - expecting BEGIN AUTH REQUEST\n";
@@ -178,13 +218,40 @@ sub req_Root
 	return 0;
     }
 
-    $state->{CVSROOT} = $data;
+    $state->{CVSROOT} = $state->{'base-path'} || '';
+    $state->{CVSROOT} =~ s#/+$##;
+    $state->{CVSROOT} .= $data;
 
     $ENV{GIT_DIR} = $state->{CVSROOT} . "/";
+
+    if (@{$state->{allowed_roots}}) {
+	my $allowed = 0;
+	foreach my $dir (@{$state->{allowed_roots}}) {
+	    next unless $dir =~ m#^/#;
+	    $dir =~ s#/+$##;
+	    if ($state->{'strict-paths'}) {
+		if ($ENV{GIT_DIR} =~ m#^\Q$dir\E/?$#) {
+		    $allowed = 1;
+		    last;
+		}
+	    } elsif ($ENV{GIT_DIR} =~ m#^\Q$dir\E(/?$|/)#) {
+		$allowed = 1;
+		last;
+	    }
+	}
+
+	unless ($allowed) {
+	    print "E $ENV{GIT_DIR} does not seem to be a valid GIT repository\n";
+	    print "E \n";
+	    print "error 1 $ENV{GIT_DIR} is not a valid repository\n";
+	    return 0;
+	}
+    }
+
     unless (-d $ENV{GIT_DIR} && -e $ENV{GIT_DIR}.'HEAD') {
        print "E $ENV{GIT_DIR} does not seem to be a valid GIT repository\n";
-        print "E \n";
-        print "error 1 $ENV{GIT_DIR} is not a valid repository\n";
+       print "E \n";
+       print "error 1 $ENV{GIT_DIR} is not a valid repository\n";
        return 0;
     }
 
