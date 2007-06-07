@@ -682,8 +682,6 @@ int get_sha1_with_mode(const char *name, unsigned char *sha1, unsigned *mode)
 		namelen = namelen - (cp - name);
 		if (!active_cache)
 			read_cache();
-		if (active_nr < 0)
-			return -1;
 		pos = cache_name_pos(cp, namelen);
 		if (pos < 0)
 			pos = -pos - 1;
