@@ -1071,7 +1071,8 @@ class P4Sync(Command):
             if p4Change > 0:
                 self.depotPaths = sorted(self.previousDepotPaths)
                 self.changeRange = "@%s,#head" % p4Change
-                self.initialParent = parseRevision(self.branch)
+                if not self.detectBranches:
+                    self.initialParent = parseRevision(self.branch)
                 if not self.silent and not self.detectBranches:
                     print "Performing incremental import into %s git branch" % self.branch
 
