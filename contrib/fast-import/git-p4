@@ -1059,11 +1059,12 @@ class P4Sync(Command):
                     else:
                         paths = []
                         for (prev, cur) in zip(self.previousDepotPaths, depotPaths):
-                            for i in range(0, max(len(cur), len(prev))):
+                            for i in range(0, min(len(cur), len(prev))):
                                 if cur[i] <> prev[i]:
+                                    i = i - 1
                                     break
 
-                            paths.append (cur[:i])
+                            paths.append (cur[:i + 1])
 
                         self.previousDepotPaths = paths
 
