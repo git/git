@@ -277,6 +277,7 @@ class P4Submit(Command):
         self.directSubmit = False
         self.trustMeLikeAFool = False
         self.verbose = False
+        self.isWindows = (platform.system() == "Windows")
 
         self.logSubstitutions = {}
         self.logSubstitutions["<enter description here>"] = "%log%"
@@ -398,6 +399,8 @@ class P4Submit(Command):
         if not self.directSubmit:
             logMessage = extractLogMessageFromGitCommit(id)
             logMessage = logMessage.replace("\n", "\n\t")
+            if self.isWindows:
+                logMessage = logMessage.replace("\n", "\r\n")
             logMessage = logMessage.strip()
 
         template = read_pipe("p4 change -o")
@@ -444,6 +447,8 @@ class P4Submit(Command):
                     tmpFile.close()
                     os.remove(fileName)
                     submitTemplate = message[:message.index(separatorLine)]
+                    if self.isWindows:
+                        submitTemplate = submitTemplate.replace("\r\n", "\n")
 
             if response == "y" or response == "yes":
                if self.dryRun:
