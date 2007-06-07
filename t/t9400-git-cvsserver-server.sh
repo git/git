@@ -110,6 +110,40 @@ test_expect_success 'pserver authentication failure (login/non-anonymous user)' 
    tail -n1 log | grep -q "^I HATE YOU$"'
 
 
+# misuse pserver authentication for testing of req_Root
+
+cat >request-relative  <<EOF
+BEGIN AUTH REQUEST
+gitcvs.git
+anonymous
+
+END AUTH REQUEST
+EOF
+
+cat >request-conflict  <<EOF
+BEGIN AUTH REQUEST
+$SERVERDIR
+anonymous
+
+END AUTH REQUEST
+Root $WORKDIR
+EOF
+
+test_expect_success 'req_Root failure (relative pathname)' \
+  'if cat request-relative | git-cvsserver pserver >log 2>&1
+   then
+       echo unexpected success
+       false
+   else
+       true
+   fi &&
+   tail log | grep -q "^error 1 Root must be an absolute pathname$"'
+
+test_expect_success 'req_Root failure (conflicting roots)' \
+  'cat request-conflict | git-cvsserver pserver >log 2>&1 &&
+   tail log | grep -q "^error 1 Conflicting roots specified$"'
+
+
 #--------------
 # CONFIG TESTS
 #--------------

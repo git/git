@@ -167,6 +167,17 @@ sub req_Root
     my ( $cmd, $data ) = @_;
     $log->debug("req_Root : $data");
 
+    unless ($data =~ m#^/#) {
+	print "error 1 Root must be an absolute pathname\n";
+	return 0;
+    }
+
+    if ($state->{CVSROOT}
+	&& ($state->{CVSROOT} ne $data)) {
+	print "error 1 Conflicting roots specified\n";
+	return 0;
+    }
+
     $state->{CVSROOT} = $data;
 
     $ENV{GIT_DIR} = $state->{CVSROOT} . "/";
