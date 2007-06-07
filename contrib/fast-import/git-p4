@@ -494,7 +494,7 @@ class P4Submit(Command):
             settings = extractSettingsGitLog(extractLogMessageFromGitCommit("p4"))
         if len(depotPath) == 0 and gitBranchExists("origin"):
             settings = extractSettingsGitLog(extractLogMessageFromGitCommit("origin"))
-        depotPaths = settings['depot-paths']
+        depotPath = settings['depot-paths'][0]
 
         if len(depotPath) == 0:
             print "Internal error: cannot locate perforce depot path from existing branches"
