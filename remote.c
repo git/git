@@ -501,16 +501,16 @@ static struct ref *find_ref_by_name(struct ref *list, const char *name)
 	return NULL;
 }
 
-static int check_pattern_match(struct refspec *rs, int rs_nr, struct ref *src)
+static const struct refspec *check_pattern_match(const struct refspec *rs,
+						 int rs_nr,
+						 const struct ref *src)
 {
 	int i;
-	if (!rs_nr)
-		return 1;
 	for (i = 0; i < rs_nr; i++) {
 		if (rs[i].pattern && !prefixcmp(src->name, rs[i].src))
-			return 1;
+			return rs + i;
 	}
-	return 0;
+	return NULL;
 }
 
 int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
@@ -525,29 +525,44 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 	/* pick the remainder */
 	for ( ; src; src = src->next) {
 		struct ref *dst_peer;
+		const struct refspec *pat = NULL;
+		char *dst_name;
 		if (src->peer_ref)
 			continue;
-		if (!check_pattern_match(rs, nr_refspec, src))
-			continue;
+		if (nr_refspec) {
+			pat = check_pattern_match(rs, nr_refspec, src);
+			if (!pat)
+				continue;
+		}
 
-		dst_peer = find_ref_by_name(dst, src->name);
+		if (pat) {
+			dst_name = xmalloc(strlen(pat->dst) +
+					   strlen(src->name) -
+					   strlen(pat->src) + 2);
+			strcpy(dst_name, pat->dst);
+			strcat(dst_name, src->name + strlen(pat->src));
+		} else
+			dst_name = strdup(src->name);
+		dst_peer = find_ref_by_name(dst, dst_name);
 		if (dst_peer && dst_peer->peer_ref)
 			/* We're already sending something to this ref. */
-			continue;
+			goto free_name;
 		if (!dst_peer && !nr_refspec && !all)
 			/* Remote doesn't have it, and we have no
 			 * explicit pattern, and we don't have
 			 * --all. */
-			continue;
+			goto free_name;
 		if (!dst_peer) {
 			/* Create a new one and link it */
-			int len = strlen(src->name) + 1;
+			int len = strlen(dst_name) + 1;
 			dst_peer = xcalloc(1, sizeof(*dst_peer) + len);
-			memcpy(dst_peer->name, src->name, len);
+			memcpy(dst_peer->name, dst_name, len);
 			hashcpy(dst_peer->new_sha1, src->new_sha1);
 			link_dst_tail(dst_peer, dst_tail);
 		}
 		dst_peer->peer_ref = src;
+	free_name:
+		free(dst_name);
 	}
 	return 0;
 }
