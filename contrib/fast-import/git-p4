@@ -156,7 +156,8 @@ def extractSettingsGitLog(log):
     paths = values.get("depot-paths")
     if not paths:
         paths = values.get("depot-path")
-    values['depot-paths'] = paths.split(',')
+    if paths:
+        values['depot-paths'] = paths.split(',')
     return values
 
 def gitBranchExists(branch):
@@ -494,12 +495,27 @@ class P4Submit(Command):
             return False
 
         depotPath = ""
-        settings = None
-        if gitBranchExists("p4"):
-            settings = extractSettingsGitLog(extractLogMessageFromGitCommit("p4"))
-        if len(depotPath) == 0 and gitBranchExists("origin"):
-            settings = extractSettingsGitLog(extractLogMessageFromGitCommit("origin"))
-        depotPath = settings['depot-paths'][0]
+        parent = 0
+        while parent < 65535:
+            commit = "HEAD~%s" % parent
+            log = extractLogMessageFromGitCommit(commit)
+            settings = extractSettingsGitLog(log)
+            if not settings.has_key("depot-paths"):
+                parent = parent + 1
+                continue
+
+            depotPath = settings['depot-paths'][0]
+
+            if len(self.origin) == 0:
+                names = read_pipe_lines("git name-rev '--refs=refs/remotes/p4/*' '%s'" % commit)
+                if len(names) > 0:
+                    # strip away the beginning of 'HEAD~42 refs/remotes/p4/foo'
+                    self.origin = names[0].strip()[len(commit) + 1:]
+
+            break
+
+        if self.verbose:
+            print "Origin branch is " + self.origin
 
         if len(depotPath) == 0:
             print "Internal error: cannot locate perforce depot path from existing branches"
@@ -529,12 +545,6 @@ class P4Submit(Command):
         response = raw_input("Do you want to sync %s with p4 sync? [y]es/[n]o " % self.clientPath)
         if response == "y" or response == "yes":
             system("p4 sync ...")
-
-        if len(self.origin) == 0:
-            if gitBranchExists("p4"):
-                self.origin = "p4"
-            else:
-                self.origin = "origin"
 
         if self.reset:
             self.firstTime = True
@@ -969,7 +979,7 @@ class P4Sync(Command):
                     print "creating %s" % remoteHead
                 update = True
             else:
-                settings =  extractSettingsGitLog(extractLogMessageFromGitCommit(remoteHead))
+                settings = extractSettingsGitLog(extractLogMessageFromGitCommit(remoteHead))
                 if settings.has_key('change') > 0:
                     if settings['depot-paths'] == original['depot-paths']:
                         originP4Change = int(original['change'])
