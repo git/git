@@ -4206,8 +4206,10 @@ sub git_snapshot {
 
 	my $git = git_cmd_str();
 	my $name = $project;
+	$name =~ s,([^/])/*\.git$,$1,;
+	$name = basename($name);
+	my $filename = to_utf8($name);
 	$name =~ s/\047/\047\\\047\047/g;
-	my $filename = to_utf8(basename($project));
 	my $cmd;
 	if ($suffix eq 'zip') {
 		$filename .= "-$hash.$suffix";
