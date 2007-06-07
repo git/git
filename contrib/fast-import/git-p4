@@ -1369,7 +1369,7 @@ class P4Clone(P4Sync):
                 return False
 
         if not self.cloneDestination:
-            self.cloneDestination = self.defaultDestination()
+            self.cloneDestination = self.defaultDestination(args)
 
         print "Importing from %s into %s" % (', '.join(depotPaths), self.cloneDestination)
         os.makedirs(self.cloneDestination)
