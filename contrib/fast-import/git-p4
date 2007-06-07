@@ -153,7 +153,10 @@ def extractSettingsGitLog(log):
 
             values[key] = val
 
-    values['depot-paths'] = values.get("depot-paths").split(',')
+    paths = values.get("depot-paths")
+    if not paths:
+        paths = values.get("depot-path")
+    values['depot-paths'] = paths.split(',')
     return values
 
 def gitBranchExists(branch):
