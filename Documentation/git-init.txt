@@ -8,13 +8,17 @@ git-init - Create an empty git repository or reinitialize an existing one
 
 SYNOPSIS
 --------
-'git-init' [--template=<template_directory>] [--shared[=<permissions>]]
+'git-init' [-q | --quiet] [--template=<template_directory>] [--shared[=<permissions>]]
 
 
 OPTIONS
 -------
 
 --
+
+-q, \--quiet::
+
+Only print error and warning messages, all other output will be suppressed.
 
 --template=<template_directory>::
 
