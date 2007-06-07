@@ -909,9 +909,10 @@ class P4Sync(Command):
                     continue
                 source = paths[0]
                 destination = paths[1]
-                if source.startswith(self.depotPath) and destination.startswith(self.depotPath):
-                    source = source[len(self.depotPath):-4]
-                    destination = destination[len(self.depotPath):-4]
+                ## HACK
+                if source.startswith(self.depotPaths[0]) and destination.startswith(self.depotPaths[0]):
+                    source = source[len(self.depotPaths[0]):-4]
+                    destination = destination[len(self.depotPaths[0]):-4]
                     if destination not in self.knownBranches:
                         self.knownBranches[destination] = source
                     if source not in self.knownBranches:
