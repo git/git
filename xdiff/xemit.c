@@ -99,8 +99,8 @@ static void xdl_find_func(xdfile_t *xf, long i, char *buf, long sz, long *ll) {
 }
 
 
-int xdl_emit_common(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
-		    xdemitconf_t const *xecfg) {
+static int xdl_emit_common(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
+                           xdemitconf_t const *xecfg) {
 	xdfile_t *xdf = &xe->xdf1;
 	const char *rchg = xdf->rchg;
 	long ix;

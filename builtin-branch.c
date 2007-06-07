@@ -55,7 +55,7 @@ static int parse_branch_color_slot(const char *var, int ofs)
 	die("bad config variable '%s'", var);
 }
 
-int git_branch_config(const char *var, const char *value)
+static int git_branch_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "color.branch")) {
 		branch_use_color = git_config_colorbool(var, value);
@@ -72,7 +72,7 @@ int git_branch_config(const char *var, const char *value)
 	return git_default_config(var, value);
 }
 
-const char *branch_get_color(enum color_branch ix)
+static const char *branch_get_color(enum color_branch ix)
 {
 	if (branch_use_color)
 		return branch_colors[ix];

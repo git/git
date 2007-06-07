@@ -107,7 +107,7 @@ static char *get_oneline(const char *message)
 	return result;
 }
 
-char *get_encoding(const char *message)
+static char *get_encoding(const char *message)
 {
 	const char *p = message, *eol;
 

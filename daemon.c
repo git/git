@@ -439,7 +439,7 @@ static void parse_extra_args(struct interp *table, char *extra_args, int buflen)
 	}
 }
 
-void fill_in_extra_table_entries(struct interp *itable)
+static void fill_in_extra_table_entries(struct interp *itable)
 {
 	char *hp;
 

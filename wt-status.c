@@ -198,7 +198,7 @@ static void wt_read_cache(struct wt_status *s)
 	read_cache();
 }
 
-void wt_status_print_initial(struct wt_status *s)
+static void wt_status_print_initial(struct wt_status *s)
 {
 	int i;
 	char buf[PATH_MAX];
