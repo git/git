@@ -1320,6 +1320,7 @@ class P4Rebase(Command):
         self.options = [ ]
         self.description = ("Fetches the latest revision from perforce and "
                             + "rebases the current work (branch) against it")
+        self.verbose = False
 
     def run(self, args):
         sync = P4Sync()
