@@ -276,6 +276,7 @@ class P4Submit(Command):
         self.origin = ""
         self.directSubmit = False
         self.trustMeLikeAFool = False
+        self.verbose = False
 
         self.logSubstitutions = {}
         self.logSubstitutions["<enter description here>"] = "%log%"
@@ -478,9 +479,6 @@ class P4Submit(Command):
                    % (fileName, fileName))
 
     def run(self, args):
-        # make gitdir absolute so we can cd out into the perforce checkout
-        os.environ["GIT_DIR"] = gitdir
-
         if len(args) == 0:
             self.master = currentGitBranch()
             if len(self.master) == 0 or not gitBranchExists("refs/heads/%s" % self.master):
