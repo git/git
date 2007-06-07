@@ -99,4 +99,3 @@ Documentation by Junio C Hamano, Jonas Fonseca, and the git-list
 GIT
 ---
 Part of the gitlink:git[7] suite
-

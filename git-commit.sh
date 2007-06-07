@@ -557,7 +557,7 @@ then
 	} >>"$GIT_DIR"/COMMIT_EDITMSG
 else
 	# we need to check if there is anything to commit
-	run_status >/dev/null 
+	run_status >/dev/null
 fi
 if [ "$?" != "0" -a ! -f "$GIT_DIR/MERGE_HEAD" -a -z "$amend" ]
 then

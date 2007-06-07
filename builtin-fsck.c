@@ -351,7 +351,7 @@ static int fsck_commit(struct commit *commit)
 	if (!commit->parents && show_root)
 		printf("root %s\n", sha1_to_hex(commit->object.sha1));
 	if (!commit->date)
-		printf("bad commit date in %s\n", 
+		printf("bad commit date in %s\n",
 		       sha1_to_hex(commit->object.sha1));
 	return 0;
 }
@@ -719,7 +719,7 @@ int cmd_fsck(int argc, char **argv, const char *prefix)
 
 	heads = 0;
 	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i]; 
+		const char *arg = argv[i];
 
 		if (*arg == '-')
 			continue;

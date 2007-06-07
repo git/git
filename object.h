@@ -66,7 +66,7 @@ void set_object_refs(struct object *obj, struct object_refs *refs);
 
 void mark_reachable(struct object *obj, unsigned int mask);
 
-struct object_list *object_list_insert(struct object *item, 
+struct object_list *object_list_insert(struct object *item,
 				       struct object_list **list_p);
 
 void object_list_append(struct object *item,

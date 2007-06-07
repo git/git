@@ -194,4 +194,3 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 
 	return 0;
 }
-

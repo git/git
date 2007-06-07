@@ -232,7 +232,7 @@ test_create_repo () {
 	mv .git/hooks .git/hooks-disabled
 	cd "$owd"
 }
-	
+
 test_done () {
 	trap - exit
 	case "$test_failure" in

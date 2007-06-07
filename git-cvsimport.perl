@@ -145,7 +145,7 @@ my $cvs_tree;
 if ($#ARGV == 0) {
 	$cvs_tree = $ARGV[0];
 } elsif (-f 'CVS/Repository') {
-	open my $f, '<', 'CVS/Repository' or 
+	open my $f, '<', 'CVS/Repository' or
 	    die 'Failed to open CVS/Repository';
 	$cvs_tree = <$f>;
 	chomp $cvs_tree;
@@ -434,7 +434,7 @@ sub file {
 	my ($self,$fn,$rev) = @_;
 	my $res;
 
-	my ($fh, $name) = tempfile('gitcvs.XXXXXX', 
+	my ($fh, $name) = tempfile('gitcvs.XXXXXX',
 		    DIR => File::Spec->tmpdir(), UNLINK => 1);
 
 	$self->_file($fn,$rev) and $res = $self->_line($fh);
@@ -520,8 +520,8 @@ sub is_sha1 {
 
 sub get_headref ($$) {
     my $name    = shift;
-    my $git_dir = shift; 
-    
+    my $git_dir = shift;
+
     my $f = "$git_dir/refs/heads/$name";
     if (open(my $fh, $f)) {
 	    chomp(my $r = <$fh>);
@@ -771,7 +771,7 @@ sub commit {
 		$xtag =~ s/\s+\*\*.*$//; # Remove stuff like ** INVALID ** and ** FUNKY **
 		$xtag =~ tr/_/\./ if ( $opt_u );
 		$xtag =~ s/[\/]/$opt_s/g;
-		
+
 		my $pid = open2($in, $out, 'git-mktag');
 		print $out "object $cid\n".
 		    "type commit\n".
@@ -788,7 +788,7 @@ sub commit {
 		     $? != 0 or $tagobj !~ /^[0123456789abcdef]{40}$/ ) {
 		    die "Cannot create tag object $xtag: $!\n";
 	        }
-		
+
 
 		open(C,">$git_dir/refs/tags/$xtag")
 			or die "Cannot create tag $xtag: $!\n";

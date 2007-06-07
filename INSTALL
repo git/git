@@ -31,7 +31,7 @@ Issues of note:
    interactive tools.  None of the core git stuff needs the wrapper,
    it's just a convenient shorthand and while it is documented in some
    places, you can always replace "git commit" with "git-commit"
-   instead. 
+   instead.
 
    But let's face it, most of us don't have GNU interactive tools, and
    even if we had it, we wouldn't know what it does.  I don't think it
@@ -111,4 +111,3 @@ Issues of note:
    would instead give you a copy of what you see at:
 
 	http://www.kernel.org/pub/software/scm/git/docs/
-

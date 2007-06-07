@@ -11,4 +11,3 @@
 	command to re-code the commit log message in the encoding
 	preferred by the user.  For non plumbing commands this
 	defaults to UTF-8.
-

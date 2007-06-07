@@ -146,7 +146,7 @@ Everything is in the good order.  I do not need the temporary branch
 nor tag anymore, so remove them:
 
 ------------------------------------------------
-$ rm -f .git/refs/tags/pu-anchor 
+$ rm -f .git/refs/tags/pu-anchor
 $ git branch -d revert-c99
 ------------------------------------------------
 

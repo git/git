@@ -14,10 +14,10 @@ Petr Baudis <pasky@suse.cz> writes:
 > Dear diary, on Sun, Aug 14, 2005 at 09:57:13AM CEST, I got a letter
 > where Junio C Hamano <junkio@cox.net> told me that...
 >> Linus Torvalds <torvalds@osdl.org> writes:
->> 
->> > Junio, maybe you want to talk about how you move patches from your "pu" 
+>>
+>> > Junio, maybe you want to talk about how you move patches from your "pu"
 >> > branch to the real branches.
->> 
+>>
 > Actually, wouldn't this be also precisely for what StGIT is intended to?
 
 Exactly my feeling.  I was sort of waiting for Catalin to speak
@@ -118,7 +118,7 @@ up your changes, along with other changes.
 
    where                      *your "master" head
   upstream --> #1 --> #2 --> #3
-    used   \ 
+    used   \
    to be     \--> #A --> #2' --> #3' --> #B --> #C
                                                 *upstream head
 
@@ -133,7 +133,7 @@ You fetch from upstream, but not merge.
     $ git fetch upstream
 
 This leaves the updated upstream head in .git/FETCH_HEAD but
-does not touch your .git/HEAD nor .git/refs/heads/master.  
+does not touch your .git/HEAD nor .git/refs/heads/master.
 You run "git rebase" now.
 
     $ git rebase FETCH_HEAD master
@@ -161,5 +161,3 @@ the #1' commit.
 To unsubscribe from this list: send the line "unsubscribe git" in
 the body of a message to majordomo@vger.kernel.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
-

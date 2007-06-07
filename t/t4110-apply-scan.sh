@@ -98,4 +98,3 @@ test_expect_success "S = cmp" \
     'cmp apply.txt patch.txt'
 
 test_done
-

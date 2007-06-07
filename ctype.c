@@ -20,4 +20,3 @@ unsigned char sane_ctype[256] = {
 	AA, AA, AA, AA, AA, AA, AA, AA, AA, AA, AA,  0,  0,  0,  0,  0,		/* 112-15 */
 	/* Nothing in the 128.. range */
 };
-

@@ -49,4 +49,3 @@ Now, test your daemon with
 	$ git ls-remote git://127.0.0.1/rule-the-world.git
 
 If this does not work, find out why, and submit a patch to this document.
-

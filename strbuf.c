@@ -39,4 +39,3 @@ void read_line(struct strbuf *sb, FILE *fp, int term) {
 		sb->eof = 1;
 	strbuf_end(sb);
 }
-

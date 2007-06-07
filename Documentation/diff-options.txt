@@ -100,8 +100,8 @@
 	that matches other criteria, nothing is selected.
 
 --find-copies-harder::
-	For performance reasons, by default, -C option finds copies only 
-	if the original file of the copy was modified in the same 
+	For performance reasons, by default, -C option finds copies only
+	if the original file of the copy was modified in the same
 	changeset.  This flag makes the command
 	inspect unmodified files as candidates for the source of
 	copy.  This is a very expensive operation for large

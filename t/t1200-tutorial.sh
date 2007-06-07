@@ -159,4 +159,3 @@ test_expect_success 'git prune-packed' 'git prune-packed'
 test_expect_failure '-> only packed objects' 'find -type f .git/objects/[0-9a-f][0-9a-f]'
 
 test_done
-

@@ -84,4 +84,3 @@ test_expect_success \
      test ! -h path1/file1 && test -f path1/file1'
 
 test_done
-

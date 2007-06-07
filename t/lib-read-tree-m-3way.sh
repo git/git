@@ -87,7 +87,7 @@ test_expect_success \
 test_expect_success \
     'recording branch A tree' \
     'tree_A=$(git-write-tree)'
-	   
+
 ################################################################
 # Branch B
 # Start from O

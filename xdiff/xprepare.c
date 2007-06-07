@@ -466,4 +466,3 @@ static int xdl_optimize_ctxs(xdfile_t *xdf1, xdfile_t *xdf2) {
 
 	return 0;
 }
-

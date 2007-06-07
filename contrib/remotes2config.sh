@@ -31,5 +31,3 @@ if [ -d "$GIT_DIR"/remotes ]; then
 		esac
 	done
 fi
-
-

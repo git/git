@@ -50,7 +50,7 @@ int SHA1_Update(SHA_CTX *c, const void *ptr, unsigned long n)
 		p += nb;
 	}
 	return 0;
-}	
+}
 
 int SHA1_Final(unsigned char *hash, SHA_CTX *c)
 {

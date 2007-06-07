@@ -121,4 +121,3 @@ The placeholders are:
 - '%Creset': reset color
 - '%m': left, right or boundary mark
 - '%n': newline
-

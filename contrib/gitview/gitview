@@ -1277,5 +1277,3 @@ if __name__ == "__main__":
 
 	view = GitView( without_diff != 1)
 	view.run(sys.argv[without_diff:])
-
-

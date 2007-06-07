@@ -148,5 +148,3 @@ test_expect_success 'old records rest in peace' \
 	"test ! -f $rr/preimage && test ! -f $rr2/preimage"
 
 test_done
-
-

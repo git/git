@@ -5,7 +5,7 @@
  * Write a packetized stream, where each line is preceded by
  * its length (including the header) as a 4-byte hex number.
  * A length of 'zero' means end of stream (and a length of 1-3
- * would be an error). 
+ * would be an error).
  *
  * This is all pretty stupid, but we use this packetized line
  * format to make a streaming format possible without ever

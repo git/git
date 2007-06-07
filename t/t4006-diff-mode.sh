@@ -41,4 +41,3 @@ test_expect_success \
     'git diff expected check'
 
 test_done
-

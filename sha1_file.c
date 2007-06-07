@@ -193,7 +193,7 @@ char *sha1_pack_name(const unsigned char *sha1)
 		*buf++ = hex[val >> 4];
 		*buf++ = hex[val & 0xf];
 	}
-	
+
 	return base;
 }
 
@@ -218,7 +218,7 @@ char *sha1_pack_index_name(const unsigned char *sha1)
 		*buf++ = hex[val >> 4];
 		*buf++ = hex[val & 0xf];
 	}
-	
+
 	return base;
 }
 
@@ -1139,7 +1139,7 @@ static int parse_sha1_header(const char *hdr, unsigned long *sizep)
 	unsigned long size;
 
 	/*
-	 * The type can be at most ten bytes (including the 
+	 * The type can be at most ten bytes (including the
 	 * terminating '\0' that we add), and is followed by
 	 * a space.
 	 */
@@ -1738,7 +1738,7 @@ static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e, cons
 	return 0;
 }
 
-struct packed_git *find_sha1_pack(const unsigned char *sha1, 
+struct packed_git *find_sha1_pack(const unsigned char *sha1,
 				  struct packed_git *packs)
 {
 	struct packed_git *p;

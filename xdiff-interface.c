@@ -129,5 +129,3 @@ int buffer_is_binary(const char *ptr, unsigned long size)
 		size = FIRST_FEW_BYTES;
 	return !!memchr(ptr, 0, size);
 }
-
-

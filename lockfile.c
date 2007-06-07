@@ -97,4 +97,3 @@ void rollback_lock_file(struct lock_file *lk)
 		unlink(lk->filename);
 	lk->filename[0] = 0;
 }
-

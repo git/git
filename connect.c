@@ -390,7 +390,7 @@ static int git_proxy_command_options(const char *var, const char *value)
 		}
 		if (0 <= matchlen) {
 			/* core.gitproxy = none for kernel.org */
-			if (matchlen == 4 && 
+			if (matchlen == 4 &&
 			    !memcmp(value, "none", 4))
 				matchlen = 0;
 			git_proxy_command = xmalloc(matchlen + 1);

@@ -34,4 +34,3 @@ Documentation by James Bowes.
 GIT
 ---
 Part of the gitlink:git[7] suite
-

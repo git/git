@@ -71,7 +71,7 @@ The first transformation in the chain is diffcore-pathspec, and
 is controlled by giving the pathname parameters to the
 git-diff-* commands on the command line.  The pathspec is used
 to limit the world diff operates in.  It removes the filepairs
-outside the specified set of pathnames.  E.g. If the input set 
+outside the specified set of pathnames.  E.g. If the input set
 of filepairs included:
 
 ------------------------------------------------
@@ -269,4 +269,3 @@ Documentation
 *.c
 t
 ------------------------------------------------
-

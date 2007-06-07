@@ -210,7 +210,7 @@ else
 	esac
 
 	# Match the index to the working tree, and do a three-way.
-    	git diff-files --name-only | git update-index --remove --stdin &&
+	git diff-files --name-only | git update-index --remove --stdin &&
 	work=`git write-tree` &&
 	git read-tree $v --reset -u $new || exit
 
@@ -245,7 +245,7 @@ else
     (exit $saved_err)
 fi
 
-# 
+#
 # Switch the HEAD pointer to the new branch if we
 # checked out a branch head, and remove any potential
 # old MERGE_HEAD's (subsequent commits will clearly not

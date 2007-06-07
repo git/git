@@ -105,5 +105,3 @@ char *get_graft_file(void)
 		setup_git_env();
 	return git_graft_file;
 }
-
-

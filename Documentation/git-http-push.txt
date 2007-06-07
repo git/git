@@ -52,7 +52,7 @@ Specifying the Refs
 
 A '<ref>' specification can be either a single pattern, or a pair
 of such patterns separated by a colon ":" (this means that a ref name
-cannot have a colon in it).  A single pattern '<name>' is just a 
+cannot have a colon in it).  A single pattern '<name>' is just a
 shorthand for '<name>:<name>'.
 
 Each pattern pair consists of the source side (before the colon)

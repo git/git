@@ -117,7 +117,7 @@ static void show_other_files(struct dir_struct *dir)
 		if (0 <= pos)
 			continue;	/* exact match */
 		pos = -pos - 1;
-		if (pos < active_nr) { 
+		if (pos < active_nr) {
 			ce = active_cache[pos];
 			if (ce_namelen(ce) == len &&
 			    !memcmp(ce->name, ent->name, len))

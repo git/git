@@ -206,4 +206,3 @@ int get_tree_entry(const unsigned char *tree_sha1, const char *name, unsigned ch
 	free(tree);
 	return retval;
 }
-

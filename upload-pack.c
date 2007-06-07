@@ -678,7 +678,7 @@ int main(int argc, char **argv)
 			break;
 		}
 	}
-	
+
 	if (i != argc-1)
 		usage(upload_pack_usage);
 	dir = argv[i];

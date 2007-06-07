@@ -181,4 +181,3 @@ sha_transform:
 
 .L_sha_K:
 	.word	0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6
-

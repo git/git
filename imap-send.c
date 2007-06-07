@@ -1239,7 +1239,7 @@ split_msg( msg_data_t *all_msgs, msg_data_t *msg, int *ofs )
 	msg->data[ msg->len ] = 0;
 
 	*ofs += msg->len;
- 	return 1;
+	return 1;
 }
 
 static imap_server_conf_t server =

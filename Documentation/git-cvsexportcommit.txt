@@ -14,19 +14,19 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Exports a commit from GIT to a CVS checkout, making it easier
-to merge patches from a git repository into a CVS repository. 
+to merge patches from a git repository into a CVS repository.
 
-Execute it from the root of the CVS working copy. GIT_DIR must be defined. 
+Execute it from the root of the CVS working copy. GIT_DIR must be defined.
 See examples below.
 
-It does its best to do the safe thing, it will check that the files are 
-unchanged and up to date in the CVS checkout, and it will not autocommit 
+It does its best to do the safe thing, it will check that the files are
+unchanged and up to date in the CVS checkout, and it will not autocommit
 by default.
 
 Supports file additions, removals, and commits that affect binary files.
 
 If the commit is a merge commit, you must tell git-cvsexportcommit what parent
-should the changeset be done against. 
+should the changeset be done against.
 
 OPTIONS
 -------
@@ -55,7 +55,7 @@ OPTIONS
 	Force the parent commit, even if it is not a direct parent.
 
 -m::
-	Prepend the commit message with the provided prefix. 
+	Prepend the commit message with the provided prefix.
 	Useful for patch series and the like.
 
 -u::
@@ -73,7 +73,7 @@ Merge one patch into CVS::
 $ export GIT_DIR=~/project/.git
 $ cd ~/project_cvs_checkout
 $ git-cvsexportcommit -v <commit-sha1>
-$ cvs commit -F .mgs <files> 
+$ cvs commit -F .mgs <files>
 ------------
 
 Merge pending patches into CVS automatically -- only if you really know what you are doing ::
@@ -95,4 +95,3 @@ Documentation by Martin Langhoff <martin@catalyst.net.nz>
 GIT
 ---
 Part of the gitlink:git[7] suite
-

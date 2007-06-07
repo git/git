@@ -37,7 +37,7 @@ fi
 find .git/objects -type f -print >should-be-empty
 test_expect_success \
     '.git/objects should be empty after git-init in an empty repo.' \
-    'cmp -s /dev/null should-be-empty' 
+    'cmp -s /dev/null should-be-empty'
 
 # also it should have 2 subdirectories; no fan-out anymore, pack, and info.
 # 3 is counting "objects" itself

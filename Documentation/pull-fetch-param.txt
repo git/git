@@ -58,7 +58,7 @@ is often useful.
 +
 Some short-cut notations are also supported.
 +
-* `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`; 
+* `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`;
   it requests fetching everything up to the given tag.
 * A parameter <ref> without a colon is equivalent to
   <ref>: when pulling/fetching, so it merges <ref> into the current

@@ -908,4 +908,3 @@ Documentation by Shawn O. Pearce <spearce@spearce.org>.
 GIT
 ---
 Part of the gitlink:git[7] suite
-

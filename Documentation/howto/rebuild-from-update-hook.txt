@@ -84,4 +84,3 @@ There are four things worth mentioning:
  - This is still crude and does not protect against simultaneous
    make invocations stomping on each other.  I would need to add
    some locking mechanism for this.
-

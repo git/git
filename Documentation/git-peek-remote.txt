@@ -52,4 +52,3 @@ Documentation by Junio C Hamano.
 GIT
 ---
 Part of the gitlink:git[7] suite
-

@@ -199,7 +199,7 @@ generate_email_footer()
 
 
 	hooks/post-receive
-	-- 
+	--
 	$projectdesc
 	EOF
 }

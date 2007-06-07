@@ -357,4 +357,3 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 
 	return 0;
 }
-

@@ -148,7 +148,7 @@ static int commit_graft_pos(const unsigned char *sha1)
 int register_commit_graft(struct commit_graft *graft, int ignore_dups)
 {
 	int pos = commit_graft_pos(graft->sha1);
-	
+
 	if (0 <= pos) {
 		if (ignore_dups)
 			free(graft);
@@ -406,7 +406,7 @@ struct commit_list * insert_by_date(struct commit *item, struct commit_list **li
 	return commit_list_insert(item, pp);
 }
 
-	
+
 void sort_by_date(struct commit_list **list)
 {
 	struct commit_list *ret = NULL;
@@ -1160,7 +1160,7 @@ void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
 		next = next->next;
 		count++;
 	}
-	
+
 	if (!count)
 		return;
 	/* allocate an array to help sort the list */
@@ -1188,11 +1188,11 @@ void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
 		}
 		next=next->next;
 	}
-	/* 
+	/*
          * find the tips
          *
-         * tips are nodes not reachable from any other node in the list 
-         * 
+         * tips are nodes not reachable from any other node in the list
+         *
          * the tips serve as a starting set for the work queue.
          */
 	next=*list;
@@ -1220,7 +1220,7 @@ void sort_in_topological_order_fn(struct commit_list ** list, int lifo,
 
 			if (pn) {
 				/*
-				 * parents are only enqueued for emission 
+				 * parents are only enqueued for emission
                                  * when all their children have been emitted thereby
                                  * guaranteeing topological order.
                                  */

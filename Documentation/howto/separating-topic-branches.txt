@@ -12,7 +12,7 @@ up with a history like this:
 
             "master"
         o---o
-             \                    "topic" 
+             \                    "topic"
               o---o---o---o---o---o
 
 At this point, "topic" contains something I know I want, but it
@@ -29,11 +29,11 @@ start building on top of "master":
         $ git checkout -b topicA master
         ... pick and apply pieces from P.diff to build
         ... commits on topicA branch.
-                      
+
               o---o---o
              /        "topicA"
         o---o"master"
-             \                    "topic" 
+             \                    "topic"
               o---o---o---o---o---o
 
 Before doing each commit on "topicA" HEAD, I run "diff HEAD"
@@ -59,7 +59,7 @@ other topic:
              /o---o---o
             |/        "topicA"
         o---o"master"
-             \                    "topic" 
+             \                    "topic"
               o---o---o---o---o---o
 
 After I am done, I'd try a pretend-merge between "topicA" and
@@ -73,7 +73,7 @@ After I am done, I'd try a pretend-merge between "topicA" and
              /o---o---o----------'
             |/        "topicA"
         o---o"master"
-             \                    "topic" 
+             \                    "topic"
               o---o---o---o---o---o
 
 The last diff better not to show anything other than cleanups
@@ -84,8 +84,7 @@ for crufts.  Then I can finally clean things up:
 
                                 "topicB"
                o---o---o---o---o
-              / 
+              /
              /o---o---o
             |/        "topicA"
         o---o"master"
-

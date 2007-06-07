@@ -479,7 +479,7 @@ extern void prepare_packed_git(void);
 extern void reprepare_packed_git(void);
 extern void install_packed_git(struct packed_git *pack);
 
-extern struct packed_git *find_sha1_pack(const unsigned char *sha1, 
+extern struct packed_git *find_sha1_pack(const unsigned char *sha1,
 					 struct packed_git *packs);
 
 extern void pack_report(void);

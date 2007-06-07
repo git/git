@@ -331,4 +331,3 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 
 	return 0;
 }
-

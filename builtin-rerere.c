@@ -434,4 +434,3 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 	path_list_clear(&merge_rr, 1);
 	return 0;
 }
-

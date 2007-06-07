@@ -49,5 +49,3 @@ test_expect_success \
     'test -f path0 && test -d path1 && test -f path1/file1'
 
 test_done
-
-

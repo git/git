@@ -135,4 +135,3 @@ EOF
 test_expect_success "expected conflict markers" "git diff expect out"
 
 test_done
-

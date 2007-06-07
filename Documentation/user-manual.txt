@@ -154,11 +154,11 @@ Author: Jamal Hadi Salim <hadi@cyberus.ca>
 Date:   Sat Dec 2 22:22:25 2006 -0800
 
     [XFRM]: Fix aevent structuring to be more complete.
-    
+
     aevents can not uniquely identify an SA. We break the ABI with this
     patch, but consensus is that since it is not yet utilized by any
     (known) application then it is fine (better do it now than later).
-    
+
     Signed-off-by: Jamal Hadi Salim <hadi@cyberus.ca>
     Signed-off-by: David S. Miller <davem@davemloft.net>
 
@@ -167,7 +167,7 @@ index 8be626f..d7aac9d 100644
 --- a/Documentation/networking/xfrm_sync.txt
 +++ b/Documentation/networking/xfrm_sync.txt
 @@ -47,10 +47,13 @@ aevent_id structure looks like:
- 
+
     struct xfrm_aevent_id {
               struct xfrm_usersa_id           sa_id;
 +             xfrm_address_t                  saddr;
@@ -1056,7 +1056,7 @@ $ git show
 -------------------------------------------------
 
 As a special shortcut,
-		
+
 -------------------------------------------------
 $ git commit -a
 -------------------------------------------------
@@ -1554,7 +1554,7 @@ history.
 
 Fortunately, git also keeps a log, called a "reflog", of all the
 previous values of each branch.  So in this case you can still find the
-old history using, for example, 
+old history using, for example,
 
 -------------------------------------------------
 $ git log master@{1}
@@ -1630,7 +1630,7 @@ If you decide you want the history back, you can always create a new
 reference pointing to it, for example, a new branch:
 
 ------------------------------------------------
-$ git branch recovered-branch 7281251ddd 
+$ git branch recovered-branch 7281251ddd
 ------------------------------------------------
 
 Other types of dangling objects (blobs and trees) are also possible, and
@@ -1793,7 +1793,7 @@ like this:
 
                         you push
   your personal repo ------------------> your public repo
-  	^                                     |
+	^                                     |
 	|                                     |
 	| you pull                            | they pull
 	|                                     |
@@ -2359,7 +2359,7 @@ the result would create a new merge commit, like this:
         \        \
          a--b--c--m <-- mywork
 ................................................
- 
+
 However, if you prefer to keep the history in mywork a simple series of
 commits without any merges, you may instead choose to use
 gitlink:git-rebase[1]:
@@ -2735,7 +2735,7 @@ must have at least one root, and while you can tie several different
 root objects together into one project by creating a commit object which
 has two or more separate roots as its ultimate parents, that's probably
 just going to confuse people.  So aim for the notion of "one root object
-per project", even if git itself does not enforce that. 
+per project", even if git itself does not enforce that.
 
 A <<def_tag_object,"tag" object>> symbolically identifies and can be
 used to sign other objects. It contains the identifier and type of
@@ -2757,7 +2757,7 @@ independently of the contents or the type of the object: all objects can
 be validated by verifying that (a) their hashes match the content of the
 file and (b) the object successfully inflates to a stream of bytes that
 forms a sequence of <ascii type without space> + <space> + <ascii decimal
-size> + <byte\0> + <binary object data>. 
+size> + <byte\0> + <binary object data>.
 
 The structured objects can further have their structure and
 connectivity to other objects verified. This is generally done with
@@ -2954,7 +2954,7 @@ cache, and the normal operation is to re-generate it completely from a
 known tree object, or update/compare it with a live tree that is being
 developed.  If you blow the directory cache away entirely, you generally
 haven't lost any information as long as you have the name of the tree
-that it described. 
+that it described.
 
 At the same time, the index is at the same time also the
 staging area for creating new trees, and creating a new tree always
@@ -2974,7 +2974,7 @@ Generally, all "git" operations work on the index file. Some operations
 work *purely* on the index file (showing the current state of the
 index), but most operations move data to and from the index file. Either
 from the database or from the working directory. Thus there are four
-main combinations: 
+main combinations:
 
 [[working-directory-to-index]]
 working directory -> index
@@ -3437,7 +3437,7 @@ because you interrupted a "git fetch" with ^C or something like that,
 leaving _some_ of the new objects in the object database, but just
 dangling and useless.
 
-Anyway, once you are sure that you're not interested in any dangling 
+Anyway, once you are sure that you're not interested in any dangling
 state, you can just prune all unreachable objects:
 
 ------------------------------------------------
@@ -3448,12 +3448,12 @@ and they'll be gone. But you should only run "git prune" on a quiescent
 repository - it's kind of like doing a filesystem fsck recovery: you
 don't want to do that while the filesystem is mounted.
 
-(The same is true of "git-fsck" itself, btw - but since 
-git-fsck never actually *changes* the repository, it just reports 
-on what it found, git-fsck itself is never "dangerous" to run. 
-Running it while somebody is actually changing the repository can cause 
-confusing and scary messages, but it won't actually do anything bad. In 
-contrast, running "git prune" while somebody is actively changing the 
+(The same is true of "git-fsck" itself, btw - but since
+git-fsck never actually *changes* the repository, it just reports
+on what it found, git-fsck itself is never "dangerous" to run.
+Running it while somebody is actually changing the repository can cause
+confusing and scary messages, but it won't actually do anything bad. In
+contrast, running "git prune" while somebody is actively changing the
 repository is a *BAD* idea).
 
 [[birdview-on-the-source-code]]

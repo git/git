@@ -358,4 +358,3 @@ for id in changes:
     if stitch == 1:
         git.clean_directories()
         stitch = 0
-

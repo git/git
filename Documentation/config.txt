@@ -682,5 +682,3 @@ receive.denyNonFastForwards::
 transfer.unpackLimit::
 	When `fetch.unpackLimit` or `receive.unpackLimit` are
 	not set, the value of this variable is used instead.
-
-

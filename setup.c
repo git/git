@@ -39,7 +39,7 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 	if (len) {
 		int speclen = strlen(path);
 		char *n = xmalloc(speclen + len + 1);
-	
+
 		memcpy(n, prefix, len);
 		memcpy(n + len, path, speclen+1);
 		path = n;
@@ -47,7 +47,7 @@ const char *prefix_path(const char *prefix, int len, const char *path)
 	return path;
 }
 
-/* 
+/*
  * Unlike prefix_path, this should be used if the named file does
  * not have to interact with index entry; i.e. name of a random file
  * on the filesystem.

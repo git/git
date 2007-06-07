@@ -828,7 +828,7 @@ static void abort_object_request(struct object_request *obj_req)
 	}
 	unlink(obj_req->tmpfile);
 	if (obj_req->slot) {
- 		release_active_slot(obj_req->slot);
+		release_active_slot(obj_req->slot);
 		obj_req->slot = NULL;
 	}
 	release_object_request(obj_req);

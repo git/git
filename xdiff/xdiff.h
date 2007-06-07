@@ -103,4 +103,3 @@ int xdl_merge(mmfile_t *orig, mmfile_t *mf1, const char *name1,
 #endif /* #ifdef __cplusplus */
 
 #endif /* #if !defined(XDIFF_H) */
-

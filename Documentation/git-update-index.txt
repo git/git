@@ -56,7 +56,7 @@ OPTIONS
 
 --unmerged::
         If --refresh finds unmerged changes in the index, the default
-        behavior is to error out.  This option makes git-update-index 
+        behavior is to error out.  This option makes git-update-index
         continue anyway.
 
 --ignore-missing::
@@ -64,12 +64,12 @@ OPTIONS
 
 --cacheinfo <mode> <object> <path>::
 	Directly insert the specified info into the index.
-	
+
 --index-info::
         Read index information from stdin.
 
 --chmod=(+|-)x::
-        Set the execute permissions on the updated files.        
+        Set the execute permissions on the updated files.
 
 --assume-unchanged, --no-assume-unchanged::
 	When these flags are specified, the object name recorded
@@ -126,7 +126,7 @@ OPTIONS
 <file>::
 	Files to act on.
 	Note that files beginning with '.' are discarded. This includes
-	`./file` and `dir/./file`. If you don't want this, then use	
+	`./file` and `dir/./file`. If you don't want this, then use
 	cleaner names.
 	The same applies to directories ending '/' and paths with '//'
 
@@ -324,4 +324,3 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 GIT
 ---
 Part of the gitlink:git[7] suite
-

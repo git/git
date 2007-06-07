@@ -185,4 +185,3 @@ gitlink:git-prune-packed[1]
 GIT
 ---
 Part of the gitlink:git[7] suite
-

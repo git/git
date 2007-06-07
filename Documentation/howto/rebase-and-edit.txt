@@ -9,16 +9,16 @@ Abstract: In this article, Linus demonstrates how a broken commit
 
 On Sat, 13 Aug 2005, Linus Torvalds wrote:
 
-> That's correct. Same things apply: you can move a patch over, and create a 
-> new one with a modified comment, but basically the _old_ commit will be 
+> That's correct. Same things apply: you can move a patch over, and create a
+> new one with a modified comment, but basically the _old_ commit will be
 > immutable.
 
 Let me clarify.
 
 You can entirely _drop_ old branches, so commits may be immutable, but
-nothing forces you to keep them. Of course, when you drop a commit, you'll 
-always end up dropping all the commits that depended on it, and if you 
-actually got somebody else to pull that commit you can't drop it from 
+nothing forces you to keep them. Of course, when you drop a commit, you'll
+always end up dropping all the commits that depended on it, and if you
+actually got somebody else to pull that commit you can't drop it from
 _their_ repository, but undoing things is not impossible.
 
 For example, let's say that you've made a mess of things: you've committed
@@ -29,7 +29,7 @@ want to save "b" and "c". What you can do is
 	# for reference
 	git branch broken
 
-	# Reset the main branch to three parents back: this 
+	# Reset the main branch to three parents back: this
 	# effectively undoes the three top commits
 	git reset HEAD^^^
 	git checkout -f
@@ -59,7 +59,7 @@ Finally, check out the end result again:
 
 to see that everything looks sensible.
 
-And then, you can just remove the broken branch if you decide you really 
+And then, you can just remove the broken branch if you decide you really
 don't want it:
 
 	# remove 'broken' branch
@@ -68,8 +68,8 @@ don't want it:
 	# Prune old objects if you're really really sure
 	git prune
 
-And yeah, I'm sure there are other ways of doing this. And as usual, the 
-above is totally untested, and I just wrote it down in this email, so if 
+And yeah, I'm sure there are other ways of doing this. And as usual, the
+above is totally untested, and I just wrote it down in this email, so if
 I've done something wrong, you'll have to figure it out on your own ;)
 
 			Linus
@@ -77,5 +77,3 @@ I've done something wrong, you'll have to figure it out on your own ;)
 To unsubscribe from this list: send the line "unsubscribe git" in
 the body of a message to majordomo@vger.kernel.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
-

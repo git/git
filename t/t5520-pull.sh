@@ -54,4 +54,3 @@ test_expect_success 'the default remote . should not break explicit pull' '
 '
 
 test_done
-

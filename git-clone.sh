@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2005, Linus Torvalds
 # Copyright (c) 2005, Junio C Hamano
-# 
+#
 # Clone a repository into a different directory that does not yet exist.
 
 # See git-sh-setup why.
@@ -98,7 +98,7 @@ while
 	*,--na|*,--nak|*,--nake|*,--naked|\
 	*,-b|*,--b|*,--ba|*,--bar|*,--bare) bare=yes ;;
 	*,-l|*,--l|*,--lo|*,--loc|*,--loca|*,--local) use_local=yes ;;
-        *,-s|*,--s|*,--sh|*,--sha|*,--shar|*,--share|*,--shared) 
+        *,-s|*,--s|*,--sh|*,--sha|*,--shar|*,--share|*,--shared)
           local_shared=yes; use_local=yes ;;
 	1,--template) usage ;;
 	*,--template)
@@ -410,4 +410,3 @@ fi
 rm -f "$GIT_DIR/CLONE_HEAD" "$GIT_DIR/REMOTE_HEAD"
 
 trap - 0
-

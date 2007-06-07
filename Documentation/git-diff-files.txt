@@ -26,7 +26,7 @@ include::diff-options.txt[]
 	branch" respectively.  With these options, diffs for
 	merged entries are not shown.
 +
-The default is to diff against our branch (-2) and the 
+The default is to diff against our branch (-2) and the
 cleanly resolved paths.  The option -0 can be given to
 omit diff output for unmerged entries and just show "Unmerged".
 
@@ -58,4 +58,3 @@ Documentation by David Greaves, Junio C Hamano and the git-list <git@vger.kernel
 GIT
 ---
 Part of the gitlink:git[7] suite
-

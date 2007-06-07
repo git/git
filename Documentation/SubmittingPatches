@@ -296,15 +296,15 @@ diff --git a/pico/pico.c b/pico/pico.c
 --- a/pico/pico.c
 +++ b/pico/pico.c
 @@ -219,7 +219,9 @@ PICO *pm;
- 	    switch(pico_all_done){	/* prepare for/handle final events */
- 	      case COMP_EXIT :		/* already confirmed */
- 		packheader();
+	    switch(pico_all_done){	/* prepare for/handle final events */
+	      case COMP_EXIT :		/* already confirmed */
+		packheader();
 +#if 0
- 		stripwhitespace();
+		stripwhitespace();
 +#endif
- 		c |= COMP_EXIT;
- 		break;
- 
+		c |= COMP_EXIT;
+		break;
+
 
 (Daniel Barkalow)
 

@@ -64,7 +64,7 @@ do
 	    done
 	;;
     -m)
-    	annotate=1
+	annotate=1
 	shift
 	message="$1"
 	if test "$#" = "0"; then
@@ -90,7 +90,7 @@ do
 	username="$1"
 	;;
     -d)
-    	shift
+	shift
 	had_error=0
 	for tag
 	do
@@ -180,4 +180,3 @@ if [ "$annotate" ]; then
 fi
 
 git update-ref "refs/tags/$name" "$object" "$prev"
-

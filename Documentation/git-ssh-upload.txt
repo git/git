@@ -44,4 +44,3 @@ Documentation by Daniel Barkalow
 GIT
 ---
 Part of the gitlink:git[7] suite
-

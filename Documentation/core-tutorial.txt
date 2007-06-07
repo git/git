@@ -9,11 +9,11 @@ repository, mainly because being hands-on and using explicit examples is
 often the best way of explaining what is going on.
 
 In normal life, most people wouldn't use the "core" git programs
-directly, but rather script around them to make them more palatable. 
+directly, but rather script around them to make them more palatable.
 Understanding the core git stuff may help some people get those scripts
 done, though, and it may also be instructive in helping people
 understand what it is that the higher-level helper scripts are actually
-doing. 
+doing.
 
 The core git is often called "plumbing", with the prettier user
 interfaces on top of it called "porcelain". You may not want to use the
@@ -41,7 +41,7 @@ Creating a new git repository couldn't be easier: all git repositories start
 out empty, and the only thing you need to do is find yourself a
 subdirectory that you want to use as a working tree - either an empty
 one for a totally new project, or an existing working tree that you want
-to import into git. 
+to import into git.
 
 For our first example, we're going to start a totally new repository from
 scratch, with no pre-existing files, and we'll call it `git-tutorial`.
@@ -169,7 +169,7 @@ $ ls .git/objects/??/*
 and see two files:
 
 ----------------
-.git/objects/55/7db03de997c86a4a028e1ebd3a1ceb225be238 
+.git/objects/55/7db03de997c86a4a028e1ebd3a1ceb225be238
 .git/objects/f2/4c74a2e500f5ee1332c86b94199f52b1d1d962
 ----------------
 
@@ -220,7 +220,7 @@ you have not actually really "checked in" your files into git so far,
 you've only *told* git about them.
 
 However, since git knows about them, you can now start using some of the
-most basic git commands to manipulate the files or look at their status. 
+most basic git commands to manipulate the files or look at their status.
 
 In particular, let's not even check in the two files into git yet, we'll
 start off by adding another line to `hello` first:
@@ -350,7 +350,7 @@ Making a change
 
 Remember how we did the `git-update-index` on file `hello` and then we
 changed `hello` afterward, and could compare the new state of `hello` with the
-state we saved in the index file? 
+state we saved in the index file?
 
 Further, remember how I said that `git-write-tree` writes the contents
 of the *index* file to the tree, and thus what we just committed was in
@@ -370,7 +370,7 @@ file and the working tree, `git-diff-index` shows the differences
 between a committed *tree* and either the index file or the working
 tree. In other words, `git-diff-index` wants a tree to be diffed
 against, and before we did the commit, we couldn't do that, because we
-didn't have anything to diff against. 
+didn't have anything to diff against.
 
 But now we can do
 
@@ -379,7 +379,7 @@ $ git-diff-index -p HEAD
 ----------------
 
 (where `-p` has the same meaning as it did in `git-diff-files`), and it
-will show us the same difference, but for a totally different reason. 
+will show us the same difference, but for a totally different reason.
 Now we're comparing the working tree not against the index file,
 but against the tree we just wrote. It just so happens that those two
 are obviously the same, so we get the same result.
@@ -398,7 +398,7 @@ working tree, but when given the `\--cached` flag, it is told to
 instead compare against just the index cache contents, and ignore the
 current working tree state entirely. Since we just wrote the index
 file to HEAD, doing `git-diff-index \--cached -p HEAD` should thus return
-an empty set of differences, and that's exactly what it does. 
+an empty set of differences, and that's exactly what it does.
 
 [NOTE]
 ================
@@ -549,7 +549,7 @@ $ git-whatchanged -p --root
 ----------------
 
 and you will see exactly what has changed in the repository over its
-short history. 
+short history.
 
 [NOTE]
 The `\--root` flag is a flag to `git-diff-tree` to tell it to
@@ -637,7 +637,7 @@ So the mental model of "the git information is always tied directly to
 the working tree that it describes" may not be technically 100%
 accurate, but it's a good model for all normal use.
 
-This has two implications: 
+This has two implications:
 
  - if you grow bored with the tutorial repository you created (or you've
    made a mistake and want to start all over), you can just do simple
@@ -705,7 +705,7 @@ Many (most?) public remote repositories will not contain any of
 the checked out files or even an index file, and will *only* contain the
 actual core git files. Such a repository usually doesn't even have the
 `.git` subdirectory, but has all the git files directly in the
-repository. 
+repository.
 
 To create your own local live copy of such a "raw" git repository, you'd
 first create your own subdirectory for the project, and then copy the
@@ -718,7 +718,7 @@ $ cd my-git
 $ rsync -rL rsync://rsync.kernel.org/pub/scm/git/git.git/ .git
 ----------------
 
-followed by 
+followed by
 
 ----------------
 $ git-read-tree HEAD
@@ -738,7 +738,7 @@ up-to-date (so that you don't have to refresh it afterward), and the
 `-a` flag means "check out all files" (if you have a stale copy or an
 older version of a checked out tree you may also need to add the `-f`
 flag first, to tell git-checkout-index to *force* overwriting of any old
-files). 
+files).
 
 Again, this can all be simplified with
 
@@ -751,7 +751,7 @@ $ git checkout
 which will end up doing all of the above for you.
 
 You have now successfully copied somebody else's (mine) remote
-repository, and checked it out. 
+repository, and checked it out.
 
 
 Creating a new branch
@@ -760,14 +760,14 @@ Creating a new branch
 Branches in git are really nothing more than pointers into the git
 object database from within the `.git/refs/` subdirectory, and as we
 already discussed, the `HEAD` branch is nothing but a symlink to one of
-these object pointers. 
+these object pointers.
 
 You can at any time create a new branch by just picking an arbitrary
 point in the project history, and just writing the SHA1 name of that
 object into a file under `.git/refs/heads/`. You can use any filename you
 want (and indeed, subdirectories), but the convention is that the
 "normal" branch is called `master`. That's just a convention, though,
-and nothing enforces it. 
+and nothing enforces it.
 
 To show that as an example, let's go back to the git-tutorial repository we
 used earlier, and create a branch in it. You do that by simply just
@@ -778,7 +778,7 @@ $ git checkout -b mybranch
 ------------
 
 will create a new branch based at the current `HEAD` position, and switch
-to it. 
+to it.
 
 [NOTE]
 ================================================
@@ -825,7 +825,7 @@ checking it out and switching to it. If so, just use the command
 $ git branch <branchname> [startingpoint]
 ------------
 
-which will simply _create_ the branch, but will not do anything further. 
+which will simply _create_ the branch, but will not do anything further.
 You can then later -- once you decide that you want to actually develop
 on that branch -- switch to that branch with a regular `git checkout`
 with the branchname as the argument.
@@ -884,7 +884,7 @@ $ gitk --all
 will show you graphically both of your branches (that's what the `\--all`
 means: normally it will just show you your current `HEAD`) and their
 histories. You can also see exactly how they came to be from a common
-source. 
+source.
 
 Anyway, let's exit `gitk` (`^Q` or the File menu), and decide that we want
 to merge the work we did on the `mybranch` branch into the `master`
@@ -905,8 +905,8 @@ of it as it can automatically (which in this case is just merge the `example`
 file, which had no differences in the `mybranch` branch), and say:
 
 ----------------
-	Auto-merging hello 
-	CONFLICT (content): Merge conflict in hello 
+	Auto-merging hello
+	CONFLICT (content): Merge conflict in hello
 	Automatic merge failed; fix up by hand
 ----------------
 
@@ -1387,7 +1387,7 @@ repository. Kernel.org mirror network takes care of the
 propagation to other publicly visible machines:
 
 ------------
-$ git push master.kernel.org:/pub/scm/git/git.git/ 
+$ git push master.kernel.org:/pub/scm/git/git.git/
 ------------
 
 
