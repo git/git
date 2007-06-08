@@ -114,12 +114,7 @@ void mark_parents_uninteresting(struct commit *commit)
 	}
 }
 
-void add_pending_object(struct rev_info *revs, struct object *obj, const char *name)
-{
-	add_pending_object_with_mode(revs, obj, name, S_IFINVALID);
-}
-
-void add_pending_object_with_mode(struct rev_info *revs, struct object *obj, const char *name, unsigned mode)
+static void add_pending_object_with_mode(struct rev_info *revs, struct object *obj, const char *name, unsigned mode)
 {
 	if (revs->no_walk && (obj->flags & UNINTERESTING))
 		die("object ranges do not make sense when not walking revisions");
@@ -127,6 +122,11 @@ void add_pending_object_with_mode(struct rev_info *revs, struct object *obj, con
 	if (revs->reflog_info && obj->type == OBJ_COMMIT)
 		add_reflog_for_walk(revs->reflog_info,
 				(struct commit *)obj, name);
+}
+
+void add_pending_object(struct rev_info *revs, struct object *obj, const char *name)
+{
+	add_pending_object_with_mode(revs, obj, name, S_IFINVALID);
 }
 
 static struct object *get_reference(struct rev_info *revs, const char *name, const unsigned char *sha1, unsigned int flags)
@@ -262,7 +262,7 @@ static void file_change(struct diff_options *options,
 	options->has_changes = 1;
 }
 
-int rev_compare_tree(struct rev_info *revs, struct tree *t1, struct tree *t2)
+static int rev_compare_tree(struct rev_info *revs, struct tree *t1, struct tree *t2)
 {
 	if (!t1)
 		return REV_TREE_NEW;
@@ -276,7 +276,7 @@ int rev_compare_tree(struct rev_info *revs, struct tree *t1, struct tree *t2)
 	return tree_difference;
 }
 
-int rev_same_tree_as_empty(struct rev_info *revs, struct tree *t1)
+static int rev_same_tree_as_empty(struct rev_info *revs, struct tree *t1)
 {
 	int retval;
 	void *tree;
