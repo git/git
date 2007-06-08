@@ -323,7 +323,7 @@ case "$filter_subdir" in
 	;;
 *)
 	git-rev-list --reverse --topo-order --default HEAD \
-		--parents "$@" -- "$filter_subdir"
+		--parents --full-history "$@" -- "$filter_subdir"
 esac > ../revs
 commits=$(cat ../revs | wc -l | tr -d " ")
 

@@ -78,4 +78,25 @@ test_expect_success 'subdirectory filter result looks okay' '
 	! git show sub:subdir
 '
 
+test_expect_success 'setup and filter history that requires --full-history' '
+	git checkout master &&
+	mkdir subdir &&
+	echo A > subdir/new &&
+	git add subdir/new &&
+	test_tick &&
+	git commit -m "subdir on master" subdir/new &&
+	git rm a &&
+	test_tick &&
+	git commit -m "again subdir on master" &&
+	git merge branch &&
+	git-filter-branch --subdirectory-filter subdir sub-master
+'
+
+test_expect_success 'subdirectory filter result looks okay' '
+	test 3 = $(git-rev-list -1 --parents sub-master | wc -w) &&
+	git show sub-master^:new &&
+	git show sub-master^2:new &&
+	! git show sub:subdir
+'
+
 test_done
