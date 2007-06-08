@@ -2401,6 +2401,26 @@ sub git_difftree_body {
 	print "<table class=\"" .
 	      (@parents > 1 ? "combined " : "") .
 	      "diff_tree\">\n";
+
+	# header only for combined diff in 'commitdiff' view
+	my $has_header = @parents > 1 && $action eq 'commitdiff';
+	if ($has_header) {
+		# table header
+		print "<thead><tr>\n" .
+		       "<th></th><th></th>\n"; # filename, patchN link
+		for (my $i = 0; $i < @parents; $i++) {
+			my $par = $parents[$i];
+			print "<th>" .
+			      $cgi->a({-href => href(action=>"commitdiff",
+			                             hash=>$hash, hash_parent=>$par),
+			               -title => 'commitdiff to parent number ' .
+			                          ($i+1) . ': ' . substr($par,0,7)},
+			              $i+1) .
+			      "&nbsp;</th>\n";
+		}
+		print "</tr></thead>\n<tbody>\n";
+	}
+
 	my $alternate = 1;
 	my $patchno = 0;
 	foreach my $line (@{$difftree}) {
@@ -2673,6 +2693,7 @@ sub git_difftree_body {
 		} # we should not encounter Unmerged (U) or Unknown (X) status
 		print "</tr>\n";
 	}
+	print "</tbody>" if $has_header;
 	print "</table>\n";
 }
 
