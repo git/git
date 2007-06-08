@@ -119,6 +119,10 @@
 #	attached, the rewritten tag won't have it. Sorry. (It is by
 #	definition impossible to preserve signatures at any rate, though.)
 #
+# --subdirectory-filter DIRECTORY:: Only regard the history, as seen by
+#	the given subdirectory. The result will contain that directory as
+#	its project root.
+#
 # EXAMPLE USAGE
 # -------------
 # Suppose you want to remove a file (containing confidential information
@@ -224,7 +228,13 @@ set_ident () {
 
 # list all parent's object names for a given commit
 get_parents () {
-	git-rev-list -1 --parents "$1" | sed "s/^[0-9a-f]*//"
+	case "$filter_subdir" in
+	"")
+		git-rev-list -1 --parents "$1"
+		;;
+	*)
+		git-rev-list -1 --parents "$1" -- "$filter_subdir"
+	esac | sed "s/^[0-9a-f]*//"
 }
 
 tempdir=.git-rewrite
@@ -235,6 +245,7 @@ filter_parent=
 filter_msg=cat
 filter_commit='git-commit-tree "$@"'
 filter_tag_name=
+filter_subdir=
 while case "$#" in 0) usage;; esac
 do
 	case "$1" in
@@ -280,6 +291,9 @@ do
 	--tag-name-filter)
 		filter_tag_name="$OPTARG"
 		;;
+	--subdirectory-filter)
+		filter_subdir="$OPTARG"
+		;;
 	*)
 		usage
 		;;
@@ -313,7 +327,14 @@ ret=0
 
 mkdir ../map # map old->new commit ids for rewriting parents
 
-git-rev-list --reverse --topo-order --default HEAD "$@" >../revs
+case "$filter_subdir" in
+"")
+	git-rev-list --reverse --topo-order --default HEAD "$@"
+	;;
+*)
+	git-rev-list --reverse --topo-order --default HEAD "$@" \
+		-- "$filter_subdir"
+esac > ../revs
 commits=$(cat ../revs | wc -l | tr -d " ")
 
 test $commits -eq 0 && die "Found nothing to rewrite"
@@ -323,7 +344,13 @@ while read commit; do
 	i=$(($i+1))
 	printf "$commit ($i/$commits) "
 
-	git-read-tree -i -m $commit
+	case "$filter_subdir" in
+	"")
+		git-read-tree -i -m $commit
+		;;
+	*)
+		git-read-tree -i -m $commit:"$filter_subdir"
+	esac
 
 	export GIT_COMMIT=$commit
 	git-cat-file commit "$commit" >../commit

@@ -54,4 +54,28 @@ test_expect_success 'common ancestor is still common (unchanged)' '
 	test "$(git-merge-base modD D)" = "$(git-rev-parse B)"
 '
 
+test_expect_success 'filter subdirectory only' '
+	mkdir subdir &&
+	touch subdir/new &&
+	git add subdir/new &&
+	test_tick &&
+	git commit -m "subdir" &&
+	echo H > a &&
+	test_tick &&
+	git commit -m "not subdir" a &&
+	echo A > subdir/new &&
+	test_tick &&
+	git commit -m "again subdir" subdir/new &&
+	git rm a &&
+	test_tick &&
+	git commit -m "again not subdir" &&
+	git-filter-branch --subdirectory-filter subdir sub
+'
+
+test_expect_success 'subdirectory filter result looks okay' '
+	test 2 = $(git-rev-list sub | wc -l) &&
+	git show sub:new &&
+	! git show sub:subdir
+'
+
 test_done
