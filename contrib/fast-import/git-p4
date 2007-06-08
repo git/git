@@ -153,7 +153,11 @@ def extractSettingsGitLog(log):
 
             values[key] = val
 
-    values['depot-paths'] = values.get("depot-paths").split(',')
+    paths = values.get("depot-paths")
+    if not paths:
+        paths = values.get("depot-path")
+    if paths:
+        values['depot-paths'] = paths.split(',')
     return values
 
 def gitBranchExists(branch):
@@ -273,6 +277,8 @@ class P4Submit(Command):
         self.origin = ""
         self.directSubmit = False
         self.trustMeLikeAFool = False
+        self.verbose = False
+        self.isWindows = (platform.system() == "Windows")
 
         self.logSubstitutions = {}
         self.logSubstitutions["<enter description here>"] = "%log%"
@@ -394,6 +400,8 @@ class P4Submit(Command):
         if not self.directSubmit:
             logMessage = extractLogMessageFromGitCommit(id)
             logMessage = logMessage.replace("\n", "\n\t")
+            if self.isWindows:
+                logMessage = logMessage.replace("\n", "\r\n")
             logMessage = logMessage.strip()
 
         template = read_pipe("p4 change -o")
@@ -440,6 +448,8 @@ class P4Submit(Command):
                     tmpFile.close()
                     os.remove(fileName)
                     submitTemplate = message[:message.index(separatorLine)]
+                    if self.isWindows:
+                        submitTemplate = submitTemplate.replace("\r\n", "\n")
 
             if response == "y" or response == "yes":
                if self.dryRun:
@@ -475,9 +485,6 @@ class P4Submit(Command):
                    % (fileName, fileName))
 
     def run(self, args):
-        # make gitdir absolute so we can cd out into the perforce checkout
-        os.environ["GIT_DIR"] = gitdir
-
         if len(args) == 0:
             self.master = currentGitBranch()
             if len(self.master) == 0 or not gitBranchExists("refs/heads/%s" % self.master):
@@ -488,12 +495,27 @@ class P4Submit(Command):
             return False
 
         depotPath = ""
-        settings = None
-        if gitBranchExists("p4"):
-            settings = extractSettingsGitLog(extractLogMessageFromGitCommit("p4"))
-        if len(depotPath) == 0 and gitBranchExists("origin"):
-            settings = extractSettingsGitLog(extractLogMessageFromGitCommit("origin"))
-        depotPaths = settings['depot-paths']
+        parent = 0
+        while parent < 65535:
+            commit = "HEAD~%s" % parent
+            log = extractLogMessageFromGitCommit(commit)
+            settings = extractSettingsGitLog(log)
+            if not settings.has_key("depot-paths"):
+                parent = parent + 1
+                continue
+
+            depotPath = settings['depot-paths'][0]
+
+            if len(self.origin) == 0:
+                names = read_pipe_lines("git name-rev '--refs=refs/remotes/p4/*' '%s'" % commit)
+                if len(names) > 0:
+                    # strip away the beginning of 'HEAD~42 refs/remotes/p4/foo'
+                    self.origin = names[0].strip()[len(commit) + 1:]
+
+            break
+
+        if self.verbose:
+            print "Origin branch is " + self.origin
 
         if len(depotPath) == 0:
             print "Internal error: cannot locate perforce depot path from existing branches"
@@ -523,12 +545,6 @@ class P4Submit(Command):
         response = raw_input("Do you want to sync %s with p4 sync? [y]es/[n]o " % self.clientPath)
         if response == "y" or response == "yes":
             system("p4 sync ...")
-
-        if len(self.origin) == 0:
-            if gitBranchExists("p4"):
-                self.origin = "p4"
-            else:
-                self.origin = "origin"
 
         if self.reset:
             self.firstTime = True
@@ -896,10 +912,6 @@ class P4Sync(Command):
             return p [p.strip().rfind("/") + 1:]
 
     def getBranchMapping(self):
-
-        ## FIXME - what's a P4 projectName ?
-        self.projectName = self.guessProjectName()
-
         for info in p4CmdList("branches"):
             details = p4Cmd("branch -o %s" % info["branch"])
             viewIdx = 0
@@ -911,9 +923,10 @@ class P4Sync(Command):
                     continue
                 source = paths[0]
                 destination = paths[1]
-                if source.startswith(self.depotPath) and destination.startswith(self.depotPath):
-                    source = source[len(self.depotPath):-4]
-                    destination = destination[len(self.depotPath):-4]
+                ## HACK
+                if source.startswith(self.depotPaths[0]) and destination.startswith(self.depotPaths[0]):
+                    source = source[len(self.depotPaths[0]):-4]
+                    destination = destination[len(self.depotPaths[0]):-4]
                     if destination not in self.knownBranches:
                         self.knownBranches[destination] = source
                     if source not in self.knownBranches:
@@ -932,7 +945,7 @@ class P4Sync(Command):
             line = line.strip()
 
             ## only import to p4/
-            if not line.startswith('p4/'):
+            if not line.startswith('p4/') or line == "p4/HEAD":
                 continue
             branch = line
             if self.importIntoRemotes:
@@ -967,7 +980,7 @@ class P4Sync(Command):
                     print "creating %s" % remoteHead
                 update = True
             else:
-                settings =  extractSettingsGitLog(extractLogMessageFromGitCommit(remoteHead))
+                settings = extractSettingsGitLog(extractLogMessageFromGitCommit(remoteHead))
                 if settings.has_key('change') > 0:
                     if settings['depot-paths'] == original['depot-paths']:
                         originP4Change = int(original['change'])
@@ -1012,7 +1025,7 @@ class P4Sync(Command):
         if self.importIntoRemotes:
             self.refPrefix = "refs/remotes/p4/"
         else:
-            self.refPrefix = "refs/heads/"
+            self.refPrefix = "refs/heads/p4/"
 
         if self.syncWithOrigin and self.hasOrigin:
             if not self.silent:
@@ -1020,7 +1033,7 @@ class P4Sync(Command):
             system("git fetch origin")
 
         if len(self.branch) == 0:
-            self.branch = self.refPrefix + "p4/master"
+            self.branch = self.refPrefix + "master"
             if gitBranchExists("refs/heads/p4") and self.importIntoRemotes:
                 system("git update-ref %s refs/heads/p4" % self.branch)
                 system("git branch -D p4");
@@ -1061,18 +1074,20 @@ class P4Sync(Command):
                     else:
                         paths = []
                         for (prev, cur) in zip(self.previousDepotPaths, depotPaths):
-                            for i in range(0, max(len(cur), len(prev))):
+                            for i in range(0, min(len(cur), len(prev))):
                                 if cur[i] <> prev[i]:
+                                    i = i - 1
                                     break
 
-                            paths.append (cur[:i])
+                            paths.append (cur[:i + 1])
 
                         self.previousDepotPaths = paths
 
             if p4Change > 0:
                 self.depotPaths = sorted(self.previousDepotPaths)
                 self.changeRange = "@%s,#head" % p4Change
-                self.initialParent = parseRevision(self.branch)
+                if not self.detectBranches:
+                    self.initialParent = parseRevision(self.branch)
                 if not self.silent and not self.detectBranches:
                     print "Performing incremental import into %s git branch" % self.branch
 
@@ -1127,7 +1142,11 @@ class P4Sync(Command):
             self.getLabels();
 
         if self.detectBranches:
-            self.getBranchMapping();
+            ## FIXME - what's a P4 projectName ?
+            self.projectName = self.guessProjectName()
+
+            if not self.hasOrigin:
+                self.getBranchMapping();
             if self.verbose:
                 print "p4-git branches: %s" % self.p4BranchesInGit
                 print "initial parents: %s" % self.initialParents
@@ -1319,6 +1338,7 @@ class P4Rebase(Command):
         self.options = [ ]
         self.description = ("Fetches the latest revision from perforce and "
                             + "rebases the current work (branch) against it")
+        self.verbose = False
 
     def run(self, args):
         sync = P4Sync()
@@ -1359,12 +1379,17 @@ class P4Clone(P4Sync):
             sys.exit(1)
 
         depotPaths = args
+
+        if not self.cloneDestination and len(depotPaths) > 1:
+            self.cloneDestination = depotPaths[-1]
+            depotPaths = depotPaths[:-1]
+
         for p in depotPaths:
             if not p.startswith("//"):
                 return False
 
         if not self.cloneDestination:
-            self.cloneDestination = self.defaultDestination()
+            self.cloneDestination = self.defaultDestination(args)
 
         print "Importing from %s into %s" % (', '.join(depotPaths), self.cloneDestination)
         os.makedirs(self.cloneDestination)
