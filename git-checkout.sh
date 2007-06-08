@@ -63,12 +63,13 @@ while [ "$#" != "0" ]; do
 				echo "unknown flag $arg"
 				exit 1
 			fi
-			new="$rev"
 			new_name="$arg"
 			if git-show-ref --verify --quiet -- "refs/heads/$arg"
 			then
+				rev=$(git-rev-parse --verify "refs/heads/$arg^0")
 				branch="$arg"
 			fi
+			new="$rev"
 		elif rev=$(git-rev-parse --verify "$arg^{tree}" 2>/dev/null)
 		then
 			# checking out selected paths from a tree-ish.

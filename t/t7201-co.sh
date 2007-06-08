@@ -190,4 +190,44 @@ test_expect_success 'checkout to detach HEAD with HEAD^0' '
 	fi
 '
 
+test_expect_success 'checkout with ambiguous tag/branch names' '
+
+	git tag both side &&
+	git branch both master &&
+	git reset --hard &&
+	git checkout master &&
+
+	git checkout both &&
+	H=$(git rev-parse --verify HEAD) &&
+	M=$(git show-ref -s --verify refs/heads/master) &&
+	test "z$H" = "z$M" &&
+	name=$(git symbolic-ref HEAD 2>/dev/null) &&
+	test "z$name" = zrefs/heads/both
+
+'
+
+test_expect_success 'checkout with ambiguous tag/branch names' '
+
+	git reset --hard &&
+	git checkout master &&
+
+	git tag frotz side &&
+	git branch frotz master &&
+	git reset --hard &&
+	git checkout master &&
+
+	git checkout tags/frotz &&
+	H=$(git rev-parse --verify HEAD) &&
+	S=$(git show-ref -s --verify refs/heads/side) &&
+	test "z$H" = "z$S" &&
+	if name=$(git symbolic-ref HEAD 2>/dev/null)
+	then
+		echo "Bad -- should have detached"
+		false
+	else
+		: happy
+	fi
+
+'
+
 test_done
