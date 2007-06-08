@@ -1058,7 +1058,7 @@ sub format_extended_diff_header_line {
 
 # format from-file/to-file diff header
 sub format_diff_from_to_header {
-	my ($from_line, $to_line, $diffinfo, $from, $to) = @_;
+	my ($from_line, $to_line, $diffinfo, $from, $to, @parents) = @_;
 	my $line;
 	my $result = '';
 
@@ -1084,7 +1084,17 @@ sub format_diff_from_to_header {
 		for (my $i = 0; $i < $diffinfo->{'nparents'}; $i++) {
 			if ($from->{'href'}[$i]) {
 				$line = '--- ' .
-				        ($i+1) . "/" .
+				        $cgi->a({-href=>href(action=>"blobdiff",
+				                             hash_parent=>$diffinfo->{'from_id'}[$i],
+				                             hash_parent_base=>$parents[$i],
+				                             file_parent=>$from->{'file'}[$i],
+				                             hash=>$diffinfo->{'to_id'},
+				                             hash_base=>$hash,
+				                             file_name=>$to->{'file'}),
+				                 -class=>"path",
+				                 -title=>"diff" . ($i+1)},
+				                $i+1) .
+				        '/' .
 				        $cgi->a({-href=>$from->{'href'}[$i], -class=>"path"},
 				                esc_path($from->{'file'}[$i]));
 			} else {
@@ -3042,7 +3052,8 @@ sub git_patchset_body {
 		#assert($patch_line =~ m/^\+\+\+/) if DEBUG;
 
 		print format_diff_from_to_header($last_patch_line, $patch_line,
-		                                 $diffinfo, \%from, \%to);
+		                                 $diffinfo, \%from, \%to,
+		                                 @hash_parents);
 
 		# the patch itself
 	LINE:
