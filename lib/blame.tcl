@@ -69,10 +69,10 @@ constructor new {i_commit i_path} {
 	make_toplevel top w
 	wm title $top "[appname] ([reponame]): File Viewer"
 
-	frame $w.header -background orange
+	frame $w.header -background gold
 	label $w.header.commit_l \
 		-text {Commit:} \
-		-background orange \
+		-background gold \
 		-anchor w \
 		-justify left
 	set w_back $w.header.commit_b
@@ -81,8 +81,8 @@ constructor new {i_commit i_path} {
 		-borderwidth 0 \
 		-relief flat \
 		-state disabled \
-		-background orange \
-		-activebackground orange
+		-background gold \
+		-activebackground gold
 	bind $w_back <Button-1> "
 		if {\[$w_back cget -state\] eq {normal}} {
 			[cb _history_menu]
@@ -90,17 +90,17 @@ constructor new {i_commit i_path} {
 		"
 	label $w.header.commit \
 		-textvariable @commit \
-		-background orange \
+		-background gold \
 		-anchor w \
 		-justify left
 	label $w.header.path_l \
 		-text {File:} \
-		-background orange \
+		-background gold \
 		-anchor w \
 		-justify left
 	set w_path $w.header.path
 	label $w_path \
-		-background orange \
+		-background gold \
 		-anchor w \
 		-justify left
 	pack $w.header.commit_l -side left
