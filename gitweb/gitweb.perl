@@ -1064,19 +1064,35 @@ sub format_diff_from_to_header {
 
 	$line = $from_line;
 	#assert($line =~ m/^---/) if DEBUG;
-	# no extra formatting "^--- /dev/null"
-	if ($line =~ m!^--- "?a/!) {
-		if (!$diffinfo->{'nparents'} && # multiple 'from'
-		    $from->{'href'}) {
-			$line = '--- a/' .
-			        $cgi->a({-href=>$from->{'href'}, -class=>"path"},
-			                esc_path($from->{'file'}));
-		} else {
-			$line = '--- a/' .
-			        esc_path($from->{'file'});
+	# no extra formatting for "^--- /dev/null"
+	if (! $diffinfo->{'nparents'}) {
+		# ordinary (single parent) diff
+		if ($line =~ m!^--- "?a/!) {
+			if ($from->{'href'}) {
+				$line = '--- a/' .
+				        $cgi->a({-href=>$from->{'href'}, -class=>"path"},
+				                esc_path($from->{'file'}));
+			} else {
+				$line = '--- a/' .
+				        esc_path($from->{'file'});
+			}
+		}
+		$result .= qq!<div class="diff from_file">$line</div>\n!;
+
+	} else {
+		# combined diff (merge commit)
+		for (my $i = 0; $i < $diffinfo->{'nparents'}; $i++) {
+			if ($from->{'href'}[$i]) {
+				$line = '--- ' .
+				        ($i+1) . "/" .
+				        $cgi->a({-href=>$from->{'href'}[$i], -class=>"path"},
+				                esc_path($from->{'file'}[$i]));
+			} else {
+				$line = '--- /dev/null';
+			}
+			$result .= qq!<div class="diff from_file">$line</div>\n!;
 		}
 	}
-	$result .= qq!<div class="diff from_file">$line</div>\n!;
 
 	$line = $to_line;
 	#assert($line =~ m/^\+\+\+/) if DEBUG;
