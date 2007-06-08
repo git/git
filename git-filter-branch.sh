@@ -226,17 +226,6 @@ set_ident () {
 	echo "[ -n \"\$GIT_${uid}_NAME\" ] || export GIT_${uid}_NAME=\"\${GIT_${uid}_EMAIL%%@*}\""
 }
 
-# list all parent's object names for a given commit
-get_parents () {
-	case "$filter_subdir" in
-	"")
-		git-rev-list -1 --parents "$1"
-		;;
-	*)
-		git-rev-list -1 --parents "$1" -- "$filter_subdir"
-	esac | sed "s/^[0-9a-f]*//"
-}
-
 tempdir=.git-rewrite
 filter_env=
 filter_tree=
@@ -329,18 +318,19 @@ mkdir ../map # map old->new commit ids for rewriting parents
 
 case "$filter_subdir" in
 "")
-	git-rev-list --reverse --topo-order --default HEAD "$@"
+	git-rev-list --reverse --topo-order --default HEAD \
+		--parents "$@"
 	;;
 *)
-	git-rev-list --reverse --topo-order --default HEAD "$@" \
-		-- "$filter_subdir"
+	git-rev-list --reverse --topo-order --default HEAD \
+		--parents "$@" -- "$filter_subdir"
 esac > ../revs
 commits=$(cat ../revs | wc -l | tr -d " ")
 
 test $commits -eq 0 && die "Found nothing to rewrite"
 
 i=0
-while read commit; do
+while read commit parents; do
 	i=$(($i+1))
 	printf "$commit ($i/$commits) "
 
@@ -374,7 +364,7 @@ while read commit; do
 	eval "$filter_index" < /dev/null
 
 	parentstr=
-	for parent in $(get_parents $commit); do
+	for parent in $parents; do
 		for reparent in $(map "$parent"); do
 			parentstr="$parentstr -p $reparent"
 		done
@@ -389,7 +379,7 @@ while read commit; do
 		tee ../map/$commit
 done <../revs
 
-src_head=$(tail -n 1 ../revs)
+src_head=$(tail -n 1 ../revs | sed -e 's/ .*//')
 target_head=$(head -n 1 ../map/$src_head)
 case "$target_head" in
 '')
