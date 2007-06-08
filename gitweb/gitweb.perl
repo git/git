@@ -4479,7 +4479,14 @@ sub git_commitdiff {
 				$hash_parent_short = substr($hash_parent, 0, 7);
 			}
 			$formats_nav .=
-				' (from: ' .
+				' (from';
+			for (my $i = 0; $i < @{$co{'parents'}}; $i++) {
+				if ($co{'parents'}[$i] eq $hash_parent) {
+					$formats_nav .= ' parent ' . ($i+1);
+					last;
+				}
+			}
+			$formats_nav .= ': ' .
 				$cgi->a({-href => href(action=>"commitdiff",
 				                       hash=>$hash_parent)},
 				        esc_html($hash_parent_short)) .
