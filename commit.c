@@ -1116,15 +1116,6 @@ struct commit *pop_commit(struct commit_list **stack)
 	return item;
 }
 
-int count_parents(struct commit * commit)
-{
-        int count;
-        struct commit_list * parents = commit->parents;
-        for (count = 0; parents; parents = parents->next,count++)
-		;
-        return count;
-}
-
 void topo_sort_default_setter(struct commit *c, void *data)
 {
 	c->util = data;

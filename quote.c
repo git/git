@@ -20,7 +20,7 @@ static inline int need_bs_quote(char c)
 	return (c == '\'' || c == '!');
 }
 
-size_t sq_quote_buf(char *dst, size_t n, const char *src)
+static size_t sq_quote_buf(char *dst, size_t n, const char *src)
 {
 	char c;
 	char *bp = dst;
@@ -60,18 +60,6 @@ void sq_quote_print(FILE *stream, const char *src)
 		}
 	}
 	fputc('\'', stream);
-}
-
-char *sq_quote(const char *src)
-{
-	char *buf;
-	size_t cnt;
-
-	cnt = sq_quote_buf(NULL, 0, src) + 1;
-	buf = xmalloc(cnt);
-	sq_quote_buf(buf, cnt, src);
-
-	return buf;
 }
 
 char *sq_quote_argv(const char** argv, int count)

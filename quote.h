@@ -28,9 +28,7 @@
  * excluding the final null regardless of the buffer size.
  */
 
-extern char *sq_quote(const char *src);
 extern void sq_quote_print(FILE *stream, const char *src);
-extern size_t sq_quote_buf(char *dst, size_t n, const char *src);
 extern char *sq_quote_argv(const char** argv, int count);
 
 /*
