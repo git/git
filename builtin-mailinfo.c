@@ -851,8 +851,8 @@ static void handle_info(void)
 	fprintf(fout, "\n");
 }
 
-int mailinfo(FILE *in, FILE *out, int ks, const char *encoding,
-	     const char *msg, const char *patch)
+static int mailinfo(FILE *in, FILE *out, int ks, const char *encoding,
+		    const char *msg, const char *patch)
 {
 	keep_subject = ks;
 	metainfo_charset = encoding;
