@@ -954,7 +954,149 @@ sub format_subject_html {
 	}
 }
 
-# format patch (diff) line (rather not to be used for diff headers)
+# format git diff header line, i.e. "diff --(git|combined|cc) ..."
+sub format_git_diff_header_line {
+	my $line = shift;
+	my $diffinfo = shift;
+	my ($from, $to) = @_;
+
+	if ($diffinfo->{'nparents'}) {
+		# combined diff
+		$line =~ s!^(diff (.*?) )"?.*$!$1!;
+		if ($to->{'href'}) {
+			$line .= $cgi->a({-href => $to->{'href'}, -class => "path"},
+			                 esc_path($to->{'file'}));
+		} else { # file was deleted (no href)
+			$line .= esc_path($to->{'file'});
+		}
+	} else {
+		# "ordinary" diff
+		$line =~ s!^(diff (.*?) )"?a/.*$!$1!;
+		if ($from->{'href'}) {
+			$line .= $cgi->a({-href => $from->{'href'}, -class => "path"},
+			                 'a/' . esc_path($from->{'file'}));
+		} else { # file was added (no href)
+			$line .= 'a/' . esc_path($from->{'file'});
+		}
+		$line .= ' ';
+		if ($to->{'href'}) {
+			$line .= $cgi->a({-href => $to->{'href'}, -class => "path"},
+			                 'b/' . esc_path($to->{'file'}));
+		} else { # file was deleted
+			$line .= 'b/' . esc_path($to->{'file'});
+		}
+	}
+
+	return "<div class=\"diff header\">$line</div>\n";
+}
+
+# format extended diff header line, before patch itself
+sub format_extended_diff_header_line {
+	my $line = shift;
+	my $diffinfo = shift;
+	my ($from, $to) = @_;
+
+	# match <path>
+	if ($line =~ s!^((copy|rename) from ).*$!$1! && $from->{'href'}) {
+		$line .= $cgi->a({-href=>$from->{'href'}, -class=>"path"},
+		                       esc_path($from->{'file'}));
+	}
+	if ($line =~ s!^((copy|rename) to ).*$!$1! && $to->{'href'}) {
+		$line .= $cgi->a({-href=>$to->{'href'}, -class=>"path"},
+		                 esc_path($to->{'file'}));
+	}
+	# match single <mode>
+	if ($line =~ m/\s(\d{6})$/) {
+		$line .= '<span class="info"> (' .
+		         file_type_long($1) .
+		         ')</span>';
+	}
+	# match <hash>
+	if ($line =~ m/^index [0-9a-fA-F]{40},[0-9a-fA-F]{40}/) {
+		# can match only for combined diff
+		$line = 'index ';
+		for (my $i = 0; $i < $diffinfo->{'nparents'}; $i++) {
+			if ($from->{'href'}[$i]) {
+				$line .= $cgi->a({-href=>$from->{'href'}[$i],
+				                  -class=>"hash"},
+				                 substr($diffinfo->{'from_id'}[$i],0,7));
+			} else {
+				$line .= '0' x 7;
+			}
+			# separator
+			$line .= ',' if ($i < $diffinfo->{'nparents'} - 1);
+		}
+		$line .= '..';
+		if ($to->{'href'}) {
+			$line .= $cgi->a({-href=>$to->{'href'}, -class=>"hash"},
+			                 substr($diffinfo->{'to_id'},0,7));
+		} else {
+			$line .= '0' x 7;
+		}
+
+	} elsif ($line =~ m/^index [0-9a-fA-F]{40}..[0-9a-fA-F]{40}/) {
+		# can match only for ordinary diff
+		my ($from_link, $to_link);
+		if ($from->{'href'}) {
+			$from_link = $cgi->a({-href=>$from->{'href'}, -class=>"hash"},
+			                     substr($diffinfo->{'from_id'},0,7));
+		} else {
+			$from_link = '0' x 7;
+		}
+		if ($to->{'href'}) {
+			$to_link = $cgi->a({-href=>$to->{'href'}, -class=>"hash"},
+			                   substr($diffinfo->{'to_id'},0,7));
+		} else {
+			$to_link = '0' x 7;
+		}
+		my ($from_id, $to_id) = ($diffinfo->{'from_id'}, $diffinfo->{'to_id'});
+		$line =~ s!$from_id\.\.$to_id!$from_link..$to_link!;
+	}
+
+	return $line . "<br/>\n";
+}
+
+# format from-file/to-file diff header
+sub format_diff_from_to_header {
+	my ($from_line, $to_line, $diffinfo, $from, $to) = @_;
+	my $line;
+	my $result = '';
+
+	$line = $from_line;
+	#assert($line =~ m/^---/) if DEBUG;
+	# no extra formatting "^--- /dev/null"
+	if ($line =~ m!^--- "?a/!) {
+		if (!$diffinfo->{'nparents'} && # multiple 'from'
+		    $from->{'href'}) {
+			$line = '--- a/' .
+			        $cgi->a({-href=>$from->{'href'}, -class=>"path"},
+			                esc_path($from->{'file'}));
+		} else {
+			$line = '--- a/' .
+			        esc_path($from->{'file'});
+		}
+	}
+	$result .= qq!<div class="diff from_file">$line</div>\n!;
+
+	$line = $to_line;
+	#assert($line =~ m/^\+\+\+/) if DEBUG;
+	# no extra formatting for "^+++ /dev/null"
+	if ($line =~ m!^\+\+\+ "?b/!) {
+		if ($to->{'href'}) {
+			$line = '+++ b/' .
+			        $cgi->a({-href=>$to->{'href'}, -class=>"path"},
+			                esc_path($to->{'file'}));
+		} else {
+			$line = '+++ b/' .
+			        esc_path($to->{'file'});
+		}
+	}
+	$result .= qq!<div class="diff to_file">$line</div>\n!;
+
+	return $result;
+}
+
+# format patch (diff) line (not to be used for diff headers)
 sub format_diff_line {
 	my $line = shift;
 	my ($from, $to) = @_;
@@ -1680,6 +1822,48 @@ sub parse_ls_tree_line ($;%) {
 	return wantarray ? %res : \%res;
 }
 
+# generates _two_ hashes, references to which are passed as 2 and 3 argument
+sub parse_from_to_diffinfo {
+	my ($diffinfo, $from, $to, @parents) = @_;
+
+	if ($diffinfo->{'nparents'}) {
+		# combined diff
+		$from->{'file'} = [];
+		$from->{'href'} = [];
+		fill_from_file_info($diffinfo, @parents)
+			unless exists $diffinfo->{'from_file'};
+		for (my $i = 0; $i < $diffinfo->{'nparents'}; $i++) {
+			$from->{'file'}[$i] = $diffinfo->{'from_file'}[$i] || $diffinfo->{'to_file'};
+			if ($diffinfo->{'status'}[$i] ne "A") { # not new (added) file
+				$from->{'href'}[$i] = href(action=>"blob",
+				                           hash_base=>$parents[$i],
+				                           hash=>$diffinfo->{'from_id'}[$i],
+				                           file_name=>$from->{'file'}[$i]);
+			} else {
+				$from->{'href'}[$i] = undef;
+			}
+		}
+	} else {
+		$from->{'file'} = $diffinfo->{'from_file'} || $diffinfo->{'file'};
+		if ($diffinfo->{'status'} ne "A") { # not new (added) file
+			$from->{'href'} = href(action=>"blob", hash_base=>$hash_parent,
+			                       hash=>$diffinfo->{'from_id'},
+			                       file_name=>$from->{'file'});
+		} else {
+			delete $from->{'href'};
+		}
+	}
+
+	$to->{'file'} = $diffinfo->{'to_file'} || $diffinfo->{'file'};
+	if (!is_deleted($diffinfo)) { # file exists in result
+		$to->{'href'} = href(action=>"blob", hash_base=>$hash,
+		                     hash=>$diffinfo->{'to_id'},
+		                     file_name=>$to->{'file'});
+	} else {
+		delete $to->{'href'};
+	}
+}
+
 ## ......................................................................
 ## parse to array of hashes functions
 
@@ -2387,6 +2571,11 @@ sub from_ids_eq {
 	}
 }
 
+sub is_deleted {
+	my $diffinfo = shift;
+
+	return $diffinfo->{'to_id'} eq ('0' x 40);
+}
 
 sub git_difftree_body {
 	my ($difftree, $hash, @parents) = @_;
@@ -2444,7 +2633,7 @@ sub git_difftree_body {
 			fill_from_file_info($diff, @parents)
 				unless exists $diff->{'from_file'};
 
-			if ($diff->{'to_id'} ne ('0' x 40)) {
+			if (!is_deleted($diff)) {
 				# file exists in the result (child) commit
 				print "<td>" .
 				      $cgi->a({-href => href(action=>"blob", hash=>$diff->{'to_id'},
@@ -2765,6 +2954,8 @@ sub git_patchset_body {
 			} else {
 				$diffinfo = parse_difftree_raw_line($difftree->[$patch_idx]);
 			}
+			# modifies %from, %to hashes
+			parse_from_to_diffinfo($diffinfo, \%from, \%to, @hash_parents);
 			if ($diffinfo->{'nparents'}) {
 				# combined diff
 				$from{'file'} = [];
@@ -2794,7 +2985,7 @@ sub git_patchset_body {
 			}
 
 			$to{'file'} = $diffinfo->{'to_file'} || $diffinfo->{'file'};
-			if ($diffinfo->{'to_id'} ne ('0' x 40)) { # file exists in result
+			if (!is_deleted($diffinfo)) { # file exists in result
 				$to{'href'} = href(action=>"blob", hash_base=>$hash,
 				                   hash=>$diffinfo->{'to_id'},
 				                   file_name=>$to{'file'});
@@ -2808,105 +2999,15 @@ sub git_patchset_body {
 
 		# print "git diff" header
 		$patch_line = shift @diff_header;
-		if ($diffinfo->{'nparents'}) {
-
-			# combined diff
-			$patch_line =~ s!^(diff (.*?) )"?.*$!$1!;
-			if ($to{'href'}) {
-				$patch_line .= $cgi->a({-href => $to{'href'}, -class => "path"},
-				                       esc_path($to{'file'}));
-			} else { # file was deleted
-				$patch_line .= esc_path($to{'file'});
-			}
-
-		} else {
-
-			$patch_line =~ s!^(diff (.*?) )"?a/.*$!$1!;
-			if ($from{'href'}) {
-				$patch_line .= $cgi->a({-href => $from{'href'}, -class => "path"},
-				                       'a/' . esc_path($from{'file'}));
-			} else { # file was added
-				$patch_line .= 'a/' . esc_path($from{'file'});
-			}
-			$patch_line .= ' ';
-			if ($to{'href'}) {
-				$patch_line .= $cgi->a({-href => $to{'href'}, -class => "path"},
-				                       'b/' . esc_path($to{'file'}));
-			} else { # file was deleted
-				$patch_line .= 'b/' . esc_path($to{'file'});
-			}
-
-		}
-		print "<div class=\"diff header\">$patch_line</div>\n";
+		print format_git_diff_header_line($patch_line, $diffinfo,
+		                                  \%from, \%to);
 
 		# print extended diff header
 		print "<div class=\"diff extended_header\">\n" if (@diff_header > 0);
 	EXTENDED_HEADER:
 		foreach $patch_line (@diff_header) {
-			# match <path>
-			if ($patch_line =~ s!^((copy|rename) from ).*$!$1! && $from{'href'}) {
-				$patch_line .= $cgi->a({-href=>$from{'href'}, -class=>"path"},
-				                       esc_path($from{'file'}));
-			}
-			if ($patch_line =~ s!^((copy|rename) to ).*$!$1! && $to{'href'}) {
-				$patch_line .= $cgi->a({-href=>$to{'href'}, -class=>"path"},
-				                       esc_path($to{'file'}));
-			}
-			# match single <mode>
-			if ($patch_line =~ m/\s(\d{6})$/) {
-				$patch_line .= '<span class="info"> (' .
-				               file_type_long($1) .
-				               ')</span>';
-			}
-			# match <hash>
-			if ($patch_line =~ m/^index [0-9a-fA-F]{40},[0-9a-fA-F]{40}/) {
-				# can match only for combined diff
-				$patch_line = 'index ';
-				for (my $i = 0; $i < $diffinfo->{'nparents'}; $i++) {
-					if ($from{'href'}[$i]) {
-						$patch_line .= $cgi->a({-href=>$from{'href'}[$i],
-						                        -class=>"hash"},
-						                       substr($diffinfo->{'from_id'}[$i],0,7));
-					} else {
-						$patch_line .= '0' x 7;
-					}
-					# separator
-					$patch_line .= ',' if ($i < $diffinfo->{'nparents'} - 1);
-				}
-				$patch_line .= '..';
-				if ($to{'href'}) {
-					$patch_line .= $cgi->a({-href=>$to{'href'}, -class=>"hash"},
-					                       substr($diffinfo->{'to_id'},0,7));
-				} else {
-					$patch_line .= '0' x 7;
-				}
-
-			} elsif ($patch_line =~ m/^index [0-9a-fA-F]{40}..[0-9a-fA-F]{40}/) {
-				# can match only for ordinary diff
-				my ($from_link, $to_link);
-				if ($from{'href'}) {
-					$from_link = $cgi->a({-href=>$from{'href'}, -class=>"hash"},
-					                     substr($diffinfo->{'from_id'},0,7));
-				} else {
-					$from_link = '0' x 7;
-				}
-				if ($to{'href'}) {
-					$to_link = $cgi->a({-href=>$to{'href'}, -class=>"hash"},
-					                   substr($diffinfo->{'to_id'},0,7));
-				} else {
-					$to_link = '0' x 7;
-				}
-				#affirm {
-				#	my ($from_hash, $to_hash) =
-				#		($patch_line =~ m/^index ([0-9a-fA-F]{40})..([0-9a-fA-F]{40})/);
-				#	my ($from_id, $to_id) =
-				#		($diffinfo->{'from_id'}, $diffinfo->{'to_id'});
-				#	($from_hash eq $from_id) && ($to_hash eq $to_id);
-				#} if DEBUG;
-				my ($from_id, $to_id) = ($diffinfo->{'from_id'}, $diffinfo->{'to_id'});
-				$patch_line =~ s!$from_id\.\.$to_id!$from_link..$to_link!;
-			}
-			print $patch_line . "<br/>\n";
+			print format_extended_diff_header_line($patch_line, $diffinfo,
+			                                       \%from, \%to);
 		}
 		print "</div>\n"  if (@diff_header > 0); # class="diff extended_header"
 
@@ -2918,24 +3019,14 @@ sub git_patchset_body {
 		}
 		next PATCH if ($patch_line =~ m/^diff /);
 		#assert($patch_line =~ m/^---/) if DEBUG;
-		if (!$diffinfo->{'nparents'} && # not from-file line for combined diff
-		    $from{'href'} && $patch_line =~ m!^--- "?a/!) {
-			$patch_line = '--- a/' .
-			              $cgi->a({-href=>$from{'href'}, -class=>"path"},
-			                      esc_path($from{'file'}));
-		}
-		print "<div class=\"diff from_file\">$patch_line</div>\n";
+		#assert($patch_line eq $last_patch_line) if DEBUG;
 
 		$patch_line = <$fd>;
 		chomp $patch_line;
+		#assert($patch_line =~ m/^\+\+\+/) if DEBUG;
 
-		#assert($patch_line =~ m/^+++/) if DEBUG;
-		if ($to{'href'} && $patch_line =~ m!^\+\+\+ "?b/!) {
-			$patch_line = '+++ b/' .
-			              $cgi->a({-href=>$to{'href'}, -class=>"path"},
-			                      esc_path($to{'file'}));
-		}
-		print "<div class=\"diff to_file\">$patch_line</div>\n";
+		print format_diff_from_to_header($last_patch_line, $patch_line,
+		                                 $diffinfo, \%from, \%to);
 
 		# the patch itself
 	LINE:
