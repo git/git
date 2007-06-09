@@ -3,7 +3,7 @@ git-prune(1)
 
 NAME
 ----
-git-prune - Prunes all unreachable objects from the object database
+git-prune - Prune all unreachable objects from the object database
 
 
 SYNOPSIS

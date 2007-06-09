@@ -3,7 +3,7 @@ git-clone(1)
 
 NAME
 ----
-git-clone - Clones a repository into a new directory
+git-clone - Clone a repository into a new directory
 
 
 SYNOPSIS
