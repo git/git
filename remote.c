@@ -430,9 +430,6 @@ static int match_explicit(struct ref *src, struct ref *dst,
 	if (rs->pattern)
 		return errs;
 
-	if (dst_value == NULL)
-		dst_value = rs->src;
-
 	matched_src = matched_dst = NULL;
 	switch (count_refspec_match(rs->src, src, &matched_src)) {
 	case 1:
@@ -445,16 +442,22 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		matched_src = try_explicit_object_name(rs->src);
 		if (matched_src)
 			break;
-		errs = 1;
 		error("src refspec %s does not match any.",
 		      rs->src);
 		break;
 	default:
-		errs = 1;
+		matched_src = NULL;
 		error("src refspec %s matches more than one.",
 		      rs->src);
 		break;
 	}
+
+	if (!matched_src)
+		errs = 1;
+
+	if (dst_value == NULL)
+		dst_value = rs->src;
+
 	switch (count_refspec_match(dst_value, dst, &matched_dst)) {
 	case 1:
 		break;
@@ -466,21 +469,19 @@ static int match_explicit(struct ref *src, struct ref *dst,
 			 * remote does not have master yet.
 			 */
 			matched_dst = make_dst(matched_src->name, dst_tail);
-		else {
-			errs = 1;
+		else
 			error("dst refspec %s does not match any "
 			      "existing ref on the remote and does "
 			      "not start with refs/.", dst_value);
-		}
 		break;
 	default:
-		errs = 1;
+		matched_dst = NULL;
 		error("dst refspec %s matches more than one.",
 		      dst_value);
 		break;
 	}
-	if (errs)
-		return errs;
+	if (errs || matched_dst == NULL)
+		return 1;
 	if (matched_dst->peer_ref) {
 		errs = 1;
 		error("dst ref %s receives from more than one src.",
