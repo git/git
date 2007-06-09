@@ -962,7 +962,7 @@ class P4Sync(Command):
 
         for line in read_pipe_lines("git rev-parse --symbolic --remotes"):
             line = line.strip()
-            if (not line.startswith("origin/")) or line.endswith("HEAD\n"):
+            if (not line.startswith("origin/")) or line.endswith("HEAD"):
                 continue
 
             headName = line[len("origin/"):]
