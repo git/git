@@ -171,6 +171,15 @@ test_expect_success 'test tracking setup via --track but deeper' \
      test "$(git-config branch.my7.remote)" = local &&
      test "$(git-config branch.my7.merge)" = refs/heads/o/o'
 
+test_expect_success 'test deleting branch deletes branch config' \
+    'git-branch -d my7 &&
+     test "$(git-config branch.my7.remote)" = "" &&
+     test "$(git-config branch.my7.merge)" = ""'
+
+test_expect_success 'test deleting branch without config' \
+    'git-branch my7 s &&
+     test "$(git-branch -d my7 2>&1)" = "Deleted branch my7."'
+
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF
 0000000000000000000000000000000000000000 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
