@@ -258,6 +258,7 @@ sub show_remote {
 	if ($info->{'PUSH'}) {
 		my @pushed = map {
 			s|^refs/heads/||;
+			s|^\+refs/heads/|+|;
 			s|:refs/heads/|:|;
 			$_;
 		} @{$info->{'PUSH'}};
