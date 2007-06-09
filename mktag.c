@@ -12,14 +12,7 @@
  * "object <sha1>\n" is 48 bytes, "type tag\n" at 9 bytes is the
  * shortest possible type-line, and "tag .\n" at 6 bytes is the
  * shortest single-character-tag line.
- *
- * We also artificially limit the size of the full object to 8kB.
- * Just because I'm a lazy bastard, and if you can't fit a signature
- * in that size, you're doing something wrong.
  */
-
-/* Some random size */
-#define MAXSIZE (8192)
 
 /*
  * We refuse to tag something we can't verify. Just because.
