@@ -53,9 +53,8 @@ side are updated.
 +
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
 +
-A parameter <ref> without a colon is equivalent to
-<ref>`:`<ref>, hence updates <ref> in the destination from <ref>
-in the source.
+A parameter <ref> without a colon pushes the <ref> from the source
+repository to the destination repository under the same name.
 +
 Pushing an empty <src> allows you to delete the <dst> ref from
 the remote repository.
@@ -97,6 +96,26 @@ the remote repository.
 	Run verbosely.
 
 include::urls.txt[]
+
+
+Examples
+--------
+
+git push origin master::
+	Find a ref that matches `master` in the source repository
+	(most likely, it would find `refs/heads/master`), and update
+	the same ref (e.g. `refs/heads/master`) in `origin` repository
+	with it.
+
+git push origin :experimental::
+	Find a ref that matches `experimental` in the `origin` repository
+	(e.g. `refs/heads/experimental`), and delete it.
+
+git push origin master:satellite/master::
+	Find a ref that matches `master` in the source repository
+	(most likely, it would find `refs/heads/master`), and update
+	the ref that matches `satellite/master` (most likely, it would
+	be `refs/remotes/satellite/master`) in `origin` repository with it.
 
 Author
 ------
