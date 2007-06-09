@@ -455,7 +455,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		errs = 1;
 
 	if (dst_value == NULL)
-		dst_value = rs->src;
+		dst_value = matched_src->name;
 
 	switch (count_refspec_match(dst_value, dst, &matched_dst)) {
 	case 1:
@@ -463,11 +463,6 @@ static int match_explicit(struct ref *src, struct ref *dst,
 	case 0:
 		if (!memcmp(dst_value, "refs/", 5))
 			matched_dst = make_dst(dst_value, dst_tail);
-		else if (!strcmp(rs->src, dst_value) && matched_src)
-			/* pushing "master:master" when
-			 * remote does not have master yet.
-			 */
-			matched_dst = make_dst(matched_src->name, dst_tail);
 		else
 			error("dst refspec %s does not match any "
 			      "existing ref on the remote and does "

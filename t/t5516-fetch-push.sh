@@ -189,6 +189,58 @@ test_expect_success 'push with ambiguity (2)' '
 	else
 		check_push_result $the_first_commit heads/frotz tags/frotz
 	fi
+
+'
+
+test_expect_success 'push with colon-less refspec (1)' '
+
+	mk_test heads/frotz tags/frotz &&
+	git branch -f frotz master &&
+	git push testrepo frotz &&
+	check_push_result $the_commit heads/frotz &&
+	check_push_result $the_first_commit tags/frotz
+
+'
+
+test_expect_success 'push with colon-less refspec (2)' '
+
+	mk_test heads/frotz tags/frotz &&
+	if git show-ref --verify -q refs/heads/frotz
+	then
+		git branch -D frotz
+	fi &&
+	git tag -f frotz &&
+	git push testrepo frotz &&
+	check_push_result $the_commit tags/frotz &&
+	check_push_result $the_first_commit heads/frotz
+
+'
+
+test_expect_success 'push with colon-less refspec (3)' '
+
+	mk_test &&
+	if git show-ref --verify -q refs/tags/frotz
+	then
+		git tag -d frotz
+	fi &&
+	git branch -f frotz master &&
+	git push testrepo frotz &&
+	check_push_result $the_commit heads/frotz &&
+	test "$( cd testrepo && git show-ref | wc -l )" = 1
+'
+
+test_expect_success 'push with colon-less refspec (4)' '
+
+	mk_test &&
+	if git show-ref --verify -q refs/heads/frotz
+	then
+		git branch -D frotz
+	fi &&
+	git tag -f frotz &&
+	git push testrepo frotz &&
+	check_push_result $the_commit tags/frotz &&
+	test "$( cd testrepo && git show-ref | wc -l )" = 1
+
 '
 
 test_done
