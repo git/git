@@ -20,7 +20,7 @@ usage() {
 get_repo_base() {
 	(
 		cd "`/bin/pwd`" &&
-		cd "$1" &&
+		cd "$1" || cd "$1.git" &&
 		{
 			cd .git
 			pwd
