@@ -108,7 +108,7 @@ test_expect_success \
     'git-archive --format=zip' \
     'git-archive --format=zip HEAD >d.zip'
 
-$UNZIP -v 2>/dev/null
+$UNZIP -v >/dev/null 2>&1
 if [ $? -eq 127 ]; then
 	echo "Skipping ZIP tests, because unzip was not found"
 	test_done
