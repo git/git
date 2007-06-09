@@ -15,12 +15,58 @@ mk_empty () {
 	)
 }
 
+mk_test () {
+	mk_empty &&
+	(
+		for ref in "$@"
+		do
+			git push testrepo $the_first_commit:refs/$ref || {
+				echo "Oops, push refs/$ref failure"
+				exit 1
+			}
+		done &&
+		cd testrepo &&
+		for ref in "$@"
+		do
+			r=$(git show-ref -s --verify refs/$ref) &&
+			test "z$r" = "z$the_first_commit" || {
+				echo "Oops, refs/$ref is wrong"
+				exit 1
+			}
+		done &&
+		git fsck --full
+	)
+}
+
+check_push_result () {
+	(
+		cd testrepo &&
+		it="$1" &&
+		shift
+		for ref in "$@"
+		do
+			r=$(git show-ref -s --verify refs/$ref) &&
+			test "z$r" = "z$it" || {
+				echo "Oops, refs/$ref is wrong"
+				exit 1
+			}
+		done &&
+		git fsck --full
+	)
+}
+
 test_expect_success setup '
 
 	: >path1 &&
 	git add path1 &&
 	test_tick &&
 	git commit -a -m repo &&
+	the_first_commit=$(git show-ref -s --verify refs/heads/master) &&
+
+	: >path2 &&
+	git add path2 &&
+	test_tick &&
+	git commit -a -m second &&
 	the_commit=$(git show-ref -s --verify refs/heads/master)
 
 '
@@ -77,6 +123,72 @@ test_expect_success 'push with wildcard' '
 
 		test 1 = $(git for-each-ref refs/remotes/origin | wc -l)
 	)
+'
+
+test_expect_success 'push with matching heads' '
+
+	mk_test heads/master &&
+	git push testrepo &&
+	check_push_result $the_commit heads/master
+
+'
+
+test_expect_success 'push with no ambiguity (1)' '
+
+	mk_test heads/master &&
+	git push testrepo master:master &&
+	check_push_result $the_commit heads/master
+
+'
+
+test_expect_success 'push with no ambiguity (2)' '
+
+	mk_test remotes/origin/master &&
+	git push testrepo master:master &&
+	check_push_result $the_commit remotes/origin/master
+
+'
+
+test_expect_success 'push with weak ambiguity (1)' '
+
+	mk_test heads/master remotes/origin/master &&
+	git push testrepo master:master &&
+	check_push_result $the_commit heads/master &&
+	check_push_result $the_first_commit remotes/origin/master
+
+'
+
+test_expect_success 'push with weak ambiguity (2)' '
+
+	mk_test heads/master remotes/origin/master remotes/another/master &&
+	git push testrepo master:master &&
+	check_push_result $the_commit heads/master &&
+	check_push_result $the_first_commit remotes/origin/master remotes/another/master
+
+'
+
+test_expect_success 'push with ambiguity (1)' '
+
+	mk_test remotes/origin/master remotes/frotz/master &&
+	if git push testrepo master:master
+	then
+		echo "Oops, should have failed"
+		false
+	else
+		check_push_result $the_first_commit remotes/origin/master remotes/frotz/master
+	fi
+'
+
+test_expect_success 'push with ambiguity (2)' '
+
+	mk_test heads/frotz tags/frotz &&
+	if git push testrepo master:frotz
+	then
+		echo "Oops, should have failed"
+		false
+	else
+		check_push_result $the_first_commit heads/frotz tags/frotz
+	fi
 '
 
 test_done

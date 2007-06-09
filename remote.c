@@ -333,7 +333,6 @@ static int count_refspec_match(const char *pattern,
 	for (weak_match = match = 0; refs; refs = refs->next) {
 		char *name = refs->name;
 		int namelen = strlen(name);
-		int weak_match;
 
 		if (namelen < patlen ||
 		    memcmp(name + namelen - patlen, pattern, patlen))
