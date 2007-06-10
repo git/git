@@ -14,15 +14,6 @@ to pick an item from the list and work on it.
 Recent issues
 -------------
 
-* parse-remote.sh has POSIXLY incorrect shell construct.
-
-Message-ID: <20070505080313.GA12170@gondor.apana.org.au>
-
-* Use 'git diff' not 'git diff-tree' in merge and rebase
-
-From: James Bowes <jbowes@dangerouslyinc.com>
-Message-ID: <1178398134288-git-send-email-jbowes@dangerouslyinc.com>
-
 * gitk --left-right
 
 From: Linus Torvalds <torvalds@linux-foundation.org>
@@ -47,7 +38,6 @@ Message-ID: <450EABD0.1040102@innova-card.com>
 Repeated requests against git-daemon makes it stuck under --syslog
 
 [jc: does not reproduce easily for me; has anybody seen it?]
-
 
 * AsciiDoc 8 would break our documentation.
 
