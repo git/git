@@ -395,7 +395,17 @@ int git_config_from_file(config_fn_t fn, const char *filename)
 
 const char *git_etc_gitconfig(void)
 {
-	return ETC_GITCONFIG;
+	static const char *system_wide;
+	if (!system_wide) {
+		system_wide = ETC_GITCONFIG;
+		/* interpret path relative to exec-dir */
+		if (system_wide[0] != '/' && system_wide[1] != ':') {
+			const char *exec_path = git_exec_path();
+			system_wide = prefix_path(exec_path, strlen(exec_path),
+						system_wide);
+		}
+	}
+	return system_wide;
 }
 
 int git_config(config_fn_t fn)
