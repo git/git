@@ -20,7 +20,7 @@
 #include "mailmap.h"
 
 static char blame_usage[] =
-"git-blame [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-p] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [--contents <filename>] [--incremental] [commit] [--] file\n"
+"git-blame [-c] [-b] [-l] [--root] [-t] [-f] [-n] [-s] [-p] [-w] [-L n,m] [-S <revs-file>] [-M] [-C] [-C] [--contents <filename>] [--incremental] [commit] [--] file\n"
 "  -c                  Use the same output mode as git-annotate (Default: off)\n"
 "  -b                  Show blank SHA-1 for boundary commits (Default: off)\n"
 "  -l                  Show long commit SHA1 (Default: off)\n"
@@ -30,6 +30,7 @@ static char blame_usage[] =
 "  -n, --show-number   Show original linenumber (Default: off)\n"
 "  -s                  Suppress author name and timestamp (Default: off)\n"
 "  -p, --porcelain     Show in a format designed for machine consumption\n"
+"  -w                  Ignore whitespace differences\n"
 "  -L n,m              Process only line range n,m, counting from 1\n"
 "  -M, -C              Find line movements within and across files\n"
 "  --incremental       Show blame entries as we find them, incrementally\n"
@@ -45,6 +46,7 @@ static int show_root;
 static int blank_boundary;
 static int incremental;
 static int cmd_is_annotate;
+static int xdl_opts = XDF_NEED_MINIMAL;
 static struct path_list mailmap;
 
 #ifndef DEBUG
@@ -515,7 +517,7 @@ static struct patch *compare_buffer(mmfile_t *file_p, mmfile_t *file_o,
 	xdemitconf_t xecfg;
 	xdemitcb_t ecb;
 
-	xpp.flags = XDF_NEED_MINIMAL;
+	xpp.flags = xdl_opts;
 	xecfg.ctxlen = context;
 	xecfg.flags = 0;
 	ecb.outf = xdiff_outf;
@@ -2159,6 +2161,8 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 			output_option |= OUTPUT_LONG_OBJECT_NAME;
 		else if (!strcmp("-s", arg))
 			output_option |= OUTPUT_NO_AUTHOR;
+		else if (!strcmp("-w", arg))
+			xdl_opts |= XDF_IGNORE_WHITESPACE;
 		else if (!strcmp("-S", arg) && ++i < argc)
 			revs_file = argv[i];
 		else if (!prefixcmp(arg, "-M")) {
