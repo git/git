@@ -144,7 +144,7 @@ STRIP ?= strip
 prefix = $(HOME)
 bindir = $(prefix)/bin
 gitexecdir = $(bindir)
-sharedir = $(prefix)/share/
+sharedir = $(prefix)/share
 template_dir = $(sharedir)/git-core/templates/
 ifeq ($(prefix),/usr)
 sysconfdir = /etc
