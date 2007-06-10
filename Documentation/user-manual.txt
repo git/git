@@ -2723,46 +2723,44 @@ database>> and the <<def_index,index>>.
 The Object Database
 -------------------
 
-The object database is literally just a content-addressable collection
-of objects.  All objects are named by their content, which is
-approximated by the SHA1 hash of the object itself.  Objects may refer
-to other objects (by referencing their SHA1 hash), and so you can
-build up a hierarchy of objects.
 
-All objects have a statically determined "type" which is
-determined at object creation time, and which identifies the format of
-the object (i.e. how it is used, and how it can refer to other
-objects).  There are currently four different object types: "blob",
-"tree", "commit", and "tag".
+We already saw in <<understanding-commits>> that all commits are stored
+under a 40-digit "object name".  In fact, all the information needed to
+represent the history of a project is stored in objects with such names.
+In each case the name is calculated by taking the SHA1 hash of the
+contents of the object.  The SHA1 hash is a cryptographic hash function.
+What that means to us is that it is impossible to find two different
+objects with the same name.  This has a number of advantages; among
+others:
 
-A <<def_blob_object,"blob" object>> cannot refer to any other object,
-and is, as the name implies, a pure storage object containing some
-user data.  It is used to actually store the file data, i.e. a blob
-object is associated with some particular version of some file.
+- Git can quickly determine whether two objects are identical or not,
+  just by comparing names.
+- Since object names are computed the same way in ever repository, the
+  same content stored in two repositories will always be stored under
+  the same name.
+- Git can detect errors when it reads an object, by checking that the
+  object's name is still the SHA1 hash of its contents.
 
-A <<def_tree_object,"tree" object>> is an object that ties one or more
-"blob" objects into a directory structure. In addition, a tree object
-can refer to other tree objects, thus creating a directory hierarchy.
+(See <<object-details>> for the details of the object formatting and
+SHA1 calculation.)
 
-A <<def_commit_object,"commit" object>> ties such directory hierarchies
-together into a <<def_DAG,directed acyclic graph>> of revisions - each
-"commit" is associated with exactly one tree (the directory hierarchy at
-the time of the commit). In addition, a "commit" refers to one or more
-"parent" commit objects that describe the history of how we arrived at
-that directory hierarchy.
+There are four different types of objects: "blob", "tree", "commit", and
+"tag".
 
-As a special case, a commit object with no parents is called the "root"
-commit, and is the point of an initial project commit.  Each project
-must have at least one root, and while you can tie several different
-root objects together into one project by creating a commit object which
-has two or more separate roots as its ultimate parents, that's probably
-just going to confuse people.  So aim for the notion of "one root object
-per project", even if git itself does not enforce that.
-
-A <<def_tag_object,"tag" object>> symbolically identifies and can be
-used to sign other objects. It contains the identifier and type of
-another object, a symbolic name (of course!) and, optionally, a
-signature.
+- A <<def_blob_object,"blob" object>> is used to store file data.
+- A <<def_tree_object,"tree" object>> is an object that ties one or more
+  "blob" objects into a directory structure. In addition, a tree object
+  can refer to other tree objects, thus creating a directory hierarchy.
+- A <<def_commit_object,"commit" object>> ties such directory hierarchies
+  together into a <<def_DAG,directed acyclic graph>> of revisions - each
+  commit contains the object name of exactly one tree designating the
+  directory hierarchy at the time of the commit. In addition, a commit
+  refers to "parent" commit objects that describe the history of how we
+  arrived at that directory hierarchy.
+- A <<def_tag_object,"tag" object>> symbolically identifies and can be
+  used to sign other objects. It contains the object name and type of
+  another object, a symbolic name (of course!) and, optionally, a
+  signature.
 
 The object types in some more detail:
 
@@ -2770,109 +2768,142 @@ The object types in some more detail:
 Commit Object
 ~~~~~~~~~~~~~
 
-The "commit" object is an object that introduces the notion of
-history into the picture.  In contrast to the other objects, it
-doesn't just describe the physical state of a tree, it describes how
-we got there, and why.
+The "commit" object links a physical state of a tree with a description
+of how we got there and why.  Use the --pretty=raw option to
+gitlink:git-show[1] or gitlink:git-log[1] to examine your favorite
+commit:
 
-A "commit" is defined by the tree-object that it results in, the
-parent commits (zero, one or more) that led up to that point, and a
-comment on what happened.  Again, a commit is not trusted per se:
-the contents are well-defined and "safe" due to the cryptographically
-strong signatures at all levels, but there is no reason to believe
-that the tree is "good" or that the merge information makes sense.
-The parents do not have to actually have any relationship with the
-result, for example.
+------------------------------------------------
+$ git show -s --pretty=raw 2be7fcb476
+commit 2be7fcb4764f2dbcee52635b91fedb1b3dcf7ab4
+tree fb3a8bdd0ceddd019615af4d57a53f43d8cee2bf
+parent 257a84d9d02e90447b149af58b271c19405edb6a
+author Dave Watson <dwatson@mimvista.com> 1187576872 -0400
+committer Junio C Hamano <gitster@pobox.com> 1187591163 -0700
 
-Note on commits: unlike some SCM's, commits do not contain
-rename information or file mode change information.  All of that is
-implicit in the trees involved (the result tree, and the result trees
-of the parents), and describing that makes no sense in this idiotic
-file manager.
+    Fix misspelling of 'suppress' in docs
 
-A commit is created with gitlink:git-commit-tree[1] and
-its data can be accessed by gitlink:git-cat-file[1].
+    Signed-off-by: Junio C Hamano <gitster@pobox.com>
+------------------------------------------------
+
+As you can see, a commit is defined by:
+
+- a tree: The SHA1 name of a tree object (as defined below), representing
+  the contents of a directory at a certain point in time.
+- parent(s): The SHA1 name of some number of commits which represent the
+  immediately prevoius step(s) in the history of the project.  The
+  example above has one parent; merge commits may have more than
+  one.  A commit with no parents is called a "root" commit, and
+  represents the initial revision of a project.  Each project must have
+  at least one root.  A project can also have multiple roots, though
+  that isn't common (or necessarily a good idea).
+- an author: The name of the person responsible for this change, together
+  with its date.
+- a committer: The name of the person who actually created the commit,
+  with the date it was done.  This may be different from the author, for
+  example, if the author was someone who wrote a patch and emailed it
+  to the person who used it to create the commit.
+- a comment describing this commit.
+
+Note that a commit does not itself contain any information about what
+actually changed; all changes are calculated by comparing the contents
+of the tree referred to by this commit with the trees associated with
+its parents.  In particular, git does not attempt to record file renames
+explicitly, though it can identify cases where the existence of the same
+file data at changing paths suggests a rename.  (See, for example, the
+-M option to gitlink:git-diff[1]).
+
+A commit is usually created by gitlink:git-commit[1], which creates a
+commit whose parent is normally the current HEAD, and whose tree is
+taken from the content currently stored in the index.
 
 [[tree-object]]
 Tree Object
 ~~~~~~~~~~~
 
-The next hierarchical object type is the "tree" object.  A tree object
-is a list of mode/name/blob data, sorted by name.  Alternatively, the
-mode data may specify a directory mode, in which case instead of
-naming a blob, that name is associated with another TREE object.
+The ever-versatile gitlink:git-show[1] command can also be used to
+examine tree objects, but gitlink:git-ls-tree[1] will give you more
+details:
 
-Like the "blob" object, a tree object is uniquely determined by the
-set contents, and so two separate but identical trees will always
-share the exact same object. This is true at all levels, i.e. it's
-true for a "leaf" tree (which does not refer to any other trees, only
-blobs) as well as for a whole subdirectory.
+------------------------------------------------
+$ git ls-tree fb3a8bdd0ce
+100644 blob 63c918c667fa005ff12ad89437f2fdc80926e21c    .gitignore
+100644 blob 5529b198e8d14decbe4ad99db3f7fb632de0439d    .mailmap
+100644 blob 6ff87c4664981e4397625791c8ea3bbb5f2279a3    COPYING
+040000 tree 2fb783e477100ce076f6bf57e4a6f026013dc745    Documentation
+100755 blob 3c0032cec592a765692234f1cba47dfdcc3a9200    GIT-VERSION-GEN
+100644 blob 289b046a443c0647624607d471289b2c7dcd470b    INSTALL
+100644 blob 4eb463797adc693dc168b926b6932ff53f17d0b1    Makefile
+100644 blob 548142c327a6790ff8821d67c2ee1eff7a656b52    README
+...
+------------------------------------------------
 
-For that reason a "tree" object is just a pure data abstraction: it
-has no history, no signatures, no verification of validity, except
-that since the contents are again protected by the hash itself, we can
-trust that the tree is immutable and its contents never change.
+As you can see, a tree object contains a list of entries, each with a
+mode, object type, SHA1 name, and name, sorted by name.  It represents
+the contents of a single directory tree.
 
-So you can trust the contents of a tree to be valid, the same way you
-can trust the contents of a blob, but you don't know where those
-contents 'came' from.
+The object type may be a blob, representing the contents of a file, or
+another tree, representing the contents of a subdirectory.  Since trees
+and blobs, like all other objects, are named by the SHA1 hash of their
+contents, two trees have the same SHA1 name if and only if their
+contents (including, recursively, the contents of all subdirectories)
+are identical.  This allows git to quickly determine the differences
+between two related tree objects, since it can ignore any entries with
+identical object names.
 
-Side note on trees: since a "tree" object is a sorted list of
-"filename+content", you can create a diff between two trees without
-actually having to unpack two trees.  Just ignore all common parts,
-and your diff will look right.  In other words, you can effectively
-(and efficiently) tell the difference between any two random trees by
-O(n) where "n" is the size of the difference, rather than the size of
-the tree.
+(Note: in the presence of submodules, trees may also have commits as
+entries.   See gitlink:git-submodule[1] and gitlink:gitmodules.txt[1]
+for partial documentation.)
 
-Side note 2 on trees: since the name of a "blob" depends entirely and
-exclusively on its contents (i.e. there are no names or permissions
-involved), you can see trivial renames or permission changes by
-noticing that the blob stayed the same.  However, renames with data
-changes need a smarter "diff" implementation.
-
-A tree is created with gitlink:git-write-tree[1] and
-its data can be accessed by gitlink:git-ls-tree[1].
-Two trees can be compared with gitlink:git-diff-tree[1].
+Note that the files all have mode 644 or 755: git actually only pays
+attention to the executable bit.
 
 [[blob-object]]
 Blob Object
 ~~~~~~~~~~~
 
-A "blob" object is nothing but a binary blob of data, and doesn't
-refer to anything else.  There is no signature or any other
-verification of the data, so while the object is consistent (it 'is'
-indexed by its sha1 hash, so the data itself is certainly correct), it
-has absolutely no other attributes.  No name associations, no
-permissions.  It is purely a blob of data (i.e. normally "file
-contents").
+You can use gitlink:git-show[1] to examine the contents of a blob; take,
+for example, the blob in the entry for "COPYING" from the tree above:
 
-In particular, since the blob is entirely defined by its data, if two
-files in a directory tree (or in multiple different versions of the
-repository) have the same contents, they will share the same blob
-object. The object is totally independent of its location in the
-directory tree, and renaming a file does not change the object that
-file is associated with in any way.
+------------------------------------------------
+$ git show 6ff87c4664
 
-A blob is typically created when gitlink:git-update-index[1]
-is run, and its data can be accessed by gitlink:git-cat-file[1].
+ Note that the only valid version of the GPL as far as this project
+ is concerned is _this_ particular version of the license (ie v2, not
+ v2.2 or v3.x or whatever), unless explicitly otherwise stated.
+...
+------------------------------------------------
+
+A "blob" object is nothing but a binary blob of data.  It doesn't refer
+to anything else or have attributes of any kind.
+
+Since the blob is entirely defined by its data, if two files in a
+directory tree (or in multiple different versions of the repository)
+have the same contents, they will share the same blob object. The object
+is totally independent of its location in the directory tree, and
+renaming a file does not change the object that file is associated with.
+
+Note that any tree or blob object can be examined using
+gitlink:git-show[1] with the <revision>:<path> syntax.  This can
+sometimes be useful for browsing the contents of a tree that is not
+currently checked out.
 
 [[trust]]
 Trust
 ~~~~~
 
-An aside on the notion of "trust". Trust is really outside the scope
-of "git", but it's worth noting a few things.  First off, since
-everything is hashed with SHA1, you 'can' trust that an object is
-intact and has not been messed with by external sources.  So the name
-of an object uniquely identifies a known state - just not a state that
-you may want to trust.
+If you receive the SHA1 name of a blob from one source, and its contents
+from another (possibly untrusted) source, you can still trust that those
+contents are correct as long as the SHA1 name agrees.  This is because
+the SHA1 is designed so that it is infeasible to find different contents
+that produce the same hash.
 
-Furthermore, since the SHA1 signature of a commit refers to the
-SHA1 signatures of the tree it is associated with and the signatures
-of the parent, a single named commit specifies uniquely a whole set
-of history, with full contents.  You can't later fake any step of the
-way once you have the name of a commit.
+Similarly, you need only trust the SHA1 name of a top-level tree object
+to trust the contents of the entire directory that it refers to, and if
+you receive the SHA1 name of a commit from a trusted source, then you
+can easily verify the entire history of commits reachable through
+parents of that commit, and all of those contents of the trees referred
+to by those commits.
 
 So to introduce some real trust in the system, the only thing you need
 to do is to digitally sign just 'one' special note, which includes the
@@ -2891,23 +2922,31 @@ To assist in this, git also provides the tag object...
 Tag Object
 ~~~~~~~~~~
 
-Git provides the "tag" object to simplify creating, managing and
-exchanging symbolic and signed tokens.  The "tag" object at its
-simplest simply symbolically identifies another object by containing
-the sha1, type and symbolic name.
+A tag object contains an object, object type, tag name, the name of the
+person ("tagger") who created the tag, and a message, which may contain
+a signature, as can be seen using the gitlink:git-cat-file[1]:
 
-However it can optionally contain additional signature information
-(which git doesn't care about as long as there's less than 8k of
-it). This can then be verified externally to git.
+------------------------------------------------
+$ git cat-file tag v1.5.0
+object 437b1b20df4b356c9342dac8d38849f24ef44f27
+type commit
+tag v1.5.0
+tagger Junio C Hamano <junkio@cox.net> 1171411200 +0000
 
-Note that despite the tag features, "git" itself only handles content
-integrity; the trust framework (and signature provision and
-verification) has to come from outside.
+GIT 1.5.0
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
 
-A tag is created with gitlink:git-mktag[1],
-its data can be accessed by gitlink:git-cat-file[1],
-and the signature can be verified by
-gitlink:git-verify-tag[1].
+iD8DBQBF0lGqwMbZpPMRm5oRAuRiAJ9ohBLd7s2kqjkKlq1qqC57SbnmzQCdG4ui
+nLE/L9aUXdWeTFPron96DLA=
+=2E+0
+-----END PGP SIGNATURE-----
+------------------------------------------------
+
+See the gitlink:git-tag[1] command to learn how to create and verify tag
+objects.  (Note that gitlink:git-tag[1] can also be used to create
+"lightweight tags", which are not tag objects at all, but just simple
+references in .git/refs/tags/).
 
 
 [[the-index]]
@@ -2977,6 +3016,24 @@ Many of the higher-level commands were originally implemented as shell
 scripts using a smaller core of low-level git commands.  These can still
 be useful when doing unusual things with git, or just as a way to
 understand its inner workings.
+
+[[object-manipulation]]
+Object access and manipulation
+------------------------------
+
+The gitlink:git-cat-file[1] command can show the contents of any object,
+though the higher-level gitlink:git-show[1] is usually more useful.
+
+The gitlink:git-commit-tree[1] command allows constructing commits with
+arbitrary parents and trees.
+
+A tree can be created with gitlink:git-write-tree[1] and its data can be
+accessed by gitlink:git-ls-tree[1].  Two trees can be compared with
+gitlink:git-diff-tree[1].
+
+A tag is created with gitlink:git-mktag[1], and the signature can be
+verified by gitlink:git-verify-tag[1], though it is normally simpler to
+use gitlink:git-tag[1] for both.
 
 [[the-workflow]]
 The Workflow
