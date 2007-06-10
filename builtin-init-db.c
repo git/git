@@ -5,6 +5,7 @@
  */
 #include "cache.h"
 #include "builtin.h"
+#include "exec_cmd.h"
 
 #ifndef DEFAULT_GIT_TEMPLATE_DIR
 #define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates/"
