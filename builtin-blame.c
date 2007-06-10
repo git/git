@@ -1744,11 +1744,11 @@ static int read_ancestry(const char *graft_file)
  */
 static int lineno_width(int lines)
 {
-        int i, width;
+	int i, width;
 
-        for (width = 1, i = 10; i <= lines + 1; width++)
-                i *= 10;
-        return width;
+	for (width = 1, i = 10; i <= lines + 1; width++)
+		i *= 10;
+	return width;
 }
 
 /*
