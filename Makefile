@@ -722,6 +722,7 @@ bindir_SQ = $(subst ','\'',$(bindir))
 gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
 template_dir_SQ = $(subst ','\'',$(template_dir))
 prefix_SQ = $(subst ','\'',$(prefix))
+sysconfdir_SQ = $(subst ','\'',$(sysconfdir))
 
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
@@ -1001,8 +1002,11 @@ remove-dashes:
 install: all
 	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(bindir_SQ)'
 	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(gitexecdir_SQ)'
+	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(sysconfdir_SQ)'
 	$(INSTALL) $(ALL_PROGRAMS) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
 	$(INSTALL) git$X '$(DESTDIR_SQ)$(bindir_SQ)'
+	GIT_CONFIG='$(DESTDIR_SQ)$(sysconfdir_SQ)/gitconfig' \
+		$(DESTDIR_SQ)$(bindir_SQ)/git-config$X core.symlinks false
 	$(MAKE) -C templates DESTDIR='$(DESTDIR_SQ)' install
 	$(MAKE) -C perl prefix='$(prefix_SQ)' install
 ifndef NO_TCLTK
