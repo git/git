@@ -132,8 +132,8 @@ and newly modified files, and in both cases it takes a snapshot of the
 given files and stages that content in the index, ready for inclusion in
 the next commit.
 
-Viewing the changelog
----------------------
+Viewing project history
+-----------------------
 
 At any point you can view the history of your changes using
 

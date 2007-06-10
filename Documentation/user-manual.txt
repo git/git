@@ -27,7 +27,7 @@ $ man git-clone
 See also <<git-quick-start>> for a brief overview of git commands,
 without any explanation.
 
-Also, see <<todo>> for ways that you can help make this manual more
+Finally, see <<todo>> for ways that you can help make this manual more
 complete.
 
 
@@ -921,6 +921,7 @@ echo "git diff --stat --summary -M v$last v$new > ../diffstat-$new"
 and then he just cut-and-pastes the output commands after verifying that
 they look OK.
 
+[[Finding-comments-with-given-content]]
 Finding commits referencing a file with given content
 -----------------------------------------------------
 
@@ -1682,7 +1683,7 @@ automatically set the default remote branch to pull from at the time
 that a branch is created:
 
 -------------------------------------------------
-$ git checkout --track -b origin/maint maint
+$ git checkout --track -b maint origin/maint
 -------------------------------------------------
 
 In addition to saving you keystrokes, "git pull" also helps you by
@@ -3669,11 +3670,11 @@ itself!
 include::glossary.txt[]
 
 [[git-quick-start]]
-Appendix A: Git Quick Start
-===========================
+Appendix A: Git Quick Reference
+===============================
 
-This is a quick summary of the major commands; the following chapters
-will explain how these work in more detail.
+This is a quick summary of the major commands; the previous chapters
+explain how these work in more detail.
 
 [[quick-creating-a-new-repository]]
 Creating a new repository
@@ -3951,3 +3952,7 @@ CVS, Subversion, and just imports of series of release tarballs.
 More details on gitweb?
 
 Write a chapter on using plumbing and writing scripts.
+
+Alternates, clone -reference, etc.
+
+git unpack-objects -r for recovery
