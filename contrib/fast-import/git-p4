@@ -960,14 +960,16 @@ class P4Sync(Command):
             print ("Creating/updating branch(es) in %s based on origin branch(es)"
                    % self.refPrefix)
 
+        originPrefix = "origin/p4/"
+
         for line in read_pipe_lines("git rev-parse --symbolic --remotes"):
             line = line.strip()
-            if (not line.startswith("origin/")) or line.endswith("HEAD"):
+            if (not line.startswith(originPrefix)) or line.endswith("HEAD"):
                 continue
 
-            headName = line[len("origin/"):]
+            headName = line[len(originPrefix):]
             remoteHead = self.refPrefix + headName
-            originHead = "origin/" + headName
+            originHead = line
 
             original = extractSettingsGitLog(extractLogMessageFromGitCommit(originHead))
             if (not original.has_key('depot-paths')
@@ -1020,7 +1022,7 @@ class P4Sync(Command):
         # map from branch depot path to parent branch
         self.knownBranches = {}
         self.initialParents = {}
-        self.hasOrigin = gitBranchExists("origin")
+        self.hasOrigin = gitBranchExists("origin") or gitBranchExists("origin/p4") or gitBranchExists("origin/p4/master")
 
         if self.importIntoRemotes:
             self.refPrefix = "refs/remotes/p4/"
