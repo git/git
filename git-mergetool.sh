@@ -310,23 +310,35 @@ if test -z "$merge_tool"; then
 fi
 
 if test -z "$merge_tool" ; then
-    if type kdiff3 >/dev/null 2>&1 && test -n "$DISPLAY"; then
-	merge_tool="kdiff3";
-    elif type tkdiff >/dev/null 2>&1 && test -n "$DISPLAY"; then
-	merge_tool=tkdiff
-    elif type xxdiff >/dev/null 2>&1 && test -n "$DISPLAY"; then
-	merge_tool=xxdiff
-    elif type meld >/dev/null 2>&1 && test -n "$DISPLAY"; then
-	merge_tool=meld
-    elif type gvimdiff >/dev/null 2>&1 && test -n "$DISPLAY"; then
-	merge_tool=gvimdiff
-    elif type opendiff >/dev/null 2>&1; then
-	merge_tool=opendiff
-    elif type emacs >/dev/null 2>&1; then
-	merge_tool=emerge
-    elif type vimdiff >/dev/null 2>&1; then
-	merge_tool=vimdiff
-    else
+    if test -n "$DISPLAY"; then
+        merge_tool_candidates="kdiff3 tkdiff xxdiff meld gvimdiff"
+        if test -n "$GNOME_DESKTOP_SESSION_ID" ; then
+            merge_tool_candidates="meld $merge_tool_candidates"
+        fi
+        if test "$KDE_FULL_SESSION" = "true"; then
+            merge_tool_candidates="kdiff3 $merge_tool_candidates"
+        fi
+    fi
+    if echo "${VISUAL:-$EDITOR}" | grep 'emacs' > /dev/null 2>&1; then
+        merge_tool_candidates="$merge_tool_candidates emerge"
+    fi
+    if echo "${VISUAL:-$EDITOR}" | grep 'vim' > /dev/null 2>&1; then
+        merge_tool_candidates="$merge_tool_candidates vimdiff"
+    fi
+    merge_tool_candidates="$merge_tool_candidates opendiff emerge vimdiff"
+    echo "merge tool candidates: $merge_tool_candidates"
+    for i in $merge_tool_candidates; do
+        if test $i = emerge ; then
+            cmd=emacs
+        else
+            cmd=$i
+        fi
+        if type $cmd > /dev/null 2>&1; then
+            merge_tool=$i
+            break
+        fi
+    done
+    if test -z "$merge_tool" ; then
 	echo "No available merge resolution programs available."
 	exit 1
     fi
