@@ -36,8 +36,8 @@ If you want more control you can also use the git-p4 sync command directly:
   git-p4 sync //path/in/your/perforce/depot
 
 This will import the current head revision of the specified depot path into a
-"p4" branch of your git repository. You can use the --branch=mybranch option
-to use a different branch.
+"remotes/p4/master" branch of your git repository. You can use the
+--branch=mybranch option to use a different branch.
 
 If you want to import the entire history of a given depot path just use
 
@@ -57,7 +57,7 @@ newer changes from the Perforce depot by just calling
 
   git-p4 sync
 
-in your git repository. By default the "p4" branch is updated.
+in your git repository. By default the "remotes/p4/master" branch is updated.
 
 It is recommended to run 'git repack -a -d -f' from time to time when using
 incremental imports to optimally combine the individual git packs that each
