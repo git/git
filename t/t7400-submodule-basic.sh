@@ -18,7 +18,7 @@ subcommands of git-submodule.
 #  -add directory lib to 'superproject', this creates a DIRLINK entry
 #  -add a couple of regular files to enable testing of submodule filtering
 #  -mv lib subrepo
-#  -add an entry to .gitmodules for path 'lib'
+#  -add an entry to .gitmodules for submodule 'example'
 #
 test_expect_success 'Prepare submodule testing' '
 	mkdir lib &&
@@ -40,7 +40,19 @@ test_expect_success 'Prepare submodule testing' '
 	git-add a lib z &&
 	git-commit -m "super commit 1" &&
 	mv lib .subrepo &&
-	GIT_CONFIG=.gitmodules git-config submodule.lib.url git://example.com/lib.git
+	GIT_CONFIG=.gitmodules git-config submodule.example.url git://example.com/lib.git
+'
+
+test_expect_success 'status should fail for unmapped paths' '
+	if git-submodule status
+	then
+		echo "[OOPS] submodule status succeeded"
+		false
+	elif ! GIT_CONFIG=.gitmodules git-config submodule.example.path lib
+	then
+		echo "[OOPS] git-config failed to update .gitmodules"
+		false
+	fi
 '
 
 test_expect_success 'status should only print one line' '
@@ -54,12 +66,12 @@ test_expect_success 'status should initially be "missing"' '
 
 test_expect_success 'init should register submodule url in .git/config' '
 	git-submodule init &&
-	url=$(git-config submodule.lib.url) &&
+	url=$(git-config submodule.example.url) &&
 	if test "$url" != "git://example.com/lib.git"
 	then
 		echo "[OOPS] init succeeded but submodule url is wrong"
 		false
-	elif ! git-config submodule.lib.url ./.subrepo
+	elif ! git-config submodule.example.url ./.subrepo
 	then
 		echo "[OOPS] init succeeded but update of url failed"
 		false

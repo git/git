@@ -25,6 +25,19 @@ say()
 	fi
 }
 
+#
+# Map submodule path to submodule name
+#
+# $1 = path
+#
+module_name()
+{
+       name=$(GIT_CONFIG=.gitmodules git-config --get-regexp '^submodule\..*\.path$' "$1" |
+       sed -nre 's/^submodule\.(.+)\.path .+$/\1/p')
+       test -z "$name" &&
+       die "No submodule mapping found in .gitmodules for path '$path'"
+       echo "$name"
+}
 
 #
 # Clone a submodule
@@ -49,7 +62,7 @@ module_clone()
 	die "A file already exist at path '$path'"
 
 	git-clone -n "$url" "$path" ||
-	die "Clone of submodule '$path' failed"
+	die "Clone of '$url' into submodule path '$path' failed"
 }
 
 #
@@ -63,17 +76,18 @@ modules_init()
 	while read mode sha1 stage path
 	do
 		# Skip already registered paths
-		url=$(git-config submodule."$path".url)
+		name=$(module_name "$path") || exit
+		url=$(git-config submodule."$name".url)
 		test -z "$url" || continue
 
-		url=$(GIT_CONFIG=.gitmodules git-config submodule."$path".url)
+		url=$(GIT_CONFIG=.gitmodules git-config submodule."$name".url)
 		test -z "$url" &&
-		die "No url found for submodule '$path' in .gitmodules"
+		die "No url found for submodule path '$path' in .gitmodules"
 
-		git-config submodule."$path".url "$url" ||
-		die "Failed to register url for submodule '$path'"
+		git-config submodule."$name".url "$url" ||
+		die "Failed to register url for submodule path '$path'"
 
-		say "Submodule '$path' registered with url '$url'"
+		say "Submodule '$name' ($url) registered for path '$path'"
 	done
 }
 
@@ -87,13 +101,14 @@ modules_update()
 	git ls-files --stage -- "$@" | grep -e '^160000 ' |
 	while read mode sha1 stage path
 	do
-		url=$(git-config submodule."$path".url)
+		name=$(module_name "$path") || exit
+		url=$(git-config submodule."$name".url)
 		if test -z "$url"
 		then
 			# Only mention uninitialized submodules when its
 			# path have been specified
 			test "$#" != "0" &&
-			say "Submodule '$path' not initialized"
+			say "Submodule path '$path' not initialized"
 			continue
 		fi
 
@@ -104,22 +119,22 @@ modules_update()
 		else
 			subsha1=$(unset GIT_DIR && cd "$path" &&
 				git-rev-parse --verify HEAD) ||
-			die "Unable to find current revision of submodule '$path'"
+			die "Unable to find current revision in submodule path '$path'"
 		fi
 
 		if test "$subsha1" != "$sha1"
 		then
 			(unset GIT_DIR && cd "$path" && git-fetch &&
 				git-checkout -q "$sha1") ||
-			die "Unable to checkout '$sha1' in submodule '$path'"
+			die "Unable to checkout '$sha1' in submodule path '$path'"
 
-			say "Submodule '$path': checked out '$sha1'"
+			say "Submodule path '$path': checked out '$sha1'"
 		fi
 	done
 }
 
 #
-# List all registered submodules, prefixed with:
+# List all submodules, prefixed with:
 #  - submodule not initialized
 #  + different revision checked out
 #
@@ -133,7 +148,9 @@ modules_list()
 	git ls-files --stage -- "$@" | grep -e '^160000 ' |
 	while read mode sha1 stage path
 	do
-		if ! test -d "$path"/.git
+		name=$(module_name "$path") || exit
+		url=$(git-config submodule."$name".url)
+		if test -z "url" || ! test -d "$path"/.git
 		then
 			say "-$sha1 $path"
 			continue;
