@@ -72,7 +72,7 @@ test_expect_success 'update should fail when path is used by a file' '
 	then
 		echo "[OOPS] update should have failed"
 		false
-	elif test -f lib && test "$(cat lib)" != "hello"
+	elif test "$(cat lib)" != "hello"
 	then
 		echo "[OOPS] update failed but lib file was molested"
 		false
