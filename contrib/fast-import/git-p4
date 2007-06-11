@@ -1175,7 +1175,7 @@ class P4Sync(Command):
         self.gitError = importProcess.stderr
 
         if self.revision:
-            print "Doing initial import of %s from revision %s" % (' '.join(self.depotPaths), self.revision)
+            print "Doing initial import of %s from revision %s into %s" % (' '.join(self.depotPaths), self.revision, self.branch)
 
             details = { "user" : "git perforce import user", "time" : int(time.time()) }
             details["desc"] = ("Initial import of %s from the state at revision %s"
@@ -1251,6 +1251,9 @@ class P4Sync(Command):
                 if not self.silent:
                     print "No changes to import!"
                 return True
+
+            if not self.silent and not self.detectBranches:
+                print "Import destination: %s" % self.branch
 
             self.updatedBranches = set()
 
