@@ -78,5 +78,3 @@ test "$VN" = "$VC" || {
 	echo >&2 "GITGUI_VERSION = $VN"
 	echo "GITGUI_VERSION = $VN" >$GVF
 }
-
-
