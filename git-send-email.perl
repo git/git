@@ -561,7 +561,8 @@ foreach my $t (@files) {
 					$subject = $1;
 
 				} elsif (/^(Cc|From):\s+(.*)$/) {
-					if ($2 eq $from) {
+					if (unquote_rfc2047($2) eq $from) {
+						$from = $2;
 						next if ($suppress_from);
 					}
 					elsif ($1 eq 'From') {
