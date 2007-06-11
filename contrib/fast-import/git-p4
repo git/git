@@ -391,10 +391,10 @@ class P4Submit(Command):
         system(applyPatchCmd)
 
         for f in filesToAdd:
-            system("p4 add %s" % f)
+            system("p4 add \"%s\"" % f)
         for f in filesToDelete:
-            system("p4 revert %s" % f)
-            system("p4 delete %s" % f)
+            system("p4 revert \"%s\"" % f)
+            system("p4 delete \"%s\"" % f)
 
         logMessage = ""
         if not self.directSubmit:
