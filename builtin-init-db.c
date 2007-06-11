@@ -7,7 +7,7 @@
 #include "builtin.h"
 
 #ifndef DEFAULT_GIT_TEMPLATE_DIR
-#define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates/"
+#define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates"
 #endif
 
 #ifdef NO_TRUSTABLE_FILEMODE

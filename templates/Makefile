@@ -7,7 +7,7 @@ endif
 INSTALL ?= install
 TAR ?= tar
 prefix ?= $(HOME)
-template_dir ?= $(prefix)/share/git-core/templates/
+template_dir ?= $(prefix)/share/git-core/templates
 # DESTDIR=
 
 # Shell quote (do not use $(call) to accommodate ancient setups);

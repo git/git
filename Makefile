@@ -145,7 +145,7 @@ prefix = $(HOME)
 bindir = $(prefix)/bin
 gitexecdir = $(bindir)
 sharedir = $(prefix)/share
-template_dir = $(sharedir)/git-core/templates/
+template_dir = $(sharedir)/git-core/templates
 ifeq ($(prefix),/usr)
 sysconfdir = /etc
 else
