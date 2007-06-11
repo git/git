@@ -909,7 +909,12 @@ class P4Sync(Command):
 
     def guessProjectName(self):
         for p in self.depotPaths:
-            return p [p.strip().rfind("/") + 1:]
+            if p.endswith("/"):
+                p = p[:-1]
+            p = p[p.strip().rfind("/") + 1:]
+            if not p.endswith("/"):
+               p += "/"
+            return p
 
     def getBranchMapping(self):
         for info in p4CmdList("branches"):
