@@ -471,7 +471,8 @@ proc rescan {after {honor_trustmtime 1}} {
 
 	if {![$ui_comm edit modified]
 		|| [string trim [$ui_comm get 0.0 end]] eq {}} {
-		if {[load_message GITGUI_MSG]} {
+		if {[string match amend* $commit_type]} {
+		} elseif {[load_message GITGUI_MSG]} {
 		} elseif {[load_message MERGE_MSG]} {
 		} elseif {[load_message SQUASH_MSG]} {
 		}
