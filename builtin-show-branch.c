@@ -259,17 +259,19 @@ static void join_revs(struct commit_list **list_p,
 
 static void show_one_commit(struct commit *commit, int no_name)
 {
-	char pretty[256], *cp;
+	char *pretty = NULL;
+	const char *pretty_str = "(unavailable)";
+	unsigned long pretty_len = 0;
 	struct commit_name *name = commit->util;
-	if (commit->object.parsed)
+
+	if (commit->object.parsed) {
 		pretty_print_commit(CMIT_FMT_ONELINE, commit, ~0,
-				    pretty, sizeof(pretty), 0, NULL, NULL, 0);
-	else
-		strcpy(pretty, "(unavailable)");
-	if (!prefixcmp(pretty, "[PATCH] "))
-		cp = pretty + 8;
-	else
-		cp = pretty;
+				    &pretty, &pretty_len,
+				    0, NULL, NULL, 0);
+		pretty_str = pretty;
+	}
+	if (!prefixcmp(pretty_str, "[PATCH] "))
+		pretty_str += 8;
 
 	if (!no_name) {
 		if (name && name->head_name) {
@@ -286,7 +288,8 @@ static void show_one_commit(struct commit *commit, int no_name)
 			printf("[%s] ",
 			       find_unique_abbrev(commit->object.sha1, 7));
 	}
-	puts(cp);
+	puts(pretty_str);
+	free(pretty);
 }
 
 static char *ref_name[MAX_REVS + 1];

@@ -44,33 +44,33 @@ void interp_clear_table(struct interp *table, int ninterps)
  *        { "%%", "%"},
  *    }
  *
- * Returns 1 on a successful substitution pass that fits in result,
- * Returns 0 on a failed or overflowing substitution pass.
+ * Returns 0 on a successful substitution pass that fits in result,
+ * Returns a number of bytes needed to hold the full substituted
+ * string otherwise.
  */
 
-int interpolate(char *result, int reslen,
+unsigned long interpolate(char *result, unsigned long reslen,
 		const char *orig,
 		const struct interp *interps, int ninterps)
 {
 	const char *src = orig;
 	char *dest = result;
-	int newlen = 0;
+	unsigned long newlen = 0;
 	const char *name, *value;
-	int namelen, valuelen;
+	unsigned long namelen, valuelen;
 	int i;
 	char c;
 
         memset(result, 0, reslen);
 
-	while ((c = *src) && newlen < reslen - 1) {
+	while ((c = *src)) {
 		if (c == '%') {
 			/* Try to match an interpolation string. */
 			for (i = 0; i < ninterps; i++) {
 				name = interps[i].name;
 				namelen = strlen(name);
-				if (strncmp(src, name, namelen) == 0) {
+				if (strncmp(src, name, namelen) == 0)
 					break;
-				}
 			}
 
 			/* Check for valid interpolation. */
@@ -78,29 +78,25 @@ int interpolate(char *result, int reslen,
 				value = interps[i].value;
 				valuelen = strlen(value);
 
-				if (newlen + valuelen < reslen - 1) {
+				if (newlen + valuelen + 1 < reslen) {
 					/* Substitute. */
 					strncpy(dest, value, valuelen);
-					newlen += valuelen;
 					dest += valuelen;
-					src += namelen;
-				} else {
-					/* Something's not fitting. */
-					return 0;
 				}
-
-			} else {
-				/* Skip bogus interpolation. */
-				*dest++ = *src++;
-				newlen++;
+				newlen += valuelen;
+				src += namelen;
+				continue;
 			}
-
-		} else {
-			/* Straight copy one non-interpolation character. */
-			*dest++ = *src++;
-			newlen++;
 		}
+		/* Straight copy one non-interpolation character. */
+		if (newlen + 1 < reslen)
+			*dest++ = *src;
+		src++;
+		newlen++;
 	}
 
-	return newlen < reslen - 1;
+	if (newlen + 1 < reslen)
+		return 0;
+	else
+		return newlen + 2;
 }

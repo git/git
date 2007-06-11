@@ -776,7 +776,7 @@ static void fill_person(struct interp *table, const char *msg, int len)
 }
 
 static long format_commit_message(const struct commit *commit,
-		const char *msg, char *buf, unsigned long space)
+		const char *msg, char **buf_p, unsigned long *space_p)
 {
 	struct interp table[] = {
 		{ "%H" },	/* commit hash */
@@ -905,16 +905,27 @@ static long format_commit_message(const struct commit *commit,
 		if (!table[i].value)
 			interp_set_entry(table, i, "<unknown>");
 
-	interpolate(buf, space, user_format, table, ARRAY_SIZE(table));
+	do {
+		char *buf = *buf_p;
+		unsigned long space = *space_p;
+
+		space = interpolate(buf, space, user_format,
+				    table, ARRAY_SIZE(table));
+		if (!space)
+			break;
+		buf = xrealloc(buf, space);
+		*buf_p = buf;
+		*space_p = space;
+	} while (1);
 	interp_clear_table(table, ARRAY_SIZE(table));
 
-	return strlen(buf);
+	return strlen(*buf_p);
 }
 
 unsigned long pretty_print_commit(enum cmit_fmt fmt,
 				  const struct commit *commit,
 				  unsigned long len,
-				  char *buf, unsigned long space,
+				  char **buf_p, unsigned long *space_p,
 				  int abbrev, const char *subject,
 				  const char *after_subject,
 				  enum date_mode dmode)
@@ -927,9 +938,11 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 	int plain_non_ascii = 0;
 	char *reencoded;
 	const char *encoding;
+	char *buf;
+	unsigned long space, slop;
 
 	if (fmt == CMIT_FMT_USERFORMAT)
-		return format_commit_message(commit, msg, buf, space);
+		return format_commit_message(commit, msg, buf_p, space_p);
 
 	encoding = (git_log_output_encoding
 		    ? git_log_output_encoding
@@ -969,6 +982,26 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 		}
 	}
 
+	space = *space_p;
+	buf = *buf_p;
+
+	/*
+	 * We do not want to repeatedly realloc below, so
+	 * preallocate with enough slop to hold MIME headers,
+	 * "Subject: " prefix, etc.
+	 */
+	slop = 1000;
+	if (subject)
+		slop += strlen(subject);
+	if (after_subject)
+		slop += strlen(after_subject);
+	if (space < strlen(msg) + slop) {
+		space = strlen(msg) + slop;
+		buf = xrealloc(buf, space);
+		*space_p = space;
+		*buf_p = buf;
+	}
+
 	for (;;) {
 		const char *line = msg;
 		int linelen = get_one_line(msg, len);
@@ -976,14 +1009,12 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 		if (!linelen)
 			break;
 
-		/*
-		 * We want some slop for indentation and a possible
-		 * final "...". Thus the "+ 20".
-		 */
+		/* 20 would cover indent and leave us some slop */
 		if (offset + linelen + 20 > space) {
-			memcpy(buf + offset, "    ...\n", 8);
-			offset += 8;
-			break;
+			space = offset + linelen + 20;
+			buf = xrealloc(buf, space);
+			*buf_p = buf;
+			*space_p = space;
 		}
 
 		msg += linelen;
