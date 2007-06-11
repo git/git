@@ -765,12 +765,11 @@ class P4Sync(Command):
 
         self.gitStream.write("data <<EOT\n")
         self.gitStream.write(details["desc"])
-        self.gitStream.write("\n[git-p4: depot-paths = \"%s\": change = %s: "
-                             "options = %s]\n"
-                             % (','.join (branchPrefixes), details["change"],
-                                details['options']
-                                ))
-        self.gitStream.write("EOT\n\n")
+        self.gitStream.write("\n[git-p4: depot-paths = \"%s\": change = %s"
+                             % (','.join (branchPrefixes), details["change"]))
+        if len(details['options']) > 0:
+            self.gitStream.write(": options = %s" % details['options'])
+        self.gitStream.write("]\nEOT\n\n")
 
         if len(parent) > 0:
             if self.verbose:
