@@ -100,11 +100,12 @@ modules_update()
 		if ! test -d "$path"/.git
 		then
 			module_clone "$path" "$url" || exit
+			subsha1=
+		else
+			subsha1=$(unset GIT_DIR && cd "$path" &&
+				git-rev-parse --verify HEAD) ||
+			die "Unable to find current revision of submodule '$path'"
 		fi
-
-		subsha1=$(unset GIT_DIR && cd "$path" &&
-			git-rev-parse --verify HEAD) ||
-		die "Unable to find current revision of submodule '$path'"
 
 		if test "$subsha1" != "$sha1"
 		then
