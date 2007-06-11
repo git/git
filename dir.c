@@ -271,25 +271,24 @@ int excluded(struct dir_struct *dir, const char *pathname)
 	return 0;
 }
 
-struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
-{
+static struct dir_entry *dir_entry_new(const char *pathname, int len) {
 	struct dir_entry *ent;
 
-	if (cache_name_pos(pathname, len) >= 0)
-		return NULL;
-
-	if (dir->nr == dir->alloc) {
-		int alloc = alloc_nr(dir->alloc);
-		dir->alloc = alloc;
-		dir->entries = xrealloc(dir->entries, alloc*sizeof(ent));
-	}
 	ent = xmalloc(sizeof(*ent) + len + 1);
 	ent->ignored = ent->ignored_dir = 0;
 	ent->len = len;
 	memcpy(ent->name, pathname, len);
 	ent->name[len] = 0;
-	dir->entries[dir->nr++] = ent;
 	return ent;
+}
+
+struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
+{
+	if (cache_name_pos(pathname, len) >= 0)
+		return NULL;
+
+	ALLOC_GROW(dir->entries, dir->nr, dir->alloc);
+	return dir->entries[dir->nr++] = dir_entry_new(pathname, len);
 }
 
 enum exist_status {
