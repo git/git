@@ -1400,7 +1400,8 @@ class P4Clone(P4Sync):
             self.cloneDestination = self.defaultDestination(args)
 
         print "Importing from %s into %s" % (', '.join(depotPaths), self.cloneDestination)
-        os.makedirs(self.cloneDestination)
+        if not os.path.exists(self.cloneDestination):
+            os.makedirs(self.cloneDestination)
         os.chdir(self.cloneDestination)
         system("git init")
         self.gitdir = os.getcwd() + "/.git"
