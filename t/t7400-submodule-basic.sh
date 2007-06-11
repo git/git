@@ -40,7 +40,7 @@ test_expect_success 'Prepare submodule testing' '
 	git-add a lib z &&
 	git-commit -m "super commit 1" &&
 	mv lib .subrepo &&
-	GIT_CONFIG=.gitmodules git-config module.lib.url git://example.com/lib.git
+	GIT_CONFIG=.gitmodules git-config submodule.lib.url git://example.com/lib.git
 '
 
 test_expect_success 'status should only print one line' '

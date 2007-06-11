@@ -66,7 +66,7 @@ modules_init()
 		url=$(git-config submodule."$path".url)
 		test -z "$url" || continue
 
-		url=$(GIT_CONFIG=.gitmodules git-config module."$path".url)
+		url=$(GIT_CONFIG=.gitmodules git-config submodule."$path".url)
 		test -z "$url" &&
 		die "No url found for submodule '$path' in .gitmodules"
 
