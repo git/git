@@ -291,6 +291,15 @@ struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int
 	return dir->entries[dir->nr++] = dir_entry_new(pathname, len);
 }
 
+struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, int len)
+{
+	if (cache_name_pos(pathname, len) >= 0)
+		return NULL;
+
+	ALLOC_GROW(dir->ignored, dir->ignored_nr, dir->ignored_alloc);
+	return dir->ignored[dir->ignored_nr++] = dir_entry_new(pathname, len);
+}
+
 enum exist_status {
 	index_nonexistent = 0,
 	index_directory,
@@ -463,6 +472,8 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 				continue;
 
 			exclude = excluded(dir, fullname);
+			if (exclude && dir->collect_ignored)
+				dir_add_ignored(dir, fullname, baselen + len);
 			if (exclude != dir->show_ignored) {
 				if (!dir->show_ignored || DTYPE(de) != DT_DIR) {
 					continue;
@@ -609,6 +620,7 @@ int read_directory(struct dir_struct *dir, const char *path, const char *base, i
 	read_directory_recursive(dir, path, base, baselen, 0, simplify);
 	free_simplify(simplify);
 	qsort(dir->entries, dir->nr, sizeof(struct dir_entry *), cmp_name);
+	qsort(dir->ignored, dir->ignored_nr, sizeof(struct dir_entry *), cmp_name);
 	return dir->nr;
 }
 
