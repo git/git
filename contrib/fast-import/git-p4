@@ -1028,6 +1028,8 @@ class P4Sync(Command):
         self.knownBranches = {}
         self.initialParents = {}
         self.hasOrigin = gitBranchExists("origin") or gitBranchExists("origin/p4") or gitBranchExists("origin/p4/master")
+        if not self.syncWithOrigin:
+            self.hasOrigin = False
 
         if self.importIntoRemotes:
             self.refPrefix = "refs/remotes/p4/"
