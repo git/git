@@ -55,7 +55,7 @@ proc save_config {} {
 }
 
 proc do_about {} {
-	global appvers copyright
+	global appvers copyright oguilib
 	global tcl_patchLevel tk_patchLevel
 
 	set w .about_dialog
@@ -94,6 +94,10 @@ $copyright" \
 		append v ", Tk version $tk_patchLevel"
 	}
 
+	set d {}
+	append d "git exec dir: [gitexec]\n"
+	append d "git-gui lib: $oguilib"
+
 	label $w.vers \
 		-text $v \
 		-padx 5 -pady 5 \
@@ -102,6 +106,15 @@ $copyright" \
 		-borderwidth 1 \
 		-relief solid
 	pack $w.vers -side top -fill x -padx 5 -pady 5
+
+	label $w.dirs \
+		-text $d \
+		-padx 5 -pady 5 \
+		-justify left \
+		-anchor w \
+		-borderwidth 1 \
+		-relief solid
+	pack $w.dirs -side top -fill x -padx 5 -pady 5
 
 	menu $w.ctxm -tearoff 0
 	$w.ctxm add command \
@@ -174,8 +187,10 @@ proc do_options {} {
 
 		{b merge.summary {Summarize Merge Commits}}
 		{i-1..5 merge.verbosity {Merge Verbosity}}
+		{b merge.diffstat {Show Diffstat After Merge}}
 
 		{b gui.trustmtime  {Trust File Modification Timestamps}}
+		{b gui.pruneduringfetch {Prune Tracking Branches During Fetch}}
 		{i-0..99 gui.diffcontext {Number of Diff Context Lines}}
 		{t gui.newbranchtemplate {New Branch Name Template}}
 		} {
