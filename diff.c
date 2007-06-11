@@ -2201,6 +2201,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->detect_rename = DIFF_DETECT_RENAME;
 	}
 	else if (!prefixcmp(arg, "-C")) {
+		if (options->detect_rename == DIFF_DETECT_COPY)
+			options->find_copies_harder = 1;
 		if ((options->rename_score =
 		     diff_scoreopt_parse(arg)) == -1)
 			return -1;

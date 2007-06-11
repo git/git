@@ -86,7 +86,7 @@
 	Detect renames.
 
 -C::
-	Detect copies as well as renames.
+	Detect copies as well as renames.  See also `--find-copies-harder`.
 
 --diff-filter=[ACDMRTUXB*]::
 	Select only files that are Added (`A`), Copied (`C`),
@@ -100,12 +100,13 @@
 	that matches other criteria, nothing is selected.
 
 --find-copies-harder::
-	For performance reasons, by default, -C option finds copies only
+	For performance reasons, by default, `-C` option finds copies only
 	if the original file of the copy was modified in the same
 	changeset.  This flag makes the command
 	inspect unmodified files as candidates for the source of
 	copy.  This is a very expensive operation for large
-	projects, so use it with caution.
+	projects, so use it with caution.  Giving more than one
+	`-C` option has the same effect.
 
 -l<num>::
 	-M and -C options require O(n^2) processing time where n
