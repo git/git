@@ -22,6 +22,22 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA}
 
 ######################################################################
 ##
+## Tcl/Tk sanity check
+
+if {[catch {package require Tcl 8.4} err]
+ || [catch {package require Tk  8.4} err]
+} {
+	catch {wm withdraw .}
+	tk_messageBox \
+		-icon error \
+		-type ok \
+		-title "git-gui: fatal error" \
+		-message $err
+	exit 1
+}
+
+######################################################################
+##
 ## configure our library
 
 set oguilib {@@GITGUI_LIBDIR@@}
@@ -1008,6 +1024,7 @@ proc incr_font_size {font {amt 1}} {
 	incr sz $amt
 	font configure $font -size $sz
 	font configure ${font}bold -size $sz
+	font configure ${font}italic -size $sz
 }
 
 ######################################################################
@@ -1200,12 +1217,14 @@ catch {
 	destroy .dummy
 }
 
+font create font_uiitalic
 font create font_uibold
 font create font_diffbold
+font create font_diffitalic
 
 foreach class {Button Checkbutton Entry Label
 		Labelframe Listbox Menu Message
-		Radiobutton Text} {
+		Radiobutton Spinbox Text} {
 	option add *$class.font font_ui
 }
 unset class
@@ -1233,8 +1252,10 @@ proc apply_config {} {
 		}
 		foreach {cn cv} [font configure $font] {
 			font configure ${font}bold $cn $cv
+			font configure ${font}italic $cn $cv
 		}
 		font configure ${font}bold -weight bold
+		font configure ${font}italic -slant italic
 	}
 }
 
@@ -1600,7 +1621,7 @@ unset browser doc_path doc_url
 
 # -- Standard bindings
 #
-bind .   <Destroy> do_quit
+bind .   <Destroy> {if {{%W} eq {.}} do_quit}
 bind all <$M1B-Key-q> do_quit
 bind all <$M1B-Key-Q> do_quit
 bind all <$M1B-Key-w> {destroy [winfo toplevel %W]}
@@ -1715,7 +1736,7 @@ pack .vpane -anchor n -side top -fill both -expand 1
 #
 frame .vpane.files.index -height 100 -width 200
 label .vpane.files.index.title -text {Staged Changes (Will Be Committed)} \
-	-background green
+	-background lightgreen
 text $ui_index -background white -borderwidth 0 \
 	-width 20 -height 10 \
 	-wrap none \
@@ -1735,7 +1756,7 @@ pack $ui_index -side left -fill both -expand 1
 #
 frame .vpane.files.workdir -height 100 -width 200
 label .vpane.files.workdir.title -text {Unstaged Changes (Will Not Be Committed)} \
-	-background red
+	-background lightsalmon
 text $ui_workdir -background white -borderwidth 0 \
 	-width 20 -height 10 \
 	-wrap none \
@@ -1752,10 +1773,8 @@ pack $ui_workdir -side left -fill both -expand 1
 .vpane.files add .vpane.files.workdir -sticky nsew
 
 foreach i [list $ui_index $ui_workdir] {
-	$i tag conf in_diff -font font_uibold
-	$i tag conf in_sel \
-		-background [$i cget -foreground] \
-		-foreground [$i cget -background]
+	$i tag conf in_diff -background lightgray
+	$i tag conf in_sel  -background lightgray
 }
 unset i
 
@@ -1913,18 +1932,18 @@ proc trace_current_diff_path {varname args} {
 }
 trace add variable current_diff_path write trace_current_diff_path
 
-frame .vpane.lower.diff.header -background orange
+frame .vpane.lower.diff.header -background gold
 label .vpane.lower.diff.header.status \
-	-background orange \
+	-background gold \
 	-width $max_status_desc \
 	-anchor w \
 	-justify left
 label .vpane.lower.diff.header.file \
-	-background orange \
+	-background gold \
 	-anchor w \
 	-justify left
 label .vpane.lower.diff.header.path \
-	-background orange \
+	-background gold \
 	-anchor w \
 	-justify left
 pack .vpane.lower.diff.header.status -side left
@@ -2038,17 +2057,17 @@ lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add separator
 $ctxm add command \
 	-label {Show Less Context} \
-	-command {if {$repo_config(gui.diffcontext) >= 2} {
+	-command {if {$repo_config(gui.diffcontext) >= 1} {
 		incr repo_config(gui.diffcontext) -1
 		reshow_diff
 	}}
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add command \
 	-label {Show More Context} \
-	-command {
+	-command {if {$repo_config(gui.diffcontext) < 99} {
 		incr repo_config(gui.diffcontext)
 		reshow_diff
-	}
+	}}
 lappend diff_actions [list $ctxm entryconf [$ctxm index last] -state]
 $ctxm add separator
 $ctxm add command -label {Options...} \

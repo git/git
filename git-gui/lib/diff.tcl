@@ -145,7 +145,7 @@ proc show_diff {path w {lno {}}} {
 
 	lappend cmd -p
 	lappend cmd --no-color
-	if {$repo_config(gui.diffcontext) > 0} {
+	if {$repo_config(gui.diffcontext) >= 0} {
 		lappend cmd "-U$repo_config(gui.diffcontext)"
 	}
 	if {$w eq $ui_index} {
