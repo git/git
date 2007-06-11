@@ -1312,7 +1312,7 @@ class P4Sync(Command):
                                 parent = self.initialParents[branch]
                                 del self.initialParents[branch]
 
-                            self.commit(description, filesForCommit, branch, branchPrefix, parent)
+                            self.commit(description, filesForCommit, branch, [branchPrefix], parent)
                     else:
                         files = self.extractFilesFromCommit(description)
                         self.commit(description, files, self.branch, self.depotPaths,
