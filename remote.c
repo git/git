@@ -542,7 +542,7 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 			strcpy(dst_name, pat->dst);
 			strcat(dst_name, src->name + strlen(pat->src));
 		} else
-			dst_name = strdup(src->name);
+			dst_name = xstrdup(src->name);
 		dst_peer = find_ref_by_name(dst, dst_name);
 		if (dst_peer && dst_peer->peer_ref)
 			/* We're already sending something to this ref. */
