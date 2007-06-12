@@ -180,7 +180,7 @@ def findUpstreamBranchPoint():
             parent = parent + 1
             continue
 
-        names = read_pipe_lines("git name-rev '--refs=refs/remotes/p4/*' '%s'" % commit)
+        names = read_pipe_lines("git name-rev \"--refs=refs/remotes/p4/*\" \"%s\"" % commit)
         if len(names) <= 0:
             continue
 
