@@ -1,0 +1,62 @@
+gitmodules(5)
+=============
+
+NAME
+----
+gitmodules - defining submodule properties
+
+SYNOPSIS
+--------
+.gitmodules
+
+
+DESCRIPTION
+-----------
+
+The `.gitmodules` file, located in the top-level directory of a git
+working tree, is a text file with a syntax matching the requirements
+of gitlink:git-config[1].
+
+The file contains one subsection per submodule, and the subsection value
+is the name of the submodule. Each submodule section also contains the
+following required keys:
+
+submodule.<name>.path::
+	Defines the path, relative to the top-level directory of the git
+	working tree, where the submodule is expected to be checked out.
+	The path name must not end with a `/`. All submodule paths must
+	be unique within the .gitmodules file.
+
+submodule.<name>.url::
+	Defines an url from where the submodule repository can be cloned.
+
+
+EXAMPLES
+--------
+
+Consider the following .gitmodules file:
+
+	[submodule "libfoo"]
+		path = include/foo
+		url = git://foo.com/git/lib.git
+
+	[submodule "libbar"]
+		path = include/bar
+		url = git://bar.com/git/lib.git
+
+
+This defines two submodules, `libfoo` and `libbar`. These are expected to
+be checked out in the paths 'include/foo' and 'include/bar', and for both
+submodules an url is specified which can be used for cloning the submodules.
+
+SEE ALSO
+--------
+gitlink:git-submodule[1] gitlink:git-config[1]
+
+DOCUMENTATION
+-------------
+Documentation by Lars Hjemli <hjemli@gmail.com>
+
+GIT
+---
+Part of the gitlink:git[7] suite
