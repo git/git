@@ -53,6 +53,9 @@ OPTIONS
 <head>::
 	Working branch; defaults to HEAD.
 
+<limit>::
+	Do not report commits up to (and including) limit.
+
 Author
 ------
 Written by Junio C Hamano <junkio@cox.net>
