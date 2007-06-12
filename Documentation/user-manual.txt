@@ -1528,9 +1528,9 @@ dangling tree b24c2473f1fd3d91352a624795be026d64c8841f
 -------------------------------------------------
 
 Dangling objects are not a problem.  At worst they may take up a little
-extra disk space.  They can sometimes provide a last-resort method of
-recovery lost work--see <<dangling-objects>> for details.  However, if
-you want, you may remove them with gitlink:git-prune[1] or the --prune
+extra disk space.  They can sometimes provide a last-resort method for
+recovering lost work--see <<dangling-objects>> for details.  However, if
+you wish, you can remove them with gitlink:git-prune[1] or the --prune
 option to gitlink:git-gc[1]:
 
 -------------------------------------------------
