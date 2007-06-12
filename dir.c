@@ -275,7 +275,6 @@ static struct dir_entry *dir_entry_new(const char *pathname, int len) {
 	struct dir_entry *ent;
 
 	ent = xmalloc(sizeof(*ent) + len + 1);
-	ent->ignored = ent->ignored_dir = 0;
 	ent->len = len;
 	memcpy(ent->name, pathname, len);
 	ent->name[len] = 0;
@@ -432,6 +431,18 @@ static int simplify_away(const char *path, int pathlen, const struct path_simpli
 	return 0;
 }
 
+static int in_pathspec(const char *path, int len, const struct path_simplify *simplify)
+{
+	if (simplify) {
+		for (; simplify->path; simplify++) {
+			if (len == simplify->len
+			    && !memcmp(path, simplify->path, len))
+				return 1;
+		}
+	}
+	return 0;
+}
+
 /*
  * Read a directory tree. We currently ignore anything but
  * directories, regular files and symlinks. That's because git
@@ -472,7 +483,8 @@ static int read_directory_recursive(struct dir_struct *dir, const char *path, co
 				continue;
 
 			exclude = excluded(dir, fullname);
-			if (exclude && dir->collect_ignored)
+			if (exclude && dir->collect_ignored
+			    && in_pathspec(fullname, baselen + len, simplify))
 				dir_add_ignored(dir, fullname, baselen + len);
 			if (exclude != dir->show_ignored) {
 				if (!dir->show_ignored || DTYPE(de) != DT_DIR) {

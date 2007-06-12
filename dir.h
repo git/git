@@ -13,9 +13,7 @@
 
 
 struct dir_entry {
-	unsigned int ignored : 1;
-	unsigned int ignored_dir : 1;
-	unsigned int len : 30;
+	unsigned int len;
 	char name[FLEX_ARRAY]; /* more */
 };
 
