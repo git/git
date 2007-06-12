@@ -60,7 +60,6 @@ constructor dialog {} {
 		$w.rename.newname_t icursor end
 		focus $w.rename.newname_t
 	"
-	bind $w.header <Destroy> [list delete_this $this]
 	tkwait window $w
 }
 

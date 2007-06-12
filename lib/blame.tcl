@@ -289,7 +289,6 @@ constructor new {i_commit i_path} {
 
 	bind $w_cviewer <Button-1> [list focus $w_cviewer]
 	bind $top <Visibility> [list focus $top]
-	bind $w_file <Destroy> [list delete_this $this]
 
 	grid configure $w.header -sticky ew
 	grid configure $w.file_pane -sticky nsew

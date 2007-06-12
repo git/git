@@ -131,7 +131,6 @@ constructor dialog {} {
 	bind $w <$M1B-Key-R> [cb _rescan]
 	bind $w <Key-Return> [cb _delete]
 	bind $w <Key-Escape> [list destroy $w]
-	bind $w.header <Destroy> [list delete_this $this]
 	return $w
 }
 

@@ -17,7 +17,7 @@ constructor new {short_title long_title} {
 
 method _init {} {
 	global M1B
-	make_toplevel top w
+	make_toplevel top w -autodelete 0
 	wm title $top "[appname] ([reponame]): $t_short"
 	set console_cr 1.0
 

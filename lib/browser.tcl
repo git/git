@@ -70,7 +70,6 @@ constructor new {commit} {
 	bind $w_list <Right>           break
 
 	bind $w_list <Visibility> [list focus $w_list]
-	bind $w_list <Destroy> [list delete_this $this]
 	set w $w_list
 	_ls $this $browser_commit
 	return $this
