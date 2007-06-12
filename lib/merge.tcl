@@ -125,7 +125,8 @@ Please select fewer branches.  To merge more than 15 branches, merge the branche
 	set cons [console::new "Merge" $msg]
 	console::exec $cons $cmd \
 		[namespace code [list _finish $revcnt $cons]]
-	bind $w <Destroy> {}
+
+	wm protocol $w WM_DELETE_WINDOW {}
 	destroy $w
 }
 
@@ -250,7 +251,7 @@ proc dialog {} {
 	bind $w <$M1B-Key-Return> $_start
 	bind $w <Visibility> "grab $w; focus $w.source.l"
 	bind $w <Key-Escape> "unlock_index;destroy $w"
-	bind $w <Destroy> unlock_index
+	wm protocol $w WM_DELETE_WINDOW "unlock_index;destroy $w"
 	wm title $w "[appname] ([reponame]): Merge"
 	tkwait window $w
 }

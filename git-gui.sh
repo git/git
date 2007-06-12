@@ -1622,7 +1622,7 @@ unset browser doc_path doc_url
 
 # -- Standard bindings
 #
-bind .   <Destroy> {if {{%W} eq {.}} do_quit}
+wm protocol . WM_DELETE_WINDOW do_quit
 bind all <$M1B-Key-q> do_quit
 bind all <$M1B-Key-Q> do_quit
 bind all <$M1B-Key-w> {destroy [winfo toplevel %W]}
