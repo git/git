@@ -120,10 +120,21 @@ proc delete_this {{t {}}} {
 	if {[namespace exists $t]} {namespace delete $t}
 }
 
-proc make_toplevel {t w} {
-	upvar $t top $w pfx
+proc make_toplevel {t w args} {
+	upvar $t top $w pfx this this
+
+	if {[llength $args] % 2} {
+		error "make_toplevel topvar winvar {options}"
+	}
+	set autodelete 1
+	foreach {name value} $args {
+		switch -exact -- $name {
+		-autodelete {set autodelete $value}
+		default     {error "unsupported option $name"}
+		}
+	}
+
 	if {[winfo ismapped .]} {
-		upvar this this
 		regsub -all {::} $this {__} w
 		set top .$w
 		set pfx $top
@@ -131,6 +142,13 @@ proc make_toplevel {t w} {
 	} else {
 		set top .
 		set pfx {}
+	}
+
+	if {$autodelete} {
+		wm protocol $top WM_DELETE_WINDOW "
+			[list delete_this $this]
+			[list destroy $top]
+		"
 	}
 }
 
