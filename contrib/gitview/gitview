@@ -533,7 +533,7 @@ class AnnotateWindow(object):
 
 		self.add_file_data(filename, commit_sha1, line_num)
 
-		fp = os.popen("git blame --incremental -- " + filename + " " + commit_sha1)
+		fp = os.popen("git blame --incremental -C -C -- " + filename + " " + commit_sha1)
 		flags = fcntl.fcntl(fp.fileno(), fcntl.F_GETFL)
 		fcntl.fcntl(fp.fileno(), fcntl.F_SETFL, flags | os.O_NONBLOCK)
 		self.io_watch_tag = gobject.io_add_watch(fp, gobject.IO_IN, self.data_ready)
