@@ -735,9 +735,13 @@ gitk-wish: gitk GIT-GUI-VARS
 	chmod +x $@+ && \
 	mv -f $@+ $@
 
-git$X: git.c common-cmds.h $(BUILTIN_OBJS) $(GITLIBS) GIT-CFLAGS
+git.o: git.c common-cmds.h GIT-CFLAGS
+	$(QUIET_CC)$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
+		$(ALL_CFLAGS) -c $(filter %.c,$^)
+
+git$X: git.o $(BUILTIN_OBJS) $(GITLIBS)
 	$(QUIET_LINK)$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
-		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) \
+		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) git.o \
 		$(BUILTIN_OBJS) $(ALL_LDFLAGS) $(LIBS)
 
 help.o: common-cmds.h
