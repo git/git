@@ -1,0 +1,68 @@
+diff --git a/Documentation/RelNotes-1.5.2.2.txt b/Documentation/RelNotes-1.5.2.2.txt
+new file mode 100644
+index 0000000..e7cecc8
+--- /dev/null
++++ b/Documentation/RelNotes-1.5.2.2.txt
+@@ -0,0 +1,40 @@
++GIT v1.5.2.2 Release Notes
++==========================
++
++Fixes since v1.5.2.1
++--------------------
++
++* Usability fix
++
++  - git-gui is shipped with its updated blame interface.  It is
++    rumored that the older one was not just unusable but was
++    active health hazard, but this one is actually pretty.
++    Please see for yourself.
++
++* Bugfixes
++
++  - "git checkout fubar" was utterly confused when there is a
++    branch fubar and a tag fubar at the same time.  It correctly
++    checks out the branch fubar now.
++
++  - "git clone /path/foo" to clone a local /path/foo.git
++    repository left an incorrect configuration.
++
++  - "git send-email" correctly unquotes RFC 2047 quoted names in
++    the patch-email before using their values.
++
++  - We did not accept number of seconds since epoch older than
++    year 2000 as a valid timestamp.  We now interpret positive
++    integers more than 8 digits as such, which allows us to
++    express timestamps more recent than March 1973.
++
++  - git-cvsimport did not work when you have GIT_DIR to point
++    your repository at a nonstandard location.
++
++* Many documentation updates
++
++--
++exec >/var/tmp/1
++O=v1.5.2.1-67-g4f01d0f
++echo O=`git describe refs/heads/maint`
++git shortlog --no-merges $O..refs/heads/maint
+diff --git a/GIT-VERSION-GEN b/GIT-VERSION-GEN
+index bd30398..3c3cd2f 100755
+--- a/GIT-VERSION-GEN
++++ b/GIT-VERSION-GEN
+@@ -1,7 +1,7 @@
+ #!/bin/sh
+ 
+ GVF=GIT-VERSION-FILE
+-DEF_VER=v1.5.2.1.GIT
++DEF_VER=v1.5.2.2.GIT
+ 
+ LF='
+ '
+diff --git a/RelNotes b/RelNotes
+index 403fb97..61f9778 120000
+--- a/RelNotes
++++ b/RelNotes
+@@ -1 +1 @@
+-Documentation/RelNotes-1.5.2.1.txt
+\ No newline at end of file
++Documentation/RelNotes-1.5.2.2.txt
+\ No newline at end of file

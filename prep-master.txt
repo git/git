@@ -1,0 +1,155 @@
+diff --git a/Documentation/RelNotes-1.5.3.txt b/Documentation/RelNotes-1.5.3.txt
+index d111661..6eb85aa 100644
+--- a/Documentation/RelNotes-1.5.3.txt
++++ b/Documentation/RelNotes-1.5.3.txt
+@@ -1,4 +1,4 @@
+-GIT v1.5.3 Release Notes (draft)
++GIT v1.5.3 Release Notes
+ ========================
+ 
+ Updates since v1.5.2
+@@ -10,6 +10,8 @@ Updates since v1.5.2
+ * Thee are a handful pack-objects changes to help you cope better with
+   repositories with pathologically large blobs in them.
+ 
++* Comes with git-gui 0.8.0.
++
+ * New commands and options.
+ 
+   - "git-submodule" command helps you manage the projects from
+@@ -36,8 +38,38 @@ Updates since v1.5.2
+   - "git repack" can be told to split resulting packs to avoid
+     exceeding limit specified with "--max-pack-size".
+ 
++  - "git fsck" gained --verbose option.  This is really really
++    verbose but it might help you identify exact commit that is
++    corrupt in your repository.
++
++  - "git format-patch" learned --numbered-files option.  This
++    may be useful for MH users.
++
++  - "git tag -n -l" shows tag annotations while listing tags.
++
++  - "git cvsimport" can optionally use the separate-remote layout.
++
++  - "git blame" can be told to see through commits that changes
++    whitespaces and indentation levels with "-w" option.
++
+ * Updated behavior of existing commands.
+ 
++  - "git mergetool" chooses its backend more wisely, taking
++    notice of its environment such as use of X, Gnome/KDE, etc.
++
++  - "gitweb" shows merge commits a lot nicer than before.  The
++    default view uses more compact --cc format, while the UI
++    allows to choose normal diff with any parent.
++
++  - snapshot files "gitweb" creates from a repository at
++    $path/$project/.git are more useful.  We use $project part
++    in the filename, which we used to discard.
++
++  - "git cvsimort" creates lightweight tag; there is not any
++    interesting information we can record in an annotated tag,
++    and the handcrafted ones the old code created was not
++    properly formed anyway.
++
+   - "git push" pretends that you immediately fetched back from
+     the remote by updating corresponding remote tracking
+     branches if you have any.
+@@ -48,17 +80,25 @@ Updates since v1.5.2
+   - "git-apply --whitespace=strip" removes blank lines added at
+     the end of the file.
+ 
+-  - fetch over git native protocols with -v shows connection
++  - "git-fetch" over git native protocols with -v shows connection
+     status, and the IP address of the other end, to help
+     diagnosing problems.
+ 
+-  - core.legacyheaders is no more, although we still can read
+-    objects created in a new loose object format.
++  - We used to have core.legacyheaders configuration, when
++    set to false, allowed git to write loose objects in a format
++    that mimicks the format used by objects stored in packs.  It
++    turns out that this was not so useful.  Although we will
++    continue to read objects written in that format, we do not
++    honor that configuration anymore and create loose objects in
++    the legacy/traditional format.
++
++  - "--find-copies-harder" option to diff family can now be
++    spelled as "-C -C" for brevity.
+ 
+   - "git-mailsplit" (hence "git-am") can read from Maildir
+     formatted mailboxes.
+ 
+-  - "git cvsserver" does not barf upon seeing "cvs login"
++  - "git-cvsserver" does not barf upon seeing "cvs login"
+     request.
+ 
+   - "pack-objects" honors "delta" attribute set in
+@@ -68,6 +108,8 @@ Updates since v1.5.2
+   - new-workdir script (in contrib) can now be used with a bare
+     repository.
+ 
++  - "git-mergetool" learned to use gvimdiff.
++
+ 
+ * Builds
+ 
+@@ -88,22 +130,40 @@ Updates since v1.5.2
+     the object requested the last time, which exploits the
+     locality of references.
+ 
++  - verifying pack contents done by "git fsck --full" got boost
++    by carefully choosing the order to verify objects in them.
++
++
+ Fixes since v1.5.2
+ ------------------
+ 
+ All of the fixes in v1.5.2 maintenance series are included in
+ this release, unless otherwise noted.
+ 
+-* Bugfixes
++* Bugfixes ('+' needs cherry-picking to maint)
++
++  + "git-merge-recursive" does not try to run file level merge
++    on binary files.
++
++  + "git-branch --track" did not create tracking configuration
++    correctly when the branch name had slash in it.
++
++  + "gitweb" had trouble handling non UTF-8 text with older
++    Encode.pm Perl module.
++
++  + The email address of the user specified with user.email
++    configuration was overriden by EMAIL environment variable.
++
++  + The tree parser did not warn about tree entries with
++    nonsense file modes, and assumed they must be blobs.
+ 
+   - ....  This has not
+     been backported to 1.5.2.x series, as it is rather an
+     intrusive change.
+ 
+-
+ --
+ exec >/var/tmp/1
+-O=v1.5.2-45-ged82edc
+-O=v1.5.2-172-g1a8b769
++O=v1.5.2.1-133-gd44c782
++O=v1.5.2.1-271-g90ac368
+ echo O=`git describe refs/heads/master`
+ git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
+diff --git a/GIT-VERSION-GEN b/GIT-VERSION-GEN
+index 06c360b..3c0032c 100755
+--- a/GIT-VERSION-GEN
++++ b/GIT-VERSION-GEN
+@@ -1,7 +1,7 @@
+ #!/bin/sh
+ 
+ GVF=GIT-VERSION-FILE
+-DEF_VER=v1.5.2.GIT
++DEF_VER=v1.5.3.GIT
+ 
+ LF='
+ '
