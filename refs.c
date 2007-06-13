@@ -150,7 +150,7 @@ static struct ref_list *sort_ref_list(struct ref_list *list)
  * Future: need to be in "struct repository"
  * when doing a full libification.
  */
-struct cached_refs {
+static struct cached_refs {
 	char did_loose;
 	char did_packed;
 	struct ref_list *loose;

@@ -7,7 +7,7 @@ struct cmdname_help
     char help[80];
 };
 
-struct cmdname_help common_cmds[] = {"
+static struct cmdname_help common_cmds[] = {"
 
 sort <<\EOF |
 add

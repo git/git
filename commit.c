@@ -27,7 +27,7 @@ struct sort_node
 
 const char *commit_type = "commit";
 
-struct cmt_fmt_map {
+static struct cmt_fmt_map {
 	const char *n;
 	size_t cmp_len;
 	enum cmit_fmt v;

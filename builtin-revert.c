@@ -25,7 +25,7 @@ static const char *cherry_pick_usage = "git-cherry-pick [--edit] [-n] [-r] [-x] 
 
 static int edit;
 static int replay;
-enum { REVERT, CHERRY_PICK } action;
+static enum { REVERT, CHERRY_PICK } action;
 static int no_commit;
 static struct commit *commit;
 static int needed_deref;
@@ -129,7 +129,7 @@ static char *get_encoding(const char *message)
 	return NULL;
 }
 
-struct lock_file msg_file;
+static struct lock_file msg_file;
 static int msg_fd;
 
 static void add_to_msg(const char *string)
