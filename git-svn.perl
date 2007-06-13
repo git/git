@@ -1457,7 +1457,7 @@ sub tmp_config {
 	my (@args) = @_;
 	my $old_def_config = "$ENV{GIT_DIR}/svn/config";
 	my $config = "$ENV{GIT_DIR}/svn/.metadata";
-	if (-e $old_def_config && ! -e $config) {
+	if (! -f $config && -f $old_def_config) {
 		rename $old_def_config, $config or
 		       die "Failed rename $old_def_config => $config: $!\n";
 	}
