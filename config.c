@@ -523,7 +523,7 @@ static int store_aux(const char* key, const char* value)
 	return 0;
 }
 
-static int write_error()
+static int write_error(void)
 {
 	fprintf(stderr, "Failed to write new configuration file\n");
 
