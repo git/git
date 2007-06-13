@@ -410,6 +410,7 @@ ifeq ($(uname_S),SunOS)
 	NEEDS_NSL = YesPlease
 	SHELL_PATH = /bin/bash
 	NO_STRCASESTR = YesPlease
+	NO_HSTRERROR = YesPlease
 	ifeq ($(uname_R),5.8)
 		NEEDS_LIBICONV = YesPlease
 		NO_UNSETENV = YesPlease
@@ -653,6 +654,10 @@ endif
 endif
 ifdef NO_PERL_MAKEMAKER
 	export NO_PERL_MAKEMAKER
+endif
+ifdef NO_HSTRERROR
+	COMPAT_CFLAGS += -DNO_HSTRERROR
+	COMPAT_OBJS += compat/hstrerror.o
 endif
 
 ifeq ($(TCLTK_PATH),)

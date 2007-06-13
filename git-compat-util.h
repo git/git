@@ -167,6 +167,11 @@ extern size_t gitstrlcpy(char *, const char *, size_t);
 extern uintmax_t gitstrtoumax(const char *, char **, int);
 #endif
 
+#ifdef NO_HSTRERROR
+#define hstrerror githstrerror
+extern const char *githstrerror(int herror);
+#endif
+
 extern void release_pack_memory(size_t, int);
 
 static inline char* xstrdup(const char *str)
