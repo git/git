@@ -7,7 +7,7 @@ gitmodules - defining submodule properties
 
 SYNOPSIS
 --------
-.gitmodules
+gitmodules
 
 
 DESCRIPTION
