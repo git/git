@@ -352,6 +352,7 @@ class AnnotateWindow(object):
 		self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 		self.window.set_border_width(0)
 		self.window.set_title("Git repository browser annotation window")
+		self.prev_read = ""
 
 		# Use two thirds of the screen by default
 		screen = self.window.get_screen()
@@ -401,7 +402,10 @@ class AnnotateWindow(object):
 	def data_ready(self, source, condition):
 		while (1):
 			try :
-				buffer = source.read(8192)
+				# A simple readline doesn't work
+				# a readline bug ??
+				buffer = source.read(100)
+
 			except:
 				# resource temporary not available
 				return True
@@ -410,6 +414,19 @@ class AnnotateWindow(object):
 				gobject.source_remove(self.io_watch_tag)
 				source.close()
 				return False
+
+			if (self.prev_read != ""):
+				buffer = self.prev_read + buffer
+				self.prev_read = ""
+
+			if (buffer[len(buffer) -1] != '\n'):
+				try:
+					newline_index = buffer.rindex("\n")
+				except ValueError:
+					newline_index = 0
+
+				self.prev_read = buffer[newline_index:(len(buffer))]
+				buffer = buffer[0:newline_index]
 
 			for buff in buffer.split("\n"):
 				annotate_line = re.compile('^([0-9a-f]{40}) (.+) (.+) (.+)$')
