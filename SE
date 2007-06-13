@@ -1,0 +1,34 @@
+#!/bin/sh
+
+me='Junio C Hamano <gitster@pobox.com>'
+smtp='smtp.west.cox.net'
+to='git@vger.kernel.org'
+
+#smtp=/var/tmp/smtp-server
+
+while case $# in 0) break ;; esac
+do
+	case "$1" in
+	--dry-run | -n)
+		dryrun=--dry-run
+		;;
+	-*)
+		echo >&2 "? $1"
+		exit 1
+		;;
+	*)
+		break
+		;;
+	esac
+	shift
+done
+
+git-send-email \
+	--from="$me" \
+	--no-chain-reply-to \
+	--to="$to" \
+	--suppress-from \
+	--no-signed-off-cc \
+	--smtp-server=$smtp \
+	$dryrun \
+	"$@"
