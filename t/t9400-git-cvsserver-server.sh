@@ -173,6 +173,22 @@ test_expect_success 'req_Root (base-path)' \
 test_expect_failure 'req_Root failure (base-path)' \
   'cat request-anonymous | git-cvsserver --strict-paths --base-path $WORKDIR pserver $SERVERDIR >log 2>&1'
 
+GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled false || exit 1
+
+test_expect_success 'req_Root (export-all)' \
+  'cat request-anonymous | git-cvsserver --export-all pserver $WORKDIR >log 2>&1 &&
+   tail -n1 log | grep -q "^I LOVE YOU$"'
+
+test_expect_failure 'req_Root failure (export-all w/o whitelist)' \
+  'cat request-anonymous | git-cvsserver --export-all pserver >log 2>&1
+   || false'
+
+test_expect_success 'req_Root (everything together)' \
+  'cat request-base | git-cvsserver --export-all --strict-paths --base-path $WORKDIR/ pserver $SERVERDIR >log 2>&1 &&
+   tail -n1 log | grep -q "^I LOVE YOU$"'
+
+GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true || exit 1
+
 #--------------
 # CONFIG TESTS
 #--------------

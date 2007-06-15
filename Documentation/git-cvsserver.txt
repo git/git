@@ -38,7 +38,8 @@ Prepend 'path' to requested CVSROOT
 Don't allow recursing into subdirectories
 
 --export-all::
-Don't check for `gitcvs.enabled` in config
+Don't check for `gitcvs.enabled` in config. You also have to specify a list
+of allowed directories (see below) if you want to use this option.
 
 --version, -V::
 Print version information and exit

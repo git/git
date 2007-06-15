@@ -130,6 +130,11 @@ if (@ARGV) {
 # everything else is a directory
 $state->{allowed_roots} = [ @ARGV ];
 
+# don't export the whole system unless the users requests it
+if ($state->{'export-all'} && !@{$state->{allowed_roots}}) {
+    die "--export-all can only be used together with an explicit whitelist\n";
+}
+
 # if we are called with a pserver argument,
 # deal with the authentication cat before entering the
 # main loop
@@ -276,7 +281,8 @@ sub req_Root
 
     my $enabled = ($cfg->{gitcvs}{$state->{method}}{enabled}
 		   || $cfg->{gitcvs}{enabled});
-    unless ($enabled && $enabled =~ /^\s*(1|true|yes)\s*$/i) {
+    unless ($state->{'export-all'} ||
+	    ($enabled && $enabled =~ /^\s*(1|true|yes)\s*$/i)) {
         print "E GITCVS emulation needs to be enabled on this repo\n";
         print "E the repo config file needs a [gitcvs] section added, and the parameter 'enabled' set to 1\n";
         print "E \n";
