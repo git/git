@@ -163,6 +163,7 @@ BEGIN AUTH REQUEST
 anonymous
 
 END AUTH REQUEST
+Root /gitcvs.git
 EOF
 
 test_expect_success 'req_Root (base-path)' \

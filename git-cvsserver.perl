@@ -212,15 +212,17 @@ sub req_Root
 	return 0;
     }
 
+    my $cvsroot = $state->{'base-path'} || '';
+    $cvsroot =~ s#/+$##;
+    $cvsroot .= $data;
+
     if ($state->{CVSROOT}
-	&& ($state->{CVSROOT} ne $data)) {
+	&& ($state->{CVSROOT} ne $cvsroot)) {
 	print "error 1 Conflicting roots specified\n";
 	return 0;
     }
 
-    $state->{CVSROOT} = $state->{'base-path'} || '';
-    $state->{CVSROOT} =~ s#/+$##;
-    $state->{CVSROOT} .= $data;
+    $state->{CVSROOT} = $cvsroot;
 
     $ENV{GIT_DIR} = $state->{CVSROOT} . "/";
 
