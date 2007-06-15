@@ -38,14 +38,16 @@ use IPC::Open3;
 use Git;
 
 BEGIN {
-	my $s;
+	# import functions from Git into our packages, en masse
+	no strict 'refs';
 	foreach (qw/command command_oneline command_noisy command_output_pipe
 	            command_input_pipe command_close_pipe/) {
-		$s .= "*SVN::Git::Editor::$_ = *SVN::Git::Fetcher::$_ = ".
-		      "*Git::SVN::Migration::$_ = ".
-		      "*Git::SVN::Log::$_ = *Git::SVN::$_ = *$_ = *Git::$_; ";
+		for my $package ( qw(SVN::Git::Editor SVN::Git::Fetcher
+			Git::SVN::Migration Git::SVN::Log Git::SVN),
+			__PACKAGE__) {
+			*{"${package}::$_"} = \&{"Git::$_"};
+		}
 	}
-	eval $s;
 }
 
 my ($SVN);
@@ -846,26 +848,26 @@ BEGIN {
 	# some options are read globally, but can be overridden locally
 	# per [svn-remote "..."] section.  Command-line options will *NOT*
 	# override options set in an [svn-remote "..."] section
-	my $e;
-	foreach (qw/follow_parent no_metadata use_svm_props
-	            use_svnsync_props/) {
-		my $key = $_;
+	no strict 'refs';
+	for my $option (qw/follow_parent no_metadata use_svm_props
+			   use_svnsync_props/) {
+		my $key = $option;
 		$key =~ tr/_//d;
-		$e .= "sub $_ {
-			my (\$self) = \@_;
-			return \$self->{-$_} if exists \$self->{-$_};
-			my \$k = \"svn-remote.\$self->{repo_id}\.$key\";
-			eval { command_oneline(qw/config --get/, \$k) };
-			if (\$@) {
-				\$self->{-$_} = \$Git::SVN::_$_;
+		my $prop = "-$option";
+		*$option = sub {
+			my ($self) = @_;
+			return $self->{$prop} if exists $self->{$prop};
+			my $k = "svn-remote.$self->{repo_id}.$key";
+			eval { command_oneline(qw/config --get/, $k) };
+			if ($@) {
+				$self->{$prop} = ${"Git::SVN::_$option"};
 			} else {
-				my \$v = command_oneline(qw/config --bool/,\$k);
-				\$self->{-$_} = \$v eq 'false' ? 0 : 1;
+				my $v = command_oneline(qw/config --bool/,$k);
+				$self->{$prop} = $v eq 'false' ? 0 : 1;
 			}
-			return \$self->{-$_} }\n";
+			return $self->{$prop};
+		}
 	}
-	$e .= "1;\n";
-	eval $e or die $@;
 }
 
 my %LOCKFILES;
@@ -2899,17 +2901,17 @@ my ($can_do_switch, %ignored_err, $RA);
 
 BEGIN {
 	# enforce temporary pool usage for some simple functions
-	my $e;
-	foreach (qw/rev_proplist get_latest_revnum get_uuid get_repos_root/) {
-		$e .= "sub $_ {
-			my \$self = shift;
-			my \$pool = SVN::Pool->new;
-			my \@ret = \$self->SUPER::$_(\@_,\$pool);
-			\$pool->clear;
-			wantarray ? \@ret : \$ret[0]; }\n";
+	no strict 'refs';
+	for my $f (qw/rev_proplist get_latest_revnum get_uuid get_repos_root/) {
+		my $SUPER = "SUPER::$f";
+		*$f = sub {
+			my $self = shift;
+			my $pool = SVN::Pool->new;
+			my @ret = $self->$SUPER(@_,$pool);
+			$pool->clear;
+			wantarray ? @ret : $ret[0];
+		};
 	}
-
-	eval "$e; 1;" or die $@;
 }
 
 sub new {
