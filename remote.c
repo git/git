@@ -536,10 +536,11 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 		}
 
 		if (pat) {
-			dst_name = xmalloc(strlen(pat->dst) +
+			const char *dst_side = pat->dst ? pat->dst : pat->src;
+			dst_name = xmalloc(strlen(dst_side) +
 					   strlen(src->name) -
 					   strlen(pat->src) + 2);
-			strcpy(dst_name, pat->dst);
+			strcpy(dst_name, dst_side);
 			strcat(dst_name, src->name + strlen(pat->src));
 		} else
 			dst_name = xstrdup(src->name);
