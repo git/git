@@ -234,7 +234,7 @@ extern void verify_non_filename(const char *prefix, const char *name);
  */
 #define ALLOC_GROW(x, nr, alloc) \
 	do { \
-		if ((nr) >= alloc) { \
+		if ((nr) > alloc) { \
 			if (alloc_nr(alloc) < (nr)) \
 				alloc = (nr); \
 			else \
