@@ -89,6 +89,10 @@ OPTIONS
 --git-dir::
 	Show `$GIT_DIR` if defined else show the path to the .git directory.
 
+--is-inside-git-dir::
+	Return "true" if we are in the git directory, otherwise "false".
+	Some commands require to be run in a working directory.
+
 --short, --short=number::
 	Instead of outputting the full SHA1 values of object names try to
 	abbreviate them to a shorter unique name. When no length is specified
