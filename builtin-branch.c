@@ -317,8 +317,6 @@ static void print_ref_list(int kinds, int detached, int verbose, int abbrev)
 static char *config_repo;
 static char *config_remote;
 static const char *start_ref;
-static int start_len;
-static int base_len;
 
 static int get_remote_branch_name(const char *value)
 {
@@ -334,26 +332,41 @@ static int get_remote_branch_name(const char *value)
 
 	end = value + strlen(value);
 
-	/* Try an exact match first.  */
+	/*
+	 * Try an exact match first.  I.e. handle the case where the
+	 * value is "$anything:refs/foo/bar/baz" and start_ref is exactly
+	 * "refs/foo/bar/baz". Then the name at the remote is $anything.
+	 */
 	if (!strcmp(colon + 1, start_ref)) {
-		/* Truncate the value before the colon.  */
+		/* Truncate the value before the colon. */
 		nfasprintf(&config_repo, "%.*s", colon - value, value);
 		return 1;
 	}
 
-	/* Try with a wildcard match now.  */
-	if (end - value > 2 && end[-2] == '/' && end[-1] == '*' &&
-	    colon - value > 2 && colon[-2] == '/' && colon[-1] == '*' &&
-	    (end - 2) - (colon + 1) == base_len &&
-	    !strncmp(colon + 1, start_ref, base_len)) {
-		/* Replace the star with the remote branch name.  */
-		nfasprintf(&config_repo, "%.*s%s",
-			   (colon - 2) - value, value,
-			   start_ref + base_len);
-		return 1;
-	}
+	/*
+	 * Is this a wildcard match?
+	 */
+	if ((end - 2 <= value) || end[-2] != '/' || end[-1] != '*' ||
+	    (colon - 2 <= value) || colon[-2] != '/' || colon[-1] != '*')
+		return 0;
 
-	return 0;
+	/*
+	 * Value is "refs/foo/bar/<asterisk>:refs/baz/boa/<asterisk>"
+	 * and start_ref begins with "refs/baz/boa/"; the name at the
+	 * remote is refs/foo/bar/ with the remaining part of the
+	 * start_ref.  The length of the prefix on the RHS is (end -
+	 * colon - 2), including the slash immediately before the
+	 * asterisk.
+	 */
+	if ((strlen(start_ref) < end - colon - 2) ||
+	    memcmp(start_ref, colon + 1, end - colon - 2))
+		return 0; /* does not match prefix */
+
+	/* Replace the asterisk with the remote branch name.  */
+	nfasprintf(&config_repo, "%.*s%s",
+		   (colon - 1) - value, value,
+		   start_ref + (end - colon - 2));
+	return 1;
 }
 
 static int get_remote_config(const char *key, const char *value)
@@ -363,10 +376,12 @@ static int get_remote_config(const char *key, const char *value)
 		return 0;
 
 	var = strrchr(key, '.');
-	if (var == key + 6)
+	if (var == key + 6 || strcmp(var, ".fetch"))
 		return 0;
-
-	if (!strcmp(var, ".fetch") && get_remote_branch_name(value))
+	/*
+	 * Ok, we are looking at key == "remote.$foo.fetch";
+	 */
+	if (get_remote_branch_name(value))
 		nfasprintf(&config_remote, "%.*s", var - (key + 7), key + 7);
 
 	return 0;
@@ -392,14 +407,14 @@ static void set_branch_merge(const char *name, const char *config_remote,
 
 static void set_branch_defaults(const char *name, const char *real_ref)
 {
-	const char *slash = strrchr(real_ref, '/');
-
-	if (!slash)
-		return;
-
+	/*
+	 * name is the name of new branch under refs/heads;
+	 * real_ref is typically refs/remotes/$foo/$bar, where
+	 * $foo is the remote name (there typically are no slashes)
+	 * and $bar is the branch name we map from the remote
+	 * (it could have slashes).
+	 */
 	start_ref = real_ref;
-	start_len = strlen(real_ref);
-	base_len = slash - real_ref;
 	git_config(get_remote_config);
 	if (!config_repo && !config_remote &&
 	    !prefixcmp(real_ref, "refs/heads/")) {
