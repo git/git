@@ -637,6 +637,7 @@ class P4Sync(Command):
         self.isWindows = (platform.system() == "Windows")
         self.keepRepoPath = False
         self.depotPaths = None
+        self.p4BranchesInGit = []
 
         if gitConfig("git-p4.syncFromOrigin") == "false":
             self.syncWithOrigin = False
