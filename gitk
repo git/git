@@ -230,8 +230,9 @@ proc updatecommits {} {
     catch {unset selectedline}
     catch {unset thickerline}
     catch {unset viewdata($n)}
-    discardallcommits
     readrefs
+    changedrefs
+    regetallcommits
     showview $n
 }
 
@@ -357,6 +358,30 @@ proc readrefs {} {
 	    set mainhead [string range $thehead 11 end]
 	}
     }
+}
+
+# update things for a head moved to a child of its previous location
+proc movehead {id name} {
+    global headids idheads
+
+    removehead $headids($name) $name
+    set headids($name) $id
+    lappend idheads($id) $name
+}
+
+# update things when a head has been removed
+proc removehead {id name} {
+    global headids idheads
+
+    if {$idheads($id) eq $name} {
+	unset idheads($id)
+    } else {
+	set i [lsearch -exact $idheads($id) $name]
+	if {$i >= 0} {
+	    set idheads($id) [lreplace $idheads($id) $i $i]
+	}
+    }
+    unset headids($name)
 }
 
 proc show_error {w top msg} {
@@ -3805,22 +3830,31 @@ proc viewnextline {dir} {
 
 # add a list of tag or branch names at position pos
 # returns the number of names inserted
-proc appendrefs {pos tags var} {
+proc appendrefs {pos ids var} {
     global ctext commitrow linknum curview $var
 
     if {[catch {$ctext index $pos}]} {
 	return 0
     }
-    set tags [lsort $tags]
+    $ctext conf -state normal
+    $ctext delete $pos "$pos lineend"
+    set tags {}
+    foreach id $ids {
+	foreach tag [set $var\($id\)] {
+	    lappend tags [list $tag $id]
+	}
+    }
+    set tags [lsort -index 0 -decreasing $tags]
     set sep {}
-    foreach tag $tags {
-	set id [set $var\($tag\)]
+    foreach ti $tags {
+	set id [lindex $ti 1]
 	set lk link$linknum
 	incr linknum
+	$ctext tag delete $lk
 	$ctext insert $pos $sep
-	$ctext insert $pos $tag $lk
-	$ctext tag conf $lk -foreground blue
+	$ctext insert $pos [lindex $ti 0] $lk
 	if {[info exists commitrow($curview,$id)]} {
+	    $ctext tag conf $lk -foreground blue
 	    $ctext tag bind $lk <1> \
 		[list selectline $commitrow($curview,$id) 1]
 	    $ctext tag conf $lk -underline 1
@@ -3829,41 +3863,58 @@ proc appendrefs {pos tags var} {
 	}
 	set sep ", "
     }
+    $ctext conf -state disabled
     return [llength $tags]
 }
 
-proc taglist {ids} {
-    global idtags
-
-    set tags {}
-    foreach id $ids {
-	foreach tag $idtags($id) {
-	    lappend tags $tag
-	}
-    }
-    return $tags
-}
-
 # called when we have finished computing the nearby tags
-proc dispneartags {} {
-    global selectedline currentid ctext anc_tags desc_tags showneartags
-    global desc_heads
+proc dispneartags {delay} {
+    global selectedline currentid showneartags tagphase
 
     if {![info exists selectedline] || !$showneartags} return
-    set id $currentid
-    $ctext conf -state normal
-    if {[info exists desc_heads($id)]} {
-	if {[appendrefs branch $desc_heads($id) headids] > 1} {
-	    $ctext insert "branch -2c" "es"
+    after cancel dispnexttag
+    if {$delay} {
+	after 200 dispnexttag
+	set tagphase -1
+    } else {
+	after idle dispnexttag
+	set tagphase 0
+    }
+}
+
+proc dispnexttag {} {
+    global selectedline currentid showneartags tagphase ctext
+
+    if {![info exists selectedline] || !$showneartags} return
+    switch -- $tagphase {
+	0 {
+	    set dtags [desctags $currentid]
+	    if {$dtags ne {}} {
+		appendrefs precedes $dtags idtags
+	    }
+	}
+	1 {
+	    set atags [anctags $currentid]
+	    if {$atags ne {}} {
+		appendrefs follows $atags idtags
+	    }
+	}
+	2 {
+	    set dheads [descheads $currentid]
+	    if {$dheads ne {}} {
+		if {[appendrefs branch $dheads idheads] > 1
+		    && [$ctext get "branch -3c"] eq "h"} {
+		    # turn "Branch" into "Branches"
+		    $ctext conf -state normal
+		    $ctext insert "branch -2c" "es"
+		    $ctext conf -state disabled
+		}
+	    }
 	}
     }
-    if {[info exists anc_tags($id)]} {
-	appendrefs follows [taglist $anc_tags($id)] tagids
+    if {[incr tagphase] <= 2} {
+	after idle dispnexttag
     }
-    if {[info exists desc_tags($id)]} {
-	appendrefs precedes [taglist $desc_tags($id)] tagids
-    }
-    $ctext conf -state disabled
 }
 
 proc selectline {l isnew} {
@@ -3873,7 +3924,7 @@ proc selectline {l isnew} {
     global currentid sha1entry
     global commentend idtags linknum
     global mergemax numcommits pending_select
-    global cmitmode desc_tags anc_tags showneartags allcommits desc_heads
+    global cmitmode showneartags allcommits
 
     catch {unset pending_select}
     $canv delete hover
@@ -3993,25 +4044,14 @@ proc selectline {l isnew} {
 	$ctext insert end "Branch: "
 	$ctext mark set branch "end -1c"
 	$ctext mark gravity branch left
-	if {[info exists desc_heads($id)]} {
-	    if {[appendrefs branch $desc_heads($id) headids] > 1} {
-		# turn "Branch" into "Branches"
-		$ctext insert "branch -2c" "es"
-	    }
-	}
 	$ctext insert end "\nFollows: "
 	$ctext mark set follows "end -1c"
 	$ctext mark gravity follows left
-	if {[info exists anc_tags($id)]} {
-	    appendrefs follows [taglist $anc_tags($id)] tagids
-	}
 	$ctext insert end "\nPrecedes: "
 	$ctext mark set precedes "end -1c"
 	$ctext mark gravity precedes left
-	if {[info exists desc_tags($id)]} {
-	    appendrefs precedes [taglist $desc_tags($id)] tagids
-	}
 	$ctext insert end "\n"
+	dispneartags 1
     }
     $ctext insert end "\n"
     appendwithlinks [lindex $info 5] {comment}
@@ -5297,26 +5337,28 @@ proc mkbrgo {top} {
 	notbusy newbranch
 	error_popup $err
     } else {
+	set headids($name) $id
+	lappend idheads($id) $name
 	addedhead $id $name
-	# XXX should update list of heads displayed for selected commit
 	notbusy newbranch
 	redrawtags $id
+	dispneartags 0
     }
 }
 
 proc cherrypick {} {
     global rowmenuid curview commitrow
-    global mainhead desc_heads anc_tags desc_tags allparents allchildren
+    global mainhead
 
-    if {[info exists desc_heads($rowmenuid)]
-	&& [lsearch -exact $desc_heads($rowmenuid) $mainhead] >= 0} {
+    set oldhead [exec git rev-parse HEAD]
+    set dheads [descheads $rowmenuid]
+    if {$dheads ne {} && [lsearch -exact $dheads $oldhead] >= 0} {
 	set ok [confirm_popup "Commit [string range $rowmenuid 0 7] is already\
 			included in branch $mainhead -- really re-apply it?"]
 	if {!$ok} return
     }
     nowbusy cherrypick
     update
-    set oldhead [exec git rev-parse HEAD]
     # Unfortunately git-cherry-pick writes stuff to stderr even when
     # no error occurs, and exec takes that as an indication of error...
     if {[catch {exec sh -c "git cherry-pick -r $rowmenuid 2>&1"} err]} {
@@ -5330,16 +5372,11 @@ proc cherrypick {} {
 	error_popup "No changes committed"
 	return
     }
-    set allparents($newhead) $oldhead
-    lappend allchildren($oldhead) $newhead
-    set desc_heads($newhead) $mainhead
-    if {[info exists anc_tags($oldhead)]} {
-	set anc_tags($newhead) $anc_tags($oldhead)
-    }
-    set desc_tags($newhead) {}
+    addnewchild $newhead $oldhead
     if {[info exists commitrow($curview,$oldhead)]} {
 	insertrow $commitrow($curview,$oldhead) $newhead
 	if {$mainhead ne {}} {
+	    movehead $newhead $mainhead
 	    movedhead $newhead $mainhead
 	}
 	redrawtags $oldhead
@@ -5380,7 +5417,7 @@ proc cobranch {} {
 }
 
 proc rmbranch {} {
-    global desc_heads headmenuid headmenuhead mainhead
+    global headmenuid headmenuhead mainhead
     global headids idheads
 
     set head $headmenuhead
@@ -5389,7 +5426,8 @@ proc rmbranch {} {
 	error_popup "Cannot delete the currently checked-out branch"
 	return
     }
-    if {$desc_heads($id) eq $head} {
+    set dheads [descheads $id]
+    if {$dheads eq $headids($head)} {
 	# the stuff on this branch isn't on any other branch
 	if {![confirm_popup "The commits on branch $head aren't on any other\
 			branch.\nReally delete branch $head?"]} return
@@ -5401,385 +5439,887 @@ proc rmbranch {} {
 	error_popup $err
 	return
     }
+    removehead $id $head
     removedhead $id $head
     redrawtags $id
     notbusy rmbranch
+    dispneartags 0
 }
 
 # Stuff for finding nearby tags
 proc getallcommits {} {
-    global allcstart allcommits allcfd allids
+    global allcommits allids nbmp nextarc seeds
 
     set allids {}
-    set fd [open [concat | git rev-list --all --topo-order --parents] r]
-    set allcfd $fd
+    set nbmp 0
+    set nextarc 0
+    set allcommits 0
+    set seeds {}
+    regetallcommits
+}
+
+# Called when the graph might have changed
+proc regetallcommits {} {
+    global allcommits seeds
+
+    set cmd [concat | git rev-list --all --parents]
+    foreach id $seeds {
+	lappend cmd "^$id"
+    }
+    set fd [open $cmd r]
     fconfigure $fd -blocking 0
-    set allcommits "reading"
+    incr allcommits
     nowbusy allcommits
     restartgetall $fd
 }
 
-proc discardallcommits {} {
-    global allparents allchildren allcommits allcfd
-    global desc_tags anc_tags alldtags tagisdesc allids desc_heads
-
-    if {![info exists allcommits]} return
-    if {$allcommits eq "reading"} {
-	catch {close $allcfd}
-    }
-    foreach v {allcommits allchildren allparents allids desc_tags anc_tags
-		alldtags tagisdesc desc_heads} {
-	catch {unset $v}
-    }
-}
-
 proc restartgetall {fd} {
-    global allcstart
-
     fileevent $fd readable [list getallclines $fd]
-    set allcstart [clock clicks -milliseconds]
 }
 
-proc combine_dtags {l1 l2} {
-    global tagisdesc notfirstd
-
-    set res [lsort -unique [concat $l1 $l2]]
-    for {set i 0} {$i < [llength $res]} {incr i} {
-	set x [lindex $res $i]
-	for {set j [expr {$i+1}]} {$j < [llength $res]} {} {
-	    set y [lindex $res $j]
-	    if {[info exists tagisdesc($x,$y)]} {
-		if {$tagisdesc($x,$y) > 0} {
-		    # x is a descendent of y, exclude x
-		    set res [lreplace $res $i $i]
-		    incr i -1
-		    break
-		} else {
-		    # y is a descendent of x, exclude y
-		    set res [lreplace $res $j $j]
-		}
-	    } else {
-		# no relation, keep going
-		incr j
-	    }
-	}
-    }
-    return $res
-}
-
-proc combine_atags {l1 l2} {
-    global tagisdesc
-
-    set res [lsort -unique [concat $l1 $l2]]
-    for {set i 0} {$i < [llength $res]} {incr i} {
-	set x [lindex $res $i]
-	for {set j [expr {$i+1}]} {$j < [llength $res]} {} {
-	    set y [lindex $res $j]
-	    if {[info exists tagisdesc($x,$y)]} {
-		if {$tagisdesc($x,$y) < 0} {
-		    # x is an ancestor of y, exclude x
-		    set res [lreplace $res $i $i]
-		    incr i -1
-		    break
-		} else {
-		    # y is an ancestor of x, exclude y
-		    set res [lreplace $res $j $j]
-		}
-	    } else {
-		# no relation, keep going
-		incr j
-	    }
-	}
-    }
-    return $res
-}
-
-proc forward_pass {id children} {
-    global idtags desc_tags idheads desc_heads alldtags tagisdesc
-
-    set dtags {}
-    set dheads {}
-    foreach child $children {
-	if {[info exists idtags($child)]} {
-	    set ctags [list $child]
-	} else {
-	    set ctags $desc_tags($child)
-	}
-	if {$dtags eq {}} {
-	    set dtags $ctags
-	} elseif {$ctags ne $dtags} {
-	    set dtags [combine_dtags $dtags $ctags]
-	}
-	set cheads $desc_heads($child)
-	if {$dheads eq {}} {
-	    set dheads $cheads
-	} elseif {$cheads ne $dheads} {
-	    set dheads [lsort -unique [concat $dheads $cheads]]
-	}
-    }
-    set desc_tags($id) $dtags
-    if {[info exists idtags($id)]} {
-	set adt $dtags
-	foreach tag $dtags {
-	    set adt [concat $adt $alldtags($tag)]
-	}
-	set adt [lsort -unique $adt]
-	set alldtags($id) $adt
-	foreach tag $adt {
-	    set tagisdesc($id,$tag) -1
-	    set tagisdesc($tag,$id) 1
-	}
-    }
-    if {[info exists idheads($id)]} {
-	set dheads [concat $dheads $idheads($id)]
-    }
-    set desc_heads($id) $dheads
-}
+# Since most commits have 1 parent and 1 child, we group strings of
+# such commits into "arcs" joining branch/merge points (BMPs), which
+# are commits that either don't have 1 parent or don't have 1 child.
+#
+# arcnos(id) - incoming arcs for BMP, arc we're on for other nodes
+# arcout(id) - outgoing arcs for BMP
+# arcids(a) - list of IDs on arc including end but not start
+# arcstart(a) - BMP ID at start of arc
+# arcend(a) - BMP ID at end of arc
+# growing(a) - arc a is still growing
+# arctags(a) - IDs out of arcids (excluding end) that have tags
+# archeads(a) - IDs out of arcids (excluding end) that have heads
+# The start of an arc is at the descendent end, so "incoming" means
+# coming from descendents, and "outgoing" means going towards ancestors.
 
 proc getallclines {fd} {
-    global allparents allchildren allcommits allcstart
-    global desc_tags anc_tags idtags tagisdesc allids
-    global idheads travindex
+    global allids allparents allchildren idtags nextarc nbmp
+    global arcnos arcids arctags arcout arcend arcstart archeads growing
+    global seeds allcommits allcstart
 
+    if {![info exists allcstart]} {
+	set allcstart [clock clicks -milliseconds]
+    }
+    set nid 0
     while {[gets $fd line] >= 0} {
 	set id [lindex $line 0]
+	if {[info exists allparents($id)]} {
+	    # seen it already
+	    continue
+	}
 	lappend allids $id
 	set olds [lrange $line 1 end]
 	set allparents($id) $olds
 	if {![info exists allchildren($id)]} {
 	    set allchildren($id) {}
+	    set arcnos($id) {}
+	    lappend seeds $id
+	} else {
+	    set a $arcnos($id)
+	    if {[llength $olds] == 1 && [llength $a] == 1} {
+		lappend arcids($a) $id
+		if {[info exists idtags($id)]} {
+		    lappend arctags($a) $id
+		}
+		if {[info exists idheads($id)]} {
+		    lappend archeads($a) $id
+		}
+		if {[info exists allparents($olds)]} {
+		    # seen parent already
+		    if {![info exists arcout($olds)]} {
+			splitarc $olds
+		    }
+		    lappend arcids($a) $olds
+		    set arcend($a) $olds
+		    unset growing($a)
+		}
+		lappend allchildren($olds) $id
+		lappend arcnos($olds) $a
+		continue
+	    }
 	}
+	incr nbmp
+	foreach a $arcnos($id) {
+	    lappend arcids($a) $id
+	    set arcend($a) $id
+	    unset growing($a)
+	}
+
+	set ao {}
 	foreach p $olds {
 	    lappend allchildren($p) $id
+	    set a [incr nextarc]
+	    set arcstart($a) $id
+	    set archeads($a) {}
+	    set arctags($a) {}
+	    set archeads($a) {}
+	    set arcids($a) {}
+	    lappend ao $a
+	    set growing($a) 1
+	    if {[info exists allparents($p)]} {
+		# seen it already, may need to make a new branch
+		if {![info exists arcout($p)]} {
+		    splitarc $p
+		}
+		lappend arcids($a) $p
+		set arcend($a) $p
+		unset growing($a)
+	    }
+	    lappend arcnos($p) $a
 	}
-	# compute nearest tagged descendents as we go
-	# also compute descendent heads
-	forward_pass $id $allchildren($id)
-	if {[clock clicks -milliseconds] - $allcstart >= 50} {
-	    fileevent $fd readable {}
-	    after idle restartgetall $fd
-	    return
+	set arcout($id) $ao
+	if {[incr nid] >= 50} {
+	    set nid 0
+	    if {[clock clicks -milliseconds] - $allcstart >= 50} {
+		fileevent $fd readable {}
+		after idle restartgetall $fd
+		unset allcstart
+		return
+	    }
 	}
     }
-    if {[eof $fd]} {
-	set travindex [llength $allids]
-	set allcommits "traversing"
-	after idle restartatags
-	if {[catch {close $fd} err]} {
-	    error_popup "Error reading full commit graph: $err.\n\
-			 Results may be incomplete."
+    if {![eof $fd]} return
+    close $fd
+    if {[incr allcommits -1] == 0} {
+	notbusy allcommits
+    }
+    dispneartags 0
+}
+
+proc recalcarc {a} {
+    global arctags archeads arcids idtags idheads
+
+    set at {}
+    set ah {}
+    foreach id [lrange $arcids($a) 0 end-1] {
+	if {[info exists idtags($id)]} {
+	    lappend at $id
 	}
+	if {[info exists idheads($id)]} {
+	    lappend ah $id
+	}
+    }
+    set arctags($a) $at
+    set archeads($a) $ah
+}
+
+proc splitarc {p} {
+    global arcnos arcids nextarc nbmp arctags archeads idtags idheads
+    global arcstart arcend arcout allparents growing
+
+    set a $arcnos($p)
+    if {[llength $a] != 1} {
+	puts "oops splitarc called but [llength $a] arcs already"
+	return
+    }
+    set a [lindex $a 0]
+    set i [lsearch -exact $arcids($a) $p]
+    if {$i < 0} {
+	puts "oops splitarc $p not in arc $a"
+	return
+    }
+    set na [incr nextarc]
+    if {[info exists arcend($a)]} {
+	set arcend($na) $arcend($a)
+    } else {
+	set l [lindex $allparents([lindex $arcids($a) end]) 0]
+	set j [lsearch -exact $arcnos($l) $a]
+	set arcnos($l) [lreplace $arcnos($l) $j $j $na]
+    }
+    set tail [lrange $arcids($a) [expr {$i+1}] end]
+    set arcids($a) [lrange $arcids($a) 0 $i]
+    set arcend($a) $p
+    set arcstart($na) $p
+    set arcout($p) $na
+    set arcids($na) $tail
+    if {[info exists growing($a)]} {
+	set growing($na) 1
+	unset growing($a)
+    }
+    incr nbmp
+
+    foreach id $tail {
+	if {[llength $arcnos($id)] == 1} {
+	    set arcnos($id) $na
+	} else {
+	    set j [lsearch -exact $arcnos($id) $a]
+	    set arcnos($id) [lreplace $arcnos($id) $j $j $na]
+	}
+    }
+
+    # reconstruct tags and heads lists
+    if {$arctags($a) ne {} || $archeads($a) ne {}} {
+	recalcarc $a
+	recalcarc $na
+    } else {
+	set arctags($na) {}
+	set archeads($na) {}
     }
 }
 
-# walk backward through the tree and compute nearest tagged ancestors
-proc restartatags {} {
-    global allids allparents idtags anc_tags travindex
+# Update things for a new commit added that is a child of one
+# existing commit.  Used when cherry-picking.
+proc addnewchild {id p} {
+    global allids allparents allchildren idtags nextarc nbmp
+    global arcnos arcids arctags arcout arcend arcstart archeads growing
+    global seeds
 
-    set t0 [clock clicks -milliseconds]
-    set i $travindex
-    while {[incr i -1] >= 0} {
-	set id [lindex $allids $i]
-	set atags {}
-	foreach p $allparents($id) {
-	    if {[info exists idtags($p)]} {
-		set ptags [list $p]
+    lappend allids $id
+    set allparents($id) [list $p]
+    set allchildren($id) {}
+    set arcnos($id) {}
+    lappend seeds $id
+    incr nbmp
+    lappend allchildren($p) $id
+    set a [incr nextarc]
+    set arcstart($a) $id
+    set archeads($a) {}
+    set arctags($a) {}
+    set arcids($a) [list $p]
+    set arcend($a) $p
+    if {![info exists arcout($p)]} {
+	splitarc $p
+    }
+    lappend arcnos($p) $a
+    set arcout($id) [list $a]
+}
+
+# Returns 1 if a is an ancestor of b, -1 if b is an ancestor of a,
+# or 0 if neither is true.
+proc anc_or_desc {a b} {
+    global arcout arcstart arcend arcnos cached_isanc
+
+    if {$arcnos($a) eq $arcnos($b)} {
+	# Both are on the same arc(s); either both are the same BMP,
+	# or if one is not a BMP, the other is also not a BMP or is
+	# the BMP at end of the arc (and it only has 1 incoming arc).
+	if {$a eq $b} {
+	    return 0
+	}
+	# assert {[llength $arcnos($a)] == 1}
+	set arc [lindex $arcnos($a) 0]
+	set i [lsearch -exact $arcids($arc) $a]
+	set j [lsearch -exact $arcids($arc) $b]
+	if {$i < 0 || $i > $j} {
+	    return 1
+	} else {
+	    return -1
+	}
+    }
+
+    if {![info exists arcout($a)]} {
+	set arc [lindex $arcnos($a) 0]
+	if {[info exists arcend($arc)]} {
+	    set aend $arcend($arc)
+	} else {
+	    set aend {}
+	}
+	set a $arcstart($arc)
+    } else {
+	set aend $a
+    }
+    if {![info exists arcout($b)]} {
+	set arc [lindex $arcnos($b) 0]
+	if {[info exists arcend($arc)]} {
+	    set bend $arcend($arc)
+	} else {
+	    set bend {}
+	}
+	set b $arcstart($arc)
+    } else {
+	set bend $b
+    }
+    if {$a eq $bend} {
+	return 1
+    }
+    if {$b eq $aend} {
+	return -1
+    }
+    if {[info exists cached_isanc($a,$bend)]} {
+	if {$cached_isanc($a,$bend)} {
+	    return 1
+	}
+    }
+    if {[info exists cached_isanc($b,$aend)]} {
+	if {$cached_isanc($b,$aend)} {
+	    return -1
+	}
+	if {[info exists cached_isanc($a,$bend)]} {
+	    return 0
+	}
+    }
+
+    set todo [list $a $b]
+    set anc($a) a
+    set anc($b) b
+    for {set i 0} {$i < [llength $todo]} {incr i} {
+	set x [lindex $todo $i]
+	if {$anc($x) eq {}} {
+	    continue
+	}
+	foreach arc $arcnos($x) {
+	    set xd $arcstart($arc)
+	    if {$xd eq $bend} {
+		set cached_isanc($a,$bend) 1
+		set cached_isanc($b,$aend) 0
+		return 1
+	    } elseif {$xd eq $aend} {
+		set cached_isanc($b,$aend) 1
+		set cached_isanc($a,$bend) 0
+		return -1
+	    }
+	    if {![info exists anc($xd)]} {
+		set anc($xd) $anc($x)
+		lappend todo $xd
+	    } elseif {$anc($xd) ne $anc($x)} {
+		set anc($xd) {}
+	    }
+	}
+    }
+    set cached_isanc($a,$bend) 0
+    set cached_isanc($b,$aend) 0
+    return 0
+}
+
+# This identifies whether $desc has an ancestor that is
+# a growing tip of the graph and which is not an ancestor of $anc
+# and returns 0 if so and 1 if not.
+# If we subsequently discover a tag on such a growing tip, and that
+# turns out to be a descendent of $anc (which it could, since we
+# don't necessarily see children before parents), then $desc
+# isn't a good choice to display as a descendent tag of
+# $anc (since it is the descendent of another tag which is
+# a descendent of $anc).  Similarly, $anc isn't a good choice to
+# display as a ancestor tag of $desc.
+#
+proc is_certain {desc anc} {
+    global arcnos arcout arcstart arcend growing problems
+
+    set certain {}
+    if {[llength $arcnos($anc)] == 1} {
+	# tags on the same arc are certain
+	if {$arcnos($desc) eq $arcnos($anc)} {
+	    return 1
+	}
+	if {![info exists arcout($anc)]} {
+	    # if $anc is partway along an arc, use the start of the arc instead
+	    set a [lindex $arcnos($anc) 0]
+	    set anc $arcstart($a)
+	}
+    }
+    if {[llength $arcnos($desc)] > 1 || [info exists arcout($desc)]} {
+	set x $desc
+    } else {
+	set a [lindex $arcnos($desc) 0]
+	set x $arcend($a)
+    }
+    if {$x == $anc} {
+	return 1
+    }
+    set anclist [list $x]
+    set dl($x) 1
+    set nnh 1
+    set ngrowanc 0
+    for {set i 0} {$i < [llength $anclist] && ($nnh > 0 || $ngrowanc > 0)} {incr i} {
+	set x [lindex $anclist $i]
+	if {$dl($x)} {
+	    incr nnh -1
+	}
+	set done($x) 1
+	foreach a $arcout($x) {
+	    if {[info exists growing($a)]} {
+		if {![info exists growanc($x)] && $dl($x)} {
+		    set growanc($x) 1
+		    incr ngrowanc
+		}
 	    } else {
-		set ptags $anc_tags($p)
+		set y $arcend($a)
+		if {[info exists dl($y)]} {
+		    if {$dl($y)} {
+			if {!$dl($x)} {
+			    set dl($y) 0
+			    if {![info exists done($y)]} {
+				incr nnh -1
+			    }
+			    if {[info exists growanc($x)]} {
+				incr ngrowanc -1
+			    }
+			    set xl [list $y]
+			    for {set k 0} {$k < [llength $xl]} {incr k} {
+				set z [lindex $xl $k]
+				foreach c $arcout($z) {
+				    if {[info exists arcend($c)]} {
+					set v $arcend($c)
+					if {[info exists dl($v)] && $dl($v)} {
+					    set dl($v) 0
+					    if {![info exists done($v)]} {
+						incr nnh -1
+					    }
+					    if {[info exists growanc($v)]} {
+						incr ngrowanc -1
+					    }
+					    lappend xl $v
+					}
+				    }
+				}
+			    }
+			}
+		    }
+		} elseif {$y eq $anc || !$dl($x)} {
+		    set dl($y) 0
+		    lappend anclist $y
+		} else {
+		    set dl($y) 1
+		    lappend anclist $y
+		    incr nnh
+		}
 	    }
-	    if {$atags eq {}} {
-		set atags $ptags
-	    } elseif {$ptags ne $atags} {
-		set atags [combine_atags $atags $ptags]
-	    }
-	}
-	set anc_tags($id) $atags
-	if {[clock clicks -milliseconds] - $t0 >= 50} {
-	    set travindex $i
-	    after idle restartatags
-	    return
 	}
     }
-    set allcommits "done"
-    set travindex 0
-    notbusy allcommits
-    dispneartags
+    foreach x [array names growanc] {
+	if {$dl($x)} {
+	    return 0
+	}
+    }
+    return 1
 }
 
-# update the desc_tags and anc_tags arrays for a new tag just added
+proc validate_arctags {a} {
+    global arctags idtags
+
+    set i -1
+    set na $arctags($a)
+    foreach id $arctags($a) {
+	incr i
+	if {![info exists idtags($id)]} {
+	    set na [lreplace $na $i $i]
+	    incr i -1
+	}
+    }
+    set arctags($a) $na
+}
+
+proc validate_archeads {a} {
+    global archeads idheads
+
+    set i -1
+    set na $archeads($a)
+    foreach id $archeads($a) {
+	incr i
+	if {![info exists idheads($id)]} {
+	    set na [lreplace $na $i $i]
+	    incr i -1
+	}
+    }
+    set archeads($a) $na
+}
+
+# Return the list of IDs that have tags that are descendents of id,
+# ignoring IDs that are descendents of IDs already reported.
+proc desctags {id} {
+    global arcnos arcstart arcids arctags idtags allparents
+    global growing cached_dtags
+
+    if {![info exists allparents($id)]} {
+	return {}
+    }
+    set t1 [clock clicks -milliseconds]
+    set argid $id
+    if {[llength $arcnos($id)] == 1 && [llength $allparents($id)] == 1} {
+	# part-way along an arc; check that arc first
+	set a [lindex $arcnos($id) 0]
+	if {$arctags($a) ne {}} {
+	    validate_arctags $a
+	    set i [lsearch -exact $arcids($a) $id]
+	    set tid {}
+	    foreach t $arctags($a) {
+		set j [lsearch -exact $arcids($a) $t]
+		if {$j >= $i} break
+		set tid $t
+	    }
+	    if {$tid ne {}} {
+		return $tid
+	    }
+	}
+	set id $arcstart($a)
+	if {[info exists idtags($id)]} {
+	    return $id
+	}
+    }
+    if {[info exists cached_dtags($id)]} {
+	return $cached_dtags($id)
+    }
+
+    set origid $id
+    set todo [list $id]
+    set queued($id) 1
+    set nc 1
+    for {set i 0} {$i < [llength $todo] && $nc > 0} {incr i} {
+	set id [lindex $todo $i]
+	set done($id) 1
+	set ta [info exists hastaggedancestor($id)]
+	if {!$ta} {
+	    incr nc -1
+	}
+	# ignore tags on starting node
+	if {!$ta && $i > 0} {
+	    if {[info exists idtags($id)]} {
+		set tagloc($id) $id
+		set ta 1
+	    } elseif {[info exists cached_dtags($id)]} {
+		set tagloc($id) $cached_dtags($id)
+		set ta 1
+	    }
+	}
+	foreach a $arcnos($id) {
+	    set d $arcstart($a)
+	    if {!$ta && $arctags($a) ne {}} {
+		validate_arctags $a
+		if {$arctags($a) ne {}} {
+		    lappend tagloc($id) [lindex $arctags($a) end]
+		}
+	    }
+	    if {$ta || $arctags($a) ne {}} {
+		set tomark [list $d]
+		for {set j 0} {$j < [llength $tomark]} {incr j} {
+		    set dd [lindex $tomark $j]
+		    if {![info exists hastaggedancestor($dd)]} {
+			if {[info exists done($dd)]} {
+			    foreach b $arcnos($dd) {
+				lappend tomark $arcstart($b)
+			    }
+			    if {[info exists tagloc($dd)]} {
+				unset tagloc($dd)
+			    }
+			} elseif {[info exists queued($dd)]} {
+			    incr nc -1
+			}
+			set hastaggedancestor($dd) 1
+		    }
+		}
+	    }
+	    if {![info exists queued($d)]} {
+		lappend todo $d
+		set queued($d) 1
+		if {![info exists hastaggedancestor($d)]} {
+		    incr nc
+		}
+	    }
+	}
+    }
+    set tags {}
+    foreach id [array names tagloc] {
+	if {![info exists hastaggedancestor($id)]} {
+	    foreach t $tagloc($id) {
+		if {[lsearch -exact $tags $t] < 0} {
+		    lappend tags $t
+		}
+	    }
+	}
+    }
+    set t2 [clock clicks -milliseconds]
+    set loopix $i
+
+    # remove tags that are descendents of other tags
+    for {set i 0} {$i < [llength $tags]} {incr i} {
+	set a [lindex $tags $i]
+	for {set j 0} {$j < $i} {incr j} {
+	    set b [lindex $tags $j]
+	    set r [anc_or_desc $a $b]
+	    if {$r == 1} {
+		set tags [lreplace $tags $j $j]
+		incr j -1
+		incr i -1
+	    } elseif {$r == -1} {
+		set tags [lreplace $tags $i $i]
+		incr i -1
+		break
+	    }
+	}
+    }
+
+    if {[array names growing] ne {}} {
+	# graph isn't finished, need to check if any tag could get
+	# eclipsed by another tag coming later.  Simply ignore any
+	# tags that could later get eclipsed.
+	set ctags {}
+	foreach t $tags {
+	    if {[is_certain $t $origid]} {
+		lappend ctags $t
+	    }
+	}
+	if {$tags eq $ctags} {
+	    set cached_dtags($origid) $tags
+	} else {
+	    set tags $ctags
+	}
+    } else {
+	set cached_dtags($origid) $tags
+    }
+    set t3 [clock clicks -milliseconds]
+    if {0 && $t3 - $t1 >= 100} {
+	puts "iterating descendents ($loopix/[llength $todo] nodes) took\
+    	    [expr {$t2-$t1}]+[expr {$t3-$t2}]ms, $nc candidates left"
+    }
+    return $tags
+}
+
+proc anctags {id} {
+    global arcnos arcids arcout arcend arctags idtags allparents
+    global growing cached_atags
+
+    if {![info exists allparents($id)]} {
+	return {}
+    }
+    set t1 [clock clicks -milliseconds]
+    set argid $id
+    if {[llength $arcnos($id)] == 1 && [llength $allparents($id)] == 1} {
+	# part-way along an arc; check that arc first
+	set a [lindex $arcnos($id) 0]
+	if {$arctags($a) ne {}} {
+	    validate_arctags $a
+	    set i [lsearch -exact $arcids($a) $id]
+	    foreach t $arctags($a) {
+		set j [lsearch -exact $arcids($a) $t]
+		if {$j > $i} {
+		    return $t
+		}
+	    }
+	}
+	if {![info exists arcend($a)]} {
+	    return {}
+	}
+	set id $arcend($a)
+	if {[info exists idtags($id)]} {
+	    return $id
+	}
+    }
+    if {[info exists cached_atags($id)]} {
+	return $cached_atags($id)
+    }
+
+    set origid $id
+    set todo [list $id]
+    set queued($id) 1
+    set taglist {}
+    set nc 1
+    for {set i 0} {$i < [llength $todo] && $nc > 0} {incr i} {
+	set id [lindex $todo $i]
+	set done($id) 1
+	set td [info exists hastaggeddescendent($id)]
+	if {!$td} {
+	    incr nc -1
+	}
+	# ignore tags on starting node
+	if {!$td && $i > 0} {
+	    if {[info exists idtags($id)]} {
+		set tagloc($id) $id
+		set td 1
+	    } elseif {[info exists cached_atags($id)]} {
+		set tagloc($id) $cached_atags($id)
+		set td 1
+	    }
+	}
+	foreach a $arcout($id) {
+	    if {!$td && $arctags($a) ne {}} {
+		validate_arctags $a
+		if {$arctags($a) ne {}} {
+		    lappend tagloc($id) [lindex $arctags($a) 0]
+		}
+	    }
+	    if {![info exists arcend($a)]} continue
+	    set d $arcend($a)
+	    if {$td || $arctags($a) ne {}} {
+		set tomark [list $d]
+		for {set j 0} {$j < [llength $tomark]} {incr j} {
+		    set dd [lindex $tomark $j]
+		    if {![info exists hastaggeddescendent($dd)]} {
+			if {[info exists done($dd)]} {
+			    foreach b $arcout($dd) {
+				if {[info exists arcend($b)]} {
+				    lappend tomark $arcend($b)
+				}
+			    }
+			    if {[info exists tagloc($dd)]} {
+				unset tagloc($dd)
+			    }
+			} elseif {[info exists queued($dd)]} {
+			    incr nc -1
+			}
+			set hastaggeddescendent($dd) 1
+		    }
+		}
+	    }
+	    if {![info exists queued($d)]} {
+		lappend todo $d
+		set queued($d) 1
+		if {![info exists hastaggeddescendent($d)]} {
+		    incr nc
+		}
+	    }
+	}
+    }
+    set t2 [clock clicks -milliseconds]
+    set loopix $i
+    set tags {}
+    foreach id [array names tagloc] {
+	if {![info exists hastaggeddescendent($id)]} {
+	    foreach t $tagloc($id) {
+		if {[lsearch -exact $tags $t] < 0} {
+		    lappend tags $t
+		}
+	    }
+	}
+    }
+
+    # remove tags that are ancestors of other tags
+    for {set i 0} {$i < [llength $tags]} {incr i} {
+	set a [lindex $tags $i]
+	for {set j 0} {$j < $i} {incr j} {
+	    set b [lindex $tags $j]
+	    set r [anc_or_desc $a $b]
+	    if {$r == -1} {
+		set tags [lreplace $tags $j $j]
+		incr j -1
+		incr i -1
+	    } elseif {$r == 1} {
+		set tags [lreplace $tags $i $i]
+		incr i -1
+		break
+	    }
+	}
+    }
+
+    if {[array names growing] ne {}} {
+	# graph isn't finished, need to check if any tag could get
+	# eclipsed by another tag coming later.  Simply ignore any
+	# tags that could later get eclipsed.
+	set ctags {}
+	foreach t $tags {
+	    if {[is_certain $origid $t]} {
+		lappend ctags $t
+	    }
+	}
+	if {$tags eq $ctags} {
+	    set cached_atags($origid) $tags
+	} else {
+	    set tags $ctags
+	}
+    } else {
+	set cached_atags($origid) $tags
+    }
+    set t3 [clock clicks -milliseconds]
+    if {0 && $t3 - $t1 >= 100} {
+	puts "iterating ancestors ($loopix/[llength $todo] nodes) took\
+    	    [expr {$t2-$t1}]+[expr {$t3-$t2}]ms, $nc candidates left"
+    }
+    return $tags
+}
+
+# Return the list of IDs that have heads that are descendents of id,
+# including id itself if it has a head.
+proc descheads {id} {
+    global arcnos arcstart arcids archeads idheads cached_dheads
+    global allparents
+
+    if {![info exists allparents($id)]} {
+	return {}
+    }
+    set ret {}
+    if {[llength $arcnos($id)] == 1 && [llength $allparents($id)] == 1} {
+	# part-way along an arc; check it first
+	set a [lindex $arcnos($id) 0]
+	if {$archeads($a) ne {}} {
+	    validate_archeads $a
+	    set i [lsearch -exact $arcids($a) $id]
+	    foreach t $archeads($a) {
+		set j [lsearch -exact $arcids($a) $t]
+		if {$j > $i} break
+		lappend $ret $t
+	    }
+	}
+	set id $arcstart($a)
+    }
+    set origid $id
+    set todo [list $id]
+    set seen($id) 1
+    for {set i 0} {$i < [llength $todo]} {incr i} {
+	set id [lindex $todo $i]
+	if {[info exists cached_dheads($id)]} {
+	    set ret [concat $ret $cached_dheads($id)]
+	} else {
+	    if {[info exists idheads($id)]} {
+		lappend ret $id
+	    }
+	    foreach a $arcnos($id) {
+		if {$archeads($a) ne {}} {
+		    set ret [concat $ret $archeads($a)]
+		}
+		set d $arcstart($a)
+		if {![info exists seen($d)]} {
+		    lappend todo $d
+		    set seen($d) 1
+		}
+	    }
+	}
+    }
+    set ret [lsort -unique $ret]
+    set cached_dheads($origid) $ret
+}
+
 proc addedtag {id} {
-    global desc_tags anc_tags allparents allchildren allcommits
-    global idtags tagisdesc alldtags
+    global arcnos arcout cached_dtags cached_atags
 
-    if {![info exists desc_tags($id)]} return
-    set adt $desc_tags($id)
-    foreach t $desc_tags($id) {
-	set adt [concat $adt $alldtags($t)]
+    if {![info exists arcnos($id)]} return
+    if {![info exists arcout($id)]} {
+	recalcarc [lindex $arcnos($id) 0]
     }
-    set adt [lsort -unique $adt]
-    set alldtags($id) $adt
-    foreach t $adt {
-	set tagisdesc($id,$t) -1
-	set tagisdesc($t,$id) 1
-    }
-    if {[info exists anc_tags($id)]} {
-	set todo $anc_tags($id)
-	while {$todo ne {}} {
-	    set do [lindex $todo 0]
-	    set todo [lrange $todo 1 end]
-	    if {[info exists tagisdesc($id,$do)]} continue
-	    set tagisdesc($do,$id) -1
-	    set tagisdesc($id,$do) 1
-	    if {[info exists anc_tags($do)]} {
-		set todo [concat $todo $anc_tags($do)]
-	    }
-	}
-    }
-
-    set lastold $desc_tags($id)
-    set lastnew [list $id]
-    set nup 0
-    set nch 0
-    set todo $allparents($id)
-    while {$todo ne {}} {
-	set do [lindex $todo 0]
-	set todo [lrange $todo 1 end]
-	if {![info exists desc_tags($do)]} continue
-	if {$desc_tags($do) ne $lastold} {
-	    set lastold $desc_tags($do)
-	    set lastnew [combine_dtags $lastold [list $id]]
-	    incr nch
-	}
-	if {$lastold eq $lastnew} continue
-	set desc_tags($do) $lastnew
-	incr nup
-	if {![info exists idtags($do)]} {
-	    set todo [concat $todo $allparents($do)]
-	}
-    }
-
-    if {![info exists anc_tags($id)]} return
-    set lastold $anc_tags($id)
-    set lastnew [list $id]
-    set nup 0
-    set nch 0
-    set todo $allchildren($id)
-    while {$todo ne {}} {
-	set do [lindex $todo 0]
-	set todo [lrange $todo 1 end]
-	if {![info exists anc_tags($do)]} continue
-	if {$anc_tags($do) ne $lastold} {
-	    set lastold $anc_tags($do)
-	    set lastnew [combine_atags $lastold [list $id]]
-	    incr nch
-	}
-	if {$lastold eq $lastnew} continue
-	set anc_tags($do) $lastnew
-	incr nup
-	if {![info exists idtags($do)]} {
-	    set todo [concat $todo $allchildren($do)]
-	}
-    }
+    catch {unset cached_dtags}
+    catch {unset cached_atags}
 }
 
-# update the desc_heads array for a new head just added
 proc addedhead {hid head} {
-    global desc_heads allparents headids idheads
+    global arcnos arcout cached_dheads
 
-    set headids($head) $hid
-    lappend idheads($hid) $head
-
-    set todo [list $hid]
-    while {$todo ne {}} {
-	set do [lindex $todo 0]
-	set todo [lrange $todo 1 end]
-	if {![info exists desc_heads($do)] ||
-	    [lsearch -exact $desc_heads($do) $head] >= 0} continue
-	set oldheads $desc_heads($do)
-	lappend desc_heads($do) $head
-	set heads $desc_heads($do)
-	while {1} {
-	    set p $allparents($do)
-	    if {[llength $p] != 1 || ![info exists desc_heads($p)] ||
-		$desc_heads($p) ne $oldheads} break
-	    set do $p
-	    set desc_heads($do) $heads
-	}
-	set todo [concat $todo $p]
+    if {![info exists arcnos($hid)]} return
+    if {![info exists arcout($hid)]} {
+	recalcarc [lindex $arcnos($hid) 0]
     }
+    catch {unset cached_dheads}
 }
 
-# update the desc_heads array for a head just removed
 proc removedhead {hid head} {
-    global desc_heads allparents headids idheads
+    global cached_dheads
 
-    unset headids($head)
-    if {$idheads($hid) eq $head} {
-	unset idheads($hid)
-    } else {
-	set i [lsearch -exact $idheads($hid) $head]
-	if {$i >= 0} {
-	    set idheads($hid) [lreplace $idheads($hid) $i $i]
-	}
-    }
-
-    set todo [list $hid]
-    while {$todo ne {}} {
-	set do [lindex $todo 0]
-	set todo [lrange $todo 1 end]
-	if {![info exists desc_heads($do)]} continue
-	set i [lsearch -exact $desc_heads($do) $head]
-	if {$i < 0} continue
-	set oldheads $desc_heads($do)
-	set heads [lreplace $desc_heads($do) $i $i]
-	while {1} {
-	    set desc_heads($do) $heads
-	    set p $allparents($do)
-	    if {[llength $p] != 1 || ![info exists desc_heads($p)] ||
-		$desc_heads($p) ne $oldheads} break
-	    set do $p
-	}
-	set todo [concat $todo $p]
-    }
+    catch {unset cached_dheads}
 }
 
-# update things for a head moved to a child of its previous location
-proc movedhead {id name} {
-    global headids idheads
+proc movedhead {hid head} {
+    global arcnos arcout cached_dheads
 
-    set oldid $headids($name)
-    set headids($name) $id
-    if {$idheads($oldid) eq $name} {
-	unset idheads($oldid)
-    } else {
-	set i [lsearch -exact $idheads($oldid) $name]
-	if {$i >= 0} {
-	    set idheads($oldid) [lreplace $idheads($oldid) $i $i]
-	}
+    if {![info exists arcnos($hid)]} return
+    if {![info exists arcout($hid)]} {
+	recalcarc [lindex $arcnos($hid) 0]
     }
-    lappend idheads($id) $name
+    catch {unset cached_dheads}
 }
 
 proc changedrefs {} {
-    global desc_heads desc_tags anc_tags allcommits allids
-    global allchildren allparents idtags travindex
+    global cached_dheads cached_dtags cached_atags
+    global arctags archeads arcnos arcout idheads idtags
 
-    if {![info exists allcommits]} return
-    catch {unset desc_heads}
-    catch {unset desc_tags}
-    catch {unset anc_tags}
-    catch {unset alldtags}
-    catch {unset tagisdesc}
-    foreach id $allids {
-	forward_pass $id $allchildren($id)
-    }
-    if {$allcommits ne "reading"} {
-	set travindex [llength $allids]
-	if {$allcommits ne "traversing"} {
-	    set allcommits "traversing"
-	    after idle restartatags
+    foreach id [concat [array names idheads] [array names idtags]] {
+	if {[info exists arcnos($id)] && ![info exists arcout($id)]} {
+	    set a [lindex $arcnos($id) 0]
+	    if {![info exists donearc($a)]} {
+		recalcarc $a
+		set donearc($a) 1
+	    }
 	}
     }
+    catch {unset cached_dtags}
+    catch {unset cached_atags}
+    catch {unset cached_dheads}
 }
 
 proc rereadrefs {} {
