@@ -5,6 +5,15 @@
 	'full', 'fuller', 'email', 'raw' and 'format:<string>'.
 	When left out the format default to 'medium'.
 
+--abbrev-commit::
+	Instead of showing the full 40-byte hexadecimal commit object
+	name, show only handful hexdigits prefix.  Non default number of
+	digits can be specified with "--abbrev=<n>" (which also modifies
+	diff output, if it is displayed).
++
+This should make "--pretty=oneline" a whole lot more readable for
+people using 80-column terminals.
+
 --encoding[=<encoding>]::
 	The commit objects record the encoding used for the log message
 	in their encoding header; this option can be used to tell the
