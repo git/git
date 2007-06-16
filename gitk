@@ -3831,7 +3831,7 @@ proc viewnextline {dir} {
 # add a list of tag or branch names at position pos
 # returns the number of names inserted
 proc appendrefs {pos ids var} {
-    global ctext commitrow linknum curview $var
+    global ctext commitrow linknum curview $var maxrefs
 
     if {[catch {$ctext index $pos}]} {
 	return 0
@@ -3844,24 +3844,29 @@ proc appendrefs {pos ids var} {
 	    lappend tags [list $tag $id]
 	}
     }
-    set tags [lsort -index 0 -decreasing $tags]
-    set sep {}
-    foreach ti $tags {
-	set id [lindex $ti 1]
-	set lk link$linknum
-	incr linknum
-	$ctext tag delete $lk
-	$ctext insert $pos $sep
-	$ctext insert $pos [lindex $ti 0] $lk
-	if {[info exists commitrow($curview,$id)]} {
-	    $ctext tag conf $lk -foreground blue
-	    $ctext tag bind $lk <1> \
-		[list selectline $commitrow($curview,$id) 1]
-	    $ctext tag conf $lk -underline 1
-	    $ctext tag bind $lk <Enter> { %W configure -cursor hand2 }
-	    $ctext tag bind $lk <Leave> { %W configure -cursor $curtextcursor }
+    if {[llength $tags] > $maxrefs} {
+	$ctext insert $pos "many ([llength $tags])"
+    } else {
+	set tags [lsort -index 0 -decreasing $tags]
+	set sep {}
+	foreach ti $tags {
+	    set id [lindex $ti 1]
+	    set lk link$linknum
+	    incr linknum
+	    $ctext tag delete $lk
+	    $ctext insert $pos $sep
+	    $ctext insert $pos [lindex $ti 0] $lk
+	    if {[info exists commitrow($curview,$id)]} {
+		$ctext tag conf $lk -foreground blue
+		$ctext tag bind $lk <1> \
+		    [list selectline $commitrow($curview,$id) 1]
+		$ctext tag conf $lk -underline 1
+		$ctext tag bind $lk <Enter> { %W configure -cursor hand2 }
+		$ctext tag bind $lk <Leave> \
+		    { %W configure -cursor $curtextcursor }
+	    }
+	    set sep ", "
 	}
-	set sep ", "
     }
     $ctext conf -state disabled
     return [llength $tags]
@@ -6856,6 +6861,7 @@ set mingaplen 30
 set cmitmode "patch"
 set wrapcomment "none"
 set showneartags 1
+set maxrefs 20
 
 set colors {green red blue magenta darkgrey brown orange}
 set bgcolor white
