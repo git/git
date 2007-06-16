@@ -8,7 +8,7 @@ git-read-tree - Reads tree information into the index
 
 SYNOPSIS
 --------
-'git-read-tree' (<tree-ish> | [[-m [--aggressive] | --reset | --prefix=<prefix>] [-u | -i]] [--exclude-per-directory=<gitignore>] [--index-output=<file>] <tree-ish1> [<tree-ish2> [<tree-ish3>]])
+'git-read-tree' (<tree-ish> | [[-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>] [-u | -i]] [--exclude-per-directory=<gitignore>] [--index-output=<file>] <tree-ish1> [<tree-ish2> [<tree-ish3>]])
 
 
 DESCRIPTION
@@ -49,6 +49,12 @@ OPTIONS
 	tree and is meant to be used when creating a merge of
 	trees that are not directly related to the current
 	working tree status into a temporary index file.
+
+--trivial::
+	Restrict three-way merge by `git-read-tree` to happen
+	only if there is no file-level merging required, instead
+	of resolving merge for trivial cases and leaving
+	conflicting files unresolved in the index.
 
 --aggressive::
 	Usually a three-way merge by `git-read-tree` resolves
