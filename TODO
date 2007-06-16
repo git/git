@@ -39,16 +39,6 @@ Repeated requests against git-daemon makes it stuck under --syslog
 
 [jc: does not reproduce easily for me; has anybody seen it?]
 
-* AsciiDoc 8 would break our documentation.
-
-From: Stefan Richter <stefanr@s5r6.in-berlin.de>
-Message-ID: <4523EC14.6070806@s5r6.in-berlin.de>
-
-AsciiDoc 8 does not grok documents written for AsciiDoc 7 out of
-the box.
-
-[jc: limbo?]
-
 * Delegate gitweb part to somebody else.
 
 * Use gitattributes for more things.
