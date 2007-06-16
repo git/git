@@ -7,9 +7,52 @@ git-cvsserver - A CVS server emulator for git
 
 SYNOPSIS
 --------
+
+SSH:
+
 [verse]
 export CVS_SERVER=git-cvsserver
 'cvs' -d :ext:user@server/path/repo.git co <HEAD_name>
+
+pserver (/etc/inetd.conf):
+
+[verse]
+cvspserver stream tcp nowait nobody /usr/bin/git-cvsserver git-cvsserver pserver
+
+Usage:
+
+[verse]
+'git-cvsserver' [options] [pserver|server] [<directory> ...]
+
+OPTIONS
+-------
+
+All these options obviously only make sense if enforced by the server side.
+They have been implemented to resemble the gitlink:git-daemon[1] options as
+closely as possible.
+
+--base-path <path>::
+Prepend 'path' to requested CVSROOT
+
+--strict-paths::
+Don't allow recursing into subdirectories
+
+--export-all::
+Don't check for `gitcvs.enabled` in config. You also have to specify a list
+of allowed directories (see below) if you want to use this option.
+
+--version, -V::
+Print version information and exit
+
+--help, -h, -H::
+Print usage information and exit
+
+<directory>::
+You can specify a list of allowed directories. If no directories
+are given, all are allowed. This is an additional restriction, gitcvs
+access still needs to be enabled by the `gitcvs.enabled` config option
+unless '--export-all' was given, too.
+
 
 DESCRIPTION
 -----------
