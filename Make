@@ -13,6 +13,8 @@ export PATH LANG LC_CTYPE
 #GIT_SVN_NO_LIB=1
 #export GIT_SVN_NO_LIB
 
+old_style_def_fix=b79d18c92d9f4841a6a1a29b7b2373a8ff9871e1
+
 head=`git symbolic-ref HEAD 2>/dev/null` &&
 branch=`expr "$head" : 'refs/heads/\(.*\)'` || branch=detached
 
@@ -37,7 +39,13 @@ while case $# in 0) break ;; esac
 do 
 	case "$1" in
 	-pedantic)
-		O="$O -Werror -Wall -Wold-style-definition -ansi -pedantic -std=c99"
+		o= &&
+		rev=$(git-rev-parse HEAD) &&
+		case "$(git-merge-base "$old_style_def_fix" "$rev")" in
+		$old_style_def_fix)
+			o=-Wold-style-definition ;;
+		esac
+		O="$O -Werror -Wall $o -ansi -pedantic -std=c99"
 		;;
 	--)
 		shift
