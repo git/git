@@ -22,6 +22,7 @@ SYNOPSIS
 	     [ \--stdin ]
 	     [ \--topo-order ]
 	     [ \--parents ]
+	     [ \--timestamp ]
 	     [ \--left-right ]
 	     [ \--cherry-pick ]
 	     [ \--encoding[=<encoding>] ]
@@ -116,6 +117,9 @@ e.g. "2 hours ago".
 --parents::
 
 	Print the parents of the commit.
+
+--timestamp::
+	Print the raw commit timestamp.
 
 --left-right::
 
