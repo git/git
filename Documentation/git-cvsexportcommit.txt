@@ -76,7 +76,7 @@ $ git-cvsexportcommit -v <commit-sha1>
 $ cvs commit -F .mgs <files>
 ------------
 
-Merge pending patches into CVS automatically -- only if you really know what you are doing ::
+Merge pending patches into CVS automatically -- only if you really know what you are doing::
 +
 ------------
 $ export GIT_DIR=~/project/.git

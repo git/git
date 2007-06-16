@@ -1180,7 +1180,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 
 			opts = diff_opt_parse(&revs->diffopt, argv+i, argc-i);
 			if (opts > 0) {
-				revs->diff = 1;
+				if (strcmp(argv[i], "-z"))
+					revs->diff = 1;
 				i += opts - 1;
 				continue;
 			}
