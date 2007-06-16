@@ -16,6 +16,7 @@ SYNOPSIS
 	     [ \--sparse ]
 	     [ \--no-merges ]
 	     [ \--remove-empty ]
+	     [ \--full-history ]
 	     [ \--not ]
 	     [ \--all ]
 	     [ \--stdin ]
@@ -227,6 +228,14 @@ limiting may be applied.
 --remove-empty::
 
 	Stop when a given path disappears from the tree.
+
+--full-history::
+
+	Show also parts of history irrelevant to current state of a given
+	path. This turns off history simplification, which removed merges
+	which didn't change anything at all at some child. It will still actually
+	simplify away merges that didn't change anything at all into either
+	child.
 
 --no-merges::
 
