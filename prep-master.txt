@@ -1,5 +1,5 @@
 diff --git a/Documentation/RelNotes-1.5.3.txt b/Documentation/RelNotes-1.5.3.txt
-index d111661..6eb85aa 100644
+index d111661..4b7f472 100644
 --- a/Documentation/RelNotes-1.5.3.txt
 +++ b/Documentation/RelNotes-1.5.3.txt
 @@ -1,4 +1,4 @@
@@ -8,7 +8,7 @@ index d111661..6eb85aa 100644
  ========================
  
  Updates since v1.5.2
-@@ -10,6 +10,8 @@ Updates since v1.5.2
+@@ -10,8 +10,13 @@ Updates since v1.5.2
  * Thee are a handful pack-objects changes to help you cope better with
    repositories with pathologically large blobs in them.
  
@@ -16,8 +16,13 @@ index d111661..6eb85aa 100644
 +
  * New commands and options.
  
++  - "git-cvsserver" learned new options (--base-path, --export-all,
++    --strict-paths) inspired by git-daemon.
++
    - "git-submodule" command helps you manage the projects from
-@@ -36,8 +38,38 @@ Updates since v1.5.2
+     the superproject that contain them.
+ 
+@@ -36,9 +41,39 @@ Updates since v1.5.2
    - "git repack" can be told to split resulting packs to avoid
      exceeding limit specified with "--max-pack-size".
  
@@ -37,6 +42,7 @@ index d111661..6eb85aa 100644
 +
  * Updated behavior of existing commands.
  
+-  - "git push" pretends that you immediately fetched back from
 +  - "git mergetool" chooses its backend more wisely, taking
 +    notice of its environment such as use of X, Gnome/KDE, etc.
 +
@@ -53,10 +59,11 @@ index d111661..6eb85aa 100644
 +    and the handcrafted ones the old code created was not
 +    properly formed anyway.
 +
-   - "git push" pretends that you immediately fetched back from
++  - "git-push" pretends that you immediately fetched back from
      the remote by updating corresponding remote tracking
      branches if you have any.
-@@ -48,17 +80,25 @@ Updates since v1.5.2
+ 
+@@ -48,17 +83,25 @@ Updates since v1.5.2
    - "git-apply --whitespace=strip" removes blank lines added at
      the end of the file.
  
@@ -86,16 +93,25 @@ index d111661..6eb85aa 100644
      request.
  
    - "pack-objects" honors "delta" attribute set in
-@@ -68,6 +108,8 @@ Updates since v1.5.2
+@@ -68,10 +111,16 @@ Updates since v1.5.2
    - new-workdir script (in contrib) can now be used with a bare
      repository.
  
 +  - "git-mergetool" learned to use gvimdiff.
 +
++  - "gitview" (in contrib) has a better blame interface.
++
  
  * Builds
  
-@@ -88,22 +130,40 @@ Updates since v1.5.2
+-  -
++  - old-style function definitions (most notably, a function
++    without parameter defined with "func()", not "func(void)")
++    have been eradicated.
+ 
+ * Performance Tweaks
+ 
+@@ -88,6 +137,10 @@ Updates since v1.5.2
      the object requested the last time, which exploits the
      locality of references.
  
@@ -106,38 +122,22 @@ index d111661..6eb85aa 100644
  Fixes since v1.5.2
  ------------------
  
- All of the fixes in v1.5.2 maintenance series are included in
- this release, unless otherwise noted.
+@@ -96,14 +149,11 @@ this release, unless otherwise noted.
  
--* Bugfixes
-+* Bugfixes ('+' needs cherry-picking to maint)
-+
-+  + "git-merge-recursive" does not try to run file level merge
-+    on binary files.
-+
-+  + "git-branch --track" did not create tracking configuration
-+    correctly when the branch name had slash in it.
-+
-+  + "gitweb" had trouble handling non UTF-8 text with older
-+    Encode.pm Perl module.
-+
-+  + The email address of the user specified with user.email
-+    configuration was overriden by EMAIL environment variable.
-+
-+  + The tree parser did not warn about tree entries with
-+    nonsense file modes, and assumed they must be blobs.
+ * Bugfixes
  
-   - ....  This has not
-     been backported to 1.5.2.x series, as it is rather an
-     intrusive change.
- 
+-  - ....  This has not
+-    been backported to 1.5.2.x series, as it is rather an
+-    intrusive change.
 -
++  - "gitweb" had trouble handling non UTF-8 text with older
++    Encode.pm Perl module.
+ 
  --
  exec >/var/tmp/1
 -O=v1.5.2-45-ged82edc
 -O=v1.5.2-172-g1a8b769
-+O=v1.5.2.1-133-gd44c782
-+O=v1.5.2.1-271-g90ac368
++O=v1.5.2.2-236-g952c8c5
  echo O=`git describe refs/heads/master`
  git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
 diff --git a/GIT-VERSION-GEN b/GIT-VERSION-GEN
