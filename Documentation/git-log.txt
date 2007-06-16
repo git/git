@@ -54,6 +54,13 @@ include::pretty-options.txt[]
 --decorate::
 	Print out the ref names of any commits that are shown.
 
+--full-diff::
+	Without this flag, "git log -p <paths>..." shows commits that
+	touch the specified paths, and diffs about the same specified
+	paths.  With this, the full diff is shown for commits that touch
+	the specified paths; this means that "<paths>..." limits only
+	commits, and doesn't limit diff for those commits.
+
 <paths>...::
 	Show only commits that affect the specified paths.
 
