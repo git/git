@@ -1671,7 +1671,7 @@ proc showview {n} {
     global pending_select phase
     global commitidx rowlaidout rowoptim linesegends
     global commfd nextupdate
-    global selectedview
+    global selectedview selectfirst
     global vparentlist vchildlist vdisporder vcmitlisted
     global hlview selectedhlview
 
@@ -1689,6 +1689,9 @@ proc showview {n} {
 	} else {
 	    set yscreen [expr {($ybot - $ytop) / 2}]
 	}
+    } elseif {[info exists pending_select]} {
+	set selid $pending_select
+	unset pending_select
     }
     unselectline
     normalline
@@ -1723,7 +1726,9 @@ proc showview {n} {
     .bar.view entryconf Delete* -state [expr {$n == 0? "disabled": "normal"}]
 
     if {![info exists viewdata($n)]} {
-	set pending_select $selid
+	if {$selid ne {}} {
+	    set pending_select $selid
+	}
 	getcommits
 	return
     }
@@ -1757,7 +1762,8 @@ proc showview {n} {
     set row 0
     setcanvscroll
     set yf 0
-    set row 0
+    set row {}
+    set selectfirst 0
     if {$selid ne {} && [info exists commitrow($n,$selid)]} {
 	set row $commitrow($n,$selid)
 	# try to get the selected row in the same position on the screen
@@ -1770,7 +1776,17 @@ proc showview {n} {
     }
     allcanvs yview moveto $yf
     drawvisible
-    selectline $row 0
+    if {$row ne {}} {
+	selectline $row 0
+    } elseif {$selid ne {}} {
+	set pending_select $selid
+    } else {
+	if {$numcommits > 0} {
+	    selectline 0 0
+	} else {
+	    set selectfirst 1
+	}
+    }
     if {$phase ne {}} {
 	if {$phase eq "getcommits"} {
 	    show_status "Reading commits..."
@@ -2407,7 +2423,7 @@ proc initlayout {} {
     global nextcolor
     global parentlist childlist children
     global colormap rowtextx
-    global linesegends
+    global linesegends selectfirst
 
     set numcommits 0
     set displayorder {}
@@ -2427,6 +2443,7 @@ proc initlayout {} {
     catch {unset rowtextx}
     catch {unset idrowranges}
     set linesegends {}
+    set selectfirst 1
 }
 
 proc setcanvscroll {} {
@@ -2495,6 +2512,7 @@ proc layoutmore {tmax} {
 proc showstuff {canshow} {
     global numcommits commitrow pending_select selectedline
     global linesegends idrowranges idrangedrawn curview
+    global displayorder selectfirst
 
     if {$numcommits == 0} {
 	global phase
@@ -2533,8 +2551,13 @@ proc showstuff {canshow} {
 	$commitrow($curview,$pending_select) < $numcommits} {
 	selectline $commitrow($curview,$pending_select) 1
     }
-    if {![info exists selectedline] && ![info exists pending_select]} {
-	selectline 0 1
+    if {$selectfirst} {
+	if {[info exists selectedline] || [info exists pending_select]} {
+	    set selectfirst 0
+	} else {
+	    selectline 0 1
+	    set selectfirst 0
+	}
     }
 }
 
@@ -3551,7 +3574,6 @@ proc drawrest {} {
     global rowlaidout commitidx curview
     global pending_select
 
-    set row $rowlaidout
     layoutrows $rowlaidout $commitidx($curview) 1
     layouttail
     optimize_rows $row 0 $commitidx($curview)
