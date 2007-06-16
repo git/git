@@ -52,7 +52,7 @@ include::pretty-options.txt[]
 	See also gitlink:git-reflog[1].
 
 --decorate::
-    Print out the ref names of any commits that are shown.
+	Print out the ref names of any commits that are shown.
 
 <paths>...::
 	Show only commits that affect the specified paths.
