@@ -286,7 +286,7 @@ struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int
 	if (cache_name_pos(pathname, len) >= 0)
 		return NULL;
 
-	ALLOC_GROW(dir->entries, dir->nr, dir->alloc);
+	ALLOC_GROW(dir->entries, dir->nr+1, dir->alloc);
 	return dir->entries[dir->nr++] = dir_entry_new(pathname, len);
 }
 
@@ -295,7 +295,7 @@ struct dir_entry *dir_add_ignored(struct dir_struct *dir, const char *pathname, 
 	if (cache_name_pos(pathname, len) >= 0)
 		return NULL;
 
-	ALLOC_GROW(dir->ignored, dir->ignored_nr, dir->ignored_alloc);
+	ALLOC_GROW(dir->ignored, dir->ignored_nr+1, dir->ignored_alloc);
 	return dir->ignored[dir->ignored_nr++] = dir_entry_new(pathname, len);
 }
 
