@@ -139,8 +139,8 @@ proc getcommitlines {fd view}  {
     global commitlisted
     global leftover commfd
     global displayorder commitidx commitrow commitdata
-    global parentlist childlist children curview hlview
-    global vparentlist vchildlist vdisporder vcmitlisted
+    global parentlist children curview hlview
+    global vparentlist vdisporder vcmitlisted
 
     set stuff [read $fd 500000]
     if {$stuff == {}} {
@@ -237,12 +237,10 @@ proc getcommitlines {fd view}  {
 	incr commitidx($view)
 	if {$view == $curview} {
 	    lappend parentlist $olds
-	    lappend childlist $children($view,$id)
 	    lappend displayorder $id
 	    lappend commitlisted $listed
 	} else {
 	    lappend vparentlist($view) $olds
-	    lappend vchildlist($view) $children($view,$id)
 	    lappend vdisporder($view) $id
 	    lappend vcmitlisted($view) $listed
 	}
@@ -1754,7 +1752,7 @@ proc unflatten {var l} {
 
 proc showview {n} {
     global curview viewdata viewfiles
-    global displayorder parentlist childlist rowidlist rowoffsets
+    global displayorder parentlist rowidlist rowoffsets
     global colormap rowtextx commitrow nextcolor canvxmax
     global numcommits rowrangelist commitlisted idrowranges rowchk
     global selectedline currentid canv canvy0
@@ -1763,7 +1761,7 @@ proc showview {n} {
     global commitidx rowlaidout rowoptim
     global commfd
     global selectedview selectfirst
-    global vparentlist vchildlist vdisporder vcmitlisted
+    global vparentlist vdisporder vcmitlisted
     global hlview selectedhlview
 
     if {$n == $curview} return
@@ -1789,7 +1787,6 @@ proc showview {n} {
     stopfindproc
     if {$curview >= 0} {
 	set vparentlist($curview) $parentlist
-	set vchildlist($curview) $childlist
 	set vdisporder($curview) $displayorder
 	set vcmitlisted($curview) $commitlisted
 	if {$phase ne {}} {
@@ -1828,7 +1825,6 @@ proc showview {n} {
     set phase [lindex $v 0]
     set displayorder $vdisporder($n)
     set parentlist $vparentlist($n)
-    set childlist $vchildlist($n)
     set commitlisted $vcmitlisted($n)
     set rowidlist [lindex $v 1]
     set rowoffsets [lindex $v 2]
@@ -1961,7 +1957,6 @@ proc addvhighlight {n} {
     if {$n != $curview && ![info exists viewdata($n)]} {
 	set viewdata($n) [list getcommits {{}} {{}} {} {} {} 0 0 0 {}]
 	set vparentlist($n) {}
-	set vchildlist($n) {}
 	set vdisporder($n) {}
 	set vcmitlisted($n) {}
 	start_rev_list $n
@@ -2430,17 +2425,15 @@ proc ntimes {n o} {
 }
 
 proc usedinrange {id l1 l2} {
-    global children commitrow childlist curview
+    global children commitrow curview
 
     if {[info exists commitrow($curview,$id)]} {
 	set r $commitrow($curview,$id)
 	if {$l1 <= $r && $r <= $l2} {
 	    return [expr {$r - $l1 + 1}]
 	}
-	set kids [lindex $childlist $r]
-    } else {
-	set kids $children($curview,$id)
     }
+    set kids $children($curview,$id)
     foreach c $kids {
 	set r $commitrow($curview,$c)
 	if {$l1 <= $r && $r <= $l2} {
@@ -2515,7 +2508,7 @@ proc initlayout {} {
     global idinlist rowchk rowrangelist idrowranges
     global numcommits canvxmax canv
     global nextcolor
-    global parentlist childlist children
+    global parentlist
     global colormap rowtextx
     global selectfirst
 
@@ -2523,7 +2516,6 @@ proc initlayout {} {
     set displayorder {}
     set commitlisted {}
     set parentlist {}
-    set childlist {}
     set rowrangelist {}
     set nextcolor 0
     set rowidlist {{}}
@@ -2721,7 +2713,7 @@ proc readdiffindex {fd serial} {
 proc layoutrows {row endrow last} {
     global rowidlist rowoffsets displayorder
     global uparrowlen downarrowlen maxwidth mingaplen
-    global childlist parentlist
+    global children parentlist
     global idrowranges
     global commitidx curview
     global idinlist rowchk rowrangelist
@@ -2771,7 +2763,7 @@ proc layoutrows {row endrow last} {
 	    lappend idlist $id
 	    lset rowidlist $row $idlist
 	    set z {}
-	    if {[lindex $childlist $row] ne {}} {
+	    if {$children($curview,$id) ne {}} {
 		set z [expr {[llength [lindex $rowidlist [expr {$row-1}]]] - $col}]
 		unset idinlist($id)
 	    }
@@ -2830,7 +2822,7 @@ proc layoutrows {row endrow last} {
 proc addextraid {id row} {
     global displayorder commitrow commitinfo
     global commitidx commitlisted
-    global parentlist childlist children curview
+    global parentlist children curview
 
     incr commitidx($curview)
     lappend displayorder $id
@@ -2844,7 +2836,6 @@ proc addextraid {id row} {
     if {![info exists children($curview,$id)]} {
 	set children($curview,$id) {}
     }
-    lappend childlist $children($curview,$id)
 }
 
 proc layouttail {} {
@@ -3729,7 +3720,7 @@ proc show_status {msg} {
 # The new commit will be displayed on row $row and the commits
 # on that row and below will move down one row.
 proc insertrow {row newcmit} {
-    global displayorder parentlist childlist commitlisted children
+    global displayorder parentlist commitlisted children
     global commitrow curview rowidlist rowoffsets numcommits
     global rowrangelist rowlaidout rowoptim numcommits
     global selectedline rowchk commitidx
@@ -3741,11 +3732,10 @@ proc insertrow {row newcmit} {
     set p [lindex $displayorder $row]
     set displayorder [linsert $displayorder $row $newcmit]
     set parentlist [linsert $parentlist $row $p]
-    set kids [lindex $childlist $row]
+    set kids $children($curview,$p)
     lappend kids $newcmit
-    lset childlist $row $kids
-    set childlist [linsert $childlist $row {}]
     set children($curview,$p) $kids
+    set children($curview,$newcmit) {}
     set commitlisted [linsert $commitlisted $row 1]
     set l [llength $displayorder]
     for {set r $row} {$r < $l} {incr r} {
@@ -3802,7 +3792,7 @@ proc insertrow {row newcmit} {
 
 # Remove a commit that was inserted with insertrow on row $row.
 proc removerow {row} {
-    global displayorder parentlist childlist commitlisted children
+    global displayorder parentlist commitlisted children
     global commitrow curview rowidlist rowoffsets numcommits
     global rowrangelist idrowranges rowlaidout rowoptim numcommits
     global linesegends selectedline rowchk commitidx
@@ -3816,13 +3806,11 @@ proc removerow {row} {
     set p [lindex $parentlist $row]
     set displayorder [lreplace $displayorder $row $row]
     set parentlist [lreplace $parentlist $row $row]
-    set childlist [lreplace $childlist $row $row]
     set commitlisted [lreplace $commitlisted $row $row]
-    set kids [lindex $childlist $row]
+    set kids $children($curview,$p)
     set i [lsearch -exact $kids $id]
     if {$i >= 0} {
 	set kids [lreplace $kids $i $i]
-	lset childlist $row $kids
 	set children($curview,$p) $kids
     }
     set l [llength $displayorder]
@@ -4264,7 +4252,7 @@ proc dispnexttag {} {
 proc selectline {l isnew} {
     global canv canv2 canv3 ctext commitinfo selectedline
     global displayorder linehtag linentag linedtag
-    global canvy0 linespc parentlist childlist
+    global canvy0 linespc parentlist children curview
     global currentid sha1entry
     global commentend idtags linknum
     global mergemax numcommits pending_select
@@ -4375,7 +4363,7 @@ proc selectline {l isnew} {
 	}
     }
 
-    foreach c [lindex $childlist $l] {
+    foreach c $children($curview,$id) {
 	append headers "Child:  [commit_descriptor $c]"
     }
 
