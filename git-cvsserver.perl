@@ -1813,13 +1813,13 @@ sub req_annotate
 # the second is $state->{files} which is everything after it.
 sub argsplit
 {
-    return unless( defined($state->{arguments}) and ref $state->{arguments} eq "ARRAY" );
-
-    my $type = shift;
-
     $state->{args} = [];
     $state->{files} = [];
     $state->{opt} = {};
+
+    return unless( defined($state->{arguments}) and ref $state->{arguments} eq "ARRAY" );
+
+    my $type = shift;
 
     if ( defined($type) )
     {
