@@ -957,6 +957,12 @@ class P4Sync(Command):
                     source = source[len(self.depotPaths[0]):-4]
                     destination = destination[len(self.depotPaths[0]):-4]
 
+                    if destination in self.knownBranches:
+                        if not self.silent:
+                            print "p4 branch %s defines a mapping from %s to %s" % (info["branch"], source, destination)
+                            print "but there exists another mapping from %s to %s already!" % (self.knownBranches[destination], destination)
+                        continue
+
                     self.knownBranches[destination] = source
 
                     lostAndFoundBranches.discard(destination)
