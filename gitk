@@ -5950,7 +5950,7 @@ proc regetallcommits {} {
 # coming from descendents, and "outgoing" means going towards ancestors.
 
 proc getallclines {fd} {
-    global allids allparents allchildren idtags nextarc nbmp
+    global allids allparents allchildren idtags idheads nextarc nbmp
     global arcnos arcids arctags arcout arcend arcstart archeads growing
     global seeds allcommits
 
@@ -6022,6 +6022,12 @@ proc getallclines {fd} {
 	    lappend arcnos($p) $a
 	}
 	set arcout($id) $ao
+    }
+    if {$nid > 0} {
+	global cached_dheads cached_dtags cached_atags
+	catch {unset cached_dheads}
+	catch {unset cached_dtags}
+	catch {unset cached_atags}
     }
     if {![eof $fd]} {
 	return [expr {$nid >= 1000? 2: 1}]
@@ -6674,7 +6680,7 @@ proc descheads {id} {
     if {![info exists allparents($id)]} {
 	return {}
     }
-    set ret {}
+    set aret {}
     if {[llength $arcnos($id)] == 1 && [llength $allparents($id)] == 1} {
 	# part-way along an arc; check it first
 	set a [lindex $arcnos($id) 0]
@@ -6684,7 +6690,7 @@ proc descheads {id} {
 	    foreach t $archeads($a) {
 		set j [lsearch -exact $arcids($a) $t]
 		if {$j > $i} break
-		lappend $ret $t
+		lappend aret $t
 	    }
 	}
 	set id $arcstart($a)
@@ -6692,6 +6698,7 @@ proc descheads {id} {
     set origid $id
     set todo [list $id]
     set seen($id) 1
+    set ret {}
     for {set i 0} {$i < [llength $todo]} {incr i} {
 	set id [lindex $todo $i]
 	if {[info exists cached_dheads($id)]} {
@@ -6714,6 +6721,7 @@ proc descheads {id} {
     }
     set ret [lsort -unique $ret]
     set cached_dheads($origid) $ret
+    return [concat $ret $aret]
 }
 
 proc addedtag {id} {
