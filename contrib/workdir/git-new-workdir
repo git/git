@@ -24,6 +24,11 @@ git_dir=$(cd "$orig_git" 2>/dev/null &&
   git rev-parse --git-dir 2>/dev/null) ||
   die "\"$orig_git\" is not a git repository!"
 
+if test "$git_dir" == ".git"
+then
+	git_dir="$orig_git/.git"
+fi
+
 # don't link to a workdir
 if test -L "$git_dir/config"
 then
