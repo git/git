@@ -66,9 +66,10 @@ COMMANDS
 	to the names of remotes if trunk/branches/tags are
 	specified.  The prefix does not automatically include a
 	trailing slash, so be sure you include one in the
-	argument if that is what you want.  This is useful if
-	you wish to track multiple projects that share a common
-	repository.
+	argument if that is what you want.  If --branches/-b is
+	specified, the prefix must include a trailing slash.
+	Setting a prefix is useful if you wish to track multiple
+	projects that share a common repository.
 
 'fetch'::
 	Fetch unfetched revisions from the Subversion remote we are
