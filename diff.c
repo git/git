@@ -2210,6 +2210,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "--find-copies-harder"))
 		options->find_copies_harder = 1;
+	else if (!strcmp(arg, "--follow"))
+		options->follow_renames = 1;
 	else if (!strcmp(arg, "--abbrev"))
 		options->abbrev = DEFAULT_ABBREV;
 	else if (!prefixcmp(arg, "--abbrev=")) {
