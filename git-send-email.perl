@@ -412,13 +412,21 @@ sub extract_valid_address {
 # 1 second since the last time we were called.
 
 # We'll setup a template for the message id, using the "from" address:
-my $message_id_from = extract_valid_address($from);
-my $message_id_template = "<%s-git-send-email-$message_id_from>";
 
 sub make_message_id
 {
 	my $date = time;
 	my $pseudo_rand = int (rand(4200));
+	my $du_part;
+	for ($from, $committer, $author) {
+		$du_part = extract_valid_address($_);
+		last if ($du_part ne '');
+	}
+	if ($du_part eq '') {
+		use Sys::Hostname qw();
+		$du_part = 'user@' . Sys::Hostname::hostname();
+	}
+	my $message_id_template = "<%s-git-send-email-$du_part>";
 	$message_id = sprintf $message_id_template, "$date$pseudo_rand";
 	#print "new message id = $message_id\n"; # Was useful for debugging
 }
@@ -467,6 +475,8 @@ sub send_message
 		$ccline = "\nCc: $cc";
 	}
 	$from = sanitize_address_rfc822($from);
+	make_message_id();
+
 	my $header = "From: $from
 To: $to${ccline}
 Subject: $subject
@@ -533,7 +543,6 @@ X-Mailer: git-send-email $gitversion
 
 $reply_to = $initial_reply_to;
 $references = $initial_reply_to || '';
-make_message_id();
 $subject = $initial_subject;
 
 foreach my $t (@files) {
@@ -627,7 +636,6 @@ foreach my $t (@files) {
 			$references = "$message_id";
 		}
 	}
-	make_message_id();
 }
 
 if ($compose) {
