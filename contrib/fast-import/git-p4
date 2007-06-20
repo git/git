@@ -1465,6 +1465,31 @@ class P4Clone(P4Sync):
 
         return True
 
+class P4Branches(Command):
+    def __init__(self):
+        Command.__init__(self)
+        self.options = [ ]
+        self.description = ("Shows the git branches that hold imports and their "
+                            + "corresponding perforce depot paths")
+        self.verbose = False
+
+    def run(self, args):
+        cmdline = "git rev-parse --symbolic "
+        cmdline += " --remotes"
+
+        for line in read_pipe_lines(cmdline):
+            line = line.strip()
+
+            if not line.startswith('p4/') or line == "p4/HEAD":
+                continue
+            branch = line
+
+            log = extractLogMessageFromGitCommit("refs/remotes/%s" % branch)
+            settings = extractSettingsGitLog(log)
+
+            print "%s <= %s (%s)" % (branch, ",".join(settings["depot-paths"]), settings["change"])
+        return True
+
 class HelpFormatter(optparse.IndentedHelpFormatter):
     def __init__(self):
         optparse.IndentedHelpFormatter.__init__(self)
@@ -1489,7 +1514,8 @@ commands = {
     "sync" : P4Sync,
     "rebase" : P4Rebase,
     "clone" : P4Clone,
-    "rollback" : P4RollBack
+    "rollback" : P4RollBack,
+    "branches" : P4Branches
 }
 
 
