@@ -867,34 +867,14 @@ sub commit {
 			or die "Cannot write branch $dest for update: $!\n";
 	}
 
-	if($tag) {
-		my($in, $out) = ('','');
+	if ($tag) {
 		$last_rev = "-" if %$changed_paths;
 		# the tag was 'complex', i.e. did not refer to a "real" revision
 
 		$dest =~ tr/_/\./ if $opt_u;
-		$branch = $dest;
 
-		my $pid = open2($in, $out, 'git-mktag');
-		print $out ("object $cid\n".
-		    "type commit\n".
-		    "tag $dest\n".
-		    "tagger $committer_name <$committer_email> 0 +0000\n") and
-		close($out)
-		    or die "Cannot create tag object $dest: $!\n";
-
-		my $tagobj = <$in>;
-		chomp $tagobj;
-
-		if ( !close($in) or waitpid($pid, 0) != $pid or
-				$? != 0 or $tagobj !~ /^[0123456789abcdef]{40}$/ ) {
-			die "Cannot create tag object $dest: $!\n";
-		}
-
-		open(C,">$git_dir/refs/tags/$dest") and
-		print C ("$tagobj\n") and
-		close(C)
-			or die "Cannot create tag $branch: $!\n";
+		system('git-tag', $dest, $cid) == 0
+			or die "Cannot create tag $dest: $!\n";
 
 		print "Created tag '$dest' on '$branch'\n" if $opt_v;
 	}

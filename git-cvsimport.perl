@@ -774,7 +774,6 @@ sub commit {
 		or die "Cannot write branch $branch for update: $!\n";
 
 	if ($tag) {
-		my ($in, $out) = ('','');
 	        my ($xtag) = $tag;
 		$xtag =~ s/\s+\*\*.*$//; # Remove stuff like ** INVALID ** and ** FUNKY **
 		$xtag =~ tr/_/\./ if ( $opt_u );
