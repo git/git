@@ -168,12 +168,12 @@ def gitBranchExists(branch):
 def gitConfig(key):
     return read_pipe("git config %s" % key, ignore_error=True).strip()
 
-def findUpstreamBranchPoint():
+def findUpstreamBranchPoint(head = "HEAD"):
     settings = None
     branchPoint = ""
     parent = 0
     while parent < 65535:
-        commit = "HEAD~%s" % parent
+        commit = head + "~%s" % parent
         log = extractLogMessageFromGitCommit(commit)
         settings = extractSettingsGitLog(log)
         if not settings.has_key("depot-paths"):
