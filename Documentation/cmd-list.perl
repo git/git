@@ -86,6 +86,7 @@ git-check-attr                          purehelpers
 git-check-ref-format                    purehelpers
 git-cherry                              ancillaryinterrogators
 git-cherry-pick                         mainporcelain
+git-citool                              mainporcelain
 git-clean                               mainporcelain
 git-clone                               mainporcelain
 git-commit                              mainporcelain
@@ -111,6 +112,7 @@ git-fsck	                        ancillaryinterrogators
 git-gc                                  mainporcelain
 git-get-tar-commit-id                   ancillaryinterrogators
 git-grep                                mainporcelain
+git-gui                                 mainporcelain
 git-hash-object                         plumbingmanipulators
 git-http-fetch                          synchelpers
 git-http-push                           synchelpers

@@ -164,11 +164,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/git-gui
 %{_bindir}/git-citool
 %{_datadir}/git-gui/
-# Not Yet...
-# %{!?_without_docs: %{_mandir}/man1/git-gui.1}
-# %{!?_without_docs: %doc Documentation/git-gui.html}
-# %{!?_without_docs: %{_mandir}/man1/git-citool.1}
-# %{!?_without_docs: %doc Documentation/git-citool.html}
+%{!?_without_docs: %{_mandir}/man1/git-gui.1}
+%{!?_without_docs: %doc Documentation/git-gui.html}
+%{!?_without_docs: %{_mandir}/man1/git-citool.1}
+%{!?_without_docs: %doc Documentation/git-citool.html}
 
 %files -n gitk
 %defattr(-,root,root)
@@ -188,6 +187,9 @@ rm -rf $RPM_BUILD_ROOT
 %{!?_without_docs: %doc Documentation/technical}
 
 %changelog
+* Thu Jun 21 2007 Shawn O. Pearce <spearce@spearce.org>
+- Added documentation files for git-gui
+
 * Tue May 13 2007 Quy Tonthat <qtonthat@gmail.com>
 - Added lib files for git-gui
 - Added Documentation/technical (As needed by Git Users Manual)
