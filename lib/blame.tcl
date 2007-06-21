@@ -33,6 +33,13 @@ variable group_colors {
 	#ececec
 }
 
+# Switches for original location detection
+#
+variable original_options [list -C -C]
+if {[git-version >= 1.5.3]} {
+	lappend original_options -w ; # ignore indentation changes
+}
+
 # Current blame data; cleared/reset on each load
 #
 field commit               ; # input commit to blame
@@ -512,6 +519,7 @@ method _exec_blame {cur_w cur_d options cur_s} {
 method _read_blame {fd cur_w cur_d cur_s} {
 	upvar #0 $cur_d line_data
 	variable group_colors
+	variable original_options
 
 	if {$fd ne $current_fd} {
 		catch {close $fd}
@@ -681,7 +689,7 @@ method _read_blame {fd cur_w cur_d cur_s} {
 		close $fd
 		if {$cur_w eq $w_asim} {
 			_exec_blame $this $w_amov @amov_data \
-				[list -M -C -C] \
+				$original_options \
 				{ original location}
 		} else {
 			set current_fd {}
