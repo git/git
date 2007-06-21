@@ -99,4 +99,12 @@ test_expect_success 'subdirectory filter result looks okay' '
 	! git show sub:subdir
 '
 
+test_expect_success 'use index-filter to move into a subdirectory' '
+	git-filter-branch --index-filter \
+		 "git-ls-files -s | sed \"s-\\t-&newsubdir/-\" |
+	          GIT_INDEX_FILE=\$GIT_INDEX_FILE.new \
+			git-update-index --index-info &&
+		  mv \$GIT_INDEX_FILE.new \$GIT_INDEX_FILE" directorymoved &&
+	test -z "$(git diff HEAD directorymoved:newsubdir)"'
+
 test_done

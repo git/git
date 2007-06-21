@@ -178,6 +178,14 @@
 #
 #	git-filter-branch ... new-H C..H --not D
 #	git-filter-branch ... new-H D..H --not C
+#
+# To move the whole tree into a subdirectory, or remove it from there:
+#
+# git-filter-branch --index-filter \
+#	'git-ls-files -s | sed "s-\t-&newsubdir/-" |
+#		GIT_INDEX_FILE=$GIT_INDEX_FILE.new \
+#			git-update-index --index-info &&
+#	 mv $GIT_INDEX_FILE.new $GIT_INDEX_FILE' directorymoved
 
 # Testsuite: TODO
 
