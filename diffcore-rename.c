@@ -119,6 +119,21 @@ static int is_exact_match(struct diff_filespec *src,
 	return 0;
 }
 
+static int basename_same(struct diff_filespec *src, struct diff_filespec *dst)
+{
+	int src_len = strlen(src->path), dst_len = strlen(dst->path);
+	while (src_len && dst_len) {
+		char c1 = src->path[--src_len];
+		char c2 = dst->path[--dst_len];
+		if (c1 != c2)
+			return 0;
+		if (c1 == '/')
+			return 1;
+	}
+	return (!src_len || src->path[src_len - 1] == '/') &&
+		(!dst_len || dst->path[dst_len - 1] == '/');
+}
+
 struct diff_score {
 	int src; /* index in rename_src */
 	int dst; /* index in rename_dst */
@@ -186,8 +201,11 @@ static int estimate_similarity(struct diff_filespec *src,
 	 */
 	if (!dst->size)
 		score = 0; /* should not happen */
-	else
+	else {
 		score = (int)(src_copied * MAX_SCORE / max_size);
+		if (basename_same(src, dst))
+			score++;
+	}
 	return score;
 }
 
@@ -295,9 +313,22 @@ void diffcore_rename(struct diff_options *options)
 			if (rename_dst[i].pair)
 				continue; /* dealt with an earlier round */
 			for (j = 0; j < rename_src_nr; j++) {
+				int k;
 				struct diff_filespec *one = rename_src[j].one;
 				if (!is_exact_match(one, two, contents_too))
 					continue;
+
+				/* see if there is a basename match, too */
+				for (k = j; k < rename_src_nr; k++) {
+					one = rename_src[k].one;
+					if (basename_same(one, two) &&
+						is_exact_match(one, two,
+							contents_too)) {
+						j = k;
+						break;
+					}
+				}
+
 				record_rename_pair(i, j, (int)MAX_SCORE);
 				rename_count++;
 				break; /* we are done with this entry */
