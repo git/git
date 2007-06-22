@@ -1,6 +1,12 @@
 #!/bin/sh
 # Tcl ignores the next line -*- tcl -*- \
-exec wish "$0" -- "$@"
+ if test "z$*" = zversion \
+ || test "z$*" = z--version; \
+ then \
+	echo 'git-gui version @@GITGUI_VERSION@@'; \
+	exit; \
+ fi; \
+ exec wish "$0" -- "$@"
 
 set appvers {@@GITGUI_VERSION@@}
 set copyright {
@@ -270,11 +276,6 @@ proc tk_optionMenu {w varName args} {
 ######################################################################
 ##
 ## version check
-
-if {{--version} eq $argv || {version} eq $argv} {
-	puts "git-gui version $appvers"
-	exit
-}
 
 set req_maj 1
 set req_min 5
