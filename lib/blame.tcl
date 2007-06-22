@@ -304,8 +304,9 @@ constructor new {i_commit i_path} {
 
 	set req_w [winfo reqwidth  $top]
 	set req_h [winfo reqheight $top]
+	set scr_h [expr {[winfo screenheight $top] - 100}]
 	if {$req_w < 600} {set req_w 600}
-	if {$req_h < 400} {set req_h 400}
+	if {$req_h < $scr_h} {set req_h $scr_h}
 	set g "${req_w}x${req_h}"
 	wm geometry $top $g
 	update
