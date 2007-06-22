@@ -2925,6 +2925,7 @@ sub new {
 	    SVN::Client::get_ssl_server_trust_file_provider(),
 	    SVN::Client::get_simple_prompt_provider(
 	      \&Git::SVN::Prompt::simple, 2),
+	    SVN::Client::get_ssl_client_cert_file_provider(),
 	    SVN::Client::get_ssl_client_cert_prompt_provider(
 	      \&Git::SVN::Prompt::ssl_client_cert, 2),
 	    SVN::Client::get_ssl_client_cert_pw_prompt_provider(
