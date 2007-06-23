@@ -22,7 +22,7 @@ static inline const unsigned char *tree_entry_extract(struct tree_desc *desc, co
 
 static inline int tree_entry_len(const char *name, const unsigned char *sha1)
 {
-	return (char *)sha1 - (char *)name - 1;
+	return (const char *)sha1 - name - 1;
 }
 
 void update_tree_entry(struct tree_desc *);

@@ -478,7 +478,7 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 	if (0 <= it->entry_count) {
 		if (size < 20)
 			goto free_return;
-		hashcpy(it->sha1, (unsigned char*)buf);
+		hashcpy(it->sha1, (const unsigned char*)buf);
 		buf += 20;
 		size -= 20;
 	}
