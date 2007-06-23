@@ -529,6 +529,14 @@ static int add_rfc2047(char *buf, const char *line, int len,
 	return bp - buf;
 }
 
+static unsigned long bound_rfc2047(unsigned long len, const char *encoding)
+{
+	/* upper bound of q encoded string of length 'len' */
+	unsigned long elen = strlen(encoding);
+
+	return len * 3 + elen + 100;
+}
+
 static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf,
 			 const char *line, enum date_mode dmode,
 			 const char *encoding)
@@ -776,7 +784,7 @@ static void fill_person(struct interp *table, const char *msg, int len)
 }
 
 static long format_commit_message(const struct commit *commit,
-		const char *msg, char *buf, unsigned long space)
+		const char *msg, char **buf_p, unsigned long *space_p)
 {
 	struct interp table[] = {
 		{ "%H" },	/* commit hash */
@@ -905,31 +913,252 @@ static long format_commit_message(const struct commit *commit,
 		if (!table[i].value)
 			interp_set_entry(table, i, "<unknown>");
 
-	interpolate(buf, space, user_format, table, ARRAY_SIZE(table));
+	do {
+		char *buf = *buf_p;
+		unsigned long space = *space_p;
+
+		space = interpolate(buf, space, user_format,
+				    table, ARRAY_SIZE(table));
+		if (!space)
+			break;
+		buf = xrealloc(buf, space);
+		*buf_p = buf;
+		*space_p = space;
+	} while (1);
 	interp_clear_table(table, ARRAY_SIZE(table));
 
-	return strlen(buf);
+	return strlen(*buf_p);
+}
+
+static void pp_header(enum cmit_fmt fmt,
+		      int abbrev,
+		      enum date_mode dmode,
+		      const char *encoding,
+		      const struct commit *commit,
+		      const char **msg_p,
+		      unsigned long *len_p,
+		      unsigned long *ofs_p,
+		      char **buf_p,
+		      unsigned long *space_p)
+{
+	int parents_shown = 0;
+
+	for (;;) {
+		const char *line = *msg_p;
+		char *dst;
+		int linelen = get_one_line(*msg_p, *len_p);
+		unsigned long len;
+
+		if (!linelen)
+			return;
+		*msg_p += linelen;
+		*len_p -= linelen;
+
+		if (linelen == 1)
+			/* End of header */
+			return;
+
+		ALLOC_GROW(*buf_p, linelen + *ofs_p + 20, *space_p);
+		dst = *buf_p + *ofs_p;
+
+		if (fmt == CMIT_FMT_RAW) {
+			memcpy(dst, line, linelen);
+			*ofs_p += linelen;
+			continue;
+		}
+
+		if (!memcmp(line, "parent ", 7)) {
+			if (linelen != 48)
+				die("bad parent line in commit");
+			continue;
+		}
+
+		if (!parents_shown) {
+			struct commit_list *parent;
+			int num;
+			for (parent = commit->parents, num = 0;
+			     parent;
+			     parent = parent->next, num++)
+				;
+			/* with enough slop */
+			num = *ofs_p + num * 50 + 20;
+			ALLOC_GROW(*buf_p, num, *space_p);
+			dst = *buf_p + *ofs_p;
+			*ofs_p += add_merge_info(fmt, dst, commit, abbrev);
+			parents_shown = 1;
+		}
+
+		/*
+		 * MEDIUM == DEFAULT shows only author with dates.
+		 * FULL shows both authors but not dates.
+		 * FULLER shows both authors and dates.
+		 */
+		if (!memcmp(line, "author ", 7)) {
+			len = linelen;
+			if (fmt == CMIT_FMT_EMAIL)
+				len = bound_rfc2047(linelen, encoding);
+			ALLOC_GROW(*buf_p, *ofs_p + len, *space_p);
+			dst = *buf_p + *ofs_p;
+			*ofs_p += add_user_info("Author", fmt, dst,
+						line + 7, dmode, encoding);
+		}
+
+		if (!memcmp(line, "committer ", 10) &&
+		    (fmt == CMIT_FMT_FULL || fmt == CMIT_FMT_FULLER)) {
+			len = linelen;
+			if (fmt == CMIT_FMT_EMAIL)
+				len = bound_rfc2047(linelen, encoding);
+			ALLOC_GROW(*buf_p, *ofs_p + len, *space_p);
+			dst = *buf_p + *ofs_p;
+			*ofs_p += add_user_info("Commit", fmt, dst,
+						line + 10, dmode, encoding);
+		}
+	}
+}
+
+static void pp_title_line(enum cmit_fmt fmt,
+			  const char **msg_p,
+			  unsigned long *len_p,
+			  unsigned long *ofs_p,
+			  char **buf_p,
+			  unsigned long *space_p,
+			  int indent,
+			  const char *subject,
+			  const char *after_subject,
+			  const char *encoding,
+			  int plain_non_ascii)
+{
+	char *title;
+	unsigned long title_alloc, title_len;
+	unsigned long len;
+
+	title_len = 0;
+	title_alloc = 80;
+	title = xmalloc(title_alloc);
+	for (;;) {
+		const char *line = *msg_p;
+		int linelen = get_one_line(line, *len_p);
+		*msg_p += linelen;
+		*len_p -= linelen;
+
+		if (!linelen || is_empty_line(line, &linelen))
+			break;
+
+		if (title_alloc <= title_len + linelen + 2) {
+			title_alloc = title_len + linelen + 80;
+			title = xrealloc(title, title_alloc);
+		}
+		len = 0;
+		if (title_len) {
+			if (fmt == CMIT_FMT_EMAIL) {
+				len++;
+				title[title_len++] = '\n';
+			}
+			len++;
+			title[title_len++] = ' ';
+		}
+		memcpy(title + title_len, line, linelen);
+		title_len += linelen;
+	}
+
+	/* Enough slop for the MIME header and rfc2047 */
+	len = bound_rfc2047(title_len, encoding)+ 1000;
+	if (subject)
+		len += strlen(subject);
+	if (after_subject)
+		len += strlen(after_subject);
+	if (encoding)
+		len += strlen(encoding);
+	ALLOC_GROW(*buf_p, title_len + *ofs_p + len, *space_p);
+
+	if (subject) {
+		len = strlen(subject);
+		memcpy(*buf_p + *ofs_p, subject, len);
+		*ofs_p += len;
+		*ofs_p += add_rfc2047(*buf_p + *ofs_p,
+				      title, title_len, encoding);
+	} else {
+		memcpy(*buf_p + *ofs_p, title, title_len);
+		*ofs_p += title_len;
+	}
+	(*buf_p)[(*ofs_p)++] = '\n';
+	if (plain_non_ascii) {
+		const char *header_fmt =
+			"MIME-Version: 1.0\n"
+			"Content-Type: text/plain; charset=%s\n"
+			"Content-Transfer-Encoding: 8bit\n";
+		*ofs_p += snprintf(*buf_p + *ofs_p,
+				   *space_p - *ofs_p,
+				   header_fmt, encoding);
+	}
+	if (after_subject) {
+		len = strlen(after_subject);
+		memcpy(*buf_p + *ofs_p, after_subject, len);
+		*ofs_p += len;
+	}
+	free(title);
+	if (fmt == CMIT_FMT_EMAIL) {
+		ALLOC_GROW(*buf_p, *ofs_p + 20, *space_p);
+		(*buf_p)[(*ofs_p)++] = '\n';
+	}
+}
+
+static void pp_remainder(enum cmit_fmt fmt,
+			 const char **msg_p,
+			 unsigned long *len_p,
+			 unsigned long *ofs_p,
+			 char **buf_p,
+			 unsigned long *space_p,
+			 int indent)
+{
+	int first = 1;
+	for (;;) {
+		const char *line = *msg_p;
+		int linelen = get_one_line(line, *len_p);
+		*msg_p += linelen;
+		*len_p -= linelen;
+
+		if (!linelen)
+			break;
+
+		if (is_empty_line(line, &linelen)) {
+			if (first)
+				continue;
+			if (fmt == CMIT_FMT_SHORT)
+				break;
+		}
+		first = 0;
+
+		ALLOC_GROW(*buf_p, *ofs_p + linelen + indent + 20, *space_p);
+		if (indent) {
+			memset(*buf_p + *ofs_p, ' ', indent);
+			*ofs_p += indent;
+		}
+		memcpy(*buf_p + *ofs_p, line, linelen);
+		*ofs_p += linelen;
+		(*buf_p)[(*ofs_p)++] = '\n';
+	}
 }
 
 unsigned long pretty_print_commit(enum cmit_fmt fmt,
 				  const struct commit *commit,
 				  unsigned long len,
-				  char *buf, unsigned long space,
+				  char **buf_p, unsigned long *space_p,
 				  int abbrev, const char *subject,
 				  const char *after_subject,
 				  enum date_mode dmode)
 {
-	int hdr = 1, body = 0, seen_title = 0;
 	unsigned long offset = 0;
+	unsigned long beginning_of_body;
 	int indent = 4;
-	int parents_shown = 0;
 	const char *msg = commit->buffer;
 	int plain_non_ascii = 0;
 	char *reencoded;
 	const char *encoding;
+	char *buf;
 
 	if (fmt == CMIT_FMT_USERFORMAT)
-		return format_commit_message(commit, msg, buf, space);
+		return format_commit_message(commit, msg, buf_p, space_p);
 
 	encoding = (git_log_output_encoding
 		    ? git_log_output_encoding
@@ -937,8 +1166,10 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 	if (!encoding)
 		encoding = "utf-8";
 	reencoded = logmsg_reencode(commit, encoding);
-	if (reencoded)
+	if (reencoded) {
 		msg = reencoded;
+		len = strlen(reencoded);
+	}
 
 	if (fmt == CMIT_FMT_ONELINE || fmt == CMIT_FMT_EMAIL)
 		indent = 0;
@@ -969,137 +1200,57 @@ unsigned long pretty_print_commit(enum cmit_fmt fmt,
 		}
 	}
 
-	for (;;) {
-		const char *line = msg;
-		int linelen = get_one_line(msg, len);
+	pp_header(fmt, abbrev, dmode, encoding,
+		  commit, &msg, &len,
+		  &offset, buf_p, space_p);
+	if (fmt != CMIT_FMT_ONELINE && !subject) {
+		ALLOC_GROW(*buf_p, offset + 20, *space_p);
+		(*buf_p)[offset++] = '\n';
+	}
 
+	/* Skip excess blank lines at the beginning of body, if any... */
+	for (;;) {
+		int linelen = get_one_line(msg, len);
+		int ll = linelen;
 		if (!linelen)
 			break;
-
-		/*
-		 * We want some slop for indentation and a possible
-		 * final "...". Thus the "+ 20".
-		 */
-		if (offset + linelen + 20 > space) {
-			memcpy(buf + offset, "    ...\n", 8);
-			offset += 8;
+		if (!is_empty_line(msg, &ll))
 			break;
-		}
-
 		msg += linelen;
 		len -= linelen;
-		if (hdr) {
-			if (linelen == 1) {
-				hdr = 0;
-				if ((fmt != CMIT_FMT_ONELINE) && !subject)
-					buf[offset++] = '\n';
-				continue;
-			}
-			if (fmt == CMIT_FMT_RAW) {
-				memcpy(buf + offset, line, linelen);
-				offset += linelen;
-				continue;
-			}
-			if (!memcmp(line, "parent ", 7)) {
-				if (linelen != 48)
-					die("bad parent line in commit");
-				continue;
-			}
-
-			if (!parents_shown) {
-				offset += add_merge_info(fmt, buf + offset,
-							 commit, abbrev);
-				parents_shown = 1;
-				continue;
-			}
-			/*
-			 * MEDIUM == DEFAULT shows only author with dates.
-			 * FULL shows both authors but not dates.
-			 * FULLER shows both authors and dates.
-			 */
-			if (!memcmp(line, "author ", 7))
-				offset += add_user_info("Author", fmt,
-							buf + offset,
-							line + 7,
-							dmode,
-							encoding);
-			if (!memcmp(line, "committer ", 10) &&
-			    (fmt == CMIT_FMT_FULL || fmt == CMIT_FMT_FULLER))
-				offset += add_user_info("Commit", fmt,
-							buf + offset,
-							line + 10,
-							dmode,
-							encoding);
-			continue;
-		}
-
-		if (!subject)
-			body = 1;
-
-		if (is_empty_line(line, &linelen)) {
-			if (!seen_title)
-				continue;
-			if (!body)
-				continue;
-			if (subject)
-				continue;
-			if (fmt == CMIT_FMT_SHORT)
-				break;
-		}
-
-		seen_title = 1;
-		if (subject) {
-			int slen = strlen(subject);
-			memcpy(buf + offset, subject, slen);
-			offset += slen;
-			offset += add_rfc2047(buf + offset, line, linelen,
-					      encoding);
-		}
-		else {
-			memset(buf + offset, ' ', indent);
-			memcpy(buf + offset + indent, line, linelen);
-			offset += linelen + indent;
-		}
-		buf[offset++] = '\n';
-		if (fmt == CMIT_FMT_ONELINE)
-			break;
-		if (subject && plain_non_ascii) {
-			int sz;
-			char header[512];
-			const char *header_fmt =
-				"MIME-Version: 1.0\n"
-				"Content-Type: text/plain; charset=%s\n"
-				"Content-Transfer-Encoding: 8bit\n";
-			sz = snprintf(header, sizeof(header), header_fmt,
-				      encoding);
-			if (sizeof(header) < sz)
-				die("Encoding name %s too long", encoding);
-			memcpy(buf + offset, header, sz);
-			offset += sz;
-		}
-		if (after_subject) {
-			int slen = strlen(after_subject);
-			if (slen > space - offset - 1)
-				slen = space - offset - 1;
-			memcpy(buf + offset, after_subject, slen);
-			offset += slen;
-			after_subject = NULL;
-		}
-		subject = NULL;
 	}
-	while (offset && isspace(buf[offset-1]))
+
+	/* These formats treat the title line specially. */
+	if (fmt == CMIT_FMT_ONELINE
+	    || fmt == CMIT_FMT_EMAIL)
+		pp_title_line(fmt, &msg, &len, &offset,
+			      buf_p, space_p, indent,
+			      subject, after_subject, encoding,
+			      plain_non_ascii);
+
+	beginning_of_body = offset;
+	if (fmt != CMIT_FMT_ONELINE)
+		pp_remainder(fmt, &msg, &len, &offset,
+			     buf_p, space_p, indent);
+
+	while (offset && isspace((*buf_p)[offset-1]))
 		offset--;
+
+	ALLOC_GROW(*buf_p, offset + 20, *space_p);
+	buf = *buf_p;
+
 	/* Make sure there is an EOLN for the non-oneline case */
 	if (fmt != CMIT_FMT_ONELINE)
 		buf[offset++] = '\n';
+
 	/*
-	 * make sure there is another EOLN to separate the headers from whatever
-	 * body the caller appends if we haven't already written a body
+	 * The caller may append additional body text in e-mail
+	 * format.  Make sure we did not strip the blank line
+	 * between the header and the body.
 	 */
-	if (fmt == CMIT_FMT_EMAIL && !body)
+	if (fmt == CMIT_FMT_EMAIL && offset <= beginning_of_body)
 		buf[offset++] = '\n';
 	buf[offset] = '\0';
-
 	free(reencoded);
 	return offset;
 }

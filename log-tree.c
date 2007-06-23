@@ -79,16 +79,25 @@ static int detect_any_signoff(char *letter, int size)
 	return seen_head && seen_name;
 }
 
-static int append_signoff(char *buf, int buf_sz, int at, const char *signoff)
+static unsigned long append_signoff(char **buf_p, unsigned long *buf_sz_p,
+				    unsigned long at, const char *signoff)
 {
 	static const char signed_off_by[] = "Signed-off-by: ";
-	int signoff_len = strlen(signoff);
+	size_t signoff_len = strlen(signoff);
 	int has_signoff = 0;
-	char *cp = buf;
+	char *cp;
+	char *buf;
+	unsigned long buf_sz;
 
-	/* Do we have enough space to add it? */
-	if (buf_sz - at <= strlen(signed_off_by) + signoff_len + 3)
-		return at;
+	buf = *buf_p;
+	buf_sz = *buf_sz_p;
+	if (buf_sz <= at + strlen(signed_off_by) + signoff_len + 3) {
+		buf_sz += strlen(signed_off_by) + signoff_len + 3;
+		buf = xrealloc(buf, buf_sz);
+		*buf_p = buf;
+		*buf_sz_p = buf_sz;
+	}
+	cp = buf;
 
 	/* First see if we already have the sign-off by the signer */
 	while ((cp = strstr(cp, signed_off_by))) {
@@ -133,7 +142,8 @@ static unsigned int digits_in_number(unsigned int number)
 
 void show_log(struct rev_info *opt, const char *sep)
 {
-	static char this_header[16384];
+	char *msgbuf = NULL;
+	unsigned long msgbuf_len = 0;
 	struct log_info *log = opt->loginfo;
 	struct commit *commit = log->commit, *parent = log->parent;
 	int abbrev = opt->diffopt.abbrev;
@@ -278,14 +288,15 @@ void show_log(struct rev_info *opt, const char *sep)
 	/*
 	 * And then the pretty-printed message itself
 	 */
-	len = pretty_print_commit(opt->commit_format, commit, ~0u, this_header,
-				  sizeof(this_header), abbrev, subject,
+	len = pretty_print_commit(opt->commit_format, commit, ~0u,
+				  &msgbuf, &msgbuf_len, abbrev, subject,
 				  extra_headers, opt->date_mode);
 
 	if (opt->add_signoff)
-		len = append_signoff(this_header, sizeof(this_header), len,
+		len = append_signoff(&msgbuf, &msgbuf_len, len,
 				     opt->add_signoff);
-	printf("%s%s%s", this_header, extra, sep);
+	printf("%s%s%s", msgbuf, extra, sep);
+	free(msgbuf);
 }
 
 int log_tree_diff_flush(struct rev_info *opt)
