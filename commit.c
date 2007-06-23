@@ -997,7 +997,7 @@ static void pp_header(enum cmit_fmt fmt,
 			len = linelen;
 			if (fmt == CMIT_FMT_EMAIL)
 				len = bound_rfc2047(linelen, encoding);
-			ALLOC_GROW(*buf_p, *ofs_p + len, *space_p);
+			ALLOC_GROW(*buf_p, *ofs_p + len + 80, *space_p);
 			dst = *buf_p + *ofs_p;
 			*ofs_p += add_user_info("Author", fmt, dst,
 						line + 7, dmode, encoding);
@@ -1008,7 +1008,7 @@ static void pp_header(enum cmit_fmt fmt,
 			len = linelen;
 			if (fmt == CMIT_FMT_EMAIL)
 				len = bound_rfc2047(linelen, encoding);
-			ALLOC_GROW(*buf_p, *ofs_p + len, *space_p);
+			ALLOC_GROW(*buf_p, *ofs_p + len + 80, *space_p);
 			dst = *buf_p + *ofs_p;
 			*ofs_p += add_user_info("Commit", fmt, dst,
 						line + 10, dmode, encoding);
