@@ -4400,7 +4400,6 @@ proc selectline {l isnew} {
     }
     appendwithlinks $comment {comment}
 
-    $ctext tag delete Comments
     $ctext tag remove found 1.0 end
     $ctext conf -state disabled
     set commentend [$ctext index "end - 1c"]
@@ -4566,10 +4565,11 @@ proc gettreeline {gtf id} {
     set nl 0
     while {[incr nl] <= 1000 && [gets $gtf line] >= 0} {
 	if {$diffids ne $nullid} {
-	    set tl [split $line "\t"]
-	    if {[lindex $tl 0 1] ne "blob"} continue
-	    set sha1 [lindex $tl 0 2]
-	    set fname [lindex $tl 1]
+	    if {[lindex $line 1] ne "blob"} continue
+	    set i [string first "\t" $line]
+	    if {$i < 0} continue
+	    set sha1 [lindex $line 2]
+	    set fname [string range $line [expr {$i+1}] end]
 	    if {[string index $fname 0] eq "\""} {
 		set fname [lindex $fname 0]
 	    }
@@ -4797,8 +4797,14 @@ proc gettreediffline {gdtf ids} {
 
     set nr 0
     while {[incr nr] <= 1000 && [gets $gdtf line] >= 0} {
-	set file [lindex $line 5]
-	lappend treediff $file
+	set i [string first "\t" $line]
+	if {$i >= 0} {
+	    set file [string range $line [expr {$i+1}] end]
+	    if {[string index $file 0] eq "\""} {
+		set file [lindex $file 0]
+	    }
+	    lappend treediff $file
+	}
     }
     if {![eof $gdtf]} {
 	return [expr {$nr >= 1000? 2: 1}]
@@ -4819,7 +4825,7 @@ proc gettreediffline {gdtf ids} {
 }
 
 proc getblobdiffs {ids} {
-    global diffopts blobdifffd diffids env curdifftag curtagstart
+    global diffopts blobdifffd diffids env
     global diffinhdr treediffs
 
     set env(GIT_DIFF_OPTS) $diffopts
@@ -4830,8 +4836,6 @@ proc getblobdiffs {ids} {
     set diffinhdr 0
     fconfigure $bdf -blocking 0
     set blobdifffd($ids) $bdf
-    set curdifftag Comments
-    set curtagstart 0.0
     filerun $bdf [list getblobdiffline $bdf $diffids]
 }
 
@@ -4848,8 +4852,20 @@ proc setinlist {var i val} {
     }
 }
 
+proc makediffhdr {fname ids} {
+    global ctext curdiffstart treediffs
+
+    set i [lsearch -exact $treediffs($ids) $fname]
+    if {$i >= 0} {
+	setinlist difffilestart $i $curdiffstart
+    }
+    set l [expr {(78 - [string length $fname]) / 2}]
+    set pad [string range "----------------------------------------" 1 $l]
+    $ctext insert $curdiffstart "$pad $fname $pad" filesep
+}
+
 proc getblobdiffline {bdf ids} {
-    global diffids blobdifffd ctext curdifftag curtagstart
+    global diffids blobdifffd ctext curdiffstart
     global diffnexthead diffnextnote difffilestart
     global diffinhdr treediffs
 
@@ -4860,38 +4876,67 @@ proc getblobdiffline {bdf ids} {
 	    close $bdf
 	    return 0
 	}
-	if {[regexp {^diff --git a/(.*) b/(.*)} $line match fname newname]} {
+	if {![string compare -length 11 "diff --git " $line]} {
+	    # trim off "diff --git "
+	    set line [string range $line 11 end]
+	    set diffinhdr 1
 	    # start of a new file
 	    $ctext insert end "\n"
-	    $ctext tag add $curdifftag $curtagstart end
-	    set here [$ctext index "end - 1c"]
-	    set curtagstart $here
-	    set header $newname
-	    set i [lsearch -exact $treediffs($ids) $fname]
-	    if {$i >= 0} {
-		setinlist difffilestart $i $here
+	    set curdiffstart [$ctext index "end - 1c"]
+	    $ctext insert end "\n" filesep
+	    # If the name hasn't changed the length will be odd,
+	    # the middle char will be a space, and the two bits either
+	    # side will be a/name and b/name, or "a/name" and "b/name".
+	    # If the name has changed we'll get "rename from" and
+	    # "rename to" lines following this, and we'll use them
+	    # to get the filenames.
+	    # This complexity is necessary because spaces in the filename(s)
+	    # don't get escaped.
+	    set l [string length $line]
+	    set i [expr {$l / 2}]
+	    if {!(($l & 1) && [string index $line $i] eq " " &&
+		  [string range $line 2 [expr {$i - 1}]] eq \
+		      [string range $line [expr {$i + 3}] end])} {
+		continue
 	    }
-	    if {$newname ne $fname} {
-		set i [lsearch -exact $treediffs($ids) $newname]
-		if {$i >= 0} {
-		    setinlist difffilestart $i $here
-		}
+	    # unescape if quoted and chop off the a/ from the front
+	    if {[string index $line 0] eq "\""} {
+		set fname [string range [lindex $line 0] 2 end]
+	    } else {
+		set fname [string range $line 2 [expr {$i - 1}]]
 	    }
-	    set curdifftag "f:$fname"
-	    $ctext tag delete $curdifftag
-	    set l [expr {(78 - [string length $header]) / 2}]
-	    set pad [string range "----------------------------------------" \
-			 1 $l]
-	    $ctext insert end "$pad $header $pad\n" filesep
-	    set diffinhdr 1
-	} elseif {$diffinhdr && [string compare -length 3 $line "---"] == 0} {
-	    # do nothing
-	} elseif {$diffinhdr && [string compare -length 3 $line "+++"] == 0} {
-	    set diffinhdr 0
-	} elseif {[regexp {^@@ -([0-9]+),([0-9]+) \+([0-9]+),([0-9]+) @@(.*)} \
+	    makediffhdr $fname $ids
+
+	} elseif {[regexp {^@@ -([0-9]+)(,[0-9]+)? \+([0-9]+)(,[0-9]+)? @@(.*)} \
 		       $line match f1l f1c f2l f2c rest]} {
 	    $ctext insert end "$line\n" hunksep
 	    set diffinhdr 0
+
+	} elseif {$diffinhdr} {
+	    if {![string compare -length 12 "rename from " $line]} {
+		set fname [string range $line 12 end]
+		if {[string index $fname 0] eq "\""} {
+		    set fname [lindex $fname 0]
+		}
+		set i [lsearch -exact $treediffs($ids) $fname]
+		if {$i >= 0} {
+		    setinlist difffilestart $i $curdiffstart
+		}
+	    } elseif {![string compare -length 10 $line "rename to "]} {
+		set fname [string range $line 10 end]
+		if {[string index $fname 0] eq "\""} {
+		    set fname [lindex $fname 0]
+		}
+		makediffhdr $fname $ids
+	    } elseif {[string compare -length 3 $line "---"] == 0} {
+		# do nothing
+		continue
+	    } elseif {[string compare -length 3 $line "+++"] == 0} {
+		set diffinhdr 0
+		continue
+	    }
+	    $ctext insert end "$line\n" filesep
+
 	} else {
 	    set x [string range $line 0 0]
 	    if {$x == "-" || $x == "+"} {
@@ -4899,27 +4944,16 @@ proc getblobdiffline {bdf ids} {
 		$ctext insert end "$line\n" d$tag
 	    } elseif {$x == " "} {
 		$ctext insert end "$line\n"
-	    } elseif {$diffinhdr || $x == "\\"} {
-		# e.g. "\ No newline at end of file"
-		$ctext insert end "$line\n" filesep
 	    } else {
-		# Something else we don't recognize
-		if {$curdifftag != "Comments"} {
-		    $ctext insert end "\n"
-		    $ctext tag add $curdifftag $curtagstart end
-		    set curtagstart [$ctext index "end - 1c"]
-		    set curdifftag Comments
-		}
-		$ctext insert end "$line\n" filesep
+		# "\ No newline at end of file",
+		# or something else we don't recognize
+		$ctext insert end "$line\n" hunksep
 	    }
 	}
     }
     $ctext conf -state disabled
     if {[eof $bdf]} {
 	close $bdf
-	if {$ids == $diffids && $bdf == $blobdifffd($ids)} {
-	    $ctext tag add $curdifftag $curtagstart end
-	}
 	return 0
     }
     return [expr {$nr >= 1000? 2: 1}]
@@ -5444,7 +5478,6 @@ proc doseldiff {oldid newid} {
     $ctext insert end [lindex $commitinfo($newid) 0]
     $ctext insert end "\n"
     $ctext conf -state disabled
-    $ctext tag delete Comments
     $ctext tag remove found 1.0 end
     startdiff [list $oldid $newid]
 }
