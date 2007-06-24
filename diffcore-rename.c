@@ -138,6 +138,7 @@ struct diff_score {
 	int src; /* index in rename_src */
 	int dst; /* index in rename_dst */
 	int score;
+	int name_score;
 };
 
 static int estimate_similarity(struct diff_filespec *src,
@@ -201,11 +202,8 @@ static int estimate_similarity(struct diff_filespec *src,
 	 */
 	if (!dst->size)
 		score = 0; /* should not happen */
-	else {
+	else
 		score = (int)(src_copied * MAX_SCORE / max_size);
-		if (basename_same(src, dst))
-			score++;
-	}
 	return score;
 }
 
@@ -242,6 +240,10 @@ static void record_rename_pair(int dst_index, int src_index, int score)
 static int score_compare(const void *a_, const void *b_)
 {
 	const struct diff_score *a = a_, *b = b_;
+
+	if (a->score == b->score)
+		return b->name_score - a->name_score;
+
 	return b->score - a->score;
 }
 
@@ -360,6 +362,7 @@ void diffcore_rename(struct diff_options *options)
 			m->dst = i;
 			m->score = estimate_similarity(one, two,
 						       minimum_score);
+			m->name_score = basename_same(one, two);
 			diff_free_filespec_data(one);
 		}
 		/* We do not need the text anymore */
