@@ -188,7 +188,8 @@ static int quote_c_style_counted(const char *name, int namelen,
 #define EMITQ() EMIT('\\')
 
 	const char *sp;
-	int ch, count = 0, needquote = 0;
+	unsigned char ch;
+	int count = 0, needquote = 0;
 
 	if (!no_dq)
 		EMIT('"');
@@ -197,7 +198,7 @@ static int quote_c_style_counted(const char *name, int namelen,
 		if (!ch)
 			break;
 		if ((ch < ' ') || (ch == '"') || (ch == '\\') ||
-		    (ch >= 0177)) {
+		    (quote_path_fully && (ch >= 0177))) {
 			needquote = 1;
 			switch (ch) {
 			case '\a': EMITQ(); ch = 'a'; break;

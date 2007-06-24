@@ -271,6 +271,11 @@ int git_default_config(const char *var, const char *value)
 		return 0;
 	}
 
+	if (!strcmp(var, "core.quotepath")) {
+		quote_path_fully = git_config_bool(var, value);
+		return 0;
+	}
+
 	if (!strcmp(var, "core.symlinks")) {
 		has_symlinks = git_config_bool(var, value);
 		return 0;
