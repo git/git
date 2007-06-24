@@ -1813,6 +1813,11 @@ static void diff_fill_sha1_info(struct diff_filespec *one)
 		hashclr(one->sha1);
 }
 
+static int similarity_index(struct diff_filepair *p)
+{
+	return p->score * 100 / MAX_SCORE;
+}
+
 static void run_diff(struct diff_filepair *p, struct diff_options *o)
 {
 	const char *pgm = external_diff();
@@ -1847,23 +1852,20 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 				"similarity index %d%%\n"
 				"copy from %s\n"
 				"copy to %s\n",
-				(int)(0.5 + p->score * 100.0/MAX_SCORE),
-				name_munged, other_munged);
+				similarity_index(p), name_munged, other_munged);
 		break;
 	case DIFF_STATUS_RENAMED:
 		len += snprintf(msg + len, sizeof(msg) - len,
 				"similarity index %d%%\n"
 				"rename from %s\n"
 				"rename to %s\n",
-				(int)(0.5 + p->score * 100.0/MAX_SCORE),
-				name_munged, other_munged);
+				similarity_index(p), name_munged, other_munged);
 		break;
 	case DIFF_STATUS_MODIFIED:
 		if (p->score) {
 			len += snprintf(msg + len, sizeof(msg) - len,
 					"dissimilarity index %d%%\n",
-					(int)(0.5 + p->score *
-					      100.0/MAX_SCORE));
+					similarity_index(p));
 			complete_rewrite = 1;
 			break;
 		}
@@ -2387,8 +2389,7 @@ static void diff_flush_raw(struct diff_filepair *p,
 	}
 
 	if (p->score)
-		sprintf(status, "%c%03d", p->status,
-			(int)(0.5 + p->score * 100.0/MAX_SCORE));
+		sprintf(status, "%c%03d", p->status, similarity_index(p));
 	else {
 		status[0] = p->status;
 		status[1] = 0;
@@ -2670,8 +2671,7 @@ static void show_rename_copy(const char *renamecopy, struct diff_filepair *p)
 {
 	char *names = pprint_rename(p->one->path, p->two->path);
 
-	printf(" %s %s (%d%%)\n", renamecopy, names,
-	       (int)(0.5 + p->score * 100.0/MAX_SCORE));
+	printf(" %s %s (%d%%)\n", renamecopy, names, similarity_index(p));
 	free(names);
 	show_mode_change(p, 0);
 }
@@ -2695,7 +2695,7 @@ static void diff_summary(struct diff_filepair *p)
 		if (p->score) {
 			char *name = quote_one(p->two->path);
 			printf(" rewrite %s (%d%%)\n", name,
-				(int)(0.5 + p->score * 100.0/MAX_SCORE));
+			       similarity_index(p));
 			free(name);
 			show_mode_change(p, 0);
 		} else	show_mode_change(p, 1);
