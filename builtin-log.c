@@ -58,6 +58,11 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	argc = setup_revisions(argc, argv, rev, "HEAD");
 	if (rev->diffopt.pickaxe || rev->diffopt.filter)
 		rev->always_show_header = 0;
+	if (rev->diffopt.follow_renames) {
+		rev->always_show_header = 0;
+		if (rev->diffopt.nr_paths != 1)
+			usage("git logs can only follow renames on one pathname at a time");
+	}
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--decorate")) {

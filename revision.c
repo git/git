@@ -1230,7 +1230,9 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, const ch
 
 	if (revs->prune_data) {
 		diff_tree_setup_paths(revs->prune_data, &revs->pruning);
-		revs->prune_fn = try_to_simplify_commit;
+		/* Can't prune commits with rename following: the paths change.. */
+		if (!revs->diffopt.follow_renames)
+			revs->prune_fn = try_to_simplify_commit;
 		if (!revs->full_diff)
 			diff_tree_setup_paths(revs->prune_data, &revs->diffopt);
 	}

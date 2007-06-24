@@ -3,6 +3,7 @@
  */
 #include "cache.h"
 #include "diff.h"
+#include "diffcore.h"
 #include "tree.h"
 
 static char *malloc_base(const char *base, int baselen, const char *path, int pathlen)
@@ -290,6 +291,78 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2, const char *base, stru
 	return 0;
 }
 
+/*
+ * Does it look like the resulting diff might be due to a rename?
+ *  - single entry
+ *  - not a valid previous file
+ */
+static inline int diff_might_be_rename(void)
+{
+	return diff_queued_diff.nr == 1 &&
+		!DIFF_FILE_VALID(diff_queued_diff.queue[0]->one);
+}
+
+static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, const char *base, struct diff_options *opt)
+{
+	struct diff_options diff_opts;
+	struct diff_queue_struct *q = &diff_queued_diff;
+	struct diff_filepair *choice;
+	const char *paths[1];
+	int i;
+
+	/* Remove the file creation entry from the diff queue, and remember it */
+	choice = q->queue[0];
+	q->nr = 0;
+
+	diff_setup(&diff_opts);
+	diff_opts.recursive = 1;
+	diff_opts.detect_rename = DIFF_DETECT_RENAME;
+	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
+	diff_opts.single_follow = opt->paths[0];
+	paths[0] = NULL;
+	diff_tree_setup_paths(paths, &diff_opts);
+	if (diff_setup_done(&diff_opts) < 0)
+		die("unable to set up diff options to follow renames");
+	diff_tree(t1, t2, base, &diff_opts);
+	diffcore_std(&diff_opts);
+
+	/* Go through the new set of filepairing, and see if we find a more interesting one */
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filepair *p = q->queue[i];
+
+		/*
+		 * Found a source? Not only do we use that for the new
+		 * diff_queued_diff, we will also use that as the path in
+		 * the future!
+		 */
+		if ((p->status == 'R' || p->status == 'C') && !strcmp(p->two->path, opt->paths[0])) {
+			/* Switch the file-pairs around */
+			q->queue[i] = choice;
+			choice = p;
+
+			/* Update the path we use from now on.. */
+			opt->paths[0] = xstrdup(p->one->path);
+			diff_tree_setup_paths(opt->paths, opt);
+			break;
+		}
+	}
+
+	/*
+	 * Then, discard all the non-relevane file pairs...
+	 */
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filepair *p = q->queue[i];
+		diff_free_filepair(p);
+	}
+
+	/*
+	 * .. and re-instate the one we want (which might be either the
+	 * original one, or the rename/copy we found)
+	 */
+	q->queue[0] = choice;
+	q->nr = 1;
+}
+
 int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const char *base, struct diff_options *opt)
 {
 	void *tree1, *tree2;
@@ -306,6 +379,11 @@ int diff_tree_sha1(const unsigned char *old, const unsigned char *new, const cha
 	init_tree_desc(&t1, tree1, size1);
 	init_tree_desc(&t2, tree2, size2);
 	retval = diff_tree(&t1, &t2, base, opt);
+	if (opt->follow_renames && diff_might_be_rename()) {
+		init_tree_desc(&t1, tree1, size1);
+		init_tree_desc(&t2, tree2, size2);
+		try_to_follow_renames(&t1, &t2, base, opt);
+	}
 	free(tree1);
 	free(tree2);
 	return retval;
