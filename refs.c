@@ -1106,8 +1106,7 @@ static int log_ref_write(const char *ref_name, const unsigned char *old_sha1,
 		len += sprintf(logrec + len - 1, "\t%.*s\n", msglen, msg) - 1;
 	written = len <= maxlen ? write_in_full(logfd, logrec, len) : -1;
 	free(logrec);
-	close(logfd);
-	if (written != len)
+	if (close(logfd) != 0 || written != len)
 		return error("Unable to append to %s", log_file);
 	return 0;
 }
@@ -1204,8 +1203,7 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 		goto error_free_return;
 	}
 	written = write_in_full(fd, ref, len);
-	close(fd);
-	if (written != len) {
+	if (close(fd) != 0 || written != len) {
 		error("Unable to write to %s", lockpath);
 		goto error_unlink_return;
 	}
