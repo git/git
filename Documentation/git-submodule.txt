@@ -8,11 +8,19 @@ git-submodule - Initialize, update or inspect submodules
 
 SYNOPSIS
 --------
+'git-submodule' [--quiet] [-b branch] add <repository> [<path>]
 'git-submodule' [--quiet] [--cached] [status|init|update] [--] [<path>...]
 
 
 COMMANDS
 --------
+add::
+	Add the given repository as a submodule at the given path
+	to the changeset to be committed next.  In particular, the
+	repository is cloned at the specified path, added to the
+	changeset and registered in .gitmodules.   If no path is
+	specified, the path is deduced from the repository specification.
+
 status::
 	Show the status of the submodules. This will print the SHA-1 of the
 	currently checked out commit for each submodule, along with the
@@ -38,6 +46,9 @@ OPTIONS
 -------
 -q, --quiet::
 	Only print error messages.
+
+-b, --branch::
+	Branch of repository to add as submodule.
 
 --cached::
 	Display the SHA-1 stored in the index, not the SHA-1 of the currently

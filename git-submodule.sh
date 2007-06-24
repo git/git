@@ -1,13 +1,15 @@
 #!/bin/sh
 #
-# git-submodules.sh: init, update or list git submodules
+# git-submodules.sh: add, init, update or list git submodules
 #
 # Copyright (c) 2007 Lars Hjemli
 
-USAGE='[--quiet] [--cached] [status|init|update] [--] [<path>...]'
+USAGE='[--quiet] [--cached] [add <repo> [-b branch]|status|init|update] [--] [<path>...]'
 . git-sh-setup
 require_work_tree
 
+add=
+branch=
 init=
 update=
 status=
@@ -23,6 +25,18 @@ say()
 	then
 		echo "$@"
 	fi
+}
+
+# NEEDSWORK: identical function exists in get_repo_base in clone.sh
+get_repo_base() {
+	(
+		cd "`/bin/pwd`" &&
+		cd "$1" || cd "$1.git" &&
+		{
+			cd .git
+			pwd
+		}
+	) 2>/dev/null
 }
 
 #
@@ -41,6 +55,11 @@ module_name()
 
 #
 # Clone a submodule
+#
+# Prior to calling, modules_update checks that a possibly existing
+# path is not a git repository.
+# Likewise, module_add checks that path does not exist at all,
+# since it is the location of a new submodule.
 #
 module_clone()
 {
@@ -63,6 +82,53 @@ module_clone()
 
 	git-clone -n "$url" "$path" ||
 	die "Clone of '$url' into submodule path '$path' failed"
+}
+
+#
+# Add a new submodule to the working tree, .gitmodules and the index
+#
+# $@ = repo [path]
+#
+# optional branch is stored in global branch variable
+#
+module_add()
+{
+	repo=$1
+	path=$2
+
+	if test -z "$repo"; then
+		usage
+	fi
+
+	# Turn the source into an absolute path if
+	# it is local
+	if base=$(get_repo_base "$repo"); then
+		repo="$base"
+	fi
+
+	# Guess path from repo if not specified or strip trailing slashes
+	if test -z "$path"; then
+		path=$(echo "$repo" | sed -e 's|/*$||' -e 's|:*/*\.git$||' -e 's|.*[/:]||g')
+	else
+		path=$(echo "$path" | sed -e 's|/*$||')
+	fi
+
+	test -e "$path" &&
+	die "'$path' already exists"
+
+	git-ls-files --error-unmatch "$path" > /dev/null 2>&1 &&
+	die "'$path' already exists in the index"
+
+	module_clone "$path" "$repo" || exit
+	(unset GIT_DIR && cd "$path" && git checkout -q ${branch:+-b "$branch" "origin/$branch"}) ||
+	die "Unable to checkout submodule '$path'"
+	git add "$path" ||
+	die "Failed to add submodule '$path'"
+
+	GIT_CONFIG=.gitmodules git config submodule."$path".path "$path" &&
+	GIT_CONFIG=.gitmodules git config submodule."$path".url "$repo" &&
+	git add .gitmodules ||
+	die "Failed to register submodule '$path'"
 }
 
 #
@@ -173,6 +239,9 @@ modules_list()
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
+	add)
+		add=1
+		;;
 	init)
 		init=1
 		;;
@@ -184,6 +253,14 @@ do
 		;;
 	-q|--quiet)
 		quiet=1
+		;;
+	-b|--branch)
+		case "$2" in
+		'')
+			usage
+			;;
+		esac
+		branch="$2"; shift
 		;;
 	--cached)
 		cached=1
@@ -201,14 +278,27 @@ do
 	shift
 done
 
-case "$init,$update,$status,$cached" in
-1,,,)
+case "$add,$branch" in
+1,*)
+	;;
+,)
+	;;
+,*)
+	usage
+	;;
+esac
+
+case "$add,$init,$update,$status,$cached" in
+1,,,,)
+	module_add "$@"
+	;;
+,1,,,)
 	modules_init "$@"
 	;;
-,1,,)
+,,1,,)
 	modules_update "$@"
 	;;
-,,*,*)
+,,,1,*)
 	modules_list "$@"
 	;;
 *)
