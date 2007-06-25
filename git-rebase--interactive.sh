@@ -60,6 +60,11 @@ die_with_patch () {
 	die "$2"
 }
 
+die_abort () {
+	rm -rf "$DOTEST"
+	die "$1"
+}
+
 pick_one () {
 	case "$1" in -n) sha1=$2 ;; *) sha1=$1 ;; esac
 	git rev-parse --verify $sha1 || die "Invalid commit name: $sha1"
@@ -212,7 +217,7 @@ do
 	-C*)
 		die "Interactive rebase uses merge, so $1 does not make sense"
 		;;
-	-v)
+	-v|--verbose)
 		VERBOSE=t
 		;;
 	-i|--interactive)
@@ -264,8 +269,11 @@ do
 		echo $ONTO > "$DOTEST"/onto
 		test t = "$VERBOSE" && : > "$DOTEST"/verbose
 
+		SHORTUPSTREAM=$(git rev-parse --short $UPSTREAM)
+		SHORTHEAD=$(git rev-parse --short $HEAD)
+		SHORTONTO=$(git rev-parse --short $ONTO)
 		cat > "$TODO" << EOF
-# Rebasing $UPSTREAM..$HEAD onto $ONTO
+# Rebasing $SHORTUPSTREAM..$SHORTHEAD onto $SHORTONTO
 #
 # Commands:
 #  pick = use commit
@@ -277,13 +285,16 @@ EOF
 			sed "s/^/pick /" >> "$TODO"
 
 		test -z "$(grep -ve '^$' -e '^#' < $TODO)" &&
-			die "Nothing to do"
+			die_abort "Nothing to do"
 
 		cp "$TODO" "$TODO".backup
 		${VISUAL:-${EDITOR:-vi}} "$TODO" ||
 			die "Could not execute editor"
 
-		git reset --hard $ONTO && do_rest
+		test -z "$(grep -ve '^$' -e '^#' < $TODO)" &&
+			die_abort "Nothing to do"
+
+		git checkout $ONTO && do_rest
 	esac
 	shift
 done

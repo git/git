@@ -140,6 +140,7 @@ test_expect_success 'abort' '
 test_expect_success 'retain authorship' '
 	echo A > file7 &&
 	git add file7 &&
+	test_tick &&
 	GIT_AUTHOR_NAME="Twerp Snog" git commit -m "different author" &&
 	git tag twerp &&
 	git rebase -i --onto master HEAD^ &&
@@ -149,6 +150,7 @@ test_expect_success 'retain authorship' '
 test_expect_success 'squash' '
 	git reset --hard twerp &&
 	echo B > file7 &&
+	test_tick &&
 	GIT_AUTHOR_NAME="Nitfol" git commit -m "nitfol" file7 &&
 	echo "******************************" &&
 	FAKE_LINES="1 squash 2" git rebase -i --onto master HEAD~2 &&
