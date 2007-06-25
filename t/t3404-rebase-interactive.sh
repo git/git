@@ -99,6 +99,10 @@ test_expect_success 'rebase on top of a non-conflicting commit' '
 	test $(git rev-parse I) = $(git rev-parse HEAD~2)
 '
 
+test_expect_success 'reflog for the branch shows state before rebase' '
+	test $(git rev-parse branch1@{1}) = $(git rev-parse original-branch1)
+'
+
 test_expect_success 'exchange two commits' '
 	FAKE_LINES="2 1" git rebase -i HEAD~2 &&
 	test H = $(git cat-file commit HEAD^ | tail -n 1) &&

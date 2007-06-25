@@ -151,8 +151,14 @@ do_next () {
 	esac
 	test -s "$TODO" && return
 
-	HEAD=$(git rev-parse HEAD)
-	HEADNAME=$(cat "$DOTEST"/head-name)
+	comment_for_reflog finish &&
+	HEADNAME=$(cat "$DOTEST"/head-name) &&
+	OLDHEAD=$(cat "$DOTEST"/head) &&
+	SHORTONTO=$(git rev-parse --short $(cat "$DOTEST"/onto)) &&
+	NEWHEAD=$(git rev-parse HEAD) &&
+	message="$GIT_REFLOG_ACTION: $HEADNAME onto $SHORTONTO)" &&
+	git update-ref -m "$message" $HEADNAME $NEWHEAD $OLDHEAD &&
+	git symbolic-ref HEAD $HEADNAME &&
 	rm -rf "$DOTEST" &&
 	warn "Successfully rebased and updated $HEADNAME."
 
