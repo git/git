@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git-rebase' [-i | --interactive] [-v | --verbose] [--merge] [-C<n>]
-	[--onto <newbase>] <upstream> [<branch>]
+	[-p | --preserve-merges] [--onto <newbase>] <upstream> [<branch>]
 'git-rebase' --continue | --skip | --abort
 
 DESCRIPTION
@@ -213,6 +213,10 @@ OPTIONS
 	Make a list of the commits which are about to be rebased.  Let the
 	user edit that list before rebasing.
 
+-p, \--preserve-merges::
+	Instead of ignoring merges, try to recreate them.  This option
+	only works in interactive mode.
+
 include::merge-strategies.txt[]
 
 NOTES
@@ -303,6 +307,23 @@ $ git rebase -i HEAD~5
 ----------------------
 
 And move the first patch to the end of the list.
+
+You might want to preserve merges, if you have a history like this:
+
+------------------
+           X
+            \
+         A---M---B
+        /
+---o---O---P---Q
+------------------
+
+Suppose you want to rebase the side branch starting at "A" to "Q". Make
+sure that the current HEAD is "B", and call
+
+-----------------------------
+$ git rebase -i -p --onto Q O
+-----------------------------
 
 Authors
 ------

@@ -10,7 +10,8 @@
 # The original idea comes from Eric W. Biederman, in
 # http://article.gmane.org/gmane.comp.version-control.git/22407
 
-USAGE='(--continue | --abort | --skip | [--onto <branch>] <upstream> [<branch>])'
+USAGE='(--continue | --abort | --skip | [--preserve-merges] [--verbose]
+	[--onto <branch>] <upstream> [<branch>])'
 
 . git-sh-setup
 require_work_tree
@@ -18,6 +19,8 @@ require_work_tree
 DOTEST="$GIT_DIR/.dotest-merge"
 TODO="$DOTEST"/todo
 DONE="$DOTEST"/done
+REWRITTEN="$DOTEST"/rewritten
+PRESERVE_MERGES=
 STRATEGY=
 VERBOSE=
 
@@ -68,6 +71,8 @@ die_abort () {
 pick_one () {
 	case "$1" in -n) sha1=$2 ;; *) sha1=$1 ;; esac
 	git rev-parse --verify $sha1 || die "Invalid commit name: $sha1"
+	test -d "$REWRITTEN" &&
+		pick_one_preserving_merges "$@" && return
 	parent_sha1=$(git rev-parse --verify $sha1^ 2>/dev/null)
 	current_sha1=$(git rev-parse --verify HEAD)
 	if [ $current_sha1 = $parent_sha1 ]; then
@@ -77,6 +82,75 @@ pick_one () {
 	else
 		git cherry-pick $STRATEGY "$@"
 	fi
+}
+
+pick_one_preserving_merges () {
+	case "$1" in -n) sha1=$2 ;; *) sha1=$1 ;; esac
+	sha1=$(git rev-parse $sha1)
+
+	if [ -f "$DOTEST"/current-commit ]
+	then
+		current_commit=$(cat "$DOTEST"/current-commit) &&
+		git rev-parse HEAD > "$REWRITTEN"/$current_commit &&
+		rm "$DOTEST"/current-commit ||
+		die "Cannot write current commit's replacement sha1"
+	fi
+
+	# rewrite parents; if none were rewritten, we can fast-forward.
+	fast_forward=t
+	preserve=t
+	new_parents=
+	for p in $(git rev-list --parents -1 $sha1 | cut -d\  -f2-)
+	do
+		if [ -f "$REWRITTEN"/$p ]
+		then
+			preserve=f
+			new_p=$(cat "$REWRITTEN"/$p)
+			test $p != $new_p && fast_forward=f
+			case "$new_parents" in
+			*$new_p*)
+				;; # do nothing; that parent is already there
+			*)
+				new_parents="$new_parents $new_p"
+			esac
+		fi
+	done
+	case $fast_forward in
+	t)
+		echo "Fast forward to $sha1"
+		test $preserve=f && echo $sha1 > "$REWRITTEN"/$sha1
+		;;
+	f)
+		test "a$1" = a-n && die "Refusing to squash a merge: $sha1"
+
+		first_parent=$(expr "$new_parents" : " \([^ ]*\)")
+		# detach HEAD to current parent
+		git checkout $first_parent 2> /dev/null ||
+			die "Cannot move HEAD to $first_parent"
+
+		echo $sha1 > "$DOTEST"/current-commit
+		case "$new_parents" in
+		\ *\ *)
+			# redo merge
+			author_script=$(get_author_ident_from_commit $sha1)
+			eval "$author_script"
+			msg="$(git cat-file commit $sha1 | \
+				sed -e '1,/^$/d' -e "s/[\"\\]/\\\\&/g")"
+			# NEEDSWORK: give rerere a chance
+			if ! git merge $STRATEGY -m "$msg" $new_parents
+			then
+				echo "$msg" > "$GIT_DIR"/MERGE_MSG
+				warn Error redoing merge $sha1
+				warn
+				warn After fixup, please use
+				die "$author_script git commit"
+			fi
+			;;
+		*)
+			git cherry-pick $STRATEGY "$@" ||
+				die_with_patch $sha1 "Could not pick $sha1"
+		esac
+	esac
 }
 
 do_next () {
@@ -155,7 +229,15 @@ do_next () {
 	HEADNAME=$(cat "$DOTEST"/head-name) &&
 	OLDHEAD=$(cat "$DOTEST"/head) &&
 	SHORTONTO=$(git rev-parse --short $(cat "$DOTEST"/onto)) &&
-	NEWHEAD=$(git rev-parse HEAD) &&
+	if [ -d "$REWRITTEN" ]
+	then
+		test -f "$DOTEST"/current-commit &&
+			current_commit=$(cat "$DOTEST"/current-commit) &&
+			git rev-parse HEAD > "$REWRITTEN"/$current_commit
+		NEWHEAD=$(cat "$REWRITTEN"/$OLDHEAD)
+	else
+		NEWHEAD=$(git rev-parse HEAD)
+	fi &&
 	message="$GIT_REFLOG_ACTION: $HEADNAME onto $SHORTONTO)" &&
 	git update-ref -m "$message" $HEADNAME $NEWHEAD $OLDHEAD &&
 	git symbolic-ref HEAD $HEADNAME &&
@@ -226,6 +308,9 @@ do
 	-v|--verbose)
 		VERBOSE=t
 		;;
+	-p|--preserve-merges)
+		PRESERVE_MERGES=t
+		;;
 	-i|--interactive)
 		# yeah, we know
 		;;
@@ -274,6 +359,25 @@ do
 		echo $UPSTREAM > "$DOTEST"/upstream
 		echo $ONTO > "$DOTEST"/onto
 		test t = "$VERBOSE" && : > "$DOTEST"/verbose
+		if [ t = "$PRESERVE_MERGES" ]
+		then
+			# $REWRITTEN contains files for each commit that is
+			# reachable by at least one merge base of $HEAD and
+			# $UPSTREAM. They are not necessarily rewritten, but
+			# their children might be.
+			# This ensures that commits on merged, but otherwise
+			# unrelated side branches are left alone. (Think "X"
+			# in the man page's example.)
+			mkdir "$REWRITTEN" &&
+			for c in $(git merge-base --all $HEAD $UPSTREAM)
+			do
+				echo $ONTO > "$REWRITTEN"/$c ||
+					die "Could not init rewritten commits"
+			done
+			MERGES_OPTION=
+		else
+			MERGES_OPTION=--no-merges
+		fi
 
 		SHORTUPSTREAM=$(git rev-parse --short $UPSTREAM)
 		SHORTHEAD=$(git rev-parse --short $HEAD)
@@ -286,7 +390,7 @@ do
 #  edit = use commit, but stop for amending
 #  squash = use commit, but meld into previous commit
 EOF
-		git rev-list --no-merges --pretty=oneline --abbrev-commit \
+		git rev-list $MERGES_OPTION --pretty=oneline --abbrev-commit \
 			--abbrev=7 --reverse $UPSTREAM..$HEAD | \
 			sed "s/^/pick /" >> "$TODO"
 

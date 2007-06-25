@@ -166,4 +166,26 @@ test_expect_success 'retain authorship when squashing' '
 	git show HEAD | grep "^Author: Nitfol"
 '
 
+test_expect_success 'preserve merges with -p' '
+	git checkout -b to-be-preserved master^ &&
+	: > unrelated-file &&
+	git add unrelated-file &&
+	test_tick &&
+	git commit -m "unrelated" &&
+	git checkout -b to-be-rebased master &&
+	echo B > file1 &&
+	test_tick &&
+	git commit -m J file1 &&
+	test_tick &&
+	git merge to-be-preserved &&
+	echo C > file1 &&
+	test_tick &&
+	git commit -m K file1 &&
+	git rebase -i -p --onto branch1 master &&
+	test $(git rev-parse HEAD^^2) = $(git rev-parse to-be-preserved) &&
+	test $(git rev-parse HEAD~3) = $(git rev-parse branch1) &&
+	test $(git show HEAD:file1) = C &&
+	test $(git show HEAD~2:file1) = B
+'
+
 test_done
