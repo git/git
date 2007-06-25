@@ -18,5 +18,6 @@ int parse_hunk_header(char *line, int len,
 		      int *ob, int *on,
 		      int *nb, int *nn);
 int read_mmfile(mmfile_t *ptr, const char *filename);
+int buffer_is_binary(const char *ptr, unsigned long size);
 
 #endif

@@ -27,8 +27,8 @@ new packs and replace existing ones.
 OPTIONS
 -------
 -n::
-        Only list the objects that would be unpacked, don't actually unpack
-        them.
+        Dry run.  Check the pack file without actually unpacking
+	the objects.
 
 -q::
 	The command usually shows percentage progress.  This

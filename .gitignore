@@ -156,7 +156,7 @@ common-cmds.h
 *.tar.gz
 *.dsc
 *.deb
-git-core.spec
+git.spec
 *.exe
 *.[ao]
 *.py[co]

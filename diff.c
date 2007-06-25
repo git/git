@@ -1108,10 +1108,8 @@ static void setup_diff_attr_check(struct git_attr_check *check)
 	check->attr = attr_diff;
 }
 
-#define FIRST_FEW_BYTES 8000
 static int file_is_binary(struct diff_filespec *one)
 {
-	unsigned long sz;
 	struct git_attr_check attr_diff_check;
 
 	setup_diff_attr_check(&attr_diff_check);
@@ -1128,10 +1126,7 @@ static int file_is_binary(struct diff_filespec *one)
 			return 0;
 		diff_populate_filespec(one, 0);
 	}
-	sz = one->size;
-	if (FIRST_FEW_BYTES < sz)
-		sz = FIRST_FEW_BYTES;
-	return !!memchr(one->data, 0, sz);
+	return buffer_is_binary(one->data, one->size);
 }
 
 static void builtin_diff(const char *name_a,

@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "grep.h"
+#include "xdiff-interface.h"
 
 void append_grep_pattern(struct grep_opt *opt, const char *pat,
 			 const char *origin, int no, enum grep_pat_token t)
@@ -230,17 +231,6 @@ static void show_line(struct grep_opt *opt, const char *bol, const char *eol,
 	if (opt->linenum)
 		printf("%d%c", lno, sign);
 	printf("%.*s\n", (int)(eol-bol), bol);
-}
-
-/*
- * NEEDSWORK: share code with diff.c
- */
-#define FIRST_FEW_BYTES 8000
-static int buffer_is_binary(const char *ptr, unsigned long size)
-{
-	if (FIRST_FEW_BYTES < size)
-		size = FIRST_FEW_BYTES;
-	return !!memchr(ptr, 0, size);
 }
 
 static int fixmatch(const char *pattern, char *line, regmatch_t *match)

@@ -202,9 +202,9 @@ const char *fmt_ident(const char *name, const char *email,
 	if (!name)
 		name = git_default_name;
 	if (!email)
-		email = getenv("EMAIL");
-	if (!email)
 		email = git_default_email;
+	if (!email)
+		email = getenv("EMAIL");
 
 	if (!*name) {
 #ifndef NO_ETC_PASSWD

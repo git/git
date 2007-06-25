@@ -3,7 +3,7 @@ git-archive(1)
 
 NAME
 ----
-git-archive - Creates an archive of files from a named tree
+git-archive - Create an archive of files from a named tree
 
 
 SYNOPSIS
