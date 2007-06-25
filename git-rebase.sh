@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano.
 #
 
-USAGE='[-v] [--onto <newbase>] <upstream> [<branch>]'
+USAGE='[--interactive | -i] [-v] [--onto <newbase>] <upstream> [<branch>]'
 LONG_USAGE='git-rebase replaces <branch> with a new branch of the
 same name.  When the --onto option is provided the new branch starts
 out with a HEAD equal to <newbase>, otherwise it is equal to <upstream>
@@ -119,6 +119,16 @@ finish_rb_merge () {
 	rm -r "$dotest"
 	echo "All done."
 }
+
+is_interactive () {
+	test -f "$dotest"/interactive ||
+	while case $#,"$1" in 0,|*,-i|*,--interactive) break ;; esac
+	do
+		shift
+	done && test -n "$1"
+}
+
+is_interactive "$@" && exec git-rebase--interactive "$@"
 
 while case "$#" in 0) break ;; esac
 do

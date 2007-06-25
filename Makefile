@@ -204,7 +204,7 @@ SCRIPT_SH = \
 	git-fetch.sh \
 	git-ls-remote.sh \
 	git-merge-one-file.sh git-mergetool.sh git-parse-remote.sh \
-	git-pull.sh git-rebase.sh \
+	git-pull.sh git-rebase.sh git-rebase--interactive.sh \
 	git-repack.sh git-request-pull.sh git-reset.sh \
 	git-sh-setup.sh \
 	git-tag.sh git-verify-tag.sh \

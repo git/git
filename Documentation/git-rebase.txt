@@ -8,7 +8,8 @@ git-rebase - Forward-port local commits to the updated upstream head
 SYNOPSIS
 --------
 [verse]
-'git-rebase' [-v] [--merge] [-C<n>] [--onto <newbase>] <upstream> [<branch>]
+'git-rebase' [-i | --interactive] [-v | --verbose] [--merge] [-C<n>]
+	[--onto <newbase>] <upstream> [<branch>]
 'git-rebase' --continue | --skip | --abort
 
 DESCRIPTION
@@ -208,6 +209,10 @@ OPTIONS
 	context exist they all must match.  By default no context is
 	ever ignored.
 
+-i, \--interactive::
+	Make a list of the commits which are about to be rebased.  Let the
+	user edit that list before rebasing.
+
 include::merge-strategies.txt[]
 
 NOTES
@@ -226,9 +231,83 @@ pre-rebase hook script for an example.
 You must be in the top directory of your project to start (or continue)
 a rebase.  Upon completion, <branch> will be the current branch.
 
-Author
+INTERACTIVE MODE
+----------------
+
+Rebasing interactively means that you have a chance to edit the commits
+which are rebased.  You can reorder the commits, and you can
+remove them (weeding out bad or otherwise unwanted patches).
+
+The interactive mode is meant for this type of workflow:
+
+1. have a wonderful idea
+2. hack on the code
+3. prepare a series for submission
+4. submit
+
+where point 2. consists of several instances of
+
+a. regular use
+ 1. finish something worthy of a commit
+ 2. commit
+b. independent fixup
+ 1. realize that something does not work
+ 2. fix that
+ 3. commit it
+
+Sometimes the thing fixed in b.2. cannot be amended to the not-quite
+perfect commit it fixes, because that commit is buried deeply in a
+patch series.  That is exactly what interactive rebase is for: use it
+after plenty of "a"s and "b"s, by rearranging and editing
+commits, and squashing multiple commits into one.
+
+Start it with the last commit you want to retain as-is:
+
+	git rebase -i <after-this-commit>
+
+An editor will be fired up with all the commits in your current branch
+(ignoring merge commits), which come after the given commit.  You can
+reorder the commits in this list to your heart's content, and you can
+remove them.  The list looks more or less like this:
+
+-------------------------------------------
+pick deadbee The oneline of this commit
+pick fa1afe1 The oneline of the next commit
+...
+-------------------------------------------
+
+The oneline descriptions are purely for your pleasure; `git-rebase` will
+not look at them but at the commit names ("deadbee" and "fa1afe1" in this
+example), so do not delete or edit the names.
+
+By replacing the command "pick" with the command "edit", you can tell
+`git-rebase` to stop after applying that commit, so that you can edit
+the files and/or the commit message, amend the commit, and continue
+rebasing.
+
+If you want to fold two or more commits into one, replace the command
+"pick" with "squash" for the second and subsequent commit.  If the
+commits had different authors, it will attribute the squashed commit to
+the author of the last commit.
+
+In both cases, or when a "pick" does not succeed (because of merge
+errors), the loop will stop to let you fix things, and you can continue
+the loop with `git rebase --continue`.
+
+For example, if you want to reorder the last 5 commits, such that what
+was HEAD~4 becomes the new HEAD. To achieve that, you would call
+`git-rebase` like this:
+
+----------------------
+$ git rebase -i HEAD~5
+----------------------
+
+And move the first patch to the end of the list.
+
+Authors
 ------
-Written by Junio C Hamano <junkio@cox.net>
+Written by Junio C Hamano <junkio@cox.net> and
+Johannes E. Schindelin <johannes.schindelin@gmx.de>
 
 Documentation
 --------------
