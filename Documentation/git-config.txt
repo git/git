@@ -9,9 +9,9 @@ git-config - Get and set repository or global options
 SYNOPSIS
 --------
 [verse]
-'git-config' [--system | --global] [-z|--null] name [value [value_regex]]
-'git-config' [--system | --global] --add name value
-'git-config' [--system | --global] --replace-all name [value [value_regex]]
+'git-config' [--system | --global] [type] [-z|--null] name [value [value_regex]]
+'git-config' [--system | --global] [type] --add name value
+'git-config' [--system | --global] [type] --replace-all name [value [value_regex]]
 'git-config' [--system | --global] [type] [-z|--null] --get name [value_regex]
 'git-config' [--system | --global] [type] [-z|--null] --get-all name [value_regex]
 'git-config' [--system | --global] [type] [-z|--null] --get-regexp name_regex [value_regex]
@@ -37,8 +37,7 @@ prepend a single exclamation mark in front (see also <<EXAMPLES>>).
 The type specifier can be either '--int' or '--bool', which will make
 'git-config' ensure that the variable(s) are of the given type and
 convert the value to the canonical form (simple decimal number for int,
-a "true" or "false" string for bool).  Type specifiers currently only
-take effect for reading operations.  If no type specifier is passed,
+a "true" or "false" string for bool).  If no type specifier is passed,
 no checks or transformations are performed on the value.
 
 This command will fail if:

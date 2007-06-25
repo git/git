@@ -471,10 +471,56 @@ test_expect_success bool '
         done &&
 	cmp expect result'
 
-test_expect_failure 'invalid bool' '
+test_expect_failure 'invalid bool (--get)' '
 
 	git-config bool.nobool foobar &&
 	git-config --bool --get bool.nobool'
+
+test_expect_failure 'invalid bool (set)' '
+
+	git-config --bool bool.nobool foobar'
+
+rm .git/config
+
+cat > expect <<\EOF
+[bool]
+	true1 = true
+	true2 = true
+	true3 = true
+	true4 = true
+	false1 = false
+	false2 = false
+	false3 = false
+	false4 = false
+EOF
+
+test_expect_success 'set --bool' '
+
+	git-config --bool bool.true1 01 &&
+	git-config --bool bool.true2 -1 &&
+	git-config --bool bool.true3 YeS &&
+	git-config --bool bool.true4 true &&
+	git-config --bool bool.false1 000 &&
+	git-config --bool bool.false2 "" &&
+	git-config --bool bool.false3 nO &&
+	git-config --bool bool.false4 FALSE &&
+	cmp expect .git/config'
+
+rm .git/config
+
+cat > expect <<\EOF
+[int]
+	val1 = 1
+	val2 = -1
+	val3 = 5242880
+EOF
+
+test_expect_success 'set --int' '
+
+	git-config --int int.val1 01 &&
+	git-config --int int.val2 -1 &&
+	git-config --int int.val3 5m &&
+	cmp expect .git/config'
 
 rm .git/config
 
