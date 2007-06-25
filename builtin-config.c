@@ -2,7 +2,7 @@
 #include "cache.h"
 
 static const char git_config_set_usage[] =
-"git-config [ --global | --system ] [ --bool | --int ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --remove-section name | --list";
+"git-config [ --global | --system ] [ --bool | --int ] [ -z | --null ] [--get | --get-all | --get-regexp | --replace-all | --add | --unset | --unset-all] name [value [value_regex]] | --rename-section old_name new_name | --remove-section name | --list";
 
 static char *key;
 static regex_t *key_regexp;
@@ -12,14 +12,17 @@ static int use_key_regexp;
 static int do_all;
 static int do_not_match;
 static int seen;
+static char delim = '=';
+static char key_delim = ' ';
+static char term = '\n';
 static enum { T_RAW, T_INT, T_BOOL } type = T_RAW;
 
 static int show_all_config(const char *key_, const char *value_)
 {
 	if (value_)
-		printf("%s=%s\n", key_, value_);
+		printf("%s%c%s%c", key_, delim, value_, term);
 	else
-		printf("%s\n", key_);
+		printf("%s%c", key_, term);
 	return 0;
 }
 
@@ -40,7 +43,7 @@ static int show_config(const char* key_, const char* value_)
 
 	if (show_keys) {
 		if (value_)
-			printf("%s ", key_);
+			printf("%s%c", key_, key_delim);
 		else
 			printf("%s", key_);
 	}
@@ -58,7 +61,7 @@ static int show_config(const char* key_, const char* value_)
 				key_, vptr);
 	}
 	else
-		printf("%s\n", vptr);
+		printf("%s%c", vptr, term);
 
 	return 0;
 }
@@ -159,6 +162,11 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		}
 		else if (!strcmp(argv[1], "--system"))
 			setenv("GIT_CONFIG", ETC_GITCONFIG, 1);
+		else if (!strcmp(argv[1], "--null") || !strcmp(argv[1], "-z")) {
+			term = '\0';
+			delim = '\n';
+			key_delim = '\n';
+		}
 		else if (!strcmp(argv[1], "--rename-section")) {
 			int ret;
 			if (argc != 4)

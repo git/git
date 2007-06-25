@@ -9,17 +9,17 @@ git-config - Get and set repository or global options
 SYNOPSIS
 --------
 [verse]
-'git-config' [--system | --global] name [value [value_regex]]
+'git-config' [--system | --global] [-z|--null] name [value [value_regex]]
 'git-config' [--system | --global] --add name value
 'git-config' [--system | --global] --replace-all name [value [value_regex]]
-'git-config' [--system | --global] [type] --get name [value_regex]
-'git-config' [--system | --global] [type] --get-all name [value_regex]
-'git-config' [--system | --global] [type] --get-regexp name_regex [value_regex]
+'git-config' [--system | --global] [type] [-z|--null] --get name [value_regex]
+'git-config' [--system | --global] [type] [-z|--null] --get-all name [value_regex]
+'git-config' [--system | --global] [type] [-z|--null] --get-regexp name_regex [value_regex]
 'git-config' [--system | --global] --unset name [value_regex]
 'git-config' [--system | --global] --unset-all name [value_regex]
 'git-config' [--system | --global] --rename-section old_name new_name
 'git-config' [--system | --global] --remove-section name
-'git-config' [--system | --global] -l | --list
+'git-config' [--system | --global] [-z|--null] -l | --list
 
 DESCRIPTION
 -----------
@@ -117,6 +117,14 @@ See also <<FILES>>.
 	decimal number.  An optional value suffix of 'k', 'm', or 'g'
 	in the config file will cause the value to be multiplied
 	by 1024, 1048576, or 1073741824 prior to output.
+
+-z, --null::
+	For all options that output values and/or keys, always
+	end values with with the null character (instead of a
+	newline). Use newline instead as a delimiter between
+	key and value. This allows for secure parsing of the
+	output without getting confused e.g. by values that
+	contain line breaks.
 
 
 [[FILES]]

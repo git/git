@@ -519,4 +519,36 @@ git config --list > result
 
 test_expect_success 'value continued on next line' 'cmp result expect'
 
+cat > .git/config <<\EOF
+[section "sub=section"]
+	val1 = foo=bar
+	val2 = foo\nbar
+	val3 = \n\n
+	val4 =
+	val5
+EOF
+
+cat > expect <<\EOF
+Key: section.sub=section.val1
+Value: foo=bar
+Key: section.sub=section.val2
+Value: foo
+bar
+Key: section.sub=section.val3
+Value: 
+
+
+Key: section.sub=section.val4
+Value: 
+Key: section.sub=section.val5
+EOF
+
+git config --null --list | perl -0ne 'chop;($key,$value)=split(/\n/,$_,2);print "Key: $key\n";print "Value: $value\n" if defined($value)' > result
+
+test_expect_success '--null --list' 'cmp result expect'
+
+git config --null --get-regexp 'val[0-9]' | perl -0ne 'chop;($key,$value)=split(/\n/,$_,2);print "Key: $key\n";print "Value: $value\n" if defined($value)' > result
+
+test_expect_success '--null --get-regexp' 'cmp result expect'
+
 test_done
