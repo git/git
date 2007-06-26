@@ -96,6 +96,7 @@ git-push
 git-quiltimport
 git-read-tree
 git-rebase
+git-rebase--interactive
 git-receive-pack
 git-reflog
 git-relink
