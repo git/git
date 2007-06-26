@@ -164,9 +164,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/git-gui
 %{_bindir}/git-citool
 %{_datadir}/git-gui/
-%{!?_without_docs: %{_mandir}/man1/git-gui.1}
+%{!?_without_docs: %{_mandir}/man1/git-gui.1*}
 %{!?_without_docs: %doc Documentation/git-gui.html}
-%{!?_without_docs: %{_mandir}/man1/git-citool.1}
+%{!?_without_docs: %{_mandir}/man1/git-citool.1*}
 %{!?_without_docs: %doc Documentation/git-citool.html}
 
 %files -n gitk
@@ -187,6 +187,9 @@ rm -rf $RPM_BUILD_ROOT
 %{!?_without_docs: %doc Documentation/technical}
 
 %changelog
+* Tue Jun 26 2007 Quy Tonthat <qtonthat@gmail.com>
+- Fixed problems looking for wrong manpages.
+
 * Thu Jun 21 2007 Shawn O. Pearce <spearce@spearce.org>
 - Added documentation files for git-gui
 
