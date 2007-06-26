@@ -199,6 +199,18 @@ modules_update()
 	done
 }
 
+set_name_rev () {
+	revname=$( (
+		unset GIT_DIR &&
+		cd "$1" && {
+			git-describe "$2" 2>/dev/null ||
+			git-describe --tags "$2" 2>/dev/null ||
+			git-describe --contains --tags "$2"
+		}
+	) )
+	test -z "$revname" || revname=" ($revname)"
+}
+
 #
 # List all submodules, prefixed with:
 #  - submodule not initialized
@@ -221,17 +233,18 @@ modules_list()
 			say "-$sha1 $path"
 			continue;
 		fi
-		revname=$(unset GIT_DIR && cd "$path" && git-describe $sha1)
+		revname=$(unset GIT_DIR && cd "$path" && git-describe --tags $sha1)
+		set_name_rev "$path" $"sha1"
 		if git diff-files --quiet -- "$path"
 		then
-			say " $sha1 $path ($revname)"
+			say " $sha1 $path$revname"
 		else
 			if test -z "$cached"
 			then
 				sha1=$(unset GIT_DIR && cd "$path" && git-rev-parse --verify HEAD)
-				revname=$(unset GIT_DIR && cd "$path" && git-describe $sha1)
+				set_name_rev "$path" $"sha1"
 			fi
-			say "+$sha1 $path ($revname)"
+			say "+$sha1 $path$revname"
 		fi
 	done
 }
