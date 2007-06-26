@@ -74,6 +74,9 @@ Options:
    --suppress-from Suppress sending emails to yourself if your address
                   appears in a From: line.
 
+    --threaded    Specify that the "In-Reply-To:" header should be set on all
+                  emails. Defaults to on.
+
    --quiet	  Make git-send-email less verbose.  One line per email
                   should be all that is output.
 
@@ -138,8 +141,8 @@ my (@to,@cc,@initial_cc,@bcclist,@xh,
 	$initial_reply_to,$initial_subject,@files,$from,$compose,$time);
 
 # Behavior modification variables
-my ($chain_reply_to, $quiet, $suppress_from, $no_signed_off_cc,
-	$dry_run) = (1, 0, 0, 0, 0);
+my ($threaded, $chain_reply_to, $quiet, $suppress_from, $no_signed_off_cc,
+	$dry_run) = (1, 1, 0, 0, 0, 0);
 my $smtp_server;
 my $envelope_sender;
 
@@ -154,9 +157,16 @@ if ($@) {
 	$term = new FakeTerm "$@: going non-interactive";
 }
 
-my $def_chain = $repo->config_bool('sendemail.chainreplyto');
-if (defined $def_chain and not $def_chain) {
-    $chain_reply_to = 0;
+my %config_settings = (
+    "threaded" => \$threaded,
+    "chainreplyto" => \$chain_reply_to,
+);
+
+foreach my $setting (keys %config_settings) {
+    my $default = $repo->config_bool("sendemail.$setting");
+    if (defined $default) {
+        $config_settings{$setting} = $default ? 1 : 0;
+    }
 }
 
 @bcclist = $repo->config('sendemail.bcc');
@@ -181,6 +191,7 @@ my $rc = GetOptions("from=s" => \$from,
 		    "no-signed-off-cc|no-signed-off-by-cc" => \$no_signed_off_cc,
 		    "dry-run" => \$dry_run,
 		    "envelope-sender=s" => \$envelope_sender,
+		    "threaded!" => \$threaded,
 	 );
 
 unless ($rc) {
@@ -287,7 +298,7 @@ if (!defined $initial_subject && $compose) {
 	$prompting++;
 }
 
-if (!defined $initial_reply_to && $prompting) {
+if ($threaded && !defined $initial_reply_to && $prompting) {
 	do {
 		$_= $term->readline("Message-ID to be used as In-Reply-To for the first email? ",
 			$initial_reply_to);
@@ -484,7 +495,7 @@ Date: $date
 Message-Id: $message_id
 X-Mailer: git-send-email $gitversion
 ";
-	if ($reply_to) {
+	if ($threaded && $reply_to) {
 
 		$header .= "In-Reply-To: $reply_to\n";
 		$header .= "References: $references\n";

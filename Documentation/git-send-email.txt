@@ -86,6 +86,13 @@ The --cc option must be repeated for each user you want on the cc list.
 	Do not add the From: address to the cc: list, if it shows up in a From:
 	line.
 
+--threaded, --no-threaded::
+	If this is set, the In-Reply-To header will be set on each email sent.
+	If disabled with "--no-threaded", no emails will have the In-Reply-To
+	header set.
+	Default is the value of the 'sendemail.threaded' configuration value;
+	if that is unspecified, default to --threaded.
+
 --dry-run::
 	Do everything except actually send the emails.
 
