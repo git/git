@@ -1545,8 +1545,7 @@ if {[is_MacOSX]} {
 
 	# -- Tools Menu
 	#
-	if {[file exists /usr/local/miga/lib/gui-miga]
-		&& [file exists .pvcsrc]} {
+	if {[is_Cygwin] && [file exists /usr/local/miga/lib/gui-miga]} {
 	proc do_miga {} {
 		global ui_status_value
 		if {![lock_index update]} return
