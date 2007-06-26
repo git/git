@@ -5851,19 +5851,54 @@ proc resethead {} {
     bind $w <Visibility> "grab $w; focus $w"
     tkwait window $w
     if {!$confirm_ok} return
-    dohidelocalchanges
-    if {[catch {exec git reset --$resettype $rowmenuid} err]} {
+    if {[catch {set fd [open \
+	    [list | sh -c "git reset --$resettype $rowmenuid 2>&1"] r]} err]} {
 	error_popup $err
     } else {
-	set oldhead $mainheadid
-	movedhead $rowmenuid $mainhead
-	set mainheadid $rowmenuid
+	dohidelocalchanges
+	set w ".resetprogress"
+	filerun $fd [list readresetstat $fd $w]
+	toplevel $w
+	wm transient $w
+	wm title $w "Reset progress"
+	message $w.m -text "Reset in progress, please wait..." \
+	    -justify center -aspect 1000
+	pack $w.m -side top -fill x -padx 20 -pady 5
+	canvas $w.c -width 150 -height 20 -bg white
+	$w.c create rect 0 0 0 20 -fill green -tags rect
+	pack $w.c -side top -fill x -padx 20 -pady 5 -expand 1
+	nowbusy reset
+    }
+}
+
+proc readresetstat {fd w} {
+    global mainhead mainheadid showlocalchanges
+
+    if {[gets $fd line] >= 0} {
+	if {[regexp {([0-9]+)% \(([0-9]+)/([0-9]+)\)} $line match p m n]} {
+	    set x [expr {($m * 150) / $n}]
+	    $w.c coords rect 0 0 $x 20
+	}
+	return 1
+    }
+    destroy $w
+    notbusy reset
+    if {[catch {close $fd} err]} {
+	error_popup $err
+    }
+    set oldhead $mainheadid
+    set newhead [exec git rev-parse HEAD]
+    if {$newhead ne $oldhead} {
+	movehead $newhead $mainhead
+	movedhead $newhead $mainhead
+	set mainheadid $newhead
 	redrawtags $oldhead
-	redrawtags $rowmenuid
+	redrawtags $newhead
     }
     if {$showlocalchanges} {
 	doshowlocalchanges
     }
+    return 0
 }
 
 # context menu for a head
@@ -6742,7 +6777,10 @@ proc descheads {id} {
 	    }
 	    foreach a $arcnos($id) {
 		if {$archeads($a) ne {}} {
-		    set ret [concat $ret $archeads($a)]
+		    validate_archeads $a
+		    if {$archeads($a) ne {}} {
+			set ret [concat $ret $archeads($a)]
+		    }
 		}
 		set d $arcstart($a)
 		if {![info exists seen($d)]} {
