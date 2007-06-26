@@ -683,7 +683,7 @@ proc makewindow {} {
     pack .bright.sb -side right -fill y
     pack $cflist -side left -fill both -expand 1
     $cflist tag configure highlight \
-	-background [$cflist cget -highlightbackground]
+	-background [$cflist cget -selectbackground]
     $cflist tag configure bold -font [concat $mainfont bold]
 
     .pwbottom add .bright
@@ -1790,7 +1790,7 @@ proc bolden {row font} {
 	$canv delete secsel
 	set t [eval $canv create rect [$canv bbox $linehtag($row)] \
 		   -outline {{}} -tags secsel \
-		   -fill [$canv cget -highlightbackground]]
+		   -fill [$canv cget -selectbackground]]
 	$canv lower $t
     }
 }
@@ -1804,7 +1804,7 @@ proc bolden_name {row font} {
 	$canv2 delete secsel
 	set t [eval $canv2 create rect [$canv2 bbox $linentag($row)] \
 		   -outline {{}} -tags secsel \
-		   -fill [$canv2 cget -highlightbackground]]
+		   -fill [$canv2 cget -selectbackground]]
 	$canv2 lower $t
     }
 }
@@ -3920,15 +3920,15 @@ proc selectline {l isnew} {
     if {![info exists linehtag($l)]} return
     $canv delete secsel
     set t [eval $canv create rect [$canv bbox $linehtag($l)] -outline {{}} \
-	       -tags secsel -fill [$canv cget -highlightbackground]]
+	       -tags secsel -fill [$canv cget -selectbackground]]
     $canv lower $t
     $canv2 delete secsel
     set t [eval $canv2 create rect [$canv2 bbox $linentag($l)] -outline {{}} \
-	       -tags secsel -fill [$canv2 cget -highlightbackground]]
+	       -tags secsel -fill [$canv2 cget -selectbackground]]
     $canv2 lower $t
     $canv3 delete secsel
     set t [eval $canv3 create rect [$canv3 bbox $linedtag($l)] -outline {{}} \
-	       -tags secsel -fill [$canv3 cget -highlightbackground]]
+	       -tags secsel -fill [$canv3 cget -selectbackground]]
     $canv3 lower $t
 
     if {$isnew} {
