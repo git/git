@@ -92,7 +92,7 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 		fi; \
 	fi && \
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
-		-e 's|^exec wish "$$0"|exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' \
+		-e 's|^ exec wish "$$0"| exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' \
 		-e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
 		-e 's|@@GITGUI_RELATIVE@@|'$$GITGUI_RELATIVE'|' \
 		-e $$GITGUI_RELATIVE's|@@GITGUI_LIBDIR@@|$(libdir_SQ)|' \

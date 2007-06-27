@@ -487,7 +487,11 @@ method _read_file {fd jump} {
 } ifdeleted { catch {close $fd} }
 
 method _exec_blame {cur_w cur_d options cur_s} {
-	set cmd [list nice git blame]
+	set cmd [list]
+	if {![is_Windows] || [is_Cygwin]} {
+		lappend cmd nice
+	}
+	lappend cmd git blame
 	set cmd [concat $cmd $options]
 	lappend cmd --incremental
 	if {$commit eq {}} {
