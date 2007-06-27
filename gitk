@@ -7004,7 +7004,7 @@ proc doprefs {} {
     grid x $top.hunksepbut $top.hunksep -sticky w
     label $top.selbgsep -padx 40 -relief sunk -background $selectbgcolor
     button $top.selbgbut -text "Select bg" -font optionfont \
-	-command [list choosecolor selectbgcolor 0 $top.bg background setselbg]
+	-command [list choosecolor selectbgcolor 0 $top.selbgsep background setselbg]
     grid x $top.selbgbut $top.selbgsep -sticky w
 
     frame $top.buts
