@@ -682,6 +682,9 @@ _git_push ()
 			esac
 			__gitcomp "$(__git_refs "$remote")" "" "${cur#*:}"
 			;;
+		+*)
+			__gitcomp "$(__git_refs)" + "${cur#+}"
+			;;
 		*)
 			__gitcomp "$(__git_refs)"
 			;;
