@@ -589,7 +589,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		get_patch_ids(&rev, &ids, prefix);
 
 	if (!use_stdout)
-		realstdout = fdopen(dup(1), "w");
+		realstdout = xfdopen(xdup(1), "w");
 
 	prepare_revision_walk(&rev);
 	while ((commit = get_revision(&rev)) != NULL) {
