@@ -283,6 +283,12 @@ EOF
 test_expect_success 'get variable with no value' \
 	'git-config --get novalue.variable ^$'
 
+echo novalue.variable > expect
+
+test_expect_success 'get-regexp variable with no value' \
+	'git-config --get-regexp novalue > output &&
+	 cmp output expect'
+
 git-config > output 2>&1
 
 test_expect_success 'no arguments, but no crash' \

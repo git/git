@@ -34,6 +34,12 @@ doit() {
 	echo $commit
 }
 
+#  E---D---C---B---A
+#  \'-_         \   \
+#   \  `---------G   \
+#    \                \
+#     F----------------H
+
 # Setup...
 E=$(doit 5 E)
 D=$(doit 4 D $E)
@@ -43,6 +49,18 @@ B=$(doit 2 B $C)
 A=$(doit 1 A $B)
 G=$(doit 7 G $B $E)
 H=$(doit 8 H $A $F)
+
+test_expect_success 'compute merge-base (single)' \
+    'MB=$(git-merge-base G H) &&
+     expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/B"'
+
+test_expect_success 'compute merge-base (all)' \
+    'MB=$(git-merge-base --all G H) &&
+     expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/B"'
+
+test_expect_success 'compute merge-base with show-branch' \
+    'MB=$(git-show-branch --merge-base G H) &&
+     expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/B"'
 
 # Setup for second test to demonstrate that relying on timestamps in a
 # distributed SCM to provide a _consistent_ partial ordering of commits
@@ -80,18 +98,6 @@ R2=$(doit  3 R2 $R1)
 
 PL=$(doit  4 PL $L2 $C2)
 PR=$(doit  4 PR $C2 $R2)
-
-test_expect_success 'compute merge-base (single)' \
-    'MB=$(git-merge-base G H) &&
-     expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/B"'
-
-test_expect_success 'compute merge-base (all)' \
-    'MB=$(git-merge-base --all G H) &&
-     expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/B"'
-
-test_expect_success 'compute merge-base with show-branch' \
-    'MB=$(git-show-branch --merge-base G H) &&
-     expr "$(git-name-rev "$MB")" : "[0-9a-f]* tags/B"'
 
 test_expect_success 'compute merge-base (single)' \
     'MB=$(git-merge-base PL PR) &&

@@ -14,6 +14,7 @@ SYNOPSIS
 'git-config' [--system | --global] --replace-all name [value [value_regex]]
 'git-config' [--system | --global] [type] --get name [value_regex]
 'git-config' [--system | --global] [type] --get-all name [value_regex]
+'git-config' [--system | --global] [type] --get-regexp name_regex [value_regex]
 'git-config' [--system | --global] --unset name [value_regex]
 'git-config' [--system | --global] --unset-all name [value_regex]
 'git-config' [--system | --global] --rename-section old_name new_name
@@ -73,6 +74,7 @@ OPTIONS
 
 --get-regexp::
 	Like --get-all, but interprets the name as a regular expression.
+	Also outputs the key names.
 
 --global::
 	For writing options: write to global ~/.gitconfig file rather than

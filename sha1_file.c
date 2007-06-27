@@ -510,7 +510,10 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 		 * for offsets larger than 2^31.
 		 */
 		unsigned long min_size = 8 + 4*256 + nr*(20 + 4 + 4) + 20 + 20;
-		if (idx_size < min_size || idx_size > min_size + (nr - 1)*8) {
+		unsigned long max_size = min_size;
+		if (nr)
+			max_size += (nr - 1)*8;
+		if (idx_size < min_size || idx_size > max_size) {
 			munmap(idx_map, idx_size);
 			return error("wrong index file size in %s", path);
 		}
