@@ -59,9 +59,11 @@ The --cc option must be repeated for each user you want on the cc list.
 	Only necessary if --compose is also set.  If --compose
 	is not set, this will be prompted for.
 
---no-signed-off-by-cc::
-	Do not add emails found in Signed-off-by: or Cc: lines to the
-	cc list.
+--signed-off-by-cc, --no-signed-off-by-cc::
+        If this is set, add emails found in Signed-off-by: or Cc: lines to the
+        cc list.
+        Default is the value of 'sendemail.signedoffbycc' configuration value;
+        if that is unspecified, default to --signed-off-by-cc.
 
 --quiet::
 	Make git-send-email less verbose.  One line per email should be
@@ -82,16 +84,18 @@ The --cc option must be repeated for each user you want on the cc list.
 	Only necessary if --compose is also set.  If --compose
 	is not set, this will be prompted for.
 
---suppress-from::
-	Do not add the From: address to the cc: list, if it shows up in a From:
-	line.
+--suppress-from, --no-suppress-from::
+        If this is set, do not add the From: address to the cc: list, if it
+        shows up in a From: line.
+        Default is the value of 'sendemail.suppressfrom' configuration value;
+        if that is unspecified, default to --no-supress-from.
 
---threaded, --no-threaded::
+--thread, --no-thread::
 	If this is set, the In-Reply-To header will be set on each email sent.
-	If disabled with "--no-threaded", no emails will have the In-Reply-To
+	If disabled with "--no-thread", no emails will have the In-Reply-To
 	header set.
-	Default is the value of the 'sendemail.threaded' configuration value;
-	if that is unspecified, default to --threaded.
+	Default is the value of the 'sendemail.thread' configuration value;
+	if that is unspecified, default to --thread.
 
 --dry-run::
 	Do everything except actually send the emails.

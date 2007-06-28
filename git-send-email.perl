@@ -64,17 +64,16 @@ Options:
                   email sent, rather than to the first email sent.
                   Defaults to on.
 
-   --no-signed-off-cc Suppress the automatic addition of email addresses
-                 that appear in Signed-off-by: or Cc: lines to the cc:
-                 list.  Note: Using this option is not recommended.
+   --signed-off-cc Automatically add email addresses that appear in
+                 Signed-off-by: or Cc: lines to the cc: list. Defaults to on.
 
    --smtp-server  If set, specifies the outgoing SMTP server to use.
                   Defaults to localhost.
 
    --suppress-from Suppress sending emails to yourself if your address
-                  appears in a From: line.
+                  appears in a From: line. Defaults to off.
 
-    --threaded    Specify that the "In-Reply-To:" header should be set on all
+   --thread       Specify that the "In-Reply-To:" header should be set on all
                   emails. Defaults to on.
 
    --quiet	  Make git-send-email less verbose.  One line per email
@@ -140,9 +139,6 @@ my $compose_filename = ".msg.$$";
 my (@to,@cc,@initial_cc,@bcclist,@xh,
 	$initial_reply_to,$initial_subject,@files,$from,$compose,$time);
 
-# Behavior modification variables
-my ($threaded, $chain_reply_to, $quiet, $suppress_from, $no_signed_off_cc,
-	$dry_run) = (1, 1, 0, 0, 0, 0);
 my $smtp_server;
 my $envelope_sender;
 
@@ -157,16 +153,22 @@ if ($@) {
 	$term = new FakeTerm "$@: going non-interactive";
 }
 
+# Behavior modification variables
+my ($quiet, $dry_run) = (0, 0);
+
+# Variables with corresponding config settings
+my ($thread, $chain_reply_to, $suppress_from, $signed_off_cc);
+
 my %config_settings = (
-    "threaded" => \$threaded,
-    "chainreplyto" => \$chain_reply_to,
+    "thread" => [\$thread, 1],
+    "chainreplyto" => [\$chain_reply_to, 1],
+    "suppressfrom" => [\$suppress_from, 0],
+    "signedoffcc" => [\$signed_off_cc, 1],
 );
 
 foreach my $setting (keys %config_settings) {
-    my $default = $repo->config_bool("sendemail.$setting");
-    if (defined $default) {
-        $config_settings{$setting} = $default ? 1 : 0;
-    }
+    my $config = $repo->config_bool("sendemail.$setting");
+    ${$config_settings{$setting}->[0]} = (defined $config) ? $config : $config_settings{$setting}->[1];
 }
 
 @bcclist = $repo->config('sendemail.bcc');
@@ -187,11 +189,11 @@ my $rc = GetOptions("from=s" => \$from,
 		    "smtp-server=s" => \$smtp_server,
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
-		    "suppress-from" => \$suppress_from,
-		    "no-signed-off-cc|no-signed-off-by-cc" => \$no_signed_off_cc,
+		    "suppress-from!" => \$suppress_from,
+		    "signed-off-cc|signed-off-by-cc!" => \$signed_off_cc,
 		    "dry-run" => \$dry_run,
 		    "envelope-sender=s" => \$envelope_sender,
-		    "threaded!" => \$threaded,
+		    "thread!" => \$thread,
 	 );
 
 unless ($rc) {
@@ -298,7 +300,7 @@ if (!defined $initial_subject && $compose) {
 	$prompting++;
 }
 
-if ($threaded && !defined $initial_reply_to && $prompting) {
+if ($thread && !defined $initial_reply_to && $prompting) {
 	do {
 		$_= $term->readline("Message-ID to be used as In-Reply-To for the first email? ",
 			$initial_reply_to);
@@ -495,7 +497,7 @@ Date: $date
 Message-Id: $message_id
 X-Mailer: git-send-email $gitversion
 ";
-	if ($threaded && $reply_to) {
+	if ($thread && $reply_to) {
 
 		$header .= "In-Reply-To: $reply_to\n";
 		$header .= "References: $references\n";
@@ -620,7 +622,7 @@ foreach my $t (@files) {
 			}
 		} else {
 			$message .=  $_;
-			if (/^(Signed-off-by|Cc): (.*)$/i && !$no_signed_off_cc) {
+			if (/^(Signed-off-by|Cc): (.*)$/i && $signed_off_cc) {
 				my $c = $2;
 				chomp $c;
 				push @cc, $c;
