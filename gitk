@@ -6972,7 +6972,7 @@ proc doprefs {} {
     pack $top.ntag.b $top.ntag.l -side left
     grid x $top.ntag -sticky w
     label $top.tabstopl -text "tabstop" -font optionfont
-    entry $top.tabstop -width 10 -textvariable tabstop
+    spinbox $top.tabstop -from 1 -to 20 -width 4 -textvariable tabstop
     grid x $top.tabstopl $top.tabstop -sticky w
 
     label $top.cdisp -text "Colors: press to choose"
@@ -7004,7 +7004,7 @@ proc doprefs {} {
     grid x $top.hunksepbut $top.hunksep -sticky w
     label $top.selbgsep -padx 40 -relief sunk -background $selectbgcolor
     button $top.selbgbut -text "Select bg" -font optionfont \
-	-command [list choosecolor selectbgcolor 0 $top.bg background setselbg]
+	-command [list choosecolor selectbgcolor 0 $top.selbgsep background setselbg]
     grid x $top.selbgbut $top.selbgsep -sticky w
 
     frame $top.buts
