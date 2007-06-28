@@ -178,14 +178,14 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			char *home = getenv("HOME");
 			if (home) {
 				char *user_config = xstrdup(mkpath("%s/.gitconfig", home));
-				setenv("GIT_CONFIG", user_config, 1);
+				setenv(CONFIG_ENVIRONMENT, user_config, 1);
 				free(user_config);
 			} else {
 				die("$HOME not set");
 			}
 		}
 		else if (!strcmp(argv[1], "--system"))
-			setenv("GIT_CONFIG", ETC_GITCONFIG, 1);
+			setenv(CONFIG_ENVIRONMENT, ETC_GITCONFIG, 1);
 		else if (!strcmp(argv[1], "--null") || !strcmp(argv[1], "-z")) {
 			term = '\0';
 			delim = '\n';
