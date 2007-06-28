@@ -1007,7 +1007,7 @@ if ($orig_branch) {
 		if ($opt_r && $opt_o ne 'HEAD');
 	system('git-update-ref', 'HEAD', "$orig_branch");
 	unless ($opt_i) {
-		system('git checkout');
+		system('git checkout -f');
 		die "checkout failed: $?\n" if $?;
 	}
 }
