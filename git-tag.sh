@@ -19,28 +19,40 @@ do
     case "$1" in
     -a)
 	annotate=1
+	shift
 	;;
     -s)
 	annotate=1
 	signed=1
+	shift
 	;;
     -f)
 	force=1
+	shift
 	;;
     -n)
-        case $2 in
-	-*)	LINES=1 	# no argument
+        case "$#,$2" in
+	1,* | *,-*)
+		LINES=1 	# no argument
 		;;
 	*)	shift
 		LINES=$(expr "$1" : '\([0-9]*\)')
 		[ -z "$LINES" ] && LINES=1 # 1 line is default when -n is used
 		;;
 	esac
+	shift
 	;;
     -l)
 	list=1
 	shift
-	PATTERN="$1"	# select tags by shell pattern, not re
+	case $# in
+	0)	PATTERN=
+		;;
+	*)
+		PATTERN="$1"	# select tags by shell pattern, not re
+		shift
+		;;
+	esac
 	git rev-parse --symbolic --tags | sort |
 	    while read TAG
 	    do
@@ -74,7 +86,9 @@ do
 	if test "$#" = "0"; then
 	    die "error: option -m needs an argument"
 	else
+	    message="$1"
 	    message_given=1
+	    shift
 	fi
 	;;
     -F)
@@ -85,13 +99,19 @@ do
 	else
 	    message="$(cat "$1")"
 	    message_given=1
+	    shift
 	fi
 	;;
     -u)
 	annotate=1
 	signed=1
 	shift
-	username="$1"
+	if test "$#" = "0"; then
+	    die "error: option -u needs an argument"
+	else
+	    username="$1"
+	    shift
+	fi
 	;;
     -d)
 	shift
@@ -126,7 +146,6 @@ do
 	break
 	;;
     esac
-    shift
 done
 
 [ -n "$list" ] && exit 0
