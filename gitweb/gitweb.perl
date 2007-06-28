@@ -2213,12 +2213,18 @@ EOF
 		} else {
 			$search_hash = "HEAD";
 		}
+		my $action = $my_uri;
+		my ($use_pathinfo) = gitweb_check_feature('pathinfo');
+		if ($use_pathinfo) {
+			$action .= "/$project";
+		} else {
+			$cgi->param("p", $project);
+		}
 		$cgi->param("a", "search");
 		$cgi->param("h", $search_hash);
-		$cgi->param("p", $project);
-		print $cgi->startform(-method => "get", -action => $my_uri) .
+		print $cgi->startform(-method => "get", -action => $action) .
 		      "<div class=\"search\">\n" .
-		      $cgi->hidden(-name => "p") . "\n" .
+		      (!$use_pathinfo && $cgi->hidden(-name => "p") . "\n") .
 		      $cgi->hidden(-name => "a") . "\n" .
 		      $cgi->hidden(-name => "h") . "\n" .
 		      $cgi->popup_menu(-name => 'st', -default => 'commit',
