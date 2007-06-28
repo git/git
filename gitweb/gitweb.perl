@@ -1526,6 +1526,7 @@ sub git_get_last_activity {
 		my $age = time - $timestamp;
 		return ($age, age_string($age));
 	}
+	return (undef, undef);
 }
 
 sub git_get_references {
