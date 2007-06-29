@@ -122,11 +122,14 @@ static struct spanhash_top *add_spanhash(struct spanhash_top *top,
 	}
 }
 
-static struct spanhash_top *hash_chars(unsigned char *buf, unsigned int sz)
+static struct spanhash_top *hash_chars(struct diff_filespec *one)
 {
 	int i, n;
 	unsigned int accum1, accum2, hashval;
 	struct spanhash_top *hash;
+	unsigned char *buf = one->data;
+	unsigned int sz = one->size;
+	int is_text = !one->is_binary;
 
 	i = INITIAL_HASH_SIZE;
 	hash = xmalloc(sizeof(*hash) + sizeof(struct spanhash) * (1<<i));
@@ -140,6 +143,11 @@ static struct spanhash_top *hash_chars(unsigned char *buf, unsigned int sz)
 		unsigned int c = *buf++;
 		unsigned int old_1 = accum1;
 		sz--;
+
+		/* Ignore CR in CRLF sequence if text */
+		if (is_text && c == '\r' && sz && *buf == '\n')
+			continue;
+
 		accum1 = (accum1 << 7) ^ (accum2 >> 25);
 		accum2 = (accum2 << 7) ^ (old_1 >> 25);
 		accum1 += c;
@@ -169,14 +177,14 @@ int diffcore_count_changes(struct diff_filespec *src,
 	if (src_count_p)
 		src_count = *src_count_p;
 	if (!src_count) {
-		src_count = hash_chars(src->data, src->size);
+		src_count = hash_chars(src);
 		if (src_count_p)
 			*src_count_p = src_count;
 	}
 	if (dst_count_p)
 		dst_count = *dst_count_p;
 	if (!dst_count) {
-		dst_count = hash_chars(dst->data, dst->size);
+		dst_count = hash_chars(dst);
 		if (dst_count_p)
 			*dst_count_p = dst_count;
 	}
