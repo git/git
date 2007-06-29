@@ -7,6 +7,8 @@ GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
 -include GIT-VERSION-FILE
 
+uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
+
 SCRIPT_SH = git-gui.sh
 GITGUI_BUILT_INS = git-citool
 ALL_PROGRAMS = $(GITGUI_BUILT_INS) $(patsubst %.sh,%,$(SCRIPT_SH))
@@ -58,11 +60,15 @@ exedir_SQ = $(subst ','\'',$(exedir))
 
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	$(QUIET_GEN)rm -f $@ $@+ && \
+	GITGUI_RELATIVE= && \
 	if test '$(exedir_SQ)' = '$(libdir_SQ)'; then \
-		GITGUI_RELATIVE=1; \
+		if test "$(uname_O)" = Cygwin; \
+		then GITGUI_RELATIVE= ; \
+		else GITGUI_RELATIVE=1; \
+		fi; \
 	fi && \
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
-		-e 's|^exec wish "$$0"|exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' \
+		-e 's|^ exec wish "$$0"| exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' \
 		-e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
 		-e 's|@@GITGUI_RELATIVE@@|'$$GITGUI_RELATIVE'|' \
 		-e $$GITGUI_RELATIVE's|@@GITGUI_LIBDIR@@|$(libdir_SQ)|' \
