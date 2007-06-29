@@ -156,8 +156,8 @@ static struct spanhash_top *hash_chars(unsigned char *buf, unsigned int sz)
 	return hash;
 }
 
-int diffcore_count_changes(void *src, unsigned long src_size,
-			   void *dst, unsigned long dst_size,
+int diffcore_count_changes(struct diff_filespec *src,
+			   struct diff_filespec *dst,
 			   void **src_count_p,
 			   void **dst_count_p,
 			   unsigned long delta_limit,
@@ -172,14 +172,14 @@ int diffcore_count_changes(void *src, unsigned long src_size,
 	if (src_count_p)
 		src_count = *src_count_p;
 	if (!src_count) {
-		src_count = hash_chars(src, src_size);
+		src_count = hash_chars(src->data, src->size);
 		if (src_count_p)
 			*src_count_p = src_count;
 	}
 	if (dst_count_p)
 		dst_count = *dst_count_p;
 	if (!dst_count) {
-		dst_count = hash_chars(dst, dst_size);
+		dst_count = hash_chars(dst->data, dst->size);
 		if (dst_count_p)
 			*dst_count_p = dst_count;
 	}
