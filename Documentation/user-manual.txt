@@ -890,7 +890,7 @@ $ git archive --format=tar --prefix=project/ HEAD | gzip >latest.tar.gz
 -------------------------------------------------
 
 will use HEAD to produce a tar archive in which each filename is
-preceded by "prefix/".
+preceded by "project/".
 
 If you're releasing a new version of a software project, you may want
 to simultaneously make a changelog to include in the release
