@@ -5,23 +5,20 @@
 /*
  * Idea here is very simple.
  *
- * We have total of (sz-N+1) N-byte overlapping sequences in buf whose
- * size is sz.  If the same N-byte sequence appears in both source and
- * destination, we say the byte that starts that sequence is shared
- * between them (i.e. copied from source to destination).
+ * Almost all data we are interested in are text, but sometimes we have
+ * to deal with binary data.  So we cut them into chunks delimited by
+ * LF byte, or 64-byte sequence, whichever comes first, and hash them.
  *
- * For each possible N-byte sequence, if the source buffer has more
- * instances of it than the destination buffer, that means the
- * difference are the number of bytes not copied from source to
- * destination.  If the counts are the same, everything was copied
- * from source to destination.  If the destination has more,
- * everything was copied, and destination added more.
+ * For those chunks, if the source buffer has more instances of it
+ * than the destination buffer, that means the difference are the
+ * number of bytes not copied from source to destination.  If the
+ * counts are the same, everything was copied from source to
+ * destination.  If the destination has more, everything was copied,
+ * and destination added more.
  *
  * We are doing an approximation so we do not really have to waste
  * memory by actually storing the sequence.  We just hash them into
  * somewhere around 2^16 hashbuckets and count the occurrences.
- *
- * The length of the sequence is arbitrarily set to 8 for now.
  */
 
 /* Wild guess at the initial hash size */
