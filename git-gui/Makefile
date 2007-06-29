@@ -7,6 +7,8 @@ GIT-VERSION-FILE: .FORCE-GIT-VERSION-FILE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
 -include GIT-VERSION-FILE
 
+uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
+
 SCRIPT_SH = git-gui.sh
 GITGUI_BUILT_INS = git-citool
 ALL_PROGRAMS = $(GITGUI_BUILT_INS) $(patsubst %.sh,%,$(SCRIPT_SH))
@@ -29,11 +31,35 @@ ifndef INSTALL
 	INSTALL = install
 endif
 
+INSTALL_D0 = $(INSTALL) -d -m755 # space is required here
+INSTALL_D1 =
+INSTALL_R0 = $(INSTALL) -m644 # space is required here
+INSTALL_R1 =
+INSTALL_X0 = $(INSTALL) -m755 # space is required here
+INSTALL_X1 =
+INSTALL_L0 = rm -f # space is required here
+INSTALL_L1 = && ln # space is required here
+INSTALL_L2 =
+INSTALL_L3 =
+
 ifndef V
-	QUIET_GEN      = @echo '   ' GEN $@;
-	QUIET_BUILT_IN = @echo '   ' BUILTIN $@;
-	QUIET_INDEX    = @echo '   ' INDEX $(dir $@);
+	QUIET          = @
+	QUIET_GEN      = $(QUIET)echo '   ' GEN $@ &&
+	QUIET_BUILT_IN = $(QUIET)echo '   ' BUILTIN $@ &&
+	QUIET_INDEX    = $(QUIET)echo '   ' INDEX $(dir $@) &&
 	QUIET_2DEVNULL = 2>/dev/null
+
+	INSTALL_D0 = dir=
+	INSTALL_D1 = && echo ' ' DEST $$dir && $(INSTALL) -d -m755 "$$dir"
+	INSTALL_R0 = src=
+	INSTALL_R1 = && echo '   ' INSTALL 644 `basename $$src` && $(INSTALL) -m644 $$src
+	INSTALL_X0 = src=
+	INSTALL_X1 = && echo '   ' INSTALL 755 `basename $$src` && $(INSTALL) -m755 $$src
+
+	INSTALL_L0 = dst=
+	INSTALL_L1 = && src=
+	INSTALL_L2 = && dst=
+	INSTALL_L3 = && echo '   ' 'LINK       ' `basename "$$dst"` '->' `basename "$$src"` && rm -f "$$dst" && ln "$$src" "$$dst"
 endif
 
 TCL_PATH   ?= tclsh
@@ -58,11 +84,15 @@ exedir_SQ = $(subst ','\'',$(exedir))
 
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 	$(QUIET_GEN)rm -f $@ $@+ && \
+	GITGUI_RELATIVE= && \
 	if test '$(exedir_SQ)' = '$(libdir_SQ)'; then \
-		GITGUI_RELATIVE=1; \
+		if test "$(uname_O)" = Cygwin; \
+		then GITGUI_RELATIVE= ; \
+		else GITGUI_RELATIVE=1; \
+		fi; \
 	fi && \
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
-		-e 's|^exec wish "$$0"|exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' \
+		-e 's|^ exec wish "$$0"| exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' \
 		-e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
 		-e 's|@@GITGUI_RELATIVE@@|'$$GITGUI_RELATIVE'|' \
 		-e $$GITGUI_RELATIVE's|@@GITGUI_LIBDIR@@|$(libdir_SQ)|' \
@@ -109,12 +139,12 @@ GIT-GUI-VARS: .FORCE-GIT-GUI-VARS
 all:: $(ALL_PROGRAMS) lib/tclIndex
 
 install: all
-	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(gitexecdir_SQ)'
-	$(INSTALL) git-gui '$(DESTDIR_SQ)$(gitexecdir_SQ)'
-	$(foreach p,$(GITGUI_BUILT_INS), rm -f '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' && ln '$(DESTDIR_SQ)$(gitexecdir_SQ)/git-gui' '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' ;)
-	$(INSTALL) -d -m755 '$(DESTDIR_SQ)$(libdir_SQ)'
-	$(INSTALL) -m644 lib/tclIndex '$(DESTDIR_SQ)$(libdir_SQ)'
-	$(foreach p,$(ALL_LIBFILES), $(INSTALL) -m644 $p '$(DESTDIR_SQ)$(libdir_SQ)' ;)
+	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(gitexecdir_SQ)' $(INSTALL_D1)
+	$(QUIET)$(INSTALL_X0)git-gui $(INSTALL_X1) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
+	$(QUIET)$(foreach p,$(GITGUI_BUILT_INS), $(INSTALL_L0)'$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' $(INSTALL_L1)'$(DESTDIR_SQ)$(gitexecdir_SQ)/git-gui' $(INSTALL_L2)'$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' $(INSTALL_L3) &&) true
+	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(libdir_SQ)' $(INSTALL_D1)
+	$(QUIET)$(INSTALL_R0)lib/tclIndex $(INSTALL_R1) '$(DESTDIR_SQ)$(libdir_SQ)'
+	$(QUIET)$(foreach p,$(ALL_LIBFILES), $(INSTALL_R0)$p $(INSTALL_R1) '$(DESTDIR_SQ)$(libdir_SQ)' &&) true
 
 dist-version:
 	@mkdir -p $(TARDIR)
