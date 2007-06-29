@@ -110,4 +110,30 @@ test_expect_success 'check correct prefix detection' '
 	git add 1/2/a 1/3/b 1/2/c
 '
 
+test_expect_success 'git add and filemode=0 with unmerged entries' '
+	echo 1 > stage1 &&
+	echo 2 > stage2 &&
+	echo 3 > stage3 &&
+	for s in 1 2 3
+	do
+		echo "100755 $(git hash-object -w stage$s) $s	file"
+	done | git update-index --index-info &&
+	git config core.filemode 0 &&
+	echo new > file &&
+	git add file &&
+	git ls-files --stage | grep "^100755 .* 0	file$"
+'
+
+test_expect_success 'git add and filemode=0 prefers stage 2 over stage 1' '
+	git rm --cached -f file &&
+	(
+		echo "100644 $(git hash-object -w stage1) 1	file"
+		echo "100755 $(git hash-object -w stage2) 2	file"
+	) | git update-index --index-info &&
+	git config core.filemode 0 &&
+	echo new > file &&
+	git add file &&
+	git ls-files --stage | grep "^100755 .* 0	file$"
+'
+
 test_done
