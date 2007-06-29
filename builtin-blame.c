@@ -1459,6 +1459,7 @@ static void found_guilty_entry(struct blame_entry *ent)
 				printf("boundary\n");
 		}
 		write_filename_info(suspect->path);
+		maybe_flush_or_die(stdout, "stdout");
 	}
 }
 
