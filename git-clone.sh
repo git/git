@@ -72,6 +72,17 @@ Perhaps git-update-server-info needs to be run there?"
 	rm -fr "$clone_tmp"
 	http_fetch "$1/HEAD" "$GIT_DIR/REMOTE_HEAD" ||
 	rm -f "$GIT_DIR/REMOTE_HEAD"
+	if test -f "$GIT_DIR/REMOTE_HEAD"; then
+		head_sha1=`cat "$GIT_DIR/REMOTE_HEAD"`
+		case "$head_sha1" in
+		'ref: refs/'*)
+			;;
+		*)
+			git-http-fetch $v -a "$head_sha1" "$1" ||
+			rm -f "$GIT_DIR/REMOTE_HEAD"
+			;;
+		esac
+	fi
 }
 
 quiet=
