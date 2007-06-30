@@ -123,6 +123,7 @@ git-ssh-fetch
 git-ssh-pull
 git-ssh-push
 git-ssh-upload
+git-stash
 git-status
 git-stripspace
 git-submodule
