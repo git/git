@@ -2241,6 +2241,10 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->exit_with_status = 1;
 	else if (!strcmp(arg, "--quiet"))
 		options->quiet = 1;
+	else if (!strcmp(arg, "--ext-diff"))
+		options->allow_external = 1;
+	else if (!strcmp(arg, "--no-ext-diff"))
+		options->allow_external = 0;
 	else
 		return 0;
 	return 1;
