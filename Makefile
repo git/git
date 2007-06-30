@@ -94,9 +94,9 @@ all::
 # Define OLD_ICONV if your library has an old iconv(), where the second
 # (input buffer pointer) parameter is declared with type (const char **).
 #
-# Define NO_R_TO_GCC if your gcc does not like "-R/path/lib" that
-# tells runtime paths to dynamic libraries; "-Wl,-rpath=/path/lib"
-# is used instead.
+# Define NO_R_TO_GCC_LINKER if your gcc does not like "-R/path/lib"
+# that tells runtime paths to dynamic libraries;
+# "-Wl,-rpath=/path/lib" is used instead.
 #
 # Define USE_NSEC below if you want git to care about sub-second file mtimes
 # and ctimes. Note that you need recent glibc (at least 2.2.4) for this, and
