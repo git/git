@@ -384,7 +384,7 @@ while read commit parents; do
 
 	sed -e '1,/^$/d' <../commit | \
 		eval "$filter_msg" | \
-		sh -c "$filter_commit" git-commit-tree $(git-write-tree) $parentstr | \
+		sh -c "$filter_commit" "git-commit-tree" $(git-write-tree) $parentstr | \
 		tee ../map/$commit
 done <../revs
 

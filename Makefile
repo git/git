@@ -988,7 +988,8 @@ check-sha1:: test-sha1$X
 check: common-cmds.h
 	for i in *.c; do sparse $(ALL_CFLAGS) $(SPARSE_FLAGS) $$i || exit; done
 
-
+remove-dashes:
+	./fixup-builtins $(BUILT_INS)
 
 ### Installation rules
 
