@@ -787,12 +787,12 @@ sub read_repo_config {
 
 sub extract_metadata {
 	my $id = shift or return (undef, undef, undef);
-	my ($url, $rev, $uuid) = ($id =~ /^git-svn-id:\s(\S+?)\@(\d+)
+	my ($url, $rev, $uuid) = ($id =~ /^\s*git-svn-id:\s+(.*)\@(\d+)
 							\s([a-f\d\-]+)$/x);
 	if (!defined $rev || !$uuid || !$url) {
 		# some of the original repositories I made had
 		# identifiers like this:
-		($rev, $uuid) = ($id =~/^git-svn-id:\s(\d+)\@([a-f\d\-]+)/);
+		($rev, $uuid) = ($id =~/^\s*git-svn-id:\s(\d+)\@([a-f\d\-]+)/);
 	}
 	return ($url, $rev, $uuid);
 }
@@ -804,10 +804,16 @@ sub cmt_metadata {
 
 sub working_head_info {
 	my ($head, $refs) = @_;
-	my ($fh, $ctx) = command_output_pipe('rev-list', $head);
-	while (my $hash = <$fh>) {
-		chomp($hash);
-		my ($url, $rev, $uuid) = cmt_metadata($hash);
+	my ($fh, $ctx) = command_output_pipe('log', $head);
+	my $hash;
+	while (<$fh>) {
+		if ( m{^commit ($::sha1)$} ) {
+			unshift @$refs, $hash if $hash and $refs;
+			$hash = $1;
+			next;
+		}
+		next unless s{^\s*(git-svn-id:)}{$1};
+		my ($url, $rev, $uuid) = extract_metadata($_);
 		if (defined $url && defined $rev) {
 			if (my $gs = Git::SVN->find_by_url($url)) {
 				my $c = $gs->rev_db_get($rev);
@@ -817,7 +823,6 @@ sub working_head_info {
 				}
 			}
 		}
-		unshift @$refs, $hash if $refs;
 	}
 	command_close_pipe($fh, $ctx);
 	(undef, undef, undef, undef);
@@ -1966,16 +1971,19 @@ sub rebuild {
 		return;
 	}
 	print "Rebuilding $db_path ...\n";
-	my ($rev_list, $ctx) = command_output_pipe("rev-list", $self->refname);
+	my ($log, $ctx) = command_output_pipe("log", $self->refname);
 	my $latest;
 	my $full_url = $self->full_url;
 	remove_username($full_url);
 	my $svn_uuid;
-	while (<$rev_list>) {
-		chomp;
-		my $c = $_;
-		die "Non-SHA1: $c\n" unless $c =~ /^$::sha1$/o;
-		my ($url, $rev, $uuid) = ::cmt_metadata($c);
+	my $c;
+	while (<$log>) {
+		if ( m{^commit ($::sha1)$} ) {
+			$c = $1;
+			next;
+		}
+		next unless s{^\s*(git-svn-id:)}{$1};
+		my ($url, $rev, $uuid) = ::extract_metadata($_);
 		remove_username($url);
 
 		# ignore merges (from set-tree)
@@ -1993,7 +2001,7 @@ sub rebuild {
 		$self->rev_db_set($rev, $c);
 		print "r$rev = $c\n";
 	}
-	command_close_pipe($rev_list, $ctx);
+	command_close_pipe($log, $ctx);
 	print "Done rebuilding $db_path\n";
 }
 
