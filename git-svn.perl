@@ -806,6 +806,7 @@ sub working_head_info {
 	my ($head, $refs) = @_;
 	my ($fh, $ctx) = command_output_pipe('log', $head);
 	my $hash;
+	my %max;
 	while (<$fh>) {
 		if ( m{^commit ($::sha1)$} ) {
 			unshift @$refs, $hash if $hash and $refs;
@@ -815,11 +816,14 @@ sub working_head_info {
 		next unless s{^\s*(git-svn-id:)}{$1};
 		my ($url, $rev, $uuid) = extract_metadata($_);
 		if (defined $url && defined $rev) {
+			next if $max{$url} and $max{$url} < $rev;
 			if (my $gs = Git::SVN->find_by_url($url)) {
 				my $c = $gs->rev_db_get($rev);
 				if ($c && $c eq $hash) {
 					close $fh; # break the pipe
 					return ($url, $rev, $uuid, $gs);
+				} else {
+					$max{$url} ||= $gs->rev_db_max;
 				}
 			}
 		}
