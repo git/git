@@ -5,7 +5,7 @@ proc class {class body} {
 	if {[namespace exists $class]} {
 		error "class $class already declared"
 	}
-	namespace eval $class {
+	namespace eval $class "
 		variable __nextid     0
 		variable __sealed     0
 		variable __field_list {}
@@ -13,10 +13,9 @@ proc class {class body} {
 
 		proc cb {name args} {
 			upvar this this
-			set args [linsert $args 0 $name $this]
-			return [uplevel [list namespace code $args]]
+			concat \[list ${class}::\$name \$this\] \$args
 		}
-	}
+	"
 	namespace eval $class $body
 }
 
@@ -51,15 +50,16 @@ proc constructor {name params body} {
 	set mbodyc {}
 
 	append mbodyc {set this } $class
-	append mbodyc {::__o[incr } $class {::__nextid]} \;
-	append mbodyc {namespace eval $this {}} \;
+	append mbodyc {::__o[incr } $class {::__nextid]::__d} \;
+	append mbodyc {create_this } $class \;
+	append mbodyc {set __this [namespace qualifiers $this]} \;
 
 	if {$__field_list ne {}} {
 		append mbodyc {upvar #0}
 		foreach n $__field_list {
 			set n [lindex $n 0]
-			append mbodyc { ${this}::} $n { } $n
-			regsub -all @$n\\M $body "\${this}::$n" body
+			append mbodyc { ${__this}::} $n { } $n
+			regsub -all @$n\\M $body "\${__this}::$n" body
 		}
 		append mbodyc \;
 		foreach n $__field_list {
@@ -80,10 +80,12 @@ proc method {name params body {deleted {}} {del_body {}}} {
 	set params [linsert $params 0 this]
 	set mbodyc {}
 
+	append mbodyc {set __this [namespace qualifiers $this]} \;
+
 	switch $deleted {
 	{} {}
 	ifdeleted {
-		append mbodyc {if {![namespace exists $this]} }
+		append mbodyc {if {![namespace exists $__this]} }
 		append mbodyc \{ $del_body \; return \} \;
 	}
 	default {
@@ -98,10 +100,12 @@ proc method {name params body {deleted {}} {del_body {}}} {
 			if {   [regexp -all -- $n\\M $body] == 1
 				&& [regexp -all -- \\\$$n\\M $body] == 1
 				&& [regexp -all -- \\\$$n\\( $body] == 0} {
-				regsub -all \\\$$n\\M $body "\[set \${this}::$n\]" body
+				regsub -all \
+					\\\$$n\\M $body \
+					"\[set \${__this}::$n\]" body
 			} else {
-				append decl { ${this}::} $n { } $n
-				regsub -all @$n\\M $body "\${this}::$n" body
+				append decl { ${__this}::} $n { } $n
+				regsub -all @$n\\M $body "\${__this}::$n" body
 			}
 		}
 	}
@@ -112,11 +116,21 @@ proc method {name params body {deleted {}} {del_body {}}} {
 	namespace eval $class [list proc $name $params $mbodyc]
 }
 
+proc create_this {class} {
+	upvar this this
+	namespace eval [namespace qualifiers $this] [list proc \
+		[namespace tail $this] \
+		[list name args] \
+		"eval \[list ${class}::\$name $this\] \$args" \
+	]
+}
+
 proc delete_this {{t {}}} {
 	if {$t eq {}} {
 		upvar this this
 		set t $this
 	}
+	set t [namespace qualifiers $t]
 	if {[namespace exists $t]} {namespace delete $t}
 }
 
