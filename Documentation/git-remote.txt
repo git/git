@@ -49,6 +49,9 @@ branch the `HEAD` at the remote repository actually points at.
 'show'::
 
 Gives some information about the remote <name>.
++
+With `-n` option, the remote heads are not queried first with
+`git ls-remote <name>`; cached information is used instead.
 
 'prune'::
 
@@ -56,6 +59,10 @@ Deletes all stale tracking branches under <name>.
 These stale branches have already been removed from the remote repository
 referenced by <name>, but are still locally available in
 "remotes/<name>".
++
+With `-n` option, the remote heads are not confirmed first with `git
+ls-remote <name>`; cached information is used instead.  Use with
+caution.
 
 'update'::
 
