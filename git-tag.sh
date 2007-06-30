@@ -51,12 +51,16 @@ do
 		[ "$LINES" -le 0 ] && { echo "$TAG"; continue ;}
 		OBJTYPE=$(git cat-file -t "$TAG")
 		case $OBJTYPE in
-		tag)	ANNOTATION=$(git cat-file tag "$TAG" |
-				       sed -e '1,/^$/d' \
-					   -e '/^-----BEGIN PGP SIGNATURE-----$/Q' )
-			printf "%-15s %s\n" "$TAG" "$ANNOTATION" |
-			  sed -e '2,$s/^/    /' \
-			      -e "${LINES}q"
+		tag)
+			ANNOTATION=$(git cat-file tag "$TAG" |
+				sed -e '1,/^$/d' |
+				sed -n -e "
+					/^-----BEGIN PGP SIGNATURE-----\$/q
+					2,\$s/^/    /
+					p
+					${LINES}q
+				")
+			printf "%-15s %s\n" "$TAG" "$ANNOTATION"
 			;;
 		*)      echo "$TAG"
 			;;
