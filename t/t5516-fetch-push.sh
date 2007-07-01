@@ -226,7 +226,7 @@ test_expect_success 'push with colon-less refspec (3)' '
 	git branch -f frotz master &&
 	git push testrepo frotz &&
 	check_push_result $the_commit heads/frotz &&
-	test "$( cd testrepo && git show-ref | wc -l )" = 1
+	test 1 = $( cd testrepo && git show-ref | wc -l )
 '
 
 test_expect_success 'push with colon-less refspec (4)' '
@@ -239,7 +239,7 @@ test_expect_success 'push with colon-less refspec (4)' '
 	git tag -f frotz &&
 	git push testrepo frotz &&
 	check_push_result $the_commit tags/frotz &&
-	test "$( cd testrepo && git show-ref | wc -l )" = 1
+	test 1 = $( cd testrepo && git show-ref | wc -l )
 
 '
 
