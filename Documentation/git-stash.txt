@@ -8,32 +8,32 @@ git-stash - Stash the changes in a dirty working directory away
 SYNOPSIS
 --------
 [verse]
-'git-stash'
-'git-stash' [list | show [<stash>] | apply [<stash>] | clear]
+'git-stash' (save | list | show [<stash>] | apply [<stash>] | clear)
 
 DESCRIPTION
 -----------
 
-Use 'git-stash' when you want to record the current state of the
+Use 'git-stash save' when you want to record the current state of the
 working directory and the index, but want to go back to a clean
 working directory.  The command saves your local modifications away
 and reverts the working directory to match the `HEAD` commit.
 
 The modifications stashed away by this command can be listed with
 `git-stash list`, inspected with `git-stash show`, and restored
-(potentially on top of a different commit) with `git-stash apply`
-commands.  The default operation when called without options is to
-save the changes away.
+(potentially on top of a different commit) with `git-stash apply`.
+The default operation when called without options is to save the
+changes away.
 
 The latest stash you created is stored in `$GIT_DIR/refs/stash`; older
-stashes are found in the reflog of this refererence and can be named using
-the usual reflog syntax (e.g. `stash@{1}` is the stash one previously made,
-`stash@{2}` is the one before it, `stash@{2.hours.ago}` is also possible).
+stashes are found in the reflog of this reference and can be named using
+the usual reflog syntax (e.g. `stash@{1}` is the most recently
+created stash, `stash@{2}` is the one before it, `stash@{2.hours.ago}`
+is also possible).
 
 OPTIONS
 -------
 
-(no subcommand)::
+save::
 
 	Save your local modifications to a new 'stash', and run `git-reset
 	--hard` to revert them.
@@ -42,7 +42,7 @@ list::
 
 	List the stashes that you currently have.  Each 'stash' is listed
 	with its name (e.g. `stash@{0}` is the latest stash, `stash@{1} is
-	the one before), the name of the branch that was current when the
+	the one before, etc.), the name of the branch that was current when the
 	stash was made, and a short description of the commit the stash was
 	based on.
 +
@@ -53,25 +53,24 @@ stash@{1}: master: 9cc0589... Merge branch 'master' of gfi
 
 show [<stash>]::
 
-	Show the changes recorded in the stash.  When no `<stash>` is given,
-	shows the latest one.  By default, the command shows diffstat, but
-	you can add `-p` option (i.e. `git stash show -p stash@{2}`) to view
-	it in patch form.
+	Show the changes recorded in the stash as a diff between the the
+	stashed state and its original parent. When no `<stash>` is given,
+	shows the latest one. By default, the command shows the diffstat, but
+	it will accept any format known to `git-diff` (e.g., `git-stash show
+	-p stash@{2}` to view the second most recent stash in patch form).
 
 apply [<stash>]::
 
-	Restores the changes recorded in the stash on top of the current
+	Restore the changes recorded in the stash on top of the current
 	working tree state.  When no `<stash>` is given, applies the latest
-	one.  The working directory must match the index.  When the changes
-	conflict, you need to resolve them by hand and mark the result with
-	`git add` as usual.  When the changes are cleanly merged, your
-	earlier local changes stored in the stash becomes the differences
-	between the index and the working tree (i.e. `git diff`), except
-	that newly created files are registered in the index (i.e. `git diff
-	--cached` is necessary to review the newly added files).
+	one.  The working directory must match the index.
++
+This operation can fail with conflicts; you need to resolve them
+by hand in the working tree.
 
 clear::
-	Removes all the stashed states.
+	Remove all the stashed states. Note that those states will then
+	be subject to pruning, and may be difficult or impossible to recover.
 
 
 DISCUSSION
@@ -98,13 +97,13 @@ EXAMPLES
 Pulling into a dirty tree::
 
 When you are in the middle of something, you learn that there are
-changes that possibly are relevant to what you are doing in the
-upstream.  When your local changes do not conflict with the changes in
+upstream changes that are possibly relevant to what you are
+doing.  When your local changes do not conflict with the changes in
 the upstream, a simple `git pull` will let you move forward.
 +
 However, there are cases in which your local changes do conflict with
 the upstream changes, and `git pull` refuses to overwrite your
-changes.  In such a case, you can first stash your changes away,
+changes.  In such a case, you can stash your changes away,
 perform a pull, and then unstash, like this:
 +
 ----------------------------------------------------------------
@@ -119,9 +118,9 @@ $ git stash apply
 Interrupted workflow::
 
 When you are in the middle of something, your boss comes in and
-demands you to fix something immediately.  Traditionally, you would
+demands that you fix something immediately.  Traditionally, you would
 make a commit to a temporary branch to store your changes away, and
-come back to make the emergency fix, like this:
+return to your original branch to make the emergency fix, like this:
 +
 ----------------------------------------------------------------
 ... hack hack hack ...
