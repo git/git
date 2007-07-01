@@ -117,6 +117,18 @@ core.fileMode::
 	the working copy are ignored; useful on broken filesystems like FAT.
 	See gitlink:git-update-index[1]. True by default.
 
+core.quotepath::
+	The commands that output paths (e.g. `ls-files`,
+	`diff`), when not given the `-z` option, will quote
+	"unusual" characters in the pathname by enclosing the
+	pathname in a double-quote pair and with backslashes the
+	same way strings in C source code are quoted.  If this
+	variable is set to false, the bytes higher than 0x80 are
+	not quoted but output as verbatim.  Note that double
+	quote, backslash and control characters are always
+	quoted without `-z` regardless of the setting of this
+	variable.
+
 core.autocrlf::
 	If true, makes git convert `CRLF` at the end of lines in text files to
 	`LF` when reading from the filesystem, and convert in reverse when

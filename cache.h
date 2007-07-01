@@ -294,6 +294,7 @@ extern int delete_ref(const char *, const unsigned char *sha1);
 
 /* Environment bits from configuration mechanism */
 extern int trust_executable_bit;
+extern int quote_path_fully;
 extern int has_symlinks;
 extern int assume_unchanged;
 extern int prefer_symlink_refs;
