@@ -4,7 +4,7 @@
 #include "quote.h"
 
 const char git_usage_string[] =
-	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate] [--bare] [--git-dir=GIT_DIR] [--help] COMMAND [ARGS]";
+	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate] [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE] [--help] COMMAND [ARGS]";
 
 static void prepend_to_path(const char *dir, int len)
 {
@@ -69,6 +69,16 @@ static int handle_options(const char*** argv, int* argc)
 			handled++;
 		} else if (!prefixcmp(cmd, "--git-dir=")) {
 			setenv(GIT_DIR_ENVIRONMENT, cmd + 10, 1);
+		} else if (!strcmp(cmd, "--work-tree")) {
+			if (*argc < 2) {
+				fprintf(stderr, "No directory given for --work-tree.\n" );
+				usage(git_usage_string);
+			}
+			setenv(GIT_WORK_TREE_ENVIRONMENT, (*argv)[1], 1);
+			(*argv)++;
+			(*argc)--;
+		} else if (!prefixcmp(cmd, "--work-tree=")) {
+			setenv(GIT_WORK_TREE_ENVIRONMENT, cmd + 12, 1);
 		} else if (!strcmp(cmd, "--bare")) {
 			static char git_dir[PATH_MAX+1];
 			setenv(GIT_DIR_ENVIRONMENT, getcwd(git_dir, sizeof(git_dir)), 1);
@@ -214,7 +224,7 @@ const char git_version_string[] = GIT_VERSION;
  * require working tree to be present -- anything uses this needs
  * RUN_SETUP for reading from the configuration file.
  */
-#define NOT_BARE 	(1<<2)
+#define NEED_WORK_TREE	(1<<2)
 
 struct cmd_struct {
 	const char *cmd;
@@ -233,10 +243,9 @@ static int run_command(struct cmd_struct *p, int argc, const char **argv)
 		prefix = setup_git_directory();
 	if (p->option & USE_PAGER)
 		setup_pager();
-	if (p->option & NOT_BARE) {
-		if (is_bare_repository() || is_inside_git_dir())
-			die("%s must be run in a work tree", p->cmd);
-	}
+	if ((p->option & NEED_WORK_TREE) &&
+	    (!is_inside_work_tree() || is_inside_git_dir()))
+		die("%s must be run in a work tree", p->cmd);
 	trace_argv_printf(argv, argc, "trace: built-in: git");
 
 	status = p->fn(argc, argv, prefix);
@@ -264,7 +273,7 @@ static void handle_internal_command(int argc, const char **argv)
 {
 	const char *cmd = argv[0];
 	static struct cmd_struct commands[] = {
-		{ "add", cmd_add, RUN_SETUP | NOT_BARE },
+		{ "add", cmd_add, RUN_SETUP | NEED_WORK_TREE },
 		{ "annotate", cmd_annotate, RUN_SETUP | USE_PAGER },
 		{ "apply", cmd_apply },
 		{ "archive", cmd_archive },
@@ -274,9 +283,9 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "cat-file", cmd_cat_file, RUN_SETUP },
 		{ "checkout-index", cmd_checkout_index, RUN_SETUP },
 		{ "check-ref-format", cmd_check_ref_format },
-		{ "check-attr", cmd_check_attr, RUN_SETUP | NOT_BARE },
+		{ "check-attr", cmd_check_attr, RUN_SETUP | NEED_WORK_TREE },
 		{ "cherry", cmd_cherry, RUN_SETUP },
-		{ "cherry-pick", cmd_cherry_pick, RUN_SETUP | NOT_BARE },
+		{ "cherry-pick", cmd_cherry_pick, RUN_SETUP | NEED_WORK_TREE },
 		{ "commit-tree", cmd_commit_tree, RUN_SETUP },
 		{ "config", cmd_config },
 		{ "count-objects", cmd_count_objects, RUN_SETUP },
@@ -304,7 +313,7 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "mailsplit", cmd_mailsplit },
 		{ "merge-base", cmd_merge_base, RUN_SETUP },
 		{ "merge-file", cmd_merge_file },
-		{ "mv", cmd_mv, RUN_SETUP | NOT_BARE },
+		{ "mv", cmd_mv, RUN_SETUP | NEED_WORK_TREE },
 		{ "name-rev", cmd_name_rev, RUN_SETUP },
 		{ "pack-objects", cmd_pack_objects, RUN_SETUP },
 		{ "pickaxe", cmd_blame, RUN_SETUP | USE_PAGER },
@@ -317,9 +326,9 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "rerere", cmd_rerere, RUN_SETUP },
 		{ "rev-list", cmd_rev_list, RUN_SETUP },
 		{ "rev-parse", cmd_rev_parse, RUN_SETUP },
-		{ "revert", cmd_revert, RUN_SETUP | NOT_BARE },
-		{ "rm", cmd_rm, RUN_SETUP | NOT_BARE },
-		{ "runstatus", cmd_runstatus, RUN_SETUP | NOT_BARE },
+		{ "revert", cmd_revert, RUN_SETUP | NEED_WORK_TREE },
+		{ "rm", cmd_rm, RUN_SETUP | NEED_WORK_TREE },
+		{ "runstatus", cmd_runstatus, RUN_SETUP | NEED_WORK_TREE },
 		{ "shortlog", cmd_shortlog, RUN_SETUP | USE_PAGER },
 		{ "show-branch", cmd_show_branch, RUN_SETUP },
 		{ "show", cmd_show, RUN_SETUP | USE_PAGER },

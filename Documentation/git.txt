@@ -10,7 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git' [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate]
-    [--bare] [--git-dir=GIT_DIR] [--help] COMMAND [ARGS]
+    [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE]
+    [--help] COMMAND [ARGS]
 
 DESCRIPTION
 -----------
@@ -102,6 +103,14 @@ OPTIONS
 --git-dir=<path>::
 	Set the path to the repository. This can also be controlled by
 	setting the GIT_DIR environment variable.
+
+--work-tree=<path>::
+	Set the path to the working tree.  The value will not be
+	used in combination with repositories found automatically in
+	a .git directory (i.e. $GIT_DIR is not set).
+	This can also be controlled by setting the GIT_WORK_TREE
+	environment variable and the core.worktree configuration
+	variable.
 
 --bare::
 	Same as --git-dir=`pwd`.
@@ -346,6 +355,13 @@ git so take care if using Cogito etc.
 	If the 'GIT_DIR' environment variable is set then it
 	specifies a path to use instead of the default `.git`
 	for the base of the repository.
+
+'GIT_WORK_TREE'::
+	Set the path to the working tree.  The value will not be
+	used in combination with repositories found automatically in
+	a .git directory (i.e. $GIT_DIR is not set).
+	This can also be controlled by the '--work-tree' command line
+	option and the core.worktree configuration variable.
 
 git Commits
 ~~~~~~~~~~~
