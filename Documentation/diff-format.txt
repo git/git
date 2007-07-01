@@ -126,6 +126,13 @@ the file that rename/copy produces, respectively.
     If there is need for such substitution then the whole
     pathname is put in double quotes.
 
+The similarity index is the percentage of unchanged lines, and
+the dissimilarity index is the percentage of changed lines.  It
+is a rounded down integer, followed by a percent sign.  The
+similarity index value of 100% is thus reserved for two equal
+files, while 100% dissimilarity means that no line from the old
+file made it into the new one.
+
 
 combined diff format
 --------------------
