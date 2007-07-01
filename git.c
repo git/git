@@ -28,7 +28,7 @@ static void prepend_to_path(const char *dir, int len)
 	free(path);
 }
 
-static int handle_options(const char*** argv, int* argc)
+static int handle_options(const char*** argv, int* argc, int* envchanged)
 {
 	int handled = 0;
 
@@ -64,24 +64,34 @@ static int handle_options(const char*** argv, int* argc)
 				usage(git_usage_string);
 			}
 			setenv(GIT_DIR_ENVIRONMENT, (*argv)[1], 1);
+			if (envchanged)
+				*envchanged = 1;
 			(*argv)++;
 			(*argc)--;
 			handled++;
 		} else if (!prefixcmp(cmd, "--git-dir=")) {
 			setenv(GIT_DIR_ENVIRONMENT, cmd + 10, 1);
+			if (envchanged)
+				*envchanged = 1;
 		} else if (!strcmp(cmd, "--work-tree")) {
 			if (*argc < 2) {
 				fprintf(stderr, "No directory given for --work-tree.\n" );
 				usage(git_usage_string);
 			}
 			setenv(GIT_WORK_TREE_ENVIRONMENT, (*argv)[1], 1);
+			if (envchanged)
+				*envchanged = 1;
 			(*argv)++;
 			(*argc)--;
 		} else if (!prefixcmp(cmd, "--work-tree=")) {
 			setenv(GIT_WORK_TREE_ENVIRONMENT, cmd + 12, 1);
+			if (envchanged)
+				*envchanged = 1;
 		} else if (!strcmp(cmd, "--bare")) {
 			static char git_dir[PATH_MAX+1];
 			setenv(GIT_DIR_ENVIRONMENT, getcwd(git_dir, sizeof(git_dir)), 1);
+			if (envchanged)
+				*envchanged = 1;
 		} else {
 			fprintf(stderr, "Unknown option: %s\n", cmd);
 			usage(git_usage_string);
@@ -160,7 +170,7 @@ static int split_cmdline(char *cmdline, const char ***argv)
 
 static int handle_alias(int *argcp, const char ***argv)
 {
-	int nongit = 0, ret = 0, saved_errno = errno;
+	int nongit = 0, envchanged = 0, ret = 0, saved_errno = errno;
 	const char *subdir;
 	int count, option_count;
 	const char** new_argv;
@@ -181,7 +191,11 @@ static int handle_alias(int *argcp, const char ***argv)
 			    alias_string + 1, alias_command);
 		}
 		count = split_cmdline(alias_string, &new_argv);
-		option_count = handle_options(&new_argv, &count);
+		option_count = handle_options(&new_argv, &count, &envchanged);
+		if (envchanged)
+			die("alias '%s' changes environment variables\n"
+				 "You can use '!git' in the alias to do this.",
+				 alias_command);
 		memmove(new_argv - option_count, new_argv,
 				count * sizeof(char *));
 		new_argv -= option_count;
@@ -402,7 +416,7 @@ int main(int argc, const char **argv)
 	/* Look for flags.. */
 	argv++;
 	argc--;
-	handle_options(&argv, &argc);
+	handle_options(&argv, &argc, NULL);
 	if (argc > 0) {
 		if (!prefixcmp(argv[0], "--"))
 			argv[0] += 2;
