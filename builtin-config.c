@@ -138,9 +138,33 @@ free_strings:
 	return ret;
 }
 
+char *normalize_value(const char *key, const char *value)
+{
+	char *normalized;
+
+	if (!value)
+		return NULL;
+
+	if (type == T_RAW)
+		normalized = xstrdup(value);
+	else {
+		normalized = xmalloc(64);
+		if (type == T_INT) {
+			int v = git_config_int(key, value);
+			sprintf(normalized, "%d", v);
+		}
+		else if (type == T_BOOL)
+			sprintf(normalized, "%s",
+				git_config_bool(key, value) ? "true" : "false");
+	}
+
+	return normalized;
+}
+
 int cmd_config(int argc, const char **argv, const char *prefix)
 {
 	int nongit = 0;
+	char* value;
 	setup_git_directory_gently(&nongit);
 
 	while (1 < argc) {
@@ -217,9 +241,10 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			use_key_regexp = 1;
 			do_all = 1;
 			return get_value(argv[2], NULL);
-		} else
-
-			return git_config_set(argv[1], argv[2]);
+		} else {
+			value = normalize_value(argv[1], argv[2]);
+			return git_config_set(argv[1], value);
+		}
 	case 4:
 		if (!strcmp(argv[1], "--unset"))
 			return git_config_set_multivar(argv[2], NULL, argv[3], 0);
@@ -235,17 +260,21 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			use_key_regexp = 1;
 			do_all = 1;
 			return get_value(argv[2], argv[3]);
-		} else if (!strcmp(argv[1], "--add"))
-			return git_config_set_multivar(argv[2], argv[3], "^$", 0);
-		else if (!strcmp(argv[1], "--replace-all"))
-
-			return git_config_set_multivar(argv[2], argv[3], NULL, 1);
-		else
-
-			return git_config_set_multivar(argv[1], argv[2], argv[3], 0);
+		} else if (!strcmp(argv[1], "--add")) {
+			value = normalize_value(argv[2], argv[3]);
+			return git_config_set_multivar(argv[2], value, "^$", 0);
+		} else if (!strcmp(argv[1], "--replace-all")) {
+			value = normalize_value(argv[2], argv[3]);
+			return git_config_set_multivar(argv[2], value, NULL, 1);
+		} else {
+			value = normalize_value(argv[1], argv[2]);
+			return git_config_set_multivar(argv[1], value, argv[3], 0);
+		}
 	case 5:
-		if (!strcmp(argv[1], "--replace-all"))
-			return git_config_set_multivar(argv[2], argv[3], argv[4], 1);
+		if (!strcmp(argv[1], "--replace-all")) {
+			value = normalize_value(argv[2], argv[3]);
+			return git_config_set_multivar(argv[2], value, argv[4], 1);
+		}
 	case 1:
 	default:
 		usage(git_config_set_usage);
