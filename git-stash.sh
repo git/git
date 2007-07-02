@@ -76,7 +76,12 @@ save_stash () {
 	printf >&2 'Saved WIP on %s\n' "$msg"
 }
 
+have_stash () {
+	git-rev-parse --verify $ref_stash >/dev/null 2>&1
+}
+
 list_stash () {
+	have_stash || return 0
 	git-log --pretty=oneline -g "$@" $ref_stash |
 	sed -n -e 's/^[.0-9a-f]* refs\///p'
 }
