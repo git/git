@@ -48,8 +48,8 @@ standard input of the hook will be one line per ref to be updated:
 The refname value is relative to $GIT_DIR; e.g. for the master
 head this is "refs/heads/master".  The two sha1 values before
 each refname are the object names for the refname before and after
-the update.  Refs to be created will have sha1-old equal to 0{40},
-while refs to be deleted will have sha1-new equal to 0{40}, otherwise
+the update.  Refs to be created will have sha1-old equal to 0\{40},
+while refs to be deleted will have sha1-new equal to 0\{40}, otherwise
 sha1-old and sha1-new should be valid objects in the repository.
 
 This hook is called before any refname is updated and before any
@@ -71,7 +71,7 @@ The refname parameter is relative to $GIT_DIR; e.g. for the master
 head this is "refs/heads/master".  The two sha1 arguments are
 the object names for the refname before and after the update.
 Note that the hook is called before the refname is updated,
-so either sha1-old is 0{40} (meaning there is no such ref yet),
+so either sha1-old is 0\{40} (meaning there is no such ref yet),
 or it should match what is recorded in refname.
 
 The hook should exit with non-zero status if it wants to disallow
@@ -96,8 +96,8 @@ The refname value is relative to $GIT_DIR; e.g. for the master
 head this is "refs/heads/master".  The two sha1 values before
 each refname are the object names for the refname before and after
 the update.  Refs that were created will have sha1-old equal to
-0{40}, while refs that were deleted will have sha1-new equal to
-0{40}, otherwise sha1-old and sha1-new should be valid objects in
+0\{40}, while refs that were deleted will have sha1-new equal to
+0\{40}, otherwise sha1-old and sha1-new should be valid objects in
 the repository.
 
 Using this hook, it is easy to generate mails describing the updates

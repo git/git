@@ -64,7 +64,7 @@ OPTIONS
 -l::
 	Create the new branch's ref log.  This activates recording of
 	all changes to made the branch ref, enabling use of date
-	based sha1 expressions such as "<branchname>@{yesterday}".
+	based sha1 expressions such as "<branchname>@\{yesterday}".
 
 -m::
 	If you have local modifications to one or more files that
