@@ -133,7 +133,7 @@ apply_stash () {
 # Main command set
 case "$1" in
 list | '')
-	shift
+	test $# -gt 0 && shift
 	if test $# = 0
 	then
 		set x -n 10
