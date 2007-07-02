@@ -483,34 +483,8 @@ fi >>"$GIT_DIR"/COMMIT_EDITMSG
 # Author
 if test '' != "$use_commit"
 then
-	pick_author_script='
-	/^author /{
-		s/'\''/'\''\\'\'\''/g
-		h
-		s/^author \([^<]*\) <[^>]*> .*$/\1/
-		s/'\''/'\''\'\'\''/g
-		s/.*/GIT_AUTHOR_NAME='\''&'\''/p
-
-		g
-		s/^author [^<]* <\([^>]*\)> .*$/\1/
-		s/'\''/'\''\'\'\''/g
-		s/.*/GIT_AUTHOR_EMAIL='\''&'\''/p
-
-		g
-		s/^author [^<]* <[^>]*> \(.*\)$/\1/
-		s/'\''/'\''\'\'\''/g
-		s/.*/GIT_AUTHOR_DATE='\''&'\''/p
-
-		q
-	}
-	'
-	encoding=$(git config i18n.commitencoding || echo UTF-8)
-	set_author_env=`git show -s --pretty=raw --encoding="$encoding" "$use_commit" |
-	LANG=C LC_ALL=C sed -ne "$pick_author_script"`
-	eval "$set_author_env"
-	export GIT_AUTHOR_NAME
-	export GIT_AUTHOR_EMAIL
-	export GIT_AUTHOR_DATE
+	eval "$(get_author_ident_from_commit "$use_commit")"
+	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
 fi
 if test '' != "$force_author"
 then
