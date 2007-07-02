@@ -26,8 +26,8 @@ list`.
 
 The latest stash you created is stored in `$GIT_DIR/refs/stash`; older
 stashes are found in the reflog of this reference and can be named using
-the usual reflog syntax (e.g. `stash@{1}` is the most recently
-created stash, `stash@{2}` is the one before it, `stash@{2.hours.ago}`
+the usual reflog syntax (e.g. `stash@\{1}` is the most recently
+created stash, `stash@\{2}` is the one before it, `stash@\{2.hours.ago}`
 is also possible).
 
 OPTIONS
@@ -41,7 +41,7 @@ save::
 list::
 
 	List the stashes that you currently have.  Each 'stash' is listed
-	with its name (e.g. `stash@{0}` is the latest stash, `stash@{1} is
+	with its name (e.g. `stash@\{0}` is the latest stash, `stash@\{1} is
 	the one before, etc.), the name of the branch that was current when the
 	stash was made, and a short description of the commit the stash was
 	based on.
@@ -57,7 +57,7 @@ show [<stash>]::
 	stashed state and its original parent. When no `<stash>` is given,
 	shows the latest one. By default, the command shows the diffstat, but
 	it will accept any format known to `git-diff` (e.g., `git-stash show
-	-p stash@{2}` to view the second most recent stash in patch form).
+	-p stash@\{2}` to view the second most recent stash in patch form).
 
 apply [<stash>]::
 
