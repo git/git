@@ -544,6 +544,13 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 			if (!pat)
 				continue;
 		}
+		else if (prefixcmp(src->name, "refs/heads/"))
+			/*
+			 * "matching refs"; traditionally we pushed everything
+			 * including refs outside refs/heads/ hierarchy, but
+			 * that does not make much sense these days.
+			 */
+			continue;
 
 		if (pat) {
 			const char *dst_side = pat->dst ? pat->dst : pat->src;
