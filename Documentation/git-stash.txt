@@ -21,8 +21,8 @@ and reverts the working directory to match the `HEAD` commit.
 The modifications stashed away by this command can be listed with
 `git-stash list`, inspected with `git-stash show`, and restored
 (potentially on top of a different commit) with `git-stash apply`.
-The default operation when called without options is to save the
-changes away.
+Calling git-stash without any arguments is equivalent to `git-stash
+list`.
 
 The latest stash you created is stored in `$GIT_DIR/refs/stash`; older
 stashes are found in the reflog of this reference and can be named using
