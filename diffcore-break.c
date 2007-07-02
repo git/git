@@ -66,8 +66,7 @@ static int should_break(struct diff_filespec *src,
 	if (base_size < MINIMUM_BREAK_SIZE)
 		return 0; /* we do not break too small filepair */
 
-	if (diffcore_count_changes(src->data, src->size,
-				   dst->data, dst->size,
+	if (diffcore_count_changes(src, dst,
 				   NULL, NULL,
 				   0,
 				   &src_copied, &literal_added))

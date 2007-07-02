@@ -5,23 +5,20 @@
 /*
  * Idea here is very simple.
  *
- * We have total of (sz-N+1) N-byte overlapping sequences in buf whose
- * size is sz.  If the same N-byte sequence appears in both source and
- * destination, we say the byte that starts that sequence is shared
- * between them (i.e. copied from source to destination).
+ * Almost all data we are interested in are text, but sometimes we have
+ * to deal with binary data.  So we cut them into chunks delimited by
+ * LF byte, or 64-byte sequence, whichever comes first, and hash them.
  *
- * For each possible N-byte sequence, if the source buffer has more
- * instances of it than the destination buffer, that means the
- * difference are the number of bytes not copied from source to
- * destination.  If the counts are the same, everything was copied
- * from source to destination.  If the destination has more,
- * everything was copied, and destination added more.
+ * For those chunks, if the source buffer has more instances of it
+ * than the destination buffer, that means the difference are the
+ * number of bytes not copied from source to destination.  If the
+ * counts are the same, everything was copied from source to
+ * destination.  If the destination has more, everything was copied,
+ * and destination added more.
  *
  * We are doing an approximation so we do not really have to waste
  * memory by actually storing the sequence.  We just hash them into
  * somewhere around 2^16 hashbuckets and count the occurrences.
- *
- * The length of the sequence is arbitrarily set to 8 for now.
  */
 
 /* Wild guess at the initial hash size */
@@ -125,11 +122,14 @@ static struct spanhash_top *add_spanhash(struct spanhash_top *top,
 	}
 }
 
-static struct spanhash_top *hash_chars(unsigned char *buf, unsigned int sz)
+static struct spanhash_top *hash_chars(struct diff_filespec *one)
 {
 	int i, n;
 	unsigned int accum1, accum2, hashval;
 	struct spanhash_top *hash;
+	unsigned char *buf = one->data;
+	unsigned int sz = one->size;
+	int is_text = !one->is_binary;
 
 	i = INITIAL_HASH_SIZE;
 	hash = xmalloc(sizeof(*hash) + sizeof(struct spanhash) * (1<<i));
@@ -143,6 +143,11 @@ static struct spanhash_top *hash_chars(unsigned char *buf, unsigned int sz)
 		unsigned int c = *buf++;
 		unsigned int old_1 = accum1;
 		sz--;
+
+		/* Ignore CR in CRLF sequence if text */
+		if (is_text && c == '\r' && sz && *buf == '\n')
+			continue;
+
 		accum1 = (accum1 << 7) ^ (accum2 >> 25);
 		accum2 = (accum2 << 7) ^ (old_1 >> 25);
 		accum1 += c;
@@ -156,8 +161,8 @@ static struct spanhash_top *hash_chars(unsigned char *buf, unsigned int sz)
 	return hash;
 }
 
-int diffcore_count_changes(void *src, unsigned long src_size,
-			   void *dst, unsigned long dst_size,
+int diffcore_count_changes(struct diff_filespec *src,
+			   struct diff_filespec *dst,
 			   void **src_count_p,
 			   void **dst_count_p,
 			   unsigned long delta_limit,
@@ -172,14 +177,14 @@ int diffcore_count_changes(void *src, unsigned long src_size,
 	if (src_count_p)
 		src_count = *src_count_p;
 	if (!src_count) {
-		src_count = hash_chars(src, src_size);
+		src_count = hash_chars(src);
 		if (src_count_p)
 			*src_count_p = src_count;
 	}
 	if (dst_count_p)
 		dst_count = *dst_count_p;
 	if (!dst_count) {
-		dst_count = hash_chars(dst, dst_size);
+		dst_count = hash_chars(dst);
 		if (dst_count_p)
 			*dst_count_p = dst_count;
 	}

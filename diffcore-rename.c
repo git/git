@@ -190,8 +190,7 @@ static int estimate_similarity(struct diff_filespec *src,
 
 	delta_limit = (unsigned long)
 		(base_size * (MAX_SCORE-minimum_score) / MAX_SCORE);
-	if (diffcore_count_changes(src->data, src->size,
-				   dst->data, dst->size,
+	if (diffcore_count_changes(src, dst,
 				   &src->cnt_data, &dst->cnt_data,
 				   delta_limit,
 				   &src_copied, &literal_added))

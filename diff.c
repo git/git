@@ -3005,6 +3005,22 @@ void diffcore_std(struct diff_options *options)
 {
 	if (options->quiet)
 		return;
+
+	/*
+	 * break/rename count similarity differently depending on
+	 * the binary-ness.
+	 */
+	if ((options->break_opt != -1) || (options->detect_rename)) {
+		struct diff_queue_struct *q = &diff_queued_diff;
+		int i;
+
+		for (i = 0; i < q->nr; i++) {
+			struct diff_filepair *p = q->queue[i];
+			p->one->is_binary = file_is_binary(p->one);
+			p->two->is_binary = file_is_binary(p->two);
+		}
+	}
+
 	if (options->break_opt != -1)
 		diffcore_break(options->break_opt);
 	if (options->detect_rename)
