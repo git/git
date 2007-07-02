@@ -126,12 +126,13 @@ not add any suffix.
 CONFIGURATION
 -------------
 You can specify extra mail header lines to be added to each
-message in the repository configuration.  Also you can specify
-the default suffix different from the built-in one:
+message in the repository configuration.  You can also specify
+new defaults for the subject prefix and file suffix.
 
 ------------
 [format]
         headers = "Organization: git-foo\n"
+        subjectprefix = CHANGE
         suffix = .txt
 ------------
 

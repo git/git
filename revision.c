@@ -667,7 +667,6 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	revs->min_age = -1;
 	revs->skip_count = -1;
 	revs->max_count = -1;
-	revs->subject_prefix = "PATCH";
 
 	revs->prune_fn = NULL;
 	revs->prune_data = NULL;

@@ -242,6 +242,8 @@ format-patch --inline --stdout initial..side
 format-patch --inline --stdout initial..master^
 format-patch --inline --stdout initial..master
 format-patch --inline --stdout --subject-prefix=TESTCASE initial..master
+config format.subjectprefix DIFFERENT_PREFIX
+format-patch --inline --stdout initial..master^^
 
 diff --abbrev initial..side
 diff -r initial..side

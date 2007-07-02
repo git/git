@@ -265,6 +265,7 @@ static int istitlechar(char c)
 
 static char *extra_headers = NULL;
 static int extra_headers_size = 0;
+static const char *fmt_patch_subject_prefix = "PATCH";
 static const char *fmt_patch_suffix = ".patch";
 
 static int git_format_config(const char *var, const char *value)
@@ -290,6 +291,13 @@ static int git_format_config(const char *var, const char *value)
 	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
 		return 0;
 	}
+	if (!strcmp(var, "format.subjectprefix")) {
+		if (!value)
+			die("format.subjectprefix without value");
+		fmt_patch_subject_prefix = xstrdup(value);
+		return 0;
+	}
+
 	return git_log_config(var, value);
 }
 
@@ -459,6 +467,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.diffopt.msg_sep = "";
 	rev.diffopt.recursive = 1;
 
+	rev.subject_prefix = fmt_patch_subject_prefix;
 	rev.extra_headers = extra_headers;
 
 	/*
