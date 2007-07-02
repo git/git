@@ -110,30 +110,37 @@ test_expect_success 'check correct prefix detection' '
 	git add 1/2/a 1/3/b 1/2/c
 '
 
-test_expect_success 'git add and filemode=0 with unmerged entries' '
-	echo 1 > stage1 &&
-	echo 2 > stage2 &&
-	echo 3 > stage3 &&
+test_expect_success 'git add with filemode=0, symlinks=0, and unmerged entries' '
 	for s in 1 2 3
 	do
+		echo $s > stage$s
 		echo "100755 $(git hash-object -w stage$s) $s	file"
+		echo "120000 $(printf $s | git hash-object -w -t blob --stdin) $s	symlink"
 	done | git update-index --index-info &&
 	git config core.filemode 0 &&
+	git config core.symlinks 0 &&
 	echo new > file &&
-	git add file &&
-	git ls-files --stage | grep "^100755 .* 0	file$"
+	echo new > symlink &&
+	git add file symlink &&
+	git ls-files --stage | grep "^100755 .* 0	file$" &&
+	git ls-files --stage | grep "^120000 .* 0	symlink$"
 '
 
-test_expect_success 'git add and filemode=0 prefers stage 2 over stage 1' '
-	git rm --cached -f file &&
+test_expect_success 'git add with filemode=0, symlinks=0 prefers stage 2 over stage 1' '
+	git rm --cached -f file symlink &&
 	(
 		echo "100644 $(git hash-object -w stage1) 1	file"
 		echo "100755 $(git hash-object -w stage2) 2	file"
+		echo "100644 $(printf $s | git hash-object -w -t blob --stdin) 1	symlink"
+		echo "120000 $(printf $s | git hash-object -w -t blob --stdin) 2	symlink"
 	) | git update-index --index-info &&
 	git config core.filemode 0 &&
+	git config core.symlinks 0 &&
 	echo new > file &&
-	git add file &&
-	git ls-files --stage | grep "^100755 .* 0	file$"
+	echo new > symlink &&
+	git add file symlink &&
+	git ls-files --stage | grep "^100755 .* 0	file$" &&
+	git ls-files --stage | grep "^120000 .* 0	symlink$"
 '
 
 test_done
