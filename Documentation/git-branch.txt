@@ -41,7 +41,7 @@ to happen.
 
 With a `-d` or `-D` option, `<branchname>` will be deleted.  You may
 specify more than one branch for deletion.  If the branch currently
-has a ref log then the ref log will also be deleted. Use -r together with -d
+has a reflog then the reflog will also be deleted. Use -r together with -d
 to delete remote-tracking branches.
 
 
@@ -54,8 +54,8 @@ OPTIONS
 	Delete a branch irrespective of its index status.
 
 -l::
-	Create the branch's ref log.  This activates recording of
-	all changes to made the branch ref, enabling use of date
+	Create the branch's reflog.  This activates recording of
+	all changes made to the branch ref, enabling use of date
 	based sha1 expressions such as "<branchname>@\{yesterday}".
 
 -f::
