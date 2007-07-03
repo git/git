@@ -13,7 +13,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Use 'git-stash save' when you want to record the current state of the
+Use 'git-stash' when you want to record the current state of the
 working directory and the index, but want to go back to a clean
 working directory.  The command saves your local modifications away
 and reverts the working directory to match the `HEAD` commit.
@@ -22,7 +22,7 @@ The modifications stashed away by this command can be listed with
 `git-stash list`, inspected with `git-stash show`, and restored
 (potentially on top of a different commit) with `git-stash apply`.
 Calling git-stash without any arguments is equivalent to `git-stash
-list`.
+save`.
 
 The latest stash you created is stored in `$GIT_DIR/refs/stash`; older
 stashes are found in the reflog of this reference and can be named using
@@ -36,7 +36,8 @@ OPTIONS
 save::
 
 	Save your local modifications to a new 'stash', and run `git-reset
-	--hard` to revert them.
+	--hard` to revert them.  This is the default action when no
+	subcommand is given.
 
 list::
 

@@ -137,8 +137,8 @@ apply_stash () {
 
 # Main command set
 case "$1" in
-list | '')
-	test $# -gt 0 && shift
+list)
+	shift
 	if test $# = 0
 	then
 		set x -n 10
@@ -157,7 +157,7 @@ apply)
 clear)
 	clear_stash
 	;;
-save)
+save | '')
 	save_stash && git-reset --hard
 	;;
 *)
