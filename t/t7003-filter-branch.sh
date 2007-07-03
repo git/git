@@ -107,4 +107,39 @@ test_expect_success 'use index-filter to move into a subdirectory' '
 		  mv \$GIT_INDEX_FILE.new \$GIT_INDEX_FILE" directorymoved &&
 	test -z "$(git diff HEAD directorymoved:newsubdir)"'
 
+test_expect_success 'author information is preserved' '
+	: > i &&
+	git add i &&
+	test_tick &&
+	GIT_AUTHOR_NAME="B V Uips" git commit -m bvuips &&
+	git-filter-branch --msg-filter "cat; \
+			test \$GIT_COMMIT = $(git rev-parse master) && \
+			echo Hallo" \
+		preserved-author &&
+	test 1 = $(git rev-list --author="B V Uips" preserved-author | wc -l)
+'
+
+test_expect_success "remove a certain author's commits" '
+	echo i > i &&
+	test_tick &&
+	git commit -m i i &&
+	git-filter-branch --commit-filter "\
+		if [ \"\$GIT_AUTHOR_NAME\" = \"B V Uips\" ];\
+		then\
+			shift;\
+			while [ -n \"\$1\" ];\
+			do\
+				shift;\
+				echo \"\$1\";\
+				shift;\
+			done;\
+		else\
+			git commit-tree \"\$@\";\
+		fi" removed-author &&
+	cnt1=$(git rev-list master | wc -l) &&
+	cnt2=$(git rev-list removed-author | wc -l) &&
+	test $cnt1 -eq $(($cnt2 + 1)) &&
+	test 0 = $(git rev-list --author="B V Uips" removed-author | wc -l)
+'
+
 test_done
