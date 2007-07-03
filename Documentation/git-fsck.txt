@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git-fsck' [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]
-		 [--full] [--strict] [--verbose] [<object>*]
+	 [--full] [--strict] [--verbose] [--lost-found] [<object>*]
 
 DESCRIPTION
 -----------
@@ -63,6 +63,10 @@ index file and all SHA1 references in .git/refs/* as heads.
 
 --verbose::
 	Be chatty.
+
+--lost-found::
+	Write dangling refs into .git/commit/ or .git/other/, depending
+	on type.
 
 It tests SHA1 and general object sanity, and it does full tracking of
 the resulting reachability and everything else. It prints out any
