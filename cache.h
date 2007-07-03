@@ -546,6 +546,7 @@ extern int write_or_whine_pipe(int fd, const void *buf, size_t count, const char
 
 /* pager.c */
 extern void setup_pager(void);
+extern char *pager_program;
 extern int pager_in_use;
 extern int pager_use_color;
 

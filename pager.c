@@ -32,6 +32,8 @@ void setup_pager(void)
 	if (!isatty(1))
 		return;
 	if (!pager)
+		pager = pager_program;
+	if (!pager)
 		pager = getenv("PAGER");
 	if (!pager)
 		pager = "less";
