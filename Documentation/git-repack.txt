@@ -14,7 +14,8 @@ DESCRIPTION
 -----------
 
 This script is used to combine all objects that do not currently
-reside in a "pack", into a pack.
+reside in a "pack", into a pack.  It can also be used to re-organise
+existing packs into a single, more efficient pack.
 
 A pack is a collection of objects, individually compressed, with
 delta compression applied, stored in a single file, with an
@@ -28,11 +29,13 @@ OPTIONS
 
 -a::
 	Instead of incrementally packing the unpacked objects,
-	pack everything available into a single pack.
+	pack everything referenced into a single pack.
 	Especially useful when packing a repository that is used
 	for private development and there is no need to worry
-	about people fetching via dumb file transfer protocols
-	from it.  Use with '-d'.
+	about people fetching via dumb protocols from it.  Use
+	with '-d'.  This will clean up the objects that `git prune`
+	leaves behind, but `git fsck --full` shows as
+	dangling.
 
 -d::
 	After packing, if the newly created packs make some

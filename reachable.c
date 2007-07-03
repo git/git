@@ -21,6 +21,14 @@ static void process_blob(struct blob *blob,
 	/* Nothing to do, really .. The blob lookup was the important part */
 }
 
+static void process_gitlink(const unsigned char *sha1,
+			    struct object_array *p,
+			    struct name_path *path,
+			    const char *name)
+{
+	/* I don't think we want to recurse into this, really. */
+}
+
 static void process_tree(struct tree *tree,
 			 struct object_array *p,
 			 struct name_path *path,
@@ -47,6 +55,8 @@ static void process_tree(struct tree *tree,
 	while (tree_entry(&desc, &entry)) {
 		if (S_ISDIR(entry.mode))
 			process_tree(lookup_tree(entry.sha1), p, &me, entry.path);
+		else if (S_ISDIRLNK(entry.mode))
+			process_gitlink(entry.sha1, p, &me, entry.path);
 		else
 			process_blob(lookup_blob(entry.sha1), p, &me, entry.path);
 	}
@@ -159,6 +169,16 @@ static void add_cache_refs(struct rev_info *revs)
 
 	read_cache();
 	for (i = 0; i < active_nr; i++) {
+		/*
+		 * The index can contain blobs and GITLINKs, GITLINKs are hashes
+		 * that don't actually point to objects in the repository, it's
+		 * almost guaranteed that they are NOT blobs, so we don't call
+		 * lookup_blob() on them, to avoid populating the hash table
+		 * with invalid information
+		 */
+		if (S_ISDIRLNK(ntohl(active_cache[i]->ce_mode)))
+			continue;
+
 		lookup_blob(active_cache[i]->sha1);
 		/*
 		 * We could add the blobs to the pending list, but quite

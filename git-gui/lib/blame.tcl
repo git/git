@@ -272,6 +272,8 @@ constructor new {i_commit i_path} {
 			set cursorW %W
 			tk_popup $w.ctxm %X %Y
 		"
+		bind $i <Shift-Tab> "[list focus $w_cviewer];break"
+		bind $i <Tab>       "[list focus $w_cviewer];break"
 	}
 
 	foreach i [concat $w_columns $w_cviewer] {
@@ -287,8 +289,10 @@ constructor new {i_commit i_path} {
 		bind $i <Control-Key-f> {catch {%W yview scroll  1 pages};break}
 	}
 
+	bind $w_cviewer <Shift-Tab> "[list focus $w_file];break"
+	bind $w_cviewer <Tab>       "[list focus $w_file];break"
 	bind $w_cviewer <Button-1> [list focus $w_cviewer]
-	bind $top <Visibility> [list focus $top]
+	bind $w_file    <Visibility> [list focus $w_file]
 
 	grid configure $w.header -sticky ew
 	grid configure $w.file_pane -sticky nsew
@@ -483,7 +487,11 @@ method _read_file {fd jump} {
 } ifdeleted { catch {close $fd} }
 
 method _exec_blame {cur_w cur_d options cur_s} {
-	set cmd [list nice git blame]
+	set cmd [list]
+	if {![is_Windows] || [is_Cygwin]} {
+		lappend cmd nice
+	}
+	lappend cmd git blame
 	set cmd [concat $cmd $options]
 	lappend cmd --incremental
 	if {$commit eq {}} {
