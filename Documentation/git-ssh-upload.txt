@@ -12,6 +12,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
+THIS COMMAND IS DEPRECATED.
+
 Pushes from a remote repository over ssh connection, invoking
 git-ssh-fetch on the other end. It functions identically to
 git-ssh-fetch, aside from which end you run it on.
