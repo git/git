@@ -3178,7 +3178,7 @@ sub git_project_list_body {
 			$pr->{'descr'} = chop_str($descr, 25, 5);
 		}
 		if (!defined $pr->{'owner'}) {
-			$pr->{'owner'} = get_file_owner("$projectroot/$pr->{'path'}") || "";
+			$pr->{'owner'} = git_get_project_owner("$pr->{'path'}") || "";
 		}
 		if ($check_forks) {
 			my $pname = $pr->{'path'};
@@ -3602,7 +3602,7 @@ sub git_project_index {
 
 	foreach my $pr (@projects) {
 		if (!exists $pr->{'owner'}) {
-			$pr->{'owner'} = get_file_owner("$projectroot/$pr->{'path'}");
+			$pr->{'owner'} = git_get_project_owner("$pr->{'path'}");
 		}
 
 		my ($path, $owner) = ($pr->{'path'}, $pr->{'owner'});
