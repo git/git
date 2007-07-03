@@ -67,7 +67,7 @@ save_stash () {
 		die "Cannot save the current worktree state"
 
 	# create the stash
-	w_commit=$(printf 'WIP on %s' "$msg" |
+	w_commit=$(printf 'WIP on %s\n' "$msg" |
 		git commit-tree $w_tree -p $b_commit -p $i_commit) ||
 		die "Cannot record working tree state"
 
