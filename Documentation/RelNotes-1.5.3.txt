@@ -4,14 +4,16 @@ GIT v1.5.3 Release Notes
 Updates since v1.5.2
 --------------------
 
-* An initial interation of Porcelain level superproject support
-  started to take shape.
+* The commit walkers other than http are officially deprecated,
+  but still supported for now.
 
-* Thee are a handful pack-objects changes to help you cope better with
-  repositories with pathologically large blobs in them.
+* The submodule support has Porcelain layer.
+
+* There are a handful pack-objects changes to help you cope better
+  with repositories with pathologically large blobs in them.
 
 * For people who need to import from Perforce, a front-end for
-  fast-import is in contrib/fast-import/ now.
+  fast-import is in contrib/fast-import/.
 
 * Comes with git-gui 0.8.0.
 
@@ -19,10 +21,25 @@ Updates since v1.5.2
 
 * New commands and options.
 
-  - "git log" learned a new option '--follow', to follow
+  - "git stash" allows you to quickly save away your work in
+    progress and replay it later on an updated state.
+
+  - "git rebase" learned an "interactive" mode that let you
+    pick and reorder which commits to rebuild.
+
+  - "git fsck" can save its findings in $GIT_DIR/lost-found,
+    without a separate invocation of "git lost-found" command.
+
+  - $GIT_WORK_TREE environment variable can be used together with
+    $GIT_DIR to work in a subdirectory of a working tree that is
+    not located at "$GIT_DIR/..".
+
+  - "git log" learned a new option "--follow", to follow
     renaming history of a single file.
 
-  - "git-filter-branch" is a reborn cg-admin-rewritehist.
+  - "git-filter-branch" lets you rewrite the revision history of
+    the current branch, creating a new branch. You can specify a
+    number of filters to modify the commits, files and trees.
 
   - "git-cvsserver" learned new options (--base-path, --export-all,
     --strict-paths) inspired by git-daemon.
@@ -58,11 +75,15 @@ Updates since v1.5.2
   - "git format-patch" learned --numbered-files option.  This
     may be useful for MH users.
 
+  - "git format-patch" learned format.subjectprefix configuration
+    variable, which serves the same purpose as "--subject-prefix"
+    option.
+
   - "git tag -n -l" shows tag annotations while listing tags.
 
   - "git cvsimport" can optionally use the separate-remote layout.
 
-  - "git blame" can be told to see through commits that changes
+  - "git blame" can be told to see through commits that change
     whitespaces and indentation levels with "-w" option.
 
   - "git send-email" can be told not to thread the messages when
@@ -71,7 +92,17 @@ Updates since v1.5.2
   - "git config" learned NUL terminated output format via -z to
     help scripts.
 
+  - "git init -q" makes the command quieter.
+
 * Updated behavior of existing commands.
+
+  - "git svn dcommit" retains local merge information.
+
+  - "git config" to set values also honors type flags like --bool
+    and --int.
+
+  - core.quotepath configuration can be used to make textual git
+    output to emit most of the characters in the path literally.
 
   - "git mergetool" chooses its backend more wisely, taking
     notice of its environment such as use of X, Gnome/KDE, etc.
@@ -84,7 +115,7 @@ Updates since v1.5.2
     $path/$project/.git are more useful.  We use $project part
     in the filename, which we used to discard.
 
-  - "git cvsimort" creates lightweight tag; there is not any
+  - "git cvsimport" creates lightweight tags; there is no
     interesting information we can record in an annotated tag,
     and the handcrafted ones the old code created was not
     properly formed anyway.
@@ -99,9 +130,9 @@ Updates since v1.5.2
   - "git-apply --whitespace=strip" removes blank lines added at
     the end of the file.
 
-  - "git-fetch" over git native protocols with -v shows connection
-    status, and the IP address of the other end, to help
-    diagnosing problems.
+  - "git-fetch" over git native protocols with "-v" option shows
+    connection status, and the IP address of the other end, to
+    help diagnosing problems.
 
   - We used to have core.legacyheaders configuration, when
     set to false, allowed git to write loose objects in a format
@@ -124,8 +155,8 @@ Updates since v1.5.2
     .gitattributes.  It does not attempt to deltify blobs that
     come from paths with delta attribute set to false.
 
-  - new-workdir script (in contrib) can now be used with a bare
-    repository.
+  - "new-workdir" script (in contrib) can now be used with a
+    bare repository.
 
   - "git-mergetool" learned to use gvimdiff.
 
@@ -179,6 +210,6 @@ this release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.5.2.2-603-g7c85173
+O=v1.5.3-rc0
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
