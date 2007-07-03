@@ -1065,15 +1065,17 @@ proc do_gitk {revs} {
 	#    lets us bypass using shell process on Windows systems.
 	#
 	set cmd [list [info nameofexecutable]]
-	lappend cmd [gitexec gitk]
+	set exe [gitexec gitk]
+	lappend cmd $exe
 	if {$revs ne {}} {
 		append cmd { }
 		append cmd $revs
 	}
 
-	if {[catch {eval exec $cmd &} err]} {
-		error_popup "Failed to start gitk:\n\n$err"
+	if {! [file exists $exe]} {
+		error_popup "Unable to start gitk:\n\n$exe does not exist"
 	} else {
+		eval exec $cmd &
 		set ui_status_value $starting_gitk_msg
 		after 10000 {
 			if {$ui_status_value eq $starting_gitk_msg} {
