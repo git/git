@@ -66,7 +66,9 @@ args="$args $local $quiet $no_reuse$extra"
 names=$(git pack-objects --non-empty --all --reflog $args </dev/null "$PACKTMP") ||
 	exit 1
 if [ -z "$names" ]; then
-	echo Nothing new to pack.
+	if test -z "$quiet"; then
+		echo Nothing new to pack.
+	fi
 fi
 for name in $names ; do
 	fullbases="$fullbases pack-$name"
