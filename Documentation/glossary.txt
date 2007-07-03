@@ -330,6 +330,12 @@ This commit is referred to as a "merge commit", or sometimes just a
 	denotes a particular <<def_object,object>>. These may be stored in
 	`$GIT_DIR/refs/`.
 
+[[def_reflog]]reflog::
+	A reflog shows the local "history" of a ref.  In other words,
+	it can tell you what the 3rd last revision in _this_ repository
+	was, and what was the current state in _this_ repository,
+	yesterday 9:14pm.  See gitlink:git-reflog[1] for details.
+
 [[def_refspec]]refspec::
 	A "refspec" is used by <<def_fetch,fetch>> and
 	<<def_push,push>> to describe the mapping between remote
