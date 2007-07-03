@@ -13,9 +13,9 @@ test_expect_success setup '
 	test_tick &&
 	mkdir mozart mozart/is &&
 	echo "Commit #0" >mozart/is/pink &&
-	git-update-index --add mozart/is/pink &&
-	tree=$(git-write-tree) &&
-	commit=$(echo "Commit #0" | git-commit-tree $tree) &&
+	git update-index --add mozart/is/pink &&
+	tree=$(git write-tree) &&
+	commit=$(echo "Commit #0" | git commit-tree $tree) &&
 	zero=$commit &&
 	parent=$zero &&
 	i=0 &&
@@ -24,18 +24,18 @@ test_expect_success setup '
 	    i=$(($i+1)) &&
 	    test_tick &&
 	    echo "Commit #$i" >mozart/is/pink &&
-	    git-update-index --add mozart/is/pink &&
-	    tree=$(git-write-tree) &&
-	    commit=$(echo "Commit #$i" | git-commit-tree $tree -p $parent) &&
-	    git-update-ref refs/tags/commit$i $commit &&
+	    git update-index --add mozart/is/pink &&
+	    tree=$(git write-tree) &&
+	    commit=$(echo "Commit #$i" | git commit-tree $tree -p $parent) &&
+	    git update-ref refs/tags/commit$i $commit &&
 	    parent=$commit || return 1
 	done &&
-	git-update-ref HEAD "$commit" &&
+	git update-ref HEAD "$commit" &&
 	git-clone ./. victim &&
 	cd victim &&
-	git-log &&
+	git log &&
 	cd .. &&
-	git-update-ref HEAD "$zero" &&
+	git update-ref HEAD "$zero" &&
 	parent=$zero &&
 	i=0 &&
 	while test $i -le $cnt
@@ -43,15 +43,15 @@ test_expect_success setup '
 	    i=$(($i+1)) &&
 	    test_tick &&
 	    echo "Rebase #$i" >mozart/is/pink &&
-	    git-update-index --add mozart/is/pink &&
-	    tree=$(git-write-tree) &&
-	    commit=$(echo "Rebase #$i" | git-commit-tree $tree -p $parent) &&
-	    git-update-ref refs/tags/rebase$i $commit &&
+	    git update-index --add mozart/is/pink &&
+	    tree=$(git write-tree) &&
+	    commit=$(echo "Rebase #$i" | git commit-tree $tree -p $parent) &&
+	    git update-ref refs/tags/rebase$i $commit &&
 	    parent=$commit || return 1
 	done &&
-	git-update-ref HEAD "$commit" &&
+	git update-ref HEAD "$commit" &&
 	echo Rebase &&
-	git-log'
+	git log'
 
 test_expect_success 'pack the source repository' '
 	git repack -a -d &&
@@ -106,9 +106,9 @@ export HOME ;# this way we force the victim/.git/config to be used.
 test_expect_success \
         'pushing with --force should be denied with denyNonFastforwards' '
 	cd victim &&
-	git-config receive.denyNonFastforwards true &&
+	git config receive.denyNonFastforwards true &&
 	cd .. &&
-	git-update-ref refs/heads/master master^ || return 1
+	git update-ref refs/heads/master master^ || return 1
 	git-send-pack --force ./victim/.git/ master && return 1
 	! git diff .git/refs/heads/master victim/.git/refs/heads/master
 '

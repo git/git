@@ -6,8 +6,8 @@ SUBDIRECTORY_OK=Sometimes
 require_work_tree
 
 old_name=HEAD
-old=$(git-rev-parse --verify $old_name 2>/dev/null)
-oldbranch=$(git-symbolic-ref $old_name 2>/dev/null)
+old=$(git rev-parse --verify $old_name 2>/dev/null)
+oldbranch=$(git symbolic-ref $old_name 2>/dev/null)
 new=
 new_name=
 force=
@@ -29,9 +29,9 @@ while [ "$#" != "0" ]; do
 		shift
 		[ -z "$newbranch" ] &&
 			die "git checkout: -b needs a branch name"
-		git-show-ref --verify --quiet -- "refs/heads/$newbranch" &&
+		git show-ref --verify --quiet -- "refs/heads/$newbranch" &&
 			die "git checkout: branch $newbranch already exists"
-		git-check-ref-format "heads/$newbranch" ||
+		git check-ref-format "heads/$newbranch" ||
 			die "git checkout: we do not like '$newbranch' as a branch name."
 		;;
 	"-l")
@@ -57,20 +57,20 @@ while [ "$#" != "0" ]; do
 		usage
 		;;
 	*)
-		if rev=$(git-rev-parse --verify "$arg^0" 2>/dev/null)
+		if rev=$(git rev-parse --verify "$arg^0" 2>/dev/null)
 		then
 			if [ -z "$rev" ]; then
 				echo "unknown flag $arg"
 				exit 1
 			fi
 			new_name="$arg"
-			if git-show-ref --verify --quiet -- "refs/heads/$arg"
+			if git show-ref --verify --quiet -- "refs/heads/$arg"
 			then
-				rev=$(git-rev-parse --verify "refs/heads/$arg^0")
+				rev=$(git rev-parse --verify "refs/heads/$arg^0")
 				branch="$arg"
 			fi
 			new="$rev"
-		elif rev=$(git-rev-parse --verify "$arg^{tree}" 2>/dev/null)
+		elif rev=$(git rev-parse --verify "$arg^{tree}" 2>/dev/null)
 		then
 			# checking out selected paths from a tree-ish.
 			new="$rev"
@@ -129,14 +129,14 @@ Did you intend to checkout '$@' which can not be resolved as commit?"
 		# from a specific tree-ish; note that this is for
 		# rescuing paths and is never meant to remove what
 		# is not in the named tree-ish.
-		git-ls-tree --full-name -r "$new" "$@" |
-		git-update-index --index-info || exit $?
+		git ls-tree --full-name -r "$new" "$@" |
+		git update-index --index-info || exit $?
 	fi
 
 	# Make sure the request is about existing paths.
-	git-ls-files --error-unmatch -- "$@" >/dev/null || exit
-	git-ls-files -- "$@" |
-	git-checkout-index -f -u --stdin
+	git ls-files --error-unmatch -- "$@" >/dev/null || exit
+	git ls-files -- "$@" |
+	git checkout-index -f -u --stdin
 	exit $?
 else
 	# Make sure we did not fall back on $arg^{tree} codepath
@@ -144,7 +144,7 @@ else
 	# but switching branches.
 	if test '' != "$new"
 	then
-		git-rev-parse --verify "$new^{commit}" >/dev/null 2>&1 ||
+		git rev-parse --verify "$new^{commit}" >/dev/null 2>&1 ||
 		die "Cannot switch branch to a non-commit."
 	fi
 fi
@@ -200,10 +200,10 @@ fi
 
 if [ "$force" ]
 then
-    git-read-tree $v --reset -u $new
+    git read-tree $v --reset -u $new
 else
-    git-update-index --refresh >/dev/null
-    merge_error=$(git-read-tree -m -u --exclude-per-directory=.gitignore $old $new 2>&1) || (
+    git update-index --refresh >/dev/null
+    merge_error=$(git read-tree -m -u --exclude-per-directory=.gitignore $old $new 2>&1) || (
 	case "$merge" in
 	'')
 		echo >&2 "$merge_error"
@@ -254,12 +254,12 @@ fi
 #
 if [ "$?" -eq 0 ]; then
 	if [ "$newbranch" ]; then
-		git-branch $track $newbranch_log "$newbranch" "$new_name" || exit
+		git branch $track $newbranch_log "$newbranch" "$new_name" || exit
 		branch="$newbranch"
 	fi
 	if test -n "$branch"
 	then
-		GIT_DIR="$GIT_DIR" git-symbolic-ref -m "checkout: moving to $branch" HEAD "refs/heads/$branch"
+		GIT_DIR="$GIT_DIR" git symbolic-ref -m "checkout: moving to $branch" HEAD "refs/heads/$branch"
 		if test -n "$quiet"
 		then
 			true	# nothing
@@ -271,7 +271,7 @@ if [ "$?" -eq 0 ]; then
 		fi
 	elif test -n "$detached"
 	then
-		git-update-ref --no-deref -m "checkout: moving to $arg" HEAD "$detached" ||
+		git update-ref --no-deref -m "checkout: moving to $arg" HEAD "$detached" ||
 			die "Cannot detach HEAD"
 		if test -n "$detach_warn"
 		then

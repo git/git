@@ -12,8 +12,8 @@ trap 'rm -f "$TMP-*"' 0
 ref_stash=refs/stash
 
 no_changes () {
-	git-diff-index --quiet --cached HEAD &&
-	git-diff-files --quiet
+	git diff-index --quiet --cached HEAD &&
+	git diff-files --quiet
 }
 
 clear_stash () {
@@ -32,14 +32,14 @@ save_stash () {
 		clear_stash || die "Cannot initialize stash"
 
 	# state of the base commit
-	if b_commit=$(git-rev-parse --verify HEAD)
+	if b_commit=$(git rev-parse --verify HEAD)
 	then
-		head=$(git-log --abbrev-commit --pretty=oneline -n 1 HEAD)
+		head=$(git log --abbrev-commit --pretty=oneline -n 1 HEAD)
 	else
 		die "You do not have the initial commit yet"
 	fi
 
-	if branch=$(git-symbolic-ref -q HEAD)
+	if branch=$(git symbolic-ref -q HEAD)
 	then
 		branch=${branch#refs/heads/}
 	else
@@ -48,9 +48,9 @@ save_stash () {
 	msg=$(printf '%s: %s' "$branch" "$head")
 
 	# state of the index
-	i_tree=$(git-write-tree) &&
+	i_tree=$(git write-tree) &&
 	i_commit=$(printf 'index on %s' "$msg" |
-		git-commit-tree $i_tree -p $b_commit) ||
+		git commit-tree $i_tree -p $b_commit) ||
 		die "Cannot save the current index state"
 
 	# state of the working tree
@@ -59,57 +59,57 @@ save_stash () {
 		export GIT_INDEX_FILE &&
 
 		rm -f "$TMP-index" &&
-		git-read-tree $i_tree &&
-		git-add -u &&
-		git-write-tree &&
+		git read-tree $i_tree &&
+		git add -u &&
+		git write-tree &&
 		rm -f "$TMP-index"
 	) ) ||
 		die "Cannot save the current worktree state"
 
 	# create the stash
 	w_commit=$(printf 'WIP on %s' "$msg" |
-		git-commit-tree $w_tree -p $b_commit -p $i_commit) ||
+		git commit-tree $w_tree -p $b_commit -p $i_commit) ||
 		die "Cannot record working tree state"
 
-	git-update-ref -m "$msg" $ref_stash $w_commit ||
+	git update-ref -m "$msg" $ref_stash $w_commit ||
 		die "Cannot save the current status"
 	printf >&2 'Saved WIP on %s\n' "$msg"
 }
 
 have_stash () {
-	git-rev-parse --verify $ref_stash >/dev/null 2>&1
+	git rev-parse --verify $ref_stash >/dev/null 2>&1
 }
 
 list_stash () {
 	have_stash || return 0
-	git-log --pretty=oneline -g "$@" $ref_stash |
+	git log --pretty=oneline -g "$@" $ref_stash |
 	sed -n -e 's/^[.0-9a-f]* refs\///p'
 }
 
 show_stash () {
-	flags=$(git-rev-parse --no-revs --flags "$@")
+	flags=$(git rev-parse --no-revs --flags "$@")
 	if test -z "$flags"
 	then
 		flags=--stat
 	fi
-	s=$(git-rev-parse --revs-only --no-flags --default $ref_stash "$@")
+	s=$(git rev-parse --revs-only --no-flags --default $ref_stash "$@")
 
-	w_commit=$(git-rev-parse --verify "$s") &&
-	b_commit=$(git-rev-parse --verify "$s^") &&
-	git-diff $flags $b_commit $w_commit
+	w_commit=$(git rev-parse --verify "$s") &&
+	b_commit=$(git rev-parse --verify "$s^") &&
+	git diff $flags $b_commit $w_commit
 }
 
 apply_stash () {
-	git-diff-files --quiet ||
+	git diff-files --quiet ||
 		die 'Cannot restore on top of a dirty state'
 
 	# current index state
-	c_tree=$(git-write-tree) ||
+	c_tree=$(git write-tree) ||
 		die 'Cannot apply a stash in the middle of a merge'
 
-	s=$(git-rev-parse --revs-only --no-flags --default $ref_stash "$@") &&
-	w_tree=$(git-rev-parse --verify "$s:") &&
-	b_tree=$(git-rev-parse --verify "$s^:") ||
+	s=$(git rev-parse --revs-only --no-flags --default $ref_stash "$@") &&
+	w_tree=$(git rev-parse --verify "$s:") &&
+	b_tree=$(git rev-parse --verify "$s^:") ||
 		die "$*: no valid stashed state found"
 
 	eval "
@@ -123,9 +123,9 @@ apply_stash () {
 	then
 		# No conflict
 		a="$TMP-added" &&
-		git-diff --cached --name-only --diff-filter=A $c_tree >"$a" &&
-		git-read-tree --reset $c_tree &&
-		git-update-index --add --stdin <"$a" ||
+		git diff --cached --name-only --diff-filter=A $c_tree >"$a" &&
+		git read-tree --reset $c_tree &&
+		git update-index --add --stdin <"$a" ||
 			die "Cannot unstage modified files"
 		git-status
 		rm -f "$a"

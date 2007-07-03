@@ -13,7 +13,7 @@
 #   $7 - file in branch2 mode (or empty)
 #
 # Handle some trivial cases.. The _really_ trivial cases have
-# been handled already by git-read-tree, but that one doesn't
+# been handled already by git read-tree, but that one doesn't
 # do any merges that might change the tree layout.
 
 case "${1:-.}${2:-.}${3:-.}" in
@@ -34,7 +34,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 		rm -f -- "$4" &&
 		rmdir -p "$(expr "z$4" : 'z\(.*\)/')" 2>/dev/null || :
 	fi &&
-		exec git-update-index --remove -- "$4"
+		exec git update-index --remove -- "$4"
 	;;
 
 #
@@ -50,8 +50,8 @@ case "${1:-.}${2:-.}${3:-.}" in
 		echo "ERROR: untracked $4 is overwritten by the merge."
 		exit 1
 	}
-	git-update-index --add --cacheinfo "$6$7" "$2$3" "$4" &&
-		exec git-checkout-index -u -f -- "$4"
+	git update-index --add --cacheinfo "$6$7" "$2$3" "$4" &&
+		exec git checkout-index -u -f -- "$4"
 	;;
 
 #
@@ -64,8 +64,8 @@ case "${1:-.}${2:-.}${3:-.}" in
 		exit 1
 	fi
 	echo "Adding $4"
-	git-update-index --add --cacheinfo "$6" "$2" "$4" &&
-		exec git-checkout-index -u -f -- "$4"
+	git update-index --add --cacheinfo "$6" "$2" "$4" &&
+		exec git checkout-index -u -f -- "$4"
 	;;
 
 #
@@ -84,11 +84,11 @@ case "${1:-.}${2:-.}${3:-.}" in
 	case "$1" in
 	'')
 		echo "Added $4 in both, but differently."
-		# This extracts OUR file in $orig, and uses git-apply to
+		# This extracts OUR file in $orig, and uses git apply to
 		# remove lines that are unique to ours.
 		orig=`git-unpack-file $2`
 		sz0=`wc -c <"$orig"`
-		diff -u -La/$orig -Lb/$orig $orig $src2 | git-apply --no-add
+		diff -u -La/$orig -Lb/$orig $orig $src2 | git apply --no-add
 		sz1=`wc -c <"$orig"`
 
 		# If we do not have enough common material, it is not
@@ -104,12 +104,12 @@ case "${1:-.}${2:-.}${3:-.}" in
 	# Be careful for funny filename such as "-L" in "$4", which
 	# would confuse "merge" greatly.
 	src1=`git-unpack-file $2`
-	git-merge-file "$src1" "$orig" "$src2"
+	git merge-file "$src1" "$orig" "$src2"
 	ret=$?
 
 	# Create the working tree file, using "our tree" version from the
 	# index, and then store the result of the merge.
-	git-checkout-index -f --stage=2 -- "$4" && cat "$src1" >"$4"
+	git checkout-index -f --stage=2 -- "$4" && cat "$src1" >"$4"
 	rm -f -- "$orig" "$src1" "$src2"
 
 	if [ "$6" != "$7" ]; then
@@ -124,7 +124,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 		echo "ERROR: Merge conflict in $4"
 		exit 1
 	fi
-	exec git-update-index -- "$4"
+	exec git update-index -- "$4"
 	;;
 
 *)

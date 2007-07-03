@@ -17,18 +17,18 @@ test_expect_success \
     'echo frotz >file0 &&
      mkdir path1 &&
      echo rezrov >path1/file1 &&
-     git-update-index --add file0 path1/file1 &&
-     tree=`git-write-tree` &&
+     git update-index --add file0 path1/file1 &&
+     tree=`git write-tree` &&
      echo "$tree" &&
      echo nitfol >file0 &&
      echo yomin >path1/file1 &&
-     git-update-index file0 path1/file1'
+     git update-index file0 path1/file1'
 
 cat >expected <<\EOF
 EOF
 test_expect_success \
     'limit to path should show nothing' \
-    'git-diff-index --cached $tree -- path >current &&
+    'git diff-index --cached $tree -- path >current &&
      compare_diff_raw current expected'
 
 cat >expected <<\EOF
@@ -36,7 +36,7 @@ cat >expected <<\EOF
 EOF
 test_expect_success \
     'limit to path1 should show path1/file1' \
-    'git-diff-index --cached $tree -- path1 >current &&
+    'git diff-index --cached $tree -- path1 >current &&
      compare_diff_raw current expected'
 
 cat >expected <<\EOF
@@ -44,7 +44,7 @@ cat >expected <<\EOF
 EOF
 test_expect_success \
     'limit to path1/ should show path1/file1' \
-    'git-diff-index --cached $tree -- path1/ >current &&
+    'git diff-index --cached $tree -- path1/ >current &&
      compare_diff_raw current expected'
 
 cat >expected <<\EOF
@@ -52,14 +52,14 @@ cat >expected <<\EOF
 EOF
 test_expect_success \
     'limit to file0 should show file0' \
-    'git-diff-index --cached $tree -- file0 >current &&
+    'git diff-index --cached $tree -- file0 >current &&
      compare_diff_raw current expected'
 
 cat >expected <<\EOF
 EOF
 test_expect_success \
     'limit to file0/ should emit nothing.' \
-    'git-diff-index --cached $tree -- file0/ >current &&
+    'git diff-index --cached $tree -- file0/ >current &&
      compare_diff_raw current expected'
 
 test_done

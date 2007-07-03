@@ -11,24 +11,24 @@ test_description='Test mode change diffs.
 test_expect_success \
     'setup' \
     'echo frotz >rezrov &&
-     git-update-index --add rezrov &&
-     tree=`git-write-tree` &&
+     git update-index --add rezrov &&
+     tree=`git write-tree` &&
      echo $tree'
 
 if [ "$(git config --get core.filemode)" = false ]
 then
 	say 'filemode disabled on the filesystem, using update-index --chmod=+x'
 	test_expect_success \
-	    'git-update-index --chmod=+x' \
-	    'git-update-index rezrov &&
-	     git-update-index --chmod=+x rezrov &&
-	     git-diff-index $tree >current'
+	    'git update-index --chmod=+x' \
+	    'git update-index rezrov &&
+	     git update-index --chmod=+x rezrov &&
+	     git diff-index $tree >current'
 else
 	test_expect_success \
 	    'chmod' \
 	    'chmod +x rezrov &&
-	     git-update-index rezrov &&
-	     git-diff-index $tree >current'
+	     git update-index rezrov &&
+	     git diff-index $tree >current'
 fi
 
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'

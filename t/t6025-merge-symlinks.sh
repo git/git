@@ -12,22 +12,22 @@ if core.symlinks is false.'
 
 test_expect_success \
 'setup' '
-git-config core.symlinks false &&
+git config core.symlinks false &&
 > file &&
-git-add file &&
+git add file &&
 git-commit -m initial &&
-git-branch b-symlink &&
-git-branch b-file &&
+git branch b-symlink &&
+git branch b-file &&
 l=$(echo -n file | git-hash-object -t blob -w --stdin) &&
-echo "120000 $l	symlink" | git-update-index --index-info &&
+echo "120000 $l	symlink" | git update-index --index-info &&
 git-commit -m master &&
 git-checkout b-symlink &&
 l=$(echo -n file-different | git-hash-object -t blob -w --stdin) &&
-echo "120000 $l	symlink" | git-update-index --index-info &&
+echo "120000 $l	symlink" | git update-index --index-info &&
 git-commit -m b-symlink &&
 git-checkout b-file &&
 echo plain-file > symlink &&
-git-add symlink &&
+git add symlink &&
 git-commit -m b-file'
 
 test_expect_failure \

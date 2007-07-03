@@ -17,7 +17,7 @@ unique_commit()
 	_text=$1
         _tree=$2
 	shift 2
-	echo $_text | git-commit-tree $(tag $_tree) "$@"
+	echo $_text | git commit-tree $(tag $_tree) "$@"
 }
 
 # Save the output of a command into the tag specified. Prepend
@@ -62,7 +62,7 @@ as_author()
 commit_date()
 {
         _commit=$1
-	git-cat-file commit $_commit | sed -n "s/^committer .*> \([0-9]*\) .*/\1/p"
+	git cat-file commit $_commit | sed -n "s/^committer .*> \([0-9]*\) .*/\1/p"
 }
 
 on_committer_date()

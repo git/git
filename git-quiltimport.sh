@@ -67,12 +67,12 @@ tmp_info="$tmp_dir/info"
 
 
 # Find the intial commit
-commit=$(git-rev-parse HEAD)
+commit=$(git rev-parse HEAD)
 
 mkdir $tmp_dir || exit 2
 for patch_name in $(cat "$QUILT_PATCHES/series" | grep -v '^#'); do
 	echo $patch_name
-	(cat $QUILT_PATCHES/$patch_name | git-mailinfo "$tmp_msg" "$tmp_patch" > "$tmp_info") || exit 3
+	(cat $QUILT_PATCHES/$patch_name | git mailinfo "$tmp_msg" "$tmp_patch" > "$tmp_info") || exit 3
 	test -s .dotest/patch || {
 		echo "Patch is empty.  Was it split wrong?"
 		exit 1
@@ -113,10 +113,10 @@ for patch_name in $(cat "$QUILT_PATCHES/series" | grep -v '^#'); do
 	fi
 
 	if [ -z "$dry_run" ] ; then
-		git-apply --index -C1 "$tmp_patch" &&
-		tree=$(git-write-tree) &&
-		commit=$( (echo "$SUBJECT"; echo; cat "$tmp_msg") | git-commit-tree $tree -p $commit) &&
-		git-update-ref -m "quiltimport: $patch_name" HEAD $commit || exit 4
+		git apply --index -C1 "$tmp_patch" &&
+		tree=$(git write-tree) &&
+		commit=$( (echo "$SUBJECT"; echo; cat "$tmp_msg") | git commit-tree $tree -p $commit) &&
+		git update-ref -m "quiltimport: $patch_name" HEAD $commit || exit 4
 	fi
 done
 rm -rf $tmp_dir || exit 5

@@ -84,7 +84,7 @@ test_expect_success 'three-way not complaining on an untracked path in both' '
 	echo >file2 file two is untracked on the master side &&
 	echo >subdir/file2 file two is untracked on the master side &&
 
-	git-read-tree -m -u branch-point master side
+	git read-tree -m -u branch-point master side
 '
 
 test_expect_success 'three-way not clobbering a working tree file' '

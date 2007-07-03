@@ -1,18 +1,18 @@
 #!/bin/sh
 
-test_description='git-mv in subdirs'
+test_description='git mv in subdirs'
 . ./test-lib.sh
 
 test_expect_success \
     'prepare reference tree' \
     'mkdir path0 path1 &&
      cp ../../COPYING path0/COPYING &&
-     git-add path0/COPYING &&
+     git add path0/COPYING &&
      git-commit -m add -a'
 
 test_expect_success \
     'moving the file out of subdirectory' \
-    'cd path0 && git-mv COPYING ../path1/COPYING'
+    'cd path0 && git mv COPYING ../path1/COPYING'
 
 # in path0 currently
 test_expect_success \
@@ -21,12 +21,12 @@ test_expect_success \
 
 test_expect_success \
     'checking the commit' \
-    'git-diff-tree -r -M --name-status  HEAD^ HEAD | \
+    'git diff-tree -r -M --name-status  HEAD^ HEAD | \
     grep -E "^R100.+path0/COPYING.+path1/COPYING"'
 
 test_expect_success \
     'moving the file back into subdirectory' \
-    'cd path0 && git-mv ../path1/COPYING COPYING'
+    'cd path0 && git mv ../path1/COPYING COPYING'
 
 # in path0 currently
 test_expect_success \
@@ -35,18 +35,18 @@ test_expect_success \
 
 test_expect_success \
     'checking the commit' \
-    'git-diff-tree -r -M --name-status  HEAD^ HEAD | \
+    'git diff-tree -r -M --name-status  HEAD^ HEAD | \
     grep -E "^R100.+path1/COPYING.+path0/COPYING"'
 
 test_expect_success \
     'adding another file' \
     'cp ../../README path0/README &&
-     git-add path0/README &&
+     git add path0/README &&
      git-commit -m add2 -a'
 
 test_expect_success \
     'moving whole subdirectory' \
-    'git-mv path0 path2'
+    'git mv path0 path2'
 
 test_expect_success \
     'commiting the change' \
@@ -54,18 +54,18 @@ test_expect_success \
 
 test_expect_success \
     'checking the commit' \
-    'git-diff-tree -r -M --name-status  HEAD^ HEAD | \
+    'git diff-tree -r -M --name-status  HEAD^ HEAD | \
      grep -E "^R100.+path0/COPYING.+path2/COPYING" &&
-     git-diff-tree -r -M --name-status  HEAD^ HEAD | \
+     git diff-tree -r -M --name-status  HEAD^ HEAD | \
      grep -E "^R100.+path0/README.+path2/README"'
 
 test_expect_success \
     'succeed when source is a prefix of destination' \
-    'git-mv path2/COPYING path2/COPYING-renamed'
+    'git mv path2/COPYING path2/COPYING-renamed'
 
 test_expect_success \
     'moving whole subdirectory into subdirectory' \
-    'git-mv path2 path1'
+    'git mv path2 path1'
 
 test_expect_success \
     'commiting the change' \
@@ -73,18 +73,18 @@ test_expect_success \
 
 test_expect_success \
     'checking the commit' \
-    'git-diff-tree -r -M --name-status  HEAD^ HEAD | \
+    'git diff-tree -r -M --name-status  HEAD^ HEAD | \
      grep -E "^R100.+path2/COPYING.+path1/path2/COPYING" &&
-     git-diff-tree -r -M --name-status  HEAD^ HEAD | \
+     git diff-tree -r -M --name-status  HEAD^ HEAD | \
      grep -E "^R100.+path2/README.+path1/path2/README"'
 
 test_expect_failure \
     'do not move directory over existing directory' \
-    'mkdir path0 && mkdir path0/path2 && git-mv path2 path0'
+    'mkdir path0 && mkdir path0/path2 && git mv path2 path0'
 
 test_expect_success \
     'move into "."' \
-    'git-mv path1/path2/ .'
+    'git mv path1/path2/ .'
 
 test_expect_success "Michael Cassar's test case" '
 	rm -fr .git papers partA &&

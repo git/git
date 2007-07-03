@@ -56,7 +56,7 @@ bisect_start() {
 	# Verify HEAD. If we were bisecting before this, reset to the
 	# top-of-line master first!
 	#
-	head=$(GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD) ||
+	head=$(GIT_DIR="$GIT_DIR" git symbolic-ref HEAD) ||
 	die "Bad HEAD - I need a symbolic ref"
 	case "$head" in
 	refs/heads/bisect)
@@ -99,7 +99,7 @@ bisect_start() {
 		break
 		;;
 	    *)
-	        rev=$(git-rev-parse --verify "$arg^{commit}" 2>/dev/null) || {
+	        rev=$(git rev-parse --verify "$arg^{commit}" 2>/dev/null) || {
 		    test $has_double_dash -eq 1 &&
 		        die "'$arg' does not appear to be a valid revision"
 		    break
@@ -124,9 +124,9 @@ bisect_bad() {
 	bisect_autostart
 	case "$#" in
 	0)
-		rev=$(git-rev-parse --verify HEAD) ;;
+		rev=$(git rev-parse --verify HEAD) ;;
 	1)
-		rev=$(git-rev-parse --verify "$1^{commit}") ;;
+		rev=$(git rev-parse --verify "$1^{commit}") ;;
 	*)
 		usage ;;
 	esac || exit
@@ -138,19 +138,19 @@ bisect_bad() {
 bisect_write_bad() {
 	rev="$1"
 	echo "$rev" >"$GIT_DIR/refs/bisect/bad"
-	echo "# bad: "$(git-show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
+	echo "# bad: "$(git show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
 }
 
 bisect_good() {
 	bisect_autostart
         case "$#" in
-	0)    revs=$(git-rev-parse --verify HEAD) || exit ;;
-	*)    revs=$(git-rev-parse --revs-only --no-flags "$@") &&
+	0)    revs=$(git rev-parse --verify HEAD) || exit ;;
+	*)    revs=$(git rev-parse --revs-only --no-flags "$@") &&
 		test '' != "$revs" || die "Bad rev input: $@" ;;
 	esac
 	for rev in $revs
 	do
-		rev=$(git-rev-parse --verify "$rev^{commit}") || exit
+		rev=$(git rev-parse --verify "$rev^{commit}") || exit
 		bisect_write_good "$rev"
 		echo "git-bisect good $rev" >>"$GIT_DIR/BISECT_LOG"
 
@@ -161,7 +161,7 @@ bisect_good() {
 bisect_write_good() {
 	rev="$1"
 	echo "$rev" >"$GIT_DIR/refs/bisect/good-$rev"
-	echo "# good: "$(git-show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
+	echo "# good: "$(git show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
 }
 
 bisect_next_check() {
@@ -211,10 +211,10 @@ bisect_next() {
 	bisect_autostart
 	bisect_next_check good
 
-	bad=$(git-rev-parse --verify refs/bisect/bad) &&
+	bad=$(git rev-parse --verify refs/bisect/bad) &&
 	good=$(git for-each-ref --format='^%(objectname)' \
 		"refs/bisect/good-*" | tr '[\012]' ' ') &&
-	eval="git-rev-list --bisect-vars $good $bad --" &&
+	eval="git rev-list --bisect-vars $good $bad --" &&
 	eval="$eval $(cat "$GIT_DIR/BISECT_NAMES")" &&
 	eval=$(eval "$eval") &&
 	eval "$eval" || exit
@@ -225,7 +225,7 @@ bisect_next() {
 	fi
 	if [ "$bisect_rev" = "$bad" ]; then
 		echo "$bisect_rev is first bad commit"
-		git-diff-tree --pretty $bisect_rev
+		git diff-tree --pretty $bisect_rev
 		exit 0
 	fi
 
@@ -233,8 +233,8 @@ bisect_next() {
 	echo "$bisect_rev" >"$GIT_DIR/refs/heads/new-bisect"
 	git checkout -q new-bisect || exit
 	mv "$GIT_DIR/refs/heads/new-bisect" "$GIT_DIR/refs/heads/bisect" &&
-	GIT_DIR="$GIT_DIR" git-symbolic-ref HEAD refs/heads/bisect
-	git-show-branch "$bisect_rev"
+	GIT_DIR="$GIT_DIR" git symbolic-ref HEAD refs/heads/bisect
+	git show-branch "$bisect_rev"
 }
 
 bisect_visualize() {
@@ -250,7 +250,7 @@ bisect_reset() {
 	   else
 	       branch=master
 	   fi ;;
-	1) git-show-ref --verify --quiet -- "refs/heads/$1" || {
+	1) git show-ref --verify --quiet -- "refs/heads/$1" || {
 	       echo >&2 "$1 does not seem to be a valid branch"
 	       exit 1
 	   }
@@ -288,12 +288,12 @@ bisect_replay () {
 			;;
 		good)
 			echo "$rev" >"$GIT_DIR/refs/bisect/good-$rev"
-			echo "# good: "$(git-show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
+			echo "# good: "$(git show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
 			echo "git-bisect good $rev" >>"$GIT_DIR/BISECT_LOG"
 			;;
 		bad)
 			echo "$rev" >"$GIT_DIR/refs/bisect/bad"
-			echo "# bad: "$(git-show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
+			echo "# bad: "$(git show-branch $rev) >>"$GIT_DIR/BISECT_LOG"
 			echo "git-bisect bad $rev" >>"$GIT_DIR/BISECT_LOG"
 			;;
 		*)

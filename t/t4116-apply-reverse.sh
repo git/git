@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git-apply in reverse
+test_description='git apply in reverse
 
 '
 

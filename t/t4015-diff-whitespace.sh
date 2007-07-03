@@ -17,7 +17,7 @@ do {
 } while (0);
 EOF
 
-git-update-index --add x
+git update-index --add x
 
 cat << EOF > x
 do
@@ -42,13 +42,13 @@ index adf3937..6edc172 100644
 +while (0);
 EOF
 
-git-diff > out
+git diff > out
 test_expect_success "Ray's example without options" 'git diff expect out'
 
-git-diff -w > out
+git diff -w > out
 test_expect_success "Ray's example with -w" 'git diff expect out'
 
-git-diff -b > out
+git diff -b > out
 test_expect_success "Ray's example with -b" 'git diff expect out'
 
 tr 'Q' '\015' << EOF > x
@@ -60,7 +60,7 @@ unchanged line
 CR at endQ
 EOF
 
-git-update-index x
+git update-index x
 
 cat << EOF > x
 	whitespace at beginning
@@ -89,14 +89,14 @@ index d99af23..8b32fb5 100644
 -CR at endQ
 +CR at end
 EOF
-git-diff > out
+git diff > out
 test_expect_success 'another test, without options' 'git diff expect out'
 
 cat << EOF > expect
 diff --git a/x b/x
 index d99af23..8b32fb5 100644
 EOF
-git-diff -w > out
+git diff -w > out
 test_expect_success 'another test, with -w' 'git diff expect out'
 
 tr 'Q' '\015' << EOF > expect
@@ -114,7 +114,7 @@ index d99af23..8b32fb5 100644
  unchanged line
  CR at endQ
 EOF
-git-diff -b > out
+git diff -b > out
 test_expect_success 'another test, with -b' 'git diff expect out'
 
 test_done

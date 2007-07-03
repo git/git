@@ -65,14 +65,14 @@ resolve_symlink_merge () {
 	read ans
 	case "$ans" in
 	    [lL]*)
-		git-checkout-index -f --stage=2 -- "$path"
-		git-add -- "$path"
+		git checkout-index -f --stage=2 -- "$path"
+		git add -- "$path"
 		cleanup_temp_files --save-backup
 		return
 		;;
 	    [rR]*)
-		git-checkout-index -f --stage=3 -- "$path"
-		git-add -- "$path"
+		git checkout-index -f --stage=3 -- "$path"
+		git add -- "$path"
 		cleanup_temp_files --save-backup
 		return
 		;;
@@ -93,12 +93,12 @@ resolve_deleted_merge () {
 	read ans
 	case "$ans" in
 	    [mMcC]*)
-		git-add -- "$path"
+		git add -- "$path"
 		cleanup_temp_files --save-backup
 		return
 		;;
 	    [dD]*)
-		git-rm -- "$path" > /dev/null
+		git rm -- "$path" > /dev/null
 		cleanup_temp_files
 		return
 		;;
@@ -140,7 +140,7 @@ remove_backup () {
 merge_file () {
     path="$1"
 
-    f=`git-ls-files -u -- "$path"`
+    f=`git ls-files -u -- "$path"`
     if test -z "$f" ; then
 	if test ! -f "$path" ; then
 	    echo "$path: file not found"
@@ -297,7 +297,7 @@ do
 done
 
 if test -z "$merge_tool"; then
-    merge_tool=`git-config merge.tool`
+    merge_tool=`git config merge.tool`
     case "$merge_tool" in
 	kdiff3 | tkdiff | xxdiff | meld | opendiff | emerge | vimdiff | gvimdiff | "")
 	    ;; # happy

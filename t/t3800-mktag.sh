@@ -22,9 +22,9 @@ check_verify_failure () {
 # first create a commit, so we have a valid object/type
 # for the tag.
 echo Hello >A
-git-update-index --add A
+git update-index --add A
 git-commit -m "Initial commit"
-head=$(git-rev-parse --verify HEAD)
+head=$(git rev-parse --verify HEAD)
 
 ############################################################
 #  1. length check

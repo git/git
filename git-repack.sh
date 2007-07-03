@@ -63,7 +63,7 @@ case ",$all_into_one," in
 esac
 
 args="$args $local $quiet $no_reuse$extra"
-names=$(git-pack-objects --non-empty --all --reflog $args </dev/null "$PACKTMP") ||
+names=$(git pack-objects --non-empty --all --reflog $args </dev/null "$PACKTMP") ||
 	exit 1
 if [ -z "$names" ]; then
 	echo Nothing new to pack.
@@ -113,7 +113,7 @@ then
 		  done
 		)
 	fi
-	git-prune-packed $quiet
+	git prune-packed $quiet
 fi
 
 case "$no_update_info" in

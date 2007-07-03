@@ -29,11 +29,11 @@ set_reflog_action() {
 }
 
 is_bare_repository () {
-	git-rev-parse --is-bare-repository
+	git rev-parse --is-bare-repository
 }
 
 cd_to_toplevel () {
-	cdup=$(git-rev-parse --show-cdup)
+	cdup=$(git rev-parse --show-cdup)
 	if test ! -z "$cdup"
 	then
 		cd "$cdup" || {
@@ -44,8 +44,8 @@ cd_to_toplevel () {
 }
 
 require_work_tree () {
-	test $(git-rev-parse --is-inside-work-tree) = true &&
-	test $(git-rev-parse --is-inside-git-dir) = false ||
+	test $(git rev-parse --is-inside-work-tree) = true &&
+	test $(git rev-parse --is-inside-git-dir) = false ||
 	die "fatal: $0 cannot be used without a working tree."
 }
 
@@ -95,12 +95,12 @@ esac
 if [ -z "$SUBDIRECTORY_OK" ]
 then
 	: ${GIT_DIR=.git}
-	GIT_DIR=$(GIT_DIR="$GIT_DIR" git-rev-parse --git-dir) || {
+	GIT_DIR=$(GIT_DIR="$GIT_DIR" git rev-parse --git-dir) || {
 		exit=$?
 		echo >&2 "You need to run this command from the toplevel of the working tree."
 		exit $exit
 	}
 else
-	GIT_DIR=$(git-rev-parse --git-dir) || exit
+	GIT_DIR=$(git rev-parse --git-dir) || exit
 fi
 : ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}

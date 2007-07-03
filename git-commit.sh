@@ -8,7 +8,7 @@ SUBDIRECTORY_OK=Yes
 . git-sh-setup
 require_work_tree
 
-git-rev-parse --verify HEAD >/dev/null 2>&1 || initial_commit=t
+git rev-parse --verify HEAD >/dev/null 2>&1 || initial_commit=t
 
 case "$0" in
 *status)
@@ -53,7 +53,7 @@ run_status () {
 	t) color= ;;
 	*) color=--nocolor ;;
 	esac
-	git-runstatus ${color} \
+	git runstatus ${color} \
 		${verbose:+--verbose} \
 		${amend:+--amend} \
 		${untracked_files:+--untracked}
@@ -335,20 +335,20 @@ t,)
 		cd_to_toplevel &&
 		GIT_INDEX_FILE="$NEXT_INDEX" &&
 		export GIT_INDEX_FILE &&
-		git-diff-files --name-only -z |
-		git-update-index --remove -z --stdin
+		git diff-files --name-only -z |
+		git update-index --remove -z --stdin
 	) || exit
 	;;
 ,t)
 	save_index &&
-	git-ls-files --error-unmatch -- "$@" >/dev/null || exit
+	git ls-files --error-unmatch -- "$@" >/dev/null || exit
 
-	git-diff-files --name-only -z -- "$@"  |
+	git diff-files --name-only -z -- "$@"  |
 	(
 		cd_to_toplevel &&
 		GIT_INDEX_FILE="$NEXT_INDEX" &&
 		export GIT_INDEX_FILE &&
-		git-update-index --remove -z --stdin
+		git update-index --remove -z --stdin
 	) || exit
 	;;
 ,)
@@ -364,28 +364,28 @@ t,)
 			refuse_partial "Cannot do a partial commit during a merge."
 		fi
 		TMP_INDEX="$GIT_DIR/tmp-index$$"
-		commit_only=`git-ls-files --error-unmatch -- "$@"` || exit
+		commit_only=`git ls-files --error-unmatch -- "$@"` || exit
 
 		# Build a temporary index and update the real index
 		# the same way.
 		if test -z "$initial_commit"
 		then
 			GIT_INDEX_FILE="$THIS_INDEX" \
-			git-read-tree --index-output="$TMP_INDEX" -i -m HEAD
+			git read-tree --index-output="$TMP_INDEX" -i -m HEAD
 		else
 			rm -f "$TMP_INDEX"
 		fi || exit
 
 		printf '%s\n' "$commit_only" |
 		GIT_INDEX_FILE="$TMP_INDEX" \
-		git-update-index --add --remove --stdin &&
+		git update-index --add --remove --stdin &&
 
 		save_index &&
 		printf '%s\n' "$commit_only" |
 		(
 			GIT_INDEX_FILE="$NEXT_INDEX"
 			export GIT_INDEX_FILE
-			git-update-index --remove --stdin
+			git update-index --remove --stdin
 		) || exit
 		;;
 	esac
@@ -408,12 +408,12 @@ case "$status_only" in
 t)
 	# This will silently fail in a read-only repository, which is
 	# what we want.
-	GIT_INDEX_FILE="$USE_INDEX" git-update-index -q --unmerged --refresh
+	GIT_INDEX_FILE="$USE_INDEX" git update-index -q --unmerged --refresh
 	run_status
 	exit $?
 	;;
 '')
-	GIT_INDEX_FILE="$USE_INDEX" git-update-index -q --refresh || exit
+	GIT_INDEX_FILE="$USE_INDEX" git update-index -q --refresh || exit
 	;;
 esac
 
@@ -454,7 +454,7 @@ then
 elif test -f "$GIT_DIR/SQUASH_MSG"
 then
 	cat "$GIT_DIR/SQUASH_MSG"
-fi | git-stripspace >"$GIT_DIR"/COMMIT_EDITMSG
+fi | git stripspace >"$GIT_DIR"/COMMIT_EDITMSG
 
 case "$signoff" in
 t)
@@ -505,12 +505,12 @@ then
 		PARENTS="-p HEAD "`sed -e 's/^/-p /' "$GIT_DIR/MERGE_HEAD"`
 	elif test -n "$amend"; then
 		rloga='commit (amend)'
-		PARENTS=$(git-cat-file commit HEAD |
+		PARENTS=$(git cat-file commit HEAD |
 			sed -n -e '/^$/q' -e 's/^parent /-p /p')
 	fi
-	current="$(git-rev-parse --verify HEAD)"
+	current="$(git rev-parse --verify HEAD)"
 else
-	if [ -z "$(git-ls-files)" ]; then
+	if [ -z "$(git ls-files)" ]; then
 		echo >&2 'nothing to commit (use "git add file1 file2" to include for commit)'
 		exit 1
 	fi
@@ -577,23 +577,23 @@ then
 else
     cat "$GIT_DIR"/COMMIT_EDITMSG
 fi |
-git-stripspace >"$GIT_DIR"/COMMIT_MSG
+git stripspace >"$GIT_DIR"/COMMIT_MSG
 
 if cnt=`grep -v -i '^Signed-off-by' "$GIT_DIR"/COMMIT_MSG |
-	git-stripspace |
+	git stripspace |
 	wc -l` &&
    test 0 -lt $cnt
 then
 	if test -z "$TMP_INDEX"
 	then
-		tree=$(GIT_INDEX_FILE="$USE_INDEX" git-write-tree)
+		tree=$(GIT_INDEX_FILE="$USE_INDEX" git write-tree)
 	else
-		tree=$(GIT_INDEX_FILE="$TMP_INDEX" git-write-tree) &&
+		tree=$(GIT_INDEX_FILE="$TMP_INDEX" git write-tree) &&
 		rm -f "$TMP_INDEX"
 	fi &&
-	commit=$(cat "$GIT_DIR"/COMMIT_MSG | git-commit-tree $tree $PARENTS) &&
+	commit=$(cat "$GIT_DIR"/COMMIT_MSG | git commit-tree $tree $PARENTS) &&
 	rlogm=$(sed -e 1q "$GIT_DIR"/COMMIT_MSG) &&
-	git-update-ref -m "$GIT_REFLOG_ACTION: $rlogm" HEAD $commit "$current" &&
+	git update-ref -m "$GIT_REFLOG_ACTION: $rlogm" HEAD $commit "$current" &&
 	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" &&
 	if test -f "$NEXT_INDEX"
 	then
@@ -612,7 +612,7 @@ cd_to_toplevel
 
 if test -d "$GIT_DIR/rr-cache"
 then
-	git-rerere
+	git rerere
 fi
 
 if test "$ret" = 0
@@ -623,7 +623,7 @@ then
 	fi
 	if test -z "$quiet"
 	then
-		commit=`git-diff-tree --always --shortstat --pretty="format:%h: %s"\
+		commit=`git diff-tree --always --shortstat --pretty="format:%h: %s"\
 		       --summary --root HEAD --`
 		echo "Created${initial_commit:+ initial} commit $commit"
 	fi

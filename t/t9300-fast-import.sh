@@ -60,10 +60,10 @@ INPUT_END
 test_expect_success \
     'A: create pack from stdin' \
     'git-fast-import --export-marks=marks.out <input &&
-	 git-whatchanged master'
+	 git whatchanged master'
 test_expect_success \
 	'A: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git-verify-pack $p||exit;done'
+	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
 
 cat >expect <<EOF
 author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
@@ -73,7 +73,7 @@ initial
 EOF
 test_expect_success \
 	'A: verify commit' \
-	'git-cat-file commit master | sed 1d >actual &&
+	'git cat-file commit master | sed 1d >actual &&
 	git diff expect actual'
 
 cat >expect <<EOF
@@ -83,29 +83,29 @@ cat >expect <<EOF
 EOF
 test_expect_success \
 	'A: verify tree' \
-	'git-cat-file -p master^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
+	'git cat-file -p master^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
 	 git diff expect actual'
 
 echo "$file2_data" >expect
 test_expect_success \
 	'A: verify file2' \
-	'git-cat-file blob master:file2 >actual && git diff expect actual'
+	'git cat-file blob master:file2 >actual && git diff expect actual'
 
 echo "$file3_data" >expect
 test_expect_success \
 	'A: verify file3' \
-	'git-cat-file blob master:file3 >actual && git diff expect actual'
+	'git cat-file blob master:file3 >actual && git diff expect actual'
 
 printf "$file4_data" >expect
 test_expect_success \
 	'A: verify file4' \
-	'git-cat-file blob master:file4 >actual && git diff expect actual'
+	'git cat-file blob master:file4 >actual && git diff expect actual'
 
 cat >expect <<EOF
-:2 `git-rev-parse --verify master:file2`
-:3 `git-rev-parse --verify master:file3`
-:4 `git-rev-parse --verify master:file4`
-:5 `git-rev-parse --verify master^0`
+:2 `git rev-parse --verify master:file2`
+:3 `git rev-parse --verify master:file3`
+:4 `git rev-parse --verify master:file4`
+:5 `git rev-parse --verify master^0`
 EOF
 test_expect_success \
 	'A: verify marks output' \
@@ -134,19 +134,19 @@ INPUT_END
 test_expect_success \
 	'A: verify marks import does not crash' \
 	'git-fast-import --import-marks=marks.out <input &&
-	 git-whatchanged verify--import-marks'
+	 git whatchanged verify--import-marks'
 test_expect_success \
 	'A: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git-verify-pack $p||exit;done'
+	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
 cat >expect <<EOF
 :000000 100755 0000000000000000000000000000000000000000 7123f7f44e39be127c5eb701e5968176ee9d78b1 A	copy-of-file2
 EOF
-git-diff-tree -M -r master verify--import-marks >actual
+git diff-tree -M -r master verify--import-marks >actual
 test_expect_success \
 	'A: verify diff' \
 	'compare_diff_raw expect actual &&
-	 test `git-rev-parse --verify master:file2` \
-	    = `git-rev-parse --verify verify--import-marks:copy-of-file2`'
+	 test `git rev-parse --verify master:file2` \
+	    = `git rev-parse --verify verify--import-marks:copy-of-file2`'
 
 ###
 ### series B
@@ -175,7 +175,7 @@ rm -f .git/objects/pack_* .git/objects/index_*
 ###
 
 newf=`echo hi newf | git-hash-object -w --stdin`
-oldf=`git-rev-parse --verify master:file2`
+oldf=`git rev-parse --verify master:file2`
 test_tick
 cat >input <<INPUT_END
 commit refs/heads/branch
@@ -193,17 +193,17 @@ INPUT_END
 test_expect_success \
     'C: incremental import create pack from stdin' \
     'git-fast-import <input &&
-	 git-whatchanged branch'
+	 git whatchanged branch'
 test_expect_success \
 	'C: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git-verify-pack $p||exit;done'
+	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
 test_expect_success \
 	'C: validate reuse existing blob' \
-	'test $newf = `git-rev-parse --verify branch:file2/newf`
-	 test $oldf = `git-rev-parse --verify branch:file2/oldf`'
+	'test $newf = `git rev-parse --verify branch:file2/newf`
+	 test $oldf = `git rev-parse --verify branch:file2/oldf`'
 
 cat >expect <<EOF
-parent `git-rev-parse --verify master^0`
+parent `git rev-parse --verify master^0`
 author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 
@@ -211,7 +211,7 @@ second
 EOF
 test_expect_success \
 	'C: verify commit' \
-	'git-cat-file commit branch | sed 1d >actual &&
+	'git cat-file commit branch | sed 1d >actual &&
 	 git diff expect actual'
 
 cat >expect <<EOF
@@ -219,7 +219,7 @@ cat >expect <<EOF
 :100644 100644 7123f7f44e39be127c5eb701e5968176ee9d78b1 7123f7f44e39be127c5eb701e5968176ee9d78b1 R100	file2	file2/oldf
 :100644 000000 0d92e9f3374ae2947c23aa477cbc68ce598135f1 0000000000000000000000000000000000000000 D	file3
 EOF
-git-diff-tree -M -r master branch >actual
+git diff-tree -M -r master branch >actual
 test_expect_success \
 	'C: validate rename result' \
 	'compare_diff_raw expect actual'
@@ -251,16 +251,16 @@ INPUT_END
 test_expect_success \
     'D: inline data in commit' \
     'git-fast-import <input &&
-	 git-whatchanged branch'
+	 git whatchanged branch'
 test_expect_success \
 	'D: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git-verify-pack $p||exit;done'
+	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
 
 cat >expect <<EOF
 :000000 100755 0000000000000000000000000000000000000000 35a59026a33beac1569b1c7f66f3090ce9c09afc A	newdir/exec.sh
 :000000 100644 0000000000000000000000000000000000000000 046d0371e9220107917db0d0e030628de8a1de9b A	newdir/interesting
 EOF
-git-diff-tree -M -r branch^ branch >actual
+git diff-tree -M -r branch^ branch >actual
 test_expect_success \
 	'D: validate new files added' \
 	'compare_diff_raw expect actual'
@@ -268,13 +268,13 @@ test_expect_success \
 echo "$file5_data" >expect
 test_expect_success \
 	'D: verify file5' \
-	'git-cat-file blob branch:newdir/interesting >actual &&
+	'git cat-file blob branch:newdir/interesting >actual &&
 	 git diff expect actual'
 
 echo "$file6_data" >expect
 test_expect_success \
 	'D: verify file6' \
-	'git-cat-file blob branch:newdir/exec.sh >actual &&
+	'git cat-file blob branch:newdir/exec.sh >actual &&
 	 git diff expect actual'
 
 ###
@@ -300,7 +300,7 @@ test_expect_success \
     'git-fast-import --date-format=rfc2822 <input'
 test_expect_success \
 	'E: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git-verify-pack $p||exit;done'
+	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
 
 cat >expect <<EOF
 author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> 1170778938 -0500
@@ -310,14 +310,14 @@ RFC 2822 type date
 EOF
 test_expect_success \
 	'E: verify commit' \
-	'git-cat-file commit branch | sed 1,2d >actual &&
+	'git cat-file commit branch | sed 1,2d >actual &&
 	git diff expect actual'
 
 ###
 ### series F
 ###
 
-old_branch=`git-rev-parse --verify branch^0`
+old_branch=`git rev-parse --verify branch^0`
 test_tick
 cat >input <<INPUT_END
 commit refs/heads/branch
@@ -339,7 +339,7 @@ test_expect_success \
 		echo BAD gfi did not fail
 		return 1
 	 else
-		if test $old_branch = `git-rev-parse --verify branch^0`
+		if test $old_branch = `git rev-parse --verify branch^0`
 		then
 			: branch unaffected and failure returned
 			return 0
@@ -351,11 +351,11 @@ test_expect_success \
 	'
 test_expect_success \
 	'F: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git-verify-pack $p||exit;done'
+	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
 
 cat >expect <<EOF
-tree `git-rev-parse branch~1^{tree}`
-parent `git-rev-parse branch~1`
+tree `git rev-parse branch~1^{tree}`
+parent `git rev-parse branch~1`
 author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 
@@ -363,14 +363,14 @@ losing things already?
 EOF
 test_expect_success \
 	'F: verify other commit' \
-	'git-cat-file commit other >actual &&
+	'git cat-file commit other >actual &&
 	git diff expect actual'
 
 ###
 ### series G
 ###
 
-old_branch=`git-rev-parse --verify branch^0`
+old_branch=`git rev-parse --verify branch^0`
 test_tick
 cat >input <<INPUT_END
 commit refs/heads/branch
@@ -387,11 +387,11 @@ test_expect_success \
     'git-fast-import --force <input'
 test_expect_success \
 	'G: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git-verify-pack $p||exit;done'
+	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
 test_expect_success \
 	'G: branch changed, but logged' \
-	'test $old_branch != `git-rev-parse --verify branch^0` &&
-	 test $old_branch = `git-rev-parse --verify branch@{1}`'
+	'test $old_branch != `git rev-parse --verify branch^0` &&
+	 test $old_branch = `git rev-parse --verify branch@{1}`'
 
 ###
 ### series H
@@ -421,10 +421,10 @@ INPUT_END
 test_expect_success \
     'H: deletall, add 1' \
     'git-fast-import <input &&
-	 git-whatchanged H'
+	 git whatchanged H'
 test_expect_success \
 	'H: verify pack' \
-	'for p in .git/objects/pack/*.pack;do git-verify-pack $p||exit;done'
+	'for p in .git/objects/pack/*.pack;do git verify-pack $p||exit;done'
 
 cat >expect <<EOF
 :100755 000000 f1fb5da718392694d0076d677d6d0e364c79b0bc 0000000000000000000000000000000000000000 D	file2/newf
@@ -433,7 +433,7 @@ cat >expect <<EOF
 :100644 100644 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 R100	newdir/interesting	h/e/l/lo
 :100755 000000 e74b7d465e52746be2b4bae983670711e6e66657 0000000000000000000000000000000000000000 D	newdir/exec.sh
 EOF
-git-diff-tree -M -r H^ H >actual
+git diff-tree -M -r H^ H >actual
 test_expect_success \
 	'H: validate old files removed, new files added' \
 	'compare_diff_raw expect actual'
@@ -441,7 +441,7 @@ test_expect_success \
 echo "$file5_data" >expect
 test_expect_success \
 	'H: verify file' \
-	'git-cat-file blob H:h/e/l/lo >actual &&
+	'git cat-file blob H:h/e/l/lo >actual &&
 	 git diff expect actual'
 
 ###
@@ -463,7 +463,7 @@ test_expect_success \
     'git-fast-import --export-pack-edges=edges.list <input'
 
 cat >expect <<EOF
-.git/objects/pack/pack-.pack: `git-rev-parse --verify export-boundary`
+.git/objects/pack/pack-.pack: `git rev-parse --verify export-boundary`
 EOF
 test_expect_success \
 	'I: verify edge list' \
@@ -497,7 +497,7 @@ test_expect_success \
     'git-fast-import <input'
 test_expect_success \
 	'J: branch has 1 commit, empty tree' \
-	'test 1 = `git-rev-list J | wc -l` &&
+	'test 1 = `git rev-list J | wc -l` &&
 	 test 0 = `git ls-tree J | wc -l`'
 
 ###
@@ -527,8 +527,8 @@ test_expect_success \
     'git-fast-import <input'
 test_expect_success \
     'K: verify K^1 = branch^1' \
-    'test `git-rev-parse --verify branch^1` \
-		= `git-rev-parse --verify K^1`'
+    'test `git rev-parse --verify branch^1` \
+		= `git rev-parse --verify K^1`'
 
 ###
 ### series L
@@ -577,7 +577,7 @@ EXPECT_END
 test_expect_success \
     'L: verify internal tree sorting' \
 	'git-fast-import <input &&
-	 git-diff --raw L^ L >output &&
+	 git diff --raw L^ L >output &&
 	 git diff expect output'
 
 test_done

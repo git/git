@@ -3,7 +3,7 @@
 # Copyright (c) 2007 Junio C Hamano
 #
 
-test_description='git-apply --whitespace=strip and configuration file.
+test_description='git apply --whitespace=strip and configuration file.
 
 '
 

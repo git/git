@@ -3,13 +3,13 @@
 # Copyright (c) 2005 Johannes Schindelin
 #
 
-test_description='Test git-config in different settings'
+test_description='Test git config in different settings'
 
 . ./test-lib.sh
 
 test -f .git/config && rm .git/config
 
-git-config core.penguin "little blue"
+git config core.penguin "little blue"
 
 cat > expect << EOF
 [core]
@@ -18,7 +18,7 @@ EOF
 
 test_expect_success 'initial' 'cmp .git/config expect'
 
-git-config Core.Movie BadPhysics
+git config Core.Movie BadPhysics
 
 cat > expect << EOF
 [core]
@@ -28,7 +28,7 @@ EOF
 
 test_expect_success 'mixed case' 'cmp .git/config expect'
 
-git-config Cores.WhatEver Second
+git config Cores.WhatEver Second
 
 cat > expect << EOF
 [core]
@@ -40,7 +40,7 @@ EOF
 
 test_expect_success 'similar section' 'cmp .git/config expect'
 
-git-config CORE.UPPERCASE true
+git config CORE.UPPERCASE true
 
 cat > expect << EOF
 [core]
@@ -54,10 +54,10 @@ EOF
 test_expect_success 'similar section' 'cmp .git/config expect'
 
 test_expect_success 'replace with non-match' \
-	'git-config core.penguin kingpin !blue'
+	'git config core.penguin kingpin !blue'
 
 test_expect_success 'replace with non-match (actually matching)' \
-	'git-config core.penguin "very blue" !kingpin'
+	'git config core.penguin "very blue" !kingpin'
 
 cat > expect << EOF
 [core]
@@ -86,7 +86,7 @@ EOF
 cp .git/config .git/config2
 
 test_expect_success 'multiple unset' \
-	'git-config --unset-all beta.haha'
+	'git config --unset-all beta.haha'
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -102,7 +102,7 @@ test_expect_success 'multiple unset is correct' 'cmp .git/config expect'
 mv .git/config2 .git/config
 
 test_expect_success '--replace-all' \
-	'git-config --replace-all beta.haha gamma'
+	'git config --replace-all beta.haha gamma'
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -116,7 +116,7 @@ EOF
 
 test_expect_success 'all replaced' 'cmp .git/config expect'
 
-git-config beta.haha alpha
+git config beta.haha alpha
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -130,7 +130,7 @@ EOF
 
 test_expect_success 'really mean test' 'cmp .git/config expect'
 
-git-config nextsection.nonewline wow
+git config nextsection.nonewline wow
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -145,8 +145,8 @@ EOF
 
 test_expect_success 'really really mean test' 'cmp .git/config expect'
 
-test_expect_success 'get value' 'test alpha = $(git-config beta.haha)'
-git-config --unset beta.haha
+test_expect_success 'get value' 'test alpha = $(git config beta.haha)'
+git config --unset beta.haha
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -160,7 +160,7 @@ EOF
 
 test_expect_success 'unset' 'cmp .git/config expect'
 
-git-config nextsection.NoNewLine "wow2 for me" "for me$"
+git config nextsection.NoNewLine "wow2 for me" "for me$"
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -176,18 +176,18 @@ EOF
 test_expect_success 'multivar' 'cmp .git/config expect'
 
 test_expect_success 'non-match' \
-	'git-config --get nextsection.nonewline !for'
+	'git config --get nextsection.nonewline !for'
 
 test_expect_success 'non-match value' \
-	'test wow = $(git-config --get nextsection.nonewline !for)'
+	'test wow = $(git config --get nextsection.nonewline !for)'
 
 test_expect_failure 'ambiguous get' \
-	'git-config --get nextsection.nonewline'
+	'git config --get nextsection.nonewline'
 
 test_expect_success 'get multivar' \
-	'git-config --get-all nextsection.nonewline'
+	'git config --get-all nextsection.nonewline'
 
-git-config nextsection.nonewline "wow3" "wow$"
+git config nextsection.nonewline "wow3" "wow$"
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -202,15 +202,15 @@ EOF
 
 test_expect_success 'multivar replace' 'cmp .git/config expect'
 
-test_expect_failure 'ambiguous value' 'git-config nextsection.nonewline'
+test_expect_failure 'ambiguous value' 'git config nextsection.nonewline'
 
 test_expect_failure 'ambiguous unset' \
-	'git-config --unset nextsection.nonewline'
+	'git config --unset nextsection.nonewline'
 
 test_expect_failure 'invalid unset' \
-	'git-config --unset somesection.nonewline'
+	'git config --unset somesection.nonewline'
 
-git-config --unset nextsection.nonewline "wow3$"
+git config --unset nextsection.nonewline "wow3$"
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -224,12 +224,12 @@ EOF
 
 test_expect_success 'multivar unset' 'cmp .git/config expect'
 
-test_expect_failure 'invalid key' 'git-config inval.2key blabla'
+test_expect_failure 'invalid key' 'git config inval.2key blabla'
 
-test_expect_success 'correct key' 'git-config 123456.a123 987'
+test_expect_success 'correct key' 'git config 123456.a123 987'
 
 test_expect_success 'hierarchical section' \
-	'git-config Version.1.2.3eX.Alpha beta'
+	'git config Version.1.2.3eX.Alpha beta'
 
 cat > expect << EOF
 [beta] ; silly comment # another comment
@@ -255,7 +255,7 @@ version.1.2.3eX.alpha=beta
 EOF
 
 test_expect_success 'working --list' \
-	'git-config --list > output && cmp output expect'
+	'git config --list > output && cmp output expect'
 
 cat > expect << EOF
 beta.noindent sillyValue
@@ -263,9 +263,9 @@ nextsection.nonewline wow2 for me
 EOF
 
 test_expect_success '--get-regexp' \
-	'git-config --get-regexp in > output && cmp output expect'
+	'git config --get-regexp in > output && cmp output expect'
 
-git-config --add nextsection.nonewline "wow4 for you"
+git config --add nextsection.nonewline "wow4 for you"
 
 cat > expect << EOF
 wow2 for me
@@ -273,7 +273,7 @@ wow4 for you
 EOF
 
 test_expect_success '--add' \
-	'git-config --get-all nextsection.nonewline > output && cmp output expect'
+	'git config --get-all nextsection.nonewline > output && cmp output expect'
 
 cat > .git/config << EOF
 [novalue]
@@ -281,15 +281,15 @@ cat > .git/config << EOF
 EOF
 
 test_expect_success 'get variable with no value' \
-	'git-config --get novalue.variable ^$'
+	'git config --get novalue.variable ^$'
 
 echo novalue.variable > expect
 
 test_expect_success 'get-regexp variable with no value' \
-	'git-config --get-regexp novalue > output &&
+	'git config --get-regexp novalue > output &&
 	 cmp output expect'
 
-git-config > output 2>&1
+git config > output 2>&1
 
 test_expect_success 'no arguments, but no crash' \
 	"test $? = 129 && grep usage output"
@@ -299,7 +299,7 @@ cat > .git/config << EOF
 	c = d
 EOF
 
-git-config a.x y
+git config a.x y
 
 cat > expect << EOF
 [a.b]
@@ -310,8 +310,8 @@ EOF
 
 test_expect_success 'new section is partial match of another' 'cmp .git/config expect'
 
-git-config b.x y
-git-config a.b c
+git config b.x y
+git config a.b c
 
 cat > expect << EOF
 [a.b]
@@ -334,11 +334,11 @@ cat > expect << EOF
 ein.bahn=strasse
 EOF
 
-GIT_CONFIG=other-config git-config -l > output
+GIT_CONFIG=other-config git config -l > output
 
 test_expect_success 'alternative GIT_CONFIG' 'cmp output expect'
 
-GIT_CONFIG=other-config git-config anwohner.park ausweis
+GIT_CONFIG=other-config git config anwohner.park ausweis
 
 cat > expect << EOF
 [ein]
@@ -361,7 +361,7 @@ weird
 EOF
 
 test_expect_success "rename section" \
-	"git-config --rename-section branch.eins branch.zwei"
+	"git config --rename-section branch.eins branch.zwei"
 
 cat > expect << EOF
 # Hallo
@@ -377,12 +377,12 @@ EOF
 test_expect_success "rename succeeded" "git diff expect .git/config"
 
 test_expect_failure "rename non-existing section" \
-	'git-config --rename-section branch."world domination" branch.drei'
+	'git config --rename-section branch."world domination" branch.drei'
 
 test_expect_success "rename succeeded" "git diff expect .git/config"
 
 test_expect_success "rename another section" \
-	'git-config --rename-section branch."1 234 blabl/a" branch.drei'
+	'git config --rename-section branch."1 234 blabl/a" branch.drei'
 
 cat > expect << EOF
 # Hallo
@@ -425,20 +425,20 @@ EOF
 
 test_expect_success 'section ending' '
 
-	git-config gitcvs.enabled true &&
-	git-config gitcvs.ext.dbname %Ggitcvs1.%a.%m.sqlite &&
-	git-config gitcvs.dbname %Ggitcvs2.%a.%m.sqlite &&
+	git config gitcvs.enabled true &&
+	git config gitcvs.ext.dbname %Ggitcvs1.%a.%m.sqlite &&
+	git config gitcvs.dbname %Ggitcvs2.%a.%m.sqlite &&
 	cmp .git/config expect
 
 '
 
 test_expect_success numbers '
 
-	git-config kilo.gram 1k &&
-	git-config mega.ton 1m &&
-	k=$(git-config --int --get kilo.gram) &&
+	git config kilo.gram 1k &&
+	git config mega.ton 1m &&
+	k=$(git config --int --get kilo.gram) &&
 	test z1024 = "z$k" &&
-	m=$(git-config --int --get mega.ton) &&
+	m=$(git config --int --get mega.ton) &&
 	test z1048576 = "z$m"
 '
 
@@ -455,30 +455,30 @@ EOF
 
 test_expect_success bool '
 
-	git-config bool.true1 01 &&
-	git-config bool.true2 -1 &&
-	git-config bool.true3 YeS &&
-	git-config bool.true4 true &&
-	git-config bool.false1 000 &&
-	git-config bool.false2 "" &&
-	git-config bool.false3 nO &&
-	git-config bool.false4 FALSE &&
+	git config bool.true1 01 &&
+	git config bool.true2 -1 &&
+	git config bool.true3 YeS &&
+	git config bool.true4 true &&
+	git config bool.false1 000 &&
+	git config bool.false2 "" &&
+	git config bool.false3 nO &&
+	git config bool.false4 FALSE &&
 	rm -f result &&
 	for i in 1 2 3 4
 	do
-	    git-config --bool --get bool.true$i >>result
-	    git-config --bool --get bool.false$i >>result
+	    git config --bool --get bool.true$i >>result
+	    git config --bool --get bool.false$i >>result
         done &&
 	cmp expect result'
 
 test_expect_failure 'invalid bool (--get)' '
 
-	git-config bool.nobool foobar &&
-	git-config --bool --get bool.nobool'
+	git config bool.nobool foobar &&
+	git config --bool --get bool.nobool'
 
 test_expect_failure 'invalid bool (set)' '
 
-	git-config --bool bool.nobool foobar'
+	git config --bool bool.nobool foobar'
 
 rm .git/config
 
@@ -496,14 +496,14 @@ EOF
 
 test_expect_success 'set --bool' '
 
-	git-config --bool bool.true1 01 &&
-	git-config --bool bool.true2 -1 &&
-	git-config --bool bool.true3 YeS &&
-	git-config --bool bool.true4 true &&
-	git-config --bool bool.false1 000 &&
-	git-config --bool bool.false2 "" &&
-	git-config --bool bool.false3 nO &&
-	git-config --bool bool.false4 FALSE &&
+	git config --bool bool.true1 01 &&
+	git config --bool bool.true2 -1 &&
+	git config --bool bool.true3 YeS &&
+	git config --bool bool.true4 true &&
+	git config --bool bool.false1 000 &&
+	git config --bool bool.false2 "" &&
+	git config --bool bool.false3 nO &&
+	git config --bool bool.false4 FALSE &&
 	cmp expect .git/config'
 
 rm .git/config
@@ -517,17 +517,17 @@ EOF
 
 test_expect_success 'set --int' '
 
-	git-config --int int.val1 01 &&
-	git-config --int int.val2 -1 &&
-	git-config --int int.val3 5m &&
+	git config --int int.val1 01 &&
+	git config --int int.val2 -1 &&
+	git config --int int.val3 5m &&
 	cmp expect .git/config'
 
 rm .git/config
 
-git-config quote.leading " test"
-git-config quote.ending "test "
-git-config quote.semicolon "test;test"
-git-config quote.hash "test#test"
+git config quote.leading " test"
+git config quote.ending "test "
+git config quote.semicolon "test;test"
+git config quote.hash "test#test"
 
 cat > expect << EOF
 [quote]

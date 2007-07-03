@@ -8,19 +8,19 @@ test_description='Test the update hook infrastructure.'
 
 test_expect_success setup '
 	echo This is a test. >a &&
-	git-update-index --add a &&
-	tree0=$(git-write-tree) &&
-	commit0=$(echo setup | git-commit-tree $tree0) &&
+	git update-index --add a &&
+	tree0=$(git write-tree) &&
+	commit0=$(echo setup | git commit-tree $tree0) &&
 	echo We hope it works. >a &&
-	git-update-index a &&
-	tree1=$(git-write-tree) &&
-	commit1=$(echo modify | git-commit-tree $tree1 -p $commit0) &&
-	git-update-ref refs/heads/master $commit0 &&
-	git-update-ref refs/heads/tofail $commit1 &&
+	git update-index a &&
+	tree1=$(git write-tree) &&
+	commit1=$(echo modify | git commit-tree $tree1 -p $commit0) &&
+	git update-ref refs/heads/master $commit0 &&
+	git update-ref refs/heads/tofail $commit1 &&
 	git-clone ./. victim &&
-	GIT_DIR=victim/.git git-update-ref refs/heads/tofail $commit1 &&
-	git-update-ref refs/heads/master $commit1 &&
-	git-update-ref refs/heads/tofail $commit0
+	GIT_DIR=victim/.git git update-ref refs/heads/tofail $commit1 &&
+	git update-ref refs/heads/master $commit1 &&
+	git update-ref refs/heads/tofail $commit0
 '
 
 cat >victim/.git/hooks/pre-receive <<'EOF'
@@ -65,8 +65,8 @@ test_expect_failure push '
 '
 
 test_expect_success 'updated as expected' '
-	test $(GIT_DIR=victim/.git git-rev-parse master) = $commit1 &&
-	test $(GIT_DIR=victim/.git git-rev-parse tofail) = $commit1
+	test $(GIT_DIR=victim/.git git rev-parse master) = $commit1 &&
+	test $(GIT_DIR=victim/.git git rev-parse tofail) = $commit1
 '
 
 test_expect_success 'hooks ran' '

@@ -3,7 +3,7 @@
 # Copyright (C) 2005 Rene Scharfe
 #
 
-test_description='git-tar-tree and git-get-tar-commit-id test
+test_description='git tar-tree and git get-tar-commit-id test
 
 This test covers the topics of file contents, commit date handling and
 commit id embedding:
@@ -13,13 +13,13 @@ commit id embedding:
   binary file (/bin/sh).  Only paths shorter than 99 characters are
   used.
 
-  git-tar-tree applies the commit date to every file in the archive it
+  git tar-tree applies the commit date to every file in the archive it
   creates.  The test sets the commit date to a specific value and checks
   if the tar archive contains that value.
 
-  When giving git-tar-tree a commit id (in contrast to a tree id) it
+  When giving git tar-tree a commit id (in contrast to a tree id) it
   embeds this commit id into the tar archive as a comment.  The test
-  checks the ability of git-get-tar-commit-id to figure it out from the
+  checks the ability of git get-tar-commit-id to figure it out from the
   tar file.
 
 '
@@ -42,23 +42,23 @@ test_expect_success \
 
 test_expect_success \
     'add files to repository' \
-    'find a -type f | xargs git-update-index --add &&
-     find a -type l | xargs git-update-index --add &&
-     treeid=`git-write-tree` &&
+    'find a -type f | xargs git update-index --add &&
+     find a -type l | xargs git update-index --add &&
+     treeid=`git write-tree` &&
      echo $treeid >treeid &&
-     git-update-ref HEAD $(TZ=GMT GIT_COMMITTER_DATE="2005-05-27 22:00:00" \
-     git-commit-tree $treeid </dev/null)'
+     git update-ref HEAD $(TZ=GMT GIT_COMMITTER_DATE="2005-05-27 22:00:00" \
+     git commit-tree $treeid </dev/null)'
 
 test_expect_success \
-    'git-archive' \
-    'git-archive HEAD >b.tar'
+    'git archive' \
+    'git archive HEAD >b.tar'
 
 test_expect_success \
-    'git-tar-tree' \
-    'git-tar-tree HEAD >b2.tar'
+    'git tar-tree' \
+    'git tar-tree HEAD >b2.tar'
 
 test_expect_success \
-    'git-archive vs. git-tar-tree' \
+    'git archive vs. git tar-tree' \
     'diff b.tar b2.tar'
 
 test_expect_success \
@@ -70,9 +70,9 @@ test_expect_success \
      diff expected.mtime b.mtime'
 
 test_expect_success \
-    'git-get-tar-commit-id' \
-    'git-get-tar-commit-id <b.tar >b.commitid &&
-     diff .git/$(git-symbolic-ref HEAD) b.commitid'
+    'git get-tar-commit-id' \
+    'git get-tar-commit-id <b.tar >b.commitid &&
+     diff .git/$(git symbolic-ref HEAD) b.commitid'
 
 test_expect_success \
     'extract tar archive' \
@@ -88,8 +88,8 @@ test_expect_success \
     'diff -r a b/a'
 
 test_expect_success \
-    'git-tar-tree with prefix' \
-    'git-tar-tree HEAD prefix >c.tar'
+    'git tar-tree with prefix' \
+    'git tar-tree HEAD prefix >c.tar'
 
 test_expect_success \
     'extract tar archive with prefix' \
@@ -105,8 +105,8 @@ test_expect_success \
     'diff -r a c/prefix/a'
 
 test_expect_success \
-    'git-archive --format=zip' \
-    'git-archive --format=zip HEAD >d.zip'
+    'git archive --format=zip' \
+    'git archive --format=zip HEAD >d.zip'
 
 $UNZIP -v >/dev/null 2>&1
 if [ $? -eq 127 ]; then
@@ -129,8 +129,8 @@ test_expect_success \
     'diff -r a d/a'
 
 test_expect_success \
-    'git-archive --format=zip with prefix' \
-    'git-archive --format=zip --prefix=prefix/ HEAD >e.zip'
+    'git archive --format=zip with prefix' \
+    'git archive --format=zip --prefix=prefix/ HEAD >e.zip'
 
 test_expect_success \
     'extract ZIP archive with prefix' \
@@ -146,7 +146,7 @@ test_expect_success \
     'diff -r a e/prefix/a'
 
 test_expect_success \
-    'git-archive --list outside of a git repo' \
-    'GIT_DIR=some/non-existing/directory git-archive --list'
+    'git archive --list outside of a git repo' \
+    'GIT_DIR=some/non-existing/directory git archive --list'
 
 test_done

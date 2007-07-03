@@ -14,15 +14,15 @@ export GIT_AUTHOR_EMAIL=bogus_email_address
 test_expect_success \
     'prepare repository with topic branch, then rebase against master' \
     'echo First > A &&
-     git-update-index --add A &&
+     git update-index --add A &&
      git-commit -m "Add A." &&
      git checkout -b my-topic-branch &&
      echo Second > B &&
-     git-update-index --add B &&
+     git update-index --add B &&
      git-commit -m "Add B." &&
      git checkout -f master &&
      echo Third >> A &&
-     git-update-index A &&
+     git update-index A &&
      git-commit -m "Modify A." &&
      git checkout -f my-topic-branch &&
      git rebase master'

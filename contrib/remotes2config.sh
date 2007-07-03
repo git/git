@@ -26,8 +26,8 @@ if [ -d "$GIT_DIR"/remotes ]; then
 				mv "$GIT_DIR"/remotes "$GIT_DIR"/remotes.old
 			fi ;;
 		*)
-			echo "git-config $key "$value" $regex"
-			git-config $key "$value" $regex || error=1 ;;
+			echo "git config $key "$value" $regex"
+			git config $key "$value" $regex || error=1 ;;
 		esac
 	done
 fi

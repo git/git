@@ -2,7 +2,7 @@
 
 # git-ls-remote could be called from outside a git managed repository;
 # this would fail in that case and would issue an error message.
-GIT_DIR=$(git-rev-parse --git-dir 2>/dev/null) || :;
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null) || :;
 
 get_data_source () {
 	case "$1" in
@@ -13,7 +13,7 @@ get_data_source () {
 		echo self
 		;;
 	*)
-		if test "$(git-config --get "remote.$1.url")"
+		if test "$(git config --get "remote.$1.url")"
 		then
 			echo config
 		elif test -f "$GIT_DIR/remotes/$1"
@@ -38,7 +38,7 @@ get_remote_url () {
 		echo "$1"
 		;;
 	config)
-		git-config --get "remote.$1.url"
+		git config --get "remote.$1.url"
 		;;
 	remotes)
 		sed -ne '/^URL: */{
@@ -55,8 +55,8 @@ get_remote_url () {
 }
 
 get_default_remote () {
-	curr_branch=$(git-symbolic-ref -q HEAD | sed -e 's|^refs/heads/||')
-	origin=$(git-config --get "branch.$curr_branch.remote")
+	curr_branch=$(git symbolic-ref -q HEAD | sed -e 's|^refs/heads/||')
+	origin=$(git config --get "branch.$curr_branch.remote")
 	echo ${origin:-origin}
 }
 
@@ -66,7 +66,7 @@ get_remote_default_refs_for_push () {
 	'' | branches | self)
 		;; # no default push mapping, just send matching refs.
 	config)
-		git-config --get-all "remote.$1.push" ;;
+		git config --get-all "remote.$1.push" ;;
 	remotes)
 		sed -ne '/^Push: */{
 			s///p
@@ -107,9 +107,9 @@ canon_refs_list_for_fetch () {
 		shift
 		if test "$remote" = "$(get_default_remote)"
 		then
-			curr_branch=$(git-symbolic-ref -q HEAD | \
+			curr_branch=$(git symbolic-ref -q HEAD | \
 			    sed -e 's|^refs/heads/||')
-			merge_branches=$(git-config \
+			merge_branches=$(git config \
 			    --get-all "branch.${curr_branch}.merge")
 		fi
 		if test -z "$merge_branches" && test $is_explicit != explicit
@@ -156,7 +156,7 @@ canon_refs_list_for_fetch () {
 
 		if local_ref_name=$(expr "z$local" : 'zrefs/\(.*\)')
 		then
-		   git-check-ref-format "$local_ref_name" ||
+		   git check-ref-format "$local_ref_name" ||
 		   die "* refusing to create funny ref '$local_ref_name' locally"
 		fi
 		echo "${dot_prefix}${force}${remote}:${local}"
@@ -171,11 +171,11 @@ get_remote_default_refs_for_fetch () {
 		echo "HEAD:" ;;
 	self)
 	        canon_refs_list_for_fetch -d "$1" \
-			$(git-for-each-ref --format='%(refname):')
+			$(git for-each-ref --format='%(refname):')
 		;;
 	config)
 		canon_refs_list_for_fetch -d "$1" \
-			$(git-config --get-all "remote.$1.fetch") ;;
+			$(git config --get-all "remote.$1.fetch") ;;
 	branches)
 		remote_branch=$(sed -ne '/#/s/.*#//p' "$GIT_DIR/branches/$1")
 		case "$remote_branch" in '') remote_branch=master ;; esac
@@ -254,7 +254,7 @@ get_uploadpack () {
 	data_source=$(get_data_source "$1")
 	case "$data_source" in
 	config)
-		uplp=$(git-config --get "remote.$1.uploadpack")
+		uplp=$(git config --get "remote.$1.uploadpack")
 		echo ${uplp:-git-upload-pack}
 		;;
 	*)

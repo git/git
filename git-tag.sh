@@ -118,12 +118,12 @@ do
 	had_error=0
 	for tag
 	do
-		cur=$(git-show-ref --verify --hash -- "refs/tags/$tag") || {
+		cur=$(git show-ref --verify --hash -- "refs/tags/$tag") || {
 			echo >&2 "Seriously, what tag are you talking about?"
 			had_error=1
 			continue
 		}
-		git-update-ref -m 'tag: delete' -d "refs/tags/$tag" "$cur" || {
+		git update-ref -m 'tag: delete' -d "refs/tags/$tag" "$cur" || {
 			had_error=1
 			continue
 		}
@@ -134,7 +134,7 @@ do
     -v)
 	shift
 	tag_name="$1"
-	tag=$(git-show-ref --verify --hash -- "refs/tags/$tag_name") ||
+	tag=$(git show-ref --verify --hash -- "refs/tags/$tag_name") ||
 		die "Seriously, what tag are you talking about?"
 	git-verify-tag -v "$tag"
 	exit $?
@@ -153,21 +153,21 @@ done
 name="$1"
 [ "$name" ] || usage
 prev=0000000000000000000000000000000000000000
-if git-show-ref --verify --quiet -- "refs/tags/$name"
+if git show-ref --verify --quiet -- "refs/tags/$name"
 then
     test -n "$force" || die "tag '$name' already exists"
     prev=`git rev-parse "refs/tags/$name"`
 fi
 shift
-git-check-ref-format "tags/$name" ||
+git check-ref-format "tags/$name" ||
 	die "we do not like '$name' as a tag name."
 
-object=$(git-rev-parse --verify --default HEAD "$@") || exit 1
-type=$(git-cat-file -t $object) || exit 1
+object=$(git rev-parse --verify --default HEAD "$@") || exit 1
+type=$(git cat-file -t $object) || exit 1
 tagger=$(git-var GIT_COMMITTER_IDENT) || exit 1
 
 test -n "$username" ||
-	username=$(git-repo-config user.signingkey) ||
+	username=$(git repo-config user.signingkey) ||
 	username=$(expr "z$tagger" : 'z\(.*>\)')
 
 trap 'rm -f "$GIT_DIR"/TAG_TMP* "$GIT_DIR"/TAG_FINALMSG "$GIT_DIR"/TAG_EDITMSG' 0
@@ -183,7 +183,7 @@ if [ "$annotate" ]; then
     fi
 
     grep -v '^#' <"$GIT_DIR"/TAG_EDITMSG |
-    git-stripspace >"$GIT_DIR"/TAG_FINALMSG
+    git stripspace >"$GIT_DIR"/TAG_FINALMSG
 
     [ -s "$GIT_DIR"/TAG_FINALMSG -o -n "$message_given" ] || {
 	echo >&2 "No tag message?"

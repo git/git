@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git-checkout-index test.
+test_description='git checkout-index test.
 
 This test registers the following filesystem structure in the cache:
 
@@ -26,46 +26,46 @@ show_files() {
 	find path? -ls |
 	sed -e 's/^[0-9]* * [0-9]* * \([-bcdl]\)[^ ]* *[0-9]* *[^ ]* *[^ ]* *[0-9]* [A-Z][a-z][a-z] [0-9][0-9] [^ ]* /fs: \1 /'
 	# what's in the cache, just mode and name
-	git-ls-files --stage |
+	git ls-files --stage |
 	sed -e 's/^\([0-9]*\) [0-9a-f]* [0-3] /ca: \1 /'
 	# what's in the tree, just mode and name.
-	git-ls-tree -r "$1" |
+	git ls-tree -r "$1" |
 	sed -e 's/^\([0-9]*\)	[^ ]*	[0-9a-f]*	/tr: \1 /'
 }
 
 mkdir path0
 date >path0/file0
 test_expect_success \
-    'git-update-index --add path0/file0' \
-    'git-update-index --add path0/file0'
+    'git update-index --add path0/file0' \
+    'git update-index --add path0/file0'
 test_expect_success \
-    'writing tree out with git-write-tree' \
-    'tree1=$(git-write-tree)'
+    'writing tree out with git write-tree' \
+    'tree1=$(git write-tree)'
 test_debug 'show_files $tree1'
 
 mkdir path1
 date >path1/file1
 test_expect_success \
-    'git-update-index --add path1/file1' \
-    'git-update-index --add path1/file1'
+    'git update-index --add path1/file1' \
+    'git update-index --add path1/file1'
 test_expect_success \
-    'writing tree out with git-write-tree' \
-    'tree2=$(git-write-tree)'
+    'writing tree out with git write-tree' \
+    'tree2=$(git write-tree)'
 test_debug 'show_files $tree2'
 
 rm -fr path1
 test_expect_success \
     'read previously written tree and checkout.' \
-    'git-read-tree -m $tree1 && git-checkout-index -f -a'
+    'git read-tree -m $tree1 && git checkout-index -f -a'
 test_debug 'show_files $tree1'
 
 ln -s path0 path1
 test_expect_success \
-    'git-update-index --add a symlink.' \
-    'git-update-index --add path1'
+    'git update-index --add a symlink.' \
+    'git update-index --add path1'
 test_expect_success \
-    'writing tree out with git-write-tree' \
-    'tree3=$(git-write-tree)'
+    'writing tree out with git write-tree' \
+    'tree3=$(git write-tree)'
 test_debug 'show_files $tree3'
 
 # Morten says "Got that?" here.
@@ -73,7 +73,7 @@ test_debug 'show_files $tree3'
 
 test_expect_success \
     'read previously written tree and checkout.' \
-    'git-read-tree $tree2 && git-checkout-index -f -a'
+    'git read-tree $tree2 && git checkout-index -f -a'
 test_debug 'show_files $tree2'
 
 test_expect_success \

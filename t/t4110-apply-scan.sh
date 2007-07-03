@@ -4,7 +4,7 @@
 # Copyright (c) 2005 Robert Fitzsimons
 #
 
-test_description='git-apply test for patches which require scanning forwards and backwards.
+test_description='git apply test for patches which require scanning forwards and backwards.
 
 '
 . ./test-lib.sh
@@ -86,8 +86,8 @@ diff --git a/new.txt b/new.txt
 +c2222
 EOF
 
-test_expect_success "S = git-apply scan" \
-    'git-apply patch1.patch patch2.patch patch3.patch patch4.patch patch5.patch'
+test_expect_success "S = git apply scan" \
+    'git apply patch1.patch patch2.patch patch3.patch patch4.patch patch5.patch'
 mv new.txt apply.txt
 
 test_expect_success "S = patch scan" \

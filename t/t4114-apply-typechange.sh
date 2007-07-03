@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Eric Wong
 #
 
-test_description='git-apply should not get confused with type changes.
+test_description='git apply should not get confused with type changes.
 
 '
 

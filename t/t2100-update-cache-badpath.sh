@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git-update-index nonsense-path test.
+test_description='git update-index nonsense-path test.
 
 This test creates the following structure in the cache:
 
@@ -12,7 +12,7 @@ This test creates the following structure in the cache:
     path2/file2 - a file in a directory
     path3/file3 - a file in a directory
 
-and tries to git-update-index --add the following:
+and tries to git update-index --add the following:
 
     path0/file0 - a file in a directory
     path1/file1 - a file in a directory
@@ -31,8 +31,8 @@ date >path2/file2
 date >path3/file3
 
 test_expect_success \
-    'git-update-index --add to add various paths.' \
-    'git-update-index --add -- path0 path1 path2/file2 path3/file3'
+    'git update-index --add to add various paths.' \
+    'git update-index --add -- path0 path1 path2/file2 path3/file3'
 
 rm -fr path?
 
@@ -45,7 +45,7 @@ date >path1/file1
 for p in path0/file0 path1/file1 path2 path3
 do
 	test_expect_failure \
-	    "git-update-index to add conflicting path $p should fail." \
-	    "git-update-index --add -- $p"
+	    "git update-index to add conflicting path $p should fail." \
+	    "git update-index --add -- $p"
 done
 test_done

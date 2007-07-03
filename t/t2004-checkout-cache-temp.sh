@@ -3,9 +3,9 @@
 # Copyright (c) 2006 Shawn Pearce
 #
 
-test_description='git-checkout-index --temp test.
+test_description='git checkout-index --temp test.
 
-With --temp flag, git-checkout-index writes to temporary merge files
+With --temp flag, git checkout-index writes to temporary merge files
 rather than the tracked path.'
 
 . ./test-lib.sh
@@ -18,28 +18,28 @@ echo tree1path1 >path1 &&
 echo tree1path3 >path3 &&
 echo tree1path4 >path4 &&
 echo tree1asubdir/path5 >asubdir/path5 &&
-git-update-index --add path0 path1 path3 path4 asubdir/path5 &&
-t1=$(git-write-tree) &&
+git update-index --add path0 path1 path3 path4 asubdir/path5 &&
+t1=$(git write-tree) &&
 rm -f path* .merge_* out .git/index &&
 echo tree2path0 >path0 &&
 echo tree2path1 >path1 &&
 echo tree2path2 >path2 &&
 echo tree2path4 >path4 &&
-git-update-index --add path0 path1 path2 path4 &&
-t2=$(git-write-tree) &&
+git update-index --add path0 path1 path2 path4 &&
+t2=$(git write-tree) &&
 rm -f path* .merge_* out .git/index &&
 echo tree2path0 >path0 &&
 echo tree3path1 >path1 &&
 echo tree3path2 >path2 &&
 echo tree3path3 >path3 &&
-git-update-index --add path0 path1 path2 path3 &&
-t3=$(git-write-tree)'
+git update-index --add path0 path1 path2 path3 &&
+t3=$(git write-tree)'
 
 test_expect_success \
 'checkout one stage 0 to temporary file' '
 rm -f path* .merge_* out .git/index &&
-git-read-tree $t1 &&
-git-checkout-index --temp -- path1 >out &&
+git read-tree $t1 &&
+git checkout-index --temp -- path1 >out &&
 test $(wc -l <out) = 1 &&
 test $(cut "-d	" -f2 out) = path1 &&
 p=$(cut "-d	" -f1 out) &&
@@ -49,8 +49,8 @@ test $(cat $p) = tree1path1'
 test_expect_success \
 'checkout all stage 0 to temporary files' '
 rm -f path* .merge_* out .git/index &&
-git-read-tree $t1 &&
-git-checkout-index -a --temp >out &&
+git read-tree $t1 &&
+git checkout-index -a --temp >out &&
 test $(wc -l <out) = 5 &&
 for f in path0 path1 path3 path4 asubdir/path5
 do
@@ -63,12 +63,12 @@ done'
 test_expect_success \
 'prepare 3-way merge' '
 rm -f path* .merge_* out .git/index &&
-git-read-tree -m $t1 $t2 $t3'
+git read-tree -m $t1 $t2 $t3'
 
 test_expect_success \
 'checkout one stage 2 to temporary file' '
 rm -f path* .merge_* out &&
-git-checkout-index --stage=2 --temp -- path1 >out &&
+git checkout-index --stage=2 --temp -- path1 >out &&
 test $(wc -l <out) = 1 &&
 test $(cut "-d	" -f2 out) = path1 &&
 p=$(cut "-d	" -f1 out) &&
@@ -78,7 +78,7 @@ test $(cat $p) = tree2path1'
 test_expect_success \
 'checkout all stage 2 to temporary files' '
 rm -f path* .merge_* out &&
-git-checkout-index --all --stage=2 --temp >out &&
+git checkout-index --all --stage=2 --temp >out &&
 test $(wc -l <out) = 3 &&
 for f in path1 path2 path4
 do
@@ -91,13 +91,13 @@ done'
 test_expect_success \
 'checkout all stages/one file to nothing' '
 rm -f path* .merge_* out &&
-git-checkout-index --stage=all --temp -- path0 >out &&
+git checkout-index --stage=all --temp -- path0 >out &&
 test $(wc -l <out) = 0'
 
 test_expect_success \
 'checkout all stages/one file to temporary files' '
 rm -f path* .merge_* out &&
-git-checkout-index --stage=all --temp -- path1 >out &&
+git checkout-index --stage=all --temp -- path1 >out &&
 test $(wc -l <out) = 1 &&
 test $(cut "-d	" -f2 out) = path1 &&
 cut "-d	" -f1 out | (read s1 s2 s3 &&
@@ -111,7 +111,7 @@ test $(cat $s3) = tree3path1)'
 test_expect_success \
 'checkout some stages/one file to temporary files' '
 rm -f path* .merge_* out &&
-git-checkout-index --stage=all --temp -- path2 >out &&
+git checkout-index --stage=all --temp -- path2 >out &&
 test $(wc -l <out) = 1 &&
 test $(cut "-d	" -f2 out) = path2 &&
 cut "-d	" -f1 out | (read s1 s2 s3 &&
@@ -124,7 +124,7 @@ test $(cat $s3) = tree3path2)'
 test_expect_success \
 'checkout all stages/all files to temporary files' '
 rm -f path* .merge_* out &&
-git-checkout-index -a --stage=all --temp >out &&
+git checkout-index -a --stage=all --temp >out &&
 test $(wc -l <out) = 5'
 
 test_expect_success \
@@ -184,7 +184,7 @@ test $(cat $s1) = tree1asubdir/path5)'
 test_expect_success \
 'checkout --temp within subdir' '
 (cd asubdir &&
- git-checkout-index -a --stage=all >out &&
+ git checkout-index -a --stage=all >out &&
  test $(wc -l <out) = 1 &&
  test $(grep path5 out | cut "-d	" -f2) = path5 &&
  grep path5 out | cut "-d	" -f1 | (read s1 s2 s3 &&
@@ -198,11 +198,11 @@ test_expect_success \
 'checkout --temp symlink' '
 rm -f path* .merge_* out .git/index &&
 ln -s b a &&
-git-update-index --add a &&
-t4=$(git-write-tree) &&
+git update-index --add a &&
+t4=$(git write-tree) &&
 rm -f .git/index &&
-git-read-tree $t4 &&
-git-checkout-index --temp -a >out &&
+git read-tree $t4 &&
+git checkout-index --temp -a >out &&
 test $(wc -l <out) = 1 &&
 test $(cut "-d	" -f2 out) = a &&
 p=$(cut "-d	" -f1 out) &&

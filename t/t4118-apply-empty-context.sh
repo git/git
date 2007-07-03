@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Junio C Hamano
 #
 
-test_description='git-apply with new style GNU diff with empty context
+test_description='git apply with new style GNU diff with empty context
 
 '
 

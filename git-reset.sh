@@ -24,7 +24,7 @@ do
 		usage
 		;;
 	*)
-		rev=$(git-rev-parse --verify "$1") || exit
+		rev=$(git rev-parse --verify "$1") || exit
 		shift
 		break
 		;;
@@ -33,7 +33,7 @@ do
 done
 
 : ${rev=HEAD}
-rev=$(git-rev-parse --verify $rev^0) || exit
+rev=$(git rev-parse --verify $rev^0) || exit
 
 # Skip -- in "git reset HEAD -- foo" and "git reset -- foo".
 case "$1" in --) shift ;; esac
@@ -46,7 +46,7 @@ then
 	test "$reset_type" = "--mixed" ||
 		die "Cannot do partial $reset_type reset."
 
-	git-diff-index --cached $rev -- "$@" |
+	git diff-index --cached $rev -- "$@" |
 	sed -e 's/^:\([0-7][0-7]*\) [0-7][0-7]* \([0-9a-f][0-9a-f]*\) [0-9a-f][0-9a-f]* [A-Z]	\(.*\)$/\1 \2	\3/' |
 	git update-index --add --remove --index-info || exit
 	git update-index --refresh
@@ -66,22 +66,22 @@ fi
 if test "$reset_type" = "--soft"
 then
 	if test -f "$GIT_DIR/MERGE_HEAD" ||
-	   test "" != "$(git-ls-files --unmerged)"
+	   test "" != "$(git ls-files --unmerged)"
 	then
 		die "Cannot do a soft reset in the middle of a merge."
 	fi
 else
-	git-read-tree -v --reset $update "$rev" || exit
+	git read-tree -v --reset $update "$rev" || exit
 fi
 
 # Any resets update HEAD to the head being switched to.
-if orig=$(git-rev-parse --verify HEAD 2>/dev/null)
+if orig=$(git rev-parse --verify HEAD 2>/dev/null)
 then
 	echo "$orig" >"$GIT_DIR/ORIG_HEAD"
 else
 	rm -f "$GIT_DIR/ORIG_HEAD"
 fi
-git-update-ref -m "$GIT_REFLOG_ACTION" HEAD "$rev"
+git update-ref -m "$GIT_REFLOG_ACTION" HEAD "$rev"
 update_ref_status=$?
 
 case "$reset_type" in
@@ -96,7 +96,7 @@ case "$reset_type" in
 	;; # Nothing else to do
 --mixed )
 	# Report what has not been updated.
-	git-update-index --refresh
+	git update-index --refresh
 	;;
 esac
 

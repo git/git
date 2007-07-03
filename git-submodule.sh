@@ -46,7 +46,7 @@ get_repo_base() {
 #
 module_name()
 {
-       name=$(GIT_CONFIG=.gitmodules git-config --get-regexp '^submodule\..*\.path$' "$1" |
+       name=$(GIT_CONFIG=.gitmodules git config --get-regexp '^submodule\..*\.path$' "$1" |
        sed -nre 's/^submodule\.(.+)\.path .+$/\1/p')
        test -z "$name" &&
        die "No submodule mapping found in .gitmodules for path '$path'"
@@ -116,7 +116,7 @@ module_add()
 	test -e "$path" &&
 	die "'$path' already exists"
 
-	git-ls-files --error-unmatch "$path" > /dev/null 2>&1 &&
+	git ls-files --error-unmatch "$path" > /dev/null 2>&1 &&
 	die "'$path' already exists in the index"
 
 	module_clone "$path" "$repo" || exit
@@ -143,14 +143,14 @@ modules_init()
 	do
 		# Skip already registered paths
 		name=$(module_name "$path") || exit
-		url=$(git-config submodule."$name".url)
+		url=$(git config submodule."$name".url)
 		test -z "$url" || continue
 
-		url=$(GIT_CONFIG=.gitmodules git-config submodule."$name".url)
+		url=$(GIT_CONFIG=.gitmodules git config submodule."$name".url)
 		test -z "$url" &&
 		die "No url found for submodule path '$path' in .gitmodules"
 
-		git-config submodule."$name".url "$url" ||
+		git config submodule."$name".url "$url" ||
 		die "Failed to register url for submodule path '$path'"
 
 		say "Submodule '$name' ($url) registered for path '$path'"
@@ -168,7 +168,7 @@ modules_update()
 	while read mode sha1 stage path
 	do
 		name=$(module_name "$path") || exit
-		url=$(git-config submodule."$name".url)
+		url=$(git config submodule."$name".url)
 		if test -z "$url"
 		then
 			# Only mention uninitialized submodules when its
@@ -184,7 +184,7 @@ modules_update()
 			subsha1=
 		else
 			subsha1=$(unset GIT_DIR && cd "$path" &&
-				git-rev-parse --verify HEAD) ||
+				git rev-parse --verify HEAD) ||
 			die "Unable to find current revision in submodule path '$path'"
 		fi
 
@@ -203,9 +203,9 @@ set_name_rev () {
 	revname=$( (
 		unset GIT_DIR &&
 		cd "$1" && {
-			git-describe "$2" 2>/dev/null ||
-			git-describe --tags "$2" 2>/dev/null ||
-			git-describe --contains --tags "$2"
+			git describe "$2" 2>/dev/null ||
+			git describe --tags "$2" 2>/dev/null ||
+			git describe --contains --tags "$2"
 		}
 	) )
 	test -z "$revname" || revname=" ($revname)"
@@ -227,13 +227,13 @@ modules_list()
 	while read mode sha1 stage path
 	do
 		name=$(module_name "$path") || exit
-		url=$(git-config submodule."$name".url)
+		url=$(git config submodule."$name".url)
 		if test -z "url" || ! test -d "$path"/.git
 		then
 			say "-$sha1 $path"
 			continue;
 		fi
-		revname=$(unset GIT_DIR && cd "$path" && git-describe --tags $sha1)
+		revname=$(unset GIT_DIR && cd "$path" && git describe --tags $sha1)
 		set_name_rev "$path" $"sha1"
 		if git diff-files --quiet -- "$path"
 		then
@@ -241,7 +241,7 @@ modules_list()
 		else
 			if test -z "$cached"
 			then
-				sha1=$(unset GIT_DIR && cd "$path" && git-rev-parse --verify HEAD)
+				sha1=$(unset GIT_DIR && cd "$path" && git rev-parse --verify HEAD)
 				set_name_rev "$path" $"sha1"
 			fi
 			say "+$sha1 $path$revname"

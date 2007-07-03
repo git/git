@@ -3,7 +3,7 @@
 # Copyright (c) 2007 Shawn O. Pearce
 #
 
-test_description='git-apply -p handling.'
+test_description='git apply -p handling.'
 
 . ./test-lib.sh
 

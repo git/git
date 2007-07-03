@@ -60,17 +60,17 @@ fall_back_3way () {
     mkdir "$dotest/patch-merge-tmp-dir"
 
     # First see if the patch records the index info that we can use.
-    git-apply -z --index-info "$dotest/patch" \
+    git apply -z --index-info "$dotest/patch" \
 	>"$dotest/patch-merge-index-info" &&
     GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
-    git-update-index -z --index-info <"$dotest/patch-merge-index-info" &&
+    git update-index -z --index-info <"$dotest/patch-merge-index-info" &&
     GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
-    git-write-tree >"$dotest/patch-merge-base+" ||
+    git write-tree >"$dotest/patch-merge-base+" ||
     cannot_fallback "Repository lacks necessary blobs to fall back on 3-way merge."
 
     echo Using index info to reconstruct a base tree...
     if GIT_INDEX_FILE="$dotest/patch-merge-tmp-index" \
-	git-apply $binary --cached <"$dotest/patch"
+	git apply $binary --cached <"$dotest/patch"
     then
 	mv "$dotest/patch-merge-base+" "$dotest/patch-merge-base"
 	mv "$dotest/patch-merge-tmp-index" "$dotest/patch-merge-index"
@@ -80,7 +80,7 @@ It does not apply to blobs recorded in its index."
     fi
 
     test -f "$dotest/patch-merge-index" &&
-    his_tree=$(GIT_INDEX_FILE="$dotest/patch-merge-index" git-write-tree) &&
+    his_tree=$(GIT_INDEX_FILE="$dotest/patch-merge-index" git write-tree) &&
     orig_tree=$(cat "$dotest/patch-merge-base") &&
     rm -fr "$dotest"/patch-merge-* || exit 1
 
@@ -97,7 +97,7 @@ It does not apply to blobs recorded in its index."
     git-merge-recursive $orig_tree -- HEAD $his_tree || {
 	    if test -d "$GIT_DIR/rr-cache"
 	    then
-		git-rerere
+		git rerere
 	    fi
 	    echo Failed to merge in the changes.
 	    exit 1
@@ -198,7 +198,7 @@ else
 	# Start afresh.
 	mkdir -p "$dotest" || exit
 
-	git-mailsplit -d"$prec" -o"$dotest" -b -- "$@" > "$dotest/last" ||  {
+	git mailsplit -d"$prec" -o"$dotest" -b -- "$@" > "$dotest/last" ||  {
 		rm -fr "$dotest"
 		exit 1
 	}
@@ -216,7 +216,7 @@ fi
 
 case "$resolved" in
 '')
-	files=$(git-diff-index --cached --name-only HEAD) || exit
+	files=$(git diff-index --cached --name-only HEAD) || exit
 	if [ "$files" ]; then
 	   echo "Dirty index: cannot apply patches (dirty: $files)" >&2
 	   exit 1
@@ -254,7 +254,7 @@ if test "$skip" = t
 then
 	if test -d "$GIT_DIR/rr-cache"
 	then
-		git-rerere clear
+		git rerere clear
 	fi
 	this=`expr "$this" + 1`
 	resume=
@@ -287,14 +287,14 @@ do
 	# by the user, or the user can tell us to do so by --resolved flag.
 	case "$resume" in
 	'')
-		git-mailinfo $keep $utf8 "$dotest/msg" "$dotest/patch" \
+		git mailinfo $keep $utf8 "$dotest/msg" "$dotest/patch" \
 			<"$dotest/$msgnum" >"$dotest/info" ||
 			stop_here $this
 		test -s $dotest/patch || {
 			echo "Patch is empty.  Was it split wrong?"
 			stop_here $this
 		}
-		git-stripspace < "$dotest/msg" > "$dotest/msg-clean"
+		git stripspace < "$dotest/msg" > "$dotest/msg-clean"
 		;;
 	esac
 
@@ -347,7 +347,7 @@ do
 		case "$resolved$interactive" in
 		tt)
 			# This is used only for interactive view option.
-			git-diff-index -p --cached HEAD >"$dotest/patch"
+			git diff-index -p --cached HEAD >"$dotest/patch"
 			;;
 		esac
 	esac
@@ -399,7 +399,7 @@ do
 
 	case "$resolved" in
 	'')
-		git-apply $git_apply_opt $binary --index "$dotest/patch"
+		git apply $git_apply_opt $binary --index "$dotest/patch"
 		apply_status=$?
 		;;
 	t)
@@ -408,11 +408,11 @@ do
 		# trust what the user has in the index file and the
 		# working tree.
 		resolved=
-		git-diff-index --quiet --cached HEAD && {
+		git diff-index --quiet --cached HEAD && {
 			echo "No changes - did you forget to use 'git add'?"
 			stop_here_user_resolve $this
 		}
-		unmerged=$(git-ls-files -u)
+		unmerged=$(git ls-files -u)
 		if test -n "$unmerged"
 		then
 			echo "You still have unmerged paths in your index"
@@ -433,7 +433,7 @@ do
 		then
 		    # Applying the patch to an earlier tree and merging the
 		    # result may have produced the same tree as ours.
-		    git-diff-index --quiet --cached HEAD && {
+		    git diff-index --quiet --cached HEAD && {
 			echo No changes -- Patch already applied.
 			go_next
 			continue
@@ -453,12 +453,12 @@ do
 		"$GIT_DIR"/hooks/pre-applypatch || stop_here $this
 	fi
 
-	tree=$(git-write-tree) &&
+	tree=$(git write-tree) &&
 	echo Wrote tree $tree &&
-	parent=$(git-rev-parse --verify HEAD) &&
-	commit=$(git-commit-tree $tree -p $parent <"$dotest/final-commit") &&
+	parent=$(git rev-parse --verify HEAD) &&
+	commit=$(git commit-tree $tree -p $parent <"$dotest/final-commit") &&
 	echo Committed: $commit &&
-	git-update-ref -m "$GIT_REFLOG_ACTION: $SUBJECT" HEAD $commit $parent ||
+	git update-ref -m "$GIT_REFLOG_ACTION: $SUBJECT" HEAD $commit $parent ||
 	stop_here $this
 
 	if test -x "$GIT_DIR"/hooks/post-applypatch

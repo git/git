@@ -4,9 +4,9 @@
 # Copyright (c) 2005 Robert Fitzsimons
 #
 
-test_description='git-ls-tree directory and filenames handling.
+test_description='git ls-tree directory and filenames handling.
 
-This test runs git-ls-tree with the following in a tree.
+This test runs git ls-tree with the following in a tree.
 
     1.txt              - a file
     2.txt              - a file
@@ -35,8 +35,8 @@ test_expect_success \
      echo 111 >path3/1.txt &&
      echo 222 >path3/2.txt &&
      find *.txt path* \( -type f -o -type l \) -print |
-     xargs git-update-index --add &&
-     tree=`git-write-tree` &&
+     xargs git update-index --add &&
+     tree=`git write-tree` &&
      echo $tree'
 
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
@@ -48,7 +48,7 @@ test_output () {
 
 test_expect_success \
     'ls-tree plain' \
-    'git-ls-tree $tree >current &&
+    'git ls-tree $tree >current &&
      cat >expected <<\EOF &&
 100644 blob X	1.txt
 100644 blob X	2.txt
@@ -62,7 +62,7 @@ EOF
 # Recursive does not show tree nodes anymore...
 test_expect_success \
     'ls-tree recursive' \
-    'git-ls-tree -r $tree >current &&
+    'git ls-tree -r $tree >current &&
      cat >expected <<\EOF &&
 100644 blob X	1.txt
 100644 blob X	2.txt
@@ -76,7 +76,7 @@ EOF
 
 test_expect_success \
     'ls-tree filter 1.txt' \
-    'git-ls-tree $tree 1.txt >current &&
+    'git ls-tree $tree 1.txt >current &&
      cat >expected <<\EOF &&
 100644 blob X	1.txt
 EOF
@@ -84,7 +84,7 @@ EOF
 
 test_expect_success \
     'ls-tree filter path1/b/c/1.txt' \
-    'git-ls-tree $tree path1/b/c/1.txt >current &&
+    'git ls-tree $tree path1/b/c/1.txt >current &&
      cat >expected <<\EOF &&
 100644 blob X	path1/b/c/1.txt
 EOF
@@ -92,7 +92,7 @@ EOF
 
 test_expect_success \
     'ls-tree filter all 1.txt files' \
-    'git-ls-tree $tree 1.txt path0/a/b/c/1.txt path1/b/c/1.txt path2/1.txt path3/1.txt >current &&
+    'git ls-tree $tree 1.txt path0/a/b/c/1.txt path1/b/c/1.txt path2/1.txt path3/1.txt >current &&
      cat >expected <<\EOF &&
 100644 blob X	1.txt
 100644 blob X	path0/a/b/c/1.txt
@@ -107,7 +107,7 @@ EOF
 # it behaves as if path0/a/b/c, path1/b/c, path2 and path3 are specified.
 test_expect_success \
     'ls-tree filter directories' \
-    'git-ls-tree $tree path3 path2 path0/a/b/c path1/b/c path0/a >current &&
+    'git ls-tree $tree path3 path2 path0/a/b/c path1/b/c path0/a >current &&
      cat >expected <<\EOF &&
 040000 tree X	path0/a/b/c
 040000 tree X	path1/b/c
@@ -120,7 +120,7 @@ EOF
 # having 1.txt and path3
 test_expect_success \
     'ls-tree filter odd names' \
-    'git-ls-tree $tree 1.txt /1.txt //1.txt path3/1.txt /path3/1.txt //path3//1.txt path3 /path3/ path3// >current &&
+    'git ls-tree $tree 1.txt /1.txt //1.txt path3/1.txt /path3/1.txt //path3//1.txt path3 /path3/ path3// >current &&
      cat >expected <<\EOF &&
 100644 blob X	1.txt
 100644 blob X	path3/1.txt
@@ -130,7 +130,7 @@ EOF
 
 test_expect_success \
     'ls-tree filter missing files and extra slashes' \
-    'git-ls-tree $tree 1.txt/ abc.txt path3//23.txt path3/2.txt/// >current &&
+    'git ls-tree $tree 1.txt/ abc.txt path3//23.txt path3/2.txt/// >current &&
      cat >expected <<\EOF &&
 EOF
      test_output'

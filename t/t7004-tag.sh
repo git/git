@@ -176,7 +176,7 @@ EOF
 test_expect_success \
 	'listing tags with substring as pattern must print those matching' '
 	git-tag -l a > actual &&
-	git-diff expect actual
+	git diff expect actual
 '
 
 cat >expect <<EOF
@@ -187,7 +187,7 @@ EOF
 test_expect_success \
 	'listing tags with substring as pattern must print those matching' '
 	git-tag -l .1 > actual &&
-	git-diff expect actual
+	git diff expect actual
 '
 
 cat >expect <<EOF
@@ -197,7 +197,7 @@ EOF
 test_expect_success \
 	'listing tags with substring as pattern must print those matching' '
 	git-tag -l t21 > actual &&
-	git-diff expect actual
+	git diff expect actual
 '
 
 cat >expect <<EOF
@@ -207,7 +207,7 @@ EOF
 test_expect_success \
 	'listing tags using a name as pattern must print those matching' '
 	git-tag -l a1 > actual &&
-	git-diff expect actual
+	git diff expect actual
 '
 
 cat >expect <<EOF
@@ -217,7 +217,7 @@ EOF
 test_expect_success \
 	'listing tags using a name as pattern must print those matching' '
 	git-tag -l v1.0 > actual &&
-	git-diff expect actual
+	git diff expect actual
 '
 
 cat >expect <<EOF
@@ -226,14 +226,14 @@ EOF
 test_expect_success \
 	'listing tags with ? in the pattern should print those matching' '
 	git-tag -l "1.1?" > actual &&
-	git-diff expect actual
+	git diff expect actual
 '
 
 >expect
 test_expect_success \
 	'listing tags using v.* should print nothing because none have v.' '
 	git-tag -l "v.*" > actual &&
-	git-diff expect actual
+	git diff expect actual
 '
 
 cat >expect <<EOF
@@ -245,7 +245,7 @@ EOF
 test_expect_success \
 	'listing tags using v* should print only those having v' '
 	git-tag -l "v*" > actual &&
-	git-diff expect actual
+	git diff expect actual
 '
 
 # creating and verifying lightweight tags:
@@ -253,8 +253,8 @@ test_expect_success \
 test_expect_success \
 	'a non-annotated tag created without parameters should point to HEAD' '
 	git-tag non-annotated-tag &&
-	test $(git-cat-file -t non-annotated-tag) = commit &&
-	test $(git-rev-parse non-annotated-tag) = $(git-rev-parse HEAD)
+	test $(git cat-file -t non-annotated-tag) = commit &&
+	test $(git rev-parse non-annotated-tag) = $(git rev-parse HEAD)
 '
 
 test_expect_failure 'trying to verify an unknown tag should fail' \
@@ -475,7 +475,7 @@ echo '-----BEGIN PGP SIGNATURE-----' >>expect
 test_expect_success 'creating a signed tag with -m message should succeed' '
 	git-tag -s -m "A signed tag message" signed-tag &&
 	get_tag_msg signed-tag >actual &&
-	git-diff expect actual
+	git diff expect actual
 '
 
 test_expect_success 'verifying a signed tag should succeed' \

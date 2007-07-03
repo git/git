@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Johannes E. Schindelin
 #
 
-test_description='git-rerere
+test_description='git rerere
 '
 
 . ./test-lib.sh

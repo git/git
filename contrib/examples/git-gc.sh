@@ -30,8 +30,8 @@ notbare|"")
 esac
 
 test "true" != "$pack_refs" ||
-git-pack-refs --prune &&
-git-reflog expire --all &&
+git pack-refs --prune &&
+git reflog expire --all &&
 git-repack -a -d -l &&
-$no_prune git-prune &&
-git-rerere gc || exit
+$no_prune git prune &&
+git rerere gc || exit

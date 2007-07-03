@@ -13,10 +13,10 @@ test_expect_success 'setup' '
 	touch src/part1.c Makefile &&
 	echo build >.gitignore &&
 	echo \*.o >>.gitignore &&
-	git-add . &&
+	git add . &&
 	git-commit -m setup &&
 	touch src/part2.c README &&
-	git-add .
+	git add .
 
 '
 
@@ -141,7 +141,7 @@ test_expect_success 'git-clean -d -X' '
 
 test_expect_success 'clean.requireForce' '
 
-	git-config clean.requireForce true &&
+	git config clean.requireForce true &&
 	! git-clean
 
 '

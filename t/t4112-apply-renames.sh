@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git-apply should not get confused with rename/copy.
+test_description='git apply should not get confused with rename/copy.
 
 '
 
@@ -115,10 +115,10 @@ rename to include/arch/m32r/klibc/archsetjmp.h
 +#endif /* _KLIBC_ARCHSETJMP_H */
 EOF
 
-find klibc -type f -print | xargs git-update-index --add --
+find klibc -type f -print | xargs git update-index --add --
 
-test_expect_success 'check rename/copy patch' 'git-apply --check patch'
+test_expect_success 'check rename/copy patch' 'git apply --check patch'
 
-test_expect_success 'apply rename/copy patch' 'git-apply --index patch'
+test_expect_success 'apply rename/copy patch' 'git apply --index patch'
 
 test_done

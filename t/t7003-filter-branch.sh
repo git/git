@@ -27,14 +27,14 @@ test_expect_success 'setup' '
 	make_commit H
 '
 
-H=$(git-rev-parse H)
+H=$(git rev-parse H)
 
 test_expect_success 'rewrite identically' '
 	git-filter-branch H2
 '
 
 test_expect_success 'result is really identical' '
-	test $H = $(git-rev-parse H2)
+	test $H = $(git rev-parse H2)
 '
 
 test_expect_success 'rewrite, renaming a specific file' '
@@ -51,7 +51,7 @@ test_expect_success 'rewrite one branch, keeping a side branch' '
 '
 
 test_expect_success 'common ancestor is still common (unchanged)' '
-	test "$(git-merge-base modD D)" = "$(git-rev-parse B)"
+	test "$(git merge-base modD D)" = "$(git rev-parse B)"
 '
 
 test_expect_success 'filter subdirectory only' '
@@ -73,7 +73,7 @@ test_expect_success 'filter subdirectory only' '
 '
 
 test_expect_success 'subdirectory filter result looks okay' '
-	test 2 = $(git-rev-list sub | wc -l) &&
+	test 2 = $(git rev-list sub | wc -l) &&
 	git show sub:new &&
 	! git show sub:subdir
 '
@@ -93,7 +93,7 @@ test_expect_success 'setup and filter history that requires --full-history' '
 '
 
 test_expect_success 'subdirectory filter result looks okay' '
-	test 3 = $(git-rev-list -1 --parents sub-master | wc -w) &&
+	test 3 = $(git rev-list -1 --parents sub-master | wc -w) &&
 	git show sub-master^:new &&
 	git show sub-master^2:new &&
 	! git show sub:subdir
@@ -101,9 +101,9 @@ test_expect_success 'subdirectory filter result looks okay' '
 
 test_expect_success 'use index-filter to move into a subdirectory' '
 	git-filter-branch --index-filter \
-		 "git-ls-files -s | sed \"s-\\t-&newsubdir/-\" |
+		 "git ls-files -s | sed \"s-\\t-&newsubdir/-\" |
 	          GIT_INDEX_FILE=\$GIT_INDEX_FILE.new \
-			git-update-index --index-info &&
+			git update-index --index-info &&
 		  mv \$GIT_INDEX_FILE.new \$GIT_INDEX_FILE" directorymoved &&
 	test -z "$(git diff HEAD directorymoved:newsubdir)"'
 

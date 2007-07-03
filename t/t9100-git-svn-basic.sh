@@ -86,10 +86,10 @@ test_expect_failure "$name" "
 	rm -f '$GIT_DIR'/index &&
 	git checkout -f -b mybranch3 remotes/git-svn &&
 	rm bar/zzz &&
-	git-update-index --remove bar/zzz &&
+	git update-index --remove bar/zzz &&
 	mkdir bar/zzz &&
 	echo yyy > bar/zzz/yyy &&
-	git-update-index --add bar/zzz/yyy &&
+	git update-index --add bar/zzz/yyy &&
 	git commit -m '$name' &&
 	git-svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch3" || true
@@ -191,8 +191,8 @@ GIT_SVN_ID=alt
 export GIT_SVN_ID
 test_expect_success "$name" \
     "git-svn init $svnrepo && git-svn fetch &&
-     git-rev-list --pretty=raw remotes/git-svn | grep ^tree | uniq > a &&
-     git-rev-list --pretty=raw remotes/alt | grep ^tree | uniq > b &&
+     git rev-list --pretty=raw remotes/git-svn | grep ^tree | uniq > a &&
+     git rev-list --pretty=raw remotes/alt | grep ^tree | uniq > b &&
      git diff a b"
 
 name='check imported tree checksums expected tree checksums'
@@ -214,7 +214,7 @@ EOF
 test_expect_success "$name" "git diff a expected"
 
 test_expect_failure 'exit if remote refs are ambigious' "
-        git-config --add svn-remote.svn.fetch \
+        git config --add svn-remote.svn.fetch \
                               bar:refs/remotes/git-svn &&
         git-svn migrate
         "
@@ -222,7 +222,7 @@ test_expect_failure 'exit if remote refs are ambigious' "
 test_expect_failure 'exit if init-ing a would clobber a URL' "
         svnadmin create ${PWD}/svnrepo2 &&
         svn mkdir -m 'mkdir bar' ${svnrepo}2/bar &&
-        git-config --unset svn-remote.svn.fetch \
+        git config --unset svn-remote.svn.fetch \
                                 '^bar:refs/remotes/git-svn$' &&
         git-svn init ${svnrepo}2/bar
         "

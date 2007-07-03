@@ -3,9 +3,9 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-test_description='git-ls-tree test.
+test_description='git ls-tree test.
 
-This test runs git-ls-tree with the following in a tree.
+This test runs git ls-tree with the following in a tree.
 
     path0       - a file
     path1	- a symlink
@@ -27,8 +27,8 @@ test_expect_success \
      ln -s ../path1 path2/bazbo &&
      echo Mi >path2/baz/b &&
      find path? \( -type f -o -type l \) -print |
-     xargs git-update-index --add &&
-     tree=`git-write-tree` &&
+     xargs git update-index --add &&
+     tree=`git write-tree` &&
      echo $tree'
 
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
@@ -40,7 +40,7 @@ test_output () {
 
 test_expect_success \
     'ls-tree plain' \
-    'git-ls-tree $tree >current &&
+    'git ls-tree $tree >current &&
      cat >expected <<\EOF &&
 100644 blob X	path0
 120000 blob X	path1
@@ -50,7 +50,7 @@ EOF
 
 test_expect_success \
     'ls-tree recursive' \
-    'git-ls-tree -r $tree >current &&
+    'git ls-tree -r $tree >current &&
      cat >expected <<\EOF &&
 100644 blob X	path0
 120000 blob X	path1
@@ -62,7 +62,7 @@ EOF
 
 test_expect_success \
     'ls-tree recursive with -t' \
-    'git-ls-tree -r -t $tree >current &&
+    'git ls-tree -r -t $tree >current &&
      cat >expected <<\EOF &&
 100644 blob X	path0
 120000 blob X	path1
@@ -76,7 +76,7 @@ EOF
 
 test_expect_success \
     'ls-tree recursive with -d' \
-    'git-ls-tree -r -d $tree >current &&
+    'git ls-tree -r -d $tree >current &&
      cat >expected <<\EOF &&
 040000 tree X	path2
 040000 tree X	path2/baz
@@ -85,7 +85,7 @@ EOF
 
 test_expect_success \
     'ls-tree filtered with path' \
-    'git-ls-tree $tree path >current &&
+    'git ls-tree $tree path >current &&
      cat >expected <<\EOF &&
 EOF
      test_output'
@@ -95,7 +95,7 @@ EOF
 # they are shown in canonical order.
 test_expect_success \
     'ls-tree filtered with path1 path0' \
-    'git-ls-tree $tree path1 path0 >current &&
+    'git ls-tree $tree path1 path0 >current &&
      cat >expected <<\EOF &&
 100644 blob X	path0
 120000 blob X	path1
@@ -104,7 +104,7 @@ EOF
 
 test_expect_success \
     'ls-tree filtered with path0/' \
-    'git-ls-tree $tree path0/ >current &&
+    'git ls-tree $tree path0/ >current &&
      cat >expected <<\EOF &&
 EOF
      test_output'
@@ -113,7 +113,7 @@ EOF
 # with pathspec semantics it shows only path2
 test_expect_success \
     'ls-tree filtered with path2' \
-    'git-ls-tree $tree path2 >current &&
+    'git ls-tree $tree path2 >current &&
      cat >expected <<\EOF &&
 040000 tree X	path2
 EOF
@@ -122,7 +122,7 @@ EOF
 # ... and path2/ shows the children.
 test_expect_success \
     'ls-tree filtered with path2/' \
-    'git-ls-tree $tree path2/ >current &&
+    'git ls-tree $tree path2/ >current &&
      cat >expected <<\EOF &&
 040000 tree X	path2/baz
 120000 blob X	path2/bazbo
@@ -134,7 +134,7 @@ EOF
 # path2/baz
 test_expect_success \
     'ls-tree filtered with path2/baz' \
-    'git-ls-tree $tree path2/baz >current &&
+    'git ls-tree $tree path2/baz >current &&
      cat >expected <<\EOF &&
 040000 tree X	path2/baz
 EOF
@@ -142,14 +142,14 @@ EOF
 
 test_expect_success \
     'ls-tree filtered with path2/bak' \
-    'git-ls-tree $tree path2/bak >current &&
+    'git ls-tree $tree path2/bak >current &&
      cat >expected <<\EOF &&
 EOF
      test_output'
 
 test_expect_success \
     'ls-tree -t filtered with path2/bak' \
-    'git-ls-tree -t $tree path2/bak >current &&
+    'git ls-tree -t $tree path2/bak >current &&
      cat >expected <<\EOF &&
 040000 tree X	path2
 EOF

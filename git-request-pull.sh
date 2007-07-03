@@ -18,8 +18,8 @@ head=${3-HEAD}
 [ "$base" ] || usage
 [ "$url" ] || usage
 
-baserev=`git-rev-parse --verify "$base"^0` &&
-headrev=`git-rev-parse --verify "$head"^0` || exit
+baserev=`git rev-parse --verify "$base"^0` &&
+headrev=`git rev-parse --verify "$head"^0` || exit
 
 merge_base=`git merge-base $baserev $headrev` ||
 die "fatal: No commits in common between $base and $head"

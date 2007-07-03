@@ -13,8 +13,8 @@ test_expect_success \
     'prepare reference tree' \
     'cat ../../COPYING >COPYING &&
      echo frotz >rezrov &&
-    git-update-index --add COPYING rezrov &&
-    tree=$(git-write-tree) &&
+    git update-index --add COPYING rezrov &&
+    tree=$(git write-tree) &&
     echo $tree'
 
 test_expect_success \
@@ -22,14 +22,14 @@ test_expect_success \
     'sed -e 's/HOWEVER/However/' <COPYING >COPYING.1 &&
     sed -e 's/GPL/G.P.L/g' <COPYING >COPYING.2 &&
     rm -f COPYING &&
-    git-update-index --add --remove COPYING COPYING.?'
+    git update-index --add --remove COPYING COPYING.?'
 
 # tree has COPYING and rezrov.  work tree has COPYING.1 and COPYING.2,
 # both are slightly edited, and unchanged rezrov.  So we say you
 # copy-and-edit one, and rename-and-edit the other.  We do not say
 # anything about rezrov.
 
-GIT_DIFF_OPTS=--unified=0 git-diff-index -M -p $tree >current
+GIT_DIFF_OPTS=--unified=0 git diff-index -M -p $tree >current
 cat >expected <<\EOF
 diff --git a/COPYING b/COPYING.1
 copy from COPYING
@@ -62,14 +62,14 @@ test_expect_success \
 test_expect_success \
     'prepare work tree again' \
     'mv COPYING.2 COPYING &&
-     git-update-index --add --remove COPYING COPYING.1 COPYING.2'
+     git update-index --add --remove COPYING COPYING.1 COPYING.2'
 
 # tree has COPYING and rezrov.  work tree has COPYING and COPYING.1,
 # both are slightly edited, and unchanged rezrov.  So we say you
 # edited one, and copy-and-edit the other.  We do not say
 # anything about rezrov.
 
-GIT_DIFF_OPTS=--unified=0 git-diff-index -C -p $tree >current
+GIT_DIFF_OPTS=--unified=0 git diff-index -C -p $tree >current
 cat >expected <<\EOF
 diff --git a/COPYING b/COPYING
 --- a/COPYING
@@ -100,16 +100,16 @@ test_expect_success \
 test_expect_success \
     'prepare work tree once again' \
     'cat ../../COPYING >COPYING &&
-     git-update-index --add --remove COPYING COPYING.1'
+     git update-index --add --remove COPYING COPYING.1'
 
 # tree has COPYING and rezrov.  work tree has COPYING and COPYING.1,
 # but COPYING is not edited.  We say you copy-and-edit COPYING.1; this
 # is only possible because -C mode now reports the unmodified file to
 # the diff-core.  Unchanged rezrov, although being fed to
-# git-diff-index as well, should not be mentioned.
+# git diff-index as well, should not be mentioned.
 
 GIT_DIFF_OPTS=--unified=0 \
-    git-diff-index -C --find-copies-harder -p $tree >current
+    git diff-index -C --find-copies-harder -p $tree >current
 cat >expected <<\EOF
 diff --git a/COPYING b/COPYING.1
 copy from COPYING

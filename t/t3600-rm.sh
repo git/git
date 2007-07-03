@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Carl D. Worth
 #
 
-test_description='Test of the various options to git-rm.'
+test_description='Test of the various options to git rm.'
 
 . ./test-lib.sh
 
@@ -11,13 +11,13 @@ test_description='Test of the various options to git-rm.'
 test_expect_success \
     'Initialize test directory' \
     "touch -- foo bar baz 'space embedded' -q &&
-     git-add -- foo bar baz 'space embedded' -q &&
+     git add -- foo bar baz 'space embedded' -q &&
      git-commit -m 'add normal files' &&
      test_tabs=y &&
      if touch -- 'tab	embedded' 'newline
 embedded'
      then
-     git-add -- 'tab	embedded' 'newline
+     git add -- 'tab	embedded' 'newline
 embedded' &&
      git-commit -m 'add files with tabs and newlines'
      else
@@ -26,7 +26,7 @@ embedded' &&
      fi"
 
 # Later we will try removing an unremovable path to make sure
-# git-rm barfs, but if the test is run as root that cannot be
+# git rm barfs, but if the test is run as root that cannot be
 # arranged.
 test_expect_success \
     'Determine rm behavior' \
@@ -38,51 +38,51 @@ test_expect_success \
      rm -f test-file'
 
 test_expect_success \
-    'Pre-check that foo exists and is in index before git-rm foo' \
-    '[ -f foo ] && git-ls-files --error-unmatch foo'
+    'Pre-check that foo exists and is in index before git rm foo' \
+    '[ -f foo ] && git ls-files --error-unmatch foo'
 
 test_expect_success \
-    'Test that git-rm foo succeeds' \
-    'git-rm --cached foo'
+    'Test that git rm foo succeeds' \
+    'git rm --cached foo'
 
 test_expect_success \
-    'Post-check that foo exists but is not in index after git-rm foo' \
-    '[ -f foo ] && ! git-ls-files --error-unmatch foo'
+    'Post-check that foo exists but is not in index after git rm foo' \
+    '[ -f foo ] && ! git ls-files --error-unmatch foo'
 
 test_expect_success \
-    'Pre-check that bar exists and is in index before "git-rm bar"' \
-    '[ -f bar ] && git-ls-files --error-unmatch bar'
+    'Pre-check that bar exists and is in index before "git rm bar"' \
+    '[ -f bar ] && git ls-files --error-unmatch bar'
 
 test_expect_success \
-    'Test that "git-rm bar" succeeds' \
-    'git-rm bar'
+    'Test that "git rm bar" succeeds' \
+    'git rm bar'
 
 test_expect_success \
-    'Post-check that bar does not exist and is not in index after "git-rm -f bar"' \
-    '! [ -f bar ] && ! git-ls-files --error-unmatch bar'
+    'Post-check that bar does not exist and is not in index after "git rm -f bar"' \
+    '! [ -f bar ] && ! git ls-files --error-unmatch bar'
 
 test_expect_success \
-    'Test that "git-rm -- -q" succeeds (remove a file that looks like an option)' \
-    'git-rm -- -q'
+    'Test that "git rm -- -q" succeeds (remove a file that looks like an option)' \
+    'git rm -- -q'
 
 test "$test_tabs" = y && test_expect_success \
-    "Test that \"git-rm -f\" succeeds with embedded space, tab, or newline characters." \
-    "git-rm -f 'space embedded' 'tab	embedded' 'newline
+    "Test that \"git rm -f\" succeeds with embedded space, tab, or newline characters." \
+    "git rm -f 'space embedded' 'tab	embedded' 'newline
 embedded'"
 
 if test "$test_failed_remove" = y; then
 chmod a-w .
 test_expect_failure \
-    'Test that "git-rm -f" fails if its rm fails' \
-    'git-rm -f baz'
+    'Test that "git rm -f" fails if its rm fails' \
+    'git rm -f baz'
 chmod 775 .
 else
     test_expect_success 'skipping removal failure (perhaps running as root?)' :
 fi
 
 test_expect_success \
-    'When the rm in "git-rm -f" fails, it should not remove the file from the index' \
-    'git-ls-files --error-unmatch baz'
+    'When the rm in "git rm -f" fails, it should not remove the file from the index' \
+    'git ls-files --error-unmatch baz'
 
 test_expect_success 'Remove nonexistent file with --ignore-unmatch' '
 	git rm --ignore-unmatch nonexistent
