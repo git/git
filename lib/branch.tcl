@@ -3,13 +3,16 @@
 
 proc load_all_heads {} {
 	global all_heads
+	global some_heads_tracking
 
+	set rh refs/heads
+	set rh_len [expr {[string length $rh] + 1}]
 	set all_heads [list]
-	set fd [open "| git for-each-ref --format=%(refname) refs/heads" r]
+	set fd [open "| git for-each-ref --format=%(refname) $rh" r]
 	while {[gets $fd line] > 0} {
-		if {[is_tracking_branch $line]} continue
-		if {![regsub ^refs/heads/ $line {} name]} continue
-		lappend all_heads $name
+		if {!$some_heads_tracking || ![is_tracking_branch $line]} {
+			lappend all_heads [string range $line $rh_len end]
+		}
 	}
 	close $fd
 

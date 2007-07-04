@@ -1,14 +1,13 @@
 # git-gui remote management
 # Copyright (C) 2006, 2007 Shawn Pearce
 
+set some_heads_tracking 0;  # assume not
+
 proc is_tracking_branch {name} {
 	global tracking_branches
-
-	if {![catch {set info $tracking_branches($name)}]} {
-		return 1
-	}
-	foreach t [array names tracking_branches] {
-		if {[string match {*/\*} $t] && [string match $t $name]} {
+	foreach spec $tracking_branches {
+		set t [lindex $spec 0]
+		if {$t eq $name || [string match $t $name]} {
 			return 1
 		}
 	}
@@ -20,9 +19,10 @@ proc all_tracking_branches {} {
 
 	set all_trackings {}
 	set cmd {}
-	foreach name [array names tracking_branches] {
-		if {[regsub {/\*$} $name {} name]} {
-			lappend cmd $name
+	foreach spec $tracking_branches {
+		set name [lindex $spec 0]
+		if {[string range $name end-1 end] eq {/*}} {
+			lappend cmd [string range $name 0 end-2]
 		} else {
 			regsub ^refs/(heads|remotes)/ $name {} name
 			lappend all_trackings $name
@@ -43,11 +43,14 @@ proc all_tracking_branches {} {
 
 proc load_all_remotes {} {
 	global repo_config
-	global all_remotes tracking_branches
+	global all_remotes tracking_branches some_heads_tracking
 
+	set some_heads_tracking 0
 	set all_remotes [list]
-	array unset tracking_branches
+	set trck [list]
 
+	set rh_str refs/heads/
+	set rh_len [string length $rh_str]
 	set rm_dir [gitdir remotes]
 	if {[file isdirectory $rm_dir]} {
 		set all_remotes [glob \
@@ -62,10 +65,16 @@ proc load_all_remotes {} {
 				while {[gets $fd line] >= 0} {
 					if {![regexp {^Pull:[ 	]*([^:]+):(.+)$} \
 						$line line src dst]} continue
-					if {![regexp ^refs/ $dst]} {
-						set dst "refs/heads/$dst"
+					if {![string equal -length 5 refs/ $src]} {
+						set src $rh_str$src
 					}
-					set tracking_branches($dst) [list $name $src]
+					if {![string equal -length 5 refs/ $dst]} {
+						set dst $rh_str$dst
+					}
+					if {[string equal -length $rh_len $rh_str $dst]} {
+						set some_heads_tracking 1
+					}
+					lappend trck [list $dst $name $src]
 				}
 				close $fd
 			}
@@ -81,13 +90,20 @@ proc load_all_remotes {} {
 		}
 		foreach line $fl {
 			if {![regexp {^([^:]+):(.+)$} $line line src dst]} continue
-			if {![regexp ^refs/ $dst]} {
-				set dst "refs/heads/$dst"
+			if {![string equal -length 5 refs/ $src]} {
+				set src $rh_str$src
 			}
-			set tracking_branches($dst) [list $name $src]
+			if {![string equal -length 5 refs/ $dst]} {
+				set dst $rh_str$dst
+			}
+			if {[string equal -length $rh_len $rh_str $dst]} {
+				set some_heads_tracking 1
+			}
+			lappend trck [list $dst $name $src]
 		}
 	}
 
+	set tracking_branches [lsort -index 0 -unique $trck]
 	set all_remotes [lsort -unique $all_remotes]
 }
 
