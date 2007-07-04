@@ -1507,7 +1507,7 @@ if {[is_enabled branch]} {
 		[.mbar.branch index last] -state]
 
 	.mbar.branch add command -label {Delete...} \
-		-command do_delete_branch
+		-command branch_delete::dialog
 	lappend disable_on_lock [list .mbar.branch entryconf \
 		[.mbar.branch index last] -state]
 

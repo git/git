@@ -87,17 +87,38 @@ constructor new {path {title {}}} {
 	return $this
 }
 
+method none {text} {
+	if {[winfo exists $w.none_r]} {
+		$w.none_r configure -text $text
+		return
+	}
+
+	radiobutton $w.none_r \
+		-anchor w \
+		-text $text \
+		-value none \
+		-variable @revtype
+	grid $w.none_r -sticky we -padx {0 5} -columnspan 2
+	if {$revtype eq {}} {
+		set revtype none
+	}
+}
+
 method get {} {
 	switch -- $revtype {
 	head { return $c_head }
 	trck { return $c_trck }
 	tag  { return $c_tag  }
 	expr { return $c_expr }
+	none { return {}      }
 	default { error "unknown type of revision" }
 	}
 }
 
 method get_commit {} {
+	if {$revtype eq {none}} {
+		return {}
+	}
 	set rev [get $this]
 	return [git rev-parse --verify "${rev}^0"]
 }
