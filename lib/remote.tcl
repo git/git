@@ -17,28 +17,41 @@ proc is_tracking_branch {name} {
 proc all_tracking_branches {} {
 	global tracking_branches
 
-	set all_trackings {}
-	set cmd {}
+	set all [list]
+	set pat [list]
+	set cmd [list]
+
 	foreach spec $tracking_branches {
-		set name [lindex $spec 0]
-		if {[string range $name end-1 end] eq {/*}} {
-			lappend cmd [string range $name 0 end-2]
+		set dst [lindex $spec 0]
+		if {[string range $dst end-1 end] eq {/*}} {
+			lappend pat $spec
+			lappend cmd [string range $dst 0 end-2]
 		} else {
-			regsub ^refs/(heads|remotes)/ $name {} name
-			lappend all_trackings $name
+			lappend all $spec
 		}
 	}
 
-	if {$cmd ne {}} {
+	if {$pat ne {}} {
 		set fd [open "| git for-each-ref --format=%(refname) $cmd" r]
-		while {[gets $fd name] > 0} {
-			regsub ^refs/(heads|remotes)/ $name {} name
-			lappend all_trackings $name
+		while {[gets $fd n] > 0} {
+			foreach spec $pat {
+				set dst [string range [lindex $spec 0] 0 end-2]
+				set len [string length $dst]
+				if {[string equal -length $len $dst $n]} {
+					set src [string range [lindex $spec 2] 0 end-2]
+					set spec [list \
+						$n \
+						[lindex $spec 1] \
+						$src[string range $n $len end] \
+						]
+					lappend all $spec
+				}
+			}
 		}
 		close $fd
 	}
 
-	return [lsort -unique $all_trackings]
+	return [lsort -index 0 -unique $all]
 }
 
 proc load_all_remotes {} {
@@ -65,6 +78,9 @@ proc load_all_remotes {} {
 				while {[gets $fd line] >= 0} {
 					if {![regexp {^Pull:[ 	]*([^:]+):(.+)$} \
 						$line line src dst]} continue
+					if {[string index $src 0] eq {+}} {
+						set src [string range $src 1 end]
+					}
 					if {![string equal -length 5 refs/ $src]} {
 						set src $rh_str$src
 					}
@@ -90,6 +106,9 @@ proc load_all_remotes {} {
 		}
 		foreach line $fl {
 			if {![regexp {^([^:]+):(.+)$} $line line src dst]} continue
+			if {[string index $src 0] eq {+}} {
+				set src [string range $src 1 end]
+			}
 			if {![string equal -length 5 refs/ $src]} {
 				set src $rh_str$src
 			}

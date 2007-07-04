@@ -11,6 +11,8 @@ field c_trck        {}; # selected tracking branch
 field c_tag         {}; # selected tag
 field c_expr        {}; # current revision expression
 
+field trck_spec       ; # array of specifications
+
 constructor new {path {title {}}} {
 	global all_heads current_branch
 
@@ -37,19 +39,30 @@ constructor new {path {title {}}} {
 		trace add variable @c_head write [cb _select head]
 	}
 
-	set all_trackings [all_tracking_branches]
-	if {$all_trackings ne {}} {
-		set c_trck [lindex $all_trackings 0]
+	set trck_list [all_tracking_branches]
+	if {$trck_list ne {}} {
+		set nam [list]
+		foreach spec $trck_list {
+			set txt [lindex $spec 0]
+			regsub ^refs/(heads/|remotes/)? $txt {} txt
+			set trck_spec($txt) $spec
+			lappend nam $txt
+		}
+		set nam [lsort -unique $nam]
+
 		radiobutton $w.trck_r \
 			-text {Tracking Branch:} \
 			-value trck \
 			-variable @revtype
-		eval tk_optionMenu $w.trck_m @c_trck $all_trackings
+		eval tk_optionMenu $w.trck_m @c_trck $nam
 		grid $w.trck_r $w.trck_m -sticky w
+
+		set c_trck [lindex $nam 0]
 		if {$revtype eq {}} {
 			set revtype trck
 		}
 		trace add variable @c_trck write [cb _select trck]
+		unset nam spec txt
 	}
 
 	set all_tags [load_all_tags]
@@ -115,12 +128,22 @@ method get {} {
 	}
 }
 
+method get_expr {} {
+	switch -- $revtype {
+	head { return refs/heads/$c_head             }
+	trck { return [lindex $trck_spec($c_trck) 0] }
+	tag  { return refs/tags/$c_tag               }
+	expr { return $c_expr                        }
+	none { return {}                             }
+	default { error "unknown type of revision"   }
+	}
+}
+
 method get_commit {} {
 	if {$revtype eq {none}} {
 		return {}
 	}
-	set rev [get $this]
-	return [git rev-parse --verify "${rev}^0"]
+	return [git rev-parse --verify "[get_expr $this]^0"]
 }
 
 method _validate {d S} {
