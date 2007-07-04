@@ -259,7 +259,8 @@ if [ "$?" -eq 0 ]; then
 	fi
 	if test -n "$branch"
 	then
-		GIT_DIR="$GIT_DIR" git symbolic-ref -m "checkout: moving to $branch" HEAD "refs/heads/$branch"
+		old_branch_name=`expr "z$oldbranch" : 'zrefs/heads/\(.*\)'`
+		GIT_DIR="$GIT_DIR" git symbolic-ref -m "checkout: moving from $old_branch_name to $branch" HEAD "refs/heads/$branch"
 		if test -n "$quiet"
 		then
 			true	# nothing
