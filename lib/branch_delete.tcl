@@ -40,6 +40,7 @@ constructor dialog {} {
 		-height 10 \
 		-width 70 \
 		-selectmode extended \
+		-exportselection false \
 		-yscrollcommand [list $w.list.sby set]
 	scrollbar $w.list.sby -command [list $w.list.l yview]
 	pack $w.list.sby -side right -fill y
@@ -80,13 +81,7 @@ method _select {} {
 method _delete {} {
 	global all_heads
 
-	if {[catch {set check_cmt [$w_check get_commit]} err]} {
-		tk_messageBox \
-			-icon error \
-			-type ok \
-			-title [wm title $w] \
-			-parent $w \
-			-message "Invalid revision: [$w_check get]"
+	if {[catch {set check_cmt [$w_check commit_or_die]}]} {
 		return
 	}
 

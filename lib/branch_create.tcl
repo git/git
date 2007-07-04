@@ -63,7 +63,7 @@ constructor dialog {} {
 	pack $w.desc -anchor nw -fill x -pady 5 -padx 5
 
 	set w_rev [::choose_rev::new $w.rev {Starting Revision}]
-	pack $w.rev -anchor nw -fill x -pady 5 -padx 5
+	pack $w.rev -anchor nw -fill both -expand 1 -pady 5 -padx 5
 
 	labelframe $w.options -text {Options}
 
@@ -170,13 +170,7 @@ method _create {} {
 		return
 	}
 
-	if {[catch {set new [$w_rev get_commit]}]} {
-		tk_messageBox \
-			-icon error \
-			-type ok \
-			-title [wm title $w] \
-			-parent $w \
-			-message "Invalid revision: [$w_rev get]"
+	if {[catch {set new [$w_rev commit_or_die]}]} {
 		return
 	}
 
