@@ -211,7 +211,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	if (!gitdirenv) {
 		int len, offset;
 
-		if (!getcwd(cwd, sizeof(cwd)-1) || cwd[0] != '/')
+		if (!getcwd(cwd, sizeof(cwd)-1))
 			die("Unable to read current working directory");
 
 		offset = len = strlen(cwd);
@@ -271,7 +271,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		die("Not a git repository: '%s'", gitdirenv);
 	}
 
-	if (!getcwd(cwd, sizeof(cwd)-1) || cwd[0] != '/')
+	if (!getcwd(cwd, sizeof(cwd)-1))
 		die("Unable to read current working directory");
 	if (chdir(gitdirenv)) {
 		if (nongit_ok) {
@@ -281,7 +281,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		die("Cannot change directory to $%s '%s'",
 			GIT_DIR_ENVIRONMENT, gitdirenv);
 	}
-	if (!getcwd(gitdir, sizeof(gitdir)-1) || gitdir[0] != '/')
+	if (!getcwd(gitdir, sizeof(gitdir)-1))
 		die("Unable to read current working directory");
 	if (chdir(cwd))
 		die("Cannot come back to cwd");
@@ -340,7 +340,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			die("Cannot change directory to working tree '%s'",
 				gitworktree);
 	}
-	if (!getcwd(worktree, sizeof(worktree)-1) || worktree[0] != '/')
+	if (!getcwd(worktree, sizeof(worktree)-1))
 		die("Unable to read current working directory");
 	strcat(worktree, "/");
 	inside_work_tree = !prefixcmp(cwd, worktree);
