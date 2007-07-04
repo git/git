@@ -13,6 +13,10 @@ set -e
 USAGE="git-filter-branch [-d TEMPDIR] [FILTERS] DESTBRANCH [REV-RANGE]"
 . git-sh-setup
 
+warn () {
+        echo "$*" >&2
+}
+
 map()
 {
 	# if it was not rewritten, take the original
