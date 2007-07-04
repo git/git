@@ -1465,12 +1465,12 @@ sub git_get_projects_list {
 	return @list;
 }
 
-sub git_get_project_owner {
-	my $project = shift;
-	my $owner;
+our $gitweb_project_owner = undef;
+sub git_get_project_list_from_file {
 
-	return undef unless $project;
+	return if (defined $gitweb_project_owner);
 
+	$gitweb_project_owner = {};
 	# read from file (url-encoded):
 	# 'git%2Fgit.git Linus+Torvalds'
 	# 'libs%2Fklibc%2Fklibc.git H.+Peter+Anvin'
@@ -1482,12 +1482,24 @@ sub git_get_project_owner {
 			my ($pr, $ow) = split ' ', $line;
 			$pr = unescape($pr);
 			$ow = unescape($ow);
-			if ($pr eq $project) {
-				$owner = to_utf8($ow);
-				last;
-			}
+			$gitweb_project_owner->{$pr} = to_utf8($ow);
 		}
 		close $fd;
+	}
+}
+
+sub git_get_project_owner {
+	my $project = shift;
+	my $owner;
+
+	return undef unless $project;
+
+	if (!defined $gitweb_project_owner) {
+		git_get_project_list_from_file();
+	}
+
+	if (exists $gitweb_project_owner->{$project}) {
+		$owner = $gitweb_project_owner->{$project};
 	}
 	if (!defined $owner) {
 		$owner = get_file_owner("$projectroot/$project");
