@@ -164,7 +164,7 @@ test $commits -eq 0 && die "Found nothing to rewrite"
 i=0
 while read commit parents; do
 	i=$(($i+1))
-	printf "$commit ($i/$commits) "
+	printf "\rRewrite $commit ($i/$commits)"
 
 	case "$filter_subdir" in
 	"")
@@ -207,8 +207,8 @@ while read commit parents; do
 
 	sed -e '1,/^$/d' <../commit | \
 		eval "$filter_msg" | \
-		sh -c "$filter_commit" "git commit-tree" $(git write-tree) $parentstr | \
-		tee ../map/$commit
+		sh -c "$filter_commit" "git commit-tree" $(git write-tree) \
+			$parentstr > ../map/$commit
 done <../revs
 
 src_head=$(tail -n 1 ../revs | sed -e 's/ .*//')
@@ -260,6 +260,6 @@ fi
 
 cd ../..
 rm -rf "$tempdir"
-echo "Rewritten history saved to the $dstbranch branch"
+printf "\nRewritten history saved to the $dstbranch branch\n"
 
 exit $ret
