@@ -6261,7 +6261,8 @@ proc anc_or_desc {a b} {
 	# Both are on the same arc(s); either both are the same BMP,
 	# or if one is not a BMP, the other is also not a BMP or is
 	# the BMP at end of the arc (and it only has 1 incoming arc).
-	if {$a eq $b} {
+	# Or both can be BMPs with no incoming arcs.
+	if {$a eq $b || $arcnos($a) eq {}} {
 	    return 0
 	}
 	# assert {[llength $arcnos($a)] == 1}
