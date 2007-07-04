@@ -3002,6 +3002,7 @@ sub new {
 	      \&Git::SVN::Prompt::username, 2),
 	  ]);
 	my $config = SVN::Core::config_get_config($config_dir);
+	$RA = undef;
 	my $self = SVN::Ra->new(url => $url, auth => $baton,
 	                      config => $config,
 			      pool => SVN::Pool->new,
