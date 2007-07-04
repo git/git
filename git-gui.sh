@@ -1496,7 +1496,7 @@ if {[is_enabled branch]} {
 	menu .mbar.branch
 
 	.mbar.branch add command -label {Create...} \
-		-command do_create_branch \
+		-command branch_create::dialog \
 		-accelerator $M1T-N
 	lappend disable_on_lock [list .mbar.branch entryconf \
 		[.mbar.branch index last] -state]
@@ -2221,8 +2221,8 @@ bind $ui_diff <Control-Key-f> {catch {%W yview scroll  1 pages};break}
 bind $ui_diff <Button-1>   {focus %W}
 
 if {[is_enabled branch]} {
-	bind . <$M1B-Key-n> do_create_branch
-	bind . <$M1B-Key-N> do_create_branch
+	bind . <$M1B-Key-n> branch_create::dialog
+	bind . <$M1B-Key-N> branch_create::dialog
 }
 if {[is_enabled transport]} {
 	bind . <$M1B-Key-p> do_push_anywhere
