@@ -215,8 +215,7 @@ static void combine_diff(const unsigned char *parent, mmfile_t *result_file,
 	parent_file.ptr = grab_blob(parent, &sz);
 	parent_file.size = sz;
 	xpp.flags = XDF_NEED_MINIMAL;
-	xecfg.ctxlen = 0;
-	xecfg.flags = 0;
+	memset(&xecfg, 0, sizeof(xecfg));
 	ecb.outf = xdiff_outf;
 	ecb.priv = &state;
 	memset(&state, 0, sizeof(state));
