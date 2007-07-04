@@ -71,7 +71,7 @@ save_stash () {
 		git commit-tree $w_tree -p $b_commit -p $i_commit) ||
 		die "Cannot record working tree state"
 
-	git update-ref -m "$msg" $ref_stash $w_commit ||
+	git update-ref -m "WIP on $msg" $ref_stash $w_commit ||
 		die "Cannot save the current status"
 	printf >&2 'Saved WIP on %s\n' "$msg"
 }
