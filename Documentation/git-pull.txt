@@ -29,7 +29,7 @@ include::fetch-options.txt[]
 
 include::pull-fetch-param.txt[]
 
-include::urls.txt[]
+include::urls-remotes.txt[]
 
 include::merge-strategies.txt[]
 
