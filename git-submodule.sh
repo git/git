@@ -234,7 +234,7 @@ modules_list()
 			continue;
 		fi
 		revname=$(unset GIT_DIR && cd "$path" && git describe --tags $sha1)
-		set_name_rev "$path" $"sha1"
+		set_name_rev "$path" "$sha1"
 		if git diff-files --quiet -- "$path"
 		then
 			say " $sha1 $path$revname"
@@ -242,7 +242,7 @@ modules_list()
 			if test -z "$cached"
 			then
 				sha1=$(unset GIT_DIR && cd "$path" && git rev-parse --verify HEAD)
-				set_name_rev "$path" $"sha1"
+				set_name_rev "$path" "$sha1"
 			fi
 			say "+$sha1 $path$revname"
 		fi
