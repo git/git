@@ -200,7 +200,7 @@ void show_log(struct rev_info *opt, const char *sep)
 					digits_in_number(opt->total),
 					opt->nr, opt->total);
 			subject = buffer;
-		} else if (opt->total == 0) {
+		} else if (opt->total == 0 && opt->subject_prefix && *opt->subject_prefix) {
 			static char buffer[256];
 			snprintf(buffer, sizeof(buffer),
 					"Subject: [%s] ",
