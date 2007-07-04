@@ -213,7 +213,9 @@ proc dialog {} {
 	pack $w.buttons.visualize -side left
 	button $w.buttons.create -text Merge -command $_start
 	pack $w.buttons.create -side right
-	button $w.buttons.cancel -text {Cancel} -command [list destroy $w]
+	button $w.buttons.cancel \
+		-text {Cancel} \
+		-command "unlock_index;destroy $w"
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
