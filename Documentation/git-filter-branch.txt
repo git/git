@@ -31,7 +31,7 @@ branch as your current branch.  Nevertheless, this may be useful in
 the future for compensating for some git bugs or such, therefore
 such a usage is permitted.
 
-WARNING! The rewritten history will have different object names for all
+*WARNING*! The rewritten history will have different object names for all
 the objects and will not converge with the original branch.  You will not
 be able to easily push and distribute the rewritten branch on top of the
 original branch.  Please do not use this command if you do not know the
@@ -54,7 +54,7 @@ argument is always evaluated in shell using the 'eval' command.
 Prior to that, the $GIT_COMMIT environment variable will be set to contain
 the id of the commit being rewritten.  Also, GIT_AUTHOR_NAME,
 GIT_AUTHOR_EMAIL, GIT_AUTHOR_DATE, GIT_COMMITTER_NAME, GIT_COMMITTER_EMAIL,
-and GIT_COMMITTER_DATE is set according to the current commit.
+and GIT_COMMITTER_DATE are set according to the current commit.
 
 A 'map' function is available that takes an "original sha1 id" argument
 and outputs a "rewritten sha1 id" if the commit has been already
@@ -78,7 +78,7 @@ OPTIONS
 	directory set to the root of the checked out tree.  The new tree
 	is then used as-is (new files are auto-added, disappeared files
 	are auto-removed - neither .gitignore files nor any other ignore
-	rules HAVE ANY EFFECT!).
+	rules *HAVE ANY EFFECT*!).
 
 --index-filter <command>::
 	This is the filter for rewriting the index.  It is similar to the
@@ -128,8 +128,9 @@ attached, the rewritten tag won't have it.  Sorry.  (It is by
 definition impossible to preserve signatures at any rate.)
 
 --subdirectory-filter <directory>::
-	Only ever look at the history, which touches the given subdirectory.
-	The result will contain that directory as its project root.
+	Only look at the history which touches the given subdirectory.
+	The result will contain that directory (and only that) as its
+	project root.
 
 -d <directory>::
 	Use this option to set the path to the temporary directory used for
