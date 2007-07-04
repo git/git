@@ -11,7 +11,8 @@ mk_empty () {
 	mkdir testrepo &&
 	(
 		cd testrepo &&
-		git init
+		git init &&
+		mv .git/hooks .git/hooks-disabled
 	)
 }
 
