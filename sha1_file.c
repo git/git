@@ -352,10 +352,14 @@ static void read_info_alternates(const char * relative_base, int depth)
 	char *map;
 	size_t mapsz;
 	struct stat st;
-	char path[PATH_MAX];
+	const char alt_file_name[] = "info/alternates";
+	/* Given that relative_base is no longer than PATH_MAX,
+	   ensure that "path" has enough space to append "/", the
+	   file name, "info/alternates", and a trailing NUL.  */
+	char path[PATH_MAX + 1 + sizeof alt_file_name];
 	int fd;
 
-	sprintf(path, "%s/info/alternates", relative_base);
+	sprintf(path, "%s/%s", relative_base, alt_file_name);
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
 		return;
@@ -836,7 +840,10 @@ void install_packed_git(struct packed_git *pack)
 
 static void prepare_packed_git_one(char *objdir, int local)
 {
-	char path[PATH_MAX];
+	/* Ensure that this buffer is large enough so that we can
+	   append "/pack/" without clobbering the stack even if
+	   strlen(objdir) were PATH_MAX.  */
+	char path[PATH_MAX + 1 + 4 + 1 + 1];
 	int len;
 	DIR *dir;
 	struct dirent *de;
@@ -856,6 +863,9 @@ static void prepare_packed_git_one(char *objdir, int local)
 		struct packed_git *p;
 
 		if (!has_extension(de->d_name, ".idx"))
+			continue;
+
+		if (len + namelen + 1 > sizeof(path))
 			continue;
 
 		/* Don't reopen a pack we already have. */

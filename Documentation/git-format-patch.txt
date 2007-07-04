@@ -53,6 +53,9 @@ OPTIONS
 -------
 include::diff-options.txt[]
 
+-<n>::
+	Limits the number of patches to prepare.
+
 -o|--output-directory <dir>::
 	Use <dir> to store the resulting files, instead of the
 	current working directory.
