@@ -305,10 +305,12 @@ branch=$(git rev-parse --verify "${branch_name}^0") || exit
 
 # Now we are rebasing commits $upstream..$branch on top of $onto
 
-# Check if we are already based on $onto, but this should be
-# done only when upstream and onto are the same.
+# Check if we are already based on $onto with linear history,
+# but this should be done only when upstream and onto are the same.
 mb=$(git merge-base "$onto" "$branch")
-if test "$upstream" = "$onto" && test "$mb" = "$onto"
+if test "$upstream" = "$onto" && test "$mb" = "$onto" &&
+	# linear history?
+	! git rev-list --parents "$onto".."$branch" | grep " .* " > /dev/null
 then
 	echo >&2 "Current branch $branch_name is up to date."
 	exit 0
