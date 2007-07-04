@@ -28,6 +28,16 @@ map()
 	fi
 }
 
+# override die(): this version puts in an extra line break, so that
+# the progress is still visible
+
+die()
+{
+	echo >&2
+	echo "$*" >&2
+	exit 1
+}
+
 # When piped a commit, output a script to set the ident of either
 # "author" or "committer
 
@@ -181,23 +191,29 @@ while read commit parents; do
 	export GIT_COMMIT=$commit
 	git cat-file commit "$commit" >../commit
 
-	eval "$(set_ident AUTHOR <../commit)"
-	eval "$(set_ident COMMITTER <../commit)"
-	eval "$filter_env" < /dev/null
+	eval "$(set_ident AUTHOR <../commit)" ||
+		die "setting author failed for commit $commit"
+	eval "$(set_ident COMMITTER <../commit)" ||
+		die "setting committer failed for commit $commit"
+	eval "$filter_env" < /dev/null ||
+		die "env filter failed: $filter_env"
 
 	if [ "$filter_tree" ]; then
 		git checkout-index -f -u -a
 		# files that $commit removed are now still in the working tree;
 		# remove them, else they would be added again
 		git ls-files -z --others | xargs -0 rm -f
-		eval "$filter_tree" < /dev/null
+		eval "$filter_tree" < /dev/null ||
+			die "tree filter failed: $filter_tree"
+
 		git diff-index -r $commit | cut -f 2- | tr '\n' '\0' | \
 			xargs -0 git update-index --add --replace --remove
 		git ls-files -z --others | \
 			xargs -0 git update-index --add --replace --remove
 	fi
 
-	eval "$filter_index" < /dev/null
+	eval "$filter_index" < /dev/null ||
+		die "index filter failed: $filter_index"
 
 	parentstr=
 	for parent in $parents; do
@@ -206,13 +222,15 @@ while read commit parents; do
 		done
 	done
 	if [ "$filter_parent" ]; then
-		parentstr="$(echo "$parentstr" | eval "$filter_parent")"
+		parentstr="$(echo "$parentstr" | eval "$filter_parent")" ||
+				die "parent filter failed: $filter_parent"
 	fi
 
 	sed -e '1,/^$/d' <../commit | \
-		eval "$filter_msg" | \
-		sh -c "$filter_commit" "git commit-tree" $(git write-tree) \
-			$parentstr > ../map/$commit
+		eval "$filter_msg" > ../message ||
+			die "msg filter failed: $filter_msg"
+	sh -c "$filter_commit" "git commit-tree" \
+		$(git write-tree) $parentstr < ../message > ../map/$commit
 done <../revs
 
 src_head=$(tail -n 1 ../revs | sed -e 's/ .*//')
@@ -249,7 +267,8 @@ if [ "$filter_tag_name" ]; then
 		[ -f "../map/$sha1" ] || continue
 		new_sha1="$(cat "../map/$sha1")"
 		export GIT_COMMIT="$sha1"
-		new_ref="$(echo "$ref" | eval "$filter_tag_name")"
+		new_ref="$(echo "$ref" | eval "$filter_tag_name")" ||
+			die "tag name filter failed: $filter_tag_name"
 
 		echo "$ref -> $new_ref ($sha1 -> $new_sha1)"
 

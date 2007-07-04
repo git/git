@@ -107,13 +107,19 @@ test_expect_success 'use index-filter to move into a subdirectory' '
 		  mv \$GIT_INDEX_FILE.new \$GIT_INDEX_FILE" directorymoved &&
 	test -z "$(git diff HEAD directorymoved:newsubdir)"'
 
+test_expect_success 'stops when msg filter fails' '
+	! git-filter-branch --msg-filter false nonono &&
+	rm -rf .git-rewrite &&
+	! git rev-parse nonono
+'
+
 test_expect_success 'author information is preserved' '
 	: > i &&
 	git add i &&
 	test_tick &&
 	GIT_AUTHOR_NAME="B V Uips" git commit -m bvuips &&
 	git-filter-branch --msg-filter "cat; \
-			test \$GIT_COMMIT = $(git rev-parse master) && \
+			test \$GIT_COMMIT != $(git rev-parse master) || \
 			echo Hallo" \
 		preserved-author &&
 	test 1 = $(git rev-list --author="B V Uips" preserved-author | wc -l)
