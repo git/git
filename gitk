@@ -1786,7 +1786,6 @@ proc showview {n} {
     }
     unselectline
     normalline
-    stopfindproc
     if {$curview >= 0} {
 	set vparentlist($curview) $parentlist
 	set vdisporder($curview) $displayorder
@@ -3939,7 +3938,6 @@ proc findmatches {f} {
 proc dofind {{rev 0}} {
     global findstring findstartline findcurline selectedline numcommits
 
-    stopfindproc
     unmarkmatches
     cancel_next_highlight
     focus .
@@ -4091,23 +4089,6 @@ proc findselectline {l} {
 	    $ctext tag add found "1.0 + $start c" "1.0 + $end c"
 	}
     }
-}
-
-proc stopfindproc {{done 0}} {
-    global findprocpid findprocfile findids
-    global ctext findoldcursor phase maincursor textcursor
-    global findinprogress
-
-    catch {unset findids}
-    if {[info exists findprocpid]} {
-	if {!$done} {
-	    catch {exec kill $findprocpid}
-	}
-	catch {close $findprocfile}
-	unset findprocpid
-    }
-    catch {unset findinprogress}
-    notbusy find
 }
 
 # mark the bits of a headline or author that match a find string
