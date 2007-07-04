@@ -128,6 +128,14 @@ method get {} {
 	}
 }
 
+method get_tracking_branch {} {
+	if {$revtype eq {trck}} {
+		return $trck_spec($c_trck)
+	} else {
+		return {}
+	}
+}
+
 method get_expr {} {
 	switch -- $revtype {
 	head { return refs/heads/$c_head             }

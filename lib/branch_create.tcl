@@ -8,6 +8,8 @@ field w_rev          ; # mega-widget to pick the initial revision
 field w_name         ; # new branch name widget
 
 field name         {}; # name of the branch the user has chosen
+field name_type  user; # type of branch name to use
+
 field opt_checkout  1; # automatically checkout the new branch?
 
 constructor dialog {} {
@@ -32,10 +34,12 @@ constructor dialog {} {
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.desc -text {Branch Description}
-	label $w.desc.name_r \
+	labelframe $w.desc -text {Branch Name}
+	radiobutton $w.desc.name_r \
 		-anchor w \
-		-text {Name:}
+		-text {Name:} \
+		-value user \
+		-variable @name_type
 	set w_name $w.desc.name_t
 	entry $w_name \
 		-borderwidth 1 \
@@ -45,6 +49,13 @@ constructor dialog {} {
 		-validate key \
 		-validatecommand [cb _validate %d %S]
 	grid $w.desc.name_r $w_name -sticky we -padx {0 5}
+
+	radiobutton $w.desc.match_r \
+		-anchor w \
+		-text {Match Tracking Branch Name} \
+		-value match \
+		-variable @name_type
+	grid $w.desc.match_r -sticky we -padx {0 5} -columnspan 2
 
 	grid columnconfigure $w.desc 1 -weight 1
 	pack $w.desc -anchor nw -fill x -pady 5 -padx 5
@@ -75,7 +86,33 @@ method _create {} {
 	global null_sha1 repo_config
 	global all_heads
 
-	set newbranch $name
+	switch -- $name_type {
+	user {
+		set newbranch $name
+	}
+	match {
+		set spec [$w_rev get_tracking_branch]
+		if {$spec eq {}} {
+			tk_messageBox \
+				-icon error \
+				-type ok \
+				-title [wm title $w] \
+				-parent $w \
+				-message "Please select a tracking branch."
+			return
+		}
+		if {![regsub ^refs/heads/ [lindex $spec 2] {} newbranch]} {
+			tk_messageBox \
+				-icon error \
+				-type ok \
+				-title [wm title $w] \
+				-parent $w \
+				-message "Tracking branch [$w get] is not a branch in the remote repository."
+			return
+		}
+	}
+	}
+
 	if {$newbranch eq {}
 		|| $newbranch eq $repo_config(gui.newbranchtemplate)} {
 		tk_messageBox \
