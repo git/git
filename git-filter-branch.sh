@@ -16,8 +16,12 @@ USAGE="git-filter-branch [-d TEMPDIR] [FILTERS] DESTBRANCH [REV-RANGE]"
 map()
 {
 	# if it was not rewritten, take the original
-	test -r "$workdir/../map/$1" || echo "$1"
-	cat "$workdir/../map/$1"
+	if test -r "$workdir/../map/$1"
+	then
+		cat "$workdir/../map/$1"
+	else
+		echo "$1"
+	fi
 }
 
 # When piped a commit, output a script to set the ident of either
