@@ -58,8 +58,9 @@ and GIT_COMMITTER_DATE are set according to the current commit.
 
 A 'map' function is available that takes an "original sha1 id" argument
 and outputs a "rewritten sha1 id" if the commit has been already
-rewritten, fails otherwise; the 'map' function can return several
-ids on separate lines if your commit filter emitted multiple commits.
+rewritten, and "original sha1 id" otherwise; the 'map' function can
+return several ids on separate lines if your commit filter emitted
+multiple commits.
 
 
 OPTIONS
@@ -166,12 +167,13 @@ git filter-branch --index-filter 'git update-index --remove filename' newbranch
 Now, you will get the rewritten history saved in the branch 'newbranch'
 (your current branch is left untouched).
 
-To "etch-graft" a commit to the revision history (set a commit to be
-the parent of the current initial commit and propagate that):
+To set a commit (which typically is at the tip of another
+history) to be the parent of the current initial commit, in
+order to paste the other history behind the current history:
 
-----------------------------------------------------------------------
-git filter-branch --parent-filter sed\ 's/^$/-p <graft-id>/' newbranch
-----------------------------------------------------------------------
+------------------------------------------------------------------------
+git filter-branch --parent-filter 'sed "s/^\$/-p <graft-id>/"' newbranch
+------------------------------------------------------------------------
 
 (if the parent string is empty - therefore we are dealing with the
 initial commit - add graftcommit as a parent).  Note that this assumes
@@ -182,6 +184,13 @@ happened).  If this is not the case, use:
 git filter-branch --parent-filter \
 	'cat; test $GIT_COMMIT = <commit-id> && echo "-p <graft-id>"' newbranch
 -------------------------------------------------------------------------------
+
+or even simpler:
+
+-----------------------------------------------
+echo "$commit-id $graft-id" >> .git/info/grafts
+git filter-branch newbranch $graft-id..
+-----------------------------------------------
 
 To remove commits authored by "Darl McBribe" from the history:
 
