@@ -254,6 +254,8 @@ if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 	}
 }
 
+($from) = expand_aliases($from) if defined $from;
+
 my $prompting = 0;
 if (!defined $from) {
 	$from = $author || $committer;
