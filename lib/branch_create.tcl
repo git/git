@@ -12,6 +12,7 @@ field name_type  user; # type of branch name to use
 
 field opt_merge    ff; # type of merge to apply to existing branch
 field opt_checkout  1; # automatically checkout the new branch?
+field opt_fetch     1; # refetch tracking branch if used?
 field reset_ok      0; # did the user agree to reset?
 
 constructor dialog {} {
@@ -87,6 +88,11 @@ constructor dialog {} {
 	pack $w.options.merge.reset -side left
 	pack $w.options.merge -anchor nw
 
+	checkbutton $w.options.fetch \
+		-text {Fetch Tracking Branch} \
+		-variable @opt_fetch
+	pack $w.options.fetch -anchor nw
+
 	checkbutton $w.options.checkout \
 		-text {Checkout After Creation} \
 		-variable @opt_checkout
@@ -107,15 +113,15 @@ constructor dialog {} {
 }
 
 method _create {} {
-	global null_sha1 repo_config
-	global all_heads current_branch
+	global repo_config current_branch
+	global M1B
 
+	set spec [$w_rev get_tracking_branch]
 	switch -- $name_type {
 	user {
 		set newbranch $name
 	}
 	match {
-		set spec [$w_rev get_tracking_branch]
 		if {$spec eq {}} {
 			tk_messageBox \
 				-icon error \
@@ -170,6 +176,52 @@ method _create {} {
 		focus $w_name
 		return
 	}
+
+	if {$spec ne {} && $opt_fetch} {
+		set l_trck [lindex $spec 0]
+		set remote [lindex $spec 1]
+		set r_head [lindex $spec 2]
+		regsub ^refs/heads/ $r_head {} r_head
+
+		set c $w.fetch_trck
+		toplevel $c
+		wm title $c "Refreshing Tracking Branch"
+		wm geometry $c "+[winfo rootx $w]+[winfo rooty $w]"
+
+		set e [::console::embed \
+			$c.console \
+			"Fetching $r_head from $remote"]
+		pack $c.console -fill both -expand 1
+		$e exec \
+			[list git fetch $remote +$r_head:$l_trck] \
+			[cb _finish_fetch $newbranch $c $e]
+
+		bind $c <Visibility> [list grab $c]
+		bind $c <$M1B-Key-w> break
+		bind $c <$M1B-Key-W> break
+		wm protocol $c WM_DELETE_WINDOW [cb _noop]
+	} else {
+		_finish_create $this $newbranch
+	}
+}
+
+method _noop {} {}
+
+method _finish_fetch {newbranch c e ok} {
+	wm protocol $c WM_DELETE_WINDOW {}
+
+	if {$ok} {
+		destroy $c
+		_finish_create $this $newbranch
+	} else {
+		$e done $ok
+		button $c.close -text Close -command [list destroy $c]
+		pack $c.close -side bottom -anchor e -padx 10 -pady 10
+	}
+}
+
+method _finish_create {newbranch} {
+	global null_sha1 all_heads
 
 	if {[catch {set new [$w_rev commit_or_die]}]} {
 		return

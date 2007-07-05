@@ -7,6 +7,7 @@ field t_short
 field t_long
 field w
 field console_cr
+field is_toplevel    1; # are we our own window?
 
 constructor new {short_title long_title} {
 	set t_short $short_title
@@ -15,10 +16,25 @@ constructor new {short_title long_title} {
 	return $this
 }
 
+constructor embed {path title} {
+	set t_short {}
+	set t_long $title
+	set w $path
+	set is_toplevel 0
+	_init $this
+	return $this
+}
+
 method _init {} {
 	global M1B
-	make_toplevel top w -autodelete 0
-	wm title $top "[appname] ([reponame]): $t_short"
+
+	if {$is_toplevel} {
+		make_toplevel top w -autodelete 0
+		wm title $top "[appname] ([reponame]): $t_short"
+	} else {
+		frame $w
+	}
+
 	set console_cr 1.0
 
 	frame $w.m
@@ -57,15 +73,17 @@ method _init {} {
 			$w.m.t tag remove sel 0.0 end
 		"
 
-	button $w.ok -text {Close} \
-		-state disabled \
-		-command "destroy $w"
-	pack $w.ok -side bottom -anchor e -pady 10 -padx 10
+	if {$is_toplevel} {
+		button $w.ok -text {Close} \
+			-state disabled \
+			-command [list destroy $w]
+		pack $w.ok -side bottom -anchor e -pady 10 -padx 10
+		bind $w <Visibility> [list focus $w]
+	}
 
 	bind_button3 $w.m.t "tk_popup $w.ctxm %X %Y"
 	bind $w.m.t <$M1B-Key-a> "$w.m.t tag add sel 0.0 end;break"
 	bind $w.m.t <$M1B-Key-A> "$w.m.t tag add sel 0.0 end;break"
-	bind $w <Visibility> "focus $w"
 }
 
 method exec {cmd {after {}}} {
@@ -159,16 +177,20 @@ method done {ok} {
 	if {$ok} {
 		if {[winfo exists $w.m.s]} {
 			$w.m.s conf -background green -text {Success}
-			$w.ok conf -state normal
-			focus $w.ok
+			if {$is_toplevel} {
+				$w.ok conf -state normal
+				focus $w.ok
+			}
 		}
 	} else {
 		if {![winfo exists $w.m.s]} {
 			_init $this
 		}
 		$w.m.s conf -background red -text {Error: Command Failed}
-		$w.ok conf -state normal
-		focus $w.ok
+		if {$is_toplevel} {
+			$w.ok conf -state normal
+			focus $w.ok
+		}
 	}
 	delete_this
 }
