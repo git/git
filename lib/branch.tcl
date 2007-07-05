@@ -21,14 +21,13 @@ proc load_all_heads {} {
 
 proc load_all_tags {} {
 	set all_tags [list]
-	set fd [open "| git for-each-ref --format=%(refname) refs/tags" r]
+	set fd [open "| git for-each-ref --sort=-taggerdate --format=%(refname) refs/tags" r]
 	while {[gets $fd line] > 0} {
 		if {![regsub ^refs/tags/ $line {} name]} continue
 		lappend all_tags $name
 	}
 	close $fd
-
-	return [lsort $all_tags]
+	return $all_tags
 }
 
 proc populate_branch_menu {} {
