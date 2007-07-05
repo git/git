@@ -85,7 +85,7 @@ the `HEAD` commit.  The ancestry graph looks like this:
 
             .----W
            /    /
-     ...--H----I
+     -----H----I
 
 where `H` is the `HEAD` commit, `I` is a commit that records the state
 of the index, and `W` is a commit that records the state of the working
