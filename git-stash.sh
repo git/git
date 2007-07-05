@@ -23,6 +23,8 @@ clear_stash () {
 }
 
 save_stash () {
+	stash_msg="$1"
+
 	if no_changes
 	then
 		echo >&2 'No local changes to save'
@@ -67,13 +69,19 @@ save_stash () {
 		die "Cannot save the current worktree state"
 
 	# create the stash
-	w_commit=$(printf 'WIP on %s\n' "$msg" |
+	if test -z "$stash_msg"
+	then
+		stash_msg=$(printf 'WIP on %s' "$msg")
+	else
+		stash_msg=$(printf 'On %s: %s' "$branch" "$stash_msg")
+	fi
+	w_commit=$(printf '%s\n' "$stash_msg" |
 		git commit-tree $w_tree -p $b_commit -p $i_commit) ||
 		die "Cannot record working tree state"
 
-	git update-ref -m "WIP on $msg" $ref_stash $w_commit ||
+	git update-ref -m "$stash_msg" $ref_stash $w_commit ||
 		die "Cannot save the current status"
-	printf >&2 'Saved WIP on %s\n' "$msg"
+	printf >&2 'Saved "%s"\n' "$stash_msg"
 }
 
 have_stash () {
@@ -157,9 +165,14 @@ apply)
 clear)
 	clear_stash
 	;;
-save | '')
-	save_stash && git-reset --hard
+help | usage)
+	usage
 	;;
 *)
-	usage
+	if test $# -gt 0 && test "$1" = save
+	then
+		shift
+	fi
+	save_stash "$*" && git-reset --hard
+	;;
 esac
