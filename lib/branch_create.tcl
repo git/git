@@ -93,13 +93,14 @@ constructor dialog {} {
 	pack $w.options.checkout -anchor nw
 	pack $w.options -anchor nw -fill x -pady 5 -padx 5
 
-	set name $repo_config(gui.newbranchtemplate)
+	trace add variable @name_type write [cb _select]
 
-	bind $w <Visibility> "
-		grab $w
-		$w_name icursor end
-		focus $w_name
-	"
+	set name $repo_config(gui.newbranchtemplate)
+	if {[is_config_true gui.matchtrackingbranch]} {
+		set name_type match
+	}
+
+	bind $w <Visibility> [cb _visible]
 	bind $w <Key-Escape> [list destroy $w]
 	bind $w <Key-Return> [cb _create]\;break
 	tkwait window $w
@@ -359,6 +360,20 @@ method _validate {d S} {
 		}
 	}
 	return 1
+}
+
+method _select {args} {
+	if {$name_type eq {match}} {
+		$w_rev pick_tracking_branch
+	}
+}
+
+method _visible {} {
+	grab $w
+	if {$name_type eq {user}} {
+		$w_name icursor end
+		focus $w_name
+	}
 }
 
 }

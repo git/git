@@ -159,6 +159,10 @@ method get {} {
 	}
 }
 
+method pick_tracking_branch {} {
+	set revtype trck
+}
+
 method get_tracking_branch {} {
 	set i [$w_list curselection]
 	if {$i eq {} || $revtype ne {trck}} {

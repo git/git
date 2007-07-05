@@ -1339,6 +1339,7 @@ set default_config(merge.verbosity) 2
 set default_config(user.name) {}
 set default_config(user.email) {}
 
+set default_config(gui.matchtrackingbranch) false
 set default_config(gui.pruneduringfetch) false
 set default_config(gui.trustmtime) false
 set default_config(gui.diffcontext) 5
