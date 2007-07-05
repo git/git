@@ -187,15 +187,24 @@ dir="$2"
 # Try using "humanish" part of source repo if user didn't specify one
 [ -z "$dir" ] && dir=$(echo "$repo" | sed -e 's|/$||' -e 's|:*/*\.git$||' -e 's|.*[/:]||g')
 [ -e "$dir" ] && die "destination directory '$dir' already exists."
-mkdir -p "$dir" &&
-D=$(cd "$dir" && pwd) &&
-trap 'err=$?; cd ..; rm -rf "$D"; exit $err' 0
+D=
+cleanup() {
+	err=$?
+	test -z "$D" && rm -rf "$dir"
+	cd ..
+	test -n "$D" && rm -rf "$D"
+	exit $err
+}
+trap cleanup 0
+mkdir -p "$dir" && D=$(cd "$dir" && pwd) || usage
 case "$bare" in
 yes)
 	GIT_DIR="$D" ;;
 *)
 	GIT_DIR="$D/.git" ;;
-esac && export GIT_DIR && git init $quiet ${template+"$template"} || usage
+esac &&
+export GIT_DIR &&
+git-init $quiet ${template+"$template"} || usage
 
 if test -n "$reference"
 then
