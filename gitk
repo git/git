@@ -1216,6 +1216,9 @@ proc treeview {w l openlevs} {
 	set treeheight($prefix) $ht
 	incr ht [lindex $htstack end]
 	set htstack [lreplace $htstack end end]
+	set prefixend [lindex $prefendstack end]
+	set prefendstack [lreplace $prefendstack end end]
+	set prefix [string range $prefix 0 $prefixend]
     }
     $w conf -state disabled
 }
