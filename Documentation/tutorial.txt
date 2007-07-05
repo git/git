@@ -354,7 +354,7 @@ used for pulls:
 
 -------------------------------------
 $ git config --get remote.origin.url
-/home/bob/myrepo
+/home/alice/project
 -------------------------------------
 
 (The complete configuration created by git-clone is visible using
