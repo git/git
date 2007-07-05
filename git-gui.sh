@@ -285,14 +285,24 @@ proc git {args} {
 }
 
 proc current-branch {} {
-	set ref {}
 	set fd [open [gitdir HEAD] r]
-	if {[gets $fd ref] <16
-	 || ![regsub {^ref: refs/heads/} $ref {} ref]} {
+	if {[gets $fd ref] < 1} {
 		set ref {}
 	}
 	close $fd
-	return $ref
+
+	set pfx {ref: refs/heads/}
+	set len [string length $pfx]
+	if {[string equal -length $len $pfx $ref]} {
+		# We're on a branch.  It might not exist.  But
+		# HEAD looks good enough to be a branch.
+		#
+		return [string range $ref $len end]
+	} else {
+		# Assume this is a detached head.
+		#
+		return HEAD
+	}
 }
 
 auto_load tk_optionMenu
