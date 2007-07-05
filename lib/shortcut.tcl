@@ -9,6 +9,9 @@ proc do_windows_shortcut {} {
 		-title "[appname] ([reponame]): Create Desktop Icon" \
 		-initialfile "Git [reponame].bat"]
 	if {$fn != {}} {
+		if {[file extension $fn] ne {.bat}} {
+			set fn ${fn}.bat
+		}
 		if {[catch {
 				set fd [open $fn w]
 				puts $fd "@ECHO Entering [reponame]"
@@ -42,6 +45,9 @@ proc do_cygwin_shortcut {} {
 		-initialdir $desktop \
 		-initialfile "Git [reponame].bat"]
 	if {$fn != {}} {
+		if {[file extension $fn] ne {.bat}} {
+			set fn ${fn}.bat
+		}
 		if {[catch {
 				set fd [open $fn w]
 				set sh [exec cygpath \
