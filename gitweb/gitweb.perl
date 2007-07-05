@@ -71,6 +71,9 @@ our $logo_label = "git homepage";
 # source of projects list
 our $projects_list = "++GITWEB_LIST++";
 
+# the width (in characters) of the projects list "Description" column
+our $projects_list_description_width = 25;
+
 # default order of projects list
 # valid values are none, project, descr, owner, and age
 our $default_projects_order = "project";
@@ -3182,7 +3185,7 @@ sub git_project_list_body {
 		if (!defined $pr->{'descr'}) {
 			my $descr = git_get_project_description($pr->{'path'}) || "";
 			$pr->{'descr_long'} = to_utf8($descr);
-			$pr->{'descr'} = chop_str($descr, 25, 5);
+			$pr->{'descr'} = chop_str($descr, $projects_list_description_width, 5);
 		}
 		if (!defined $pr->{'owner'}) {
 			$pr->{'owner'} = git_get_project_owner("$pr->{'path'}") || "";
