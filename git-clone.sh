@@ -187,22 +187,29 @@ dir="$2"
 # Try using "humanish" part of source repo if user didn't specify one
 [ -z "$dir" ] && dir=$(echo "$repo" | sed -e 's|/$||' -e 's|:*/*\.git$||' -e 's|.*[/:]||g')
 [ -e "$dir" ] && die "destination directory '$dir' already exists."
+[ yes = "$bare" ] && unset GIT_WORK_TREE
+[ -n "$GIT_WORK_TREE" ] && [ -e "$GIT_WORK_TREE" ] &&
+die "working tree '$GIT_WORK_TREE' already exists."
 D=
+W=
 cleanup() {
 	err=$?
 	test -z "$D" && rm -rf "$dir"
+	test -z "$W" && test -n "$GIT_WORK_TREE" && rm -rf "$GIT_WORK_TREE"
 	cd ..
 	test -n "$D" && rm -rf "$D"
+	test -n "$W" && rm -rf "$W"
 	exit $err
 }
 trap cleanup 0
 mkdir -p "$dir" && D=$(cd "$dir" && pwd) || usage
-case "$bare" in
-yes)
-	GIT_DIR="$D" ;;
-*)
-	GIT_DIR="$D/.git" ;;
-esac &&
+test -n "$GIT_WORK_TREE" && mkdir -p "$GIT_WORK_TREE" &&
+W=$(cd "$GIT_WORK_TREE" && pwd) && export GIT_WORK_TREE="$W"
+if test yes = "$bare" || test -n "$GIT_WORK_TREE"; then
+	GIT_DIR="$D"
+else
+	GIT_DIR="$D/.git"
+fi &&
 export GIT_DIR &&
 git-init $quiet ${template+"$template"} || usage
 
@@ -358,7 +365,11 @@ then
 	done < "$GIT_DIR/CLONE_HEAD"
 fi
 
-cd "$D" || exit
+if test -n "$W"; then
+	cd "$W" || exit
+else
+	cd "$D" || exit
+fi
 
 if test -z "$bare" && test -f "$GIT_DIR/REMOTE_HEAD"
 then
