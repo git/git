@@ -1822,6 +1822,10 @@ pack .vpane.lower.commarea.buttons.commit -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.commit conf -state}
 
+button .vpane.lower.commarea.buttons.push -text {Push} \
+	-command do_push_anywhere
+pack .vpane.lower.commarea.buttons.push -side top -fill x
+
 # -- Commit Message Buffer
 #
 frame .vpane.lower.commarea.buffer
