@@ -37,6 +37,7 @@ struct diff_filespec {
 #define DIFF_FILE_VALID(spec) (((spec)->mode) != 0)
 	unsigned should_free : 1; /* data should be free()'ed */
 	unsigned should_munmap : 1; /* data should be munmap()'ed */
+	unsigned checked_attr : 1;
 	unsigned is_binary : 1; /* data should be considered "binary" */
 };
 
@@ -46,6 +47,7 @@ extern void fill_filespec(struct diff_filespec *, const unsigned char *,
 
 extern int diff_populate_filespec(struct diff_filespec *, int);
 extern void diff_free_filespec_data(struct diff_filespec *);
+extern int diff_filespec_is_binary(struct diff_filespec *);
 
 struct diff_filepair {
 	struct diff_filespec *one;

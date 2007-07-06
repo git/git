@@ -1102,30 +1102,45 @@ static void setup_diff_attr_check(struct git_attr_check *check)
 {
 	static struct git_attr *attr_diff;
 
-	if (!attr_diff)
+	if (!attr_diff) {
 		attr_diff = git_attr("diff", 4);
-	check->attr = attr_diff;
+	}
+	check[0].attr = attr_diff;
 }
 
-static int file_is_binary(struct diff_filespec *one)
+static void diff_filespec_check_attr(struct diff_filespec *one)
 {
-	struct git_attr_check attr_diff_check;
+	struct git_attr_check attr_diff_check[1];
 
-	setup_diff_attr_check(&attr_diff_check);
-	if (!git_checkattr(one->path, 1, &attr_diff_check)) {
-		const char *value = attr_diff_check.value;
+	if (one->checked_attr)
+		return;
+
+	setup_diff_attr_check(attr_diff_check);
+	one->is_binary = 0;
+
+	if (!git_checkattr(one->path, ARRAY_SIZE(attr_diff_check), attr_diff_check)) {
+		const char *value;
+
+		/* binaryness */
+		value = attr_diff_check[0].value;
 		if (ATTR_TRUE(value))
-			return 0;
+			;
 		else if (ATTR_FALSE(value))
-			return 1;
+			one->is_binary = 1;
 	}
 
-	if (!one->data) {
-		if (!DIFF_FILE_VALID(one))
-			return 0;
+	if (!one->data && DIFF_FILE_VALID(one))
 		diff_populate_filespec(one, 0);
-	}
-	return buffer_is_binary(one->data, one->size);
+
+	if (one->data)
+		one->is_binary = buffer_is_binary(one->data, one->size);
+
+}
+
+int diff_filespec_is_binary(struct diff_filespec *one)
+{
+	diff_filespec_check_attr(one);
+	return one->is_binary;
 }
 
 static void builtin_diff(const char *name_a,
@@ -1182,7 +1197,8 @@ static void builtin_diff(const char *name_a,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (!o->text && (file_is_binary(one) || file_is_binary(two))) {
+	if (!o->text &&
+	    (diff_filespec_is_binary(one) || diff_filespec_is_binary(two))) {
 		/* Quite common confusing case */
 		if (mf1.size == mf2.size &&
 		    !memcmp(mf1.ptr, mf2.ptr, mf1.size))
@@ -1260,7 +1276,7 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (file_is_binary(one) || file_is_binary(two)) {
+	if (diff_filespec_is_binary(one) || diff_filespec_is_binary(two)) {
 		data->is_binary = 1;
 		data->added = mf2.size;
 		data->deleted = mf1.size;
@@ -1302,7 +1318,7 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 		die("unable to read files to diff");
 
-	if (file_is_binary(two))
+	if (diff_filespec_is_binary(two))
 		goto free_and_return;
 	else {
 		/* Crazy xdl interfaces.. */
@@ -1880,8 +1896,8 @@ static void run_diff(struct diff_filepair *p, struct diff_options *o)
 
 		if (o->binary) {
 			mmfile_t mf;
-			if ((!fill_mmfile(&mf, one) && file_is_binary(one)) ||
-			    (!fill_mmfile(&mf, two) && file_is_binary(two)))
+			if ((!fill_mmfile(&mf, one) && diff_filespec_is_binary(one)) ||
+			    (!fill_mmfile(&mf, two) && diff_filespec_is_binary(two)))
 				abbrev = 40;
 		}
 		len += snprintf(msg + len, sizeof(msg) - len,
@@ -2783,7 +2799,7 @@ static int diff_get_patch_id(struct diff_options *options, unsigned char *sha1)
 			return error("unable to read files to diff");
 
 		/* Maybe hash p->two? into the patch id? */
-		if (file_is_binary(p->two))
+		if (diff_filespec_is_binary(p->two))
 			continue;
 
 		len1 = remove_space(p->one->path, strlen(p->one->path));
@@ -3010,21 +3026,6 @@ void diffcore_std(struct diff_options *options)
 {
 	if (options->quiet)
 		return;
-
-	/*
-	 * break/rename count similarity differently depending on
-	 * the binary-ness.
-	 */
-	if ((options->break_opt != -1) || (options->detect_rename)) {
-		struct diff_queue_struct *q = &diff_queued_diff;
-		int i;
-
-		for (i = 0; i < q->nr; i++) {
-			struct diff_filepair *p = q->queue[i];
-			p->one->is_binary = file_is_binary(p->one);
-			p->two->is_binary = file_is_binary(p->two);
-		}
-	}
 
 	if (options->break_opt != -1)
 		diffcore_break(options->break_opt);
