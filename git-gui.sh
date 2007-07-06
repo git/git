@@ -527,7 +527,7 @@ proc PARENT {} {
 
 proc rescan {after {honor_trustmtime 1}} {
 	global HEAD PARENT MERGE_HEAD commit_type
-	global ui_index ui_workdir ui_status_value ui_comm
+	global ui_index ui_workdir ui_comm
 	global rescan_active file_states
 	global repo_config
 
@@ -566,7 +566,7 @@ proc rescan {after {honor_trustmtime 1}} {
 		rescan_stage2 {} $after
 	} else {
 		set rescan_active 1
-		set ui_status_value {Refreshing file status...}
+		ui_status {Refreshing file status...}
 		set cmd [list git update-index]
 		lappend cmd -q
 		lappend cmd --unmerged
@@ -580,7 +580,6 @@ proc rescan {after {honor_trustmtime 1}} {
 }
 
 proc rescan_stage2 {fd after} {
-	global ui_status_value
 	global rescan_active buf_rdi buf_rdf buf_rlo
 
 	if {$fd ne {}} {
@@ -601,7 +600,7 @@ proc rescan_stage2 {fd after} {
 	set buf_rlo {}
 
 	set rescan_active 3
-	set ui_status_value {Scanning for modified files ...}
+	ui_status {Scanning for modified files ...}
 	set fd_di [open "| git diff-index --cached -z [PARENT]" r]
 	set fd_df [open "| git diff-files -z" r]
 	set fd_lo [open $ls_others r]
@@ -759,6 +758,16 @@ proc mapdesc {state path} {
 		return $state
 	}
 	return $r
+}
+
+proc ui_status {msg} {
+	set ::ui_status_value $msg
+}
+
+proc ui_ready {{test {}}} {
+	if {$test eq {} || $::ui_status_value eq $test} {
+		ui_status Ready.
+	}
 }
 
 proc escape_path {path} {
@@ -1112,7 +1121,7 @@ proc incr_font_size {font {amt 1}} {
 set starting_gitk_msg {Starting gitk... please wait...}
 
 proc do_gitk {revs} {
-	global env ui_status_value starting_gitk_msg
+	global env starting_gitk_msg
 
 	# -- Always start gitk through whatever we were loaded with.  This
 	#    lets us bypass using shell process on Windows systems.
@@ -1129,11 +1138,9 @@ proc do_gitk {revs} {
 		error_popup "Unable to start gitk:\n\n$exe does not exist"
 	} else {
 		eval exec $cmd &
-		set ui_status_value $starting_gitk_msg
+		ui_status $starting_gitk_msg
 		after 10000 {
-			if {$ui_status_value eq $starting_gitk_msg} {
-				set ui_status_value {Ready.}
-			}
+			ui_ready $starting_gitk_msg
 		}
 	}
 }
@@ -1182,7 +1189,7 @@ proc do_quit {} {
 }
 
 proc do_rescan {} {
-	rescan {set ui_status_value {Ready.}}
+	rescan ui_ready
 }
 
 proc do_commit {} {
@@ -1217,12 +1224,12 @@ proc toggle_or_diff {w x y} {
 			update_indexinfo \
 				"Unstaging [short_path $path] from commit" \
 				[list $path] \
-				[concat $after {set ui_status_value {Ready.}}]
+				[concat $after [list ui_ready]]
 		} elseif {$w eq $ui_workdir} {
 			update_index \
 				"Adding [short_path $path]" \
 				[list $path] \
-				[concat $after {set ui_status_value {Ready.}}]
+				[concat $after [list ui_ready]]
 		}
 	} else {
 		show_diff $path $w $lno
@@ -1640,20 +1647,19 @@ if {[is_MacOSX]} {
 	#
 	if {[is_Cygwin] && [file exists /usr/local/miga/lib/gui-miga]} {
 	proc do_miga {} {
-		global ui_status_value
 		if {![lock_index update]} return
 		set cmd [list sh --login -c "/usr/local/miga/lib/gui-miga \"[pwd]\""]
 		set miga_fd [open "|$cmd" r]
 		fconfigure $miga_fd -blocking 0
 		fileevent $miga_fd readable [list miga_done $miga_fd]
-		set ui_status_value {Running miga...}
+		ui_status {Running miga...}
 	}
 	proc miga_done {fd} {
 		read $fd 512
 		if {[eof $fd]} {
 			close $fd
 			unlock_index
-			rescan [list set ui_status_value {Ready.}]
+			rescan ui_ready
 		}
 	}
 	.mbar add cascade -label Tools -menu .mbar.tools

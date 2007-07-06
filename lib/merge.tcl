@@ -28,7 +28,7 @@ Another Git program has modified this repository since the last scan.  A rescan 
 The rescan will be automatically started now.
 }
 		unlock_index
-		rescan {set ui_status_value {Ready.}}
+		rescan ui_ready
 		return 0
 	}
 
@@ -79,7 +79,7 @@ proc _visualize {w list} {
 }
 
 proc _start {w list} {
-	global HEAD ui_status_value current_branch
+	global HEAD current_branch
 
 	set cmd [list git merge]
 	set names [_refs $w $list]
@@ -121,7 +121,7 @@ Please select fewer branches.  To merge more than 15 branches, merge the branche
 	}
 
 	set msg "Merging $current_branch, [join $names {, }]"
-	set ui_status_value "$msg..."
+	ui_status "$msg..."
 	set cons [console::new "Merge" $msg]
 	console::exec $cons $cmd \
 		[namespace code [list _finish $revcnt $cons]]
@@ -150,14 +150,14 @@ You can attempt this merge again by merging only one branch at a time." $w
 			fconfigure $fd -blocking 0 -translation binary
 			fileevent $fd readable \
 				[namespace code [list _reset_wait $fd]]
-			set ui_status_value {Aborting... please wait...}
+			ui_status {Aborting... please wait...}
 			return
 		}
 
 		set msg {Merge failed.  Conflict resolution is required.}
 	}
 	unlock_index
-	rescan [list set ui_status_value $msg]
+	rescan [list ui_status $msg]
 }
 
 proc dialog {} {
@@ -285,7 +285,7 @@ Continue with aborting the current $op?"] eq {yes}} {
 		set fd [open "| git read-tree --reset -u HEAD" r]
 		fconfigure $fd -blocking 0 -translation binary
 		fileevent $fd readable [namespace code [list _reset_wait $fd]]
-		set ui_status_value {Aborting... please wait...}
+		ui_status {Aborting... please wait...}
 	} else {
 		unlock_index
 	}
@@ -308,7 +308,7 @@ proc _reset_wait {fd} {
 		catch {file delete [gitdir MERGE_MSG]}
 		catch {file delete [gitdir GITGUI_MSG]}
 
-		rescan {set ui_status_value {Abort completed.  Ready.}}
+		rescan {ui_status {Abort completed.  Ready.}}
 	}
 }
 

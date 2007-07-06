@@ -58,7 +58,7 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 	$ui_comm insert end $msg
 	$ui_comm edit reset
 	$ui_comm edit modified false
-	rescan {set ui_status_value {Ready.}}
+	rescan ui_ready
 }
 
 set GIT_COMMITTER_IDENT {}
@@ -108,12 +108,12 @@ proc create_new_commit {} {
 	$ui_comm delete 0.0 end
 	$ui_comm edit reset
 	$ui_comm edit modified false
-	rescan {set ui_status_value {Ready.}}
+	rescan ui_ready
 }
 
 proc commit_tree {} {
 	global HEAD commit_type file_states ui_comm repo_config
-	global ui_status_value pch_error
+	global pch_error
 
 	if {[committer_ident] eq {}} return
 	if {![lock_index update]} return
@@ -132,7 +132,7 @@ Another Git program has modified this repository since the last scan.  A rescan 
 The rescan will be automatically started now.
 }
 		unlock_index
-		rescan {set ui_status_value {Ready.}}
+		rescan ui_ready
 		return
 	}
 
@@ -206,7 +206,7 @@ A good commit message has the following format:
 		return
 	}
 
-	set ui_status_value {Calling pre-commit hook...}
+	ui_status {Calling pre-commit hook...}
 	set pch_error {}
 	set fd_ph [open "| $pchook" r]
 	fconfigure $fd_ph -blocking 0 -translation binary
@@ -215,13 +215,13 @@ A good commit message has the following format:
 }
 
 proc commit_prehook_wait {fd_ph curHEAD msg} {
-	global pch_error ui_status_value
+	global pch_error
 
 	append pch_error [read $fd_ph]
 	fconfigure $fd_ph -blocking 1
 	if {[eof $fd_ph]} {
 		if {[catch {close $fd_ph}]} {
-			set ui_status_value {Commit declined by pre-commit hook.}
+			ui_status {Commit declined by pre-commit hook.}
 			hook_failed_popup pre-commit $pch_error
 			unlock_index
 		} else {
@@ -234,9 +234,7 @@ proc commit_prehook_wait {fd_ph curHEAD msg} {
 }
 
 proc commit_writetree {curHEAD msg} {
-	global ui_status_value
-
-	set ui_status_value {Committing changes...}
+	ui_status {Committing changes...}
 	set fd_wt [open "| git write-tree" r]
 	fileevent $fd_wt readable \
 		[list commit_committree $fd_wt $curHEAD $msg]
@@ -244,15 +242,15 @@ proc commit_writetree {curHEAD msg} {
 
 proc commit_committree {fd_wt curHEAD msg} {
 	global HEAD PARENT MERGE_HEAD commit_type
-	global all_heads current_branch
-	global ui_status_value ui_comm selected_commit_type
+	global current_branch
+	global ui_comm selected_commit_type
 	global file_states selected_paths rescan_active
 	global repo_config
 
 	gets $fd_wt tree_id
 	if {$tree_id eq {} || [catch {close $fd_wt} err]} {
 		error_popup "write-tree failed:\n\n$err"
-		set ui_status_value {Commit failed.}
+		ui_status {Commit failed.}
 		unlock_index
 		return
 	}
@@ -269,7 +267,7 @@ No files were modified by this commit and it was not a merge commit.
 A rescan will be automatically started now.
 }
 			unlock_index
-			rescan {set ui_status_value {No changes to commit.}}
+			rescan {ui_status {No changes to commit.}}
 			return
 		}
 	}
@@ -294,7 +292,7 @@ A rescan will be automatically started now.
 	lappend cmd <$msg_p
 	if {[catch {set cmt_id [eval git $cmd]} err]} {
 		error_popup "commit-tree failed:\n\n$err"
-		set ui_status_value {Commit failed.}
+		ui_status {Commit failed.}
 		unlock_index
 		return
 	}
@@ -316,7 +314,7 @@ A rescan will be automatically started now.
 			git update-ref -m $reflogm HEAD $cmt_id $curHEAD
 		} err]} {
 		error_popup "update-ref failed:\n\n$err"
-		set ui_status_value {Commit failed.}
+		ui_status {Commit failed.}
 		unlock_index
 		return
 	}
@@ -410,6 +408,5 @@ A rescan will be automatically started now.
 	display_all_files
 	unlock_index
 	reshow_diff
-	set ui_status_value \
-		"Created commit [string range $cmt_id 0 7]: $subject"
+	ui_status "Created commit [string range $cmt_id 0 7]: $subject"
 }
