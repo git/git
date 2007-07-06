@@ -22,7 +22,7 @@ static const char builtin_branch_usage[] =
 static const char *head;
 static unsigned char head_sha1[20];
 
-static int branch_track_remotes;
+static int branch_track_remotes = 1;
 
 static int branch_use_color;
 static char branch_colors[][COLOR_MAXLEN] = {
