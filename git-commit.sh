@@ -458,16 +458,18 @@ fi | git stripspace >"$GIT_DIR"/COMMIT_EDITMSG
 
 case "$signoff" in
 t)
-	need_blank_before_signoff=
+	sign=$(git-var GIT_COMMITTER_IDENT | sed -e '
+		s/>.*/>/
+		s/^/Signed-off-by: /
+		')
+	blank_before_signoff=
 	tail -n 1 "$GIT_DIR"/COMMIT_EDITMSG |
-	grep 'Signed-off-by:' >/dev/null || need_blank_before_signoff=yes
-	{
-		test -z "$need_blank_before_signoff" || echo
-		git-var GIT_COMMITTER_IDENT | sed -e '
-			s/>.*/>/
-			s/^/Signed-off-by: /
-		'
-	} >>"$GIT_DIR"/COMMIT_EDITMSG
+	grep 'Signed-off-by:' >/dev/null || blank_before_signoff='
+'
+	tail -n 1 "$GIT_DIR"/COMMIT_EDITMSG |
+	grep "$sign"$ >/dev/null ||
+	printf '%s%s\n' "$blank_before_signoff" "$sign" \
+		>>"$GIT_DIR"/COMMIT_EDITMSG
 	;;
 esac
 
