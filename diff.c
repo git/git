@@ -1101,22 +1101,26 @@ static void emit_binary_diff(mmfile_t *one, mmfile_t *two)
 static void setup_diff_attr_check(struct git_attr_check *check)
 {
 	static struct git_attr *attr_diff;
+	static struct git_attr *attr_diff_func_name;
 
 	if (!attr_diff) {
 		attr_diff = git_attr("diff", 4);
+		attr_diff_func_name = git_attr("funcname", 8);
 	}
 	check[0].attr = attr_diff;
+	check[1].attr = attr_diff_func_name;
 }
 
 static void diff_filespec_check_attr(struct diff_filespec *one)
 {
-	struct git_attr_check attr_diff_check[1];
+	struct git_attr_check attr_diff_check[2];
 
 	if (one->checked_attr)
 		return;
 
 	setup_diff_attr_check(attr_diff_check);
 	one->is_binary = 0;
+	one->hunk_header_ident = NULL;
 
 	if (!git_checkattr(one->path, ARRAY_SIZE(attr_diff_check), attr_diff_check)) {
 		const char *value;
@@ -1127,6 +1131,13 @@ static void diff_filespec_check_attr(struct diff_filespec *one)
 			;
 		else if (ATTR_FALSE(value))
 			one->is_binary = 1;
+
+		/* hunk header ident */
+		value = attr_diff_check[1].value;
+		if (ATTR_TRUE(value) || ATTR_FALSE(value) || ATTR_UNSET(value))
+			;
+		else
+			one->hunk_header_ident = value;
 	}
 
 	if (!one->data && DIFF_FILE_VALID(one))
@@ -1141,6 +1152,82 @@ int diff_filespec_is_binary(struct diff_filespec *one)
 {
 	diff_filespec_check_attr(one);
 	return one->is_binary;
+}
+
+static struct hunk_header_regexp {
+	char *name;
+	char *regexp;
+	struct hunk_header_regexp *next;
+} *hunk_header_regexp_list, **hunk_header_regexp_tail;
+
+static int hunk_header_config(const char *var, const char *value)
+{
+	static const char funcname[] = "funcname.";
+	struct hunk_header_regexp *hh;
+
+	if (prefixcmp(var, funcname))
+		return 0;
+	var += strlen(funcname);
+	for (hh = hunk_header_regexp_list; hh; hh = hh->next)
+		if (!strcmp(var, hh->name)) {
+			free(hh->regexp);
+			hh->regexp = xstrdup(value);
+			return 0;
+		}
+	hh = xcalloc(1, sizeof(*hh));
+	hh->name = xstrdup(var);
+	hh->regexp = xstrdup(value);
+	hh->next = NULL;
+	*hunk_header_regexp_tail = hh;
+	return 0;
+}
+
+static const char *hunk_header_regexp(const char *ident)
+{
+	struct hunk_header_regexp *hh;
+
+	if (!hunk_header_regexp_tail) {
+		hunk_header_regexp_tail = &hunk_header_regexp_list;
+		git_config(hunk_header_config);
+	}
+	for (hh = hunk_header_regexp_list; hh; hh = hh->next)
+		if (!strcmp(ident, hh->name))
+			return hh->regexp;
+	return NULL;
+}
+
+static const char *diff_hunk_header_regexp(struct diff_filespec *one)
+{
+	const char *ident, *regexp;
+
+	diff_filespec_check_attr(one);
+	ident = one->hunk_header_ident;
+
+	if (!ident)
+		/*
+		 * If the config file has "funcname.default" defined, that
+		 * regexp is used; otherwise NULL is returned and xemit uses
+		 * the built-in default.
+		 */
+		return hunk_header_regexp("default");
+
+	/* Look up custom "funcname.$ident" regexp from config. */
+	regexp = hunk_header_regexp(ident);
+	if (regexp)
+		return regexp;
+
+	/*
+	 * And define built-in fallback patterns here.  Note that
+	 * these can be overriden by the user's config settings.
+	 */
+	if (!strcmp(ident, "java"))
+		return "!^[ 	]*\\(catch\\|do\\|for\\|if\\|instanceof\\|"
+			"new\\|return\\|switch\\|throw\\|while\\)\n"
+			"^[ 	]*\\(\\([ 	]*"
+			"[A-Za-z_][A-Za-z_0-9]*\\)\\{2,\\}"
+			"[ 	]*([^;]*$\\)";
+
+	return NULL;
 }
 
 static void builtin_diff(const char *name_a,
@@ -1217,6 +1304,11 @@ static void builtin_diff(const char *name_a,
 		xdemitconf_t xecfg;
 		xdemitcb_t ecb;
 		struct emit_callback ecbdata;
+		const char *hunk_header_regexp;
+
+		hunk_header_regexp = diff_hunk_header_regexp(one);
+		if (!hunk_header_regexp)
+			hunk_header_regexp = diff_hunk_header_regexp(two);
 
 		memset(&xecfg, 0, sizeof(xecfg));
 		memset(&ecbdata, 0, sizeof(ecbdata));
@@ -1226,6 +1318,8 @@ static void builtin_diff(const char *name_a,
 		xpp.flags = XDF_NEED_MINIMAL | o->xdl_opts;
 		xecfg.ctxlen = o->context;
 		xecfg.flags = XDL_EMIT_FUNCNAMES;
+		if (hunk_header_regexp)
+			xdiff_set_find_func(&xecfg, hunk_header_regexp);
 		if (!diffopts)
 			;
 		else if (!prefixcmp(diffopts, "--unified="))
