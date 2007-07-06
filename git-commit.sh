@@ -610,10 +610,7 @@ rm -f "$GIT_DIR/COMMIT_MSG" "$GIT_DIR/COMMIT_EDITMSG" "$GIT_DIR/SQUASH_MSG"
 
 cd_to_toplevel
 
-if test -d "$GIT_DIR/rr-cache"
-then
-	git rerere
-fi
+git rerere
 
 if test "$ret" = 0
 then

@@ -95,10 +95,7 @@ It does not apply to blobs recorded in its index."
     eval GITHEAD_$his_tree='"$SUBJECT"'
     export GITHEAD_$his_tree
     git-merge-recursive $orig_tree -- HEAD $his_tree || {
-	    if test -d "$GIT_DIR/rr-cache"
-	    then
-		git rerere
-	    fi
+	    git rerere
 	    echo Failed to merge in the changes.
 	    exit 1
     }
@@ -252,10 +249,7 @@ last=`cat "$dotest/last"`
 this=`cat "$dotest/next"`
 if test "$skip" = t
 then
-	if test -d "$GIT_DIR/rr-cache"
-	then
-		git rerere clear
-	fi
+	git rerere clear
 	this=`expr "$this" + 1`
 	resume=
 fi
@@ -420,10 +414,7 @@ do
 			stop_here_user_resolve $this
 		fi
 		apply_status=0
-		if test -d "$GIT_DIR/rr-cache"
-		then
-			git rerere
-		fi
+		git rerere
 		;;
 	esac
 

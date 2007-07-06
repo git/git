@@ -39,14 +39,31 @@ sed -e 's/To die, t/To die! T/' > a1
 echo "* END *" >>a1
 git commit -q -a -m second
 
-# activate rerere
-mkdir .git/rr-cache
+test_expect_success 'nothing recorded without rerere' '
+	(rm -rf .git/rr-cache; git config rerere.enabled false) &&
+	! git merge first &&
+	! test -d .git/rr-cache
+'
 
-test_expect_failure 'conflicting merge' 'git pull . first'
+# activate rerere, old style
+test_expect_success 'conflicting merge' '
+	git reset --hard &&
+	mkdir .git/rr-cache &&
+	git config --unset rerere.enabled &&
+	! git merge first
+'
 
 sha1=$(sed -e 's/	.*//' .git/rr-cache/MERGE_RR)
 rr=.git/rr-cache/$sha1
 test_expect_success 'recorded preimage' "grep ======= $rr/preimage"
+
+test_expect_success 'rerere.enabled works, too' '
+	rm -rf .git/rr-cache &&
+	git config rerere.enabled true &&
+	git reset --hard &&
+	! git merge first &&
+	grep ======= $rr/preimage
+'
 
 test_expect_success 'no postimage or thisimage yet' \
 	"test ! -f $rr/postimage -a ! -f $rr/thisimage"

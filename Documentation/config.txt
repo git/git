@@ -448,6 +448,11 @@ gc.rerereunresolved::
 	kept for this many days when `git rerere gc` is run.
 	The default is 15 days.  See gitlink:git-rerere[1].
 
+rerere.enabled::
+	Activate recording of resolved conflicts, so that identical
+	conflict hunks can be resolved automatically, should they
+	be encountered again.  See gitlink:git-rerere[1].
+
 gitcvs.enabled::
 	Whether the cvs server interface is enabled for this repository.
 	See gitlink:git-cvsserver[1].

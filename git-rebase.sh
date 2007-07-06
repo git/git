@@ -101,7 +101,7 @@ call_merge () {
 		return
 		;;
 	1)
-		test -d "$GIT_DIR/rr-cache" && git rerere
+		git rerere
 		die "$RESOLVEMSG"
 		;;
 	2)
@@ -160,10 +160,7 @@ do
 	--skip)
 		if test -d "$dotest"
 		then
-			if test -d "$GIT_DIR/rr-cache"
-			then
-				git rerere clear
-			fi
+			git rerere clear
 			prev_head="`cat $dotest/prev_head`"
 			end="`cat $dotest/end`"
 			msgnum="`cat $dotest/msgnum`"
@@ -181,10 +178,7 @@ do
 		exit
 		;;
 	--abort)
-		if test -d "$GIT_DIR/rr-cache"
-		then
-			git rerere clear
-		fi
+		git rerere clear
 		if test -d "$dotest"
 		then
 			rm -r "$dotest"

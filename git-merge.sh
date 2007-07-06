@@ -496,9 +496,6 @@ Conflicts:
 		sed -e 's/^[^	]*	/	/' |
 		uniq
 	} >>"$GIT_DIR/MERGE_MSG"
-	if test -d "$GIT_DIR/rr-cache"
-	then
-		git rerere
-	fi
+	git rerere
 	die "Automatic merge failed; fix conflicts and then commit the result."
 fi
