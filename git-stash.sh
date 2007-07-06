@@ -3,6 +3,7 @@
 
 USAGE='[ | list | show | apply | clear]'
 
+SUBDIRECTORY_OK=Yes
 . git-sh-setup
 require_work_tree
 
