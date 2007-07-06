@@ -1525,7 +1525,8 @@ if {[is_enabled transport]} {
 
 	menu .mbar.push
 	.mbar.push add command -label {Push...} \
-		-command do_push_anywhere
+		-command do_push_anywhere \
+		-accelerator $M1T-P
 }
 
 if {[is_MacOSX]} {
@@ -2147,6 +2148,10 @@ bind $ui_diff <Button-1>   {focus %W}
 if {[is_enabled branch]} {
 	bind . <$M1B-Key-n> do_create_branch
 	bind . <$M1B-Key-N> do_create_branch
+}
+if {[is_enabled transport]} {
+	bind . <$M1B-Key-p> do_push_anywhere
+	bind . <$M1B-Key-P> do_push_anywhere
 }
 
 bind .   <Key-F5>     do_rescan
