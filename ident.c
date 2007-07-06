@@ -83,11 +83,18 @@ static void setup_ident(void)
 	}
 
 	if (!git_default_email[0]) {
-		if (!pw)
-			pw = getpwuid(getuid());
-		if (!pw)
-			die("You don't exist. Go away!");
-		copy_email(pw);
+		const char *email = getenv("EMAIL");
+
+		if (email && email[0])
+			strlcpy(git_default_email, email,
+				sizeof(git_default_email));
+		else {
+			if (!pw)
+				pw = getpwuid(getuid());
+			if (!pw)
+				die("You don't exist. Go away!");
+			copy_email(pw);
+		}
 	}
 
 	/* And set the default date */
@@ -197,8 +204,6 @@ const char *fmt_ident(const char *name, const char *email,
 		name = git_default_name;
 	if (!email)
 		email = git_default_email;
-	if (!email)
-		email = getenv("EMAIL");
 
 	if (!*name) {
 		struct passwd *pw;
