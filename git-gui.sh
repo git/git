@@ -1559,7 +1559,8 @@ if {[is_enabled transport]} {
 
 	menu .mbar.push
 	.mbar.push add command -label {Push...} \
-		-command do_push_anywhere
+		-command do_push_anywhere \
+		-accelerator $M1T-P
 	.mbar.push add command -label {Delete...} \
 		-command remote_branch_delete::dialog
 }
@@ -1848,6 +1849,10 @@ button .vpane.lower.commarea.buttons.commit -text {Commit} \
 pack .vpane.lower.commarea.buttons.commit -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.commit conf -state}
+
+button .vpane.lower.commarea.buttons.push -text {Push} \
+	-command do_push_anywhere
+pack .vpane.lower.commarea.buttons.push -side top -fill x
 
 # -- Commit Message Buffer
 #
@@ -2176,10 +2181,14 @@ if {[is_enabled branch]} {
 	bind . <$M1B-Key-n> do_create_branch
 	bind . <$M1B-Key-N> do_create_branch
 }
+if {[is_enabled transport]} {
+	bind . <$M1B-Key-p> do_push_anywhere
+	bind . <$M1B-Key-P> do_push_anywhere
+}
 
-bind all <Key-F5> do_rescan
-bind all <$M1B-Key-r> do_rescan
-bind all <$M1B-Key-R> do_rescan
+bind .   <Key-F5>     do_rescan
+bind .   <$M1B-Key-r> do_rescan
+bind .   <$M1B-Key-R> do_rescan
 bind .   <$M1B-Key-s> do_signoff
 bind .   <$M1B-Key-S> do_signoff
 bind .   <$M1B-Key-i> do_add_all
