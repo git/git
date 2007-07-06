@@ -2957,13 +2957,13 @@ developed.  If you blow the directory cache away entirely, you generally
 haven't lost any information as long as you have the name of the tree
 that it described.
 
-At the same time, the index is at the same time also the
-staging area for creating new trees, and creating a new tree always
-involves a controlled modification of the index file.  In particular,
-the index file can have the representation of an intermediate tree that
-has not yet been instantiated.  So the index can be thought of as a
-write-back cache, which can contain dirty information that has not yet
-been written back to the backing store.
+At the same time, the index is also the staging area for creating
+new trees, and creating a new tree always involves a controlled
+modification of the index file.  In particular, the index file can
+have the representation of an intermediate tree that has not yet been
+instantiated.  So the index can be thought of as a write-back cache,
+which can contain dirty information that has not yet been written back
+to the backing store.
 
 
 
