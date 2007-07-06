@@ -2149,9 +2149,9 @@ if {[is_enabled branch]} {
 	bind . <$M1B-Key-N> do_create_branch
 }
 
-bind all <Key-F5> do_rescan
-bind all <$M1B-Key-r> do_rescan
-bind all <$M1B-Key-R> do_rescan
+bind .   <Key-F5>     do_rescan
+bind .   <$M1B-Key-r> do_rescan
+bind .   <$M1B-Key-R> do_rescan
 bind .   <$M1B-Key-s> do_signoff
 bind .   <$M1B-Key-S> do_signoff
 bind .   <$M1B-Key-i> do_add_all
