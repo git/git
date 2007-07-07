@@ -38,12 +38,12 @@ test_expect_success 'default behaviour' '
 '
 
 test_expect_success 'preset java pattern' '
-	echo "*.java funcname=java" >.gitattributes &&
+	echo "*.java diff=java" >.gitattributes &&
 	git diff Beer.java Beer-correct.java |
 	grep "^@@.*@@ public static void main("
 '
 
-git config funcname.java '!static
+git config diff.java.funcname '!static
 !String
 [^ 	].*s.*'
 
@@ -53,7 +53,7 @@ test_expect_success 'custom pattern' '
 '
 
 test_expect_success 'last regexp must not be negated' '
-	git config diff.functionnameregexp "!static" &&
+	git config diff.java.funcname "!static" &&
 	! git diff Beer.java Beer-correct.java
 '
 

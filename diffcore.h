@@ -27,7 +27,7 @@ struct diff_filespec {
 	char *path;
 	void *data;
 	void *cnt_data;
-	const void *hunk_header_ident;
+	const char *funcname_pattern_ident;
 	unsigned long size;
 	int xfrm_flags;		 /* for use by the xfrm */
 	unsigned short mode;	 /* file mode */
