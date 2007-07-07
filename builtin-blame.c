@@ -518,8 +518,8 @@ static struct patch *compare_buffer(mmfile_t *file_p, mmfile_t *file_o,
 	xdemitcb_t ecb;
 
 	xpp.flags = xdl_opts;
+	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = context;
-	xecfg.flags = 0;
 	ecb.outf = xdiff_outf;
 	ecb.priv = &state;
 	memset(&state, 0, sizeof(state));

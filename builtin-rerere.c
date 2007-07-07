@@ -285,8 +285,8 @@ static int diff_two(const char *file1, const char *label1,
 	printf("--- a/%s\n+++ b/%s\n", label1, label2);
 	fflush(stdout);
 	xpp.flags = XDF_NEED_MINIMAL;
+	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;
-	xecfg.flags = 0;
 	ecb.outf = outf;
 	xdl_diff(&minus, &plus, &xpp, &xecfg, &ecb);
 

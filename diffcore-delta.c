@@ -129,7 +129,7 @@ static struct spanhash_top *hash_chars(struct diff_filespec *one)
 	struct spanhash_top *hash;
 	unsigned char *buf = one->data;
 	unsigned int sz = one->size;
-	int is_text = !one->is_binary;
+	int is_text = !diff_filespec_is_binary(one);
 
 	i = INITIAL_HASH_SIZE;
 	hash = xmalloc(sizeof(*hash) + sizeof(struct spanhash) * (1<<i));

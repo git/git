@@ -73,9 +73,13 @@ typedef struct s_xdemitcb {
 	int (*outf)(void *, mmbuffer_t *, int);
 } xdemitcb_t;
 
+typedef long (*find_func_t)(const char *line, long line_len, char *buffer, long buffer_size, void *priv);
+
 typedef struct s_xdemitconf {
 	long ctxlen;
 	unsigned long flags;
+	find_func_t find_func;
+	void *find_func_priv;
 } xdemitconf_t;
 
 typedef struct s_bdiffparam {
