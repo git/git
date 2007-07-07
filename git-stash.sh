@@ -112,6 +112,13 @@ apply_stash () {
 	git diff-files --quiet ||
 		die 'Cannot restore on top of a dirty state'
 
+	unstash_index=
+	case "$1" in
+	--index)
+		unstash_index=t
+		shift
+	esac
+
 	# current index state
 	c_tree=$(git write-tree) ||
 		die 'Cannot apply a stash in the middle of a merge'
@@ -120,6 +127,15 @@ apply_stash () {
 	w_tree=$(git rev-parse --verify "$s:") &&
 	b_tree=$(git rev-parse --verify "$s^:") ||
 		die "$*: no valid stashed state found"
+
+	test -z "$unstash_index" || {
+		git diff --binary $s^2^..$s^2 | git apply --cached
+		test $? -ne 0 &&
+			die 'Conflicts in index. Try without --index.'
+		unstashed_index_tree=$(git-write-tree) ||
+			die 'Could not save index tree'
+		git reset
+	}
 
 	eval "
 		GITHEAD_$w_tree='Stashed changes' &&
@@ -138,9 +154,12 @@ apply_stash () {
 			die "Cannot unstage modified files"
 		git-status
 		rm -f "$a"
+		test -z "$unstash_index" || git read-tree $unstashed_index_tree
 	else
 		# Merge conflict; keep the exit status from merge-recursive
-		exit
+		status=$?
+		test -z "$unstash_index" || echo 'Index was not unstashed.' >&2
+		exit $status
 	fi
 }
 
