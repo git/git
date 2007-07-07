@@ -14,6 +14,47 @@ to pick an item from the list and work on it.
 Recent issues
 -------------
 
+* gitweb patches (bunch of them)
+
+From: Matt McCutchen <hashproduct@gmail.com>
+Subject: [PATCH] gitweb: snapshot cleanups & support for offering multiple formats
+Message-ID: <1183053733.6108.0.camel@mattlaptop2>
+
+Subject: [PATCH] gitweb: make search form generate pathinfo-style URLs
+Message-ID: <1183057027.6108.4.camel@mattlaptop2>
+
+Subject: [PATCH] gitweb: make "No commits" in project list gray, not bold green
+Message-ID: <1183068922.6108.8.camel@mattlaptop2>
+
+From: Miklos Vajna <vmiklos@frugalware.org>
+Subject: [PATCH] gitweb: prefer git_get_project_owner() over get_file_owner()
+Message-ID: <20070703221122.GI32766@genesis.frugalware.org>
+
+From: Michael Hendricks <michael@ndrix.org>
+Subject: [PATCH] gitweb: configurable width for the projects list Description column
+Message-ID: <11835958082458-git-send-email-michael@ndrix.org>
+
+
+* switching branches when b changes between symlink and directory in a/b/c
+
+From: Pierre Habouzit <madcoder@debian.org>
+Subject: [BUG (or misfeature?)] git checkout and symlinks
+Message-ID: <20070704203541.GA13286@artemis.corp>
+
+
+* cherry-pick unexpected conflicts
+
+From: Gerrit Pape <pape@smarden.org>
+Subject: Re: unexpected git-cherry-pick conflict
+Date: Wed, 13 Jun 2007 13:43:35 +0000
+Message-ID: <20070613134336.13661.qmail@c61f4fed932273.315fe32.mid.smarden.org>
+
+* git-apply -R --whitespace=warn
+
+From: Daniel Barkalow <barkalow@iabervon.org>
+Message-ID: <Pine.LNX.4.64.0707062155170.6977@iabervon.org>
+Subject: Minor bug in git-apply's patch-cleaning
+
 * gitk --left-right
 
 From: Linus Torvalds <torvalds@linux-foundation.org>
@@ -39,8 +80,6 @@ Repeated requests against git-daemon makes it stuck under --syslog
 
 [jc: does not reproduce easily for me; has anybody seen it?]
 
-* Delegate gitweb part to somebody else.
-
 * Use gitattributes for more things.
 
  - 'precious' files that are not tracked but not
@@ -51,17 +90,11 @@ Repeated requests against git-daemon makes it stuck under --syslog
    another branch that has a file where the current branch has a
    directory could lose such 'precious' files.
 
- - Customized "diff -p" markers per path (Johannes, on #git
-   2007-04-30).
+ - Customized "diff -p" markers per path.
 
-   I think it makes sense to give an extra parameter to xdiff
-   machinery to affect how "diff -p" markers are constructed (as
-   opposed to teach xdiff machinery to read gitattributes -- the
-   code does not have path information at that level).  The
-   simplest interface would be to pass a regexp and have the
-   existing code always look for that regexp backwards.  A more
-   complex one would involve a callback function, but I do not
-   know if that kind of complexity is worth it.
+  From: Linus Torvalds <torvalds@linux-foundation.org>
+  Subject: Re: [PATCH] Per-path attribute based hunk header selection.
+  Message-ID: <alpine.LFD.0.98.0707061051020.9434@woody.linux-foundation.org>
 
  - Others???
 
