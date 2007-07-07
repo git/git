@@ -1162,6 +1162,7 @@ static void setup_diff_attr_check(struct git_attr_check *check)
 static void diff_filespec_check_attr(struct diff_filespec *one)
 {
 	struct git_attr_check attr_diff_check;
+	int check_from_data = 0;
 
 	if (one->checked_attr)
 		return;
@@ -1179,6 +1180,8 @@ static void diff_filespec_check_attr(struct diff_filespec *one)
 			;
 		else if (ATTR_FALSE(value))
 			one->is_binary = 1;
+		else
+			check_from_data = 1;
 
 		/* funcname pattern ident */
 		if (ATTR_TRUE(value) || ATTR_FALSE(value) || ATTR_UNSET(value))
@@ -1187,12 +1190,13 @@ static void diff_filespec_check_attr(struct diff_filespec *one)
 			one->funcname_pattern_ident = value;
 	}
 
-	if (!one->data && DIFF_FILE_VALID(one))
-		diff_populate_filespec(one, 0);
+	if (check_from_data) {
+		if (!one->data && DIFF_FILE_VALID(one))
+			diff_populate_filespec(one, 0);
 
-	if (one->data)
-		one->is_binary = buffer_is_binary(one->data, one->size);
-
+		if (one->data)
+			one->is_binary = buffer_is_binary(one->data, one->size);
+	}
 }
 
 int diff_filespec_is_binary(struct diff_filespec *one)
