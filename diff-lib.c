@@ -24,7 +24,7 @@ static int read_directory(const char *path, struct path_list *list)
 
 	while ((e = readdir(dir)))
 		if (strcmp(".", e->d_name) && strcmp("..", e->d_name))
-			path_list_insert(xstrdup(e->d_name), list);
+			path_list_insert(e->d_name, list);
 
 	closedir(dir);
 	return 0;
