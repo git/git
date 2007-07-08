@@ -460,6 +460,17 @@ if [ $? -eq 127 ]; then
 	exit
 fi
 
+# As said here: http://www.gnupg.org/documentation/faqs.html#q6.19
+# the gpg version 1.0.6 didn't parse trust packets correctly, so for
+# that version, creation of signed tags using the generated key fails.
+case "$(gpg --version)" in
+'gpg (GnuPG) 1.0.6'*)
+	echo "Skipping signed tag tests, because a bug in 1.0.6 version"
+	test_done
+	exit
+	;;
+esac
+
 # key generation info: gpg --homedir t/t7004 --gen-key
 # Type DSA and Elgamal, size 2048 bits, no expiration date.
 # Name and email: C O Mitter <committer@example.com>
