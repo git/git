@@ -23,6 +23,9 @@ REWRITTEN="$DOTEST"/rewritten
 PRESERVE_MERGES=
 STRATEGY=
 VERBOSE=
+test -d "$REWRITTEN" && PRESERVE_MERGES=t
+test -f "$DOTEST"/strategy && STRATEGY="$(cat "$DOTEST"/strategy)"
+test -f "$DOTEST"/verbose && VERBOSE=t
 
 warn () {
 	echo "$*" >&2
@@ -366,6 +369,7 @@ do
 		echo $HEAD > "$DOTEST"/head
 		echo $UPSTREAM > "$DOTEST"/upstream
 		echo $ONTO > "$DOTEST"/onto
+		test -z "$STRATEGY" || echo "$STRATEGY" > "$DOTEST"/strategy
 		test t = "$VERBOSE" && : > "$DOTEST"/verbose
 		if [ t = "$PRESERVE_MERGES" ]
 		then
