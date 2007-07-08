@@ -27,8 +27,9 @@ case "${1:-.}${2:-.}${3:-.}" in
 		# read-tree checked that index matches HEAD already,
 		# so we know we do not have this path tracked.
 		# there may be an unrelated working tree file here,
-		# which we should just leave unmolested.
-		exit 0
+		# which we should just leave unmolested.  Make sure
+		# we do not have it in the index, though.
+		exec git update-index --remove -- "$4"
 	fi
 	if test -f "$4"; then
 		rm -f -- "$4" &&
@@ -42,7 +43,8 @@ case "${1:-.}${2:-.}${3:-.}" in
 #
 ".$2.")
 	# the other side did not add and we added so there is nothing
-	# to be done.
+	# to be done, except making the path merged.
+	exec git update-index --add --cacheinfo "$6" "$2" "$4"
 	;;
 "..$3")
 	echo "Adding $4"
@@ -50,7 +52,7 @@ case "${1:-.}${2:-.}${3:-.}" in
 		echo "ERROR: untracked $4 is overwritten by the merge."
 		exit 1
 	}
-	git update-index --add --cacheinfo "$6$7" "$2$3" "$4" &&
+	git update-index --add --cacheinfo "$7" "$3" "$4" &&
 		exec git checkout-index -u -f -- "$4"
 	;;
 
