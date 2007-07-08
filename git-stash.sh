@@ -58,11 +58,11 @@ save_stash () {
 
 	# state of the working tree
 	w_tree=$( (
+		rm -f "$TMP-index" &&
+		cp -p ${GIT_INDEX_FILE-"$GIT_DIR/index"} "$TMP-index" &&
 		GIT_INDEX_FILE="$TMP-index" &&
 		export GIT_INDEX_FILE &&
-
-		rm -f "$TMP-index" &&
-		git read-tree $i_tree &&
+		git read-tree -m $i_tree &&
 		git add -u &&
 		git write-tree &&
 		rm -f "$TMP-index"
