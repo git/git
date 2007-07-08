@@ -1216,9 +1216,22 @@ static const char *funcname_pattern(const char *ident)
 	return NULL;
 }
 
+static struct builtin_funcname_pattern {
+	const char *name;
+	const char *pattern;
+} builtin_funcname_pattern[] = {
+	{ "java", "!^[ 	]*\\(catch\\|do\\|for\\|if\\|instanceof\\|"
+			"new\\|return\\|switch\\|throw\\|while\\)\n"
+			"^[ 	]*\\(\\([ 	]*"
+			"[A-Za-z_][A-Za-z_0-9]*\\)\\{2,\\}"
+			"[ 	]*([^;]*$\\)" },
+	{ "tex", "^\\(\\\\\\(sub\\)*section{.*\\)$" },
+};
+
 static const char *diff_funcname_pattern(struct diff_filespec *one)
 {
 	const char *ident, *pattern;
+	int i;
 
 	diff_filespec_check_attr(one);
 	ident = one->funcname_pattern_ident;
@@ -1240,12 +1253,9 @@ static const char *diff_funcname_pattern(struct diff_filespec *one)
 	 * And define built-in fallback patterns here.  Note that
 	 * these can be overriden by the user's config settings.
 	 */
-	if (!strcmp(ident, "java"))
-		return "!^[ 	]*\\(catch\\|do\\|for\\|if\\|instanceof\\|"
-			"new\\|return\\|switch\\|throw\\|while\\)\n"
-			"^[ 	]*\\(\\([ 	]*"
-			"[A-Za-z_][A-Za-z_0-9]*\\)\\{2,\\}"
-			"[ 	]*([^;]*$\\)";
+	for (i = 0; i < ARRAY_SIZE(builtin_funcname_pattern); i++)
+		if (!strcmp(ident, builtin_funcname_pattern[i].name))
+			return builtin_funcname_pattern[i].pattern;
 
 	return NULL;
 }
