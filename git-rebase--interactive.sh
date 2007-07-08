@@ -239,7 +239,10 @@ do_next () {
 	fi &&
 	message="$GIT_REFLOG_ACTION: $HEADNAME onto $SHORTONTO)" &&
 	git update-ref -m "$message" $HEADNAME $NEWHEAD $OLDHEAD &&
-	git symbolic-ref HEAD $HEADNAME &&
+	git symbolic-ref HEAD $HEADNAME && {
+		test ! -f "$DOTEST"/verbose ||
+			git diff --stat $(cat "$DOTEST"/head)..HEAD
+	} &&
 	rm -rf "$DOTEST" &&
 	warn "Successfully rebased and updated $HEADNAME."
 
@@ -251,9 +254,6 @@ do_rest () {
 	do
 		do_next
 	done
-	test -f "$DOTEST"/verbose &&
-		git diff --stat $(cat "$DOTEST"/head)..HEAD
-	exit
 }
 
 while case $# in 0) break ;; esac
