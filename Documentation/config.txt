@@ -309,7 +309,10 @@ branch.autosetupmerge::
 	so that gitlink:git-pull[1] will appropriately merge from that
 	remote branch.  Note that even if this option is not set,
 	this behavior can be chosen per-branch using the `--track`
-	and `--no-track` options.  This option defaults to false.
+	and `--no-track` options.  This option can have values
+	'false' (never touch the configuration), 'all' (do this
+	for all branches), or 'true' (do this only when
+	branching from a remote tracking branch), and defaults to 'true'.
 
 branch.<name>.remote::
 	When in branch <name>, it tells `git fetch` which remote to fetch.

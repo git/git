@@ -52,8 +52,9 @@ OPTIONS
 	set up configuration so that git-pull will automatically
 	retrieve data from the remote branch.  Set the
 	branch.autosetupmerge configuration variable to true if you
-	want git-checkout and git-branch to always behave as if
-	'--track' were given.
+	want git-checkout and git-branch to behave as if
+	'--track' were given when you branch from a remote
+	tracking branch.
 
 --no-track::
 	When -b is given and a branch is created off a remote branch,

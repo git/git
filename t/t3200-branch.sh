@@ -148,6 +148,15 @@ test_expect_success 'test tracking setup via config' \
      test $(git config branch.my3.remote) = local &&
      test $(git config branch.my3.merge) = refs/heads/master'
 
+test_expect_success 'autosetupmerge = all' '
+	git config branch.autosetupmerge true &&
+	git branch all1 master &&
+	test -z "$(git config branch.all1.merge)" &&
+	git config branch.autosetupmerge all &&
+	git branch all2 master &&
+	test $(git config branch.all2.merge) = refs/heads/master
+'
+
 test_expect_success 'test overriding tracking setup via --no-track' \
     'git config branch.autosetupmerge true &&
      git config remote.local.url . &&

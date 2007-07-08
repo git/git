@@ -22,7 +22,7 @@ static const char builtin_branch_usage[] =
 static const char *head;
 static unsigned char head_sha1[20];
 
-static int branch_track_remotes = 1;
+static int branch_track = 1; /* 0 = none, 1 = remotes, 2 = all */
 
 static int branch_use_color;
 static char branch_colors[][COLOR_MAXLEN] = {
@@ -66,8 +66,12 @@ static int git_branch_config(const char *var, const char *value)
 		color_parse(value, var, branch_colors[slot]);
 		return 0;
 	}
-	if (!strcmp(var, "branch.autosetupmerge"))
-		branch_track_remotes = git_config_bool(var, value);
+	if (!strcmp(var, "branch.autosetupmerge")) {
+		if (!strcmp(value, "all"))
+			branch_track = 2;
+		else
+			branch_track = git_config_bool(var, value);
+	}
 
 	return git_default_config(var, value);
 }
@@ -504,7 +508,9 @@ static void create_branch(const char *name, const char *start_name,
 	/* When branching off a remote branch, set up so that git-pull
 	   automatically merges from there.  So far, this is only done for
 	   remotes registered via .git/config.  */
-	if (real_ref && track)
+	if (real_ref && (track == 2 ||
+				(track == 1 &&
+				 !prefixcmp(real_ref, "refs/remotes/"))))
 		set_branch_defaults(name, real_ref);
 
 	if (write_ref_sha1(lock, sha1, msg) < 0)
@@ -564,7 +570,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	int i;
 
 	git_config(git_branch_config);
-	track = branch_track_remotes;
+	track = branch_track;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -576,7 +582,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			break;
 		}
 		if (!strcmp(arg, "--track")) {
-			track = 1;
+			track = 2;
 			continue;
 		}
 		if (!strcmp(arg, "--no-track")) {
