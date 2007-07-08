@@ -308,33 +308,76 @@ proc tk_optionMenu {w varName args} {
 ##
 ## version check
 
-set req_maj 1
-set req_min 5
-
-if {[catch {set v [git --version]} err]} {
+if {[catch {set _git_version [git --version]} err]} {
 	catch {wm withdraw .}
 	error_popup "Cannot determine Git version:
 
 $err
 
-[appname] requires Git $req_maj.$req_min or later."
+[appname] requires Git 1.5.0 or later."
 	exit 1
 }
-if {[regexp {^git version (\d+)\.(\d+)} $v _junk act_maj act_min]} {
-	if {$act_maj < $req_maj
-		|| ($act_maj == $req_maj && $act_min < $req_min)} {
-		catch {wm withdraw .}
-		error_popup "[appname] requires Git $req_maj.$req_min or later.
-
-You are using $v."
-		exit 1
-	}
-} else {
+if {![regsub {^git version } $_git_version {} _git_version]} {
 	catch {wm withdraw .}
-	error_popup "Cannot parse Git version string:\n\n$v"
+	error_popup "Cannot parse Git version string:\n\n$_git_version"
 	exit 1
 }
-unset -nocomplain v _junk act_maj act_min req_maj req_min
+regsub {\.[0-9]+\.g[0-9a-f]+$} $_git_version {} _git_version
+regsub {\.rc[0-9]+$} $_git_version {} _git_version
+
+proc git-version {args} {
+	global _git_version
+
+	switch [llength $args] {
+	0 {
+		return $_git_version
+	}
+
+	2 {
+		set op [lindex $args 0]
+		set vr [lindex $args 1]
+		set cm [package vcompare $_git_version $vr]
+		return [expr $cm $op 0]
+	}
+
+	4 {
+		set type [lindex $args 0]
+		set name [lindex $args 1]
+		set parm [lindex $args 2]
+		set body [lindex $args 3]
+
+		if {($type ne {proc} && $type ne {method})} {
+			error "Invalid arguments to git-version"
+		}
+		if {[llength $body] < 2 || [lindex $body end-1] ne {default}} {
+			error "Last arm of $type $name must be default"
+		}
+
+		foreach {op vr cb} [lrange $body 0 end-2] {
+			if {[git-version $op $vr]} {
+				return [uplevel [list $type $name $parm $cb]]
+			}
+		}
+
+		return [uplevel [list $type $name $parm [lindex $body end]]]
+	}
+
+	default {
+		error "git-version >= x"
+	}
+
+	}
+}
+
+if {[git-version < 1.5]} {
+	catch {wm withdraw .}
+	error_popup "[appname] requires Git 1.5.0 or later.
+
+You are using [git-version]:
+
+[git --version]"
+	exit 1
+}
 
 ######################################################################
 ##
