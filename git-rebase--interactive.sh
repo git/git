@@ -59,6 +59,10 @@ make_patch () {
 }
 
 die_with_patch () {
+	test -f "$DOTEST"/message ||
+		git cat-file commit $sha1 | sed "1,/^$/d" > "$DOTEST"/message
+	test -f "$DOTEST"/author-script ||
+		get_author_ident_from_commit $sha1 > "$DOTEST"/author-script
 	make_patch "$1"
 	die "$2"
 }
@@ -140,10 +144,7 @@ pick_one_preserving_merges () {
 			if ! git merge $STRATEGY -m "$msg" $new_parents
 			then
 				echo "$msg" > "$GIT_DIR"/MERGE_MSG
-				warn Error redoing merge $sha1
-				warn
-				warn After fixup, please use
-				die "$author_script git commit"
+				die Error redoing merge $sha1
 			fi
 			;;
 		*)
@@ -154,11 +155,12 @@ pick_one_preserving_merges () {
 }
 
 do_next () {
+	test -f "$DOTEST"/message && rm "$DOTEST"/message
+	test -f "$DOTEST"/author-script && rm "$DOTEST"/author-script
 	read command sha1 rest < "$TODO"
 	case "$command" in
 	\#|'')
 		mark_action_done
-		continue
 		;;
 	pick)
 		comment_for_reflog pick
@@ -201,6 +203,7 @@ do_next () {
 		git cat-file commit $sha1 | sed -e '1,/^$/d' >> "$MSG"
 		git reset --soft HEAD^
 		author_script=$(get_author_ident_from_commit $sha1)
+		echo "$author_script" > "$DOTEST"/author-script
 		case $failed in
 		f)
 			# This is like --amend, but with a different message
@@ -212,10 +215,6 @@ do_next () {
 			cp "$MSG" "$GIT_DIR"/MERGE_MSG
 			warn
 			warn "Could not apply $sha1... $rest"
-			warn "After you fixed that, commit the result with"
-			warn
-			warn "  $(echo $author_script | tr '\012' ' ') \\"
-			warn "	  git commit -F \"$GIT_DIR\"/MERGE_MSG -e"
 			die_with_patch $sha1 ""
 		esac
 		;;
@@ -264,6 +263,15 @@ do
 		comment_for_reflog continue
 
 		test -d "$DOTEST" || die "No interactive rebase running"
+
+		# commit if necessary
+		git rev-parse --verify HEAD > /dev/null &&
+		git update-index --refresh &&
+		git diff-files --quiet &&
+		! git diff-index --cached --quiet HEAD &&
+		. "$DOTEST"/author-script &&
+		export GIT_AUTHOR_NAME GIT_AUTHOR_NAME GIT_AUTHOR_DATE &&
+		git commit -F "$DOTEST"/message -e
 
 		require_clean_work_tree
 		do_rest

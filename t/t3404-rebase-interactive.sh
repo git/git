@@ -63,7 +63,10 @@ test_expect_success 'setup' '
 
 cat > fake-editor.sh << EOF
 #!/bin/sh
-test "\$1" = .git/COMMIT_EDITMSG && exit
+test "\$1" = .git/COMMIT_EDITMSG && {
+	test -z "\$FAKE_COMMIT_MESSAGE" || echo "\$FAKE_COMMIT_MESSAGE" > "\$1"
+	exit
+}
 test -z "\$FAKE_LINES" && exit
 grep -v "^#" < "\$1" > "\$1".tmp
 rm "\$1"
@@ -181,11 +184,22 @@ test_expect_success 'preserve merges with -p' '
 	echo C > file1 &&
 	test_tick &&
 	git commit -m K file1 &&
+	test_tick &&
 	git rebase -i -p --onto branch1 master &&
 	test $(git rev-parse HEAD^^2) = $(git rev-parse to-be-preserved) &&
 	test $(git rev-parse HEAD~3) = $(git rev-parse branch1) &&
 	test $(git show HEAD:file1) = C &&
 	test $(git show HEAD~2:file1) = B
+'
+
+test_expect_success '--continue tries to commit' '
+	test_tick &&
+	! git rebase -i --onto new-branch1 HEAD^ &&
+	echo resolved > file1 &&
+	git add file1 &&
+	FAKE_COMMIT_MESSAGE="chouette!" git rebase --continue &&
+	test $(git rev-parse HEAD^) = $(git rev-parse new-branch1) &&
+	git show HEAD | grep chouette
 '
 
 test_done
