@@ -331,7 +331,12 @@ A rescan will be automatically started now.
 
 	# -- Let rerere do its thing.
 	#
-	if {[file isdirectory [gitdir rr-cache]]} {
+	if {[get_config rerere.enabled] eq {}} {
+		set rerere [file isdirectory [gitdir rr-cache]]
+	} else {
+		set rerere [is_config_true rerere.enabled]
+	}
+	if {$rerere} {
 		catch {git rerere}
 	}
 
