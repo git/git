@@ -18,7 +18,7 @@ field spec_trck       ; # list of all tracking branch specs
 field spec_tag        ; # list of all tag specs
 
 constructor new {path {title {}}} {
-	global all_heads current_branch
+	global current_branch is_detached
 
 	set w $path
 
@@ -28,6 +28,15 @@ constructor new {path {title {}}} {
 		frame $w
 	}
 	bind $w <Destroy> [cb _delete %W]
+
+	if {$is_detached} {
+		radiobutton $w.detachedhead_r \
+			-anchor w \
+			-text {This Detached Checkout} \
+			-value HEAD \
+			-variable @revtype
+		grid $w.detachedhead_r -sticky we -padx {0 5} -columnspan 2
+	}
 
 	radiobutton $w.expr_r \
 		-text {Revision Expression:} \
@@ -86,14 +95,18 @@ constructor new {path {title {}}} {
 	grid $w.list -sticky nswe -padx {20 5} -columnspan 2
 
 	grid columnconfigure $w 1 -weight 1
-	grid rowconfigure    $w 2 -weight 1
+	if {$is_detached} {
+		grid rowconfigure $w 3 -weight 1
+	} else {
+		grid rowconfigure $w 2 -weight 1
+	}
 
 	trace add variable @revtype write [cb _select]
 	bind $w_filter <Key-Return> [list focus $w_list]\;break
 	bind $w_filter <Key-Down>   [list focus $w_list]
 
 	set spec_head [list]
-	foreach name $all_heads {
+	foreach name [load_all_heads] {
 		lappend spec_head [list $name refs/heads/$name]
 	}
 
@@ -109,7 +122,8 @@ constructor new {path {title {}}} {
 		lappend spec_tag [list $name refs/tags/$name]
 	}
 
-	      if {[llength $spec_head] > 0} { set revtype head
+		  if {$is_detached}             { set revtype HEAD
+	} elseif {[llength $spec_head] > 0} { set revtype head
 	} elseif {[llength $spec_trck] > 0} { set revtype trck
 	} elseif {[llength $spec_tag ] > 0} { set revtype tag
 	} else {                              set revtype expr
@@ -153,6 +167,7 @@ method get {} {
 		}
 	}
 
+	HEAD { return HEAD                     }
 	expr { return $c_expr                  }
 	none { return {}                       }
 	default { error "unknown type of revision" }
@@ -161,6 +176,20 @@ method get {} {
 
 method pick_tracking_branch {} {
 	set revtype trck
+}
+
+method focus_filter {} {
+	if {[$w_filter cget -state] eq {normal}} {
+		focus $w_filter
+	}
+}
+
+method get_local_branch {} {
+	if {$revtype eq {head}} {
+		return [_expr $this]
+	} else {
+		return {}
+	}
 }
 
 method get_tracking_branch {} {
@@ -222,6 +251,7 @@ method _expr {} {
 			error "Revision expression is empty."
 		}
 	}
+	HEAD { return HEAD                     }
 	none { return {}                       }
 	default { error "unknown type of revision"      }
 	}
@@ -249,9 +279,7 @@ method _filter {P} {
 
 method _select {args} {
 	_rebuild $this $filter
-	if {[$w_filter cget -state] eq {normal}} {
-		focus $w_filter
-	}
+	focus_filter $this
 }
 
 method _rebuild {pat} {
@@ -261,6 +289,7 @@ method _rebuild {pat} {
 	trck { set new $spec_trck }
 	tag  { set new $spec_tag  }
 	expr -
+	HEAD -
 	none {
 		set new [list]
 		set ste disabled

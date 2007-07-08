@@ -173,6 +173,14 @@ method chain {cmdlist {ok 1}} {
 	}
 }
 
+method insert {txt} {
+	if {![winfo exists $w.m.t]} {_init $this}
+	$w.m.t conf -state normal
+	$w.m.t insert end "$txt\n"
+	set console_cr [$w.m.t index {end -1c}]
+	$w.m.t conf -state disabled
+}
+
 method done {ok} {
 	if {$ok} {
 		if {[winfo exists $w.m.s]} {

@@ -284,7 +284,9 @@ proc git {args} {
 	return [eval exec git $args]
 }
 
-proc current-branch {} {
+proc load_current_branch {} {
+	global current_branch is_detached
+
 	set fd [open [gitdir HEAD] r]
 	if {[gets $fd ref] < 1} {
 		set ref {}
@@ -297,11 +299,13 @@ proc current-branch {} {
 		# We're on a branch.  It might not exist.  But
 		# HEAD looks good enough to be a branch.
 		#
-		return [string range $ref $len end]
+		set current_branch [string range $ref $len end]
+		set is_detached 0
 	} else {
 		# Assume this is a detached head.
 		#
-		return HEAD
+		set current_branch HEAD
+		set is_detached 1
 	}
 }
 
@@ -442,6 +446,7 @@ set MERGE_HEAD [list]
 set commit_type {}
 set empty_tree {}
 set current_branch {}
+set is_detached 0
 set current_diff_path {}
 set selected_commit_type new
 
@@ -491,7 +496,7 @@ proc repository_state {ctvar hdvar mhvar} {
 
 	set mh [list]
 
-	set current_branch [current-branch]
+	load_current_branch
 	if {[catch {set hd [git rev-parse --verify HEAD]}]} {
 		set hd {}
 		set ct initial
@@ -555,11 +560,6 @@ proc rescan {after {honor_trustmtime 1}} {
 		}
 		$ui_comm edit reset
 		$ui_comm edit modified false
-	}
-
-	if {[is_enabled branch]} {
-		load_all_heads
-		populate_branch_menu
 	}
 
 	if {$honor_trustmtime && $repo_config(gui.trustmtime) eq {true}} {
@@ -1519,6 +1519,12 @@ if {[is_enabled branch]} {
 	lappend disable_on_lock [list .mbar.branch entryconf \
 		[.mbar.branch index last] -state]
 
+	.mbar.branch add command -label {Checkout...} \
+		-command branch_checkout::dialog \
+		-accelerator $M1T-O
+	lappend disable_on_lock [list .mbar.branch entryconf \
+		[.mbar.branch index last] -state]
+
 	.mbar.branch add command -label {Rename...} \
 		-command branch_rename::dialog
 	lappend disable_on_lock [list .mbar.branch entryconf \
@@ -1739,7 +1745,7 @@ switch -- $subcommand {
 browser {
 	set subcommand_args {rev?}
 	switch [llength $argv] {
-	0 { set current_branch [current-branch] }
+	0 { load_current_branch }
 	1 { set current_branch [lindex $argv 0] }
 	default usage
 	}
@@ -1773,7 +1779,7 @@ blame {
 	unset is_path
 
 	if {$head eq {}} {
-		set current_branch [current-branch]
+		load_current_branch
 	} else {
 		set current_branch $head
 	}
@@ -2240,6 +2246,8 @@ bind $ui_diff <Button-1>   {focus %W}
 if {[is_enabled branch]} {
 	bind . <$M1B-Key-n> branch_create::dialog
 	bind . <$M1B-Key-N> branch_create::dialog
+	bind . <$M1B-Key-o> branch_checkout::dialog
+	bind . <$M1B-Key-O> branch_checkout::dialog
 }
 if {[is_enabled transport]} {
 	bind . <$M1B-Key-p> do_push_anywhere
@@ -2326,9 +2334,7 @@ user.email settings into your personal
 #
 if {[is_enabled transport]} {
 	load_all_remotes
-	load_all_heads
 
-	populate_branch_menu
 	populate_fetch_menu
 	populate_push_menu
 }

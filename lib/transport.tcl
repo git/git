@@ -74,7 +74,7 @@ trace add variable push_remote write \
 	[list radio_selector push_urltype remote]
 
 proc do_push_anywhere {} {
-	global all_heads all_remotes current_branch
+	global all_remotes current_branch
 	global push_urltype push_remote push_url push_thin push_tags
 
 	set w .push_setup
@@ -101,7 +101,7 @@ proc do_push_anywhere {} {
 		-width 70 \
 		-selectmode extended \
 		-yscrollcommand [list $w.source.sby set]
-	foreach h $all_heads {
+	foreach h [load_all_heads] {
 		$w.source.l insert end $h
 		if {$h eq $current_branch} {
 			$w.source.l select set end

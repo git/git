@@ -73,7 +73,7 @@ constructor dialog {} {
 	pack $w.options.merge.l -side left
 	radiobutton $w.options.merge.no \
 		-text No \
-		-value no \
+		-value none \
 		-variable @opt_merge
 	pack $w.options.merge.no -side left
 	radiobutton $w.options.merge.ff \
@@ -113,7 +113,7 @@ constructor dialog {} {
 }
 
 method _create {} {
-	global repo_config current_branch
+	global repo_config
 	global M1B
 
 	set spec [$w_rev get_tracking_branch]
@@ -155,17 +155,6 @@ method _create {} {
 		return
 	}
 
-	if {$newbranch eq $current_branch} {
-		tk_messageBox \
-			-icon error \
-			-type ok \
-			-title [wm title $w] \
-			-parent $w \
-			-message "'$newbranch' already exists and is the current branch."
-		focus $w_name
-		return
-	}
-
 	if {[catch {git check-ref-format "heads/$newbranch"}]} {
 		tk_messageBox \
 			-icon error \
@@ -178,228 +167,28 @@ method _create {} {
 	}
 
 	if {$spec ne {} && $opt_fetch} {
-		set l_trck [lindex $spec 0]
-		set remote [lindex $spec 1]
-		set r_head [lindex $spec 2]
-		regsub ^refs/heads/ $r_head {} r_head
-
-		set c $w.fetch_trck
-		toplevel $c
-		wm title $c "Refreshing Tracking Branch"
-		wm geometry $c "+[winfo rootx $w]+[winfo rooty $w]"
-
-		set e [::console::embed \
-			$c.console \
-			"Fetching $r_head from $remote"]
-		pack $c.console -fill both -expand 1
-		$e exec \
-			[list git fetch $remote +$r_head:$l_trck] \
-			[cb _finish_fetch $newbranch $c $e]
-
-		bind $c <Visibility> [list grab $c]
-		bind $c <$M1B-Key-w> break
-		bind $c <$M1B-Key-W> break
-		wm protocol $c WM_DELETE_WINDOW [cb _noop]
-	} else {
-		_finish_create $this $newbranch
-	}
-}
-
-method _noop {} {}
-
-method _finish_fetch {newbranch c e ok} {
-	wm protocol $c WM_DELETE_WINDOW {}
-
-	if {$ok} {
-		destroy $c
-		_finish_create $this $newbranch
-	} else {
-		$e done $ok
-		button $c.close -text Close -command [list destroy $c]
-		pack $c.close -side bottom -anchor e -padx 10 -pady 10
-	}
-}
-
-method _finish_create {newbranch} {
-	global null_sha1 all_heads
-
-	if {[catch {set new [$w_rev commit_or_die]}]} {
+		set new {}
+	} elseif {[catch {set new [$w_rev commit_or_die]}]} {
 		return
 	}
 
-	set ref refs/heads/$newbranch
-	if {[catch {set cur [git rev-parse --verify "$ref^0"]}]} {
-		# Assume it does not exist, and that is what the error was.
-		#
-		set reflog_msg "branch: Created from [$w_rev get]"
-		set cur $null_sha1
-	} elseif {$opt_merge eq {no}} {
-		tk_messageBox \
-			-icon error \
-			-type ok \
-			-title [wm title $w] \
-			-parent $w \
-			-message "Branch '$newbranch' already exists."
+	set co [::checkout_op::new \
+		[$w_rev get] \
+		$new \
+		refs/heads/$newbranch]
+	$co parent $w
+	$co enable_create   1
+	$co enable_merge    $opt_merge
+	$co enable_checkout $opt_checkout
+	if {$spec ne {} && $opt_fetch} {
+		$co enable_fetch $spec
+	}
+
+	if {[$co run]} {
+		destroy $w
+	} else {
 		focus $w_name
-		return
-	} else {
-		set mrb {}
-		catch {set mrb [git merge-base $new $cur]}
-		switch -- $opt_merge {
-		ff {
-			if {$mrb eq $new} {
-				# The current branch is actually newer.
-				#
-				set new $cur
-			} elseif {$mrb eq $cur} {
-				# The current branch is older.
-				#
-				set reflog_msg "merge [$w_rev get]: Fast-forward"
-			} else {
-				tk_messageBox \
-					-icon error \
-					-type ok \
-					-title [wm title $w] \
-					-parent $w \
-					-message "Branch '$newbranch' already exists.\n\nIt cannot fast-forward to [$w_rev get].\nA merge is required."
-				focus $w_name
-				return
-			}
-		}
-		reset {
-			if {$mrb eq $cur} {
-				# The current branch is older.
-				#
-				set reflog_msg "merge [$w_rev get]: Fast-forward"
-			} else {
-				# The current branch will lose things.
-				#
-				if {[_confirm_reset $this $newbranch $cur $new]} {
-					set reflog_msg "reset [$w_rev get]"
-				} else {
-					return
-				}
-			}
-		}
-		default {
-			tk_messageBox \
-				-icon error \
-				-type ok \
-				-title [wm title $w] \
-				-parent $w \
-				-message "Branch '$newbranch' already exists."
-			focus $w_name
-			return
-		}
-		}
 	}
-
-	if {$new ne $cur} {
-		if {[catch {
-				git update-ref -m $reflog_msg $ref $new $cur
-			} err]} {
-			tk_messageBox \
-				-icon error \
-				-type ok \
-				-title [wm title $w] \
-				-parent $w \
-				-message "Failed to create '$newbranch'.\n\n$err"
-			return
-		}
-	}
-
-	if {$cur eq $null_sha1} {
-		lappend all_heads $newbranch
-		set all_heads [lsort -uniq $all_heads]
-		populate_branch_menu
-	}
-
-	destroy $w
-	if {$opt_checkout} {
-		switch_branch $newbranch
-	}
-}
-
-method _confirm_reset {newbranch cur new} {
-	set reset_ok 0
-	set gitk [list do_gitk [list $cur ^$new]]
-
-	set c $w.confirm_reset
-	toplevel $c
-	wm title $c "Confirm Branch Reset"
-	wm geometry $c "+[winfo rootx $w]+[winfo rooty $w]"
-
-	pack [label $c.msg1 \
-		-anchor w \
-		-justify left \
-		-text "Resetting '$newbranch' to [$w_rev get] will lose the following commits:" \
-		] -anchor w
-
-	set list $c.list.l
-	frame $c.list
-	text $list \
-		-font font_diff \
-		-width 80 \
-		-height 10 \
-		-wrap none \
-		-xscrollcommand [list $c.list.sbx set] \
-		-yscrollcommand [list $c.list.sby set]
-	scrollbar $c.list.sbx -orient h -command [list $list xview]
-	scrollbar $c.list.sby -orient v -command [list $list yview]
-	pack $c.list.sbx -fill x -side bottom
-	pack $c.list.sby -fill y -side right
-	pack $list -fill both -expand 1
-	pack $c.list -fill both -expand 1 -padx 5 -pady 5
-
-	pack [label $c.msg2 \
-		-anchor w \
-		-justify left \
-		-text "Recovering lost commits may not be easy." \
-		]
-	pack [label $c.msg3 \
-		-anchor w \
-		-justify left \
-		-text "Reset '$newbranch'?" \
-		]
-
-	frame $c.buttons
-	button $c.buttons.visualize \
-		-text Visualize \
-		-command $gitk
-	pack $c.buttons.visualize -side left
-	button $c.buttons.reset \
-		-text Reset \
-		-command "
-			set @reset_ok 1
-			destroy $c
-		"
-	pack $c.buttons.reset -side right
-	button $c.buttons.cancel \
-		-default active \
-		-text Cancel \
-		-command [list destroy $c]
-	pack $c.buttons.cancel -side right -padx 5
-	pack $c.buttons -side bottom -fill x -pady 10 -padx 10
-
-	set fd [open "| git rev-list --pretty=oneline $cur ^$new" r]
-	while {[gets $fd line] > 0} {
-		set abbr [string range $line 0 7]
-		set subj [string range $line 41 end]
-		$list insert end "$abbr  $subj\n"
-	}
-	close $fd
-	$list configure -state disabled
-
-	bind $c    <Key-v> $gitk
-
-	bind $c <Visibility> "
-		grab $c
-		focus $c.buttons.cancel
-	"
-	bind $c <Key-Return> [list destroy $c]
-	bind $c <Key-Escape> [list destroy $c]
-	tkwait window $c
-	return $reset_ok
 }
 
 method _validate {d S} {

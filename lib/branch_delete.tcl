@@ -9,7 +9,7 @@ field w_check         ; # revision picker for merge test
 field w_delete        ; # delete button
 
 constructor dialog {} {
-	global all_heads current_branch
+	global current_branch
 
 	make_toplevel top w
 	wm title $top "[appname] ([reponame]): Delete Branch"
@@ -54,7 +54,7 @@ constructor dialog {} {
 	$w_check none {Always (Do not perform merge test.)}
 	pack $w.check -anchor nw -fill x -pady 5 -padx 5
 
-	foreach h $all_heads {
+	foreach h [load_all_heads] {
 		if {$h ne $current_branch} {
 			$w_heads insert end $h
 		}
@@ -79,8 +79,6 @@ method _select {} {
 }
 
 method _delete {} {
-	global all_heads
-
 	if {[catch {set check_cmt [$w_check commit_or_die]}]} {
 		return
 	}
@@ -133,11 +131,6 @@ Delete the selected branches?}
 		set o [lindex $i 1]
 		if {[catch {git update-ref -d "refs/heads/$b" $o} err]} {
 			append failed " - $b: $err\n"
-		} else {
-			set x [lsearch -sorted -exact $all_heads $b]
-			if {$x >= 0} {
-				set all_heads [lreplace $all_heads $x $x]
-			}
 		}
 	}
 
@@ -150,8 +143,6 @@ Delete the selected branches?}
 			-message "Failed to delete branches:\n$failed"
 	}
 
-	set all_heads [lsort $all_heads]
-	populate_branch_menu
 	destroy $w
 }
 

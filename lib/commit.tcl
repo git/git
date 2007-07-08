@@ -359,14 +359,6 @@ A rescan will be automatically started now.
 
 	if {[is_enabled singlecommit]} do_quit
 
-	# -- Make sure our current branch exists.
-	#
-	if {$commit_type eq {initial}} {
-		lappend all_heads $current_branch
-		set all_heads [lsort -unique $all_heads]
-		populate_branch_menu
-	}
-
 	# -- Update in memory status
 	#
 	set selected_commit_type new

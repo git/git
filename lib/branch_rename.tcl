@@ -8,7 +8,7 @@ field oldname
 field newname
 
 constructor dialog {} {
-	global all_heads current_branch
+	global current_branch
 
 	make_toplevel top w
 	wm title $top "[appname] ([reponame]): Rename Branch"
@@ -34,7 +34,7 @@ constructor dialog {} {
 
 	frame $w.rename
 	label $w.rename.oldname_l -text {Branch:}
-	eval tk_optionMenu $w.rename.oldname_m @oldname $all_heads
+	eval tk_optionMenu $w.rename.oldname_m @oldname [load_all_heads]
 
 	label $w.rename.newname_l -text {New Name:}
 	entry $w.rename.newname_t \
@@ -64,7 +64,7 @@ constructor dialog {} {
 }
 
 method _rename {} {
-	global all_heads current_branch
+	global current_branch
 
 	if {$oldname eq {}} {
 		tk_messageBox \
@@ -117,14 +117,6 @@ method _rename {} {
 			-message "Failed to rename '$oldname'.\n\n$err"
 		return
 	}
-
-	set oldidx [lsearch -exact -sorted $all_heads $oldname]
-	if {$oldidx >= 0} {
-		set all_heads [lreplace $all_heads $oldidx $oldidx]
-	}
-	lappend all_heads $newname
-	set all_heads [lsort $all_heads]
-	populate_branch_menu
 
 	if {$current_branch eq $oldname} {
 		set current_branch $newname
