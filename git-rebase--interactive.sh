@@ -401,6 +401,9 @@ do
 #  pick = use commit
 #  edit = use commit, but stop for amending
 #  squash = use commit, but meld into previous commit
+#
+# If you remove a line here THAT COMMIT WILL BE LOST.
+#
 EOF
 		git rev-list $MERGES_OPTION --pretty=oneline --abbrev-commit \
 			--abbrev=7 --reverse $UPSTREAM..$HEAD | \
