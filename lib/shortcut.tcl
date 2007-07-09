@@ -66,7 +66,7 @@ proc do_cygwin_shortcut {} {
 				puts $fd "@ECHO Entering [reponame]"
 				puts $fd "@ECHO Starting git-gui... please wait..."
 				puts -nonewline $fd "@\"$sh\" --login -c \""
-				puts -nonewline $fd "GIT_DIR=[sq [$gd]]"
+				puts -nonewline $fd "GIT_DIR=[sq $gd]"
 				puts -nonewline $fd " [sq $me]"
 				puts $fd "&\""
 				close $fd
