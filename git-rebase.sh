@@ -116,8 +116,28 @@ call_merge () {
 }
 
 finish_rb_merge () {
+	if test -f "$dotest/stash"
+	then
+		stash=$(cat "$dotest/stash")
+		git stash apply --index "$stash"
+	fi
 	rm -r "$dotest"
 	echo "All done."
+}
+
+read_stash () {
+	if test -f "$1"
+	then
+		cat "$1"
+	fi
+}
+unstash_and_exit () {
+	err=$?
+	if test -f "$1" && test $err = 0
+	then
+		git stash apply --index "$1"
+	fi
+	exit $err
 }
 
 is_interactive () {
@@ -154,8 +174,9 @@ do
 			finish_rb_merge
 			exit
 		fi
+		stash=$(read_stash ".dotest/stash")
 		git am --resolved --3way --resolvemsg="$RESOLVEMSG"
-		exit
+		unstash_and_exit "$stash"
 		;;
 	--skip)
 		if test -d "$dotest"
@@ -174,21 +195,31 @@ do
 			finish_rb_merge
 			exit
 		fi
+		stash=$(read_stash ".dotest/stash")
 		git am -3 --skip --resolvemsg="$RESOLVEMSG"
-		exit
+		unstash_and_exit "$stash"
 		;;
 	--abort)
 		git rerere clear
 		if test -d "$dotest"
 		then
+			if test -f "$dotest/stash"
+			then
+				stash=$(cat "$dotest/stash")
+			fi
 			rm -r "$dotest"
 		elif test -d .dotest
 		then
+			if test -f ".dotest/stash"
+			then
+				stash=$(cat ".dotest/stash")
+			fi
 			rm -r .dotest
 		else
 			die "No rebase in progress?"
 		fi
 		git reset --hard ORIG_HEAD
+		test -z "$stash" || git stash apply --index "$stash"
 		exit
 		;;
 	--onto)
@@ -254,16 +285,6 @@ else
 	fi
 fi
 
-# The tree must be really really clean.
-git update-index --refresh || exit
-diff=$(git diff-index --cached --name-status -r HEAD)
-case "$diff" in
-?*)	echo "cannot rebase: your index is not up-to-date"
-	echo "$diff"
-	exit 1
-	;;
-esac
-
 # The upstream head must be given.  Make sure it is valid.
 upstream_name="$1"
 upstream=`git rev-parse --verify "${upstream_name}^0"` ||
@@ -273,11 +294,19 @@ upstream=`git rev-parse --verify "${upstream_name}^0"` ||
 onto_name=${newbase-"$upstream_name"}
 onto=$(git rev-parse --verify "${onto_name}^0") || exit
 
+# The tree must be clean enough for us to create a stash
+stash=$(git stash create) || exit
+if test -n "$stash"
+then
+	echo >&2 "Stashed away your working tree changes"
+fi
+
 # If a hook exists, give it a chance to interrupt
 if test -x "$GIT_DIR/hooks/pre-rebase"
 then
 	"$GIT_DIR/hooks/pre-rebase" ${1+"$@"} || {
 		echo >&2 "The pre-rebase hook refused to rebase."
+		test -z "$stash" || git stash apply --index "$stash"
 		exit 1
 	}
 fi
@@ -286,7 +315,10 @@ fi
 case "$#" in
 2)
 	branch_name="$2"
-	git-checkout "$2" || usage
+	git-checkout "$2" || {
+		test -z "$stash" || git stash apply --index "$stash"
+		usage
+	}
 	;;
 *)
 	if branch_name=`git symbolic-ref -q HEAD`
@@ -309,6 +341,7 @@ if test "$upstream" = "$onto" && test "$mb" = "$onto" &&
 	! git rev-list --parents "$onto".."$branch" | grep " .* " > /dev/null
 then
 	echo >&2 "Current branch $branch_name is up to date."
+	test -z "$stash" || git stash apply --index "$stash"
 	exit 0
 fi
 
@@ -328,6 +361,7 @@ git-reset --hard "$onto"
 if test "$mb" = "$branch"
 then
 	echo >&2 "Fast-forwarded $branch_name to $onto_name."
+	test -z "$stash" || git stash apply --index "$stash"
 	exit 0
 fi
 
@@ -335,7 +369,16 @@ if test -z "$do_merge"
 then
 	git format-patch -k --stdout --full-index --ignore-if-in-upstream "$upstream"..ORIG_HEAD |
 	git am $git_am_opt --binary -3 -k --resolvemsg="$RESOLVEMSG"
-	exit $?
+	err=$?
+
+	if test $err = 0
+	then
+		test -z "$stash" || git stash apply --index "$stash"
+		exit
+	else
+		test -z "$stash" || echo "$stash" >.dotest/stash
+		exit $err
+	fi
 fi
 
 # start doing a rebase with git-merge
@@ -346,6 +389,7 @@ echo "$onto" > "$dotest/onto"
 echo "$onto_name" > "$dotest/onto_name"
 prev_head=`git rev-parse HEAD^0`
 echo "$prev_head" > "$dotest/prev_head"
+test -z "$stash" || echo "$stash" >"$dotest/stash"
 
 msgnum=0
 for cmt in `git rev-list --reverse --no-merges "$upstream"..ORIG_HEAD`
