@@ -54,7 +54,7 @@ proc do_cygwin_shortcut {} {
 				set sh [exec cygpath \
 					--windows \
 					--absolute \
-					/bin/sh]
+					/bin/sh.exe]
 				set me [exec cygpath \
 					--unix \
 					--absolute \
