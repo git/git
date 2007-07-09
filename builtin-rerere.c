@@ -168,19 +168,16 @@ static int find_conflict(struct path_list *conflict)
 	int i;
 	if (read_cache() < 0)
 		return error("Could not read index");
-	for (i = 0; i + 2 < active_nr; i++) {
-		struct cache_entry *e1 = active_cache[i];
-		struct cache_entry *e2 = active_cache[i+1];
-		struct cache_entry *e3 = active_cache[i+2];
-		if (ce_stage(e1) == 1 &&
-		    ce_stage(e2) == 2 &&
+	for (i = 0; i+1 < active_nr; i++) {
+		struct cache_entry *e2 = active_cache[i];
+		struct cache_entry *e3 = active_cache[i+1];
+		if (ce_stage(e2) == 2 &&
 		    ce_stage(e3) == 3 &&
-		    ce_same_name(e1, e2) && ce_same_name(e1, e3) &&
-		    S_ISREG(ntohl(e1->ce_mode)) &&
+		    ce_same_name(e2, e3) &&
 		    S_ISREG(ntohl(e2->ce_mode)) &&
 		    S_ISREG(ntohl(e3->ce_mode))) {
-			path_list_insert((const char *)e1->name, conflict);
-			i += 2;
+			path_list_insert((const char *)e2->name, conflict);
+			i++; /* skip over both #2 and #3 */
 		}
 	}
 	return 0;

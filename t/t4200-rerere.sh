@@ -116,11 +116,12 @@ test_expect_success 'commit succeeds' \
 
 test_expect_success 'recorded postimage' "test -f $rr/postimage"
 
-git checkout -b third master
-git show second^:a1 | sed 's/To die: t/To die! T/' > a1
-git commit -q -a -m third
-
-test_expect_failure 'another conflicting merge' 'git pull . first'
+test_expect_success 'another conflicting merge' '
+	git checkout -b third master &&
+	git show second^:a1 | sed "s/To die: t/To die! T/" > a1 &&
+	git commit -q -a -m third &&
+	! git pull . first
+'
 
 git show first:a1 | sed 's/To die: t/To die! T/' > expect
 test_expect_success 'rerere kicked in' "! grep ======= a1"
@@ -163,5 +164,38 @@ test_expect_success 'garbage collection (part2)' 'git rerere gc'
 
 test_expect_success 'old records rest in peace' \
 	"test ! -f $rr/preimage && test ! -f $rr2/preimage"
+
+test_expect_success 'file2 added differently in two branches' '
+	git reset --hard &&
+	git checkout -b fourth &&
+	echo Hallo > file2 &&
+	git add file2 &&
+	git commit -m version1 &&
+	git checkout third &&
+	echo Bello > file2 &&
+	git add file2 &&
+	git commit -m version2 &&
+	! git merge fourth &&
+	sha1=$(sed -e "s/	.*//" .git/rr-cache/MERGE_RR) &&
+	rr=.git/rr-cache/$sha1 &&
+	echo Cello > file2 &&
+	git add file2 &&
+	git commit -m resolution
+'
+
+test_expect_success 'resolution was recorded properly' '
+	git reset --hard HEAD~2 &&
+	git checkout -b fifth &&
+	echo Hallo > file3 &&
+	git add file3 &&
+	git commit -m version1 &&
+	git checkout third &&
+	echo Bello > file3 &&
+	git add file3 &&
+	git commit -m version2 &&
+	! git merge fifth &&
+	git diff-files -q &&
+	test Cello = "$(cat file3)"
+'
 
 test_done
