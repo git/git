@@ -294,6 +294,7 @@ proc _git_cmd {name} {
 
 	if {[catch {set v $_git_cmd_path($name)}]} {
 		switch -- $name {
+		  version   -
 		--version   -
 		--exec-path { return [list $::_git $name] }
 		}
