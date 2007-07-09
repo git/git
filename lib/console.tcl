@@ -87,19 +87,12 @@ method _init {} {
 }
 
 method exec {cmd {after {}}} {
-	# -- Cygwin's Tcl tosses the enviroment when we exec our child.
-	#    But most users need that so we have to relogin. :-(
-	#
-	if {[is_Cygwin]} {
-		set cmd [list sh --login -c "cd \"[pwd]\" && [join $cmd { }]"]
+	if {[lindex $cmd 0] eq {git}} {
+		set fd_f [eval git_read --stderr [lrange $cmd 1 end]]
+	} else {
+		lappend cmd 2>@1
+		set fd_f [_open_stdout_stderr $cmd]
 	}
-
-	# -- Tcl won't let us redirect both stdout and stderr to
-	#    the same pipe.  So pass it through cat...
-	#
-	set cmd [concat | $cmd |& cat]
-
-	set fd_f [open $cmd r]
 	fconfigure $fd_f -blocking 0 -translation binary
 	fileevent $fd_f readable [cb _read $fd_f $after]
 }

@@ -394,6 +394,29 @@ proc git {args} {
 	return [eval $opt $cmdp $args]
 }
 
+proc _open_stdout_stderr {cmd} {
+	if {[catch {
+			set fd [open $cmd r]
+		} err]} {
+		if {   [lindex $cmd end] eq {2>@1}
+		    && $err eq {can not find channel named "1"}
+			} {
+			# Older versions of Tcl 8.4 don't have this 2>@1 IO
+			# redirect operator.  Fallback to |& cat for those.
+			# The command was not actually started, so its safe
+			# to try to start it a second time.
+			#
+			set fd [open [concat \
+				[lrange $cmd 0 end-1] \
+				[list |& cat] \
+				] r]
+		} else {
+			error $err
+		}
+	}
+	return $fd
+}
+
 proc git_read {args} {
 	set opt [list |]
 
@@ -422,28 +445,7 @@ proc git_read {args} {
 	set cmdp [_git_cmd [lindex $args 0]]
 	set args [lrange $args 1 end]
 
-	if {[catch {
-			set fd [open [concat $opt $cmdp $args] r]
-		} err]} {
-		if {   [lindex $args end] eq {2>@1}
-		    && $err eq {can not find channel named "1"}
-			} {
-			# Older versions of Tcl 8.4 don't have this 2>@1 IO
-			# redirect operator.  Fallback to |& cat for those.
-			# The command was not actually started, so its safe
-			# to try to start it a second time.
-			#
-			set fd [open [concat \
-				$opt \
-				$cmdp \
-				[lrange $args 0 end-1] \
-				[list |& cat] \
-				] r]
-		} else {
-			error $err
-		}
-	}
-	return $fd
+	return [_open_stdout_stderr [concat $opt $cmdp $args]]
 }
 
 proc git_write {args} {
