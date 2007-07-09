@@ -302,19 +302,31 @@ proc _git_cmd {name} {
 		set p [gitexec git-$name$::_search_exe]
 		if {[file exists $p]} {
 			set v [list $p]
-		} elseif {[is_Cygwin]} {
-			# On Cygwin git is a proper Cygwin program and knows
-			# how to properly restart the Cygwin environment and
-			# spawn its non-.exe support program.
+		} elseif {[is_Windows] && [file exists [gitexec git-$name]]} {
+			# Try to determine what sort of magic will make
+			# git-$name go and do its thing, because native
+			# Tcl on Windows doesn't know it.
 			#
-			set v [list $::_git $name]
-		} elseif {[is_Windows]
-			&& $::_sh ne {}
-			&& [file exists [gitexec git-$name]]} {
-			# Assume this is a UNIX shell script.  We can
-			# probably execute it through a Bourne shell.
-			#
-			set v [list $::_sh [gitexec git-$name]]
+			set p [gitexec git-$name]
+			set f [open $p r]
+			set s [gets $f]
+			close $f
+
+			switch -glob -- $s {
+			#!*sh     { set i sh     }
+			#!*perl   { set i perl   }
+			#!*python { set i python }
+			default   { error "git-$name is not supported: $s" }
+			}
+
+			upvar #0 _$i interp
+			if {![info exists interp]} {
+				set interp [_which $i]
+			}
+			if {$interp eq {}} {
+				error "git-$name requires $i (not in PATH)"
+			}
+			set v [list $interp $p]
 		} else {
 			# Assume it is builtin to git somehow and we
 			# aren't actually able to see a file for it.
@@ -506,7 +518,6 @@ if {$_git eq {}} {
 	exit 1
 }
 set _nice [_which nice]
-set _sh   [_which sh]
 
 ######################################################################
 ##
