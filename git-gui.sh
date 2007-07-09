@@ -438,7 +438,6 @@ set _reponame [lindex [file split \
 set current_diff_path {}
 set current_diff_side {}
 set diff_actions [list]
-set ui_status_value {Initializing...}
 
 set HEAD {}
 set PARENT {}
@@ -761,13 +760,11 @@ proc mapdesc {state path} {
 }
 
 proc ui_status {msg} {
-	set ::ui_status_value $msg
+	$::main_status show $msg
 }
 
 proc ui_ready {{test {}}} {
-	if {$test eq {} || $::ui_status_value eq $test} {
-		ui_status Ready.
-	}
+	$::main_status show {Ready.} $test
 }
 
 proc escape_path {path} {
@@ -2207,12 +2204,9 @@ unset ui_diff_applyhunk
 
 # -- Status Bar
 #
-label .status -textvariable ui_status_value \
-	-anchor w \
-	-justify left \
-	-borderwidth 1 \
-	-relief sunken
+set main_status [::status_bar::new .status]
 pack .status -anchor w -side bottom -fill x
+$main_status show {Initializing...}
 
 # -- Load geometry
 #

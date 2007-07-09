@@ -63,8 +63,10 @@ method stop {msg} {
 	set status $msg
 }
 
-method show {msg} {
-	set status $msg
+method show {msg {test {}}} {
+	if {$test eq {} || $status eq $test} {
+		set status $msg
+	}
 }
 
 method _delete {current} {
