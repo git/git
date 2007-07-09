@@ -32,7 +32,7 @@ proc all_tracking_branches {} {
 	}
 
 	if {$pat ne {}} {
-		set fd [open "| git for-each-ref --format=%(refname) $cmd" r]
+		set fd [eval git_read for-each-ref --format=%(refname) $cmd]
 		while {[gets $fd n] > 0} {
 			foreach spec $pat {
 				set dst [string range [lindex $spec 0] 0 end-2]

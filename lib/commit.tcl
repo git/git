@@ -25,7 +25,7 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 	set msg {}
 	set parents [list]
 	if {[catch {
-			set fd [open "| git cat-file commit $curHEAD" r]
+			set fd [git_read cat-file commit $curHEAD]
 			fconfigure $fd -encoding binary -translation lf
 			if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
 				set enc utf-8
@@ -235,7 +235,7 @@ proc commit_prehook_wait {fd_ph curHEAD msg} {
 
 proc commit_writetree {curHEAD msg} {
 	ui_status {Committing changes...}
-	set fd_wt [open "| git write-tree" r]
+	set fd_wt [git_read write-tree]
 	fileevent $fd_wt readable \
 		[list commit_committree $fd_wt $curHEAD $msg]
 }

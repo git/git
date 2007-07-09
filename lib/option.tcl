@@ -95,6 +95,7 @@ $copyright" \
 	}
 
 	set d {}
+	append d "git wrapper: $::_git\n"
 	append d "git exec dir: [gitexec]\n"
 	append d "git-gui lib: $oguilib"
 

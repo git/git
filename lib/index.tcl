@@ -17,7 +17,7 @@ proc update_indexinfo {msg pathList after} {
 		$update_index_cp \
 		$totalCnt \
 		0.0]
-	set fd [open "| git update-index -z --index-info" w]
+	set fd [git_write update-index -z --index-info]
 	fconfigure $fd \
 		-blocking 0 \
 		-buffering full \
@@ -90,7 +90,7 @@ proc update_index {msg pathList after} {
 		$update_index_cp \
 		$totalCnt \
 		0.0]
-	set fd [open "| git update-index --add --remove -z --stdin" w]
+	set fd [git_write update-index --add --remove -z --stdin]
 	fconfigure $fd \
 		-blocking 0 \
 		-buffering full \
@@ -167,13 +167,13 @@ proc checkout_index {msg pathList after} {
 		$update_index_cp \
 		$totalCnt \
 		0.0]
-	set cmd [list git checkout-index]
-	lappend cmd --index
-	lappend cmd --quiet
-	lappend cmd --force
-	lappend cmd -z
-	lappend cmd --stdin
-	set fd [open "| $cmd " w]
+	set fd [git_write checkout-index \
+		--index \
+		--quiet \
+		--force \
+		-z \
+		--stdin \
+		]
 	fconfigure $fd \
 		-blocking 0 \
 		-buffering full \

@@ -178,8 +178,7 @@ method _ls {tree_id {name {}}} {
 	lappend browser_stack [list $tree_id $name]
 	$w conf -state disabled
 
-	set cmd [list git ls-tree -z $tree_id]
-	set fd [open "| $cmd" r]
+	set fd [git_read ls-tree -z $tree_id]
 	fconfigure $fd -blocking 0 -translation binary -encoding binary
 	fileevent $fd readable [cb _read $fd]
 }

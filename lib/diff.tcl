@@ -131,7 +131,7 @@ proc show_diff {path w {lno {}}} {
 		return
 	}
 
-	set cmd [list | git]
+	set cmd [list]
 	if {$w eq $ui_index} {
 		lappend cmd diff-index
 		lappend cmd --cached
@@ -154,7 +154,7 @@ proc show_diff {path w {lno {}}} {
 	lappend cmd --
 	lappend cmd $path
 
-	if {[catch {set fd [open $cmd r]} err]} {
+	if {[catch {set fd [eval git_read --nice $cmd]} err]} {
 		set diff_active 0
 		unlock_index
 		ui_status "Unable to display [escape_path $path]"
@@ -271,7 +271,7 @@ proc apply_hunk {x y} {
 	if {$current_diff_path eq {} || $current_diff_header eq {}} return
 	if {![lock_index apply_hunk]} return
 
-	set apply_cmd {git apply --cached --whitespace=nowarn}
+	set apply_cmd {apply --cached --whitespace=nowarn}
 	set mi [lindex $file_states($current_diff_path) 0]
 	if {$current_diff_side eq $ui_index} {
 		set mode unstage
@@ -301,7 +301,7 @@ proc apply_hunk {x y} {
 	}
 
 	if {[catch {
-		set p [open "| $apply_cmd" w]
+		set p [eval git_write $apply_cmd]
 		fconfigure $p -translation binary -encoding binary
 		puts -nonewline $p $current_diff_header
 		puts -nonewline $p [$ui_diff get $s_lno $e_lno]

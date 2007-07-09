@@ -146,7 +146,7 @@ The working directory will now be reset.
 
 You can attempt this merge again by merging only one branch at a time." $w
 
-			set fd [open "| git read-tree --reset -u HEAD" r]
+			set fd [git_read read-tree --reset -u HEAD]
 			fconfigure $fd -blocking 0 -translation binary
 			fileevent $fd readable \
 				[namespace code [list _reset_wait $fd]]
@@ -167,11 +167,13 @@ proc dialog {} {
 	if {![_can_merge]} return
 
 	set fmt {list %(objectname) %(*objectname) %(refname) %(subject)}
-	set cmd [list git for-each-ref --tcl --format=$fmt]
-	lappend cmd refs/heads
-	lappend cmd refs/remotes
-	lappend cmd refs/tags
-	set fr_fd [open "| $cmd" r]
+	set fr_fd [git_read for-each-ref \
+		--tcl \
+		--format=$fmt \
+		refs/heads \
+		refs/remotes \
+		refs/tags \
+		]
 	fconfigure $fr_fd -translation binary
 	while {[gets $fr_fd line] > 0} {
 		set line [eval $line]
@@ -186,7 +188,7 @@ proc dialog {} {
 	close $fr_fd
 
 	set to_show {}
-	set fr_fd [open "| git rev-list --all --not HEAD"]
+	set fr_fd [git_read rev-list --all --not HEAD]
 	while {[gets $fr_fd line] > 0} {
 		if {[catch {set ref $sha1($line)}]} continue
 		foreach n $ref {
@@ -282,7 +284,7 @@ You must finish amending this commit.
 Aborting the current $op will cause *ALL* uncommitted changes to be lost.
 
 Continue with aborting the current $op?"] eq {yes}} {
-		set fd [open "| git read-tree --reset -u HEAD" r]
+		set fd [git_read read-tree --reset -u HEAD]
 		fconfigure $fd -blocking 0 -translation binary
 		fileevent $fd readable [namespace code [list _reset_wait $fd]]
 		ui_status {Aborting... please wait...}

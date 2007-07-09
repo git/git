@@ -2,7 +2,7 @@
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc do_stats {} {
-	set fd [open "| git count-objects -v" r]
+	set fd [git_read count-objects -v]
 	while {[gets $fd line] > 0} {
 		if {[regexp {^([^:]+): (\d+)$} $line _ name value]} {
 			set stats($name) $value

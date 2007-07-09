@@ -371,8 +371,7 @@ method _load {jump} {
 	if {$commit eq {}} {
 		set fd [open $path r]
 	} else {
-		set cmd [list git cat-file blob "$commit:$path"]
-		set fd [open "| $cmd" r]
+		set fd [git_read cat-file blob "$commit:$path"]
 	}
 	fconfigure $fd -blocking 0 -translation lf -encoding binary
 	fileevent $fd readable [cb _read_file $fd $jump]
@@ -475,20 +474,14 @@ method _read_file {fd jump} {
 } ifdeleted { catch {close $fd} }
 
 method _exec_blame {cur_w cur_d options cur_s} {
-	set cmd [list]
-	if {![is_Windows] || [is_Cygwin]} {
-		lappend cmd nice
-	}
-	lappend cmd git blame
-	set cmd [concat $cmd $options]
-	lappend cmd --incremental
+	lappend options --incremental
 	if {$commit eq {}} {
-		lappend cmd --contents $path
+		lappend options --contents $path
 	} else {
-		lappend cmd $commit
+		lappend options $commit
 	}
-	lappend cmd -- $path
-	set fd [open "| $cmd" r]
+	lappend options -- $path
+	set fd [eval git_read --nice blame $options]
 	fconfigure $fd -blocking 0 -translation lf -encoding binary
 	fileevent $fd readable [cb _read_blame $fd $cur_w $cur_d]
 	set current_fd $fd
@@ -767,7 +760,7 @@ method _showcommit {cur_w lno} {
 		if {[catch {set msg $header($cmit,message)}]} {
 			set msg {}
 			catch {
-				set fd [open "| git cat-file commit $cmit" r]
+				set fd [git_read cat-file commit $cmit]
 				fconfigure $fd -encoding binary -translation lf
 				if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
 					set enc utf-8

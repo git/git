@@ -296,7 +296,7 @@ method _load {cache uri} {
 		set full_list [list]
 		set head_cache($cache) [list]
 		set full_cache($cache) [list]
-		set active_ls [open "| [list git ls-remote $uri]" r]
+		set active_ls [git_read ls-remote $uri]
 		fconfigure $active_ls \
 			-blocking 0 \
 			-translation lf \

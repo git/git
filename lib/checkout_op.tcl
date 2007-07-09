@@ -274,12 +274,12 @@ The rescan will be automatically started now.
 		_readtree $this
 	} else {
 		ui_status {Refreshing file status...}
-		set cmd [list git update-index]
-		lappend cmd -q
-		lappend cmd --unmerged
-		lappend cmd --ignore-missing
-		lappend cmd --refresh
-		set fd [open "| $cmd" r]
+		set fd [git_read update-index \
+			-q \
+			--unmerged \
+			--ignore-missing \
+			--refresh \
+			]
 		fconfigure $fd -blocking 0 -translation binary
 		fileevent $fd readable [cb _refresh_wait $fd]
 	}
@@ -315,23 +315,14 @@ method _readtree {} {
 		"Updating working directory to '[_name $this]'..." \
 		{files checked out}
 
-	set cmd [list git read-tree]
-	lappend cmd -m
-	lappend cmd -u
-	lappend cmd -v
-	lappend cmd --exclude-per-directory=.gitignore
-	lappend cmd $HEAD
-	lappend cmd $new_hash
-
-	if {[catch {
-			set fd [open "| $cmd 2>@1" r]
-		} err]} {
-		# Older versions of Tcl 8.4 don't have this 2>@1 IO
-		# redirect operator.  Fallback to |& cat for those.
-		#
-		set fd [open "| $cmd |& cat" r]
-	}
-
+	set fd [git_read --stderr read-tree \
+		-m \
+		-u \
+		-v \
+		--exclude-per-directory=.gitignore \
+		$HEAD \
+		$new_hash \
+		]
 	fconfigure $fd -blocking 0 -translation binary
 	fileevent $fd readable [cb _readtree_wait $fd]
 }
@@ -524,7 +515,7 @@ method _confirm_reset {cur} {
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	set fd [open "| git rev-list --pretty=oneline $cur ^$new_hash" r]
+	set fd [git_read rev-list --pretty=oneline $cur ^$new_hash]
 	while {[gets $fd line] > 0} {
 		set abbr [string range $line 0 7]
 		set subj [string range $line 41 end]

@@ -117,6 +117,7 @@ set _gitdir {}
 set _gitexec {}
 set _reponame {}
 set _iscygwin {}
+set _search_path {}
 
 proc appname {} {
 	global _appname
@@ -128,7 +129,7 @@ proc gitdir {args} {
 	if {$args eq {}} {
 		return $_gitdir
 	}
-	return [eval [concat [list file join $_gitdir] $args]]
+	return [eval [list file join $_gitdir] $args]
 }
 
 proc gitexec {args} {
@@ -137,11 +138,19 @@ proc gitexec {args} {
 		if {[catch {set _gitexec [git --exec-path]} err]} {
 			error "Git not installed?\n\n$err"
 		}
+		if {[is_Cygwin]} {
+			set _gitexec [exec cygpath \
+				--windows \
+				--absolute \
+				$_gitexec]
+		} else {
+			set _gitexec [file normalize $_gitexec]
+		}
 	}
 	if {$args eq {}} {
 		return $_gitexec
 	}
-	return [eval [concat [list file join $_gitexec] $args]]
+	return [eval [list file join $_gitexec] $args]
 }
 
 proc reponame {} {
@@ -237,7 +246,7 @@ proc load_config {include_global} {
 	array unset global_config
 	if {$include_global} {
 		catch {
-			set fd_rc [open "| git config --global --list" r]
+			set fd_rc [git_read config --global --list]
 			while {[gets $fd_rc line] >= 0} {
 				if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
 					if {[is_many_config $name]} {
@@ -253,7 +262,7 @@ proc load_config {include_global} {
 
 	array unset repo_config
 	catch {
-		set fd_rc [open "| git config --list" r]
+		set fd_rc [git_read config --list]
 		while {[gets $fd_rc line] >= 0} {
 			if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
 				if {[is_many_config $name]} {
@@ -280,8 +289,172 @@ proc load_config {include_global} {
 ##
 ## handy utils
 
+proc _git_cmd {name} {
+	global _git_cmd_path
+
+	if {[catch {set v $_git_cmd_path($name)}]} {
+		switch -- $name {
+		--version   -
+		--exec-path { return [list $::_git $name] }
+		}
+
+		set p [gitexec git-$name$::_search_exe]
+		if {[file exists $p]} {
+			set v [list $p]
+		} elseif {[is_Cygwin]} {
+			# On Cygwin git is a proper Cygwin program and knows
+			# how to properly restart the Cygwin environment and
+			# spawn its non-.exe support program.
+			#
+			set v [list $::_git $name]
+		} elseif {[is_Windows]
+			&& $::_sh ne {}
+			&& [file exists [gitexec git-$name]]} {
+			# Assume this is a UNIX shell script.  We can
+			# probably execute it through a Bourne shell.
+			#
+			set v [list $::_sh [gitexec git-$name]]
+		} else {
+			error "No [gitexec git-$name]"
+		}
+		set _git_cmd_path($name) $v
+	}
+	return $v
+}
+
+proc _which {what} {
+	global env _search_exe _search_path
+
+	if {$_search_path eq {}} {
+		if {[is_Cygwin]} {
+			set _search_path [split [exec cygpath \
+				--windows \
+				--path \
+				--absolute \
+				$env(PATH)] {;}]
+			set _search_exe .exe
+		} elseif {[is_Windows]} {
+			set _search_path [split $env(PATH) {;}]
+			set _search_exe .exe
+		} else {
+			set _search_path [split $env(PATH) :]
+			set _search_exe {}
+		}
+	}
+
+	foreach p $_search_path {
+		set p [file join $p $what$_search_exe]
+		if {[file exists $p]} {
+			return [file normalize $p]
+		}
+	}
+	return {}
+}
+
 proc git {args} {
-	return [eval exec git $args]
+	set opt [list exec]
+
+	while {1} {
+		switch -- [lindex $args 0] {
+		--nice {
+			global _nice
+			if {$_nice ne {}} {
+				lappend opt $_nice
+			}
+		}
+
+		default {
+			break
+		}
+
+		}
+
+		set args [lrange $args 1 end]
+	}
+
+	set cmdp [_git_cmd [lindex $args 0]]
+	set args [lrange $args 1 end]
+
+	return [eval $opt $cmdp $args]
+}
+
+proc git_read {args} {
+	set opt [list |]
+
+	while {1} {
+		switch -- [lindex $args 0] {
+		--nice {
+			global _nice
+			if {$_nice ne {}} {
+				lappend opt $_nice
+			}
+		}
+
+		--stderr {
+			lappend args 2>@1
+		}
+
+		default {
+			break
+		}
+
+		}
+
+		set args [lrange $args 1 end]
+	}
+
+	set cmdp [_git_cmd [lindex $args 0]]
+	set args [lrange $args 1 end]
+
+	if {[catch {
+			set fd [open [concat $opt $cmdp $args] r]
+		} err]} {
+		if {   [lindex $args end] eq {2>@1}
+		    && $err eq {can not find channel named "1"}
+			} {
+			# Older versions of Tcl 8.4 don't have this 2>@1 IO
+			# redirect operator.  Fallback to |& cat for those.
+			# The command was not actually started, so its safe
+			# to try to start it a second time.
+			#
+			set fd [open [concat \
+				$opt \
+				$cmdp \
+				[lrange $args 0 end-1] \
+				[list |& cat] \
+				] r]
+		} else {
+			error $err
+		}
+	}
+	return $fd
+}
+
+proc git_write {args} {
+	set opt [list |]
+
+	while {1} {
+		switch -- [lindex $args 0] {
+		--nice {
+			global _nice
+			if {$_nice ne {}} {
+				lappend opt $_nice
+			}
+		}
+
+		default {
+			break
+		}
+
+		}
+
+		set args [lrange $args 1 end]
+	}
+
+	set cmdp [_git_cmd [lindex $args 0]]
+	set args [lrange $args 1 end]
+
+	return [open [concat $opt $cmdp $args] w]
 }
 
 proc load_current_branch {} {
@@ -317,6 +490,19 @@ proc tk_optionMenu {w varName args} {
 	$w configure -font font_ui
 	return $m
 }
+
+######################################################################
+##
+## find git
+
+set _git  [_which git]
+if {$_git eq {}} {
+	catch {wm withdraw .}
+	error_popup "Cannot find git in PATH."
+	exit 1
+}
+set _nice [_which nice]
+set _sh   [_which sh]
 
 ######################################################################
 ##
@@ -566,12 +752,12 @@ proc rescan {after {honor_trustmtime 1}} {
 	} else {
 		set rescan_active 1
 		ui_status {Refreshing file status...}
-		set cmd [list git update-index]
-		lappend cmd -q
-		lappend cmd --unmerged
-		lappend cmd --ignore-missing
-		lappend cmd --refresh
-		set fd_rf [open "| $cmd" r]
+		set fd_rf [git_read update-index \
+			-q \
+			--unmerged \
+			--ignore-missing \
+			--refresh \
+			]
 		fconfigure $fd_rf -blocking 0 -translation binary
 		fileevent $fd_rf readable \
 			[list rescan_stage2 $fd_rf $after]
@@ -587,8 +773,7 @@ proc rescan_stage2 {fd after} {
 		close $fd
 	}
 
-	set ls_others [list | git ls-files --others -z \
-		--exclude-per-directory=.gitignore]
+	set ls_others [list --exclude-per-directory=.gitignore]
 	set info_exclude [gitdir info exclude]
 	if {[file readable $info_exclude]} {
 		lappend ls_others "--exclude-from=$info_exclude"
@@ -600,9 +785,9 @@ proc rescan_stage2 {fd after} {
 
 	set rescan_active 3
 	ui_status {Scanning for modified files ...}
-	set fd_di [open "| git diff-index --cached -z [PARENT]" r]
-	set fd_df [open "| git diff-files -z" r]
-	set fd_lo [open $ls_others r]
+	set fd_di [git_read diff-index --cached -z [PARENT]]
+	set fd_df [git_read diff-files -z]
+	set fd_lo [eval git_read ls-files --others -z $ls_others]
 
 	fconfigure $fd_di -blocking 0 -translation binary -encoding binary
 	fconfigure $fd_df -blocking 0 -translation binary -encoding binary
