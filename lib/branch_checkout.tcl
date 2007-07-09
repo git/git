@@ -30,6 +30,7 @@ constructor dialog {} {
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
 	set w_rev [::choose_rev::new $w.rev {Revision}]
+	$w_rev bind_listbox <Double-Button-1> [cb _checkout]
 	pack $w.rev -anchor nw -fill both -expand 1 -pady 5 -padx 5
 
 	labelframe $w.options -text {Options}

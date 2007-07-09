@@ -185,6 +185,10 @@ method focus_filter {} {
 	}
 }
 
+method bind_listbox {event script}  {
+	bind $w_list $event $script
+}
+
 method get_local_branch {} {
 	if {$revtype eq {head}} {
 		return [_expr $this]
