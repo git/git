@@ -475,6 +475,11 @@ proc git_write {args} {
 	return [open [concat $opt $cmdp $args] w]
 }
 
+proc sq {value} {
+	regsub -all ' $value "'\\''" value
+	return "'$value'"
+}
+
 proc load_current_branch {} {
 	global current_branch is_detached
 
