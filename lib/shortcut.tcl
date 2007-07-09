@@ -68,7 +68,7 @@ proc do_cygwin_shortcut {} {
 				puts -nonewline $fd "@\"$sh\" --login -c \""
 				puts -nonewline $fd "GIT_DIR=[sq $gd]"
 				puts -nonewline $fd " [sq $me]"
-				puts $fd "&\""
+				puts $fd " &\""
 				close $fd
 			} err]} {
 			error_popup "Cannot write script:\n\n$err"
