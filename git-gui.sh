@@ -1746,7 +1746,18 @@ browser {
 	set subcommand_args {rev?}
 	switch [llength $argv] {
 	0 { load_current_branch }
-	1 { set current_branch [lindex $argv 0] }
+	1 {
+		set current_branch [lindex $argv 0]
+		if {[regexp {^[0-9a-f]{1,39}$} $current_branch]} {
+			if {[catch {
+					set current_branch \
+					[git rev-parse --verify $current_branch]
+				} err]} {
+				puts stderr $err
+				exit 1
+			}
+		}
+	}
 	default usage
 	}
 	browser::new $current_branch
@@ -1781,6 +1792,14 @@ blame {
 	if {$head eq {}} {
 		load_current_branch
 	} else {
+		if {[regexp {^[0-9a-f]{1,39}$} $head]} {
+			if {[catch {
+					set head [git rev-parse --verify $head]
+				} err]} {
+				puts stderr $err
+				exit 1
+			}
+		}
 		set current_branch $head
 	}
 
