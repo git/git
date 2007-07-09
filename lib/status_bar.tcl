@@ -9,6 +9,7 @@ field w_c       ; # canvas we draw a progress bar into
 field status  {}; # single line of text we show
 field prefix  {}; # text we format into status
 field units   {}; # unit of progress
+field meter   {}; # current core git progress meter (if active)
 
 constructor new {path} {
 	set w $path
@@ -45,6 +46,7 @@ method start {msg uds} {
 	set status $msg
 	set prefix $msg
 	set units  $uds
+	set meter  {}
 }
 
 method update {have total} {
@@ -58,9 +60,25 @@ method update {have total} {
 	$w_c coords bar 0 0 $pdone 20
 }
 
-method stop {msg} {
+method update_meter {buf} {
+	append meter $buf
+	set r [string last "\r" $meter]
+	if {$r == -1} {
+		return
+	}
+
+	set prior [string range $meter 0 $r]
+	set meter [string range $meter [expr {$r + 1}] end]
+	if {[regexp "\\((\\d+)/(\\d+)\\)\\s+done\r\$" $prior _j a b]} {
+		update $this $a $b
+	}
+}
+
+method stop {{msg {}}} {
 	destroy $w_c
-	set status $msg
+	if {$msg ne {}} {
+		set status $msg
+	}
 }
 
 method show {msg {test {}}} {

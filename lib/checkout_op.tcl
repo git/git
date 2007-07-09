@@ -19,6 +19,7 @@ field create        0; # create the branch if it doesn't exist?
 field reset_ok      0; # did the user agree to reset?
 field fetch_ok      0; # did the fetch succeed?
 
+field readtree_d   {}; # buffered output from read-tree
 field update_old   {}; # was the update-ref call deferred?
 field reflog_msg   {}; # log message for the update-ref call
 
@@ -309,51 +310,69 @@ method _name {} {
 method _readtree {} {
 	global HEAD
 
-	ui_status "Updating working directory to '[_name $this]'..."
+	set readtree_d {}
+	$::main_status start \
+		"Updating working directory to '[_name $this]'..." \
+		{files checked out}
+
 	set cmd [list git read-tree]
 	lappend cmd -m
 	lappend cmd -u
+	lappend cmd -v
 	lappend cmd --exclude-per-directory=.gitignore
 	lappend cmd $HEAD
 	lappend cmd $new_hash
-	set fd [open "| $cmd" r]
+
+	if {[catch {
+			set fd [open "| $cmd 2>@1" r]
+		} err]} {
+		# Older versions of Tcl 8.4 don't have this 2>@1 IO
+		# redirect operator.  Fallback to |& cat for those.
+		#
+		set fd [open "| $cmd |& cat" r]
+	}
+
 	fconfigure $fd -blocking 0 -translation binary
 	fileevent $fd readable [cb _readtree_wait $fd]
 }
 
 method _readtree_wait {fd} {
-	global selected_commit_type commit_type HEAD MERGE_HEAD PARENT
-	global current_branch is_detached
-	global ui_comm
+	global current_branch
 
-	# -- We never get interesting output on stdout; only stderr.
-	#
-	read $fd
+	set buf [read $fd]
+	$::main_status update_meter $buf
+	append readtree_d $buf
+
 	fconfigure $fd -blocking 1
 	if {![eof $fd]} {
 		fconfigure $fd -blocking 0
 		return
 	}
 
-	set name [_name $this]
-
-	# -- The working directory wasn't in sync with the index and
-	#    we'd have to overwrite something to make the switch. A
-	#    merge is required.
-	#
-	if {[catch {close $fd} err]} {
+	if {[catch {close $fd}]} {
+		set err $readtree_d
 		regsub {^fatal: } $err {} err
+		$::main_status stop "Aborted checkout of '[_name $this]' (file level merging is required)."
 		warn_popup "File level merge required.
 
 $err
 
 Staying on branch '$current_branch'."
-		ui_status "Aborted checkout of '$name' (file level merging is required)."
 		unlock_index
 		delete_this
 		return
 	}
 
+	$::main_status stop
+	_after_readtree $this
+}
+
+method _after_readtree {} {
+	global selected_commit_type commit_type HEAD MERGE_HEAD PARENT
+	global current_branch is_detached
+	global ui_comm
+
+	set name [_name $this]
 	set log "checkout: moving"
 	if {!$is_detached} {
 		append log " from $current_branch"
