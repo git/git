@@ -315,7 +315,10 @@ proc _git_cmd {name} {
 			#
 			set v [list $::_sh [gitexec git-$name]]
 		} else {
-			error "No [gitexec git-$name]"
+			# Assume it is builtin to git somehow and we
+			# aren't actually able to see a file for it.
+			#
+			set v [list $::_git $name]
 		}
 		set _git_cmd_path($name) $v
 	}
