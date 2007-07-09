@@ -1303,24 +1303,16 @@ proc incr_font_size {font {amt 1}} {
 set starting_gitk_msg {Starting gitk... please wait...}
 
 proc do_gitk {revs} {
-	global env starting_gitk_msg
-
 	# -- Always start gitk through whatever we were loaded with.  This
 	#    lets us bypass using shell process on Windows systems.
 	#
-	set cmd [list [info nameofexecutable]]
-	set exe [gitexec gitk]
-	lappend cmd $exe
-	if {$revs ne {}} {
-		append cmd { }
-		append cmd $revs
-	}
-
+	set exe [file join [file dirname $::_git] gitk]
+	set cmd [list [info nameofexecutable] $exe]
 	if {! [file exists $exe]} {
 		error_popup "Unable to start gitk:\n\n$exe does not exist"
 	} else {
-		eval exec $cmd &
-		ui_status $starting_gitk_msg
+		eval exec $cmd $revs &
+		ui_status $::starting_gitk_msg
 		after 10000 {
 			ui_ready $starting_gitk_msg
 		}
