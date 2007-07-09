@@ -2885,7 +2885,7 @@ proc layouttail {} {
 	set id [lindex $idlist $col]
 	addextraid $id $row
 	unset idinlist($id)
-	lappend idrowranges($id) $row
+	lappend idrowranges($id) $id
 	lappend rowrangelist $idrowranges($id)
 	unset idrowranges($id)
 	incr row
@@ -2901,7 +2901,7 @@ proc layouttail {} {
 	lset rowidlist $row [list $id]
 	lset rowoffsets $row 0
 	makeuparrow $id 0 $row 0
-	lappend idrowranges($id) $row
+	lappend idrowranges($id) $id
 	lappend rowrangelist $idrowranges($id)
 	unset idrowranges($id)
 	incr row
