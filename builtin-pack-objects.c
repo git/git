@@ -1337,7 +1337,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	if (max_size == 0)
 		return 0;
 	if (trg_entry->delta && trg_entry->delta_size <= max_size)
-		max_size = trg_entry->delta_size-1;
+		max_size = trg_entry->delta_size;
 	src_size = src_entry->size;
 	sizediff = src_size < trg_size ? trg_size - src_size : 0;
 	if (sizediff >= max_size)
@@ -1371,6 +1371,12 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		return 0;
 
 	if (trg_entry->delta_data) {
+		/* Prefer only shallower same-sized deltas. */
+		if (delta_size == trg_entry->delta_size &&
+		    src_entry->depth + 1 >= trg_entry->depth) {
+			free(delta_buf);
+			return 0;
+		}
 		delta_cache_size -= trg_entry->delta_size;
 		free(trg_entry->delta_data);
 	}
