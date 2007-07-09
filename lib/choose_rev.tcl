@@ -133,6 +133,7 @@ constructor new {path {title {}}} {
 		set i 0
 		foreach spec $spec_head {
 			if {[lindex $spec 0] eq $current_branch} {
+				$w_list selection clear 0 end
 				$w_list selection set $i
 				break
 			}
@@ -311,6 +312,10 @@ method _rebuild {pat} {
 			lappend cur_specs $spec
 			$w_list insert end $txt
 		}
+	}
+	if {$cur_specs ne {}} {
+		$w_list selection clear 0 end
+		$w_list selection set 0
 	}
 
 	if {[$w_filter cget -state] ne $ste} {
