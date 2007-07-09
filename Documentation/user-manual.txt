@@ -890,7 +890,7 @@ $ git archive --format=tar --prefix=project/ HEAD | gzip >latest.tar.gz
 -------------------------------------------------
 
 will use HEAD to produce a tar archive in which each filename is
-preceded by "prefix/".
+preceded by "project/".
 
 If you're releasing a new version of a software project, you may want
 to simultaneously make a changelog to include in the release
@@ -1528,9 +1528,9 @@ dangling tree b24c2473f1fd3d91352a624795be026d64c8841f
 -------------------------------------------------
 
 Dangling objects are not a problem.  At worst they may take up a little
-extra disk space.  They can sometimes provide a last-resort method of
-recovery lost work--see <<dangling-objects>> for details.  However, if
-you want, you may remove them with gitlink:git-prune[1] or the --prune
+extra disk space.  They can sometimes provide a last-resort method for
+recovering lost work--see <<dangling-objects>> for details.  However, if
+you wish, you can remove them with gitlink:git-prune[1] or the --prune
 option to gitlink:git-gc[1]:
 
 -------------------------------------------------
@@ -1772,13 +1772,22 @@ repository, but it works just as well in the other direction.
 
 If you and the maintainer both have accounts on the same machine, then
 you can just pull changes from each other's repositories directly;
-commands that accepts repository URLs as arguments will also accept a
+commands that accept repository URLs as arguments will also accept a
 local directory name:
 
 -------------------------------------------------
 $ git clone /path/to/repository
 $ git pull /path/to/other/repository
 -------------------------------------------------
+
+or an ssh url:
+
+-------------------------------------------------
+$ git clone ssh://yourhost/~you/repository
+-------------------------------------------------
+
+For projects with few developers, or for synchronizing a few private
+repositories, this may be all you need.
 
 However, the more common way to do this is to maintain a separate public
 repository (usually on a different host) for others to pull changes
@@ -1801,6 +1810,8 @@ like this:
 	|                                     |
         |               they push             V
   their public repo <------------------- their repo
+
+We explain how to do this in the following sections.
 
 [[setting-up-a-public-repository]]
 Setting up a public repository
@@ -1912,6 +1923,12 @@ proceeding the branch name by a plus sign:
 -------------------------------------------------
 $ git push ssh://yourserver.com/~you/proj.git +master
 -------------------------------------------------
+
+Note that the target of a "push" is normally a
+<<def_bare_repository,bare>> repository.  You can also push to a
+repository that has a checked-out working tree, but the working tree
+will not be updated by the push.  This may lead to unexpected results if
+the branch you push to is the currently checked-out branch!
 
 As with git-fetch, you may also set up configuration options to
 save typing; so, for example, after
