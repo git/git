@@ -96,8 +96,8 @@ proc start_rev_list {view} {
 	set order "--date-order"
     }
     if {[catch {
-	set fd [open [concat | git rev-list --header $order \
-			  --parents --boundary --default HEAD $args] r]
+	set fd [open [concat | git log -z --pretty=raw $order \
+			  --parents --boundary $args] r]
     } err]} {
 	puts stderr "Error executing git rev-list: $err"
 	exit 1
@@ -194,10 +194,14 @@ proc getcommitlines {fd view}  {
 	set j [string first "\n" $cmit]
 	set ok 0
 	set listed 1
-	if {$j >= 0} {
-	    set ids [string range $cmit 0 [expr {$j - 1}]]
-	    if {[string range $ids 0 0] == "-"} {
-		set listed 0
+	if {$j >= 0 && [string match "commit *" $cmit]} {
+	    set ids [string range $cmit 7 [expr {$j - 1}]]
+	    if {[string match {[-<>]*} $ids]} {
+		switch -- [string index $ids 0] {
+		    "-" {set listed 0}
+		    "<" {set listed 2}
+		    ">" {set listed 3}
+		}
 		set ids [string range $ids 1 end]
 	    }
 	    set ok 1
@@ -213,7 +217,7 @@ proc getcommitlines {fd view}  {
 	    if {[string length $shortcmit] > 80} {
 		set shortcmit "[string range $shortcmit 0 80]..."
 	    }
-	    error_popup "Can't parse git rev-list output: {$shortcmit}"
+	    error_popup "Can't parse git log output: {$shortcmit}"
 	    exit 1
 	}
 	set id [lindex $ids 0]
@@ -3334,23 +3338,41 @@ proc drawlines {id} {
 }
 
 proc drawcmittext {id row col} {
-    global linespc canv canv2 canv3 canvy0 fgcolor
+    global linespc canv canv2 canv3 canvy0 fgcolor curview
     global commitlisted commitinfo rowidlist parentlist
     global rowtextx idpos idtags idheads idotherrefs
     global linehtag linentag linedtag markingmatches
     global mainfont canvxmax boldrows boldnamerows fgcolor nullid
 
+    # listed is 0 for boundary, 1 for normal, 2 for left, 3 for right
+    set listed [lindex $commitlisted $row]
     if {$id eq $nullid} {
 	set ofill red
     } else {
-	set ofill [expr {[lindex $commitlisted $row]? "blue": "white"}]
+	set ofill [expr {$listed != 0? "blue": "white"}]
     }
     set x [xc $row $col]
     set y [yc $row]
     set orad [expr {$linespc / 3}]
-    set t [$canv create oval [expr {$x - $orad}] [expr {$y - $orad}] \
-	       [expr {$x + $orad - 1}] [expr {$y + $orad - 1}] \
-	       -fill $ofill -outline $fgcolor -width 1 -tags circle]
+    if {$listed <= 1} {
+	set t [$canv create oval [expr {$x - $orad}] [expr {$y - $orad}] \
+		   [expr {$x + $orad - 1}] [expr {$y + $orad - 1}] \
+		   -fill $ofill -outline $fgcolor -width 1 -tags circle]
+    } elseif {$listed == 2} {
+	# triangle pointing left for left-side commits
+	set t [$canv create polygon \
+		   [expr {$x - $orad}] $y \
+		   [expr {$x + $orad - 1}] [expr {$y - $orad}] \
+		   [expr {$x + $orad - 1}] [expr {$y + $orad - 1}] \
+		   -fill $ofill -outline $fgcolor -width 1 -tags circle]
+    } else {
+	# triangle pointing right for right-side commits
+	set t [$canv create polygon \
+		   [expr {$x + $orad - 1}] $y \
+		   [expr {$x - $orad}] [expr {$y - $orad}] \
+		   [expr {$x - $orad}] [expr {$y + $orad - 1}] \
+		   -fill $ofill -outline $fgcolor -width 1 -tags circle]
+    }
     $canv raise $t
     $canv bind $t <1> {selcanvline {} %x %y}
     set rmx [llength [lindex $rowidlist $row]]
