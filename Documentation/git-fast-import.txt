@@ -481,8 +481,9 @@ It is recommended that `<path>` always be encoded using UTF-8.
 
 `filedelete`
 ^^^^^^^^^^^^
-Included in a `commit` command to remove a file from the branch.
-If the file removal makes its directory empty, the directory will
+Included in a `commit` command to remove a file or recursively
+delete an entire directory from the branch.  If the file or directory
+removal makes its parent directory empty, the parent directory will
 be automatically removed too.  This cascades up the tree until the
 first non-empty directory or the root is reached.
 
@@ -490,7 +491,8 @@ first non-empty directory or the root is reached.
 	'D' SP <path> LF
 ....
 
-here `<path>` is the complete path of the file to be removed.
+here `<path>` is the complete path of the file or subdirectory to
+be removed from the branch.
 See `filemodify` above for a detailed description of `<path>`.
 
 `filedeleteall`
