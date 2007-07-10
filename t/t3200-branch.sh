@@ -148,13 +148,14 @@ test_expect_success 'test tracking setup via config' \
      test $(git config branch.my3.remote) = local &&
      test $(git config branch.my3.merge) = refs/heads/master'
 
-test_expect_success 'autosetupmerge = all' '
+test_expect_success 'avoid ambiguous track' '
 	git config branch.autosetupmerge true &&
+	git config remote.ambi1.url = lalala &&
+	git config remote.ambi1.fetch = refs/heads/lalala:refs/heads/master &&
+	git config remote.ambi2.url = lilili &&
+	git config remote.ambi2.fetch = refs/heads/lilili:refs/heads/master &&
 	git branch all1 master &&
-	test -z "$(git config branch.all1.merge)" &&
-	git config branch.autosetupmerge all &&
-	git branch all2 master &&
-	test $(git config branch.all2.merge) = refs/heads/master
+	test -z "$(git config branch.all1.merge)"
 '
 
 test_expect_success 'test overriding tracking setup via --no-track' \
@@ -167,10 +168,10 @@ test_expect_success 'test overriding tracking setup via --no-track' \
      ! test "$(git config branch.my2.remote)" = local &&
      ! test "$(git config branch.my2.merge)" = refs/heads/master'
 
-test_expect_success 'test local tracking setup' \
+test_expect_success 'no tracking without .fetch entries' \
     'git branch --track my6 s &&
-     test $(git config branch.my6.remote) = . &&
-     test $(git config branch.my6.merge) = refs/heads/s'
+     test -z "$(git config branch.my6.remote)" &&
+     test -z "$(git config branch.my6.merge)"'
 
 test_expect_success 'test tracking setup via --track but deeper' \
     'git config remote.local.url . &&
@@ -182,8 +183,8 @@ test_expect_success 'test tracking setup via --track but deeper' \
 
 test_expect_success 'test deleting branch deletes branch config' \
     'git branch -d my7 &&
-     test "$(git config branch.my7.remote)" = "" &&
-     test "$(git config branch.my7.merge)" = ""'
+     test -z "$(git config branch.my7.remote)" &&
+     test -z "$(git config branch.my7.merge)"'
 
 test_expect_success 'test deleting branch without config' \
     'git branch my7 s &&
