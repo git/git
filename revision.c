@@ -437,7 +437,7 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit, str
 	return 0;
 }
 
-static void cherry_pick_list(struct commit_list *list)
+static void cherry_pick_list(struct commit_list *list, struct rev_info *revs)
 {
 	struct commit_list *p;
 	int left_count = 0, right_count = 0;
@@ -458,6 +458,11 @@ static void cherry_pick_list(struct commit_list *list)
 
 	left_first = left_count < right_count;
 	init_patch_ids(&ids);
+	if (revs->diffopt.nr_paths) {
+		ids.diffopts.nr_paths = revs->diffopt.nr_paths;
+		ids.diffopts.paths = revs->diffopt.paths;
+		ids.diffopts.pathlens = revs->diffopt.pathlens;
+	}
 
 	/* Compute patch-ids for one side */
 	for (p = list; p; p = p->next) {
@@ -546,7 +551,7 @@ static int limit_list(struct rev_info *revs)
 		p = &commit_list_insert(commit, p)->next;
 	}
 	if (revs->cherry_pick)
-		cherry_pick_list(newlist);
+		cherry_pick_list(newlist, revs);
 
 	revs->commits = newlist;
 	return 0;
