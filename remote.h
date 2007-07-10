@@ -20,13 +20,16 @@ struct remote {
 
 struct remote *remote_get(const char *name);
 
+typedef int each_remote_fn(struct remote *remote, void *priv);
+int for_each_remote(each_remote_fn fn, void *priv);
+
 int remote_has_uri(struct remote *remote, const char *uri);
 
 struct refspec {
 	unsigned force : 1;
 	unsigned pattern : 1;
 
-	const char *src;
+	char *src;
 	char *dst;
 };
 

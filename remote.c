@@ -279,6 +279,25 @@ struct remote *remote_get(const char *name)
 	return ret;
 }
 
+int for_each_remote(each_remote_fn fn, void *priv)
+{
+	int i, result = 0;
+	read_config();
+	for (i = 0; i < allocated_remotes && !result; i++) {
+		struct remote *r = remotes[i];
+		if (!r)
+			continue;
+		if (!r->fetch)
+			r->fetch = parse_ref_spec(r->fetch_refspec_nr,
+					r->fetch_refspec);
+		if (!r->push)
+			r->push = parse_ref_spec(r->push_refspec_nr,
+					r->push_refspec);
+		result = fn(r, priv);
+	}
+	return result;
+}
+
 int remote_has_uri(struct remote *remote, const char *uri)
 {
 	int i;
@@ -291,32 +310,43 @@ int remote_has_uri(struct remote *remote, const char *uri)
 
 int remote_find_tracking(struct remote *remote, struct refspec *refspec)
 {
+	int find_src = refspec->src == NULL;
+	char *needle, **result;
 	int i;
+
+	if (find_src) {
+		if (refspec->dst == NULL)
+			return error("find_tracking: need either src or dst");
+		needle = refspec->dst;
+		result = &refspec->src;
+	} else {
+		needle = refspec->src;
+		result = &refspec->dst;
+	}
+
 	for (i = 0; i < remote->fetch_refspec_nr; i++) {
 		struct refspec *fetch = &remote->fetch[i];
+		const char *key = find_src ? fetch->dst : fetch->src;
+		const char *value = find_src ? fetch->src : fetch->dst;
 		if (!fetch->dst)
 			continue;
 		if (fetch->pattern) {
-			if (!prefixcmp(refspec->src, fetch->src)) {
-				refspec->dst =
-					xmalloc(strlen(fetch->dst) +
-						strlen(refspec->src) -
-						strlen(fetch->src) + 1);
-				strcpy(refspec->dst, fetch->dst);
-				strcpy(refspec->dst + strlen(fetch->dst),
-				       refspec->src + strlen(fetch->src));
+			if (!prefixcmp(needle, key)) {
+				*result = xmalloc(strlen(value) +
+						  strlen(needle) -
+						  strlen(key) + 1);
+				strcpy(*result, value);
+				strcpy(*result + strlen(value),
+				       needle + strlen(key));
 				refspec->force = fetch->force;
 				return 0;
 			}
-		} else {
-			if (!strcmp(refspec->src, fetch->src)) {
-				refspec->dst = xstrdup(fetch->dst);
-				refspec->force = fetch->force;
-				return 0;
-			}
+		} else if (!strcmp(needle, key)) {
+			*result = xstrdup(value);
+			refspec->force = fetch->force;
+			return 0;
 		}
 	}
-	refspec->dst = NULL;
 	return -1;
 }
 
