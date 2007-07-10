@@ -164,7 +164,7 @@ test_expect_success 'listing all tags should print them ordered' '
 	git tag a1 &&
 	git tag v1.0 &&
 	git tag t210 &&
-	git tag -l > actual
+	git tag -l > actual &&
 	git diff expect actual
 '
 
@@ -437,6 +437,106 @@ test_expect_success \
 	git diff expect actual
 '
 
+# listing messages for annotated non-signed tags:
+
+test_expect_success \
+	'listing the one-line message of a non-signed tag should succeed' '
+	git-tag -m "A msg" tag-one-line &&
+
+	echo "tag-one-line" >expect &&
+	git-tag -l | grep "^tag-one-line" >actual &&
+	git diff expect actual &&
+	git-tag -n 0 -l | grep "^tag-one-line" >actual &&
+	git diff expect actual &&
+	git-tag -n 0 -l tag-one-line >actual &&
+	git diff expect actual &&
+
+	echo "tag-one-line    A msg" >expect &&
+	git-tag -n xxx -l | grep "^tag-one-line" >actual &&
+	git diff expect actual &&
+	git-tag -n "" -l | grep "^tag-one-line" >actual &&
+	git diff expect actual &&
+	git-tag -n 1 -l | grep "^tag-one-line" >actual &&
+	git diff expect actual &&
+	git-tag -n -l | grep "^tag-one-line" >actual &&
+	git diff expect actual &&
+	git-tag -n 1 -l tag-one-line >actual &&
+	git diff expect actual &&
+	git-tag -n 2 -l tag-one-line >actual &&
+	git diff expect actual &&
+	git-tag -n 999 -l tag-one-line >actual &&
+	git diff expect actual
+'
+
+test_expect_success \
+	'listing the zero-lines message of a non-signed tag should succeed' '
+	git-tag -m "" tag-zero-lines &&
+
+	echo "tag-zero-lines" >expect &&
+	git-tag -l | grep "^tag-zero-lines" >actual &&
+	git diff expect actual &&
+	git-tag -n 0 -l | grep "^tag-zero-lines" >actual &&
+	git diff expect actual &&
+	git-tag -n 0 -l tag-zero-lines >actual &&
+	git diff expect actual &&
+
+	echo "tag-zero-lines  " >expect &&
+	git-tag -n 1 -l | grep "^tag-zero-lines" >actual &&
+	git diff expect actual &&
+	git-tag -n -l | grep "^tag-zero-lines" >actual &&
+	git diff expect actual &&
+	git-tag -n 1 -l tag-zero-lines >actual &&
+	git diff expect actual &&
+	git-tag -n 2 -l tag-zero-lines >actual &&
+	git diff expect actual &&
+	git-tag -n 999 -l tag-zero-lines >actual &&
+	git diff expect actual
+'
+
+echo 'tag line one' >annotagmsg
+echo 'tag line two' >>annotagmsg
+echo 'tag line three' >>annotagmsg
+test_expect_success \
+	'listing many message lines of a non-signed tag should succeed' '
+	git-tag -F annotagmsg tag-lines &&
+
+	echo "tag-lines" >expect &&
+	git-tag -l | grep "^tag-lines" >actual &&
+	git diff expect actual &&
+	git-tag -n 0 -l | grep "^tag-lines" >actual &&
+	git diff expect actual &&
+	git-tag -n 0 -l tag-lines >actual &&
+	git diff expect actual &&
+
+	echo "tag-lines       tag line one" >expect &&
+	git-tag -n 1 -l | grep "^tag-lines" >actual &&
+	git diff expect actual &&
+	git-tag -n -l | grep "^tag-lines" >actual &&
+	git diff expect actual &&
+	git-tag -n 1 -l tag-lines >actual &&
+	git diff expect actual &&
+
+	echo "    tag line two" >>expect &&
+	git-tag -n 2 -l | grep "^ *tag.line" >actual &&
+	git diff expect actual &&
+	git-tag -n 2 -l tag-lines >actual &&
+	git diff expect actual &&
+
+	echo "    tag line three" >>expect &&
+	git-tag -n 3 -l | grep "^ *tag.line" >actual &&
+	git diff expect actual &&
+	git-tag -n 3 -l tag-lines >actual &&
+	git diff expect actual &&
+	git-tag -n 4 -l | grep "^ *tag.line" >actual &&
+	git diff expect actual &&
+	git-tag -n 4 -l tag-lines >actual &&
+	git diff expect actual &&
+	git-tag -n 99 -l | grep "^ *tag.line" >actual &&
+	git diff expect actual &&
+	git-tag -n 99 -l tag-lines >actual &&
+	git diff expect actual
+'
+
 # trying to verify annotated non-signed tags:
 
 test_expect_success \
@@ -649,6 +749,106 @@ test_expect_success \
 	get_tag_msg commentnonlfile-signed-tag >actual &&
 	git diff expect actual &&
 	git-tag -v commentnonlfile-signed-tag
+'
+
+# listing messages for signed tags:
+
+test_expect_success \
+	'listing the one-line message of a signed tag should succeed' '
+	git-tag -s -m "A message line signed" stag-one-line &&
+
+	echo "stag-one-line" >expect &&
+	git-tag -l | grep "^stag-one-line" >actual &&
+	git diff expect actual &&
+	git-tag -n 0 -l | grep "^stag-one-line" >actual &&
+	git diff expect actual &&
+	git-tag -n 0 -l stag-one-line >actual &&
+	git diff expect actual &&
+
+	echo "stag-one-line   A message line signed" >expect &&
+	git-tag -n xxx -l | grep "^stag-one-line" >actual &&
+	git diff expect actual &&
+	git-tag -n "" -l | grep "^stag-one-line" >actual &&
+	git diff expect actual &&
+	git-tag -n 1 -l | grep "^stag-one-line" >actual &&
+	git diff expect actual &&
+	git-tag -n -l | grep "^stag-one-line" >actual &&
+	git diff expect actual &&
+	git-tag -n 1 -l stag-one-line >actual &&
+	git diff expect actual &&
+	git-tag -n 2 -l stag-one-line >actual &&
+	git diff expect actual &&
+	git-tag -n 999 -l stag-one-line >actual &&
+	git diff expect actual
+'
+
+test_expect_success \
+	'listing the zero-lines message of a signed tag should succeed' '
+	git-tag -s -m "" stag-zero-lines &&
+
+	echo "stag-zero-lines" >expect &&
+	git-tag -l | grep "^stag-zero-lines" >actual &&
+	git diff expect actual &&
+	git-tag -n 0 -l | grep "^stag-zero-lines" >actual &&
+	git diff expect actual &&
+	git-tag -n 0 -l stag-zero-lines >actual &&
+	git diff expect actual &&
+
+	echo "stag-zero-lines " >expect &&
+	git-tag -n 1 -l | grep "^stag-zero-lines" >actual &&
+	git diff expect actual &&
+	git-tag -n -l | grep "^stag-zero-lines" >actual &&
+	git diff expect actual &&
+	git-tag -n 1 -l stag-zero-lines >actual &&
+	git diff expect actual &&
+	git-tag -n 2 -l stag-zero-lines >actual &&
+	git diff expect actual &&
+	git-tag -n 999 -l stag-zero-lines >actual &&
+	git diff expect actual
+'
+
+echo 'stag line one' >sigtagmsg
+echo 'stag line two' >>sigtagmsg
+echo 'stag line three' >>sigtagmsg
+test_expect_success \
+	'listing many message lines of a signed tag should succeed' '
+	git-tag -s -F sigtagmsg stag-lines &&
+
+	echo "stag-lines" >expect &&
+	git-tag -l | grep "^stag-lines" >actual &&
+	git diff expect actual &&
+	git-tag -n 0 -l | grep "^stag-lines" >actual &&
+	git diff expect actual &&
+	git-tag -n 0 -l stag-lines >actual &&
+	git diff expect actual &&
+
+	echo "stag-lines      stag line one" >expect &&
+	git-tag -n 1 -l | grep "^stag-lines" >actual &&
+	git diff expect actual &&
+	git-tag -n -l | grep "^stag-lines" >actual &&
+	git diff expect actual &&
+	git-tag -n 1 -l stag-lines >actual &&
+	git diff expect actual &&
+
+	echo "    stag line two" >>expect &&
+	git-tag -n 2 -l | grep "^ *stag.line" >actual &&
+	git diff expect actual &&
+	git-tag -n 2 -l stag-lines >actual &&
+	git diff expect actual &&
+
+	echo "    stag line three" >>expect &&
+	git-tag -n 3 -l | grep "^ *stag.line" >actual &&
+	git diff expect actual &&
+	git-tag -n 3 -l stag-lines >actual &&
+	git diff expect actual &&
+	git-tag -n 4 -l | grep "^ *stag.line" >actual &&
+	git diff expect actual &&
+	git-tag -n 4 -l stag-lines >actual &&
+	git diff expect actual &&
+	git-tag -n 99 -l | grep "^ *stag.line" >actual &&
+	git diff expect actual &&
+	git-tag -n 99 -l stag-lines >actual &&
+	git diff expect actual
 '
 
 # tags pointing to objects different from commits:
