@@ -81,6 +81,30 @@ test_expect_success \
 
     printf "$ttt\n\n$ttt$ttt$ttt\n" > expect &&
     printf "$ttt\n\n\n\n\n$ttt$ttt$ttt\n" | git stripspace >actual &&
+    git diff expect actual &&
+
+    printf "$ttt\n\n$ttt\n" > expect &&
+    printf "$ttt\n\t\n \n\n  \t\t\n$ttt\n" | git stripspace >actual &&
+    git diff expect actual &&
+
+    printf "$ttt$ttt\n\n$ttt\n" > expect &&
+    printf "$ttt$ttt\n\t\n \n\n  \t\t\n$ttt\n" | git stripspace >actual &&
+    git diff expect actual &&
+
+    printf "$ttt$ttt$ttt\n\n$ttt\n" > expect &&
+    printf "$ttt$ttt$ttt\n\t\n \n\n  \t\t\n$ttt\n" | git stripspace >actual &&
+    git diff expect actual &&
+
+    printf "$ttt\n\n$ttt\n" > expect &&
+    printf "$ttt\n\t\n \n\n  \t\t\n$ttt\n" | git stripspace >actual &&
+    git diff expect actual &&
+
+    printf "$ttt\n\n$ttt$ttt\n" > expect &&
+    printf "$ttt\n\t\n \n\n  \t\t\n$ttt$ttt\n" | git stripspace >actual &&
+    git diff expect actual &&
+
+    printf "$ttt\n\n$ttt$ttt$ttt\n" > expect &&
+    printf "$ttt\n\t\n \n\n  \t\t\n$ttt$ttt$ttt\n" | git stripspace >actual &&
     git diff expect actual
 '
 
@@ -338,6 +362,33 @@ test_expect_success \
     git diff expect actual &&
 
     printf "$sss$sss$sss$sss" | git stripspace >actual &&
+    git diff expect actual
+'
+
+test_expect_success \
+    'consecutive text lines should be unchanged' '
+    printf "$ttt$ttt\n$ttt\n" >expect &&
+    printf "$ttt$ttt\n$ttt\n" | git stripspace >actual &&
+    git diff expect actual &&
+
+    printf "$ttt\n$ttt$ttt\n$ttt\n" >expect &&
+    printf "$ttt\n$ttt$ttt\n$ttt\n" | git stripspace >actual &&
+    git diff expect actual &&
+
+    printf "$ttt\n$ttt\n$ttt\n$ttt$ttt\n" >expect &&
+    printf "$ttt\n$ttt\n$ttt\n$ttt$ttt\n" | git stripspace >actual &&
+    git diff expect actual &&
+
+    printf "$ttt\n$ttt\n\n$ttt$ttt\n$ttt\n" >expect &&
+    printf "$ttt\n$ttt\n\n$ttt$ttt\n$ttt\n" | git stripspace >actual &&
+    git diff expect actual &&
+
+    printf "$ttt$ttt\n\n$ttt\n$ttt$ttt\n" >expect &&
+    printf "$ttt$ttt\n\n$ttt\n$ttt$ttt\n" | git stripspace >actual &&
+    git diff expect actual &&
+
+    printf "$ttt\n$ttt$ttt\n\n$ttt\n" >expect &&
+    printf "$ttt\n$ttt$ttt\n\n$ttt\n" | git stripspace >actual &&
     git diff expect actual
 '
 
