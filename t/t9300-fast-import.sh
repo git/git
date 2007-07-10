@@ -580,4 +580,72 @@ test_expect_success \
 	 git diff --raw L^ L >output &&
 	 git diff expect output'
 
+###
+### series M
+###
+
+test_tick
+cat >input <<INPUT_END
+commit refs/heads/M1
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+file rename
+COMMIT
+
+from refs/heads/branch^0
+R file2/newf file2/n.e.w.f
+
+INPUT_END
+
+cat >expect <<EOF
+:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc R100	file2/newf	file2/n.e.w.f
+EOF
+test_expect_success \
+	'M: rename file in same subdirectory' \
+	'git-fast-import <input &&
+	 git diff-tree -M -r M1^ M1 >actual &&
+	 compare_diff_raw expect actual'
+
+cat >input <<INPUT_END
+commit refs/heads/M2
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+file rename
+COMMIT
+
+from refs/heads/branch^0
+R file2/newf i/am/new/to/you
+
+INPUT_END
+
+cat >expect <<EOF
+:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc R100	file2/newf	i/am/new/to/you
+EOF
+test_expect_success \
+	'M: rename file to new subdirectory' \
+	'git-fast-import <input &&
+	 git diff-tree -M -r M2^ M2 >actual &&
+	 compare_diff_raw expect actual'
+
+cat >input <<INPUT_END
+commit refs/heads/M3
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+file rename
+COMMIT
+
+from refs/heads/M2^0
+R i other/sub
+
+INPUT_END
+
+cat >expect <<EOF
+:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc R100	i/am/new/to/you	other/sub/am/new/to/you
+EOF
+test_expect_success \
+	'M: rename subdirectory to new subdirectory' \
+	'git-fast-import <input &&
+	 git diff-tree -M -r M3^ M3 >actual &&
+	 compare_diff_raw expect actual'
+
 test_done

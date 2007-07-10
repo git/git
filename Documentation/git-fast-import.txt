@@ -302,7 +302,7 @@ change to the project.
 	data
 	('from' SP <committish> LF)?
 	('merge' SP <committish> LF)?
-	(filemodify | filedelete | filedeleteall)*
+	(filemodify | filedelete | filerename | filedeleteall)*
 	LF
 ....
 
@@ -325,11 +325,13 @@ commit message use a 0 length data.  Commit messages are free-form
 and are not interpreted by Git.  Currently they must be encoded in
 UTF-8, as fast-import does not permit other encodings to be specified.
 
-Zero or more `filemodify`, `filedelete` and `filedeleteall` commands
+Zero or more `filemodify`, `filedelete`, `filename` and
+`filedeleteall` commands
 may be included to update the contents of the branch prior to
 creating the commit.  These commands may be supplied in any order.
 However it is recommended that a `filedeleteall` command preceed
-all `filemodify` commands in the same commit, as `filedeleteall`
+all `filemodify` and `filerename` commands in the same commit, as
+`filedeleteall`
 wipes the branch clean (see below).
 
 `author`
@@ -494,6 +496,26 @@ first non-empty directory or the root is reached.
 here `<path>` is the complete path of the file or subdirectory to
 be removed from the branch.
 See `filemodify` above for a detailed description of `<path>`.
+
+`filerename`
+^^^^^^^^^^^^
+Renames an existing file or subdirectory to a different location
+within the branch.  The existing file or directory must exist. If
+the destination exists it will be replaced by the source directory.
+
+....
+	'R' SP <path> SP <path> LF
+....
+
+here the first `<path>` is the source location and the second
+`<path>` is the destination.  See `filemodify` above for a detailed
+description of what `<path>` may look like.  To use a source path
+that contains SP the path must be quoted.
+
+A `filerename` command takes effect immediately.  Once the source
+location has been renamed to the destination any future commands
+applied to the source location will create new files there and not
+impact the destination of the rename.
 
 `filedeleteall`
 ^^^^^^^^^^^^^^^

@@ -26,9 +26,10 @@ Format of STDIN stream:
     lf;
   commit_msg ::= data;
 
-  file_change ::= file_clr | file_del | file_obm | file_inm;
+  file_change ::= file_clr | file_del | file_rnm | file_obm | file_inm;
   file_clr ::= 'deleteall' lf;
   file_del ::= 'D' sp path_str lf;
+  file_rnm ::= 'R' sp path_str sp path_str lf;
   file_obm ::= 'M' sp mode sp (hexsha1 | idnum) sp path_str lf;
   file_inm ::= 'M' sp mode sp 'inline' sp path_str lf
     data;
@@ -1154,7 +1155,8 @@ static int tree_content_set(
 	struct tree_entry *root,
 	const char *p,
 	const unsigned char *sha1,
-	const uint16_t mode)
+	const uint16_t mode,
+	struct tree_content *subtree)
 {
 	struct tree_content *t = root->tree;
 	const char *slash1;
@@ -1168,20 +1170,22 @@ static int tree_content_set(
 		n = strlen(p);
 	if (!n)
 		die("Empty path component found in input");
+	if (!slash1 && !S_ISDIR(mode) && subtree)
+		die("Non-directories cannot have subtrees");
 
 	for (i = 0; i < t->entry_count; i++) {
 		e = t->entries[i];
 		if (e->name->str_len == n && !strncmp(p, e->name->str_dat, n)) {
 			if (!slash1) {
-				if (e->versions[1].mode == mode
+				if (!S_ISDIR(mode)
+						&& e->versions[1].mode == mode
 						&& !hashcmp(e->versions[1].sha1, sha1))
 					return 0;
 				e->versions[1].mode = mode;
 				hashcpy(e->versions[1].sha1, sha1);
-				if (e->tree) {
+				if (e->tree)
 					release_tree_content_recursive(e->tree);
-					e->tree = NULL;
-				}
+				e->tree = subtree;
 				hashclr(root->versions[1].sha1);
 				return 1;
 			}
@@ -1191,7 +1195,7 @@ static int tree_content_set(
 			}
 			if (!e->tree)
 				load_tree(e);
-			if (tree_content_set(e, slash1 + 1, sha1, mode)) {
+			if (tree_content_set(e, slash1 + 1, sha1, mode, subtree)) {
 				hashclr(root->versions[1].sha1);
 				return 1;
 			}
@@ -1209,9 +1213,9 @@ static int tree_content_set(
 	if (slash1) {
 		e->tree = new_tree_content(8);
 		e->versions[1].mode = S_IFDIR;
-		tree_content_set(e, slash1 + 1, sha1, mode);
+		tree_content_set(e, slash1 + 1, sha1, mode, subtree);
 	} else {
-		e->tree = NULL;
+		e->tree = subtree;
 		e->versions[1].mode = mode;
 		hashcpy(e->versions[1].sha1, sha1);
 	}
@@ -1219,7 +1223,10 @@ static int tree_content_set(
 	return 1;
 }
 
-static int tree_content_remove(struct tree_entry *root, const char *p)
+static int tree_content_remove(
+	struct tree_entry *root,
+	const char *p,
+	struct tree_entry *backup_leaf)
 {
 	struct tree_content *t = root->tree;
 	const char *slash1;
@@ -1239,13 +1246,14 @@ static int tree_content_remove(struct tree_entry *root, const char *p)
 				goto del_entry;
 			if (!e->tree)
 				load_tree(e);
-			if (tree_content_remove(e, slash1 + 1)) {
+			if (tree_content_remove(e, slash1 + 1, backup_leaf)) {
 				for (n = 0; n < e->tree->entry_count; n++) {
 					if (e->tree->entries[n]->versions[1].mode) {
 						hashclr(root->versions[1].sha1);
 						return 1;
 					}
 				}
+				backup_leaf = NULL;
 				goto del_entry;
 			}
 			return 0;
@@ -1254,10 +1262,11 @@ static int tree_content_remove(struct tree_entry *root, const char *p)
 	return 0;
 
 del_entry:
-	if (e->tree) {
+	if (backup_leaf)
+		memcpy(backup_leaf, e, sizeof(*backup_leaf));
+	else if (e->tree)
 		release_tree_content_recursive(e->tree);
-		e->tree = NULL;
-	}
+	e->tree = NULL;
 	e->versions[1].mode = 0;
 	hashclr(e->versions[1].sha1);
 	hashclr(root->versions[1].sha1);
@@ -1629,7 +1638,7 @@ static void file_change_m(struct branch *b)
 			    typename(type), command_buf.buf);
 	}
 
-	tree_content_set(&b->branch_tree, p, sha1, S_IFREG | mode);
+	tree_content_set(&b->branch_tree, p, sha1, S_IFREG | mode, NULL);
 	free(p_uq);
 }
 
@@ -1645,8 +1654,56 @@ static void file_change_d(struct branch *b)
 			die("Garbage after path in: %s", command_buf.buf);
 		p = p_uq;
 	}
-	tree_content_remove(&b->branch_tree, p);
+	tree_content_remove(&b->branch_tree, p, NULL);
 	free(p_uq);
+}
+
+static void file_change_r(struct branch *b)
+{
+	const char *s, *d;
+	char *s_uq, *d_uq;
+	const char *endp;
+	struct tree_entry leaf;
+
+	s = command_buf.buf + 2;
+	s_uq = unquote_c_style(s, &endp);
+	if (s_uq) {
+		if (*endp != ' ')
+			die("Missing space after source: %s", command_buf.buf);
+	}
+	else {
+		endp = strchr(s, ' ');
+		if (!endp)
+			die("Missing space after source: %s", command_buf.buf);
+		s_uq = xmalloc(endp - s + 1);
+		memcpy(s_uq, s, endp - s);
+		s_uq[endp - s] = 0;
+	}
+	s = s_uq;
+
+	endp++;
+	if (!*endp)
+		die("Missing dest: %s", command_buf.buf);
+
+	d = endp;
+	d_uq = unquote_c_style(d, &endp);
+	if (d_uq) {
+		if (*endp)
+			die("Garbage after dest in: %s", command_buf.buf);
+		d = d_uq;
+	}
+
+	memset(&leaf, 0, sizeof(leaf));
+	tree_content_remove(&b->branch_tree, s, &leaf);
+	if (!leaf.versions[1].mode)
+		die("Path %s not in branch", s);
+	tree_content_set(&b->branch_tree, d,
+		leaf.versions[1].sha1,
+		leaf.versions[1].mode,
+		leaf.tree);
+
+	free(s_uq);
+	free(d_uq);
 }
 
 static void file_change_deleteall(struct branch *b)
@@ -1816,6 +1873,8 @@ static void cmd_new_commit(void)
 			file_change_m(b);
 		else if (!prefixcmp(command_buf.buf, "D "))
 			file_change_d(b);
+		else if (!prefixcmp(command_buf.buf, "R "))
+			file_change_r(b);
 		else if (!strcmp("deleteall", command_buf.buf))
 			file_change_deleteall(b);
 		else
