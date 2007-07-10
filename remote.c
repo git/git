@@ -396,11 +396,12 @@ static int count_refspec_match(const char *pattern,
 	}
 }
 
-static void link_dst_tail(struct ref *ref, struct ref ***tail)
+static void tail_link_ref(struct ref *ref, struct ref ***tail)
 {
 	**tail = ref;
+	while (ref->next)
+		ref = ref->next;
 	*tail = &ref->next;
-	**tail = NULL;
 }
 
 static struct ref *try_explicit_object_name(const char *name)
@@ -424,16 +425,16 @@ static struct ref *try_explicit_object_name(const char *name)
 	return ref;
 }
 
-static struct ref *make_dst(const char *name, struct ref ***dst_tail)
+static struct ref *make_linked_ref(const char *name, struct ref ***tail)
 {
-	struct ref *dst;
+	struct ref *ret;
 	size_t len;
 
 	len = strlen(name) + 1;
-	dst = alloc_ref(len);
-	memcpy(dst->name, name, len);
-	link_dst_tail(dst, dst_tail);
-	return dst;
+	ret = alloc_ref(len);
+	memcpy(ret->name, name, len);
+	tail_link_ref(ret, tail);
+	return ret;
 }
 
 static int match_explicit(struct ref *src, struct ref *dst,
@@ -481,7 +482,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		break;
 	case 0:
 		if (!memcmp(dst_value, "refs/", 5))
-			matched_dst = make_dst(dst_value, dst_tail);
+			matched_dst = make_linked_ref(dst_value, dst_tail);
 		else
 			error("dst refspec %s does not match any "
 			      "existing ref on the remote and does "
@@ -591,7 +592,7 @@ int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 			goto free_name;
 		if (!dst_peer) {
 			/* Create a new one and link it */
-			dst_peer = make_dst(dst_name, dst_tail);
+			dst_peer = make_linked_ref(dst_name, dst_tail);
 			hashcpy(dst_peer->new_sha1, src->new_sha1);
 		}
 		dst_peer->peer_ref = src;
