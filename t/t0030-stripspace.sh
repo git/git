@@ -85,39 +85,36 @@ test_expect_success \
 '
 
 test_expect_success \
-    'consecutive blank lines at the beginning should be removed' '
-    printf "" > expect &&
+    'only consecutive blank lines should be completely removed' '
+    > expect &&
+
     printf "\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "" > expect &&
     printf "\n\n\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "" > expect &&
     printf "$sss\n$sss\n$sss\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "" > expect &&
     printf "$sss$sss\n$sss\n\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "" > expect &&
     printf "\n$sss\n$sss$sss\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "" > expect &&
     printf "$sss$sss$sss$sss\n\n\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "" > expect &&
     printf "\n$sss$sss$sss$sss\n\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "" > expect &&
     printf "\n\n$sss$sss$sss$sss\n" | git stripspace >actual &&
-    git diff expect actual &&
+    git diff expect actual
+'
 
+test_expect_success \
+    'consecutive blank lines at the beginning should be removed' '
     printf "$ttt\n" > expect &&
     printf "\n$ttt\n" | git stripspace >actual &&
     git diff expect actual &&
@@ -139,26 +136,22 @@ test_expect_success \
     git diff expect actual &&
 
     printf "$ttt\n" > expect &&
+
     printf "$sss\n$sss\n$sss\n$ttt\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "$ttt\n" > expect &&
     printf "\n$sss\n$sss$sss\n$ttt\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "$ttt\n" > expect &&
     printf "$sss$sss\n$sss\n\n$ttt\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "$ttt\n" > expect &&
     printf "$sss$sss$sss\n\n\n$ttt\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "$ttt\n" > expect &&
     printf "\n$sss$sss$sss\n\n$ttt\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "$ttt\n" > expect &&
     printf "\n\n$sss$sss$sss\n$ttt\n" | git stripspace >actual &&
     git diff expect actual
 '
@@ -186,26 +179,22 @@ test_expect_success \
     git diff expect actual &&
 
     printf "$ttt\n" > expect &&
+
     printf "$ttt\n$sss\n$sss\n$sss\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "$ttt\n" > expect &&
     printf "$ttt\n\n$sss\n$sss$sss\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "$ttt\n" > expect &&
     printf "$ttt\n$sss$sss\n$sss\n\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "$ttt\n" > expect &&
     printf "$ttt\n$sss$sss$sss\n\n\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "$ttt\n" > expect &&
     printf "$ttt\n\n$sss$sss$sss\n\n" | git stripspace >actual &&
     git diff expect actual &&
 
-    printf "$ttt\n" > expect &&
     printf "$ttt\n\n\n$sss$sss$sss\n" | git stripspace >actual &&
     git diff expect actual
 '
@@ -224,7 +213,7 @@ test_expect_success \
     'text plus spaces without newline at end should end with newline' '
     test `printf "$ttt$sss" | git stripspace | wc -l` -gt 0 &&
     test `printf "$ttt$ttt$sss" | git stripspace | wc -l` -gt 0 &&
-    test `printf "$ttt$ttt$ttt$sss" | git stripspace | wc -l` -gt 0
+    test `printf "$ttt$ttt$ttt$sss" | git stripspace | wc -l` -gt 0 &&
     test `printf "$ttt$sss$sss" | git stripspace | wc -l` -gt 0 &&
     test `printf "$ttt$ttt$sss$sss" | git stripspace | wc -l` -gt 0 &&
     test `printf "$ttt$sss$sss$sss" | git stripspace | wc -l` -gt 0
@@ -340,13 +329,13 @@ test_expect_success \
     printf "" >expect &&
 
     printf "" | git stripspace >actual &&
-    git diff expect actual
+    git diff expect actual &&
 
     printf "$sss$sss" | git stripspace >actual &&
-    git diff expect actual
+    git diff expect actual &&
 
     printf "$sss$sss$sss" | git stripspace >actual &&
-    git diff expect actual
+    git diff expect actual &&
 
     printf "$sss$sss$sss$sss" | git stripspace >actual &&
     git diff expect actual
