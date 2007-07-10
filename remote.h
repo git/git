@@ -30,6 +30,13 @@ struct refspec {
 	char *dst;
 };
 
+struct ref *alloc_ref(unsigned namelen);
+
+/*
+ * Frees the entire list and peers of elements.
+ */
+void free_refs(struct ref *ref);
+
 int match_refs(struct ref *src, struct ref *dst, struct ref ***dst_tail,
 	       int nr_refspec, char **refspec, int all);
 

@@ -72,7 +72,7 @@ struct ref **get_remote_heads(int in, struct ref **list,
 			continue;
 		if (nr_match && !path_match(name, nr_match, match))
 			continue;
-		ref = xcalloc(1, sizeof(*ref) + len - 40);
+		ref = alloc_ref(len - 40);
 		hashcpy(ref->old_sha1, old_sha1);
 		memcpy(ref->name, buffer + 41, len - 40);
 		*list = ref;

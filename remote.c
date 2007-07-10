@@ -320,6 +320,25 @@ int remote_find_tracking(struct remote *remote, struct refspec *refspec)
 	return -1;
 }
 
+struct ref *alloc_ref(unsigned namelen)
+{
+	struct ref *ret = xmalloc(sizeof(struct ref) + namelen);
+	memset(ret, 0, sizeof(struct ref) + namelen);
+	return ret;
+}
+
+void free_refs(struct ref *ref)
+{
+	struct ref *next;
+	while (ref) {
+		next = ref->next;
+		if (ref->peer_ref)
+			free(ref->peer_ref);
+		free(ref);
+		ref = next;
+	}
+}
+
 static int count_refspec_match(const char *pattern,
 			       struct ref *refs,
 			       struct ref **matched_ref)
@@ -391,7 +410,7 @@ static struct ref *try_explicit_object_name(const char *name)
 	int len;
 
 	if (!*name) {
-		ref = xcalloc(1, sizeof(*ref) + 20);
+		ref = alloc_ref(20);
 		strcpy(ref->name, "(delete)");
 		hashclr(ref->new_sha1);
 		return ref;
@@ -399,7 +418,7 @@ static struct ref *try_explicit_object_name(const char *name)
 	if (get_sha1(name, sha1))
 		return NULL;
 	len = strlen(name) + 1;
-	ref = xcalloc(1, sizeof(*ref) + len);
+	ref = alloc_ref(len);
 	memcpy(ref->name, name, len);
 	hashcpy(ref->new_sha1, sha1);
 	return ref;
@@ -411,7 +430,7 @@ static struct ref *make_dst(const char *name, struct ref ***dst_tail)
 	size_t len;
 
 	len = strlen(name) + 1;
-	dst = xcalloc(1, sizeof(*dst) + len);
+	dst = alloc_ref(len);
 	memcpy(dst->name, name, len);
 	link_dst_tail(dst, dst_tail);
 	return dst;
