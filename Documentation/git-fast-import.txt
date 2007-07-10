@@ -325,7 +325,7 @@ commit message use a 0 length data.  Commit messages are free-form
 and are not interpreted by Git.  Currently they must be encoded in
 UTF-8, as fast-import does not permit other encodings to be specified.
 
-Zero or more `filemodify`, `filedelete`, `filename` and
+Zero or more `filemodify`, `filedelete`, `filerename` and
 `filedeleteall` commands
 may be included to update the contents of the branch prior to
 creating the commit.  These commands may be supplied in any order.
