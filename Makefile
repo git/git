@@ -753,8 +753,7 @@ git.o: git.c common-cmds.h GIT-CFLAGS
 		$(ALL_CFLAGS) -c $(filter %.c,$^)
 
 git$X: git.o $(BUILTIN_OBJS) $(GITLIBS)
-	$(QUIET_LINK)$(CC) -DGIT_VERSION='"$(GIT_VERSION)"' \
-		$(ALL_CFLAGS) -o $@ $(filter %.c,$^) git.o \
+	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ git.o \
 		$(BUILTIN_OBJS) $(ALL_LDFLAGS) $(LIBS)
 
 help.o: common-cmds.h
@@ -857,7 +856,7 @@ configure: configure.ac
 	rm -f $<+
 
 # These can record GIT_VERSION
-git$X git.spec \
+git.o git.spec \
 	$(patsubst %.sh,%,$(SCRIPT_SH)) \
 	$(patsubst %.perl,%,$(SCRIPT_PERL)) \
 	: GIT-VERSION-FILE
