@@ -364,6 +364,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 int git_config_perm(const char *var, const char *value)
 {
 	if (value) {
+		int i;
 		if (!strcmp(value, "umask"))
 			return PERM_UMASK;
 		if (!strcmp(value, "group"))
@@ -372,6 +373,9 @@ int git_config_perm(const char *var, const char *value)
 		    !strcmp(value, "world") ||
 		    !strcmp(value, "everybody"))
 			return PERM_EVERYBODY;
+		i = atoi(value);
+		if (i > 1)
+			return i;
 	}
 	return git_config_bool(var, value);
 }

@@ -38,6 +38,7 @@ static int update_info_refs(int force)
 		return error("unable to update %s", path0);
 	for_each_ref(add_info_ref, NULL);
 	fclose(info_ref_fp);
+	adjust_shared_perm(path1);
 	rename(path1, path0);
 	free(path0);
 	free(path1);
@@ -227,6 +228,7 @@ static int update_info_packs(int force)
 		return error("cannot open %s", name);
 	write_pack_info_file(fp);
 	fclose(fp);
+	adjust_shared_perm(name);
 	rename(name, infofile);
 	return 0;
 }
