@@ -258,7 +258,7 @@ proc commit_committree {fd_wt curHEAD msg} {
 	# -- Verify this wasn't an empty change.
 	#
 	if {$commit_type eq {normal}} {
-		set fd_ot [open "| git cat-file commit $PARENT" r]
+		set fd_ot [git_read cat-file commit $PARENT]
 		fconfigure $fd_ot -encoding binary -translation lf
 		set old_tree [gets $fd_ot]
 		close $fd_ot
