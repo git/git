@@ -1348,6 +1348,8 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	sizediff = src_size < trg_size ? trg_size - src_size : 0;
 	if (sizediff >= max_size)
 		return 0;
+	if (trg_size < src_size / 32)
+		return 0;
 
 	/* Load data if not already done */
 	if (!trg->data) {
