@@ -260,7 +260,18 @@ proc commit_committree {fd_wt curHEAD msg} {
 	# -- Verify this wasn't an empty change.
 	#
 	if {$commit_type eq {normal}} {
-		set old_tree [git rev-parse "$PARENT^{tree}"]
+		set fd_ot [open "| git cat-file commit $PARENT" r]
+		fconfigure $fd_ot -encoding binary -translation lf
+		set old_tree [gets $fd_ot]
+		close $fd_ot
+
+		if {[string equal -length 5 {tree } $old_tree]
+			&& [string length $old_tree] == 45} {
+			set old_tree [string range $old_tree 5 end]
+		} else {
+			error "Commit $PARENT appears to be corrupt"
+		}
+
 		if {$tree_id eq $old_tree} {
 			info_popup {No changes to commit.
 
