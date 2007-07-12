@@ -85,6 +85,17 @@ base-name::
 	times to get to the necessary object.
 	The default value for --window is 10 and --depth is 50.
 
+--window-memory=[N]::
+	This option provides an additional limit on top of `--window`;
+	the window size will dynamically scale down so as to not take
+	up more than N bytes in memory.  This is useful in
+	repositories with a mix of large and small objects to not run
+	out of memory with a large window, but still be able to take
+	advantage of the large window for the smaller objects.  The
+	size can be suffixed with "k", "m", or "g".
+	`--window-memory=0` makes memory usage unlimited, which is the
+	default.
+
 --max-pack-size=<n>::
 	Maximum size of each output packfile, expressed in MiB.
 	If specified,  multiple packfiles may be created.

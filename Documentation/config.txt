@@ -589,6 +589,12 @@ pack.depth::
 	The maximum delta depth used by gitlink:git-pack-objects[1] when no
 	maximum depth is given on the command line. Defaults to 50.
 
+pack.windowMemory::
+	The window memory size limit used by gitlink:git-pack-objects[1]
+	when no limit is given on the command line.  The value can be
+	suffixed with "k", "m", or "g".  Defaults to 0, meaning no
+	limit.
+
 pack.compression::
 	An integer -1..9, indicating the compression level for objects
 	in a pack file. -1 is the zlib default. 0 means no
