@@ -386,6 +386,23 @@ if (defined $hash_base) {
 	}
 }
 
+my %allowed_options = (
+	"--no-merges" => [ qw(rss atom log shortlog history) ],
+);
+
+our @extra_options = $cgi->param('opt');
+if (defined @extra_options) {
+	foreach(@extra_options)
+	{
+		if (not grep(/^$_$/, keys %allowed_options)) {
+			die_error(undef, "Invalid option parameter");
+		}
+		if (not grep(/^$action$/, @{$allowed_options{$_}})) {
+			die_error(undef, "Invalid option parameter for this action");
+		}
+	}
+}
+
 our $hash_parent_base = $cgi->param('hpb');
 if (defined $hash_parent_base) {
 	if (!validate_refname($hash_parent_base)) {
@@ -537,6 +554,7 @@ sub href(%) {
 		action => "a",
 		file_name => "f",
 		file_parent => "fp",
+		extra_options => "opt",
 		hash => "h",
 		hash_parent => "hp",
 		hash_base => "hb",
@@ -1773,6 +1791,7 @@ sub parse_commits {
 		($arg ? ($arg) : ()),
 		("--max-count=" . $maxcount),
 		("--skip=" . $skip),
+		@extra_options,
 		$commit_id,
 		"--",
 		($filename ? ($filename) : ())
