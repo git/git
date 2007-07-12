@@ -71,7 +71,7 @@ OPTIONS
 	Override the author name used in the commit.  Use
 	`A U Thor <author@example.com>` format.
 
--m <msg>::
+-m <msg>|--message=<msg>::
 	Use the given <msg> as the commit message.
 
 -s|--signoff::

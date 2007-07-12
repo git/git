@@ -64,6 +64,7 @@ OPTIONS
 	Operate quietly.  This flag is passed to "rsync" and
 	"git-fetch-pack" commands when given.
 
+--no-checkout::
 -n::
 	No checkout of HEAD is performed after the clone is complete.
 
