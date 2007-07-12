@@ -84,6 +84,7 @@ pick_one () {
 	current_sha1=$(git rev-parse --verify HEAD)
 	if [ $current_sha1 = $parent_sha1 ]; then
 		git reset --hard $sha1
+		test "a$1" = a-n && git reset --soft $current_sha1
 		sha1=$(git rev-parse --short $sha1)
 		warn Fast forward to $sha1
 	else
@@ -193,14 +194,14 @@ do_next () {
 			die "Cannot 'squash' without a previous commit"
 
 		mark_action_done
-		failed=f
-		pick_one -n $sha1 || failed=t
 		MSG="$DOTEST"/message
 		echo "# This is a combination of two commits." > "$MSG"
 		echo "# The first commit's message is:" >> "$MSG"
 		echo >> "$MSG"
 		git cat-file commit HEAD | sed -e '1,/^$/d' >> "$MSG"
 		echo >> "$MSG"
+		failed=f
+		pick_one -n $sha1 || failed=t
 		echo "# And this is the 2nd commit message:" >> "$MSG"
 		echo >> "$MSG"
 		git cat-file commit $sha1 | sed -e '1,/^$/d' >> "$MSG"
