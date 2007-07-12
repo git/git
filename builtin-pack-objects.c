@@ -1303,6 +1303,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	struct object_entry *trg_entry = trg->entry;
 	struct object_entry *src_entry = src->entry;
 	unsigned long trg_size, src_size, delta_size, sizediff, max_size, sz;
+	unsigned ref_depth;
 	enum object_type type;
 	void *delta_buf;
 
@@ -1332,12 +1333,17 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 
 	/* Now some size filtering heuristics. */
 	trg_size = trg_entry->size;
-	max_size = trg_size/2 - 20;
-	max_size = max_size * (max_depth - src_entry->depth) / max_depth;
+	if (!trg_entry->delta) {
+		max_size = trg_size/2 - 20;
+		ref_depth = 1;
+	} else {
+		max_size = trg_entry->delta_size;
+		ref_depth = trg_entry->depth;
+	}
+	max_size = max_size * (max_depth - src_entry->depth) /
+						(max_depth - ref_depth + 1);
 	if (max_size == 0)
 		return 0;
-	if (trg_entry->delta && trg_entry->delta_size <= max_size)
-		max_size = trg_entry->delta_size;
 	src_size = src_entry->size;
 	sizediff = src_size < trg_size ? trg_size - src_size : 0;
 	if (sizediff >= max_size)
