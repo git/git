@@ -495,6 +495,9 @@ static void verify_absent(const char *path, const char *action,
 	if (o->index_only || o->reset || !o->update)
 		return;
 
+	if (has_symlink_leading_path(path, NULL))
+		return;
+
 	if (!lstat(path, &st)) {
 		int cnt;
 
