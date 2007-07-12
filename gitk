@@ -87,19 +87,15 @@ proc start_rev_list {view} {
 
     set startmsecs [clock clicks -milliseconds]
     set commitidx($view) 0
-    set args $viewargs($view)
-    if {$viewfiles($view) ne {}} {
-	set args [concat $args "--" $viewfiles($view)]
-    }
     set order "--topo-order"
     if {$datemode} {
 	set order "--date-order"
     }
     if {[catch {
-	set fd [open [concat | git log -z --pretty=raw $order \
-			  --parents --boundary $args] r]
+	set fd [open [concat | git log -z --pretty=raw $order --parents \
+			 --boundary $viewargs($view) "--" $viewfiles($view)] r]
     } err]} {
-	puts stderr "Error executing git rev-list: $err"
+	error_popup "Error executing git rev-list: $err"
 	exit 1
     }
     set commfd($view) $fd
@@ -7471,17 +7467,6 @@ catch {source ~/.gitk}
 
 font create optionfont -family sans-serif -size -12
 
-set revtreeargs {}
-foreach arg $argv {
-    switch -regexp -- $arg {
-	"^$" { }
-	"^-d" { set datemode 1 }
-	default {
-	    lappend revtreeargs $arg
-	}
-    }
-}
-
 # check that we can find a .git directory somewhere...
 set gitdir [gitdir]
 if {![file isdirectory $gitdir]} {
@@ -7489,17 +7474,41 @@ if {![file isdirectory $gitdir]} {
     exit 1
 }
 
+set revtreeargs {}
 set cmdline_files {}
-set i [lsearch -exact $revtreeargs "--"]
-if {$i >= 0} {
-    set cmdline_files [lrange $revtreeargs [expr {$i + 1}] end]
-    set revtreeargs [lrange $revtreeargs 0 [expr {$i - 1}]]
-} elseif {$revtreeargs ne {}} {
+set i 0
+foreach arg $argv {
+    switch -regexp -- $arg {
+	"^$" { }
+	"^-d" { set datemode 1 }
+	"--" {
+	    set cmdline_files [lrange $argv [expr {$i + 1}] end]
+	    break
+	}
+	default {
+	    lappend revtreeargs $arg
+	}
+    }
+    incr i
+}
+
+if {$i >= [llength $argv] && $revtreeargs ne {}} {
+    # no -- on command line, but some arguments (other than -d)
     if {[catch {
 	set f [eval exec git rev-parse --no-revs --no-flags $revtreeargs]
 	set cmdline_files [split $f "\n"]
 	set n [llength $cmdline_files]
 	set revtreeargs [lrange $revtreeargs 0 end-$n]
+	# Unfortunately git rev-parse doesn't produce an error when
+	# something is both a revision and a filename.  To be consistent
+	# with git log and git rev-list, check revtreeargs for filenames.
+	foreach arg $revtreeargs {
+	    if {[file exists $arg]} {
+		show_error {} . "Ambiguous argument '$arg': both revision\
+				 and filename"
+		exit 1
+	    }
+	}
     } err]} {
 	# unfortunately we get both stdout and stderr in $err,
 	# so look for "fatal:".
