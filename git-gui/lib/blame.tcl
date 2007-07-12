@@ -21,7 +21,7 @@ field w_amov     ; # text column: annotations + move tracking
 field w_asim     ; # text column: annotations (simple computation)
 field w_file     ; # text column: actual file data
 field w_cviewer  ; # pane showing commit message
-field status     ; # text variable bound to status bar
+field status     ; # status mega-widget instance
 field old_height ; # last known height of $w.file_pane
 
 # Tk UI colors
@@ -31,6 +31,13 @@ variable group_colors {
 	#d6d6d6
 	#e1e1e1
 	#ececec
+}
+
+# Switches for original location detection
+#
+variable original_options [list -C -C]
+if {[git-version >= 1.5.3]} {
+	lappend original_options -w ; # ignore indentation changes
 }
 
 # Current blame data; cleared/reset on each load
@@ -235,14 +242,7 @@ constructor new {i_commit i_path} {
 	pack $w.file_pane.cm.sbx -side bottom -fill x
 	pack $w_cviewer -expand 1 -fill both
 
-	frame $w.status \
-		-borderwidth 1 \
-		-relief sunken
-	label $w.status.l \
-		-textvariable @status \
-		-anchor w \
-		-justify left
-	pack $w.status.l -side left
+	set status [::status_bar::new $w.status]
 
 	menu $w.ctxm -tearoff 0
 	$w.ctxm add command \
@@ -304,8 +304,9 @@ constructor new {i_commit i_path} {
 
 	set req_w [winfo reqwidth  $top]
 	set req_h [winfo reqheight $top]
+	set scr_h [expr {[winfo screenheight $top] - 100}]
 	if {$req_w < 600} {set req_w 600}
-	if {$req_h < 400} {set req_h 400}
+	if {$req_h < $scr_h} {set req_h $scr_h}
 	set g "${req_w}x${req_h}"
 	wm geometry $top $g
 	update
@@ -352,19 +353,6 @@ method _load {jump} {
 		set total_lines 0
 	}
 
-	if {[winfo exists $w.status.c]} {
-		$w.status.c coords bar 0 0 0 20
-	} else {
-		canvas $w.status.c \
-			-width 100 \
-			-height [expr {int([winfo reqheight $w.status.l] * 0.6)}] \
-			-borderwidth 1 \
-			-relief groove \
-			-highlightt 0
-		$w.status.c create rectangle 0 0 0 20 -tags bar -fill navy
-		pack $w.status.c -side right
-	}
-
 	if {$history eq {}} {
 		$w_back conf -state disabled
 	} else {
@@ -378,13 +366,12 @@ method _load {jump} {
 	set amov_data [list [list]]
 	set asim_data [list [list]]
 
-	set status "Loading $commit:[escape_path $path]..."
+	$status show "Reading $commit:[escape_path $path]..."
 	$w_path conf -text [escape_path $path]
 	if {$commit eq {}} {
 		set fd [open $path r]
 	} else {
-		set cmd [list git cat-file blob "$commit:$path"]
-		set fd [open "| $cmd" r]
+		set fd [git_read cat-file blob "$commit:$path"]
 	}
 	fconfigure $fd -blocking 0 -translation lf -encoding binary
 	fileevent $fd readable [cb _read_file $fd $jump]
@@ -487,30 +474,28 @@ method _read_file {fd jump} {
 } ifdeleted { catch {close $fd} }
 
 method _exec_blame {cur_w cur_d options cur_s} {
-	set cmd [list]
-	if {![is_Windows] || [is_Cygwin]} {
-		lappend cmd nice
-	}
-	lappend cmd git blame
-	set cmd [concat $cmd $options]
-	lappend cmd --incremental
+	lappend options --incremental
 	if {$commit eq {}} {
-		lappend cmd --contents $path
+		lappend options --contents $path
 	} else {
-		lappend cmd $commit
+		lappend options $commit
 	}
-	lappend cmd -- $path
-	set fd [open "| $cmd" r]
+	lappend options -- $path
+	set fd [eval git_read --nice blame $options]
 	fconfigure $fd -blocking 0 -translation lf -encoding binary
-	fileevent $fd readable [cb _read_blame $fd $cur_w $cur_d $cur_s]
+	fileevent $fd readable [cb _read_blame $fd $cur_w $cur_d]
 	set current_fd $fd
 	set blame_lines 0
-	_status $this $cur_s
+
+	$status start \
+		"Loading$cur_s annotations..." \
+		{lines annotated}
 }
 
-method _read_blame {fd cur_w cur_d cur_s} {
+method _read_blame {fd cur_w cur_d} {
 	upvar #0 $cur_d line_data
 	variable group_colors
+	variable original_options
 
 	if {$fd ne $current_fd} {
 		catch {close $fd}
@@ -547,6 +532,10 @@ method _read_blame {fd cur_w cur_d cur_s} {
 			set a_name {}
 			catch {set a_name $header($cmit,author)}
 			while {$a_name ne {}} {
+				if {$author_abbr ne {}
+					&& [string index $a_name 0] eq {'}} {
+					regsub {^'[^']+'\s+} $a_name {} a_name
+				}
 				if {![regexp {^([[:upper:]])} $a_name _a]} break
 				append author_abbr $_a
 				unset _a
@@ -680,29 +669,16 @@ method _read_blame {fd cur_w cur_d cur_s} {
 		close $fd
 		if {$cur_w eq $w_asim} {
 			_exec_blame $this $w_amov @amov_data \
-				[list -M -C -C] \
+				$original_options \
 				{ original location}
 		} else {
 			set current_fd {}
-			set status {Annotation complete.}
-			destroy $w.status.c
+			$status stop {Annotation complete.}
 		}
 	} else {
-		_status $this $cur_s
+		$status update $blame_lines $total_lines
 	}
 } ifdeleted { catch {close $fd} }
-
-method _status {cur_s} {
-	set have  $blame_lines
-	set total $total_lines
-	set pdone 0
-	if {$total} {set pdone [expr {100 * $have / $total}]}
-
-	set status [format \
-		"Loading%s annotations... %i of %i lines annotated (%2i%%)" \
-		$cur_s $have $total $pdone]
-	$w.status.c coords bar 0 0 $pdone 20
-}
 
 method _click {cur_w pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
@@ -784,7 +760,7 @@ method _showcommit {cur_w lno} {
 		if {[catch {set msg $header($cmit,message)}]} {
 			set msg {}
 			catch {
-				set fd [open "| git cat-file commit $cmit" r]
+				set fd [git_read cat-file commit $cmit]
 				fconfigure $fd -encoding binary -translation lf
 				if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
 					set enc utf-8

@@ -28,7 +28,7 @@ Another Git program has modified this repository since the last scan.  A rescan 
 The rescan will be automatically started now.
 }
 		unlock_index
-		rescan {set ui_status_value {Ready.}}
+		rescan ui_ready
 		return 0
 	}
 
@@ -79,7 +79,7 @@ proc _visualize {w list} {
 }
 
 proc _start {w list} {
-	global HEAD ui_status_value current_branch
+	global HEAD current_branch
 
 	set cmd [list git merge]
 	set names [_refs $w $list]
@@ -121,7 +121,7 @@ Please select fewer branches.  To merge more than 15 branches, merge the branche
 	}
 
 	set msg "Merging $current_branch, [join $names {, }]"
-	set ui_status_value "$msg..."
+	ui_status "$msg..."
 	set cons [console::new "Merge" $msg]
 	console::exec $cons $cmd \
 		[namespace code [list _finish $revcnt $cons]]
@@ -146,18 +146,18 @@ The working directory will now be reset.
 
 You can attempt this merge again by merging only one branch at a time." $w
 
-			set fd [open "| git read-tree --reset -u HEAD" r]
+			set fd [git_read read-tree --reset -u HEAD]
 			fconfigure $fd -blocking 0 -translation binary
 			fileevent $fd readable \
 				[namespace code [list _reset_wait $fd]]
-			set ui_status_value {Aborting... please wait...}
+			ui_status {Aborting... please wait...}
 			return
 		}
 
 		set msg {Merge failed.  Conflict resolution is required.}
 	}
 	unlock_index
-	rescan [list set ui_status_value $msg]
+	rescan [list ui_status $msg]
 }
 
 proc dialog {} {
@@ -167,11 +167,13 @@ proc dialog {} {
 	if {![_can_merge]} return
 
 	set fmt {list %(objectname) %(*objectname) %(refname) %(subject)}
-	set cmd [list git for-each-ref --tcl --format=$fmt]
-	lappend cmd refs/heads
-	lappend cmd refs/remotes
-	lappend cmd refs/tags
-	set fr_fd [open "| $cmd" r]
+	set fr_fd [git_read for-each-ref \
+		--tcl \
+		--format=$fmt \
+		refs/heads \
+		refs/remotes \
+		refs/tags \
+		]
 	fconfigure $fr_fd -translation binary
 	while {[gets $fr_fd line] > 0} {
 		set line [eval $line]
@@ -186,7 +188,7 @@ proc dialog {} {
 	close $fr_fd
 
 	set to_show {}
-	set fr_fd [open "| git rev-list --all --not HEAD"]
+	set fr_fd [git_read rev-list --all --not HEAD]
 	while {[gets $fr_fd line] > 0} {
 		if {[catch {set ref $sha1($line)}]} continue
 		foreach n $ref {
@@ -213,7 +215,9 @@ proc dialog {} {
 	pack $w.buttons.visualize -side left
 	button $w.buttons.create -text Merge -command $_start
 	pack $w.buttons.create -side right
-	button $w.buttons.cancel -text {Cancel} -command [list destroy $w]
+	button $w.buttons.cancel \
+		-text {Cancel} \
+		-command "unlock_index;destroy $w"
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
@@ -280,10 +284,10 @@ You must finish amending this commit.
 Aborting the current $op will cause *ALL* uncommitted changes to be lost.
 
 Continue with aborting the current $op?"] eq {yes}} {
-		set fd [open "| git read-tree --reset -u HEAD" r]
+		set fd [git_read read-tree --reset -u HEAD]
 		fconfigure $fd -blocking 0 -translation binary
 		fileevent $fd readable [namespace code [list _reset_wait $fd]]
-		set ui_status_value {Aborting... please wait...}
+		ui_status {Aborting... please wait...}
 	} else {
 		unlock_index
 	}
@@ -306,7 +310,7 @@ proc _reset_wait {fd} {
 		catch {file delete [gitdir MERGE_MSG]}
 		catch {file delete [gitdir GITGUI_MSG]}
 
-		rescan {set ui_status_value {Abort completed.  Ready.}}
+		rescan {ui_status {Abort completed.  Ready.}}
 	}
 }
 

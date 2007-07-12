@@ -9,11 +9,15 @@ proc do_windows_shortcut {} {
 		-title "[appname] ([reponame]): Create Desktop Icon" \
 		-initialfile "Git [reponame].bat"]
 	if {$fn != {}} {
+		if {[file extension $fn] ne {.bat}} {
+			set fn ${fn}.bat
+		}
 		if {[catch {
+				set ge [file normalize [file dirname $::_git]]
 				set fd [open $fn w]
 				puts $fd "@ECHO Entering [reponame]"
 				puts $fd "@ECHO Starting git-gui... please wait..."
-				puts $fd "@SET PATH=[file normalize [gitexec]];%PATH%"
+				puts $fd "@SET PATH=$ge;%PATH%"
 				puts $fd "@SET GIT_DIR=[file normalize [gitdir]]"
 				puts -nonewline $fd "@\"[info nameofexecutable]\""
 				puts $fd " \"[file normalize $argv0]\""
@@ -42,12 +46,15 @@ proc do_cygwin_shortcut {} {
 		-initialdir $desktop \
 		-initialfile "Git [reponame].bat"]
 	if {$fn != {}} {
+		if {[file extension $fn] ne {.bat}} {
+			set fn ${fn}.bat
+		}
 		if {[catch {
 				set fd [open $fn w]
 				set sh [exec cygpath \
 					--windows \
 					--absolute \
-					/bin/sh]
+					/bin/sh.exe]
 				set me [exec cygpath \
 					--unix \
 					--absolute \
@@ -56,18 +63,12 @@ proc do_cygwin_shortcut {} {
 					--unix \
 					--absolute \
 					[gitdir]]
-				set gw [exec cygpath \
-					--windows \
-					--absolute \
-					[file dirname [gitdir]]]
-				regsub -all ' $me "'\\''" me
-				regsub -all ' $gd "'\\''" gd
-				puts $fd "@ECHO Entering $gw"
+				puts $fd "@ECHO Entering [reponame]"
 				puts $fd "@ECHO Starting git-gui... please wait..."
 				puts -nonewline $fd "@\"$sh\" --login -c \""
-				puts -nonewline $fd "GIT_DIR='$gd'"
-				puts -nonewline $fd " '$me'"
-				puts $fd "&\""
+				puts -nonewline $fd "GIT_DIR=[sq $gd]"
+				puts -nonewline $fd " [sq $me]"
+				puts $fd " &\""
 				close $fd
 			} err]} {
 			error_popup "Cannot write script:\n\n$err"
@@ -84,6 +85,9 @@ proc do_macosx_app {} {
 		-initialdir [file join $env(HOME) Desktop] \
 		-initialfile "Git [reponame].app"]
 	if {$fn != {}} {
+		if {[file extension $fn] ne {.app}} {
+			set fn ${fn}.app
+		}
 		if {[catch {
 				set Contents [file join $fn Contents]
 				set MacOS [file join $Contents MacOS]
@@ -117,20 +121,27 @@ proc do_macosx_app {} {
 				close $fd
 
 				set fd [open $exe w]
-				set gd [file normalize [gitdir]]
-				set ep [file normalize [gitexec]]
-				regsub -all ' $gd "'\\''" gd
-				regsub -all ' $ep "'\\''" ep
 				puts $fd "#!/bin/sh"
-				foreach name [array names env] {
-					if {[string match GIT_* $name]} {
-						regsub -all ' $env($name) "'\\''" v
-						puts $fd "export $name='$v'"
+				foreach name [lsort [array names env]] {
+					set value $env($name)
+					switch -- $name {
+					GIT_DIR { set value [file normalize [gitdir]] }
+					}
+
+					switch -glob -- $name {
+					SSH_* -
+					GIT_* {
+						puts $fd "if test \"z\$$name\" = z; then"
+						puts $fd "  export $name=[sq $value]"
+						puts $fd "fi &&"
+					}
 					}
 				}
-				puts $fd "export PATH='$ep':\$PATH"
-				puts $fd "export GIT_DIR='$gd'"
-				puts $fd "exec [file normalize $argv0]"
+				puts $fd "export PATH=[sq [file dirname $::_git]]:\$PATH &&"
+				puts $fd "cd [sq [file normalize [pwd]]] &&"
+				puts $fd "exec \\"
+				puts $fd " [sq [info nameofexecutable]] \\"
+				puts $fd " [sq [file normalize $argv0]]"
 				close $fd
 
 				file attributes $exe -permissions u+x,g+x,o+x

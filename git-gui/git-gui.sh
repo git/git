@@ -117,6 +117,7 @@ set _gitdir {}
 set _gitexec {}
 set _reponame {}
 set _iscygwin {}
+set _search_path {}
 
 proc appname {} {
 	global _appname
@@ -128,7 +129,7 @@ proc gitdir {args} {
 	if {$args eq {}} {
 		return $_gitdir
 	}
-	return [eval [concat [list file join $_gitdir] $args]]
+	return [eval [list file join $_gitdir] $args]
 }
 
 proc gitexec {args} {
@@ -137,11 +138,19 @@ proc gitexec {args} {
 		if {[catch {set _gitexec [git --exec-path]} err]} {
 			error "Git not installed?\n\n$err"
 		}
+		if {[is_Cygwin]} {
+			set _gitexec [exec cygpath \
+				--windows \
+				--absolute \
+				$_gitexec]
+		} else {
+			set _gitexec [file normalize $_gitexec]
+		}
 	}
 	if {$args eq {}} {
 		return $_gitexec
 	}
-	return [eval [concat [list file join $_gitexec] $args]]
+	return [eval [list file join $_gitexec] $args]
 }
 
 proc reponame {} {
@@ -237,7 +246,7 @@ proc load_config {include_global} {
 	array unset global_config
 	if {$include_global} {
 		catch {
-			set fd_rc [open "| git config --global --list" r]
+			set fd_rc [git_read config --global --list]
 			while {[gets $fd_rc line] >= 0} {
 				if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
 					if {[is_many_config $name]} {
@@ -253,7 +262,7 @@ proc load_config {include_global} {
 
 	array unset repo_config
 	catch {
-		set fd_rc [open "| git config --list" r]
+		set fd_rc [git_read config --list]
 		while {[gets $fd_rc line] >= 0} {
 			if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
 				if {[is_many_config $name]} {
@@ -280,19 +289,220 @@ proc load_config {include_global} {
 ##
 ## handy utils
 
-proc git {args} {
-	return [eval exec git $args]
+proc _git_cmd {name} {
+	global _git_cmd_path
+
+	if {[catch {set v $_git_cmd_path($name)}]} {
+		switch -- $name {
+		  version   -
+		--version   -
+		--exec-path { return [list $::_git $name] }
+		}
+
+		set p [gitexec git-$name$::_search_exe]
+		if {[file exists $p]} {
+			set v [list $p]
+		} elseif {[is_Windows] && [file exists [gitexec git-$name]]} {
+			# Try to determine what sort of magic will make
+			# git-$name go and do its thing, because native
+			# Tcl on Windows doesn't know it.
+			#
+			set p [gitexec git-$name]
+			set f [open $p r]
+			set s [gets $f]
+			close $f
+
+			switch -glob -- $s {
+			#!*sh     { set i sh     }
+			#!*perl   { set i perl   }
+			#!*python { set i python }
+			default   { error "git-$name is not supported: $s" }
+			}
+
+			upvar #0 _$i interp
+			if {![info exists interp]} {
+				set interp [_which $i]
+			}
+			if {$interp eq {}} {
+				error "git-$name requires $i (not in PATH)"
+			}
+			set v [list $interp $p]
+		} else {
+			# Assume it is builtin to git somehow and we
+			# aren't actually able to see a file for it.
+			#
+			set v [list $::_git $name]
+		}
+		set _git_cmd_path($name) $v
+	}
+	return $v
 }
 
-proc current-branch {} {
-	set ref {}
+proc _which {what} {
+	global env _search_exe _search_path
+
+	if {$_search_path eq {}} {
+		if {[is_Cygwin]} {
+			set _search_path [split [exec cygpath \
+				--windows \
+				--path \
+				--absolute \
+				$env(PATH)] {;}]
+			set _search_exe .exe
+		} elseif {[is_Windows]} {
+			set _search_path [split $env(PATH) {;}]
+			set _search_exe .exe
+		} else {
+			set _search_path [split $env(PATH) :]
+			set _search_exe {}
+		}
+	}
+
+	foreach p $_search_path {
+		set p [file join $p $what$_search_exe]
+		if {[file exists $p]} {
+			return [file normalize $p]
+		}
+	}
+	return {}
+}
+
+proc git {args} {
+	set opt [list exec]
+
+	while {1} {
+		switch -- [lindex $args 0] {
+		--nice {
+			global _nice
+			if {$_nice ne {}} {
+				lappend opt $_nice
+			}
+		}
+
+		default {
+			break
+		}
+
+		}
+
+		set args [lrange $args 1 end]
+	}
+
+	set cmdp [_git_cmd [lindex $args 0]]
+	set args [lrange $args 1 end]
+
+	return [eval $opt $cmdp $args]
+}
+
+proc _open_stdout_stderr {cmd} {
+	if {[catch {
+			set fd [open $cmd r]
+		} err]} {
+		if {   [lindex $cmd end] eq {2>@1}
+		    && $err eq {can not find channel named "1"}
+			} {
+			# Older versions of Tcl 8.4 don't have this 2>@1 IO
+			# redirect operator.  Fallback to |& cat for those.
+			# The command was not actually started, so its safe
+			# to try to start it a second time.
+			#
+			set fd [open [concat \
+				[lrange $cmd 0 end-1] \
+				[list |& cat] \
+				] r]
+		} else {
+			error $err
+		}
+	}
+	return $fd
+}
+
+proc git_read {args} {
+	set opt [list |]
+
+	while {1} {
+		switch -- [lindex $args 0] {
+		--nice {
+			global _nice
+			if {$_nice ne {}} {
+				lappend opt $_nice
+			}
+		}
+
+		--stderr {
+			lappend args 2>@1
+		}
+
+		default {
+			break
+		}
+
+		}
+
+		set args [lrange $args 1 end]
+	}
+
+	set cmdp [_git_cmd [lindex $args 0]]
+	set args [lrange $args 1 end]
+
+	return [_open_stdout_stderr [concat $opt $cmdp $args]]
+}
+
+proc git_write {args} {
+	set opt [list |]
+
+	while {1} {
+		switch -- [lindex $args 0] {
+		--nice {
+			global _nice
+			if {$_nice ne {}} {
+				lappend opt $_nice
+			}
+		}
+
+		default {
+			break
+		}
+
+		}
+
+		set args [lrange $args 1 end]
+	}
+
+	set cmdp [_git_cmd [lindex $args 0]]
+	set args [lrange $args 1 end]
+
+	return [open [concat $opt $cmdp $args] w]
+}
+
+proc sq {value} {
+	regsub -all ' $value "'\\''" value
+	return "'$value'"
+}
+
+proc load_current_branch {} {
+	global current_branch is_detached
+
 	set fd [open [gitdir HEAD] r]
-	if {[gets $fd ref] <16
-	 || ![regsub {^ref: refs/heads/} $ref {} ref]} {
+	if {[gets $fd ref] < 1} {
 		set ref {}
 	}
 	close $fd
-	return $ref
+
+	set pfx {ref: refs/heads/}
+	set len [string length $pfx]
+	if {[string equal -length $len $pfx $ref]} {
+		# We're on a branch.  It might not exist.  But
+		# HEAD looks good enough to be a branch.
+		#
+		set current_branch [string range $ref $len end]
+		set is_detached 0
+	} else {
+		# Assume this is a detached head.
+		#
+		set current_branch HEAD
+		set is_detached 1
+	}
 }
 
 auto_load tk_optionMenu
@@ -306,35 +516,90 @@ proc tk_optionMenu {w varName args} {
 
 ######################################################################
 ##
+## find git
+
+set _git  [_which git]
+if {$_git eq {}} {
+	catch {wm withdraw .}
+	error_popup "Cannot find git in PATH."
+	exit 1
+}
+set _nice [_which nice]
+
+######################################################################
+##
 ## version check
 
-set req_maj 1
-set req_min 5
-
-if {[catch {set v [git --version]} err]} {
+if {[catch {set _git_version [git --version]} err]} {
 	catch {wm withdraw .}
 	error_popup "Cannot determine Git version:
 
 $err
 
-[appname] requires Git $req_maj.$req_min or later."
+[appname] requires Git 1.5.0 or later."
 	exit 1
 }
-if {[regexp {^git version (\d+)\.(\d+)} $v _junk act_maj act_min]} {
-	if {$act_maj < $req_maj
-		|| ($act_maj == $req_maj && $act_min < $req_min)} {
-		catch {wm withdraw .}
-		error_popup "[appname] requires Git $req_maj.$req_min or later.
-
-You are using $v."
-		exit 1
-	}
-} else {
+if {![regsub {^git version } $_git_version {} _git_version]} {
 	catch {wm withdraw .}
-	error_popup "Cannot parse Git version string:\n\n$v"
+	error_popup "Cannot parse Git version string:\n\n$_git_version"
 	exit 1
 }
-unset -nocomplain v _junk act_maj act_min req_maj req_min
+regsub {\.[0-9]+\.g[0-9a-f]+$} $_git_version {} _git_version
+regsub {\.rc[0-9]+$} $_git_version {} _git_version
+
+proc git-version {args} {
+	global _git_version
+
+	switch [llength $args] {
+	0 {
+		return $_git_version
+	}
+
+	2 {
+		set op [lindex $args 0]
+		set vr [lindex $args 1]
+		set cm [package vcompare $_git_version $vr]
+		return [expr $cm $op 0]
+	}
+
+	4 {
+		set type [lindex $args 0]
+		set name [lindex $args 1]
+		set parm [lindex $args 2]
+		set body [lindex $args 3]
+
+		if {($type ne {proc} && $type ne {method})} {
+			error "Invalid arguments to git-version"
+		}
+		if {[llength $body] < 2 || [lindex $body end-1] ne {default}} {
+			error "Last arm of $type $name must be default"
+		}
+
+		foreach {op vr cb} [lrange $body 0 end-2] {
+			if {[git-version $op $vr]} {
+				return [uplevel [list $type $name $parm $cb]]
+			}
+		}
+
+		return [uplevel [list $type $name $parm [lindex $body end]]]
+	}
+
+	default {
+		error "git-version >= x"
+	}
+
+	}
+}
+
+if {[git-version < 1.5]} {
+	catch {wm withdraw .}
+	error_popup "[appname] requires Git 1.5.0 or later.
+
+You are using [git-version]:
+
+[git --version]"
+	exit 1
+}
 
 ######################################################################
 ##
@@ -381,7 +646,6 @@ set _reponame [lindex [file split \
 set current_diff_path {}
 set current_diff_side {}
 set diff_actions [list]
-set ui_status_value {Initializing...}
 
 set HEAD {}
 set PARENT {}
@@ -389,6 +653,7 @@ set MERGE_HEAD [list]
 set commit_type {}
 set empty_tree {}
 set current_branch {}
+set is_detached 0
 set current_diff_path {}
 set selected_commit_type new
 
@@ -438,7 +703,7 @@ proc repository_state {ctvar hdvar mhvar} {
 
 	set mh [list]
 
-	set current_branch [current-branch]
+	load_current_branch
 	if {[catch {set hd [git rev-parse --verify HEAD]}]} {
 		set hd {}
 		set ct initial
@@ -474,7 +739,7 @@ proc PARENT {} {
 
 proc rescan {after {honor_trustmtime 1}} {
 	global HEAD PARENT MERGE_HEAD commit_type
-	global ui_index ui_workdir ui_status_value ui_comm
+	global ui_index ui_workdir ui_comm
 	global rescan_active file_states
 	global repo_config
 
@@ -504,22 +769,17 @@ proc rescan {after {honor_trustmtime 1}} {
 		$ui_comm edit modified false
 	}
 
-	if {[is_enabled branch]} {
-		load_all_heads
-		populate_branch_menu
-	}
-
 	if {$honor_trustmtime && $repo_config(gui.trustmtime) eq {true}} {
 		rescan_stage2 {} $after
 	} else {
 		set rescan_active 1
-		set ui_status_value {Refreshing file status...}
-		set cmd [list git update-index]
-		lappend cmd -q
-		lappend cmd --unmerged
-		lappend cmd --ignore-missing
-		lappend cmd --refresh
-		set fd_rf [open "| $cmd" r]
+		ui_status {Refreshing file status...}
+		set fd_rf [git_read update-index \
+			-q \
+			--unmerged \
+			--ignore-missing \
+			--refresh \
+			]
 		fconfigure $fd_rf -blocking 0 -translation binary
 		fileevent $fd_rf readable \
 			[list rescan_stage2 $fd_rf $after]
@@ -527,7 +787,6 @@ proc rescan {after {honor_trustmtime 1}} {
 }
 
 proc rescan_stage2 {fd after} {
-	global ui_status_value
 	global rescan_active buf_rdi buf_rdf buf_rlo
 
 	if {$fd ne {}} {
@@ -536,8 +795,7 @@ proc rescan_stage2 {fd after} {
 		close $fd
 	}
 
-	set ls_others [list | git ls-files --others -z \
-		--exclude-per-directory=.gitignore]
+	set ls_others [list --exclude-per-directory=.gitignore]
 	set info_exclude [gitdir info exclude]
 	if {[file readable $info_exclude]} {
 		lappend ls_others "--exclude-from=$info_exclude"
@@ -548,10 +806,10 @@ proc rescan_stage2 {fd after} {
 	set buf_rlo {}
 
 	set rescan_active 3
-	set ui_status_value {Scanning for modified files ...}
-	set fd_di [open "| git diff-index --cached -z [PARENT]" r]
-	set fd_df [open "| git diff-files -z" r]
-	set fd_lo [open $ls_others r]
+	ui_status {Scanning for modified files ...}
+	set fd_di [git_read diff-index --cached -z [PARENT]]
+	set fd_df [git_read diff-files -z]
+	set fd_lo [eval git_read ls-files --others -z $ls_others]
 
 	fconfigure $fd_di -blocking 0 -translation binary -encoding binary
 	fconfigure $fd_df -blocking 0 -translation binary -encoding binary
@@ -706,6 +964,14 @@ proc mapdesc {state path} {
 		return $state
 	}
 	return $r
+}
+
+proc ui_status {msg} {
+	$::main_status show $msg
+}
+
+proc ui_ready {{test {}}} {
+	$::main_status show {Ready.} $test
 }
 
 proc escape_path {path} {
@@ -1059,26 +1325,18 @@ proc incr_font_size {font {amt 1}} {
 set starting_gitk_msg {Starting gitk... please wait...}
 
 proc do_gitk {revs} {
-	global env ui_status_value starting_gitk_msg
-
 	# -- Always start gitk through whatever we were loaded with.  This
 	#    lets us bypass using shell process on Windows systems.
 	#
-	set cmd [list [info nameofexecutable]]
-	lappend cmd [gitexec gitk]
-	if {$revs ne {}} {
-		append cmd { }
-		append cmd $revs
-	}
-
-	if {[catch {eval exec $cmd &} err]} {
-		error_popup "Failed to start gitk:\n\n$err"
+	set exe [file join [file dirname $::_git] gitk]
+	set cmd [list [info nameofexecutable] $exe]
+	if {! [file exists $exe]} {
+		error_popup "Unable to start gitk:\n\n$exe does not exist"
 	} else {
-		set ui_status_value $starting_gitk_msg
+		eval exec $cmd $revs &
+		ui_status $::starting_gitk_msg
 		after 10000 {
-			if {$ui_status_value eq $starting_gitk_msg} {
-				set ui_status_value {Ready.}
-			}
+			ui_ready $starting_gitk_msg
 		}
 	}
 }
@@ -1127,7 +1385,7 @@ proc do_quit {} {
 }
 
 proc do_rescan {} {
-	rescan {set ui_status_value {Ready.}}
+	rescan ui_ready
 }
 
 proc do_commit {} {
@@ -1162,12 +1420,12 @@ proc toggle_or_diff {w x y} {
 			update_indexinfo \
 				"Unstaging [short_path $path] from commit" \
 				[list $path] \
-				[concat $after {set ui_status_value {Ready.}}]
+				[concat $after [list ui_ready]]
 		} elseif {$w eq $ui_workdir} {
 			update_index \
 				"Adding [short_path $path]" \
 				[list $path] \
-				[concat $after {set ui_status_value {Ready.}}]
+				[concat $after [list ui_ready]]
 		}
 	} else {
 		show_diff $path $w $lno
@@ -1294,6 +1552,7 @@ set default_config(merge.verbosity) 2
 set default_config(user.name) {}
 set default_config(user.email) {}
 
+set default_config(gui.matchtrackingbranch) false
 set default_config(gui.pruneduringfetch) false
 set default_config(gui.trustmtime) false
 set default_config(gui.diffcontext) 5
@@ -1451,8 +1710,14 @@ if {[is_enabled branch]} {
 	menu .mbar.branch
 
 	.mbar.branch add command -label {Create...} \
-		-command do_create_branch \
+		-command branch_create::dialog \
 		-accelerator $M1T-N
+	lappend disable_on_lock [list .mbar.branch entryconf \
+		[.mbar.branch index last] -state]
+
+	.mbar.branch add command -label {Checkout...} \
+		-command branch_checkout::dialog \
+		-accelerator $M1T-O
 	lappend disable_on_lock [list .mbar.branch entryconf \
 		[.mbar.branch index last] -state]
 
@@ -1462,7 +1727,7 @@ if {[is_enabled branch]} {
 		[.mbar.branch index last] -state]
 
 	.mbar.branch add command -label {Delete...} \
-		-command do_delete_branch
+		-command branch_delete::dialog
 	lappend disable_on_lock [list .mbar.branch entryconf \
 		[.mbar.branch index last] -state]
 
@@ -1557,7 +1822,8 @@ if {[is_enabled transport]} {
 
 	menu .mbar.push
 	.mbar.push add command -label {Push...} \
-		-command do_push_anywhere
+		-command do_push_anywhere \
+		-accelerator $M1T-P
 	.mbar.push add command -label {Delete...} \
 		-command remote_branch_delete::dialog
 }
@@ -1583,20 +1849,19 @@ if {[is_MacOSX]} {
 	#
 	if {[is_Cygwin] && [file exists /usr/local/miga/lib/gui-miga]} {
 	proc do_miga {} {
-		global ui_status_value
 		if {![lock_index update]} return
 		set cmd [list sh --login -c "/usr/local/miga/lib/gui-miga \"[pwd]\""]
 		set miga_fd [open "|$cmd" r]
 		fconfigure $miga_fd -blocking 0
 		fileevent $miga_fd readable [list miga_done $miga_fd]
-		set ui_status_value {Running miga...}
+		ui_status {Running miga...}
 	}
 	proc miga_done {fd} {
 		read $fd 512
 		if {[eof $fd]} {
 			close $fd
 			unlock_index
-			rescan [list set ui_status_value {Ready.}]
+			rescan ui_ready
 		}
 	}
 	.mbar add cascade -label Tools -menu .mbar.tools
@@ -1676,8 +1941,19 @@ switch -- $subcommand {
 browser {
 	set subcommand_args {rev?}
 	switch [llength $argv] {
-	0 { set current_branch [current-branch] }
-	1 { set current_branch [lindex $argv 0] }
+	0 { load_current_branch }
+	1 {
+		set current_branch [lindex $argv 0]
+		if {[regexp {^[0-9a-f]{1,39}$} $current_branch]} {
+			if {[catch {
+					set current_branch \
+					[git rev-parse --verify $current_branch]
+				} err]} {
+				puts stderr $err
+				exit 1
+			}
+		}
+	}
 	default usage
 	}
 	browser::new $current_branch
@@ -1710,8 +1986,16 @@ blame {
 	unset is_path
 
 	if {$head eq {}} {
-		set current_branch [current-branch]
+		load_current_branch
 	} else {
+		if {[regexp {^[0-9a-f]{1,39}$} $head]} {
+			if {[catch {
+					set head [git rev-parse --verify $head]
+				} err]} {
+				puts stderr $err
+				exit 1
+			}
+		}
 		set current_branch $head
 	}
 
@@ -1846,6 +2130,10 @@ button .vpane.lower.commarea.buttons.commit -text {Commit} \
 pack .vpane.lower.commarea.buttons.commit -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.commit conf -state}
+
+button .vpane.lower.commarea.buttons.push -text {Push} \
+	-command do_push_anywhere
+pack .vpane.lower.commarea.buttons.push -side top -fill x
 
 # -- Commit Message Buffer
 #
@@ -2115,12 +2403,9 @@ unset ui_diff_applyhunk
 
 # -- Status Bar
 #
-label .status -textvariable ui_status_value \
-	-anchor w \
-	-justify left \
-	-borderwidth 1 \
-	-relief sunken
+set main_status [::status_bar::new .status]
 pack .status -anchor w -side bottom -fill x
+$main_status show {Initializing...}
 
 # -- Load geometry
 #
@@ -2171,13 +2456,19 @@ bind $ui_diff <Control-Key-f> {catch {%W yview scroll  1 pages};break}
 bind $ui_diff <Button-1>   {focus %W}
 
 if {[is_enabled branch]} {
-	bind . <$M1B-Key-n> do_create_branch
-	bind . <$M1B-Key-N> do_create_branch
+	bind . <$M1B-Key-n> branch_create::dialog
+	bind . <$M1B-Key-N> branch_create::dialog
+	bind . <$M1B-Key-o> branch_checkout::dialog
+	bind . <$M1B-Key-O> branch_checkout::dialog
+}
+if {[is_enabled transport]} {
+	bind . <$M1B-Key-p> do_push_anywhere
+	bind . <$M1B-Key-P> do_push_anywhere
 }
 
-bind all <Key-F5> do_rescan
-bind all <$M1B-Key-r> do_rescan
-bind all <$M1B-Key-R> do_rescan
+bind .   <Key-F5>     do_rescan
+bind .   <$M1B-Key-r> do_rescan
+bind .   <$M1B-Key-R> do_rescan
 bind .   <$M1B-Key-s> do_signoff
 bind .   <$M1B-Key-S> do_signoff
 bind .   <$M1B-Key-i> do_add_all
@@ -2255,9 +2546,7 @@ user.email settings into your personal
 #
 if {[is_enabled transport]} {
 	load_all_remotes
-	load_all_heads
 
-	populate_branch_menu
 	populate_fetch_menu
 	populate_push_menu
 }

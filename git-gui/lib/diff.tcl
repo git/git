@@ -17,7 +17,7 @@ proc clear_diff {} {
 }
 
 proc reshow_diff {} {
-	global ui_status_value file_states file_lists
+	global file_states file_lists
 	global current_diff_path current_diff_side
 
 	set p $current_diff_path
@@ -49,13 +49,13 @@ A rescan will be automatically started to find other files which may have the sa
 
 	clear_diff
 	display_file $path __
-	rescan {set ui_status_value {Ready.}} 0
+	rescan ui_ready 0
 }
 
 proc show_diff {path w {lno {}}} {
 	global file_states file_lists
 	global is_3way_diff diff_active repo_config
-	global ui_diff ui_status_value ui_index ui_workdir
+	global ui_diff ui_index ui_workdir
 	global current_diff_path current_diff_side current_diff_header
 
 	if {$diff_active || ![lock_index read]} return
@@ -78,7 +78,7 @@ proc show_diff {path w {lno {}}} {
 	set current_diff_path $path
 	set current_diff_side $w
 	set current_diff_header {}
-	set ui_status_value "Loading diff of [escape_path $path]..."
+	ui_status "Loading diff of [escape_path $path]..."
 
 	# - Git won't give us the diff, there's nothing to compare to!
 	#
@@ -92,7 +92,7 @@ proc show_diff {path w {lno {}}} {
 			} err ]} {
 			set diff_active 0
 			unlock_index
-			set ui_status_value "Unable to display [escape_path $path]"
+			ui_status "Unable to display [escape_path $path]"
 			error_popup "Error loading file:\n\n$err"
 			return
 		}
@@ -127,11 +127,11 @@ proc show_diff {path w {lno {}}} {
 		$ui_diff conf -state disabled
 		set diff_active 0
 		unlock_index
-		set ui_status_value {Ready.}
+		ui_ready
 		return
 	}
 
-	set cmd [list | git]
+	set cmd [list]
 	if {$w eq $ui_index} {
 		lappend cmd diff-index
 		lappend cmd --cached
@@ -154,10 +154,10 @@ proc show_diff {path w {lno {}}} {
 	lappend cmd --
 	lappend cmd $path
 
-	if {[catch {set fd [open $cmd r]} err]} {
+	if {[catch {set fd [eval git_read --nice $cmd]} err]} {
 		set diff_active 0
 		unlock_index
-		set ui_status_value "Unable to display [escape_path $path]"
+		ui_status "Unable to display [escape_path $path]"
 		error_popup "Error loading diff:\n\n$err"
 		return
 	}
@@ -170,7 +170,7 @@ proc show_diff {path w {lno {}}} {
 }
 
 proc read_diff {fd} {
-	global ui_diff ui_status_value diff_active
+	global ui_diff diff_active
 	global is_3way_diff current_diff_header
 
 	$ui_diff conf -state normal
@@ -256,7 +256,7 @@ proc read_diff {fd} {
 		close $fd
 		set diff_active 0
 		unlock_index
-		set ui_status_value {Ready.}
+		ui_ready
 
 		if {[$ui_diff index end] eq {2.0}} {
 			handle_empty_diff
@@ -271,7 +271,7 @@ proc apply_hunk {x y} {
 	if {$current_diff_path eq {} || $current_diff_header eq {}} return
 	if {![lock_index apply_hunk]} return
 
-	set apply_cmd {git apply --cached --whitespace=nowarn}
+	set apply_cmd {apply --cached --whitespace=nowarn}
 	set mi [lindex $file_states($current_diff_path) 0]
 	if {$current_diff_side eq $ui_index} {
 		set mode unstage
@@ -301,7 +301,7 @@ proc apply_hunk {x y} {
 	}
 
 	if {[catch {
-		set p [open "| $apply_cmd" w]
+		set p [eval git_write $apply_cmd]
 		fconfigure $p -translation binary -encoding binary
 		puts -nonewline $p $current_diff_header
 		puts -nonewline $p [$ui_diff get $s_lno $e_lno]

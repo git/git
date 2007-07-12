@@ -7,6 +7,7 @@ field t_short
 field t_long
 field w
 field console_cr
+field is_toplevel    1; # are we our own window?
 
 constructor new {short_title long_title} {
 	set t_short $short_title
@@ -15,10 +16,25 @@ constructor new {short_title long_title} {
 	return $this
 }
 
+constructor embed {path title} {
+	set t_short {}
+	set t_long $title
+	set w $path
+	set is_toplevel 0
+	_init $this
+	return $this
+}
+
 method _init {} {
 	global M1B
-	make_toplevel top w -autodelete 0
-	wm title $top "[appname] ([reponame]): $t_short"
+
+	if {$is_toplevel} {
+		make_toplevel top w -autodelete 0
+		wm title $top "[appname] ([reponame]): $t_short"
+	} else {
+		frame $w
+	}
+
 	set console_cr 1.0
 
 	frame $w.m
@@ -31,16 +47,20 @@ method _init {} {
 		-background white -borderwidth 1 \
 		-relief sunken \
 		-width 80 -height 10 \
+		-wrap none \
 		-font font_diff \
 		-state disabled \
+		-xscrollcommand [list $w.m.sbx set] \
 		-yscrollcommand [list $w.m.sby set]
 	label $w.m.s -text {Working... please wait...} \
 		-anchor w \
 		-justify left \
 		-font font_uibold
+	scrollbar $w.m.sbx -command [list $w.m.t xview] -orient h
 	scrollbar $w.m.sby -command [list $w.m.t yview]
 	pack $w.m.l1 -side top -fill x
 	pack $w.m.s -side bottom -fill x
+	pack $w.m.sbx -side bottom -fill x
 	pack $w.m.sby -side right -fill y
 	pack $w.m.t -side left -fill both -expand 1
 	pack $w.m -side top -fill both -expand 1 -padx 5 -pady 10
@@ -57,31 +77,26 @@ method _init {} {
 			$w.m.t tag remove sel 0.0 end
 		"
 
-	button $w.ok -text {Close} \
-		-state disabled \
-		-command "destroy $w"
-	pack $w.ok -side bottom -anchor e -pady 10 -padx 10
+	if {$is_toplevel} {
+		button $w.ok -text {Close} \
+			-state disabled \
+			-command [list destroy $w]
+		pack $w.ok -side bottom -anchor e -pady 10 -padx 10
+		bind $w <Visibility> [list focus $w]
+	}
 
 	bind_button3 $w.m.t "tk_popup $w.ctxm %X %Y"
 	bind $w.m.t <$M1B-Key-a> "$w.m.t tag add sel 0.0 end;break"
 	bind $w.m.t <$M1B-Key-A> "$w.m.t tag add sel 0.0 end;break"
-	bind $w <Visibility> "focus $w"
 }
 
 method exec {cmd {after {}}} {
-	# -- Cygwin's Tcl tosses the enviroment when we exec our child.
-	#    But most users need that so we have to relogin. :-(
-	#
-	if {[is_Cygwin]} {
-		set cmd [list sh --login -c "cd \"[pwd]\" && [join $cmd { }]"]
+	if {[lindex $cmd 0] eq {git}} {
+		set fd_f [eval git_read --stderr [lrange $cmd 1 end]]
+	} else {
+		lappend cmd 2>@1
+		set fd_f [_open_stdout_stderr $cmd]
 	}
-
-	# -- Tcl won't let us redirect both stdout and stderr to
-	#    the same pipe.  So pass it through cat...
-	#
-	set cmd [concat | $cmd |& cat]
-
-	set fd_f [open $cmd r]
 	fconfigure $fd_f -blocking 0 -translation binary
 	fileevent $fd_f readable [cb _read $fd_f $after]
 }
@@ -155,20 +170,32 @@ method chain {cmdlist {ok 1}} {
 	}
 }
 
+method insert {txt} {
+	if {![winfo exists $w.m.t]} {_init $this}
+	$w.m.t conf -state normal
+	$w.m.t insert end "$txt\n"
+	set console_cr [$w.m.t index {end -1c}]
+	$w.m.t conf -state disabled
+}
+
 method done {ok} {
 	if {$ok} {
 		if {[winfo exists $w.m.s]} {
 			$w.m.s conf -background green -text {Success}
-			$w.ok conf -state normal
-			focus $w.ok
+			if {$is_toplevel} {
+				$w.ok conf -state normal
+				focus $w.ok
+			}
 		}
 	} else {
 		if {![winfo exists $w.m.s]} {
 			_init $this
 		}
 		$w.m.s conf -background red -text {Error: Command Failed}
-		$w.ok conf -state normal
-		focus $w.ok
+		if {$is_toplevel} {
+			$w.ok conf -state normal
+			focus $w.ok
+		}
 	}
 	delete_this
 }

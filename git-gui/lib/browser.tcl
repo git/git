@@ -11,6 +11,8 @@ field browser_status {Starting...}
 field browser_stack  {}
 field browser_busy   1
 
+field ls_buf     {}; # Buffered record output from ls-tree
+
 constructor new {commit} {
 	global cursor_ptr M1B
 	make_toplevel top w
@@ -160,7 +162,7 @@ method _click {was_double_click pos} {
 }
 
 method _ls {tree_id {name {}}} {
-	set browser_buffer {}
+	set ls_buf {}
 	set browser_files {}
 	set browser_busy 1
 
@@ -178,24 +180,25 @@ method _ls {tree_id {name {}}} {
 	lappend browser_stack [list $tree_id $name]
 	$w conf -state disabled
 
-	set cmd [list git ls-tree -z $tree_id]
-	set fd [open "| $cmd" r]
+	set fd [git_read ls-tree -z $tree_id]
 	fconfigure $fd -blocking 0 -translation binary -encoding binary
 	fileevent $fd readable [cb _read $fd]
 }
 
 method _read {fd} {
-	append browser_buffer [read $fd]
-	set pck [split $browser_buffer "\0"]
-	set browser_buffer [lindex $pck end]
+	append ls_buf [read $fd]
+	set pck [split $ls_buf "\0"]
+	set ls_buf [lindex $pck end]
 
 	set n [llength $browser_files]
 	$w conf -state normal
 	foreach p [lrange $pck 0 end-1] {
-		set info [split $p "\t"]
-		set path [lindex $info 1]
-		set info [split [lindex $info 0] { }]
-		set type [lindex $info 1]
+		set tab [string first "\t" $p]
+		if {$tab == -1} continue
+
+		set info [split [string range $p 0 [expr {$tab - 1}]] { }]
+		set path [string range $p [expr {$tab + 1}] end]
+		set type   [lindex $info 1]
 		set object [lindex $info 2]
 
 		switch -- $type {
@@ -225,7 +228,7 @@ method _read {fd} {
 		close $fd
 		set browser_status Ready.
 		set browser_busy 0
-		unset browser_buffer
+		set ls_buf {}
 		if {$n > 0} {
 			$w tag add in_sel 1.0 2.0
 			focus -force $w
