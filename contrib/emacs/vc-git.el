@@ -81,6 +81,71 @@
         (match-string 2 str)
       str)))
 
+(defun vc-git-symbolic-commit (commit)
+  "Translate COMMIT string into symbolic form.
+Returns nil if not possible."
+  (and commit
+       (with-temp-buffer
+	 (and
+	  (zerop
+	   (call-process "git" nil '(t nil) nil "name-rev"
+			 "--name-only" "--tags"
+			 commit))
+	  (goto-char (point-min))
+	  (= (forward-line 2) 1)
+	  (bolp)
+	  (buffer-substring-no-properties (point-min) (1- (point-max)))))))
+
+(defun vc-git-previous-version (file rev)
+  "git-specific version of `vc-previous-version'."
+  (let ((default-directory (file-name-directory (expand-file-name file)))
+	(file (file-name-nondirectory file)))
+    (vc-git-symbolic-commit
+     (with-temp-buffer
+       (and
+	(zerop
+	 (call-process "git" nil '(t nil) nil "rev-list"
+		       "-2" rev "--" file))
+	(goto-char (point-max))
+	(bolp)
+	(zerop (forward-line -1))
+	(not (bobp))
+	(buffer-substring-no-properties
+	   (point)
+	   (1- (point-max))))))))
+
+(defun vc-git-next-version (file rev)
+  "git-specific version of `vc-next-version'."
+  (let* ((default-directory (file-name-directory
+			     (expand-file-name file)))
+	(file (file-name-nondirectory file))
+	(current-rev
+	 (with-temp-buffer
+	   (and
+	    (zerop
+	     (call-process "git" nil '(t nil) nil "rev-list"
+			   "-1" rev "--" file))
+	    (goto-char (point-max))
+	    (bolp)
+	    (zerop (forward-line -1))
+	    (bobp)
+	    (buffer-substring-no-properties
+	     (point)
+	     (1- (point-max)))))))
+    (and current-rev
+	 (vc-git-symbolic-commit
+	  (with-temp-buffer
+	    (and
+	     (zerop
+	      (call-process "git" nil '(t nil) nil "rev-list"
+			    "HEAD" "--" file))
+	     (goto-char (point-min))
+	     (search-forward current-rev nil t)
+	     (zerop (forward-line -1))
+	     (buffer-substring-no-properties
+	      (point)
+	      (progn (forward-line 1) (1- (point))))))))))
+
 (defun vc-git-revert (file &optional contents-done)
   "Revert FILE to the version stored in the git repository."
   (if contents-done
