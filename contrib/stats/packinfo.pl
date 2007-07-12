@@ -1,4 +1,4 @@
-#!/bin/perl
+#!/usr/bin/perl
 #
 # This tool will print vaguely pretty information about a pack.  It
 # expects the output of "git-verify-pack -v" as input on stdin.
