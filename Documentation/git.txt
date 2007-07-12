@@ -411,6 +411,11 @@ parameter, <path>.
 
 other
 ~~~~~
+'GIT_MERGE_VERBOSITY'::
+	A number controlling the amount of output shown by
+	the recursive merge strategy.  Overrides merge.verbosity.
+	See gitlink:git-merge[1]
+
 'GIT_PAGER'::
 	This environment variable overrides `$PAGER`.
 
