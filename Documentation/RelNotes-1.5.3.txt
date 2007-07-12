@@ -21,6 +21,9 @@ Updates since v1.5.2
 
 * New commands and options.
 
+  - The hunk header output from "git diff" family can be customized
+    with the attributes mechanism.  See gitattributes(5) for details.
+
   - "git stash" allows you to quickly save away your work in
     progress and replay it later on an updated state.
 
@@ -184,6 +187,11 @@ Updates since v1.5.2
     small enough delta results it creates while looking for the
     best delta candidates.
 
+  - git-pack-objects learned a new heuristcs to prefer delta
+    that is shallower in depth over the smallest delta
+    possible.  This improves both overall packfile access
+    performance and packfile density.
+
   - diff-delta code that is used for packing has been improved
     to work better on big files.
 
@@ -210,6 +218,6 @@ this release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.5.3-rc0
+O=v1.5.3-rc1
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
