@@ -87,19 +87,15 @@ proc start_rev_list {view} {
 
     set startmsecs [clock clicks -milliseconds]
     set commitidx($view) 0
-    set args $viewargs($view)
-    if {$viewfiles($view) ne {}} {
-	set args [concat $args "--" $viewfiles($view)]
-    }
     set order "--topo-order"
     if {$datemode} {
 	set order "--date-order"
     }
     if {[catch {
-	set fd [open [concat | git rev-list --header $order \
-			  --parents --boundary --default HEAD $args] r]
+	set fd [open [concat | git log -z --pretty=raw $order --parents \
+			 --boundary $viewargs($view) "--" $viewfiles($view)] r]
     } err]} {
-	puts stderr "Error executing git rev-list: $err"
+	error_popup "Error executing git rev-list: $err"
 	exit 1
     }
     set commfd($view) $fd
@@ -194,10 +190,14 @@ proc getcommitlines {fd view}  {
 	set j [string first "\n" $cmit]
 	set ok 0
 	set listed 1
-	if {$j >= 0} {
-	    set ids [string range $cmit 0 [expr {$j - 1}]]
-	    if {[string range $ids 0 0] == "-"} {
-		set listed 0
+	if {$j >= 0 && [string match "commit *" $cmit]} {
+	    set ids [string range $cmit 7 [expr {$j - 1}]]
+	    if {[string match {[-<>]*} $ids]} {
+		switch -- [string index $ids 0] {
+		    "-" {set listed 0}
+		    "<" {set listed 2}
+		    ">" {set listed 3}
+		}
 		set ids [string range $ids 1 end]
 	    }
 	    set ok 1
@@ -213,7 +213,7 @@ proc getcommitlines {fd view}  {
 	    if {[string length $shortcmit] > 80} {
 		set shortcmit "[string range $shortcmit 0 80]..."
 	    }
-	    error_popup "Can't parse git rev-list output: {$shortcmit}"
+	    error_popup "Can't parse git log output: {$shortcmit}"
 	    exit 1
 	}
 	set id [lindex $ids 0]
@@ -1216,6 +1216,9 @@ proc treeview {w l openlevs} {
 	set treeheight($prefix) $ht
 	incr ht [lindex $htstack end]
 	set htstack [lreplace $htstack end end]
+	set prefixend [lindex $prefendstack end]
+	set prefendstack [lreplace $prefendstack end end]
+	set prefix [string range $prefix 0 $prefixend]
     }
     $w conf -state disabled
 }
@@ -1758,7 +1761,7 @@ proc showview {n} {
     global colormap rowtextx commitrow nextcolor canvxmax
     global numcommits rowrangelist commitlisted idrowranges rowchk
     global selectedline currentid canv canvy0
-    global matchinglines treediffs
+    global treediffs
     global pending_select phase
     global commitidx rowlaidout rowoptim
     global commfd
@@ -1786,7 +1789,6 @@ proc showview {n} {
     }
     unselectline
     normalline
-    stopfindproc
     if {$curview >= 0} {
 	set vparentlist($curview) $parentlist
 	set vdisporder($curview) $displayorder
@@ -1802,7 +1804,6 @@ proc showview {n} {
 		[list {} $rowidlist $rowoffsets $rowrangelist]
 	}
     }
-    catch {unset matchinglines}
     catch {unset treediffs}
     clear_display
     if {[info exists hlview] && $hlview == $n} {
@@ -2132,7 +2133,7 @@ proc readfhighlight {} {
 
 proc find_change {name ix op} {
     global nhighlights mainfont boldnamerows
-    global findstring findpattern findtype
+    global findstring findpattern findtype markingmatches
 
     # delete previous highlights, if any
     foreach row $boldnamerows {
@@ -2141,17 +2142,32 @@ proc find_change {name ix op} {
     set boldnamerows {}
     catch {unset nhighlights}
     unbolden
+    unmarkmatches
     if {$findtype ne "Regexp"} {
 	set e [string map {"*" "\\*" "?" "\\?" "\[" "\\\[" "\\" "\\\\"} \
 		   $findstring]
 	set findpattern "*$e*"
     }
+    set markingmatches [expr {$findstring ne {}}]
     drawvisible
+}
+
+proc doesmatch {f} {
+    global findtype findstring findpattern
+
+    if {$findtype eq "Regexp"} {
+	return [regexp $findstring $f]
+    } elseif {$findtype eq "IgnCase"} {
+	return [string match -nocase $findpattern $f]
+    } else {
+	return [string match $findpattern $f]
+    }
 }
 
 proc askfindhighlight {row id} {
     global nhighlights commitinfo iddrawn mainfont
-    global findstring findtype findloc findpattern
+    global findloc
+    global markingmatches
 
     if {![info exists commitinfo($id)]} {
 	getcommit $id
@@ -2160,33 +2176,45 @@ proc askfindhighlight {row id} {
     set isbold 0
     set fldtypes {Headline Author Date Committer CDate Comments}
     foreach f $info ty $fldtypes {
-	if {$findloc ne "All fields" && $findloc ne $ty} {
-	    continue
-	}
-	if {$findtype eq "Regexp"} {
-	    set doesmatch [regexp $findstring $f]
-	} elseif {$findtype eq "IgnCase"} {
-	    set doesmatch [string match -nocase $findpattern $f]
-	} else {
-	    set doesmatch [string match $findpattern $f]
-	}
-	if {$doesmatch} {
+	if {($findloc eq "All fields" || $findloc eq $ty) &&
+	    [doesmatch $f]} {
 	    if {$ty eq "Author"} {
 		set isbold 2
-	    } else {
-		set isbold 1
+		break
 	    }
+	    set isbold 1
 	}
     }
-    if {[info exists iddrawn($id)]} {
-	if {$isbold && ![ishighlighted $row]} {
-	    bolden $row [concat $mainfont bold]
+    if {$isbold && [info exists iddrawn($id)]} {
+	set f [concat $mainfont bold]
+	if {![ishighlighted $row]} {
+	    bolden $row $f
+	    if {$isbold > 1} {
+		bolden_name $row $f
+	    }
 	}
-	if {$isbold >= 2} {
-	    bolden_name $row [concat $mainfont bold]
+	if {$markingmatches} {
+	    markrowmatches $row [lindex $info 0] [lindex $info 1]
 	}
     }
     set nhighlights($row) $isbold
+}
+
+proc markrowmatches {row headline author} {
+    global canv canv2 linehtag linentag
+
+    $canv delete match$row
+    $canv2 delete match$row
+    set m [findmatches $headline]
+    if {$m ne {}} {
+	markmatches $canv $row $headline $linehtag($row) $m \
+	    [$canv itemcget $linehtag($row) -font]
+    }
+    set m [findmatches $author]
+    if {$m ne {}} {
+	markmatches $canv2 $row $author $linentag($row) $m \
+	    [$canv2 itemcget $linentag($row) -font]
+    }
 }
 
 proc vrel_change {name ix op} {
@@ -2857,7 +2885,7 @@ proc layouttail {} {
 	set id [lindex $idlist $col]
 	addextraid $id $row
 	unset idinlist($id)
-	lappend idrowranges($id) $row
+	lappend idrowranges($id) $id
 	lappend rowrangelist $idrowranges($id)
 	unset idrowranges($id)
 	incr row
@@ -2873,7 +2901,7 @@ proc layouttail {} {
 	lset rowidlist $row [list $id]
 	lset rowoffsets $row 0
 	makeuparrow $id 0 $row 0
-	lappend idrowranges($id) $row
+	lappend idrowranges($id) $id
 	lappend rowrangelist $idrowranges($id)
 	unset idrowranges($id)
 	incr row
@@ -3306,23 +3334,41 @@ proc drawlines {id} {
 }
 
 proc drawcmittext {id row col} {
-    global linespc canv canv2 canv3 canvy0 fgcolor
+    global linespc canv canv2 canv3 canvy0 fgcolor curview
     global commitlisted commitinfo rowidlist parentlist
     global rowtextx idpos idtags idheads idotherrefs
-    global linehtag linentag linedtag
+    global linehtag linentag linedtag markingmatches
     global mainfont canvxmax boldrows boldnamerows fgcolor nullid
 
+    # listed is 0 for boundary, 1 for normal, 2 for left, 3 for right
+    set listed [lindex $commitlisted $row]
     if {$id eq $nullid} {
 	set ofill red
     } else {
-	set ofill [expr {[lindex $commitlisted $row]? "blue": "white"}]
+	set ofill [expr {$listed != 0? "blue": "white"}]
     }
     set x [xc $row $col]
     set y [yc $row]
     set orad [expr {$linespc / 3}]
-    set t [$canv create oval [expr {$x - $orad}] [expr {$y - $orad}] \
-	       [expr {$x + $orad - 1}] [expr {$y + $orad - 1}] \
-	       -fill $ofill -outline $fgcolor -width 1 -tags circle]
+    if {$listed <= 1} {
+	set t [$canv create oval [expr {$x - $orad}] [expr {$y - $orad}] \
+		   [expr {$x + $orad - 1}] [expr {$y + $orad - 1}] \
+		   -fill $ofill -outline $fgcolor -width 1 -tags circle]
+    } elseif {$listed == 2} {
+	# triangle pointing left for left-side commits
+	set t [$canv create polygon \
+		   [expr {$x - $orad}] $y \
+		   [expr {$x + $orad - 1}] [expr {$y - $orad}] \
+		   [expr {$x + $orad - 1}] [expr {$y + $orad - 1}] \
+		   -fill $ofill -outline $fgcolor -width 1 -tags circle]
+    } else {
+	# triangle pointing right for right-side commits
+	set t [$canv create polygon \
+		   [expr {$x + $orad - 1}] $y \
+		   [expr {$x - $orad}] [expr {$y - $orad}] \
+		   [expr {$x - $orad}] [expr {$y + $orad - 1}] \
+		   -fill $ofill -outline $fgcolor -width 1 -tags circle]
+    }
     $canv raise $t
     $canv bind $t <1> {selcanvline {} %x %y}
     set rmx [llength [lindex $rowidlist $row]]
@@ -3366,6 +3412,9 @@ proc drawcmittext {id row col} {
     set linedtag($row) [$canv3 create text 3 $y -anchor w -fill $fgcolor \
 			    -text $date -font $mainfont -tags text]
     set xr [expr {$xt + [font measure $mainfont $headline]}]
+    if {$markingmatches} {
+	markrowmatches $row $headline $name
+    }
     if {$xr > $canvxmax} {
 	set canvxmax $xr
 	setcanvscroll
@@ -3436,9 +3485,7 @@ proc drawcommits {row {endrow {}}} {
     for {} {$r <= $er} {incr r} {
 	set id [lindex $displayorder $r]
 	set wasdrawn [info exists iddrawn($id)]
-	if {!$wasdrawn} {
-	    drawcmitrow $r
-	}
+	drawcmitrow $r
 	if {$r == $er} break
 	set nextid [lindex $displayorder [expr {$r + 1}]]
 	if {$wasdrawn && [info exists iddrawn($nextid)]} {
@@ -3889,101 +3936,165 @@ proc notbusy {what} {
 }
 
 proc findmatches {f} {
-    global findtype foundstring foundstrlen
+    global findtype findstring
     if {$findtype == "Regexp"} {
-	set matches [regexp -indices -all -inline $foundstring $f]
+	set matches [regexp -indices -all -inline $findstring $f]
     } else {
+	set fs $findstring
 	if {$findtype == "IgnCase"} {
-	    set str [string tolower $f]
-	} else {
-	    set str $f
+	    set f [string tolower $f]
+	    set fs [string tolower $fs]
 	}
 	set matches {}
 	set i 0
-	while {[set j [string first $foundstring $str $i]] >= 0} {
-	    lappend matches [list $j [expr {$j+$foundstrlen-1}]]
-	    set i [expr {$j + $foundstrlen}]
+	set l [string length $fs]
+	while {[set j [string first $fs $f $i]] >= 0} {
+	    lappend matches [list $j [expr {$j+$l-1}]]
+	    set i [expr {$j + $l}]
 	}
     }
     return $matches
 }
 
-proc dofind {} {
-    global findtype findloc findstring markedmatches commitinfo
-    global numcommits displayorder linehtag linentag linedtag
-    global mainfont canv canv2 canv3 selectedline
-    global matchinglines foundstring foundstrlen matchstring
-    global commitdata
+proc dofind {{rev 0}} {
+    global findstring findstartline findcurline selectedline numcommits
 
-    stopfindproc
     unmarkmatches
     cancel_next_highlight
     focus .
-    set matchinglines {}
-    if {$findtype == "IgnCase"} {
-	set foundstring [string tolower $findstring]
-    } else {
-	set foundstring $findstring
-    }
-    set foundstrlen [string length $findstring]
-    if {$foundstrlen == 0} return
-    regsub -all {[*?\[\\]} $foundstring {\\&} matchstring
-    set matchstring "*$matchstring*"
+    if {$findstring eq {} || $numcommits == 0} return
     if {![info exists selectedline]} {
-	set oldsel -1
+	set findstartline [lindex [visiblerows] $rev]
     } else {
-	set oldsel $selectedline
+	set findstartline $selectedline
     }
-    set didsel 0
-    set fldtypes {Headline Author Date Committer CDate Comments}
-    set l -1
-    foreach id $displayorder {
-	set d $commitdata($id)
-	incr l
-	if {$findtype == "Regexp"} {
-	    set doesmatch [regexp $foundstring $d]
-	} elseif {$findtype == "IgnCase"} {
-	    set doesmatch [string match -nocase $matchstring $d]
-	} else {
-	    set doesmatch [string match $matchstring $d]
+    set findcurline $findstartline
+    nowbusy finding
+    if {!$rev} {
+	run findmore
+    } else {
+	set findcurline $findstartline
+	if {$findcurline == 0} {
+	    set findcurline $numcommits
 	}
-	if {!$doesmatch} continue
+	incr findcurline -1
+	run findmorerev
+    }
+}
+
+proc findnext {restart} {
+    global findcurline
+    if {![info exists findcurline]} {
+	if {$restart} {
+	    dofind
+	} else {
+	    bell
+	}
+    } else {
+	run findmore
+	nowbusy finding
+    }
+}
+
+proc findprev {} {
+    global findcurline
+    if {![info exists findcurline]} {
+	dofind 1
+    } else {
+	run findmorerev
+	nowbusy finding
+    }
+}
+
+proc findmore {} {
+    global commitdata commitinfo numcommits findstring findpattern findloc
+    global findstartline findcurline markingmatches displayorder
+
+    set fldtypes {Headline Author Date Committer CDate Comments}
+    set l [expr {$findcurline + 1}]
+    if {$l >= $numcommits} {
+	set l 0
+    }
+    if {$l <= $findstartline} {
+	set lim [expr {$findstartline + 1}]
+    } else {
+	set lim $numcommits
+    }
+    if {$lim - $l > 500} {
+	set lim [expr {$l + 500}]
+    }
+    set last 0
+    for {} {$l < $lim} {incr l} {
+	set id [lindex $displayorder $l]
+	if {![doesmatch $commitdata($id)]} continue
 	if {![info exists commitinfo($id)]} {
 	    getcommit $id
 	}
 	set info $commitinfo($id)
-	set doesmatch 0
 	foreach f $info ty $fldtypes {
-	    if {$findloc != "All fields" && $findloc != $ty} {
-		continue
-	    }
-	    set matches [findmatches $f]
-	    if {$matches == {}} continue
-	    set doesmatch 1
-	    if {$ty == "Headline"} {
-		drawcommits $l
-		markmatches $canv $l $f $linehtag($l) $matches $mainfont
-	    } elseif {$ty == "Author"} {
-		drawcommits $l
-		markmatches $canv2 $l $f $linentag($l) $matches $mainfont
-	    } elseif {$ty == "Date"} {
-		drawcommits $l
-		markmatches $canv3 $l $f $linedtag($l) $matches $mainfont
-	    }
-	}
-	if {$doesmatch} {
-	    lappend matchinglines $l
-	    if {!$didsel && $l > $oldsel} {
+	    if {($findloc eq "All fields" || $findloc eq $ty) &&
+		[doesmatch $f]} {
+		set markingmatches 1
 		findselectline $l
-		set didsel 1
+		notbusy finding
+		return 0
 	    }
 	}
     }
-    if {$matchinglines == {}} {
+    if {$l == $findstartline + 1} {
 	bell
-    } elseif {!$didsel} {
-	findselectline [lindex $matchinglines 0]
+	unset findcurline
+	notbusy finding
+	return 0
     }
+    set findcurline [expr {$l - 1}]
+    return 1
+}
+
+proc findmorerev {} {
+    global commitdata commitinfo numcommits findstring findpattern findloc
+    global findstartline findcurline markingmatches displayorder
+
+    set fldtypes {Headline Author Date Committer CDate Comments}
+    set l $findcurline
+    if {$l == 0} {
+	set l $numcommits
+    }
+    incr l -1
+    if {$l >= $findstartline} {
+	set lim [expr {$findstartline - 1}]
+    } else {
+	set lim -1
+    }
+    if {$l - $lim > 500} {
+	set lim [expr {$l - 500}]
+    }
+    set last 0
+    for {} {$l > $lim} {incr l -1} {
+	set id [lindex $displayorder $l]
+	if {![doesmatch $commitdata($id)]} continue
+	if {![info exists commitinfo($id)]} {
+	    getcommit $id
+	}
+	set info $commitinfo($id)
+	foreach f $info ty $fldtypes {
+	    if {($findloc eq "All fields" || $findloc eq $ty) &&
+		[doesmatch $f]} {
+		set markingmatches 1
+		findselectline $l
+		notbusy finding
+		return 0
+	    }
+	}
+    }
+    if {$l == -1} {
+	bell
+	unset findcurline
+	notbusy finding
+	return 0
+    }
+    set findcurline [expr {$l + 1}]
+    return 1
 }
 
 proc findselectline {l} {
@@ -4001,72 +4112,7 @@ proc findselectline {l} {
     }
 }
 
-proc findnext {restart} {
-    global matchinglines selectedline
-    if {![info exists matchinglines]} {
-	if {$restart} {
-	    dofind
-	}
-	return
-    }
-    if {![info exists selectedline]} return
-    foreach l $matchinglines {
-	if {$l > $selectedline} {
-	    findselectline $l
-	    return
-	}
-    }
-    bell
-}
-
-proc findprev {} {
-    global matchinglines selectedline
-    if {![info exists matchinglines]} {
-	dofind
-	return
-    }
-    if {![info exists selectedline]} return
-    set prev {}
-    foreach l $matchinglines {
-	if {$l >= $selectedline} break
-	set prev $l
-    }
-    if {$prev != {}} {
-	findselectline $prev
-    } else {
-	bell
-    }
-}
-
-proc stopfindproc {{done 0}} {
-    global findprocpid findprocfile findids
-    global ctext findoldcursor phase maincursor textcursor
-    global findinprogress
-
-    catch {unset findids}
-    if {[info exists findprocpid]} {
-	if {!$done} {
-	    catch {exec kill $findprocpid}
-	}
-	catch {close $findprocfile}
-	unset findprocpid
-    }
-    catch {unset findinprogress}
-    notbusy find
-}
-
-# mark a commit as matching by putting a yellow background
-# behind the headline
-proc markheadline {l id} {
-    global canv mainfont linehtag
-
-    drawcommits $l
-    set bbox [$canv bbox $linehtag($l)]
-    set t [$canv create rect $bbox -outline {} -tags matches -fill yellow]
-    $canv lower $t
-}
-
-# mark the bits of a headline, author or date that match a find string
+# mark the bits of a headline or author that match a find string
 proc markmatches {canv l str tag matches font} {
     set bbox [$canv bbox $tag]
     set x0 [lindex $bbox 0]
@@ -4080,16 +4126,18 @@ proc markmatches {canv l str tag matches font} {
 	set xlen [font measure $font [string range $str 0 [expr {$end}]]]
 	set t [$canv create rect [expr {$x0+$xoff}] $y0 \
 		   [expr {$x0+$xlen+2}] $y1 \
-		   -outline {} -tags matches -fill yellow]
+		   -outline {} -tags [list match$l matches] -fill yellow]
 	$canv lower $t
     }
 }
 
 proc unmarkmatches {} {
-    global matchinglines findids
+    global findids markingmatches findcurline
+
     allcanvs delete matches
-    catch {unset matchinglines}
     catch {unset findids}
+    set markingmatches 0
+    catch {unset findcurline}
 }
 
 proc selcanvline {w x y} {
@@ -6215,7 +6263,8 @@ proc anc_or_desc {a b} {
 	# Both are on the same arc(s); either both are the same BMP,
 	# or if one is not a BMP, the other is also not a BMP or is
 	# the BMP at end of the arc (and it only has 1 incoming arc).
-	if {$a eq $b} {
+	# Or both can be BMPs with no incoming arcs.
+	if {$a eq $b || $arcnos($a) eq {}} {
 	    return 0
 	}
 	# assert {[llength $arcnos($a)] == 1}
@@ -7418,17 +7467,6 @@ catch {source ~/.gitk}
 
 font create optionfont -family sans-serif -size -12
 
-set revtreeargs {}
-foreach arg $argv {
-    switch -regexp -- $arg {
-	"^$" { }
-	"^-d" { set datemode 1 }
-	default {
-	    lappend revtreeargs $arg
-	}
-    }
-}
-
 # check that we can find a .git directory somewhere...
 set gitdir [gitdir]
 if {![file isdirectory $gitdir]} {
@@ -7436,17 +7474,41 @@ if {![file isdirectory $gitdir]} {
     exit 1
 }
 
+set revtreeargs {}
 set cmdline_files {}
-set i [lsearch -exact $revtreeargs "--"]
-if {$i >= 0} {
-    set cmdline_files [lrange $revtreeargs [expr {$i + 1}] end]
-    set revtreeargs [lrange $revtreeargs 0 [expr {$i - 1}]]
-} elseif {$revtreeargs ne {}} {
+set i 0
+foreach arg $argv {
+    switch -regexp -- $arg {
+	"^$" { }
+	"^-d" { set datemode 1 }
+	"--" {
+	    set cmdline_files [lrange $argv [expr {$i + 1}] end]
+	    break
+	}
+	default {
+	    lappend revtreeargs $arg
+	}
+    }
+    incr i
+}
+
+if {$i >= [llength $argv] && $revtreeargs ne {}} {
+    # no -- on command line, but some arguments (other than -d)
     if {[catch {
 	set f [eval exec git rev-parse --no-revs --no-flags $revtreeargs]
 	set cmdline_files [split $f "\n"]
 	set n [llength $cmdline_files]
 	set revtreeargs [lrange $revtreeargs 0 end-$n]
+	# Unfortunately git rev-parse doesn't produce an error when
+	# something is both a revision and a filename.  To be consistent
+	# with git log and git rev-list, check revtreeargs for filenames.
+	foreach arg $revtreeargs {
+	    if {[file exists $arg]} {
+		show_error {} . "Ambiguous argument '$arg': both revision\
+				 and filename"
+		exit 1
+	    }
+	}
     } err]} {
 	# unfortunately we get both stdout and stderr in $err,
 	# so look for "fatal:".
@@ -7471,6 +7533,7 @@ set searchdirn -forwards
 set boldrows {}
 set boldnamerows {}
 set diffelide {0 0}
+set markingmatches 0
 
 set optim_delay 16
 
