@@ -8,7 +8,7 @@ git-commit - Record changes to the repository
 SYNOPSIS
 --------
 [verse]
-'git-commit' [-a | --interactive] [-s] [-v]
+'git-commit' [-a | --interactive] [-s] [-v] [-u]
 	   [(-c | -C) <commit> | -F <file> | -m <msg> | --amend]
 	   [--no-verify] [-e] [--author <author>]
 	   [--] [[-i | -o ]<file>...]
@@ -114,6 +114,19 @@ but can be used to amend a merge commit.
 	stage the contents of paths given on the command line
 	as well.  This is usually not what you want unless you
 	are concluding a conflicted merge.
+
+-u|--untracked-files::
+	Show all untracked files, also those in uninteresting
+	directories, in the "Untracked files:" section of commit
+	message template.  Without this option only its name and
+	a trailing slash are displayed for each untracked
+	directory.
+
+-v|--verbose::
+	Show unified diff between the HEAD commit and what
+	would be committed at the bottom of the commit message
+	template.  Note that this diff output doesn't have its
+	lines prefixed with '#'.
 
 -q|--quiet::
 	Suppress commit summary message.
