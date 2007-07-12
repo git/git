@@ -31,16 +31,20 @@ method _init {} {
 		-background white -borderwidth 1 \
 		-relief sunken \
 		-width 80 -height 10 \
+		-wrap none \
 		-font font_diff \
 		-state disabled \
+		-xscrollcommand [list $w.m.sbx set] \
 		-yscrollcommand [list $w.m.sby set]
 	label $w.m.s -text {Working... please wait...} \
 		-anchor w \
 		-justify left \
 		-font font_uibold
+	scrollbar $w.m.sbx -command [list $w.m.t xview] -orient h
 	scrollbar $w.m.sby -command [list $w.m.t yview]
 	pack $w.m.l1 -side top -fill x
 	pack $w.m.s -side bottom -fill x
+	pack $w.m.sbx -side bottom -fill x
 	pack $w.m.sby -side right -fill y
 	pack $w.m.t -side left -fill both -expand 1
 	pack $w.m -side top -fill both -expand 1 -padx 5 -pady 10

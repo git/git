@@ -547,6 +547,10 @@ method _read_blame {fd cur_w cur_d cur_s} {
 			set a_name {}
 			catch {set a_name $header($cmit,author)}
 			while {$a_name ne {}} {
+				if {$author_abbr ne {}
+					&& [string index $a_name 0] eq {'}} {
+					regsub {^'[^']+'\s+} $a_name {} a_name
+				}
 				if {![regexp {^([[:upper:]])} $a_name _a]} break
 				append author_abbr $_a
 				unset _a
