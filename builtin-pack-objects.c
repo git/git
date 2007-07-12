@@ -26,9 +26,6 @@ git-pack-objects [{ -q | --progress | --all-progress }] \n\
 struct object_entry {
 	struct pack_idx_entry idx;
 	unsigned long size;	/* uncompressed size */
-
-	unsigned int hash;	/* name hint hash */
-	unsigned int depth;	/* delta depth */
 	struct packed_git *in_pack; 	/* already in pack */
 	off_t in_pack_offset;
 	struct object_entry *delta;	/* delta base object */
@@ -38,6 +35,7 @@ struct object_entry {
 					     */
 	void *delta_data;	/* cached delta (uncompressed) */
 	unsigned long delta_size;	/* delta data size (uncompressed) */
+	unsigned int hash;	/* name hint hash */
 	enum object_type type;
 	enum object_type in_pack_type;	/* could be delta */
 	unsigned char in_pack_header_size;
@@ -1274,6 +1272,7 @@ struct unpacked {
 	struct object_entry *entry;
 	void *data;
 	struct delta_index *index;
+	unsigned depth;
 };
 
 static int delta_cacheable(struct unpacked *trg, struct unpacked *src,
@@ -1332,7 +1331,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		return 0;
 
 	/* Let's not bust the allowed depth. */
-	if (src_entry->depth >= max_depth)
+	if (src->depth >= max_depth)
 		return 0;
 
 	/* Now some size filtering heuristics. */
@@ -1342,9 +1341,9 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		ref_depth = 1;
 	} else {
 		max_size = trg_entry->delta_size;
-		ref_depth = trg_entry->depth;
+		ref_depth = trg->depth;
 	}
-	max_size = max_size * (max_depth - src_entry->depth) /
+	max_size = max_size * (max_depth - src->depth) /
 						(max_depth - ref_depth + 1);
 	if (max_size == 0)
 		return 0;
@@ -1388,17 +1387,17 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 	if (trg_entry->delta_data) {
 		/* Prefer only shallower same-sized deltas. */
 		if (delta_size == trg_entry->delta_size &&
-		    src_entry->depth + 1 >= trg_entry->depth) {
+		    src->depth + 1 >= trg->depth) {
 			free(delta_buf);
 			return 0;
 		}
 		delta_cache_size -= trg_entry->delta_size;
 		free(trg_entry->delta_data);
+		trg_entry->delta_data = NULL;
 	}
-	trg_entry->delta_data = 0;
 	trg_entry->delta = src_entry;
 	trg_entry->delta_size = delta_size;
-	trg_entry->depth = src_entry->depth + 1;
+	trg->depth = src->depth + 1;
 
 	if (delta_cacheable(src, trg, src_size, trg_size, delta_size)) {
 		trg_entry->delta_data = xrealloc(delta_buf, delta_size);
@@ -1511,7 +1510,7 @@ static void find_deltas(struct object_entry **list, int window, int depth)
 		 * depth, leaving it in the window is pointless.  we
 		 * should evict it first.
 		 */
-		if (entry->delta && depth <= entry->depth)
+		if (entry->delta && depth <= n->depth)
 			continue;
 
 		next:
