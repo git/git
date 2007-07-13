@@ -46,6 +46,40 @@ test_expect_success \
     'git rm --cached foo'
 
 test_expect_success \
+    'Test that git rm --cached foo succeeds if the index matches the file' \
+    'echo content > foo
+     git add foo
+     git rm --cached foo'
+
+test_expect_success \
+    'Test that git rm --cached foo succeeds if the index matches the file' \
+    'echo content > foo
+     git add foo
+     git commit -m foo
+     echo "other content" > foo
+     git rm --cached foo'
+
+test_expect_failure \
+    'Test that git rm --cached foo fails if the index matches neither the file nor HEAD' \
+    'echo content > foo
+     git add foo
+     git commit -m foo
+     echo "other content" > foo
+     git add foo
+     echo "yet another content" > foo
+     git rm --cached foo'
+
+test_expect_success \
+    'Test that git rm --cached -f foo works in case where --cached only did not' \
+    'echo content > foo
+     git add foo
+     git commit -m foo
+     echo "other content" > foo
+     git add foo
+     echo "yet another content" > foo
+     git rm --cached -f foo'
+
+test_expect_success \
     'Post-check that foo exists but is not in index after git rm foo' \
     '[ -f foo ] && ! git ls-files --error-unmatch foo'
 

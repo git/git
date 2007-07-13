@@ -14,7 +14,8 @@ DESCRIPTION
 Remove files from the working tree and from the index.  The
 files have to be identical to the tip of the branch, and no
 updates to its contents must have been placed in the staging
-area (aka index).
+area (aka index).  When --cached is given, the staged content has to
+match either the tip of the branch *or* the file on disk.
 
 
 OPTIONS

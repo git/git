@@ -46,7 +46,7 @@ static int remove_file(const char *name)
 	return ret;
 }
 
-static int check_local_mod(unsigned char *head)
+static int check_local_mod(unsigned char *head, int index_only)
 {
 	/* items in list are already sorted in the cache order,
 	 * so we could do this a lot more efficiently by using
@@ -65,6 +65,8 @@ static int check_local_mod(unsigned char *head)
 		const char *name = list.name[i];
 		unsigned char sha1[20];
 		unsigned mode;
+		int local_changes = 0;
+		int staged_changes = 0;
 
 		pos = cache_name_pos(name, strlen(name));
 		if (pos < 0)
@@ -87,14 +89,32 @@ static int check_local_mod(unsigned char *head)
 			continue;
 		}
 		if (ce_match_stat(ce, &st, 0))
-			errs = error("'%s' has local modifications "
-				     "(hint: try -f)", ce->name);
+			local_changes = 1;
 		if (no_head
 		     || get_tree_entry(head, name, sha1, &mode)
 		     || ce->ce_mode != create_ce_mode(mode)
 		     || hashcmp(ce->sha1, sha1))
-			errs = error("'%s' has changes staged in the index "
-				     "(hint: try -f)", name);
+			staged_changes = 1;
+
+		if (local_changes && staged_changes)
+			errs = error("'%s' has staged content different "
+				     "from both the file and the HEAD\n"
+				     "(use -f to force removal)", name);
+		else if (!index_only) {
+			/* It's not dangerous to git-rm --cached a
+			 * file if the index matches the file or the
+			 * HEAD, since it means the deleted content is
+			 * still available somewhere.
+			 */
+			if (staged_changes)
+				errs = error("'%s' has changes staged in the index\n"
+					     "(use --cached to keep the file, "
+					     "or -f to force removal)", name);
+			if (local_changes)
+				errs = error("'%s' has local modifications\n"
+					     "(use --cached to keep the file, "
+					     "or -f to force removal)", name);
+		}
 	}
 	return errs;
 }
@@ -192,7 +212,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 		unsigned char sha1[20];
 		if (get_sha1("HEAD", sha1))
 			hashclr(sha1);
-		if (check_local_mod(sha1))
+		if (check_local_mod(sha1, index_only))
 			exit(1);
 	}
 
