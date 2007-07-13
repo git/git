@@ -137,6 +137,13 @@ const char *show_date(unsigned long time, int tz, enum date_mode mode)
 	if (mode == DATE_SHORT)
 		sprintf(timebuf, "%04d-%02d-%02d", tm->tm_year + 1900,
 				tm->tm_mon + 1, tm->tm_mday);
+	else if (mode == DATE_ISO8601)
+		sprintf(timebuf, "%04d-%02d-%02d %02d:%02d:%02d %+05d",
+				tm->tm_year + 1900,
+				tm->tm_mon + 1,
+				tm->tm_mday,
+				tm->tm_hour, tm->tm_min, tm->tm_sec,
+				tz);
 	else
 		sprintf(timebuf, "%.3s %.3s %d %02d:%02d:%02d %d%c%+05d",
 				weekday_names[tm->tm_wday],

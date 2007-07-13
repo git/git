@@ -781,6 +781,7 @@ static void fill_person(struct interp *table, const char *msg, int len)
 	interp_set_entry(table, 2, show_date(date, tz, 0));
 	interp_set_entry(table, 3, show_rfc2822_date(date, tz));
 	interp_set_entry(table, 4, show_date(date, tz, 1));
+	interp_set_entry(table, 6, show_date(date, tz, DATE_ISO8601));
 }
 
 static long format_commit_message(const struct commit *commit,
@@ -799,12 +800,14 @@ static long format_commit_message(const struct commit *commit,
 		{ "%aD" },	/* author date, RFC2822 style */
 		{ "%ar" },	/* author date, relative */
 		{ "%at" },	/* author date, UNIX timestamp */
+		{ "%ai" },	/* author date, ISO 8601 */
 		{ "%cn" },	/* committer name */
 		{ "%ce" },	/* committer email */
 		{ "%cd" },	/* committer date */
 		{ "%cD" },	/* committer date, RFC2822 style */
 		{ "%cr" },	/* committer date, relative */
 		{ "%ct" },	/* committer date, UNIX timestamp */
+		{ "%ci" },	/* committer date, ISO 8601 */
 		{ "%e" },	/* encoding */
 		{ "%s" },	/* subject */
 		{ "%b" },	/* body */
@@ -821,10 +824,11 @@ static long format_commit_message(const struct commit *commit,
 		IPARENTS, IPARENTS_ABBREV,
 		IAUTHOR_NAME, IAUTHOR_EMAIL,
 		IAUTHOR_DATE, IAUTHOR_DATE_RFC2822, IAUTHOR_DATE_RELATIVE,
-		IAUTHOR_TIMESTAMP,
+		IAUTHOR_TIMESTAMP, IAUTHOR_ISO8601,
 		ICOMMITTER_NAME, ICOMMITTER_EMAIL,
 		ICOMMITTER_DATE, ICOMMITTER_DATE_RFC2822,
 		ICOMMITTER_DATE_RELATIVE, ICOMMITTER_TIMESTAMP,
+		ICOMMITTER_ISO8601,
 		IENCODING,
 		ISUBJECT,
 		IBODY,
