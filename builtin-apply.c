@@ -1003,12 +1003,16 @@ static int parse_fragment(char *line, unsigned long size, struct patch *patch, s
 			trailing++;
 			break;
 		case '-':
+			if (apply_in_reverse &&
+					new_whitespace != nowarn_whitespace)
+				check_whitespace(line, len);
 			deleted++;
 			oldlines--;
 			trailing = 0;
 			break;
 		case '+':
-			if (new_whitespace != nowarn_whitespace)
+			if (!apply_in_reverse &&
+					new_whitespace != nowarn_whitespace)
 				check_whitespace(line, len);
 			added++;
 			newlines--;

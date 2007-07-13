@@ -257,6 +257,34 @@ proc commit_committree {fd_wt curHEAD msg} {
 		return
 	}
 
+	# -- Verify this wasn't an empty change.
+	#
+	if {$commit_type eq {normal}} {
+		set fd_ot [open "| git cat-file commit $PARENT" r]
+		fconfigure $fd_ot -encoding binary -translation lf
+		set old_tree [gets $fd_ot]
+		close $fd_ot
+
+		if {[string equal -length 5 {tree } $old_tree]
+			&& [string length $old_tree] == 45} {
+			set old_tree [string range $old_tree 5 end]
+		} else {
+			error "Commit $PARENT appears to be corrupt"
+		}
+
+		if {$tree_id eq $old_tree} {
+			info_popup {No changes to commit.
+
+No files were modified by this commit and it was not a merge commit.
+
+A rescan will be automatically started now.
+}
+			unlock_index
+			rescan {set ui_status_value {No changes to commit.}}
+			return
+		}
+	}
+
 	# -- Build the message.
 	#
 	set msg_p [gitdir COMMIT_EDITMSG]
