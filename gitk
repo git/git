@@ -7478,9 +7478,9 @@ set revtreeargs {}
 set cmdline_files {}
 set i 0
 foreach arg $argv {
-    switch -regexp -- $arg {
-	"^$" { }
-	"^-d" { set datemode 1 }
+    switch -- $arg {
+	"" { }
+	"-d" { set datemode 1 }
 	"--" {
 	    set cmdline_files [lrange $argv [expr {$i + 1}] end]
 	    break
