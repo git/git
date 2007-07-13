@@ -1431,6 +1431,7 @@ static void free_unpacked(struct unpacked *n)
 		window_memory_usage -= n->entry->size;
 	}
 	n->entry = NULL;
+	n->depth = 0;
 }
 
 static void find_deltas(struct object_entry **list, int window, int depth)
