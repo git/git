@@ -31,15 +31,15 @@ static int lock_file(struct lock_file *lk, const char *path)
 	sprintf(lk->filename, "%s.lock", path);
 	fd = open(lk->filename, O_RDWR | O_CREAT | O_EXCL, 0666);
 	if (0 <= fd) {
+		if (!lock_file_list) {
+			signal(SIGINT, remove_lock_file_on_signal);
+			atexit(remove_lock_file);
+		}
 		lk->owner = getpid();
 		if (!lk->on_list) {
 			lk->next = lock_file_list;
 			lock_file_list = lk;
 			lk->on_list = 1;
-		}
-		if (lock_file_list) {
-			signal(SIGINT, remove_lock_file_on_signal);
-			atexit(remove_lock_file);
 		}
 		if (adjust_shared_perm(lk->filename))
 			return error("cannot fix permission bits on %s",
