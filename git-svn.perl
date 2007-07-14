@@ -1026,7 +1026,9 @@ sub read_all_remotes {
 	my $r = {};
 	foreach (grep { s/^svn-remote\.// } command(qw/config -l/)) {
 		if (m!^(.+)\.fetch=\s*(.*)\s*:\s*refs/remotes/(.+)\s*$!) {
-			$r->{$1}->{fetch}->{$2} = $3;
+			my ($remote, $local_ref, $remote_ref) = ($1, $2, $3);
+			$local_ref =~ s{^/}{};
+			$r->{$remote}->{fetch}->{$local_ref} = $remote_ref;
 		} elsif (m!^(.+)\.url=\s*(.*)\s*$!) {
 			$r->{$1}->{url} = $2;
 		} elsif (m!^(.+)\.(branches|tags)=
@@ -1146,6 +1148,7 @@ sub init_remote_config {
 	unless ($no_write) {
 		command_noisy('config',
 			      "svn-remote.$self->{repo_id}.url", $url);
+		$self->{path} =~ s{^/}{};
 		command_noisy('config', '--add',
 			      "svn-remote.$self->{repo_id}.fetch",
 			      "$self->{path}:".$self->refname);
