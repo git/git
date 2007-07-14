@@ -623,8 +623,12 @@ sub req_Modified
     my ( $cmd, $data ) = @_;
 
     my $mode = <STDIN>;
+    defined $mode
+        or (print "E end of file reading mode for $data\n"), return;
     chomp $mode;
     my $size = <STDIN>;
+    defined $size
+        or (print "E end of file reading size of $data\n"), return;
     chomp $size;
 
     # Grab config information
@@ -644,7 +648,8 @@ sub req_Modified
         $bytesleft -= $blocksize;
     }
 
-    close $fh;
+    close $fh
+        or (print "E failed to write temporary, $filename: $!\n"), return;
 
     # Ensure we have something sensible for the file mode
     if ( $mode =~ /u=(\w+)/ )
@@ -901,8 +906,13 @@ sub req_update
     # projects (heads in this case) to checkout.
     #
     if ($state->{module} eq '') {
+	my $heads_dir = $state->{CVSROOT} . '/refs/heads';
+	if (!opendir HEADS, $heads_dir) {
+	    print "E [server aborted]: Failed to open directory, "
+	      . "$heads_dir: $!\nerror\n";
+	    return 0;
+	}
         print "E cvs update: Updating .\n";
-	opendir HEADS, $state->{CVSROOT} . '/refs/heads';
 	while (my $head = readdir(HEADS)) {
 	    if (-f $state->{CVSROOT} . '/refs/heads/' . $head) {
 	        print "E cvs update: New directory `$head'\n";
@@ -1737,14 +1747,16 @@ sub req_annotate
 	system("git-read-tree", $lastseenin);
 	unless ($? == 0)
 	{
-	    die "Error running git-read-tree $lastseenin $file_index $!";
+	    print "E error running git-read-tree $lastseenin $file_index $!\n";
+	    return;
 	}
 	$log->info("Created index '$file_index' with commit $lastseenin - exit status $?");
 
         # do a checkout of the file
         system('git-checkout-index', '-f', '-u', $filename);
         unless ($? == 0) {
-            die "Error running git-checkout-index -f -u $filename : $!";
+            print "E error running git-checkout-index -f -u $filename : $!\n";
+            return;
         }
 
         $log->info("Annotate $filename");
@@ -1754,7 +1766,11 @@ sub req_annotate
         # git-jsannotate telling us about commits we are hiding
         # from the client.
 
-        open(ANNOTATEHINTS, ">$tmpdir/.annotate_hints") or die "Error opening > $tmpdir/.annotate_hints $!";
+        my $a_hints = "$tmpdir/.annotate_hints";
+        if (!open(ANNOTATEHINTS, '>', $a_hints)) {
+            print "E failed to open '$a_hints' for writing: $!\n";
+            return;
+        }
         for (my $i=0; $i < @$revisions; $i++)
         {
             print ANNOTATEHINTS $revisions->[$i][2];
@@ -1765,11 +1781,14 @@ sub req_annotate
         }
 
         print ANNOTATEHINTS "\n";
-        close ANNOTATEHINTS;
+        close ANNOTATEHINTS
+            or (print "E failed to write $a_hints: $!\n"), return;
 
-        my $annotatecmd = 'git-annotate';
-        open(ANNOTATE, "-|", $annotatecmd, '-l', '-S', "$tmpdir/.annotate_hints", $filename)
-	    or die "Error invoking $annotatecmd -l -S $tmpdir/.annotate_hints $filename : $!";
+        my @cmd = (qw(git-annotate -l -S), $a_hints, $filename);
+        if (!open(ANNOTATE, "-|", @cmd)) {
+            print "E error invoking ". join(' ',@cmd) .": $!\n";
+            return;
+        }
         my $metadata = {};
         print "E Annotations for $filename\n";
         print "E ***************\n";
@@ -1996,12 +2015,12 @@ sub transmitfile
         {
             open NEWFILE, ">", $targetfile or die("Couldn't open '$targetfile' for writing : $!");
             print NEWFILE $_ while ( <$fh> );
-            close NEWFILE;
+            close NEWFILE or die("Failed to write '$targetfile': $!");
         } else {
             print "$size\n";
             print while ( <$fh> );
         }
-        close $fh or die ("Couldn't close filehandle for transmitfile()");
+        close $fh or die ("Couldn't close filehandle for transmitfile(): $!");
     } else {
         die("Couldn't execute git-cat-file");
     }
@@ -2501,17 +2520,14 @@ sub update
                     if ($parent eq $lastpicked) {
                         next;
                     }
-                    open my $p, 'git-merge-base '. $lastpicked . ' '
-                    . $parent . '|';
-                    my @output = (<$p>);
-                    close $p;
-                    my $base = join('', @output);
+                    my $base = safe_pipe_capture('git-merge-base',
+						 $lastpicked, $parent);
                     chomp $base;
                     if ($base) {
                         my @merged;
                         # print "want to log between  $base $parent \n";
                         open(GITLOG, '-|', 'git-log', "$base..$parent")
-                        or die "Cannot call git-log: $!";
+			  or die "Cannot call git-log: $!";
                         my $mergedhash;
                         while (<GITLOG>) {
                             chomp;
