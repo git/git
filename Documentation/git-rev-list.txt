@@ -28,7 +28,7 @@ SYNOPSIS
 	     [ \--encoding[=<encoding>] ]
 	     [ \--(author|committer|grep)=<pattern> ]
 	     [ \--regexp-ignore-case ] [ \--extended-regexp ]
-	     [ \--date={local|relative|default} ]
+	     [ \--date={local|relative|default|iso|rfc|short} ]
 	     [ [\--objects | \--objects-edge] [ \--unpacked ] ]
 	     [ \--pretty | \--header ]
 	     [ \--bisect ]
@@ -96,7 +96,7 @@ include::pretty-options.txt[]
 
 	Synonym for `--date=relative`.
 
---date={relative,local,default}::
+--date={relative,local,default,iso,rfc}::
 
 	Only takes effect for dates shown in human-readable format, such
 	as when using "--pretty".
@@ -105,6 +105,13 @@ include::pretty-options.txt[]
 e.g. "2 hours ago".
 +
 `--date=local` shows timestamps in user's local timezone.
++
+`--date=iso` (or `--date=iso8601`) shows timestamps in ISO 8601 format.
++
+`--date=rfc` (or `--date=rfc2822`) shows timestamps in RFC 2822
+format, often found in E-mail messages.
++
+`--date=short` shows only date but not time, in `YYYY-MM-DD` fomat.
 +
 `--date=default` shows timestamps in the original timezone
 (either committer's or author's).
