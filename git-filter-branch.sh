@@ -171,7 +171,7 @@ case "$filter_subdir" in
 	git rev-list --reverse --topo-order --default HEAD \
 		--parents --full-history "$@" -- "$filter_subdir"
 esac > ../revs
-commits=$(cat ../revs | wc -l | tr -d " ")
+commits=$(wc -l <../revs | tr -d " ")
 
 test $commits -eq 0 && die "Found nothing to rewrite"
 
@@ -241,7 +241,7 @@ case "$target_head" in
 	;;
 *)
 	git update-ref refs/heads/"$dstbranch" $target_head
-	if [ $(cat ../map/$src_head | wc -l) -gt 1 ]; then
+	if [ $(wc -l <../map/$src_head) -gt 1 ]; then
 		echo "WARNING: Your commit filter caused the head commit to expand to several rewritten commits. Only the first such commit was recorded as the current $dstbranch head but you will need to resolve the situation now (probably by manually merging the other commits). These are all the commits:" >&2
 		sed 's/^/	/' ../map/$src_head >&2
 		ret=1

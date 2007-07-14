@@ -70,10 +70,11 @@ tmp_info="$tmp_dir/info"
 commit=$(git rev-parse HEAD)
 
 mkdir $tmp_dir || exit 2
-for patch_name in $(cat "$QUILT_PATCHES/series" | grep -v '^#'); do
+for patch_name in $(grep -v '^#' < "$QUILT_PATCHES/series" ); do
 	echo $patch_name
-	(cat $QUILT_PATCHES/$patch_name | git mailinfo "$tmp_msg" "$tmp_patch" > "$tmp_info") || exit 3
-	test -s .dotest/patch || {
+	git mailinfo "$tmp_msg" "$tmp_patch" \
+		<"$QUILT_PATCHES/$patch_name" >"$tmp_info" || exit 3
+	test -s "$tmp_patch" || {
 		echo "Patch is empty.  Was it split wrong?"
 		exit 1
 	}

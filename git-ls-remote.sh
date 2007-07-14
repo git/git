@@ -82,7 +82,7 @@ rsync://* )
 	(cd $tmpdir && find refs -type f) |
 	while read path
 	do
-		cat "$tmpdir/$path" | tr -d '\012'
+		tr -d '\012' <"$tmpdir/$path"
 		echo "	$path"
 	done &&
 	rm -fr $tmpdir

@@ -593,7 +593,7 @@ then
 		tree=$(GIT_INDEX_FILE="$TMP_INDEX" git write-tree) &&
 		rm -f "$TMP_INDEX"
 	fi &&
-	commit=$(cat "$GIT_DIR"/COMMIT_MSG | git commit-tree $tree $PARENTS) &&
+	commit=$(git commit-tree $tree $PARENTS <"$GIT_DIR/COMMIT_MSG") &&
 	rlogm=$(sed -e 1q "$GIT_DIR"/COMMIT_MSG) &&
 	git update-ref -m "$GIT_REFLOG_ACTION: $rlogm" HEAD $commit "$current" &&
 	rm -f -- "$GIT_DIR/MERGE_HEAD" "$GIT_DIR/MERGE_MSG" &&
