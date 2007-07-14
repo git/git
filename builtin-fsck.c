@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 #include "commit.h"
 #include "tree.h"
@@ -659,7 +660,7 @@ static const char fsck_usage[] =
 "git-fsck [--tags] [--root] [[--unreachable] [--cache] [--full] "
 "[--strict] [--verbose] <head-sha1>*]";
 
-int cmd_fsck(int argc, char **argv, const char *prefix)
+int cmd_fsck(int argc, const char **argv, const char *prefix)
 {
 	int i, heads;
 

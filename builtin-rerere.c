@@ -1,3 +1,4 @@
+#include "builtin.h"
 #include "cache.h"
 #include "path-list.h"
 #include "xdiff/xdiff.h"

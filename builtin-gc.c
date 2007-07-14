@@ -10,6 +10,7 @@
  * Copyright (c) 2006 Shawn O. Pearce
  */
 
+#include "builtin.h"
 #include "cache.h"
 #include "run-command.h"
 
