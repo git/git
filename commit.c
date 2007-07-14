@@ -585,7 +585,7 @@ static int add_user_info(const char *what, enum cmit_fmt fmt, char *buf,
 		break;
 	case CMIT_FMT_EMAIL:
 		ret += sprintf(buf + ret, "Date: %s\n",
-			       show_rfc2822_date(time, tz));
+			       show_date(time, tz, DATE_RFC2822));
 		break;
 	case CMIT_FMT_FULLER:
 		ret += sprintf(buf + ret, "%sDate: %s\n", what,
@@ -778,9 +778,9 @@ static void fill_person(struct interp *table, const char *msg, int len)
 			tz = -tz;
 	}
 
-	interp_set_entry(table, 2, show_date(date, tz, 0));
-	interp_set_entry(table, 3, show_rfc2822_date(date, tz));
-	interp_set_entry(table, 4, show_date(date, tz, 1));
+	interp_set_entry(table, 2, show_date(date, tz, DATE_NORMAL));
+	interp_set_entry(table, 3, show_date(date, tz, DATE_RFC2822));
+	interp_set_entry(table, 4, show_date(date, tz, DATE_RELATIVE));
 	interp_set_entry(table, 6, show_date(date, tz, DATE_ISO8601));
 }
 

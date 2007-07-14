@@ -370,7 +370,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 				fprintf(stderr,
 					"warning: Log for '%.*s' only goes "
 					"back to %s.\n", len, str,
-					show_rfc2822_date(co_time, co_tz));
+					show_date(co_time, co_tz, DATE_RFC2822));
 			else
 				fprintf(stderr,
 					"warning: Log for '%.*s' only has "

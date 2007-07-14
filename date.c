@@ -144,6 +144,11 @@ const char *show_date(unsigned long time, int tz, enum date_mode mode)
 				tm->tm_mday,
 				tm->tm_hour, tm->tm_min, tm->tm_sec,
 				tz);
+	else if (mode == DATE_RFC2822)
+		sprintf(timebuf, "%.3s, %d %.3s %d %02d:%02d:%02d %+05d",
+			weekday_names[tm->tm_wday], tm->tm_mday,
+			month_names[tm->tm_mon], tm->tm_year + 1900,
+			tm->tm_hour, tm->tm_min, tm->tm_sec, tz);
 	else
 		sprintf(timebuf, "%.3s %.3s %d %02d:%02d:%02d %d%c%+05d",
 				weekday_names[tm->tm_wday],
@@ -153,21 +158,6 @@ const char *show_date(unsigned long time, int tz, enum date_mode mode)
 				tm->tm_year + 1900,
 				(mode == DATE_LOCAL) ? 0 : ' ',
 				tz);
-	return timebuf;
-}
-
-const char *show_rfc2822_date(unsigned long time, int tz)
-{
-	struct tm *tm;
-	static char timebuf[200];
-
-	tm = time_to_tm(time, tz);
-	if (!tm)
-		return NULL;
-	sprintf(timebuf, "%.3s, %d %.3s %d %02d:%02d:%02d %+05d",
-		weekday_names[tm->tm_wday], tm->tm_mday,
-		month_names[tm->tm_mon], tm->tm_year + 1900,
-		tm->tm_hour, tm->tm_min, tm->tm_sec, tz);
 	return timebuf;
 }
 

@@ -1300,7 +1300,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 				if (hashcmp(logged_sha1, sha1)) {
 					fprintf(stderr,
 						"warning: Log %s has gap after %s.\n",
-						logfile, show_rfc2822_date(date, tz));
+						logfile, show_date(date, tz, DATE_RFC2822));
 				}
 			}
 			else if (date == at_time) {
@@ -1313,7 +1313,7 @@ int read_ref_at(const char *ref, unsigned long at_time, int cnt, unsigned char *
 				if (hashcmp(logged_sha1, sha1)) {
 					fprintf(stderr,
 						"warning: Log %s unexpectedly ended on %s.\n",
-						logfile, show_rfc2822_date(date, tz));
+						logfile, show_date(date, tz, DATE_RFC2822));
 				}
 			}
 			munmap(log_mapped, mapsz);
