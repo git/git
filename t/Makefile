@@ -6,6 +6,7 @@
 #GIT_TEST_OPTS=--verbose --debug
 SHELL_PATH ?= $(SHELL)
 TAR ?= $(TAR)
+RM ?= rm -f
 
 # Shell quote;
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
@@ -19,7 +20,7 @@ $(T):
 	@echo "*** $@ ***"; GIT_CONFIG=.git/config '$(SHELL_PATH_SQ)' $@ $(GIT_TEST_OPTS)
 
 clean:
-	rm -fr trash
+	$(RM) -r trash
 
 # we can test NO_OPTIMIZE_COMMITS independently of LC_ALL
 full-svn-test:

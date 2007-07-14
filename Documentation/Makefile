@@ -41,6 +41,7 @@ ifdef ASCIIDOC8
 ASCIIDOC_EXTRA += -a asciidoc7compatible
 endif
 INSTALL?=install
+RM ?= rm -f
 DOC_REF = origin/man
 
 -include ../config.mak.autogen
@@ -84,7 +85,7 @@ install: man
 # Determine "include::" file references in asciidoc files.
 #
 doc.dep : $(wildcard *.txt) build-docdep.perl
-	rm -f $@+ $@
+	$(RM) $@+ $@
 	perl ./build-docdep.perl >$@+
 	mv $@+ $@
 
@@ -109,11 +110,11 @@ cmd-list.made: cmd-list.perl $(MAN1_TXT)
 git.7 git.html: git.txt core-intro.txt
 
 clean:
-	rm -f *.xml *.xml+ *.html *.html+ *.1 *.5 *.7 howto-index.txt howto/*.html doc.dep
-	rm -f $(cmds_txt) *.made
+	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7 howto-index.txt howto/*.html doc.dep
+	$(RM) $(cmds_txt) *.made
 
 %.html : %.txt
-	rm -f $@+ $@
+	$(RM) $@+ $@
 	$(ASCIIDOC) -b xhtml11 -d manpage -f asciidoc.conf \
 		$(ASCIIDOC_EXTRA) -agit_version=$(GIT_VERSION) -o $@+ $<
 	mv $@+ $@
@@ -122,7 +123,7 @@ clean:
 	xmlto -m callouts.xsl man $<
 
 %.xml : %.txt
-	rm -f $@+ $@
+	$(RM) $@+ $@
 	$(ASCIIDOC) -b docbook -d manpage -f asciidoc.conf \
 		$(ASCIIDOC_EXTRA) -agit_version=$(GIT_VERSION) -o $@+ $<
 	mv $@+ $@
@@ -137,7 +138,7 @@ user-manual.html: user-manual.xml
 	xsltproc $(XSLTOPTS) -o $@ $(XSLT) $<
 
 howto-index.txt: howto-index.sh $(wildcard howto/*.txt)
-	rm -f $@+ $@
+	$(RM) $@+ $@
 	sh ./howto-index.sh $(wildcard howto/*.txt) >$@+
 	mv $@+ $@
 
@@ -147,7 +148,7 @@ $(patsubst %,%.html,$(ARTICLES)) : %.html : %.txt
 WEBDOC_DEST = /pub/software/scm/git/docs
 
 $(patsubst %.txt,%.html,$(wildcard howto/*.txt)): %.html : %.txt
-	rm -f $@+ $@
+	$(RM) $@+ $@
 	sed -e '1,/^$$/d' $< | $(ASCIIDOC) -b xhtml11 - >$@+
 	mv $@+ $@
 

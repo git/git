@@ -176,6 +176,7 @@ export prefix bindir gitexecdir sharedir template_dir sysconfdir
 
 CC = gcc
 AR = ar
+RM = rm -f
 TAR = tar
 INSTALL = install
 RPMBUILD = rpmbuild
@@ -729,7 +730,7 @@ export TAR INSTALL DESTDIR SHELL_PATH
 
 all:: $(ALL_PROGRAMS) $(BUILT_INS) $(OTHER_PROGRAMS)
 ifneq (,$X)
-	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_PROGRAMS) $(BUILT_INS) git$X)), rm -f '$p';)
+	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_PROGRAMS) $(BUILT_INS) git$X)), $(RM) '$p';)
 endif
 
 all::
@@ -743,7 +744,7 @@ strip: $(PROGRAMS) git$X
 	$(STRIP) $(STRIP_OPTS) $(PROGRAMS) git$X
 
 gitk-wish: gitk GIT-GUI-VARS
-	$(QUIET_GEN)rm -f $@ $@+ && \
+	$(QUIET_GEN)$(RM) $@ $@+ && \
 	sed -e '1,3s|^exec .* "$$0"|exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' <gitk >$@+ && \
 	chmod +x $@+ && \
 	mv -f $@+ $@
@@ -759,10 +760,10 @@ git$X: git.o $(BUILTIN_OBJS) $(GITLIBS)
 help.o: common-cmds.h
 
 git-merge-subtree$X: git-merge-recursive$X
-	$(QUIET_BUILT_IN)rm -f $@ && ln git-merge-recursive$X $@
+	$(QUIET_BUILT_IN)$(RM) $@ && ln git-merge-recursive$X $@
 
 $(BUILT_INS): git$X
-	$(QUIET_BUILT_IN)rm -f $@ && ln git$X $@
+	$(QUIET_BUILT_IN)$(RM) $@ && ln git$X $@
 
 common-cmds.h: ./generate-cmdlist.sh
 
@@ -770,7 +771,7 @@ common-cmds.h: $(wildcard Documentation/git-*.txt)
 	$(QUIET_GEN)./generate-cmdlist.sh > $@+ && mv $@+ $@
 
 $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
-	$(QUIET_GEN)rm -f $@ $@+ && \
+	$(QUIET_GEN)$(RM) $@ $@+ && \
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 	    -e 's|@@PERL@@|$(PERL_PATH_SQ)|g' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
@@ -782,7 +783,7 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 $(patsubst %.perl,%,$(SCRIPT_PERL)): perl/perl.mak
 
 $(patsubst %.py,%,$(SCRIPT_PYTHON)) : % : %.py
-	rm -f $@ $@+
+	$(RM) $@ $@+
 	sed -e '1s|#!.*/python|#!$(PYTHON_PATH_SQ)|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
@@ -794,7 +795,7 @@ perl/perl.mak: GIT-CFLAGS
 	$(QUIET_SUBDIR0)perl $(QUIET_SUBDIR1) PERL_PATH='$(PERL_PATH_SQ)' prefix='$(prefix_SQ)' $(@F)
 
 $(patsubst %.perl,%,$(SCRIPT_PERL)): % : %.perl
-	$(QUIET_GEN)rm -f $@ $@+ && \
+	$(QUIET_GEN)$(RM) $@ $@+ && \
 	INSTLIBDIR=`$(MAKE) -C perl -s --no-print-directory instlibdir` && \
 	sed -e '1{' \
 	    -e '	s|#!.*perl|#!$(PERL_PATH_SQ)|' \
@@ -813,7 +814,7 @@ git-status: git-commit
 	$(QUIET_GEN)cp $< $@+ && mv $@+ $@
 
 gitweb/gitweb.cgi: gitweb/gitweb.perl
-	$(QUIET_GEN)rm -f $@ $@+ && \
+	$(QUIET_GEN)$(RM) $@ $@+ && \
 	sed -e '1s|#!.*perl|#!$(PERL_PATH_SQ)|' \
 	    -e 's|++GIT_VERSION++|$(GIT_VERSION)|g' \
 	    -e 's|++GIT_BINDIR++|$(bindir)|g' \
@@ -836,7 +837,7 @@ gitweb/gitweb.cgi: gitweb/gitweb.perl
 	mv $@+ $@
 
 git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css
-	$(QUIET_GEN)rm -f $@ $@+ && \
+	$(QUIET_GEN)$(RM) $@ $@+ && \
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 	    -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    -e 's/@@NO_CURL@@/$(NO_CURL)/g' \
@@ -849,11 +850,11 @@ git-instaweb: git-instaweb.sh gitweb/gitweb.cgi gitweb/gitweb.css
 	mv $@+ $@
 
 configure: configure.ac
-	$(QUIET_GEN)rm -f $@ $<+ && \
+	$(QUIET_GEN)$(RM) $@ $<+ && \
 	sed -e 's/@@GIT_VERSION@@/$(GIT_VERSION)/g' \
 	    $< > $<+ && \
 	autoconf -o $@ $<+ && \
-	rm -f $<+
+	$(RM) $<+
 
 # These can record GIT_VERSION
 git.o git.spec \
@@ -908,7 +909,7 @@ $(patsubst git-%$X,%.o,$(PROGRAMS)): $(LIB_H) $(wildcard */*.h)
 $(DIFF_OBJS): diffcore.h
 
 $(LIB_FILE): $(LIB_OBJS)
-	$(QUIET_AR)rm -f $@ && $(AR) rcs $@ $(LIB_OBJS)
+	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $(LIB_OBJS)
 
 XDIFF_OBJS=xdiff/xdiffi.o xdiff/xprepare.o xdiff/xutils.o xdiff/xemit.o \
 	xdiff/xmerge.o
@@ -916,7 +917,7 @@ $(XDIFF_OBJS): xdiff/xinclude.h xdiff/xmacros.h xdiff/xdiff.h xdiff/xtypes.h \
 	xdiff/xutils.h xdiff/xprepare.h xdiff/xdiffi.h xdiff/xemit.h
 
 $(XDIFF_LIB): $(XDIFF_OBJS)
-	$(QUIET_AR)rm -f $@ && $(AR) rcs $@ $(XDIFF_OBJS)
+	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $(XDIFF_OBJS)
 
 
 perl/Makefile: perl/Git.pm perl/Makefile.PL GIT-CFLAGS
@@ -927,11 +928,11 @@ doc:
 	$(MAKE) -C Documentation all
 
 TAGS:
-	rm -f TAGS
+	$(RM) TAGS
 	find . -name '*.[hcS]' -print | xargs etags -a
 
 tags:
-	rm -f tags
+	$(RM) tags
 	find . -name '*.[hcS]' -print | xargs ctags -a
 
 ### Detect prefix changes
@@ -1010,9 +1011,9 @@ endif
 		cp '$(DESTDIR_SQ)$(bindir_SQ)/git$X' \
 			'$(DESTDIR_SQ)$(gitexecdir_SQ)/git$X'; \
 	fi
-	$(foreach p,$(BUILT_INS), rm -f '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' && ln '$(DESTDIR_SQ)$(gitexecdir_SQ)/git$X' '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' ;)
+	$(foreach p,$(BUILT_INS), $(RM) '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' && ln '$(DESTDIR_SQ)$(gitexecdir_SQ)/git$X' '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p' ;)
 ifneq (,$X)
-	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_PROGRAMS) $(BUILT_INS) git$X)), rm -f '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p';)
+	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_PROGRAMS) $(BUILT_INS) git$X)), $(RM) '$(DESTDIR_SQ)$(gitexecdir_SQ)/$p';)
 endif
 
 install-doc:
@@ -1042,7 +1043,7 @@ dist: git.spec git-archive configure
 		$(GIT_TARNAME)/configure \
 		$(GIT_TARNAME)/version \
 		$(GIT_TARNAME)/git-gui/version
-	@rm -rf $(GIT_TARNAME)
+	@$(RM) -r $(GIT_TARNAME)
 	gzip -f -9 $(GIT_TARNAME).tar
 
 rpm: dist
@@ -1051,13 +1052,13 @@ rpm: dist
 htmldocs = git-htmldocs-$(GIT_VERSION)
 manpages = git-manpages-$(GIT_VERSION)
 dist-doc:
-	rm -fr .doc-tmp-dir
+	$(RM) -r .doc-tmp-dir
 	mkdir .doc-tmp-dir
 	$(MAKE) -C Documentation WEBDOC_DEST=../.doc-tmp-dir install-webdoc
 	cd .doc-tmp-dir && $(TAR) cf ../$(htmldocs).tar .
 	gzip -n -9 -f $(htmldocs).tar
 	:
-	rm -fr .doc-tmp-dir
+	$(RM) -r .doc-tmp-dir
 	mkdir -p .doc-tmp-dir/man1 .doc-tmp-dir/man5 .doc-tmp-dir/man7
 	$(MAKE) -C Documentation DESTDIR=./ \
 		man1dir=../.doc-tmp-dir/man1 \
@@ -1066,31 +1067,31 @@ dist-doc:
 		install
 	cd .doc-tmp-dir && $(TAR) cf ../$(manpages).tar .
 	gzip -n -9 -f $(manpages).tar
-	rm -fr .doc-tmp-dir
+	$(RM) -r .doc-tmp-dir
 
 ### Cleaning rules
 
 clean:
-	rm -f *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o xdiff/*.o \
+	$(RM) *.o mozilla-sha1/*.o arm/*.o ppc/*.o compat/*.o xdiff/*.o \
 		$(LIB_FILE) $(XDIFF_LIB)
-	rm -f $(ALL_PROGRAMS) $(BUILT_INS) git$X
-	rm -f $(TEST_PROGRAMS)
-	rm -f *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
-	rm -rf autom4te.cache
-	rm -f configure config.log config.mak.autogen config.mak.append config.status config.cache
-	rm -rf $(GIT_TARNAME) .doc-tmp-dir
-	rm -f $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
-	rm -f $(htmldocs).tar.gz $(manpages).tar.gz
-	rm -f gitweb/gitweb.cgi
+	$(RM) $(ALL_PROGRAMS) $(BUILT_INS) git$X
+	$(RM) $(TEST_PROGRAMS)
+	$(RM) *.spec *.pyc *.pyo */*.pyc */*.pyo common-cmds.h TAGS tags
+	$(RM) -r autom4te.cache
+	$(RM) configure config.log config.mak.autogen config.mak.append config.status config.cache
+	$(RM) -r $(GIT_TARNAME) .doc-tmp-dir
+	$(RM) $(GIT_TARNAME).tar.gz git-core_$(GIT_VERSION)-*.tar.gz
+	$(RM) $(htmldocs).tar.gz $(manpages).tar.gz
+	$(RM) gitweb/gitweb.cgi
 	$(MAKE) -C Documentation/ clean
 	$(MAKE) -C perl clean
 	$(MAKE) -C templates/ clean
 	$(MAKE) -C t/ clean
 ifndef NO_TCLTK
-	rm -f gitk-wish
+	$(RM) gitk-wish
 	$(MAKE) -C git-gui clean
 endif
-	rm -f GIT-VERSION-FILE GIT-CFLAGS GIT-GUI-VARS
+	$(RM) GIT-VERSION-FILE GIT-CFLAGS GIT-GUI-VARS
 
 .PHONY: all install clean strip
 .PHONY: .FORCE-GIT-VERSION-FILE TAGS tags .FORCE-GIT-CFLAGS
