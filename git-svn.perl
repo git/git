@@ -77,11 +77,12 @@ my %fc_opts = ( 'follow-parent|follow!' => \$Git::SVN::_follow_parent,
 		   \$Git::SVN::_repack_flags,
 		%remote_opts );
 
-my ($_trunk, $_tags, $_branches);
+my ($_trunk, $_tags, $_branches, $_stdlayout);
 my %icv;
 my %init_opts = ( 'template=s' => \$_template, 'shared:s' => \$_shared,
                   'trunk|T=s' => \$_trunk, 'tags|t=s' => \$_tags,
                   'branches|b=s' => \$_branches, 'prefix=s' => \$_prefix,
+                  'stdlayout|s' => \$_stdlayout,
                   'minimize-url|m' => \$Git::SVN::_minimize_url,
 		  'no-metadata' => sub { $icv{noMetadata} = 1 },
 		  'use-svm-props' => sub { $icv{useSvmProps} = 1 },
@@ -292,7 +293,8 @@ sub init_subdir {
 sub cmd_clone {
 	my ($url, $path) = @_;
 	if (!defined $path &&
-	    (defined $_trunk || defined $_branches || defined $_tags) &&
+	    (defined $_trunk || defined $_branches || defined $_tags ||
+	     defined $_stdlayout) &&
 	    $url !~ m#^[a-z\+]+://#) {
 		$path = $url;
 	}
@@ -302,6 +304,11 @@ sub cmd_clone {
 }
 
 sub cmd_init {
+	if (defined $_stdlayout) {
+		$_trunk = 'trunk' if (!defined $_trunk);
+		$_tags = 'tags' if (!defined $_tags);
+		$_branches = 'branches' if (!defined $_branches);
+	}
 	if (defined $_trunk || defined $_branches || defined $_tags) {
 		return cmd_multi_init(@_);
 	}

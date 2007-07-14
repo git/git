@@ -44,10 +44,15 @@ COMMANDS
 --tags=<tags_subdir>;;
 -b<branches_subdir>;;
 --branches=<branches_subdir>;;
+-s;;
+--stdlayout;;
 	These are optional command-line options for init.  Each of
 	these flags can point to a relative repository path
 	(--tags=project/tags') or a full url
-	(--tags=https://foo.org/project/tags)
+	(--tags=https://foo.org/project/tags). The option --stdlayout is
+	a shorthand way of setting trunk,tags,branches as the relative paths,
+	which is the Subversion default. If any of the other options are given
+	as well, they take precedence.
 --no-metadata;;
 	Set the 'noMetadata' option in the [svn-remote] config.
 --use-svm-props;;
