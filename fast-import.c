@@ -11,7 +11,7 @@ Format of STDIN stream:
         ;
 
   new_blob ::= 'blob' lf
-	mark?
+    mark?
     file_content;
   file_content ::= data;
 
@@ -42,7 +42,7 @@ Format of STDIN stream:
 
   new_tag ::= 'tag' sp tag_str lf
     'from' sp (ref_str | hexsha1 | sha1exp_str | idnum) lf
-	'tagger' sp name '<' email '>' when lf
+    'tagger' sp name '<' email '>' when lf
     tag_msg;
   tag_msg ::= data;
 
@@ -56,9 +56,9 @@ Format of STDIN stream:
      # note: the first idnum in a stream should be 1 and subsequent
      # idnums should not have gaps between values as this will cause
      # the stream parser to reserve space for the gapped values.  An
-	 # idnum can be updated in the future to a new object by issuing
+     # idnum can be updated in the future to a new object by issuing
      # a new mark directive with the old idnum.
-	 #
+     #
   mark ::= 'mark' sp idnum lf;
   data ::= (delimited_data | exact_data)
     lf;
@@ -68,7 +68,7 @@ Format of STDIN stream:
     # delim.
   delimited_data ::= 'data' sp '<<' delim lf
     (data_line lf)*
-	delim lf;
+    delim lf;
 
      # note: declen indicates the length of binary_data in bytes.
      # declen does not include the lf preceeding the binary data.
@@ -78,10 +78,10 @@ Format of STDIN stream:
 
      # note: quoted strings are C-style quoting supporting \c for
      # common escapes of 'c' (e..g \n, \t, \\, \") or \nnn where nnn
-	 # is the signed byte value in octal.  Note that the only
+     # is the signed byte value in octal.  Note that the only
      # characters which must actually be escaped to protect the
      # stream formatting is: \, " and LF.  Otherwise these values
-	 # are UTF8.
+     # are UTF8.
      #
   ref_str     ::= ref;
   sha1exp_str ::= sha1exp;
@@ -104,9 +104,9 @@ Format of STDIN stream:
   lf ::= # ASCII newline (LF) character;
 
      # note: a colon (':') must precede the numerical value assigned to
-	 # an idnum.  This is to distinguish it from a ref or tag name as
+     # an idnum.  This is to distinguish it from a ref or tag name as
      # GIT does not permit ':' in ref or tag strings.
-	 #
+     #
   idnum   ::= ':' bigint;
   path    ::= # GIT style file path, e.g. "a/b/c";
   ref     ::= # GIT ref name, e.g. "refs/heads/MOZ_GECKO_EXPERIMENT";
@@ -115,9 +115,9 @@ Format of STDIN stream:
   hexsha1 ::= # SHA1 in hexadecimal format;
 
      # note: name and email are UTF8 strings, however name must not
-	 # contain '<' or lf and email must not contain any of the
+     # contain '<' or lf and email must not contain any of the
      # following: '<', '>', lf.
-	 #
+     #
   name  ::= # valid GIT author/committer name;
   email ::= # valid GIT author/committer email;
   ts    ::= # time since the epoch in seconds, ascii base10 notation;
