@@ -26,10 +26,16 @@ Format of STDIN stream:
     lf;
   commit_msg ::= data;
 
-  file_change ::= file_clr | file_del | file_rnm | file_obm | file_inm;
+  file_change ::= file_clr
+    | file_del
+    | file_rnm
+    | file_cpy
+    | file_obm
+    | file_inm;
   file_clr ::= 'deleteall' lf;
   file_del ::= 'D' sp path_str lf;
   file_rnm ::= 'R' sp path_str sp path_str lf;
+  file_cpy ::= 'C' sp path_str sp path_str lf;
   file_obm ::= 'M' sp mode sp (hexsha1 | idnum) sp path_str lf;
   file_inm ::= 'M' sp mode sp 'inline' sp path_str lf
     data;
@@ -621,6 +627,31 @@ static void release_tree_entry(struct tree_entry *e)
 		release_tree_content_recursive(e->tree);
 	*((void**)e) = avail_tree_entry;
 	avail_tree_entry = e;
+}
+
+static struct tree_content *dup_tree_content(struct tree_content *s)
+{
+	struct tree_content *d;
+	struct tree_entry *a, *b;
+	unsigned int i;
+
+	if (!s)
+		return NULL;
+	d = new_tree_content(s->entry_count);
+	for (i = 0; i < s->entry_count; i++) {
+		a = s->entries[i];
+		b = new_tree_entry();
+		memcpy(b, a, sizeof(*a));
+		if (a->tree && is_null_sha1(b->versions[1].sha1))
+			b->tree = dup_tree_content(a->tree);
+		else
+			b->tree = NULL;
+		d->entries[i] = b;
+	}
+	d->entry_count = s->entry_count;
+	d->delta_depth = s->delta_depth;
+
+	return d;
 }
 
 static void start_packfile(void)
@@ -1273,6 +1304,43 @@ del_entry:
 	return 1;
 }
 
+static int tree_content_get(
+	struct tree_entry *root,
+	const char *p,
+	struct tree_entry *leaf)
+{
+	struct tree_content *t = root->tree;
+	const char *slash1;
+	unsigned int i, n;
+	struct tree_entry *e;
+
+	slash1 = strchr(p, '/');
+	if (slash1)
+		n = slash1 - p;
+	else
+		n = strlen(p);
+
+	for (i = 0; i < t->entry_count; i++) {
+		e = t->entries[i];
+		if (e->name->str_len == n && !strncmp(p, e->name->str_dat, n)) {
+			if (!slash1) {
+				memcpy(leaf, e, sizeof(*leaf));
+				if (e->tree && is_null_sha1(e->versions[1].sha1))
+					leaf->tree = dup_tree_content(e->tree);
+				else
+					leaf->tree = NULL;
+				return 1;
+			}
+			if (!S_ISDIR(e->versions[1].mode))
+				return 0;
+			if (!e->tree)
+				load_tree(e);
+			return tree_content_get(e, slash1 + 1, leaf);
+		}
+	}
+	return 0;
+}
+
 static int update_branch(struct branch *b)
 {
 	static const char *msg = "fast-import";
@@ -1658,7 +1726,7 @@ static void file_change_d(struct branch *b)
 	free(p_uq);
 }
 
-static void file_change_r(struct branch *b)
+static void file_change_cr(struct branch *b, int rename)
 {
 	const char *s, *d;
 	char *s_uq, *d_uq;
@@ -1694,7 +1762,10 @@ static void file_change_r(struct branch *b)
 	}
 
 	memset(&leaf, 0, sizeof(leaf));
-	tree_content_remove(&b->branch_tree, s, &leaf);
+	if (rename)
+		tree_content_remove(&b->branch_tree, s, &leaf);
+	else
+		tree_content_get(&b->branch_tree, s, &leaf);
 	if (!leaf.versions[1].mode)
 		die("Path %s not in branch", s);
 	tree_content_set(&b->branch_tree, d,
@@ -1874,7 +1945,9 @@ static void cmd_new_commit(void)
 		else if (!prefixcmp(command_buf.buf, "D "))
 			file_change_d(b);
 		else if (!prefixcmp(command_buf.buf, "R "))
-			file_change_r(b);
+			file_change_cr(b, 1);
+		else if (!prefixcmp(command_buf.buf, "C "))
+			file_change_cr(b, 0);
 		else if (!strcmp("deleteall", command_buf.buf))
 			file_change_deleteall(b);
 		else
