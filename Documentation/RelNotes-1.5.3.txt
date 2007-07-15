@@ -21,6 +21,8 @@ Updates since v1.5.2
 
 * New commands and options.
 
+  - "git log --date=<format>" can use more formats: iso8601, rfc2822.
+
   - The hunk header output from "git diff" family can be customized
     with the attributes mechanism.  See gitattributes(5) for details.
 
@@ -68,6 +70,10 @@ Updates since v1.5.2
   - "git gc --aggressive" tells the command to spend more cycles
     to optimize the repository harder.
 
+  - "git repack" learned a "window-memory" limit which
+    dynamically reduces the window size to stay within the
+    specified memory usage.
+
   - "git repack" can be told to split resulting packs to avoid
     exceeding limit specified with "--max-pack-size".
 
@@ -98,6 +104,9 @@ Updates since v1.5.2
   - "git init -q" makes the command quieter.
 
 * Updated behavior of existing commands.
+
+  - "git rm --cached" does not complain when removing a newly
+    added file from the index anymore.
 
   - "git svn dcommit" retains local merge information.
 
@@ -175,6 +184,11 @@ Updates since v1.5.2
     concatenate them into a single line and treat the result as
     "oneline".
 
+  - "git p4import" has been demoted to contrib status.  For
+    a superior option, checkout the git-p4 front end to
+    git-fast-import (also in contrib).  The man page and p4
+    rpm have been removed as well.
+
 * Builds
 
   - old-style function definitions (most notably, a function
@@ -218,6 +232,6 @@ this release, unless otherwise noted.
 
 --
 exec >/var/tmp/1
-O=v1.5.3-rc1
+O=v1.5.3-rc2
 echo O=`git describe refs/heads/master`
 git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint
