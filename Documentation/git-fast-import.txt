@@ -302,7 +302,7 @@ change to the project.
 	data
 	('from' SP <committish> LF)?
 	('merge' SP <committish> LF)?
-	(filemodify | filedelete | filerename | filedeleteall)*
+	(filemodify | filedelete | filecopy | filerename | filedeleteall)*
 	LF
 ....
 
@@ -325,13 +325,13 @@ commit message use a 0 length data.  Commit messages are free-form
 and are not interpreted by Git.  Currently they must be encoded in
 UTF-8, as fast-import does not permit other encodings to be specified.
 
-Zero or more `filemodify`, `filedelete`, `filename` and
-`filedeleteall` commands
+Zero or more `filemodify`, `filedelete`, `filecopy`, `filerename`
+and `filedeleteall` commands
 may be included to update the contents of the branch prior to
 creating the commit.  These commands may be supplied in any order.
 However it is recommended that a `filedeleteall` command preceed
-all `filemodify` and `filerename` commands in the same commit, as
-`filedeleteall`
+all `filemodify`, `filecopy` and `filerename` commands in the same
+commit, as `filedeleteall`
 wipes the branch clean (see below).
 
 `author`
@@ -497,6 +497,27 @@ here `<path>` is the complete path of the file or subdirectory to
 be removed from the branch.
 See `filemodify` above for a detailed description of `<path>`.
 
+`filecopy`
+^^^^^^^^^^^^
+Recursively copies an existing file or subdirectory to a different
+location within the branch.  The existing file or directory must
+exist.  If the destination exists it will be completely replaced
+by the content copied from the source.
+
+....
+	'C' SP <path> SP <path> LF
+....
+
+here the first `<path>` is the source location and the second
+`<path>` is the destination.  See `filemodify` above for a detailed
+description of what `<path>` may look like.  To use a source path
+that contains SP the path must be quoted.
+
+A `filecopy` command takes effect immediately.  Once the source
+location has been copied to the destination any future commands
+applied to the source location will not impact the destination of
+the copy.
+
 `filerename`
 ^^^^^^^^^^^^
 Renames an existing file or subdirectory to a different location
@@ -516,6 +537,15 @@ A `filerename` command takes effect immediately.  Once the source
 location has been renamed to the destination any future commands
 applied to the source location will create new files there and not
 impact the destination of the rename.
+
+Note that a `filerename` is the same as a `filecopy` followed by a
+`filedelete` of the source location.  There is a slight performance
+advantage to using `filerename`, but the advantage is so small
+that it is never worth trying to convert a delete/add pair in
+source material into a rename for fast-import.  This `filerename`
+command is provided just to simplify frontends that already have
+rename information and don't want bother with decomposing it into a
+`filecopy` followed by a `filedelete`.
 
 `filedeleteall`
 ^^^^^^^^^^^^^^^

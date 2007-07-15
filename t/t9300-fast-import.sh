@@ -648,4 +648,87 @@ test_expect_success \
 	 git diff-tree -M -r M3^ M3 >actual &&
 	 compare_diff_raw expect actual'
 
+###
+### series N
+###
+
+test_tick
+cat >input <<INPUT_END
+commit refs/heads/N1
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+file copy
+COMMIT
+
+from refs/heads/branch^0
+C file2/newf file2/n.e.w.f
+
+INPUT_END
+
+cat >expect <<EOF
+:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc C100	file2/newf	file2/n.e.w.f
+EOF
+test_expect_success \
+	'N: copy file in same subdirectory' \
+	'git-fast-import <input &&
+	 git diff-tree -C --find-copies-harder -r N1^ N1 >actual &&
+	 compare_diff_raw expect actual'
+
+cat >input <<INPUT_END
+commit refs/heads/N2
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+clean directory copy
+COMMIT
+
+from refs/heads/branch^0
+C file2 file3
+
+commit refs/heads/N2
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+modify directory copy
+COMMIT
+
+M 644 inline file3/file5
+data <<EOF
+$file5_data
+EOF
+
+INPUT_END
+
+cat >expect <<EOF
+:100644 100644 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 fcf778cda181eaa1cbc9e9ce3a2e15ee9f9fe791 C100	newdir/interesting	file3/file5
+:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc C100	file2/newf	file3/newf
+:100644 100644 7123f7f44e39be127c5eb701e5968176ee9d78b1 7123f7f44e39be127c5eb701e5968176ee9d78b1 C100	file2/oldf	file3/oldf
+EOF
+test_expect_success \
+	'N: copy then modify subdirectory' \
+	'git-fast-import <input &&
+	 git diff-tree -C --find-copies-harder -r N2^^ N2 >actual &&
+	 compare_diff_raw expect actual'
+
+cat >input <<INPUT_END
+commit refs/heads/N3
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+dirty directory copy
+COMMIT
+
+from refs/heads/branch^0
+M 644 inline file2/file5
+data <<EOF
+$file5_data
+EOF
+
+C file2 file3
+D file2/file5
+
+INPUT_END
+
+test_expect_success \
+	'N: copy dirty subdirectory' \
+	'git-fast-import <input &&
+	 test `git-rev-parse N2^{tree}` = `git-rev-parse N3^{tree}`'
+
 test_done
