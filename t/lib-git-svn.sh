@@ -48,3 +48,37 @@ svnrepo="file://$svnrepo"
 poke() {
 	test-chmtime +1 "$1"
 }
+
+SVN_HTTPD_MODULE_PATH=${SVN_HTTPD_MODULE_PATH-'/usr/lib/apache2/modules'}
+SVN_HTTPD_PATH=${SVN_HTTPD_PATH-'/usr/sbin/apache2'}
+
+start_httpd () {
+	if test -z "$SVN_HTTPD_PORT"
+	then
+		echo >&2 'SVN_HTTPD_PORT is not defined!'
+		return
+	fi
+
+	mkdir "$GIT_DIR"/logs
+
+	cat > "$GIT_DIR/httpd.conf" <<EOF
+ServerName "git-svn test"
+ServerRoot "$GIT_DIR"
+DocumentRoot "$GIT_DIR"
+PidFile "$GIT_DIR/httpd.pid"
+Listen 127.0.0.1:$SVN_HTTPD_PORT
+LoadModule dav_module $SVN_HTTPD_MODULE_PATH/mod_dav.so
+LoadModule dav_svn_module $SVN_HTTPD_MODULE_PATH/mod_dav_svn.so
+<Location /svn>
+	DAV svn
+	SVNPath $rawsvnrepo
+</Location>
+EOF
+	"$SVN_HTTPD_PATH" -f "$GIT_DIR"/httpd.conf -k start
+	svnrepo=http://127.0.0.1:$SVN_HTTPD_PORT/svn
+}
+
+stop_httpd () {
+	test -z "$SVN_HTTPD_PORT" && return
+	"$SVN_HTTPD_PATH" -f "$GIT_DIR"/httpd.conf -k stop
+}

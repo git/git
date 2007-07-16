@@ -2724,6 +2724,9 @@ sub repo_path {
 
 sub url_path {
 	my ($self, $path) = @_;
+	if ($self->{url} =~ m#^https?://#) {
+		$path =~ s/([^a-zA-Z0-9_.-])/uc sprintf("%%%02x",ord($1))/eg;
+	}
 	$self->{url} . '/' . $self->repo_path($path);
 }
 
