@@ -544,7 +544,7 @@ if {![regsub {^git version } $_git_version {} _git_version]} {
 	error_popup "Cannot parse Git version string:\n\n$_git_version"
 	exit 1
 }
-regsub {-dirty$} $_git_version {} _git_version
+regsub -- {-dirty$} $_git_version {} _git_version
 regsub {\.[0-9]+\.g[0-9a-f]+$} $_git_version {} _git_version
 regsub {\.rc[0-9]+$} $_git_version {} _git_version
 
