@@ -63,21 +63,34 @@ def system(cmd):
     if os.system(cmd) != 0:
         die("command failed: %s" % cmd)
 
-def p4CmdList(cmd):
+def p4CmdList(cmd, stdin=None, stdin_mode='w+b'):
     cmd = "p4 -G %s" % cmd
     if verbose:
         sys.stderr.write("Opening pipe: %s\n" % cmd)
-    pipe = os.popen(cmd, "rb")
+
+    # Use a temporary file to avoid deadlocks without
+    # subprocess.communicate(), which would put another copy
+    # of stdout into memory.
+    stdin_file = None
+    if stdin is not None:
+        stdin_file = tempfile.TemporaryFile(prefix='p4-stdin', mode=stdin_mode)
+        stdin_file.write(stdin)
+        stdin_file.flush()
+        stdin_file.seek(0)
+
+    p4 = subprocess.Popen(cmd, shell=True,
+                          stdin=stdin_file,
+                          stdout=subprocess.PIPE)
 
     result = []
     try:
         while True:
-            entry = marshal.load(pipe)
+            entry = marshal.load(p4.stdout)
             result.append(entry)
     except EOFError:
         pass
-    exitCode = pipe.close()
-    if exitCode != None:
+    exitCode = p4.wait()
+    if exitCode != 0:
         entry = {}
         entry["p4ExitCode"] = exitCode
         result.append(entry)
