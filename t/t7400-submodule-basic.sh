@@ -21,6 +21,10 @@ subcommands of git-submodule.
 #  -add an entry to .gitmodules for submodule 'example'
 #
 test_expect_success 'Prepare submodule testing' '
+	: > t &&
+	git-add t &&
+	git-commit -m "initial commit" &&
+	git branch initial HEAD &&
 	mkdir lib &&
 	cd lib &&
 	git init &&
@@ -164,6 +168,11 @@ test_expect_success 'update should checkout rev1' '
 
 test_expect_success 'status should be "up-to-date" after update' '
 	git-submodule status | grep "^ $rev1"
+'
+
+test_expect_success 'checkout superproject with subproject already present' '
+	git-checkout initial &&
+	git-checkout master
 '
 
 test_done
