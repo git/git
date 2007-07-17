@@ -370,6 +370,7 @@ method _load {jump} {
 	$w_path conf -text [escape_path $path]
 	if {$commit eq {}} {
 		set fd [open $path r]
+		fconfigure $fd -eofchar {}
 	} else {
 		set fd [git_read cat-file blob "$commit:$path"]
 	}

@@ -209,7 +209,7 @@ A good commit message has the following format:
 	ui_status {Calling pre-commit hook...}
 	set pch_error {}
 	set fd_ph [open "| $pchook" r]
-	fconfigure $fd_ph -blocking 0 -translation binary
+	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
 	fileevent $fd_ph readable \
 		[list commit_prehook_wait $fd_ph $curHEAD $msg]
 }

@@ -414,6 +414,7 @@ proc _open_stdout_stderr {cmd} {
 			error $err
 		}
 	}
+	fconfigure $fd -eofchar {}
 	return $fd
 }
 
@@ -828,6 +829,7 @@ proc load_message {file} {
 		if {[catch {set fd [open $f r]}]} {
 			return 0
 		}
+		fconfigure $fd -eofchar {}
 		set content [string trim [read $fd]]
 		close $fd
 		regsub -all -line {[ \r\t]+$} $content {} content
