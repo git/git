@@ -101,7 +101,7 @@ proc start_rev_list {view} {
     set commfd($view) $fd
     set leftover($view) {}
     set lookingforhead $showlocalchanges
-    fconfigure $fd -blocking 0 -translation lf
+    fconfigure $fd -blocking 0 -translation lf -eofchar {}
     if {$tclencoding != {}} {
 	fconfigure $fd -encoding $tclencoding
     }
