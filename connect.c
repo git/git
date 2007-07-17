@@ -395,7 +395,7 @@ static enum protocol get_protocol(const char *name)
 /*
  * Returns a connected socket() fd, or else die()s.
  */
-static int git_tcp_connect_sock(char *host)
+static int git_tcp_connect_sock(char *host, int flags)
 {
 	int sockfd = -1, saved_errno = 0;
 	char *colon, *end;
@@ -426,9 +426,15 @@ static int git_tcp_connect_sock(char *host)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 
+	if (flags & CONNECT_VERBOSE)
+		fprintf(stderr, "Looking up %s ... ", host);
+
 	gai = getaddrinfo(host, port, &hints, &ai);
 	if (gai)
 		die("Unable to look up %s (port %s) (%s)", host, port, gai_strerror(gai));
+
+	if (flags & CONNECT_VERBOSE)
+		fprintf(stderr, "done.\nConnecting to %s (port %s) ... ", host, port);
 
 	for (ai0 = ai; ai; ai = ai->ai_next) {
 		sockfd = socket(ai->ai_family,
@@ -451,6 +457,9 @@ static int git_tcp_connect_sock(char *host)
 	if (sockfd < 0)
 		die("unable to connect a socket (%s)", strerror(saved_errno));
 
+	if (flags & CONNECT_VERBOSE)
+		fprintf(stderr, "done.\n");
+
 	return sockfd;
 }
 
@@ -459,7 +468,7 @@ static int git_tcp_connect_sock(char *host)
 /*
  * Returns a connected socket() fd, or else die()s.
  */
-static int git_tcp_connect_sock(char *host)
+static int git_tcp_connect_sock(char *host, int flags)
 {
 	int sockfd = -1, saved_errno = 0;
 	char *colon, *end;
@@ -486,6 +495,9 @@ static int git_tcp_connect_sock(char *host)
 		port = colon + 1;
 	}
 
+	if (flags & CONNECT_VERBOSE)
+		fprintf(stderr, "Looking up %s ... ", host);
+
 	he = gethostbyname(host);
 	if (!he)
 		die("Unable to look up %s (%s)", host, hstrerror(h_errno));
@@ -497,6 +509,9 @@ static int git_tcp_connect_sock(char *host)
 			die("Unknown port %s\n", port);
 		nport = se->s_port;
 	}
+
+	if (flags & CONNECT_VERBOSE)
+		fprintf(stderr, "done.\nConnecting to %s (port %s) ... ", host, port);
 
 	for (ap = he->h_addr_list; *ap; ap++) {
 		sockfd = socket(he->h_addrtype, SOCK_STREAM, 0);
@@ -522,16 +537,19 @@ static int git_tcp_connect_sock(char *host)
 	if (sockfd < 0)
 		die("unable to connect a socket (%s)", strerror(saved_errno));
 
+	if (flags & CONNECT_VERBOSE)
+		fprintf(stderr, "done.\n");
+
 	return sockfd;
 }
 
 #endif /* NO_IPV6 */
 
 
-static void git_tcp_connect(int fd[2], char *host)
+static void git_tcp_connect(int fd[2], char *host, int flags)
 {
 #ifndef __MINGW32__
-	int sockfd = git_tcp_connect_sock(host);
+	int sockfd = git_tcp_connect_sock(host, flags);
 #else
 	int sockfd;
 	WSADATA wsa;
@@ -541,7 +559,7 @@ static void git_tcp_connect(int fd[2], char *host)
 			WSAGetLastError());
 	atexit((void(*)(void)) WSACleanup);
 
-	sockfd = git_tcp_connect_sock(host);
+	sockfd = git_tcp_connect_sock(host, flags);
 	/* convert into a file descriptor */
 	if ((sockfd = _open_osfhandle(sockfd, O_RDWR|O_BINARY)) < 0)
 		die("unable to make a socket file descriptor: %s",
@@ -663,7 +681,7 @@ static void git_proxy_connect(int fd[2], char *host)
  *
  * Does not return a negative value on error; it just dies.
  */
-pid_t git_connect(int fd[2], char *url, const char *prog)
+pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 {
 	char *host, *path = url;
 	char *end;
@@ -737,7 +755,7 @@ pid_t git_connect(int fd[2], char *url, const char *prog)
 		if (git_use_proxy(host))
 			git_proxy_connect(fd, host);
 		else
-			git_tcp_connect(fd, host);
+			git_tcp_connect(fd, host, flags);
 		/*
 		 * Separate original protocol components prog and path
 		 * from extended components with a NUL byte.

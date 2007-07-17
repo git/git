@@ -204,23 +204,16 @@ core.warnAmbiguousRefs::
 	and might match multiple refs in the .git/refs/ tree. True by default.
 
 core.compression::
-	An integer -1..9, indicating the compression level for objects that
-	are not in a pack file. -1 is the zlib and git default. 0 means no
-	compression, and 1..9 are various speed/size tradeoffs, 9 being
-	slowest.
+	An integer -1..9, indicating a default compression level.
+	-1 is the zlib default. 0 means no compression,
+	and 1..9 are various speed/size tradeoffs, 9 being slowest.
 
-core.legacyheaders::
-	A boolean which
-	changes the format of loose objects so that they are more
-	efficient to pack and to send out of the repository over git
-	native protocol, since v1.4.2.  However, loose objects
-	written in the new format cannot be read by git older than
-	that version; people fetching from your repository using
-	older versions of git over dumb transports (e.g. http)
-	will also be affected.
-+
-To let git use the new loose object format, you have to
-set core.legacyheaders to false.
+core.loosecompression::
+	An integer -1..9, indicating the compression level for objects that
+	are not in a pack file. -1 is the zlib default. 0 means no
+	compression, and 1..9 are various speed/size tradeoffs, 9 being
+	slowest.  If not set,  defaults to core.compression.  If that is
+	not set,  defaults to 0 (best speed).
 
 core.packedGitWindowSize::
 	Number of bytes of a pack file to map into memory in a
@@ -397,6 +390,11 @@ format.suffix::
 	`.patch`. Use this variable to change that suffix (make sure to
 	include the dot if you want it).
 
+gc.aggressiveWindow::
+	The window size parameter used in the delta compression
+	algorithm used by 'git gc --aggressive'.  This defaults
+	to 10.
+
 gc.packrefs::
 	`git gc` does not run `git pack-refs` in a bare repository by
 	default so that older dumb-transport clients can still fetch
@@ -562,6 +560,13 @@ pack.window::
 pack.depth::
 	The maximum delta depth used by gitlink:git-pack-objects[1] when no
 	maximum depth is given on the command line. Defaults to 50.
+
+pack.compression::
+	An integer -1..9, indicating the compression level for objects
+	in a pack file. -1 is the zlib default. 0 means no
+	compression, and 1..9 are various speed/size tradeoffs, 9 being
+	slowest.  If not set,  defaults to core.compression.  If that is
+	not set,  defaults to -1.
 
 pull.octopus::
 	The default merge strategy to use when pulling multiple branches

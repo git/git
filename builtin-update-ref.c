@@ -3,16 +3,17 @@
 #include "builtin.h"
 
 static const char git_update_ref_usage[] =
-"git-update-ref [-m <reason>] (-d <refname> <value> | <refname> <value> [<oldval>])";
+"git-update-ref [-m <reason>] (-d <refname> <value> | [--no-deref] <refname> <value> [<oldval>])";
 
 int cmd_update_ref(int argc, const char **argv, const char *prefix)
 {
 	const char *refname=NULL, *value=NULL, *oldval=NULL, *msg=NULL;
 	struct ref_lock *lock;
 	unsigned char sha1[20], oldsha1[20];
-	int i, delete;
+	int i, delete, ref_flags;
 
 	delete = 0;
+	ref_flags = 0;
 	git_config(git_default_config);
 
 	for (i = 1; i < argc; i++) {
@@ -28,6 +29,10 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 		}
 		if (!strcmp("-d", argv[i])) {
 			delete = 1;
+			continue;
+		}
+		if (!strcmp("--no-deref", argv[i])) {
+			ref_flags |= REF_NODEREF;
 			continue;
 		}
 		if (!refname) {
@@ -59,7 +64,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 	if (oldval && *oldval && get_sha1(oldval, oldsha1))
 		die("%s: not a valid old SHA1", oldval);
 
-	lock = lock_any_ref_for_update(refname, oldval ? oldsha1 : NULL);
+	lock = lock_any_ref_for_update(refname, oldval ? oldsha1 : NULL, ref_flags);
 	if (!lock)
 		die("%s: cannot lock the ref", refname);
 	if (write_ref_sha1(lock, sha1, msg) < 0)

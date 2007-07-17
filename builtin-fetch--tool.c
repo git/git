@@ -42,7 +42,7 @@ static int update_ref(const char *action,
 	if (!rla)
 		rla = "(reflog update)";
 	snprintf(msg, sizeof(msg), "%s: %s", rla, action);
-	lock = lock_any_ref_for_update(refname, oldval);
+	lock = lock_any_ref_for_update(refname, oldval, 0);
 	if (!lock)
 		return 1;
 	if (write_ref_sha1(lock, sha1, msg) < 0)

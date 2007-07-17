@@ -8,7 +8,7 @@ git-gc - Cleanup unnecessary files and optimize the local repository
 
 SYNOPSIS
 --------
-'git-gc' [--prune]
+'git-gc' [--prune] [--aggressive]
 
 DESCRIPTION
 -----------
@@ -35,6 +35,13 @@ OPTIONS
 	repository at the same time (e.g. never use this option
 	in a cron script).
 
+--aggressive::
+	Usually 'git-gc' runs very quickly while providing good disk
+	space utilization and performance.   This option will cause
+	git-gc to more aggressive optimize the repository at the expense
+	of taking much more time.  The effects of this optimization are
+	persistent, so this option only needs to be sporadically; every
+	few hundred changesets or so.
 
 Configuration
 -------------
@@ -66,6 +73,13 @@ The optional configuration variable 'gc.packrefs' determines if
 `git gc` runs `git-pack-refs`.  Without the configuration, `git-pack-refs`
 is not run in bare repositories by default, to allow older dumb-transport
 clients fetch from the repository,  but this will change in the future.
+
+The optional configuration variable 'gc.aggressiveWindow' controls how
+much time is spent optimizing the delta compression of the objects in
+the repository when the --aggressive option is specified.  The larger
+the value, the more time is spent optimizing the delta compression.  See
+the documentation for the --window' option in gitlink:git-repack[1] for
+more details.  This defaults to 10.
 
 See Also
 --------

@@ -11,7 +11,6 @@
 
 char git_default_email[MAX_GITNAME];
 char git_default_name[MAX_GITNAME];
-int use_legacy_headers = 1;
 int trust_executable_bit = 1;
 int has_symlinks = 1;
 int assume_unchanged;
@@ -24,7 +23,9 @@ const char *git_commit_encoding;
 const char *git_log_output_encoding;
 int shared_repository = PERM_UMASK;
 const char *apply_default_whitespace;
-int zlib_compression_level = Z_DEFAULT_COMPRESSION;
+int zlib_compression_level = Z_BEST_SPEED;
+int core_compression_level;
+int core_compression_seen;
 size_t packed_git_window_size = DEFAULT_PACKED_GIT_WINDOW_SIZE;
 size_t packed_git_limit = DEFAULT_PACKED_GIT_LIMIT;
 size_t delta_base_cache_limit = 16 * 1024 * 1024;

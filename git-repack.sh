@@ -8,7 +8,7 @@ SUBDIRECTORY_OK='Yes'
 . git-sh-setup
 
 no_update_info= all_into_one= remove_redundant=
-local= quiet= no_reuse_delta= extra=
+local= quiet= no_reuse= extra=
 while case "$#" in 0) break ;; esac
 do
 	case "$1" in
@@ -16,7 +16,7 @@ do
 	-a)	all_into_one=t ;;
 	-d)	remove_redundant=t ;;
 	-q)	quiet=-q ;;
-	-f)	no_reuse_delta=--no-reuse-delta ;;
+	-f)	no_reuse=--no-reuse-object ;;
 	-l)	local=--local ;;
 	--window=*) extra="$extra $1" ;;
 	--depth=*) extra="$extra $1" ;;
@@ -61,7 +61,7 @@ case ",$all_into_one," in
 	;;
 esac
 
-args="$args $local $quiet $no_reuse_delta$extra"
+args="$args $local $quiet $no_reuse$extra"
 name=$(git-pack-objects --non-empty --all --reflog $args </dev/null "$PACKTMP") ||
 	exit 1
 if [ -z "$name" ]; then

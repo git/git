@@ -119,14 +119,14 @@ struct sha1file *sha1fd(int fd, const char *name)
 	return f;
 }
 
-int sha1write_compressed(struct sha1file *f, void *in, unsigned int size)
+int sha1write_compressed(struct sha1file *f, void *in, unsigned int size, int level)
 {
 	z_stream stream;
 	unsigned long maxsize;
 	void *out;
 
 	memset(&stream, 0, sizeof(stream));
-	deflateInit(&stream, zlib_compression_level);
+	deflateInit(&stream, level);
 	maxsize = deflateBound(&stream, size);
 	out = xmalloc(maxsize);
 

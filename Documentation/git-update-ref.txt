@@ -7,7 +7,7 @@ git-update-ref - Update the object name stored in a ref safely
 
 SYNOPSIS
 --------
-'git-update-ref' [-m <reason>] (-d <ref> <oldvalue> | <ref> <newvalue> [<oldvalue>])
+'git-update-ref' [-m <reason>] (-d <ref> <oldvalue> | [--no-deref] <ref> <newvalue> [<oldvalue>])
 
 DESCRIPTION
 -----------
@@ -35,6 +35,9 @@ if they start with "refs/": otherwise it will just try to read
 them and update them as a regular file (i.e. it will allow the
 filesystem to follow them, but will overwrite such a symlink to
 somewhere else with a regular filename).
+
+If --no-deref is given, <ref> itself is overwritten, rather than
+the result of following the symbolic pointers.
 
 In general, using
 

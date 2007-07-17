@@ -16,7 +16,7 @@ extern struct sha1file *sha1fd(int fd, const char *name);
 extern struct sha1file *sha1create(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
 extern int sha1close(struct sha1file *, unsigned char *, int);
 extern int sha1write(struct sha1file *, void *, unsigned int);
-extern int sha1write_compressed(struct sha1file *, void *, unsigned int);
+extern int sha1write_compressed(struct sha1file *, void *, unsigned int, int);
 extern void crc32_begin(struct sha1file *);
 extern uint32_t crc32_end(struct sha1file *);
 

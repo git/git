@@ -307,7 +307,8 @@ fi
 if test -n "$verbose"
 then
 	echo "Changes from $mb to $onto:"
-	git-diff-tree --stat --summary "$mb" "$onto"
+	# We want color (if set), but no pager
+	GIT_PAGER='' git-diff --stat --summary "$mb" "$onto"
 fi
 
 # Rewind the head to "$onto"; this saves our current head in ORIG_HEAD.
