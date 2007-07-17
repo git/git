@@ -8,7 +8,8 @@ git-stash - Stash the changes in a dirty working directory away
 SYNOPSIS
 --------
 [verse]
-'git-stash' (save | list | show [<stash>] | apply [<stash>] | clear)
+'git-stash' (list | show [<stash>] | apply [<stash>] | clear)
+'git-stash' [save] [message...]
 
 DESCRIPTION
 -----------
@@ -22,7 +23,9 @@ The modifications stashed away by this command can be listed with
 `git-stash list`, inspected with `git-stash show`, and restored
 (potentially on top of a different commit) with `git-stash apply`.
 Calling git-stash without any arguments is equivalent to `git-stash
-save`.
+save`.  A stash is by default listed as "WIP on 'branchname' ...", but
+you can give a more descriptive message on the command line when
+you create one.
 
 The latest stash you created is stored in `$GIT_DIR/refs/stash`; older
 stashes are found in the reflog of this reference and can be named using
@@ -48,8 +51,8 @@ list::
 	based on.
 +
 ----------------------------------------------------------------
-stash@{0}: submit: 6ebd0e2... Add git-stash
-stash@{1}: master: 9cc0589... Merge branch 'master' of gfi
+stash@{0}: WIP on submit: 6ebd0e2... Update git-stash documentation
+stash@{1}: On master: 9cc0589... Add git-stash
 ----------------------------------------------------------------
 
 show [<stash>]::
