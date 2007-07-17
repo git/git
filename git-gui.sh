@@ -548,6 +548,7 @@ if {![regsub {^git version } $_git_version {} _git_version]} {
 regsub -- {-dirty$} $_git_version {} _git_version
 regsub {\.[0-9]+\.g[0-9a-f]+$} $_git_version {} _git_version
 regsub {\.rc[0-9]+$} $_git_version {} _git_version
+regsub {\.GIT$} $_git_version {} _git_version
 
 proc git-version {args} {
 	global _git_version
