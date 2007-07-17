@@ -132,7 +132,7 @@ our %feature = (
 	# $feature{'snapshot'}{'default'} = [undef];
 	# To have project specific config enable override in $GITWEB_CONFIG
 	# $feature{'snapshot'}{'override'} = 1;
-	# and in project config gitweb.snapshot = none|gzip|bzip2;
+	# and in project config gitweb.snapshot = none|gzip|bzip2|zip;
 	'snapshot' => {
 		'sub' => \&feature_snapshot,
 		'override' => 0,
@@ -244,6 +244,8 @@ sub feature_snapshot {
 		return ('x-gzip', 'gz', 'gzip');
 	} elsif ($val eq 'bzip2') {
 		return ('x-bzip2', 'bz2', 'bzip2');
+	} elsif ($val eq 'zip') {
+		return ('x-zip', 'zip', '');
 	} elsif ($val eq 'none') {
 		return ();
 	}
@@ -3976,19 +3978,26 @@ sub git_snapshot {
 		$hash = git_get_head_hash($project);
 	}
 
-	my $filename = decode_utf8(basename($project)) . "-$hash.tar.$suffix";
+	my $git = git_cmd_str();
+	my $name = $project;
+	$name =~ s/\047/\047\\\047\047/g;
+	my $filename = decode_utf8(basename($project));
+	my $cmd;
+	if ($suffix eq 'zip') {
+		$filename .= "-$hash.$suffix";
+		$cmd = "$git archive --format=zip --prefix=\'$name\'/ $hash";
+	} else {
+		$filename .= "-$hash.tar.$suffix";
+		$cmd = "$git archive --format=tar --prefix=\'$name\'/ $hash | $command";
+	}
 
 	print $cgi->header(
 		-type => "application/$ctype",
 		-content_disposition => 'inline; filename="' . "$filename" . '"',
 		-status => '200 OK');
 
-	my $git = git_cmd_str();
-	my $name = $project;
-	$name =~ s/\047/\047\\\047\047/g;
-	open my $fd, "-|",
-		"$git archive --format=tar --prefix=\'$name\'/ $hash | $command"
-		or die_error(undef, "Execute git-tar-tree failed");
+	open my $fd, "-|", $cmd
+		or die_error(undef, "Execute git-archive failed");
 	binmode STDOUT, ':raw';
 	print <$fd>;
 	binmode STDOUT, ':utf8'; # as set at the beginning of gitweb.cgi

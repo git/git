@@ -12,7 +12,8 @@ SYNOPSIS
 'git-am' [--signoff] [--dotest=<dir>] [--keep] [--utf8 | --no-utf8]
          [--3way] [--interactive] [--binary]
          [--whitespace=<option>] [-C<n>] [-p<n>]
-         <mbox>...
+         <mbox>|<Maildir>...
+
 'git-am' [--skip | --resolved]
 
 DESCRIPTION
@@ -23,9 +24,10 @@ current branch.
 
 OPTIONS
 -------
-<mbox>...::
+<mbox>|<Maildir>...::
 	The list of mailbox files to read patches from. If you do not
-	supply this argument, reads from the standard input.
+	supply this argument, reads from the standard input. If you supply
+	directories, they'll be treated as Maildirs.
 
 -s, --signoff::
 	Add `Signed-off-by:` line to the commit message, using

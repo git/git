@@ -450,7 +450,7 @@ int mingw_socket(int domain, int type, int protocol);
 #define socket mingw_socket
 
 #define setlinebuf(x)
-#define fsync(x)
+#define fsync(x) 0
 
 extern void quote_argv(const char **dst, const char **src);
 extern const char *parse_interpreter(const char *cmd);

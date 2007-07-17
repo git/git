@@ -95,9 +95,10 @@ $state->{method} = 'ext';
 if (@ARGV && $ARGV[0] eq 'pserver') {
     $state->{method} = 'pserver';
     my $line = <STDIN>; chomp $line;
-    unless( $line eq 'BEGIN AUTH REQUEST') {
+    unless( $line =~ /^BEGIN (AUTH|VERIFICATION) REQUEST$/) {
        die "E Do not understand $line - expecting BEGIN AUTH REQUEST\n";
     }
+    my $request = $1;
     $line = <STDIN>; chomp $line;
     req_Root('root', $line) # reuse Root
        or die "E Invalid root $line \n";
@@ -109,10 +110,11 @@ if (@ARGV && $ARGV[0] eq 'pserver') {
     }
     $line = <STDIN>; chomp $line;    # validate the password?
     $line = <STDIN>; chomp $line;
-    unless ($line eq 'END AUTH REQUEST') {
-       die "E Do not understand $line -- expecting END AUTH REQUEST\n";
+    unless ($line eq "END $request REQUEST") {
+       die "E Do not understand $line -- expecting END $request REQUEST\n";
     }
     print "I LOVE YOU\n";
+    exit if $request eq 'VERIFICATION'; # cvs login
     # and now back to our regular programme...
 }
 

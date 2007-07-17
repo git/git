@@ -55,7 +55,7 @@ static void process_tree(struct tree *tree,
 	while (tree_entry(&desc, &entry)) {
 		if (S_ISDIR(entry.mode))
 			process_tree(lookup_tree(entry.sha1), p, &me, entry.path);
-		else if (S_ISDIRLNK(entry.mode))
+		else if (S_ISGITLINK(entry.mode))
 			process_gitlink(entry.sha1, p, &me, entry.path);
 		else
 			process_blob(lookup_blob(entry.sha1), p, &me, entry.path);
@@ -176,7 +176,7 @@ static void add_cache_refs(struct rev_info *revs)
 		 * lookup_blob() on them, to avoid populating the hash table
 		 * with invalid information
 		 */
-		if (S_ISDIRLNK(ntohl(active_cache[i]->ce_mode)))
+		if (S_ISGITLINK(ntohl(active_cache[i]->ce_mode)))
 			continue;
 
 		lookup_blob(active_cache[i]->sha1);

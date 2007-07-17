@@ -22,6 +22,9 @@ do
 	-n|--n|--no|--no-|--no-s|--no-su|--no-sum|--no-summ|\
 		--no-summa|--no-summar|--no-summary)
 		no_summary=-n ;;
+	--summary)
+		no_summary=$1
+		;;
 	--no-c|--no-co|--no-com|--no-comm|--no-commi|--no-commit)
 		no_commit=--no-commit ;;
 	--sq|--squ|--squa|--squas|--squash)

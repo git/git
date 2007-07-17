@@ -3,7 +3,7 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
-USAGE='[-n] [--no-commit] [--squash] [-s <strategy>] [-m=<merge-message>] <commit>+'
+USAGE='[-n] [--summary] [--no-commit] [--squash] [-s <strategy>] [-m=<merge-message>] <commit>+'
 
 SUBDIRECTORY_OK=Yes
 . git-sh-setup
@@ -88,12 +88,11 @@ finish () {
 	'')
 		;;
 	?*)
-		case "$no_summary" in
-		'')
+		if test "$show_diffstat" = t
+		then
 			# We want color (if set), but no pager
 			GIT_PAGER='' git-diff --stat --summary -M "$head" "$1"
-			;;
-		esac
+		fi
 		;;
 	esac
 }
@@ -126,7 +125,9 @@ do
 	case "$1" in
 	-n|--n|--no|--no-|--no-s|--no-su|--no-sum|--no-summ|\
 		--no-summa|--no-summar|--no-summary)
-		no_summary=t ;;
+		show_diffstat=false ;;
+	--summary)
+		show_diffstat=t ;;
 	--sq|--squ|--squa|--squas|--squash)
 		squash=t no_commit=t ;;
 	--no-c|--no-co|--no-com|--no-comm|--no-commi|--no-commit)
@@ -167,6 +168,11 @@ do
 	esac
 	shift
 done
+
+if test -z "$show_diffstat"; then
+    test "$(git-config --bool merge.diffstat)" = false && show_diffstat=false
+    test -z "$show_diffstat" && show_diffstat=t
+fi
 
 # This could be traditional "merge <msg> HEAD <commit>..."  and the
 # way we can tell it is to see if the second token is HEAD, but some

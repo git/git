@@ -1675,6 +1675,7 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 	char *new = xmalloc(size);
 	const char *oldlines, *newlines;
 	int oldsize = 0, newsize = 0;
+	int new_blank_lines_at_end = 0;
 	unsigned long leading, trailing;
 	int pos, lines;
 
@@ -1682,6 +1683,7 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 		char first;
 		int len = linelen(patch, size);
 		int plen;
+		int added_blank_line = 0;
 
 		if (!len)
 			break;
@@ -1703,6 +1705,7 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 			else if (first == '+')
 				first = '-';
 		}
+
 		switch (first) {
 		case '\n':
 			/* Newer GNU diff, empty context line */
@@ -1720,9 +1723,14 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 				break;
 		/* Fall-through for ' ' */
 		case '+':
-			if (first != '+' || !no_add)
-				newsize += apply_line(new + newsize, patch,
-						      plen);
+			if (first != '+' || !no_add) {
+				int added = apply_line(new + newsize, patch,
+						       plen);
+				newsize += added;
+				if (first == '+' &&
+				    added == 1 && new[newsize-1] == '\n')
+					added_blank_line = 1;
+			}
 			break;
 		case '@': case '\\':
 			/* Ignore it, we already handled it */
@@ -1732,6 +1740,10 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 				error("invalid start of line: '%c'", first);
 			return -1;
 		}
+		if (added_blank_line)
+			new_blank_lines_at_end++;
+		else
+			new_blank_lines_at_end = 0;
 		patch += len;
 		size -= len;
 	}
@@ -1774,9 +1786,16 @@ static int apply_one_fragment(struct buffer_desc *desc, struct fragment *frag, i
 		if (match_beginning && offset)
 			offset = -1;
 		if (offset >= 0) {
-			int diff = newsize - oldsize;
-			unsigned long size = desc->size + diff;
-			unsigned long alloc = desc->alloc;
+			int diff;
+			unsigned long size, alloc;
+
+			if (new_whitespace == strip_whitespace &&
+			    (desc->size - oldsize - offset == 0)) /* end of file? */
+				newsize -= new_blank_lines_at_end;
+
+			diff = newsize - oldsize;
+			size = desc->size + diff;
+			alloc = desc->alloc;
 
 			/* Warn if it was necessary to reduce the number
 			 * of context lines.

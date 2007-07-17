@@ -40,8 +40,8 @@
  * happens that everybody shares the same bit representation
  * in the UNIX world (and apparently wider too..)
  */
-#define S_IFDIRLNK	0160000
-#define S_ISDIRLNK(m)	(((m) & S_IFMT) == S_IFDIRLNK)
+#define S_IFGITLINK	0160000
+#define S_ISGITLINK(m)	(((m) & S_IFMT) == S_IFGITLINK)
 
 /*
  * Intensive research over the course of many years has shown that
@@ -123,8 +123,8 @@ static inline unsigned int create_ce_mode(unsigned int mode)
 {
 	if (S_ISLNK(mode))
 		return htonl(S_IFLNK);
-	if (S_ISDIR(mode) || S_ISDIRLNK(mode))
-		return htonl(S_IFDIRLNK);
+	if (S_ISDIR(mode) || S_ISGITLINK(mode))
+		return htonl(S_IFGITLINK);
 	return htonl(S_IFREG | ce_permissions(mode));
 }
 static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned int mode)
@@ -142,7 +142,7 @@ static inline unsigned int ce_mode_from_stat(struct cache_entry *ce, unsigned in
 }
 #define canon_mode(mode) \
 	(S_ISREG(mode) ? (S_IFREG | ce_permissions(mode)) : \
-	S_ISLNK(mode) ? S_IFLNK : S_ISDIR(mode) ? S_IFDIR : S_IFDIRLNK)
+	S_ISLNK(mode) ? S_IFLNK : S_ISDIR(mode) ? S_IFDIR : S_IFGITLINK)
 
 #define cache_entry_size(len) ((offsetof(struct cache_entry,name) + (len) + 8) & ~7)
 

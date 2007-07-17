@@ -17,11 +17,11 @@
 
 static const char builtin_gc_usage[] = "git-gc [--prune] [--aggressive]";
 
-static int pack_refs = -1;
+static int pack_refs = 1;
 static int aggressive_window = -1;
 
 #define MAX_ADD 10
-static const char *argv_pack_refs[] = {"pack-refs", "--prune", NULL};
+static const char *argv_pack_refs[] = {"pack-refs", "--all", "--prune", NULL};
 static const char *argv_reflog[] = {"reflog", "expire", "--all", NULL};
 static const char *argv_repack[MAX_ADD] = {"repack", "-a", "-d", "-l", NULL};
 static const char *argv_prune[] = {"prune", NULL};

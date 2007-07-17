@@ -45,8 +45,10 @@ static void parse_options(int argc, const char **argv)
 	if (argc < 2)
 		usage(usage_str);
 
-	for (i = 1; i < argc - 1; i++) {
+	for (i = 1; i < argc; i++) {
 		arg = argv[i];
+		if (arg[0] != '-')
+			break;
 		if (!strcmp(arg, "-n") || !strcmp(arg, "--no-commit"))
 			no_commit = 1;
 		else if (!strcmp(arg, "-e") || !strcmp(arg, "--edit"))
@@ -59,7 +61,8 @@ static void parse_options(int argc, const char **argv)
 		else if (strcmp(arg, "-r"))
 			usage(usage_str);
 	}
-
+	if (i != argc - 1)
+		usage(usage_str);
 	arg = argv[argc - 1];
 	if (get_sha1(arg, sha1))
 		die ("Cannot find '%s'", arg);

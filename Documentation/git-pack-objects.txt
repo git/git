@@ -85,6 +85,11 @@ base-name::
 	times to get to the necessary object.
 	The default value for --window is 10 and --depth is 50.
 
+--max-pack-size=<n>::
+	Maximum size of each output packfile, expressed in MiB.
+	If specified,  multiple packfiles may be created.
+	The default is unlimited.
+
 --incremental::
 	This flag causes an object already in a pack ignored
 	even if it appears in the standard input.

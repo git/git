@@ -20,17 +20,19 @@ new_workdir=$2
 branch=$3
 
 # want to make sure that what is pointed to has a .git directory ...
-test -d "$orig_git/.git" || die "\"$orig_git\" is not a git repository!"
+git_dir=$(cd "$orig_git" 2>/dev/null &&
+  git rev-parse --git-dir 2>/dev/null) ||
+  die "\"$orig_git\" is not a git repository!"
 
 # don't link to a workdir
-if test -L "$orig_git/.git/config"
+if test -L "$git_dir/config"
 then
 	die "\"$orig_git\" is a working directory only, please specify" \
 		"a complete repository."
 fi
 
 # make sure the the links use full paths
-orig_git=$(cd "$orig_git"; pwd)
+git_dir=$(cd "$git_dir"; pwd)
 
 # create the workdir
 mkdir -p "$new_workdir/.git" || die "unable to create \"$new_workdir\"!"
@@ -45,13 +47,13 @@ do
 		mkdir -p "$(dirname "$new_workdir/.git/$x")"
 		;;
 	esac
-	ln -s "$orig_git/.git/$x" "$new_workdir/.git/$x"
+	ln -s "$git_dir/$x" "$new_workdir/.git/$x"
 done
 
 # now setup the workdir
 cd "$new_workdir"
 # copy the HEAD from the original repository as a default branch
-cp "$orig_git/.git/HEAD" .git/HEAD
+cp "$git_dir/HEAD" .git/HEAD
 # checkout the branch (either the same as HEAD from the original repository, or
 # the one that was asked for)
 git checkout -f $branch

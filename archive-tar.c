@@ -167,7 +167,7 @@ static void write_entry(const unsigned char *sha1, struct strbuf *path,
 	} else {
 		if (verbose)
 			fprintf(stderr, "%.*s\n", path->len, path->buf);
-		if (S_ISDIR(mode) || S_ISDIRLNK(mode)) {
+		if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
 			*header.typeflag = TYPEFLAG_DIR;
 			mode = (mode | 0777) & ~tar_umask;
 		} else if (S_ISLNK(mode)) {
@@ -280,7 +280,7 @@ static int write_tar_entry(const unsigned char *sha1,
 	memcpy(path.buf + baselen, filename, filenamelen);
 	path.len = baselen + filenamelen;
 	path.buf[path.len] = '\0';
-	if (S_ISDIR(mode) || S_ISDIRLNK(mode)) {
+	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
 		strbuf_append_string(&path, "/");
 		buffer = NULL;
 		size = 0;

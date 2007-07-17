@@ -145,7 +145,7 @@ static int write_entry(struct cache_entry *ce, char *path, const struct checkout
 						 "symlink %s (%s)", path, strerror(errno));
 		}
 		break;
-	case S_IFDIRLNK:
+	case S_IFGITLINK:
 		if (to_tempfile)
 			return error("git-checkout-index: cannot create temporary subproject %s", path);
 		if (mkdir(path, 0777) < 0)
@@ -194,7 +194,7 @@ int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *t
 		unlink(path);
 		if (S_ISDIR(st.st_mode)) {
 			/* If it is a gitlink, leave it alone! */
-			if (S_ISDIRLNK(ntohl(ce->ce_mode)))
+			if (S_ISGITLINK(ntohl(ce->ce_mode)))
 				return 0;
 			if (!state->force)
 				return error("%s is a directory", path);

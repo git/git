@@ -87,7 +87,7 @@ static void process_tree(struct rev_info *revs,
 			process_tree(revs,
 				     lookup_tree(entry.sha1),
 				     p, &me, entry.path);
-		else if (S_ISDIRLNK(entry.mode))
+		else if (S_ISGITLINK(entry.mode))
 			process_gitlink(revs, entry.sha1,
 					p, &me, entry.path);
 		else

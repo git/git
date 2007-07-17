@@ -8,7 +8,7 @@ git-describe - Show the most recent tag that is reachable from a commit
 
 SYNOPSIS
 --------
-'git-describe' [--all] [--tags] [--abbrev=<n>] <committish>...
+'git-describe' [--all] [--tags] [--contains] [--abbrev=<n>] <committish>...
 
 DESCRIPTION
 -----------
@@ -30,6 +30,11 @@ OPTIONS
 --tags::
 	Instead of using only the annotated tags, use any tag
 	found in `.git/refs/tags`.
+
+--contains::
+	Instead of finding the tag that predates the commit, find
+	the tag that comes after the commit, and thus contains it.
+	Automatically implies --tags.
 
 --abbrev=<n>::
 	Instead of using the default 8 hexadecimal digits as the
