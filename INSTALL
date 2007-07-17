@@ -56,9 +56,8 @@ Issues of note:
 
 	- "zlib", the compression library. Git won't build without it.
 
-	- "openssl".  The git-rev-list program uses bignum support from
-	  openssl, and unless you specify otherwise, you'll also get the
-	  SHA1 library from here.
+	- "openssl".  Unless you specify otherwise, you'll get the SHA1
+	  library from here.
 
 	  If you don't have openssl, you can use one of the SHA1 libraries
 	  that come with git (git includes the one from Mozilla, and has
@@ -73,7 +72,7 @@ Issues of note:
 	  management over DAV.  Similar to "curl" above, this is optional.
 
         - "wish", the Tcl/Tk windowing shell is used in gitk to show the
-          history graphically
+          history graphically, and in git-gui.
 
 	- "ssh" is used to push and pull over the net
 
