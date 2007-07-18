@@ -367,16 +367,25 @@ proc _which {what} {
 	return {}
 }
 
+proc _lappend_nice {cmd_var} {
+	global _nice
+	upvar $cmd_var cmd
+
+	if {![info exists _nice]} {
+		set _nice [_which nice]
+	}
+	if {$_nice ne {}} {
+		lappend cmd $_nice
+	}
+}
+
 proc git {args} {
 	set opt [list exec]
 
 	while {1} {
 		switch -- [lindex $args 0] {
 		--nice {
-			global _nice
-			if {$_nice ne {}} {
-				lappend opt $_nice
-			}
+			_lappend_nice opt
 		}
 
 		default {
@@ -424,10 +433,7 @@ proc git_read {args} {
 	while {1} {
 		switch -- [lindex $args 0] {
 		--nice {
-			global _nice
-			if {$_nice ne {}} {
-				lappend opt $_nice
-			}
+			_lappend_nice opt
 		}
 
 		--stderr {
@@ -455,10 +461,7 @@ proc git_write {args} {
 	while {1} {
 		switch -- [lindex $args 0] {
 		--nice {
-			global _nice
-			if {$_nice ne {}} {
-				lappend opt $_nice
-			}
+			_lappend_nice opt
 		}
 
 		default {
@@ -525,7 +528,6 @@ if {$_git eq {}} {
 	error_popup "Cannot find git in PATH."
 	exit 1
 }
-set _nice [_which nice]
 
 ######################################################################
 ##
