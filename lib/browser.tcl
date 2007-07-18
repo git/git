@@ -13,13 +13,13 @@ field browser_busy   1
 
 field ls_buf     {}; # Buffered record output from ls-tree
 
-constructor new {commit} {
+constructor new {commit {path {}}} {
 	global cursor_ptr M1B
 	make_toplevel top w
 	wm title $top "[appname] ([reponame]): File Browser"
 
 	set browser_commit $commit
-	set browser_path $browser_commit:
+	set browser_path $browser_commit:$path
 
 	label $w.path \
 		-textvariable @browser_path \
@@ -73,7 +73,11 @@ constructor new {commit} {
 
 	bind $w_list <Visibility> [list focus $w_list]
 	set w $w_list
-	_ls $this $browser_commit
+	if {$path ne {}} {
+		_ls $this $browser_commit:$path $path
+	} else {
+		_ls $this $browser_commit $path
+	}
 	return $this
 }
 

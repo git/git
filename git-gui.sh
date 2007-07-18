@@ -1976,27 +1976,7 @@ proc usage {} {
 # -- Not a normal commit type invocation?  Do that instead!
 #
 switch -- $subcommand {
-browser {
-	set subcommand_args {rev?}
-	switch [llength $argv] {
-	0 { load_current_branch }
-	1 {
-		set current_branch [lindex $argv 0]
-		if {[regexp {^[0-9a-f]{1,39}$} $current_branch]} {
-			if {[catch {
-					set current_branch \
-					[git rev-parse --verify $current_branch]
-				} err]} {
-				puts stderr $err
-				exit 1
-			}
-		}
-	}
-	default usage
-	}
-	browser::new $current_branch
-	return
-}
+browser -
 blame {
 	set subcommand_args {rev? path}
 	if {$argv eq {}} usage
@@ -2044,12 +2024,26 @@ blame {
 		set current_branch $head
 	}
 
-	if {$head eq {} && ![file exists $path]} {
-		puts stderr "fatal: cannot stat path $path: No such file or directory"
-		exit 1
+	switch -- $subcommand {
+	browser {
+		if {$head eq {}} {
+			if {$path ne {} && [file isdirectory $path]} {
+				set head $current_branch
+			} else {
+				set head $path
+				set path {}
+			}
+		}
+		browser::new $head $path
 	}
-
-	blame::new $head $path
+	blame   {
+		if {$head eq {} && ![file exists $path]} {
+			puts stderr "fatal: cannot stat path $path: No such file or directory"
+			exit 1
+		}
+		blame::new $head $path
+	}
+	}
 	return
 }
 citool -
