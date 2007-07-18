@@ -205,26 +205,31 @@ def p4BranchesInGit(branchesAreInRemotes = True):
     return branches
 
 def findUpstreamBranchPoint(head = "HEAD"):
+    branches = p4BranchesInGit()
+    # map from depot-path to branch name
+    branchByDepotPath = {}
+    for branch in branches.keys():
+        tip = branches[branch]
+        log = extractLogMessageFromGitCommit(tip)
+        settings = extractSettingsGitLog(log)
+        if settings.has_key("depot-paths"):
+            paths = ",".join(settings["depot-paths"])
+            branchByDepotPath[paths] = "remotes/p4/" + branch
+
     settings = None
-    branchPoint = ""
     parent = 0
     while parent < 65535:
         commit = head + "~%s" % parent
         log = extractLogMessageFromGitCommit(commit)
         settings = extractSettingsGitLog(log)
-        if not settings.has_key("depot-paths"):
-            parent = parent + 1
-            continue
+        if settings.has_key("depot-paths"):
+            paths = ",".join(settings["depot-paths"])
+            if branchByDepotPath.has_key(paths):
+                return [branchByDepotPath[paths], settings]
 
-        names = read_pipe_lines("git name-rev \"--refs=refs/remotes/p4/*\" \"%s\"" % commit)
-        if len(names) <= 0:
-            continue
+        parent = parent + 1
 
-        # strip away the beginning of 'HEAD~42 refs/remotes/p4/foo'
-        branchPoint = names[0].strip()[len(commit) + 1:]
-        break
-
-    return [branchPoint, settings]
+    return ["", settings]
 
 class Command:
     def __init__(self):
