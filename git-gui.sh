@@ -632,6 +632,43 @@ You are using [git-version]:
 
 ######################################################################
 ##
+## feature option selection
+
+if {[regexp {^git-(.+)$} [appname] _junk subcommand]} {
+	unset _junk
+} else {
+	set subcommand gui
+}
+if {$subcommand eq {gui.sh}} {
+	set subcommand gui
+}
+if {$subcommand eq {gui} && [llength $argv] > 0} {
+	set subcommand [lindex $argv 0]
+	set argv [lrange $argv 1 end]
+}
+
+enable_option multicommit
+enable_option branch
+enable_option transport
+
+switch -- $subcommand {
+browser -
+blame {
+	disable_option multicommit
+	disable_option branch
+	disable_option transport
+}
+citool {
+	enable_option singlecommit
+
+	disable_option multicommit
+	disable_option branch
+	disable_option transport
+}
+}
+
+######################################################################
+##
 ## repository setup
 
 if {[catch {
@@ -1595,43 +1632,6 @@ set font_descs {
 }
 load_config 0
 apply_config
-
-######################################################################
-##
-## feature option selection
-
-if {[regexp {^git-(.+)$} [appname] _junk subcommand]} {
-	unset _junk
-} else {
-	set subcommand gui
-}
-if {$subcommand eq {gui.sh}} {
-	set subcommand gui
-}
-if {$subcommand eq {gui} && [llength $argv] > 0} {
-	set subcommand [lindex $argv 0]
-	set argv [lrange $argv 1 end]
-}
-
-enable_option multicommit
-enable_option branch
-enable_option transport
-
-switch -- $subcommand {
-browser -
-blame {
-	disable_option multicommit
-	disable_option branch
-	disable_option transport
-}
-citool {
-	enable_option singlecommit
-
-	disable_option multicommit
-	disable_option branch
-	disable_option transport
-}
-}
 
 ######################################################################
 ##
