@@ -79,8 +79,10 @@ int cmd_stripspace(int argc, const char **argv, const char *prefix)
 
 	size = 1024;
 	buffer = xmalloc(size);
-	if (read_pipe(0, &buffer, &size))
+	if (read_fd(0, &buffer, &size)) {
+		free(buffer);
 		die("could not read the input");
+	}
 
 	size = stripspace(buffer, size, 0);
 	write_or_die(1, buffer, size);

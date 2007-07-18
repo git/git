@@ -2304,26 +2304,35 @@ int has_sha1_file(const unsigned char *sha1)
  *
  * returns 0 if anything went fine and -1 otherwise
  *
+ * The buffer is always NUL-terminated, not including it in returned size.
+ *
  * NOTE: both buf and size may change, but even when -1 is returned
  * you still have to free() it yourself.
  */
-int read_pipe(int fd, char** return_buf, unsigned long* return_size)
+int read_fd(int fd, char **return_buf, unsigned long *return_size)
 {
-	char* buf = *return_buf;
+	char *buf = *return_buf;
 	unsigned long size = *return_size;
 	ssize_t iret;
 	unsigned long off = 0;
 
+	if (!buf || size <= 1) {
+		size = 1024;
+		buf = xrealloc(buf, size);
+	}
+
 	do {
-		iret = xread(fd, buf + off, size - off);
+		iret = xread(fd, buf + off, (size - 1) - off);
 		if (iret > 0) {
 			off += iret;
-			if (off == size) {
-				size *= 2;
+			if (off == size - 1) {
+				size = alloc_nr(size);
 				buf = xrealloc(buf, size);
 			}
 		}
 	} while (iret > 0);
+
+	buf[off] = '\0';
 
 	*return_buf = buf;
 	*return_size = off;
@@ -2339,7 +2348,7 @@ int index_pipe(unsigned char *sha1, int fd, const char *type, int write_object)
 	char *buf = xmalloc(size);
 	int ret;
 
-	if (read_pipe(fd, &buf, &size)) {
+	if (read_fd(fd, &buf, &size)) {
 		free(buf);
 		return -1;
 	}
