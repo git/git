@@ -2581,36 +2581,11 @@ if {[is_enabled transport]} {
 	populate_push_menu
 }
 
-# -- Only suggest a gc run if we are going to stay running.
-#
-if {[is_enabled multicommit]} {
-	set object_limit 8
-	if {[is_Windows]} {
-		set object_limit 1
-	}
-	set objects_current [llength [glob \
-		-directory [gitdir objects 42] \
-		-nocomplain \
-		-tails \
-		-- \
-		*]]
-	if {$objects_current >= $object_limit} {
-		set objects_current [expr {$objects_current * 256}]
-		set object_limit    [expr {$object_limit    * 256}]
-		if {[ask_popup \
-			"This repository currently has approximately $objects_current loose objects.
-
-To maintain optimal performance it is strongly recommended that you compress the database when more than $object_limit loose objects exist.
-
-Compress the database now?"] eq yes} {
-			do_gc
-		}
-	}
-	unset object_limit objects_current
-}
-
 lock_index begin-read
 if {![winfo ismapped .]} {
 	wm deiconify .
 }
 after 1 do_rescan
+if {[is_enabled multicommit]} {
+	after 1000 hint_gc
+}
