@@ -547,10 +547,34 @@ if {![regsub {^git version } $_git_version {} _git_version]} {
 	error_popup "Cannot parse Git version string:\n\n$_git_version"
 	exit 1
 }
+
+set _real_git_version $_git_version
 regsub -- {-dirty$} $_git_version {} _git_version
 regsub {\.[0-9]+\.g[0-9a-f]+$} $_git_version {} _git_version
 regsub {\.rc[0-9]+$} $_git_version {} _git_version
 regsub {\.GIT$} $_git_version {} _git_version
+
+if {![regexp {^[1-9]+(\.[0-9]+)+$} $_git_version]} {
+	catch {wm withdraw .}
+	if {[tk_messageBox \
+		-icon warning \
+		-type yesno \
+		-default no \
+		-title "[appname]: warning" \
+		-message "Git version cannot be determined.
+
+$_git claims it is version '$_real_git_version'.
+
+[appname] requires at least Git 1.5.0 or later.
+
+Assume '$_real_git_version' is version 1.5.0?
+"] eq {yes}} {
+		set _git_version 1.5.0
+	} else {
+		exit 1
+	}
+}
+unset _real_git_version
 
 proc git-version {args} {
 	global _git_version
@@ -2586,4 +2610,7 @@ Compress the database now?"] eq yes} {
 }
 
 lock_index begin-read
+if {![winfo ismapped .]} {
+	wm deiconify .
+}
 after 1 do_rescan
