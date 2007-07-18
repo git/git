@@ -8,8 +8,6 @@
 # a new branch. You can specify a number of filters to modify the commits,
 # files and trees.
 
-set -e
-
 USAGE="git-filter-branch [-d TEMPDIR] [FILTERS] DESTBRANCH [REV-RANGE]"
 . git-sh-setup
 
@@ -141,9 +139,10 @@ git show-ref "refs/heads/$dstbranch" 2> /dev/null &&
 	die "branch $dstbranch already exists"
 
 test ! -e "$tempdir" || die "$tempdir already exists, please remove it"
-mkdir -p "$tempdir/t"
-cd "$tempdir/t"
-workdir="$(pwd)"
+mkdir -p "$tempdir/t" &&
+cd "$tempdir/t" &&
+workdir="$(pwd)" ||
+die ""
 
 case "$GIT_DIR" in
 /*)
@@ -155,12 +154,12 @@ esac
 export GIT_DIR GIT_WORK_TREE=.
 
 export GIT_INDEX_FILE="$(pwd)/../index"
-git read-tree # seed the index file
+git read-tree || die "Could not seed the index"
 
 ret=0
 
-
-mkdir ../map # map old->new commit ids for rewriting parents
+# map old->new commit ids for rewriting parents
+mkdir ../map || die "Could not create map/ directory"
 
 case "$filter_subdir" in
 "")
@@ -170,7 +169,7 @@ case "$filter_subdir" in
 *)
 	git rev-list --reverse --topo-order --default HEAD \
 		--parents --full-history "$@" -- "$filter_subdir"
-esac > ../revs
+esac > ../revs || die "Could not get the commits"
 commits=$(wc -l <../revs | tr -d " ")
 
 test $commits -eq 0 && die "Found nothing to rewrite"
@@ -186,10 +185,11 @@ while read commit parents; do
 		;;
 	*)
 		git read-tree -i -m $commit:"$filter_subdir"
-	esac
+	esac || die "Could not initialize the index"
 
 	export GIT_COMMIT=$commit
-	git cat-file commit "$commit" >../commit
+	git cat-file commit "$commit" >../commit ||
+		die "Cannot read commit $commit"
 
 	eval "$(set_ident AUTHOR <../commit)" ||
 		die "setting author failed for commit $commit"
@@ -199,7 +199,8 @@ while read commit parents; do
 		die "env filter failed: $filter_env"
 
 	if [ "$filter_tree" ]; then
-		git checkout-index -f -u -a
+		git checkout-index -f -u -a ||
+			die "Could not checkout the index"
 		# files that $commit removed are now still in the working tree;
 		# remove them, else they would be added again
 		git ls-files -z --others | xargs -0 rm -f
@@ -240,7 +241,8 @@ case "$target_head" in
 	echo Nothing rewritten
 	;;
 *)
-	git update-ref refs/heads/"$dstbranch" $target_head
+	git update-ref refs/heads/"$dstbranch" $target_head ||
+		die "Could not update $dstbranch with $target_head"
 	if [ $(wc -l <../map/$src_head) -gt 1 ]; then
 		echo "WARNING: Your commit filter caused the head commit to expand to several rewritten commits. Only the first such commit was recorded as the current $dstbranch head but you will need to resolve the situation now (probably by manually merging the other commits). These are all the commits:" >&2
 		sed 's/^/	/' ../map/$src_head >&2
@@ -277,7 +279,8 @@ if [ "$filter_tag_name" ]; then
 			warn "unreferencing tag object $sha1t"
 		fi
 
-		git update-ref "refs/tags/$new_ref" "$new_sha1"
+		git update-ref "refs/tags/$new_ref" "$new_sha1" ||
+			die "Could not write tag $new_ref"
 	done
 fi
 
