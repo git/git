@@ -243,3 +243,56 @@ method _read {fd} {
 }
 
 }
+
+class browser_open {
+
+field w              ; # widget path
+field w_rev          ; # mega-widget to pick the initial revision
+
+constructor dialog {} {
+	make_toplevel top w
+	wm title $top "[appname] ([reponame]): Browse Branch Files"
+	if {$top ne {.}} {
+		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
+	}
+
+	label $w.header \
+		-text {Browse Branch Files} \
+		-font font_uibold
+	pack $w.header -side top -fill x
+
+	frame $w.buttons
+	button $w.buttons.browse -text Browse \
+		-default active \
+		-command [cb _open]
+	pack $w.buttons.browse -side right
+	button $w.buttons.cancel -text {Cancel} \
+		-command [list destroy $w]
+	pack $w.buttons.cancel -side right -padx 5
+	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
+
+	set w_rev [::choose_rev::new $w.rev {Revision}]
+	$w_rev bind_listbox <Double-Button-1> [cb _open]
+	pack $w.rev -anchor nw -fill both -expand 1 -pady 5 -padx 5
+
+	bind $w <Visibility> [cb _visible]
+	bind $w <Key-Escape> [list destroy $w]
+	bind $w <Key-Return> [cb _open]\;break
+	tkwait window $w
+}
+
+method _open {} {
+	if {[catch {$w_rev commit_or_die} err]} {
+		return
+	}
+	set name [$w_rev get]
+	destroy $w
+	browser::new $name
+}
+
+method _visible {} {
+	grab $w
+	$w_rev focus_filter
+}
+
+}

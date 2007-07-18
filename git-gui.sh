@@ -1670,9 +1670,12 @@ if {[is_enabled transport]} {
 menu .mbar.repository
 
 .mbar.repository add command \
-	-label {Browse Current Branch} \
+	-label {Browse Current Branch's Files} \
 	-command {browser::new $current_branch}
-trace add variable current_branch write ".mbar.repository entryconf [.mbar.repository index last] -label \"Browse \$current_branch\" ;#"
+trace add variable current_branch write ".mbar.repository entryconf [.mbar.repository index last] -label \"Browse \$current_branch's Files\" ;#"
+.mbar.repository add command \
+	-label {Browse Branch Files...} \
+	-command browser_open::dialog
 .mbar.repository add separator
 
 .mbar.repository add command \
