@@ -1006,27 +1006,11 @@ class P4Sync(Command):
             self.knownBranches[branch] = branch
 
     def listExistingP4GitBranches(self):
-        self.p4BranchesInGit = []
-
-        cmdline = "git rev-parse --symbolic "
-        if self.importIntoRemotes:
-            cmdline += " --remotes"
-        else:
-            cmdline += " --branches"
-
-        for line in read_pipe_lines(cmdline):
-            line = line.strip()
-
-            ## only import to p4/
-            if not line.startswith('p4/') or line == "p4/HEAD":
-                continue
-            branch = line
-
-            # strip off p4
-            branch = re.sub ("^p4/", "", line)
-
-            self.p4BranchesInGit.append(branch)
-            self.initialParents[self.refPrefix + branch] = parseRevision(line)
+        # branches holds mapping from name to commit
+        branches = p4BranchesInGit(self.importIntoRemotes)
+        self.p4BranchesInGit = branches.keys()
+        for branch in branches.keys():
+            self.initialParents[self.refPrefix + branch] = branches[branch]
 
     def createOrUpdateBranchesFromOrigin(self):
         if not self.silent:
