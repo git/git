@@ -86,7 +86,7 @@ constructor new {path {title {}}} {
 	listbox $w_list \
 		-font font_diff \
 		-width 50 \
-		-height 5 \
+		-height 10 \
 		-selectmode browse \
 		-exportselection false \
 		-xscrollcommand [cb _sb_set $w.list.sbx h] \
