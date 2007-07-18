@@ -1679,11 +1679,11 @@ trace add variable current_branch write ".mbar.repository entryconf [.mbar.repos
 .mbar.repository add separator
 
 .mbar.repository add command \
-	-label {Visualize Current Branch} \
+	-label {Visualize Current Branch's History} \
 	-command {do_gitk $current_branch}
-trace add variable current_branch write ".mbar.repository entryconf [.mbar.repository index last] -label \"Visualize \$current_branch\" ;#"
+trace add variable current_branch write ".mbar.repository entryconf [.mbar.repository index last] -label \"Visualize \$current_branch's History\" ;#"
 .mbar.repository add command \
-	-label {Visualize All Branches} \
+	-label {Visualize All Branch History} \
 	-command {do_gitk --all}
 .mbar.repository add separator
 
