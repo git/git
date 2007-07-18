@@ -650,10 +650,13 @@ if {$subcommand eq {gui} && [llength $argv] > 0} {
 enable_option multicommit
 enable_option branch
 enable_option transport
+disable_option bare
 
 switch -- $subcommand {
 browser -
 blame {
+	enable_option bare
+
 	disable_option multicommit
 	disable_option branch
 	disable_option transport
@@ -691,19 +694,24 @@ if {![file isdirectory $_gitdir]} {
 	error_popup "Git directory not found:\n\n$_gitdir"
 	exit 1
 }
-if {[lindex [file split $_gitdir] end] ne {.git}} {
-	catch {wm withdraw .}
-	error_popup "Cannot use funny .git directory:\n\n$_gitdir"
-	exit 1
+if {![is_enabled bare]} {
+	if {[lindex [file split $_gitdir] end] ne {.git}} {
+		catch {wm withdraw .}
+		error_popup "Cannot use funny .git directory:\n\n$_gitdir"
+		exit 1
+	}
+	if {[catch {cd [file dirname $_gitdir]} err]} {
+		catch {wm withdraw .}
+		error_popup "No working directory [file dirname $_gitdir]:\n\n$err"
+		exit 1
+	}
 }
-if {[catch {cd [file dirname $_gitdir]} err]} {
-	catch {wm withdraw .}
-	error_popup "No working directory [file dirname $_gitdir]:\n\n$err"
-	exit 1
+set _reponame [file split [file normalize $_gitdir]]
+if {[lindex $_reponame end] eq {.git}} {
+	set _reponame [lindex $_reponame end-1]
+} else {
+	set _reponame [lindex $_reponame end]
 }
-set _reponame [lindex [file split \
-	[file normalize [file dirname $_gitdir]]] \
-	end]
 
 ######################################################################
 ##
@@ -1990,7 +1998,8 @@ browser {
 	return
 }
 blame {
-	set subcommand_args {rev? path?}
+	set subcommand_args {rev? path}
+	if {$argv eq {}} usage
 	set head {}
 	set path {}
 	set is_path 0
@@ -2009,11 +2018,17 @@ blame {
 		} elseif {$head eq {}} {
 			if {$head ne {}} usage
 			set head $a
+			set is_path 1
 		} else {
 			usage
 		}
 	}
 	unset is_path
+
+	if {$head ne {} && $path eq {}} {
+		set path $_prefix$head
+		set head {}
+	}
 
 	if {$head eq {}} {
 		load_current_branch
@@ -2029,7 +2044,11 @@ blame {
 		set current_branch $head
 	}
 
-	if {$path eq {}} usage
+	if {$head eq {} && ![file exists $path]} {
+		puts stderr "fatal: cannot stat path $path: No such file or directory"
+		exit 1
+	}
+
 	blame::new $head $path
 	return
 }
