@@ -1888,7 +1888,9 @@ if {[is_MacOSX]} {
 
 	# -- Tools Menu
 	#
-	if {[is_Cygwin] && [file exists /usr/local/miga/lib/gui-miga]} {
+	if {[is_Cygwin]
+		&& [is_enabled multicommit]
+		&& [file exists /usr/local/miga/lib/gui-miga]} {
 	proc do_miga {} {
 		if {![lock_index update]} return
 		set cmd [list sh --login -c "/usr/local/miga/lib/gui-miga \"[pwd]\""]
