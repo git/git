@@ -1,9 +1,13 @@
 # git-gui branch merge support
 # Copyright (C) 2006, 2007 Shawn Pearce
 
-namespace eval merge {
+class merge {
 
-proc _can_merge {} {
+field w         ; # top level window
+field w_list    ; # widget of available branches
+field list      ; # list of available branches
+
+method _can_merge {} {
 	global HEAD commit_type file_states
 
 	if {[string match amend* $commit_type]} {
@@ -63,26 +67,26 @@ You should complete the current commit before starting a merge.  Doing so will h
 	return 1
 }
 
-proc _refs {w list} {
+method _refs {} {
 	set r {}
-	foreach i [$w.source.l curselection] {
+	foreach i [$w_list curselection] {
 		lappend r [lindex [lindex $list $i] 0]
 	}
 	return $r
 }
 
-proc _visualize {w list} {
-	set revs [_refs $w $list]
+method _visualize {} {
+	set revs [_refs $this]
 	if {$revs eq {}} return
 	lappend revs --not HEAD
 	do_gitk $revs
 }
 
-proc _start {w list} {
+method _start {} {
 	global HEAD current_branch
 
 	set cmd [list git merge]
-	set names [_refs $w $list]
+	set names [_refs $this]
 	set revcnt [llength $names]
 	append cmd { } $names
 
@@ -123,15 +127,14 @@ Please select fewer branches.  To merge more than 15 branches, merge the branche
 	set msg "Merging $current_branch, [join $names {, }]"
 	ui_status "$msg..."
 	set cons [console::new "Merge" $msg]
-	console::exec $cons $cmd \
-		[namespace code [list _finish $revcnt $cons]]
+	console::exec $cons $cmd [cb _finish $revcnt $cons]
 
 	wm protocol $w WM_DELETE_WINDOW {}
 	destroy $w
 }
 
-proc _finish {revcnt w ok} {
-	console::done $w $ok
+method _finish {revcnt cons ok} {
+	console::done $cons $ok
 	if {$ok} {
 		set msg {Merge completed successfully.}
 	} else {
@@ -148,8 +151,7 @@ You can attempt this merge again by merging only one branch at a time." $w
 
 			set fd [git_read read-tree --reset -u HEAD]
 			fconfigure $fd -blocking 0 -translation binary
-			fileevent $fd readable \
-				[namespace code [list _reset_wait $fd]]
+			fileevent $fd readable [cb _reset_wait $fd]
 			ui_status {Aborting... please wait...}
 			return
 		}
@@ -158,13 +160,17 @@ You can attempt this merge again by merging only one branch at a time." $w
 	}
 	unlock_index
 	rescan [list ui_status $msg]
+	delete_this
 }
 
-proc dialog {} {
+constructor dialog {} {
 	global current_branch
 	global M1B
 
-	if {![_can_merge]} return
+	if {![_can_merge $this]} {
+		delete_this
+		return
+	}
 
 	set fmt {list %(objectname) %(*objectname) %(refname) %(subject)}
 	set fr_fd [git_read for-each-ref \
@@ -187,23 +193,25 @@ proc dialog {} {
 	}
 	close $fr_fd
 
-	set to_show {}
+	set list [list]
 	set fr_fd [git_read rev-list --all --not HEAD]
 	while {[gets $fr_fd line] > 0} {
 		if {[catch {set ref $sha1($line)}]} continue
 		foreach n $ref {
-			lappend to_show [list $n $line]
+			lappend list [list $n $line]
 		}
 	}
 	close $fr_fd
-	set to_show [lsort -unique $to_show]
+	set list [lsort -unique $list]
 
-	set w .merge_setup
-	toplevel $w
-	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
+	make_toplevel top w
+	wm title $top "[appname] ([reponame]): Merge"
+	if {$top ne {.}} {
+		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
+	}
 
-	set _visualize [namespace code [list _visualize $w $to_show]]
-	set _start [namespace code [list _start $w $to_show]]
+	set _visualize [cb _visualize]
+	set _start [cb _start]
 
 	label $w.header \
 		-text "Merge Into $current_branch" \
@@ -217,48 +225,64 @@ proc dialog {} {
 	pack $w.buttons.create -side right
 	button $w.buttons.cancel \
 		-text {Cancel} \
-		-command "unlock_index;destroy $w"
+		-command [cb _cancel]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
 	labelframe $w.source -text {Source Branches}
-	listbox $w.source.l \
+	set w_list $w.source.l
+	listbox $w_list \
 		-height 10 \
 		-width 70 \
 		-font font_diff \
 		-selectmode extended \
 		-yscrollcommand [list $w.source.sby set]
-	scrollbar $w.source.sby -command [list $w.source.l yview]
+	scrollbar $w.source.sby -command [list $w_list yview]
 	pack $w.source.sby -side right -fill y
-	pack $w.source.l -side left -fill both -expand 1
+	pack $w_list -side left -fill both -expand 1
 	pack $w.source -fill both -expand 1 -pady 5 -padx 5
 
-	foreach ref $to_show {
+	foreach ref $list {
 		set n [lindex $ref 0]
 		if {[string length $n] > 20} {
 			set n "[string range $n 0 16]..."
 		}
-		$w.source.l insert end [format {%s %-20s %s} \
+		$w_list insert end [format {%s %-20s %s} \
 			[string range [lindex $ref 1] 0 5] \
 			$n \
 			$subj([lindex $ref 0])]
 	}
 
-	bind $w.source.l <Key-K> [list event generate %W <Shift-Key-Up>]
-	bind $w.source.l <Key-J> [list event generate %W <Shift-Key-Down>]
-	bind $w.source.l <Key-k> [list event generate %W <Key-Up>]
-	bind $w.source.l <Key-j> [list event generate %W <Key-Down>]
-	bind $w.source.l <Key-h> [list event generate %W <Key-Left>]
-	bind $w.source.l <Key-l> [list event generate %W <Key-Right>]
-	bind $w.source.l <Key-v> $_visualize
+	bind $w_list <Key-K> [list event generate %W <Shift-Key-Up>]
+	bind $w_list <Key-J> [list event generate %W <Shift-Key-Down>]
+	bind $w_list <Key-k> [list event generate %W <Key-Up>]
+	bind $w_list <Key-j> [list event generate %W <Key-Down>]
+	bind $w_list <Key-h> [list event generate %W <Key-Left>]
+	bind $w_list <Key-l> [list event generate %W <Key-Right>]
+	bind $w_list <Key-v> $_visualize
 
 	bind $w <$M1B-Key-Return> $_start
-	bind $w <Visibility> "grab $w; focus $w.source.l"
-	bind $w <Key-Escape> "unlock_index;destroy $w"
-	wm protocol $w WM_DELETE_WINDOW "unlock_index;destroy $w"
-	wm title $w "[appname] ([reponame]): Merge"
+	bind $w <Visibility> [cb _visible]
+	bind $w <Key-Escape> [cb _cancel]
+	wm protocol $w WM_DELETE_WINDOW [cb _cancel]
 	tkwait window $w
 }
+
+method _visible {} {
+	grab $w
+	focus $w_list
+}
+
+method _cancel {} {
+	wm protocol $w WM_DELETE_WINDOW {}
+	unlock_index
+	destroy $w
+	delete_this
+}
+
+}
+
+namespace eval merge {
 
 proc reset_hard {} {
 	global HEAD commit_type file_states
