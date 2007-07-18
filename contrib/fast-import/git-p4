@@ -181,6 +181,29 @@ def gitBranchExists(branch):
 def gitConfig(key):
     return read_pipe("git config %s" % key, ignore_error=True).strip()
 
+def p4BranchesInGit(branchesAreInRemotes = True):
+    branches = {}
+
+    cmdline = "git rev-parse --symbolic "
+    if branchesAreInRemotes:
+        cmdline += " --remotes"
+    else:
+        cmdline += " --branches"
+
+    for line in read_pipe_lines(cmdline):
+        line = line.strip()
+
+        ## only import to p4/
+        if not line.startswith('p4/') or line == "p4/HEAD":
+            continue
+        branch = line
+
+        # strip off p4
+        branch = re.sub ("^p4/", "", line)
+
+        branches[branch] = parseRevision(line)
+    return branches
+
 def findUpstreamBranchPoint(head = "HEAD"):
     settings = None
     branchPoint = ""
