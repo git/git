@@ -879,6 +879,11 @@ method _open_tooltip {cur_w} {
 		set org [lindex $amov_data $lno]
 	}
 
+	if {$dat eq {}} {
+		_hide_tooltip $this
+		return
+	}
+
 	set cmit [lindex $dat 0]
 	set tooltip_commit [list $cmit]
 
