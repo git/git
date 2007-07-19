@@ -1846,14 +1846,14 @@ if {[is_enabled multicommit] || [is_enabled singlecommit]} {
 if {[is_enabled branch]} {
 	menu .mbar.merge
 	.mbar.merge add command -label {Local Merge...} \
-		-command merge::dialog
+		-command merge::dialog \
+		-accelerator $M1T-M
 	lappend disable_on_lock \
 		[list .mbar.merge entryconf [.mbar.merge index last] -state]
 	.mbar.merge add command -label {Abort Merge...} \
 		-command merge::reset_hard
 	lappend disable_on_lock \
 		[list .mbar.merge entryconf [.mbar.merge index last] -state]
-
 }
 
 # -- Transport Menu
@@ -2508,6 +2508,8 @@ if {[is_enabled branch]} {
 	bind . <$M1B-Key-N> branch_create::dialog
 	bind . <$M1B-Key-o> branch_checkout::dialog
 	bind . <$M1B-Key-O> branch_checkout::dialog
+	bind . <$M1B-Key-m> merge::dialog
+	bind . <$M1B-Key-M> merge::dialog
 }
 if {[is_enabled transport]} {
 	bind . <$M1B-Key-p> do_push_anywhere
