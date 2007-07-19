@@ -154,12 +154,10 @@ proc gitexec {args} {
 }
 
 proc reponame {} {
-	global _reponame
-	return $_reponame
+	return $::_reponame
 }
 
 proc is_MacOSX {} {
-	global tcl_platform tk_library
 	if {[tk windowingsystem] eq {aqua}} {
 		return 1
 	}
@@ -167,17 +165,16 @@ proc is_MacOSX {} {
 }
 
 proc is_Windows {} {
-	global tcl_platform
-	if {$tcl_platform(platform) eq {windows}} {
+	if {$::tcl_platform(platform) eq {windows}} {
 		return 1
 	}
 	return 0
 }
 
 proc is_Cygwin {} {
-	global tcl_platform _iscygwin
+	global _iscygwin
 	if {$_iscygwin eq {}} {
-		if {$tcl_platform(platform) eq {windows}} {
+		if {$::tcl_platform(platform) eq {windows}} {
 			if {[catch {set p [exec cygpath --windir]} err]} {
 				set _iscygwin 0
 			} else {
