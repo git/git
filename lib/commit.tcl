@@ -37,9 +37,14 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 					set enc [string tolower [string range $line 9 end]]
 				}
 			}
-			set msg [encoding convertfrom $enc [read $fd]]
-			set msg [string trim $msg]
+			set msg [read $fd]
 			close $fd
+
+			set enc [tcl_encoding $enc]
+			if {$enc ne {}} {
+				set msg [encoding convertfrom $enc $msg]
+			}
+			set msg [string trim $msg]
 		} err]} {
 		error_popup "Error loading commit data for amend:\n\n$err"
 		return
@@ -287,11 +292,18 @@ A rescan will be automatically started now.
 	#
 	set msg_p [gitdir COMMIT_EDITMSG]
 	set msg_wt [open $msg_p w]
+	fconfigure $msg_wt -translation lf
 	if {[catch {set enc $repo_config(i18n.commitencoding)}]} {
 		set enc utf-8
 	}
-	fconfigure $msg_wt -encoding binary -translation binary
-	puts -nonewline $msg_wt [encoding convertto $enc $msg]
+	set use_enc [tcl_encoding $enc]
+	if {$use_enc ne {}} {
+		fconfigure $msg_wt -encoding $use_enc
+	} else {
+		puts stderr "warning: Tcl does not support encoding '$enc'."
+		fconfigure $msg_wt -encoding utf-8
+	}
+	puts -nonewline $msg_wt $msg
 	close $msg_wt
 
 	# -- Create the commit.
