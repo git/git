@@ -809,6 +809,12 @@ proc makewindow {} {
         wm geometry . "$geometry(main)"
     }
 
+    if {[tk windowingsystem] eq {aqua}} {
+        set M1B M1
+    } else {
+        set M1B Control
+    }
+
     bind .pwbottom <Configure> {resizecdetpanes %W %w}
     pack .ctop -fill both -expand 1
     bindall <1> {selcanvline %W %x %y}
@@ -827,12 +833,12 @@ proc makewindow {} {
     bindkey <Key-Left> "goback"
     bind . <Key-Prior> "selnextpage -1"
     bind . <Key-Next> "selnextpage 1"
-    bind . <Control-Home> "allcanvs yview moveto 0.0"
-    bind . <Control-End> "allcanvs yview moveto 1.0"
-    bind . <Control-Key-Up> "allcanvs yview scroll -1 units"
-    bind . <Control-Key-Down> "allcanvs yview scroll 1 units"
-    bind . <Control-Key-Prior> "allcanvs yview scroll -1 pages"
-    bind . <Control-Key-Next> "allcanvs yview scroll 1 pages"
+    bind . <$M1B-Home> "allcanvs yview moveto 0.0"
+    bind . <$M1B-End> "allcanvs yview moveto 1.0"
+    bind . <$M1B-Key-Up> "allcanvs yview scroll -1 units"
+    bind . <$M1B-Key-Down> "allcanvs yview scroll 1 units"
+    bind . <$M1B-Key-Prior> "allcanvs yview scroll -1 pages"
+    bind . <$M1B-Key-Next> "allcanvs yview scroll 1 pages"
     bindkey <Key-Delete> "$ctext yview scroll -1 pages"
     bindkey <Key-BackSpace> "$ctext yview scroll -1 pages"
     bindkey <Key-space> "$ctext yview scroll 1 pages"
@@ -852,15 +858,15 @@ proc makewindow {} {
     bindkey ? findprev
     bindkey f nextfile
     bindkey <F5> updatecommits
-    bind . <Control-q> doquit
-    bind . <Control-f> dofind
-    bind . <Control-g> {findnext 0}
-    bind . <Control-r> dosearchback
-    bind . <Control-s> dosearch
-    bind . <Control-equal> {incrfont 1}
-    bind . <Control-KP_Add> {incrfont 1}
-    bind . <Control-minus> {incrfont -1}
-    bind . <Control-KP_Subtract> {incrfont -1}
+    bind . <$M1B-q> doquit
+    bind . <$M1B-f> dofind
+    bind . <$M1B-g> {findnext 0}
+    bind . <$M1B-r> dosearchback
+    bind . <$M1B-s> dosearch
+    bind . <$M1B-equal> {incrfont 1}
+    bind . <$M1B-KP_Add> {incrfont 1}
+    bind . <$M1B-minus> {incrfont -1}
+    bind . <$M1B-KP_Subtract> {incrfont -1}
     wm protocol . WM_DELETE_WINDOW doquit
     bind . <Button-1> "click %W"
     bind $fstring <Key-Return> dofind
@@ -1101,12 +1107,17 @@ proc keys {} {
 	raise $w
 	return
     }
+    if {[tk windowingsystem] eq {aqua}} {
+	set M1T Cmd
+    } else {
+	set M1T Ctrl
+    }
     toplevel $w
     wm title $w "Gitk key bindings"
-    message $w.m -text {
+    message $w.m -text "
 Gitk key bindings:
 
-<Ctrl-Q>		Quit
+<$M1T-Q>		Quit
 <Home>		Move to first commit
 <End>		Move to last commit
 <Up>, p, i	Move up one commit
@@ -1115,12 +1126,12 @@ Gitk key bindings:
 <Right>, x, l	Go forward in history list
 <PageUp>	Move up one page in commit list
 <PageDown>	Move down one page in commit list
-<Ctrl-Home>	Scroll to top of commit list
-<Ctrl-End>	Scroll to bottom of commit list
-<Ctrl-Up>	Scroll commit list up one line
-<Ctrl-Down>	Scroll commit list down one line
-<Ctrl-PageUp>	Scroll commit list up one page
-<Ctrl-PageDown>	Scroll commit list down one page
+<$M1T-Home>	Scroll to top of commit list
+<$M1T-End>	Scroll to bottom of commit list
+<$M1T-Up>	Scroll commit list up one line
+<$M1T-Down>	Scroll commit list down one line
+<$M1T-PageUp>	Scroll commit list up one page
+<$M1T-PageDown>	Scroll commit list down one page
 <Shift-Up>	Move to previous highlighted line
 <Shift-Down>	Move to next highlighted line
 <Delete>, b	Scroll diff view up one page
@@ -1128,20 +1139,20 @@ Gitk key bindings:
 <Space>		Scroll diff view down one page
 u		Scroll diff view up 18 lines
 d		Scroll diff view down 18 lines
-<Ctrl-F>		Find
-<Ctrl-G>		Move to next find hit
+<$M1T-F>		Find
+<$M1T-G>		Move to next find hit
 <Return>	Move to next find hit
 /		Move to next find hit, or redo find
 ?		Move to previous find hit
 f		Scroll diff view to next file
-<Ctrl-S>		Search for next hit in diff view
-<Ctrl-R>		Search for previous hit in diff view
-<Ctrl-KP+>	Increase font size
-<Ctrl-plus>	Increase font size
-<Ctrl-KP->	Decrease font size
-<Ctrl-minus>	Decrease font size
+<$M1T-S>		Search for next hit in diff view
+<$M1T-R>		Search for previous hit in diff view
+<$M1T-KP+>	Increase font size
+<$M1T-plus>	Increase font size
+<$M1T-KP->	Decrease font size
+<$M1T-minus>	Decrease font size
 <F5>		Update
-} \
+" \
 	    -justify left -bg white -border 2 -relief groove
     pack $w.m -side top -fill both -padx 2 -pady 2
     $w.m configure -font $uifont
