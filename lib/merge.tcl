@@ -67,95 +67,44 @@ You should complete the current commit before starting a merge.  Doing so will h
 	return 1
 }
 
-method _refs {} {
-	set r {}
-	foreach i [$w_list curselection] {
-		lappend r [lindex [lindex $list $i] 0]
+method _rev {} {
+	set i [$w_list curselection]
+	if {$i >= 0} {
+		return [lindex [lindex $list $i] 0]
 	}
-	return $r
+	return {}
 }
 
 method _visualize {} {
-	set revs [_refs $this]
-	if {$revs eq {}} return
-	lappend revs --not HEAD
-	do_gitk $revs
+	set rev [_rev $this]
+	if {$rev ne {}} {
+		do_gitk [list $rev --not HEAD]
+	}
 }
 
 method _start {} {
 	global HEAD current_branch
 
-	set cmd [list git merge]
-	set names [_refs $this]
-	set revcnt [llength $names]
-	append cmd { } $names
-
-	if {$revcnt == 0} {
-		return
-	} elseif {$revcnt == 1} {
-		set unit branch
-	} elseif {$revcnt <= 15} {
-		set unit branches
-
-		if {[tk_dialog \
-		$w.confirm_octopus \
-		[wm title $w] \
-		"Use octopus merge strategy?
-
-You are merging $revcnt branches at once.  This requires using the octopus merge driver, which may not succeed if there are file-level conflicts.
-" \
-		question \
-		0 \
-		{Cancel} \
-		{Use octopus} \
-		] != 1} return
-	} else {
-		tk_messageBox \
-			-icon error \
-			-type ok \
-			-title [wm title $w] \
-			-parent $w \
-			-message "Too many branches selected.
-
-You have requested to merge $revcnt branches in an octopus merge.  This exceeds Git's internal limit of 15 branches per merge.
-
-Please select fewer branches.  To merge more than 15 branches, merge the branches in batches.
-"
+	set name [_rev $this]
+	if {$name eq {}} {
 		return
 	}
 
-	set msg "Merging $current_branch, [join $names {, }]"
+	set cmd [list git merge $name]
+	set msg "Merging $current_branch and $name"
 	ui_status "$msg..."
-	set cons [console::new "Merge" $msg]
-	console::exec $cons $cmd [cb _finish $revcnt $cons]
+	set cons [console::new "Merge" $cmd]
+	console::exec $cons $cmd [cb _finish $cons]
 
 	wm protocol $w WM_DELETE_WINDOW {}
 	destroy $w
 }
 
-method _finish {revcnt cons ok} {
+method _finish {cons ok} {
 	console::done $cons $ok
 	if {$ok} {
 		set msg {Merge completed successfully.}
 	} else {
-		if {$revcnt != 1} {
-			info_popup "Octopus merge failed.
-
-Your merge of $revcnt branches has failed.
-
-There are file-level conflicts between the branches which must be resolved manually.
-
-The working directory will now be reset.
-
-You can attempt this merge again by merging only one branch at a time." $w
-
-			set fd [git_read read-tree --reset -u HEAD]
-			fconfigure $fd -blocking 0 -translation binary
-			fileevent $fd readable [cb _reset_wait $fd]
-			ui_status {Aborting... please wait...}
-			return
-		}
-
 		set msg {Merge failed.  Conflict resolution is required.}
 	}
 	unlock_index
@@ -235,7 +184,7 @@ constructor dialog {} {
 		-height 10 \
 		-width 70 \
 		-font font_diff \
-		-selectmode extended \
+		-selectmode browse \
 		-yscrollcommand [list $w.source.sby set]
 	scrollbar $w.source.sby -command [list $w_list yview]
 	pack $w.source.sby -side right -fill y
