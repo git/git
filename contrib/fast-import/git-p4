@@ -63,21 +63,34 @@ def system(cmd):
     if os.system(cmd) != 0:
         die("command failed: %s" % cmd)
 
-def p4CmdList(cmd):
+def p4CmdList(cmd, stdin=None, stdin_mode='w+b'):
     cmd = "p4 -G %s" % cmd
     if verbose:
         sys.stderr.write("Opening pipe: %s\n" % cmd)
-    pipe = os.popen(cmd, "rb")
+
+    # Use a temporary file to avoid deadlocks without
+    # subprocess.communicate(), which would put another copy
+    # of stdout into memory.
+    stdin_file = None
+    if stdin is not None:
+        stdin_file = tempfile.TemporaryFile(prefix='p4-stdin', mode=stdin_mode)
+        stdin_file.write(stdin)
+        stdin_file.flush()
+        stdin_file.seek(0)
+
+    p4 = subprocess.Popen(cmd, shell=True,
+                          stdin=stdin_file,
+                          stdout=subprocess.PIPE)
 
     result = []
     try:
         while True:
-            entry = marshal.load(pipe)
+            entry = marshal.load(p4.stdout)
             result.append(entry)
     except EOFError:
         pass
-    exitCode = pipe.close()
-    if exitCode != None:
+    exitCode = p4.wait()
+    if exitCode != 0:
         entry = {}
         entry["p4ExitCode"] = exitCode
         result.append(entry)
@@ -168,27 +181,55 @@ def gitBranchExists(branch):
 def gitConfig(key):
     return read_pipe("git config %s" % key, ignore_error=True).strip()
 
+def p4BranchesInGit(branchesAreInRemotes = True):
+    branches = {}
+
+    cmdline = "git rev-parse --symbolic "
+    if branchesAreInRemotes:
+        cmdline += " --remotes"
+    else:
+        cmdline += " --branches"
+
+    for line in read_pipe_lines(cmdline):
+        line = line.strip()
+
+        ## only import to p4/
+        if not line.startswith('p4/') or line == "p4/HEAD":
+            continue
+        branch = line
+
+        # strip off p4
+        branch = re.sub ("^p4/", "", line)
+
+        branches[branch] = parseRevision(line)
+    return branches
+
 def findUpstreamBranchPoint(head = "HEAD"):
+    branches = p4BranchesInGit()
+    # map from depot-path to branch name
+    branchByDepotPath = {}
+    for branch in branches.keys():
+        tip = branches[branch]
+        log = extractLogMessageFromGitCommit(tip)
+        settings = extractSettingsGitLog(log)
+        if settings.has_key("depot-paths"):
+            paths = ",".join(settings["depot-paths"])
+            branchByDepotPath[paths] = "remotes/p4/" + branch
+
     settings = None
-    branchPoint = ""
     parent = 0
     while parent < 65535:
         commit = head + "~%s" % parent
         log = extractLogMessageFromGitCommit(commit)
         settings = extractSettingsGitLog(log)
-        if not settings.has_key("depot-paths"):
-            parent = parent + 1
-            continue
+        if settings.has_key("depot-paths"):
+            paths = ",".join(settings["depot-paths"])
+            if branchByDepotPath.has_key(paths):
+                return [branchByDepotPath[paths], settings]
 
-        names = read_pipe_lines("git name-rev \"--refs=refs/remotes/p4/*\" \"%s\"" % commit)
-        if len(names) <= 0:
-            continue
+        parent = parent + 1
 
-        # strip away the beginning of 'HEAD~42 refs/remotes/p4/foo'
-        branchPoint = names[0].strip()[len(commit) + 1:]
-        break
-
-    return [branchPoint, settings]
+    return ["", settings]
 
 class Command:
     def __init__(self):
@@ -712,27 +753,13 @@ class P4Sync(Command):
         if not files:
             return
 
-        # We cannot put all the files on the command line
-        # OS have limitations on the max lenght of arguments
-        # POSIX says it's 4096 bytes, default for Linux seems to be 130 K.
-        # and all OS from the table below seems to be higher than POSIX.
-        # See http://www.in-ulm.de/~mascheck/various/argmax/
-        if (self.isWindows):
-            argmax = 2000
-        else:
-            argmax = min(4000, os.sysconf('SC_ARG_MAX'))
-
-        chunk = ''
-        filedata = []
-        for i in xrange(len(files)):
-            f = files[i]
-            chunk += '"%s#%s" ' % (f['path'], f['rev'])
-            if len(chunk) > argmax or i == len(files)-1:
-                data = p4CmdList('print %s' % chunk)
-                if "p4ExitCode" in data[0]:
-                    die("Problems executing p4. Error: [%d]." % (data[0]['p4ExitCode']));
-                filedata.extend(data)
-                chunk = ''
+        filedata = p4CmdList('-x - print',
+                             stdin='\n'.join(['%s#%s' % (f['path'], f['rev'])
+                                              for f in files]),
+                             stdin_mode='w+')
+        if "p4ExitCode" in filedata[0]:
+            die("Problems executing p4. Error: [%d]."
+                % (filedata[0]['p4ExitCode']));
 
         j = 0;
         contents = {}
@@ -979,27 +1006,11 @@ class P4Sync(Command):
             self.knownBranches[branch] = branch
 
     def listExistingP4GitBranches(self):
-        self.p4BranchesInGit = []
-
-        cmdline = "git rev-parse --symbolic "
-        if self.importIntoRemotes:
-            cmdline += " --remotes"
-        else:
-            cmdline += " --branches"
-
-        for line in read_pipe_lines(cmdline):
-            line = line.strip()
-
-            ## only import to p4/
-            if not line.startswith('p4/') or line == "p4/HEAD":
-                continue
-            branch = line
-
-            # strip off p4
-            branch = re.sub ("^p4/", "", line)
-
-            self.p4BranchesInGit.append(branch)
-            self.initialParents[self.refPrefix + branch] = parseRevision(line)
+        # branches holds mapping from name to commit
+        branches = p4BranchesInGit(self.importIntoRemotes)
+        self.p4BranchesInGit = branches.keys()
+        for branch in branches.keys():
+            self.initialParents[self.refPrefix + branch] = branches[branch]
 
     def createOrUpdateBranchesFromOrigin(self):
         if not self.silent:
