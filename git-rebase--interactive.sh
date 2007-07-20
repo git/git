@@ -414,7 +414,7 @@ EOF
 			die_abort "Nothing to do"
 
 		cp "$TODO" "$TODO".backup
-		${VISUAL:-${EDITOR:-vi}} "$TODO" ||
+		git_editor "$TODO" ||
 			die "Could not execute editor"
 
 		test -z "$(grep -ve '^$' -e '^#' < $TODO)" &&

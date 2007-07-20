@@ -244,10 +244,12 @@ on the Subject: line and the rest of the commit in the body.
 
 include::i18n.txt[]
 
-ENVIRONMENT VARIABLES
----------------------
-The command specified by either the VISUAL or EDITOR environment
-variables is used to edit the commit log message.
+ENVIRONMENT AND CONFIGURATION VARIABLES
+---------------------------------------
+The editor used to edit the commit log message will be chosen from the
+GIT_EDITOR environment variable, the core.editor configuration variable, the
+VISUAL environment variable, or the EDITOR environment variable (in that
+order).
 
 HOOKS
 -----
