@@ -182,27 +182,23 @@ method _update_ref {} {
 		#
 	} else {
 		catch {set merge_base [git merge-base $new $cur]}
-		switch -- $merge_type {
-		ff {
-			if {$merge_base eq $new} {
-				# The current branch is actually newer.
-				#
-				set new $cur
-			} elseif {$merge_base eq $cur} {
-				# The current branch is older.
-				#
-				set reflog_msg "merge $new_expr: Fast-forward"
-			} else {
-				_error $this "Branch '$newbranch' already exists.\n\nIt cannot fast-forward to $new_expr.\nA merge is required."
-				return 0
+		if {$merge_base eq $cur} {
+			# The current branch is older.
+			#
+			set reflog_msg "merge $new_expr: Fast-forward"
+		} else {
+			switch -- $merge_type {
+			ff {
+				if {$merge_base eq $new} {
+					# The current branch is actually newer.
+					#
+					set new $cur
+				} else {
+					_error $this "Branch '$newbranch' already exists.\n\nIt cannot fast-forward to $new_expr.\nA merge is required."
+					return 0
+				}
 			}
-		}
-		reset {
-			if {$merge_base eq $cur} {
-				# The current branch is older.
-				#
-				set reflog_msg "merge $new_expr: Fast-forward"
-			} else {
+			reset {
 				# The current branch will lose things.
 				#
 				if {[_confirm_reset $this $cur]} {
@@ -211,11 +207,11 @@ method _update_ref {} {
 					return 0
 				}
 			}
-		}
-		default {
-			_error $this "Only 'ff' and 'reset' merge is currently supported."
-			return 0
-		}
+			default {
+				_error $this "Only 'ff' and 'reset' merge is currently supported."
+				return 0
+			}
+			}
 		}
 	}
 
