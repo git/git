@@ -12,6 +12,7 @@ field new_ref    ; # ref we are updating/creating
 
 field parent_w      .; # window that started us
 field merge_type none; # type of merge to apply to existing branch
+field merge_base   {}; # merge base if we have another ref involved
 field fetch_spec   {}; # refetch tracking branch if used?
 field checkout      1; # actually checkout the branch?
 field create        0; # create the branch if it doesn't exist?
@@ -180,15 +181,14 @@ method _update_ref {} {
 		# No merge would be required, don't compute anything.
 		#
 	} else {
-		set mrb {}
-		catch {set mrb [git merge-base $new $cur]}
+		catch {set merge_base [git merge-base $new $cur]}
 		switch -- $merge_type {
 		ff {
-			if {$mrb eq $new} {
+			if {$merge_base eq $new} {
 				# The current branch is actually newer.
 				#
 				set new $cur
-			} elseif {$mrb eq $cur} {
+			} elseif {$merge_base eq $cur} {
 				# The current branch is older.
 				#
 				set reflog_msg "merge $new_expr: Fast-forward"
@@ -198,7 +198,7 @@ method _update_ref {} {
 			}
 		}
 		reset {
-			if {$mrb eq $cur} {
+			if {$merge_base eq $cur} {
 				# The current branch is older.
 				#
 				set reflog_msg "merge $new_expr: Fast-forward"
