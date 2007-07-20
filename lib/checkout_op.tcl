@@ -266,7 +266,9 @@ The rescan will be automatically started now.
 		return
 	}
 
-	if {[is_config_true gui.trustmtime]} {
+	if {$curHEAD eq $new_hash} {
+		_after_readtree $this
+	} elseif {[is_config_true gui.trustmtime]} {
 		_readtree $this
 	} else {
 		ui_status {Refreshing file status...}
