@@ -208,7 +208,7 @@ method _update_ref {} {
 				}
 			}
 			default {
-				_error $this "Only 'ff' and 'reset' merge is currently supported."
+				_error $this "Merge strategy '$merge_type' not supported."
 				return 0
 			}
 			}
