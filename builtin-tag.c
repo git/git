@@ -24,7 +24,11 @@ static void launch_editor(const char *path, char **buffer, unsigned long *len)
 	const char *args[3];
 	int fd;
 
-	editor = getenv("VISUAL");
+	editor = getenv("GIT_EDITOR");
+	if (!editor && editor_program)
+		editor = editor_program;
+	if (!editor)
+		editor = getenv("VISUAL");
 	if (!editor)
 		editor = getenv("EDITOR");
 
@@ -249,9 +253,9 @@ static void create_tag(const unsigned char *object, const char *tag,
 		       char *message, int sign, unsigned char *result)
 {
 	enum object_type type;
-	char header_buf[1024], *buffer;
+	char header_buf[1024], *buffer = NULL;
 	int header_len, max_size;
-	unsigned long size;
+	unsigned long size = 0;
 
 	type = sha1_object_info(object, NULL);
 	if (type <= 0)
