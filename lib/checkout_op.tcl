@@ -66,14 +66,19 @@ method run {} {
 		set r_head [lindex $fetch_spec 2]
 		regsub ^refs/heads/ $r_head {} r_name
 
+		set cmd [list git fetch $remote]
+		if {$l_trck ne {}} {
+			lappend cmd +$r_head:$l_trck
+		} else {
+			lappend cmd $r_head
+		}
+
 		_toplevel $this {Refreshing Tracking Branch}
 		set w_cons [::console::embed \
 			$w.console \
 			"Fetching $r_name from $remote"]
 		pack $w.console -fill both -expand 1
-		$w_cons exec \
-			[list git fetch $remote +$r_head:$l_trck] \
-			[cb _finish_fetch]
+		$w_cons exec $cmd [cb _finish_fetch]
 
 		bind $w <$M1B-Key-w> break
 		bind $w <$M1B-Key-W> break
@@ -114,6 +119,9 @@ method _noop {} {}
 method _finish_fetch {ok} {
 	if {$ok} {
 		set l_trck [lindex $fetch_spec 0]
+		if {$l_trck eq {}} {
+			set l_trck FETCH_HEAD
+		}
 		if {[catch {set new_hash [git rev-parse --verify "$l_trck^0"]} err]} {
 			set ok 0
 			$w_cons insert "fatal: Cannot resolve $l_trck"
