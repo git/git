@@ -1323,16 +1323,17 @@ static enum rewrite_result rewrite_one(struct rev_info *revs, struct commit **pp
 
 static void remove_duplicate_parents(struct commit *commit)
 {
-	struct commit_list *p;
-	struct commit_list **pp = &commit->parents;
+	struct commit_list **pp, *p;
 
 	/* Examine existing parents while marking ones we have seen... */
-	for (p = commit->parents; p; p = p->next) {
+	pp = &commit->parents;
+	while ((p = *pp) != NULL) {
 		struct commit *parent = p->item;
-		if (parent->object.flags & TMP_MARK)
+		if (parent->object.flags & TMP_MARK) {
+			*pp = p->next;
 			continue;
+		}
 		parent->object.flags |= TMP_MARK;
-		*pp = p;
 		pp = &p->next;
 	}
 	/* ... and clear the temporary mark */
