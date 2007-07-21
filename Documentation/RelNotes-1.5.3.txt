@@ -1,0 +1,109 @@
+GIT v1.5.3 Release Notes (draft)
+========================
+
+Updates since v1.5.2
+--------------------
+
+* An initial interation of Porcelain level superproject support
+  started to take shape.
+
+* Thee are a handful pack-objects changes to help you cope better with
+  repositories with pathologically large blobs in them.
+
+* New commands and options.
+
+  - "git-submodule" command helps you manage the projects from
+    the superproject that contain them.
+
+  - In addition to core.compression configuration option,
+    core.loosecompression and pack.compression options can
+    independently tweak zlib compression levels used for loose
+    and packed objects.
+
+  - "git-ls-tree -l" shows size of blobs pointed at by the
+    tree entries, similar to "/bin/ls -l".
+
+  - "git-rev-list" learned --regexp-ignore-case and
+    --extended-regexp options to tweak its matching logic used
+    for --grep fitering.
+
+  - "git-describe --contains" is a handier way to call more
+    obscure command "git-name-rev --tags".
+
+  - "git gc --aggressive" tells the command to spend more cycles
+    to optimize the repository harder.
+
+  - "git repack" can be told to split resulting packs to avoid
+    exceeding limit specified with "--max-pack-size".
+
+* Updated behavior of existing commands.
+
+  - "git push" pretends that you immediately fetched back from
+    the remote by updating corresponding remote tracking
+    branches if you have any.
+
+  - The diffstat given after a merge (or a pull) honors the
+    color.diff configuration.
+
+  - "git-apply --whitespace=strip" removes blank lines added at
+    the end of the file.
+
+  - fetch over git native protocols with -v shows connection
+    status, and the IP address of the other end, to help
+    diagnosing problems.
+
+  - core.legacyheaders is no more, although we still can read
+    objects created in a new loose object format.
+
+  - "git-mailsplit" (hence "git-am") can read from Maildir
+    formatted mailboxes.
+
+  - "git cvsserver" does not barf upon seeing "cvs login"
+    request.
+
+  - "pack-objects" honors "delta" attribute set in
+    .gitattributes.  It does not attempt to deltify blobs that
+    come from paths with delta attribute set to false.
+
+  - new-workdir script (in contrib) can now be used with a bare
+    repository.
+
+
+* Builds
+
+  -
+
+* Performance Tweaks
+
+  - git-pack-objects avoids re-deltification cost by caching
+    small enough delta results it creates while looking for the
+    best delta candidates.
+
+  - diff-delta code that is used for packing has been improved
+    to work better on big files.
+
+  - when there are more than one pack files in the repository,
+    the runtime used to try finding an object always from the
+    newest packfile; it now tries the same packfile as we found
+    the object requested the last time, which exploits the
+    locality of references.
+
+Fixes since v1.5.2
+------------------
+
+All of the fixes in v1.5.2 maintenance series are included in
+this release, unless otherwise noted.
+
+* Bugfixes
+
+  - ....  This has not
+    been backported to 1.5.2.x series, as it is rather an
+    intrusive change.
+
+
+--
+exec >/var/tmp/1
+O=v1.5.2-45-ged82edc
+O=v1.5.2-172-g1a8b769
+echo O=`git describe refs/heads/master`
+git shortlog --no-merges $O..refs/heads/master ^refs/heads/maint

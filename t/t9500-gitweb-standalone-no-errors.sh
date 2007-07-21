@@ -487,4 +487,32 @@ test_expect_success \
 	'gitweb_run "p=.git;a=atom"'
 test_debug 'cat gitweb.log'
 
+# ----------------------------------------------------------------------
+# encoding/decoding
+
+test_expect_success \
+	'encode(commit): utf8' \
+	'. ../t3901-utf8.txt &&
+	 echo "UTF-8" >> file &&
+	 git add file &&
+	 git commit -F ../t3900/1-UTF-8.txt &&
+	 gitweb_run "p=.git;a=commit"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'encode(commit): iso-8859-1' \
+	'. ../t3901-8859-1.txt &&
+	 echo "ISO-8859-1" >> file &&
+	 git add file &&
+	 git config i18n.commitencoding ISO-8859-1 &&
+	 git commit -F ../t3900/ISO-8859-1.txt &&
+	 git config --unset i18n.commitencoding &&
+	 gitweb_run "p=.git;a=commit"'
+test_debug 'cat gitweb.log'
+
+test_expect_success \
+	'encode(log): utf-8 and iso-8859-1' \
+	'gitweb_run "p=.git;a=log"'
+test_debug 'cat gitweb.log'
+
 test_done

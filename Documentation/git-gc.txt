@@ -37,10 +37,10 @@ OPTIONS
 
 --aggressive::
 	Usually 'git-gc' runs very quickly while providing good disk
-	space utilization and performance.   This option will cause
-	git-gc to more aggressive optimize the repository at the expense
+	space utilization and performance.  This option will cause
+	git-gc to more aggressively optimize the repository at the expense
 	of taking much more time.  The effects of this optimization are
-	persistent, so this option only needs to be sporadically; every
+	persistent, so this option only needs to be used occasionally; every
 	few hundred changesets or so.
 
 Configuration

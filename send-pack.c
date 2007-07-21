@@ -4,6 +4,7 @@
 #include "refs.h"
 #include "pkt-line.h"
 #include "run-command.h"
+#include "remote.h"
 
 static const char send_pack_usage[] =
 "git-send-pack [--all] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
@@ -176,7 +177,7 @@ static int receive_status(int in)
 	return ret;
 }
 
-static int send_pack(int in, int out, int nr_refspec, char **refspec)
+static int send_pack(int in, int out, struct remote *remote, int nr_refspec, char **refspec)
 {
 	struct ref *ref;
 	int new_refs;
@@ -213,18 +214,19 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 	new_refs = 0;
 	for (ref = remote_refs; ref; ref = ref->next) {
 		char old_hex[60], *new_hex;
-		int delete_ref;
+		int will_delete_ref;
 
 		if (!ref->peer_ref)
 			continue;
 
-		delete_ref = is_null_sha1(ref->peer_ref->new_sha1);
-		if (delete_ref && !allow_deleting_refs) {
+
+		will_delete_ref = is_null_sha1(ref->peer_ref->new_sha1);
+		if (will_delete_ref && !allow_deleting_refs) {
 			error("remote does not support deleting refs");
 			ret = -2;
 			continue;
 		}
-		if (!delete_ref &&
+		if (!will_delete_ref &&
 		    !hashcmp(ref->old_sha1, ref->peer_ref->new_sha1)) {
 			if (verbose)
 				fprintf(stderr, "'%s': up-to-date\n", ref->name);
@@ -251,7 +253,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 		 */
 
 		if (!force_update &&
-		    !delete_ref &&
+		    !will_delete_ref &&
 		    !is_null_sha1(ref->old_sha1) &&
 		    !ref->force) {
 			if (!has_sha1_file(ref->old_sha1) ||
@@ -275,7 +277,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 			}
 		}
 		hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
-		if (!delete_ref)
+		if (!will_delete_ref)
 			new_refs++;
 		strcpy(old_hex, sha1_to_hex(ref->old_sha1));
 		new_hex = sha1_to_hex(ref->new_sha1);
@@ -290,7 +292,7 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 		else
 			packet_write(out, "%s %s %s",
 				     old_hex, new_hex, ref->name);
-		if (delete_ref)
+		if (will_delete_ref)
 			fprintf(stderr, "deleting '%s'\n", ref->name);
 		else {
 			fprintf(stderr, "updating '%s'", ref->name);
@@ -299,6 +301,28 @@ static int send_pack(int in, int out, int nr_refspec, char **refspec)
 					ref->peer_ref->name);
 			fprintf(stderr, "\n  from %s\n  to   %s\n",
 				old_hex, new_hex);
+		}
+		if (remote) {
+			struct refspec rs;
+			rs.src = ref->name;
+			remote_find_tracking(remote, &rs);
+			if (rs.dst) {
+				struct ref_lock *lock;
+				fprintf(stderr, " Also local %s\n", rs.dst);
+				if (will_delete_ref) {
+					if (delete_ref(rs.dst, NULL)) {
+						error("Failed to delete");
+					}
+				} else {
+					lock = lock_any_ref_for_update(rs.dst, NULL, 0);
+					if (!lock)
+						error("Failed to lock");
+					else
+						write_ref_sha1(lock, ref->new_sha1,
+							       "update by push");
+				}
+				free(rs.dst);
+			}
 		}
 	}
 
@@ -330,6 +354,7 @@ static void verify_remote_names(int nr_heads, char **heads)
 		case -2: /* ok but a single level -- that is fine for
 			  * a match pattern.
 			  */
+		case -3: /* ok but ends with a pattern-match character */
 			continue;
 		}
 		die("remote part of refspec is not a valid name in %s",
@@ -344,6 +369,8 @@ int main(int argc, char **argv)
 	char **heads = NULL;
 	int fd[2], ret;
 	pid_t pid;
+	char *remote_name = NULL;
+	struct remote *remote = NULL;
 
 	setup_git_directory();
 	git_config(git_default_config);
@@ -359,6 +386,10 @@ int main(int argc, char **argv)
 			}
 			if (!prefixcmp(arg, "--exec=")) {
 				receivepack = arg + 7;
+				continue;
+			}
+			if (!prefixcmp(arg, "--remote=")) {
+				remote_name = arg + 9;
 				continue;
 			}
 			if (!strcmp(arg, "--all")) {
@@ -393,10 +424,18 @@ int main(int argc, char **argv)
 		usage(send_pack_usage);
 	verify_remote_names(nr_heads, heads);
 
+	if (remote_name) {
+		remote = remote_get(remote_name);
+		if (!remote_has_uri(remote, dest)) {
+			die("Destination %s is not a uri for %s",
+			    dest, remote_name);
+		}
+	}
+
 	pid = git_connect(fd, dest, receivepack, verbose ? CONNECT_VERBOSE : 0);
 	if (pid < 0)
 		return 1;
-	ret = send_pack(fd[0], fd[1], nr_heads, heads);
+	ret = send_pack(fd[0], fd[1], remote, nr_heads, heads);
 	close(fd[0]);
 	close(fd[1]);
 	ret |= finish_connect(pid);

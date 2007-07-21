@@ -388,7 +388,7 @@ create_delta(const struct delta_index *index,
 				outsize = max_size + MAX_OP_SIZE + 1;
 			if (max_size && outpos > max_size)
 				break;
-			out = xrealloc(out, outsize);
+			out = realloc(out, outsize);
 			if (!out) {
 				free(tmp);
 				return NULL;

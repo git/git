@@ -388,11 +388,12 @@ void prepare_alt_odb(void)
 {
 	const char *alt;
 
+	if (alt_odb_tail)
+		return;
+
 	alt = getenv(ALTERNATE_DB_ENVIRONMENT);
 	if (!alt) alt = "";
 
-	if (alt_odb_tail)
-		return;
 	alt_odb_tail = &alt_odb_list;
 	link_alt_odb_entries(alt, alt + strlen(alt), ':', NULL, 0);
 
@@ -545,6 +546,21 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 	return 0;
 }
 
+int open_pack_index(struct packed_git *p)
+{
+	char *idx_name;
+	int ret;
+
+	if (p->index_data)
+		return 0;
+
+	idx_name = xstrdup(p->pack_name);
+	strcpy(idx_name + strlen(idx_name) - strlen(".pack"), ".idx");
+	ret = check_packed_git_idx(idx_name, p);
+	free(idx_name);
+	return ret;
+}
+
 static void scan_windows(struct packed_git *p,
 	struct packed_git **lru_p,
 	struct pack_window **lru_w,
@@ -619,6 +635,9 @@ static int open_packed_git_1(struct packed_git *p)
 	unsigned char sha1[20];
 	unsigned char *idx_sha1;
 	long fd_flag;
+
+	if (!p->index_data && open_pack_index(p))
+		return error("packfile %s index unavailable", p->pack_name);
 
 	p->pack_fd = open(p->pack_name, O_RDONLY);
 	if (p->pack_fd < 0 || fstat(p->pack_fd, &st))
@@ -774,8 +793,7 @@ struct packed_git *add_packed_git(const char *path, int path_len, int local)
 		return NULL;
 	memcpy(p->pack_name, path, path_len);
 	strcpy(p->pack_name + path_len, ".pack");
-	if (stat(p->pack_name, &st) || !S_ISREG(st.st_mode) ||
-	    check_packed_git_idx(path, p)) {
+	if (stat(p->pack_name, &st) || !S_ISREG(st.st_mode)) {
 		free(p);
 		return NULL;
 	}
@@ -783,6 +801,10 @@ struct packed_git *add_packed_git(const char *path, int path_len, int local)
 	/* ok, it looks sane as far as we can check without
 	 * actually mapping the pack file.
 	 */
+	p->index_version = 0;
+	p->index_data = NULL;
+	p->index_size = 0;
+	p->num_objects = 0;
 	p->pack_size = st.st_size;
 	p->next = NULL;
 	p->windows = NULL;
@@ -1595,10 +1617,15 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 	return data;
 }
 
-const unsigned char *nth_packed_object_sha1(const struct packed_git *p,
+const unsigned char *nth_packed_object_sha1(struct packed_git *p,
 					    uint32_t n)
 {
 	const unsigned char *index = p->index_data;
+	if (!index) {
+		if (open_pack_index(p))
+			return NULL;
+		index = p->index_data;
+	}
 	if (n >= p->num_objects)
 		return NULL;
 	index += 4 * 256;
@@ -1635,6 +1662,12 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 	const unsigned char *index = p->index_data;
 	unsigned hi, lo;
 
+	if (!index) {
+		if (open_pack_index(p))
+			return 0;
+		level1_ofs = p->index_data;
+		index = p->index_data;
+	}
 	if (p->index_version > 1) {
 		level1_ofs += 2;
 		index += 8;
@@ -1677,20 +1710,25 @@ static int matches_pack_name(struct packed_git *p, const char *ig)
 
 static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e, const char **ignore_packed)
 {
+	static struct packed_git *last_found = (void *)1;
 	struct packed_git *p;
 	off_t offset;
 
 	prepare_packed_git();
+	if (!packed_git)
+		return 0;
+	p = (last_found == (void *)1) ? packed_git : last_found;
 
-	for (p = packed_git; p; p = p->next) {
+	do {
 		if (ignore_packed) {
 			const char **ig;
 			for (ig = ignore_packed; *ig; ig++)
 				if (!matches_pack_name(p, *ig))
 					break;
 			if (*ig)
-				continue;
+				goto next;
 		}
+
 		offset = find_pack_entry_one(sha1, p);
 		if (offset) {
 			/*
@@ -1703,14 +1741,23 @@ static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e, cons
 			 */
 			if (p->pack_fd == -1 && open_packed_git(p)) {
 				error("packfile %s cannot be accessed", p->pack_name);
-				continue;
+				goto next;
 			}
 			e->offset = offset;
 			e->p = p;
 			hashcpy(e->sha1, sha1);
+			last_found = p;
 			return 1;
 		}
-	}
+
+		next:
+		if (p == last_found)
+			p = packed_git;
+		else
+			p = p->next;
+		if (p == last_found)
+			p = p->next;
+	} while (p);
 	return 0;
 }
 
