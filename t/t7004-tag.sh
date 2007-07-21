@@ -332,6 +332,33 @@ test_expect_success 'creating an annotated tag with -F - should succeed' '
 	git diff expect actual
 '
 
+test_expect_success \
+	'trying to create a tag with a non-existing -F file should fail' '
+	! test -f nonexistingfile &&
+	! tag_exists notag &&
+	! git-tag -F nonexistingfile notag &&
+	! tag_exists notag
+'
+
+test_expect_success \
+	'trying to create tags giving many -m or -F options should fail' '
+	echo "message file 1" >msgfile1 &&
+	echo "message file 2" >msgfile2 &&
+	! tag_exists msgtag &&
+	! git-tag -m "message 1" -m "message 2" msgtag &&
+	! tag_exists msgtag &&
+	! git-tag -F msgfile1 -F msgfile2 msgtag &&
+	! tag_exists msgtag &&
+	! git-tag -m "message 1" -F msgfile1 msgtag &&
+	! tag_exists msgtag &&
+	! git-tag -F msgfile1 -m "message 1" msgtag &&
+	! tag_exists msgtag &&
+	! git-tag -F msgfile1 -m "message 1" -F msgfile2 msgtag &&
+	! tag_exists msgtag &&
+	! git-tag -m "message 1" -F msgfile1 -m "message 2" msgtag &&
+	! tag_exists msgtag
+'
+
 # blank and empty messages:
 
 get_tag_header empty-annotated-tag $commit commit $time >expect
@@ -646,6 +673,14 @@ test_expect_success 'creating a signed tag with -F - should succeed' '
 	git-tag -s -F - stdin-signed-tag <siginputmsg &&
 	get_tag_msg stdin-signed-tag >actual &&
 	git diff expect actual
+'
+
+test_expect_success \
+	'trying to create a signed tag with non-existing -F file should fail' '
+	! test -f nonexistingfile &&
+	! tag_exists nosigtag &&
+	! git-tag -s -F nonexistingfile nosigtag &&
+	! tag_exists nosigtag
 '
 
 test_expect_success 'verifying a signed tag should succeed' \

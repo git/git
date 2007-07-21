@@ -89,14 +89,19 @@ static int show_reference(const char *refname, const unsigned char *sha1,
 		printf("%-15s ", refname);
 
 		sp = buf = read_sha1_file(sha1, &type, &size);
-		if (!buf || !size)
+		if (!buf)
 			return 0;
+		if (!size) {
+			free(buf);
+			return 0;
+		}
 		/* skip header */
 		while (sp + 1 < buf + size &&
 				!(sp[0] == '\n' && sp[1] == '\n'))
 			sp++;
 		/* only take up to "lines" lines, and strip the signature */
-		for (i = 0, sp += 2; i < filter->lines && sp < buf + size &&
+		for (i = 0, sp += 2;
+				i < filter->lines && sp < buf + size &&
 				prefixcmp(sp, PGP_SIGNATURE "\n");
 				i++) {
 			if (i)
@@ -137,10 +142,10 @@ static int list_tags(const char *pattern, int lines)
 	return 0;
 }
 
-typedef int (*func_tag)(const char *name, const char *ref,
+typedef int (*each_tag_name_fn)(const char *name, const char *ref,
 				const unsigned char *sha1);
 
-static int do_tag_names(const char **argv, func_tag fn)
+static int for_each_tag_name(const char **argv, each_tag_name_fn fn)
 {
 	const char **p;
 	char ref[PATH_MAX];
@@ -195,7 +200,7 @@ static ssize_t do_sign(char *buffer, size_t size, size_t max)
 
 	if (!*signingkey) {
 		if (strlcpy(signingkey, git_committer_info(1),
-				sizeof(signingkey)) >= sizeof(signingkey))
+				sizeof(signingkey)) > sizeof(signingkey) - 1)
 			return error("committer info too long.");
 		bracket = strchr(signingkey, '>');
 		if (bracket)
@@ -258,7 +263,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 	unsigned long size = 0;
 
 	type = sha1_object_info(object, NULL);
-	if (type <= 0)
+	if (type <= OBJ_NONE)
 	    die("bad object type.");
 
 	header_len = snprintf(header_buf, sizeof(header_buf),
@@ -271,7 +276,7 @@ static void create_tag(const unsigned char *object, const char *tag,
 			  tag,
 			  git_committer_info(1));
 
-	if (header_len >= sizeof(header_buf))
+	if (header_len > sizeof(header_buf) - 1)
 		die("tag header too big.");
 
 	if (!message) {
@@ -366,6 +371,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 			i++;
 			if (i == argc)
 				die("option -m needs an argument.");
+			if (message)
+				die("only one -F or -m option is allowed.");
 			message = xstrdup(argv[i]);
 			continue;
 		}
@@ -377,6 +384,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 			i++;
 			if (i == argc)
 				die("option -F needs an argument.");
+			if (message)
+				die("only one -F or -m option is allowed.");
 
 			if (!strcmp(argv[i], "-"))
 				fd = 0;
@@ -405,15 +414,12 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 				die("argument to option -u too long");
 			continue;
 		}
-		if (!strcmp(arg, "-l")) {
+		if (!strcmp(arg, "-l"))
 			return list_tags(argv[i + 1], lines);
-		}
-		if (!strcmp(arg, "-d")) {
-			return do_tag_names(argv + i + 1, delete_tag);
-		}
-		if (!strcmp(arg, "-v")) {
-			return do_tag_names(argv + i + 1, verify_tag);
-		}
+		if (!strcmp(arg, "-d"))
+			return for_each_tag_name(argv + i + 1, delete_tag);
+		if (!strcmp(arg, "-v"))
+			return for_each_tag_name(argv + i + 1, verify_tag);
 		usage(builtin_tag_usage);
 	}
 
@@ -431,7 +437,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (get_sha1(object_ref, object))
 		die("Failed to resolve '%s' as a valid ref.", object_ref);
 
-	if (snprintf(ref, sizeof(ref), "refs/tags/%s", tag) >= sizeof(ref))
+	if (snprintf(ref, sizeof(ref), "refs/tags/%s", tag) > sizeof(ref) - 1)
 		die("tag name too long: %.*s...", 50, tag);
 	if (check_ref_format(ref))
 		die("'%s' is not a valid tag name.", tag);
