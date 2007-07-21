@@ -1895,35 +1895,6 @@ if {[is_MacOSX]} {
 	.mbar.edit add separator
 	.mbar.edit add command -label {Options...} \
 		-command do_options
-
-	# -- Tools Menu
-	#
-	if {[is_Cygwin]
-		&& [is_enabled multicommit]
-		&& [file exists /usr/local/miga/lib/gui-miga]} {
-	proc do_miga {} {
-		if {![lock_index update]} return
-		set cmd [list sh --login -c "/usr/local/miga/lib/gui-miga \"[pwd]\""]
-		set miga_fd [open "|$cmd" r]
-		fconfigure $miga_fd -blocking 0
-		fileevent $miga_fd readable [list miga_done $miga_fd]
-		ui_status {Running miga...}
-	}
-	proc miga_done {fd} {
-		read $fd 512
-		if {[eof $fd]} {
-			close $fd
-			unlock_index
-			rescan ui_ready
-		}
-	}
-	.mbar add cascade -label Tools -menu .mbar.tools
-	menu .mbar.tools
-	.mbar.tools add command -label "Migrate" \
-		-command do_miga
-	lappend disable_on_lock \
-		[list .mbar.tools entryconf [.mbar.tools index last] -state]
-	}
 }
 
 # -- Help Menu
