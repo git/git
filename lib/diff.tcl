@@ -39,13 +39,13 @@ proc handle_empty_diff {} {
 	set s $file_states($path)
 	if {[lindex $s 0] ne {_M}} return
 
-	info_popup "No differences detected.
+	info_popup [mc "No differences detected.
 
-[short_path $path] has no changes.
+%s has no changes.
 
 The modification date of this file was updated by another application, but the content within the file was not changed.
 
-A rescan will be automatically started to find other files which may have the same state."
+A rescan will be automatically started to find other files which may have the same state." [short_path $path]]
 
 	clear_diff
 	display_file $path __
@@ -94,7 +94,7 @@ proc show_diff {path w {lno {}}} {
 			set diff_active 0
 			unlock_index
 			ui_status "Unable to display [escape_path $path]"
-			error_popup "Error loading file:\n\n$err"
+ 		    error_popup [append [mc "Error loading file:"] "\n\n$err"]
 			return
 		}
 		$ui_diff conf -state normal
@@ -159,7 +159,7 @@ proc show_diff {path w {lno {}}} {
 		set diff_active 0
 		unlock_index
 		ui_status "Unable to display [escape_path $path]"
-		error_popup "Error loading diff:\n\n$err"
+		error_popup [append [mc "Error loading diff:"] "\n\n$err"]
 		return
 	}
 
@@ -275,14 +275,14 @@ proc apply_hunk {x y} {
 	set apply_cmd {apply --cached --whitespace=nowarn}
 	set mi [lindex $file_states($current_diff_path) 0]
 	if {$current_diff_side eq $ui_index} {
-		set mode unstage
+		set failed_msg [mc "Failed to unstage selected hunk."]
 		lappend apply_cmd --reverse
 		if {[string index $mi 0] ne {M}} {
 			unlock_index
 			return
 		}
 	} else {
-		set mode stage
+		set failed_msg [mc "Failed to stage selected hunk."]
 		if {[string index $mi 1] ne {M}} {
 			unlock_index
 			return
@@ -307,7 +307,7 @@ proc apply_hunk {x y} {
 		puts -nonewline $p $current_diff_header
 		puts -nonewline $p [$ui_diff get $s_lno $e_lno]
 		close $p} err]} {
-		error_popup "Failed to $mode selected hunk.\n\n$err"
+		error_popup [append $failed_msg "\n\n$err"]
 		unlock_index
 		return
 	}

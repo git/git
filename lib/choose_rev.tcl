@@ -50,14 +50,14 @@ constructor _new {path unmerged_only title} {
 	if {$is_detached} {
 		radiobutton $w.detachedhead_r \
 			-anchor w \
-			-text {This Detached Checkout} \
+			-text [mc "This Detached Checkout"] \
 			-value HEAD \
 			-variable @revtype
 		grid $w.detachedhead_r -sticky we -padx {0 5} -columnspan 2
 	}
 
 	radiobutton $w.expr_r \
-		-text {Revision Expression:} \
+		-text [mc "Revision Expression:"] \
 		-value expr \
 		-variable @revtype
 	entry $w.expr_t \
@@ -71,17 +71,17 @@ constructor _new {path unmerged_only title} {
 
 	frame $w.types
 	radiobutton $w.types.head_r \
-		-text {Local Branch} \
+		-text [mc "Local Branch"] \
 		-value head \
 		-variable @revtype
 	pack $w.types.head_r -side left
 	radiobutton $w.types.trck_r \
-		-text {Tracking Branch} \
+		-text [mc "Tracking Branch"] \
 		-value trck \
 		-variable @revtype
 	pack $w.types.trck_r -side left
 	radiobutton $w.types.tag_r \
-		-text {Tag} \
+		-text [mc "Tag"] \
 		-value tag \
 		-variable @revtype
 	pack $w.types.tag_r -side left
@@ -314,7 +314,7 @@ method commit_or_die {} {
 		}
 
 		set top [winfo toplevel $w]
-		set msg "Invalid revision: [get $this]\n\n$err"
+		set msg [append [mc "Invalid revision: %s" [get $this]] "\n\n$err"]
 		tk_messageBox \
 			-icon error \
 			-type ok \
@@ -335,7 +335,7 @@ method _expr {} {
 		if {$i ne {}} {
 			return [lindex $cur_specs $i 1]
 		} else {
-			error "No revision selected."
+			error [mc "No revision selected."]
 		}
 	}
 
@@ -343,7 +343,7 @@ method _expr {} {
 		if {$c_expr ne {}} {
 			return $c_expr
 		} else {
-			error "Revision expression is empty."
+			error [mc "Revision expression is empty."]
 		}
 	}
 	HEAD { return HEAD                     }

@@ -4,7 +4,7 @@
 proc fetch_from {remote} {
 	set w [console::new \
 		"fetch $remote" \
-		"Fetching new changes from $remote"]
+		[mc "Fetching new changes from %s" $remote]]
 	set cmds [list]
 	lappend cmds [list exec git fetch $remote]
 	if {[is_config_true gui.pruneduringfetch]} {
@@ -16,14 +16,14 @@ proc fetch_from {remote} {
 proc prune_from {remote} {
 	set w [console::new \
 		"remote prune $remote" \
-		"Pruning tracking branches deleted from $remote"]
+		[mc "Pruning tracking branches deleted from %s" $remote]]
 	console::exec $w [list git remote prune $remote]
 }
 
 proc push_to {remote} {
 	set w [console::new \
 		"push $remote" \
-		"Pushing changes to $remote"]
+		[mc "Pushing changes to %s" $remote]]
 	set cmd [list git push]
 	lappend cmd -v
 	lappend cmd $remote
@@ -65,7 +65,7 @@ proc start_push_anywhere_action {w} {
 
 	set cons [console::new \
 		"push $r_url" \
-		"Pushing $cnt $unit to $r_url"]
+		[mc "Pushing %s %s to %s" $cnt $unit $r_url]]
 	console::exec $cons $cmd
 	destroy $w
 }
@@ -81,21 +81,21 @@ proc do_push_anywhere {} {
 	toplevel $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
-	label $w.header -text {Push Branches} -font font_uibold
+	label $w.header -text [mc "Push Branches"] -font font_uibold
 	pack $w.header -side top -fill x
 
 	frame $w.buttons
-	button $w.buttons.create -text Push \
+	button $w.buttons.create -text [mc Push] \
 		-default active \
 		-command [list start_push_anywhere_action $w]
 	pack $w.buttons.create -side right
-	button $w.buttons.cancel -text {Cancel} \
+	button $w.buttons.cancel -text [mc "Cancel"] \
 		-default normal \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	labelframe $w.source -text {Source Branches}
+	labelframe $w.source -text [mc "Source Branches"]
 	listbox $w.source.l \
 		-height 10 \
 		-width 70 \
@@ -112,10 +112,10 @@ proc do_push_anywhere {} {
 	pack $w.source.l -side left -fill both -expand 1
 	pack $w.source -fill both -expand 1 -pady 5 -padx 5
 
-	labelframe $w.dest -text {Destination Repository}
+	labelframe $w.dest -text [mc "Destination Repository"]
 	if {$all_remotes ne {}} {
 		radiobutton $w.dest.remote_r \
-			-text {Remote:} \
+			-text [mc "Remote:"] \
 			-value remote \
 			-variable push_urltype
 		eval tk_optionMenu $w.dest.remote_m push_remote $all_remotes
@@ -130,7 +130,7 @@ proc do_push_anywhere {} {
 		set push_urltype url
 	}
 	radiobutton $w.dest.url_r \
-		-text {Arbitrary URL:} \
+		-text [mc "Arbitrary URL:"] \
 		-value url \
 		-variable push_urltype
 	entry $w.dest.url_t \
@@ -150,13 +150,13 @@ proc do_push_anywhere {} {
 	grid columnconfigure $w.dest 1 -weight 1
 	pack $w.dest -anchor nw -fill x -pady 5 -padx 5
 
-	labelframe $w.options -text {Transfer Options}
+	labelframe $w.options -text [mc "Transfer Options"]
 	checkbutton $w.options.thin \
-		-text {Use thin pack (for slow network connections)} \
+		-text [mc "Use thin pack (for slow network connections)"] \
 		-variable push_thin
 	grid $w.options.thin -columnspan 2 -sticky w
 	checkbutton $w.options.tags \
-		-text {Include tags} \
+		-text [mc "Include tags"] \
 		-variable push_tags
 	grid $w.options.tags -columnspan 2 -sticky w
 	grid columnconfigure $w.options 1 -weight 1
@@ -169,6 +169,6 @@ proc do_push_anywhere {} {
 	bind $w <Visibility> "grab $w; focus $w.buttons.create"
 	bind $w <Key-Escape> "destroy $w"
 	bind $w <Key-Return> [list start_push_anywhere_action $w]
-	wm title $w "[appname] ([reponame]): Push"
+	wm title $w [append "[appname] ([reponame]): " [mc "Push"]]
 	tkwait window $w
 }

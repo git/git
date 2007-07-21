@@ -55,7 +55,7 @@ method update {have total} {
 		set pdone [expr {100 * $have / $total}]
 	}
 
-	set status [format "%s ... %i of %i %s (%2i%%)" \
+	set status [mc "%s ... %i of %i %s (%2i%%)" \
 		$prefix $have $total $units $pdone]
 	$w_c coords bar 0 0 $pdone 20
 }

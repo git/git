@@ -6,7 +6,7 @@ proc do_windows_shortcut {} {
 
 	set fn [tk_getSaveFile \
 		-parent . \
-		-title "[appname] ([reponame]): Create Desktop Icon" \
+		-title [append "[appname] ([reponame]): " [mc "Create Desktop Icon"]] \
 		-initialfile "Git [reponame].bat"]
 	if {$fn != {}} {
 		if {[file extension $fn] ne {.bat}} {
@@ -23,7 +23,7 @@ proc do_windows_shortcut {} {
 				puts $fd " \"[file normalize $argv0]\""
 				close $fd
 			} err]} {
-			error_popup "Cannot write script:\n\n$err"
+			error_popup [append [mc "Cannot write script:"] "\n\n$err"]
 		}
 	}
 }
@@ -42,7 +42,7 @@ proc do_cygwin_shortcut {} {
 	}
 	set fn [tk_getSaveFile \
 		-parent . \
-		-title "[appname] ([reponame]): Create Desktop Icon" \
+		-title [append "[appname] ([reponame]): " [mc "Create Desktop Icon"]] \
 		-initialdir $desktop \
 		-initialfile "Git [reponame].bat"]
 	if {$fn != {}} {
@@ -71,7 +71,7 @@ proc do_cygwin_shortcut {} {
 				puts $fd " &\""
 				close $fd
 			} err]} {
-			error_popup "Cannot write script:\n\n$err"
+			error_popup [append [mc "Cannot write script:"] "\n\n$err"]
 		}
 	}
 }
@@ -81,7 +81,7 @@ proc do_macosx_app {} {
 
 	set fn [tk_getSaveFile \
 		-parent . \
-		-title "[appname] ([reponame]): Create Desktop Icon" \
+		-title [append "[appname] ([reponame]): " [mc "Create Desktop Icon"]] \
 		-initialdir [file join $env(HOME) Desktop] \
 		-initialfile "Git [reponame].app"]
 	if {$fn != {}} {
@@ -146,7 +146,7 @@ proc do_macosx_app {} {
 
 				file attributes $exe -permissions u+x,g+x,o+x
 			} err]} {
-			error_popup "Cannot write icon:\n\n$err"
+			error_popup [append [mc "Cannot write icon:"] "\n\n$err"]
 		}
 	}
 }

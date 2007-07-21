@@ -74,11 +74,11 @@ constructor new {i_commit i_path} {
 	set path   $i_path
 
 	make_toplevel top w
-	wm title $top "[appname] ([reponame]): File Viewer"
+	wm title $top [append "[appname] ([reponame]): " [mc "File Viewer"]]
 
 	frame $w.header -background gold
 	label $w.header.commit_l \
-		-text {Commit:} \
+		-text [mc "Commit:"] \
 		-background gold \
 		-anchor w \
 		-justify left
@@ -101,7 +101,7 @@ constructor new {i_commit i_path} {
 		-anchor w \
 		-justify left
 	label $w.header.path_l \
-		-text {File:} \
+		-text [mc "File:"] \
 		-background gold \
 		-anchor w \
 		-justify left
@@ -246,7 +246,7 @@ constructor new {i_commit i_path} {
 
 	menu $w.ctxm -tearoff 0
 	$w.ctxm add command \
-		-label "Copy Commit" \
+		-label [mc "Copy Commit"] \
 		-command [cb _copycommit]
 
 	foreach i $w_columns {
@@ -366,7 +366,7 @@ method _load {jump} {
 	set amov_data [list [list]]
 	set asim_data [list [list]]
 
-	$status show "Reading $commit:[escape_path $path]..."
+	$status show [mc "Reading %s..." "$commit:[escape_path $path]"]
 	$w_path conf -text [escape_path $path]
 	if {$commit eq {}} {
 		set fd [open $path r]

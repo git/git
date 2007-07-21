@@ -52,7 +52,7 @@ method _init {} {
 		-state disabled \
 		-xscrollcommand [list $w.m.sbx set] \
 		-yscrollcommand [list $w.m.sby set]
-	label $w.m.s -text {Working... please wait...} \
+	label $w.m.s -text [mc "Working... please wait..."] \
 		-anchor w \
 		-justify left \
 		-font font_uibold
@@ -66,11 +66,11 @@ method _init {} {
 	pack $w.m -side top -fill both -expand 1 -padx 5 -pady 10
 
 	menu $w.ctxm -tearoff 0
-	$w.ctxm add command -label "Copy" \
+	$w.ctxm add command -label [mc "Copy"] \
 		-command "tk_textCopy $w.m.t"
-	$w.ctxm add command -label "Select All" \
+	$w.ctxm add command -label [mc "Select All"] \
 		-command "focus $w.m.t;$w.m.t tag add sel 0.0 end"
-	$w.ctxm add command -label "Copy All" \
+	$w.ctxm add command -label [mc "Copy All"] \
 		-command "
 			$w.m.t tag add sel 0.0 end
 			tk_textCopy $w.m.t
@@ -78,7 +78,7 @@ method _init {} {
 		"
 
 	if {$is_toplevel} {
-		button $w.ok -text {Close} \
+		button $w.ok -text [mc "Close"] \
 			-state disabled \
 			-command [list destroy $w]
 		pack $w.ok -side bottom -anchor e -pady 10 -padx 10
@@ -181,7 +181,7 @@ method insert {txt} {
 method done {ok} {
 	if {$ok} {
 		if {[winfo exists $w.m.s]} {
-			$w.m.s conf -background green -text {Success}
+			$w.m.s conf -background green -text [mc "Success"]
 			if {$is_toplevel} {
 				$w.ok conf -state normal
 				focus $w.ok
@@ -191,7 +191,7 @@ method done {ok} {
 		if {![winfo exists $w.m.s]} {
 			_init $this
 		}
-		$w.m.s conf -background red -text {Error: Command Failed}
+		$w.m.s conf -background red -text [mc "Error: Command Failed"]
 		if {$is_toplevel} {
 			$w.ok conf -state normal
 			focus $w.ok

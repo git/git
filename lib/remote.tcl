@@ -159,7 +159,7 @@ proc populate_fetch_menu {} {
 		if {$enable} {
 			lappend prune_list $r
 			$m add command \
-				-label "Fetch from $r..." \
+				-label [mc "Fetch from %s..." $r] \
 				-command [list fetch_from $r]
 		}
 	}
@@ -169,7 +169,7 @@ proc populate_fetch_menu {} {
 	}
 	foreach r $prune_list {
 		$m add command \
-			-label "Prune from $r..." \
+			-label [mc "Prune from %s..." $r] \
 			-command [list prune_from $r]
 	}
 }
@@ -203,7 +203,7 @@ proc populate_push_menu {} {
 				$m add separator
 			}
 			$m add command \
-				-label "Push to $r..." \
+				-label [mc "Push to %s..." $r] \
 				-command [list push_to $r]
 			incr fast_count
 		}
