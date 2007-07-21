@@ -593,6 +593,7 @@ pid_t git_connect(int fd[2], char *url, const char *prog, int flags)
 		env_unsetenv(env, ALTERNATE_DB_ENVIRONMENT);
 		env_unsetenv(env, DB_ENVIRONMENT);
 		env_unsetenv(env, GIT_DIR_ENVIRONMENT);
+		env_unsetenv(env, GIT_WORK_TREE_ENVIRONMENT);
 		env_unsetenv(env, GRAFT_ENVIRONMENT);
 		env_unsetenv(env, INDEX_ENVIRONMENT);
 		pid = spawnvpe_pipe("sh", argv, env, pipefd[1], pipefd[0]);

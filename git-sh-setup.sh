@@ -29,11 +29,7 @@ set_reflog_action() {
 }
 
 is_bare_repository () {
-	git-config --bool --get core.bare ||
-	case "$GIT_DIR" in
-	.git | */.git) echo false ;;
-	*) echo true ;;
-	esac
+	git-rev-parse --is-bare-repository
 }
 
 cd_to_toplevel () {
@@ -48,7 +44,7 @@ cd_to_toplevel () {
 }
 
 require_work_tree () {
-	test $(is_bare_repository) = false &&
+	test $(git-rev-parse --is-inside-work-tree) = true &&
 	test $(git-rev-parse --is-inside-git-dir) = false ||
 	die "fatal: $0 cannot be used without a working tree."
 }

@@ -408,5 +408,6 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 		shown = 1;
 	}
 	opt->loginfo = NULL;
+	maybe_flush_or_die(stdout, "stdout");
 	return shown;
 }

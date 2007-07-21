@@ -4,7 +4,7 @@
 #include "quote.h"
 
 const char git_usage_string[] =
-	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate] [--bare] [--git-dir=GIT_DIR] [--help] COMMAND [ARGS]";
+	"git [--version] [--exec-path[=GIT_EXEC_PATH]] [-p|--paginate] [--bare] [--git-dir=GIT_DIR] [--work-tree=GIT_WORK_TREE] [--help] COMMAND [ARGS]";
 
 static void prepend_to_path(const char *dir, int len)
 {
@@ -32,7 +32,7 @@ static void prepend_to_path(const char *dir, int len)
 	free(path);
 }
 
-static int handle_options(const char*** argv, int* argc)
+static int handle_options(const char*** argv, int* argc, int* envchanged)
 {
 	int handled = 0;
 
@@ -68,14 +68,34 @@ static int handle_options(const char*** argv, int* argc)
 				usage(git_usage_string);
 			}
 			setenv(GIT_DIR_ENVIRONMENT, (*argv)[1], 1);
+			if (envchanged)
+				*envchanged = 1;
 			(*argv)++;
 			(*argc)--;
 			handled++;
 		} else if (!prefixcmp(cmd, "--git-dir=")) {
 			setenv(GIT_DIR_ENVIRONMENT, cmd + 10, 1);
+			if (envchanged)
+				*envchanged = 1;
+		} else if (!strcmp(cmd, "--work-tree")) {
+			if (*argc < 2) {
+				fprintf(stderr, "No directory given for --work-tree.\n" );
+				usage(git_usage_string);
+			}
+			setenv(GIT_WORK_TREE_ENVIRONMENT, (*argv)[1], 1);
+			if (envchanged)
+				*envchanged = 1;
+			(*argv)++;
+			(*argc)--;
+		} else if (!prefixcmp(cmd, "--work-tree=")) {
+			setenv(GIT_WORK_TREE_ENVIRONMENT, cmd + 12, 1);
+			if (envchanged)
+				*envchanged = 1;
 		} else if (!strcmp(cmd, "--bare")) {
 			static char git_dir[PATH_MAX+1];
 			setenv(GIT_DIR_ENVIRONMENT, getcwd(git_dir, sizeof(git_dir)), 1);
+			if (envchanged)
+				*envchanged = 1;
 		} else {
 			fprintf(stderr, "Unknown option: %s\n", cmd);
 			usage(git_usage_string);
@@ -154,7 +174,7 @@ static int split_cmdline(char *cmdline, const char ***argv)
 
 static int handle_alias(int *argcp, const char ***argv)
 {
-	int nongit = 0, ret = 0, saved_errno = errno;
+	int nongit = 0, envchanged = 0, ret = 0, saved_errno = errno;
 	const char *subdir;
 	int count, option_count;
 	const char** new_argv;
@@ -175,7 +195,11 @@ static int handle_alias(int *argcp, const char ***argv)
 			    alias_string + 1, alias_command);
 		}
 		count = split_cmdline(alias_string, &new_argv);
-		option_count = handle_options(&new_argv, &count);
+		option_count = handle_options(&new_argv, &count, &envchanged);
+		if (envchanged)
+			die("alias '%s' changes environment variables\n"
+				 "You can use '!git' in the alias to do this.",
+				 alias_command);
 		memmove(new_argv - option_count, new_argv,
 				count * sizeof(char *));
 		new_argv -= option_count;
@@ -218,17 +242,56 @@ const char git_version_string[] = GIT_VERSION;
  * require working tree to be present -- anything uses this needs
  * RUN_SETUP for reading from the configuration file.
  */
-#define NOT_BARE 	(1<<2)
+#define NEED_WORK_TREE	(1<<2)
 
-static void handle_internal_command(int argc, const char **argv, char **envp)
+struct cmd_struct {
+	const char *cmd;
+	int (*fn)(int, const char **, const char *);
+	int option;
+};
+
+static int run_command(struct cmd_struct *p, int argc, const char **argv)
+{
+	int status;
+	struct stat st;
+	const char *prefix;
+
+	prefix = NULL;
+	if (p->option & RUN_SETUP)
+		prefix = setup_git_directory();
+	if (p->option & USE_PAGER)
+		setup_pager();
+	if ((p->option & NEED_WORK_TREE) &&
+	    (!is_inside_work_tree() || is_inside_git_dir()))
+		die("%s must be run in a work tree", p->cmd);
+	trace_argv_printf(argv, argc, "trace: built-in: git");
+
+	status = p->fn(argc, argv, prefix);
+	if (status)
+		return status;
+
+	/* Somebody closed stdout? */
+	if (fstat(fileno(stdout), &st))
+		return 0;
+	/* Ignore write errors for pipes and sockets.. */
+	if (S_ISFIFO(st.st_mode) || S_ISSOCK(st.st_mode))
+		return 0;
+
+	/* Check for ENOSPC and EIO errors.. */
+	if (fflush(stdout))
+		die("write failure on standard output: %s", strerror(errno));
+	if (ferror(stdout))
+		die("unknown write failure on standard output");
+	if (fclose(stdout))
+		die("close failed on standard output: %s", strerror(errno));
+	return 0;
+}
+
+static void handle_internal_command(int argc, const char **argv)
 {
 	const char *cmd = argv[0];
-	static struct cmd_struct {
-		const char *cmd;
-		int (*fn)(int, const char **, const char *);
-		int option;
-	} commands[] = {
-		{ "add", cmd_add, RUN_SETUP | NOT_BARE },
+	static struct cmd_struct commands[] = {
+		{ "add", cmd_add, RUN_SETUP | NEED_WORK_TREE },
 		{ "annotate", cmd_annotate, RUN_SETUP | USE_PAGER },
 		{ "apply", cmd_apply },
 		{ "archive", cmd_archive },
@@ -238,9 +301,9 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "cat-file", cmd_cat_file, RUN_SETUP },
 		{ "checkout-index", cmd_checkout_index, RUN_SETUP },
 		{ "check-ref-format", cmd_check_ref_format },
-		{ "check-attr", cmd_check_attr, RUN_SETUP | NOT_BARE },
+		{ "check-attr", cmd_check_attr, RUN_SETUP | NEED_WORK_TREE },
 		{ "cherry", cmd_cherry, RUN_SETUP },
-		{ "cherry-pick", cmd_cherry_pick, RUN_SETUP | NOT_BARE },
+		{ "cherry-pick", cmd_cherry_pick, RUN_SETUP | NEED_WORK_TREE },
 		{ "commit-tree", cmd_commit_tree, RUN_SETUP },
 		{ "config", cmd_config },
 		{ "count-objects", cmd_count_objects, RUN_SETUP },
@@ -268,7 +331,7 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "mailsplit", cmd_mailsplit },
 		{ "merge-base", cmd_merge_base, RUN_SETUP },
 		{ "merge-file", cmd_merge_file },
-		{ "mv", cmd_mv, RUN_SETUP | NOT_BARE },
+		{ "mv", cmd_mv, RUN_SETUP | NEED_WORK_TREE },
 		{ "name-rev", cmd_name_rev, RUN_SETUP },
 		{ "pack-objects", cmd_pack_objects, RUN_SETUP },
 		{ "pickaxe", cmd_blame, RUN_SETUP | USE_PAGER },
@@ -281,9 +344,9 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 		{ "rerere", cmd_rerere, RUN_SETUP },
 		{ "rev-list", cmd_rev_list, RUN_SETUP },
 		{ "rev-parse", cmd_rev_parse, RUN_SETUP },
-		{ "revert", cmd_revert, RUN_SETUP | NOT_BARE },
-		{ "rm", cmd_rm, RUN_SETUP | NOT_BARE },
-		{ "runstatus", cmd_runstatus, RUN_SETUP | NOT_BARE },
+		{ "revert", cmd_revert, RUN_SETUP | NEED_WORK_TREE },
+		{ "rm", cmd_rm, RUN_SETUP | NEED_WORK_TREE },
+		{ "runstatus", cmd_runstatus, RUN_SETUP | NEED_WORK_TREE },
 		{ "shortlog", cmd_shortlog, RUN_SETUP | USE_PAGER },
 		{ "show-branch", cmd_show_branch, RUN_SETUP },
 		{ "show", cmd_show, RUN_SETUP | USE_PAGER },
@@ -320,25 +383,13 @@ static void handle_internal_command(int argc, const char **argv, char **envp)
 
 	for (i = 0; i < ARRAY_SIZE(commands); i++) {
 		struct cmd_struct *p = commands+i;
-		const char *prefix;
 		if (strcmp(p->cmd, cmd))
 			continue;
-
-		prefix = NULL;
-		if (p->option & RUN_SETUP)
-			prefix = setup_git_directory();
-		if (p->option & USE_PAGER)
-			setup_pager();
-		if ((p->option & NOT_BARE) &&
-				(is_bare_repository() || is_inside_git_dir()))
-			die("%s must be run in a work tree", cmd);
-		trace_argv_printf(argv, argc, "trace: built-in: git");
-
-		exit(p->fn(argc, argv, prefix));
+		exit(run_command(p, argc, argv));
 	}
 }
 
-int main(int argc, const char **argv, char **envp)
+int main(int argc, const char **argv)
 {
 	const char *cmd = argv[0] ? argv[0] : "git-help";
 	char *slash = strrchr(cmd, '/');
@@ -381,14 +432,14 @@ int main(int argc, const char **argv, char **envp)
 	if (!prefixcmp(cmd, "git-")) {
 		cmd += 4;
 		argv[0] = cmd;
-		handle_internal_command(argc, argv, envp);
+		handle_internal_command(argc, argv);
 		die("cannot handle %s internally", cmd);
 	}
 
 	/* Look for flags.. */
 	argv++;
 	argc--;
-	handle_options(&argv, &argc);
+	handle_options(&argv, &argc, NULL);
 	if (argc > 0) {
 		if (!prefixcmp(argv[0], "--"))
 			argv[0] += 2;
@@ -413,7 +464,7 @@ int main(int argc, const char **argv, char **envp)
 
 	while (1) {
 		/* See if it's an internal command */
-		handle_internal_command(argc, argv, envp);
+		handle_internal_command(argc, argv);
 
 		/* .. then try the external ones */
 		execv_git_cmd(argv);
