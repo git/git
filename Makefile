@@ -103,6 +103,21 @@ $(patsubst %.sh,%,$(SCRIPT_SH)) : % : %.sh
 $(GITGUI_BUILT_INS): git-gui
 	$(QUIET_BUILT_IN)rm -f $@ && ln git-gui $@
 
+XGETTEXT   ?= xgettext
+msgsdir    ?= $(libdir)/msgs
+msgsdir_SQ  = $(subst ','\'',$(msgsdir))
+PO_TEMPLATE = po/git-gui.pot
+ALL_POFILES = $(wildcard po/*.po)
+ALL_MSGFILES = $(subst .po,.msg,$(ALL_POFILES))
+
+$(PO_TEMPLATE): $(SCRIPT_SH) $(ALL_LIBFILES)
+	$(XGETTEXT) -kmc -LTcl -o $@ $(SCRIPT_SH) $(ALL_LIBFILES)
+update-po:: $(PO_TEMPLATE)
+	$(foreach p, $(ALL_POFILES), echo Updating $p ; msgmerge -U $p $(PO_TEMPLATE) ; )
+$(ALL_MSGFILES): %.msg : %.po
+	@echo Generating catalog $@
+	msgfmt --statistics --tcl $< -l $(basename $(notdir $<)) -d $(dir $@)
+
 lib/tclIndex: $(ALL_LIBFILES)
 	$(QUIET_INDEX)if echo \
 	  $(foreach p,$(PRELOAD_FILES),source $p\;) \
@@ -136,7 +151,7 @@ GIT-GUI-VARS: .FORCE-GIT-GUI-VARS
 		echo 1>$@ "$$VARS"; \
 	fi
 
-all:: $(ALL_PROGRAMS) lib/tclIndex
+all:: $(ALL_PROGRAMS) lib/tclIndex $(ALL_MSGFILES)
 
 install: all
 	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(gitexecdir_SQ)' $(INSTALL_D1)
@@ -145,13 +160,15 @@ install: all
 	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(libdir_SQ)' $(INSTALL_D1)
 	$(QUIET)$(INSTALL_R0)lib/tclIndex $(INSTALL_R1) '$(DESTDIR_SQ)$(libdir_SQ)'
 	$(QUIET)$(foreach p,$(ALL_LIBFILES), $(INSTALL_R0)$p $(INSTALL_R1) '$(DESTDIR_SQ)$(libdir_SQ)' &&) true
+	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(msgsdir_SQ)' $(INSTALL_D1)
+	$(QUIET)$(foreach p,$(ALL_MSGFILES), $(INSTALL_R0)$p $(INSTALL_R1) '$(DESTDIR_SQ)$(msgsdir_SQ)' &&) true
 
 dist-version:
 	@mkdir -p $(TARDIR)
 	@echo $(GITGUI_VERSION) > $(TARDIR)/version
 
 clean::
-	rm -f $(ALL_PROGRAMS) lib/tclIndex
+	rm -f $(ALL_PROGRAMS) lib/tclIndex po/*.msg
 	rm -f GIT-VERSION-FILE GIT-GUI-VARS
 
 .PHONY: all install dist-version clean
